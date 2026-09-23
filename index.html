@@ -215,6 +215,8 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
 .mtop-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .chip{background:var(--glass);border:1px solid var(--line);color:var(--ink);font:600 12.5px var(--body);padding:8px 12px;border-radius:999px;cursor:pointer}
 .chip:hover{background:var(--glass-2)}
+.chip.snd{border-color:rgba(255,209,102,.5);color:var(--lantern)}
+.chip.snd.off{color:var(--ink-3);border-color:var(--line)}
 .mmain{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:center}
 .mhero{display:flex;flex-direction:column;gap:14px;align-items:flex-start}
 .logo{font-size:clamp(52px,8.5vw,112px);line-height:.88;letter-spacing:-.035em;margin:0}
@@ -300,6 +302,7 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
   <header class="mtop">
     <div class="mbrand"><span class="mdot"></span>Pulseform</div>
     <div class="mtop-r"><span class="wallet" id="walletM"></span>
+      <button class="chip snd" id="mSound" type="button">♪ Tap for music</button>
       <button class="chip" id="mShop" type="button">Collection</button><button class="chip" id="mGuide" type="button">Guide</button><button class="chip" id="mSettings" type="button">Settings</button></div>
   </header>
   <div class="mmain">
@@ -447,6 +450,7 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
     </ul>
     <div class="lbl">Timing</div>
     <div class="judge"><b>Perfect</b><span>within 45 ms. Grows your streak.</span><b>Good</b><span>within 90 ms. Keeps your streak.</span><b>Early / Late</b><span>within 150 ms. Two in a row breaks the streak.</span><b>Miss</b><span>Costs a Harmony point.</span></div>
+    <p class="small">On phones and tablets every window is 35% wider, and swipes get a small lag correction.</p>
     <div class="lbl">Streak tiers</div>
     <div class="judge"><b>10 Pulse</b><span>×1.5, trail and bass</span><b>25 Flow</b><span>×2, ripples and drums</span><b>50 Bloom</b><span>×3, the world blooms, melody</span><b>100 Resonance</b><span>×4, new sky, harmonies</span><b>200 Transcend</b><span>×5, gold light, full mix</span></div>
   </div>
@@ -573,9 +577,13 @@ const STYLES={
  noir:{name:'Noir',mood:'smoky and slow',bpm:.86,swing:.33,prog:[[0,'m7'],[5,'m7'],[10,'7'],[3,'M7']],scale:'minor',
   kick:{s:'kickSoft',p:P16([0,.5],[8,.35])},snare:{s:'brush',p:P16([4,.6],[12,.6],[14,.2])},hat:{s:'ride',p:P16([0,.45],[4,.45],[6,.3],[8,.45],[12,.45],[14,.3])},
   bass:{pat:'walk',wave:'tri',v:.38},keys:{pat:'charleston',voice:'rhodes'},lead:{voice:'horn',dens:.5,rhy:'swing'},spark:'bells'}};
-const STYLE_IDS=Object.keys(STYLES);
-function makeTrack(styleId,seed){
-  const st=STYLES[styleId], r=mulberry(hashStr('track'+seed)), K=55+Math.floor(r()*7);
+STYLES.lobby={name:'Lobby',mood:'jazz club',bpm:1,swing:.3,prog:[[2,'m7'],[7,'7'],[0,'M7'],[9,'7']],scale:'major',
+  kick:{s:'kickHard',p:P16([0,1.25],[6,.55],[8,1.15],[10,.35],[14,.5])},snare:{s:'snareHard',p:P16([4,1.35],[12,1.35],[11,.2],[15,.3])},
+  hat:{s:'ride',p:P16([0,.6],[4,.6],[6,.45],[8,.6],[12,.6],[14,.45])},perc:{s:'hat',p:P16([4,.55],[12,.55])},
+  bass:{pat:'walk',wave:'tri',v:.44},keys:{pat:'charleston',voice:'rhodes'},lead:{voice:'horn',dens:.62,rhy:'swing'},spark:'bells'};
+const STYLE_IDS=Object.keys(STYLES).filter(k=>k!=='lobby');
+function makeTrack(styleId,seed,forceK){
+  const st=STYLES[styleId], r=mulberry(hashStr('track'+seed)), K0=55+Math.floor(r()*7), K=forceK||K0;
   const chords=st.prog.map(([off,q])=>{ const ints=QUAL[q]; const n=ints.map(i=>{ let m=K+off+i; while(m>68) m-=12; while(m<55) m+=12; return m; }).sort((a,b)=>a-b);
     let root=K+off-24; while(root>47) root-=12; while(root<36) root+=12; return {root,n,ints}; });
   const sc=SCALES[st.scale], pool=[]; for(let m=64;m<=86;m++) if(sc.includes(((m-K)%12+12)%12)) pool.push(m);
@@ -1008,7 +1016,10 @@ function nextRoom(first){
   G.players.forEach(P=>{ P.pos={...R.start}; P.prevPos=null; P.done=false; P.dead=false; P.anim={kind:'drop',t0:G.now||0,dur:.45}; P.trailPts=[]; });
   G.ripples=[];
 }
-function win(spb){ const sc=SAVE.relaxed?1.3:1, cap=.4*spb; return {p:Math.min(.045*sc,cap*.3),g:Math.min(.09*sc,cap*.6),l:Math.min(.15*sc,cap)}; }
+/* Touch screens report swipes a little late and fingers are less precise than keys:
+   phones get 35% wider windows and a small built-in lag correction. */
+const TOUCH_LAG=MOB?.03:0;
+function win(spb){ const sc=(SAVE.relaxed?1.3:1)*(MOB?1.35:1), cap=.42*spb; return {p:Math.min(.045*sc,cap*.3),g:Math.min(.09*sc,cap*.6),l:Math.min(.15*sc,cap)}; }
 function pump(){
   const c=A.ctx, ahead=c.currentTime+(MOB?.35:.25);
   for(;;){
@@ -1041,7 +1052,7 @@ function input(dir,ev,pid){
   if(b.k<=G.restUntil){ flash(pid,dir,'guard'); popAt(P,'rest','#DCCBE6',13); return 'rest'; }
   if(b.d[pid]){ flash(pid,dir,'guard'); return 'guard'; }
   b.d[pid]=true;
-  const W=win(b.spb), d=t-b.t, ad=Math.abs(d);
+  const W=win(b.spb), d=t-b.t-TOUCH_LAG, ad=Math.abs(d);
   const j=ad<=W.p?'perfect':ad<=W.g?'good':ad<=W.l?(d<0?'early':'late'):'miss';
   if(ad<=.15){ G.stats.hist[clamp(Math.floor((d+.15)/.03),0,9)]++; G.stats.sum+=d; G.stats.cnt++; }
   if(j==='miss'){ flash(pid,dir,'miss'); miss(P,b,'off'); return 'miss'; }
@@ -1564,7 +1575,7 @@ const notesTxt=()=>'♪ '+SAVE.notes.toLocaleString();
 function fadeMusic(){ if(!A.ctx) return; A.music.gain.setTargetAtTime(0,A.ctx.currentTime,.4); }
 function toMenu(ov='menuOv'){
   if(A.ctx&&A.ctx.state==='suspended') A.ctx.resume();
-  fadeMusic();
+  if(G.state!=='menu') fadeMusic();
   G=visualDefaults({state:'menu',players:[mkPlayer(0)]}); R=null; setTheme(THEMES[Math.min(5,SAVE.world-1)]);
   hint('');
   if(ov==='menuOv') buildMenu(); else if(ov==='worldsOv') buildWorlds(); else if(ov==='shopOv') buildShop(); else if(ov==='settingsOv') buildSettings();
@@ -1575,7 +1586,7 @@ function nextUp(){
   let best=null; for(let w=1;w<=6;w++) for(let l=1;l<=LEVELS_PER_WORLD;l++){ const s=SAVE.stars[`${w}-${l}`]||0; if(s<3&&(!best||s<best.s)) best={w,l,s}; } return best; }
 function untilMidnight(){ const n=new Date(), m=new Date(n); m.setHours(24,0,0,0); const mins=Math.ceil((m-n)/60000); return `${Math.floor(mins/60)}h ${mins%60}m`; }
 function buildMenu(){
-  $('walletM').textContent=notesTxt();
+  $('walletM').textContent=notesTxt(); syncSoundChip();
   const nu=nextUp(), fresh=totalStars()===0;
   $('mContinue').hidden=!nu;
   if(nu){ $('mContTitle').textContent=fresh?'Start playing':'Continue';
@@ -1635,7 +1646,7 @@ function buildSettings(){
   $('resetBtn').textContent='Erase progress'; $('resetBtn').dataset.arm='';
 }
 function syncVol(){ ['music','sfx'].forEach(k=>{ const v=Math.round(SAVE[k+'Vol']*100); document.querySelectorAll(`[data-vol="${k}"]`).forEach(i=>i.value=v); document.querySelectorAll(`[data-volout="${k}"]`).forEach(o=>o.textContent=v+'%'); }); }
-function applyVol(){ if(!A.ctx) return; A.sfx.gain.value=.7*SAVE.sfxVol; if(['playing','paused'].includes(G.state)) A.music.gain.setTargetAtTime(SAVE.musicVol,A.ctx.currentTime,.05); }
+function applyVol(){ if(!A.ctx) return; A.sfx.gain.value=.7*SAVE.sfxVol; syncSoundChip(); if(['playing','paused','menu'].includes(G.state)) A.music.gain.setTargetAtTime(SAVE.musicVol,A.ctx.currentTime,.05); }
 function syncOffset(){ $('offset').value=SAVE.offset; $('offsetOut').textContent=(SAVE.offset>0?'+':'')+SAVE.offset+' ms'; }
 function unlockedSet(){ return new Set([...SKINS,...TRAILS].filter(i=>i.req&&reqMet(i.req)).map(i=>i.name)); }
 
@@ -1727,19 +1738,39 @@ function loop(){
     if(G.fireAt&&now>=G.fireAt){ G.fireAt=null; if(R.cells.some(c=>c.vent)){ G.fireT=now; sFire();
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='calib') calibTick();
-  else if(G.state==='menu') menuDemo(now);
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
   render(now);
 }
 
+/* ---------------- LOBBY MUSIC ---------------- */
+const LOBBY={on:false,t0:0,n:0,spb:60/104,tracks:null};
+function lobbyTick(){
+  if(!A.ctx||A.ctx.state!=='running'){ return; }
+  if(G.state!=='menu'){ LOBBY.on=false; return; }
+  const c=A.ctx;
+  if(!LOBBY.tracks){ const a=makeTrack('lobby','lobbyA'); LOBBY.tracks=[a,makeTrack('lobby','lobbyB',a.K)]; LOBBY.tracks[1].chords=a.chords; }
+  if(!LOBBY.on){ LOBBY.on=true; LOBBY.t0=c.currentTime+.12; LOBBY.n=0; G.demoBeat=-1;
+    setStemTier(5,c.currentTime,.05); A.filt.frequency.cancelScheduledValues(c.currentTime); A.filt.frequency.setValueAtTime(18000,c.currentTime);
+    A.music.gain.cancelScheduledValues(c.currentTime); A.music.gain.setValueAtTime(0,c.currentTime); A.music.gain.setTargetAtTime(SAVE.musicVol,c.currentTime,.4); }
+  const ahead=c.currentTime+(MOB?.35:.25), s16=LOBBY.spb/4;
+  while(LOBBY.t0+LOBBY.n*s16<ahead){ TRACK=LOBBY.tracks[Math.floor(LOBBY.n/64)%2]; scheduleStep(LOBBY.n,LOBBY.t0+LOBBY.n*s16,LOBBY.spb); LOBBY.n++; }
+}
+function syncSoundChip(){ const b=$('mSound'); if(!b) return; const on=A.ctx&&A.ctx.state==='running';
+  b.textContent=!on?'♪ Tap for music':SAVE.musicVol>0?'♪ Music on':'♪ Music off'; b.classList.toggle('off',!!on&&SAVE.musicVol===0); }
+function firstGesture(){ ensureAudio(); if(A.ctx.state==='suspended'&&G.state!=='paused') A.ctx.resume().then(syncSoundChip); if(!A.lobbyT) A.lobbyT=setInterval(lobbyTick,40); syncSoundChip(); }
+['pointerdown','keydown'].forEach(t=>addEventListener(t,()=>{ if(!A.ctx||(A.ctx.state!=='running'&&G.state!=='paused')) firstGesture(); },{capture:true,passive:true}));
+
 /* ---------------- MENU DEMO ---------------- */
 function menuDemo(now){
   if(!R||!G.players) return; const P=G.players[0];
   if(!G.demoT){ G.demoT=now+1.1; return; }
-  if(now<G.demoT) return; G.demoT=now+.5; G.lastBeatT=now; G.demoK=(G.demoK||0)+1; if(G.demoK%4===0) G.waveT=now;
-  if(P.pos.x===R.goal.x&&P.pos.y===R.goal.y){ burst(P.pos.x,P.pos.y,18,TH.acc,true); rng=Math.random; R=genRoom(cfgEndless(3+ri(5))); R.rise=now; P.pos={...R.start}; P.anim={kind:'drop',t0:now,dur:.45}; G.demoT=now+1.3; return; }
+  if(LOBBY.on){ const hb=Math.floor((heardNow()-LOBBY.t0)/LOBBY.spb); if(hb<=G.demoBeat) return; G.demoBeat=hb; G.demoT=now; }
+  else { if(now<G.demoT) return; G.demoT=now+.5; }
+  G.lastBeatT=now; G.demoK=(G.demoK||0)+1; if(G.demoK%4===0) G.waveT=now;
+  if(P.pos.x===R.goal.x&&P.pos.y===R.goal.y){ burst(P.pos.x,P.pos.y,18,TH.acc,true); rng=Math.random; R=genRoom(cfgEndless(3+ri(5))); R.rise=now; P.pos={...R.start}; P.anim={kind:'drop',t0:now,dur:.45}; G.demoT=now+1.3; if(LOBBY.on) G.demoBeat=Math.floor((heardNow()-LOBBY.t0)/LOBBY.spb)+2; return; }
   const d=bfsDir(R,P.pos,R.pressed), r=d&&simMove(R,P.pos.x,P.pos.y,d,R.pressed);
   if(!r){ R=null; G.demoT=0; return; }
   if(r.pressed&&!R.pressed){ R.pressed=true; R.cells.forEach(c=>{ if(c.gate){ c.open=true; c.openT=now; } }); }
@@ -1772,7 +1803,8 @@ function calibTick(){
 /* ---------------- WIRING ---------------- */
 document.addEventListener('click',e=>{ if(e.target.closest('.overlay button')){ ensureAudio(); if(A.ctx.state==='suspended'&&G.state!=='paused') A.ctx.resume(); sUI(); } });
 $('mLevels').onclick=()=>{ const w=Math.min(SAVE.lastWorld||1,SAVE.world); if(totalStars()>0){ buildLevels(w); showOv('levelsOv'); } else { buildWorlds(); showOv('worldsOv'); } };
-$('mGuide').onclick=()=>showOv('guideOv'); $('gBack').onclick=()=>toMenu();
+$('mGuide').onclick=()=>showOv('guideOv');
+$('mSound').onclick=()=>{ const wasOn=A.ctx&&A.ctx.state==='running'; firstGesture(); if(wasOn){ SAVE.musicVol=SAVE.musicVol>0?0:.8; save(); syncVol(); applyVol(); } syncSoundChip(); }; $('gBack').onclick=()=>toMenu();
 $('haptics').onchange=e=>{ SAVE.haptics=e.target.checked; save(); buzz(15); };
 document.querySelectorAll('#ctrlTabs button').forEach(b=>b.onclick=()=>{ SAVE.controls=b.dataset.c; save(); buildSettings(); });
 document.querySelectorAll('[data-vol]').forEach(i=>i.addEventListener('input',()=>{ SAVE[i.dataset.vol+'Vol']=i.value/100; save(); syncVol(); applyVol(); }));
