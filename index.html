@@ -8,6 +8,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="description" content="Pulseform Beat Rooms: a rhythm puzzle game. Move one tile per beat through floating rooms.">
 <style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}</style>
+<script>
+/* ===== CLOUD SAVES (sign in with Google or email) =====
+   Paste your Firebase web config between the braces below, then upload this file.
+   Leave it as null and the game still works; the Sign in screen just says cloud saves are off. */
+window.PULSEFORM_FIREBASE = null;
+</script>
 </head>
 <body>
 <title>Pulseform Beat Rooms</title>
@@ -327,7 +333,25 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
 #nCode{min-width:0;font:600 16px var(--display);letter-spacing:.2em;text-align:center;text-transform:uppercase;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink);padding:0 6px}
 #nCode:focus{outline:2px solid #FFD166;outline-offset:1px}
 .coderow{display:flex;align-items:center;gap:10px}.pcode{font:700 30px var(--display);letter-spacing:.18em;color:#FFD166}
-.small.err,#nStatus.err{color:#FFB3A8}
+.small.err,#nStatus.err,#aMsg.err{color:#FFB3A8}
+.chip.acct.on{border-color:rgba(184,242,230,.55);color:#B8F2E6}
+.chip.acct.on::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#B8F2E6;margin-right:6px;vertical-align:1px}
+.acct-form{display:flex;flex-direction:column;gap:10px;margin:0}
+.acct-form input{font:500 16px var(--body);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink);padding:12px 14px;min-width:0}
+.acct-form input:focus{outline:2px solid #FFD166;outline-offset:1px}
+.acct-form .segs button{flex:1}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1F1F1F}
+.acct-or{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-3)}
+.acct-or::before,.acct-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.linkbtn{background:none;border:0;color:var(--ink-2,#ddd);font:500 13px var(--body);text-decoration:underline;cursor:pointer;align-self:center;padding:4px}
+.acct-card{display:flex;gap:12px;align-items:center;background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.acct-card b{display:block;font:600 14px var(--display);word-break:break-all}
+.acct-dot{width:12px;height:12px;border-radius:50%;background:#B8F2E6;box-shadow:0 0 10px #B8F2E6;flex:none}
+#aMsg:empty{display:none}
+#aIn,#aOut{display:flex;flex-direction:column;gap:12px}
+#aIn p,#aOut p{margin:0}
+button:disabled{opacity:.55;cursor:default}
+
 #netLive{display:grid;gap:8px}#netLive[hidden]{display:none}
 @media (max-width:380px){.joinrow{grid-template-columns:1fr 70px}.joinrow #nHost{grid-column:1/-1}}
 </style>
@@ -362,6 +386,7 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
     <div class="mbrand"><span class="mdot"></span>Pulseform</div>
     <div class="mtop-r"><span class="wallet" id="walletM"></span>
       <button class="chip snd" id="mSound" type="button">♪ Tap for music</button>
+      <button class="chip acct" id="mAcct" type="button">Sign in</button>
       <button class="chip" id="mShop" type="button">Collection</button><button class="chip" id="mGuide" type="button">Guide</button><button class="chip" id="mSettings" type="button">Settings</button></div>
   </header>
   <div class="mmain">
@@ -452,6 +477,33 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
     <div class="tabs"><button id="tabSkins" class="on" type="button">Blocks</button><button id="tabTrails" type="button">Landing effects</button></div>
     <div class="shop" id="shopGrid"></div>
     <div class="small" id="shopStats"></div>
+  </div>
+</section>
+
+<section id="acctOv" class="overlay" hidden>
+  <div class="panel">
+    <div class="head"><button class="back" id="aBack" type="button">← Menu</button></div>
+    <h2>Your account</h2>
+    <div id="aOff" hidden><p class="small">Cloud saves aren't switched on for this copy of the game yet. Your progress is still saved on this device.</p></div>
+    <div id="aOut" hidden>
+      <p class="small acct-lead">Sign in to keep your notes, blocks, landing effects and stars safe, and pick up on any phone or computer.</p>
+      <p class="small" id="aLoading">Loading sign-in…</p>
+      <form id="aForm" class="acct-form" hidden novalidate>
+        <button class="btn gbtn" id="aGoogle" type="button"><svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>Continue with Google</span></button>
+        <div class="acct-or"><span>or use email</span></div>
+        <div class="segs"><button id="aModeIn" type="button" class="on">Sign in</button><button id="aModeUp" type="button">Create account</button></div>
+        <input id="aEmail" type="email" placeholder="Email" autocomplete="email" autocapitalize="off" spellcheck="false" aria-label="Email">
+        <input id="aPass" type="password" placeholder="Password (6+ characters)" autocomplete="current-password" aria-label="Password">
+        <button class="btn" id="aGo" type="submit">Sign in</button>
+        <button class="linkbtn" id="aForgot" type="button">Forgot password?</button>
+      </form>
+    </div>
+    <div id="aIn" hidden>
+      <div class="acct-card"><span class="acct-dot"></span><div><b id="aWho"></b><small class="small" id="aSync"></small></div></div>
+      <p class="small">Everything you earn saves to your account automatically. Sign in with the same account on another device to carry it over.</p>
+      <div class="row"><button class="btn ghost" id="aSyncNow" type="button">Sync now</button><button class="btn ghost" id="aSignOut" type="button">Sign out</button></div>
+    </div>
+    <p class="small" id="aMsg" role="status"></p>
   </div>
 </section>
 
@@ -598,7 +650,7 @@ if(!old){ SAVE.offset=store.get('offset',0); SAVE.relaxed=store.get('relaxed',fa
 SAVE.daily=Object.assign({},DEF.daily,SAVE.daily||{}); SAVE.stars=SAVE.stars||{};
 if(!SAVE.land) SAVE.land='ring';
 if(!SAVE.trailRefund){ const refund={petal:150,ember:250,stardust:400,rainbow:600}; let n=0; for(const k in refund) if(SAVE.owned.includes(k)){ n+=refund[k]; } SAVE.owned=SAVE.owned.filter(k=>!(k in refund)); SAVE.notes+=n; SAVE.trailRefund=true; } if(!['pad','swipe','both'].includes(SAVE.controls)) SAVE.controls='both';
-const save=()=>store.set('save',SAVE);
+let onSave=null; const save=()=>{ store.set('save',SAVE); if(onSave) onSave(); };
 const RM=()=>RMQ||SAVE.reduce;
 const totalStars=()=>Object.values(SAVE.stars).reduce((a,b)=>a+b,0);
 
@@ -658,7 +710,8 @@ const SKINS=[
  {id:'disco',name:'Disco Ball',anim:'disco',top:'#E6E6F0',front:'#A8A8C0',core:'#FFFFFF',price:1400},
  {id:'blaze',name:'Blaze',anim:'blaze',top:'#4A2A1A',front:'#2A160E',core:'#FFB347',req:{streak:120}},
  {id:'tess',name:'Tesseract',anim:'tess',top:'#1A1A3A',front:'#0E0E24',core:'#7FE0FF',req:{stars:120}},
- {id:'void',name:'Void',fx:'void',top:'#0A0612',front:'#050309',core:'#B084FF',req:{streak:150},pt:'radial-gradient(circle,#3A1E6B,#0A0612 70%)',pf:'#050309',glow:'#B084FF'}];
+ {id:'void',name:'Void',fx:'void',top:'#0A0612',front:'#050309',core:'#B084FF',req:{streak:150},pt:'radial-gradient(circle,#3A1E6B,#0A0612 70%)',pf:'#050309',glow:'#B084FF'},
+ {id:'dread',name:'Dread',fx:'dread',top:'#0B0607',front:'#8A0E14',core:'#FF2A2A',req:{hard:12},pt:'#0B0607',pf:'#8A0E14',glow:'#FF2A2A'}];
 const LANDS=[
  {id:'ring',name:'Pulse Ring',glyph:'◯',col:'#FFF8EE',price:0},
  {id:'petals',name:'Petal Burst',glyph:'✿',col:'#FFB3C7',price:150},
@@ -674,8 +727,9 @@ const LANDS=[
  {id:'quake',name:'Shockquake',glyph:'╳',col:'#FFB347',req:{streak:75}},
  {id:'nova',name:'Supernova',glyph:'✺',col:'#FFFFFF',req:{stars:90}}];
 const skinById=id=>SKINS.find(s=>s.id===id)||SKINS[0], landById=id=>LANDS.find(s=>s.id===id)||LANDS[0];
-const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true);
-const reqText=r=>r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
+const hardCleared=()=>{ let n=0; for(let i=1;i<=12;i++) if((SAVE.stars['H-'+i]||0)>0) n++; return n; };
+const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true);
+const reqText=r=>r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
 function hsl2hex(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
   return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); }
 
@@ -1195,7 +1249,7 @@ function nextRoom(first){
   if(first) setStemTier(0,A.ctx.currentTime,.01);
   if(first) G.bpm=bpm; else G.pendingBpm=bpm;
   G.budget=M.type==='level'?R.par*2+12:M.type==='hard'?Math.ceil(R.par*1.5)+8:0; G.parTotal+=R.par; G.roomBeats=0;
-  G.players.forEach(P=>{ P.pos={...(R.spawns?R.spawns[P.id]:R.start)}; P.prevPos=null; P.done=false; P.dead=false; P.anim={kind:'drop',t0:G.now||0,dur:.45}; P.trailPts=[]; });
+  G.players.forEach(P=>{ P.pos={...(R.spawns?R.spawns[P.id]:R.start)}; P.prevPos=null; P.netAt=null; P.done=false; P.dead=false; P.fallRoom=null; P.anim={kind:'drop',t0:G.now||0,dur:.45}; P.trailPts=[]; });
   G.ripples=[];
   if(R.arena){ spawnBlaster(0); if(R.arena==='duel') spawnBlaster(1); }
 }
@@ -1337,10 +1391,13 @@ function doFall(P){
   if(P.remote) return;
   netLocal({t:'fall',x:P.pos.x,y:P.pos.y});
   if(G.mode.fallEnds){ G.state='dying'; setTimeout(()=>gameOver('fell'),950); }
-  else setTimeout(()=>respawn(P),800);
+  else { P.fallRoom=R; setTimeout(()=>respawn(P),800); }
 }
 function respawn(P){
-  if(G.state!=='playing'||!R) return;
+  if(!R||P.fallRoom!==R||!P.dead) return;
+  if(G.state==='paused'){ setTimeout(()=>respawn(P),250); return; }
+  if(G.state!=='playing') return;
+  P.fallRoom=null;
   const sp=R.spawns?R.spawns[P.id]:R.start, sc=cellAt(sp.x,sp.y); if(sc&&sc.fallen){ sc.fallen=false; sc.fallK=null; sc.regenT=G.now; }
   P.pos={...sp}; P.dead=false; P.done=false; P.anim={kind:'drop',t0:G.now,dur:.45};
   if(G.mode.duel){ const out=duelLoseLife(P); netLocal({t:'resp',lives:P.lives}); if(out) return; } else netLocal({t:'resp'});
@@ -1356,7 +1413,7 @@ function burn(P){
   P.pos={...back}; loseHarmony();
 }
 function swapRoom(){
-  if(G.state!=='playing') return;
+  if(G.state!=='playing'||!G.swapPending) return;
   G.swapPending=false; nextRoom(false); R.rise=G.now;
   const M=G.mode, isBoss=M.type==='boss';
   const title=isBoss?`Phase ${G.roomIdx} of 3`:M.type==='daily'?`Room ${G.roomIdx} of 3`:'Room '+G.roomIdx;
@@ -1399,7 +1456,7 @@ function onLand(P,a){
   if(c.crack&&!c.fallen) noise(A.sfx,sfxT(),.12,.08,'bandpass',2500,3);
   landFx(P,a.to.x,a.to.y,a.j);
   if(P.done){ burst(a.to.x,a.to.y,20,TH.acc,true); sChime(84); }
-  if(G.swapPending&&G.players.every(q=>q.done)) setTimeout(swapRoom,120);
+  if(G.swapPending&&G.players.every(q=>q.done)&&!G.swapQueued){ G.swapQueued=true; setTimeout(()=>{ G.swapQueued=false; swapRoom(); },120); }
   if(G.finishing&&G.players.every(q=>q.done)&&!G.finishQueued){ G.finishQueued=true; setTimeout(finishRun,350); }
 }
 function onBeat(b){
@@ -1822,6 +1879,11 @@ function skinDeco(S,x0,topY,bw,bh,H,now){
       const u=((now*.6)%1.6)-.3, g=cx.createLinearGradient(x0+bw*u-12,y,x0+bw*u+12,y+h); g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(.5,'rgba(255,255,255,.65)'); g.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=g; cx.fillRect(x0,y,bw,h); }); break;
     case 'neon': { cx.globalCompositeOperation='lighter'; [[7,.3],[2.2,1]].forEach(([lw,a])=>{ cx.strokeStyle=rgba('#FF4FD8',a*(.7+.3*beat)); cx.lineWidth=lw; rr(x0,topY,bw,bh+H,4); cx.stroke(); });
       cx.strokeStyle=rgba('#4FF0FF',.9); cx.lineWidth=1.6; cx.beginPath(); cx.moveTo(x0+3,fy); cx.lineTo(x0+bw-3,fy); cx.stroke(); cx.globalCompositeOperation='source-over'; } break;
+    case 'dread': { const pul=.75+.25*beat;
+      cx.fillStyle='#7A0C11'; cx.fillRect(x0,fy,bw,H); cx.fillStyle='rgba(0,0,0,.28)'; cx.fillRect(x0+bw/2,fy,bw/2,H);
+      cx.fillStyle='#0B0607'; rr(x0,topY,bw,bh,3); cx.fill();
+      cx.save(); cx.shadowColor='#FF1E1E'; cx.shadowBlur=(MOB?7:11)*pul; cx.strokeStyle=rgba('#FF2A2A',.85+.15*pul); cx.lineWidth=1.8; rr(x0,topY,bw,bh+H,4); cx.stroke();
+      cx.lineWidth=1.3; cx.beginPath(); cx.moveTo(x0+2,fy); cx.lineTo(x0+bw-2,fy); cx.stroke(); cx.restore(); } break;
     case 'holo': both((y,h)=>{ cx.fillStyle='rgba(255,255,255,.22)'; for(let yy=y+((now*30)%3);yy<y+h;yy+=3) cx.fillRect(x0,yy,bw,1);
       const g=cx.createLinearGradient(x0,y,x0+bw,y+h); g.addColorStop(0,'rgba(255,120,220,.25)'); g.addColorStop(.5,'rgba(120,255,240,.2)'); g.addColorStop(1,'rgba(255,240,120,.25)'); cx.fillStyle=g; cx.fillRect(x0,y,bw,h); }); break;
     case 'gold': both((y,h)=>{ const u=((now*.5)%1.8)-.4, g=cx.createLinearGradient(x0+bw*u-10,y,x0+bw*u+10,y+h); g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(.5,'rgba(255,255,240,.8)'); g.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=g; cx.fillRect(x0,y,bw,h); });
@@ -2232,11 +2294,7 @@ function netData(o){
   if(G.state!=='playing'&&G.state!=='dying'&&o.t!=='over') return;
   const P=G.players[1-NET.me];
   switch(o.t){
-    case 'mv': NET.q.push(o); netFlush(); break;
-    case 'miss': P.greyT=G.now; P.anim={kind:'stumble',t0:G.now,dur:.25}; popAt(P,'miss','#A8A3BF',12); loseHarmony(); break;
-    case 'fall': netFlush(); if(!P.dead){ P.pos={x:o.x,y:o.y}; doFall(P); } break;
-    case 'resp': netRespawn(P,o); break;
-    case 'burn': netFlush(); burn(P); P.pos={x:o.x,y:o.y}; if(P.anim&&P.anim.to) P.anim.to={x:o.x,y:o.y}; break;
+    case 'mv': case 'miss': case 'fall': case 'resp': case 'burn': NET.q.push(o); netFlush(); break;
     case 'leave': if(G.state==='playing'||G.state==='dying'){ G.state='dying'; G.netOver=true; gameOver('left'); } break;
     case 'hm': if(!NET.host){ G.harmony=o.h; hud(); } break;
     case 'bl': { const c=R.cells[o.i]; if(c&&R.arena){ R.cells.forEach(q=>{ if(q.blaster===o.o+1) q.blaster=0; }); c.blaster=o.o+1; c.blastT=G.now; burst(o.i%R.N,(o.i/R.N)|0,12,o.o===1?'#B8F2E6':'#FFD166',true); } break; }
@@ -2246,17 +2304,37 @@ function netData(o){
 /* replay the partner's moves on the beat they were made (queued until that beat exists here) */
 function netFlush(){
   if(!G.mode||!G.mode.net||!R) return;
-  while(NET.q.length){ const o=NET.q[0], b=G.beats[o.k]; if(!b||b.t>G.now+.15) return; NET.q.shift(); netMove(o,b); }
+  // partner events are handled strictly in the order they were sent; a move waits for its beat,
+  // and anything sent after it (a fall, a respawn) waits behind it
+  while(NET.q.length){ const o=NET.q[0];
+    if(o.t==='mv'){ const b=G.beats[o.k]; if(!b||b.t>G.now+.15) return; NET.q.shift(); netMove(o,b); continue; }
+    NET.q.shift(); netEvent(o); }
+}
+function netEvent(o){
+  if(G.state!=='playing'&&G.state!=='dying') return;
+  const P=G.players[1-NET.me];
+  if(o.t==='miss'){ P.greyT=G.now; P.anim={kind:'stumble',t0:G.now,dur:.25}; popAt(P,'miss','#A8A3BF',12); loseHarmony(); }
+  else if(o.t==='fall'){ P.netAt={x:o.x,y:o.y}; if(!P.dead||P.anim.kind!=='fall'&&!(P.anim.fallAfter)){ P.pos={x:o.x,y:o.y}; doFall(P); } }
+  else if(o.t==='resp') netRespawn(P,o);
+  else if(o.t==='burn'){ burn(P); P.pos={x:o.x,y:o.y}; P.netAt={x:o.x,y:o.y}; if(P.anim&&P.anim.to) P.anim.to={x:o.x,y:o.y}; }
 }
 function netMove(o,b){
   if(G.state!=='playing') return;
   const P=G.players[1-NET.me]; b.d[P.id]=true; P.dead=false;
+  // always replay from where the partner says they were, never from a spot our copy guessed
+  if(P.netAt) P.pos={...P.netAt};
+  const own=cellAt(o.x,o.y), ownSolid=own&&own.t!==0&&!own.fallen;
   const px=P.pos.x, py=P.pos.y;
   G.fireTarget=o.tx!=null?{x:o.tx,y:o.ty}:null;
   const res=tryMove(P,o.dir,b,o.j);
   G.fireTarget=null;
-  if(res!=='fall'&&(P.pos.x!==o.x||P.pos.y!==o.y)){ const from={x:px,y:py}, to={x:o.x,y:o.y};
+  if(res==='fall'&&(ownSolid||own&&own.fallen)){
+    // our copy thought they fell, but on their screen they landed: trust them (and mend the tile if it crumbled early here)
+    if(own.fallen){ own.fallen=false; own.fallK=null; own.step=null; own.regenT=G.now; }
+    P.dead=false; P.anim={kind:'path',segs:[{from:{x:px,y:py},to:{x:o.x,y:o.y},m:'hop',t0:G.now,dur:.15}],t0:G.now,end:G.now+.15,j:o.j,from:{x:px,y:py},to:{x:o.x,y:o.y}}; P.pos={x:o.x,y:o.y}; }
+  else if(res!=='fall'&&(P.pos.x!==o.x||P.pos.y!==o.y)){ const from={x:px,y:py}, to={x:o.x,y:o.y};
     P.anim={kind:'path',segs:[{from,to,m:'hop',t0:G.now,dur:.15}],t0:G.now,end:G.now+.15,j:o.j,from,to}; P.pos=to; }
+  P.netAt={x:o.x,y:o.y};
   hitFx(P,px,py,o.j);
   if(res==='hop'){ const pts=Math.round(PTS[o.j]||0)+10; G.score+=pts; }
   if(o.j==='perfect'&&NET.host&&++G.regen>=8){ G.regen=0; if(G.harmony<G.mode.harmony){ G.harmony++; netSend({t:'hm',h:G.harmony}); hud(); } }
@@ -2264,7 +2342,7 @@ function netMove(o,b){
 }
 function netRespawn(P,o){
   const sp=R.spawns?R.spawns[P.id]:R.start, sc=cellAt(sp.x,sp.y); if(sc&&sc.fallen){ sc.fallen=false; sc.fallK=null; sc.regenT=G.now; }
-  P.pos={...sp}; P.dead=false; P.done=false; P.anim={kind:'drop',t0:G.now,dur:.45};
+  P.pos={...sp}; P.netAt={...sp}; P.dead=false; P.done=false; P.anim={kind:'drop',t0:G.now,dur:.45};
   if(G.mode.duel){ P.lives=o.lives; hud(); popAt(P,P.lives?`${P.lives} ${P.lives===1?'life':'lives'} left`:'knocked out!','#FF8A80',14);
     if(P.lives<=0&&G.state==='playing'){ G.winner=NET.me; G.state='dying'; sWin(); setTimeout(()=>gameOver('duel'),900); } return; }
   popAt(P,'respawn','#DCCBE6',12); loseHarmony();
@@ -2281,6 +2359,152 @@ $('nLeave').onclick=()=>{ netLeave(); netStatus(''); };
 $('nJourney').onclick=()=>netStart('coop');
 $('nDuel').onclick=()=>netStart('duel');
 $('nCopy').onclick=()=>{ const t=NET.code; if(!t) return; try{ navigator.clipboard.writeText(t).then(()=>netStatus('Code copied. Send it to your friend.')); }catch(e){} };
+
+/* ---------------- ACCOUNTS: email/password or Google sign-in, cloud saves ----------------
+   Uses Firebase Auth + Firestore (free tier). The project config is read from
+   window.PULSEFORM_FIREBASE, set in a small <script> at the top of index.html.
+   The save lives at users/{uid} as {save:"<json>", t:<ms>}. */
+const ACCT={user:null,ready:false,loading:null,err:'',db:null,auth:null,pushT:null,syncing:false,lastSync:0,mode:'in'};
+const FB_VER='10.14.1';
+const acctCfg=()=>{ const c=window.PULSEFORM_FIREBASE; return c&&c.apiKey&&c.projectId?c:null; };
+function fbLoad(){
+  if(window.firebase&&firebase.auth&&firebase.firestore) return Promise.resolve();
+  if(ACCT.loading) return ACCT.loading;
+  const one=src=>new Promise((ok,bad)=>{ const s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=()=>bad(new Error('load')); document.head.appendChild(s); });
+  const seq=base=>['app','auth','firestore'].reduce((p,m)=>p.then(()=>one(`${base}/firebase-${m}-compat.js`)),Promise.resolve());
+  ACCT.loading=seq(`https://www.gstatic.com/firebasejs/${FB_VER}`).catch(()=>seq(`https://cdn.jsdelivr.net/npm/firebase@${FB_VER}`)).catch(e=>{ ACCT.loading=null; throw e; });
+  return ACCT.loading;
+}
+function acctInit(){
+  const cfg=acctCfg(); if(!cfg) return;
+  fbLoad().then(()=>{
+    if(!firebase.apps.length) firebase.initializeApp(cfg);
+    ACCT.auth=firebase.auth(); ACCT.db=firebase.firestore();
+    ACCT.auth.getRedirectResult().catch(e=>{ ACCT.err=authMsg(e); acctUI(); });
+    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; if(u) acctPull(true); acctUI(); acctChip(); });
+  }).catch(()=>{ ACCT.err='Could not load sign-in. Check your connection.'; acctUI(); });
+}
+
+/* ---- merging a device's save with the account's save ---- */
+const DEVICE_KEYS=['offset','controls','musicVol','sfxVol','haptics','reduce'];
+function mergeSaves(loc,cl,additive){
+  const base=JSON.parse(JSON.stringify(DEF));
+  const newer=(cl._t||0)>=(loc._t||0)?cl:loc;
+  const out=Object.assign(base,loc,newer);
+  for(const k of DEVICE_KEYS) if(k in loc) out[k]=loc[k];
+  out.owned=[...new Set([...(cl.owned||[]),...(loc.owned||[])])];
+  out.stars=Object.assign({},cl.stars||{}); for(const k in (loc.stars||{})) out.stars[k]=Math.max(out.stars[k]||0,loc.stars[k]);
+  for(const k of ['bestEndless','bestCoop','maxStreak','plays','world','lastWorld']) out[k]=Math.max(loc[k]||0,cl[k]||0)||DEF[k];
+  const dl=loc.daily||{}, dc=cl.daily||{}; out.daily=Object.assign({},DEF.daily,newer===cl?dc:dl);
+  if(dl.date&&dl.date===dc.date){ out.daily.best=Math.max(dl.best||0,dc.best||0); out.daily.stars=Math.max(dl.stars||0,dc.stars||0); }
+  out.daily.streak=Math.max(dl.streak||0,dc.streak||0);
+  // guest progress made before signing in on this device is added into the account
+  out.notes=additive?(cl.notes||0)+(loc.notes||0):newer.notes||0;
+  if(!out.owned.includes(out.skin)) out.skin='classic';
+  if(!out.owned.includes(out.land)&&out.land!=='ring') out.land='ring';
+  out.trailRefund=true; out._t=Math.max(loc._t||0,cl._t||0,1);
+  return out;
+}
+function acctDoc(){ return ACCT.db.collection('users').doc(ACCT.user.uid); }
+function acctPull(first){
+  if(!ACCT.user) return; const uid=ACCT.user.uid; ACCT.syncing=true; acctUI();
+  acctDoc().get().then(snap=>{
+    if(!ACCT.user||ACCT.user.uid!==uid) return;
+    let cl=null; if(snap.exists){ try{ cl=JSON.parse(snap.data().save); }catch(e){ cl=null; } }
+    const linked=SAVE.linked===uid;
+    if(cl){ const keepT=SAVE._t; SAVE=mergeSaves(SAVE,cl,!linked); if(!linked) SAVE._t=Date.now(); else SAVE._t=Math.max(keepT||0,SAVE._t); }
+    SAVE.linked=uid; store.set('save',SAVE);
+    ACCT.syncing=false; ACCT.lastSync=Date.now();
+    if(!cl||!linked||(SAVE._t>(cl._t||0))) acctPush(true);
+    acctRefresh(); acctUI();
+  }).catch(e=>{ ACCT.syncing=false; ACCT.err='Could not load your cloud save ('+(e.code||'offline')+'). Your progress is still saved on this device.'; acctUI(); });
+}
+function acctPush(now){
+  if(!ACCT.user||!ACCT.db||SAVE.linked!==ACCT.user.uid) return;
+  clearTimeout(ACCT.pushT);
+  const go=()=>{ const data={save:JSON.stringify(SAVE),t:SAVE._t||Date.now(),name:ACCT.user.displayName||ACCT.user.email||''};
+    acctDoc().set(data).then(()=>{ ACCT.lastSync=Date.now(); ACCT.err=''; acctUI(); }).catch(e=>{ ACCT.err='Cloud save failed ('+(e.code||'offline')+'). It will retry on your next save.'; acctUI(); }); };
+  if(now) go(); else ACCT.pushT=setTimeout(go,1500);
+}
+onSave=()=>{ SAVE._t=Date.now(); acctPush(false); };
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&ACCT.pushT){ acctPush(true); } });
+function acctRefresh(){
+  // redraw whatever menu is open so new notes/skins show straight away
+  if(G.state!=='menu') return;
+  const open=OVS.find(o=>!$(o).hidden);
+  if(open==='menuOv') buildMenu(); else if(open==='shopOv') buildShop(); else if(open==='worldsOv') buildWorlds(); else if(open==='hardOv') buildHard();
+  acctChip();
+}
+
+/* ---- sign in / out ---- */
+function authMsg(e){
+  const c=e&&e.code||'';
+  return ({'auth/invalid-email':'That email address doesn\'t look right.','auth/missing-password':'Type a password.','auth/weak-password':'Use at least 6 characters for your password.',
+    'auth/email-already-in-use':'That email already has an account. Sign in instead.','auth/invalid-credential':'Wrong email or password.','auth/wrong-password':'Wrong email or password.',
+    'auth/user-not-found':'No account with that email. Create one instead.','auth/too-many-requests':'Too many tries. Wait a minute and try again.',
+    'auth/popup-closed-by-user':'','auth/cancelled-popup-request':'','auth/network-request-failed':'Could not reach the sign-in server. Check your connection.',
+    'auth/unauthorized-domain':'Google sign-in isn\'t allowed on this web address yet. Add it under Authorized domains in Firebase.',
+    'auth/operation-not-allowed':'This sign-in method is turned off in Firebase.'}[c]) ?? ('Sign-in problem ('+(c||'unknown')+').');
+}
+function acctBusy(b){ $('acctOv').querySelectorAll('button:not(.back),input').forEach(el=>el.disabled=b); }
+function acctEmail(){
+  const em=$('aEmail').value.trim(), pw=$('aPass').value;
+  if(!em||!pw){ ACCT.err='Type your email and a password.'; acctUI(); return; }
+  ACCT.err=''; acctBusy(true);
+  const p=ACCT.mode==='up'?ACCT.auth.createUserWithEmailAndPassword(em,pw):ACCT.auth.signInWithEmailAndPassword(em,pw);
+  p.then(()=>{ $('aPass').value=''; sChime(84); }).catch(e=>{ ACCT.err=authMsg(e); }).finally(()=>{ acctBusy(false); acctUI(); });
+}
+function acctGoogle(){
+  ACCT.err=''; const prov=new firebase.auth.GoogleAuthProvider(); prov.setCustomParameters({prompt:'select_account'});
+  acctBusy(true);
+  ACCT.auth.signInWithPopup(prov).then(()=>sChime(84)).catch(e=>{
+    if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')) return ACCT.auth.signInWithRedirect(prov);
+    ACCT.err=authMsg(e); }).finally(()=>{ acctBusy(false); acctUI(); });
+}
+function acctForgot(){
+  const em=$('aEmail').value.trim(); if(!em){ ACCT.err='Type your email first, then tap Forgot password.'; acctUI(); return; }
+  ACCT.auth.sendPasswordResetEmail(em).then(()=>{ ACCT.err=''; $('aMsg').textContent='Password reset email sent. Check your inbox.'; $('aMsg').classList.remove('err'); })
+    .catch(e=>{ ACCT.err=authMsg(e); acctUI(); });
+}
+function acctOut(){
+  if(!ACCT.auth) return; acctPush(true);
+  // the progress lives in the account now; this device goes back to a fresh guest save
+  const keep={}; for(const k of DEVICE_KEYS) keep[k]=SAVE[k];
+  ACCT.auth.signOut().then(()=>{ SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep,{trailRefund:true}); store.set('save',SAVE); acctRefresh(); acctUI(); });
+}
+
+/* ---- UI ---- */
+function acctChip(){
+  const b=$('mAcct'); if(!b) return;
+  const u=ACCT.user; b.textContent=u?(u.displayName||u.email||'Account').split(/[ @]/)[0]:'Sign in';
+  b.classList.toggle('on',!!u); b.title=u?'Signed in: progress saves to your account':'Sign in to save your progress';
+}
+function acctUI(){
+  const cfg=acctCfg(), u=ACCT.user;
+  $('aOff').hidden=!!cfg; $('aOut').hidden=!cfg||!!u; $('aIn').hidden=!cfg||!u;
+  $('aLoading').hidden=!cfg||ACCT.ready||!!ACCT.err;
+  $('aForm').hidden=!ACCT.ready;
+  const m=$('aMsg'); m.textContent=ACCT.err; m.classList.toggle('err',!!ACCT.err);
+  $('aModeIn').classList.toggle('on',ACCT.mode==='in'); $('aModeUp').classList.toggle('on',ACCT.mode==='up');
+  $('aGo').textContent=ACCT.mode==='up'?'Create account':'Sign in';
+  $('aPass').autocomplete=ACCT.mode==='up'?'new-password':'current-password';
+  $('aForgot').hidden=ACCT.mode==='up';
+  if(u){
+    $('aWho').textContent=u.displayName?`${u.displayName} · ${u.email||''}`:(u.email||'Signed in');
+    $('aSync').textContent=ACCT.syncing?'Syncing…':ACCT.lastSync?`Saved to your account · ${notesTxt()} · ${SAVE.owned.length} items owned`:'Connecting…';
+  }
+}
+function showAcct(){ if(ACCT.ready) ACCT.err=''; acctUI(); showOv('acctOv'); if(acctCfg()&&!ACCT.ready&&!ACCT.loading) acctInit(); }
+$('mAcct').onclick=showAcct;
+$('aBack').onclick=()=>toMenu();
+$('aModeIn').onclick=()=>{ ACCT.mode='in'; ACCT.err=''; acctUI(); };
+$('aModeUp').onclick=()=>{ ACCT.mode='up'; ACCT.err=''; acctUI(); };
+$('aForm').onsubmit=e=>{ e.preventDefault(); acctEmail(); };
+$('aGoogle').onclick=acctGoogle;
+$('aForgot').onclick=acctForgot;
+$('aSignOut').onclick=acctOut;
+$('aSyncNow').onclick=()=>acctPull(false);
+acctInit(); acctChip();
 
 /* ---------------- HUD ---------------- */
 function hud(){
@@ -2320,7 +2544,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv'];
+const OVS=['menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -2340,7 +2564,7 @@ function nextUp(){
   let best=null; for(let w=1;w<=6;w++) for(let l=1;l<=LEVELS_PER_WORLD;l++){ const s=SAVE.stars[`${w}-${l}`]||0; if(s<3&&(!best||s<best.s)) best={w,l,s}; } return best; }
 function untilMidnight(){ const n=new Date(), m=new Date(n); m.setHours(24,0,0,0); const mins=Math.ceil((m-n)/60000); return `${Math.floor(mins/60)}h ${mins%60}m`; }
 function buildMenu(){
-  $('walletM').textContent=notesTxt(); syncSoundChip();
+  $('walletM').textContent=notesTxt(); syncSoundChip(); acctChip();
   const nu=nextUp(), fresh=totalStars()===0;
   $('mContinue').hidden=!nu;
   if(nu){ $('mContTitle').textContent=fresh?'Start playing':'Continue';
@@ -2613,6 +2837,7 @@ document.querySelectorAll('[data-vol="sfx"]').forEach(i=>i.addEventListener('cha
 /* keyboard: play keys, pause, menu navigation, shortcuts */
 addEventListener('keydown',e=>{
   if(e.repeat) return;
+  if(e.target&&e.target.matches&&e.target.matches('input:not([type=range]):not([type=checkbox])')&&e.code!=='Escape'&&G.state!=='playing') return;
   const d=KEYS1[e.code];
   if(d&&(G.state==='playing'||G.state==='calib')){ e.preventDefault(); const pid=G.mode&&G.mode.net?NET.me:G.mode&&G.mode.coop?KEYP[e.code]:0; input(d,e,pid); return; }
   if(e.code==='Space'&&G.state==='calib'){ e.preventDefault(); calibTap(e); return; }
