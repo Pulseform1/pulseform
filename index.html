@@ -360,6 +360,31 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
 #stBpmOut{font:700 15px var(--display);color:var(--lantern)}
 #stTap.flash{background:rgba(255,209,102,.3)}
 .err:empty{display:none}
+.talk{position:absolute;left:50%;top:64px;transform:translateX(-50%);z-index:5;display:flex;gap:10px;align-items:center;max-width:min(480px,calc(100% - 24px));width:max-content;padding:10px 14px 10px 10px;border-radius:18px;background:rgba(24,20,56,.9);border:1px solid rgba(184,242,230,.45);box-shadow:0 8px 30px rgba(0,0,0,.3);pointer-events:none;animation:talkIn .35s cubic-bezier(.2,.9,.3,1.2) both}
+.talk[hidden]{display:none}
+.talk .tport{flex:none;width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#2E4A6A,#161433);display:grid;place-items:center;overflow:hidden}
+.talk .tport svg{width:38px;height:38px}
+.talk .ttxt{display:flex;flex-direction:column;gap:2px;font-size:13.5px;line-height:1.35;color:var(--ink)}
+.talk .ttxt b{font:700 11px var(--display);letter-spacing:.08em;text-transform:uppercase;color:#B8F2E6}
+@keyframes talkIn{from{opacity:0;transform:translate(-50%,-10px) scale(.95)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+.tutpanel{align-items:center;text-align:center;max-width:460px}
+.tutport{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 50% 38%,#34557A,#161433 72%);display:grid;place-items:center;box-shadow:0 0 40px rgba(127,224,204,.35)}
+.tutport svg{width:100px;height:100px}
+.tutline{font-size:17px;line-height:1.5;min-height:78px;margin:0;color:var(--ink);text-wrap:balance}
+.tutdots{display:flex;gap:6px}.tutdots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2)}.tutdots i.on{background:#B8F2E6}
+.tutpanel .row{width:100%}
+.lore{font-size:13.5px;font-style:italic;color:#B8F2E6;text-align:center;line-height:1.45}.lore:empty{display:none}.lore b{font-style:normal;font:700 11px var(--display);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:3px;color:var(--ink-2)}
+.story p{font-size:13.5px;line-height:1.55;color:var(--ink-2);margin:6px 0 10px}
+.wlore{display:block;font-style:italic;color:#B8F2E6;margin-bottom:6px}
+.cine{position:absolute;left:0;right:0;z-index:6;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 20px 16px;background:linear-gradient(180deg,rgba(6,5,14,0),rgba(6,5,14,.82) 30%,rgba(6,5,14,.82) 70%,rgba(6,5,14,0));pointer-events:none;text-align:center}
+.cine[hidden]{display:none}
+.cine b{font:600 10.5px var(--display);letter-spacing:.18em;text-transform:uppercase;color:#9FC6FF}.cine b:empty{display:none}
+.cine span{font:italic 400 clamp(15px,2.2vw,19px) var(--body);color:#EEF0FA;max-width:680px;line-height:1.45;text-wrap:balance;min-height:1.45em}
+.cine.in{animation:cineIn .6s ease both}.cine.out{animation:cineOut .6s ease both}
+@keyframes cineIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}@keyframes cineOut{to{opacity:0;transform:translateY(6px)}}
+.mode.inter{border-left:4px solid #7FB8FF;background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(28,24,62,.7))}.mode.inter b{color:#CFE0FF}
+.swtarea{height:min(46vh,340px);border-radius:20px;border:1.5px dashed rgba(184,242,230,.5);background:rgba(255,255,255,.04);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;touch-action:none;user-select:none;-webkit-user-select:none}
+.swtarrow{font:700 72px var(--display);color:#B8F2E6;transition:transform .15s,color .15s}.swtarrow.good{color:#FFD166;transform:scale(1.15)}.swtarrow.bad{color:#FF8A80}
 .wsec{font:600 11px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:8px 2px 0}
 .rankchip{display:inline-flex;align-items:center;gap:6px;position:relative}
 .rankchip .gem{width:10px;height:10px;transform:rotate(45deg);border-radius:2px;background:var(--rc,#D08A52);box-shadow:0 0 8px var(--rc,#D08A52)}
@@ -435,6 +460,8 @@ button:disabled{opacity:.55;cursor:default}
     </div>
   </header>
   <div id="hint"></div>
+  <div id="cine" class="cine" hidden><b id="cineWho"></b><span id="cineTxt"></span></div>
+  <div id="talk" class="talk" hidden><span class="tport" id="talkPort"></span><div class="ttxt"><b id="talkWho"></b><span id="talkTxt"></span></div></div>
   <div id="stage" class="stage"></div>
   <div id="pads" class="pads"></div>
 </div>
@@ -488,6 +515,7 @@ button:disabled{opacity:.55;cursor:default}
 <section id="resultOv" class="overlay" hidden>
   <div class="panel">
     <div><div class="eyebrow" id="rEyebrow">Cleared</div><h2 id="rTitle"></h2></div>
+    <div class="lore" id="rLore"></div>
     <div class="bigstars" id="rStars"><span>◆</span><span>◆</span><span>◆</span></div>
     <ul class="crit" id="rCrit"></ul>
     <div class="stats">
@@ -594,11 +622,15 @@ button:disabled{opacity:.55;cursor:default}
   <div class="panel wide">
     <div class="head"><button class="back" id="stBack" type="button">← Menu</button></div>
     <div><div class="eyebrow">Studio</div><h2>Your song, your tempo</h2><p class="small" style="margin:4px 0 0">Pick a song, set the BPM, and the rooms move to your beat.</p></div>
-    <div class="segs" id="stSrc"><button data-s="game" type="button">Game songs</button><button data-s="file" type="button">Your music</button></div>
+    <div class="segs" id="stSrc"><button data-s="game" type="button">Game songs</button><button data-s="file" type="button">Your music</button><button data-s="none" type="button">No music</button></div>
     <div id="stGame"><div class="songgrid" id="stSongs"></div></div>
     <div id="stFile" hidden>
       <label class="filebtn" for="stFileIn"><input type="file" id="stFileIn" accept="audio/*,.mp3,.m4a,.wav,.ogg,.aac,.flac"><span id="stFileName">Choose a song file</span></label>
       <div class="small" id="stFileInfo">MP3, M4A, WAV or OGG from your device. It plays only on your device and is never uploaded.</div>
+    </div>
+    <div id="stNone" hidden>
+      <p class="small" style="margin:0 0 8px">Play your song outside the game (speaker, phone, Spotify). The game stays silent and only runs the beat. Set the BPM, then <b>tap tempo along with your song right before you press Start</b> so the rooms line up with it.</p>
+      <label class="opt" for="stClick"><input id="stClick" type="checkbox"><span>Soft click on every beat<small>A quiet tick to help you lock in. Leave it off for total silence.</small></span></label>
     </div>
     <div class="field"><div class="top"><label for="stBpm">Tempo</label><output id="stBpmOut">100 BPM</output></div>
       <input id="stBpm" type="range" min="60" max="190" step="0.5">
@@ -611,12 +643,31 @@ button:disabled{opacity:.55;cursor:default}
     <div class="small err" id="stMsg"></div>
   </div>
 </section>
+<section id="tutOv" class="overlay" hidden>
+  <div class="panel tutpanel">
+    <div class="tutport" id="tutPort"></div>
+    <div class="eyebrow" id="tutWho">The Fountain</div>
+    <p class="tutline" id="tutLine"></p>
+    <div class="tutdots" id="tutDots"></div>
+    <div class="row"><button class="btn ghost" id="tutSkip" type="button">Skip tutorial</button><button class="btn" id="tutNext" type="button">Next</button></div>
+  </div>
+</section>
+<section id="swtOv" class="overlay" hidden>
+  <div class="panel">
+    <div class="head"><button class="back" id="swtBack" type="button">← Settings</button><span class="small" id="swtCount"></span></div>
+    <div><div class="eyebrow">Swipe training</div><h2>Swipe the way you play</h2></div>
+    <div id="swtArea" class="swtarea"><span class="swtarrow" id="swtArrow">↑</span><span class="small" id="swtMsg"></span></div>
+    <div id="swtDone" hidden><p id="swtResult" style="margin:0 0 12px"></p><div class="row"><button class="btn ghost" id="swtAgain" type="button">Train again</button></div></div>
+  </div>
+</section>
 <section id="settingsOv" class="overlay" hidden>
   <div class="panel">
     <div class="head"><button class="back" id="setBack" type="button">← Menu</button></div>
     <h2>Settings</h2>
     <div class="field" id="ctrlField"><div class="top"><span>Controls</span></div><div class="segs" id="ctrlTabs"><button data-c="pad" type="button">Buttons</button><button data-c="swipe" type="button">Swipe</button><button data-c="both" type="button">Both</button></div>
       <small class="small">Swipe anywhere on the board. Your move is timed from when your finger touches down.</small></div>
+    <div class="field"><div class="top"><span>Swipe feel</span></div><small class="small">Swipes are tuned for how a thumb really arcs, and they keep learning from how you play. Train them for the best fit.</small>
+      <div class="row"><button class="btn ghost" id="swTrain" type="button">Train your swipes</button><button class="btn ghost" id="swReset" type="button">Reset swipe learning</button></div></div>
     <div class="field"><div class="top"><label for="sMusic">Music volume</label><output data-volout="music"></output></div><input id="sMusic" data-vol="music" type="range" min="0" max="100"></div>
     <div class="field"><div class="top"><label for="sSfx">Effects volume</label><output data-volout="sfx"></output></div><input id="sSfx" data-vol="sfx" type="range" min="0" max="100"></div>
     <label class="opt" for="haptics"><input id="haptics" type="checkbox"><span>Vibration<small>A light buzz on hits and misses, on phones that support it.</small></span></label>
@@ -648,6 +699,7 @@ button:disabled{opacity:.55;cursor:default}
   <div class="panel">
     <div class="head"><button class="back" id="gBack" type="button">← Menu</button></div>
     <h2>Tile guide</h2>
+    <div class="story"><div class="lbl">The story so far</div><p id="gStory"></p><button class="btn ghost" id="gTut" type="button">Replay the Fountain's tutorial</button></div>
     <ul class="guide">
       <li><span class="sw door"></span><span><b>Door.</b> Reach it to clear the room.</span></li>
       <li><span class="sw rail"></span><span><b>Rail.</b> A glowing lip on an edge. Bumping it is safe.</span></li>
@@ -1225,7 +1277,7 @@ WORLD_SONGS.push({s:'surf',n:'Tidal Hop'},{s:'reggae',n:'Bog Skank'},{s:'synthwa
 /* ---- cosmetics: rank rewards and signature landing effects ---- */
 SKINS.push(
  {id:'diamond',name:'Diamond',fx:'crystal',top:'#F2FEFF',front:'#7FD8F0',core:'#FFFFFF',rim:true,req:{rank:12},pt:'linear-gradient(135deg,#FFFFFF,#BFF3FF 50%,#E8E0FF)',pf:'linear-gradient(120deg,#7FD8F0,#B8ECFF 55%,#6AC0E0 56%)'},
- {id:'maestro',name:'Maestro',rainbow:true,top:'#FFFFFF',front:'#FFD166',core:'#FFFFFF',rim:true,req:{rank:21}});
+ {id:'maestro',name:'Maestro',anim:'maestro',top:'#FFF6DA',front:'#15102A',core:'#FFD166',req:{rank:21}});
 /* every fancy block gets a matching landing effect; owning the block unlocks it */
 const SIG={
  lantern:{n:'Lantern Glow',g:'✹',c:['#FFD166','#FFE7A3','#FF9F3C'],sh:'flame',ring:'#FFD166'},
@@ -1468,11 +1520,13 @@ function modeFor(type,a,b){
   if(type==='duel') return {type,coop:true,duel:true,rooms:0,mustMove:false,fallEnds:false,harmony:0,lives:3,mods:{}};
   if(type==='daily'){ const d=dailyInfo(); return {type,rooms:3,mustMove:true,fallEnds:true,harmony:d.mod==='onelife'?1:5,mods:d.mod?{[d.mod]:true}:{},seed:d.key,diff:d.diff,themeIdx:d.themeIdx,mod:d.mod}; }
   if(type==='coop') return {type,coop:true,rooms:0,mustMove:false,fallEnds:false,harmony:6,mods:{}};
+  if(type==='interlude') return {type,rooms:INTER.rooms,mustMove:false,fallEnds:true,harmony:3,mods:{}};
   if(type==='ascent') return {type,rooms:0,mustMove:false,fallEnds:false,harmony:4,mods:{},world:1};
   if(type==='studio'){ const o=a||{}; return {type,rooms:0,mustMove:o.diff!=='chill',fallEnds:false,harmony:o.diff==='intense'?3:o.diff==='chill'?6:5,mods:{},...o}; }
   return {type:'endless',rooms:0,mustMove:true,fallEnds:true,harmony:5,mods:{}};
 }
 function startRun(M){
+  if(needsTutorial(M)){ ensureAudio(); showTutorialIntro(M); return; }
   ensureAudio(); A.ctx.resume();
   hideAll();
   G=visualDefaults({state:'playing',mode:M,roomIdx:0,bpm:90,spb:.66,pendingBpm:0,restUntil:3,startT:0,checkIdx:0,idleIdx:0,
@@ -1488,10 +1542,10 @@ function startRun(M){
   if(M.net){ const me=G.players[NET.me], op=G.players[1-NET.me]; me.skin=skinById(SAVE.skin); me.land=landById(SAVE.land); op.remote=true; if(NET.peerSkin) op.skin=skinById(NET.peerSkin); if(NET.peerLand) op.land=landById(NET.peerLand); }
   nextRoom(true);
   syncClock(); G.startT=M.atPerf!=null?Math.max(c.currentTime+.05,M.atPerf/1000+(CLK.off||0)):c.currentTime+(MOB?.5:.35); R.rise=G.now;
-  stopStudioAudio(); if(M.type==='studio'&&M.file) studioBegin(M);
+  stopStudioAudio(); if(M.type==='studio'&&M.file) studioBegin(M); if(M.type==='studio'&&M.silent) studioSilentBegin(M);
   clearInterval(A.pumpT); A.pumpT=setInterval(()=>{ if(G.state==='playing') pump(); },40);
-  const title=M.type==='level'?`${M.world}-${M.level} ${LEVEL_NAMES[M.world-1][M.level-1]}`:M.type==='boss'?BOSS[M.world-1]:M.type==='daily'?'Daily Challenge':M.type==='hard'?`Hard ${M.idx} · ${HARD_NAMES[M.idx-1]}`:M.type==='duel'?'Duel':M.type==='coop'?'Co-op':M.type==='ascent'?'Ascent · floor 1':M.type==='studio'?M.songName:'Endless';
-  G.banner={text:title,sub:M.type==='level'?`♪ ${trackName()} · ${M.level===1?'the song begins':'+ '+INST[M.level]} · part ${M.level}/9`:M.type==='boss'?`♪ ${trackName()} · the full symphony`:`♪ ${trackName()} · ${TRACK.style.mood}`,t0:G.now,dur:2.6,col:'#FFF8EE'};
+  const title=M.type==='level'?`${M.world}-${M.level} ${LEVEL_NAMES[M.world-1][M.level-1]}`:M.type==='boss'?BOSS[M.world-1]:M.type==='daily'?'Daily Challenge':M.type==='hard'?`Hard ${M.idx} · ${HARD_NAMES[M.idx-1]}`:M.type==='duel'?'Duel':M.type==='coop'?'Co-op':M.type==='ascent'?'Ascent · floor 1':M.type==='studio'?M.songName:M.type==='interlude'?'Interlude · The Silence':'Endless';
+  G.banner={text:title,sub:M.type==='interlude'?'keep moving':M.type==='level'?`♪ ${trackName()} · ${M.level===1?'the song begins':'+ '+INST[M.level]} · part ${M.level}/9`:M.type==='boss'?`♪ ${trackName()} · the full symphony`:`♪ ${trackName()} · ${TRACK.style.mood}`,t0:G.now,dur:2.6,col:'#FFF8EE'};
   $('score').textContent='0'; setPads(); hud();
   const key=M.type==='level'?M.world+'-'+M.level:'';
   let h=LEVEL_HINTS[key]||'';
@@ -1502,11 +1556,12 @@ function startRun(M){
   if(!h&&M.type==='duel') h='Step on your blaster pad to shell your rival\'s tile. Knock them off 3 times to win.';
   if(!h&&M.type==='daily') h=M.mod?MODS[M.mod]:'No modifier today. Three rooms, one run.';
   if(!h&&M.type==='coop') h='P1 uses WASD, P2 uses the arrows. Both blocks must reach the door.';
-  if(!h&&M.type==='studio') h=`Studio · ${Math.round(M.bpm*10)/10} BPM · ${M.diff==='chill'?'Chill: skip beats whenever you like.':M.diff==='groove'?'Groove: a move every beat.':'Intense: a move every beat, 3 Harmony.'}`+(M.file?' The run ends when your song does.':'');
+  if(M.type==='interlude') h='';
+  if(!h&&M.type==='studio') h=`Studio · ${Math.round(M.bpm*10)/10} BPM · ${M.diff==='chill'?'Chill: skip beats whenever you like.':M.diff==='groove'?'Groove: a move every beat.':'Intense: a move every beat, 3 Harmony.'}`+(M.file?' The run ends when your song does.':M.silent?(M.synced?' Silent mode: lined up with your taps.':' Silent mode: tap tempo along with your song right before Start to line up the beat.'):'');
   if(!h&&M.type==='ascent') h='Ascent: climb floor by floor. After each floor you pick a power card. Every 5th floor a guardian waits.';
   if(!h&&M.type==='endless') h=SAVE.relaxed?'Relaxed: skip a beat to hold still.':'Every beat needs a move. Bump a rail to stay put.';
   if(M.type==='level'||M.type==='boss'){ WORLD_MECH[M.world-1].forEach(k=>G.seen.add(k)); SAVE.lastWorld=M.world; }
-  hint(h,7000);
+  hint(M.tut?'':h,7000); hideTalk(); tutStart(M); bossTalk(M);
   SAVE.plays++; save();
 }
 function nextRoom(first){
@@ -1517,6 +1572,7 @@ function nextRoom(first){
   else if(M.type==='boss'){ rng=mulberry(hashStr(`Arena${M.world}`)); th=THEMES[M.world-1]; sid=WORLD_SONGS[M.world-1].s; tseed=`W${M.world}`; bpm=(th.bpm+24)*Math.max(1,STYLES[sid].bpm); instr=10; }
   else if(M.type==='hard'){ rng=mulberry(hashStr(`H${M.idx}#${i}`)); cfg=cfgHard(M.idx); cfg.glass=!!M.mods.glass; th=THEMES[(M.idx+5)%WORLDS]; sid=M.idx%3===0?'boss'+Math.min(6,2+Math.ceil(M.idx/3)):STYLE_IDS[hashStr('hs'+M.idx)%STYLE_IDS.length]; tseed=`H${M.idx}`; bpm=(120+M.idx*3.5)*(sid.startsWith('boss')?1:Math.max(1,STYLES[sid].bpm))*(M.mods.allegro?1.15:1); instr=Math.min(10,2+M.idx); }
   else if(M.type==='duel'){ rng=M.net?mulberry(hashStr('duel'+M.seed)):Math.random; if(G.duelTheme==null) G.duelTheme=M.net?hashStr(M.seed)%6:ri(6); th=THEMES[G.duelTheme]; sid=['fierce','bounce','arcade'][G.duelTheme%3]; tseed='duel'+G.duelTheme; bpm=100*STYLES[sid].bpm; instr=1; }
+  else if(M.type==='interlude'){ rng=mulberry(hashStr('silence#'+i)); const a=interRoom(M,i); cfg=a.cfg; th=a.th; sid=a.sid; tseed=a.tseed; bpm=a.bpm; instr=a.instr; }
   else if(M.type==='ascent'){ const a=ascentRoom(M,i); cfg=a.cfg; th=a.th; sid=a.sid; tseed=a.tseed; bpm=a.bpm; instr=a.instr; G.guardian=a.guard; }
   else if(M.type==='daily'){ rng=mulberry(hashStr(M.seed+'#'+i)); cfg=cfgEndless(M.diff+i-1); cfg.glass=!!M.mods.glass; th=THEMES[M.themeIdx]; sid=STYLE_IDS[hashStr(M.seed)%STYLE_IDS.length]; tseed='D'+M.seed; bpm=(86+M.diff*4+(i-1)*4)*STYLES[sid].bpm*(M.mods.allegro?1.15:1); instr=1; }
   else if(M.type==='studio'){ const n=M.diff==='chill'?Math.min(2+Math.floor((i-1)/2),6):M.diff==='groove'?Math.min(2+i,10):Math.min(4+i,14);
@@ -1529,7 +1585,7 @@ function nextRoom(first){
   R=M.type==='boss'?genArena(M.world):M.type==='duel'?genDuel():M.type==='ascent'&&G.guardian?ascentArena(M.world,i):genRoom(cfg); rng=Math.random;
   setTheme(th); G.instr=instr; G.roomBpm=bpm;
   if(!TRACK||TRACK.seedKey!==tseed){ setTrack(sid,tseed); TRACK.seedKey=tseed; G.newTrack=!first; }
-  TRACK.title=(M.type==='level'||M.type==='boss'||M.type==='ascent')?WORLD_SONGS[M.world-1].n:M.type==='studio'?M.songName:'';
+  TRACK.title=(M.type==='level'||M.type==='boss'||M.type==='ascent')?WORLD_SONGS[M.world-1].n:M.type==='studio'?M.songName:M.type==='interlude'?'The Silence':'';
   G.stemFloor=M.type==='level'?STEM_FLOOR[M.level-1]:M.type==='boss'||(M.type==='ascent'&&G.guardian)?5:0;
   if(first) setStemTier(0,A.ctx.currentTime,.01);
   if(first) G.bpm=bpm; else G.pendingBpm=bpm;
@@ -1537,6 +1593,7 @@ function nextRoom(first){
   G.players.forEach(P=>{ P.pos={...(R.spawns?R.spawns[P.id]:R.start)}; P.prevPos=null; P.netAt=null; P.done=false; P.dead=false; P.fallRoom=null; P.anim={kind:'drop',t0:G.now||0,dur:.45}; P.trailPts=[]; });
   G.ripples=[];
   if(R.arena){ spawnBlaster(0); if(R.arena==='duel') spawnBlaster(1); }
+  G.dark=null; interRoomStart();
 }
 /* Touch screens report swipes a little late and fingers are less precise than keys:
    phones get 35% wider windows and a small built-in lag correction. */
@@ -1551,7 +1608,8 @@ function pump(){
     if(k%4===0&&G.pendingBpm&&(!G.pendingK||k>=G.pendingK)){G.bpm=G.pendingBpm;G.pendingBpm=0;G.pendingK=0}
     if(G.mode.duel&&k>=48&&k%16===0&&G.bpm<168){ G.bpm=Math.min(168,G.bpm+6); G.surgeK=k; }
     const spb=60/G.bpm, b={k,t,spb,d:[false,false]}; G.beats.push(b);
-    if(!G.mode.file) for(let s=0;s<4;s++) scheduleStep(k*4+s,t+s*spb/4,spb);
+    if(!G.mode.file&&!G.mode.silent) for(let s=0;s<4;s++) scheduleStep(k*4+s,t+s*spb/4,spb);
+    else if(G.mode.click) { tone(A.sfx,t,'square',k%4?1500:2000,.035,.001,.03,{lp:5000}); tone(A.sfx,t,'sine',k%4?750:1000,.08,.001,.05); }
   }
 }
 function nextDownbeatTime(now){
@@ -1579,6 +1637,7 @@ function input(dir,ev,pid){
   b.d[pid]=true;
   const W=win(b.spb), d=t-b.t-TOUCH_LAG, ad=Math.abs(d);
   const j=ad<=W.p?'perfect':ad<=W.g?'good':ad<=W.l?(d<0?'early':'late'):'miss';
+  tutMove(j);
   if(ad<=.15){ G.stats.hist[clamp(Math.floor((d+.15)/.03),0,9)]++; G.stats.sum+=d; G.stats.cnt++; }
   if(j==='miss'){ flash(pid,dir,'miss'); miss(P,b,'off'); return 'miss'; }
   flash(pid,dir,j==='perfect'?'perfect':j==='good'?'good':'drift');
@@ -1607,12 +1666,12 @@ function input(dir,ev,pid){
 }
 const inB=(x,y)=>x>=0&&y>=0&&x<R.N&&y<R.N;
 const cellAt=(x,y)=>inB(x,y)?R.cells[y*R.N+x]:null;
-const isVoidC=(c,k)=>!c||c.t===0||c.fallen||(c.blink>=0&&!blinkOn(c,k));
+const isVoidC=(c,k)=>!c||c.t===0||c.fallen||c.dark||(c.blink>=0&&!blinkOn(c,k));
 const blocks=(c,k)=>c.t>=2||(c.gate&&!c.open)||(c.gate2&&!c.open2)||(c.rgate&&k%2!==0);
 function tryMove(P,dir,b,j){
   const x0=P.pos.x,y0=P.pos.y, cur=cellAt(x0,y0), spb=b.spb;
   P.face=dir;
-  const bumpIt=why=>{ P.anim={kind:'bump',dir,t0:G.now,dur:Math.max(.12,.3*spb)}; sThud(); if(why) G.pops.push({text:why,col:'#DCCBE6',size:11,x:x0,y:y0,t0:G.now,dy:-.4}); return 'bump'; };
+  const bumpIt=why=>{ P.anim={kind:'bump',dir,t0:G.now,dur:Math.max(.12,.3*spb)}; sThud(); if(!P.remote) tutBump(); if(why) G.pops.push({text:why,col:'#DCCBE6',size:11,x:x0,y:y0,t0:G.now,dy:-.4}); return 'bump'; };
   if(cur.lock&&cur.lock!==dir) return bumpIt('locked');
   if(cur.rot>=0&&rotDir(cur,b.k)!==dir) return bumpIt('arrow turning');
   const nx=x0+DIRS[dir][0], ny=y0+DIRS[dir][1], nc=cellAt(nx,ny);
@@ -1689,6 +1748,7 @@ function checkTier(){
 function doFall(P){
   P.anim={kind:'fall',t0:G.now,at:{...P.pos}}; sFall(); P.dead=true;
   if(P.remote) return;
+  tutFall();
   netLocal({t:'fall',x:P.pos.x,y:P.pos.y});
   if(G.mode.fallEnds){ G.state='dying'; setTimeout(()=>gameOver('fell'),950); }
   else { P.fallRoom=R; setTimeout(()=>respawn(P),800); }
@@ -1777,7 +1837,7 @@ function onBeat(b){
   R.cells.forEach(c=>{ if(c.fallen&&c.fallK!=null&&b.k>=c.fallK+REGEN_BEATS){ c.fallen=false; c.fallK=null; c.step=null; c.regenT=G.now; } });
   R.cells.forEach((c,i)=>{ if(c.crack&&!c.fallen&&c.step!=null&&b.k>=c.step+2){ c.fallen=true; c.fallT=G.now; c.fallK=b.k; sCrumble();
     G.players.forEach(P=>{ if(G.state==='playing'&&!P.remote&&!P.dead&&!P.done&&P.pos.y*N+P.pos.x===i) doFall(P); }); }});
-  newTilesBeat(b,rest);
+  newTilesBeat(b,rest); if(G.mode.type==='interlude') interBeat(b,rest);
   if(G.echo&&b.k>G.echo.until) G.echo=null;
   if(b.k%2===0) G.fireAt=b.t+b.spb/2;
   arenaBeat(b,rest); duelBeat(b,rest);
@@ -1853,10 +1913,10 @@ function render(now){
     players.forEach((P,i)=>{ const bd=BD[i]; if(!bd.falling&&clamp(Math.ceil(bd.y-.001),0,N-1)===y) drawBlock(P,bd,L,now); });
     if(R.boss&&y===R.boss.y+2) drawBoss(L,now);
   }
-  drawLaserFx(L,now); drawBlooms(now,L); drawRipples(now,L); drawShocks(now,L); drawRays(now,L);
+  drawDark(L,now); drawLaserFx(L,now); drawBlooms(now,L); drawRipples(now,L); drawShocks(now,L); drawRays(now,L);
   drawLandFx(L,now);
   players.forEach((P,i)=>{ if(BD[i].falling) drawBlock(P,BD[i],L,now); });
-  drawParts(now,L);
+  drawParts(now,L); drawSpirits(L,now);
   if(R.arena) drawArenaFx(L,now);
   players.forEach((P,i)=>drawRing(P,now,L,BD[i],bi));
   drawPops(now,L);
@@ -1897,6 +1957,7 @@ function drawCell(x,y,now,L,pulse,vis){
   const N=R.N, c=R.cells[y*N+x]; if(c.t===0||c.t===3) return;
   if(c.blink>=0&&!c.fallen){ const k=G.bi&&G.bi.last?G.bi.last.k:0; if(!blinkOn(c,k)){ drawBlinkOff(x,y,now,L); return; } if(k%4===3&&G.state==='playing') vis*=.45+.55*Math.abs(Math.sin(now*26)); }
   if(c.ghost){ vis*=ghostVis(x,y,now); if(vis<=.02) return; }
+  if(c.dark){ const t=now-(c.darkT||0); if(t>.55) return; vis*=1-t/.55; }
   let lift=0, alpha=1;
   const ru=(now-R.rise-(x+y)*.035)/.45; if(ru<1){ const e=ru<0?0:1-Math.pow(1-ru,3); lift=-(1-e)*L.th*2.5; alpha=clamp(ru*1.4,0,1); }
   if(c.fallen){ const t=now-c.fallT; lift=-(t*t*900); alpha=Math.max(0,1-t/.7); if(alpha<=0) return; }
@@ -2262,12 +2323,18 @@ function animMods(S,now){
     case 'heart': return {sq:0,scale:1+.14*beat*beat};
     case 'speaker': return {sq:-.05*beat,scale:1};
     case 'blaze': return {sq:Math.sin(now*14)*.015,scale:1};
+    case 'maestro': return {sq:-.03*beat,scale:1+.04*beat};
     default: return null;
   }
 }
 function heartPath(x,y,s){ cx.beginPath(); cx.moveTo(x,y+s*.35); cx.bezierCurveTo(x-s*1.1,y-s*.35,x-s*.45,y-s*.95,x,y-s*.35); cx.bezierCurveTo(x+s*.45,y-s*.95,x+s*1.1,y-s*.35,x,y+s*.35); cx.closePath(); }
 function skinPre(S,x0,topY,bw,bh,H,now,P){
   const fy=topY+bh;
+  if(S.anim==='maestro'){ const cxp=x0+bw/2, cyp=topY+(bh+H)*.45, beat=clamp(1-(now-G.lastBeatT)/.35,0,1);
+    cx.save(); cx.globalCompositeOperation='lighter';
+    const g=cx.createRadialGradient(cxp,cyp,0,cxp,cyp,bw*(1.25+.2*beat)); g.addColorStop(0,rgba('#FFE7A0',.5+.2*beat)); g.addColorStop(1,'rgba(255,209,102,0)'); cx.fillStyle=g; cx.beginPath(); cx.arc(cxp,cyp,bw*(1.25+.2*beat),0,Math.PI*2); cx.fill();
+    for(let i=0;i<10;i++){ const a=now*.35+i*Math.PI/5, L1=bw*(1.05+.25*beat+(i%2?0:.25)); cx.strokeStyle=rgba('#FFD166',i%2?.18:.3); cx.lineWidth=bw*.06; cx.beginPath(); cx.moveTo(cxp+Math.cos(a)*bw*.45,cyp+Math.sin(a)*bw*.35); cx.lineTo(cxp+Math.cos(a)*L1,cyp+Math.sin(a)*L1*.75); cx.stroke(); }
+    cx.restore(); }
   if(S.anim==='critter'){ const sw=Math.sin(now*4)*.5; cx.strokeStyle=S.front; cx.lineWidth=Math.max(3,bw*.12); cx.lineCap='round'; cx.beginPath(); cx.moveTo(x0+bw*.9,fy+H*.6); cx.quadraticCurveTo(x0+bw*1.35,fy+H*.3,x0+bw*(1.2+.15*sw),fy-bh*.4); cx.stroke(); }
   if(S.anim==='disco'){ cx.globalCompositeOperation='lighter'; for(let i=0;i<4;i++){ const a=now*1.4+i*Math.PI/2, cxp=x0+bw/2, cyp=topY+bh*.5; const g=cx.createLinearGradient(cxp,cyp,cxp+Math.cos(a)*bw*2.2,cyp+Math.sin(a)*bw*1.2);
     g.addColorStop(0,rgba(['#FF7EB6','#7FE0FF','#FFD166','#B8F2E6'][i],.35)); g.addColorStop(1,'rgba(0,0,0,0)'); cx.fillStyle=g; cx.beginPath(); cx.moveTo(cxp,cyp); cx.lineTo(cxp+Math.cos(a-.15)*bw*2.2,cyp+Math.sin(a-.15)*bw*1.2); cx.lineTo(cxp+Math.cos(a+.15)*bw*2.2,cyp+Math.sin(a+.15)*bw*1.2); cx.closePath(); cx.fill(); } cx.globalCompositeOperation='source-over'; }
@@ -2314,6 +2381,28 @@ function skinPost(S,x0,topY,bw,bh,H,now,P){
         const g=cx.createLinearGradient(0,topY+bh*.4-h,0,topY+bh*.4); g.addColorStop(0,'rgba(255,80,20,0)'); g.addColorStop(.5,'rgba(255,140,40,.8)'); g.addColorStop(1,'rgba(255,230,140,.95)'); cx.fillStyle=g;
         cx.beginPath(); cx.moveTo(fx2-bw*.14,topY+bh*.4); cx.quadraticCurveTo(fx2-bw*.12,topY+bh*.4-h*.6,fx2+Math.sin(now*9+i)*bw*.05,topY+bh*.4-h); cx.quadraticCurveTo(fx2+bw*.12,topY+bh*.4-h*.6,fx2+bw*.14,topY+bh*.4); cx.closePath(); cx.fill(); }
       cx.strokeStyle='rgba(255,140,40,.7)'; cx.lineWidth=1.5; cx.beginPath(); cx.moveTo(x0+bw*.2,fy+H*.3); cx.lineTo(x0+bw*.45,fy+H*.6); cx.lineTo(x0+bw*.8,fy+H*.45); cx.stroke(); cx.globalCompositeOperation='source-over'; } break;
+    case 'maestro': { const cxp=x0+bw/2, gold='#FFD166';
+      // tuxedo front: ivory shirt, gold lapels, bow tie and buttons
+      cx.fillStyle='#FFF6DA'; cx.beginPath(); cx.moveTo(cxp-bw*.2,fy); cx.lineTo(cxp+bw*.2,fy); cx.lineTo(cxp,fy+H*.95); cx.closePath(); cx.fill();
+      cx.strokeStyle=gold; cx.lineWidth=Math.max(1.2,bw*.045); cx.beginPath(); cx.moveTo(cxp-bw*.3,fy); cx.lineTo(cxp,fy+H*.95); cx.lineTo(cxp+bw*.3,fy); cx.stroke();
+      const by=fy+H*.16, bs=bw*.12; cx.fillStyle=gold; cx.beginPath(); cx.moveTo(cxp,by); cx.lineTo(cxp-bs*1.3,by-bs*.7); cx.lineTo(cxp-bs*1.3,by+bs*.7); cx.closePath(); cx.moveTo(cxp,by); cx.lineTo(cxp+bs*1.3,by-bs*.7); cx.lineTo(cxp+bs*1.3,by+bs*.7); cx.closePath(); cx.fill();
+      cx.fillStyle='#FFF3C4'; cx.beginPath(); cx.arc(cxp,by,bs*.35,0,Math.PI*2); cx.fill();
+      cx.fillStyle=gold; [.45,.7].forEach(v=>{ cx.beginPath(); cx.arc(cxp,fy+H*v,Math.max(1,bw*.025),0,Math.PI*2); cx.fill(); });
+      // engraved gold staff and note on the top face
+      cx.strokeStyle=rgba('#C9962E',.55); cx.lineWidth=.8; for(let i=0;i<3;i++){ const yy=topY+bh*(.3+i*.2); cx.beginPath(); cx.moveTo(x0+bw*.15,yy); cx.lineTo(x0+bw*.85,yy); cx.stroke(); }
+      cx.fillStyle='#C9962E'; cx.font=`700 ${Math.round(bh*.8)}px system-ui,sans-serif`; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('♫',cxp,topY+bh*.55); cx.textBaseline='alphabetic';
+      // gold trim with a travelling shine
+      cx.strokeStyle=gold; cx.lineWidth=1.8; rr(x0,topY,bw,bh+H,3); cx.stroke();
+      clip(x0,topY,bw,bh+H); const u=((now*.45)%1.6)-.3, sg=cx.createLinearGradient(x0+bw*u-12,topY,x0+bw*u+12,topY+bh+H); sg.addColorStop(0,'rgba(255,255,255,0)'); sg.addColorStop(.5,'rgba(255,245,210,.45)'); sg.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=sg; cx.fillRect(x0,topY,bw,bh+H); cx.restore();
+      // floating crown that bounces on the beat
+      const cy0=topY-bh*.55-Math.sin(now*2.2)*2-beat*4, cw=bw*.52, ch=bh*.55;
+      cx.fillStyle=gold; cx.strokeStyle='#A8761C'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(cxp-cw/2,cy0+ch*.4); cx.lineTo(cxp-cw/2,cy0-ch*.35); cx.lineTo(cxp-cw/4,cy0); cx.lineTo(cxp,cy0-ch*.6); cx.lineTo(cxp+cw/4,cy0); cx.lineTo(cxp+cw/2,cy0-ch*.35); cx.lineTo(cxp+cw/2,cy0+ch*.4); cx.closePath(); cx.fill(); cx.stroke();
+      [['#FF6B8A',-cw/4],['#7FE0FF',0],['#B8F2E6',cw/4]].forEach(([c,dx])=>{ cx.fillStyle=c; cx.beginPath(); cx.arc(cxp+dx,cy0+ch*.12,Math.max(1.2,bw*.04),0,Math.PI*2); cx.fill(); });
+      // two notes orbiting the conductor
+      cx.save(); cx.globalCompositeOperation='lighter'; cx.fillStyle=gold; cx.font=`700 ${Math.round(bw*.3)}px system-ui,sans-serif`; cx.textAlign='center';
+      for(let i=0;i<2;i++){ const a=now*1.6+i*Math.PI, ox=Math.cos(a)*bw*.85, oy=Math.sin(a)*bh*.6; if(Math.sin(a)<0) cx.globalAlpha*=.8; cx.fillText(i?'♪':'♫',cxp+ox,topY+(bh+H)*.4+oy); }
+      if(Math.sin(now*3.1)>.85){ cx.fillStyle='#FFFFFF'; const sx=x0+bw*.82, sy=topY+bh*.2; cx.fillRect(sx-4,sy-.8,8,1.6); cx.fillRect(sx-.8,sy-4,1.6,8); }
+      cx.restore(); } break;
     case 'tess': { const cxp=x0+bw/2, cyp=topY+(bh+H)*.55, s=Math.min(bw,bh+H)*.28, ay=now*1.1, ax=now*.7;
       const V=[]; for(let i=0;i<8;i++){ let X=(i&1?1:-1), Y=(i&2?1:-1), Z=(i&4?1:-1); let x1=X*Math.cos(ay)-Z*Math.sin(ay), z1=X*Math.sin(ay)+Z*Math.cos(ay); let y1=Y*Math.cos(ax)-z1*Math.sin(ax); V.push([cxp+x1*s,cyp+y1*s*.8]); }
       cx.globalCompositeOperation='lighter'; cx.strokeStyle='rgba(127,224,255,.9)'; cx.lineWidth=1.4; cx.beginPath();
@@ -2354,32 +2443,32 @@ function genArena(w){
     const carve=(n,t,avoid)=>{ let done=0; for(let tr=0;tr<700&&done<n;tr++){ const x=rri(N), y=rri(N), c=cells[id(x,y)];
       if(c.t!==1||Math.abs(x-start.x)+Math.abs(y-start.y)<2||(avoid&&avoid(x,y))) continue; c.t=t; if(!conn()){ c.t=1; continue; } done++; } };
     // from The Impossible Sky on, arenas get fewer holes and more rails so they stay walkable
-    const wv=Math.min(w,8), holeW=w===6?2:w>6?4:wv;
+    const fin=w===WORLDS, wv=Math.min(w,8), holeW=w===6||fin?1:w>6?4:wv;   // the final arena is the most open of all
     carve(Math.round(N*N*(.15+holeW*.015)),0,(x,y)=>y===3&&x>=3&&x<=5&&rng()<.7);
-    carve(3+Math.min(wv,5),2);
+    carve(fin?4:w===6?3:3+Math.min(wv,5),2);   // pillars (walls)
     const pickFree=(ok)=>{ const f=[]; cells.forEach((c,i)=>{ const x=i%N,y=(i/N)|0; if(c.t===1&&!isSpecial(c)&&!(x===start.x&&y===start.y)&&(!ok||ok(x,y))) f.push(i); }); return f.length?f[rri(f.length)]:-1; };
-    for(let k=0;k<(w>=6?7:5+w);k++){ const i=pickFree(); if(i>=0) cells[i].crack=true; }
+    for(let k=0;k<(fin?4:w===6?3:w>=6?7:5+w);k++){ const i=pickFree(); if(i>=0) cells[i].crack=true; }
     if(w>=2){ const a=pickFree((x,y)=>y>=5&&x<=3), b=pickFree((x,y)=>y<=4&&x>=5); if(a>=0&&b>=0){ cells[a].tele=b; cells[b].tele=a; } }
-    if(w>=3) for(let k=0;k<3;k++){ const i=pickFree(); if(i>=0) cells[i].rgate=true; }
-    if(w>=4) for(let k=0;k<3;k++){ const i=pickFree(); if(i<0) continue; const x=i%N,y=(i/N)|0; const ds=DK.filter(d=>{ const nx=x+DIRS[d][0], ny=y+DIRS[d][1]; return inb(nx,ny)&&cells[id(nx,ny)].t===1&&!isSpecial(cells[id(nx,ny)]); }); if(ds.length) cells[i].wind=ds[rri(ds.length)]; }
-    if(w>=5) for(let k=0;k<3;k++){ const i=pickFree(); if(i>=0) cells[i].vent=true; }
+    if(w>=3) for(let k=0;k<(fin?1:3);k++){ const i=pickFree(); if(i>=0) cells[i].rgate=true; }
+    if(w>=4) for(let k=0;k<(fin?1:3);k++){ const i=pickFree(); if(i<0) continue; const x=i%N,y=(i/N)|0; const ds=DK.filter(d=>{ const nx=x+DIRS[d][0], ny=y+DIRS[d][1]; return inb(nx,ny)&&cells[id(nx,ny)].t===1&&!isSpecial(cells[id(nx,ny)]); }); if(ds.length) cells[i].wind=ds[rri(ds.length)]; }
+    if(w>=5) for(let k=0;k<(fin?1:3);k++){ const i=pickFree(); if(i>=0) cells[i].vent=true; }
     const boxed=(x,y)=>DK.every(d=>{ const nx=x+DIRS[d][0], ny=y+DIRS[d][1]; return inb(nx,ny)&&cells[id(nx,ny)].t!==0; });
-    if(w>=6) for(let k=0;k<(w>6?2:3);k++){ const i=pickFree(boxed); if(i>=0) cells[i].ice=true; }   // ice only where a slide can't dump you in a hole
+    if(w>=6&&!fin) for(let k=0;k<(w>6?2:1);k++){ const i=pickFree(boxed); if(i>=0) cells[i].ice=true; }   // ice only where a slide can't dump you in a hole
     // Book II arenas add the new tiles, heavier on the world's own tile
-    const mech=w>6?WORLD_MECH[w-1]:[], extra=k=>mech.includes(k)?4:isRemix(w)?1:0;
+    const mech=w>6?WORLD_MECH[w-1]:[], extra=k=>fin?({blink:2,ghost:1,laser:1}[k]||0):mech.includes(k)?4:isRemix(w)?1:0;
     if(w>6){
       for(let k=0;k<extra('spring');k++){ const i=pickFree(); if(i>=0) cells[i].spring=true; }
       for(let k=0;k<extra('blink');k++){ const i=pickFree(y=>true); if(i>=0) cells[i].blink=rri(2); }
       for(let k=0;k<extra('ghost')*2;k++){ const i=pickFree(); if(i>=0) cells[i].ghost=true; }
       if(extra('laser')){ const li=4+rri(4); room.lasers=[{axis:'row',idx:li}]; for(let x=0;x<N;x++){ const c=cells[id(x,li)]; if(c.t===1&&!(x===start.x&&li===start.y)) c.beam='row'; } }
     }
-    const rp=w<=6?[.9,.8,.72,.64,.56,.8][w-1]:Math.max(.6,.72-(w-7)*.012);
+    const rp=fin?.88:w<=6?[.9,.8,.72,.64,.56,.8][w-1]:Math.max(.6,.72-(w-7)*.012);
     cells.forEach((c,i)=>{ if(c.t!==1) return; const x=i%N,y=(i/N)|0; DK.forEach(k=>{ const nx=x+DIRS[k][0], ny=y+DIRS[k][1]; if(!inb(nx,ny)||cells[id(nx,ny)].t===0) c.rails[k]=rng()<rp; }); });
     // the whole fight must stay reachable with the real movement rules
     const seen=new Set([id(start.x,start.y)]), q=[start];
     while(q.length){ const s=q.shift(); for(const k of DK){ const r=simMove(room,s.x,s.y,k,true); if(!r) continue; const kk=id(r.x,r.y); if(!seen.has(kk)){ seen.add(kk); q.push({x:r.x,y:r.y}); } } }
     if(seen.size<floorCount()*(w>=6&&attempt<30?.92:.75)) continue;
-    const hp=w<=6?6+2*w:12+w;
+    const hp=w<=6?6+2*w:w===WORLDS?24:12+w;
     room.boss={x:3,y:0,hp,max:hp,flashT:-9,chargeT:-9,dieT:0,enraged:false,w};
     ['crack','tele','rgate','wind','vent','ice','spring','mud','ghost'].forEach(k=>room.has[k]=cells.some(c=>k==='tele'?c.tele>=0:c[k]));
     room.has.blink=cells.some(c=>c.blink>=0); room.has.rot=cells.some(c=>c.rot>=0); room.has.laser=!!(room.lasers&&room.lasers.length);
@@ -2517,7 +2606,7 @@ function drawBoss(L,now){
   for(let i=0;i<lost;i++){ const sx=x0+w*((i*37%100)/100*.8+.1), sy=topY+h+H*.12; cx.moveTo(sx,sy); cx.lineTo(sx+w*.05,sy+H*.25); cx.lineTo(sx-w*.03,sy+H*.45); cx.lineTo(sx+w*.04,sy+H*.7); } cx.stroke();
   const ex=x0+w/2, ey=topY+h+H*.45, er=Math.min(w,H)*.2, P=G.players[0];
   cx.fillStyle='#1C1236'; cx.beginPath(); cx.ellipse(ex,ey,er*1.25,er,0,0,Math.PI*2); cx.fill();
-  const g=cx.createRadialGradient(ex,ey,0,ex,ey,er*1.1); g.addColorStop(0,mixc('#FF8A5C','#FFFFFF',ch)); g.addColorStop(1,'rgba(255,60,60,.15)'); cx.fillStyle=g; cx.beginPath(); cx.ellipse(ex,ey,er,er*.8,0,0,Math.PI*2); cx.fill();
+  const g=cx.createRadialGradient(ex,ey,0,ex,ey,er*1.1); if(B.dieT){ g.addColorStop(0,'#CFE6FF'); g.addColorStop(1,'rgba(90,160,255,.25)'); } else { g.addColorStop(0,mixc('#FF8A5C','#FFFFFF',ch)); g.addColorStop(1,'rgba(255,60,60,.15)'); } cx.fillStyle=g; cx.beginPath(); cx.ellipse(ex,ey,er,er*.8,0,0,Math.PI*2); cx.fill();
   let px=0,py=0; if(P){ const tx=L.ox+(P.pos.x+.5)*L.tw, ty=L.oy+(P.pos.y+.5)*L.th, d=Math.hypot(tx-ex,ty-ey)||1; px=(tx-ex)/d*er*.45; py=(ty-ey)/d*er*.35; }
   cx.fillStyle='#1C1236'; cx.beginPath(); cx.arc(ex+px,ey+py,er*.32,0,Math.PI*2); cx.fill();
   if(ch>0){ cx.globalCompositeOperation='lighter'; const g2=cx.createRadialGradient(ex,ey,0,ex,ey,er*3); g2.addColorStop(0,`rgba(255,90,70,${.5*ch})`); g2.addColorStop(1,'rgba(255,90,70,0)'); cx.fillStyle=g2; cx.fillRect(ex-er*3,ey-er*3,er*6,er*6); cx.globalCompositeOperation='source-over'; }
@@ -2833,14 +2922,27 @@ function authMsg(e){
     'auth/operation-not-allowed':'This sign-in method is turned off in Firebase.'}[c]) ?? ('Sign-in problem ('+(c||'unknown')+').');
 }
 function acctBusy(b){ $('acctOv').querySelectorAll('button:not(.back),input').forEach(el=>el.disabled=b); }
+/* developer unlock: a special login that opens every level. Only a hash of the password is stored here. */
+const DEV_EMAIL='dev@pulseform', DEV_HASH='f065c5bfde6b66801fcf9acd0275b75f45ae10919b4a5acbbf6cca8feb0ad2a9';
+async function devCheck(em,pw){
+  if(em.toLowerCase()!==DEV_EMAIL) return false;
+  let ok=false; try{ const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('pulseform-dev|'+pw)); ok=[...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('')===DEV_HASH; }catch(e){}
+  if(!ok){ ACCT.err='Wrong email or password.'; acctUI(); return true; }
+  SAVE.devAll=!SAVE.devAll; save(); $('aPass').value='';
+  ACCT.err=''; acctUI(); const m=$('aMsg'); m.classList.remove('err'); m.textContent=SAVE.devAll?'Developer unlock ON: every world, level, boss and Hard stage is open.':'Developer unlock OFF: levels are locked by progress again.';
+  if(A.ctx) sGem(); return true;
+}
 function acctEmail(){
   const em=$('aEmail').value.trim(), pw=$('aPass').value;
   if(!em||!pw){ ACCT.err='Type your email and a password.'; acctUI(); return; }
+  if(em.toLowerCase()===DEV_EMAIL){ devCheck(em,pw); return; }
+  if(!ACCT.auth){ ACCT.err='Sign-in is not available right now. Check your connection.'; acctUI(); return; }
   ACCT.err=''; acctBusy(true);
   const p=ACCT.mode==='up'?ACCT.auth.createUserWithEmailAndPassword(em,pw):ACCT.auth.signInWithEmailAndPassword(em,pw);
   p.then(()=>{ $('aPass').value=''; sChime(84); }).catch(e=>{ ACCT.err=authMsg(e); }).finally(()=>{ acctBusy(false); acctUI(); });
 }
 function acctGoogle(){
+  if(!ACCT.auth){ ACCT.err='Sign-in is not available right now. Check your connection.'; acctUI(); return; }
   ACCT.err=''; const prov=new firebase.auth.GoogleAuthProvider(); prov.setCustomParameters({prompt:'select_account'});
   acctBusy(true);
   ACCT.auth.signInWithPopup(prov).then(()=>sChime(84)).catch(e=>{
@@ -2869,7 +2971,7 @@ function acctUI(){
   const cfg=acctCfg(), u=ACCT.user;
   $('aOff').hidden=!!cfg; $('aOut').hidden=!cfg||!!u; $('aIn').hidden=!cfg||!u;
   $('aLoading').hidden=!cfg||ACCT.ready||!!ACCT.err;
-  $('aForm').hidden=!ACCT.ready;
+  $('aForm').hidden=!ACCT.ready&&!ACCT.err;
   const m=$('aMsg'); m.textContent=ACCT.err; m.classList.toggle('err',!!ACCT.err);
   $('aModeIn').classList.toggle('on',ACCT.mode==='in'); $('aModeUp').classList.toggle('on',ACCT.mode==='up');
   $('aGo').textContent=ACCT.mode==='up'?'Create account':'Sign in';
@@ -3250,14 +3352,16 @@ function songList(){
 function showStudio(){
   const s=SAVE.studio||{}; Object.assign(STUDIO,{src:s.src==='file'&&STUDIO.buf?'file':s.src==='file'?'file':'game',style:s.style||'shallows',tseed:s.tseed||'W1',songName:s.songName||'Courtyard Dawn',bpm:s.bpm||100,diff:s.diff||'groove'});
   if(STUDIO.src==='file'&&STUDIO.buf){ STUDIO.bpm=STUDIO.fileBpm||STUDIO.bpm; }
+  if(s.src==='none'){ STUDIO.src='none'; STUDIO.bpm=s.noneBpm||STUDIO.bpm; STUDIO.click=!!s.click; }
   studioUI(); showOv('studioOv');
 }
-function studioSave(){ SAVE.studio={src:STUDIO.src,style:STUDIO.style,tseed:STUDIO.tseed,songName:STUDIO.src==='game'?STUDIO.songName:SAVE.studio&&SAVE.studio.songName,bpm:STUDIO.src==='game'?STUDIO.bpm:(SAVE.studio&&SAVE.studio.bpm)||100,diff:STUDIO.diff}; save(); }
+function studioSave(){ const prev=SAVE.studio||{}; SAVE.studio={noneBpm:STUDIO.src==='none'?STUDIO.bpm:prev.noneBpm,click:!!STUDIO.click,src:STUDIO.src,style:STUDIO.style,tseed:STUDIO.tseed,songName:STUDIO.src==='game'?STUDIO.songName:SAVE.studio&&SAVE.studio.songName,bpm:STUDIO.src==='game'?STUDIO.bpm:prev.bpm||100,diff:STUDIO.diff}; save(); }
 function studioUI(){
   const file=STUDIO.src==='file';
   $('stSrc').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.s===STUDIO.src));
-  $('stGame').hidden=file; $('stFile').hidden=!file; $('stOffField').hidden=!file; $('stDetect').hidden=!(file&&STUDIO.buf);
-  $('stSongs').innerHTML=songList().map(s=>`<button class="song${!file&&s.seed===STUDIO.tseed?' on':''}" data-id="${s.id}" data-seed="${s.seed}" data-bpm="${s.bpm}" type="button" style="--c:${s.c}"><b>${s.name}</b><small>${s.sub} · ${s.bpm} BPM</small></button>`).join('');
+  const none=STUDIO.src==='none';
+  $('stGame').hidden=file||none; $('stFile').hidden=!file; $('stNone').hidden=!none; $('stClick').checked=!!STUDIO.click; $('stOffField').hidden=!file; $('stDetect').hidden=!(file&&STUDIO.buf);
+  $('stSongs').innerHTML=songList().map(s=>`<button class="song${STUDIO.src==='game'&&s.seed===STUDIO.tseed?' on':''}" data-id="${s.id}" data-seed="${s.seed}" data-bpm="${s.bpm}" type="button" style="--c:${s.c}"><b>${s.name}</b><small>${s.sub} · ${s.bpm} BPM</small></button>`).join('');
   $('stSongs').querySelectorAll('.song').forEach(b=>b.onclick=()=>{ stopPreview(); STUDIO.style=b.dataset.id; STUDIO.tseed=b.dataset.seed; STUDIO.songName=b.querySelector('b').textContent; STUDIO.bpm=+b.dataset.bpm; studioSave(); studioUI(); });
   $('stFileName').textContent=STUDIO.buf?'♪ '+STUDIO.fileName+' · tap to change':'Choose a song file';
   $('stBpm').value=STUDIO.bpm; $('stBpmOut').textContent=(Math.round(STUDIO.bpm*10)/10)+' BPM';
@@ -3268,14 +3372,17 @@ function studioUI(){
 }
 $('mStudio').onclick=()=>{ ensureAudio(); showStudio(); };
 $('stBack').onclick=()=>{ stopPreview(); toMenu(); };
-$('stSrc').querySelectorAll('button').forEach(b=>b.onclick=()=>{ stopPreview(); STUDIO.src=b.dataset.s; if(STUDIO.src==='file'&&STUDIO.buf) STUDIO.bpm=STUDIO.fileBpm; else if(STUDIO.src==='game') STUDIO.bpm=(SAVE.studio&&SAVE.studio.bpm)||100; studioSave(); studioUI(); });
+$('stSrc').querySelectorAll('button').forEach(b=>b.onclick=()=>{ stopPreview(); const S=SAVE.studio||{}; STUDIO.src=b.dataset.s; if(STUDIO.src==='file'&&STUDIO.buf) STUDIO.bpm=STUDIO.fileBpm; else if(STUDIO.src==='game') STUDIO.bpm=S.bpm||100; else if(STUDIO.src==='none') STUDIO.bpm=S.noneBpm||STUDIO.bpm; studioSave(); studioUI(); });
+$('stClick').onchange=e=>{ STUDIO.click=e.target.checked; studioSave(); };
 $('stDiff').querySelectorAll('button').forEach(b=>b.onclick=()=>{ STUDIO.diff=b.dataset.d; studioSave(); studioUI(); });
 $('stBpm').addEventListener('input',e=>{ setStudioBpm(+e.target.value); });
 $('stOff').addEventListener('input',e=>{ STUDIO.off=+e.target.value; $('stOffOut').textContent=(STUDIO.off>0?'+':'')+STUDIO.off+' ms'; if(STUDIO.preview) restartPreview(); });
 $('stHalf').onclick=()=>setStudioBpm(STUDIO.bpm/2); $('stDouble').onclick=()=>setStudioBpm(STUDIO.bpm*2);
 function setStudioBpm(v){ STUDIO.bpm=clamp(Math.round(v*2)/2,60,190); if(STUDIO.src==='file') STUDIO.fileBpm=STUDIO.bpm; $('stBpm').value=STUDIO.bpm; $('stBpmOut').textContent=(Math.round(STUDIO.bpm*10)/10)+' BPM'; studioSave(); if(STUDIO.preview) restartPreview(); }
 $('stTap').addEventListener('pointerdown',e=>{ e.preventDefault(); const t=performance.now(), T=STUDIO.taps; if(T.length&&t-T[T.length-1]>2000) T.length=0; T.push(t); if(T.length>9) T.shift();
-  const b=$('stTap'); b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash'); ensureAudio(); if(A.ctx.state==='running') tone(A.sfx,A.ctx.currentTime,'sine',1320,.08,.001,.05);
+  const b=$('stTap'); b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash'); ensureAudio(); if(A.ctx.state!=='running') A.ctx.resume();
+  STUDIO.tapAt=A.ctx.currentTime-Math.max(0,(performance.now()-e.timeStamp)/1000); STUDIO.tapPerf=performance.now();
+  if(A.ctx.state==='running'&&STUDIO.src!=='none') tone(A.sfx,A.ctx.currentTime,'sine',1320,.08,.001,.05);
   if(T.length>=3){ const iv=(T[T.length-1]-T[0])/(T.length-1); setStudioBpm(60000/iv); b.textContent=`Tap tempo (${T.length})`; } else b.textContent='Keep tapping…'; });
 $('stDetect').onclick=()=>{ if(!STUDIO.buf) return; const d=detectBPM(STUDIO.buf); STUDIO.firstBeat=d.first; STUDIO.off=0; setStudioBpm(d.bpm); studioUI(); $('stMsg').textContent=''; };
 
@@ -3320,9 +3427,11 @@ function startPreview(){
   if(STUDIO.src==='file'&&STUDIO.buf){ const pos=Math.min(Math.max(0,STUDIO.buf.duration-16),STUDIO.buf.duration*.3), s=c.createBufferSource(); s.buffer=STUDIO.buf; s.connect(A.music); s.start(t0,pos,15); P.node=s;
     const first=STUDIO.firstBeat+STUDIO.off/1000; let j=Math.ceil((pos-first)/spb); P.clickT=j; P.pos=pos; P.first=first;
     s.onended=()=>{ if(STUDIO.preview===P){ STUDIO.preview=null; studioUI(); } }; }
+  else if(STUDIO.src==='none'){ P.silent=true; P.n=0; if(STUDIO.tapAt&&performance.now()-STUDIO.tapPerf<20000){ P.t0=STUDIO.tapAt+Math.ceil((c.currentTime+.15-STUDIO.tapAt)/spb)*spb; } }
   else { P.track=makeTrack(STUDIO.style,STUDIO.tseed); if(STUDIO.style==='lobby'&&LOBBY.tracks) P.track=LOBBY.tracks[0]; }
   P.timer=setInterval(()=>{ if(STUDIO.preview!==P) return; const ahead=c.currentTime+.25;
     if(P.node){ for(;;){ const t=P.t0+(P.first+P.clickT*spb-P.pos); if(t>ahead) break; if(t>=c.currentTime-.01&&t<P.t0+15) { tone(A.sfx,t,'square',P.clickT%4?1500:2000,.05,.001,.04,{lp:5000}); tone(A.sfx,t,'sine',P.clickT%4?750:1000,.12,.001,.06); } P.clickT++; if(t>P.t0+15) break; } }
+    else if(P.silent){ while(P.t0+P.n*spb<ahead){ const t=P.t0+P.n*spb; tone(A.sfx,t,'square',P.n%4?1500:2000,.05,.001,.04,{lp:5000}); tone(A.sfx,t,'sine',P.n%4?750:1000,.12,.001,.06); P.n++; } if(P.n>=16){ setTimeout(()=>{ if(STUDIO.preview===P){ stopPreview(); studioUI(); } },spb*1000); } }
     else { const s16=spb/4; while(P.t0+P.n*s16<ahead){ TRACK=P.track; scheduleStep(P.n,P.t0+P.n*s16,spb); P.n++; } if(c.currentTime>P.t0+spb*32){ stopPreview(); studioUI(); } } },25);
   STUDIO.preview=P;
 }
@@ -3332,8 +3441,8 @@ function restartPreview(){ stopPreview(); startPreview(); studioUI(); }
 /* ---- start ---- */
 $('stGo').onclick=()=>{
   stopPreview(); if(STUDIO.src==='file'&&!STUDIO.buf) return;
-  const file=STUDIO.src==='file';
-  startRun(modeFor('studio',{diff:STUDIO.diff,bpm:STUDIO.bpm,style:file?'shallows':STUDIO.style,tseed:file?'Sfile':STUDIO.tseed,songName:file?STUDIO.fileName:STUDIO.songName,file,firstBeat:STUDIO.firstBeat,off:STUDIO.off,themeOff:ri(WORLDS)}));
+  const file=STUDIO.src==='file', silent=STUDIO.src==='none';
+  startRun(modeFor('studio',{diff:STUDIO.diff,bpm:STUDIO.bpm,style:file||silent?'shallows':STUDIO.style,tseed:file?'Sfile':silent?'Snone':STUDIO.tseed,songName:file?STUDIO.fileName:silent?'Your own song':STUDIO.songName,file,silent,click:silent&&!!STUDIO.click,firstBeat:STUDIO.firstBeat,off:STUDIO.off,themeOff:ri(WORLDS)}));
 };
 function studioBegin(M){
   const c=A.ctx, spb=60/M.bpm, t0=c.currentTime+(MOB?.5:.4), s=c.createBufferSource();
@@ -3342,7 +3451,313 @@ function studioBegin(M){
   s.onended=()=>{ if(STUDIO.node!==s) return; STUDIO.node=null; if(G.mode===M&&G.state==='playing'){ G.state='dying'; gameOver('song'); } };
   STUDIO.node=s;
 }
+/* no music: line the beat grid up with the player's last taps, if they tapped along recently */
+function studioSilentBegin(M){
+  const c=A.ctx, spb=60/M.bpm, base=c.currentTime+(MOB?.5:.35);
+  if(STUDIO.tapAt&&performance.now()-STUDIO.tapPerf<20000){ G.startT=STUDIO.tapAt+Math.ceil((base-STUDIO.tapAt)/spb)*spb; M.synced=true; } else M.synced=false;
+}
 function stopStudioAudio(){ const s=STUDIO.node; STUDIO.node=null; if(s){ try{ s.onended=null; s.stop(); }catch(e){} } stopPreview(); }
+
+/* ================= LORE & THE FOUNTAIN'S TUTORIAL =================
+   All the story text lives here so it is easy to rewrite. */
+const LORE={
+ story:'Long ago, every room in this sky moved to one great song: the Pulse. Then the Silence came. The song broke apart, the rooms drifted away, and the guardians of each world forgot the tune. The Fountain, keeper of the Courtyard, poured its last note into a small block: you, a Pulseform. Every beat you land reminds a room how to sing. Every guardian you beat gives back a verse. The guardians try to stop you, not out of cruelty, but out of fear of what is waiting past the Impossible Sky: the Silence itself, a slow dark that swallows every song that stops moving. At the very top of the sky, the Conductor holds the final chorus.',
+ intro:[
+  'Oh! A new Pulseform. I felt your first beat all the way down in my basin.',
+  'I\'m the Fountain. Long ago, every room in this sky moved to one great song.',
+  'Then the Silence came. The song broke apart, the rooms drifted away, and their guardians forgot the tune.',
+  'You were made from the last note I had left. When you move on the beat, the rooms remember how to sing.',
+  'Let\'s try it together. Listen to the music, and watch the gold ring around you.'],
+ worlds:[
+  'Where the Fountain still hums the very first melody.',
+  'The lanterns only glow when a boat crosses on the beat. The Lighthouse keeps watch.',
+  'Every gear here lost its tempo. The Great Clock ticks for no one.',
+  'Light bends to the rhythm of the wind. The Kaleidoscope split the song into six colours.',
+  'Sounds here repeat long after they are played. The Echo remembers everything.',
+  'Stairs loop into themselves above the clouds. The Unfolding guards the edge of the map.',
+  'Past the clouds lie the Far Shores, where the tide itself keeps time.',
+  'The Bog King locked his gardens behind twin gates. You will need both keys.',
+  'The night trains still run, but only on the off-beat.',
+  'Here the lost notes were melted down into beams of light.',
+  'Every direction points to somewhere the song used to be.',
+  'The whole story of the Silence is written here, in invisible ink.',
+  'The thunder is someone\'s drum. The Stormcaller wants it back.',
+  'Songs sink. The Leviathan collected every one that fell.',
+  'The sun rises exactly on the downbeat. The Sun Engine makes sure of it.',
+  'The Conductor waits with the last verse. Everything you have learned leads here.'],
+ bossIntro:[
+  'Please… stay here with me, where it\'s warm. It doesn\'t have to be this way.',
+  'I dimmed my light so you would never find the way out. I\'m sorry.',
+  'If I stop the hands, you never have to reach the end. Isn\'t that kinder?',
+  'I have seen what waits past the sky in every colour. None of them are bright.',
+  'Everyone who went on ahead… I only ever heard them once.',
+  'This is for your own good. Past me, there is nothing but the dark.',
+  'The tide keeps coming back. Why won\'t you turn back too?',
+  'I locked these gates to keep something out, not to keep you in.',
+  'Last train of the night. No one ever buys a ticket home.',
+  'I melted the songs into light so the dark could never swallow them. Was that wrong?',
+  'Every road ends in the same place. I only wanted you to rest first.',
+  'I have read how this story ends. Please don\'t make me read it again.',
+  'The thunder is only me, shouting for you to turn back.',
+  'I kept the sunken songs safe down here. The sky above isn\'t safe anymore.',
+  'I rise every morning so the dark stays away one more day. Let me rest.',
+  'I stopped the music so the dark would stop listening. And now you\'ve started it again.'],
+ bossDown:[
+  'Then go, little one. And whatever follows you… keep moving.',
+  'Take my light with you. You\'ll need it more than I will.',
+  'Your timing is better than mine ever was. Don\'t let it stop.',
+  'Carry all six colours. The dark hates colour.',
+  'I\'ll remember your song. Every note of it.',
+  'I tried to keep you from the edge. Now I\'ll help you past it.',
+  'Ride the tide, then. It always finds its way back.',
+  'Take both keys. Lock nothing behind you.',
+  'Service restored. One way only.',
+  'The light remembers it was once a song. So will you.',
+  'Every direction points forward now.',
+  'Then write the ending yourself.',
+  'Keep my drum. Play it loud.',
+  'Take the songs back up. They missed the sky.',
+  'The sky is bright enough now. Go and see the Conductor.',
+  'Then play it loud enough that the dark can\'t bear to listen. The music is yours now, Pulseform.'],
+ tutDone:'The Courtyard hums again! Every level adds an instrument to our song. Clear all eight… then come and test yourself against me.'};
+
+const FOUNTAIN_SVG=`<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="54" rx="24" ry="6" fill="#7E6A9C"/><path d="M8 48h48l-4 7H12z" fill="#EFDCC6"/><rect x="28" y="30" width="8" height="18" rx="2" fill="#C39C7C"/><ellipse cx="32" cy="31" rx="14" ry="4" fill="#EFDCC6"/><rect x="30" y="18" width="4" height="13" fill="#C39C7C"/><ellipse cx="32" cy="18" rx="7" ry="2.5" fill="#EFDCC6"/>
+<path d="M32 16c0-6 0-9 0-10M32 8c-5 1-9 6-11 12M32 8c5 1 9 6 11 12M20 30c-5 3-8 9-9 16M44 30c5 3 8 9 9 16" fill="none" stroke="#B8F2E6" stroke-width="2.2" stroke-linecap="round"/><circle cx="32" cy="5" r="2.4" fill="#FFD166"/><circle cx="26" cy="41" r="1.6" fill="#3A2A58"/><circle cx="38" cy="41" r="1.6" fill="#3A2A58"/><path d="M28.5 44.5q3.5 2.5 7 0" fill="none" stroke="#3A2A58" stroke-width="1.4" stroke-linecap="round"/></svg>`;
+const bossSVG=col=>`<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M12 20l20-10 20 10v26L32 56 12 46z" fill="${col}" opacity=".35"/><path d="M12 20l20 10 20-10M32 30v26" fill="none" stroke="${col}" stroke-width="2"/><path d="M12 20l20-10 20 10v26L32 56 12 46z" fill="none" stroke="#FFF8EE" stroke-width="1.6"/><ellipse cx="32" cy="38" rx="9" ry="6" fill="#1C1236"/><circle cx="32" cy="38" r="4" fill="#FF8A5C"/><circle cx="33" cy="37" r="1.5" fill="#1C1236"/></svg>`;
+
+/* ---- speech bubble during play ---- */
+let talkTO=null;
+function talk(who,text,ms,port){
+  const t=$('talk'); $('talkWho').textContent=who; $('talkTxt').textContent=text; $('talkPort').innerHTML=port||FOUNTAIN_SVG;
+  t.hidden=false; t.style.animation='none'; void t.offsetWidth; t.style.animation='';
+  clearTimeout(talkTO); if(ms) talkTO=setTimeout(()=>{ t.hidden=true; },ms);
+  hint('');
+}
+function hideTalk(){ clearTimeout(talkTO); $('talk').hidden=true; }
+
+/* ---- the intro dialog before 1-1 ---- */
+const TUT={i:0,mode:null,typing:null,said:{},moves:0};
+function showTutorialIntro(M){
+  TUT.mode=M; TUT.i=0; $('tutPort').innerHTML=FOUNTAIN_SVG; $('tutWho').textContent='The Fountain';
+  $('tutDots').innerHTML=LORE.intro.map(()=>'<i></i>').join(''); tutLine(); showOv('tutOv');
+}
+function tutLine(){
+  const txt=LORE.intro[TUT.i], el=$('tutLine'); clearInterval(TUT.typing); let n=0; el.textContent='';
+  if(RM()) el.textContent=txt; else TUT.typing=setInterval(()=>{ n+=2; el.textContent=txt.slice(0,n); if(n>=txt.length) clearInterval(TUT.typing); },22);
+  [...$('tutDots').children].forEach((d,i)=>d.classList.toggle('on',i<=TUT.i));
+  $('tutNext').textContent=TUT.i===LORE.intro.length-1?'Let\'s play':'Next';
+  if(A.ctx&&A.ctx.state==='running') tone(A.sfx,A.ctx.currentTime,'sine',[1047,1175,1319,1568,1760][TUT.i%5],.04,.002,.3);
+}
+$('tutNext').onclick=()=>{ const el=$('tutLine'), txt=LORE.intro[TUT.i];
+  if(el.textContent.length<txt.length){ clearInterval(TUT.typing); el.textContent=txt; return; }   // first tap finishes the line
+  if(TUT.i<LORE.intro.length-1){ TUT.i++; tutLine(); return; }
+  clearInterval(TUT.typing); const M=TUT.mode; M.tut=true; startRun(M); };
+$('tutSkip').onclick=()=>{ clearInterval(TUT.typing); SAVE.tutDone=true; save(); const M=TUT.mode; M.tut=false; M.tutSkip=true; startRun(M); };
+$('gTut').onclick=()=>{ const M=modeFor('level',1,1); showTutorialIntro(M); };
+$('gStory').textContent=LORE.story;
+const needsTutorial=M=>M.type==='level'&&M.world===1&&M.level===1&&!M.tut&&!M.tutSkip&&!SAVE.tutDone;
+
+/* ---- in-level coaching (1-1 only) ---- */
+function tutStart(M){ TUT.said={}; TUT.moves=0; if(M.tut) setTimeout(()=>{ if(G.mode===M) talk('The Fountain','Watch the gold ring around you. When it closes on your block, press any arrow key, or swipe on your phone.',0); },900); }
+function tutOnce(k,txt,ms){ if(!G.mode||!G.mode.tut||TUT.said[k]) return; TUT.said[k]=1; talk('The Fountain',txt,ms===undefined?6500:ms); }
+function tutMove(j){
+  if(!G.mode||!G.mode.tut) return; TUT.moves++;
+  if(TUT.moves===1){ TUT.said.first=1; talk('The Fountain',j==='perfect'?'Perfect! That is the beat. Every perfect grows your streak, and the song grows with it.':j==='good'?'Good! Now try to press exactly as the ring meets your block.':j==='miss'?'Missed the beat. Listen for the drum, then press as the ring closes.':`A little ${j}. Wait for the ring to touch your block, then press.`,6500); return; }
+  if(TUT.moves===4) tutOnce('plan','In levels you can skip beats to think. The glowing arch is the door. Find your way there.');
+  if(G.streak===6) tutOnce('streak','Hear that? The Courtyard is waking up. Keep the streak going.');
+}
+const tutBump=()=>tutOnce('bump','Bumping a glowing rail is safe. But an edge with no rail? You would fall right off.');
+const tutFall=()=>tutOnce('fall','Oof! The sky has no floor. Watch for edges without a rail. You get a few tries.');
+function loreForResult(M){
+  if(M.type==='level'&&M.tut){ SAVE.tutDone=true; save(); return `<b>The Fountain</b>“${LORE.tutDone}”`; }
+  if(M.type==='boss') return `<b>${BOSS[M.world-1]}</b>“${LORE.bossDown[M.world-1]}”`;
+  if(M.type==='interlude') return `<b>The guardians</b>“We held it back as long as we could. The rest of the song is yours to finish.”`;
+  return '';
+}
+
+/* ================= THE BOTTOM STORY BAR ================= */
+let cineTO=null, cineTy=null;
+function cine(who,text,ms){
+  const b=$('cine'); $('cineWho').textContent=who||''; const t=$('cineTxt'); clearInterval(cineTy);
+  const pads=$('pads'); b.style.bottom=((pads&&pads.offsetHeight)||0)+8+'px';
+  b.hidden=false; b.classList.remove('out'); void b.offsetWidth; b.classList.add('in');
+  if(RM()) t.textContent='“'+text+'”'; else { let n=0; t.textContent=''; cineTy=setInterval(()=>{ n+=1; t.textContent='“'+text.slice(0,n)+(n>=text.length?'”':''); if(n>=text.length) clearInterval(cineTy); },28); }
+  clearTimeout(cineTO); cineTO=setTimeout(hideCine,ms||5200);
+}
+function hideCine(){ clearInterval(cineTy); clearTimeout(cineTO); const b=$('cine'); if(b.hidden) return; b.classList.add('out'); setTimeout(()=>{ if(b.classList.contains('out')) b.hidden=true; },600); }
+function bossTalk(M){
+  if(M.type!=='boss') return; const w=M.world;
+  G.restUntil=Math.max(G.restUntil,8);          // a few quiet beats to read before the fight starts
+  setTimeout(()=>{ if(G.mode===M) cine(BOSS[w-1],LORE.bossIntro[w-1],5600); },450);
+}
+
+/* ================= INTERLUDE: THE SILENCE =================
+   After the Impossible Sky: six grey rooms, a slow song, and a darkness that swallows every tile
+   you leave behind. The spirits of the six guardians watch with blue eyes, and one by one they
+   throw themselves into the dark to slow it down. */
+const DARK_THEME={name:'The Silence',sky:['#000000','#05050A','#0B0B14'],hi:['#000000','#06060E','#10101C'],tile:'#8A8A94',front:'#44444E',acc:'#7FB8FF',pTop:'#A4A4AE',pFront:'#55555F',bpm:74};
+STYLES.lament={name:'The Silence',mood:'slow and sad',bpm:1,swing:0,prog:[[0,'m'],[8,'M'],[3,'M'],[10,'sus']],scale:'minor',
+  kick:{s:'kickSoft',p:P16([0,.3])},bass:{pat:'long',wave:'sine',v:.26},keys:{pat:'pad',voice:'soft'},arp:{rate:4,voice:'bell',v:.03},lead:{voice:'bell',dens:.35,rhy:'sparse'},spark:'shimmer'};
+const INTER={rooms:6,
+  spirits:[ // the order they appear, one per room: the last guardian you beat comes first, the Fountain last
+   {w:6,hello:'I was wrong to hold you back. Don\'t stop. Not for anything.',gift:'The Unfolding folds itself into the dark.'},
+   {w:5,hello:'I can hear it behind you… keep going, keep going.',gift:'The Echo cries out once more, and the dark flinches.'},
+   {w:4,hello:'Six colours. Enough to blind it for a moment.',gift:'The Kaleidoscope shatters into light.'},
+   {w:3,hello:'I\'ll stop time for it instead of you.',gift:'The Great Clock stops, and the dark stops with it.'},
+   {w:2,hello:'Follow my light. It will be the last one.',gift:'The Lighthouse gives the dark all of its light.'},
+   {w:1,hello:'You were the best note I ever had.',gift:'Go on. The song is yours now.',speaks:true}],
+  intro:'Past the Impossible Sky, the music stops. And something in the quiet starts to move.'};
+const interCfg=i=>({N:6,rail:.95,pillarP:.25,crackP:0,teleP:0,gateP:0,density:0,M:{},focus:[],gems:0,need:null});
+function interRoom(M,i){ return {cfg:interCfg(i),th:DARK_THEME,sid:'lament',tseed:'lament',bpm:74,instr:1}; }
+/* distances from the start along the floor: the dark floods outward in this order */
+function darkInit(){
+  const N=R.N, d=new Array(N*N).fill(1e9), q=[R.start]; d[R.start.y*N+R.start.x]=0;
+  while(q.length){ const p=q.shift(), dp=d[p.y*N+p.x]; for(const k of DK){ const x=p.x+DIRS[k][0], y=p.y+DIRS[k][1]; if(x<0||y<0||x>=N||y>=N) continue; const i=y*N+x; if(R.cells[i].t!==1||d[i]<=dp+1) continue; d[i]=dp+1; q.push({x,y}); } }
+  G.dark={dist:d,front:-1,next:null,frozenUntil:-1,spent:false,sac:null,minK:0};
+}
+function interBeat(b,rest){
+  const D=G.dark; if(!D||rest||G.state!=='playing') return;
+  const P=G.players[0]; if(!P||P.dead||P.done) return;
+  const pd=D.dist[P.pos.y*R.N+P.pos.x];
+  if(D.next==null) D.next=b.k+2;                          // a short head start
+  // it creeps one tile every 2 beats, and surges every beat when it has fallen far behind
+  if(b.k>=D.next&&b.k>D.frozenUntil){ D.front+=pd-D.front>5?2:1; D.next=b.k+(pd-D.front>3?1:2); sDark(); }
+  darkApply();
+  const gd=D.dist[R.goal.y*R.N+R.goal.x];
+  if(!D.spent&&b.k>=D.minK&&pd<1e9&&(pd-D.front<=2||pd>=gd*.55)) spiritSacrifice();   // when it gets close, this room's guardian steps in
+  if(pd<=D.front&&!(P.anim&&P.anim.kind==='path'&&G.now<P.anim.end)){ caught(P); }
+}
+function darkApply(){ const D=G.dark; R.cells.forEach((c,i)=>{ const on=D.dist[i]<=D.front; if(on&&!c.dark){ c.dark=true; c.darkT=G.now; } else if(!on&&c.dark){ c.dark=false; c.regenT=G.now; } }); }
+function caught(P){ if(G.state!=='playing') return; P.anim={kind:'fall',t0:G.now,at:{...P.pos}}; P.dead=true; sFall(); G.state='dying'; cine('','The dark caught up.',3000); setTimeout(()=>gameOver('dark'),1200); }
+function spiritSacrifice(){
+  const D=G.dark; D.spent=true; const sp=INTER.spirits[G.roomIdx-1]; if(!sp) return;
+  const k=G.beats.length?G.beats[G.checkIdx-1].k:0;
+  // the spirit dives into the dark front nearest the player
+  let best=null, bd=1e9; const P=G.players[0]; R.cells.forEach((c,i)=>{ if(!c.dark) return; const x=i%R.N,y=(i/R.N)|0, dd=Math.abs(x-P.pos.x)+Math.abs(y-P.pos.y); if(dd<bd){ bd=dd; best={x,y}; } });
+  D.sac={w:sp.w,t0:G.now,to:best||R.start};
+  cine(sp.speaks?BOSS[sp.w-1]:'',sp.gift,4200);
+  setTimeout(()=>{ if(!G.dark||G.dark!==D) return; D.front=Math.max(-1,D.front-3); D.frozenUntil=k+8; D.next=k+10; darkApply(); sSacrifice();
+    const t=D.sac.to; G.shocks.push({x:t.x,y:t.y,t0:G.now,col:'#7FB8FF',p:3.4,pillar:true}); burst(t.x,t.y,26,'#BFE0FF',true); burst(t.x,t.y,12,'#FFFFFF',true); G.flashT=G.now; G.flashC='#7FB8FF'; },850);
+}
+function interRoomStart(){
+  if(!G.mode||G.mode.type!=='interlude') return;
+  darkInit(); G.stemFloor=5; setStemTier(5,A.ctx.currentTime,.3);
+  const sp=INTER.spirits[G.roomIdx-1], k0=G.beats.length?G.beats[G.beats.length-1].k:0;
+  if(G.roomIdx===1) G.restUntil=Math.max(G.restUntil,12);          // time to read the opening before anything moves
+  G.dark.minK=(G.roomIdx===1?12:k0+2)+4;                            // the guardian says hello before it can be needed
+  setTimeout(()=>{ if(!G.mode||G.mode.type!=='interlude'||G.state!=='playing') return;
+    if(G.roomIdx===1) { cine('',INTER.intro,5200); setTimeout(()=>{ if(G.mode&&G.mode.type==='interlude'&&G.state==='playing') cine(BOSS[sp.w-1],sp.hello,4600); },5600); }
+    else cine(BOSS[sp.w-1],sp.hello,4600); },500);
+}
+const sDark=()=>{ if(!A.ctx) return; const t=sfxT(); tone(A.sfx,t,'sine',55,.18,.05,.9,{glide:40,gt:.8}); noise(A.sfx,t,.05,.8,'lowpass',300,1,120); };
+const sSacrifice=()=>{ if(!A.ctx) return; const t=sfxT(); [72,76,79,84].forEach((m,i)=>tone(A.sfx,t+i*.09,'sine',mtof(m),.09,.01,1.4)); noise(A.sfx,t,.12,1.2,'highpass',5000,.5); };
+
+/* ---- drawing the dark and the spirits ---- */
+function drawDark(L,now){
+  if(!G.dark||!R) return; const N=R.N;
+  cx.save();
+  R.cells.forEach((c,i)=>{ if(!c.dark) return; const x=i%N,y=(i/N)|0, r=cellRect(x,y,L), mx=r.X+r.w/2, my=r.Y+r.h/2, age=clamp((now-c.darkT)/.8,0,1);
+    const edge=DK.some(k=>{ const q=R.cells[(y+DIRS[k][1])*N+(x+DIRS[k][0])]; return x+DIRS[k][0]>=0&&x+DIRS[k][0]<N&&y+DIRS[k][1]>=0&&y+DIRS[k][1]<N&&q&&q.t===1&&!q.dark; });
+    const hz=cx.createRadialGradient(mx,my,0,mx,my,r.w*1.1); hz.addColorStop(0,`rgba(90,50,150,${.28*age})`); hz.addColorStop(1,'rgba(90,50,150,0)'); cx.fillStyle=hz; cx.fillRect(mx-r.w*1.1,my-r.w*1.1,r.w*2.2,r.w*2.2);
+    for(let j=0;j<5;j++){ const a=j*1.26+now*(.6+j*.1)+i, rad=r.w*(.32+.12*Math.sin(now*1.7+j+i))*age, bx=mx+Math.cos(a)*r.w*.18, by=my+Math.sin(a)*r.h*.18-L.th*.1;
+      cx.fillStyle='#120C1E'; cx.beginPath(); cx.ellipse(bx,by,rad,rad*.72,0,0,Math.PI*2); cx.fill();
+      cx.strokeStyle=`rgba(150,110,230,${.22+.12*Math.sin(now*2+j)})`; cx.lineWidth=1.2; cx.stroke(); }
+    // a few faint eyes inside the dark
+    if((i*7)%5===0){ const bl=Math.sin(now*.8+i)>.9?.1:1; cx.fillStyle=`rgba(200,170,255,${.5*age})`; [-1,1].forEach(sd=>{ cx.beginPath(); cx.ellipse(mx+sd*r.w*.1,my-L.th*.15,r.w*.035,r.w*.035*bl,0,0,Math.PI*2); cx.fill(); }); }
+    if(edge){ cx.strokeStyle=`rgba(160,120,240,${.5+.25*Math.sin(now*3+i)})`; cx.lineWidth=2; cx.beginPath(); cx.ellipse(mx,my-L.th*.1,r.w*.5*age,r.h*.45*age,0,0,Math.PI*2); cx.stroke();
+      for(let t=0;t<3;t++){ const a=now*.9+t*2.1+i, len=r.w*(.45+.2*Math.sin(now*2+t)); cx.strokeStyle='rgba(8,6,14,.95)'; cx.lineWidth=4; cx.lineCap='round'; cx.beginPath(); cx.moveTo(mx,my-L.th*.1); cx.quadraticCurveTo(mx+Math.cos(a)*len*.6,my+Math.sin(a)*len*.3,mx+Math.cos(a+.4)*len,my+Math.sin(a+.4)*len*.5); cx.stroke(); } } });
+  cx.restore();
+}
+function spiritPos(slot,count,L,now){ const gcx=L.ox+R.N*L.tw/2, span=Math.min(VW*.8,R.N*L.tw*1.25), x=gcx+(count>1?(slot/(count-1)-.5):0)*span, y=L.oy-L.th*1.7+Math.sin(now*1.3+slot)*6+Math.abs(slot-(count-1)/2)*L.th*.35; return {x,y}; }
+function drawSpirits(L,now){
+  if(!G.mode||G.mode.type!=='interlude'||!R) return;
+  const alive=INTER.spirits.slice(G.roomIdx-1), P=G.players[0], D=G.dark;
+  const ps=P?{x:L.ox+(P.pos.x+.5)*L.tw,y:L.oy+(P.pos.y+.5)*L.th}:{x:VW/2,y:VH/2};
+  alive.forEach((sp,slot)=>{
+    let {x,y}=spiritPos(slot,alive.length,L,now), a=.55, s=L.tw*.42;
+    if(slot===0&&D&&D.sac){ const u=clamp((now-D.sac.t0)/.85,0,1), t={x:L.ox+(D.sac.to.x+.5)*L.tw,y:L.oy+(D.sac.to.y+.5)*L.th-L.th*.3}; if(u>=1) return;
+      x=lerp(x,t.x,u*u); y=lerp(y,t.y,u*u)-Math.sin(Math.PI*u)*L.th; a=.55+.45*u; s*=1+u*.4; }
+    const col=THEMES[sp.w-1].pTop;
+    cx.save(); cx.globalAlpha=a;
+    const g=cx.createRadialGradient(x,y,0,x,y,s*1.6); g.addColorStop(0,'rgba(127,184,255,.25)'); g.addColorStop(1,'rgba(127,184,255,0)'); cx.fillStyle=g; cx.fillRect(x-s*1.6,y-s*1.6,s*3.2,s*3.2);
+    cx.fillStyle=rgba(col,.35); rr(x-s/2,y-s*.55,s,s*1.1,s*.18); cx.fill(); cx.strokeStyle='rgba(220,235,255,.5)'; cx.lineWidth=1.2; cx.stroke();
+    cx.fillStyle='rgba(200,215,240,.2)'; cx.beginPath(); cx.moveTo(x-s/2,y+s*.55); for(let i=0;i<=4;i++) cx.lineTo(x-s/2+s*i/4,y+s*.55+(i%2?s*.25:0)*(1+.3*Math.sin(now*4+i))); cx.fill();
+    // blue eyes that follow the little cube
+    const dx=ps.x-x, dy=ps.y-y, dl=Math.hypot(dx,dy)||1, ex=dx/dl*s*.06, ey=dy/dl*s*.06;
+    cx.globalCompositeOperation='lighter'; [-1,1].forEach(sd=>{ const exx=x+sd*s*.2+ex, eyy=y-s*.1+ey; const eg=cx.createRadialGradient(exx,eyy,0,exx,eyy,s*.22); eg.addColorStop(0,'rgba(170,215,255,1)'); eg.addColorStop(.35,'rgba(90,160,255,.8)'); eg.addColorStop(1,'rgba(90,160,255,0)'); cx.fillStyle=eg; cx.beginPath(); cx.arc(exx,eyy,s*.22,0,Math.PI*2); cx.fill(); cx.fillStyle='#EAF4FF'; cx.beginPath(); cx.arc(exx,eyy,s*.05,0,Math.PI*2); cx.fill(); });
+    cx.restore();
+  });
+}
+
+/* ================= THUMB-AWARE SWIPES =================
+   A thumb pivots from the bottom corner of the phone, so its swipes arc instead of running straight:
+   with the right thumb "up" leans up-left, "right" drifts up, "left" drifts down and "down" leans down-right
+   (the left thumb is the mirror image). Instead of cutting the circle at fixed 45° lines, every direction has
+   a centre angle, and a swipe goes to the nearest one. The centres start from that thumb model, can be trained
+   in Settings, and keep learning a little from every confident swipe you make. */
+const SW_CANON={right:0,down:90,left:180,up:-90};
+const SW_PRIOR={R:{right:-10,down:78,left:168,up:-104},L:{right:10,down:102,left:-168,up:-76}};
+const angDiff=(a,b)=>{ let d=((a-b)%360+540)%360-180; return d; };
+function swProfile(hand){ const L=SAVE.swipeLearn||(SAVE.swipeLearn={}); if(!L[hand]) L[hand]={...SW_PRIOR[hand],n:0}; return L[hand]; }
+const swHand=x=>x>innerWidth*.45?'R':'L';
+/* robust angle: skip the first few pixels where the thumb pad rolls onto the glass */
+function swAngle(s,x,y){
+  let o={x:s.x,y:s.y}; for(const p of s.pts){ if(Math.hypot(p.x-s.x,p.y-s.y)>=5){ o=p; break; } }
+  let dx=x-o.x, dy=y-o.y; if(Math.hypot(dx,dy)<6){ dx=x-s.x; dy=y-s.y; }
+  return Math.atan2(dy,dx)*180/Math.PI;
+}
+function swClassify(ang,hand){
+  const P=swProfile(hand); let best=null,bd=1e9,second=1e9;
+  for(const k of ['up','right','down','left']){ const d=Math.abs(angDiff(ang,P[k])); if(d<bd){ second=bd; bd=d; best=k; } else if(d<second) second=d; }
+  return {dir:best,conf:second-bd,err:bd};
+}
+let swSaveT=null;
+function swLearn(ang,hand,c){
+  if(c.err>28||c.conf<18) return;                                   // only learn from clear, confident swipes
+  const P=swProfile(hand), cur=P[c.dir], nxt=cur+angDiff(ang,cur)*.05, off=angDiff(nxt,SW_CANON[c.dir]);
+  P[c.dir]=SW_CANON[c.dir]+clamp(off,-32,32); P.n=(P.n||0)+1;
+  clearTimeout(swSaveT); swSaveT=setTimeout(save,4000);
+}
+/* the game's swipe handler calls this once a finger has moved far enough */
+function fireSwipe(s,dx,dy,x,y){
+  s.used=true; const hand=s.hand||swHand(s.x), ang=swAngle(s,x!=null?x:s.x+dx,y!=null?y:s.y+dy), c=swClassify(ang,hand);
+  s.dir=c.dir; s.j=input(s.dir,s.ev,s.pid)||'guard'; swLearn(ang,hand,c);
+}
+/* vertical thumb swipes are naturally shorter than sideways ones, so they trigger a little sooner */
+function swFarEnough(s,dx,dy){ const d=Math.hypot(dx,dy); if(d>=17) return true; return d>=13&&Math.abs(dy)>Math.abs(dx)*1.2; }
+
+/* ---- Settings → Train your swipes ---- */
+const SWT={i:0,list:[],rec:[],cur:null,xs:[]};
+function swTrainStart(){
+  const dirs=[]; for(let r=0;r<5;r++) dirs.push(...['up','right','down','left'].sort(()=>Math.random()-.5));
+  Object.assign(SWT,{i:0,list:dirs,rec:[],cur:null,xs:[]}); $('swtDone').hidden=true; $('swtArea').hidden=false; swtPrompt(); showOv('swtOv');
+}
+function swtPrompt(){ const d=SWT.list[SWT.i]; $('swtArrow').textContent={up:'↑',down:'↓',left:'←',right:'→'}[d]; $('swtArrow').className='swtarrow';
+  $('swtCount').textContent=`${SWT.i+1} / ${SWT.list.length}`; $('swtMsg').textContent=`Swipe ${d.toUpperCase()} with the thumb you play with`; }
+function swtFinish(){
+  const hand=SWT.xs.length&&SWT.xs.sort((a,b)=>a-b)[SWT.xs.length>>1]<innerWidth*.45?'L':'R', P=swProfile(hand), out=[];
+  for(const k of ['up','right','down','left']){ const a=SWT.rec.filter(r=>r.d===k).map(r=>r.a); if(!a.length) continue;
+    let sx=0,sy=0; a.forEach(v=>{ sx+=Math.cos(v*Math.PI/180); sy+=Math.sin(v*Math.PI/180); }); const m=Math.atan2(sy,sx)*180/Math.PI;
+    P[k]=SW_CANON[k]+clamp(angDiff(m,SW_CANON[k]),-32,32); out.push([k,Math.round(angDiff(P[k],SW_CANON[k]))]); }
+  P.n=(P.n||0)+20; P.trained=true; save();
+  const lean=out.filter(([,o])=>Math.abs(o)>=4).map(([k,o])=>{ const r=P[k]*Math.PI/180, side=(k==='up'||k==='down')?(Math.cos(r)>0?'right':'left'):(Math.sin(r)>0?'down':'up'); return `${k} leans ${Math.abs(o)}° ${side}`; });
+  $('swtArea').hidden=true; $('swtDone').hidden=false;
+  $('swtResult').textContent=`Saved for your ${hand==='R'?'right':'left'} thumb. `+(lean.length?'Your swipes: '+lean.join(', ')+'. The game now expects that.':'Your swipes are nice and straight already.');
+}
+(()=>{ const area=$('swtArea'); let st=null;
+  area.addEventListener('pointerdown',e=>{ e.preventDefault(); st={x:e.clientX,y:e.clientY,pts:[{x:e.clientX,y:e.clientY}]}; area.setPointerCapture&&area.setPointerCapture(e.pointerId); });
+  area.addEventListener('pointermove',e=>{ if(!st) return; st.pts.push({x:e.clientX,y:e.clientY}); });
+  const end=e=>{ if(!st) return; const s=st; st=null; const dx=e.clientX-s.x, dy=e.clientY-s.y; if(Math.hypot(dx,dy)<10) return;
+    const a=swAngle(s,e.clientX,e.clientY), want=SWT.list[SWT.i], ok=Math.abs(angDiff(a,SW_CANON[want]))<70;
+    if(!ok){ $('swtMsg').textContent=`That looked like a different direction. Swipe ${want.toUpperCase()} again.`; $('swtArrow').className='swtarrow bad'; return; }
+    SWT.rec.push({d:want,a}); SWT.xs.push(s.x); $('swtArrow').className='swtarrow good'; if(A.ctx) tone(A.sfx,A.ctx.currentTime,'sine',1320,.05,.002,.08);
+    SWT.i++; if(SWT.i>=SWT.list.length) swtFinish(); else setTimeout(swtPrompt,160); };
+  area.addEventListener('pointerup',end); area.addEventListener('pointercancel',()=>{ st=null; });
+})();
+$('swTrain').onclick=()=>{ ensureAudio(); swTrainStart(); };
+$('swtBack').onclick=()=>{ buildSettings(); showOv('settingsOv'); };
+$('swtAgain').onclick=swTrainStart;
+$('swReset').onclick=()=>{ SAVE.swipeLearn={}; save(); $('swReset').textContent='Reset ✓'; setTimeout(()=>$('swReset').textContent='Reset swipe learning',1500); };
 
 /* ---------------- HUD ---------------- */
 function hud(){
@@ -3360,6 +3775,7 @@ function hud(){
   else if(M.type==='duel'){ const p=G.players; a=`Duel · ${G.bpm} BPM`; b=M.net?`You ${'◆'.repeat(p[NET.me].lives||0)}  ·  Rival ${'◆'.repeat(p[1-NET.me].lives||0)}`:`P1 ${'◆'.repeat(p[0].lives||0)}  ·  P2 ${'◆'.repeat(p[1].lives||0)}`; }
   else if(M.type==='daily'){ a=`Daily · room ${G.roomIdx}/3`; b=(M.mod?MODS[M.mod].split(' · ')[0]:'No modifier')+` · ${G.bpm} BPM`; }
   else if(M.type==='coop'){ a=`${M.net?'Online co-op':'Co-op'} · room ${G.roomIdx}`; b=`${G.bpm} BPM`; }
+  else if(M.type==='interlude'){ a='Interlude · The Silence'; b=`Room ${G.roomIdx}/${M.rooms} · keep moving`; }
   else if(M.type==='studio'){ a=`Studio · ${M.songName}`; b=`Room ${G.roomIdx} · ${Math.round(M.bpm*10)/10} BPM`; }
   else if(M.type==='ascent'){ a=`Ascent · floor ${G.roomIdx}${G.guardian?' · Guardian':''}`; b=G.guardian?(R&&R.boss?`HP ${R.boss.hp}/${R.boss.max}`:''):`Beats ${G.roomBeats}/${G.budget} · ${G.bpm} BPM`; }
   else { a=`Room ${G.roomIdx}`; b=`${G.bpm} BPM`; }
@@ -3384,7 +3800,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv'];
+const OVS=['swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -3393,13 +3809,14 @@ const notesTxt=()=>'♪ '+SAVE.notes.toLocaleString();
 function fadeMusic(){ if(!A.ctx) return; A.music.gain.setTargetAtTime(0,A.ctx.currentTime,.4); }
 function toMenu(ov='menuOv'){
   if(A.ctx&&A.ctx.state==='suspended') A.ctx.resume();
-  if(G.state!=='menu') fadeMusic(); stopStudioAudio();
+  if(G.state!=='menu') fadeMusic(); stopStudioAudio(); hideTalk(); hideCine();
   G=visualDefaults({state:'menu',players:[mkPlayer(0)]}); R=null; setTheme(THEMES[Math.min(WORLDS-1,SAVE.world-1)]);
   hint('');
   if(ov==='menuOv') buildMenu(); else if(ov==='hardOv') buildHard(); else if(ov==='worldsOv') buildWorlds(); else if(ov==='shopOv') buildShop(); else if(ov==='settingsOv') buildSettings();
   showOv(ov);
 }
 function nextUp(){
+  if(SAVE.interOpen&&!SAVE.interDone) return {w:6,l:'I'};
   for(let w=1;w<=SAVE.world;w++){ for(let l=1;l<=LEVELS_PER_WORLD;l++) if(!(SAVE.stars[`${w}-${l}`]>0)) return {w,l}; if(!(SAVE.stars[`${w}-B`]>0)) return {w,l:'B'}; }
   let best=null; for(let w=1;w<=SAVE.world;w++) for(let l=1;l<=LEVELS_PER_WORLD;l++){ const s=SAVE.stars[`${w}-${l}`]||0; if(s<3&&(!best||s<best.s)) best={w,l,s}; } return best; }
 function untilMidnight(){ const n=new Date(), m=new Date(n); m.setHours(24,0,0,0); const mins=Math.ceil((m-n)/60000); return `${Math.floor(mins/60)}h ${mins%60}m`; }
@@ -3408,8 +3825,8 @@ function buildMenu(){
   const nu=nextUp(), fresh=totalStars()===0;
   $('mContinue').hidden=!nu;
   if(nu){ $('mContTitle').textContent=fresh?'Start playing':'Continue';
-    $('mContSub').textContent=nu.l==='B'?`Boss · ${BOSS[nu.w-1]}`:`${nu.w}-${nu.l} ${LEVEL_NAMES[nu.w-1][nu.l-1]}${fresh?' · learn the beat':''}`;
-    $('mContinue').onclick=()=>startRun(nu.l==='B'?modeFor('boss',nu.w):modeFor('level',nu.w,nu.l)); }
+    $('mContSub').textContent=nu.l==='I'?'Interlude · The Silence':nu.l==='B'?`Boss · ${BOSS[nu.w-1]}`:`${nu.w}-${nu.l} ${LEVEL_NAMES[nu.w-1][nu.l-1]}${fresh?' · learn the beat':''}`;
+    $('mContinue').onclick=()=>startRun(nu.l==='I'?modeFor('interlude'):nu.l==='B'?modeFor('boss',nu.w):modeFor('level',nu.w,nu.l)); }
   $('mLevelsMeta').innerHTML=`World ${SAVE.world}<br>◆ ${levelStars()}/${WORLDS*27}`;
   const d=dailyInfo(), done=SAVE.daily.date===d.key;
   $('mDailySub').textContent=d.mod?MODS[d.mod]:'No modifier today. Three rooms, one run.';
@@ -3426,18 +3843,19 @@ const starStr=n=>`<span class="stars"><i>${'◆'.repeat(n)}</i>${'◇'.repeat(3-
 function worldStars(w){ let s=0; for(let l=1;l<=LEVELS_PER_WORLD;l++) s+=SAVE.stars[`${w}-${l}`]||0; return s+(SAVE.stars[`${w}-B`]||0); }
 function buildWorlds(){
   $('walletW').textContent=notesTxt();
-  $('worldList').innerHTML=THEMES.map((th,i)=>{ const w=i+1, open=w<=SAVE.world;
-    const sec=w===1?'<div class="wsec">Book I · The Floating Rooms</div>':w===7?'<div class="wsec">Book II · The Far Shores</div>':'';
+  $('worldList').innerHTML=THEMES.map((th,i)=>{ const w=i+1, open=w<=SAVE.world||SAVE.devAll;
+    const interOk=SAVE.interOpen||SAVE.interDone||SAVE.world>=7||SAVE.devAll;
+    const sec=w===1?'<div class="wsec">Book I · The Floating Rooms</div>':w===7?`<button class="mode inter" data-inter="1" type="button" ${interOk?'':'disabled'}><b>Interlude · The Silence</b><small>${interOk?'Six grey rooms and something that follows. Keep moving.':'Beat The Unfolding to find out what waits past the sky'}</small><span class="meta">${SAVE.interDone?'◆ cleared':''}</span></button><div class="wsec">Book II · The Far Shores</div>`:'';
     return sec+`<button class="mode" data-w="${w}" type="button" ${open?'':'disabled'} style="border-left:4px solid ${th.acc}"><b>${w}. ${th.name}</b><small>${open?(isRemix(w)?'Remix: ':'New: ')+WORLD_MECH[i].map(k=>MECH_NAMES[k]).join(', ')+' · ♪ '+WORLD_SONGS[i].n:`Beat ${BOSS[i-1]} to unlock`}</small><span class="meta">◆ ${worldStars(w)}/27</span></button>`; }).join('');
-  $('worldList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ buildLevels(+b.dataset.w); showOv('levelsOv'); });
+  $('worldList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ if(b.dataset.inter){ startRun(modeFor('interlude')); return; } buildLevels(+b.dataset.w); showOv('levelsOv'); });
 }
 let curWorld=1;
-function levelOpen(w,l){ return l===1||(SAVE.stars[`${w}-${l-1}`]||0)>0; }
-function bossOpen(w){ for(let l=1;l<=LEVELS_PER_WORLD;l++) if(!(SAVE.stars[`${w}-${l}`]>0)) return false; return true; }
+function levelOpen(w,l){ return SAVE.devAll||l===1||(SAVE.stars[`${w}-${l-1}`]||0)>0; }
+function bossOpen(w){ if(SAVE.devAll) return true; for(let l=1;l<=LEVELS_PER_WORLD;l++) if(!(SAVE.stars[`${w}-${l}`]>0)) return false; return true; }
 function buildLevels(w){
   curWorld=w; const th=THEMES[w-1]; setTheme(th); R=null;
   $('lEyebrow').textContent='World '+w; $('lTitle').textContent=th.name; $('lStars').textContent=`◆ ${worldStars(w)}/27`;
-  $('lIntro').textContent=`♪ World song: ${WORLD_SONGS[w-1].n}. Each level adds an instrument, and the boss plays it as a full symphony. `+WORLD_MECH[w-1].map(k=>TIPS[k]).join(' ');
+  $('lIntro').innerHTML=`<span class="wlore">${LORE.worlds[w-1]}</span>`; $('lIntro').append(`♪ World song: ${WORLD_SONGS[w-1].n}. Each level adds an instrument, and the boss plays it as a full symphony. `+WORLD_MECH[w-1].map(k=>TIPS[k]).join(' '));
   let h=''; for(let l=1;l<=LEVELS_PER_WORLD;l++){ const open=levelOpen(w,l), s=SAVE.stars[`${w}-${l}`]||0;
     const nx=open&&!s; h+=`<button class="lvl${nx?' next':''}" data-l="${l}" type="button" ${open?'':'disabled'}><span class="n">${w}-${l}</span><span class="nm">${LEVEL_NAMES[w-1][l-1]}</span><span class="trk">${l===1?'♪ melody':'+ '+INST[l]}</span>${starStr(s)}</button>`; }
   const bo=bossOpen(w), bs=SAVE.stars[`${w}-B`]||0;
@@ -3447,7 +3865,7 @@ function buildLevels(w){
 }
 function buildHard(){
   let hs=0; for(let i=1;i<=12;i++) hs+=SAVE.stars['H-'+i]||0; $('hStars').textContent=`◆ ${hs}/36`;
-  let h=''; for(let i=1;i<=12;i++){ const s=SAVE.stars['H-'+i]||0, open=i<=3||(SAVE.stars['H-'+(i-1)]||0)>0, sid=i%3===0?'boss'+Math.min(6,2+Math.ceil(i/3)):STYLE_IDS[hashStr('hs'+i)%STYLE_IDS.length];
+  let h=''; for(let i=1;i<=12;i++){ const s=SAVE.stars['H-'+i]||0, open=SAVE.devAll||i<=3||(SAVE.stars['H-'+(i-1)]||0)>0, sid=i%3===0?'boss'+Math.min(6,2+Math.ceil(i/3)):STYLE_IDS[hashStr('hs'+i)%STYLE_IDS.length];
     h+=`<button class="lvl hard${open&&!s?' next':''}" data-h="${i}" type="button" ${open?'':'disabled'} style="--i:${i-1}"><span class="n">H${i}</span><span class="nm">${HARD_NAMES[i-1]}</span><span class="trk">♪ ${STYLES[sid].name}</span>${starStr(s)}</button>`; }
   $('hardGrid').innerHTML=h; $('hardGrid').querySelectorAll('button').forEach(b=>b.onclick=()=>startRun(modeFor('hard',+b.dataset.h)));
 }
@@ -3490,11 +3908,14 @@ function finishRun(){
     const s2=(G.bossHits||0)<=2, s3=perf>=.8; stars=1+(s2?1:0)+(s3?1:0);
     const key=`${M.world}-B`, prev=SAVE.stars[key]||0; G.prevStars=prev;
     notes=(prev===0?100:0)+Math.max(0,stars-prev)*20; SAVE.stars[key]=Math.max(prev,stars);
-    if(SAVE.world<=M.world&&M.world<WORLDS){ SAVE.world=M.world+1; eyebrow='World '+(M.world+1)+' unlocked'; }
-    if(M.world===6&&SAVE.world===7) eyebrow='World 7 unlocked · 10 new worlds await';
+    if(M.world===6&&!SAVE.interDone&&SAVE.world<=6){ SAVE.interOpen=true; eyebrow='Something stirs past the sky…'; }
+    else if(SAVE.world<=M.world&&M.world<WORLDS){ SAVE.world=M.world+1; eyebrow='World '+(M.world+1)+' unlocked'; }
     if(M.world===WORLDS) eyebrow='You finished Pulseform';
     title=`${BOSS[M.world-1]} defeated`;
     crit=[['Defeat the boss',true],[`Take 2 hits or fewer (you took ${G.bossHits||0})`,s2],[`80% perfect (you hit ${Math.round(perf*100)}%)`,s3]];
+  } else if(M.type==='interlude'){
+    stars=3; const first=!SAVE.interDone; SAVE.interDone=true; SAVE.interOpen=true; if(SAVE.world<7) SAVE.world=7; notes=first?150:20;
+    title='Chapter Two'; eyebrow='The Far Shores'; crit=[['Outrun the Silence',true],['Carry the guardians\' song',true],['Keep moving',true]];
   } else if(M.type==='hard'){
     const lim=G.parTotal+Math.max(2,Math.ceil(G.parTotal*.15)), s2=G.beatsTotal<=lim, s3=s.miss===0; stars=1+(s2?1:0)+(s3?1:0);
     const key=`H-${M.idx}`, prev=SAVE.stars[key]||0; G.prevStars=prev; notes=(prev===0?60+M.idx*5:0)+Math.max(0,stars-prev)*20; SAVE.stars[key]=Math.max(prev,stars);
@@ -3520,7 +3941,7 @@ function finishRun(){
   const after=[...unlockedSet()].filter(n=>!before.has(n));
   setTimeout(()=>{
     if(G.mode!==M||G.state!=='done') return;
-    $('rXP').innerHTML=xpLine;
+    $('rXP').innerHTML=xpLine; $('rLore').innerHTML=loreForResult(M); hideTalk(); hideCine();
     $('rEyebrow').textContent=eyebrow; $('rTitle').textContent=title;
     [...$('rStars').children].forEach((el,i)=>{ el.classList.toggle('on',i<stars); el.style.animationDelay=(i*.18)+'s'; });
     $('rCrit').innerHTML=crit.map(([t,ok])=>`<li class="${ok?'ok':''}">${t}</li>`).join('');
@@ -3529,18 +3950,20 @@ function finishRun(){
     $('rUnlock').textContent=after.length?'Unlocked: '+after.join(', '):'';
     let next=null;
     if(M.type==='level') next=M.level<LEVELS_PER_WORLD?modeFor('level',M.world,M.level+1):bossOpen(M.world)?modeFor('boss',M.world):null;
+    else if(M.type==='boss'&&M.world===6&&SAVE.interOpen&&!SAVE.interDone) next=modeFor('interlude');
+    else if(M.type==='interlude') next=modeFor('level',7,1);
     else if(M.type==='boss'&&M.world<WORLDS) next=modeFor('level',M.world+1,1);
     else if(M.type==='hard'&&M.idx<12) next=modeFor('hard',M.idx+1);
     $('rNext').hidden=!next; $('rNext').onclick=()=>next&&startRun(next);
     $('rRetry').onclick=()=>startRun(M.type==='daily'?modeFor('daily'):M);
     $('rMenu').textContent=M.type==='daily'?'Menu':'Map';
-    $('rMenu').onclick=()=>{ if(M.type==='hard'){ toMenu('hardOv'); } else if(M.type==='daily') toMenu(); else { toMenu('worldsOv'); buildLevels(M.type==='boss'&&M.world<WORLDS?M.world+1:M.world); showOv('levelsOv'); } };
+    $('rMenu').onclick=()=>{ if(M.type==='interlude'){ toMenu('worldsOv'); return; } if(M.type==='hard'){ toMenu('hardOv'); } else if(M.type==='daily') toMenu(); else { toMenu('worldsOv'); buildLevels(M.type==='boss'&&M.world<WORLDS?M.world+1:M.world); showOv('levelsOv'); } };
     showOv('resultOv',false);
   },900);
 }
 function gameOver(why){
   if(G.state!=='dying'&&G.state!=='playing') return;
-  G.state='over'; fadeMusic();
+  G.state='over'; fadeMusic(); hideTalk(); if(why!=='dark') hideCine();
   const before=unlockedSet();
   const M=G.mode, s=G.stats; let notes=0, best=false;
   if(M.type==='endless'){ notes=Math.floor(G.score/150); if(G.score>SAVE.bestEndless){SAVE.bestEndless=G.score;best=true;} }
@@ -3557,7 +3980,7 @@ function gameOver(why){
   if(M.net&&NET.host&&!G.netOver&&why!=='left'&&why!=='quit') netSend({t:'over',why,w:G.winner});
   if(M.net&&why==='quit') netSend({t:'leave'});
   $('oWhy').textContent=M.net?(M.type==='duel'?'Online duel':'Online co-op'):M.type==='ascent'?(best?'New best climb':'Ascent'):M.type==='studio'?'Studio · '+M.songName:M.type==='duel'?'Duel':best?'New best':(M.type==='level'||M.type==='boss'||M.type==='hard')?'Level failed':'Run ended';
-  $('oTitle').textContent=M.net&&why==='duel'?(G.winner===NET.me?'You win!':`${NET.peerName||'Your rival'} wins`):why==='left'?`${NET.peerName||'Your friend'} left the match`:why==='duel'?`Player ${(G.winner||0)+1} wins!`:M.type==='ascent'&&why==='harmony'?`The climb ends on floor ${G.floorBest||1}`:why==='song'?'Song complete!':({fell:'You fell into the void',harmony:'Out of harmony',burn:'Scorched by a fire vent',budget:'Out of beats',quit:'Run ended early'}[why]||'Run ended');
+  $('oTitle').textContent=M.net&&why==='duel'?(G.winner===NET.me?'You win!':`${NET.peerName||'Your rival'} wins`):why==='left'?`${NET.peerName||'Your friend'} left the match`:why==='duel'?`Player ${(G.winner||0)+1} wins!`:M.type==='ascent'&&why==='harmony'?`The climb ends on floor ${G.floorBest||1}`:why==='song'?'Song complete!':why==='dark'?'The darkness caught you':M.type==='interlude'&&why==='fell'?'You fell into the dark':({fell:'You fell into the void',harmony:'Out of harmony',burn:'Scorched by a fire vent',budget:'Out of beats',quit:'Run ended early'}[why]||'Run ended');
   $('oScore').textContent=G.score.toLocaleString();
   if(M.type==='level'||M.type==='hard'){ $('oRoomsL').textContent='Beats used'; $('oRooms').textContent=G.roomBeats+'/'+G.budget; }
   else if(M.type==='boss'){ $('oRoomsL').textContent='Boss HP left'; $('oRooms').textContent=R&&R.boss?R.boss.hp+'/'+R.boss.max:'–'; }
@@ -3573,7 +3996,7 @@ function gameOver(why){
   $('oRetry').onclick=()=>startRun(M.type==='daily'?modeFor('daily'):M); $('oRetry').textContent=M.type==='duel'?'Rematch':'Try again';
   $('oMenu').textContent=(M.type==='level'||M.type==='boss'||M.type==='hard')?'Map':'Menu';
   if(M.type==='studio') $('oMenu').textContent='Studio';
-  $('oMenu').onclick=()=>{ if(M.type==='hard'){ toMenu('hardOv'); return; } if(M.type==='studio'){ toMenu(); showStudio(); return; } if(M.type==='level'||M.type==='boss'){ toMenu('worldsOv'); buildLevels(M.world); showOv('levelsOv'); } else toMenu(); };
+  $('oMenu').onclick=()=>{ if(M.type==='hard'){ toMenu('hardOv'); return; } if(M.type==='interlude'){ toMenu('worldsOv'); return; } if(M.type==='studio'){ toMenu(); showStudio(); return; } if(M.type==='level'||M.type==='boss'){ toMenu('worldsOv'); buildLevels(M.world); showOv('levelsOv'); } else toMenu(); };
   if(M.net){ const rt=$('oRetry');
     if(NET.conn&&NET.host){ rt.textContent=M.type==='duel'?'Rematch':'Play again'; rt.onclick=()=>netStart(M.type); }
     else if(NET.conn){ rt.textContent='Waiting for host'; rt.onclick=()=>hint('Waiting for the host to start the next match…',3000); }
@@ -3707,15 +4130,14 @@ addEventListener('keydown',e=>{
 });
 /* swipe controls: judged from the moment the finger touches down */
 const SWS=new Map(), SWDONE=[];
-function fireSwipe(s,dx,dy){ s.used=true; s.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up'); s.j=input(s.dir,s.ev,s.pid)||'guard'; }
 addEventListener('pointerdown',e=>{ if(G.state!=='playing'||(!MOB&&SAVE.controls==='pad')||e.target.closest('button,.overlay')) return;
   const pad=e.target.closest('.swipepad'), pid=G.mode&&G.mode.net?NET.me:G.mode&&G.mode.coop?(pad?+pad.dataset.p:(e.clientX<innerWidth/2?0:1)):0;
-  SWS.set(e.pointerId,{x:e.clientX,y:e.clientY,ev:{timeStamp:e.timeStamp},pid,used:false,pts:[{x:e.clientX,y:e.clientY}]}); },{passive:true});
+  SWS.set(e.pointerId,{x:e.clientX,y:e.clientY,ev:{timeStamp:e.timeStamp},pid,used:false,pts:[{x:e.clientX,y:e.clientY}],hand:G.mode&&G.mode.coop&&!G.mode.net?(pid===0?'L':'R'):swHand(e.clientX)}); },{passive:true});
 addEventListener('pointermove',e=>{ const s=SWS.get(e.pointerId); if(!s) return;
   const lp=s.pts[s.pts.length-1]; if(Math.hypot(e.clientX-lp.x,e.clientY-lp.y)>3){ s.pts.push({x:e.clientX,y:e.clientY}); if(s.pts.length>60) s.pts.splice(1,1); }
-  if(s.used) return; const dx=e.clientX-s.x, dy=e.clientY-s.y; if(Math.hypot(dx,dy)<18) return; fireSwipe(s,dx,dy); },{passive:true});
+  if(s.used) return; const dx=e.clientX-s.x, dy=e.clientY-s.y; if(!swFarEnough(s,dx,dy)) return; fireSwipe(s,dx,dy,e.clientX,e.clientY); },{passive:true});
 ['pointerup','pointercancel'].forEach(t=>addEventListener(t,e=>{ const s=SWS.get(e.pointerId); if(!s) return; SWS.delete(e.pointerId);
-  const dx=e.clientX-s.x, dy=e.clientY-s.y; if(!s.used&&t==='pointerup'&&Math.hypot(dx,dy)>=9){ s.pts.push({x:e.clientX,y:e.clientY}); fireSwipe(s,dx,dy); }
+  const dx=e.clientX-s.x, dy=e.clientY-s.y; if(!s.used&&t==='pointerup'&&Math.hypot(dx,dy)>=8){ s.pts.push({x:e.clientX,y:e.clientY}); fireSwipe(s,dx,dy,e.clientX,e.clientY); }
   if(s.pts.length>1||s.used){ s.endT=G.now; SWDONE.push(s); } },{passive:true}));
 document.addEventListener('contextmenu',e=>{ if(G.state==='playing') e.preventDefault(); });
 $('mDaily').onclick=()=>startRun(modeFor('daily'));
