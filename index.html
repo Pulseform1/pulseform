@@ -4566,7 +4566,7 @@ const isChase=M=>M&&M.type==='level'&&M.world===DARK_W;
 /* ---- the chase in each level ---- */
 function chaseStart(){
   const M=G.mode; if(!R) return;
-  if(M.type==='boss'&&M.world===DARK_W){ bossDarkInit(); return; }
+  if(M.type==='boss'&&M.world===DARK_W) return;   // the Black Tide boss no longer swallows tiles
   if(!isChase(M)) return;
   darkInit(); const D=G.dark, l=M.level; D.spent=true; D.chase=true; D.dist=chaseDist();
   D.every=l<=2?3:2; D.head=l===1?8:l<=4?6:5; D.surge=l>=7?4:5;
