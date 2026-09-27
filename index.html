@@ -110,7 +110,7 @@ body.swipe-only .pads{display:none}
 
 /* overlays */
 /* party sidebar: a small card on the left while you are in an online party */
-.partybar{position:fixed;z-index:6;left:max(12px,env(safe-area-inset-left,0px));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;width:112px;padding:14px 10px;border-radius:18px;background:var(--panel);border:1px solid var(--line);color:var(--ink);font:inherit;text-align:center;cursor:pointer;pointer-events:auto;box-shadow:0 10px 30px rgba(10,8,30,.35);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.partybar{position:fixed;z-index:6;right:max(12px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;width:112px;padding:14px 10px;border-radius:18px;background:var(--panel);border:1px solid var(--line);color:var(--ink);font:inherit;text-align:center;cursor:pointer;pointer-events:auto;box-shadow:0 10px 30px rgba(10,8,30,.35);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .partybar:disabled{cursor:default;pointer-events:none}
 .pb-dot{width:10px;height:10px;border-radius:50%;background:#7EE0A8;box-shadow:0 0 0 4px rgba(126,224,168,.18);animation:pbPulse 1.6s ease-in-out infinite}
 .partybar.wait .pb-dot{background:var(--lantern);box-shadow:0 0 0 4px rgba(255,209,102,.18)}
@@ -123,13 +123,10 @@ body.swipe-only .pads{display:none}
   .partybar{top:auto;bottom:max(12px,env(safe-area-inset-bottom,0px));transform:none;flex-direction:row;width:auto;max-width:calc(100% - 24px);padding:7px 12px;gap:8px;border-radius:999px}
   .pb-code{font-size:13px} .pb-sub{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
   /* in a run, shrink to a slim tab on the left edge so it never covers the HUD or the pads */
-  body:not(.in-menu) .partybar{left:max(6px,env(safe-area-inset-left,0px));bottom:auto;top:50%;transform:translateY(-50%);flex-direction:column;padding:10px 5px;gap:7px;border-radius:12px;opacity:.7}
+  body:not(.in-menu) .partybar{right:max(6px,env(safe-area-inset-right,0px));bottom:auto;top:50%;transform:translateY(-50%);flex-direction:column;padding:10px 5px;gap:7px;border-radius:12px;opacity:.7}
   body:not(.in-menu) .partybar .pb-lbl{writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px}
   body:not(.in-menu) .partybar .pb-code,body:not(.in-menu) .partybar .pb-sub,body:not(.in-menu) .partybar .pb-skins{display:none}
-  body.inparty .beatbar{left:calc(max(6px,env(safe-area-inset-left,0px)) + 34px)}
 }
-/* the party tab and the beat bars both live on the left: the bars move over to make room */
-@media (min-width:1041px){ body.inparty .beatbar{left:calc(max(12px,env(safe-area-inset-left,0px)) + 124px)} }
 @media (prefers-reduced-motion:reduce){.pb-dot{animation:none}}
 /* 5-second countdown before a party match */
 .countdown{position:fixed;inset:0;z-index:7;display:grid;place-content:center;justify-items:center;gap:6px;pointer-events:none;text-shadow:0 4px 24px rgba(10,8,30,.55)}
@@ -1109,6 +1106,7 @@ button:disabled{opacity:.55;cursor:default}
         <button class="btn ghost" id="nLeave" type="button">Leave party</button>
       </div>
     </div>
+    <div id="localPlay">
     <div class="eyebrow" style="margin-top:4px">Same device</div>
     <p style="font-size:14px;margin:0">P1 uses WASD, P2 uses the arrow keys. On a phone, each player gets a swipe pad.</p>
     <div class="modes">
@@ -1117,6 +1115,7 @@ button:disabled{opacity:.55;cursor:default}
       <button class="mode" id="cDuel" type="button"><b>Duel</b><small>Side-by-side platforms. Hit your blaster pad to blow holes under your rival. First to knock the other off 3 times wins.</small><span class="meta">⚔</span></button>
       <button class="mode" id="cRaid" type="button"><b>Boss Raid</b><small>Fight every boss back to back, together. Two blaster pads, either of you can fire. Beat a boss to heal.</small><span class="meta" id="cRaidMeta">☠</span></button>
       <button class="mode" id="cTether" type="button"><b>Tether</b><small>Tied together by a glowing cord. Stretch it past 4 tiles and it snaps you back. Stay side by side for double points.</small><span class="meta" id="cTetherMeta">∞</span></button>
+    </div>
     </div>
   </div>
 </section>
@@ -3075,7 +3074,11 @@ function spawnBlaster(owner){
   const dist=new Map([[from.y*N+from.x,0]]), q=[from];
   while(q.length){ const s=q.shift(), d=dist.get(s.y*N+s.x); if(d>=9) continue; for(const k of DK){ const r=simMove(R,s.x,s.y,k,true); if(!r) continue; const kk=r.y*N+r.x; if(!dist.has(kk)){ dist.set(kk,d+1); q.push({x:r.x,y:r.y}); } } }
   const rapid=R.arena==='duel'&&P&&P.rapid>0; if(rapid) P.rapid--;
-  let cand=[...dist.entries()].filter(([i,d])=>(rapid?d>=1&&d<=2:d>=3&&d<=7)&&plainTile(R.cells[i])&&!R.cells[i].dark&&side(i));
+  // in a raid each player's pad goes on their own share of the tiles: every screen places its own player's pad,
+  // so two pads chosen at the same moment could otherwise land on the same tile and one would vanish
+  const np=G.players.length, mine=i=>R.arena==='duel'||np<2||((i%N)+((i/N)|0))%np===owner%np;
+  let cand=[...dist.entries()].filter(([i,d])=>(rapid?d>=1&&d<=2:d>=3&&d<=7)&&plainTile(R.cells[i])&&!R.cells[i].dark&&side(i)&&mine(i)&&!R.cells[i].blaster);
+  if(!cand.length) cand=[...dist.entries()].filter(([i,d])=>(rapid?d>=1&&d<=2:d>=3&&d<=7)&&plainTile(R.cells[i])&&!R.cells[i].dark&&side(i)&&!R.cells[i].blaster);
   if(!cand.length) cand=[...dist.entries()].filter(([i,d])=>d>=1&&plainTile(R.cells[i])&&side(i));
   if(!cand.length) return;
   const i=cand[ri(cand.length)][0], c=R.cells[i]; c.blaster=owner+1; c.blastT=G.now; netLocal({t:'bl',o:owner,i});
@@ -3267,7 +3270,7 @@ const netMe=()=>({name:ensureName(),skin:SAVE.skin,land:SAVE.land,rank:myRank()}
 const netMateAt=i=>NET.order&&NET.mates[NET.order[i]];
 function netUI(){
   setTimeout(partyBarSync,0);
-  const live=!!NET.peer; $('netIdle').hidden=live; $('netLive').hidden=!live; netRoster(); frCoopInvites();
+  const live=!!NET.peer; $('netIdle').hidden=live; $('netLive').hidden=!live; $('localPlay').hidden=live; netRoster(); frCoopInvites();
   $('nShow').textContent=NET.code||'····';
   const n=netCount(), on=netLive();
   $('nModes').hidden=!(on&&NET.host);
@@ -3304,19 +3307,25 @@ function netErr(e){ return e&&e.type==='network'||e&&e.type==='server-error'?'Co
 function netWireHost(c){
   c.on('open',()=>{
     const used=new Set(NET.conns.map(x=>x.slot)); let slot=0; for(let s=1;s<PARTY_MAX;s++) if(!used.has(s)){ slot=s; break; }
-    if(!slot||netMatch()){ try{ c.send({t:slot?'busy':'full'}); }catch(e){} setTimeout(()=>{ try{ c.close(); }catch(e){} },400); return; }
+    // turned away: say why now and again when they say hello (a message sent the moment the line opens can be lost)
+    if(!slot||netMatch()){ c.refused=slot?'busy':'full'; try{ c.send({t:c.refused}); }catch(e){} setTimeout(()=>{ try{ c.close(); }catch(e){} },1500); return; }
     NET.conns.push({c,slot,last:performance.now()}); try{ c.send({t:'welcome',slot}); }catch(e){}
   });
   c.on('data',o=>netFromGuest(c,o));
   c.on('close',()=>netGuestGone(c)); c.on('error',()=>netGuestGone(c));
 }
 function netFromGuest(c,o){
+  if(c.refused){ if(o&&o.t==='hi') try{ c.send({t:c.refused}); }catch(e){} return; }
   const x=NET.conns.find(q=>q.c===c); if(!x||!o||!o.t) return; x.last=performance.now();
   if(o.t==='bye'){ try{ c.close(); }catch(e){} netGuestGone(c); return; }
   if(o.t==='ping'){ try{ c.send({t:'pong',a:o.a,h:performance.now()}); }catch(e){} return; }
-  if(o.t==='hi'){ const fresh=!NET.mates[x.slot]; NET.mates[x.slot]={name:cleanName(o.name)||'Friend',skin:o.skin||'classic',land:o.land,rank:clamp(+o.rank||0,0,RANK_MAX)};
+  if(o.t==='hi'){ const fresh=!NET.mates[x.slot];
+    // welcome them again, now that we know they are listening: a welcome sent the moment the line opens can be lost
+    try{ c.send({t:'welcome',slot:x.slot}); }catch(e){}
+    NET.mates[x.slot]={name:cleanName(o.name)||'Friend',skin:o.skin||'classic',land:o.land,rank:clamp(+o.rank||0,0,RANK_MAX)};
     netRosterSend(); netRosterChanged(fresh?NET.mates[x.slot]:null); return; }
   // a game event: stamp it with that player's number in the match, pass it on to everyone else, then play it here
+  if(!G.mode||!G.mode.net||(o.m!=null&&o.m!==G.mode.seed)) return;   // from a match that has already ended
   const i=NET.order?NET.order.indexOf(x.slot):-1; if(i<0) return; o.p=i;
   for(const q of NET.conns) if(q.c!==c&&q.c.open) try{ q.c.send(o); }catch(e){}
   netData(o);
@@ -3353,15 +3362,22 @@ function netFromHost(o){
     case 'full': NET.refused=`That party is full (${PARTY_MAX} players).`; netStatus(NET.refused,true); $('nStatusIdle').textContent=NET.refused; setTimeout(()=>netLeave(),1500); return;
     case 'busy': NET.refused='That party is in the middle of a match. Try again when it ends.'; netStatus(NET.refused,true); $('nStatusIdle').textContent=NET.refused; setTimeout(()=>netLeave(),1800); return;
     case 'bye': if(NET.conn){ const c=NET.conn; try{ c.close(); }catch(e){} netClosed(c); } return;
-    case 'start': netBegin(o.type,o.seed,o.at-NET.off,o.order); return;
-    case 'gone': netPlayerGone(o.p,o.n); return;
+    case 'start': { const now=performance.now(), lead=o.hn!=null?o.at-o.hn:PARTY_COUNT*1000; let at=o.at-NET.off;
+      // no clock samples yet, or an offset that puts the start in the past or far away: count from arrival instead
+      if(!NET.samples.length||at<now+300||at>now+lead+1500) at=now+lead-Math.min(NET.rtt<1e9?NET.rtt/2:80,1000);
+      netBegin(o.type,o.seed,at,o.order); return; }
+    case 'gone': if(!G.mode||o.m==null||o.m===G.mode.seed) netPlayerGone(o.p,o.n); return;
   }
   netData(o);
 }
 function netPing(){ netSend({t:'ping',a:performance.now()}); }
 function netPingBurst(n){ let i=0; const t=setInterval(()=>{ netPing(); if(++i>=n) clearInterval(t); },100); }
+/* in-match messages carry the match they belong to (its seed): a move or fall sent in the last moments of the
+   previous match can still be on its way when the next one starts, and must not move anyone in the new one */
+const NET_MATCH_T={mv:1,miss:1,fall:1,resp:1,burn:1,snap:1,leave:1,hm:1,bt:1,pu:1,bl:1,over:1,gone:1};
 /* host: to every guest; guest: to the host */
 function netSend(o){
+  if(NET_MATCH_T[o.t]&&o.m==null&&G.mode&&G.mode.net) o.m=G.mode.seed;
   if(NET.host){ for(const q of NET.conns) if(q.c.open) try{ q.c.send(o); }catch(e){} return; }
   const c=NET.conn; if(c&&c.open) try{ c.send(o); }catch(e){}
 }
@@ -3412,11 +3428,11 @@ function netStart(type){
   const order=[0].concat(netMateList().map(m=>m.s));
   if((type==='duel'||type==='tether')&&order.length!==2){ netStatus(`${type==='duel'?'Duel':'Tether'} is for exactly 2 players. Try Journey or Boss Raid.`,true); return; }
   const seed=Math.floor(Math.random()*1e9).toString(36), at=performance.now()+PARTY_COUNT*1000;
-  netSend({t:'start',type,seed,at,order});
+  netSend({t:'start',type,seed,at,order,hn:performance.now()});
   netBegin(type,seed,at,order);
 }
 function netBegin(type,seed,atPerf,order){
-  if(!NET.host&&order&&!order.includes(NET.slot)){ netStatus('A match started just as you joined. You\'ll be in the next one.'); return; }
+  if(!NET.host&&order&&(!NET.slot||!order.includes(NET.slot))){ netStatus('A match started just as you joined. You\'ll be in the next one.'); return; }
   NET.order=order||[0,1]; NET.me=Math.max(0,NET.order.indexOf(NET.slot));
   const M=modeFor(type), n=NET.order.length; M.net=true; M.seed=seed; M.atPerf=atPerf; M.n=n; NET.q={}; NET.bt={}; if(!NET.host) netPingBurst(10);
   if(M.coop&&!M.duel&&n>2) M.harmony+=n-2;   // more players, a little more Harmony to share
@@ -3427,6 +3443,7 @@ function netBegin(type,seed,atPerf,order){
 function netData(o){
   if(!o||!o.t) return;
   if(!G.mode||!G.mode.net||!R) return;
+  if(NET_MATCH_T[o.t]&&o.m!=null&&o.m!==G.mode.seed) return;   // left over from an earlier match
   if(G.state!=='playing'&&G.state!=='dying'&&o.t!=='over') return;
   switch(o.t){
     case 'mv': case 'miss': case 'fall': case 'resp': case 'burn': case 'snap': { const P=G.players[o.p]; if(!P||P.gone||o.p===NET.me) return; (NET.q[o.p]||(NET.q[o.p]=[])).push(o); netFlush(); break; }
