@@ -406,30 +406,6 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 #nCode:focus{outline:2px solid #FFD166;outline-offset:1px}
 .coderow{display:flex;align-items:center;gap:10px}.pcode{font:700 30px var(--display);letter-spacing:.18em;color:#FFD166}
 .small.err,#nStatus.err,#aMsg.err{color:#FFB3A8}
-.roster{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:stretch}
-.slot{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 6px 10px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);text-align:center;min-width:0}
-.slot .skprev{width:64px;height:64px;margin:10px 0 0}
-.slot b{font:600 14px var(--display);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.slot .rk{font-size:11.5px;color:var(--rc,#C9D1E0)}
-.slot .tag{position:absolute;top:6px;left:8px;font:700 10px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
-.slot.me{border-color:rgba(255,209,102,.55)}
-.slot.friend.in{border-color:rgba(156,255,216,.75);background:rgba(156,255,216,.08);box-shadow:0 0 0 1px rgba(156,255,216,.25),0 0 22px rgba(156,255,216,.18);animation:slotIn .5s cubic-bezier(.34,1.56,.64,1)}
-.slot .st{margin-top:3px;font:700 11.5px var(--display);color:#9CFFD8;display:flex;align-items:center;gap:5px}
-.slot .st i{width:7px;height:7px;border-radius:50%;background:#9CFFD8;box-shadow:0 0 8px #9CFFD8}
-.slot.empty{border-style:dashed;justify-content:center;color:var(--ink-3);font-size:12.5px;min-height:120px}
-.slot.empty .dots::after{content:'…';animation:dots 1.4s steps(4) infinite;display:inline-block;width:1em;text-align:left}
-.vs{align-self:center;font:700 13px var(--display);color:var(--ink-3)}
-.roster.full .vs{color:#9CFFD8}
-.pcount{grid-column:1/-1;text-align:center;font:700 13px var(--display);letter-spacing:.04em;padding:6px;border-radius:10px;background:rgba(255,255,255,.06);color:var(--ink-3)}
-.roster.full .pcount{background:rgba(156,255,216,.14);color:#9CFFD8}
-@keyframes slotIn{0%{transform:scale(.85);opacity:0}100%{transform:scale(1);opacity:1}}
-@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
-.p2pick{display:grid;gap:6px}
-.p2row{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
-.p2row button{flex:0 0 auto;width:54px;height:58px;padding:0;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);cursor:pointer;display:grid;place-items:center}
-.p2row button.on{border-color:#B8F2E6;box-shadow:0 0 0 2px rgba(184,242,230,.6);background:rgba(184,242,230,.12)}
-.p2row .skprev{width:48px;height:48px;margin:0}
-@media (prefers-reduced-motion:reduce){.slot.friend.in,.slot.empty .dots::after{animation:none}}
 .toast{position:fixed;left:50%;top:16px;z-index:60;transform:translate(-50%,-40px);opacity:0;background:rgba(28,24,62,.95);border:1px solid rgba(255,209,102,.5);color:#FFD166;font:600 14px var(--display);padding:10px 16px;border-radius:14px;pointer-events:none}
 .toast.show{animation:toastIn 3s ease both}
 @keyframes toastIn{0%{opacity:0;transform:translate(-50%,-40px)}10%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-20px)}}
@@ -992,7 +968,6 @@ button:disabled{opacity:.55;cursor:default}
       </div>
       <div id="netLive" hidden>
         <div class="coderow"><span class="small">Party code</span><b class="pcode" id="nShow">····</b><button class="chip" id="nCopy" type="button">Copy</button></div>
-        <div class="roster" id="nRoster" aria-live="polite"></div>
         <div class="small" id="nStatus"></div>
         <div class="modes" id="nModes" hidden>
           <button class="mode primary" id="nJourney" type="button"><b>Online Journey</b><small>Co-op through endless rooms. Both blocks must reach the door.</small><span class="meta">♪</span></button>
@@ -1007,7 +982,6 @@ button:disabled{opacity:.55;cursor:default}
     <div class="eyebrow" style="margin-top:4px">Same device</div>
     <p style="font-size:14px;margin:0">P1 uses WASD, P2 uses the arrow keys. On a phone, each player gets a swipe pad.</p>
     <div class="modes">
-      <div class="p2pick"><div class="p2head"><span class="small"><b>P2's block</b> · pick any block you own</span></div><div class="p2row" id="p2Row"></div></div>
       <button class="mode primary" id="cJourney" type="button"><b>Journey</b><small>Team up through endless rooms. Both blocks must reach the door.</small><span class="meta" id="cJourneyMeta"></span></button>
       <button class="mode" id="cDuel" type="button"><b>Duel</b><small>Side-by-side platforms. Hit your blaster pad to blow holes under your rival. First to knock the other off 3 times wins.</small><span class="meta">⚔</span></button>
       <button class="mode" id="cRaid" type="button"><b>Boss Raid</b><small>Fight every boss back to back, together. Two blaster pads, either of you can fire. Beat a boss to heal.</small><span class="meta" id="cRaidMeta">☠</span></button>
@@ -1527,8 +1501,7 @@ WORLD_SONGS.push({s:'surf',n:'Tidal Hop'},{s:'reggae',n:'Bog Skank'},{s:'synthwa
 /* ---- cosmetics: rank rewards and signature landing effects ---- */
 SKINS.push(
  {id:'diamond',name:'Diamond',fx:'crystal',top:'#F2FEFF',front:'#7FD8F0',core:'#FFFFFF',rim:true,req:{rank:12},pt:'linear-gradient(135deg,#FFFFFF,#BFF3FF 50%,#E8E0FF)',pf:'linear-gradient(120deg,#7FD8F0,#B8ECFF 55%,#6AC0E0 56%)'},
- {id:'maestro',name:'Maestro',anim:'maestro',top:'#FFF6DA',front:'#15102A',core:'#FFD166',req:{rank:21}},
- {id:'supreme',name:'Supreme Conductor',anim:'supreme',top:'#FFF8FC',front:'#15102A',core:'#FFFFFF',req:{rank:25}});
+ {id:'maestro',name:'Maestro',anim:'maestro',top:'#FFF6DA',front:'#15102A',core:'#FFD166',req:{rank:21}});
 /* every fancy block gets a matching landing effect; owning the block unlocks it */
 const SIG={
  lantern:{n:'Lantern Glow',g:'✹',c:['#FFD166','#FFE7A3','#FF9F3C'],sh:'flame',ring:'#FFD166'},
@@ -1563,23 +1536,20 @@ const SIG={
  resonant:{n:'Resonance',g:'♫',c:['#FFD166','#FFFFFF'],sh:'note',ring:'#FFD166',fx:'waves'},
  star:{n:'Shooting Stars',g:'☄',c:['#FFD166','#FFFFFF','#C9B8FF'],sh:'star5',ring:'#FFD166'},
  diamond:{n:'Diamond Dust',g:'◇',c:['#FFFFFF','#BFF3FF','#E8E0FF'],sh:'shard',ring:'#FFFFFF',fx:'spire'},
- maestro:{n:'Downbeat',g:'♩',c:['#FFD166','#FFF3C4'],sh:null,ring:'#FFD166',fx:'downbeat'},
- supreme:{n:'Grand Finale',g:'♩',c:['#FF7EB6','#FFD166','#B8F2E6','#C9B8FF'],sh:null,ring:'rainbow',fx:'downbeat'}};
+ maestro:{n:'Standing Ovation',g:'♛',c:['#FFD166','#FF7EB6','#B8F2E6','#C9B8FF'],sh:'confetti',ring:'rainbow',fx:'beams'}};
 LANDS.push({id:'match',name:'Match my block',glyph:'⟲',col:'#FFF8EE',price:0,note:'Uses your block\'s signature effect'});
 Object.keys(SIG).forEach(k=>{ const s=SIG[k]; LANDS.push({id:'sig_'+k,name:s.n,glyph:s.g,col:s.c[0],req:{skin:k},sig:k}); });
-SIG.ovation={n:'Standing Ovation',g:'♛',c:['#FFD166','#FF7EB6','#B8F2E6','#C9B8FF'],sh:'confetti',ring:'rainbow',fx:'beams'};   // the Crown's effect (added after the loop so it has no block of its own)
-LANDS.push({id:'crown',name:'Crown',glyph:'♛',col:'#FFD166',req:{rank:18},sig:'ovation'});
+LANDS.push({id:'crown',name:'Crown',glyph:'♛',col:'#FFD166',req:{rank:18},sig:'maestro'});
 
 /* ---- ranks: XP from every run ---- */
 const RANK_TIERS=[
  {n:'Bronze',c:'#D08A52'},{n:'Silver',c:'#C9D1E0'},{n:'Gold',c:'#FFD166'},{n:'Platinum',c:'#8FF0E0'},
  {n:'Diamond',c:'#9FD8FF'},{n:'Master',c:'#C9B8FF'},{n:'Grandmaster',c:'#FF7EB6'},{n:'Maestro',c:'#FFF8EE'}];
-/* Bronze I (0) ... Grandmaster III (20), Maestro (21), Maestro I-III (22-24), Supreme Conductor (25) */
-const RANK_MAESTRO=21, RANK_MAX=25;
+const RANK_MAX=21; // Bronze I (0) ... Grandmaster III (20), Maestro (21)
 const rankXP=n=>n<=0?0:Math.round(120*n+34*n*n);   // total XP needed to reach rank n
 function rankOf(xp){ let n=0; while(n<RANK_MAX&&xp>=rankXP(n+1)) n++; return n; }
-function rankName(n){ if(n>=RANK_MAX) return 'Supreme Conductor'; if(n>RANK_MAESTRO) return 'Maestro '+['I','II','III'][n-RANK_MAESTRO-1]; if(n===RANK_MAESTRO) return 'Maestro'; return RANK_TIERS[Math.floor(n/3)].n+' '+['I','II','III'][n%3]; }
-const rankCol=n=>n>=RANK_MAX?'#FF9CE6':n>=RANK_MAESTRO?(n>RANK_MAESTRO?'#FFE7A0':'#FFF8EE'):RANK_TIERS[Math.min(7,Math.floor(n/3))].c;
+function rankName(n){ if(n>=RANK_MAX) return 'Maestro'; return RANK_TIERS[Math.floor(n/3)].n+' '+['I','II','III'][n%3]; }
+const rankCol=n=>RANK_TIERS[Math.min(7,Math.floor(n/3))].c;
 const rankReward=n=>60+n*25;
 
 /* ---- daily quests ---- */
@@ -1762,8 +1732,7 @@ function solve(room){
 /* ---------------- RUN STATE ---------------- */
 let G={state:'menu'}, R=null;
 function mkPlayer(id){
-  const p2=SAVE.p2skin&&ownsSkin(SAVE.p2skin)?SAVE.p2skin:(SAVE.skin==='mint'?'coral':'mint');   // player 2 on the same device uses the block picked in Play together
-  const sk=id===0?skinById(SAVE.skin):skinById(p2);
+  const sk=id===0?skinById(SAVE.skin):skinById(SAVE.skin==='mint'?'coral':'mint');
   return {id,pos:{x:0,y:0},prevPos:null,anim:null,done:false,dead:false,skin:sk,land:landById(id===0?SAVE.land:(SAVE.land==='stars'?'petals':'stars')),trailPts:[],greyT:-9,flashT:-9,flashC:'#FFF8EE'};
 }
 function visualDefaults(o){ return Object.assign(o,{lfx:[],lastBeatT:-9,waveT:-9,sweepT:-9,flashT:-9,flashC:'#FFF8EE',goT:-9,fireT:-9,count:null,banner:null,nudge:{x:0,y:0},skyMix:0,parts:[],pops:[],ripples:[],shocks:[],rays:[],bi:null,beats:[],tier:0,restDim:0}); }
@@ -2482,13 +2451,9 @@ function sigFx(id,x,y,j){
   if(S.fx==='coins'||S.fx==='pillar') for(let i=0;i<n(6);i++) spawnP(x,y,{col:col(i+1),sz:2.2,s:60+Math.random()*80,a:cone(),vy:-150,g:40,life:.8,add:true});
   if(S.fx==='alarm'&&!RM()){ G.flashT=G.now; G.flashC='#FF2A2A'; }
   if(S.fx==='waves'&&!RM()) G.nudge.y+=3*k;
-  if(S.fx==='downbeat'){   // a few slow glints rising, and a tiny camera dip on a perfect
-    for(let i=0;i<n(4);i++) spawnP(x,y,{col:S.ring==='rainbow'?hsl2hex(Math.random()*360,85,72):(i%2?'#FFF3C4':'#FFD166'),shape:'star5',sz:2.5+Math.random()*2,a:up+(Math.random()-.5)*.9,s:18+Math.random()*25,vy:-70,g:-10,life:1.1,add:true,spin:3});
-    if(!RM()&&j==='perfect') G.nudge.y+=2.2; }
 }
-function drawSigFx(f,x,y,tw,now,th){
+function drawSigFx(f,x,y,tw,now){
   const u=clamp((now-f.t0)/.7,0,1); if(u>=1) return; const e=1-Math.pow(1-u,3), a=1-u, ring=c=>c==='rainbow'?hsl2hex((now*240+f.seed)%360,85,70):c==='neon'?'#FF4FD8':c;
-  if(f.fx==='downbeat'){ drawDownbeat(f,x,y,tw,th||tw*.62,now,u,e,a); return; }
   cx.save(); cx.globalCompositeOperation='lighter';
   const R0=tw*(.3+.9*e*f.k); cx.strokeStyle=rgba(ring(f.col),.8*a); cx.lineWidth=2.5*a+.5; cx.beginPath(); cx.ellipse(x,y,R0,R0*.62,0,0,Math.PI*2); cx.stroke();
   switch(f.fx){
@@ -2507,34 +2472,11 @@ function drawSigFx(f,x,y,tw,now,th){
   }
   cx.restore();
 }
-/* DOWNBEAT · the Maestro's landing: quiet but heavy, like a conductor's first downbeat.
-   A white-hot tap on the tile, one crisp ring and a softer echo, four thin baton strokes along the floor,
-   the neighbouring tiles light up a moment later, and a thin shaft of light over the block. No confetti. */
-function drawDownbeat(f,x,y,tw,th,now,u,e,a){
-  const rb=f.col==='rainbow', c=o=>rb?hsl2hex((((now*200+f.seed+o)%360)+360)%360,90,70):(o%120===0?'#FFD166':'#FFE7A0'), k=f.k;
-  cx.save(); cx.globalCompositeOperation='lighter';
-  // the tap
-  if(u<.22){ const v=u/.22, g=cx.createRadialGradient(x,y,0,x,y,tw*.55); g.addColorStop(0,rgba('#FFFFFF',.85*(1-v))); g.addColorStop(.4,rgba(c(0),.55*(1-v))); g.addColorStop(1,rgba(c(0),0)); cx.fillStyle=g; cx.beginPath(); cx.ellipse(x,y,tw*.55,tw*.55*.62,0,0,Math.PI*2); cx.fill(); }
-  // one crisp ring, one soft echo
-  const r1=tw*(.22+1.15*e*k); cx.strokeStyle=rgba(c(0),.95*a); cx.lineWidth=1.4+1.2*a; cx.beginPath(); cx.ellipse(x,y,r1,r1*.62,0,0,Math.PI*2); cx.stroke();
-  const v2=clamp((u-.14)/.86,0,1); if(v2>0){ const e2=1-Math.pow(1-v2,3), r2=tw*(.3+1.7*e2*k); cx.strokeStyle=rgba(c(120),.35*(1-v2)); cx.lineWidth=4*(1-v2)+.5; cx.beginPath(); cx.ellipse(x,y,r2,r2*.62,0,0,Math.PI*2); cx.stroke(); }
-  // four baton strokes sliding out along the floor
-  const s0=tw*(.3+.5*e), s1=tw*(.45+1.1*e*k), fade=u<.5?1:1-(u-.5)/.5;
-  [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy],i)=>{ const col=c(i*90); cx.strokeStyle=rgba(col,.8*fade); cx.lineWidth=2; cx.beginPath();
-    cx.moveTo(x+dx*s0,y+dy*s0*.62); cx.lineTo(x+dx*s1,y+dy*s1*.62); cx.stroke();
-    cx.fillStyle=rgba('#FFFFFF',.9*fade); cx.beginPath(); cx.arc(x+dx*s1,y+dy*s1*.62,1.8,0,Math.PI*2); cx.fill(); });
-  // the neighbouring tiles answer a beat later
-  const v3=clamp((u-.1)/.5,0,1); if(v3>0&&v3<1){ const al=.32*Math.sin(Math.PI*v3);
-    [[tw,0],[-tw,0],[0,th],[0,-th]].forEach(([ox,oy],i)=>{ const g=cx.createRadialGradient(x+ox,y+oy,0,x+ox,y+oy,tw*.5); g.addColorStop(0,rgba(c(i*90+45),al)); g.addColorStop(1,rgba(c(i*90+45),0)); cx.fillStyle=g; cx.beginPath(); cx.ellipse(x+ox,y+oy,tw*.5,tw*.5*.62,0,0,Math.PI*2); cx.fill(); }); }
-  // a thin shaft of light
-  if(u<.6){ const v=u/.6, Hh=tw*(1.2+1.2*k)*(1-v*.3), w=Math.max(1.5,tw*.05)*(1-v); const g=cx.createLinearGradient(0,y-Hh,0,y); g.addColorStop(0,rgba(c(60),0)); g.addColorStop(.7,rgba(c(60),.5*(1-v))); g.addColorStop(1,rgba('#FFFFFF',.8*(1-v))); cx.fillStyle=g; cx.fillRect(x-w/2,y-Hh,w,Hh); }
-  cx.restore();
-}
 function drawLandFx(L,now){
   if(!G.lfx||!G.lfx.length) return;
   G.lfx=G.lfx.filter(f=>now-f.t0<1);
   G.lfx.forEach(f=>{ const x=L.ox+(f.x+.5)*L.tw, y=L.oy+(f.y+.5)*L.th, tw=L.tw;
-    if(f.type==='sring'){ drawSigFx(f,x,y,tw,now,L.th); return; }
+    if(f.type==='sring'){ drawSigFx(f,x,y,tw,now); return; }
     if(f.type==='ring'){ const u=clamp((now-f.t0)/.5,0,1); if(u>=1) return; [0,.18].forEach(d=>{ const v=clamp(u-d,0,1); if(v<=0) return; const r=tw*(.3+.9*v*f.k); cx.strokeStyle=rgba('#FFF8EE',.7*(1-v)); cx.lineWidth=2.5*(1-v)+.5; cx.beginPath(); cx.ellipse(x,y,r,r*.62,0,0,Math.PI*2); cx.stroke(); }); }
     else if(f.type==='ink'){ const u=clamp((now-f.t0)/.9,0,1); if(u>=1) return; const e=1-Math.pow(1-Math.min(1,u*4),3), a=u<.5?.85:.85*(1-(u-.5)*2);
       cx.fillStyle=rgba('#8C7CFF',a); f.blobs.forEach(b=>{ const bx=x+Math.cos(b.a)*b.d*tw*e, by=y+Math.sin(b.a)*b.d*tw*.62*e, r=tw*b.r*e*f.k; cx.beginPath(); cx.ellipse(bx,by,r,r*.62,0,0,Math.PI*2); cx.fill(); });
@@ -2624,19 +2566,17 @@ function animMods(S,now){
     case 'heart': return {sq:0,scale:1+.14*beat*beat};
     case 'speaker': return {sq:-.05*beat,scale:1};
     case 'blaze': return {sq:Math.sin(now*14)*.015,scale:1};
-    case 'maestro': case 'supreme': return {sq:-.03*beat,scale:1+.04*beat};
+    case 'maestro': return {sq:-.03*beat,scale:1+.04*beat};
     default: return null;
   }
 }
-/* the Maestro's accents are gold; the Supreme Conductor's run through the rainbow */
-const mcol=(S,now,off)=>S.anim==='supreme'?hsl2hex((((now*70+(off||0))%360)+360)%360,92,66):'#FFD166';
 function heartPath(x,y,s){ cx.beginPath(); cx.moveTo(x,y+s*.35); cx.bezierCurveTo(x-s*1.1,y-s*.35,x-s*.45,y-s*.95,x,y-s*.35); cx.bezierCurveTo(x+s*.45,y-s*.95,x+s*1.1,y-s*.35,x,y+s*.35); cx.closePath(); }
 function skinPre(S,x0,topY,bw,bh,H,now,P){
   const fy=topY+bh;
-  if(S.anim==='maestro'||S.anim==='supreme'){ const cxp=x0+bw/2, cyp=topY+(bh+H)*.45, beat=clamp(1-(now-G.lastBeatT)/.35,0,1), sup=S.anim==='supreme';
+  if(S.anim==='maestro'){ const cxp=x0+bw/2, cyp=topY+(bh+H)*.45, beat=clamp(1-(now-G.lastBeatT)/.35,0,1);
     cx.save(); cx.globalCompositeOperation='lighter';
-    const g=cx.createRadialGradient(cxp,cyp,0,cxp,cyp,bw*(1.25+.2*beat)); g.addColorStop(0,rgba(sup?mcol(S,now,0):'#FFE7A0',.5+.2*beat)); g.addColorStop(.55,rgba(sup?mcol(S,now,120):'#FFD166',.18+.1*beat)); g.addColorStop(1,rgba(sup?mcol(S,now,240):'#FFD166',0)); cx.fillStyle=g; cx.beginPath(); cx.arc(cxp,cyp,bw*(1.25+.2*beat),0,Math.PI*2); cx.fill();
-    for(let i=0;i<10;i++){ const a=now*.35+i*Math.PI/5, L1=bw*(1.05+.25*beat+(i%2?0:.25)); cx.strokeStyle=rgba(mcol(S,now,i*36),i%2?.18:.3); cx.lineWidth=bw*.06; cx.beginPath(); cx.moveTo(cxp+Math.cos(a)*bw*.45,cyp+Math.sin(a)*bw*.35); cx.lineTo(cxp+Math.cos(a)*L1,cyp+Math.sin(a)*L1*.75); cx.stroke(); }
+    const g=cx.createRadialGradient(cxp,cyp,0,cxp,cyp,bw*(1.25+.2*beat)); g.addColorStop(0,rgba('#FFE7A0',.5+.2*beat)); g.addColorStop(1,'rgba(255,209,102,0)'); cx.fillStyle=g; cx.beginPath(); cx.arc(cxp,cyp,bw*(1.25+.2*beat),0,Math.PI*2); cx.fill();
+    for(let i=0;i<10;i++){ const a=now*.35+i*Math.PI/5, L1=bw*(1.05+.25*beat+(i%2?0:.25)); cx.strokeStyle=rgba('#FFD166',i%2?.18:.3); cx.lineWidth=bw*.06; cx.beginPath(); cx.moveTo(cxp+Math.cos(a)*bw*.45,cyp+Math.sin(a)*bw*.35); cx.lineTo(cxp+Math.cos(a)*L1,cyp+Math.sin(a)*L1*.75); cx.stroke(); }
     cx.restore(); }
   if(S.anim==='critter'){ const sw=Math.sin(now*4)*.5; cx.strokeStyle=S.front; cx.lineWidth=Math.max(3,bw*.12); cx.lineCap='round'; cx.beginPath(); cx.moveTo(x0+bw*.9,fy+H*.6); cx.quadraticCurveTo(x0+bw*1.35,fy+H*.3,x0+bw*(1.2+.15*sw),fy-bh*.4); cx.stroke(); }
   if(S.anim==='disco'){ cx.globalCompositeOperation='lighter'; for(let i=0;i<4;i++){ const a=now*1.4+i*Math.PI/2, cxp=x0+bw/2, cyp=topY+bh*.5; const g=cx.createLinearGradient(cxp,cyp,cxp+Math.cos(a)*bw*2.2,cyp+Math.sin(a)*bw*1.2);
@@ -2684,26 +2624,26 @@ function skinPost(S,x0,topY,bw,bh,H,now,P){
         const g=cx.createLinearGradient(0,topY+bh*.4-h,0,topY+bh*.4); g.addColorStop(0,'rgba(255,80,20,0)'); g.addColorStop(.5,'rgba(255,140,40,.8)'); g.addColorStop(1,'rgba(255,230,140,.95)'); cx.fillStyle=g;
         cx.beginPath(); cx.moveTo(fx2-bw*.14,topY+bh*.4); cx.quadraticCurveTo(fx2-bw*.12,topY+bh*.4-h*.6,fx2+Math.sin(now*9+i)*bw*.05,topY+bh*.4-h); cx.quadraticCurveTo(fx2+bw*.12,topY+bh*.4-h*.6,fx2+bw*.14,topY+bh*.4); cx.closePath(); cx.fill(); }
       cx.strokeStyle='rgba(255,140,40,.7)'; cx.lineWidth=1.5; cx.beginPath(); cx.moveTo(x0+bw*.2,fy+H*.3); cx.lineTo(x0+bw*.45,fy+H*.6); cx.lineTo(x0+bw*.8,fy+H*.45); cx.stroke(); cx.globalCompositeOperation='source-over'; } break;
-    case 'maestro': case 'supreme': { const cxp=x0+bw/2, sup=a==='supreme', gold=mcol(S,now,0), gc=o=>mcol(S,now,o);
+    case 'maestro': { const cxp=x0+bw/2, gold='#FFD166';
       // tuxedo front: ivory shirt, gold lapels, bow tie and buttons
       cx.fillStyle='#FFF6DA'; cx.beginPath(); cx.moveTo(cxp-bw*.2,fy); cx.lineTo(cxp+bw*.2,fy); cx.lineTo(cxp,fy+H*.95); cx.closePath(); cx.fill();
-      cx.strokeStyle=gc(40); cx.lineWidth=Math.max(1.2,bw*.045); cx.beginPath(); cx.moveTo(cxp-bw*.3,fy); cx.lineTo(cxp,fy+H*.95); cx.lineTo(cxp+bw*.3,fy); cx.stroke();
-      const by=fy+H*.16, bs=bw*.12; cx.fillStyle=gc(90); cx.beginPath(); cx.moveTo(cxp,by); cx.lineTo(cxp-bs*1.3,by-bs*.7); cx.lineTo(cxp-bs*1.3,by+bs*.7); cx.closePath(); cx.moveTo(cxp,by); cx.lineTo(cxp+bs*1.3,by-bs*.7); cx.lineTo(cxp+bs*1.3,by+bs*.7); cx.closePath(); cx.fill();
+      cx.strokeStyle=gold; cx.lineWidth=Math.max(1.2,bw*.045); cx.beginPath(); cx.moveTo(cxp-bw*.3,fy); cx.lineTo(cxp,fy+H*.95); cx.lineTo(cxp+bw*.3,fy); cx.stroke();
+      const by=fy+H*.16, bs=bw*.12; cx.fillStyle=gold; cx.beginPath(); cx.moveTo(cxp,by); cx.lineTo(cxp-bs*1.3,by-bs*.7); cx.lineTo(cxp-bs*1.3,by+bs*.7); cx.closePath(); cx.moveTo(cxp,by); cx.lineTo(cxp+bs*1.3,by-bs*.7); cx.lineTo(cxp+bs*1.3,by+bs*.7); cx.closePath(); cx.fill();
       cx.fillStyle='#FFF3C4'; cx.beginPath(); cx.arc(cxp,by,bs*.35,0,Math.PI*2); cx.fill();
-      [.45,.7].forEach((v,vi)=>{ cx.fillStyle=gc(150+vi*60); cx.beginPath(); cx.arc(cxp,fy+H*v,Math.max(1,bw*.025),0,Math.PI*2); cx.fill(); });
+      cx.fillStyle=gold; [.45,.7].forEach(v=>{ cx.beginPath(); cx.arc(cxp,fy+H*v,Math.max(1,bw*.025),0,Math.PI*2); cx.fill(); });
       // engraved gold staff and note on the top face
-      cx.strokeStyle=sup?rgba(gc(200),.6):rgba('#C9962E',.55); cx.lineWidth=.8; for(let i=0;i<3;i++){ const yy=topY+bh*(.3+i*.2); cx.beginPath(); cx.moveTo(x0+bw*.15,yy); cx.lineTo(x0+bw*.85,yy); cx.stroke(); }
-      cx.fillStyle=sup?gc(260):'#C9962E'; cx.font=`700 ${Math.round(bh*.8)}px system-ui,sans-serif`; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('♫',cxp,topY+bh*.55); cx.textBaseline='alphabetic';
+      cx.strokeStyle=rgba('#C9962E',.55); cx.lineWidth=.8; for(let i=0;i<3;i++){ const yy=topY+bh*(.3+i*.2); cx.beginPath(); cx.moveTo(x0+bw*.15,yy); cx.lineTo(x0+bw*.85,yy); cx.stroke(); }
+      cx.fillStyle='#C9962E'; cx.font=`700 ${Math.round(bh*.8)}px system-ui,sans-serif`; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('♫',cxp,topY+bh*.55); cx.textBaseline='alphabetic';
       // gold trim with a travelling shine
-      if(sup){ const tg=cx.createLinearGradient(x0,topY,x0+bw,topY+bh+H); for(let q=0;q<=6;q++) tg.addColorStop(q/6,gc(q*60)); cx.strokeStyle=tg; } else cx.strokeStyle=gold; cx.lineWidth=sup?2.2:1.8; rr(x0,topY,bw,bh+H,3); cx.stroke();
+      cx.strokeStyle=gold; cx.lineWidth=1.8; rr(x0,topY,bw,bh+H,3); cx.stroke();
       clip(x0,topY,bw,bh+H); const u=((now*.45)%1.6)-.3, sg=cx.createLinearGradient(x0+bw*u-12,topY,x0+bw*u+12,topY+bh+H); sg.addColorStop(0,'rgba(255,255,255,0)'); sg.addColorStop(.5,'rgba(255,245,210,.45)'); sg.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=sg; cx.fillRect(x0,topY,bw,bh+H); cx.restore();
       // floating crown that bounces on the beat
       const cy0=topY-bh*.55-Math.sin(now*2.2)*2-beat*4, cw=bw*.52, ch=bh*.55;
-      if(sup){ const cg=cx.createLinearGradient(cxp-cw/2,0,cxp+cw/2,0); for(let q=0;q<=4;q++) cg.addColorStop(q/4,gc(q*72+30)); cx.fillStyle=cg; } else cx.fillStyle=gold; cx.strokeStyle=sup?'#FFFFFF':'#A8761C'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(cxp-cw/2,cy0+ch*.4); cx.lineTo(cxp-cw/2,cy0-ch*.35); cx.lineTo(cxp-cw/4,cy0); cx.lineTo(cxp,cy0-ch*.6); cx.lineTo(cxp+cw/4,cy0); cx.lineTo(cxp+cw/2,cy0-ch*.35); cx.lineTo(cxp+cw/2,cy0+ch*.4); cx.closePath(); cx.fill(); cx.stroke();
+      cx.fillStyle=gold; cx.strokeStyle='#A8761C'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(cxp-cw/2,cy0+ch*.4); cx.lineTo(cxp-cw/2,cy0-ch*.35); cx.lineTo(cxp-cw/4,cy0); cx.lineTo(cxp,cy0-ch*.6); cx.lineTo(cxp+cw/4,cy0); cx.lineTo(cxp+cw/2,cy0-ch*.35); cx.lineTo(cxp+cw/2,cy0+ch*.4); cx.closePath(); cx.fill(); cx.stroke();
       [['#FF6B8A',-cw/4],['#7FE0FF',0],['#B8F2E6',cw/4]].forEach(([c,dx])=>{ cx.fillStyle=c; cx.beginPath(); cx.arc(cxp+dx,cy0+ch*.12,Math.max(1.2,bw*.04),0,Math.PI*2); cx.fill(); });
       // two notes orbiting the conductor
       cx.save(); cx.globalCompositeOperation='lighter'; cx.fillStyle=gold; cx.font=`700 ${Math.round(bw*.3)}px system-ui,sans-serif`; cx.textAlign='center';
-      for(let i=0;i<2;i++){ cx.fillStyle=gc(i*180+100); const a=now*1.6+i*Math.PI, ox=Math.cos(a)*bw*.85, oy=Math.sin(a)*bh*.6; if(Math.sin(a)<0) cx.globalAlpha*=.8; cx.fillText(i?'♪':'♫',cxp+ox,topY+(bh+H)*.4+oy); }
+      for(let i=0;i<2;i++){ const a=now*1.6+i*Math.PI, ox=Math.cos(a)*bw*.85, oy=Math.sin(a)*bh*.6; if(Math.sin(a)<0) cx.globalAlpha*=.8; cx.fillText(i?'♪':'♫',cxp+ox,topY+(bh+H)*.4+oy); }
       if(Math.sin(now*3.1)>.85){ cx.fillStyle='#FFFFFF'; const sx=x0+bw*.82, sy=topY+bh*.2; cx.fillRect(sx-4,sy-.8,8,1.6); cx.fillRect(sx-.8,sy-4,1.6,8); }
       cx.restore(); } break;
     case 'tess': { const cxp=x0+bw/2, cyp=topY+(bh+H)*.55, s=Math.min(bw,bh+H)*.28, ay=now*1.1, ax=now*.7;
@@ -2715,9 +2655,9 @@ function skinPost(S,x0,topY,bw,bh,H,now,P){
 }
 
 /* ---------------- LIVE SHOP PREVIEWS ---------------- */
-function drawSkinPreviews(now,sel){
-  const cvs=document.querySelectorAll(sel||'#shopGrid canvas.skprev'); if(!cvs.length) return;
-  const main=cx, dpr=Math.min(2,devicePixelRatio||1), gm=G.mode; G.mode=gm?{...gm,coop:false}:null;
+function drawSkinPreviews(now){
+  const cvs=document.querySelectorAll('#shopGrid canvas.skprev'); if(!cvs.length) return;
+  const main=cx, dpr=Math.min(2,devicePixelRatio||1);
   cvs.forEach((c,idx)=>{ const r=c.getBoundingClientRect(); if(r.bottom<0||r.top>innerHeight) return;
     const w=64, h=64; if(c.width!==w*dpr){ c.width=w*dpr; c.height=h*dpr; }
     const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,w,h); cx=g;
@@ -2725,7 +2665,7 @@ function drawSkinPreviews(now,sel){
     const L={tw:58,th:58*.62,ox:w/2-29,oy:52-58*.62*.5,d:0}, P={skin:skinById(c.dataset.skin),greyT:-9,flashT:-9,flashC:'#FFF',face:['down','right','down','left'][Math.floor(now/1.2)%4],id:0};
     try{ drawBlock(P,{x:0,y:0,dx:0,dy:0,lift,sq,alpha:1,falling:false,fallY:0},L,now); }catch(e){}
   });
-  cx=main; G.mode=gm;
+  cx=main;
 }
 
 /* ---------------- ARENAS: boss fights and duels ---------------- */
@@ -2985,7 +2925,7 @@ function netOpts(){
 }
 function netStatus(t,err){ const e=$('nStatus'); if(e){ e.textContent=t; e.classList.toggle('err',!!err); } }
 function netUI(){
-  const live=!!NET.peer; $('netIdle').hidden=live; $('netLive').hidden=!live; netRoster();
+  const live=!!NET.peer; $('netIdle').hidden=live; $('netLive').hidden=!live;
   $('nShow').textContent=NET.code||'····';
   $('nModes').hidden=!(NET.conn&&NET.host);
   $('nWait').hidden=!(NET.conn&&!NET.host);
@@ -3048,7 +2988,6 @@ function netStart(type){
 }
 function netBegin(type,seed,atPerf){
   const M=modeFor(type); M.net=true; M.seed=seed; M.atPerf=atPerf; NET.q=[];
-  netHello();   // make sure the other screen has our current block
   startRun(M);
 }
 function netData(o){
@@ -3059,7 +2998,6 @@ function netData(o){
       NET.samples.push({rtt,off}); if(NET.samples.length>12) NET.samples.shift();
       const best=NET.samples.reduce((a,b)=>b.rtt<a.rtt?b:a); NET.rtt=best.rtt; NET.off=best.off; return; }
     case 'hi': { NET.peerSkin=o.skin; NET.peerLand=o.land; const fresh=!NET.peerName; NET.peerName=cleanName(o.name)||'Friend'; NET.peerRank=clamp(+o.rank||0,0,RANK_MAX);
-      netPeerLook(); netRoster(fresh);
       if(fresh&&!o.echo) netSend({t:'hi',skin:SAVE.skin,land:SAVE.land,name:ensureName(),rank:myRank(),echo:1});
       if(fresh&&NET.conn) netStatus(NET.host?`${NET.peerName} (${rankName(NET.peerRank)}) joined! Pick a mode to start.`:`Connected to ${NET.peerName}! Waiting for them to pick a mode…`); return; }
     case 'full': netStatus('That party already has two players.',true); setTimeout(()=>netLeave(),1500); return;
@@ -3129,7 +3067,7 @@ function netRespawn(P,o){
 /* hooks the game calls for the local block */
 function netLocal(o){ if(inNet()) netSend(o); }
 function netTick(){ if(G.mode&&G.mode.net&&NET.q.length) netFlush(); }
-function showParty(){ $('nName').value=ensureName(); buildP2Pick();
+function showParty(){ $('nName').value=ensureName();
   $('cJourneyMeta').innerHTML=SAVE.bestCoop?`Best<br>${SAVE.bestCoop}`:''; $('cRaidMeta').innerHTML=SAVE.bestRaid?`Best<br>${SAVE.bestRaid}/${WORLDS}`:'☠'; $('cTetherMeta').innerHTML=SAVE.bestTether?`Best<br>${SAVE.bestTether}`:'∞'; netUI(); if(!NET.peer) $('nStatusIdle').textContent=$('nStatusIdle').textContent||''; showOv('coopOv'); }
 $('nHost').onclick=netHost;
 $('nJoin').onclick=netJoin;
@@ -3462,7 +3400,6 @@ function ensureName(){ if(!SAVE.name){ SAVE.name=NAME_A[ri(NAME_A.length)]+' '+N
 function setName(v,quiet){ const n=cleanName(v); if(n.length<2) return false; const changed=SAVE.name!==n; SAVE.name=n; store.set('name',n); if(changed) save();
   ['nName','pName'].forEach(id=>{ const e=$(id); if(e&&document.activeElement!==e) e.value=n; });
   if(changed&&NET.conn){ clearTimeout(setName.hiT); setName.hiT=setTimeout(()=>netSend({t:'hi',skin:SAVE.skin,land:SAVE.land,name:SAVE.name,rank:myRank()}),quiet?600:0); }
-  if(changed) netRoster();
   if(changed&&!quiet) toast('Name saved: '+n);
   return true; }
 function restoreName(){ if(!SAVE.name){ const n=cleanName(store.get('name','')); if(n.length>=2){ SAVE.name=n; save(); } } else if(store.get('name','')!==SAVE.name) store.set('name',SAVE.name); }
@@ -3532,7 +3469,7 @@ const questsReady=()=>{ ensureQuests(); return SAVE.quests.list.filter(q=>q.prog
 function toast(t){ let e=$('toast'); if(!e){ e=document.createElement('div'); e.id='toast'; e.className='toast'; document.body.appendChild(e); } e.textContent=t; e.classList.remove('show'); void e.offsetWidth; e.classList.add('show'); }
 
 /* ================= PROFILE SCREEN ================= */
-const RANK_UNLOCKS=[[12,'Diamond block'],[18,'Crown landing effect'],[21,'Maestro block + Downbeat landing'],[25,'Supreme Conductor block + Grand Finale landing']];
+const RANK_UNLOCKS=[[12,'Diamond block'],[18,'Crown landing effect'],[21,'Maestro block']];
 function updateRankChip(){ const n=myRank(), b=$('mProfile'); if(!b) return; b.style.setProperty('--rc',rankCol(n)); $('mRankTxt').textContent=rankName(n); $('mQDot').hidden=!questsReady(); }
 function buildProfile(){
   ensureName(); ensureQuests();
@@ -4304,8 +4241,7 @@ const ACH=[
  ['quests10','Errand Runner','Claim 10 quests',()=>LF('quests')>=10],
  ['gold','Gold Standard','Reach Gold rank',()=>myRank()>=6],
  ['diamond','Diamond','Reach Diamond rank',()=>myRank()>=12],
- ['maestro','Maestro','Reach Maestro rank',()=>myRank()>=RANK_MAESTRO],
- ['supreme','Supreme Conductor','Reach the top rank',()=>myRank()>=RANK_MAX],
+ ['maestro','Maestro','Reach the top rank',()=>myRank()>=RANK_MAX],
  ['skins10','Collector','Own 10 blocks',()=>SKINS.filter(s=>ownsSkin(s.id)).length>=10],
  ['challenge','Throw Down','Send a challenge link',()=>LF('challenges')>=1],
  ['chalwin','Challenge Accepted','Beat a friend\'s challenge',()=>LF('chalWins')>=1],
@@ -5184,43 +5120,9 @@ function drawTether(L,now,players,BD){
   if(len>4&&!RM()){ const u0=((now-(G.lastBeatT||0))/(G.spb||.6))%1;
     for(let k=0;k<3;k++){ const u=(u0+k/3)%1, x=(1-u)*(1-u)*pa.sx+2*(1-u)*u*mx+u*u*pb.sx, y=(1-u)*(1-u)*ya+2*(1-u)*u*my+u*u*yb; cx.fillStyle=rgba(col,.9); cx.beginPath(); cx.arc(x,y,2.6,0,Math.PI*2); cx.fill(); } }
   if(d<=1){ cx.globalCompositeOperation='lighter'; const g=cx.createRadialGradient(mx,my,0,mx,my,L.tw*.6); g.addColorStop(0,'rgba(156,255,216,.35)'); g.addColorStop(1,'rgba(156,255,216,0)'); cx.fillStyle=g; cx.fillRect(mx-L.tw,my-L.tw,L.tw*2,L.tw*2); cx.globalCompositeOperation='source-over';
-    cx.fillStyle='#9CFFD8'; cx.font=`700 ${Math.round(clamp(L.tw*.2,10,13))}px Unbounded, system-ui, sans-serif`; cx.textAlign='center'; cx.fillText('LINKED ×2',mx,my-L.th*.62); }
+    cx.fillStyle='#9CFFD8'; cx.font=`700 ${Math.round(clamp(L.tw*.2,10,13))}px Unbounded, system-ui, sans-serif`; cx.textAlign='center'; cx.fillText('LINKED ×2',mx,my-L.th*.35); }
   else if(d>=TETHER_MAX){ cx.fillStyle='#FF8A5C'; cx.font=`700 ${Math.round(clamp(L.tw*.2,10,13))}px Unbounded, system-ui, sans-serif`; cx.textAlign='center'; cx.fillText('TAUT!',mx,my-L.th*.3); }
   cx.restore();
-}
-
-/* ================= PARTY ROOM & PARTNER BLOCKS =================
-   The online party shows both players side by side with their real blocks, names and ranks, and a big
-   "2 / 2 in the party" line once your friend is in. Blocks are resent whenever someone changes theirs,
-   and a partner's block updates live, even mid-match. P2 on the same device picks their own block too. */
-function netHello(){ if(NET.conn) netSend({t:'hi',skin:SAVE.skin,land:SAVE.land,name:ensureName(),rank:myRank(),echo:1}); }
-function netPeerLook(){
-  if(!G.mode||!G.mode.net||!G.players) return;
-  const op=G.players[1-NET.me]; if(!op) return;
-  if(NET.peerSkin) op.skin=skinById(NET.peerSkin); if(NET.peerLand) op.land=landById(NET.peerLand);
-}
-function rosterSlot(o){
-  const rk=o.rank>=0?`<span class="rk" style="--rc:${rankCol(o.rank)}">${escapeHTML(rankName(o.rank))}</span>`:'';
-  return `<div class="slot ${o.cls}"><span class="tag">${o.tag}</span><canvas class="skprev" data-skin="${escapeHTML(o.skin)}" width="64" height="64" aria-hidden="true"></canvas><b>${escapeHTML(o.name)}</b>${rk}${o.st?`<span class="st"><i></i>${o.st}</span>`:''}</div>`;
-}
-function netRoster(justJoined){
-  const el=$('nRoster'); if(!el) return;
-  if(!NET.peer){ el.innerHTML=''; return; }
-  const inParty=!!(NET.conn&&NET.peerName);
-  const me=rosterSlot({cls:'me',tag:NET.host?'Host · you':'You',skin:SAVE.skin,name:SAVE.name||'You',rank:myRank(),st:''});
-  const friend=inParty?rosterSlot({cls:'friend in',tag:NET.host?'Joined':'Host',skin:NET.peerSkin||'classic',name:NET.peerName,rank:NET.peerRank||0,st:'In the party'})
-    :`<div class="slot empty"><span class="tag">Friend</span><span>Waiting for a friend<span class="dots"></span></span><span class="small">Code <b style="color:#FFD166">${escapeHTML(NET.code||'····')}</b></span></div>`;
-  const line=inParty?(NET.host?`2 / 2 in the party · pick a mode below`:`2 / 2 in the party · ${escapeHTML(NET.peerName)} picks the mode`):'1 / 2 in the party';
-  el.classList.toggle('full',inParty);
-  el.innerHTML=me+`<span class="vs">${inParty?'＋':'·'}</span>`+friend+`<div class="pcount">${line}</div>`;
-  if(justJoined&&inParty){ toast(`${NET.peerName} is in the party!`); if(A.ctx) sChime(88); buzz(20); }
-}
-function buildP2Pick(){
-  const row=$('p2Row'); if(!row) return;
-  const own=SKINS.filter(s=>ownsSkin(s.id)), cur=SAVE.p2skin&&ownsSkin(SAVE.p2skin)?SAVE.p2skin:(SAVE.skin==='mint'?'coral':'mint');
-  row.innerHTML=own.map(s=>`<button type="button" data-p2="${s.id}" class="${s.id===cur?'on':''}" title="${escapeHTML(s.name)}" aria-label="P2 block: ${escapeHTML(s.name)}"><canvas class="skprev" data-skin="${s.id}" width="48" height="48" aria-hidden="true"></canvas></button>`).join('');
-  row.querySelectorAll('[data-p2]').forEach(b=>b.onclick=()=>{ SAVE.p2skin=b.dataset.p2; save(); row.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); if(A.ctx) sGem(); });
-  const on=row.querySelector('.on'); if(on) setTimeout(()=>on.scrollIntoView({block:'nearest',inline:'center'}),30);
 }
 
 /* ---------------- HUD ---------------- */
@@ -5351,9 +5253,9 @@ function buildShop(){
     else if(it.req) btn=`<button class="btn ghost" disabled type="button">${reqText(it.req)}</button>`;
     else btn=`<button class="btn" data-buy="${it.id}" type="button" ${SAVE.notes<it.price?'disabled':''}>♪ ${it.price}</button>`;
     return `<div class="item${eq===it.id?' eq':''}">${prev}<b>${it.name}</b>${btn}</div>`; }).join('');
-  $('shopGrid').querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{ if(shopTab==='skins') SAVE.skin=b.dataset.eq; else SAVE.land=b.dataset.eq; save(); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; buildShop(); netHello(); });
+  $('shopGrid').querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{ if(shopTab==='skins') SAVE.skin=b.dataset.eq; else SAVE.land=b.dataset.eq; save(); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; buildShop(); });
   $('shopGrid').querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{ const it=list.find(x=>x.id===b.dataset.buy); if(SAVE.notes<it.price) return; SAVE.notes-=it.price; SAVE.owned.push(it.id);
-    if(shopTab==='skins') SAVE.skin=it.id; else SAVE.land=it.id; save(); if(A.ctx) sGem(); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; buildShop(); netHello(); });
+    if(shopTab==='skins') SAVE.skin=it.id; else SAVE.land=it.id; save(); if(A.ctx) sGem(); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; buildShop(); });
   $('shopStats').textContent=`◆ ${totalStars()} stars · longest streak ${SAVE.maxStreak} · best endless ${SAVE.bestEndless.toLocaleString()} · daily streak ${SAVE.daily.streak} · Notes come from levels, dailies and runs.`;
 }
 function buildSettings(){
@@ -5515,7 +5417,7 @@ function loop(){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&shopTab==='skins') drawSkinPreviews(now); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&shopTab==='skins') drawSkinPreviews(now); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
