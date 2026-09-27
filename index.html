@@ -20,6 +20,13 @@ window.PULSEFORM_FIREBASE = {
   messagingSenderId: "653074377253",
   appId: "1:653074377253:web:802ea5afbd1523319dedcc"
 };
+/* ===== ONLINE PARTY SERVER (optional) =====
+   Online parties load their connection library from vendor/peerjs.min.js on this site, so upload the
+   vendor folder next to index.html. By default the free public PeerJS server introduces the two players.
+   To use your own (see party-server/README.md), fill this in, for example:
+   window.PULSEFORM_PEER = { host: "party.yoursite.com", port: 443, path: "/", secure: true };
+   You can also add relay servers for strict networks: iceServers: [{ urls: "turns:...:443", username: "...", credential: "..." }] */
+window.PULSEFORM_PEER = null;
 </script>
 </head>
 <body>
@@ -1612,8 +1619,14 @@ const RANK_TIERS=[
  {n:'Diamond',c:'#9FD8FF'},{n:'Master',c:'#C9B8FF'},{n:'Grandmaster',c:'#FF7EB6'},{n:'Maestro',c:'#FFF8EE'}];
 /* Bronze I (0) ... Grandmaster III (20), Maestro (21), Maestro I-III (22-24), Supreme Conductor (25) */
 const RANK_MAESTRO=21, RANK_MAX=25;
-const rankXP=n=>n<=0?0:Math.round(120*n+34*n*n);   // total XP needed to reach rank n
-function rankOf(xp){ let n=0; while(n<RANK_MAX&&xp>=rankXP(n+1)) n++; return n; }
+/* total XP needed to reach rank n. Up to Maestro it grows gently; past Maestro every rank costs
+   MAESTRO_GROWTH times the one before it (3,000 → 9,000 → 27,000 → 81,000), so Supreme Conductor is a real climb */
+const MAESTRO_STEP=3000, MAESTRO_GROWTH=3;
+const baseXP=n=>n<=0?0:Math.round(120*n+34*n*n);
+const rankXP=n=>n<=RANK_MAESTRO?baseXP(n):baseXP(RANK_MAESTRO)+Math.round(MAESTRO_STEP*(Math.pow(MAESTRO_GROWTH,n-RANK_MAESTRO)-1)/(MAESTRO_GROWTH-1));
+function rankOf(xp){ let n=0; while(n<RANK_MAX&&xp>=rankXP(n+1)) n++; return Math.max(n,SAVE.rankKeep||0); }
+// players who already climbed past Maestro under the old, flatter curve keep the rank they earned
+if(!SAVE.xpCurve2){ let old=0; while(old<RANK_MAX&&(SAVE.xp||0)>=baseXP(old+1)) old++; if(old>RANK_MAESTRO) SAVE.rankKeep=old; SAVE.xpCurve2=true; save(); }
 function rankName(n){ if(n>=RANK_MAX) return 'Supreme Conductor'; if(n>RANK_MAESTRO) return 'Maestro '+['I','II','III'][n-RANK_MAESTRO-1]; if(n===RANK_MAESTRO) return 'Maestro'; return RANK_TIERS[Math.floor(n/3)].n+' '+['I','II','III'][n%3]; }
 const rankCol=n=>n>=RANK_MAX?'#FF9CE6':n>=RANK_MAESTRO?(n>RANK_MAESTRO?'#FFE7A0':'#FFF8EE'):RANK_TIERS[Math.min(7,Math.floor(n/3))].c;
 const rankReward=n=>60+n*25;
@@ -3014,12 +3027,16 @@ const inNet=()=>!!(G&&G.mode&&G.mode.net&&NET.conn);
 function netLib(){
   if(window.Peer) return Promise.resolve();
   if(NET.lib) return NET.lib;
-  NET.lib=new Promise((ok,bad)=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js';
-    s.onload=()=>window.Peer?ok():bad(new Error('lib')); s.onerror=()=>{ NET.lib=null; bad(new Error('lib')); }; document.head.appendChild(s); });
+  // our own copy first (works when outside CDNs are blocked), then the public CDN as a backup
+  const one=src=>new Promise((ok,bad)=>{ const s=document.createElement('script'); s.src=src; s.onload=()=>window.Peer?ok():bad(new Error('lib')); s.onerror=()=>{ s.remove(); bad(new Error('lib')); }; document.head.appendChild(s); });
+  NET.lib=one('vendor/peerjs.min.js').catch(()=>one('https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js')).catch(e=>{ NET.lib=null; throw e; });
   return NET.lib;
 }
 function netOpts(){
   const o={debug:0,config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'}]}};
+  const cfg=window.PULSEFORM_PEER;   // your own party server, set at the top of index.html
+  if(cfg&&cfg.host){ o.host=cfg.host; o.port=+cfg.port||443; o.path=cfg.path||'/'; o.secure=cfg.secure!==false; }
+  if(cfg&&Array.isArray(cfg.iceServers)) o.config.iceServers=o.config.iceServers.concat(cfg.iceServers);
   const q=new URLSearchParams(location.search); if(q.get('peerhost')){ o.host=q.get('peerhost'); o.port=+(q.get('peerport')||9000); o.path=q.get('peerpath')||'/'; o.secure=q.get('peersecure')==='1'; }
   return o;
 }
@@ -3244,7 +3261,7 @@ function mergeSaves(loc,cl,additive){
   for(const k of DEVICE_KEYS) if(k in loc) out[k]=loc[k];
   out.owned=[...new Set([...(cl.owned||[]),...(loc.owned||[])])];
   out.stars=Object.assign({},cl.stars||{}); for(const k in (loc.stars||{})) out.stars[k]=Math.max(out.stars[k]||0,loc.stars[k]);
-  for(const k of ['bestEndless','bestCoop','maxStreak','plays','world','lastWorld','bestAscent','rankSeen','bestRaid','bestTether']) out[k]=Math.max(loc[k]||0,cl[k]||0)||DEF[k];
+  for(const k of ['bestEndless','bestCoop','maxStreak','plays','world','lastWorld','bestAscent','rankSeen','bestRaid','bestTether','rankKeep']) out[k]=Math.max(loc[k]||0,cl[k]||0)||DEF[k];
   out.xp=additive?(cl.xp||0)+(loc.xp||0):Math.max(loc.xp||0,cl.xp||0);
   out.life=Object.assign({},cl.life||{}); for(const k in (loc.life||{})) out.life[k]=additive?(out.life[k]||0)+loc.life[k]:Math.max(out.life[k]||0,loc.life[k]);
   { const seen=new Set(), ml=[]; [...(newer.myLevels||[]),...(loc.myLevels||[]),...(cl.myLevels||[])].forEach(l=>{ if(l&&l.code&&!seen.has(l.code)&&ml.length<24){ seen.add(l.code); ml.push(l); } }); out.myLevels=ml; }
@@ -3605,8 +3622,9 @@ function buildProfile(){
   ensureName(); ensureQuests();
   const n=myRank(), xp=SAVE.xp||0, lo=rankXP(n), hi=rankXP(Math.min(RANK_MAX,n+1));
   $('walletP').textContent=notesTxt(); $('pRank').textContent=rankName(n); $('pBadge').style.setProperty('--rc',rankCol(n));
-  $('pXPBar').style.width=(n>=RANK_MAX?100:Math.round((xp-lo)/(hi-lo)*100))+'%';
-  $('pXPTxt').textContent=n>=RANK_MAX?`${xp.toLocaleString()} XP · top rank`:`${(xp-lo).toLocaleString()} / ${(hi-lo).toLocaleString()} XP to ${rankName(n+1)} · reward ♪${rankReward(n+1)}`;
+  const got=clamp(xp-lo,0,hi-lo);   // a kept rank can sit above the XP curve: show the bar from empty then
+  $('pXPBar').style.width=(n>=RANK_MAX?100:Math.round(got/(hi-lo)*100))+'%';
+  $('pXPTxt').textContent=n>=RANK_MAX?`${xp.toLocaleString()} XP · top rank`:`${got.toLocaleString()} / ${(hi-lo).toLocaleString()} XP to ${rankName(n+1)} · reward ♪${rankReward(n+1)}`;
   $('pName').value=SAVE.name;
   $('qReset').textContent='· new in '+untilMidnight();
   $('qList').innerHTML=SAVE.quests.list.map((q,i)=>{ const rw=QREW[q.tier], done=q.prog>=q.goal;
