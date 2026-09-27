@@ -3018,7 +3018,7 @@ function genArena(w){
       const near=new Set(); bad.forEach(i=>{ near.add(i); const x=i%N,y=(i/N)|0; DK.forEach(k=>{ const nx=x+DIRS[k][0], ny=y+DIRS[k][1]; if(inb(nx,ny)) near.add(id(nx,ny)); }); });
       near.forEach(i=>{ const c=cells[i]; if(c.tele>=0){ cells[c.tele].tele=-1; c.tele=-1; } c.wind=null; c.ice=false; c.spring=false; }); }
     if(arenaTraps(room,start).bad.length) continue;
-    const hp=(w<=6?3+2*w:w===WORLDS?21:9+w)+1;   // 3 less health than the original bosses, then 1 given back
+    const hp=w===1?4:(w<=6?3+2*w:w===WORLDS?21:9+w)+1;   // 3 less health than the original bosses, then 1 given back; the Fountain has 4
     room.boss={x:3,y:0,hp,max:hp,flashT:-9,chargeT:-9,dieT:0,enraged:false,w};
     ['crack','tele','rgate','wind','vent','ice','spring','mud','ghost'].forEach(k=>room.has[k]=cells.some(c=>k==='tele'?c.tele>=0:c[k]));
     room.has.blink=cells.some(c=>c.blink>=0); room.has.rot=cells.some(c=>c.rot>=0); room.has.laser=!!(room.lasers&&room.lasers.length);
