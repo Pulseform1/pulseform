@@ -635,6 +635,31 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 button:disabled{opacity:.55;cursor:default}
 
 #netLive{display:grid;gap:8px}#netLive[hidden]{display:none}
+/* friends */
+.frrow{display:grid;grid-template-columns:1fr auto;gap:8px}
+#frCodeIn{min-width:0;font:600 16px var(--display);letter-spacing:.2em;text-align:center;text-transform:uppercase;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink);padding:10px 8px}
+#frCodeIn:focus{outline:2px solid #FFD166;outline-offset:1px}
+.frlist{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:46vh;overflow:auto}
+.frlist li{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:6px 10px 6px 6px;border-radius:12px;background:var(--glass);border:1px solid var(--line)}
+.frlist li.none{display:block;padding:12px;color:var(--ink-3);font-size:13px}
+.frlist .skprev{width:44px;height:44px;margin:0}
+.frlist b{display:block;font:600 14px var(--display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frlist small{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-3)}
+.frlist .gem,.fprank .gem{display:inline-block;width:8px;height:8px;transform:rotate(45deg);border-radius:2px;background:var(--rc,#D08A52);flex:none}
+.frlist .btns{display:flex;gap:6px}
+.frlist .btns .btn{padding:7px 11px;font-size:12px}
+.frlist li.invite{border-color:rgba(156,255,216,.6);background:rgba(156,255,216,.08)}
+.odot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#6B6690}.odot.on{background:#7EE0A8;box-shadow:0 0 6px #7EE0A8}
+.fphero{display:flex;gap:14px;align-items:center}
+.fpskin{width:96px;height:96px;flex:none;margin:0}
+.fprank{display:flex;align-items:center;gap:7px;font:600 14px var(--display);color:var(--rc,#FFF8EE);margin:2px 0}
+.fpworlds{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.fpworlds span{display:flex;flex-direction:column;align-items:center;padding:4px 2px;border-radius:8px;background:rgba(255,255,255,.06);font-size:10px;color:var(--ink-3);border-bottom:3px solid var(--c)}
+.fpworlds span b{font:600 11px var(--display);color:var(--ink)}
+.fpworlds span.full{background:rgba(255,209,102,.14)}
+.invitebar{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:8;display:flex;align-items:center;gap:10px;max-width:calc(100% - 24px);padding:10px 12px 10px 16px;border-radius:16px;background:rgba(28,24,62,.96);border:1px solid rgba(156,255,216,.6);box-shadow:0 10px 30px rgba(10,8,30,.45);font:600 14px var(--body);color:var(--ink);pointer-events:auto}
+.invitebar .btn{padding:8px 14px;font-size:13px}
+@media (max-width:560px){.fpworlds{grid-template-columns:repeat(4,1fr)}.invitebar{flex-wrap:wrap;justify-content:center;text-align:center}}
 @media (max-width:380px){.joinrow{grid-template-columns:1fr 70px}.joinrow #nHost{grid-column:1/-1}}
 </style>
 
@@ -681,6 +706,7 @@ button:disabled{opacity:.55;cursor:default}
       <button class="chip" id="mLB" type="button">Top 20</button>
       <button class="chip rankchip" id="mProfile" type="button"><i class="gem"></i><span id="mRankTxt">Bronze I</span><em class="qdot" id="mQDot" hidden></em></button>
       <button class="chip acct" id="mAcct" type="button">Sign in</button>
+      <button class="chip" id="mFriends" type="button">Friends<em class="qdot" id="mFDot" hidden></em></button>
       <button class="chip" id="mShop" type="button">Collection</button><button class="chip" id="mGuide" type="button">Guide</button><button class="chip" id="mSettings" type="button">Settings</button></div>
   </header>
   <div class="mmain">
@@ -1042,6 +1068,7 @@ button:disabled{opacity:.55;cursor:default}
           <button class="mode" id="nTether" type="button"><b>Online Tether</b><small>Tied together by a cord. Stray more than 4 tiles apart and it snaps. Stay close for double points.</small><span class="meta">∞</span></button>
         </div>
         <div class="small" id="nWait" hidden>The host picks the mode. The match starts on both screens together.</div>
+        <div id="nInvite" hidden><div class="lbl" style="margin:4px 0 6px">Invite a friend</div><ul class="frlist" id="nInviteList"></ul></div>
         <button class="btn ghost" id="nLeave" type="button">Leave party</button>
       </div>
     </div>
@@ -1066,6 +1093,32 @@ button:disabled{opacity:.55;cursor:default}
   </div>
 </section>
 
+<section id="friendsOv" class="overlay" hidden>
+  <div class="panel">
+    <div class="head"><button class="back" id="frBack" type="button">← Menu</button></div>
+    <div><div class="eyebrow">Friends</div><h2>Your friends</h2></div>
+    <div id="frOff" hidden><p class="small" style="margin:0 0 10px" id="frOffTxt">Sign in to get your own friend code and add friends. Your friends can see your rank, block, level progress, best scores and the levels you build.</p><button class="btn" id="frSignIn" type="button">Sign in</button></div>
+    <div id="frOn" hidden>
+      <div class="coderow"><span class="small">Your friend code</span><b class="pcode" id="frMyCode">······</b><button class="chip" id="frCopy" type="button">Copy</button></div>
+      <div class="frrow"><input id="frCodeIn" maxlength="6" placeholder="FRIEND CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Friend code"><button class="btn" id="frAdd" type="button">Add friend</button></div>
+      <div class="small" id="frMsg" role="status"></div>
+      <div id="frInvites"></div>
+      <ul class="frlist" id="frList"></ul>
+    </div>
+  </div>
+</section>
+<section id="friendOv" class="overlay" hidden>
+  <div class="panel wide">
+    <div class="head"><button class="back" id="fpBack" type="button">← Friends</button><span class="small" id="fpSeen"></span></div>
+    <div class="fphero"><canvas class="skprev fpskin" id="fpSkin" data-skin="classic" width="64" height="64" aria-hidden="true"></canvas>
+      <div><div class="eyebrow">Player</div><h2 id="fpName"></h2><div class="fprank"><i class="gem" id="fpGem"></i><span id="fpRank"></span></div><div class="small" id="fpSkinName"></div></div></div>
+    <div><div class="lbl" style="margin-bottom:6px">Levels</div><p class="small" id="fpLevels" style="margin:0 0 8px"></p><div class="fpworlds" id="fpWorlds"></div></div>
+    <div class="stats" id="fpStats"></div>
+    <div><div class="lbl" style="margin-bottom:6px">Leaderboard rankings</div><ul class="lb" id="fpRanks"></ul></div>
+    <div><div class="lbl" style="margin-bottom:6px">Levels they built</div><ul class="edmine" id="fpMaps"></ul></div>
+  </div>
+</section>
+<div id="inviteBar" class="invitebar" hidden role="alert"><span id="ivText"></span><button class="btn" id="ivJoin" type="button">Join</button><button class="chip" id="ivNo" type="button">Not now</button></div>
 <section id="calibOv" class="overlay" hidden>
   <div class="panel">
     <h2>Calibrate timing</h2>
@@ -3125,7 +3178,7 @@ function netOpts(){
 function netStatus(t,err){ const e=$('nStatus'); if(e){ e.textContent=t; e.classList.toggle('err',!!err); } }
 function netUI(){
   setTimeout(partyBarSync,0);
-  const live=!!NET.peer; $('netIdle').hidden=live; $('netLive').hidden=!live; netRoster();
+  const live=!!NET.peer; $('netIdle').hidden=live; $('netLive').hidden=!live; netRoster(); frCoopInvites();
   $('nShow').textContent=NET.code||'····';
   $('nModes').hidden=!(NET.conn&&NET.host);
   $('nWait').hidden=!(NET.conn&&!NET.host);
@@ -3330,7 +3383,7 @@ function acctInit(){
     if(!firebase.apps.length) firebase.initializeApp(cfg);
     ACCT.auth=firebase.auth(); ACCT.db=firebase.firestore();
     ACCT.auth.getRedirectResult().catch(e=>{ ACCT.err=authMsg(e); acctUI(); });
-    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; if(u) acctPull(true); acctUI(); acctChip(); });
+    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; if(u) acctPull(true); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
   }).catch(()=>{ ACCT.err='Could not load sign-in. Check your connection.'; acctUI(); });
 }
 
@@ -3380,7 +3433,7 @@ function acctPush(now){
     acctDoc().set(data).then(()=>{ ACCT.lastSync=Date.now(); ACCT.err=''; acctUI(); }).catch(e=>{ ACCT.err='Cloud save failed ('+(e.code||'offline')+'). It will retry on your next save.'; acctUI(); }); };
   if(now) go(); else ACCT.pushT=setTimeout(go,1500);
 }
-onSave=()=>{ SAVE._t=Date.now(); acctPush(false); };
+onSave=()=>{ SAVE._t=Date.now(); acctPush(false); frPush(false); };
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&ACCT.pushT){ acctPush(true); } });
 function acctRefresh(){
   // redraw whatever menu is open so new notes/skins show straight away
@@ -3442,6 +3495,7 @@ function acctOut(){
 
 /* ---- UI ---- */
 function acctChip(){
+  { const f=$('mFriends'); if(f) f.hidden=!acctCfg(); }
   const b=$('mAcct'); if(!b||window.PF_CG) return;
   const u=ACCT.user; b.textContent=u?(u.displayName||u.email||'Account').split(/[ @]/)[0]:'Sign in';
   b.classList.toggle('on',!!u); b.title=u?'Signed in: progress saves to your account':'Sign in to save your progress';
@@ -3472,6 +3526,162 @@ $('aForgot').onclick=acctForgot;
 $('aSignOut').onclick=acctOut;
 $('aSyncNow').onclick=()=>acctPull(false);
 acctInit(); acctChip();
+
+/* ================= FRIENDS =================
+   Needs a signed-in account (Firebase). Firestore layout (rules in firestore.rules):
+   profiles/{uid}              the public card friends see: name, friend code, rank, block, level progress,
+                               best scores, built levels and when you were last online
+   codes/{CODE}                {uid}: looks a 6-character friend code up
+   friends/{uid}               {uids:[...]}: the people you have added (only you can read or change it)
+   invites/{to}/items/{from}   a party invite; the rules only allow it when `from` is on `to`'s friends list,
+                               so only people you have added can invite you */
+var FR={code:'',uids:[],profiles:{},invites:[],unsub:null,pushT:null,lastPush:0,dismissed:{},sentT:{},view:null,starting:null};
+const FR_MAX=50, INVITE_TTL=10*60*1000, ONLINE_MS=6*60*1000;
+function frOn(){ return !!(FR&&ACCT.user&&ACCT.db&&FR.code); }
+const frDB=()=>ACCT.db, frMe=()=>ACCT.user&&ACCT.user.uid;
+function frCard(){
+  const worlds=[]; for(let w=1;w<=WORLDS;w++) worlds.push(worldStars(w));
+  return {v:1,name:ensureName(),code:FR.code,rank:myRank(),xp:SAVE.xp||0,skin:SAVE.skin,land:SAVE.land,world:SAVE.world||1,levelStars:levelStars(),worlds,
+    bosses:bossesBeaten(),hard:hardCleared(),interDone:!!SAVE.interDone,bestEndless:SAVE.bestEndless||0,bestAscent:SAVE.bestAscent||0,bestRaid:SAVE.bestRaid||0,
+    bestTether:SAVE.bestTether||0,levels:(SAVE.myLevels||[]).slice(0,24).map(l=>({n:l.n||'Untitled',code:l.code})),seen:Date.now()};
+}
+/* your public card is refreshed a few seconds after anything is saved, and every few minutes while the game is open */
+function frPush(now){
+  if(!frOn()) return; clearTimeout(FR.pushT);
+  const go=()=>{ if(!frOn()) return; FR.lastPush=Date.now(); frDB().collection('profiles').doc(frMe()).set(frCard()).catch(()=>{}); };
+  if(now) go(); else FR.pushT=setTimeout(go,Math.max(3000,8000-(Date.now()-FR.lastPush)));
+}
+setInterval(()=>{ if(frOn()&&!document.hidden) frPush(true); },4*60*1000);
+async function frEnsureCode(){
+  const me=frMe(), snap=await frDB().collection('profiles').doc(me).get();
+  if(snap.exists&&snap.data().code){ FR.code=snap.data().code; return; }
+  // a new code: the rules refuse to overwrite a code someone already owns, so a clash just tries another
+  for(let i=0;i<8;i++){ const code=Array.from({length:6},()=>NET_ALPHA[ri(NET_ALPHA.length)]).join('');
+    try{ await frDB().collection('codes').doc(code).set({uid:me}); FR.code=code; return; }catch(e){ if(!e||e.code!=='permission-denied') throw e; } }
+  throw new Error('no-code');
+}
+function frStart(){
+  if(!acctCfg()||!ACCT.user||FR.starting) return FR.starting;
+  FR.starting=(async()=>{ try{
+      await frEnsureCode(); frPush(true);
+      const f=await frDB().collection('friends').doc(frMe()).get(); FR.uids=(f.exists&&f.data().uids)||[];
+      await frLoadProfiles();
+      if(FR.unsub) FR.unsub();
+      FR.unsub=frDB().collection('invites').doc(frMe()).collection('items').onSnapshot(snap=>{
+        const list=[]; snap.forEach(d=>{ const v=d.data()||{}; if(Date.now()-(v.t||0)<INVITE_TTL&&v.code) list.push({from:d.id,...v}); else d.ref.delete().catch(()=>{}); });
+        FR.invites=list.sort((a,b)=>b.t-a.t); frInviteBar(); frBadge(); if(!$('friendsOv').hidden) frRender(); },()=>{});
+    }catch(e){ FR.err='Friends could not connect ('+(e&&e.code||'offline')+').'; }
+    FR.starting=null; frBadge(); if(!$('friendsOv').hidden) frRender(); frCoopInvites(); })();
+  return FR.starting;
+}
+function frStop(){ if(FR.unsub) FR.unsub(); Object.assign(FR,{code:'',uids:[],profiles:{},invites:[],unsub:null}); frInviteBar(); frBadge(); }
+async function frLoadProfiles(){
+  const got=await Promise.all(FR.uids.map(u=>frDB().collection('profiles').doc(u).get().then(d=>[u,d.exists?d.data():null]).catch(()=>[u,FR.profiles[u]||null])));
+  got.forEach(([u,d])=>{ FR.profiles[u]=d; });
+}
+const frOnline=p=>!!(p&&Date.now()-(p.seen||0)<ONLINE_MS);
+function frAgo(t){ if(!t) return 'never'; const m=Math.floor((Date.now()-t)/60000); return m<1?'just now':m<60?m+' min ago':m<1440?Math.floor(m/60)+' h ago':Math.floor(m/1440)+' days ago'; }
+function frMsg(t,err){ const m=$('frMsg'); m.textContent=t||''; m.classList.toggle('err',!!err); }
+async function frAdd(){
+  const code=($('frCodeIn').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(code.length!==6) return frMsg('Friend codes are 6 letters or numbers.',true);
+  if(code===FR.code) return frMsg('That\'s your own code. Send it to a friend so they can add you.',true);
+  if(FR.uids.length>=FR_MAX) return frMsg(`You can have up to ${FR_MAX} friends. Remove one first.`,true);
+  frMsg('Looking for '+code+'…');
+  try{
+    const c=await frDB().collection('codes').doc(code).get(); const uid=c.exists&&c.data().uid;
+    if(!uid) return frMsg('No player has the code '+code+'. Check it and try again.',true);
+    if(FR.uids.includes(uid)) return frMsg('They\'re already on your friends list.',true);
+    await frDB().collection('friends').doc(frMe()).set({uids:firebase.firestore.FieldValue.arrayUnion(uid)},{merge:true});
+    FR.uids.push(uid); await frLoadProfiles(); const p=FR.profiles[uid];
+    $('frCodeIn').value=''; frMsg(`${p?p.name:'Your friend'} added! They can now invite you to their parties.`); if(A.ctx) sChime(88); frRender();
+  }catch(e){ frMsg('Could not add that friend ('+(e&&e.code||'offline')+'). Try again.',true); }
+}
+async function frRemove(uid){
+  try{ await frDB().collection('friends').doc(frMe()).set({uids:firebase.firestore.FieldValue.arrayRemove(uid)},{merge:true}); FR.uids=FR.uids.filter(u=>u!==uid); frRender(); frMsg('Removed.'); }
+  catch(e){ frMsg('Could not remove them ('+(e&&e.code||'offline')+').',true); }
+}
+function frRow(uid,p,btns){
+  const pr=p||{name:'Unknown player',rank:0,skin:'classic'};
+  return `<li><canvas class="skprev" data-skin="${escapeHTML(pr.skin||'classic')}" width="44" height="44" aria-hidden="true"></canvas><span><b>${escapeHTML(pr.name||'Player')}</b>
+    <small><i class="gem" style="--rc:${rankCol(pr.rank||0)}"></i>${escapeHTML(rankName(pr.rank||0))} · <i class="odot${frOnline(pr)?' on':''}"></i>${frOnline(pr)?'online':'seen '+frAgo(pr.seen)}</small></span><span class="btns">${btns}</span></li>`;
+}
+function frRender(){
+  const signed=!!ACCT.user&&!!acctCfg();
+  $('frOff').hidden=signed&&!!FR.code; $('frOn').hidden=!(signed&&FR.code);
+  if(!acctCfg()){ $('frOffTxt').textContent='Friends need cloud accounts, which aren\'t switched on for this copy of the game.'; $('frSignIn').hidden=true; return; }
+  if(!signed||!FR.code){ $('frSignIn').hidden=!!ACCT.user; if(ACCT.user) $('frOffTxt').textContent=FR.err||'Setting up your friend code…'; return; }
+  $('frMyCode').textContent=FR.code;
+  $('frInvites').innerHTML=FR.invites.length?`<ul class="frlist" style="margin-bottom:8px">${FR.invites.map(v=>frRow(v.from,{name:v.name,rank:v.rank,skin:v.skin,seen:v.t},`<button class="btn" data-join="${escapeHTML(v.from)}" type="button">Join party</button>`).replace('<li>','<li class="invite">')).join('')}</ul>`:'';
+  const rows=FR.uids.map(u=>frRow(u,FR.profiles[u],`<button class="btn ghost" data-view="${u}" type="button">View</button><button class="btn ghost" data-rm="${u}" type="button" aria-label="Remove friend">✕</button>`));
+  $('frList').innerHTML=rows.length?rows.join(''):'<li class="none">No friends yet. Share your code, or type a friend\'s code above.</li>';
+  $('frList').querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>frView(b.dataset.view));
+  $('frList').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ if(b.dataset.arm){ frRemove(b.dataset.rm); return; } b.dataset.arm='1'; b.textContent='Remove?'; setTimeout(()=>{ if(b.isConnected){ b.dataset.arm=''; b.textContent='✕'; } },2500); });
+  $('frInvites').querySelectorAll('[data-join]').forEach(b=>b.onclick=()=>frJoin(FR.invites.find(v=>v.from===b.dataset.join)));
+}
+function showFriends(){ frMsg(''); frRender(); showOv('friendsOv'); if(ACCT.user&&!FR.code) frStart(); else if(frOn()) frLoadProfiles().then(()=>{ if(!$('friendsOv').hidden) frRender(); }); }
+/* ---- a friend's card ---- */
+async function frView(uid){
+  FR.view=uid; showOv('friendOv');
+  let p=FR.profiles[uid]; try{ const d=await frDB().collection('profiles').doc(uid).get(); if(d.exists){ p=d.data(); FR.profiles[uid]=p; } }catch(e){}
+  if(FR.view!==uid) return;
+  if(!p){ $('fpName').textContent='Unknown player'; return; }
+  $('fpName').textContent=p.name||'Player'; $('fpSeen').innerHTML=`<i class="odot${frOnline(p)?' on':''}"></i> ${frOnline(p)?'Online now':'Last seen '+frAgo(p.seen)}`;
+  $('fpSkin').dataset.skin=p.skin||'classic'; $('fpSkinName').textContent='Block: '+((SKINS.find(k=>k.id===p.skin)||{}).name||'Dawn Cube');
+  $('fpRank').textContent=rankName(p.rank||0); $('fpRank').parentNode.style.setProperty('--rc',rankCol(p.rank||0)); $('fpGem').style.setProperty('--rc',rankCol(p.rank||0));
+  $('fpLevels').textContent=`Reached world ${Math.min(WORLDS,p.world||1)} of ${WORLDS} · ◆ ${p.levelStars||0}/${WORLDS*27} stars · ${p.bosses||0}/${WORLDS} bosses · Hard Mode ${p.hard||0}/12`+(p.interDone?' · Interlude cleared':'');
+  $('fpWorlds').innerHTML=(p.worlds||[]).map((n,i)=>`<span class="${n>=27?'full':''}" style="--c:${THEMES[i]?THEMES[i].acc:'#FFD166'}" title="${escapeHTML(THEMES[i]?THEMES[i].name:'World '+(i+1))}">W${i+1}<b>◆${n}</b></span>`).join('');
+  $('fpStats').innerHTML=[['Best Endless',(p.bestEndless||0).toLocaleString()],['Best Ascent',p.bestAscent?'floor '+p.bestAscent:'–'],['Best Boss Raid',p.bestRaid?p.bestRaid+'/'+WORLDS+' bosses':'–'],['Best Tether',p.bestTether?p.bestTether+' rooms':'–']].map(([l,v])=>`<div><span class="lbl">${l}</span><b>${v}</b></div>`).join('');
+  const maps=p.levels||[];
+  $('fpMaps').innerHTML=maps.length?maps.map((l,i)=>`<li><span>${escapeHTML(l.n||'Untitled')}</span><button type="button" data-a="play" data-i="${i}">Play</button><button type="button" data-a="edit" data-i="${i}">Open in editor</button></li>`).join(''):'<li class="none">They haven\'t built any levels yet.</li>';
+  $('fpMaps').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const d=edDecode(maps[+b.dataset.i].code); if(!d) return toast('That level could not be opened.'); if(!d.by) d.by=p.name; if(b.dataset.a==='play') playDesign(d,false); else { edLoad(d,-1); showEditor(); } });
+  // leaderboard positions: where they sit in the top 100 of each board
+  const boards=[['endless','Endless · all time'],['ascent','Ascent · highest floor'],['daily-'+todayKey(),'Today\'s Daily'],['week-'+weekKey(),weekEvent().name+' · this week']];
+  $('fpRanks').innerHTML=boards.map(([,l])=>`<li><span class="lbn">…</span><i class="gem" style="--rc:${rankCol(p.rank||0)}"></i><span class="lbname">${l}</span><b>…</b></li>`).join('');
+  const res=await Promise.all(boards.map(([b])=>frDB().collection('boards').doc(b).collection('entries').orderBy('score','desc').limit(100).get()
+    .then(snap=>{ let i=-1,sc=0,k=0; snap.forEach(d=>{ if(d.id===uid){ i=k; sc=d.data().score||0; } k++; }); return {i,sc}; }).catch(()=>null)));
+  if(FR.view!==uid) return;
+  $('fpRanks').innerHTML=boards.map(([b,l],j)=>{ const r=res[j]; const pos=!r?'–':r.i>=0?'#'+(r.i+1):'–', val=!r?'couldn\'t load':r.i<0?'not in the top 100':b==='ascent'?'floor '+Math.floor(r.sc/1e6)+' · '+(r.sc%1e6).toLocaleString():r.sc.toLocaleString();
+    return `<li><span class="lbn">${pos}</span><i class="gem" style="--rc:${rankCol(p.rank||0)}"></i><span class="lbname">${l}</span><b>${val}</b></li>`; }).join('');
+}
+/* ---- party invites ---- */
+function frCoopInvites(){
+  const box=$('nInvite'); if(!box) return;
+  const show=frOn()&&NET.host&&NET.peer&&!NET.peer.pending&&!NET.conn; box.hidden=!show; if(!show) return;
+  const now=Date.now();
+  $('nInviteList').innerHTML=FR.uids.length?FR.uids.map(u=>frRow(u,FR.profiles[u],FR.sentT[u]&&now-FR.sentT[u]<30000?'<button class="btn ghost" type="button" disabled>Sent</button>':`<button class="btn" data-inv="${u}" type="button">Invite</button>`)).join('')
+    :'<li class="none">Add friends from the Friends screen on the main menu, then invite them here.</li>';
+  $('nInviteList').querySelectorAll('[data-inv]').forEach(b=>b.onclick=()=>frInvite(b.dataset.inv));
+}
+async function frInvite(uid){
+  if(!frOn()||!NET.code) return; const p=FR.profiles[uid]||{}, who=p.name||'Your friend';
+  try{ await frDB().collection('invites').doc(uid).collection('items').doc(frMe()).set({name:ensureName(),rank:myRank(),skin:SAVE.skin,code:NET.code,t:Date.now()});
+    FR.sentT[uid]=Date.now(); frCoopInvites(); netStatus(`Invite sent to ${who}. It shows up on their screen for 10 minutes.`); setTimeout(frCoopInvites,30500); }
+  catch(e){ netStatus(e&&e.code==='permission-denied'?`${who} has to add you as a friend before you can invite them. Send them your friend code: ${FR.code}`:`Could not send the invite (${e&&e.code||'offline'}).`,true); }
+}
+const frBusy=()=>['playing','paused','dying','cutscene','picking','calib'].includes(G.state);
+function frInviteBar(){
+  const bar=$('inviteBar'); if(!bar) return;
+  const v=FR.invites.find(x=>!FR.dismissed[x.from+'@'+x.t]&&Date.now()-x.t<INVITE_TTL);
+  if(!v||frBusy()||NET.conn||(NET.peer&&NET.code===v.code)){ bar.hidden=true; return; }
+  $('ivText').textContent=`${v.name||'A friend'} invited you to their party`;
+  $('ivJoin').onclick=()=>frJoin(v); $('ivNo').onclick=()=>{ FR.dismissed[v.from+'@'+v.t]=1; frDecline(v); frInviteBar(); };
+  if(bar.hidden&&A.ctx&&A.ctx.state==='running') sChime(88); bar.hidden=false;
+}
+function frDecline(v){ if(frOn()) frDB().collection('invites').doc(frMe()).collection('items').doc(v.from).delete().catch(()=>{}); }
+function frJoin(v){
+  if(!v) return; $('inviteBar').hidden=true; frDecline(v); FR.invites=FR.invites.filter(x=>x!==v);
+  toMenu(); showParty(); $('nCode').value=v.code; netJoin();
+}
+function frBadge(){ const d=$('mFDot'); if(d) d.hidden=!FR.invites.length; }
+setInterval(()=>{ frInviteBar(); if(!$('coopOv').hidden) frCoopInvites(); },1000);
+$('mFriends').onclick=showFriends;
+$('frBack').onclick=()=>toMenu(); $('fpBack').onclick=()=>{ FR.view=null; showFriends(); };
+$('frSignIn').onclick=()=>showAcct();
+$('frAdd').onclick=frAdd;
+$('frCodeIn').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') frAdd(); });
+$('frCodeIn').addEventListener('input',e=>{ e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6); });
+$('frCopy').onclick=()=>{ const t=FR.code; if(!t) return; try{ navigator.clipboard.writeText(t).then(()=>frMsg('Code copied. Send it to a friend.'),()=>frMsg('Your code is '+t)); }catch(e){ frMsg('Your code is '+t); } };
 
 /* ---------------- NEW TILES: spring, mud, blink, laser, turning arrow, ghost ---------------- */
 const ROT_DIRS=['up','right','down','left'];
@@ -4981,7 +5191,7 @@ function cgReload(){
 function cgSetup(){
   document.body.classList.add('cg');
   // things that need an outside account or leave CrazyGames
-  ['mLB','oLB','rShare','oShare','edShare'].forEach(id=>{ const e=$(id); if(e){ e.hidden=true; e.style.display='none'; } });
+  ['mLB','oLB','rShare','oShare','edShare','mFriends','nInvite'].forEach(id=>{ const e=$(id); if(e){ e.hidden=true; e.style.display='none'; } });
   // accounts
   if(CG.user&&CG.user.isUserAccountAvailable){
     CG.user.getUser().then(u=>cgApplyUser(u)).catch(()=>cgApplyUser(null));
@@ -5472,7 +5682,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv'];
+const OVS=['friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -5724,7 +5934,7 @@ function loop(){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&shopTab==='skins') drawSkinPreviews(now); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&shopTab==='skins') drawSkinPreviews(now); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
