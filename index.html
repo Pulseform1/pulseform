@@ -242,13 +242,13 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
 @media (max-width:420px){h1{font-size:31px}.streak{font-size:36px}.num{font-size:17px}.panel{padding:18px}.hud{gap:8px}.sub{font-size:11px}}
 @media (max-height:640px) and (orientation:portrait){.hud{padding-block:8px 2px}.streak{font-size:32px}.metro{margin-top:5px}.pad{--b:clamp(52px,15vw,64px)}}
 /* beat bars: a track at the side of the screen; two bars slide in from its ends and meet in the middle on every beat */
-.beatbar{position:fixed;left:max(12px,env(safe-area-inset-left));top:50%;height:min(44vh,300px);width:26px;transform:translateY(-50%);z-index:2;pointer-events:none;opacity:.92}
+.beatbar{position:fixed;left:max(12px,env(safe-area-inset-left));top:50%;height:min(62vh,440px);width:42px;transform:translateY(-50%);z-index:2;pointer-events:none;opacity:.92}
 .beatbar[hidden]{display:none}
-.beatbar::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;border-radius:2px;background:linear-gradient(transparent,rgba(255,248,238,.55) 18%,rgba(255,248,238,.55) 82%,transparent);box-shadow:0 0 0 1px rgba(24,20,56,.18)}
-.beatbar .bbmid{position:absolute;left:1px;right:1px;top:50%;height:6px;margin-top:-3px;border-radius:3px;border:2px solid #FFD166;box-shadow:0 0 0 1px rgba(24,20,56,.45);box-sizing:border-box}
-.beatbar .bb{position:absolute;left:3px;right:3px;top:50%;height:4px;margin-top:-2px;border-radius:2px;background:#FFF8EE;box-shadow:0 0 0 1.5px rgba(24,20,56,.55),0 0 6px rgba(255,248,238,.6);will-change:transform}
+.beatbar::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:4px;margin-left:-2px;border-radius:2px;background:linear-gradient(transparent,rgba(255,248,238,.55) 18%,rgba(255,248,238,.55) 82%,transparent);box-shadow:0 0 0 1px rgba(24,20,56,.18)}
+.beatbar .bbmid{position:absolute;left:0;right:0;top:50%;height:12px;margin-top:-6px;border-radius:6px;border:3px solid #FFD166;box-shadow:0 0 0 1px rgba(24,20,56,.45);box-sizing:border-box}
+.beatbar .bb{position:absolute;left:4px;right:4px;top:50%;height:8px;margin-top:-4px;border-radius:4px;background:#FFF8EE;box-shadow:0 0 0 1.5px rgba(24,20,56,.55),0 0 6px rgba(255,248,238,.6);will-change:transform}
 .beatbar.down .bb{background:var(--lantern);box-shadow:0 0 0 1.5px rgba(24,20,56,.55),0 0 8px rgba(255,209,102,.8)}
-@media (max-width:520px){.beatbar{left:max(5px,env(safe-area-inset-left));width:20px}#app .talk{top:100px}}
+@media (max-width:520px){.beatbar{left:max(5px,env(safe-area-inset-left));width:32px;height:min(52vh,380px)}#app .talk{top:100px;max-width:calc(100% - 16px);padding:12px 14px 12px 10px}#app .talk .ttxt{font-size:15.5px}#app .talk .tport{width:52px;height:52px}#app .talk .tport svg{width:44px;height:44px}}
 .beatbar.hit .bbmid{animation:bbHit .22s ease-out}
 @keyframes bbHit{0%{transform:scaleX(1.5);background:rgba(255,209,102,.9)}100%{transform:scaleX(1);background:transparent}}
 /* phones on their side: controls float in the corners so the board gets the full height */
@@ -263,7 +263,8 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
   body.coop .stage{margin-left:calc(clamp(42px,11vh,56px)*3 + 24px)}
   body.swipe-only .stage{margin:0}
   body.coop .beatbar{left:calc(clamp(42px,11vh,56px)*3 + 30px)}
-  .beatbar{height:min(56vh,220px)}
+  .beatbar{height:min(66vh,250px);width:34px}
+  #app .talk{top:52px;padding:10px 16px 10px 10px}#app .talk .ttxt{font-size:15px}#app .talk .tport{width:48px;height:48px}#app .talk .tport svg{width:40px;height:40px}
   .panel{max-height:calc(100% - 16px);padding:16px;gap:10px}
 }
 .segs{display:flex;gap:6px;background:var(--glass);padding:4px;border-radius:12px}
@@ -499,12 +500,12 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 #stBpmOut{font:700 15px var(--display);color:var(--lantern)}
 #stTap.flash{background:rgba(255,209,102,.3)}
 .err:empty{display:none}
-.talk{position:absolute;left:50%;top:64px;transform:translateX(-50%);z-index:5;display:flex;gap:10px;align-items:center;max-width:min(480px,calc(100% - 24px));width:max-content;padding:10px 14px 10px 10px;border-radius:18px;background:rgba(24,20,56,.9);border:1px solid rgba(184,242,230,.45);box-shadow:0 8px 30px rgba(0,0,0,.3);pointer-events:none;animation:talkIn .35s cubic-bezier(.2,.9,.3,1.2) both}
+.talk{position:absolute;left:50%;top:64px;transform:translateX(-50%);z-index:5;box-sizing:border-box;display:flex;gap:14px;align-items:center;max-width:min(680px,calc(100% - 24px));width:max-content;padding:14px 20px 14px 14px;border-radius:22px;background:rgba(24,20,56,.9);border:1px solid rgba(184,242,230,.45);box-shadow:0 8px 30px rgba(0,0,0,.3);pointer-events:none;animation:talkIn .35s cubic-bezier(.2,.9,.3,1.2) both}
 .talk[hidden]{display:none}
-.talk .tport{flex:none;width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#2E4A6A,#161433);display:grid;place-items:center;overflow:hidden}
-.talk .tport svg{width:38px;height:38px}
-.talk .ttxt{display:flex;flex-direction:column;gap:2px;font-size:13.5px;line-height:1.35;color:var(--ink)}
-.talk .ttxt b{font:700 11px var(--display);letter-spacing:.08em;text-transform:uppercase;color:#B8F2E6}
+.talk .tport{flex:none;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#2E4A6A,#161433);display:grid;place-items:center;overflow:hidden}
+.talk .tport svg{width:54px;height:54px}
+.talk .ttxt{display:flex;flex-direction:column;gap:4px;font-size:18px;line-height:1.4;color:var(--ink)}
+.talk .ttxt b{font:700 13px var(--display);letter-spacing:.08em;text-transform:uppercase;color:#B8F2E6}
 @keyframes talkIn{from{opacity:0;transform:translate(-50%,-10px) scale(.95)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
 .tutpanel{align-items:center;text-align:center;max-width:460px}
 .tutport{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 50% 38%,#34557A,#161433 72%);display:grid;place-items:center;box-shadow:0 0 40px rgba(127,224,204,.35)}
@@ -2967,6 +2968,15 @@ function reach(room,start){
   return seen;
 }
 const isSpecial=c=>c.crack||c.rgate||c.wind||c.ice||c.vent||c.tele>=0||c.blaster||c.spring||c.mud||c.blink>=0||c.rot>=0||c.ghost||c.beam||c.pu;
+/* the tiles you can reach from `from`, and which of them have no way back to it */
+function arenaTraps(room,from){
+  const N=room.N, id=(x,y)=>y*N+x, s0=id(from.x,from.y), adj=new Map(), seen=new Set([s0]), q=[from];
+  while(q.length){ const c=q.shift(), me=id(c.x,c.y), outs=[];
+    for(const k of DK){ const r=simMove(room,c.x,c.y,k,true); if(!r) continue; const kk=id(r.x,r.y); if(kk!==me) outs.push(kk); if(!seen.has(kk)){ seen.add(kk); q.push({x:r.x,y:r.y}); } }
+    adj.set(me,outs); }
+  const back=new Set([s0]); for(let ch=true;ch;){ ch=false; for(const [k,o] of adj) if(!back.has(k)&&o.some(v=>back.has(v))){ back.add(k); ch=true; } }
+  return {seen,bad:[...seen].filter(k=>!back.has(k))};
+}
 function genArena(w){
   const N=9, id=(x,y)=>y*N+x, inb=(x,y)=>x>=0&&y>=0&&x<N&&y<N;
   for(let attempt=0;attempt<40;attempt++){
@@ -3002,6 +3012,12 @@ function genArena(w){
     const seen=new Set([id(start.x,start.y)]), q=[start];
     while(q.length){ const s=q.shift(); for(const k of DK){ const r=simMove(room,s.x,s.y,k,true); if(!r) continue; const kk=id(r.x,r.y); if(!seen.has(kk)){ seen.add(kk); q.push({x:r.x,y:r.y}); } } }
     if(seen.size<floorCount()*(w>=6&&attempt<30?.92:.75)) continue;
+    // no traps: wind, ice, springs and teleporters must never carry you somewhere you can't walk back from.
+    // Flatten the push tiles in and around any one-way pocket, and try another layout if that isn't enough.
+    for(let fix=0;fix<12;fix++){ const bad=arenaTraps(room,start).bad; if(!bad.length) break;
+      const near=new Set(); bad.forEach(i=>{ near.add(i); const x=i%N,y=(i/N)|0; DK.forEach(k=>{ const nx=x+DIRS[k][0], ny=y+DIRS[k][1]; if(inb(nx,ny)) near.add(id(nx,ny)); }); });
+      near.forEach(i=>{ const c=cells[i]; if(c.tele>=0){ cells[c.tele].tele=-1; c.tele=-1; } c.wind=null; c.ice=false; c.spring=false; }); }
+    if(arenaTraps(room,start).bad.length) continue;
     const hp=(w<=6?3+2*w:w===WORLDS?21:9+w)+1;   // 3 less health than the original bosses, then 1 given back
     room.boss={x:3,y:0,hp,max:hp,flashT:-9,chargeT:-9,dieT:0,enraged:false,w};
     ['crack','tele','rgate','wind','vent','ice','spring','mud','ghost'].forEach(k=>room.has[k]=cells.some(c=>k==='tele'?c.tele>=0:c[k]));
@@ -5704,11 +5720,18 @@ function raidRoom(M,i){
   return {th,sid,tseed:'W'+w,bpm:(th.bpm+18)*Math.max(1,STYLES[sid].bpm),instr:10,w};
 }
 function raidArena(w){
-  const room=genArena(w), hp=Math.max(4,Math.round(room.boss.hp*.75));   // a raid is a rush: each boss has 25% less health
+  let room;
+  for(let tries=0;tries<30;tries++){
+    room=genArena(w);
+    // both spawns are plain floor: a vent, teleporter, gate, wind, spring or ghost tile under a spawn made the start unfair
+    RAID_SPAWNS.forEach(p=>{ const c=room.cells[p.y*room.N+p.x]; if(c.tele>=0){ room.cells[c.tele].tele=-1; }
+      Object.assign(c,{t:1,crack:false,ice:false,blink:-1,vent:false,rgate:false,wind:null,lock:null,spring:false,mud:false,ghost:false,beam:null,tele:-1,rot:-1,blaster:0,pu:null}); });
+    // and the two spawns must be joined, with no one-way pockets from either
+    const a=arenaTraps(room,RAID_SPAWNS[0]), b=RAID_SPAWNS[1];
+    if(!a.bad.length&&a.seen.has(b.y*room.N+b.x)&&!arenaTraps(room,b).bad.length) break;
+  }
+  const hp=Math.max(4,Math.round(room.boss.hp*.75));   // a raid is a rush: each boss has 25% less health
   room.boss.hp=hp; room.boss.max=hp; room.spawns=RAID_SPAWNS.map(p=>({...p}));
-  // both spawns are plain floor: a vent, teleporter, gate, wind, spring or ghost tile under a spawn made the start unfair
-  RAID_SPAWNS.forEach(p=>{ const c=room.cells[p.y*room.N+p.x]; if(c.tele>=0){ room.cells[c.tele].tele=-1; }
-    Object.assign(c,{t:1,crack:false,ice:false,blink:-1,vent:false,rgate:false,wind:null,lock:null,spring:false,mud:false,ghost:false,beam:null,tele:-1,rot:-1,blaster:0,pu:null}); });
   room.has.tele=room.cells.some(c=>c.tele>=0);
   return room;
 }
