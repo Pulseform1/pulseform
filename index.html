@@ -3388,16 +3388,38 @@ function acctInit(){
 }
 
 /* ---- merging a device's save with the account's save ---- */
-const DEVICE_KEYS=['offset','controls','musicVol','sfxVol','haptics','reduce'];
+const DEVICE_KEYS=['offset','controls','musicVol','sfxVol','haptics','reduce','swipeLearn'];
 function mergeSaves(loc,cl,additive){
   const base=JSON.parse(JSON.stringify(DEF));
+  // "Erase progress" is stamped with a time: a save from before the latest erase gives way to it,
+  // instead of merging its old stars and Notes straight back into the account
+  if(!additive&&(cl.wipe||0)!==(loc.wipe||0)){
+    const keep=(cl.wipe||0)>(loc.wipe||0)?cl:loc, out=Object.assign(base,keep);
+    for(const k of DEVICE_KEYS) if(k in loc) out[k]=loc[k];
+    out.trailRefund=true; out._t=Math.max(loc._t||0,cl._t||0,1); out.syncBase={notes:out.notes||0,xp:out.xp||0}; return out; }
   const newer=(cl._t||0)>=(loc._t||0)?cl:loc;
   const out=Object.assign(base,loc,newer);
   for(const k of DEVICE_KEYS) if(k in loc) out[k]=loc[k];
   out.owned=[...new Set([...(cl.owned||[]),...(loc.owned||[])])];
   out.stars=Object.assign({},cl.stars||{}); for(const k in (loc.stars||{})) out.stars[k]=Math.max(out.stars[k]||0,loc.stars[k]);
   for(const k of ['bestEndless','bestCoop','maxStreak','plays','world','lastWorld','bestAscent','rankSeen','bestRaid','bestTether','rankKeep']) out[k]=Math.max(loc[k]||0,cl[k]||0)||DEF[k];
-  out.xp=additive?(cl.xp||0)+(loc.xp||0):Math.max(loc.xp||0,cl.xp||0);
+  // Notes and XP sync as changes: what this device earned or spent since it last synced is applied on top
+  // of the account's value, so two devices playing at the same time both keep what they earned
+  const B0=loc.syncBase;
+  out.xp=additive?(cl.xp||0)+(loc.xp||0):B0?(cl.xp||0)+Math.max(0,(loc.xp||0)-(B0.xp||0)):Math.max(loc.xp||0,cl.xp||0);
+  for(const k of ['bestStudio']) out[k]=Math.max(loc[k]||0,cl[k]||0);
+  for(const k of ['interDone','interOpen','tutDone','xpCurve2']) out[k]=!!(loc[k]||cl[k]);
+  out.events=Object.assign({},cl.events||{},loc.events||{});           // limited event blocks you unlocked
+  out.ach=Object.assign({},cl.ach||{},loc.ach||{});                    // achievements
+  out.lbBest={}; for(const o of [cl.lbBest||{},loc.lbBest||{}]) for(const k in o) out.lbBest[k]=Math.max(out.lbBest[k]||0,o[k]||0);
+  { const g={}, rank=x=>'CBAS'.indexOf(x||'');                        // best grade and every medal, per level
+    for(const o of [cl.grades||{},loc.grades||{}]) for(const k in o){ const a=g[k]||{g:'',m:{}}, b=o[k]||{}; g[k]={g:rank(b.g)>rank(a.g)?b.g:a.g,m:Object.assign({},a.m,b.m||{})}; } out.grades=g; }
+  { const gh=Object.assign({},cl.ghosts||{}); for(const k in (loc.ghosts||{})) if(!gh[k]||(loc.ghosts[k].s||0)>(gh[k].s||0)) gh[k]=loc.ghosts[k]; out.ghosts=gh; }
+  { const a=loc.gift||{}, b=cl.gift||{}; out.gift=Object.assign({},(a.date||'')>=(b.date||'')?a:b); out.gift.streak=Math.max(a.streak||0,b.streak||0); }
+  { const a=loc.eventBest, b=cl.eventBest; out.eventBest=!a?b:!b?a:a.wk===b.wk?{wk:a.wk,s:Math.max(a.s||0,b.s||0)}:(a.wk>b.wk?a:b); if(!out.eventBest) delete out.eventBest; }
+  { const a=loc.quests||{}, b=cl.quests||{};                            // today's quests: keep the furthest progress and every claim
+    if(a.date&&a.date===b.date&&a.list&&b.list){ out.quests={date:a.date,list:a.list.map((q,i)=>{ const o=b.list.find(x=>x.id===q.id)||b.list[i]||{}; return {...q,prog:Math.max(q.prog||0,o.prog||0),claimed:!!(q.claimed||o.claimed),told:!!(q.told||o.told)}; })}; }
+    else out.quests=(a.date||'')>=(b.date||'')?a:b; }
   out.life=Object.assign({},cl.life||{}); for(const k in (loc.life||{})) out.life[k]=additive?(out.life[k]||0)+loc.life[k]:Math.max(out.life[k]||0,loc.life[k]);
   { const seen=new Set(), ml=[]; [...(newer.myLevels||[]),...(loc.myLevels||[]),...(cl.myLevels||[])].forEach(l=>{ if(l&&l.code&&!seen.has(l.code)&&ml.length<24){ seen.add(l.code); ml.push(l); } }); out.myLevels=ml; }
   out.name=newer.name||loc.name||cl.name||'';
@@ -3405,35 +3427,57 @@ function mergeSaves(loc,cl,additive){
   if(dl.date&&dl.date===dc.date){ out.daily.best=Math.max(dl.best||0,dc.best||0); out.daily.stars=Math.max(dl.stars||0,dc.stars||0); }
   out.daily.streak=Math.max(dl.streak||0,dc.streak||0);
   // guest progress made before signing in on this device is added into the account
-  out.notes=additive?(cl.notes||0)+(loc.notes||0):newer.notes||0;
+  out.notes=additive?(cl.notes||0)+(loc.notes||0):B0?Math.max(0,(cl.notes||0)+((loc.notes||0)-(B0.notes||0))):newer.notes||0;
   const sk=SKINS.find(s=>s.id===out.skin), ld=LANDS.find(s=>s.id===out.land);
   if(!sk||(!out.owned.includes(sk.id)&&!sk.req&&sk.price>0)) out.skin='classic';
   if(!ld||(!out.owned.includes(ld.id)&&!ld.req&&ld.price>0)) out.land='ring';
   out.trailRefund=true; out._t=Math.max(loc._t||0,cl._t||0,1);
+  out.syncBase={notes:out.notes||0,xp:out.xp||0};   // what the account will hold once this is written
   return out;
 }
 function acctDoc(){ return ACCT.db.collection('users').doc(ACCT.user.uid); }
-function acctPull(first){
-  if(!ACCT.user) return; const uid=ACCT.user.uid; ACCT.syncing=true; acctUI();
-  acctDoc().get().then(snap=>{
+/* One sync = read the account's save, merge this device's save into it, write the result — all in one
+   transaction. So a device that has been open for hours can't overwrite what another device saved in the
+   meantime, and two devices saving at the same moment are merged instead of one winning. */
+ACCT.rev=0;
+const sameSave=(a,b)=>{ const f=o=>JSON.stringify(Object.assign({},o,{_t:0,syncBase:0,linked:0})); return f(a)===f(b); };
+function acctSync(){
+  if(!ACCT.user||!ACCT.db) return Promise.resolve();
+  if(ACCT.syncP){ ACCT.syncAgain=true; return ACCT.syncP; }
+  const uid=ACCT.user.uid, ref=acctDoc(), rev=ACCT.rev, start=JSON.parse(JSON.stringify(SAVE)), overwrite=!!ACCT.overwrite;
+  ACCT.syncing=true; acctUI();
+  ACCT.syncP=ACCT.db.runTransaction(async tx=>{
+    const snap=await tx.get(ref); let cl=null; if(snap.exists){ try{ cl=JSON.parse(snap.data().save); }catch(e){ cl=null; } }
+    // a device that isn't linked yet (a guest save, or first sign-in here) adds its progress into the account
+    let out=overwrite||!cl?Object.assign({},start,{syncBase:{notes:start.notes||0,xp:start.xp||0}}):mergeSaves(start,cl,start.linked!==uid);
+    out.linked=uid; if(start.linked!==uid) out._t=Date.now();
+    if(!cl||overwrite||!sameSave(out,cl)) tx.set(ref,{save:JSON.stringify(out),t:out._t||Date.now(),name:ACCT.user.displayName||ACCT.user.email||''});
+    return out;
+  }).then(out=>{
     if(!ACCT.user||ACCT.user.uid!==uid) return;
-    let cl=null; if(snap.exists){ try{ cl=JSON.parse(snap.data().save); }catch(e){ cl=null; } }
-    const linked=SAVE.linked===uid;
-    if(cl){ const keepT=SAVE._t; SAVE=mergeSaves(SAVE,cl,!linked); if(!linked) SAVE._t=Date.now(); else SAVE._t=Math.max(keepT||0,SAVE._t); }
-    if(!SAVE.name) restoreName(); SAVE.linked=uid; store.set('save',SAVE);
-    ACCT.syncing=false; ACCT.lastSync=Date.now();
-    if(!cl||!linked||(SAVE._t>(cl._t||0))) acctPush(true);
-    acctRefresh(); acctUI();
-  }).catch(e=>{ ACCT.syncing=false; ACCT.err='Could not load your cloud save ('+(e.code||'offline')+'). Your progress is still saved on this device.'; acctUI(); });
+    if(overwrite) ACCT.overwrite=false;
+    if(ACCT.rev===rev) SAVE=out;
+    else {  // something was saved while the sync ran: keep it on top of the synced save, then sync once more
+      const cur=SAVE; cur.syncBase={notes:start.notes||0,xp:start.xp||0}; cur.linked=uid;
+      SAVE=mergeSaves(cur,out,false); SAVE.syncBase={notes:out.notes||0,xp:out.xp||0}; ACCT.syncAgain=true; }
+    if(!SAVE.name) restoreName();
+    store.set('save',SAVE); ACCT.lastSync=Date.now(); ACCT.err=''; acctRefresh();
+  }).catch(e=>{ ACCT.err='Could not sync with your account ('+(e&&e.code||'offline')+'). Your progress is safe on this device and syncs next time.'; })
+  .finally(()=>{ ACCT.syncP=null; ACCT.syncing=false; acctUI(); if(ACCT.syncAgain){ ACCT.syncAgain=false; acctPush(false); } });
+  return ACCT.syncP;
 }
+function acctPull(){ return acctSync(); }
 function acctPush(now){
-  if(!ACCT.user||!ACCT.db||SAVE.linked!==ACCT.user.uid) return;
-  clearTimeout(ACCT.pushT);
-  const go=()=>{ const data={save:JSON.stringify(SAVE),t:SAVE._t||Date.now(),name:ACCT.user.displayName||ACCT.user.email||''};
-    acctDoc().set(data).then(()=>{ ACCT.lastSync=Date.now(); ACCT.err=''; acctUI(); }).catch(e=>{ ACCT.err='Cloud save failed ('+(e.code||'offline')+'). It will retry on your next save.'; acctUI(); }); };
-  if(now) go(); else ACCT.pushT=setTimeout(go,1500);
+  if(!ACCT.user||!ACCT.db||SAVE.linked!==ACCT.user.uid) return Promise.resolve();
+  clearTimeout(ACCT.pushT); ACCT.pushT=null;
+  if(now) return acctSync(); ACCT.pushT=setTimeout(()=>{ ACCT.pushT=null; acctSync(); },1500);
 }
-onSave=()=>{ SAVE._t=Date.now(); acctPush(false); frPush(false); };
+/* coming back to the game (another tab, another app, the phone waking up) picks up progress from other devices */
+function acctCatchUp(){ if(ACCT.user&&!document.hidden&&!['playing','paused','dying','cutscene','picking'].includes(G.state)&&Date.now()-(ACCT.lastSync||0)>15000) acctSync(); }
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) acctCatchUp(); });
+addEventListener('focus',acctCatchUp);
+setInterval(acctCatchUp,3*60*1000);
+onSave=()=>{ SAVE._t=Date.now(); ACCT.rev++; acctPush(false); frPush(false); };
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&ACCT.pushT){ acctPush(true); } });
 function acctRefresh(){
   // redraw whatever menu is open so new notes/skins show straight away
@@ -3487,10 +3531,10 @@ function acctForgot(){
     .catch(e=>{ ACCT.err=authMsg(e); acctUI(); });
 }
 function acctOut(){
-  if(!ACCT.auth) return; acctPush(true);
+  if(!ACCT.auth) return;
   // the progress lives in the account now; this device goes back to a fresh guest save
   const keep={}; for(const k of DEVICE_KEYS) keep[k]=SAVE[k];
-  ACCT.auth.signOut().then(()=>{ SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep,{trailRefund:true,name:SAVE.name||store.get('name','')}); store.set('save',SAVE); acctRefresh(); acctUI(); });
+  acctSync().catch(()=>{}).then(()=>ACCT.auth.signOut()).then(()=>{ SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep,{trailRefund:true,name:SAVE.name||store.get('name','')}); store.set('save',SAVE); acctRefresh(); acctUI(); });
 }
 
 /* ---- UI ---- */
@@ -3524,7 +3568,7 @@ $('aForm').onsubmit=e=>{ e.preventDefault(); acctEmail(); };
 $('aGoogle').onclick=acctGoogle;
 $('aForgot').onclick=acctForgot;
 $('aSignOut').onclick=acctOut;
-$('aSyncNow').onclick=()=>acctPull(false);
+$('aSyncNow').onclick=()=>acctSync();
 acctInit(); acctChip();
 
 /* ================= FRIENDS =================
@@ -6071,8 +6115,8 @@ $('calibDot').addEventListener('pointerdown',e=>{e.preventDefault(); calibTap(e)
 $('relaxed').onchange=e=>{SAVE.relaxed=e.target.checked; save()};
 $('reduce').onchange=e=>{SAVE.reduce=e.target.checked; save()};
 $('offset').oninput=e=>{SAVE.offset=+e.target.value; save(); syncOffset()};
-$('resetBtn').onclick=e=>{ const b=$('resetBtn'); if(!b.dataset.arm){ b.dataset.arm='1'; b.textContent='Tap again to erase all stars, Notes and items'; return; }
-  const keep={offset:SAVE.offset,relaxed:SAVE.relaxed,reduce:SAVE.reduce,name:SAVE.name}; SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep); save(); b.dataset.arm=''; b.textContent='Progress erased'; };
+$('resetBtn').onclick=e=>{ const b=$('resetBtn'), acct=!!(ACCT.user&&SAVE.linked===ACCT.user.uid); if(!b.dataset.arm){ b.dataset.arm='1'; b.textContent=acct?'Tap again to erase all stars, Notes and items, here and on your account':'Tap again to erase all stars, Notes and items'; return; }
+  const keep={offset:SAVE.offset,relaxed:SAVE.relaxed,reduce:SAVE.reduce,name:SAVE.name,linked:acct?SAVE.linked:undefined,wipe:Date.now()}; SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep); if(acct) ACCT.overwrite=true; save(); b.dataset.arm=''; b.textContent='Progress erased'; };
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&G.state==='playing'&&!(G.mode&&G.mode.net)) pause(); wakeSync(); });
 /* switching to another window (the keys stop reaching the game) pauses too */
 addEventListener('blur',()=>{ if(G.state==='playing'&&!(G.mode&&G.mode.net)) pause(); });
