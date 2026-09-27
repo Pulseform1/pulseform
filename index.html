@@ -688,6 +688,7 @@ button:disabled{opacity:.55;cursor:default}
       <div id="hist" class="hist"></div>
       <div class="histlbl"><span>early</span><span>on beat</span><span>late</span></div>
       <p id="timingTip" style="font-size:13px;margin-top:8px"></p>
+      <button id="applyOff" class="btn ghost" type="button" hidden></button>
     </div>
     <div class="near" id="oNear"></div>
     <div class="reward" id="oReward"></div>
@@ -781,8 +782,8 @@ button:disabled{opacity:.55;cursor:default}
       <label class="opt" for="stClick"><input id="stClick" type="checkbox"><span>Soft click on every beat<small>A quiet tick to help you lock in. Leave it off for total silence.</small></span></label>
     </div>
     <div class="field"><div class="top"><label for="stBpm">Tempo</label><output id="stBpmOut">100 BPM</output></div>
-      <input id="stBpm" type="range" min="60" max="190" step="0.5">
-      <div class="bpmrow"><button class="btn ghost" id="stTap" type="button">Tap tempo</button><button class="btn ghost" id="stDetect" type="button" hidden>Detect BPM</button><button class="btn ghost" id="stHalf" type="button">½×</button><button class="btn ghost" id="stDouble" type="button">2×</button></div></div>
+      <input id="stBpm" type="range" min="60" max="190" step="0.01">
+      <div class="bpmrow"><button class="btn ghost" id="stTap" type="button">Tap tempo</button><button class="btn ghost" id="stDetect" type="button" hidden>Detect BPM</button><button class="btn ghost" id="stMinus" type="button" aria-label="0.1 BPM slower">−</button><button class="btn ghost" id="stPlus" type="button" aria-label="0.1 BPM faster">+</button><button class="btn ghost" id="stHalf" type="button">½×</button><button class="btn ghost" id="stDouble" type="button">2×</button></div></div>
     <div class="field" id="stOffField" hidden><div class="top"><label for="stOff">Beat alignment</label><output id="stOffOut">0 ms</output></div>
       <input id="stOff" type="range" min="-600" max="600" step="5"><small class="small">Play the preview. If the clicks land before the song's beat, slide right; if after, slide left.</small></div>
     <div><div class="segs" id="stDiff"><button data-d="chill" type="button">Chill</button><button data-d="groove" type="button">Groove</button><button data-d="intense" type="button">Intense</button></div>
@@ -890,13 +891,13 @@ button:disabled{opacity:.55;cursor:default}
     <label class="opt" for="reduce"><input id="reduce" type="checkbox"><span>Calmer effects<small>No screen flashes, camera nudges or bobbing.</small></span></label>
     <div class="offset">
       <label for="offset">Audio offset</label><output id="offsetOut">0 ms</output>
-      <input id="offset" type="range" min="-150" max="150" step="1" value="0">
+      <input id="offset" type="range" min="-300" max="300" step="1" value="0">
     </div>
     <button id="calibBtn" class="btn ghost" type="button">Calibrate timing</button>
     <details>
       <summary>How to play</summary>
       <ul class="howto">
-        <li>Press a direction as the gold ring closes on your block. Arrows, WASD or the on-screen pad.</li>
+        <li>Press a direction as the gold ring closes on your block. Arrows, WASD, a game controller or the on-screen pad.</li>
         <li>Perfect hits grow your streak. Every streak tier adds music layers and effects.</li>
         <li>Bumping walls, pillars and glowing rails is safe. Open edges drop you.</li>
         <li>Reach the glowing door to clear a room.</li>
@@ -995,7 +996,7 @@ button:disabled{opacity:.55;cursor:default}
 <section id="calibOv" class="overlay" hidden>
   <div class="panel">
     <h2>Calibrate timing</h2>
-    <p id="calibMsg">Tap any direction, Space, or the dot on every click. 16 clicks; the first 4 are warm-up.</p>
+    <p id="calibMsg">Tap any direction, Space, or the dot on every click. 24 clicks; the first 4 are warm-up.</p>
     <button id="calibDot" class="calibdot" type="button" aria-label="Tap on each click"></button>
     <div class="small" id="calibCount" style="text-align:center">0 taps</div>
     <button id="calibDone" class="btn ghost" type="button" hidden>Back to settings</button>
@@ -1416,6 +1417,8 @@ function syncClock(){
 }
 function evTime(ev){ const pn=performance.now(); return (ev&&ev.timeStamp>0&&Math.abs(ev.timeStamp-pn)<1000)?ev.timeStamp:pn; }
 function heardNow(ev){ if(CLK.off==null) syncClock(); return evTime(ev)/1000+(CLK.off||0); }
+/* how long a sound scheduled now takes to reach the speaker */
+function outLat(){ return A.ctx?clamp(A.ctx.currentTime-heardNow(),0,.5):0; }
 
 /* ================= EXPANSION DATA: worlds 7-16, new tiles, music, cosmetics, ranks, quests ================= */
 THEMES.push(
@@ -1822,9 +1825,11 @@ function nextRoom(first){
 /* Touch screens report swipes a little late and fingers are less precise than keys:
    phones get 35% wider windows and a small built-in lag correction. */
 const TOUCH_LAG=MOB?.03:0;
+/* notes due more than this long ago are dropped instead of played late and bunched together */
+const LATE_OK=.012;
 function win(spb){ const sc=(SAVE.relaxed?1.3:1)*(MOB?1.35:1)*(G.mode&&G.mode.tight?.8:1)*((G.perks&&G.perks.win)||1), cap=.42*spb; return {p:Math.min(.045*sc,cap*.3),g:Math.min(.09*sc,cap*.6),l:Math.min(.15*sc,cap)}; }
 function pump(){
-  const c=A.ctx, ahead=c.currentTime+(MOB?.35:.25);
+  const c=A.ctx, lat=G.mode.click?outLat():0, ahead=c.currentTime+(MOB?.35:.25)+lat;
   for(;;){
     const last=G.beats[G.beats.length-1], t=last?last.t+last.spb:G.startT;
     if(t>ahead) break;
@@ -1832,8 +1837,8 @@ function pump(){
     if(k%4===0&&G.pendingBpm&&(!G.pendingK||k>=G.pendingK)){G.bpm=G.pendingBpm;G.pendingBpm=0;G.pendingK=0}
     if(G.mode.duel&&k>=48&&k%16===0&&G.bpm<168){ G.bpm=Math.min(168,G.bpm+6); G.surgeK=k; }
     const spb=60/G.bpm, b={k,t,spb,d:[false,false]}; G.beats.push(b);
-    if(!G.mode.file&&!G.mode.silent) for(let s=0;s<4;s++) scheduleStep(k*4+s,t+s*spb/4,spb);
-    else if(G.mode.click) { tone(A.sfx,t,'square',k%4?1500:2000,.035,.001,.03,{lp:5000}); tone(A.sfx,t,'sine',k%4?750:1000,.08,.001,.05); }
+    if(!G.mode.file&&!G.mode.silent) for(let s=0;s<4;s++){ const st=t+s*spb/4; if(st>=c.currentTime-LATE_OK) scheduleStep(k*4+s,st,spb); }
+    else if(G.mode.click&&t-lat>=c.currentTime-LATE_OK) { const ct=t-lat; tone(A.sfx,ct,'square',k%4?1500:2000,.035,.001,.03,{lp:5000}); tone(A.sfx,ct,'sine',k%4?750:1000,.08,.001,.05); }
   }
 }
 function nextDownbeatTime(now){
@@ -3594,7 +3599,7 @@ function studioUI(){
   $('stSongs').innerHTML=songList().map(s=>`<button class="song${STUDIO.src==='game'&&s.seed===STUDIO.tseed?' on':''}" data-id="${s.id}" data-seed="${s.seed}" data-bpm="${s.bpm}" type="button" style="--c:${s.c}"><b>${s.name}</b><small>${s.sub} · ${s.bpm} BPM</small></button>`).join('');
   $('stSongs').querySelectorAll('.song').forEach(b=>b.onclick=()=>{ stopPreview(); STUDIO.style=b.dataset.id; STUDIO.tseed=b.dataset.seed; STUDIO.songName=b.querySelector('b').textContent; STUDIO.bpm=+b.dataset.bpm; studioSave(); studioUI(); });
   $('stFileName').textContent=STUDIO.buf?'♪ '+STUDIO.fileName+' · tap to change':'Choose a song file';
-  $('stBpm').value=STUDIO.bpm; $('stBpmOut').textContent=(Math.round(STUDIO.bpm*10)/10)+' BPM';
+  $('stBpm').value=STUDIO.bpm; $('stBpmOut').textContent=fmtBpm(STUDIO.bpm)+' BPM';
   $('stOff').value=STUDIO.off; $('stOffOut').textContent=(STUDIO.off>0?'+':'')+STUDIO.off+' ms';
   $('stDiff').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.d===STUDIO.diff)); $('stDiffTxt').textContent=DIFF_TXT[STUDIO.diff];
   $('stPrev').textContent=STUDIO.preview?'■ Stop':'▶ Preview'; $('stPrev').disabled=file&&!STUDIO.buf; $('stGo').disabled=file&&!STUDIO.buf;
@@ -3608,12 +3613,26 @@ $('stDiff').querySelectorAll('button').forEach(b=>b.onclick=()=>{ STUDIO.diff=b.
 $('stBpm').addEventListener('input',e=>{ setStudioBpm(+e.target.value); });
 $('stOff').addEventListener('input',e=>{ STUDIO.off=+e.target.value; $('stOffOut').textContent=(STUDIO.off>0?'+':'')+STUDIO.off+' ms'; if(STUDIO.preview) restartPreview(); });
 $('stHalf').onclick=()=>setStudioBpm(STUDIO.bpm/2); $('stDouble').onclick=()=>setStudioBpm(STUDIO.bpm*2);
-function setStudioBpm(v){ STUDIO.bpm=clamp(Math.round(v*2)/2,60,190); if(STUDIO.src==='file') STUDIO.fileBpm=STUDIO.bpm; $('stBpm').value=STUDIO.bpm; $('stBpmOut').textContent=(Math.round(STUDIO.bpm*10)/10)+' BPM'; studioSave(); if(STUDIO.preview) restartPreview(); }
-$('stTap').addEventListener('pointerdown',e=>{ e.preventDefault(); const t=performance.now(), T=STUDIO.taps; if(T.length&&t-T[T.length-1]>2000) T.length=0; T.push(t); if(T.length>9) T.shift();
-  const b=$('stTap'); b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash'); ensureAudio(); if(A.ctx.state!=='running') A.ctx.resume();
-  STUDIO.tapAt=A.ctx.currentTime-Math.max(0,(performance.now()-e.timeStamp)/1000); STUDIO.tapPerf=performance.now();
+$('stMinus').onclick=()=>setStudioBpm(STUDIO.bpm-.1); $('stPlus').onclick=()=>setStudioBpm(STUDIO.bpm+.1);
+function fmtBpm(v){ return Math.abs(v-Math.round(v))<.005?String(Math.round(v)):v.toFixed(2).replace(/0$/,''); }
+// kept to 0.01 BPM: rounding a 127.8 BPM song to 128 would slide it a whole beat out of line within a few minutes
+function setStudioBpm(v){ STUDIO.bpm=clamp(Math.round(v*100)/100,60,190); if(STUDIO.src==='file') STUDIO.fileBpm=STUDIO.bpm; $('stBpm').value=STUDIO.bpm; $('stBpmOut').textContent=fmtBpm(STUDIO.bpm)+' BPM'; studioSave(); if(STUDIO.preview) restartPreview(); }
+/* tap tempo: a straight-line fit through every tap (not just the first and last) gives the tempo and where the beat falls.
+   Taps are timed from the event itself and put on the same clock the game judges moves with. */
+$('stTap').addEventListener('pointerdown',e=>{ e.preventDefault(); ensureAudio(); if(A.ctx.state!=='running') A.ctx.resume();
+  const t=evTime(e)/1000, T=STUDIO.taps; if(T.length&&t-T[T.length-1]>2) T.length=0; T.push(t); if(T.length>32) T.shift();
+  const b=$('stTap'); b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
   if(A.ctx.state==='running'&&STUDIO.src!=='none') tone(A.sfx,A.ctx.currentTime,'sine',1320,.08,.001,.05);
-  if(T.length>=3){ const iv=(T[T.length-1]-T[0])/(T.length-1); setStudioBpm(60000/iv); b.textContent=`Tap tempo (${T.length})`; } else b.textContent='Keep tapping…'; });
+  const onClock=pt=>heardNow({timeStamp:pt*1000})-SAVE.offset/1000-TOUCH_LAG;
+  STUDIO.tapAt=onClock(t); STUDIO.tapPerf=performance.now();
+  if(T.length<3){ b.textContent='Keep tapping…'; return; }
+  const n=T.length, mx=(n-1)/2, my=T.reduce((a,v)=>a+v,0)/n; let sxy=0,sxx=0; T.forEach((v,i)=>{ sxy+=(i-mx)*(v-my); sxx+=(i-mx)*(i-mx); });
+  let spb=sxy/sxx, bpm=60/spb; if(!(bpm>=30&&bpm<=400)) return;
+  // a whole BPM that fits the taps is almost always the song's real tempo
+  if(n>=6&&Math.abs(bpm-Math.round(bpm))<.35) bpm=Math.round(bpm);
+  setStudioBpm(bpm); spb=60/STUDIO.bpm;
+  STUDIO.tapAt=onClock(my+((n-1)-mx)*spb);   // the fitted time of the last tap, at the tempo actually used
+  b.textContent=`Tap tempo (${n})`; });
 $('stDetect').onclick=()=>{ if(!STUDIO.buf) return; const d=detectBPM(STUDIO.buf); STUDIO.firstBeat=d.first; STUDIO.off=0; setStudioBpm(d.bpm); studioUI(); $('stMsg').textContent=''; };
 
 /* ---- your own music file ---- */
@@ -3638,15 +3657,33 @@ function detectBPM(buf){
   let best=100,bs=-1;
   for(let bpm=60;bpm<=190;bpm+=.25){ const lag=fps*60/bpm; let s=0,c=0; for(let i=0;i+lag*2<n;i+=1){ s+=on[i]*(at(i+lag)+.5*at(i+lag*2)); c++; }
     const w=1-Math.abs(Math.log2(bpm/120))*.35; const sc=s/Math.max(1,c)*w; if(sc>bs){ bs=sc; best=bpm; } }
-  const lag=fps*60/best; let bp=0,bv=-1; for(let p=0;p<lag;p+=.25){ let s=0; for(let x=p;x<n;x+=lag) s+=at(x); if(s>bv){ bv=s; bp=p; } }
-  // refine the beat phase on a finer grid (about 3 ms) around the coarse answer
-  const bpmR=Math.round(best*2)/2, spb=60/bpmR, hop2=128, n2=Math.floor(len/hop2), e2=new Float32Array(n2), o2=new Float32Array(n2);
-  for(let i=0;i<n2;i++){ let e=0; const o=start+i*hop2; for(let j=0;j<hop2&&o+j<L.length;j++){ const v=L[o+j]+(Rc?Rc[o+j]:0); e+=v*v; } e2[i]=Math.sqrt(e/hop2); }
-  for(let i=1;i<n2;i++) o2[i]=Math.max(0,e2[i]-e2[i-1]);
-  const coarse=bp/fps, per=spb*sr/hop2; let bt=coarse, bsc=-1;
-  for(let d=-.045;d<=.045;d+=hop2/sr){ const ph=(coarse+d)*sr/hop2; let sc=0; for(let x=ph;x<n2;x+=per){ const i=Math.round(x); if(i>=0&&i<n2) sc+=o2[i]+.5*((o2[i-1]||0)+(o2[i+1]||0)); } if(sc>bsc){ bsc=sc; bt=coarse+d; } }
-  const first=((start/sr+bt)%spb+spb)%spb;
-  return {bpm:bpmR,first};
+  return refineBeat(buf,best);
+}
+/* The coarse search above is only good to about a quarter BPM, and a quarter BPM drifts a whole beat
+   over a few minutes. Refine it over the whole song: at the true tempo every beat's onset falls at the
+   same point of the beat, so they line up most tightly there. Most songs are made at a whole
+   (or half) BPM, so one of those wins whenever it lines up just as well. */
+function refineBeat(buf,coarse){
+  const sr=buf.sampleRate, L=buf.getChannelData(0), Rc=buf.numberOfChannels>1?buf.getChannelData(1):null, hop=128, fr=sr/hop;
+  const n=Math.max(8,Math.min(Math.floor(L.length/hop),Math.floor(fr*360))), on=new Float32Array(n); let prev=0;
+  for(let i=0;i<n;i++){ let e=0; const o=i*hop; for(let j=0;j<hop&&o+j<L.length;j++){ const v=L[o+j]+(Rc?Rc[o+j]:0); e+=v*v; } e=Math.sqrt(e/hop); on[i]=Math.max(0,e-prev); prev=e; }
+  // keep only onsets that stand out from the last half second, so sustained sound doesn't blur the peaks
+  const W=Math.round(fr*.5), idx=[], val=[]; let run=0;
+  for(let i=0;i<n;i++){ run+=on[i]; if(i>=W) run-=on[i-W]; const v=on[i]-1.5*run/Math.min(i+1,W); if(v>0){ idx.push(i); val.push(v); } }
+  const hist=(bpm,NB)=>{ const h=new Float64Array(NB), k=NB*bpm/(60*fr); for(let j=0;j<idx.length;j++) h[Math.floor((idx[j]*k)%NB)]+=val[j]; return h; };
+  const peak=h=>{ const NB=h.length; let bs=-1,bb=0; for(let b=0;b<NB;b++){ const sc=h[b]+.5*(h[(b+NB-1)%NB]+h[(b+1)%NB]); if(sc>bs){ bs=sc; bb=b; } } return {sc:bs,b:bb}; };
+  // how tightly the onsets line up at this tempo (length of the average phase vector): smooth, with no bin edges to trip on
+  const score=bpm=>{ const k=2*Math.PI*bpm/(60*fr); let x=0,y=0; for(let j=0;j<idx.length;j++){ const a=idx[j]*k; x+=val[j]*Math.cos(a); y+=val[j]*Math.sin(a); } return Math.hypot(x,y); };
+  let best=coarse, bs=-1;
+  for(let bpm=coarse-2;bpm<=coarse+2.001;bpm+=.05){ const sc=score(bpm); if(sc>bs){ bs=sc; best=bpm; } }
+  for(let bpm=best-.06,c=best;bpm<=c+.0601;bpm+=.005){ const sc=score(bpm); if(sc>bs){ bs=sc; best=bpm; } }
+  for(const c of [Math.round(best),Math.round(best*2)/2]) if(Math.abs(c-best)<=.3&&score(c)>=bs*.98){ best=c; break; }
+  best=Math.round(best*100)/100;
+  // the beat phase, to one analysis frame (about 3 ms)
+  const spb=60/best, NB=Math.max(16,Math.round(spb*fr)), h=hist(best,NB), pk=peak(h).b;
+  const y0=h[(pk+NB-1)%NB], y1=h[pk], y2=h[(pk+1)%NB], den=y0-2*y1+y2, sub=den<0?clamp(.5*(y0-y2)/den,-.5,.5):0;
+  const first=(((pk+sub+.5)/NB*spb+.5/fr)%spb+spb)%spb;
+  return {bpm:best,first};
 }
 /* ---- preview ---- */
 $('stPrev').onclick=()=>{ if(STUDIO.preview){ stopPreview(); studioUI(); return; } startPreview(); studioUI(); };
@@ -3661,7 +3698,7 @@ function startPreview(){
   else { P.track=makeTrack(STUDIO.style,STUDIO.tseed); if(STUDIO.style==='lobby'&&LOBBY.tracks) P.track=LOBBY.tracks[0]; }
   P.timer=setInterval(()=>{ if(STUDIO.preview!==P) return; const ahead=c.currentTime+.25;
     if(P.node){ for(;;){ const t=P.t0+(P.first+P.clickT*spb-P.pos); if(t>ahead) break; if(t>=c.currentTime-.01&&t<P.t0+15) { tone(A.sfx,t,'square',P.clickT%4?1500:2000,.05,.001,.04,{lp:5000}); tone(A.sfx,t,'sine',P.clickT%4?750:1000,.12,.001,.06); } P.clickT++; if(t>P.t0+15) break; } }
-    else if(P.silent){ while(P.t0+P.n*spb<ahead){ const t=P.t0+P.n*spb; tone(A.sfx,t,'square',P.n%4?1500:2000,.05,.001,.04,{lp:5000}); tone(A.sfx,t,'sine',P.n%4?750:1000,.12,.001,.06); P.n++; } if(P.n>=16){ setTimeout(()=>{ if(STUDIO.preview===P){ stopPreview(); studioUI(); } },spb*1000); } }
+    else if(P.silent){ const lat=outLat(); while(P.t0+P.n*spb-lat<ahead){ const t=P.t0+P.n*spb-lat; if(t>=c.currentTime-LATE_OK) tone(A.sfx,t,'square',P.n%4?1500:2000,.05,.001,.04,{lp:5000}); if(t>=c.currentTime-LATE_OK) tone(A.sfx,t,'sine',P.n%4?750:1000,.12,.001,.06); P.n++; } if(P.n>=16){ setTimeout(()=>{ if(STUDIO.preview===P){ stopPreview(); studioUI(); } },spb*1000); } }
     else { const s16=spb/4; while(P.t0+P.n*s16<ahead){ TRACK=P.track; scheduleStep(P.n,P.t0+P.n*s16,spb); P.n++; } if(c.currentTime>P.t0+spb*32){ stopPreview(); studioUI(); } } },25);
   STUDIO.preview=P;
 }
@@ -4893,6 +4930,8 @@ function gameOver(why){
   const mx=Math.max(1,...s.hist); $('hist').innerHTML=s.hist.map((v,i)=>`<i class="${i===4||i===5?'mid':''}" style="height:${Math.max(3,v/mx*100)}%"></i>`).join('');
   const avg=s.cnt?s.sum/s.cnt*1000:0;
   $('timingTip').textContent=why==='budget'?'Levels give you a beat budget. Take shorter routes and keep moving when you can.':s.cnt<6?'Play a little longer to see your timing pattern.':Math.abs(avg)<18?`You average ${Math.round(Math.abs(avg))} ms from the beat. Nicely centred.`:`You average ${Math.round(Math.abs(avg))} ms ${avg<0?'early':'late'}. If that feels wrong, set the audio offset in Settings to about ${Math.round(SAVE.offset+avg)} ms.`;
+  { const ao=$('applyOff'), want=Math.round(clamp(SAVE.offset+avg,-300,300)); ao.hidden=!(why!=='budget'&&s.cnt>=12&&Math.abs(avg)>=18&&want!==SAVE.offset);
+    ao.textContent=`Set audio offset to ${want} ms`; ao.onclick=()=>{ SAVE.offset=want; save(); syncOffset(); ao.hidden=true; toast(`Audio offset set to ${want} ms`); }; }
   $('oReward').textContent=notes?`+${notes} Notes`:''; $('oUnlock').textContent=after.length?'Unlocked: '+after.join(', '):'';
   $('oRetry').onclick=()=>startRun(M.type==='daily'?modeFor('daily'):M); $('oRetry').textContent=M.type==='duel'?'Rematch':'Try again';
   $('oMenu').textContent=(M.type==='level'||M.type==='boss'||M.type==='hard')?'Map':'Menu';
@@ -4910,8 +4949,12 @@ function pause(){ if(G.state!=='playing') return;
 function resume(){ hideAll(); A.ctx.resume().then(()=>{ const bi=beatInfo(heardNow()); G.restUntil=Math.max(G.restUntil,(bi.last?bi.last.k:0)+5); G.state='playing'; }); }
 
 /* ---------------- LOOP ---------------- */
+/* a frame appears on screen roughly one refresh after it is drawn; measure the refresh and draw that far ahead */
+const VIS={last:0,dt:1/60};
+function visTick(){ const t=performance.now()/1000, d=t-VIS.last; VIS.last=t; if(d>.004&&d<.05) VIS.dt+=(d-VIS.dt)*.05; }
+const visLead=()=>clamp(VIS.dt,.006,.034);
 function loop(){
-  requestAnimationFrame(loop);
+  requestAnimationFrame(loop); visTick(); padTick(); watchAudio();
   const live=A.ctx&&PLAYING();
   if(A.ctx) syncClock();
   let now=live?heardNow():performance.now()/1000;
@@ -4920,7 +4963,7 @@ function loop(){
   if(G.state==='playing'){
     pump(); netTick();
     while(G.checkIdx<G.beats.length&&G.beats[G.checkIdx].t<=now) onBeat(G.beats[G.checkIdx++]);
-    const jt=now-SAVE.offset/1000, must=G.mode.mustMove&&!SAVE.relaxed;
+    const jt=now-SAVE.offset/1000-TOUCH_LAG, must=G.mode.mustMove&&!SAVE.relaxed;
     while(G.idleIdx<G.beats.length){ const b=G.beats[G.idleIdx]; if(b.t+win(b.spb).l>=jt) break; G.idleIdx++;
       if(b.k>G.restUntil) G.players.forEach(P=>{ if(!b.d[P.id]&&!P.done&&!P.dead&&G.state==='playing'){ b.d[P.id]=true; if(must&&!heldBeat(P,b.k)) miss(P,b,'idle'); } }); }
     newTilesTick(now);
@@ -4933,7 +4976,7 @@ function loop(){
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
-  render(now);
+  render(now+visLead());
 }
 
 /* ---------------- LOBBY MUSIC ---------------- */
@@ -4947,7 +4990,7 @@ function lobbyTick(){
     setStemTier(5,c.currentTime,.05); A.filt.frequency.cancelScheduledValues(c.currentTime); A.filt.frequency.setValueAtTime(18000,c.currentTime);
     A.music.gain.cancelScheduledValues(c.currentTime); A.music.gain.setValueAtTime(0,c.currentTime); A.music.gain.setTargetAtTime(SAVE.musicVol,c.currentTime,.4); }
   const ahead=c.currentTime+(MOB?.35:.25), s16=LOBBY.spb/4;
-  while(LOBBY.t0+LOBBY.n*s16<ahead){ TRACK=LOBBY.tracks[Math.floor(LOBBY.n/64)%2]; scheduleStep(LOBBY.n,LOBBY.t0+LOBBY.n*s16,LOBBY.spb); LOBBY.n++; }
+  while(LOBBY.t0+LOBBY.n*s16<ahead){ const st=LOBBY.t0+LOBBY.n*s16; TRACK=LOBBY.tracks[Math.floor(LOBBY.n/64)%2]; if(st>=c.currentTime-LATE_OK) scheduleStep(LOBBY.n,st,LOBBY.spb); LOBBY.n++; }
 }
 function syncSoundChip(){ const b=$('mSound'); if(!b) return; const on=A.ctx&&A.ctx.state==='running';
   b.textContent=!on?'♪ Tap for music':SAVE.musicVol>0?'♪ Music on':'♪ Music off'; b.classList.toggle('off',!!on&&SAVE.musicVol===0); }
@@ -4973,21 +5016,25 @@ function menuDemo(now){
 }
 
 /* ---------------- CALIBRATION ---------------- */
+const CALIB_N=24;
 function startCalib(){
   ensureAudio(); A.ctx.resume(); const c=A.ctx, t0=c.currentTime+.6, spb=.6;
-  for(let i=0;i<16;i++) tone(A.master,t0+i*spb,'sine',i%4?600:900,.3,.002,.08);
+  for(let i=0;i<CALIB_N;i++) tone(A.master,t0+i*spb,'sine',i%4?600:900,.3,.002,.08);
   const pl=G.players; G=visualDefaults({state:'calib',calib:{t0,spb,taps:[]},players:pl||[mkPlayer(0)]});
-  $('calibMsg').textContent='Tap any direction, Space, or the dot on every click. 16 clicks; the first 4 are warm-up.';
+  $('calibMsg').textContent='Tap any direction, Space, or the dot on every click. 24 clicks; the first 4 are warm-up.';
   $('calibCount').textContent='0 taps'; $('calibDone').hidden=true; showOv('calibOv');
 }
-function calibTap(ev){ const k=G.calib; if(!k||k.finished) return; const t=heardNow(ev), i=Math.round((t-k.t0)/k.spb); if(i<4||i>15) return;
-  k.taps.push(t-(k.t0+i*k.spb)); $('calibCount').textContent=k.taps.length+' taps'; }
+function calibTap(ev){ const k=G.calib; if(!k||k.finished) return; const t=heardNow(ev)-TOUCH_LAG, i=Math.round((t-k.t0)/k.spb); if(i<4||i>=CALIB_N) return;
+  if(k.taps.some(x=>x.i===i)) return; k.taps.push({i,d:t-(k.t0+i*k.spb)}); $('calibCount').textContent=k.taps.length+' taps'; }
 function calibTick(){
-  const k=G.calib, c=A.ctx, h=heardNow(), ph=((h-k.t0)/k.spb)%1, d=$('calibDot');
+  const k=G.calib, c=A.ctx, h=heardNow()+visLead(), ph=((h-k.t0)/k.spb)%1, d=$('calibDot');
   if(h>k.t0-.05){ d.style.opacity=.3+.7*Math.max(0,1-ph*4); d.style.transform=`scale(${1+.15*Math.max(0,1-ph*4)})`; }
-  if(!k.finished&&c.currentTime>k.t0+16*k.spb+.3){ k.finished=true;
-    if(k.taps.length>=5){ const s=k.taps.slice().sort((a,b)=>a-b), med=s[Math.floor(s.length/2)]*1000; SAVE.offset=Math.round(clamp(med,-150,150)); save(); syncOffset();
-      $('calibMsg').textContent=`Done. Your taps land ${Math.abs(SAVE.offset)} ms ${SAVE.offset<0?'early':'late'} on average, so the offset is now ${SAVE.offset} ms.`; }
+  if(!k.finished&&c.currentTime>k.t0+CALIB_N*k.spb+.3){ k.finished=true;
+    // average the middle half of the taps: stray early or late taps don't pull the result
+    const s=k.taps.map(x=>x.d).sort((a,b)=>a-b), q=Math.floor(s.length/4), mid=s.slice(q,s.length-q), avg=mid.reduce((a,b)=>a+b,0)/Math.max(1,mid.length)*1000;
+    const spread=mid.length?(mid[mid.length-1]-mid[0])*500:0;
+    if(k.taps.length>=8){ SAVE.offset=Math.round(clamp(avg,-300,300)); save(); syncOffset();
+      $('calibMsg').textContent=`Done. Your taps land ${Math.abs(SAVE.offset)} ms ${SAVE.offset<0?'early':'late'} on average, so the offset is now ${SAVE.offset} ms.`+(spread>40?' Your taps were a bit uneven; run it again for a steadier result.':' Nice and steady.'); }
     else $('calibMsg').textContent='Not enough taps to measure. Try again and tap along with every click.';
     $('calibDone').hidden=false; $('calibDone').focus(); }
 }
@@ -5064,7 +5111,47 @@ $('reduce').onchange=e=>{SAVE.reduce=e.target.checked; save()};
 $('offset').oninput=e=>{SAVE.offset=+e.target.value; save(); syncOffset()};
 $('resetBtn').onclick=e=>{ const b=$('resetBtn'); if(!b.dataset.arm){ b.dataset.arm='1'; b.textContent='Tap again to erase all stars, Notes and items'; return; }
   const keep={offset:SAVE.offset,relaxed:SAVE.relaxed,reduce:SAVE.reduce}; SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep); save(); b.dataset.arm=''; b.textContent='Progress erased'; };
-document.addEventListener('visibilitychange',()=>{ if(document.hidden&&G.state==='playing'&&!(G.mode&&G.mode.net)) pause(); });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&G.state==='playing'&&!(G.mode&&G.mode.net)) pause(); wakeSync(); });
+/* switching to another window (the keys stop reaching the game) pauses too */
+addEventListener('blur',()=>{ if(G.state==='playing'&&!(G.mode&&G.mode.net)) pause(); });
+
+/* ---------------- QUALITY OF LIFE ---------------- */
+/* keep the screen awake during a run, so a long level or a silent Studio run never dims mid-song */
+const WAKE={lock:null,want:false};
+function wakeSync(){
+  const want=PLAYING()&&G.state!=='over'&&document.visibilityState==='visible'; if(want===WAKE.want) return; WAKE.want=want;
+  if(want&&navigator.wakeLock) navigator.wakeLock.request('screen').then(l=>{ if(!WAKE.want){ l.release().catch(()=>{}); return; } WAKE.lock=l;
+    l.addEventListener('release',()=>{ if(WAKE.lock===l){ WAKE.lock=null; WAKE.want=false; } }); }).catch(()=>{});
+  else if(!want&&WAKE.lock){ WAKE.lock.release().catch(()=>{}); WAKE.lock=null; }
+}
+setInterval(wakeSync,1000);
+/* if the system takes the audio away mid-run (a phone call, another app, iOS interruptions), pause instead of drifting */
+function watchAudio(){ if(!A.ctx||A.stWatch) return; A.stWatch=true;
+  A.ctx.addEventListener('statechange',()=>{ if(A.ctx.state!=='running'&&G.state==='playing'&&!(G.mode&&G.mode.net)) pause(); }); }
+
+/* game controllers: d-pad or left stick to move, A to confirm, B to go back, Start to pause.
+   Moves are timed from the controller's own timestamp, not from when the frame noticed them. */
+const PAD={prev:{}};
+function padTick(){
+  if(!navigator.getGamepads) return; let pads; try{ pads=navigator.getGamepads(); }catch(e){ return; }
+  for(const gp of pads){ if(!gp||!gp.connected) continue;
+    const pv=PAD.prev[gp.index]||{}, b=i=>!!(gp.buttons[i]&&gp.buttons[i].pressed), ax=gp.axes[0]||0, ay=gp.axes[1]||0, horiz=Math.abs(ax)>=Math.abs(ay);
+    const cur={up:b(12)||(!horiz&&ay<-.6),down:b(13)||(!horiz&&ay>.6),left:b(14)||(horiz&&ax<-.6),right:b(15)||(horiz&&ax>.6),a:b(0),back:b(1),start:b(9)};
+    PAD.prev[gp.index]=cur;
+    const ev={timeStamp:gp.timestamp}, pressed=k=>cur[k]&&!pv[k], key=code=>dispatchEvent(new KeyboardEvent('keydown',{code,key:code}));
+    const pid=G.mode&&G.mode.net?NET.me:G.mode&&G.mode.coop?gp.index%2:0;
+    for(const d of ['up','down','left','right']) if(pressed(d)){
+      if(G.state==='playing'||G.state==='calib') input(d,ev,pid);
+      else key({up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight'}[d]); }
+    if(pressed('a')){
+      if(G.state==='calib') calibTap(ev);
+      else if(G.state!=='playing'){ const ov=visibleOv(), f=document.activeElement;
+        if(ov&&f&&f.tagName==='BUTTON'&&ov.contains(f)) f.click(); else if(ov){ const bs=visBtns(ov).filter(x=>x.tagName==='BUTTON'); if(bs.length) bs[0].focus(); } } }
+    if(pressed('back')) key('Escape');
+    if(pressed('start')){ if(G.state==='playing') pause(); else if(G.state==='paused') resume(); }
+  }
+}
+addEventListener('gamepadconnected',e=>{ toast('Controller connected'); });
 toMenu(); loop();
 })();
 </script>
