@@ -100,6 +100,32 @@ body.swipe-only .pads{display:none}
 @media (pointer:coarse){.pads:not(.duo) .keys{visibility:hidden}}
 
 /* overlays */
+/* party sidebar: a small card on the left while you are in an online party */
+.partybar{position:fixed;z-index:6;left:max(12px,env(safe-area-inset-left,0px));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;width:112px;padding:14px 10px;border-radius:18px;background:var(--panel);border:1px solid var(--line);color:var(--ink);font:inherit;text-align:center;cursor:pointer;pointer-events:auto;box-shadow:0 10px 30px rgba(10,8,30,.35);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.partybar:disabled{cursor:default;pointer-events:none}
+.pb-dot{width:10px;height:10px;border-radius:50%;background:#7EE0A8;box-shadow:0 0 0 4px rgba(126,224,168,.18);animation:pbPulse 1.6s ease-in-out infinite}
+.partybar.wait .pb-dot{background:var(--lantern);box-shadow:0 0 0 4px rgba(255,209,102,.18)}
+.partybar.lost .pb-dot{background:var(--coral);box-shadow:0 0 0 4px rgba(255,138,128,.18);animation:none}
+.pb-lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.pb-code{font-family:var(--display);font-size:18px;letter-spacing:.08em}
+.pb-sub{font-size:12px;line-height:1.3;color:var(--ink-2);overflow-wrap:anywhere}
+@keyframes pbPulse{50%{transform:scale(.75)}}
+@media (max-width:1040px){
+  .partybar{top:auto;bottom:max(12px,env(safe-area-inset-bottom,0px));transform:none;flex-direction:row;width:auto;max-width:calc(100% - 24px);padding:7px 12px;gap:8px;border-radius:999px}
+  .pb-code{font-size:13px} .pb-sub{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+  /* in a run, shrink to a slim tab on the left edge so it never covers the HUD or the pads */
+  body:not(.in-menu) .partybar{left:max(6px,env(safe-area-inset-left,0px));bottom:auto;top:50%;transform:translateY(-50%);flex-direction:column;padding:10px 5px;gap:7px;border-radius:12px;opacity:.7}
+  body:not(.in-menu) .partybar .pb-lbl{writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px}
+  body:not(.in-menu) .partybar .pb-code,body:not(.in-menu) .partybar .pb-sub{display:none}
+}
+@media (prefers-reduced-motion:reduce){.pb-dot{animation:none}}
+/* 5-second countdown before a party match */
+.countdown{position:fixed;inset:0;z-index:7;display:grid;place-content:center;justify-items:center;gap:6px;pointer-events:none;text-shadow:0 4px 24px rgba(10,8,30,.55)}
+.countdown b{font-family:var(--display);font-weight:700;font-size:clamp(72px,22vw,150px);line-height:1;color:var(--lantern)}
+.countdown small{font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);font-weight:600}
+.countdown.pop b{animation:cdPop .9s cubic-bezier(.2,.8,.3,1)}
+@keyframes cdPop{0%{transform:scale(1.5);opacity:0}25%{transform:scale(1);opacity:1}100%{transform:scale(.92);opacity:.85}}
+@media (prefers-reduced-motion:reduce){.countdown.pop b{animation:none}}
 .overlay{position:fixed;inset:0;z-index:5;display:grid;place-items:center;padding-inline:16px;background:rgba(20,16,46,.42);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:auto}
 .panel{width:100%;max-width:440px;box-sizing:border-box;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:14px;max-height:calc(100% - 32px);overflow:auto}
 .panel.wide{max-width:560px}
@@ -579,6 +605,13 @@ button:disabled{opacity:.55;cursor:default}
 </style>
 
 <canvas id="cv" aria-label="Game board"></canvas>
+<button id="partyBar" class="partybar" type="button" hidden aria-live="polite">
+  <span class="pb-dot" aria-hidden="true"></span>
+  <span class="pb-lbl">Party</span>
+  <b class="pb-code" id="pbCode">····</b>
+  <span class="pb-sub" id="pbSub"></span>
+</button>
+<div id="countdown" class="countdown" hidden aria-live="assertive"><b id="cdNum">5</b><small id="cdSub">Get ready</small></div>
 <div id="app">
   <header class="hud">
     <div>
@@ -1752,6 +1785,7 @@ function startRun(M){
   if(needsTutorial(M)){ ensureAudio(); showTutorialIntro(M); return; }
   ensureAudio(); A.ctx.resume();
   hideAll();
+  if(!M.net&&(M.type==='coop'||M.type==='duel')) M.atPerf=performance.now()+PARTY_COUNT*1000;
   G=visualDefaults({state:'playing',mode:M,roomIdx:0,bpm:90,spb:.66,pendingBpm:0,restUntil:3,startT:0,checkIdx:0,idleIdx:0,
     score:0,disp:0,streak:0,maxStreak:0,harmony:M.harmony,regen:0,drifts:[],echo:null,swapPending:false,finishing:false,fireAt:null,
     roomBeats:0,beatsTotal:0,parTotal:0,seen:new Set(),instr:1,players:[mkPlayer(0)].concat(M.coop?[mkPlayer(1)]:[]),shots:[],proj:[],bossHits:0,blastRespawn:{},
@@ -1765,6 +1799,7 @@ function startRun(M){
   if(M.net){ const me=G.players[NET.me], op=G.players[1-NET.me]; me.skin=skinById(SAVE.skin); me.land=landById(SAVE.land); op.remote=true; if(NET.peerSkin) op.skin=skinById(NET.peerSkin); if(NET.peerLand) op.land=landById(NET.peerLand); }
   nextRoom(true); ghostStart(M);
   syncClock(); G.startT=M.atPerf!=null?Math.max(c.currentTime+.05,M.atPerf/1000+(CLK.off||0)):c.currentTime+(MOB?.5:.35); R.rise=G.now;
+  if(M.atPerf!=null&&(M.net||M.type==='coop'||M.type==='duel')) startCountdown(M.atPerf);
   stopStudioAudio(); if(M.type==='studio'&&M.file) studioBegin(M); if(M.type==='studio'&&M.silent) studioSilentBegin(M);
   clearInterval(A.pumpT); A.pumpT=setInterval(()=>{ if(G.state==='playing'||G.state==='cutscene') pump(); },40);
   const title=M.type==='level'?`${M.world}-${M.level} ${LEVEL_NAMES[M.world-1][M.level-1]}`:M.type==='boss'?BOSS[M.world-1]:M.type==='daily'?'Daily Challenge':M.type==='hard'?`Hard ${M.idx} · ${HARD_NAMES[M.idx-1]}`:M.type==='duel'?'Duel':M.type==='coop'?'Co-op':M.type==='ascent'?'Ascent · floor 1':M.type==='studio'?M.songName:M.type==='interlude'?'Interlude · The Silence':M.type==='event'?weekEvent().name:M.type==='custom'?(M.design.n||'Custom level'):'Endless';
@@ -2698,7 +2733,7 @@ function genArena(w){
     const seen=new Set([id(start.x,start.y)]), q=[start];
     while(q.length){ const s=q.shift(); for(const k of DK){ const r=simMove(room,s.x,s.y,k,true); if(!r) continue; const kk=id(r.x,r.y); if(!seen.has(kk)){ seen.add(kk); q.push({x:r.x,y:r.y}); } } }
     if(seen.size<floorCount()*(w>=6&&attempt<30?.92:.75)) continue;
-    const hp=w<=6?6+2*w:w===WORLDS?24:12+w;
+    const hp=(w<=6?6+2*w:w===WORLDS?24:12+w)+1;
     room.boss={x:3,y:0,hp,max:hp,flashT:-9,chargeT:-9,dieT:0,enraged:false,w};
     ['crack','tele','rgate','wind','vent','ice','spring','mud','ghost'].forEach(k=>room.has[k]=cells.some(c=>k==='tele'?c.tele>=0:c[k]));
     room.has.blink=cells.some(c=>c.blink>=0); room.has.rot=cells.some(c=>c.rot>=0); room.has.laser=!!(room.lasers&&room.lasers.length);
@@ -2907,6 +2942,7 @@ function netOpts(){
 }
 function netStatus(t,err){ const e=$('nStatus'); if(e){ e.textContent=t; e.classList.toggle('err',!!err); } }
 function netUI(){
+  setTimeout(partyBarSync,0);
   const live=!!NET.peer; $('netIdle').hidden=live; $('netLive').hidden=!live;
   $('nShow').textContent=NET.code||'····';
   $('nModes').hidden=!(NET.conn&&NET.host);
@@ -2961,10 +2997,11 @@ function netLeave(quiet){
   try{ c&&c.close(); }catch(e){} try{ p&&p.destroy&&p.destroy(); }catch(e){}
   if(!quiet){ netUI(); $('nStatusIdle').textContent=''; }
 }
-/* host picks a mode: both devices start the same seeded match on a shared beat grid 2.5 s from now */
+/* host picks a mode: both devices start the same seeded match on a shared beat grid, after a 5-second countdown */
+const PARTY_COUNT=5;
 function netStart(type){
   if(!NET.conn||!NET.host) return;
-  const seed=Math.floor(Math.random()*1e9).toString(36), at=performance.now()+2500;
+  const seed=Math.floor(Math.random()*1e9).toString(36), at=performance.now()+PARTY_COUNT*1000;
   netSend({t:'start',type,seed,at});
   netBegin(type,seed,at);
 }
@@ -3044,6 +3081,31 @@ function netRespawn(P,o){
   if(G.mode.duel){ P.lives=o.lives; hud(); popAt(P,P.lives?`${P.lives} ${P.lives===1?'life':'lives'} left`:'knocked out!','#FF8A80',14);
     if(P.lives<=0&&G.state==='playing'){ G.winner=NET.me; G.state='dying'; sWin(); setTimeout(()=>gameOver('duel'),900); } return; }
   popAt(P,'respawn','#DCCBE6',12); loseHarmony();
+}
+/* ---- party sidebar: always shows that you are still in a party, and who with ---- */
+function partyBarSync(){
+  const el=$('partyBar'); if(!el) return; const inParty=!!(NET.peer&&NET.code), coopOpen=!$('coopOv').hidden;
+  el.hidden=!inParty||coopOpen; if(el.hidden) return;
+  const live=!!(NET.conn&&NET.conn.open), who=NET.peerName||(NET.host?'':'the host');
+  el.classList.toggle('wait',!live&&NET.host); el.classList.toggle('lost',!live&&!NET.host);
+  $('pbCode').textContent=NET.code;
+  $('pbSub').textContent=live?`with ${who||'your friend'}${NET.rtt<1e9?' · '+Math.round(NET.rtt)+' ms':''}`:NET.host?'Waiting for a friend…':'Connecting…';
+  const busy=['playing','paused','dying','cutscene','picking'].includes(G.state); el.disabled=busy;
+  el.setAttribute('aria-label',`In party ${NET.code}. ${$('pbSub').textContent}`+(busy?'':' Open party.'));
+}
+setInterval(partyBarSync,1000);
+$('partyBar').onclick=()=>{ if(['playing','paused','dying','cutscene','picking'].includes(G.state)) return; toMenu(); showParty(); partyBarSync(); };
+/* ---- the 5-second countdown before a party match; it ends exactly on the first beat ---- */
+const CD={at:0,last:null};
+function startCountdown(atPerf){ CD.at=atPerf; CD.last=null; $('countdown').hidden=false; cdTick(); }
+function cdTick(){
+  const el=$('countdown'), left=(CD.at-performance.now())/1000;
+  if(left<-.7||!PLAYING()||G.state==='over'){ el.hidden=true; return; }
+  const n=Math.max(0,Math.ceil(left));
+  if(n!==CD.last){ CD.last=n; $('cdNum').textContent=n>0?n:'Go!'; $('cdSub').textContent=n>0?(G.mode&&G.mode.duel?'Duel starts in':'Party starts in'):'';
+    el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+    if(A.ctx&&A.ctx.state==='running') tone(A.sfx,A.ctx.currentTime,'sine',n>0?880:1320,n>0?.06:.09,.002,n>0?.12:.3); }
+  requestAnimationFrame(cdTick);
 }
 /* hooks the game calls for the local block */
 function netLocal(o){ if(inNet()) netSend(o); }
@@ -3529,7 +3591,7 @@ function ascentRoom(M,i){
   let bpm=(86+f*2.6+(g?6:0))*Math.max(.95,STYLES[sid].bpm)+(P.bpm||0);
   return {cfg,th,sid,tseed:'A'+w,bpm,instr:g?10:Math.min(9,2+((f-1)%3)*3),guard:g,w};
 }
-function ascentArena(w,f){ const room=genArena(w), hp=4+Math.ceil(f/5)*2; room.boss.hp=hp; room.boss.max=hp; return room; }
+function ascentArena(w,f){ const room=genArena(w), hp=5+Math.ceil(f/5)*2; room.boss.hp=hp; room.boss.max=hp; return room; }
 function ascentPick(){
   if(G.state!=='playing') return;
   G.state='picking'; A.ctx.suspend().catch(()=>{});
@@ -4727,7 +4789,7 @@ const OVS=['edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv',
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
-function showOv(id,menu=true){ OVS.forEach(o=>$(o).hidden=o!==id); const ov=$(id); ov.querySelectorAll('.mcard,.mode,.lvl,.item,.cta').forEach((el,i)=>el.style.setProperty('--i',i)); ov.classList.remove('enter'); void ov.offsetWidth; ov.classList.add('enter'); document.body.classList.toggle('in-menu',menu); if(!MOB||id!=='menuOv'){ const f=visBtns($(id)).find(b=>b.matches('.cta,.btn,.mode,.lvl,.mcard'))||visBtns($(id))[0]; if(f) f.focus({preventScroll:true}); } }
+function showOv(id,menu=true){ OVS.forEach(o=>$(o).hidden=o!==id); setTimeout(partyBarSync,0); const ov=$(id); ov.querySelectorAll('.mcard,.mode,.lvl,.item,.cta').forEach((el,i)=>el.style.setProperty('--i',i)); ov.classList.remove('enter'); void ov.offsetWidth; ov.classList.add('enter'); document.body.classList.toggle('in-menu',menu); if(!MOB||id!=='menuOv'){ const f=visBtns($(id)).find(b=>b.matches('.cta,.btn,.mode,.lvl,.mcard'))||visBtns($(id))[0]; if(f) f.focus({preventScroll:true}); } }
 const notesTxt=()=>'♪ '+SAVE.notes.toLocaleString();
 function fadeMusic(){ if(!A.ctx) return; A.music.gain.setTargetAtTime(0,A.ctx.currentTime,.4); }
 function toMenu(ov='menuOv'){
