@@ -37,11 +37,25 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Your own friends list: only you can see or change it
+    // Friends lists: only you can see yours. Friendship is two-way, so when you add someone's code
+    // you may also add yourself to their list (only if they are already on yours), or take yourself off it.
     match /friends/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null && request.auth.uid == uid
         && request.resource.data.uids is list && request.resource.data.uids.size() <= 50;
+      // someone else adding themselves
+      allow create: if request.auth != null && request.auth.uid != uid
+        && request.resource.data.keys().hasOnly(['uids'])
+        && request.resource.data.uids == [request.auth.uid]
+        && uid in get(/databases/$(db)/documents/friends/$(request.auth.uid)).data.uids;
+      allow update: if request.auth != null && request.auth.uid != uid
+        && request.resource.data.keys().hasOnly(['uids'])
+        && request.resource.data.uids is list && request.resource.data.uids.size() <= 50
+        && (
+          (request.resource.data.uids.toSet() == resource.data.uids.toSet().union([request.auth.uid].toSet())
+            && uid in get(/databases/$(db)/documents/friends/$(request.auth.uid)).data.uids)
+          || request.resource.data.uids.toSet() == resource.data.uids.toSet().difference([request.auth.uid].toSet())
+        );
       allow delete: if false;
     }
 

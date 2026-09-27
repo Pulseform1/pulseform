@@ -3575,10 +3575,11 @@ acctInit(); acctChip();
    profiles/{uid}              the public card friends see: name, friend code, rank, block, level progress,
                                best scores, built levels and when you were last online
    codes/{CODE}                {uid}: looks a 6-character friend code up
-   friends/{uid}               {uids:[...]}: the people you have added (only you can read or change it)
-   invites/{to}/items/{from}   a party invite; the rules only allow it when `from` is on `to`'s friends list,
-                               so only people you have added can invite you */
-var FR={code:'',uids:[],profiles:{},invites:[],unsub:null,pushT:null,lastPush:0,dismissed:{},sentT:{},view:null,starting:null};
+   friends/{uid}               {uids:[...]}: your friends. Friendship is two-way: adding someone's code also
+                               puts you on their list, so they never need your code back. Only you can read it;
+                               the rules let someone else only add or remove themselves
+   invites/{to}/items/{from}   a party invite; the rules only allow it when `from` is on `to`'s friends list */
+var FR={code:'',uids:[],profiles:{},invites:[],unsub:null,unsubF:null,pushT:null,lastPush:0,dismissed:{},sentT:{},view:null,starting:null};
 const FR_MAX=50, INVITE_TTL=10*60*1000, ONLINE_MS=6*60*1000;
 function frOn(){ return !!(FR&&ACCT.user&&ACCT.db&&FR.code); }
 const frDB=()=>ACCT.db, frMe=()=>ACCT.user&&ACCT.user.uid;
@@ -3607,8 +3608,13 @@ function frStart(){
   if(!acctCfg()||!ACCT.user||FR.starting) return FR.starting;
   FR.starting=(async()=>{ try{
       await frEnsureCode(); frPush(true);
-      const f=await frDB().collection('friends').doc(frMe()).get(); FR.uids=(f.exists&&f.data().uids)||[];
-      await frLoadProfiles();
+      const fdoc=frDB().collection('friends').doc(frMe());
+      const f=await fdoc.get(); FR.uids=(f.exists&&f.data().uids)||[];
+      await frLoadProfiles(); frMutual();
+      // live: someone who adds your code appears here straight away
+      if(FR.unsubF) FR.unsubF();
+      FR.unsubF=fdoc.onSnapshot(d=>{ const u=(d.exists&&d.data().uids)||[]; if(u.join()===FR.uids.join()) return;
+        FR.uids=u; frLoadProfiles().then(()=>{ if(!$('friendsOv').hidden) frRender(); frCoopInvites(); }); },()=>{});
       if(FR.unsub) FR.unsub();
       FR.unsub=frDB().collection('invites').doc(frMe()).collection('items').onSnapshot(snap=>{
         const list=[]; snap.forEach(d=>{ const v=d.data()||{}; if(Date.now()-(v.t||0)<INVITE_TTL&&v.code) list.push({from:d.id,...v}); else d.ref.delete().catch(()=>{}); });
@@ -3617,7 +3623,7 @@ function frStart(){
     FR.starting=null; frBadge(); if(!$('friendsOv').hidden) frRender(); frCoopInvites(); })();
   return FR.starting;
 }
-function frStop(){ if(FR.unsub) FR.unsub(); Object.assign(FR,{code:'',uids:[],profiles:{},invites:[],unsub:null}); frInviteBar(); frBadge(); }
+function frStop(){ if(FR.unsub) FR.unsub(); if(FR.unsubF) FR.unsubF(); Object.assign(FR,{code:'',uids:[],profiles:{},invites:[],unsub:null,unsubF:null}); frInviteBar(); frBadge(); }
 async function frLoadProfiles(){
   const got=await Promise.all(FR.uids.map(u=>frDB().collection('profiles').doc(u).get().then(d=>[u,d.exists?d.data():null]).catch(()=>[u,FR.profiles[u]||null])));
   got.forEach(([u,d])=>{ FR.profiles[u]=d; });
@@ -3625,6 +3631,13 @@ async function frLoadProfiles(){
 const frOnline=p=>!!(p&&Date.now()-(p.seen||0)<ONLINE_MS);
 function frAgo(t){ if(!t) return 'never'; const m=Math.floor((Date.now()-t)/60000); return m<1?'just now':m<60?m+' min ago':m<1440?Math.floor(m/60)+' h ago':Math.floor(m/1440)+' days ago'; }
 function frMsg(t,err){ const m=$('frMsg'); m.textContent=t||''; m.classList.toggle('err',!!err); }
+/* friendships made before they were two-way: put yourself on each friend's list, once per account */
+function frMutual(){
+  const me=frMe(), done=SAVE.frMutual||(SAVE.frMutual=[]); if(done.includes(me)) return;
+  Promise.all(FR.uids.map(u=>frLink(u,true))).then(()=>{ if(!done.includes(me)){ done.push(me); save(); } }).catch(()=>{});
+}
+/* add yourself to (or take yourself off) a friend's list; the rules allow only this change to someone else's list */
+const frLink=(uid,on)=>frDB().collection('friends').doc(uid).set({uids:firebase.firestore.FieldValue[on?'arrayUnion':'arrayRemove'](frMe())},{merge:true}).catch(()=>{});
 async function frAdd(){
   const code=($('frCodeIn').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(code.length!==6) return frMsg('Friend codes are 6 letters or numbers.',true);
@@ -3636,12 +3649,13 @@ async function frAdd(){
     if(!uid) return frMsg('No player has the code '+code+'. Check it and try again.',true);
     if(FR.uids.includes(uid)) return frMsg('They\'re already on your friends list.',true);
     await frDB().collection('friends').doc(frMe()).set({uids:firebase.firestore.FieldValue.arrayUnion(uid)},{merge:true});
-    FR.uids.push(uid); await frLoadProfiles(); const p=FR.profiles[uid];
-    $('frCodeIn').value=''; frMsg(`${p?p.name:'Your friend'} added! They can now invite you to their parties.`); if(A.ctx) sChime(88); frRender();
+    await frLink(uid,true);
+    if(!FR.uids.includes(uid)) FR.uids.push(uid); await frLoadProfiles(); const p=FR.profiles[uid];
+    $('frCodeIn').value=''; frMsg(`${p?p.name:'Your friend'} added! You're on each other's lists now, so you can invite each other to parties.`); if(A.ctx) sChime(88); frRender();
   }catch(e){ frMsg('Could not add that friend ('+(e&&e.code||'offline')+'). Try again.',true); }
 }
 async function frRemove(uid){
-  try{ await frDB().collection('friends').doc(frMe()).set({uids:firebase.firestore.FieldValue.arrayRemove(uid)},{merge:true}); FR.uids=FR.uids.filter(u=>u!==uid); frRender(); frMsg('Removed.'); }
+  try{ await frDB().collection('friends').doc(frMe()).set({uids:firebase.firestore.FieldValue.arrayRemove(uid)},{merge:true}); frLink(uid,false); FR.uids=FR.uids.filter(u=>u!==uid); frRender(); frMsg('Removed.'); }
   catch(e){ frMsg('Could not remove them ('+(e&&e.code||'offline')+').',true); }
 }
 function frRow(uid,p,btns){
@@ -3700,7 +3714,7 @@ async function frInvite(uid){
   if(!frOn()||!NET.code) return; const p=FR.profiles[uid]||{}, who=p.name||'Your friend';
   try{ await frDB().collection('invites').doc(uid).collection('items').doc(frMe()).set({name:ensureName(),rank:myRank(),skin:SAVE.skin,code:NET.code,t:Date.now()});
     FR.sentT[uid]=Date.now(); frCoopInvites(); netStatus(`Invite sent to ${who}. It shows up on their screen for 10 minutes.`); setTimeout(frCoopInvites,30500); }
-  catch(e){ netStatus(e&&e.code==='permission-denied'?`${who} has to add you as a friend before you can invite them. Send them your friend code: ${FR.code}`:`Could not send the invite (${e&&e.code||'offline'}).`,true); }
+  catch(e){ netStatus(e&&e.code==='permission-denied'?`${who} isn't on your friends list any more. Add their code again to invite them.`:`Could not send the invite (${e&&e.code||'offline'}).`,true); }
 }
 const frBusy=()=>['playing','paused','dying','cutscene','picking','calib'].includes(G.state);
 function frInviteBar(){
@@ -3909,8 +3923,13 @@ function xpForRun(o){
   if(M.type==='boss'&&o.cleared) xp+=60; if(M.type==='hard'&&o.cleared) xp+=40+M.idx*5; if(M.type==='daily'&&o.cleared) xp+=40;
   if(M.type==='endless'||M.type==='coop'||M.type==='tether') xp+=Math.max(0,G.roomIdx-1)*6; if(M.type==='raid') xp+=(G.raidBeaten||0)*20; if(M.type==='ascent') xp+=Math.max(0,(G.floorBest||1)-1)*12;
   if(M.type==='duel') xp+=25+(o.won?25:0);
-  return Math.min(900,xp);
+  xp=Math.min(900,xp);
+  /* Maestro and up: a raid of 7+ bosses pays 2000 XP, plus 400 for each boss past the 7th */
+  const rb=G.raidBeaten||0;
+  if(M.type==='raid'&&rb>=RAID_BIG_N&&myRank()>=RANK_MAESTRO) xp=Math.max(xp,RAID_BIG_XP+(rb-RAID_BIG_N)*RAID_BIG_EACH);
+  return xp;
 }
+const RAID_BIG_N=7, RAID_BIG_XP=2000, RAID_BIG_EACH=400;
 /* called once from every run end; returns the line shown on the result screen */
 function awardRun(o){
   ensureQuests();
