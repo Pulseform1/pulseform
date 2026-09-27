@@ -1571,7 +1571,8 @@ WORLD_SONGS.push({s:'surf',n:'Tidal Hop'},{s:'reggae',n:'Bog Skank'},{s:'synthwa
 SKINS.push(
  {id:'diamond',name:'Diamond',fx:'crystal',top:'#F2FEFF',front:'#7FD8F0',core:'#FFFFFF',rim:true,req:{rank:12},pt:'linear-gradient(135deg,#FFFFFF,#BFF3FF 50%,#E8E0FF)',pf:'linear-gradient(120deg,#7FD8F0,#B8ECFF 55%,#6AC0E0 56%)'},
  {id:'maestro',name:'Maestro',anim:'maestro',top:'#FFF6DA',front:'#15102A',core:'#FFD166',req:{rank:21}},
- {id:'supreme',name:'Supreme Conductor',anim:'supreme',top:'#FFF8FC',front:'#15102A',core:'#FFFFFF',req:{rank:25}});
+ {id:'supreme',name:'Supreme Conductor',anim:'supreme',top:'#FFF8FC',front:'#15102A',core:'#FFFFFF',req:{rank:25}},
+ {id:'truepulse',name:'True Pulse',anim:'truepulse',top:'#1A0508',front:'#07020A',core:'#FF1E2E',req:{rank:26}});
 /* every fancy block gets a matching landing effect; owning the block unlocks it */
 const SIG={
  lantern:{n:'Lantern Glow',g:'✹',c:['#FFD166','#FFE7A3','#FF9F3C'],sh:'flame',ring:'#FFD166'},
@@ -1607,7 +1608,8 @@ const SIG={
  star:{n:'Shooting Stars',g:'☄',c:['#FFD166','#FFFFFF','#C9B8FF'],sh:'star5',ring:'#FFD166'},
  diamond:{n:'Diamond Dust',g:'◇',c:['#FFFFFF','#BFF3FF','#E8E0FF'],sh:'shard',ring:'#FFFFFF',fx:'spire'},
  maestro:{n:'Downbeat',g:'♩',c:['#FFD166','#FFF3C4'],sh:null,ring:'#FFD166',fx:'downbeat'},
- supreme:{n:'Grand Finale',g:'♩',c:['#FF7EB6','#FFD166','#B8F2E6','#C9B8FF'],sh:null,ring:'rainbow',fx:'downbeat'}};
+ supreme:{n:'Grand Finale',g:'♩',c:['#FF7EB6','#FFD166','#B8F2E6','#C9B8FF'],sh:null,ring:'rainbow',fx:'downbeat'},
+ truepulse:{n:'Doom Pulse',g:'♥',c:['#FF1E2E','#7A0010','#FF6A3A'],sh:null,ring:'#FF1E2E',fx:'truepulse'}};
 LANDS.push({id:'match',name:'Match my block',glyph:'⟲',col:'#FFF8EE',price:0,note:'Uses your block\'s signature effect'});
 Object.keys(SIG).forEach(k=>{ const s=SIG[k]; LANDS.push({id:'sig_'+k,name:s.n,glyph:s.g,col:s.c[0],req:{skin:k},sig:k}); });
 SIG.ovation={n:'Standing Ovation',g:'♛',c:['#FFD166','#FF7EB6','#B8F2E6','#C9B8FF'],sh:'confetti',ring:'rainbow',fx:'beams'};   // the Crown's effect (added after the loop so it has no block of its own)
@@ -1617,20 +1619,21 @@ LANDS.push({id:'crown',name:'Crown',glyph:'♛',col:'#FFD166',req:{rank:18},sig:
 const RANK_TIERS=[
  {n:'Bronze',c:'#D08A52'},{n:'Silver',c:'#C9D1E0'},{n:'Gold',c:'#FFD166'},{n:'Platinum',c:'#8FF0E0'},
  {n:'Diamond',c:'#9FD8FF'},{n:'Master',c:'#C9B8FF'},{n:'Grandmaster',c:'#FF7EB6'},{n:'Maestro',c:'#FFF8EE'}];
-/* Bronze I (0) ... Grandmaster III (20), Maestro (21), Maestro I-III (22-24), Supreme Conductor (25) */
-const RANK_MAESTRO=21, RANK_MAX=25;
+/* Bronze I (0) ... Grandmaster III (20), Maestro (21), Maestro I-III (22-24), Supreme Conductor (25), True Pulse (26) */
+const RANK_MAESTRO=21, RANK_SUPREME=25, RANK_MAX=26;
 /* total XP needed to reach rank n. Up to Maestro it grows gently; past Maestro every rank costs
    MAESTRO_GROWTH times the one before it, adding up to MAESTRO_TOTAL from Maestro to Supreme Conductor
    (with 40,000 and ×2: about 2,667 → 5,333 → 10,667 → 21,333) */
 const MAESTRO_TOTAL=40000, MAESTRO_GROWTH=2;
-const MAESTRO_STEP=MAESTRO_TOTAL*(MAESTRO_GROWTH-1)/(Math.pow(MAESTRO_GROWTH,RANK_MAX-RANK_MAESTRO)-1);
+const MAESTRO_STEP=MAESTRO_TOTAL*(MAESTRO_GROWTH-1)/(Math.pow(MAESTRO_GROWTH,RANK_SUPREME-RANK_MAESTRO)-1);
+const TRUE_PULSE_XP=70000;   // Supreme Conductor → True Pulse
 const baseXP=n=>n<=0?0:Math.round(120*n+34*n*n);
-const rankXP=n=>n<=RANK_MAESTRO?baseXP(n):baseXP(RANK_MAESTRO)+Math.round(MAESTRO_STEP*(Math.pow(MAESTRO_GROWTH,n-RANK_MAESTRO)-1)/(MAESTRO_GROWTH-1));
+const rankXP=n=>n<=RANK_MAESTRO?baseXP(n):n>RANK_SUPREME?rankXP(RANK_SUPREME)+TRUE_PULSE_XP*(n-RANK_SUPREME):baseXP(RANK_MAESTRO)+Math.round(MAESTRO_STEP*(Math.pow(MAESTRO_GROWTH,n-RANK_MAESTRO)-1)/(MAESTRO_GROWTH-1));
 function rankOf(xp){ let n=0; while(n<RANK_MAX&&xp>=rankXP(n+1)) n++; return Math.max(n,SAVE.rankKeep||0); }
 // players who already climbed past Maestro under the old, flatter curve keep the rank they earned
-if(!SAVE.xpCurve2){ let old=0; while(old<RANK_MAX&&(SAVE.xp||0)>=baseXP(old+1)) old++; if(old>RANK_MAESTRO) SAVE.rankKeep=old; SAVE.xpCurve2=true; save(); }
-function rankName(n){ if(n>=RANK_MAX) return 'Supreme Conductor'; if(n>RANK_MAESTRO) return 'Maestro '+['I','II','III'][n-RANK_MAESTRO-1]; if(n===RANK_MAESTRO) return 'Maestro'; return RANK_TIERS[Math.floor(n/3)].n+' '+['I','II','III'][n%3]; }
-const rankCol=n=>n>=RANK_MAX?'#FF9CE6':n>=RANK_MAESTRO?(n>RANK_MAESTRO?'#FFE7A0':'#FFF8EE'):RANK_TIERS[Math.min(7,Math.floor(n/3))].c;
+if(!SAVE.xpCurve2){ let old=0; while(old<RANK_SUPREME&&(SAVE.xp||0)>=baseXP(old+1)) old++; if(old>RANK_MAESTRO) SAVE.rankKeep=old; SAVE.xpCurve2=true; save(); }
+function rankName(n){ if(n>=RANK_MAX) return 'True Pulse'; if(n>=RANK_SUPREME) return 'Supreme Conductor'; if(n>RANK_MAESTRO) return 'Maestro '+['I','II','III'][n-RANK_MAESTRO-1]; if(n===RANK_MAESTRO) return 'Maestro'; return RANK_TIERS[Math.floor(n/3)].n+' '+['I','II','III'][n%3]; }
+const rankCol=n=>n>=RANK_MAX?'#FF2A3C':n>=RANK_SUPREME?'#FF9CE6':n>=RANK_MAESTRO?(n>RANK_MAESTRO?'#FFE7A0':'#FFF8EE'):RANK_TIERS[Math.min(7,Math.floor(n/3))].c;
 const rankReward=n=>60+n*25;
 
 /* ---- daily quests ---- */
@@ -2537,6 +2540,9 @@ function sigFx(id,x,y,j){
   if(S.fx==='coins'||S.fx==='pillar') for(let i=0;i<n(6);i++) spawnP(x,y,{col:col(i+1),sz:2.2,s:60+Math.random()*80,a:cone(),vy:-150,g:40,life:.8,add:true});
   if(S.fx==='alarm'&&!RM()){ G.flashT=G.now; G.flashC='#FF2A2A'; }
   if(S.fx==='waves'&&!RM()) G.nudge.y+=3*k;
+  if(S.fx==='truepulse'){   // embers torn upward, a heavy camera slam and a red pulse at the screen's edge on a perfect
+    for(let i=0;i<n(9);i++) spawnP(x,y,{col:['#FF1E2E','#FF6A3A','#B0001A'][i%3],shape:i%3?'shard':'star5',sz:2.5+Math.random()*3,a:up+(Math.random()-.5)*1.4,s:40+Math.random()*90,vy:-120,g:-25,life:.9+Math.random()*.4,add:true,spin:6});
+    if(!RM()){ G.nudge.y+=j==='perfect'?4.5:2; if(j==='perfect'){ G.flashT=G.now; G.flashC='#B0001A'; } } }
   if(S.fx==='downbeat'){   // a few slow glints rising, and a tiny camera dip on a perfect
     for(let i=0;i<n(4);i++) spawnP(x,y,{col:S.ring==='rainbow'?hsl2hex(Math.random()*360,85,72):(i%2?'#FFF3C4':'#FFD166'),shape:'star5',sz:2.5+Math.random()*2,a:up+(Math.random()-.5)*.9,s:18+Math.random()*25,vy:-70,g:-10,life:1.1,add:true,spin:3});
     if(!RM()&&j==='perfect') G.nudge.y+=2.2; }
@@ -2544,6 +2550,7 @@ function sigFx(id,x,y,j){
 function drawSigFx(f,x,y,tw,now,th){
   const u=clamp((now-f.t0)/.7,0,1); if(u>=1) return; const e=1-Math.pow(1-u,3), a=1-u, ring=c=>c==='rainbow'?hsl2hex((now*240+f.seed)%360,85,70):c==='neon'?'#FF4FD8':c;
   if(f.fx==='downbeat'){ drawDownbeat(f,x,y,tw,th||tw*.62,now,u,e,a); return; }
+  if(f.fx==='truepulse'){ drawTruePulse(f,x,y,tw,th||tw*.62,now,u,e,a); return; }
   cx.save(); cx.globalCompositeOperation='lighter';
   const R0=tw*(.3+.9*e*f.k); cx.strokeStyle=rgba(ring(f.col),.8*a); cx.lineWidth=2.5*a+.5; cx.beginPath(); cx.ellipse(x,y,R0,R0*.62,0,0,Math.PI*2); cx.stroke();
   switch(f.fx){
@@ -2583,6 +2590,38 @@ function drawDownbeat(f,x,y,tw,th,now,u,e,a){
     [[tw,0],[-tw,0],[0,th],[0,-th]].forEach(([ox,oy],i)=>{ const g=cx.createRadialGradient(x+ox,y+oy,0,x+ox,y+oy,tw*.5); g.addColorStop(0,rgba(c(i*90+45),al)); g.addColorStop(1,rgba(c(i*90+45),0)); cx.fillStyle=g; cx.beginPath(); cx.ellipse(x+ox,y+oy,tw*.5,tw*.5*.62,0,0,Math.PI*2); cx.fill(); }); }
   // a thin shaft of light
   if(u<.6){ const v=u/.6, Hh=tw*(1.2+1.2*k)*(1-v*.3), w=Math.max(1.5,tw*.05)*(1-v); const g=cx.createLinearGradient(0,y-Hh,0,y); g.addColorStop(0,rgba(c(60),0)); g.addColorStop(.7,rgba(c(60),.5*(1-v))); g.addColorStop(1,rgba('#FFFFFF',.8*(1-v))); cx.fillStyle=g; cx.fillRect(x-w/2,y-Hh,w,Hh); }
+  cx.restore();
+}
+/* DOOM PULSE · the True Pulse's landing: the floor goes dark for an instant, then a crimson shockwave
+   cracks it open. Glowing fractures run out along the tiles, the neighbours flare red a beat later,
+   and a thick red shaft slams down on the block. */
+function drawTruePulse(f,x,y,tw,th,now,u,e,a){
+  const k=f.k, beat=clamp(1-(now-(G.lastBeatT||-9))/.3,0,1);
+  cx.save();
+  // the dark: a black hole opens under the block before the light arrives
+  if(u<.45){ const v=u/.45, r=tw*(.4+.7*v), g0=cx.createRadialGradient(x,y,0,x,y,r); g0.addColorStop(0,`rgba(20,0,6,${.75*(1-v)})`); g0.addColorStop(1,'rgba(20,0,6,0)'); cx.fillStyle=g0; cx.beginPath(); cx.ellipse(x,y,r,r*.62,0,0,TAU); cx.fill(); }
+  // solid crimson (not added light), so it stays blood-red even on pale floors
+  const r1=tw*(.22+1.35*e*k); cx.strokeStyle=`rgba(120,0,14,${.7*a})`; cx.lineWidth=5+4*a; cx.beginPath(); cx.ellipse(x,y,r1,r1*.62,0,0,TAU); cx.stroke();
+  cx.strokeStyle=`rgba(230,16,40,${.95*a})`; cx.lineWidth=2+2*a; cx.stroke();
+  { const fade=u<.45?1:1-(u-.45)/.55, len=tw*(.4+1.3*Math.min(1,u*2.6))*k;
+    for(let i=0;i<7;i++){ const an=f.seed+i*TAU/7; cx.strokeStyle=`rgba(150,0,18,${.9*fade})`; cx.lineWidth=3; cx.beginPath(); cx.moveTo(x,y);
+      for(let s2=1;s2<=4;s2++){ const jit=Math.sin(f.seed*3.1+i*7.7+s2*2.3)*.45, d=len*s2/4; cx.lineTo(x+Math.cos(an+jit*.5)*d,y+Math.sin(an+jit*.5)*d*.62); } cx.stroke(); } }
+  cx.globalCompositeOperation='lighter';
+  // white-hot core
+  if(u<.2){ const v=u/.2, g=cx.createRadialGradient(x,y,0,x,y,tw*.6); g.addColorStop(0,`rgba(255,235,235,${.9*(1-v)})`); g.addColorStop(.35,`rgba(255,30,46,${.7*(1-v)})`); g.addColorStop(1,'rgba(255,30,46,0)'); cx.fillStyle=g; cx.beginPath(); cx.ellipse(x,y,tw*.6,tw*.6*.62,0,0,TAU); cx.fill(); }
+  // a heavy crimson ring and a slower, wider echo
+  cx.strokeStyle=`rgba(255,30,46,${.35*a})`; cx.lineWidth=1.5; cx.beginPath(); cx.ellipse(x,y,r1,r1*.62,0,0,TAU); cx.stroke();
+  const v2=clamp((u-.12)/.88,0,1); if(v2>0){ const e2=1-Math.pow(1-v2,3), r2=tw*(.3+2*e2*k); cx.strokeStyle=`rgba(176,0,26,${.5*(1-v2)})`; cx.lineWidth=6*(1-v2)+1; cx.beginPath(); cx.ellipse(x,y,r2,r2*.62,0,0,TAU); cx.stroke(); }
+  // fractures: jagged glowing cracks running out along the floor
+  const fade=u<.45?1:1-(u-.45)/.55, len=tw*(.4+1.3*Math.min(1,u*2.6))*k;
+  for(let i=0;i<7;i++){ const an=f.seed+i*TAU/7; let px=x, py=y; cx.strokeStyle=`rgba(255,${40+Math.round(60*beat)},40,${.5*fade})`; cx.lineWidth=1.2; cx.beginPath(); cx.moveTo(px,py);
+    for(let s2=1;s2<=4;s2++){ const jit=Math.sin(f.seed*3.1+i*7.7+s2*2.3)*.45, d=len*s2/4; px=x+Math.cos(an+jit*.5)*d; py=y+Math.sin(an+jit*.5)*d*.62; cx.lineTo(px,py); }
+    cx.stroke(); cx.fillStyle=`rgba(255,120,90,${fade})`; cx.fillRect(px-1.5,py-1.5,3,3); }
+  // the neighbouring tiles flare red a moment later
+  const v3=clamp((u-.12)/.5,0,1); if(v3>0&&v3<1){ const al=.4*Math.sin(Math.PI*v3);
+    [[tw,0],[-tw,0],[0,th],[0,-th]].forEach(([ox,oy])=>{ const g=cx.createRadialGradient(x+ox,y+oy,0,x+ox,y+oy,tw*.55); g.addColorStop(0,`rgba(255,30,46,${al})`); g.addColorStop(1,'rgba(255,30,46,0)'); cx.fillStyle=g; cx.beginPath(); cx.ellipse(x+ox,y+oy,tw*.55,tw*.55*.62,0,0,TAU); cx.fill(); }); }
+  // a thick red shaft slamming down
+  if(u<.5){ const v=u/.5, Hh=tw*(1.6+1.2*k)*(1-v*.4), w=Math.max(3,tw*.14)*(1-v); const g=cx.createLinearGradient(0,y-Hh,0,y); g.addColorStop(0,'rgba(255,30,46,0)'); g.addColorStop(.6,`rgba(255,30,46,${.6*(1-v)})`); g.addColorStop(1,`rgba(255,220,220,${.9*(1-v)})`); cx.fillStyle=g; cx.fillRect(x-w/2,y-Hh,w,Hh); }
   cx.restore();
 }
 function drawLandFx(L,now){
@@ -2680,6 +2719,7 @@ function animMods(S,now){
     case 'speaker': return {sq:-.05*beat,scale:1};
     case 'blaze': return {sq:Math.sin(now*14)*.015,scale:1};
     case 'maestro': case 'supreme': return {sq:-.03*beat,scale:1+.04*beat};
+    case 'truepulse': return {sq:-.05*beat*beat,scale:1+.07*beat*beat};   // a heavy heartbeat throb
     default: return null;
   }
 }
@@ -2692,6 +2732,15 @@ function skinPre(S,x0,topY,bw,bh,H,now,P){
     cx.save(); cx.globalCompositeOperation='lighter';
     const g=cx.createRadialGradient(cxp,cyp,0,cxp,cyp,bw*(1.25+.2*beat)); g.addColorStop(0,rgba(sup?mcol(S,now,0):'#FFE7A0',.5+.2*beat)); g.addColorStop(.55,rgba(sup?mcol(S,now,120):'#FFD166',.18+.1*beat)); g.addColorStop(1,rgba(sup?mcol(S,now,240):'#FFD166',0)); cx.fillStyle=g; cx.beginPath(); cx.arc(cxp,cyp,bw*(1.25+.2*beat),0,Math.PI*2); cx.fill();
     for(let i=0;i<10;i++){ const a=now*.35+i*Math.PI/5, L1=bw*(1.05+.25*beat+(i%2?0:.25)); cx.strokeStyle=rgba(mcol(S,now,i*36),i%2?.18:.3); cx.lineWidth=bw*.06; cx.beginPath(); cx.moveTo(cxp+Math.cos(a)*bw*.45,cyp+Math.sin(a)*bw*.35); cx.lineTo(cxp+Math.cos(a)*L1,cyp+Math.sin(a)*L1*.75); cx.stroke(); }
+    cx.restore(); }
+  if(S.anim==='truepulse'){ const cxp=x0+bw/2, cyp=topY+(bh+H)*.45, beat=clamp(1-(now-G.lastBeatT)/.35,0,1);
+    cx.save();
+    // a dark aura that drinks the light around it, rimmed in red
+    const g=cx.createRadialGradient(cxp,cyp,0,cxp,cyp,bw*(1.35+.25*beat)); g.addColorStop(0,'rgba(40,0,6,.55)'); g.addColorStop(.6,`rgba(120,0,14,${.28+.18*beat})`); g.addColorStop(1,'rgba(120,0,14,0)'); cx.fillStyle=g; cx.beginPath(); cx.arc(cxp,cyp,bw*(1.35+.25*beat),0,Math.PI*2); cx.fill();
+    // jagged red spikes of light, lunging out on the beat
+    cx.globalCompositeOperation='lighter';
+    for(let i=0;i<8;i++){ const a=-now*.25+i*Math.PI/4, L1=bw*(1.1+.45*beat+(i%2?0:.3)), mx=cxp+Math.cos(a+.08)*bw*.8, my=cyp+Math.sin(a+.08)*bw*.6;
+      cx.strokeStyle=`rgba(255,30,46,${(i%2?.2:.34)+.25*beat})`; cx.lineWidth=bw*.05; cx.beginPath(); cx.moveTo(cxp+Math.cos(a)*bw*.45,cyp+Math.sin(a)*bw*.35); cx.lineTo(mx,my); cx.lineTo(cxp+Math.cos(a)*L1,cyp+Math.sin(a)*L1*.75); cx.stroke(); }
     cx.restore(); }
   if(S.anim==='critter'){ const sw=Math.sin(now*4)*.5; cx.strokeStyle=S.front; cx.lineWidth=Math.max(3,bw*.12); cx.lineCap='round'; cx.beginPath(); cx.moveTo(x0+bw*.9,fy+H*.6); cx.quadraticCurveTo(x0+bw*1.35,fy+H*.3,x0+bw*(1.2+.15*sw),fy-bh*.4); cx.stroke(); }
   if(S.anim==='disco'){ cx.globalCompositeOperation='lighter'; for(let i=0;i<4;i++){ const a=now*1.4+i*Math.PI/2, cxp=x0+bw/2, cyp=topY+bh*.5; const g=cx.createLinearGradient(cxp,cyp,cxp+Math.cos(a)*bw*2.2,cyp+Math.sin(a)*bw*1.2);
@@ -2760,6 +2809,37 @@ function skinPost(S,x0,topY,bw,bh,H,now,P){
       cx.save(); cx.globalCompositeOperation='lighter'; cx.fillStyle=gold; cx.font=`700 ${Math.round(bw*.3)}px system-ui,sans-serif`; cx.textAlign='center';
       for(let i=0;i<2;i++){ cx.fillStyle=gc(i*180+100); const a=now*1.6+i*Math.PI, ox=Math.cos(a)*bw*.85, oy=Math.sin(a)*bh*.6; if(Math.sin(a)<0) cx.globalAlpha*=.8; cx.fillText(i?'♪':'♫',cxp+ox,topY+(bh+H)*.4+oy); }
       if(Math.sin(now*3.1)>.85){ cx.fillStyle='#FFFFFF'; const sx=x0+bw*.82, sy=topY+bh*.2; cx.fillRect(sx-4,sy-.8,8,1.6); cx.fillRect(sx-.8,sy-4,1.6,8); }
+      cx.restore(); } break;
+    case 'truepulse': { const cxp=x0+bw/2, red=al=>`rgba(255,${Math.round(24+50*beat)},${Math.round(40+20*beat)},${al})`;
+      // obsidian front: a black shirt, blood-red lapels and bow tie, cracks that glow on every beat
+      cx.fillStyle='#240409'; cx.beginPath(); cx.moveTo(cxp-bw*.2,fy); cx.lineTo(cxp+bw*.2,fy); cx.lineTo(cxp,fy+H*.95); cx.closePath(); cx.fill();
+      cx.strokeStyle='#C80A20'; cx.lineWidth=Math.max(1.2,bw*.05); cx.beginPath(); cx.moveTo(cxp-bw*.3,fy); cx.lineTo(cxp,fy+H*.95); cx.lineTo(cxp+bw*.3,fy); cx.stroke();
+      const by=fy+H*.16, bs=bw*.13; cx.fillStyle='#E0102A'; cx.beginPath(); cx.moveTo(cxp,by); cx.lineTo(cxp-bs*1.4,by-bs*.8); cx.lineTo(cxp-bs*1.1,by); cx.lineTo(cxp-bs*1.4,by+bs*.8); cx.closePath(); cx.moveTo(cxp,by); cx.lineTo(cxp+bs*1.4,by-bs*.8); cx.lineTo(cxp+bs*1.1,by); cx.lineTo(cxp+bs*1.4,by+bs*.8); cx.closePath(); cx.fill();
+      cx.save(); cx.globalCompositeOperation='lighter';
+      cx.strokeStyle=red(.45+.5*beat); cx.lineWidth=Math.max(1,bw*.03); cx.beginPath();
+      cx.moveTo(x0+bw*.06,fy+H*.15); cx.lineTo(x0+bw*.2,fy+H*.45); cx.lineTo(x0+bw*.1,fy+H*.72); cx.lineTo(x0+bw*.18,fy+H*.95);
+      cx.moveTo(x0+bw*.94,fy+H*.1); cx.lineTo(x0+bw*.8,fy+H*.4); cx.lineTo(x0+bw*.9,fy+H*.8); cx.stroke();
+      // two slit eyes and a heart-core that beats
+      [-1,1].forEach(sd=>{ const ex=cxp+sd*bw*.2, ey=fy+H*.36; cx.fillStyle=red(.95); cx.beginPath(); cx.moveTo(ex-sd*bw*.09,ey-H*.03); cx.lineTo(ex+sd*bw*.07,ey); cx.lineTo(ex-sd*bw*.09,ey+H*.03); cx.closePath(); cx.fill(); });
+      const hr=bw*(.07+.05*beat), hy=fy+H*.64; const hg=cx.createRadialGradient(cxp,hy,0,cxp,hy,hr*3); hg.addColorStop(0,'rgba(255,220,220,.95)'); hg.addColorStop(.3,red(.8)); hg.addColorStop(1,red(0)); cx.fillStyle=hg; cx.beginPath(); cx.arc(cxp,hy,hr*3,0,Math.PI*2); cx.fill();
+      // a heartbeat line burning across the top face
+      cx.strokeStyle=red(.7+.3*beat); cx.lineWidth=Math.max(1.2,bw*.035); cx.beginPath(); const ly=topY+bh*.55, sp=x0+bw*.1, ep=x0+bw*.9, pk=((now*.8)%1);
+      cx.moveTo(sp,ly); cx.lineTo(sp+(ep-sp)*.35,ly); cx.lineTo(sp+(ep-sp)*.43,ly-bh*.32); cx.lineTo(sp+(ep-sp)*.52,ly+bh*.3); cx.lineTo(sp+(ep-sp)*.6,ly); cx.lineTo(ep,ly); cx.stroke();
+      cx.fillStyle='rgba(255,230,230,.9)'; cx.beginPath(); cx.arc(sp+(ep-sp)*pk,ly,Math.max(1.2,bw*.03),0,Math.PI*2); cx.fill();
+      cx.restore();
+      // blood-red trim with a dark shine crawling over it
+      cx.strokeStyle='#E0102A'; cx.lineWidth=2.4; rr(x0,topY,bw,bh+H,3); cx.stroke();
+      clip(x0,topY,bw,bh+H); const u=((now*.35)%1.6)-.3, sg=cx.createLinearGradient(x0+bw*u-14,topY,x0+bw*u+14,topY+bh+H); sg.addColorStop(0,'rgba(0,0,0,0)'); sg.addColorStop(.5,'rgba(255,40,60,.35)'); sg.addColorStop(1,'rgba(0,0,0,0)'); cx.fillStyle=sg; cx.fillRect(x0,topY,bw,bh+H); cx.restore();
+      // a black crown of thorns that slams down on the beat
+      const cy0=topY-bh*.5-Math.sin(now*1.6)*1.5+beat*3, cw=bw*.62, ch=bh*.75, spikes=[-.5,-.3,-.1,.1,.3,.5], hts=[.5,.8,1.1,1.1,.8,.5];
+      cx.fillStyle='#0A0205'; cx.strokeStyle='#E0102A'; cx.lineWidth=1.2; cx.beginPath(); cx.moveTo(cxp-cw/2,cy0+ch*.35);
+      spikes.forEach((o,i)=>{ const sx=cxp+o*cw; cx.lineTo(sx-cw*.06,cy0); cx.lineTo(sx,cy0-ch*hts[i]); cx.lineTo(sx+cw*.06,cy0); });
+      cx.lineTo(cxp+cw/2,cy0+ch*.35); cx.closePath(); cx.fill(); cx.stroke();
+      cx.save(); cx.globalCompositeOperation='lighter'; [-cw*.2,0,cw*.2].forEach((dx,i)=>{ cx.fillStyle=red(i===1?1:.8); cx.beginPath(); cx.arc(cxp+dx,cy0+ch*.14,Math.max(1.2,bw*(i===1?.055:.035))*(1+.4*beat),0,Math.PI*2); cx.fill(); });
+      // shards of red glass orbiting it, and embers torn upward
+      for(let i=0;i<3;i++){ const a2=now*1.3+i*Math.PI*2/3, ox=Math.cos(a2)*bw*.9, oy=Math.sin(a2)*bh*.65, px=cxp+ox, py=topY+(bh+H)*.4+oy, s2=bw*.08;
+        cx.fillStyle=red(Math.sin(a2)<0?.5:.9); cx.beginPath(); cx.moveTo(px,py-s2*1.6); cx.lineTo(px+s2*.6,py); cx.lineTo(px,py+s2*1.6); cx.lineTo(px-s2*.6,py); cx.closePath(); cx.fill(); }
+      for(let i=0;i<5;i++){ const q=((now*.55+i*.21)%1), ex=x0+bw*(.1+((i*.37)%1)*.8)+Math.sin(now*3+i)*3, ey=topY-q*bh*2.2; cx.fillStyle=`rgba(255,${80+Math.round(90*(1-q))},60,${.9*(1-q)})`; cx.fillRect(ex,ey,2,2); }
       cx.restore(); } break;
     case 'tess': { const cxp=x0+bw/2, cyp=topY+(bh+H)*.55, s=Math.min(bw,bh+H)*.28, ay=now*1.1, ax=now*.7;
       const V=[]; for(let i=0;i<8;i++){ let X=(i&1?1:-1), Y=(i&2?1:-1), Z=(i&4?1:-1); let x1=X*Math.cos(ay)-Z*Math.sin(ay), z1=X*Math.sin(ay)+Z*Math.cos(ay); let y1=Y*Math.cos(ax)-z1*Math.sin(ax); V.push([cxp+x1*s,cyp+y1*s*.8]); }
@@ -3618,7 +3698,7 @@ const questsReady=()=>{ ensureQuests(); return SAVE.quests.list.filter(q=>q.prog
 function toast(t){ let e=$('toast'); if(!e){ e=document.createElement('div'); e.id='toast'; e.className='toast'; document.body.appendChild(e); } e.textContent=t; e.classList.remove('show'); void e.offsetWidth; e.classList.add('show'); }
 
 /* ================= PROFILE SCREEN ================= */
-const RANK_UNLOCKS=[[12,'Diamond block'],[18,'Crown landing effect'],[21,'Maestro block + Downbeat landing'],[25,'Supreme Conductor block + Grand Finale landing']];
+const RANK_UNLOCKS=[[12,'Diamond block'],[18,'Crown landing effect'],[21,'Maestro block + Downbeat landing'],[25,'Supreme Conductor block + Grand Finale landing'],[26,'True Pulse block + Doom Pulse landing']];
 function updateRankChip(){ const n=myRank(), b=$('mProfile'); if(!b) return; b.style.setProperty('--rc',rankCol(n)); $('mRankTxt').textContent=rankName(n); $('mQDot').hidden=!questsReady(); }
 function buildProfile(){
   ensureName(); ensureQuests();
@@ -4424,7 +4504,8 @@ const ACH=[
  ['gold','Gold Standard','Reach Gold rank',()=>myRank()>=6],
  ['diamond','Diamond','Reach Diamond rank',()=>myRank()>=12],
  ['maestro','Maestro','Reach Maestro rank',()=>myRank()>=RANK_MAESTRO],
- ['supreme','Supreme Conductor','Reach the top rank',()=>myRank()>=RANK_MAX],
+ ['supreme','Supreme Conductor','Reach Supreme Conductor',()=>myRank()>=RANK_SUPREME],
+ ['truepulse','True Pulse','Reach the final rank',()=>myRank()>=RANK_MAX],
  ['skins10','Collector','Own 10 blocks',()=>SKINS.filter(s=>ownsSkin(s.id)).length>=10],
  ['challenge','Throw Down','Send a challenge link',()=>LF('challenges')>=1],
  ['chalwin','Challenge Accepted','Beat a friend\'s challenge',()=>LF('chalWins')>=1],
