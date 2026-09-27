@@ -1679,7 +1679,7 @@ const RANK_MAESTRO=21, RANK_SUPREME=25, RANK_MAX=26;
    (with 40,000 and ×2: about 2,667 → 5,333 → 10,667 → 21,333) */
 const MAESTRO_TOTAL=40000, MAESTRO_GROWTH=2;
 const MAESTRO_STEP=MAESTRO_TOTAL*(MAESTRO_GROWTH-1)/(Math.pow(MAESTRO_GROWTH,RANK_SUPREME-RANK_MAESTRO)-1);
-const TRUE_PULSE_XP=40000;   // Supreme Conductor → True Pulse
+const TRUE_PULSE_XP=32000;   // Supreme Conductor → True Pulse
 const baseXP=n=>n<=0?0:Math.round(120*n+34*n*n);
 const rankXP=n=>n<=RANK_MAESTRO?baseXP(n):n>RANK_SUPREME?rankXP(RANK_SUPREME)+TRUE_PULSE_XP*(n-RANK_SUPREME):baseXP(RANK_MAESTRO)+Math.round(MAESTRO_STEP*(Math.pow(MAESTRO_GROWTH,n-RANK_MAESTRO)-1)/(MAESTRO_GROWTH-1));
 function rankOf(xp){ let n=0; while(n<RANK_MAX&&xp>=rankXP(n+1)) n++; return Math.max(n,SAVE.rankKeep||0); }
