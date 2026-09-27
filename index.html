@@ -67,6 +67,8 @@ body.in-menu .hud,body.in-menu #hint,body.in-menu .pads{visibility:hidden}
 .tierline b{color:var(--lantern);font-weight:600}
 .echo{font-family:var(--display);font-size:12px;color:var(--mint);opacity:.85;margin-top:3px;font-variant-numeric:tabular-nums}
 .metro{display:flex;gap:7px;margin-top:8px;align-items:center}
+.harmony.safe span{box-shadow:0 0 0 1.5px #B8F2E6}
+.harmony.safe::after{content:'safe';font:700 9px var(--display);letter-spacing:.1em;text-transform:uppercase;color:#B8F2E6;margin-left:6px;align-self:center}
 .metro i{display:block;width:7px;height:7px;border-radius:50%;border:1.5px solid var(--ink-3);transition:background .05s}
 .metro i:first-child{width:10px;height:10px}
 .metro i.on{background:var(--lantern);border-color:var(--lantern)}
@@ -231,10 +233,24 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
 .howto li{display:grid;grid-template-columns:14px 1fr;gap:8px}
 .howto li::before{content:"";width:7px;height:7px;margin-top:6px;transform:rotate(45deg);background:var(--lilac);border-radius:1px}
 .small{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.hppanel{align-items:center;text-align:center}
+.hppanel .row{justify-content:center}
+.hpicon svg{width:72px;height:72px;display:block}
+.calibtune{display:flex;flex-direction:column;gap:8px}
 .calibdot{width:60px;height:60px;border-radius:50%;margin:6px auto;background:var(--lantern);opacity:.3;border:0;display:block}
 .danger{color:var(--coral)!important}
 @media (max-width:420px){h1{font-size:31px}.streak{font-size:36px}.num{font-size:17px}.panel{padding:18px}.hud{gap:8px}.sub{font-size:11px}}
 @media (max-height:640px) and (orientation:portrait){.hud{padding-block:8px 2px}.streak{font-size:32px}.metro{margin-top:5px}.pad{--b:clamp(52px,15vw,64px)}}
+/* beat bars: a track at the side of the screen; two bars slide in from its ends and meet in the middle on every beat */
+.beatbar{position:fixed;left:max(12px,env(safe-area-inset-left));top:50%;height:min(44vh,300px);width:26px;transform:translateY(-50%);z-index:2;pointer-events:none;opacity:.92}
+.beatbar[hidden]{display:none}
+.beatbar::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;border-radius:2px;background:linear-gradient(transparent,rgba(255,248,238,.55) 18%,rgba(255,248,238,.55) 82%,transparent);box-shadow:0 0 0 1px rgba(24,20,56,.18)}
+.beatbar .bbmid{position:absolute;left:1px;right:1px;top:50%;height:6px;margin-top:-3px;border-radius:3px;border:2px solid #FFD166;box-shadow:0 0 0 1px rgba(24,20,56,.45);box-sizing:border-box}
+.beatbar .bb{position:absolute;left:3px;right:3px;top:50%;height:4px;margin-top:-2px;border-radius:2px;background:#FFF8EE;box-shadow:0 0 0 1.5px rgba(24,20,56,.55),0 0 6px rgba(255,248,238,.6);will-change:transform}
+.beatbar.down .bb{background:var(--lantern);box-shadow:0 0 0 1.5px rgba(24,20,56,.55),0 0 8px rgba(255,209,102,.8)}
+@media (max-width:520px){.beatbar{left:max(5px,env(safe-area-inset-left));width:20px}#app .talk{top:100px}}
+.beatbar.hit .bbmid{animation:bbHit .22s ease-out}
+@keyframes bbHit{0%{transform:scaleX(1.5);background:rgba(255,209,102,.9)}100%{transform:scaleX(1);background:transparent}}
 /* phones on their side: controls float in the corners so the board gets the full height */
 @media (max-height:540px) and (orientation:landscape){
   .hud{padding-block:6px 0}.streak{font-size:28px}.metro{margin-top:4px}.tierline{margin-top:2px}
@@ -246,6 +262,8 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
   .stage{margin-right:calc(clamp(42px,11vh,56px)*3 + 24px)}
   body.coop .stage{margin-left:calc(clamp(42px,11vh,56px)*3 + 24px)}
   body.swipe-only .stage{margin:0}
+  body.coop .beatbar{left:calc(clamp(42px,11vh,56px)*3 + 30px)}
+  .beatbar{height:min(56vh,220px)}
   .panel{max-height:calc(100% - 16px);padding:16px;gap:10px}
 }
 .segs{display:flex;gap:6px;background:var(--glass);padding:4px;border-radius:12px}
@@ -670,6 +688,7 @@ button:disabled{opacity:.55;cursor:default}
   <b class="pb-code" id="pbCode">····</b>
   <span class="pb-sub" id="pbSub"></span>
 </button>
+<div id="beatbar" class="beatbar" hidden aria-hidden="true"><i class="bbmid"></i><i class="bb" id="bbTop"></i><i class="bb" id="bbBot"></i></div>
 <div id="countdown" class="countdown" hidden aria-live="assertive"><b id="cdNum">5</b><small id="cdLabel">Get ready</small></div>
 <div id="app">
   <header class="hud">
@@ -981,6 +1000,8 @@ button:disabled{opacity:.55;cursor:default}
     <label class="opt" for="haptics"><input id="haptics" type="checkbox"><span>Vibration<small>A light buzz on hits and misses, on phones that support it.</small></span></label>
     <label class="opt" for="relaxed"><input id="relaxed" type="checkbox"><span>Relaxed timing<small>Windows 30% wider, and skipping a beat never costs Harmony.</small></span></label>
     <label class="opt" for="ghostOn"><input id="ghostOn" type="checkbox"><span>Best-run ghost<small>A see-through copy of your best run of a level plays beside you.</small></span></label>
+    <label class="opt" for="metroOn"><input id="metroOn" type="checkbox"><span>Beat bars<small>Two bars at the side of the screen slide together and meet on every beat.</small></span></label>
+    <label class="opt" for="fountOn"><input id="fountOn" type="checkbox"><span>Fountain tips<small>The Fountain explains the game during every Courtyard level.</small></span></label>
     <label class="opt" for="reduce"><input id="reduce" type="checkbox"><span>Calmer effects<small>No screen flashes, camera nudges or bobbing.</small></span></label>
     <div class="offset">
       <label for="offset">Audio offset</label><output id="offsetOut">0 ms</output>
@@ -1125,7 +1146,21 @@ button:disabled{opacity:.55;cursor:default}
     <p id="calibMsg">Tap any direction, Space, or the dot on every click. 24 clicks; the first 4 are warm-up.</p>
     <button id="calibDot" class="calibdot" type="button" aria-label="Tap on each click"></button>
     <div class="small" id="calibCount" style="text-align:center">0 taps</div>
-    <button id="calibDone" class="btn ghost" type="button" hidden>Back to settings</button>
+    <div id="calibTune" class="calibtune" hidden>
+      <div class="small">Fine-tune (offset <b id="calibOff">0 ms</b>): when you play, if hits you make right on the beat keep showing <b>◂ early</b> or <b>late ▸</b>, nudge it here, 5 ms at a time.</div>
+      <div class="row"><button class="btn ghost" id="calibMinus" type="button">They show early</button><button class="btn ghost" id="calibPlus" type="button">They show late</button></div>
+    </div>
+    <div class="row"><button id="calibAgain" class="btn ghost" type="button" hidden>Run it again</button><button id="calibDone" class="btn ghost" type="button" hidden>Back to settings</button></div>
+  </div>
+</section>
+<section id="hpOv" class="overlay" hidden>
+  <div class="panel hppanel" role="dialog" aria-labelledby="hpTitle">
+    <div class="hpicon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M12 38v-6a20 20 0 0 1 40 0v6" fill="none" stroke="#B8F2E6" stroke-width="4" stroke-linecap="round"/><rect x="8" y="36" width="12" height="18" rx="5" fill="#FFD166"/><rect x="44" y="36" width="12" height="18" rx="5" fill="#FFD166"/><path d="M26 44h3l2-6 3 12 2-6h3" fill="none" stroke="#FFF8EE" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div><div class="eyebrow">Before you play</div><h2 id="hpTitle">Headphones recommended</h2></div>
+    <p style="margin:0">Pulseform is played to the beat. Headphones make the drum easier to hear and keep your taps in time with the music.</p>
+    <p class="small" style="margin:0">Every setup has a slightly different sound delay, and Bluetooth headphones add the most. Take 15 seconds to calibrate: tap along with the clicks and the game lines itself up with you.</p>
+    <div class="row"><button class="btn" id="hpCalib" type="button">Calibrate timing</button><button class="btn ghost" id="hpPlay" type="button">Play now</button></div>
+    <small class="small">You can calibrate any time in Settings.</small>
   </div>
 </section>
 
@@ -1895,6 +1930,8 @@ function modeFor(type,a,b){
   return {type:'endless',rooms:0,mustMove:true,fallEnds:true,harmony:5,mods:{},seed:a&&a.seed||Math.random().toString(36).slice(2,8)};
 }
 function startRun(M){
+  // first time on this device: suggest headphones and a quick timing calibration
+  if(!SAVE.hpSeen&&!M.net){ SAVE.hpSeen=true; save(); HP.pending=M; ensureAudio(); showOv('hpOv'); $('hpCalib').focus(); return; }
   if(needsTutorial(M)){ ensureAudio(); showTutorialIntro(M); return; }
   ensureAudio(); A.ctx.resume();
   hideAll();
@@ -2108,7 +2145,10 @@ function roomClear(b){
   if(M.net){ d+=4; G.pendingK=d; }
   G.restUntil=d-1; G.swapPending=true;
 }
-function loseHarmony(){ if(G.mode.duel) return; G.harmony=Math.max(0,G.harmony-1); G.regen=0; bump('harmony','hit'); hud();
+/* the Courtyard (world 1 and its boss) is the practice world: mistakes never cost Harmony there */
+const courtyardSafe=()=>!!(G.mode&&(G.mode.type==='level'||G.mode.type==='boss')&&G.mode.world===1);
+function loseHarmony(){ if(G.mode.duel) return;
+  if(courtyardSafe()){ G.regen=0; if(!G.safeTold){ G.safeTold=true; tutOnce('safe','That would cost Harmony anywhere else. Here in my Courtyard you are safe, so keep practising!',6000); } return; } G.harmony=Math.max(0,G.harmony-1); G.regen=0; bump('harmony','hit'); hud();
   if(inNet()){ if(!NET.host) return; netSend({t:'hm',h:G.harmony}); }
   if(G.harmony<=0&&G.state==='playing'&&G.perks.phoenix){ G.perks.phoenix=0; G.harmony=2; G.banner={text:'Phoenix!',sub:'Back from the ashes with 2 Harmony',t0:G.now,dur:1.6,col:'#FF7EB6'}; sTierUp(); hud(); return; }
   if(G.harmony<=0&&G.state==='playing'){ G.state='dying'; setTimeout(()=>gameOver('harmony'),650); } }
@@ -2231,7 +2271,7 @@ function onBeat(b){
   if(!rest&&(G.mode.type==='level'||G.mode.type==='hard')){ G.roomBeats++; G.beatsTotal++;
     if(G.roomBeats>G.budget&&G.state==='playing'){ G.state='dying'; setTimeout(()=>gameOver('budget'),300); } }
   if(!rest&&G.mode.type==='ascent'&&G.budget&&!G.finishing){ G.roomBeats++;
-    if(G.roomBeats>G.budget&&G.state==='playing'){ G.budget+=6; hint('Over the beat budget: −1 Harmony, +6 beats.',2500); G.players.forEach(P=>popAt(P,'over budget','#FF8A80',13)); loseHarmony(); } }
+    if(G.roomBeats>G.budget&&G.state==='playing'){ G.budget+=6; hint(courtyardSafe()?'Over the beat budget: +6 beats.':'Over the beat budget: −1 Harmony, +6 beats.',2500); G.players.forEach(P=>popAt(P,'over budget','#FF8A80',13)); loseHarmony(); } }
   hud();
 }
 function spawnBloom(){
@@ -3417,7 +3457,7 @@ function acctInit(){
 }
 
 /* ---- merging a device's save with the account's save ---- */
-const DEVICE_KEYS=['offset','controls','musicVol','sfxVol','haptics','reduce','swipeLearn'];
+const DEVICE_KEYS=['offset','controls','musicVol','sfxVol','haptics','reduce','swipeLearn','hpSeen'];
 function mergeSaves(loc,cl,additive){
   const base=JSON.parse(JSON.stringify(DEF));
   // "Erase progress" is stamped with a time: a save from before the latest erase gives way to it,
@@ -4389,9 +4429,47 @@ $('gTut').onclick=()=>{ const M=modeFor('level',1,1); showTutorialIntro(M); };
 $('gStory').textContent=LORE.story;
 const needsTutorial=M=>M.type==='level'&&M.world===1&&M.level===1&&!M.tut&&!M.tutSkip&&!SAVE.tutDone;
 
-/* ---- in-level coaching (1-1 only) ---- */
-function tutStart(M){ TUT.said={}; TUT.moves=0; if(M.tut) setTimeout(()=>{ if(G.mode===M) talk('The Fountain','Watch the gold ring around you. When it closes on your block, press any arrow key, or swipe on your phone.',0); },900); }
-function tutOnce(k,txt,ms){ if(!G.mode||!G.mode.tut||TUT.said[k]) return; TUT.said[k]=1; talk('The Fountain',txt,ms===undefined?6500:ms); }
+/* ---- in-level coaching: the Fountain explains the game on every Courtyard level and in its boss fight ---- */
+const FOUNT_LESSONS={
+ '1-1':['Watch the gold ring around your block. Press an arrow key (or swipe) the moment it closes.',
+        'Listen for the drum. The ring always closes right on it.',
+        'Harmony, at the top right, is your health. In my Courtyard you never lose any, so relax and learn.'],
+ '1-2':['In Levels you don\'t have to move every beat. Skip a beat to stand still and think.',
+        'The glowing arch is the door. Reach it to clear the level.',
+        'Your beats and the par are under your score. Finish near par for more stars.'],
+ '1-3':['Watch the markers when you move: ◂ early or late ▸ shows which way you were off.',
+        'Aim for PERFECT: press right as the ring touches your block.',
+        'See the floating gem? Grab it on your way to the door for bonus points.'],
+ '1-4':['Pillars! They block your way, but bumping one is safe. You just stay where you are.',
+        'The glowing rails along the edges work the same way. Bump them all you like.',
+        'Plan your turns around the pillars. The shortest path isn\'t always a straight line.'],
+ '1-5':['Careful: an edge with no rail drops you into the sky.',
+        'If you fall, you start again from your last safe spot. In the other worlds, a fall costs Harmony.',
+        'Before you step toward an edge, look for its glowing rail.'],
+ '1-6':['Streaks! Every PERFECT in a row adds to the number in the middle.',
+        'Every 10 perfects wakes a new layer of the song and raises your score multiplier.',
+        'A miss breaks the streak, so stay steady and keep listening.'],
+ '1-7':['Gems float above some tiles. Grab them for bonus points.',
+        'Your stars at the end come from playing cleanly: good timing, few extra moves, and gems.',
+        'Collect gems and stars to earn ♪ notes for new blocks in the shop.'],
+ '1-8':['The last Courtyard level! Everything you\'ve learned comes together here.',
+        'If your hits keep feeling early or late, calibrate your timing in Settings.',
+        'Clear this, and you can face me in the boss fight. I\'ll go easy on you.'],
+ 'B':  ['This is a guardian fight. Step on the gold blaster pad to fire at me.',
+        'Red targets show where my shots will land, two beats later. Step off them!',
+        'Here in my Courtyard my shots can\'t cost you Harmony. The other guardians won\'t be so gentle.']};
+const fountOn=M=>!!(M&&(M.tut||(!SAVE.fountOff&&!M.net&&(M.type==='level'||M.type==='boss')&&M.world===1)));
+function tutStart(M){
+  TUT.said={}; TUT.moves=0; clearTimeout(TUT.lessonT);
+  if(M.tut){ setTimeout(()=>{ if(G.mode===M) talk('The Fountain','Watch the gold ring around you. When it closes on your block, press any arrow key, or swipe on your phone.',0); },900); return; }
+  if(!fountOn(M)) return;
+  const lines=FOUNT_LESSONS[M.type==='boss'?'B':'1-'+M.level]||[]; let i=0;
+  const next=()=>{ if(G.mode!==M||G.state==='over'||i>=lines.length) return;
+    if(G.state!=='playing'||!$('talk').hidden||!$('cine').hidden){ TUT.lessonT=setTimeout(next,800); return; }   // wait for a free moment
+    talk('The Fountain',lines[i++],6800); TUT.lessonT=setTimeout(next,7600); };
+  TUT.lessonT=setTimeout(next,M.type==='boss'?6500:1000);
+}
+function tutOnce(k,txt,ms){ if(!fountOn(G.mode)||TUT.said[k]) return; TUT.said[k]=1; talk('The Fountain',txt,ms===undefined?6500:ms); }
 function tutMove(j){
   if(!G.mode||!G.mode.tut) return; TUT.moves++;
   if(TUT.moves===1){ TUT.said.first=1; talk('The Fountain',j==='perfect'?'Perfect! That is the beat. Every perfect grows your streak, and the song grows with it.':j==='good'?'Good! Now try to press exactly as the ring meets your block.':j==='miss'?'Missed the beat. Listen for the drum, then press as the ring closes.':`A little ${j}. Wait for the ring to touch your block, then press.`,6500); return; }
@@ -5735,6 +5813,7 @@ function hud(){
   $('tierName').textContent=TIERS[G.tier].n; $('mult').textContent='×'+TIERS[G.tier].m;
   const mh=G.maxH||M.harmony, h=$('harmony'); if(h.children.length!==mh){h.innerHTML='';for(let i=0;i<mh;i++)h.appendChild(document.createElement('span'))}
   [...h.children].forEach((s,i)=>s.classList.toggle('on',i<G.harmony));
+  h.classList.toggle('safe',courtyardSafe()); h.title=courtyardSafe()?'The Courtyard is safe: mistakes cost no Harmony':'';
   const e=$('echo'); if(G.echo){e.hidden=false;e.textContent='echo '+G.echo.target+' · '+G.echo.count+'/4 perfects'} else e.hidden=true;
   let a='',b='';
   if(M.type==='level'){ a=`${M.world}-${M.level} ${LEVEL_NAMES[M.world-1][M.level-1]}`; b=`Beats ${G.roomBeats}/${G.budget} · par ${R.par}`; }
@@ -5773,7 +5852,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv'];
+const OVS=['hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -5862,7 +5941,7 @@ function buildShop(){
 }
 function buildSettings(){
   $('ctrlField').hidden=MOB;
-  $('ghostOn').checked=!SAVE.ghostOff; $('relaxed').checked=SAVE.relaxed; $('reduce').checked=SAVE.reduce; $('haptics').checked=SAVE.haptics; syncOffset(); syncVol();
+  $('ghostOn').checked=!SAVE.ghostOff; $('metroOn').checked=!SAVE.metroOff; $('fountOn').checked=!SAVE.fountOff; $('relaxed').checked=SAVE.relaxed; $('reduce').checked=SAVE.reduce; $('haptics').checked=SAVE.haptics; syncOffset(); syncVol();
   document.querySelectorAll('#ctrlTabs button').forEach(b=>b.classList.toggle('on',b.dataset.c===SAVE.controls));
   $('resetBtn').textContent='Erase progress'; $('resetBtn').dataset.arm='';
 }
@@ -6029,7 +6108,24 @@ function loop(){
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
+  beatBar(now+visLead());
   render(now+visLead());
+}
+
+/* the beat bars: at time t, each bar has travelled the fraction of the way from its end of the track
+   to the middle that the current beat has, so both reach the middle exactly on the beat */
+const BB={k:-1,shown:false};
+function beatBar(t){
+  const on=!SAVE.metroOff&&(G.state==='playing'||G.state==='paused')&&G.beats&&G.beats.length>0&&!!G.stats;
+  if(on!==BB.shown){ BB.shown=on; $('beatbar').hidden=!on; BB.k=-1; }
+  if(!on) return;
+  let nb=null; for(let i=G.beats.length-1;i>=0;i--){ if(G.beats[i].t<t) break; nb=G.beats[i]; }
+  let nt,nk,spb;
+  if(nb){ nt=nb.t; nk=nb.k; spb=nb.spb; } else { const l=G.beats[G.beats.length-1]; spb=l.spb; nk=l.k+Math.max(1,Math.ceil((t-l.t)/spb)); nt=l.t+(nk-l.k)*spb; }
+  const p=clamp(1-(nt-t)/spb,0,1), el=$('beatbar'), half=el.clientHeight/2-4, off=(1-p)*half;
+  $('bbTop').style.transform=`translateY(${-off}px)`; $('bbBot').style.transform=`translateY(${off}px)`;
+  el.classList.toggle('down',nk%4===0);
+  const passed=nk-1; if(passed!==BB.k){ if(BB.k>=0&&passed>=0){ el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); } BB.k=passed; }
 }
 
 /* ---------------- LOBBY MUSIC ---------------- */
@@ -6070,12 +6166,19 @@ function menuDemo(now){
 
 /* ---------------- CALIBRATION ---------------- */
 const CALIB_N=24;
+const HP={pending:null};
+$('hpPlay').onclick=()=>{ const M=HP.pending; HP.pending=null; if(M) startRun(M); else toMenu(); };
+$('hpCalib').onclick=()=>{ CAL.back=HP.pending; HP.pending=null; startCalib(); };
+const CAL={back:null};
+function calibOffTxt(){ $('calibOff').textContent=(SAVE.offset>0?'+':'')+SAVE.offset+' ms'; }
+function calibNudge(d){ SAVE.offset=clamp((SAVE.offset||0)+d,-300,300); save(); syncOffset(); calibOffTxt(); if(A.ctx) tone(A.sfx,A.ctx.currentTime,'sine',d>0?990:770,.05,.002,.08); }
 function startCalib(){
   ensureAudio(); A.ctx.resume(); const c=A.ctx, t0=c.currentTime+.6, spb=.6;
   for(let i=0;i<CALIB_N;i++) tone(A.master,t0+i*spb,'sine',i%4?600:900,.3,.002,.08);
   const pl=G.players; G=visualDefaults({state:'calib',calib:{t0,spb,taps:[]},players:pl||[mkPlayer(0)]});
   $('calibMsg').textContent='Tap any direction, Space, or the dot on every click. 24 clicks; the first 4 are warm-up.';
-  $('calibCount').textContent='0 taps'; $('calibDone').hidden=true; showOv('calibOv');
+  $('calibCount').textContent='0 taps'; $('calibDone').hidden=true; $('calibAgain').hidden=true; $('calibTune').hidden=true;
+  $('calibDone').textContent=CAL.back?'Let\'s play':'Back to settings'; $('calibDone').classList.toggle('ghost',!CAL.back); showOv('calibOv');
 }
 function calibTap(ev){ const k=G.calib; if(!k||k.finished) return; const t=heardNow(ev)-TOUCH_LAG, i=Math.round((t-k.t0)/k.spb); if(i<4||i>=CALIB_N) return;
   if(k.taps.some(x=>x.i===i)) return; k.taps.push({i,d:t-(k.t0+i*k.spb)}); $('calibCount').textContent=k.taps.length+' taps'; }
@@ -6089,7 +6192,7 @@ function calibTick(){
     if(k.taps.length>=8){ SAVE.offset=Math.round(clamp(avg,-300,300)); save(); syncOffset();
       $('calibMsg').textContent=`Done. Your taps land ${Math.abs(SAVE.offset)} ms ${SAVE.offset<0?'early':'late'} on average, so the offset is now ${SAVE.offset} ms.`+(spread>40?' Your taps were a bit uneven; run it again for a steadier result.':' Nice and steady.'); }
     else $('calibMsg').textContent='Not enough taps to measure. Try again and tap along with every click.';
-    $('calibDone').hidden=false; $('calibDone').focus(); }
+    $('calibDone').hidden=false; $('calibAgain').hidden=false; $('calibTune').hidden=k.taps.length<8; calibOffTxt(); $('calibDone').focus(); }
 }
 
 /* ---------------- WIRING ---------------- */
@@ -6157,10 +6260,13 @@ $('pauseBtn').onclick=()=>G.state==='playing'?pause():null;
 $('resumeBtn').onclick=resume;
 $('restartBtn').onclick=()=>{ const M=G.mode; A.ctx.resume().then(()=>startRun(M.type==='daily'?modeFor('daily'):M)); };
 $('quitBtn').onclick=()=>{ A.ctx.resume(); G.state='dying'; gameOver('quit'); };
-$('calibBtn').onclick=startCalib; $('calibDone').onclick=()=>{ toMenu('settingsOv'); };
+$('calibBtn').onclick=()=>{ CAL.back=null; startCalib(); }; $('calibDone').onclick=()=>{ const M=CAL.back; CAL.back=null; if(M) startRun(M); else toMenu('settingsOv'); };
+$('calibAgain').onclick=startCalib; $('calibMinus').onclick=()=>calibNudge(-5); $('calibPlus').onclick=()=>calibNudge(5);
 $('calibDot').addEventListener('pointerdown',e=>{e.preventDefault(); calibTap(e)});
 $('relaxed').onchange=e=>{SAVE.relaxed=e.target.checked; save()};
 $('reduce').onchange=e=>{SAVE.reduce=e.target.checked; save()};
+$('metroOn').onchange=e=>{ SAVE.metroOff=!e.target.checked; save(); };
+$('fountOn').onchange=e=>{ SAVE.fountOff=!e.target.checked; save(); };
 $('offset').oninput=e=>{SAVE.offset=+e.target.value; save(); syncOffset()};
 $('resetBtn').onclick=e=>{ const b=$('resetBtn'), acct=!!(ACCT.user&&SAVE.linked===ACCT.user.uid); if(!b.dataset.arm){ b.dataset.arm='1'; b.textContent=acct?'Tap again to erase all stars, Notes and items, here and on your account':'Tap again to erase all stars, Notes and items'; return; }
   const keep={offset:SAVE.offset,relaxed:SAVE.relaxed,reduce:SAVE.reduce,name:SAVE.name,linked:acct?SAVE.linked:undefined,wipe:Date.now()}; SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep); if(acct) ACCT.overwrite=true; save(); b.dataset.arm=''; b.textContent='Progress erased'; };
