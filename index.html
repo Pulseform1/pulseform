@@ -1620,8 +1620,10 @@ const RANK_TIERS=[
 /* Bronze I (0) ... Grandmaster III (20), Maestro (21), Maestro I-III (22-24), Supreme Conductor (25) */
 const RANK_MAESTRO=21, RANK_MAX=25;
 /* total XP needed to reach rank n. Up to Maestro it grows gently; past Maestro every rank costs
-   MAESTRO_GROWTH times the one before it (3,000 → 9,000 → 27,000 → 81,000), so Supreme Conductor is a real climb */
-const MAESTRO_STEP=3000, MAESTRO_GROWTH=3;
+   MAESTRO_GROWTH times the one before it, adding up to MAESTRO_TOTAL from Maestro to Supreme Conductor
+   (with 40,000 and ×2: about 2,667 → 5,333 → 10,667 → 21,333) */
+const MAESTRO_TOTAL=40000, MAESTRO_GROWTH=2;
+const MAESTRO_STEP=MAESTRO_TOTAL*(MAESTRO_GROWTH-1)/(Math.pow(MAESTRO_GROWTH,RANK_MAX-RANK_MAESTRO)-1);
 const baseXP=n=>n<=0?0:Math.round(120*n+34*n*n);
 const rankXP=n=>n<=RANK_MAESTRO?baseXP(n):baseXP(RANK_MAESTRO)+Math.round(MAESTRO_STEP*(Math.pow(MAESTRO_GROWTH,n-RANK_MAESTRO)-1)/(MAESTRO_GROWTH-1));
 function rankOf(xp){ let n=0; while(n<RANK_MAX&&xp>=rankXP(n+1)) n++; return Math.max(n,SAVE.rankKeep||0); }
