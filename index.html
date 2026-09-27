@@ -2167,7 +2167,7 @@ function onBeat(b){
     G.players.forEach(P=>{ if(G.state==='playing'&&!P.remote&&!P.dead&&!P.done&&P.pos.y*N+P.pos.x===i) doFall(P); }); }});
   newTilesBeat(b,rest); feverBeat(b); if(G.dark) (G.dark.boss?bossDarkBeat:interBeat)(b,rest);
   if(G.echo&&b.k>G.echo.until) G.echo=null;
-  if(b.k%2===0) G.fireAt=b.t+b.spb/2;
+  if(b.k%2===0&&!rest) G.fireAt=b.t+b.spb/2;   // vents hold fire during rest beats, when you aren't allowed to move off them
   arenaBeat(b,rest); duelBeat(b,rest);
   if(!rest&&(G.mode.type==='level'||G.mode.type==='hard')){ G.roomBeats++; G.beatsTotal++;
     if(G.roomBeats>G.budget&&G.state==='playing'){ G.state='dying'; setTimeout(()=>gameOver('budget'),300); } }
@@ -3435,9 +3435,9 @@ function placeNewTiles(cfg,R0,F,used,free){
 }
 function newTilesBeat(b,rest){
   G.blinkK=b.k;
-  const le=laserEvery(); if(R.lasers&&R.lasers.length&&b.k%le===le-1) G.laserAt=b.t+b.spb/2;
+  const le=laserEvery(); if(!rest&&R.lasers&&R.lasers.length&&b.k%le===le-1) G.laserAt=b.t+b.spb/2;
   if(b.k%4===0&&R.cells.some(c=>c.blink>=0)){ sBlink();
-    G.players.forEach(P=>{ if(P.remote||P.dead||P.done||G.state!=='playing') return; const c=cellAt(P.pos.x,P.pos.y);
+    G.players.forEach(P=>{ if(rest||P.remote||P.dead||P.done||G.state!=='playing') return; const c=cellAt(P.pos.x,P.pos.y);
       if(c&&c.blink>=0&&!blinkOn(c,b.k)&&!(P.anim&&P.anim.kind==='path'&&G.now<P.anim.end&&!(P.anim.to.x===P.pos.x&&P.anim.to.y===P.pos.y))) { popAt(P,'tile vanished','#C9B8FF',12); doFall(P); } }); }
 }
 function newTilesTick(now){
@@ -5246,7 +5246,10 @@ function raidRoom(M,i){
 function raidArena(w){
   const room=genArena(w), hp=Math.max(4,Math.round(room.boss.hp*.75));   // a raid is a rush: each boss has 25% less health
   room.boss.hp=hp; room.boss.max=hp; room.spawns=RAID_SPAWNS.map(p=>({...p}));
-  RAID_SPAWNS.forEach(p=>{ const c=room.cells[p.y*room.N+p.x]; c.t=1; c.crack=false; c.ice=false; c.blink=-1; });
+  // both spawns are plain floor: a vent, teleporter, gate, wind, spring or ghost tile under a spawn made the start unfair
+  RAID_SPAWNS.forEach(p=>{ const c=room.cells[p.y*room.N+p.x]; if(c.tele>=0){ room.cells[c.tele].tele=-1; }
+    Object.assign(c,{t:1,crack:false,ice:false,blink:-1,vent:false,rgate:false,wind:null,lock:null,spring:false,mud:false,ghost:false,beam:null,tele:-1,rot:-1,blaster:0,pu:null}); });
+  room.has.tele=room.cells.some(c=>c.tele>=0);
   return room;
 }
 /* returns true when the raid handles the boss going down */
