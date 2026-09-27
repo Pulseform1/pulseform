@@ -833,7 +833,7 @@ button:disabled{opacity:.55;cursor:default}
     <div id="aIn" hidden>
       <div class="acct-card"><span class="acct-dot"></span><div><b id="aWho"></b><small class="small" id="aSync"></small></div></div>
       <p class="small">Everything you earn saves to your account automatically. Sign in with the same account on another device to carry it over.</p>
-      <div class="row"><button class="btn ghost" id="aSyncNow" type="button">Sync now</button><button class="btn ghost" id="aSignOut" type="button">Sign out</button></div>
+      <div class="row"><button class="btn ghost" id="aSignOut" type="button">Sign out</button></div>
     </div>
     <p class="small" id="aMsg" role="status"></p>
   </div>
@@ -3568,7 +3568,6 @@ $('aForm').onsubmit=e=>{ e.preventDefault(); acctEmail(); };
 $('aGoogle').onclick=acctGoogle;
 $('aForgot').onclick=acctForgot;
 $('aSignOut').onclick=acctOut;
-$('aSyncNow').onclick=()=>acctSync();
 acctInit(); acctChip();
 
 /* ================= FRIENDS =================
