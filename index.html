@@ -645,7 +645,7 @@ button:disabled{opacity:.55;cursor:default}
   <b class="pb-code" id="pbCode">····</b>
   <span class="pb-sub" id="pbSub"></span>
 </button>
-<div id="countdown" class="countdown" hidden aria-live="assertive"><b id="cdNum">5</b><small id="cdSub">Get ready</small></div>
+<div id="countdown" class="countdown" hidden aria-live="assertive"><b id="cdNum">5</b><small id="cdLabel">Get ready</small></div>
 <div id="app">
   <header class="hud">
     <div>
@@ -3207,7 +3207,7 @@ function cdTick(){
   const el=$('countdown'), left=(CD.at-performance.now())/1000;
   if(left<-.7||!PLAYING()||G.state==='over'){ el.hidden=true; return; }
   const n=Math.max(0,Math.ceil(left));
-  if(n!==CD.last){ CD.last=n; $('cdNum').textContent=n>0?n:'Go!'; $('cdSub').textContent=n>0?(G.mode&&G.mode.duel?'Duel starts in':'Party starts in'):'';
+  if(n!==CD.last){ CD.last=n; $('cdNum').textContent=n>0?n:'Go!'; $('cdLabel').textContent=n>0?(G.mode&&G.mode.duel?'Duel starts in':'Party starts in'):'';
     el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
     if(A.ctx&&A.ctx.state==='running') tone(A.sfx,A.ctx.currentTime,'sine',n>0?880:1320,n>0?.06:.09,.002,n>0?.12:.3); }
   requestAnimationFrame(cdTick);
@@ -3826,7 +3826,7 @@ $('stFileIn').addEventListener('change',e=>{
   f.arrayBuffer().then(ab=>new Promise((ok,bad)=>{ const p=A.ctx.decodeAudioData(ab,ok,bad); if(p&&p.then) p.then(ok,bad); })).then(buf=>{
     STUDIO.buf=buf; STUDIO.fileName=cleanSong(f.name); const d=detectBPM(buf); STUDIO.firstBeat=d.first; STUDIO.off=0; STUDIO.fileBpm=d.bpm; STUDIO.bpm=d.bpm; STUDIO.src='file';
     studioUI(); const m=Math.floor(buf.duration/60), s=Math.round(buf.duration%60);
-    $('stFileInfo').textContent=`${m}:${String(s).padStart(2,'0')} long · detected about ${Math.round(d.bpm)} BPM. Press Preview to check the clicks line up with the beat.`;
+    $('stFileInfo').textContent=`${m}:${String(s).padStart(2,'0')} long · detected ${fmtBpm(d.bpm)} BPM. Press Preview to check the clicks line up with the beat.`;
   }).catch(()=>{ STUDIO.buf=null; studioUI(); $('stMsg').textContent='Could not read that file. Try an MP3, M4A or WAV.'; });
 });
 const cleanSong=n=>n.replace(/\.[a-z0-9]{2,5}$/i,'').replace(/[_]+/g,' ').replace(/[^\p{L}\p{N} '&().,!\-]/gu,'').trim().slice(0,40)||'Your song';
