@@ -8,7 +8,8 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Leaderboards: anyone can view; players can only write their own, higher score
+    // Leaderboards: anyone can view; players can only write their own entry. The score can only go up;
+    // an update that keeps the same score just changes the name, rank or block (when you rename yourself)
     match /boards/{board}/entries/{uid} {
       allow read: if true;
       allow create, update: if request.auth != null
@@ -18,7 +19,7 @@ service cloud.firestore {
         && request.resource.data.name.size() <= 24
         && request.resource.data.score is number
         && request.resource.data.score >= 0
-        && (resource == null || request.resource.data.score > resource.data.score);
+        && (resource == null || request.resource.data.score >= resource.data.score);
       allow delete: if false;
     }
 
