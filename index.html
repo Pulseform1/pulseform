@@ -1657,9 +1657,10 @@ function voiceNote(v,m,t,d,vol,dur){ const f=mtof(m); switch(v){
 function bassNote(w,m,t,d,vol,dur){ const f=mtof(m);
   if(w==='saw') tone(d,t,'sawtooth',f,vol*.8,.005,dur,{lp:750}); else if(w==='square') tone(d,t,'square',f,vol*.7,.004,dur,{lp:1100});
   else tone(d,t,w==='tri'?'triangle':'sine',f,vol,.008,dur); }
-/* the sound pack playing now: yours in Endless, or the one you're previewing in the shop */
+/* the sound pack playing now: yours in Endless and on the menu (lobby) music, or the one you're previewing in the shop */
 let PACKPREV=null;
-function curPack(){ const pv=PACKPREV&&performance.now()<PACKPREV.until?PACKPREV.id:null; const P=packById(pv||(G&&G.mode&&G.mode.type==='endless'?SAVE.pack:'s_none'));
+function curPack(){ const pv=PACKPREV&&performance.now()<PACKPREV.until?PACKPREV.id:null, mine=G&&(G.state==='menu'&&!STUDIO.preview||G.mode&&G.mode.type==='endless');
+  const P=packById(pv||(mine?SAVE.pack:'s_none'));
   return P.ov&&(pv||ownsItem(P))?P:null; }
 function packStyle(st){ const P=curPack(); if(!P) return st; st._pk=st._pk||{}; if(st._pk[P.id]) return st._pk[P.id];
   const v=P.ov, o={...st}; ['kick','snare','hat','perc'].forEach(q=>{ if(st[q]&&v[q]) o[q]={...st[q],s:v[q]}; });
@@ -6947,7 +6948,7 @@ function buildShop2(){
   $('shopGrid').querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{ const it=list.find(x=>x.id===b.dataset.buy); if(!it||SAVE.notes<it.price||(it.req&&!reqMet(it.req))) return;
     SAVE.notes-=it.price; SAVE.owned.push(it.id); equip(kind,it.id); if(A.ctx) sGem(); if(!tiles) packHear(it.id); done(); });
   $('shopGrid').querySelectorAll('[data-hear]').forEach(b=>b.onclick=()=>{ packHear(b.dataset.hear); b.textContent='♫ Playing…'; setTimeout(()=>{ if(b.isConnected) b.textContent='▶ Listen'; },8000); });
-  $('shopStats').textContent=tiles?'Tile themes tint the tiles and sky of every world. The ones named after a block unlock when you own that block.':'Sound packs change the band that plays in Endless. Tap Listen to hear one on the menu music.';
+  $('shopStats').textContent=tiles?'Tile themes tint the tiles and sky of every world. The ones named after a block unlock when you own that block.':'Sound packs change the band that plays in Endless and on the menu music. Tap Listen to hear one.';
 }
 /* hear a sound pack: the menu music plays on it for 8 seconds */
 function packHear(id){ firstGesture(); PACKPREV={id,until:performance.now()+8000}; }
