@@ -497,8 +497,9 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 .cvktimer small{font:700 11px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
 .cvktimer b{font:800 clamp(24px,6vw,34px) var(--display);color:#fff;letter-spacing:.04em;font-variant-numeric:tabular-nums;text-shadow:0 0 18px rgba(255,255,255,.35)}
 .cvkbars{display:flex;flex-direction:column;gap:12px;text-align:left;margin-top:4px}
-.cvklbl{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+.cvklbl{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:5px}
 .cvklbl b{font:800 17px var(--display);letter-spacing:.06em;text-transform:uppercase}
+.cvklbl .who{display:flex;flex-direction:column;line-height:1.15}.cvklbl .who small{font:600 12px var(--display);letter-spacing:.04em;opacity:.8}
 .cvklbl span{font:700 17px var(--display);font-variant-numeric:tabular-nums}
 .cvkrow.cale .cvklbl{color:#8FD0FF}.cvkrow.korra .cvklbl{color:#FF9AA5}
 .cvktrack{height:24px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);overflow:hidden;position:relative}
@@ -1053,8 +1054,8 @@ button:disabled{opacity:.55;cursor:default}
     <h2 class="cvktitle"><span class="c">CALE</span><em>VS</em><span class="k">KORRA</span></h2>
     <div class="cvktimer"><small id="cvkPhase">Starts in</small><b id="cvkTime">--</b><span class="small" id="cvkWhen"></span></div>
     <div class="cvkbars">
-      <div class="cvkrow cale" id="cvkRowC"><div class="cvklbl"><b>Cale</b><span id="cvkScC">0</span></div><div class="cvktrack"><i id="cvkBarC"></i></div><div class="cvkbets" id="cvkBetsC"></div></div>
-      <div class="cvkrow korra" id="cvkRowK"><div class="cvklbl"><b>Korra</b><span id="cvkScK">0</span></div><div class="cvktrack"><i id="cvkBarK"></i></div><div class="cvkbets" id="cvkBetsK"></div></div>
+      <div class="cvkrow cale" id="cvkRowC"><div class="cvklbl"><span class="who"><b id="cvkNmC">Cale</b><small id="cvkRlC">(Cale)</small></span><span id="cvkScC">0</span></div><div class="cvktrack"><i id="cvkBarC"></i></div><div class="cvkbets" id="cvkBetsC"></div></div>
+      <div class="cvkrow korra" id="cvkRowK"><div class="cvklbl"><span class="who"><b id="cvkNmK">Korra</b><small id="cvkRlK">(Korra)</small></span><span id="cvkScK">0</span></div><div class="cvktrack"><i id="cvkBarK"></i></div><div class="cvkbets" id="cvkBetsK"></div></div>
     </div>
     <div id="cvkYou" class="cvkyou"></div>
     <div class="cvkbet" id="cvkBet">
@@ -4447,7 +4448,7 @@ function ensureName(){ if(!SAVE.name){ SAVE.name=NAME_A[ri(NAME_A.length)]+' '+N
 function setName(v,quiet){ const n=cleanName(v); if(n.length<2) return false; const changed=SAVE.name!==n; SAVE.name=n; store.set('name',n); if(changed){ SAVE.nameT=Date.now(); SAVE.nameAuto=false; save(); }
   ['nName','pName'].forEach(id=>{ const e=$(id); if(e&&document.activeElement!==e) e.value=n; });
   if(changed&&netLive()){ clearTimeout(setName.hiT); setName.hiT=setTimeout(netHello,quiet?600:0); }
-  if(changed){ netRoster(); lbRename(); }
+  if(changed){ netRoster(); lbRename(); clearTimeout(setName.cvkT); setName.cvkT=setTimeout(cvkSendName,1500); }
   if(changed&&!quiet) toast('Name saved: '+n);
   return true; }
 function restoreName(){ if(!SAVE.name){ const n=cleanName(store.get('name','')); if(n.length>=2){ SAVE.name=n; save(); } } else if(store.get('name','')!==SAVE.name) store.set('name',SAVE.name); }
@@ -5505,10 +5506,15 @@ function cvkCheckWin(){
   toast('You won Cale vs Korra! The Eclipse Seraph is yours, and only yours.');
   if(typeof buildShop==='function'&&!$('shopOv').hidden) buildShop();
 }
+/* your username on your bar follows you when you rename yourself */
+function cvkSendName(){
+  if(!SAVE.cvkSide||!ACCT.user||!cvkCol()||window.PF_CG) return;
+  cvkCol().collection('sides').doc(SAVE.cvkSide).set({name:ensureName()},{merge:true}).catch(()=>{});
+}
 /* which side this account signed up as (so it follows you to another device) */
 async function cvkFindSide(){
   if(SAVE.cvkSide||!ACCT.user||!cvkCol()) return;
-  for(const k of ['cale','korra']){ try{ const d=await cvkCol().collection('claims').doc(k).get(); if(d.exists&&d.data().uid===ACCT.user.uid){ SAVE.cvkSide=k; save(); cvkRender(); return; } }catch(e){} }
+  for(const k of ['cale','korra']){ try{ const d=await cvkCol().collection('claims').doc(k).get(); if(d.exists&&d.data().uid===ACCT.user.uid){ SAVE.cvkSide=k; save(); cvkSendName(); cvkRender(); return; } }catch(e){} }
 }
 async function cvkSignUp(){
   const code=($('cvkCode').value||'').toUpperCase().replace(/\s+/g,'');
@@ -5520,7 +5526,7 @@ async function cvkSignUp(){
   try{ await col.collection('claims').doc(side).set({uid:me,code,t:Date.now()}); }
   catch(e){ let mine=false; try{ const d=await col.collection('claims').doc(side).get(); mine=d.exists&&d.data().uid===me; }catch(_){}
     if(!mine){ cvkMsg(`Someone has already signed up as ${nm}.`,true); return; } }
-  try{ const d=await col.collection('sides').doc(side).get(); if(!d.exists) await col.collection('sides').doc(side).set({score:0,t:Date.now()}); }catch(e){}
+  try{ const d=await col.collection('sides').doc(side).get(); if(!d.exists) await col.collection('sides').doc(side).set({score:0,t:Date.now(),name:ensureName()}); else cvkSendName(); }catch(e){}
   SAVE.cvkSide=side; save(); $('cvkForm').hidden=true; cvkMsg(''); if(A.ctx) sChime(88);
   toast(`You're in! You're fighting as ${nm}.`); cvkRender();
 }
@@ -5529,7 +5535,7 @@ function cvkPost(M){
   if(!SAVE.cvkSide||!ACCT.user||!ACCT.db||window.PF_CG||cvkPhase()!=='live') return;
   const add=Math.min(400000,Math.max(0,Math.round(G.score||0))+(SAVE.cvkPend||0)); if(!add) return;
   SAVE.cvkPend=0; save(); const side=SAVE.cvkSide;
-  cvkCol().collection('sides').doc(side).set({score:firebase.firestore.FieldValue.increment(add),t:Date.now()},{merge:true})
+  cvkCol().collection('sides').doc(side).set({score:firebase.firestore.FieldValue.increment(add),t:Date.now(),name:ensureName()},{merge:true})
     .then(()=>toast(`+${add.toLocaleString()} for ${CVK.sides[side].name}!`))
     .catch(()=>{ SAVE.cvkPend=Math.min(400000,(SAVE.cvkPend||0)+add); save(); });
 }
@@ -5538,11 +5544,13 @@ function cvkRender(){
   const chip=$('mCvk'); if(chip){ chip.hidden=!cvkShown(); chip.textContent='⚔ Cale vs Korra · '+(ph==='soon'?'starts in '+cvkFmt(CVK.start-n).replace(/ \d+s$/,''):ph==='live'?'LIVE':'results'); }
   if($('cvkOv').hidden) return;
   const w=ph==='over'?cvkWinner():null;
+  const who=s2=>{ const v=CVK.scores[s2]; return v&&v.name?cleanName(v.name):''; };   // their username, as it is now
   $('cvkPhase').textContent=ph==='soon'?'Starts in':ph==='live'?'Ends in':'Final result';
-  $('cvkTime').textContent=ph==='soon'?cvkFmt(CVK.start-n):ph==='live'?cvkFmt(CVK.end-n):w?`${CVK.sides[w].name} wins!`:'No winner';
+  $('cvkTime').textContent=ph==='soon'?cvkFmt(CVK.start-n):ph==='live'?cvkFmt(CVK.end-n):w?`${who(w)?who(w)+' ('+CVK.sides[w].name+')':CVK.sides[w].name} wins!`:'No winner';
   $('cvkWhen').textContent=ph==='soon'?'9:00 AM Central, Wed Sep 30 · runs 3 days':ph==='live'?'Ends 9:00 AM Central, Sat Oct 3':'Ended 9:00 AM Central, Sat Oct 3';
   const sc=k=>CVK.scores[k]?CVK.scores[k].score||0:0, c=sc('cale'), k=sc('korra'), top=Math.max(c,k,1);
   $('cvkScC').textContent=c.toLocaleString(); $('cvkScK').textContent=k.toLocaleString();
+  [['cale','C'],['korra','K']].forEach(([s2,L])=>{ const nm=who(s2), real=CVK.sides[s2].name; $('cvkNm'+L).textContent=nm||real; $('cvkRl'+L).textContent=nm?`(${real})`:'(not signed up yet)'; });
   $('cvkBarC').style.width=Math.max(3,c/top*100)+'%'; $('cvkBarK').style.width=Math.max(3,k/top*100)+'%';
   const lead=c===k?null:c>k?'cale':'korra';
   $('cvkRowC').classList.toggle('lead',lead==='cale'); $('cvkRowK').classList.toggle('lead',lead==='korra');
