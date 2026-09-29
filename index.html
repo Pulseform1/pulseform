@@ -98,7 +98,7 @@ body.swipe-only .pads{display:none}
 .pad{--b:clamp(58px,17vw,74px);display:grid;grid-template-columns:repeat(3,var(--b));grid-template-rows:repeat(3,calc(var(--b)*.78));gap:4px}
 .pads.duo .pad{--b:clamp(40px,10.5vw,58px)}
 .pads.duo{gap:14px}
-.dir{pointer-events:auto;touch-action:none;width:var(--b);height:calc(var(--b)*.78);border-radius:16px;border:1px solid var(--line);background:rgba(255,248,238,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:background .12s,transform .08s;padding:0}
+.dir{pointer-events:auto;touch-action:none;width:var(--b);height:calc(var(--b)*.78);border-radius:16px;border:1px solid var(--line);background:rgba(255,248,238,.16);color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:background .12s,transform .08s;padding:0}
 .dir svg{width:26px;height:26px}
 .pads.duo .dir svg{width:20px;height:20px}
 .pads.mirror .d-left svg,.pads.mirror .d-right svg{transform:scaleX(-1)}
@@ -261,6 +261,9 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
 @media (max-width:520px){.beatbar{left:max(5px,env(safe-area-inset-left));width:32px;height:min(52vh,380px)}#app .talk{top:100px;max-width:calc(100% - 16px);padding:12px 14px 12px 10px}#app .talk .ttxt{font-size:15.5px}#app .talk .tport{width:52px;height:52px}#app .talk .tport svg{width:44px;height:44px}}
 .beatbar.hit .bbmid{animation:bbHit .22s ease-out}
 @keyframes bbHit{0%{transform:scaleX(1.5);background:rgba(255,209,102,.9)}100%{transform:scaleX(1);background:transparent}}
+/* slow computers: no blur behind menus (it is redrawn every frame), a darker backdrop instead */
+body.lite .overlay,body.lite .partybar,body.lite .panel{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+body.lite .overlay{background:rgba(20,16,46,.74)}
 /* phones on their side: controls float in the corners so the board gets the full height */
 @media (max-height:540px) and (orientation:landscape){
   .hud{padding-block:6px 0}.streak{font-size:28px}.metro{margin-top:4px}.tierline{margin-top:2px}
@@ -462,9 +465,14 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 .online{border:1px solid var(--line);background:var(--glass);border-radius:16px;padding:12px 14px;display:grid;gap:8px}
 .onl-head{display:flex;align-items:center;gap:8px}.onl-dot{width:8px;height:8px;border-radius:50%;background:#B8F2E6;box-shadow:0 0 0 0 rgba(184,242,230,.7);animation:onl 1.6s infinite}
 @keyframes onl{70%{box-shadow:0 0 0 8px rgba(184,242,230,0)}100%{box-shadow:0 0 0 0 rgba(184,242,230,0)}}
-.joinrow{display:grid;grid-template-columns:1fr 84px auto;gap:8px;align-items:stretch}
+.joinrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch}
+.joinstep{display:flex;flex-direction:column;gap:6px}
+.joinstep>b{font:700 14px var(--display)}
+.joinstep>.btn{margin:2px 0 0}
+.joinor{display:flex;align-items:center;gap:10px;margin:10px 0;color:var(--ink-3);font-size:12px;text-transform:uppercase;letter-spacing:.12em}
+.joinor::before,.joinor::after{content:'';flex:1;height:1px;background:var(--line)}
 .joinrow .btn{margin:0}
-#nCode{min-width:0;font:600 16px var(--display);letter-spacing:.2em;text-align:center;text-transform:uppercase;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink);padding:0 6px}
+#nCode{min-width:0;min-height:48px;font:700 22px var(--display);letter-spacing:.35em;text-align:center;text-transform:uppercase;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink);padding:0 6px}
 #nCode:focus{outline:2px solid #FFD166;outline-offset:1px}
 .coderow{display:flex;align-items:center;gap:10px}.pcode{font:700 30px var(--display);letter-spacing:.18em;color:#FFD166}
 .small.err,#nStatus.err,#aMsg.err{color:#FFB3A8}
@@ -698,7 +706,7 @@ button:disabled{opacity:.55;cursor:default}
 .invitebar{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:8;display:flex;align-items:center;gap:10px;max-width:calc(100% - 24px);padding:10px 12px 10px 16px;border-radius:16px;background:rgba(28,24,62,.96);border:1px solid rgba(156,255,216,.6);box-shadow:0 10px 30px rgba(10,8,30,.45);font:600 14px var(--body);color:var(--ink);pointer-events:auto}
 .invitebar .btn{padding:8px 14px;font-size:13px}
 @media (max-width:560px){.fpworlds{grid-template-columns:repeat(4,1fr)}.invitebar{flex-wrap:wrap;justify-content:center;text-align:center}}
-@media (max-width:380px){.joinrow{grid-template-columns:1fr 70px}.joinrow #nHost{grid-column:1/-1}}
+
 </style>
 
 <canvas id="cv" aria-label="Game board"></canvas>
@@ -1091,12 +1099,14 @@ button:disabled{opacity:.55;cursor:default}
       <div class="onl-head"><span class="eyebrow">Online · up to 4 devices</span><span class="onl-dot" aria-hidden="true"></span></div>
       <div id="netIdle">
         <label class="namerow" for="nName"><span class="small">Your name</span><input id="nName" maxlength="14" placeholder="Pick a name" autocomplete="nickname" spellcheck="false"></label>
-        <p class="small" style="margin:0 0 8px">Host a party and send the code to a friend. They join from their own phone or computer. Your name and rank show above your block.</p>
-        <div class="joinrow">
-          <button class="btn" id="nHost" type="button">Host a party</button>
-          <input id="nCode" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Party code">
-          <button class="btn ghost" id="nJoin" type="button">Join</button>
-        </div>
+        <div class="joinstep"><b>Start a party</b><span class="small">You get a 4-letter code. Up to 3 friends can join with it from their own phone or computer.</span>
+          <button class="btn" id="nHost" type="button">Host a party</button></div>
+        <div class="joinor"><span>or</span></div>
+        <div class="joinstep"><b>Join a friend's party</b><span class="small">Type the 4-letter code shown on your friend's screen, then tap Join.</span>
+          <div class="joinrow">
+            <input id="nCode" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Party code from your friend" inputmode="text">
+            <button class="btn" id="nJoin" type="button">Join</button>
+          </div></div>
         <div class="small err" id="nStatusIdle"></div>
       </div>
       <div id="netLive" hidden>
@@ -2307,8 +2317,10 @@ function spawnBloom(){
 }
 
 /* ---------------- RENDER ---------------- */
+var PERF={f:[],last:0,level:0}; const PERF_DPR=[2,1.5,1.2,1];   // see perfTick
+try{ PERF.level=Math.max(0,Math.min(3,+localStorage.getItem('pf-perf')||0)); }catch(e){}
 const cv=$('cv'); let cx=cv.getContext('2d'); let DPR=1, VW=0, VH=0;
-function resize(){ DPR=Math.min(MOB?1.5:2,devicePixelRatio||1); VW=innerWidth; VH=innerHeight; cv.width=VW*DPR; cv.height=VH*DPR; }
+function resize(){ DPR=Math.min(MOB?1.5:2,PERF_DPR[PERF.level],devicePixelRatio||1); VW=innerWidth; VH=innerHeight; cv.width=VW*DPR; cv.height=VH*DPR; }
 addEventListener('resize',resize); resize();
 const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
 const mixc=(a,b,t)=>{const A1=hex(a),B1=hex(b);return `rgb(${Math.round(lerp(A1[0],B1[0],t))},${Math.round(lerp(A1[1],B1[1],t))},${Math.round(lerp(A1[2],B1[2],t))})`};
@@ -2978,7 +2990,7 @@ function skinPost(S,x0,topY,bw,bh,H,now,P){
 function drawSkinPreviews(now,sel){
   const cvs=document.querySelectorAll(sel||'#shopGrid canvas.skprev'); if(!cvs.length) return;
   const main=cx, dpr=Math.min(2,devicePixelRatio||1), gm=G.mode; G.mode=gm?{...gm,coop:false}:null;
-  cvs.forEach((c,idx)=>{ const r=c.getBoundingClientRect(); if(r.bottom<0||r.top>innerHeight) return;
+  cvs.forEach((c,idx)=>{ const r=c.getBoundingClientRect(); if(!r.width||r.bottom<0||r.top>innerHeight) return;
     const w=64, h=64; if(c.width!==w*dpr){ c.width=w*dpr; c.height=h*dpr; }
     const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,w,h); cx=g;
     const ph=((now+idx*.13)%1), lift=ph<.32?Math.sin(Math.PI*ph/.32)*9:0, sq=ph>=.32&&ph<.45?.12*(1-(ph-.32)/.13):0;
@@ -3322,7 +3334,7 @@ function netHost(){
   NET.host=true; NET.me=0; NET.slot=0; NET.refused=null; NET.code=netCode(); NET.peer={pending:true}; netUI(); netStatus('Opening a party…');
   netLib().then(()=>{
     const p=new Peer(NET_PREFIX+NET.code,netOpts()); NET.peer=p;
-    p.on('open',()=>{ netUI(); netStatus(`Share this code. Up to ${PARTY_MAX-1} friends can tap Join and type it in.`); });
+    p.on('open',()=>{ netUI(); netStatus(`Share this code with up to ${PARTY_MAX-1} friends: they open Play together, type ${NET.code} under "Join a friend's party" and tap Join.`); });
     p.on('connection',netWireHost);
     p.on('error',e=>{ if(e.type==='unavailable-id'){ netHost(); return; } if(e.type==='peer-unavailable') return; netStatus(netErr(e),true); });
     p.on('disconnected',()=>{ if(NET.peer===p) try{ p.reconnect(); }catch(e){} });
@@ -3361,7 +3373,9 @@ function netFromGuest(c,o){
     // welcome them again, now that we know they are listening: a welcome sent the moment the line opens can be lost
     try{ c.send({t:'welcome',slot:x.slot}); }catch(e){}
     NET.mates[x.slot]={name:cleanName(o.name)||'Friend',skin:o.skin||'classic',land:o.land,rank:clamp(+o.rank||0,0,RANK_MAX)};
-    netRosterSend(); netRosterChanged(fresh?NET.mates[x.slot]:null); return; }
+    if(fresh) netRosterSend(); else try{ c.send({t:'roster',you:x.slot,list:netRosterList()}); }catch(e){}
+    if(fresh) netRosterChanged(NET.mates[x.slot]); else { netPeerLook(); netUI(); }
+    return; }
   // a game event: stamp it with that player's number in the match, pass it on to everyone else, then play it here
   if(!G.mode||!G.mode.net||(o.m!=null&&o.m!==G.mode.seed)) return;   // from a match that has already ended
   const i=NET.order?NET.order.indexOf(x.slot):-1; if(i<0) return; o.p=i;
@@ -3376,11 +3390,15 @@ function netGuestGone(c){
   if(NET.peer) netStatus(`${name} left. The party is still open with the same code.`,true);
   netUI();
 }
-function netRosterSend(){ if(NET.host) netSend({t:'roster',list:[{s:0,...netMe()}].concat(netMateList())}); }
+const netRosterList=()=>[{s:0,...netMe()}].concat(netMateList());
+/* each guest gets the list with their own slot in it (`you`), so a lost welcome can't leave them without one */
+function netRosterSend(){ if(!NET.host) return; const list=netRosterList(); for(const q of NET.conns) if(q.c.open) try{ q.c.send({t:'roster',you:q.slot,list}); }catch(e){} }
 /* ---- guest side ---- */
 function netWire(c){
-  c.on('open',()=>{ NET.conn=c; NET.samples=[]; NET.rtt=1e9; NET.off=0; NET.lastHost=performance.now(); NET.refused=null;
-    netSend({t:'hi',...netMe()}); netStatus('Connected! Waiting for the host to pick a mode…'); netUI(); sChime(84);
+  c.on('open',()=>{ NET.conn=c; NET.samples=[]; NET.rtt=1e9; NET.off=0; NET.lastHost=performance.now(); NET.refused=null; NET.listed=false;
+    netSend({t:'hi',...netMe()}); netStatus('Connected! Joining the party…'); netUI(); sChime(84);
+    // a message sent the instant a line opens can be lost: keep saying hello until the host lists us
+    clearInterval(NET.hiT); let tries=0; NET.hiT=setInterval(()=>{ if(NET.conn!==c||NET.listed||++tries>20){ clearInterval(NET.hiT); return; } netSend({t:'hi',...netMe()}); },700);
     netPingBurst(10); clearInterval(NET.pingT); NET.pingT=setInterval(netPing,1500); });
   c.on('data',netFromHost);
   c.on('close',()=>netClosed(c));
@@ -3393,9 +3411,11 @@ function netFromHost(o){
       NET.samples.push({rtt,off}); if(NET.samples.length>24) NET.samples.shift();
       const best=NET.samples.reduce((a,b)=>b.rtt<a.rtt?b:a); NET.rtt=best.rtt; NET.off=best.off; return; }
     case 'welcome': NET.slot=o.slot; return;
-    case 'roster': { const before=new Set(Object.keys(NET.mates)), m={}; (o.list||[]).forEach(r=>{ if(r.s!==NET.slot) m[r.s]={name:cleanName(r.name)||'Friend',skin:r.skin||'classic',land:r.land,rank:clamp(+r.rank||0,0,RANK_MAX)}; });
+    case 'roster': { if(o.you) NET.slot=o.you;
+      const before=new Set(Object.keys(NET.mates)), m={}; (o.list||[]).forEach(r=>{ if(r.s!==NET.slot) m[r.s]={name:cleanName(r.name)||'Friend',skin:r.skin||'classic',land:r.land,rank:clamp(+r.rank||0,0,RANK_MAX)}; });
+      const listed=!!NET.slot&&(o.list||[]).some(r=>r.s===NET.slot);
+      if(listed&&!NET.listed){ NET.listed=true; const hn=cleanName(((o.list||[]).find(r=>r.s===0)||{}).name); netStatus(`You're in ${hn?hn+'\'s':'the'} party! Waiting for the host to pick a mode…`); }
       NET.mates=m; const fresh=Object.keys(m).find(s=>!before.has(s)&&+s!==0);
-      if(!before.size) netStatus(`Connected to ${netHostName()}! Waiting for them to pick a mode…`);
       netRosterChanged(fresh!=null&&before.size?m[fresh]:null); return; }
     case 'full': NET.refused=`That party is full (${PARTY_MAX} players).`; netStatus(NET.refused,true); $('nStatusIdle').textContent=NET.refused; setTimeout(()=>netLeave(),1500); return;
     case 'busy': NET.refused='That party is in the middle of a match. Try again when it ends.'; netStatus(NET.refused,true); $('nStatusIdle').textContent=NET.refused; setTimeout(()=>netLeave(),1800); return;
@@ -3434,6 +3454,8 @@ function netClosed(c){
   const why=NET.refused||'Disconnected from the party.'; netStatus(why,true); $('nStatusIdle').textContent=why;
   netUI();
 }
+/* in the lobby the host repeats the party list every 3 s, so a lost update fixes itself */
+setInterval(()=>{ if(NET.host&&NET.conns.length&&!netMatch()) netRosterSend(); },3000);
 /* heartbeat: guests ping every 1.5 s and the host answers, so a closed tab or lost connection shows up within seconds */
 setInterval(()=>{
   const now=performance.now();
@@ -6305,8 +6327,20 @@ function resume(){ hideAll(); A.ctx.resume().then(()=>{ const bi=beatInfo(heardN
 const VIS={last:0,dt:1/60};
 function visTick(){ const t=performance.now()/1000, d=t-VIS.last; VIS.last=t; if(d>.004&&d<.05) VIS.dt+=(d-VIS.dt)*.05; }
 const visLead=()=>clamp(VIS.dt,.006,.034);
+/* ---- staying smooth on slow computers: when frames keep running slow, draw fewer pixels and drop the
+   costly blur, one step at a time (remembered on this device) ---- */
+function perfTick(){
+  const t=performance.now();
+  if(document.hidden||!PERF.last||t-PERF.last>250){ PERF.last=t; return; }   // a hidden tab or a one-off stall isn't a slow computer
+  PERF.f.push(t-PERF.last); PERF.last=t;
+  if(PERF.f.length<120) return;
+  const s=PERF.f.sort((a,b)=>a-b), med=s[60]; PERF.f=[];
+  if(med>21&&PERF.level<3){ PERF.level++; perfApply(); try{ localStorage.setItem('pf-perf',PERF.level); }catch(e){} }
+}
+function perfApply(){ document.body.classList.toggle('lite',PERF.level>0); resize(); }
+perfApply();
 function loop(){
-  requestAnimationFrame(loop); visTick(); padTick(); watchAudio();
+  requestAnimationFrame(loop); perfTick(); visTick(); padTick(); watchAudio();
   const live=A.ctx&&PLAYING();
   if(A.ctx) syncClock();
   let now=live?heardNow():performance.now()/1000;
