@@ -3708,7 +3708,11 @@ function mergeSaves(loc,cl,additive){
     else out.quests=(a.date||'')>=(b.date||'')?a:b; }
   out.life=Object.assign({},cl.life||{}); for(const k in (loc.life||{})) out.life[k]=additive?(out.life[k]||0)+loc.life[k]:Math.max(out.life[k]||0,loc.life[k]);
   { const seen=new Set(), ml=[]; [...(newer.myLevels||[]),...(loc.myLevels||[]),...(cl.myLevels||[])].forEach(l=>{ if(l&&l.code&&!seen.has(l.code)&&ml.length<24){ seen.add(l.code); ml.push(l); } }); out.myLevels=ml; }
-  out.name=newer.name||loc.name||cl.name||'';
+  // the name: one you typed beats a made-up one, and the one typed last wins (not whichever save is newer,
+  // or a device's random name would replace your real one every time you signed in there)
+  const nameRank=v=>!v||!v.name?0:v.nameT?3:v.nameAuto?1:2, nl=nameRank(loc), nc=nameRank(cl);
+  const nw=nl!==nc?(nl>nc?loc:cl):nl===3?((cl.nameT||0)>=(loc.nameT||0)?cl:loc):newer;
+  out.name=nw.name||loc.name||cl.name||''; out.nameT=nw.nameT||0; out.nameAuto=!!nw.nameAuto&&nameRank(nw)===1;
   const dl=loc.daily||{}, dc=cl.daily||{}; out.daily=Object.assign({},DEF.daily,newer===cl?dc:dl);
   if(dl.date&&dl.date===dc.date){ out.daily.best=Math.max(dl.best||0,dc.best||0); out.daily.stars=Math.max(dl.stars||0,dc.stars||0); }
   out.daily.streak=Math.max(dl.streak||0,dc.streak||0);
@@ -3747,6 +3751,8 @@ function acctSync(){
       const cur=SAVE; cur.syncBase={notes:start.notes||0,xp:start.xp||0}; cur.linked=uid;
       SAVE=mergeSaves(cur,out,false); SAVE.syncBase={notes:out.notes||0,xp:out.xp||0}; ACCT.syncAgain=true; }
     if(!SAVE.name) restoreName();
+    // show the account's name everywhere straight away, and keep the spare copy in step
+    if(SAVE.name){ store.set('name',SAVE.name); ['nName','pName'].forEach(id=>{ const e=$(id); if(e&&document.activeElement!==e) e.value=SAVE.name; }); }
     store.set('save',SAVE); ACCT.lastSync=Date.now(); ACCT.err=''; acctRefresh();
   }).catch(e=>{ ACCT.err='Could not sync with your account ('+(e&&e.code||'offline')+'). Your progress is safe on this device and syncs next time.'; })
   .finally(()=>{ ACCT.syncP=null; ACCT.syncing=false; acctUI(); if(ACCT.syncAgain){ ACCT.syncAgain=false; acctPush(false); } });
@@ -3820,7 +3826,7 @@ function acctOut(){
   if(!ACCT.auth) return;
   // the progress lives in the account now; this device goes back to a fresh guest save
   const keep={}; for(const k of DEVICE_KEYS) keep[k]=SAVE[k];
-  acctSync().catch(()=>{}).then(()=>ACCT.auth.signOut()).then(()=>{ SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep,{trailRefund:true,name:SAVE.name||store.get('name','')}); store.set('save',SAVE); acctRefresh(); acctUI(); });
+  acctSync().catch(()=>{}).then(()=>ACCT.auth.signOut()).then(()=>{ SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep,{trailRefund:true,name:SAVE.name||store.get('name',''),nameT:SAVE.nameT||0,nameAuto:!!SAVE.nameAuto}); store.set('save',SAVE); acctRefresh(); acctUI(); });
 }
 
 /* ---- UI ---- */
@@ -4175,10 +4181,10 @@ function drawTwin(c,r,mx,my,now,L){
 const NAME_A=['Swift','Lucky','Neon','Quiet','Brave','Cosmic','Jazzy','Mellow','Rapid','Sunny','Tiny','Wild'],
       NAME_B=['Tempo','Beat','Fox','Comet','Drum','Echo','Pixel','Rhythm','Cube','Otter','Spark','Wave'];
 const cleanName=s=>(s||'').replace(/[^\p{L}\p{N} _.\-]/gu,'').replace(/\s+/g,' ').trim().slice(0,14);
-function ensureName(){ if(!SAVE.name){ SAVE.name=NAME_A[ri(NAME_A.length)]+' '+NAME_B[ri(NAME_B.length)]; save(); } return SAVE.name; }
+function ensureName(){ if(!SAVE.name){ SAVE.name=NAME_A[ri(NAME_A.length)]+' '+NAME_B[ri(NAME_B.length)]; SAVE.nameAuto=true; save(); } return SAVE.name; }
 /* the name is saved as you type (not only when the box loses focus), and a copy is kept on its own so
    signing out, erasing progress or switching saves never loses it */
-function setName(v,quiet){ const n=cleanName(v); if(n.length<2) return false; const changed=SAVE.name!==n; SAVE.name=n; store.set('name',n); if(changed) save();
+function setName(v,quiet){ const n=cleanName(v); if(n.length<2) return false; const changed=SAVE.name!==n; SAVE.name=n; store.set('name',n); if(changed){ SAVE.nameT=Date.now(); SAVE.nameAuto=false; save(); }
   ['nName','pName'].forEach(id=>{ const e=$(id); if(e&&document.activeElement!==e) e.value=n; });
   if(changed&&netLive()){ clearTimeout(setName.hiT); setName.hiT=setTimeout(netHello,quiet?600:0); }
   if(changed){ netRoster(); lbRename(); }
