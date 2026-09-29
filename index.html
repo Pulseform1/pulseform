@@ -1033,7 +1033,7 @@ button:disabled{opacity:.55;cursor:default}
 <section id="cvkPromo" class="overlay" hidden>
   <div class="panel cvkpanel cvkpromo" role="dialog" aria-labelledby="cvkPTitle">
     <div class="cvkpedestal small" aria-hidden="true"><div class="cvkrays"></div><div class="cvkglow"></div>
-      <canvas class="skprev" data-skin="eclipse" data-px="170" width="170" height="170"></canvas>
+      <canvas class="skprev" data-skin="eclipse_seraph" data-px="170" width="170" height="170"></canvas>
       <div class="cvkstone"><i></i><i></i><i></i></div></div>
     <span class="cvkbadge">Limited event</span>
     <h2 class="cvktitle"><span class="c">CALE</span><em>VS</em><span class="k">KORRA</span></h2>
@@ -1047,7 +1047,7 @@ button:disabled{opacity:.55;cursor:default}
 <section id="cvkOv" class="overlay cvkov" hidden>
   <div class="panel cvkpanel">
     <div class="cvkpedestal" aria-hidden="true"><div class="cvkrays"></div><div class="cvkglow"></div>
-      <canvas class="skprev" data-skin="eclipse" data-px="250" width="250" height="250"></canvas>
+      <canvas class="skprev" data-skin="eclipse_seraph" data-px="250" width="250" height="250"></canvas>
       <div class="cvkstone"><i></i><i></i><i></i></div></div>
     <div class="cvkprize"><b>Eclipse Seraph</b><span>The prize. One of a kind: only the winner will ever own it.</span></div>
     <div class="head cvkhead"><button class="back" id="cvkBack" type="button">← Menu</button><span class="cvkbadge">Limited event</span></div>
@@ -1830,7 +1830,7 @@ SKINS.push(
  // betting rewards: plainer halves of the Eclipse Seraph (no glow behind them, a one-colour halo)
  {id:'dawn',name:'Dawn Seraph',anim:'dawn',top:'#FFFBEF',front:'#F1E4C6',core:'#FFFFFF',req:{cvkOn:'korra'},prev:[.86,8]},
  {id:'dusk',name:'Dusk Seraph',anim:'dusk',top:'#2A1A40',front:'#150B24',core:'#8A4FD8',req:{cvkOn:'cale'},prev:[.86,8]},
- {id:'eclipse',name:'Eclipse Seraph',anim:'eclipse',top:'#FFFBEF',front:'#EFE6D2',core:'#FFFFFF',req:{cvk:true},prev:[.8,11]});
+ {id:'eclipse_seraph',name:'Eclipse Seraph',anim:'eclipse',top:'#FFFBEF',front:'#EFE6D2',core:'#FFFFFF',req:{cvk:true},prev:[.8,11],hidden:true});
 /* every fancy block gets a matching landing effect; owning the block unlocks it */
 const SIG={
  lantern:{n:'Lantern Glow',g:'✹',c:['#FFD166','#FFE7A3','#FF9F3C'],sh:'flame',ring:'#FFD166'},
@@ -1868,9 +1868,9 @@ const SIG={
  maestro:{n:'Downbeat',g:'♩',c:['#FFD166','#FFF3C4'],sh:null,ring:'#FFD166',fx:'downbeat'},
  supreme:{n:'Grand Finale',g:'♩',c:['#FF7EB6','#FFD166','#B8F2E6','#C9B8FF'],sh:null,ring:'rainbow',fx:'downbeat'},
  truepulse:{n:'Doom Pulse',g:'♥',c:['#FF1E2E','#7A0010','#FF6A3A'],sh:null,ring:'#FF1E2E',fx:'truepulse'},
- eclipse:{n:'Eclipse',g:'◑',c:['#FFF3C4','#FFD166','#8A4FD8','#1A0B2E'],sh:null,ring:'#FFE7A0',fx:'eclipse'}};
+ eclipse_seraph:{n:'Eclipse',g:'◑',c:['#FFF3C4','#FFD166','#8A4FD8','#1A0B2E'],sh:null,ring:'#FFE7A0',fx:'eclipse'}};   // its own id: the older 'eclipse' is the Lights Out event block
 LANDS.push({id:'match',name:'Match my block',glyph:'⟲',col:'#FFF8EE',price:0,note:'Uses your block\'s signature effect'});
-Object.keys(SIG).forEach(k=>{ const s=SIG[k]; LANDS.push({id:'sig_'+k,name:s.n,glyph:s.g,col:s.c[0],req:{skin:k},sig:k}); });
+Object.keys(SIG).forEach(k=>{ const s=SIG[k]; if(k==='eclipse_seraph') return; LANDS.push({id:'sig_'+k,name:s.n,glyph:s.g,col:s.c[0],req:{skin:k},sig:k}); });
 SIG.ovation={n:'Standing Ovation',g:'♛',c:['#FFD166','#FF7EB6','#B8F2E6','#C9B8FF'],sh:'confetti',ring:'rainbow',fx:'beams'};   // the Crown's effect (added after the loop so it has no block of its own)
 LANDS.push({id:'crown',name:'Crown',glyph:'♛',col:'#FFD166',req:{rank:18},sig:'ovation'});
 SIG.twilight={n:'Twilight',g:'☾',c:['#FFE3A8','#C9A6FF','#FFFFFF'],sh:'star5',ring:'#D8B4FF',fx:'twilight'};   // for betting 2,000 notes on Cale vs Korra
@@ -5409,7 +5409,7 @@ function eventCfg(M,cfg,i){ const ev=EVENTS.find(e=>e.id===M.ev)||weekEvent(); i
 SKINS.push(
  {id:'glacier',name:'Glacier',fx:'frost',top:'#DFF6FF',front:'#4F98CC',core:'#FFFFFF',req:{event:'ice'},pt:'linear-gradient(135deg,#FFFFFF,#BFE8FF)',pf:'linear-gradient(180deg,#4F98CC 70%,#DFF6FF 70%)'},
  {id:'overdrive',name:'Overdrive',fx:'gold',top:'#FFB347',front:'#C0402A',core:'#FFF6D0',req:{event:'turbo'},pt:'linear-gradient(135deg,#FFE0A0,#FF8A3C 55%,#E0502A)',pf:'linear-gradient(135deg,#E0602A,#8A2010)'},
- {id:'eclipse',name:'Eclipse',fx:'void',top:'#07050A',front:'#000000',core:'#FFD166',req:{event:'lights'},pt:'radial-gradient(circle,#FFD166 18%,#07050A 22%)',pf:'#000',glow:'#FFD166'},
+ {id:'eclipse',name:'Eclipse',fx:'void',top:'#07050A',front:'#000000',core:'#FFD166',req:{event:'lights'},hidden:true,pt:'radial-gradient(circle,#FFD166 18%,#07050A 22%)',pf:'#000',glow:'#FFD166'},
  {id:'springy',name:'Springy',anim:'jelly',top:'#FFD1A8',front:'#FF9F5A',core:'#FFFFFF',req:{event:'bounce'}},
  {id:'shard',name:'Shard',fx:'crystal',top:'#FFE6F3',front:'#E27AAE',core:'#FFFFFF',req:{event:'glass'},pt:'linear-gradient(135deg,#FFFFFF,#FFC2E0 50%,#E0B8FF)',pf:'linear-gradient(120deg,#E27AAE,#F2A0CC 55%,#C85A94 56%)'});
 function eventDone(M){ if(M.type!=='event') return ''; const ev=EVENTS.find(e=>e.id===M.ev); const E=SAVE.events||(SAVE.events={}), wk=weekKey();
@@ -6618,7 +6618,7 @@ let shopTab='skins';
 function buildShop(){
   $('walletS').textContent=notesTxt();
   $('tabSkins').classList.toggle('on',shopTab==='skins'); $('tabTrails').classList.toggle('on',shopTab==='lands');
-  const list=shopTab==='skins'?SKINS:LANDS, eq=shopTab==='skins'?SAVE.skin:SAVE.land;
+  const list=(shopTab==='skins'?SKINS:LANDS).filter(it=>!it.hidden||ownsSkin(it.id)), eq=shopTab==='skins'?SAVE.skin:SAVE.land;   // hidden: only its owner sees it
   $('shopGrid').innerHTML=list.map(it=>{ const owned=SAVE.owned.includes(it.id)||(it.req&&reqMet(it.req))||it.price===0;
     const prev=shopTab==='skins'?`<canvas class="skprev" data-skin="${it.id}" width="64" height="64" aria-hidden="true"></canvas>${it.anim?'<span class="badge">Animated</span>':''}`:`<div class="lfxp" style="--c:${it.col}"><span>${it.glyph}</span></div>`;
     let btn; if(eq===it.id) btn=`<button class="btn ghost" disabled type="button">Equipped</button>`;
