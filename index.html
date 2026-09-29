@@ -469,6 +469,52 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 .onl-head{display:flex;align-items:center;gap:8px}.onl-dot{width:8px;height:8px;border-radius:50%;background:#B8F2E6;box-shadow:0 0 0 0 rgba(184,242,230,.7);animation:onl 1.6s infinite}
 @keyframes onl{70%{box-shadow:0 0 0 8px rgba(184,242,230,0)}100%{box-shadow:0 0 0 0 rgba(184,242,230,0)}}
 .joinrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch}
+/* ---- Cale vs Korra ---- */
+.cvkchip{background:linear-gradient(90deg,rgba(63,169,255,.35),rgba(255,59,78,.35))!important;border-color:rgba(255,255,255,.35)!important;color:#fff!important;font-weight:700}
+.cvkov{align-items:start;overflow-y:auto;padding-block:16px}
+.cvkpanel{position:relative;max-width:540px;margin-top:226px;overflow:visible;text-align:center;gap:12px;
+  background:linear-gradient(120deg,rgba(18,42,96,.97),rgba(12,8,28,.98) 48%,rgba(96,12,26,.97));border:1px solid rgba(255,255,255,.16);
+  box-shadow:-24px 0 60px -20px rgba(63,169,255,.55),24px 0 60px -20px rgba(255,59,78,.55),0 20px 60px rgba(0,0,0,.5)}
+.cvkpedestal{position:relative;height:176px;margin:-176px auto 0;width:300px;display:grid;justify-items:center;pointer-events:none}
+.cvkpedestal canvas{position:absolute;top:-62px;width:250px;height:250px;z-index:2}
+.cvkrays{position:absolute;top:-100px;width:360px;height:360px;border-radius:50%;background:conic-gradient(from 0deg,rgba(255,236,170,.0),rgba(255,236,170,.35) 8%,rgba(255,236,170,0) 16%,rgba(160,100,255,.25) 30%,rgba(255,236,170,0) 40%,rgba(255,236,170,.3) 55%,rgba(255,236,170,0) 64%,rgba(160,100,255,.22) 78%,rgba(255,236,170,0) 88%);-webkit-mask:radial-gradient(circle,#000 20%,transparent 68%);mask:radial-gradient(circle,#000 20%,transparent 68%);animation:cvkspin 16s linear infinite}
+.cvkglow{position:absolute;top:10px;width:200px;height:120px;border-radius:50%;background:radial-gradient(ellipse,rgba(255,236,170,.4),rgba(140,80,230,.18) 55%,transparent 72%)}
+.cvkstone{position:absolute;bottom:-6px;display:grid;justify-items:center;z-index:1}
+.cvkstone i{display:block;height:14px;border-radius:4px;background:linear-gradient(90deg,#241836,#3A2A58 30%,#E9D6AE 50%,#3A2A58 70%,#1A1028);border-top:2px solid #E8B64A;box-shadow:0 4px 10px rgba(0,0,0,.45)}
+.cvkstone i:nth-child(1){width:110px}.cvkstone i:nth-child(2){width:140px}.cvkstone i:nth-child(3){width:170px;height:16px}
+@keyframes cvkspin{to{transform:rotate(360deg)}}
+.cvkprize{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.cvkprize b{font:800 20px var(--display);letter-spacing:.06em;background:linear-gradient(90deg,#FFF3C4,#FFD166 45%,#B07CFF 55%,#E6D8FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cvkprize span{font-size:12.5px;color:var(--ink-2)}
+.cvkhead{position:absolute;top:12px;left:14px;right:14px;justify-content:space-between}
+.cvkbadge{font:700 10px var(--display);letter-spacing:.14em;text-transform:uppercase;padding:4px 8px;border-radius:999px;background:rgba(255,209,102,.16);color:#FFD166;border:1px solid rgba(255,209,102,.4)}
+.cvktitle{margin:2px 0 0;font:900 clamp(34px,9vw,52px)/1 var(--display);letter-spacing:.02em;display:flex;justify-content:center;align-items:center;gap:14px}
+.cvktitle .c{background:linear-gradient(180deg,#BFE4FF,#3FA9FF);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(63,169,255,.7))}
+.cvktitle .k{background:linear-gradient(180deg,#FFC2C8,#FF3B4E);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(255,59,78,.7))}
+.cvktitle em{font-style:italic;font-size:.55em;color:#FFE7A0;text-shadow:0 0 10px #FFD166,0 0 26px rgba(255,209,102,.6);animation:cvkvs 1.6s ease-in-out infinite}
+@keyframes cvkvs{50%{transform:scale(1.15) rotate(-6deg)}}
+.cvktimer{display:flex;flex-direction:column;align-items:center;gap:2px}
+.cvktimer small{font:700 11px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+.cvktimer b{font:800 clamp(24px,6vw,34px) var(--display);color:#fff;letter-spacing:.04em;font-variant-numeric:tabular-nums;text-shadow:0 0 18px rgba(255,255,255,.35)}
+.cvkbars{display:flex;flex-direction:column;gap:12px;text-align:left;margin-top:4px}
+.cvklbl{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+.cvklbl b{font:800 17px var(--display);letter-spacing:.06em;text-transform:uppercase}
+.cvklbl span{font:700 17px var(--display);font-variant-numeric:tabular-nums}
+.cvkrow.cale .cvklbl{color:#8FD0FF}.cvkrow.korra .cvklbl{color:#FF9AA5}
+.cvktrack{height:24px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);overflow:hidden;position:relative}
+.cvktrack i{position:absolute;inset:0 auto 0 0;width:3%;border-radius:12px;transition:width 1s cubic-bezier(.2,.9,.3,1);overflow:hidden}
+.cvkrow.cale .cvktrack i{background:linear-gradient(90deg,#0B4FA8,#3FA9FF 70%,#BFE4FF);box-shadow:0 0 18px rgba(63,169,255,.8)}
+.cvkrow.korra .cvktrack i{background:linear-gradient(90deg,#8A0E1E,#FF3B4E 70%,#FFC2C8);box-shadow:0 0 18px rgba(255,59,78,.8)}
+.cvktrack i::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);background-size:220% 100%;animation:cvksheen 2.2s linear infinite}
+@keyframes cvksheen{from{background-position:120% 0}to{background-position:-120% 0}}
+.cvkrow.lead .cvklbl b::after{content:' ♛';color:#FFD166}
+.cvkrow.win .cvktrack{box-shadow:0 0 0 2px #FFD166,0 0 24px rgba(255,209,102,.6)}
+.cvkyou{font-size:14px}.cvkyou b.c{color:#8FD0FF}.cvkyou b.k{color:#FF9AA5}
+.cvkyou .won{display:block;margin-top:6px;font:800 16px var(--display);color:#FFE7A0;text-shadow:0 0 12px rgba(255,209,102,.6)}
+.cvkjoin{width:100%;background:linear-gradient(90deg,#3FA9FF,#8A4FD8 50%,#FF3B4E)!important;color:#fff!important;font-weight:800}
+.cvkrules{margin:0;color:var(--ink-3)}
+#cvkCode{min-width:0;min-height:44px;font:700 15px var(--display);letter-spacing:.12em;text-align:center;text-transform:uppercase;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.cvkrays,.cvktitle em,.cvktrack i::after{animation:none}}
 .joinstep{display:flex;flex-direction:column;gap:6px}
 .joinstep>b{font:700 14px var(--display)}
 .joinstep>.btn{margin:2px 0 0}
@@ -754,6 +800,7 @@ button:disabled{opacity:.55;cursor:default}
     <div class="mtop-r"><span class="wallet" id="walletM"></span>
       <button class="chip snd" id="mSound" type="button">♪ Tap for music</button>
       <button class="chip evchip" id="mEvent" type="button">★ Event</button>
+      <button class="chip cvkchip" id="mCvk" type="button" hidden>⚔ Cale vs Korra</button>
       <button class="chip" id="mLB" type="button">Top 20</button>
       <button class="chip rankchip" id="mProfile" type="button"><i class="gem"></i><span id="mRankTxt">Bronze I</span><em class="qdot" id="mQDot" hidden></em></button>
       <button class="chip acct" id="mAcct" type="button">Sign in</button>
@@ -952,6 +999,28 @@ button:disabled{opacity:.55;cursor:default}
     <div><div class="eyebrow">Leaderboards</div><h2>Top 20</h2><p class="small" id="lbSub" style="margin:2px 0 0"></p></div>
     <div class="segs" id="lbTabs"><button data-t="daily" type="button">Daily</button><button data-t="endless" type="button">Endless</button><button data-t="ascent" type="button">Ascent</button><button data-t="week" type="button">Event</button></div>
     <div id="lbList"></div>
+  </div>
+</section>
+<section id="cvkOv" class="overlay cvkov" hidden>
+  <div class="panel cvkpanel">
+    <div class="cvkpedestal" aria-hidden="true"><div class="cvkrays"></div><div class="cvkglow"></div>
+      <canvas class="skprev" data-skin="eclipse" data-px="250" width="250" height="250"></canvas>
+      <div class="cvkstone"><i></i><i></i><i></i></div></div>
+    <div class="cvkprize"><b>Eclipse Seraph</b><span>The prize. One of a kind: only the winner will ever own it.</span></div>
+    <div class="head cvkhead"><button class="back" id="cvkBack" type="button">← Menu</button><span class="cvkbadge">Limited event</span></div>
+    <h2 class="cvktitle"><span class="c">CALE</span><em>VS</em><span class="k">KORRA</span></h2>
+    <div class="cvktimer"><small id="cvkPhase">Starts in</small><b id="cvkTime">--</b><span class="small" id="cvkWhen"></span></div>
+    <div class="cvkbars">
+      <div class="cvkrow cale" id="cvkRowC"><div class="cvklbl"><b>Cale</b><span id="cvkScC">0</span></div><div class="cvktrack"><i id="cvkBarC"></i></div></div>
+      <div class="cvkrow korra" id="cvkRowK"><div class="cvklbl"><b>Korra</b><span id="cvkScK">0</span></div><div class="cvktrack"><i id="cvkBarK"></i></div></div>
+    </div>
+    <div id="cvkYou" class="cvkyou"></div>
+    <div id="cvkJoin">
+      <button class="btn cvkjoin" id="cvkOpen" type="button">⚔ Cale or Korra? Click here to sign up as a participant</button>
+      <div id="cvkForm" class="joinrow" hidden><input id="cvkCode" maxlength="24" placeholder="YOUR EVENT CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Event code"><button class="btn" id="cvkGo" type="button">Sign up</button></div>
+      <div class="small" id="cvkMsg" role="status"></div>
+    </div>
+    <p class="small cvkrules">Every point Cale and Korra score, in any mode, while the event is live adds to their bar. The highest total when the timer runs out wins.</p>
   </div>
 </section>
 <section id="eventOv" class="overlay" hidden>
@@ -1310,8 +1379,8 @@ const LANDS=[
 const skinById=id=>SKINS.find(s=>s.id===id)||SKINS[0], landById=id=>LANDS.find(s=>s.id===id)||LANDS[0];
 const hardCleared=()=>{ let n=0; for(let i=1;i<=12;i++) if((SAVE.stars['H-'+i]||0)>0) n++; return n; };
 const ownsSkin=id=>{ const s=SKINS.find(k=>k.id===id); return !!s&&(SAVE.owned.includes(id)||s.price===0||(s.req&&reqMet(s.req))); };
-const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?rankOf(SAVE.xp||0)>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true);
-const reqText=r=>r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
+const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?rankOf(SAVE.xp||0)>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true);
+const reqText=r=>r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
 function hsl2hex(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
   return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); }
 
@@ -1699,7 +1768,9 @@ SKINS.push(
  {id:'diamond',name:'Diamond',fx:'crystal',top:'#F2FEFF',front:'#7FD8F0',core:'#FFFFFF',rim:true,req:{rank:12},pt:'linear-gradient(135deg,#FFFFFF,#BFF3FF 50%,#E8E0FF)',pf:'linear-gradient(120deg,#7FD8F0,#B8ECFF 55%,#6AC0E0 56%)'},
  {id:'maestro',name:'Maestro',anim:'maestro',top:'#FFF6DA',front:'#15102A',core:'#FFD166',req:{rank:21}},
  {id:'supreme',name:'Supreme Conductor',anim:'supreme',top:'#FFF8FC',front:'#15102A',core:'#FFFFFF',req:{rank:25}},
- {id:'truepulse',name:'True Pulse',anim:'truepulse',top:'#1A0508',front:'#07020A',core:'#FF1E2E',req:{rank:26}});
+ {id:'truepulse',name:'True Pulse',anim:'truepulse',top:'#1A0508',front:'#07020A',core:'#FF1E2E',req:{rank:26}},
+ // one of a kind: only the winner of Cale vs Korra ever owns it
+ {id:'eclipse',name:'Eclipse Seraph',anim:'eclipse',top:'#FFFBEF',front:'#EFE6D2',core:'#FFFFFF',req:{cvk:true},prev:[.8,11]});
 /* every fancy block gets a matching landing effect; owning the block unlocks it */
 const SIG={
  lantern:{n:'Lantern Glow',g:'✹',c:['#FFD166','#FFE7A3','#FF9F3C'],sh:'flame',ring:'#FFD166'},
@@ -1736,7 +1807,8 @@ const SIG={
  diamond:{n:'Diamond Dust',g:'◇',c:['#FFFFFF','#BFF3FF','#E8E0FF'],sh:'shard',ring:'#FFFFFF',fx:'spire'},
  maestro:{n:'Downbeat',g:'♩',c:['#FFD166','#FFF3C4'],sh:null,ring:'#FFD166',fx:'downbeat'},
  supreme:{n:'Grand Finale',g:'♩',c:['#FF7EB6','#FFD166','#B8F2E6','#C9B8FF'],sh:null,ring:'rainbow',fx:'downbeat'},
- truepulse:{n:'Doom Pulse',g:'♥',c:['#FF1E2E','#7A0010','#FF6A3A'],sh:null,ring:'#FF1E2E',fx:'truepulse'}};
+ truepulse:{n:'Doom Pulse',g:'♥',c:['#FF1E2E','#7A0010','#FF6A3A'],sh:null,ring:'#FF1E2E',fx:'truepulse'},
+ eclipse:{n:'Eclipse',g:'◑',c:['#FFF3C4','#FFD166','#8A4FD8','#1A0B2E'],sh:null,ring:'#FFE7A0',fx:'eclipse'}};
 LANDS.push({id:'match',name:'Match my block',glyph:'⟲',col:'#FFF8EE',price:0,note:'Uses your block\'s signature effect'});
 Object.keys(SIG).forEach(k=>{ const s=SIG[k]; LANDS.push({id:'sig_'+k,name:s.n,glyph:s.g,col:s.c[0],req:{skin:k},sig:k}); });
 SIG.ovation={n:'Standing Ovation',g:'♛',c:['#FFD166','#FF7EB6','#B8F2E6','#C9B8FF'],sh:'confetti',ring:'rainbow',fx:'beams'};   // the Crown's effect (added after the loop so it has no block of its own)
@@ -2685,6 +2757,10 @@ function sigFx(id,x,y,j){
   if(S.fx==='truepulse'){   // embers torn upward, a heavy camera slam and a red pulse at the screen's edge on a perfect
     for(let i=0;i<n(9);i++) spawnP(x,y,{col:['#FF1E2E','#FF6A3A','#B0001A'][i%3],shape:i%3?'shard':'star5',sz:2.5+Math.random()*3,a:up+(Math.random()-.5)*1.4,s:40+Math.random()*90,vy:-120,g:-25,life:.9+Math.random()*.4,add:true,spin:6});
     if(!RM()){ G.nudge.y+=j==='perfect'?4.5:2; if(j==='perfect'){ G.flashT=G.now; G.flashC='#B0001A'; } } }
+  if(S.fx==='eclipse'){
+    for(let i=0;i<n(6);i++) spawnP(x,y,{col:i%2?'#FFF3C4':'#FFD166',shape:'star5',sz:2.5+Math.random()*2.5,a:up+(Math.random()-.5)*1.2,s:40+Math.random()*70,vy:-110,g:-20,life:1,add:true,spin:4});
+    for(let i=0;i<n(5);i++) spawnP(x,y,{col:i%2?'#8A4FD8':'#2A1446',shape:'shard',sz:3+Math.random()*2.5,a:Math.PI/2+(Math.random()-.5)*2.2,s:30+Math.random()*50,vy:20,g:160,life:.9,spin:6});
+    if(!RM()&&j==='perfect'){ G.nudge.y+=3; G.flashT=G.now; G.flashC='#FFF3C4'; } }
   if(S.fx==='downbeat'){   // a few slow glints rising, and a tiny camera dip on a perfect
     for(let i=0;i<n(4);i++) spawnP(x,y,{col:S.ring==='rainbow'?hsl2hex(Math.random()*360,85,72):(i%2?'#FFF3C4':'#FFD166'),shape:'star5',sz:2.5+Math.random()*2,a:up+(Math.random()-.5)*.9,s:18+Math.random()*25,vy:-70,g:-10,life:1.1,add:true,spin:3});
     if(!RM()&&j==='perfect') G.nudge.y+=2.2; }
@@ -2693,6 +2769,11 @@ function drawSigFx(f,x,y,tw,now,th){
   const u=clamp((now-f.t0)/.7,0,1); if(u>=1) return; const e=1-Math.pow(1-u,3), a=1-u, ring=c=>c==='rainbow'?hsl2hex((now*240+f.seed)%360,85,70):c==='neon'?'#FF4FD8':c;
   if(f.fx==='downbeat'){ drawDownbeat(f,x,y,tw,th||tw*.62,now,u,e,a); return; }
   if(f.fx==='truepulse'){ drawTruePulse(f,x,y,tw,th||tw*.62,now,u,e,a); return; }
+  if(f.fx==='eclipse'){ const k=f.k; cx.save(); cx.globalCompositeOperation='lighter';
+    const r1=tw*(.25+1.2*e*k); cx.strokeStyle=`rgba(255,214,110,${.9*a})`; cx.lineWidth=3*a+.8; cx.beginPath(); cx.ellipse(x,y,r1,r1*.62,0,0,TAU); cx.stroke();
+    if(u<.25){ const v=u/.25, g=cx.createRadialGradient(x,y,0,x,y,tw*.7); g.addColorStop(0,`rgba(255,250,230,${.85*(1-v)})`); g.addColorStop(1,'rgba(255,220,140,0)'); cx.fillStyle=g; cx.beginPath(); cx.ellipse(x,y,tw*.7,tw*.45,0,0,TAU); cx.fill(); }
+    cx.restore(); cx.save(); const r2=tw*(.2+.85*e*k); cx.strokeStyle=`rgba(40,10,70,${.8*a})`; cx.lineWidth=4*a+1; cx.beginPath(); cx.ellipse(x,y+2,r2,r2*.62,0,0,TAU); cx.stroke();
+    cx.strokeStyle=`rgba(150,90,230,${.8*a})`; cx.lineWidth=1.2; cx.stroke(); cx.restore(); return; }
   cx.save(); cx.globalCompositeOperation='lighter';
   const R0=tw*(.3+.9*e*f.k); cx.strokeStyle=rgba(ring(f.col),.8*a); cx.lineWidth=2.5*a+.5; cx.beginPath(); cx.ellipse(x,y,R0,R0*.62,0,0,Math.PI*2); cx.stroke();
   switch(f.fx){
@@ -2862,6 +2943,7 @@ function animMods(S,now){
     case 'blaze': return {sq:Math.sin(now*14)*.015,scale:1};
     case 'maestro': case 'supreme': return {sq:-.03*beat,scale:1+.04*beat};
     case 'truepulse': return {sq:-.05*beat*beat,scale:1+.07*beat*beat};   // a heavy heartbeat throb
+    case 'eclipse': return {sq:-.03*beat,scale:1+.05*beat};
     default: return null;
   }
 }
@@ -2874,6 +2956,30 @@ function skinPre(S,x0,topY,bw,bh,H,now,P){
     cx.save(); cx.globalCompositeOperation='lighter';
     const g=cx.createRadialGradient(cxp,cyp,0,cxp,cyp,bw*(1.25+.2*beat)); g.addColorStop(0,rgba(sup?mcol(S,now,0):'#FFE7A0',.5+.2*beat)); g.addColorStop(.55,rgba(sup?mcol(S,now,120):'#FFD166',.18+.1*beat)); g.addColorStop(1,rgba(sup?mcol(S,now,240):'#FFD166',0)); cx.fillStyle=g; cx.beginPath(); cx.arc(cxp,cyp,bw*(1.25+.2*beat),0,Math.PI*2); cx.fill();
     for(let i=0;i<10;i++){ const a=now*.35+i*Math.PI/5, L1=bw*(1.05+.25*beat+(i%2?0:.25)); cx.strokeStyle=rgba(mcol(S,now,i*36),i%2?.18:.3); cx.lineWidth=bw*.06; cx.beginPath(); cx.moveTo(cxp+Math.cos(a)*bw*.45,cyp+Math.sin(a)*bw*.35); cx.lineTo(cxp+Math.cos(a)*L1,cyp+Math.sin(a)*L1*.75); cx.stroke(); }
+    cx.restore(); }
+  if(S.anim==='eclipse'){ const cxp=x0+bw/2, cyp=topY+(bh+H)*.48, beat=clamp(1-(now-G.lastBeatT)/.35,0,1), flap=Math.sin(now*2.2);
+    cx.save();
+    // the dark: violet-black smoke pooling low and to the right, curling tendrils sinking away
+    const dg=cx.createRadialGradient(cxp+bw*.4,cyp+bh*.35,0,cxp+bw*.4,cyp+bh*.35,bw*1.35); dg.addColorStop(0,'rgba(46,10,78,.6)'); dg.addColorStop(.55,'rgba(22,6,44,.32)'); dg.addColorStop(1,'rgba(22,6,44,0)');
+    cx.fillStyle=dg; cx.beginPath(); cx.arc(cxp+bw*.4,cyp+bh*.35,bw*1.35,0,TAU); cx.fill();
+    cx.lineCap='round';
+    for(let i=0;i<4;i++){ const q=((now*.22+i*.25)%1), sx=cxp+bw*(.15+i*.12), sy=cyp+bh*.4;
+      cx.strokeStyle=`rgba(120,60,200,${.38*(1-q)})`; cx.lineWidth=bw*(.07-.04*q); cx.beginPath(); cx.moveTo(sx,sy);
+      for(let t=1;t<=6;t++){ const d=t/6; cx.lineTo(sx+bw*.5*d*q*1.8+Math.sin(now*2+i+t)*bw*.06, sy+bh*1.6*d*q+bh*.2*d); } cx.stroke(); }
+    // the shadow wing (right): black feathers edged in violet
+    for(let f=0;f<5;f++){ const ang=-.35-f*.3+flap*.07, len=bw*(.55+.13*f), wd=bw*.1;
+      cx.save(); cx.translate(cxp+bw*.4,cyp-bh*.05); cx.rotate(ang); cx.beginPath(); cx.moveTo(0,0); cx.quadraticCurveTo(len*.5,-wd,len,0); cx.quadraticCurveTo(len*.55,wd*.9,0,0);
+      cx.fillStyle=f%2?'#140A22':'#1E0F33'; cx.fill(); cx.strokeStyle=`rgba(150,90,230,${.55+.3*beat})`; cx.lineWidth=1; cx.stroke(); cx.restore(); }
+    cx.globalCompositeOperation='lighter';
+    // the light: a holy glow up and to the left, with god rays turning slowly
+    const lg=cx.createRadialGradient(cxp-bw*.3,cyp-bh*.5,0,cxp-bw*.3,cyp-bh*.5,bw*1.5); lg.addColorStop(0,`rgba(255,248,215,${.55+.2*beat})`); lg.addColorStop(.45,'rgba(255,214,120,.2)'); lg.addColorStop(1,'rgba(255,214,120,0)');
+    cx.fillStyle=lg; cx.beginPath(); cx.arc(cxp-bw*.3,cyp-bh*.5,bw*1.5,0,TAU); cx.fill();
+    for(let i=0;i<14;i++){ const a=now*.18+i*TAU/14, up=Math.max(0,-Math.sin(a)*.7-Math.cos(a)*.5); if(up<=.05) continue; const L1=bw*(1.45+.35*(i%2)+.25*beat), w2=.07;
+      cx.fillStyle=`rgba(255,236,170,${(.1+.12*beat)*up})`; cx.beginPath(); cx.moveTo(cxp,cyp); cx.lineTo(cxp+Math.cos(a-w2)*L1,cyp+Math.sin(a-w2)*L1*.8); cx.lineTo(cxp+Math.cos(a+w2)*L1,cyp+Math.sin(a+w2)*L1*.8); cx.closePath(); cx.fill(); }
+    // the wing of light (left): white-gold feathers
+    for(let f=0;f<5;f++){ const ang=Math.PI+.35+f*.3-flap*.07, len=bw*(.55+.13*f), wd=bw*.1;
+      cx.save(); cx.translate(cxp-bw*.4,cyp-bh*.05); cx.rotate(ang); const wg=cx.createLinearGradient(0,0,len,0); wg.addColorStop(0,'rgba(255,250,230,.95)'); wg.addColorStop(1,'rgba(255,206,110,.35)');
+      cx.beginPath(); cx.moveTo(0,0); cx.quadraticCurveTo(len*.5,-wd,len,0); cx.quadraticCurveTo(len*.55,wd*.9,0,0); cx.fillStyle=wg; cx.fill(); cx.restore(); }
     cx.restore(); }
   if(S.anim==='truepulse'){ const cxp=x0+bw/2, cyp=topY+(bh+H)*.45, beat=clamp(1-(now-G.lastBeatT)/.35,0,1);
     cx.save();
@@ -2952,6 +3058,57 @@ function skinPost(S,x0,topY,bw,bh,H,now,P){
       for(let i=0;i<2;i++){ cx.fillStyle=gc(i*180+100); const a=now*1.6+i*Math.PI, ox=Math.cos(a)*bw*.85, oy=Math.sin(a)*bh*.6; if(Math.sin(a)<0) cx.globalAlpha*=.8; cx.fillText(i?'♪':'♫',cxp+ox,topY+(bh+H)*.4+oy); }
       if(Math.sin(now*3.1)>.85){ cx.fillStyle='#FFFFFF'; const sx=x0+bw*.82, sy=topY+bh*.2; cx.fillRect(sx-4,sy-.8,8,1.6); cx.fillRect(sx-.8,sy-4,1.6,8); }
       cx.restore(); } break;
+    case 'eclipse': { const cxp=x0+bw/2, Hh=bh+H;
+      cx.save();
+      cx.beginPath(); cx.rect(x0,topY,bw,Hh); cx.clip();
+      // warm ivory marble with a soft sheen
+      const ig=cx.createLinearGradient(x0,topY,x0+bw*.6,topY+Hh); ig.addColorStop(0,'#FFFDF6'); ig.addColorStop(.6,'#F6EBD2'); ig.addColorStop(1,'#E9D6AE'); cx.fillStyle=ig; cx.fillRect(x0,topY,bw,Hh);
+      // gold filigree curling across the light half
+      cx.strokeStyle='#D39A2E'; cx.lineWidth=Math.max(1,bw*.025); cx.lineCap='round'; cx.beginPath();
+      cx.moveTo(x0+bw*.06,topY+Hh*.3); cx.bezierCurveTo(x0+bw*.3,topY+Hh*.12,x0+bw*.38,topY+Hh*.42,x0+bw*.18,topY+Hh*.44); cx.bezierCurveTo(x0+bw*.1,topY+Hh*.45,x0+bw*.12,topY+Hh*.36,x0+bw*.2,topY+Hh*.37);
+      cx.moveTo(x0+bw*.06,topY+Hh*.74); cx.bezierCurveTo(x0+bw*.26,topY+Hh*.58,x0+bw*.42,topY+Hh*.86,x0+bw*.24,topY+Hh*.92); cx.stroke();
+      cx.fillStyle='#E8B64A'; [[.2,.37],[.3,.6],[.14,.58]].forEach(([u,v])=>{ const px=x0+bw*u, py=topY+Hh*v, k=Math.max(1.2,bw*.03); cx.beginPath(); cx.moveTo(px,py-k); cx.lineTo(px+k*.7,py); cx.lineTo(px,py+k); cx.lineTo(px-k*.7,py); cx.closePath(); cx.fill(); });
+      // split down a jagged seam: ivory light on the left, obsidian dark on the right
+      const seam=[[.56,0],[.5,.18],[.58,.34],[.48,.52],[.55,.7],[.46,.86],[.52,1]].map(([u,v])=>[x0+bw*u,topY+Hh*v]);
+      cx.beginPath(); cx.moveTo(seam[0][0],seam[0][1]); seam.forEach(p=>cx.lineTo(p[0],p[1])); cx.lineTo(x0+bw,topY+Hh); cx.lineTo(x0+bw,topY); cx.closePath();
+      const og=cx.createLinearGradient(x0+bw*.5,topY,x0+bw,topY+Hh); og.addColorStop(0,'#2A1446'); og.addColorStop(.5,'#12081F'); og.addColorStop(1,'#07030D'); cx.fillStyle=og; cx.fill();
+      cx.globalCompositeOperation='lighter';
+      // violet cracks pulsing through the dark half
+      cx.strokeStyle=`rgba(170,100,255,${.45+.45*beat})`; cx.lineWidth=Math.max(1,bw*.025); cx.beginPath();
+      cx.moveTo(x0+bw*.62,topY+Hh*.22); cx.lineTo(x0+bw*.74,topY+Hh*.36); cx.lineTo(x0+bw*.7,topY+Hh*.5); cx.lineTo(x0+bw*.86,topY+Hh*.66);
+      cx.moveTo(x0+bw*.9,topY+Hh*.2); cx.lineTo(x0+bw*.8,topY+Hh*.3); cx.moveTo(x0+bw*.7,topY+Hh*.5); cx.lineTo(x0+bw*.64,topY+Hh*.8); cx.stroke();
+      // the seam burns white-gold
+      cx.strokeStyle=`rgba(255,240,200,${.6+.35*beat})`; cx.lineWidth=Math.max(1.2,bw*.03); cx.beginPath(); cx.moveTo(seam[0][0],seam[0][1]); seam.forEach(p=>cx.lineTo(p[0],p[1])); cx.stroke();
+      // a band of light sweeping over the whole block
+      const u=((now*.4)%1.8)-.4, sg=cx.createLinearGradient(x0+bw*u-16,topY,x0+bw*u+16,topY+Hh); sg.addColorStop(0,'rgba(255,255,255,0)'); sg.addColorStop(.5,'rgba(255,248,220,.4)'); sg.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=sg; cx.fillRect(x0,topY,bw,Hh);
+      cx.restore();
+      // the eclipse on the front: a gold corona, and a black moon sliding over the sun
+      { const ey=fy+H*.5, er=Math.min(bw,H)*.24;
+        cx.save(); cx.globalCompositeOperation='lighter';
+        const cg=cx.createRadialGradient(cxp,ey,er*.6,cxp,ey,er*1.9); cg.addColorStop(0,`rgba(255,220,130,${.8+.2*beat})`); cg.addColorStop(1,'rgba(255,200,90,0)'); cx.fillStyle=cg; cx.beginPath(); cx.arc(cxp,ey,er*1.9,0,TAU); cx.fill();
+        cx.strokeStyle='rgba(255,236,170,.9)'; cx.lineWidth=1; for(let i=0;i<12;i++){ const a=now*.8+i*TAU/12, r0=er*1.08, r1=er*(1.35+.25*((i%2)+beat)); cx.beginPath(); cx.moveTo(cxp+Math.cos(a)*r0,ey+Math.sin(a)*r0); cx.lineTo(cxp+Math.cos(a)*r1,ey+Math.sin(a)*r1); cx.stroke(); }
+        cx.restore(); const mx=cxp+Math.sin(now*.9)*er*.18;
+        cx.fillStyle='#0A0414'; cx.beginPath(); cx.arc(mx,ey,er*.92,0,TAU); cx.fill(); cx.strokeStyle='rgba(170,110,255,.9)'; cx.lineWidth=1; cx.stroke();
+        cx.fillStyle='rgba(255,250,235,.95)'; cx.beginPath(); cx.arc(mx-er*.5,ey-er*.45,Math.max(.8,er*.12),0,TAU); cx.fill(); }
+      // trim: gold on the light side, violet on the dark
+      cx.save(); cx.beginPath(); cx.rect(x0-3,topY-3,bw*.52+3,Hh+6); cx.clip(); cx.strokeStyle='#E8B64A'; cx.lineWidth=2.2; rr(x0,topY,bw,Hh,3); cx.stroke(); cx.restore();
+      cx.save(); cx.beginPath(); cx.rect(x0+bw*.52,topY-3,bw*.48+3,Hh+6); cx.clip(); cx.strokeStyle='#8A4FD8'; cx.lineWidth=2.2; rr(x0,topY,bw,Hh,3); cx.stroke(); cx.restore();
+      // the halo: two gold rings with turning runes, a dark ring turning the other way, and sparks racing round
+      { const hy=topY-bh*.95-Math.sin(now*1.7)*2.5-beat*2.5, hr=bw*.5, rr1=hr*.3;
+        cx.save(); cx.globalCompositeOperation='lighter';
+        const hg=cx.createRadialGradient(cxp,hy,0,cxp,hy,hr*1.3); hg.addColorStop(0,`rgba(255,236,170,${.25+.2*beat})`); hg.addColorStop(1,'rgba(255,236,170,0)'); cx.fillStyle=hg; cx.beginPath(); cx.ellipse(cxp,hy,hr*1.3,hr*.55,0,0,TAU); cx.fill();
+        cx.strokeStyle=`rgba(255,214,110,${.85+.15*beat})`; cx.lineWidth=2.2; cx.beginPath(); cx.ellipse(cxp,hy,hr,rr1,0,0,TAU); cx.stroke();
+        cx.strokeStyle='rgba(255,248,225,.9)'; cx.lineWidth=1.1; cx.beginPath(); cx.ellipse(cxp,hy,hr*.74,rr1*.74,0,0,TAU); cx.stroke();
+        for(let i=0;i<18;i++){ const a=now*.7+i*TAU/18, c1=Math.cos(a), s1=Math.sin(a), px=cxp+c1*hr*.87, py=hy+s1*rr1*.87, k=i%3===0?2.2:1.2;
+          cx.fillStyle=`rgba(255,240,190,${s1<0?.55:.95})`; cx.beginPath(); cx.moveTo(px,py-k); cx.lineTo(px+k*.7,py); cx.lineTo(px,py+k); cx.lineTo(px-k*.7,py); cx.closePath(); cx.fill(); }
+        for(let i=0;i<3;i++){ const a=-now*2.1+i*TAU/3; cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.arc(cxp+Math.cos(a)*hr,hy+Math.sin(a)*rr1,1.8,0,TAU); cx.fill(); }
+        cx.restore();
+        cx.save(); cx.setLineDash([3,4]); cx.lineDashOffset=now*18; cx.strokeStyle='rgba(90,40,150,.85)'; cx.lineWidth=1.4; cx.beginPath(); cx.ellipse(cxp,hy,hr*1.12,rr1*1.12,0,0,TAU); cx.stroke(); cx.restore(); }
+      // light motes rising on the left, dark embers sinking on the right
+      cx.save(); cx.globalCompositeOperation='lighter';
+      for(let i=0;i<5;i++){ const q=((now*.5+i*.2)%1), px=x0+bw*(.05+.09*i)+Math.sin(now*2+i)*2.5, py=topY+Hh*.7-q*Hh*1.6; cx.fillStyle=`rgba(255,240,190,${.95*(1-q)})`; cx.fillRect(px,py,2,2); }
+      for(let i=0;i<4;i++){ const q=((now*.35+i*.25)%1), px=x0+bw*(.62+.1*i)+Math.sin(now*1.6+i)*2, py=topY+Hh*.6+q*Hh*.9; cx.fillStyle=`rgba(160,90,240,${.8*(1-q)})`; cx.fillRect(px,py,2.2,2.2); }
+      cx.restore(); } break;
     case 'truepulse': { const cxp=x0+bw/2, red=al=>`rgba(255,${Math.round(24+50*beat)},${Math.round(40+20*beat)},${al})`;
       // obsidian front: a black shirt, blood-red lapels and bow tie, cracks that glow on every beat
       cx.fillStyle='#240409'; cx.beginPath(); cx.moveTo(cxp-bw*.2,fy); cx.lineTo(cxp+bw*.2,fy); cx.lineTo(cxp,fy+H*.95); cx.closePath(); cx.fill();
@@ -2996,8 +3153,9 @@ function drawSkinPreviews(now,sel){
   const cvs=document.querySelectorAll(sel||'#shopGrid canvas.skprev'); if(!cvs.length) return;
   const main=cx, dpr=Math.min(2,devicePixelRatio||1), gm=G.mode; G.mode=gm?{...gm,coop:false}:null;
   cvs.forEach((c,idx)=>{ const r=c.getBoundingClientRect(); if(!r.width||r.bottom<0||r.top>innerHeight) return;
-    const w=64, h=64; if(c.width!==w*dpr){ c.width=w*dpr; c.height=h*dpr; }
-    const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,w,h); cx=g;
+    const w=64, h=64, px=+c.dataset.px||64, sc=px/64; if(c.width!==Math.round(px*dpr)){ c.width=Math.round(px*dpr); c.height=Math.round(px*dpr); }
+    const g=c.getContext('2d'); g.setTransform(dpr*sc,0,0,dpr*sc,0,0); g.clearRect(0,0,w,h); cx=g;
+    const pv=(skinById(c.dataset.skin)||{}).prev; if(pv){ g.translate(w/2,pv[1]); g.scale(pv[0],pv[0]); g.translate(-w/2,0); }
     const ph=((now+idx*.13)%1), lift=ph<.32?Math.sin(Math.PI*ph/.32)*9:0, sq=ph>=.32&&ph<.45?.12*(1-(ph-.32)/.13):0;
     const L={tw:58,th:58*.62,ox:w/2-29,oy:52-58*.62*.5,d:0}, P={skin:skinById(c.dataset.skin),greyT:-9,flashT:-9,flashC:'#FFF',face:['down','right','down','left'][Math.floor(now/1.2)%4],id:0};
     try{ drawBlock(P,{x:0,y:0,dx:0,dy:0,lift,sq,alpha:1,falling:false,fallY:0},L,now); }catch(e){}
@@ -3674,7 +3832,7 @@ function acctInit(){
     if(!firebase.apps.length) firebase.initializeApp(cfg);
     ACCT.auth=firebase.auth(); ACCT.db=firebase.firestore();
     ACCT.auth.getRedirectResult().catch(e=>{ ACCT.err=authMsg(e); acctUI(); });
-    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; if(u) acctPull(true).then(lbRename,lbRename); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
+    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; if(u) acctPull(true).then(lbRename,lbRename).then(()=>cvkFindSide()); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
   }).catch(()=>{ ACCT.err='Could not load sign-in. Check your connection.'; acctUI(); });
 }
 
@@ -3718,6 +3876,7 @@ function mergeSaves(loc,cl,additive){
   const nameRank=v=>!v||!v.name?0:v.nameT?3:v.nameAuto?1:2, nl=nameRank(loc), nc=nameRank(cl);
   const nw=nl!==nc?(nl>nc?loc:cl):nl===3?((cl.nameT||0)>=(loc.nameT||0)?cl:loc):newer;
   out.name=nw.name||loc.name||cl.name||''; out.nameT=nw.nameT||0; out.nameAuto=!!nw.nameAuto&&nameRank(nw)===1;
+  out.cvkWin=!!(loc.cvkWin||cl.cvkWin); out.cvkSide=newer.cvkSide||loc.cvkSide||cl.cvkSide||null;
   const dl=loc.daily||{}, dc=cl.daily||{}; out.daily=Object.assign({},DEF.daily,newer===cl?dc:dl);
   if(dl.date&&dl.date===dc.date){ out.daily.best=Math.max(dl.best||0,dc.best||0); out.daily.stars=Math.max(dl.stars||0,dc.stars||0); }
   out.daily.streak=Math.max(dl.streak||0,dc.streak||0);
@@ -4226,11 +4385,11 @@ function xpForRun(o){
   if(M.type==='boss'&&o.cleared) xp+=60; if(M.type==='hard'&&o.cleared) xp+=40+M.idx*5; if(M.type==='daily'&&o.cleared) xp+=40;
   if(M.type==='endless'||M.type==='coop'||M.type==='tether') xp+=Math.max(0,G.roomIdx-1)*6; if(M.type==='raid') xp+=(G.raidBeaten||0)*20; if(M.type==='ascent') xp+=Math.max(0,(G.floorBest||1)-1)*12;
   if(M.type==='duel') xp+=25+(o.won?25:0);
-  // Maestro and up: the ranks cost far more, so runs pay more (x1.5, Supreme Conductor and True Pulse x1.75)
-  // and a single run can earn up to 2000 XP instead of 900
+  // Maestro and up: the ranks cost far more, so runs pay more and a single run can earn much more.
+  // Maestro x1.5 (up to 2000 per run); Supreme Conductor, the long climb to True Pulse, x2.5 (up to 4000)
   const rk=myRank();
-  if(rk>=RANK_MAESTRO){ xp=Math.round(xp*(rk>=RANK_SUPREME?1.75:1.5)); if(M.type==='endless') xp+=Math.max(0,G.roomIdx-1)*6; }
-  xp=Math.min(rk>=RANK_MAESTRO?2000:900,xp);
+  if(rk>=RANK_MAESTRO){ xp=Math.round(xp*(rk>=RANK_SUPREME?2.5:1.5)); if(M.type==='endless') xp+=Math.max(0,G.roomIdx-1)*6; }
+  xp=Math.min(rk>=RANK_SUPREME?4000:rk>=RANK_MAESTRO?2000:900,xp);
   /* Maestro and up: a raid of 7+ bosses pays 2000 XP, plus 400 for each boss past the 7th */
   const rb=G.raidBeaten||0;
   if(M.type==='raid'&&rb>=RAID_BIG_N&&myRank()>=RANK_MAESTRO) xp=Math.max(xp,RAID_BIG_XP+(rb-RAID_BIG_N)*RAID_BIG_EACH);
@@ -5177,6 +5336,97 @@ function showEvent(){
 $('evPlay').onclick=()=>startRun(modeFor('event'));
 $('evBack').onclick=()=>toMenu();
 
+/* ================= CALE VS KORRA: a one-off event =================
+   Runs 9:00 AM Central Wed 30 Sep 2026 to 9:00 AM Central Sat 3 Oct 2026. Cale and Korra sign up with secret codes
+   (the game keeps only their SHA-256 fingerprints; firestore.rules checks them too). Every point either of them
+   scores in any mode while it's live adds to their bar. The winner, alone in the world, gets the Eclipse Seraph.
+   Firestore: events/cvk/claims/{cale|korra} = who signed up (private), events/cvk/sides/{cale|korra} = {score,t}. */
+const CVK={start:1790776800000,end:1791036000000,
+  sides:{cale:{name:'Cale',cls:'c',h:'bf9254eff060b724af4f9ff4562baff0ea6e8650ebe2b2d4fa7f51ffe832c5b7'},korra:{name:'Korra',cls:'k',h:'cdf74e040ee0af0702471fbb74f8bafecee16afcc43bb9f7b726263044bc99fe'}},
+  scores:{cale:null,korra:null},unsub:[],lastFetch:0};
+const cvkPhase=()=>{ const n=Date.now(); return n<CVK.start?'soon':n<CVK.end?'live':'over'; };
+const cvkShown=()=>!window.PF_CG&&!!acctCfg()&&Date.now()<CVK.end+14*864e5;   // on the menu until two weeks after it ends
+const cvkCol=()=>ACCT.db&&ACCT.db.collection('events').doc('cvk');
+function cvkFmt(ms){ ms=Math.max(0,ms); const d=Math.floor(ms/864e5), h=Math.floor(ms/36e5)%24, m=Math.floor(ms/6e4)%60, sec=Math.floor(ms/1e3)%60, p=v=>String(v).padStart(2,'0');
+  return d?`${d}d ${p(h)}h ${p(m)}m ${p(sec)}s`:`${p(h)}h ${p(m)}m ${p(sec)}s`; }
+async function sha256hex(t){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+function cvkMsg(t,err){ const m=$('cvkMsg'); m.textContent=t||''; m.classList.toggle('err',!!err); }
+/* the winner: the higher total; on a tie, whoever got there first */
+function cvkWinner(){ const a=CVK.scores.cale, b=CVK.scores.korra, sa=a?a.score||0:0, sb=b?b.score||0:0;
+  if(!sa&&!sb) return null; if(sa!==sb) return sa>sb?'cale':'korra'; return (a.t||0)<=(b.t||0)?'cale':'korra'; }
+function cvkWatch(){
+  if(CVK.unsub.length||!cvkCol()) return;
+  ['cale','korra'].forEach(k=>CVK.unsub.push(cvkCol().collection('sides').doc(k).onSnapshot(d=>{ CVK.scores[k]=d.exists?d.data():null; cvkCheckWin(); cvkRender(); },()=>{})));
+}
+function cvkUnwatch(){ CVK.unsub.forEach(f=>{ try{ f(); }catch(e){} }); CVK.unsub=[]; }
+/* after the event: the winner's own game hands them the block, once */
+function cvkCheckWin(){
+  if(cvkPhase()!=='over'||!SAVE.cvkSide||SAVE.cvkWin) return;
+  const w=cvkWinner(); if(!w||w!==SAVE.cvkSide) return;
+  SAVE.cvkWin=true; save(); sChime(90);
+  toast('You won Cale vs Korra! The Eclipse Seraph is yours, and only yours.');
+  if(typeof buildShop==='function'&&!$('shopOv').hidden) buildShop();
+}
+/* which side this account signed up as (so it follows you to another device) */
+async function cvkFindSide(){
+  if(SAVE.cvkSide||!ACCT.user||!cvkCol()) return;
+  for(const k of ['cale','korra']){ try{ const d=await cvkCol().collection('claims').doc(k).get(); if(d.exists&&d.data().uid===ACCT.user.uid){ SAVE.cvkSide=k; save(); cvkRender(); return; } }catch(e){} }
+}
+async function cvkSignUp(){
+  const code=($('cvkCode').value||'').toUpperCase().replace(/\s+/g,'');
+  if(!ACCT.user){ cvkMsg('Sign in to your account first, then enter your code.',true); return; }
+  if(cvkPhase()==='over'){ cvkMsg('The event is over.',true); return; }
+  let side=null; try{ const h=await sha256hex(code); side=Object.keys(CVK.sides).find(k=>CVK.sides[k].h===h); }catch(e){}
+  if(!side){ cvkMsg('That code isn\'t right. Check it and try again.',true); return; }
+  cvkMsg('Signing you up…'); const col=cvkCol(), me=ACCT.user.uid, nm=CVK.sides[side].name;
+  try{ await col.collection('claims').doc(side).set({uid:me,code,t:Date.now()}); }
+  catch(e){ let mine=false; try{ const d=await col.collection('claims').doc(side).get(); mine=d.exists&&d.data().uid===me; }catch(_){}
+    if(!mine){ cvkMsg(`Someone has already signed up as ${nm}.`,true); return; } }
+  try{ const d=await col.collection('sides').doc(side).get(); if(!d.exists) await col.collection('sides').doc(side).set({score:0,t:Date.now()}); }catch(e){}
+  SAVE.cvkSide=side; save(); $('cvkForm').hidden=true; cvkMsg(''); if(A.ctx) sChime(88);
+  toast(`You're in! You're fighting as ${nm}.`); cvkRender();
+}
+/* every run's points go to your side while the event is live (anything that fails to send waits for the next run) */
+function cvkPost(M){
+  if(!SAVE.cvkSide||!ACCT.user||!ACCT.db||window.PF_CG||cvkPhase()!=='live') return;
+  const add=Math.min(400000,Math.max(0,Math.round(G.score||0))+(SAVE.cvkPend||0)); if(!add) return;
+  SAVE.cvkPend=0; save(); const side=SAVE.cvkSide;
+  cvkCol().collection('sides').doc(side).set({score:firebase.firestore.FieldValue.increment(add),t:Date.now()},{merge:true})
+    .then(()=>toast(`+${add.toLocaleString()} for ${CVK.sides[side].name}!`))
+    .catch(()=>{ SAVE.cvkPend=Math.min(400000,(SAVE.cvkPend||0)+add); save(); });
+}
+function cvkRender(){
+  const ph=cvkPhase(), n=Date.now();
+  const chip=$('mCvk'); if(chip){ chip.hidden=!cvkShown(); chip.textContent='⚔ Cale vs Korra · '+(ph==='soon'?'starts in '+cvkFmt(CVK.start-n).replace(/ \d+s$/,''):ph==='live'?'LIVE':'results'); }
+  if($('cvkOv').hidden) return;
+  const w=ph==='over'?cvkWinner():null;
+  $('cvkPhase').textContent=ph==='soon'?'Starts in':ph==='live'?'Ends in':'Final result';
+  $('cvkTime').textContent=ph==='soon'?cvkFmt(CVK.start-n):ph==='live'?cvkFmt(CVK.end-n):w?`${CVK.sides[w].name} wins!`:'No winner';
+  $('cvkWhen').textContent=ph==='soon'?'9:00 AM Central, Wed Sep 30 · runs 3 days':ph==='live'?'Ends 9:00 AM Central, Sat Oct 3':'Ended 9:00 AM Central, Sat Oct 3';
+  const sc=k=>CVK.scores[k]?CVK.scores[k].score||0:0, c=sc('cale'), k=sc('korra'), top=Math.max(c,k,1);
+  $('cvkScC').textContent=c.toLocaleString(); $('cvkScK').textContent=k.toLocaleString();
+  $('cvkBarC').style.width=Math.max(3,c/top*100)+'%'; $('cvkBarK').style.width=Math.max(3,k/top*100)+'%';
+  const lead=c===k?null:c>k?'cale':'korra';
+  $('cvkRowC').classList.toggle('lead',lead==='cale'); $('cvkRowK').classList.toggle('lead',lead==='korra');
+  $('cvkRowC').classList.toggle('win',w==='cale'); $('cvkRowK').classList.toggle('win',w==='korra');
+  const me=SAVE.cvkSide, you=$('cvkYou');
+  you.innerHTML=me?`${ph==='over'?'You fought as':'You\'re fighting as'} <b class="${CVK.sides[me].cls}">${CVK.sides[me].name}</b>. `+(ph==='soon'?'Your points start counting at 9:00 AM Central on Wed Sep 30.':ph==='live'?'Every point you score, in any mode, adds to your bar.':'')+(SAVE.cvkWin?'<span class="won">✦ The Eclipse Seraph is yours ✦</span>':'')
+    :ph==='over'?'':'Watching? Cheer them on. The bars update live.';
+  $('cvkJoin').hidden=!!me||ph==='over';
+  $('cvkOpen').textContent=ACCT.user?'⚔ Cale or Korra? Click here to sign up as a participant':'⚔ Cale or Korra? Sign in, then click here to sign up';
+}
+function showCvk(){ showOv('cvkOv'); cvkMsg(''); if(acctCfg()&&!ACCT.ready&&!ACCT.loading) acctInit(); cvkWatch(); cvkFindSide(); cvkRender(); }
+$('mCvk').onclick=showCvk;
+$('cvkBack').onclick=()=>{ cvkUnwatch(); toMenu(); };
+$('cvkOpen').onclick=()=>{ if(!ACCT.user){ showAcct(); return; } const f=$('cvkForm'); f.hidden=!f.hidden; if(!f.hidden) $('cvkCode').focus(); };
+$('cvkGo').onclick=cvkSignUp;
+$('cvkCode').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') cvkSignUp(); });
+setInterval(()=>{ cvkRender();
+  // after the event, a player who signed up checks the result now and then, so the winner gets the block
+  if(cvkPhase()==='over'&&SAVE.cvkSide&&!SAVE.cvkWin&&ACCT.db&&Date.now()-CVK.lastFetch>60000){ CVK.lastFetch=Date.now();
+    ['cale','korra'].forEach(k=>cvkCol().collection('sides').doc(k).get().then(d=>{ CVK.scores[k]=d.exists?d.data():null; cvkCheckWin(); }).catch(()=>{})); }
+},1000);
+
 /* ================= LEADERBOARDS (Firestore: boards/{board}/entries/{uid}) ================= */
 function boardFor(M){
   if(M.chal) return null;
@@ -6116,7 +6366,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv'];
+const OVS=['cvkOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -6266,7 +6516,8 @@ function finishRun(){
   setTimeout(()=>{
     if(G.mode!==M||G.state!=='done') return;
     $('rXP').innerHTML=xpLine; $('rLore').innerHTML=loreForResult(M); hideTalk(); hideCine(); showExtras(M,ex);
-    { const cr=chalResult(M), lb=lbPost(M); if(cr) $('rNear').textContent=cr; else if(lb&&!$('rNear').textContent) $('rNear').textContent=lb; }
+    cvkPost(M);
+  { const cr=chalResult(M), lb=lbPost(M); if(cr) $('rNear').textContent=cr; else if(lb&&!$('rNear').textContent) $('rNear').textContent=lb; }
     $('rShare').hidden=!chalFor(M); $('rShare').onclick=()=>shareChallenge(M); $('rShare').textContent='Challenge a friend';
     if(M.type==='custom'){ $('rShare').hidden=false; $('rShare').textContent='Share this level'; $('rShare').onclick=()=>shareLevel(edCodeOf(M.design)); }
     $('rEyebrow').textContent=eyebrow; $('rTitle').textContent=title;
@@ -6305,6 +6556,7 @@ function gameOver(why){
   if(M.type==='studio') setTimeout(()=>{ if(G.mode===M) stopStudioAudio(); },1500);
   { const L=SAVE.life; if(M.type==='endless') L.endlessRooms=Math.max(L.endlessRooms||0,G.roomIdx-1); if(M.net) L.online=(L.online||0)+1; if(why==='song') L.songs=(L.songs||0)+1; }
   overNear(M,why,best);
+  cvkPost(M);
   { const ev=eventDone(M), cr=chalResult(M), lb=lbPost(M); if(cr) $('oNear').textContent=cr; else if(ev) $('oNear').textContent=ev; else if(lb&&!$('oNear').textContent) $('oNear').textContent=lb; }
   $('oShare').hidden=!chalFor(M)||!!M.net; $('oShare').onclick=()=>shareChallenge(M);
   const bf=boardFor(M); $('oLB').hidden=!bf; $('oLB').onclick=()=>{ if(M.type==='event') showEvent(); else showLB(M.type==='endless'?'endless':M.type==='ascent'?'ascent':'daily'); };
@@ -6381,7 +6633,7 @@ function loop(){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&shopTab==='skins') drawSkinPreviews(now); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&shopTab==='skins') drawSkinPreviews(now); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkOv').hidden) drawSkinPreviews(now,'#cvkOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);

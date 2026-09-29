@@ -60,6 +60,40 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ---- Cale vs Korra: 9:00 AM Central Wed Sep 30 2026 to 9:00 AM Central Sat Oct 3 2026 ----
+    // Signing up: the code must match that side's fingerprint (SHA-256), and each side can be claimed once.
+    // Only the person who signed up can read their claim (it holds their code).
+    match /events/cvk/claims/{side} {
+      allow get: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if request.auth != null
+        && (side == 'cale' || side == 'korra')
+        && request.resource.data.keys().hasOnly(['uid','code','t'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.code is string
+        && hashing.sha256(request.resource.data.code).toHexString().lower()
+             == (side == 'cale' ? 'bf9254eff060b724af4f9ff4562baff0ea6e8650ebe2b2d4fa7f51ffe832c5b7' : 'cdf74e040ee0af0702471fbb74f8bafecee16afcc43bb9f7b726263044bc99fe')
+        && request.time < timestamp.value(1791036000000);
+      allow update, delete: if false;
+    }
+    // The bars: everyone can watch; only the side's player can add to it, only while the event is live,
+    // and at most 400,000 points at a time.
+    match /events/cvk/sides/{side} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && get(/databases/$(db)/documents/events/cvk/claims/$(side)).data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['score','t'])
+        && request.resource.data.score == 0;
+      allow update: if request.auth != null
+        && get(/databases/$(db)/documents/events/cvk/claims/$(side)).data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['score','t'])
+        && request.resource.data.score is number
+        && request.resource.data.score >= resource.data.score
+        && request.resource.data.score - resource.data.score <= 400000
+        && request.time >= timestamp.value(1790776800000)
+        && request.time < timestamp.value(1791036000000);
+      allow delete: if false;
+    }
+
     // Party invites: only someone on the recipient's friends list can invite them
     match /invites/{to}/items/{from} {
       allow create, update: if request.auth != null && request.auth.uid == from
