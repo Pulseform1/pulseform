@@ -1870,7 +1870,7 @@ const SIG={
  truepulse:{n:'Doom Pulse',g:'♥',c:['#FF1E2E','#7A0010','#FF6A3A'],sh:null,ring:'#FF1E2E',fx:'truepulse'},
  eclipse_seraph:{n:'Eclipse',g:'◑',c:['#FFF3C4','#FFD166','#8A4FD8','#1A0B2E'],sh:null,ring:'#FFE7A0',fx:'eclipse'}};   // its own id: the older 'eclipse' is the Lights Out event block
 LANDS.push({id:'match',name:'Match my block',glyph:'⟲',col:'#FFF8EE',price:0,note:'Uses your block\'s signature effect'});
-Object.keys(SIG).forEach(k=>{ const s=SIG[k]; if(k==='eclipse_seraph') return; LANDS.push({id:'sig_'+k,name:s.n,glyph:s.g,col:s.c[0],req:{skin:k},sig:k}); });
+Object.keys(SIG).forEach(k=>{ const s=SIG[k]; LANDS.push({id:'sig_'+k,name:s.n,glyph:s.g,col:s.c[0],req:{skin:k},sig:k,hidden:k==='eclipse_seraph'}); });   // the Eclipse effect, like its block, only shows for the winner
 SIG.ovation={n:'Standing Ovation',g:'♛',c:['#FFD166','#FF7EB6','#B8F2E6','#C9B8FF'],sh:'confetti',ring:'rainbow',fx:'beams'};   // the Crown's effect (added after the loop so it has no block of its own)
 LANDS.push({id:'crown',name:'Crown',glyph:'♛',col:'#FFD166',req:{rank:18},sig:'ovation'});
 SIG.twilight={n:'Twilight',g:'☾',c:['#FFE3A8','#C9A6FF','#FFFFFF'],sh:'star5',ring:'#D8B4FF',fx:'twilight'};   // for betting 2,000 notes on Cale vs Korra
@@ -6618,7 +6618,7 @@ let shopTab='skins';
 function buildShop(){
   $('walletS').textContent=notesTxt();
   $('tabSkins').classList.toggle('on',shopTab==='skins'); $('tabTrails').classList.toggle('on',shopTab==='lands');
-  const list=(shopTab==='skins'?SKINS:LANDS).filter(it=>!it.hidden||ownsSkin(it.id)), eq=shopTab==='skins'?SAVE.skin:SAVE.land;   // hidden: only its owner sees it
+  const list=(shopTab==='skins'?SKINS:LANDS).filter(it=>!it.hidden||SAVE.owned.includes(it.id)||(it.req&&reqMet(it.req))), eq=shopTab==='skins'?SAVE.skin:SAVE.land;   // hidden: only its owner sees it
   $('shopGrid').innerHTML=list.map(it=>{ const owned=SAVE.owned.includes(it.id)||(it.req&&reqMet(it.req))||it.price===0;
     const prev=shopTab==='skins'?`<canvas class="skprev" data-skin="${it.id}" width="64" height="64" aria-hidden="true"></canvas>${it.anim?'<span class="badge">Animated</span>':''}`:`<div class="lfxp" style="--c:${it.col}"><span>${it.glyph}</span></div>`;
     let btn; if(eq===it.id) btn=`<button class="btn ghost" disabled type="button">Equipped</button>`;
