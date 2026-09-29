@@ -2998,6 +2998,11 @@ function skinPre(S,x0,topY,bw,bh,H,now,P){
     const g=cx.createRadialGradient(cxp,cyp,0,cxp,cyp,bw*(1.25+.2*beat)); g.addColorStop(0,rgba(sup?mcol(S,now,0):'#FFE7A0',.5+.2*beat)); g.addColorStop(.55,rgba(sup?mcol(S,now,120):'#FFD166',.18+.1*beat)); g.addColorStop(1,rgba(sup?mcol(S,now,240):'#FFD166',0)); cx.fillStyle=g; cx.beginPath(); cx.arc(cxp,cyp,bw*(1.25+.2*beat),0,Math.PI*2); cx.fill();
     for(let i=0;i<10;i++){ const a=now*.35+i*Math.PI/5, L1=bw*(1.05+.25*beat+(i%2?0:.25)); cx.strokeStyle=rgba(mcol(S,now,i*36),i%2?.18:.3); cx.lineWidth=bw*.06; cx.beginPath(); cx.moveTo(cxp+Math.cos(a)*bw*.45,cyp+Math.sin(a)*bw*.35); cx.lineTo(cxp+Math.cos(a)*L1,cyp+Math.sin(a)*L1*.75); cx.stroke(); }
     cx.restore(); }
+  // Dawn and Dusk Seraph: a soft glow in their own colour (nothing like the Eclipse's rays, wings and smoke)
+  if(S.anim==='dawn'||S.anim==='dusk'){ const cxp=x0+bw/2, cyp=topY+(bh+H)*.5, beat=clamp(1-(now-G.lastBeatT)/.35,0,1), light=S.anim==='dawn', r=bw*(1.05+.12*beat+.04*Math.sin(now*2));
+    cx.save(); if(light) cx.globalCompositeOperation='lighter';
+    const g=cx.createRadialGradient(cxp,cyp,bw*.2,cxp,cyp,r); g.addColorStop(0,light?`rgba(255,214,120,${.42+.15*beat})`:`rgba(138,79,216,${.5+.15*beat})`); g.addColorStop(.6,light?'rgba(255,200,90,.14)':'rgba(90,40,160,.18)'); g.addColorStop(1,'rgba(0,0,0,0)');
+    cx.fillStyle=g; cx.beginPath(); cx.arc(cxp,cyp,r,0,TAU); cx.fill(); cx.restore(); }
   if(S.anim==='eclipse'){ const cxp=x0+bw/2, cyp=topY+(bh+H)*.48, beat=clamp(1-(now-G.lastBeatT)/.35,0,1), flap=Math.sin(now*2.2);
     cx.save();
     // the dark: violet-black smoke pooling low and to the right, curling tendrils sinking away
