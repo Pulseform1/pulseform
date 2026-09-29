@@ -1437,6 +1437,7 @@ const SKINS=[
  {id:'jelly',name:'Jelly',anim:'jelly',top:'#B8F5A0',front:'#6FD66A',core:'#FFFFFF',price:800},
  {id:'heart',name:'Heartbeat',anim:'heart',top:'#FFB3C1',front:'#E84A6A',core:'#FFFFFF',price:850},
  {id:'critter',name:'Buddy the Cat',anim:'critter',top:'#FFD9A8',front:'#F2A65A',core:'#FFFFFF',price:900},
+ {id:'alpine',name:'Alpine',anim:'alpine',top:'#231D20',front:'#1B1618',core:'#FFFFFF',price:950},
  {id:'speaker',name:'Subwoofer',anim:'speaker',top:'#3A3A48',front:'#22222C',core:'#FFD166',price:1000},
  {id:'tv',name:'Retro TV',anim:'tv',top:'#C98B5A',front:'#8E5A36',core:'#FFFFFF',price:1100},
  {id:'lamp',name:'Lava Lamp',anim:'lamp',top:'#8A6CFF',front:'#5A3DD8',core:'#FF8AD8',price:1150},
@@ -3089,6 +3090,10 @@ function skinPre(S,x0,topY,bw,bh,H,now,P){
       cx.strokeStyle=`rgba(255,30,46,${(i%2?.2:.34)+.25*beat})`; cx.lineWidth=bw*.05; cx.beginPath(); cx.moveTo(cxp+Math.cos(a)*bw*.45,cyp+Math.sin(a)*bw*.35); cx.lineTo(mx,my); cx.lineTo(cxp+Math.cos(a)*L1,cyp+Math.sin(a)*L1*.75); cx.stroke(); }
     cx.restore(); }
   if(S.anim==='critter'){ const sw=Math.sin(now*4)*.5; cx.strokeStyle=S.front; cx.lineWidth=Math.max(3,bw*.12); cx.lineCap='round'; cx.beginPath(); cx.moveTo(x0+bw*.9,fy+H*.6); cx.quadraticCurveTo(x0+bw*1.35,fy+H*.3,x0+bw*(1.2+.15*sw),fy-bh*.4); cx.stroke(); }
+  // Alpine the Bernese mountain dog: a fluffy black tail with a white tip, wagging hard (harder on the beat)
+  if(S.anim==='alpine'){ const beat=clamp(1-(now-G.lastBeatT)/.35,0,1), sw=Math.sin(now*(9+6*beat))*.6, tx=x0+bw*(1.22+.18*sw), ty=fy-bh*.2;
+    cx.lineCap='round'; cx.strokeStyle='#1B1618'; cx.lineWidth=Math.max(4,bw*.17); cx.beginPath(); cx.moveTo(x0+bw*.9,fy+H*.55); cx.quadraticCurveTo(x0+bw*1.4,fy+H*.35,tx,ty); cx.stroke();
+    cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.arc(tx,ty,Math.max(2,bw*.085),0,TAU); cx.fill(); }
   if(S.anim==='disco'){ cx.globalCompositeOperation='lighter'; for(let i=0;i<4;i++){ const a=now*1.4+i*Math.PI/2, cxp=x0+bw/2, cyp=topY+bh*.5; const g=cx.createLinearGradient(cxp,cyp,cxp+Math.cos(a)*bw*2.2,cyp+Math.sin(a)*bw*1.2);
     g.addColorStop(0,rgba(['#FF7EB6','#7FE0FF','#FFD166','#B8F2E6'][i],.35)); g.addColorStop(1,'rgba(0,0,0,0)'); cx.fillStyle=g; cx.beginPath(); cx.moveTo(cxp,cyp); cx.lineTo(cxp+Math.cos(a-.15)*bw*2.2,cyp+Math.sin(a-.15)*bw*1.2); cx.lineTo(cxp+Math.cos(a+.15)*bw*2.2,cyp+Math.sin(a+.15)*bw*1.2); cx.closePath(); cx.fill(); } cx.globalCompositeOperation='source-over'; }
   if(S.anim==='blaze'){ cx.globalCompositeOperation='lighter'; const g=cx.createRadialGradient(x0+bw/2,topY,0,x0+bw/2,topY,bw*1.3); g.addColorStop(0,'rgba(255,140,50,.45)'); g.addColorStop(1,'rgba(255,90,30,0)'); cx.fillStyle=g; cx.fillRect(x0-bw,topY-bw*1.3,bw*3,bw*2.6); cx.globalCompositeOperation='source-over'; }
@@ -3107,6 +3112,25 @@ function skinPost(S,x0,topY,bw,bh,H,now,P){
       [.32,.68].forEach(px=>{ const exx=x0+bw*px+fdx*bw*.06; cx.fillStyle='#2A1A10'; if(blink) cx.fillRect(exx-er,ey,er*2,1.5); else { cx.beginPath(); cx.arc(exx,ey,er,0,Math.PI*2); cx.fill(); cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.arc(exx+er*.3,ey-er*.35,er*.35,0,Math.PI*2); cx.fill(); } });
       cx.fillStyle='#E0607A'; cx.beginPath(); cx.arc(x0+bw*.5+fdx*bw*.05,fy+H*.58,Math.max(1.3,bw*.04),0,Math.PI*2); cx.fill();
       cx.fillStyle='rgba(255,120,150,.35)'; cx.beginPath(); cx.ellipse(x0+bw*.2,fy+H*.6,bw*.08,H*.06,0,0,Math.PI*2); cx.ellipse(x0+bw*.8,fy+H*.6,bw*.08,H*.06,0,0,Math.PI*2); cx.fill(); } break;
+    case 'alpine': { const cxm=x0+bw/2+fdx*bw*.04, er=Math.max(1.8,bw*.062), ey=fy+H*.34+fdy*H*.05, flop=Math.sin(now*6)*.05*(1+beat);
+      // floppy black ears over the top corners
+      [[x0-bw*.02,-1],[x0+bw*1.02,1]].forEach(([ex,sg])=>{ cx.save(); cx.translate(ex,topY+bh*.45); cx.rotate(sg*(.3+flop)); cx.fillStyle='#2A2226'; cx.strokeStyle='#6A5A60'; cx.lineWidth=Math.max(1,bw*.02);
+        cx.beginPath(); cx.ellipse(0,bh*.45,bw*.14,bh*.5+H*.16,0,0,TAU); cx.fill(); cx.stroke(); cx.restore(); });
+      // the white blaze: up over the head and down the face to the muzzle
+      cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.moveTo(x0+bw*.45,topY+bh*.2); cx.lineTo(x0+bw*.55,topY+bh*.2); cx.lineTo(x0+bw*.59,fy); cx.lineTo(x0+bw*.41,fy); cx.closePath(); cx.fill();
+      cx.beginPath(); cx.moveTo(cxm-bw*.07,fy); cx.lineTo(cxm+bw*.07,fy); cx.lineTo(cxm+bw*.11,fy+H*.52); cx.lineTo(cxm-bw*.11,fy+H*.52); cx.closePath(); cx.fill();
+      // rust cheeks, white muzzle, rust eyebrow spots
+      cx.fillStyle='#C8662E'; cx.beginPath(); cx.ellipse(cxm-bw*.21,fy+H*.66,bw*.13,H*.14,0,0,TAU); cx.ellipse(cxm+bw*.21,fy+H*.66,bw*.13,H*.14,0,0,TAU); cx.fill();
+      cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.ellipse(cxm,fy+H*.67,bw*.19,H*.19,0,0,TAU); cx.fill();
+      cx.fillStyle='#D47A3A'; [-.19,.19].forEach(d=>{ cx.beginPath(); cx.ellipse(cxm+bw*d,ey-er*2.1,er*.9,er*.55,0,0,TAU); cx.fill(); });
+      // warm brown eyes that blink
+      const blink=(now%3.6)<.12;
+      [-.19,.19].forEach(d=>{ const ex=cxm+bw*d; cx.fillStyle='#3A1E0E'; if(blink) cx.fillRect(ex-er,ey,er*2,1.5); else { cx.beginPath(); cx.arc(ex,ey,er,0,TAU); cx.fill(); cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.arc(ex+er*.3,ey-er*.35,er*.35,0,TAU); cx.fill(); } });
+      // nose, mouth, and a tongue that pants on the beat
+      cx.fillStyle='#FF7A8A'; cx.beginPath(); cx.ellipse(cxm,fy+H*(.76+.04*beat),bw*.055,H*(.05+.06*beat),0,0,TAU); cx.fill();
+      cx.strokeStyle='#141012'; cx.lineWidth=Math.max(1,bw*.022); cx.lineCap='round'; cx.beginPath(); cx.moveTo(cxm,fy+H*.6); cx.lineTo(cxm,fy+H*.68);
+      cx.moveTo(cxm-bw*.09,fy+H*.7); cx.quadraticCurveTo(cxm-bw*.04,fy+H*.75,cxm,fy+H*.68); cx.quadraticCurveTo(cxm+bw*.04,fy+H*.75,cxm+bw*.09,fy+H*.7); cx.stroke();
+      cx.fillStyle='#141012'; cx.beginPath(); cx.ellipse(cxm,fy+H*.58,bw*.075,H*.05,0,0,TAU); cx.fill(); } break;
     case 'speaker': { const cxp=x0+bw/2, cyp=fy+H*.5, R0=Math.min(bw,H)*.36; cx.fillStyle='#111118'; cx.beginPath(); cx.arc(cxp,cyp,R0,0,Math.PI*2); cx.fill();
       const cone=R0*(.72+.2*beat); const g=cx.createRadialGradient(cxp,cyp,0,cxp,cyp,cone); g.addColorStop(0,'#FFD166'); g.addColorStop(.3,'#4A4A58'); g.addColorStop(1,'#26262F'); cx.fillStyle=g; cx.beginPath(); cx.arc(cxp,cyp,cone,0,Math.PI*2); cx.fill();
       cx.fillStyle='#FFD166'; cx.beginPath(); cx.arc(x0+bw*.5,topY+bh*.5,bw*.08,0,Math.PI*2); cx.fill();
