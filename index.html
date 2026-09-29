@@ -18,7 +18,9 @@ window.PULSEFORM_FIREBASE = {
   projectId: "pulseform-d8282",
   storageBucket: "pulseform-d8282.firebasestorage.app",
   messagingSenderId: "653074377253",
-  appId: "1:653074377253:web:802ea5afbd1523319dedcc"
+  appId: "1:653074377253:web:802ea5afbd1523319dedcc",
+  // the "backup line" for online parties on school networks (Build > Realtime Database in the Firebase console)
+  databaseURL: "https://pulseform-d8282-default-rtdb.firebaseio.com"
 };
 /* ===== ONLINE PARTY SERVER (optional) =====
    Online parties load their connection library from vendor/peerjs.min.js on this site, so upload the
@@ -3563,7 +3565,7 @@ function drawArenaHud(L,now,gcx){
    Peer-to-peer over WebRTC (PeerJS). The host's party code is its peer id.
    Both devices run the same seeded rooms on a shared beat grid; each device is the
    authority for its own block and sends its moves (tagged with the beat number) to the other. */
-const NET={on:false,host:false,me:0,slot:0,peer:null,conn:null,conns:[],mates:{},order:null,leftName:null,code:'',off:0,rtt:1e9,samples:[],q:{},pingT:null,lib:null};
+const NET={on:false,host:false,me:0,slot:0,peer:null,conn:null,conns:[],mates:{},order:null,leftName:null,code:'',off:0,rtt:1e9,samples:[],q:{},pingT:null,lib:null,via:'',peerP:null};
 const PARTY_MAX=4, PCOL=['#FFD166','#B8F2E6','#FF9CE6','#9CC8FF'];   // up to 4 in a party; each player's colour
 const NET_ALPHA='ABCDEFGHJKMNPQRSTUVWXYZ23456789', NET_PREFIX='pulseform-beatrooms-';
 const netCode=()=>Array.from({length:4},()=>NET_ALPHA[ri(NET_ALPHA.length)]).join('');
@@ -3610,26 +3612,153 @@ function netUI(){
 }
 function netHost(){
   ensureAudio(); A.ctx.resume(); netLeave(true);
-  NET.host=true; NET.me=0; NET.slot=0; NET.refused=null; NET.code=netCode(); NET.peer={pending:true}; netUI(); netStatus('Opening a party…');
+  const code=netCode();
+  NET.host=true; NET.me=0; NET.slot=0; NET.refused=null; NET.code=code; NET.via=''; NET.peer={pending:true}; netUI(); netStatus('Opening a party…');
+  // the party opens on both lines at once: direct (PeerJS) for most friends, and the backup line for friends on
+  // networks that block peer-to-peer games. Whichever is ready first opens the party.
+  const mine=()=>NET.host&&NET.code===code&&!!NET.peer;
+  let ready=false, pDown=false, rDown=false;
+  const up=()=>{ if(!mine()) return; if(NET.peer.pending) NET.peer={relay:true}; if(ready){ netUI(); return; } ready=true; netUI();
+    netStatus(`Share this code with up to ${PARTY_MAX-1} friends: they open Play together, type ${code} under "Join a friend's party" and tap Join.`); };
+  const down=why=>{ if(!mine()||!pDown||!rDown) return; NET.peer=null; netUI(); netStatus(why||'Could not open a party. Check your connection and try again.',true); };
   netLib().then(()=>{
-    const p=new Peer(NET_PREFIX+NET.code,netOpts()); NET.peer=p;
-    p.on('open',()=>{ netUI(); netStatus(`Share this code with up to ${PARTY_MAX-1} friends: they open Play together, type ${NET.code} under "Join a friend's party" and tap Join.`); });
-    p.on('connection',netWireHost);
-    p.on('error',e=>{ if(e.type==='unavailable-id'){ netHost(); return; } if(e.type==='peer-unavailable') return; netStatus(netErr(e),true); });
-    p.on('disconnected',()=>{ if(NET.peer===p) try{ p.reconnect(); }catch(e){} });
-  }).catch(()=>{ NET.peer=null; netUI(); netStatus('Could not load online play. Check your connection and try again.',true); });
+    if(!mine()) return;
+    const p=new Peer(NET_PREFIX+code,netOpts()); if(NET.peer.pending) NET.peer=p; else NET.peerP=p;
+    let opened=false;
+    p.on('open',()=>{ if(!mine()) return; opened=true; if(NET.peer!==p){ NET.peerP=null; NET.peer=p; } up(); });
+    p.on('connection',c=>{ if(mine()) netWireHost(c); });
+    p.on('error',e=>{ if(!mine()) return; if(e.type==='unavailable-id'){ netHost(); return; } if(e.type==='peer-unavailable') return;
+      if(opened){ if(!RELAY.ok) netStatus(netErr(e),true); return; }   // a hiccup after the party opened: PeerJS reconnects itself
+      // this network blocks the direct line: carry on with the backup line alone
+      pDown=true; if(RELAY.ok){ try{ p.destroy(); }catch(x){} if(NET.peer===p) NET.peer={relay:true}; NET.peerP=null; up(); } else down(netErr(e)); });
+    p.on('disconnected',()=>{ if(mine()&&!pDown&&(NET.peer===p||NET.peerP===p)) try{ p.reconnect(); }catch(e){} });
+  }).catch(()=>{ pDown=true; down('Could not load online play. Check your connection and try again.'); });
+  relayHost(code).then(up).catch(e=>{ if(!mine()) return; if(e&&e.type==='taken'){ netHost(); return; } rDown=true; down(); });
 }
 function netJoin(){
   const code=($('nCode').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(code.length!==4){ $('nStatusIdle').textContent='Party codes are 4 letters or numbers.'; return; }
   ensureAudio(); A.ctx.resume(); netLeave(true);
-  NET.host=false; NET.me=1; NET.slot=0; NET.refused=null; NET.code=code; NET.peer={pending:true}; netUI(); netStatus('Looking for party '+code+'…');
+  NET.host=false; NET.me=1; NET.slot=0; NET.refused=null; NET.code=code; NET.via=''; NET.peer={pending:true}; netUI(); netStatus('Looking for party '+code+'…');
+  const mine=()=>!NET.host&&NET.code===code&&!!NET.peer;
+  // the direct line first; if it fails or is still not through after a few seconds, the backup line
+  let backup=false, pMissing=false, rMissing=false, pDown=false;
+  const none=()=>{ if(!mine()||NET.conn) return; netStatus('No party with code '+code+'. Check the code and try again.',true); setTimeout(()=>{ if(mine()&&!NET.conn) netLeave(); },2200); };
+  const tryRelay=()=>{
+    if(backup||!mine()||NET.conn) return; backup=true;
+    if(!pDown) netStatus('Still connecting… trying the backup line.');
+    relayJoin(code).then(c=>{
+      if(!mine()||NET.conn){ c.close(); return; }
+      const p=NET.peer; NET.peer={relay:true}; try{ p&&p.destroy&&p.destroy(); }catch(e){}   // one line only
+      netWire(c);
+      setTimeout(()=>{ if(mine()&&!NET.conn){ netStatus('Could not reach the party. Ask the host to check their connection, then try again.',true); setTimeout(()=>{ if(mine()&&!NET.conn) netLeave(); },2500); } },12000);
+    }).catch(e=>{
+      if(!mine()||NET.conn) return;
+      // not on the backup line, and the direct line either says the same or can't even reach its server
+      if(e&&e.type==='peer-unavailable'){ rMissing=true; if(pMissing||pDown||!(NET.peer&&NET.peer.open)) none(); return; }
+      if(pDown) netStatus('Could not reach the party server. Check your connection and try again.',true);
+    });
+  };
   netLib().then(()=>{
+    if(!mine()||backup) return;
     const p=new Peer(undefined,netOpts()); NET.peer=p;
-    p.on('open',()=>{ const c=p.connect(NET_PREFIX+code,{reliable:true}); netWire(c);
-      setTimeout(()=>{ if(NET.peer===p&&!NET.conn) netStatus('Still connecting… if this hangs, one of your networks may block peer-to-peer games.',true); },9000); });
-    p.on('error',e=>{ netStatus(e.type==='peer-unavailable'?'No party with code '+code+'. Check the code and try again.':netErr(e),true); if(e.type==='peer-unavailable'){ setTimeout(()=>{ if(!NET.conn) netLeave(); },2200); } });
-  }).catch(()=>{ NET.peer=null; netUI(); netStatus('Could not load online play. Check your connection and try again.',true); });
+    p.on('open',()=>{ if(NET.peer===p) netWire(p.connect(NET_PREFIX+code,{reliable:true})); });
+    p.on('error',e=>{ if(NET.peer!==p||NET.conn) return; pDown=true; if(e.type==='peer-unavailable'){ pMissing=true; if(rMissing) return none(); }
+      if(backup) netStatus(e.type==='peer-unavailable'?'Looking for party '+code+' on the backup line…':'Trying the backup line…'); tryRelay(); });
+  }).catch(()=>{ pDown=true; tryRelay(); });
+  setTimeout(tryRelay,5000);
+  setTimeout(()=>{ if(mine()&&!NET.conn) netStatus('Still connecting… if this hangs, check the code and try again.',true); },20000);
+}
+/* ---- the backup line: some networks (many schools) block peer-to-peer games. Then the party talks through
+   Firebase's Realtime Database instead: the same Google servers that sign-in and the leaderboard use, so it gets
+   through the same filters. relay/{CODE}/host marks an open party and relay/{CODE}/box/{id} is each player's
+   mailbox. A letter is {f:from, d:"<json>"} or a control word {f:from, k:'hello'|'ok'|'close'}, and the reader
+   deletes each one it reads. A RelayConn looks like a PeerJS connection to the rest of the party code. ---- */
+const RELAY={db:null,loading:null,room:null,id:'',conns:{},offs:[],ok:false,want:false};
+function relayLoad(){
+  const cfg=acctCfg(); if(!cfg) return Promise.reject(new Error('off'));
+  if(RELAY.db) return Promise.resolve(RELAY.db);
+  if(RELAY.loading) return RELAY.loading;
+  const one=src=>new Promise((ok,bad)=>{ const s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=()=>{ s.remove(); bad(new Error('load')); }; document.head.appendChild(s); });
+  RELAY.loading=fbLoad().then(()=>firebase.database?0:one(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-database-compat.js`).catch(()=>one(`https://cdn.jsdelivr.net/npm/firebase@${FB_VER}/firebase-database-compat.js`)))
+    .then(()=>{
+      if(!firebase.apps.length) firebase.initializeApp(cfg);
+      const db=firebase.app().database(cfg.databaseURL||`https://${cfg.projectId}-default-rtdb.firebaseio.com`);
+      const emu=new URLSearchParams(location.search).get('rtdbemu'); if(emu) db.useEmulator('127.0.0.1',+emu);
+      return RELAY.db=db;
+    }).catch(e=>{ RELAY.loading=null; throw e; });
+  return RELAY.loading;
+}
+const within=(p,ms)=>Promise.race([p,new Promise((_,bad)=>setTimeout(()=>bad(new Error('timeout')),ms))]);
+class RelayConn{
+  constructor(to){ this.to=to; this.open=false; this.dead=false; this.via='relay'; this.h={}; }
+  on(ev,f){ (this.h[ev]=this.h[ev]||[]).push(f); return this; }
+  emit(ev,a){ (this.h[ev]||[]).slice().forEach(f=>{ try{ f(a); }catch(e){ console.error(e); } }); }
+  send(o){ if(this.open) relayPost(this.to,{d:JSON.stringify(o)}); }
+  close(){ if(this.dead) return; relayPost(this.to,{k:'close'}); this._gone(); }
+  _open(){ if(this.open||this.dead) return; this.open=true; this.emit('open'); }
+  _gone(){ if(this.dead) return; this.dead=true; this.open=false; this.emit('close'); }
+  _data(m){ let o; try{ o=JSON.parse(m.d); }catch(e){ return; } this.emit('data',o); }
+}
+function relayPost(to,m){ if(!RELAY.room) return; m.f=RELAY.id; RELAY.room.child('box/'+to).push(m).catch(()=>{}); }
+function relayListen(onMsg){
+  const box=RELAY.room.child('box/'+RELAY.id);
+  box.onDisconnect().remove();
+  const f=box.on('child_added',s=>{ const m=s.val(); s.ref.remove().catch(()=>{}); if(m&&typeof m.f==='string') onMsg(m); });
+  RELAY.offs.push(()=>box.off('child_added',f));
+}
+/* host: claim the code, then answer each friend who says hello */
+function relayHost(code){
+  RELAY.want=true;
+  const stale=()=>!(NET.host&&NET.code===code&&NET.peer);
+  return relayLoad().then(db=>{
+    if(stale()) throw new Error('stale');
+    db.goOnline();
+    const room=db.ref('relay/'+code);
+    return within(room.child('host').transaction(cur=>cur?undefined:{id:'h',t:Date.now()}),10000).then(r=>{
+      if(stale()){ if(r.committed) room.remove().catch(()=>{}); throw new Error('stale'); }
+      if(!r.committed){ const e=new Error('taken'); e.type='taken'; throw e; }
+      RELAY.room=room; RELAY.id='h'; RELAY.conns={};
+      room.onDisconnect().remove();   // the party closes on the backup line when this tab goes away
+      relayListen(m=>{
+        let c=RELAY.conns[m.f];
+        if(m.k==='hello'){ relayPost(m.f,{k:'ok'}); if(!c||c.dead){ c=RELAY.conns[m.f]=new RelayConn(m.f); netWireHost(c); c._open(); } return; }
+        if(!c) return;
+        if(m.k==='close') c._gone(); else if(m.d!=null) c._data(m);
+      });
+      RELAY.ok=true;
+    });
+  });
+}
+/* guest: find the party, then keep saying hello until the host answers */
+function relayJoin(code){
+  RELAY.want=true;
+  return relayLoad().then(db=>{
+    db.goOnline();
+    const room=db.ref('relay/'+code);
+    return within(room.child('host').once('value'),10000).then(s=>{
+      if(!s.exists()){ const e=new Error('none'); e.type='peer-unavailable'; throw e; }
+      if(!(!NET.host&&NET.code===code&&NET.peer)||NET.conn) throw new Error('stale');
+      RELAY.room=room; RELAY.id='g'+Math.random().toString(36).slice(2,12); RELAY.conns={};
+      const c=RELAY.conns.h=new RelayConn('h');
+      room.child('box/h').push().onDisconnect().set({f:RELAY.id,k:'close'});   // tells the host if this tab vanishes
+      relayListen(m=>{ if(m.f!=='h') return;
+        if(m.k==='ok') c._open(); else if(m.k==='close') c._gone(); else if(m.d!=null){ c._open(); c._data(m); } });
+      const hr=room.child('host'), hf=hr.on('value',v=>{ if(!v.exists()) c._gone(); });
+      let n=0; const t=setInterval(()=>{ if(c.open||c.dead||++n>12){ clearInterval(t); return; } relayPost('h',{k:'hello'}); },800);
+      RELAY.offs.push(()=>hr.off('value',hf),()=>clearInterval(t));
+      relayPost('h',{k:'hello'});
+      return c;
+    });
+  });
+}
+function relayStop(){
+  RELAY.offs.forEach(f=>{ try{ f(); }catch(e){} }); RELAY.offs=[];
+  Object.values(RELAY.conns).forEach(c=>{ c.dead=true; c.open=false; });
+  const room=RELAY.room, id=RELAY.id; RELAY.room=null; RELAY.id=''; RELAY.conns={}; RELAY.ok=false; RELAY.want=false;
+  if(room){ room.onDisconnect().cancel().catch(()=>{}); (id==='h'?room:room.child('box/'+id)).remove().catch(()=>{}); }
+  // hang up once the last letters are out, so an idle tab doesn't hold a database connection
+  if(RELAY.db) setTimeout(()=>{ if(!RELAY.want&&RELAY.db) RELAY.db.goOffline(); },1500);
 }
 function netErr(e){ return e&&e.type==='network'||e&&e.type==='server-error'?'Could not reach the party server. Check your connection.':e&&e.type==='browser-incompatible'?'This browser does not support online play.':'Connection problem ('+(e&&e.type||'unknown')+'). Try again.'; }
 /* ---- host side ---- */
@@ -3651,7 +3780,7 @@ function netFromGuest(c,o){
   if(o.t==='hi'){ const fresh=!NET.mates[x.slot];
     // welcome them again, now that we know they are listening: a welcome sent the moment the line opens can be lost
     try{ c.send({t:'welcome',slot:x.slot}); }catch(e){}
-    NET.mates[x.slot]={name:cleanName(o.name)||'Friend',skin:o.skin||'classic',land:o.land,rank:clamp(+o.rank||0,0,RANK_MAX)};
+    NET.mates[x.slot]={name:cleanName(o.name)||'Friend',skin:o.skin||'classic',land:o.land,rank:clamp(+o.rank||0,0,RANK_MAX),v:c.via==='relay'?'r':''};
     if(fresh) netRosterSend(); else try{ c.send({t:'roster',you:x.slot,list:netRosterList()}); }catch(e){}
     if(fresh) netRosterChanged(NET.mates[x.slot]); else { netPeerLook(); netUI(); }
     return; }
@@ -3674,7 +3803,8 @@ const netRosterList=()=>[{s:0,...netMe()}].concat(netMateList());
 function netRosterSend(){ if(!NET.host) return; const list=netRosterList(); for(const q of NET.conns) if(q.c.open) try{ q.c.send({t:'roster',you:q.slot,list}); }catch(e){} }
 /* ---- guest side ---- */
 function netWire(c){
-  c.on('open',()=>{ NET.conn=c; NET.samples=[]; NET.rtt=1e9; NET.off=0; NET.lastHost=performance.now(); NET.refused=null; NET.listed=false;
+  c.on('open',()=>{ if(NET.conn&&NET.conn!==c&&NET.conn.open){ try{ c.close(); }catch(e){} return; }
+    NET.conn=c; NET.via=c.via||'direct'; NET.samples=[]; NET.rtt=1e9; NET.off=0; NET.lastHost=performance.now(); NET.refused=null; NET.listed=false;
     netSend({t:'hi',...netMe()}); netStatus('Connected! Joining the party…'); netUI(); sChime(84);
     // a message sent the instant a line opens can be lost: keep saying hello until the host lists us
     clearInterval(NET.hiT); let tries=0; NET.hiT=setInterval(()=>{ if(NET.conn!==c||NET.listed||++tries>20){ clearInterval(NET.hiT); return; } netSend({t:'hi',...netMe()}); },700);
@@ -3691,9 +3821,9 @@ function netFromHost(o){
       const best=NET.samples.reduce((a,b)=>b.rtt<a.rtt?b:a); NET.rtt=best.rtt; NET.off=best.off; return; }
     case 'welcome': NET.slot=o.slot; return;
     case 'roster': { if(o.you) NET.slot=o.you;
-      const before=new Set(Object.keys(NET.mates)), m={}; (o.list||[]).forEach(r=>{ if(r.s!==NET.slot) m[r.s]={name:cleanName(r.name)||'Friend',skin:r.skin||'classic',land:r.land,rank:clamp(+r.rank||0,0,RANK_MAX)}; });
+      const before=new Set(Object.keys(NET.mates)), m={}; (o.list||[]).forEach(r=>{ if(r.s!==NET.slot) m[r.s]={name:cleanName(r.name)||'Friend',skin:r.skin||'classic',land:r.land,rank:clamp(+r.rank||0,0,RANK_MAX),v:r.v==='r'?'r':''}; });
       const listed=!!NET.slot&&(o.list||[]).some(r=>r.s===NET.slot);
-      if(listed&&!NET.listed){ NET.listed=true; const hn=cleanName(((o.list||[]).find(r=>r.s===0)||{}).name); netStatus(`You're in ${hn?hn+'\'s':'the'} party! Waiting for the host to pick a mode…`); }
+      if(listed&&!NET.listed){ NET.listed=true; const hn=cleanName(((o.list||[]).find(r=>r.s===0)||{}).name); netStatus(`You're in ${hn?hn+'\'s':'the'} party${NET.via==='relay'?' (through the backup line)':''}! Waiting for the host to pick a mode…`); }
       NET.mates=m; const fresh=Object.keys(m).find(s=>!before.has(s)&&+s!==0);
       netRosterChanged(fresh!=null&&before.size?m[fresh]:null); return; }
     case 'full': NET.refused=`That party is full (${PARTY_MAX} players).`; netStatus(NET.refused,true); $('nStatusIdle').textContent=NET.refused; setTimeout(()=>netLeave(),1500); return;
@@ -3729,7 +3859,7 @@ function netClosed(c){
   if(NET.conn!==c) return; NET.conn=null; clearInterval(NET.pingT);
   const who=netHostName();
   if(netMatch()){ G.state='dying'; G.netLeft=true; NET.leftName=who; gameOver('left'); }
-  NET.mates={}; NET.peer&&NET.peer.destroy&&NET.peer.destroy(); NET.peer=null;
+  NET.mates={}; NET.peer&&NET.peer.destroy&&NET.peer.destroy(); NET.peer=null; relayStop();
   const why=NET.refused||'Disconnected from the party.'; netStatus(why,true); $('nStatusIdle').textContent=why;
   netUI();
 }
@@ -3745,9 +3875,10 @@ setInterval(()=>{
 addEventListener('pagehide',()=>{ if(NET.peer) netSend({t:'bye'}); });
 function netLeave(quiet){
   clearInterval(NET.pingT); netSend({t:'bye'});
-  const c=NET.conn, p=NET.peer, cs=NET.conns;
-  NET.conn=null; NET.conns=[]; NET.peer=null; NET.code=''; NET.mates={}; NET.order=null;
-  try{ c&&c.close(); }catch(e){} cs.forEach(q=>{ try{ q.c.close(); }catch(e){} }); try{ p&&p.destroy&&p.destroy(); }catch(e){}
+  const c=NET.conn, p=NET.peer, p2=NET.peerP, cs=NET.conns;
+  NET.conn=null; NET.conns=[]; NET.peer=null; NET.peerP=null; NET.code=''; NET.mates={}; NET.order=null; NET.via='';
+  try{ c&&c.close(); }catch(e){} cs.forEach(q=>{ try{ q.c.close(); }catch(e){} }); [p,p2].forEach(x=>{ try{ x&&x.destroy&&x.destroy(); }catch(e){} });
+  relayStop();
   if(!quiet){ netUI(); $('nStatusIdle').textContent=NET.refused||''; }
 }
 /* a player left in the middle of a match: the others carry on without them (a duel or tether, or a match
@@ -3932,7 +4063,8 @@ const ACCT={user:null,ready:false,loading:null,err:'',db:null,auth:null,pushT:nu
 const FB_VER='10.14.1';
 // Hudson's Firebase project. A config pasted into index.html (window.PULSEFORM_FIREBASE) wins over this one.
 const FB_DEFAULT={apiKey:'AIzaSyBrAUF7jmH7gBKxBfJ6Un9bZRySC-jTTVU',authDomain:'pulseform-d8282.firebaseapp.com',projectId:'pulseform-d8282',
-  storageBucket:'pulseform-d8282.firebasestorage.app',messagingSenderId:'653074377253',appId:'1:653074377253:web:802ea5afbd1523319dedcc'};
+  storageBucket:'pulseform-d8282.firebasestorage.app',messagingSenderId:'653074377253',appId:'1:653074377253:web:802ea5afbd1523319dedcc',
+  databaseURL:'https://pulseform-d8282-default-rtdb.firebaseio.com'};
 const acctCfg=()=>{ if(window.PF_CG) return null; const c=window.PULSEFORM_FIREBASE||FB_DEFAULT; return c&&c.apiKey&&c.projectId?c:null; };
 function fbLoad(){
   if(window.firebase&&firebase.auth&&firebase.firestore) return Promise.resolve();
@@ -6517,9 +6649,9 @@ function netRoster(){
   const live=netLive(), mates=live?netMateList():[], n=1+mates.length;
   const all=[{s:NET.host?0:NET.slot,me:true}].concat(mates).sort((a,b)=>a.s-b.s);
   const slots=all.map(m=>m.me?rosterSlot({cls:'me',tag:m.s===0?'Host · you':'You',skin:SAVE.skin,name:SAVE.name||'You',rank:myRank(),st:'',pick:true})
-    :rosterSlot({cls:'friend in',tag:m.s===0?'Host':'Joined',skin:m.skin||'classic',name:m.name,rank:m.rank||0,st:'In the party'}));
+    :rosterSlot({cls:'friend in',tag:m.s===0?'Host':'Joined',skin:m.skin||'classic',name:m.name,rank:m.rank||0,st:m.v==='r'?'On the backup line':'In the party'}));
   if(n<PARTY_MAX) slots.push(`<div class="slot empty"><span class="tag">${n<2?'Friend':'Open'}</span><span>${n<2?'Waiting for a friend':'Room for '+(PARTY_MAX-n)+' more'}<span class="dots"></span></span><span class="small">Code <b style="color:#FFD166">${escapeHTML(NET.code||'····')}</b></span></div>`);
-  const line=n<2?`1 / ${PARTY_MAX} in the party`:`${n} / ${PARTY_MAX} in the party · `+(NET.host?'pick a mode below':`${escapeHTML(netHostName())} picks the mode`);
+  const line=n<2?`1 / ${PARTY_MAX} in the party`:`${n} / ${PARTY_MAX} in the party · `+(NET.host?'pick a mode below':`${escapeHTML(netHostName())} picks the mode`)+(!NET.host&&live?`<br><span class="small">${NET.via==='relay'?'Connected through the backup line':'Connected directly'}</span>`:'');
   el.classList.toggle('full',n>=2); el.dataset.n=slots.length;
   el.innerHTML=slots.join('')+`<div class="pcount">${line}</div>`;
   $('nMyBlock').onclick=()=>{ const r=$('nSkins'); r.hidden=!r.hidden; if(!r.hidden) buildPartySkins(); };
