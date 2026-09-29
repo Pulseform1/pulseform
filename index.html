@@ -513,6 +513,15 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 .cvkyou .won{display:block;margin-top:6px;font:800 16px var(--display);color:#FFE7A0;text-shadow:0 0 12px rgba(255,209,102,.6)}
 .cvkjoin{width:100%;background:linear-gradient(90deg,#3FA9FF,#8A4FD8 50%,#FF3B4E)!important;color:#fff!important;font-weight:800}
 .cvkrules{margin:0;color:var(--ink-3)}
+.cvkpromo{margin-top:180px;align-items:center}
+#cvkPromo{align-items:start;overflow-y:auto;padding-block:16px}
+.cvkpedestal.small{height:140px;margin:-140px auto 0;width:260px}
+.cvkpedestal.small canvas{top:-52px;width:170px;height:170px}
+.cvkpedestal.small .cvkrays{top:-80px;width:300px;height:300px}
+.cvkpromo .cvkjoin,.cvkpromo .btn{white-space:nowrap;width:auto}
+.cvkpromo .cvkask{margin:0;font:800 clamp(18px,4.6vw,22px) var(--display);color:#FFF3C4;text-shadow:0 0 14px rgba(255,209,102,.45)}
+.cvkpots{display:flex;gap:18px;justify-content:center;font:700 15px var(--display)}
+.cvkpots .c{color:#8FD0FF}.cvkpots .k{color:#FF9AA5}.cvkpots b{color:#fff;margin-left:4px}
 .cvkbets{margin-top:4px;font-size:12.5px;color:var(--ink-2);text-align:right}
 .cvkbet{display:flex;flex-direction:column;gap:8px;text-align:left;padding:12px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
 .cvkbethead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.cvkbethead b{font:800 15px var(--display)}
@@ -1018,6 +1027,20 @@ button:disabled{opacity:.55;cursor:default}
     <div><div class="eyebrow">Leaderboards</div><h2>Top 20</h2><p class="small" id="lbSub" style="margin:2px 0 0"></p></div>
     <div class="segs" id="lbTabs"><button data-t="daily" type="button">Daily</button><button data-t="endless" type="button">Endless</button><button data-t="ascent" type="button">Ascent</button><button data-t="week" type="button">Event</button></div>
     <div id="lbList"></div>
+  </div>
+</section>
+<section id="cvkPromo" class="overlay" hidden>
+  <div class="panel cvkpanel cvkpromo" role="dialog" aria-labelledby="cvkPTitle">
+    <div class="cvkpedestal small" aria-hidden="true"><div class="cvkrays"></div><div class="cvkglow"></div>
+      <canvas class="skprev" data-skin="eclipse" data-px="170" width="170" height="170"></canvas>
+      <div class="cvkstone"><i></i><i></i><i></i></div></div>
+    <span class="cvkbadge">Limited event</span>
+    <h2 class="cvktitle"><span class="c">CALE</span><em>VS</em><span class="k">KORRA</span></h2>
+    <p class="cvkask" id="cvkPTitle">Are you ready to bet on the real winner?</p>
+    <div class="cvktimer"><small id="cvkPPhase">Starts in</small><b id="cvkPTime">--</b></div>
+    <div class="cvkpots"><span class="c">Cale <b id="cvkPC">♪0</b></span><span class="k">Korra <b id="cvkPK">♪0</b></span></div>
+    <p class="small" style="margin:0;color:var(--ink-2)">Back the winner and take a share of the other side's notes. Bet ♪2,000 or ♪4,000 to unlock rewards you keep either way.</p>
+    <div class="row" style="justify-content:center"><button class="btn cvkjoin" id="cvkPGo" type="button">⚔ Bet now</button><button class="btn ghost" id="cvkPNo" type="button">Maybe later</button></div>
   </div>
 </section>
 <section id="cvkOv" class="overlay cvkov" hidden>
@@ -5542,6 +5565,18 @@ function cvkRender(){
   $('cvkBet').hidden=!open&&!(mc||mk)&&ph!=='soon';
   $('cvkOpen').textContent=ACCT.user?'⚔ Cale or Korra? Click here to sign up as a participant':'⚔ Cale or Korra? Sign in, then click here to sign up';
 }
+/* when the game opens while betting is open: one invitation per visit (the daily gift waits until after) */
+function cvkPromo(){
+  if(CVK.promoted||!cvkShown()||!cvkBetOpen()||G.state!=='menu') return false;
+  CVK.promoted=true; showOv('cvkPromo'); cvkWatch(); cvkPromoTick(); if(A.ctx) sChime(86); return true;
+}
+function cvkPromoTick(){
+  if($('cvkPromo').hidden) return; const ph=cvkPhase(), n=Date.now();
+  $('cvkPPhase').textContent=ph==='soon'?'Starts in':'Betting closes in'; $('cvkPTime').textContent=cvkFmt((ph==='soon'?CVK.start:CVK.betClose)-n);
+  $('cvkPC').textContent='♪'+cvkPot('cale').toLocaleString(); $('cvkPK').textContent='♪'+cvkPot('korra').toLocaleString();
+}
+$('cvkPGo').onclick=()=>showCvk();
+$('cvkPNo').onclick=()=>{ cvkUnwatch(); toMenu(); };
 function showCvk(){ showOv('cvkOv'); cvkMsg(''); $('cvkBetMsg').textContent=''; if(acctCfg()&&!ACCT.ready&&!ACCT.loading) acctInit(); cvkWatch(); cvkFindSide(); cvkLoadMyBet(); cvkRender(); }
 $('mCvk').onclick=showCvk;
 $('cvkBack').onclick=()=>{ cvkUnwatch(); toMenu(); };
@@ -5552,7 +5587,7 @@ $('cvkBet').querySelectorAll('.cvkamt button').forEach(b=>b.onclick=()=>{ $('cvk
 $('cvkPlace').onclick=cvkPlaceBet;
 $('cvkAmt').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') cvkPlaceBet(); });
 $('cvkCode').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') cvkSignUp(); });
-setInterval(()=>{ cvkRender();
+setInterval(()=>{ cvkRender(); cvkPromoTick();
   // after the event, a player who signed up checks the result now and then, so the winner gets the block
   const needWin=SAVE.cvkSide&&!SAVE.cvkWin, needPay=!SAVE.cvkPaid&&(cvkMyBet('cale')+cvkMyBet('korra'))>0;
   if(cvkPhase()==='over'&&(needWin||needPay)&&ACCT.db&&Date.now()-CVK.lastFetch>60000){ CVK.lastFetch=Date.now();
@@ -6500,7 +6535,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['cvkOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv'];
+const OVS=['cvkPromo','cvkOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -6512,7 +6547,7 @@ function toMenu(ov='menuOv'){
   if(G.state!=='menu') fadeMusic(); stopStudioAudio(); hideTalk(); hideCine();
   G=visualDefaults({state:'menu',players:[mkPlayer(0)]}); R=null; setTheme(THEMES[Math.min(WORLDS-1,SAVE.world-1)]);
   hint('');
-  if(ov==='menuOv'){ buildMenu(); setTimeout(()=>{ if(G.state==='menu'&&!$('menuOv').hidden&&!chalOffer()&&!lvlOffer()) giftCheck(); },500); } else if(ov==='hardOv') buildHard(); else if(ov==='worldsOv') buildWorlds(); else if(ov==='shopOv') buildShop(); else if(ov==='settingsOv') buildSettings();
+  if(ov==='menuOv'){ buildMenu(); setTimeout(()=>{ if(G.state==='menu'&&!$('menuOv').hidden&&!chalOffer()&&!lvlOffer()&&!cvkPromo()) giftCheck(); },500); } else if(ov==='hardOv') buildHard(); else if(ov==='worldsOv') buildWorlds(); else if(ov==='shopOv') buildShop(); else if(ov==='settingsOv') buildSettings();
   showOv(ov);
 }
 function nextUp(){
@@ -6767,7 +6802,7 @@ function loop(){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&shopTab==='skins') drawSkinPreviews(now); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkOv').hidden) drawSkinPreviews(now,'#cvkOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&shopTab==='skins') drawSkinPreviews(now); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkOv').hidden) drawSkinPreviews(now,'#cvkOv canvas.skprev'); if(!$('cvkPromo').hidden) drawSkinPreviews(now,'#cvkPromo canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
