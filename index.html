@@ -98,7 +98,7 @@ body.swipe-only .pads{display:none}
 .pad{--b:clamp(58px,17vw,74px);display:grid;grid-template-columns:repeat(3,var(--b));grid-template-rows:repeat(3,calc(var(--b)*.78));gap:4px}
 .pads.duo .pad{--b:clamp(40px,10.5vw,58px)}
 .pads.duo{gap:14px}
-.dir{pointer-events:auto;touch-action:none;width:var(--b);height:calc(var(--b)*.78);border-radius:16px;border:1px solid var(--line);background:rgba(255,248,238,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:background .12s,transform .08s;padding:0}
+.dir{pointer-events:auto;touch-action:none;width:var(--b);height:calc(var(--b)*.78);border-radius:16px;border:1px solid var(--line);background:rgba(255,248,238,.16);color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:background .12s,transform .08s;padding:0}
 .dir svg{width:26px;height:26px}
 .pads.duo .dir svg{width:20px;height:20px}
 .pads.mirror .d-left svg,.pads.mirror .d-right svg{transform:scaleX(-1)}
@@ -261,6 +261,9 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
 @media (max-width:520px){.beatbar{left:max(5px,env(safe-area-inset-left));width:32px;height:min(52vh,380px)}#app .talk{top:100px;max-width:calc(100% - 16px);padding:12px 14px 12px 10px}#app .talk .ttxt{font-size:15.5px}#app .talk .tport{width:52px;height:52px}#app .talk .tport svg{width:44px;height:44px}}
 .beatbar.hit .bbmid{animation:bbHit .22s ease-out}
 @keyframes bbHit{0%{transform:scaleX(1.5);background:rgba(255,209,102,.9)}100%{transform:scaleX(1);background:transparent}}
+/* slow computers: no blur behind menus (it is redrawn every frame), a darker backdrop instead */
+body.lite .overlay,body.lite .partybar,body.lite .panel{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+body.lite .overlay{background:rgba(20,16,46,.74)}
 /* phones on their side: controls float in the corners so the board gets the full height */
 @media (max-height:540px) and (orientation:landscape){
   .hud{padding-block:6px 0}.streak{font-size:28px}.metro{margin-top:4px}.tierline{margin-top:2px}
@@ -331,8 +334,8 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
 .cta-s{grid-row:2;font-size:13.5px;opacity:.8}
 .cta-go{grid-row:1/3;grid-column:2;font-size:20px}
 .cta:hover{filter:brightness(1.05)}
-.mcards{display:grid;grid-template-columns:repeat(8,1fr);gap:10px}
-@media (max-width:1180px) and (min-width:761px){.mcards{grid-template-columns:repeat(4,1fr)}.mcard{min-height:112px}}
+.mcards{display:grid;grid-template-columns:repeat(9,1fr);gap:10px}
+@media (max-width:1180px) and (min-width:761px){.mcards{grid-template-columns:repeat(5,1fr)}.mcard{min-height:112px}}
 .mcard{position:relative;text-align:left;background:rgba(28,24,62,.78);border:1px solid var(--line);border-top:3px solid var(--a);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:3px;min-height:132px;color:var(--ink);cursor:pointer;font:inherit}
 .mcard:hover{background:rgba(40,35,82,.85)}
 .mcard svg{width:30px;height:30px;color:var(--a);margin-bottom:6px}
@@ -348,6 +351,7 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
   .logo{font-size:clamp(46px,14vw,64px)}
   .tag{font-size:14px}
   .mcards{grid-template-columns:1fr 1fr;gap:10px}
+  .mcards .mcard:last-child:nth-child(odd){grid-column:1/-1}
   .mcard{min-height:104px;padding:12px}
   .mcard svg{width:24px;height:24px;margin-bottom:2px}
   .mtop-r .wallet{order:-1}
@@ -360,8 +364,10 @@ summary{cursor:pointer;font-weight:600;font-size:14px}
   #menuArt{order:0;min-height:120px}
   .tag,.eyebrow{display:none}
   .logo{font-size:40px}
-  .mcards{grid-template-columns:repeat(8,1fr)}
+  .mcards{grid-template-columns:repeat(9,1fr)}
   .mcard{min-height:0;padding:10px}.mcard small{display:none}
+  /* short screens: the menu scrolls instead of stacking the mode cards on top of the Start button */
+  #menuOv{overflow-y:auto} #menuOv .mmain,#menuOv .mcards{flex:0 0 auto}
 }
 
 /* CrazyGames build: nothing that needs an outside account or leaves the site */
@@ -462,9 +468,14 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 .online{border:1px solid var(--line);background:var(--glass);border-radius:16px;padding:12px 14px;display:grid;gap:8px}
 .onl-head{display:flex;align-items:center;gap:8px}.onl-dot{width:8px;height:8px;border-radius:50%;background:#B8F2E6;box-shadow:0 0 0 0 rgba(184,242,230,.7);animation:onl 1.6s infinite}
 @keyframes onl{70%{box-shadow:0 0 0 8px rgba(184,242,230,0)}100%{box-shadow:0 0 0 0 rgba(184,242,230,0)}}
-.joinrow{display:grid;grid-template-columns:1fr 84px auto;gap:8px;align-items:stretch}
+.joinrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch}
+.joinstep{display:flex;flex-direction:column;gap:6px}
+.joinstep>b{font:700 14px var(--display)}
+.joinstep>.btn{margin:2px 0 0}
+.joinor{display:flex;align-items:center;gap:10px;margin:10px 0;color:var(--ink-3);font-size:12px;text-transform:uppercase;letter-spacing:.12em}
+.joinor::before,.joinor::after{content:'';flex:1;height:1px;background:var(--line)}
 .joinrow .btn{margin:0}
-#nCode{min-width:0;font:600 16px var(--display);letter-spacing:.2em;text-align:center;text-transform:uppercase;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink);padding:0 6px}
+#nCode{min-width:0;min-height:48px;font:700 22px var(--display);letter-spacing:.35em;text-align:center;text-transform:uppercase;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink);padding:0 6px}
 #nCode:focus{outline:2px solid #FFD166;outline-offset:1px}
 .coderow{display:flex;align-items:center;gap:10px}.pcode{font:700 30px var(--display);letter-spacing:.18em;color:#FFD166}
 .small.err,#nStatus.err,#aMsg.err{color:#FFB3A8}
@@ -698,7 +709,7 @@ button:disabled{opacity:.55;cursor:default}
 .invitebar{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:8;display:flex;align-items:center;gap:10px;max-width:calc(100% - 24px);padding:10px 12px 10px 16px;border-radius:16px;background:rgba(28,24,62,.96);border:1px solid rgba(156,255,216,.6);box-shadow:0 10px 30px rgba(10,8,30,.45);font:600 14px var(--body);color:var(--ink);pointer-events:auto}
 .invitebar .btn{padding:8px 14px;font-size:13px}
 @media (max-width:560px){.fpworlds{grid-template-columns:repeat(4,1fr)}.invitebar{flex-wrap:wrap;justify-content:center;text-align:center}}
-@media (max-width:380px){.joinrow{grid-template-columns:1fr 70px}.joinrow #nHost{grid-column:1/-1}}
+
 </style>
 
 <canvas id="cv" aria-label="Game board"></canvas>
@@ -765,6 +776,7 @@ button:disabled{opacity:.55;cursor:default}
     <button class="mcard" id="mCoop" type="button" style="--a:#C9B8FF"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="11" width="12" height="12" rx="3" fill="currentColor"/><rect x="17" y="7" width="12" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="3"/></svg><b>Co-op</b><small>Journey or Duel, one device</small><span class="meta" id="mCoopMeta"></span></button>
     <button class="mcard" id="mHard" type="button" style="--a:#FF6B6B"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3l3.5 8.5L28 13l-6.5 6 2 9L16 23.5 8.5 28l2-9L4 13l8.5-1.5z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="16" cy="16" r="3" fill="currentColor"/></svg><b>Hard Mode</b><small>12 brutal stages</small><span class="meta" id="mHardMeta"></span></button>
     <button class="mcard" id="mAscent" type="button" style="--a:#8FF0E0"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 28l9-12 5 6 4-5 8 11z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="M21 4v9M17 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Ascent</b><small>Climb floors, pick power cards</small><span class="meta" id="mAscentMeta"></span></button>
+    <button class="mcard" id="mRush" type="button" style="--a:#FF9F5A"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 26V12l10-7 10 7v14z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="16" cy="16" r="4" fill="currentColor"/><path d="M11 26v-4h10v4" fill="none" stroke="currentColor" stroke-width="2.6"/></svg><b>Boss Rush</b><small>Every boss, back to back, solo</small><span class="meta" id="mRushMeta"></span></button>
     <button class="mcard" id="mStudio" type="button" style="--a:#FF7EB6"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 24V7l14-3v17" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="8.5" cy="24" r="3.5" fill="currentColor"/><circle cx="22.5" cy="21" r="3.5" fill="currentColor"/></svg><b>Studio</b><small>Any song, your tempo</small><span class="meta" id="mStudioMeta"></span></button>
   <button class="mcard" id="mCreate" type="button" style="--a:#B8F27A"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="4" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.6"/><rect x="18" y="18" width="10" height="10" rx="2" fill="currentColor"/><path d="M18 9h10M23 4v10M4 23h10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg><b>Create</b><small>Build and share levels</small><span class="meta" id="mCreateMeta"></span></button>
   </nav>
@@ -1091,12 +1103,14 @@ button:disabled{opacity:.55;cursor:default}
       <div class="onl-head"><span class="eyebrow">Online · up to 4 devices</span><span class="onl-dot" aria-hidden="true"></span></div>
       <div id="netIdle">
         <label class="namerow" for="nName"><span class="small">Your name</span><input id="nName" maxlength="14" placeholder="Pick a name" autocomplete="nickname" spellcheck="false"></label>
-        <p class="small" style="margin:0 0 8px">Host a party and send the code to a friend. They join from their own phone or computer. Your name and rank show above your block.</p>
-        <div class="joinrow">
-          <button class="btn" id="nHost" type="button">Host a party</button>
-          <input id="nCode" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Party code">
-          <button class="btn ghost" id="nJoin" type="button">Join</button>
-        </div>
+        <div class="joinstep"><b>Start a party</b><span class="small">You get a 4-letter code. Up to 3 friends can join with it from their own phone or computer.</span>
+          <button class="btn" id="nHost" type="button">Host a party</button></div>
+        <div class="joinor"><span>or</span></div>
+        <div class="joinstep"><b>Join a friend's party</b><span class="small">Type the 4-letter code shown on your friend's screen, then tap Join.</span>
+          <div class="joinrow">
+            <input id="nCode" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Party code from your friend" inputmode="text">
+            <button class="btn" id="nJoin" type="button">Join</button>
+          </div></div>
         <div class="small err" id="nStatusIdle"></div>
       </div>
       <div id="netLive" hidden>
@@ -1650,7 +1664,7 @@ Object.assign(TIPS,{
   spring:'Spring pads launch you 2 extra tiles the way you were moving, right over gaps.',
   twin:'Blue twin gates only drop once BOTH blue buttons (1 and 2) are pressed. Find them both.',
   blink:'Blink tiles switch on and off every bar (4 beats). They flicker before they vanish.',
-  laser:'Laser rows charge up over a bar and fire just after beat 4 (every other bar in Hard Mode). Be off the beam when it fires.',
+  laser:'Laser rows charge up over two bars and fire just after the 8th beat. Be off the beam when it fires.',
   ghost:'Ghost tiles are invisible until you stand next to them. They also flash on every downbeat.'});
 const MECH_NAMES={pillar:'pillars',gem:'gems',crack:'cracks',tele:'teleporters',lock:'arrow locks',rgate:'rhythm gates',gate:'buttons & gates',wind:'wind',vent:'fire vents',ice:'ice',
   spring:'spring pads',twin:'twin gates',blink:'blink tiles',laser:'laser rows',ghost:'ghost tiles'};
@@ -1957,6 +1971,7 @@ function modeFor(type,a,b){
   if(type==='daily'){ const d=dailyInfo(); return {type,rooms:3,mustMove:true,fallEnds:true,harmony:d.mod==='onelife'?1:5,mods:d.mod?{[d.mod]:true}:{},seed:d.key,diff:d.diff,themeIdx:d.themeIdx,mod:d.mod}; }
   if(type==='coop') return {type,coop:true,rooms:0,mustMove:false,fallEnds:false,harmony:6,mods:{}};
   if(type==='raid') return {type,coop:true,raid:true,rooms:0,mustMove:false,fallEnds:false,harmony:6,mods:{},world:1};
+  if(type==='rush') return {type:'raid',solo:true,raid:true,rooms:0,mustMove:false,fallEnds:false,harmony:5,mods:{},world:1};   // Boss Rush: the raid, solo
   if(type==='tether') return {type,coop:true,tether:true,rooms:0,mustMove:false,fallEnds:false,harmony:6,mods:{}};
   if(type==='interlude') return {type,rooms:INTER.rooms,mustMove:false,fallEnds:true,harmony:3,mods:{}};
   if(type==='ascent') return {type,rooms:0,mustMove:false,fallEnds:false,harmony:4,mods:{},world:1,seed:a&&a.seed||Math.random().toString(36).slice(2,8)};
@@ -1989,7 +2004,7 @@ function startRun(M){
   if(M.atPerf!=null&&(M.net||M.coop||M.duel)) startCountdown(M.atPerf);
   stopStudioAudio(); if(M.type==='studio'&&M.file) studioBegin(M); if(M.type==='studio'&&M.silent) studioSilentBegin(M);
   clearInterval(A.pumpT); A.pumpT=setInterval(()=>{ if(G.state==='playing'||G.state==='cutscene') pump(); },40);
-  const title=M.type==='level'?`${M.world}-${M.level} ${LEVEL_NAMES[M.world-1][M.level-1]}`:M.type==='boss'?BOSS[M.world-1]:M.type==='daily'?'Daily Challenge':M.type==='hard'?`Hard ${M.idx} · ${HARD_NAMES[M.idx-1]}`:M.type==='duel'?'Duel':M.type==='coop'?'Co-op':M.type==='raid'?'Boss Raid':M.type==='tether'?'Tether':M.type==='ascent'?'Ascent · floor 1':M.type==='studio'?M.songName:M.type==='interlude'?'Interlude · The Silence':M.type==='event'?weekEvent().name:M.type==='custom'?(M.design.n||'Custom level'):'Endless';
+  const title=M.type==='level'?`${M.world}-${M.level} ${LEVEL_NAMES[M.world-1][M.level-1]}`:M.type==='boss'?BOSS[M.world-1]:M.type==='daily'?'Daily Challenge':M.type==='hard'?`Hard ${M.idx} · ${HARD_NAMES[M.idx-1]}`:M.type==='duel'?'Duel':M.type==='coop'?'Co-op':M.type==='raid'?(M.solo?'Boss Rush':'Boss Raid'):M.type==='tether'?'Tether':M.type==='ascent'?'Ascent · floor 1':M.type==='studio'?M.songName:M.type==='interlude'?'Interlude · The Silence':M.type==='event'?weekEvent().name:M.type==='custom'?(M.design.n||'Custom level'):'Endless';
   G.banner={text:title,sub:M.type==='interlude'?'keep moving':M.type==='level'?`♪ ${trackName()} · ${M.level===1?'the song begins':'+ '+INST[M.level]} · part ${M.level}/9`:M.type==='boss'?`♪ ${trackName()} · the full symphony`:`♪ ${trackName()} · ${TRACK.style.mood}`,t0:G.now,dur:2.6,col:'#FFF8EE'};
   $('score').textContent='0'; setPads(); hud();
   const key=M.type==='level'?M.world+'-'+M.level:'';
@@ -2001,7 +2016,7 @@ function startRun(M){
   if(!h&&M.type==='duel') h='Step on your blaster pad to shell your rival\'s tile. Knock them off 3 times to win.';
   if(!h&&M.type==='daily') h=M.mod?MODS[M.mod]:'No modifier today. Three rooms, one run.';
   if(!h&&M.type==='coop') h='P1 uses WASD, P2 uses the arrows. Both blocks must reach the door.';
-  if(M.type==='raid') h=(M.net?'Online Boss Raid: ':'Boss Raid: ')+'fight every boss back to back. Step on either blaster pad to fire. Dodge the red targets. Each boss you beat heals 2 Harmony.';
+  if(M.type==='raid') h=M.solo?'Boss Rush: every boss, back to back. Step on the blaster pad to fire. Dodge the red targets. Each boss you beat heals 2 Harmony.':(M.net?'Online Boss Raid: ':'Boss Raid: ')+'fight every boss back to back. Step on either blaster pad to fire. Dodge the red targets. Each boss you beat heals 2 Harmony.';
   if(M.type==='tether') h=(M.net?'Online Tether: ':'Tether: ')+`you are tied together. Stretch the cord past ${TETHER_MAX} tiles and it snaps you back (−1 Harmony). Stay side by side for double points.`;
   if(M.type==='interlude') h='';
   if(!h&&M.type==='studio') h=`Studio · ${Math.round(M.bpm*10)/10} BPM · ${M.diff==='chill'?'Chill: skip beats whenever you like.':M.diff==='groove'?'Groove: a move every beat.':'Intense: a move every beat, 3 Harmony.'}`+(M.file?' The run ends when your song does.':M.silent?(M.synced?' Silent mode: lined up with your taps.':' Silent mode: tap tempo along with your song right before Start to line up the beat.'):'');
@@ -2318,8 +2333,10 @@ function spawnBloom(){
 }
 
 /* ---------------- RENDER ---------------- */
+var PERF={f:[],last:0,level:0}; const PERF_DPR=[2,1.5,1.2,1];   // see perfTick
+try{ PERF.level=Math.max(0,Math.min(3,+localStorage.getItem('pf-perf')||0)); }catch(e){}
 const cv=$('cv'); let cx=cv.getContext('2d'); let DPR=1, VW=0, VH=0;
-function resize(){ DPR=Math.min(MOB?1.5:2,devicePixelRatio||1); VW=innerWidth; VH=innerHeight; cv.width=VW*DPR; cv.height=VH*DPR; }
+function resize(){ DPR=Math.min(MOB?1.5:2,PERF_DPR[PERF.level],devicePixelRatio||1); VW=innerWidth; VH=innerHeight; cv.width=VW*DPR; cv.height=VH*DPR; }
 addEventListener('resize',resize); resize();
 const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
 const mixc=(a,b,t)=>{const A1=hex(a),B1=hex(b);return `rgb(${Math.round(lerp(A1[0],B1[0],t))},${Math.round(lerp(A1[1],B1[1],t))},${Math.round(lerp(A1[2],B1[2],t))})`};
@@ -2989,7 +3006,7 @@ function skinPost(S,x0,topY,bw,bh,H,now,P){
 function drawSkinPreviews(now,sel){
   const cvs=document.querySelectorAll(sel||'#shopGrid canvas.skprev'); if(!cvs.length) return;
   const main=cx, dpr=Math.min(2,devicePixelRatio||1), gm=G.mode; G.mode=gm?{...gm,coop:false}:null;
-  cvs.forEach((c,idx)=>{ const r=c.getBoundingClientRect(); if(r.bottom<0||r.top>innerHeight) return;
+  cvs.forEach((c,idx)=>{ const r=c.getBoundingClientRect(); if(!r.width||r.bottom<0||r.top>innerHeight) return;
     const w=64, h=64; if(c.width!==w*dpr){ c.width=w*dpr; c.height=h*dpr; }
     const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,w,h); cx=g;
     const ph=((now+idx*.13)%1), lift=ph<.32?Math.sin(Math.PI*ph/.32)*9:0, sq=ph>=.32&&ph<.45?.12*(1-(ph-.32)/.13):0;
@@ -3333,7 +3350,7 @@ function netHost(){
   NET.host=true; NET.me=0; NET.slot=0; NET.refused=null; NET.code=netCode(); NET.peer={pending:true}; netUI(); netStatus('Opening a party…');
   netLib().then(()=>{
     const p=new Peer(NET_PREFIX+NET.code,netOpts()); NET.peer=p;
-    p.on('open',()=>{ netUI(); netStatus(`Share this code. Up to ${PARTY_MAX-1} friends can tap Join and type it in.`); });
+    p.on('open',()=>{ netUI(); netStatus(`Share this code with up to ${PARTY_MAX-1} friends: they open Play together, type ${NET.code} under "Join a friend's party" and tap Join.`); });
     p.on('connection',netWireHost);
     p.on('error',e=>{ if(e.type==='unavailable-id'){ netHost(); return; } if(e.type==='peer-unavailable') return; netStatus(netErr(e),true); });
     p.on('disconnected',()=>{ if(NET.peer===p) try{ p.reconnect(); }catch(e){} });
@@ -3372,7 +3389,9 @@ function netFromGuest(c,o){
     // welcome them again, now that we know they are listening: a welcome sent the moment the line opens can be lost
     try{ c.send({t:'welcome',slot:x.slot}); }catch(e){}
     NET.mates[x.slot]={name:cleanName(o.name)||'Friend',skin:o.skin||'classic',land:o.land,rank:clamp(+o.rank||0,0,RANK_MAX)};
-    netRosterSend(); netRosterChanged(fresh?NET.mates[x.slot]:null); return; }
+    if(fresh) netRosterSend(); else try{ c.send({t:'roster',you:x.slot,list:netRosterList()}); }catch(e){}
+    if(fresh) netRosterChanged(NET.mates[x.slot]); else { netPeerLook(); netUI(); }
+    return; }
   // a game event: stamp it with that player's number in the match, pass it on to everyone else, then play it here
   if(!G.mode||!G.mode.net||(o.m!=null&&o.m!==G.mode.seed)) return;   // from a match that has already ended
   const i=NET.order?NET.order.indexOf(x.slot):-1; if(i<0) return; o.p=i;
@@ -3387,11 +3406,15 @@ function netGuestGone(c){
   if(NET.peer) netStatus(`${name} left. The party is still open with the same code.`,true);
   netUI();
 }
-function netRosterSend(){ if(NET.host) netSend({t:'roster',list:[{s:0,...netMe()}].concat(netMateList())}); }
+const netRosterList=()=>[{s:0,...netMe()}].concat(netMateList());
+/* each guest gets the list with their own slot in it (`you`), so a lost welcome can't leave them without one */
+function netRosterSend(){ if(!NET.host) return; const list=netRosterList(); for(const q of NET.conns) if(q.c.open) try{ q.c.send({t:'roster',you:q.slot,list}); }catch(e){} }
 /* ---- guest side ---- */
 function netWire(c){
-  c.on('open',()=>{ NET.conn=c; NET.samples=[]; NET.rtt=1e9; NET.off=0; NET.lastHost=performance.now(); NET.refused=null;
-    netSend({t:'hi',...netMe()}); netStatus('Connected! Waiting for the host to pick a mode…'); netUI(); sChime(84);
+  c.on('open',()=>{ NET.conn=c; NET.samples=[]; NET.rtt=1e9; NET.off=0; NET.lastHost=performance.now(); NET.refused=null; NET.listed=false;
+    netSend({t:'hi',...netMe()}); netStatus('Connected! Joining the party…'); netUI(); sChime(84);
+    // a message sent the instant a line opens can be lost: keep saying hello until the host lists us
+    clearInterval(NET.hiT); let tries=0; NET.hiT=setInterval(()=>{ if(NET.conn!==c||NET.listed||++tries>20){ clearInterval(NET.hiT); return; } netSend({t:'hi',...netMe()}); },700);
     netPingBurst(10); clearInterval(NET.pingT); NET.pingT=setInterval(netPing,1500); });
   c.on('data',netFromHost);
   c.on('close',()=>netClosed(c));
@@ -3404,9 +3427,11 @@ function netFromHost(o){
       NET.samples.push({rtt,off}); if(NET.samples.length>24) NET.samples.shift();
       const best=NET.samples.reduce((a,b)=>b.rtt<a.rtt?b:a); NET.rtt=best.rtt; NET.off=best.off; return; }
     case 'welcome': NET.slot=o.slot; return;
-    case 'roster': { const before=new Set(Object.keys(NET.mates)), m={}; (o.list||[]).forEach(r=>{ if(r.s!==NET.slot) m[r.s]={name:cleanName(r.name)||'Friend',skin:r.skin||'classic',land:r.land,rank:clamp(+r.rank||0,0,RANK_MAX)}; });
+    case 'roster': { if(o.you) NET.slot=o.you;
+      const before=new Set(Object.keys(NET.mates)), m={}; (o.list||[]).forEach(r=>{ if(r.s!==NET.slot) m[r.s]={name:cleanName(r.name)||'Friend',skin:r.skin||'classic',land:r.land,rank:clamp(+r.rank||0,0,RANK_MAX)}; });
+      const listed=!!NET.slot&&(o.list||[]).some(r=>r.s===NET.slot);
+      if(listed&&!NET.listed){ NET.listed=true; const hn=cleanName(((o.list||[]).find(r=>r.s===0)||{}).name); netStatus(`You're in ${hn?hn+'\'s':'the'} party! Waiting for the host to pick a mode…`); }
       NET.mates=m; const fresh=Object.keys(m).find(s=>!before.has(s)&&+s!==0);
-      if(!before.size) netStatus(`Connected to ${netHostName()}! Waiting for them to pick a mode…`);
       netRosterChanged(fresh!=null&&before.size?m[fresh]:null); return; }
     case 'full': NET.refused=`That party is full (${PARTY_MAX} players).`; netStatus(NET.refused,true); $('nStatusIdle').textContent=NET.refused; setTimeout(()=>netLeave(),1500); return;
     case 'busy': NET.refused='That party is in the middle of a match. Try again when it ends.'; netStatus(NET.refused,true); $('nStatusIdle').textContent=NET.refused; setTimeout(()=>netLeave(),1800); return;
@@ -3445,6 +3470,8 @@ function netClosed(c){
   const why=NET.refused||'Disconnected from the party.'; netStatus(why,true); $('nStatusIdle').textContent=why;
   netUI();
 }
+/* in the lobby the host repeats the party list every 3 s, so a lost update fixes itself */
+setInterval(()=>{ if(NET.host&&NET.conns.length&&!netMatch()) netRosterSend(); },3000);
 /* heartbeat: guests ping every 1.5 s and the host answers, so a closed tab or lost connection shows up within seconds */
 setInterval(()=>{
   const now=performance.now();
@@ -3677,7 +3704,7 @@ function mergeSaves(loc,cl,additive){
   for(const k of DEVICE_KEYS) if(k in loc) out[k]=loc[k];
   out.owned=[...new Set([...(cl.owned||[]),...(loc.owned||[])])];
   out.stars=Object.assign({},cl.stars||{}); for(const k in (loc.stars||{})) out.stars[k]=Math.max(out.stars[k]||0,loc.stars[k]);
-  for(const k of ['bestEndless','bestCoop','maxStreak','plays','world','lastWorld','bestAscent','rankSeen','bestRaid','bestTether','rankKeep']) out[k]=Math.max(loc[k]||0,cl[k]||0)||DEF[k];
+  for(const k of ['bestEndless','bestCoop','maxStreak','plays','world','lastWorld','bestAscent','rankSeen','bestRaid','bestRush','bestTether','rankKeep']) out[k]=Math.max(loc[k]||0,cl[k]||0)||DEF[k];
   // Notes and XP sync as changes: what this device earned or spent since it last synced is applied on top
   // of the account's value, so two devices playing at the same time both keep what they earned
   const B0=loc.syncBase;
@@ -3697,7 +3724,11 @@ function mergeSaves(loc,cl,additive){
     else out.quests=(a.date||'')>=(b.date||'')?a:b; }
   out.life=Object.assign({},cl.life||{}); for(const k in (loc.life||{})) out.life[k]=additive?(out.life[k]||0)+loc.life[k]:Math.max(out.life[k]||0,loc.life[k]);
   { const seen=new Set(), ml=[]; [...(newer.myLevels||[]),...(loc.myLevels||[]),...(cl.myLevels||[])].forEach(l=>{ if(l&&l.code&&!seen.has(l.code)&&ml.length<24){ seen.add(l.code); ml.push(l); } }); out.myLevels=ml; }
-  out.name=newer.name||loc.name||cl.name||'';
+  // the name: one you typed beats a made-up one, and the one typed last wins (not whichever save is newer,
+  // or a device's random name would replace your real one every time you signed in there)
+  const nameRank=v=>!v||!v.name?0:v.nameT?3:v.nameAuto?1:2, nl=nameRank(loc), nc=nameRank(cl);
+  const nw=nl!==nc?(nl>nc?loc:cl):nl===3?((cl.nameT||0)>=(loc.nameT||0)?cl:loc):newer;
+  out.name=nw.name||loc.name||cl.name||''; out.nameT=nw.nameT||0; out.nameAuto=!!nw.nameAuto&&nameRank(nw)===1;
   const dl=loc.daily||{}, dc=cl.daily||{}; out.daily=Object.assign({},DEF.daily,newer===cl?dc:dl);
   if(dl.date&&dl.date===dc.date){ out.daily.best=Math.max(dl.best||0,dc.best||0); out.daily.stars=Math.max(dl.stars||0,dc.stars||0); }
   out.daily.streak=Math.max(dl.streak||0,dc.streak||0);
@@ -3736,6 +3767,8 @@ function acctSync(){
       const cur=SAVE; cur.syncBase={notes:start.notes||0,xp:start.xp||0}; cur.linked=uid;
       SAVE=mergeSaves(cur,out,false); SAVE.syncBase={notes:out.notes||0,xp:out.xp||0}; ACCT.syncAgain=true; }
     if(!SAVE.name) restoreName();
+    // show the account's name everywhere straight away, and keep the spare copy in step
+    if(SAVE.name){ store.set('name',SAVE.name); ['nName','pName'].forEach(id=>{ const e=$(id); if(e&&document.activeElement!==e) e.value=SAVE.name; }); }
     store.set('save',SAVE); ACCT.lastSync=Date.now(); ACCT.err=''; acctRefresh();
   }).catch(e=>{ ACCT.err='Could not sync with your account ('+(e&&e.code||'offline')+'). Your progress is safe on this device and syncs next time.'; })
   .finally(()=>{ ACCT.syncP=null; ACCT.syncing=false; acctUI(); if(ACCT.syncAgain){ ACCT.syncAgain=false; acctPush(false); } });
@@ -3809,7 +3842,7 @@ function acctOut(){
   if(!ACCT.auth) return;
   // the progress lives in the account now; this device goes back to a fresh guest save
   const keep={}; for(const k of DEVICE_KEYS) keep[k]=SAVE[k];
-  acctSync().catch(()=>{}).then(()=>ACCT.auth.signOut()).then(()=>{ SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep,{trailRefund:true,name:SAVE.name||store.get('name','')}); store.set('save',SAVE); acctRefresh(); acctUI(); });
+  acctSync().catch(()=>{}).then(()=>ACCT.auth.signOut()).then(()=>{ SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep,{trailRefund:true,name:SAVE.name||store.get('name',''),nameT:SAVE.nameT||0,nameAuto:!!SAVE.nameAuto}); store.set('save',SAVE); acctRefresh(); acctUI(); });
 }
 
 /* ---- UI ---- */
@@ -3861,7 +3894,7 @@ const frDB=()=>ACCT.db, frMe=()=>ACCT.user&&ACCT.user.uid;
 function frCard(){
   const worlds=[]; for(let w=1;w<=WORLDS;w++) worlds.push(worldStars(w));
   return {v:1,name:ensureName(),code:FR.code,rank:myRank(),xp:SAVE.xp||0,skin:SAVE.skin,land:SAVE.land,world:SAVE.world||1,levelStars:levelStars(),worlds,
-    bosses:bossesBeaten(),hard:hardCleared(),interDone:!!SAVE.interDone,bestEndless:SAVE.bestEndless||0,bestAscent:SAVE.bestAscent||0,bestRaid:SAVE.bestRaid||0,
+    bosses:bossesBeaten(),hard:hardCleared(),interDone:!!SAVE.interDone,bestEndless:SAVE.bestEndless||0,bestAscent:SAVE.bestAscent||0,bestRush:SAVE.bestRush||0,bestRaid:SAVE.bestRaid||0,
     bestTether:SAVE.bestTether||0,levels:(SAVE.myLevels||[]).slice(0,24).map(l=>({n:l.n||'Untitled',code:l.code})),seen:Date.now()};
 }
 /* your public card is refreshed a few seconds after anything is saved, and every few minutes while the game is open */
@@ -3963,7 +3996,7 @@ async function frView(uid){
   $('fpRank').textContent=rankName(p.rank||0); $('fpRank').parentNode.style.setProperty('--rc',rankCol(p.rank||0)); $('fpGem').style.setProperty('--rc',rankCol(p.rank||0));
   $('fpLevels').textContent=`Reached world ${Math.min(WORLDS,p.world||1)} of ${WORLDS} · ◆ ${p.levelStars||0}/${WORLDS*27} stars · ${p.bosses||0}/${WORLDS} bosses · Hard Mode ${p.hard||0}/12`+(p.interDone?' · Interlude cleared':'');
   $('fpWorlds').innerHTML=(p.worlds||[]).map((n,i)=>`<span class="${n>=27?'full':''}" style="--c:${THEMES[i]?THEMES[i].acc:'#FFD166'}" title="${escapeHTML(THEMES[i]?THEMES[i].name:'World '+(i+1))}">W${i+1}<b>◆${n}</b></span>`).join('');
-  $('fpStats').innerHTML=[['Best Endless',(p.bestEndless||0).toLocaleString()],['Best Ascent',p.bestAscent?'floor '+p.bestAscent:'–'],['Best Boss Raid',p.bestRaid?p.bestRaid+'/'+WORLDS+' bosses':'–'],['Best Tether',p.bestTether?p.bestTether+' rooms':'–']].map(([l,v])=>`<div><span class="lbl">${l}</span><b>${v}</b></div>`).join('');
+  $('fpStats').innerHTML=[['Best Endless',(p.bestEndless||0).toLocaleString()],['Best Ascent',p.bestAscent?'floor '+p.bestAscent:'–'],['Best Boss Raid',p.bestRaid?p.bestRaid+'/'+WORLDS+' bosses':'–'],['Best Tether',p.bestTether?p.bestTether+' rooms':'–'],['Best Boss Rush',p.bestRush?p.bestRush+'/'+WORLDS+' bosses':'–']].map(([l,v])=>`<div><span class="lbl">${l}</span><b>${v}</b></div>`).join('');
   const maps=p.levels||[];
   $('fpMaps').innerHTML=maps.length?maps.map((l,i)=>`<li><span>${escapeHTML(l.n||'Untitled')}</span><button type="button" data-a="play" data-i="${i}">Play</button><button type="button" data-a="edit" data-i="${i}">Open in editor</button></li>`).join(''):'<li class="none">They haven\'t built any levels yet.</li>';
   $('fpMaps').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const d=edDecode(maps[+b.dataset.i].code); if(!d) return toast('That level could not be opened.'); if(!d.by) d.by=p.name; if(b.dataset.a==='play') playDesign(d,false); else { edLoad(d,-1); showEditor(); } });
@@ -4039,7 +4072,13 @@ function placeNewTiles(cfg,R0,F,used,free){
         Object.assign(cells[id(F[i+1])],newCell());           // the tile after the spring becomes a gap to bounce over
         cells[id(F[i])].spring=true; used.add(id(F[i])); used.add(id(F[i+1])); has.spring=true;
       } else if(k==='laser'){
-        const i=pick(p=>!isSG(p)); if(i<0) break; const p=F[i], axis=rng()<.5?'row':'col', li=axis==='row'?p.y:p.x;
+        const i=pick(p=>!isSG(p)); if(i<0) break; const p=F[i];
+        // the beam must cross the route, not run along it: a route walking 4-6 tiles down a beam can't get
+        // clear between shots. Take the axis with the shorter stretch along it; skip if both are over 2
+        const along=(ax,li)=>{ let run=0,best=0; F.forEach(q=>{ if((ax==='row'?q.y:q.x)===li){ run++; best=Math.max(best,run); } else run=0; }); return best; };
+        const ra=along('row',p.y), ca=along('col',p.x), pref=rng()<.5?'row':'col';
+        const axis=ra===ca?pref:ra<ca?'row':'col', li=axis==='row'?p.y:p.x;
+        if(Math.min(ra,ca)>2) continue;
         if((R0.lasers||[]).some(l=>l.axis===axis&&l.idx===li)) continue;
         let any=0; for(let t=0;t<N;t++){ const x=axis==='row'?t:li, y=axis==='row'?li:t, c=cells[y*N+x];
           if(c.t!==1||c.tele>=0||(x===R0.start.x&&y===R0.start.y)||(x===R0.goal.x&&y===R0.goal.y)) continue; c.beam=axis; any++; }
@@ -4108,7 +4147,7 @@ function drawNewSpecial(c,r,mx,my,now,L){
     cx.fillStyle=g; rr(r.X,r.Y,r.w,r.h,5); cx.fill(); }
 }
 /* lasers fire every bar; in Hard Mode every other bar, so there is time to cross */
-const laserEvery=()=>G.mode&&G.mode.type==='hard'?8:4;
+const laserEvery=()=>8;   // every other bar (it was every bar outside Hard Mode, which left too little time to cross)
 function laserCharge(now){ const lb=G.bi&&G.bi.last; if(!lb||!R||!R.lasers) return 0; const le=laserEvery(), ph=((lb.k%le)+(now-lb.t)/lb.spb)/(le-.5); return clamp(ph,0,1)*clamp(ph,0,1); }
 function drawLaserFx(L,now){
   if(!R||!R.lasers||!R.lasers.length) return;
@@ -4164,10 +4203,10 @@ function drawTwin(c,r,mx,my,now,L){
 const NAME_A=['Swift','Lucky','Neon','Quiet','Brave','Cosmic','Jazzy','Mellow','Rapid','Sunny','Tiny','Wild'],
       NAME_B=['Tempo','Beat','Fox','Comet','Drum','Echo','Pixel','Rhythm','Cube','Otter','Spark','Wave'];
 const cleanName=s=>(s||'').replace(/[^\p{L}\p{N} _.\-]/gu,'').replace(/\s+/g,' ').trim().slice(0,14);
-function ensureName(){ if(!SAVE.name){ SAVE.name=NAME_A[ri(NAME_A.length)]+' '+NAME_B[ri(NAME_B.length)]; save(); } return SAVE.name; }
+function ensureName(){ if(!SAVE.name){ SAVE.name=NAME_A[ri(NAME_A.length)]+' '+NAME_B[ri(NAME_B.length)]; SAVE.nameAuto=true; save(); } return SAVE.name; }
 /* the name is saved as you type (not only when the box loses focus), and a copy is kept on its own so
    signing out, erasing progress or switching saves never loses it */
-function setName(v,quiet){ const n=cleanName(v); if(n.length<2) return false; const changed=SAVE.name!==n; SAVE.name=n; store.set('name',n); if(changed) save();
+function setName(v,quiet){ const n=cleanName(v); if(n.length<2) return false; const changed=SAVE.name!==n; SAVE.name=n; store.set('name',n); if(changed){ SAVE.nameT=Date.now(); SAVE.nameAuto=false; save(); }
   ['nName','pName'].forEach(id=>{ const e=$(id); if(e&&document.activeElement!==e) e.value=n; });
   if(changed&&netLive()){ clearTimeout(setName.hiT); setName.hiT=setTimeout(netHello,quiet?600:0); }
   if(changed){ netRoster(); lbRename(); }
@@ -4198,7 +4237,11 @@ function xpForRun(o){
   if(M.type==='boss'&&o.cleared) xp+=60; if(M.type==='hard'&&o.cleared) xp+=40+M.idx*5; if(M.type==='daily'&&o.cleared) xp+=40;
   if(M.type==='endless'||M.type==='coop'||M.type==='tether') xp+=Math.max(0,G.roomIdx-1)*6; if(M.type==='raid') xp+=(G.raidBeaten||0)*20; if(M.type==='ascent') xp+=Math.max(0,(G.floorBest||1)-1)*12;
   if(M.type==='duel') xp+=25+(o.won?25:0);
-  xp=Math.min(900,xp);
+  // Maestro and up: the ranks cost far more, so runs pay more (x1.5, Supreme Conductor and True Pulse x1.75)
+  // and a single run can earn up to 2000 XP instead of 900
+  const rk=myRank();
+  if(rk>=RANK_MAESTRO){ xp=Math.round(xp*(rk>=RANK_SUPREME?1.75:1.5)); if(M.type==='endless') xp+=Math.max(0,G.roomIdx-1)*6; }
+  xp=Math.min(rk>=RANK_MAESTRO?2000:900,xp);
   /* Maestro and up: a raid of 7+ bosses pays 2000 XP, plus 400 for each boss past the 7th */
   const rb=G.raidBeaten||0;
   if(M.type==='raid'&&rb>=RAID_BIG_N&&myRank()>=RANK_MAESTRO) xp=Math.max(xp,RAID_BIG_XP+(rb-RAID_BIG_N)*RAID_BIG_EACH);
@@ -4385,6 +4428,7 @@ function ascentAdvance(){
 function ascentGuardianDown(){ if(G.mode.type!=='ascent') return false; setTimeout(()=>{ G.players.forEach(P=>P.done=true); ascentPick(); },1500); return true; }
 addEventListener('keydown',e=>{ if($('cardOv').hidden||G.state!=='picking') return; const m=/^Digit([1-3])$/.exec(e.code); if(!m) return; const b=$('cardRow').children[+m[1]-1]; if(b){ e.preventDefault(); b.click(); } });
 $('mAscent').onclick=()=>startRun(modeFor('ascent'));
+$('mRush').onclick=()=>startRun(modeFor('rush'));
 
 /* ================= STUDIO: pick any song, set your own BPM ================= */
 const STUDIO={src:'game',style:'shallows',tseed:'W1',songName:'Courtyard Dawn',bpm:100,diff:'groove',buf:null,fileName:'',firstBeat:0,off:0,preview:null,node:null,taps:[]};
@@ -5950,7 +5994,7 @@ function raidAdvance(){
   const k=G.raidK!=null?G.raidK:curK(); G.restUntil=Math.ceil((k+10)/4)*4-1;
   G.harmony=Math.min(G.maxH,G.harmony+RAID_HEAL);
   G.banner={text:BOSS[G.mode.world-1],sub:`Boss ${G.mode.world} of ${WORLDS}  ·  +${RAID_HEAL} Harmony`,t0:G.now,dur:2.2,col:THEMES[G.mode.world-1].acc}; G.newTrack=false; sChime(79);
-  hint(G.mode.world===2?'Two blaster pads, gold and mint. Either of you can use either one.':'',4000); hud();
+  hint(G.mode.world===2&&!G.mode.solo?'Two blaster pads, gold and mint. Either of you can use either one.':'',4000); hud();
 }
 
 /* ---- Tether ---- */
@@ -6053,7 +6097,7 @@ function hud(){
   else if(M.type==='duel'){ const p=G.players; a=`Duel · ${G.bpm} BPM`; b=M.net?`You ${'◆'.repeat(p[NET.me].lives||0)}  ·  Rival ${'◆'.repeat(p[1-NET.me].lives||0)}`:`P1 ${'◆'.repeat(p[0].lives||0)}  ·  P2 ${'◆'.repeat(p[1].lives||0)}`; }
   else if(M.type==='daily'){ a=`Daily · room ${G.roomIdx}/3`; b=(M.mod?MODS[M.mod].split(' · ')[0]:'No modifier')+` · ${G.bpm} BPM`; }
   else if(M.type==='coop'){ a=`${M.net?'Online co-op':'Co-op'} · room ${G.roomIdx}`; b=`${G.bpm} BPM`; }
-  else if(M.type==='raid'){ a=`${M.net?'Online raid':'Boss Raid'} · ${M.world}/${WORLDS} ${BOSS[M.world-1]}`; b=R&&R.boss?`HP ${R.boss.hp}/${R.boss.max} · beaten ${G.raidBeaten||0}`:''; }
+  else if(M.type==='raid'){ a=`${M.net?'Online raid':M.solo?'Boss Rush':'Boss Raid'} · ${M.world}/${WORLDS} ${BOSS[M.world-1]}`; b=R&&R.boss?`HP ${R.boss.hp}/${R.boss.max} · beaten ${G.raidBeaten||0}`:''; }
   else if(M.type==='tether'){ a=`${M.net?'Online tether':'Tether'} · room ${G.roomIdx}`; b=`${G.bpm} BPM · snaps ${G.stats.snaps||0}`; }
   else if(M.type==='interlude'){ a='Interlude · The Silence'; b=`Room ${G.roomIdx}/${M.rooms} · keep moving`; }
   else if(M.type==='studio'){ a=`Studio · ${M.songName}`; b=`Room ${G.roomIdx} · ${Math.round(M.bpm*10)/10} BPM`; }
@@ -6121,6 +6165,7 @@ function buildMenu(){
   $('mCreateMeta').innerHTML=(SAVE.myLevels||[]).length?`${SAVE.myLevels.length} level${SAVE.myLevels.length>1?'s':''}<br>built`:'New';
   $('mStudioMeta').innerHTML=SAVE.bestStudio?`Best<br>${SAVE.bestStudio} rooms`:'New mode';
   $('mAscentMeta').innerHTML=SAVE.bestAscent?`Best<br>floor ${SAVE.bestAscent}`:'New mode';
+  $('mRushMeta').innerHTML=SAVE.bestRush?`Best<br>${SAVE.bestRush}/${WORLDS}`:'New mode';
   ensureName(); updateRankChip(); eventChip();
 }
 const starStr=n=>`<span class="stars"><i>${'◆'.repeat(n)}</i>${'◇'.repeat(3-n)}</span>`;
@@ -6262,7 +6307,7 @@ function gameOver(why){
   if(M.type==='endless'){ notes=Math.floor(G.score/150); if(G.score>SAVE.bestEndless){SAVE.bestEndless=G.score;best=true;} }
   if(M.type==='coop'){ notes=Math.floor(G.score/150); if(G.roomIdx-1>SAVE.bestCoop){SAVE.bestCoop=G.roomIdx-1;best=true;} }
   if(M.type==='tether'){ notes=Math.floor(G.score/150); if(G.roomIdx-1>(SAVE.bestTether||0)){SAVE.bestTether=G.roomIdx-1;best=true;} }
-  if(M.type==='raid'){ const n=G.raidBeaten||0; notes=n*25+Math.floor(G.score/250); if(n>(SAVE.bestRaid||0)){SAVE.bestRaid=n;best=true;} }
+  if(M.type==='raid'){ const n=G.raidBeaten||0, bk=M.solo?'bestRush':'bestRaid'; notes=n*25+Math.floor(G.score/250); if(n>(SAVE[bk]||0)){SAVE[bk]=n;best=true;} }
   if(M.type==='daily') notes=Math.floor(G.score/300);
   if(M.type==='duel') notes=Math.floor(G.score/300)+(!M.net||G.winner===NET.me?15:5);
   if(M.type==='studio'){ notes=(G.roomIdx-1)*6+Math.floor(G.score/200); if(G.roomIdx-1>(SAVE.bestStudio||0)){ SAVE.bestStudio=G.roomIdx-1; best=true; } }
@@ -6279,8 +6324,8 @@ function gameOver(why){
   const judged=s.perfect+s.good+s.early+s.late+s.miss;
   if(M.net&&NET.host&&!G.netOver&&why!=='left'&&why!=='quit') netSend({t:'over',why,w:G.winner});
   if(M.net&&why==='quit') netSend({t:'leave'});
-  $('oWhy').textContent=M.type==='raid'?(best?'New best raid':M.net?'Online Boss Raid':'Boss Raid'):M.type==='tether'?(best?'New best':M.net?'Online Tether':'Tether'):M.net?(M.type==='duel'?'Online duel':'Online co-op'):M.type==='ascent'?(best?'New best climb':'Ascent'):M.type==='studio'?'Studio · '+M.songName:M.type==='duel'?'Duel':best?'New best':(M.type==='level'||M.type==='boss'||M.type==='hard'||M.type==='custom')?'Level failed':'Run ended';
-  $('oTitle').textContent=why==='raid'?'Every boss defeated!':M.type==='raid'&&why==='harmony'?`The raid ends at ${BOSS[M.world-1]}`:M.type==='tether'&&why==='harmony'?'The cord wore out':M.net&&why==='duel'?(G.winner===NET.me?'You win!':`${NET.peerName||'Your rival'} wins`):why==='left'?`${NET.leftName||'Your friend'} left the match`:why==='duel'?`Player ${(G.winner||0)+1} wins!`:M.type==='ascent'&&why==='harmony'?`The climb ends on floor ${G.floorBest||1}`:why==='song'?'Song complete!':why==='dark'?'The darkness caught you':M.type==='interlude'&&why==='fell'?'You fell into the dark':({fell:'You fell into the void',harmony:'Out of harmony',burn:'Scorched by a fire vent',budget:'Out of beats',quit:'Run ended early'}[why]||'Run ended');
+  $('oWhy').textContent=M.type==='raid'?(best?(M.solo?'New best rush':'New best raid'):M.net?'Online Boss Raid':M.solo?'Boss Rush':'Boss Raid'):M.type==='tether'?(best?'New best':M.net?'Online Tether':'Tether'):M.net?(M.type==='duel'?'Online duel':'Online co-op'):M.type==='ascent'?(best?'New best climb':'Ascent'):M.type==='studio'?'Studio · '+M.songName:M.type==='duel'?'Duel':best?'New best':(M.type==='level'||M.type==='boss'||M.type==='hard'||M.type==='custom')?'Level failed':'Run ended';
+  $('oTitle').textContent=why==='raid'?'Every boss defeated!':M.type==='raid'&&why==='harmony'?`The ${M.solo?'rush':'raid'} ends at ${BOSS[M.world-1]}`:M.type==='tether'&&why==='harmony'?'The cord wore out':M.net&&why==='duel'?(G.winner===NET.me?'You win!':`${NET.peerName||'Your rival'} wins`):why==='left'?`${NET.leftName||'Your friend'} left the match`:why==='duel'?`Player ${(G.winner||0)+1} wins!`:M.type==='ascent'&&why==='harmony'?`The climb ends on floor ${G.floorBest||1}`:why==='song'?'Song complete!':why==='dark'?'The darkness caught you':M.type==='interlude'&&why==='fell'?'You fell into the dark':({fell:'You fell into the void',harmony:'Out of harmony',burn:'Scorched by a fire vent',budget:'Out of beats',quit:'Run ended early'}[why]||'Run ended');
   $('oScore').textContent=G.score.toLocaleString();
   if(M.type==='level'||M.type==='hard'){ $('oRoomsL').textContent='Beats used'; $('oRooms').textContent=G.roomBeats+'/'+G.budget; }
   else if(M.type==='boss'){ $('oRoomsL').textContent='Boss HP left'; $('oRooms').textContent=R&&R.boss?R.boss.hp+'/'+R.boss.max:'–'; }
@@ -6316,8 +6361,20 @@ function resume(){ hideAll(); A.ctx.resume().then(()=>{ const bi=beatInfo(heardN
 const VIS={last:0,dt:1/60};
 function visTick(){ const t=performance.now()/1000, d=t-VIS.last; VIS.last=t; if(d>.004&&d<.05) VIS.dt+=(d-VIS.dt)*.05; }
 const visLead=()=>clamp(VIS.dt,.006,.034);
+/* ---- staying smooth on slow computers: when frames keep running slow, draw fewer pixels and drop the
+   costly blur, one step at a time (remembered on this device) ---- */
+function perfTick(){
+  const t=performance.now();
+  if(document.hidden||!PERF.last||t-PERF.last>250){ PERF.last=t; return; }   // a hidden tab or a one-off stall isn't a slow computer
+  PERF.f.push(t-PERF.last); PERF.last=t;
+  if(PERF.f.length<120) return;
+  const s=PERF.f.sort((a,b)=>a-b), med=s[60]; PERF.f=[];
+  if(med>21&&PERF.level<3){ PERF.level++; perfApply(); try{ localStorage.setItem('pf-perf',PERF.level); }catch(e){} }
+}
+function perfApply(){ document.body.classList.toggle('lite',PERF.level>0); resize(); }
+perfApply();
 function loop(){
-  requestAnimationFrame(loop); visTick(); padTick(); watchAudio();
+  requestAnimationFrame(loop); perfTick(); visTick(); padTick(); watchAudio();
   const live=A.ctx&&PLAYING();
   if(A.ctx) syncClock();
   let now=live?heardNow():performance.now()/1000;
