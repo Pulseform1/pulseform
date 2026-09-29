@@ -513,6 +513,25 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 .cvkyou .won{display:block;margin-top:6px;font:800 16px var(--display);color:#FFE7A0;text-shadow:0 0 12px rgba(255,209,102,.6)}
 .cvkjoin{width:100%;background:linear-gradient(90deg,#3FA9FF,#8A4FD8 50%,#FF3B4E)!important;color:#fff!important;font-weight:800}
 .cvkrules{margin:0;color:var(--ink-3)}
+.cvkbets{margin-top:4px;font-size:12.5px;color:var(--ink-2);text-align:right}
+.cvkbet{display:flex;flex-direction:column;gap:8px;text-align:left;padding:12px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+.cvkbethead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.cvkbethead b{font:800 15px var(--display)}
+.cvkpick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cvkside{padding:10px;border-radius:12px;font:800 15px var(--display);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:var(--ink)}
+.cvkside.c.on{background:linear-gradient(90deg,#0B4FA8,#3FA9FF);border-color:#8FD0FF;box-shadow:0 0 16px rgba(63,169,255,.5)}
+.cvkside.k.on{background:linear-gradient(90deg,#8A0E1E,#FF3B4E);border-color:#FF9AA5;box-shadow:0 0 16px rgba(255,59,78,.5)}
+.cvkamt{display:flex;gap:6px;flex-wrap:wrap}.cvkamt button{flex:1;min-width:52px;padding:6px 4px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink);font:700 12px var(--display);cursor:pointer}
+#cvkAmt{min-width:0;min-height:40px;padding:0 10px;font:700 15px var(--display);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink)}
+.cvkmine b.c{color:#8FD0FF}.cvkmine b.k{color:#FF9AA5}
+.cvkrewards{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.cvkrw{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:12px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.08);text-align:center}
+.cvkrw b{font:700 12px var(--display)}.cvkrw small{font-size:10.5px;color:var(--ink-3);line-height:1.25}
+.cvkrw .glyph{font-size:30px;line-height:48px;color:#D8B4FF;text-shadow:0 0 10px rgba(216,180,255,.6)}
+.cvkrw .skprev{width:48px;height:48px}
+.cvkrw i{display:block;width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:3px}
+.cvkrw i::before{content:'';display:block;height:100%;width:var(--p,0%);background:#FFD166}
+.cvkrw.got{border-color:#FFD166;box-shadow:0 0 12px rgba(255,209,102,.35)}.cvkrw.got small::after{content:' · unlocked!';color:#FFD166}
+@media (max-width:420px){.cvkrewards{grid-template-columns:1fr}.cvkrw{flex-direction:row;text-align:left;gap:8px}.cvkrw .skprev,.cvkrw .glyph{flex:none}.cvkrw i{display:none}}
 #cvkCode{min-width:0;min-height:44px;font:700 15px var(--display);letter-spacing:.12em;text-align:center;text-transform:uppercase;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink)}
 @media (prefers-reduced-motion:reduce){.cvkrays,.cvktitle em,.cvktrack i::after{animation:none}}
 .joinstep{display:flex;flex-direction:column;gap:6px}
@@ -1011,10 +1030,24 @@ button:disabled{opacity:.55;cursor:default}
     <h2 class="cvktitle"><span class="c">CALE</span><em>VS</em><span class="k">KORRA</span></h2>
     <div class="cvktimer"><small id="cvkPhase">Starts in</small><b id="cvkTime">--</b><span class="small" id="cvkWhen"></span></div>
     <div class="cvkbars">
-      <div class="cvkrow cale" id="cvkRowC"><div class="cvklbl"><b>Cale</b><span id="cvkScC">0</span></div><div class="cvktrack"><i id="cvkBarC"></i></div></div>
-      <div class="cvkrow korra" id="cvkRowK"><div class="cvklbl"><b>Korra</b><span id="cvkScK">0</span></div><div class="cvktrack"><i id="cvkBarK"></i></div></div>
+      <div class="cvkrow cale" id="cvkRowC"><div class="cvklbl"><b>Cale</b><span id="cvkScC">0</span></div><div class="cvktrack"><i id="cvkBarC"></i></div><div class="cvkbets" id="cvkBetsC"></div></div>
+      <div class="cvkrow korra" id="cvkRowK"><div class="cvklbl"><b>Korra</b><span id="cvkScK">0</span></div><div class="cvktrack"><i id="cvkBarK"></i></div><div class="cvkbets" id="cvkBetsK"></div></div>
     </div>
     <div id="cvkYou" class="cvkyou"></div>
+    <div class="cvkbet" id="cvkBet">
+      <div class="cvkbethead"><b>Place your bet</b><span class="small" id="cvkBetWhen"></span></div>
+      <div class="cvkpick"><button type="button" class="cvkside c" data-side="cale">Cale</button><button type="button" class="cvkside k" data-side="korra">Korra</button></div>
+      <div class="cvkamt"><button type="button" data-amt="100">100</button><button type="button" data-amt="500">500</button><button type="button" data-amt="1000">1,000</button><button type="button" data-amt="2000">2,000</button><button type="button" data-amt="4000">4,000</button></div>
+      <div class="joinrow"><input id="cvkAmt" inputmode="numeric" placeholder="Notes to bet" aria-label="Notes to bet"><button class="btn" id="cvkPlace" type="button">Bet</button></div>
+      <div class="small" id="cvkBetMsg" role="status"></div>
+      <div class="small cvkmine" id="cvkMine"></div>
+      <div class="cvkrewards">
+        <div class="cvkrw" id="cvkRw1"><span class="glyph">☾</span><b>Twilight</b><small>Landing effect · bet ♪2,000 in total</small><i></i></div>
+        <div class="cvkrw" id="cvkRw2"><canvas class="skprev" data-skin="dawn" width="48" height="48"></canvas><b>Dawn Seraph</b><small>Block · bet ♪4,000 on Korra</small><i></i></div>
+        <div class="cvkrw" id="cvkRw3"><canvas class="skprev" data-skin="dusk" width="48" height="48"></canvas><b>Dusk Seraph</b><small>Block · bet ♪4,000 on Cale</small><i></i></div>
+      </div>
+      <p class="small cvkrules">If your pick wins, you get your notes back plus a share of everything bet on the other side, in proportion to your bet. Rewards are yours to keep either way.</p>
+    </div>
     <div id="cvkJoin">
       <button class="btn cvkjoin" id="cvkOpen" type="button">⚔ Cale or Korra? Click here to sign up as a participant</button>
       <div id="cvkForm" class="joinrow" hidden><input id="cvkCode" maxlength="24" placeholder="YOUR EVENT CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Event code"><button class="btn" id="cvkGo" type="button">Sign up</button></div>
@@ -1379,8 +1412,8 @@ const LANDS=[
 const skinById=id=>SKINS.find(s=>s.id===id)||SKINS[0], landById=id=>LANDS.find(s=>s.id===id)||LANDS[0];
 const hardCleared=()=>{ let n=0; for(let i=1;i<=12;i++) if((SAVE.stars['H-'+i]||0)>0) n++; return n; };
 const ownsSkin=id=>{ const s=SKINS.find(k=>k.id===id); return !!s&&(SAVE.owned.includes(id)||s.price===0||(s.req&&reqMet(s.req))); };
-const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?rankOf(SAVE.xp||0)>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true);
-const reqText=r=>r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
+const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?rankOf(SAVE.xp||0)>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true);
+const reqText=r=>r.cvkOn?`Bet ♪${CVK_BET_BLOCK.toLocaleString()} on ${r.cvkOn==='cale'?'Cale':'Korra'} in Cale vs Korra`:r.cvkBet?`Bet ♪${r.cvkBet.toLocaleString()} in total on Cale vs Korra`:r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
 function hsl2hex(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
   return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); }
 
@@ -1770,6 +1803,9 @@ SKINS.push(
  {id:'supreme',name:'Supreme Conductor',anim:'supreme',top:'#FFF8FC',front:'#15102A',core:'#FFFFFF',req:{rank:25}},
  {id:'truepulse',name:'True Pulse',anim:'truepulse',top:'#1A0508',front:'#07020A',core:'#FF1E2E',req:{rank:26}},
  // one of a kind: only the winner of Cale vs Korra ever owns it
+ // betting rewards: plainer halves of the Eclipse Seraph (no glow behind them, a one-colour halo)
+ {id:'dawn',name:'Dawn Seraph',anim:'dawn',top:'#FFFBEF',front:'#F1E4C6',core:'#FFFFFF',req:{cvkOn:'korra'},prev:[.86,8]},
+ {id:'dusk',name:'Dusk Seraph',anim:'dusk',top:'#2A1A40',front:'#150B24',core:'#8A4FD8',req:{cvkOn:'cale'},prev:[.86,8]},
  {id:'eclipse',name:'Eclipse Seraph',anim:'eclipse',top:'#FFFBEF',front:'#EFE6D2',core:'#FFFFFF',req:{cvk:true},prev:[.8,11]});
 /* every fancy block gets a matching landing effect; owning the block unlocks it */
 const SIG={
@@ -1813,6 +1849,8 @@ LANDS.push({id:'match',name:'Match my block',glyph:'⟲',col:'#FFF8EE',price:0,n
 Object.keys(SIG).forEach(k=>{ const s=SIG[k]; LANDS.push({id:'sig_'+k,name:s.n,glyph:s.g,col:s.c[0],req:{skin:k},sig:k}); });
 SIG.ovation={n:'Standing Ovation',g:'♛',c:['#FFD166','#FF7EB6','#B8F2E6','#C9B8FF'],sh:'confetti',ring:'rainbow',fx:'beams'};   // the Crown's effect (added after the loop so it has no block of its own)
 LANDS.push({id:'crown',name:'Crown',glyph:'♛',col:'#FFD166',req:{rank:18},sig:'ovation'});
+SIG.twilight={n:'Twilight',g:'☾',c:['#FFE3A8','#C9A6FF','#FFFFFF'],sh:'star5',ring:'#D8B4FF',fx:'twilight'};   // for betting 2,000 notes on Cale vs Korra
+LANDS.push({id:'twilight',name:'Twilight',glyph:'☾',col:'#D8B4FF',req:{cvkBet:2000},sig:'twilight'});
 
 /* ---- ranks: XP from every run ---- */
 const RANK_TIERS=[
@@ -2757,6 +2795,8 @@ function sigFx(id,x,y,j){
   if(S.fx==='truepulse'){   // embers torn upward, a heavy camera slam and a red pulse at the screen's edge on a perfect
     for(let i=0;i<n(9);i++) spawnP(x,y,{col:['#FF1E2E','#FF6A3A','#B0001A'][i%3],shape:i%3?'shard':'star5',sz:2.5+Math.random()*3,a:up+(Math.random()-.5)*1.4,s:40+Math.random()*90,vy:-120,g:-25,life:.9+Math.random()*.4,add:true,spin:6});
     if(!RM()){ G.nudge.y+=j==='perfect'?4.5:2; if(j==='perfect'){ G.flashT=G.now; G.flashC='#B0001A'; } } }
+  if(S.fx==='twilight'){   // a few stars rising, lilac and gold
+    for(let i=0;i<n(5);i++) spawnP(x,y,{col:i%2?'#FFE3A8':'#C9A6FF',shape:'star5',sz:2.5+Math.random()*2,a:up+(Math.random()-.5)*1.4,s:30+Math.random()*50,vy:-80,g:-10,life:1,add:true,spin:3}); }
   if(S.fx==='eclipse'){
     for(let i=0;i<n(6);i++) spawnP(x,y,{col:i%2?'#FFF3C4':'#FFD166',shape:'star5',sz:2.5+Math.random()*2.5,a:up+(Math.random()-.5)*1.2,s:40+Math.random()*70,vy:-110,g:-20,life:1,add:true,spin:4});
     for(let i=0;i<n(5);i++) spawnP(x,y,{col:i%2?'#8A4FD8':'#2A1446',shape:'shard',sz:3+Math.random()*2.5,a:Math.PI/2+(Math.random()-.5)*2.2,s:30+Math.random()*50,vy:20,g:160,life:.9,spin:6});
@@ -2944,6 +2984,7 @@ function animMods(S,now){
     case 'maestro': case 'supreme': return {sq:-.03*beat,scale:1+.04*beat};
     case 'truepulse': return {sq:-.05*beat*beat,scale:1+.07*beat*beat};   // a heavy heartbeat throb
     case 'eclipse': return {sq:-.03*beat,scale:1+.05*beat};
+    case 'dawn': case 'dusk': return {sq:-.02*beat,scale:1+.03*beat};
     default: return null;
   }
 }
@@ -3058,6 +3099,26 @@ function skinPost(S,x0,topY,bw,bh,H,now,P){
       for(let i=0;i<2;i++){ cx.fillStyle=gc(i*180+100); const a=now*1.6+i*Math.PI, ox=Math.cos(a)*bw*.85, oy=Math.sin(a)*bh*.6; if(Math.sin(a)<0) cx.globalAlpha*=.8; cx.fillText(i?'♪':'♫',cxp+ox,topY+(bh+H)*.4+oy); }
       if(Math.sin(now*3.1)>.85){ cx.fillStyle='#FFFFFF'; const sx=x0+bw*.82, sy=topY+bh*.2; cx.fillRect(sx-4,sy-.8,8,1.6); cx.fillRect(sx-.8,sy-4,1.6,8); }
       cx.restore(); } break;
+    case 'dawn': case 'dusk': { const cxp=x0+bw/2, Hh=bh+H, light=a==='dawn', ink=light?'#D39A2E':'#8A4FD8';
+      cx.save(); cx.beginPath(); cx.rect(x0,topY,bw,Hh); cx.clip();
+      const fg=cx.createLinearGradient(x0,topY,x0+bw,topY+Hh); if(light){ fg.addColorStop(0,'#FFFDF6'); fg.addColorStop(1,'#EAD8B2'); } else { fg.addColorStop(0,'#2A1446'); fg.addColorStop(1,'#07030D'); }
+      cx.fillStyle=fg; cx.fillRect(x0,topY,bw,Hh);
+      cx.strokeStyle=ink; cx.lineWidth=Math.max(1,bw*.025); cx.lineCap='round'; cx.beginPath();
+      if(light){ cx.moveTo(x0+bw*.1,topY+Hh*.3); cx.bezierCurveTo(x0+bw*.35,topY+Hh*.12,x0+bw*.42,topY+Hh*.42,x0+bw*.22,topY+Hh*.44);
+        cx.moveTo(x0+bw*.9,topY+Hh*.74); cx.bezierCurveTo(x0+bw*.65,topY+Hh*.58,x0+bw*.58,topY+Hh*.88,x0+bw*.78,topY+Hh*.92); }
+      else { cx.globalAlpha=.55+.45*beat; cx.moveTo(x0+bw*.2,topY+Hh*.2); cx.lineTo(x0+bw*.34,topY+Hh*.38); cx.lineTo(x0+bw*.28,topY+Hh*.52); cx.moveTo(x0+bw*.82,topY+Hh*.3); cx.lineTo(x0+bw*.7,topY+Hh*.46); cx.lineTo(x0+bw*.78,topY+Hh*.7); }
+      cx.stroke(); cx.globalAlpha=1; cx.restore();
+      // a small sun (dawn) or crescent moon (dusk) on the front
+      { const ey=fy+H*.5, er=Math.min(bw,H)*.17;
+        if(light){ cx.fillStyle='#E8B64A'; cx.beginPath(); cx.arc(cxp,ey,er,0,TAU); cx.fill(); cx.strokeStyle='#E8B64A'; cx.lineWidth=1.2;
+          for(let i=0;i<8;i++){ const an=now*.5+i*TAU/8; cx.beginPath(); cx.moveTo(cxp+Math.cos(an)*er*1.3,ey+Math.sin(an)*er*1.3); cx.lineTo(cxp+Math.cos(an)*er*1.7,ey+Math.sin(an)*er*1.7); cx.stroke(); } }
+        else { cx.fillStyle='#B98CFF'; cx.beginPath(); cx.arc(cxp,ey,er,0,TAU); cx.fill(); cx.fillStyle='#150B24'; cx.beginPath(); cx.arc(cxp+er*.45,ey-er*.25,er*.9,0,TAU); cx.fill(); } }
+      cx.strokeStyle=light?'#E8B64A':'#8A4FD8'; cx.lineWidth=2; rr(x0,topY,bw,Hh,3); cx.stroke();
+      // a halo in the block's own colour: one ring and a few turning ticks, no glow
+      { const hy=topY-bh*.85-Math.sin(now*1.7)*2-beat*1.5, hr=bw*.42, ry=hr*.3, hc=light?'#F2DDA0':'#4A2E78';
+        cx.strokeStyle=hc; cx.lineWidth=2.4; cx.beginPath(); cx.ellipse(cxp,hy,hr,ry,0,0,TAU); cx.stroke();
+        cx.fillStyle=hc; for(let i=0;i<8;i++){ const an=now*.6+i*TAU/8; cx.beginPath(); cx.arc(cxp+Math.cos(an)*hr,hy+Math.sin(an)*ry,1.4,0,TAU); cx.fill(); } }
+      } break;
     case 'eclipse': { const cxp=x0+bw/2, Hh=bh+H;
       cx.save();
       cx.beginPath(); cx.rect(x0,topY,bw,Hh); cx.clip();
@@ -3832,7 +3893,7 @@ function acctInit(){
     if(!firebase.apps.length) firebase.initializeApp(cfg);
     ACCT.auth=firebase.auth(); ACCT.db=firebase.firestore();
     ACCT.auth.getRedirectResult().catch(e=>{ ACCT.err=authMsg(e); acctUI(); });
-    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; if(u) acctPull(true).then(lbRename,lbRename).then(()=>cvkFindSide()); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
+    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; if(u) acctPull(true).then(lbRename,lbRename).then(()=>{ cvkFindSide(); cvkLoadMyBet(); }); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
   }).catch(()=>{ ACCT.err='Could not load sign-in. Check your connection.'; acctUI(); });
 }
 
@@ -3876,7 +3937,8 @@ function mergeSaves(loc,cl,additive){
   const nameRank=v=>!v||!v.name?0:v.nameT?3:v.nameAuto?1:2, nl=nameRank(loc), nc=nameRank(cl);
   const nw=nl!==nc?(nl>nc?loc:cl):nl===3?((cl.nameT||0)>=(loc.nameT||0)?cl:loc):newer;
   out.name=nw.name||loc.name||cl.name||''; out.nameT=nw.nameT||0; out.nameAuto=!!nw.nameAuto&&nameRank(nw)===1;
-  out.cvkWin=!!(loc.cvkWin||cl.cvkWin); out.cvkSide=newer.cvkSide||loc.cvkSide||cl.cvkSide||null;
+  out.cvkWin=!!(loc.cvkWin||cl.cvkWin); out.cvkPaid=!!(loc.cvkPaid||cl.cvkPaid); out.cvkPayout=Math.max(loc.cvkPayout||0,cl.cvkPayout||0);
+  { const a=loc.cvkBet||{}, b=cl.cvkBet||{}; if(a.cale||a.korra||b.cale||b.korra) out.cvkBet={cale:Math.max(+a.cale||0,+b.cale||0),korra:Math.max(+a.korra||0,+b.korra||0)}; } out.cvkSide=newer.cvkSide||loc.cvkSide||cl.cvkSide||null;
   const dl=loc.daily||{}, dc=cl.daily||{}; out.daily=Object.assign({},DEF.daily,newer===cl?dc:dl);
   if(dl.date&&dl.date===dc.date){ out.daily.best=Math.max(dl.best||0,dc.best||0); out.daily.stars=Math.max(dl.stars||0,dc.stars||0); }
   out.daily.streak=Math.max(dl.streak||0,dc.streak||0);
@@ -5343,7 +5405,54 @@ $('evBack').onclick=()=>toMenu();
    Firestore: events/cvk/claims/{cale|korra} = who signed up (private), events/cvk/sides/{cale|korra} = {score,t}. */
 const CVK={start:1790776800000,end:1791036000000,
   sides:{cale:{name:'Cale',cls:'c',h:'bf9254eff060b724af4f9ff4562baff0ea6e8650ebe2b2d4fa7f51ffe832c5b7'},korra:{name:'Korra',cls:'k',h:'cdf74e040ee0af0702471fbb74f8bafecee16afcc43bb9f7b726263044bc99fe'}},
-  scores:{cale:null,korra:null},unsub:[],lastFetch:0};
+  scores:{cale:null,korra:null},fresh:{},unsub:[],lastFetch:0,bets:{},pick:null,betClose:1790863200000};
+/* ---- betting: players stake notes on Cale or Korra until 9:00 AM Central Thu Oct 1 (a day into the event).
+   events/cvk/bets/{uid} = {cale,korra,name,t}: what each player has bet, which only goes up.
+   When it ends, backers of the winner get their stake back plus a share of the losing side's pot, in
+   proportion to their stake (if nobody backed the winner, everyone gets their notes back). Milestones
+   unlock rewards straight away, win or lose. ---- */
+const CVK_BET_BLOCK=4000, CVK_BET_MAX=100000;
+const cvkFresh=x=>!x||!x.metadata||!x.metadata.fromCache;   // straight from the server, not a cached copy
+const cvkMyBet=side=>{ const b=SAVE.cvkBet||{}; return Math.max(0,+b[side]||0); };
+const cvkPot=side=>Object.values(CVK.bets).reduce((a,b)=>a+(+b[side]||0),0);
+const cvkBackers=side=>Object.values(CVK.bets).filter(b=>(+b[side]||0)>0).length;
+const cvkBetOpen=()=>!window.PF_CG&&Date.now()<CVK.betClose;
+/* what a bet on `side` pays if that side wins, given the pots now */
+function cvkPayout(side,stake){ const pw=cvkPot(side), pl=cvkPot(side==='cale'?'korra':'cale'); return pw>0?Math.floor(stake+stake/pw*pl):stake; }
+async function cvkPlaceBet(){
+  const side=CVK.pick, amt=Math.floor(+($('cvkAmt').value||'').replace(/[^\d]/g,''));
+  const msg=(t,err)=>{ const m=$('cvkBetMsg'); m.textContent=t; m.classList.toggle('err',!!err); };
+  if(!ACCT.user){ msg('Sign in to your account to bet.',true); return; }
+  if(!cvkBetOpen()){ msg('Betting has closed.',true); return; }
+  if(!side){ msg('Pick Cale or Korra first.',true); return; }
+  if(!(amt>0)){ msg('How many notes do you want to bet?',true); return; }
+  if(amt>SAVE.notes){ msg(`You only have ♪${SAVE.notes.toLocaleString()}.`,true); return; }
+  if(amt>CVK_BET_MAX){ msg(`The most you can bet at once is ♪${CVK_BET_MAX.toLocaleString()}.`,true); return; }
+  const before=new Set([...SKINS,...LANDS].filter(i=>i.req&&reqMet(i.req)).map(i=>i.name));
+  SAVE.notes-=amt; const B=SAVE.cvkBet||(SAVE.cvkBet={cale:0,korra:0}); B[side]=(+B[side]||0)+amt; save(); msg('Placing your bet…');
+  const inc=firebase.firestore.FieldValue.increment;
+  try{ await cvkCol().collection('bets').doc(ACCT.user.uid).set({cale:inc(side==='cale'?amt:0),korra:inc(side==='korra'?amt:0),name:ensureName(),t:Date.now()},{merge:true}); }
+  catch(e){ SAVE.notes+=amt; B[side]-=amt; save(); msg('Your bet didn\'t go through ('+(e&&e.code||'offline')+'). Your notes are back.',true); return; }
+  if(A.ctx) sGem(); msg(`♪${amt.toLocaleString()} on ${CVK.sides[side].name}. If ${CVK.sides[side].name} wins right now, you'd get about ♪${cvkPayout(side,cvkMyBet(side)).toLocaleString()} back.`);
+  const got=[...SKINS,...LANDS].filter(i=>i.req&&reqMet(i.req)&&!before.has(i.name)).map(i=>i.name);
+  if(got.length){ toast('Unlocked: '+got.join(', ')+'!'); sChime(90); }
+  $('cvkAmt').value=''; ['walletM','walletP','walletW'].forEach(id=>{ const e=$(id); if(e) e.textContent=notesTxt(); }); cvkRender();
+}
+/* your bets follow your account to other devices */
+async function cvkLoadMyBet(){
+  if(!ACCT.user||!cvkCol()) return;
+  try{ const d=await cvkCol().collection('bets').doc(ACCT.user.uid).get(); if(!d.exists) return; const v=d.data(), B=SAVE.cvkBet||(SAVE.cvkBet={cale:0,korra:0});
+    let ch=false; ['cale','korra'].forEach(k=>{ if((+v[k]||0)>(+B[k]||0)){ B[k]=+v[k]; ch=true; } }); if(ch){ save(); cvkRender(); } }catch(e){}
+}
+/* after the event: each better's own game pays out their winnings, once */
+function cvkSettle(){
+  if(cvkPhase()!=='over'||SAVE.cvkPaid||!(cvkMyBet('cale')+cvkMyBet('korra'))) return;
+  if(!CVK.betsLoaded||!(CVK.fresh.cale&&CVK.fresh.korra)) return; const w=cvkWinner(); if(!w) return;
+  const pw=cvkPot(w), pl=cvkPot(w==='cale'?'korra':'cale');
+  const back=pw>0?cvkPayout(w,cvkMyBet(w)):cvkMyBet('cale')+cvkMyBet('korra');   // nobody backed the winner: refunds
+  SAVE.cvkPaid=true; SAVE.cvkPayout=back; if(back>0){ SAVE.notes+=back; } save(); ['walletM','walletP','walletW'].forEach(id=>{ const e=$(id); if(e) e.textContent=notesTxt(); });
+  toast(back>0?`Cale vs Korra: ${CVK.sides[w].name} won! You collect ♪${back.toLocaleString()}.`:`Cale vs Korra: ${CVK.sides[w].name} won. Better luck next time!`);
+}
 const cvkPhase=()=>{ const n=Date.now(); return n<CVK.start?'soon':n<CVK.end?'live':'over'; };
 const cvkShown=()=>!window.PF_CG&&!!acctCfg()&&Date.now()<CVK.end+14*864e5;   // on the menu until two weeks after it ends
 const cvkCol=()=>ACCT.db&&ACCT.db.collection('events').doc('cvk');
@@ -5356,12 +5465,13 @@ function cvkWinner(){ const a=CVK.scores.cale, b=CVK.scores.korra, sa=a?a.score|
   if(!sa&&!sb) return null; if(sa!==sb) return sa>sb?'cale':'korra'; return (a.t||0)<=(b.t||0)?'cale':'korra'; }
 function cvkWatch(){
   if(CVK.unsub.length||!cvkCol()) return;
-  ['cale','korra'].forEach(k=>CVK.unsub.push(cvkCol().collection('sides').doc(k).onSnapshot(d=>{ CVK.scores[k]=d.exists?d.data():null; cvkCheckWin(); cvkRender(); },()=>{})));
+  CVK.unsub.push(cvkCol().collection('bets').onSnapshot(q=>{ const m={}; q.forEach(d=>{ m[d.id]=d.data(); }); CVK.bets=m; if(cvkFresh(q)) CVK.betsLoaded=true; cvkSettle(); cvkRender(); },()=>{}));
+  ['cale','korra'].forEach(k=>CVK.unsub.push(cvkCol().collection('sides').doc(k).onSnapshot(d=>{ CVK.scores[k]=d.exists?d.data():null; if(cvkFresh(d)) CVK.fresh[k]=true; cvkCheckWin(); cvkSettle(); cvkRender(); },()=>{})));
 }
 function cvkUnwatch(){ CVK.unsub.forEach(f=>{ try{ f(); }catch(e){} }); CVK.unsub=[]; }
 /* after the event: the winner's own game hands them the block, once */
 function cvkCheckWin(){
-  if(cvkPhase()!=='over'||!SAVE.cvkSide||SAVE.cvkWin) return;
+  if(cvkPhase()!=='over'||!SAVE.cvkSide||SAVE.cvkWin||!(CVK.fresh.cale&&CVK.fresh.korra)) return;
   const w=cvkWinner(); if(!w||w!==SAVE.cvkSide) return;
   SAVE.cvkWin=true; save(); sChime(90);
   toast('You won Cale vs Korra! The Eclipse Seraph is yours, and only yours.');
@@ -5413,18 +5523,37 @@ function cvkRender(){
   you.innerHTML=me?`${ph==='over'?'You fought as':'You\'re fighting as'} <b class="${CVK.sides[me].cls}">${CVK.sides[me].name}</b>. `+(ph==='soon'?'Your points start counting at 9:00 AM Central on Wed Sep 30.':ph==='live'?'Every point you score, in any mode, adds to your bar.':'')+(SAVE.cvkWin?'<span class="won">✦ The Eclipse Seraph is yours ✦</span>':'')
     :ph==='over'?'':'Watching? Cheer them on. The bars update live.';
   $('cvkJoin').hidden=!!me||ph==='over';
+  // bets under each bar, and the betting panel
+  const pc=cvkPot('cale'), pk=cvkPot('korra'), bl=(p,n)=>p?`Bets: ♪${p.toLocaleString()} from ${n} player${n===1?'':'s'}`:'No bets yet';
+  $('cvkBetsC').textContent=bl(pc,cvkBackers('cale')); $('cvkBetsK').textContent=bl(pk,cvkBackers('korra'));
+  const open=cvkBetOpen(), mc=cvkMyBet('cale'), mk=cvkMyBet('korra');
+  $('cvkBetWhen').textContent=open?'Closes 9:00 AM Central, Thu Oct 1 · you have ♪'+SAVE.notes.toLocaleString():'Betting closed';
+  $('cvkBet').querySelectorAll('.cvkpick button,.cvkamt button,#cvkPlace,#cvkAmt').forEach(b=>b.disabled=!open);
+  $('cvkBet').querySelectorAll('.cvkside').forEach(b=>b.classList.toggle('on',b.dataset.side===CVK.pick));
+  $('cvkMine').innerHTML=(mc||mk)?`Your bets: <b class="c">Cale ♪${mc.toLocaleString()}</b> · <b class="k">Korra ♪${mk.toLocaleString()}</b>`+
+    (ph==='over'&&SAVE.cvkPaid?` · you collected ♪${(SAVE.cvkPayout||0).toLocaleString()}`:ph!=='over'?` · if Cale wins: ♪${cvkPayout('cale',mc).toLocaleString()}, if Korra wins: ♪${cvkPayout('korra',mk).toLocaleString()}`:''):'';
+  const rw=(id,have,need)=>{ const e=$(id); e.style.setProperty('--p',Math.min(100,have/need*100)+'%'); e.classList.toggle('got',have>=need); };
+  rw('cvkRw1',mc+mk,2000); rw('cvkRw2',mk,CVK_BET_BLOCK); rw('cvkRw3',mc,CVK_BET_BLOCK);
+  $('cvkBet').hidden=!open&&!(mc||mk)&&ph!=='soon';
   $('cvkOpen').textContent=ACCT.user?'⚔ Cale or Korra? Click here to sign up as a participant':'⚔ Cale or Korra? Sign in, then click here to sign up';
 }
-function showCvk(){ showOv('cvkOv'); cvkMsg(''); if(acctCfg()&&!ACCT.ready&&!ACCT.loading) acctInit(); cvkWatch(); cvkFindSide(); cvkRender(); }
+function showCvk(){ showOv('cvkOv'); cvkMsg(''); $('cvkBetMsg').textContent=''; if(acctCfg()&&!ACCT.ready&&!ACCT.loading) acctInit(); cvkWatch(); cvkFindSide(); cvkLoadMyBet(); cvkRender(); }
 $('mCvk').onclick=showCvk;
 $('cvkBack').onclick=()=>{ cvkUnwatch(); toMenu(); };
 $('cvkOpen').onclick=()=>{ if(!ACCT.user){ showAcct(); return; } const f=$('cvkForm'); f.hidden=!f.hidden; if(!f.hidden) $('cvkCode').focus(); };
 $('cvkGo').onclick=cvkSignUp;
+$('cvkBet').querySelectorAll('.cvkside').forEach(b=>b.onclick=()=>{ CVK.pick=b.dataset.side; cvkRender(); });
+$('cvkBet').querySelectorAll('.cvkamt button').forEach(b=>b.onclick=()=>{ $('cvkAmt').value=b.dataset.amt; });
+$('cvkPlace').onclick=cvkPlaceBet;
+$('cvkAmt').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') cvkPlaceBet(); });
 $('cvkCode').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') cvkSignUp(); });
 setInterval(()=>{ cvkRender();
   // after the event, a player who signed up checks the result now and then, so the winner gets the block
-  if(cvkPhase()==='over'&&SAVE.cvkSide&&!SAVE.cvkWin&&ACCT.db&&Date.now()-CVK.lastFetch>60000){ CVK.lastFetch=Date.now();
-    ['cale','korra'].forEach(k=>cvkCol().collection('sides').doc(k).get().then(d=>{ CVK.scores[k]=d.exists?d.data():null; cvkCheckWin(); }).catch(()=>{})); }
+  const needWin=SAVE.cvkSide&&!SAVE.cvkWin, needPay=!SAVE.cvkPaid&&(cvkMyBet('cale')+cvkMyBet('korra'))>0;
+  if(cvkPhase()==='over'&&(needWin||needPay)&&ACCT.db&&Date.now()-CVK.lastFetch>60000){ CVK.lastFetch=Date.now();
+    Promise.all(['cale','korra'].map(k=>cvkCol().collection('sides').doc(k).get().then(d=>{ CVK.scores[k]=d.exists?d.data():null; if(cvkFresh(d)) CVK.fresh[k]=true; })))
+      .then(()=>needPay?cvkCol().collection('bets').get().then(q=>{ const m={}; q.forEach(d=>{ m[d.id]=d.data(); }); CVK.bets=m; if(cvkFresh(q)) CVK.betsLoaded=true; }):null)
+      .then(()=>{ cvkCheckWin(); cvkSettle(); }).catch(()=>{}); }
 },1000);
 
 /* ================= LEADERBOARDS (Firestore: boards/{board}/entries/{uid}) ================= */
