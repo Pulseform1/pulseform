@@ -5805,13 +5805,22 @@ $('cvkWEquip').onclick=()=>{ equip('skin','eclipse_seraph'); equip('land','sig_e
   $('cvkWEquip').disabled=true; $('cvkWEquip').textContent='✦ Equipped'; $('cvkWNote').textContent='Your block, landing effect and tiles are now the Eclipse Seraph\'s.'; setTimeout(()=>{ if(!$('cvkWinOv').hidden) toMenu(); },1400); };
 $('cvkWLater').onclick=()=>toMenu();
 /* your username on your bar follows you when you rename yourself */
-function cvkSendName(){
-  if(!SAVE.cvkSide||!ACCT.user||!cvkCol()||window.PF_CG) return;
-  cvkCol().collection('sides').doc(SAVE.cvkSide).set({name:ensureName()},{merge:true}).catch(()=>{});
+function cvkSendName(){ cvkEnsureBar().then(()=>cvkRender(),()=>{}); }
+/* make sure your bar exists and carries your username. If the rules published in Firebase are older ones that
+   don't allow a name on the bar, the bar is still made (without the name) so your points always count. */
+async function cvkEnsureBar(){
+  if(!SAVE.cvkSide||!ACCT.user||!cvkCol()||window.PF_CG) return false;
+  const ref=cvkCol().collection('sides').doc(SAVE.cvkSide), name=ensureName();
+  try{ const d=await ref.get();
+    if(!d.exists){ try{ await ref.set({score:0,t:Date.now(),name}); }catch(e){ await ref.set({score:0,t:Date.now()}); CVK.barErr=true; return true; } }
+    else if(d.data().name!==name){ try{ await ref.set({name},{merge:true}); }catch(e){ CVK.barErr=true; return true; } }
+    CVK.barErr=false; return true;
+  }catch(e){ return false; }
 }
 /* which side this account signed up as (so it follows you to another device) */
 async function cvkFindSide(){
-  if(SAVE.cvkSide||!ACCT.user||!cvkCol()) return;
+  if(!ACCT.user||!cvkCol()) return;
+  if(SAVE.cvkSide){ cvkSendName(); return; }   // (re)make your bar and name on every sign-in
   for(const k of ['cale','korra']){ try{ const d=await cvkCol().collection('claims').doc(k).get(); if(d.exists&&d.data().uid===ACCT.user.uid){ SAVE.cvkSide=k; save(); cvkSendName(); cvkRender(); return; } }catch(e){} }
 }
 async function cvkSignUp(){
@@ -5824,16 +5833,16 @@ async function cvkSignUp(){
   try{ await col.collection('claims').doc(side).set({uid:me,code,t:Date.now()}); }
   catch(e){ let mine=false; try{ const d=await col.collection('claims').doc(side).get(); mine=d.exists&&d.data().uid===me; }catch(_){}
     if(!mine){ cvkMsg(`Someone has already signed up as ${nm}.`,true); return; } }
-  try{ const d=await col.collection('sides').doc(side).get(); if(!d.exists) await col.collection('sides').doc(side).set({score:0,t:Date.now(),name:ensureName()}); else cvkSendName(); }catch(e){}
-  SAVE.cvkSide=side; save(); $('cvkForm').hidden=true; cvkMsg(''); if(A.ctx) sChime(88);
+  SAVE.cvkSide=side; save(); await cvkEnsureBar(); $('cvkForm').hidden=true; cvkMsg(''); if(A.ctx) sChime(88);
   toast(`You're in! You're fighting as ${nm}.`); cvkRender();
 }
 /* every run's points go to your side while the event is live (anything that fails to send waits for the next run) */
 function cvkPost(M){
   if(!SAVE.cvkSide||!ACCT.user||!ACCT.db||window.PF_CG||cvkPhase()!=='live') return;
   const add=Math.min(400000,Math.max(0,Math.round(G.score||0))+(SAVE.cvkPend||0)); if(!add) return;
-  SAVE.cvkPend=0; save(); const side=SAVE.cvkSide;
-  cvkCol().collection('sides').doc(side).set({score:firebase.firestore.FieldValue.increment(add),t:Date.now(),name:ensureName()},{merge:true})
+  SAVE.cvkPend=0; save(); const side=SAVE.cvkSide, ref=cvkCol().collection('sides').doc(side), inc=firebase.firestore.FieldValue.increment(add);
+  // the bar must exist first; the name rides along unless the published rules refuse it
+  cvkEnsureBar().then(ok=>{ if(!ok) throw new Error('bar'); return ref.set({score:inc,t:Date.now(),name:ensureName()},{merge:true}).catch(()=>ref.set({score:inc,t:Date.now()},{merge:true})); })
     .then(()=>toast(`+${add.toLocaleString()} for ${CVK.sides[side].name}!`))
     .catch(()=>{ SAVE.cvkPend=Math.min(400000,(SAVE.cvkPend||0)+add); save(); });
 }
@@ -5848,7 +5857,7 @@ function cvkRender(){
   $('cvkWhen').textContent=ph==='soon'?'9:00 AM Central, Wed Sep 30 · runs 3 days':ph==='live'?'Ends 9:00 AM Central, Sat Oct 3':'Ended 9:00 AM Central, Sat Oct 3';
   const sc=k=>CVK.scores[k]?CVK.scores[k].score||0:0, c=sc('cale'), k=sc('korra'), top=Math.max(c,k,1);
   $('cvkScC').textContent=c.toLocaleString(); $('cvkScK').textContent=k.toLocaleString();
-  [['cale','C'],['korra','K']].forEach(([s2,L])=>{ const nm=who(s2), real=CVK.sides[s2].name; $('cvkNm'+L).textContent=nm||real; $('cvkRl'+L).textContent=nm?`(${real})`:'(not signed up yet)'; });
+  [['cale','C'],['korra','K']].forEach(([s2,L])=>{ const nm=who(s2), real=CVK.sides[s2].name; $('cvkNm'+L).textContent=nm||real; $('cvkRl'+L).textContent=nm?`(${real})`:CVK.scores[s2]?'':'(not signed up yet)'; });
   $('cvkBarC').style.width=Math.max(3,c/top*100)+'%'; $('cvkBarK').style.width=Math.max(3,k/top*100)+'%';
   const lead=c===k?null:c>k?'cale':'korra';
   $('cvkRowC').classList.toggle('lead',lead==='cale'); $('cvkRowK').classList.toggle('lead',lead==='korra');
