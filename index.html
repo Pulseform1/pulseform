@@ -343,6 +343,110 @@ body.hween #menuOv .logo{text-shadow:0 0 34px rgba(255,122,24,.28)}
 @keyframes hwFlicker{0%,100%{opacity:1}42%{opacity:.82}47%{opacity:.6}52%{opacity:.9}70%{opacity:.75}}
 @media (max-width:760px){.hw-web.tl{width:130px;height:130px}.hw-web.tr{width:110px;height:110px}.hw-spider{left:44%;width:28px;height:105px}.hw-pumpwrap{right:4px;bottom:-2px}.hw-pump{width:60px}.hw-moon{top:22%}}
 @media (prefers-reduced-motion:reduce){.hw-spider,.hw-bat,.hw-bat path,.hw-glow{animation:none}.hw-bat{display:none}}
+
+/* ================= POLISHED TOP BAR ================= */
+.mtop{
+  position:sticky;top:0;z-index:20;
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  flex-wrap:nowrap;
+  padding:10px 12px;
+  margin-bottom:4px;
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:20px;
+  background:linear-gradient(180deg,rgba(25,21,57,.88),rgba(18,15,43,.78));
+  box-shadow:0 10px 30px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter:blur(18px) saturate(125%);
+  -webkit-backdrop-filter:blur(18px) saturate(125%);
+}
+.mbrand{flex:0 0 auto;min-width:max-content;padding:5px 8px;font-size:15px}
+.mbrand .mdot{width:11px;height:11px}
+.mtop-r{
+  min-width:0;display:flex;align-items:center;gap:7px;flex:1;
+  flex-wrap:nowrap;justify-content:flex-end;overflow-x:auto;overflow-y:hidden;
+  touch-action:pan-x;overscroll-behavior-x:contain;
+  scrollbar-width:none;padding:2px 1px;
+}
+.mtop-r::-webkit-scrollbar{display:none}
+.mtop-r .wallet{
+  flex:0 0 auto;padding:8px 11px;border:1px solid rgba(255,255,255,.09);
+  border-radius:12px;background:rgba(255,255,255,.045);white-space:nowrap;
+}
+.chip{
+  flex:0 0 auto;min-height:40px;padding:9px 12px;border-radius:13px;
+  border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.045);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 3px 12px rgba(0,0,0,.10);
+  font-size:12.5px;letter-spacing:.01em;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1),background .18s,box-shadow .2s,border-color .18s,filter .18s;
+}
+.chip::before{font-size:13px;margin-right:6px;vertical-align:-1px;opacity:.9}
+.chip.namechip::before{content:'✦'}
+.chip.acct::before{content:'◉'}
+.chip.rankchip::before{content:'';margin:0}
+.chip.c-coll::before{content:'◈'}
+.chip.c-fr::before{content:'♢'}
+.chip.c-lb::before{content:'◆'}
+.chip.c-set::before{content:'⚙'}
+.chip.evchip::before{content:'★'}
+.chip.c-poll::before{content:'☑'}
+.chip.c-help::before{content:'?'}
+.chip.snd::before{content:'♪'}
+.chip.cvkchip::before{content:'⚔'}
+.chip:hover{transform:translateY(-2px);filter:brightness(1.06);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 7px 18px rgba(0,0,0,.16)}
+.chip:active{transform:scale(.96)}
+.chip.c-coll,.chip.c-fr,.chip.c-lb,.chip.c-set,.chip.c-help,.chip.c-poll,.chip.evchip{background:rgba(255,255,255,.055)}
+.chip.c-poll{
+  color:#F5FFFE;
+  border-color:rgba(126,232,220,.72);
+  background:linear-gradient(135deg,rgba(45,137,136,.78),rgba(40,77,113,.78));
+  box-shadow:0 0 0 1px rgba(126,232,220,.10),0 8px 22px rgba(71,220,205,.16),inset 0 1px 0 rgba(255,255,255,.12);
+  animation:voteGlow 2.6s ease-in-out infinite;
+}
+.chip.c-poll::after{
+  content:'COMMUNITY';display:inline-block;margin-left:7px;padding:2px 5px;border-radius:999px;
+  font:800 8px var(--body);letter-spacing:.08em;color:#11273A;background:#B8F2E6;vertical-align:2px;
+}
+.chip.c-poll .qdot{top:5px;right:5px;width:8px;height:8px;margin:0;background:#FF8A3D;box-shadow:0 0 0 2px rgba(26,13,37,.92),0 0 8px rgba(255,138,61,.55);z-index:3}
+@keyframes voteGlow{0%,100%{box-shadow:0 0 0 1px rgba(126,232,220,.10),0 8px 22px rgba(71,220,205,.13),inset 0 1px 0 rgba(255,255,255,.12)}50%{box-shadow:0 0 0 2px rgba(126,232,220,.11),0 10px 28px rgba(71,220,205,.22),inset 0 1px 0 rgba(255,255,255,.14)}}
+@media (prefers-reduced-motion:reduce){.chip.c-poll{animation:none}}
+@media (max-width:1080px){
+  .mtop{gap:8px}
+  .mtop-r{justify-content:flex-start}
+  .chip{padding-inline:10px}
+  .chip.c-poll::after{display:none}
+}
+@media (max-width:760px){
+  .mtop{
+    position:sticky;top:0;
+    align-items:stretch;flex-direction:column;gap:7px;
+    padding:9px 9px 8px;border-radius:17px;
+    margin-inline:-2px;
+  }
+  .mbrand{justify-content:center;padding:3px 0;font-size:14px}
+  .mtop-r{
+    width:100%;flex:0 0 auto;gap:7px;justify-content:flex-start;
+    overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;
+    padding:1px 1px 3px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .mtop-r > *{scroll-snap-align:start}
+  .mtop-r .wallet{order:-1;min-height:40px;display:flex;align-items:center}
+  .chip{min-height:42px;padding:9px 11px;border-radius:13px;font-size:12px}
+  .chip.c-poll{position:relative}
+  .chip.c-poll::after{display:inline-block;font-size:7px;padding:2px 4px;margin-left:5px}
+}
+@media (max-width:420px){
+  .mtop{padding-inline:7px}
+  .mtop-r{gap:6px}
+  .chip{min-height:44px;padding-inline:10px}
+  .chip.c-poll::after{content:'VOTE';font-size:7px}
+  .mtop-r .wallet{padding-inline:9px}
+}
+@media (max-height:540px) and (orientation:landscape){
+  .mtop{padding:6px 9px;border-radius:14px}
+  .mbrand{padding:2px 5px}
+  .chip{min-height:36px;padding:7px 9px}
+}
+
 .mtop{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .mbrand{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.04em;display:flex;align-items:center;gap:8px}
 .mdot{width:10px;height:10px;border-radius:3px;background:var(--lantern);box-shadow:0 0 12px var(--lantern);animation:beat 1s ease-in-out infinite}
@@ -872,6 +976,66 @@ body.obscene .hud,body.obscene #hint,body.obscene #cine,body.obscene #talk,body.
 body.obscene.talkok #cine{opacity:1!important}   /* a speech during a cutscene keeps its bubbles */
 @media (max-width:560px){.fpworlds{grid-template-columns:repeat(4,1fr)}.invitebar{flex-wrap:wrap;justify-content:center;text-align:center}}
 
+/* ================= OCTOBER TOP BAR ================= */
+.chip.c-poll::before{content:'✓';margin-right:6px}
+.evchip::before{content:''!important;margin-right:0!important}
+.evchip{animation:none!important;box-shadow:none!important}
+
+body.hween #menuOv .mtop{
+  background:
+    radial-gradient(circle at 12% 0%,rgba(255,122,24,.20),transparent 30%),
+    linear-gradient(180deg,rgba(31,14,44,.94),rgba(14,7,24,.90));
+  border-color:rgba(255,133,44,.34);
+  box-shadow:0 12px 34px rgba(0,0,0,.38),0 0 0 1px rgba(137,75,180,.13),inset 0 1px 0 rgba(255,255,255,.07);
+}
+body.hween #menuOv .mtop::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:.28;
+  background:
+    radial-gradient(circle at 7% 50%,rgba(255,159,64,.42) 0 1px,transparent 2px),
+    radial-gradient(circle at 18% 24%,rgba(205,139,255,.34) 0 1px,transparent 2px),
+    radial-gradient(circle at 76% 72%,rgba(255,159,64,.30) 0 1px,transparent 2px),
+    radial-gradient(circle at 93% 30%,rgba(205,139,255,.36) 0 1px,transparent 2px);
+}
+body.hween #menuOv .mtop-r .chip{
+  background:linear-gradient(180deg,rgba(55,27,70,.82),rgba(26,13,37,.82));
+  border-color:rgba(208,164,236,.25);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 4px 13px rgba(0,0,0,.20);
+}
+body.hween #menuOv .mtop-r .chip.c-coll{border-color:rgba(255,126,182,.58);color:#FFB4D6}
+body.hween #menuOv .mtop-r .chip.c-fr{border-color:rgba(177,142,255,.58);color:#D9C8FF}
+body.hween #menuOv .mtop-r .chip.c-lb{border-color:rgba(255,153,78,.64);color:#FFC08D}
+body.hween #menuOv .mtop-r .chip.c-set{border-color:rgba(195,166,224,.54);color:#E0C9EF}
+body.hween #menuOv .mtop-r .chip.c-help{border-color:rgba(169,220,126,.54);color:#D0F2A8}
+body.hween #menuOv .mtop-r .chip.evchip{
+  border-color:rgba(255,154,65,.72);color:#FFD0A3;
+  background:linear-gradient(135deg,rgba(112,48,24,.90),rgba(57,24,53,.90));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 5px 16px rgba(255,111,36,.14)!important;
+}
+body.hween #menuOv .mtop-r .chip.c-poll{
+  border-color:rgba(221,177,255,.72);color:#FFF3FF;
+  background:linear-gradient(135deg,rgba(93,49,116,.92),rgba(46,31,77,.92));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 7px 22px rgba(190,110,255,.18);
+  animation:none!important;
+}
+body.hween #menuOv .mtop-r .chip.c-poll::after{
+  background:#E7C2FF;color:#2C1438;
+}
+body.hween #menuOv .mtop-r .chip.snd{
+  border-color:rgba(255,183,101,.42);color:#E9D6CC;
+}
+body.hween #menuOv .mbrand .mdot{background:#FF8A2A;box-shadow:0 0 14px rgba(255,138,42,.60)}
+
+/* The old menu CSS also supplied a beat animation to the brand dot; keep that harmless dot static in October. */
+body.hween #menuOv .mbrand .mdot{animation:none!important}
+
+@media (max-width:760px){
+  body.hween #menuOv .mtop{border-radius:17px}
+  body.hween #menuOv .mtop-r{padding-bottom:4px}
+  body.hween #menuOv .mtop-r .chip{min-height:42px}
+}
+@media (max-width:420px){
+  body.hween #menuOv .mtop-r .chip{min-height:44px}
+}
 </style>
 
 <canvas id="cv" aria-label="Game board"></canvas>
@@ -922,11 +1086,11 @@ body.obscene.talkok #cine{opacity:1!important}   /* a speech during a cutscene k
       <button class="chip c-fr" id="mFriends" type="button">Friends<em class="qdot" id="mFDot" hidden></em></button>
       <button class="chip c-lb" id="mLB" type="button">Leaderboard</button>
       <button class="chip c-set" id="mSettings" type="button">Settings</button>
-      <button class="chip evchip" id="mEvent" type="button">★ Event</button>
-      <button class="chip cvkchip" id="mCvk" type="button" hidden>⚔ Cale vs Korra</button>
-      <button class="chip c-poll" id="mPoll" type="button">☑ Vote<em class="qdot" id="mPollDot" hidden></em></button>
+      <button class="chip evchip" id="mEvent" type="button">Event</button>
+      <button class="chip cvkchip" id="mCvk" type="button" hidden>Cale vs Korra</button>
+      <button class="chip c-poll" id="mPoll" type="button">Vote<em class="qdot" id="mPollDot" hidden></em></button>
       <button class="chip c-help" id="mGuide" type="button">Help</button>
-      <button class="chip snd" id="mSound" type="button">♪ Tap for music</button></div>
+      <button class="chip snd" id="mSound" type="button">Tap for music</button></div>
   </header>
   <div class="mmain">
     <div class="mhero">
@@ -1664,6 +1828,11 @@ STYLES.lobby={name:'Lobby',mood:'jazz club',bpm:1,swing:.3,prog:[[2,'m7'],[7,'7'
   kick:{s:'kickHard',p:P16([0,1.25],[6,.55],[8,1.15],[10,.35],[14,.5])},snare:{s:'snareHard',p:P16([4,1.35],[12,1.35],[11,.2],[15,.3])},
   hat:{s:'ride',p:P16([0,.6],[4,.6],[6,.45],[8,.6],[12,.6],[14,.45])},perc:{s:'hat',p:P16([4,.55],[12,.55])},
   bass:{pat:'walk',wave:'tri',v:.44},keys:{pat:'charleston',voice:'rhodes'},lead:{voice:'horn',dens:.62,rhy:'swing'},spark:'bells'};
+/* October lobby variant: same Pulseform groove, but in a minor key with softer drums, darker harmony and bell-led melody. */
+STYLES.lobbySpooky={name:'Haunted Lobby',mood:'moonlit and mysterious',bpm:1,swing:.12,prog:[[0,'m'],[8,'M'],[3,'m'],[10,'7']],scale:'minor',
+  kick:{s:'kickSoft',p:P16([0,.9],[6,.35],[8,.72],[14,.28])},snare:{s:'brush',p:P16([4,.62],[12,.58],[15,.16])},
+  hat:{s:'ride',p:P16([0,.32],[6,.28],[8,.34],[14,.25])},perc:{s:'rim',p:P16([3,.25],[11,.22])},
+  bass:{pat:'walk',wave:'tri',v:.34},keys:{pat:'drone',voice:'soft'},lead:{voice:'bell',dens:.48,rhy:'sparse'},spark:'bells'};
 /* Boss tracks get darker and faster world by world: minor → phrygian → harmonic-minor tritone riffs, busier kicks, 16th-note bass. */
 for(let w=1;w<=6;w++){
   const tier=w<=2?0:w<=4?1:2;
@@ -1676,7 +1845,7 @@ for(let w=1;w<=6;w++){
     bass:{pat:tier===2?'drive16':'drive',wave:'saw',v:.3+tier*.03},keys:{pat:'power',voice:'saw'},arp:{rate:tier===2?1:2,voice:'saw',v:.026},
     lead:{voice:'sawlead',dens:.7+tier*.08,rhy:'drive'},spark:'crash'};
 }
-const STYLE_IDS=Object.keys(STYLES).filter(k=>k!=='lobby'&&!k.startsWith('boss'));
+const STYLE_IDS=Object.keys(STYLES).filter(k=>k!=='lobby'&&!k.startsWith('boss')&&!k.startsWith('lobbySpooky'));
 function makeTrack(styleId,seed,forceK){
   const st=STYLES[styleId], r=mulberry(hashStr('track'+seed)), K0=55+Math.floor(r()*7), K=forceK||K0;
   const chords=st.prog.map(([off,q])=>{ const ints=QUAL[q]; const n=ints.map(i=>{ let m=K+off+i; while(m>68) m-=12; while(m<55) m+=12; return m; }).sort((a,b)=>a-b);
@@ -2204,12 +2373,14 @@ const RANK_MAESTRO=21, RANK_SUPREME=25, RANK_MAX=26;
    (with 40,000 and ×2: about 2,667 → 5,333 → 10,667 → 21,333) */
 const MAESTRO_TOTAL=40000, MAESTRO_GROWTH=2;
 const MAESTRO_STEP=MAESTRO_TOTAL*(MAESTRO_GROWTH-1)/(Math.pow(MAESTRO_GROWTH,RANK_SUPREME-RANK_MAESTRO)-1);
-const TRUE_PULSE_XP=32000;   // Supreme Conductor → True Pulse
+const TRUE_PULSE_XP=70000;   // XP required above Supreme Conductor to reach True Pulse
 const baseXP=n=>n<=0?0:Math.round(120*n+34*n*n);
 const rankXP=n=>n<=RANK_MAESTRO?baseXP(n):n>RANK_SUPREME?rankXP(RANK_SUPREME)+TRUE_PULSE_XP*(n-RANK_SUPREME):baseXP(RANK_MAESTRO)+Math.round(MAESTRO_STEP*(Math.pow(MAESTRO_GROWTH,n-RANK_MAESTRO)-1)/(MAESTRO_GROWTH-1));
 function rankOf(xp){ let n=0; while(n<RANK_MAX&&xp>=rankXP(n+1)) n++; return Math.max(n,SAVE.rankKeep||0); }
+// players who already reached True Pulse under the previous curve keep True Pulse even if the curve changes
+if(!SAVE.truePulseKeep && (SAVE.xp||0)>=89514){ SAVE.rankKeep=Math.max(SAVE.rankKeep||0,RANK_MAX); SAVE.truePulseKeep=true; save(); }
 // players who already climbed past Maestro under the old, flatter curve keep the rank they earned
-if(!SAVE.xpCurve2){ let old=0; while(old<RANK_SUPREME&&(SAVE.xp||0)>=baseXP(old+1)) old++; if(old>RANK_MAESTRO) SAVE.rankKeep=old; SAVE.xpCurve2=true; save(); }
+if(!SAVE.xpCurve2){ let old=0; while(old<RANK_SUPREME&&(SAVE.xp||0)>=baseXP(old+1)) old++; if(old>RANK_MAESTRO) SAVE.rankKeep=Math.max(SAVE.rankKeep||0,old); SAVE.xpCurve2=true; save(); }
 function rankName(n){ if(n>=RANK_MAX) return 'True Pulse'; if(n>=RANK_SUPREME) return 'Supreme Conductor'; if(n>RANK_MAESTRO) return 'Maestro '+['I','II','III'][n-RANK_MAESTRO-1]; if(n===RANK_MAESTRO) return 'Maestro'; return RANK_TIERS[Math.floor(n/3)].n+' '+['I','II','III'][n%3]; }
 const rankCol=n=>n>=RANK_MAX?'#FF2A3C':n>=RANK_SUPREME?'#FF9CE6':n>=RANK_MAESTRO?(n>RANK_MAESTRO?'#FFE7A0':'#FFF8EE'):RANK_TIERS[Math.min(7,Math.floor(n/3))].c;
 const rankReward=n=>60+n*25;
@@ -5226,8 +5397,10 @@ const myRank=()=>rankOf(SAVE.xp||0);
 function addXP(n){ const before=myRank(); SAVE.xp=(SAVE.xp||0)+Math.max(0,Math.round(n)); const after=myRank(); let bonus=0;
   for(let r=before+1;r<=after;r++) bonus+=rankReward(r); SAVE.notes+=bonus; return {before,after,bonus}; }
 function xpForRun(o){
-  const s=G.stats||{perfect:0}; let xp=Math.round((G.score||0)/120)+s.perfect+(o.cleared?20:0);
   const M=G.mode||{};
+  // Custom/editor levels are sandbox runs: they never grant progression XP.
+  if(M.type==='custom') return 0;
+  const s=G.stats||{perfect:0}; let xp=Math.round((G.score||0)/120)+s.perfect+(o.cleared?20:0);
   if(M.type==='boss'&&o.cleared) xp+=60; if(M.type==='hard'&&o.cleared) xp+=40+M.idx*5; if(M.type==='daily'&&o.cleared) xp+=40;
   if(M.type==='endless'||M.type==='coop'||M.type==='tether') xp+=Math.max(0,G.roomIdx-1)*6; if(M.type==='raid') xp+=(G.raidBeaten||0)*20; if(M.type==='ascent') xp+=Math.max(0,(G.floorBest||1)-1)*12;
   if(M.type==='duel') xp+=25+(o.won?25:0);
@@ -5244,8 +5417,13 @@ function xpForRun(o){
 const RAID_BIG_N=7, RAID_BIG_XP=2000, RAID_BIG_EACH=400;
 /* called once from every run end; returns the line shown on the result screen */
 function awardRun(o){
+  const M=G.mode||{};
+  // Custom/editor levels are sandbox runs: no XP, quest progress, lifetime run stats,
+  // rank rewards, or achievement progression should come from them.
+  if(M.type==='custom') return '+0 XP';
+
   ensureQuests();
-  const s=G.stats||{perfect:0,gems:0}, M=G.mode||{}, L=SAVE.life||(SAVE.life={});
+  const s=G.stats||{perfect:0,gems:0}, L=SAVE.life||(SAVE.life={});
   L.runs=(L.runs||0)+1; L.perfect=(L.perfect||0)+s.perfect; L.gems=(L.gems||0)+(s.gems||0);
   questEv('runs',1); questEv('perfect',s.perfect); questEv('gems',s.gems||0); questEv('streak',G.maxStreak||0,true);
   if(o.cleared&&M.type==='level') questEv('levels',1);
@@ -6775,6 +6953,8 @@ async function cvkSignUp(){
 }
 /* every run's points go to your side while the event is live (anything that fails to send waits for the next run) */
 function cvkPost(M){
+  // Custom/editor levels are sandbox runs and never contribute to the live event score.
+  if(M&&M.type==='custom') return;
   if(!SAVE.cvkSide||!ACCT.user||!ACCT.db||window.PF_CG||cvkPhase()!=='live') return;
   const add=Math.min(400000,Math.max(0,Math.round(G.score||0))+(SAVE.cvkPend||0)); if(!add) return;
   SAVE.cvkPend=0; save(); const side=SAVE.cvkSide, ref=cvkCol().collection('sides').doc(side), inc=firebase.firestore.FieldValue.increment(add);
@@ -6785,7 +6965,7 @@ function cvkPost(M){
 }
 function cvkRender(){
   const ph=cvkPhase(), n=Date.now();
-  const chip=$('mCvk'); if(chip){ chip.hidden=!cvkShown(); chip.textContent='⚔ Cale vs Korra · '+(ph==='soon'?'starts in '+cvkFmt(CVK.start-n).replace(/ \d+s$/,''):ph==='live'?'LIVE':'results'); }
+  const chip=$('mCvk'); if(chip){ chip.hidden=!cvkShown(); chip.textContent='Cale vs Korra · '+(ph==='soon'?'starts in '+cvkFmt(CVK.start-n).replace(/ \d+s$/,''):ph==='live'?'LIVE':'results'); }
   if($('cvkOv').hidden) return;
   const w=ph==='over'?cvkWinner():null;
   const who=s2=>{ const v=CVK.scores[s2]; return v&&v.name?cleanName(v.name):''; };   // their username, as it is now
@@ -6968,7 +7148,7 @@ $('lbTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>showLB(b.dataset
 $('lbBack').onclick=()=>toMenu();
 $('mLB').onclick=()=>showLB('daily');
 $('mEvent').onclick=showEvent;
-function eventChip(){ const b=$('mEvent'); if(b) b.textContent='★ '+weekEvent().name; }
+function eventChip(){ const b=$('mEvent'); if(b) b.textContent=weekEvent().name; }
 
 /* ================= CHALLENGE LINKS ================= */
 const b64e=s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -8303,7 +8483,7 @@ function beatBar(t){
    Through October (until the end of Nov 1) the main menu dresses up: a darker, purple-and-orange night, cobwebs in the
    top corners, a spider on a thread, bats crossing the screen, a pale moon and a glowing jack-o'-lantern. The accent
    colour turns pumpkin orange. It's decoration only: it sits behind the buttons and never takes a tap. */
-const HWEEN=(()=>{ const d=new Date(); return d.getMonth()===9||(d.getMonth()===10&&d.getDate()<=1); })();
+const HWEEN=(()=>new Date().getMonth()===9)();
 function hweenBuild(){
   const host=$('hween'); if(!HWEEN||!host||host.dataset.on) return; host.dataset.on='1'; document.body.classList.add('hween');
   // a quarter cobweb fanning out of a corner: spokes, and threads sagging between them
@@ -8324,11 +8504,26 @@ function hweenBuild(){
   const main=document.querySelector('#menuOv .mmain'); if(main){ const p=document.createElement('div'); p.className='hw-pumpwrap'; p.setAttribute('aria-hidden','true'); p.innerHTML=pumpkin; main.appendChild(p); }
 }
 hweenBuild();
+function syncHweenSeason(){
+  const active=new Date().getMonth()===9, host=$('hween');
+  document.body.classList.toggle('hween',active);
+  if(!host) return;
+  if(active && !host.dataset.on){ host.dataset.on=''; hweenBuild(); }
+  if(!active && host.dataset.on){ host.dataset.on=''; host.innerHTML=''; }
+}
+setInterval(syncHweenSeason,60000);
+syncHweenSeason();
 
 /* ---------------- LOBBY MUSIC ---------------- */
-const LOBBY={on:false,t0:0,n:0,spb:60/104,tracks:null};
-/* the menu song: two tunes over the same chords. Endless plays it too when a sound pack is equipped. */
-function lobbyTracks(){ if(!LOBBY.tracks){ const a=makeTrack('lobby','lobbyA'); LOBBY.tracks=[a,makeTrack('lobby','lobbyB',a.K)]; LOBBY.tracks[1].chords=a.chords; } return LOBBY.tracks; }
+const LOBBY={on:false,t0:0,n:0,spb:60/104,tracks:null,theme:null};
+const lobbySpookyNow=()=>new Date().getMonth()===9;
+/* the menu song: two tunes over the same chords. October gets a darker minor-key arrangement. */
+function lobbyTracks(){
+  const spooky=lobbySpookyNow(), theme=spooky?'lobbySpooky':'lobby';
+  if(LOBBY.theme!==theme){ LOBBY.theme=theme; LOBBY.tracks=null; LOBBY.on=false; LOBBY.spb=60/(spooky?96:104); }
+  if(!LOBBY.tracks){ const a=makeTrack(theme,'lobbyA'); LOBBY.tracks=[a,makeTrack(theme,'lobbyB',a.K)]; LOBBY.tracks[1].chords=a.chords; }
+  return LOBBY.tracks;
+}
 /* the equipped, owned sound pack whose song a solo Endless run plays. Online runs and shared challenge links keep the usual songs, so everyone hears the same tempo. */
 function endlessPack(M){ if(!M||M.type!=='endless'||M.net||M.shared) return null; const P=packById(SAVE.pack); return P.ov&&ownsItem(P)?P:null; }
 function lobbyTick(){
@@ -8343,7 +8538,7 @@ function lobbyTick(){
   while(LOBBY.t0+LOBBY.n*s16<ahead){ const st=LOBBY.t0+LOBBY.n*s16; TRACK=LOBBY.tracks[Math.floor(LOBBY.n/64)%2]; if(st>=c.currentTime-LATE_OK) scheduleStep(LOBBY.n,st,LOBBY.spb); LOBBY.n++; }
 }
 function syncSoundChip(){ const b=$('mSound'); if(!b) return; const on=A.ctx&&A.ctx.state==='running';
-  b.textContent=!on?'♪ Tap for music':SAVE.musicVol>0?'♪ Music on':'♪ Music off'; b.classList.toggle('off',!!on&&SAVE.musicVol===0); }
+  b.textContent=!on?'Tap for music':SAVE.musicVol>0?'Music on':'Music off'; b.classList.toggle('off',!!on&&SAVE.musicVol===0); }
 function firstGesture(){ ensureAudio(); if(A.ctx.state==='suspended'&&G.state!=='paused') A.ctx.resume().then(syncSoundChip); if(!A.lobbyT) A.lobbyT=setInterval(lobbyTick,40); syncSoundChip(); }
 ['pointerdown','keydown'].forEach(t=>addEventListener(t,()=>{ if(!A.ctx||(A.ctx.state!=='running'&&G.state!=='paused')) firstGesture(); },{capture:true,passive:true}));
 
