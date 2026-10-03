@@ -4044,12 +4044,15 @@ function vxPre2(S,X,T,W,bh,H,now){
   const v=S.vx, fy=T+bh, cxm=X+W/2, bt=clamp(1-(now-G.lastBeatT)/.35,0,1), oy=fy+H*.35, B=fy+H, sb=clamp((now-G.lastBeatT)/.6,0,1);
   cx.save(); cx.globalCompositeOperation='lighter';
   switch(v){
-    // Equinox: pearl light pouring out, thin rays turning slowly, a halo that breathes on the beat; a light mote and a dark one circle each other
-    case 'equinox': { vxGlow(cxm,oy,W*(1.25+.15*bt),'#FFE7A0',.28+.18*bt,.82); vxGlow(cxm,oy,W*.75,'#FFFFFF',.16+.12*bt,.8);
-      const n=vxN(14); for(let i=0;i<n;i++){ const a=now*.12+i*TAU/n, L=W*(1.25+.18*Math.sin(now*1.3+i*1.7)+.15*bt), w2=.035;
-        const rg=cx.createLinearGradient(cxm,oy,cxm+Math.cos(a)*L,oy+Math.sin(a)*L*.8); rg.addColorStop(0,rgba(i%2?'#FFF3C4':'#FFFFFF',.2+.12*bt)); rg.addColorStop(1,rgba('#FFF3C4',0));
+    // Equinox: crisp rays turning slowly, gold-white on the light side and deep indigo on the shadow side, and a two-tone shockwave on the beat
+    case 'equinox': { vxGlow(cxm,oy,W*(1.0+.12*bt),'#FFE7A0',.16+.14*bt,.8);
+      const n=vxN(16); for(let i=0;i<n;i++){ const a=now*.18+i*TAU/n, c=Math.cos(a), L=W*(1.1+.3*(i%2)+.18*bt), w2=i%2?.022:.034, light=c<0;
+        cx.globalCompositeOperation=light?'lighter':'source-over';
+        const rg=cx.createLinearGradient(cxm,oy,cxm+c*L,oy+Math.sin(a)*L*.8); rg.addColorStop(0,light?rgba('#FFF6DA',.55+.25*bt):rgba('#1C1636',.5+.2*bt)); rg.addColorStop(1,light?rgba('#FFE7A0',0):rgba('#2A2148',0));
         cx.fillStyle=rg; cx.beginPath(); cx.moveTo(cxm,oy); cx.lineTo(cxm+Math.cos(a-w2)*L,oy+Math.sin(a-w2)*L*.8); cx.lineTo(cxm+Math.cos(a+w2)*L,oy+Math.sin(a+w2)*L*.8); cx.closePath(); cx.fill(); }
-      vxEqPair(cxm,oy,W,now,false); } break;
+      if(sb<1){ const r=W*(.6+sb*1.1); cx.lineWidth=2.6*(1-sb)+.6;
+        cx.globalCompositeOperation='lighter'; cx.strokeStyle=rgba('#FFF6DA',.85*(1-sb)); cx.beginPath(); cx.ellipse(cxm,B,r,r*.3,0,Math.PI/2,Math.PI*1.5); cx.stroke();
+        cx.globalCompositeOperation='source-over'; cx.strokeStyle=rgba('#2A2148',.8*(1-sb)); cx.beginPath(); cx.ellipse(cxm,B,r,r*.3,0,-Math.PI/2,Math.PI/2); cx.stroke(); } } break;
     case 'critter': vxGlow(cxm,oy,W,'#FFC48A',.18+.18*bt,.78); vxOrbit(1,1.1,cxm,B-H*.1,W*.85,W*.25,now,false,(x,y)=>vxYarn(x,y,W*.13,now)); break;
     case 'speaker': { vxGlow(cxm,oy,W*1.05,'#FFD166',.15+.3*bt,.78);
       for(let k=0;k<3;k++){ const u=(sb+k*.18); if(u>1) continue; cx.strokeStyle=rgba('#FFD166',.6*(1-u)); cx.lineWidth=2.5*(1-u)+.5; const r=W*(.55+u*1.1); cx.beginPath(); cx.ellipse(cxm,fy+H*.5,r,r*.55,0,0,TAU); cx.stroke(); } } break;
@@ -4106,27 +4109,36 @@ function vxPost2(S,X,T,W,bh,H,now){
   cx.save(); cx.lineCap='round'; cx.lineJoin='round';
   switch(v){
     case 'equinox': {
-      // the top face: a soft S-curve parts light from shadow, an ember of shadow rests in the light, a spark of light in the shadow
-      cx.save(); cx.beginPath(); cx.rect(X,T,W,bh); cx.clip(); const mx=X+W/2;
-      cx.beginPath(); cx.moveTo(mx,T); cx.bezierCurveTo(mx+W*.34,T+bh*.28,mx-W*.34,T+bh*.72,mx,T+bh); cx.lineTo(X+W,T+bh); cx.lineTo(X+W,T); cx.closePath();
-      const sh=cx.createLinearGradient(mx,T,X+W,T+bh); sh.addColorStop(0,'rgba(70,56,120,.18)'); sh.addColorStop(1,'rgba(52,40,96,.34)'); cx.fillStyle=sh; cx.fill(); cx.restore();
-      cx.fillStyle='rgba(58,46,102,.6)'; cx.beginPath(); cx.ellipse(X+W*.33,T+bh*.6,W*.05,bh*.09,0,0,TAU); cx.fill();
-      cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(X+W*.67,T+bh*.4,W*.1,'#FFFFFF',.9); cx.restore();
-      cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.ellipse(X+W*.67,T+bh*.4,W*.035,bh*.065,0,0,TAU); cx.fill();
-      // a pearl sheen drifting across the front, and the same parting of light and shadow, fainter
-      cx.save(); cx.beginPath(); cx.rect(X,fy,W,H); cx.clip(); const u=((now*.18)%1.6)-.3, g=cx.createLinearGradient(X+W*u-W*.4,fy,X+W*u+W*.4,B);
-      g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(.5,'rgba(255,250,235,.55)'); g.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=g; cx.fillRect(X,fy,W,H);
-      cx.beginPath(); cx.moveTo(cxm,fy); cx.bezierCurveTo(cxm-W*.3,fy+H*.35,cxm+W*.3,fy+H*.65,cxm,B); cx.lineTo(X+W,B); cx.lineTo(X+W,fy); cx.closePath();
-      const fg=cx.createLinearGradient(cxm,fy,X+W,B); fg.addColorStop(0,'rgba(70,56,120,.14)'); fg.addColorStop(1,'rgba(52,40,96,.3)'); cx.fillStyle=fg; cx.fill(); cx.restore();
-      cx.strokeStyle=rgba('#E8C068',.55); cx.lineWidth=Math.max(.8,W*.018); cx.beginPath(); cx.moveTo(cxm,fy); cx.bezierCurveTo(cxm-W*.3,fy+H*.35,cxm+W*.3,fy+H*.65,cxm,B); cx.stroke();
-      cx.beginPath(); cx.moveTo(mx,T); cx.bezierCurveTo(mx+W*.34,T+bh*.28,mx-W*.34,T+bh*.72,mx,T+bh); cx.stroke();
-      cx.strokeStyle=rgba('#FFE7A0',.55+.35*bt); cx.lineWidth=1.2; rr(X,T,W,bh+H,3); cx.stroke();
-      // the halo, breathing with the beat
-      const hr=W*(.4+.06*bt+.02*Math.sin(now*2)); cx.save(); cx.globalCompositeOperation='lighter'; cx.shadowColor='#FFE7A0'; cx.shadowBlur=MOB?6:12;
-      cx.strokeStyle=rgba('#FFF6DA',.85); cx.lineWidth=Math.max(1.6,W*.05); cx.beginPath(); cx.ellipse(cxm,T-bh*.55,hr,hr*.3,0,0,TAU); cx.stroke(); cx.restore();
-      cx.save(); cx.globalCompositeOperation='lighter'; vxEqPair(cxm,oy,W,now,true);
-      if(bt>.05){ vxGlow(cxm,fy+H*.3,W*(.5+.5*bt),'#FFF6DA',.32*bt); vxSpark(cxm,T-bh*.55,W*.16*bt,'#FFFFFF',bt); }
-      vxRise(vxN(4),.3,X-W*.1,W*1.2,B,W*1.4,now,(x,y,u2,i)=>{ if(i%2) vxGlow(x,y,W*.06,'#FFF3C4',.85*Math.sin(Math.PI*u2)); else { cx.fillStyle=`rgba(58,46,102,${.55*Math.sin(Math.PI*u2)})`; cx.beginPath(); cx.arc(x,y,W*.03,0,TAU); cx.fill(); } },21);
+      // light and shadow, parted by a bold gold S-curve on the top and down the front
+      const mx=X+W/2, topS=()=>{ cx.moveTo(mx,T); cx.bezierCurveTo(mx+W*.34,T+bh*.28,mx-W*.34,T+bh*.72,mx,T+bh); }, frontS=()=>{ cx.moveTo(cxm,fy); cx.bezierCurveTo(cxm-W*.3,fy+H*.35,cxm+W*.3,fy+H*.65,cxm,B); };
+      cx.save(); cx.beginPath(); cx.rect(X,T,W,bh+H); cx.clip();
+      cx.beginPath(); topS(); cx.lineTo(X+W,T+bh); cx.lineTo(X+W,T); cx.closePath(); cx.fillStyle='rgba(40,30,82,.5)'; cx.fill();
+      cx.beginPath(); frontS(); cx.lineTo(X+W,B); cx.lineTo(X+W,fy); cx.closePath(); const fg=cx.createLinearGradient(cxm,fy,X+W,B); fg.addColorStop(0,'rgba(40,30,82,.45)'); fg.addColorStop(1,'rgba(22,16,48,.7)'); cx.fillStyle=fg; cx.fill();
+      // a pearl sheen drifting across the light side
+      const u=((now*.18)%1.6)-.3, g=cx.createLinearGradient(X+W*u-W*.4,T,X+W*u+W*.4,B); g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(.5,'rgba(255,252,240,.5)'); g.addColorStop(1,'rgba(255,255,255,0)');
+      cx.fillStyle=g; cx.beginPath(); topS(); cx.lineTo(X,T+bh); cx.lineTo(X,T); cx.closePath(); cx.fill(); cx.beginPath(); frontS(); cx.lineTo(X,B); cx.lineTo(X,fy); cx.closePath(); cx.fill(); cx.restore();
+      cx.save(); cx.shadowColor='#FFD166'; cx.shadowBlur=MOB?4:6+6*bt; cx.strokeStyle=`rgb(255,${Math.round(214+30*bt)},${Math.round(120+90*bt)})`; cx.lineWidth=Math.max(1.4,W*.035);
+      cx.beginPath(); topS(); frontS(); cx.stroke(); cx.restore();
+      // an ember of shadow in the light, a spark of light in the shadow
+      cx.fillStyle='#1C1636'; cx.beginPath(); cx.ellipse(X+W*.3,T+bh*.6,W*.06,bh*.1,0,0,TAU); cx.fill(); cx.beginPath(); cx.arc(X+W*.3,fy+H*.62,W*.055,0,TAU); cx.fill();
+      cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(X+W*.7,T+bh*.4,W*.12,'#FFFFFF',.9); vxGlow(X+W*.7,fy+H*.38,W*.12,'#FFFFFF',.8); cx.restore();
+      cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.ellipse(X+W*.7,T+bh*.4,W*.045,bh*.075,0,0,TAU); cx.fill(); cx.beginPath(); cx.arc(X+W*.7,fy+H*.38,W*.045,0,TAU); cx.fill();
+      // crisp edges: gold on the light side, lilac on the shadow side
+      cx.lineWidth=1.4; cx.strokeStyle=rgba('#FFE7A0',.95); cx.beginPath(); cx.moveTo(X+W*.5,T); cx.lineTo(X,T); cx.lineTo(X,B); cx.lineTo(X+W*.5,B); cx.stroke();
+      cx.strokeStyle=rgba('#B9A6FF',.9); cx.beginPath(); cx.moveTo(X+W*.5,T); cx.lineTo(X+W,T); cx.lineTo(X+W,B); cx.lineTo(X+W*.5,B); cx.stroke();
+      // the moons on its shoulders: white on the light side, black on the shadow side, bobbing against each other
+      const mr=W*.2, bob=Math.sin(now*1.6)*bh*.12, lx=X+W*.04, rx2=X+W*.96, my=T-mr*.45;
+      cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(lx,my+bob,mr*2.3,'#FFF6DA',.45+.35*bt); cx.restore();
+      const wg=cx.createRadialGradient(lx-mr*.35,my+bob-mr*.35,0,lx,my+bob,mr); wg.addColorStop(0,'#FFFFFF'); wg.addColorStop(.7,'#F4EEDD'); wg.addColorStop(1,'#D9CFB8');
+      cx.fillStyle=wg; cx.beginPath(); cx.arc(lx,my+bob,mr,0,TAU); cx.fill();
+      cx.fillStyle='rgba(180,168,140,.45)'; [[-.3,.15,.22],[.25,-.2,.15],[.2,.35,.12]].forEach(([dx,dy,rr2])=>{ cx.beginPath(); cx.arc(lx+dx*mr,my+bob+dy*mr,rr2*mr,0,TAU); cx.fill(); });
+      const dg=cx.createRadialGradient(rx2+mr*.3,my-bob-mr*.3,0,rx2,my-bob,mr); dg.addColorStop(0,'#3A2E66'); dg.addColorStop(.6,'#15102A'); dg.addColorStop(1,'#07040F');
+      cx.save(); cx.shadowColor='#8A6CFF'; cx.shadowBlur=MOB?6:10+8*bt; cx.fillStyle=dg; cx.beginPath(); cx.arc(rx2,my-bob,mr,0,TAU); cx.fill(); cx.restore();
+      cx.lineWidth=Math.max(1.2,W*.03); cx.strokeStyle=rgba('#C9B8FF',.8+.2*bt); cx.beginPath(); cx.arc(rx2,my-bob,mr,-Math.PI*.95,-Math.PI*.15); cx.stroke();
+      cx.strokeStyle=rgba('#FFE7A0',.5+.4*bt); cx.lineWidth=1; cx.beginPath(); cx.arc(rx2,my-bob,mr*1.0,Math.PI*.15,Math.PI*.55); cx.stroke();
+      // the beat: a short flare through the S-curve, and sparks rising, light and dark
+      cx.save(); cx.globalCompositeOperation='lighter'; if(bt>.05){ vxSpark(cxm,T+bh*.5,W*.2*bt,'#FFF6DA',bt); vxGlow(lx,my+bob,mr*(1.2+.8*bt),'#FFFFFF',.5*bt); vxSpark(lx-mr*.9,my+bob-mr*.9,mr*.6*bt,'#FFFFFF',bt); }
+      vxRise(vxN(6),.45,X-W*.2,W*1.4,B,W*1.6,now,(x,y,u2,i)=>{ if(i%2) vxSpark(x,y,W*.06,'#FFF6DA',Math.sin(Math.PI*u2)); else { cx.globalCompositeOperation='source-over'; vxSpark(x,y,W*.06,'#1C1636',.9*Math.sin(Math.PI*u2)); cx.globalCompositeOperation='lighter'; } },21);
       cx.restore(); } break;
     case 'critter': { cx.strokeStyle='rgba(90,50,30,.55)'; cx.lineWidth=.9; cx.beginPath(); [-1,1].forEach(sg=>{ const bx=cxm+sg*W*.22; for(let k=-1;k<=1;k++){ cx.moveTo(bx,fy+H*.6); cx.lineTo(bx+sg*W*.32,fy+H*(.6+k*.08)+Math.sin(now*3)*H*.01); } }); cx.stroke();
       cx.fillStyle='#E0475A'; cx.fillRect(X,fy+H*.8,W,H*.09); const bj=Math.sin(now*14)*bt*W*.03; cx.fillStyle='#FFD166'; cx.beginPath(); cx.arc(cxm+bj,fy+H*.92,W*.07,0,TAU); cx.fill(); cx.fillStyle='#8A6A1A'; cx.fillRect(cxm+bj-W*.035,fy+H*.94,W*.07,1);
