@@ -1517,7 +1517,7 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
   <div class="panel">
     <div class="head"><button class="back" id="hBack" type="button">← Menu</button><div class="small" id="hStars"></div></div>
     <div><div class="eyebrow" style="color:#FF8A80">Hard Mode</div><h2>No rest for the rhythm</h2></div>
-    <p style="font-size:13.5px">Every tile type at once, low rails, a move on every beat, only 3 Harmony and a tight beat budget. Clear a stage to unlock the next.</p>
+    <p style="font-size:13.5px">Every tile type at once, low rails, a move on every beat, one life and a tight beat budget. Clear a stage to unlock the next, and clear all 12 to earn the Dread block.</p>
     <div class="levels" id="hardGrid"></div>
   </div>
 </section>
@@ -1599,6 +1599,13 @@ const old=store.get('save',null);
 let SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),old||{});
 if(!old){ SAVE.offset=store.get('offset',0); SAVE.relaxed=store.get('relaxed',false); SAVE.bestEndless=store.get('best',0); }
 SAVE.daily=Object.assign({},DEF.daily,SAVE.daily||{}); SAVE.stars=SAVE.stars||{};
+/* Hard Mode went to one life. A save that had cleared all 12 stages before that starts Hard Mode over from stage 1
+   (and so loses Dread until it clears them again). hardV marks a save that has been through this, so an older copy of
+   the same save (another device, the cloud) can't bring the old stars back. */
+const HARD_V=1;
+function hardMig(sv){ if(!sv||(sv.hardV||0)>=HARD_V) return sv; const st=sv.stars||{}; let n=0; for(let i=1;i<=12;i++) if((st['H-'+i]||0)>0) n++;
+  if(n>=12) for(let i=1;i<=12;i++) delete st['H-'+i]; sv.hardV=HARD_V; return sv; }
+hardMig(SAVE);
 if(!SAVE.land) SAVE.land='ring';
 /* equip a block, landing effect, tile theme or sound pack; the time lets signing in keep your most recent choice on every device */
 function equip(kind,id){ const k=kind==='skin'?'skin':kind==='tiles'?'tiles':kind==='pack'?'pack':kind==='banner'?'banner':'land'; SAVE[k]=id; SAVE[k+'T']=Date.now(); save(); if(k==='tiles'&&typeof refreshTiles==='function') refreshTiles();
@@ -2525,7 +2532,7 @@ function dailyInfo(){ const key=todayKey(), wd=new Date().getDay(), r=mulberry(h
 function modeFor(type,a,b){
   if(type==='level') return {type,world:a,level:b,rooms:1,mustMove:false,fallEnds:false,harmony:5,mods:{}};
   if(type==='boss') return {type,world:a,rooms:0,mustMove:false,fallEnds:false,harmony:5,mods:{}};
-  if(type==='hard') return {type,idx:a,rooms:a>=7?2:1,mustMove:true,fallEnds:false,harmony:a===12?1:2,mods:a===4?{allegro:true}:a===11?{glass:true}:a===12?{blackout:true}:{},tight:a===8||a===12};
+  if(type==='hard') return {type,idx:a,rooms:a>=7?2:1,mustMove:true,fallEnds:false,harmony:1,mods:a===4?{allegro:true}:a===11?{glass:true}:a===12?{blackout:true}:{},tight:a===8||a===12};
   if(type==='duel') return {type,coop:true,duel:true,rooms:0,mustMove:false,fallEnds:false,harmony:0,lives:3,mods:{}};
   if(type==='daily'){ const d=dailyInfo(); return {type,rooms:3,mustMove:true,fallEnds:true,harmony:d.mod==='onelife'?1:5,mods:d.mod?{[d.mod]:true}:{},seed:d.key,diff:d.diff,themeIdx:d.themeIdx,mod:d.mod}; }
   if(type==='coop') return {type,coop:true,rooms:0,mustMove:false,fallEnds:false,harmony:6,mods:{}};
@@ -2571,7 +2578,7 @@ function startRun(M){
   let h=LEVEL_HINTS[key]||'';
   if(!h&&M.type==='level'&&M.level===1) h=WORLD_MECH[M.world-1].map(k=>TIPS[k]).join(' ');
   if(!h&&M.type==='boss') h='Step on the gold blaster pad to fire at the boss. Red targets land 2 beats later, so move off them.';
-  if(!h&&M.type==='hard') h=`Hard mode: a move every beat, only ${M.harmony} Harmony, a tight beat budget${M.rooms>1?' and '+M.rooms+' rooms':''}.`+(HARD_MODS[M.idx]?' '+HARD_MODS[M.idx]+'.':'');
+  if(!h&&M.type==='hard') h=`Hard mode: a move every beat, one life (a single miss ends it), a tight beat budget${M.rooms>1?' and '+M.rooms+' rooms':''}.`+(HARD_MODS[M.idx]?' '+HARD_MODS[M.idx]+'.':'');
   if(M.net) h=M.type==='duel'?`Online duel: you are the ${NET.me?'mint':'gold'} side. Step on your blaster pad to shell your rival. Knock them off 3 times to win.`:(G.players.length>2?`Online co-op with ${G.players.length} players: everyone needs to reach the door.`:'Online co-op: you and your friend both need to reach the door.');
   if(!h&&M.type==='duel') h='Step on your blaster pad to shell your rival\'s tile. Knock them off 3 times to win.';
   if(!h&&M.type==='daily') h=M.mod?MODS[M.mod]:'No modifier today. Three rooms, one run.';
@@ -5077,13 +5084,14 @@ function acctInit(){
 /* ---- merging a device's save with the account's save ---- */
 const DEVICE_KEYS=['offset','controls','musicVol','sfxVol','haptics','reduce','swipeLearn','hpSeen'];
 function mergeSaves(loc,cl,additive){
+  hardMig(loc); hardMig(cl);
   const base=JSON.parse(JSON.stringify(DEF));
   // "Erase progress" is stamped with a time: a save from before the latest erase gives way to it,
   // instead of merging its old stars and Notes straight back into the account
   if(!additive&&(cl.wipe||0)!==(loc.wipe||0)){
     const keep=(cl.wipe||0)>(loc.wipe||0)?cl:loc, out=Object.assign(base,keep);
     for(const k of DEVICE_KEYS) if(k in loc) out[k]=loc[k];
-    out.trailRefund=true; out._t=Math.max(loc._t||0,cl._t||0,1); out.syncBase={notes:out.notes||0,xp:out.xp||0}; return out; }
+    out.hardV=HARD_V; out.trailRefund=true; out._t=Math.max(loc._t||0,cl._t||0,1); out.syncBase={notes:out.notes||0,xp:out.xp||0}; return out; }
   const newer=(cl._t||0)>=(loc._t||0)?cl:loc;
   const out=Object.assign(base,loc,newer);
   for(const k of DEVICE_KEYS) if(k in loc) out[k]=loc[k];
@@ -5130,7 +5138,7 @@ function mergeSaves(loc,cl,additive){
   const sk=SKINS.find(s=>s.id===out.skin), ld=LANDS.find(s=>s.id===out.land);
   if(!sk||(!out.owned.includes(sk.id)&&!sk.req&&sk.price>0)) out.skin='classic';
   if(!ld||(!out.owned.includes(ld.id)&&!ld.req&&ld.price>0)) out.land='ring';
-  out.trailRefund=true; out._t=Math.max(loc._t||0,cl._t||0,1);
+  out.hardV=HARD_V; out.trailRefund=true; out._t=Math.max(loc._t||0,cl._t||0,1);
   out.syncBase={notes:out.notes||0,xp:out.xp||0};   // what the account will hold once this is written
   return out;
 }
@@ -5162,7 +5170,7 @@ function acctSync(){
     if(!SAVE.name) restoreName();
     // show the account's name everywhere straight away, and keep the spare copy in step
     if(SAVE.name){ store.set('name',SAVE.name); ['nName','pName'].forEach(id=>{ const e=$(id); if(e&&document.activeElement!==e) e.value=SAVE.name; }); }
-    store.set('save',SAVE); ACCT.lastSync=Date.now(); ACCT.err=''; acctRefresh();
+    fixEquip(); store.set('save',SAVE); ACCT.lastSync=Date.now(); ACCT.err=''; acctRefresh();
     // once per visit, after the first sync: put your current banner, block, name and rank on your leaderboard entries,
     // so the banner you left equipped shows there without you having to re-equip it or set a new score
     if(!ACCT.lbFresh){ ACCT.lbFresh=true; lbRename(); }
@@ -8323,7 +8331,11 @@ function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.
 function showOv(id,menu=true){ OVS.forEach(o=>$(o).hidden=o!==id); setTimeout(partyBarSync,0); const ov=$(id); ov.querySelectorAll('.mcard,.mode,.lvl,.item,.cta').forEach((el,i)=>el.style.setProperty('--i',i)); ov.classList.remove('enter'); void ov.offsetWidth; ov.classList.add('enter'); document.body.classList.toggle('in-menu',menu); if(!MOB||id!=='menuOv'){ const f=visBtns($(id)).find(b=>b.matches('.cta,.btn,.mode,.lvl,.mcard'))||visBtns($(id))[0]; if(f) f.focus({preventScroll:true}); } }
 const notesTxt=()=>'♪ '+SAVE.notes.toLocaleString();
 function fadeMusic(){ if(!A.ctx) return; A.music.gain.setTargetAtTime(0,A.ctx.currentTime,.4); }
+/* a block or landing effect you no longer own (say Dread, after the Hard Mode reset) goes back to the default */
+function fixEquip(){ let ch=false; if(!ownsSkin(SAVE.skin)){ SAVE.skin='classic'; ch=true; }
+  const ld=LANDS.find(l=>l.id===SAVE.land); if(!ld||!(ld.price===0||SAVE.owned.includes(ld.id)||(ld.req&&reqMet(ld.req)))){ SAVE.land='ring'; ch=true; } if(ch) save(); return ch; }
 function toMenu(ov='menuOv'){
+  fixEquip();
   document.body.classList.remove('obscene','talkok'); G.obs=null; G.crowd=null; G.follow=null; G.watch=null; mystStop(.4); rollSndStop(); if(RES.boss) setTimeout(resize,0);
   if(A.ctx&&A.ctx.state==='suspended') A.ctx.resume();
   if(G.state!=='menu') fadeMusic(); stopStudioAudio(); hideTalk(); hideCine();
@@ -8384,7 +8396,7 @@ function buildLevels(w){
 }
 function buildHard(){
   let hs=0; for(let i=1;i<=12;i++) hs+=SAVE.stars['H-'+i]||0; $('hStars').textContent=`◆ ${hs}/36`;
-  let h=''; for(let i=1;i<=12;i++){ const s=SAVE.stars['H-'+i]||0, open=SAVE.devAll||i<=3||(SAVE.stars['H-'+(i-1)]||0)>0, sid=i%3===0?'boss'+Math.min(6,2+Math.ceil(i/3)):STYLE_IDS[hashStr('hs'+i)%STYLE_IDS.length];
+  let h=''; for(let i=1;i<=12;i++){ const s=SAVE.stars['H-'+i]||0, open=SAVE.devAll||i===1||(SAVE.stars['H-'+(i-1)]||0)>0, sid=i%3===0?'boss'+Math.min(6,2+Math.ceil(i/3)):STYLE_IDS[hashStr('hs'+i)%STYLE_IDS.length];
     h+=`<button class="lvl hard${open&&!s?' next':''}" data-h="${i}" type="button" ${open?'':'disabled'} style="--i:${i-1}"><span class="n">H${i}</span><span class="nm">${HARD_NAMES[i-1]}</span><span class="trk">♪ ${STYLES[sid].name}</span>${starStr(s)}</button>`; }
   $('hardGrid').innerHTML=h; $('hardGrid').querySelectorAll('button').forEach(b=>b.onclick=()=>startRun(modeFor('hard',+b.dataset.h)));
 }
