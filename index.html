@@ -1599,12 +1599,11 @@ const old=store.get('save',null);
 let SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),old||{});
 if(!old){ SAVE.offset=store.get('offset',0); SAVE.relaxed=store.get('relaxed',false); SAVE.bestEndless=store.get('best',0); }
 SAVE.daily=Object.assign({},DEF.daily,SAVE.daily||{}); SAVE.stars=SAVE.stars||{};
-/* Hard Mode went to one life. A save that had cleared all 12 stages before that starts Hard Mode over from stage 1
-   (and so loses Dread until it clears them again). hardV marks a save that has been through this, so an older copy of
-   the same save (another device, the cloud) can't bring the old stars back. */
-const HARD_V=1;
-function hardMig(sv){ if(!sv||(sv.hardV||0)>=HARD_V) return sv; const st=sv.stars||{}; let n=0; for(let i=1;i<=12;i++) if((st['H-'+i]||0)>0) n++;
-  if(n>=12) for(let i=1;i<=12;i++) delete st['H-'+i]; sv.hardV=HARD_V; return sv; }
+/* Hard Mode went to one life, so everyone's Hard Mode starts over from stage 1 (and Dread is earned again by clearing all
+   12). hardV marks a save that has been through this, so an older copy of the same save (another device, the cloud)
+   can't bring the old stars back. */
+const HARD_V=2;
+function hardMig(sv){ if(!sv||(sv.hardV||0)>=HARD_V) return sv; const st=sv.stars||{}; for(let i=1;i<=12;i++) delete st['H-'+i]; sv.hardV=HARD_V; return sv; }
 hardMig(SAVE);
 if(!SAVE.land) SAVE.land='ring';
 /* equip a block, landing effect, tile theme or sound pack; the time lets signing in keep your most recent choice on every device */
