@@ -672,7 +672,55 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 .cvkjoin{width:100%;background:linear-gradient(90deg,#3FA9FF,#8A4FD8 50%,#FF3B4E)!important;color:#fff!important;font-weight:800}
 .cvkrules{margin:0;color:var(--ink-3)}
 .cvkpromo{margin-top:180px;align-items:center}
-#cvkWinOv{align-items:start;overflow-y:auto;padding-block:16px}
+#cvkWinOv,#twinWinOv{align-items:start;overflow-y:auto;padding-block:16px}
+.twchip{background:linear-gradient(90deg,rgba(255,236,170,.4),rgba(90,70,160,.45))!important;border-color:rgba(255,236,170,.5)!important;color:#fff!important;font-weight:700}
+.twpanel{background:linear-gradient(120deg,rgba(70,60,40,.97),rgba(16,12,32,.98) 48%,rgba(40,30,86,.97))!important;
+  box-shadow:-24px 0 60px -20px rgba(255,231,160,.5),24px 0 60px -20px rgba(140,110,255,.5),0 20px 60px rgba(0,0,0,.5)!important}
+.twrays{background:conic-gradient(from 0deg,rgba(255,246,218,0),rgba(255,246,218,.42) 8%,rgba(255,246,218,0) 16%,rgba(140,110,255,.22) 30%,rgba(255,246,218,0) 40%,rgba(255,246,218,.36) 55%,rgba(255,246,218,0) 64%,rgba(140,110,255,.2) 78%,rgba(255,246,218,0) 88%)!important;animation-duration:24s!important}
+.twglow{background:radial-gradient(ellipse,rgba(255,250,235,.5),rgba(255,231,160,.2) 50%,transparent 72%)!important}
+.twstone i{background:linear-gradient(90deg,#1E1A36,#3A3262 30%,#FFF6DA 50%,#3A3262 70%,#16122A)!important;border-top-color:#FFE7A0!important}
+.twprize b{background:linear-gradient(90deg,#FFFFFF,#FFE7A0 45%,#8A78D8 60%,#E8E0FF)!important;-webkit-background-clip:text!important;background-clip:text!important}
+.twtitle{margin:2px 0 0;font:900 clamp(34px,9vw,52px)/1 var(--display);letter-spacing:.04em;display:flex;justify-content:center;gap:12px}
+.twtitle .l{background:linear-gradient(180deg,#FFFFFF,#FFE7A0);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(255,231,160,.7))}
+.twtitle .d{background:linear-gradient(180deg,#C9B8FF,#5A46B0);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(140,110,255,.7))}
+#twTimer.final b{background:linear-gradient(90deg,#FFFFFF,#FFE7A0 45%,#C9B8FF);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 20px rgba(255,231,160,.6))}
+.twnext{margin:0;color:var(--ink-2)}
+.twteam{text-align:left;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,231,160,.35);display:grid;gap:6px}
+.twteam small{font:700 10px var(--display);letter-spacing:.14em;text-transform:uppercase;color:#FFE7A0}
+.twteam h3{margin:0;font:800 20px var(--display);overflow-wrap:anywhere}
+.twteam.none p{margin:0;color:var(--ink-2);font-size:14px}
+.twmem{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px}.twmem em{color:var(--ink-3);font-style:normal}.twmem i{color:var(--ink-3)}
+.twst{justify-self:start;font:700 12px var(--display);letter-spacing:.04em;padding:4px 9px;border-radius:999px;border:1px solid}
+.twst.safe{color:#9CF5C8;border-color:rgba(156,245,200,.5);background:rgba(156,245,200,.1)}.twst.danger{color:#FF9A9A;border-color:rgba(255,154,154,.5);background:rgba(255,154,154,.1)}
+.twst.wait{color:#FFE7A0;border-color:rgba(255,231,160,.5)}.twst.out{color:var(--ink-3);border-color:var(--line)}.twst.champ{color:#1A1430;background:linear-gradient(90deg,#FFFFFF,#FFE7A0);border-color:#FFE7A0}
+.twsc{font-size:13px;color:var(--ink-2)}.twsc b{color:#fff}
+.twcode{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.twcode span{font-size:12px;color:var(--ink-3)}.twcode b{font:800 22px var(--display);letter-spacing:.18em;color:#FFE7A0}
+.twleave{justify-self:start;padding:6px 12px;font-size:12px}
+.twpanel{min-width:0}.twpanel>*{min-width:0;max-width:100%}
+.twjoin{display:grid;gap:10px}#twJoinBody{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.twbox .joinrow,.twteam .joinrow{display:flex;gap:8px;min-width:0}.twbox .joinrow input,.twteam .joinrow input{flex:1 1 auto;width:0}
+.twbox{text-align:left;display:grid;gap:4px;padding:12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.twbox b{font:800 15px var(--display)}.twbox small{color:var(--ink-3);font-size:12px}
+.twbox .joinrow input,.twteam .joinrow input{min-width:0;min-height:40px;padding:0 10px;font:700 15px var(--display);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink)}
+.twbtn{background:linear-gradient(90deg,#FFE7A0,#B9A6FF)!important;color:#1A1430!important}
+#twMsg{min-height:1em}#twMsg.err{color:#FF9A9A}
+.twrun{color:#FFE7A0}.twrun.best{color:#9CF5C8}.twrun.muted{color:var(--ink-3)}
+.twbhead{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:2px;margin-top:4px}.twbhead b{font:800 16px var(--display)}.twbhead small{color:var(--ink-3);font-size:12px}
+.twbracket{display:flex;align-items:flex-start;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 8px;text-align:left;-webkit-overflow-scrolling:touch}
+.twcol{flex:0 0 min(210px,76%);scroll-snap-align:start;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:8px}
+.twcol.now{border-color:rgba(255,231,160,.6);box-shadow:0 0 18px rgba(255,231,160,.18)}
+.twcol h4{margin:0 0 6px;font:800 14px var(--display);display:flex;justify-content:space-between;align-items:baseline}.twcol h4 small{font:600 11px var(--body);color:var(--ink-3)}
+.twcol ul{list-style:none;margin:0;padding:0;display:grid;gap:5px;max-height:360px;overflow-y:auto}
+.twcol li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 8px;border-radius:9px;background:rgba(255,255,255,.06)}
+.twcol li div{display:flex;flex-direction:column;min-width:0}.twcol li b{font:700 13px var(--display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.twcol li small{font-size:11px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.twcol li span{font:700 12px var(--display);font-variant-numeric:tabular-nums;color:#FFE7A0}
+.twcol li.out{opacity:.38}.twcol li.me{box-shadow:inset 0 0 0 1.5px #FFE7A0}.twcol li.champ{background:linear-gradient(90deg,rgba(255,246,218,.35),rgba(140,110,255,.3))}
+.twcol li.cut{background:none;padding:2px 0;justify-content:center;border-top:1.5px dashed rgba(255,154,154,.7);border-radius:0}.twcol li.cut span{color:#FF9A9A;font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.twcol li.empty{background:none;color:var(--ink-3);font-size:12px;justify-content:center}
+.twwintitle{background:linear-gradient(90deg,#FFFFFF,#FFE7A0 40%,#B9A6FF 65%,#E8E0FF)!important;-webkit-background-clip:text!important;background-clip:text!important}
+.twglyph{background:linear-gradient(90deg,#FFF6DA 50%,#3A2E66 50%)!important;-webkit-background-clip:text!important;background-clip:text!important}
+@media (max-width:520px){ #twJoinBody{grid-template-columns:minmax(0,1fr)} .twpanel .cvkhead .cvkbadge{display:none} }
+
 .cvkwin .row .btn{flex:0 0 auto;padding-inline:18px}
 .cvkwin .cvkask{font-size:clamp(15px,3.8vw,18px)}
 .cvkwintitle{margin:0;font:900 clamp(40px,11vw,60px)/1 var(--display);background:linear-gradient(90deg,#FFF3C4,#FFD166 40%,#B07CFF 60%,#E6D8FF);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(255,209,102,.55));animation:cvkvs 2.4s ease-in-out infinite}
@@ -1083,6 +1131,7 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
       <button class="chip acct" id="mAcct" type="button">Sign in</button>
       <button class="chip rankchip" id="mProfile" type="button"><i class="gem"></i><span id="mRankTxt">Bronze I</span><em class="qdot" id="mQDot" hidden></em></button>
       <button class="chip c-coll" id="mShop" type="button">Collection</button>
+      <button class="chip twchip" id="mTwin" type="button" hidden>⚔ Twin Pulse</button>
       <button class="chip c-fr" id="mFriends" type="button">Friends<em class="qdot" id="mFDot" hidden></em></button>
       <button class="chip c-lb" id="mLB" type="button">Leaderboard</button>
       <button class="chip c-set" id="mSettings" type="button">Settings</button>
@@ -1169,6 +1218,7 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
       <button id="applyOff" class="btn ghost" type="button" hidden></button>
     </div>
     <div class="near" id="oNear"></div>
+    <div class="small twrun" id="oTwin" hidden></div>
     <div class="reward" id="oReward"></div>
     <div class="unlock" id="oUnlock"></div>
     <div class="xpline" id="oXP"></div>
@@ -1304,6 +1354,47 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
     <div><div class="eyebrow">Leaderboards</div><h2>Top 20</h2><p class="small" id="lbSub" style="margin:2px 0 0"></p></div>
     <div class="segs" id="lbTabs"><button data-t="daily" type="button">Daily</button><button data-t="endless" type="button">Endless</button><button data-t="ascent" type="button">Ascent</button><button data-t="week" type="button">Event</button></div>
     <div id="lbList"></div>
+  </div>
+</section>
+<section id="twinWinOv" class="overlay" hidden>
+  <div class="panel cvkpanel cvkpromo cvkwin twpanel" role="dialog" aria-labelledby="twWTitle">
+    <div class="cvkpedestal small" aria-hidden="true"><div class="cvkrays twrays"></div><div class="cvkglow twglow"></div>
+      <canvas class="skprev" data-skin="equinox" data-px="170" width="170" height="170"></canvas>
+      <div class="cvkstone twstone"><i></i><i></i><i></i></div></div>
+    <span class="cvkbadge">Twin Pulse · champions</span>
+    <h2 class="cvkwintitle twwintitle" id="twWTitle">Your team won!</h2>
+    <p class="cvkask" id="twWSub">Equinox belongs to you and your partner, and no one else.</p>
+    <div class="cvkprizes">
+      <div><canvas class="skprev" data-skin="equinox" width="64" height="64"></canvas><b>Equinox</b><small>Block · one of a kind</small></div>
+      <div><span class="glyph twglyph">◐</span><b>Equinox</b><small>Landing effect</small></div>
+      <div><canvas class="tileprev" data-tile="t_equinox" width="132" height="84"></canvas><b>Equinox</b><small>Tiles · one of a kind</small></div>
+    </div>
+    <div class="row" style="justify-content:center"><button class="btn cvkjoin twbtn" id="twWEquip" type="button">✦ Equip everything</button><button class="btn ghost" id="twWLater" type="button">Later</button></div>
+    <small class="small" id="twWNote">You can change them any time in the Collection.</small>
+  </div>
+</section>
+<section id="twinOv" class="overlay cvkov" hidden>
+  <div class="panel cvkpanel twpanel">
+    <div class="cvkpedestal" aria-hidden="true"><div class="cvkrays twrays"></div><div class="cvkglow twglow"></div>
+      <canvas class="skprev" data-skin="equinox" data-px="250" width="250" height="250"></canvas>
+      <div class="cvkstone twstone"><i></i><i></i><i></i></div></div>
+    <div class="cvkprize twprize"><b>Equinox</b><span>The prize: one of a kind. Only the winning team will ever own it.</span></div>
+    <div class="head cvkhead"><button class="back" id="twBack" type="button">← Menu</button><span class="cvkbadge">Community event · 2v2</span></div>
+    <h2 class="twtitle"><span class="l">TWIN</span><span class="d">PULSE</span></h2>
+    <div class="cvktimer" id="twTimer"><small id="twPhase">Sign-ups open in</small><b id="twTime">--</b><span class="small" id="twWhen"></span></div>
+    <p class="small twnext" id="twNext"></p>
+    <div id="twMine"></div>
+    <div class="twjoin" id="twJoin" hidden>
+      <button class="btn cvkjoin twbtn" id="twSignIn" type="button">Sign in to make or join a team</button>
+      <div id="twJoinBody">
+        <div class="twbox"><b>Create a team</b><small>Pick a name, then send your partner the code.</small><div class="joinrow"><input id="twName" maxlength="20" placeholder="Team name" aria-label="Team name" autocomplete="off" spellcheck="false"><button class="btn" id="twCreate" type="button">Create</button></div></div>
+        <div class="twbox"><b>Join a team</b><small>Got a code from your partner? Enter it here.</small><div class="joinrow"><input id="twCode" maxlength="5" placeholder="Team code" aria-label="Team code" autocomplete="off" spellcheck="false" style="text-transform:uppercase"><button class="btn" id="twJoinGo" type="button">Join</button></div></div>
+      </div>
+    </div>
+    <div class="small" id="twMsg" role="status"></div>
+    <div class="twbhead"><b>The bracket</b><small>Every day at 3:30 PM Central the bottom teams are cut.</small></div>
+    <div class="twbracket" id="twBracket"></div>
+    <p class="small cvkrules">Teams of two, both signed in. A team's score each round is its best Online Journey run played by just the two teammates, and scores start fresh every round. The field is cut each day until one team is left on Friday at 3:30 PM. Both players on that team win Equinox.</p>
   </div>
 </section>
 <section id="cvkWinOv" class="overlay" hidden>
@@ -1705,6 +1796,7 @@ const TILES=[
  {id:'t_maestro',name:'Maestro',price:3000,req:{skin:'maestro'},tile:'#F6EED8',front:'#3A2F55',sky:['#1A1430','#4A3A6A','#F0D8A0'],m:.45,sm:.18,deco:'staff',dc:'#C8962A'},
  {id:'t_supreme',name:'Supreme Conductor',price:4000,req:{skin:'supreme'},tile:'#FFF6FB',front:'#3A2D52',sky:['#20183A','#6A4A8A','#FFE0F0'],m:.45,sm:.18,deco:'filigree',dc:'#E8B84A'},
  {id:'t_truepulse',name:'True Pulse',price:5000,req:{skin:'truepulse'},tile:'#3A1E22',front:'#1A0A0D',sky:['#12040A','#3A0A14','#7A1A24'],m:.5,sm:.32,deco:'pulse',dc:'#FF1E2E'},
+ {id:'t_equinox',name:'Equinox',req:{twin:true},hidden:true,tile:'#F7F2E6',front:'#3A3262',sky:['#1E1A3A','#6A5A8A','#F6E2B0'],m:.5,sm:.3,deco:'equinox'},
  {id:'t_eclipse',name:'Eclipse Seraph',req:{cvk:true},hidden:true,tile:'#F2E8D4',front:'#3A2656',sky:['#1E1236','#6A4A7A','#F2D9A0'],m:.6,sm:.36,deco:'eclipse'}];
 /* sound packs swap the band that plays Endless: every room keeps its own groove, chords and tune */
 const PACKS=[
@@ -1739,8 +1831,8 @@ const ownsItem=it=>!!it&&(it.price===0||SAVE.owned.includes(it.id)||(!it.price&&
 const skinById=id=>SKINS.find(s=>s.id===id)||SKINS[0], landById=id=>LANDS.find(s=>s.id===id)||LANDS[0];
 const hardCleared=()=>{ let n=0; for(let i=1;i<=12;i++) if((SAVE.stars['H-'+i]||0)>0) n++; return n; };
 const ownsSkin=id=>{ const s=SKINS.find(k=>k.id===id); return !!s&&(SAVE.owned.includes(id)||s.price===0||(s.req&&reqMet(s.req))); };
-const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?rankOf(SAVE.xp||0)>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true);
-const reqText=r=>r.boss?`Defeat ${BOSS[r.boss-1]}`:r.cvkOn?`Bet ♪${CVK_BET_BLOCK.toLocaleString()} on ${r.cvkOn==='cale'?'Cale':'Korra'} in Cale vs Korra`:r.cvkBet?`Bet ♪${r.cvkBet.toLocaleString()} in total on Cale vs Korra`:r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
+const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?rankOf(SAVE.xp||0)>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.twin?!!SAVE.twinWin:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true);
+const reqText=r=>r.twin?'One of a kind: only the Twin Pulse champions will own it':r.boss?`Defeat ${BOSS[r.boss-1]}`:r.cvkOn?`Bet ♪${CVK_BET_BLOCK.toLocaleString()} on ${r.cvkOn==='cale'?'Cale':'Korra'} in Cale vs Korra`:r.cvkBet?`Bet ♪${r.cvkBet.toLocaleString()} in total on Cale vs Korra`:r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
 function hsl2hex(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
   return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); }
 
@@ -2269,6 +2361,7 @@ SKINS.push(
  // betting rewards: plainer halves of the Eclipse Seraph (no glow behind them, a one-colour halo)
  {id:'dawn',name:'Dawn Seraph',anim:'dawn',top:'#FFFBEF',front:'#F1E4C6',core:'#FFFFFF',req:{cvkOn:'korra'},prev:[.86,8]},
  {id:'dusk',name:'Dusk Seraph',anim:'dusk',top:'#2A1A40',front:'#150B24',core:'#8A4FD8',req:{cvkOn:'cale'},prev:[.86,8]},
+ {id:'equinox',name:'Equinox',vx:'equinox',nocore:true,prev:[.74,12],top:'#FFFDF6',front:'#EFE8D8',core:'#FFFFFF',req:{twin:true},hidden:true},
  {id:'eclipse_seraph',name:'Eclipse Seraph',anim:'eclipse',top:'#FFFBEF',front:'#EFE6D2',core:'#FFFFFF',req:{cvk:true},prev:[.8,11],hidden:true});
 /* every fancy block gets a matching landing effect; owning the block unlocks it */
 const SIG={
@@ -2300,6 +2393,7 @@ const SIG={
  blaze:{n:'Inferno',g:'▲',c:['#FFB347','#FF5A1F','#FFE08A'],sh:'flame',ring:'#FF5A1F',fx:'pillar'},
  tess:{n:'Hypercube',g:'▢',c:['#7FE0FF','#C9B8FF'],sh:null,ring:'#7FE0FF',fx:'cube'},
  void:{n:'Event Horizon',g:'◐',c:['#B084FF','#3A1E6B'],sh:'star5',ring:'#B084FF',fx:'implode'},
+ equinox:{n:'Equinox',g:'◐',c:['#FFF6DA','#FFFFFF','#3A2E66'],sh:'star5',ring:'#FFE7A0',fx:'pillar'},
  dread:{n:'Red Alert',g:'✖',c:['#FF2A2A','#0B0607','#8A0E14'],sh:'shard',ring:'#FF2A2A',fx:'alarm'},
  bloom:{n:'Garden',g:'❁',c:['#FFB3C7','#B8F2E6','#FFE3EE'],sh:'petal',ring:'#FFB3C7'},
  resonant:{n:'Resonance',g:'♫',c:['#FFD166','#FFFFFF'],sh:'note',ring:'#FFD166',fx:'waves'},
@@ -2310,7 +2404,7 @@ const SIG={
  truepulse:{n:'Doom Pulse',g:'♥',c:['#FF1E2E','#7A0010','#FF6A3A'],sh:null,ring:'#FF1E2E',fx:'truepulse'},
  eclipse_seraph:{n:'Eclipse',g:'◑',c:['#FFF3C4','#FFD166','#8A4FD8','#1A0B2E'],sh:null,ring:'#FFE7A0',fx:'eclipse'}};   // its own id: the older 'eclipse' is the Lights Out event block
 LANDS.push({id:'match',name:'Match my block',glyph:'⟲',col:'#FFF8EE',price:0,note:'Uses your block\'s signature effect'});
-Object.keys(SIG).forEach(k=>{ const s=SIG[k]; LANDS.push({id:'sig_'+k,name:s.n,glyph:s.g,col:s.c[0],req:{skin:k},sig:k,hidden:k==='eclipse_seraph'}); });   // the Eclipse effect, like its block, only shows for the winner
+Object.keys(SIG).forEach(k=>{ const s=SIG[k]; LANDS.push({id:'sig_'+k,name:s.n,glyph:s.g,col:s.c[0],req:{skin:k},sig:k,hidden:k==='eclipse_seraph'||k==='equinox'}); });   // the Eclipse effect, like its block, only shows for the winner
 SIG.ovation={n:'Standing Ovation',g:'♛',c:['#FFD166','#FF7EB6','#B8F2E6','#C9B8FF'],sh:'confetti',ring:'rainbow',fx:'beams'};   // the Crown's effect (added after the loop so it has no block of its own)
 LANDS.push({id:'crown',name:'Crown',glyph:'♛',col:'#FFD166',req:{rank:18},sig:'ovation'});
 SIG.twilight={n:'Twilight',g:'☾',c:['#FFE3A8','#C9A6FF','#FFFFFF'],sh:'star5',ring:'#D8B4FF',fx:'twilight'};   // for betting 2,000 notes on Cale vs Korra
@@ -3139,7 +3233,7 @@ function drawBlock(P,bd,L,now){
   if(S.vx&&grey<.5){ cx.globalAlpha=bd.alpha; vxPost(S,sx-bw/2,topY,bw,bh,H,now); }
   cx.globalAlpha=bd.alpha*holoA;
   cx.fillStyle=mixc(S.core,'#FFFFFF',Math.min(1,t/5)); cx.globalAlpha=bd.alpha*Math.min(1,.55+t*.1);
-  if(!S.anim){ rr(sx-bw*.28,topY+bh*.36,bw*.56,bh*.28,2); cx.fill(); }
+  if(!S.anim&&!S.nocore){ rr(sx-bw*.28,topY+bh*.36,bw*.56,bh*.28,2); cx.fill(); }
   if(t>=3){ const g=cx.createRadialGradient(sx,topY+bh*.5,1,sx,topY+bh*.5,bw); g.addColorStop(0,rgba(TH.acc,.25+t*.05)); g.addColorStop(1,rgba(TH.acc,0)); cx.fillStyle=g; cx.fillRect(sx-bw,topY-bw*.5,bw*2,bw*2); }
   cx.globalAlpha=bd.alpha;
   if(t>=5||S.rim){ cx.strokeStyle=t>=5?TH.acc:'rgba(255,209,102,.8)'; cx.lineWidth=1.6; rr(sx-bw/2,topY,bw,bh+H,3); cx.stroke(); }
@@ -3754,6 +3848,9 @@ function tileDeco(T,r,x,y,now,pulse){
     case 'filigree': cx.strokeStyle=rgba(dc,.3); cx.lineWidth=.9; rr(X+w*.09,Y+h*.11,w*.82,h*.78,4); cx.stroke();
       cx.fillStyle=rgba(dc,.28); cx.beginPath(); cx.moveTo(X+w*.5,Y+h*.38); cx.lineTo(X+w*.56,Y+h*.5); cx.lineTo(X+w*.5,Y+h*.62); cx.lineTo(X+w*.44,Y+h*.5); cx.closePath(); cx.fill(); break;
     case 'pulse': { const my=Y+h*.55; cx.strokeStyle=rgba(dc,.16+.45*pulse); cx.lineWidth=1.3; cx.beginPath(); cx.moveTo(X,my); cx.lineTo(X+w*.34,my); cx.lineTo(X+w*.42,my-h*.3); cx.lineTo(X+w*.5,my+h*.22); cx.lineTo(X+w*.57,my-h*.1); cx.lineTo(X+w*.62,my); cx.lineTo(X+w,my); cx.stroke(); } break;
+    case 'equinox': { const mx=X+w/2; cx.beginPath(); cx.moveTo(mx,Y); cx.bezierCurveTo(mx+w*.3,Y+h*.3,mx-w*.3,Y+h*.7,mx,Y+h); cx.lineTo(X+w,Y+h); cx.lineTo(X+w,Y); cx.closePath();
+      cx.fillStyle='rgba(58,46,102,.2)'; cx.fill(); cx.strokeStyle='rgba(255,231,160,.35)'; cx.lineWidth=1; cx.strokeRect(X+1.5,Y+1.5,w-3,h-3);
+      if(hs%4===0){ cx.fillStyle='rgba(58,46,102,.45)'; cx.beginPath(); cx.arc(X+w*.32,Y+h*.6,Math.min(w,h)*.06,0,TAU); cx.fill(); cx.fillStyle=`rgba(255,250,235,${.6+.35*pulse})`; cx.beginPath(); cx.arc(X+w*.68,Y+h*.4,Math.min(w,h)*.06,0,TAU); cx.fill(); } } break;
     case 'eclipse': { const g=cx.createLinearGradient(X,Y,X+w,Y+h); g.addColorStop(0,'rgba(255,228,160,.55)'); g.addColorStop(.5,'rgba(255,228,160,0)'); g.addColorStop(.5,'rgba(70,34,120,0)'); g.addColorStop(1,'rgba(70,34,120,.5)'); cx.fillStyle=g; cx.fillRect(X,Y,w,h);
       cx.lineWidth=1.2; cx.strokeStyle='rgba(255,214,120,.45)'; cx.beginPath(); cx.moveTo(X+2,Y+h-3); cx.lineTo(X+2,Y+2); cx.lineTo(X+w-3,Y+2); cx.stroke();
       cx.strokeStyle='rgba(150,90,230,.4)'; cx.beginPath(); cx.moveTo(X+w-2,Y+3); cx.lineTo(X+w-2,Y+h-2); cx.lineTo(X+3,Y+h-2); cx.stroke();
@@ -3930,7 +4027,7 @@ function vxPost(S,X,T,W,bh,H,now){
   }
   cx.restore();
 }
-const VX2=new Set(['critter','speaker','tv','lamp','aqua','robot','blaze','tess','void','diamond','dread','overdrive','springy','shard','glacier']);
+const VX2=new Set(['equinox','critter','speaker','tv','lamp','aqua','robot','blaze','tess','void','diamond','dread','overdrive','springy','shard','glacier']);
 /* ---- the second wave: the novelty blocks, the earned ones and the event prizes. Same rules as above; Dread gets the works. ---- */
 function vxShardC(x,y,r,a,al,c1,c2){ cx.save(); cx.translate(x,y); cx.rotate(a*.5); const g=cx.createLinearGradient(-r,-r,r,r); g.addColorStop(0,rgba('#FFFFFF',al)); g.addColorStop(.5,rgba(c1,al)); g.addColorStop(1,rgba(c2,al));
   cx.fillStyle=g; cx.beginPath(); cx.moveTo(0,-r); cx.lineTo(r*.45,0); cx.lineTo(0,r); cx.lineTo(-r*.45,0); cx.closePath(); cx.fill(); cx.fillStyle=rgba('#FFFFFF',al*.9); cx.fillRect(-r*.08,-r*.6,r*.16,r*.5); cx.restore(); }
@@ -3947,6 +4044,12 @@ function vxPre2(S,X,T,W,bh,H,now){
   const v=S.vx, fy=T+bh, cxm=X+W/2, bt=clamp(1-(now-G.lastBeatT)/.35,0,1), oy=fy+H*.35, B=fy+H, sb=clamp((now-G.lastBeatT)/.6,0,1);
   cx.save(); cx.globalCompositeOperation='lighter';
   switch(v){
+    // Equinox: pearl light pouring out, thin rays turning slowly, a halo that breathes on the beat; a light mote and a dark one circle each other
+    case 'equinox': { vxGlow(cxm,oy,W*(1.25+.15*bt),'#FFE7A0',.28+.18*bt,.82); vxGlow(cxm,oy,W*.75,'#FFFFFF',.16+.12*bt,.8);
+      const n=vxN(14); for(let i=0;i<n;i++){ const a=now*.12+i*TAU/n, L=W*(1.25+.18*Math.sin(now*1.3+i*1.7)+.15*bt), w2=.035;
+        const rg=cx.createLinearGradient(cxm,oy,cxm+Math.cos(a)*L,oy+Math.sin(a)*L*.8); rg.addColorStop(0,rgba(i%2?'#FFF3C4':'#FFFFFF',.2+.12*bt)); rg.addColorStop(1,rgba('#FFF3C4',0));
+        cx.fillStyle=rg; cx.beginPath(); cx.moveTo(cxm,oy); cx.lineTo(cxm+Math.cos(a-w2)*L,oy+Math.sin(a-w2)*L*.8); cx.lineTo(cxm+Math.cos(a+w2)*L,oy+Math.sin(a+w2)*L*.8); cx.closePath(); cx.fill(); }
+      vxEqPair(cxm,oy,W,now,false); } break;
     case 'critter': vxGlow(cxm,oy,W,'#FFC48A',.18+.18*bt,.78); vxOrbit(1,1.1,cxm,B-H*.1,W*.85,W*.25,now,false,(x,y)=>vxYarn(x,y,W*.13,now)); break;
     case 'speaker': { vxGlow(cxm,oy,W*1.05,'#FFD166',.15+.3*bt,.78);
       for(let k=0;k<3;k++){ const u=(sb+k*.18); if(u>1) continue; cx.strokeStyle=rgba('#FFD166',.6*(1-u)); cx.lineWidth=2.5*(1-u)+.5; const r=W*(.55+u*1.1); cx.beginPath(); cx.ellipse(cxm,fy+H*.5,r,r*.55,0,0,TAU); cx.stroke(); } } break;
@@ -3985,6 +4088,11 @@ function vxPre2(S,X,T,W,bh,H,now){
   }
   cx.restore();
 }
+/* Equinox's two motes: their centre circles the block while they circle each other; front=true draws the ones in front */
+function vxEqPair(cx0,cy0,W,now,front){ const a=now*.55, s=Math.sin(a); if((s>0)!==front) return; const px=cx0+Math.cos(a)*W*.92, py=cy0+s*W*.32, b=now*2.4, r=W*.12;
+  const lx=px+Math.cos(b)*r, ly=py+Math.sin(b)*r*.6, dx=px-Math.cos(b)*r, dy=py-Math.sin(b)*r*.6;
+  vxGlow(lx,ly,W*.16,'#FFF6DA',.9); cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.arc(lx,ly,W*.045,0,TAU); cx.fill();
+  cx.save(); cx.globalCompositeOperation='source-over'; cx.fillStyle='#2A2148'; cx.beginPath(); cx.arc(dx,dy,W*.05,0,TAU); cx.fill(); cx.strokeStyle='rgba(201,184,255,.8)'; cx.lineWidth=1; cx.stroke(); cx.restore(); }
 function vxYarn(x,y,r,now){ cx.fillStyle='#FF6F91'; cx.beginPath(); cx.arc(x,y,r,0,TAU); cx.fill(); cx.strokeStyle='rgba(255,255,255,.6)'; cx.lineWidth=1; cx.beginPath(); cx.arc(x,y,r*.65,now*3,now*3+2.2); cx.stroke(); cx.beginPath(); cx.arc(x,y,r*.35,now*3+3,now*3+5); cx.stroke(); }
 function vxFireball(x,y,r,now){ vxGlow(x,y,r*2.2,'#FF7A1F',.7); vxGlow(x,y,r,'#FFE08A',.9); }
 function vxRune(x,y,r,i,a){ cx.strokeStyle=rgba('#FF3A3A',a); cx.lineWidth=1.2; cx.beginPath(); const k=i%4;
@@ -3997,6 +4105,29 @@ function vxPost2(S,X,T,W,bh,H,now){
   const clipBody=()=>{ cx.beginPath(); cx.rect(X,T,W,bh+H); cx.clip(); };
   cx.save(); cx.lineCap='round'; cx.lineJoin='round';
   switch(v){
+    case 'equinox': {
+      // the top face: a soft S-curve parts light from shadow, an ember of shadow rests in the light, a spark of light in the shadow
+      cx.save(); cx.beginPath(); cx.rect(X,T,W,bh); cx.clip(); const mx=X+W/2;
+      cx.beginPath(); cx.moveTo(mx,T); cx.bezierCurveTo(mx+W*.34,T+bh*.28,mx-W*.34,T+bh*.72,mx,T+bh); cx.lineTo(X+W,T+bh); cx.lineTo(X+W,T); cx.closePath();
+      const sh=cx.createLinearGradient(mx,T,X+W,T+bh); sh.addColorStop(0,'rgba(70,56,120,.18)'); sh.addColorStop(1,'rgba(52,40,96,.34)'); cx.fillStyle=sh; cx.fill(); cx.restore();
+      cx.fillStyle='rgba(58,46,102,.6)'; cx.beginPath(); cx.ellipse(X+W*.33,T+bh*.6,W*.05,bh*.09,0,0,TAU); cx.fill();
+      cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(X+W*.67,T+bh*.4,W*.1,'#FFFFFF',.9); cx.restore();
+      cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.ellipse(X+W*.67,T+bh*.4,W*.035,bh*.065,0,0,TAU); cx.fill();
+      // a pearl sheen drifting across the front, and the same parting of light and shadow, fainter
+      cx.save(); cx.beginPath(); cx.rect(X,fy,W,H); cx.clip(); const u=((now*.18)%1.6)-.3, g=cx.createLinearGradient(X+W*u-W*.4,fy,X+W*u+W*.4,B);
+      g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(.5,'rgba(255,250,235,.55)'); g.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=g; cx.fillRect(X,fy,W,H);
+      cx.beginPath(); cx.moveTo(cxm,fy); cx.bezierCurveTo(cxm-W*.3,fy+H*.35,cxm+W*.3,fy+H*.65,cxm,B); cx.lineTo(X+W,B); cx.lineTo(X+W,fy); cx.closePath();
+      const fg=cx.createLinearGradient(cxm,fy,X+W,B); fg.addColorStop(0,'rgba(70,56,120,.14)'); fg.addColorStop(1,'rgba(52,40,96,.3)'); cx.fillStyle=fg; cx.fill(); cx.restore();
+      cx.strokeStyle=rgba('#E8C068',.55); cx.lineWidth=Math.max(.8,W*.018); cx.beginPath(); cx.moveTo(cxm,fy); cx.bezierCurveTo(cxm-W*.3,fy+H*.35,cxm+W*.3,fy+H*.65,cxm,B); cx.stroke();
+      cx.beginPath(); cx.moveTo(mx,T); cx.bezierCurveTo(mx+W*.34,T+bh*.28,mx-W*.34,T+bh*.72,mx,T+bh); cx.stroke();
+      cx.strokeStyle=rgba('#FFE7A0',.55+.35*bt); cx.lineWidth=1.2; rr(X,T,W,bh+H,3); cx.stroke();
+      // the halo, breathing with the beat
+      const hr=W*(.4+.06*bt+.02*Math.sin(now*2)); cx.save(); cx.globalCompositeOperation='lighter'; cx.shadowColor='#FFE7A0'; cx.shadowBlur=MOB?6:12;
+      cx.strokeStyle=rgba('#FFF6DA',.85); cx.lineWidth=Math.max(1.6,W*.05); cx.beginPath(); cx.ellipse(cxm,T-bh*.55,hr,hr*.3,0,0,TAU); cx.stroke(); cx.restore();
+      cx.save(); cx.globalCompositeOperation='lighter'; vxEqPair(cxm,oy,W,now,true);
+      if(bt>.05){ vxGlow(cxm,fy+H*.3,W*(.5+.5*bt),'#FFF6DA',.32*bt); vxSpark(cxm,T-bh*.55,W*.16*bt,'#FFFFFF',bt); }
+      vxRise(vxN(4),.3,X-W*.1,W*1.2,B,W*1.4,now,(x,y,u2,i)=>{ if(i%2) vxGlow(x,y,W*.06,'#FFF3C4',.85*Math.sin(Math.PI*u2)); else { cx.fillStyle=`rgba(58,46,102,${.55*Math.sin(Math.PI*u2)})`; cx.beginPath(); cx.arc(x,y,W*.03,0,TAU); cx.fill(); } },21);
+      cx.restore(); } break;
     case 'critter': { cx.strokeStyle='rgba(90,50,30,.55)'; cx.lineWidth=.9; cx.beginPath(); [-1,1].forEach(sg=>{ const bx=cxm+sg*W*.22; for(let k=-1;k<=1;k++){ cx.moveTo(bx,fy+H*.6); cx.lineTo(bx+sg*W*.32,fy+H*(.6+k*.08)+Math.sin(now*3)*H*.01); } }); cx.stroke();
       cx.fillStyle='#E0475A'; cx.fillRect(X,fy+H*.8,W,H*.09); const bj=Math.sin(now*14)*bt*W*.03; cx.fillStyle='#FFD166'; cx.beginPath(); cx.arc(cxm+bj,fy+H*.92,W*.07,0,TAU); cx.fill(); cx.fillStyle='#8A6A1A'; cx.fillRect(cxm+bj-W*.035,fy+H*.94,W*.07,1);
       vxOrbit(1,1.1,cxm,B-H*.1,W*.85,W*.25,now,true,(x,y)=>vxYarn(x,y,W*.13,now));
@@ -4573,7 +4704,7 @@ const netMatch=()=>!!(G.mode&&G.mode.net&&['playing','dying','paused','cutscene'
 function netNames(list){ const n=list.map(m=>m.name||'Friend'); return n.length<=1?(n[0]||''):n.slice(0,-1).join(', ')+' and '+n[n.length-1]; }
 const netOthers=()=>netNames(netMateList());
 const netHostName=()=>(NET.mates[0]&&NET.mates[0].name)||'the host';
-const netMe=()=>({name:ensureName(),skin:SAVE.skin,land:SAVE.land,rank:myRank()});
+const netMe=()=>({name:ensureName(),skin:SAVE.skin,land:SAVE.land,rank:myRank(),uid:ACCT.user?ACCT.user.uid:''});
 /* the party member playing as player i in the current match */
 const netMateAt=i=>NET.order&&NET.mates[NET.order[i]];
 function netUI(){
@@ -4757,7 +4888,7 @@ function netFromGuest(c,o){
   if(o.t==='hi'){ const fresh=!NET.mates[x.slot];
     // welcome them again, now that we know they are listening: a welcome sent the moment the line opens can be lost
     try{ c.send({t:'welcome',slot:x.slot}); }catch(e){}
-    NET.mates[x.slot]={name:cleanName(o.name)||'Friend',skin:o.skin||'classic',land:o.land,rank:clamp(+o.rank||0,0,RANK_MAX),v:c.via==='relay'?'r':''};
+    NET.mates[x.slot]={name:cleanName(o.name)||'Friend',skin:o.skin||'classic',land:o.land,rank:clamp(+o.rank||0,0,RANK_MAX),v:c.via==='relay'?'r':'',uid:typeof o.uid==='string'?o.uid.slice(0,128):''};
     if(fresh) netRosterSend(); else try{ c.send({t:'roster',you:x.slot,list:netRosterList()}); }catch(e){}
     if(fresh) netRosterChanged(NET.mates[x.slot]); else { netPeerLook(); netUI(); }
     return; }
@@ -4801,7 +4932,7 @@ function netFromHost(o){
       NET.off=first||Math.abs(best.off-NET.off)>60?best.off:NET.off+(best.off-NET.off)*.2; return; }
     case 'welcome': NET.slot=o.slot; return;
     case 'roster': { if(o.you) NET.slot=o.you;
-      const before=new Set(Object.keys(NET.mates)), m={}; (o.list||[]).forEach(r=>{ if(r.s!==NET.slot) m[r.s]={name:cleanName(r.name)||'Friend',skin:r.skin||'classic',land:r.land,rank:clamp(+r.rank||0,0,RANK_MAX),v:r.v==='r'?'r':''}; });
+      const before=new Set(Object.keys(NET.mates)), m={}; (o.list||[]).forEach(r=>{ if(r.s!==NET.slot) m[r.s]={name:cleanName(r.name)||'Friend',skin:r.skin||'classic',land:r.land,rank:clamp(+r.rank||0,0,RANK_MAX),v:r.v==='r'?'r':'',uid:typeof r.uid==='string'?r.uid.slice(0,128):''}; });
       const listed=!!NET.slot&&(o.list||[]).some(r=>r.s===NET.slot);
       if(listed&&!NET.listed){ NET.listed=true; const hn=cleanName(((o.list||[]).find(r=>r.s===0)||{}).name); netStatus(`You're in ${hn?hn+'\'s':'the'} party${NET.via==='relay'?' (through the backup line)':''}! Waiting for the host to pick a mode…`); }
       NET.mates=m; const fresh=Object.keys(m).find(s=>!before.has(s)&&+s!==0);
@@ -5076,7 +5207,7 @@ function acctInit(){
     if(!firebase.apps.length) firebase.initializeApp(cfg);
     ACCT.auth=firebase.auth(); ACCT.db=firebase.firestore();
     ACCT.auth.getRedirectResult().catch(e=>{ ACCT.err=authMsg(e); acctUI(); });
-    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; if(u) acctPull(true).then(lbRename,lbRename).then(()=>{ cvkFindSide(); cvkLoadMyBet(); }); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
+    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; if(u) acctPull(true).then(lbRename,lbRename).then(()=>{ cvkFindSide(); cvkLoadMyBet(); twFind(); }); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
   }).catch(()=>{ ACCT.err='Could not load sign-in. Check your connection.'; acctUI(); });
 }
 
@@ -5124,6 +5255,7 @@ function mergeSaves(loc,cl,additive){
   out.name=nw.name||loc.name||cl.name||''; out.nameT=nw.nameT||0; out.nameAuto=!!nw.nameAuto&&nameRank(nw)===1;
   out.cvkWin=!!(loc.cvkWin||cl.cvkWin); out.cvkWinSeen=!!(loc.cvkWinSeen||cl.cvkWinSeen); out.cvkPaid=!!(loc.cvkPaid||cl.cvkPaid); out.cvkPayout=Math.max(loc.cvkPayout||0,cl.cvkPayout||0);
   { const a=loc.cvkBet||{}, b=cl.cvkBet||{}; if(a.cale||a.korra||b.cale||b.korra) out.cvkBet={cale:Math.max(+a.cale||0,+b.cale||0),korra:Math.max(+a.korra||0,+b.korra||0)}; } out.cvkSide=newer.cvkSide||loc.cvkSide||cl.cvkSide||null;
+  out.twinTeam=newer.twinTeam!==undefined?newer.twinTeam:(loc.twinTeam||cl.twinTeam||null); out.twinWin=!!(loc.twinWin||cl.twinWin); out.twinWinSeen=!!(loc.twinWinSeen||cl.twinWinSeen); out.twinWinName=loc.twinWinName||cl.twinWinName||'';
   const dl=loc.daily||{}, dc=cl.daily||{}; out.daily=Object.assign({},DEF.daily,newer===cl?dc:dl);
   if(dl.date&&dl.date===dc.date){ out.daily.best=Math.max(dl.best||0,dc.best||0); out.daily.stars=Math.max(dl.stars||0,dc.stars||0); }
   out.daily.streak=Math.max(dl.streak||0,dc.streak||0);
@@ -6961,6 +7093,7 @@ function giftState(){
 function giftCheck(){
   const today=todayKey(), g=giftState();
   if(!giftSigned()||g.done||g.date===today||!$('giftOv')||G.state!=='menu') return false;
+  if(!$('twinWinOv').hidden||!$('cvkWinOv').hidden) return false;   // a champion's popup comes first
   const day=Math.min(7,(g.day||0)+1);   // the next gift in the set of 7: your place is kept even if you miss days
   $('giftDays').innerHTML=GIFT.map((n,i)=>`<div class="gday${i+1<day?' got':i+1===day?' now':''}${i===6?' big':''}"><b>Day ${i+1}</b><span>♪${n}</span></div>`).join('');
   $('giftTitle').textContent=day===7?'Day 7: the big chest!':`Day ${day} gift`;
@@ -7210,6 +7343,254 @@ setInterval(()=>{
     Promise.all(['cale','korra'].map(k=>cvkCol().collection('sides').doc(k).get().then(d=>{ CVK.scores[k]=d.exists?d.data():null; if(cvkFresh(d)) CVK.fresh[k]=true; })))
       .then(()=>needPay?cvkCol().collection('bets').get().then(q=>{ const m={}; q.forEach(d=>{ m[d.id]=d.data(); }); CVK.bets=m; if(cvkFresh(q)) CVK.betsLoaded=true; }):null)
       .then(()=>{ cvkCheckWin(); cvkSettle(); }).catch(()=>{}); }
+},1000);
+
+/* ================= TWIN PULSE: the 2v2 bracket (Mon Oct 5 – Fri Oct 9, 2026, all times Central) =================
+   Any two signed-in players make a team (a team name and a 5-letter code for the partner) while sign-ups are open,
+   Monday 12:00 AM to 3:30 PM. Then four 24-hour rounds, each ending at 3:30 PM: a team's score in a round is its best
+   Online Journey run played by just the two teammates. After round k the field of N teams is cut to
+   round(N^((4-k)/4)), so one team is left on Friday at 3:30 PM, and both its players win Equinox.
+   Firestore: events/twin/{teams,codes,names,players}/… and events/twin/rounds/{1-4}/scores/{teamId}.
+   There is no server: every game works out the same standings from the stored scores. */
+const TW={open:1791176400000,start:1791232200000,end:1791577800000,hide:1791608400000,day:86400000,
+  teams:{},scores:{1:{},2:{},3:{},4:{}},fresh:{},unsub:[],lastFetch:0,loaded:false,winSeenT:0};
+const TW_DAYS=['Mon','Tue','Wed','Thu','Fri'], TW_DAYN=['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const twPreview=()=>/[?&]twin=1\b/.test(location.search);   // ?twin=1 shows the event screen before sign-ups open
+const twPhase=()=>{ const n=Date.now(); return n<TW.open?'soon':n<TW.start?'signup':n<TW.end?'live':'over'; };
+const twRound=()=>{ const n=Date.now(); return n<TW.start?0:n>=TW.end?5:1+Math.floor((n-TW.start)/TW.day); };
+const twRoundEnd=k=>TW.start+k*TW.day;
+const twShown=()=>!window.PF_CG&&!!acctCfg()&&Date.now()<TW.hide&&(Date.now()>=TW.open||twPreview());
+const twCol=()=>ACCT.db&&ACCT.db.collection('events').doc('twin');
+/* how many teams are still standing after cut k (1-4), out of a field of n */
+const twKeep=(n,k)=>Math.max(1,Math.round(Math.pow(n,(4-k)/4)));
+const twNameClean=s=>(s||'').replace(/[^\p{L}\p{N} _.\-!']/gu,'').replace(/\s+/g,' ').trim().slice(0,20);
+const twKey=s=>twNameClean(s).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20);
+const twRand=(n,abc)=>Array.from({length:n},()=>abc[ri(abc.length)]).join('');
+const twOrd=n=>{ const v=n%100; return n+(v>=11&&v<=13?'th':['th','st','nd','rd'][n%10]||'th'); };
+const twMine=()=>SAVE.twinTeam&&TW.teams[SAVE.twinTeam];
+function twFmt(ms){ ms=Math.max(0,ms); const d=Math.floor(ms/864e5), h=Math.floor(ms/36e5)%24, m=Math.floor(ms/6e4)%60, s=Math.floor(ms/1e3)%60;
+  return d?`${d}d ${h}h ${m}m`:h?`${h}h ${m}m ${String(s).padStart(2,'0')}s`:`${m}m ${String(s).padStart(2,'0')}s`; }
+
+/* the bracket. days[k-1] is round k: the teams in it ranked by their round score (best first; a tie goes to whoever got
+   there first; teams that didn't play come last), how many go through, and whether the round is over. */
+function twStand(){
+  const field=Object.values(TW.teams).filter(t=>t.members&&t.members.length===2).sort((a,b)=>(a.created||0)-(b.created||0)||(a.id<b.id?-1:1));
+  const N=field.length, days=[], out={}; let alive=field;
+  for(let k=1;k<=4&&N;k++){
+    const sc=TW.scores[k]||{}, ranked=alive.map(t=>({t,s:sc[t.id]||null})).sort((a,b)=>
+      (b.s?1:0)-(a.s?1:0)||(b.s?b.s.score:0)-(a.s?a.s.score:0)||(a.s?a.s.t:0)-(b.s?b.s.t:0)||(a.t.created||0)-(b.t.created||0)||(a.t.id<b.t.id?-1:1));
+    const keep=Math.min(ranked.length,twKeep(N,k)), done=Date.now()>=twRoundEnd(k);
+    days.push({k,ranked,keep,done});
+    if(!done) break;
+    ranked.slice(keep).forEach(r=>{ out[r.t.id]=k; });
+    alive=ranked.slice(0,keep).map(r=>r.t);
+  }
+  const winner=days.length===4&&days[3].done&&days[3].ranked.length?days[3].ranked[0].t:null;
+  return {field,N,days,out,winner};
+}
+/* is this team still in the bracket for round r? */
+function twAlive(tid,r){ const st=twStand(), d=st.days[r-1]; return !!d&&d.ranked.some(x=>x.t.id===tid); }
+
+/* ---- reading the event: live while its screen is open, one fresh read at other times ---- */
+const twTeamOf=d=>({id:d.id,...d.data()});
+function twWatch(){
+  if(TW.unsub.length||!twCol()) return;
+  TW.unsub.push(twCol().collection('teams').onSnapshot(q=>{ const m={}; q.forEach(d=>{ m[d.id]=twTeamOf(d); }); TW.teams=m; if(cvkFresh(q)) TW.fresh.teams=true; TW.loaded=true; twCheckMine(); twCheckWin(); twRender(); },()=>{}));
+  for(let k=1;k<=4;k++) TW.unsub.push(twCol().collection('rounds').doc(String(k)).collection('scores').onSnapshot(q=>{ const m={}; q.forEach(d=>{ m[d.id]=d.data(); }); TW.scores[k]=m; if(cvkFresh(q)) TW.fresh[k]=true; twCheckWin(); twRender(); },()=>{}));
+}
+function twUnwatch(){ TW.unsub.forEach(f=>{ try{ f(); }catch(e){} }); TW.unsub=[]; }
+async function twFetchAll(){
+  if(!twCol()) return false; TW.lastFetch=Date.now();
+  const q=await twCol().collection('teams').get(); const m={}; q.forEach(d=>{ m[d.id]=twTeamOf(d); }); TW.teams=m; if(cvkFresh(q)) TW.fresh.teams=true;
+  for(let k=1;k<=Math.min(4,twRound());k++){ const s=await twCol().collection('rounds').doc(String(k)).collection('scores').get(); const sm={}; s.forEach(d=>{ sm[d.id]=d.data(); }); TW.scores[k]=sm; if(cvkFresh(s)) TW.fresh[k]=true; }
+  TW.loaded=true; twCheckMine(); return true;
+}
+/* which team this account is on (it follows you to another device) */
+async function twFind(){
+  if(!ACCT.user||!twCol()||window.PF_CG) return;
+  try{ const d=await twCol().collection('players').doc(ACCT.user.uid).get(); const id=d.exists?d.data().teamId:null;
+    if(d.exists||cvkFresh(d)){ if((SAVE.twinTeam||null)!==id){ SAVE.twinTeam=id; save(); } twRender(); } }catch(e){}
+}
+/* a team you left (or that closed) is forgotten once the fresh list of teams shows it */
+function twCheckMine(){ const id=SAVE.twinTeam; if(!id||!TW.fresh.teams||!ACCT.user) return; const t=TW.teams[id];
+  if(!t||!t.members.includes(ACCT.user.uid)){ SAVE.twinTeam=null; save(); } }
+
+/* ---- making, joining, leaving and renaming a team: each one is a single transaction ---- */
+function twMsg(t,err){ const m=$('twMsg'); if(!m) return; m.textContent=t||''; m.classList.toggle('err',!!err); }
+function twGate(){
+  if(!ACCT.user){ twMsg('Sign in first: both teammates need an account.',true); return false; }
+  if(twPhase()!=='signup'){ twMsg(twPhase()==='soon'?'Sign-ups open Monday at 12:00 AM Central.':'Sign-ups are closed. Teams locked at 3:30 PM Monday.',true); return false; }
+  return true;
+}
+async function twCreate(){
+  if(!twGate()) return; const nm=twNameClean($('twName').value), key=twKey(nm), me=ACCT.user.uid, C=twCol();
+  if(nm.length<2||key.length<2){ twMsg('Pick a team name: 2 to 20 letters or numbers.',true); return; }
+  twMsg('Creating your team…');
+  for(let attempt=0;attempt<4;attempt++){
+    const tid=twRand(12,'abcdefghijkmnpqrstuvwxyz23456789'), code=twRand(5,'ABCDEFGHJKMNPQRSTUVWXYZ23456789');
+    let r; try{ r=await ACCT.db.runTransaction(async tx=>{
+        if((await tx.get(C.collection('players').doc(me))).exists) return 'already';
+        if((await tx.get(C.collection('names').doc(key))).exists) return 'taken';
+        if((await tx.get(C.collection('codes').doc(code))).exists) return 'retry';
+        tx.set(C.collection('teams').doc(tid),{name:nm,nameKey:key,code,members:[me],names:[ensureName()],owner:me,created:Date.now()});
+        tx.set(C.collection('codes').doc(code),{teamId:tid}); tx.set(C.collection('names').doc(key),{teamId:tid}); tx.set(C.collection('players').doc(me),{teamId:tid});
+        return 'ok'; }); }catch(e){ r='error'; }
+    if(r==='retry') continue;
+    if(r==='ok'){ SAVE.twinTeam=tid; save(); $('twName').value=''; twMsg(`Team “${nm}” is ready! Send your partner the code.`); if(A.ctx) sChime(88); twFind(); twRender(); return; }
+    twMsg(r==='already'?'You\'re already on a team. Leave it first to make a new one.':r==='taken'?'That team name is taken. Try another.':'Couldn\'t create the team. Check your connection and try again.',true); return;
+  }
+  twMsg('Couldn\'t create the team. Try again.',true);
+}
+async function twJoin(){
+  if(!twGate()) return; const code=($('twCode').value||'').toUpperCase().replace(/[^A-Z0-9]/g,''), me=ACCT.user.uid, C=twCol();
+  if(code.length!==5){ twMsg('Team codes are 5 letters or numbers.',true); return; }
+  twMsg('Joining…'); let tid=null, r;
+  try{ r=await ACCT.db.runTransaction(async tx=>{
+      const cd=await tx.get(C.collection('codes').doc(code)); if(!cd.exists) return 'nocode'; tid=cd.data().teamId;
+      const td=await tx.get(C.collection('teams').doc(tid)); if(!td.exists) return 'nocode'; const t=td.data();
+      if(t.members.includes(me)) return 'mine'; if(t.members.length>=2) return 'full';
+      if((await tx.get(C.collection('players').doc(me))).exists) return 'already';
+      tx.set(C.collection('teams').doc(tid),{...t,members:[...t.members,me],names:[...t.names,ensureName()]}); tx.set(C.collection('players').doc(me),{teamId:tid});
+      return 'ok'; }); }catch(e){ r='error'; }
+  if(r==='ok'||r==='mine'){ SAVE.twinTeam=tid; save(); $('twCode').value=''; twMsg('You\'re on the team! Good luck.'); if(A.ctx) sChime(88); twRender(); return; }
+  twMsg(r==='nocode'?'No team with that code. Check it and try again.':r==='full'?'That team already has two players.':r==='already'?'You\'re already on a team. Leave it first to join another.':'Couldn\'t join. Check your connection and try again.',true);
+}
+async function twLeave(){
+  if(!twGate()||!SAVE.twinTeam) return; const me=ACCT.user.uid, tid=SAVE.twinTeam, C=twCol(); let r;
+  try{ r=await ACCT.db.runTransaction(async tx=>{
+      const td=await tx.get(C.collection('teams').doc(tid)); if(!td.exists) return 'gone'; const t=td.data(), i=t.members.indexOf(me); if(i<0) return 'gone';
+      const rest=t.members.filter(u=>u!==me);
+      if(!rest.length){ tx.delete(C.collection('teams').doc(tid)); tx.delete(C.collection('codes').doc(t.code)); tx.delete(C.collection('names').doc(t.nameKey)); }
+      else tx.set(C.collection('teams').doc(tid),{...t,members:rest,names:t.names.filter((_,j)=>j!==i),owner:rest[0]});
+      tx.delete(C.collection('players').doc(me)); return 'ok'; }); }catch(e){ r='error'; }
+  if(r==='ok'||r==='gone'){ SAVE.twinTeam=null; save(); twMsg('You left the team.'); twRender(); return; }
+  twMsg('Couldn\'t leave the team. Check your connection and try again.',true);
+}
+async function twRename(){
+  if(!twGate()||!SAVE.twinTeam) return; const nm=twNameClean($('twRen').value), key=twKey(nm), me=ACCT.user.uid, tid=SAVE.twinTeam, C=twCol(); let r;
+  if(nm.length<2||key.length<2){ twMsg('Pick a team name: 2 to 20 letters or numbers.',true); return; }
+  try{ r=await ACCT.db.runTransaction(async tx=>{
+      const td=await tx.get(C.collection('teams').doc(tid)); if(!td.exists) return 'gone'; const t=td.data(); if(t.owner!==me) return 'owner';
+      if(key!==t.nameKey){ if((await tx.get(C.collection('names').doc(key))).exists) return 'taken'; }
+      tx.set(C.collection('teams').doc(tid),{...t,name:nm,nameKey:key});
+      if(key!==t.nameKey){ tx.set(C.collection('names').doc(key),{teamId:tid}); tx.delete(C.collection('names').doc(t.nameKey)); }
+      return 'ok'; }); }catch(e){ r='error'; }
+  twMsg(r==='ok'?`Renamed to “${nm}”.`:r==='taken'?'That team name is taken. Try another.':r==='owner'?'Only the player who made the team can rename it.':'Couldn\'t rename the team. Try again.',r!=='ok');
+  if(r==='ok'){ $('twRen').value=''; twRender(); }
+}
+
+/* ---- a run that counts: Online Journey, just the two teammates, while their team is still in ---- */
+async function twPost(M){
+  const el=$('oTwin'); if(el){ el.hidden=true; el.textContent=''; }
+  const r=twRound(); if(!(r>=1&&r<=4)||!M||M.type!=='coop'||!M.net||!ACCT.user||!SAVE.twinTeam||!twCol()||window.PF_CG) return;
+  if(!TW.loaded||Date.now()-TW.lastFetch>60000&&!TW.unsub.length){ try{ await twFetchAll(); }catch(e){ return; } }
+  const t=twMine(); if(!t||t.members.length!==2) return;
+  const me=ACCT.user.uid, mate=t.members.find(u=>u!==me), other=G.players&&G.players.length===2?netMateAt(1-NET.me):null;
+  const say=(txt,cls)=>{ if(!el) return; el.hidden=false; el.textContent=txt; el.className='small twrun'+(cls?' '+cls:''); };
+  if(!other||other.uid!==mate){ say(`Twin Pulse: only runs with just your teammate count for “${t.name}”.`,'muted'); return; }
+  if(!twAlive(t.id,r)){ say(`Twin Pulse: “${t.name}” is out of the bracket.`,'muted'); return; }
+  const sc=Math.round(G.score||0); if(sc<=0) return;
+  say(`Bracket run: counts for “${t.name}” (${r<4?'Round '+r:'the Final'})`);
+  const ref=twCol().collection('rounds').doc(String(r)).collection('scores').doc(t.id);
+  try{ const d=await ref.get(), best=d.exists?d.data().score||0:0;
+    if(sc<=best){ say(`Bracket run: counts for “${t.name}”. Your team's best this round is still ${best.toLocaleString()}.`); return; }
+    await ref.set({score:sc,t:Date.now(),by:me}); TW.scores[r]=TW.scores[r]||{}; TW.scores[r][t.id]={score:sc,t:Date.now(),by:me};
+    say(`Bracket run: counts for “${t.name}”. New team best this round: ${sc.toLocaleString()}!`,'best'); }
+  catch(e){ /* your teammate's game may have posted the same run a moment earlier */ }
+}
+
+/* ---- the champions: each winner's own game hands them Equinox, once ---- */
+function twCheckWin(){
+  if(twPhase()!=='over'||!ACCT.user||SAVE.twinWin||!SAVE.twinTeam) return;
+  if(!TW.fresh.teams||![1,2,3,4].every(k=>TW.fresh[k])) return;
+  const w=twStand().winner; if(!w||!w.members.includes(ACCT.user.uid)) return;
+  SAVE.twinWin=true; SAVE.twinWinName=w.name; save(); if(A.ctx) sChime(90);
+  if(typeof buildShop==='function'&&!$('shopOv').hidden) buildShop();
+  twWinPopup();
+}
+function twWinPopup(){
+  if(!SAVE.twinWin||SAVE.twinWinSeen||G.state!=='menu') return false;
+  const busy=['twinWinOv','cvkWinOv','hpOv','tutOv','calibOv','edOv','studioOv','giftOv','pollOv','chalOv','swtOv'].some(id=>$(id)&&!$(id).hidden)||$('menuOv').hidden; if(busy) return false;
+  SAVE.twinWinSeen=true; save();
+  $('twWSub').textContent=`${SAVE.twinWinName?'“'+SAVE.twinWinName+'”':'Your team'} took the Twin Pulse bracket. Equinox belongs to you and your partner, and no one else.`;
+  $('twWEquip').disabled=false; $('twWEquip').textContent='✦ Equip everything'; $('twWNote').textContent='You can change them any time in the Collection.';
+  $('twinWinOv').querySelectorAll('canvas.tileprev').forEach(c=>drawTilePreview(c,tilesById(c.dataset.tile)));
+  showOv('twinWinOv'); if(A.ctx) sChime(92); buzz(40); return true;
+}
+$('twWEquip').onclick=()=>{ equip('skin','equinox'); equip('land','sig_equinox'); equip('tiles','t_equinox'); G.players=[mkPlayer(0)]; netHello(); if(A.ctx) sGem();
+  $('twWEquip').disabled=true; $('twWEquip').textContent='✦ Equipped'; $('twWNote').textContent='Your block, landing effect and tiles are now Equinox.'; setTimeout(()=>{ if(!$('twinWinOv').hidden) toMenu(); },1400); };
+$('twWLater').onclick=()=>toMenu();
+
+/* ---- the event screen ---- */
+function twTeamRow(t,s,cls){ const nm=(t.names||[]).map(n=>escapeHTML(cleanName(n)||'Player')).join(' & ');
+  return `<li class="${cls}"><div><b>${escapeHTML(t.name)}</b><small>${nm}</small></div><span>${s?s.score.toLocaleString():'–'}</span></li>`; }
+function twRender(){
+  const ph=twPhase(), r=twRound(), n=Date.now();
+  const chip=$('mTwin'); if(chip){ chip.hidden=!twShown(); chip.textContent='⚔ Twin Pulse · '+(ph==='soon'?'Monday':ph==='signup'?'Sign-ups open':ph==='live'?(r<4?'Round '+r:'Final'):'Results'); }
+  if($('twinOv').hidden) return;
+  const st=twStand(), mine=twMine(), me=ACCT.user&&ACCT.user.uid, cur=ph==='live'?st.days[r-1]:null;
+  if(TW.lastPh!==ph+r){ if(TW.lastPh) twMsg(''); TW.lastPh=ph+r; }   // a new round: old messages go
+  // the countdown, or the champions once it's over
+  const tm=$('twTimer'); tm.classList.toggle('final',ph==='over');
+  if(ph==='over'){ const w=st.winner; $('twPhase').textContent=w?'The champions':'Final result';
+    $('twTime').textContent=w?w.name:(TW.fresh.teams?'No winner':'…'); $('twWhen').textContent=w?(w.names||[]).map(x=>cleanName(x)).join(' & '):'Ended 3:30 PM Central, Fri Oct 9'; }
+  else { $('twPhase').textContent=ph==='soon'?'Sign-ups open in':ph==='signup'?'Sign-ups close in':r<4?`Round ${r} · next cut in`:'The Final ends in';
+    $('twTime').textContent=twFmt((ph==='soon'?TW.open:ph==='signup'?TW.start:twRoundEnd(r))-n);
+    $('twWhen').textContent=ph==='soon'||ph==='signup'?'Sign-ups: Mon 12:00 AM – 3:30 PM Central · cuts at 3:30 PM daily · Final ends Fri 3:30 PM':`${r<4?'Cut':'Winner'} at 3:30 PM Central, ${TW_DAYN[r]}`; }
+  $('twNext').textContent=ph==='soon'?'Teams of two form on Monday. Every day at 3:30 PM the bracket is cut until one team is left.'
+    :ph==='signup'?`At 3:30 PM the teams lock and Round 1 begins. ${st.N} team${st.N===1?'':'s'} of two ready so far; a team without a partner by then doesn't enter.`
+    :ph==='live'?(r<4?`${cur?cur.keep:0} of ${cur?cur.ranked.length:0} teams go through at 3:30 PM. Your team's best Online Journey run (just the two of you) is its score.`:`${cur?cur.ranked.length:0} team${cur&&cur.ranked.length===1?'':'s'} left. The top team at 3:30 PM Friday wins Equinox.`)
+    :'';
+  // your team
+  let card='';
+  if(mine){ const full=mine.members.length===2, owner=mine.owner===me, names=(mine.names||[]).map(x=>`<b>${escapeHTML(cleanName(x)||'Player')}</b>`).join('<em>&amp;</em>');
+    let status='';
+    if(ph==='signup') status=full?'<span class="twst safe">Ready for Round 1</span>':'<span class="twst wait">Waiting for your partner</span>';
+    else if(ph==='live'||ph==='over'){ const outK=st.out[mine.id];
+      if(!full) status='<span class="twst out">Didn\'t enter: no partner at the lock</span>';
+      else if(st.winner&&st.winner.id===mine.id) status='<span class="twst champ">♛ Champions</span>';
+      else if(outK) status=`<span class="twst out">Out in ${outK<4?'Round '+outK:'the Final'} (${TW_DAYN[outK-1]})</span>`;
+      else if(cur){ const i=cur.ranked.findIndex(x=>x.t.id===mine.id), s=i>=0?cur.ranked[i].s:null;
+        status=`<span class="twst ${i<cur.keep?'safe':'danger'}">${i<cur.keep?(r<4?'Safe':'Leading'):(r<4?'In danger':'Chasing')} · ${twOrd(i+1)} of ${cur.ranked.length}</span><span class="twsc">${r<4?'Round '+r:'Final'} best: <b>${s?s.score.toLocaleString():'no run yet'}</b></span>`; } }
+    card=`<div class="twteam"><small>Your team</small><h3>${escapeHTML(mine.name)}</h3><div class="twmem">${names}${full?'':'<em>&amp;</em><i>open spot</i>'}</div>${status}
+      ${ph==='signup'?`<div class="twcode"><span>Team code</span><b>${escapeHTML(mine.code)}</b><button class="btn ghost" id="twCopy" type="button">Copy</button></div>
+      ${owner?`<div class="joinrow"><input id="twRen" maxlength="20" placeholder="Rename the team" aria-label="New team name" autocomplete="off" spellcheck="false"><button class="btn ghost" id="twRenGo" type="button">Rename</button></div>`:''}
+      <button class="btn ghost twleave" id="twLeave" type="button">Leave team</button>`:''}</div>`; }
+  else if(ph!=='soon'&&ph!=='signup') card=`<div class="twteam none"><small>Your team</small><p>${SAVE.twinTeam&&!TW.loaded?'Loading…':'You\'re not on a team in this bracket. Cheer on the teams below!'}</p></div>`;
+  // redrawn only when something changed, keeping anything typed in the rename box
+  if(TW.cardHTML!==card){ const ri0=$('twRen'), keep=ri0?ri0.value:'', foc=ri0&&document.activeElement===ri0; TW.cardHTML=card; $('twMine').innerHTML=card;
+    const ri1=$('twRen'); if(ri1&&keep){ ri1.value=keep; } if(ri1&&foc) ri1.focus(); }
+  // sign-ups
+  const canJoin=ph==='signup'&&!mine; $('twJoin').hidden=!(canJoin||(ph==='soon'&&twPreview()));
+  $('twJoinBody').hidden=!ACCT.user; $('twSignIn').hidden=!!ACCT.user;
+  // the bracket: one column per day; teams that were cut stay, greyed, under the day they fell
+  const cols=[]; for(let k=1;k<=4;k++){ const d=st.days[k-1];
+    let rows='';
+    if(k===1&&(ph==='soon'||ph==='signup')) rows=st.field.map(t=>twTeamRow(t,null,'in'+(mine&&t.id===mine.id?' me':''))).join('')||'<li class="empty">No full teams yet</li>';
+    else if(d){ d.ranked.forEach((x,i)=>{ if(i===d.keep&&(d.done||(ph==='live'&&k===r))) rows+=`<li class="cut"><span>${d.done?'cut':'cut line'}</span></li>`;
+      rows+=twTeamRow(x.t,x.s,(i<d.keep||!d.done?'in':'out')+(mine&&x.t.id===mine.id?' me':'')+(d.done&&k===4&&i===0?' champ':'')); }); }
+    else rows='<li class="empty">'+(ph==='over'?'—':`Starts ${TW_DAYS[k-1]} 3:30 PM`)+'</li>';
+    cols.push(`<div class="twcol${ph==='live'&&k===r?' now':''}"><h4>${TW_DAYS[k-1]}<small>${k<4?'Round '+k:'Final'}</small></h4><ul>${rows}</ul></div>`); }
+  const w=st.winner; cols.push(`<div class="twcol champ${ph==='over'?' now':''}"><h4>Fri<small>Champions</small></h4><ul>${w?twTeamRow(w,null,'in champ'):'<li class="empty">♛</li>'}</ul></div>`);
+  const bh2=cols.join(''); if(TW.bracketHTML!==bh2){ TW.bracketHTML=bh2; $('twBracket').innerHTML=bh2; }
+  const now=$('twBracket').querySelector('.twcol.now'); if(now&&!$('twBracket').dataset.scrolled){ $('twBracket').dataset.scrolled='1'; setTimeout(()=>{ $('twBracket').scrollLeft=Math.max(0,now.offsetLeft-12); },0); }
+  // buttons inside the team card
+  const cp=$('twCopy'); if(cp) cp.onclick=()=>{ try{ navigator.clipboard.writeText(mine.code).then(()=>twMsg('Code copied. Send it to your partner.'),()=>twMsg('Your team code is '+mine.code)); }catch(e){ twMsg('Your team code is '+mine.code); } };
+  const lv=$('twLeave'); if(lv) lv.onclick=twLeave; const rn=$('twRenGo'); if(rn) rn.onclick=twRename;
+  const ri2=$('twRen'); if(ri2) ri2.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') twRename(); });
+}
+function showTwin(){ TW.cardHTML=TW.bracketHTML=null; showOv('twinOv'); twMsg(''); $('twBracket').dataset.scrolled=''; if(acctCfg()&&!ACCT.ready&&!ACCT.loading) acctInit(); twWatch(); twFind(); twRender(); }
+$('mTwin').onclick=showTwin;
+$('twBack').onclick=()=>{ twUnwatch(); toMenu(); };
+$('twCreate').onclick=twCreate; $('twJoinGo').onclick=twJoin; $('twSignIn').onclick=()=>showAcct();
+['twName','twCode'].forEach(id=>$(id).addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') (id==='twName'?twCreate:twJoin)(); }));
+setInterval(()=>{ twRender();
+  if(!twShown()&&!$('twinOv').hidden){ twUnwatch(); toMenu(); }
+  if(SAVE.twinWin&&!SAVE.twinWinSeen&&G.state==='menu') twWinPopup();
+  // after the Final, a player on a team checks the result now and then, so both champions get Equinox even if they were away
+  if(twPhase()==='over'&&SAVE.twinTeam&&!SAVE.twinWin&&ACCT.db){
+    if(TW.loaded) twCheckWin();   // the Final just ended: no new data arrives to prompt the check
+    if(!TW.unsub.length&&Date.now()-TW.lastFetch>60000) twFetchAll().then(twCheckWin).catch(()=>{}); }
 },1000);
 
 /* ================= COMMUNITY POLL: WHAT'S NEXT =================
@@ -8323,7 +8704,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['pollOv','cvkWinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
+const OVS=['pollOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -8340,7 +8721,7 @@ function toMenu(ov='menuOv'){
   if(G.state!=='menu') fadeMusic(); stopStudioAudio(); hideTalk(); hideCine();
   G=visualDefaults({state:'menu',players:[mkPlayer(0)]}); R=null; setTheme(THEMES[Math.min(WORLDS-1,SAVE.world-1)]);
   hint('');
-  if(ov==='menuOv'){ buildMenu(); setTimeout(()=>{ if(G.state==='menu'&&!$('menuOv').hidden&&!chalOffer()&&!lvlOffer()&&$('cvkWinOv').hidden&&!cvkWinPopup()) giftCheck(); },500); } else if(ov==='hardOv') buildHard(); else if(ov==='worldsOv') buildWorlds(); else if(ov==='shopOv') buildShop(); else if(ov==='settingsOv') buildSettings();
+  if(ov==='menuOv'){ buildMenu(); setTimeout(()=>{ if(G.state==='menu'&&!$('menuOv').hidden&&!chalOffer()&&!lvlOffer()&&$('cvkWinOv').hidden&&$('twinWinOv').hidden&&!cvkWinPopup()&&!twWinPopup()) giftCheck(); },500); } else if(ov==='hardOv') buildHard(); else if(ov==='worldsOv') buildWorlds(); else if(ov==='shopOv') buildShop(); else if(ov==='settingsOv') buildSettings();
   showOv(ov);
 }
 function nextUp(){
@@ -8558,7 +8939,7 @@ function gameOver(why){
   if(M.type==='studio') setTimeout(()=>{ if(G.mode===M) stopStudioAudio(); },1500);
   { const L=SAVE.life; if(M.type==='endless') L.endlessRooms=Math.max(L.endlessRooms||0,G.roomIdx-1); if(M.net) L.online=(L.online||0)+1; if(why==='song') L.songs=(L.songs||0)+1; }
   overNear(M,why,best);
-  cvkPost(M);
+  cvkPost(M); twPost(M);
   { const ev=eventDone(M), cr=chalResult(M), lb=lbPost(M); if(cr) $('oNear').textContent=cr; else if(ev) $('oNear').textContent=ev; else if(lb&&!$('oNear').textContent) $('oNear').textContent=lb; }
   $('oShare').hidden=!chalFor(M)||!!M.net; $('oShare').onclick=()=>shareChallenge(M);
   const bf=boardFor(M); $('oLB').hidden=!bf; $('oLB').onclick=()=>{ if(M.type==='event') showEvent(); else showLB(M.type==='endless'?'endless':M.type==='ascent'?'ascent':'daily'); };
@@ -8636,7 +9017,7 @@ function loop(){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners')) drawSkinPreviews(now); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners')) drawSkinPreviews(now); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
