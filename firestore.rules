@@ -1,0 +1,299 @@
+rules_version = '2';
+// Pulseform: paste this into Firebase console → Firestore Database → Rules, then Publish.
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    // Cloud saves: each player can only read and write their own save
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Set the Firebase Auth custom claim {admin: true} on your owner/admin account
+    // if you want that account to be able to reset community polls.
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Leaderboards: anyone can view; players can only write their own entry. The score can only go up;
+    // an update that keeps the same score just changes the name, rank or block (when you rename yourself)
+    match /boards/{board}/entries/{uid} {
+      allow read: if true;
+
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly([
+          'name', 'rank', 'score', 'skin', 't', 'banner'
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 32
+        && request.resource.data.rank is int
+        && request.resource.data.score is int
+        && request.resource.data.t is int
+        && request.resource.data.skin is string
+        && request.resource.data.skin.size() <= 64
+        && (!('banner' in request.resource.data)
+            || (
+              request.resource.data.banner is string
+              && request.resource.data.banner.size() <= 24
+            ))
+        && (
+          resource == null
+          || request.resource.data.score >= resource.data.score
+        );
+
+      allow delete: if false;
+    }
+
+    // Friends: public player cards (name, rank, block, progress, bests, built levels, last seen)
+    match /profiles/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24;
+    }
+
+    // Friend codes: anyone signed in can look one up; a code can be claimed once and never changed
+    match /codes/{code} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid
+        && code.size() == 6;
+      allow update, delete: if false;
+    }
+
+    // Friends lists: only you can see yours. Friendship is two-way, so when you add someone's code
+    // you may also add yourself to their list (only if they are already on yours), or take yourself off it.
+    match /friends/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.uids is list && request.resource.data.uids.size() <= 50;
+      // someone else adding themselves
+      allow create: if request.auth != null && request.auth.uid != uid
+        && request.resource.data.keys().hasOnly(['uids'])
+        && request.resource.data.uids == [request.auth.uid]
+        && uid in get(/databases/$(db)/documents/friends/$(request.auth.uid)).data.uids;
+      allow update: if request.auth != null && request.auth.uid != uid
+        && request.resource.data.keys().hasOnly(['uids'])
+        && request.resource.data.uids is list && request.resource.data.uids.size() <= 50
+        && (
+          (request.resource.data.uids.toSet() == resource.data.uids.toSet().union([request.auth.uid].toSet())
+            && uid in get(/databases/$(db)/documents/friends/$(request.auth.uid)).data.uids)
+          || request.resource.data.uids.toSet() == resource.data.uids.toSet().difference([request.auth.uid].toSet())
+        );
+      allow delete: if false;
+    }
+
+    // ---- Cale vs Korra: 9:00 AM Central Wed Sep 30 2026 to 9:00 AM Central Sat Oct 3 2026 ----
+    // Signing up: the code must match that side's fingerprint (SHA-256), and each side can be claimed once.
+    // Only the person who signed up can read their claim (it holds their code).
+    match /events/cvk/claims/{side} {
+      allow get: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if request.auth != null
+        && (side == 'cale' || side == 'korra')
+        && request.resource.data.keys().hasOnly(['uid','code','t'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.code is string
+        && hashing.sha256(request.resource.data.code).toHexString().lower()
+             == (side == 'cale' ? 'bf9254eff060b724af4f9ff4562baff0ea6e8650ebe2b2d4fa7f51ffe832c5b7' : 'cdf74e040ee0af0702471fbb74f8bafecee16afcc43bb9f7b726263044bc99fe')
+        && request.time < timestamp.value(1791036000000);
+      allow update, delete: if false;
+    }
+    // The bars: everyone can watch; only the side's player can add to it, only while the event is live,
+    // and at most 400,000 points at a time. The bar also shows the player's current username.
+    match /events/cvk/sides/{side} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && get(/databases/$(db)/documents/events/cvk/claims/$(side)).data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['score','t','name'])
+        && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 24))
+        && request.resource.data.score == 0;
+      allow update: if request.auth != null
+        && get(/databases/$(db)/documents/events/cvk/claims/$(side)).data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['score','t','name'])
+        && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 24))
+        && request.resource.data.score is number
+        && request.resource.data.score >= resource.data.score
+        && request.resource.data.score - resource.data.score <= 400000
+        // the score only moves while the event is live; the player's username can be updated any time
+        && (request.resource.data.score == resource.data.score
+            || (request.time >= timestamp.value(1790776800000) && request.time < timestamp.value(1791036000000)));
+      allow delete: if false;
+    }
+
+    // Betting on Cale vs Korra: everyone can see the bets; you can only add to your own, at most 100,000 notes
+    // at a time, until 9:00 AM Central Thu Oct 1 2026 (a day into the event). Amounts never go down.
+    match /events/cvk/bets/{uid} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['cale','korra','name','t'])
+        && request.resource.data.cale is number && request.resource.data.korra is number
+        && request.resource.data.cale >= 0 && request.resource.data.korra >= 0
+        && request.resource.data.cale + request.resource.data.korra <= 100000
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24
+        && request.time < timestamp.value(1790863200000);
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['cale','korra','name','t'])
+        && request.resource.data.cale is number && request.resource.data.korra is number
+        && request.resource.data.cale >= resource.data.cale && request.resource.data.korra >= resource.data.korra
+        && (request.resource.data.cale - resource.data.cale) + (request.resource.data.korra - resource.data.korra) <= 100000
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24
+        && request.time < timestamp.value(1790863200000);
+      allow delete: if false;
+    }
+
+    // Party invites: only someone on the recipient's friends list can invite them
+    match /invites/{to}/items/{from} {
+      allow create, update: if request.auth != null && request.auth.uid == from
+        && exists(/databases/$(db)/documents/friends/$(to))
+        && from in get(/databases/$(db)/documents/friends/$(to)).data.uids
+        && request.resource.data.code is string && request.resource.data.code.size() == 4;
+      allow read: if request.auth != null && request.auth.uid == to;
+      allow delete: if request.auth != null && (request.auth.uid == to || request.auth.uid == from);
+    }
+
+    /*
+     * TWIN PULSE: the 2v2 bracket, Mon Oct 5 – Fri Oct 9, 2026 (all times Central)
+     *   events/twin/teams/{teamId}   = {name, nameKey, code, members:[uid,uid], names:[..], owner, created}
+     *   events/twin/codes/{code}     = {teamId}     a team's join code, claimed once
+     *   events/twin/names/{nameKey}  = {teamId}     a team name, claimed once (case-insensitive)
+     *   events/twin/players/{uid}    = {teamId}     one team per player
+     *   events/twin/rounds/{r}/scores/{teamId} = {score, t, by}   the team's best run in round r
+     * Teams form, change and break up only while sign-ups are open (Mon 12:00 AM – 3:30 PM). Every change is one
+     * transaction, and each document checks the others as they will be after it (getAfter/existsAfter).
+     */
+    function twOpen() {
+      return request.time >= timestamp.value(1791176400000) && request.time < timestamp.value(1791232200000);
+    }
+    function twTeamPath(t) { return /databases/$(db)/documents/events/twin/teams/$(t); }
+    function twPlayerPath(u) { return /databases/$(db)/documents/events/twin/players/$(u); }
+    function twNameOk(d) {
+      return d.name is string && d.name.size() >= 2 && d.name.size() <= 20
+        && d.nameKey is string && d.nameKey.matches('^[a-z0-9]{2,20}$');
+    }
+    function twShape(d) {
+      return d.keys().hasOnly(['name', 'nameKey', 'code', 'members', 'names', 'owner', 'created'])
+        && d.members is list && d.names is list && d.names.size() == d.members.size() && d.members.size() <= 2
+        && d.code is string && d.code.matches('^[A-Z0-9]{5}$') && d.created is int && twNameOk(d);
+    }
+
+    match /events/twin/teams/{tid} {
+      allow read: if true;
+      allow create: if signedIn() && twOpen() && tid.matches('^[a-z0-9]{8,16}$')
+        && twShape(request.resource.data)
+        && request.resource.data.members == [request.auth.uid]
+        && request.resource.data.owner == request.auth.uid
+        && getAfter(/databases/$(db)/documents/events/twin/codes/$(request.resource.data.code)).data.teamId == tid
+        && getAfter(/databases/$(db)/documents/events/twin/names/$(request.resource.data.nameKey)).data.teamId == tid
+        && getAfter(twPlayerPath(request.auth.uid)).data.teamId == tid;
+      allow update: if signedIn() && twOpen() && twShape(request.resource.data)
+        && request.resource.data.code == resource.data.code
+        && request.resource.data.created == resource.data.created
+        && (
+          // a second player joins
+          (resource.data.members.size() == 1
+            && !resource.data.members.hasAny([request.auth.uid])
+            && request.resource.data.members == resource.data.members.concat([request.auth.uid])
+            && request.resource.data.name == resource.data.name
+            && request.resource.data.nameKey == resource.data.nameKey
+            && request.resource.data.owner == resource.data.owner
+            && getAfter(twPlayerPath(request.auth.uid)).data.teamId == tid)
+          // one of two leaves; the one who stays runs the team
+          || (resource.data.members.size() == 2
+            && resource.data.members.hasAny([request.auth.uid])
+            && request.resource.data.members == resource.data.members.removeAll([request.auth.uid])
+            && request.resource.data.owner == request.resource.data.members[0]
+            && request.resource.data.name == resource.data.name
+            && request.resource.data.nameKey == resource.data.nameKey
+            && !existsAfter(twPlayerPath(request.auth.uid)))
+          // the team's owner renames it
+          || (resource.data.owner == request.auth.uid
+            && request.resource.data.members == resource.data.members
+            && request.resource.data.names == resource.data.names
+            && request.resource.data.owner == resource.data.owner
+            && getAfter(/databases/$(db)/documents/events/twin/names/$(request.resource.data.nameKey)).data.teamId == tid)
+        );
+      // the last player leaving closes the team
+      allow delete: if signedIn() && twOpen()
+        && resource.data.members == [request.auth.uid]
+        && !existsAfter(twPlayerPath(request.auth.uid));
+    }
+    match /events/twin/codes/{code} {
+      allow read: if true;
+      allow create: if signedIn() && twOpen() && request.resource.data.keys().hasOnly(['teamId'])
+        && getAfter(twTeamPath(request.resource.data.teamId)).data.code == code
+        && getAfter(twTeamPath(request.resource.data.teamId)).data.owner == request.auth.uid;
+      allow delete: if signedIn() && twOpen()
+        && get(twTeamPath(resource.data.teamId)).data.members.hasAny([request.auth.uid])
+        && !existsAfter(twTeamPath(resource.data.teamId));
+    }
+    match /events/twin/names/{key} {
+      allow read: if true;
+      allow create: if signedIn() && twOpen() && request.resource.data.keys().hasOnly(['teamId'])
+        && getAfter(twTeamPath(request.resource.data.teamId)).data.nameKey == key
+        && getAfter(twTeamPath(request.resource.data.teamId)).data.owner == request.auth.uid;
+      allow delete: if signedIn() && twOpen()
+        && get(twTeamPath(resource.data.teamId)).data.members.hasAny([request.auth.uid])
+        && (!existsAfter(twTeamPath(resource.data.teamId))
+            || getAfter(twTeamPath(resource.data.teamId)).data.nameKey != key);
+    }
+    match /events/twin/players/{uid} {
+      allow read: if true;
+      allow create: if signedIn() && twOpen() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['teamId'])
+        && getAfter(twTeamPath(request.resource.data.teamId)).data.members.hasAny([uid]);
+      allow delete: if signedIn() && twOpen() && request.auth.uid == uid
+        && (!existsAfter(twTeamPath(resource.data.teamId))
+            || !getAfter(twTeamPath(resource.data.teamId)).data.members.hasAny([uid]));
+    }
+    // a team's best run in round r (1-4): only its own players, only while that round runs, only upward
+    match /events/twin/rounds/{r}/scores/{tid} {
+      allow read: if true;
+      allow create, update: if signedIn() && r in ['1', '2', '3', '4']
+        && request.time >= timestamp.value(1791232200000 + (int(r) - 1) * 86400000)
+        && request.time < timestamp.value(1791232200000 + int(r) * 86400000)
+        && get(twTeamPath(tid)).data.members.hasAny([request.auth.uid])
+        && get(twTeamPath(tid)).data.members.size() == 2
+        && request.resource.data.keys().hasOnly(['score', 't', 'by'])
+        && request.resource.data.score is int && request.resource.data.score > 0 && request.resource.data.score <= 2000000
+        && request.resource.data.t is int && request.resource.data.by == request.auth.uid
+        && (resource == null || request.resource.data.score > resource.data.score);
+      allow delete: if false;
+    }
+
+    /*
+     * COMMUNITY POLL
+     * polls/next/votes/{uid} = { event, update, t }
+     *
+     * Everyone can read totals.
+     * A signed-in player can create/update their own vote.
+     * A player can delete their own vote.
+     * An admin (Firebase Auth custom claim: admin=true) can delete any vote,
+     * which allows the current poll to be wiped/reset safely.
+     */
+    match /polls/next/votes/{uid} {
+      allow read: if true;
+
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['event', 'update', 't'])
+        && request.resource.data.event is string
+        && request.resource.data.update is string
+        && request.resource.data.t is int
+        && request.resource.data.event in [
+          'goal',
+          'bracket'
+        ]
+        && request.resource.data.update in [
+          'pass',
+          'packs',
+          'mode',
+          'revamp'
+        ];
+
+      allow delete: if signedIn()
+        && (request.auth.uid == uid || isAdmin());
+    }
+  }
+}
