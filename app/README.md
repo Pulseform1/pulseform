@@ -130,7 +130,7 @@ address), ads and purchases are pretend and free, so you can try the flow.
   Connect and the Play Console. Replace `CONTACT_EMAIL` in it with your support email first.
 - **App privacy ("nutrition label")**: Contact info → email (app functionality, linked to the user); Identifiers → user
   ID; User content → gameplay content and player name; no tracking, no ads.
-- **Account deletion**: in the game, Sign in → Delete account. Mention it in the review notes.
+- **Account deletion**: in the game, Settings → (bottom) Delete account, confirmed with the password (or Apple/Google sign-in). Mention it in the review notes.
 - **Report and block**: the ⋯ button on leaderboard rows and "Report or block" on a friend's card. Reports land in the
   Firestore `reports` collection; check it in the Firebase console.
 - **Age rating**: answer the questionnaire; user-generated content (names, shared levels) and online play are the items

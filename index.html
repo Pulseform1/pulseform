@@ -1123,8 +1123,8 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 .chip.acct.on{border-color:rgba(184,242,230,.55);color:#B8F2E6}
 .chip.acct.on::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#B8F2E6;margin-right:6px;vertical-align:1px}
 .acct-form{display:flex;flex-direction:column;gap:10px;margin:0}
-.acct-form input{font:500 16px var(--body);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink);padding:12px 14px;min-width:0}
-.acct-form input:focus{outline:2px solid #FFD166;outline-offset:1px}
+.acct-form input,.adelform input{font:500 16px var(--body);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink);padding:12px 14px;min-width:0}
+.acct-form input:focus,.adelform input:focus{outline:2px solid #FFD166;outline-offset:1px}
 .acct-form .segs button{flex:1}
 .gbtn{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1F1F1F}
 .abtn{display:flex;align-items:center;justify-content:center;gap:10px;background:#000;color:#fff;margin-top:8px;border:1px solid rgba(255,255,255,.25)}
@@ -1148,6 +1148,7 @@ button:disabled{opacity:.55;cursor:default}
 #frOn{display:grid;gap:14px;margin-top:10px}#frOn>:empty{display:none}#frOn>h2{margin:8px 0 0}
 .frlist li{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:6px 10px 6px 6px;border-radius:12px;background:var(--glass);border:1px solid var(--line)}
 .modwhy{display:flex;flex-wrap:wrap;gap:8px}
+.adelhint{margin:10px 0 0;opacity:.75}.adelform{display:flex;flex-direction:column;gap:8px;margin-top:8px}#settingsOv .adanger{margin-top:28px}
 .adanger{margin-top:12px;border:1px solid rgba(255,107,107,.35);border-radius:12px;padding:8px 12px}.adanger summary{cursor:pointer;color:#FF9A9A;font-weight:700;font-size:13px}
 .btn.dangerfill{background:#E5484D;color:#fff}
 .frlist li.none{display:block;padding:12px;color:var(--ink-3);font-size:13px}
@@ -1725,9 +1726,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <div class="acct-card"><span class="acct-dot"></span><div><b id="aWho"></b><small class="small" id="aSync"></small></div></div>
       <p class="small">Everything you earn saves to your account automatically. Sign in with the same account on another device to carry it over.</p>
       <div class="row"><button class="btn ghost" id="aSignOut" type="button">Sign out</button></div>
-      <details class="adanger"><summary>Delete account</summary>
-        <p class="small">This permanently deletes your account, your cloud save, your leaderboard scores, your friend list and your player card. Your progress on this device is erased too. This can't be undone.</p>
-        <button class="btn dangerfill" id="aDelete" type="button">Delete my account</button></details>
+      <p class="small adelhint">Want to delete your account? It's at the bottom of Settings.</p>
     </div>
     <div id="aBlocked" hidden><div class="lbl" style="margin:10px 0 6px">Blocked players</div><ul class="frlist" id="aBlockedList"></ul></div>
     <p class="small" id="aMsg" role="status"></p>
@@ -1977,6 +1976,14 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     </details>
     <button id="resetBtn" class="btn ghost danger" type="button">Erase progress</button>
     <p class="small" style="margin:10px 0 0"><a class="pplink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
+    <details class="adanger" id="setDel" hidden><summary>Delete account</summary>
+      <p class="small">This permanently deletes your account, your cloud save, your leaderboard scores, your friend list and your player card. Your progress on this device is erased too. This can't be undone.</p>
+      <form class="adelform" id="delForm" novalidate>
+        <input type="email" id="delUser" autocomplete="username" hidden aria-hidden="true" tabindex="-1">
+        <input id="delPass" type="password" placeholder="Your password" autocomplete="current-password" aria-label="Your password, to confirm">
+        <button class="btn dangerfill" id="aDelete" type="submit">Delete my account</button>
+      </form>
+      <p class="small" id="delMsg" role="status"></p></details>
   </div>
 </section>
 
@@ -6617,12 +6624,31 @@ function acctBlockedUI(){ const L=SAVE.blocked||[]; const box=$('aBlocked'); if(
   $('aBlockedList').querySelectorAll('[data-unblock]').forEach(b=>b.onclick=()=>blockSet(b.dataset.unblock,'',false)); }
 
 /* ---- deleting your account (App Store guideline 5.1.1(v)): every record of you in the cloud, then the sign-in itself ---- */
+const acctProv=u=>((u&&u.providerData)||[]).map(p=>p.providerId);
+/* who you are is confirmed again right before deleting: your password, or (Google/Apple accounts have none) that sign-in again */
+async function acctReauth(u){
+  const pv=acctProv(u);
+  if(pv.includes('password')){ const pw=$('delPass').value; if(!pw) throw {code:'pf/no-pass'};
+    return u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,pw)); }
+  const apple=pv.includes('apple.com'), NA=nativeAuth();
+  if(NA){ const r=await (apple?NA.signInWithApple({skipNativeAuth:true}):NA.signInWithGoogle({skipNativeAuth:true})), c=(r&&r.credential)||{};
+    return u.reauthenticateWithCredential(apple?new firebase.auth.OAuthProvider('apple.com').credential({idToken:c.idToken,rawNonce:c.nonce}):firebase.auth.GoogleAuthProvider.credential(c.idToken,c.accessToken)); }
+  const prov=apple?new firebase.auth.OAuthProvider('apple.com'):new firebase.auth.GoogleAuthProvider();
+  return u.reauthenticateWithPopup(prov);
+}
+function delUI(){ const u=ACCT.user, box=$('setDel'); box.hidden=!u||!ACCT.db; if(!u) return;
+  const pw=acctProv(u).includes('password'), apple=acctProv(u).includes('apple.com');
+  $('delPass').hidden=!pw; $('delUser').value=u.email||''; $('delPass').value=''; $('aDelete').disabled=false;
+  $('aDelete').textContent=pw?'Delete my account':`Confirm with ${apple?'Apple':'Google'} and delete`; $('delMsg').textContent=''; $('delMsg').classList.remove('err'); }
 async function acctDelete(){
-  const u=ACCT.user, db=ACCT.db, btn=$('aDelete'), m=$('aMsg'); if(!u||!db) return;
-  if(!btn.dataset.arm){ btn.dataset.arm='1'; btn.textContent='Tap again to delete everything for good'; setTimeout(()=>{ if(btn.isConnected&&btn.dataset.arm){ btn.dataset.arm=''; btn.textContent='Delete my account'; } },5000); return; }
-  btn.dataset.arm=''; btn.disabled=true; btn.textContent='Deleting…'; m.classList.remove('err'); m.textContent='';
-  const last=Date.parse((u.metadata&&u.metadata.lastSignInTime)||0)||0;
-  if(Date.now()-last>5*60*1000){ btn.disabled=false; btn.textContent='Delete my account'; m.classList.add('err'); m.textContent='For your safety, sign out and sign in again, then delete your account within 5 minutes.'; return; }
+  const u=ACCT.user, db=ACCT.db, btn=$('aDelete'), m=$('delMsg'); if(!u||!db) return;
+  const label=btn.textContent; btn.disabled=true; btn.textContent='Checking…'; m.classList.remove('err'); m.textContent='';
+  try{ await acctReauth(u); }
+  catch(e){ btn.disabled=false; btn.textContent=label; const c=String((e&&(e.code||e.message))||'');
+    if(/cancel|popup-closed/i.test(c)) return;
+    m.classList.add('err'); m.textContent=c==='pf/no-pass'?'Type your password to delete your account.':/wrong-password|invalid-credential|invalid-login/.test(c)?"That password isn't right.":/too-many/.test(c)?'Too many tries. Wait a few minutes and try again.':/user-mismatch/.test(c)?'That was a different account. Use the one you are signed in with.':'Could not confirm it is you. Check your connection and try again.';
+    return; }
+  btn.textContent='Deleting…'; $('delPass').value='';
   const uid=u.uid, quiet=pr=>pr.catch(()=>{});
   try{
     clearTimeout(ACCT.pushT); ACCT.deleting=true;
@@ -6640,10 +6666,10 @@ async function acctDelete(){
     const keep={}; for(const k of DEVICE_KEYS) keep[k]=SAVE[k];
     SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep,{wipe:Date.now()}); store.set('save',SAVE); store.set('name','');
     ACCT.deleting=false; toast('Your account was deleted.'); toMenu();
-  }catch(e){ ACCT.deleting=false; btn.disabled=false; btn.textContent='Delete my account'; m.classList.add('err');
+  }catch(e){ ACCT.deleting=false; btn.disabled=false; btn.textContent=label; m.classList.add('err');
     m.textContent=e&&e.code==='auth/requires-recent-login'?'For your safety, sign out and sign in again, then delete your account.':'Something went wrong. Check your connection and try again.'; }
 }
-$('aDelete').onclick=acctDelete;
+$('delForm').onsubmit=e=>{ e.preventDefault(); acctDelete(); };
 // in the native app the policy opens inside the app (its own page has a link back)
 document.querySelectorAll('a.pplink').forEach(a=>a.addEventListener('click',e=>{ if(isNativeApp()){ e.preventDefault(); acctSync().catch(()=>{}).then(()=>{ location.href='privacy.html'; }); } }));
 acctInit(); acctChip();
@@ -10391,7 +10417,7 @@ function buildBanners(){
 }
 /* hear a sound pack: the menu music plays on it for 8 seconds */
 function packHear(id){ firstGesture(); PACKPREV={id,until:performance.now()+8000}; }
-function buildSettings(){
+function buildSettings(){ delUI();
   $('ctrlField').hidden=MOB;
   $('ghostOn').checked=!SAVE.ghostOff; $('metroOn').checked=!SAVE.metroOff; $('fountOn').checked=!SAVE.fountOff; $('relaxed').checked=SAVE.relaxed; $('reduce').checked=SAVE.reduce; $('haptics').checked=SAVE.haptics; syncOffset(); syncVol();
   document.querySelectorAll('#ctrlTabs button').forEach(b=>b.classList.toggle('on',b.dataset.c===SAVE.controls));
