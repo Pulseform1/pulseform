@@ -687,7 +687,7 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 .pptier{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}.pptier b{font:800 18px var(--display)}.pptier span{font-size:13px;color:var(--ink-2)}
 .ppbar{height:14px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid var(--line);overflow:hidden}.ppbar i{display:block;height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,#FFD166,#FF7EB6,#C9A0FF);box-shadow:0 0 14px rgba(255,209,102,.6);transition:width .6s}
 #ppClaimAll{justify-self:center}
-.pptrack{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-width:0}
+.pptrack{flex:none;align-items:stretch;display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-width:0}
 .ppcard{flex:0 0 108px;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);position:relative}
 .ppcard small{align-self:flex-start;font:800 11px var(--display);color:var(--ink-3)}.ppcard b{font:700 12px var(--display);text-align:center;min-height:2.4em;display:flex;align-items:center}
 .ppcard em{font-size:10.5px;color:var(--ink-3);font-style:normal}.ppcard .btn{padding:6px 10px;font-size:12px;min-height:0}
@@ -1195,7 +1195,7 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
   <div class="panel pppanel">
     <div class="head"><button class="back" id="ppBack" type="button">← Menu</button><div class="wallet" id="walletPP"></div></div>
     <div class="pphero"><canvas class="skprev" data-skin="pp_sovereign" data-px="190" width="190" height="190"></canvas>
-      <div><small>Tier 100 · the grand reward</small><b>Pulse Sovereign</b><span>Climb all 100 tiers to crown yourself. Nine more Pass blocks wait on the way, one every 10 tiers.</span></div></div>
+      <div><small>Tier 100 · the grand reward</small><b>Pulse Sovereign</b><span>Climb all 100 tiers to crown yourself. Eight more Pass blocks wait on the way.</span></div></div>
     <h2 class="pptitle"><span>PULSE</span> PASS <em>Season 1</em></h2>
     <div class="pptier"><b id="ppTier">Tier 0</b><span id="ppNext"></span></div>
     <div class="ppbar"><i id="ppFill"></i></div>
@@ -2425,7 +2425,6 @@ SKINS.push(
  {id:'pp_leviathan',name:'Leviathan',vx:'pp_leviathan',nocore:true,prev:[.6,20],top:'#1E5A66',front:'#0C2A36',core:'#5CFFE0',req:{pass:30}},
  {id:'pp_ronin',name:'Ronin',vx:'pp_ronin',nocore:true,prev:[.7,14],top:'#1A1418',front:'#7A0E18',core:'#FF4A5A',req:{pass:40}},
  {id:'pp_oni',name:'Mecha Oni',vx:'pp_oni',nocore:true,prev:[.62,19],top:'#C8D0DC',front:'#5A6478',core:'#FF3DAA',req:{pass:50}},
- {id:'pp_wyrm',name:'Frost Wyrm',vx:'pp_wyrm',nocore:true,prev:[.64,16],top:'#E6F6FF',front:'#5A9ACC',core:'#BDE8FF',req:{pass:60}},
  {id:'pp_archmage',name:'Archmage',vx:'pp_archmage',nocore:true,prev:[.62,18],top:'#5A3A9A',front:'#2A1A5A',core:'#E0C0FF',req:{pass:70}},
  {id:'pp_solar',name:'Solar King',vx:'pp_solar',nocore:true,prev:[.62,18],top:'#FFE7A0',front:'#E08A1A',core:'#FFFFFF',req:{pass:80}},
  {id:'pp_grove',name:'Elder Grove',vx:'pp_grove',nocore:true,prev:[.66,15],top:'#5A8A3A',front:'#4A2E1A',core:'#B8FF7A',req:{pass:90}},
@@ -2467,7 +2466,6 @@ const SIG={
  pp_leviathan:{n:'Riptide',g:'∘',c:['#5CFFE0','#1E8A9A','#BFF3FF'],sh:'bubble',ring:'#5CFFE0',fx:'waves'},
  pp_ronin:{n:'Iaido',g:'╱',c:['#FF4A5A','#FFFFFF','#FFC2D1'],sh:'petal',ring:'#FF4A5A',fx:'alarm'},
  pp_oni:{n:'Overclock',g:'⚙',c:['#FF3DAA','#4FF0FF','#C8D0DC'],sh:'gear',ring:'#FF3DAA',fx:'beams'},
- pp_wyrm:{n:'Glacial Roar',g:'✱',c:['#BDE8FF','#FFFFFF','#5A9ACC'],sh:'shard',ring:'#BDE8FF',fx:'implode'},
  pp_archmage:{n:'Arcane Sigil',g:'✶',c:['#E0C0FF','#8A5AFF','#FFE08A'],sh:'star5',ring:'#C9A0FF',fx:'cube'},
  pp_solar:{n:'Supernova Crown',g:'☀',c:['#FFE08A','#FF8A1A','#FFFFFF'],sh:'star5',ring:'#FFD166',fx:'pillar'},
  pp_grove:{n:'Spirit Bloom',g:'❦',c:['#B8FF7A','#5A8A3A','#FFE6A0'],sh:'petal',ring:'#B8FF7A',fx:'waves'},
@@ -4357,7 +4355,7 @@ function vxPost2(S,X,T,W,bh,H,now){
   cx.restore();
 }
 /* ---- the Pulse Pass blocks (Season 1): ten themed blocks, one every ten tiers, with Pulse Sovereign at tier 100 ---- */
-const VX3=new Set(['pp_storm','pp_phoenix','pp_leviathan','pp_ronin','pp_oni','pp_wyrm','pp_archmage','pp_solar','pp_grove','pp_sovereign']);
+const VX3=new Set(['pp_storm','pp_phoenix','pp_leviathan','pp_ronin','pp_oni','pp_archmage','pp_solar','pp_grove','pp_sovereign']);
 function vxBolt(x1,y1,x2,y2,seed,jit,col,w){ const n=6; cx.strokeStyle=col; cx.lineWidth=w; cx.beginPath(); cx.moveTo(x1,y1);
   for(let i=1;i<n;i++){ const u=i/n; cx.lineTo(x1+(x2-x1)*u+(vxRnd(seed+i)-.5)*jit,y1+(y2-y1)*u+(vxRnd(seed+i*7)-.5)*jit*.4); } cx.lineTo(x2,y2); cx.stroke(); }
 function vxCloud(x,y,r,lit){ const puffs=[[-1,0,.62],[-.45,-.35,.72],[.15,-.45,.8],[.7,-.2,.66],[1.05,.08,.5],[.3,.12,.7],[-.35,.15,.6]];
@@ -4367,12 +4365,6 @@ function vxFeather(len,wd,col1,col2){ const g=cx.createLinearGradient(0,0,len,0)
   cx.beginPath(); cx.moveTo(0,0); cx.quadraticCurveTo(len*.5,-wd,len,0); cx.quadraticCurveTo(len*.55,wd*.8,0,0); cx.fill(); }
 function vxHexRing(cx0,cy0,rx,ry,now,front,col,a){ for(let i=0;i<10;i++){ const an=now*.6+i*TAU/10, s=Math.sin(an); if((s>0)!==front) continue; const x=cx0+Math.cos(an)*rx, y=cy0+s*ry, r=rx*.16*(.75+.25*Math.abs(Math.cos(an)));
     cx.strokeStyle=rgba(col,a*(.55+.45*Math.abs(s))); cx.lineWidth=1.2; cx.beginPath(); for(let k=0;k<6;k++){ const b=k*Math.PI/3; cx.lineTo(x+Math.cos(b)*r,y+Math.sin(b)*r*.8); } cx.closePath(); cx.stroke(); } }
-/* Frost Wyrm's body: a coil of segments climbing around the block; front=true draws the part in front of it */
-function vxWyrm(cxm,B,W,H,bh,now,front){ const n=vxN(22);
-  for(let i=n-1;i>=0;i--){ const s=i/(n-1), a=now*.9+s*TAU*1.25, sn=Math.sin(a); if((sn>0)!==front) continue;
-    const x=cxm+Math.cos(a)*W*.78, y=B-s*(H+bh*1.6), r=W*(.06+.09*s);
-    const g=cx.createRadialGradient(x-r*.3,y-r*.4,0,x,y,r); g.addColorStop(0,'#FFFFFF'); g.addColorStop(.5,'#BDE8FF'); g.addColorStop(1,'#4A88BC'); cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r,0,TAU); cx.fill();
-    if(i%2===0){ cx.fillStyle='#E6F8FF'; cx.beginPath(); cx.moveTo(x-r*.35,y-r*.8); cx.lineTo(x,y-r*1.6); cx.lineTo(x+r*.35,y-r*.8); cx.closePath(); cx.fill(); } } }
 function vxPre3(S,X,T,W,bh,H,now){
   const v=S.vx, fy=T+bh, cxm=X+W/2, bt=clamp(1-(now-G.lastBeatT)/.35,0,1), oy=fy+H*.35, B=fy+H, sb=clamp((now-G.lastBeatT)/.6,0,1);
   cx.save(); cx.globalCompositeOperation='lighter';
@@ -4402,7 +4394,6 @@ function vxPre3(S,X,T,W,bh,H,now){
       cx.fillStyle='#FFD166'; cx.beginPath(); cx.ellipse(0,W*.23,W*.13,W*.05,0,0,TAU); cx.fill(); cx.fillStyle='#2A1418'; cx.fillRect(-W*.045,W*.27,W*.09,W*.55); cx.fillStyle='#C0303A'; for(let i=0;i<5;i++){ cx.save(); cx.translate(0,W*(.32+i*.1)); cx.rotate(.6); cx.fillRect(-W*.04,-W*.015,W*.08,W*.03); cx.restore(); }
       cx.restore(); } break;
     case 'pp_oni': { vxGlow(cxm,oy,W*1.15,'#FF3DAA',.22+.28*bt,.8); vxHexRing(cxm,oy,W*.95,W*.32,now,false,'#4FF0FF',.8); } break;
-    case 'pp_wyrm': { vxGlow(cxm,oy,W*1.2,'#9FD8FF',.25+.25*bt,.8); cx.globalCompositeOperation='source-over'; vxWyrm(cxm,B,W,H,bh,now,false); } break;
     case 'pp_archmage': { vxGlow(cxm,oy,W*1.2,'#8A5AFF',.28+.25*bt,.8);
       cx.save(); cx.translate(cxm,B); cx.scale(1,.32); cx.rotate(now*.5); const R0=W*1.05; cx.strokeStyle=rgba('#C9A0FF',.75+.25*bt); cx.lineWidth=2.4;
       cx.beginPath(); cx.arc(0,0,R0,0,TAU); cx.stroke(); cx.lineWidth=1.2; cx.beginPath(); cx.arc(0,0,R0*.82,0,TAU); cx.stroke();
@@ -4495,19 +4486,6 @@ function vxPost3(S,X,T,W,bh,H,now){
       cx.fillStyle='#2A3040'; for(let i=0;i<5;i++) cx.fillRect(X+W*(.24+i*.11),fy+H*.78,W*.06,H*.14);
       cx.globalCompositeOperation='lighter'; vxHexRing(cxm,oy,W*.95,W*.32,now,true,'#4FF0FF',.9); vxGlow(X+W*.12,fy+H*.86,W*.12,'#FF3DAA',.7*bt+.2); vxGlow(X+W*.88,fy+H*.86,W*.12,'#4FF0FF',.7*bt+.2);
       [X+W*.25,X+W*.75].forEach(tx=>{ const g=cx.createLinearGradient(0,B,0,B+H*(.3+.2*bt)); g.addColorStop(0,'rgba(255,61,170,.9)'); g.addColorStop(1,'rgba(255,61,170,0)'); cx.fillStyle=g; cx.beginPath(); cx.moveTo(tx-W*.07,B); cx.lineTo(tx+W*.07,B); cx.lineTo(tx,B+H*(.3+.2*bt)); cx.fill(); }); } break;
-    case 'pp_wyrm': {
-      cx.strokeStyle=rgba('#FFFFFF',.5); cx.lineWidth=1; const fern=(x,y,a,len,d)=>{ if(d>2) return; const ex=x+Math.cos(a)*len, ey=y+Math.sin(a)*len; cx.moveTo(x,y); cx.lineTo(ex,ey); fern(ex,ey,a-.6,len*.55,d+1); fern(ex,ey,a+.6,len*.55,d+1); };
-      cx.save(); clipBody(); cx.beginPath(); fern(X,B,-.8,W*.4,0); fern(X+W,fy,Math.PI*.8,W*.35,0); cx.stroke(); cx.restore();
-      vxWyrm(cxm,B,W,H,bh,now,true);
-      // the head, at the top of the coil, breathing frost
-      const a=now*.9+TAU*1.25, hx=cxm+Math.cos(a)*W*.78, hy=B-(H+bh*1.6)-W*.08, dir=Math.cos(a+.2)>0?1:-1, hr=W*.2;
-      cx.save(); cx.translate(hx,hy); cx.scale(dir,1);
-      const hg=cx.createLinearGradient(-hr,0,hr*1.4,0); hg.addColorStop(0,'#BDE8FF'); hg.addColorStop(1,'#FFFFFF'); cx.fillStyle=hg; cx.beginPath(); cx.moveTo(-hr*.8,-hr*.5); cx.quadraticCurveTo(hr*.6,-hr*.7,hr*1.4,-hr*.1); cx.lineTo(hr*1.3,hr*.25); cx.quadraticCurveTo(hr*.4,hr*.5,-hr*.8,hr*.45); cx.closePath(); cx.fill();
-      cx.fillStyle='#E6F8FF'; [[-.5,-.45,-.9,-1.3],[0,-.55,-.2,-1.4]].forEach(([x1,y1,x2,y2])=>{ cx.beginPath(); cx.moveTo(x1*hr,y1*hr); cx.lineTo(x2*hr,y2*hr); cx.lineTo((x1+.25)*hr,y1*hr); cx.closePath(); cx.fill(); });
-      cx.fillStyle='#2A6AAC'; cx.beginPath(); cx.moveTo(hr*.5,hr*.18); cx.lineTo(hr*1.3,hr*.12); cx.lineTo(hr*.6,hr*.3); cx.fill();
-      cx.shadowColor='#7FE0FF'; cx.shadowBlur=MOB?4:8; cx.fillStyle='#7FE0FF'; cx.beginPath(); cx.ellipse(hr*.35,-hr*.18,hr*.14,hr*.08,-.3,0,TAU); cx.fill(); cx.restore();
-      cx.globalCompositeOperation='lighter'; for(let i=0;i<vxN(6);i++){ const u=((now*1.2+i/6)%1), d=u*W*(.8+.6*bt); vxFlake(hx+dir*(hr*1.4+d),hy+Math.sin(i*2+now)*d*.3,W*.05*(1-u*.5),(.5+.5*bt)*(1-u)); }
-      vxGlow(hx+dir*hr*1.5,hy,W*.3*(.4+bt),'#BDE8FF',.5*bt+.15); } break;
     case 'pp_archmage': {
       // a sigil glowing on the front, a grimoire floating above with turning pages, orbs circling
       cx.save(); cx.shadowColor='#C9A0FF'; cx.shadowBlur=MOB?5:10+10*bt; cx.strokeStyle=`rgba(230,210,255,${.8+.2*bt})`; cx.lineWidth=1.3; const sx=cxm, sy=fy+H*.5, sr=Math.min(W,H)*.3;
@@ -4567,14 +4545,18 @@ function vxPost3(S,X,T,W,bh,H,now){
 }
 function drawSkinPreviews(now,sel){
   const cvs=document.querySelectorAll(sel||'#shopGrid canvas.skprev'); if(!cvs.length) return;
-  const main=cx, dpr=Math.min(2,devicePixelRatio||1), gm=G.mode; G.mode=gm?{...gm,coop:false}:null;
+  const main=cx, dpr=Math.min(3,devicePixelRatio||1), gm=G.mode; G.mode=gm?{...gm,coop:false}:null;
   cvs.forEach((c,idx)=>{ const r=c.getBoundingClientRect(); if(!r.width||r.bottom<0||r.top>innerHeight) return;
-    const w=64, h=64, px=+c.dataset.px||64, sc=px/64; if(c.width!==Math.round(px*dpr)){ c.width=Math.round(px*dpr); c.height=Math.round(px*dpr); }
-    const g=c.getContext('2d'); g.setTransform(dpr*sc,0,0,dpr*sc,0,0); g.clearRect(0,0,w,h); cx=g;
-    const pv=(skinById(c.dataset.skin)||{}).prev; if(pv){ g.translate(w/2,pv[1]); g.scale(pv[0],pv[0]); g.translate(-w/2,0); }
+    // sized from the canvas's laid-out width (not its hover transform), so it stays sharp on 3x phone screens
+    const w=64, h=64, css=c.clientWidth||+c.dataset.px||64, N=Math.round(css*dpr), sc=N/64; if(c.width!==N){ c.width=N; c.height=N; }
+    const g=c.getContext('2d'); g.setTransform(sc,0,0,sc,0,0); g.clearRect(0,0,w,h); cx=g;
+    // small icons (friends, leaderboard) zoom in on the block itself; the effects around it are faded at the edge
+    const pv=(skinById(c.dataset.skin)||{}).prev; if(pv){ const k=css<=48?.45:1, s0=1-(1-pv[0])*k; g.translate(w/2,pv[1]*k); g.scale(s0,s0); g.translate(-w/2,0); }
     const ph=((now+idx*.13)%1), lift=ph<.32?Math.sin(Math.PI*ph/.32)*9:0, sq=ph>=.32&&ph<.45?.12*(1-(ph-.32)/.13):0;
     const L={tw:58,th:58*.62,ox:w/2-29,oy:52-58*.62*.5,d:0}, P={skin:skinById(c.dataset.skin),greyT:-9,flashT:-9,flashC:'#FFF',face:['down','right','down','left'][Math.floor(now/1.2)%4],id:0};
     try{ drawBlock(P,{x:0,y:0,dx:0,dy:0,lift,sq,alpha:1,falling:false,fallY:0},L,now); }catch(e){}
+    g.setTransform(1,0,0,1,0,0); g.globalAlpha=1; g.shadowBlur=0; g.globalCompositeOperation='destination-in';
+    const fm=g.createRadialGradient(N/2,N/2,N*.36,N/2,N/2,N*.5); fm.addColorStop(0,'#000'); fm.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=fm; g.fillRect(0,0,N,N); g.globalCompositeOperation='source-over';
   });
   cx=main; G.mode=gm;
 }
@@ -6196,13 +6178,14 @@ function awardRun(o){
 
 /* ================= PULSE PASS · Season 1 =================
    100 tiers. Every run's XP also fills the pass (taken before the Maestro and Supreme multipliers, so everyone climbs at
-   the same pace). Each tier has a reward to claim: the ten Pass blocks on every tenth tier (the grand one at 100), four
+   the same pace). Each tier has a reward to claim: nine Pass blocks (the grand one at 100), a ♪5,000 jackpot at 60, four
    tile themes, four banners, a sound pack, and Notes. Claimed tiers are kept in SAVE.pass.got. */
-const PASS_TIERS=100, passCost=t=>250+Math.floor((t-1)/10)*25;   // the XP from tier t-1 to tier t
-const PASS_SKINS={10:'pp_storm',20:'pp_phoenix',30:'pp_leviathan',40:'pp_ronin',50:'pp_oni',60:'pp_wyrm',70:'pp_archmage',80:'pp_solar',90:'pp_grove',100:'pp_sovereign'};
-const PASS_TILES={25:'t_storm',45:'t_abyss',65:'t_arcane',85:'t_solar'}, PASS_BANNERS={15:'b_stormfront',35:'b_phoenix',75:'b_deepglow',95:'b_sovereign'}, PASS_PACK={55:'s_anthem'};
+// the XP from tier t-1 to tier t grows ~3.5% a tier: 200 for tier 1, ~1,100 by tier 50, ~6,000 for tier 100 (~172,000 XP in all)
+const PASS_TIERS=100, passCost=t=>Math.round(200*Math.pow(1.035,t-1)/25)*25;
+const PASS_SKINS={10:'pp_storm',20:'pp_phoenix',30:'pp_leviathan',40:'pp_ronin',50:'pp_oni',70:'pp_archmage',80:'pp_solar',90:'pp_grove',100:'pp_sovereign'};
+const PASS_TILES={25:'t_storm',45:'t_abyss',65:'t_arcane',85:'t_solar'}, PASS_BANNERS={15:'b_stormfront',35:'b_phoenix',75:'b_deepglow',95:'b_sovereign'}, PASS_PACK={55:'s_anthem'}, PASS_JACKPOT={60:5000};
 const PASS=Array.from({length:PASS_TIERS},(_,i)=>{ const t=i+1;
-  return PASS_SKINS[t]?{t,kind:'skin',id:PASS_SKINS[t]}:PASS_TILES[t]?{t,kind:'tiles',id:PASS_TILES[t]}:PASS_BANNERS[t]?{t,kind:'banner',id:PASS_BANNERS[t]}:PASS_PACK[t]?{t,kind:'pack',id:PASS_PACK[t]}:{t,kind:'notes',n:Math.round((100+t*6)/25)*25}; });
+  return PASS_SKINS[t]?{t,kind:'skin',id:PASS_SKINS[t]}:PASS_TILES[t]?{t,kind:'tiles',id:PASS_TILES[t]}:PASS_BANNERS[t]?{t,kind:'banner',id:PASS_BANNERS[t]}:PASS_PACK[t]?{t,kind:'pack',id:PASS_PACK[t]}:{t,kind:'notes',n:PASS_JACKPOT[t]||Math.round((100+t*6)/25)*25,jack:!!PASS_JACKPOT[t]}; });
 const passS=()=>{ const p=SAVE.pass||(SAVE.pass={xp:0,got:[]}); if(!Array.isArray(p.got)) p.got=[]; return p; };
 const passGot=t=>passS().got.includes(t);
 function passTier(){ let xp=passS().xp||0, t=0; while(t<PASS_TIERS&&xp>=passCost(t+1)){ xp-=passCost(t+1); t++; } return {t,into:xp,need:t<PASS_TIERS?passCost(t+1):0}; }
@@ -6225,7 +6208,7 @@ function buildPass(){
   $('ppTier').textContent=`Tier ${pt.t} / ${PASS_TIERS}`; $('ppNext').textContent=pt.t>=PASS_TIERS?'Every tier climbed!':`${pt.into.toLocaleString()} / ${pt.need.toLocaleString()} XP to tier ${pt.t+1}`;
   $('ppFill').style.width=(pt.t>=PASS_TIERS?100:pt.into/pt.need*100)+'%';
   $('ppClaimAll').hidden=!ready; $('ppClaimAll').textContent=`Claim all (${ready})`;
-  $('ppTrack').innerHTML=PASS.map(r=>{ const got=passGot(r.t), open=r.t<=pt.t, big=r.kind==='skin';
+  $('ppTrack').innerHTML=PASS.map(r=>{ const got=passGot(r.t), open=r.t<=pt.t, big=r.kind==='skin'||r.jack;
     const btn=got?(r.kind==='notes'?'<span class="ppdone">✓ Claimed</span>':passEquipped(r)?'<span class="ppdone">Equipped</span>':`<button class="btn ghost" data-ppeq="${r.t}" type="button">Equip</button>`)
       :open?`<button class="btn twbtn" data-ppc="${r.t}" type="button">Claim</button>`:`<span class="pplock">🔒 Tier ${r.t}</span>`;
     return `<div class="ppcard${big?' big':''}${r.t===100?' grand':''}${got?' got':open?' open':''}" data-t="${r.t}"><small>${r.t}</small>${passPrev(r)}<b>${escapeHTML(passName(r))}</b><em>${passKind(r)}</em>${btn}</div>`; }).join('');
