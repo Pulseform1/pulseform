@@ -1328,7 +1328,7 @@ body.phone .segs button{flex:0 0 auto;white-space:nowrap;padding-inline:14px}
       <button class="chip c-lb" id="mLB" type="button">Leaderboard</button>
       <button class="chip c-set" id="mSettings" type="button">Settings</button>
       <button class="chip evchip" id="mEvent" type="button">Event</button>
-      <button class="chip c-poll" id="mPoll" type="button">Vote<em class="qdot" id="mPollDot" hidden></em></button>
+      <button class="chip c-poll" id="mPoll" type="button" hidden>Vote<em class="qdot" id="mPollDot" hidden></em></button>
       <button class="chip c-help" id="mGuide" type="button">Help</button>
       <button class="chip snd" id="mSound" type="button">Tap for music</button></div>
   </header>
@@ -6535,7 +6535,7 @@ const PHONE_MQ=matchMedia('(max-width:760px), (max-height:540px) and (pointer:co
 const TAB_OF={menuOv:'home',worldsOv:'home',levelsOv:'home',hardOv:'home',remixOv:'home',coopOv:'home',passOv:'pass',shopOv:'shop',friendsOv:'friends',friendOv:'friends',
   lbOv:'more',profOv:'more',settingsOv:'more',acctOv:'more',guideOv:'more',eventOv:'more',pollOv:'more',twinOv:'more'};
 const MORE_ITEMS=[['mProfile','Profile & quests','◆','rgba(255,170,90,.25)'],['mLB','Leaderboards','♛','rgba(255,209,102,.22)'],['mTwin',null,'⚔','rgba(255,236,170,.22)'],['mEvent',null,'★','rgba(255,126,182,.22)'],
-  ['mPoll','Vote','☑','rgba(126,232,220,.22)'],['mAcct',null,'◉','rgba(156,200,255,.22)'],['mName','Player name','✦','rgba(201,160,255,.22)'],['mSettings','Settings','⚙','rgba(255,255,255,.12)'],['mGuide','Help','?','rgba(184,242,122,.2)'],['mSound',null,'♪','rgba(255,255,255,.12)']];
+  ['mAcct',null,'◉','rgba(156,200,255,.22)'],['mName','Player name','✦','rgba(201,160,255,.22)'],['mSettings','Settings','⚙','rgba(255,255,255,.12)'],['mGuide','Help','?','rgba(184,242,122,.2)'],['mSound',null,'♪','rgba(255,255,255,.12)']];
 const isDot=id=>{ const e=$(id); return !!e&&!e.hidden; };
 function moreBuild(){
   $('moreGrid').innerHTML=MORE_ITEMS.filter(([id])=>$(id)&&!$(id).hidden).map(([id,label,ic,c])=>{ const b=$(id), dot=b.querySelector('.qdot');
@@ -6557,7 +6557,7 @@ function tabSync(){
   document.body.classList.toggle('hastabs',show); if(!show){ if(!$('moreSheet').hidden) moreClose(); return; }
   const fr=!$('mFriends').hidden; $('tabbar').style.setProperty('--tabs',fr?5:4);
   document.querySelectorAll('#tabbar [data-tab]').forEach(b=>{ b.classList.toggle('on',b.dataset.tab===tab); if(b.dataset.tab==='friends') b.hidden=!fr; });
-  const dots={pass:isDot('mPassDot'),friends:isDot('mFDot'),more:isDot('mQDot')||isDot('mPollDot')};
+  const dots={pass:isDot('mPassDot'),friends:isDot('mFDot'),more:isDot('mQDot')};
   document.querySelectorAll('#tabbar [data-dot]').forEach(d=>d.hidden=!dots[d.dataset.dot]);
 }
 setInterval(tabSync,200); PHONE_MQ.addEventListener&&PHONE_MQ.addEventListener('change',tabSync); setTimeout(tabSync,0); $('ppBack').onclick=()=>toMenu();
