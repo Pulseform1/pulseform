@@ -676,29 +676,101 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 .cvkpromo{margin-top:180px;align-items:center}
 #cvkWinOv,#twinWinOv{align-items:start;overflow-y:auto;padding-block:16px}
 .ppchip{background:linear-gradient(90deg,rgba(255,209,102,.35),rgba(201,160,255,.35),rgba(127,240,210,.3))!important;border-color:rgba(255,209,102,.5)!important;color:#fff!important;font-weight:700}
-.ppov{align-items:start;overflow-y:auto;padding-block:16px}
-.pppanel{max-width:760px;gap:12px;text-align:center;background:linear-gradient(140deg,rgba(26,20,48,.97),rgba(12,10,28,.98) 55%,rgba(30,22,60,.97))!important;border:1px solid rgba(255,209,102,.3)}
-.pphero{display:flex;align-items:center;gap:14px;text-align:left;padding:10px 14px;border-radius:18px;background:radial-gradient(ellipse at 20% 50%,rgba(255,209,102,.18),transparent 60%),rgba(255,255,255,.04);border:1px solid rgba(255,209,102,.35)}
-.pphero canvas{width:150px;height:150px;flex:0 0 auto}.pphero small{font:700 10px var(--display);letter-spacing:.14em;text-transform:uppercase;color:#FFD166}
-.pphero b{display:block;font:900 clamp(22px,5vw,30px)/1.1 var(--display);background:linear-gradient(90deg,#FFFFFF,#FFD166 40%,#C9A0FF 70%,#7FF0D2);-webkit-background-clip:text;background-clip:text;color:transparent}
-.pphero span{font-size:13px;color:var(--ink-2)}
-.pptitle{margin:0;font:900 clamp(30px,8vw,46px)/1 var(--display);letter-spacing:.06em}.pptitle span{background:linear-gradient(90deg,#FFD166,#FF7EB6);-webkit-background-clip:text;background-clip:text;color:transparent}
-.pptitle em{display:block;font:700 11px var(--display);letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);font-style:normal;margin-top:4px}
-.pptier{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}.pptier b{font:800 18px var(--display)}.pptier span{font-size:13px;color:var(--ink-2)}
-.ppbar{height:14px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid var(--line);overflow:hidden}.ppbar i{display:block;height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,#FFD166,#FF7EB6,#C9A0FF);box-shadow:0 0 14px rgba(255,209,102,.6);transition:width .6s}
-#ppClaimAll{justify-self:center}
-.pptrack{flex:none;align-items:stretch;display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-width:0}
-.ppcard{flex:0 0 108px;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);position:relative}
-.ppcard small{align-self:flex-start;font:800 11px var(--display);color:var(--ink-3)}.ppcard b{font:700 12px var(--display);text-align:center;min-height:2.4em;display:flex;align-items:center}
-.ppcard em{font-size:10.5px;color:var(--ink-3);font-style:normal}.ppcard .btn{padding:6px 10px;font-size:12px;min-height:0}
-.ppcard canvas.skprev{width:64px;height:64px}.ppcard canvas.tileprev{width:92px;height:58px;border-radius:8px}
-.ppcard.big{flex-basis:132px;border-color:rgba(255,209,102,.45);background:radial-gradient(ellipse at 50% 30%,rgba(255,209,102,.16),transparent 70%),rgba(255,255,255,.05)}
-.ppcard.big canvas.skprev{width:96px;height:96px}
-.ppcard.grand{flex-basis:160px;border:2px solid #FFD166;box-shadow:0 0 22px rgba(255,209,102,.35)}.ppcard.grand canvas.skprev{width:120px;height:120px}
-.ppcard.open{border-color:#7FF0D2;box-shadow:0 0 14px rgba(127,240,210,.25)}.ppcard.got{opacity:.75}
-.ppban{width:92px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.2)}.ppglyph{font:800 34px var(--display);line-height:58px}.ppglyph.notes{color:#FFD166}
-.ppdone{font:700 11px var(--display);color:#9CF5C8}.pplock{font:700 11px var(--display);color:var(--ink-3)}
-@media (max-width:520px){ .pphero canvas{width:110px;height:110px} }
+.ppov{align-items:start;overflow-y:auto;padding-block:12px}
+/* ---- Pulse Pass: a bold, game-store style screen ---- */
+.pppanel{max-width:1120px;width:100%;padding:14px!important;gap:12px;text-align:left;border:3px solid #FFD166!important;border-radius:26px!important;box-shadow:0 0 0 4px rgba(0,0,0,.35),0 18px 60px rgba(0,0,0,.55)!important;
+  background:radial-gradient(ellipse at 70% 0%,rgba(255,126,182,.28),transparent 55%),radial-gradient(ellipse at 100% 100%,rgba(127,240,210,.18),transparent 50%),repeating-linear-gradient(135deg,rgba(255,255,255,.035) 0 18px,transparent 18px 36px),linear-gradient(160deg,#4A2296,#2A1468 55%,#1A0C46)!important}
+.ppk{font-family:var(--display);font-weight:900;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.55),0 0 2px #000,0 0 2px #000}
+.pphead{display:flex;align-items:center;gap:12px}
+.pphead .back{flex:none}
+.ppxp{flex:1;display:flex;align-items:center;gap:8px;min-width:0;max-width:520px;margin-inline:auto}
+.ppxpic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:linear-gradient(#FFE27A,#FFB020);color:#3A1A00;border:3px solid #1A0C2E;box-shadow:0 3px 0 #1A0C2E;transform:rotate(-8deg)}
+.ppbar{flex:1;position:relative;height:30px;border-radius:10px;background:#1A0C2E;border:3px solid #1A0C2E;overflow:hidden;box-shadow:inset 0 3px 0 rgba(0,0,0,.4)}
+.ppbar i{position:absolute;inset:0 auto 0 0;width:0;border-radius:7px;background:linear-gradient(#B8FF7A,#3FD45A 60%,#2AAE46);box-shadow:inset 0 3px 0 rgba(255,255,255,.45);transition:width .6s}
+.ppbar b{position:relative;display:block;text-align:center;line-height:24px;font:900 16px var(--display);color:#fff;text-shadow:0 2px 0 #000,0 0 2px #000}
+.ppnext{flex:none;display:flex;align-items:center;gap:4px;font:900 18px var(--display);color:#fff}
+.ppnext::before{content:'';border:8px solid transparent;border-left:11px solid #fff;margin-right:-2px}
+.ppnode{display:inline-grid;place-items:center;min-width:34px;height:34px;padding:0 6px;border-radius:50%;background:#1A0C2E;color:#fff;font:900 15px var(--display);border:3px solid #FFD166;box-shadow:0 3px 0 rgba(0,0,0,.5)}
+.ppbody{display:grid;grid-template-columns:250px minmax(0,1fr);gap:14px;align-items:stretch}
+.pphero{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 12px 14px;border-radius:22px;overflow:hidden;border:3px solid #1A0C2E;box-shadow:0 5px 0 rgba(0,0,0,.4);
+  background:radial-gradient(circle at 50% 52%,rgba(255,255,255,.75),rgba(255,255,255,0) 42%),repeating-conic-gradient(from 0deg at 50% 52%,rgba(255,255,255,.18) 0 8deg,transparent 8deg 22deg),linear-gradient(170deg,#FFE24A,#FFB52E 55%,#FF8A2A)}
+.pptitle{margin:0;font:900 40px/0.92 var(--display);letter-spacing:.01em;text-align:center;color:#1A0C2E;text-shadow:0 3px 0 #fff;transform:rotate(-3deg)}
+.ppseason{font:900 12px var(--display);letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#1A0C2E;border-radius:999px;padding:4px 12px}
+.pphero canvas{width:190px;height:190px;margin:-4px 0 -10px;filter:drop-shadow(0 8px 10px rgba(80,30,0,.45))}
+.ppgrand{font:900 13px var(--display);color:#1A0C2E;text-align:center;line-height:1.2}.ppgrand b{display:block;font-size:19px}
+.pptierbig{font:900 15px var(--display);color:#1A0C2E;background:rgba(255,255,255,.55);border-radius:10px;padding:3px 10px}
+.ppcta{width:100%;margin-top:4px;border:3px solid #1A0C2E;border-radius:16px;padding:12px 10px 10px;font:900 20px var(--display);letter-spacing:.02em;color:#fff;text-shadow:0 2px 0 #000,0 0 2px #000;cursor:pointer;
+  background:linear-gradient(#8CF56E,#3FC24E 55%,#2A9E3C);box-shadow:inset 0 3px 0 rgba(255,255,255,.5),0 5px 0 #14501F;transition:transform .08s}
+.ppcta:active{transform:translateY(3px);box-shadow:inset 0 3px 0 rgba(255,255,255,.5),0 2px 0 #14501F}
+.ppcta.alt{background:linear-gradient(#8FD2FF,#3F8CE8 55%,#2A64C0);box-shadow:inset 0 3px 0 rgba(255,255,255,.5),0 5px 0 #173A78}
+.ppmain{display:flex;flex-direction:column;gap:10px;min-width:0}
+.pptabs{display:flex;gap:8px}
+.pptabs button{position:relative;flex:1;max-width:200px;border:3px solid #1A0C2E;border-radius:14px;padding:8px 10px;font:900 16px var(--display);color:#fff;text-shadow:0 2px 0 #000;cursor:pointer;background:linear-gradient(#5E3AB0,#43248A);box-shadow:0 4px 0 rgba(0,0,0,.45)}
+.pptabs button.on{background:linear-gradient(#FFE27A,#FFB020);color:#1A0C2E;text-shadow:0 2px 0 rgba(255,255,255,.6)}
+.pptabs .qdot{position:absolute;top:-6px;right:-6px}
+.pptrack{flex:none;display:flex;gap:10px;overflow-x:auto;padding:16px 4px 6px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-width:0;align-items:stretch}
+.ppcol{flex:none;display:flex;flex-direction:column;align-items:stretch;gap:10px;scroll-snap-align:center}
+.ppcard{--g1:#3FC97A;--g2:#167A4A;position:relative;width:158px;min-height:262px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px 10px;border-radius:18px;border:3px solid #1A0C2E;
+  background:radial-gradient(ellipse at 50% 38%,rgba(255,255,255,.35),transparent 60%),linear-gradient(170deg,var(--g1),var(--g2));box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 5px 0 rgba(0,0,0,.45);transition:filter .3s,transform .15s}
+.ppcard::after{content:'';position:absolute;inset:3px 3px 55% 3px;border-radius:14px 14px 40% 40%;background:linear-gradient(rgba(255,255,255,.22),rgba(255,255,255,0));pointer-events:none}
+.ppcard.k-skin{--g1:#9A5BFF;--g2:#4A1EA8;width:190px}.ppcard.k-tiles{--g1:#4FB0FF;--g2:#1A4FA8}.ppcard.k-banner{--g1:#FF6FA8;--g2:#A82266}.ppcard.k-pack{--g1:#FFA24A;--g2:#B04A10}.ppcard.k-jack{--g1:#4FF0C8;--g2:#0E8A6A;width:190px}
+.ppcard.grand{--g1:#FFE27A;--g2:#E0761A;width:224px;border-color:#FFF4C2;box-shadow:inset 0 3px 0 rgba(255,255,255,.5),0 5px 0 rgba(0,0,0,.45),0 0 26px rgba(255,209,102,.6)}
+.ppcard.lock{filter:saturate(.75) brightness(.8)}
+.ppcard.open{transform:translateY(-4px);box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 7px 0 rgba(0,0,0,.45),0 0 0 3px #B8FF7A,0 0 22px rgba(184,255,122,.55);animation:ppglow 1.6s ease-in-out infinite}
+@keyframes ppglow{50%{box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 7px 0 rgba(0,0,0,.45),0 0 0 3px #B8FF7A,0 0 34px rgba(184,255,122,.85)}}
+.ppcard.got{filter:grayscale(1) brightness(.62);transform:none}
+.pplk{position:absolute;top:-14px;left:-10px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#fff;border:3px solid #1A0C2E;box-shadow:0 3px 0 rgba(0,0,0,.4);z-index:2}
+.pplk svg{width:16px;height:16px}
+.ppchk{position:absolute;top:-12px;right:-10px;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#9CF5C8;color:#0E3A22;font:900 18px var(--display);border:3px solid #1A0C2E;z-index:2}
+.ppart{flex:1;display:grid;place-items:center;min-height:96px;width:100%}
+.ppcard canvas.skprev{width:96px;height:96px}.ppcard.k-skin canvas.skprev{width:150px;height:150px}.ppcard.grand canvas.skprev{width:176px;height:176px}
+.ppcard canvas.tileprev{width:112px;height:72px;border-radius:10px;border:2px solid rgba(255,255,255,.4)}
+.ppban{width:118px;height:40px;border-radius:10px;border:2px solid rgba(255,255,255,.5);box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.ppglyph{font:900 64px/1 var(--display);color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.4)}.ppglyph.notes{color:#FFE27A}
+.ppcard .ppname{font:900 15px/1.1 var(--display);text-align:center;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.6),0 0 2px #000}
+.pprib{font:900 10.5px var(--display);letter-spacing:.12em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.35);border-radius:999px;padding:2px 9px}
+.ppbtn{margin-top:4px;min-width:96px;border:3px solid #1A0C2E;border-radius:12px;padding:6px 12px;font:900 14px var(--display);color:#fff;text-shadow:0 2px 0 #000;cursor:pointer;background:linear-gradient(#8CF56E,#3FC24E 55%,#2A9E3C);box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 4px 0 #14501F}
+.ppbtn:active{transform:translateY(2px);box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 2px 0 #14501F}
+.ppbtn.done,.ppbtn:disabled{background:linear-gradient(#B4B4BE,#8A8A96);box-shadow:inset 0 2px 0 rgba(255,255,255,.35),0 4px 0 #4A4A54;color:#F2F2F6;cursor:default;text-shadow:0 1px 0 rgba(0,0,0,.5)}
+.ppbtn.lk{background:rgba(0,0,0,.35);box-shadow:none;border-color:rgba(0,0,0,.5);cursor:default;font-size:12.5px}
+.ppbtn.eq{background:linear-gradient(#8FD2FF,#3F8CE8 55%,#2A64C0);box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 4px 0 #173A78;filter:none}
+.ppcard.got .ppbtn.eq{filter:none}
+.pprail{position:relative;height:34px;display:grid;place-items:center}
+.pprail::before{content:'';position:absolute;left:-6px;right:-6px;top:50%;height:12px;transform:translateY(-50%);background:#1A0C2E;border-radius:6px}
+.pprail.on::before{background:linear-gradient(#B8FF7A,#3FD45A);box-shadow:0 0 0 3px #1A0C2E}
+.pprail .ppnode{position:relative;z-index:1}
+.pprail.on .ppnode{background:linear-gradient(#B8FF7A,#3FC24E);color:#0E3A22;text-shadow:none;border-color:#1A0C2E}
+.ppnote{margin:6px 0 0;font-size:12.5px;color:rgba(255,255,255,.75)}
+/* quests */
+.pqsec{display:grid;gap:8px}
+.pqh{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font:900 19px var(--display);color:#fff;text-shadow:0 2px 0 #000}.pqh small{font:700 12px var(--body);color:rgba(255,255,255,.75);text-shadow:none}
+.pqlist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.pqlist li{position:relative;display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;padding:12px;border-radius:16px;border:3px solid #1A0C2E;background:linear-gradient(170deg,#5E3AB0,#3A1E80);box-shadow:inset 0 3px 0 rgba(255,255,255,.2),0 4px 0 rgba(0,0,0,.4)}
+.pqlist li.wk{background:linear-gradient(170deg,#2A7AD8,#173E8A)}
+.pqlist li.ready{box-shadow:inset 0 3px 0 rgba(255,255,255,.2),0 4px 0 rgba(0,0,0,.4),0 0 0 3px #B8FF7A,0 0 18px rgba(184,255,122,.5)}
+.pqlist li.got{filter:grayscale(1) brightness(.7)}
+.pqic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:21px;background:rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.25)}
+.pqt{font:800 14px/1.25 var(--display);color:#fff}
+.pqbar{grid-column:1/-1;position:relative;height:20px;border-radius:8px;background:#1A0C2E;overflow:hidden}
+.pqbar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(#FFE27A,#FFB020);border-radius:6px}
+.pqbar b{position:relative;display:block;text-align:center;font:900 12px/20px var(--display);color:#fff;text-shadow:0 1px 0 #000,0 0 2px #000}
+.pqfoot{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pqrw{white-space:nowrap;font:900 14px var(--display);color:#B8FF7A;text-shadow:0 2px 0 #000}
+.pqfoot .ppbtn{margin:0;min-width:0;padding:6px 14px}
+@media (max-width:760px){
+  .pppanel{padding:10px!important;border-radius:20px!important}
+  .ppbody{grid-template-columns:1fr}
+  .pphero{display:grid;grid-template-columns:118px 1fr;grid-template-areas:'art title' 'art grand' 'art tier' 'cta cta';align-items:center;justify-items:start;gap:4px 10px;padding:10px 12px 12px}
+  .pphero canvas{grid-area:art;width:118px;height:118px;margin:0}
+  .pptitle{grid-area:title;font-size:30px;text-align:left}.ppseason{display:none}
+  .ppgrand{grid-area:grand;text-align:left}.ppgrand b{font-size:16px}
+  .pptierbig{grid-area:tier}
+  .ppcta{grid-area:cta;font-size:18px;padding:10px}
+  .ppxpic{display:none}.pphead{gap:8px}.pphead .back{padding-inline:8px}
+  .ppbar{height:28px}.ppnext{font-size:16px}
+  .ppcard{width:126px;min-height:200px}.ppcard.k-skin,.ppcard.k-jack{width:152px}.ppcard.grand{width:180px}.ppcard.k-skin canvas.skprev{width:124px;height:124px}.ppcard.grand canvas.skprev{width:150px;height:150px}.ppglyph{font-size:52px}
+  .pqlist{grid-template-columns:1fr}
+}
 .twchip{background:linear-gradient(90deg,rgba(255,236,170,.4),rgba(90,70,160,.45))!important;border-color:rgba(255,236,170,.5)!important;color:#fff!important;font-weight:700}
 .twpanel{background:linear-gradient(120deg,rgba(70,60,40,.97),rgba(16,12,32,.98) 48%,rgba(40,30,86,.97))!important;
   box-shadow:-24px 0 60px -20px rgba(255,231,160,.5),24px 0 60px -20px rgba(140,110,255,.5),0 20px 60px rgba(0,0,0,.5)!important}
@@ -1193,15 +1265,22 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
 
 <section id="passOv" class="overlay ppov" hidden>
   <div class="panel pppanel">
-    <div class="head"><button class="back" id="ppBack" type="button">← Menu</button><div class="wallet" id="walletPP"></div></div>
-    <div class="pphero"><canvas class="skprev" data-skin="pp_sovereign" data-px="190" width="190" height="190"></canvas>
-      <div><small>Tier 100 · the grand reward</small><b>Pulse Sovereign</b><span>Climb all 100 tiers to crown yourself. Eight more Pass blocks wait on the way.</span></div></div>
-    <h2 class="pptitle"><span>PULSE</span> PASS <em>Season 1</em></h2>
-    <div class="pptier"><b id="ppTier">Tier 0</b><span id="ppNext"></span></div>
-    <div class="ppbar"><i id="ppFill"></i></div>
-    <button class="btn twbtn" id="ppClaimAll" type="button" hidden>Claim all</button>
-    <div class="pptrack" id="ppTrack"></div>
-    <p class="small cvkrules">Every run you finish fills the pass with the XP it earns (up to 600 a run). Claim each tier's reward here. Everything you claim is yours to keep.</p>
+    <div class="pphead"><button class="back" id="ppBack" type="button">← Menu</button>
+      <div class="ppxp"><span class="ppxpic" aria-hidden="true">♛</span><div class="ppbar"><i id="ppFill"></i><b id="ppNext">0 / 200</b></div><span class="ppnext" id="ppNextT"><span class="ppnode">1</span></span></div>
+      <div class="wallet" id="walletPP"></div></div>
+    <div class="ppbody">
+      <aside class="pphero"><h2 class="pptitle">PULSE<br>PASS</h2><span class="ppseason">Season 1</span>
+        <canvas class="skprev" data-skin="pp_sovereign" data-px="190" width="190" height="190"></canvas>
+        <div class="ppgrand">Tier 100 grand reward<b>Pulse Sovereign</b></div>
+        <div class="pptierbig" id="ppTier">Tier 0 / 100</div>
+        <button class="ppcta" id="ppClaimAll" type="button">Claim all</button></aside>
+      <div class="ppmain">
+        <div class="pptabs" role="tablist"><button type="button" data-pt="rewards" class="on">Rewards</button><button type="button" data-pt="quests">Quests<em class="qdot" id="ppQDot" hidden></em></button></div>
+        <div id="ppRewards"><div class="pptrack" id="ppTrack"></div>
+          <p class="ppnote">Every run fills the pass with the XP it earns (up to 600 a run), and quests give big boosts. Everything you collect is yours to keep.</p></div>
+        <div id="ppQuests" hidden></div>
+      </div>
+    </div>
   </div>
 </section>
 <section id="remixOv" class="overlay" hidden>
@@ -5605,6 +5684,8 @@ function mergeSaves(loc,cl,additive){
   out.name=nw.name||loc.name||cl.name||''; out.nameT=nw.nameT||0; out.nameAuto=!!nw.nameAuto&&nameRank(nw)===1;
   out.cvkWin=!!(loc.cvkWin||cl.cvkWin); out.cvkWinSeen=!!(loc.cvkWinSeen||cl.cvkWinSeen); out.cvkPaid=!!(loc.cvkPaid||cl.cvkPaid); out.cvkPayout=Math.max(loc.cvkPayout||0,cl.cvkPayout||0);
   { const a=loc.cvkBet||{}, b=cl.cvkBet||{}; if(a.cale||a.korra||b.cale||b.korra) out.cvkBet={cale:Math.max(+a.cale||0,+b.cale||0),korra:Math.max(+a.korra||0,+b.korra||0)}; } out.cvkSide=newer.cvkSide||loc.cvkSide||cl.cvkSide||null;
+  { const a=loc.pq||{}, b=cl.pq||{}, m=(ka,kb,la,lb)=>ka&&ka===kb&&Array.isArray(la)&&Array.isArray(lb)?la.map(q=>{ const o=lb.find(x=>x.id===q.id)||{}; return {...q,prog:Math.max(q.prog||0,o.prog||0),claimed:!!(q.claimed||o.claimed)}; }):(ka||'')>=(kb||'')?la:lb;
+    if(a.day||b.day){ const dA=(a.day||'')>=(b.day||''), wA=(a.week||'')>=(b.week||''); out.pq={day:dA?a.day:b.day,d:m(a.day,b.day,a.d,b.d)||(dA?a.d:b.d),week:wA?a.week:b.week,w:m(a.week,b.week,a.w,b.w)||(wA?a.w:b.w)}; } }
   { const a=loc.pass||{}, b=cl.pass||{}; out.pass={xp:Math.max(a.xp||0,b.xp||0),got:[...new Set([...(a.got||[]),...(b.got||[])])]}; }
   { const a=loc.remix||{}, b=cl.remix||{}, m={...a}; for(const k in b) m[k]=Math.max(m[k]||0,b[k]); out.remix=m; } out.bestRhythm=Math.max(loc.bestRhythm||0,cl.bestRhythm||0);
   out.twinTeam=newer.twinTeam!==undefined?newer.twinTeam:(loc.twinTeam||cl.twinTeam||null); out.twinWin=!!(loc.twinWin||cl.twinWin); out.twinWinSeen=!!(loc.twinWinSeen||cl.twinWinSeen); out.twinWinName=loc.twinWinName||cl.twinWinName||'';
@@ -6165,6 +6246,8 @@ function awardRun(o){
   if(M.type==='endless') questEv('endless',Math.max(0,G.roomIdx-1),true);
   if(M.type==='ascent'){ questEv('ascent',G.floorBest||1,true); L.floors=(L.floors||0)+Math.max(0,(G.floorBest||1)-1); }
   if(M.type==='duel'){ questEv('duel',1); if(o.won) L.duelWins=(L.duelWins||0)+1; }
+  if(M.type==='rhythm') questEv('rhythm',Math.max(0,G.roomIdx-1),true);
+  if(o.cleared&&M.type==='lremix') questEv('remix',1);
   const xp=xpForRun(o), r=addXP(xp), pa=xp>0?passAdd(xp):{base:0,up:0}; save();
   const ready=(SAVE.quests.list||[]).filter(q=>q.prog>=q.goal&&!q.claimed&&!q.told);
   ready.forEach(q=>q.told=true); save();
@@ -6203,27 +6286,92 @@ function passPrev(r,big){ if(r.kind==='skin') return `<canvas class="skprev" dat
   if(r.kind==='pack') return `<span class="ppglyph" style="color:${packById(r.id).col}">${packById(r.id).glyph}</span>`;
   return `<span class="ppglyph notes">♪</span>`; }
 function passEquipped(r){ return r.kind==='skin'?SAVE.skin===r.id:r.kind==='tiles'?SAVE.tiles===r.id:r.kind==='banner'?SAVE.banner===r.id:r.kind==='pack'?SAVE.pack===r.id:false; }
+const PP_LOCK='<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="7" width="11" height="8" rx="2" fill="#1A0C2E"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="#1A0C2E" stroke-width="2.2"/></svg>';
+let ppTab='rewards';
 function buildPass(){
-  const pt=passTier(), ready=passReady();
-  $('ppTier').textContent=`Tier ${pt.t} / ${PASS_TIERS}`; $('ppNext').textContent=pt.t>=PASS_TIERS?'Every tier climbed!':`${pt.into.toLocaleString()} / ${pt.need.toLocaleString()} XP to tier ${pt.t+1}`;
+  const pt=passTier(), ready=passReady(), qr=pqReady();
+  $('ppTier').textContent=`Tier ${pt.t} / ${PASS_TIERS}`;
+  $('ppNext').textContent=pt.t>=PASS_TIERS?'MAX':`${pt.into.toLocaleString()} / ${pt.need.toLocaleString()}`;
+  $('ppNextT').innerHTML=`<span class="ppnode">${pt.t>=PASS_TIERS?'★':pt.t+1}</span>`;
   $('ppFill').style.width=(pt.t>=PASS_TIERS?100:pt.into/pt.need*100)+'%';
-  $('ppClaimAll').hidden=!ready; $('ppClaimAll').textContent=`Claim all (${ready})`;
-  $('ppTrack').innerHTML=PASS.map(r=>{ const got=passGot(r.t), open=r.t<=pt.t, big=r.kind==='skin'||r.jack;
-    const btn=got?(r.kind==='notes'?'<span class="ppdone">✓ Claimed</span>':passEquipped(r)?'<span class="ppdone">Equipped</span>':`<button class="btn ghost" data-ppeq="${r.t}" type="button">Equip</button>`)
-      :open?`<button class="btn twbtn" data-ppc="${r.t}" type="button">Claim</button>`:`<span class="pplock">🔒 Tier ${r.t}</span>`;
-    return `<div class="ppcard${big?' big':''}${r.t===100?' grand':''}${got?' got':open?' open':''}" data-t="${r.t}"><small>${r.t}</small>${passPrev(r)}<b>${escapeHTML(passName(r))}</b><em>${passKind(r)}</em>${btn}</div>`; }).join('');
+  const cta=$('ppClaimAll'); cta.classList.toggle('alt',!ready);
+  cta.textContent=ready?`Claim all (${ready})`:qr?`Quests ready (${qr})`:ppTab==='quests'?'See rewards':'See quests';
+  $('ppQDot').hidden=!qr;
+  document.querySelectorAll('#passOv .pptabs button').forEach(b=>b.classList.toggle('on',b.dataset.pt===ppTab));
+  $('ppRewards').hidden=ppTab!=='rewards'; $('ppQuests').hidden=ppTab!=='quests';
+  $('ppTrack').innerHTML=PASS.map(r=>{ const got=passGot(r.t), open=r.t<=pt.t, eqable=r.kind!=='notes';
+    const k=r.t===100?'k-skin grand':r.jack?'k-jack':'k-'+r.kind;
+    const btn=got?(eqable&&!passEquipped(r)?`<button class="ppbtn eq" data-ppeq="${r.t}" type="button">Equip</button>`:`<button class="ppbtn done" type="button" disabled>${eqable?'Equipped':'Collected'}</button>`)
+      :open?`<button class="ppbtn" data-ppc="${r.t}" type="button">Collect</button>`:`<span class="ppbtn lk">Tier ${r.t}</span>`;
+    return `<div class="ppcol"><div class="ppcard ${k}${got?' got':open?' open':' lock'}" data-t="${r.t}">${got?'<span class="ppchk">✓</span>':open?'':`<span class="pplk">${PP_LOCK}</span>`}`+
+      `<div class="ppart">${passPrev(r)}</div><span class="ppname">${escapeHTML(passName(r))}</span><span class="pprib">${r.jack?'Jackpot':passKind(r)}</span>${btn}</div>`+
+      `<div class="pprail${open?' on':''}"><span class="ppnode">${r.t}</span></div></div>`; }).join('');
   $('ppTrack').querySelectorAll('canvas.tileprev').forEach(c=>drawTilePreview(c,tilesById(c.dataset.tile)));
   $('ppTrack').querySelectorAll('[data-ppc]').forEach(b=>b.onclick=()=>{ const t=+b.dataset.ppc, r=PASS[t-1]; if(!passClaim(t)) return; if(A.ctx) sGem(); buzz(15);
     toast(r.kind==='notes'?`+${passName(r)} Notes`:`${passName(r)} unlocked!`); buildPass(); });
   $('ppTrack').querySelectorAll('[data-ppeq]').forEach(b=>b.onclick=()=>{ const r=PASS[+b.dataset.ppeq-1]; equip(r.kind==='skin'?'skin':r.kind==='tiles'?'tiles':r.kind==='pack'?'pack':'banner',r.id);
     if(r.kind==='skin'){ G.players=[mkPlayer(0)]; netHello(); } if(r.kind==='banner') lbRename(); if(A.ctx) sGem(); buildPass(); });
-  if(!$('ppTrack').dataset.scrolled){ $('ppTrack').dataset.scrolled='1'; setTimeout(()=>{ const c=$('ppTrack').querySelector(`.ppcard[data-t="${Math.max(1,Math.min(PASS_TIERS,pt.t+1))}"]`); if(c) $('ppTrack').scrollLeft=Math.max(0,c.offsetLeft-$('ppTrack').clientWidth/2+c.offsetWidth/2); },0); }
+  buildPassQuests();
+  if(ppTab==='rewards'&&!$('ppTrack').dataset.scrolled){ $('ppTrack').dataset.scrolled='1'; setTimeout(()=>{ const c=$('ppTrack').querySelector(`.ppcard[data-t="${Math.max(1,Math.min(PASS_TIERS,pt.t+1))}"]`); if(c){ const col=c.parentNode; $('ppTrack').scrollLeft=Math.max(0,col.offsetLeft-$('ppTrack').offsetLeft-$('ppTrack').clientWidth/2+col.offsetWidth/2); } },0); }
   $('walletPP').textContent=notesTxt();
 }
-function showPass(){ $('ppTrack').dataset.scrolled=''; buildPass(); showOv('passOv'); }
+function showPass(){ $('ppTrack').dataset.scrolled=''; ppTab='rewards'; buildPass(); showOv('passOv'); }
 $('mPass').onclick=showPass; $('ppBack').onclick=()=>toMenu();
+document.querySelectorAll('#passOv .pptabs button').forEach(b=>b.onclick=()=>{ ppTab=b.dataset.pt; if(ppTab==='rewards') $('ppTrack').dataset.scrolled=''; buildPass(); });
 $('ppClaimAll').onclick=()=>{ let n=0, notes=0; for(let t=1;t<=passTier().t;t++) if(!passGot(t)){ const r=PASS[t-1]; if(passClaim(t)){ n++; if(r.kind==='notes') notes+=r.n; } }
-  if(n){ if(A.ctx) sGem(); toast(`Claimed ${n} reward${n>1?'s':''}${notes?` (+♪${notes.toLocaleString()})`:''}`); } buildPass(); };
+  if(n){ if(A.ctx) sGem(); buzz(20); toast(`Collected ${n} reward${n>1?'s':''}${notes?` (+♪${notes.toLocaleString()})`:''}`); }
+  else { ppTab=pqReady()?'quests':ppTab==='quests'?'rewards':'quests'; if(ppTab==='rewards') $('ppTrack').dataset.scrolled=''; }
+  buildPass(); };
+
+/* ---- Pulse Pass quests: 3 daily and 4 weekly, paid in Pass XP. They fill from the same run events as the profile's
+   daily quests (questEv), so one run can tick both. ---- */
+const PQ_DAY=[
+ {id:'perf',ic:'✦',t:n=>`Hit ${n} perfect beats`,g:120,ev:'perfect'},
+ {id:'runs',ic:'▶',t:n=>`Finish ${n} runs in any mode`,g:5,ev:'runs'},
+ {id:'levels',ic:'⚑',t:n=>`Clear ${n} levels`,g:3,ev:'levels'},
+ {id:'streak',ic:'🔥',t:n=>`Reach a ${n} streak in one run`,g:40,ev:'streak',max:true},
+ {id:'gems',ic:'◆',t:n=>`Collect ${n} gems`,g:8,ev:'gems'},
+ {id:'endless',ic:'∞',t:n=>`Clear ${n} rooms in one Endless run`,g:6,ev:'endless',max:true},
+ {id:'rhythm',ic:'♫',t:n=>`Clear ${n} rooms in one Rhythm Patterns run`,g:4,ev:'rhythm',max:true},
+ {id:'remix',ic:'⇄',t:n=>`Clear ${n} Remix levels`,g:2,ev:'remix'},
+ {id:'ascent',ic:'▲',t:n=>`Reach floor ${n} in Ascent`,g:6,ev:'ascent',max:true},
+ {id:'daily',ic:'☀',t:()=>`Finish today's Daily Challenge`,g:1,ev:'daily'}];
+const PQ_WEEK=[
+ {id:'perf',ic:'✦',t:n=>`Hit ${n.toLocaleString()} perfect beats`,g:1200,ev:'perfect'},
+ {id:'runs',ic:'▶',t:n=>`Finish ${n} runs`,g:30,ev:'runs'},
+ {id:'levels',ic:'⚑',t:n=>`Clear ${n} levels`,g:15,ev:'levels'},
+ {id:'stars',ic:'★',t:n=>`Earn ${n} new stars`,g:10,ev:'stars'},
+ {id:'rhythm',ic:'♫',t:n=>`Clear ${n} rooms in one Rhythm Patterns run`,g:8,ev:'rhythm',max:true},
+ {id:'remix',ic:'⇄',t:n=>`Clear ${n} Remix levels`,g:8,ev:'remix'},
+ {id:'boss',ic:'☠',t:n=>`Defeat ${n} bosses`,g:3,ev:'boss'},
+ {id:'endless',ic:'∞',t:n=>`Clear ${n} rooms in one Endless run`,g:12,ev:'endless',max:true},
+ {id:'ascent',ic:'▲',t:n=>`Reach floor ${n} in Ascent`,g:12,ev:'ascent',max:true},
+ {id:'daily',ic:'☀',t:n=>`Finish ${n} Daily Challenges`,g:4,ev:'daily'}];
+const PQ_DAY_XP=[800,1000,1200], PQ_WEEK_XP=[3000,4000,5000,6000];
+function weekKey(){ const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function pqPick(pool,key,xps){ const r=mulberry(hashStr('pq'+key)), a=[...pool]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a.slice(0,xps.length).map((q,i)=>({id:q.id,goal:q.g,prog:0,xp:xps[i],claimed:false})); }
+function ensurePQ(){ const q=SAVE.pq||(SAVE.pq={}), dk=todayKey(), wk=weekKey();
+  if(q.day!==dk||!Array.isArray(q.d)){ q.day=dk; q.d=pqPick(PQ_DAY,'d'+dk,PQ_DAY_XP); }
+  if(q.week!==wk||!Array.isArray(q.w)){ q.week=wk; q.w=pqPick(PQ_WEEK,'w'+wk,PQ_WEEK_XP); }
+  return q; }
+const pqDef=(q,wk)=>(wk?PQ_WEEK:PQ_DAY).find(d=>d.id===q.id);
+function pqEv(ev,n,isMax){ const P=ensurePQ(); [[P.d,0],[P.w,1]].forEach(([L,wk])=>L.forEach(q=>{ const d=pqDef(q,wk); if(!d||d.ev!==ev||q.claimed) return; q.prog=Math.min(q.goal,isMax?Math.max(q.prog,n):q.prog+n); })); }
+const pqReady=()=>{ const P=ensurePQ(); return [...P.d,...P.w].filter(q=>q.prog>=q.goal&&!q.claimed).length; };
+function pqClaim(wk,i){ const P=ensurePQ(), q=(wk?P.w:P.d)[i]; if(!q||q.claimed||q.prog<q.goal) return;
+  q.claimed=true; const before=passTier().t; passS().xp=(passS().xp||0)+q.xp; save(); if(A.ctx) sGem(); buzz(20);
+  const up=passTier().t-before; toast(`+${q.xp.toLocaleString()} Pass XP`+(up?` · Tier ${passTier().t}!`:'')); buildPass(); }
+function untilMonday(){ const n=new Date(), m=new Date(n); m.setHours(24,0,0,0); while(m.getDay()!==1) m.setDate(m.getDate()+1); const h=Math.ceil((m-n)/3600000); return h>=24?`${Math.floor(h/24)}d ${h%24}h`:`${h}h`; }
+function buildPassQuests(){ const P=ensurePQ();
+  const li=(q,i,wk)=>{ const d=pqDef(q,wk); if(!d) return ''; const done=q.prog>=q.goal;
+    const btn=q.claimed?'<button class="ppbtn done" type="button" disabled>Collected</button>':done?`<button class="ppbtn" data-pq="${wk?1:0}:${i}" type="button">Collect</button>`:'<button class="ppbtn" type="button" disabled>In progress</button>';
+    return `<li class="${wk?'wk ':''}${q.claimed?'got':done?'ready':''}"><span class="pqic" aria-hidden="true">${d.ic}</span><span class="pqt">${escapeHTML(d.t(q.goal))}</span>`+
+      `<span class="pqbar"><i style="width:${Math.round(q.prog/q.goal*100)}%"></i><b>${q.prog.toLocaleString()} / ${q.goal.toLocaleString()}</b></span>`+
+      `<span class="pqfoot"><span class="pqrw">+${q.xp.toLocaleString()} Pass XP</span>${btn}</span></li>`; };
+  $('ppQuests').innerHTML=`<div class="pqsec"><div class="pqh">Daily quests <small>new in ${untilMidnight()}</small></div><ul class="pqlist">${P.d.map((q,i)=>li(q,i,0)).join('')}</ul></div>`+
+    `<div class="pqsec" style="margin-top:12px"><div class="pqh">Weekly quests <small>new in ${untilMonday()}</small></div><ul class="pqlist">${P.w.map((q,i)=>li(q,i,1)).join('')}</ul></div>`;
+  $('ppQuests').querySelectorAll('[data-pq]').forEach(b=>b.onclick=()=>{ const [w,i]=b.dataset.pq.split(':').map(Number); pqClaim(w,i); });
+}
 
 /* ================= DAILY QUESTS ================= */
 const QREW=[{n:60,x:60},{n:100,x:100},{n:150,x:160}];
@@ -6234,7 +6382,7 @@ function ensureQuests(){
 }
 const questDef=q=>QUESTS.find(d=>d.id===q.id);
 const questText=q=>questDef(q).t(q.goal);
-function questEv(ev,n,isMax){ (SAVE.quests.list||[]).forEach(q=>{ const d=questDef(q); if(!d||d.ev!==ev||q.claimed) return; q.prog=Math.min(q.goal,isMax?Math.max(q.prog,n):q.prog+n); }); }
+function questEv(ev,n,isMax){ pqEv(ev,n,isMax); (SAVE.quests.list||[]).forEach(q=>{ const d=questDef(q); if(!d||d.ev!==ev||q.claimed) return; q.prog=Math.min(q.goal,isMax?Math.max(q.prog,n):q.prog+n); }); }
 function claimQuest(i){ const q=SAVE.quests.list[i]; if(!q||q.claimed||q.prog<q.goal) return; q.claimed=true; SAVE.life.quests=(SAVE.life.quests||0)+1; const rw=QREW[q.tier]; SAVE.notes+=rw.n; const r=addXP(rw.x); save();
   if(A.ctx) sGem(); buildProfile(); if(r.after>r.before) toast(`Rank up! ${rankName(r.after)} · +♪${r.bonus}`); }
 const questsReady=()=>{ ensureQuests(); return SAVE.quests.list.filter(q=>q.prog>=q.goal&&!q.claimed).length; };
@@ -9147,7 +9295,7 @@ function buildMenu(){
   $('mEndlessMeta').innerHTML=SAVE.bestEndless?`Best<br>${SAVE.bestEndless.toLocaleString()}`:'';
   $('mCoopMeta').innerHTML=SAVE.bestCoop?`Best<br>${SAVE.bestCoop} rooms`:'';
   let hs=0; for(let i=1;i<=12;i++) hs+=SAVE.stars['H-'+i]||0; $('mHardMeta').textContent=`◆ ${hs}/36`;
-  { const n=passReady(); $('mPassDot').hidden=!n; $('mPassTxt').textContent='♛ Pulse Pass · '+passTier().t; }
+  { const n=passReady()+pqReady(); $('mPassDot').hidden=!n; $('mPassTxt').textContent='♛ Pulse Pass · '+passTier().t; }
   { const rb=SAVE.bestRhythm||0; $('mRhythmMeta').innerHTML=rb?`Best<br>${rb.toLocaleString()}`:'♫'; const rs=Object.values(SAVE.remix||{}).reduce((x,y)=>x+y,0); $('mRemixMeta').textContent=rs?`◆ ${rs}`:'⇄'; }
   $('mCreateMeta').innerHTML=(SAVE.myLevels||[]).length?`${SAVE.myLevels.length} level${SAVE.myLevels.length>1?'s':''}<br>built`:'New';
   $('mStudioMeta').innerHTML=SAVE.bestStudio?`Best<br>${SAVE.bestStudio} rooms`:'New mode';
