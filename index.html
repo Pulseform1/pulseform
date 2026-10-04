@@ -7364,7 +7364,7 @@ function reviveOffer(){
   const M=G.mode, b=R&&R.boss, free=!!SAVE.noAds, tok=SAVE.revives||0, ad=adsReady();
   if(!free&&!tok&&!ad){ return reviveNo(); }
   $('rvSub').textContent=b?`${BOSS[M.world-1]} has ${b.hp} / ${b.max} HP left. Jump back in with 3 Harmony?`:'Jump back in with 3 Harmony?';
-  $('rvFree').hidden=!free; $('rvAd').hidden=free||!ad; $('rvToken').hidden=free||!tok; $('rvToken').textContent=`Use a revive token (${tok} left)`;
+  $('rvFree').hidden=!free; $('rvAd').hidden=free||!ad; $('rvAd').innerHTML=ADS.off?'<span class="rvplay">▶</span> Revive (free for now)':'<span class="rvplay">▶</span> Watch an ad to revive'; $('rvToken').hidden=free||!tok; $('rvToken').textContent=`Use a revive token (${tok} left)`;
   showOv('reviveOv',false); RV.left=9; RV.hold=false; rvTick(); clearInterval(RV.timer);
   RV.timer=setInterval(()=>{ if(RV.hold) return; RV.left--; rvTick(); if(RV.left<=0) reviveNo(); },1000); }
 function rvTick(){ $('rvCount').textContent=Math.max(0,RV.left); $('rvArc').style.strokeDashoffset=String(276.5*(1-Math.max(0,RV.left)/9)); }
@@ -7375,9 +7375,13 @@ function reviveDo(){ clearInterval(RV.timer); if(G.state!=='revive') return;
 $('rvNo').onclick=reviveNo;
 $('rvFree').onclick=()=>{ if(SAVE.noAds) reviveDo(); };
 $('rvToken').onclick=()=>{ if((SAVE.revives||0)<1) return; SAVE.revives--; save(); reviveDo(); };
-$('rvAd').onclick=()=>{ if(RV.hold) return; RV.hold=true; $('rvAd').disabled=true; $('rvAd').textContent='Loading ad…';
+$('rvAd').onclick=()=>{ if(RV.hold) return; if(ADS.off){ reviveDo(); return; } RV.hold=true; $('rvAd').disabled=true; $('rvAd').textContent='Loading ad…';
   showRewardedAd().then(ok=>{ RV.hold=false; $('rvAd').disabled=false; $('rvAd').innerHTML='<span class="rvplay">▶</span> Watch an ad to revive';
-    if(ok) reviveDo(); else adFailed().then(msg=>{ toast(msg); RV.left=Math.max(RV.left,6); rvTick(); }); }); };
+    if(ok) reviveDo();
+    else if(adsOff()){ ADS.off=true; toast('Ads are switched off on CrazyGames for now, so this revive is free!'); reviveDo(); }
+    else adFailed().then(msg=>{ toast(msg); RV.left=Math.max(RV.left,6); rvTick(); }); }); };
+/* CrazyGames keeps ads off while a game is in its Basic Launch: the revive is simply free until ads are turned on */
+const adsOff=()=>/disabled/i.test(ADS.err||'');
 /* why a rewarded ad didn't play, in words a player understands (on CrazyGames the SDK says whether an ad blocker is on) */
 async function adFailed(){ const e=(ADS.err||'').toLowerCase(), CG=cgSDK();
   let blocked=/adblock|blocked/.test(e); if(!blocked&&CG&&CG.ad&&CG.ad.hasAdblock){ try{ blocked=!!(await CG.ad.hasAdblock()); }catch(x){} }
