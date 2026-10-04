@@ -93,7 +93,7 @@ The game code is ready; it only needs your account IDs. Everything is set in `in
 
 ### RevenueCat (in-app purchases)
 
-1. Create these products in **App Store Connect** (In-App Purchases) and **Google Play Console** (In-app products):
+1. Create these products (16 in all) in **App Store Connect** (In-App Purchases) and **Google Play Console** (In-app products):
 
    | Product ID | Type | Price | Gives |
    |---|---|---|---|
@@ -103,9 +103,19 @@ The game code is ready; it only needs your account IDs. Everything is set in `in
    | `pf_notes_13000` | Consumable | $9.99 | ♪13,000 |
    | `pf_starter` | Non-consumable | $1.99 | ♪2,500 + 5 revive tokens, once |
    | `pf_no_ads` | Non-consumable | $2.99 | Revives without ads |
+   | `pf_skin_clock` | Non-consumable | $1.99 | Astral Clockwork premium block |
+   | `pf_skin_magma` | Non-consumable | $2.99 | Volcanic Titan premium block |
+   | `pf_skin_core` | Non-consumable | $2.99 | Fusion Core premium block |
+   | `pf_skin_aurora` | Non-consumable | $2.99 | Aurora Warden premium block |
+   | `pf_skin_kitsune` | Non-consumable | $3.99 | Nine-Tail Kitsune premium block |
+   | `pf_skin_pharaoh` | Non-consumable | $3.99 | Sun Pharaoh premium block |
+   | `pf_skin_paladin` | Non-consumable | $3.99 | Radiant Paladin premium block |
+   | `pf_skin_prism` | Non-consumable | $4.99 | Prism Dragon premium block |
+   | `pf_skin_lich` | Non-consumable | $4.99 | Lich King premium block |
+   | `pf_skin_horizon` | Non-consumable | $4.99 | Event Horizon premium block |
 
 2. RevenueCat → new project → add the App Store app and the Play Store app (follow its steps to connect each store).
-3. Import the six products into RevenueCat (no entitlements or offerings are needed; the game asks for the products by ID).
+3. Import all the products into RevenueCat (no entitlements or offerings are needed; the game asks for the products by ID).
 4. Copy the **public SDK keys** (Project → API keys; one starts with `appl_`, one with `goog_`) into
    `MONEY.rcKeys.ios` / `MONEY.rcKeys.android`.
 5. Test with a Sandbox tester (iOS) or a license tester (Android) before release.
