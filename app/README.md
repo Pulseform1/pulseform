@@ -73,6 +73,47 @@ detects this automatically. On the website it keeps using the normal popup.
 
 Publish the repo's `firestore.rules` (it adds account deletion and player reports) before the app goes live.
 
+## Ads and purchases
+
+The game code is ready; it only needs your account IDs. Everything is set in `index.html` in the `MONEY` block
+(search for `const MONEY=`), then run `npm run sync`.
+
+### AdMob (rewarded ads for boss revives)
+
+1. AdMob → **Apps** → add the iOS app and the Android app.
+2. For each app, create a **Rewarded** ad unit.
+3. Put the ad unit IDs in `MONEY.admob.ios` / `MONEY.admob.android` and set `test:false`.
+4. Put the **app IDs** (they contain a `~`) in:
+   - iOS: `ios/App/App/Info.plist` → `GADApplicationIdentifier`
+   - Android: `android/app/src/main/AndroidManifest.xml` → `com.google.android.gms.ads.APPLICATION_ID`
+   (Both currently hold Google's test IDs, which only ever show test ads.)
+5. AdMob → **Privacy & messaging**: create a GDPR message (the game shows it automatically where required).
+6. App Store privacy label: add "Device ID" / "Advertising data" used for **third-party advertising**, not linked to
+   the user, not used for tracking.
+
+### RevenueCat (in-app purchases)
+
+1. Create these products in **App Store Connect** (In-App Purchases) and **Google Play Console** (In-app products):
+
+   | Product ID | Type | Price | Gives |
+   |---|---|---|---|
+   | `pf_notes_1000` | Consumable | $0.99 | ♪1,000 |
+   | `pf_notes_3300` | Consumable | $2.99 | ♪3,300 |
+   | `pf_notes_6000` | Consumable | $4.99 | ♪6,000 |
+   | `pf_notes_13000` | Consumable | $9.99 | ♪13,000 |
+   | `pf_starter` | Non-consumable | $1.99 | ♪2,500 + 5 revive tokens, once |
+   | `pf_no_ads` | Non-consumable | $2.99 | Revives without ads |
+
+2. RevenueCat → new project → add the App Store app and the Play Store app (follow its steps to connect each store).
+3. Import the six products into RevenueCat (no entitlements or offerings are needed; the game asks for the products by ID).
+4. Copy the **public SDK keys** (Project → API keys; one starts with `appl_`, one with `goog_`) into
+   `MONEY.rcKeys.ios` / `MONEY.rcKeys.android`.
+5. Test with a Sandbox tester (iOS) or a license tester (Android) before release.
+
+Until the keys are filled in, the shop shows the packs but buying is switched off in the app. On the website, the
+packs say they're available in the app. When you run the game from your computer (or add `?testads=1` to the
+address), ads and purchases are pretend and free, so you can try the flow.
+
 ## Store checklist
 
 - **Privacy policy URL**: host `privacy.html` (it sits next to `index.html` in the repo) and paste its link in App Store

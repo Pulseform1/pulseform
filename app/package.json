@@ -11,10 +11,12 @@
     "assets": "npx @capacitor/assets generate --iconBackgroundColor '#141030' --splashBackgroundColor '#141030'"
   },
   "dependencies": {
+    "@capacitor-community/admob": "^8.1.0",
     "@capacitor-firebase/authentication": "^8.5.2",
     "@capacitor/android": "^8.5.2",
     "@capacitor/core": "^8.5.2",
     "@capacitor/ios": "^8.5.2",
+    "@revenuecat/purchases-capacitor": "^13.7.0",
     "firebase": "^12.6.0"
   },
   "devDependencies": {
