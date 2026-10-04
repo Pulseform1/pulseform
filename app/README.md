@@ -93,7 +93,7 @@ The game code is ready; it only needs your account IDs. Everything is set in `in
 
 ### RevenueCat (in-app purchases)
 
-1. Create these products (16 in all) in **App Store Connect** (In-App Purchases) and **Google Play Console** (In-app products):
+1. Create these products (17 in all) in **App Store Connect** (In-App Purchases) and **Google Play Console** (In-app products):
 
    | Product ID | Type | Price | Gives |
    |---|---|---|---|
@@ -113,6 +113,7 @@ The game code is ready; it only needs your account IDs. Everything is set in `in
    | `pf_skin_prism` | Non-consumable | $4.99 | Prism Dragon premium block |
    | `pf_skin_lich` | Non-consumable | $4.99 | Lich King premium block |
    | `pf_skin_horizon` | Non-consumable | $4.99 | Event Horizon premium block |
+   | `pf_pass_s1` | Non-consumable | $4.99 | Pulse Pass+ for Season 1 (the paid reward row) |
 
 2. RevenueCat → new project → add the App Store app and the Play Store app (follow its steps to connect each store).
 3. Import all the products into RevenueCat (no entitlements or offerings are needed; the game asks for the products by ID).

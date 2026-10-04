@@ -1063,6 +1063,8 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 .gday::before{content:'';position:absolute;left:50%;top:6px;width:14px;height:11px;margin-left:-7px;border-radius:2px;background:linear-gradient(90deg,var(--gc) 40%,#FFD166 40% 60%,var(--gc) 60%);box-shadow:0 -4px 0 -1px var(--gc)}
 .gday{--gc:#7E6A9C}.gday.now{--gc:#FF7EB6}.gday.big{--gc:#E0A020}
 .gday.got::before{content:'✓';background:none;box-shadow:none;color:#8FF0B0;font:700 13px var(--display);top:4px;height:auto;text-align:center}
+.gmile{margin:0;font-size:12.5px;color:var(--ink-2)}.gmile b{color:#FFD166}
+.gday span{line-height:1.15;font-weight:700}.gday.g-rev span{color:#FF8AA0}.gday.g-px span{color:#9CC8FF}.gday.big span{color:#FFD166}
 .gday b{font:600 9.5px var(--display);color:var(--ink-2)}.gday.got{opacity:.6}.gday.now{border-color:#FFD166;color:#FFD166;box-shadow:0 0 12px rgba(255,209,102,.35);animation:pBob 1.6s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){.present *,.present,.gday,.gtap{animation-duration:.01ms!important;animation-iteration-count:1!important}}
 .reduce .present *,.reduce .present,.reduce .gday{animation-iteration-count:1!important}
@@ -1413,6 +1415,65 @@ body.phone #worldsOv > .panel > .head:first-child,body.phone #levelsOv > .panel 
   background:rgba(22,17,52,.9);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid rgba(255,255,255,.07)}
 body.phone .overlay .panel > .head:first-child .back{font-size:15px;padding:8px 12px 8px 4px;min-height:40px}
 body.phone #twinOv > .panel{padding-top:calc(env(safe-area-inset-top) + 12px)!important}
+/* ---- Pulse Pass: two rows per tier (Pass+ on top, free below) ---- */
+.ppcol{width:158px;gap:8px}.ppcol:has(.grand){width:214px}
+.ppcol .ppcard{width:auto;min-height:0;height:220px;overflow:hidden}
+.ppcol .ppcard canvas.skprev{width:96px;height:96px}.ppcol .ppcard.k-skin canvas.skprev{width:124px;height:124px}.ppcol .ppcard.grand canvas.skprev{width:128px;height:128px}
+.ppcol .ppart{min-height:84px}
+.ppcard.prem{border-color:#7A4A00;box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 5px 0 rgba(0,0,0,.45),0 0 0 2px #FFD166}
+.ppcard.prem::before{content:'+';position:absolute;top:6px;right:8px;z-index:2;font:900 15px/1 var(--display);color:#3A1A00;background:linear-gradient(#FFE27A,#FFB020);border:2px solid #1A0C2E;border-radius:8px;padding:1px 5px}
+.ppcard.prem.k-notes{--g1:#E0A030;--g2:#8A4A0A}.ppcard.prem.k-revive{--g1:#FF6B8A;--g2:#8A1A3A}.ppcard.prem.k-jack{--g1:#FFE27A;--g2:#C0601A}
+#passOv:not(.plus) .ppcard.prem.lock{filter:saturate(.55) brightness(.62)}
+#passOv:not(.plus) .ppcard.prem.lock .ppart{opacity:.85}
+.ppbtn.plus{background:linear-gradient(#FFE27A,#FFB020 60%,#E08A10);color:#3A1A00;text-shadow:0 1px 0 rgba(255,255,255,.5);box-shadow:inset 0 2px 0 rgba(255,255,255,.6),0 4px 0 #7A4A00;filter:none}
+#passOv:not(.plus) .ppcard.prem.lock .ppbtn.plus{filter:saturate(1.8) brightness(1.6)}
+.pprev{position:relative;display:grid;place-items:center;width:76px;height:70px}
+.pprev i{font:900 58px/1 var(--display);font-style:normal;color:#FF5A7A;text-shadow:0 4px 0 #1A0C2E,0 0 16px rgba(255,90,122,.6)}
+.pprev b{position:absolute;right:-6px;bottom:0;font:900 18px var(--display);color:#fff;background:#1A0C2E;border-radius:10px;padding:1px 7px}
+.pptw{padding-left:30px}.pplabels{position:absolute;left:0;top:16px;bottom:48px;z-index:2;display:flex;flex-direction:column;gap:8px;width:24px}
+.pptw .ppsc.l{left:22px}
+.pplab{flex:1;display:grid;place-items:center;border-radius:10px;border:3px solid #1A0C2E;writing-mode:vertical-rl;transform:rotate(180deg);font:900 13px var(--display);letter-spacing:.12em;text-transform:uppercase}
+.pplab.p{background:linear-gradient(#FFE27A,#FFB020);color:#3A1A00}.pplab.f{background:#3A2470;color:#fff}
+.ppcol.ping .ppcard{animation:ppping .9s ease-out}
+.ppplus{width:100%;margin-top:6px;border:3px solid #1A0C2E;border-radius:16px;padding:9px 10px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;
+  background:linear-gradient(110deg,#FFE27A,#FFB020 45%,#FF8A3C);color:#3A1A00;box-shadow:inset 0 3px 0 rgba(255,255,255,.55),0 5px 0 #7A4A00;animation:ppglint 2.6s ease-in-out infinite}
+.ppplus b{font:900 18px var(--display)}.ppplus small{font:800 12px var(--display);opacity:.85}
+.ppplus:active{transform:translateY(3px);box-shadow:inset 0 3px 0 rgba(255,255,255,.55),0 2px 0 #7A4A00}
+@keyframes ppglint{0%,100%{filter:none}50%{filter:brightness(1.12) saturate(1.15)}}
+@media (prefers-reduced-motion:reduce){.ppplus{animation:none}}
+.ppplus-on{margin-top:6px;font:900 12.5px var(--display);color:#3A1A00;background:linear-gradient(90deg,#FFE27A,#FFB020);border:2px solid #1A0C2E;border-radius:999px;padding:4px 12px;text-align:center}
+#passOv.plus .pppanel{border-color:#FFE27A!important;box-shadow:0 0 0 4px rgba(0,0,0,.35),0 0 40px rgba(255,209,102,.35),0 18px 60px rgba(0,0,0,.55)!important}
+.ppm.pm{background:linear-gradient(170deg,#6A4A10,#3A2408)}.ppm.pm.on{background:linear-gradient(170deg,#FFB020,#B0600A)}
+.ppmplus{position:absolute;top:-6px;left:-6px;width:18px;height:18px;border-radius:6px;display:grid;place-items:center;font:900 13px/1 var(--display);font-style:normal;color:#3A1A00;background:linear-gradient(#FFE27A,#FFB020);border:2px solid #1A0C2E}
+/* the Pulse Pass+ offer */
+.pbpanel{max-width:560px;width:100%;text-align:left;gap:12px;border:3px solid #FFD166!important;border-radius:26px!important;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,209,102,.3),transparent 60%),linear-gradient(160deg,#4A2296,#2A1468 55%,#1A0C46)!important}
+.pbhero{text-align:center}.pbhero h2{margin:4px 0 6px;font:900 42px/1 var(--display);color:#fff;text-shadow:0 3px 0 #000}.pbhero h2 em{font-style:normal;color:#FFD166;margin-left:2px}
+.pbhero p{margin:0 auto;max-width:40ch;color:#E8DEFF}
+.pbtag{display:inline-block;font:900 11px var(--display);letter-spacing:.14em;text-transform:uppercase;color:#1A0C2E;background:#FFD166;border-radius:999px;padding:3px 10px}
+.pbskins{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.pbsk{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:14px;background:rgba(0,0,0,.25);border:2px solid rgba(255,209,102,.4)}
+.pbsk canvas{width:64px;height:64px;max-width:100%}.pbsk small{font:800 10.5px/1.1 var(--display);text-align:center;color:#fff}
+.pblist{margin:0;padding:0;list-style:none;display:grid;gap:7px}
+.pblist li{position:relative;padding:9px 12px 9px 38px;border-radius:12px;background:rgba(0,0,0,.25);color:#F4EFFF;font-size:14.5px;line-height:1.35}
+.pblist li::before{content:'✓';position:absolute;left:12px;top:9px;font:900 15px var(--display);color:#B8FF7A}
+.pblist b{color:#FFD166}
+.pbnow{margin:0;text-align:center;font:800 14px var(--display);color:#B8FF7A}
+#opbBuy{background:linear-gradient(#FFE27A,#FFB020 55%,#E08A10);color:#3A1A00;text-shadow:0 2px 0 rgba(255,255,255,.5);box-shadow:inset 0 3px 0 rgba(255,255,255,.55),0 5px 0 #7A4A00}
+.pbfine{text-align:center;margin:0}
+.mspecial.passplus{background:linear-gradient(110deg,#7A4A10,#C07A1A 50%,#5A2A80)!important;border-color:#FFD166!important}
+@media (max-width:760px){
+  .ppcol{width:128px}.ppcol:has(.grand){width:170px}
+  .ppcol .ppcard{height:180px;padding:12px 6px 8px}
+  .ppcol .ppcard canvas.skprev{width:74px;height:74px}.ppcol .ppcard.k-skin canvas.skprev{width:92px;height:92px}.ppcol .ppcard.grand canvas.skprev{width:100px;height:100px}
+  .ppcol .ppart{min-height:70px}.ppcol .ppcoins{transform:scale(.78)}.ppcol .ppcard .ppname{font-size:13.5px}
+  .pbskins{grid-template-columns:repeat(3,minmax(0,1fr))}.pbhero h2{font-size:36px}
+  .pphero .ppplus,.pphero .ppplus-on{grid-column:1/-1}
+}
+@media (min-width:1000px) and (min-height:760px){
+  .ppcol{width:170px}.ppcol:has(.grand){width:226px}
+  .ppcol .ppcard{height:240px}
+}
 body.phone #passOv{padding:0!important;background:#1A0C46}
 body.phone #passOv > .pppanel{border-radius:0!important;border:0!important;box-shadow:none!important;min-height:100%;padding:calc(env(safe-area-inset-top) + 10px) max(12px,env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))!important}
 body.phone.hastabs .partybar{bottom:calc(74px + env(safe-area-inset-bottom))!important}
@@ -1585,15 +1646,28 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         <canvas class="skprev" data-skin="pp_sovereign" data-px="190" width="190" height="190"></canvas>
         <div class="ppgrand">Tier 100 grand reward<b>Pulse Sovereign</b></div>
         <div class="pptierbig" id="ppTier">Tier 0 / 100</div>
-        <button class="ppcta" id="ppClaimAll" type="button">Claim all</button></aside>
+        <button class="ppcta" id="ppClaimAll" type="button">Claim all</button>
+        <button class="ppplus" id="ppBuy" type="button" hidden></button>
+        <span class="ppplus-on" id="ppPlusOn" hidden>★ Pulse Pass+ active · +25% Pass XP</span></aside>
       <div class="ppmain">
         <div class="pptabs" role="tablist"><button type="button" data-pt="rewards" class="on">Rewards</button><button type="button" data-pt="quests">Quests<em class="qdot" id="ppQDot" hidden></em></button></div>
         <div id="ppRewards"><div class="ppmiles" id="ppMiles" aria-label="Big rewards"></div>
-          <div class="pptw"><button class="ppsc l" type="button" data-sc="-1" aria-label="Scroll back">‹</button><div class="pptrack" id="ppTrack"></div><button class="ppsc r" type="button" data-sc="1" aria-label="Scroll forward">›</button></div>
+          <div class="pptw"><div class="pplabels" aria-hidden="true"><span class="pplab p">Pass+</span><span class="pplab f">Free</span></div><button class="ppsc l" type="button" data-sc="-1" aria-label="Scroll back">‹</button><div class="pptrack" id="ppTrack"></div><button class="ppsc r" type="button" data-sc="1" aria-label="Scroll forward">›</button></div>
           <p class="ppnote">Every run fills the pass with the XP it earns (up to 600 a run), and quests give big boosts. Everything you collect is yours to keep.</p></div>
         <div id="ppQuests" hidden></div>
       </div>
     </div>
+  </div>
+</section>
+<section id="ppBuyOv" class="overlay ppov" hidden>
+  <div class="panel pbpanel">
+    <div class="head"><button class="back" id="opbBack" type="button">← Pulse Pass</button></div>
+    <div class="pbhero"><span class="pbtag">Season 1</span><h2>Pulse Pass<em>+</em></h2><p>A second row of rewards on every tier. Pay once, keep everything you unlock this season.</p></div>
+    <div class="pbskins" id="opbSkins"></div>
+    <ul class="pblist" id="opbList"></ul>
+    <p class="pbnow" id="opbNow"></p>
+    <button class="ppcta" id="opbBuy" type="button">Unlock</button>
+    <p class="small pbfine">One-time purchase for Season 1. The free row stays free for everyone.</p>
   </div>
 </section>
 <section id="remixOv" class="overlay" hidden>
@@ -1928,6 +2002,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     </button>
     <p class="gtap" id="giftTap">Tap the present</p>
     <div class="gdays" id="giftDays"></div>
+    <p class="gmile" id="giftMile"></p>
     <p class="small" id="giftSub" style="margin:0"></p>
     <div class="xpline" id="giftGot"></div>
     <div class="row" style="width:100%"><button class="btn" id="giftClaim" type="button">Open</button><button class="btn" id="giftClose" type="button" hidden>Let's play</button></div>
@@ -2281,6 +2356,8 @@ const TILES=[
  {id:'t_abyss',name:'Abyss',req:{pass:45},tile:'#1E5A66',front:'#0C2A36',sky:['#06141E','#0E3A48','#2A7A84'],m:.5,sm:.3,deco:'stars'},
  {id:'t_arcane',name:'Arcane',req:{pass:65},tile:'#5A3A9A',front:'#2A1A5A',sky:['#160E36','#3A2A7A','#8A6AC8'],m:.5,sm:.28,deco:'grid',dc:'#E0C0FF'},
  {id:'t_solar',name:'Solar',req:{pass:85},tile:'#FFE3A0',front:'#C0701A',sky:['#4A1E0E','#C0601A','#FFD27A'],m:.45,sm:.26,deco:'filigree',dc:'#FF8A1A'},
+ {id:'t_gilded',name:'Gilded',req:{passp:35},tile:'#FFE9A8',front:'#9A6A1A',sky:['#2A1A0A','#7A4A1A','#F2C66A'],m:.45,sm:.26,deco:'filigree',dc:'#FFD166'},
+ {id:'t_velvet',name:'Velvet Night',req:{passp:65},tile:'#4A2A5A',front:'#1E0E2A',sky:['#0E0618','#3A1450','#9A4A9A'],m:.5,sm:.3,deco:'stars'},
  {id:'t_equinox',name:'Equinox',req:{twin:true},hidden:true,tile:'#F7F2E6',front:'#3A3262',sky:['#1E1A3A','#6A5A8A','#F6E2B0'],m:.5,sm:.3,deco:'equinox'},
  {id:'t_eclipse',name:'Eclipse Seraph',req:{cvk:true},hidden:true,tile:'#F2E8D4',front:'#3A2656',sky:['#1E1236','#6A4A7A','#F2D9A0'],m:.6,sm:.36,deco:'eclipse'}];
 /* sound packs swap the band that plays Endless: every room keeps its own groove, chords and tune */
@@ -2309,6 +2386,11 @@ const BANNERS=[
  {id:'b_phoenix',name:'Phoenix Rise',req:{pass:35},bg:'radial-gradient(ellipse at 50% 140%,rgba(255,224,138,.8),transparent 55%),radial-gradient(ellipse at 80% 120%,rgba(255,90,31,.7),transparent 50%),linear-gradient(100deg,#2A0A08,#7A1E10 50%,#D8501A)'},
  {id:'b_deepglow',name:'Deep Glow',req:{pass:75},bg:'radial-gradient(circle at 20% 40%,rgba(92,255,224,.6) 0 2px,transparent 3px),radial-gradient(circle at 55% 70%,rgba(92,255,224,.5) 0 2px,transparent 3px),radial-gradient(circle at 82% 30%,rgba(92,255,224,.55) 0 2px,transparent 3px),linear-gradient(100deg,#04121A,#0C2E3A 60%,#145A60)'},
  {id:'b_sovereign',name:'Sovereign',req:{pass:95},bg:'linear-gradient(115deg,transparent 38%,rgba(255,255,255,.45) 46%,transparent 54%),linear-gradient(90deg,#FF7EB6,#FFD166,#7FF0D2,#9CC8FF,#C9A0FF)'},
+ {id:'b_gilded',name:'Gilded Pass',req:{passp:25},bg:'linear-gradient(115deg,transparent 40%,rgba(255,255,255,.55) 47%,transparent 54%),repeating-linear-gradient(90deg,rgba(255,255,255,.08) 0 2px,transparent 2px 14px),linear-gradient(90deg,#7A4A10,#E0A030 45%,#FFE7A0 60%,#B07A1A)'},
+ {id:'b_aurorapass',name:'Aurora Crown',req:{passp:55},bg:'radial-gradient(ellipse at 30% 120%,rgba(127,240,210,.7),transparent 60%),radial-gradient(ellipse at 75% -20%,rgba(201,160,255,.8),transparent 60%),linear-gradient(90deg,#0E1636,#1E2A5A 50%,#2A1A4A)'},
+ {id:'b_velvet',name:'Velvet Eclipse',req:{passp:85},bg:'radial-gradient(circle at 78% 50%,#FFD166 0 9%,rgba(255,209,102,.35) 10% 16%,transparent 17%),linear-gradient(90deg,#12061C,#3A1450 55%,#7A2A6A)'},
+ {id:'b_devoted',name:'Devoted',req:{login:30},bg:'repeating-linear-gradient(135deg,rgba(255,255,255,.07) 0 10px,transparent 10px 20px),linear-gradient(90deg,#FF7EB6,#C94A8A 50%,#5A1E4A)'},
+ {id:'b_centurion',name:'Centurion',req:{login:100},bg:'linear-gradient(115deg,transparent 42%,rgba(255,255,255,.5) 48%,transparent 54%),linear-gradient(90deg,#1A1430,#4A3A8A 40%,#FFD166 75%,#FFF4C2)'},
  {id:'b_maestro',name:'Maestro',req:{rank:21},bg:'repeating-linear-gradient(0deg,transparent 0 6px,rgba(232,184,74,.28) 6px 7px),linear-gradient(100deg,#1A1430,#3A2E58 55%,#6A5A38)'},
  // the final rank: a crimson heartbeat line running across a near-black banner
  {id:'b_truepulse',name:'True Pulse',req:{rank:26},bg:`url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%2240%22 viewBox=%220 0 120 40%22%3E%3Cpolyline points=%220,20 38,20 44,14 50,20 56,20 61,4 67,36 72,20 80,20 85,16 90,20 120,20%22 fill=%22none%22 stroke=%22%23FF1E2E%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22 opacity=%22.85%22/%3E%3C/svg%3E') left center/120px 100% repeat-x,radial-gradient(ellipse at 50% 50%,rgba(255,30,46,.32),transparent 70%),linear-gradient(100deg,#07020A,#3A0A14 55%,#12040A)`},
@@ -2321,8 +2403,8 @@ const ownsItem=it=>!!it&&(it.price===0||SAVE.owned.includes(it.id)||(!it.price&&
 const skinById=id=>SKINS.find(s=>s.id===id)||SKINS[0], landById=id=>LANDS.find(s=>s.id===id)||LANDS[0];
 const hardCleared=()=>{ let n=0; for(let i=1;i<=12;i++) if((SAVE.stars['H-'+i]||0)>0) n++; return n; };
 const ownsSkin=id=>{ const s=SKINS.find(k=>k.id===id); return !!s&&(SAVE.owned.includes(id)||s.price===0||(s.req&&reqMet(s.req))); };
-const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?rankOf(SAVE.xp||0)>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.twin?!!SAVE.twinWin:true)&&(r.pass?passGot(r.pass):true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true);
-const reqText=r=>r.pass?`Pulse Pass · tier ${r.pass}`:r.twin?'One of a kind: only the Twin Pulse champions will own it':r.boss?`Defeat ${BOSS[r.boss-1]}`:r.cvkOn?`Bet ♪${CVK_BET_BLOCK.toLocaleString()} on ${r.cvkOn==='cale'?'Cale':'Korra'} in Cale vs Korra`:r.cvkBet?`Bet ♪${r.cvkBet.toLocaleString()} in total on Cale vs Korra`:r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
+const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?rankOf(SAVE.xp||0)>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.twin?!!SAVE.twinWin:true)&&(r.pass?passGot(r.pass):true)&&(r.passp?passPGot(r.passp):true)&&(r.login?giftDays()>=r.login:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true);
+const reqText=r=>r.pass?`Pulse Pass · tier ${r.pass}`:r.passp?`Pulse Pass+ · tier ${r.passp}`:r.login?`Log in on ${r.login} different days`:r.twin?'One of a kind: only the Twin Pulse champions will own it':r.boss?`Defeat ${BOSS[r.boss-1]}`:r.cvkOn?`Bet ♪${CVK_BET_BLOCK.toLocaleString()} on ${r.cvkOn==='cale'?'Cale':'Korra'} in Cale vs Korra`:r.cvkBet?`Bet ♪${r.cvkBet.toLocaleString()} in total on Cale vs Korra`:r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
 function hsl2hex(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
   return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); }
 
@@ -2852,12 +2934,12 @@ SKINS.push(
  {id:'dawn',name:'Dawn Seraph',anim:'dawn',top:'#FFFBEF',front:'#F1E4C6',core:'#FFFFFF',req:{cvkOn:'korra'},prev:[.86,8]},
  {id:'dusk',name:'Dusk Seraph',anim:'dusk',top:'#2A1A40',front:'#150B24',core:'#8A4FD8',req:{cvkOn:'cale'},prev:[.86,8]},
  {id:'pp_storm',name:'Stormcaller',vx:'pp_storm',nocore:true,prev:[.58,21],top:'#4A5874',front:'#252C40',core:'#9FD8FF',req:{pass:10}},
- {id:'pp_phoenix',name:'Phoenix',vx:'pp_phoenix',nocore:true,prev:[.62,17],top:'#FFB347',front:'#C0391B',core:'#FFE08A',req:{pass:20}},
- {id:'pp_leviathan',name:'Leviathan',vx:'pp_leviathan',nocore:true,prev:[.6,20],top:'#1E5A66',front:'#0C2A36',core:'#5CFFE0',req:{pass:30}},
+ {id:'pp_phoenix',name:'Phoenix',vx:'pp_phoenix',nocore:true,prev:[.62,17],top:'#FFB347',front:'#C0391B',core:'#FFE08A',req:{passp:20}},
+ {id:'pp_leviathan',name:'Leviathan',vx:'pp_leviathan',nocore:true,prev:[.6,20],top:'#1E5A66',front:'#0C2A36',core:'#5CFFE0',req:{passp:30}},
  {id:'pp_ronin',name:'Ronin',vx:'pp_ronin',nocore:true,prev:[.7,14],top:'#1A1418',front:'#7A0E18',core:'#FF4A5A',req:{pass:40}},
- {id:'pp_oni',name:'Mecha Oni',vx:'pp_oni',nocore:true,prev:[.62,19],top:'#C8D0DC',front:'#5A6478',core:'#FF3DAA',req:{pass:50}},
- {id:'pp_archmage',name:'Archmage',vx:'pp_archmage',nocore:true,prev:[.62,18],top:'#5A3A9A',front:'#2A1A5A',core:'#E0C0FF',req:{pass:70}},
- {id:'pp_solar',name:'Solar King',vx:'pp_solar',nocore:true,prev:[.62,18],top:'#FFE7A0',front:'#E08A1A',core:'#FFFFFF',req:{pass:80}},
+ {id:'pp_oni',name:'Mecha Oni',vx:'pp_oni',nocore:true,prev:[.62,19],top:'#C8D0DC',front:'#5A6478',core:'#FF3DAA',req:{passp:50}},
+ {id:'pp_archmage',name:'Archmage',vx:'pp_archmage',nocore:true,prev:[.62,18],top:'#5A3A9A',front:'#2A1A5A',core:'#E0C0FF',req:{passp:70}},
+ {id:'pp_solar',name:'Solar King',vx:'pp_solar',nocore:true,prev:[.62,18],top:'#FFE7A0',front:'#E08A1A',core:'#FFFFFF',req:{passp:80}},
  {id:'pp_grove',name:'Elder Grove',vx:'pp_grove',nocore:true,prev:[.66,15],top:'#5A8A3A',front:'#4A2E1A',core:'#B8FF7A',req:{pass:90}},
  {id:'sk_clock',name:'Astral Clockwork',vx:'sk_clock',nocore:true,prev:[.58,21],top:'#C99A44',front:'#14204A',core:'#FFE7A0',paid:'pf_skin_clock'},
  {id:'sk_magma',name:'Volcanic Titan',vx:'sk_magma',nocore:true,prev:[.6,19],top:'#2E2624',front:'#1C1614',core:'#FF6A1A',paid:'pf_skin_magma'},
@@ -2869,7 +2951,7 @@ SKINS.push(
  {id:'sk_aurora',name:'Aurora Warden',vx:'sk_aurora',nocore:true,prev:[.6,20],top:'#EEF9FF',front:'#9EC6E8',core:'#9CFFD8',paid:'pf_skin_aurora'},
  {id:'sk_paladin',name:'Radiant Paladin',vx:'sk_paladin',nocore:true,prev:[.6,19],top:'#DCE1EC',front:'#8A93A8',core:'#FFE7A0',paid:'pf_skin_paladin'},
  {id:'sk_horizon',name:'Event Horizon',vx:'sk_horizon',nocore:true,prev:[.58,20],top:'#0B0B14',front:'#05050A',core:'#FFB347',paid:'pf_skin_horizon'},
- {id:'pp_sovereign',name:'Pulse Sovereign',vx:'pp_sovereign',nocore:true,prev:[.56,22],top:'#1A1430',front:'#0C0A1C',core:'#FFFFFF',req:{pass:100}},
+ {id:'pp_sovereign',name:'Pulse Sovereign',vx:'pp_sovereign',nocore:true,prev:[.56,22],top:'#1A1430',front:'#0C0A1C',core:'#FFFFFF',req:{passp:100}},
  {id:'equinox',name:'Equinox',vx:'equinox',nocore:true,prev:[.74,12],top:'#FFFDF6',front:'#EFE8D8',core:'#FFFFFF',req:{twin:true},hidden:true},
  {id:'eclipse_seraph',name:'Eclipse Seraph',anim:'eclipse',top:'#FFFBEF',front:'#EFE6D2',core:'#FFFFFF',req:{cvk:true},prev:[.8,11],hidden:true});
 /* every fancy block gets a matching landing effect; owning the block unlocks it */
@@ -6409,7 +6491,7 @@ function mergeSaves(loc,cl,additive){
     for(const o of [cl.grades||{},loc.grades||{}]) for(const k in o){ const a=g[k]||{g:'',m:{}}, b=o[k]||{}; g[k]={g:rank(b.g)>rank(a.g)?b.g:a.g,m:Object.assign({},a.m,b.m||{})}; } out.grades=g; }
   { const gh=Object.assign({},cl.ghosts||{}); for(const k in (loc.ghosts||{})) if(!gh[k]||(loc.ghosts[k].s||0)>(gh[k].s||0)) gh[k]=loc.ghosts[k]; out.ghosts=gh; }
   { const a=loc.gift||{}, b=cl.gift||{}; out.gift=Object.assign({},(a.date||'')>=(b.date||'')?a:b); out.gift.streak=Math.max(a.streak||0,b.streak||0);
-    if(a.day!=null||b.day!=null) out.gift.day=Math.max(a.day||0,b.day||0); if(a.done||b.done){ out.gift.done=true; out.gift.day=7; } }   // gifts claimed on any device count, and a finished set stays finished
+    if(a.day!=null||b.day!=null) out.gift.day=Math.max(a.day||0,b.day||0); out.gift.miles=[...new Set([...(a.miles||[]),...(b.miles||[])])]; delete out.gift.done; }   // gifts claimed on any device count
   { const a=loc.eventBest, b=cl.eventBest; out.eventBest=!a?b:!b?a:a.wk===b.wk?{wk:a.wk,s:Math.max(a.s||0,b.s||0)}:(a.wk>b.wk?a:b); if(!out.eventBest) delete out.eventBest; }
   { const a=loc.quests||{}, b=cl.quests||{};                            // today's quests: keep the furthest progress and every claim
     if(a.date&&a.date===b.date&&a.list&&b.list){ out.quests={date:a.date,list:a.list.map((q,i)=>{ const o=b.list.find(x=>x.id===q.id)||b.list[i]||{}; return {...q,prog:Math.max(q.prog||0,o.prog||0),claimed:!!(q.claimed||o.claimed),told:!!(q.told||o.told)}; })}; }
@@ -6426,7 +6508,8 @@ function mergeSaves(loc,cl,additive){
   { const a=loc.pq||{}, b=cl.pq||{}, m=(ka,kb,la,lb)=>ka&&ka===kb&&Array.isArray(la)&&Array.isArray(lb)?la.map(q=>{ const o=lb.find(x=>x.id===q.id)||{}; return {...q,prog:Math.max(q.prog||0,o.prog||0),claimed:!!(q.claimed||o.claimed)}; }):(ka||'')>=(kb||'')?la:lb;
     if(a.day||b.day){ const dA=(a.day||'')>=(b.day||''), wA=(a.week||'')>=(b.week||''); out.pq={day:dA?a.day:b.day,d:m(a.day,b.day,a.d,b.d)||(dA?a.d:b.d),week:wA?a.week:b.week,w:m(a.week,b.week,a.w,b.w)||(wA?a.w:b.w)}; } }
   { const seen=new Set(), bl=[]; [...(loc.blocked||[]),...(cl.blocked||[])].forEach(x=>{ if(x&&x.u&&!seen.has(x.u)){ seen.add(x.u); bl.push(x); } }); out.blocked=bl.slice(-200); }
-  { const a=loc.pass||{}, b=cl.pass||{}; out.pass={xp:Math.max(a.xp||0,b.xp||0),got:[...new Set([...(a.got||[]),...(b.got||[])])]}; }
+  { const a=loc.pass||{}, b=cl.pass||{}, U=(x,y)=>[...new Set([...(x||[]),...(y||[])])], leg=x=>x.v2?(x.legacy||[]):(x.got||[]).filter(t=>PREM_SKINS[t]);
+    out.pass={xp:Math.max(a.xp||0,b.xp||0),got:U(a.got,b.got),pgot:U(a.pgot,b.pgot),prem:!!(a.prem||b.prem),v2:1,legacy:U(leg(a),leg(b))}; }   // Pass+ bought on any device counts everywhere
   { const a=loc.remix||{}, b=cl.remix||{}, m={...a}; for(const k in b) m[k]=Math.max(m[k]||0,b[k]); out.remix=m; } out.bestRhythm=Math.max(loc.bestRhythm||0,cl.bestRhythm||0);
   out.twinTeam=newer.twinTeam!==undefined?newer.twinTeam:(loc.twinTeam||cl.twinTeam||null); out.twinWin=!!(loc.twinWin||cl.twinWin); out.twinWinSeen=!!(loc.twinWinSeen||cl.twinWinSeen); out.twinWinName=loc.twinWinName||cl.twinWinName||'';
   const dl=loc.daily||{}, dc=cl.daily||{}; out.daily=Object.assign({},DEF.daily,newer===cl?dc:dl);
@@ -6608,8 +6691,8 @@ $('aGoogle').onclick=acctGoogle; $('aApple').onclick=acctApple;
     const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('pulseform/owner/v1:'+v));
     return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('')===OWNER_H; };
   const field=$('aEmail'); const go=()=>check(field.value).then(ok=>{ if(!ok) return; field.value=''; let n=0;
-    SKINS.filter(k=>k.paid).forEach(k=>{ if(!SAVE.owned.includes(k.id)){ SAVE.owned.push(k.id); n++; } });
-    save(); if(ACCT.user) acctPush(true); if(A.ctx) sGem(); buzz(40); toast(n?`Unlocked ${n} premium blocks. Enjoy!`:'All premium blocks are already yours.'); });
+    SKINS.filter(k=>k.paid).forEach(k=>{ if(!SAVE.owned.includes(k.id)){ SAVE.owned.push(k.id); n++; } }); passS().prem=true;
+    save(); if(ACCT.user) acctPush(true); if(A.ctx) sGem(); buzz(40); toast(n?`Unlocked ${n} premium blocks and Pulse Pass+. Enjoy!`:'All premium blocks and Pulse Pass+ are yours.'); if(!$('passOv').hidden) buildPass(); });
   field.addEventListener('input',go); field.addEventListener('change',go); }
 $('aForgot').onclick=acctForgot;
 $('aSignOut').onclick=acctOut;
@@ -7115,69 +7198,106 @@ function awardRun(o){
 
 /* ================= PULSE PASS · Season 1 =================
    100 tiers. Every run's XP also fills the pass (taken before the Maestro and Supreme multipliers, so everyone climbs at
-   the same pace). Each tier has a reward to claim: nine Pass blocks (the grand one at 100), a ♪5,000 jackpot at 60, four
-   tile themes, four banners, a sound pack, and Notes. Claimed tiers are kept in SAVE.pass.got. */
+   the same pace). Two rows of rewards per tier:
+   - the free row: three Pass blocks (10, 40, 90), four tile themes, four banners, a sound pack, a ♪4,500 jackpot at 60, and Notes;
+   - the Pulse Pass+ row (a one-time purchase for the season): six blocks including the tier-100 Pulse Sovereign, two tile
+     themes and three banners only found here, 10 revive tokens, a ♪5,000 jackpot, Notes on every other tier, and +25% Pass XP.
+   Claimed tiers are kept in SAVE.pass.got (free) and SAVE.pass.pgot (Pass+). Players who claimed one of the six blocks
+   from the free row before it moved to Pass+ keep it (SAVE.pass.legacy). */
 // the XP from tier t-1 to tier t grows ~3.5% a tier up to tier 75 (200 → ~2,550), then only ~0.6% a tier (~2,950 for tier 100; ~138,800 XP in all)
 const PASS_TIERS=100, passCost=t=>Math.round(200*Math.pow(1.035,Math.min(t,75)-1)*Math.pow(1.006,Math.max(0,t-75))/25)*25;
-const PASS_SKINS={10:'pp_storm',20:'pp_phoenix',30:'pp_leviathan',40:'pp_ronin',50:'pp_oni',70:'pp_archmage',80:'pp_solar',90:'pp_grove',100:'pp_sovereign'};
-const PASS_TILES={25:'t_storm',45:'t_abyss',65:'t_arcane',85:'t_solar'}, PASS_BANNERS={15:'b_stormfront',35:'b_phoenix',75:'b_deepglow',95:'b_sovereign'}, PASS_PACK={55:'s_anthem'}, PASS_JACKPOT={60:4500};
+const PASS_SKINS={10:'pp_storm',40:'pp_ronin',90:'pp_grove'};
+const PASS_TILES={25:'t_storm',45:'t_abyss',65:'t_arcane',85:'t_solar'}, PASS_BANNERS={15:'b_stormfront',35:'b_phoenix',75:'b_deepglow',95:'b_sovereign'}, PASS_PACK={55:'s_anthem'}, PASS_JACKPOT={60:4500,100:3000};
+const PREM_SKINS={20:'pp_phoenix',30:'pp_leviathan',50:'pp_oni',70:'pp_archmage',80:'pp_solar',100:'pp_sovereign'};
+const PREM_TILES={35:'t_gilded',65:'t_velvet'}, PREM_BANNERS={25:'b_gilded',55:'b_aurorapass',85:'b_velvet'}, PREM_REV={5:2,15:2,45:2,75:2,95:2}, PREM_JACKPOT={60:5000};
+const PASS_PRICE_ID='pf_pass_s1', PASS_XP_BOOST=1.25;
 const PASS=Array.from({length:PASS_TIERS},(_,i)=>{ const t=i+1;
   return PASS_SKINS[t]?{t,kind:'skin',id:PASS_SKINS[t]}:PASS_TILES[t]?{t,kind:'tiles',id:PASS_TILES[t]}:PASS_BANNERS[t]?{t,kind:'banner',id:PASS_BANNERS[t]}:PASS_PACK[t]?{t,kind:'pack',id:PASS_PACK[t]}:{t,kind:'notes',n:PASS_JACKPOT[t]||Math.round((100+t*6)*NOTE_RATE/25)*25,jack:!!PASS_JACKPOT[t]}; });
-const passS=()=>{ const p=SAVE.pass||(SAVE.pass={xp:0,got:[]}); if(!Array.isArray(p.got)) p.got=[]; return p; };
+const PASSP=Array.from({length:PASS_TIERS},(_,i)=>{ const t=i+1, o=PREM_SKINS[t]?{kind:'skin',id:PREM_SKINS[t]}:PREM_TILES[t]?{kind:'tiles',id:PREM_TILES[t]}:PREM_BANNERS[t]?{kind:'banner',id:PREM_BANNERS[t]}:PREM_REV[t]?{kind:'revive',n:PREM_REV[t]}
+    :{kind:'notes',n:PREM_JACKPOT[t]||Math.round((80+t*4)*NOTE_RATE/25)*25,jack:!!PREM_JACKPOT[t]}; return Object.assign(o,{t,prem:true}); });
+const passS=()=>{ const p=SAVE.pass||(SAVE.pass={xp:0,got:[]}); if(!Array.isArray(p.got)) p.got=[]; if(!Array.isArray(p.pgot)) p.pgot=[];
+  if(!p.v2){ p.v2=1; p.legacy=p.got.filter(t=>PREM_SKINS[t]); }   // blocks claimed for free before they moved to Pass+ stay yours
+  return p; };
 const passGot=t=>passS().got.includes(t);
+const passPlus=()=>!!passS().prem;
+const passPGot=t=>{ const p=passS(); return p.pgot.includes(t)||(p.legacy||[]).includes(t); };
+const rGot=r=>r.prem?passPGot(r.t):passGot(r.t);
 function passTier(){ let xp=passS().xp||0, t=0; while(t<PASS_TIERS&&xp>=passCost(t+1)){ xp-=passCost(t+1); t++; } return {t,into:xp,need:t<PASS_TIERS?passCost(t+1):0}; }
-const passReady=()=>{ const n=passTier().t; let c=0; for(let t=1;t<=n;t++) if(!passGot(t)) c++; return c; };
+const passReady=()=>{ const n=passTier().t, plus=passPlus(); let c=0; for(let t=1;t<=n;t++){ if(!passGot(t)) c++; if(plus&&!passPGot(t)) c++; } return c; };
 const passItem=r=>r.kind==='skin'?skinById(r.id):r.kind==='tiles'?tilesById(r.id):r.kind==='banner'?bannerById(r.id):r.kind==='pack'?packById(r.id):null;
-const passName=r=>r.kind==='notes'?`♪${r.n.toLocaleString()}`:(passItem(r)||{}).name||'';
-const passKind=r=>({skin:'Block',tiles:'Tiles',banner:'Banner',pack:'Sound pack',notes:'Notes'})[r.kind];
-function passClaim(t){ const r=PASS[t-1]; if(!r||passGot(t)||passTier().t<t) return false; passS().got.push(t); if(r.kind==='notes') SAVE.notes+=r.n; save(); return true; }
-/* a run's share of the pass: its XP before the high-rank multipliers, up to 600 */
-function passAdd(xp){ const rk=myRank(), base=Math.min(600,Math.round(xp/(rk>=RANK_SUPREME?2.5:rk>=RANK_MAESTRO?1.5:1))); if(base<=0) return {base:0,up:0};
+const passName=r=>r.kind==='notes'?`♪${r.n.toLocaleString()}`:r.kind==='revive'?`${r.n} revive tokens`:(passItem(r)||{}).name||'';
+const passKind=r=>({skin:'Block',tiles:'Tiles',banner:'Banner',pack:'Sound pack',notes:'Notes',revive:'Boss revives'})[r.kind];
+function passClaimR(r){ if(!r||rGot(r)||passTier().t<r.t||(r.prem&&!passPlus())) return false;
+  (r.prem?passS().pgot:passS().got).push(r.t); if(r.kind==='notes') SAVE.notes+=r.n; if(r.kind==='revive') SAVE.revives=(SAVE.revives||0)+r.n; save(); return true; }
+const passClaim=t=>passClaimR(PASS[t-1]);
+/* a run's share of the pass: its XP before the high-rank multipliers, up to 600 (750 with Pass+, which gives +25%) */
+function passAdd(xp){ const rk=myRank(), boost=passPlus()?PASS_XP_BOOST:1, base=Math.min(Math.round(600*boost),Math.round(xp/(rk>=RANK_SUPREME?2.5:rk>=RANK_MAESTRO?1.5:1)*boost)); if(base<=0) return {base:0,up:0};
   const before=passTier().t; passS().xp=(passS().xp||0)+base; save(); return {base,up:passTier().t-before}; }
 function passPrev(r,big){ if(r.kind==='skin') return `<canvas class="skprev" data-skin="${r.id}" width="64" height="64" aria-hidden="true"></canvas>`;
   if(r.kind==='tiles') return `<canvas class="tileprev" data-tile="${r.id}" width="132" height="84" aria-hidden="true"></canvas>`;
   if(r.kind==='banner') return `<span class="ppban" style="background:${bannerById(r.id).bg}"></span>`;
   if(r.kind==='pack') return `<span class="ppglyph" style="color:${packById(r.id).col}">${packById(r.id).glyph}</span>`;
+  if(r.kind==='revive') return `<span class="pprev" aria-hidden="true"><i>♥</i><b>×${r.n}</b></span>`;
   const c=r.jack?4:r.n>=400?3:r.n>=200?2:1; return `<span class="ppcoins c${c}" aria-hidden="true">${'<i>♪</i>'.repeat(c)}</span>`; }
 function passEquipped(r){ return r.kind==='skin'?SAVE.skin===r.id:r.kind==='tiles'?SAVE.tiles===r.id:r.kind==='banner'?SAVE.banner===r.id:r.kind==='pack'?SAVE.pack===r.id:false; }
 const PP_LOCK='<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="7" width="11" height="8" rx="2" fill="#1A0C2E"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="#1A0C2E" stroke-width="2.2"/></svg>';
 let ppTab='rewards';
+function ppCard(r,pt){ const got=rGot(r), open=r.t<=pt.t, eqable=!['notes','revive'].includes(r.kind), plus=passPlus(), locked=r.prem&&!plus;
+  const k=(r.t===100&&r.kind==='skin'?'k-skin grand':r.jack?'k-jack':'k-'+r.kind)+(r.prem?' prem':'');
+  const btn=got?(eqable&&!passEquipped(r)?`<button class="ppbtn eq" data-ppeq="${r.prem?'p':'f'}${r.t}" type="button">Equip</button>`:`<button class="ppbtn done" type="button" disabled>${eqable?'Equipped':'Collected'}</button>`)
+    :locked?`<button class="ppbtn plus" data-ppbuy="1" type="button">Pass+</button>`
+    :open?`<button class="ppbtn" data-ppc="${r.prem?'p':'f'}${r.t}" type="button">Collect</button>`:`<span class="ppbtn lk">Tier ${r.t}</span>`;
+  return `<div class="ppcard ${k}${got?' got':open&&!locked?' open':' lock'}" data-t="${r.t}" data-trk="${r.prem?'p':'f'}">${got?'<span class="ppchk">✓</span>':open&&!locked?'':`<span class="pplk">${PP_LOCK}</span>`}`+
+    `<div class="ppart">${passPrev(r)}</div><span class="ppname">${escapeHTML(passName(r))}</span><span class="pprib">${r.jack?'Jackpot':passKind(r)}</span>${btn}</div>`; }
+const ppRec=id=>id[0]==='p'?PASSP[+id.slice(1)-1]:PASS[+id.slice(1)-1];
 function buildPass(){
-  const pt=passTier(), ready=passReady(), qr=pqReady();
+  const pt=passTier(), ready=passReady(), qr=pqReady(), plus=passPlus();
   $('ppTier').textContent=`Tier ${pt.t} / ${PASS_TIERS}`;
   $('ppNext').textContent=pt.t>=PASS_TIERS?'MAX':`${pt.into.toLocaleString()} / ${pt.need.toLocaleString()}`;
   $('ppNextT').innerHTML=`<span class="ppnode">${pt.t>=PASS_TIERS?'★':pt.t+1}</span>`;
   $('ppFill').style.width=(pt.t>=PASS_TIERS?100:pt.into/pt.need*100)+'%';
   const cta=$('ppClaimAll'); cta.classList.toggle('alt',!ready);
   cta.textContent=ready?`Claim all (${ready})`:qr?`Quests ready (${qr})`:ppTab==='quests'?'See rewards':'See quests';
+  const pr=PRODUCTS.find(p=>p.id===PASS_PRICE_ID);
+  $('ppBuy').hidden=plus; $('ppBuy').innerHTML=`<b>Unlock Pulse Pass+</b><small>${escapeHTML(iapPrice(pr))} · 6 blocks and more</small>`;
+  $('ppPlusOn').hidden=!plus; $('passOv').classList.toggle('plus',plus);
   $('ppQDot').hidden=!qr;
   document.querySelectorAll('#passOv .pptabs button').forEach(b=>b.classList.toggle('on',b.dataset.pt===ppTab));
   $('ppRewards').hidden=ppTab!=='rewards'; $('ppQuests').hidden=ppTab!=='quests';
-  $('ppTrack').innerHTML=PASS.map(r=>{ const got=passGot(r.t), open=r.t<=pt.t, eqable=r.kind!=='notes';
-    const k=r.t===100?'k-skin grand':r.jack?'k-jack':'k-'+r.kind;
-    const btn=got?(eqable&&!passEquipped(r)?`<button class="ppbtn eq" data-ppeq="${r.t}" type="button">Equip</button>`:`<button class="ppbtn done" type="button" disabled>${eqable?'Equipped':'Collected'}</button>`)
-      :open?`<button class="ppbtn" data-ppc="${r.t}" type="button">Collect</button>`:`<span class="ppbtn lk">Tier ${r.t}</span>`;
-    return `<div class="ppcol"><div class="ppcard ${k}${got?' got':open?' open':' lock'}" data-t="${r.t}">${got?'<span class="ppchk">✓</span>':open?'':`<span class="pplk">${PP_LOCK}</span>`}`+
-      `<div class="ppart">${passPrev(r)}</div><span class="ppname">${escapeHTML(passName(r))}</span><span class="pprib">${r.jack?'Jackpot':passKind(r)}</span>${btn}</div>`+
-      `<div class="pprail${open?' on':''}"><span class="ppnode">${r.t}</span></div></div>`; }).join('');
+  $('ppTrack').innerHTML=PASS.map((r,i)=>`<div class="ppcol">${ppCard(PASSP[i],pt)}${ppCard(r,pt)}`+
+    `<div class="pprail${r.t<=pt.t?' on':''}"><span class="ppnode">${r.t}</span></div></div>`).join('');
   $('ppTrack').querySelectorAll('canvas.tileprev').forEach(c=>drawTilePreview(c,tilesById(c.dataset.tile)));
-  $('ppTrack').querySelectorAll('[data-ppc]').forEach(b=>b.onclick=()=>{ const t=+b.dataset.ppc, r=PASS[t-1]; if(!passClaim(t)) return; if(A.ctx) sGem(); buzz(15);
-    toast(r.kind==='notes'?`+${passName(r)} Notes`:`${passName(r)} unlocked!`); buildPass(); });
-  $('ppTrack').querySelectorAll('[data-ppeq]').forEach(b=>b.onclick=()=>{ const r=PASS[+b.dataset.ppeq-1]; equip(r.kind==='skin'?'skin':r.kind==='tiles'?'tiles':r.kind==='pack'?'pack':'banner',r.id);
+  $('ppTrack').querySelectorAll('[data-ppc]').forEach(b=>b.onclick=()=>{ const r=ppRec(b.dataset.ppc); if(!passClaimR(r)) return; if(A.ctx) sGem(); buzz(15);
+    toast(r.kind==='notes'?`+${passName(r)} Notes`:r.kind==='revive'?`+${r.n} boss revive tokens`:`${passName(r)} unlocked!`); buildPass(); });
+  $('ppTrack').querySelectorAll('[data-ppeq]').forEach(b=>b.onclick=()=>{ const r=ppRec(b.dataset.ppeq); equip(r.kind==='skin'?'skin':r.kind==='tiles'?'tiles':r.kind==='pack'?'pack':'banner',r.id);
     if(r.kind==='skin'){ G.players=[mkPlayer(0)]; netHello(); } if(r.kind==='banner') lbRename(); if(A.ctx) sGem(); buildPass(); });
-  $('ppMiles').innerHTML=PASS.filter(r=>r.kind==='skin'||r.jack).map(r=>{ const on=r.t<=pt.t, got=passGot(r.t);
+  $('ppTrack').querySelectorAll('[data-ppbuy]').forEach(b=>b.onclick=ppBuyOpen);
+  const miles=PASS.concat(PASSP).filter(r=>r.kind==='skin'||r.jack).sort((a,b)=>a.t-b.t||(a.prem?1:-1));
+  $('ppMiles').innerHTML=miles.map(r=>{ const on=r.t<=pt.t, got=rGot(r), lk=r.prem&&!plus;
     const art=r.kind==='skin'?`<canvas class="skprev" data-skin="${r.id}" data-px="44" width="44" height="44"></canvas>`:'<span class="ppmj">♪</span>';
-    return `<button type="button" class="ppm${on?' on':''}${got?' got':''}${r.t===100?' grand':''}" data-goto="${r.t}" title="Tier ${r.t}: ${escapeHTML(passName(r))}">${art}<b>${r.t}</b>${on&&!got?'<i class="ppmdot"></i>':''}</button>`; }).join('');
+    return `<button type="button" class="ppm${on&&!lk?' on':''}${got?' got':''}${r.prem?' pm':''}${r.t===100&&r.prem?' grand':''}" data-goto="${r.t}" title="Tier ${r.t}${r.prem?' (Pass+)':''}: ${escapeHTML(passName(r))}">${art}<b>${r.t}</b>${r.prem?'<i class="ppmplus">+</i>':''}${on&&!got&&!lk?'<i class="ppmdot"></i>':''}</button>`; }).join('');
   $('ppMiles').querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>ppScrollTo(+b.dataset.goto,true));
   buildPassQuests();
-  if(ppTab==='rewards'&&!$('ppTrack').dataset.scrolled){ $('ppTrack').dataset.scrolled='1'; setTimeout(()=>{ const c=$('ppTrack').querySelector(`.ppcard[data-t="${Math.max(1,Math.min(PASS_TIERS,pt.t+1))}"]`); if(c){ const col=c.parentNode; $('ppTrack').scrollLeft=Math.max(0,col.offsetLeft-$('ppTrack').offsetLeft-$('ppTrack').clientWidth/2+col.offsetWidth/2); } },0); }
+  if(ppTab==='rewards'&&!$('ppTrack').dataset.scrolled){ $('ppTrack').dataset.scrolled='1'; setTimeout(()=>ppScrollTo(Math.max(1,Math.min(PASS_TIERS,pt.t+1)),false),0); }
   $('walletPP').textContent=notesTxt();
 }
 function ppScrollTo(t,smooth){ const tr=$('ppTrack'), c=tr.querySelector(`.ppcard[data-t="${t}"]`); if(!c) return; const col=c.parentNode;
   tr.scrollTo({left:Math.max(0,col.offsetLeft-tr.offsetLeft-tr.clientWidth/2+col.offsetWidth/2),behavior:smooth?'smooth':'auto'});
-  if(smooth){ c.classList.remove('ping'); void c.offsetWidth; c.classList.add('ping'); } }
+  if(smooth){ col.classList.remove('ping'); requestAnimationFrame(()=>col.classList.add('ping')); } }
 document.querySelectorAll('#passOv .ppsc').forEach(b=>b.onclick=()=>{ const tr=$('ppTrack'); tr.scrollBy({left:+b.dataset.sc*tr.clientWidth*.8,behavior:'smooth'}); });
 $('ppTrack').addEventListener('scroll',()=>{ const tr=$('ppTrack'); $('passOv').querySelector('.ppsc.l').classList.toggle('off',tr.scrollLeft<8); $('passOv').querySelector('.ppsc.r').classList.toggle('off',tr.scrollLeft>tr.scrollWidth-tr.clientWidth-8); },{passive:true});
+/* the Pulse Pass+ offer: what it gives, and the buy button */
+function ppBuyOpen(){ const pr=PRODUCTS.find(p=>p.id===PASS_PRICE_ID), pt=passTier().t;
+  const now=PASSP.filter(r=>r.t<=pt), nNow=now.length, notes=PASSP.filter(r=>r.kind==='notes').reduce((a,r)=>a+r.n,0);
+  $('opbSkins').innerHTML=Object.values(PREM_SKINS).map(id=>`<span class="pbsk"><canvas class="skprev" data-skin="${id}" data-px="64" width="64" height="64"></canvas><small>${escapeHTML(skinById(id).name)}</small></span>`).join('');
+  $('opbList').innerHTML=[`<b>6 Pass blocks</b>, including the tier-100 <b>Pulse Sovereign</b>`,`<b>2 tile themes</b> and <b>3 banners</b> only found in Pass+`,`<b>♪${notes.toLocaleString()} Notes</b> across the season (with a ♪5,000 jackpot)`,`<b>10 boss revive tokens</b>`,`<b>+25% Pass XP</b> from every run, so you climb faster`]
+    .map(t=>`<li>${t}</li>`).join('');
+  $('opbNow').textContent=nNow?`You're on tier ${pt}: ${nNow} Pass+ reward${nNow>1?'s':''} unlock the moment you buy.`:'Every Pass+ reward unlocks as you reach its tier.';
+  $('opbBuy').textContent=`Unlock for ${iapPrice(pr)}`; $('opbBuy').disabled=IAP.busy;
+  showOv('ppBuyOv'); }
+$('ppBuy').onclick=ppBuyOpen;
+$('opbBuy').onclick=()=>iapBuy(PASS_PRICE_ID);
+$('opbBack').onclick=()=>{ showOv('passOv'); buildPass(); };
 function showPass(){ $('ppTrack').dataset.scrolled=''; ppTab='rewards'; buildPass(); showOv('passOv'); }
 $('mPass').onclick=showPass;
 /* ================= MONETIZATION: rewarded ads (boss revives) and in-app purchases =================
@@ -7195,7 +7315,8 @@ const PRODUCTS=[
   {id:'pf_notes_6000',kind:'notes',n:6000,price:'$4.99',name:'Chest of Notes',tag:'+20%',art:3},
   {id:'pf_notes_13000',kind:'notes',n:13000,price:'$9.99',name:'Vault of Notes',tag:'Best value',art:4},
   {id:'pf_starter',kind:'starter',n:2500,rev:5,price:'$1.99',name:'Starter Bundle',once:true},
-  {id:'pf_no_ads',kind:'noads',price:'$2.99',name:'No Ads',once:true}];
+  {id:'pf_no_ads',kind:'noads',price:'$2.99',name:'No Ads',once:true},
+  {id:'pf_pass_s1',kind:'pass',price:'$4.99',name:'Pulse Pass+ (Season 1)',once:true}];
 /* Premium blocks: one store product each (non-consumable), $1.99 to $4.99 */
 const PREMIUM_PRICES={sk_clock:'$1.99',sk_magma:'$2.99',sk_core:'$2.99',sk_aurora:'$2.99',sk_kitsune:'$3.99',sk_pharaoh:'$3.99',sk_paladin:'$3.99',sk_prism:'$4.99',sk_lich:'$4.99',sk_horizon:'$4.99'};
 SKINS.filter(s=>s.paid).forEach(s=>PRODUCTS.push({id:s.paid,kind:'skin',skin:s.id,price:PREMIUM_PRICES[s.id]||'$2.99',name:s.name,once:true}));
@@ -7263,6 +7384,7 @@ function iapGrant(id,tx){ const pr=PRODUCTS.find(p=>p.id===id); if(!pr) return f
   if(pr.kind==='notes'){ SAVE.notes+=pr.n; toast(`+♪${pr.n.toLocaleString()} Notes. Thank you!`); }
   if(pr.kind==='starter'){ SAVE.starterBought=true; SAVE.notes+=pr.n; SAVE.revives=(SAVE.revives||0)+pr.rev; toast(`Starter Bundle: +♪${pr.n.toLocaleString()} and ${pr.rev} revive tokens!`); }
   if(pr.kind==='noads'){ SAVE.noAds=true; toast('No Ads: boss revives are now free. Thank you!'); }
+  if(pr.kind==='pass'){ passS().prem=true; toast('Pulse Pass+ unlocked! Your Pass+ rewards are ready to collect.'); if(!$('ppBuyOv').hidden){ showOv('passOv'); } if(!$('passOv').hidden) buildPass(); }
   if(pr.kind==='skin'){ if(!SAVE.owned.includes(pr.skin)) SAVE.owned.push(pr.skin); equip('skin',pr.skin); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; try{ netHello(); }catch(e){} toast(`${pr.name} is yours! Equipped.`); }
   if(A.ctx) sGem(); buzz(30); save(); if(typeof acctPush==='function') acctPush(true); return true; }
 async function iapBuy(id){ const pr=PRODUCTS.find(p=>p.id===id); if(!pr||IAP.busy) return;
@@ -7285,6 +7407,7 @@ function moneyHTML(){
   const pk=p=>`<button type="button" class="mpack a${p.art}" data-iap="${p.id}" ${IAP.busy?'disabled':''}>${p.tag?`<em>${p.tag}</em>`:''}<span class="mpic">${'♪'.repeat(Math.min(3,p.art))}</span><b>♪${p.n.toLocaleString()}</b><small>${escapeHTML(p.name)}</small><span class="mprice">${escapeHTML(iapPrice(p))}</span></button>`;
   let sp='';
   if(!SAVE.starterBought) sp+=`<button type="button" class="mspecial starter" data-iap="${st.id}" ${IAP.busy?'disabled':''}><span class="msico">🎁</span><span class="mstxt"><b>Starter Bundle</b><small>♪${st.n.toLocaleString()} + ${st.rev} boss revive tokens · one time only</small></span><span class="mprice">${escapeHTML(iapPrice(st))}</span></button>`;
+  if(!passPlus()){ const pp=PRODUCTS.find(p=>p.id===PASS_PRICE_ID); sp+=`<button type="button" class="mspecial passplus" data-ppoffer="1"><span class="msico">♛</span><span class="mstxt"><b>Pulse Pass+</b><small>6 Pass blocks, exclusive tiles and banners, Notes, revives, +25% Pass XP</small></span><span class="mprice">${escapeHTML(iapPrice(pp))}</span></button>`; }
   sp+=SAVE.noAds?`<div class="mspecial owned"><span class="msico">✓</span><span class="mstxt"><b>No Ads</b><small>Boss revives are free. Thanks for the support!</small></span></div>`
     :`<button type="button" class="mspecial noads" data-iap="${na.id}" ${IAP.busy?'disabled':''}><span class="msico">🚫</span><span class="mstxt"><b>No Ads</b><small>Revive in boss fights without watching ads</small></span><span class="mprice">${escapeHTML(iapPrice(na))}</span></button>`;
   const note=iapLive()?'':(isNativeApp()?'<p class="mnote">Connecting to the store…</p>':ADS.test?'<p class="mnote">Test mode: purchases here are pretend and free.</p>':'<p class="mnote">Notes packs and bundles can be bought in the Pulseform app.</p>');
@@ -7294,7 +7417,7 @@ function moneyHTML(){
   return `<div class="mhead"><b>Premium Blocks</b><span class="mrev pr">Animated · own landing effect</span></div><div class="mprems">${prem.map(pb).join('')}</div><div class="mhead"><b>Get Notes</b>${(SAVE.revives||0)?`<span class="mrev">♥ ${SAVE.revives} revive token${SAVE.revives>1?'s':''}</span>`:''}</div><div class="mpacks">${packs.map(pk).join('')}</div><div class="mspecials">${sp}</div>${note}`+
     (isNativeApp()?'<button type="button" class="mrestore" id="iapRestore">Restore purchases</button>':''); }
 function moneyRender(){ const box=$('shopMoney'); if(!box) return; const on=shopMode==='shop'; box.hidden=!on; if(!on) return;
-  box.innerHTML=moneyHTML(); box.querySelectorAll('[data-iap]').forEach(b=>b.onclick=()=>iapBuy(b.dataset.iap));
+  box.innerHTML=moneyHTML(); box.querySelectorAll('[data-iap]').forEach(b=>b.onclick=()=>iapBuy(b.dataset.iap)); box.querySelectorAll('[data-ppoffer]').forEach(b=>b.onclick=()=>{ $('ppTrack').dataset.scrolled=''; ppTab='rewards'; buildPass(); ppBuyOpen(); });
   box.querySelectorAll('[data-peq]').forEach(b=>b.onclick=()=>{ equip('skin',b.dataset.peq); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; try{ netHello(); }catch(e){} buildShop(); }); const r=$('iapRestore'); if(r) r.onclick=()=>iapRestore(false); }
 if(isNativeApp()) setTimeout(()=>{ iapInit(); adsInit(); },1500);
 
@@ -7333,8 +7456,9 @@ function tabSync(){
 }
 setInterval(tabSync,200); PHONE_MQ.addEventListener&&PHONE_MQ.addEventListener('change',tabSync); setTimeout(tabSync,0); $('ppBack').onclick=()=>toMenu();
 document.querySelectorAll('#passOv .pptabs button').forEach(b=>b.onclick=()=>{ ppTab=b.dataset.pt; if(ppTab==='rewards') $('ppTrack').dataset.scrolled=''; buildPass(); });
-$('ppClaimAll').onclick=()=>{ let n=0, notes=0; for(let t=1;t<=passTier().t;t++) if(!passGot(t)){ const r=PASS[t-1]; if(passClaim(t)){ n++; if(r.kind==='notes') notes+=r.n; } }
-  if(n){ if(A.ctx) sGem(); buzz(20); toast(`Collected ${n} reward${n>1?'s':''}${notes?` (+♪${notes.toLocaleString()})`:''}`); }
+$('ppClaimAll').onclick=()=>{ let n=0, notes=0, rev=0; const top=passTier().t, plus=passPlus();
+  for(let t=1;t<=top;t++) for(const r of plus?[PASS[t-1],PASSP[t-1]]:[PASS[t-1]]) if(!rGot(r)&&passClaimR(r)){ n++; if(r.kind==='notes') notes+=r.n; if(r.kind==='revive') rev+=r.n; }
+  if(n){ if(A.ctx) sGem(); buzz(20); toast(`Collected ${n} reward${n>1?'s':''}${notes?` (+♪${notes.toLocaleString()})`:''}${rev?` · +${rev} revive tokens`:''}`); }
   else { ppTab=pqReady()?'quests':ppTab==='quests'?'rewards':'quests'; if(ppTab==='rewards') $('ppTrack').dataset.scrolled=''; }
   buildPass(); };
 
@@ -8642,47 +8766,61 @@ function drawGhost(L,now){
   const sx=L.ox+(x+.5)*L.tw, sy=L.oy+(y+.5)*L.th-lift-L.th*.95; cx.globalAlpha=.55; cx.font='700 9px Unbounded, system-ui, sans-serif'; cx.textAlign='center'; cx.fillStyle='#DCE6FF'; cx.fillText('BEST',sx,sy); cx.globalAlpha=1;
 }
 
-/* ================= DAILY GIFT ================= */
-const GIFT=[25,35,45,55,70,90,225];
-/* The daily gift is a one-time set of seven, tied to your account:
-   - it only appears while you're signed in (and after your account has synced, so another device's progress counts);
-   - gift.day is how many you've claimed. It only ever goes up, one a day, and missing days never resets it;
-   - once the 7th is claimed, gift.done is set and the gift never appears on that account again (not even after "erase progress"). */
+/* ================= DAILY GIFT =================
+   A login calendar that never ends: one gift a day while you're signed in (and after your account has synced, so another
+   device's progress counts). It cycles through a week of rewards, and the 7th day is a big chest. Missing a day never
+   resets your place. gift.day counts every gift you've opened, and it also unlocks milestone rewards at 14, 30, 60 and
+   100 days (two of them are banners you can't get any other way). */
+const GIFT=[{n:100},{n:150},{rev:1},{n:200},{px:600},{n:300},{n:600,rev:2,px:1000,xp:150,big:true}];
+const GIFT_MILES=[{d:14,n:1000},{d:30,n:1500,banner:'b_devoted'},{d:60,n:2500,rev:5},{d:100,n:5000,banner:'b_centurion'}];
 const giftSigned=()=>!!(ACCT.user&&SAVE.linked===ACCT.user.uid&&ACCT.lastSync);
 function giftState(){
   const g=SAVE.gift||(SAVE.gift={date:'',last:'',streak:0});
-  if(g.day==null){ g.day=Math.min(7,g.streak||0); if(g.day>=7) g.done=true; }   // saves from before this rule: carry over how far they got
+  if(g.day==null) g.day=Math.min(7,g.streak||0);   // saves from before gift.day: carry over how far they got
+  if(!Array.isArray(g.miles)) g.miles=[];
   return g;
 }
+function giftDays(){ return (SAVE.gift&&SAVE.gift.day)||0; }
+const giftLbl=r=>r.big?'Chest':r.n?`♪${r.n}`:r.rev?`♥ ×${r.rev}`:r.px?`+${r.px} Pass XP`:'';
+const giftIco=r=>r.big?'chest':r.n?'notes':r.rev?'rev':'px';
+function giftGive(r){ const out=[]; if(r.n){ SAVE.notes+=r.n; out.push(`♪${r.n.toLocaleString()}`); }
+  if(r.rev){ SAVE.revives=(SAVE.revives||0)+r.rev; out.push(`${r.rev} revive token${r.rev>1?'s':''}`); }
+  if(r.px){ const before=passTier().t; passS().xp=(passS().xp||0)+r.px; const up=passTier().t-before; out.push(`${r.px} Pass XP${up?` (tier ${passTier().t}!)`:''}`); }
+  if(r.xp){ const x=addXP(r.xp); out.push(`${r.xp} XP`+(x.after>x.before?` · Rank up! ${rankName(x.after)}`:'')); }
+  if(r.banner){ out.push(`the ${bannerById(r.banner).name} banner`); }
+  return out; }
 function giftCheck(){
   const today=todayKey(), g=giftState();
-  if(!giftSigned()||g.done||g.date===today||!$('giftOv')||G.state!=='menu') return false;
+  if(!giftSigned()||g.date===today||!$('giftOv')||G.state!=='menu') return false;
   if(!$('twinWinOv').hidden||!$('cvkWinOv').hidden) return false;   // a champion's popup comes first
-  const day=Math.min(7,(g.day||0)+1);   // the next gift in the set of 7: your place is kept even if you miss days
-  $('giftDays').innerHTML=GIFT.map((n,i)=>`<div class="gday${i+1<day?' got':i+1===day?' now':''}${i===6?' big':''}"><b>Day ${i+1}</b><span>♪${n}</span></div>`).join('');
-  $('giftTitle').textContent=day===7?'Day 7: the big chest!':`Day ${day} gift`;
-  $('giftSub').textContent=day===7?'The last gift of the seven. Enjoy it!':`Gift ${day} of 7. Come back tomorrow for the next one. Your place is saved to your account, even if you miss a day.`;
-  const box=$('giftBox'); box.className='present d'+day; $('giftBurst').innerHTML=''; $('giftPrize').textContent=''; $('giftTap').textContent='Tap the present';
+  const total=(g.day||0)+1, day=((total-1)%7)+1, R=GIFT[day-1], mile=GIFT_MILES.find(m=>m.d===total), next=GIFT_MILES.find(m=>m.d>total);
+  $('giftDays').innerHTML=GIFT.map((r,i)=>`<div class="gday g-${giftIco(r)}${i+1<day?' got':i+1===day?' now':''}${r.big?' big':''}"><b>Day ${i+1}</b><span>${giftLbl(r)}</span></div>`).join('');
+  $('giftTitle').textContent=mile?`Day ${total}: milestone!`:day===7?'Day 7: the big chest!':`Day ${day} gift`;
+  $('giftSub').textContent=(mile?`${total} days! Today's milestone bonus: ♪${mile.n.toLocaleString()}${mile.banner?` and the ${bannerById(mile.banner).name} banner`:''}${mile.rev?` and ${mile.rev} revive tokens`:''}. `:'')+(day===7?'Come back tomorrow and a new week of gifts begins.':`Come back tomorrow for the next one. Missing a day never resets your place.`);
+  $('giftMile').innerHTML=`<b>${total}</b> day${total>1?'s':''} logged in`+(next?` · next milestone at <b>${next.d}</b>: ♪${next.n.toLocaleString()}${next.banner?` + ${escapeHTML(bannerById(next.banner).name)} banner`:''}${next.rev?` + ${next.rev} revives`:''}`:'');
+  const box=$('giftBox'); box.className='present d'+day+(mile?' mile':''); $('giftBurst').innerHTML=''; $('giftPrize').textContent=''; $('giftTap').textContent='Tap the present';
   $('giftClaim').hidden=false; $('giftClose').hidden=true; $('giftGot').textContent='';
   let opening=false;
   const claim=()=>{ if(opening) return; opening=true;
-    { const c=giftState(); if(!giftSigned()||c.done||c.date===today||(c.day||0)>=day){ toMenu(); return; } }   // already claimed elsewhere (or signed out) since this opened
-    const n=GIFT[day-1]; SAVE.notes+=n; let x=''; if(day===7){ const r=addXP(150); x=' and 150 XP'+(r.after>r.before?` · Rank up! ${rankName(r.after)}`:''); }
+    { const c=giftState(); if(!giftSigned()||c.date===today||(c.day||0)>=total){ toMenu(); return; } }   // already claimed elsewhere (or signed out) since this opened
+    const got=giftGive(R);
     const gs=giftState();   // read it again: a sync may have swapped the save since the gift opened
-    gs.date=today; gs.last=today; gs.day=Math.max(gs.day||0,day); gs.streak=Math.max(gs.streak||0,day); if(gs.day>=7) gs.done=true;   // all seven claimed: the daily gift never comes back on this account
+    gs.date=today; gs.last=today; gs.day=Math.max(gs.day||0,total); gs.streak=Math.max(gs.streak||0,gs.day);
+    if(mile&&!gs.miles.includes(mile.d)){ gs.miles.push(mile.d); got.push(...giftGive(mile)); }
     save(); acctPush(true); $('giftClaim').hidden=true; $('giftTap').textContent='';
-    const t=A.ctx?A.ctx.currentTime:0, fast=RM();
+    const t=A.ctx?A.ctx.currentTime:0, fast=RM(), big=day===7||!!mile;
     if(A.ctx) for(let k=0;k<5;k++) tone(A.sfx,t+k*.09,'triangle',520+k*70,.05,.002,.07);
     box.classList.add('shake');
-    setTimeout(()=>{ box.classList.remove('shake'); box.classList.add('open'); giftBurst(day===7);
-      if(A.ctx){ const t2=A.ctx.currentTime; [523,659,784,1047].forEach((f,k)=>tone(A.sfx,t2+k*.07,'sine',f,.09,.004,.5)); if(day===7) [1319,1568].forEach((f,k)=>tone(A.sfx,t2+.3+k*.08,'sine',f,.08,.004,.6)); sGem(); }
-      const t0=performance.now(), cnt=()=>{ const u=Math.min(1,(performance.now()-t0)/700); $('giftPrize').textContent='+♪'+Math.round(n*(1-Math.pow(1-u,3))); if(u<1) requestAnimationFrame(cnt); }; cnt();
-      $('giftGot').textContent=x?x.replace(/^ and /,'+'):''; $('giftClose').hidden=false; $('giftClose').focus(); achCheck(); }, fast?0:560); };
+    setTimeout(()=>{ box.classList.remove('shake'); box.classList.add('open'); giftBurst(big);
+      if(A.ctx){ const t2=A.ctx.currentTime; [523,659,784,1047].forEach((f,k)=>tone(A.sfx,t2+k*.07,'sine',f,.09,.004,.5)); if(big) [1319,1568].forEach((f,k)=>tone(A.sfx,t2+.3+k*.08,'sine',f,.08,.004,.6)); sGem(); }
+      const n=(R.n||0)+(mile&&mile.n||0);
+      if(n){ const t0=performance.now(), cnt=()=>{ const u=Math.min(1,(performance.now()-t0)/700); $('giftPrize').textContent='+♪'+Math.round(n*(1-Math.pow(1-u,3))); if(u<1) requestAnimationFrame(cnt); }; cnt(); }
+      else $('giftPrize').textContent=R.rev?`+${R.rev} ♥`:`+${R.px} XP`;
+      $('giftGot').textContent=got.join(' · '); $('giftClose').hidden=false; $('giftClose').focus(); achCheck(); }, fast?0:560); };
   $('giftClaim').onclick=claim; box.onclick=claim;
   $('giftClose').onclick=()=>toMenu();
   showOv('giftOv'); return true;
 }
-
 function giftBurst(big){
   const b=$('giftBurst'), cols=['#FFD166','#FF7EB6','#7EC8FF','#8FF0B0','#C9A6FF','#FFFFFF'], n=big?60:38; let h='';
   for(let k=0;k<n;k++){ const a=Math.random()*Math.PI*2, d=70+Math.random()*(big?150:110), x=Math.cos(a)*d, y=Math.sin(a)*d*.8-60-Math.random()*50, note=k%6===0;
@@ -8724,7 +8862,7 @@ const ACH=[
  ['endless10','Endless Echo','Clear 10 rooms in one Endless run',()=>LF('endlessRooms')>=10],
  ['daily','Daily Dose','Finish a Daily Challenge',()=>LF('dailies')>=1],
  ['daily7','Weekly Ritual','Keep a 7-day Daily streak',()=>SAVE.daily.streak>=7],
- ['gift7','Loyal','Open all 7 daily gifts',()=>!!SAVE.gift&&(SAVE.gift.done||(SAVE.gift.day||0)>=7||(SAVE.gift.streak||0)>=7)],
+ ['gift7','Loyal','Open 7 daily gifts',()=>!!SAVE.gift&&(SAVE.gift.done||(SAVE.gift.day||0)>=7||(SAVE.gift.streak||0)>=7)],
  ['duel','First Knockout','Win a duel',()=>LF('duelWins')>=1],
  ['online','Long Distance','Finish an online match',()=>LF('online')>=1],
  ['studio','Your Song','Finish a song of your own in Studio',()=>LF('songs')>=1],
@@ -10273,7 +10411,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['reviveOv','modOv','remixOv','passOv','pollOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
+const OVS=['ppBuyOv','reviveOv','modOv','remixOv','passOv','pollOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -10628,7 +10766,7 @@ function loop(ts){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners')) drawSkinPreviews(now); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners')) drawSkinPreviews(now); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
