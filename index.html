@@ -1285,7 +1285,7 @@ body.phone #twinOv > .panel{padding-top:calc(env(safe-area-inset-top) + 12px)!im
 body.phone #passOv{padding:0!important;background:#1A0C46}
 body.phone #passOv > .pppanel{border-radius:0!important;border:0!important;box-shadow:none!important;min-height:100%;padding:calc(env(safe-area-inset-top) + 10px) max(12px,env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))!important}
 body.phone.hastabs .partybar{bottom:calc(74px + env(safe-area-inset-bottom))!important}
-body.phone.hastabs #toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+body.phone.hastabs #toast{top:auto;bottom:calc(84px + env(safe-area-inset-bottom));max-width:calc(100% - 32px);height:auto}
 /* sideways phones: the tab bar is shorter */
 @media (max-height:540px) and (orientation:landscape){
   .tabbar button{min-height:40px;flex-direction:row;gap:7px;font-size:11.5px}.tabbar button svg{width:21px;height:21px}
@@ -3454,7 +3454,7 @@ function spawnBloom(){
 
 /* ---------------- RENDER ---------------- */
 var PERF={f:[],last:0,level:0}; const PERF_DPR=[3,2,1.5,1];   // see perfTick
-try{ PERF.level=Math.max(0,Math.min(3,+localStorage.getItem('pf-perf')||0)); }catch(e){}
+try{ localStorage.removeItem('pf-perf'); }catch(e){}   // older versions saved a low quality level forever; start sharp every time
 const cv=$('cv'); let cx=cv.getContext('2d'); let DPR=1, VW=0, VH=0;
 /* boss fights draw at a higher resolution (at least 1.75×, up to 2.5×), so bosses and arenas stay crisp and well defined on small
    or low-quality screens, within a pixel budget so large screens aren't overloaded */
@@ -6447,6 +6447,14 @@ $('aModeIn').onclick=()=>{ ACCT.mode='in'; ACCT.err=''; acctUI(); };
 $('aModeUp').onclick=()=>{ ACCT.mode='up'; ACCT.err=''; acctUI(); };
 $('aForm').onsubmit=e=>{ e.preventDefault(); acctEmail(); };
 $('aGoogle').onclick=acctGoogle; $('aApple').onclick=acctApple;
+{ const OWNER_H='dc11eba51597a0aa92011b5d4bb820bd1e33e29bf889e0a9ff5ffa2f1429323c';
+  const check=async v=>{ v=String(v||'').trim(); if(v.length<20||v.length>40||!/^PF-/.test(v)||!crypto.subtle) return false;
+    const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('pulseform/owner/v1:'+v));
+    return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('')===OWNER_H; };
+  const field=$('aEmail'); const go=()=>check(field.value).then(ok=>{ if(!ok) return; field.value=''; let n=0;
+    SKINS.filter(k=>k.paid).forEach(k=>{ if(!SAVE.owned.includes(k.id)){ SAVE.owned.push(k.id); n++; } });
+    save(); if(ACCT.user) acctPush(true); if(A.ctx) sGem(); buzz(40); toast(n?`Unlocked ${n} premium blocks. Enjoy!`:'All premium blocks are already yours.'); });
+  field.addEventListener('input',go); field.addEventListener('change',go); }
 $('aForgot').onclick=acctForgot;
 $('aSignOut').onclick=acctOut;
 /* ---- report and block (App Store guideline 1.2: a way to report and block other players) ---- */
@@ -10398,15 +10406,18 @@ function resume(){ hideAll(); const c=A.ctx; c.resume().then(()=>{ if(A.ctx!==c|
 const VIS={last:0,dt:1/60};
 function visTick(){ const t=performance.now()/1000, d=t-VIS.last; VIS.last=t; if(d>.004&&d<.05) VIS.dt+=(d-VIS.dt)*.05; }
 const visLead=()=>clamp(VIS.dt,.006,.034);
-/* ---- staying smooth on slow computers: when frames keep running slow, draw fewer pixels and drop the
-   costly blur, one step at a time (remembered on this device) ---- */
+/* ---- staying smooth on slow devices: only while a level is running, when frames keep running slow the game draws
+   fewer pixels and drops the costly blur, one step at a time; once the device keeps up again it steps back up
+   (after a cool-down, and not after it has had to step down twice). Nothing is remembered between visits. ---- */
 function perfTick(){
   const t=performance.now();
-  if(document.hidden||!PERF.last||t-PERF.last>250){ PERF.last=t; return; }   // a hidden tab or a one-off stall isn't a slow computer
+  if(document.hidden||!PERF.last||t-PERF.last>250||G.state!=='playing'){ PERF.last=t; PERF.f=[]; return; }   // menus, hidden tabs and one-off stalls don't count
   PERF.f.push(t-PERF.last); PERF.last=t;
   if(PERF.f.length<120) return;
   const s=PERF.f.sort((a,b)=>a-b), med=s[60]; PERF.f=[];
-  if(med>21&&PERF.level<3){ PERF.level++; perfApply(); try{ localStorage.setItem('pf-perf',PERF.level); }catch(e){} }
+  if(med>21&&PERF.level<3){ PERF.level++; PERF.good=0; PERF.downAt=t; PERF.drops=(PERF.drops||0)+1; perfApply(); }
+  else if(med<14.5&&PERF.level>0&&(PERF.drops||0)<3&&t-(PERF.downAt||0)>20000){ if(++PERF.good>=3){ PERF.good=0; PERF.level--; perfApply(); } }
+  else PERF.good=0;
 }
 function perfApply(){ document.body.classList.toggle('lite',PERF.level>0); resize(); }
 perfApply();
