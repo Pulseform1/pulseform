@@ -525,7 +525,8 @@ body.hween #menuOv .logo{text-shadow:0 0 34px rgba(255,122,24,.28)}
 }
 
 /* CrazyGames build: nothing that needs an outside account or leaves the site */
-body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.cg .edmine button[data-a=share],body.cg #evBoard,body.cg #evBoard+*,body.cg .evlblb{display:none!important}
+#passOv.cgfree .pplabels{display:none}#passOv.cgfree .pptw{padding-left:0}#passOv.cgfree .pptw .ppsc.l{left:-8px}
+body.cg a.pplink,body.cg #setDel,body.cg .mspecial.passplus,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.cg .edmine button[data-a=share],body.cg #evBoard,body.cg #evBoard+*,body.cg .evlblb{display:none!important}
 .cgav{width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px}
 /* level editor */
 .edpanel{width:min(1040px,96vw);max-width:none}
@@ -1417,7 +1418,7 @@ body.phone .overlay .panel > .head:first-child .back{font-size:15px;padding:8px 
 body.phone #twinOv > .panel{padding-top:calc(env(safe-area-inset-top) + 12px)!important}
 /* ---- Pulse Pass: two rows per tier (Pass+ on top, free below) ---- */
 .ppcol{width:158px;gap:8px}.ppcol:has(.grand){width:214px}
-.ppcol .ppcard{width:auto;min-height:0;height:220px;overflow:hidden}
+.ppcol .ppcard{width:auto;min-height:0;height:220px}
 .ppcol .ppcard canvas.skprev{width:96px;height:96px}.ppcol .ppcard.k-skin canvas.skprev{width:124px;height:124px}.ppcol .ppcard.grand canvas.skprev{width:128px;height:128px}
 .ppcol .ppart{min-height:84px}
 .ppcard.prem{border-color:#7A4A00;box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 5px 0 rgba(0,0,0,.45),0 0 0 2px #FFD166}
@@ -7262,12 +7263,13 @@ function buildPass(){
   const cta=$('ppClaimAll'); cta.classList.toggle('alt',!ready);
   cta.textContent=ready?`Claim all (${ready})`:qr?`Quests ready (${qr})`:ppTab==='quests'?'See rewards':'See quests';
   const pr=PRODUCTS.find(p=>p.id===PASS_PRICE_ID);
-  $('ppBuy').hidden=plus; $('ppBuy').innerHTML=`<b>Unlock Pulse Pass+</b><small>${escapeHTML(iapPrice(pr))} · 6 blocks and more</small>`;
+  $('ppBuy').hidden=plus||!!window.PF_CG; $('ppBuy').innerHTML=`<b>Unlock Pulse Pass+</b><small>${escapeHTML(iapPrice(pr))} · 6 blocks and more</small>`;
   $('ppPlusOn').hidden=!plus; $('passOv').classList.toggle('plus',plus);
   $('ppQDot').hidden=!qr;
   document.querySelectorAll('#passOv .pptabs button').forEach(b=>b.classList.toggle('on',b.dataset.pt===ppTab));
   $('ppRewards').hidden=ppTab!=='rewards'; $('ppQuests').hidden=ppTab!=='quests';
-  $('ppTrack').innerHTML=PASS.map((r,i)=>`<div class="ppcol">${ppCard(PASSP[i],pt)}${ppCard(r,pt)}`+
+  const cg=!!window.PF_CG; $('passOv').classList.toggle('cgfree',cg);   // CrazyGames: Pass+ can't be bought there, so only the free row shows
+  $('ppTrack').innerHTML=PASS.map((r,i)=>`<div class="ppcol">${cg?'':ppCard(PASSP[i],pt)}${ppCard(r,pt)}`+
     `<div class="pprail${r.t<=pt.t?' on':''}"><span class="ppnode">${r.t}</span></div></div>`).join('');
   $('ppTrack').querySelectorAll('canvas.tileprev').forEach(c=>drawTilePreview(c,tilesById(c.dataset.tile)));
   $('ppTrack').querySelectorAll('[data-ppc]').forEach(b=>b.onclick=()=>{ const r=ppRec(b.dataset.ppc); if(!passClaimR(r)) return; if(A.ctx) sGem(); buzz(15);
@@ -7275,7 +7277,7 @@ function buildPass(){
   $('ppTrack').querySelectorAll('[data-ppeq]').forEach(b=>b.onclick=()=>{ const r=ppRec(b.dataset.ppeq); equip(r.kind==='skin'?'skin':r.kind==='tiles'?'tiles':r.kind==='pack'?'pack':'banner',r.id);
     if(r.kind==='skin'){ G.players=[mkPlayer(0)]; netHello(); } if(r.kind==='banner') lbRename(); if(A.ctx) sGem(); buildPass(); });
   $('ppTrack').querySelectorAll('[data-ppbuy]').forEach(b=>b.onclick=ppBuyOpen);
-  const miles=PASS.concat(PASSP).filter(r=>r.kind==='skin'||r.jack).sort((a,b)=>a.t-b.t||(a.prem?1:-1));
+  const miles=PASS.concat(window.PF_CG?[]:PASSP).filter(r=>r.kind==='skin'||r.jack).sort((a,b)=>a.t-b.t||(a.prem?1:-1));
   $('ppMiles').innerHTML=miles.map(r=>{ const on=r.t<=pt.t, got=rGot(r), lk=r.prem&&!plus;
     const art=r.kind==='skin'?`<canvas class="skprev" data-skin="${r.id}" data-px="44" width="44" height="44"></canvas>`:'<span class="ppmj">♪</span>';
     return `<button type="button" class="ppm${on&&!lk?' on':''}${got?' got':''}${r.prem?' pm':''}${r.t===100&&r.prem?' grand':''}" data-goto="${r.t}" title="Tier ${r.t}${r.prem?' (Pass+)':''}: ${escapeHTML(passName(r))}">${art}<b>${r.t}</b>${r.prem?'<i class="ppmplus">+</i>':''}${on&&!got&&!lk?'<i class="ppmdot"></i>':''}</button>`; }).join('');
@@ -7290,7 +7292,7 @@ function ppScrollTo(t,smooth){ const tr=$('ppTrack'), c=tr.querySelector(`.ppcar
 document.querySelectorAll('#passOv .ppsc').forEach(b=>b.onclick=()=>{ const tr=$('ppTrack'); tr.scrollBy({left:+b.dataset.sc*tr.clientWidth*.8,behavior:'smooth'}); });
 $('ppTrack').addEventListener('scroll',()=>{ const tr=$('ppTrack'); $('passOv').querySelector('.ppsc.l').classList.toggle('off',tr.scrollLeft<8); $('passOv').querySelector('.ppsc.r').classList.toggle('off',tr.scrollLeft>tr.scrollWidth-tr.clientWidth-8); },{passive:true});
 /* the Pulse Pass+ offer: what it gives, and the buy button */
-function ppBuyOpen(){ const pr=PRODUCTS.find(p=>p.id===PASS_PRICE_ID), pt=passTier().t;
+function ppBuyOpen(){ if(window.PF_CG) return; const pr=PRODUCTS.find(p=>p.id===PASS_PRICE_ID), pt=passTier().t;
   const now=PASSP.filter(r=>r.t<=pt), nNow=now.length, notes=PASSP.filter(r=>r.kind==='notes').reduce((a,r)=>a+r.n,0);
   $('opbSkins').innerHTML=Object.values(PREM_SKINS).map(id=>`<span class="pbsk"><canvas class="skprev" data-skin="${id}" data-px="64" width="64" height="64"></canvas><small>${escapeHTML(skinById(id).name)}</small></span>`).join('');
   $('opbList').innerHTML=[`<b>6 Pass blocks</b>, including the tier-100 <b>Pulse Sovereign</b>`,`<b>2 tile themes</b> and <b>3 banners</b> only found in Pass+`,`<b>♪${notes.toLocaleString()} Notes</b> across the season (with a ♪5,000 jackpot)`,`<b>10 boss revive tokens</b>`,`<b>+25% Pass XP</b> from every run, so you climb faster`]
@@ -7419,7 +7421,7 @@ function moneyHTML(){
     (own?(eq?'<span class="mpown">Equipped</span>':`<button type="button" class="mpeq" data-peq="${p.skin}">Equip</button>`):`<button type="button" class="mprice" data-iap="${p.id}" ${IAP.busy?'disabled':''}>${escapeHTML(iapPrice(p))}</button>`)+'</div>'; };
   return `<div class="mhead"><b>Premium Blocks</b><span class="mrev pr">Animated · own landing effect</span></div><div class="mprems">${prem.map(pb).join('')}</div><div class="mhead"><b>Get Notes</b>${(SAVE.revives||0)?`<span class="mrev">♥ ${SAVE.revives} revive token${SAVE.revives>1?'s':''}</span>`:''}</div><div class="mpacks">${packs.map(pk).join('')}</div><div class="mspecials">${sp}</div>${note}`+
     (isNativeApp()?'<button type="button" class="mrestore" id="iapRestore">Restore purchases</button>':''); }
-function moneyRender(){ const box=$('shopMoney'); if(!box) return; const on=shopMode==='shop'; box.hidden=!on; if(!on) return;
+function moneyRender(){ const box=$('shopMoney'); if(!box) return; const on=shopMode==='shop'&&!window.PF_CG; box.hidden=!on; if(!on) return;   // CrazyGames: no real-money items
   box.innerHTML=moneyHTML(); box.querySelectorAll('[data-iap]').forEach(b=>b.onclick=()=>iapBuy(b.dataset.iap)); box.querySelectorAll('[data-ppoffer]').forEach(b=>b.onclick=()=>{ $('ppTrack').dataset.scrolled=''; ppTab='rewards'; buildPass(); ppBuyOpen(); });
   box.querySelectorAll('[data-peq]').forEach(b=>b.onclick=()=>{ equip('skin',b.dataset.peq); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; try{ netHello(); }catch(e){} buildShop(); }); const r=$('iapRestore'); if(r) r.onclick=()=>iapRestore(false); }
 if(isNativeApp()) setTimeout(()=>{ iapInit(); adsInit(); },1500);
@@ -8776,7 +8778,7 @@ function drawGhost(L,now){
    100 days (two of them are banners you can't get any other way). */
 const GIFT=[{n:100},{n:150},{rev:1},{n:200},{px:600},{n:300},{n:600,rev:2,px:1000,xp:150,big:true}];
 const GIFT_MILES=[{d:14,n:1000},{d:30,n:1500,banner:'b_devoted'},{d:60,n:2500,rev:5},{d:100,n:5000,banner:'b_centurion'}];
-const giftSigned=()=>!!(ACCT.user&&SAVE.linked===ACCT.user.uid&&ACCT.lastSync);
+const giftSigned=()=>window.PF_CG?!!(CG&&CGS.user):!!(ACCT.user&&SAVE.linked===ACCT.user.uid&&ACCT.lastSync);   // on CrazyGames: signed in to a CrazyGames account
 function giftState(){
   const g=SAVE.gift||(SAVE.gift={date:'',last:'',streak:0});
   if(g.day==null) g.day=Math.min(7,g.streak||0);   // saves from before gift.day: carry over how far they got
