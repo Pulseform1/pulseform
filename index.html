@@ -1292,10 +1292,43 @@ body.phone.hastabs #toast{bottom:calc(84px + env(safe-area-inset-bottom))}
   body.phone #menuOv #menuArt{display:none}
 }
 
+/* the Shop button in the middle of the tab bar */
+.tabbar button.tstore{color:#FFE7A3}
+.tsbubble{display:grid;place-items:center;width:52px;height:52px;margin:-26px 0 1px;border-radius:18px;background:linear-gradient(160deg,#FFE27A,#FF9E2C 70%,#FF7A1F);color:#3A1600;border:3px solid #16102F;
+  box-shadow:0 6px 18px rgba(255,150,40,.45),inset 0 2px 0 rgba(255,255,255,.55);transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.tabbar button.tstore svg{width:27px;height:27px}
+.tabbar button.tstore.on{color:#FFD166}.tabbar button.tstore.on::before{display:none}.tabbar button.tstore.on .tsbubble{transform:translateY(-2px) scale(1.06)}
+@media (max-height:540px) and (orientation:landscape){ .tsbubble{width:34px;height:34px;margin:0;border-radius:11px;border-width:2px}.tabbar button.tstore svg{width:20px;height:20px} }
+/* the More sheet: your profile card, then colourful tiles */
+.sheet-me{appearance:none;width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;margin:0 0 14px;border-radius:18px;border:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(120deg,rgba(255,209,102,.18),rgba(201,160,255,.14) 60%,rgba(127,240,210,.12));color:var(--ink);text-align:left;cursor:pointer}
+.sheet-me .gem{width:22px;height:22px;flex:none;margin:0 6px;transform:rotate(45deg);border-radius:6px;background:linear-gradient(135deg,#fff8,transparent),var(--rc,#D08A52);box-shadow:0 0 14px var(--rc,#D08A52)}
+.sheet-me span{flex:1;min-width:0;display:flex;flex-direction:column}.sheet-me b{font:700 16px var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sheet-me small{font-size:12px;color:var(--ink-2)}
+.sheet-me em{font:700 14px var(--display);font-style:normal;color:#FFD166;background:rgba(0,0,0,.25);padding:6px 10px;border-radius:10px;white-space:nowrap}
+.sheet-grid button{border:0!important;background:linear-gradient(150deg,var(--c1),var(--c2))!important;color:#fff!important;min-height:94px!important;border-radius:20px!important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.28),inset 0 -3px 0 rgba(0,0,0,.18),0 6px 16px rgba(0,0,0,.28);overflow:hidden}
+.sheet-grid button::after{content:'';position:absolute;inset:0 0 55% 0;background:linear-gradient(rgba(255,255,255,.18),rgba(255,255,255,0));pointer-events:none}
+.sheet-grid .si{width:auto!important;height:auto!important;background:none!important}
+.sheet-grid .si svg{width:30px;height:30px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.sheet-grid .sl{font:700 12.5px/1.15 var(--display);text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.sheet-grid .tdot{box-shadow:0 0 0 2px #fff}
+/* Shop: a featured block, gold accents */
+.shopfeat{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:20px;border:2px solid rgba(255,209,102,.55);
+  background:radial-gradient(ellipse at 20% 50%,rgba(255,209,102,.3),transparent 60%),linear-gradient(120deg,#3A2470,#1F1748);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.shopfeat canvas{width:120px;height:120px;flex:none}
+.shopfeat div{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.shopfeat small{font:700 10.5px var(--display);letter-spacing:.14em;text-transform:uppercase;color:#FFD166}
+.shopfeat b{font:800 22px var(--display)}
+#shopOv.storemode .panel h2{background:linear-gradient(90deg,#FFE27A,#FF9E2C);-webkit-background-clip:text;background-clip:text;color:transparent}
+.shopnone{grid-column:1/-1;text-align:center;color:var(--ink-2);padding:24px 8px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.chip.c-store{background:linear-gradient(135deg,rgba(255,226,122,.35),rgba(255,140,40,.35))!important;border-color:rgba(255,209,102,.7)!important;color:#FFF3D1!important;font-weight:700}
+.chip.c-store::before{content:'🛍'}
+#walletM{cursor:pointer}
+body.phone #menuOv .mtop-r .wallet::after{content:'+';display:inline-grid;place-items:center;width:18px;height:18px;margin-left:7px;border-radius:6px;background:#FFD166;color:#2A1800;font:900 14px/1 var(--display)}
 /* tab rows scroll sideways instead of wrapping onto two lines */
-body.phone .segs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-body.phone .segs::-webkit-scrollbar{display:none}
-body.phone .segs button{flex:0 0 auto;white-space:nowrap;padding-inline:14px}
+body.phone .segs,body.phone .tabs{flex:none;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+body.phone .segs::-webkit-scrollbar,body.phone .tabs::-webkit-scrollbar{display:none}
+body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap;padding-inline:14px}
 /* in a level: a cleaner swipe pad */
 .swipepad{border:1px solid rgba(255,248,238,.12)!important;background:radial-gradient(ellipse at 50% 40%,rgba(255,248,238,.09),rgba(255,248,238,.03) 70%)!important;border-radius:28px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
 .sp-cross{width:64px!important;height:64px!important}
@@ -1321,6 +1354,7 @@ body.phone .segs button{flex:0 0 auto;white-space:nowrap;padding-inline:14px}
       <button class="chip namechip" id="mName" type="button" title="Change your player name">Player name</button>
       <button class="chip acct" id="mAcct" type="button">Sign in</button>
       <button class="chip rankchip" id="mProfile" type="button"><i class="gem"></i><span id="mRankTxt">Bronze I</span><em class="qdot" id="mQDot" hidden></em></button>
+      <button class="chip c-store" id="mStore" type="button">Shop</button>
       <button class="chip c-coll" id="mShop" type="button">Collection</button>
       <button class="chip ppchip" id="mPass" type="button"><span id="mPassTxt">♛ Pulse Pass</span><em class="qdot" id="mPassDot" hidden></em></button>
       <button class="chip twchip" id="mTwin" type="button" hidden>⚔ Twin Pulse</button>
@@ -1358,11 +1392,11 @@ body.phone .segs button{flex:0 0 auto;white-space:nowrap;padding-inline:14px}
 <nav class="tabbar" id="tabbar" aria-label="Main">
   <button type="button" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" fill-opacity=".18"/></svg>Play</button>
   <button type="button" data-tab="pass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8l4 3.5L12 5l4 6.5L20 8l-1.6 10H5.6z" fill="currentColor" fill-opacity=".18"/></svg>Pass<i class="tdot" data-dot="pass" hidden></i></button>
+  <button type="button" data-tab="store" class="tstore"><span class="tsbubble"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8z" fill="currentColor" fill-opacity=".25"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/></svg></span>Shop</button>
   <button type="button" data-tab="shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" fill="currentColor" fill-opacity=".18"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg>Collection</button>
-  <button type="button" data-tab="friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.5" fill="currentColor" fill-opacity=".18"/><path d="M2.8 19c.8-3.3 3.3-5 6.2-5s5.4 1.7 6.2 5"/><path d="M15.5 5.3a3.3 3.3 0 0 1 0 6.4M18 14.4c1.7.7 2.8 2.2 3.2 4.6"/></svg>Friends<i class="tdot" data-dot="friends" hidden></i></button>
   <button type="button" data-tab="more"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5.5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18.5" cy="12" r="2"/></svg>More<i class="tdot" data-dot="more" hidden></i></button>
 </nav>
-<div class="sheet" id="moreSheet" hidden><div class="sheet-card" role="dialog" aria-label="More"><div class="sheet-grab"></div><h3>More</h3><div class="sheet-grid" id="moreGrid"></div></div></div>
+<div class="sheet" id="moreSheet" hidden><div class="sheet-card" role="dialog" aria-label="More"><div class="sheet-grab"></div><button type="button" class="sheet-me" id="moreMe"></button><div class="sheet-grid" id="moreGrid"></div></div></div>
 
 <section id="passOv" class="overlay ppov" hidden>
   <div class="panel pppanel">
@@ -1470,7 +1504,8 @@ body.phone .segs button{flex:0 0 auto;white-space:nowrap;padding-inline:14px}
 <section id="shopOv" class="overlay" hidden>
   <div class="panel wide">
     <div class="head"><button class="back" id="sBack" type="button">← Menu</button><div class="wallet" id="walletS"></div></div>
-    <h2>Collection</h2>
+    <h2 id="shopTitle">Collection</h2>
+    <div class="shopfeat" id="shopFeat" hidden></div>
     <div class="tabs"><button id="tabSkins" class="on" type="button">Blocks</button><button id="tabTrails" type="button">Landing effects</button><button id="tabTiles" type="button">Tiles</button><button id="tabSounds" type="button">Sound Tracks</button><button id="tabBanners" type="button">Banners</button></div>
     <div class="shop" id="shopGrid"></div>
     <div class="small" id="shopStats"></div>
@@ -6532,15 +6567,16 @@ function showPass(){ $('ppTrack').dataset.scrolled=''; ppTab='rewards'; buildPas
 $('mPass').onclick=showPass;
 /* ================= PHONE APP SHELL: bottom tabs and the More sheet (all of them press the menu's own buttons) ================= */
 const PHONE_MQ=matchMedia('(max-width:760px), (max-height:540px) and (pointer:coarse)');
-const TAB_OF={menuOv:'home',worldsOv:'home',levelsOv:'home',hardOv:'home',remixOv:'home',coopOv:'home',passOv:'pass',shopOv:'shop',friendsOv:'friends',friendOv:'friends',
+const TAB_OF={menuOv:'home',worldsOv:'home',levelsOv:'home',hardOv:'home',remixOv:'home',coopOv:'home',passOv:'pass',shopOv:'shop',friendsOv:'more',friendOv:'more',
   lbOv:'more',profOv:'more',settingsOv:'more',acctOv:'more',guideOv:'more',eventOv:'more',pollOv:'more',twinOv:'more'};
-const MORE_ITEMS=[['mProfile','Profile & quests','◆','rgba(255,170,90,.25)'],['mLB','Leaderboards','♛','rgba(255,209,102,.22)'],['mTwin',null,'⚔','rgba(255,236,170,.22)'],['mEvent',null,'★','rgba(255,126,182,.22)'],
-  ['mAcct',null,'◉','rgba(156,200,255,.22)'],['mName','Player name','✦','rgba(201,160,255,.22)'],['mSettings','Settings','⚙','rgba(255,255,255,.12)'],['mGuide','Help','?','rgba(184,242,122,.2)'],['mSound',null,'♪','rgba(255,255,255,.12)']];
+const MORE_ITEMS=[['mProfile','Profile & quests','#FF9A4D','#E2541E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 7-7 11-7-11z" fill="currentColor" fill-opacity=".25"/></svg>'],['mFriends','Friends','#3FD9C2','#127E9C','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19c.8-3.3 3.3-5 6.2-5s5.4 1.7 6.2 5"/><path d="M15.5 5.3a3.3 3.3 0 0 1 0 6.4M18 14.4c1.7.7 2.8 2.2 3.2 4.6"/></svg>'],['mLB','Leaderboards','#FFD45E','#E0901A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="currentColor" fill-opacity=".25"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 14v4M8 20h8"/></svg>'],['mTwin',null,'#B79BFF','#5B3BD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M14 5h5v5M19 19L5 5M5 10V5h5"/></svg>'],['mEvent',null,'#FF7EB6','#C2307A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z" fill="currentColor" fill-opacity=".25"/></svg>'],['mAcct',null,'#7FB8FF','#2E5FD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M4.5 20c1.3-3.6 4.2-5.5 7.5-5.5s6.2 1.9 7.5 5.5"/></svg>'],['mName','Player name','#D29BFF','#8A3DD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z" fill="currentColor" fill-opacity=".2"/><path d="M13.5 6.5l4 4"/></svg>'],['mSettings','Settings','#9AA6C8','#4B5578','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>'],['mGuide','Help','#9CF07A','#2E9E54','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01"/></svg>'],['mSound',null,'#8A8CFF','#3F3FC2','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12" /><circle cx="6.5" cy="18" r="2.5" fill="currentColor" fill-opacity=".3"/><circle cx="16.5" cy="16" r="2.5" fill="currentColor" fill-opacity=".3"/></svg>']];
 const isDot=id=>{ const e=$(id); return !!e&&!e.hidden; };
 function moreBuild(){
-  $('moreGrid').innerHTML=MORE_ITEMS.filter(([id])=>$(id)&&!$(id).hidden).map(([id,label,ic,c])=>{ const b=$(id), dot=b.querySelector('.qdot');
+  const rk=myRank(); $('moreMe').innerHTML=`<i class="gem" style="--rc:${rankCol(rk)}"></i><span><b>${escapeHTML(ensureName())}</b><small>${escapeHTML(rankName(rk))} · tap for your profile</small></span><em>${notesTxt()}</em>`;
+  $('moreMe').onclick=()=>{ moreClose(); toMenu(); $('mProfile').click(); };
+  $('moreGrid').innerHTML=MORE_ITEMS.filter(([id])=>$(id)&&!$(id).hidden).map(([id,label,c1,c2,ic])=>{ const b=$(id), dot=b.querySelector('.qdot');
     const txt=label||(b.querySelector('span')?b.querySelector('span').textContent:b.textContent).replace(/^[^\p{L}\p{N}]+/u,'').trim();
-    return `<button type="button" data-more="${id}"><span class="si" style="--sc:${c}">${ic}</span>${escapeHTML(txt)}${dot&&!dot.hidden?'<i class="tdot"></i>':''}</button>`; }).join('');
+    return `<button type="button" data-more="${id}" style="--c1:${c1};--c2:${c2}"><span class="si">${ic}</span><span class="sl">${escapeHTML(txt)}</span>${dot&&!dot.hidden?'<i class="tdot"></i>':''}</button>`; }).join('');
   $('moreGrid').querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>{ moreClose(); const id=b.dataset.more; if(!$('menuOv').hidden||id==='mSound') $(id).click(); else { toMenu(); setTimeout(()=>$(id).click(),0); } });
 }
 function moreOpen(){ moreBuild(); $('moreSheet').hidden=false; if(A.ctx) sUI(); }
@@ -6550,14 +6586,16 @@ document.querySelectorAll('#tabbar [data-tab]').forEach(b=>b.onclick=()=>{ const
   if(t==='more') return moreOpen();
   const cur=OVS.find(id=>!$(id).hidden);
   if(t==='home'){ if(cur!=='menuOv') toMenu(); return; }
-  const btn={pass:'mPass',shop:'mShop',friends:'mFriends'}[t]; if(cur!=='menuOv') toMenu(); $(btn).click(); });
+  if(t==='store'){ if(cur!=='menuOv') toMenu(); return showStore(); }
+  if(t==='shop'){ if(cur!=='menuOv') toMenu(); return showColl(); }
+  const btn={pass:'mPass'}[t]; if(cur!=='menuOv') toMenu(); $(btn).click(); });
 function tabSync(){
   const phone=PHONE_MQ.matches; document.body.classList.toggle('phone',phone);
   const cur=OVS.find(id=>!$(id).hidden), tab=G.state==='menu'&&cur?TAB_OF[cur]:null, show=phone&&!!tab;
   document.body.classList.toggle('hastabs',show); if(!show){ if(!$('moreSheet').hidden) moreClose(); return; }
-  const fr=!$('mFriends').hidden; $('tabbar').style.setProperty('--tabs',fr?5:4);
-  document.querySelectorAll('#tabbar [data-tab]').forEach(b=>{ b.classList.toggle('on',b.dataset.tab===tab); if(b.dataset.tab==='friends') b.hidden=!fr; });
-  const dots={pass:isDot('mPassDot'),friends:isDot('mFDot'),more:isDot('mQDot')};
+  const at=tab==='shop'&&shopMode==='shop'?'store':tab;
+  document.querySelectorAll('#tabbar [data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===at));
+  const dots={pass:isDot('mPassDot'),more:isDot('mQDot')||isDot('mFDot')};
   document.querySelectorAll('#tabbar [data-dot]').forEach(d=>d.hidden=!dots[d.dataset.dot]);
 }
 setInterval(tabSync,200); PHONE_MQ.addEventListener&&PHONE_MQ.addEventListener('change',tabSync); setTimeout(tabSync,0); $('ppBack').onclick=()=>toMenu();
@@ -9588,13 +9626,28 @@ function buildHard(){
     h+=`<button class="lvl hard${open&&!s?' next':''}" data-h="${i}" type="button" ${open?'':'disabled'} style="--i:${i-1}"><span class="n">H${i}</span><span class="nm">${HARD_NAMES[i-1]}</span><span class="trk">♪ ${STYLES[sid].name}</span>${starStr(s)}</button>`; }
   $('hardGrid').innerHTML=h; $('hardGrid').querySelectorAll('button').forEach(b=>b.onclick=()=>startRun(modeFor('hard',+b.dataset.h)));
 }
-let shopTab='skins';
+let shopTab='skins', shopMode='coll';
+/* Shop shows what you can buy; Collection shows what you own (to equip) and the rewards you can still earn. */
+const shopKeep=(it,owned)=>shopMode==='shop'?(!owned&&it.price>0&&!it.hidden):(owned||(!!it.req&&!(it.price>0)&&!it.hidden));
+function shopEmpty(){ if($('shopGrid').children.length) return;
+  $('shopGrid').innerHTML=shopMode==='shop'?'<p class="shopnone">You own everything here. Nice! Try another tab.</p>':'<p class="shopnone">Nothing here yet. <button class="btn" type="button" id="shopGo">Visit the Shop</button></p>';
+  const g=$('shopGo'); if(g) g.onclick=()=>showStore(shopTab); }
+function shopFeature(){ const f=$('shopFeat'); if(shopMode!=='shop'){ f.hidden=true; return; }
+  const pool=SKINS.filter(it=>it.price>0&&!it.hidden&&!SAVE.owned.includes(it.id)&&!(it.req&&reqMet(it.req)));
+  if(!pool.length){ f.hidden=true; return; } const it=pool[hashStr('feat'+todayKey())%pool.length];
+  f.hidden=false; f.innerHTML=`<canvas class="skprev" data-skin="${it.id}" data-px="120" width="120" height="120" aria-hidden="true"></canvas><div><small>Today's featured block</small><b>${escapeHTML(it.name)}</b>`+
+    `<button class="btn" type="button" data-featbuy="${it.id}" ${SAVE.notes<it.price?'disabled':''}>♪ ${it.price.toLocaleString()}</button></div>`;
+  f.querySelector('[data-featbuy]').onclick=()=>{ if(SAVE.notes<it.price||SAVE.owned.includes(it.id)) return; SAVE.notes-=it.price; SAVE.owned.push(it.id); equip('skin',it.id); if(A.ctx) sGem(); buzz(20);
+    G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; netHello(); toast(`${it.name} is yours! Equipped.`); buildShop(); }; }
+function showStore(tab){ shopMode='shop'; if(tab) shopTab=tab; buildShop(); showOv('shopOv'); }
+function showColl(tab){ shopMode='coll'; if(tab) shopTab=tab; buildShop(); showOv('shopOv'); }
 function buildShop(){
-  $('walletS').textContent=notesTxt();
+  $('walletS').textContent=notesTxt(); $('shopTitle').textContent=shopMode==='shop'?'Shop':'Collection'; $('shopOv').classList.toggle('storemode',shopMode==='shop'); shopFeature();
   $('tabSkins').classList.toggle('on',shopTab==='skins'); $('tabTrails').classList.toggle('on',shopTab==='lands'); $('tabTiles').classList.toggle('on',shopTab==='tiles'); $('tabSounds').classList.toggle('on',shopTab==='sounds'); $('tabBanners').classList.toggle('on',shopTab==='banners');
-  if(shopTab==='banners') return buildBanners();
-  if(shopTab==='tiles'||shopTab==='sounds') return buildShop2();
-  const list=(shopTab==='skins'?SKINS:LANDS).filter(it=>!it.hidden||SAVE.owned.includes(it.id)||(it.req&&reqMet(it.req))), eq=shopTab==='skins'?SAVE.skin:SAVE.land;   // hidden: only its owner sees it
+  if(shopTab==='banners'){ buildBanners(); return shopEmpty(); }
+  if(shopTab==='tiles'||shopTab==='sounds'){ buildShop2(); return shopEmpty(); }
+  const own1=it=>SAVE.owned.includes(it.id)||(it.req&&reqMet(it.req))||it.price===0;
+  const list=(shopTab==='skins'?SKINS:LANDS).filter(it=>!it.hidden||SAVE.owned.includes(it.id)||(it.req&&reqMet(it.req))).filter(it=>shopKeep(it,own1(it))).sort((a,b)=>shopMode==='shop'?(a.price-b.price):(own1(b)-own1(a))), eq=shopTab==='skins'?SAVE.skin:SAVE.land;   // hidden: only its owner sees it
   $('shopGrid').innerHTML=list.map(it=>{ const owned=SAVE.owned.includes(it.id)||(it.req&&reqMet(it.req))||it.price===0;
     const prev=shopTab==='skins'?`<canvas class="skprev" data-skin="${it.id}" width="64" height="64" aria-hidden="true"></canvas>${it.anim||it.vx?'<span class="badge">Animated</span>':''}`:`<div class="lfxp" style="--c:${it.col}"><span>${it.glyph}</span></div>`;
     let btn; if(eq===it.id) btn=`<button class="btn ghost" disabled type="button">Equipped</button>`;
@@ -9606,11 +9659,12 @@ function buildShop(){
   $('shopGrid').querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{ const it=list.find(x=>x.id===b.dataset.buy); if(SAVE.notes<it.price) return; SAVE.notes-=it.price; SAVE.owned.push(it.id);
     equip(shopTab==='skins'?'skin':'land',it.id); if(A.ctx) sGem(); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; buildShop(); netHello(); });
   $('shopStats').textContent=`◆ ${totalStars()} stars · longest streak ${SAVE.maxStreak} · best endless ${SAVE.bestEndless.toLocaleString()} · daily streak ${SAVE.daily.streak} · Notes come from levels, dailies and runs.`;
+  shopEmpty();
 }
 /* the Tiles and Sounds tabs. A block-matched tile theme needs its block before it can be bought. */
 function buildShop2(){
   const tiles=shopTab==='tiles', kind=tiles?'tiles':'pack', eq=SAVE[kind];
-  const list=(tiles?TILES:PACKS).filter(it=>!it.hidden||ownsItem(it));
+  const list=(tiles?TILES:PACKS).filter(it=>!it.hidden||ownsItem(it)).filter(it=>shopKeep(it,ownsItem(it))).sort((a,b)=>shopMode==='shop'?(a.price-b.price):(ownsItem(b)-ownsItem(a)));
   $('shopGrid').innerHTML=list.map(it=>{ const owned=ownsItem(it);
     const prev=tiles?`<canvas class="tileprev" data-tile="${it.id}" width="132" height="84" aria-hidden="true"></canvas>`:`<div class="lfxp" style="--c:${it.col}"><span>${it.glyph}</span></div><small class="small">${escapeHTML(it.desc)}</small>`;
     let btn; if(eq===it.id) btn=`<button class="btn ghost" disabled type="button">Equipped</button>`;
@@ -9629,7 +9683,7 @@ function buildShop2(){
 }
 /* the Banners tab: each preview is a leaderboard tile with your own block, name and rank on it */
 function buildBanners(){
-  const eq=SAVE.banner||'b_plain', list=BANNERS, rk=myRank(), nm=escapeHTML(ensureName());
+  const eq=SAVE.banner||'b_plain', list=BANNERS.filter(it=>!it.hidden||ownsItem(it)).filter(it=>shopKeep(it,ownsItem(it))).sort((a,b)=>shopMode==='shop'?(a.price-b.price):(ownsItem(b)-ownsItem(a))), rk=myRank(), nm=escapeHTML(ensureName());
   $('shopGrid').innerHTML=list.map(it=>{ const owned=ownsItem(it);
     const prev=`<div class="banprev${it.bg?' ban':''}"${it.bg?` style="background:${it.bg}"`:''}><canvas class="skprev lbsk" data-skin="${SAVE.skin}" data-px="30" width="30" height="30" aria-hidden="true"></canvas><span class="lbwho"><span class="lbname">${nm}</span><small class="lbrank"><i class="gem" style="--rc:${rankCol(rk)}"></i><span class="lbrk">${rankName(rk)}</span></small></span></div>`;
     let btn; if(eq===it.id) btn=`<button class="btn ghost" disabled type="button">Equipped</button>`;
@@ -9834,7 +9888,7 @@ function loop(){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners')) drawSkinPreviews(now); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners')) drawSkinPreviews(now); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
@@ -10037,7 +10091,8 @@ $('mHard').onclick=()=>{ buildHard(); showOv('hardOv'); };
 $('mRemix').onclick=()=>{ buildRemix(); showOv('remixOv'); }; $('rxBack').onclick=()=>toMenu();
 $('mRhythm').onclick=()=>startRun(modeFor('rhythm')); $('hBack').onclick=()=>toMenu();
 $('cBack').onclick=()=>toMenu(); $('cJourney').onclick=()=>startRun(modeFor('coop')); $('cRaid').onclick=()=>startRun(modeFor('raid')); $('cTether').onclick=()=>startRun(modeFor('tether')); $('cDuel').onclick=()=>startRun(modeFor('duel'));
-$('mShop').onclick=()=>{ buildShop(); showOv('shopOv'); };
+$('mShop').onclick=()=>showColl(); $('mStore').onclick=()=>showStore();
+$('walletM').addEventListener('click',()=>showStore()); $('walletM').title='Open the Shop'; $('walletM').setAttribute('role','button');
 $('mSettings').onclick=()=>{ buildSettings(); showOv('settingsOv'); };
 $('wBack').onclick=()=>toMenu(); $('lBack').onclick=()=>{ buildWorlds(); showOv('worldsOv'); };
 $('sBack').onclick=()=>toMenu(); $('setBack').onclick=()=>toMenu();
