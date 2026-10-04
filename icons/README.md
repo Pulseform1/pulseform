@@ -1,6 +1,6 @@
-# Beatdash's tab icon
+# Pulseform's tab icon
 
-The icon that shows on the browser tab (and when someone saves Beatdash to their phone's home screen)
+The icon that shows on the browser tab (and when someone saves Pulseform to their phone's home screen)
 is already built into `index.html`, so uploading `index.html` is all you need.
 
 The files in this folder are the same icon, for other uses:
