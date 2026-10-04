@@ -9548,7 +9548,9 @@ function gameOver(why){
 }
 function pause(){ if(G.state!=='playing') return;
   if(G.mode.net){ if(G.leaveArm&&performance.now()-G.leaveArm<2500){ G.state='dying'; gameOver('quit'); } else { G.leaveArm=performance.now(); hint('Online matches can\'t pause. Press pause again to leave the match.',2500); } return; } G.state='paused'; A.ctx.suspend(); syncVol(); showOv('pauseOv',false); }
-function resume(){ hideAll(); A.ctx.resume().then(()=>{ const bi=beatInfo(heardNow()); G.restUntil=Math.max(G.restUntil,(bi.last?bi.last.k:0)+5); G.state='playing'; }); }
+function resume(){ hideAll(); const c=A.ctx; c.resume().then(()=>{ if(A.ctx!==c||G.state!=='paused') return; const bi=beatInfo(heardNow()); G.restUntil=Math.max(G.restUntil,(bi.last?bi.last.k:0)+5); G.state='playing'; }).catch(()=>{});
+  // the sound system wouldn't come back (an audio device change on some phones): end the run cleanly instead of hanging
+  setTimeout(()=>{ if(G.state==='paused'&&A.ctx===c&&c.state!=='running'&&$('pauseOv').hidden){ rebuildAudio(true); G.state='dying'; gameOver('quit'); toast('Your sound output changed, so the run ended. Your progress is safe.'); } },1800); }
 
 /* ---------------- LOOP ---------------- */
 /* a frame appears on screen roughly one refresh after it is drawn; measure the refresh and draw that far ahead */
@@ -9673,7 +9675,7 @@ function lobbyTick(){
 }
 function syncSoundChip(){ const b=$('mSound'); if(!b) return; const on=A.ctx&&A.ctx.state==='running';
   b.textContent=!on?'Tap for music':SAVE.musicVol>0?'Music on':'Music off'; b.classList.toggle('off',!!on&&SAVE.musicVol===0); }
-function firstGesture(){ ensureAudio(); if(A.ctx.state==='suspended'&&G.state!=='paused') A.ctx.resume().then(syncSoundChip); if(!A.lobbyT) A.lobbyT=setInterval(lobbyTick,40); syncSoundChip(); }
+function firstGesture(){ ensureAudio(); if(A.ctx.state!=='running'&&A.ctx.state!=='closed'&&G.state!=='paused') A.ctx.resume().then(syncSoundChip); if(!A.lobbyT) A.lobbyT=setInterval(lobbyTick,40); syncSoundChip(); }
 ['pointerdown','keydown'].forEach(t=>addEventListener(t,()=>{ if(!A.ctx||(A.ctx.state!=='running'&&G.state!=='paused')) firstGesture(); },{capture:true,passive:true}));
 
 /* ---------------- MENU DEMO ---------------- */
@@ -9739,7 +9741,7 @@ if(HOVER){
     if(A.ctx&&A.ctx.state==='running') tone(A.sfx,A.ctx.currentTime,'sine',[1568,1760,2093][ri(3)],.018,.001,.05); },{passive:true});
 }
 document.addEventListener('click',e=>{ if(e.target.closest('.screen button')){ ensureAudio(); sUI(); } });
-document.addEventListener('click',e=>{ if(e.target.closest('.overlay button')){ ensureAudio(); if(A.ctx.state==='suspended'&&G.state!=='paused') A.ctx.resume(); sUI(); } });
+document.addEventListener('click',e=>{ if(e.target.closest('.overlay button')){ ensureAudio(); if(A.ctx.state!=='running'&&A.ctx.state!=='closed'&&G.state!=='paused') A.ctx.resume(); sUI(); } });
 $('mLevels').onclick=()=>{ const w=Math.min(SAVE.lastWorld||1,SAVE.world); if(totalStars()>0){ buildLevels(w); showOv('levelsOv'); } else { buildWorlds(); showOv('worldsOv'); } };
 $('mGuide').onclick=()=>showOv('guideOv');
 $('mSound').onclick=()=>{ const wasOn=A.ctx&&A.ctx.state==='running'; firstGesture(); if(wasOn){ SAVE.musicVol=SAVE.musicVol>0?0:.8; save(); syncVol(); applyVol(); } syncSoundChip(); }; $('gBack').onclick=()=>toMenu();
@@ -9813,11 +9815,11 @@ $('offset').oninput=e=>{SAVE.offset=+e.target.value; save(); syncOffset()};
 $('resetBtn').onclick=e=>{ const b=$('resetBtn'), acct=!!(ACCT.user&&SAVE.linked===ACCT.user.uid); if(!b.dataset.arm){ b.dataset.arm='1'; b.textContent=acct?'Tap again to erase all stars, Notes and items, here and on your account':'Tap again to erase all stars, Notes and items'; return; }
   const keep={offset:SAVE.offset,relaxed:SAVE.relaxed,reduce:SAVE.reduce,name:SAVE.name,gift:giftState(),linked:acct?SAVE.linked:undefined,wipe:Date.now()}; SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep); if(acct) ACCT.overwrite=true; save(); b.dataset.arm=''; b.textContent='Progress erased'; };
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&G.state==='playing'&&!(G.mode&&G.mode.net)) pause(); wakeSync(); mobAudioSync(); });
-/* on phones and tablets the music stops whenever the game isn't on screen (another app, another tab, the screen locked),
+/* the music stops whenever the game isn't on screen (another tab, another app, the screen locked, a minimised window),
    and picks up again when you come back. Online matches keep their clock running. A paused run stays silent until you press Resume. */
 const MOBHUSH={on:false};
 function mobAudioSync(){
-  if(!MOB||!A.ctx) return;
+  if(!A.ctx) return;
   const away=document.visibilityState!=='visible', net=G.mode&&G.mode.net&&(G.state==='playing'||G.state==='cutscene');
   if(away&&!net){ if(A.ctx.state==='running'){ MOBHUSH.on=true; A.ctx.suspend(); } }
   else if(!away&&MOBHUSH.on){ MOBHUSH.on=false; if(G.state!=='paused') A.ctx.resume().then(syncSoundChip); }
@@ -9837,8 +9839,29 @@ function wakeSync(){
 }
 setInterval(wakeSync,1000);
 /* if the system takes the audio away mid-run (a phone call, another app, iOS interruptions), pause instead of drifting */
-function watchAudio(){ if(!A.ctx||A.stWatch) return; A.stWatch=true;
-  A.ctx.addEventListener('statechange',()=>{ if(A.ctx.state!=='running'&&G.state==='playing'&&!(G.mode&&G.mode.net)) pause(); }); }
+function watchAudio(){ if(!A.ctx||A.stWatch) return; A.stWatch=true; const c=A.ctx;
+  c.addEventListener('statechange',()=>{ if(A.ctx!==c) return; if(c.state==='running'){ AUD.ok=performance.now(); return; }
+    if(G.state==='playing'&&!(G.mode&&G.mode.net)) pause(); }); }
+/* ---- the audio output changing: Bluetooth / wireless headphones connecting or disconnecting, AirPods taken out, a call.
+   Some phones keep the old sample rate or leave the sound system "interrupted", which garbles or silences the music.
+   Outside a run the sound engine is simply rebuilt for the new device; in a run the run pauses, the clock re-measures the
+   new device's delay (Bluetooth adds a lot), and the engine is rebuilt once you're back on the menu. ---- */
+const AUD={rebuild:false,ok:0,tries:0};
+function rebuildAudio(force){
+  if(!A.ctx) return; if(!force&&(G.state!=='menu'||STUDIO.preview)){ AUD.rebuild=true; return; }
+  AUD.rebuild=false; const old=A.ctx; A.ctx=null; A.stems={}; A.stWatch=false; LOBBY.on=false; CLK.off=null;
+  try{ old.close(); }catch(e){}
+  ensureAudio(); watchAudio(); syncVol(); if(document.visibilityState==='visible') A.ctx.resume().then(syncSoundChip).catch(()=>{}); syncSoundChip(); }
+function audioRouteChanged(){ if(!A.ctx) return; CLK.off=null;
+  if(G.state==='playing'&&!(G.mode&&G.mode.net)){ pause(); hint('Your sound output changed. Press Resume when ready. If the beat feels off, recalibrate in Settings.',4000); AUD.rebuild=true; }
+  else rebuildAudio(); }
+try{ if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener) navigator.mediaDevices.addEventListener('devicechange',()=>setTimeout(audioRouteChanged,350)); }catch(e){}
+setInterval(()=>{ if(!A.ctx) return;
+  if(AUD.rebuild&&G.state==='menu'&&!STUDIO.preview){ rebuildAudio(); return; }
+  // on the menu, on screen, the music should be running: if the system left it stuck, try to wake it, then rebuild it
+  const want=document.visibilityState==='visible'&&!MOBHUSH.on&&G.state==='menu'&&!STUDIO.preview&&AUD.ok>0;
+  if(want&&A.ctx.state!=='running'&&A.ctx.state!=='closed'){ AUD.tries++; A.ctx.resume().catch(()=>{}); if(AUD.tries>=3){ AUD.tries=0; rebuildAudio(); } } else AUD.tries=0;
+},1000);
 
 /* game controllers: d-pad or left stick to move, A to confirm, B to go back, Start to pause.
    Moves are timed from the controller's own timestamp, not from when the frame noticed them. */
