@@ -7344,7 +7344,13 @@ function showRewardedAd(){ return new Promise(res=>{ let done=false; const fin=v
         await AM.prepareRewardVideoAd({adId:MONEY.admob[appPlatform()]||MONEY.admob.android,isTesting:MONEY.admob.test,npa:true});
         const r=await AM.showRewardVideoAd(); if(r&&r.amount!==undefined) got=true; setTimeout(()=>{ off(); fin(got); },1500);
       }catch(e){ off(); fin(false); } })(); return; }
-  const CG=cgSDK(); if(CG&&CG.ad){ try{ CG.ad.requestAd('rewarded',{adStarted:()=>{},adFinished:()=>fin(true),adError:()=>fin(false)}); }catch(e){ fin(false); } return; }
+  const CG=cgSDK(); if(CG&&CG.ad){ ADS.err=''; let started=false;
+    // CrazyGames: a rewarded ad. If it never starts (no ad to show, a blocker, a slow network) give up after 15 s instead of
+    // leaving "Loading ad…" on screen, and remember why it failed so the player gets a useful message
+    const tmo=setTimeout(()=>{ if(!started){ ADS.err='timeout'; fin(false); } },15000);
+    const fail=e=>{ clearTimeout(tmo); ADS.err=String((e&&(e.code||e.message))||e||'error'); fin(false); };
+    try{ CG.ad.requestAd('rewarded',{adStarted:()=>{ started=true; clearTimeout(tmo); },adFinished:()=>{ clearTimeout(tmo); fin(true); },adError:fail}); }catch(e){ fail(e); }
+    return; }
   if(ADS.test){ const o=$('testAdOv'); let n=5; $('taCount').textContent=n; o.hidden=false;
     const t=setInterval(()=>{ n--; $('taCount').textContent=n; if(n<=0){ clearInterval(t); o.hidden=true; fin(true); } },1000);
     $('taSkip').onclick=()=>{ clearInterval(t); o.hidden=true; fin(false); }; return; }
@@ -7371,7 +7377,14 @@ $('rvFree').onclick=()=>{ if(SAVE.noAds) reviveDo(); };
 $('rvToken').onclick=()=>{ if((SAVE.revives||0)<1) return; SAVE.revives--; save(); reviveDo(); };
 $('rvAd').onclick=()=>{ if(RV.hold) return; RV.hold=true; $('rvAd').disabled=true; $('rvAd').textContent='Loading ad…';
   showRewardedAd().then(ok=>{ RV.hold=false; $('rvAd').disabled=false; $('rvAd').innerHTML='<span class="rvplay">▶</span> Watch an ad to revive';
-    if(ok) reviveDo(); else { toast('The ad didn\'t finish, so no revive this time.'); RV.left=Math.max(RV.left,4); rvTick(); } }); };
+    if(ok) reviveDo(); else adFailed().then(msg=>{ toast(msg); RV.left=Math.max(RV.left,6); rvTick(); }); }); };
+/* why a rewarded ad didn't play, in words a player understands (on CrazyGames the SDK says whether an ad blocker is on) */
+async function adFailed(){ const e=(ADS.err||'').toLowerCase(), CG=cgSDK();
+  let blocked=/adblock|blocked/.test(e); if(!blocked&&CG&&CG.ad&&CG.ad.hasAdblock){ try{ blocked=!!(await CG.ad.hasAdblock()); }catch(x){} }
+  if(blocked) return 'An ad blocker stopped the ad. Turn it off for this game to revive with an ad.';
+  if(/unfilled|no ?fill|no ad|timeout|other/.test(e)) return 'No ad was available just now. Tap again to try another one.';
+  if(e) return 'The ad couldn\'t play ('+e.slice(0,40)+'). Tap to try again.';
+  return 'The ad didn\'t finish, so no revive this time.'; }
 
 /* ---- in-app purchases ---- */
 const IAP={ok:false,items:{},prices:{},busy:false};
