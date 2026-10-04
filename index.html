@@ -1225,6 +1225,94 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
   <div id="pads" class="pads"></div>
 </div>
 
+<style id="phoneui">
+/* ================= PHONE APP SHELL (body.phone: phones in portrait, and phones held sideways) =================
+   A compact top bar, a bottom tab bar, full-screen pages with a sticky header, and a "More" sheet. */
+.tabbar,.sheet{display:none}
+body.phone.hastabs .tabbar{display:grid}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;grid-template-columns:repeat(var(--tabs,5),1fr);padding:5px max(6px,env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
+  background:rgba(16,12,38,.94);-webkit-backdrop-filter:blur(20px) saturate(150%);backdrop-filter:blur(20px) saturate(150%);border-top:1px solid rgba(255,255,255,.08);box-shadow:0 -8px 30px rgba(0,0,0,.25)}
+.tabbar button{appearance:none;-webkit-appearance:none;background:none;border:0;color:rgba(255,248,238,.55);display:flex;flex-direction:column;align-items:center;gap:3px;font:600 10.5px/1.1 var(--display);letter-spacing:.01em;padding:6px 0 4px;position:relative;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:50px}
+.tabbar button svg{width:25px;height:25px;transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.tabbar button.on{color:#FFD166}.tabbar button.on svg{transform:translateY(-1px) scale(1.08)}
+.tabbar button.on::before{content:'';position:absolute;top:-5px;width:26px;height:3px;border-radius:0 0 3px 3px;background:#FFD166;box-shadow:0 0 10px rgba(255,209,102,.7)}
+.tabbar button:active{background:rgba(255,255,255,.06)}
+.tdot{position:absolute;top:5px;left:calc(50% + 7px);width:9px;height:9px;border-radius:50%;background:#FF8A3D;box-shadow:0 0 0 2px #120E2C}
+body.phone .sheet:not([hidden]){display:flex}
+.sheet{position:fixed;inset:0;z-index:50;align-items:flex-end;background:rgba(6,4,18,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.sheet-card{width:100%;box-sizing:border-box;background:linear-gradient(180deg,#241D52,#191440);border-radius:26px 26px 0 0;border-top:1px solid rgba(255,255,255,.12);padding:8px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -20px 50px rgba(0,0,0,.4);animation:sheetUp .28s cubic-bezier(.2,.9,.3,1)}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+.sheet-grab{width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.25);margin:2px auto 12px}
+.sheet-card h3{margin:0 0 12px 4px;font:700 17px var(--display);color:var(--ink)}
+.sheet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sheet-grid button{appearance:none;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:86px;padding:10px 6px;border-radius:18px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:var(--ink);font:600 12px/1.2 var(--display);text-align:center;cursor:pointer}
+.sheet-grid button:active{transform:scale(.96);background:rgba(255,255,255,.1)}
+.sheet-grid .si{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px;background:var(--sc,rgba(255,209,102,.18));color:#fff}
+.sheet-grid .tdot{top:8px;left:auto;right:10px}
+
+/* the menu */
+body.phone #menuOv{padding-bottom:calc(84px + env(safe-area-inset-bottom))!important;gap:12px}
+body.phone #menuOv .mtop{flex-direction:row!important;align-items:center!important;flex-wrap:nowrap!important;justify-content:space-between!important;padding:8px 8px 8px 14px!important;border-radius:18px!important;gap:8px!important;margin:0!important;min-height:56px;box-sizing:border-box}
+body.phone #menuOv .mbrand{font:700 17px var(--display);justify-content:flex-start;padding:0;gap:8px}
+body.phone #menuOv .mtop-r{flex:0 1 auto!important;width:auto!important;overflow:visible!important;flex-wrap:nowrap!important;gap:6px!important;justify-content:flex-end!important;padding:0!important}
+body.phone #menuOv .mtop-r>.chip:not(#mProfile){display:none!important}
+body.phone #menuOv .mtop-r .wallet{order:0;min-height:38px;padding:0 12px;display:flex;align-items:center;font:700 14px var(--display);border-radius:12px}
+body.phone #mProfile{min-height:38px!important;padding:0 11px!important;border-radius:12px!important;font-size:12.5px!important}
+body.phone #menuOv .mmain{display:flex;flex-direction:column;gap:10px;flex:0 0 auto}
+body.phone #menuOv #menuArt{order:-1;height:clamp(130px,24vh,230px);min-height:0;flex:none}
+body.phone #menuOv .eyebrow{display:none}
+body.phone #menuOv .logo{font-size:clamp(40px,12.5vw,56px);line-height:.95;display:block;white-space:nowrap}
+body.phone #menuOv .logo span{display:inline}
+body.phone #menuOv .tag{font-size:14px;line-height:1.45;max-width:none}
+body.phone #menuOv .mhero{gap:12px}
+body.phone #menuOv .cta{width:100%;border-radius:20px;padding:16px 20px;box-shadow:0 12px 30px rgba(255,140,40,.32)}
+body.phone #menuOv .mcards{grid-template-columns:1fr 1fr!important;gap:10px}
+body.phone #menuOv .mcards .mcard:last-child:nth-child(odd){grid-column:1/-1}
+body.phone #menuOv .mcard{min-height:108px;padding:13px 14px;border-radius:20px}
+body.phone #menuOv .mcard b{font-size:16px}
+body.phone #menuOv .mcard small{font-size:12px}
+body.phone .hw-pumpwrap{display:none}
+
+/* full-screen pages with a sticky header */
+body.phone #worldsOv,body.phone #levelsOv,body.phone #shopOv,body.phone #friendsOv,body.phone #friendOv,body.phone #lbOv,body.phone #profOv,body.phone #settingsOv,body.phone #acctOv,body.phone #guideOv,body.phone #eventOv,body.phone #pollOv,body.phone #twinOv,body.phone #remixOv,body.phone #hardOv,body.phone #coopOv{padding:0!important;place-items:stretch!important;background:linear-gradient(180deg,#1C1745,#140F33 60%,#100C29)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.phone #worldsOv > .panel,body.phone #levelsOv > .panel,body.phone #shopOv > .panel,body.phone #friendsOv > .panel,body.phone #friendOv > .panel,body.phone #lbOv > .panel,body.phone #profOv > .panel,body.phone #settingsOv > .panel,body.phone #acctOv > .panel,body.phone #guideOv > .panel,body.phone #eventOv > .panel,body.phone #pollOv > .panel,body.phone #twinOv > .panel,body.phone #remixOv > .panel,body.phone #hardOv > .panel,body.phone #coopOv > .panel{max-width:none!important;width:100%!important;max-height:none!important;height:100%;border-radius:0!important;border:0!important;box-shadow:none!important;background:transparent!important;
+  padding:0 max(16px,env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))!important;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+body.phone #worldsOv > .panel > .head:first-child,body.phone #levelsOv > .panel > .head:first-child,body.phone #shopOv > .panel > .head:first-child,body.phone #friendsOv > .panel > .head:first-child,body.phone #friendOv > .panel > .head:first-child,body.phone #lbOv > .panel > .head:first-child,body.phone #profOv > .panel > .head:first-child,body.phone #settingsOv > .panel > .head:first-child,body.phone #acctOv > .panel > .head:first-child,body.phone #guideOv > .panel > .head:first-child,body.phone #eventOv > .panel > .head:first-child,body.phone #pollOv > .panel > .head:first-child,body.phone #twinOv > .panel > .head:first-child,body.phone #remixOv > .panel > .head:first-child,body.phone #hardOv > .panel > .head:first-child,body.phone #coopOv > .panel > .head:first-child{position:sticky;top:0;z-index:5;margin:0 calc(-1 * max(16px,env(safe-area-inset-right))) 2px calc(-1 * max(16px,env(safe-area-inset-left)));
+  padding:calc(env(safe-area-inset-top) + 10px) max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left));min-height:52px;box-sizing:content-box;
+  background:rgba(22,17,52,.9);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid rgba(255,255,255,.07)}
+body.phone .overlay .panel > .head:first-child .back{font-size:15px;padding:8px 12px 8px 4px;min-height:40px}
+body.phone #twinOv > .panel{padding-top:calc(env(safe-area-inset-top) + 12px)!important}
+body.phone #passOv{padding:0!important;background:#1A0C46}
+body.phone #passOv > .pppanel{border-radius:0!important;border:0!important;box-shadow:none!important;min-height:100%;padding:calc(env(safe-area-inset-top) + 10px) max(12px,env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))!important}
+body.phone.hastabs .partybar{bottom:calc(74px + env(safe-area-inset-bottom))!important}
+body.phone.hastabs #toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+/* sideways phones: the tab bar is shorter */
+@media (max-height:540px) and (orientation:landscape){
+  .tabbar button{min-height:40px;flex-direction:row;gap:7px;font-size:11.5px}.tabbar button svg{width:21px;height:21px}
+  body.phone #menuOv #menuArt{display:none}
+}
+
+/* tab rows scroll sideways instead of wrapping onto two lines */
+body.phone .segs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+body.phone .segs::-webkit-scrollbar{display:none}
+body.phone .segs button{flex:0 0 auto;white-space:nowrap;padding-inline:14px}
+/* in a level: a cleaner swipe pad */
+.swipepad{border:1px solid rgba(255,248,238,.12)!important;background:radial-gradient(ellipse at 50% 40%,rgba(255,248,238,.09),rgba(255,248,238,.03) 70%)!important;border-radius:28px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.sp-cross{width:64px!important;height:64px!important}
+.sp-cross::before,.sp-cross::after{background:none!important}
+.sp-cross{background:
+  linear-gradient(135deg,transparent 46%,rgba(255,248,238,.35) 46% 54%,transparent 54%) 50% 0/14px 14px no-repeat,
+  linear-gradient(225deg,transparent 46%,rgba(255,248,238,.35) 46% 54%,transparent 54%) 50% 0/14px 14px no-repeat}
+.sp-arrows{position:absolute;inset:0;pointer-events:none}
+.sp-arrows i{position:absolute;width:12px;height:12px;border:solid rgba(255,248,238,.32);border-width:2.5px 2.5px 0 0;border-radius:2px}
+.sp-arrows i:nth-child(1){left:50%;top:22%;transform:translate(-50%,0) rotate(-45deg)}
+.sp-arrows i:nth-child(2){right:calc(50% - 64px);top:50%;transform:translate(0,-50%) rotate(45deg)}
+.sp-arrows i:nth-child(3){left:50%;bottom:32%;transform:translate(-50%,0) rotate(135deg)}
+.sp-arrows i:nth-child(4){left:calc(50% - 64px);top:50%;transform:translate(0,-50%) rotate(-135deg)}
+.sp-cross{display:none!important}
+.sp-hint{margin-top:auto!important;margin-bottom:14px;align-self:end;font-size:10.5px!important;opacity:.75}
+.swipepad.learned .sp-hint,.swipepad.learned .sp-arrows{opacity:.35}
+</style>
 <section id="menuOv" class="screen" hidden>
   <div id="hween" aria-hidden="true"></div>
   <header class="mtop">
@@ -1267,6 +1355,14 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
   <button class="mcard" id="mCreate" type="button" style="--a:#B8F27A"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="4" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.6"/><rect x="18" y="18" width="10" height="10" rx="2" fill="currentColor"/><path d="M18 9h10M23 4v10M4 23h10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg><b>Create</b><small>Build and share levels</small><span class="meta" id="mCreateMeta"></span></button>
   </nav>
 </section>
+<nav class="tabbar" id="tabbar" aria-label="Main">
+  <button type="button" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" fill-opacity=".18"/></svg>Play</button>
+  <button type="button" data-tab="pass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8l4 3.5L12 5l4 6.5L20 8l-1.6 10H5.6z" fill="currentColor" fill-opacity=".18"/></svg>Pass<i class="tdot" data-dot="pass" hidden></i></button>
+  <button type="button" data-tab="shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" fill="currentColor" fill-opacity=".18"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg>Collection</button>
+  <button type="button" data-tab="friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.5" fill="currentColor" fill-opacity=".18"/><path d="M2.8 19c.8-3.3 3.3-5 6.2-5s5.4 1.7 6.2 5"/><path d="M15.5 5.3a3.3 3.3 0 0 1 0 6.4M18 14.4c1.7.7 2.8 2.2 3.2 4.6"/></svg>Friends<i class="tdot" data-dot="friends" hidden></i></button>
+  <button type="button" data-tab="more"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5.5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18.5" cy="12" r="2"/></svg>More<i class="tdot" data-dot="more" hidden></i></button>
+</nav>
+<div class="sheet" id="moreSheet" hidden><div class="sheet-card" role="dialog" aria-label="More"><div class="sheet-grab"></div><h3>More</h3><div class="sheet-grid" id="moreGrid"></div></div></div>
 
 <section id="passOv" class="overlay ppov" hidden>
   <div class="panel pppanel">
@@ -3241,15 +3337,18 @@ function spawnBloom(){
 }
 
 /* ---------------- RENDER ---------------- */
-var PERF={f:[],last:0,level:0}; const PERF_DPR=[2,1.5,1.2,1];   // see perfTick
+var PERF={f:[],last:0,level:0}; const PERF_DPR=[3,2,1.5,1];   // see perfTick
 try{ PERF.level=Math.max(0,Math.min(3,+localStorage.getItem('pf-perf')||0)); }catch(e){}
 const cv=$('cv'); let cx=cv.getContext('2d'); let DPR=1, VW=0, VH=0;
 /* boss fights draw at a higher resolution (at least 1.75×, up to 2.5×), so bosses and arenas stay crisp and well defined on small
    or low-quality screens, within a pixel budget so large screens aren't overloaded */
 const RES={boss:false};
 function resize(){ VW=innerWidth; VH=innerHeight; RES.boss=!!(typeof R!=='undefined'&&R&&R.boss&&G&&G.state!=='menu');
-  DPR=Math.min(MOB?1.5:2,PERF_DPR[PERF.level],devicePixelRatio||1);
-  if(RES.boss) DPR=Math.min(2.5,Math.max(1.75,(devicePixelRatio||1)*1.25),Math.sqrt(4.4e6/Math.max(1,VW*VH)));
+  // phones draw at their full screen density (up to 3x, within a pixel budget); computers at up to 2x; a slow device steps down
+  const area=Math.max(1,VW*VH), dev=devicePixelRatio||1;
+  DPR=Math.min(MOB?3:2,PERF_DPR[PERF.level],dev,Math.sqrt((MOB?3.8e6:6e6)/area));
+  if(RES.boss) DPR=Math.max(DPR,Math.min(2.5,dev*1.25,Math.sqrt(4.4e6/area)));
+  DPR=Math.max(1,DPR);
   cv.width=Math.round(VW*DPR); cv.height=Math.round(VH*DPR); cx.imageSmoothingQuality='high'; }
 addEventListener('resize',resize); resize();
 const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
@@ -3259,6 +3358,8 @@ const DIST=Array.from({length:9},(_,i)=>({x:Math.random(),y:.12+Math.random()*.7
 function layout(){
   let r=$('stage').getBoundingClientRect(); const N=R.N;
   if(G.state==='menu'&&!$('menuOv').hidden){ const a=$('menuArt').getBoundingClientRect(); if(a.width>80&&a.height>80) r=a; }
+  // narrow screens: keep the board clear of the beat bars at the left edge (shrink both sides so it stays centred)
+  else { const bb=$('beatbar'); if(bb&&!bb.hidden){ const b=bb.getBoundingClientRect(), over=b.right+6-r.left; if(over>0&&b.width>0&&r.width-2*over>200) r={left:r.left+over,top:r.top,width:r.width-2*over,height:r.height}; } }
   const hk=R.boss?3.9:1.1, tw=Math.max(18,Math.min(r.width*.96/N,r.height/(N*.62+.31+hk*.62+(R.boss?0:.42)),92)), th=tw*.62, d=th*.5, head=th*hk;
   return {tw,th,d,gap:tw*.035,ox:r.left+(r.width-N*tw)/2,oy:r.top+head+(r.height-head-(N*th+d))/2};
 }
@@ -6428,7 +6529,38 @@ function buildPass(){
   $('walletPP').textContent=notesTxt();
 }
 function showPass(){ $('ppTrack').dataset.scrolled=''; ppTab='rewards'; buildPass(); showOv('passOv'); }
-$('mPass').onclick=showPass; $('ppBack').onclick=()=>toMenu();
+$('mPass').onclick=showPass;
+/* ================= PHONE APP SHELL: bottom tabs and the More sheet (all of them press the menu's own buttons) ================= */
+const PHONE_MQ=matchMedia('(max-width:760px), (max-height:540px) and (pointer:coarse)');
+const TAB_OF={menuOv:'home',worldsOv:'home',levelsOv:'home',hardOv:'home',remixOv:'home',coopOv:'home',passOv:'pass',shopOv:'shop',friendsOv:'friends',friendOv:'friends',
+  lbOv:'more',profOv:'more',settingsOv:'more',acctOv:'more',guideOv:'more',eventOv:'more',pollOv:'more',twinOv:'more'};
+const MORE_ITEMS=[['mProfile','Profile & quests','◆','rgba(255,170,90,.25)'],['mLB','Leaderboards','♛','rgba(255,209,102,.22)'],['mTwin',null,'⚔','rgba(255,236,170,.22)'],['mEvent',null,'★','rgba(255,126,182,.22)'],
+  ['mPoll','Vote','☑','rgba(126,232,220,.22)'],['mAcct',null,'◉','rgba(156,200,255,.22)'],['mName','Player name','✦','rgba(201,160,255,.22)'],['mSettings','Settings','⚙','rgba(255,255,255,.12)'],['mGuide','Help','?','rgba(184,242,122,.2)'],['mSound',null,'♪','rgba(255,255,255,.12)']];
+const isDot=id=>{ const e=$(id); return !!e&&!e.hidden; };
+function moreBuild(){
+  $('moreGrid').innerHTML=MORE_ITEMS.filter(([id])=>$(id)&&!$(id).hidden).map(([id,label,ic,c])=>{ const b=$(id), dot=b.querySelector('.qdot');
+    const txt=label||(b.querySelector('span')?b.querySelector('span').textContent:b.textContent).replace(/^[^\p{L}\p{N}]+/u,'').trim();
+    return `<button type="button" data-more="${id}"><span class="si" style="--sc:${c}">${ic}</span>${escapeHTML(txt)}${dot&&!dot.hidden?'<i class="tdot"></i>':''}</button>`; }).join('');
+  $('moreGrid').querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>{ moreClose(); const id=b.dataset.more; if(!$('menuOv').hidden||id==='mSound') $(id).click(); else { toMenu(); setTimeout(()=>$(id).click(),0); } });
+}
+function moreOpen(){ moreBuild(); $('moreSheet').hidden=false; if(A.ctx) sUI(); }
+function moreClose(){ $('moreSheet').hidden=true; }
+$('moreSheet').addEventListener('click',e=>{ if(e.target===$('moreSheet')) moreClose(); });
+document.querySelectorAll('#tabbar [data-tab]').forEach(b=>b.onclick=()=>{ const t=b.dataset.tab; moreClose(); if(A.ctx) sUI(); buzz(8);
+  if(t==='more') return moreOpen();
+  const cur=OVS.find(id=>!$(id).hidden);
+  if(t==='home'){ if(cur!=='menuOv') toMenu(); return; }
+  const btn={pass:'mPass',shop:'mShop',friends:'mFriends'}[t]; if(cur!=='menuOv') toMenu(); $(btn).click(); });
+function tabSync(){
+  const phone=PHONE_MQ.matches; document.body.classList.toggle('phone',phone);
+  const cur=OVS.find(id=>!$(id).hidden), tab=G.state==='menu'&&cur?TAB_OF[cur]:null, show=phone&&!!tab;
+  document.body.classList.toggle('hastabs',show); if(!show){ if(!$('moreSheet').hidden) moreClose(); return; }
+  const fr=!$('mFriends').hidden; $('tabbar').style.setProperty('--tabs',fr?5:4);
+  document.querySelectorAll('#tabbar [data-tab]').forEach(b=>{ b.classList.toggle('on',b.dataset.tab===tab); if(b.dataset.tab==='friends') b.hidden=!fr; });
+  const dots={pass:isDot('mPassDot'),friends:isDot('mFDot'),more:isDot('mQDot')||isDot('mPollDot')};
+  document.querySelectorAll('#tabbar [data-dot]').forEach(d=>d.hidden=!dots[d.dataset.dot]);
+}
+setInterval(tabSync,200); PHONE_MQ.addEventListener&&PHONE_MQ.addEventListener('change',tabSync); setTimeout(tabSync,0); $('ppBack').onclick=()=>toMenu();
 document.querySelectorAll('#passOv .pptabs button').forEach(b=>b.onclick=()=>{ ppTab=b.dataset.pt; if(ppTab==='rewards') $('ppTrack').dataset.scrolled=''; buildPass(); });
 $('ppClaimAll').onclick=()=>{ let n=0, notes=0; for(let t=1;t<=passTier().t;t++) if(!passGot(t)){ const r=PASS[t-1]; if(passClaim(t)){ n++; if(r.kind==='notes') notes+=r.n; } }
   if(n){ if(A.ctx) sGem(); buzz(20); toast(`Collected ${n} reward${n>1?'s':''}${notes?` (+♪${notes.toLocaleString()})`:''}`); }
@@ -9355,7 +9487,7 @@ function hud(){
 const ARW={up:'M6 15l6-6 6 6',down:'M6 9l6 6 6-6',left:'M15 6l-6 6 6 6',right:'M9 6l6 6-6 6'};
 const flashT={};
 function padHTML(pid,label){ return `<nav class="pad" aria-label="${label}">`+DK.map(d=>`<button class="dir d-${d}" data-dir="${d}" data-p="${pid}" aria-label="${d}" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${ARW[d]}"/></svg></button>`).join('')+`<div class="keys" aria-hidden="true">${label}</div></nav>`; }
-const swipeHTML=(pid,label)=>`<div class="swipepad" data-p="${pid}"><span class="sp-cross"></span><span class="sp-hint">${label}</span></div>`;
+const swipeHTML=(pid,label)=>`<div class="swipepad${(SAVE.life&&SAVE.life.runs>=5)?' learned':''}" data-p="${pid}"><span class="sp-cross"></span><span class="sp-arrows" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="sp-hint">${label}</span></div>`;
 function setPads(){
   const coop=G.mode&&G.mode.coop&&!G.mode.net, el=$('pads'), me=G.mode&&G.mode.net?NET.me:0;
   el.classList.toggle('swipe',MOB);
