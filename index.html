@@ -5441,12 +5441,29 @@ function vxPost4(S,X,T,W,bh,H,now){
   }
   cx.restore();
 }
+/* the animated block previews (shop, collection, pass, friends…). Keeping them smooth while a list scrolls on a phone:
+   - which previews are on screen comes from an IntersectionObserver, not from measuring each one every frame (measuring
+     forces the page to be laid out again, mid-scroll);
+   - each preview's size is measured once (again after a resize);
+   - on phones they're drawn at up to 2.5x sharpness, 30 times a second, and 20 a second while a list is moving. */
+const PV={io:'IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{ e.target._vis=e.isIntersecting; }),{rootMargin:'60px'}):null,
+  seen:new Set(),f:0,on:true,scrollT:0,gcT:0,rk:''};
+addEventListener('scroll',()=>{ PV.scrollT=performance.now(); },{capture:true,passive:true});
+function pvFrame(){ PV.f++; const scrolling=performance.now()-PV.scrollT<180, step=MOB?(scrolling?3:2):1; PV.on=PV.f%step===0;
+  const rk=innerWidth+'x'+innerHeight; if(rk!==PV.rk){ PV.rk=rk; PV.seen.forEach(c=>{ c._css=0; }); }
+  if(performance.now()-PV.gcT>3000){ PV.gcT=performance.now(); PV.seen.forEach(c=>{ if(!c.isConnected){ PV.io&&PV.io.unobserve(c); PV.seen.delete(c); } }); } }
 function drawSkinPreviews(now,sel){
+  if(!PV.on) return;
   const cvs=document.querySelectorAll(sel||'#shopGrid canvas.skprev'); if(!cvs.length) return;
-  const main=cx, dpr=Math.min(3,devicePixelRatio||1), gm=G.mode; G.mode=gm?{...gm,coop:false}:null;
-  cvs.forEach((c,idx)=>{ const r=c.getBoundingClientRect(); if(!r.width||r.bottom<0||r.top>innerHeight) return;
+  const main=cx, dpr=Math.min(MOB?2.5:3,devicePixelRatio||1), gm=G.mode; G.mode=gm?{...gm,coop:false}:null;
+  cvs.forEach((c,idx)=>{
+    if(PV.io){ if(!PV.seen.has(c)){ PV.seen.add(c); PV.io.observe(c); c._vis=undefined; }
+      if(c._vis===false) return;
+      if(c._vis===undefined){ const r=c.getBoundingClientRect(); c._vis=!!r.width&&r.bottom>=0&&r.top<=innerHeight; if(!c._vis) return; } }   // the first time only, until the observer reports
+    else { const r=c.getBoundingClientRect(); if(!r.width||r.bottom<0||r.top>innerHeight) return; }
     // sized from the canvas's laid-out width (not its hover transform), so it stays sharp on 3x phone screens
-    const w=64, h=64, css=c.clientWidth||+c.dataset.px||64, N=Math.round(css*dpr), sc=N/64; if(c.width!==N){ c.width=N; c.height=N; }
+    if(!c._css) c._css=c.clientWidth||+c.dataset.px||64;
+    const w=64, h=64, css=c._css, N=Math.round(css*dpr), sc=N/64; if(c.width!==N){ c.width=N; c.height=N; }
     const g=c.getContext('2d'); g.setTransform(sc,0,0,sc,0,0); g.clearRect(0,0,w,h); cx=g;
     // small icons (friends, leaderboard) zoom in on the block itself; the effects around it are faded at the edge
     const pv=(skinById(c.dataset.skin)||{}).prev; if(pv){ const k=css<=48?.45:1, s0=1-(1-pv[0])*k; g.translate(w/2,pv[1]*k); g.scale(s0,s0); g.translate(-w/2,0); }
@@ -10793,8 +10810,12 @@ function loop(ts){
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
   beatBar(now+visLead());
-  render(now+visLead());
+  pvFrame();
+  if(!(G.state==='menu'&&coveredByPanel())) render(now+visLead());   // on phones the menu panels cover the whole screen: no point drawing the scene behind them
 }
+/* phones: these panels fill the screen with a solid background, so the game scene behind them can't be seen */
+const FULL_PANELS=['worldsOv','levelsOv','shopOv','friendsOv','friendOv','lbOv','profOv','settingsOv','acctOv','guideOv','eventOv','pollOv','twinOv','remixOv','hardOv','coopOv','passOv'];
+function coveredByPanel(){ return document.body.classList.contains('phone')&&FULL_PANELS.some(id=>{ const e=$(id); return e&&!e.hidden; }); }
 
 /* the beat bars: at time t, each bar has travelled the fraction of the way from its end of the track
    to the middle that the current beat has, so both reach the middle exactly on the beat */
