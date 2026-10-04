@@ -5452,14 +5452,19 @@ function vxPost4(S,X,T,W,bh,H,now){
 const PV={io:'IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{ e.target._vis=e.isIntersecting; }),{rootMargin:'60px'}):null,
   seen:new Set(),f:0,on:true,scrollT:0,gcT:0,rk:''};
 addEventListener('scroll',()=>{ PV.scrollT=performance.now(); },{capture:true,passive:true});
+// while a finger is scrolling a list, the previews hold still (and pick up again the moment it lifts): scrolling stays smooth
+addEventListener('touchstart',()=>{ PV.touch=true; PV.touchT=performance.now(); },{capture:true,passive:true});
+['touchend','touchcancel'].forEach(t=>addEventListener(t,e=>{ if(!e.touches||!e.touches.length) PV.touch=false; },{capture:true,passive:true}));
+const pvFrozen=()=>PV.touch&&PV.scrollT>PV.touchT;
 function pvFrame(){ PV.f++; const scrolling=performance.now()-PV.scrollT<180, step=MOB?(scrolling?3:2):1; PV.on=PV.f%step===0;
   const rk=innerWidth+'x'+innerHeight; if(rk!==PV.rk){ PV.rk=rk; PV.seen.forEach(c=>{ c._css=0; }); }
   if(performance.now()-PV.gcT>3000){ PV.gcT=performance.now(); PV.seen.forEach(c=>{ if(!c.isConnected){ PV.io&&PV.io.unobserve(c); PV.seen.delete(c); } }); } }
 function drawSkinPreviews(now,sel){
-  if(!PV.on) return;
+  if(!PV.on&&!pvFrozen()) return;
   const cvs=document.querySelectorAll(sel||'#shopGrid canvas.skprev'); if(!cvs.length) return;
-  const main=cx, dpr=Math.min(MOB?2.5:3,devicePixelRatio||1), gm=G.mode; G.mode=gm?{...gm,coop:false}:null;
+  const main=cx, dpr=Math.min(MOB?2.5:3,devicePixelRatio||1), gm=G.mode, frozen=pvFrozen(); G.mode=gm?{...gm,coop:false}:null;
   cvs.forEach((c,idx)=>{
+    if(frozen&&c._drawn) return;   // held still mid-scroll; one that scrolls into view is still drawn once
     if(PV.io){ if(!PV.seen.has(c)){ PV.seen.add(c); PV.io.observe(c); c._vis=undefined; }
       if(c._vis===false) return;
       if(c._vis===undefined){ const r=c.getBoundingClientRect(); c._vis=!!r.width&&r.bottom>=0&&r.top<=innerHeight; if(!c._vis) return; } }   // the first time only, until the observer reports
@@ -5472,7 +5477,7 @@ function drawSkinPreviews(now,sel){
     const pv=(skinById(c.dataset.skin)||{}).prev; if(pv){ const k=css<=48?.45:1, s0=1-(1-pv[0])*k; g.translate(w/2,pv[1]*k); g.scale(s0,s0); g.translate(-w/2,0); }
     const ph=((now+idx*.13)%1), lift=ph<.32?Math.sin(Math.PI*ph/.32)*9:0, sq=ph>=.32&&ph<.45?.12*(1-(ph-.32)/.13):0;
     const L={tw:58,th:58*.62,ox:w/2-29,oy:52-58*.62*.5,d:0}, P={skin:skinById(c.dataset.skin),greyT:-9,flashT:-9,flashC:'#FFF',face:['down','right','down','left'][Math.floor(now/1.2)%4],id:0};
-    try{ drawBlock(P,{x:0,y:0,dx:0,dy:0,lift,sq,alpha:1,falling:false,fallY:0},L,now); }catch(e){}
+    try{ drawBlock(P,{x:0,y:0,dx:0,dy:0,lift,sq,alpha:1,falling:false,fallY:0},L,now); }catch(e){} c._drawn=true;
     g.setTransform(1,0,0,1,0,0); g.globalAlpha=1; g.shadowBlur=0; g.globalCompositeOperation='destination-in';
     const fm=g.createRadialGradient(N/2,N/2,N*.36,N/2,N/2,N*.5); fm.addColorStop(0,'#000'); fm.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=fm; g.fillRect(0,0,N,N); g.globalCompositeOperation='source-over';
   });
