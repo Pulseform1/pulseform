@@ -1,4 +1,4 @@
-# Pulseform for the App Store and Google Play
+# Beatdash for the App Store and Google Play
 
 This folder turns the game into real iPhone/iPad and Android apps with **Capacitor**: a native app shell that runs
 `../index.html` inside the phone's own web engine. The game code stays the same file you already upload; this folder

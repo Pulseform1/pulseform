@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#2E3566">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="description" content="Pulseform Beat Rooms: a rhythm puzzle game. Move one tile per beat through floating rooms.">
+<meta name="description" content="Beatdash: a rhythm puzzle game. Move one tile per beat through floating rooms.">
 <style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}</style>
 <script>
 /* ===== CLOUD SAVES (sign in with Google or email) =====
@@ -30,14 +30,14 @@ window.PULSEFORM_FIREBASE = {
    You can also add relay servers for strict networks: iceServers: [{ urls: "turns:...:443", username: "...", credential: "..." }] */
 window.PULSEFORM_PEER = null;
 </script>
-<!-- Tab icon: a Pulseform block in its beat ring (source: icons/pulseform-icon.svg). Built in, so this one file is all you upload. -->
+<!-- Tab icon: a Beatdash block in its beat ring (source: icons/pulseform-icon.svg). Built in, so this one file is all you upload. -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E %3Cdefs%3E %3ClinearGradient id=%22bg%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%233A3170%22/%3E%3Cstop offset=%221%22 stop-color=%22%231C1640%22/%3E%3C/linearGradient%3E %3C/defs%3E %3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22url%28%23bg%29%22/%3E %3Cellipse cx=%2232%22 cy=%2245%22 rx=%2223%22 ry=%2211%22 fill=%22none%22 stroke=%22%23FFD166%22 stroke-width=%223.5%22/%3E %3Cpath d=%22M32 13 L50 22 L32 31 L14 22 Z%22 fill=%22%23FBF1E4%22/%3E %3Cpath d=%22M14 22 L32 31 L32 51 L14 42 Z%22 fill=%22%23E2C49A%22/%3E %3Cpath d=%22M50 22 L32 31 L32 51 L50 42 Z%22 fill=%22%23A77E60%22/%3E %3Cpath d=%22M24 21.5 L32 25.5 L40 21.5%22 fill=%22none%22 stroke=%22%23FFD166%22 stroke-width=%223.2%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E %3C/svg%3E">
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,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">
 <link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,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">
 <meta name="theme-color" content="#2B2350">
 </head>
 <body>
-<title>Pulseform Beat Rooms</title>
+<title>Beatdash</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap">
@@ -1526,7 +1526,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
 <section id="menuOv" class="screen" hidden>
   <div id="hween" aria-hidden="true"></div>
   <header class="mtop">
-    <div class="mbrand"><span class="mdot"></span>Pulseform</div>
+    <div class="mbrand"><span class="mdot"></span>Beatdash</div>
     <div class="mtop-r"><span class="wallet" id="walletM"></span>
       <button class="chip namechip" id="mName" type="button" title="Change your player name">Player name</button>
       <button class="chip acct" id="mAcct" type="button">Sign in</button>
@@ -1546,7 +1546,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   <div class="mmain">
     <div class="mhero">
       <div class="eyebrow">A rhythm puzzle in floating rooms</div>
-      <h1 class="logo" id="logo">Pulse<span>form</span></h1>
+      <h1 class="logo" id="logo">Beat<span>dash</span></h1>
       <p class="tag">Move one tile per beat. Land on the beat and the music grows around you. Every level has its own track.</p>
       <button class="cta" id="mContinue" type="button"><span class="cta-k" id="mContTitle">Continue</span><span class="cta-s" id="mContSub"></span><span class="cta-go" aria-hidden="true">▶</span></button>
     </div>
@@ -2138,7 +2138,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   <div class="panel hppanel" role="dialog" aria-labelledby="hpTitle">
     <div class="hpicon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M12 38v-6a20 20 0 0 1 40 0v6" fill="none" stroke="#B8F2E6" stroke-width="4" stroke-linecap="round"/><rect x="8" y="36" width="12" height="18" rx="5" fill="#FFD166"/><rect x="44" y="36" width="12" height="18" rx="5" fill="#FFD166"/><path d="M26 44h3l2-6 3 12 2-6h3" fill="none" stroke="#FFF8EE" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div><div class="eyebrow">Before you play</div><h2 id="hpTitle">Headphones recommended</h2></div>
-    <p style="margin:0">Pulseform is played to the beat. Headphones make the drum easier to hear and keep your taps in time with the music.</p>
+    <p style="margin:0">Beatdash is played to the beat. Headphones make the drum easier to hear and keep your taps in time with the music.</p>
     <p class="small" style="margin:0">Every setup has a slightly different sound delay, and Bluetooth headphones add the most. Take 15 seconds to calibrate: tap along with the clicks and the game lines itself up with you.</p>
     <div class="row"><button class="btn" id="hpCalib" type="button">Calibrate timing</button><button class="btn ghost" id="hpPlay" type="button">Play now</button></div>
     <small class="small">You can calibrate any time in Settings.</small>
@@ -2364,7 +2364,7 @@ STYLES.lobby={name:'Lobby',mood:'jazz club',bpm:1,swing:.3,prog:[[2,'m7'],[7,'7'
   kick:{s:'kickHard',p:P16([0,1.25],[6,.55],[8,1.15],[10,.35],[14,.5])},snare:{s:'snareHard',p:P16([4,1.35],[12,1.35],[11,.2],[15,.3])},
   hat:{s:'ride',p:P16([0,.6],[4,.6],[6,.45],[8,.6],[12,.6],[14,.45])},perc:{s:'hat',p:P16([4,.55],[12,.55])},
   bass:{pat:'walk',wave:'tri',v:.44},keys:{pat:'charleston',voice:'rhodes'},lead:{voice:'horn',dens:.62,rhy:'swing'},spark:'bells'};
-/* October lobby variant: same Pulseform groove, but in a minor key with softer drums, darker harmony and bell-led melody. */
+/* October lobby variant: same Beatdash groove, but in a minor key with softer drums, darker harmony and bell-led melody. */
 STYLES.lobbySpooky={name:'Haunted Lobby',mood:'moonlit and mysterious',bpm:1,swing:.12,prog:[[0,'m'],[8,'M'],[3,'m'],[10,'7']],scale:'minor',
   kick:{s:'kickSoft',p:P16([0,.9],[6,.35],[8,.72],[14,.28])},snare:{s:'brush',p:P16([4,.62],[12,.58],[15,.16])},
   hat:{s:'ride',p:P16([0,.32],[6,.28],[8,.34],[14,.25])},perc:{s:'rim',p:P16([3,.25],[11,.22])},
@@ -3524,7 +3524,10 @@ function swapRoom(){
 
 /* ---------------- FX helpers ---------------- */
 function buzz(ms){ if(ms&&SAVE.haptics&&navigator.vibrate){ try{ navigator.vibrate(ms); }catch(e){} } }
-function bump(id,cls){ const e=$(id); if(!e) return; e.classList.remove(cls); void e.offsetWidth; e.classList.add(cls); }
+// restart a CSS pulse without forcing a page layout (the old remove/offsetWidth/add trick re-laid out the page on every beat)
+function bump(id,cls){ const e=$(id); if(!e) return;
+  if(e.classList.contains(cls)&&e.getAnimations){ const an=e.getAnimations(); if(an.length){ an.forEach(a=>{ a.cancel(); a.play(); }); return; } }
+  e.classList.remove(cls); requestAnimationFrame(()=>e.classList.add(cls)); }
 let hintTO; function hint(t,ms=5500){ const h=$('hint'); h.textContent=t; h.style.opacity=t?1:0; clearTimeout(hintTO); if(t) hintTO=setTimeout(()=>h.style.opacity=0,ms); }
 function popAt(P,text,col,size){ G.pops.push({text,col,size,x:P.pos.x,y:P.pos.y,t0:G.now}); }
 function burst(x,y,n,col,big){ if(MOB) n=Math.ceil(n*.6); for(let i=0;i<n&&G.parts.length<(MOB?160:320);i++){ const a=Math.random()*Math.PI*2, s=(big?90:40)+Math.random()*(big?200:120); G.parts.push({gx:x,gy:y,ox:0,oy:0,vx:Math.cos(a)*s,vy:Math.sin(a)*s*.6-(big?110:60),life:.5+Math.random()*(big?.6:.4),t0:G.now,col,sz:(big?3:2)+Math.random()*(big?4:3),sh:big?2:ri(2),rot:Math.random()*6,spin:(Math.random()-.5)*12,add:!!big}); } }
@@ -3612,11 +3615,22 @@ let DIST=[], DIST_K='';
 function distLay(){ const k=Math.round(VW)+'x'+Math.round(VH); if(k===DIST_K) return; DIST_K=k; DIST=[];
   for(let tries=0;DIST.length<9&&tries<400;tries++){ const sz=(30+Math.random()*90)*Math.min(1,VW/700+.35), o={x:Math.random(),y:.12+Math.random()*.75,s:sz,k:ri(3),ph:Math.random()*6};
     if(DIST.every(q=>Math.hypot((q.x-o.x)*VW,(q.y-o.y)*VH-(q.s-o.s)*.4)>(q.s+o.s)*.62+16)) DIST.push(o); } }
-function layout(){
-  let r=$('stage').getBoundingClientRect(); const N=R.N;
-  if(G.state==='menu'&&!$('menuOv').hidden){ const a=$('menuArt').getBoundingClientRect(); if(a.width>80&&a.height>80) r=a; }
+/* where the board goes. Reading the page layout every frame forces the browser to lay the page out again each frame
+   (a stutter on phones), so the rectangle is measured only when something that moves it changes, or every half second. */
+const LAY={k:'',t:0,r:null};
+['resize','orientationchange'].forEach(e=>addEventListener(e,()=>{ LAY.k=''; },{passive:true}));
+addEventListener('scroll',()=>{ LAY.k=''; },{capture:true,passive:true});
+function layRect(){
+  const menu=G.state==='menu'&&!$('menuOv').hidden, bb=$('beatbar'), k=(menu?'m':'g')+(bb&&!bb.hidden?'b':'')+VW+'x'+VH, t=performance.now();
+  if(LAY.r&&LAY.k===k&&t-LAY.t<500) return LAY.r;
+  let r=$('stage').getBoundingClientRect();
+  if(menu){ const a=$('menuArt').getBoundingClientRect(); if(a.width>80&&a.height>80) r=a; }
   // narrow screens: keep the board clear of the beat bars at the left edge (shrink both sides so it stays centred)
-  else { const bb=$('beatbar'); if(bb&&!bb.hidden){ const b=bb.getBoundingClientRect(), over=b.right+6-r.left; if(over>0&&b.width>0&&r.width-2*over>200) r={left:r.left+over,top:r.top,width:r.width-2*over,height:r.height}; } }
+  else if(bb&&!bb.hidden){ const b=bb.getBoundingClientRect(), over=b.right+6-r.left; if(over>0&&b.width>0&&r.width-2*over>200) r={left:r.left+over,top:r.top,width:r.width-2*over,height:r.height}; }
+  LAY.k=k; LAY.t=t; LAY.r={left:r.left,top:r.top,width:r.width,height:r.height}; return LAY.r;
+}
+function layout(){
+  const r=layRect(), N=R.N;
   const hk=R.boss?3.9:1.1, tw=Math.max(18,Math.min(r.width*.96/N,r.height/(N*.62+.31+hk*.62+(R.boss?0:.42)),92)), th=tw*.62, d=th*.5, head=th*hk;
   return {tw,th,d,gap:tw*.035,ox:r.left+(r.width-N*tw)/2,oy:r.top+head+(r.height-head-(N*th+d))/2};
 }
@@ -7254,14 +7268,14 @@ function iapGrant(id,tx){ const pr=PRODUCTS.find(p=>p.id===id); if(!pr) return f
 async function iapBuy(id){ const pr=PRODUCTS.find(p=>p.id===id); if(!pr||IAP.busy) return;
   if(!iapLive()){
     if(ADS.test&&!isNativeApp()){ if(confirm(`TEST PURCHASE (nothing is charged)\n\n${pr.name} · ${pr.price}`)){ iapGrant(id,'test-'+Date.now()); buildShop(); } return; }
-    toast(isNativeApp()?'The store isn\'t available right now. Try again in a moment.':'Purchases are available in the Pulseform app.'); return; }
+    toast(isNativeApp()?'The store isn\'t available right now. Try again in a moment.':'Purchases are available in the Beatdash app.'); return; }
   const sp=IAP.items[id]; if(!sp){ toast('That item isn\'t available right now.'); return; }
   IAP.busy=true; buildShop();
   try{ const r=await rcPlugin().purchaseStoreProduct({product:sp}); const tx=r&&r.transaction&&r.transaction.transactionIdentifier; iapGrant(id,tx||('rc-'+Date.now())); }
   catch(e){ const cancel=e&&(e.userCancelled||String(e.code)==='1'); if(!cancel) toast('The purchase didn\'t go through. You were not charged.'); }
   IAP.busy=false; buildShop(); }
 /* Restore purchases: brings back No Ads and the Starter Bundle on a new phone (Notes packs are used up when bought) */
-async function iapRestore(quiet){ const P=rcPlugin(); if(!P||!IAP.ok){ if(!quiet) toast('Restoring works in the Pulseform app.'); return; }
+async function iapRestore(quiet){ const P=rcPlugin(); if(!P||!IAP.ok){ if(!quiet) toast('Restoring works in the Beatdash app.'); return; }
   try{ const {customerInfo}=quiet?await P.getCustomerInfo():await P.restorePurchases(); let n=0;
     (customerInfo&&customerInfo.nonSubscriptionTransactions||[]).forEach(t=>{ const pr=PRODUCTS.find(p=>p.id===t.productIdentifier); if(pr&&pr.once&&iapGrant(pr.id,t.transactionIdentifier)) n++; });
     if(!quiet) toast(n?`Restored ${n} purchase${n>1?'s':''}.`:'Nothing to restore. You\'re all set.'); }
@@ -7273,7 +7287,7 @@ function moneyHTML(){
   if(!SAVE.starterBought) sp+=`<button type="button" class="mspecial starter" data-iap="${st.id}" ${IAP.busy?'disabled':''}><span class="msico">🎁</span><span class="mstxt"><b>Starter Bundle</b><small>♪${st.n.toLocaleString()} + ${st.rev} boss revive tokens · one time only</small></span><span class="mprice">${escapeHTML(iapPrice(st))}</span></button>`;
   sp+=SAVE.noAds?`<div class="mspecial owned"><span class="msico">✓</span><span class="mstxt"><b>No Ads</b><small>Boss revives are free. Thanks for the support!</small></span></div>`
     :`<button type="button" class="mspecial noads" data-iap="${na.id}" ${IAP.busy?'disabled':''}><span class="msico">🚫</span><span class="mstxt"><b>No Ads</b><small>Revive in boss fights without watching ads</small></span><span class="mprice">${escapeHTML(iapPrice(na))}</span></button>`;
-  const note=iapLive()?'':(isNativeApp()?'<p class="mnote">Connecting to the store…</p>':ADS.test?'<p class="mnote">Test mode: purchases here are pretend and free.</p>':'<p class="mnote">Notes packs and bundles can be bought in the Pulseform app.</p>');
+  const note=iapLive()?'':(isNativeApp()?'<p class="mnote">Connecting to the store…</p>':ADS.test?'<p class="mnote">Test mode: purchases here are pretend and free.</p>':'<p class="mnote">Notes packs and bundles can be bought in the Beatdash app.</p>');
   const prem=PRODUCTS.filter(p=>p.kind==='skin');
   const pb=p=>{ const own=ownsSkin(p.skin), eq=SAVE.skin===p.skin; return `<div class="mprem${own?' own':''}"><canvas class="skprev" data-skin="${p.skin}" data-px="110" width="110" height="110" aria-hidden="true"></canvas><b>${escapeHTML(p.name)}</b>`+
     (own?(eq?'<span class="mpown">Equipped</span>':`<button type="button" class="mpeq" data-peq="${p.skin}">Equip</button>`):`<button type="button" class="mprice" data-iap="${p.id}" ${IAP.busy?'disabled':''}>${escapeHTML(iapPrice(p))}</button>`)+'</div>'; };
@@ -7686,9 +7700,9 @@ function stopStudioAudio(){ const s=STUDIO.node; STUDIO.node=null; if(s){ try{ s
 /* ================= LORE & THE FOUNTAIN'S TUTORIAL =================
    All the story text lives here so it is easy to rewrite. */
 const LORE={
- story:'Long ago, every room in this sky moved to one great song: the Pulse. Then the Silence came. The song broke apart, the rooms drifted away, and the guardians of each world forgot the tune. The Fountain, keeper of the Courtyard, poured its last note into a small block: you, a Pulseform. Every beat you land reminds a room how to sing. Every guardian you beat gives back a verse. The guardians try to stop you, not out of cruelty, but out of fear of what is waiting past the Impossible Sky: the Silence itself, a slow dark that swallows every song that stops moving. At the very top of the sky, the Round One holds the final chorus.',
+ story:'Long ago, every room in this sky moved to one great song: the Pulse. Then the Silence came. The song broke apart, the rooms drifted away, and the guardians of each world forgot the tune. The Fountain, keeper of the Courtyard, poured its last note into a small block: you, a Beatdasher. Every beat you land reminds a room how to sing. Every guardian you beat gives back a verse. The guardians try to stop you, not out of cruelty, but out of fear of what is waiting past the Impossible Sky: the Silence itself, a slow dark that swallows every song that stops moving. At the very top of the sky, the Round One holds the final chorus.',
  intro:[
-  'Oh! A new Pulseform. I felt your first beat all the way down in my basin.',
+  'Oh! A new Beatdasher. I felt your first beat all the way down in my basin.',
   'I\'m the Fountain. Long ago, every room in this sky moved to one great song.',
   'Then the Silence came. The song broke apart, the rooms drifted away, and their guardians forgot the tune.',
   'You were made from the last note I had left. When you move on the beat, the rooms remember how to sing.',
@@ -7747,14 +7761,14 @@ const LORE={
   'I tried to keep you from the edge. Now I\'ll help you past it.',
   'Ride the tide, then. It always finds its way back.',
   'My crown… sinking in my own mud. Take both keys. My gardens were never truly mine.',
-  'All signals… green. Your line runs clear now, Pulseform. Mine has reached the end.',
+  'All signals… green. Your line runs clear now, Beatdasher. Mine has reached the end.',
   'My fire… burning out. Let the songs I stole go free. They were never mine to melt.',
   'You never lost your way, not once. My needle is still. Go where it points.',
-  'My ink… fading. Every name I erased is coming back. Write your own ending, Pulseform.',
+  'My ink… fading. Every name I erased is coming back. Write your own ending, Beatdasher.',
   'The storm… is over. Take the drum back where it belongs, and play it gently.',
   'My collection… rising. Take the songs back up to the sky. They were never mine to keep.',
   'My gears… slowing. At last, I can set. The Round One waits beyond the dusk.',
-  'My smile… cracking. The great song plays on without me. It always could. The music is yours now, Pulseform.'],
+  'My smile… cracking. The great song plays on without me. It always could. The music is yours now, Beatdasher.'],
  tutDone:'The Courtyard hums again! Every level adds an instrument to our song. Clear all eight… then come and test yourself against me.'};
 
 const FOUNTAIN_SVG=`<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="54" rx="24" ry="6" fill="#7E6A9C"/><path d="M8 48h48l-4 7H12z" fill="#EFDCC6"/><rect x="28" y="30" width="8" height="18" rx="2" fill="#C39C7C"/><ellipse cx="32" cy="31" rx="14" ry="4" fill="#EFDCC6"/><rect x="30" y="18" width="4" height="13" fill="#C39C7C"/><ellipse cx="32" cy="18" rx="7" ry="2.5" fill="#EFDCC6"/>
@@ -8077,7 +8091,7 @@ function drawLetterbox(now){
 }
 
 /* ================= THE OBSERVER (Book II) =================
-   A small red circle with no face that floats around and watches the Pulseform. It never speaks.
+   A small red circle with no face that floats around and watches the Beatdasher. It never speaks.
    It first appears after the Black Tide falls: everything but the map and your block fades away, the music stops,
    and it hums in from the top right, hovers near the top of the screen above you, watching, then leaves through the top left.
    After the Crucible Eye falls, three of them come back: they chase each other like children playing, up from the lower right
@@ -9277,9 +9291,9 @@ function chalFor(M){
 }
 const MODE_NAME={level:'level',boss:'boss fight',hard:'Hard stage',endless:'Endless run',ascent:'Ascent climb',daily:'Daily Challenge',event:'weekly event'};
 function shareChallenge(M){
-  const url=chalFor(M); if(!url) return; const txt=`I scored ${G.score.toLocaleString()} on this Pulseform ${MODE_NAME[M.type]}${M.type==='ascent'?` (floor ${G.floorBest||1})`:''}. Beat me:`;
+  const url=chalFor(M); if(!url) return; const txt=`I scored ${G.score.toLocaleString()} on this Beatdash ${MODE_NAME[M.type]}${M.type==='ascent'?` (floor ${G.floorBest||1})`:''}. Beat me:`;
   SAVE.life.challenges=(SAVE.life.challenges||0)+1; save(); achCheck();
-  if(navigator.share){ navigator.share({title:'Pulseform challenge',text:txt,url}).catch(()=>{}); return; }
+  if(navigator.share){ navigator.share({title:'Beatdash challenge',text:txt,url}).catch(()=>{}); return; }
   (navigator.clipboard?navigator.clipboard.writeText(txt+' '+url):Promise.reject()).then(()=>toast('Challenge link copied! Paste it to a friend.')).catch(()=>{ prompt('Copy this challenge link:',url); });
 }
 function chalMode(c){
@@ -9459,9 +9473,9 @@ function edSave(){
   SAVE.life.built=Math.max(SAVE.life.built||0,L.length); save(); achCheck(); edMine(); toast('Level saved');
 }
 function shareLevel(D){
-  const d=D&&D.c?D:edEncode(), code=edCode(d), url=location.origin+location.pathname+'?lvl='+code, txt=`Can you clear my Pulseform level "${d.n||'Untitled'}"?`;
+  const d=D&&D.c?D:edEncode(), code=edCode(d), url=location.origin+location.pathname+'?lvl='+code, txt=`Can you clear my Beatdash level "${d.n||'Untitled'}"?`;
   SAVE.life.shared=(SAVE.life.shared||0)+1; save(); achCheck();
-  if(navigator.share){ navigator.share({title:'Pulseform level',text:txt,url}).catch(()=>{}); return; }
+  if(navigator.share){ navigator.share({title:'Beatdash level',text:txt,url}).catch(()=>{}); return; }
   (navigator.clipboard?navigator.clipboard.writeText(txt+' '+url):Promise.reject()).then(()=>toast('Level link copied! Paste it to a friend.')).catch(()=>{ prompt('Copy this level code:',code); });
 }
 function playDesign(D,test){ const M=modeFor('custom',D); M.test=!!test; startRun(M); }
@@ -9506,7 +9520,7 @@ function lvlOffer(){
 function resetChalBtns(){ $('chGo').textContent='Accept'; $('chNo').textContent='Not now'; }
 
 /* ================= WORLD 7 · THE DARK SHORE =================
-   The Silence followed the Pulseform past the sky. Every level in World 7 is an escape: the dark floods in
+   The Silence followed the Beatdasher past the sky. Every level in World 7 is an escape: the dark floods in
    from the start tile and chases you to the door. Lanterns push it back, and springs leap gaps the dark can't cross.
    The boss, the Black Tide, closes in from both sides of the arena; every hit you land drives it back. */
 const DARK_W=7;
@@ -10254,7 +10268,8 @@ function setPads(){
   el.querySelectorAll('.dir').forEach(b=>b.addEventListener('pointerdown',e=>{ e.preventDefault(); input(b.dataset.dir,e,+b.dataset.p); }));
 }
 function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}"][data-dir="${dir}"]`); if(!b) return;
-  b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'); void b.offsetWidth; b.classList.add('press'); if(cls) b.classList.add('j-'+cls);
+  const again=b.classList.contains('press'); b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard');
+  if(again&&b.getAnimations) b.getAnimations().forEach(a=>{ a.cancel(); a.play(); }); b.classList.add('press'); if(cls) b.classList.add('j-'+cls);   // no forced page layout on every press
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
@@ -10441,7 +10456,7 @@ function finishRun(){
     notes=(prev===0?100:0)+Math.max(0,stars-prev)*20; SAVE.stars[key]=Math.max(prev,stars);
     if(M.world===6&&!SAVE.interDone&&SAVE.world<=6){ SAVE.interOpen=true; eyebrow='Something stirs past the sky…'; }
     else if(SAVE.world<=M.world&&M.world<WORLDS){ SAVE.world=M.world+1; eyebrow='World '+(M.world+1)+' unlocked'; }
-    if(M.world===WORLDS) eyebrow='You finished Pulseform';
+    if(M.world===WORLDS) eyebrow='You finished Beatdash';
     title=`${BOSS[M.world-1]} defeated`;
     crit=[['Defeat the boss',true],[`Take 2 hits or fewer (you took ${G.bossHits||0})`,s2],[`80% perfect (you hit ${Math.round(perf*100)}%)`,s3]];
   } else if(M.type==='interlude'){
@@ -10591,11 +10606,14 @@ function perfTick(){
 }
 function perfApply(){ document.body.classList.toggle('lite',PERF.level>0); resize(); }
 perfApply();
-function loop(){
+function loop(ts){
   requestAnimationFrame(loop); perfTick(); visTick(); padTick(); watchAudio();
   const live=A.ctx&&PLAYING();
   if(A.ctx) syncClock();
-  let now=live?heardNow():performance.now()/1000;
+  // the frame's own timestamp (the same for everything drawn this frame, and evenly spaced) rather than "right now",
+  // which drifts by however long the code before it took: motion comes out evenly spaced
+  const ft=(typeof ts==='number'&&ts>0&&Math.abs(ts-performance.now())<100?ts:performance.now())/1000;
+  let now=live?ft+(CLK.off||0):ft;
   if(live){ if(G.lastNow!=null&&now<G.lastNow) now=G.lastNow; G.lastNow=now; }
   G.now=now;
   if(G.state==='playing'){
@@ -10620,21 +10638,22 @@ function loop(){
 
 /* the beat bars: at time t, each bar has travelled the fraction of the way from its end of the track
    to the middle that the current beat has, so both reach the middle exactly on the beat */
-const BB={k:-1,shown:false};
+const BB={k:-1,shown:false,h:0,hk:''};
+const bbHalf=el=>{ const k=VW+'x'+VH; if(BB.hk!==k||!BB.h){ BB.h=el.clientHeight; BB.hk=k; } return BB.h/2-4; };
 function beatBar(t){
   const on=!SAVE.metroOff&&(G.state==='playing'||G.state==='paused')&&G.beats&&G.beats.length>0&&!!G.stats;
-  if(on!==BB.shown){ BB.shown=on; $('beatbar').hidden=!on; BB.k=-1; }
+  if(on!==BB.shown){ BB.shown=on; $('beatbar').hidden=!on; BB.k=-1; BB.h=0; }
   if(!on) return;
   let nb=null; for(let i=G.beats.length-1;i>=0;i--){ if(G.beats[i].t<t) break; nb=G.beats[i]; }
   let nt,nk,spb;
   if(nb){ nt=nb.t; nk=nb.k; spb=nb.spb; } else { const l=G.beats[G.beats.length-1]; spb=l.spb; nk=l.k+Math.max(1,Math.ceil((t-l.t)/spb)); nt=l.t+(nk-l.k)*spb; }
   // boss fights: the bar holds still through the opening dialogue and starts with the 3-2-1 countdown
   const hold=G.mode&&G.mode.type==='boss'&&G.state==='playing'&&nk<=G.restUntil-2;
-  if(hold){ const el=$('beatbar'), half=el.clientHeight/2-4; $('bbTop').style.transform=`translateY(${-half}px)`; $('bbBot').style.transform=`translateY(${half}px)`; el.classList.remove('down','hit'); BB.k=-1; return; }
-  const p=clamp(1-(nt-t)/spb,0,1), el=$('beatbar'), half=el.clientHeight/2-4, off=(1-p)*half;
+  if(hold){ const el=$('beatbar'), half=bbHalf(el); $('bbTop').style.transform=`translateY(${-half}px)`; $('bbBot').style.transform=`translateY(${half}px)`; el.classList.remove('down','hit'); BB.k=-1; return; }
+  const p=clamp(1-(nt-t)/spb,0,1), el=$('beatbar'), half=bbHalf(el), off=(1-p)*half;
   $('bbTop').style.transform=`translateY(${-off}px)`; $('bbBot').style.transform=`translateY(${off}px)`;
   el.classList.toggle('down',nk%4===0);
-  const passed=nk-1; if(passed!==BB.k){ if(BB.k>=0&&passed>=0){ el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); } BB.k=passed; }
+  const passed=nk-1; if(passed!==BB.k){ if(BB.k>=0&&passed>=0){ el.classList.remove('hit'); requestAnimationFrame(()=>el.classList.add('hit')); } BB.k=passed; }
 }
 
 /* ---------------- HALLOWEEN MENU ----------------
