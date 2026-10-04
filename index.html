@@ -2226,6 +2226,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
 const $=id=>document.getElementById(id);
 /* on CrazyGames, saves go through their Data module (backed up to the player's CrazyGames account) */
 const CGD=window.PF_CG&&window.CrazyGames&&window.CrazyGames.SDK&&window.CrazyGames.SDK.data;
+const START_QS=location.search, START_HASH=location.hash;   // the link as opened (shared levels and challenges tidy it away once read)
 const store={get(k,d){try{const v=CGD?CGD.getItem('pf_'+k):localStorage.getItem('pf_'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{CGD?CGD.setItem('pf_'+k,JSON.stringify(v)):localStorage.setItem('pf_'+k,JSON.stringify(v))}catch(e){}}};
 const RMQ=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const MOB=matchMedia('(pointer:coarse)').matches||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -6686,6 +6687,8 @@ $('aModeIn').onclick=()=>{ ACCT.mode='in'; ACCT.err=''; acctUI(); };
 $('aModeUp').onclick=()=>{ ACCT.mode='up'; ACCT.err=''; acctUI(); };
 $('aForm').onsubmit=e=>{ e.preventDefault(); acctEmail(); };
 $('aGoogle').onclick=acctGoogle; $('aApple').onclick=acctApple;
+// the email-only web build (built with --email-only): no Google or Apple buttons on the website
+if(window.PF_EMAIL_ONLY&&!isNativeApp()){ $('aGoogle').hidden=true; $('aApple').hidden=true; const o=document.querySelector('#aForm .acct-or'); if(o) o.hidden=true; }
 { const OWNER_H='dc11eba51597a0aa92011b5d4bb820bd1e33e29bf889e0a9ff5ffa2f1429323c';
   const check=async v=>{ v=String(v||'').trim(); if(v.length<20||v.length>40||!/^PF-/.test(v)||!crypto.subtle) return false;
     const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('pulseform/owner/v1:'+v));
@@ -11066,6 +11069,38 @@ function padTick(){
 addEventListener('gamepadconnected',e=>{ toast('Controller connected'); });
 if(CG) cgSetup();
 toMenu(); loop();
+/* ================= MOVING TO A NEW WEB ADDRESS =================
+   Progress on the website is stored in the browser, separately for each web address, so a new address starts empty.
+   To move everyone across: put the new address in MOVE_TO and upload this file to the OLD address. Anyone who opens the
+   old address is sent straight to the new one, carrying their progress in the link (after the #, which never reaches any
+   server). The new address reads it once and saves it. Signed-in players also get everything back by signing in. */
+const MOVE_TO='';   // e.g. 'https://pulseform.win/'  (leave empty on the new site itself)
+const b64u={enc:u8=>{ let s=''; for(let i=0;i<u8.length;i+=0x8000) s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000)); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); },
+  dec:t=>{ const s=atob(t.replace(/-/g,'+').replace(/_/g,'/')); const u=new Uint8Array(s.length); for(let i=0;i<s.length;i++) u[i]=s.charCodeAt(i); return u; }};
+async function zipTxt(txt,un){ const S=un?window.DecompressionStream:window.CompressionStream; if(!S) throw 0; const st=new Blob([txt]).stream().pipeThrough(new S('gzip')); return new Uint8Array(await new Response(st).arrayBuffer()); }
+async function packMove(){ const sv=JSON.parse(JSON.stringify(SAVE)); if(!sv.moveId){ SAVE.moveId=sv.moveId=Date.now().toString(36)+Math.random().toString(36).slice(2,8); save(); }
+  let body={v:1,save:sv,name:store.get('name','')}, txt=JSON.stringify(body);
+  const pack=async t=>{ try{ return 'z'+b64u.enc(await zipTxt(t)); }catch(e){ return 'j'+b64u.enc(new TextEncoder().encode(t)); } };
+  let out=await pack(txt); if(out.length>60000){ delete body.save.ghosts; out=await pack(JSON.stringify(body)); }   // best-run ghosts are the bulky part; everything else always fits
+  return out; }
+async function unpackMove(t){ const kind=t[0], u=b64u.dec(t.slice(1)); const txt=kind==='z'?new TextDecoder().decode(await zipTxt(u,true)):new TextDecoder().decode(u); return JSON.parse(txt); }
+(async function moveCheck(){
+  try{
+    const m=START_HASH.match(/[#&]pfmove=([^&]+)/);
+    if(m){ if(/pfmove=/.test(location.hash)) history.replaceState(null,'',location.pathname+location.search);   // take it out of the address bar straight away
+      const inc=await unpackMove(m[1]), sv=inc&&inc.save; if(!sv) return;
+      SAVE.movedIn=SAVE.movedIn||[]; if(sv.moveId&&SAVE.movedIn.includes(sv.moveId)) return;   // already brought over
+      const fresh=!(SAVE.plays>0)&&totalStars()===0&&(SAVE.xp||0)===0;
+      const ids=[...new Set([...(SAVE.movedIn||[]),...(sv.movedIn||[]),sv.moveId].filter(Boolean))];
+      SAVE=fresh?Object.assign(JSON.parse(JSON.stringify(DEF)),sv):mergeSaves(SAVE,sv,true);   // a brand-new save takes it as it is; otherwise the two are combined
+      SAVE.movedIn=ids; if(inc.name&&!store.get('name','')) store.set('name',inc.name);
+      save(); fixEquip(); if(G.state==='menu'){ G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; toMenu(); } toast('Your progress moved over. Welcome to the new home of Pulseform!'); return; }
+    if(!MOVE_TO||window.PF_CG||isNativeApp()||/^(localhost|127\.0\.0\.1)$/.test(location.hostname)||location.protocol==='file:') return;
+    const to=new URL(MOVE_TO); if(to.origin===location.origin) return;
+    const keep=SAVE.plays>0||totalStars()>0||(SAVE.xp||0)>0||(SAVE.notes||0)>0;
+    location.replace(to.origin+to.pathname+START_QS+(keep?'#pfmove='+await packMove():''));
+  }catch(e){}
+})();
 })();
 </script>
 
