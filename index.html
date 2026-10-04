@@ -6180,8 +6180,8 @@ function awardRun(o){
    100 tiers. Every run's XP also fills the pass (taken before the Maestro and Supreme multipliers, so everyone climbs at
    the same pace). Each tier has a reward to claim: nine Pass blocks (the grand one at 100), a ♪5,000 jackpot at 60, four
    tile themes, four banners, a sound pack, and Notes. Claimed tiers are kept in SAVE.pass.got. */
-// the XP from tier t-1 to tier t grows ~3.5% a tier: 200 for tier 1, ~1,100 by tier 50, ~6,000 for tier 100 (~172,000 XP in all)
-const PASS_TIERS=100, passCost=t=>Math.round(200*Math.pow(1.035,t-1)/25)*25;
+// the XP from tier t-1 to tier t grows ~3.5% a tier up to tier 75 (200 → ~2,550), then only ~1.2% a tier (~3,425 for tier 100; ~144,500 XP in all)
+const PASS_TIERS=100, passCost=t=>Math.round(200*Math.pow(1.035,Math.min(t,75)-1)*Math.pow(1.012,Math.max(0,t-75))/25)*25;
 const PASS_SKINS={10:'pp_storm',20:'pp_phoenix',30:'pp_leviathan',40:'pp_ronin',50:'pp_oni',70:'pp_archmage',80:'pp_solar',90:'pp_grove',100:'pp_sovereign'};
 const PASS_TILES={25:'t_storm',45:'t_abyss',65:'t_arcane',85:'t_solar'}, PASS_BANNERS={15:'b_stormfront',35:'b_phoenix',75:'b_deepglow',95:'b_sovereign'}, PASS_PACK={55:'s_anthem'}, PASS_JACKPOT={60:5000};
 const PASS=Array.from({length:PASS_TIERS},(_,i)=>{ const t=i+1;
