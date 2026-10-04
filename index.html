@@ -160,6 +160,7 @@ h2{font-family:var(--display);font-weight:600;font-size:22px;margin:0;text-wrap:
 .btn:disabled{opacity:.45;cursor:default}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .row>.btn{flex:1}
+.panel>.btn,.panel>details,.panel>.field,.panel>.opt,.panel>.offset{flex-shrink:0}   /* a long scrolling panel never squashes its buttons */
 .head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .back{background:none;border:0;color:var(--ink-2);font:600 13px var(--body);cursor:pointer;padding:6px 0}
 .wallet{font-family:var(--display);font-weight:600;font-size:14px;color:var(--lantern);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -1974,7 +1975,6 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         <li>No sound on iPhone? Check the ringer switch and volume.</li>
       </ul>
     </details>
-    <button id="resetBtn" class="btn ghost danger" type="button">Erase progress</button>
     <p class="small" style="margin:10px 0 0"><a class="pplink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
     <details class="adanger" id="setDel" hidden><summary>Delete account</summary>
       <p class="small">This permanently deletes your account, your cloud save, your leaderboard scores, your friend list and your player card. Your progress on this device is erased too. This can't be undone.</p>
@@ -10421,7 +10421,7 @@ function buildSettings(){ delUI();
   $('ctrlField').hidden=MOB;
   $('ghostOn').checked=!SAVE.ghostOff; $('metroOn').checked=!SAVE.metroOff; $('fountOn').checked=!SAVE.fountOff; $('relaxed').checked=SAVE.relaxed; $('reduce').checked=SAVE.reduce; $('haptics').checked=SAVE.haptics; syncOffset(); syncVol();
   document.querySelectorAll('#ctrlTabs button').forEach(b=>b.classList.toggle('on',b.dataset.c===SAVE.controls));
-  $('resetBtn').textContent='Erase progress'; $('resetBtn').dataset.arm='';
+
 }
 function syncVol(){ ['music','sfx'].forEach(k=>{ const v=Math.round(SAVE[k+'Vol']*100); document.querySelectorAll(`[data-vol="${k}"]`).forEach(i=>i.value=v); document.querySelectorAll(`[data-volout="${k}"]`).forEach(o=>o.textContent=v+'%'); }); }
 function applyVol(){ if(!A.ctx) return; A.sfx.gain.value=.7*SAVE.sfxVol; syncSoundChip(); if(['playing','paused','menu'].includes(G.state)) A.music.gain.setTargetAtTime(SAVE.musicVol,A.ctx.currentTime,.05); }
@@ -10835,8 +10835,6 @@ $('reduce').onchange=e=>{SAVE.reduce=e.target.checked; save()};
 $('metroOn').onchange=e=>{ SAVE.metroOff=!e.target.checked; save(); };
 $('fountOn').onchange=e=>{ SAVE.fountOff=!e.target.checked; save(); };
 $('offset').oninput=e=>{SAVE.offset=+e.target.value; save(); syncOffset()};
-$('resetBtn').onclick=e=>{ const b=$('resetBtn'), acct=!!(ACCT.user&&SAVE.linked===ACCT.user.uid); if(!b.dataset.arm){ b.dataset.arm='1'; b.textContent=acct?'Tap again to erase all stars, Notes and items, here and on your account':'Tap again to erase all stars, Notes and items'; return; }
-  const keep={offset:SAVE.offset,relaxed:SAVE.relaxed,reduce:SAVE.reduce,name:SAVE.name,gift:giftState(),linked:acct?SAVE.linked:undefined,wipe:Date.now()}; SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep); if(acct) ACCT.overwrite=true; save(); b.dataset.arm=''; b.textContent='Progress erased'; };
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&G.state==='playing'&&!(G.mode&&G.mode.net)) pause(); wakeSync(); mobAudioSync(); });
 /* the music stops whenever the game isn't on screen (another tab, another app, the screen locked, a minimised window),
    and picks up again when you come back. Online matches keep their clock running. A paused run stays silent until you press Resume. */
