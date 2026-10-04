@@ -1,0 +1,19 @@
+{
+  "appId": "com.pulseform.game",
+  "appName": "Pulseform",
+  "webDir": "www",
+  "backgroundColor": "#141030",
+  "ios": {
+    "contentInset": "never",
+    "scheme": "Pulseform"
+  },
+  "android": {
+    "backgroundColor": "#141030"
+  },
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": ["google.com", "apple.com"]
+    }
+  }
+}

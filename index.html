@@ -1020,7 +1020,8 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 .lvl{position:relative}.lg{position:absolute;top:6px;right:8px;font:800 13px var(--display)}.lg.gS{color:#FFD166;text-shadow:0 0 8px rgba(255,209,102,.6)}.lg.gA{color:#B8F2E6}.lg.gB{color:#C9B8FF}.lg.gC{color:var(--ink-3)}
 .lmed{position:absolute;top:8px;left:8px;font-size:7px;letter-spacing:2px;color:#FFD166}
 .lb{list-style:none;margin:0;padding:0;display:grid;gap:4px;max-height:52vh;overflow:auto}
-.lb li{display:grid;grid-template-columns:26px 34px minmax(0,1fr) auto;align-items:center;gap:8px;padding:5px 12px 5px 8px;border-radius:12px;background:var(--glass);font-size:14px;min-height:44px}
+.lb li{display:grid;grid-template-columns:26px 34px minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:5px 12px 5px 8px;border-radius:12px;background:var(--glass);font-size:14px;min-height:44px}
+.lbmore{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:rgba(0,0,0,.18);color:inherit;font:900 16px/1 var(--display);cursor:pointer;padding:0}.lbmore:hover{background:rgba(255,255,255,.12)}
 .lb li.ban{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 .lb li.ban .lbn{color:rgba(255,255,255,.85)}
 .lb .lbsk{width:34px;height:34px;margin:0}
@@ -1075,6 +1076,7 @@ body.cg #mLB,body.cg #oLB,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.
 .acct-form input:focus{outline:2px solid #FFD166;outline-offset:1px}
 .acct-form .segs button{flex:1}
 .gbtn{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1F1F1F}
+.abtn{display:flex;align-items:center;justify-content:center;gap:10px;background:#000;color:#fff;margin-top:8px;border:1px solid rgba(255,255,255,.25)}
 .acct-or{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-3)}
 .acct-or::before,.acct-or::after{content:"";flex:1;height:1px;background:var(--line)}
 .linkbtn{background:none;border:0;color:var(--ink-2,#ddd);font:500 13px var(--body);text-decoration:underline;cursor:pointer;align-self:center;padding:4px}
@@ -1094,6 +1096,9 @@ button:disabled{opacity:.55;cursor:default}
 .frlist{list-style:none;margin:0;padding:0;display:grid;gap:10px;max-height:46vh;overflow:auto}
 #frOn{display:grid;gap:14px;margin-top:10px}#frOn>:empty{display:none}#frOn>h2{margin:8px 0 0}
 .frlist li{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:6px 10px 6px 6px;border-radius:12px;background:var(--glass);border:1px solid var(--line)}
+.modwhy{display:flex;flex-wrap:wrap;gap:8px}
+.adanger{margin-top:12px;border:1px solid rgba(255,107,107,.35);border-radius:12px;padding:8px 12px}.adanger summary{cursor:pointer;color:#FF9A9A;font-weight:700;font-size:13px}
+.btn.dangerfill{background:#E5484D;color:#fff}
 .frlist li.none{display:block;padding:12px;color:var(--ink-3);font-size:13px}
 .frlist .skprev{width:44px;height:44px;margin:0}
 .frlist b{display:block;font:600 14px var(--display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1386,6 +1391,7 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
       <p class="small" id="aLoading">Loading sign-in…</p>
       <form id="aForm" class="acct-form" hidden novalidate>
         <button class="btn gbtn" id="aGoogle" type="button"><svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>Continue with Google</span></button>
+        <button class="btn abtn" id="aApple" type="button"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9s-2-.9-3.4-.9c-1.7 0-3.3 1-4.2 2.6-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9 0 0-2.7-1-2.7-4.1zM13.9 4.9c.7-.9 1.2-2 1-3.2-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.2.1 2.3-.6 3.1-1.5z"/></svg>Continue with Apple</button>
         <div class="acct-or"><span>or use email</span></div>
         <div class="segs"><button id="aModeIn" type="button" class="on">Sign in</button><button id="aModeUp" type="button">Create account</button></div>
         <input id="aEmail" type="email" placeholder="Email" autocomplete="email" autocapitalize="off" spellcheck="false" aria-label="Email">
@@ -1398,8 +1404,13 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
       <div class="acct-card"><span class="acct-dot"></span><div><b id="aWho"></b><small class="small" id="aSync"></small></div></div>
       <p class="small">Everything you earn saves to your account automatically. Sign in with the same account on another device to carry it over.</p>
       <div class="row"><button class="btn ghost" id="aSignOut" type="button">Sign out</button></div>
+      <details class="adanger"><summary>Delete account</summary>
+        <p class="small">This permanently deletes your account, your cloud save, your leaderboard scores, your friend list and your player card. Your progress on this device is erased too. This can't be undone.</p>
+        <button class="btn dangerfill" id="aDelete" type="button">Delete my account</button></details>
     </div>
+    <div id="aBlocked" hidden><div class="lbl" style="margin:10px 0 6px">Blocked players</div><ul class="frlist" id="aBlockedList"></ul></div>
     <p class="small" id="aMsg" role="status"></p>
+    <p class="small" style="margin:6px 0 0"><a class="pplink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
   </div>
 </section>
 
@@ -1644,6 +1655,7 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
       </ul>
     </details>
     <button id="resetBtn" class="btn ghost danger" type="button">Erase progress</button>
+    <p class="small" style="margin:10px 0 0"><a class="pplink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
   </div>
 </section>
 
@@ -1757,6 +1769,17 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
     </div>
   </div>
 </section>
+<section id="modOv" class="overlay" hidden>
+  <div class="panel">
+    <div class="head"><button class="back" id="modBack" type="button">← Back</button></div>
+    <div><div class="eyebrow">Player</div><h2 id="modName">Player</h2></div>
+    <div id="modReport"><div class="lbl" style="margin-bottom:6px">Report</div>
+      <div class="modwhy"><button class="btn ghost" data-why="name" type="button">Offensive name</button><button class="btn ghost" data-why="cheat" type="button">Cheating score</button><button class="btn ghost" data-why="levels" type="button">Offensive level</button><button class="btn ghost" data-why="abuse" type="button">Harassment</button><button class="btn ghost" data-why="other" type="button">Something else</button></div></div>
+    <div><div class="lbl" style="margin-bottom:6px">Block</div><p class="small" style="margin:0 0 8px">You won't see them on leaderboards, get their party invites, or have them join your parties. You can undo this in your account screen.</p>
+      <button class="btn" id="modBlock" type="button">Block</button></div>
+    <p class="small" id="modMsg" role="status"></p>
+  </div>
+</section>
 <section id="friendOv" class="overlay" hidden>
   <div class="panel wide">
     <div class="head"><button class="back" id="fpBack" type="button">← Friends</button><span class="small" id="fpSeen"></span></div>
@@ -1766,6 +1789,7 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
     <div class="stats" id="fpStats"></div>
     <div><div class="lbl" style="margin-bottom:6px">Leaderboard rankings</div><ul class="lb" id="fpRanks"></ul></div>
     <div><div class="lbl" style="margin-bottom:6px">Levels they built</div><ul class="edmine" id="fpMaps"></ul></div>
+    <div class="row"><button class="btn ghost" id="fpMod" type="button">Report or block</button></div>
   </div>
 </section>
 <div id="inviteBar" class="invitebar" hidden role="alert"><span id="ivText"></span><button class="btn" id="ivJoin" type="button">Join</button><button class="chip" id="ivNo" type="button">Not now</button></div>
@@ -1814,7 +1838,7 @@ const PTS={perfect:100,good:60,early:25,late:25};
 /* ---------------- SAVE ---------------- */
 const DEF={myLevels:[],notes:0,stars:{},world:1,owned:['classic','ribbon'],skin:'classic',land:'ring',tiles:'t_world',pack:'s_none',bestEndless:0,bestCoop:0,maxStreak:0,
   daily:{date:'',best:0,stars:0,streak:0,last:''},offset:0,relaxed:false,reduce:false,plays:0,
-  musicVol:.8,sfxVol:.8,haptics:true,controls:'both',lastWorld:1,name:'',xp:0,rankSeen:0,quests:{date:'',list:[]},bestAscent:0,life:{},studio:{src:'game',style:'shallows',bpm:100,diff:'groove'},bestStudio:0};
+  musicVol:.8,sfxVol:.8,haptics:true,controls:'both',lastWorld:1,name:'',xp:0,rankSeen:0,quests:{date:'',list:[]},blocked:[],bestAscent:0,life:{},studio:{src:'game',style:'shallows',bpm:100,diff:'groove'},bestStudio:0};
 const old=store.get('save',null);
 let SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),old||{});
 if(!old){ SAVE.offset=store.get('offset',0); SAVE.relaxed=store.get('relaxed',false); SAVE.bestEndless=store.get('best',0); }
@@ -5314,7 +5338,8 @@ function netFromGuest(c,o){
   const x=NET.conns.find(q=>q.c===c); if(!x||!o||!o.t) return; x.last=performance.now();
   if(o.t==='bye'){ try{ c.close(); }catch(e){} netGuestGone(c); return; }
   if(o.t==='ping'){ try{ c.send({t:'pong',a:o.a,h:performance.now()}); }catch(e){} return; }
-  if(o.t==='hi'){ const fresh=!NET.mates[x.slot];
+  if(o.t==='hi'){ if(typeof o.uid==='string'&&isBlocked(o.uid)){ try{ c.send({t:'nojoin'}); }catch(e){} setTimeout(()=>{ try{ c.close(); }catch(e){} },800); return; }
+    const fresh=!NET.mates[x.slot];
     // welcome them again, now that we know they are listening: a welcome sent the moment the line opens can be lost
     try{ c.send({t:'welcome',slot:x.slot}); }catch(e){}
     NET.mates[x.slot]={name:cleanName(o.name)||'Friend',skin:o.skin||'classic',land:o.land,rank:clamp(+o.rank||0,0,RANK_MAX),v:c.via==='relay'?'r':'',uid:typeof o.uid==='string'?o.uid.slice(0,128):''};
@@ -5367,6 +5392,7 @@ function netFromHost(o){
       NET.mates=m; const fresh=Object.keys(m).find(s=>!before.has(s)&&+s!==0);
       netRosterChanged(fresh!=null&&before.size?m[fresh]:null); return; }
     case 'full': NET.refused=`That party is full (${PARTY_MAX} players).`; netStatus(NET.refused,true); $('nStatusIdle').textContent=NET.refused; setTimeout(()=>netLeave(),1500); return;
+    case 'nojoin': NET.refused='You can\'t join that party.'; netStatus(NET.refused,true); $('nStatusIdle').textContent=NET.refused; setTimeout(()=>netLeave(),1500); return;
     case 'busy': NET.refused='That party is in the middle of a match. Try again when it ends.'; netStatus(NET.refused,true); $('nStatusIdle').textContent=NET.refused; setTimeout(()=>netLeave(),1800); return;
     case 'bye': if(NET.conn){ const c=NET.conn; try{ c.close(); }catch(e){} netClosed(c); } return;
     case 'start': { const now=performance.now(), lead=o.hn!=null?o.at-o.hn:PARTY_COUNT*1000; let at=o.at-NET.off;
@@ -5686,6 +5712,7 @@ function mergeSaves(loc,cl,additive){
   { const a=loc.cvkBet||{}, b=cl.cvkBet||{}; if(a.cale||a.korra||b.cale||b.korra) out.cvkBet={cale:Math.max(+a.cale||0,+b.cale||0),korra:Math.max(+a.korra||0,+b.korra||0)}; } out.cvkSide=newer.cvkSide||loc.cvkSide||cl.cvkSide||null;
   { const a=loc.pq||{}, b=cl.pq||{}, m=(ka,kb,la,lb)=>ka&&ka===kb&&Array.isArray(la)&&Array.isArray(lb)?la.map(q=>{ const o=lb.find(x=>x.id===q.id)||{}; return {...q,prog:Math.max(q.prog||0,o.prog||0),claimed:!!(q.claimed||o.claimed)}; }):(ka||'')>=(kb||'')?la:lb;
     if(a.day||b.day){ const dA=(a.day||'')>=(b.day||''), wA=(a.week||'')>=(b.week||''); out.pq={day:dA?a.day:b.day,d:m(a.day,b.day,a.d,b.d)||(dA?a.d:b.d),week:wA?a.week:b.week,w:m(a.week,b.week,a.w,b.w)||(wA?a.w:b.w)}; } }
+  { const seen=new Set(), bl=[]; [...(loc.blocked||[]),...(cl.blocked||[])].forEach(x=>{ if(x&&x.u&&!seen.has(x.u)){ seen.add(x.u); bl.push(x); } }); out.blocked=bl.slice(-200); }
   { const a=loc.pass||{}, b=cl.pass||{}; out.pass={xp:Math.max(a.xp||0,b.xp||0),got:[...new Set([...(a.got||[]),...(b.got||[])])]}; }
   { const a=loc.remix||{}, b=cl.remix||{}, m={...a}; for(const k in b) m[k]=Math.max(m[k]||0,b[k]); out.remix=m; } out.bestRhythm=Math.max(loc.bestRhythm||0,cl.bestRhythm||0);
   out.twinTeam=newer.twinTeam!==undefined?newer.twinTeam:(loc.twinTeam||cl.twinTeam||null); out.twinWin=!!(loc.twinWin||cl.twinWin); out.twinWinSeen=!!(loc.twinWinSeen||cl.twinWinSeen); out.twinWinName=loc.twinWinName||cl.twinWinName||'';
@@ -5713,7 +5740,7 @@ function acctDoc(){ return ACCT.db.collection('users').doc(ACCT.user.uid); }
 ACCT.rev=0;
 const sameSave=(a,b)=>{ const f=o=>JSON.stringify(Object.assign({},o,{_t:0,syncBase:0,linked:0})); return f(a)===f(b); };
 function acctSync(){
-  if(!ACCT.user||!ACCT.db) return Promise.resolve();
+  if(!ACCT.user||!ACCT.db||ACCT.deleting) return Promise.resolve();
   if(ACCT.syncP){ ACCT.syncAgain=true; return ACCT.syncP; }
   const uid=ACCT.user.uid, ref=acctDoc(), rev=ACCT.rev, start=JSON.parse(JSON.stringify(SAVE)), overwrite=!!ACCT.overwrite;
   ACCT.syncing=true; acctUI();
@@ -5768,7 +5795,7 @@ function acctRefresh(){
 /* ---- sign in / out ---- */
 function authMsg(e){
   const c=e&&e.code||'';
-  return ({'auth/invalid-email':'That email address doesn\'t look right.','auth/missing-password':'Type a password.','auth/weak-password':'Use at least 6 characters for your password.',
+  return ({'auth/operation-not-allowed':'That sign-in option isn\'t switched on yet. Try another way to sign in.','auth/invalid-email':'That email address doesn\'t look right.','auth/missing-password':'Type a password.','auth/weak-password':'Use at least 6 characters for your password.',
     'auth/email-already-in-use':'That email already has an account. Sign in instead.','auth/invalid-credential':'Wrong email or password.','auth/wrong-password':'Wrong email or password.',
     'auth/user-not-found':'No account with that email. Create one instead.','auth/too-many-requests':'Too many tries. Wait a minute and try again.',
     'auth/popup-closed-by-user':'','auth/cancelled-popup-request':'','auth/network-request-failed':'Could not reach the sign-in server. Check your connection.',
@@ -5795,8 +5822,27 @@ function acctEmail(){
   const p=ACCT.mode==='up'?ACCT.auth.createUserWithEmailAndPassword(em,pw):ACCT.auth.signInWithEmailAndPassword(em,pw);
   p.then(()=>{ $('aPass').value=''; sChime(84); }).catch(e=>{ ACCT.err=authMsg(e); }).finally(()=>{ acctBusy(false); acctUI(); });
 }
+/* Inside the App Store / Play Store app (Capacitor), sign-in popups can't open: the native sign-in sheet is used instead
+   (the @capacitor-firebase/authentication plugin, with skipNativeAuth), and its token signs in to Firebase here. */
+const isNativeApp=()=>!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+const nativeAuth=()=>isNativeApp()&&window.Capacitor.Plugins&&window.Capacitor.Plugins.FirebaseAuthentication;
+function acctNative(kind){ const NA=nativeAuth(); acctBusy(true); ACCT.err='';
+  (kind==='apple'?NA.signInWithApple({skipNativeAuth:true}):NA.signInWithGoogle({skipNativeAuth:true})).then(r=>{ const c=(r&&r.credential)||{};
+    const cred=kind==='apple'?new firebase.auth.OAuthProvider('apple.com').credential({idToken:c.idToken,rawNonce:c.nonce}):firebase.auth.GoogleAuthProvider.credential(c.idToken,c.accessToken);
+    return ACCT.auth.signInWithCredential(cred); }).then(()=>sChime(84))
+    .catch(e=>{ if(/cancel/i.test(String((e&&(e.code||e.message))||''))) return; ACCT.err=authMsg(e); }).finally(()=>{ acctBusy(false); acctUI(); }); }
+function acctApple(){
+  if(!ACCT.auth){ ACCT.err='Sign-in is not available right now. Check your connection.'; acctUI(); return; }
+  if(nativeAuth()) return acctNative('apple');
+  ACCT.err=''; const prov=new firebase.auth.OAuthProvider('apple.com'); prov.addScope('email'); prov.addScope('name');
+  acctBusy(true);
+  ACCT.auth.signInWithPopup(prov).then(()=>sChime(84)).catch(e=>{
+    if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')) return ACCT.auth.signInWithRedirect(prov);
+    ACCT.err=authMsg(e); }).finally(()=>{ acctBusy(false); acctUI(); });
+}
 function acctGoogle(){
   if(!ACCT.auth){ ACCT.err='Sign-in is not available right now. Check your connection.'; acctUI(); return; }
+  if(nativeAuth()) return acctNative('google');
   ACCT.err=''; const prov=new firebase.auth.GoogleAuthProvider(); prov.setCustomParameters({prompt:'select_account'});
   acctBusy(true);
   ACCT.auth.signInWithPopup(prov).then(()=>sChime(84)).catch(e=>{
@@ -5837,15 +5883,69 @@ function acctUI(){
     $('aSync').textContent=ACCT.syncing?'Syncing…':ACCT.lastSync?`Saved to your account · ${notesTxt()} · ${SAVE.owned.length} items owned`:'Connecting…';
   }
 }
-function showAcct(){ if(ACCT.ready) ACCT.err=''; acctUI(); showOv('acctOv'); if(acctCfg()&&!ACCT.ready&&!ACCT.loading) acctInit(); }
+function showAcct(){ if(ACCT.ready) ACCT.err=''; acctUI(); acctBlockedUI(); showOv('acctOv'); if(acctCfg()&&!ACCT.ready&&!ACCT.loading) acctInit(); }
 $('mAcct').onclick=showAcct;
 $('aBack').onclick=()=>toMenu();
 $('aModeIn').onclick=()=>{ ACCT.mode='in'; ACCT.err=''; acctUI(); };
 $('aModeUp').onclick=()=>{ ACCT.mode='up'; ACCT.err=''; acctUI(); };
 $('aForm').onsubmit=e=>{ e.preventDefault(); acctEmail(); };
-$('aGoogle').onclick=acctGoogle;
+$('aGoogle').onclick=acctGoogle; $('aApple').onclick=acctApple;
 $('aForgot').onclick=acctForgot;
 $('aSignOut').onclick=acctOut;
+/* ---- report and block (App Store guideline 1.2: a way to report and block other players) ---- */
+const isBlocked=uid=>!!uid&&(SAVE.blocked||[]).some(x=>x.u===uid);
+const MOD={};
+function modOpen(o){ if(!o||!o.uid) return; MOD.o=o; MOD.back=OVS.find(id=>!$(id).hidden)||'menuOv';
+  $('modName').textContent=o.name||'Player'; $('modMsg').textContent=''; $('modMsg').classList.remove('err');
+  const bl=isBlocked(o.uid); $('modBlock').textContent=bl?'Unblock':'Block'; $('modReport').hidden=!(ACCT.user&&ACCT.db);
+  showOv('modOv'); }
+function modBack(){ const b=MOD.back||'menuOv'; if(b==='menuOv') toMenu(); else showOv(b); if(b==='lbOv'&&lbLoad.cur) lbLoad(lbLoad.cur,'lbList'); if(b==='friendsOv') frRender(); }
+function blockSet(uid,name,on){ SAVE.blocked=(SAVE.blocked||[]).filter(x=>x.u!==uid); if(on) SAVE.blocked.push({u:uid,n:String(showName(name)).slice(0,24),t:Date.now()}); save();
+  if(on&&FR.uids&&FR.uids.includes(uid)&&typeof frRemove==='function') frRemove(uid);
+  if(on&&NET.host) Object.entries(NET.mates||{}).forEach(([sl,m])=>{ if(m&&m.uid===uid){ const x=NET.conns.find(q=>String(q.slot)===String(sl)); if(x){ try{ x.c.send({t:'nojoin'}); }catch(e){} setTimeout(()=>{ try{ x.c.close(); }catch(e){} },500); } } });
+  acctBlockedUI(); }
+$('modBack').onclick=modBack;
+$('modBlock').onclick=()=>{ const o=MOD.o; if(!o) return; const on=!isBlocked(o.uid); blockSet(o.uid,o.name,on); $('modBlock').textContent=on?'Unblock':'Block';
+  $('modMsg').textContent=on?`${o.name||'Player'} is blocked.`:`${o.name||'Player'} is unblocked.`; };
+document.querySelectorAll('#modOv [data-why]').forEach(b=>b.onclick=()=>{ const o=MOD.o; if(!o||!ACCT.user||!ACCT.db) return;
+  const m=$('modMsg'); m.textContent='Sending…'; m.classList.remove('err');
+  ACCT.db.collection('reports').add({by:ACCT.user.uid,uid:String(o.uid).slice(0,128),name:String(o.raw||o.name||'').slice(0,40),why:b.dataset.why,where:String(o.where||'').slice(0,20),t:Date.now()})
+    .then(()=>{ m.textContent='Thanks. Your report was sent and will be reviewed.'; })
+    .catch(()=>{ m.textContent='Could not send the report. Check your connection and try again.'; m.classList.add('err'); }); });
+function acctBlockedUI(){ const L=SAVE.blocked||[]; const box=$('aBlocked'); if(!box) return; box.hidden=!L.length;
+  $('aBlockedList').innerHTML=L.map(x=>`<li><span></span><span><b>${escapeHTML(x.n||'Player')}</b></span><span class="btns"><button class="btn ghost" data-unblock="${escapeHTML(x.u)}" type="button">Unblock</button></span></li>`).join('');
+  $('aBlockedList').querySelectorAll('[data-unblock]').forEach(b=>b.onclick=()=>blockSet(b.dataset.unblock,'',false)); }
+
+/* ---- deleting your account (App Store guideline 5.1.1(v)): every record of you in the cloud, then the sign-in itself ---- */
+async function acctDelete(){
+  const u=ACCT.user, db=ACCT.db, btn=$('aDelete'), m=$('aMsg'); if(!u||!db) return;
+  if(!btn.dataset.arm){ btn.dataset.arm='1'; btn.textContent='Tap again to delete everything for good'; setTimeout(()=>{ if(btn.isConnected&&btn.dataset.arm){ btn.dataset.arm=''; btn.textContent='Delete my account'; } },5000); return; }
+  btn.dataset.arm=''; btn.disabled=true; btn.textContent='Deleting…'; m.classList.remove('err'); m.textContent='';
+  const last=Date.parse((u.metadata&&u.metadata.lastSignInTime)||0)||0;
+  if(Date.now()-last>5*60*1000){ btn.disabled=false; btn.textContent='Delete my account'; m.classList.add('err'); m.textContent='For your safety, sign out and sign in again, then delete your account within 5 minutes.'; return; }
+  const uid=u.uid, quiet=pr=>pr.catch(()=>{});
+  try{
+    clearTimeout(ACCT.pushT); ACCT.deleting=true;
+    if(FR.unsub) FR.unsub(); if(FR.unsubF) FR.unsubF();
+    const boards=[...new Set(Object.keys(SAVE.lbBest||{}).concat(['endless','ascent','daily-'+todayKey(),'week-'+weekKey()]))];
+    await Promise.all(boards.map(b=>quiet(db.collection('boards').doc(b).collection('entries').doc(uid).delete())));
+    // take yourself off your friends' lists, then remove your own list, card and friend code
+    const fl=await quiet(db.collection('friends').doc(uid).get()), mates=(fl&&fl.exists&&fl.data().uids)||[];
+    await Promise.all(mates.map(f=>quiet(db.collection('friends').doc(f).update({uids:firebase.firestore.FieldValue.arrayRemove(uid)}))));
+    const inv=await quiet(db.collection('invites').doc(uid).collection('items').get()); if(inv) await Promise.all(inv.docs.map(d=>quiet(d.ref.delete())));
+    if(FR.code) await quiet(db.collection('codes').doc(FR.code).delete());
+    await Promise.all([quiet(db.collection('friends').doc(uid).delete()),quiet(db.collection('profiles').doc(uid).delete()),quiet(db.collection('polls').doc('next').collection('votes').doc(uid).delete())]);
+    await db.collection('users').doc(uid).delete();
+    await u.delete();
+    const keep={}; for(const k of DEVICE_KEYS) keep[k]=SAVE[k];
+    SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep,{wipe:Date.now()}); store.set('save',SAVE); store.set('name','');
+    ACCT.deleting=false; toast('Your account was deleted.'); toMenu();
+  }catch(e){ ACCT.deleting=false; btn.disabled=false; btn.textContent='Delete my account'; m.classList.add('err');
+    m.textContent=e&&e.code==='auth/requires-recent-login'?'For your safety, sign out and sign in again, then delete your account.':'Something went wrong. Check your connection and try again.'; }
+}
+$('aDelete').onclick=acctDelete;
+// in the native app the policy opens inside the app (its own page has a link back)
+document.querySelectorAll('a.pplink').forEach(a=>a.addEventListener('click',e=>{ if(isNativeApp()){ e.preventDefault(); acctSync().catch(()=>{}).then(()=>{ location.href='privacy.html'; }); } }));
 acctInit(); acctChip();
 
 /* ================= FRIENDS =================
@@ -5895,7 +5995,7 @@ function frStart(){
         FR.uids=u; frLoadProfiles().then(()=>{ if(!$('friendsOv').hidden) frRender(); frCoopInvites(); }); },()=>{});
       if(FR.unsub) FR.unsub();
       FR.unsub=frDB().collection('invites').doc(frMe()).collection('items').onSnapshot(snap=>{
-        const list=[]; snap.forEach(d=>{ const v=d.data()||{}; if(Date.now()-(v.t||0)<INVITE_TTL&&v.code) list.push({from:d.id,...v}); else d.ref.delete().catch(()=>{}); });
+        const list=[]; snap.forEach(d=>{ const v=d.data()||{}; if(Date.now()-(v.t||0)<INVITE_TTL&&v.code&&!isBlocked(d.id)) list.push({from:d.id,...v}); else d.ref.delete().catch(()=>{}); });
         FR.invites=list.sort((a,b)=>b.t-a.t); frInviteBar(); frBadge(); if(!$('friendsOv').hidden) frRender(); },()=>{});
     }catch(e){ FR.err='Friends could not connect ('+(e&&e.code||'offline')+').'; }
     FR.starting=null; frBadge(); if(!$('friendsOv').hidden) frRender(); frCoopInvites(); })();
@@ -5957,11 +6057,11 @@ function frRender(){
 function showFriends(){ frMsg(''); frRender(); showOv('friendsOv'); if(ACCT.user&&!FR.code) frStart(); else if(frOn()) frLoadProfiles().then(()=>{ if(!$('friendsOv').hidden) frRender(); }); }
 /* ---- a friend's card ---- */
 async function frView(uid){
-  FR.view=uid; showOv('friendOv');
+  FR.view=uid; showOv('friendOv'); $('fpMod').onclick=()=>modOpen({uid,name:showName((FR.profiles[uid]||{}).name),raw:String((FR.profiles[uid]||{}).name||''),where:'friend'});
   let p=FR.profiles[uid]; try{ const d=await frDB().collection('profiles').doc(uid).get(); if(d.exists){ p=d.data(); FR.profiles[uid]=p; } }catch(e){}
   if(FR.view!==uid) return;
   if(!p){ $('fpName').textContent='Unknown player'; return; }
-  $('fpName').textContent=p.name||'Player'; $('fpSeen').innerHTML=`<i class="odot${frOnline(p)?' on':''}"></i> ${frOnline(p)?'Online now':'Last seen '+frAgo(p.seen)}`;
+  $('fpName').textContent=showName(p.name); $('fpSeen').innerHTML=`<i class="odot${frOnline(p)?' on':''}"></i> ${frOnline(p)?'Online now':'Last seen '+frAgo(p.seen)}`;
   $('fpSkin').dataset.skin=p.skin||'classic'; $('fpSkinName').textContent='Block: '+((SKINS.find(k=>k.id===p.skin)||{}).name||'Dawn Cube');
   $('fpRank').textContent=rankName(p.rank||0); $('fpRank').parentNode.style.setProperty('--rc',rankCol(p.rank||0)); $('fpGem').style.setProperty('--rc',rankCol(p.rank||0));
   $('fpLevels').textContent=`Reached world ${Math.min(WORLDS,p.world||1)} of ${WORLDS} · ◆ ${p.levelStars||0}/${WORLDS*27} stars · ${p.bosses||0}/${WORLDS} bosses · Hard Mode ${p.hard||0}/12`+(p.interDone?' · Interlude cleared':'');
@@ -5999,7 +6099,7 @@ function frInviteBar(){
   const bar=$('inviteBar'); if(!bar) return;
   const v=FR.invites.find(x=>!FR.dismissed[x.from+'@'+x.t]&&Date.now()-x.t<INVITE_TTL);
   if(!v||frBusy()||netLive()||(NET.peer&&NET.code===v.code)){ bar.hidden=true; return; }
-  $('ivText').textContent=`${v.name||'A friend'} invited you to their party`;
+  $('ivText').textContent=`${showName(v.name,'A friend')} invited you to their party`;
   $('ivJoin').onclick=()=>frJoin(v); $('ivNo').onclick=()=>{ FR.dismissed[v.from+'@'+v.t]=1; frDecline(v); frInviteBar(); };
   if(bar.hidden&&A.ctx&&A.ctx.state==='running') sChime(88); bar.hidden=false;
 }
@@ -6172,7 +6272,19 @@ function drawTwin(c,r,mx,my,now,L){
 /* ================= NAMES ================= */
 const NAME_A=['Swift','Lucky','Neon','Quiet','Brave','Cosmic','Jazzy','Mellow','Rapid','Sunny','Tiny','Wild'],
       NAME_B=['Tempo','Beat','Fox','Comet','Drum','Echo','Pixel','Rhythm','Cube','Otter','Spark','Wave'];
-const cleanName=s=>(s||'').replace(/[^\p{L}\p{N} _.\-]/gu,'').replace(/\s+/g,' ').trim().slice(0,14);
+/* offensive names: checked on everything typed (your name, team names, level names) and on every name shown from other
+   players, after undoing look-alike letters (sh1t, f.u.c.k, fuuuck). A flagged name is refused, or shown as "Player". */
+const BAD_OK=['peacock','hancock','woodcock','hitchcock','babcock','cockatoo','cockpit','cockroach','shuttlecock','scunthorpe','dickens','dickinson','grape','drape','scrape','therapist','spicy','spice','spiced','assassin','classic','passion','cocktail','penistone','arsenal','mishit','shitake','shiitake','sextet','sussex','essex','middlesex','raptor','kiker','dickson','snigger','shitzu','shihtzu','cockney','cockerel','cockle','scuntho','analys','titmouse'];
+const BAD_STEMS=['fuck','fuk','fck','shit','bitch','cunt','dick','cock','pussy','whore','slut','nigg','nigga','niger','fag','retard','rapist','porn','nazi','hitler','penis','vagina','twat','wank','bastard','killyourself','molest','pedo','jizz','tits','boob','horny','dildo','semen','kkk','chink','spic','kike','tranny','incest','hentai','nude','naked','bollock','arse','prick','douche','motherf'];
+const BAD_WORDS=['ass','asshole','sex','sexy','kys','cum','anal','hoe','hoes','thot','nsfw','milf','gay','homo','isis','rape','raped','raping'];
+function badName(raw){ if(!raw) return false;
+  const lo=String(raw).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'');
+  const lt=lo.replace(/[0]/g,'o').replace(/[1!|]/g,'i').replace(/3/g,'e').replace(/[4@]/g,'a').replace(/[5$]/g,'s').replace(/7/g,'t').replace(/8/g,'b').replace(/9/g,'g');
+  let flat=lt.replace(/[^a-z]/g,''); BAD_OK.forEach(w=>{ flat=flat.split(w).join('-'); }); const sq=flat.replace(/(.)\1+/g,'$1');
+  if(BAD_STEMS.some(w=>{ const c=w.replace(/(.)\1+/g,'$1'); return flat.includes(w)||(c.length>=4&&sq.includes(c)); })) return true;
+  const toks=lt.split(/[^a-z]+/).filter(Boolean); return toks.some(t=>BAD_WORDS.includes(t)||BAD_WORDS.includes(t.replace(/(.)\1+/g,'$1'))); }
+const cleanName=s=>{ const n=(s||'').replace(/[^\p{L}\p{N} _.\-]/gu,'').replace(/\s+/g,' ').trim().slice(0,14); return badName(n)?'':n; };
+const showName=(s,fb='Player')=>{ const n=String(s||'').trim(); return n&&!badName(n)?n:fb; };
 function ensureName(){ if(!SAVE.name){ SAVE.name=NAME_A[ri(NAME_A.length)]+' '+NAME_B[ri(NAME_B.length)]; SAVE.nameAuto=true; save(); } return SAVE.name; }
 /* the name is saved as you type (not only when the box loses focus), and a copy is kept on its own so
    signing out, erasing progress or switching saves never loses it */
@@ -6194,7 +6306,7 @@ setInterval(nameChip,1000); nameChip();
 ['nName','pName'].forEach(id=>{ const e=$(id); if(!e) return;
   e.addEventListener('input',()=>{ if(e.readOnly) return; setName(e.value,true); });
   e.addEventListener('focus',()=>{ e._was=SAVE.name; });
-  const commit=()=>{ if(e.readOnly) return; if(!setName(e.value,true)) e.value=SAVE.name||''; else if(e.value!==SAVE.name) e.value=SAVE.name;
+  const commit=()=>{ if(e.readOnly) return; if(!setName(e.value,true)){ if(badName(e.value)) toast('That name isn\'t allowed. Pick another one.'); e.value=SAVE.name||''; } else if(e.value!==SAVE.name) e.value=SAVE.name;
     if(e._was!==undefined&&SAVE.name&&SAVE.name!==e._was){ toast('Name saved: '+SAVE.name); } e._was=SAVE.name; };
   e.addEventListener('change',commit); e.addEventListener('blur',commit);
   e.addEventListener('keydown',ev=>{ if(ev.key!=='Escape') ev.stopPropagation(); if(ev.key==='Enter') e.blur(); }); });
@@ -6348,7 +6460,6 @@ const PQ_WEEK=[
  {id:'ascent',ic:'▲',t:n=>`Reach floor ${n} in Ascent`,g:12,ev:'ascent',max:true},
  {id:'daily',ic:'☀',t:n=>`Finish ${n} Daily Challenges`,g:4,ev:'daily'}];
 const PQ_DAY_XP=[800,1000,1200], PQ_WEEK_XP=[3000,4000,5000,6000];
-function weekKey(){ const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function pqPick(pool,key,xps){ const r=mulberry(hashStr('pq'+key)), a=[...pool]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
   return a.slice(0,xps.length).map((q,i)=>({id:q.id,goal:q.g,prog:0,xp:xps[i],claimed:false})); }
 function ensurePQ(){ const q=SAVE.pq||(SAVE.pq={}), dk=todayKey(), wk=weekKey();
@@ -7975,6 +8086,7 @@ function twGate(){
 async function twCreate(){
   if(!twGate()) return; const nm=twNameClean($('twName').value), key=twKey(nm), me=ACCT.user.uid, C=twCol();
   if(nm.length<2||key.length<2){ twMsg('Pick a team name: 2 to 20 letters or numbers.',true); return; }
+  if(badName(nm)){ twMsg('That team name isn\'t allowed. Pick another one.',true); return; }
   twMsg('Creating your team…');
   for(let attempt=0;attempt<4;attempt++){
     const tid=twRand(12,'abcdefghijkmnpqrstuvwxyz23456789'), code=twRand(5,'ABCDEFGHJKMNPQRSTUVWXYZ23456789');
@@ -8019,6 +8131,7 @@ async function twLeave(){
 async function twRename(){
   if(!twGate()||!SAVE.twinTeam) return; const nm=twNameClean($('twRen').value), key=twKey(nm), me=ACCT.user.uid, tid=SAVE.twinTeam, C=twCol(); let r;
   if(nm.length<2||key.length<2){ twMsg('Pick a team name: 2 to 20 letters or numbers.',true); return; }
+  if(badName(nm)){ twMsg('That team name isn\'t allowed. Pick another one.',true); return; }
   try{ r=await ACCT.db.runTransaction(async tx=>{
       const td=await tx.get(C.collection('teams').doc(tid)); if(!td.exists) return 'gone'; const t=td.data(); if(t.owner!==me) return 'owner';
       if(key!==t.nameKey){ if((await tx.get(C.collection('names').doc(key))).exists) return 'taken'; }
@@ -8073,7 +8186,7 @@ $('twWLater').onclick=()=>toMenu();
 
 /* ---- the event screen ---- */
 function twTeamRow(t,s,cls){ const nm=(t.names||[]).map(n=>escapeHTML(cleanName(n)||'Player')).join(' & ');
-  return `<li class="${cls}"><div><b>${escapeHTML(t.name)}</b><small>${nm}</small></div><span>${s?s.score.toLocaleString():'–'}</span></li>`; }
+  return `<li class="${cls}"><div><b>${escapeHTML(showName(t.name,'Team'))}</b><small>${nm}</small></div><span>${s?s.score.toLocaleString():'–'}</span></li>`; }
 function twRender(){
   const ph=twPhase(), r=twRound(), n=Date.now();
   const chip=$('mTwin'); if(chip){ chip.hidden=!twShown(); chip.textContent='⚔ Twin Pulse · '+(ph==='soon'?'Monday':ph==='signup'?'Sign-ups open':ph==='live'?(r<4?'Round '+r:'Final'):'Results'); }
@@ -8234,19 +8347,20 @@ function lbPost(M){
     .catch(e=>{ B[b]=0; save(); if(e&&e.code==='permission-denied') toast('Leaderboards need the new Firebase rule (see setup).'); });
   return '';
 }
-function lbLoad(board,el){
+function lbLoad(board,el){ if(el==='lbList') lbLoad.cur=board;
   const box=$(el); box.innerHTML='<p class="small">Loading…</p>';
   if(!ACCT.db){ box.innerHTML='<p class="small">Leaderboards could not connect. Check your internet connection.</p>'; return; }
   const col=ACCT.db.collection('boards').doc(board).collection('entries');
   col.orderBy('score','desc').limit(20).get().then(snap=>{
-    const rows=[]; snap.forEach(d=>rows.push({id:d.id,...d.data()}));
+    const rows=[]; snap.forEach(d=>{ if(!isBlocked(d.id)) rows.push({id:d.id,...d.data()}); });
     if(!rows.length){ box.innerHTML='<p class="small">No scores yet. Be the first!</p>'; return; }
     const me=ACCT.user&&ACCT.user.uid, asc=board==='ascent';
     // each player's tile: their banner behind it, their block, their name and rank, and the score
     box.innerHTML='<ol class="lb">'+rows.map((r,i)=>{ const mine=r.id===me, bn=bannerById(mine?SAVE.banner:lbBannerOf(r)), sk=skinById(mine?SAVE.skin:lbSkinOf(r)).id, rk=mine?myRank():(r.rank||0);
       return `<li class="${mine?'me':''}${bn.bg?' ban':''}"${bn.bg?` style="background:${bn.bg}"`:''}><span class="lbn">${i+1}</span><canvas class="skprev lbsk" data-skin="${sk}" data-px="34" width="34" height="34" aria-hidden="true"></canvas>`+
-        `<span class="lbwho"><span class="lbname">${escapeHTML((mine&&SAVE.name)||r.name||'Player')}</span><small class="lbrank"><i class="gem" style="--rc:${rankCol(rk)}"></i><span class="lbrk">${rankName(rk)}</span></small></span>`+
-        `<b>${asc?'floor '+Math.floor(r.score/1e6)+' · '+(r.score%1e6).toLocaleString():(r.score||0).toLocaleString()}</b></li>`; }).join('')+'</ol>'+(me||ACCT.user?'':'<p class="small">Sign in to add your own scores.</p>');
+        `<span class="lbwho"><span class="lbname">${escapeHTML((mine&&SAVE.name)||showName(r.name))}</span><small class="lbrank"><i class="gem" style="--rc:${rankCol(rk)}"></i><span class="lbrk">${rankName(rk)}</span></small></span>`+
+        `<b>${asc?'floor '+Math.floor(r.score/1e6)+' · '+(r.score%1e6).toLocaleString():(r.score||0).toLocaleString()}</b>${mine?'':`<button class="lbmore" type="button" data-mod="${escapeHTML(r.id)}" data-mn="${escapeHTML(showName(r.name))}" data-raw="${escapeHTML(String(r.name||'').slice(0,40))}" aria-label="Report or block ${escapeHTML(showName(r.name))}">⋯</button>`}</li>`; }).join('')+'</ol>'+(me||ACCT.user?'':'<p class="small">Sign in to add your own scores.</p>');
+    box.querySelectorAll('[data-mod]').forEach(b=>b.onclick=()=>modOpen({uid:b.dataset.mod,name:b.dataset.mn,raw:b.dataset.raw,where:'board'}));
   }).catch(e=>{ box.innerHTML=`<p class="small err">${e&&e.code==='permission-denied'?'Leaderboards are almost ready: the game owner needs to add one Firebase rule.':'Could not load the leaderboard. Check your connection.'}</p>`; });
 }
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -9255,7 +9369,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['remixOv','passOv','pollOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
+const OVS=['modOv','remixOv','passOv','pollOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }

@@ -45,7 +45,8 @@ service cloud.firestore {
           || request.resource.data.score >= resource.data.score
         );
 
-      allow delete: if false;
+      // a player deleting their account removes their own scores
+      allow delete: if signedIn() && request.auth.uid == uid;
     }
 
     // Friends: public player cards (name, rank, block, progress, bests, built levels, last seen)
@@ -53,6 +54,7 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == uid
         && request.resource.data.name is string && request.resource.data.name.size() <= 24;
+      allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
     // Friend codes: anyone signed in can look one up; a code can be claimed once and never changed
@@ -60,7 +62,9 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.uid == request.auth.uid
         && code.size() == 6;
-      allow update, delete: if false;
+      allow update: if false;
+      // only when its owner deletes their account
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
     // Friends lists: only you can see yours. Friendship is two-way, so when you add someone's code
@@ -82,7 +86,7 @@ service cloud.firestore {
             && uid in get(/databases/$(db)/documents/friends/$(request.auth.uid)).data.uids)
           || request.resource.data.uids.toSet() == resource.data.uids.toSet().difference([request.auth.uid].toSet())
         );
-      allow delete: if false;
+      allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
     // ---- Cale vs Korra: 9:00 AM Central Wed Sep 30 2026 to 9:00 AM Central Sat Oct 3 2026 ----
@@ -272,6 +276,21 @@ service cloud.firestore {
      * An admin (Firebase Auth custom claim: admin=true) can delete any vote,
      * which allows the current poll to be wiped/reset safely.
      */
+    // Reports of other players (offensive names or levels, cheating, harassment). Anyone signed in can file one;
+    // nobody can read, change or delete them from the game: review them in the Firebase console.
+    match /reports/{id} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['by', 'uid', 'name', 'why', 'where', 't'])
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.uid is string && request.resource.data.uid.size() > 0 && request.resource.data.uid.size() <= 128
+        && request.resource.data.uid != request.auth.uid
+        && request.resource.data.name is string && request.resource.data.name.size() <= 40
+        && request.resource.data.why in ['name', 'cheat', 'levels', 'abuse', 'other']
+        && request.resource.data.where is string && request.resource.data.where.size() <= 20
+        && request.resource.data.t is int;
+      allow read, update, delete: if isAdmin();
+    }
+
     match /polls/next/votes/{uid} {
       allow read: if true;
 

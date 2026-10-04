@@ -1,0 +1,24 @@
+{
+  "name": "pulseform-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pulseform for the App Store and Google Play (a Capacitor shell around ../index.html)",
+  "scripts": {
+    "build": "node scripts/build-www.mjs",
+    "sync": "node scripts/build-www.mjs && npx cap sync",
+    "ios": "node scripts/build-www.mjs && npx cap sync ios && npx cap open ios",
+    "android": "node scripts/build-www.mjs && npx cap sync android && npx cap open android",
+    "assets": "npx @capacitor/assets generate --iconBackgroundColor '#141030' --splashBackgroundColor '#141030'"
+  },
+  "dependencies": {
+    "@capacitor-firebase/authentication": "^8.5.2",
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
+    "firebase": "^12.6.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.2"
+  }
+}
