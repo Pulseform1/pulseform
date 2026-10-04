@@ -527,6 +527,7 @@ body.hween #menuOv .logo{text-shadow:0 0 34px rgba(255,122,24,.28)}
 /* CrazyGames build: nothing that needs an outside account or leaves the site */
 #passOv.cgfree .pplabels{display:none}#passOv.cgfree .pptw{padding-left:0}#passOv.cgfree .pptw .ppsc.l{left:-8px}
 body.cg a.pplink,body.cg #setDel,body.cg .mspecial.passplus,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.cg .edmine button[data-a=share],body.cg #evBoard,body.cg #evBoard+*,body.cg .evlblb{display:none!important}
+.cginv{display:flex;flex-direction:column;gap:6px;margin:4px 0 2px}.cginv input{font:500 13px var(--body);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:8px 10px;min-width:0}
 .cgav{width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px}
 /* level editor */
 .edpanel{width:min(1040px,96vw);max-width:none}
@@ -2131,6 +2132,8 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         </div>
         <div class="small" id="nModeNote"></div>
         <div class="small" id="nWait" hidden>The host picks the mode. The match starts on both screens together.</div>
+        <div class="cginv" id="nCgInvite" hidden><button class="btn" id="nCgInvBtn" type="button">Invite friends</button>
+          <input id="nCgLink" readonly aria-label="Invite link" hidden><span class="small" id="nCgNote"></span></div>
         <div id="nInvite" hidden><div class="lbl" style="margin:4px 0 6px">Invite a friend</div><ul class="frlist" id="nInviteList"></ul></div>
         <button class="btn ghost" id="nLeave" type="button">Leave party</button>
       </div>
@@ -5976,6 +5979,7 @@ function netUI(){
   setTimeout(partyBarSync,0);
   const live=!!NET.peer; $('netIdle').hidden=live; $('netLive').hidden=!live; $('localPlay').hidden=live; netRoster(); frCoopInvites();
   $('nShow').textContent=NET.code||'····';
+  { const ci=$('nCgInvite'); if(ci) ci.hidden=!(window.PF_CG&&live&&NET.code&&!(NET.peer&&NET.peer.pending)); }
   const n=netCount(), on=netLive();
   $('nModes').hidden=!(on&&NET.host);
   $('nWait').hidden=!(on&&!NET.host);
@@ -9958,6 +9962,33 @@ function cgSetup(){
     if(G.state==='done'&&G.mode&&G.mode.type==='boss'&&CGS.bossJoy!==G.mode){ CGS.bossJoy=G.mode; try{ CG.game.happytime(); }catch(e){} }
   },300);
   try{ CG.game.loadingStop(); }catch(e){}
+  $('nCgInvBtn').onclick=cgInvite;
+  setTimeout(cgPartyStart,900);   // after the save has loaded
+}
+
+/* ---- CrazyGames multiplayer: invite links and instant multiplayer ----
+   - "Invite friends" in a party asks CrazyGames for an invite link carrying the party code; a friend who opens it is
+     taken straight into that party.
+   - When CrazyGames starts the game in instant-multiplayer mode, a party is opened right away with its invite ready. */
+const cgInvParam=()=>{ let v=null; try{ v=CG&&CG.game&&CG.game.getInviteParam?CG.game.getInviteParam('pfparty'):null; }catch(e){}
+  if(!v){ try{ v=new URLSearchParams(START_QS).get('pfparty'); }catch(e){} } return v?String(v).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4):''; };
+async function cgInvite(){
+  if(!CG||!CG.game||!CG.game.inviteLink||!NET.code) return;
+  const note=$('nCgNote'), box=$('nCgLink');
+  try{ const link=await Promise.resolve(CG.game.inviteLink({pfparty:NET.code})); if(!link) throw 0;
+    box.value=link; box.hidden=false;
+    let copied=false; try{ await navigator.clipboard.writeText(link); copied=true; }catch(e){}
+    if(!copied){ box.focus(); box.select(); }
+    note.textContent=copied?'Invite link copied. Send it to your friends: it opens this party.':'Copy this link and send it to your friends: it opens this party.';
+  }catch(e){ note.textContent=`Couldn't make an invite link right now. Friends can still join with the code ${NET.code}.`; } }
+function cgPartyStart(){
+  if(!CG||!CG.game) return;
+  const code=cgInvParam();
+  if(code&&code.length===4){   // opened from a friend's invite: straight into their party
+    showParty(); $('nCode').value=code; netJoin(); return; }
+  if(CG.game.isInstantMultiplayer){   // CrazyGames started the game for playing with friends: open a party and get the invite ready
+    showParty(); netHost();
+    let n=0; const t=setInterval(()=>{ n++; if(NET.host&&NET.code&&NET.peer&&!NET.peer.pending){ clearInterval(t); cgInvite(); } else if(n>40||!NET.host) clearInterval(t); },250); }
 }
 
 /* ================= BOSS LOOKS =================
