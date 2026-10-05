@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "relay": {
+      "$code": {
+        ".read": "$code.matches(/^[A-Z0-9]{4}$/)",
+        ".write": "$code.matches(/^[A-Z0-9]{4}$/)",
+        "host": {
+          ".validate": "newData.hasChildren(['id', 't']) && newData.child('id').val() === 'h' && newData.child('t').isNumber()"
+        },
+        "box": {
+          "$to": {
+            "$msg": {
+              ".validate": "$to.matches(/^(h|g[a-z0-9]{1,16})$/) && newData.hasChildren(['f']) && newData.child('f').isString() && newData.child('f').val().matches(/^(h|g[a-z0-9]{1,16})$/) && ((newData.child('d').isString() && newData.child('d').val().length < 8000) || newData.child('k').val() === 'hello' || newData.child('k').val() === 'ok' || newData.child('k').val() === 'close')"
+            }
+          }
+        },
+        "$other": { ".validate": false }
+      }
+    },
+    "$other": { ".read": false, ".write": false }
+  }
+}
