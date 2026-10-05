@@ -644,6 +644,7 @@ body.cg a.pplink,body.cg #setDel,body.cg .mspecial.passplus,body.cg #rShare,body
 .cvkprize b{font:800 20px var(--display);letter-spacing:.06em;background:linear-gradient(90deg,#FFF3C4,#FFD166 45%,#B07CFF 55%,#E6D8FF);-webkit-background-clip:text;background-clip:text;color:transparent}
 .cvkprize span{font-size:12.5px;color:var(--ink-2)}
 .cvkhead{position:absolute;top:12px;left:14px;right:14px;justify-content:space-between}
+.cvkhead .cvkbadge{position:relative;z-index:3}
 .cvkbadge{font:700 10px var(--display);letter-spacing:.14em;text-transform:uppercase;padding:4px 8px;border-radius:999px;background:rgba(255,209,102,.16);color:#FFD166;border:1px solid rgba(255,209,102,.4)}
 .cvktitle{margin:2px 0 0;font:900 clamp(34px,9vw,52px)/1 var(--display);letter-spacing:.02em;display:flex;justify-content:center;align-items:center;gap:14px}
 .cvktitle .c{background:linear-gradient(180deg,#BFE4FF,#3FA9FF);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(63,169,255,.7))}
@@ -678,7 +679,7 @@ body.cg a.pplink,body.cg #setDel,body.cg .mspecial.passplus,body.cg #rShare,body
 .cvkrules{margin:0;color:var(--ink-3)}
 .cvkpromo{margin-top:180px;align-items:center}
 #cvkWinOv,#twinWinOv{align-items:start;overflow-y:auto;padding-block:16px}
-#mPassTxt i{font-style:normal}#mPassTxt .ppt::before{content:' · '}
+#mPassTxt i{font-style:normal}#mTwin i{font-style:normal}#mTwin .twt::before{content:' · '}body:not(.phone) #menuOv #mTwin .twt::before{content:''}#mPassTxt .ppt::before{content:' · '}
 .ppchip{background:linear-gradient(90deg,rgba(255,209,102,.35),rgba(201,160,255,.35),rgba(127,240,210,.3))!important;border-color:rgba(255,209,102,.5)!important;color:#fff!important;font-weight:700}
 .ppov{align-items:start;overflow-y:auto;padding-block:12px}
 /* ---- Pulse Pass: a bold, game-store style screen ---- */
@@ -1275,6 +1276,10 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
   body:not(.phone) #menuOv .chip.c-set{order:23}     body:not(.phone) #menuOv .chip.c-help{order:24}
   body:not(.phone) #menuOv .chip.snd{order:25}
   body:not(.phone) #menuOv .chip.rankchip::before{display:none}
+  body:not(.phone) #menuOv .chip.twchip::before{--ic:#FFE7A0;-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2'/%3E%3Cpath d='M9.5 17.5L21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2'/%3E%3Cpath d='M9.5 17.5L21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2'/%3E%3C/svg%3E")}
+  body:not(.phone) #menuOv .chip.twchip{color:#fff!important;background:linear-gradient(90deg,rgba(255,231,160,.24),rgba(106,74,176,.32))!important;border-color:rgba(255,231,160,.4)!important;flex-wrap:wrap;row-gap:0}
+  body:not(.phone) #menuOv .chip.twchip .twg{display:none}
+  body:not(.phone) #menuOv .chip.twchip .twt{margin-left:auto;font:900 11px var(--display);font-style:normal;color:#2A1400;background:#FFE7A0;border-radius:999px;padding:2px 8px;white-space:nowrap}
   body:not(.phone) #menuOv #mPassTxt{flex:1;display:flex;align-items:center;gap:6px}body:not(.phone) #menuOv #mPassTxt .ppg{display:none}body:not(.phone) #menuOv #mPassTxt .ppt::before{content:'Tier '}
   body:not(.phone) #menuOv #mPassTxt .ppt{margin-left:auto;font:900 11.5px var(--display);font-style:normal;color:#1A0C2E;background:#FFD166;border-radius:999px;padding:2px 8px}
   body:not(.phone) #menuOv .chip.ppchip::before{--ic:#FFD166;-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8l4 3.5L12 5l4 6.5L20 8l-1.6 10H5.6z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8l4 3.5L12 5l4 6.5L20 8l-1.6 10H5.6z'/%3E%3C/svg%3E")}
@@ -9285,7 +9290,7 @@ function twTeamRow(t,s,cls){ const nm=(t.names||[]).map(n=>escapeHTML(cleanName(
   return `<li class="${cls}"><div><b>${escapeHTML(showName(t.name,'Team'))}</b><small>${nm}</small></div><span>${s?s.score.toLocaleString():'–'}</span></li>`; }
 function twRender(){
   const ph=twPhase(), r=twRound(), n=Date.now();
-  const chip=$('mTwin'); if(chip){ chip.hidden=!twShown(); chip.textContent='⚔ Twin Pulse · '+(ph==='soon'?'Monday':ph==='signup'?'Sign-ups open':ph==='live'?(r<4?'Round '+r:'Final'):'Results'); }
+  const chip=$('mTwin'); if(chip){ chip.hidden=!twShown(); chip.innerHTML='<i class="twg">⚔ </i>Twin Pulse<i class="twt">'+(ph==='soon'?'Monday':ph==='signup'?'Sign-ups open':ph==='live'?(r<4?'Round '+r:'Final'):'Results')+'</i>'; }
   { const ban=$('mTwinBan'); if(ban){ ban.hidden=!twShown(); $('mTwinBanSub').textContent='2v2 event · '+(ph==='soon'?'starts Monday':ph==='signup'?'sign-ups are open, find a partner':ph==='live'?(r<4?'Round '+r+' is on':'the Final is on'):'see the results'); } }
   if($('twinOv').hidden) return;
   const st=twStand(), mine=twMine(), me=ACCT.user&&ACCT.user.uid, cur=ph==='live'?st.days[r-1]:null;
