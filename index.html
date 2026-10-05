@@ -1396,6 +1396,12 @@ body.phone #menuOv .mtop{flex-direction:row!important;align-items:center!importa
 body.phone #menuOv .mbrand{font:700 17px var(--display);justify-content:flex-start;padding:0;gap:8px}
 body.phone #menuOv .mtop-r{flex:0 1 auto!important;width:auto!important;overflow:visible!important;flex-wrap:nowrap!important;gap:6px!important;justify-content:flex-end!important;padding:0!important}
 body.phone #menuOv .mtop-r>.chip:not(#mProfile){display:none!important}
+.fsbtn{display:none}
+body.phone #menuOv .fsbtn:not([hidden]){display:grid;place-items:center;flex:none;width:38px;height:38px;order:-1;border-radius:12px;cursor:pointer;color:#E8DEFF;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}
+body.phone #menuOv .fsbtn svg{width:20px;height:20px}
+.fsbtn .fs-out{display:none}
+@media (max-width:429px){body.phone #menuOv .mbrand{font-size:0;gap:0}body.phone #menuOv .mbrand .mdot{width:14px;height:14px}}.fsbtn.on .fs-in{display:none}.fsbtn.on .fs-out{display:inline}
 .twban{display:none}
 body.phone #menuOv .twban:not([hidden]){display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:12px 14px;border-radius:18px;cursor:pointer;text-align:left;color:#fff;font:inherit;
   border:1px solid rgba(255,236,170,.55);background:linear-gradient(110deg,rgba(255,226,140,.28),rgba(106,74,176,.55) 55%,rgba(40,24,90,.8));box-shadow:0 8px 24px rgba(0,0,0,.25),0 0 0 1px rgba(255,236,170,.15) inset}
@@ -1601,7 +1607,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   <div id="hween" aria-hidden="true"></div>
   <header class="mtop">
     <div class="mbrand"><span class="mdot"></span>Pulseform</div>
-    <div class="mtop-r"><span class="wallet" id="walletM"></span>
+    <div class="mtop-r"><button class="fsbtn" id="mFull" type="button" aria-label="Full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button><span class="wallet" id="walletM"></span>
       <button class="chip namechip" id="mName" type="button" title="Change your player name">Player name</button>
       <button class="chip acct" id="mAcct" type="button">Sign in</button>
       <button class="chip rankchip" id="mProfile" type="button"><i class="gem"></i><span id="mRankTxt">Bronze I</span><em class="qdot" id="mQDot" hidden></em></button>
@@ -9345,7 +9351,19 @@ function twRender(){
   const ri2=$('twRen'); if(ri2) ri2.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') twRename(); });
 }
 function showTwin(){ TW.cardHTML=TW.bracketHTML=null; showOv('twinOv'); twMsg(''); $('twBracket').dataset.scrolled=''; if(acctCfg()&&!ACCT.ready&&!ACCT.loading) acctInit(); twWatch(); twFind(); twRender(); }
-$('mTwin').onclick=showTwin; $('mTwinBan').onclick=showTwin;
+$('mTwin').onclick=showTwin;
+/* full screen on phones (the website only: the app and CrazyGames handle their own). iPhones don't let websites go full
+   screen, so there the button explains Add to Home Screen, which opens the game full screen like an app. */
+const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
+const fsCan=()=>!!(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen);
+const fsStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+function fsSync(){ const b=$('mFull'); if(!b) return; b.hidden=isNativeApp()||!!window.PF_CG||fsStandalone(); b.classList.toggle('on',!!fsEl()); b.setAttribute('aria-label',fsEl()?'Leave full screen':'Full screen'); }
+$('mFull').onclick=()=>{
+  if(fsEl()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); return; }
+  if(!fsCan()){ toast(/iPhone|iPod/.test(navigator.userAgent)?'To play full screen on iPhone: tap Share, then Add to Home Screen, and open Pulseform from there.':'Your browser doesn\'t support full screen. Try adding Pulseform to your home screen.'); return; }
+  const el=document.documentElement; try{ const r=(el.requestFullscreen?el.requestFullscreen({navigationUI:'hide'}):el.webkitRequestFullscreen()); if(r&&r.catch) r.catch(()=>toast('Full screen isn\'t available here.')); }catch(e){ toast('Full screen isn\'t available here.'); } };
+['fullscreenchange','webkitfullscreenchange'].forEach(e=>document.addEventListener(e,()=>{ fsSync(); LAY.k=''; }));
+fsSync(); $('mTwinBan').onclick=showTwin;
 $('twBack').onclick=()=>{ twUnwatch(); toMenu(); };
 $('twCreate').onclick=twCreate; $('twJoinGo').onclick=twJoin; $('twSignIn').onclick=()=>showAcct();
 ['twName','twCode'].forEach(id=>$(id).addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') (id==='twName'?twCreate:twJoin)(); }));
