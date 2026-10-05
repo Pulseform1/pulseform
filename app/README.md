@@ -138,3 +138,16 @@ address), ads and purchases are pretend and free, so you can try the flow.
   to declare.
 - **Review notes**: give Apple a test account (email + password) so the reviewer can try leaderboards and friends.
 - **Screenshots**: 6.9" and 6.5" iPhone, 13" iPad (if you ship iPad), and phone screenshots for Play.
+
+## The website (pulseform.win on Cloudflare)
+
+pulseform.win is served by a Cloudflare Worker called `pulseform`, in the Cloudflare account that owns the domain.
+To update it:
+
+```
+node scripts/build-www.mjs --email-only     # the website version (email sign-in only)
+node scripts/build-cf-worker.mjs            # packs it into web-cf/worker.js
+```
+
+Then upload `web-cf/worker.js` to the `pulseform` Worker (Cloudflare API, or the dashboard's "Edit code" → paste →
+Deploy). pulseform.win and www.pulseform.win are attached to it as custom domains; www redirects to pulseform.win.
