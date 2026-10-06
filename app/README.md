@@ -151,3 +151,15 @@ node scripts/build-cf-worker.mjs            # packs it into web-cf/worker.js
 
 Then upload `web-cf/worker.js` to the `pulseform` Worker (Cloudflare API, or the dashboard's "Edit code" → paste →
 Deploy). pulseform.win and www.pulseform.win are attached to it as custom domains; www redirects to pulseform.win.
+
+## Unlock codes and the admin panel
+
+The game keeps only salted SHA-256 fingerprints of these codes; the codes themselves are kept privately by the owner.
+
+- **Unlock codes** (one per premium block, one for Pulse Pass+): typed into the Email box on the Account screen. They unlock on that device straight away and sync to the account. A code works any number of times, so treat each one like a gift card.
+- **Admin code**: while signed out, type it into the Email box, then sign in. `firestore.rules` checks the code against its fingerprint and stores `admins/{uid}`; after that, **Settings → Admin panel** appears on that account on every device. From the panel you can:
+  - set your own rank (or go back to the earned one), add Notes, unlock every level, get Pulse Pass+, own every item;
+  - find a player by exact name or friend code and send them Notes, a block, banner, tile theme, Pulse Pass+, a rank, or a message (`gifts/{uid}/items`; applied the next time they open the game signed in);
+  - run one site-wide event (`live/event`): title, message, XP and Notes boosts (up to 3×), start time, length, and an optional gift everyone can claim once from the banner on the main menu.
+- All admin powers are enforced by `firestore.rules`, so **publish the latest rules** in the Firebase console (Firestore Database → Rules) before using the panel. To remove an admin, delete their `admins/{uid}` document in the console.
+- CrazyGames builds have no Firebase, so the admin panel and live events don't appear there.

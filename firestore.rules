@@ -8,10 +8,58 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Set the Firebase Auth custom claim {admin: true} on your owner/admin account
-    // if you want that account to be able to reset community polls.
+    // An admin: an account that entered the admin code (stored at admins/{uid}, checked below), or one with the
+    // Firebase Auth custom claim {admin: true}. Admins can send gifts, run the live event, read reports and reset polls.
     function isAdmin() {
-      return signedIn() && request.auth.token.admin == true;
+      return signedIn() && (request.auth.token.admin == true
+        || exists(/databases/$(db)/documents/admins/$(request.auth.uid)));
+    }
+
+    // Becoming an admin: the code must match its SHA-256 fingerprint (the code itself is never in the game).
+    // Only you can see your own admin record; it can't be changed, only removed (when you delete your account).
+    match /admins/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['k', 't'])
+        && request.resource.data.k is string && request.resource.data.k.size() <= 64
+        && request.resource.data.t is int
+        && hashing.sha256('pulseform/admin/v1:' + request.resource.data.k).toHexString().lower()
+             == 'a6190887335179604bebc5c526d1a5dff858f503886f7aaef9b2e9d78b071f59';
+      allow update: if false;
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Gifts: only an admin can send one; the player it's for reads it, applies it and deletes it
+    match /gifts/{uid}/items/{id} {
+      allow read, delete: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['kind', 'id', 'n', 'msg', 't', 'by'])
+        && request.resource.data.kind in ['notes', 'skin', 'banner', 'tiles', 'passp', 'rank', 'msg']
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.t is int
+        && (!('id' in request.resource.data) || (request.resource.data.id is string && request.resource.data.id.size() <= 40))
+        && (!('n' in request.resource.data) || (request.resource.data.n is number && request.resource.data.n >= -1 && request.resource.data.n <= 1000000))
+        && (!('msg' in request.resource.data) || (request.resource.data.msg is string && request.resource.data.msg.size() <= 120));
+      allow update: if false;
+    }
+
+    // The live event: one site-wide event everyone can see (even signed out); only an admin starts, changes or ends it
+    match /live/{doc} {
+      allow read: if true;
+      allow create, update: if isAdmin() && doc == 'event'
+        && request.resource.data.keys().hasOnly(['id', 'title', 'msg', 'xp', 'notes', 'start', 'end', 'gift', 'by', 't'])
+        && request.resource.data.id is string && request.resource.data.id.size() <= 32
+        && request.resource.data.title is string && request.resource.data.title.size() <= 40
+        && request.resource.data.msg is string && request.resource.data.msg.size() <= 140
+        && request.resource.data.xp is number && request.resource.data.xp >= 1 && request.resource.data.xp <= 3
+        && request.resource.data.notes is number && request.resource.data.notes >= 1 && request.resource.data.notes <= 3
+        && request.resource.data.start is int && request.resource.data.end is int
+        && request.resource.data.end >= request.resource.data.start
+        && request.resource.data.by == request.auth.uid
+        && (request.resource.data.gift == null
+            || (request.resource.data.gift is map && request.resource.data.gift.keys().hasOnly(['kind', 'id', 'n'])
+                && request.resource.data.gift.kind in ['notes', 'skin', 'banner', 'tiles']));
+      allow delete: if isAdmin();
     }
 
     match /users/{uid} {

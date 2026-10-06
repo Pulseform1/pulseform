@@ -3,7 +3,7 @@
 // Deploy (needs a Cloudflare API token with Workers Scripts: Edit on the account that owns pulseform.win):
 //   PUT https://api.cloudflare.com/client/v4/accounts/<account id>/workers/scripts/pulseform
 //   multipart: metadata={"main_module":"worker.js","compatibility_date":"2026-09-01"}, worker.js (application/javascript+module)
-// pulseform.win and www.pulseform.win are attached to the "pulseform" Worker as custom domains.
+// pulseform.org, pulseform.win and their www. names are attached to the "pulseform" Worker as custom domains.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,14 +13,14 @@ const src = path.resolve(here, '..', 'web-email-only');
 const out = path.resolve(here, '..', 'web-cf');
 if (!fs.existsSync(path.join(src, 'index.html'))) throw new Error('Build the website first: node scripts/build-www.mjs --email-only');
 
-const TYPES = { '.html': 'text/html; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.md': 'text/markdown', '.json': 'application/json', '.ico': 'image/x-icon' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.md': 'text/markdown', '.json': 'application/json', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8' };
 const files = {};
 (function walk(dir) {
   for (const f of fs.readdirSync(dir)) {
     const full = path.join(dir, f), rel = '/' + path.relative(src, full).split(path.sep).join('/');
     if (fs.statSync(full).isDirectory()) { if (rel !== '/vendor') walk(full); continue; }   // PeerJS is already built into index.html
     const ext = path.extname(f).toLowerCase(), t = TYPES[ext] || 'application/octet-stream', data = fs.readFileSync(full);
-    const text = t.startsWith('text/') || t === 'image/svg+xml' || t === 'application/json';
+    const text = t.startsWith('text/') || t === 'image/svg+xml' || t.startsWith('application/json') || t.startsWith('application/xml');
     files[rel] = { t, s: text ? data.toString('utf8') : null, b: text ? null : data.toString('base64') };
   }
 })(src);
@@ -31,7 +31,7 @@ const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 export default {
   async fetch(request) {
     const url = new URL(request.url);
-    if (url.hostname === 'www.pulseform.win') { url.hostname = 'pulseform.win'; return Response.redirect(url.toString(), 301); }
+    if (url.hostname.startsWith('www.')) { url.hostname = url.hostname.slice(4); return Response.redirect(url.toString(), 301); }
     let p = decodeURIComponent(url.pathname);
     if (p === '/' || p === '') p = '/index.html';
     if (!FILES[p] && FILES[p + '.html']) p = p + '.html';

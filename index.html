@@ -6,8 +6,23 @@
 <meta name="theme-color" content="#2E3566">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="description" content="Pulseform Beat Rooms: a rhythm puzzle game. Move one tile per beat through floating rooms.">
-<style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}</style>
+<meta name="description" content="Pulseform is an interactive music education and rhythm-learning game that helps learners practice musical timing, rhythm, listening, coordination, and musical skills through guided puzzles, exercises, and challenges.">
+<meta name="keywords" content="music education, music learning, rhythm, rhythm training, music theory, ear training, musical skills, music practice, interactive learning, educational game">
+<meta property="og:title" content="Pulseform — Interactive Music Education & Rhythm Learning">
+<meta property="og:description" content="Practice rhythm, timing, listening, and musical skills through interactive exercises, puzzles, and challenges.">
+<link rel="canonical" href="https://pulseform.org/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pulseform">
+<meta property="og:url" content="https://pulseform.org/">
+<meta property="og:image" content="https://pulseform.org/icons/icon-512.png">
+<meta name="twitter:card" content="summary">
+<meta name="application-name" content="Pulseform">
+<meta name="application-category" content="Education">
+<meta name="subject" content="Music education, rhythm learning, musical timing, listening skills, and interactive practice">
+<meta name="audience" content="Learners and players practicing music, rhythm, timing, and listening skills">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Pulseform","applicationCategory":"EducationalApplication","applicationSubCategory":"Music Education","url":"https://pulseform.org/","image":"https://pulseform.org/icons/icon-512.png","operatingSystem":"Any","isAccessibleForFree":true,"inLanguage":"en","publisher":{"@type":"Organization","name":"Pulseform","url":"https://pulseform.org/"},"description":"An interactive music education game for practicing rhythm, timing, musical listening, coordination, and other musical skills through puzzles and challenges."}</script>
+<style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}.eduIntro{display:grid;gap:3px;max-width:620px;margin:10px auto 14px;padding:10px 14px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.045);text-align:center}.eduIntro b{font-family:var(--display);font-size:13px;letter-spacing:.04em}.eduIntro span{font-size:12px;line-height:1.45;color:var(--ink-2)}
+</style>
 <script>
 /* ===== CLOUD SAVES (sign in with Google or email) =====
    Your Firebase project is already built into the game. You only need to change this
@@ -37,7 +52,7 @@ window.PULSEFORM_PEER = null;
 <meta name="theme-color" content="#2B2350">
 </head>
 <body>
-<title>Pulseform Beat Rooms</title>
+<title>Pulseform — Interactive Music Education & Rhythm Learning</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap">
@@ -526,7 +541,7 @@ body.hween #menuOv .logo{text-shadow:0 0 34px rgba(255,122,24,.28)}
 
 /* CrazyGames build: nothing that needs an outside account or leaves the site */
 #passOv.cgfree .pplabels{display:none}#passOv.cgfree .pptw{padding-left:0}#passOv.cgfree .pptw .ppsc.l{left:-8px}
-body.cg a.pplink,body.cg #setDel,body.cg .mspecial.passplus,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.cg .edmine button[data-a=share],body.cg #evBoard,body.cg #evBoard+*,body.cg .evlblb{display:none!important}
+body.cg a.pplink,body.cg .ppsep,body.cg #setDel,body.cg .mspecial.passplus,body.cg #rShare,body.cg #oShare,body.cg #edShare,body.cg .edmine button[data-a=share],body.cg #evBoard,body.cg #evBoard+*,body.cg .evlblb{display:none!important}
 .cginv{display:flex;flex-direction:column;gap:6px;margin:4px 0 2px}.cginv input{font:500 13px var(--body);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:8px 10px;min-width:0}
 .cgav{width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px}
 /* level editor */
@@ -1408,6 +1423,15 @@ body.phone #menuOv .twban:not([hidden]){display:flex;align-items:center;gap:12px
 .twban-ic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:linear-gradient(#FFE7A0,#E0A040);color:#2A1400}
 .twban-t{flex:1;display:flex;flex-direction:column;min-width:0}.twban-t b{font:800 16px var(--display)}.twban-t small{font-size:12.5px;color:#F1E8FF;opacity:.9}
 .twban-go{font:700 26px var(--display);color:#FFE7A0}
+#menuOv .liveban:not([hidden]){display:flex;align-items:center;gap:12px;width:100%;max-width:520px;margin-top:10px;padding:12px 14px;border-radius:18px;cursor:pointer;text-align:left;color:#fff;font:inherit;
+  border:1px solid rgba(140,240,255,.55);background:linear-gradient(110deg,rgba(120,230,255,.26),rgba(70,90,190,.55) 55%,rgba(30,26,90,.85));box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.liveban .twban-ic{background:linear-gradient(#B8F6FF,#4FB8E0);color:#06203A}.liveban .twban-go{color:#B8F6FF;font-size:14px;white-space:nowrap}
+.adm .field{margin-top:14px}.adm h3{margin:18px 0 4px;font:800 16px var(--display);color:#FFD166}
+.adm input,.adm select,.adm textarea{background:rgba(10,8,30,.6);border:1px solid var(--line);border-radius:10px;padding:9px 10px;color:var(--ink);font:inherit;font-size:14px;min-width:0;width:100%;box-sizing:border-box}
+.adm .g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:8px}.adm .g2 label,.adm .g1 label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--ink-2)}
+.adm .g1{display:grid;gap:8px;margin-top:8px}.adm .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.adm .row .btn{flex:1 1 auto}
+.adm .who{margin-top:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.06);font-size:14px}.adm .who:empty{display:none}
+.adm .amsg{min-height:1.4em;margin:8px 0 0;font-size:13.5px;color:#B8F2E6}.adm .amsg.err{color:#FF8A80}
 body.phone #menuOv .mtop-r .wallet{order:0;min-height:38px;padding:0 12px;display:flex;align-items:center;font:700 14px var(--display);border-radius:12px}
 body.phone #mProfile{min-height:38px!important;padding:0 11px!important;border-radius:12px!important;font-size:12.5px!important}
 body.phone #menuOv .mmain{display:flex;flex-direction:column;gap:10px;flex:0 0 auto}
@@ -1426,10 +1450,10 @@ body.phone #menuOv .mcard small{font-size:12px}
 body.phone .hw-pumpwrap{display:none}
 
 /* full-screen pages with a sticky header */
-body.phone #worldsOv,body.phone #levelsOv,body.phone #shopOv,body.phone #friendsOv,body.phone #friendOv,body.phone #lbOv,body.phone #profOv,body.phone #settingsOv,body.phone #acctOv,body.phone #guideOv,body.phone #eventOv,body.phone #pollOv,body.phone #twinOv,body.phone #remixOv,body.phone #hardOv,body.phone #coopOv{padding:0!important;place-items:stretch!important;background:linear-gradient(180deg,#1C1745,#140F33 60%,#100C29)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
-body.phone #worldsOv > .panel,body.phone #levelsOv > .panel,body.phone #shopOv > .panel,body.phone #friendsOv > .panel,body.phone #friendOv > .panel,body.phone #lbOv > .panel,body.phone #profOv > .panel,body.phone #settingsOv > .panel,body.phone #acctOv > .panel,body.phone #guideOv > .panel,body.phone #eventOv > .panel,body.phone #pollOv > .panel,body.phone #twinOv > .panel,body.phone #remixOv > .panel,body.phone #hardOv > .panel,body.phone #coopOv > .panel{max-width:none!important;width:100%!important;max-height:none!important;height:100%;border-radius:0!important;border:0!important;box-shadow:none!important;background:transparent!important;
+body.phone #worldsOv,body.phone #levelsOv,body.phone #shopOv,body.phone #friendsOv,body.phone #friendOv,body.phone #lbOv,body.phone #profOv,body.phone #settingsOv,body.phone #adminOv,body.phone #acctOv,body.phone #guideOv,body.phone #eventOv,body.phone #pollOv,body.phone #twinOv,body.phone #remixOv,body.phone #hardOv,body.phone #coopOv{padding:0!important;place-items:stretch!important;background:linear-gradient(180deg,#1C1745,#140F33 60%,#100C29)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.phone #worldsOv > .panel,body.phone #levelsOv > .panel,body.phone #shopOv > .panel,body.phone #friendsOv > .panel,body.phone #friendOv > .panel,body.phone #lbOv > .panel,body.phone #profOv > .panel,body.phone #settingsOv > .panel,body.phone #adminOv > .panel,body.phone #acctOv > .panel,body.phone #guideOv > .panel,body.phone #eventOv > .panel,body.phone #pollOv > .panel,body.phone #twinOv > .panel,body.phone #remixOv > .panel,body.phone #hardOv > .panel,body.phone #coopOv > .panel{max-width:none!important;width:100%!important;max-height:none!important;height:100%;border-radius:0!important;border:0!important;box-shadow:none!important;background:transparent!important;
   padding:0 max(16px,env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))!important;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-body.phone #worldsOv > .panel > .head:first-child,body.phone #levelsOv > .panel > .head:first-child,body.phone #shopOv > .panel > .head:first-child,body.phone #friendsOv > .panel > .head:first-child,body.phone #friendOv > .panel > .head:first-child,body.phone #lbOv > .panel > .head:first-child,body.phone #profOv > .panel > .head:first-child,body.phone #settingsOv > .panel > .head:first-child,body.phone #acctOv > .panel > .head:first-child,body.phone #guideOv > .panel > .head:first-child,body.phone #eventOv > .panel > .head:first-child,body.phone #pollOv > .panel > .head:first-child,body.phone #twinOv > .panel > .head:first-child,body.phone #remixOv > .panel > .head:first-child,body.phone #hardOv > .panel > .head:first-child,body.phone #coopOv > .panel > .head:first-child{position:sticky;top:0;z-index:5;margin:0 calc(-1 * max(16px,env(safe-area-inset-right))) 2px calc(-1 * max(16px,env(safe-area-inset-left)));
+body.phone #worldsOv > .panel > .head:first-child,body.phone #levelsOv > .panel > .head:first-child,body.phone #shopOv > .panel > .head:first-child,body.phone #friendsOv > .panel > .head:first-child,body.phone #friendOv > .panel > .head:first-child,body.phone #lbOv > .panel > .head:first-child,body.phone #profOv > .panel > .head:first-child,body.phone #settingsOv > .panel > .head:first-child,body.phone #adminOv > .panel > .head:first-child,body.phone #acctOv > .panel > .head:first-child,body.phone #guideOv > .panel > .head:first-child,body.phone #eventOv > .panel > .head:first-child,body.phone #pollOv > .panel > .head:first-child,body.phone #twinOv > .panel > .head:first-child,body.phone #remixOv > .panel > .head:first-child,body.phone #hardOv > .panel > .head:first-child,body.phone #coopOv > .panel > .head:first-child{position:sticky;top:0;z-index:5;margin:0 calc(-1 * max(16px,env(safe-area-inset-right))) 2px calc(-1 * max(16px,env(safe-area-inset-left)));
   padding:calc(env(safe-area-inset-top) + 10px) max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left));min-height:52px;box-sizing:content-box;
   background:rgba(22,17,52,.9);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid rgba(255,255,255,.07)}
 body.phone .overlay .panel > .head:first-child .back{font-size:15px;padding:8px 12px 8px 4px;min-height:40px}
@@ -1625,14 +1649,17 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   </header>
   <div class="mmain">
     <div class="mhero">
-      <div class="eyebrow">A rhythm puzzle in floating rooms</div>
+      <div class="eyebrow">Interactive music learning through rhythm and musical skill</div>
       <h1 class="logo" id="logo">Pulse<span>form</span></h1>
-      <p class="tag">Move one tile per beat. Land on the beat and the music grows around you. Every level has its own track.</p>
-      <button class="cta" id="mContinue" type="button"><span class="cta-k" id="mContTitle">Continue</span><span class="cta-s" id="mContSub"></span><span class="cta-go" aria-hidden="true">▶</span></button>
+      <p class="tag">Practice rhythm, timing, and musical listening one beat at a time. Each level turns musical practice into an interactive learning challenge.</p>
+      <div class="eduIntro" aria-label="About Pulseform learning"><b>Learn through play</b><span>Pulseform combines rhythm practice, listening exercises, timing challenges, and interactive puzzles to help players develop musical skills.</span></div>
+       <button class="cta" id="mContinue" type="button"><span class="cta-k" id="mContTitle">Continue</span><span class="cta-s" id="mContSub"></span><span class="cta-go" aria-hidden="true">▶</span></button>
+      <button class="twban liveban" id="mLive" type="button" hidden><span class="twban-ic" aria-hidden="true">★</span><span class="twban-t"><b id="mLiveT">Live event</b><small id="mLiveSub"></small></span><span class="twban-go" id="mLiveGo" aria-hidden="true">›</span></button>
       <button class="twban" id="mTwinBan" type="button" hidden><span class="twban-ic" aria-hidden="true">⚔</span><span class="twban-t"><b>Twin Pulse</b><small id="mTwinBanSub">2v2 event</small></span><span class="twban-go" aria-hidden="true">›</span></button>
     </div>
     <div id="menuArt" aria-hidden="true"></div>
   </div>
+  <p class="edu-intro" style="max-width:760px;margin:0 auto 18px;padding:0 20px;text-align:center;opacity:.82">Pulseform is a music education game built around rhythm, timing, listening, and musical skill development. Play through interactive challenges to practice your sense of beat and improve musical coordination.</p>
   <nav class="mcards" aria-label="Game modes">
     <button class="mcard" id="mLevels" type="button" style="--a:#FFD166"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 26h8v-6h8v-6h8V6" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg><b>Levels</b><small>16 worlds · 144 stages</small><span class="meta" id="mLevelsMeta"></span></button>
     <button class="mcard" id="mDaily" type="button" style="--a:#B8F2E6"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="6" fill="currentColor"/><g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M16 3v4M16 25v4M3 16h4M25 16h4M7 7l3 3M22 22l3 3M25 7l-3 3M10 22l-3 3"/></g></svg><b>Daily</b><small id="mDailySub"></small><span class="meta" id="mDailyMeta"></span></button>
@@ -1642,7 +1669,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <button class="mcard" id="mAscent" type="button" style="--a:#8FF0E0"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 28l9-12 5 6 4-5 8 11z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="M21 4v9M17 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Ascent</b><small>Climb floors, pick power cards</small><span class="meta" id="mAscentMeta"></span></button>
     <button class="mcard" id="mRhythm" type="button" style="--a:#7FF0D2"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="7" cy="23" r="3.6" fill="currentColor"/><circle cx="16" cy="23" r="3.6" fill="currentColor"/><circle cx="25" cy="19" r="3.6" fill="currentColor"/><path d="M10.4 23V8l18-4v15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.4 23V9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><b>Rhythm Patterns</b><small>Eighths, triplets, off-beats</small><span class="meta" id="mRhythmMeta"></span></button>
     <button class="mcard" id="mRemix" type="button" style="--a:#C9A0FF"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 10h6l10 12h8M4 22h6l3-3.6M19 13.6L20 12h8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 7l4 3-4 3M24 19l4 3-4 3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Remix</b><small>Your levels, reshuffled</small><span class="meta" id="mRemixMeta"></span></button>
-    <button class="mcard" id="mRush" type="button" style="--a:#FF9F5A"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 26V12l10-7 10 7v14z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="16" cy="16" r="4" fill="currentColor"/><path d="M11 26v-4h10v4" fill="none" stroke="currentColor" stroke-width="2.6"/></svg><b>Boss Rush</b><small>Every boss, back to back, solo</small><span class="meta" id="mRushMeta"></span></button>
+    <button class="mcard" id="mRush" type="button" style="--a:#FF9F5A"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 26V12l10-7 10 7v14z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="16" cy="16" r="4" fill="currentColor"/><path d="M11 26v-4h10v4" fill="none" stroke="currentColor" stroke-width="2.6"/></svg><b>Mastery Rush</b><small>Advanced rhythm challenges, back to back, solo</small><span class="meta" id="mRushMeta"></span></button>
     <button class="mcard" id="mStudio" type="button" style="--a:#FF7EB6"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 24V7l14-3v17" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="8.5" cy="24" r="3.5" fill="currentColor"/><circle cx="22.5" cy="21" r="3.5" fill="currentColor"/></svg><b>Studio</b><small>Any song, your tempo</small><span class="meta" id="mStudioMeta"></span></button>
   <button class="mcard" id="mCreate" type="button" style="--a:#B8F27A"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="4" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.6"/><rect x="18" y="18" width="10" height="10" rx="2" fill="currentColor"/><path d="M18 9h10M23 4v10M4 23h10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg><b>Create</b><small>Build and share levels</small><span class="meta" id="mCreateMeta"></span></button>
   </nav>
@@ -1772,7 +1799,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <button class="rvbtn" id="rvAd" type="button"><span class="rvplay">▶</span> Watch an ad to revive</button>
     <button class="rvbtn alt" id="rvToken" type="button">Use a revive token</button>
     <button class="btn ghost" id="rvNo" type="button">No thanks</button>
-    <small class="rvnote">One revive per boss fight. The boss keeps the damage you've done.</small>
+    <small class="rvnote">One revive per mastery challenge. Your progress in the challenge is preserved.</small>
   </div>
 </section>
 <div class="adov" id="testAdOv" hidden><div class="adbox"><small>TEST AD</small><b>This is where a short video ad plays</b><p>Real ads appear once AdMob is set up. Reward in <span id="taCount">5</span>…</p><button class="btn ghost" id="taSkip" type="button">Close (no reward)</button></div></div>
@@ -1825,7 +1852,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     </div>
     <div id="aBlocked" hidden><div class="lbl" style="margin:10px 0 6px">Blocked players</div><ul class="frlist" id="aBlockedList"></ul></div>
     <p class="small" id="aMsg" role="status"></p>
-    <p class="small" style="margin:6px 0 0"><a class="pplink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
+    <p class="small" style="margin:6px 0 0"><a class="pplink" href="about.html" target="_blank" rel="noopener">About</a><span class="ppsep"> · </span><a class="pplink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
   </div>
 </section>
 
@@ -2057,6 +2084,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <input id="offset" type="range" min="-300" max="300" step="1" value="0">
     </div>
     <button id="calibBtn" class="btn ghost" type="button">Calibrate timing</button>
+    <button id="setAdmin" class="btn ghost" type="button" hidden>Admin panel</button>
     <details>
       <summary>How to play</summary>
       <ul class="howto">
@@ -2070,7 +2098,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         <li>No sound on iPhone? Check the ringer switch and volume.</li>
       </ul>
     </details>
-    <p class="small" style="margin:10px 0 0"><a class="pplink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
+    <p class="small" style="margin:10px 0 0"><a class="pplink" href="about.html" target="_blank" rel="noopener">About</a><span class="ppsep"> · </span><a class="pplink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
     <details class="adanger" id="setDel" hidden><summary>Delete account</summary>
       <p class="small">This permanently deletes your account, your cloud save, your leaderboard scores, your friend list and your player card. Your progress on this device is erased too. This can't be undone.</p>
       <form class="adelform" id="delForm" novalidate>
@@ -2079,6 +2107,36 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         <button class="btn dangerfill" id="aDelete" type="submit">Delete my account</button>
       </form>
       <p class="small" id="delMsg" role="status"></p></details>
+  </div>
+</section>
+
+<section id="adminOv" class="overlay" hidden>
+  <div class="panel adm">
+    <div class="head"><button class="back" id="admBack" type="button">← Settings</button></div>
+    <h2>Admin panel</h2>
+    <p class="small" id="admWho"></p>
+    <h3>Your account</h3>
+    <div class="g2"><label>Rank<select id="admRank"></select></label><label>Add Notes<input id="admNotes" type="number" min="0" max="1000000" step="100" placeholder="e.g. 5000"></label></div>
+    <div class="row"><button class="btn ghost" id="admRankGo" type="button">Set rank</button><button class="btn ghost" id="admNotesGo" type="button">Add Notes</button></div>
+    <div class="row"><button class="btn ghost" id="admLevels" type="button">Unlock all levels</button><button class="btn ghost" id="admPass" type="button">Pulse Pass+</button><button class="btn ghost" id="admAll" type="button">Own every item</button></div>
+    <h3>Gift a player</h3>
+    <div class="g2"><label>Player name or friend code<input id="admFind" type="text" maxlength="24" autocomplete="off" placeholder="Name or 6-letter code"></label><label>&nbsp;<button class="btn ghost" id="admFindGo" type="button">Find player</button></label></div>
+    <div class="who" id="admTarget"></div>
+    <div class="g2"><label>Gift<select id="admKind"><option value="notes">Notes</option><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option><option value="passp">Pulse Pass+</option><option value="rank">Set rank</option><option value="msg">Message only</option></select></label>
+      <label id="admItemL">Item<select id="admItem"></select></label></div>
+    <div class="g1"><label id="admAmtL">Amount<input id="admAmt" type="number" min="1" max="1000000" step="100" value="1000"></label><label>Message (optional)<input id="admNote" type="text" maxlength="120" placeholder="Thanks for playing!"></label></div>
+    <div class="row"><button class="btn" id="admSend" type="button" disabled>Send gift</button></div>
+    <h3>Global event</h3>
+    <p class="small" id="admLiveNow">No event running.</p>
+    <div class="g1"><label>Title<input id="admEvT" type="text" maxlength="40" placeholder="Double XP Weekend"></label><label>Message<input id="admEvM" type="text" maxlength="140" placeholder="Every run earns double XP until Sunday night."></label></div>
+    <div class="g2"><label>XP boost<select id="admEvX"><option value="1">None</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option></select></label>
+      <label>Notes boost<select id="admEvN"><option value="1">None</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option></select></label>
+      <label>Starts in (hours)<input id="admEvS" type="number" min="0" max="720" step="0.5" value="0"></label><label>Lasts (hours)<input id="admEvH" type="number" min="0.5" max="720" step="0.5" value="48"></label>
+      <label>Gift for everyone<select id="admEvG"><option value="">None</option><option value="notes">Notes</option><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option></select></label>
+      <label id="admEvGL">Gift item<select id="admEvGI"></select></label></div>
+    <div class="g1" id="admEvGAL"><label>Notes for everyone<input id="admEvGA" type="number" min="1" max="100000" step="100" value="500"></label></div>
+    <div class="row"><button class="btn" id="admEvGo" type="button">Start event</button><button class="btn ghost" id="admEvEnd" type="button">End event now</button></div>
+    <p class="amsg" id="admMsg" role="status"></p>
   </div>
 </section>
 
@@ -2145,7 +2203,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         <div class="modes" id="nModes" hidden>
           <button class="mode primary" id="nJourney" type="button"><b>Online Journey</b><small>Co-op through endless rooms, 2 to 4 players. Every block must reach the door.</small><span class="meta">♪</span></button>
           <button class="mode" id="nDuel" type="button"><b>Online Duel</b><small>2 players. Shell your friend's platform from your own device. 3 knockouts wins.</small><span class="meta">⚔</span></button>
-          <button class="mode" id="nRaid" type="button"><b>Online Boss Raid</b><small>Team up against every boss, back to back, 2 to 4 players. A blaster pad each, one shared Harmony.</small><span class="meta">☠</span></button>
+          <button class="mode" id="nRaid" type="button"><b>Online Mastery Challenge</b><small>Work together through advanced rhythm challenges, 2 to 4 players. Each player uses timing pads and shares Harmony.</small><span class="meta">☠</span></button>
           <button class="mode" id="nTether" type="button"><b>Online Tether</b><small>2 players, tied together by a cord. Stray more than 4 tiles apart and it snaps. Stay close for double points.</small><span class="meta">∞</span></button>
         </div>
         <div class="small" id="nModeNote"></div>
@@ -2163,7 +2221,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <div class="p2pick"><div class="p2head"><span class="small"><b>P2's block</b> · pick any block you own</span></div><div class="p2row" id="p2Row"></div></div>
       <button class="mode primary" id="cJourney" type="button"><b>Journey</b><small>Team up through endless rooms. Both blocks must reach the door.</small><span class="meta" id="cJourneyMeta"></span></button>
       <button class="mode" id="cDuel" type="button"><b>Duel</b><small>Side-by-side platforms. Hit your blaster pad to blow holes under your rival. First to knock the other off 3 times wins.</small><span class="meta">⚔</span></button>
-      <button class="mode" id="cRaid" type="button"><b>Boss Raid</b><small>Fight every boss back to back, together. Two blaster pads, either of you can fire. Beat a boss to heal.</small><span class="meta" id="cRaidMeta">☠</span></button>
+      <button class="mode" id="cRaid" type="button"><b>Mastery Challenge</b><small>Work through advanced rhythm challenges together. Use the timing pads and keep your Harmony going.</small><span class="meta" id="cRaidMeta">☠</span></button>
       <button class="mode" id="cTether" type="button"><b>Tether</b><small>Tied together by a glowing cord. Stretch it past 4 tiles and it snaps you back. Stay side by side for double points.</small><span class="meta" id="cTetherMeta">∞</span></button>
     </div>
     </div>
@@ -2426,8 +2484,8 @@ const ownsItem=it=>!!it&&(it.price===0||SAVE.owned.includes(it.id)||(!it.price&&
 const skinById=id=>SKINS.find(s=>s.id===id)||SKINS[0], landById=id=>LANDS.find(s=>s.id===id)||LANDS[0];
 const hardCleared=()=>{ let n=0; for(let i=1;i<=12;i++) if((SAVE.stars['H-'+i]||0)>0) n++; return n; };
 const ownsSkin=id=>{ const s=SKINS.find(k=>k.id===id); return !!s&&(SAVE.owned.includes(id)||s.price===0||(s.req&&reqMet(s.req))); };
-const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?rankOf(SAVE.xp||0)>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.twin?!!SAVE.twinWin:true)&&(r.pass?passGot(r.pass):true)&&(r.passp?passPGot(r.passp):true)&&(r.login?giftDays()>=r.login:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true);
-const reqText=r=>r.pass?`Pulse Pass · tier ${r.pass}`:r.passp?`Pulse Pass+ · tier ${r.passp}`:r.login?`Log in on ${r.login} different days`:r.twin?'One of a kind: only the Twin Pulse champions will own it':r.boss?`Defeat ${BOSS[r.boss-1]}`:r.cvkOn?`Bet ♪${CVK_BET_BLOCK.toLocaleString()} on ${r.cvkOn==='cale'?'Cale':'Korra'} in Cale vs Korra`:r.cvkBet?`Bet ♪${r.cvkBet.toLocaleString()} in total on Cale vs Korra`:r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
+const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?myRank()>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.twin?!!SAVE.twinWin:true)&&(r.pass?passGot(r.pass):true)&&(r.passp?passPGot(r.passp):true)&&(r.login?giftDays()>=r.login:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true);
+const reqText=r=>r.pass?`Pulse Pass · tier ${r.pass}`:r.passp?`Pulse Pass+ · tier ${r.passp}`:r.login?`Log in on ${r.login} different days`:r.twin?'One of a kind: only the Twin Pulse champions will own it':r.boss?`Complete ${BOSS[r.boss-1]}`:r.cvkOn?`Bet ♪${CVK_BET_BLOCK.toLocaleString()} on ${r.cvkOn==='cale'?'Cale':'Korra'} in Cale vs Korra`:r.cvkBet?`Bet ♪${r.cvkBet.toLocaleString()} in total on Cale vs Korra`:r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
 function hsl2hex(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
   return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); }
 
@@ -3077,8 +3135,8 @@ const QUESTS=[
  {id:'ascent',t:n=>`Reach floor ${n} in Ascent`,g:[4,7,10],ev:'ascent',max:true},
  {id:'duel',t:n=>`Play ${n} duels`,g:[1,2,3],ev:'duel'},
  {id:'hard',t:n=>`Clear ${n} Hard Mode stage${n>1?'s':''}`,g:[1,1,2],ev:'hard'},
- {id:'daily',t:()=>`Finish today's Daily Challenge`,g:[1,1,1],ev:'daily'},
- {id:'boss',t:()=>`Defeat a boss`,g:[1,1,1],ev:'boss'},
+ {id:'daily',t:()=>`Finish today's Daily Practice`,g:[1,1,1],ev:'daily'},
+ {id:'boss',t:()=>`Complete a mastery challenge`,g:[1,1,1],ev:'boss'},
  {id:'runs',t:n=>`Play ${n} runs in any mode`,g:[4,6,8],ev:'runs'}];
 const levelStars=()=>Object.entries(SAVE.stars).filter(([k])=>!k.startsWith('H-')).reduce((a,[,v])=>a+v,0);
 
@@ -3320,7 +3378,7 @@ function startRun(M){
   if(!h&&M.type==='duel') h='Step on your blaster pad to shell your rival\'s tile. Knock them off 3 times to win.';
   if(!h&&M.type==='daily') h=M.mod?MODS[M.mod]:'No modifier today. Three rooms, one run.';
   if(!h&&M.type==='coop') h='P1 uses WASD, P2 uses the arrows. Both blocks must reach the door.';
-  if(M.type==='raid') h=M.solo?'Boss Rush: every boss, back to back. Step on the blaster pad to fire. Dodge the red targets. Each boss you beat heals 2 Harmony.':(M.net?'Online Boss Raid: ':'Boss Raid: ')+'fight every boss back to back. Step on either blaster pad to fire. Dodge the red targets. Each boss you beat heals 2 Harmony.';
+  if(M.type==='raid') h=M.solo?'Boss Rush: every boss, back to back. Step on the blaster pad to fire. Dodge the red targets. Each boss you beat heals 2 Harmony.':(M.net?'Online Boss Raid: ':'Boss Raid: ')+'work through advanced rhythm challenges back to back. Use the timing pads to play, avoid the red targets, and restore Harmony by completing each challenge.';
   if(M.type==='tether') h=(M.net?'Online Tether: ':'Tether: ')+`you are tied together. Stretch the cord past ${TETHER_MAX} tiles and it snaps you back (−1 Harmony). Stay side by side for double points.`;
   if(M.type==='interlude') h='';
   if(!h&&M.type==='studio') h=`Studio · ${Math.round(M.bpm*10)/10} BPM · ${M.diff==='chill'?'Chill: skip beats whenever you like.':M.diff==='groove'?'Groove: a move every beat.':'Intense: a move every beat, 3 Harmony.'}`+(M.file?' The run ends when your song does.':M.silent?(M.synced?' Silent mode: lined up with your taps.':' Silent mode: tap tempo along with your song right before Start to line up the beat.'):'');
@@ -3358,7 +3416,7 @@ function nextRoom(first){
   bpm=M.type==='studio'||M.type==='custom'?M.bpm||M.design.bpm:clamp(Math.round(bpm),68,180);
   if(M.net&&M.type==='duel') rng=mulberry(hashStr('duel'+M.seed+'#'+i));
   R=M.type==='custom'?edRoom(M.design):M.type==='boss'?genArena(M.world):M.type==='raid'?raidArena(M.world):M.type==='duel'?genDuel():M.type==='ascent'&&G.guardian?ascentArena(M.world,i):genRoom(cfg); rng=Math.random;
-  setTheme(th); G.instr=instr; G.roomBpm=bpm; if(!!R.boss!==RES.boss) resize();   // sharper drawing for boss fights
+  setTheme(th); G.instr=instr; G.roomBpm=bpm; if(!!R.boss!==RES.boss) resize();   // sharper drawing for mastery challenges
   const PK=endlessPack(M); if(PK){ sid='lobby'; tseed='pack-'+PK.id; bpm=clamp(Math.round((90+(i-1)*4)*STYLES.lobby.bpm),68,180); G.roomBpm=bpm; G.instr=1; }
   // an equipped sound pack: Endless plays the pack's song exactly as the menu does (no room instruments), only speeding up every room
   if(!TRACK||TRACK.seedKey!==tseed){ setTrack(sid,tseed); if(PK){ const L=lobbyTracks(); TRACK=Object.assign({},L[0],{pair:L}); } TRACK.seedKey=tseed; G.newTrack=!first; }
@@ -3701,7 +3759,7 @@ function spawnBloom(){
 var PERF={f:[],last:0,level:0}; const PERF_DPR=[3,2,1.5,1];   // see perfTick
 try{ localStorage.removeItem('pf-perf'); }catch(e){}   // older versions saved a low quality level forever; start sharp every time
 const cv=$('cv'); let cx=cv.getContext('2d'); let DPR=1, VW=0, VH=0;
-/* boss fights draw at a higher resolution (at least 1.75×, up to 2.5×), so bosses and arenas stay crisp and well defined on small
+/* mastery challenges draw at a higher resolution (at least 1.75×, up to 2.5×), so bosses and arenas stay crisp and well defined on small
    or low-quality screens, within a pixel budget so large screens aren't overloaded */
 const RES={boss:false};
 function resize(){ VW=innerWidth; VH=innerHeight; RES.boss=!!(typeof R!=='undefined'&&R&&R.boss&&G&&G.state!=='menu');
@@ -4165,7 +4223,7 @@ function drawTruePulse(f,x,y,tw,th,now,u,e,a){
   cx.save();
   // the dark: a small shadow opens under the block before the light arrives
   if(u<.45){ const v=u/.45, r=RM0*(.5+.5*v), g0=cx.createRadialGradient(x,y,0,x,y,r); g0.addColorStop(0,`rgba(20,0,6,${.6*(1-v)})`); g0.addColorStop(1,'rgba(20,0,6,0)'); cx.fillStyle=g0; cx.beginPath(); cx.ellipse(x,y,r,r*.62,0,0,TAU); cx.fill(); }
-  // solid crimson (not added light), so it stays blood-red even on pale floors
+  // deep crimson (not added light), so it stays deep crimson even on pale floors
   const r1=RM0*(.35+.65*e*k); cx.strokeStyle=`rgba(120,0,14,${.7*a})`; cx.lineWidth=2.5+2*a; cx.beginPath(); cx.ellipse(x,y,r1,r1*.62,0,0,TAU); cx.stroke();
   cx.strokeStyle=`rgba(230,16,40,${.95*a})`; cx.lineWidth=1+1.2*a; cx.stroke();
   // fractures: short jagged cracks that stay within the tile
@@ -4509,7 +4567,7 @@ function skinPost(S,x0,topY,bw,bh,H,now,P){
       for(let i=0;i<4;i++){ const q=((now*.35+i*.25)%1), px=x0+bw*(.62+.1*i)+Math.sin(now*1.6+i)*2, py=topY+Hh*.6+q*Hh*.9; cx.fillStyle=`rgba(160,90,240,${.8*(1-q)})`; cx.fillRect(px,py,2.2,2.2); }
       cx.restore(); } break;
     case 'truepulse': { const cxp=x0+bw/2, red=al=>`rgba(255,${Math.round(24+50*beat)},${Math.round(40+20*beat)},${al})`;
-      // obsidian front: a black shirt, blood-red lapels and bow tie, cracks that glow on every beat
+      // obsidian front: a black shirt, deep crimson lapels and bow tie, cracks that glow on every beat
       cx.fillStyle='#240409'; cx.beginPath(); cx.moveTo(cxp-bw*.2,fy); cx.lineTo(cxp+bw*.2,fy); cx.lineTo(cxp,fy+H*.95); cx.closePath(); cx.fill();
       cx.strokeStyle='#C80A20'; cx.lineWidth=Math.max(1.2,bw*.05); cx.beginPath(); cx.moveTo(cxp-bw*.3,fy); cx.lineTo(cxp,fy+H*.95); cx.lineTo(cxp+bw*.3,fy); cx.stroke();
       const by=fy+H*.16, bs=bw*.13; cx.fillStyle='#E0102A'; cx.beginPath(); cx.moveTo(cxp,by); cx.lineTo(cxp-bs*1.4,by-bs*.8); cx.lineTo(cxp-bs*1.1,by); cx.lineTo(cxp-bs*1.4,by+bs*.8); cx.closePath(); cx.moveTo(cxp,by); cx.lineTo(cxp+bs*1.4,by-bs*.8); cx.lineTo(cxp+bs*1.1,by); cx.lineTo(cxp+bs*1.4,by+bs*.8); cx.closePath(); cx.fill();
@@ -4525,7 +4583,7 @@ function skinPost(S,x0,topY,bw,bh,H,now,P){
       cx.moveTo(sp,ly); cx.lineTo(sp+(ep-sp)*.35,ly); cx.lineTo(sp+(ep-sp)*.43,ly-bh*.32); cx.lineTo(sp+(ep-sp)*.52,ly+bh*.3); cx.lineTo(sp+(ep-sp)*.6,ly); cx.lineTo(ep,ly); cx.stroke();
       cx.fillStyle='rgba(255,230,230,.9)'; cx.beginPath(); cx.arc(sp+(ep-sp)*pk,ly,Math.max(1.2,bw*.03),0,Math.PI*2); cx.fill();
       cx.restore();
-      // blood-red trim with a dark shine crawling over it
+      // deep crimson trim with a dark shine crawling over it
       cx.strokeStyle='#E0102A'; cx.lineWidth=2.4; rr(x0,topY,bw,bh+H,3); cx.stroke();
       clip(x0,topY,bw,bh+H); const u=((now*.35)%1.6)-.3, sg=cx.createLinearGradient(x0+bw*u-14,topY,x0+bw*u+14,topY+bh+H); sg.addColorStop(0,'rgba(0,0,0,0)'); sg.addColorStop(.5,'rgba(255,40,60,.35)'); sg.addColorStop(1,'rgba(0,0,0,0)'); cx.fillStyle=sg; cx.fillRect(x0,topY,bw,bh+H); cx.restore();
       // a black crown of thorns that slams down on the beat
@@ -5502,7 +5560,7 @@ function drawSkinPreviews(now,sel){
   cx=main; G.mode=gm;
 }
 
-/* ---------------- ARENAS: boss fights and duels ---------------- */
+/* ---------------- ARENAS: mastery challenges and duels ---------------- */
 const REGEN_BEATS=8;
 function reach(room,start){
   const N=room.N, C=room.cells, seen=new Set([start.y*N+start.x]), q=[start];
@@ -6499,9 +6557,9 @@ function acctInit(){
   const cfg=acctCfg(); if(!cfg) return;
   fbLoad().then(()=>{
     if(!firebase.apps.length) firebase.initializeApp(cfg);
-    ACCT.auth=firebase.auth(); ACCT.db=firebase.firestore();
+    ACCT.auth=firebase.auth(); ACCT.db=firebase.firestore(); liveStart();
     ACCT.auth.getRedirectResult().catch(e=>{ ACCT.err=authMsg(e); acctUI(); });
-    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; try{ if(u&&IAP.ok) rcPlugin().logIn({appUserID:u.uid}).catch(()=>{}); }catch(e){} if(u) acctPull(true).then(lbRename,lbRename).then(()=>{ cvkFindSide(); cvkLoadMyBet(); twFind(); }); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
+    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; try{ if(u&&IAP.ok) rcPlugin().logIn({appUserID:u.uid}).catch(()=>{}); }catch(e){} admAuth(u); if(u) acctPull(true).then(lbRename,lbRename).then(()=>{ cvkFindSide(); cvkLoadMyBet(); twFind(); inboxStart(u); }); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
   }).catch(()=>{ ACCT.err='Could not load sign-in. Check your connection.'; acctUI(); });
 }
 
@@ -6557,6 +6615,8 @@ function mergeSaves(loc,cl,additive){
   { const a=loc.pass||{}, b=cl.pass||{}, U=(x,y)=>[...new Set([...(x||[]),...(y||[])])], leg=x=>x.v2?(x.legacy||[]):(x.got||[]).filter(t=>PREM_SKINS[t]);
     out.pass={xp:Math.max(a.xp||0,b.xp||0),got:U(a.got,b.got),pgot:U(a.pgot,b.pgot),prem:!!(a.prem||b.prem),v2:1,legacy:U(leg(a),leg(b))}; }   // Pass+ bought on any device counts everywhere
   { const a=loc.remix||{}, b=cl.remix||{}, m={...a}; for(const k in b) m[k]=Math.max(m[k]||0,b[k]); out.remix=m; } out.bestRhythm=Math.max(loc.bestRhythm||0,cl.bestRhythm||0);
+  { const a=loc.rankSet, b=cl.rankSet, r=!a?b:!b?a:(a.t||0)>=(b.t||0)?a:b; if(r) out.rankSet=r; else delete out.rankSet; }   // the newest rank setting wins
+  for(const k of ['giftIds','liveGot']) out[k]=[...new Set([...(cl[k]||[]),...(loc[k]||[])])].slice(-200);
   out.twinTeam=newer.twinTeam!==undefined?newer.twinTeam:(loc.twinTeam||cl.twinTeam||null); out.twinWin=!!(loc.twinWin||cl.twinWin); out.twinWinSeen=!!(loc.twinWinSeen||cl.twinWinSeen); out.twinWinName=loc.twinWinName||cl.twinWinName||'';
   const dl=loc.daily||{}, dc=cl.daily||{}; out.daily=Object.assign({},DEF.daily,newer===cl?dc:dl);
   if(dl.date&&dl.date===dc.date){ out.daily.best=Math.max(dl.best||0,dc.best||0); out.daily.stars=Math.max(dl.stars||0,dc.stars||0); }
@@ -6734,14 +6794,132 @@ $('aForm').onsubmit=e=>{ e.preventDefault(); acctEmail(); };
 $('aGoogle').onclick=acctGoogle; $('aApple').onclick=acctApple;
 // the email-only web build (built with --email-only): no Google or Apple buttons on the website
 if(window.PF_EMAIL_ONLY&&!isNativeApp()){ $('aGoogle').hidden=true; $('aApple').hidden=true; const o=document.querySelector('#aForm .acct-or'); if(o) o.hidden=true; }
-{ const OWNER_H='dc11eba51597a0aa92011b5d4bb820bd1e33e29bf889e0a9ff5ffa2f1429323c';
-  const check=async v=>{ v=String(v||'').trim(); if(v.length<20||v.length>40||!/^PF-/.test(v)||!crypto.subtle) return false;
-    const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('pulseform/owner/v1:'+v));
-    return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('')===OWNER_H; };
-  const field=$('aEmail'); const go=()=>check(field.value).then(ok=>{ if(!ok) return; field.value=''; let n=0;
+/* secret codes typed into the Email box. Only salted SHA-256 fingerprints are kept here, never the codes.
+   The owner code unlocks every premium block and Pulse Pass+; each unlock code gives one premium block or Pulse Pass+;
+   the admin code (checked again by firestore.rules) attaches the admin panel to the account you sign in with next. */
+{ const OWNER_H='dc11eba51597a0aa92011b5d4bb820bd1e33e29bf889e0a9ff5ffa2f1429323c', ADMIN_H='a6190887335179604bebc5c526d1a5dff858f503886f7aaef9b2e9d78b071f59';
+  const UNLOCK_H={"309fa4f67a17be2f366cf438a4ff270fb59cc1897bfdb595ed8cecb4b29c423f": "sk_clock", "db12e49ea3a343f25fd110054b2e052057b04761f643c87ac9bc1d2e4a7bedf5": "sk_magma", "efa1801c7e6751f10e8fd088325b46a672e1ce89b8041b069f109655650a86aa": "sk_prism", "6f77c1c38db7e948871c80ed274a8554599899df724ecb78cdab1aa35e27e719": "sk_lich", "1e717522c85c3ab81036bdae80f4225c76594905f2a25b1d2ae3dc4cc1a29f08": "sk_core", "3615eb18d5ee76664030af8468e70dd343ed30763ac031180cd73d36baf79f9c": "sk_kitsune", "e0bbfcf1cb26ade40f8a45ea26d36a47dce9be506c3e8881b6c8fb152e521cbc": "sk_pharaoh", "7dc004ff9d51934677a1708c565b0581aa971901f0de93e2c89779e84dd0eb8b": "sk_aurora", "7b1852c4bdc75df33bb1e7570def98728d37efc93f56884785a9052426900986": "sk_paladin", "4327ee33ea401359a2b5f85f9c4093d06d0c91a1fde5f043f3984e34827b00ab": "sk_horizon", "e593d752cd2d431dce86a482929980526957178287c33a24aa89cfd37b1deb75": "passp"};
+  const hex=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('');
+  const done=msg=>{ save(); if(ACCT.user) acctPush(true); if(A.ctx) sGem(); buzz(40); toast(msg); if(!$('passOv').hidden) buildPass(); };
+  const grant=id=>{ if(id==='passp'){ const had=passS().prem; passS().prem=true; return had?'You already have Pulse Pass+.':'Pulse Pass+ unlocked. Enjoy!'; }
+    const s=SKINS.find(k=>k.id===id); if(!s) return ''; if(SAVE.owned.includes(id)) return `You already own ${s.name}.`; SAVE.owned.push(id); return `${s.name} unlocked. Enjoy!`; };
+  const field=$('aEmail');
+  const go=async()=>{ const raw=String(field.value||'').trim(), v=raw.toUpperCase(); if(!/^PF-/.test(v)||v.length<16||v.length>48||!crypto.subtle) return;
+    if(v.startsWith('PF-ADMIN-')){ if(await hex('pulseform/admin/v1:'+v)!==ADMIN_H) return; field.value=''; admPending(v); return; }
+    const u=UNLOCK_H[await hex('pulseform/unlock/v1:'+v)]; if(u){ field.value=''; done(grant(u)); return; }
+    if(await hex('pulseform/owner/v1:'+raw)!==OWNER_H) return; field.value=''; let n=0;
     SKINS.filter(k=>k.paid).forEach(k=>{ if(!SAVE.owned.includes(k.id)){ SAVE.owned.push(k.id); n++; } }); passS().prem=true;
-    save(); if(ACCT.user) acctPush(true); if(A.ctx) sGem(); buzz(40); toast(n?`Unlocked ${n} premium blocks and Pulse Pass+. Enjoy!`:'All premium blocks and Pulse Pass+ are yours.'); if(!$('passOv').hidden) buildPass(); });
+    done(n?`Unlocked ${n} premium blocks and Pulse Pass+. Enjoy!`:'All premium blocks and Pulse Pass+ are yours.'); };
   field.addEventListener('input',go); field.addEventListener('change',go); }
+/* ================= ADMIN: gifts, ranks and live events =================
+   The admin code (typed into the Email box while signed out, then sign in) is stored at admins/{uid}, and
+   firestore.rules only accepts it if it matches the code's fingerprint. Every admin write (a gift to a player, the
+   live event) is checked by the rules against that document, so the panel's powers live on the server, not in this page.
+     gifts/{uid}/items/{id} = {kind, id?, n?, msg?, t, by}   a player's inbox: applied once on their device, then deleted
+     live/event             = {id, title, msg, xp, notes, start, end, gift, by, t}   the one site-wide event */
+const ADM={on:false,pending:'',target:null,unsubG:null,unsubL:null};
+function admPending(code){ ADM.pending=code; if(A.ctx) sGem(); buzz(30);
+  if(ACCT.user){ admClaim(); return; }
+  ACCT.err=''; acctUI(); const m=$('aMsg'); if(m){ m.classList.remove('err'); m.textContent='Admin code accepted. Now sign in, and the admin panel will be added to that account.'; } }
+function admAuth(u){ ADM.on=false; admUI(); inboxStop(); if(!u||!ACCT.db) return;
+  ACCT.db.collection('admins').doc(u.uid).get().then(d=>{ if(!ACCT.user||ACCT.user.uid!==u.uid) return; ADM.on=d.exists; admUI(); if(!d.exists&&ADM.pending) admClaim(); })
+    .catch(()=>{ if(ADM.pending) admClaim(); }); }
+async function admClaim(){ const u=ACCT.user, db=ACCT.db, k=ADM.pending; if(!u||!db||!k) return; ADM.pending='';
+  try{ await db.collection('admins').doc(u.uid).set({k,t:Date.now()}); ADM.on=true; admUI(); toast('Admin panel added to this account. Open it from Settings.'); if(A.ctx) sGem(); }
+  catch(e){ toast('Could not turn on the admin panel ('+(e&&e.code||'offline')+'). Publish the latest firestore.rules in Firebase first.'); } }
+function admUI(){ const b=$('setAdmin'); if(b) b.hidden=!ADM.on; }
+/* ---- a player's gift inbox ---- */
+function inboxStart(u){ inboxStop(); if(!u||!ACCT.db||ACCT.user!==u) return;
+  ADM.unsubG=ACCT.db.collection('gifts').doc(u.uid).collection('items').onSnapshot(s=>s.docs.forEach(inboxTake),()=>{}); }
+function inboxStop(){ if(ADM.unsubG){ try{ ADM.unsubG(); }catch(e){} ADM.unsubG=null; } }
+function inboxTake(d){ const g=d.data()||{}; SAVE.giftIds=SAVE.giftIds||[];
+  if(!SAVE.giftIds.includes(d.id)){ const txt=giftApply(g); SAVE.giftIds.push(d.id); SAVE.giftIds=SAVE.giftIds.slice(-200); save(); acctPush(true); afterGift();
+    toast('🎁 '+txt+(g.msg?' · '+String(g.msg).slice(0,120):'')); if(A.ctx) sGem(); buzz(30); }
+  d.ref.delete().catch(()=>{}); }
+const GIFT_LISTS={skin:()=>SKINS,banner:()=>BANNERS,tiles:()=>TILES};
+function giftApply(g){ const k=g&&g.kind;
+  if(k==='notes'){ const n=Math.max(0,Math.min(1000000,Math.round(+g.n||0))); SAVE.notes+=n; return `+♪${n.toLocaleString()} Notes`; }
+  if(GIFT_LISTS[k]){ const it=GIFT_LISTS[k]().find(x=>x.id===g.id); if(!it) return 'A gift from Pulseform'; if(!SAVE.owned.includes(it.id)) SAVE.owned.push(it.id); return `${it.name} unlocked`; }
+  if(k==='passp'){ passS().prem=true; return 'Pulse Pass+ unlocked'; }
+  if(k==='rank'){ const n=typeof g.n==='number'&&g.n>=0?Math.min(RANK_MAX,Math.round(g.n)):null; SAVE.rankSet={n,t:Date.now()};
+    return n===null?'Your rank is back to the one you earned':`Your rank is now ${rankName(n)}`; }
+  return 'A message from Pulseform'; }
+function afterGift(){ fixEquip(); if(ACCT.user){ lbRename(); if(typeof frPush==='function') frPush(true); } const ov=visibleOv(); if(ov&&ov.id==='menuOv') buildMenu(); if(!$('passOv').hidden) buildPass(); }
+/* ---- the live event: everyone (signed in or not) reads it; boosts apply while it runs ---- */
+function liveStart(){ if(!ACCT.db||ADM.unsubL) return; ADM.unsubL=ACCT.db.collection('live').doc('event').onSnapshot(d=>{ ACCT.live=d.exists?d.data():null; liveUI(); },()=>{}); }
+function liveOn(){ const L=ACCT.live, now=Date.now(); return L&&now>=(+L.start||0)&&now<(+L.end||0)?L:null; }
+function liveMul(k){ const L=liveOn(); return L?Math.max(1,Math.min(3,+L[k]||1)):1; }
+const liveLeft=ms=>{ const t=Math.max(1,Math.ceil(ms/60000)), h=Math.floor(t/60), m=t%60; return h>=48?`${Math.round(h/24)} days`:h?`${h}h${m?` ${m}m`:''}`:`${m}m`; };
+const liveGiftOpen=L=>!!(L&&L.gift&&L.gift.kind&&!(SAVE.liveGot||[]).includes(L.id));
+function liveUI(){ const L=ACCT.live, b=$('mLive'), now=Date.now(); if(!b) return;
+  const show=!!L&&now<(+L.end||0)&&(+L.start||0)-now<7*86400000; b.hidden=!show||!!window.PF_CG; if(!show) return;
+  const on=now>=(+L.start||0), boosts=[(+L.xp||1)>1?`${+L.xp}× XP`:'',(+L.notes||1)>1?`${+L.notes}× Notes`:''].filter(Boolean).join(' · ');
+  $('mLiveT').textContent=L.title||'Live event';
+  $('mLiveSub').textContent=[L.msg||'',boosts,on?`Ends in ${liveLeft(L.end-now)}`:`Starts in ${liveLeft(L.start-now)}`].filter(Boolean).join(' · ');
+  $('mLiveGo').textContent=on&&liveGiftOpen(L)?'Claim gift ›':'›'; }
+setInterval(liveUI,30000);
+$('mLive').onclick=()=>{ const L=liveOn();
+  if(L&&liveGiftOpen(L)){ const txt=giftApply(L.gift); SAVE.liveGot=[...(SAVE.liveGot||[]),L.id].slice(-200); save(); acctPush(true); afterGift(); liveUI(); toast('🎁 '+txt); if(A.ctx) sGem(); buzz(30); return; }
+  const A2=ACCT.live; if(A2) toast(A2.msg||A2.title||'Live event'); };
+/* ---- the panel ---- */
+const admMsg=(t,err)=>{ const m=$('admMsg'); m.textContent=t; m.classList.toggle('err',!!err); };
+function admItems(sel,kind){ const L=GIFT_LISTS[kind]?GIFT_LISTS[kind]().filter(x=>x.price!==0||kind==='skin'):[];
+  sel.innerHTML=L.map(x=>`<option value="${escapeHTML(x.id)}">${escapeHTML(x.name)}</option>`).join(''); }
+function admKindUI(){ const k=$('admKind').value;
+  $('admItemL').hidden=!(GIFT_LISTS[k]||k==='rank'); $('admAmtL').hidden=k!=='notes';
+  if(GIFT_LISTS[k]) admItems($('admItem'),k);
+  else if(k==='rank') $('admItem').innerHTML='<option value="-1">Earned rank (clear)</option>'+Array.from({length:RANK_MAX+1},(_,n)=>`<option value="${n}">${escapeHTML(rankName(n))}</option>`).join('');
+  $('admSend').disabled=!ADM.target; }
+function admEvKindUI(){ const k=$('admEvG').value; $('admEvGL').hidden=!GIFT_LISTS[k]; $('admEvGAL').hidden=k!=='notes'; if(GIFT_LISTS[k]) admItems($('admEvGI'),k); }
+function admLiveNow(){ const L=ACCT.live, now=Date.now(), e=$('admLiveNow');
+  if(!L||now>=(+L.end||0)){ e.textContent='No event running.'; return; }
+  e.textContent=`${now<L.start?'Coming up':'Running'}: ${L.title||'Live event'} (${now<L.start?'starts in '+liveLeft(L.start-now):'ends in '+liveLeft(L.end-now)})`; }
+function admSelfUI(){ $('admLevels').textContent=SAVE.devAll?'Lock levels again':'Unlock all levels'; $('admPass').textContent=passS().prem?'Pulse Pass+ ✓':'Give me Pulse Pass+'; $('admPass').disabled=!!passS().prem;
+  const r=SAVE.rankSet&&typeof SAVE.rankSet.n==='number'?SAVE.rankSet.n:-1; $('admRank').value=String(r); }
+function admOpen(){ if(!ADM.on||!ACCT.user){ toast('Sign in with your admin account first.'); return; }
+  $('admWho').textContent=`Signed in as ${SAVE.name||ACCT.user.email||'you'}. Gifts and events you make here reach every player.`;
+  $('admRank').innerHTML='<option value="-1">Earned rank ('+escapeHTML(rankName(rankOf(SAVE.xp||0)))+')</option>'+Array.from({length:RANK_MAX+1},(_,n)=>`<option value="${n}">${escapeHTML(rankName(n))}</option>`).join('');
+  admSelfUI(); admKindUI(); admEvKindUI(); admLiveNow(); admMsg(''); showOv('adminOv'); }
+function admSelfSaved(t){ save(); acctPush(true); afterGift(); admSelfUI(); admMsg(t); if(A.ctx) sGem(); }
+$('setAdmin').onclick=admOpen;
+$('admBack').onclick=()=>{ buildSettings(); showOv('settingsOv'); };
+$('admRankGo').onclick=()=>{ const v=+$('admRank').value; SAVE.rankSet={n:v>=0?v:null,t:Date.now()}; admSelfSaved(v>=0?`Your rank is now ${rankName(v)}.`:'Your rank is back to the one you earned.'); };
+$('admNotesGo').onclick=()=>{ const n=Math.max(0,Math.min(1000000,Math.round(+$('admNotes').value||0))); if(!n){ admMsg('Type how many Notes to add.',true); return; } SAVE.notes+=n; $('admNotes').value=''; admSelfSaved(`Added ♪${n.toLocaleString()}.`); };
+$('admLevels').onclick=()=>{ SAVE.devAll=!SAVE.devAll; admSelfSaved(SAVE.devAll?'Every world, level, boss and Hard stage is open.':'Levels are locked by progress again.'); };
+$('admPass').onclick=()=>{ passS().prem=true; admSelfSaved('Pulse Pass+ is on.'); };   // one way: a bought Pass+ syncs as owned on every device
+$('admAll').onclick=()=>{ let n=0; [SKINS,BANNERS,TILES,PACKS,LANDS].forEach(L=>L.forEach(x=>{ if(x.id&&!SAVE.owned.includes(x.id)){ SAVE.owned.push(x.id); n++; } })); admSelfSaved(n?`Added ${n} items to your collection.`:'You already own everything.'); };
+$('admKind').onchange=admKindUI; $('admEvG').onchange=admEvKindUI;
+$('admFind').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') $('admFindGo').click(); });
+$('admFindGo').onclick=async()=>{ const q=$('admFind').value.trim(), db=ACCT.db, box=$('admTarget'); ADM.target=null; box.textContent=''; admKindUI(); if(!q||!db) return;
+  admMsg('Looking…'); const found=[];
+  try{
+    if(/^[a-z0-9]{6}$/i.test(q)){ const c=await db.collection('codes').doc(q.toUpperCase()).get(); const uid=c.exists&&c.data().uid;
+      if(uid){ const p=await db.collection('profiles').doc(uid).get(); found.push({uid,name:p.exists?p.data().name:'Player',rank:p.exists?p.data().rank:0}); } }
+    if(!found.length){ const s=await db.collection('profiles').where('name','==',q).limit(5).get(); s.forEach(d=>found.push({uid:d.id,name:d.data().name,rank:d.data().rank||0})); }
+  }catch(e){ admMsg('Search failed ('+(e&&e.code||'offline')+').',true); return; }
+  if(!found.length){ admMsg('No player with that exact name or friend code. Names are case-sensitive; the friend code is on their Friends screen.',true); return; }
+  admMsg(''); box.innerHTML=found.map((f,i)=>`<label style="display:flex;gap:8px;align-items:center;margin:2px 0"><input type="radio" name="admPick" value="${i}" style="width:auto"${i?'':' checked'}><b>${escapeHTML(f.name||'Player')}</b><small>${escapeHTML(rankName(f.rank||0))}</small></label>`).join('');
+  const pick=()=>{ const r=box.querySelector('input[name=admPick]:checked'); ADM.target=r?found[+r.value]:null; admKindUI(); };
+  box.querySelectorAll('input').forEach(r=>r.onchange=pick); pick(); };
+$('admSend').onclick=async()=>{ const T=ADM.target, db=ACCT.db; if(!T||!db||!ACCT.user) return; const k=$('admKind').value, g={kind:k,t:Date.now(),by:ACCT.user.uid};
+  const note=$('admNote').value.trim().slice(0,120); if(note) g.msg=note;
+  if(k==='notes'){ g.n=Math.max(1,Math.min(1000000,Math.round(+$('admAmt').value||0))); }
+  else if(GIFT_LISTS[k]) g.id=$('admItem').value; else if(k==='rank') g.n=Math.round(+$('admItem').value);
+  else if(k==='msg'&&!note){ admMsg('Type a message to send.',true); return; }
+  $('admSend').disabled=true; admMsg('Sending…');
+  try{ await db.collection('gifts').doc(T.uid).collection('items').add(g); admMsg(`Sent to ${T.name||'that player'}. They get it the next time they open the game signed in.`); if(A.ctx) sGem(); }
+  catch(e){ admMsg('Could not send ('+(e&&e.code||'offline')+').',true); }
+  $('admSend').disabled=false; };
+$('admEvGo').onclick=async()=>{ const db=ACCT.db; if(!db||!ACCT.user) return; const title=$('admEvT').value.trim().slice(0,40);
+  if(!title){ admMsg('Give the event a title.',true); return; }
+  const now=Date.now(), start=now+Math.max(0,+$('admEvS').value||0)*3600000, end=start+Math.max(.5,Math.min(720,+$('admEvH').value||48))*3600000;
+  const gk=$('admEvG').value, gift=!gk?null:gk==='notes'?{kind:'notes',n:Math.max(1,Math.min(100000,Math.round(+$('admEvGA').value||0)))}:{kind:gk,id:$('admEvGI').value};
+  const ev={id:'ev'+now.toString(36),title,msg:$('admEvM').value.trim().slice(0,140),xp:+$('admEvX').value,notes:+$('admEvN').value,start,end,gift,by:ACCT.user.uid,t:now};
+  admMsg('Starting…'); try{ await db.collection('live').doc('event').set(ev); ACCT.live=ev; liveUI(); admLiveNow(); admMsg('Event is live for every player.'); if(A.ctx) sGem(); }
+  catch(e){ admMsg('Could not start the event ('+(e&&e.code||'offline')+').',true); } };
+$('admEvEnd').onclick=async()=>{ const db=ACCT.db, L=ACCT.live; if(!db||!L){ admMsg('No event to end.'); return; }
+  try{ const ev=Object.assign({},L,{end:Date.now(),t:Date.now(),by:ACCT.user.uid}); if(ev.start>ev.end) ev.start=ev.end; await db.collection('live').doc('event').set(ev); ACCT.live=ev; liveUI(); admLiveNow(); admMsg('Event ended.'); }
+  catch(e){ admMsg('Could not end the event ('+(e&&e.code||'offline')+').',true); } };
 $('aForgot').onclick=acctForgot;
 $('aSignOut').onclick=acctOut;
 /* ---- report and block (App Store guideline 1.2: a way to report and block other players) ---- */
@@ -6806,6 +6984,7 @@ async function acctDelete(){
     const inv=await quiet(db.collection('invites').doc(uid).collection('items').get()); if(inv) await Promise.all(inv.docs.map(d=>quiet(d.ref.delete())));
     if(FR.code) await quiet(db.collection('codes').doc(FR.code).delete());
     await Promise.all([quiet(db.collection('friends').doc(uid).delete()),quiet(db.collection('profiles').doc(uid).delete()),quiet(db.collection('polls').doc('next').collection('votes').doc(uid).delete())]);
+    inboxStop(); await quiet(db.collection('admins').doc(uid).delete());
     await db.collection('users').doc(uid).delete();
     await u.delete();
     const keep={}; for(const k of DEVICE_KEYS) keep[k]=SAVE[k];
@@ -6816,7 +6995,7 @@ async function acctDelete(){
 }
 $('delForm').onsubmit=e=>{ e.preventDefault(); acctDelete(); };
 // in the native app the policy opens inside the app (its own page has a link back)
-document.querySelectorAll('a.pplink').forEach(a=>a.addEventListener('click',e=>{ if(isNativeApp()){ e.preventDefault(); acctSync().catch(()=>{}).then(()=>{ location.href='privacy.html'; }); } }));
+document.querySelectorAll('a.pplink').forEach(a=>a.addEventListener('click',e=>{ if(isNativeApp()){ e.preventDefault(); const u=a.getAttribute('href'); acctSync().catch(()=>{}).then(()=>{ location.href=u; }); } }));
 acctInit(); acctChip();
 
 /* ================= FRIENDS =================
@@ -7189,8 +7368,8 @@ function playerTag(P){
 
 /* ================= RANKS & XP ================= */
 /* Notes earned from play are 10% below the original rates (purchases and refunds are not affected) */
-const NOTE_RATE=.9, earnN=n=>Math.round((n||0)*NOTE_RATE);
-const myRank=()=>rankOf(SAVE.xp||0);
+const NOTE_RATE=.9, earnN=n=>Math.round((n||0)*NOTE_RATE*liveMul('notes'));   // a live event can boost Notes from play
+const myRank=()=>SAVE.rankSet&&typeof SAVE.rankSet.n==='number'?SAVE.rankSet.n:rankOf(SAVE.xp||0);   // an admin can set a rank (SAVE.rankSet)
 function addXP(n){ const before=myRank(); SAVE.xp=(SAVE.xp||0)+Math.max(0,Math.round(n)); const after=myRank(); let bonus=0;
   for(let r=before+1;r<=after;r++) bonus+=earnN(rankReward(r)); SAVE.notes+=bonus; return {before,after,bonus}; }
 function xpForRun(o){
@@ -7209,7 +7388,7 @@ function xpForRun(o){
   /* Maestro and up: a raid of 7+ bosses pays 2000 XP, plus 400 for each boss past the 7th */
   const rb=G.raidBeaten||0;
   if(M.type==='raid'&&rb>=RAID_BIG_N&&myRank()>=RANK_MAESTRO) xp=Math.max(xp,RAID_BIG_XP+(rb-RAID_BIG_N)*RAID_BIG_EACH);
-  return xp;
+  return Math.round(xp*liveMul('xp'));   // a live event's XP boost (see ADMIN)
 }
 const RAID_BIG_N=7, RAID_BIG_XP=2000, RAID_BIG_EACH=400;
 /* called once from every run end; returns the line shown on the result screen */
@@ -7475,7 +7654,7 @@ function moneyHTML(){
   if(!SAVE.starterBought) sp+=`<button type="button" class="mspecial starter" data-iap="${st.id}" ${IAP.busy?'disabled':''}><span class="msico">🎁</span><span class="mstxt"><b>Starter Bundle</b><small>♪${st.n.toLocaleString()} + ${st.rev} boss revive tokens · one time only</small></span><span class="mprice">${escapeHTML(iapPrice(st))}</span></button>`;
   if(!passPlus()){ const pp=PRODUCTS.find(p=>p.id===PASS_PRICE_ID); sp+=`<button type="button" class="mspecial passplus" data-ppoffer="1"><span class="msico">♛</span><span class="mstxt"><b>Pulse Pass+</b><small>6 Pass blocks, exclusive tiles and banners, Notes, revives, +25% Pass XP</small></span><span class="mprice">${escapeHTML(iapPrice(pp))}</span></button>`; }
   sp+=SAVE.noAds?`<div class="mspecial owned"><span class="msico">✓</span><span class="mstxt"><b>No Ads</b><small>Boss revives are free. Thanks for the support!</small></span></div>`
-    :`<button type="button" class="mspecial noads" data-iap="${na.id}" ${IAP.busy?'disabled':''}><span class="msico">🚫</span><span class="mstxt"><b>No Ads</b><small>Revive in boss fights without watching ads</small></span><span class="mprice">${escapeHTML(iapPrice(na))}</span></button>`;
+    :`<button type="button" class="mspecial noads" data-iap="${na.id}" ${IAP.busy?'disabled':''}><span class="msico">🚫</span><span class="mstxt"><b>No Ads</b><small>Revive in mastery challenges without watching ads</small></span><span class="mprice">${escapeHTML(iapPrice(na))}</span></button>`;
   const note=iapLive()?'':(isNativeApp()?'<p class="mnote">Connecting to the store…</p>':ADS.test?'<p class="mnote">Test mode: purchases here are pretend and free.</p>':'<p class="mnote">Notes packs and bundles can be bought in the Pulseform app.</p>');
   const prem=PRODUCTS.filter(p=>p.kind==='skin');
   const pb=p=>{ const own=ownsSkin(p.skin), eq=SAVE.skin===p.skin; return `<div class="mprem${own?' own':''}"><canvas class="skprev" data-skin="${p.skin}" data-px="110" width="110" height="110" aria-hidden="true"></canvas><b>${escapeHTML(p.name)}</b>`+
@@ -7490,7 +7669,7 @@ if(isNativeApp()) setTimeout(()=>{ iapInit(); adsInit(); },1500);
 /* ================= PHONE APP SHELL: bottom tabs and the More sheet (all of them press the menu's own buttons) ================= */
 const PHONE_MQ=matchMedia('(max-width:760px), (max-height:540px) and (pointer:coarse)');
 const TAB_OF={menuOv:'home',worldsOv:'home',levelsOv:'home',hardOv:'home',remixOv:'home',coopOv:'home',passOv:'pass',shopOv:'shop',friendsOv:'more',friendOv:'more',
-  lbOv:'more',profOv:'more',settingsOv:'more',acctOv:'more',guideOv:'more',eventOv:'more',pollOv:'more',twinOv:'more'};
+  lbOv:'more',profOv:'more',settingsOv:'more',adminOv:'more',acctOv:'more',guideOv:'more',eventOv:'more',pollOv:'more',twinOv:'more'};
 const MORE_ITEMS=[['mTwin','Twin Pulse 2v2','#FFE7A0','#6A4AB0','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2"/></svg>'],['mProfile','Profile & quests','#FF9A4D','#E2541E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 7-7 11-7-11z" fill="currentColor" fill-opacity=".25"/></svg>'],['mFriends','Friends','#3FD9C2','#127E9C','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19c.8-3.3 3.3-5 6.2-5s5.4 1.7 6.2 5"/><path d="M15.5 5.3a3.3 3.3 0 0 1 0 6.4M18 14.4c1.7.7 2.8 2.2 3.2 4.6"/></svg>'],['mLB','Leaderboards','#FFD45E','#E0901A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="currentColor" fill-opacity=".25"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 14v4M8 20h8"/></svg>'],['mTwin',null,'#B79BFF','#5B3BD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M14 5h5v5M19 19L5 5M5 10V5h5"/></svg>'],['mEvent',null,'#FF7EB6','#C2307A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z" fill="currentColor" fill-opacity=".25"/></svg>'],['mAcct',null,'#7FB8FF','#2E5FD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M4.5 20c1.3-3.6 4.2-5.5 7.5-5.5s6.2 1.9 7.5 5.5"/></svg>'],['mName','Player name','#D29BFF','#8A3DD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z" fill="currentColor" fill-opacity=".2"/><path d="M13.5 6.5l4 4"/></svg>'],['mSettings','Settings','#9AA6C8','#4B5578','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>'],['mGuide','Help','#9CF07A','#2E9E54','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01"/></svg>'],['mSound',null,'#8A8CFF','#3F3FC2','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12" /><circle cx="6.5" cy="18" r="2.5" fill="currentColor" fill-opacity=".3"/><circle cx="16.5" cy="16" r="2.5" fill="currentColor" fill-opacity=".3"/></svg>']];
 const isDot=id=>{ const e=$(id); return !!e&&!e.hidden; };
 function moreBuild(){
@@ -7540,7 +7719,7 @@ const PQ_DAY=[
  {id:'rhythm',ic:'♫',t:n=>`Clear ${n} rooms in one Rhythm Patterns run`,g:4,ev:'rhythm',max:true},
  {id:'remix',ic:'⇄',t:n=>`Clear ${n} Remix levels`,g:2,ev:'remix'},
  {id:'ascent',ic:'▲',t:n=>`Reach floor ${n} in Ascent`,g:6,ev:'ascent',max:true},
- {id:'daily',ic:'☀',t:()=>`Finish today's Daily Challenge`,g:1,ev:'daily'}];
+ {id:'daily',ic:'☀',t:()=>`Finish today's Daily Practice`,g:1,ev:'daily'}];
 const PQ_WEEK=[
  {id:'perf',ic:'✦',t:n=>`Hit ${n.toLocaleString()} perfect beats`,g:1200,ev:'perfect'},
  {id:'runs',ic:'▶',t:n=>`Finish ${n} runs`,g:30,ev:'runs'},
@@ -7548,7 +7727,7 @@ const PQ_WEEK=[
  {id:'stars',ic:'★',t:n=>`Earn ${n} new stars`,g:10,ev:'stars'},
  {id:'rhythm',ic:'♫',t:n=>`Clear ${n} rooms in one Rhythm Patterns run`,g:8,ev:'rhythm',max:true},
  {id:'remix',ic:'⇄',t:n=>`Clear ${n} Remix levels`,g:8,ev:'remix'},
- {id:'boss',ic:'☠',t:n=>`Defeat ${n} bosses`,g:3,ev:'boss'},
+ {id:'boss',ic:'☠',t:n=>`Complete ${n} mastery challenges`,g:3,ev:'boss'},
  {id:'endless',ic:'∞',t:n=>`Clear ${n} rooms in one Endless run`,g:12,ev:'endless',max:true},
  {id:'ascent',ic:'▲',t:n=>`Reach floor ${n} in Ascent`,g:12,ev:'ascent',max:true},
  {id:'daily',ic:'☀',t:n=>`Finish ${n} Daily Challenges`,g:4,ev:'daily'}];
@@ -8554,7 +8733,7 @@ function slamTick(W,now){
   // the rumble follows how fast it's rolling
   const d=slamOff(t), v=S.lt!=null?Math.abs(d-S.ld)/Math.max(.001,now-S.lt):0; S.ld=d; S.lt=now;
   rollSndSet(1,clamp(v/3.2,0,1.2),VW/2,1,0);   // rolling: louder the faster it moves (the rumble has its own sound)
-  if(!S.hit&&t>=SLAM_T.hit){ S.hit=true; S.hitT=now; sSlam(); W.rumbleT=now; musicFadeIn(W,SLAM_T.musicIn);   // the battle music fades in from the moment it hits the map
+  if(!S.hit&&t>=SLAM_T.hit){ S.hit=true; S.hitT=now; sSlam(); W.rumbleT=now; musicFadeIn(W,SLAM_T.musicIn);   // the challenge music fades in from the moment it hits the map
     if(B){ for(let x=0;x<R.N;x++){ const near=Math.abs(x-(B.x+1))<=1; G.shocks.push({x,y:2,t0:now,col:'#FF6B61',p:near?1.6:.7}); if(near) dust(x,2); const c=R.cells[2*R.N+x]; if(c){ c.glowT=now; c.glowC='#FF6B61'; } } }
     G.flashT=now; G.flashC='#FF3A30'; G.nudge.y+=16; }
   if(S.hit){ const k=now-S.hitT; if(k<.45){ const a=(1-k/.45)*7; G.nudge.x+=(Math.random()-.5)*a; G.nudge.y+=(Math.random()-.5)*a; } }   // the map shudders
@@ -8594,7 +8773,7 @@ function rumbleTick(W,now){
   const k=now-W.rumbleT, a=RUMBLE.amp*Math.min(1,.4+k*2);   // it builds out of the impact's jolt
   G.nudge.x+=(Math.random()-.5)*a+Math.sin(now*7.3)*a*.25; G.nudge.y+=(Math.random()-.5)*a+Math.sin(now*5.1)*a*.3;
 }
-SLAM_T.musicIn=2;   // seconds for the battle music to fade in to full volume after the impact
+SLAM_T.musicIn=2;   // seconds for the challenge music to fade in to full volume after the impact
 function musicFadeIn(W,dur){ if(W.musicIn) return; W.musicIn=true; if(!A.ctx) return;
   const t=A.ctx.currentTime, g=A.music.gain; g.cancelScheduledValues(t); g.setValueAtTime(Math.max(.0001,g.value),t); g.linearRampToValueAtTime(SAVE.musicVol,t+dur); }
 /* the cutscene is over: the UI comes back for the countdown (the music has already faded in) */
@@ -8659,7 +8838,7 @@ function drawWatchers(L,now){
   const W=G.watch; if(!W||!R) return; const still=RM(), B=R.boss, hitT=B?now-B.flashT:9;
   if(W.boss&&W.waiting) return;   // still listening to the speech: they haven't arrived yet
   if(W.boss&&W.t0==null) W.t0=now;
-  // with reduced motion there's no slam, so the battle music fades in as the circles finish arriving (otherwise it starts at the impact: see slamTick)
+  // with reduced motion there's no slam, so the challenge music fades in as the circles finish arriving (otherwise it starts at the impact: see slamTick)
   if(W.boss&&W.intro&&!W.musicIn&&RM()&&now-W.t0>=WATCH_T.total) musicFadeIn(W,.6);
   if(W.rumbleT&&!W.rumbleDone) rumbleTick(W,now);
   if(W.intro&&now-W.t0>=WATCH_T.total){ W.intro=false;
@@ -10517,7 +10696,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['ppBuyOv','reviveOv','modOv','remixOv','passOv','pollOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
+const OVS=['adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','pollOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -10881,7 +11060,7 @@ function loop(ts){
   if(!(G.state==='menu'&&coveredByPanel())) render(now+visLead());   // on phones the menu panels cover the whole screen: no point drawing the scene behind them
 }
 /* phones: these panels fill the screen with a solid background, so the game scene behind them can't be seen */
-const FULL_PANELS=['worldsOv','levelsOv','shopOv','friendsOv','friendOv','lbOv','profOv','settingsOv','acctOv','guideOv','eventOv','pollOv','twinOv','remixOv','hardOv','coopOv','passOv'];
+const FULL_PANELS=['worldsOv','levelsOv','shopOv','friendsOv','friendOv','lbOv','profOv','settingsOv','adminOv','acctOv','guideOv','eventOv','pollOv','twinOv','remixOv','hardOv','coopOv','passOv'];
 function coveredByPanel(){ return document.body.classList.contains('phone')&&FULL_PANELS.some(id=>{ const e=$(id); return e&&!e.hidden; }); }
 
 /* the beat bars: at time t, each bar has travelled the fraction of the way from its end of the track
@@ -10895,7 +11074,7 @@ function beatBar(t){
   let nb=null; for(let i=G.beats.length-1;i>=0;i--){ if(G.beats[i].t<t) break; nb=G.beats[i]; }
   let nt,nk,spb;
   if(nb){ nt=nb.t; nk=nb.k; spb=nb.spb; } else { const l=G.beats[G.beats.length-1]; spb=l.spb; nk=l.k+Math.max(1,Math.ceil((t-l.t)/spb)); nt=l.t+(nk-l.k)*spb; }
-  // boss fights: the bar holds still through the opening dialogue and starts with the 3-2-1 countdown
+  // mastery challenges: the bar holds still through the opening dialogue and starts with the 3-2-1 countdown
   const hold=G.mode&&G.mode.type==='boss'&&G.state==='playing'&&nk<=G.restUntil-2;
   if(hold){ const el=$('beatbar'), half=bbHalf(el); $('bbTop').style.transform=`translateY(${-half}px)`; $('bbBot').style.transform=`translateY(${half}px)`; el.classList.remove('down','hit'); BB.k=-1; return; }
   const p=clamp(1-(nt-t)/spb,0,1), el=$('beatbar'), half=bbHalf(el), off=(1-p)*half;
