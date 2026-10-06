@@ -1461,6 +1461,15 @@ body.phone #menuOv .twban:not([hidden]){display:flex;align-items:center;gap:12px
 .adm .g1{display:grid;gap:8px;margin-top:6px}.adm .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.adm .row .btn{flex:1 1 auto}
 .admcard{padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:14px}.admcard.on{border-color:rgba(143,240,224,.5);background:rgba(143,240,224,.1)}
 .adm .amsg{min-height:1.4em;margin:10px 0 0;font-size:13.5px;color:#B8F2E6}.adm .amsg.err{color:#FF8A80}
+.admpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;max-height:282px;overflow-y:auto;margin-top:8px;padding:2px}.admpick[hidden]{display:none}
+.admpi{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px 7px;border-radius:12px;border:1.5px solid rgba(255,255,255,.1);background:rgba(10,8,30,.45);color:var(--ink-2);font:600 11.5px var(--body);cursor:pointer;min-width:0}
+.admpi span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admpi canvas.skprev{width:56px;height:56px}.admpi canvas.tileprev{width:76px;height:48px;border-radius:6px}.admpi .ppban{display:block;width:76px;height:30px;border-radius:7px;border:1px solid rgba(255,255,255,.15)}
+.admpi:hover{border-color:rgba(143,240,224,.45)}.admpi.on{border-color:#8FF0E0;background:rgba(143,240,224,.16);color:#fff;box-shadow:0 0 0 2px rgba(143,240,224,.25)}
+.admconf{position:fixed;inset:0;z-index:400;display:grid;place-items:center;padding:16px;background:rgba(8,6,22,.66);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}.admconf[hidden]{display:none}
+.admconfbox{box-sizing:border-box;width:100%;max-width:380px;padding:20px;border-radius:20px;background:linear-gradient(180deg,#2A2156,#1C1640);border:1px solid rgba(143,240,224,.4);box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center}
+.admconfbox .row{display:flex;gap:8px;margin-top:14px}.admconfbox .row .btn{flex:1}.admconfbox>b{display:block;font:800 19px var(--display);color:#fff}.admconfbox #admConfP{margin-top:8px;color:var(--ink-2);font-size:14px;line-height:1.45}
+.admconfbox #admConfP .admpv{display:flex;justify-content:center;margin:10px 0 2px}.admconfbox #admConfP canvas.skprev{width:84px;height:84px}.admconfbox #admConfP canvas.tileprev{width:110px;height:70px;border-radius:8px}.admconfbox #admConfP .ppban{display:block;width:150px;height:40px;border-radius:9px}
 #menuOv .admfab:not([hidden]){position:absolute;top:16px;right:18px;z-index:6;display:flex;align-items:center;gap:7px;padding:9px 14px 9px 11px;border-radius:999px;cursor:pointer;
   font:800 13.5px var(--display);letter-spacing:.02em;color:#06231F;background:linear-gradient(180deg,#B8F2E6,#8FF0E0);border:0;box-shadow:0 6px 20px rgba(0,0,0,.3),0 0 0 3px rgba(143,240,224,.18)}
 #menuOv .admfab svg{width:18px;height:18px}
@@ -1700,7 +1709,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <button class="mcard" id="mLevels" type="button" style="--a:#FFD166"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 26h8v-6h8v-6h8V6" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg><b>Levels</b><small>16 worlds · 144 stages</small><span class="meta" id="mLevelsMeta"></span></button>
     <button class="mcard" id="mDaily" type="button" style="--a:#B8F2E6"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="6" fill="currentColor"/><g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M16 3v4M16 25v4M3 16h4M25 16h4M7 7l3 3M22 22l3 3M25 7l-3 3M10 22l-3 3"/></g></svg><b>Daily</b><small id="mDailySub"></small><span class="meta" id="mDailyMeta"></span></button>
     <button class="mcard" id="mEndless" type="button" style="--a:#FF8A80"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9 11c-4 0-6 2.5-6 5s2 5 6 5c6 0 8-10 14-10 4 0 6 2.5 6 5s-2 5-6 5c-6 0-8-10-14-10z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></svg><b>Endless</b><small>Faster every room</small><span class="meta" id="mEndlessMeta"></span></button>
-    <button class="mcard" id="mCoop" type="button" style="--a:#C9B8FF"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="11" width="12" height="12" rx="3" fill="currentColor"/><rect x="17" y="7" width="12" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="3"/></svg><b>Co-op</b><small>Journey or Duel, one device</small><span class="meta" id="mCoopMeta"></span></button>
+    <button class="mcard" id="mCoop" type="button" style="--a:#C9B8FF"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="11" width="12" height="12" rx="3" fill="currentColor"/><rect x="17" y="7" width="12" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="3"/></svg><b>Co-op</b><small>Journey or Riff-Off, one device</small><span class="meta" id="mCoopMeta"></span></button>
     <button class="mcard" id="mHard" type="button" style="--a:#FF6B6B"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3l3.5 8.5L28 13l-6.5 6 2 9L16 23.5 8.5 28l2-9L4 13l8.5-1.5z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="16" cy="16" r="3" fill="currentColor"/></svg><b>Hard Mode</b><small>12 brutal stages</small><span class="meta" id="mHardMeta"></span></button>
     <button class="mcard" id="mAscent" type="button" style="--a:#8FF0E0"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 28l9-12 5 6 4-5 8 11z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="M21 4v9M17 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Ascent</b><small>Climb floors, pick power cards</small><span class="meta" id="mAscentMeta"></span></button>
     <button class="mcard" id="mRhythm" type="button" style="--a:#7FF0D2"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="7" cy="23" r="3.6" fill="currentColor"/><circle cx="16" cy="23" r="3.6" fill="currentColor"/><circle cx="25" cy="19" r="3.6" fill="currentColor"/><path d="M10.4 23V8l18-4v15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.4 23V9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><b>Rhythm Patterns</b><small>Eighths, triplets, off-beats</small><span class="meta" id="mRhythmMeta"></span></button>
@@ -2164,6 +2173,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         <small class="admhint">Or pick something</small>
         <div class="g2"><label>Gift<select id="admKind"><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option><option value="notes">Notes (any amount)</option><option value="rank">Set rank</option><option value="msg">Message only</option></select></label>
           <label id="admItemL">Item<select id="admItem"></select></label><label id="admAmtL" hidden>Amount<input id="admAmt" type="number" min="1" max="1000000" step="100" value="1000"></label></div>
+        <div class="admpick" id="admPickG" hidden></div>
         <div class="g1"><label>Message (optional)<input id="admNote" type="text" maxlength="120" placeholder="Thanks for playing!"></label></div>
         <div class="row"><button class="btn" id="admSend" type="button">Send gift</button></div>
       </div>
@@ -2175,7 +2185,8 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         <label>Notes boost<select id="admEvN"><option value="1">None</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option></select></label>
         <label>Starts in (hours)<input id="admEvS" type="number" min="0" max="720" step="0.5" value="0"></label><label>Lasts (hours)<input id="admEvH" type="number" min="0.5" max="720" step="0.5" value="48"></label>
         <label>Gift for everyone<select id="admEvG"><option value="">None</option><option value="notes">Notes</option><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option></select></label>
-        <label id="admEvGL">Gift item<select id="admEvGI"></select></label></div>
+        <label id="admEvGL" hidden>Gift item<select id="admEvGI"></select></label></div>
+      <div class="admpick" id="admEvPick" hidden></div>
       <div class="g1" id="admEvGAL"><label>Notes for everyone<input id="admEvGA" type="number" min="1" max="100000" step="100" value="500"></label></div>
       <div class="row"><button class="btn" id="admEvGo" type="button">Start event</button><button class="btn ghost" id="admEvEnd" type="button">End event now</button></div>
     </div>
@@ -2187,6 +2198,9 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     </div>
     <p class="amsg" id="admMsg" role="status"></p>
   </div>
+  <div class="admconf" id="admConf" hidden role="dialog" aria-modal="true" aria-labelledby="admConfT"><div class="admconfbox">
+    <b id="admConfT"></b><div id="admConfP"></div>
+    <div class="row"><button class="btn ghost" id="admConfNo" type="button">Cancel</button><button class="btn" id="admConfYes" type="button">Confirm</button></div></div></div>
 </section>
 
 <section id="guideOv" class="overlay" hidden>
@@ -2214,9 +2228,9 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <li><span class="sw blink"></span><span><b>Blink tile.</b> Switches on and off every bar. It flickers on beat 4 before it vanishes.</span></li>
       <li><span class="sw laser"></span><span><b>Laser row.</b> Charges over each bar and fires just after beat 4. Be off the red line.</span></li>
       <li><span class="sw ghost"></span><span><b>Ghost tile.</b> Invisible until you stand next to it. Flashes on each downbeat.</span></li>
-      <li><span class="sw" style="color:#9FD8FF">◷</span><span><b>Duel power-ups.</b> Tempo Drag, Freeze, Scramble, Shield, Mega Shell and Rapid Fire orbs appear on your side. Walk into one to use it.</span></li>
-      <li><span class="sw blaster"></span><span><b>Blaster pad.</b> Bosses and Duels only. Step on it and a shot lands exactly one beat later. A new pad appears elsewhere.</span></li>
-      <li><span class="sw target"></span><span><b>Red target.</b> A boss shot lands here 2 beats after it appears. Move off it.</span></li>
+      <li><span class="sw" style="color:#9FD8FF">◷</span><span><b>Riff-Off power-ups.</b> Tempo Drag, Freeze, Scramble, Shield, Mega Pulse and Rapid Rhythm orbs appear on your side. Walk into one to use it.</span></li>
+      <li><span class="sw blaster"></span><span><b>Pulse pad.</b> Bosses and Riff-Offs only. Step on it and a pulse lands exactly one beat later. A new pad appears elsewhere.</span></li>
+      <li><span class="sw target"></span><span><b>Red target.</b> A boss note lands here 2 beats after it appears. Move off it.</span></li>
     </ul>
     <div class="lbl">Timing</div>
     <div class="judge"><b>Perfect</b><span>within 45 ms. Grows your streak.</span><b>Good</b><span>within 90 ms. Keeps your streak.</span><b>Early / Late</b><span>within 150 ms. Two in a row breaks the streak.</span><b>Miss</b><span>Costs a Harmony point.</span></div>
@@ -2251,7 +2265,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         <div class="small" id="nStatus"></div>
         <div class="modes" id="nModes" hidden>
           <button class="mode primary" id="nJourney" type="button"><b>Online Journey</b><small>Co-op through endless rooms, 2 to 4 players. Every block must reach the door.</small><span class="meta">♪</span></button>
-          <button class="mode" id="nDuel" type="button"><b>Online Duel</b><small>2 players. Shell your friend's platform from your own device. 3 knockouts wins.</small><span class="meta">⚔</span></button>
+          <button class="mode" id="nDuel" type="button"><b>Online Riff-Off</b><small>2 players. Send pulses at your friend's platform from your own device. First to 3 drops wins.</small><span class="meta">⚔</span></button>
           <button class="mode" id="nRaid" type="button"><b>Online Mastery Challenge</b><small>Work together through advanced rhythm challenges, 2 to 4 players. Each player uses timing pads and shares Harmony.</small><span class="meta">☠</span></button>
           <button class="mode" id="nTether" type="button"><b>Online Tether</b><small>2 players, tied together by a cord. Stray more than 4 tiles apart and it snaps. Stay close for double points.</small><span class="meta">∞</span></button>
         </div>
@@ -2269,7 +2283,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <div class="modes">
       <div class="p2pick"><div class="p2head"><span class="small"><b>P2's block</b> · pick any block you own</span></div><div class="p2row" id="p2Row"></div></div>
       <button class="mode primary" id="cJourney" type="button"><b>Journey</b><small>Team up through endless rooms. Both blocks must reach the door.</small><span class="meta" id="cJourneyMeta"></span></button>
-      <button class="mode" id="cDuel" type="button"><b>Duel</b><small>Side-by-side platforms. Hit your blaster pad to blow holes under your rival. First to knock the other off 3 times wins.</small><span class="meta">⚔</span></button>
+      <button class="mode" id="cDuel" type="button"><b>Riff-Off</b><small>Side-by-side platforms. Hit your pulse pad to drop tiles under your rival. First to drop the other 3 times wins.</small><span class="meta">⚔</span></button>
       <button class="mode" id="cRaid" type="button"><b>Mastery Challenge</b><small>Work through advanced rhythm challenges together. Use the timing pads and keep your Harmony going.</small><span class="meta" id="cRaidMeta">☠</span></button>
       <button class="mode" id="cTether" type="button"><b>Tether</b><small>Tied together by a glowing cord. Stretch it past 4 tiles and it snaps you back. Stay side by side for double points.</small><span class="meta" id="cTetherMeta">∞</span></button>
     </div>
@@ -2281,7 +2295,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   <div class="panel">
     <div class="head"><button class="back" id="hBack" type="button">← Menu</button><div class="small" id="hStars"></div></div>
     <div><div class="eyebrow" style="color:#FF8A80">Hard Mode</div><h2>No rest for the rhythm</h2></div>
-    <p style="font-size:13.5px">Every tile type at once, low rails, a move on every beat, one life and a tight beat budget. Clear a stage to unlock the next, and clear all 12 to earn the Dread block.</p>
+    <p style="font-size:13.5px">Every tile type at once, low rails, a move on every beat, one life and a tight beat budget. Clear a stage to unlock the next, and clear all 12 to earn the Masterful block.</p>
     <div class="levels" id="hardGrid"></div>
   </div>
 </section>
@@ -2450,7 +2464,7 @@ const SKINS=[
  {id:'blaze',name:'Blaze',vx:'blaze',prev:[.86,6],anim:'blaze',top:'#4A2A1A',front:'#2A160E',core:'#FFB347',req:{streak:120}},
  {id:'tess',name:'Tesseract',vx:'tess',prev:[.88,0],anim:'tess',top:'#1A1A3A',front:'#0E0E24',core:'#7FE0FF',req:{stars:120}},
  {id:'void',name:'Void',vx:'void',prev:[.88,0],fx:'void',top:'#0A0612',front:'#050309',core:'#B084FF',req:{streak:150},pt:'radial-gradient(circle,#3A1E6B,#0A0612 70%)',pf:'#050309',glow:'#B084FF'},
- {id:'dread',name:'Dread',vx:'dread',prev:[.78,8],fx:'dread',top:'#0B0607',front:'#8A0E14',core:'#FF2A2A',req:{hard:12},pt:'#0B0607',pf:'#8A0E14',glow:'#FF2A2A'}];
+ {id:'dread',name:'Masterful',vx:'dread',prev:[.78,8],fx:'dread',top:'#0B0607',front:'#8A0E14',core:'#FF2A2A',req:{hard:12},pt:'#0B0607',pf:'#8A0E14',glow:'#FF2A2A'}];
 const LANDS=[
  {id:'ring',name:'Pulse Ring',glyph:'◯',col:'#FFF8EE',price:0},
  {id:'petals',name:'Petal Burst',glyph:'✿',col:'#FFB3C7',price:150},
@@ -3182,7 +3196,7 @@ const QUESTS=[
  {id:'gems',t:n=>`Collect ${n} gems`,g:[5,10,16],ev:'gems'},
  {id:'endless',t:n=>`Clear ${n} rooms in one Endless run`,g:[4,6,9],ev:'endless',max:true},
  {id:'ascent',t:n=>`Reach floor ${n} in Ascent`,g:[4,7,10],ev:'ascent',max:true},
- {id:'duel',t:n=>`Play ${n} duels`,g:[1,2,3],ev:'duel'},
+ {id:'duel',t:n=>`Play ${n} riff-offs`,g:[1,2,3],ev:'duel'},
  {id:'hard',t:n=>`Clear ${n} Hard Mode stage${n>1?'s':''}`,g:[1,1,2],ev:'hard'},
  {id:'daily',t:()=>`Finish today's Daily Practice`,g:[1,1,1],ev:'daily'},
  {id:'boss',t:()=>`Complete a mastery challenge`,g:[1,1,1],ev:'boss'},
@@ -3413,21 +3427,21 @@ function startRun(M){
   if(M.atPerf!=null&&(M.net||M.coop||M.duel)) startCountdown(M.atPerf);
   stopStudioAudio(); if(M.type==='studio'&&M.file) studioBegin(M); if(M.type==='studio'&&M.silent) studioSilentBegin(M);
   clearInterval(A.pumpT); A.pumpT=setInterval(()=>{ if(G.state==='playing'||G.state==='cutscene') pump(); },40);
-  const title=M.type==='level'?`${M.world}-${M.level} ${LEVEL_NAMES[M.world-1][M.level-1]}`:M.type==='boss'?BOSS[M.world-1]:M.type==='daily'?'Daily Challenge':M.type==='hard'?`Hard ${M.idx} · ${HARD_NAMES[M.idx-1]}`:M.type==='duel'?'Duel':M.type==='coop'?'Co-op':M.type==='raid'?(M.solo?'Boss Rush':'Boss Raid'):M.type==='tether'?'Tether':M.type==='ascent'?'Ascent · floor 1':M.type==='studio'?M.songName:M.type==='interlude'?'Interlude · The Silence':M.type==='event'?weekEvent().name:M.type==='custom'?(M.design.n||'Custom level'):'Endless';
+  const title=M.type==='level'?`${M.world}-${M.level} ${LEVEL_NAMES[M.world-1][M.level-1]}`:M.type==='boss'?BOSS[M.world-1]:M.type==='daily'?'Daily Challenge':M.type==='hard'?`Hard ${M.idx} · ${HARD_NAMES[M.idx-1]}`:M.type==='duel'?'Riff-Off':M.type==='coop'?'Co-op':M.type==='raid'?(M.solo?'Boss Rush':'Boss Raid'):M.type==='tether'?'Tether':M.type==='ascent'?'Ascent · floor 1':M.type==='studio'?M.songName:M.type==='interlude'?'Interlude · The Silence':M.type==='event'?weekEvent().name:M.type==='custom'?(M.design.n||'Custom level'):'Endless';
   G.banner={text:title,sub:M.type==='interlude'?'keep moving':M.type==='level'?`♪ ${trackName()} · ${M.level===1?'the song begins':'+ '+instName(M.world,M.level)} · part ${M.level}/9`:M.type==='boss'?`♪ ${trackName()} · the full symphony`:`♪ ${trackName()} · ${TRACK.style.mood}`,t0:G.now,dur:2.6,col:'#FFF8EE'};
   $('score').textContent='0'; setPads(); hud();
   const key=M.type==='level'?M.world+'-'+M.level:'';
   let h=LEVEL_HINTS[key]||'';
   if(!h&&M.type==='level'&&M.level===1) h=WORLD_MECH[M.world-1].map(k=>TIPS[k]).join(' ');
-  if(!h&&M.type==='boss') h='Step on the gold blaster pad to fire at the boss. Red targets land 2 beats later, so move off them.';
+  if(!h&&M.type==='boss') h='Step on the gold pulse pad to send a pulse at the boss. Red targets land 2 beats later, so move off them.';
   if(!h&&M.type==='rhythm') h='Rhythm Patterns: move on every note in the lane above. Eighths, triplets and off-beats are coming.';
   if(!h&&M.type==='lremix') h='Remix: a level you cleared, reshuffled, with new hazards and a faster song.';
   if(!h&&M.type==='hard') h=`Hard mode: a move every beat, one life (a single miss ends it), a tight beat budget${M.rooms>1?' and '+M.rooms+' rooms':''}.`+(HARD_MODS[M.idx]?' '+HARD_MODS[M.idx]+'.':'');
-  if(M.net) h=M.type==='duel'?`Online duel: you are the ${NET.me?'mint':'gold'} side. Step on your blaster pad to shell your rival. Knock them off 3 times to win.`:(G.players.length>2?`Online co-op with ${G.players.length} players: everyone needs to reach the door.`:'Online co-op: you and your friend both need to reach the door.');
-  if(!h&&M.type==='duel') h='Step on your blaster pad to shell your rival\'s tile. Knock them off 3 times to win.';
+  if(M.net) h=M.type==='duel'?`Online Riff-Off: you are the ${NET.me?'mint':'gold'} side. Step on your pulse pad to send a pulse at your rival. Drop them 3 times to win.`:(G.players.length>2?`Online co-op with ${G.players.length} players: everyone needs to reach the door.`:'Online co-op: you and your friend both need to reach the door.');
+  if(!h&&M.type==='duel') h='Step on your pulse pad to send a pulse at your rival\'s tile. Drop them 3 times to win.';
   if(!h&&M.type==='daily') h=M.mod?MODS[M.mod]:'No modifier today. Three rooms, one run.';
   if(!h&&M.type==='coop') h='P1 uses WASD, P2 uses the arrows. Both blocks must reach the door.';
-  if(M.type==='raid') h=M.solo?'Boss Rush: every boss, back to back. Step on the blaster pad to fire. Dodge the red targets. Each boss you beat heals 2 Harmony.':(M.net?'Online Boss Raid: ':'Boss Raid: ')+'work through advanced rhythm challenges back to back. Use the timing pads to play, avoid the red targets, and restore Harmony by completing each challenge.';
+  if(M.type==='raid') h=M.solo?'Boss Rush: every boss, back to back. Step on the pulse pad to send a pulse. Dodge the red targets. Each boss you beat heals 2 Harmony.':(M.net?'Online Boss Raid: ':'Boss Raid: ')+'work through advanced rhythm challenges back to back. Use the timing pads to play, avoid the red targets, and restore Harmony by completing each challenge.';
   if(M.type==='tether') h=(M.net?'Online Tether: ':'Tether: ')+`you are tied together. Stretch the cord past ${TETHER_MAX} tiles and it snaps you back (−1 Harmony). Stay side by side for double points.`;
   if(M.type==='interlude') h='';
   if(!h&&M.type==='studio') h=`Studio · ${Math.round(M.bpm*10)/10} BPM · ${M.diff==='chill'?'Chill: skip beats whenever you like.':M.diff==='groove'?'Groove: a move every beat.':'Intense: a move every beat, 3 Harmony.'}`+(M.file?' The run ends when your song does.':M.silent?(M.synced?' Silent mode: lined up with your taps.':' Silent mode: tap tempo along with your song right before Start to line up the beat.'):'');
@@ -5848,7 +5862,7 @@ function arenaTick(now){
 }
 function duelLoseLife(P){
   P.lives=Math.max(0,(P.lives||0)-1); hud();
-  popAt(P,P.lives?`${P.lives} ${P.lives===1?'life':'lives'} left`:'knocked out!','#FF8A80',14);
+  popAt(P,P.lives?`${P.lives} ${P.lives===1?'life':'lives'} left`:'dropped out!','#FF8A80',14);
   if(P.lives<=0&&G.state==='playing'){ G.winner=1-P.id; G.state='dying'; sWin(); setTimeout(()=>gameOver('duel'),900); return true; }
   return false;
 }
@@ -6115,8 +6129,8 @@ function netUI(){
   $('nModes').hidden=!(on&&NET.host);
   $('nWait').hidden=!(on&&!NET.host);
   // Duel and Tether are for exactly two
-  [['nDuel','Online Duel'],['nTether','Online Tether']].forEach(([id])=>{ const b=$(id); if(!b) return; b.disabled=n!==2; b.classList.toggle('only2',n!==2); });
-  const note=$('nModeNote'); if(note) note.textContent=n>2?`${n} players: Journey and Boss Raid are open to everyone. Duel and Tether are for exactly 2.`:'';
+  [['nDuel','Online Riff-Off'],['nTether','Online Tether']].forEach(([id])=>{ const b=$(id); if(!b) return; b.disabled=n!==2; b.classList.toggle('only2',n!==2); });
+  const note=$('nModeNote'); if(note) note.textContent=n>2?`${n} players: Journey and Boss Raid are open to everyone. Riff-Off and Tether are for exactly 2.`:'';
 }
 function netHost(){
   ensureAudio(); A.ctx.resume(); netLeave(true);
@@ -6409,7 +6423,7 @@ const PARTY_COUNT=5;
 function netStart(type){
   if(!netLive()||!NET.host) return;
   const order=[0].concat(netMateList().map(m=>m.s));
-  if((type==='duel'||type==='tether')&&order.length!==2){ netStatus(`${type==='duel'?'Duel':'Tether'} is for exactly 2 players. Try Journey or Boss Raid.`,true); return; }
+  if((type==='duel'||type==='tether')&&order.length!==2){ netStatus(`${type==='duel'?'Riff-Off':'Tether'} is for exactly 2 players. Try Journey or Boss Raid.`,true); return; }
   const seed=Math.floor(Math.random()*1e9).toString(36), at=performance.now()+PARTY_COUNT*1000;
   netSend({t:'start',type,seed,at,order,hn:performance.now()});
   netBegin(type,seed,at,order);
@@ -6532,7 +6546,7 @@ function netRespawn(P,o){
   const sp=R.spawns?R.spawns[P.id]:R.start, sc=cellAt(sp.x,sp.y); if(sc&&sc.fallen){ sc.fallen=false; sc.fallK=null; sc.regenT=G.now; }
   P.pos={...sp}; P.netAt={...sp}; P.dead=false; P.done=false; P.anim={kind:'drop',t0:G.now,dur:.45};
   if(G.mode.duel&&P.shield&&o.lives===P.lives){ P.shield=false; popAt(P,'shield saved them!','#B8F2E6',14); return; }
-  if(G.mode.duel){ P.lives=o.lives; hud(); popAt(P,P.lives?`${P.lives} ${P.lives===1?'life':'lives'} left`:'knocked out!','#FF8A80',14);
+  if(G.mode.duel){ P.lives=o.lives; hud(); popAt(P,P.lives?`${P.lives} ${P.lives===1?'life':'lives'} left`:'dropped out!','#FF8A80',14);
     if(P.lives<=0&&G.state==='playing'){ G.winner=NET.me; G.state='dying'; sWin(); setTimeout(()=>gameOver('duel'),900); } return; }
   popAt(P,'respawn','#DCCBE6',12); loseHarmony();
 }
@@ -6556,7 +6570,7 @@ $('partyBar').onclick=()=>{ if(['playing','paused','dying','cutscene','picking']
 const CD={at:0,last:null};
 function startCountdown(atPerf){
   CD.at=atPerf; CD.last=null; const el=$('countdown'); el.classList.remove('out'); el.hidden=false;
-  const M=G.mode||{}, name={coop:'Journey',duel:'Duel',raid:'Boss Raid',tether:'Tether'}[M.type]||'Match';
+  const M=G.mode||{}, name={coop:'Journey',duel:'Riff-Off',raid:'Boss Raid',tether:'Tether'}[M.type]||'Match';
   $('cdMode').textContent=(M.net?'Online ':'')+name;
   $('cdWho').textContent=M.net&&G.players?G.players.map((P,i)=>i===NET.me?(SAVE.name||'You'):((netMateAt(i)||{}).name||'Friend')).join('  ·  '):(M.coop?'P1 and P2 on this device':'');
   cdTick(); }
@@ -6565,7 +6579,7 @@ function cdTick(){
   if(left<-.45||!PLAYING()||G.state==='over'){ el.hidden=true; el.classList.remove('out'); return; }
   const n=Math.max(0,Math.ceil(left));
   if(n===0) el.classList.add('out');   // Go! and the game appears
-  if(n!==CD.last){ CD.last=n; $('cdNum').textContent=n>0?n:'Go!'; $('cdLabel').textContent=n>0?(G.mode&&G.mode.duel?'Duel starts in':'Party starts in'):'';
+  if(n!==CD.last){ CD.last=n; $('cdNum').textContent=n>0?n:'Go!'; $('cdLabel').textContent=n>0?(G.mode&&G.mode.duel?'Riff-Off starts in':'Party starts in'):'';
     el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
     if(A.ctx&&A.ctx.state==='running') tone(A.sfx,A.ctx.currentTime,'sine',n>0?880:1320,n>0?.06:.09,.002,n>0?.12:.3); }
   requestAnimationFrame(cdTick);
@@ -6913,14 +6927,31 @@ $('mLive').onclick=()=>{ const L=liveOn();
   const A2=ACCT.live; if(A2) toast(A2.msg||A2.title||'Live event'); };
 /* ---- the panel: Players (search and one-tap gifts), Events, My account ---- */
 const admMsg=(t,err)=>{ const m=$('admMsg'); m.textContent=t; m.classList.toggle('err',!!err); };
+/* every admin action asks first: a title, what will happen (with a picture of the item, if there is one), Confirm or Cancel */
+function admConfirm(title,body,yes){ return new Promise(res=>{ const c=$('admConf'), Y=$('admConfYes'), N=$('admConfNo');
+  if(c.parentNode!==document.body) document.body.appendChild(c);   // above everything, the tab bar included
+  $('admConfT').textContent=title; $('admConfP').innerHTML=body||''; Y.textContent=yes||'Confirm'; c.hidden=false;
+  $('admConfP').querySelectorAll('canvas.tileprev').forEach(cv=>drawTilePreview(cv,tilesById(cv.dataset.tile)));
+  const done=v=>{ c.hidden=true; Y.onclick=N.onclick=c.onclick=null; ADM.conf=null; res(v); };
+  ADM.conf=done; Y.onclick=()=>done(true); N.onclick=()=>done(false); c.onclick=e=>{ if(e.target===c) done(false); }; setTimeout(()=>Y.focus({preventScroll:true}),30); }); }
+addEventListener('keydown',e=>{ if(ADM.conf&&(e.key==='Escape'||e.key==='Backspace')&&!/^(INPUT|SELECT|TEXTAREA)$/.test((e.target&&e.target.tagName)||'')){ e.preventDefault(); e.stopImmediatePropagation(); ADM.conf(false); } },true);
 let admTab='players';
 function admItems(sel,kind){ const L=GIFT_LISTS[kind]?GIFT_LISTS[kind]().filter(x=>x.price!==0||kind==='skin'):[];
   sel.innerHTML=L.map(x=>`<option value="${escapeHTML(x.id)}">${escapeHTML(x.name)}</option>`).join(''); }
+/* blocks, banners and tile themes are picked from a grid of pictures (the select underneath holds the choice) */
+const admPrev=(kind,x,px=56)=>kind==='skin'?`<canvas class="skprev" data-skin="${escapeHTML(x.id)}" data-px="${px}" width="${px}" height="${px}" aria-hidden="true"></canvas>`
+  :kind==='tiles'?`<canvas class="tileprev" data-tile="${escapeHTML(x.id)}" width="132" height="84" aria-hidden="true"></canvas>`:`<span class="ppban" style="background:${x.bg||'rgba(255,255,255,.08)'}"></span>`;
+function admPicker(sel,grid,kind){ const L=GIFT_LISTS[kind]().filter(x=>x.price!==0||kind==='skin'); grid.hidden=false;
+  grid.innerHTML=L.map(x=>`<button type="button" class="admpi" data-id="${escapeHTML(x.id)}" title="${escapeHTML(x.name)}">${admPrev(kind,x)}<span>${escapeHTML(x.name)}</span></button>`).join('');
+  grid.querySelectorAll('canvas.tileprev').forEach(c=>drawTilePreview(c,tilesById(c.dataset.tile)));
+  const pick=id=>{ sel.value=id; grid.querySelectorAll('.admpi').forEach(b=>b.classList.toggle('on',b.dataset.id===id)); };
+  grid.querySelectorAll('.admpi').forEach(b=>b.onclick=()=>pick(b.dataset.id)); pick(L[0]&&L[0].id); grid.scrollTop=0; }
+function admPreviewHTML(kind,id){ const L=GIFT_LISTS[kind]&&GIFT_LISTS[kind](), x=L&&L.find(i=>i.id===id); return x?`<div class="admpv">${admPrev(kind,x,84)}</div>`:''; }
 function admKindUI(){ const k=$('admKind').value;
-  $('admItemL').hidden=!(GIFT_LISTS[k]||k==='rank'); $('admAmtL').hidden=k!=='notes';
-  if(GIFT_LISTS[k]) admItems($('admItem'),k);
+  $('admItemL').hidden=k!=='rank'; $('admAmtL').hidden=k!=='notes'; $('admPickG').hidden=!GIFT_LISTS[k];
+  if(GIFT_LISTS[k]){ admItems($('admItem'),k); admPicker($('admItem'),$('admPickG'),k); }
   else if(k==='rank') $('admItem').innerHTML='<option value="-1">Earned rank (clear)</option>'+Array.from({length:RANK_MAX+1},(_,n)=>`<option value="${n}">${escapeHTML(rankName(n))}</option>`).join(''); }
-function admEvKindUI(){ const k=$('admEvG').value; $('admEvGL').hidden=!GIFT_LISTS[k]; $('admEvGAL').hidden=k!=='notes'; if(GIFT_LISTS[k]) admItems($('admEvGI'),k); }
+function admEvKindUI(){ const k=$('admEvG').value; $('admEvPick').hidden=!GIFT_LISTS[k]; $('admEvGAL').hidden=k!=='notes'; if(GIFT_LISTS[k]){ admItems($('admEvGI'),k); admPicker($('admEvGI'),$('admEvPick'),k); } }
 function admLiveNow(){ const L=ACCT.live, now=Date.now(), e=$('admLiveNow'), on=!!L&&now<(+L.end||0);
   e.classList.toggle('on',on); $('admEvEnd').disabled=!on;
   if(!on){ e.textContent='No event running. Start one below: everyone sees it on the main menu.'; return; }
@@ -6961,8 +6992,10 @@ function admPick(f){ ADM.target=f; $('admSel').hidden=false; $('admRes').hidden=
   $('admSelAv').textContent=String(f.name||'?').charAt(0).toUpperCase(); $('admSelName').textContent=f.name||'Player'; $('admSelInfo').textContent=rankName(f.rank||0)+(f.score?` · best ${(+f.score).toLocaleString()}`:'');
   $('admSel').querySelectorAll('button').forEach(b=>b.disabled=false); admKindUI(); admMsg(''); }
 function admUnpick(){ ADM.target=null; $('admSel').hidden=true; $('admRes').hidden=false; $('admResHead').hidden=false; $('admFind').closest('.admsearch').hidden=false; admMsg(''); const q=$('admFind').value; if(q.trim()) admSearch(q); else admTop(); $('admFind').focus({preventScroll:true}); }
-async function admGift(g,label){ const T=ADM.target, db=ACCT.db; if(!T||!db||!ACCT.user) return;
-  Object.assign(g,{t:Date.now(),by:ACCT.user.uid}); const note=$('admNote').value.trim().slice(0,120); if(note) g.msg=note;
+async function admGift(g,label,pic){ const T=ADM.target, db=ACCT.db; if(!T||!db||!ACCT.user) return;
+  const note=$('admNote').value.trim().slice(0,120);
+  if(!await admConfirm(`Send ${label} to ${T.name||'this player'}?`,(pic||'')+`<div>They get it the next time they open the game signed in.${note?` Your message: “${escapeHTML(note)}”`:''}</div>`,'Send it')){ admMsg('Cancelled. Nothing was sent.'); return; }
+  Object.assign(g,{t:Date.now(),by:ACCT.user.uid}); if(note) g.msg=note;
   const btns=$('admSel').querySelectorAll('button'); btns.forEach(b=>b.disabled=true); admMsg('Sending…');
   try{ await db.collection('gifts').doc(T.uid).collection('items').add(g); admMsg(`✓ ${label} sent to ${T.name||'that player'}. They get it the next time they open the game signed in.`); if(A.ctx) sGem(); buzz(20); }
   catch(e){ admMsg('Could not send ('+(e&&e.code||'offline')+').',true); }
@@ -6975,27 +7008,31 @@ $('admSel').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{ const q=b.da
   if(q==='passp') admGift({kind:'passp'},'Pulse Pass+'); else { const n=+q.split(':')[1]; admGift({kind:'notes',n},`♪${n.toLocaleString()}`); } });
 $('admSend').onclick=()=>{ const k=$('admKind').value, g={kind:k}; let label='';
   if(k==='notes'){ g.n=Math.max(1,Math.min(1000000,Math.round(+$('admAmt').value||0))); label=`♪${g.n.toLocaleString()}`; }
-  else if(GIFT_LISTS[k]){ g.id=$('admItem').value; label=$('admItem').selectedOptions[0]?$('admItem').selectedOptions[0].textContent:'The gift'; }
+  else if(GIFT_LISTS[k]){ g.id=$('admItem').value; label=$('admItem').selectedOptions[0]?$('admItem').selectedOptions[0].textContent:'the gift'; }
   else if(k==='rank'){ g.n=Math.round(+$('admItem').value); label=g.n>=0?`Rank ${rankName(g.n)}`:'Rank reset'; }
   else { if(!$('admNote').value.trim()){ admMsg('Type a message to send.',true); return; } label='Your message'; }
-  admGift(g,label); };
+  admGift(g,label,GIFT_LISTS[k]?admPreviewHTML(k,g.id):''); };
 document.querySelectorAll('#admTabs button').forEach(b=>b.onclick=()=>admTabSet(b.dataset.at));
 $('setAdmin').onclick=admOpen; $('mAdmin').onclick=admOpen;
 $('admBack').onclick=()=>toMenu();
-$('admRankGo').onclick=()=>{ const v=+$('admRank').value; SAVE.rankSet={n:v>=0?v:null,t:Date.now()}; admSelfSaved(v>=0?`Your rank is now ${rankName(v)}.`:'Your rank is back to the one you earned.'); };
-$('admNotesGo').onclick=()=>{ const n=Math.max(0,Math.min(1000000,Math.round(+$('admNotes').value||0))); if(!n){ admMsg('Type how many Notes to add.',true); return; } SAVE.notes+=n; $('admNotes').value=''; admSelfSaved(`Added ♪${n.toLocaleString()}.`); };
-$('admLevels').onclick=()=>{ SAVE.devAll=!SAVE.devAll; admSelfSaved(SAVE.devAll?'Every world, level, boss and Hard stage is open.':'Levels are locked by progress again.'); };
-$('admPass').onclick=()=>{ passS().prem=true; admSelfSaved('Pulse Pass+ is on.'); };   // one way: a bought Pass+ syncs as owned on every device
-$('admAll').onclick=()=>{ let n=0; [SKINS,BANNERS,TILES,PACKS,LANDS].forEach(L=>L.forEach(x=>{ if(x.id&&!SAVE.owned.includes(x.id)){ SAVE.owned.push(x.id); n++; } })); admSelfSaved(n?`Added ${n} items to your collection.`:'You already own everything.'); };
+$('admRankGo').onclick=async()=>{ const v=+$('admRank').value; if(!await admConfirm(v>=0?`Set your rank to ${rankName(v)}?`:'Go back to your earned rank?','Your rank shows everywhere: leaderboards, friends and parties.')) return; SAVE.rankSet={n:v>=0?v:null,t:Date.now()}; admSelfSaved(v>=0?`Your rank is now ${rankName(v)}.`:'Your rank is back to the one you earned.'); };
+$('admNotesGo').onclick=async()=>{ const n=Math.max(0,Math.min(1000000,Math.round(+$('admNotes').value||0))); if(!n){ admMsg('Type how many Notes to add.',true); return; } if(!await admConfirm(`Add ♪${n.toLocaleString()} to your account?`)) return; SAVE.notes+=n; $('admNotes').value=''; admSelfSaved(`Added ♪${n.toLocaleString()}.`); };
+$('admLevels').onclick=async()=>{ if(!await admConfirm(SAVE.devAll?'Lock levels again?':'Unlock every level?',SAVE.devAll?'Levels go back to unlocking by progress.':'Every world, level, boss and Hard stage opens on this account.')) return; SAVE.devAll=!SAVE.devAll; admSelfSaved(SAVE.devAll?'Every world, level, boss and Hard stage is open.':'Levels are locked by progress again.'); };
+$('admPass').onclick=async()=>{ if(!await admConfirm('Give yourself Pulse Pass+?','This can\'t be undone: Pass+ stays on your account on every device.')) return; passS().prem=true; admSelfSaved('Pulse Pass+ is on.'); };   // one way: a bought Pass+ syncs as owned on every device
+$('admAll').onclick=async()=>{ if(!await admConfirm('Own every item?','Every block, banner, tile theme, sound pack and landing effect is added to your collection. This can\'t be undone.')) return; let n=0; [SKINS,BANNERS,TILES,PACKS,LANDS].forEach(L=>L.forEach(x=>{ if(x.id&&!SAVE.owned.includes(x.id)){ SAVE.owned.push(x.id); n++; } })); admSelfSaved(n?`Added ${n} items to your collection.`:'You already own everything.'); };
 $('admKind').onchange=admKindUI; $('admEvG').onchange=admEvKindUI;
 $('admEvGo').onclick=async()=>{ const db=ACCT.db; if(!db||!ACCT.user) return; const title=$('admEvT').value.trim().slice(0,40);
   if(!title){ admMsg('Give the event a title.',true); return; }
   const now=Date.now(), start=now+Math.max(0,+$('admEvS').value||0)*3600000, end=start+Math.max(.5,Math.min(720,+$('admEvH').value||48))*3600000;
   const gk=$('admEvG').value, gift=!gk?null:gk==='notes'?{kind:'notes',n:Math.max(1,Math.min(100000,Math.round(+$('admEvGA').value||0)))}:{kind:gk,id:$('admEvGI').value};
   const ev={id:'ev'+now.toString(36),title,msg:$('admEvM').value.trim().slice(0,140),xp:+$('admEvX').value,notes:+$('admEvN').value,start,end,gift,by:ACCT.user.uid,t:now};
+  const it=gift&&GIFT_LISTS[gift.kind]?GIFT_LISTS[gift.kind]().find(x=>x.id===gift.id):null;
+  const sum=[ev.xp>1?`${ev.xp}× XP`:'',ev.notes>1?`${ev.notes}× Notes`:'',gift?`gift for everyone: ${gift.kind==='notes'?'♪'+gift.n.toLocaleString():escapeHTML(it?it.name:'an item')}`:''].filter(Boolean).join(' · ')||'no boosts';
+  const old=ACCT.live&&now<(+ACCT.live.end||0);
+  if(!await admConfirm(`Start “${title}” for every player?`,(gift&&it?admPreviewHTML(gift.kind,gift.id):'')+`<div>${sum}<br>${start>now?'Starts in '+liveLeft(start-now)+', l':'Starts now, l'}asts ${liveLeft(end-start)}.${old?'<br><b>This replaces the event that\'s running now.</b>':''}</div>`,'Start event')) return;
   admMsg('Starting…'); try{ await db.collection('live').doc('event').set(ev); ACCT.live=ev; liveUI(); admLiveNow(); admMsg('✓ Event is live for every player.'); if(A.ctx) sGem(); }
   catch(e){ admMsg('Could not start the event ('+(e&&e.code||'offline')+').',true); } };
-$('admEvEnd').onclick=async()=>{ const db=ACCT.db, L=ACCT.live; if(!db||!L){ admMsg('No event to end.'); return; }
+$('admEvEnd').onclick=async()=>{ const db=ACCT.db, L=ACCT.live; if(!db||!L){ admMsg('No event to end.'); return; } if(!await admConfirm(`End “${L.title||'the event'}” now?`,'Boosts stop and the banner disappears for every player.','End event')) return;
   try{ const ev=Object.assign({},L,{end:Date.now(),t:Date.now(),by:ACCT.user.uid}); if(ev.start>ev.end) ev.start=ev.end; await db.collection('live').doc('event').set(ev); ACCT.live=ev; liveUI(); admLiveNow(); admMsg('Event ended.'); }
   catch(e){ admMsg('Could not end the event ('+(e&&e.code||'offline')+').',true); } };
 $('aForgot').onclick=acctForgot;
@@ -7865,7 +7902,7 @@ function buildProfile(){
     return `<li class="${done?'done':''} ${q.claimed?'claimed':''}"><span>${questText(q)}<br><small>${q.prog}/${q.goal} · ♪${rw.n} + ${rw.x} XP</small></span>${q.claimed?'<small>Claimed</small>':`<button class="btn${done?'':' ghost'}" data-q="${i}" type="button" ${done?'':'disabled'}>${done?'Claim':'In progress'}</button>`}<span class="qbar"><i style="width:${Math.round(q.prog/q.goal*100)}%"></i></span></li>`; }).join('');
   $('qList').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>claimQuest(+b.dataset.q));
   $('pRewards').innerHTML=RANK_UNLOCKS.map(([r,t])=>`<li class="${n>=r?'got':''}"><span>${rankName(r)}</span><span>${t}${n>=r?' ✓':''}</span></li>`).join('')+`<li><span>Every rank up</span><span>♪ ${earnN(rankReward(1))}, more each rank</span></li>`;
-  const L=SAVE.life||{}; $('pLife').textContent=`Lifetime: ${(L.runs||0)} runs · ${(L.perfect||0).toLocaleString()} perfects · ${(L.gems||0)} gems · ${(L.duelWins||0)} duel wins · best Ascent floor ${SAVE.bestAscent||0}`;
+  const L=SAVE.life||{}; $('pLife').textContent=`Lifetime: ${(L.runs||0)} runs · ${(L.perfect||0).toLocaleString()} perfects · ${(L.gems||0)} gems · ${(L.duelWins||0)} riff-off wins · best Ascent floor ${SAVE.bestAscent||0}`;
   $('pAch').innerHTML=achHTML();
   updateRankChip();
 }
@@ -7874,8 +7911,8 @@ $('pBack').onclick=()=>toMenu();
 
 /* ================= DUEL POWER-UPS ================= */
 const PU={slow:{n:'Tempo Drag',g:'◷',c:'#9FD8FF',d:'rival moves every other beat'},freeze:{n:'Freeze',g:'❄',c:'#DDF4FF',d:'rival frozen 2 beats'},
-  mirror:{n:'Scramble',g:'⇄',c:'#FF7EB6',d:'rival left/right swapped'},shield:{n:'Shield',g:'◯',c:'#B8F2E6',d:'next knockout is free'},
-  mega:{n:'Mega Shell',g:'✹',c:'#FFB347',d:'next shot hits 3×3'},rapid:{n:'Rapid Fire',g:'»',c:'#FFD166',d:'next 3 pads spawn close'}};
+  mirror:{n:'Scramble',g:'⇄',c:'#FF7EB6',d:'rival left/right swapped'},shield:{n:'Shield',g:'◯',c:'#B8F2E6',d:'next drop is forgiven'},
+  mega:{n:'Mega Pulse',g:'✹',c:'#FFB347',d:'next pulse hits 3×3'},rapid:{n:'Rapid Rhythm',g:'»',c:'#FFD166',d:'next 3 pads spawn close'}};
 const PU_KEYS=Object.keys(PU);
 const DUEL_STAGES={classic:'Classic',ice:'Ice Rink',blink:'Blinking Floor'};
 function duelBeat(b,rest){
@@ -7986,7 +8023,7 @@ function ascentAdvance(){
   let d=Math.ceil((k+1+riseB+3)/4)*4; G.restUntil=d-1;
   const f=G.roomIdx, g=isGuardian(f);
   G.banner={text:g?'Guardian · floor '+f:'Floor '+f,sub:(G.newTrack?'♪ '+trackName()+'  ·  ':'')+THEMES[G.mode.world-1].name,t0:G.now,dur:1.9,col:g?'#FF7EB6':'#FFF8EE'}; G.newTrack=false; sChime(79);
-  let tip=g?'A guardian! Step on the gold blaster pad to shell it. Dodge the red targets.':''; if(!tip) for(const k2 of Object.keys(TIPS)) if(R.has[k2]&&!G.seen.has(k2)){ G.seen.add(k2); tip=TIPS[k2]; break; }
+  let tip=g?'A guardian! Step on the gold pulse pad to send a pulse at it. Dodge the red targets.':''; if(!tip) for(const k2 of Object.keys(TIPS)) if(R.has[k2]&&!G.seen.has(k2)){ G.seen.add(k2); tip=TIPS[k2]; break; }
   hint(tip); hud();
 }
 function ascentGuardianDown(){ if(G.mode.type!=='ascent') return false; setTimeout(()=>{ G.players.forEach(P=>P.done=true); ascentPick(); },1500); return true; }
@@ -8280,7 +8317,7 @@ const FOUNT_LESSONS={
  '1-8':['The last Courtyard level! Everything you\'ve learned comes together here.',
         'If your hits keep feeling early or late, calibrate your timing in Settings.',
         'Clear this, and you can face me in the boss fight. I\'ll go easy on you.'],
- 'B':  ['This is a guardian fight. Step on the gold blaster pad to fire at me.',
+ 'B':  ['This is a guardian challenge. Step on the gold pulse pad to send a pulse at me.',
         'Red targets show where my shots will land, two beats later. Step off them!',
         'Here in my Courtyard my shots can\'t cost you Harmony. The other guardians won\'t be so gentle.']};
 const fountOn=M=>!!(M&&(M.tut||(!SAVE.fountOff&&!M.net&&(M.type==='level'||M.type==='boss')&&M.world===1)));
@@ -9186,7 +9223,7 @@ const ACH=[
  ['daily','Daily Dose','Finish a Daily Challenge',()=>LF('dailies')>=1],
  ['daily7','Weekly Ritual','Keep a 7-day Daily streak',()=>SAVE.daily.streak>=7],
  ['gift7','Loyal','Open 7 daily gifts',()=>!!SAVE.gift&&(SAVE.gift.done||(SAVE.gift.day||0)>=7||(SAVE.gift.streak||0)>=7)],
- ['duel','First Knockout','Win a duel',()=>LF('duelWins')>=1],
+ ['duel','First Riff-Off Win','Win a riff-off',()=>LF('duelWins')>=1],
  ['online','Long Distance','Finish an online match',()=>LF('online')>=1],
  ['studio','Your Song','Finish a song of your own in Studio',()=>LF('songs')>=1],
  ['quests10','Errand Runner','Claim 10 quests',()=>LF('quests')>=10],
@@ -10639,7 +10676,7 @@ function raidAdvance(){
   const k=G.raidK!=null?G.raidK:curK(); G.restUntil=Math.ceil((k+10)/4)*4-1;
   G.harmony=Math.min(G.maxH,G.harmony+RAID_HEAL);
   G.banner={text:BOSS[G.mode.world-1],sub:`Boss ${G.mode.world} of ${WORLDS}  ·  +${RAID_HEAL} Harmony`,t0:G.now,dur:2.2,col:THEMES[G.mode.world-1].acc}; G.newTrack=false; sChime(79);
-  hint(G.mode.world===2&&!G.mode.solo?'Two blaster pads, gold and mint. Either of you can use either one.':'',4000); hud();
+  hint(G.mode.world===2&&!G.mode.solo?'Two pulse pads, gold and mint. Either of you can use either one.':'',4000); hud();
 }
 
 /* ---- Tether ---- */
@@ -10739,7 +10776,7 @@ function hud(){
   if(M.type==='level'||M.type==='lremix'){ a=`${M.type==='lremix'?'Remix ':''}${M.world}-${M.level} ${LEVEL_NAMES[M.world-1][M.level-1]}`; b=`Beats ${G.roomBeats}/${G.budget} · par ${R.par}`; }
   else if(M.type==='hard'){ a=`Hard ${M.idx} · ${HARD_NAMES[M.idx-1]}`; b=`Beats ${G.roomBeats}/${G.budget} · par ${R.par}`; }
   else if(M.type==='boss'){ a=`Boss · ${BOSS[M.world-1]}`; b=R&&R.boss?`HP ${R.boss.hp}/${R.boss.max} · hits ${G.bossHits||0}`:''; }
-  else if(M.type==='duel'){ const p=G.players; a=`Duel · ${G.bpm} BPM`; b=M.net?`You ${'◆'.repeat(p[NET.me].lives||0)}  ·  Rival ${'◆'.repeat(p[1-NET.me].lives||0)}`:`P1 ${'◆'.repeat(p[0].lives||0)}  ·  P2 ${'◆'.repeat(p[1].lives||0)}`; }
+  else if(M.type==='duel'){ const p=G.players; a=`Riff-Off · ${G.bpm} BPM`; b=M.net?`You ${'◆'.repeat(p[NET.me].lives||0)}  ·  Rival ${'◆'.repeat(p[1-NET.me].lives||0)}`:`P1 ${'◆'.repeat(p[0].lives||0)}  ·  P2 ${'◆'.repeat(p[1].lives||0)}`; }
   else if(M.type==='daily'){ a=`Daily · room ${G.roomIdx}/3`; b=(M.mod?MODS[M.mod].split(' · ')[0]:'No modifier')+` · ${G.bpm} BPM`; }
   else if(M.type==='coop'){ a=`${M.net?'Online co-op':'Co-op'} · room ${G.roomIdx}`; b=`${G.bpm} BPM`; }
   else if(M.type==='raid'){ a=`${M.net?'Online raid':M.solo?'Boss Rush':'Boss Raid'} · ${M.world}/${WORLDS} ${BOSS[M.world-1]}`; b=R&&R.boss?`HP ${R.boss.hp}/${R.boss.max} · beaten ${G.raidBeaten||0}`:''; }
@@ -11059,7 +11096,7 @@ function gameOver(why){
   const judged=s.perfect+s.good+s.early+s.late+s.miss;
   if(M.net&&NET.host&&!G.netOver&&why!=='left'&&why!=='quit') netSend({t:'over',why,w:G.winner});
   if(M.net&&why==='quit') netSend({t:'leave'});
-  $('oWhy').textContent=M.type==='raid'?(best?(M.solo?'New best rush':'New best raid'):M.net?'Online Boss Raid':M.solo?'Boss Rush':'Boss Raid'):M.type==='tether'?(best?'New best':M.net?'Online Tether':'Tether'):M.net?(M.type==='duel'?'Online duel':'Online co-op'):M.type==='ascent'?(best?'New best climb':'Ascent'):M.type==='studio'?'Studio · '+M.songName:M.type==='duel'?'Duel':best?'New best':(M.type==='level'||M.type==='boss'||M.type==='hard'||M.type==='custom')?'Level failed':'Run ended';
+  $('oWhy').textContent=M.type==='raid'?(best?(M.solo?'New best rush':'New best raid'):M.net?'Online Boss Raid':M.solo?'Boss Rush':'Boss Raid'):M.type==='tether'?(best?'New best':M.net?'Online Tether':'Tether'):M.net?(M.type==='duel'?'Online Riff-Off':'Online co-op'):M.type==='ascent'?(best?'New best climb':'Ascent'):M.type==='studio'?'Studio · '+M.songName:M.type==='duel'?'Riff-Off':best?'New best':(M.type==='level'||M.type==='boss'||M.type==='hard'||M.type==='custom')?'Level failed':'Run ended';
   $('oTitle').textContent=why==='raid'?'Every boss defeated!':M.type==='raid'&&why==='harmony'?`The ${M.solo?'rush':'raid'} ends at ${BOSS[M.world-1]}`:M.type==='tether'&&why==='harmony'?'The cord wore out':M.net&&why==='duel'?(G.winner===NET.me?'You win!':`${NET.peerName||'Your rival'} wins`):why==='left'?`${NET.leftName||'Your friend'} left the match`:why==='duel'?`Player ${(G.winner||0)+1} wins!`:M.type==='ascent'&&why==='harmony'?`The climb ends on floor ${G.floorBest||1}`:why==='song'?'Song complete!':why==='dark'?'The darkness caught you':M.type==='interlude'&&why==='fell'?'You fell into the dark':({fell:'You fell into the void',harmony:'Out of harmony',burn:'Scorched by a fire vent',budget:'Out of beats',quit:'Run ended early'}[why]||'Run ended');
   $('oScore').textContent=G.score.toLocaleString();
   if(M.type==='level'||M.type==='hard'||M.type==='lremix'){ $('oRoomsL').textContent='Beats used'; $('oRooms').textContent=G.roomBeats+'/'+G.budget; }
@@ -11136,7 +11173,7 @@ function loop(ts){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners')) drawSkinPreviews(now); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners')) drawSkinPreviews(now); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
