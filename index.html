@@ -1303,6 +1303,14 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
   body:not(.phone) #menuOv #mPassTxt{white-space:nowrap;min-width:0}body:not(.phone) #menuOv #mPassTxt .ppt{flex:none;white-space:nowrap}
   body:not(.phone) #menuOv .chip.ppchip{position:relative}
   body:not(.phone) #menuOv .chip.ppchip .qdot{position:absolute;top:5px;right:6px;margin:0;box-shadow:0 0 0 2px #2A1F48}
+  /* PC sidebar tidy-up: the Twin Pulse row stays one line like the Pass row; the event row is a calm teal card (the Halloween
+     theme's phone styling no longer paints a dark box and glow on it); long names and emails end in … instead of running off */
+  body:not(.phone) #menuOv .chip.twchip{flex-wrap:nowrap!important;white-space:nowrap}
+  body:not(.phone) #menuOv .chip.twchip .twt{flex:none}
+  body:not(.phone) #menuOv .mtop-r .chip.evchip,body.hween:not(.phone) #menuOv .mtop-r .chip.evchip{background:linear-gradient(90deg,rgba(143,240,224,.16),rgba(143,240,224,.04))!important;
+    border-color:rgba(143,240,224,.32)!important;color:#DFFBF5!important;box-shadow:none!important;animation:none!important}
+  body:not(.phone) #menuOv .chip.namechip,body:not(.phone) #menuOv .chip.acct{display:block;width:0;min-width:100%;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:22px}
+  body:not(.phone) #menuOv .chip.namechip::before,body:not(.phone) #menuOv .chip.acct::before{display:inline-block;vertical-align:-4px;margin-right:12px}
   body:not(.phone) #menuOv .chip.ppchip::before{--ic:#FFD166;-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8l4 3.5L12 5l4 6.5L20 8l-1.6 10H5.6z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8l4 3.5L12 5l4 6.5L20 8l-1.6 10H5.6z'/%3E%3C/svg%3E")}
   body:not(.phone) #menuOv .chip.rankchip .gem{width:14px;height:14px;margin:0 3px}
   /* the two places that sell things stand out */
