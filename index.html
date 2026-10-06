@@ -1266,8 +1266,8 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
 /* ================= DESKTOP: a side bar instead of two rows of buttons =================
    Wide screens only (phones keep the tab bar). Same buttons, laid out as a navigation rail with icons. */
 @media (min-width:1000px){
-  body:not(.phone) #menuOv{padding-left:calc(272px + max(16px,env(safe-area-inset-left)))}
-  body:not(.phone) #menuOv .mtop{position:fixed!important;z-index:20;left:max(16px,env(safe-area-inset-left));top:16px;bottom:16px;width:240px;max-width:none;margin:0;box-sizing:border-box;
+  body:not(.phone) #menuOv{padding-left:calc(300px + max(16px,env(safe-area-inset-left)))}
+  body:not(.phone) #menuOv .mtop{position:fixed!important;z-index:20;left:max(16px,env(safe-area-inset-left));top:16px;bottom:16px;width:268px;max-width:none;margin:0;box-sizing:border-box;
     flex-direction:column;align-items:stretch;justify-content:flex-start;gap:10px;padding:20px 12px 14px;border-radius:24px;
     background:linear-gradient(180deg,rgba(30,24,66,.92),rgba(18,14,42,.9))}
   body:not(.phone) #menuOv .mbrand{font-size:21px;padding:2px 10px 10px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:2px}
@@ -1306,6 +1306,14 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
   /* PC sidebar tidy-up: the Twin Pulse row stays one line like the Pass row; the event row is a calm teal card (the Halloween
      theme's phone styling no longer paints a dark box and glow on it); long names and emails end in … instead of running off */
   body:not(.phone) #menuOv .chip.twchip{flex-wrap:nowrap!important;white-space:nowrap}
+  /* the sidebar's width is fixed: rows never push it wider (the display font is wide), and a label that doesn't fit ends in … */
+  body:not(.phone) #menuOv .mtop{min-width:0}
+  body:not(.phone) #menuOv .mtop>*{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+  body:not(.phone) #menuOv .mtop-r{min-width:0}
+  body:not(.phone) #menuOv .mtop-r>*{min-width:0;max-width:100%;box-sizing:border-box}
+  body:not(.phone) #menuOv .chip{gap:10px}
+  body:not(.phone) #menuOv .chip .twl,body:not(.phone) #menuOv #mPassTxt .ppl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  body:not(.phone) #menuOv .chip.twchip .twt,body:not(.phone) #menuOv #mPassTxt .ppt{flex:none;margin-left:auto;font-size:10.5px;padding:2px 7px}
   body:not(.phone) #menuOv .chip.twchip .twt{flex:none}
   body:not(.phone) #menuOv .mtop-r .chip.evchip,body.hween:not(.phone) #menuOv .mtop-r .chip.evchip{background:linear-gradient(90deg,rgba(143,240,224,.16),rgba(143,240,224,.04))!important;
     border-color:rgba(143,240,224,.32)!important;color:#DFFBF5!important;box-shadow:none!important;animation:none!important}
@@ -9598,7 +9606,7 @@ function twTeamRow(t,s,cls){ const nm=(t.names||[]).map(n=>escapeHTML(cleanName(
   return `<li class="${cls}"><div><b>${escapeHTML(showName(t.name,'Team'))}</b><small>${nm}</small></div><span>${s?s.score.toLocaleString():'–'}</span></li>`; }
 function twRender(){
   const ph=twPhase(), r=twRound(), n=Date.now();
-  const chip=$('mTwin'); if(chip){ chip.hidden=!twShown(); chip.innerHTML='<i class="twg">⚔ </i>Twin Pulse<i class="twt">'+(ph==='soon'?'Monday':ph==='signup'?'Sign-ups open':ph==='live'?(r<4?'Round '+r:'Final'):'Results')+'</i>'; }
+  const chip=$('mTwin'); if(chip){ chip.hidden=!twShown(); chip.innerHTML='<i class="twg">⚔ </i><span class="twl">Twin Pulse</span><i class="twt">'+(ph==='soon'?'Monday':ph==='signup'?'Sign-ups open':ph==='live'?(r<4?'Round '+r:'Final'):'Results')+'</i>'; }
   { const ban=$('mTwinBan'); if(ban){ ban.hidden=!twShown(); $('mTwinBanSub').textContent='2v2 event · '+(ph==='soon'?'starts Monday':ph==='signup'?'sign-ups are open, find a partner':ph==='live'?(r<4?'Round '+r+' is on':'the Final is on'):'see the results'); } }
   if($('twinOv').hidden) return;
   const st=twStand(), mine=twMine(), me=ACCT.user&&ACCT.user.uid, cur=ph==='live'?st.days[r-1]:null;
@@ -10866,7 +10874,7 @@ function buildMenu(){
   $('mEndlessMeta').innerHTML=SAVE.bestEndless?`Best<br>${SAVE.bestEndless.toLocaleString()}`:'';
   $('mCoopMeta').innerHTML=SAVE.bestCoop?`Best<br>${SAVE.bestCoop} rooms`:'';
   let hs=0; for(let i=1;i<=12;i++) hs+=SAVE.stars['H-'+i]||0; $('mHardMeta').textContent=`◆ ${hs}/36`;
-  { const n=passReady()+pqReady(); $('mPassDot').hidden=!n; $('mPassTxt').innerHTML='<i class="ppg">♛ </i>Pulse Pass<i class="ppt">'+passTier().t+'</i>'; }
+  { const n=passReady()+pqReady(); $('mPassDot').hidden=!n; $('mPassTxt').innerHTML='<i class="ppg">♛ </i><span class="ppl">Pulse Pass</span><i class="ppt">'+passTier().t+'</i>'; }
   { const rb=SAVE.bestRhythm||0; $('mRhythmMeta').innerHTML=rb?`Best<br>${rb.toLocaleString()}`:'♫'; const rs=Object.values(SAVE.remix||{}).reduce((x,y)=>x+y,0); $('mRemixMeta').textContent=rs?`◆ ${rs}`:'⇄'; }
   $('mCreateMeta').innerHTML=(SAVE.myLevels||[]).length?`${SAVE.myLevels.length} level${SAVE.myLevels.length>1?'s':''}<br>built`:'New';
   $('mStudioMeta').innerHTML=SAVE.bestStudio?`Best<br>${SAVE.bestStudio} rooms`:'New mode';
