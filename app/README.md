@@ -163,3 +163,7 @@ The game keeps only salted SHA-256 fingerprints of these codes; the codes themse
   - run one site-wide event (`live/event`): title, message, XP and Notes boosts (up to 3×), start time, length, and an optional gift everyone can claim once from the banner on the main menu.
 - All admin powers are enforced by `firestore.rules`, so **publish the latest rules** in the Firebase console (Firestore Database → Rules) before using the panel. To remove an admin, delete their `admins/{uid}` document in the console.
 - CrazyGames builds have no Firebase, so the admin panel and live events don't appear there.
+
+## Limited event: Erlaf the Giant Duck
+
+A one-off boss challenge (a giant white mallard cube) on the World 3 arena. It's open from Oct 6 to Oct 21 2026 (midnight Central) on its own, and any time an admin starts a live event with **Erlaf the Giant Duck** ticked (the live event's `mode: 'erlaf'`; publish the latest `firestore.rules` first). Beating him once unlocks the **Erlaf** block and its Quack landing effect (`SAVE.erlafWin`). It doesn't count toward world progress and has no challenge links.

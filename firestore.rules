@@ -47,7 +47,8 @@ service cloud.firestore {
     match /live/{doc} {
       allow read: if true;
       allow create, update: if isAdmin() && doc == 'event'
-        && request.resource.data.keys().hasOnly(['id', 'title', 'msg', 'xp', 'notes', 'start', 'end', 'gift', 'by', 't'])
+        && request.resource.data.keys().hasOnly(['id', 'title', 'msg', 'xp', 'notes', 'start', 'end', 'gift', 'by', 't', 'mode'])
+        && (!('mode' in request.resource.data) || request.resource.data.mode in ['erlaf'])
         && request.resource.data.id is string && request.resource.data.id.size() <= 32
         && request.resource.data.title is string && request.resource.data.title.size() <= 40
         && request.resource.data.msg is string && request.resource.data.msg.size() <= 140

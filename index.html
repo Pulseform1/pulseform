@@ -52,6 +52,11 @@ window.PULSEFORM_PEER = null;
 <meta name="theme-color" content="#2B2350">
 </head>
 <body>
+<noscript><main style="max-width:720px;margin:40px auto;padding:0 20px;font:16px/1.6 system-ui,sans-serif;color:#F4EFFF;background:#141030">
+<h1>Pulseform: a music-learning rhythm game</h1>
+<p>Pulseform teaches rhythm and timing through play. You move one tile at a time, and every move has to land on the beat of the music. Players practise keeping a steady pulse, timing their moves, listening closely to each level's song, spotting musical patterns like eighths, triplets and syncopation, and improving through short, repeatable levels.</p>
+<p>Pulseform needs JavaScript to run. <a href="about.html" style="color:#FFD166">About Pulseform</a> · <a href="privacy.html" style="color:#FFD166">Privacy policy</a></p>
+</main></noscript>
 <title>Pulseform — Interactive Music Education & Rhythm Learning</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1445,7 +1450,14 @@ body.phone #menuOv .twban:not([hidden]){display:flex;align-items:center;gap:12px
 .twban-ic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:linear-gradient(#FFE7A0,#E0A040);color:#2A1400}
 .twban-t{flex:1;display:flex;flex-direction:column;min-width:0}.twban-t b{font:800 16px var(--display)}.twban-t small{font-size:12.5px;color:#F1E8FF;opacity:.9}
 .twban-go{font:700 26px var(--display);color:#FFE7A0}
+/* the menu's intro comes first in the page (so it's the first thing read), but the top bar still shows above it */
+#menuOv .mtop{order:-1}
+/* the skill each mode practises, under its description */
+.mskill{display:block;margin-top:5px;font-style:normal;font-size:11.5px;font-weight:600;line-height:1.3;color:#8FF0E0;letter-spacing:.01em}.mskill::before{content:'♪ ';opacity:.8}
 #menuOv .edu-intro{max-width:640px;margin:22px auto 6px;padding:0 20px;text-align:center;font-size:12px;line-height:1.5;color:var(--ink-2);opacity:.55}
+#menuOv .duckban:not([hidden]){display:flex;align-items:center;gap:12px;width:100%;max-width:520px;margin-top:10px;padding:12px 14px;border-radius:18px;cursor:pointer;text-align:left;color:#fff;font:inherit;
+  border:1px solid rgba(255,255,255,.55);background:linear-gradient(110deg,rgba(255,255,255,.26),rgba(70,110,170,.5) 55%,rgba(24,30,70,.85));box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.duckban .duckic{background:linear-gradient(#8FB7E8,#4F78B8);overflow:hidden}.duckban .duckic canvas{width:40px;height:40px}.duckban .twban-go{color:#FFE27A;font-size:14px;white-space:nowrap}
 #menuOv .liveban:not([hidden]){display:flex;align-items:center;gap:12px;width:100%;max-width:520px;margin-top:10px;padding:12px 14px;border-radius:18px;cursor:pointer;text-align:left;color:#fff;font:inherit;
   border:1px solid rgba(140,240,255,.55);background:linear-gradient(110deg,rgba(120,230,255,.26),rgba(70,90,190,.55) 55%,rgba(30,26,90,.85));box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .liveban .twban-ic{background:linear-gradient(#B8F6FF,#4FB8E0);color:#06203A}.liveban .twban-go{color:#B8F6FF;font-size:14px;white-space:nowrap}
@@ -1691,6 +1703,19 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
 <section id="menuOv" class="screen" hidden>
   <button class="admfab" id="mAdmin" type="button" hidden aria-label="Admin panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-3 7.6-7 9-4-1.4-7-4.8-7-9V6z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></svg><span>Admin</span></button>
   <div id="hween" aria-hidden="true"></div>
+  <div class="mmain">
+    <div class="mhero">
+      <div class="eyebrow">Interactive music learning through rhythm and musical skill</div>
+      <h1 class="logo" id="logo">Pulse<span>form</span></h1>
+      <p class="tag">Practice rhythm, timing, and musical listening one beat at a time. Each level turns musical practice into an interactive learning challenge.</p>
+      <div class="eduIntro" aria-label="About Pulseform learning"><b>Learn through play</b><span>Pulseform combines rhythm practice, listening exercises, timing challenges, and interactive puzzles to help players develop musical skills.</span></div>
+       <button class="cta" id="mContinue" type="button"><span class="cta-k" id="mContTitle">Continue</span><span class="cta-s" id="mContSub"></span><span class="cta-go" aria-hidden="true">▶</span></button>
+      <button class="twban duckban" id="mErlaf" type="button" hidden><span class="twban-ic duckic" aria-hidden="true"><canvas class="skprev" data-skin="sk_erlaf" data-px="40" width="40" height="40"></canvas></span><span class="twban-t"><b>Erlaf the Giant Duck</b><small id="mErlafSub">Limited boss challenge</small></span><span class="twban-go" id="mErlafGo" aria-hidden="true">Play ›</span></button>
+      <button class="twban liveban" id="mLive" type="button" hidden><span class="twban-ic" aria-hidden="true">★</span><span class="twban-t"><b id="mLiveT">Live event</b><small id="mLiveSub"></small></span><span class="twban-go" id="mLiveGo" aria-hidden="true">›</span></button>
+      <button class="twban" id="mTwinBan" type="button" hidden><span class="twban-ic" aria-hidden="true">⚔</span><span class="twban-t"><b>Twin Pulse</b><small id="mTwinBanSub">2v2 event</small></span><span class="twban-go" aria-hidden="true">›</span></button>
+    </div>
+    <div id="menuArt" aria-hidden="true"></div>
+  </div>
   <header class="mtop">
     <div class="mbrand"><span class="mdot"></span>Pulseform</div>
     <div class="mtop-r"><button class="fsbtn" id="mFull" type="button" aria-label="Full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button><span class="wallet" id="walletM"></span>
@@ -1705,34 +1730,21 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <button class="chip c-lb" id="mLB" type="button">Leaderboard</button>
       <button class="chip c-set" id="mSettings" type="button">Settings</button>
       <button class="chip evchip" id="mEvent" type="button">Event</button>
-      <button class="chip c-poll" id="mPoll" type="button" hidden>Vote<em class="qdot" id="mPollDot" hidden></em></button>
       <button class="chip c-help" id="mGuide" type="button">Help</button>
       <button class="chip snd" id="mSound" type="button">Tap for music</button></div>
   </header>
-  <div class="mmain">
-    <div class="mhero">
-      <div class="eyebrow">Interactive music learning through rhythm and musical skill</div>
-      <h1 class="logo" id="logo">Pulse<span>form</span></h1>
-      <p class="tag">Practice rhythm, timing, and musical listening one beat at a time. Each level turns musical practice into an interactive learning challenge.</p>
-      <div class="eduIntro" aria-label="About Pulseform learning"><b>Learn through play</b><span>Pulseform combines rhythm practice, listening exercises, timing challenges, and interactive puzzles to help players develop musical skills.</span></div>
-       <button class="cta" id="mContinue" type="button"><span class="cta-k" id="mContTitle">Continue</span><span class="cta-s" id="mContSub"></span><span class="cta-go" aria-hidden="true">▶</span></button>
-      <button class="twban liveban" id="mLive" type="button" hidden><span class="twban-ic" aria-hidden="true">★</span><span class="twban-t"><b id="mLiveT">Live event</b><small id="mLiveSub"></small></span><span class="twban-go" id="mLiveGo" aria-hidden="true">›</span></button>
-      <button class="twban" id="mTwinBan" type="button" hidden><span class="twban-ic" aria-hidden="true">⚔</span><span class="twban-t"><b>Twin Pulse</b><small id="mTwinBanSub">2v2 event</small></span><span class="twban-go" aria-hidden="true">›</span></button>
-    </div>
-    <div id="menuArt" aria-hidden="true"></div>
-  </div>
   <nav class="mcards" aria-label="Game modes">
-    <button class="mcard" id="mLevels" type="button" style="--a:#FFD166"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 26h8v-6h8v-6h8V6" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg><b>Levels</b><small>16 worlds · 144 stages</small><span class="meta" id="mLevelsMeta"></span></button>
-    <button class="mcard" id="mDaily" type="button" style="--a:#B8F2E6"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="6" fill="currentColor"/><g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M16 3v4M16 25v4M3 16h4M25 16h4M7 7l3 3M22 22l3 3M25 7l-3 3M10 22l-3 3"/></g></svg><b>Daily</b><small id="mDailySub"></small><span class="meta" id="mDailyMeta"></span></button>
-    <button class="mcard" id="mEndless" type="button" style="--a:#FF8A80"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9 11c-4 0-6 2.5-6 5s2 5 6 5c6 0 8-10 14-10 4 0 6 2.5 6 5s-2 5-6 5c-6 0-8-10-14-10z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></svg><b>Endless</b><small>Faster every room</small><span class="meta" id="mEndlessMeta"></span></button>
-    <button class="mcard" id="mCoop" type="button" style="--a:#C9B8FF"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="11" width="12" height="12" rx="3" fill="currentColor"/><rect x="17" y="7" width="12" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="3"/></svg><b>Co-op</b><small>Journey or Riff-Off, one device</small><span class="meta" id="mCoopMeta"></span></button>
-    <button class="mcard" id="mHard" type="button" style="--a:#FF6B6B"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3l3.5 8.5L28 13l-6.5 6 2 9L16 23.5 8.5 28l2-9L4 13l8.5-1.5z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="16" cy="16" r="3" fill="currentColor"/></svg><b>Hard Mode</b><small>12 brutal stages</small><span class="meta" id="mHardMeta"></span></button>
-    <button class="mcard" id="mAscent" type="button" style="--a:#8FF0E0"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 28l9-12 5 6 4-5 8 11z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="M21 4v9M17 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Ascent</b><small>Climb floors, pick power cards</small><span class="meta" id="mAscentMeta"></span></button>
-    <button class="mcard" id="mRhythm" type="button" style="--a:#7FF0D2"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="7" cy="23" r="3.6" fill="currentColor"/><circle cx="16" cy="23" r="3.6" fill="currentColor"/><circle cx="25" cy="19" r="3.6" fill="currentColor"/><path d="M10.4 23V8l18-4v15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.4 23V9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><b>Rhythm Patterns</b><small>Eighths, triplets, off-beats</small><span class="meta" id="mRhythmMeta"></span></button>
-    <button class="mcard" id="mRemix" type="button" style="--a:#C9A0FF"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 10h6l10 12h8M4 22h6l3-3.6M19 13.6L20 12h8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 7l4 3-4 3M24 19l4 3-4 3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Remix</b><small>Your levels, reshuffled</small><span class="meta" id="mRemixMeta"></span></button>
-    <button class="mcard" id="mRush" type="button" style="--a:#FF9F5A"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 26V12l10-7 10 7v14z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="16" cy="16" r="4" fill="currentColor"/><path d="M11 26v-4h10v4" fill="none" stroke="currentColor" stroke-width="2.6"/></svg><b>Mastery Rush</b><small>Advanced rhythm challenges, back to back, solo</small><span class="meta" id="mRushMeta"></span></button>
-    <button class="mcard" id="mStudio" type="button" style="--a:#FF7EB6"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 24V7l14-3v17" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="8.5" cy="24" r="3.5" fill="currentColor"/><circle cx="22.5" cy="21" r="3.5" fill="currentColor"/></svg><b>Studio</b><small>Any song, your tempo</small><span class="meta" id="mStudioMeta"></span></button>
-  <button class="mcard" id="mCreate" type="button" style="--a:#B8F27A"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="4" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.6"/><rect x="18" y="18" width="10" height="10" rx="2" fill="currentColor"/><path d="M18 9h10M23 4v10M4 23h10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg><b>Create</b><small>Build and share levels</small><span class="meta" id="mCreateMeta"></span></button>
+    <button class="mcard" id="mLevels" type="button" style="--a:#FFD166"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 26h8v-6h8v-6h8V6" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg><b>Levels</b><small>16 worlds · 144 stages</small><em class="mskill">Steady-beat timing, step by step</em><span class="meta" id="mLevelsMeta"></span></button>
+    <button class="mcard" id="mDaily" type="button" style="--a:#B8F2E6"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="6" fill="currentColor"/><g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M16 3v4M16 25v4M3 16h4M25 16h4M7 7l3 3M22 22l3 3M25 7l-3 3M10 22l-3 3"/></g></svg><b>Daily</b><small id="mDailySub"></small><em class="mskill">Daily timing practice</em><span class="meta" id="mDailyMeta"></span></button>
+    <button class="mcard" id="mEndless" type="button" style="--a:#FF8A80"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9 11c-4 0-6 2.5-6 5s2 5 6 5c6 0 8-10 14-10 4 0 6 2.5 6 5s-2 5-6 5c-6 0-8-10-14-10z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></svg><b>Endless</b><small>Faster every room</small><em class="mskill">Keeping a steady pulse as the tempo rises</em><span class="meta" id="mEndlessMeta"></span></button>
+    <button class="mcard" id="mCoop" type="button" style="--a:#C9B8FF"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="11" width="12" height="12" rx="3" fill="currentColor"/><rect x="17" y="7" width="12" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="3"/></svg><b>Co-op</b><small>Journey or Riff-Off, one device</small><em class="mskill">Ensemble timing with a partner</em><span class="meta" id="mCoopMeta"></span></button>
+    <button class="mcard" id="mHard" type="button" style="--a:#FF6B6B"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3l3.5 8.5L28 13l-6.5 6 2 9L16 23.5 8.5 28l2-9L4 13l8.5-1.5z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="16" cy="16" r="3" fill="currentColor"/></svg><b>Hard Mode</b><small>12 brutal stages</small><em class="mskill">Precision timing under pressure</em><span class="meta" id="mHardMeta"></span></button>
+    <button class="mcard" id="mAscent" type="button" style="--a:#8FF0E0"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 28l9-12 5 6 4-5 8 11z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="M21 4v9M17 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Ascent</b><small>Climb floors, pick power cards</small><em class="mskill">Timing and planning ahead</em><span class="meta" id="mAscentMeta"></span></button>
+    <button class="mcard" id="mRhythm" type="button" style="--a:#7FF0D2"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="7" cy="23" r="3.6" fill="currentColor"/><circle cx="16" cy="23" r="3.6" fill="currentColor"/><circle cx="25" cy="19" r="3.6" fill="currentColor"/><path d="M10.4 23V8l18-4v15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.4 23V9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><b>Rhythm Patterns</b><small>Eighths, triplets, off-beats</small><em class="mskill">Reading eighths, triplets and syncopation</em><span class="meta" id="mRhythmMeta"></span></button>
+    <button class="mcard" id="mRemix" type="button" style="--a:#C9A0FF"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 10h6l10 12h8M4 22h6l3-3.6M19 13.6L20 12h8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 7l4 3-4 3M24 19l4 3-4 3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Remix</b><small>Your levels, reshuffled</small><em class="mskill">Adapting to familiar rhythms, rearranged</em><span class="meta" id="mRemixMeta"></span></button>
+    <button class="mcard" id="mRush" type="button" style="--a:#FF9F5A"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 26V12l10-7 10 7v14z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="16" cy="16" r="4" fill="currentColor"/><path d="M11 26v-4h10v4" fill="none" stroke="currentColor" stroke-width="2.6"/></svg><b>Mastery Rush</b><small>Every boss, back to back, solo</small><em class="mskill">Anticipating the beat</em><span class="meta" id="mRushMeta"></span></button>
+    <button class="mcard" id="mStudio" type="button" style="--a:#FF7EB6"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 24V7l14-3v17" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="8.5" cy="24" r="3.5" fill="currentColor"/><circle cx="22.5" cy="21" r="3.5" fill="currentColor"/></svg><b>Studio</b><small>Any song, your tempo</small><em class="mskill">Playing in time with your own music</em><span class="meta" id="mStudioMeta"></span></button>
+  <button class="mcard" id="mCreate" type="button" style="--a:#B8F27A"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="4" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.6"/><rect x="18" y="18" width="10" height="10" rx="2" fill="currentColor"/><path d="M18 9h10M23 4v10M4 23h10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg><b>Create</b><small>Build and share levels</small><em class="mskill">Composing rhythm patterns</em><span class="meta" id="mCreateMeta"></span></button>
   </nav>
   <p class="edu-intro">Pulseform is a music education game built around rhythm, timing, listening, and musical skill development. Play through interactive challenges to practice your sense of beat and improve musical coordination.</p>
 </section>
@@ -1861,7 +1873,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <button class="rvbtn" id="rvAd" type="button"><span class="rvplay">▶</span> Watch an ad to revive</button>
     <button class="rvbtn alt" id="rvToken" type="button">Use a revive token</button>
     <button class="btn ghost" id="rvNo" type="button">No thanks</button>
-    <small class="rvnote">One revive per mastery challenge. Your progress in the challenge is preserved.</small>
+    <small class="rvnote">One revive per boss challenge. The boss keeps the progress you've made.</small>
   </div>
 </section>
 <div class="adov" id="testAdOv" hidden><div class="adbox"><small>TEST AD</small><b>This is where a short video ad plays</b><p>Real ads appear once AdMob is set up. Reward in <span id="taCount">5</span>…</p><button class="btn ghost" id="taSkip" type="button">Close (no reward)</button></div></div>
@@ -1931,8 +1943,6 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
 <section id="pollOv" class="overlay" hidden>
   <div class="panel">
     <div class="head"><button class="back" id="pollBack" type="button">← Menu</button></div>
-    <div class="eyebrow">Community poll</div><h2>Vote on what's next</h2>
-    <p class="small" style="margin:0">Pick one in each. You can change your vote any time while the poll is open.</p>
     <div id="pollBody" class="pollbody"></div>
     <div class="small" id="pollMsg" role="status"></div>
   </div>
@@ -2204,6 +2214,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         <label id="admEvGL" hidden>Gift item<select id="admEvGI"></select></label></div>
       <div class="admpick" id="admEvPick" hidden></div>
       <div class="g1" id="admEvGAL"><label>Notes for everyone<input id="admEvGA" type="number" min="1" max="100000" step="100" value="500"></label></div>
+      <label class="opt admduck" for="admEvDuck"><input id="admEvDuck" type="checkbox"><span>Erlaf the Giant Duck<small>Open the limited Erlaf boss challenge (win his block) for as long as this event runs.</small></span></label>
       <div class="row"><button class="btn" id="admEvGo" type="button">Start event</button><button class="btn ghost" id="admEvEnd" type="button">End event now</button></div>
     </div>
     <div class="admpane" id="admMe" hidden>
@@ -2280,10 +2291,10 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         <div class="p2row" id="nSkins" hidden aria-label="Your block"></div>
         <div class="small" id="nStatus"></div>
         <div class="modes" id="nModes" hidden>
-          <button class="mode primary" id="nJourney" type="button"><b>Online Journey</b><small>Co-op through endless rooms, 2 to 4 players. Every block must reach the door.</small><span class="meta">♪</span></button>
-          <button class="mode" id="nDuel" type="button"><b>Online Riff-Off</b><small>2 players. Send pulses at your friend's platform from your own device. First to 3 drops wins.</small><span class="meta">⚔</span></button>
-          <button class="mode" id="nRaid" type="button"><b>Online Mastery Challenge</b><small>Work together through advanced rhythm challenges, 2 to 4 players. Each player uses timing pads and shares Harmony.</small><span class="meta">☠</span></button>
-          <button class="mode" id="nTether" type="button"><b>Online Tether</b><small>2 players, tied together by a cord. Stray more than 4 tiles apart and it snaps. Stay close for double points.</small><span class="meta">∞</span></button>
+          <button class="mode primary" id="nJourney" type="button"><b>Online Journey</b><small>Co-op through endless rooms, 2 to 4 players. Every block must reach the door.</small><em class="mskill">Ensemble timing practice</em><span class="meta">♪</span></button>
+          <button class="mode" id="nDuel" type="button"><b>Online Riff-Off</b><small>2 players. Send pulses at your friend's platform from your own device. First to 3 drops wins.</small><em class="mskill">Competitive rhythm timing practice</em><span class="meta">⚔</span></button>
+          <button class="mode" id="nRaid" type="button"><b>Online Mastery Jam</b><small>Work together through advanced rhythm challenges, 2 to 4 players. Each player uses timing pads and shares Harmony.</small><em class="mskill">Team timing, anticipating the beat</em><span class="meta">☠</span></button>
+          <button class="mode" id="nTether" type="button"><b>Online Tether</b><small>2 players, tied together by a cord. Stray more than 4 tiles apart and it snaps. Stay close for double points.</small><em class="mskill">Moving in time together</em><span class="meta">∞</span></button>
         </div>
         <div class="small" id="nModeNote"></div>
         <div class="small" id="nWait" hidden>The host picks the mode. The match starts on both screens together.</div>
@@ -2298,10 +2309,10 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <p style="font-size:14px;margin:0">P1 uses WASD, P2 uses the arrow keys. On a phone, each player gets a swipe pad.</p>
     <div class="modes">
       <div class="p2pick"><div class="p2head"><span class="small"><b>P2's block</b> · pick any block you own</span></div><div class="p2row" id="p2Row"></div></div>
-      <button class="mode primary" id="cJourney" type="button"><b>Journey</b><small>Team up through endless rooms. Both blocks must reach the door.</small><span class="meta" id="cJourneyMeta"></span></button>
-      <button class="mode" id="cDuel" type="button"><b>Riff-Off</b><small>Side-by-side platforms. Hit your pulse pad to drop tiles under your rival. First to drop the other 3 times wins.</small><span class="meta">⚔</span></button>
-      <button class="mode" id="cRaid" type="button"><b>Mastery Challenge</b><small>Work through advanced rhythm challenges together. Use the timing pads and keep your Harmony going.</small><span class="meta" id="cRaidMeta">☠</span></button>
-      <button class="mode" id="cTether" type="button"><b>Tether</b><small>Tied together by a glowing cord. Stretch it past 4 tiles and it snaps you back. Stay side by side for double points.</small><span class="meta" id="cTetherMeta">∞</span></button>
+      <button class="mode primary" id="cJourney" type="button"><b>Journey</b><small>Team up through endless rooms. Both blocks must reach the door.</small><em class="mskill">Ensemble timing practice</em><span class="meta" id="cJourneyMeta"></span></button>
+      <button class="mode" id="cDuel" type="button"><b>Riff-Off</b><small>Side-by-side platforms. Hit your pulse pad to drop tiles under your rival. First to drop the other 3 times wins.</small><em class="mskill">Competitive rhythm timing practice</em><span class="meta">⚔</span></button>
+      <button class="mode" id="cRaid" type="button"><b>Mastery Jam</b><small>Work through advanced rhythm challenges together. Use the timing pads and keep your Harmony going.</small><em class="mskill">Team timing, anticipating the beat</em><span class="meta" id="cRaidMeta">☠</span></button>
+      <button class="mode" id="cTether" type="button"><b>Tether</b><small>Tied together by a glowing cord. Stretch it past 4 tiles and it snaps you back. Stay side by side for double points.</small><em class="mskill">Moving in time together</em><span class="meta" id="cTetherMeta">∞</span></button>
     </div>
     </div>
   </div>
@@ -2431,6 +2442,8 @@ const THEMES=[
  {name:'The Impossible Sky',sky:['#3A2A63','#8E5A8A','#FFB38A'],hi:['#40205E','#B0508A','#FFC98A'],tile:'#F2F0F7',front:'#B9B3CF',acc:'#FFC857',pTop:'#FFFFFF',pFront:'#948DB0',mus:{p:2,tr:2},bpm:112}];
 const WORLD_MECH=[['pillar','gem'],['crack','tele'],['lock','rgate'],['gate','wind'],['vent'],['ice']];
 const BOSS=['The Fountain','The Lighthouse','The Great Clock','The Kaleidoscope','The Echo','The Unfolding'];
+/* Erlaf the Giant Duck: a limited-event boss challenge fought on the World 3 arena (see LIMITED EVENT: ERLAF) */
+const ERLAF_W=3, bossNameOf=M=>M&&M.erlaf?'Erlaf the Giant Duck':BOSS[((M&&M.world)||1)-1];
 const LEVELS_PER_WORLD=8;
 const LEVEL_NAMES=[
  ['Listen','Walk','Turn','Wall','Edge','Streak','Gather','Courtyard Loop'],
@@ -2563,8 +2576,8 @@ const ownsItem=it=>!!it&&(it.price===0||SAVE.owned.includes(it.id)||(!it.price&&
 const skinById=id=>SKINS.find(s=>s.id===id)||SKINS[0], landById=id=>LANDS.find(s=>s.id===id)||LANDS[0];
 const hardCleared=()=>{ let n=0; for(let i=1;i<=12;i++) if((SAVE.stars['H-'+i]||0)>0) n++; return n; };
 const ownsSkin=id=>{ const s=SKINS.find(k=>k.id===id); return !!s&&(SAVE.owned.includes(id)||s.price===0||(s.req&&reqMet(s.req))); };
-const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?myRank()>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.twin?!!SAVE.twinWin:true)&&(r.pass?passGot(r.pass):true)&&(r.passp?passPGot(r.passp):true)&&(r.login?giftDays()>=r.login:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true);
-const reqText=r=>r.pass?`Pulse Pass · tier ${r.pass}`:r.passp?`Pulse Pass+ · tier ${r.passp}`:r.login?`Log in on ${r.login} different days`:r.twin?'One of a kind: only the Twin Pulse champions will own it':r.boss?`Complete ${BOSS[r.boss-1]}`:r.cvkOn?`Bet ♪${CVK_BET_BLOCK.toLocaleString()} on ${r.cvkOn==='cale'?'Cale':'Korra'} in Cale vs Korra`:r.cvkBet?`Bet ♪${r.cvkBet.toLocaleString()} in total on Cale vs Korra`:r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
+const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?myRank()>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.duck?!!SAVE.erlafWin:true)&&(r.twin?!!SAVE.twinWin:true)&&(r.pass?passGot(r.pass):true)&&(r.passp?passPGot(r.passp):true)&&(r.login?giftDays()>=r.login:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true);
+const reqText=r=>r.duck?'Limited event: defeat Erlaf the Giant Duck':r.pass?`Pulse Pass · tier ${r.pass}`:r.passp?`Pulse Pass+ · tier ${r.passp}`:r.login?`Log in on ${r.login} different days`:r.twin?'One of a kind: only the Twin Pulse champions will own it':r.boss?`Complete ${BOSS[r.boss-1]}`:r.cvkOn?`Bet ♪${CVK_BET_BLOCK.toLocaleString()} on ${r.cvkOn==='cale'?'Cale':'Korra'} in Cale vs Korra`:r.cvkBet?`Bet ♪${r.cvkBet.toLocaleString()} in total on Cale vs Korra`:r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
 function hsl2hex(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
   return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); }
 
@@ -3113,7 +3126,8 @@ SKINS.push(
  {id:'sk_horizon',name:'Event Horizon',vx:'sk_horizon',nocore:true,prev:[.58,20],top:'#0B0B14',front:'#05050A',core:'#FFB347',paid:'pf_skin_horizon'},
  {id:'pp_sovereign',name:'Pulse Sovereign',vx:'pp_sovereign',nocore:true,prev:[.56,22],top:'#1A1430',front:'#0C0A1C',core:'#FFFFFF',req:{passp:100}},
  {id:'equinox',name:'Equinox',vx:'equinox',nocore:true,prev:[.74,12],top:'#FFFDF6',front:'#EFE8D8',core:'#FFFFFF',req:{twin:true},hidden:true},
- {id:'eclipse_seraph',name:'Eclipse Seraph',anim:'eclipse',top:'#FFFBEF',front:'#EFE6D2',core:'#FFFFFF',req:{cvk:true},prev:[.8,11],hidden:true});
+ {id:'eclipse_seraph',name:'Eclipse Seraph',anim:'eclipse',top:'#FFFBEF',front:'#EFE6D2',core:'#FFFFFF',req:{cvk:true},prev:[.8,11],hidden:true},
+ {id:'sk_erlaf',name:'Erlaf',vx:'sk_erlaf',nocore:true,prev:[.66,16],top:'#FFFFFF',front:'#E7EBF1',core:'#F4A12A',req:{duck:true}});   // the limited Erlaf event
 /* every fancy block gets a matching landing effect; owning the block unlocks it */
 const SIG={
  lantern:{n:'Lantern Glow',g:'✹',c:['#FFD166','#FFE7A3','#FF9F3C'],sh:'flame',ring:'#FFD166'},
@@ -3157,6 +3171,7 @@ const SIG={
  sk_prism:{n:'Prism Roar',g:'◆',c:['#BFF4FF','#C9A0FF','#FFFFFF'],sh:'shard',ring:'#9FD8FF',fx:'crystal'},
  sk_lich:{n:'Soul Harvest',g:'☠',c:['#3CFF8A','#B8FFD4','#2A1E3E'],sh:'blob',ring:'#3CFF8A',fx:'void'},
  sk_core:{n:'Overload',g:'◎',c:['#5CF6FF','#FF5CF0','#FFFFFF'],sh:'pixel',ring:'#5CF6FF',fx:'neonrings'},
+ sk_erlaf:{n:'Quack',g:'◒',c:['#FFFFFF','#F4A12A','#DDE3EA'],sh:'petal',ring:'#FFD45C',fx:'pillar'},
  sk_kitsune:{n:'Fox Fire',g:'✿',c:['#5CB8FF','#FF8A3C','#FFB4CC'],sh:'petal',ring:'#FF8A3C',fx:'pillar'},
  sk_pharaoh:{n:'Solar Decree',g:'☥',c:['#FFD34D','#2A5BD6','#FFF2C0'],sh:'coin',ring:'#FFD34D',fx:'beams'},
  sk_aurora:{n:'Northern Lights',g:'✱',c:['#9CFFD8','#C07CFF','#FFFFFF'],sh:'flake',ring:'#9CFFD8',fx:'frost'},
@@ -3215,7 +3230,7 @@ const QUESTS=[
  {id:'duel',t:n=>`Play ${n} riff-offs`,g:[1,2,3],ev:'duel'},
  {id:'hard',t:n=>`Clear ${n} Hard Mode stage${n>1?'s':''}`,g:[1,1,2],ev:'hard'},
  {id:'daily',t:()=>`Finish today's Daily Practice`,g:[1,1,1],ev:'daily'},
- {id:'boss',t:()=>`Complete a mastery challenge`,g:[1,1,1],ev:'boss'},
+ {id:'boss',t:()=>`Complete a boss challenge`,g:[1,1,1],ev:'boss'},
  {id:'runs',t:n=>`Play ${n} runs in any mode`,g:[4,6,8],ev:'runs'}];
 const levelStars=()=>Object.entries(SAVE.stars).filter(([k])=>!k.startsWith('H-')).reduce((a,[,v])=>a+v,0);
 
@@ -3443,12 +3458,13 @@ function startRun(M){
   if(M.atPerf!=null&&(M.net||M.coop||M.duel)) startCountdown(M.atPerf);
   stopStudioAudio(); if(M.type==='studio'&&M.file) studioBegin(M); if(M.type==='studio'&&M.silent) studioSilentBegin(M);
   clearInterval(A.pumpT); A.pumpT=setInterval(()=>{ if(G.state==='playing'||G.state==='cutscene') pump(); },40);
-  const title=M.type==='level'?`${M.world}-${M.level} ${LEVEL_NAMES[M.world-1][M.level-1]}`:M.type==='boss'?BOSS[M.world-1]:M.type==='daily'?'Daily Challenge':M.type==='hard'?`Hard ${M.idx} · ${HARD_NAMES[M.idx-1]}`:M.type==='duel'?'Riff-Off':M.type==='coop'?'Co-op':M.type==='raid'?(M.solo?'Boss Rush':'Boss Raid'):M.type==='tether'?'Tether':M.type==='ascent'?'Ascent · floor 1':M.type==='studio'?M.songName:M.type==='interlude'?'Interlude · The Silence':M.type==='event'?weekEvent().name:M.type==='custom'?(M.design.n||'Custom level'):'Endless';
+  const title=M.type==='level'?`${M.world}-${M.level} ${LEVEL_NAMES[M.world-1][M.level-1]}`:M.type==='boss'?bossNameOf(M):M.type==='daily'?'Daily Practice':M.type==='hard'?`Hard ${M.idx} · ${HARD_NAMES[M.idx-1]}`:M.type==='duel'?'Riff-Off':M.type==='coop'?'Co-op':M.type==='raid'?(M.solo?'Mastery Rush':'Mastery Jam'):M.type==='tether'?'Tether':M.type==='ascent'?'Ascent · floor 1':M.type==='studio'?M.songName:M.type==='interlude'?'Interlude · The Silence':M.type==='event'?weekEvent().name:M.type==='custom'?(M.design.n||'Custom level'):'Endless';
   G.banner={text:title,sub:M.type==='interlude'?'keep moving':M.type==='level'?`♪ ${trackName()} · ${M.level===1?'the song begins':'+ '+instName(M.world,M.level)} · part ${M.level}/9`:M.type==='boss'?`♪ ${trackName()} · the full symphony`:`♪ ${trackName()} · ${TRACK.style.mood}`,t0:G.now,dur:2.6,col:'#FFF8EE'};
   $('score').textContent='0'; setPads(); hud();
   const key=M.type==='level'?M.world+'-'+M.level:'';
   let h=LEVEL_HINTS[key]||'';
   if(!h&&M.type==='level'&&M.level===1) h=WORLD_MECH[M.world-1].map(k=>TIPS[k]).join(' ');
+  if(!h&&M.erlaf) h='Limited event: Erlaf the Giant Duck! Step on the gold pulse pad to send a pulse at him. Red targets land 2 beats later, so move off them.';
   if(!h&&M.type==='boss') h='Step on the gold pulse pad to send a pulse at the boss. Red targets land 2 beats later, so move off them.';
   if(!h&&M.type==='rhythm') h='Rhythm Patterns: move on every note in the lane above. Eighths, triplets and off-beats are coming.';
   if(!h&&M.type==='lremix') h='Remix: a level you cleared, reshuffled, with new hazards and a faster song.';
@@ -3457,7 +3473,7 @@ function startRun(M){
   if(!h&&M.type==='duel') h='Step on your pulse pad to send a pulse at your rival\'s tile. Drop them 3 times to win.';
   if(!h&&M.type==='daily') h=M.mod?MODS[M.mod]:'No modifier today. Three rooms, one run.';
   if(!h&&M.type==='coop') h='P1 uses WASD, P2 uses the arrows. Both blocks must reach the door.';
-  if(M.type==='raid') h=M.solo?'Boss Rush: every boss, back to back. Step on the pulse pad to send a pulse. Dodge the red targets. Each boss you beat heals 2 Harmony.':(M.net?'Online Boss Raid: ':'Boss Raid: ')+'work through advanced rhythm challenges back to back. Use the timing pads to play, avoid the red targets, and restore Harmony by completing each challenge.';
+  if(M.type==='raid') h=M.solo?'Mastery Rush: every boss, back to back. Step on the pulse pad to send a pulse. Dodge the red targets. Each boss you beat heals 2 Harmony.':(M.net?'Online Mastery Jam: ':'Mastery Jam: ')+'every boss, back to back, together. Step on either pulse pad to send a pulse. Dodge the red targets. Each boss you beat heals 2 Harmony.';
   if(M.type==='tether') h=(M.net?'Online Tether: ':'Tether: ')+`you are tied together. Stretch the cord past ${TETHER_MAX} tiles and it snaps you back (−1 Harmony). Stay side by side for double points.`;
   if(M.type==='interlude') h='';
   if(!h&&M.type==='studio') h=`Studio · ${Math.round(M.bpm*10)/10} BPM · ${M.diff==='chill'?'Chill: skip beats whenever you like.':M.diff==='groove'?'Groove: a move every beat.':'Intense: a move every beat, 3 Harmony.'}`+(M.file?' The run ends when your song does.':M.silent?(M.synced?' Silent mode: lined up with your taps.':' Silent mode: tap tempo along with your song right before Start to line up the beat.'):'');
@@ -3466,7 +3482,7 @@ function startRun(M){
   if(M.type==='custom') h=(M.test?'Test play. ':M.design.by?`A level by ${M.design.by}. `:'')+`Reach the door. Par is ${R.par} moves.`;
   if(M.chal) h=`${M.chal.n}'s challenge: beat ${M.chal.s.toLocaleString()} points.`;
   if(!h&&M.type==='endless') h=SAVE.relaxed?'Relaxed: skip a beat to hold still.':'Every beat needs a move. Bump a rail to stay put.';
-  if(M.type==='level'||M.type==='boss'){ WORLD_MECH[M.world-1].forEach(k=>G.seen.add(k)); SAVE.lastWorld=M.world; }
+  if((M.type==='level'||M.type==='boss')&&!M.erlaf){ WORLD_MECH[M.world-1].forEach(k=>G.seen.add(k)); SAVE.lastWorld=M.world; }
   hint(M.tut?'':h,7000); hideTalk(); tutStart(M); watchStart(M); bossTalk(M); followStart(M);
   SAVE.plays++; save();
 }
@@ -5264,7 +5280,7 @@ function vxPost3(S,X,T,W,bh,H,now){
   cx.restore();
 }
 /* ===== Premium blocks (bought with real money in the app): their animated effects ===== */
-const VX4=new Set(['sk_clock','sk_magma','sk_prism','sk_lich','sk_core','sk_kitsune','sk_pharaoh','sk_aurora','sk_paladin','sk_horizon']);
+const VX4=new Set(['sk_erlaf','sk_clock','sk_magma','sk_prism','sk_lich','sk_core','sk_kitsune','sk_pharaoh','sk_aurora','sk_paladin','sk_horizon']);
 
 
 function vx4Gear(x,y,r,teeth,a,fill,stroke){ cx.save(); cx.translate(x,y); cx.rotate(a); cx.beginPath();
@@ -5351,6 +5367,10 @@ function vxPre4(S,X,T,W,bh,H,now){
       cx.strokeStyle=rgba('#5CF6FF',.55); cx.lineWidth=1.4;
       for(let k=0;k<3;k++){ cx.save(); cx.translate(cxm,oy); cx.rotate(now*(k%2?-.6:.45)+k); cx.setLineDash([W*.12,W*.07]); cx.beginPath(); cx.ellipse(0,0,W*(1+.18*k),W*(.36+.06*k),0,Math.PI,TAU); cx.stroke(); cx.restore(); }
       cx.setLineDash([]); if(bt>.2){ const sd=Math.floor(G.lastBeatT*10); vxBolt(X-W*.1,fy+H*.3,X-W*.5,T-bh,sd,W*.25,rgba('#B8F8FF',bt),1.4); vxBolt(X+W*1.1,fy+H*.4,X+W*1.5,T-bh*.5,sd+3,W*.25,rgba('#FF7AF0',bt),1.2); } } break;
+    case 'sk_erlaf': {   // a white mallard's tail sticking up at the back with a drake's curl, flicking on the beat
+      cx.globalCompositeOperation='source-over'; cx.save(); cx.translate(X+W*.9,fy+H*.42); cx.rotate(-.15-.3*bt+Math.sin(now*3)*.05);
+      cx.fillStyle='#E3E8EF'; cx.beginPath(); cx.moveTo(-W*.05,H*.32); cx.quadraticCurveTo(W*.3,H*.05,W*.48,-H*.62); cx.quadraticCurveTo(W*.2,-H*.18,-W*.05,-H*.2); cx.closePath(); cx.fill();
+      cx.strokeStyle='rgba(90,100,125,.55)'; cx.lineWidth=1.2; cx.stroke(); cx.strokeStyle='#C3CBD6'; cx.lineWidth=Math.max(1.2,W*.04); cx.lineCap='round'; cx.beginPath(); cx.arc(W*.44,-H*.6,W*.055,Math.PI*1.1,Math.PI*2.35); cx.stroke(); cx.restore(); } break;
     case 'sk_kitsune': { vxGlow(cxm,oy,W*1.3,'#FF8A3C',.22+.25*bt,.8);
       cx.globalCompositeOperation='source-over';
       for(let i=0;i<9;i++){ const a=-Math.PI/2+(i-4)*.36+Math.sin(now*1.6+i*.7)*.07, L=W*(1.45+.12*Math.sin(now*2+i)+.12*bt), bx=cxm, by=fy+H*.7;
@@ -5521,6 +5541,17 @@ function vxPost4(S,X,T,W,bh,H,now){
       cx.strokeStyle='#4A5470'; cx.lineWidth=W*.06; [-1,1].forEach(sg=>{ cx.beginPath(); cx.moveTo(cxm+sg*W*.5,fy+H*.2); cx.quadraticCurveTo(cxm+sg*W*.85,fy+H*.6,cxm+sg*W*.62,B+H*.2); cx.stroke(); });
       cx.globalCompositeOperation='lighter'; if(sb<.6){ const u=sb/.6; cx.strokeStyle=`rgba(92,246,255,${1-u})`; cx.lineWidth=2*(1-u)+.5; cx.beginPath(); cx.ellipse(cxm,oy,W*(.6+1.1*u),W*(.22+.38*u),0,0,TAU); cx.stroke(); }
       cx.strokeStyle=rgba('#5CF6FF',.7); cx.lineWidth=1.4; for(let k=0;k<3;k++){ cx.save(); cx.translate(cxm,oy); cx.rotate(now*(k%2?-.6:.45)+k); cx.setLineDash([W*.12,W*.07]); cx.beginPath(); cx.ellipse(0,0,W*(1+.18*k),W*(.36+.06*k),0,0,Math.PI); cx.stroke(); cx.restore(); } cx.setLineDash([]); } break;
+    case 'sk_erlaf': {   // block style: googly eyes (one bigger), a slab bill that quacks on the beat, wing slabs, a tuft on top
+      const tx=cxm+Math.sin(now*.9)*W*2, ty=B+W;
+      [-1,1].forEach(sg=>{ const ww=W*.14; cx.save(); cx.translate(sg<0?X-ww*.45:X+W-ww*.55,fy+H*.32-bt*H*.08); cx.rotate(sg*(.1+.25*bt)); cubeBox(0,0,ww,bh*.25,H*.45,'#F7F9FB','#D2D9E3',2); cx.restore(); });
+      const hr=W*.15; googly(cxm-W*.19,fy+H*.3,hr*1.1,tx,ty,now,1.3); googly(cxm+W*.19,fy+H*.27,hr*.8,tx,ty,now,4.1);
+      const op=bt*.5, bw=W*.62, bx=cxm-bw/2, by=fy+H*.56;
+      cubeBox(bx+bw*.05,by+H*.12+op*H*.12,bw*.9,H*.08,H*.1,'#F7B63A','#D8841C',2);
+      if(op>.05){ cx.fillStyle='#6A1A0C'; cx.fillRect(bx+bw*.1,by+H*.15,bw*.8,op*H*.12+1); }
+      cubeBox(bx,by-H*.04,bw,H*.12,H*.1,'#FFD45C','#F4A12A',3);
+      cx.fillStyle='rgba(120,50,0,.6)'; [-1,1].forEach(s=>{ cx.fillRect(cxm+s*bw*.18-1,by-H*.01,2.2,1.4); });
+      cx.strokeStyle='#D8DEE7'; cx.lineWidth=Math.max(1.2,W*.035); cx.lineCap='round';
+      for(let k=-1;k<=1;k++){ cx.beginPath(); cx.moveTo(cxm+k*W*.06,T+bh*.55); cx.quadraticCurveTo(cxm+k*W*.12,T-bh*.5,cxm+k*W*.02+W*.08,T-bh*.45-Math.sin(now*4+k)*bh*.12); cx.stroke(); } } break;
     case 'sk_kitsune': {
       [-1,1].forEach(sg=>{ const ex=cxm+sg*W*.28; cx.fillStyle='#FFF4EA'; cx.beginPath(); cx.moveTo(ex-W*.15,T+bh*.5); cx.lineTo(ex+sg*W*.04,T-bh*1.5); cx.lineTo(ex+W*.15,T+bh*.5); cx.closePath(); cx.fill();
         cx.fillStyle='#FF8A9A'; cx.beginPath(); cx.moveTo(ex-W*.07,T+bh*.3); cx.lineTo(ex+sg*W*.03,T-bh*.9); cx.lineTo(ex+W*.07,T+bh*.3); cx.closePath(); cx.fill(); });
@@ -5669,7 +5700,7 @@ function genRoundArena(){
   return room;
 }
 function genArena(w){
-  if(w===WORLDS&&G.mode&&G.mode.type==='boss') return genRoundArena();
+  if(w===WORLDS&&G.mode&&G.mode.type==='boss'&&!G.mode.erlaf) return genRoundArena();
   const N=9, id=(x,y)=>y*N+x, inb=(x,y)=>x>=0&&y>=0&&x<N&&y<N;
   for(let attempt=0;attempt<40;attempt++){
     const cells=Array.from({length:N*N},newCell), start={x:4,y:8};
@@ -5712,6 +5743,7 @@ function genArena(w){
     if(arenaTraps(room,start).bad.length) continue;
     const hp=w===1?4:w===WORLDS?25:(w<=6?3+2*w:9+w)-1;   // 5 less health than the original bosses; the Fountain keeps 4 and the Round One has 25
     room.boss={x:3,y:0,hp,max:hp,flashT:-9,chargeT:-9,dieT:0,enraged:false,w};
+    if(G.mode&&G.mode.erlaf){ room.boss.duck=true; room.boss.hp=room.boss.max=12; }   // Erlaf: a sturdier duck than the World 3 boss
     ['crack','tele','rgate','wind','vent','ice','spring','mud','ghost'].forEach(k=>room.has[k]=cells.some(c=>k==='tele'?c.tele>=0:c[k]));
     room.has.blink=cells.some(c=>c.blink>=0); room.has.rot=cells.some(c=>c.rot>=0); room.has.laser=!!(room.lasers&&room.lasers.length);
     return room;
@@ -5804,7 +5836,7 @@ function bossDie(){
   const B=R.boss;
   B.dieT=G.now; G.proj=[]; G.finishing=true; G.restUntil=1e9; sWin();
   for(let k=0;k<9;k++) setTimeout(()=>{ if(R&&R.boss) burst(B.x+ri(3),B.y+ri(3),18,[TH.acc,'#FFFFFF','#FF8A5C'][k%3],true); },k*130);
-  G.banner={text:(G.mode.type==='ascent'?'Guardian':BOSS[G.mode.world-1])+' falls',t0:G.now,dur:1.6,col:TH.acc};
+  G.banner={text:(G.mode.type==='ascent'?'Guardian':G.mode.erlaf?'Erlaf':bossNameOf(G.mode))+' falls',t0:G.now,dur:1.6,col:TH.acc};
   if(!ascentGuardianDown()&&!raidBossDown()) setTimeout(()=>{ G.players.forEach(P=>P.done=true); if(G.crowd&&G.state==='playing') startCrowdLeave(); else if(G.follow&&G.follow.boss&&G.state==='playing') startFollowLeave(); else if(observerDue()) startObserver(); else finishRun(); },1700);
 }
 function bossHitPlayer(P){
@@ -6015,6 +6047,7 @@ function drawRoundIntro(L,now){
 function drawBoss(L,now){
   const B=R.boss; if(!B) return; const dieU=B.dieT?clamp((now-B.dieT)/1.5,0,1):0; if(dieU>=1) return;
   if(G.watch&&G.watch.roll) return;   // still rolling in: drawRoundIntro draws it
+  if(B.duck){ drawErlaf(B,L,now,dieU); return; }
   if((B.w||1)===WORLDS){
     // while the ground rumbles the map and screen shake, but the sphere itself holds perfectly still
     const W=G.watch, still=W&&W.rumbleT&&!W.rumbleDone, z=G.zoomNow||1;
@@ -6045,6 +6078,55 @@ function drawBoss(L,now){
   bossDeco(bg,'front');
   cx.restore(); cx.globalAlpha=1;
 }
+/* ---- Erlaf the Giant Duck, a white mallard in the game's block style: a giant white cube like the other bosses (flat top face, shaded
+   front), with a slab bill sticking out of his front, mismatched googly eyes that wobble after you, wing slabs that flap on
+   the beat, a wedge tail with a drake's curl and a tuft on top. His bill drops open when he's about to throw a duckling. ---- */
+function googly(x,y,r,tx,ty,now,seed){ cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.arc(x,y,r,0,TAU); cx.fill(); cx.strokeStyle='#2A1A08'; cx.lineWidth=Math.max(1.2,r*.12); cx.stroke();
+  const d=Math.hypot(tx-x,ty-y)||1, wob=Math.sin(now*5.3+seed)*.35, ax=(tx-x)/d+Math.cos(now*2.1+seed)*wob, ay=(ty-y)/d+Math.sin(now*3.7+seed)*wob+.35, k=Math.hypot(ax,ay)||1;
+  const pr=r*.48; cx.fillStyle='#1A1008'; cx.beginPath(); cx.arc(x+ax/k*(r-pr)*.9,y+ay/k*(r-pr)*.9,pr,0,TAU); cx.fill();
+  cx.fillStyle='rgba(255,255,255,.85)'; cx.beginPath(); cx.arc(x+ax/k*(r-pr)*.9-pr*.35,y+ay/k*(r-pr)*.9-pr*.35,pr*.28,0,TAU); cx.fill(); }
+/* a little block (a top face and a front face), the way every tile and block in the game is drawn */
+function cubeBox(x,y,w,top,front,cTop,cFront,rad){ cx.fillStyle=cFront; rr(x,y+top*.5,w,front+top*.5,rad); cx.fill(); cx.fillStyle='rgba(60,30,0,.14)'; cx.fillRect(x+w*.5,y+top,w*.5,front);
+  cx.fillStyle=cTop; rr(x,y,w,top,rad); cx.fill(); }
+/* his ducklings are little duck cubes */
+function duckling(x,y,r,ph){ cx.save(); cx.translate(x,y); cx.rotate(Math.sin(ph)*.25);
+  cubeBox(-r,-r,r*2,r*.9,r*1.2,'#FFE66B','#FFC928',r*.25);
+  cx.fillStyle='#FF8A1F'; rr(-r*1.55,r*.05,r*.85,r*.38,r*.12); cx.fill();
+  cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.arc(-r*.35,-r*.05,r*.3,0,TAU); cx.fill(); cx.fillStyle='#1A1008'; cx.beginPath(); cx.arc(-r*.42,0,r*.15,0,TAU); cx.fill(); cx.restore(); }
+function drawErlaf(B,L,now,dieU){
+  const x0=L.ox+B.x*L.tw+L.gap, w=3*L.tw-2*L.gap, h=3*L.th-2*L.gap, H=L.th*2.1, u=RM()?0:1, bt=clamp(1-(now-G.lastBeatT)/.35,0,1);
+  const fl=clamp(1-(now-B.flashT)/.3,0,1), ch=clamp(1-(now-B.chargeT)/.55,0,1), shake=fl>0&&u?Math.sin(now*90)*4*fl:0, bob=u*(Math.sin(now*2.2)*4-bt*3);
+  const topY=L.oy+B.y*L.th+L.gap-H-L.th*.35+bob, fy=topY+h, mx=x0+w/2, col=c=>mixc(c,'#FFD27A',fl*.6), P=G.players[0];
+  const tx=P?L.ox+(P.pos.x+.5)*L.tw:mx, ty=P?L.oy+(P.pos.y+.5)*L.th:fy+H*3;
+  cx.save(); cx.translate(shake,dieU*L.th*4); cx.globalAlpha=1-dieU;
+  cx.fillStyle='rgba(20,12,50,.3)'; cx.beginPath(); cx.ellipse(mx,L.oy+(B.y+3)*L.th,w*.55,L.th*.5,0,0,TAU); cx.fill();
+  // the wedge tail, sticking up behind his top face and flicking on the beat
+  cx.save(); cx.translate(x0+w*.84,topY+h*.45); cx.rotate(-.28-.22*bt*u);
+  cx.fillStyle=col('#D5DCE5'); cx.beginPath(); cx.moveTo(-w*.1,h*.2); cx.lineTo(w*.05,-h*.72); cx.lineTo(w*.14,-h*.58); cx.lineTo(w*.12,h*.2); cx.closePath(); cx.fill();
+  cx.fillStyle=col('#F2F5F8'); cx.beginPath(); cx.moveTo(-w*.1,h*.2); cx.lineTo(w*.05,-h*.72); cx.lineTo(w*.02,h*.2); cx.closePath(); cx.fill();
+  cx.strokeStyle=col('#C3CBD6'); cx.lineWidth=Math.max(2.5,w*.028); cx.lineCap='round'; cx.beginPath(); cx.arc(w*.1,-h*.72,w*.045,Math.PI*1.1,Math.PI*2.35); cx.stroke(); cx.restore();   // a mallard drake's curl
+  // wing slabs on both sides, flapping on the beat
+  [-1,1].forEach(sg=>{ const ww=w*.12, wx=sg<0?x0-ww*.7:x0+w-ww*.3, wy=fy+H*.22-bt*u*H*.12; cx.save(); cx.translate(wx+ww/2,wy); cx.rotate(sg*(.12+.25*bt*u)); cubeBox(-ww/2,0,ww,h*.18,H*.5,col('#F7F9FB'),col('#D2D9E3'),4); cx.restore(); });
+  // the body: one big yellow cube
+  cubeBox(x0,topY,w,h,H,col('#FFFFFF'),col('#E7EBF1'),8);
+  cx.strokeStyle='rgba(90,100,125,.45)'; cx.lineWidth=2; rr(x0,topY,w,h+H,8); cx.stroke();
+  // ruffled feathers where he's been hit
+  const lost=B.max-B.hp; cx.strokeStyle='rgba(110,120,145,.55)'; cx.lineWidth=2; cx.beginPath();
+  for(let i=0;i<lost;i++){ const sx=x0+w*((i*37%100)/100*.8+.1), sy=fy+H*.88; cx.moveTo(sx,sy); cx.lineTo(sx+5,sy-8); cx.lineTo(sx+10,sy); } cx.stroke();
+  // a tuft on top
+  cx.strokeStyle=col('#D8DEE7'); cx.lineWidth=Math.max(2,w*.025); cx.lineCap='round';
+  for(let k=-1;k<=1;k++){ cx.beginPath(); cx.moveTo(mx+k*w*.05,topY+h*.4); cx.quadraticCurveTo(mx+k*w*.1,topY-h*.35,mx+k*w*.02+w*.06,topY-h*.3-Math.sin(now*4+k)*h*.08*u); cx.stroke(); }
+  // googly eyes: one big, one small, both wobbling after you (wider when he's hit)
+  const er=H*(.19+fl*.03); googly(mx-w*.17,fy+H*.3,er*1.15,tx,ty,now,1.3); googly(mx+w*.17,fy+H*.27,er*.8,tx,ty,now,4.1);
+  // the slab bill: an orange block sticking out of his front; the lower half drops open before a throw and claps on the beat
+  const open=Math.max(ch,bt*.3)*u, bw=w*.6, bx=mx-bw/2, by=fy+H*.5;
+  cubeBox(bx+bw*.04,by+H*.12+open*H*.16,bw*.92,H*.1,H*.12,col('#F7B63A'),col('#D8841C'),5);   // lower bill
+  if(open>.05){ cx.fillStyle='#6A1A0C'; rr(bx+bw*.08,by+H*.16,bw*.84,open*H*.16+2,4); cx.fill(); }
+  cubeBox(bx,by-H*.06,bw,H*.16,H*.12,col('#FFD45C'),col('#F4A12A'),6);   // upper bill
+  cx.fillStyle='rgba(120,50,0,.6)'; [-1,1].forEach(s=>{ cx.fillRect(mx+s*bw*.18-3,by-H*.01,6,3); });   // nostrils
+  if(ch>0&&u){ cx.globalCompositeOperation='lighter'; const g2=cx.createRadialGradient(mx,by+H*.1,0,mx,by+H*.1,w*.6); g2.addColorStop(0,`rgba(255,170,60,${.45*ch})`); g2.addColorStop(1,'rgba(255,170,60,0)'); cx.fillStyle=g2; cx.fillRect(mx-w*.6,by-w*.5,w*1.2,w); cx.globalCompositeOperation='source-over'; }
+  cx.restore(); cx.globalAlpha=1;
+}
 /* a little red circle with a smiley face, falling from the sky onto its target (speeding up as it falls), its shadow growing beneath it */
 function smileDrop(t,u,L){
   const r=clamp(L.tw*.17,6,16), y=lerp(Math.min(-r*2.5,t.y-L.th*3),t.y-r*.6,Math.pow(u,1.7)), sh=.25+.75*u;   // from just above the top of the screen
@@ -6063,6 +6145,7 @@ function drawArenaFx(L,now){
   const B=R.boss;
   (G.proj||[]).forEach(p=>{ if(p.smile&&now<p.t0) return; const u=clamp((now-p.t0)/(p.t1-p.t0),0,1), t=sc(p.tx,p.ty); reticle(t,u,'#FF6B6B');
     if(p.smile){ if(u<1) smileDrop(t,u,L); return; }
+    if(u<1&&B&&B.duck){ const s={x:L.ox+(B.x+1.5)*L.tw,y:L.oy+(B.y+1.5)*L.th-L.th*1.4}; duckling(lerp(s.x,t.x,u),lerp(s.y,t.y,u)-Math.sin(Math.PI*u)*L.th*2.4,L.tw*.16,now*6); return; }
     if(u<1&&B){ const s={x:L.ox+(B.x+1.5)*L.tw,y:L.oy+(B.y+1.5)*L.th-L.th*1.4}; orb(lerp(s.x,t.x,u),lerp(s.y,t.y,u)-Math.sin(Math.PI*u)*L.th*2.4,L.tw*.12,'#FF6B6B'); } });
   (G.shots||[]).forEach(s=>{ const u=clamp((now-s.t0)/Math.max(.01,s.t1-s.t0),0,1), f=sc(s.fx,s.fy), col=s.owner===1?'#B8F2E6':'#FFD166';
     const t=s.kind==='boss'?{x:L.ox+(B.x+1.5)*L.tw,y:L.oy+(B.y+1.5)*L.th-L.th*1.5}:sc(s.tx,s.ty);
@@ -6089,7 +6172,7 @@ function drawBlaster(c,r,mx,my,now,L){
 }
 function drawArenaHud(L,now,gcx){
   if(R.boss){ const B=R.boss, bw=Math.min(VW-40,R.N*L.tw), x=gcx-bw/2, y=Math.max(10,L.oy-L.th*3.55);
-    cx.font=`700 ${Math.round(clamp(L.tw*.28,11,15))}px Unbounded, system-ui, sans-serif`; cx.textAlign='left'; cx.fillStyle='#FFF8EE'; cx.fillText(G.mode.type==='ascent'?'Guardian · '+BOSS[G.mode.world-1]:G.mode.type==='raid'?`Raid ${G.mode.world}/${WORLDS} · `+BOSS[G.mode.world-1]:BOSS[G.mode.world-1],x,y);
+    cx.font=`700 ${Math.round(clamp(L.tw*.28,11,15))}px Unbounded, system-ui, sans-serif`; cx.textAlign='left'; cx.fillStyle='#FFF8EE'; cx.fillText(G.mode.type==='ascent'?'Guardian · '+BOSS[G.mode.world-1]:G.mode.type==='raid'?`${G.mode.solo?'Rush':'Jam'} ${G.mode.world}/${WORLDS} · `+BOSS[G.mode.world-1]:bossNameOf(G.mode),x,y);
     cx.textAlign='right'; cx.fillStyle=TH.acc; cx.fillText(`${B.hp} / ${B.max}`,x+bw,y);
     cx.fillStyle='rgba(20,14,48,.55)'; rr(x,y+6,bw,10,5); cx.fill();
     const fl=clamp(1-(now-B.flashT)/.3,0,1); cx.fillStyle=mixc('#FF6B6B','#FFFFFF',fl); rr(x,y+6,bw*B.hp/B.max,10,5); cx.fill(); }
@@ -6146,7 +6229,7 @@ function netUI(){
   $('nWait').hidden=!(on&&!NET.host);
   // Duel and Tether are for exactly two
   [['nDuel','Online Riff-Off'],['nTether','Online Tether']].forEach(([id])=>{ const b=$(id); if(!b) return; b.disabled=n!==2; b.classList.toggle('only2',n!==2); });
-  const note=$('nModeNote'); if(note) note.textContent=n>2?`${n} players: Journey and Boss Raid are open to everyone. Riff-Off and Tether are for exactly 2.`:'';
+  const note=$('nModeNote'); if(note) note.textContent=n>2?`${n} players: Journey and Mastery Jam are open to everyone. Riff-Off and Tether are for exactly 2.`:'';
 }
 function netHost(){
   ensureAudio(); A.ctx.resume(); netLeave(true);
@@ -6439,7 +6522,7 @@ const PARTY_COUNT=5;
 function netStart(type){
   if(!netLive()||!NET.host) return;
   const order=[0].concat(netMateList().map(m=>m.s));
-  if((type==='duel'||type==='tether')&&order.length!==2){ netStatus(`${type==='duel'?'Riff-Off':'Tether'} is for exactly 2 players. Try Journey or Boss Raid.`,true); return; }
+  if((type==='duel'||type==='tether')&&order.length!==2){ netStatus(`${type==='duel'?'Riff-Off':'Tether'} is for exactly 2 players. Try Journey or Mastery Jam.`,true); return; }
   const seed=Math.floor(Math.random()*1e9).toString(36), at=performance.now()+PARTY_COUNT*1000;
   netSend({t:'start',type,seed,at,order,hn:performance.now()});
   netBegin(type,seed,at,order);
@@ -6586,7 +6669,7 @@ $('partyBar').onclick=()=>{ if(['playing','paused','dying','cutscene','picking']
 const CD={at:0,last:null};
 function startCountdown(atPerf){
   CD.at=atPerf; CD.last=null; const el=$('countdown'); el.classList.remove('out'); el.hidden=false;
-  const M=G.mode||{}, name={coop:'Journey',duel:'Riff-Off',raid:'Boss Raid',tether:'Tether'}[M.type]||'Match';
+  const M=G.mode||{}, name={coop:'Journey',duel:'Riff-Off',raid:'Mastery Jam',tether:'Tether'}[M.type]||'Match';
   $('cdMode').textContent=(M.net?'Online ':'')+name;
   $('cdWho').textContent=M.net&&G.players?G.players.map((P,i)=>i===NET.me?(SAVE.name||'You'):((netMateAt(i)||{}).name||'Friend')).join('  ·  '):(M.coop?'P1 and P2 on this device':'');
   cdTick(); }
@@ -6697,7 +6780,7 @@ function mergeSaves(loc,cl,additive){
   { const a=loc.remix||{}, b=cl.remix||{}, m={...a}; for(const k in b) m[k]=Math.max(m[k]||0,b[k]); out.remix=m; } out.bestRhythm=Math.max(loc.bestRhythm||0,cl.bestRhythm||0);
   { const a=loc.rankSet, b=cl.rankSet, r=!a?b:!b?a:(a.t||0)>=(b.t||0)?a:b; if(r) out.rankSet=r; else delete out.rankSet; }   // the newest rank setting wins
   for(const k of ['giftIds','liveGot']) out[k]=[...new Set([...(cl[k]||[]),...(loc[k]||[])])].slice(-200);
-  out.twinTeam=newer.twinTeam!==undefined?newer.twinTeam:(loc.twinTeam||cl.twinTeam||null); out.twinWin=!!(loc.twinWin||cl.twinWin); out.twinWinSeen=!!(loc.twinWinSeen||cl.twinWinSeen); out.twinWinName=loc.twinWinName||cl.twinWinName||'';
+  out.twinTeam=newer.twinTeam!==undefined?newer.twinTeam:(loc.twinTeam||cl.twinTeam||null); out.twinWin=!!(loc.twinWin||cl.twinWin); out.erlafWin=!!(loc.erlafWin||cl.erlafWin); out.twinWinSeen=!!(loc.twinWinSeen||cl.twinWinSeen); out.twinWinName=loc.twinWinName||cl.twinWinName||'';
   const dl=loc.daily||{}, dc=cl.daily||{}; out.daily=Object.assign({},DEF.daily,newer===cl?dc:dl);
   if(dl.date&&dl.date===dc.date){ out.daily.best=Math.max(dl.best||0,dc.best||0); out.daily.stars=Math.max(dl.stars||0,dc.stars||0); }
   out.daily.streak=Math.max(dl.streak||0,dc.streak||0);
@@ -6926,12 +7009,26 @@ function giftApply(g){ const k=g&&g.kind;
   return 'A message from Pulseform'; }
 function afterGift(){ fixEquip(); if(ACCT.user){ lbRename(); if(typeof frPush==='function') frPush(true); } const ov=visibleOv(); if(ov&&ov.id==='menuOv') buildMenu(); if(!$('passOv').hidden) buildPass(); }
 /* ---- the live event: everyone (signed in or not) reads it; boosts apply while it runs ---- */
+/* ================= LIMITED EVENT: ERLAF THE GIANT DUCK =================
+   A one-off boss challenge on the World 3 arena with its own giant duck. Open from Tue Oct 6 to Wed Oct 21 2026 (midnight
+   Central), and any time an admin's live event switches it on (live/event mode:'erlaf'). Beat him once to own the Erlaf block. */
+const ERLAF_FROM=Date.UTC(2026,9,6,5), ERLAF_TO=Date.UTC(2026,9,21,5);
+const ERLAF_SAY=['QUACK. I am Erlaf, the biggest white mallard in the whole Block World.','You want my feathers? Step on that gold pulse pad on the beat and bonk me. Watch out for my ducklings. QUACK!'];
+const ERLAF_DOWN='Quack… fine. You win. Wear my feathers with pride.';
+function erlafLive(){ const n=Date.now(); return n>=ERLAF_FROM&&n<ERLAF_TO; }
+function erlafEnd(){ const L=liveOn(), a=erlafLive()?ERLAF_TO:0, b=L&&L.mode==='erlaf'?+L.end:0; return Math.max(a,b); }
+const erlafOn=()=>erlafEnd()>Date.now();
+function erlafMode(){ const M=modeFor('boss',ERLAF_W); M.erlaf=true; return M; }
+function erlafUI(){ const b=$('mErlaf'); if(!b) return; const on=erlafOn(); b.hidden=!on; if(!on) return;
+  $('mErlafSub').textContent=`Limited boss challenge · ${SAVE.erlafWin?'Erlaf block owned ✓':'win his block'} · ends in ${liveLeft(erlafEnd()-Date.now())}`; }
+$('mErlaf').onclick=()=>{ if(erlafOn()) startRun(erlafMode()); else erlafUI(); };
+setInterval(erlafUI,30000);
 function liveStart(){ if(!ACCT.db||ADM.unsubL) return; ADM.unsubL=ACCT.db.collection('live').doc('event').onSnapshot(d=>{ ACCT.live=d.exists?d.data():null; liveUI(); },()=>{}); }
 function liveOn(){ const L=ACCT.live, now=Date.now(); return L&&now>=(+L.start||0)&&now<(+L.end||0)?L:null; }
 function liveMul(k){ const L=liveOn(); return L?Math.max(1,Math.min(3,+L[k]||1)):1; }
 const liveLeft=ms=>{ const t=Math.max(1,Math.ceil(ms/60000)), h=Math.floor(t/60), m=t%60; return h>=48?`${Math.round(h/24)} days`:h?`${h}h${m?` ${m}m`:''}`:`${m}m`; };
 const liveGiftOpen=L=>!!(L&&L.gift&&L.gift.kind&&!(SAVE.liveGot||[]).includes(L.id));
-function liveUI(){ const L=ACCT.live, b=$('mLive'), now=Date.now(); if(!b) return;
+function liveUI(){ erlafUI(); const L=ACCT.live, b=$('mLive'), now=Date.now(); if(!b) return;
   const show=!!L&&now<(+L.end||0)&&(+L.start||0)-now<7*86400000; b.hidden=!show||!!window.PF_CG; if(!show) return;
   const on=now>=(+L.start||0), boosts=[(+L.xp||1)>1?`${+L.xp}× XP`:'',(+L.notes||1)>1?`${+L.notes}× Notes`:''].filter(Boolean).join(' · ');
   $('mLiveT').textContent=L.title||'Live event';
@@ -6971,7 +7068,7 @@ function admEvKindUI(){ const k=$('admEvG').value; $('admEvPick').hidden=!GIFT_L
 function admLiveNow(){ const L=ACCT.live, now=Date.now(), e=$('admLiveNow'), on=!!L&&now<(+L.end||0);
   e.classList.toggle('on',on); $('admEvEnd').disabled=!on;
   if(!on){ e.textContent='No event running. Start one below: everyone sees it on the main menu.'; return; }
-  const b=[(+L.xp||1)>1?`${+L.xp}× XP`:'',(+L.notes||1)>1?`${+L.notes}× Notes`:'',L.gift?'a gift for everyone':''].filter(Boolean).join(' · ');
+  const b=[L.mode==='erlaf'?'Erlaf the Giant Duck':'',(+L.xp||1)>1?`${+L.xp}× XP`:'',(+L.notes||1)>1?`${+L.notes}× Notes`:'',L.gift?'a gift for everyone':''].filter(Boolean).join(' · ');
   e.innerHTML=`<b>${now<L.start?'Coming up':'Live now'}: ${escapeHTML(L.title||'Live event')}</b><br><small>${escapeHTML(b||'No boosts')} · ${now<L.start?'starts in '+liveLeft(L.start-now):'ends in '+liveLeft(L.end-now)}</small>`; }
 function admSelfUI(){ $('admLevels').textContent=SAVE.devAll?'Lock levels again':'Unlock all levels'; $('admPass').textContent=passS().prem?'Pulse Pass+ ✓':'Give me Pulse Pass+'; $('admPass').disabled=!!passS().prem;
   const r=SAVE.rankSet&&typeof SAVE.rankSet.n==='number'?SAVE.rankSet.n:-1; $('admRank').value=String(r); }
@@ -7041,9 +7138,9 @@ $('admEvGo').onclick=async()=>{ const db=ACCT.db; if(!db||!ACCT.user) return; co
   if(!title){ admMsg('Give the event a title.',true); return; }
   const now=Date.now(), start=now+Math.max(0,+$('admEvS').value||0)*3600000, end=start+Math.max(.5,Math.min(720,+$('admEvH').value||48))*3600000;
   const gk=$('admEvG').value, gift=!gk?null:gk==='notes'?{kind:'notes',n:Math.max(1,Math.min(100000,Math.round(+$('admEvGA').value||0)))}:{kind:gk,id:$('admEvGI').value};
-  const ev={id:'ev'+now.toString(36),title,msg:$('admEvM').value.trim().slice(0,140),xp:+$('admEvX').value,notes:+$('admEvN').value,start,end,gift,by:ACCT.user.uid,t:now};
+  const ev={id:'ev'+now.toString(36),title,msg:$('admEvM').value.trim().slice(0,140),xp:+$('admEvX').value,notes:+$('admEvN').value,start,end,gift,by:ACCT.user.uid,t:now}; if($('admEvDuck').checked) ev.mode='erlaf';
   const it=gift&&GIFT_LISTS[gift.kind]?GIFT_LISTS[gift.kind]().find(x=>x.id===gift.id):null;
-  const sum=[ev.xp>1?`${ev.xp}× XP`:'',ev.notes>1?`${ev.notes}× Notes`:'',gift?`gift for everyone: ${gift.kind==='notes'?'♪'+gift.n.toLocaleString():escapeHTML(it?it.name:'an item')}`:''].filter(Boolean).join(' · ')||'no boosts';
+  const sum=[ev.mode==='erlaf'?'Erlaf the Giant Duck':'',ev.xp>1?`${ev.xp}× XP`:'',ev.notes>1?`${ev.notes}× Notes`:'',gift?`gift for everyone: ${gift.kind==='notes'?'♪'+gift.n.toLocaleString():escapeHTML(it?it.name:'an item')}`:''].filter(Boolean).join(' · ')||'no boosts';
   const old=ACCT.live&&now<(+ACCT.live.end||0);
   if(!await admConfirm(`Start “${title}” for every player?`,(gift&&it?admPreviewHTML(gift.kind,gift.id):'')+`<div>${sum}<br>${start>now?'Starts in '+liveLeft(start-now)+', l':'Starts now, l'}asts ${liveLeft(end-start)}.${old?'<br><b>This replaces the event that\'s running now.</b>':''}</div>`,'Start event')) return;
   admMsg('Starting…'); try{ await db.collection('live').doc('event').set(ev); ACCT.live=ev; liveUI(); admLiveNow(); admMsg('✓ Event is live for every player.'); if(A.ctx) sGem(); }
@@ -7717,7 +7814,7 @@ function reviveOffer(){
   G.state='revive'; G.revived=true; try{ A.ctx.suspend(); }catch(e){}
   const M=G.mode, b=R&&R.boss, free=!!SAVE.noAds, tok=SAVE.revives||0, ad=adsReady();
   if(!free&&!tok&&!ad){ return reviveNo(); }
-  $('rvSub').textContent=b?`${BOSS[M.world-1]} has ${b.hp} / ${b.max} HP left. Jump back in with 3 Harmony?`:'Jump back in with 3 Harmony?';
+  $('rvSub').textContent=b?`${bossNameOf(M)} has ${b.hp} / ${b.max} HP left. Jump back in with 3 Harmony?`:'Jump back in with 3 Harmony?';
   $('rvFree').hidden=!free; $('rvAd').hidden=free||!ad; $('rvAd').innerHTML=ADS.off?'<span class="rvplay">▶</span> Revive (free for now)':'<span class="rvplay">▶</span> Watch an ad to revive'; $('rvToken').hidden=free||!tok; $('rvToken').textContent=`Use a revive token (${tok} left)`;
   showOv('reviveOv',false); RV.left=9; RV.hold=false; rvTick(); clearInterval(RV.timer);
   RV.timer=setInterval(()=>{ if(RV.hold) return; RV.left--; rvTick(); if(RV.left<=0) reviveNo(); },1000); }
@@ -7785,7 +7882,7 @@ function moneyHTML(){
   if(!SAVE.starterBought) sp+=`<button type="button" class="mspecial starter" data-iap="${st.id}" ${IAP.busy?'disabled':''}><span class="msico">🎁</span><span class="mstxt"><b>Starter Bundle</b><small>♪${st.n.toLocaleString()} + ${st.rev} boss revive tokens · one time only</small></span><span class="mprice">${escapeHTML(iapPrice(st))}</span></button>`;
   if(!passPlus()){ const pp=PRODUCTS.find(p=>p.id===PASS_PRICE_ID); sp+=`<button type="button" class="mspecial passplus" data-ppoffer="1"><span class="msico">♛</span><span class="mstxt"><b>Pulse Pass+</b><small>6 Pass blocks, exclusive tiles and banners, Notes, revives, +25% Pass XP</small></span><span class="mprice">${escapeHTML(iapPrice(pp))}</span></button>`; }
   sp+=SAVE.noAds?`<div class="mspecial owned"><span class="msico">✓</span><span class="mstxt"><b>No Ads</b><small>Boss revives are free. Thanks for the support!</small></span></div>`
-    :`<button type="button" class="mspecial noads" data-iap="${na.id}" ${IAP.busy?'disabled':''}><span class="msico">🚫</span><span class="mstxt"><b>No Ads</b><small>Revive in mastery challenges without watching ads</small></span><span class="mprice">${escapeHTML(iapPrice(na))}</span></button>`;
+    :`<button type="button" class="mspecial noads" data-iap="${na.id}" ${IAP.busy?'disabled':''}><span class="msico">🚫</span><span class="mstxt"><b>No Ads</b><small>Revive in boss challenges without watching ads</small></span><span class="mprice">${escapeHTML(iapPrice(na))}</span></button>`;
   const note=iapLive()?'':(isNativeApp()?'<p class="mnote">Connecting to the store…</p>':ADS.test?'<p class="mnote">Test mode: purchases here are pretend and free.</p>':'<p class="mnote">Notes packs and bundles can be bought in the Pulseform app.</p>');
   const prem=PRODUCTS.filter(p=>p.kind==='skin');
   const pb=p=>{ const own=ownsSkin(p.skin), eq=SAVE.skin===p.skin; return `<div class="mprem${own?' own':''}"><canvas class="skprev" data-skin="${p.skin}" data-px="110" width="110" height="110" aria-hidden="true"></canvas><b>${escapeHTML(p.name)}</b>`+
@@ -7858,10 +7955,10 @@ const PQ_WEEK=[
  {id:'stars',ic:'★',t:n=>`Earn ${n} new stars`,g:10,ev:'stars'},
  {id:'rhythm',ic:'♫',t:n=>`Clear ${n} rooms in one Rhythm Patterns run`,g:8,ev:'rhythm',max:true},
  {id:'remix',ic:'⇄',t:n=>`Clear ${n} Remix levels`,g:8,ev:'remix'},
- {id:'boss',ic:'☠',t:n=>`Complete ${n} mastery challenges`,g:3,ev:'boss'},
+ {id:'boss',ic:'☠',t:n=>`Complete ${n} boss challenges`,g:3,ev:'boss'},
  {id:'endless',ic:'∞',t:n=>`Clear ${n} rooms in one Endless run`,g:12,ev:'endless',max:true},
  {id:'ascent',ic:'▲',t:n=>`Reach floor ${n} in Ascent`,g:12,ev:'ascent',max:true},
- {id:'daily',ic:'☀',t:n=>`Finish ${n} Daily Challenges`,g:4,ev:'daily'}];
+ {id:'daily',ic:'☀',t:n=>`Finish ${n} Daily Practices`,g:4,ev:'daily'}];
 const PQ_DAY_XP=[800,1000,1200], PQ_WEEK_XP=[3000,4000,5000,6000];
 function pqPick(pool,key,xps){ const r=mulberry(hashStr('pq'+key)), a=[...pool]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
   return a.slice(0,xps.length).map((q,i)=>({id:q.id,goal:q.g,prog:0,xp:xps[i],claimed:false})); }
@@ -8332,7 +8429,7 @@ const FOUNT_LESSONS={
         'Collect gems and stars to earn ♪ notes for new blocks in the shop.'],
  '1-8':['The last Courtyard level! Everything you\'ve learned comes together here.',
         'If your hits keep feeling early or late, calibrate your timing in Settings.',
-        'Clear this, and you can face me in the boss fight. I\'ll go easy on you.'],
+        'Clear this, and you can face me in the boss challenge. I\'ll go easy on you.'],
  'B':  ['This is a guardian challenge. Step on the gold pulse pad to send a pulse at me.',
         'Red targets show where my shots will land, two beats later. Step off them!',
         'Here in my Courtyard my shots can\'t cost you Harmony. The other guardians won\'t be so gentle.']};
@@ -8358,6 +8455,7 @@ const tutBump=()=>tutOnce('bump','Bumping a glowing rail is safe. But an edge wi
 const tutFall=()=>tutOnce('fall','Oof! The sky has no floor. Watch for edges without a rail. You get a few tries.');
 function loreForResult(M){
   if(M.type==='level'&&M.tut){ SAVE.tutDone=true; save(); return `<b>The Fountain</b>“${LORE.tutDone}”`; }
+  if(M.erlaf) return `<b>Erlaf the Giant Duck</b>“${ERLAF_DOWN}”`;
   if(M.type==='boss') return `<b>${BOSS[M.world-1]}</b>“${LORE.bossDown[M.world-1]}”`;
   if(M.type==='interlude') return `<b>The guardians</b>“We held it back as long as we could. The rest of the song is yours to finish.”`;
   return '';
@@ -8414,23 +8512,23 @@ function quickRestart(){
 }
 function bossTalk(M){
   if(M.type!=='boss') return; const w=M.world, gen=CUTGEN, ok=()=>G.mode===M&&cutOk(gen);
-  cutMark('talk'+w,'pre');
+  cutMark(M.erlaf?'talkErlaf':'talk'+w,'pre');
   // every boss but the last: after the first time you've fought it, the opening dialogue is skipped automatically
   // (no Skip button) and the fight goes straight to its normal count-in. The Round One keeps its intro, with Skip.
   if(w!==WORLDS&&G.skip&&G.skip.can){ G.skip=null; if(crowdDue(M)) G.crowd={t0:G.now-CROWD_T.total,intro:false}; return; }
   // quiet beats before the fight: long enough for the line to type out, plus 5 seconds to read it, rounded up to a full bar
   // a boss line can be one bubble, or a list of bubbles shown one after another (each gets time to type out and be read)
-  const say=LORE.bossIntro[w-1], lines=Array.isArray(say)?say:[say], dur=lines.map(l=>lines.length>1?Math.max(4.1,l.length*.028+3.9):l.length*.028+5);
+  const say=M.erlaf?ERLAF_SAY:LORE.bossIntro[w-1], lines=Array.isArray(say)?say:[say], dur=lines.map(l=>lines.length>1?Math.max(4.1,l.length*.028+3.9):l.length*.028+5);
   const roll=G.watch&&G.watch.roll?ROLL_T.total:0;   // the Round One rolls in before it speaks
   const line=lines[lines.length-1], spb=60/(G.roomBpm||G.bpm||90), secs=roll+.45+dur.reduce((a,b)=>a+b,0)+(lines.length>1?1:0), crowd=crowdDue(M);
   if(roll) setTimeout(()=>{ if(ok()) roundSpeechStart(); },roll*1000);
   const post=G.watch&&G.watch.rush?WATCH_T.total+(RM()?0:SLAM_T.total):0;   // World 16: once the boss has spoken, the watchers rush in, then it slams into the map
   // World 14: the circles' crowd scene plays after the line and before the countdown, so the quiet beats cover it too
   G.restUntil=Math.max(G.restUntil,Math.ceil((Math.ceil((secs+post+(crowd?CROWD_T.total:0))/spb)+1+(crowd?3:0))/4)*4-1);   // +3 beats: the countdown starts after the scene
-  let at=roll+.45; lines.slice(0,-1).forEach((l,i)=>{ const t=at; setTimeout(()=>{ if(ok()) cine(BOSS[w-1],l,dur[i]*1000+400); },t*1000); at+=dur[i]; });
+  let at=roll+.45; lines.slice(0,-1).forEach((l,i)=>{ const t=at; setTimeout(()=>{ if(ok()) cine(bossNameOf(M),l,dur[i]*1000+400); },t*1000); at+=dur[i]; });
   // the Round One: its mysterious music starts fading as the last bubble appears, and is gone by the time the circles are halfway in
   if(post) setTimeout(()=>{ if(ok()) mystStop((secs-at)+WATCH_T.fade+WATCH_T.rush*.5); },at*1000);
-  const lastAt=at; setTimeout(()=>{ if(ok()) cine(BOSS[w-1],line,crowd||post?(secs-lastAt)*1000:Math.max(5600,(G.restUntil+1)*spb*1000-lastAt*1000)); },lastAt*1000);
+  const lastAt=at; setTimeout(()=>{ if(ok()) cine(bossNameOf(M),line,crowd||post?(secs-lastAt)*1000:Math.max(5600,(G.restUntil+1)*spb*1000-lastAt*1000)); },lastAt*1000);
   if(post) setTimeout(()=>{ if(ok()&&G.state==='playing') startWatchRush(); },secs*1000);
   if(crowd) setTimeout(()=>{ if(ok()&&G.state==='playing') startCrowd(); },secs*1000);
 }
@@ -9117,7 +9215,7 @@ function stepsToGoal(P){ if(!R||!P) return -1; const N=R.N,key=(x,y,p)=>(y*N+x)*
 function overNear(M,why,best){
   let t=''; const P=G.players&&G.players[0];
   if((M.type==='level'||M.type==='hard')&&P){ const st=P.dead?-1:stepsToGoal(P); if(st>0&&st<=4) t=`So close! You were only ${st} move${st>1?'s':''} from the door.`; }
-  else if(M.type==='boss'&&R&&R.boss&&R.boss.hp<=3) t=`So close! ${BOSS[M.world-1]} had just ${R.boss.hp} HP left.`;
+  else if(M.type==='boss'&&R&&R.boss&&R.boss.hp<=3) t=`So close! ${bossNameOf(M)} had just ${R.boss.hp} HP left.`;
   else if(M.type==='endless'&&!best&&SAVE.bestEndless&&G.score>=SAVE.bestEndless*.85) t=`Only ${(SAVE.bestEndless-G.score).toLocaleString()} points short of your best!`;
   else if(M.type==='ascent'&&!best&&SAVE.bestAscent-(G.floorBest||1)<=2&&SAVE.bestAscent>(G.floorBest||1)) t=`Only ${SAVE.bestAscent-(G.floorBest||1)} floor${SAVE.bestAscent-(G.floorBest||1)>1?'s':''} short of your best climb!`;
   else if(M.type==='interlude'&&why==='dark'&&G.roomIdx>=4) t=`You made it to room ${G.roomIdx} of 6. Keep moving!`;
@@ -9236,7 +9334,7 @@ const ACH=[
  ['asc10','Climber','Reach floor 10 in Ascent',()=>SAVE.bestAscent>=10],
  ['asc20','Summit','Reach floor 20 in Ascent',()=>SAVE.bestAscent>=20],
  ['endless10','Endless Echo','Clear 10 rooms in one Endless run',()=>LF('endlessRooms')>=10],
- ['daily','Daily Dose','Finish a Daily Challenge',()=>LF('dailies')>=1],
+ ['daily','Daily Dose','Finish a Daily Practice',()=>LF('dailies')>=1],
  ['daily7','Weekly Ritual','Keep a 7-day Daily streak',()=>SAVE.daily.streak>=7],
  ['gift7','Loyal','Open 7 daily gifts',()=>!!SAVE.gift&&(SAVE.gift.done||(SAVE.gift.day||0)>=7||(SAVE.gift.streak||0)>=7)],
  ['duel','First Riff-Off Win','Win a riff-off',()=>LF('duelWins')>=1],
@@ -9727,7 +9825,7 @@ async function pollVote(k,id){
     m.classList.add('err'); m.textContent=e&&e.code==='permission-denied'?'Your vote didn\'t go through: the game owner needs to add the poll\'s Firebase rule.':'Your vote didn\'t go through. Check your connection and try again.'; }
 }
 function showPoll(){ showOv('pollOv'); if(acctCfg()&&!ACCT.ready&&!ACCT.loading) acctInit(); pollWatch(); pollRender(); }
-$('mPoll').onclick=showPoll;
+if($('mPoll')) $('mPoll').onclick=showPoll;   // voting is closed: there's no Vote button any more
 $('pollBack').onclick=()=>{ pollUnwatch(); toMenu(); };
 setInterval(()=>{ if(!$('pollOv').hidden) pollWatch(); const d=$('mPollDot'); if(d) d.hidden=pollDone(); },1500);   // the poll connects as soon as the account system is ready
 
@@ -9797,7 +9895,7 @@ const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>'
 let lbTab='daily';
 function showLB(tab){ lbTab=tab||lbTab; $('lbTabs').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===lbTab));
   const board={daily:'daily-'+todayKey(),endless:'endless',ascent:'ascent',week:'week-'+weekKey()}[lbTab];
-  $('lbSub').textContent={daily:'Today\'s Daily Challenge',endless:'Endless · all time',ascent:'Ascent · highest floor',week:weekEvent().name+' · this week'}[lbTab];
+  $('lbSub').textContent={daily:'Today\'s Daily Practice',endless:'Endless · all time',ascent:'Ascent · highest floor',week:weekEvent().name+' · this week'}[lbTab];
   showOv('lbOv'); lbLoad(board,'lbList'); }
 $('lbTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>showLB(b.dataset.t));
 $('lbBack').onclick=()=>toMenu();
@@ -9809,6 +9907,7 @@ function eventChip(){ const b=$('mEvent'); if(b) b.textContent=weekEvent().name;
 const b64e=s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 const b64d=s=>decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
 function chalFor(M){
+  if(M.erlaf) return null;   // a limited event: no challenge links
   const c={v:1,m:M.type,s:G.score,n:ensureName()};
   if(M.type==='level'){ c.w=M.world; c.l=M.level; } else if(M.type==='boss') c.w=M.world; else if(M.type==='hard') c.i=M.idx;
   else if(M.type==='endless'||M.type==='ascent'||M.type==='daily'||M.type==='event') c.sd=M.seed;
@@ -9816,7 +9915,7 @@ function chalFor(M){
   if(M.type==='ascent') c.f=G.floorBest||1; if(M.type==='event') c.ev=M.ev;
   return location.origin+location.pathname+'?c='+b64e(JSON.stringify(c));
 }
-const MODE_NAME={level:'level',boss:'boss fight',hard:'Hard stage',endless:'Endless run',ascent:'Ascent climb',daily:'Daily Challenge',event:'weekly event'};
+const MODE_NAME={level:'level',boss:'boss challenge',hard:'Hard stage',endless:'Endless run',ascent:'Ascent climb',daily:'Daily Practice',event:'weekly event'};
 function shareChallenge(M){
   const url=chalFor(M); if(!url) return; const txt=`I scored ${G.score.toLocaleString()} on this Pulseform ${MODE_NAME[M.type]}${M.type==='ascent'?` (floor ${G.floorBest||1})`:''}. Beat me:`;
   SAVE.life.challenges=(SAVE.life.challenges||0)+1; save(); achCheck();
@@ -10791,11 +10890,11 @@ function hud(){
   let a='',b='';
   if(M.type==='level'||M.type==='lremix'){ a=`${M.type==='lremix'?'Remix ':''}${M.world}-${M.level} ${LEVEL_NAMES[M.world-1][M.level-1]}`; b=`Beats ${G.roomBeats}/${G.budget} · par ${R.par}`; }
   else if(M.type==='hard'){ a=`Hard ${M.idx} · ${HARD_NAMES[M.idx-1]}`; b=`Beats ${G.roomBeats}/${G.budget} · par ${R.par}`; }
-  else if(M.type==='boss'){ a=`Boss · ${BOSS[M.world-1]}`; b=R&&R.boss?`HP ${R.boss.hp}/${R.boss.max} · hits ${G.bossHits||0}`:''; }
+  else if(M.type==='boss'){ a=M.erlaf?'Limited event · Erlaf the Giant Duck':`Boss · ${BOSS[M.world-1]}`; b=R&&R.boss?`HP ${R.boss.hp}/${R.boss.max} · hits ${G.bossHits||0}`:''; }
   else if(M.type==='duel'){ const p=G.players; a=`Riff-Off · ${G.bpm} BPM`; b=M.net?`You ${'◆'.repeat(p[NET.me].lives||0)}  ·  Rival ${'◆'.repeat(p[1-NET.me].lives||0)}`:`P1 ${'◆'.repeat(p[0].lives||0)}  ·  P2 ${'◆'.repeat(p[1].lives||0)}`; }
   else if(M.type==='daily'){ a=`Daily · room ${G.roomIdx}/3`; b=(M.mod?MODS[M.mod].split(' · ')[0]:'No modifier')+` · ${G.bpm} BPM`; }
   else if(M.type==='coop'){ a=`${M.net?'Online co-op':'Co-op'} · room ${G.roomIdx}`; b=`${G.bpm} BPM`; }
-  else if(M.type==='raid'){ a=`${M.net?'Online raid':M.solo?'Boss Rush':'Boss Raid'} · ${M.world}/${WORLDS} ${BOSS[M.world-1]}`; b=R&&R.boss?`HP ${R.boss.hp}/${R.boss.max} · beaten ${G.raidBeaten||0}`:''; }
+  else if(M.type==='raid'){ a=`${M.net?'Online Mastery Jam':M.solo?'Mastery Rush':'Mastery Jam'} · ${M.world}/${WORLDS} ${BOSS[M.world-1]}`; b=R&&R.boss?`HP ${R.boss.hp}/${R.boss.max} · beaten ${G.raidBeaten||0}`:''; }
   else if(M.type==='tether'){ a=`${M.net?'Online tether':'Tether'} · room ${G.roomIdx}`; b=`${G.bpm} BPM · snaps ${G.stats.snaps||0}`; }
   else if(M.type==='interlude'){ a='Interlude · The Silence'; b=`Room ${G.roomIdx}/${M.rooms} · keep moving`; }
   else if(M.type==='studio'){ a=`Studio · ${M.songName}`; b=`Room ${G.roomIdx} · ${Math.round(M.bpm*10)/10} BPM`; }
@@ -10860,6 +10959,7 @@ function nextUp(){
   let best=null; for(let w=1;w<=SAVE.world;w++) for(let l=1;l<=LEVELS_PER_WORLD;l++){ const s=SAVE.stars[`${w}-${l}`]||0; if(s<3&&(!best||s<best.s)) best={w,l,s}; } return best; }
 function untilMidnight(){ const n=new Date(), m=new Date(n); m.setHours(24,0,0,0); const mins=Math.ceil((m-n)/60000); return `${Math.floor(mins/60)}h ${mins%60}m`; }
 function buildMenu(){
+  erlafUI();
   $('walletM').textContent=notesTxt(); syncSoundChip(); acctChip(); nameChip();
   const nu=nextUp(), fresh=totalStars()===0;
   $('mContinue').hidden=!nu;
@@ -11011,7 +11111,12 @@ function finishRun(){
   const before=unlockedSet();
   const M=G.mode, s=G.stats, judged=s.perfect+s.good+s.early+s.late+s.miss, perf=judged?s.perfect/judged:0;
   let stars=1, crit=[], notes=0, title='', eyebrow='Cleared';
-  if(M.type==='boss'){
+  if(M.erlaf){   // the limited event: no world progress; the first win gives the Erlaf block
+    const s2=(G.bossHits||0)<=2, s3=perf>=.8; stars=1+(s2?1:0)+(s3?1:0); G.prevStars=0;
+    const first=!SAVE.erlafWin; SAVE.erlafWin=true; notes=first?250:40;
+    title='Erlaf defeated!'; eyebrow=first?'Limited event · the Erlaf block is yours':'Limited event';
+    crit=[['Defeat Erlaf',true],[`Take 2 hits or fewer (you took ${G.bossHits||0})`,s2],[`80% perfect (you hit ${Math.round(perf*100)}%)`,s3]];
+  } else if(M.type==='boss'){
     const s2=(G.bossHits||0)<=2, s3=perf>=.8; stars=1+(s2?1:0)+(s3?1:0);
     const key=`${M.world}-B`, prev=SAVE.stars[key]||0; G.prevStars=prev;
     notes=(prev===0?100:0)+Math.max(0,stars-prev)*20; SAVE.stars[key]=Math.max(prev,stars);
@@ -11050,7 +11155,7 @@ function finishRun(){
     const replay=M.seed!==todayKey(); if(!replay) SAVE.life.dailies=(SAVE.life.dailies||0)+1;
     const d=replay?{...SAVE.daily,date:M.seed,stars:3,best:0,streak:SAVE.daily.streak}:SAVE.daily; G.prevStars=d.date===M.seed?d.stars:0; if(d.date!==M.seed){ d.streak=d.last===todayKey(-1)?d.streak+1:1; d.last=M.seed; d.date=M.seed; d.best=0; d.stars=0; notes+=40; }
     notes+=Math.max(0,stars-d.stars)*20; d.stars=Math.max(d.stars,stars); d.best=Math.max(d.best,G.score);
-    title='Daily Challenge cleared'; eyebrow=`${d.streak}-day streak`;
+    title='Daily Practice cleared'; eyebrow=`${d.streak}-day streak`;
     crit=[['Clear all 3 rooms',true],['No misses',s2],[`85% perfect (you hit ${Math.round(perf*100)}%)`,s3]];
   }
   notes=earnN(notes); SAVE.notes+=notes; SAVE.maxStreak=Math.max(SAVE.maxStreak,G.maxStreak);
@@ -11071,7 +11176,8 @@ function finishRun(){
     $('rReward').textContent=notes?`+${notes} Notes`:'No new Notes. Beat your stars to earn more.';
     $('rUnlock').textContent=after.length?'Unlocked: '+after.join(', '):'';
     let next=null;
-    if(M.type==='level') next=M.level<LEVELS_PER_WORLD?modeFor('level',M.world,M.level+1):bossOpen(M.world)?modeFor('boss',M.world):null;
+    if(M.erlaf) next=null;
+    else if(M.type==='level') next=M.level<LEVELS_PER_WORLD?modeFor('level',M.world,M.level+1):bossOpen(M.world)?modeFor('boss',M.world):null;
     else if(M.type==='boss'&&M.world===6&&SAVE.interOpen&&!SAVE.interDone) next=modeFor('interlude');
     else if(M.type==='interlude') next=modeFor('level',7,1);
     else if(M.type==='boss'&&M.world<WORLDS) next=modeFor('level',M.world+1,1);
@@ -11079,8 +11185,8 @@ function finishRun(){
     else if(M.type==='lremix'){ const nx=remixNext(M.world,M.level); next=nx?modeFor('lremix',nx[0],nx[1]):null; }
     $('rNext').hidden=!next; $('rNext').onclick=()=>next&&startRun(next);
     $('rRetry').onclick=()=>startRun(M.type==='daily'?modeFor('daily'):M);
-    $('rMenu').textContent=M.type==='daily'?'Menu':M.type==='custom'?'Editor':'Map';
-    $('rMenu').onclick=()=>{ if(M.type==='custom'){ toMenu(); showEditor(); return; } if(M.type==='interlude'){ toMenu('worldsOv'); return; } if(M.type==='hard'){ toMenu('hardOv'); } else if(M.type==='lremix'){ toMenu('remixOv'); } else if(M.type==='daily') toMenu(); else { toMenu('worldsOv'); buildLevels(M.type==='boss'&&M.world<WORLDS?M.world+1:M.world); showOv('levelsOv'); } };
+    $('rMenu').textContent=M.type==='daily'||M.erlaf?'Menu':M.type==='custom'?'Editor':'Map';
+    $('rMenu').onclick=()=>{ if(M.erlaf){ toMenu(); return; } if(M.type==='custom'){ toMenu(); showEditor(); return; } if(M.type==='interlude'){ toMenu('worldsOv'); return; } if(M.type==='hard'){ toMenu('hardOv'); } else if(M.type==='lremix'){ toMenu('remixOv'); } else if(M.type==='daily') toMenu(); else { toMenu('worldsOv'); buildLevels(M.type==='boss'&&M.world<WORLDS?M.world+1:M.world); showOv('levelsOv'); } };
     $('rHome').hidden=$('rMenu').textContent==='Menu';   // Home would do the same as Menu
     showOv('resultOv',false);
   },900);
@@ -11112,7 +11218,7 @@ function gameOver(why){
   const judged=s.perfect+s.good+s.early+s.late+s.miss;
   if(M.net&&NET.host&&!G.netOver&&why!=='left'&&why!=='quit') netSend({t:'over',why,w:G.winner});
   if(M.net&&why==='quit') netSend({t:'leave'});
-  $('oWhy').textContent=M.type==='raid'?(best?(M.solo?'New best rush':'New best raid'):M.net?'Online Boss Raid':M.solo?'Boss Rush':'Boss Raid'):M.type==='tether'?(best?'New best':M.net?'Online Tether':'Tether'):M.net?(M.type==='duel'?'Online Riff-Off':'Online co-op'):M.type==='ascent'?(best?'New best climb':'Ascent'):M.type==='studio'?'Studio · '+M.songName:M.type==='duel'?'Riff-Off':best?'New best':(M.type==='level'||M.type==='boss'||M.type==='hard'||M.type==='custom')?'Level failed':'Run ended';
+  $('oWhy').textContent=M.type==='raid'?(best?(M.solo?'New best Mastery Rush':'New best Mastery Jam'):M.net?'Online Mastery Jam':M.solo?'Mastery Rush':'Mastery Jam'):M.type==='tether'?(best?'New best':M.net?'Online Tether':'Tether'):M.net?(M.type==='duel'?'Online Riff-Off':'Online co-op'):M.type==='ascent'?(best?'New best climb':'Ascent'):M.type==='studio'?'Studio · '+M.songName:M.type==='duel'?'Riff-Off':best?'New best':(M.type==='level'||M.type==='boss'||M.type==='hard'||M.type==='custom')?'Level failed':'Run ended';
   $('oTitle').textContent=why==='raid'?'Every boss defeated!':M.type==='raid'&&why==='harmony'?`The ${M.solo?'rush':'raid'} ends at ${BOSS[M.world-1]}`:M.type==='tether'&&why==='harmony'?'The cord wore out':M.net&&why==='duel'?(G.winner===NET.me?'You win!':`${NET.peerName||'Your rival'} wins`):why==='left'?`${NET.leftName||'Your friend'} left the match`:why==='duel'?`Player ${(G.winner||0)+1} wins!`:M.type==='ascent'&&why==='harmony'?`The climb ends on floor ${G.floorBest||1}`:why==='song'?'Song complete!':why==='dark'?'The darkness caught you':M.type==='interlude'&&why==='fell'?'You fell into the dark':({fell:'You fell into the void',harmony:'Out of harmony',burn:'Scorched by a fire vent',budget:'Out of beats',quit:'Run ended early'}[why]||'Run ended');
   $('oScore').textContent=G.score.toLocaleString();
   if(M.type==='level'||M.type==='hard'||M.type==='lremix'){ $('oRoomsL').textContent='Beats used'; $('oRooms').textContent=G.roomBeats+'/'+G.budget; }
@@ -11130,9 +11236,9 @@ function gameOver(why){
     ao.textContent=`Set audio offset to ${want} ms`; ao.onclick=()=>{ SAVE.offset=want; save(); syncOffset(); ao.hidden=true; toast(`Audio offset set to ${want} ms`); }; }
   $('oReward').textContent=notes?`+${notes} Notes`:''; $('oUnlock').textContent=after.length?'Unlocked: '+after.join(', '):'';
   $('oRetry').onclick=()=>startRun(M.type==='daily'?modeFor('daily'):M); $('oRetry').textContent=M.type==='duel'?'Rematch':'Try again';
-  $('oMenu').textContent=(M.type==='level'||M.type==='boss'||M.type==='hard')?'Map':'Menu';
+  $('oMenu').textContent=(M.type==='level'||M.type==='boss'||M.type==='hard')&&!M.erlaf?'Map':'Menu';
   if(M.type==='studio') $('oMenu').textContent='Studio'; if(M.type==='custom') $('oMenu').textContent='Editor';
-  $('oMenu').onclick=()=>{ if(M.type==='custom'){ toMenu(); showEditor(); return; } if(M.type==='hard'){ toMenu('hardOv'); return; } if(M.type==='lremix'){ toMenu('remixOv'); return; } if(M.type==='interlude'){ toMenu('worldsOv'); return; } if(M.type==='studio'){ toMenu(); showStudio(); return; } if(M.type==='level'||M.type==='boss'){ toMenu('worldsOv'); buildLevels(M.world); showOv('levelsOv'); } else toMenu(); };
+  $('oMenu').onclick=()=>{ if(M.erlaf){ toMenu(); return; } if(M.type==='custom'){ toMenu(); showEditor(); return; } if(M.type==='hard'){ toMenu('hardOv'); return; } if(M.type==='lremix'){ toMenu('remixOv'); return; } if(M.type==='interlude'){ toMenu('worldsOv'); return; } if(M.type==='studio'){ toMenu(); showStudio(); return; } if(M.type==='level'||M.type==='boss'){ toMenu('worldsOv'); buildLevels(M.world); showOv('levelsOv'); } else toMenu(); };
   if(M.net){ const rt=$('oRetry');
     if(netLive()&&NET.host){ rt.textContent=M.type==='duel'?'Rematch':'Play again'; rt.onclick=()=>netStart(M.type); }
     else if(netLive()){ rt.textContent='Waiting for host'; rt.onclick=()=>hint('Waiting for the host to start the next match…',3000); }
@@ -11189,7 +11295,7 @@ function loop(ts){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners')) drawSkinPreviews(now); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners')) drawSkinPreviews(now); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
