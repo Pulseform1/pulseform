@@ -730,6 +730,8 @@ body.cg a.pplink,body.cg .ppsep,body.cg #setDel,body.cg .mspecial.passplus,body.
 .pptabs .qdot{position:absolute;top:-6px;right:-6px}
 .pptrack{flex:none;display:flex;gap:10px;overflow-x:auto;padding:16px 4px 6px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;min-width:0;align-items:stretch}
 .ppcol{flex:none;display:flex;flex-direction:column;align-items:stretch;gap:10px;scroll-snap-align:center}
+/* the 100 tiers off screen aren't laid out or painted until you scroll near them */
+.ppcol{content-visibility:auto;contain-intrinsic-size:auto 158px auto 360px}
 .ppcard{--g1:#3FC97A;--g2:#167A4A;position:relative;width:158px;min-height:262px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px 10px;border-radius:18px;border:3px solid #1A0C2E;
   background:radial-gradient(ellipse at 50% 38%,rgba(255,255,255,.35),transparent 60%),linear-gradient(170deg,var(--g1),var(--g2));box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 5px 0 rgba(0,0,0,.45);transition:filter .3s,transform .15s}
 .ppcard::after{content:'';position:absolute;inset:3px 3px 55% 3px;border-radius:14px 14px 40% 40%;background:linear-gradient(rgba(255,255,255,.22),rgba(255,255,255,0));pointer-events:none}
@@ -1297,6 +1299,10 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
   body:not(.phone) #menuOv .chip.twchip .twt{margin-left:auto;font:900 11px var(--display);font-style:normal;color:#2A1400;background:#FFE7A0;border-radius:999px;padding:2px 8px;white-space:nowrap}
   body:not(.phone) #menuOv #mPassTxt{flex:1;display:flex;align-items:center;gap:6px}body:not(.phone) #menuOv #mPassTxt .ppg{display:none}body:not(.phone) #menuOv #mPassTxt .ppt::before{content:'Tier '}
   body:not(.phone) #menuOv #mPassTxt .ppt{margin-left:auto;font:900 11.5px var(--display);font-style:normal;color:#1A0C2E;background:#FFD166;border-radius:999px;padding:2px 8px}
+  /* the label stays on one line, the tier badge never wraps, and the "ready" dot sits on the badge's corner instead of pushing past the button's edge */
+  body:not(.phone) #menuOv #mPassTxt{white-space:nowrap;min-width:0}body:not(.phone) #menuOv #mPassTxt .ppt{flex:none;white-space:nowrap}
+  body:not(.phone) #menuOv .chip.ppchip{position:relative}
+  body:not(.phone) #menuOv .chip.ppchip .qdot{position:absolute;top:5px;right:6px;margin:0;box-shadow:0 0 0 2px #2A1F48}
   body:not(.phone) #menuOv .chip.ppchip::before{--ic:#FFD166;-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8l4 3.5L12 5l4 6.5L20 8l-1.6 10H5.6z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8l4 3.5L12 5l4 6.5L20 8l-1.6 10H5.6z'/%3E%3C/svg%3E")}
   body:not(.phone) #menuOv .chip.rankchip .gem{width:14px;height:14px;margin:0 3px}
   /* the two places that sell things stand out */
@@ -1459,6 +1465,9 @@ body.phone #worldsOv > .panel > .head:first-child,body.phone #levelsOv > .panel 
   background:rgba(22,17,52,.9);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid rgba(255,255,255,.07)}
 body.phone .overlay .panel > .head:first-child .back{font-size:15px;padding:8px 12px 8px 4px;min-height:40px}
 body.phone #twinOv > .panel{padding-top:calc(env(safe-area-inset-top) + 12px)!important}
+/* on phones the event screen is one full-height scroller: no desktop gap above the card, the prize block sits in the flow under the back button */
+body.phone #twinOv > .panel{margin-top:0!important;height:100%;max-height:none;box-sizing:border-box;overflow-x:hidden!important;overflow-y:auto!important}
+body.phone #twinOv .cvkpedestal{margin:72px auto 0}body.phone #twinOv > .panel > *{flex-shrink:0}
 /* ---- Pulse Pass: two rows per tier (Pass+ on top, free below) ---- */
 .ppcol{width:158px;gap:8px}.ppcol:has(.grand){width:214px}
 .ppcol .ppcard{width:auto;min-height:0;height:220px}
@@ -2607,7 +2616,7 @@ function ensureAudio(){
   const ss=c.createGain(); ss.gain.value=.18; A.sfx.connect(ss); ss.connect(A.rev);
   A.roomBus=c.createGain(); A.roomBus.gain.value=.9; A.roomBus.connect(A.filt); const rbs=c.createGain(); rbs.gain.value=.3; A.roomBus.connect(rbs); rbs.connect(A.rev);
   STEMS.forEach((s,i)=>{const g=c.createGain(); g.gain.value=i===0?STEMV[0]:0; g.connect(A.filt); const se=c.createGain(); se.gain.value=SEND[i]; g.connect(se); se.connect(A.rev); A.stems[s]=g;});
-  renderSamples();
+  setTimeout(renderSamples,30);   // built after the tap that started audio has been drawn (drums are silent until they exist either way)
 }
 function tone(dest,t,type,f,peak,a,dec,o={}){
   const c=A.ctx, osc=c.createOscillator(); osc.type=type; osc.frequency.setValueAtTime(f,t);
@@ -5539,13 +5548,14 @@ function pvFrame(){ PV.f++; const scrolling=performance.now()-PV.scrollT<180, st
 function drawSkinPreviews(now,sel){
   if(!PV.on&&!pvFrozen()) return;
   const cvs=document.querySelectorAll(sel||'#shopGrid canvas.skprev'); if(!cvs.length) return;
-  const main=cx, dpr=Math.min(MOB?2.5:3,devicePixelRatio||1), gm=G.mode, frozen=pvFrozen(); G.mode=gm?{...gm,coop:false}:null;
+  const main=cx, dpr=Math.min(MOB?2.5:3,devicePixelRatio||1), gm=G.mode, frozen=pvFrozen(); G.mode=gm?{...gm,coop:false}:null; let fresh=0;
   cvs.forEach((c,idx)=>{
     if(frozen&&c._drawn) return;   // held still mid-scroll; one that scrolls into view is still drawn once
     if(PV.io){ if(!PV.seen.has(c)){ PV.seen.add(c); PV.io.observe(c); c._vis=undefined; }
       if(c._vis===false) return;
       if(c._vis===undefined){ const r=c.getBoundingClientRect(); c._vis=!!r.width&&r.bottom>=0&&r.top<=innerHeight; if(!c._vis) return; } }   // the first time only, until the observer reports
     else { const r=c.getBoundingClientRect(); if(!r.width||r.bottom<0||r.top>innerHeight) return; }
+    if(!c._drawn&&++fresh>(MOB?3:6)) return;   // a screen full of new previews (opening the Pass or Shop) fills in over a few frames instead of one long one
     // sized from the canvas's laid-out width (not its hover transform), so it stays sharp on 3x phone screens
     if(!c._css) c._css=c.clientWidth||+c.dataset.px||64;
     const w=64, h=64, css=c._css, N=Math.round(css*dpr), sc=N/64; if(c.width!==N){ c.width=N; c.height=N; }
@@ -10701,7 +10711,14 @@ const OVS=['adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','pollOv','c
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
-function showOv(id,menu=true){ OVS.forEach(o=>$(o).hidden=o!==id); setTimeout(partyBarSync,0); const ov=$(id); ov.querySelectorAll('.mcard,.mode,.lvl,.item,.cta').forEach((el,i)=>el.style.setProperty('--i',i)); ov.classList.remove('enter'); void ov.offsetWidth; ov.classList.add('enter'); document.body.classList.toggle('in-menu',menu); if(!MOB||id!=='menuOv'){ const f=visBtns($(id)).find(b=>b.matches('.cta,.btn,.mode,.lvl,.mcard'))||visBtns($(id))[0]; if(f) f.focus({preventScroll:true}); } }
+/* Showing a screen does no forced layout: the entrance animation restarts by itself when a hidden screen appears (a forced
+   reflow is only needed to replay it on a screen that's already showing), the stagger stops after the first 14 cards, and
+   the first button to focus is found without measuring every button (the Pass track and the Shop have hundreds) */
+function showOv(id,menu=true){ const ov=$(id), was=!ov.hidden; OVS.forEach(o=>$(o).hidden=o!==id); setTimeout(partyBarSync,0);
+  ov.querySelectorAll('.mcard,.mode,.lvl,.item,.cta').forEach((el,i)=>el.style.setProperty('--i',Math.min(i,14)));
+  if(was){ ov.classList.remove('enter'); void ov.offsetWidth; } ov.classList.add('enter'); document.body.classList.toggle('in-menu',menu);
+  if(!MOB||id!=='menuOv'){ const f=firstBtn(ov,'.cta,.btn,.mode,.lvl,.mcard')||firstBtn(ov); if(f) f.focus({preventScroll:true}); } }
+function firstBtn(el,sel){ for(const b of el.querySelectorAll('button,input')){ if(b.disabled||(sel&&!b.matches(sel))) continue; if(b.offsetParent!==null) return b; } return null; }
 const notesTxt=()=>'♪ '+SAVE.notes.toLocaleString();
 function fadeMusic(){ if(!A.ctx) return; A.music.gain.setTargetAtTime(0,A.ctx.currentTime,.4); }
 /* a block or landing effect you no longer own (say Dread, after the Hard Mode reset) goes back to the default */
