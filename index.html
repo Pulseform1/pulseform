@@ -1433,12 +1433,38 @@ body.phone #menuOv .twban:not([hidden]){display:flex;align-items:center;gap:12px
 #menuOv .liveban:not([hidden]){display:flex;align-items:center;gap:12px;width:100%;max-width:520px;margin-top:10px;padding:12px 14px;border-radius:18px;cursor:pointer;text-align:left;color:#fff;font:inherit;
   border:1px solid rgba(140,240,255,.55);background:linear-gradient(110deg,rgba(120,230,255,.26),rgba(70,90,190,.55) 55%,rgba(30,26,90,.85));box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .liveban .twban-ic{background:linear-gradient(#B8F6FF,#4FB8E0);color:#06203A}.liveban .twban-go{color:#B8F6FF;font-size:14px;white-space:nowrap}
-.adm .field{margin-top:14px}.adm h3{margin:18px 0 4px;font:800 16px var(--display);color:#FFD166}
-.adm input,.adm select,.adm textarea{background:rgba(10,8,30,.6);border:1px solid var(--line);border-radius:10px;padding:9px 10px;color:var(--ink);font:inherit;font-size:14px;min-width:0;width:100%;box-sizing:border-box}
-.adm .g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:8px}.adm .g2 label,.adm .g1 label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--ink-2)}
-.adm .g1{display:grid;gap:8px;margin-top:8px}.adm .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.adm .row .btn{flex:1 1 auto}
-.adm .who{margin-top:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.06);font-size:14px}.adm .who:empty{display:none}
-.adm .amsg{min-height:1.4em;margin:8px 0 0;font-size:13.5px;color:#B8F2E6}.adm .amsg.err{color:#FF8A80}
+.adm input,.adm select{background:rgba(10,8,30,.6);border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--ink);font:inherit;font-size:15px;min-width:0;width:100%;box-sizing:border-box}
+.adm input:focus,.adm select:focus{outline:2px solid #8FF0E0;outline-offset:1px}
+.adm .head{display:flex;align-items:center;justify-content:space-between}
+.admbadge{font:800 11px var(--display);letter-spacing:.16em;text-transform:uppercase;color:#06231F;background:linear-gradient(90deg,#8FF0E0,#B8F2E6);border-radius:999px;padding:4px 10px}
+.admtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;margin:10px 0 4px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
+.admtabs button{font:700 14px var(--display);color:var(--ink-2);background:none;border:0;border-radius:10px;padding:9px 6px;cursor:pointer}
+.admtabs button.on{color:#06231F;background:linear-gradient(180deg,#B8F2E6,#8FF0E0);box-shadow:0 2px 10px rgba(143,240,224,.3)}
+.admpane{display:flex;flex-direction:column;gap:6px;margin-top:8px}.admpane[hidden]{display:none}
+.admsearch input{font-size:16px;padding:12px 14px;border-radius:14px}
+.admhint{display:block;margin:10px 2px 2px;font:700 11px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.admres{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
+.admrow{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.admrow:hover,.admrow:focus-visible{background:rgba(143,240,224,.12);border-color:rgba(143,240,224,.4)}
+.admrow b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}.admrow small{color:var(--ink-2);font-size:12px;white-space:nowrap}
+.admav{flex:none;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font:800 14px var(--display);color:#1A1440;background:linear-gradient(135deg,#FFD166,#FF9CC8)}
+.admempty{padding:12px;color:var(--ink-2);font-size:13.5px;text-align:center}
+.admsel{margin-top:10px;padding:12px;border-radius:16px;background:rgba(143,240,224,.07);border:1px solid rgba(143,240,224,.3)}
+.admwho{display:flex;align-items:center;gap:10px}.admwho>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column}.admwho b{font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.admwho small{color:var(--ink-2);font-size:12.5px}
+.admwho .btn{flex:none;min-height:0;padding:7px 12px;font-size:13px}
+.admquick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.admquick button{font:800 14px var(--display);padding:11px 6px;border-radius:12px;border:1px solid rgba(255,209,102,.4);background:rgba(255,209,102,.12);color:#FFE7A0;cursor:pointer}
+.admquick button.pp{grid-column:1/-1;color:#1A0C2E;border:0;background:linear-gradient(90deg,#FFD166,#FF9CC8 60%,#C9A6FF)}
+.admquick button:disabled{opacity:.5;cursor:default}
+.adm .g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:6px}.adm .g2 label,.adm .g1 label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--ink-2)}
+.adm .g2 label[hidden],.adm .g1 label[hidden],.adm .g1[hidden]{display:none}
+.adm .g1{display:grid;gap:8px;margin-top:6px}.adm .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.adm .row .btn{flex:1 1 auto}
+.admcard{padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:14px}.admcard.on{border-color:rgba(143,240,224,.5);background:rgba(143,240,224,.1)}
+.adm .amsg{min-height:1.4em;margin:10px 0 0;font-size:13.5px;color:#B8F2E6}.adm .amsg.err{color:#FF8A80}
+#menuOv .admfab:not([hidden]){position:absolute;top:16px;right:18px;z-index:6;display:flex;align-items:center;gap:7px;padding:9px 14px 9px 11px;border-radius:999px;cursor:pointer;
+  font:800 13.5px var(--display);letter-spacing:.02em;color:#06231F;background:linear-gradient(180deg,#B8F2E6,#8FF0E0);border:0;box-shadow:0 6px 20px rgba(0,0,0,.3),0 0 0 3px rgba(143,240,224,.18)}
+#menuOv .admfab svg{width:18px;height:18px}
+body.phone #menuOv .admfab:not([hidden]){position:fixed;top:calc(env(safe-area-inset-top) + 82px);right:12px;padding:8px 12px 8px 9px;font-size:12.5px}
 body.phone #menuOv .mtop-r .wallet{order:0;min-height:38px;padding:0 12px;display:flex;align-items:center;font:700 14px var(--display);border-radius:12px}
 body.phone #mProfile{min-height:38px!important;padding:0 11px!important;border-radius:12px!important;font-size:12.5px!important}
 body.phone #menuOv .mmain{display:flex;flex-direction:column;gap:10px;flex:0 0 auto}
@@ -1638,6 +1664,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
 .swipepad.learned .sp-hint,.swipepad.learned .sp-arrows{opacity:.35}
 </style>
 <section id="menuOv" class="screen" hidden>
+  <button class="admfab" id="mAdmin" type="button" hidden aria-label="Admin panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-3 7.6-7 9-4-1.4-7-4.8-7-9V6z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></svg><span>Admin</span></button>
   <div id="hween" aria-hidden="true"></div>
   <header class="mtop">
     <div class="mbrand"><span class="mdot"></span>Pulseform</div>
@@ -2122,30 +2149,42 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
 
 <section id="adminOv" class="overlay" hidden>
   <div class="panel adm">
-    <div class="head"><button class="back" id="admBack" type="button">← Settings</button></div>
-    <h2>Admin panel</h2>
-    <p class="small" id="admWho"></p>
-    <h3>Your account</h3>
-    <div class="g2"><label>Rank<select id="admRank"></select></label><label>Add Notes<input id="admNotes" type="number" min="0" max="1000000" step="100" placeholder="e.g. 5000"></label></div>
-    <div class="row"><button class="btn ghost" id="admRankGo" type="button">Set rank</button><button class="btn ghost" id="admNotesGo" type="button">Add Notes</button></div>
-    <div class="row"><button class="btn ghost" id="admLevels" type="button">Unlock all levels</button><button class="btn ghost" id="admPass" type="button">Pulse Pass+</button><button class="btn ghost" id="admAll" type="button">Own every item</button></div>
-    <h3>Gift a player</h3>
-    <div class="g2"><label>Player name or friend code<input id="admFind" type="text" maxlength="24" autocomplete="off" placeholder="Name or 6-letter code"></label><label>&nbsp;<button class="btn ghost" id="admFindGo" type="button">Find player</button></label></div>
-    <div class="who" id="admTarget"></div>
-    <div class="g2"><label>Gift<select id="admKind"><option value="notes">Notes</option><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option><option value="passp">Pulse Pass+</option><option value="rank">Set rank</option><option value="msg">Message only</option></select></label>
-      <label id="admItemL">Item<select id="admItem"></select></label></div>
-    <div class="g1"><label id="admAmtL">Amount<input id="admAmt" type="number" min="1" max="1000000" step="100" value="1000"></label><label>Message (optional)<input id="admNote" type="text" maxlength="120" placeholder="Thanks for playing!"></label></div>
-    <div class="row"><button class="btn" id="admSend" type="button" disabled>Send gift</button></div>
-    <h3>Global event</h3>
-    <p class="small" id="admLiveNow">No event running.</p>
-    <div class="g1"><label>Title<input id="admEvT" type="text" maxlength="40" placeholder="Double XP Weekend"></label><label>Message<input id="admEvM" type="text" maxlength="140" placeholder="Every run earns double XP until Sunday night."></label></div>
-    <div class="g2"><label>XP boost<select id="admEvX"><option value="1">None</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option></select></label>
-      <label>Notes boost<select id="admEvN"><option value="1">None</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option></select></label>
-      <label>Starts in (hours)<input id="admEvS" type="number" min="0" max="720" step="0.5" value="0"></label><label>Lasts (hours)<input id="admEvH" type="number" min="0.5" max="720" step="0.5" value="48"></label>
-      <label>Gift for everyone<select id="admEvG"><option value="">None</option><option value="notes">Notes</option><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option></select></label>
-      <label id="admEvGL">Gift item<select id="admEvGI"></select></label></div>
-    <div class="g1" id="admEvGAL"><label>Notes for everyone<input id="admEvGA" type="number" min="1" max="100000" step="100" value="500"></label></div>
-    <div class="row"><button class="btn" id="admEvGo" type="button">Start event</button><button class="btn ghost" id="admEvEnd" type="button">End event now</button></div>
+    <div class="head"><button class="back" id="admBack" type="button">← Menu</button><span class="admbadge">Admin</span></div>
+    <div class="admtabs" id="admTabs" role="tablist"><button type="button" data-at="players">Players</button><button type="button" data-at="events">Events</button><button type="button" data-at="me">My account</button></div>
+    <div class="admpane" id="admPlayers">
+      <div class="admsearch"><input id="admFind" type="search" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Search a name or friend code"></div>
+      <small class="admhint" id="admResHead">Top players</small>
+      <div class="admres" id="admRes"></div>
+      <div class="admsel" id="admSel" hidden>
+        <div class="admwho"><span class="admav" id="admSelAv"></span><span><b id="admSelName"></b><small id="admSelInfo"></small></span><button class="btn ghost" id="admSelClear" type="button">Change</button></div>
+        <small class="admhint">One tap sends it</small>
+        <div class="admquick">
+          <button type="button" data-q="notes:1000">+♪1,000</button><button type="button" data-q="notes:5000">+♪5,000</button><button type="button" data-q="notes:25000">+♪25,000</button>
+          <button type="button" class="pp" data-q="passp">♛ Pulse Pass+</button></div>
+        <small class="admhint">Or pick something</small>
+        <div class="g2"><label>Gift<select id="admKind"><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option><option value="notes">Notes (any amount)</option><option value="rank">Set rank</option><option value="msg">Message only</option></select></label>
+          <label id="admItemL">Item<select id="admItem"></select></label><label id="admAmtL" hidden>Amount<input id="admAmt" type="number" min="1" max="1000000" step="100" value="1000"></label></div>
+        <div class="g1"><label>Message (optional)<input id="admNote" type="text" maxlength="120" placeholder="Thanks for playing!"></label></div>
+        <div class="row"><button class="btn" id="admSend" type="button">Send gift</button></div>
+      </div>
+    </div>
+    <div class="admpane" id="admEvents" hidden>
+      <div class="admcard" id="admLiveNow">No event running.</div>
+      <div class="g1"><label>Title<input id="admEvT" type="text" maxlength="40" placeholder="Double XP Weekend"></label><label>Message<input id="admEvM" type="text" maxlength="140" placeholder="Every run earns double XP until Sunday night."></label></div>
+      <div class="g2"><label>XP boost<select id="admEvX"><option value="1">None</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option></select></label>
+        <label>Notes boost<select id="admEvN"><option value="1">None</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option></select></label>
+        <label>Starts in (hours)<input id="admEvS" type="number" min="0" max="720" step="0.5" value="0"></label><label>Lasts (hours)<input id="admEvH" type="number" min="0.5" max="720" step="0.5" value="48"></label>
+        <label>Gift for everyone<select id="admEvG"><option value="">None</option><option value="notes">Notes</option><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option></select></label>
+        <label id="admEvGL">Gift item<select id="admEvGI"></select></label></div>
+      <div class="g1" id="admEvGAL"><label>Notes for everyone<input id="admEvGA" type="number" min="1" max="100000" step="100" value="500"></label></div>
+      <div class="row"><button class="btn" id="admEvGo" type="button">Start event</button><button class="btn ghost" id="admEvEnd" type="button">End event now</button></div>
+    </div>
+    <div class="admpane" id="admMe" hidden>
+      <p class="small" id="admWho"></p>
+      <div class="g2"><label>Rank<select id="admRank"></select></label><label>Add Notes<input id="admNotes" type="number" min="0" max="1000000" step="100" placeholder="e.g. 5000"></label></div>
+      <div class="row"><button class="btn ghost" id="admRankGo" type="button">Set rank</button><button class="btn ghost" id="admNotesGo" type="button">Add Notes</button></div>
+      <div class="row"><button class="btn ghost" id="admLevels" type="button">Unlock all levels</button><button class="btn ghost" id="admPass" type="button">Give me Pulse Pass+</button><button class="btn ghost" id="admAll" type="button">Own every item</button></div>
+    </div>
     <p class="amsg" id="admMsg" role="status"></p>
   </div>
 </section>
@@ -6838,7 +6877,7 @@ function admAuth(u){ ADM.on=false; admUI(); inboxStop(); if(!u||!ACCT.db) return
 async function admClaim(){ const u=ACCT.user, db=ACCT.db, k=ADM.pending; if(!u||!db||!k) return; ADM.pending='';
   try{ await db.collection('admins').doc(u.uid).set({k,t:Date.now()}); ADM.on=true; admUI(); toast('Admin panel added to this account. Open it from Settings.'); if(A.ctx) sGem(); }
   catch(e){ toast('Could not turn on the admin panel ('+(e&&e.code||'offline')+'). Publish the latest firestore.rules in Firebase first.'); } }
-function admUI(){ const b=$('setAdmin'); if(b) b.hidden=!ADM.on; }
+function admUI(){ ['setAdmin','mAdmin'].forEach(id=>{ const b=$(id); if(b) b.hidden=!ADM.on||!!window.PF_CG; }); }
 /* ---- a player's gift inbox ---- */
 function inboxStart(u){ inboxStop(); if(!u||!ACCT.db||ACCT.user!==u) return;
   ADM.unsubG=ACCT.db.collection('gifts').doc(u.uid).collection('items').onSnapshot(s=>s.docs.forEach(inboxTake),()=>{}); }
@@ -6872,61 +6911,89 @@ setInterval(liveUI,30000);
 $('mLive').onclick=()=>{ const L=liveOn();
   if(L&&liveGiftOpen(L)){ const txt=giftApply(L.gift); SAVE.liveGot=[...(SAVE.liveGot||[]),L.id].slice(-200); save(); acctPush(true); afterGift(); liveUI(); toast('🎁 '+txt); if(A.ctx) sGem(); buzz(30); return; }
   const A2=ACCT.live; if(A2) toast(A2.msg||A2.title||'Live event'); };
-/* ---- the panel ---- */
+/* ---- the panel: Players (search and one-tap gifts), Events, My account ---- */
 const admMsg=(t,err)=>{ const m=$('admMsg'); m.textContent=t; m.classList.toggle('err',!!err); };
+let admTab='players';
 function admItems(sel,kind){ const L=GIFT_LISTS[kind]?GIFT_LISTS[kind]().filter(x=>x.price!==0||kind==='skin'):[];
   sel.innerHTML=L.map(x=>`<option value="${escapeHTML(x.id)}">${escapeHTML(x.name)}</option>`).join(''); }
 function admKindUI(){ const k=$('admKind').value;
   $('admItemL').hidden=!(GIFT_LISTS[k]||k==='rank'); $('admAmtL').hidden=k!=='notes';
   if(GIFT_LISTS[k]) admItems($('admItem'),k);
-  else if(k==='rank') $('admItem').innerHTML='<option value="-1">Earned rank (clear)</option>'+Array.from({length:RANK_MAX+1},(_,n)=>`<option value="${n}">${escapeHTML(rankName(n))}</option>`).join('');
-  $('admSend').disabled=!ADM.target; }
+  else if(k==='rank') $('admItem').innerHTML='<option value="-1">Earned rank (clear)</option>'+Array.from({length:RANK_MAX+1},(_,n)=>`<option value="${n}">${escapeHTML(rankName(n))}</option>`).join(''); }
 function admEvKindUI(){ const k=$('admEvG').value; $('admEvGL').hidden=!GIFT_LISTS[k]; $('admEvGAL').hidden=k!=='notes'; if(GIFT_LISTS[k]) admItems($('admEvGI'),k); }
-function admLiveNow(){ const L=ACCT.live, now=Date.now(), e=$('admLiveNow');
-  if(!L||now>=(+L.end||0)){ e.textContent='No event running.'; return; }
-  e.textContent=`${now<L.start?'Coming up':'Running'}: ${L.title||'Live event'} (${now<L.start?'starts in '+liveLeft(L.start-now):'ends in '+liveLeft(L.end-now)})`; }
+function admLiveNow(){ const L=ACCT.live, now=Date.now(), e=$('admLiveNow'), on=!!L&&now<(+L.end||0);
+  e.classList.toggle('on',on); $('admEvEnd').disabled=!on;
+  if(!on){ e.textContent='No event running. Start one below: everyone sees it on the main menu.'; return; }
+  const b=[(+L.xp||1)>1?`${+L.xp}× XP`:'',(+L.notes||1)>1?`${+L.notes}× Notes`:'',L.gift?'a gift for everyone':''].filter(Boolean).join(' · ');
+  e.innerHTML=`<b>${now<L.start?'Coming up':'Live now'}: ${escapeHTML(L.title||'Live event')}</b><br><small>${escapeHTML(b||'No boosts')} · ${now<L.start?'starts in '+liveLeft(L.start-now):'ends in '+liveLeft(L.end-now)}</small>`; }
 function admSelfUI(){ $('admLevels').textContent=SAVE.devAll?'Lock levels again':'Unlock all levels'; $('admPass').textContent=passS().prem?'Pulse Pass+ ✓':'Give me Pulse Pass+'; $('admPass').disabled=!!passS().prem;
   const r=SAVE.rankSet&&typeof SAVE.rankSet.n==='number'?SAVE.rankSet.n:-1; $('admRank').value=String(r); }
+function admTabSet(t){ admTab=t; document.querySelectorAll('#admTabs button').forEach(b=>{ b.classList.toggle('on',b.dataset.at===t); b.setAttribute('aria-selected',b.dataset.at===t); });
+  $('admPlayers').hidden=t!=='players'; $('admEvents').hidden=t!=='events'; $('admMe').hidden=t!=='me'; admMsg('');
+  if(t==='events') admLiveNow(); if(t==='me') admSelfUI(); if(t==='players'&&!ADM.target&&!$('admFind').value.trim()) admTop(); }
 function admOpen(){ if(!ADM.on||!ACCT.user){ toast('Sign in with your admin account first.'); return; }
-  $('admWho').textContent=`Signed in as ${SAVE.name||ACCT.user.email||'you'}. Gifts and events you make here reach every player.`;
+  $('admWho').textContent=`Signed in as ${SAVE.name||ACCT.user.email||'you'}.`;
   $('admRank').innerHTML='<option value="-1">Earned rank ('+escapeHTML(rankName(rankOf(SAVE.xp||0)))+')</option>'+Array.from({length:RANK_MAX+1},(_,n)=>`<option value="${n}">${escapeHTML(rankName(n))}</option>`).join('');
-  admSelfUI(); admKindUI(); admEvKindUI(); admLiveNow(); admMsg(''); showOv('adminOv'); }
+  admKindUI(); admEvKindUI(); showOv('adminOv',false); admTabSet(admTab); }
 function admSelfSaved(t){ save(); acctPush(true); afterGift(); admSelfUI(); admMsg(t); if(A.ctx) sGem(); }
-$('setAdmin').onclick=admOpen;
-$('admBack').onclick=()=>{ buildSettings(); showOv('settingsOv'); };
+/* ---- finding players: as you type (names start with what you typed, any capitals), a friend code, or the top players ---- */
+const admAv=n=>escapeHTML(String(n||'?').trim().charAt(0).toUpperCase()||'?');
+function admList(rows,head){ $('admResHead').textContent=head; const box=$('admRes');
+  if(!rows.length){ box.innerHTML=`<div class="admempty">${head==='Top players'?'No players on the leaderboard yet.':'No players found. Try the start of their name, or their 6-letter friend code (on their Friends screen).'}</div>`; return; }
+  box.innerHTML=rows.map((f,i)=>`<button type="button" class="admrow" data-i="${i}"><span class="admav">${admAv(f.name)}</span><b>${escapeHTML(f.name||'Player')}</b><small>${escapeHTML(rankName(f.rank||0))}${f.score?` · ${(+f.score).toLocaleString()}`:''}</small></button>`).join('');
+  box.querySelectorAll('.admrow').forEach(b=>b.onclick=()=>admPick(rows[+b.dataset.i])); }
+async function admTop(){ const db=ACCT.db; if(!db) return; admList([],'Top players'); $('admRes').innerHTML='<div class="admempty">Loading…</div>';
+  try{ const s=await db.collection('boards').doc('endless').collection('entries').orderBy('score','desc').limit(15).get(); const rows=[]; s.forEach(d=>rows.push({uid:d.id,name:d.data().name,rank:d.data().rank,score:d.data().score}));
+    if(admTab==='players'&&!$('admFind').value.trim()&&!ADM.target) admList(rows,'Top players'); }
+  catch(e){ $('admRes').innerHTML='<div class="admempty">Could not load players. Check your connection.</div>'; } }
+async function admSearch(q){ const db=ACCT.db; if(!db) return; q=q.trim(); if(!q){ admTop(); return; }
+  const id=++ADM.qid, found=new Map(), add=(uid,d)=>{ if(uid&&!found.has(uid)) found.set(uid,{uid,name:d.name,rank:d.rank||0,score:d.score}); };
+  const pre=(col,f,v)=>col.where(f,'>=',v).where(f,'<=',v+'').limit(10).get().then(s=>s.forEach(d=>add(d.id,d.data()))).catch(()=>{});
+  const prof=db.collection('profiles'), lb=db.collection('boards').doc('endless').collection('entries'), low=q.toLowerCase(), cap=q.charAt(0).toUpperCase()+q.slice(1);
+  $('admResHead').textContent='Searching…';
+  const jobs=[pre(prof,'nameKey',low),pre(prof,'name',q),pre(prof,'name',cap),pre(lb,'name',q),pre(lb,'name',cap)];
+  if(/^[a-z0-9]{6}$/i.test(q)) jobs.push(db.collection('codes').doc(q.toUpperCase()).get().then(async c=>{ const uid=c.exists&&c.data().uid; if(!uid) return; const p=await prof.doc(uid).get(); add(uid,p.exists?p.data():{name:'Player'}); }).catch(()=>{}));
+  await Promise.all(jobs); if(id!==ADM.qid) return;
+  const rows=[...found.values()].filter(f=>String(f.name||'').toLowerCase().startsWith(low)||/^[a-z0-9]{6}$/i.test(q)).slice(0,12);
+  admList(rows,rows.length?`${rows.length} player${rows.length>1?'s':''}`:'No match'); }
+ADM.qid=0;
+function admPick(f){ ADM.target=f; $('admSel').hidden=false; $('admRes').hidden=true; $('admResHead').hidden=true; $('admFind').closest('.admsearch').hidden=true;
+  $('admSelAv').textContent=String(f.name||'?').charAt(0).toUpperCase(); $('admSelName').textContent=f.name||'Player'; $('admSelInfo').textContent=rankName(f.rank||0)+(f.score?` · best ${(+f.score).toLocaleString()}`:'');
+  $('admSel').querySelectorAll('button').forEach(b=>b.disabled=false); admKindUI(); admMsg(''); }
+function admUnpick(){ ADM.target=null; $('admSel').hidden=true; $('admRes').hidden=false; $('admResHead').hidden=false; $('admFind').closest('.admsearch').hidden=false; admMsg(''); const q=$('admFind').value; if(q.trim()) admSearch(q); else admTop(); $('admFind').focus({preventScroll:true}); }
+async function admGift(g,label){ const T=ADM.target, db=ACCT.db; if(!T||!db||!ACCT.user) return;
+  Object.assign(g,{t:Date.now(),by:ACCT.user.uid}); const note=$('admNote').value.trim().slice(0,120); if(note) g.msg=note;
+  const btns=$('admSel').querySelectorAll('button'); btns.forEach(b=>b.disabled=true); admMsg('Sending…');
+  try{ await db.collection('gifts').doc(T.uid).collection('items').add(g); admMsg(`✓ ${label} sent to ${T.name||'that player'}. They get it the next time they open the game signed in.`); if(A.ctx) sGem(); buzz(20); }
+  catch(e){ admMsg('Could not send ('+(e&&e.code||'offline')+').',true); }
+  btns.forEach(b=>b.disabled=false); }
+let admFindT=0;
+$('admFind').addEventListener('input',()=>{ clearTimeout(admFindT); admFindT=setTimeout(()=>admSearch($('admFind').value),250); });
+$('admFind').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'){ e.preventDefault(); const f=$('admRes').querySelector('.admrow'); if(f) f.click(); } });
+$('admSelClear').onclick=admUnpick;
+$('admSel').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{ const q=b.dataset.q;
+  if(q==='passp') admGift({kind:'passp'},'Pulse Pass+'); else { const n=+q.split(':')[1]; admGift({kind:'notes',n},`♪${n.toLocaleString()}`); } });
+$('admSend').onclick=()=>{ const k=$('admKind').value, g={kind:k}; let label='';
+  if(k==='notes'){ g.n=Math.max(1,Math.min(1000000,Math.round(+$('admAmt').value||0))); label=`♪${g.n.toLocaleString()}`; }
+  else if(GIFT_LISTS[k]){ g.id=$('admItem').value; label=$('admItem').selectedOptions[0]?$('admItem').selectedOptions[0].textContent:'The gift'; }
+  else if(k==='rank'){ g.n=Math.round(+$('admItem').value); label=g.n>=0?`Rank ${rankName(g.n)}`:'Rank reset'; }
+  else { if(!$('admNote').value.trim()){ admMsg('Type a message to send.',true); return; } label='Your message'; }
+  admGift(g,label); };
+document.querySelectorAll('#admTabs button').forEach(b=>b.onclick=()=>admTabSet(b.dataset.at));
+$('setAdmin').onclick=admOpen; $('mAdmin').onclick=admOpen;
+$('admBack').onclick=()=>toMenu();
 $('admRankGo').onclick=()=>{ const v=+$('admRank').value; SAVE.rankSet={n:v>=0?v:null,t:Date.now()}; admSelfSaved(v>=0?`Your rank is now ${rankName(v)}.`:'Your rank is back to the one you earned.'); };
 $('admNotesGo').onclick=()=>{ const n=Math.max(0,Math.min(1000000,Math.round(+$('admNotes').value||0))); if(!n){ admMsg('Type how many Notes to add.',true); return; } SAVE.notes+=n; $('admNotes').value=''; admSelfSaved(`Added ♪${n.toLocaleString()}.`); };
 $('admLevels').onclick=()=>{ SAVE.devAll=!SAVE.devAll; admSelfSaved(SAVE.devAll?'Every world, level, boss and Hard stage is open.':'Levels are locked by progress again.'); };
 $('admPass').onclick=()=>{ passS().prem=true; admSelfSaved('Pulse Pass+ is on.'); };   // one way: a bought Pass+ syncs as owned on every device
 $('admAll').onclick=()=>{ let n=0; [SKINS,BANNERS,TILES,PACKS,LANDS].forEach(L=>L.forEach(x=>{ if(x.id&&!SAVE.owned.includes(x.id)){ SAVE.owned.push(x.id); n++; } })); admSelfSaved(n?`Added ${n} items to your collection.`:'You already own everything.'); };
 $('admKind').onchange=admKindUI; $('admEvG').onchange=admEvKindUI;
-$('admFind').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') $('admFindGo').click(); });
-$('admFindGo').onclick=async()=>{ const q=$('admFind').value.trim(), db=ACCT.db, box=$('admTarget'); ADM.target=null; box.textContent=''; admKindUI(); if(!q||!db) return;
-  admMsg('Looking…'); const found=[];
-  try{
-    if(/^[a-z0-9]{6}$/i.test(q)){ const c=await db.collection('codes').doc(q.toUpperCase()).get(); const uid=c.exists&&c.data().uid;
-      if(uid){ const p=await db.collection('profiles').doc(uid).get(); found.push({uid,name:p.exists?p.data().name:'Player',rank:p.exists?p.data().rank:0}); } }
-    if(!found.length){ const s=await db.collection('profiles').where('name','==',q).limit(5).get(); s.forEach(d=>found.push({uid:d.id,name:d.data().name,rank:d.data().rank||0})); }
-  }catch(e){ admMsg('Search failed ('+(e&&e.code||'offline')+').',true); return; }
-  if(!found.length){ admMsg('No player with that exact name or friend code. Names are case-sensitive; the friend code is on their Friends screen.',true); return; }
-  admMsg(''); box.innerHTML=found.map((f,i)=>`<label style="display:flex;gap:8px;align-items:center;margin:2px 0"><input type="radio" name="admPick" value="${i}" style="width:auto"${i?'':' checked'}><b>${escapeHTML(f.name||'Player')}</b><small>${escapeHTML(rankName(f.rank||0))}</small></label>`).join('');
-  const pick=()=>{ const r=box.querySelector('input[name=admPick]:checked'); ADM.target=r?found[+r.value]:null; admKindUI(); };
-  box.querySelectorAll('input').forEach(r=>r.onchange=pick); pick(); };
-$('admSend').onclick=async()=>{ const T=ADM.target, db=ACCT.db; if(!T||!db||!ACCT.user) return; const k=$('admKind').value, g={kind:k,t:Date.now(),by:ACCT.user.uid};
-  const note=$('admNote').value.trim().slice(0,120); if(note) g.msg=note;
-  if(k==='notes'){ g.n=Math.max(1,Math.min(1000000,Math.round(+$('admAmt').value||0))); }
-  else if(GIFT_LISTS[k]) g.id=$('admItem').value; else if(k==='rank') g.n=Math.round(+$('admItem').value);
-  else if(k==='msg'&&!note){ admMsg('Type a message to send.',true); return; }
-  $('admSend').disabled=true; admMsg('Sending…');
-  try{ await db.collection('gifts').doc(T.uid).collection('items').add(g); admMsg(`Sent to ${T.name||'that player'}. They get it the next time they open the game signed in.`); if(A.ctx) sGem(); }
-  catch(e){ admMsg('Could not send ('+(e&&e.code||'offline')+').',true); }
-  $('admSend').disabled=false; };
 $('admEvGo').onclick=async()=>{ const db=ACCT.db; if(!db||!ACCT.user) return; const title=$('admEvT').value.trim().slice(0,40);
   if(!title){ admMsg('Give the event a title.',true); return; }
   const now=Date.now(), start=now+Math.max(0,+$('admEvS').value||0)*3600000, end=start+Math.max(.5,Math.min(720,+$('admEvH').value||48))*3600000;
   const gk=$('admEvG').value, gift=!gk?null:gk==='notes'?{kind:'notes',n:Math.max(1,Math.min(100000,Math.round(+$('admEvGA').value||0)))}:{kind:gk,id:$('admEvGI').value};
   const ev={id:'ev'+now.toString(36),title,msg:$('admEvM').value.trim().slice(0,140),xp:+$('admEvX').value,notes:+$('admEvN').value,start,end,gift,by:ACCT.user.uid,t:now};
-  admMsg('Starting…'); try{ await db.collection('live').doc('event').set(ev); ACCT.live=ev; liveUI(); admLiveNow(); admMsg('Event is live for every player.'); if(A.ctx) sGem(); }
+  admMsg('Starting…'); try{ await db.collection('live').doc('event').set(ev); ACCT.live=ev; liveUI(); admLiveNow(); admMsg('✓ Event is live for every player.'); if(A.ctx) sGem(); }
   catch(e){ admMsg('Could not start the event ('+(e&&e.code||'offline')+').',true); } };
 $('admEvEnd').onclick=async()=>{ const db=ACCT.db, L=ACCT.live; if(!db||!L){ admMsg('No event to end.'); return; }
   try{ const ev=Object.assign({},L,{end:Date.now(),t:Date.now(),by:ACCT.user.uid}); if(ev.start>ev.end) ev.start=ev.end; await db.collection('live').doc('event').set(ev); ACCT.live=ev; liveUI(); admLiveNow(); admMsg('Event ended.'); }
@@ -7024,7 +7091,7 @@ function frOn(){ return !!(FR&&ACCT.user&&ACCT.db&&FR.code); }
 const frDB=()=>ACCT.db, frMe=()=>ACCT.user&&ACCT.user.uid;
 function frCard(){
   const worlds=[]; for(let w=1;w<=WORLDS;w++) worlds.push(worldStars(w));
-  return {v:1,name:ensureName(),code:FR.code,rank:myRank(),xp:SAVE.xp||0,skin:SAVE.skin,land:SAVE.land,world:SAVE.world||1,levelStars:levelStars(),worlds,
+  const nm=ensureName(); return {v:1,name:nm,nameKey:String(nm).toLowerCase(),code:FR.code,rank:myRank(),xp:SAVE.xp||0,skin:SAVE.skin,land:SAVE.land,world:SAVE.world||1,levelStars:levelStars(),worlds,
     bosses:bossesBeaten(),hard:hardCleared(),interDone:!!SAVE.interDone,bestEndless:SAVE.bestEndless||0,bestAscent:SAVE.bestAscent||0,bestRush:SAVE.bestRush||0,bestRaid:SAVE.bestRaid||0,
     bestTether:SAVE.bestTether||0,levels:(SAVE.myLevels||[]).slice(0,24).map(l=>({n:l.n||'Untitled',code:l.code})),seen:Date.now()};
 }
