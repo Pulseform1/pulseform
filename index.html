@@ -1423,6 +1423,7 @@ body.phone #menuOv .twban:not([hidden]){display:flex;align-items:center;gap:12px
 .twban-ic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:linear-gradient(#FFE7A0,#E0A040);color:#2A1400}
 .twban-t{flex:1;display:flex;flex-direction:column;min-width:0}.twban-t b{font:800 16px var(--display)}.twban-t small{font-size:12.5px;color:#F1E8FF;opacity:.9}
 .twban-go{font:700 26px var(--display);color:#FFE7A0}
+#menuOv .edu-intro{max-width:640px;margin:22px auto 6px;padding:0 20px;text-align:center;font-size:12px;line-height:1.5;color:var(--ink-2);opacity:.55}
 #menuOv .liveban:not([hidden]){display:flex;align-items:center;gap:12px;width:100%;max-width:520px;margin-top:10px;padding:12px 14px;border-radius:18px;cursor:pointer;text-align:left;color:#fff;font:inherit;
   border:1px solid rgba(140,240,255,.55);background:linear-gradient(110deg,rgba(120,230,255,.26),rgba(70,90,190,.55) 55%,rgba(30,26,90,.85));box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .liveban .twban-ic{background:linear-gradient(#B8F6FF,#4FB8E0);color:#06203A}.liveban .twban-go{color:#B8F6FF;font-size:14px;white-space:nowrap}
@@ -1659,7 +1660,6 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     </div>
     <div id="menuArt" aria-hidden="true"></div>
   </div>
-  <p class="edu-intro" style="max-width:760px;margin:0 auto 18px;padding:0 20px;text-align:center;opacity:.82">Pulseform is a music education game built around rhythm, timing, listening, and musical skill development. Play through interactive challenges to practice your sense of beat and improve musical coordination.</p>
   <nav class="mcards" aria-label="Game modes">
     <button class="mcard" id="mLevels" type="button" style="--a:#FFD166"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 26h8v-6h8v-6h8V6" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg><b>Levels</b><small>16 worlds · 144 stages</small><span class="meta" id="mLevelsMeta"></span></button>
     <button class="mcard" id="mDaily" type="button" style="--a:#B8F2E6"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="6" fill="currentColor"/><g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M16 3v4M16 25v4M3 16h4M25 16h4M7 7l3 3M22 22l3 3M25 7l-3 3M10 22l-3 3"/></g></svg><b>Daily</b><small id="mDailySub"></small><span class="meta" id="mDailyMeta"></span></button>
@@ -1673,6 +1673,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <button class="mcard" id="mStudio" type="button" style="--a:#FF7EB6"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 24V7l14-3v17" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="8.5" cy="24" r="3.5" fill="currentColor"/><circle cx="22.5" cy="21" r="3.5" fill="currentColor"/></svg><b>Studio</b><small>Any song, your tempo</small><span class="meta" id="mStudioMeta"></span></button>
   <button class="mcard" id="mCreate" type="button" style="--a:#B8F27A"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="4" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.6"/><rect x="18" y="18" width="10" height="10" rx="2" fill="currentColor"/><path d="M18 9h10M23 4v10M4 23h10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg><b>Create</b><small>Build and share levels</small><span class="meta" id="mCreateMeta"></span></button>
   </nav>
+  <p class="edu-intro">Pulseform is a music education game built around rhythm, timing, listening, and musical skill development. Play through interactive challenges to practice your sense of beat and improve musical coordination.</p>
 </section>
 <nav class="tabbar" id="tabbar" aria-label="Main">
   <button type="button" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" fill-opacity=".18"/></svg>Play</button>
