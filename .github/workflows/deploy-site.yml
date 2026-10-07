@@ -1,0 +1,47 @@
+name: Publish website (Cloudflare static assets)
+
+# Builds the website and publishes it to Cloudflare as Workers static assets: free, unlimited requests that run no
+# code, so bot floods can't use up the daily Workers allowance.
+#   - Every push to this branch publishes the test copy (Worker "pulseform-beta", e.g. beta.pulseform.org).
+#   - A commit whose message contains [deploy-live] also publishes the live site (Worker "pulseform") and the
+#     www redirect Worker ("pulseform-www").
+# Needs the repository secret CLOUDFLARE_API_TOKEN (Account > Workers Scripts > Edit).
+on:
+  push:
+    branches: [claude/gifted-davinci-dvxukh]
+    paths: ['index.html', 'about.html', 'privacy.html', '404.html', 'robots.txt', 'sitemap.xml', 'icons/**', 'app/scripts/**', '.github/workflows/deploy-site.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check the Cloudflare key is set
+        if: env.CLOUDFLARE_API_TOKEN == ''
+        run: echo "::notice::Add the CLOUDFLARE_API_TOKEN repository secret to publish the website. Nothing was published."
+      - name: Install build tools
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        working-directory: app
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build the website
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        working-directory: app
+        run: node scripts/build-www.mjs --email-only
+      - name: Publish the test copy
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        working-directory: app
+        run: node scripts/deploy-cf.mjs --script pulseform-beta
+      - name: Publish the live site
+        if: env.CLOUDFLARE_API_TOKEN != '' && contains(github.event.head_commit.message, '[deploy-live]')
+        working-directory: app
+        run: |
+          node scripts/deploy-cf.mjs
+          node scripts/deploy-cf.mjs --www

@@ -9,7 +9,7 @@ service cloud.firestore {
     }
 
     // An admin: an account that entered the admin code (stored at admins/{uid}, checked below), or one with the
-    // Firebase Auth custom claim {admin: true}. Admins can send gifts, run the live event, read reports and reset polls.
+    // Firebase Auth custom claim {admin: true}. Admins can send gifts, run the live event and read reports.
     function isAdmin() {
       return signedIn() && (request.auth.token.admin == true
         || exists(/databases/$(db)/documents/admins/$(request.auth.uid)));
@@ -64,45 +64,57 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      // one save per account: only the save itself, its time and the account's display name, and no giant documents
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['save', 't', 'name'])
+        && request.resource.data.save is string && request.resource.data.save.size() < 900000
+        && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 120));
     }
-
-    // Leaderboards: anyone can view; players can only write their own entry. The score can only go up;
-    // an update that keeps the same score just changes the name, rank or block (when you rename yourself)
+    // Leaderboards: anyone can view; players can only write their own entry.
+    //  - A score can only go up, stays under a believable ceiling (the Ascent board packs floor x 1,000,000 + points), and
+    //    each new score is stamped with the server's clock (t = request.time), at least 5 seconds after the last one.
+    //  - An update that keeps the same score (a rename, a new block or banner) can't touch the time.
+    //  - Ranks are 0-26, names and blocks are short.
+    function boardMax(board) {
+      return board == 'ascent' ? 2000000000 : 20000000;
+    }
+    function boardEntryOk(board) {
+      return request.resource.data.keys().hasOnly(['name', 'rank', 'score', 'skin', 't', 'banner'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 32
+        && request.resource.data.rank is int && request.resource.data.rank >= 0 && request.resource.data.rank <= 26
+        && request.resource.data.score is int && request.resource.data.score >= 0 && request.resource.data.score <= boardMax(board)
+        && request.resource.data.skin is string && request.resource.data.skin.size() <= 64
+        && (!('banner' in request.resource.data) || (request.resource.data.banner is string && request.resource.data.banner.size() <= 24));
+    }
     match /boards/{board}/entries/{uid} {
       allow read: if true;
-
-      allow create, update: if signedIn()
-        && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly([
-          'name', 'rank', 'score', 'skin', 't', 'banner'
-        ])
-        && request.resource.data.name is string
-        && request.resource.data.name.size() <= 32
-        && request.resource.data.rank is int
-        && request.resource.data.score is int
-        && request.resource.data.t is int
-        && request.resource.data.skin is string
-        && request.resource.data.skin.size() <= 64
-        && (!('banner' in request.resource.data)
-            || (
-              request.resource.data.banner is string
-              && request.resource.data.banner.size() <= 24
-            ))
+      allow create: if signedIn() && request.auth.uid == uid && board.size() <= 64 && boardEntryOk(board)
+        && request.resource.data.t == request.time;
+      allow update: if signedIn() && request.auth.uid == uid && boardEntryOk(board)
+        && request.resource.data.score >= resource.data.score
         && (
-          resource == null
-          || request.resource.data.score >= resource.data.score
+          // a rename or a new look: same score, same time
+          (request.resource.data.score == resource.data.score && request.resource.data.t == resource.data.t)
+          // a new best: stamped now, and not within 5 seconds of the last one (older entries have a number for t)
+          || (request.resource.data.score > resource.data.score && request.resource.data.t == request.time
+              && (!(resource.data.t is timestamp) || request.time > resource.data.t + duration.value(5, 's')))
         );
-
       // a player deleting their account removes their own scores
       allow delete: if signedIn() && request.auth.uid == uid;
     }
 
-    // Friends: public player cards (name, rank, block, progress, bests, built levels, last seen)
+    // Friends: public player cards (name, rank, block, progress, bests, built levels, last seen). Only you write yours;
+    // the name is short, the rank is a real rank (0-26), and the built-level list is capped
     match /profiles/{uid} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.name is string && request.resource.data.name.size() <= 24;
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24
+        && (!('nameKey' in request.resource.data) || (request.resource.data.nameKey is string && request.resource.data.nameKey.size() <= 24))
+        && (!('rank' in request.resource.data) || (request.resource.data.rank is int && request.resource.data.rank >= 0 && request.resource.data.rank <= 26))
+        && (!('code' in request.resource.data) || request.resource.data.code == null || (request.resource.data.code is string && request.resource.data.code.size() == 6))
+        && (!('levels' in request.resource.data) || (request.resource.data.levels is list && request.resource.data.levels.size() <= 24))
+        && request.resource.data.keys().size() <= 40;
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
@@ -315,20 +327,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    /*
-     * COMMUNITY POLL
-     * polls/next/votes/{uid} = { event, update, t }
-     *
-     * Everyone can read totals.
-     * A signed-in player can create/update their own vote.
-     * A player can delete their own vote.
-     * An admin (Firebase Auth custom claim: admin=true) can delete any vote,
-     * which allows the current poll to be wiped/reset safely.
-     */
     // Reports of other players (offensive names or levels, cheating, harassment). Anyone signed in can file one;
     // nobody can read, change or delete them from the game: review them in the Firebase console.
     match /reports/{id} {
+      // one report per player per reporter (the document id is "<reporter>_<reported>"), so reports can't be piled up
       allow create: if signedIn()
+        && id == request.auth.uid + '_' + request.resource.data.uid
         && request.resource.data.keys().hasOnly(['by', 'uid', 'name', 'why', 'where', 't'])
         && request.resource.data.by == request.auth.uid
         && request.resource.data.uid is string && request.resource.data.uid.size() > 0 && request.resource.data.uid.size() <= 128
@@ -340,28 +344,5 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    match /polls/next/votes/{uid} {
-      allow read: if true;
-
-      allow create, update: if signedIn()
-        && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['event', 'update', 't'])
-        && request.resource.data.event is string
-        && request.resource.data.update is string
-        && request.resource.data.t is int
-        && request.resource.data.event in [
-          'goal',
-          'bracket'
-        ]
-        && request.resource.data.update in [
-          'pass',
-          'packs',
-          'mode',
-          'revamp'
-        ];
-
-      allow delete: if signedIn()
-        && (request.auth.uid == uid || isAdmin());
-    }
   }
 }

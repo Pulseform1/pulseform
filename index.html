@@ -7167,9 +7167,9 @@ $('modBlock').onclick=()=>{ const o=MOD.o; if(!o) return; const on=!isBlocked(o.
   $('modMsg').textContent=on?`${o.name||'Player'} is blocked.`:`${o.name||'Player'} is unblocked.`; };
 document.querySelectorAll('#modOv [data-why]').forEach(b=>b.onclick=()=>{ const o=MOD.o; if(!o||!ACCT.user||!ACCT.db) return;
   const m=$('modMsg'); m.textContent='Sending…'; m.classList.remove('err');
-  ACCT.db.collection('reports').add({by:ACCT.user.uid,uid:String(o.uid).slice(0,128),name:String(o.raw||o.name||'').slice(0,40),why:b.dataset.why,where:String(o.where||'').slice(0,20),t:Date.now()})
+  ACCT.db.collection('reports').doc(ACCT.user.uid+'_'+String(o.uid).slice(0,128)).set({by:ACCT.user.uid,uid:String(o.uid).slice(0,128),name:String(o.raw||o.name||'').slice(0,40),why:b.dataset.why,where:String(o.where||'').slice(0,20),t:Date.now()})
     .then(()=>{ m.textContent='Thanks. Your report was sent and will be reviewed.'; })
-    .catch(()=>{ m.textContent='Could not send the report. Check your connection and try again.'; m.classList.add('err'); }); });
+    .catch(e=>{ if(e&&e.code==='permission-denied'){ m.textContent='You\'ve already reported this player. Thanks, it will be reviewed.'; return; } m.textContent='Could not send the report. Check your connection and try again.'; m.classList.add('err'); }); });
 function acctBlockedUI(){ const L=SAVE.blocked||[]; const box=$('aBlocked'); if(!box) return; box.hidden=!L.length;
   $('aBlockedList').innerHTML=L.map(x=>`<li><span></span><span><b>${escapeHTML(x.n||'Player')}</b></span><span class="btns"><button class="btn ghost" data-unblock="${escapeHTML(x.u)}" type="button">Unblock</button></span></li>`).join('');
   $('aBlockedList').querySelectorAll('[data-unblock]').forEach(b=>b.onclick=()=>blockSet(b.dataset.unblock,'',false)); }
@@ -9807,14 +9807,14 @@ function lbWrite(put,entry){
     .catch(e=>{ if(!denied(e)) throw e; return put({...entry,skin:lbPack()}); })
     .catch(e=>{ if(!denied(e)) throw e; return put(entry); });
 }
-/* your name, rank and block on every board you're on follow you when they change (the score stays as it is) */
+/* your name, rank and block on every board you're on follow you when they change (the score and its time stay as they are) */
 function lbRename(){
   clearTimeout(lbRename.t);
   lbRename.t=setTimeout(()=>{
     if(window.PF_CG||!ACCT.user||!ACCT.db||!SAVE.name) return;
     const cur=['endless','ascent','daily-'+todayKey(),'week-'+weekKey()], mine=Object.keys(SAVE.lbBest||{}).filter(b=>SAVE.lbBest[b]>0);
     const boards=[...new Set(cur.filter(b=>mine.includes(b)).concat(mine.filter(b=>b.startsWith('studio-')).slice(-20)))];
-    boards.forEach(b=>{ const ref=ACCT.db.collection('boards').doc(b).collection('entries').doc(ACCT.user.uid), base={name:ensureName(),rank:myRank(),skin:SAVE.skin,t:Date.now()};
+    boards.forEach(b=>{ const ref=ACCT.db.collection('boards').doc(b).collection('entries').doc(ACCT.user.uid), base={name:ensureName(),rank:myRank(),skin:SAVE.skin};   // no t: only a new score moves the entry's time
       lbWrite(d=>ref.set(d,{merge:true}),base).catch(()=>{}); });
   },1500);
 }
@@ -9824,8 +9824,10 @@ function lbPost(M){
   if(window.PF_CG) return '';
   if(!ACCT.user||!ACCT.db) return 'Sign in to put your score on the leaderboard.';
   if((B[b]||0)>=sc) return ''; B[b]=sc; save();
-  const ref=ACCT.db.collection('boards').doc(b).collection('entries').doc(ACCT.user.uid), entry={name:ensureName(),rank:myRank(),score:sc,skin:SAVE.skin,t:Date.now()};
-  lbWrite(d=>ref.set(d),entry)
+  const ref=ACCT.db.collection('boards').doc(b).collection('entries').doc(ACCT.user.uid), entry={name:ensureName(),rank:myRank(),score:sc,skin:SAVE.skin,t:firebase.firestore.FieldValue.serverTimestamp()};   // the server's clock: the rules pace new scores by it
+  // the server's clock first (what the current rules require); if the account's rules are still the older ones that want a
+  // plain number for the time, the same score goes up with the device's clock instead
+  lbWrite(d=>ref.set(d),entry).catch(e=>{ if(!(e&&e.code==='permission-denied')) throw e; return lbWrite(d=>ref.set(d),{...entry,t:Date.now()}); })
     .then(()=>{ SAVE.life.posted=(SAVE.life.posted||0)+1; save(); achCheck(); toast('New best posted to the leaderboard!'); })
     .catch(e=>{ B[b]=0; save(); if(e&&e.code==='permission-denied') toast('Leaderboards need the new Firebase rule (see setup).'); });
   return '';
