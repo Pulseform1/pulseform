@@ -44,7 +44,7 @@ if (process.argv.includes('--www')) {
 if (process.argv.includes('--api')) {
   // the payments Worker. keep_bindings: the Stripe and Google secrets added in the Cloudflare dashboard stay put.
   const name = arg('--script', 'pulseform-api');
-  putScript(name, { main_module: 'worker.js', compatibility_date: '2026-09-01', keep_bindings: ['secret_text', 'plain_text'] },
+  putScript(name, { main_module: 'worker.js', compatibility_date: '2026-09-01', keep_bindings: ['secret_text', 'plain_text'], observability: { enabled: true } },
     [`worker.js=@${path.resolve(here, '..', 'api', 'worker.js')};type=application/javascript+module`]);
   // its address, api.pulseform.org (does nothing if it's already attached)
   const zone = curl(['https://api.cloudflare.com/client/v4/zones?name=pulseform.org']).result[0];

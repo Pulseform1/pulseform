@@ -96,6 +96,10 @@ test('checkout: server prices, signed-in players only', async () => {
   assert.equal((await api.fetch(post('/checkout', 'not json'), ENV, {}, net)).status, 400);
   r = await api.fetch(post('/checkout', { product: 'pf_no_ads', idToken: idToken({}) }, { origin: 'https://evil.example' }), ENV, {}, net);
   assert.equal(r.headers.get('access-control-allow-origin'), null);
+  // Stripe refuses: the player is told why in a few words
+  const refuse = async (u, o) => String(u).includes('stripe.com') ? new Response(JSON.stringify({ error: { message: 'no permission' } }), { status: 403 }) : net(u, o);
+  r = await api.fetch(post('/checkout', { product: 'pf_no_ads', idToken: idToken({}) }), ENV, {}, refuse);
+  assert.equal(r.status, 502); assert.match((await r.json()).error, /missing a permission/);
   // payments off until the Stripe key is added
   assert.equal((await api.fetch(post('/checkout', { product: 'pf_no_ads', idToken: idToken({}) }), {}, {}, net)).status, 503);
   const pre = await api.fetch(new Request('https://api.pulseform.org/checkout', { method: 'OPTIONS', headers: { origin: 'https://pulseform.win' } }), ENV, {}, net);

@@ -117,7 +117,11 @@ async function createCheckout(env, uid, email, product, fetchImpl) {
   });
   if (email) form.set('customer_email', email);
   const r = await fetchImpl('https://api.stripe.com/v1/checkout/sessions', { method: 'POST', headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, 'content-type': 'application/x-www-form-urlencoded' }, body: form.toString() });
-  const j = await r.json(); if (!r.ok || !j.url) throw new Error('stripe: ' + ((j.error && j.error.message) || r.status)); return j.url;
+  const j = await r.json().catch(() => ({}));
+  if (r.ok && j.url) return j.url;
+  // Stripe's own message goes to the Worker's logs (Cloudflare: pulseform-api > Logs); the player gets a short cause
+  console.error('stripe checkout failed', r.status, JSON.stringify(j.error || j));
+  const e = new Error('stripe'); e.why = r.status === 401 ? 'the Stripe key wasn\'t accepted' : r.status === 403 ? 'the Stripe key is missing a permission' : `Stripe said ${r.status}`; throw e;
 }
 
 export default {
@@ -135,7 +139,7 @@ export default {
       if (!CATALOG[body.product]) return json({ error: 'That item isn\'t for sale.' }, 400, cors);
       let who; try { who = await verifyFirebaseToken(body.idToken, undefined, fetchImpl); } catch (e) { return json({ error: 'Sign in again, then try once more.' }, 401, cors); }
       try { return json({ url: await createCheckout(env, who.uid, who.email, body.product, fetchImpl) }, 200, cors); }
-      catch (e) { return json({ error: 'The payment page couldn\'t be opened. Try again in a moment.' }, 502, cors); }
+      catch (e) { return json({ error: `The payment page couldn't be opened${e.why ? ` (${e.why})` : ''}. Try again in a moment.` }, 502, cors); }
     }
 
     if (url.pathname === '/stripe-webhook' && request.method === 'POST') {
