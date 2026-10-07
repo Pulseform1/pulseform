@@ -1488,6 +1488,7 @@ body.phone #menuOv .twban:not([hidden]){display:flex;align-items:center;gap:12px
 .adm .g2 label[hidden],.adm .g1 label[hidden],.adm .g1[hidden]{display:none}
 .adm .g1{display:grid;gap:8px;margin-top:6px}.adm .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.adm .row .btn{flex:1 1 auto}
 .admcard{padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:14px}.admcard.on{border-color:rgba(143,240,224,.5);background:rgba(143,240,224,.1)}
+.admdur{display:flex;gap:6px}.admdur input{flex:1 1 0;min-width:0}.admdur select{flex:0 0 auto;width:auto}
 .adm .amsg{min-height:1.4em;margin:10px 0 0;font-size:13.5px;color:#B8F2E6}.adm .amsg.err{color:#FF8A80}
 .admpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;max-height:282px;overflow-y:auto;margin-top:8px;padding:2px}.admpick[hidden]{display:none}
 .admpi{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px 7px;border-radius:12px;border:1.5px solid rgba(255,255,255,.1);background:rgba(10,8,30,.45);color:var(--ink-2);font:600 11.5px var(--body);cursor:pointer;min-width:0}
@@ -2209,12 +2210,12 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <div class="g1"><label>Title<input id="admEvT" type="text" maxlength="40" placeholder="Double XP Weekend"></label><label>Message<input id="admEvM" type="text" maxlength="140" placeholder="Every run earns double XP until Sunday night."></label></div>
       <div class="g2"><label>XP boost<select id="admEvX"><option value="1">None</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option></select></label>
         <label>Notes boost<select id="admEvN"><option value="1">None</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option></select></label>
-        <label>Starts in (hours)<input id="admEvS" type="number" min="0" max="720" step="0.5" value="0"></label><label>Lasts (hours)<input id="admEvH" type="number" min="0.5" max="720" step="0.5" value="48"></label>
+        <label>Starts in (hours)<input id="admEvS" type="number" min="0" max="720" step="0.5" value="0"></label><label>Lasts<span class="admdur"><input id="admEvH" type="number" min="0" max="720" step="any" value="48"><select id="admEvU" aria-label="Minutes or hours"><option value="m">minutes</option><option value="h" selected>hours</option></select></span></label>
         <label>Gift for everyone<select id="admEvG"><option value="">None</option><option value="notes">Notes</option><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option></select></label>
         <label id="admEvGL" hidden>Gift item<select id="admEvGI"></select></label></div>
       <div class="admpick" id="admEvPick" hidden></div>
       <div class="g1" id="admEvGAL"><label>Notes for everyone<input id="admEvGA" type="number" min="1" max="100000" step="100" value="500"></label></div>
-      <label class="opt admduck" for="admEvDuck"><input id="admEvDuck" type="checkbox"><span>Summon Erlaf the Giant Duck<small>Erlaf only appears when you summon him here, and he stays for exactly as long as this event lasts ("Lasts (hours)" above). Beating him gives the Erlaf block.</small></span></label>
+      <label class="opt admduck" for="admEvDuck"><input id="admEvDuck" type="checkbox"><span>Summon Erlaf the Giant Duck<small>Erlaf only appears when you summon him here, and he stays for exactly as long as this event lasts ("Lasts" above: minutes or hours, from 1 minute). Beating him gives the Erlaf block.</small></span></label>
       <div class="row"><button class="btn" id="admEvGo" type="button">Start event</button><button class="btn ghost" id="admEvEnd" type="button">End event now</button></div>
     </div>
     <div class="admpane" id="admMe" hidden>
@@ -7156,7 +7157,7 @@ $('admAll').onclick=async()=>{ if(!await admConfirm('Own every item?','Every blo
 $('admKind').onchange=admKindUI; $('admEvG').onchange=admEvKindUI;
 $('admEvGo').onclick=async()=>{ const db=ACCT.db; if(!db||!ACCT.user) return; const duck=$('admEvDuck').checked, title=($('admEvT').value.trim()||(duck?'Erlaf the Giant Duck':'')).slice(0,40);
   if(!title){ admMsg('Give the event a title.',true); return; }
-  const now=Date.now(), start=now+Math.max(0,+$('admEvS').value||0)*3600000, end=start+Math.max(.5,Math.min(720,+$('admEvH').value||48))*3600000;
+  const now=Date.now(), start=now+Math.max(0,+$('admEvS').value||0)*3600000, mins=$('admEvU').value==='m', len=Math.max(mins?1:1/60,+$('admEvH').value||(mins?30:48)), end=start+Math.min(720*60,mins?len:len*60)*60000;   // as short as 1 minute, up to 30 days
   const gk=$('admEvG').value, gift=!gk?null:gk==='notes'?{kind:'notes',n:Math.max(1,Math.min(100000,Math.round(+$('admEvGA').value||0)))}:{kind:gk,id:$('admEvGI').value};
   const ev={id:'ev'+now.toString(36),title,msg:($('admEvM').value.trim()||(duck?'A giant white mallard has landed. Beat him for his block!':'')).slice(0,140),xp:+$('admEvX').value,notes:+$('admEvN').value,start,end,gift,by:ACCT.user.uid,t:now}; if(duck) ev.mode='erlaf';
   const it=gift&&GIFT_LISTS[gift.kind]?GIFT_LISTS[gift.kind]().find(x=>x.id===gift.id):null;
