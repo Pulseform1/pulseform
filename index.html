@@ -6723,7 +6723,7 @@ function acctInit(){
     if(!firebase.apps.length) firebase.initializeApp(cfg);
     ACCT.auth=firebase.auth(); ACCT.db=firebase.firestore(); liveStart();
     ACCT.auth.getRedirectResult().catch(e=>{ ACCT.err=authMsg(e); acctUI(); });
-    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; try{ if(u&&IAP.ok) rcPlugin().logIn({appUserID:u.uid}).catch(()=>{}); }catch(e){} admAuth(u); if(u) acctPull(true).then(lbRename,lbRename).then(()=>{ cvkFindSide(); cvkLoadMyBet(); twFind(); inboxStart(u); }); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
+    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; try{ if(u&&IAP.ok) rcPlugin().logIn({appUserID:u.uid}).catch(()=>{}); }catch(e){} admAuth(u); if(u) acctPull(true).then(lbRename,lbRename).then(()=>{ cvkFindSide(); cvkLoadMyBet(); twFind(); inboxStart(u); webRestore(u); }); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
   }).catch(()=>{ ACCT.err='Could not load sign-in. Check your connection.'; acctUI(); });
 }
 
@@ -7005,6 +7005,7 @@ function giftApply(g){ const k=g&&g.kind;
   if(k==='notes'){ const n=Math.max(0,Math.min(1000000,Math.round(+g.n||0))); SAVE.notes+=n; return `+♪${n.toLocaleString()} Notes`; }
   if(GIFT_LISTS[k]){ const it=GIFT_LISTS[k]().find(x=>x.id===g.id); if(!it) return 'A gift from Pulseform'; if(!SAVE.owned.includes(it.id)) SAVE.owned.push(it.id); return `${it.name} unlocked`; }
   if(k==='passp'){ passS().prem=true; return 'Pulse Pass+ unlocked'; }
+  if(k==='iap'){ const pr=PRODUCTS.find(p=>p.id===g.id); if(!pr) return 'Your purchase arrived'; iapGrant(pr.id,'stripe-'+g.tx); return `${pr.name}: thank you for your purchase!`; }
   if(k==='rank'){ const n=typeof g.n==='number'&&g.n>=0?Math.min(RANK_MAX,Math.round(g.n)):null; SAVE.rankSet={n,t:Date.now()};
     return n===null?'Your rank is back to the one you earned':`Your rank is now ${rankName(n)}`; }
   return 'A message from Pulseform'; }
@@ -7743,7 +7744,7 @@ function ppScrollTo(t,smooth){ const tr=$('ppTrack'), c=tr.querySelector(`.ppcar
 document.querySelectorAll('#passOv .ppsc').forEach(b=>b.onclick=()=>{ const tr=$('ppTrack'); tr.scrollBy({left:+b.dataset.sc*tr.clientWidth*.8,behavior:'smooth'}); });
 $('ppTrack').addEventListener('scroll',()=>{ const tr=$('ppTrack'); $('passOv').querySelector('.ppsc.l').classList.toggle('off',tr.scrollLeft<8); $('passOv').querySelector('.ppsc.r').classList.toggle('off',tr.scrollLeft>tr.scrollWidth-tr.clientWidth-8); },{passive:true});
 /* the Pulse Pass+ offer: what it gives, and the buy button */
-function ppBuyOpen(){ if(window.PF_CG) return; const pr=PRODUCTS.find(p=>p.id===PASS_PRICE_ID), pt=passTier().t;
+function ppBuyOpen(){ if(window.PF_CG) return; webPayCheck(); const pr=PRODUCTS.find(p=>p.id===PASS_PRICE_ID), pt=passTier().t;
   const now=PASSP.filter(r=>r.t<=pt), nNow=now.length, notes=PASSP.filter(r=>r.kind==='notes').reduce((a,r)=>a+r.n,0);
   $('opbSkins').innerHTML=Object.values(PREM_SKINS).map(id=>`<span class="pbsk"><canvas class="skprev" data-skin="${id}" data-px="64" width="64" height="64"></canvas><small>${escapeHTML(skinById(id).name)}</small></span>`).join('');
   $('opbList').innerHTML=[`<b>6 Pass blocks</b>, including the tier-100 <b>Pulse Sovereign</b>`,`<b>2 tile themes</b> and <b>3 banners</b> only found in Pass+`,`<b>♪${notes.toLocaleString()} Notes</b> across the season (with a ♪5,000 jackpot)`,`<b>10 boss revive tokens</b>`,`<b>+25% Pass XP</b> from every run, so you climb faster`]
@@ -7863,12 +7864,50 @@ function iapGrant(id,tx){ const pr=PRODUCTS.find(p=>p.id===id); if(!pr) return f
 async function iapBuy(id){ const pr=PRODUCTS.find(p=>p.id===id); if(!pr||IAP.busy) return;
   if(!iapLive()){
     if(ADS.test&&!isNativeApp()){ if(confirm(`TEST PURCHASE (nothing is charged)\n\n${pr.name} · ${pr.price}`)){ iapGrant(id,'test-'+Date.now()); buildShop(); } return; }
+    if(webPayHere()&&!WEBPAY.checked) await webPayCheck();
+    if(webPay()){ webBuy(pr); return; }
     toast(isNativeApp()?'The store isn\'t available right now. Try again in a moment.':'Purchases are available in the Pulseform app.'); return; }
   const sp=IAP.items[id]; if(!sp){ toast('That item isn\'t available right now.'); return; }
   IAP.busy=true; buildShop();
   try{ const r=await rcPlugin().purchaseStoreProduct({product:sp}); const tx=r&&r.transaction&&r.transaction.transactionIdentifier; iapGrant(id,tx||('rc-'+Date.now())); }
   catch(e){ const cancel=e&&(e.userCancelled||String(e.code)==='1'); if(!cancel) toast('The purchase didn\'t go through. You were not charged.'); }
   IAP.busy=false; buildShop(); }
+/* ---- website purchases: Stripe Checkout through the Pulseform payment server (app/api/worker.js). Never in the phone
+   apps (they use the App Store and Google Play) and never on CrazyGames. The server sets the prices, and once Stripe
+   confirms a payment it sends the item to the player's gift inbox (applied once, by order id) and keeps a receipt in
+   purchases/{uid}. Buying switches itself on when the server has its Stripe keys. ---- */
+const WEBPAY={api:'https://api.pulseform.org',on:false,checked:false};
+const webPayHere=()=>!isNativeApp()&&!window.PF_CG&&/^(www\.)?pulseform\.(org|win)$/.test(location.hostname);
+const webPay=()=>webPayHere()&&WEBPAY.on;
+async function webPayCheck(){ if(WEBPAY.checked||!webPayHere()) return; WEBPAY.checked=true;
+  try{ const j=await (await fetch(WEBPAY.api+'/status')).json(); WEBPAY.on=!!(j&&j.pay); }catch(e){ WEBPAY.checked=false; }
+  if(WEBPAY.on&&!$('shopOv').hidden) buildShop(); }
+function webBusy(b){ IAP.busy=b; if(!$('shopOv').hidden) buildShop(); $('opbBuy').disabled=b; }
+async function webBuy(pr){
+  if(!ACCT.user){ toast('Sign in first, so your purchase is saved to your account.'); showAcct(); return; }
+  webBusy(true);
+  try{ const idToken=await ACCT.user.getIdToken();
+    const r=await fetch(WEBPAY.api+'/checkout',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({product:pr.id,idToken})});
+    const j=await r.json().catch(()=>({}));
+    if(j.url){ location.assign(j.url); return; }   // off to Stripe's checkout page
+    toast(j.error||'The payment page couldn\'t be opened. Try again in a moment.'); }
+  catch(e){ toast('Couldn\'t reach the payment page. Check your connection and try again.'); }
+  webBusy(false); }
+// back from Stripe with the browser's Back button: the page may come back exactly as it was left
+addEventListener('pageshow',e=>{ if(e.persisted&&IAP.busy&&!rcPlugin()) webBusy(false); });
+// back from Stripe's checkout page (?paid=<order> or ?paid=cancel)
+(function(){ const m=/[?&]paid=([^&#]+)/.exec(location.search); if(!m) return;
+  try{ const u=new URL(location.href); u.searchParams.delete('paid'); history.replaceState(history.state,'',u.pathname+u.search+u.hash); }catch(e){}
+  setTimeout(()=>toast(m[1]==='cancel'?'Checkout cancelled. You were not charged.':'Payment received, thank you! Your item arrives in a few seconds.'),1200); })();
+/* one-time website purchases come back on any device the player signs in on (Notes are used up when bought) */
+async function webRestore(u){ if(!u||!ACCT.db||ACCT.user!==u) return;
+  try{ const s=await ACCT.db.collection('purchases').doc(u.uid).collection('items').get(); let n=0;
+    s.docs.forEach(d=>{ const pr=PRODUCTS.find(p=>p.id===(d.data()||{}).product); if(!pr) return;
+      if(pr.kind==='starter'&&!SAVE.starterBought){ SAVE.starterBought=true; n++; }
+      if(pr.kind==='noads'&&!SAVE.noAds){ SAVE.noAds=true; n++; }
+      if(pr.kind==='pass'&&!passPlus()){ passS().prem=true; n++; }
+      if(pr.kind==='skin'&&!SAVE.owned.includes(pr.skin)){ SAVE.owned.push(pr.skin); n++; } });
+    if(n){ save(); acctPush(true); afterGift(); } }catch(e){} }
 /* Restore purchases: brings back No Ads and the Starter Bundle on a new phone (Notes packs are used up when bought) */
 async function iapRestore(quiet){ const P=rcPlugin(); if(!P||!IAP.ok){ if(!quiet) toast('Restoring works in the Pulseform app.'); return; }
   try{ const {customerInfo}=quiet?await P.getCustomerInfo():await P.restorePurchases(); let n=0;
@@ -7883,13 +7922,15 @@ function moneyHTML(){
   if(!passPlus()){ const pp=PRODUCTS.find(p=>p.id===PASS_PRICE_ID); sp+=`<button type="button" class="mspecial passplus" data-ppoffer="1"><span class="msico">♛</span><span class="mstxt"><b>Pulse Pass+</b><small>6 Pass blocks, exclusive tiles and banners, Notes, revives, +25% Pass XP</small></span><span class="mprice">${escapeHTML(iapPrice(pp))}</span></button>`; }
   sp+=SAVE.noAds?`<div class="mspecial owned"><span class="msico">✓</span><span class="mstxt"><b>No Ads</b><small>Boss revives are free. Thanks for the support!</small></span></div>`
     :`<button type="button" class="mspecial noads" data-iap="${na.id}" ${IAP.busy?'disabled':''}><span class="msico">🚫</span><span class="mstxt"><b>No Ads</b><small>Revive in boss challenges without watching ads</small></span><span class="mprice">${escapeHTML(iapPrice(na))}</span></button>`;
-  const note=iapLive()?'':(isNativeApp()?'<p class="mnote">Connecting to the store…</p>':ADS.test?'<p class="mnote">Test mode: purchases here are pretend and free.</p>':'<p class="mnote">Notes packs and bundles can be bought in the Pulseform app.</p>');
+  const note=iapLive()?'':(isNativeApp()?'<p class="mnote">Connecting to the store…</p>':ADS.test?'<p class="mnote">Test mode: purchases here are pretend and free.</p>'
+    :webPay()?`<p class="mnote">Secure checkout by Stripe.${ACCT.user?'':' Sign in to buy, so purchases are saved to your account.'}</p>`:'<p class="mnote">Notes packs and bundles can be bought in the Pulseform app.</p>');
   const prem=PRODUCTS.filter(p=>p.kind==='skin');
   const pb=p=>{ const own=ownsSkin(p.skin), eq=SAVE.skin===p.skin; return `<div class="mprem${own?' own':''}"><canvas class="skprev" data-skin="${p.skin}" data-px="110" width="110" height="110" aria-hidden="true"></canvas><b>${escapeHTML(p.name)}</b>`+
     (own?(eq?'<span class="mpown">Equipped</span>':`<button type="button" class="mpeq" data-peq="${p.skin}">Equip</button>`):`<button type="button" class="mprice" data-iap="${p.id}" ${IAP.busy?'disabled':''}>${escapeHTML(iapPrice(p))}</button>`)+'</div>'; };
   return `<div class="mhead"><b>Premium Blocks</b><span class="mrev pr">Animated · own landing effect</span></div><div class="mprems">${prem.map(pb).join('')}</div><div class="mhead"><b>Get Notes</b>${(SAVE.revives||0)?`<span class="mrev">♥ ${SAVE.revives} revive token${SAVE.revives>1?'s':''}</span>`:''}</div><div class="mpacks">${packs.map(pk).join('')}</div><div class="mspecials">${sp}</div>${note}`+
     (isNativeApp()?'<button type="button" class="mrestore" id="iapRestore">Restore purchases</button>':''); }
 function moneyRender(){ const box=$('shopMoney'); if(!box) return; const on=shopMode==='shop'&&!window.PF_CG; box.hidden=!on; if(!on) return;   // CrazyGames: no real-money items
+  if(!WEBPAY.checked) webPayCheck();
   box.innerHTML=moneyHTML(); box.querySelectorAll('[data-iap]').forEach(b=>b.onclick=()=>iapBuy(b.dataset.iap)); box.querySelectorAll('[data-ppoffer]').forEach(b=>b.onclick=()=>{ $('ppTrack').dataset.scrolled=''; ppTab='rewards'; buildPass(); ppBuyOpen(); });
   box.querySelectorAll('[data-peq]').forEach(b=>b.onclick=()=>{ equip('skin',b.dataset.peq); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; try{ netHello(); }catch(e){} buildShop(); }); const r=$('iapRestore'); if(r) r.onclick=()=>iapRestore(false); }
 if(isNativeApp()) setTimeout(()=>{ iapInit(); adsInit(); },1500);

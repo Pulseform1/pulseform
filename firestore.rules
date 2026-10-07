@@ -43,6 +43,13 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // Receipts for website purchases. Only the payment server (app/api/worker.js, as a Google service account, which
+    // these rules don't apply to) writes them after Stripe confirms the payment; a player can read their own.
+    match /purchases/{uid}/items/{id} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow write: if false;
+    }
+
     // The live event: one site-wide event everyone can see (even signed out); only an admin starts, changes or ends it
     match /live/{doc} {
       allow read: if true;

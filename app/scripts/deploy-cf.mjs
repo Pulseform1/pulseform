@@ -5,6 +5,7 @@
 //   node scripts/deploy-cf.mjs                         the live site (Worker "pulseform": pulseform.org, pulseform.win)
 //   node scripts/deploy-cf.mjs --script pulseform-beta  a test copy under another Worker name
 //   node scripts/deploy-cf.mjs --www                   the tiny Worker that sends www.* to the bare domain
+//   node scripts/deploy-cf.mjs --api                   the payments Worker (app/api/worker.js, "pulseform-api" at api.pulseform.org)
 //
 // Needs curl, plus CLOUDFLARE_API_TOKEN (Workers Scripts: Edit) in the environment, unless a proxy adds it.
 // Pages are served as /about and /privacy; /about.html redirects there. Unknown paths get 404.html.
@@ -37,6 +38,19 @@ if (process.argv.includes('--www')) {
   fs.writeFileSync(js, `export default { fetch(request) { const u = new URL(request.url); u.hostname = u.hostname.replace(/^www\\./, ''); return Response.redirect(u.toString(), 301); } };\n`);
   putScript(arg('--script', 'pulseform-www'), { main_module: 'www.js', compatibility_date: '2026-09-01' }, [`www.js=@${js};type=application/javascript+module`]);
   console.log('www redirect Worker published');
+  process.exit(0);
+}
+
+if (process.argv.includes('--api')) {
+  // the payments Worker. keep_bindings: the Stripe and Google secrets added in the Cloudflare dashboard stay put.
+  const name = arg('--script', 'pulseform-api');
+  putScript(name, { main_module: 'worker.js', compatibility_date: '2026-09-01', keep_bindings: ['secret_text', 'plain_text'] },
+    [`worker.js=@${path.resolve(here, '..', 'api', 'worker.js')};type=application/javascript+module`]);
+  // its address, api.pulseform.org (does nothing if it's already attached)
+  const zone = curl(['https://api.cloudflare.com/client/v4/zones?name=pulseform.org']).result[0];
+  if (zone) curl(['-X', 'PUT', `${api}/workers/domains`, '-H', 'content-type: application/json',
+    '--data', JSON.stringify({ hostname: 'api.pulseform.org', service: name, zone_id: zone.id, environment: 'production' })]);
+  console.log(`Payments Worker "${name}" published${zone ? ' at https://api.pulseform.org' : ''}`);
   process.exit(0);
 }
 

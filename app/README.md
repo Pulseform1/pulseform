@@ -125,6 +125,37 @@ Until the keys are filled in, the shop shows the packs but buying is switched of
 packs say they're available in the app. When you run the game from your computer (or add `?testads=1` to the
 address), ads and purchases are pretend and free, so you can try the flow.
 
+### Stripe (purchases on the website)
+
+On pulseform.org the same items are sold with Stripe Checkout, through a small payments Worker
+(`app/api/worker.js`, Cloudflare Worker `pulseform-api` at `https://api.pulseform.org`). Never in the phone apps
+(Apple and Google require their own stores there) and never on CrazyGames.
+
+- **Prices** live in the Worker (`CATALOG`), not the page. `node --test app/api/worker.test.mjs` checks they match the game.
+- **Buying:** the player must be signed in. The game sends the item ID and the player's Firebase sign-in token to
+  `/checkout`; the Worker checks the token and opens a Stripe Checkout page.
+- **Delivery:** when Stripe confirms the payment, it calls `/stripe-webhook` (signature checked). The Worker sends a
+  gift (`kind:'iap'`) to the player's inbox, which the game applies once, by order ID. It also keeps a receipt in
+  `purchases/{uid}/items/{order}`. A repeated notice from Stripe delivers nothing new.
+- **Restore:** one-time items (blocks, Pass+, No Ads, starter) come back from the receipts whenever the player signs in.
+- **Switching on:** buying turns itself on once the Worker has all three secrets below (the game asks `/status`).
+  Until then, the website says items can be bought in the app.
+
+Setup (once):
+
+1. Publish the Worker: `node scripts/deploy-cf.mjs --api`. This keeps its secrets and attaches api.pulseform.org.
+2. Stripe dashboard → **Developers → Webhooks → Add endpoint**:
+   - URL: `https://api.pulseform.org/stripe-webhook`
+   - events: `checkout.session.completed` and `checkout.session.async_payment_succeeded`
+   - Copy its signing secret (`whsec_…`).
+3. Firebase → Project settings → **Service accounts → Generate new private key** (a JSON file).
+4. Cloudflare → Workers → `pulseform-api` → Settings → **Variables and Secrets**. Add three secrets, each of type Secret:
+   - `STRIPE_SECRET_KEY`: from Stripe → Developers → API keys. Start with `sk_test_…`, then switch to `sk_live_…`.
+   - `STRIPE_WEBHOOK_SECRET`: the `whsec_…` from step 2.
+   - `GOOGLE_SERVICE_ACCOUNT`: the whole JSON file from step 3.
+5. Test with Stripe's test card `4242 4242 4242 4242`, then switch both Stripe values to live mode. Live mode has
+   its own webhook and its own `whsec_…`.
+
 ## Store checklist
 
 - **Privacy policy URL**: host `privacy.html` (it sits next to `index.html` in the repo) and paste its link in App Store
