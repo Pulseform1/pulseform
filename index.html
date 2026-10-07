@@ -1488,6 +1488,8 @@ body.phone #menuOv .twban:not([hidden]){display:flex;align-items:center;gap:12px
 .adm .g2 label[hidden],.adm .g1 label[hidden],.adm .g1[hidden]{display:none}
 .adm .g1{display:grid;gap:8px;margin-top:6px}.adm .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.adm .row .btn{flex:1 1 auto}
 .admcard{padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:14px}.admcard.on{border-color:rgba(143,240,224,.5);background:rgba(143,240,224,.1)}
+/* the admin dropdowns open as dark lists with light text (the browser's own light list made the highlight look inverted) */
+.adm select{color-scheme:dark}.adm select option{background:#1C1745;color:#F4EFFF}.adm select option:checked{background:#8FF0E0;color:#06231F}
 .admdur{display:flex;gap:6px}.admdur input{flex:1 1 0;min-width:0}.admdur select{flex:0 0 auto;width:auto}
 .adm .amsg{min-height:1.4em;margin:10px 0 0;font-size:13.5px;color:#B8F2E6}.adm .amsg.err{color:#FF8A80}
 .admpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;max-height:282px;overflow-y:auto;margin-top:8px;padding:2px}.admpick[hidden]{display:none}
