@@ -2214,7 +2214,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         <label id="admEvGL" hidden>Gift item<select id="admEvGI"></select></label></div>
       <div class="admpick" id="admEvPick" hidden></div>
       <div class="g1" id="admEvGAL"><label>Notes for everyone<input id="admEvGA" type="number" min="1" max="100000" step="100" value="500"></label></div>
-      <label class="opt admduck" for="admEvDuck"><input id="admEvDuck" type="checkbox"><span>Erlaf the Giant Duck<small>Open the limited Erlaf boss challenge (win his block) for as long as this event runs.</small></span></label>
+      <label class="opt admduck" for="admEvDuck"><input id="admEvDuck" type="checkbox"><span>Summon Erlaf the Giant Duck<small>Erlaf only appears when you summon him here, and he stays for exactly as long as this event lasts ("Lasts (hours)" above). Beating him gives the Erlaf block.</small></span></label>
       <div class="row"><button class="btn" id="admEvGo" type="button">Start event</button><button class="btn ghost" id="admEvEnd" type="button">End event now</button></div>
     </div>
     <div class="admpane" id="admMe" hidden>
@@ -2717,7 +2717,7 @@ function noise(dest,t,peak,dec,type,freq,q=1,sweep){
 /* flute(dest,t,f,dur,F): F is an optional flute voice (each world has its own, see FLUTES). Without one it plays the classic flute.
    w: wave · h2/h3: overtones · dt: detuned double · sc/sct: pitch scoop in · fall: pitch drop at the end · vr/vd/vdel: vibrato
    trem: tremolo rate · a/hold/v: envelope · lp: lowpass · br/brd/bt/bf/bq: breath noise */
-function flute(dest,t,f,dur,F){ F=F||{}; const c=A.ctx, D=(k,d)=>F[k]==null?d:F[k], v=D('v',.085), a=Math.min(D('a',.09),dur*.5), ns=[];
+function flute(dest,t,f,dur,F){ if(quacking()) return quack(dest,t,f,((F&&F.v)||.085)*1.6,dur); F=F||{}; const c=A.ctx, D=(k,d)=>F[k]==null?d:F[k], v=D('v',.085), a=Math.min(D('a',.09),dur*.5), ns=[];
   const o=c.createOscillator(); o.type=D('w','sine'); o.frequency.setValueAtTime(f*D('sc',.985),t); o.frequency.linearRampToValueAtTime(f,t+D('sct',.07));
   if(F.fall){ o.frequency.setValueAtTime(f,t+dur*.6); o.frequency.exponentialRampToValueAtTime(f*F.fall,t+dur); }
   const g=c.createGain(); g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(v,t+a); g.gain.setValueAtTime(v,t+Math.max(a,dur*D('hold',.7))); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
@@ -2755,12 +2755,30 @@ function fluteLayer(RB,s,bar,ch,t,spb){
     case 'bubbles': if(s%4===1) P(n[(s>>2)%3]+(bar%2?12:0),s16*1.5); break;
     case 'fife': if(s%2===0) P(n[[0,1,2,1,2,0,1,2][s>>1]]+(s>=8&&bar%2?12:0),s16*1.4); break;
     case 'run16': if(!MOB||s%2===0) P(n[[0,1,2,1][s%4]]+(s>=8?12:0),s16*1.2); break; } }
-function choir(dest,t,f,dur){ const c=A.ctx, o=c.createOscillator(); o.type='sawtooth'; o.frequency.value=f; o.detune.value=Math.random()*14-7;
+function choir(dest,t,f,dur){ if(quacking()) return quack(dest,t,f,.1,dur); const c=A.ctx, o=c.createOscillator(); o.type='sawtooth'; o.frequency.value=f; o.detune.value=Math.random()*14-7;
   const g=c.createGain(); g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(.14,t+.5); g.gain.setValueAtTime(.14,t+dur*.75); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
   [700,1150].forEach(fr=>{const b=c.createBiquadFilter(); b.type='bandpass'; b.frequency.value=fr; b.Q.value=5; o.connect(b); b.connect(g);}); g.connect(dest); o.start(t); o.stop(t+dur+.05); }
 const INST={2:'Snare & claps',3:'Cymbals',4:'Flute',5:'Shaker',6:'Strings',7:'Glockenspiel',8:'Toms',9:'Choir',10:'Full orchestra'};
 function hit(name,dest,t,v=1,rate=1){ const b=A.smp&&A.smp[name]; if(!b) return; const c=A.ctx, s=c.createBufferSource(); s.buffer=b; if(rate!==1) s.playbackRate.value=rate; const g=c.createGain(); g.gain.value=v; s.connect(g); g.connect(dest); s.start(t); }
-function voiceNote(v,m,t,d,vol,dur){ const f=mtof(m); switch(v){
+/* ---- Erlaf's quack orchestra: during his fight every melodic instrument is played by a duck. One quack is a buzzy saw and
+   square through a nasal mouth shape (two formant peaks plus a honk), scooping up at the start and dropping at the end, with
+   a fast throat rasp. Long notes become a run of quacks. The drums stay as they are, so the beat is as clear as ever. ---- */
+function quack1(d,t,f,vol,len){ const c=A.ctx; if(!c||vol<=0) return;
+  const g=c.createGain(), mix=c.createGain(), f1=c.createBiquadFilter(), f2=c.createBiquadFilter(), nas=c.createBiquadFilter();
+  f1.type='bandpass'; f1.frequency.value=1150; f1.Q.value=2.2; f2.type='bandpass'; f2.frequency.value=2500; f2.Q.value=3;
+  nas.type='peaking'; nas.frequency.value=1500; nas.Q.value=2; nas.gain.value=9;
+  mix.connect(f1); mix.connect(f2); f1.connect(nas); f2.connect(nas); nas.connect(g); g.connect(d);
+  g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(vol,t+.012); g.gain.setValueAtTime(vol*.9,t+len*.7); g.gain.exponentialRampToValueAtTime(.0001,t+len+.04);
+  const os=[['sawtooth',1,1],['square',1.004,.5]].map(([ty,m,a])=>{ const o=c.createOscillator(); o.type=ty;
+    o.frequency.setValueAtTime(f*m*.9,t); o.frequency.linearRampToValueAtTime(f*m*1.04,t+.03); o.frequency.setValueAtTime(f*m,t+len*.65); o.frequency.exponentialRampToValueAtTime(f*m*.78,t+len);
+    const og=c.createGain(); og.gain.value=a; o.connect(og); og.connect(mix); return o; });
+  const l=c.createOscillator(), lg=c.createGain(); l.frequency.value=34; lg.gain.value=.35; l.connect(lg); lg.connect(mix.gain); os.push(l);
+  os.forEach(o=>{ o.start(t); o.stop(t+len+.08); }); }
+function quack(d,t,f,vol,dur){ while(f<110) f*=2; while(f>1400) f/=2;   // ducks sing in a duck's range
+  if(dur<=.6){ quack1(d,t,f,vol,Math.max(.09,dur)); return; }
+  for(let k=0;k*.5<dur&&k<4;k++) quack1(d,t+k*.5,f,vol*(1-k*.18),.42); }
+const quacking=()=>!!(TRACK&&TRACK.quack);
+function voiceNote(v,m,t,d,vol,dur){ const f=mtof(m); if(quacking()) return quack(d,t,f,vol*1.1,dur); switch(v){
   case 'bell': tone(d,t,'sine',f,vol,.002,Math.max(.5,dur)); tone(d,t,'sine',f*2.76,vol*.3,.002,.3); break;
   case 'saw': tone(d,t,'sawtooth',f,vol,.004,dur,{lp:2400}); break;
   case 'chip': tone(d,t,'square',f,vol,.002,dur*.6,{lp:5000}); break;
@@ -2772,7 +2790,7 @@ function voiceNote(v,m,t,d,vol,dur){ const f=mtof(m); switch(v){
   case 'stab': tone(d,t,'sawtooth',f,vol,.003,dur,{lp:2600}); break;
   case 'soft': tone(d,t,'sine',f,vol,.3,dur); break;
   default: tone(d,t,'triangle',f,vol,.01,dur); } }
-function bassNote(w,m,t,d,vol,dur){ const f=mtof(m);
+function bassNote(w,m,t,d,vol,dur){ const f=mtof(m); if(quacking()) return quack(d,t,f,vol*.7,dur);
   if(w==='saw') tone(d,t,'sawtooth',f,vol*.8,.005,dur,{lp:750}); else if(w==='square') tone(d,t,'square',f,vol*.7,.004,dur,{lp:1100});
   else tone(d,t,w==='tri'?'triangle':'sine',f,vol,.008,dur); }
 /* the sound pack playing now: yours on the menu and in Endless, or the one you're previewing in the shop */
@@ -2789,6 +2807,7 @@ function packStyle(st){ const P=curPack(); if(!P) return st; st._pk=st._pk||{}; 
 /* a violin: two slightly detuned bowed saws through a warm filter with a body resonance, a quick bow attack,
    and vibrato that only blooms on the longer notes */
 function violin(d,t,f,vol,dur){
+  if(quacking()) return quack(d,t,f,vol*3,dur);
   const c=A.ctx, g=c.createGain(), lp=c.createBiquadFilter(), pk=c.createBiquadFilter(), at=Math.min(.025,dur*.3);
   lp.type='lowpass'; lp.frequency.value=Math.min(5200,f*5); lp.Q.value=.7; pk.type='peaking'; pk.frequency.value=2600; pk.Q.value=1.4; pk.gain.value=5;
   g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(vol,t+at); g.gain.setValueAtTime(vol*.85,t+Math.max(at,dur*.6)); g.gain.exponentialRampToValueAtTime(.0001,t+dur+.06);
@@ -2813,6 +2832,7 @@ function celloBus(d){
 /* a cello: the violin's voice an octave or two down, darker, with a slow bow, a slow wide vibrato, a soft octave-down
    undertone for weight, and a long release that rings out through its body */
 function cello(d,t,f,vol,dur){
+  if(quacking()) return quack(d,t,f,vol*2.5,dur);
   const c=A.ctx, g=c.createGain(), lp=c.createBiquadFilter(), at=Math.min(.18,dur*.2), rel=1, bus=celloBus(d);
   lp.type='lowpass'; lp.frequency.setValueAtTime(Math.min(900,f*4),t); lp.frequency.linearRampToValueAtTime(Math.min(1300,f*6),t+at+.3); lp.frequency.linearRampToValueAtTime(Math.min(1100,f*5),t+dur); lp.Q.value=1.1;
   g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(vol,t+at); g.gain.linearRampToValueAtTime(vol*.82,t+dur*.6); g.gain.setTargetAtTime(.0001,t+dur,rel/4);
@@ -3491,7 +3511,7 @@ function nextRoom(first){
   const M=G.mode, i=G.roomIdx; let cfg,th,bpm,instr;
   let sid, tseed, prevTrack=TRACK&&TRACK.seedKey;
   if(M.type==='level'){ rng=mulberry(hashStr(`L${M.world}-${M.level}`)); cfg=cfgLevel(M.world,M.level); th=THEMES[M.world-1]; sid=WORLD_SONGS[M.world-1].s; tseed=`W${M.world}`; bpm=worldBpm(M.world,M.level); instr=M.level; }
-  else if(M.type==='boss'){ rng=mulberry(hashStr(`Arena${M.world}`)); th=THEMES[M.world-1]; sid=WORLD_SONGS[M.world-1].s; tseed=`W${M.world}`; bpm=worldBpm(M.world,'boss'); instr=10;
+  else if(M.type==='boss'){ rng=mulberry(hashStr(`Arena${M.world}`)); th=THEMES[M.world-1]; sid=WORLD_SONGS[M.world-1].s; tseed=M.erlaf?'Erlaf':`W${M.world}`; bpm=worldBpm(M.world,'boss'); instr=10;
     if(M.world===WORLDS){ sid='roundone'; tseed='RoundOne'; bpm-=20; } }   // the Round One gets its own, more emotional song, 20 BPM slower
   else if(M.type==='lremix'){ rng=mulberry(hashStr(`RX${M.world}-${M.level}`)); cfg=remixCfg(M.world,M.level); th=THEMES[M.world-1]; sid=STYLE_IDS[hashStr('rx'+M.world+'-'+M.level)%STYLE_IDS.length];
     if(sid===WORLD_SONGS[M.world-1].s) sid=STYLE_IDS[(STYLE_IDS.indexOf(sid)+3)%STYLE_IDS.length]; tseed='RX'+M.world+'-'+M.level; bpm=(th.bpm+M.level*2)*STYLES[sid].bpm*1.15; instr=Math.min(10,M.level+2); }
@@ -3516,6 +3536,7 @@ function nextRoom(first){
   // an equipped sound pack: Endless plays the pack's song exactly as the menu does (no room instruments), only speeding up every room
   if(!TRACK||TRACK.seedKey!==tseed){ setTrack(sid,tseed); if(PK){ const L=lobbyTracks(); TRACK=Object.assign({},L[0],{pair:L}); } TRACK.seedKey=tseed; G.newTrack=!first; }
   TRACK.title=PK?PK.name:M.type==='custom'?WORLD_SONGS[M.design.th].n:(M.type==='level'||M.type==='boss'||M.type==='ascent'||M.type==='raid')?WORLD_SONGS[M.world-1].n:M.type==='studio'?M.songName:M.type==='interlude'?'The Silence':'';
+  TRACK.quack=!!M.erlaf; if(M.erlaf) TRACK.title='Quack Symphony';   // Erlaf's fight: the whole orchestra quacks
   G.stemFloor=PK?5:M.type==='level'?STEM_FLOOR[M.level-1]:M.type==='boss'||M.type==='raid'||(M.type==='ascent'&&G.guardian)?5:0;
   if(first) setStemTier(0,A.ctx.currentTime,.01);
   if(first) G.bpm=bpm; else G.pendingBpm=bpm;
@@ -7010,13 +7031,11 @@ function giftApply(g){ const k=g&&g.kind;
 function afterGift(){ fixEquip(); if(ACCT.user){ lbRename(); if(typeof frPush==='function') frPush(true); } const ov=visibleOv(); if(ov&&ov.id==='menuOv') buildMenu(); if(!$('passOv').hidden) buildPass(); }
 /* ---- the live event: everyone (signed in or not) reads it; boosts apply while it runs ---- */
 /* ================= LIMITED EVENT: ERLAF THE GIANT DUCK =================
-   A one-off boss challenge on the World 3 arena with its own giant duck. Open from Tue Oct 6 to Wed Oct 21 2026 (midnight
-   Central), and any time an admin's live event switches it on (live/event mode:'erlaf'). Beat him once to own the Erlaf block. */
-const ERLAF_FROM=Date.UTC(2026,9,6,5), ERLAF_TO=Date.UTC(2026,9,21,5);
+   A boss challenge on the World 3 arena with its own giant duck. Only an admin can summon him: a live event with Erlaf
+   switched on (live/event mode:'erlaf'), and he stays exactly as long as that event runs. Beat him once to own the Erlaf block. */
 const ERLAF_SAY=['QUACK. I am Erlaf, the biggest white mallard in the whole Block World.','You want my feathers? Step on that gold pulse pad on the beat and bonk me. Watch out for my ducklings. QUACK!'];
 const ERLAF_DOWN='Quack… fine. You win. Wear my feathers with pride.';
-function erlafLive(){ const n=Date.now(); return n>=ERLAF_FROM&&n<ERLAF_TO; }
-function erlafEnd(){ const L=liveOn(), a=erlafLive()?ERLAF_TO:0, b=L&&L.mode==='erlaf'?+L.end:0; return Math.max(a,b); }
+function erlafEnd(){ const L=liveOn(); return L&&L.mode==='erlaf'?+L.end:0; }
 const erlafOn=()=>erlafEnd()>Date.now();
 function erlafMode(){ const M=modeFor('boss',ERLAF_W); M.erlaf=true; return M; }
 function erlafUI(){ const b=$('mErlaf'); if(!b) return; const on=erlafOn(); b.hidden=!on; if(!on) return;
@@ -7029,7 +7048,8 @@ function liveMul(k){ const L=liveOn(); return L?Math.max(1,Math.min(3,+L[k]||1))
 const liveLeft=ms=>{ const t=Math.max(1,Math.ceil(ms/60000)), h=Math.floor(t/60), m=t%60; return h>=48?`${Math.round(h/24)} days`:h?`${h}h${m?` ${m}m`:''}`:`${m}m`; };
 const liveGiftOpen=L=>!!(L&&L.gift&&L.gift.kind&&!(SAVE.liveGot||[]).includes(L.id));
 function liveUI(){ erlafUI(); const L=ACCT.live, b=$('mLive'), now=Date.now(); if(!b) return;
-  const show=!!L&&now<(+L.end||0)&&(+L.start||0)-now<7*86400000; b.hidden=!show||!!window.PF_CG; if(!show) return;
+  const duckOnly=!!L&&L.mode==='erlaf'&&(+L.xp||1)<=1&&(+L.notes||1)<=1&&!L.gift&&now>=(+L.start||0);
+  const show=!!L&&now<(+L.end||0)&&(+L.start||0)-now<7*86400000&&!duckOnly; b.hidden=!show||!!window.PF_CG; if(!show) return;
   const on=now>=(+L.start||0), boosts=[(+L.xp||1)>1?`${+L.xp}× XP`:'',(+L.notes||1)>1?`${+L.notes}× Notes`:''].filter(Boolean).join(' · ');
   $('mLiveT').textContent=L.title||'Live event';
   $('mLiveSub').textContent=[L.msg||'',boosts,on?`Ends in ${liveLeft(L.end-now)}`:`Starts in ${liveLeft(L.start-now)}`].filter(Boolean).join(' · ');
@@ -7134,11 +7154,11 @@ $('admLevels').onclick=async()=>{ if(!await admConfirm(SAVE.devAll?'Lock levels 
 $('admPass').onclick=async()=>{ if(!await admConfirm('Give yourself Pulse Pass+?','This can\'t be undone: Pass+ stays on your account on every device.')) return; passS().prem=true; admSelfSaved('Pulse Pass+ is on.'); };   // one way: a bought Pass+ syncs as owned on every device
 $('admAll').onclick=async()=>{ if(!await admConfirm('Own every item?','Every block, banner, tile theme, sound pack and landing effect is added to your collection. This can\'t be undone.')) return; let n=0; [SKINS,BANNERS,TILES,PACKS,LANDS].forEach(L=>L.forEach(x=>{ if(x.id&&!SAVE.owned.includes(x.id)){ SAVE.owned.push(x.id); n++; } })); admSelfSaved(n?`Added ${n} items to your collection.`:'You already own everything.'); };
 $('admKind').onchange=admKindUI; $('admEvG').onchange=admEvKindUI;
-$('admEvGo').onclick=async()=>{ const db=ACCT.db; if(!db||!ACCT.user) return; const title=$('admEvT').value.trim().slice(0,40);
+$('admEvGo').onclick=async()=>{ const db=ACCT.db; if(!db||!ACCT.user) return; const duck=$('admEvDuck').checked, title=($('admEvT').value.trim()||(duck?'Erlaf the Giant Duck':'')).slice(0,40);
   if(!title){ admMsg('Give the event a title.',true); return; }
   const now=Date.now(), start=now+Math.max(0,+$('admEvS').value||0)*3600000, end=start+Math.max(.5,Math.min(720,+$('admEvH').value||48))*3600000;
   const gk=$('admEvG').value, gift=!gk?null:gk==='notes'?{kind:'notes',n:Math.max(1,Math.min(100000,Math.round(+$('admEvGA').value||0)))}:{kind:gk,id:$('admEvGI').value};
-  const ev={id:'ev'+now.toString(36),title,msg:$('admEvM').value.trim().slice(0,140),xp:+$('admEvX').value,notes:+$('admEvN').value,start,end,gift,by:ACCT.user.uid,t:now}; if($('admEvDuck').checked) ev.mode='erlaf';
+  const ev={id:'ev'+now.toString(36),title,msg:($('admEvM').value.trim()||(duck?'A giant white mallard has landed. Beat him for his block!':'')).slice(0,140),xp:+$('admEvX').value,notes:+$('admEvN').value,start,end,gift,by:ACCT.user.uid,t:now}; if(duck) ev.mode='erlaf';
   const it=gift&&GIFT_LISTS[gift.kind]?GIFT_LISTS[gift.kind]().find(x=>x.id===gift.id):null;
   const sum=[ev.mode==='erlaf'?'Erlaf the Giant Duck':'',ev.xp>1?`${ev.xp}× XP`:'',ev.notes>1?`${ev.notes}× Notes`:'',gift?`gift for everyone: ${gift.kind==='notes'?'♪'+gift.n.toLocaleString():escapeHTML(it?it.name:'an item')}`:''].filter(Boolean).join(' · ')||'no boosts';
   const old=ACCT.live&&now<(+ACCT.live.end||0);
