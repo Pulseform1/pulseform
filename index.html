@@ -3514,7 +3514,7 @@ function nextRoom(first){
   const M=G.mode, i=G.roomIdx; let cfg,th,bpm,instr;
   let sid, tseed, prevTrack=TRACK&&TRACK.seedKey;
   if(M.type==='level'){ rng=mulberry(hashStr(`L${M.world}-${M.level}`)); cfg=cfgLevel(M.world,M.level); th=THEMES[M.world-1]; sid=WORLD_SONGS[M.world-1].s; tseed=`W${M.world}`; bpm=worldBpm(M.world,M.level); instr=M.level; }
-  else if(M.type==='boss'){ rng=mulberry(hashStr(`Arena${M.world}`)); th=THEMES[M.world-1]; sid=WORLD_SONGS[M.world-1].s; tseed=M.erlaf?'Erlaf':`W${M.world}`; bpm=worldBpm(M.world,'boss'); instr=10;
+  else if(M.type==='boss'){ rng=mulberry(hashStr(`Arena${M.world}`)); th=THEMES[M.world-1]; sid=WORLD_SONGS[M.world-1].s; tseed=M.erlaf?'Erlaf':`W${M.world}`; bpm=worldBpm(M.world,'boss')*(M.erlaf?1.2:1);   // Erlaf plays 20% faster instr=10;
     if(M.world===WORLDS){ sid='roundone'; tseed='RoundOne'; bpm-=20; } }   // the Round One gets its own, more emotional song, 20 BPM slower
   else if(M.type==='lremix'){ rng=mulberry(hashStr(`RX${M.world}-${M.level}`)); cfg=remixCfg(M.world,M.level); th=THEMES[M.world-1]; sid=STYLE_IDS[hashStr('rx'+M.world+'-'+M.level)%STYLE_IDS.length];
     if(sid===WORLD_SONGS[M.world-1].s) sid=STYLE_IDS[(STYLE_IDS.indexOf(sid)+3)%STYLE_IDS.length]; tseed='RX'+M.world+'-'+M.level; bpm=(th.bpm+M.level*2)*STYLES[sid].bpm*1.15; instr=Math.min(10,M.level+2); }
@@ -5767,7 +5767,7 @@ function genArena(w){
     if(arenaTraps(room,start).bad.length) continue;
     const hp=w===1?4:w===WORLDS?25:(w<=6?3+2*w:9+w)-1;   // 5 less health than the original bosses; the Fountain keeps 4 and the Round One has 25
     room.boss={x:3,y:0,hp,max:hp,flashT:-9,chargeT:-9,dieT:0,enraged:false,w};
-    if(G.mode&&G.mode.erlaf){ room.boss.duck=true; room.boss.hp=room.boss.max=12; }   // Erlaf: a sturdier duck than the World 3 boss
+    if(G.mode&&G.mode.erlaf){ room.boss.duck=true; room.boss.hp=room.boss.max=24; }   // Erlaf: 24 HP, a much sturdier duck than the World 3 boss
     ['crack','tele','rgate','wind','vent','ice','spring','mud','ghost'].forEach(k=>room.has[k]=cells.some(c=>k==='tele'?c.tele>=0:c[k]));
     room.has.blink=cells.some(c=>c.blink>=0); room.has.rot=cells.some(c=>c.rot>=0); room.has.laser=!!(room.lasers&&room.lasers.length);
     return room;
@@ -5849,7 +5849,7 @@ function hitBoss(){
   hud();
 }
 /* the tempo jump happens on the same beat on every screen (ek) */
-function bossEnrage(ek){ const B=R.boss; B.enraged=true; G.pendingBpm=Math.max(G.bpm,Math.min(180,G.bpm+10)); if(ek) G.pendingK=ek; G.banner={text:'Enraged!',sub:'Faster, and twice the shots',t0:G.now,dur:1.6,col:'#FF6B6B'}; sTierUp(); }
+function bossEnrage(ek){ const B=R.boss; B.enraged=true; G.pendingBpm=Math.max(G.bpm,Math.min(180,G.bpm+10)); if(ek) G.pendingK=ek; G.banner={text:B.duck?'Erlaf is furious!':'Enraged!',sub:B.duck?'Faster, and three ducklings at a time':'Faster, and twice the shots',t0:G.now,dur:1.6,col:'#FF6B6B'}; sTierUp(); }
 /* a guest hears the real boss health from the host */
 function netBossHP(o){
   const B=R&&R.boss; if(!B||o.r!==G.roomIdx||B.hp<=0) return;
@@ -5891,13 +5891,14 @@ function arenaBeat(b,rest){
   const B=R.boss;
   if(B&&B.round&&G.mode.type==='boss'&&B.hp>0&&!rest&&!G.finishing){ if(!G.roundOpen) roundOpening(b); else roundOpenBeat(b); }
   if(B&&B.hp>0&&!rest&&!G.finishing&&b.k%2===0&&!(G.roundOpen&&!G.roundOpen.over)){
-    const team=G.players.filter(P=>!P.gone).length, n=(B.hp<=B.max/2?2:1)+((B.w||1)>=10?1:0)+(G.mode.raid&&B.hp<=B.max/2?1:0)+(team>2?1:0), alive=G.players.filter(P=>!P.dead&&!P.gone);
+    // Erlaf throws 2 ducklings at a time, 3 once he's enraged (at half health), and always the full number
+    const team=G.players.filter(P=>!P.gone).length, n=B.duck?(B.enraged||B.hp<=B.max/2?3:2):(B.hp<=B.max/2?2:1)+((B.w||1)>=10?1:0)+(G.mode.raid&&B.hp<=B.max/2?1:0)+(team>2?1:0), alive=G.players.filter(P=>!P.dead&&!P.gone);
     const rnd=G.mode.net?mulberry(hashStr((G.mode.seed||'')+'@'+b.k)):Math.random, rpick=n2=>Math.floor(rnd()*n2);
-    for(let s=0;s<n;s++){
+    for(let s=0,tries=0;s<n&&tries<n*6;tries++){ if(!B.duck) s++;
       const P=alive[rpick(alive.length)]||G.players[0], r=rnd(), N=R.N; let tx=P.pos.x, ty=P.pos.y;
       if(r>=.5){ const opts=[]; R.cells.forEach((c,i)=>{ if(c.t===1&&!c.fallen){ const x=i%N,y=(i/N)|0; if(r<.78?Math.abs(x-P.pos.x)+Math.abs(y-P.pos.y)===1:true) opts.push({x,y}); } }); if(opts.length){ const o=opts[rpick(opts.length)]; tx=o.x; ty=o.y; } }
-      if(G.proj.some(p=>p.tx===tx&&p.ty===ty)) continue;
-      const t1=b.t+2*b.spb; G.proj.push({tx,ty,t0:b.t,t1}); sLand(t1);
+      if(G.proj.some(p=>p.tx===tx&&p.ty===ty)) continue;   // Erlaf picks again (he has extra tries); other bosses just throw one fewer
+      const t1=b.t+2*b.spb; G.proj.push({tx,ty,t0:b.t,t1}); sLand(t1); if(B.duck) s++;
     }
     B.chargeT=G.now; sLaunch(b.t);
   }
