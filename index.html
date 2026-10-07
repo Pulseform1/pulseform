@@ -408,32 +408,23 @@ body.hween #menuOv .logo{text-shadow:0 0 34px rgba(255,122,24,.28)}
 .chip.c-lb::before{content:'◆'}
 .chip.c-set::before{content:'⚙'}
 .chip.evchip::before{content:'★'}
-.chip.c-poll::before{content:'☑'}
+
 .chip.c-help::before{content:'?'}
 .chip.snd::before{content:'♪'}
 .chip.cvkchip::before{content:'⚔'}
 .chip:hover{transform:translateY(-2px);filter:brightness(1.06);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 7px 18px rgba(0,0,0,.16)}
 .chip:active{transform:scale(.96)}
-.chip.c-coll,.chip.c-fr,.chip.c-lb,.chip.c-set,.chip.c-help,.chip.c-poll,.chip.evchip{background:rgba(255,255,255,.055)}
-.chip.c-poll{
-  color:#F5FFFE;
-  border-color:rgba(126,232,220,.72);
-  background:linear-gradient(135deg,rgba(45,137,136,.78),rgba(40,77,113,.78));
-  box-shadow:0 0 0 1px rgba(126,232,220,.10),0 8px 22px rgba(71,220,205,.16),inset 0 1px 0 rgba(255,255,255,.12);
-  animation:voteGlow 2.6s ease-in-out infinite;
-}
-.chip.c-poll::after{
-  content:'COMMUNITY';display:inline-block;margin-left:7px;padding:2px 5px;border-radius:999px;
-  font:800 8px var(--body);letter-spacing:.08em;color:#11273A;background:#B8F2E6;vertical-align:2px;
-}
-.chip.c-poll .qdot{top:5px;right:5px;width:8px;height:8px;margin:0;background:#FF8A3D;box-shadow:0 0 0 2px rgba(26,13,37,.92),0 0 8px rgba(255,138,61,.55);z-index:3}
-@keyframes voteGlow{0%,100%{box-shadow:0 0 0 1px rgba(126,232,220,.10),0 8px 22px rgba(71,220,205,.13),inset 0 1px 0 rgba(255,255,255,.12)}50%{box-shadow:0 0 0 2px rgba(126,232,220,.11),0 10px 28px rgba(71,220,205,.22),inset 0 1px 0 rgba(255,255,255,.14)}}
-@media (prefers-reduced-motion:reduce){.chip.c-poll{animation:none}}
+.chip.c-coll,.chip.c-fr,.chip.c-lb,.chip.c-set,.chip.c-help,.chip.evchip{background:rgba(255,255,255,.055)}
+
+
+
+
+@media (prefers-reduced-motion:reduce){}
 @media (max-width:1080px){
   .mtop{gap:8px}
   .mtop-r{justify-content:flex-start}
   .chip{padding-inline:10px}
-  .chip.c-poll::after{display:none}
+  
 }
 @media (max-width:760px){
   .mtop{
@@ -452,14 +443,14 @@ body.hween #menuOv .logo{text-shadow:0 0 34px rgba(255,122,24,.28)}
   .mtop-r > *{scroll-snap-align:start}
   .mtop-r .wallet{order:-1;min-height:40px;display:flex;align-items:center}
   .chip{min-height:42px;padding:9px 11px;border-radius:13px;font-size:12px}
-  .chip.c-poll{position:relative}
-  .chip.c-poll::after{display:inline-block;font-size:7px;padding:2px 4px;margin-left:5px}
+  
+  
 }
 @media (max-width:420px){
   .mtop{padding-inline:7px}
   .mtop-r{gap:6px}
   .chip{min-height:44px;padding-inline:10px}
-  .chip.c-poll::after{content:'VOTE';font-size:7px}
+  
   .mtop-r .wallet{padding-inline:9px}
 }
 @media (max-height:540px) and (orientation:landscape){
@@ -482,18 +473,18 @@ body.hween #menuOv .logo{text-shadow:0 0 34px rgba(255,122,24,.28)}
 .chip.c-fr{border-color:rgba(127,184,255,.55);color:#A8CCFF}
 .chip.c-set{border-color:rgba(201,184,255,.55);color:#D6CBFF}
 .chip.c-help{border-color:rgba(184,242,122,.55);color:#C8F59A}
-.chip.c-poll{position:relative;border-color:rgba(126,232,220,.55);color:#8FF0E0}
-.pollbody{display:flex;flex-direction:column;gap:16px;margin-top:4px}
-.pollq{display:flex;flex-direction:column;gap:7px}
-.pollq h3{margin:0;font:800 15px var(--display);letter-spacing:.02em;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.pollq h3 small{font:600 11px var(--body,system-ui);color:var(--ink-3);letter-spacing:0}
-.pollopt{position:relative;overflow:hidden;display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:44px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink);font:700 14px var(--display);text-align:left;cursor:pointer}
-.pollopt::before{content:'';position:absolute;inset:0 auto 0 0;width:var(--p,0%);background:rgba(126,232,220,.2);transition:width .5s ease}
-.pollopt>*{position:relative}.pollopt span{min-width:0}
-.pollopt b{flex:none;font:700 12px var(--display);color:var(--ink-2);font-variant-numeric:tabular-nums}
-.pollopt.on{border-color:#FFD166;box-shadow:0 0 12px rgba(255,209,102,.3)}.pollopt.on::before{background:rgba(255,209,102,.26)}
-.pollopt.on span::after{content:' ✓';color:#FFD166}
-.pollopt:disabled{cursor:default;opacity:.75}
+
+
+
+
+
+
+
+
+
+
+
+
 .chip.namechip{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chip.snd.off{color:var(--ink-3);border-color:var(--line)}
 .mmain{flex:1 0 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:center}
@@ -1207,8 +1198,7 @@ body.obscene .hud,body.obscene #hint,body.obscene #cine,body.obscene #talk,body.
 body.obscene.talkok #cine{opacity:1!important}   /* a speech during a cutscene keeps its bubbles */
 @media (max-width:560px){.fpworlds{grid-template-columns:repeat(4,1fr)}.invitebar{flex-wrap:wrap;justify-content:center;text-align:center}}
 
-/* ================= OCTOBER TOP BAR ================= */
-.chip.c-poll::before{content:'✓';margin-right:6px}
+
 .evchip::before{content:''!important;margin-right:0!important}
 .evchip{animation:none!important;box-shadow:none!important}
 
@@ -1242,15 +1232,8 @@ body.hween #menuOv .mtop-r .chip.evchip{
   background:linear-gradient(135deg,rgba(112,48,24,.90),rgba(57,24,53,.90));
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 5px 16px rgba(255,111,36,.14)!important;
 }
-body.hween #menuOv .mtop-r .chip.c-poll{
-  border-color:rgba(221,177,255,.72);color:#FFF3FF;
-  background:linear-gradient(135deg,rgba(93,49,116,.92),rgba(46,31,77,.92));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 7px 22px rgba(190,110,255,.18);
-  animation:none!important;
-}
-body.hween #menuOv .mtop-r .chip.c-poll::after{
-  background:#E7C2FF;color:#2C1438;
-}
+
+
 body.hween #menuOv .mtop-r .chip.snd{
   border-color:rgba(255,183,101,.42);color:#E9D6CC;
 }
@@ -1286,13 +1269,13 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
   body:not(.phone) #menuOv .chip:active{transform:scale(.98)}
   body:not(.phone) #menuOv .chip::before{content:''!important;flex:none;width:20px;height:20px;margin:0;opacity:1;background:var(--ic,currentColor);
     -webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
-  body:not(.phone) #menuOv .chip.c-poll::after{display:none}
+  
   body:not(.phone) #menuOv .chip .qdot{position:static;margin-left:auto;width:9px;height:9px}
   /* order: the main places first, then you, then settings */
   body:not(.phone) #menuOv .chip.ppchip{order:1}  body:not(.phone) #menuOv .chip.c-store{order:2}
   body:not(.phone) #menuOv .chip.c-coll{order:3}  body:not(.phone) #menuOv .chip.c-fr{order:4}
   body:not(.phone) #menuOv .chip.c-lb{order:5}    body:not(.phone) #menuOv .chip.twchip{order:6}
-  body:not(.phone) #menuOv .chip.evchip{order:7}  body:not(.phone) #menuOv .chip.c-poll{order:8}
+  body:not(.phone) #menuOv .chip.evchip{order:7}  
   body:not(.phone) #menuOv .chip.rankchip{order:20;margin-top:auto;border-top:1px solid rgba(255,255,255,.08)!important;border-radius:0 0 12px 12px;padding-top:14px}
   body:not(.phone) #menuOv .chip.namechip{order:21}  body:not(.phone) #menuOv .chip.acct{order:22}
   body:not(.phone) #menuOv .chip.c-set{order:23}     body:not(.phone) #menuOv .chip.c-help{order:24}
@@ -1341,7 +1324,7 @@ body.hween #menuOv .mbrand .mdot{animation:none!important}
   body:not(.phone) #menuOv .chip.c-lb::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z'/%3E%3Cpath d='M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z'/%3E%3Cpath d='M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3'/%3E%3C/svg%3E")}
   body:not(.phone) #menuOv .chip.c-set::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z'/%3E%3C/svg%3E")}
   body:not(.phone) #menuOv .chip.evchip::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z'/%3E%3C/svg%3E")}
-  body:not(.phone) #menuOv .chip.c-poll::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='3'/%3E%3Cpath d='M8 12l3 3 5-6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='3'/%3E%3Cpath d='M8 12l3 3 5-6'/%3E%3C/svg%3E")}
+  
   body:not(.phone) #menuOv .chip.c-help::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01'/%3E%3C/svg%3E")}
   body:not(.phone) #menuOv .chip.snd::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 10v4h4l5 4V6L8 10z'/%3E%3Cpath d='M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 10v4h4l5 4V6L8 10z'/%3E%3Cpath d='M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12'/%3E%3C/svg%3E")}
   body:not(.phone) #menuOv .chip.cvkchip::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2'/%3E%3C/svg%3E")}
@@ -1523,10 +1506,10 @@ body.phone #menuOv .mcard small{font-size:12px}
 body.phone .hw-pumpwrap{display:none}
 
 /* full-screen pages with a sticky header */
-body.phone #worldsOv,body.phone #levelsOv,body.phone #shopOv,body.phone #friendsOv,body.phone #friendOv,body.phone #lbOv,body.phone #profOv,body.phone #settingsOv,body.phone #adminOv,body.phone #acctOv,body.phone #guideOv,body.phone #eventOv,body.phone #pollOv,body.phone #twinOv,body.phone #remixOv,body.phone #hardOv,body.phone #coopOv{padding:0!important;place-items:stretch!important;background:linear-gradient(180deg,#1C1745,#140F33 60%,#100C29)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
-body.phone #worldsOv > .panel,body.phone #levelsOv > .panel,body.phone #shopOv > .panel,body.phone #friendsOv > .panel,body.phone #friendOv > .panel,body.phone #lbOv > .panel,body.phone #profOv > .panel,body.phone #settingsOv > .panel,body.phone #adminOv > .panel,body.phone #acctOv > .panel,body.phone #guideOv > .panel,body.phone #eventOv > .panel,body.phone #pollOv > .panel,body.phone #twinOv > .panel,body.phone #remixOv > .panel,body.phone #hardOv > .panel,body.phone #coopOv > .panel{max-width:none!important;width:100%!important;max-height:none!important;height:100%;border-radius:0!important;border:0!important;box-shadow:none!important;background:transparent!important;
+body.phone #worldsOv,body.phone #levelsOv,body.phone #shopOv,body.phone #friendsOv,body.phone #friendOv,body.phone #lbOv,body.phone #profOv,body.phone #settingsOv,body.phone #adminOv,body.phone #acctOv,body.phone #guideOv,body.phone #eventOv,body.phone #twinOv,body.phone #remixOv,body.phone #hardOv,body.phone #coopOv{padding:0!important;place-items:stretch!important;background:linear-gradient(180deg,#1C1745,#140F33 60%,#100C29)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.phone #worldsOv > .panel,body.phone #levelsOv > .panel,body.phone #shopOv > .panel,body.phone #friendsOv > .panel,body.phone #friendOv > .panel,body.phone #lbOv > .panel,body.phone #profOv > .panel,body.phone #settingsOv > .panel,body.phone #adminOv > .panel,body.phone #acctOv > .panel,body.phone #guideOv > .panel,body.phone #eventOv > .panel,body.phone #twinOv > .panel,body.phone #remixOv > .panel,body.phone #hardOv > .panel,body.phone #coopOv > .panel{max-width:none!important;width:100%!important;max-height:none!important;height:100%;border-radius:0!important;border:0!important;box-shadow:none!important;background:transparent!important;
   padding:0 max(16px,env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))!important;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-body.phone #worldsOv > .panel > .head:first-child,body.phone #levelsOv > .panel > .head:first-child,body.phone #shopOv > .panel > .head:first-child,body.phone #friendsOv > .panel > .head:first-child,body.phone #friendOv > .panel > .head:first-child,body.phone #lbOv > .panel > .head:first-child,body.phone #profOv > .panel > .head:first-child,body.phone #settingsOv > .panel > .head:first-child,body.phone #adminOv > .panel > .head:first-child,body.phone #acctOv > .panel > .head:first-child,body.phone #guideOv > .panel > .head:first-child,body.phone #eventOv > .panel > .head:first-child,body.phone #pollOv > .panel > .head:first-child,body.phone #twinOv > .panel > .head:first-child,body.phone #remixOv > .panel > .head:first-child,body.phone #hardOv > .panel > .head:first-child,body.phone #coopOv > .panel > .head:first-child{position:sticky;top:0;z-index:5;margin:0 calc(-1 * max(16px,env(safe-area-inset-right))) 2px calc(-1 * max(16px,env(safe-area-inset-left)));
+body.phone #worldsOv > .panel > .head:first-child,body.phone #levelsOv > .panel > .head:first-child,body.phone #shopOv > .panel > .head:first-child,body.phone #friendsOv > .panel > .head:first-child,body.phone #friendOv > .panel > .head:first-child,body.phone #lbOv > .panel > .head:first-child,body.phone #profOv > .panel > .head:first-child,body.phone #settingsOv > .panel > .head:first-child,body.phone #adminOv > .panel > .head:first-child,body.phone #acctOv > .panel > .head:first-child,body.phone #guideOv > .panel > .head:first-child,body.phone #eventOv > .panel > .head:first-child,body.phone #twinOv > .panel > .head:first-child,body.phone #remixOv > .panel > .head:first-child,body.phone #hardOv > .panel > .head:first-child,body.phone #coopOv > .panel > .head:first-child{position:sticky;top:0;z-index:5;margin:0 calc(-1 * max(16px,env(safe-area-inset-right))) 2px calc(-1 * max(16px,env(safe-area-inset-left)));
   padding:calc(env(safe-area-inset-top) + 10px) max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left));min-height:52px;box-sizing:content-box;
   background:rgba(22,17,52,.9);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid rgba(255,255,255,.07)}
 body.phone .overlay .panel > .head:first-child .back{font-size:15px;padding:8px 12px 8px 4px;min-height:40px}
@@ -1943,13 +1926,6 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   </div>
 </section>
 
-<section id="pollOv" class="overlay" hidden>
-  <div class="panel">
-    <div class="head"><button class="back" id="pollBack" type="button">← Menu</button></div>
-    <div id="pollBody" class="pollbody"></div>
-    <div class="small" id="pollMsg" role="status"></div>
-  </div>
-</section>
 
 <section id="profOv" class="overlay" hidden>
   <div class="panel">
@@ -7235,7 +7211,7 @@ async function acctDelete(){
     await Promise.all(mates.map(f=>quiet(db.collection('friends').doc(f).update({uids:firebase.firestore.FieldValue.arrayRemove(uid)}))));
     const inv=await quiet(db.collection('invites').doc(uid).collection('items').get()); if(inv) await Promise.all(inv.docs.map(d=>quiet(d.ref.delete())));
     if(FR.code) await quiet(db.collection('codes').doc(FR.code).delete());
-    await Promise.all([quiet(db.collection('friends').doc(uid).delete()),quiet(db.collection('profiles').doc(uid).delete()),quiet(db.collection('polls').doc('next').collection('votes').doc(uid).delete())]);
+    await Promise.all([quiet(db.collection('friends').doc(uid).delete()),quiet(db.collection('profiles').doc(uid).delete())]);
     inboxStop(); await quiet(db.collection('admins').doc(uid).delete());
     await db.collection('users').doc(uid).delete();
     await u.delete();
@@ -7921,7 +7897,7 @@ if(isNativeApp()) setTimeout(()=>{ iapInit(); adsInit(); },1500);
 /* ================= PHONE APP SHELL: bottom tabs and the More sheet (all of them press the menu's own buttons) ================= */
 const PHONE_MQ=matchMedia('(max-width:760px), (max-height:540px) and (pointer:coarse)');
 const TAB_OF={menuOv:'home',worldsOv:'home',levelsOv:'home',hardOv:'home',remixOv:'home',coopOv:'home',passOv:'pass',shopOv:'shop',friendsOv:'more',friendOv:'more',
-  lbOv:'more',profOv:'more',settingsOv:'more',adminOv:'more',acctOv:'more',guideOv:'more',eventOv:'more',pollOv:'more',twinOv:'more'};
+  lbOv:'more',profOv:'more',settingsOv:'more',adminOv:'more',acctOv:'more',guideOv:'more',eventOv:'more',twinOv:'more'};
 const MORE_ITEMS=[['mTwin','Twin Pulse 2v2','#FFE7A0','#6A4AB0','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2"/></svg>'],['mProfile','Profile & quests','#FF9A4D','#E2541E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 7-7 11-7-11z" fill="currentColor" fill-opacity=".25"/></svg>'],['mFriends','Friends','#3FD9C2','#127E9C','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19c.8-3.3 3.3-5 6.2-5s5.4 1.7 6.2 5"/><path d="M15.5 5.3a3.3 3.3 0 0 1 0 6.4M18 14.4c1.7.7 2.8 2.2 3.2 4.6"/></svg>'],['mLB','Leaderboards','#FFD45E','#E0901A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="currentColor" fill-opacity=".25"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 14v4M8 20h8"/></svg>'],['mTwin',null,'#B79BFF','#5B3BD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M14 5h5v5M19 19L5 5M5 10V5h5"/></svg>'],['mEvent',null,'#FF7EB6','#C2307A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z" fill="currentColor" fill-opacity=".25"/></svg>'],['mAcct',null,'#7FB8FF','#2E5FD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M4.5 20c1.3-3.6 4.2-5.5 7.5-5.5s6.2 1.9 7.5 5.5"/></svg>'],['mName','Player name','#D29BFF','#8A3DD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z" fill="currentColor" fill-opacity=".2"/><path d="M13.5 6.5l4 4"/></svg>'],['mSettings','Settings','#9AA6C8','#4B5578','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>'],['mGuide','Help','#9CF07A','#2E9E54','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01"/></svg>'],['mSound',null,'#8A8CFF','#3F3FC2','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12" /><circle cx="6.5" cy="18" r="2.5" fill="currentColor" fill-opacity=".3"/><circle cx="16.5" cy="16" r="2.5" fill="currentColor" fill-opacity=".3"/></svg>']];
 const isDot=id=>{ const e=$(id); return !!e&&!e.hidden; };
 function moreBuild(){
@@ -9488,8 +9464,8 @@ function cvkCheckWin(){
 /* the champion's screen: shown once, straight away on the menu, or as soon as they're back on it (or sign in) */
 function cvkWinPopup(){
   if(!SAVE.cvkWin||SAVE.cvkWinSeen||G.state!=='menu') return false;
-  // another popup is open (a daily gift, the poll…): wait for it to close, then show (this is checked every second)
-  const busy=['cvkWinOv','hpOv','tutOv','calibOv','edOv','studioOv','giftOv','pollOv','chalOv','swtOv'].some(id=>$(id)&&!$(id).hidden)||$('menuOv').hidden; if(busy) return false;
+  // another popup is open (a daily gift…): wait for it to close, then show (this is checked every second)
+  const busy=['cvkWinOv','hpOv','tutOv','calibOv','edOv','studioOv','giftOv','chalOv','swtOv'].some(id=>$(id)&&!$(id).hidden)||$('menuOv').hidden; if(busy) return false;
   SAVE.cvkWinSeen=true; save();
   const w=SAVE.cvkSide&&CVK.sides[SAVE.cvkSide]; $('cvkWTitle').textContent='You won!';
   $('cvkWSub').textContent=`${w?w.name+', you':'You'} won Cale vs Korra. The Eclipse Seraph is yours, and only yours.`;
@@ -9712,7 +9688,7 @@ function twCheckWin(){
 }
 function twWinPopup(){
   if(!SAVE.twinWin||SAVE.twinWinSeen||G.state!=='menu') return false;
-  const busy=['twinWinOv','cvkWinOv','hpOv','tutOv','calibOv','edOv','studioOv','giftOv','pollOv','chalOv','swtOv'].some(id=>$(id)&&!$(id).hidden)||$('menuOv').hidden; if(busy) return false;
+  const busy=['twinWinOv','cvkWinOv','hpOv','tutOv','calibOv','edOv','studioOv','giftOv','chalOv','swtOv'].some(id=>$(id)&&!$(id).hidden)||$('menuOv').hidden; if(busy) return false;
   SAVE.twinWinSeen=true; save();
   $('twWSub').textContent=`${SAVE.twinWinName?'“'+SAVE.twinWinName+'”':'Your team'} took the Twin Pulse bracket. Equinox belongs to you and your partner, and no one else.`;
   $('twWEquip').disabled=false; $('twWEquip').textContent='✦ Equip everything'; $('twWNote').textContent='You can change them any time in the Collection.';
@@ -9807,51 +9783,6 @@ setInterval(()=>{ twRender();
     if(TW.loaded) twCheckWin();   // the Final just ended: no new data arrives to prompt the check
     if(!TW.unsub.length&&Date.now()-TW.lastFetch>60000) twFetchAll().then(twCheckWin).catch(()=>{}); }
 },1000);
-
-/* ================= COMMUNITY POLL: WHAT'S NEXT =================
-   Players vote on the next event and the next update, one choice in each, and can change it any time.
-   Firestore: polls/next/votes/{uid} = {event,update,t}. One document per account, so nobody can vote twice.
-   Everyone can see the totals; you need to be signed in to vote. */
-const POLL={id:'next',votes:{},unsub:null,loaded:false,err:'',
-  q:[{k:'event',title:'Next event',opts:[['goal','Community Goal for Prizes'],['bracket','2v2 Tournament Bracket for Anybody']]},
-     {k:'update',title:'Next update',opts:[['pass','Pulse Pass'],['packs','Skin Packs'],['mode','New Gamemode'],['revamp','Skin Revamps']]}]};
-const pollCol=()=>ACCT.db&&ACCT.db.collection('polls').doc(POLL.id).collection('votes');
-const pollMine=k=>{ const me=ACCT.user&&POLL.votes[ACCT.user.uid]; return (me&&me[k])||(ACCT.user&&(SAVE.poll||{})[k])||null; };
-const pollDone=()=>POLL.q.every(q=>(SAVE.poll||{})[q.k]);
-function pollWatch(){
-  if(POLL.unsub||!pollCol()) return;
-  POLL.unsub=pollCol().onSnapshot(s=>{ const m={}; s.forEach(d=>{ m[d.id]=d.data(); }); POLL.votes=m; POLL.loaded=true; POLL.err='';
-      // your votes follow your account to other devices
-      const me=ACCT.user&&m[ACCT.user.uid]; if(me){ const P=SAVE.poll||(SAVE.poll={}); let ch=false; POLL.q.forEach(q=>{ if(me[q.k]&&P[q.k]!==me[q.k]){ P[q.k]=me[q.k]; ch=true; } }); if(ch) save(); }
-      pollRender(); },
-    e=>{ POLL.err=e&&e.code==='permission-denied'?'The poll isn\'t open yet: the game owner needs to add its Firebase rule.':'Could not load the poll. Check your connection.'; POLL.unsub=null; pollRender(); });
-}
-function pollUnwatch(){ if(POLL.unsub){ try{ POLL.unsub(); }catch(e){} POLL.unsub=null; } }
-function pollRender(){
-  const dot=$('mPollDot'); if(dot) dot.hidden=pollDone();
-  if($('pollOv').hidden) return;
-  $('pollBody').innerHTML=POLL.q.map(q=>{ const all=Object.values(POLL.votes), counts={}; q.opts.forEach(([id])=>counts[id]=all.filter(v=>v[q.k]===id).length);
-    const total=q.opts.reduce((a,[id])=>a+counts[id],0), mine=pollMine(q.k);
-    return `<div class="pollq"><h3>${q.title}<small>${total} vote${total===1?'':'s'}</small></h3>`+q.opts.map(([id,name])=>{ const n=counts[id], p=total?Math.round(n/total*100):0;
-      return `<button class="pollopt${mine===id?' on':''}" type="button" data-q="${q.k}" data-o="${id}" style="--p:${p}%" aria-pressed="${mine===id}"><span>${name}</span><b>${p}% · ${n}</b></button>`; }).join('')+'</div>'; }).join('');
-  $('pollBody').querySelectorAll('.pollopt').forEach(b=>b.onclick=()=>pollVote(b.dataset.q,b.dataset.o));
-  const m=$('pollMsg'); m.classList.toggle('err',!!POLL.err);
-  m.textContent=POLL.err||(!ACCT.user?'Sign in to your account to vote. Anyone can see the results.':pollDone()?'Thanks for voting! Tap another choice to change your vote.':'Tap a choice to vote.');
-}
-async function pollVote(k,id){
-  const m=$('pollMsg');
-  if(!ACCT.user){ showAcct(); return; }
-  if(!pollCol()||pollMine(k)===id) return;
-  const P=SAVE.poll||(SAVE.poll={}), was=P[k], uid=ACCT.user.uid, row=POLL.votes[uid]||(POLL.votes[uid]={}), wasRow=row[k];
-  P[k]=id; row[k]=id; save(); pollRender(); if(A.ctx) sGem();   // show it straight away
-  try{ await pollCol().doc(uid).set({[k]:id,t:Date.now()},{merge:true}); }
-  catch(e){ if(was) P[k]=was; else delete P[k]; if(wasRow) row[k]=wasRow; else delete row[k]; save(); pollRender();
-    m.classList.add('err'); m.textContent=e&&e.code==='permission-denied'?'Your vote didn\'t go through: the game owner needs to add the poll\'s Firebase rule.':'Your vote didn\'t go through. Check your connection and try again.'; }
-}
-function showPoll(){ showOv('pollOv'); if(acctCfg()&&!ACCT.ready&&!ACCT.loading) acctInit(); pollWatch(); pollRender(); }
-if($('mPoll')) $('mPoll').onclick=showPoll;   // voting is closed: there's no Vote button any more
-$('pollBack').onclick=()=>{ pollUnwatch(); toMenu(); };
-setInterval(()=>{ if(!$('pollOv').hidden) pollWatch(); const d=$('mPollDot'); if(d) d.hidden=pollDone(); },1500);   // the poll connects as soon as the account system is ready
 
 /* ================= LEADERBOARDS (Firestore: boards/{board}/entries/{uid}) ================= */
 function boardFor(M){
@@ -10950,7 +10881,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','pollOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
+const OVS=['adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -11328,7 +11259,7 @@ function loop(ts){
   if(!(G.state==='menu'&&coveredByPanel())) render(now+visLead());   // on phones the menu panels cover the whole screen: no point drawing the scene behind them
 }
 /* phones: these panels fill the screen with a solid background, so the game scene behind them can't be seen */
-const FULL_PANELS=['worldsOv','levelsOv','shopOv','friendsOv','friendOv','lbOv','profOv','settingsOv','adminOv','acctOv','guideOv','eventOv','pollOv','twinOv','remixOv','hardOv','coopOv','passOv'];
+const FULL_PANELS=['worldsOv','levelsOv','shopOv','friendsOv','friendOv','lbOv','profOv','settingsOv','adminOv','acctOv','guideOv','eventOv','twinOv','remixOv','hardOv','coopOv','passOv'];
 function coveredByPanel(){ return document.body.classList.contains('phone')&&FULL_PANELS.some(id=>{ const e=$(id); return e&&!e.hidden; }); }
 
 /* the beat bars: at time t, each bar has travelled the fraction of the way from its end of the track
