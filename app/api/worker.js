@@ -36,7 +36,7 @@ export const CATALOG = {
   pf_skin_pharaoh: { name: 'Sun Pharaoh (premium block)', cents: 399, once: true },
   pf_skin_paladin: { name: 'Radiant Paladin (premium block)', cents: 399, once: true },
   pf_skin_prism: { name: 'Prism Dragon (premium block)', cents: 499, once: true },
-  pf_skin_lich: { name: 'Lich King (premium block)', cents: 499, once: true },
+  pf_skin_lich: { name: 'Spectral King (premium block)', cents: 499, once: true },
   pf_skin_horizon: { name: 'Event Horizon (premium block)', cents: 499, once: true },
 };
 

@@ -111,7 +111,7 @@ The game code is ready; it only needs your account IDs. Everything is set in `in
    | `pf_skin_pharaoh` | Non-consumable | $3.99 | Sun Pharaoh premium block |
    | `pf_skin_paladin` | Non-consumable | $3.99 | Radiant Paladin premium block |
    | `pf_skin_prism` | Non-consumable | $4.99 | Prism Dragon premium block |
-   | `pf_skin_lich` | Non-consumable | $4.99 | Lich King premium block |
+   | `pf_skin_lich` | Non-consumable | $4.99 | Spectral King premium block |
    | `pf_skin_horizon` | Non-consumable | $4.99 | Event Horizon premium block |
    | `pf_pass_s1` | Non-consumable | $4.99 | Pulse Pass+ for Season 1 (the paid reward row) |
 

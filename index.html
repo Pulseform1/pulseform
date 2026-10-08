@@ -3225,7 +3225,7 @@ SKINS.push(
  {id:'sk_clock',name:'Astral Clockwork',vx:'sk_clock',nocore:true,prev:[.58,21],top:'#C99A44',front:'#14204A',core:'#FFE7A0',paid:'pf_skin_clock'},
  {id:'sk_magma',name:'Volcanic Titan',vx:'sk_magma',nocore:true,prev:[.6,19],top:'#2E2624',front:'#1C1614',core:'#FF6A1A',paid:'pf_skin_magma'},
  {id:'sk_prism',name:'Prism Dragon',vx:'sk_prism',nocore:true,prev:[.6,19],top:'#A9D4FF',front:'#4F72C8',core:'#FFFFFF',paid:'pf_skin_prism'},
- {id:'sk_lich',name:'Lich King',vx:'sk_lich',nocore:true,prev:[.62,18],top:'#2B2F3A',front:'#171A22',core:'#6CFF9A',paid:'pf_skin_lich'},
+ {id:'sk_lich',name:'Spectral King',vx:'sk_lich',nocore:true,prev:[.62,18],top:'#2B2F3A',front:'#171A22',core:'#6CFF9A',paid:'pf_skin_lich'},
  {id:'sk_core',name:'Fusion Core',vx:'sk_core',nocore:true,prev:[.64,17],top:'#C8D2E0',front:'#38425A',core:'#5CF6FF',paid:'pf_skin_core'},
  {id:'sk_kitsune',name:'Nine-Tail Kitsune',vx:'sk_kitsune',nocore:true,prev:[.6,19],top:'#FFF4EA',front:'#F1E0CE',core:'#FF5A3A',paid:'pf_skin_kitsune'},
  {id:'sk_pharaoh',name:'Sun Pharaoh',vx:'sk_pharaoh',nocore:true,prev:[.6,19],top:'#2A5BD6',front:'#1C3A96',core:'#FFD34D',paid:'pf_skin_pharaoh'},
@@ -3264,6 +3264,7 @@ SKINS.push(
  {id:'bp_garnet',name:'Garnet',vx:'bpg',prev:[.84,3],top:'#E0566A',front:'#8A1C2E',core:'#FFD0D8',bp:'eternal',req:{bp:'eternal'},bpr:0,g:{f:'gem',c:'#FFD0D8',p:'spark',a:'#FF8A9A'}},
  {id:'bp_bloodmoon',name:'Crimson Moon',vx:'bpg',prev:[.8,5],top:'#3A0A12',front:'#1E0408',core:'#FF3A4A',bp:'eternal',req:{bp:'eternal'},bpr:1,g:{f:'moon',c:'#FF3A4A',p:'ember',a:'#FF2A3A',k:1}},
  {id:'bp_hourglass',name:'Sands of Time',vx:'bp_hourglass',nocore:true,prev:[.64,17],top:'#E8C37A',front:'#7A1E24',core:'#FFE7A0',bp:'eternal',req:{bp:'eternal'},bpr:2},
+ {id:'bp_gent',name:'The Distinguished Gentleman',vx:'bp_gent',nocore:true,prev:[.58,22],top:'#2E2A36',front:'#24202C',core:'#FFD27A',bp:'eternal',req:{bp:'eternal'},bpr:2},
  {id:'bp_knight',name:'Chrono Knight',vx:'bp_knight',nocore:true,prev:[.54,23],top:'#C8D0DC',front:'#7A8498',core:'#FF6A1A',bp:'eternal',req:{bp:'eternal'},bpr:3},
  {id:'bp_ouro',name:'Ouroboros',vx:'bp_ouro',nocore:true,prev:[.58,20],top:'#2A0A0E',front:'#170407',core:'#FFD34D',bp:'eternal',req:{bp:'eternal'},bpr:3},
  {id:'bp_pearl',name:'Pearl',vx:'bpg',prev:[.84,3],top:'#FFFCF5',front:'#E8E0D2',core:'#FFFFFF',bp:'pristine',req:{bp:'pristine'},bpr:0,g:{f:'swirl',c:'#FFFFFF',p:'dust',a:'#FFF6E0'}},
@@ -3290,6 +3291,7 @@ const BP_SIG={
  bp_saturn:{n:'Ring World',g:'◍',c:['#F2D9A0','#FFFFFF','#C0603A'],sh:'star5',ring:'#F2D9A0',fx:'nebula'},
  bp_knight:{n:'Last Hour',g:'⚔',c:['#FF6A1A','#E8C37A','#D6DCE8'],sh:'gear',ring:'#FF6A1A',fx:'alarm'},
  bp_monarch:{n:'Prism Wings',g:'❦',c:['#FFB3F0','#9FE8FF','#FFE7A0'],sh:'petal',ring:'rainbow',fx:'beams'},
+ bp_gent:{n:'Tip of the Hat',g:'♣',c:['#FFD27A','#FFFFFF','#2E2A36'],sh:'confetti',ring:'#FFD27A',fx:'gold'},
  bp_pristine:{n:'Pristine Pulse',g:'◆',c:['#FFFFFF','#FFB3E6','#9FE8FF','#FFE7A0'],sh:'shard',ring:'rainbow',fx:'beams'}};
 /* the five packs, cheapest first. rates are percentages for each block (they add up to 100); a block you already own pays
    back part of the pack's price in Notes instead */
@@ -3299,7 +3301,7 @@ const BPACKS=[
  {id:'mythic',name:'Mythic Pack',price:1000,c1:'#1FA67E',c2:'#0B3B33',acc:'#7FFFD0',tag:'Ancient myths',star:'bp_hydra',rates:{bp_jade:25,bp_bronze:25,bp_moss:24,bp_siren:15,bp_golem:5.5,bp_kraken:4,bp_hydra:1.5}},
  {id:'arcane',name:'Arcane Pack',price:1800,c1:'#8A3CFF',c2:'#200A44',acc:'#E0B8FF',tag:'Spells and secrets',star:'bp_oracle',rates:{bp_amethyst:23,bp_wax:22.5,bp_ink:22,bp_hex:19,bp_grimoire:7,bp_owl:4.5,bp_oracle:2}},
  {id:'celestial',name:'Celestial Pack',price:2800,c1:'#3A5AFF',c2:'#0A1036',acc:'#FFE7A0',tag:'Stars and sky',star:'bp_titan',rates:{bp_slate:21,bp_moondust:20,bp_sky:21,bp_meteor:22,bp_comet:9,bp_saturn:4,bp_titan:3}},
- {id:'eternal',name:'Eternal Pack',price:4500,c1:'#D8283A',c2:'#2A0408',acc:'#FFD34D',tag:'Time without end',star:'bp_ouro',rates:{bp_rust:18.5,bp_ash:19,bp_garnet:19,bp_bloodmoon:25,bp_hourglass:11,bp_knight:3.5,bp_ouro:4}},
+ {id:'eternal',name:'Eternal Pack',price:4500,c1:'#D8283A',c2:'#2A0408',acc:'#FFD34D',tag:'Time without end',star:'bp_ouro',rates:{bp_rust:17,bp_ash:17.5,bp_garnet:17,bp_bloodmoon:25,bp_hourglass:11,bp_gent:5,bp_knight:3.5,bp_ouro:4}},
  {id:'pristine',name:'Pulse Pristine Pack',price:7000,c1:'#FFFFFF',c2:'#C8D4F0',acc:'#FFFFFF',tag:'The rarest blocks of all',star:'bp_pristine',rates:{bp_pearl:25.5,bp_opal:25.5,bp_haloglass:28,bp_choir:13,bp_monarch:3,bp_harp:4.6,bp_pristine:.4}}];
 
 /* every fancy block gets a matching landing effect; owning the block unlocks it */
@@ -3343,7 +3345,7 @@ const SIG={
  sk_clock:{n:'Chime of Ages',g:'⚙',c:['#FFE7A0','#E8C77A','#9FD8FF'],sh:'gear',ring:'#E8C77A',fx:'gold'},
  sk_magma:{n:'Eruption',g:'▲',c:['#FF6A1A','#FFD27A','#2E2624'],sh:'flame',ring:'#FF6A1A',fx:'lava'},
  sk_prism:{n:'Prism Roar',g:'◆',c:['#BFF4FF','#C9A0FF','#FFFFFF'],sh:'shard',ring:'#9FD8FF',fx:'crystal'},
- sk_lich:{n:'Soul Harvest',g:'☠',c:['#3CFF8A','#B8FFD4','#2A1E3E'],sh:'blob',ring:'#3CFF8A',fx:'void'},
+ sk_lich:{n:'Spirit Flame',g:'☠',c:['#3CFF8A','#B8FFD4','#2A1E3E'],sh:'blob',ring:'#3CFF8A',fx:'void'},
  sk_core:{n:'Overload',g:'◎',c:['#5CF6FF','#FF5CF0','#FFFFFF'],sh:'pixel',ring:'#5CF6FF',fx:'neonrings'},
  sk_erlaf:{n:'Quack',g:'◒',c:['#FFFFFF','#F4A12A','#DDE3EA'],sh:'petal',ring:'#FFD45C',fx:'pillar'},
  sk_kitsune:{n:'Fox Fire',g:'✿',c:['#5CB8FF','#FF8A3C','#FFB4CC'],sh:'petal',ring:'#FF8A3C',fx:'pillar'},
@@ -3360,7 +3362,7 @@ const SIG={
  diamond:{n:'Diamond Dust',g:'◇',c:['#FFFFFF','#BFF3FF','#E8E0FF'],sh:'shard',ring:'#FFFFFF',fx:'spire'},
  maestro:{n:'Downbeat',g:'♩',c:['#FFD166','#FFF3C4'],sh:null,ring:'#FFD166',fx:'downbeat'},
  supreme:{n:'Grand Finale',g:'♩',c:['#FF7EB6','#FFD166','#B8F2E6','#C9B8FF'],sh:null,ring:'rainbow',fx:'downbeat'},
- truepulse:{n:'Doom Pulse',g:'♥',c:['#FF1E2E','#7A0010','#FF6A3A'],sh:null,ring:'#FF1E2E',fx:'truepulse'},
+ truepulse:{n:'Final Pulse',g:'♥',c:['#FF1E2E','#7A0010','#FF6A3A'],sh:null,ring:'#FF1E2E',fx:'truepulse'},
  eclipse_seraph:{n:'Eclipse',g:'◑',c:['#FFF3C4','#FFD166','#8A4FD8','#1A0B2E'],sh:null,ring:'#FFE7A0',fx:'eclipse'}};   // its own id: the older 'eclipse' is the Lights Out event block
 Object.assign(SIG,BP_SIG);
 LANDS.push({id:'match',name:'Match my block',glyph:'⟲',col:'#FFF8EE',price:0,note:'Uses your block\'s signature effect'});
@@ -4485,7 +4487,7 @@ function drawDownbeat(f,x,y,tw,th,now,u,e,a){
   if(u<.6){ const v=u/.6, Hh=tw*(1.2+1.2*k)*(1-v*.3), w=Math.max(1.5,tw*.05)*(1-v); const g=cx.createLinearGradient(0,y-Hh,0,y); g.addColorStop(0,rgba(c(60),0)); g.addColorStop(.7,rgba(c(60),.5*(1-v))); g.addColorStop(1,rgba('#FFFFFF',.8*(1-v))); cx.fillStyle=g; cx.fillRect(x-w/2,y-Hh,w,Hh); }
   cx.restore();
 }
-/* DOOM PULSE · the True Pulse's landing: the floor goes dark for an instant, then a crimson shockwave
+/* FINAL PULSE · the True Pulse's landing: the floor goes dark for an instant, then a crimson shockwave
    cracks it open. Glowing fractures run out along the tiles, the neighbours flare red a beat later,
    and a thick red shaft slams down on the block. */
 function drawTruePulse(f,x,y,tw,th,now,u,e,a){
@@ -6170,7 +6172,7 @@ function vxPost5(S,X,T,W,bh,H,now){
   cx.restore();
 }
 /* ---- the second wave of pack blocks (each 3-5% in its pack) ---- */
-const VX6=new Set(['bp_kraken','bp_owl','bp_saturn','bp_knight','bp_monarch']);
+const VX6=new Set(['bp_kraken','bp_owl','bp_saturn','bp_knight','bp_monarch','bp_gent']);
 /* a curling tentacle: tapers from the root to a spiral tip, suckers along its inner side */
 function bpTentacle(x0,y0,len,ang,curl,now,ph,W,front){ const n=vxN(18), pts=[]; let x=x0, y=y0, a=ang;
   for(let i=0;i<=n;i++){ const t=i/n; pts.push([x,y,t]); a+=curl*(.05+t*t*.35)+Math.sin(now*1.6+ph+t*4)*.06; x+=Math.cos(a)*len/n; y+=Math.sin(a)*len/n; }
@@ -6224,6 +6226,10 @@ function vxPre6(S,X,T,W,bh,H,now){
       cx.beginPath(); cx.moveTo(-W*.09,-bl*.55); cx.lineTo(0,-bl*.7); cx.lineTo(W*.09,-bl*.55); cx.lineTo(W*.09,bl*.3); cx.lineTo(-W*.09,bl*.3); cx.closePath(); cx.fill();
       cx.fillStyle='#E8C37A'; cx.fillRect(-W*.3,bl*.3,W*.6,W*.08); cx.fillStyle='#5A1A1A'; cx.fillRect(-W*.05,bl*.3+W*.08,W*.1,W*.35); cx.fillStyle='#E8C37A'; cx.beginPath(); cx.arc(0,bl*.3+W*.48,W*.07,0,TAU); cx.fill();
       cx.globalCompositeOperation='lighter'; for(let i=0;i<5;i++) vx4Glyph(0,-bl*.45+i*bl*.15,W*.04,i,rgba('#FF6A3A',.5+.5*Math.sin(now*3+i)+.3*bt)); cx.restore(); } break;
+    case 'bp_gent': { vxGlow(cxm,oy,W*(1.2+.2*bt),'#FFD27A',.16+.2*bt,.85); cx.globalCompositeOperation='source-over';
+      // a cane twirling behind him
+      cx.save(); cx.translate(X+W*1.12,fy+H*.55); cx.rotate(Math.sin(now*1.8)*.35-.2); cx.strokeStyle='#1A1418'; cx.lineWidth=W*.07; cx.beginPath(); cx.moveTo(0,W*.6); cx.lineTo(0,-W*.45); cx.stroke();
+      cx.strokeStyle='#E8C37A'; cx.lineWidth=W*.08; cx.beginPath(); cx.arc(-W*.1,-W*.45,W*.1,0,Math.PI,true); cx.stroke(); cx.fillStyle='#E8C37A'; cx.fillRect(-W*.045,W*.55,W*.09,W*.07); cx.restore(); } break;
     case 'bp_monarch': { vxGlow(cxm,T,W*(1.7+.25*bt),'#FFB3F0',.2+.25*bt,1); cx.globalCompositeOperation='source-over'; bpWings(cxm,T+bh*.6,W,now,bt); } break;
   }
   cx.restore();
@@ -6293,6 +6299,32 @@ function vxPost6(S,X,T,W,bh,H,now){
       const px=cxm, py=T-bh*.1; cx.fillStyle='#E8C37A'; cx.fillRect(px-W*.04,py-W*.12,W*.08,W*.14);
       for(let i=0;i<7;i++){ const t=i/6, wave=Math.sin(now*3-t*4)*W*.06*t; cx.strokeStyle=`rgb(${200+40*t},${30+30*(1-t)},${40})`; cx.lineWidth=W*(.12-.06*t); cx.beginPath(); cx.moveTo(px,py-W*.12); cx.quadraticCurveTo(px-W*.3*t,py-W*.5,px-W*(.25+.5*t),py-W*(.35-.25*t)+wave); cx.stroke(); }
       cx.save(); cx.globalCompositeOperation='lighter'; vxRise(vxN(6),.4,X-W*.2,W*1.4,B,W*1.3,now,(x,y,u)=>vxGlow(x,y,W*.05,'#FF6A1A',.8*(1-u)),11); cx.restore(); } break;
+    case 'bp_gent': {
+      // a tailcoat: white shirt front, waistcoat buttons and a bow tie
+      cx.save(); cx.beginPath(); cx.rect(X,T,W,bh+H); cx.clip();
+      cx.fillStyle='#F4F0E8'; cx.beginPath(); cx.moveTo(cxm-W*.2,fy+H*.56); cx.lineTo(cxm+W*.2,fy+H*.56); cx.lineTo(cxm,B); cx.closePath(); cx.fill();
+      cx.fillStyle='#5A1A2A'; cx.beginPath(); cx.moveTo(cxm-W*.14,fy+H*.66); cx.lineTo(cxm+W*.14,fy+H*.66); cx.lineTo(cxm+W*.06,B); cx.lineTo(cxm-W*.06,B); cx.closePath(); cx.fill();
+      cx.fillStyle='#E8C37A'; for(let i=0;i<3;i++){ cx.beginPath(); cx.arc(cxm,fy+H*(.74+i*.09),W*.02,0,TAU); cx.fill(); }
+      cx.strokeStyle='rgba(255,255,255,.12)'; cx.lineWidth=.8; [-1,1].forEach(sg=>{ cx.beginPath(); cx.moveTo(cxm+sg*W*.2,fy+H*.56); cx.lineTo(cxm+sg*W*.36,B); cx.stroke(); }); cx.restore();
+      const by=fy+H*.6, bw=W*.13, wob=Math.sin(now*3)*.06; cx.save(); cx.translate(cxm,by); cx.rotate(wob); cx.fillStyle='#8A1A2E';
+      [-1,1].forEach(sg=>{ cx.beginPath(); cx.moveTo(0,0); cx.lineTo(sg*bw,-bw*.55); cx.quadraticCurveTo(sg*bw*1.15,0,sg*bw,bw*.55); cx.closePath(); cx.fill(); }); cx.fillStyle='#5A0A1A'; cx.beginPath(); cx.arc(0,0,bw*.25,0,TAU); cx.fill(); cx.restore();
+      // the face: one eye behind a gold monocle on a chain, the other giving a dignified squint
+      const ey=fy+H*.13; cx.fillStyle='#F4F0E8'; cx.beginPath(); cx.ellipse(cxm-W*.2,ey,W*.08,W*.05,0,0,TAU); cx.fill(); cx.fillStyle='#1A1418'; cx.beginPath(); cx.arc(cxm-W*.2,ey,W*.03,0,TAU); cx.fill();
+      cx.strokeStyle='#F4F0E8'; cx.lineWidth=1.4; cx.beginPath(); cx.moveTo(cxm-W*.3,ey-W*.09); cx.lineTo(cxm-W*.1,ey-W*.11); cx.stroke();
+      const mx=cxm+W*.2; cx.fillStyle='#F4F0E8'; cx.beginPath(); cx.arc(mx,ey,W*.075,0,TAU); cx.fill(); cx.fillStyle='#1A1418'; cx.beginPath(); cx.arc(mx,ey,W*.035,0,TAU); cx.fill();
+      cx.fillStyle='rgba(200,230,255,.25)'; cx.beginPath(); cx.arc(mx,ey,W*.11,0,TAU); cx.fill(); cx.strokeStyle='#E8C37A'; cx.lineWidth=1.8; cx.stroke();
+      cx.strokeStyle='rgba(232,195,122,.85)'; cx.lineWidth=.8; cx.beginPath(); cx.moveTo(mx+W*.08,ey+W*.08); cx.quadraticCurveTo(mx+W*.2,fy+H*.45,X+W*.98,fy+H*.62); cx.stroke();
+      cx.save(); cx.globalCompositeOperation='lighter'; vxSpark(mx-W*.05,ey-W*.05,W*.05*(.4+.6*Math.abs(Math.sin(now*2.5))),'#FFFFFF',1); cx.restore();
+      // a grand curled moustache that twitches on the beat
+      const my=fy+H*.4, tw=bt*.15; cx.fillStyle='#E8DCC8';
+      [-1,1].forEach(sg=>{ cx.save(); cx.translate(cxm,my); cx.scale(sg*1.15,1.15); cx.rotate(-tw); cx.beginPath(); cx.moveTo(0,0); cx.quadraticCurveTo(W*.15,-W*.08,W*.3,0); cx.quadraticCurveTo(W*.4,-W*.02,W*.38,-W*.1);
+        cx.quadraticCurveTo(W*.33,-W*.12,W*.33,-W*.07); cx.quadraticCurveTo(W*.35,W*.04,W*.25,W*.05); cx.quadraticCurveTo(W*.12,W*.07,0,W*.03); cx.closePath(); cx.fill(); cx.restore(); });
+      // a top hat that lifts and tips on every beat
+      const lift=bt*W*.18, tilt=-bt*.35+Math.sin(now*1.2)*.04; cx.save(); cx.translate(cxm,T+bh*.3-lift); cx.rotate(tilt);
+      cx.fillStyle='#141016'; rr(-W*.42,-W*.06,W*.84,W*.1,W*.05); cx.fill(); cx.fillRect(-W*.27,-W*.62,W*.54,W*.58);
+      cx.fillStyle='#8A1A2E'; cx.fillRect(-W*.27,-W*.18,W*.54,W*.1); cx.fillStyle='rgba(255,255,255,.12)'; cx.fillRect(-W*.22,-W*.6,W*.06,W*.4);
+      cx.fillStyle='#E8C37A'; cx.fillRect(W*.12,-W*.19,W*.08,W*.12); cx.restore();
+      if(bt>.3){ cx.save(); cx.globalCompositeOperation='lighter'; vxSpark(cxm+W*.35,T-W*.35-lift,W*.06*bt,'#FFE7A0',bt); vxSpark(cxm-W*.32,T-W*.25-lift,W*.04*bt,'#FFFFFF',bt); cx.restore(); } } break;
     case 'bp_monarch': {
       // an iridescent body with a jewelled thorax and long antennae
       cx.save(); clipBody(); const h0=(now*40)%360, g=cx.createLinearGradient(X,T,X+W,B); g.addColorStop(0,rgba(hsl2hex(h0,80,80),.7)); g.addColorStop(1,rgba(hsl2hex((h0+140)%360,80,70),.7)); cx.fillStyle=g; cx.fillRect(X,T,W,bh+H);
@@ -8711,7 +8743,7 @@ const questsReady=()=>{ ensureQuests(); return SAVE.quests.list.filter(q=>q.prog
 function toast(t){ let e=$('toast'); if(!e){ e=document.createElement('div'); e.id='toast'; e.className='toast'; document.body.appendChild(e); } e.textContent=t; e.classList.remove('show'); void e.offsetWidth; e.classList.add('show'); }
 
 /* ================= PROFILE SCREEN ================= */
-const RANK_UNLOCKS=[[12,'Diamond block'],[18,'Crown landing effect'],[21,'Maestro block + Downbeat landing'],[25,'Supreme Conductor block + Grand Finale landing'],[26,'True Pulse block, banner + Doom Pulse landing']];
+const RANK_UNLOCKS=[[12,'Diamond block'],[18,'Crown landing effect'],[21,'Maestro block + Downbeat landing'],[25,'Supreme Conductor block + Grand Finale landing'],[26,'True Pulse block, banner + Final Pulse landing']];
 function updateRankChip(){ const n=myRank(), b=$('mProfile'); if(!b) return; b.style.setProperty('--rc',rankCol(n)); $('mRankTxt').textContent=rankName(n); $('mQDot').hidden=!questsReady(); }
 function buildProfile(){
   ensureName(); ensureQuests();
@@ -11735,7 +11767,13 @@ const BP={pk:null,res:null,stage:'',raf:0,parts:[],cut:null,rays:0,rayCol:'#FFFF
 let bpRatesOpen='';
 const bpOwnedN=pk=>Object.keys(pk.rates).filter(id=>SAVE.owned.includes(id)).length;
 function bpRand(){ try{ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]/4294967296; }catch(e){ return Math.random(); } }
-function bpRoll(pk,x=bpRand()*100){ const ids=Object.keys(pk.rates); for(const id of ids){ x-=pk.rates[id]; if(x<0) return id; } return ids[0]; }
+/* luck after a dry spell: 5 commons in a row from a pack make its rares and epics 25% more likely, 10 in a row 50%.
+   The extra comes out of the commons, so legendary and pristine chances never change. */
+const bpBoost=dry=>dry>=10?1.5:dry>=5?1.25:1;
+function bpWeights(pk,m=1){ const w={...pk.rates}; if(m===1) return w; let add=0;
+  for(const id in w){ const r=skinById(id).bpr; if(r===1||r===2){ add+=w[id]*(m-1); w[id]*=m; } }
+  const com=Object.keys(w).filter(id=>skinById(id).bpr===0), cs=com.reduce((a,id)=>a+w[id],0); com.forEach(id=>{ w[id]*=Math.max(0,cs-add)/cs; }); return w; }
+function bpRoll(pk,x=bpRand()*100,m=1){ const w=bpWeights(pk,m), ids=Object.keys(w); for(const id of ids){ x-=w[id]; if(x<0) return id; } return ids[0]; }
 const bpRefund=(pk,r)=>Math.round(pk.price*BP_DUPE[r]/25)*25;
 const bpStyle=pk=>`--c1:${pk.c1};--c2:${pk.c2};--acc:${pk.acc}`;
 function bpPackHTML(pk,px=120){ const rs=[...new Set(Object.keys(pk.rates).map(id=>skinById(id).bpr))].sort();
@@ -11755,7 +11793,9 @@ function buildPacks(){
   $('shopStats').textContent='Block packs are opened with Notes. Every pack shows its exact drop rates.';
 }
 function bpBuy(pk){ if(!pk||SAVE.notes<pk.price||(BP.stage&&BP.stage!=='done')) return;
-  const id=bpRoll(pk), s=skinById(id), dupe=SAVE.owned.includes(id), refund=dupe?bpRefund(pk,s.bpr):0;
+  SAVE.bpDry=SAVE.bpDry||{}; const dry=SAVE.bpDry[pk.id]||0;
+  const id=bpRoll(pk,undefined,bpBoost(dry)), s=skinById(id), dupe=SAVE.owned.includes(id), refund=dupe?bpRefund(pk,s.bpr):0;
+  SAVE.bpDry[pk.id]=s.bpr===0?dry+1:0;
   SAVE.notes-=pk.price; if(dupe) SAVE.notes+=refund; else SAVE.owned.push(id);
   SAVE.bpOpened=SAVE.bpOpened||{}; SAVE.bpOpened[pk.id]=(SAVE.bpOpened[pk.id]||0)+1; save();
   bpShow(pk,{id,dupe,refund}); }
