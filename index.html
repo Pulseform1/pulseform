@@ -1664,7 +1664,7 @@ body.phone.hastabs #toast{top:auto;bottom:calc(84px + env(safe-area-inset-bottom
 #tabPacks{color:#FFE27A}
 #shopOv:not(.storemode) #tabPacks,#shopOv:not(.storemode) #tabPrem{display:none}
 /* the shop: tabs pinned under the header, pill buttons, cards that lift */
-#shopOv .shoptabs{position:sticky;top:var(--shopTop,0px);z-index:4;margin:6px 0 12px;background:rgba(30,24,70,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line);box-shadow:0 6px 18px rgba(10,6,30,.35);overflow-x:auto;scrollbar-width:none}
+#shopOv .shoptabs{flex:none;position:sticky;top:var(--shopTop,0px);z-index:4;margin:6px 0 12px;background:rgba(30,24,70,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line);box-shadow:0 6px 18px rgba(10,6,30,.35);overflow-x:auto;scrollbar-width:none}
 #shopOv .shoptabs::-webkit-scrollbar{display:none}
 #shopOv .shoptabs button{flex:1 0 auto;white-space:nowrap;transition:background .15s,color .15s}
 #shopOv.storemode .shoptabs button.on{background:linear-gradient(180deg,#FFE27A,#FFB020);color:#2A1600;font-weight:800}
@@ -1688,6 +1688,36 @@ body.phone.hastabs #toast{top:auto;bottom:calc(84px + env(safe-area-inset-bottom
 .bprates span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bprates em{font-style:normal;color:var(--ink-2);font-variant-numeric:tabular-nums}
 .bprates .own span::after{content:' ✓';color:#7FF0D2}
+.shop>.collhead,.shop>.collsec{grid-column:1/-1}
+.collhead{display:grid;gap:8px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.collhead b{font-family:var(--display);font-size:16px;color:#FFE27A}.collhead .bpbar{--acc:#FFD166}
+.collf{display:flex;gap:6px}.collf button{flex:1;border:1px solid var(--line);background:rgba(0,0,0,.2);color:var(--ink-2);font:700 12px var(--body);padding:7px 8px;border-radius:999px;cursor:pointer}
+.collf button.on{background:linear-gradient(180deg,#FFE27A,#FFB020);color:#2A1600;border-color:transparent}
+.collsec{display:flex;align-items:baseline;justify-content:space-between;margin:14px 2px 0;font:800 14px var(--display);letter-spacing:.02em}
+.collsec small{font:600 12px var(--body);color:var(--ink-3)}
+.citem{position:relative}.citem.locked canvas{filter:grayscale(.55) brightness(.7)}.citem.mystery canvas{filter:brightness(0) drop-shadow(0 0 6px rgba(200,180,255,.6))}
+.citem .btn[disabled]{font-size:11px;line-height:1.25;white-space:normal}
+.cpin{position:absolute;top:6px;left:6px;z-index:2;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:rgba(0,0,0,.3);font-size:13px;cursor:pointer;opacity:.45;filter:grayscale(1);transition:opacity .15s,transform .15s}
+.cpin:hover{opacity:.9}.cpin.on{opacity:1;filter:none;background:rgba(255,209,102,.3);border-color:#FFD166;transform:rotate(-20deg)}
+.crar{font:800 9.5px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--rc);margin-bottom:-4px}
+.bpfree{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;margin-top:4px;background:rgba(255,255,255,.05);border:1px solid var(--line);grid-column:1/-1}
+.bpfree.ready{background:linear-gradient(110deg,rgba(31,166,126,.35),rgba(255,209,102,.25));border-color:#FFD166;box-shadow:0 0 22px rgba(255,209,102,.25);animation:bpfreeGlow 2.2s ease-in-out infinite}
+@keyframes bpfreeGlow{50%{box-shadow:0 0 34px rgba(255,209,102,.5)}}
+.bpfree>div{flex:1;min-width:0;display:flex;flex-direction:column}.bpfree b{font-family:var(--display);font-size:14px}.bpfree small{color:var(--ink-2);font-size:12px}
+.bpfgift{font-size:30px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.4))}.bpfree.ready .bpfgift{animation:bpgift 1.4s ease-in-out infinite}
+@keyframes bpgift{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg) scale(1.1)}40%{transform:rotate(10deg) scale(1.1)}60%{transform:rotate(0)}}
+.bpfree .btn{flex:none;padding:10px 16px}
+.bpshelf{position:relative;transition:transform .2s,box-shadow .2s}
+.bpshelf:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(0,0,0,.4),0 0 24px color-mix(in srgb,var(--acc) 35%,transparent)}
+.bpshelf .bpmini{animation:bpshelfFloat 3.4s ease-in-out infinite;animation-delay:var(--d,0s);filter:drop-shadow(0 8px 16px color-mix(in srgb,var(--acc) 40%,transparent))}
+@keyframes bpshelfFloat{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-7px) rotate(1.5deg)}}
+.bpshelf.done{border-color:#7FF0D2}
+.bpbar{width:100%;height:7px;border-radius:99px;background:rgba(0,0,0,.35);overflow:hidden}
+.bpbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--acc,#7FF0D2),#FFFFFF);transition:width .9s cubic-bezier(.3,1.3,.5,1)}
+.bpsetr{font-size:11.5px;color:#FFE27A;font-weight:700}
+.bpsetline{display:flex;align-items:center;gap:8px;margin-top:8px;font:600 12px var(--body);color:var(--ink-2);justify-content:center}.bpsetline .bpbar{width:120px;--acc:#7FF0D2}.bpsetline b{color:#fff}
+.bpsetdone{margin-top:6px;font-family:var(--display);font-weight:800;font-size:18px;background:linear-gradient(90deg,#FF5ACD,#7A5CFF,#22C8FF,#FFB020);-webkit-background-clip:text;background-clip:text;color:transparent;animation:bpban 1.6s ease-out}
+@media (prefers-reduced-motion:reduce){.bpshelf .bpmini,.bpfree.ready,.bpfree .bpfgift{animation:none}}
 .bpnote{font-size:12px;color:var(--ink-3);text-align:center;margin:10px 0 0}
 /* the pack itself (shelf version and the big one you cut open) */
 .bppk{--c1:#1FA67E;--c2:#0B3B33;--acc:#7FFFD0;position:relative;border-radius:14px;background:linear-gradient(160deg,var(--c1),var(--c2) 75%);box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 0 2px rgba(255,255,255,.18);overflow:hidden;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;isolation:isolate}
@@ -11801,6 +11831,7 @@ function buildShop(){
   $('tabSkins').classList.toggle('on',shopTab==='skins'); $('tabTrails').classList.toggle('on',shopTab==='lands'); $('tabTiles').classList.toggle('on',shopTab==='tiles'); $('tabSounds').classList.toggle('on',shopTab==='sounds'); $('tabBanners').classList.toggle('on',shopTab==='banners');
   if(shopTab==='banners'){ buildBanners(); return shopEmpty(); }
   if(shopTab==='bpacks'){ buildPacks(); return shopEmpty(); }
+  if(shopMode==='coll'&&shopTab==='skins'){ buildCollSkins(); return shopEmpty(); }
   if(shopTab==='prem'){ $('shopGrid').innerHTML=''; $('shopStats').textContent='Premium blocks come with their own landing effect. Everything here is optional.'; return; }
   if(shopTab==='tiles'||shopTab==='sounds'){ buildShop2(); return shopEmpty(); }
   const own1=it=>SAVE.owned.includes(it.id)||(it.req&&reqMet(it.req))||it.price===0;
@@ -11840,24 +11871,36 @@ function bpPackHTML(pk,px=120){ const rs=[...new Set(Object.keys(pk.rates).map(i
     `<div class="bpwin"><canvas class="skprev" data-skin="${pk.star}" data-px="${px}" width="${px}" height="${px}" aria-hidden="true"></canvas></div><div class="bptag">${escapeHTML(pk.tag)}</div>`+
     `<div class="bpgems">${rs.map(r=>`<i style="--rc:${BP_RAR[r].c}"></i>`).join('')}</div><div class="bpcrimp b"></div>`; }
 /* the Packs tab of the shop */
+const BP_FREE='mythic';   // one free pack of this kind every day
+const bpFreeReady=()=>SAVE.bpFree!==todayKey();
+const bpSetBonus=pk=>pk.price*2;   // completing a pack's set pays twice its price, once
 function buildPacks(){
-  $('shopGrid').innerHTML=`<div class="bpgrid">`+BPACKS.map(pk=>{ const n=bpOwnedN(pk), tot=Object.keys(pk.rates).length, open=bpRatesOpen===pk.id;
+  const fp=BPACKS.find(p=>p.id===BP_FREE), left=()=>{ const d=new Date(); d.setHours(24,0,0,0); const m=Math.ceil((d-Date.now())/6e4); return `${Math.floor(m/60)}h ${m%60}m`; };
+  const free=`<div class="bpfree${bpFreeReady()?' ready':''}"><span class="bpfgift">🎁</span><div><b>${bpFreeReady()?'Your free daily pack is ready!':'Free daily pack opened'}</b><small>${bpFreeReady()?`One ${escapeHTML(fp.name)} on the house, every day.`:`The next one is ready in ${left()}.`}</small></div>`+
+    (bpFreeReady()?`<button class="btn" type="button" id="bpFreeGo">Open free</button>`:'')+`</div>`;
+  $('shopGrid').innerHTML=free+`<div class="bpgrid">`+BPACKS.map((pk,k)=>{ const n=bpOwnedN(pk), tot=Object.keys(pk.rates).length, open=bpRatesOpen===pk.id, done=n>=tot;
     const rates=open?`<div class="bprates">${Object.entries(pk.rates).map(([id,o])=>{ const s=skinById(id); return `<div class="${SAVE.owned.includes(id)?'own':''}"><i style="--rc:${BP_RAR[s.bpr].c}"></i><span>${escapeHTML(s.name)}</span><em>${BP_RAR[s.bpr].n} · ${o}%</em></div>`; }).join('')}</div>`:'';
-    return `<div class="bpshelf"><div class="bppk bpmini${pk.id==='pristine'?' pristine':''}" style="${bpStyle(pk)}">${bpPackHTML(pk)}</div><b class="bpn">${escapeHTML(pk.name)}</b><span class="bpprog">${n} / ${tot} blocks found</span>`+
+    return `<div class="bpshelf${done?' done':''}" style="--acc:${pk.acc};--d:${k*.35}s"><div class="bppk bpmini${pk.id==='pristine'?' pristine':''}" style="${bpStyle(pk)}">${bpPackHTML(pk)}</div><b class="bpn">${escapeHTML(pk.name)}</b>`+
+      `<div class="bpbar"><i style="width:${Math.round(n/tot*100)}%"></i></div><span class="bpprog">${done?'Set complete ✓':`${n} / ${tot} found · ${tot-n} left to discover`}</span>`+
+      (done?'':`<span class="bpsetr">Complete the set: +♪${bpSetBonus(pk).toLocaleString()}</span>`)+
       `<button class="btn" type="button" data-bpopen="${pk.id}" ${SAVE.notes<pk.price?'disabled':''}>Open · ♪ ${pk.price.toLocaleString()}</button>`+
       `<button class="bpratesbtn" type="button" data-bprates="${pk.id}">${open?'Hide the drop rates':'See the drop rates and blocks'}</button>${rates}</div>`; }).join('')+`</div>`+
     `<p class="bpnote">Each pack holds one block. Already own the one you get? You get Notes back instead: from 20% of the pack's price for a common up to the full price for a legendary.</p>`;
+  const fg=$('bpFreeGo'); if(fg) fg.onclick=()=>bpBuy(fp,true);
   $('shopGrid').querySelectorAll('[data-bpopen]').forEach(b=>b.onclick=()=>bpBuy(BPACKS.find(p=>p.id===b.dataset.bpopen)));
   $('shopGrid').querySelectorAll('[data-bprates]').forEach(b=>b.onclick=()=>{ bpRatesOpen=bpRatesOpen===b.dataset.bprates?'':b.dataset.bprates; buildShop(); });
   $('shopStats').textContent='Block packs are opened with Notes. Every pack shows its exact drop rates.';
 }
-function bpBuy(pk){ if(!pk||SAVE.notes<pk.price||(BP.stage&&BP.stage!=='done')) return;
+function bpBuy(pk,free){ if(!pk||(free?!bpFreeReady():SAVE.notes<pk.price)||(BP.stage&&BP.stage!=='done')) return;
   SAVE.bpDry=SAVE.bpDry||{}; const dry=SAVE.bpDry[pk.id]||0;
   const id=bpRoll(pk,undefined,bpBoost(dry)), s=skinById(id), dupe=SAVE.owned.includes(id), refund=dupe?bpRefund(pk,s.bpr):0;
   SAVE.bpDry[pk.id]=s.bpr===0?dry+1:0;
-  SAVE.notes-=pk.price; if(dupe) SAVE.notes+=refund; else SAVE.owned.push(id);
-  SAVE.bpOpened=SAVE.bpOpened||{}; SAVE.bpOpened[pk.id]=(SAVE.bpOpened[pk.id]||0)+1; save();
-  bpShow(pk,{id,dupe,refund}); }
+  if(free) SAVE.bpFree=todayKey(); else SAVE.notes-=pk.price; if(dupe) SAVE.notes+=refund; else SAVE.owned.push(id);
+  SAVE.bpOpened=SAVE.bpOpened||{}; SAVE.bpOpened[pk.id]=(SAVE.bpOpened[pk.id]||0)+1;
+  // the set: every block in this pack found
+  SAVE.bpSet=SAVE.bpSet||{}; const tot=Object.keys(pk.rates).length, have=bpOwnedN(pk); let set=0;
+  if(have>=tot&&!SAVE.bpSet[pk.id]){ SAVE.bpSet[pk.id]=1; set=bpSetBonus(pk); SAVE.notes+=set; }
+  save(); bpShow(pk,{id,dupe,refund,have,tot,set}); }
 /* ---- the opening ---- */
 function bpLater(f,ms){ BP.timers.push(setTimeout(f,SAVE.reduce?Math.min(ms,250):ms)); }
 function bpShow(pk,res){ try{ firstGesture(); }catch(e){} BP.timers.forEach(clearTimeout); BP.timers=[];
@@ -11932,7 +11975,11 @@ function bpReveal(){ BP.stage='done'; $('bpSkip').hidden=true; const pk=BP.pk, r
   for(let k=0;k<=Math.min(r,3);k++) bpLater(()=>bpRing(c.x,c.y,r===4?'prism':R.c,r),k*180);
   bpSnd('reveal',r); buzz([20,40,70,140,260][r]);
   if(r>=3){ const b=$('bpBanner'); b.textContent=r===4?'PULSE PRISTINE':'LEGENDARY!'; b.style.setProperty('--rc',R.c); b.className='bpbanner go'+(r===4?' r4':''); }
-  $('bpInfo').innerHTML=res.dupe?`<span class="dupe">You already own ${escapeHTML(s.name)}, so you get ♪${res.refund.toLocaleString()} back</span>`:`<span class="new">NEW BLOCK</span><br>${escapeHTML(s.name)} is yours!`;
+  $('bpInfo').innerHTML=(res.dupe?`<span class="dupe">You already own ${escapeHTML(s.name)}, so you get ♪${res.refund.toLocaleString()} back</span>`:`<span class="new">NEW BLOCK</span><br>${escapeHTML(s.name)} is yours!`)+
+    (res.tot?`<div class="bpsetline"><span>${escapeHTML(pk.name.replace(/ Pack$/,''))} set</span><div class="bpbar"><i style="width:${Math.round((res.have-(res.dupe?0:1))/res.tot*100)}%"></i></div><b>${res.have} / ${res.tot}</b></div>`:'')+
+    (res.set?`<div class="bpsetdone">SET COMPLETE! +♪${res.set.toLocaleString()}</div>`:'');
+  { const bar=$('bpInfo').querySelector('.bpsetline i'); if(bar) setTimeout(()=>{ bar.style.width=Math.round(res.have/res.tot*100)+'%'; },500); }
+  if(res.set){ bpLater(()=>{ const c=bpCardC(); for(let k=0;k<140;k++) bpSpark(c.x,c.y,1,'prism',6,k%2); bpRing(c.x,c.y,'prism',3); bpSnd('reveal',3); },900); }
   const again=SAVE.notes>=pk.price, eq=SAVE.skin===s.id;
   $('bpBtns').innerHTML=(!res.dupe||!eq?`<button class="btn" type="button" id="bpEquip" ${eq?'disabled':''}>${eq?'Equipped':'Equip it'}</button>`:'')+
     `<button class="btn ghost" type="button" id="bpAgain" ${again?'':'disabled'}>Open another · ♪ ${pk.price.toLocaleString()}</button><button class="btn ghost" type="button" id="bpDone">Done</button>`;
@@ -11975,6 +12022,35 @@ function bpSnd(k,i=0){ if(!A.ctx||!A.sfx) return; try{ const t=A.ctx.currentTime
     ch.forEach((f,j)=>{ tone(D,t+j*.06,'triangle',f,.15,.005,1.3); tone(D,t+j*.06,'sine',f*2,.05,.005,1.5); });
     if(i>=3) noise(D,t,.35,1.3,'highpass',3000,.7,9000);
     if(i===4) [1047,1319,1568,2093,2637,3136].forEach((f,j)=>tone(D,t+.55+j*.09,'sine',f,.09,.005,1.8)); } }catch(e){} }
+/* the Collection's Blocks tab: grouped by where each block comes from, with filters, a progress bar and pins.
+   Pinned blocks (up to 12) sit in their own row at the top. Pack blocks you haven't found yet show as silhouettes. */
+const COLL={f:'all'};
+const collGroup=s=>{ if(s.bp) return 'bp_'+s.bp; if(s.paid) return 'prem'; const r=s.req||{};
+  if(r.pass||r.passp) return 'pass'; if(r.duck||r.twin||r.cvk||r.cvkOn||r.event) return 'event'; if(r.rank||r.streak||r.stars||r.hard||r.boss||r.login) return 'earn'; return 'shop'; };
+function buildCollSkins(){
+  SAVE.pins=(SAVE.pins||[]).filter(id=>SKINS.some(k=>k.id===id));
+  const own=it=>ownsSkin(it.id), all=SKINS.filter(it=>!it.hidden||own(it)), got=all.filter(own).length;
+  const keep=it=>COLL.f==='all'||(COLL.f==='own'?own(it):!own(it));
+  const card=it=>{ const o=own(it), eq=SAVE.skin===it.id, pin=SAVE.pins.includes(it.id), r=it.bp?BP_RAR[it.bpr]:null, mys=it.bp&&!o;
+    let btn; if(eq) btn=`<button class="btn ghost" disabled type="button">Equipped</button>`; else if(o) btn=`<button class="btn ghost" data-eq="${it.id}" type="button">Equip</button>`;
+    else btn=`<button class="btn ghost" disabled type="button">${escapeHTML(it.req?reqText(it.req):it.paid?'Premium block':`♪ ${it.price} in the Shop`)}</button>`;
+    return `<div class="item citem${eq?' eq':''}${o?'':' locked'}${mys?' mystery':''}"><button class="cpin${pin?' on':''}" type="button" data-pin="${it.id}" aria-label="${pin?'Unpin':'Pin'} ${escapeHTML(it.name)}" title="${pin?'Unpin':'Pin to the top'}">📌</button>`+
+      `<canvas class="skprev" data-skin="${it.id}" width="64" height="64" aria-hidden="true"></canvas>${r?`<span class="crar" style="--rc:${r.c}">${r.n}</span>`:''}<b>${mys&&it.bpr>=3?'???':escapeHTML(it.name)}</b>${btn}</div>`; };
+  const groups=[['shop','Shop blocks'],['earn','Earned by playing'],['pass','Pulse Pass'],['prem','Premium'],...BPACKS.map(p=>['bp_'+p.id,p.name]),['event','Events']];
+  let h=`<div class="collhead"><div><b>${got} / ${all.length}</b> blocks collected</div><div class="bpbar"><i style="width:${Math.round(got/all.length*100)}%"></i></div>`+
+    `<div class="collf">${[['all','All'],['own','Owned'],['locked','Not yet']].map(([k,n])=>`<button type="button" data-cf="${k}" class="${COLL.f===k?'on':''}">${n}</button>`).join('')}</div></div>`;
+  const pins=SAVE.pins.map(id=>SKINS.find(k=>k.id===id)).filter(Boolean);
+  if(pins.length) h+=`<h3 class="collsec">📌 Pinned</h3>`+pins.map(card).join('');
+  groups.forEach(([g,name])=>{ const list=all.filter(it=>collGroup(it)===g&&keep(it)).sort((a,b)=>own(b)-own(a)||(a.bpr||0)-(b.bpr||0)); if(!list.length) return;
+    const n=all.filter(it=>collGroup(it)===g), have=n.filter(own).length;
+    h+=`<h3 class="collsec">${escapeHTML(name)}<small>${have} / ${n.length}</small></h3>`+list.map(card).join(''); });
+  $('shopGrid').innerHTML=h;
+  $('shopGrid').querySelectorAll('[data-cf]').forEach(b=>b.onclick=()=>{ COLL.f=b.dataset.cf; buildShop(); });
+  $('shopGrid').querySelectorAll('[data-pin]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const id=b.dataset.pin, i=SAVE.pins.indexOf(id);
+    if(i>=0) SAVE.pins.splice(i,1); else { if(SAVE.pins.length>=12){ toast('You can pin up to 12 blocks. Unpin one first.'); return; } SAVE.pins.push(id); } save(); buildShop(); });
+  $('shopGrid').querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{ equip('skin',b.dataset.eq); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; buildShop(); netHello(); });
+  $('shopStats').textContent='Tap 📌 to pin your favourite blocks to the top.';
+}
 /* the Tiles and Sounds tabs. A block-matched tile theme needs its block before it can be bought. */
 function buildShop2(){
   const tiles=shopTab==='tiles', kind=tiles?'tiles':'pack', eq=SAVE[kind];
