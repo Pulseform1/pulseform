@@ -1778,10 +1778,10 @@ body.phone.hastabs #toast{top:auto;bottom:calc(84px + env(safe-area-inset-bottom
 .bpcback::before{content:'';position:absolute;inset:8%;border-radius:12px;border:2px solid rgba(255,255,255,.35);background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.06) 0 10deg,transparent 10deg 20deg)}
 .bpcback b{position:relative;font-family:var(--display);font-size:clamp(36px,12vw,56px);color:#fff;text-shadow:0 0 18px var(--glow,#fff)}
 .bpcfront{transform:rotateY(180deg);background:linear-gradient(170deg,color-mix(in srgb,var(--rc) 40%,#1A1440),#100C28 70%);box-shadow:0 0 0 3px var(--rc),0 0 40px var(--rc);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8%;box-sizing:border-box;text-align:center}
-.bpcfront.r4{background:linear-gradient(170deg,#FFFFFF,#EDE6FF 45%,#D8F6FF 75%,#FFE6F6);color:#2A1E5A;box-shadow:0 0 0 3px #fff,0 0 60px #fff,0 0 120px #C8A0FF}
+.bpcfront.r5{background:linear-gradient(170deg,#FFFFFF,#EDE6FF 45%,#D8F6FF 75%,#FFE6F6);color:#2A1E5A;box-shadow:0 0 0 3px #fff,0 0 60px #fff,0 0 120px #C8A0FF}
 .bpcfront .bprr{font-family:var(--display);font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:var(--rc)}
 .bpcfront .bprr{white-space:nowrap}
-.bpcfront.r4 .bprr{letter-spacing:.14em;background:linear-gradient(90deg,#FF5ACD,#7A5CFF,#22C8FF,#FFB020);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:15px;font-weight:800}
+.bpcfront.r5 .bprr{letter-spacing:.14em;background:linear-gradient(90deg,#FF5ACD,#7A5CFF,#22C8FF,#FFB020);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:15px;font-weight:800}
 .bpcfront canvas{width:86%;height:auto;aspect-ratio:1;flex:none}
 .bpcfront b{font-family:var(--display);font-size:clamp(17px,5vw,22px);line-height:1.1}
 .bpcfront small{font-size:12px;opacity:.75}
@@ -1797,6 +1797,10 @@ body.phone.hastabs #toast{top:auto;bottom:calc(84px + env(safe-area-inset-bottom
 @keyframes bpwait{0%,100%{box-shadow:0 0 6px #FF5ACD,inset 0 0 0 3px rgba(255,255,255,.2)}33%{box-shadow:0 0 22px #22C8FF,inset 0 0 0 3px rgba(255,255,255,.35)}66%{box-shadow:0 0 14px #FFB020,inset 0 0 0 3px rgba(255,255,255,.25)}}
 @keyframes bpflash{0%{opacity:.95}100%{opacity:0}}
 .bpbanner{position:absolute;top:max(10px,env(safe-area-inset-top,0px));left:0;right:0;text-align:center;font-family:var(--display);font-weight:800;font-size:clamp(22px,7vw,40px);letter-spacing:.06em;opacity:0;pointer-events:none;color:var(--rc);text-shadow:0 0 20px var(--rc)}
+.bpcfront.r4{background:linear-gradient(170deg,#5A0A2E,#2A0418 55%,#14020C);box-shadow:0 0 0 3px #FF2E7A,0 0 50px #FF2E7A,0 0 100px #FF8A3A;animation:bpasc 1.6s ease-in-out infinite}
+@keyframes bpasc{50%{box-shadow:0 0 0 3px #FF8A3A,0 0 70px #FF2E7A,0 0 130px #FFB627}}
+.bpcfront.r4 .bprr{background:linear-gradient(90deg,#FF2E7A,#FF8A3A,#FFD166);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;font-size:15px}
+.bpbanner.asc{background:linear-gradient(90deg,#FF2E7A,#FF8A3A,#FFD166,#FF2E7A);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 12px #FF2E7A);animation:bpban 2.6s ease-out forwards,bprain 1.4s linear infinite}
 .bpbanner.go{animation:bpban 2.4s ease-out forwards}
 .bpbanner.r4{background:linear-gradient(90deg,#FF5ACD,#7A5CFF,#22C8FF,#FFB020,#FF5ACD);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 12px #fff);animation:bpban 3s ease-out forwards,bprain 1.2s linear infinite}
 @keyframes bpban{0%{opacity:0;transform:scale(2.4)}15%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:.9}}
@@ -3357,7 +3361,14 @@ SKINS.push(
  {id:'sk_mech',name:'Inferno Mech',vx:'sk_mech',nocore:true,prev:[.54,18],top:'#5A5A68',front:'#3A3A46',core:'#FF8A1A',price:7500},
  {id:'sk_wolf',name:'Spirit Wolf',vx:'sk_wolf',nocore:true,prev:[.58,20],top:'#C8D4E4',front:'#8A9CB8',core:'#5CC8FF',price:9000},
  {id:'sk_emperor',name:'Galaxy Emperor',vx:'sk_emperor',nocore:true,prev:[.5,22],top:'#2A1A5A',front:'#1A0E40',core:'#FFE7A0',price:12000},
- {id:'bp_pristine',name:'Pulse Pristine',vx:'bp_pristine',nocore:true,prev:[.5,26],top:'#FFFFFF',front:'#EEF2FF',core:'#FFFFFF',bp:'pristine',req:{bp:'pristine'},bpr:4});
+ {id:'bp_griffin',name:'Golden Griffin',vx:'bp_griffin',nocore:true,prev:[.48,25],top:'#F4EEE4',front:'#C9861A',core:'#FFFFFF',bp:'mythic',req:{bp:'mythic'},bpr:4},
+ {id:'bp_titanbass',name:'Bass Titan',vx:'bp_titanbass',nocore:true,prev:[.5,24],top:'#2A1426',front:'#1A0A18',core:'#FFFFFF',bp:'rhythm',req:{bp:'rhythm'},bpr:4},
+ {id:'bp_djinn',name:'Arcane Djinn',vx:'bp_djinn',nocore:true,prev:[.46,29],top:'#E8C37A',front:'#B8862A',core:'#FFFFFF',bp:'arcane',req:{bp:'arcane'},bpr:4},
+ {id:'bp_nova',name:'Supernova',vx:'bp_nova',nocore:true,prev:[.5,24],top:'#FFE27A',front:'#FF6A3A',core:'#FFFFFF',bp:'celestial',req:{bp:'celestial'},bpr:4},
+ {id:'bp_hammer',name:'Thunder Hammer',vx:'bp_hammer',nocore:true,prev:[.5,24],top:'#3A4A6A',front:'#1E2A44',core:'#FFFFFF',bp:'storm',req:{bp:'storm'},bpr:4},
+ {id:'bp_gate',name:'Eternity Gate',vx:'bp_gate',nocore:true,prev:[.5,24],top:'#2A0A2E',front:'#16041A',core:'#FFFFFF',bp:'eternal',req:{bp:'eternal'},bpr:4},
+ {id:'bp_seraph',name:'Diamond Seraph',vx:'bp_seraph',nocore:true,prev:[.5,24],top:'#FFFFFF',front:'#E8F0FF',core:'#FFFFFF',bp:'pristine',req:{bp:'pristine'},bpr:4},
+ {id:'bp_pristine',name:'Pulse Pristine',vx:'bp_pristine',nocore:true,prev:[.5,26],top:'#FFFFFF',front:'#EEF2FF',core:'#FFFFFF',bp:'pristine',req:{bp:'pristine'},bpr:5});
 /* signature landing effects for the epic, legendary and pristine pack blocks */
 const BP_SIG={
  bp_golem:{n:'Rune Quake',g:'ᚱ',c:['#3CFFB0','#8E8A80','#DFFFF0'],sh:'shard',ring:'#3CFFB0',fx:'spire'},
@@ -3384,19 +3395,26 @@ const BP_SIG={
  sk_mech:{n:'Afterburner',g:'▲',c:['#FF7A1A','#FFE07A','#5CF6FF'],sh:'flame',ring:'#FF7A1A',fx:'pillar'},
  sk_wolf:{n:'Moon Howl',g:'☾',c:['#5CC8FF','#E8FAFF','#B48CFF'],sh:'flake',ring:'#5CC8FF',fx:'frost'},
  sk_emperor:{n:'Starfall Decree',g:'♛',c:['#FFE7A0','#C9A0FF','#FFFFFF','#7AD8FF'],sh:'star5',ring:'rainbow',fx:'nebula'},
+ bp_griffin:{n:'Sky Sovereign',g:'✦',c:['#FFB627','#FFFFFF','#FF2E7A'],sh:'shard',ring:'#FFB627',fx:'pillar'},
+ bp_titanbass:{n:'Sub Drop',g:'◉',c:['#FF2E7A','#FFD166','#8A4AFF'],sh:'note',ring:'neon',fx:'waves'},
+ bp_djinn:{n:'Three Wishes',g:'✧',c:['#8A4AFF','#FFD166','#FF2E7A'],sh:'star5',ring:'#8A4AFF',fx:'implode'},
+ bp_nova:{n:'Supernova',g:'✹',c:['#FFFFFF','#FFD166','#FF6A3A'],sh:'star5',ring:'#FFD166',fx:'beams'},
+ bp_hammer:{n:'Thunder Strike',g:'ϟ',c:['#9FD8FF','#FFFFFF','#FF2E7A'],sh:'shard',ring:'#9FD8FF',fx:'alarm'},
+ bp_gate:{n:'Gate of Ages',g:'◎',c:['#FF2E7A','#FFD166','#8A4AFF'],sh:'coin',ring:'#FF2E7A',fx:'implode'},
+ bp_seraph:{n:'Diamond Choir',g:'◆',c:['#FFFFFF','#9FE8FF','#FFE7A0','#FFB3E6'],sh:'shard',ring:'rainbow',fx:'spire'},
  bp_pristine:{n:'Pristine Pulse',g:'◆',c:['#FFFFFF','#FFB3E6','#9FE8FF','#FFE7A0'],sh:'shard',ring:'rainbow',fx:'beams'}};
 /* the five packs, cheapest first. rates are percentages for each block (they add up to 100); a block you already own pays
    back part of the pack's price in Notes instead */
-const BP_RAR=[{n:'Common',c:'#B9C3D8'},{n:'Rare',c:'#4FA8FF'},{n:'Epic',c:'#B566FF'},{n:'Legendary',c:'#FFB627'},{n:'Pristine',c:'#FFFFFF'}];
-const BP_DUPE=[.2,.35,.6,1,1];
+const BP_RAR=[{n:'Common',c:'#B9C3D8'},{n:'Rare',c:'#4FA8FF'},{n:'Epic',c:'#B566FF'},{n:'Legendary',c:'#FFB627'},{n:'Ascendant',c:'#FF2E7A'},{n:'Pristine',c:'#FFFFFF'}];
+const BP_DUPE=[.2,.35,.6,1,1,1];
 const BPACKS=[
- {id:'mythic',name:'Mythic Pack',price:1000,c1:'#1FA67E',c2:'#0B3B33',acc:'#7FFFD0',tag:'Ancient myths',star:'bp_hydra',rates:{bp_jade:27.68,bp_bronze:27.69,bp_moss:26.58,bp_siren:12,bp_golem:3.3,bp_kraken:2,bp_hydra:0.75}},
- {id:'rhythm',name:'Rhythm Pack',price:1400,c1:'#E8503A',c2:'#3A0C14',acc:'#FFD27A',tag:'Feel the beat',star:'bp_piano',rates:{bp_maple:27,bp_brass:27,bp_felt:27.3,bp_sheet:14,bp_drums:3.5,bp_piano:1.2}},
- {id:'arcane',name:'Arcane Pack',price:1800,c1:'#8A3CFF',c2:'#200A44',acc:'#E0B8FF',tag:'Spells and secrets',star:'bp_oracle',rates:{bp_amethyst:26.36,bp_wax:25.78,bp_ink:25.21,bp_hex:15.2,bp_grimoire:4.2,bp_owl:2.25,bp_oracle:1}},
- {id:'celestial',name:'Celestial Pack',price:2800,c1:'#3A5AFF',c2:'#0A1036',acc:'#FFE7A0',tag:'Stars and sky',star:'bp_titan',rates:{bp_slate:24.89,bp_moondust:23.71,bp_sky:24.9,bp_meteor:17.6,bp_comet:5.4,bp_saturn:2,bp_titan:1.5}},
- {id:'storm',name:'Storm Pack',price:3500,c1:'#3A6AB8',c2:'#0A1426',acc:'#BFD8FF',tag:'Thunder and lightning',star:'bp_eye',rates:{bp_rain:26,bp_fog:26,bp_hail:26.5,bp_static:16,bp_cloud:4.3,bp_eye:1.2}},
- {id:'eternal',name:'Eternal Pack',price:4500,c1:'#D8283A',c2:'#2A0408',acc:'#FFD34D',tag:'Time without end',star:'bp_ouro',rates:{bp_rust:22,bp_ash:22.65,bp_garnet:22,bp_bloodmoon:20,bp_hourglass:6.6,bp_gent:3,bp_knight:1.75,bp_ouro:2}},
- {id:'pristine',name:'Pulse Pristine Pack',price:7000,c1:'#FFFFFF',c2:'#C8D4F0',acc:'#FFFFFF',tag:'The rarest blocks of all',star:'bp_pristine',rates:{bp_pearl:32.8,bp_opal:32.8,bp_haloglass:22.4,bp_choir:7.8,bp_monarch:1.5,bp_harp:2.3,bp_pristine:0.4}}];
+ {id:'mythic',name:'Mythic Pack',price:1000,c1:'#1FA67E',c2:'#0B3B33',acc:'#7FFFD0',tag:'Ancient myths',star:'bp_hydra',rates:{bp_jade:27.28,bp_bronze:27.69,bp_moss:26.58,bp_siren:12,bp_golem:3.3,bp_kraken:2,bp_hydra:0.75,bp_griffin:.4}},
+ {id:'rhythm',name:'Rhythm Pack',price:1400,c1:'#E8503A',c2:'#3A0C14',acc:'#FFD27A',tag:'Feel the beat',star:'bp_piano',rates:{bp_maple:26.6,bp_brass:27,bp_felt:27.3,bp_sheet:14,bp_drums:3.5,bp_piano:1.2,bp_titanbass:.4}},
+ {id:'arcane',name:'Arcane Pack',price:1800,c1:'#8A3CFF',c2:'#200A44',acc:'#E0B8FF',tag:'Spells and secrets',star:'bp_oracle',rates:{bp_amethyst:25.96,bp_wax:25.78,bp_ink:25.21,bp_hex:15.2,bp_grimoire:4.2,bp_owl:2.25,bp_oracle:1,bp_djinn:.4}},
+ {id:'celestial',name:'Celestial Pack',price:2800,c1:'#3A5AFF',c2:'#0A1036',acc:'#FFE7A0',tag:'Stars and sky',star:'bp_titan',rates:{bp_slate:24.49,bp_moondust:23.71,bp_sky:24.9,bp_meteor:17.6,bp_comet:5.4,bp_saturn:2,bp_titan:1.5,bp_nova:.4}},
+ {id:'storm',name:'Storm Pack',price:3500,c1:'#3A6AB8',c2:'#0A1426',acc:'#BFD8FF',tag:'Thunder and lightning',star:'bp_eye',rates:{bp_rain:25.6,bp_fog:26,bp_hail:26.5,bp_static:16,bp_cloud:4.3,bp_eye:1.2,bp_hammer:.4}},
+ {id:'eternal',name:'Eternal Pack',price:4500,c1:'#D8283A',c2:'#2A0408',acc:'#FFD34D',tag:'Time without end',star:'bp_ouro',rates:{bp_rust:21.6,bp_ash:22.65,bp_garnet:22,bp_bloodmoon:20,bp_hourglass:6.6,bp_gent:3,bp_knight:1.75,bp_ouro:2,bp_gate:.4}},
+ {id:'pristine',name:'Pulse Pristine Pack',price:7000,c1:'#FFFFFF',c2:'#C8D4F0',acc:'#FFFFFF',tag:'The rarest blocks of all',star:'bp_pristine',rates:{bp_pearl:32.4,bp_opal:32.8,bp_haloglass:22.4,bp_choir:7.8,bp_monarch:1.5,bp_harp:2.3,bp_pristine:0.4,bp_seraph:.4}}];
 
 /* every fancy block gets a matching landing effect; owning the block unlocks it */
 const SIG={
@@ -5034,6 +5052,7 @@ function vxRise(n,sp,x0,w,yb,hgt,now,fn,seed=0){ for(let i=0;i<n;i++){ const u=(
 /* n things circling (cx0,cy0); only the ones behind the block (front=false) or in front of it (front=true) */
 function vxOrbit(n,sp,cx0,cy0,rx,ry,now,front,fn,ph=0){ for(let i=0;i<n;i++){ const a=now*sp+i*TAU/n+ph, s=Math.sin(a); if((s>0)!==front) continue; fn(cx0+Math.cos(a)*rx,cy0+s*ry,s,i,a); } }
 function vxPre(S,X,T,W,bh,H,now){
+  if(VX9.has(S.vx)) return vxPre9(S,X,T,W,bh,H,now);
   if(VX8.has(S.vx)) return vxPre8(S,X,T,W,bh,H,now);
   if(VX7.has(S.vx)) return vxPre7(S,X,T,W,bh,H,now);
   if(VX6.has(S.vx)) return vxPre6(S,X,T,W,bh,H,now);
@@ -5079,6 +5098,7 @@ function vxShard(x,y,r,a,al){ cx.save(); cx.translate(x,y); cx.rotate(a*.5); con
 function vxPlanet(x,y,r){ const g=cx.createRadialGradient(x-r*.35,y-r*.35,0,x,y,r); g.addColorStop(0,'#FFD6F5'); g.addColorStop(.6,'#B06CFF'); g.addColorStop(1,'#3A1E7A'); cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r,0,TAU); cx.fill(); }
 function vxHeart(x,y,r,col,a){ cx.fillStyle=rgba(col,a); heartPath(x,y,r); cx.fill(); }
 function vxPost(S,X,T,W,bh,H,now){
+  if(VX9.has(S.vx)) return vxPost9(S,X,T,W,bh,H,now);
   if(VX8.has(S.vx)) return vxPost8(S,X,T,W,bh,H,now);
   if(VX7.has(S.vx)) return vxPost7(S,X,T,W,bh,H,now);
   if(VX6.has(S.vx)) return vxPost6(S,X,T,W,bh,H,now);
@@ -6607,6 +6627,169 @@ function vxPost8(S,X,T,W,bh,H,now){
       [-1,1].forEach(sg=>{ const ex=cxm+sg*W*.2, ey=fy+H*.15; cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(ex,ey,W*.12,'#C9A0FF',1); cx.restore(); cx.fillStyle='#FFFFFF'; cx.fillRect(ex-W*.06,ey-H*.015,W*.12,H*.03); });
       vxOrbit(3,.5,cxm,oy,W*1.25,W*.38,now,true,(x,y,s,i)=>{ const r=W*(.09+.03*i), g2=cx.createRadialGradient(x-r*.3,y-r*.3,0,x,y,r); g2.addColorStop(0,['#FFE0B0','#B0E0FF','#FFB0E0'][i]); g2.addColorStop(1,['#A8683A','#3A5A9A','#8A3A7A'][i]); cx.fillStyle=g2; cx.beginPath(); cx.arc(x,y,r,0,TAU); cx.fill();
         if(i===1){ cx.strokeStyle='rgba(255,240,200,.7)'; cx.lineWidth=1; cx.beginPath(); cx.ellipse(x,y,r*1.7,r*.45,-.3,0,TAU); cx.stroke(); } }); } break;
+  }
+  cx.restore();
+}
+/* ---- Ascendant blocks: one per pack, rarer than any legendary ---- */
+const VX9=new Set(['bp_griffin','bp_titanbass','bp_djinn','bp_nova','bp_hammer','bp_gate','bp_seraph']);
+/* a crimson-gold aura every Ascendant block wears */
+function bpAscAura(cxm,oy,W,now,bt){ cx.save(); cx.globalCompositeOperation='lighter';
+  for(let k=0;k<vxN(10);k++){ const a=now*.6+k*TAU/10, L=W*(1.5+.3*Math.sin(now*2+k)), g=cx.createLinearGradient(cxm,oy,cxm+Math.cos(a)*L,oy+Math.sin(a)*L*.7);
+    g.addColorStop(0,rgba(k%2?'#FF2E7A':'#FFB627',.35+.15*bt)); g.addColorStop(1,'rgba(0,0,0,0)'); cx.fillStyle=g; cx.beginPath(); cx.moveTo(cxm,oy);
+    cx.lineTo(cxm+Math.cos(a-.05)*L,oy+Math.sin(a-.05)*L*.7); cx.lineTo(cxm+Math.cos(a+.05)*L,oy+Math.sin(a+.05)*L*.7); cx.closePath(); cx.fill(); }
+  vxGlow(cxm,oy,W*(1.4+.3*bt),'#FF2E7A',.3+.3*bt,.85); cx.restore(); }
+function bpAscSparks(X,W,B,now,seed){ cx.save(); cx.globalCompositeOperation='lighter';
+  vxRise(vxN(9),.45,X-W*.6,W*2.2,B,W*2,now,(x,y,u,i)=>vxSpark(x,y,W*.04*(1-u*.5),i%2?'#FF2E7A':'#FFD166',1-u),seed); cx.restore(); }
+function vxPre9(S,X,T,W,bh,H,now){
+  const v=S.vx, fy=T+bh, cxm=X+W/2, bt=clamp(1-(now-G.lastBeatT)/.35,0,1), oy=fy+H*.35, B=fy+H;
+  bpAscAura(cxm,oy,W,now,bt);
+  cx.save();
+  switch(v){
+    case 'bp_griffin': { const fl=Math.sin(now*2.6)*.3;
+      // great wings: three layers of feathers, darker at the tips, beating slowly
+      [-1,1].forEach(sg=>{ cx.save(); cx.translate(cxm+sg*W*.18,T-W*.05); cx.scale(sg,1); cx.rotate(-.55-fl);
+        [[9,1.45,'#FFF6D8','#B8781A'],[8,1.1,'#FFFFFF','#E8A82A'],[6,.7,'#FFFFFF','#FFE7A0']].forEach(([n,len,c1,c2],row)=>{
+          for(let f=0;f<n;f++){ const a=.15-f*.16, L=W*len*(1-f*.04); cx.save(); cx.rotate(a); const g=cx.createLinearGradient(0,0,L,0); g.addColorStop(0,c1); g.addColorStop(.8,c2); g.addColorStop(1,row?c2:'#6A3A08'); cx.fillStyle=g;
+            cx.beginPath(); cx.moveTo(0,0); cx.quadraticCurveTo(L*.5,-W*.11,L,-W*.01); cx.quadraticCurveTo(L*.55,W*.09,0,W*.02); cx.fill(); cx.strokeStyle='rgba(110,60,8,.35)'; cx.lineWidth=.6; cx.beginPath(); cx.moveTo(L*.15,0); cx.lineTo(L*.9,0); cx.stroke(); cx.restore(); } });
+        cx.restore(); });
+      // the lion's tail curling behind, with its tuft
+      cx.strokeStyle='#C98A3A'; cx.lineWidth=W*.06; cx.beginPath(); cx.moveTo(cxm-W*.3,T+bh*.3); cx.bezierCurveTo(cxm-W*.8,T+bh*.2,cxm-W*.75,T-W*.5+Math.sin(now*2)*W*.08,cxm-W*.95,T-W*.6); cx.stroke();
+      cx.fillStyle='#8A5A1A'; cx.beginPath(); cx.ellipse(cxm-W*.97,T-W*.64,W*.08,W*.12,.5,0,TAU); cx.fill(); } break;
+    case 'bp_titanbass': { cx.globalCompositeOperation='lighter'; for(let k=0;k<3;k++){ const u=((now/(G.spb||.6))+k/3)%1; cx.strokeStyle=rgba('#FF2E7A',.7*(1-u)); cx.lineWidth=3*(1-u)+1; cx.beginPath(); cx.ellipse(cxm,B,W*(.6+u*1.6),W*(.2+u*.5),0,0,TAU); cx.stroke(); } } break;
+    case 'bp_djinn': { cx.globalCompositeOperation='lighter'; vxGlow(cxm,T-W*.7,W*1.1,'#5AD8FF',.25+.25*bt);
+      // a golden ring halo turning behind the djinn
+      cx.globalCompositeOperation='source-over'; const hcy=T-W*1.1+Math.sin(now*1.2)*W*.04; cx.strokeStyle='rgba(255,210,102,.6)'; cx.lineWidth=2; cx.beginPath(); cx.arc(cxm,hcy,W*.32,0,TAU); cx.stroke();
+      for(let k=0;k<10;k++){ const a=now*.4+k*TAU/10; vx4Glyph(cxm+Math.cos(a)*W*.32,hcy+Math.sin(a)*W*.32,W*.035,k,'rgba(255,210,102,.85)'); } } break;
+    case 'bp_nova': { cx.globalCompositeOperation='lighter'; for(let k=0;k<vxN(14);k++){ const a=k*TAU/14+now*.2, L=W*(1.1+.5*Math.abs(Math.sin(now*1.7+k*1.3))+.4*bt); cx.strokeStyle=rgba(k%2?'#FFD166':'#FF6A3A',.6); cx.lineWidth=W*.05; cx.beginPath(); cx.moveTo(cxm+Math.cos(a)*W*.45,oy+Math.sin(a)*W*.45); cx.lineTo(cxm+Math.cos(a)*L,oy+Math.sin(a)*L); cx.stroke(); }
+      vxGlow(cxm,oy,W*(1.1+.4*bt),'#FFF2C0',.6); } break;
+    case 'bp_hammer': { cx.globalCompositeOperation='source-over';
+      // a ring of storm cloud orbiting behind the hammer
+      const hy=T-W*.8; for(let k=0;k<vxN(14);k++){ const a=now*1.1+k*TAU/14, s2=Math.sin(a); if(s2>0) continue; cx.fillStyle=`rgba(${90+40*-s2},${100+40*-s2},${130+40*-s2},.75)`; cx.beginPath(); cx.arc(cxm+Math.cos(a)*W*.75,hy+s2*W*.22,W*(.13+.04*Math.sin(k)),0,TAU); cx.fill(); }
+      cx.globalCompositeOperation='lighter'; vxGlow(cxm,hy,W*(1+.4*bt),'#7FC8FF',.3+.35*bt); } break;
+    case 'bp_gate': { // the gate's outer ring, back half
+      cx.strokeStyle='#C99A3E'; cx.lineWidth=W*.12; cx.beginPath(); cx.arc(cxm,oy,W*1.0,Math.PI,TAU); cx.stroke();
+      cx.globalCompositeOperation='lighter'; for(let k=0;k<12;k++){ const a=Math.PI+k*Math.PI/11+now*.3; if(Math.sin(a)>0) continue; vx4Glyph(cxm+Math.cos(a)*W,oy+Math.sin(a)*W,W*.05,k,rgba('#FF2E7A',.9)); } } break;
+    case 'bp_seraph': { const fl=Math.sin(now*2)*.15;
+      [-1,1].forEach(sg=>{ for(let pr=0;pr<3;pr++){ cx.save(); cx.translate(cxm+sg*W*.3,fy+H*(.1+pr*.25)); cx.scale(sg,1); cx.rotate(-.9+pr*.55-fl*(1-pr*.3));
+        const L=W*(1.3-pr*.25), g=cx.createLinearGradient(0,0,L,0); g.addColorStop(0,'rgba(255,255,255,.95)'); g.addColorStop(.6,rgba(hsl2hex((now*60+pr*90)%360,90,80),.75)); g.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=g;
+        cx.beginPath(); cx.moveTo(0,0); cx.lineTo(L,-W*.12); cx.lineTo(L*.85,W*.02); cx.lineTo(L,W*.12); cx.closePath(); cx.fill(); cx.strokeStyle='rgba(255,255,255,.7)'; cx.lineWidth=.7; cx.stroke(); cx.restore(); } }); } break;
+  }
+  cx.restore();
+}
+function vxPost9(S,X,T,W,bh,H,now){
+  const v=S.vx, fy=T+bh, cxm=X+W/2, bt=clamp(1-(now-G.lastBeatT)/.35,0,1), oy=fy+H*.35, B=fy+H, beat=Math.floor(now/(G.spb||.6));
+  const clipBody=()=>{ cx.beginPath(); cx.rect(X,T,W,bh+H); cx.clip(); };
+  cx.save(); cx.lineCap='round'; cx.lineJoin='round';
+  // every Ascendant block has a molten crimson-gold rim
+  cx.strokeStyle=hsl2hex(340+20*Math.sin(now*3),95,60); cx.lineWidth=1.8; rr(X+.5,T+.5,W-1,bh+H-1,3); cx.stroke();
+  switch(v){
+    case 'bp_griffin': {
+      // a gold crest on the front: a shield with a rising griffin on it
+      cx.save(); clipBody(); const g0=cx.createLinearGradient(X,0,X+W,0); g0.addColorStop(0,'#6A1A2A'); g0.addColorStop(.5,'#9A2A3A'); g0.addColorStop(1,'#6A1A2A'); cx.fillStyle=g0; cx.fillRect(X,fy,W,H); cx.restore();
+      const sx=cxm, sy=fy+H*.5, sw=W*.3, sh=H*.4; cx.fillStyle='#E8B84A'; cx.beginPath(); cx.moveTo(sx-sw,sy-sh); cx.lineTo(sx+sw,sy-sh); cx.lineTo(sx+sw,sy); cx.quadraticCurveTo(sx+sw,sy+sh*.8,sx,sy+sh*1.05); cx.quadraticCurveTo(sx-sw,sy+sh*.8,sx-sw,sy); cx.closePath(); cx.fill();
+      cx.strokeStyle='#8A5A10'; cx.lineWidth=1; cx.stroke(); cx.fillStyle='#6A1A2A'; cx.beginPath(); cx.moveTo(sx-sw*.5,sy+sh*.5); cx.lineTo(sx-sw*.1,sy-sh*.6); cx.lineTo(sx+sw*.15,sy-sh*.3); cx.lineTo(sx+sw*.55,sy-sh*.75); cx.lineTo(sx+sw*.3,sy); cx.lineTo(sx+sw*.4,sy+sh*.5); cx.closePath(); cx.fill();
+      // the griffin perched on top: lion body, front talons gripping the edge
+      const by=T+bh*.35, bob=Math.sin(now*1.5)*W*.02;
+      const lg=cx.createLinearGradient(0,by-W*.3,0,by+W*.2); lg.addColorStop(0,'#E8B870'); lg.addColorStop(1,'#A8702A'); cx.fillStyle=lg;
+      cx.beginPath(); cx.ellipse(cxm-W*.08,by-W*.08+bob,W*.34,W*.2,0,0,TAU); cx.fill();
+      [-1,1].forEach(sg=>{ cx.fillStyle='#F2E6D0'; cx.beginPath(); cx.ellipse(cxm+W*.12+sg*W*.1,by+W*.06,W*.06,W*.1,0,0,TAU); cx.fill();
+        cx.strokeStyle='#3A2408'; cx.lineWidth=1.2; for(let k=-1;k<=1;k++){ cx.beginPath(); cx.moveTo(cxm+W*.12+sg*W*.1+k*W*.03,by+W*.13); cx.lineTo(cxm+W*.12+sg*W*.1+k*W*.04,by+W*.19); cx.stroke(); } });
+      // the eagle head and chest: white feathers, a crest, a hooked gold beak and a burning eye that flares on the beat
+      const hx=cxm+W*.16, hy=by-W*.42+bob-bt*W*.04; cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.ellipse(hx-W*.04,hy+W*.2,W*.2,W*.2,0,0,TAU); cx.fill();
+      cx.fillStyle='#F4EEE4'; cx.beginPath(); cx.ellipse(hx,hy,W*.2,W*.18,0,0,TAU); cx.fill();
+      cx.fillStyle='#FFFFFF'; for(let k=0;k<4;k++){ cx.beginPath(); cx.moveTo(hx-W*.12+k*W*.02,hy-W*.12); cx.lineTo(hx-W*.3-k*W*.03,hy-W*(.3+k*.04)+Math.sin(now*3+k)*W*.02); cx.lineTo(hx-W*.04+k*W*.02,hy-W*.15); cx.closePath(); cx.fill(); }
+      cx.fillStyle='#FFB627'; cx.beginPath(); cx.moveTo(hx+W*.1,hy-W*.04); cx.quadraticCurveTo(hx+W*.38,hy-W*.06,hx+W*.33,hy+W*.14); cx.quadraticCurveTo(hx+W*.26,hy+W*.06,hx+W*.12,hy+W*.08); cx.closePath(); cx.fill(); cx.strokeStyle='#8A5A10'; cx.lineWidth=.7; cx.stroke();
+      cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(hx+W*.05,hy-W*.05,W*(.12+.08*bt),'#FF2E7A',1); cx.restore();
+      cx.fillStyle='#FFE27A'; cx.beginPath(); cx.ellipse(hx+W*.05,hy-W*.05,W*.05,W*.035,-.3,0,TAU); cx.fill(); cx.fillStyle='#1A0A04'; cx.beginPath(); cx.arc(hx+W*.06,hy-W*.05,W*.018,0,TAU); cx.fill();
+      cx.strokeStyle='#3A2408'; cx.lineWidth=1.2; cx.beginPath(); cx.moveTo(hx-W*.01,hy-W*.1); cx.lineTo(hx+W*.11,hy-W*.08); cx.stroke();
+      // a screech of gold on the beat
+      if(bt>.4){ cx.save(); cx.globalCompositeOperation='lighter'; cx.strokeStyle=rgba('#FFD166',bt); cx.lineWidth=1.4; for(let k=0;k<3;k++){ cx.beginPath(); cx.arc(hx+W*.3,hy+W*.04,W*(.12+k*.1),-.6,.6); cx.stroke(); } cx.restore(); }
+      bpAscSparks(X,W,B,now,27); } break;
+    case 'bp_titanbass': {
+      // two huge speaker cones that punch out on the beat, and headphones wrapping the top
+      [[.5,.35,.3],[.5,.78,.17]].forEach(([a,b,rr3])=>{ const x=X+W*a, y=fy+H*b, r=Math.min(W,H)*rr3*(1+.12*bt); cx.fillStyle='#1A1420'; cx.beginPath(); cx.arc(x,y,r*1.15,0,TAU); cx.fill();
+        const g=cx.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,'#5A2A50'); g.addColorStop(.7,'#2A1426'); g.addColorStop(1,'#FF2E7A'); cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r,0,TAU); cx.fill();
+        cx.fillStyle='#0A060C'; cx.beginPath(); cx.arc(x,y,r*.35,0,TAU); cx.fill(); cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(x,y,r*1.6*bt+r*.3,'#FF2E7A',.8); cx.restore(); });
+      cx.strokeStyle='#2A2430'; cx.lineWidth=W*.1; cx.beginPath(); cx.arc(cxm,T+bh*.5,W*.62,Math.PI*1.08,Math.PI*1.92); cx.stroke();
+      [-1,1].forEach(sg=>{ const x=cxm+sg*W*.6, y=T+bh*.6; cx.fillStyle='#1A1420'; rr(x-W*.1,y-W*.18,W*.2,W*.36,W*.08); cx.fill(); cx.save(); cx.globalCompositeOperation='lighter'; cx.fillStyle=rgba(hsl2hex((now*120+sg*90)%360,95,65),.9); rr(x-W*.05,y-W*.12,W*.1,W*.24,W*.04); cx.fill(); cx.restore(); });
+      bpAscSparks(X,W,B,now,29); } break;
+    case 'bp_djinn': {
+      // the block is a rich carpet: a woven pattern of diamonds and gold fringe
+      cx.save(); clipBody(); cx.fillStyle='#5A1A4A'; cx.fillRect(X,fy,W,H); cx.fillStyle='#8A2A6A';
+      for(let r2=0;r2<3;r2++) for(let c=0;c<3;c++){ const x=X+W*(c+.5)/3, y=fy+H*(r2+.5)/3, d=W*.12; cx.beginPath(); cx.moveTo(x,y-d); cx.lineTo(x+d,y); cx.lineTo(x,y+d); cx.lineTo(x-d,y); cx.closePath(); cx.fill(); }
+      cx.fillStyle='#FFD166'; for(let r2=0;r2<3;r2++) for(let c=0;c<3;c++){ cx.beginPath(); cx.arc(X+W*(c+.5)/3,fy+H*(r2+.5)/3,W*.025,0,TAU); cx.fill(); }
+      cx.strokeStyle='#FFD166'; cx.lineWidth=1.2; cx.strokeRect(X+W*.06,fy+H*.06,W*.88,H*.88); cx.restore();
+      // the golden lamp on the top face
+      const lx=cxm, ly=T+bh*.45; const lg=cx.createLinearGradient(lx-W*.3,0,lx+W*.3,0); lg.addColorStop(0,'#A86A10'); lg.addColorStop(.5,'#FFE27A'); lg.addColorStop(1,'#A86A10'); cx.fillStyle=lg;
+      cx.beginPath(); cx.ellipse(lx,ly,W*.24,bh*.42,0,0,TAU); cx.fill(); cx.beginPath(); cx.moveTo(lx+W*.18,ly-bh*.1); cx.quadraticCurveTo(lx+W*.4,ly-bh*.3,lx+W*.46,ly-bh*.75); cx.lineTo(lx+W*.4,ly-bh*.8); cx.quadraticCurveTo(lx+W*.32,ly-bh*.25,lx+W*.12,ly); cx.fill();
+      cx.strokeStyle='#C99A3E'; cx.lineWidth=W*.04; cx.beginPath(); cx.arc(lx-W*.27,ly-bh*.05,W*.08,Math.PI*.4,Math.PI*1.6); cx.stroke(); cx.fillStyle='#FFE27A'; cx.beginPath(); cx.ellipse(lx,ly-bh*.42,W*.07,W*.04,0,0,TAU); cx.fill();
+      // smoke spiralling out of the spout into the djinn
+      const sx=lx+W*.44, sy=ly-bh*.8, dy=T-W*.72+Math.sin(now*1.2)*W*.04;
+      for(let k=0;k<vxN(12);k++){ const u=k/11, x=sx+(cxm-sx)*u+Math.sin(now*2+u*7)*W*.12*(1-u*.5), y=sy+(dy+W*.45-sy)*u, r=W*(.06+.1*u);
+        const g=cx.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,'rgba(120,230,255,.75)'); g.addColorStop(1,'rgba(90,120,255,0)'); cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r,0,TAU); cx.fill(); }
+      // the djinn: a broad blue chest and shoulders, arms folded with gold bracers
+      const sg=cx.createLinearGradient(0,dy-W*.2,0,dy+W*.5); sg.addColorStop(0,'#4AB8F0'); sg.addColorStop(1,'rgba(60,120,240,.2)'); cx.fillStyle=sg;
+      cx.beginPath(); cx.moveTo(cxm-W*.48,dy+W*.02); cx.quadraticCurveTo(cxm-W*.5,dy-W*.18,cxm-W*.2,dy-W*.2); cx.lineTo(cxm+W*.2,dy-W*.2); cx.quadraticCurveTo(cxm+W*.5,dy-W*.18,cxm+W*.48,dy+W*.02); cx.quadraticCurveTo(cxm+W*.3,dy+W*.35,cxm,dy+W*.5); cx.quadraticCurveTo(cxm-W*.3,dy+W*.35,cxm-W*.48,dy+W*.02); cx.fill();
+      cx.strokeStyle='rgba(20,60,140,.45)'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(cxm,dy-W*.18); cx.lineTo(cxm,dy+W*.05); cx.moveTo(cxm-W*.18,dy-W*.05); cx.quadraticCurveTo(cxm-W*.1,dy+W*.02,cxm,dy-W*.02); cx.moveTo(cxm+W*.18,dy-W*.05); cx.quadraticCurveTo(cxm+W*.1,dy+W*.02,cxm,dy-W*.02); cx.stroke();
+      cx.strokeStyle='#3A98D8'; cx.lineWidth=W*.13; cx.beginPath(); cx.moveTo(cxm-W*.42,dy-W*.02); cx.quadraticCurveTo(cxm-W*.1,dy+W*.18,cxm+W*.28,dy+W*.12); cx.moveTo(cxm+W*.42,dy-W*.02); cx.quadraticCurveTo(cxm+W*.1,dy+W*.18,cxm-W*.28,dy+W*.12); cx.stroke();
+      cx.fillStyle='#FFD166'; [-1,1].forEach(sg2=>{ rr(cxm+sg2*W*.24-W*.06,dy+W*.08,W*.12,W*.07,2); cx.fill(); });
+      // the head: pointed ears, a topknot, a gold jewel on the brow, glowing eyes and a curled beard
+      const hy=dy-W*.38; cx.fillStyle='#4AB8F0'; cx.beginPath(); cx.arc(cxm,hy,W*.16,0,TAU); cx.fill();
+      [-1,1].forEach(sg2=>{ cx.beginPath(); cx.moveTo(cxm+sg2*W*.14,hy-W*.02); cx.lineTo(cxm+sg2*W*.3,hy-W*.1); cx.lineTo(cxm+sg2*W*.15,hy+W*.06); cx.closePath(); cx.fill(); });
+      cx.fillStyle='#1A2A5A'; cx.beginPath(); cx.ellipse(cxm,hy-W*.2,W*.06,W*.04,0,0,TAU); cx.fill(); cx.strokeStyle='#1A2A5A'; cx.lineWidth=W*.05; cx.beginPath(); cx.moveTo(cxm,hy-W*.22); cx.quadraticCurveTo(cxm+W*.2,hy-W*.35+Math.sin(now*3)*W*.03,cxm+W*.15,hy-W*.5); cx.stroke();
+      cx.fillStyle='#1A2A5A'; cx.beginPath(); cx.moveTo(cxm-W*.08,hy+W*.09); cx.quadraticCurveTo(cxm,hy+W*.3,cxm+W*.08,hy+W*.09); cx.fill();
+      cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(cxm,hy-W*.09,W*.1,'#FF2E7A',.9); [-1,1].forEach(sg2=>vxGlow(cxm+sg2*W*.06,hy-W*.01,W*(.08+.05*bt),'#FFE27A',1)); cx.restore();
+      cx.fillStyle='#FF2E7A'; cx.beginPath(); cx.moveTo(cxm,hy-W*.13); cx.lineTo(cxm+W*.03,hy-W*.09); cx.lineTo(cxm,hy-W*.05); cx.lineTo(cxm-W*.03,hy-W*.09); cx.closePath(); cx.fill();
+      cx.fillStyle='#FFFFFF'; [-1,1].forEach(sg2=>{ cx.beginPath(); cx.ellipse(cxm+sg2*W*.06,hy-W*.01,W*.035,W*.016,sg2*.2,0,TAU); cx.fill(); });
+      // gold rings drifting round it, and a wish of sparkles on every beat
+      cx.save(); cx.globalCompositeOperation='lighter'; vxOrbit(3,.9,cxm,dy,W*.65,W*.2,now,true,(x,y,s2,i)=>{ cx.strokeStyle='rgba(255,210,102,.95)'; cx.lineWidth=1.5; cx.beginPath(); cx.ellipse(x,y,W*.06,W*.03,0,0,TAU); cx.stroke(); });
+      if(bt>.3) for(let k=0;k<6;k++){ const a=k*TAU/6+beat; vxSpark(cxm+Math.cos(a)*W*.4*(1.4-bt),hy+Math.sin(a)*W*.3*(1.4-bt),W*.05*bt,'#FFE27A',bt); } cx.restore();
+      bpAscSparks(X,W,B,now,31); } break;
+    case 'bp_nova': {
+      // a star collapsing and blazing out: a white-hot core on the front, shockwave rings
+      cx.save(); clipBody(); const g=cx.createRadialGradient(cxm,fy+H*.5,0,cxm,fy+H*.5,W*.8); g.addColorStop(0,'#FFFFFF'); g.addColorStop(.25,'#FFE27A'); g.addColorStop(.6,'#FF6A3A'); g.addColorStop(1,'#5A0A2E'); cx.fillStyle=g; cx.fillRect(X,T,W,bh+H); cx.restore();
+      cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(cxm,fy+H*.5,W*(.6+.3*bt),'#FFFFFF',.9);
+      for(let k=0;k<3;k++){ const u=((now*.7)+k/3)%1; cx.strokeStyle=rgba(k%2?'#FF2E7A':'#FFD166',.8*(1-u)); cx.lineWidth=2.5*(1-u)+.5; cx.beginPath(); cx.ellipse(cxm,oy,W*(.5+u*1.6),W*(.18+u*.55),-.2,0,TAU); cx.stroke(); }
+      vxRise(vxN(10),.6,X-W*.5,W*2,B,W*1.8,now,(x,y,u,i)=>vxGlow(x,y,W*.06,i%2?'#FFD166':'#FF6A3A',.9*(1-u)),37); cx.restore(); } break;
+    case 'bp_hammer': {
+      // the block: carved storm-stone with glowing runes and lightning veins
+      cx.save(); clipBody(); const sg0=cx.createLinearGradient(0,T,0,B); sg0.addColorStop(0,'#4A5A78'); sg0.addColorStop(1,'#1E2A44'); cx.fillStyle=sg0; cx.fillRect(X,fy,W,H);
+      cx.strokeStyle='rgba(10,16,30,.6)'; cx.lineWidth=1; for(let k=1;k<3;k++){ cx.beginPath(); cx.moveTo(X,fy+H*k/3); cx.lineTo(X+W,fy+H*k/3); cx.stroke(); }
+      cx.globalCompositeOperation='lighter'; for(let k=0;k<3;k++) vx4Glyph(X+W*(.22+k*.28),fy+H*.5,W*.07,k+2,rgba('#7FD8FF',.55+.45*bt));
+      vxBolt(X+W*.1,fy,X+W*.35,B,beat*3,W*.08,rgba('#BFE8FF',.35+.5*bt),1); vxBolt(X+W*.9,fy,X+W*.65,B,beat*3+1,W*.08,rgba('#BFE8FF',.35+.5*bt),1); cx.restore();
+      // the hammer: spins slowly, then slams down on the beat
+      const slam=bt*bt, hy=T-W*.8+slam*W*.28, rot=Math.sin(now*.7)*.3*(1-slam); cx.save(); cx.translate(cxm,hy); cx.rotate(rot);
+      const hg=cx.createLinearGradient(0,-W*.05,0,W*.75); hg.addColorStop(0,'#3A2414'); hg.addColorStop(1,'#6A4428'); cx.fillStyle=hg; cx.fillRect(-W*.045,W*.0,W*.09,W*.72);
+      cx.strokeStyle='#2A1408'; cx.lineWidth=1; for(let k=0;k<6;k++){ cx.beginPath(); cx.moveTo(-W*.045,W*(.12+k*.09)); cx.lineTo(W*.045,W*(.17+k*.09)); cx.stroke(); }
+      cx.fillStyle='#E8C37A'; cx.beginPath(); cx.arc(0,W*.76,W*.065,0,TAU); cx.fill(); cx.fillRect(-W*.06,W*.66,W*.12,W*.05);
+      // the head: a heavy block of silver steel with gold bands, rune lines and a storm gem at its heart
+      const g=cx.createLinearGradient(0,-W*.36,0,W*.04); g.addColorStop(0,'#F2F6FC'); g.addColorStop(.5,'#9AA8C0'); g.addColorStop(1,'#5A6478'); cx.fillStyle=g;
+      cx.beginPath(); cx.moveTo(-W*.5,-W*.32); cx.lineTo(W*.5,-W*.32); cx.lineTo(W*.56,-W*.16); cx.lineTo(W*.5,W*.02); cx.lineTo(-W*.5,W*.02); cx.lineTo(-W*.56,-W*.16); cx.closePath(); cx.fill(); cx.strokeStyle='#2A3248'; cx.lineWidth=1.2; cx.stroke();
+      cx.fillStyle='#E8C37A'; [-.36,.3].forEach(x=>cx.fillRect(W*x,-W*.32,W*.06,W*.34));
+      cx.strokeStyle='rgba(40,50,80,.55)'; cx.lineWidth=.8; for(let k=0;k<2;k++){ cx.beginPath(); cx.moveTo(-W*.48,-W*(.25-k*.16)); cx.lineTo(-W*.38,-W*(.25-k*.16)); cx.moveTo(W*.38,-W*(.25-k*.16)); cx.lineTo(W*.48,-W*(.25-k*.16)); cx.stroke(); }
+      cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(0,-W*.15,W*(.22+.18*bt),'#7FD8FF',1); cx.restore();
+      cx.fillStyle='#BFF0FF'; cx.beginPath(); cx.moveTo(0,-W*.27); cx.lineTo(W*.1,-W*.15); cx.lineTo(0,-W*.03); cx.lineTo(-W*.1,-W*.15); cx.closePath(); cx.fill(); cx.fillStyle='rgba(255,255,255,.85)'; cx.beginPath(); cx.moveTo(0,-W*.27); cx.lineTo(W*.04,-W*.17); cx.lineTo(0,-W*.15); cx.closePath(); cx.fill();
+      cx.save(); cx.globalCompositeOperation='lighter'; vxBolt(-W*.55,-W*.2,-W*.85,-W*.45,Math.floor(now*12),W*.06,'rgba(220,240,255,.9)',1.2); vxBolt(W*.55,-W*.2,W*.85,-W*.4,Math.floor(now*12)+5,W*.06,'rgba(220,240,255,.9)',1.2); cx.restore();
+      cx.restore();
+      // the front half of the storm ring, and lightning reaching for the block's corners
+      for(let k=0;k<vxN(14);k++){ const a=now*1.1+k*TAU/14, s2=Math.sin(a); if(s2<=0) continue; cx.fillStyle=`rgba(${150+60*s2},${165+55*s2},${195+50*s2},.85)`; cx.beginPath(); cx.arc(cxm+Math.cos(a)*W*.75,T-W*.8+s2*W*.22,W*(.13+.04*Math.sin(k)),0,TAU); cx.fill(); }
+      cx.save(); cx.globalCompositeOperation='lighter'; [[X,T],[X+W,T]].forEach(([x,y],k)=>vxBolt(cxm+(k?1:-1)*W*.2,hy,x,y+bh*.4,Math.floor(now*9)+k*7,W*.1,rgba('#9FD8FF',.5+.5*bt),1.4));
+      if(bt>.5){ cx.strokeStyle=rgba('#BFE8FF',bt); cx.lineWidth=2; cx.beginPath(); cx.ellipse(cxm,T+bh*.4,W*(.6+(1-bt)*.8),bh*(.6+(1-bt)*.6),0,0,TAU); cx.stroke(); }
+      cx.restore(); bpAscSparks(X,W,B,now,41); } break;
+    case 'bp_gate': {
+      // a portal swirling inside the block, runes turning round it, the gate's front ring
+      cx.save(); clipBody(); for(let k=0;k<6;k++){ cx.strokeStyle=rgba(k%2?'#FF2E7A':'#8A4AFF',.55-k*.06); cx.lineWidth=W*.06; cx.beginPath(); cx.arc(cxm,fy+H*.5,W*(.08+k*.1),now*(2-k*.25),now*(2-k*.25)+Math.PI*1.4); cx.stroke(); }
+      cx.globalCompositeOperation='lighter'; vxGlow(cxm,fy+H*.5,W*(.25+.15*bt),'#FFFFFF',.9); cx.restore();
+      cx.strokeStyle='#E8C37A'; cx.lineWidth=W*.12; cx.beginPath(); cx.arc(cxm,oy,W*1.0,0,Math.PI); cx.stroke(); cx.strokeStyle='#8A5A10'; cx.lineWidth=1; cx.stroke();
+      cx.save(); cx.globalCompositeOperation='lighter'; for(let k=0;k<12;k++){ const a=k*Math.PI/11+now*.3; if(Math.sin(a)<0) continue; vx4Glyph(cxm+Math.cos(a)*W,oy+Math.sin(a)*W,W*.05,k,rgba('#FFD166',.95)); }
+      vxOrbit(vxN(14),.8,cxm,oy,W*.9,W*.3,now,true,(x,y)=>vxGlow(x,y,W*.05,'#FF2E7A',.9)); cx.restore(); bpAscSparks(X,W,B,now,43); } break;
+    case 'bp_seraph': {
+      cx.save(); clipBody(); const h0=(now*40)%360, g=cx.createLinearGradient(X,T,X+W,B); g.addColorStop(0,rgba(hsl2hex(h0,60,92),.8)); g.addColorStop(1,rgba(hsl2hex((h0+120)%360,60,86),.8)); cx.fillStyle=g; cx.fillRect(X,T,W,bh+H);
+      cx.strokeStyle='rgba(120,110,200,.4)'; cx.lineWidth=.8; for(let k=0;k<4;k++){ cx.beginPath(); cx.moveTo(X,fy+H*k/4); cx.lineTo(cxm,fy+H*(k/4+.2)); cx.lineTo(X+W,fy+H*k/4); cx.stroke(); } cx.restore();
+      // a face of light, a double halo and a falling rain of prism shards
+      cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(cxm,fy+H*.4,W*(.4+.15*bt),'#FFFFFF',.9); [-1,1].forEach(sg=>vxGlow(cxm+sg*W*.15,fy+H*.3,W*.08,'#9FE8FF',1)); cx.restore();
+      [[.36,.1,'#FFE7A0',2.6],[.46,.13,'#FFFFFF',1.2]].forEach(([rx,ry,col,lw],k)=>{ const hy=T-bh*(1+k*.35)+Math.sin(now*1.4+k)*bh*.12; cx.strokeStyle=col; cx.lineWidth=lw; cx.beginPath(); cx.ellipse(cxm,hy,W*rx,W*ry,0,0,TAU); cx.stroke(); });
+      cx.save(); cx.globalCompositeOperation='lighter'; vxRise(vxN(10),.5,X-W*.8,W*2.6,B,W*2,now,(x,y,u,i)=>vxShardC(x,y,W*.05,now*3+i,1-u,hsl2hex((i*36+now*90)%360,90,80),'#FFFFFF'),47); cx.restore(); } break;
   }
   cx.restore();
 }
@@ -12121,7 +12304,7 @@ function bpShow(pk,res){ try{ firstGesture(); }catch(e){} BP.timers.forEach(clea
   $('bpCut').style.cssText='width:0';
   const card=$('bpCard'); card.className=''; const back=card.querySelector('.bpcback'); back.classList.remove('r4wait'); back.style.setProperty('--glow','#5A4AA8'); back.style.setProperty('--pow',0);
   const fr=$('bpFront'); fr.className='bpcf bpcfront r'+r; fr.style.setProperty('--rc',R.c);
-  fr.innerHTML=`<span class="bprr">${r===4?'✦ Pristine ✦':R.n}</span><canvas class="skprev" data-skin="${s.id}" data-px="220" data-big="1" width="220" height="220" aria-hidden="true"></canvas><b>${escapeHTML(s.name)}</b><small>${escapeHTML(pk.name)}</small>`;
+  fr.innerHTML=`<span class="bprr">${r===5?'✦ Pristine ✦':R.n}</span><canvas class="skprev" data-skin="${s.id}" data-px="220" data-big="1" width="220" height="220" aria-hidden="true"></canvas><b>${escapeHTML(s.name)}</b><small>${escapeHTML(pk.name)}</small>`;
   $('bpBanner').className='bpbanner'; $('bpInfo').innerHTML='Swipe across the top of the pack to cut it open'; $('bpBtns').innerHTML=''; $('bpSkip').hidden=true; $('bpTap').hidden=true;
   bpLater(()=>{ if(BP.stage==='cut') $('bpTap').hidden=false; },5000);
   ov.hidden=false; ov.scrollTop=ov.scrollLeft=0; bpFxSize(); if(!BP.raf) BP.raf=requestAnimationFrame(bpFrame); }
@@ -12153,12 +12336,12 @@ function bpCutDone(){ if(BP.stage!=='cut') return; BP.stage='rip'; BP.cut=null; 
   bpLater(bpHype,1900); }
 /* the build-up: the card glows at its first rarity, and every tap tries to push it one rarity higher. When it can't
    rise any further the glow holds, and the next stage (the heartbeat before the flip) starts */
-const BP_HYPE=['','It\'s glowing blue…','Purple! Something powerful is in here…','GOLD!! The light is getting stronger…','…wait. The light just went out.'];
+const BP_HYPE=['','It\'s glowing blue…','Purple! Something powerful is in here…','GOLD!! The light is getting stronger…','CRIMSON?! An Ascendant aura is breaking through…','…wait. The light just went out.'];
 function bpHype(){ if(BP.stage!=='rip') return; BP.stage='hype'; $('bpSkip').hidden=false; const r=skinById(BP.res.id).bpr, card=$('bpCard'), back=card.querySelector('.bpcback'); let i=0;
   const show=()=>{ const c=bpCardC();
-    if(i===4){ $('bpOv').classList.add('dark'); back.style.setProperty('--glow','#000000'); back.style.setProperty('--pow',0); card.classList.remove('shake'); BP.rays=0; bpSnd('charge');
+    if(i===5){ $('bpOv').classList.add('dark'); back.style.setProperty('--glow','#000000'); back.style.setProperty('--pow',0); card.classList.remove('shake'); BP.rays=0; bpSnd('charge');
       $('bpInfo').innerHTML=BP_HYPE[4]+'<br><span class="bptapme">Tap…</span>'; back.classList.add('r4wait'); return; }
-    const col=BP_RAR[i].c; back.style.setProperty('--glow',col); back.style.setProperty('--pow',(i+1)/4); $('bpOv').style.setProperty('--glow',col);
+    const col=BP_RAR[i].c; back.style.setProperty('--glow',col); back.style.setProperty('--pow',Math.min(1.2,(i+1)/4)); $('bpOv').style.setProperty('--glow',col);
     card.classList.toggle('shake',i>=2); BP.rays=i>=2?i-1:0; BP.rayCol=col;
     for(let k=0;k<10+i*14;k++) bpSpark(c.x,c.y,1,col,2+i*1.4); bpRing(c.x,c.y,col,i); bpSnd('step',i); buzz(10+i*12);
     $('bpInfo').innerHTML=(BP_HYPE[i]?BP_HYPE[i]+'<br>':'')+`<span class="bptapme">Tap to see if it ${i?'rises again':'glows brighter'}</span>`; };
@@ -12167,7 +12350,7 @@ function bpHype(){ if(BP.stage!=='rip') return; BP.stage='hype'; $('bpSkip').hid
       if(i<r){ i++; show(); return; }
       // it holds: no higher this time
       const c=bpCardC(); bpRing(c.x,c.y,'#FFFFFF',0); bpSnd('hold'); card.animate([{scale:1},{scale:1.05},{scale:1}],{duration:300});
-      BP.stage='holding'; $('bpInfo').textContent=r===4?'':`It holds at ${BP_RAR[r].n}.`; bpLater(()=>{ if(BP.stage==='holding'){ BP.stage='ready'; card.classList.remove('shake'); bpTease(); } },650); },SAVE.reduce?120:380); };
+      BP.stage='holding'; $('bpInfo').textContent=r===5?'':`It holds at ${BP_RAR[r].n}.`; bpLater(()=>{ if(BP.stage==='holding'){ BP.stage='ready'; card.classList.remove('shake'); bpTease(); } },650); },SAVE.reduce?120:380); };
   show(); }
 function bpReady(){ if(BP.stage!=='hype') return; BP.stage='ready'; $('bpCard').classList.remove('shake'); $('bpInfo').textContent='Tap the card to reveal it'; }
 $('bpCard').onclick=()=>{ if(BP.stage==='hype'&&BP.tap) BP.tap(); else if(BP.stage==='ready') bpTease(); };
@@ -12183,13 +12366,13 @@ function bpTease(){ BP.stage='tease'; $('bpSkip').hidden=true; const r=skinById(
   bpLater(beat,250); }
 $('bpSkip').onclick=()=>{ if(BP.stage==='rip'||BP.stage==='hype'||BP.stage==='holding'||BP.stage==='ready'||BP.stage==='tease'){ BP.timers.forEach(clearTimeout); BP.timers=[]; $('bpPack').className='gone'; $('bpCard').className='up'; bpReveal(); } };
 function bpReveal(){ BP.stage='done'; $('bpSkip').hidden=true; const pk=BP.pk, res=BP.res, s=skinById(res.id), r=s.bpr, R=BP_RAR[r], ov=$('bpOv'), card=$('bpCard'), c=bpCardC();
-  ov.classList.remove('dark'); ov.style.setProperty('--glow',r===4?'#C8A0FF':R.c); card.classList.remove('shake'); card.classList.add('flip');
-  const fl=$('bpFlash'); fl.style.setProperty('--fc',r===4?'#FFFFFF':R.c); fl.classList.remove('go'); void fl.offsetWidth; if(r>=2) fl.classList.add('go');
-  BP.rays=r>=2?r:0; BP.rayCol=R.c; BP.prism=r===4;
-  const n=[24,40,70,110,180][r]; for(let k=0;k<n;k++) bpSpark(c.x,c.y,1,r===4?'prism':(k%3?R.c:'#FFFFFF'),3+r*1.8,r>=1&&k%2);
-  for(let k=0;k<=Math.min(r,3);k++) bpLater(()=>bpRing(c.x,c.y,r===4?'prism':R.c,r),k*180);
-  bpSnd('reveal',r); buzz([20,40,70,140,260][r]);
-  if(r>=3){ const b=$('bpBanner'); b.textContent=r===4?'PULSE PRISTINE':'LEGENDARY!'; b.style.setProperty('--rc',R.c); b.className='bpbanner go'+(r===4?' r4':''); }
+  ov.classList.remove('dark'); ov.style.setProperty('--glow',r===5?'#C8A0FF':R.c); card.classList.remove('shake'); card.classList.add('flip');
+  const fl=$('bpFlash'); fl.style.setProperty('--fc',r===5?'#FFFFFF':R.c); fl.classList.remove('go'); void fl.offsetWidth; if(r>=2) fl.classList.add('go');
+  BP.rays=r>=2?r:0; BP.rayCol=R.c; BP.prism=r===5;
+  const n=[24,40,70,110,150,190][r]; for(let k=0;k<n;k++) bpSpark(c.x,c.y,1,r===5?'prism':(k%3?R.c:'#FFFFFF'),3+r*1.8,r>=1&&k%2);
+  for(let k=0;k<=Math.min(r,3);k++) bpLater(()=>bpRing(c.x,c.y,r===5?'prism':R.c,r),k*180);
+  bpSnd('reveal',r); buzz([20,40,70,140,200,260][r]);
+  if(r>=3){ const b=$('bpBanner'); b.textContent=r===5?'PULSE PRISTINE':r===4?'ASCENDANT!':'LEGENDARY!'; b.style.setProperty('--rc',R.c); b.className='bpbanner go'+(r===5?' r4':r===4?' asc':''); }
   $('bpInfo').innerHTML=(res.dupe?`<span class="dupe">You already own ${escapeHTML(s.name)}, so you get ♪${res.refund.toLocaleString()} back</span>`:`<span class="new">NEW BLOCK</span><br>${escapeHTML(s.name)} is yours!`)+
     (res.tot?`<div class="bpsetline"><span>${escapeHTML(pk.name.replace(/ Pack$/,''))} set</span><div class="bpbar"><i style="width:${Math.round((res.have-(res.dupe?0:1))/res.tot*100)}%"></i></div><b>${res.have} / ${res.tot}</b></div>`:'')+
     (res.set?`<div class="bpsetdone">SET COMPLETE! +♪${res.set.toLocaleString()}</div>`:'');
@@ -12232,12 +12415,12 @@ function bpSnd(k,i=0){ if(!A.ctx||!A.sfx) return; try{ const t=A.ctx.currentTime
   if(k==='whoosh') noise(D,t,.25,.5,'bandpass',600,1,3000);
   if(k==='hold'){ tone(D,t,'sine',330,.12,.005,.35); tone(D,t+.08,'sine',262,.1,.005,.4); }
   if(k==='thump'){ tone(D,t,'sine',62+i*6,.32,.004,.22,{glide:40,gt:.18}); noise(D,t,.18,.12,'lowpass',180,1); tone(D,t+.13,'sine',55+i*6,.2,.004,.18,{glide:38,gt:.15}); }
-  if(k==='step'){ const f=[392,523,659,784][i]; tone(D,t,'triangle',f,.22,.005,.55); tone(D,t,'sine',f*2,.08,.005,.7); if(i>=2) tone(D,t+.07,'sine',f*1.5,.12,.005,.7); if(i>=3){ noise(D,t,.25,.7,'lowpass',300,1,2400); tone(D,t+.14,'sine',f*2,.1,.005,.9); } }
+  if(k==='step'){ const f=[392,523,659,784,988][i]; tone(D,t,'triangle',f,.22,.005,.55); tone(D,t,'sine',f*2,.08,.005,.7); if(i>=2) tone(D,t+.07,'sine',f*1.5,.12,.005,.7); if(i>=3){ noise(D,t,.25,.7,'lowpass',300,1,2400); tone(D,t+.14,'sine',f*2,.1,.005,.9); } }
   if(k==='charge'){ noise(D,t,.3,1.5,'lowpass',90,1,2600); tone(D,t,'sawtooth',45,.1,.6,1,{glide:240,gt:1.5,lp:700}); tone(D,t+1.3,'sine',1568,.08,.01,.3); }
-  if(k==='reveal'){ const ch=[[523,659],[523,659,784],[523,659,784,988],[523,659,784,1047,1319],[523,659,784,988,1175,1568,2093]][i];
+  if(k==='reveal'){ const ch=[[523,659],[523,659,784],[523,659,784,988],[523,659,784,1047,1319],[440,554,659,880,1109,1319],[523,659,784,988,1175,1568,2093]][i];
     ch.forEach((f,j)=>{ tone(D,t+j*.06,'triangle',f,.15,.005,1.3); tone(D,t+j*.06,'sine',f*2,.05,.005,1.5); });
     if(i>=3) noise(D,t,.35,1.3,'highpass',3000,.7,9000);
-    if(i===4) [1047,1319,1568,2093,2637,3136].forEach((f,j)=>tone(D,t+.55+j*.09,'sine',f,.09,.005,1.8)); } }catch(e){} }
+    if(i>=4) [1047,1319,1568,2093,2637,3136].slice(0,i===5?6:4).forEach((f,j)=>tone(D,t+.55+j*.09,'sine',f,.09,.005,1.8)); } }catch(e){} }
 /* the Collection's Blocks tab: grouped by where each block comes from, with filters, a progress bar and pins.
    Pinned blocks (up to 12) sit in their own row at the top. Pack blocks you haven't found yet show as silhouettes. */
 const COLL={f:'all'};
