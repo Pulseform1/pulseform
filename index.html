@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2E3566">
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="description" content="Pulseform is an interactive music education and rhythm-learning game that helps learners practice musical timing, rhythm, listening, coordination, and musical skills through guided puzzles, exercises, and challenges.">
@@ -1717,7 +1718,60 @@ body.phone.hastabs #toast{top:auto;bottom:calc(84px + env(safe-area-inset-bottom
 .bpsetr{font-size:11.5px;color:#FFE27A;font-weight:700}
 .bpsetline{display:flex;align-items:center;gap:8px;margin-top:8px;font:600 12px var(--body);color:var(--ink-2);justify-content:center}.bpsetline .bpbar{width:120px;--acc:#7FF0D2}.bpsetline b{color:#fff}
 .bpsetdone{margin-top:6px;font-family:var(--display);font-weight:800;font-size:18px;background:linear-gradient(90deg,#FF5ACD,#7A5CFF,#22C8FF,#FFB020);-webkit-background-clip:text;background-clip:text;color:transparent;animation:bpban 1.6s ease-out}
-@media (prefers-reduced-motion:reduce){.bpshelf .bpmini,.bpfree.ready,.bpfree .bpfgift{animation:none}}
+@media (prefers-reduced-motion:reduce){.bpshelf .bpmini,.bpfree.ready,.bpfree .bpfgift,.bpone,.bpmc{animation:none}}
+/* packs: quick open, open five, history, the seasonal pack, free packs */
+.shop>.bptools,.shop>.bphist{grid-column:1/-1}
+.bptools{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;margin-top:10px}
+.bptog{display:flex;align-items:center;gap:8px;font:700 13px var(--body);color:#fff;cursor:pointer}.bptog small{color:var(--ink-3);font-weight:600}
+.bptog input{width:18px;height:18px;accent-color:#FFD166;margin:0}
+.bpshelf .bp5{padding:8px 10px;font-size:13px}
+.bpone{font-size:11.5px;font-weight:800;color:#0C2A22;background:#7FF0D2;padding:3px 9px;border-radius:999px;text-align:center;animation:bptapme 1.2s ease-in-out infinite}
+.bpseason{position:absolute;top:-9px;left:50%;transform:translateX(-50%);z-index:2;white-space:nowrap;font:800 10px var(--body);letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border-radius:999px;background:linear-gradient(90deg,#FF8A1A,#FFD166);color:#3A1600;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.bpshelf.seasonal{border-color:#FFB020;box-shadow:0 0 22px rgba(255,160,40,.25);margin-top:6px}
+.bphist{margin-top:14px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.bphist summary{cursor:pointer;font:800 14px var(--display)}
+.bphcnt{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.bphcnt span{display:flex;align-items:center;gap:5px;font:600 12px var(--body);padding:4px 9px;border-radius:999px;background:rgba(0,0,0,.25)}
+.bphcnt i,.bphlist i{width:8px;height:8px;border-radius:50%;background:var(--rc);flex:none}
+.bphlist{list-style:none;margin:0;padding:0;display:grid;gap:3px;font-size:12.5px}
+.bphlist li{display:flex;align-items:center;gap:7px;padding:4px 8px;border-radius:8px;background:rgba(0,0,0,.18)}
+.bphlist li>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bphlist em{font-style:normal;color:var(--ink-3);font-size:11.5px;white-space:nowrap}
+.bpov.multi .bpstage,.bpov.multi #bpInfo,.bpov.multi #bpBtns,.bpov.multi #bpTap{display:none}
+.bpmulti{position:relative;width:min(760px,calc(100vw - 32px));display:flex;flex-direction:column;align-items:center;gap:14px}
+.bpmulti[hidden]{display:none}
+.bpmgrid{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;width:100%;perspective:900px}
+.bpmc{width:calc((100% - 40px)/5)}
+@media (max-width:560px){.bpmgrid{max-width:400px}.bpmc{width:calc((100% - 20px)/3)}}
+.bpmc{position:relative;aspect-ratio:5/7.2;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.3,1.4,.5,1);cursor:pointer;animation:bpmIn .5s backwards}
+@keyframes bpmIn{from{translate:0 40px;scale:.8;opacity:0}}
+.bpmc.flip{transform:rotateY(180deg)}
+.bpmc:not(.flip):hover{transform:translateY(-4px)}
+.bpmc .bpcf{border-radius:12px}
+.bpmc .bpcback b{font-size:clamp(22px,6vw,34px)}
+.bpmc .bpcfront{padding:6%;gap:2px}
+.bpmc .bpcfront .bprr{font-size:8.5px;letter-spacing:.1em}
+.bpmc .bpcfront b{font-size:clamp(10.5px,2.6vw,13px)}
+.bpmc .bpcfront small{font-size:9.5px}
+.bpmnew{position:absolute;top:5px;right:5px;font:800 8.5px var(--body);padding:2px 6px;border-radius:999px;background:#7FF0D2;color:#0C2A22}
+.bpmsum{text-align:center;font-family:var(--display);font-size:15px;color:#fff;min-height:22px;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.bpmsum .new{display:inline-block;padding:3px 10px;border-radius:999px;background:#7FF0D2;color:#0C2A22;font-size:12px}
+/* the Collection's search box */
+.collq{width:100%;box-sizing:border-box;padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:#fff;font:600 14px var(--body)}
+.collq::placeholder{color:var(--ink-3)}
+.shop .citem[hidden],.shop .collsec[hidden],.shop .collnone[hidden]{display:none}
+.shop>.collnone{grid-column:1/-1;text-align:center}
+.item .trybtn{padding:6px 10px;font-size:12px}
+/* friends: showcase, gifting, likes */
+.fpshow{display:flex;gap:10px;flex-wrap:wrap}
+.fpshow div{display:flex;flex-direction:column;align-items:center;gap:3px;width:92px;padding:8px 6px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);text-align:center}
+.fpshow b{font-size:11.5px;line-height:1.2}.fpshow em{font:800 9px var(--body);letter-spacing:.08em;text-transform:uppercase;font-style:normal;color:var(--rc,#FFD166)}
+.fggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;max-height:38vh;overflow:auto;margin-top:6px}
+.fgitem{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.2);color:#fff;font:600 11.5px var(--body);cursor:pointer}
+.fgitem:hover{border-color:#FFD166}.fgitem em{font:800 9px var(--body);font-style:normal;letter-spacing:.06em;text-transform:uppercase}
+.fplike{border:1px solid var(--line);background:rgba(0,0,0,.2);color:#fff;border-radius:999px;padding:4px 10px;font:700 12px var(--body);cursor:pointer}
+.fplike[aria-pressed="true"]{background:rgba(255,110,150,.25);border-color:#FF6E96;color:#FFB3C8}
+.pqtok{display:block;margin-top:2px;font:700 12px var(--body);color:#FFE27A;text-shadow:none}
 .bpnote{font-size:12px;color:var(--ink-3);text-align:center;margin:10px 0 0}
 /* the pack itself (shelf version and the big one you cut open) */
 .bppk{--c1:#1FA67E;--c2:#0B3B33;--acc:#7FFFD0;position:relative;border-radius:14px;background:linear-gradient(160deg,var(--c1),var(--c2) 75%);box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 0 2px rgba(255,255,255,.18);overflow:hidden;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;isolation:isolate}
@@ -2049,6 +2103,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   <div class="bpinfo" id="bpInfo" aria-live="polite"></div>
   <button class="bptap" id="bpTap" type="button" hidden>Can't swipe? Tap here to open it</button>
   <div class="bpbtns" id="bpBtns"></div>
+  <div class="bpmulti" id="bpMulti" hidden></div>
 </section>
 
 <section id="acctOv" class="overlay" hidden>
@@ -2509,10 +2564,12 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <div class="head"><button class="back" id="fpBack" type="button">← Friends</button><span class="small" id="fpSeen"></span></div>
     <div class="fphero"><canvas class="skprev fpskin" id="fpSkin" data-skin="classic" width="64" height="64" aria-hidden="true"></canvas>
       <div><div class="eyebrow">Player</div><h2 id="fpName"></h2><div class="fprank"><i class="gem" id="fpGem"></i><span id="fpRank"></span></div><div class="small" id="fpSkinName"></div></div></div>
+    <div id="fpShowWrap" hidden><div class="lbl" style="margin-bottom:6px">Showcase</div><div class="fpshow" id="fpShow"></div></div>
     <div><div class="lbl" style="margin-bottom:6px">Levels</div><p class="small" id="fpLevels" style="margin:0 0 8px"></p><div class="fpworlds" id="fpWorlds"></div></div>
     <div class="stats" id="fpStats"></div>
     <div><div class="lbl" style="margin-bottom:6px">Leaderboard rankings</div><ul class="lb" id="fpRanks"></ul></div>
     <div><div class="lbl" style="margin-bottom:6px">Levels they built</div><ul class="edmine" id="fpMaps"></ul></div>
+    <div><div class="lbl" style="margin-bottom:6px">Gift a block</div><button class="btn ghost" id="fpGift" type="button">🎁 Send them a block</button><div id="fgBox" hidden style="margin-top:8px"></div></div>
     <div class="row"><button class="btn ghost" id="fpMod" type="button">Report or block</button></div>
   </div>
 </section>
@@ -2780,7 +2837,7 @@ STYLES.lobby={name:'Lobby',mood:'jazz club',bpm:1,swing:.3,prog:[[2,'m7'],[7,'7'
   hat:{s:'ride',p:P16([0,.6],[4,.6],[6,.45],[8,.6],[12,.6],[14,.45])},perc:{s:'hat',p:P16([4,.55],[12,.55])},
   bass:{pat:'walk',wave:'tri',v:.44},keys:{pat:'charleston',voice:'rhodes'},lead:{voice:'horn',dens:.62,rhy:'swing'},spark:'bells'};
 /* October lobby variant: same Pulseform groove, but in a minor key with softer drums, darker harmony and bell-led melody. */
-STYLES.lobbySpooky={name:'Haunted Lobby',mood:'moonlit and mysterious',bpm:1,swing:.12,prog:[[0,'m'],[8,'M'],[3,'m'],[10,'7']],scale:'minor',
+STYLES.lobbySpooky={name:'Moonlit Lobby',mood:'moonlit and mysterious',bpm:1,swing:.12,prog:[[0,'m'],[8,'M'],[3,'m'],[10,'7']],scale:'minor',
   kick:{s:'kickSoft',p:P16([0,.9],[6,.35],[8,.72],[14,.28])},snare:{s:'brush',p:P16([4,.62],[12,.58],[15,.16])},
   hat:{s:'ride',p:P16([0,.32],[6,.28],[8,.34],[14,.25])},perc:{s:'rim',p:P16([3,.25],[11,.22])},
   bass:{pat:'walk',wave:'tri',v:.34},keys:{pat:'drone',voice:'soft'},lead:{voice:'bell',dens:.48,rhy:'sparse'},spark:'bells'};
@@ -3369,6 +3426,15 @@ SKINS.push(
  {id:'bp_gate',name:'Eternity Gate',vx:'bp_gate',nocore:true,prev:[.5,24],top:'#2A0A2E',front:'#16041A',core:'#FFFFFF',bp:'eternal',req:{bp:'eternal'},bpr:4},
  {id:'bp_seraph',name:'Diamond Seraph',vx:'bp_seraph',nocore:true,prev:[.5,24],top:'#FFFFFF',front:'#E8F0FF',core:'#FFFFFF',bp:'pristine',req:{bp:'pristine'},bpr:4},
  {id:'bp_pristine',name:'Pulse Pristine',vx:'bp_pristine',nocore:true,prev:[.5,26],top:'#FFFFFF',front:'#EEF2FF',core:'#FFFFFF',bp:'pristine',req:{bp:'pristine'},bpr:5});
+/* the Harvest Festival pack: on the shelf in October and November only */
+SKINS.push(
+ {id:'bp_acorn',name:'Acorn Cap',vx:'bpg',prev:[.84,3],top:'#C98A4A',front:'#7A4A22',core:'#F2D2A0',bp:'harvest',req:{bp:'harvest'},bpr:0,g:{f:'speckle',c:'#F2D2A0',p:'leaf',a:'#FFB04A'}},
+ {id:'bp_hay',name:'Hay Bale',vx:'bpg',prev:[.84,3],top:'#F2D27A',front:'#C8A040',core:'#FFF2C0',bp:'harvest',req:{bp:'harvest'},bpr:0,g:{f:'stripe',c:'#FFF2C0',p:'dust',a:'#FFE08A'}},
+ {id:'bp_cider',name:'Apple Cider',vx:'bpg',prev:[.84,3],top:'#E8803A',front:'#9A3A1A',core:'#FFD0A0',bp:'harvest',req:{bp:'harvest'},bpr:0,g:{f:'swirl',c:'#FFD0A0',p:'bubble',a:'#FFB070'}},
+ {id:'bp_mapleglass',name:'Maple Leaf Glass',vx:'bpg',prev:[.8,5],top:'#FF8A3A',front:'#B83A1A',core:'#FFE0A0',bp:'harvest',req:{bp:'harvest'},bpr:1,g:{f:'gem',c:'#FFE0A0',p:'leaf',a:'#FF6A2A',k:1}},
+ {id:'bp_pumpkin',name:'Pumpkin Patch',vx:'bp_pumpkin',nocore:true,prev:[.6,19],top:'#5A8A3A',front:'#3A5A22',core:'#FF9A2A',bp:'harvest',req:{bp:'harvest'},bpr:2},
+ {id:'bp_cornu',name:'Golden Cornucopia',vx:'bp_cornu',nocore:true,prev:[.56,20],top:'#E8B84A',front:'#9A6A1A',core:'#FFF2C0',bp:'harvest',req:{bp:'harvest'},bpr:3},
+ {id:'bp_oak',name:'Elder Oak',vx:'bp_oak',nocore:true,prev:[.44,30],top:'#7A5A3A',front:'#4A3420',core:'#FFD166',bp:'harvest',req:{bp:'harvest'},bpr:4});
 /* signature landing effects for the epic, legendary and pristine pack blocks */
 const BP_SIG={
  bp_golem:{n:'Rune Quake',g:'ᚱ',c:['#3CFFB0','#8E8A80','#DFFFF0'],sh:'shard',ring:'#3CFFB0',fx:'spire'},
@@ -3402,7 +3468,10 @@ const BP_SIG={
  bp_hammer:{n:'Thunder Strike',g:'ϟ',c:['#9FD8FF','#FFFFFF','#FF2E7A'],sh:'shard',ring:'#9FD8FF',fx:'alarm'},
  bp_gate:{n:'Gate of Ages',g:'◎',c:['#FF2E7A','#FFD166','#8A4AFF'],sh:'coin',ring:'#FF2E7A',fx:'implode'},
  bp_seraph:{n:'Diamond Choir',g:'◆',c:['#FFFFFF','#9FE8FF','#FFE7A0','#FFB3E6'],sh:'shard',ring:'rainbow',fx:'spire'},
- bp_pristine:{n:'Pristine Pulse',g:'◆',c:['#FFFFFF','#FFB3E6','#9FE8FF','#FFE7A0'],sh:'shard',ring:'rainbow',fx:'beams'}};
+ bp_pristine:{n:'Pristine Pulse',g:'◆',c:['#FFFFFF','#FFB3E6','#9FE8FF','#FFE7A0'],sh:'shard',ring:'rainbow',fx:'beams'},
+ bp_pumpkin:{n:'Pumpkin Pop',g:'●',c:['#FF9A2A','#FFD166','#5A9A3A'],sh:'blob',ring:'#FF9A2A',fx:'waves'},
+ bp_cornu:{n:'Bountiful Harvest',g:'❦',c:['#FFD166','#E8302A','#9A6ACF'],sh:'coin',ring:'#FFD166',fx:'gold'},
+ bp_oak:{n:'Falling Leaves',g:'❧',c:['#FF8A1A','#FFB020','#D8401A','#FFD166'],sh:'confetti',ring:'#FFB020',fx:'beams'}};
 /* the five packs, cheapest first. rates are percentages for each block (they add up to 100); a block you already own pays
    back part of the pack's price in Notes instead */
 const BP_RAR=[{n:'Common',c:'#B9C3D8'},{n:'Rare',c:'#4FA8FF'},{n:'Epic',c:'#B566FF'},{n:'Legendary',c:'#FFB627'},{n:'Ascendant',c:'#FF2E7A'},{n:'Pristine',c:'#FFFFFF'}];
@@ -3414,7 +3483,8 @@ const BPACKS=[
  {id:'celestial',name:'Celestial Pack',price:2800,c1:'#3A5AFF',c2:'#0A1036',acc:'#FFE7A0',tag:'Stars and sky',star:'bp_titan',rates:{bp_slate:24.49,bp_moondust:23.71,bp_sky:24.9,bp_meteor:17.6,bp_comet:5.4,bp_saturn:2,bp_titan:1.5,bp_nova:.4}},
  {id:'storm',name:'Storm Pack',price:3500,c1:'#3A6AB8',c2:'#0A1426',acc:'#BFD8FF',tag:'Thunder and lightning',star:'bp_eye',rates:{bp_rain:25.6,bp_fog:26,bp_hail:26.5,bp_static:16,bp_cloud:4.3,bp_eye:1.2,bp_hammer:.4}},
  {id:'eternal',name:'Eternal Pack',price:4500,c1:'#D8283A',c2:'#2A0408',acc:'#FFD34D',tag:'Time without end',star:'bp_ouro',rates:{bp_rust:21.6,bp_ash:22.65,bp_garnet:22,bp_bloodmoon:20,bp_hourglass:6.6,bp_gent:3,bp_knight:1.75,bp_ouro:2,bp_gate:.4}},
- {id:'pristine',name:'Pulse Pristine Pack',price:7000,c1:'#FFFFFF',c2:'#C8D4F0',acc:'#FFFFFF',tag:'The rarest blocks of all',star:'bp_pristine',rates:{bp_pearl:32.4,bp_opal:32.8,bp_haloglass:22.4,bp_choir:7.8,bp_monarch:1.5,bp_harp:2.3,bp_pristine:0.4,bp_seraph:.4}}];
+ {id:'pristine',name:'Pulse Pristine Pack',price:7000,c1:'#FFFFFF',c2:'#C8D4F0',acc:'#FFFFFF',tag:'The rarest blocks of all',star:'bp_pristine',rates:{bp_pearl:32.4,bp_opal:32.8,bp_haloglass:22.4,bp_choir:7.8,bp_monarch:1.5,bp_harp:2.3,bp_pristine:0.4,bp_seraph:.4}},
+ {id:'harvest',name:'Harvest Festival Pack',price:2000,c1:'#E8701A',c2:'#3A1A08',acc:'#FFD166',tag:'Autumn only',star:'bp_oak',season:[10,11],rates:{bp_acorn:26.4,bp_hay:26.5,bp_cider:26.5,bp_mapleglass:16,bp_pumpkin:3.5,bp_cornu:.7,bp_oak:.4}}];
 
 /* every fancy block gets a matching landing effect; owning the block unlocks it */
 const SIG={
@@ -3691,9 +3761,13 @@ function solve(room){
 
 /* ---------------- RUN STATE ---------------- */
 let G={state:'menu'}, R=null;
+/* a Shop block being tried out: worn in the next run only, until you go back to the menu */
+let TRY=null;
+function tryBlock(id){ const s=SKINS.find(k=>k.id===id); if(!s) return; TRY=id; startRun(modeFor('endless'));
+  setTimeout(()=>{ if(TRY===id&&G.state!=='menu') hint(`Trying ${s.name}. Keep it for ♪${(s.price||0).toLocaleString()} in the Shop`,3500); },1500); }
 function mkPlayer(id){
   const p2=SAVE.p2skin&&ownsSkin(SAVE.p2skin)?SAVE.p2skin:(SAVE.skin==='mint'?'coral':'mint');   // player 2 on the same device uses the block picked in Play together
-  const sk=id===0?skinById(SAVE.skin):skinById(p2);
+  const sk=id===0?skinById(TRY||SAVE.skin):skinById(p2);
   return {id,pos:{x:0,y:0},prevPos:null,anim:null,done:false,dead:false,skin:sk,land:landById(id===0?SAVE.land:(SAVE.land==='stars'?'petals':'stars')),trailPts:[],greyT:-9,flashT:-9,flashC:'#FFF8EE'};
 }
 function visualDefaults(o){ return Object.assign(o,{lfx:[],lastBeatT:-9,waveT:-9,sweepT:-9,flashT:-9,flashC:'#FFF8EE',goT:-9,fireT:-9,count:null,banner:null,nudge:{x:0,y:0},skyMix:0,parts:[],pops:[],ripples:[],shocks:[],rays:[],bi:null,beats:[],tier:0,restDim:0}); }
@@ -5052,6 +5126,7 @@ function vxRise(n,sp,x0,w,yb,hgt,now,fn,seed=0){ for(let i=0;i<n;i++){ const u=(
 /* n things circling (cx0,cy0); only the ones behind the block (front=false) or in front of it (front=true) */
 function vxOrbit(n,sp,cx0,cy0,rx,ry,now,front,fn,ph=0){ for(let i=0;i<n;i++){ const a=now*sp+i*TAU/n+ph, s=Math.sin(a); if((s>0)!==front) continue; fn(cx0+Math.cos(a)*rx,cy0+s*ry,s,i,a); } }
 function vxPre(S,X,T,W,bh,H,now){
+  if(VX10.has(S.vx)) return vxPre10(S,X,T,W,bh,H,now);
   if(VX9.has(S.vx)) return vxPre9(S,X,T,W,bh,H,now);
   if(VX8.has(S.vx)) return vxPre8(S,X,T,W,bh,H,now);
   if(VX7.has(S.vx)) return vxPre7(S,X,T,W,bh,H,now);
@@ -5098,6 +5173,7 @@ function vxShard(x,y,r,a,al){ cx.save(); cx.translate(x,y); cx.rotate(a*.5); con
 function vxPlanet(x,y,r){ const g=cx.createRadialGradient(x-r*.35,y-r*.35,0,x,y,r); g.addColorStop(0,'#FFD6F5'); g.addColorStop(.6,'#B06CFF'); g.addColorStop(1,'#3A1E7A'); cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r,0,TAU); cx.fill(); }
 function vxHeart(x,y,r,col,a){ cx.fillStyle=rgba(col,a); heartPath(x,y,r); cx.fill(); }
 function vxPost(S,X,T,W,bh,H,now){
+  if(VX10.has(S.vx)) return vxPost10(S,X,T,W,bh,H,now);
   if(VX9.has(S.vx)) return vxPost9(S,X,T,W,bh,H,now);
   if(VX8.has(S.vx)) return vxPost8(S,X,T,W,bh,H,now);
   if(VX7.has(S.vx)) return vxPost7(S,X,T,W,bh,H,now);
@@ -6540,6 +6616,124 @@ function vxPost7(S,X,T,W,bh,H,now){
   }
   cx.restore();
 }
+/* ---- the Harvest Festival pack (autumn only): pumpkins, a horn of plenty and a great autumn oak ---- */
+const VX10=new Set(['bp_pumpkin','bp_cornu','bp_oak']);
+const HV_LEAF=['#FF6A1A','#FFB020','#D8401A','#FFD166','#B8501A'];
+/* a five-pointed maple leaf */
+function hvLeaf(x,y,s,rot,col,al){ if(al<=0) return; cx.save(); cx.translate(x,y); cx.rotate(rot); cx.globalAlpha*=Math.min(1,al); cx.fillStyle=col;
+  cx.beginPath(); for(let k=0;k<10;k++){ const a=-Math.PI/2+k*Math.PI/5, r=k%2?s*.45:s*(k===0?1:k===4||k===6?.75:.9); cx.lineTo(Math.cos(a)*r,Math.sin(a)*r); } cx.closePath(); cx.fill();
+  cx.strokeStyle='rgba(90,30,10,.5)'; cx.lineWidth=Math.max(.5,s*.08); cx.beginPath(); cx.moveTo(0,s*.9); cx.lineTo(0,-s*.6); cx.stroke(); cx.restore(); }
+/* leaves drifting down past the block: half of them behind it, half in front */
+function hvFall(n,X,W,top,h,now,seed,front){ for(let i=0;i<vxN(n);i++){ if((i%2===0)!==front) continue; const u=(now*.18*(.8+.4*vxRnd(i+seed))+vxRnd(i*3+seed))%1;
+  const x=X+W*(-.5+2*vxRnd(i*7+seed))+Math.sin(now*1.3+i)*W*.12, y=top+u*h;
+  hvLeaf(x,y,W*(.06+.03*vxRnd(i*5+seed)),now*1.5+i,HV_LEAF[i%HV_LEAF.length],Math.min(1,(1-u)*3,u*6)); } }
+function hvPumpkin(x,y,r,sq,glow){ const rx=r*(1+sq*.08), ry=r*.78*(1-sq*.1);
+  const g=cx.createRadialGradient(x-rx*.3,y-ry*.4,r*.1,x,y,r*1.1); g.addColorStop(0,'#FFC060'); g.addColorStop(.6,'#FF8A1A'); g.addColorStop(1,'#B8500A');
+  for(const [dx,w] of [[-.55,.5],[.55,.5],[-.25,.6],[.25,.6],[0,.55]]){ cx.fillStyle=g; cx.beginPath(); cx.ellipse(x+dx*rx,y,rx*w,ry,0,0,TAU); cx.fill(); cx.strokeStyle='rgba(140,60,0,.45)'; cx.lineWidth=Math.max(.6,r*.04); cx.stroke(); }
+  cx.fillStyle='rgba(255,240,200,.35)'; cx.beginPath(); cx.ellipse(x-rx*.25,y-ry*.45,rx*.18,ry*.12,-.3,0,TAU); cx.fill();
+  cx.strokeStyle='#5A6A2A'; cx.lineWidth=r*.16; cx.beginPath(); cx.moveTo(x,y-ry*.8); cx.quadraticCurveTo(x+r*.05,y-ry*1.2,x+r*.2,y-ry*1.3); cx.stroke();
+  cx.strokeStyle='#6A9A3A'; cx.lineWidth=Math.max(.6,r*.05); cx.beginPath(); cx.moveTo(x,y-ry*.9); for(let k=0;k<14;k++){ const a=k*.7, q=r*(.08+k*.02); cx.lineTo(x-r*.15-k*r*.04+Math.cos(a)*q,y-ry*1.05+Math.sin(a)*q*.6); } cx.stroke();
+  if(glow>0){ cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(x,y,r*1.4,'#FFB040',glow); cx.restore(); } }
+function hvApple(x,y,r,col,al=1){ if(al<=0) return; cx.save(); cx.globalAlpha*=Math.min(1,al); const g=cx.createRadialGradient(x-r*.35,y-r*.35,r*.1,x,y,r); g.addColorStop(0,mixc(col,'#FFFFFF',.5)); g.addColorStop(1,mixc(col,'#000000',.25)); cx.fillStyle=g;
+  cx.beginPath(); cx.arc(x-r*.25,y,r*.8,0,TAU); cx.arc(x+r*.25,y,r*.8,0,TAU); cx.fill(); cx.strokeStyle='#5A3A10'; cx.lineWidth=Math.max(.6,r*.12); cx.beginPath(); cx.moveTo(x,y-r*.6); cx.lineTo(x+r*.1,y-r*1.05); cx.stroke();
+  cx.fillStyle='#5A9A3A'; cx.beginPath(); cx.ellipse(x+r*.35,y-r*.95,r*.3,r*.13,-.5,0,TAU); cx.fill(); cx.restore(); }
+function hvPear(x,y,r){ const g=cx.createRadialGradient(x-r*.3,y,r*.1,x,y,r*1.2); g.addColorStop(0,'#F2F07A'); g.addColorStop(1,'#9AAA2A'); cx.fillStyle=g;
+  cx.beginPath(); cx.arc(x,y+r*.3,r*.75,0,TAU); cx.fill(); cx.beginPath(); cx.ellipse(x,y-r*.35,r*.45,r*.55,0,0,TAU); cx.fill();
+  cx.strokeStyle='#5A3A10'; cx.lineWidth=Math.max(.6,r*.12); cx.beginPath(); cx.moveTo(x,y-r*.85); cx.lineTo(x+r*.15,y-r*1.2); cx.stroke(); }
+function hvGrapes(x,y,r){ [[4,0],[3,1],[2,2]].forEach(([n,row])=>{ for(let i=0;i<n;i++){ const gx=x+(i-(n-1)/2)*r*1.5, gy=y+row*r*1.3, g=cx.createRadialGradient(gx-r*.3,gy-r*.3,r*.1,gx,gy,r);
+  g.addColorStop(0,'#D8A0FF'); g.addColorStop(1,'#5A2A8A'); cx.fillStyle=g; cx.beginPath(); cx.arc(gx,gy,r,0,TAU); cx.fill(); } });
+  cx.fillStyle='#5A9A3A'; cx.beginPath(); cx.ellipse(x+r*1.2,y-r*1.1,r*.9,r*.4,-.4,0,TAU); cx.fill(); }
+function hvAcorn(x,y,r){ const g=cx.createRadialGradient(x-r*.3,y,r*.1,x,y+r*.3,r*1.2); g.addColorStop(0,'#FFF2C0'); g.addColorStop(1,'#E8A82A'); cx.fillStyle=g;
+  cx.beginPath(); cx.ellipse(x,y+r*.35,r*.7,r*.85,0,0,TAU); cx.fill();
+  cx.fillStyle='#7A4A1A'; cx.beginPath(); cx.ellipse(x,y-r*.2,r*.85,r*.45,0,0,TAU); cx.fill();
+  cx.strokeStyle='#5A3410'; cx.lineWidth=Math.max(.6,r*.2); cx.beginPath(); cx.moveTo(x,y-r*.6); cx.lineTo(x+r*.2,y-r*.95); cx.stroke(); }
+const hvAcornAt=(k,tx,cy0,W)=>[tx+(k-2)*W*.34+Math.sin(k*2.1)*W*.08,cy0+W*(.12+.12*Math.sin(k*1.7))];
+function vxPre10(S,X,T,W,bh,H,now){
+  const v=S.vx, fy=T+bh, cxm=X+W/2, bt=clamp(1-(now-G.lastBeatT)/.35,0,1), oy=fy+H*.35, B=fy+H;
+  if(v==='bp_oak') bpAscAura(cxm,oy,W,now,bt);
+  cx.save(); cx.lineCap='round'; cx.lineJoin='round';
+  switch(v){
+    case 'bp_pumpkin': { cx.globalCompositeOperation='lighter'; vxGlow(cxm,oy,W*(1.15+.25*bt),'#FF8A1A',.2+.3*bt,.85); cx.globalCompositeOperation='source-over';
+      // vines climbing up behind the block, with leaves
+      [-1,1].forEach(sg=>{ cx.strokeStyle='#4A7A2A'; cx.lineWidth=W*.035; cx.beginPath(); cx.moveTo(cxm+sg*W*.3,B); cx.bezierCurveTo(cxm+sg*W*.85,B-W*.3,cxm+sg*W*.5,T,cxm+sg*W*.75,T-W*.35+Math.sin(now*1.4+sg)*W*.04); cx.stroke();
+        for(let k=0;k<3;k++){ const u=.3+k*.25, lx=cxm+sg*W*(.55+.2*Math.sin(u*5)), ly=B-(B-T+W*.3)*u; cx.fillStyle=k%2?'#5A9A3A':'#3A6A22'; cx.beginPath(); cx.ellipse(lx,ly,W*.12,W*.07,sg*.6+Math.sin(now+k)*.15,0,TAU); cx.fill(); } });
+      hvFall(10,X,W,T-W*.9,B-T+W*1.2,now,3,false); } break;
+    case 'bp_cornu': { cx.globalCompositeOperation='lighter'; vxGlow(cxm,oy,W*(1.25+.3*bt),'#FFD166',.22+.3*bt,.85); cx.globalCompositeOperation='source-over';
+      // a fan of golden wheat behind the block, swaying
+      for(let k=0;k<7;k++){ const a=-Math.PI/2+(k-3)*.28+Math.sin(now*1.2+k)*.04, L=W*(1.05+.12*(k%2)), x0=cxm, y0=T+bh*.4, x1=x0+Math.cos(a)*L, y1=y0+Math.sin(a)*L;
+        cx.strokeStyle='#C8962A'; cx.lineWidth=1.3; cx.beginPath(); cx.moveTo(x0,y0); cx.lineTo(x1,y1); cx.stroke();
+        for(let j=0;j<5;j++){ const u=.62+j*.08, gx=x0+(x1-x0)*u, gy=y0+(y1-y0)*u; [-1,1].forEach(sg=>{ cx.fillStyle=j%2?'#FFE08A':'#F2C04A'; cx.beginPath(); cx.ellipse(gx+Math.cos(a+sg*.6)*W*.035,gy+Math.sin(a+sg*.6)*W*.035,W*.04,W*.018,a+sg*.6,0,TAU); cx.fill(); }); } }
+      cx.globalCompositeOperation='lighter'; vxRise(vxN(6),.3,X-W*.5,W*2,B,W*1.8,now,(x,y,u,i)=>vxSpark(x,y,W*.03,'#FFE7A0',(1-u)*.8),17); } break;
+    case 'bp_oak': { const sway=Math.sin(now*.9)*.04, tx=cxm, top=T-W*1.05, cy0=top+W*.05, cx0=tx+sway*W*1.2;
+      // the trunk rising out of the block, and its branches
+      const tg=cx.createLinearGradient(tx-W*.15,0,tx+W*.15,0); tg.addColorStop(0,'#3A2614'); tg.addColorStop(.5,'#7A5A3A'); tg.addColorStop(1,'#3A2614'); cx.fillStyle=tg;
+      cx.beginPath(); cx.moveTo(tx-W*.16,T+bh*.3); cx.quadraticCurveTo(tx-W*.08,top+W*.5,tx-W*.06+sway*W,top+W*.3); cx.lineTo(tx+W*.06+sway*W,top+W*.3); cx.quadraticCurveTo(tx+W*.08,top+W*.5,tx+W*.16,T+bh*.3); cx.closePath(); cx.fill();
+      cx.strokeStyle='#5A3E24'; [[-1,.55,.5],[1,.5,.55],[-1,.3,.35],[1,.25,.4]].forEach(([sg,h,len])=>{ const bx=tx+sway*W*h, by=top+W*(.3+h*.5); cx.lineWidth=W*.05; cx.beginPath(); cx.moveTo(bx,by); cx.quadraticCurveTo(bx+sg*W*len*.5,by-W*.08,bx+sg*W*len+sway*W,by-W*.2); cx.stroke(); });
+      // the crown: clusters of autumn leaves, darker at the back, rustling
+      for(let k=0;k<vxN(18);k++){ const a=vxRnd(k*3.1)*TAU, d=Math.sqrt(vxRnd(k*7.3)), x=cx0+Math.cos(a)*d*W*.95, y=cy0+Math.sin(a)*d*W*.5+Math.sin(now*1.5+k)*W*.015, r=W*(.2+.08*vxRnd(k*1.7));
+        cx.fillStyle=['#8A2A0A','#B8501A','#C8761A','#9A3A12'][k%4]; cx.beginPath(); cx.arc(x,y,r,0,TAU); cx.fill(); }
+      for(let k=0;k<vxN(16);k++){ const a=vxRnd(k*5.7+1)*TAU, d=Math.sqrt(vxRnd(k*2.9+2)), x=cx0+Math.cos(a)*d*W*.85, y=cy0-W*.04+Math.sin(a)*d*W*.42+Math.sin(now*1.7+k)*W*.02, r=W*(.13+.06*vxRnd(k*4.1));
+        const c=['#FF8A1A','#FFB020','#E8501A','#FFD166'][k%4], g=cx.createRadialGradient(x-r*.3,y-r*.3,r*.1,x,y,r); g.addColorStop(0,mixc(c,'#FFFFFF',.35)); g.addColorStop(1,c); cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r,0,TAU); cx.fill(); }
+      // glowing golden acorns hanging in the crown, brighter on the beat
+      cx.save(); cx.globalCompositeOperation='lighter'; for(let k=0;k<5;k++){ const [x,y]=hvAcornAt(k,cx0,cy0,W); vxGlow(x,y,W*(.12+.08*bt),'#FFD166',.55+.4*bt); } cx.restore();
+      for(let k=0;k<5;k++){ const [x,y]=hvAcornAt(k,cx0,cy0,W); hvAcorn(x,y,W*.05); }
+      hvFall(14,X,W,T-W*1.2,B-T+W*1.5,now,7,false); } break;
+  }
+  cx.restore();
+}
+function vxPost10(S,X,T,W,bh,H,now){
+  const v=S.vx, fy=T+bh, cxm=X+W/2, bt=clamp(1-(now-G.lastBeatT)/.35,0,1), B=fy+H;
+  const clipBody=()=>{ cx.beginPath(); cx.rect(X,T,W,bh+H); cx.clip(); };
+  cx.save(); cx.lineCap='round'; cx.lineJoin='round';
+  switch(v){
+    case 'bp_pumpkin': {
+      // the front: a little wooden crate
+      cx.save(); clipBody(); cx.fillStyle='#8A5A2A'; cx.fillRect(X,fy,W,H); cx.strokeStyle='rgba(60,30,10,.55)'; cx.lineWidth=1; for(let k=1;k<4;k++){ cx.beginPath(); cx.moveTo(X,fy+H*k/4); cx.lineTo(X+W,fy+H*k/4); cx.stroke(); }
+      cx.strokeStyle='rgba(255,220,160,.18)'; cx.lineWidth=W*.06; cx.beginPath(); cx.moveTo(X,fy); cx.lineTo(X+W,B); cx.stroke(); cx.restore();
+      cx.strokeStyle='#5A3A1A'; cx.lineWidth=1.4; rr(X+.5,T+.5,W-1,bh+H-1,3); cx.stroke();
+      // the big pumpkin on top, bouncing to the beat, and two little ones at the front
+      hvPumpkin(cxm,T+bh*.15-bt*W*.03,W*.36,bt,.15+.3*bt);
+      hvPumpkin(X+W*.2,B-H*.12,W*.13,0,0); hvPumpkin(X+W*.82,B-H*.1,W*.11,0,0);
+      // fireflies
+      cx.save(); cx.globalCompositeOperation='lighter'; vxRise(vxN(7),.3,X-W*.3,W*1.6,B,W*1.5,now,(x,y,u,i)=>vxSpark(x,y,W*.035,'#FFE08A',(1-u)*(.5+.5*Math.sin(now*6+i))),21); cx.restore();
+      hvFall(10,X,W,T-W*.9,B-T+W*1.2,now,3,true); } break;
+    case 'bp_cornu': {
+      // the front: woven gold wicker
+      cx.save(); clipBody(); const wg=cx.createLinearGradient(0,fy,0,B); wg.addColorStop(0,'#C8902A'); wg.addColorStop(1,'#8A5A1A'); cx.fillStyle=wg; cx.fillRect(X,fy,W,H);
+      cx.strokeStyle='rgba(255,230,160,.35)'; cx.lineWidth=1; for(let k=-4;k<10;k++){ cx.beginPath(); cx.moveTo(X+k*W*.14,fy); cx.lineTo(X+k*W*.14+H*.6,B); cx.stroke(); cx.beginPath(); cx.moveTo(X+k*W*.14+H*.6,fy); cx.lineTo(X+k*W*.14,B); cx.stroke(); } cx.restore();
+      cx.strokeStyle='#FFE08A'; cx.lineWidth=1.6; rr(X+.5,T+.5,W-1,bh+H-1,3); cx.stroke();
+      // the horn of plenty lying on top, rocking gently
+      const hy=T+bh*.35; cx.save(); cx.translate(cxm,hy); cx.rotate(Math.sin(now*1.5)*.03);
+      const hg=cx.createLinearGradient(-W*.6,0,W*.4,0); hg.addColorStop(0,'#8A5A1A'); hg.addColorStop(.6,'#E8B84A'); hg.addColorStop(1,'#FFE7A0'); cx.fillStyle=hg;
+      cx.beginPath(); cx.moveTo(-W*.62,-W*.32); cx.quadraticCurveTo(-W*.5,W*.05,-W*.1,W*.12); cx.lineTo(W*.32,W*.18); cx.lineTo(W*.26,-W*.24); cx.quadraticCurveTo(-W*.2,-W*.2,-W*.62,-W*.32); cx.closePath(); cx.fill();
+      cx.strokeStyle='rgba(110,70,10,.55)'; cx.lineWidth=.9; for(let k=1;k<6;k++){ const u=k/6; cx.beginPath(); cx.moveTo(-W*.62+u*W*.9,-W*.32+u*W*.09); cx.quadraticCurveTo(-W*.54+u*W*.9,-W*.06,-W*.6+u*W*.92,W*.13+u*W*.04); cx.stroke(); }
+      cx.strokeStyle='#8A5A1A'; cx.lineWidth=W*.05; cx.beginPath(); cx.arc(-W*.62,-W*.4,W*.08,.3,Math.PI*1.6); cx.stroke();
+      cx.fillStyle='#5A3A10'; cx.beginPath(); cx.ellipse(W*.29,-W*.03,W*.07,W*.21,-.1,0,TAU); cx.fill();
+      cx.restore();
+      // fruit spilling out of its mouth, hopping on the beat
+      const fx0=cxm+W*.32, jump=bt*W*.04;
+      hvGrapes(fx0+W*.05,hy-W*.15-jump,W*.062); hvApple(fx0+W*.14,hy+W*.12-jump*.6,W*.13,'#E8302A'); hvPear(fx0-W*.05,hy+W*.05-jump*.8,W*.11); hvApple(fx0+W*.02,hy+W*.22,W*.11,'#F2C02A');
+      // and one apple that keeps rolling off and bouncing down the front
+      { const u=(now*.5)%1, ax=fx0+W*.1+u*W*.35, ay=hy+W*.2-Math.abs(Math.sin(u*Math.PI*2.5))*W*.12+u*(B-hy-W*.3); hvApple(ax,ay,W*.08*(1-u*.3),'#E8302A',Math.min(1,(1-u)*4)); }
+      cx.save(); cx.globalCompositeOperation='lighter'; vxRise(vxN(8),.4,X-W*.4,W*1.8,B,W*1.6,now,(x,y,u,i)=>vxSpark(x,y,W*.04*(1-u*.5),i%2?'#FFE08A':'#FFFFFF',1-u),29); cx.restore(); } break;
+    case 'bp_oak': {
+      // the front: the tree's rings in cut wood, with a ring of light rolling outward on every beat
+      cx.save(); clipBody(); const wg=cx.createLinearGradient(0,fy,0,B); wg.addColorStop(0,'#C8945A'); wg.addColorStop(1,'#8A5A30'); cx.fillStyle=wg; cx.fillRect(X,fy,W,H);
+      const rx0=cxm, ry0=fy+H*.52; cx.strokeStyle='rgba(90,50,20,.55)'; cx.lineWidth=1; for(let k=1;k<8;k++){ cx.beginPath(); cx.ellipse(rx0,ry0,W*.07*k*(1+.04*Math.sin(k*3)),H*.065*k,0,0,TAU); cx.stroke(); }
+      const ph=(now/(G.spb||.6))%1; cx.globalCompositeOperation='lighter'; cx.strokeStyle=rgba('#FFD166',.8*(1-ph)); cx.lineWidth=2.2; cx.beginPath(); cx.ellipse(rx0,ry0,W*.55*ph+2,H*.5*ph+2,0,0,TAU); cx.stroke();
+      vxGlow(rx0,ry0,W*.18,'#FFD166',.5+.4*bt); cx.restore();
+      // the base of the trunk, and roots wrapping over the top edge and down the sides
+      const tg=cx.createLinearGradient(cxm-W*.16,0,cxm+W*.16,0); tg.addColorStop(0,'#3A2614'); tg.addColorStop(.5,'#7A5A3A'); tg.addColorStop(1,'#3A2614'); cx.fillStyle=tg;
+      cx.beginPath(); cx.moveTo(cxm-W*.17,T+bh*.55); cx.quadraticCurveTo(cxm-W*.1,T,cxm-W*.1,T-W*.3); cx.lineTo(cxm+W*.1,T-W*.3); cx.quadraticCurveTo(cxm+W*.1,T,cxm+W*.17,T+bh*.55); cx.closePath(); cx.fill();
+      cx.strokeStyle='#4A3018'; [-1,1].forEach(sg=>{ cx.lineWidth=W*.045; cx.beginPath(); cx.moveTo(cxm+sg*W*.12,T+bh*.35); cx.quadraticCurveTo(cxm+sg*W*.42,T+bh*.2,X+(sg<0?W*.06:W*.94),fy+H*.35); cx.stroke();
+        cx.lineWidth=W*.03; cx.beginPath(); cx.moveTo(cxm+sg*W*.2,T+bh*.6); cx.quadraticCurveTo(cxm+sg*W*.3,fy+H*.05,cxm+sg*W*.34,fy+H*.25); cx.stroke(); });
+      // the Ascendant rim
+      cx.strokeStyle=hsl2hex(340+20*Math.sin(now*3),95,60); cx.lineWidth=1.8; rr(X+.5,T+.5,W-1,bh+H-1,3); cx.stroke();
+      bpAscSparks(X,W,B,now,41);
+      hvFall(14,X,W,T-W*1.2,B-T+W*1.5,now,7,true); } break;
+  }
+  cx.restore();
+}
 /* ---- the big-ticket Shop blocks ---- */
 const VX8=new Set(['sk_ninja','sk_mech','sk_wolf','sk_emperor']);
 function vxPre8(S,X,T,W,bh,H,now){
@@ -7886,7 +8080,9 @@ function acctInit(){
 }
 
 /* ---- merging a device's save with the account's save ---- */
-const DEVICE_KEYS=['offset','controls','musicVol','sfxVol','haptics','reduce','swipeLearn','hpSeen'];
+/* settings that stay on each device (timing calibration, controls, vibration); volume and Reduce motion follow your account */
+const DEVICE_KEYS=['offset','controls','haptics','swipeLearn','hpSeen'];
+const KEEP_KEYS=[...DEVICE_KEYS,'musicVol','sfxVol','reduce'];   // what a device keeps when you sign out
 function mergeSaves(loc,cl,additive){
   hardMig(loc); hardMig(cl);
   const base=JSON.parse(JSON.stringify(DEF));
@@ -7900,6 +8096,9 @@ function mergeSaves(loc,cl,additive){
   const out=Object.assign(base,loc,newer);
   for(const k of DEVICE_KEYS) if(k in loc) out[k]=loc[k];
   out.owned=[...new Set([...(cl.owned||[]),...(loc.owned||[])])];
+  // a block given to a friend stays gone, unless the newer save has it again
+  out.gone=Object.assign({},cl.gone||{}); for(const k in (loc.gone||{})) out.gone[k]=Math.max(out.gone[k]||0,loc.gone[k]);
+  out.owned=out.owned.filter(id=>!out.gone[id]||(newer.owned||[]).includes(id));
   out.stars=Object.assign({},cl.stars||{}); for(const k in (loc.stars||{})) out.stars[k]=Math.max(out.stars[k]||0,loc.stars[k]);
   for(const k of ['bestEndless','bestCoop','maxStreak','plays','world','lastWorld','bestAscent','rankSeen','bestRaid','bestRush','bestTether','rankKeep']) out[k]=Math.max(loc[k]||0,cl[k]||0)||DEF[k];
   // Notes and XP sync as changes: what this device earned or spent since it last synced is applied on top
@@ -8084,7 +8283,7 @@ function acctForgot(){
 function acctOut(){
   if(!ACCT.auth) return;
   // the progress lives in the account now; this device goes back to a fresh guest save
-  const keep={}; for(const k of DEVICE_KEYS) keep[k]=SAVE[k];
+  const keep={}; for(const k of KEEP_KEYS) keep[k]=SAVE[k];
   acctSync().catch(()=>{}).then(()=>ACCT.auth.signOut()).then(()=>{ SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep,{trailRefund:true,name:SAVE.name||store.get('name',''),nameT:SAVE.nameT||0,nameAuto:!!SAVE.nameAuto}); store.set('save',SAVE); acctRefresh(); acctUI(); });
 }
 
@@ -8155,8 +8354,10 @@ async function admClaim(){ const u=ACCT.user, db=ACCT.db, k=ADM.pending; if(!u||
 function admUI(){ ['setAdmin','mAdmin'].forEach(id=>{ const b=$(id); if(b) b.hidden=!ADM.on||!!window.PF_CG; }); }
 /* ---- a player's gift inbox ---- */
 function inboxStart(u){ inboxStop(); if(!u||!ACCT.db||ACCT.user!==u) return;
-  ADM.unsubG=ACCT.db.collection('gifts').doc(u.uid).collection('items').onSnapshot(s=>s.docs.forEach(inboxTake),()=>{}); }
-function inboxStop(){ if(ADM.unsubG){ try{ ADM.unsubG(); }catch(e){} ADM.unsubG=null; } }
+  ADM.unsubG=ACCT.db.collection('gifts').doc(u.uid).collection('items').onSnapshot(s=>s.docs.forEach(inboxTake),()=>{});
+  ADM.unsubF=ACCT.db.collection('fgifts').doc(u.uid).collection('items').onSnapshot(s=>s.docs.forEach(fgTake),()=>{});   // blocks from friends
+  likesLoad(u); }
+function inboxStop(){ for(const k of ['unsubG','unsubF']) if(ADM[k]){ try{ ADM[k](); }catch(e){} ADM[k]=null; } }
 function inboxTake(d){ const g=d.data()||{}; SAVE.giftIds=SAVE.giftIds||[];
   if(!SAVE.giftIds.includes(d.id)){ const txt=giftApply(g); SAVE.giftIds.push(d.id); SAVE.giftIds=SAVE.giftIds.slice(-200); save(); acctPush(true); afterGift();
     toast('🎁 '+txt+(g.msg?' · '+String(g.msg).slice(0,120):'')); if(A.ctx) sGem(); buzz(30); }
@@ -8391,7 +8592,7 @@ async function acctDelete(){
     inboxStop(); await quiet(db.collection('admins').doc(uid).delete());
     await db.collection('users').doc(uid).delete();
     await u.delete();
-    const keep={}; for(const k of DEVICE_KEYS) keep[k]=SAVE[k];
+    const keep={}; for(const k of KEEP_KEYS) keep[k]=SAVE[k];
     SAVE=Object.assign(JSON.parse(JSON.stringify(DEF)),keep,{wipe:Date.now()}); store.set('save',SAVE); store.set('name','');
     ACCT.deleting=false; toast('Your account was deleted.'); toMenu();
   }catch(e){ ACCT.deleting=false; btn.disabled=false; btn.textContent=label; m.classList.add('err');
@@ -8415,11 +8616,18 @@ var FR={code:'',uids:[],profiles:{},invites:[],unsub:null,unsubF:null,pushT:null
 const FR_MAX=50, INVITE_TTL=10*60*1000, ONLINE_MS=6*60*1000;
 function frOn(){ return !!(FR&&ACCT.user&&ACCT.db&&FR.code); }
 const frDB=()=>ACCT.db, frMe=()=>ACCT.user&&ACCT.user.uid;
+/* likes on the levels you build (by level key), loaded when you sign in */
+const lvlKey=code=>hashStr(String(code||'')).toString(36);
+const LIKES={got:{}};
+/* your showcase: your pinned blocks first, then your rarest */
+function myShowcase(){ const sc=s=>s.bp?s.bpr+1:s.paid?4:(s.price||0)>=6000?3:(s.price||0)/10000;
+  const own=SKINS.filter(s=>ownsSkin(s.id)), pins=(SAVE.pins||[]).filter(id=>own.some(s=>s.id===id));
+  return [...pins,...own.filter(s=>!pins.includes(s.id)).sort((a,b)=>sc(b)-sc(a)).map(s=>s.id)].slice(0,3); }
 function frCard(){
   const worlds=[]; for(let w=1;w<=WORLDS;w++) worlds.push(worldStars(w));
   const nm=ensureName(); return {v:1,name:nm,nameKey:String(nm).toLowerCase(),code:FR.code,rank:myRank(),xp:SAVE.xp||0,skin:SAVE.skin,land:SAVE.land,world:SAVE.world||1,levelStars:levelStars(),worlds,
     bosses:bossesBeaten(),hard:hardCleared(),interDone:!!SAVE.interDone,bestEndless:SAVE.bestEndless||0,bestAscent:SAVE.bestAscent||0,bestRush:SAVE.bestRush||0,bestRaid:SAVE.bestRaid||0,
-    bestTether:SAVE.bestTether||0,levels:(SAVE.myLevels||[]).slice(0,24).map(l=>({n:l.n||'Untitled',code:l.code})),seen:Date.now()};
+    bestTether:SAVE.bestTether||0,levels:(SAVE.myLevels||[]).slice(0,24).map(l=>({n:l.n||'Untitled',code:l.code,k:LIKES.got[lvlKey(l.code)]||0})),show:myShowcase(),seen:Date.now()};
 }
 /* your public card is refreshed a few seconds after anything is saved, and every few minutes while the game is open */
 function frPush(now){
@@ -8522,8 +8730,9 @@ async function frView(uid){
   $('fpWorlds').innerHTML=(p.worlds||[]).map((n,i)=>`<span class="${n>=27?'full':''}" style="--c:${THEMES[i]?THEMES[i].acc:'#FFD166'}" title="${escapeHTML(THEMES[i]?THEMES[i].name:'World '+(i+1))}">W${i+1}<b>◆${n}</b></span>`).join('');
   $('fpStats').innerHTML=[['Best Endless',(p.bestEndless||0).toLocaleString()],['Best Ascent',p.bestAscent?'floor '+p.bestAscent:'–'],['Best Mastery Jam',p.bestRaid?p.bestRaid+'/'+WORLDS+' bosses':'–'],['Best Tether',p.bestTether?p.bestTether+' rooms':'–'],['Best Mastery Rush',p.bestRush?p.bestRush+'/'+WORLDS+' bosses':'–']].map(([l,v])=>`<div><span class="lbl">${l}</span><b>${v}</b></div>`).join('');
   const maps=p.levels||[];
-  $('fpMaps').innerHTML=maps.length?maps.map((l,i)=>`<li><span>${escapeHTML(l.n||'Untitled')}</span><button type="button" data-a="play" data-i="${i}">Play</button><button type="button" data-a="edit" data-i="${i}">Open in editor</button></li>`).join(''):'<li class="none">They haven\'t built any levels yet.</li>';
-  $('fpMaps').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const d=edDecode(maps[+b.dataset.i].code); if(!d) return toast('That level could not be opened.'); if(!d.by) d.by=p.name; if(b.dataset.a==='play') playDesign(d,false); else { edLoad(d,-1); showEditor(); } });
+  $('fpMaps').innerHTML=maps.length?maps.map((l,i)=>`<li><span>${escapeHTML(l.n||'Untitled')}</span><button type="button" class="fplike" data-i="${i}" aria-pressed="false" aria-label="Like this level">♥ <b>${Math.max(0,+l.k||0)}</b></button><button type="button" data-a="play" data-i="${i}">Play</button><button type="button" data-a="edit" data-i="${i}">Open in editor</button></li>`).join(''):'<li class="none">They haven\'t built any levels yet.</li>';
+  frLikes(uid,maps); frShowcase(p); $('fpGift').onclick=()=>fgOpen(uid); $('fgBox').hidden=true; $('fgBox').innerHTML='';
+  $('fpMaps').querySelectorAll('button:not(.fplike)').forEach(b=>b.onclick=()=>{ const d=edDecode(maps[+b.dataset.i].code); if(!d) return toast('That level could not be opened.'); if(!d.by) d.by=p.name; if(b.dataset.a==='play') playDesign(d,false); else { edLoad(d,-1); showEditor(); } });
   // leaderboard positions: where they sit in the top 100 of each board
   const boards=[['endless','Endless · all time'],['ascent','Ascent · highest floor'],['daily-'+todayKey(),'Today\'s Daily'],['week-'+weekKey(),weekEvent().name+' · this week']];
   $('fpRanks').innerHTML=boards.map(([,l])=>`<li><span class="lbn">…</span><i class="gem" style="--rc:${rankCol(p.rank||0)}"></i><span class="lbname">${l}</span><b>…</b></li>`).join('');
@@ -8533,6 +8742,48 @@ async function frView(uid){
   $('fpRanks').innerHTML=boards.map(([b,l],j)=>{ const r=res[j]; const pos=!r?'–':r.i>=0?'#'+(r.i+1):'–', val=!r?'couldn\'t load':r.i<0?'not in the top 100':b==='ascent'?'floor '+Math.floor(r.sc/1e6)+' · '+(r.sc%1e6).toLocaleString():r.sc.toLocaleString();
     return `<li><span class="lbn">${pos}</span><i class="gem" style="--rc:${rankCol(p.rank||0)}"></i><span class="lbname">${l}</span><b>${val}</b></li>`; }).join('');
 }
+/* a friend's showcase: three blocks they're proud of */
+function frShowcase(p){ const ids=(Array.isArray(p.show)?p.show:[]).slice(0,3).map(id=>SKINS.find(s=>s.id===id)).filter(Boolean);
+  $('fpShowWrap').hidden=!ids.length;
+  $('fpShow').innerHTML=ids.map(s=>{ const R=s.bp?BP_RAR[s.bpr]:null; return `<div><canvas class="skprev" data-skin="${s.id}" width="64" height="64" aria-hidden="true"></canvas><b>${escapeHTML(s.name)}</b>${R?`<em style="--rc:${R.c}">${R.n}</em>`:s.paid?'<em>Premium</em>':''}</div>`; }).join(''); }
+/* likes: one per player per level. Your own like is a document only you (and the builder) can see */
+async function frLikes(uid,maps){ const me=frMe(); if(!frOn()||!me) return;
+  $('fpMaps').querySelectorAll('.fplike').forEach(b=>{ const l=maps[+b.dataset.i]; if(!l) return; const key=lvlKey(l.code), ref=frDB().collection('likes').doc(uid).collection('items').doc(me+'_'+key);
+    ref.get().then(d=>{ if(d.exists&&FR.view===uid) b.setAttribute('aria-pressed','true'); }).catch(()=>{});
+    b.onclick=async()=>{ if(b.disabled) return; b.disabled=true; const on=b.getAttribute('aria-pressed')==='true', n=b.querySelector('b');
+      try{ if(on) await ref.delete(); else await ref.set({by:me,key,t:Date.now()});
+        b.setAttribute('aria-pressed',String(!on)); n.textContent=Math.max(0,(+n.textContent||0)+(on?-1:1)); if(!on&&A.ctx) sGem(); }
+      catch(e){ toast(e&&e.code==='permission-denied'?'Likes need the latest Firestore rules. Ask the game\'s owner to publish them.':'Could not save your like. Check your connection.'); }
+      b.disabled=false; }; }); }
+async function likesLoad(u){ try{ const s=await ACCT.db.collection('likes').doc(u.uid).collection('items').limit(2000).get(); const got={};
+  s.forEach(d=>{ const k=(d.data()||{}).key; if(typeof k==='string') got[k]=(got[k]||0)+1; }); LIKES.got=got;
+  const tot=Object.values(got).reduce((a,b)=>a+b,0); if(tot!==(SAVE.likesGot||0)){ SAVE.likesGot=tot; save(); achCheck(); } if(frOn()) frPush(); }catch(e){} }
+/* ---- gifting a block to a friend: it leaves your collection and goes to theirs, one gift per friend a day ---- */
+const fgGiftable=s=>!!s&&!s.paid&&!s.hidden&&(!!s.bp||(!s.req&&s.price>0));
+function fgOpen(uid){ const p=FR.profiles[uid]||{}, who=escapeHTML(showName(p.name,'your friend')), day=todayKey(), box=$('fgBox'); box.hidden=false;
+  const list=SKINS.filter(s=>SAVE.owned.includes(s.id)&&fgGiftable(s)&&s.id!==SAVE.skin).sort((a,b)=>(b.bpr||0)-(a.bpr||0)||(b.price||0)-(a.price||0));
+  if(!frOn()){ box.innerHTML='<p class="small">Sign in to send gifts.</p>'; return; }
+  if((SAVE.fgSent||{})[uid]===day){ box.innerHTML=`<p class="small">You already sent ${who} a gift today. You can send another one tomorrow.</p>`; return; }
+  if(!list.length){ box.innerHTML='<p class="small">You don\'t have a block you can give yet. Blocks from packs and the Shop can be given (not the one you\'re wearing, and not Premium or event blocks).</p>'; return; }
+  box.innerHTML=`<p class="small" style="margin:0">Pick a block to give ${who}. It leaves your collection and goes to theirs.</p><div class="fggrid">${list.map(s=>`<button type="button" class="fgitem" data-fg="${s.id}"><canvas class="skprev" data-skin="${s.id}" width="56" height="56" aria-hidden="true"></canvas><span>${escapeHTML(s.name)}</span>${s.bp?`<em style="color:${BP_RAR[s.bpr].c}">${BP_RAR[s.bpr].n}</em>`:''}</button>`).join('')}</div>`;
+  box.querySelectorAll('[data-fg]').forEach(b=>b.onclick=()=>fgConfirm(uid,b.dataset.fg)); }
+function fgConfirm(uid,id){ const s=skinById(id), p=FR.profiles[uid]||{};
+  $('fgBox').innerHTML=`<p style="margin:0 0 8px">Give <b>${escapeHTML(s.name)}</b> to <b>${escapeHTML(showName(p.name,'your friend'))}</b>? It leaves your collection.</p><div class="row"><button class="btn" type="button" id="fgYes">🎁 Give it</button><button class="btn ghost" type="button" id="fgNo">Cancel</button></div><p class="small" id="fgMsg"></p>`;
+  $('fgNo').onclick=()=>fgOpen(uid); $('fgYes').onclick=()=>fgSend(uid,id); }
+async function fgSend(uid,id){ const s=skinById(id), day=todayKey(), b=$('fgYes'); if(!frOn()||!SAVE.owned.includes(id)||!fgGiftable(s)||id===SAVE.skin) return; b.disabled=true;
+  try{ await frDB().collection('fgifts').doc(uid).collection('items').doc(frMe()+'_'+day).set({from:frMe(),name:ensureName(),skin:id,t:Date.now(),day});
+    SAVE.owned=SAVE.owned.filter(x=>x!==id); SAVE.pins=(SAVE.pins||[]).filter(x=>x!==id); SAVE.gone=Object.assign({},SAVE.gone,{[id]:Date.now()});
+    const sent={}; for(const [k,d] of Object.entries(SAVE.fgSent||{})) if(d===day) sent[k]=d; sent[uid]=day; SAVE.fgSent=sent;
+    SAVE.life=SAVE.life||{}; SAVE.life.giftsSent=(SAVE.life.giftsSent||0)+1; save(); acctPush(true); frPush(true); achCheck(); if(A.ctx) sGem(); buzz(20);
+    $('fgBox').innerHTML=`<p class="small">🎁 ${escapeHTML(s.name)} is on its way to ${escapeHTML(showName((FR.profiles[uid]||{}).name,'your friend'))}!</p>`; }
+  catch(e){ b.disabled=false; $('fgMsg').textContent=e&&e.code==='permission-denied'?'That didn\'t go through. You may have already sent them a gift today, or they aren\'t on your friends list any more.':'Could not send the gift. Check your connection and try again.'; } }
+/* a gift from a friend arriving */
+function fgTake(d){ const g=d.data()||{}, s=SKINS.find(k=>k.id===g.skin), key='fg:'+d.id+':'+(g.t||0); SAVE.giftIds=SAVE.giftIds||[];
+  if(!SAVE.giftIds.includes(key)&&fgGiftable(s)){ const who=showName(g.name,'A friend'); let txt;
+    if(SAVE.owned.includes(s.id)){ const pk=BPACKS.find(p=>p.id===s.bp), n=pk?bpRefund(pk,s.bpr):Math.round((s.price||0)/2); SAVE.notes+=n; txt=`${who} sent you ${s.name}. You already have it, so here's ♪${n.toLocaleString()} instead`; }
+    else { SAVE.owned.push(s.id); if(SAVE.gone) delete SAVE.gone[s.id]; txt=`${who} sent you the ${s.name} block!`; }
+    SAVE.giftIds.push(key); SAVE.giftIds=SAVE.giftIds.slice(-200); save(); acctPush(true); afterGift(); toast('🎁 '+txt); if(A.ctx) sGem(); buzz(30); }
+  d.ref.delete().catch(()=>{}); }
 /* ---- party invites ---- */
 function frCoopInvites(){
   const box=$('nInvite'); if(!box) return;
@@ -9175,7 +9426,7 @@ const PQ_WEEK=[
  {id:'stars',ic:'★',t:n=>`Earn ${n} new stars`,g:10,ev:'stars'},
  {id:'rhythm',ic:'♫',t:n=>`Clear ${n} rooms in one Rhythm Patterns run`,g:8,ev:'rhythm',max:true},
  {id:'remix',ic:'⇄',t:n=>`Clear ${n} Remix levels`,g:8,ev:'remix'},
- {id:'boss',ic:'☠',t:n=>`Complete ${n} boss challenges`,g:3,ev:'boss'},
+ {id:'boss',ic:'♛',t:n=>`Complete ${n} boss challenges`,g:3,ev:'boss'},
  {id:'endless',ic:'∞',t:n=>`Clear ${n} rooms in one Endless run`,g:12,ev:'endless',max:true},
  {id:'ascent',ic:'▲',t:n=>`Reach floor ${n} in Ascent`,g:12,ev:'ascent',max:true},
  {id:'daily',ic:'☀',t:n=>`Finish ${n} Daily Practices`,g:4,ev:'daily'}];
@@ -9191,7 +9442,10 @@ function pqEv(ev,n,isMax){ const P=ensurePQ(); [[P.d,0],[P.w,1]].forEach(([L,wk]
 const pqReady=()=>{ const P=ensurePQ(); return [...P.d,...P.w].filter(q=>q.prog>=q.goal&&!q.claimed).length; };
 function pqClaim(wk,i){ const P=ensurePQ(), q=(wk?P.w:P.d)[i]; if(!q||q.claimed||q.prog<q.goal) return;
   q.claimed=true; const before=passTier().t; passS().xp=(passS().xp||0)+q.xp; save(); if(A.ctx) sGem(); buzz(20);
-  const up=passTier().t-before; toast(`+${q.xp.toLocaleString()} Pass XP`+(up?` · Tier ${passTier().t}!`:'')); buildPass(); }
+  const up=passTier().t-before; toast(`+${q.xp.toLocaleString()} Pass XP`+(up?` · Tier ${passTier().t}!`:''));
+  // every weekly quest collected: a free pack of your choice
+  if(wk&&P.w.every(x=>x.claimed)&&P.wTok!==P.week){ P.wTok=P.week; SAVE.bpTokens=(SAVE.bpTokens||0)+1; save(); setTimeout(()=>{ toast('🎟 All your weekly quests are done! A free pack is waiting in the Shop (Packs tab).'); if(A.ctx) sChime(88); },1800); }
+  buildPass(); }
 function untilMonday(){ const n=new Date(), m=new Date(n); m.setHours(24,0,0,0); while(m.getDay()!==1) m.setDate(m.getDate()+1); const h=Math.ceil((m-n)/3600000); return h>=24?`${Math.floor(h/24)}d ${h%24}h`:`${h}h`; }
 function buildPassQuests(){ const P=ensurePQ();
   const li=(q,i,wk)=>{ const d=pqDef(q,wk); if(!d) return ''; const done=q.prog>=q.goal;
@@ -9200,7 +9454,7 @@ function buildPassQuests(){ const P=ensurePQ();
       `<span class="pqbar"><i style="width:${Math.round(q.prog/q.goal*100)}%"></i><b>${q.prog.toLocaleString()} / ${q.goal.toLocaleString()}</b></span>`+
       `<span class="pqfoot"><span class="pqrw">+${q.xp.toLocaleString()} Pass XP</span>${btn}</span></li>`; };
   $('ppQuests').innerHTML=`<div class="pqsec"><div class="pqh">Daily quests <small>new in ${untilMidnight()}</small></div><ul class="pqlist">${P.d.map((q,i)=>li(q,i,0)).join('')}</ul></div>`+
-    `<div class="pqsec" style="margin-top:12px"><div class="pqh">Weekly quests <small>new in ${untilMonday()}</small></div><ul class="pqlist">${P.w.map((q,i)=>li(q,i,1)).join('')}</ul></div>`;
+    `<div class="pqsec" style="margin-top:12px"><div class="pqh"><span>Weekly quests<span class="pqtok">${P.wTok===P.week?'🎟 Free pack earned this week ✓':'🎟 Collect all four for a free pack'}</span></span><small>new in ${untilMonday()}</small></div><ul class="pqlist">${P.w.map((q,i)=>li(q,i,1)).join('')}</ul></div>`;
   $('ppQuests').querySelectorAll('[data-pq]').forEach(b=>b.onclick=()=>{ const [w,i]=b.dataset.pq.split(':').map(Number); pqClaim(w,i); });
 }
 
@@ -10571,7 +10825,19 @@ const ACH=[
  ['chalwin','Challenge Accepted','Beat a friend\'s challenge',()=>LF('chalWins')>=1],
  ['editor','Architect','Share a level you built',()=>LF('shared')>=1],
  ['event','Event Regular','Hit the target in a weekly event',()=>LF('events')>=1],
- ['board','On the Board','Post a score to a leaderboard',()=>LF('posted')>=1]];
+ ['board','On the Board','Post a score to a leaderboard',()=>LF('posted')>=1],
+ ['rhythm3k','Off-Beat Explorer','Score 3,000 in Rhythm Patterns',()=>(SAVE.bestRhythm||0)>=3000],
+ ['rhythm10k','Syncopation Master','Score 10,000 in Rhythm Patterns',()=>(SAVE.bestRhythm||0)>=10000],
+ ['streak300','Locked In','Reach a 300 streak',()=>SAVE.maxStreak>=300],
+ ['perf25k','Steady Tempo','Hit 25,000 perfect beats',()=>LF('perfect')>=25000],
+ ['gradeS100','Virtuoso','Get 100 S grades',()=>gradeCount('S')>=100],
+ ['songs5','Composer','Finish 5 songs of your own in Studio',()=>LF('songs')>=5],
+ ['remix10','Remixer','Earn 10 stars in Remix',()=>Object.values(SAVE.remix||{}).reduce((a,b)=>a+b,0)>=10],
+ ['pack1','Unwrapped','Open your first block pack',()=>Object.values(SAVE.bpOpened||{}).reduce((a,b)=>a+b,0)>=1],
+ ['pack50','Pack Collector','Open 50 block packs',()=>Object.values(SAVE.bpOpened||{}).reduce((a,b)=>a+b,0)>=50],
+ ['set1','Full Set','Find every block in a pack',()=>Object.keys(SAVE.bpSet||{}).length>=1],
+ ['giver','Generous','Give a block to a friend',()=>LF('giftsSent')>=1],
+ ['liked5','Crowd Favourite','Get 5 likes on levels you built',()=>(SAVE.likesGot||0)>=5]];
 let achQ=[], achT=null;
 function achCheck(){
   const A0=SAVE.ach||(SAVE.ach={}); let n=0;
@@ -11438,7 +11704,7 @@ const FLUTES={
  w9:{name:'Synth flute',pat:'long',oct:12,w:'sawtooth',h2:0,dt:12,lp:1600,vr:5.5,vd:.01,vdel:.3,br:0,a:.05,v:.035},
  w10:{name:'Steam whistle',pat:'blast',oct:12,w:'square',h2:.1,dt:25,lp:2000,sc:.8,sct:.25,vd:.004,br:.09,brd:.5,bt:'highpass',bf:2.5,a:.06,v:.035},
  w11:{name:'Pan pipes',pat:'samba',oct:12,w:'sine',h2:.06,vd:0,br:.08,brd:.07,bq:1,a:.015,hold:.4,v:.08},
- w12:{name:'Haunted flute',pat:'sigh',oct:12,w:'sine',h2:.1,vr:3,vd:.035,vdel:.1,fall:.89,trem:5,br:.03,a:.15,v:.07},
+ w12:{name:'Misty flute',pat:'sigh',oct:12,w:'sine',h2:.1,vr:3,vd:.035,vdel:.1,fall:.89,trem:5,br:.03,a:.15,v:.07},
  w13:{name:'Wind flute',pat:'gust',oct:12,w:'triangle',h2:.1,sc:.95,sct:.12,vr:6,vd:.012,br:.1,brd:.4,bf:1,bq:.7,a:.05,v:.065},
  w14:{name:'Bubble flute',pat:'bubbles',oct:12,w:'sine',h2:.15,vr:10,vd:.025,sc:.9,sct:.04,br:.01,a:.02,hold:.4,lp:1800,v:.07},
  w15:{name:'Marching fife',pat:'fife',oct:24,w:'square',h2:0,lp:3800,vd:0,br:.02,a:.006,hold:.45,v:.03},
@@ -12125,7 +12391,7 @@ function toMenu(ov='menuOv'){
   document.body.classList.remove('obscene','talkok'); G.obs=null; G.crowd=null; G.follow=null; G.watch=null; mystStop(.4); rollSndStop(); if(RES.boss) setTimeout(resize,0);
   if(A.ctx&&A.ctx.state==='suspended') A.ctx.resume();
   if(G.state!=='menu') fadeMusic(); stopStudioAudio(); hideTalk(); hideCine();
-  G=visualDefaults({state:'menu',players:[mkPlayer(0)]}); R=null; setTheme(THEMES[Math.min(WORLDS-1,SAVE.world-1)]);
+  TRY=null; G=visualDefaults({state:'menu',players:[mkPlayer(0)]}); R=null; setTheme(THEMES[Math.min(WORLDS-1,SAVE.world-1)]);
   hint('');
   if(ov==='menuOv'){ buildMenu(); setTimeout(()=>{ if(G.state==='menu'&&!$('menuOv').hidden&&!chalOffer()&&!lvlOffer()&&$('cvkWinOv').hidden&&$('twinWinOv').hidden&&!cvkWinPopup()&&!twWinPopup()) giftCheck(); },500); } else if(ov==='hardOv') buildHard(); else if(ov==='remixOv') buildRemix(); else if(ov==='passOv') buildPass(); else if(ov==='worldsOv') buildWorlds(); else if(ov==='shopOv') buildShop(); else if(ov==='settingsOv') buildSettings();
   showOv(ov);
@@ -12233,7 +12499,9 @@ function buildShop(){
     else if(owned) btn=`<button class="btn ghost" data-eq="${it.id}" type="button">Equip</button>`;
     else if(it.req) btn=`<button class="btn ghost" disabled type="button">${reqText(it.req)}</button>`;
     else btn=`<button class="btn" data-buy="${it.id}" type="button" ${SAVE.notes<it.price?'disabled':''}>♪ ${it.price}</button>`;
-    return `<div class="item${eq===it.id?' eq':''}">${prev}<b>${it.name}</b>${btn}</div>`; }).join('');
+    const tr=shopTab==='skins'&&!owned&&!it.req&&!it.paid?`<button class="btn ghost trybtn" data-try="${it.id}" type="button">▶ Try it</button>`:'';
+    return `<div class="item${eq===it.id?' eq':''}">${prev}<b>${it.name}</b>${tr}${btn}</div>`; }).join('');
+  $('shopGrid').querySelectorAll('[data-try]').forEach(b=>b.onclick=()=>tryBlock(b.dataset.try));
   $('shopGrid').querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{ equip(shopTab==='skins'?'skin':'land',b.dataset.eq); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; buildShop(); netHello(); });
   $('shopGrid').querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{ const it=list.find(x=>x.id===b.dataset.buy); if(SAVE.notes<it.price) return; SAVE.notes-=it.price; SAVE.owned.push(it.id);
     equip(shopTab==='skins'?'skin':'land',it.id); if(A.ctx) sGem(); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; buildShop(); netHello(); });
@@ -12265,35 +12533,95 @@ function bpPackHTML(pk,px=120){ const rs=[...new Set(Object.keys(pk.rates).map(i
 const BP_FREE='mythic';   // one free pack of this kind every day
 const bpFreeReady=()=>SAVE.bpFree!==todayKey();
 const bpSetBonus=pk=>pk.price*2;   // completing a pack's set pays twice its price, once
+/* the seasonal pack is on the shelf only during its months; the blocks you find in it are yours for good */
+const bpAvail=pk=>!pk.season||pk.season.includes(new Date().getMonth()+1);
+const bpSeasonLeft=pk=>{ const d=new Date(), end=new Date(d.getFullYear(),Math.max(...pk.season),1), n=Math.ceil((end-d)/864e5); return n>1?`${n} days left`:'Last day!'; };
+/* free packs earned from the weekly quests: any pack except the Pulse Pristine Pack */
+const bpTokens=()=>SAVE.bpTokens||0;
+const bpTokenOk=pk=>pk.id!=='pristine';
+const BP_MULTI=5;
+let bpHistOpen=false;
 function buildPacks(){
   const fp=BPACKS.find(p=>p.id===BP_FREE), left=()=>{ const d=new Date(); d.setHours(24,0,0,0); const m=Math.ceil((d-Date.now())/6e4); return `${Math.floor(m/60)}h ${m%60}m`; };
   const free=`<div class="bpfree${bpFreeReady()?' ready':''}"><span class="bpfgift">🎁</span><div><b>${bpFreeReady()?'Your free daily pack is ready!':'Free daily pack opened'}</b><small>${bpFreeReady()?`One ${escapeHTML(fp.name)} on the house, every day.`:`The next one is ready in ${left()}.`}</small></div>`+
     (bpFreeReady()?`<button class="btn" type="button" id="bpFreeGo">Open free</button>`:'')+`</div>`;
-  $('shopGrid').innerHTML=free+`<div class="bpgrid">`+BPACKS.map((pk,k)=>{ const n=bpOwnedN(pk), tot=Object.keys(pk.rates).length, open=bpRatesOpen===pk.id, done=n>=tot;
+  const tok=bpTokens()?`<div class="bpfree ready"><span class="bpfgift">🎟</span><div><b>${bpTokens()===1?'You have a free pack!':`You have ${bpTokens()} free packs!`}</b><small>Earned by finishing all your weekly quests. Open any pack except the Pulse Pristine Pack for free.</small></div></div>`:'';
+  const tools=`<div class="bptools"><label class="bptog"><input type="checkbox" id="bpFastOn" ${SAVE.bpFast?'checked':''}> ⚡ Quick open <small>(cuts and taps for you)</small></label>`+
+    `<span class="small">Finish all your weekly quests in the Pulse Pass for a free pack.</span></div>`;
+  const shelf=BPACKS.filter(bpAvail).sort((a,b)=>(!!b.season)-(!!a.season));
+  $('shopGrid').innerHTML=free+tok+tools+`<div class="bpgrid">`+shelf.map((pk,k)=>{ const n=bpOwnedN(pk), tot=Object.keys(pk.rates).length, open=bpRatesOpen===pk.id, done=n>=tot;
     const rates=open?`<div class="bprates">${Object.entries(pk.rates).map(([id,o])=>{ const s=skinById(id); return `<div class="${SAVE.owned.includes(id)?'own':''}"><i style="--rc:${BP_RAR[s.bpr].c}"></i><span>${escapeHTML(s.name)}</span><em>${BP_RAR[s.bpr].n} · ${o}%</em></div>`; }).join('')}</div>`:'';
-    return `<div class="bpshelf${done?' done':''}" style="--acc:${pk.acc};--d:${k*.35}s"><div class="bppk bpmini${pk.id==='pristine'?' pristine':''}" style="${bpStyle(pk)}">${bpPackHTML(pk)}</div><b class="bpn">${escapeHTML(pk.name)}</b>`+
+    const useTok=bpTokens()&&bpTokenOk(pk)?`<button class="btn" type="button" data-bptok="${pk.id}">🎟 Open free</button>`:'';
+    return `<div class="bpshelf${done?' done':''}${pk.season?' seasonal':''}" style="--acc:${pk.acc};--d:${k*.35}s">${pk.season?`<span class="bpseason">Limited · ${bpSeasonLeft(pk)}</span>`:''}<div class="bppk bpmini${pk.id==='pristine'?' pristine':''}" style="${bpStyle(pk)}">${bpPackHTML(pk)}</div><b class="bpn">${escapeHTML(pk.name)}</b>`+
       `<div class="bpbar"><i style="width:${Math.round(n/tot*100)}%"></i></div><span class="bpprog">${done?'Set complete ✓':`${n} / ${tot} found · ${tot-n} left to discover`}</span>`+
-      (done?'':`<span class="bpsetr">Complete the set: +♪${bpSetBonus(pk).toLocaleString()}</span>`)+
+      (done?'':tot-n===1?`<span class="bpone">1 left to complete the set! +♪${bpSetBonus(pk).toLocaleString()}</span>`:`<span class="bpsetr">Complete the set: +♪${bpSetBonus(pk).toLocaleString()}</span>`)+useTok+
       `<button class="btn" type="button" data-bpopen="${pk.id}" ${SAVE.notes<pk.price?'disabled':''}>Open · ♪ ${pk.price.toLocaleString()}</button>`+
+      `<button class="btn ghost bp5" type="button" data-bpfive="${pk.id}" ${SAVE.notes<pk.price*BP_MULTI?'disabled':''}>Open ${BP_MULTI} · ♪ ${(pk.price*BP_MULTI).toLocaleString()}</button>`+
       `<button class="bpratesbtn" type="button" data-bprates="${pk.id}">${open?'Hide the drop rates':'See the drop rates and blocks'}</button>${rates}</div>`; }).join('')+`</div>`+
+    bpHistHTML()+
     `<p class="bpnote">Each pack holds one block. Already own the one you get? You get Notes back instead: from 20% of the pack's price for a common up to the full price for a legendary.</p>`;
-  const fg=$('bpFreeGo'); if(fg) fg.onclick=()=>bpBuy(fp,true);
+  const fg=$('bpFreeGo'); if(fg) fg.onclick=()=>bpBuy(fp,'free');
+  $('bpFastOn').onchange=e=>{ SAVE.bpFast=e.target.checked; save(); };
+  const hd=$('shopGrid').querySelector('.bphist'); if(hd) hd.ontoggle=()=>{ bpHistOpen=hd.open; };
   $('shopGrid').querySelectorAll('[data-bpopen]').forEach(b=>b.onclick=()=>bpBuy(BPACKS.find(p=>p.id===b.dataset.bpopen)));
+  $('shopGrid').querySelectorAll('[data-bpfive]').forEach(b=>b.onclick=()=>bpBuyMulti(BPACKS.find(p=>p.id===b.dataset.bpfive)));
+  $('shopGrid').querySelectorAll('[data-bptok]').forEach(b=>b.onclick=()=>bpBuy(BPACKS.find(p=>p.id===b.dataset.bptok),'token'));
   $('shopGrid').querySelectorAll('[data-bprates]').forEach(b=>b.onclick=()=>{ bpRatesOpen=bpRatesOpen===b.dataset.bprates?'':b.dataset.bprates; buildShop(); });
   $('shopStats').textContent='Block packs are opened with Notes. Every pack shows its exact drop rates.';
 }
-function bpBuy(pk,free){ if(!pk||(free?!bpFreeReady():SAVE.notes<pk.price)||(BP.stage&&BP.stage!=='done')) return;
+/* your pack history: how many of each rarity you've found, and the last 20 blocks */
+function bpHistHTML(){ const C=SAVE.bpCnt||[], H=SAVE.bpHist||[], tot=C.reduce((a,b)=>a+(b||0),0); if(!tot&&!H.length) return '';
+  const ago=t=>{ const m=Math.round((Date.now()-t)/6e4); return m<1?'just now':m<60?m+'m ago':m<1440?Math.round(m/60)+'h ago':Math.round(m/1440)+'d ago'; };
+  return `<details class="bphist"${bpHistOpen?' open':''}><summary>Your pack history · ${tot.toLocaleString()} opened</summary>`+
+    `<div class="bphcnt">${BP_RAR.map((R,r)=>`<span><i style="--rc:${R.c}"></i>${R.n} <b>${(C[r]||0).toLocaleString()}</b></span>`).join('')}</div>`+
+    `<ul class="bphlist">${H.map(([id,pid,t,d])=>{ const s=SKINS.find(k=>k.id===id), p=BPACKS.find(x=>x.id===pid); if(!s) return ''; const R=BP_RAR[s.bpr];
+      return `<li><i style="--rc:${R.c}"></i><span>${escapeHTML(s.name)} <em>· ${R.n}${d?' · repeat':''}</em></span><em>${escapeHTML(p?p.name.replace(/ Pack$/,''):'')} · ${ago(t)}</em></li>`; }).join('')}</ul></details>`; }
+/* one block out of a pack: rolled, saved and counted */
+function bpRollOne(pk){
   SAVE.bpDry=SAVE.bpDry||{}; const dry=SAVE.bpDry[pk.id]||0;
   const id=bpRoll(pk,undefined,bpBoost(dry)), s=skinById(id), dupe=SAVE.owned.includes(id), refund=dupe?bpRefund(pk,s.bpr):0;
   SAVE.bpDry[pk.id]=s.bpr===0?dry+1:0;
-  if(free) SAVE.bpFree=todayKey(); else SAVE.notes-=pk.price; if(dupe) SAVE.notes+=refund; else SAVE.owned.push(id);
+  if(dupe) SAVE.notes+=refund; else { SAVE.owned.push(id); if(SAVE.gone) delete SAVE.gone[id]; }
   SAVE.bpOpened=SAVE.bpOpened||{}; SAVE.bpOpened[pk.id]=(SAVE.bpOpened[pk.id]||0)+1;
+  SAVE.bpCnt=SAVE.bpCnt||[0,0,0,0,0,0]; SAVE.bpCnt[s.bpr]=(SAVE.bpCnt[s.bpr]||0)+1;
+  SAVE.bpHist=[[id,pk.id,Date.now(),dupe?1:0],...(SAVE.bpHist||[])].slice(0,20);
   // the set: every block in this pack found
   SAVE.bpSet=SAVE.bpSet||{}; const tot=Object.keys(pk.rates).length, have=bpOwnedN(pk); let set=0;
   if(have>=tot&&!SAVE.bpSet[pk.id]){ SAVE.bpSet[pk.id]=1; set=bpSetBonus(pk); SAVE.notes+=set; }
-  save(); bpShow(pk,{id,dupe,refund,have,tot,set}); }
+  return {id,dupe,refund,have,tot,set}; }
+const bpCanPay=(pk,how,n=1)=>!!pk&&bpAvail(pk)&&(how==='free'?bpFreeReady():how==='token'?bpTokens()>=1&&bpTokenOk(pk):SAVE.notes>=pk.price*n);
+function bpBuy(pk,how){ if(how===true) how='free'; if(!bpCanPay(pk,how)||(BP.stage&&BP.stage!=='done')) return;
+  if(how==='free') SAVE.bpFree=todayKey(); else if(how==='token') SAVE.bpTokens=bpTokens()-1; else SAVE.notes-=pk.price;
+  const res=bpRollOne(pk); save(); bpShow(pk,res); }
+/* opening five at once: five cards face down, turned over one by one or all together */
+function bpBuyMulti(pk){ if(!bpCanPay(pk,'',BP_MULTI)||(BP.stage&&BP.stage!=='done')) return;
+  SAVE.notes-=pk.price*BP_MULTI; const list=[]; for(let i=0;i<BP_MULTI;i++) list.push(bpRollOne(pk)); save(); bpShowMulti(pk,list); }
+function bpShowMulti(pk,list){ try{ firstGesture(); }catch(e){} BP.timers.forEach(clearTimeout); BP.timers=[];
+  BP.pk=pk; BP.multi=list; BP.stage='multi'; BP.parts=[]; BP.rays=0; BP.prism=false;
+  const ov=$('bpOv'); ov.classList.add('multi'); ov.classList.remove('dark'); ov.style.setProperty('--glow',pk.acc); $('bpBanner').className='bpbanner'; $('bpSkip').hidden=true; $('bpTap').hidden=true;
+  const m=$('bpMulti'); m.hidden=false;
+  m.innerHTML=`<div class="bpmsum" id="bpmSum">${escapeHTML(pk.name)} ×${list.length} · tap a card to turn it over</div><div class="bpmgrid">${list.map((res,i)=>{ const s=skinById(res.id), r=s.bpr, R=BP_RAR[r];
+    return `<div class="bpmc" data-i="${i}" style="animation-delay:${i*.08}s" role="button" tabindex="0" aria-label="Turn over card ${i+1}"><div class="bpcf bpcback"><b>♪</b></div>`+
+      `<div class="bpcf bpcfront r${r}" style="--rc:${R.c}">${res.dupe?'':'<span class="bpmnew">NEW</span>'}<span class="bprr">${r===5?'✦ Pristine ✦':R.n}</span><canvas class="skprev" data-skin="${s.id}" data-px="120" data-big="1" width="120" height="120" aria-hidden="true"></canvas><b>${escapeHTML(s.name)}</b><small>${res.dupe?`Repeat · +♪${res.refund.toLocaleString()}`:'New block!'}</small></div></div>`; }).join('')}</div>`+
+    `<div class="bpbtns" id="bpmBtns"><button class="btn" type="button" id="bpmAll">Reveal all</button></div>`;
+  m.querySelectorAll('.bpmc').forEach(c=>{ c.onclick=()=>bpmFlip(+c.dataset.i); c.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); bpmFlip(+c.dataset.i); } }; });
+  $('bpmAll').onclick=()=>{ $('bpmAll').disabled=true; let k=0; list.forEach((_,i)=>{ if(!bpmCard(i).classList.contains('flip')) bpLater(()=>bpmFlip(i),(k++)*420); }); };
+  ov.hidden=false; ov.scrollTop=ov.scrollLeft=0; bpFxSize(); if(!BP.raf) BP.raf=requestAnimationFrame(bpFrame); }
+const bpmCard=i=>$('bpMulti').querySelector(`.bpmc[data-i="${i}"]`);
+function bpmFlip(i){ const c=bpmCard(i); if(!c||c.classList.contains('flip')||BP.stage!=='multi') return; c.classList.add('flip');
+  const res=BP.multi[i], r=skinById(res.id).bpr, R=BP_RAR[r], b=c.getBoundingClientRect(), x=b.left+b.width/2, y=b.top+b.height/2;
+  for(let k=0;k<[10,18,30,50,70,90][r];k++) bpSpark(x,y,1,r===5?'prism':(k%3?R.c:'#FFFFFF'),2+r,r>=2&&k%2); if(r>=2) bpRing(x,y,r===5?'prism':R.c,r);
+  bpSnd('reveal',r); buzz([12,20,40,80,120,160][r]);
+  if(r>=3){ const bn=$('bpBanner'); bn.textContent=r===5?'PULSE PRISTINE':r===4?'ASCENDANT!':'LEGENDARY!'; bn.style.setProperty('--rc',R.c); bn.className='bpbanner'; void bn.offsetWidth; bn.className='bpbanner go'+(r===5?' r4':r===4?' asc':''); }
+  if(BP.multi.every((_,j)=>bpmCard(j).classList.contains('flip'))) bpmDone(); }
+function bpmDone(){ BP.stage='done'; const pk=BP.pk, L=BP.multi, nw=L.filter(r=>!r.dupe).length, back=L.reduce((a,r)=>a+r.refund,0), set=L.reduce((a,r)=>a+(r.set||0),0);
+  $('bpmSum').innerHTML=[nw?`<span class="new">${nw} new block${nw>1?'s':''}</span>`:'',back?`♪${back.toLocaleString()} back for repeats`:''].filter(Boolean).join(' · ')+(set?`<div class="bpsetdone">SET COMPLETE! +♪${set.toLocaleString()}</div>`:'');
+  $('bpmBtns').innerHTML=`<button class="btn ghost" type="button" id="bpmAgain" ${bpCanPay(pk,'',BP_MULTI)?'':'disabled'}>Open ${BP_MULTI} more · ♪ ${(pk.price*BP_MULTI).toLocaleString()}</button><button class="btn ghost" type="button" id="bpmDone">Done</button>`;
+  $('bpmAgain').onclick=()=>bpBuyMulti(pk); $('bpmDone').onclick=bpClose;
+  if(set) bpLater(()=>{ const c={x:innerWidth/2,y:innerHeight/2}; for(let k=0;k<140;k++) bpSpark(c.x,c.y,1,'prism',6,k%2); bpRing(c.x,c.y,'prism',3); bpSnd('reveal',3); },400);
+  if(typeof acctPush==='function') acctPush(true); }
 /* ---- the opening ---- */
-function bpLater(f,ms){ BP.timers.push(setTimeout(f,SAVE.reduce?Math.min(ms,250):ms)); }
+function bpLater(f,ms){ BP.timers.push(setTimeout(f,SAVE.reduce?Math.min(ms,250):SAVE.bpFast?ms*.5:ms)); }   // Quick open runs everything at double speed
 function bpShow(pk,res){ try{ firstGesture(); }catch(e){} BP.timers.forEach(clearTimeout); BP.timers=[];
   BP.pk=pk; BP.res=res; BP.busy=false; BP.tap=null; BP.stage='cut'; BP.cut=null; BP.rays=0; BP.prism=false; BP.parts=[];
   const ov=$('bpOv'), pr=pk.id==='pristine', s=skinById(res.id), r=s.bpr, R=BP_RAR[r];
@@ -12305,11 +12633,14 @@ function bpShow(pk,res){ try{ firstGesture(); }catch(e){} BP.timers.forEach(clea
   const card=$('bpCard'); card.className=''; const back=card.querySelector('.bpcback'); back.classList.remove('r4wait'); back.style.setProperty('--glow','#5A4AA8'); back.style.setProperty('--pow',0);
   const fr=$('bpFront'); fr.className='bpcf bpcfront r'+r; fr.style.setProperty('--rc',R.c);
   fr.innerHTML=`<span class="bprr">${r===5?'✦ Pristine ✦':R.n}</span><canvas class="skprev" data-skin="${s.id}" data-px="220" data-big="1" width="220" height="220" aria-hidden="true"></canvas><b>${escapeHTML(s.name)}</b><small>${escapeHTML(pk.name)}</small>`;
-  $('bpBanner').className='bpbanner'; $('bpInfo').innerHTML='Swipe across the top of the pack to cut it open'; $('bpBtns').innerHTML=''; $('bpSkip').hidden=true; $('bpTap').hidden=true;
+  ov.classList.remove('multi'); $('bpMulti').hidden=true; BP.multi=null;
+  $('bpBanner').className='bpbanner'; $('bpInfo').innerHTML=SAVE.bpFast?'⚡ Quick open':'Swipe across the top of the pack to cut it open'; $('bpBtns').innerHTML=''; $('bpSkip').hidden=true; $('bpTap').hidden=true;
   bpLater(()=>{ if(BP.stage==='cut') $('bpTap').hidden=false; },5000);
+  if(SAVE.bpFast) bpLater(()=>{ if(BP.stage==='cut') bpCutDone(); },700);
   ov.hidden=false; ov.scrollTop=ov.scrollLeft=0; bpFxSize(); if(!BP.raf) BP.raf=requestAnimationFrame(bpFrame); }
 function bpClose(){ BP.timers.forEach(clearTimeout); BP.timers=[]; BP.stage=''; $('bpOv').hidden=true; cancelAnimationFrame(BP.raf); BP.raf=0;
-  if(!$('shopOv').hidden) buildShop(); }
+  $('bpOv').classList.remove('multi'); $('bpMulti').hidden=true; BP.multi=null;
+  if(!$('shopOv').hidden) buildShop(); achCheck(); }
 /* cutting: drag across the dashed line near the top of the pack */
 function bpPackRect(){ return $('bpPack').getBoundingClientRect(); }
 $('bpPack').addEventListener('pointerdown',e=>{ if(BP.stage!=='cut') return; const r=bpPackRect(), y=(e.clientY-r.top)/r.height;
@@ -12339,6 +12670,7 @@ function bpCutDone(){ if(BP.stage!=='cut') return; BP.stage='rip'; BP.cut=null; 
 const BP_HYPE=['','It\'s glowing blue…','Purple! Something powerful is in here…','GOLD!! The light is getting stronger…','CRIMSON?! An Ascendant aura is breaking through…','…wait. The light just went out.'];
 function bpHype(){ if(BP.stage!=='rip') return; BP.stage='hype'; $('bpSkip').hidden=false; const r=skinById(BP.res.id).bpr, card=$('bpCard'), back=card.querySelector('.bpcback'); let i=0;
   const show=()=>{ const c=bpCardC();
+    if(SAVE.bpFast) bpLater(()=>{ if(BP.tap) BP.tap(); },300);   // Quick open taps for you
     if(i===5){ $('bpOv').classList.add('dark'); back.style.setProperty('--glow','#000000'); back.style.setProperty('--pow',0); card.classList.remove('shake'); BP.rays=0; bpSnd('charge');
       $('bpInfo').innerHTML=BP_HYPE[4]+'<br><span class="bptapme">Tap…</span>'; back.classList.add('r4wait'); return; }
     const col=BP_RAR[i].c; back.style.setProperty('--glow',col); back.style.setProperty('--pow',Math.min(1.2,(i+1)/4)); $('bpOv').style.setProperty('--glow',col);
@@ -12423,7 +12755,7 @@ function bpSnd(k,i=0){ if(!A.ctx||!A.sfx) return; try{ const t=A.ctx.currentTime
     if(i>=4) [1047,1319,1568,2093,2637,3136].slice(0,i===5?6:4).forEach((f,j)=>tone(D,t+.55+j*.09,'sine',f,.09,.005,1.8)); } }catch(e){} }
 /* the Collection's Blocks tab: grouped by where each block comes from, with filters, a progress bar and pins.
    Pinned blocks (up to 12) sit in their own row at the top. Pack blocks you haven't found yet show as silhouettes. */
-const COLL={f:'all'};
+const COLL={f:'all',q:''};
 const collGroup=s=>{ if(s.bp) return 'bp_'+s.bp; if(s.paid) return 'prem'; const r=s.req||{};
   if(r.pass||r.passp) return 'pass'; if(r.duck||r.twin||r.cvk||r.cvkOn||r.event) return 'event'; if(r.rank||r.streak||r.stars||r.hard||r.boss||r.login) return 'earn'; return 'shop'; };
 function buildCollSkins(){
@@ -12433,11 +12765,12 @@ function buildCollSkins(){
   const card=it=>{ const o=own(it), eq=SAVE.skin===it.id, pin=SAVE.pins.includes(it.id), r=it.bp?BP_RAR[it.bpr]:null, mys=it.bp&&!o;
     let btn; if(eq) btn=`<button class="btn ghost" disabled type="button">Equipped</button>`; else if(o) btn=`<button class="btn ghost" data-eq="${it.id}" type="button">Equip</button>`;
     else btn=`<button class="btn ghost" disabled type="button">${escapeHTML(it.req?reqText(it.req):it.paid?'Premium block':`♪ ${it.price} in the Shop`)}</button>`;
-    return `<div class="item citem${eq?' eq':''}${o?'':' locked'}${mys?' mystery':''}"><button class="cpin${pin?' on':''}" type="button" data-pin="${it.id}" aria-label="${pin?'Unpin':'Pin'} ${escapeHTML(it.name)}" title="${pin?'Unpin':'Pin to the top'}">📌</button>`+
+    return `<div class="item citem${eq?' eq':''}${o?'':' locked'}${mys?' mystery':''}" data-n="${escapeHTML((mys&&it.bpr>=3?'???':it.name).toLowerCase())}"><button class="cpin${pin?' on':''}" type="button" data-pin="${it.id}" aria-label="${pin?'Unpin':'Pin'} ${escapeHTML(it.name)}" title="${pin?'Unpin':'Pin to the top'}">📌</button>`+
       `<canvas class="skprev" data-skin="${it.id}" width="64" height="64" aria-hidden="true"></canvas>${r?`<span class="crar" style="--rc:${r.c}">${r.n}</span>`:''}<b>${mys&&it.bpr>=3?'???':escapeHTML(it.name)}</b>${btn}</div>`; };
   const groups=[['shop','Shop blocks'],['earn','Earned by playing'],['pass','Pulse Pass'],['prem','Premium'],...BPACKS.map(p=>['bp_'+p.id,p.name]),['event','Events']];
   let h=`<div class="collhead"><div><b>${got} / ${all.length}</b> blocks collected</div><div class="bpbar"><i style="width:${Math.round(got/all.length*100)}%"></i></div>`+
-    `<div class="collf">${[['all','All'],['own','Owned'],['locked','Not yet']].map(([k,n])=>`<button type="button" data-cf="${k}" class="${COLL.f===k?'on':''}">${n}</button>`).join('')}</div></div>`;
+    `<div class="collf">${[['all','All'],['own','Owned'],['locked','Not yet']].map(([k,n])=>`<button type="button" data-cf="${k}" class="${COLL.f===k?'on':''}">${n}</button>`).join('')}</div>`+
+    `<input type="search" class="collq" id="collQ" placeholder="🔍 Search your blocks" value="${escapeHTML(COLL.q)}" aria-label="Search blocks" autocomplete="off" spellcheck="false"></div>`;
   const pins=SAVE.pins.map(id=>SKINS.find(k=>k.id===id)).filter(Boolean);
   if(pins.length) h+=`<h3 class="collsec">📌 Pinned</h3>`+pins.map(card).join('');
   groups.forEach(([g,name])=>{ const list=all.filter(it=>collGroup(it)===g&&keep(it)).sort((a,b)=>own(b)-own(a)||(a.bpr||0)-(b.bpr||0)); if(!list.length) return;
@@ -12445,11 +12778,19 @@ function buildCollSkins(){
     h+=`<h3 class="collsec">${escapeHTML(name)}<small>${have} / ${n.length}</small></h3>`+list.map(card).join(''); });
   $('shopGrid').innerHTML=h;
   $('shopGrid').querySelectorAll('[data-cf]').forEach(b=>b.onclick=()=>{ COLL.f=b.dataset.cf; buildShop(); });
+  { const q=$('collQ'); q.addEventListener('keydown',e=>e.stopPropagation()); q.oninput=()=>{ COLL.q=q.value; collFilter(); }; collFilter(); }
   $('shopGrid').querySelectorAll('[data-pin]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const id=b.dataset.pin, i=SAVE.pins.indexOf(id);
     if(i>=0) SAVE.pins.splice(i,1); else { if(SAVE.pins.length>=12){ toast('You can pin up to 12 blocks. Unpin one first.'); return; } SAVE.pins.push(id); } save(); buildShop(); });
   $('shopGrid').querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{ equip('skin',b.dataset.eq); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; buildShop(); netHello(); });
   $('shopStats').textContent='Tap 📌 to pin your favourite blocks to the top.';
 }
+/* the search box: hides the blocks whose names don't match, and any section left empty */
+function collFilter(){ const q=COLL.q.trim().toLowerCase(), g=$('shopGrid'); let head=null, n=0, any=0;
+  const close=()=>{ if(head) head.hidden=!!q&&!n; };
+  [...g.children].forEach(el=>{ if(el.classList.contains('collsec')){ close(); head=el; n=0; return; } if(!el.classList.contains('citem')) return;
+    const ok=!q||(el.dataset.n||'').includes(q); el.hidden=!ok; if(ok){ n++; any++; } });
+  close(); let none=g.querySelector('.collnone');
+  if(q&&!any){ if(!none){ none=document.createElement('p'); none.className='collnone small'; g.appendChild(none); } none.textContent=`No blocks called "${COLL.q.trim()}".`; none.hidden=false; } else if(none) none.hidden=true; }
 /* the Tiles and Sounds tabs. A block-matched tile theme needs its block before it can be bought. */
 function buildShop2(){
   const tiles=shopTab==='tiles', kind=tiles?'tiles':'pack', eq=SAVE[kind];
@@ -12933,6 +13274,11 @@ addEventListener('pagehide',mobAudioSync); addEventListener('pageshow',mobAudioS
 /* switching to another window (the keys stop reaching the game) pauses too */
 addEventListener('blur',()=>{ if(G.state==='playing'&&!(G.mode&&G.mode.net)) pause(); });
 
+/* ---------------- OFFLINE ----------------
+   On pulseform.org / .win the game installs a small service worker (sw.js): it always loads the newest version when
+   online, and keeps the last copy so the game still opens with no connection. Not used in the apps or on CrazyGames. */
+if('serviceWorker' in navigator&&location.protocol==='https:'&&/(^|\.)pulseform\.(org|win)$/.test(location.hostname)&&!window.Capacitor&&!window.PF_CG)
+  addEventListener('load',()=>{ setTimeout(()=>{ if(!window.PF_CG) navigator.serviceWorker.register('/sw.js').catch(()=>{}); },3000); });
 /* ---------------- QUALITY OF LIFE ---------------- */
 /* keep the screen awake during a run, so a long level or a silent Studio run never dims mid-song */
 const WAKE={lock:null,want:false};

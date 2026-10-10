@@ -42,7 +42,7 @@ if (crazy) {
 fs.writeFileSync(path.join(www, 'index.html'), html);
 
 fs.copyFileSync(path.join(root, 'privacy.html'), path.join(www, 'privacy.html'));
-for (const f of ['about.html', 'robots.txt', 'sitemap.xml']) fs.copyFileSync(path.join(root, f), path.join(www, f));
+for (const f of ['about.html', 'robots.txt', 'sitemap.xml', 'manifest.webmanifest', 'sw.js']) fs.copyFileSync(path.join(root, f), path.join(www, f));
 fs.cpSync(path.join(root, 'icons'), path.join(www, 'icons'), { recursive: true });
 fs.mkdirSync(path.join(www, 'vendor'), { recursive: true });
 fs.copyFileSync(path.join(root, 'vendor', 'peerjs.min.js'), path.join(www, 'vendor', 'peerjs.min.js'));

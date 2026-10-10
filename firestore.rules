@@ -225,6 +225,38 @@ service cloud.firestore {
       allow delete: if request.auth != null && (request.auth.uid == to || request.auth.uid == from);
     }
 
+    // Gifting a block to a friend: only someone on the recipient's friends list can send one, and only one a day
+    // (the id is "<sender>_<day>", and a gift can't be changed once sent). Only the recipient can read and clear them.
+    match /fgifts/{to}/items/{id} {
+      allow create: if signedIn() && request.auth.uid != to
+        && request.resource.data.keys().hasOnly(['from', 'name', 'skin', 't', 'day'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.day is string && request.resource.data.day.size() <= 12
+        && id == request.auth.uid + '_' + request.resource.data.day
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24
+        && request.resource.data.skin is string && request.resource.data.skin.size() > 0 && request.resource.data.skin.size() <= 40
+        && request.resource.data.t is int
+        && exists(/databases/$(db)/documents/friends/$(to))
+        && request.auth.uid in get(/databases/$(db)/documents/friends/$(to)).data.uids;
+      allow update: if false;
+      allow read, delete: if signedIn() && request.auth.uid == to;
+    }
+
+    // Likes on built levels: one per player per level (the id is "<liker>_<level key>"), never on your own.
+    // The builder can list them to count their likes; a player can only see, add or take back their own.
+    match /likes/{owner}/items/{id} {
+      allow create: if signedIn() && request.auth.uid != owner
+        && request.resource.data.keys().hasOnly(['by', 'key', 't'])
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.key is string && request.resource.data.key.size() > 0 && request.resource.data.key.size() <= 16
+        && id == request.auth.uid + '_' + request.resource.data.key
+        && request.resource.data.t is int;
+      allow update: if false;
+      allow get: if signedIn() && (request.auth.uid == owner || id.matches(request.auth.uid + '_.+'));
+      allow list: if signedIn() && request.auth.uid == owner;
+      allow delete: if signedIn() && (request.auth.uid == owner || id.matches(request.auth.uid + '_.+'));
+    }
+
     /*
      * TWIN PULSE: the 2v2 bracket, Mon Oct 5 – Fri Oct 9, 2026 (all times Central)
      *   events/twin/teams/{teamId}   = {name, nameKey, code, members:[uid,uid], names:[..], owner, created}

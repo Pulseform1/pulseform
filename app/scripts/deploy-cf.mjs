@@ -77,7 +77,7 @@ files['/_headers'] = Buffer.from(`/*
 `);
 
 // the manifest Cloudflare asks for: each file's size and a hash of its contents (as wrangler computes it)
-const TYPES = { html: 'text/html', txt: 'text/plain', xml: 'application/xml', png: 'image/png', svg: 'image/svg+xml', json: 'application/json', ico: 'image/x-icon' };
+const TYPES = { html: 'text/html', txt: 'text/plain', xml: 'application/xml', png: 'image/png', svg: 'image/svg+xml', json: 'application/json', ico: 'image/x-icon', js: 'text/javascript', webmanifest: 'application/manifest+json' };
 const manifest = {}, byHash = {};
 for (const [rel, data] of Object.entries(files)) {
   const ext = path.extname(rel).slice(1), b64 = data.toString('base64');

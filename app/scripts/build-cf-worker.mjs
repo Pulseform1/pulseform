@@ -13,14 +13,14 @@ const src = path.resolve(here, '..', 'web-email-only');
 const out = path.resolve(here, '..', 'web-cf');
 if (!fs.existsSync(path.join(src, 'index.html'))) throw new Error('Build the website first: node scripts/build-www.mjs --email-only');
 
-const TYPES = { '.html': 'text/html; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.md': 'text/markdown', '.json': 'application/json', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.md': 'text/markdown', '.json': 'application/json', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.webmanifest': 'application/manifest+json' };
 const files = {};
 (function walk(dir) {
   for (const f of fs.readdirSync(dir)) {
     const full = path.join(dir, f), rel = '/' + path.relative(src, full).split(path.sep).join('/');
     if (fs.statSync(full).isDirectory()) { if (rel !== '/vendor') walk(full); continue; }   // PeerJS is already built into index.html
     const ext = path.extname(f).toLowerCase(), t = TYPES[ext] || 'application/octet-stream', data = fs.readFileSync(full);
-    const text = t.startsWith('text/') || t === 'image/svg+xml' || t.startsWith('application/json') || t.startsWith('application/xml');
+    const text = t.startsWith('text/') || t === 'image/svg+xml' || t.startsWith('application/json') || t.startsWith('application/xml') || t.startsWith('application/manifest');
     files[rel] = { t, s: text ? data.toString('utf8') : null, b: text ? null : data.toString('base64') };
   }
 })(src);
@@ -37,7 +37,7 @@ export default {
     if (!FILES[p] && FILES[p + '.html']) p = p + '.html';
     const f = FILES[p];
     if (!f) return new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain' } });
-    const html = f.t.startsWith('text/html');
+    const html = f.t.startsWith('text/html') || p === '/sw.js';   // pages and the service worker are always checked for a newer version
     return new Response(f.s !== null ? f.s : b64(f.b), { headers: {
       'content-type': f.t,
       'cache-control': html ? 'no-cache' : 'public, max-age=86400',

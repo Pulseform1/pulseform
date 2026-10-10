@@ -1,0 +1,14 @@
+{
+  "name": "Pulseform",
+  "short_name": "Pulseform",
+  "description": "A rhythm puzzle game: move on the beat, learn timing and rhythm.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#141030",
+  "theme_color": "#2E3566",
+  "icons": [
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/pulseform-icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
