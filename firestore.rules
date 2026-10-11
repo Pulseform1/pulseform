@@ -4,7 +4,14 @@ service cloud.firestore {
   match /databases/{db}/documents {
 
     // Cloud saves: each player can only read and write their own save
+    // A real account (email or Google). Classroom students can join with a guest sign-in instead (no email), and guests
+    // can only use the classroom collections below: every other rule uses signedIn(), which turns guests away.
     function signedIn() {
+      return request.auth != null
+        && request.auth.token.get('firebase', {}).get('sign_in_provider', '') != 'anonymous';
+    }
+    // anyone with a sign-in, guests included (classroom students)
+    function authed() {
       return request.auth != null;
     }
 
@@ -115,39 +122,39 @@ service cloud.firestore {
     // Friends: public player cards (name, rank, block, progress, bests, built levels, last seen). Only you write yours;
     // the name is short, the rank is a real rank (0-26), and the built-level list is capped
     match /profiles/{uid} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid
         && request.resource.data.name is string && request.resource.data.name.size() <= 24
         && (!('nameKey' in request.resource.data) || (request.resource.data.nameKey is string && request.resource.data.nameKey.size() <= 24))
         && (!('rank' in request.resource.data) || (request.resource.data.rank is int && request.resource.data.rank >= 0 && request.resource.data.rank <= 26))
         && (!('code' in request.resource.data) || request.resource.data.code == null || (request.resource.data.code is string && request.resource.data.code.size() == 6))
         && (!('levels' in request.resource.data) || (request.resource.data.levels is list && request.resource.data.levels.size() <= 24))
         && request.resource.data.keys().size() <= 40;
-      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow delete: if signedIn() && request.auth.uid == uid;
     }
 
     // Friend codes: anyone signed in can look one up; a code can be claimed once and never changed
     match /codes/{code} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
         && code.size() == 6;
       allow update: if false;
       // only when its owner deletes their account
-      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
     }
 
     // Friends lists: only you can see yours. Friendship is two-way, so when you add someone's code
     // you may also add yourself to their list (only if they are already on yours), or take yourself off it.
     match /friends/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow create, update: if request.auth != null && request.auth.uid == uid
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
         && request.resource.data.uids is list && request.resource.data.uids.size() <= 50;
       // someone else adding themselves
-      allow create: if request.auth != null && request.auth.uid != uid
+      allow create: if signedIn() && request.auth.uid != uid
         && request.resource.data.keys().hasOnly(['uids'])
         && request.resource.data.uids == [request.auth.uid]
         && uid in get(/databases/$(db)/documents/friends/$(request.auth.uid)).data.uids;
-      allow update: if request.auth != null && request.auth.uid != uid
+      allow update: if signedIn() && request.auth.uid != uid
         && request.resource.data.keys().hasOnly(['uids'])
         && request.resource.data.uids is list && request.resource.data.uids.size() <= 50
         && (
@@ -155,15 +162,15 @@ service cloud.firestore {
             && uid in get(/databases/$(db)/documents/friends/$(request.auth.uid)).data.uids)
           || request.resource.data.uids.toSet() == resource.data.uids.toSet().difference([request.auth.uid].toSet())
         );
-      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow delete: if signedIn() && request.auth.uid == uid;
     }
 
     // ---- Cale vs Korra: 9:00 AM Central Wed Sep 30 2026 to 9:00 AM Central Sat Oct 3 2026 ----
     // Signing up: the code must match that side's fingerprint (SHA-256), and each side can be claimed once.
     // Only the person who signed up can read their claim (it holds their code).
     match /events/cvk/claims/{side} {
-      allow get: if request.auth != null && resource.data.uid == request.auth.uid;
-      allow create: if request.auth != null
+      allow get: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn()
         && (side == 'cale' || side == 'korra')
         && request.resource.data.keys().hasOnly(['uid','code','t'])
         && request.resource.data.uid == request.auth.uid
@@ -177,12 +184,12 @@ service cloud.firestore {
     // and at most 400,000 points at a time. The bar also shows the player's current username.
     match /events/cvk/sides/{side} {
       allow read: if true;
-      allow create: if request.auth != null
+      allow create: if signedIn()
         && get(/databases/$(db)/documents/events/cvk/claims/$(side)).data.uid == request.auth.uid
         && request.resource.data.keys().hasOnly(['score','t','name'])
         && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 24))
         && request.resource.data.score == 0;
-      allow update: if request.auth != null
+      allow update: if signedIn()
         && get(/databases/$(db)/documents/events/cvk/claims/$(side)).data.uid == request.auth.uid
         && request.resource.data.keys().hasOnly(['score','t','name'])
         && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 24))
@@ -199,14 +206,14 @@ service cloud.firestore {
     // at a time, until 9:00 AM Central Thu Oct 1 2026 (a day into the event). Amounts never go down.
     match /events/cvk/bets/{uid} {
       allow read: if true;
-      allow create: if request.auth != null && request.auth.uid == uid
+      allow create: if signedIn() && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['cale','korra','name','t'])
         && request.resource.data.cale is number && request.resource.data.korra is number
         && request.resource.data.cale >= 0 && request.resource.data.korra >= 0
         && request.resource.data.cale + request.resource.data.korra <= 100000
         && request.resource.data.name is string && request.resource.data.name.size() <= 24
         && request.time < timestamp.value(1790863200000);
-      allow update: if request.auth != null && request.auth.uid == uid
+      allow update: if signedIn() && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['cale','korra','name','t'])
         && request.resource.data.cale is number && request.resource.data.korra is number
         && request.resource.data.cale >= resource.data.cale && request.resource.data.korra >= resource.data.korra
@@ -218,12 +225,12 @@ service cloud.firestore {
 
     // Party invites: only someone on the recipient's friends list can invite them
     match /invites/{to}/items/{from} {
-      allow create, update: if request.auth != null && request.auth.uid == from
+      allow create, update: if signedIn() && request.auth.uid == from
         && exists(/databases/$(db)/documents/friends/$(to))
         && from in get(/databases/$(db)/documents/friends/$(to)).data.uids
         && request.resource.data.code is string && request.resource.data.code.size() == 4;
-      allow read: if request.auth != null && request.auth.uid == to;
-      allow delete: if request.auth != null && (request.auth.uid == to || request.auth.uid == from);
+      allow read: if signedIn() && request.auth.uid == to;
+      allow delete: if signedIn() && (request.auth.uid == to || request.auth.uid == from);
     }
 
     // Gifting a block to a friend: only someone on the recipient's friends list can send one, and only one a day
@@ -439,6 +446,137 @@ service cloud.firestore {
         && request.resource.data.where is string && request.resource.data.where.size() <= 20
         && request.resource.data.t is int;
       allow read, update, delete: if isAdmin();
+    }
+
+
+    // ================= CLASSROOMS =================
+    // Teachers (real accounts) make classes; students join with the class code and a display name (guests allowed).
+    // A student's work is visible only to that student and their teacher.
+    function cls(cid) { return get(/databases/$(db)/documents/classes/$(cid)).data; }
+    function teaches(cid) { return signedIn() && cls(cid).teacher == request.auth.uid; }
+    function inClass(cid) { return authed() && exists(/databases/$(db)/documents/classes/$(cid)/students/$(request.auth.uid)); }
+    function shortStr(v, n) { return v is string && v.size() <= n; }
+
+    // verified teachers can share question packs publicly; only an admin can verify
+    match /teachers/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow write: if isAdmin();
+    }
+    match /classes/{cid} {
+      allow read: if (signedIn() && resource.data.teacher == request.auth.uid) || inClass(cid) || isAdmin();
+      allow create: if signedIn() && request.resource.data.teacher == request.auth.uid
+        && request.resource.data.keys().hasOnly(['teacher', 'tname', 'name', 'grade', 'code', 'locked', 'kicked', 'exp', 't'])
+        && shortStr(request.resource.data.name, 40) && request.resource.data.name.size() > 0
+        && shortStr(request.resource.data.tname, 40) && shortStr(request.resource.data.grade, 12)
+        && shortStr(request.resource.data.code, 6) && request.resource.data.locked is bool
+        && request.resource.data.kicked is list && request.resource.data.kicked.size() == 0
+        && request.resource.data.exp is int && request.resource.data.t is int;
+      allow update: if signedIn() && resource.data.teacher == request.auth.uid
+        && request.resource.data.teacher == resource.data.teacher
+        && request.resource.data.keys().hasOnly(['teacher', 'tname', 'name', 'grade', 'code', 'locked', 'kicked', 'exp', 't'])
+        && shortStr(request.resource.data.name, 40) && shortStr(request.resource.data.code, 6)
+        && request.resource.data.locked is bool && request.resource.data.kicked is list && request.resource.data.kicked.size() <= 500;
+      allow delete: if signedIn() && resource.data.teacher == request.auth.uid;
+
+      // students: you add yourself (if the class is open and you weren't removed); the teacher can rename or remove you
+      match /students/{uid} {
+        allow read: if (authed() && request.auth.uid == uid) || teaches(cid);
+        allow create: if authed() && request.auth.uid == uid
+          && cls(cid).locked == false && !(uid in cls(cid).kicked) && request.time.toMillis() < cls(cid).exp
+          && request.resource.data.keys().hasOnly(['name', 't'])
+          && shortStr(request.resource.data.name, 24) && request.resource.data.name.size() > 0 && request.resource.data.t == request.time;
+        allow update: if ((authed() && request.auth.uid == uid) || teaches(cid))
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name'])
+          && shortStr(request.resource.data.name, 24) && request.resource.data.name.size() > 0;
+        allow delete: if (authed() && request.auth.uid == uid) || teaches(cid);
+      }
+      // homework: the teacher writes it, the class reads it
+      match /assign/{aid} {
+        allow read: if teaches(cid) || inClass(cid);
+        allow create, update: if teaches(cid)
+          && request.resource.data.keys().hasOnly(['title', 'levels', 'pack', 'packName', 'qs', 'due', 'diff', 'shuffle', 't'])
+          && shortStr(request.resource.data.title, 40) && request.resource.data.levels is list && request.resource.data.levels.size() <= 12
+          && request.resource.data.qs is list && request.resource.data.qs.size() <= 100
+          && request.resource.data.diff in ['easy', 'normal'];
+        allow delete: if teaches(cid);
+        // each student's own progress on it
+        match /work/{uid} {
+          allow read: if (authed() && request.auth.uid == uid) || teaches(cid);
+          allow create, update: if authed() && request.auth.uid == uid && inClass(cid)
+            && request.resource.data.keys().hasOnly(['name', 'lv', 'right', 'asked', 'done', 'time', 'late', 't'])
+            && shortStr(request.resource.data.name, 24) && request.resource.data.lv is map && request.resource.data.lv.size() <= 12
+            && request.resource.data.right is number && request.resource.data.asked is int && request.resource.data.asked <= 24
+            && request.resource.data.right <= request.resource.data.asked && request.resource.data.done is int && request.resource.data.done <= 12
+            && request.resource.data.t == request.time;
+          allow delete: if teaches(cid);
+        }
+      }
+      // saved results of live games hosted for this class
+      match /games/{gid} {
+        allow read, delete: if teaches(cid);
+        allow create: if teaches(cid) && request.resource.data.players is list && request.resource.data.players.size() <= 200;
+      }
+    }
+    // class codes: look one up to join; claimed once by the class's teacher
+    match /classCodes/{code} {
+      allow get: if authed();
+      allow create: if signedIn() && code.matches('^[A-Z0-9]{6}$')
+        && request.resource.data.keys().hasOnly(['cid', 'teacher']) && request.resource.data.teacher == request.auth.uid
+        && cls(request.resource.data.cid).teacher == request.auth.uid;
+      allow delete: if signedIn() && resource.data.teacher == request.auth.uid;
+    }
+    // question packs: private to their maker, or public (verified teachers only). Anyone signed in can report a
+    // public pack, which hides it until an admin looks at it; the maker can't un-hide it.
+    function packOk() {
+      return request.resource.data.keys().hasOnly(['owner', 'oname', 'title', 'subject', 'grade', 'desc', 'vis', 'hidden', 'qs', 'n', 't'])
+        && request.resource.data.owner == request.auth.uid
+        && shortStr(request.resource.data.title, 60) && request.resource.data.title.size() > 0
+        && shortStr(request.resource.data.oname, 24) && shortStr(request.resource.data.subject, 24)
+        && shortStr(request.resource.data.grade, 12) && shortStr(request.resource.data.desc, 160)
+        && request.resource.data.vis in ['private', 'public'] && request.resource.data.hidden is bool
+        && request.resource.data.qs is list && request.resource.data.qs.size() <= 100
+        && (request.resource.data.vis == 'private' || exists(/databases/$(db)/documents/teachers/$(request.auth.uid)));
+    }
+    match /packs/{pid} {
+      allow read: if (signedIn() && resource.data.owner == request.auth.uid)
+        || (signedIn() && resource.data.vis == 'public' && resource.data.hidden == false) || isAdmin();
+      allow create: if signedIn() && packOk() && request.resource.data.hidden == false;
+      allow update: if (signedIn() && resource.data.owner == request.auth.uid && packOk() && request.resource.data.hidden == resource.data.hidden)
+        || (signedIn() && resource.data.vis == 'public' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hidden']) && request.resource.data.hidden == true)
+        || isAdmin();
+      allow delete: if (signedIn() && resource.data.owner == request.auth.uid) || isAdmin();
+    }
+    // live class games: the host (a real account) runs the game; each player writes only their own score,
+    // at most about once a second, and scores can only go up a little at a time
+    match /live/{pin} {
+      allow read: if authed();
+      allow create: if signedIn() && pin.matches('^[0-9]{6}$') && request.resource.data.host == request.auth.uid
+        && request.resource.data.mode in ['race', 'tower', 'jam', 'last'] && request.resource.data.diff in ['easy', 'normal']
+        && request.resource.data.qs is list && request.resource.data.qs.size() <= 100 && request.resource.data.kicked is list;
+      allow update: if signedIn() && resource.data.host == request.auth.uid && request.resource.data.host == resource.data.host
+        && request.resource.data.qs is list && request.resource.data.qs.size() <= 100
+        && (!('kicked' in request.resource.data) || request.resource.data.kicked.size() <= 300);
+      allow delete: if signedIn() && resource.data.host == request.auth.uid;
+      match /players/{uid} {
+        allow read: if authed();
+        allow create: if authed() && request.auth.uid == uid
+          && get(/databases/$(db)/documents/live/$(pin)).data.phase != 'end'
+          && !(uid in get(/databases/$(db)/documents/live/$(pin)).data.kicked)
+          && request.resource.data.keys().hasOnly(['name', 'score', 'right', 'done', 'fl', 'rev', 'team', 'hearts', 'ans', 'fin', 't'])
+          && shortStr(request.resource.data.name, 24) && request.resource.data.name.size() > 0
+          && request.resource.data.score == 0 && request.resource.data.done == 0 && request.resource.data.t == request.time;
+        allow update: if (authed() && request.auth.uid == uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['score', 'right', 'done', 'fl', 'rev', 'hearts', 'ans', 'fin', 't'])
+            && request.resource.data.t == request.time && request.time > resource.data.t + duration.value(900, 'ms')
+            && request.resource.data.score >= resource.data.score && request.resource.data.score <= resource.data.score + 1000
+            && request.resource.data.done <= resource.data.done + 1 && request.resource.data.right <= request.resource.data.done
+            && request.resource.data.fl <= resource.data.fl + 2 && request.resource.data.rev <= resource.data.rev + 1
+            && request.resource.data.hearts is int && request.resource.data.hearts >= 0 && request.resource.data.hearts <= 3
+            && request.resource.data.ans is map && request.resource.data.ans.size() <= 100)
+          || (signedIn() && get(/databases/$(db)/documents/live/$(pin)).data.host == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['team', 'hearts']));
+        allow delete: if (authed() && request.auth.uid == uid) || (signedIn() && get(/databases/$(db)/documents/live/$(pin)).data.host == request.auth.uid);
+      }
     }
 
   }

@@ -1175,6 +1175,83 @@ body.cg a.pplink,body.cg .ppsep,body.cg #setDel,body.cg .mspecial.passplus,body.
 .plx canvas{width:80px;height:80px}.plx small{font-size:11px;opacity:.8}.plx.wide{flex:1 1 200px;align-items:flex-start;text-align:left;gap:6px}
 .mchip{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);margin-right:4px}.mchip.gold{border-color:#FFD166;color:#FFE27A}.mchip.silver{border-color:#C8D0E0}.mchip.bronze{border-color:#C97A4A}
 @media (max-width:620px){.plgrid{grid-template-columns:1fr}.plstats{grid-template-columns:repeat(2,minmax(0,1fr))}.plhero{flex-direction:column;text-align:center}.plrank{justify-content:center}.plsk{width:112px;height:112px}.plwho h2{font-size:26px}}
+/* Classrooms */
+.clstabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:10px 0 12px}.clstabs button{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clspanel .lbl{margin-top:14px}.clsmsg{min-height:1.2em}.clsmsg.err,.small.err{color:#FF9A8A}
+.clgrid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.clbox{background:var(--glass);border-radius:14px;padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px}.clbox .lbl{margin:0}
+.clrow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}.clrow>*{flex:1 1 140px}
+.clin{width:100%;box-sizing:border-box;background:rgba(0,0,0,.25);border:1px solid var(--line);color:inherit;border-radius:10px;padding:9px 11px;font:inherit;font-size:15px}
+.clin:focus{outline:2px solid #FFD166;outline-offset:1px}.clin.code{font:700 22px var(--display);letter-spacing:4px;text-transform:uppercase;text-align:center}.clin.sm{max-width:140px}
+select.clin{appearance:auto}textarea.clin{resize:vertical;font-size:14px}
+.cllab{display:flex;flex-direction:column;gap:4px;font-size:12px;opacity:.95;margin-top:6px}.clchk{display:flex;gap:8px;align-items:center;font-size:14px;margin:8px 0}
+.cllist{display:grid;gap:6px;margin-top:6px}
+.clitem{all:unset;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:10px;background:var(--glass);border-radius:12px;padding:10px 14px}
+.clitem:focus-visible{outline:2px solid #FFD166}.clitem b{font-size:15px}.clitem small{grid-column:1;opacity:.8;font-size:12px}.clitem span{grid-row:1/3;grid-column:2;align-self:center;opacity:.8}.clitem code{font-weight:700;letter-spacing:1px}
+.clnote{background:var(--glass);border-radius:14px;padding:14px}
+.clcode{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:linear-gradient(120deg,rgba(255,209,102,.18),rgba(127,240,210,.12));border-radius:14px;padding:12px 16px;margin:8px 0}
+.clcode b{display:block;font:700 34px var(--display);letter-spacing:6px}.clcode small{display:block;opacity:.8}.cllink{word-break:break-all;font-size:11px}.clcodebtns{display:flex;gap:6px;flex-wrap:wrap}
+.roster{list-style:none;padding:0;margin:0;display:grid;gap:4px;max-height:360px;overflow:auto}.roster li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center;background:rgba(0,0,0,.15);border-radius:10px;padding:4px 4px 4px 10px}
+.roster span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.btn.sm{padding:5px 10px;font-size:12px;min-height:0}
+.clleave{margin-top:16px}.clleave summary{cursor:pointer;font-size:13px;opacity:.75}
+.hwlist{display:grid;gap:8px;margin-top:6px}.hwcard{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--glass);border-radius:14px;padding:10px 14px}
+.hwcard b{display:block}.hwcard small{display:block;opacity:.85;font-size:12px}.hwcard em{color:#FF9A8A;font-style:normal}.hwcard.done{border:1px solid rgba(127,240,210,.5)}
+.hwlv{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:8px}
+.hwl{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px;background:var(--glass);border-left:4px solid var(--c);border-radius:12px;padding:10px 12px}.hwl:focus-visible{outline:2px solid #FFD166}
+.hwl small{opacity:.8;font-size:12px}.hwl span{color:#FFE27A;font-size:13px}.hwl.ok{background:rgba(127,240,210,.12)}
+.hwpicks{display:grid;gap:6px;margin:6px 0 12px;max-height:340px;overflow:auto;padding-right:4px}.hwpick{background:rgba(0,0,0,.15);border-radius:10px;padding:6px 10px}.hwpick b{font-size:13px}
+.hwpick div{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px}.hwpick label{display:flex;align-items:center;gap:3px;font-size:13px}
+.clhelp{background:rgba(255,138,128,.15);border:1px solid rgba(255,138,128,.4);border-radius:12px;padding:8px 12px;margin:8px 0;font-size:14px}
+.cltable{overflow:auto;margin-top:8px}.cltable table,.lvrep table{width:100%;border-collapse:collapse;font-size:14px}.cltable th,.cltable td,.lvrep td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}.cltable th{font-size:12px;opacity:.8}
+.pct{border-radius:999px;padding:1px 7px;font-size:12px;font-weight:700}.pct.lo{background:rgba(255,107,107,.3)}.pct.mid{background:rgba(255,209,102,.3)}.pct.hi{background:rgba(127,240,210,.3)}.late{color:#FF9A8A;font-size:11px}
+.pkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:6px}.pkcard{background:var(--glass);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}.pkcard small{opacity:.8;font-size:12px}.pkcard .row{margin:4px 0 0;gap:6px}
+.qed{background:var(--glass);border-radius:12px;padding:10px;margin-top:8px;display:flex;flex-direction:column;gap:6px}.qedh{display:flex;gap:6px;align-items:center}.qedh b{font:700 18px var(--display);min-width:24px}.qedh select{flex:1}
+.qanswers{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px}.qanswers small{grid-column:1/-1;opacity:.75}.qa{display:flex;gap:6px;align-items:center}.qa input[type=checkbox]{width:20px;height:20px;flex:none}
+.clcsv{margin:10px 0}.clcsv summary{cursor:pointer;font-size:14px}
+/* a question card */
+.qcard{display:flex;flex-direction:column;gap:12px}.qhead{font-size:12px;opacity:.85;text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;gap:8px}
+.qstop{background:none;border:1px solid var(--line);color:inherit;border-radius:8px;padding:2px 8px;cursor:pointer}
+.qkind{font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:1px}.qq{margin:0;font:700 22px/1.25 var(--display)}
+.qopts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.qopt{border:none;border-radius:14px;padding:16px 14px;font:700 17px inherit;color:#fff;cursor:pointer;text-align:left;box-shadow:inset 0 -4px 0 rgba(0,0,0,.2);min-height:60px}
+.qopt.c0{background:#E0525F}.qopt.c1{background:#3E7BE0}.qopt.c2{background:#E0A22E}.qopt.c3{background:#2FAE6A}.qopt:disabled{opacity:.45;cursor:default}
+.qopt.right{opacity:1;outline:4px solid #fff}.qopt.wrong{opacity:.35;text-decoration:line-through}
+.qtype{display:flex;gap:8px}.qtype input{flex:1;background:rgba(0,0,0,.25);border:1px solid var(--line);color:inherit;border-radius:12px;padding:12px;font:inherit;font-size:17px}
+.qfb{min-height:1.4em;display:flex;flex-direction:column;gap:6px}.qres{font:700 18px var(--display)}.qres.ok{color:#7FF0D2}.qres.no{color:#FF9A8A}.qres.try{color:#FFD166}.qexp{opacity:.9}
+.qtimer{height:6px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden}.qtimer i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#FFD166,#FF8A80);transition:width .1s linear}
+.qmodal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(10,6,24,.72);padding:16px;backdrop-filter:blur(4px)}
+.qmodal[hidden]{display:none}.qmodalbox{width:min(640px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#251B45;border:1px solid var(--line);border-radius:20px;padding:18px 20px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+/* live games */
+.lvmodes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:6px}
+.lvmode{display:flex;flex-direction:column;gap:2px;background:var(--glass);border:2px solid transparent;border-radius:12px;padding:10px 12px;cursor:pointer}.lvmode:has(input:checked){border-color:#FFD166}.lvmode input{position:absolute;opacity:0}.lvmode small{opacity:.8;font-size:12px}
+.livepanel{max-width:1100px}
+.lvhead{display:flex;gap:20px;align-items:center;justify-content:space-between;flex-wrap:wrap}.lvhead h2{margin:4px 0;font-size:26px}.lvhead p{margin:0}
+.lvpin{background:#fff;color:#2B2350;border-radius:18px;padding:12px 26px;text-align:center}.lvpin small{display:block;font-weight:700}.lvpin b{font:800 54px/1 var(--display);letter-spacing:4px}
+.lvplayers{display:flex;flex-wrap:wrap;align-items:flex-start;align-content:flex-start;gap:8px;margin:18px 0;min-height:80px}.lvp{border:none;background:var(--glass);color:inherit;border-radius:999px;padding:8px 16px;font:700 16px inherit;cursor:pointer}.lvp:hover{background:rgba(255,107,107,.35);text-decoration:line-through}
+.lvctl{align-items:center;gap:10px}
+.lvbar{display:flex;align-items:center;gap:14px;font-size:18px;margin-bottom:12px}.lvbar #lvClock{font:700 26px var(--display);margin-left:auto}
+.lvrace{display:grid;gap:6px}.lvlane{display:grid;grid-template-columns:140px minmax(0,1fr) 52px;gap:10px;align-items:center}.lvn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.lvtrack{position:relative;height:26px;border-radius:13px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.08) 0 18px,rgba(255,255,255,.03) 18px 36px);border-right:4px solid #FFD166}
+.lvtrack i{position:absolute;top:50%;transform:translate(-50%,-50%);font-style:normal;font-size:18px;color:#FFD166;transition:left .6s ease}.lvs{text-align:right;font-weight:700}
+.lvtower{display:flex;gap:30px;align-items:flex-end;justify-content:center;min-height:360px}
+.lvtw{position:relative;width:180px;height:340px;border-bottom:4px solid #8FE07A}.lvtgt{position:absolute;left:-20px;right:-20px;border-top:3px dashed #FFD166}.lvtgt span{position:absolute;right:0;top:-22px;font-size:13px;color:#FFD166}
+.lvfill{position:absolute;bottom:0;left:0;right:0;display:flex;flex-direction:column-reverse;gap:2px;transition:height .6s}.lvfill i{flex:1;background:hsl(var(--h),70%,65%);border-radius:4px;min-height:2px}
+.lvtinfo b{font:800 64px var(--display)}.lvtinfo small{display:block;opacity:.8}
+.lvjam{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}.lvteam{flex:1 1 180px;max-width:240px;display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--glass);border-top:6px solid var(--c);border-radius:16px;padding:12px}
+.lvteam b{font:700 22px var(--display);color:var(--c)}.lvinst{display:flex;gap:4px;font-size:24px}.lvinst span{opacity:.2;filter:grayscale(1);transition:.4s}.lvinst span.on{opacity:1;filter:none;transform:scale(1.15)}
+.lvjbar{width:60px;height:220px;background:rgba(0,0,0,.25);border-radius:12px;display:flex;align-items:flex-end;overflow:hidden}.lvjbar i{display:block;width:100%;background:var(--c);transition:height .6s}
+.lvlast{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}.lvlp{background:var(--glass);border-radius:12px;padding:8px 12px;display:flex;flex-direction:column}.lvlp.out{opacity:.4}
+.lvend{text-align:center}.lvend h2{font-size:34px}.lvpod{display:flex;gap:10px;justify-content:center;align-items:flex-end;flex-wrap:wrap;margin:16px 0}
+.pod{background:var(--glass);border-radius:14px;padding:12px 18px;min-width:120px;display:flex;flex-direction:column}.pod span{font-size:34px}.pod.p0{min-height:150px;background:rgba(255,209,102,.25)}.pod.p1{min-height:120px}.pod.p2{min-height:100px}
+.lvrep{text-align:left;margin:12px 0}.lvrep summary{cursor:pointer}
+.playpanel{max-width:680px}.pljoin,.plwait{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:20px 0}.pljoin input{max-width:320px}
+.pldot{width:30px;height:30px;border-radius:50%;background:#FFD166;animation:pldot 1s ease-in-out infinite alternate}@keyframes pldot{to{transform:scale(1.4);opacity:.5}}
+.plbig{font:800 48px var(--display);margin:0}
+.plstat{display:flex;justify-content:space-between;align-items:center;background:var(--glass);border-radius:12px;padding:8px 14px;margin-bottom:12px;font-weight:700}
+.plburst{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px;border-radius:18px;background:var(--glass);cursor:pointer;user-select:none;touch-action:manipulation;outline:none}
+.bring{width:140px;height:140px;display:grid;place-items:center}.bring i{width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,#FFE9A8,#FFB347);box-shadow:0 0 40px rgba(255,209,102,.6)}
+.bdots{display:flex;gap:8px}.bdots i{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.18)}.bdots i.p{background:#7FF0D2}.bdots i.g{background:#FFD166}.bdots i.m{background:#FF8A80}
+@media (max-width:600px){.lvlane{grid-template-columns:90px minmax(0,1fr) 44px}.lvpin b{font-size:40px}.qq{font-size:19px}.qopt{padding:14px 12px;font-size:16px}}
 .lb li.me{outline:2px solid #FFD166;background:rgba(255,209,102,.12)}.lb .lbn{font:700 13px var(--display);color:var(--ink-3)}.lb li:nth-child(1) .lbn{color:#FFD166}.lb li:nth-child(2) .lbn{color:#DCE2EE}.lb li:nth-child(3) .lbn{color:#D08A52}
 .lb .gem{width:9px;height:9px;transform:rotate(45deg);border-radius:2px;background:var(--rc)}.lb .lbname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lb b{font:600 13px var(--display);font-variant-numeric:tabular-nums}
 .evchip{border-color:rgba(143,240,224,.55);color:#8FF0E0;animation:evGlow 2.4s ease-in-out infinite}@keyframes evGlow{50%{box-shadow:0 0 14px rgba(143,240,224,.45)}}
@@ -2169,6 +2246,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <button class="chip c-coll" id="mShop" type="button">Collection<em class="chipdot" id="mShopNew" hidden></em></button>
       <button class="chip ppchip" id="mPass" type="button"><span id="mPassTxt">♛ Pulse Pass</span><em class="qdot" id="mPassDot" hidden></em></button>
       <button class="chip twchip" id="mTwin" type="button" hidden>⚔ Twin Pulse</button>
+      <button class="chip c-cls" id="mClass" type="button">🏫 Classroom</button>
       <button class="chip c-den" id="mDen" type="button">🎒 Locker</button>
       <button class="chip c-fr" id="mFriends" type="button">Friends<em class="qdot" id="mFDot" hidden></em></button>
       <button class="chip c-lb" id="mLB" type="button">Leaderboard</button>
@@ -2455,6 +2533,27 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <div class="row"><button class="btn ghost" id="plAdd" type="button" hidden>➕ Add friend</button><button class="btn ghost" id="plMod" type="button" hidden>Report or block</button></div>
   </div>
 </section>
+<section id="clsOv" class="overlay" hidden>
+  <div class="panel wide clspanel">
+    <div class="head"><button class="back" id="clsBack" type="button">← Menu</button></div>
+    <div><div class="eyebrow">Learn together</div><h2>Classroom</h2></div>
+    <div class="tabs clstabs" id="clsTabs"><button type="button" data-cv="home">🎒 Student</button><button type="button" data-cv="teach">🍎 Teach</button><button type="button" data-cv="packs">📝 Question packs</button></div>
+    <div id="clsBody"></div>
+  </div>
+</section>
+<section id="liveOv" class="overlay" hidden>
+  <div class="panel wide livepanel">
+    <div class="head"><button class="back" id="liveBack" type="button">← Classroom</button></div>
+    <div id="liveBody"></div>
+  </div>
+</section>
+<section id="playOv" class="overlay" hidden>
+  <div class="panel playpanel">
+    <div class="head"><button class="back" id="playBack" type="button">← Leave</button></div>
+    <div id="playBody"></div>
+  </div>
+</section>
+<div class="qmodal" id="qModal" hidden role="dialog" aria-modal="true" aria-label="Question"><div class="qmodalbox" id="qModalBody"></div></div>
 <section id="cardOv" class="overlay" hidden>
   <div class="panel wide">
     <div style="text-align:center"><div class="eyebrow" id="cdEyebrow">Floor cleared</div><h2 id="cdTitle">Pick a power card</h2><p class="small" id="cdSub" style="margin:4px 0 0"></p></div>
@@ -2699,7 +2798,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         <small class="admhint">One tap sends it</small>
         <div class="admquick">
           <button type="button" data-q="notes:1000">+♪1,000</button><button type="button" data-q="notes:5000">+♪5,000</button><button type="button" data-q="notes:25000">+♪25,000</button>
-          <button type="button" class="pp" data-q="passp">♛ Pulse Pass+</button></div>
+          <button type="button" class="pp" data-q="passp">♛ Pulse Pass+</button><button type="button" id="admTeach">🏫 Verify teacher</button></div>
         <small class="admhint">Or pick something</small>
         <div class="g2"><label>Gift<select id="admKind"><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option><option value="notes">Notes (any amount)</option><option value="rank">Set rank</option><option value="msg">Message only</option></select></label>
           <label id="admItemL">Item<select id="admItem"></select></label><label id="admAmtL" hidden>Amount<input id="admAmt" type="number" min="1" max="1000000" step="100" value="1000"></label></div>
@@ -4258,7 +4357,7 @@ function nextRoom(first){
 const TOUCH_LAG=MOB?.03:0;
 /* notes due more than this long ago are dropped instead of played late and bunched together */
 const LATE_OK=.012;
-function win(spb){ const sc=(SAVE.relaxed?1.3:1)*(MOB?1.35:1)*(G.mode&&G.mode.tight?.8:1)*((G.perks&&G.perks.win)||1), cap=.42*spb; return {p:Math.min(.045*sc,cap*.3),g:Math.min(.09*sc,cap*.6),l:Math.min(.15*sc,cap)}; }
+function win(spb){ const sc=(SAVE.relaxed||(G.mode&&G.mode.easy)?1.3:1)*(MOB?1.35:1)*(G.mode&&G.mode.tight?.8:1)*((G.perks&&G.perks.win)||1), cap=.42*spb; return {p:Math.min(.045*sc,cap*.3),g:Math.min(.09*sc,cap*.6),l:Math.min(.15*sc,cap)}; }
 function pump(){
   const c=A.ctx, lat=G.mode.click?outLat():0, ahead=c.currentTime+(MOB||A.bt?.35:.25)+lat;
   if(G.mode.pattern) return pumpPattern(c,ahead);
@@ -4442,9 +4541,9 @@ function roomClear(b){
   G.restUntil=M.type==='ascent'?1e9:d-1; G.swapPending=true;   // Ascent: no countdown yet (it waits for your power card and the next map)
 }
 /* the Courtyard (world 1 and its boss) is the practice world: mistakes never cost Harmony there */
-const courtyardSafe=()=>!!(G.mode&&(G.mode.type==='level'||G.mode.type==='boss')&&G.mode.world===1);
+const courtyardSafe=()=>!!(G.mode&&(((G.mode.type==='level'||G.mode.type==='boss')&&G.mode.world===1)||G.mode.easy));
 function loseHarmony(){ if(G.mode.duel) return; if(G.reviveSafe&&performance.now()<G.reviveSafe) return;   // a moment of safety right after a boss revive
-  if(courtyardSafe()){ G.regen=0; if(!G.safeTold){ G.safeTold=true; tutOnce('safe','That would cost Harmony anywhere else. Here in my Courtyard you are safe, so keep practising!',6000); } return; } G.harmony=Math.max(0,G.harmony-1); G.regen=0; bump('harmony','hit'); hud();
+  if(courtyardSafe()){ G.regen=0; if(!G.safeTold&&!G.mode.easy){ G.safeTold=true; tutOnce('safe','That would cost Harmony anywhere else. Here in my Courtyard you are safe, so keep practising!',6000); } return; } G.harmony=Math.max(0,G.harmony-1); G.regen=0; bump('harmony','hit'); hud();
   if(inNet()){ if(!NET.host) return; netSend({t:'hm',h:G.harmony}); }
   if(G.harmony<=0&&G.state==='playing'&&G.perks.phoenix){ G.perks.phoenix=0; G.harmony=2; G.banner={text:'Phoenix!',sub:'Back from the ashes with 2 Harmony',t0:G.now,dur:1.6,col:'#FF7EB6'}; sTierUp(); hud(); return; }
   if(G.harmony<=0&&G.state==='playing'&&reviveEligible()){ reviveOffer(); return; }
@@ -8686,6 +8785,7 @@ function mergeSaves(loc,cl,additive){
       const on=(newer.pets||{}).on!==undefined?(newer.pets||{}).on:(a.on||b.on||null); out.pets={list:Object.values(lst),eggs:Object.values(eg).slice(0,EGG_MAX),hatched,on}; } }
   { const a=loc.garden||{}, b=cl.garden||{}; if(a.days||b.days){ const days=Object.assign({},b.days||{},a.days||{}); out.garden={days,n:Math.max(a.n||0,b.n||0,Object.keys(days).length),got:[...new Set([...(a.got||[]),...(b.got||[])])]}; } }
   { const a=(loc.album||{}).got||[], b=(cl.album||{}).got||[]; out.album={got:[...new Set([...a,...b])]}; }
+  { const m={}; [...(cl.cls||[]),...(loc.cls||[])].forEach(c=>{ if(c&&c.cid) m[c.cid]=c; }); out.cls=Object.values(m).slice(0,12); out.clStars=Math.max(loc.clStars||0,cl.clStars||0); out.clName=newer.clName||loc.clName||cl.clName||''; }
   out.presGot=Math.max(loc.presGot||0,cl.presGot||0); out.petStarter=!!(loc.petStarter||cl.petStarter);
   { const a=loc.bpBest, b=cl.bpBest; const w=!a?b:!b?a:(a[1]>=b[1]?a:b); if(w) out.bpBest=w; else delete out.bpBest; }
   out.hardV=HARD_V; out.trailRefund=true; out._t=Math.max(loc._t||0,cl._t||0,1);
@@ -9005,7 +9105,8 @@ async function admSearch(q){ const db=ACCT.db; if(!db) return; q=q.trim(); if(!q
 ADM.qid=0;
 function admPick(f){ ADM.target=f; $('admSel').hidden=false; $('admRes').hidden=true; $('admResHead').hidden=true; $('admFind').closest('.admsearch').hidden=true;
   $('admSelAv').textContent=String(f.name||'?').charAt(0).toUpperCase(); $('admSelName').textContent=f.name||'Player'; $('admSelInfo').textContent=rankName(f.rank||0)+(f.score?` · best ${(+f.score).toLocaleString()}`:'');
-  $('admSel').querySelectorAll('button').forEach(b=>b.disabled=false); admKindUI(); admMsg(''); }
+  $('admSel').querySelectorAll('button').forEach(b=>b.disabled=false); admKindUI(); admMsg('');
+  $('admTeach').onclick=async()=>{ const uid=f.uid||f.id; if(!uid) return; try{ await ACCT.db.collection('teachers').doc(uid).set({ok:true,by:ACCT.user.uid,t:Date.now()}); admMsg(`✓ ${f.name||'They'} can now share question packs with every teacher.`); }catch(e){ admMsg('Could not verify: '+((e&&e.code)||'error')); } }; }
 function admUnpick(){ ADM.target=null; $('admSel').hidden=true; $('admRes').hidden=false; $('admResHead').hidden=false; $('admFind').closest('.admsearch').hidden=false; admMsg(''); const q=$('admFind').value; if(q.trim()) admSearch(q); else admTop(); $('admFind').focus({preventScroll:true}); }
 async function admGift(g,label,pic){ const T=ADM.target, db=ACCT.db; if(!T||!db||!ACCT.user) return;
   const note=$('admNote').value.trim().slice(0,120);
@@ -10007,6 +10108,7 @@ function awardRun(o){
   const s=G.stats||{perfect:0,gems:0}, L=SAVE.life||(SAVE.life={});
   L.runs=(L.runs||0)+1; L.perfect=(L.perfect||0)+s.perfect; L.gems=(L.gems||0)+(s.gems||0);
   try{ lockerRun(o); }catch(e){}
+  try{ hwAfter(o); }catch(e){}
   questEv('runs',1); questEv('perfect',s.perfect); questEv('gems',s.gems||0); questEv('streak',G.maxStreak||0,true);
   if(o.cleared&&M.type==='level') questEv('levels',1);
   if(o.newStars) questEv('stars',o.newStars);
@@ -10315,8 +10417,8 @@ if(isNativeApp()) setTimeout(()=>{ iapInit(); adsInit(); },1500);
 /* ================= PHONE APP SHELL: bottom tabs and the More sheet (all of them press the menu's own buttons) ================= */
 const PHONE_MQ=matchMedia('(max-width:760px), (max-height:540px) and (pointer:coarse)');
 const TAB_OF={menuOv:'home',worldsOv:'home',levelsOv:'home',hardOv:'home',remixOv:'home',coopOv:'home',passOv:'pass',shopOv:'shop',friendsOv:'more',friendOv:'more',
-  lbOv:'more',profOv:'more',denOv:'more',plOv:'more',settingsOv:'more',adminOv:'more',acctOv:'more',guideOv:'more',eventOv:'more',twinOv:'more'};
-const MORE_ITEMS=[['mDen','Locker','#7FF0D2','#2E8A9E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="14" height="14" rx="3" fill="currentColor" fill-opacity=".2"/><path d="M9 7V5a3 3 0 0 1 6 0v2M5 13h14"/></svg>'],['mTwin','Twin Pulse 2v2','#FFE7A0','#6A4AB0','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2"/></svg>'],['mProfile','Profile & quests','#FF9A4D','#E2541E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 7-7 11-7-11z" fill="currentColor" fill-opacity=".25"/></svg>'],['mFriends','Friends','#3FD9C2','#127E9C','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19c.8-3.3 3.3-5 6.2-5s5.4 1.7 6.2 5"/><path d="M15.5 5.3a3.3 3.3 0 0 1 0 6.4M18 14.4c1.7.7 2.8 2.2 3.2 4.6"/></svg>'],['mLB','Leaderboards','#FFD45E','#E0901A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="currentColor" fill-opacity=".25"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 14v4M8 20h8"/></svg>'],['mTwin',null,'#B79BFF','#5B3BD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M14 5h5v5M19 19L5 5M5 10V5h5"/></svg>'],['mEvent',null,'#FF7EB6','#C2307A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z" fill="currentColor" fill-opacity=".25"/></svg>'],['mAcct',null,'#7FB8FF','#2E5FD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M4.5 20c1.3-3.6 4.2-5.5 7.5-5.5s6.2 1.9 7.5 5.5"/></svg>'],['mName','Player name','#D29BFF','#8A3DD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z" fill="currentColor" fill-opacity=".2"/><path d="M13.5 6.5l4 4"/></svg>'],['mSettings','Settings','#9AA6C8','#4B5578','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>'],['mGuide','Help','#9CF07A','#2E9E54','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01"/></svg>'],['mSound',null,'#8A8CFF','#3F3FC2','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12" /><circle cx="6.5" cy="18" r="2.5" fill="currentColor" fill-opacity=".3"/><circle cx="16.5" cy="16" r="2.5" fill="currentColor" fill-opacity=".3"/></svg>']];
+  lbOv:'more',profOv:'more',denOv:'more',plOv:'more',clsOv:'more',liveOv:'more',playOv:'more',settingsOv:'more',adminOv:'more',acctOv:'more',guideOv:'more',eventOv:'more',twinOv:'more'};
+const MORE_ITEMS=[['mClass','Classroom','#FFE27A','#C2771E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-5 9 5-9 5z" fill="currentColor" fill-opacity=".25"/><path d="M7 12v5c3 2 7 2 10 0v-5M21 10v6"/></svg>'],['mDen','Locker','#7FF0D2','#2E8A9E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="14" height="14" rx="3" fill="currentColor" fill-opacity=".2"/><path d="M9 7V5a3 3 0 0 1 6 0v2M5 13h14"/></svg>'],['mTwin','Twin Pulse 2v2','#FFE7A0','#6A4AB0','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2"/></svg>'],['mProfile','Profile & quests','#FF9A4D','#E2541E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 7-7 11-7-11z" fill="currentColor" fill-opacity=".25"/></svg>'],['mFriends','Friends','#3FD9C2','#127E9C','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19c.8-3.3 3.3-5 6.2-5s5.4 1.7 6.2 5"/><path d="M15.5 5.3a3.3 3.3 0 0 1 0 6.4M18 14.4c1.7.7 2.8 2.2 3.2 4.6"/></svg>'],['mLB','Leaderboards','#FFD45E','#E0901A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="currentColor" fill-opacity=".25"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 14v4M8 20h8"/></svg>'],['mTwin',null,'#B79BFF','#5B3BD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M14 5h5v5M19 19L5 5M5 10V5h5"/></svg>'],['mEvent',null,'#FF7EB6','#C2307A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z" fill="currentColor" fill-opacity=".25"/></svg>'],['mAcct',null,'#7FB8FF','#2E5FD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M4.5 20c1.3-3.6 4.2-5.5 7.5-5.5s6.2 1.9 7.5 5.5"/></svg>'],['mName','Player name','#D29BFF','#8A3DD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z" fill="currentColor" fill-opacity=".2"/><path d="M13.5 6.5l4 4"/></svg>'],['mSettings','Settings','#9AA6C8','#4B5578','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>'],['mGuide','Help','#9CF07A','#2E9E54','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01"/></svg>'],['mSound',null,'#8A8CFF','#3F3FC2','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12" /><circle cx="6.5" cy="18" r="2.5" fill="currentColor" fill-opacity=".3"/><circle cx="16.5" cy="16" r="2.5" fill="currentColor" fill-opacity=".3"/></svg>']];
 const isDot=id=>{ const e=$(id); return !!e&&!e.hidden; };
 function moreBuild(){
   const rk=myRank(); $('moreMe').innerHTML=`<i class="gem" style="--rc:${rankCol(rk)}"></i><span><b>${escapeHTML(ensureName())}</b><small>${escapeHTML(rankName(rk))} · tap for your profile</small></span><em>${notesTxt()}</em>`;
@@ -11689,8 +11791,9 @@ function giftGive(r){ const out=[]; if(r.n){ SAVE.notes+=r.n; out.push(`♪${r.n
 /* ================= WHAT'S NEW =================
    Shown once to each player after an update (remembered in the save, so it follows their account to other devices),
    once the daily gift is out of the way. Settings → What's new opens it again. Change NEWS_V to show a new one. */
-const NEWS_V='2026-10d', NEWS_WHEN='Update · October 2026';
+const NEWS_V='2026-10e', NEWS_WHEN='Update · October 2026';
 const NEWS_ADDED=[
+ ['🏫','Classrooms','Teachers: make a class, give homework (2 questions a level), host live class games and build question packs. Students: join with a class code, no email needed. Find it on the menu.'],
  ['🎒','The Locker','A new home for your stuff: your player card, block mastery, your garden and the Album. Find it on the menu.'],
  ['🏅','Block mastery','The block you wear levels up as you play it, 1 to 10, with Notes, Stardust and a Master title along the way.'],
  ['✨','Effects','Trails behind your block, bursts on every perfect hit, and your own hit sound. Find them in the Shop under Effects.'],
@@ -11705,7 +11808,6 @@ const NEWS_EARLIER=[
  ['🧬','Fusion and Polish','Mix two blocks into a new one, or polish your favourites.'],
  ['🔁','Trading and the Forge','Trade blocks with friends, and forge missing pack blocks with Stardust.']];
 const NEWS_SOON=[
- ['🏫','Classrooms','Teachers will be able to make a class code, and students can join and practise rhythm together.'],
  ['❄','A winter pack','A new seasonal pack and Forge recipe for December.'],
  ['👥','Friend leaderboards','See how you stack up against just your friends.']];
 let newsFrom='menuOv';
@@ -13355,7 +13457,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['denOv','plOv','wardOv','newsOv','adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
+const OVS=['clsOv','liveOv','playOv','denOv','plOv','wardOv','newsOv','adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -14236,7 +14338,8 @@ const FX_TRAILS=[
  {id:'tr_rainbow',name:'Rainbow',glyph:'≋',col:'#FF7EB6',price:1200,st:'rainbow'},
  {id:'tr_mastery',name:'Mastery Ribbon',glyph:'❖',col:'#7FF0D2',st:'mastery',lk:{mast:3}},
  {id:'tr_leaf',name:'Garden Leaves',glyph:'❦',col:'#8FE07A',st:'leaf',lk:{garden:4}},
- {id:'tr_prestige',name:'Prestige Comet',glyph:'☄',col:'#C9A7FF',st:'prestige',lk:{pres:1}}];
+ {id:'tr_prestige',name:'Prestige Comet',glyph:'☄',col:'#C9A7FF',st:'prestige',lk:{pres:1}},
+ {id:'tr_chalk',name:'Chalkboard',glyph:'✎',col:'#F4F1E8',st:'chalk',lk:{cls:20}}];
 const FX_BURSTS=[
  {id:'pb_none',name:'Classic',glyph:'✧',col:'#FFF8EE',price:0},
  {id:'pb_ring',name:'Double Ring',glyph:'◎',col:'#B8F2E6',price:400},
@@ -14257,8 +14360,8 @@ const FX_SOUNDS=[
  {id:'hs_laser',name:'Laser',glyph:'ϟ',col:'#C9B8FF',price:600}];
 const FX_ALL=[...FX_TRAILS,...FX_BURSTS,...FX_SOUNDS];
 const fxById=id=>FX_ALL.find(f=>f.id===id);
-const fxLkMet=lk=>!lk||((lk.mast?mastBest()>=lk.mast:true)&&(lk.garden?gdnStage()>=lk.garden:true)&&(lk.pres?presLevel()>=lk.pres:true));
-const fxLkText=lk=>lk.mast?`Any block to mastery ${lk.mast}`:lk.garden?`Garden stage ${lk.garden}`:lk.pres?`Pass prestige ${lk.pres}`:'';
+const fxLkMet=lk=>!lk||((lk.mast?mastBest()>=lk.mast:true)&&(lk.garden?gdnStage()>=lk.garden:true)&&(lk.pres?presLevel()>=lk.pres:true)&&(lk.cls?(SAVE.clStars||0)>=lk.cls:true));
+const fxLkText=lk=>lk.mast?`Any block to mastery ${lk.mast}`:lk.garden?`Garden stage ${lk.garden}`:lk.pres?`Pass prestige ${lk.pres}`:lk.cls?`${lk.cls} class stars`:'';
 const fxOwn=f=>!!f&&(f.price===0||SAVE.owned.includes(f.id)||(!!f.lk&&fxLkMet(f.lk)));
 function fxS(){ const f=SAVE.fx||(SAVE.fx={}); if(!fxOwn(fxById(f.trail))) f.trail='tr_none'; if(!fxOwn(fxById(f.burst))) f.burst='pb_none'; if(!fxOwn(fxById(f.snd))) f.snd='hs_classic'; return f; }
 const FXC={t:-9,v:null};   // what's equipped, checked once a second rather than every frame
@@ -14286,6 +14389,7 @@ function drawFxTrail(P,bd,L,now){
     else if(st==='bubble'&&i%4===0){ cx.strokeStyle=rgba(C,.9*f); cx.lineWidth=1.5; cx.beginPath(); cx.arc(b.x+Math.sin(k)*5,b.y-age*35,2+5*(1-f)+(k%3),0,Math.PI*2); cx.stroke(); }
     else if(st==='notes'&&i%6===0){ cx.fillStyle=rgba(C,f); cx.font=`700 ${fs}px sans-serif`; cx.fillText(k%2?'♪':'♫',b.x+Math.sin(k)*6,b.y-age*40); }
     else if(st==='petal'&&i%4===0){ cx.fillStyle=rgba(k%2?C:'#FFE3EE',f); cx.beginPath(); cx.ellipse(b.x+Math.sin(k+age*4)*6,b.y+age*28,3.5,2,k+age*5,0,Math.PI*2); cx.fill(); }
+    else if(st==='chalk'&&i%2===0){ cx.strokeStyle=rgba(i%6?'#F4F1E8':'#FFE27A',.85*f); cx.lineWidth=2.2; cx.beginPath(); cx.moveTo(a.x+Math.sin(k)*1.5,a.y+Math.cos(k*1.3)*1.5); cx.lineTo(b.x,b.y); cx.stroke(); }
     else if(st==='leaf'&&i%5===0){ cx.fillStyle=rgba(k%2?C:'#4FB86A',f); cx.beginPath(); cx.ellipse(b.x+Math.sin(k+age*3)*7,b.y+age*24,4.5,2,k+age*3,0,Math.PI*2); cx.fill(); }
     else if(st==='star'&&i%4===0){ cx.fillStyle=rgba(i%8?C:'#FFFFFF',f*(.6+.4*Math.sin(now*20+i))); cx.font=`${Math.round(fs*.8)}px sans-serif`; cx.fillText('✦',b.x+Math.sin(k)*5,b.y+Math.cos(k)*4); }
     else if(st==='flame'&&i%2===0){ const r=Math.max(.5,L.tw*.1*f); cx.fillStyle=rgba(f>.6?'#FFE27A':f>.3?'#FF8A3C':'#E0452A',.85*f); cx.beginPath(); cx.arc(b.x+Math.sin(k*1.3)*3,b.y-age*45,r,0,Math.PI*2); cx.fill(); }
@@ -14495,7 +14599,10 @@ const TITLES=[
  ['wtree','World Tree Keeper',()=>gdnStage()>=10,'Grow the World Tree'],
  ['achiever','Achiever',()=>Object.keys(SAVE.ach||{}).length>=25,'Earn 25 achievements'],
  ['trend','Trendsetter',()=>albumGot('shop'),'Fill the Shop page of the Album'],
- ['show','Showstopper',()=>albumGot('fx'),'Fill the Effects page of the Album']];
+ ['show','Showstopper',()=>albumGot('fx'),'Fill the Effects page of the Album'],
+ ['hwhero','Homework Hero',()=>LF('hwDone')>=5,'Finish 5 homework assignments'],
+ ['quizwiz','Quiz Whiz',()=>LF('clRight')>=100,'Answer 100 class questions right'],
+ ['classact','Class Act',()=>(SAVE.clStars||0)>=50,'Earn 50 class stars']];
 function titleText(id){ id=String(id||''); if(!id) return '';
   if(id.startsWith('m.')){ const s=SKINS.find(k=>k.id===id.slice(2)); return s?s.name+' Master':''; }
   if(id.startsWith('al.')){ const pk=BPACKS.find(p=>'pk_'+p.id===id.slice(3)); return pk?pk.name.replace(/ Pack$/,'')+' Collector':''; }
@@ -14680,6 +14787,517 @@ function plRender(p,me,loading){
   $('plOv').querySelectorAll('canvas.skprev').forEach(c=>c._drawn=false);
 }
 $('plBack').onclick=()=>{ const f=PL.from; if(f==='menuOv'||!$(f)) toMenu(); else showOv(f); };
+
+/* ================= CLASSROOMS: classes, homework (2 questions a level), live class games, question packs =================
+   Teachers sign in with a real account; students only need a class code (or a game PIN) and a display name, no email.
+   A student who isn't signed in gets a private guest sign-in on a separate Firebase app, so it never touches the main
+   account system (no saves, no leaderboards). Everything a student writes is readable only by them and their teacher;
+   the Firestore rules enforce that. No chat anywhere, and class rewards are cosmetic only. */
+const CL={app:null,view:'home',cls:null,assign:null,pack:null,packs:null,pub:null,teach:null,msg:'',busy:false};
+const FUN_ADJ=['Purple','Swift','Jolly','Cosmic','Brave','Sunny','Mighty','Gentle','Zippy','Lucky','Calm','Bright','Snappy','Groovy','Clever','Bouncy'];
+const FUN_NOUN=['Metronome','Drum','Trumpet','Piano','Cello','Banjo','Tuba','Flute','Maraca','Violin','Harp','Bongo','Kazoo','Oboe','Ukulele','Triangle'];
+const funName=()=>FUN_ADJ[Math.floor(Math.random()*FUN_ADJ.length)]+' '+FUN_NOUN[Math.floor(Math.random()*FUN_NOUN.length)];
+const clName=s=>showName(String(s||'').replace(/\s+/g,' ').trim().slice(0,24))||'Student';
+const clCode=()=>{ const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s=''; for(let i=0;i<6;i++) s+=A[Math.floor(bpRand()*A.length)]; return s; };
+const clReal=()=>!!(ACCT.user&&!ACCT.user.isAnonymous&&ACCT.db);
+/* who's playing: the player's own account if they're signed in, otherwise a guest sign-in kept on this device */
+async function clAuth(){
+  await fbLoad(); if(clReal()) return {db:ACCT.db,uid:ACCT.user.uid,real:true};
+  const cfg=acctCfg(); if(!cfg) throw new Error('offline');
+  if(!CL.app) CL.app=firebase.apps.find(a=>a.name==='class')||firebase.initializeApp(cfg,'class');
+  const a=CL.app.auth(); if(!a.currentUser){ try{ await a.signInAnonymously(); }catch(e){ if(e&&e.code==='auth/operation-not-allowed') throw new Error('guest-off'); throw e; } }
+  return {db:CL.app.firestore(),uid:a.currentUser.uid,real:false};
+}
+const clErr=e=>{ const c=e&&(e.code||e.message)||''; return c==='guest-off'?'Joining without an account isn\'t switched on yet. Ask your teacher, or sign in first.':c==='offline'?'Classrooms need an internet connection.':c==='permission-denied'?'That isn\'t allowed. Check the code, or ask your teacher.':'Something went wrong. Check your connection and try again.'; };
+const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
+
+/* ---------------- questions ----------------
+   {k:'mc'|'tf'|'type'|'listen', q:'text', a:['choices'], c:[correct indexes], ans:['accepted typed answers'], e:'explanation', play:{r:'x.x.xx..'}|{iv:[60,67]}} */
+const QK={mc:'Multiple choice',tf:'True or false',type:'Type the answer',listen:'Listen and choose'};
+function qNorm(q){ q=q||{}; const k=QK[q.k]?q.k:'mc', o={k,q:String(q.q||'').slice(0,200),e:String(q.e||'').slice(0,200)};
+  if(k==='tf'){ o.a=['True','False']; o.c=[(q.c||[0])[0]===1?1:0]; }
+  else if(k==='type'){ o.ans=(Array.isArray(q.ans)?q.ans:[q.ans]).map(x=>String(x||'').slice(0,60)).filter(Boolean).slice(0,6); if(!o.ans.length) o.ans=['?']; }
+  else { o.a=(q.a||[]).map(x=>String(x||'').slice(0,80)).slice(0,4); while(o.a.length<2) o.a.push(''); o.c=(q.c||[0]).filter(i=>i>=0&&i<o.a.length); if(!o.c.length) o.c=[0]; }
+  if(k==='listen'){ const p=q.play||{}; o.play=p.iv&&p.iv.length===2?{iv:[+p.iv[0]||60,+p.iv[1]||67]}:{r:String(p.r||'x.x.x.x.').replace(/[^x.]/g,'').slice(0,16)||'x.x.x.x.'}; }
+  return o; }
+const qOk=q=>q.q.trim().length>0&&(q.k==='type'?q.ans.some(a=>a.trim()):q.a.filter(a=>a.trim()).length>=2);
+const qShort=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'');
+/* play a listen question's sound: a rhythm (x = hit, . = rest, in eighth notes) or two notes, one after the other */
+function listenPlay(p){ ensureAudio(); const c=A.ctx; c.resume().catch(()=>{}); const t=c.currentTime+.08, d=A.sfx;
+  if(p&&p.iv){ [0,1].forEach(i=>{ tone(d,t+i*.7,'triangle',mtof(p.iv[i]),.16,.01,.6); tone(d,t+i*.7,'sine',mtof(p.iv[i]+12),.04,.01,.4); }); return 1.5; }
+  const r=(p&&p.r)||'x.x.x.x.', e=.25; for(let i=0;i<4;i++) tone(d,t+i*e*2,'sine',i?880:1320,.05,.001,.05);   // a count-in of four clicks
+  [...r].forEach((ch,i)=>{ if(ch==='x'){ const q=t+8*e+i*e; tone(d,q,'sine',720,.22,.002,.12,{glide:520,gt:.1}); noise(d,q,.08,.04,'bandpass',2400,1); } }); return 8*e+r.length*e+.3; }
+/* one question card. opt: {easy, timer (s), auto (ms before moving on, 0 = a Continue button), onDone(score 0 / .5 / 1, ms)} */
+function qCard(box,q,opt){ q=qNorm(q); const t0=performance.now(); let tries=0, done=false, tmr=null;
+  const finish=(sc,why)=>{ if(done) return; done=true; clearInterval(tmr); const ok=sc>0, right=q.k==='type'?q.ans[0]:q.c.map(i=>q.a[i]).join(' / ');
+    if(A.ctx) ok?sGem():tone(A.sfx,A.ctx.currentTime,'sine',220,.08,.005,.25);
+    box.querySelector('.qfb').innerHTML=`<div class="qres ${ok?'ok':'no'}">${ok?(sc<1?'✓ Got it on the second try!':'✓ Correct!'):why==='time'?'⏱ Time\'s up!':'✗ Not quite.'}</div>${ok&&sc===1?'':`<div class="small">The answer: <b>${escapeHTML(right)}</b></div>`}${q.e?`<div class="small qexp">${escapeHTML(q.e)}</div>`:''}${opt.auto?'':'<button class="btn qnext" type="button">Continue</button>'}`;
+    box.querySelectorAll('.qopt,.qtype input,.qtype button').forEach(b=>b.disabled=true);
+    const go=()=>opt.onDone&&opt.onDone(sc,performance.now()-t0);
+    if(opt.auto) setTimeout(go,ok?opt.auto:opt.auto+900); else { const n=box.querySelector('.qnext'); n.onclick=go; n.focus(); } };
+  const judge=ok=>{ if(done) return; tries++; if(ok) return finish(tries===1?1:.5);
+    if(opt.easy&&tries===1){ box.querySelector('.qfb').innerHTML='<div class="qres try">Not quite. Try once more!</div>'; return false; } finish(0); };
+  const opts=q.k==='type'?`<div class="qtype"><input type="text" maxlength="60" autocomplete="off" placeholder="Type your answer" aria-label="Your answer"><button class="btn" type="button">Check</button></div>`
+    :`<div class="qopts">${q.a.map((a,i)=>a.trim()?`<button type="button" class="qopt c${i}" data-i="${i}">${escapeHTML(a)}</button>`:'').join('')}</div>`;
+  box.innerHTML=`<div class="qcard">${opt.head||''}${opt.timer?'<div class="qtimer"><i></i></div>':''}<div class="qkind">${QK[q.k]}</div><h3 class="qq">${escapeHTML(q.q)}</h3>${q.k==='listen'?'<button class="btn ghost qlisten" type="button">▶ Play it</button>':''}${opts}<div class="qfb" aria-live="polite"></div></div>`;
+  if(q.k==='listen'){ const b=box.querySelector('.qlisten'); b.onclick=()=>listenPlay(q.play); setTimeout(()=>{ if(!done&&box.isConnected) listenPlay(q.play); },350); }
+  box.querySelectorAll('.qopt').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i, ok=q.c.includes(i); b.classList.add(ok?'right':'wrong'); if(judge(ok)===false) b.disabled=true; });
+  const inp=box.querySelector('.qtype input'); if(inp){ const chk=()=>{ const v=qShort(inp.value); if(!v) return; if(judge(q.ans.some(a=>qShort(a)===v))===false){ inp.value=''; inp.focus(); } };
+    box.querySelector('.qtype button').onclick=chk; inp.onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') chk(); }; setTimeout(()=>inp.focus(),50); }
+  if(opt.timer){ const bar=box.querySelector('.qtimer i'); tmr=setInterval(()=>{ const u=(performance.now()-t0)/1000/opt.timer; bar.style.width=Math.max(0,100*(1-u))+'%'; if(u>=1) finish(0,'time'); },100); }
+}
+/* the homework question pop-up: sits on top of whatever screen is showing (the level's start or its result screen) */
+function qModal(q,opt){ return new Promise(res=>{ const m=$('qModal'); m.hidden=false;
+  qCard($('qModalBody'),q,{...opt,onDone:(sc,ms)=>{ m.hidden=true; res({sc,ms}); }}); }); }
+
+/* ---------------- ready-made question packs ---------------- */
+const BUILTIN_PACKS=[
+ {id:'b_notes',title:'Note values and rests',subject:'Music',grade:'3-6',qs:[
+  {k:'mc',q:'How many beats does a whole note get in 4/4 time?',a:['1','2','3','4'],c:[3],e:'A whole note lasts the whole bar: 4 beats.'},
+  {k:'mc',q:'How many beats does a half note get in 4/4 time?',a:['1','2','4','½'],c:[1]},
+  {k:'mc',q:'How many eighth notes fit in one quarter note?',a:['1','2','3','4'],c:[1],e:'Two eighth notes make one beat.'},
+  {k:'tf',q:'A quarter rest means you stay silent for one beat.',c:[0]},
+  {k:'mc',q:'Which is the longest?',a:['Eighth note','Quarter note','Half note','Sixteenth note'],c:[2]},
+  {k:'mc',q:'A dot after a half note makes it last…',a:['2 beats','3 beats','4 beats','1 beat'],c:[1],e:'A dot adds half the note\'s value: 2 + 1 = 3.'},
+  {k:'type',q:'How many sixteenth notes fit in one quarter note? (type a number)',ans:['4','four']},
+  {k:'tf',q:'Two half notes last as long as one whole note.',c:[0]}]},
+ {id:'b_time',title:'Time signatures',subject:'Music',grade:'4-8',qs:[
+  {k:'mc',q:'In 3/4 time, how many beats are in each bar?',a:['2','3','4','6'],c:[1]},
+  {k:'mc',q:'In 4/4, which note gets one beat?',a:['Half note','Quarter note','Eighth note','Whole note'],c:[1],e:'The bottom 4 means a quarter note gets the beat.'},
+  {k:'mc',q:'Which time signature is a waltz usually in?',a:['4/4','2/4','3/4','6/8'],c:[2]},
+  {k:'tf',q:'4/4 time is also called "common time".',c:[0]},
+  {k:'mc',q:'What does the top number of a time signature tell you?',a:['How fast to play','How many beats in a bar','How loud to play','Which key'],c:[1]},
+  {k:'mc',q:'A march is often in…',a:['2/4','3/4','5/4','7/8'],c:[0]},
+  {k:'tf',q:'In 6/8 time the beats feel like two groups of three.',c:[0]}]},
+ {id:'b_tempo',title:'Tempo words',subject:'Music',grade:'4-8',qs:[
+  {k:'mc',q:'What does "allegro" mean?',a:['Slow','Fast and lively','Getting softer','Very loud'],c:[1]},
+  {k:'mc',q:'What does "largo" mean?',a:['Very slow and broad','Fast','Medium','Getting faster'],c:[0]},
+  {k:'mc',q:'"Andante" means…',a:['At a walking pace','As fast as possible','Stop','Very quiet'],c:[0]},
+  {k:'mc',q:'"Accelerando" means…',a:['Getting slower','Getting faster','Getting louder','Repeat'],c:[1]},
+  {k:'mc',q:'"Ritardando" means…',a:['Getting faster','Getting slower','Getting softer','Short and detached'],c:[1]},
+  {k:'tf',q:'BPM stands for "beats per minute".',c:[0]},
+  {k:'mc',q:'Which is fastest?',a:['Adagio','Andante','Presto','Moderato'],c:[2]}]},
+ {id:'b_dyn',title:'Dynamics',subject:'Music',grade:'3-8',qs:[
+  {k:'mc',q:'What does "f" (forte) mean?',a:['Soft','Loud','Fast','Slow'],c:[1]},
+  {k:'mc',q:'What does "p" (piano) mean?',a:['Soft','Loud','Medium loud','Very fast'],c:[0]},
+  {k:'mc',q:'Which is the loudest?',a:['mp','mf','ff','p'],c:[2]},
+  {k:'mc',q:'A crescendo means the music gets…',a:['Softer','Louder','Slower','Higher'],c:[1]},
+  {k:'tf',q:'"pp" means very soft.',c:[0]},
+  {k:'mc',q:'"mf" stands for…',a:['Mezzo forte (medium loud)','Mezzo piano','Music fast','Very soft'],c:[0]}]},
+ {id:'b_listen',title:'Rhythm ears',subject:'Music',grade:'2-8',qs:[
+  {k:'listen',q:'Listen. How many claps did you hear?',a:['2','3','4','5'],c:[2],play:{r:'x.x.x.x.'}},
+  {k:'listen',q:'Listen. How many claps did you hear?',a:['2','3','4','6'],c:[1],play:{r:'x...x.x.'}},
+  {k:'listen',q:'Which rhythm did you hear?',a:['ta ta ta ta','ta ti-ti ta ta','ti-ti ti-ti ta ta','ta rest ta ta'],c:[1],play:{r:'x.xxx.x.'}},
+  {k:'listen',q:'Which rhythm did you hear?',a:['ta ta ta ta','ta rest ta rest','ti-ti ti-ti ti-ti ti-ti','ta ta ti-ti ta'],c:[2],play:{r:'xxxxxxxx'}},
+  {k:'listen',q:'Is the second note higher or lower than the first?',a:['Higher','Lower','The same'],c:[0],play:{iv:[60,67]}},
+  {k:'listen',q:'Is the second note higher or lower than the first?',a:['Higher','Lower','The same'],c:[1],play:{iv:[72,64]}},
+  {k:'listen',q:'Are these two notes the same or different?',a:['The same','Different'],c:[0],play:{iv:[67,67]}}]},
+ {id:'b_inst',title:'Instrument families',subject:'Music',grade:'2-6',qs:[
+  {k:'mc',q:'Which family is the violin in?',a:['Strings','Brass','Woodwinds','Percussion'],c:[0]},
+  {k:'mc',q:'Which family is the trumpet in?',a:['Strings','Brass','Woodwinds','Percussion'],c:[1]},
+  {k:'mc',q:'Which family is the flute in?',a:['Strings','Brass','Woodwinds','Percussion'],c:[2],e:'Flutes are woodwinds even though they are made of metal.'},
+  {k:'mc',q:'Which family is the xylophone in?',a:['Strings','Brass','Woodwinds','Percussion'],c:[3]},
+  {k:'mc',q:'Which instrument is the lowest in the string family?',a:['Violin','Viola','Cello','Double bass'],c:[3]},
+  {k:'tf',q:'A clarinet uses a reed.',c:[0]},
+  {k:'mc',q:'Which of these is NOT a brass instrument?',a:['Trombone','Tuba','Saxophone','French horn'],c:[2],e:'The saxophone is made of brass but uses a reed, so it\'s a woodwind.'}]},
+ {id:'b_times',title:'Multiplication facts (sample)',subject:'Math',grade:'3-4',qs:[
+  {k:'type',q:'6 × 7 = ?',ans:['42']},{k:'type',q:'8 × 4 = ?',ans:['32']},{k:'mc',q:'9 × 3 = ?',a:['24','27','30','21'],c:[1]},
+  {k:'mc',q:'7 × 7 = ?',a:['47','49','42','56'],c:[1]},{k:'tf',q:'5 × 6 = 30',c:[0]},{k:'type',q:'12 × 2 = ?',ans:['24']},{k:'mc',q:'4 × 9 = ?',a:['36','32','40','45'],c:[0]}]}];
+BUILTIN_PACKS.forEach(p=>{ p.builtin=true; p.qs=p.qs.map(qNorm); p.desc=p.desc||''; });
+const qpById=id=>BUILTIN_PACKS.find(p=>p.id===id)||(CL.packs||[]).find(p=>p.id===id)||(CL.pub||[]).find(p=>p.id===id);
+
+/* ---------------- the classroom screen ---------------- */
+function showClass(view){ if(view) CL.view=view; CL.msg=''; buildClass(); showOv('clsOv'); }
+function clSet(v,o){ CL.view=v; Object.assign(CL,o||{}); CL.msg=''; buildClass(); $('clsOv').querySelector('.panel').scrollTop=0; }
+const clMsg=(t,bad)=>{ CL.msg=t; const e=$('clsMsg'); if(e){ e.textContent=t; e.classList.toggle('err',!!bad); } };
+async function buildClass(){
+  const box=$('clsBody'), v=CL.view, real=clReal();
+  document.querySelectorAll('#clsTabs button').forEach(b=>b.classList.toggle('on',b.dataset.cv===(['home','sclass'].includes(v)?'home':['teach','class','assign','results','host'].includes(v)?'teach':'packs')));
+  const render=h=>{ box.innerHTML=h+`<p class="small clsmsg" id="clsMsg" aria-live="polite">${escapeHTML(CL.msg||'')}</p>`; clWire(box); };
+  if(v==='home') return render(clHomeHTML());
+  if(v==='sclass') return render(await clSClassHTML());
+  if(!real) return render(`<div class="clnote"><b>Teachers: sign in first.</b><p class="small">Making classes, homework, question packs and live games needs a teacher account (email or Google). Students don't need one.</p><button class="btn" data-cl="signin" type="button">Sign in</button></div>`);
+  if(v==='teach') return render(await clTeachHTML());
+  if(v==='class') return render(await clClassHTML());
+  if(v==='assign') return render(clAssignHTML());
+  if(v==='results') return render(await clResultsHTML());
+  if(v==='packs') return render(await clPacksHTML());
+  if(v==='pack') return render(clPackHTML());
+  if(v==='host') return render(await clHostHTML());
+}
+
+/* ---- students: join a class, see homework ---- */
+const myCls=()=>SAVE.cls||(SAVE.cls=[]);
+function clHomeHTML(){ const L=myCls(), code=(new URLSearchParams(location.search).get('class')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+  return `<div class="clgrid2"><div class="clbox"><div class="lbl">Join a class</div><p class="small">Type the code your teacher gave you.</p>
+    <div class="clrow"><input id="clJoinCode" class="clin code" maxlength="6" placeholder="CODE" value="${escapeHTML(code)}" aria-label="Class code"><input id="clJoinName" class="clin" maxlength="24" placeholder="Your name" value="${escapeHTML(SAVE.clName||'')}" aria-label="Your name"></div>
+    <button class="btn" data-cl="join" type="button">Join class</button></div>
+    <div class="clbox"><div class="lbl">Play a live game</div><p class="small">Your teacher shows a game PIN on the board.</p><button class="btn" data-cl="play" type="button">🎮 Enter a game PIN</button></div></div>
+    <div class="lbl">My classes</div>${L.length?`<div class="cllist">${L.map((c,i)=>`<button type="button" class="clitem" data-scls="${i}"><b>${escapeHTML(c.name)}</b><small>${escapeHTML(c.tname||'')}</small><span>›</span></button>`).join('')}</div>`:'<p class="small">You haven\'t joined a class yet.</p>'}
+    ${clReal()?'':'<p class="small">Tip: if you sign in, your classes follow you to other devices.</p>'}`; }
+async function clJoin(){ const code=$('clJoinCode').value.toUpperCase().replace(/[^A-Z0-9]/g,''), nm=clName($('clJoinName').value);
+  if(code.length!==6) return clMsg('Class codes are 6 letters or numbers.',true); if(!$('clJoinName').value.trim()) return clMsg('Type your name first.',true);
+  clMsg('Joining…');
+  try{ const au=await clAuth(), c=await au.db.collection('classCodes').doc(code).get(); if(!c.exists) return clMsg('No class has the code '+code+'. Check it with your teacher.',true);
+    const cid=c.data().cid; await au.db.collection('classes').doc(cid).collection('students').doc(au.uid).set({name:nm,t:TS()});
+    const k=await au.db.collection('classes').doc(cid).get(), d=k.data();
+    const L=myCls().filter(x=>x.cid!==cid); L.unshift({cid,name:String(d.name||'Class').slice(0,40),tname:String(d.tname||'').slice(0,40),real:au.real,code}); SAVE.cls=L.slice(0,12); SAVE.clName=nm; save();
+    toast('🏫 You joined '+d.name+'!'); if(A.ctx) sGem(); clSet('sclass',{cls:SAVE.cls[0]});
+  }catch(e){ clMsg(e&&e.code==='permission-denied'?'That class isn\'t taking new students right now. Ask your teacher.':clErr(e),true); } }
+async function clSClassHTML(){ const c=CL.cls; if(!c) return clHomeHTML();
+  let rows='<p class="small">Loading homework…</p>';
+  try{ const au=await clAuth(), s=await au.db.collection('classes').doc(c.cid).collection('assign').orderBy('t','desc').limit(20).get();
+    const list=s.docs.map(d=>({id:d.id,...d.data()}));
+    const works=await Promise.all(list.map(a=>au.db.collection('classes').doc(c.cid).collection('assign').doc(a.id).collection('work').doc(au.uid).get().then(w=>w.exists?w.data():null).catch(()=>null)));
+    CL.sAssign=list.map((a,i)=>({...a,work:works[i]}));
+    rows=CL.sAssign.length?CL.sAssign.map((a,i)=>{ const w=a.work||{}, n=(a.levels||[]).length, d=Object.keys(w.lv||{}).filter(k=>(w.lv[k]||{}).ok).length, due=a.due?new Date(a.due):null, late=due&&Date.now()>due.getTime()+864e5;
+      return `<div class="hwcard${d>=n?' done':''}"><div><b>${escapeHTML(a.title||'Homework')}</b><small>${n} level${n===1?'':'s'} · ${a.diff==='easy'?'Easy':'Normal'}${due?` · due ${due.toLocaleDateString()}`:''}${late&&d<n?' · <em>late</em>':''}</small><div class="mbar"><i style="width:${n?(d/n*100).toFixed(1):0}%"></i></div><small>${d} of ${n} done${w.asked?` · ${w.right}/${w.asked} questions right`:''}</small></div>
+        <button class="btn" data-hw="${i}" type="button">${d>=n?'Review':'Play'}</button></div>`; }).join(''):'<p class="small">No homework yet. 🎉</p>';
+  }catch(e){ rows=`<p class="small err">${escapeHTML(clErr(e))}</p>`; }
+  return `<div class="row"><button class="btn ghost" data-cl="home" type="button">← My classes</button></div><h3>${escapeHTML(c.name)}</h3><p class="small">${escapeHTML(c.tname||'')}</p><div class="lbl">Homework</div><div class="hwlist">${rows}</div>
+    <details class="clleave"><summary>Leave this class</summary><button class="btn ghost" data-cl="leave" type="button">Leave ${escapeHTML(c.name)}</button></details>`; }
+/* a homework assignment: its levels, each with a warm-up question and a question after you clear it */
+function hwLevels(a){ const w=(a.work||{}).lv||{};
+  return `<div class="row"><button class="btn ghost" data-cl="sback" type="button">← Back</button></div><h3>${escapeHTML(a.title||'Homework')}</h3><p class="small">Each level has 2 questions: one before you play and one after you clear it.${a.diff==='easy'?' Easy: mistakes cost no Harmony and timing is relaxed.':''}</p>
+    <div class="hwlv">${(a.levels||[]).map(k=>{ const [wd,l]=k.split('-'), L=w[k]||{}, th=THEMES[(+wd||1)-1]; return `<button type="button" class="hwl${L.ok?' ok':''}" data-hwl="${escapeHTML(k)}" style="--c:${th?th.acc:'#FFD166'}"><b>${l==='B'?'Boss':'Level '+l}</b><small>${escapeHTML(th?th.name:'World '+wd)}</small><span>${L.ok?'★'.repeat(L.s||0)+'☆'.repeat(Math.max(0,3-(L.s||0))):'Play ›'}</span></button>`; }).join('')}</div>`; }
+function hwQs(a,key){ const qs=a.qs||[], n=qs.length; if(!n) return [null,null]; const i=(a.levels||[]).indexOf(key);
+  let order=qs.map((_,j)=>j); if(a.shuffle){ const r=mulberry(hashStr((CL.uid||'')+a.id)); for(let j=order.length-1;j>0;j--){ const x=Math.floor(r()*(j+1)); [order[j],order[x]]=[order[x],order[j]]; } }
+  return [qs[order[(2*i)%n]],qs[order[(2*i+1)%n]]]; }
+const HW={cur:null};
+async function hwPlay(a,key){ const c=CL.cls, au=await clAuth(); CL.uid=au.uid; const [q1]=hwQs(a,key), w=(a.work&&a.work.lv&&a.work.lv[key])||{};
+  HW.cur={cid:c.cid,aid:a.id,a,key,t0:Date.now()};
+  if(q1&&w.q1==null){ const r=await qModal(q1,{easy:a.diff==='easy',head:`<div class="qhead">Warm-up question · ${escapeHTML(a.title||'Homework')}</div>`}); w.q1=r.sc; hwSave(key,{q1:r.sc}); }
+  const [wd,l]=key.split('-'); const M=l==='B'?modeFor('boss',+wd):modeFor('level',+wd,+l); M.hw={cid:c.cid,aid:a.id,key}; if(a.diff==='easy') M.easy=true;
+  startRun(M); }
+/* the level's result: called from the end of every run */
+async function hwAfter(o){ const M=G.mode||{}; if(!M.hw||!HW.cur||HW.cur.key!==M.hw.key) return; if(!o||!o.cleared) return;
+  const a=HW.cur.a, key=HW.cur.key, [,l]=key.split('-'), s=SAVE.stars[key]||0, secs=Math.round((Date.now()-HW.cur.t0)/1000);
+  const w=((a.work||{}).lv||{})[key]||{}; const patch={ok:1,s:Math.max(s,w.s||0),sec:(w.sec||0)+secs};
+  await new Promise(r=>setTimeout(r,900));
+  const [,q2]=hwQs(a,key); if(q2&&w.q2==null){ const r=await qModal(q2,{easy:a.diff==='easy',head:`<div class="qhead">Level cleared! One more question</div>`}); patch.q2=r.sc; }
+  hwSave(key,patch); HW.cur=null; SAVE.life=SAVE.life||{}; }
+/* save a level's homework progress (it queues up if you're offline) */
+async function hwSave(key,patch){ try{ const c=CL.cls||{}, a=(HW.cur&&HW.cur.a)||CL.curA; if(!a) return; const au=await clAuth();
+    const w=a.work||(a.work={}), lv=w.lv||(w.lv={}); lv[key]=Object.assign({},lv[key]||{},patch);
+    let right=0, asked=0, done=0, sec=0; for(const k in lv){ const L=lv[k]; ['q1','q2'].forEach(q=>{ if(L[q]!=null){ asked++; right+=L[q]; } }); if(L.ok) done++; sec+=L.sec||0; }
+    w.right=right; w.asked=asked; w.done=done;
+    const late=!!(a.due&&Date.now()>a.due+864e5);
+    await au.db.collection('classes').doc(a.cid||c.cid).collection('assign').doc(a.id).collection('work').doc(au.uid).set({name:SAVE.clName||clName(ensureName()),lv,right,asked,done,time:sec,late,t:TS()});
+    if(patch.ok&&done>=(a.levels||[]).length){ SAVE.life.hwDone=(SAVE.life.hwDone||0)+1; toast('📚 Homework complete! Nice work.'); }
+    if(patch.q1!=null||patch.q2!=null){ SAVE.life.clRight=(SAVE.life.clRight||0)+((patch.q1||0)+(patch.q2||0)); SAVE.clStars=(SAVE.clStars||0)+(((patch.q1||0)+(patch.q2||0))>=1?1:0); }
+    save(); achCheck();
+  }catch(e){ toast('Homework progress will save when you\'re back online.'); } }
+
+/* ---- teachers: classes ---- */
+async function clTeachHTML(){ let L=[];
+  try{ const s=await ACCT.db.collection('classes').where('teacher','==',ACCT.user.uid).limit(30).get(); L=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.t||0)-(a.t||0)); CL.teach=L; }catch(e){ CL.msg=clErr(e); }
+  return `<div class="clgrid2"><div class="clbox"><div class="lbl">New class</div><div class="clrow"><input id="clNewName" class="clin" maxlength="40" placeholder="Class name, e.g. 4th grade music"><input id="clNewGrade" class="clin sm" maxlength="12" placeholder="Grade"></div><button class="btn" data-cl="newcls" type="button">Make class</button></div>
+    <div class="clbox"><div class="lbl">Live game</div><p class="small">Put a game on the board. Students join with a PIN.</p><button class="btn" data-cl="host" type="button">🎮 Host a live game</button></div></div>
+    <div class="lbl">Your classes</div>${L.length?`<div class="cllist">${L.map((c,i)=>`<button type="button" class="clitem" data-tcls="${i}"><b>${escapeHTML(c.name)}</b><small>Code <code>${escapeHTML(c.code)}</code>${c.locked?' · locked':''}</small><span>›</span></button>`).join('')}</div>`:'<p class="small">No classes yet. Make one above.</p>'}`; }
+async function clNewClass(){ const nm=$('clNewName').value.trim().slice(0,40); if(!nm) return clMsg('Give the class a name.',true); clMsg('Making your class…');
+  try{ const db=ACCT.db, ref=db.collection('classes').doc(), exp=Date.now()+300*864e5; let code='';
+    await ref.set({teacher:ACCT.user.uid,tname:ensureName().slice(0,40),name:nm,grade:$('clNewGrade').value.trim().slice(0,12),code:'',locked:false,kicked:[],exp,t:Date.now()});
+    for(let i=0;i<6&&!code;i++){ const c=clCode(); try{ await db.collection('classCodes').doc(c).set({cid:ref.id,teacher:ACCT.user.uid}); code=c; }catch(e){ if(!(e&&e.code==='permission-denied')) throw e; } }
+    if(!code) throw new Error('code'); await ref.update({code}); toast('🏫 Class made! Code: '+code); clSet('class',{cls:{id:ref.id,name:nm,code,locked:false,kicked:[],exp,teacher:ACCT.user.uid}});
+  }catch(e){ clMsg(clErr(e),true); } }
+async function clClassHTML(){ const c=CL.cls; let st=[], as=[];
+  try{ const r=ACCT.db.collection('classes').doc(c.id); const [k,s,a]=await Promise.all([r.get(),r.collection('students').limit(200).get(),r.collection('assign').orderBy('t','desc').limit(30).get()]);
+    Object.assign(c,k.data()); st=s.docs.map(d=>({uid:d.id,...d.data()})).sort((x,y)=>String(x.name).localeCompare(y.name)); as=a.docs.map(d=>({id:d.id,cid:c.id,...d.data()})); CL.roster=st; CL.tAssign=as; }catch(e){ CL.msg=clErr(e); }
+  const url=location.origin+location.pathname+'?class='+c.code;
+  return `<div class="row"><button class="btn ghost" data-cl="teach" type="button">← Classes</button></div><h3>${escapeHTML(c.name)}</h3>
+    <div class="clcode"><div><small>Class code</small><b>${escapeHTML(c.code)}</b><small class="cllink">${escapeHTML(url)}</small></div><div class="clcodebtns"><button class="btn ghost" data-cl="copy" type="button">Copy link</button><button class="btn ghost" data-cl="lock" type="button">${c.locked?'🔓 Let students join':'🔒 No new students'}</button><button class="btn ghost" data-cl="recode" type="button">New code</button></div></div>
+    <div class="clgrid2"><div class="clbox"><div class="lbl">Homework</div><button class="btn" data-cl="newhw" type="button">＋ New homework</button>
+      ${as.length?`<div class="cllist">${as.map((a,i)=>`<button type="button" class="clitem" data-tas="${i}"><b>${escapeHTML(a.title||'Homework')}</b><small>${(a.levels||[]).length} levels · ${a.diff==='easy'?'Easy':'Normal'}${a.due?' · due '+new Date(a.due).toLocaleDateString():''}</small><span>Results ›</span></button>`).join('')}</div>`:'<p class="small">No homework yet.</p>'}</div>
+    <div class="clbox"><div class="lbl">Students (${st.length})</div>${st.length?`<ul class="roster">${st.map((s,i)=>`<li><span>${escapeHTML(clName(s.name))}</span><button type="button" class="btn ghost sm" data-ren="${i}">Rename</button><button type="button" class="btn ghost sm" data-kick="${i}">Remove</button></li>`).join('')}</ul>`:`<p class="small">Nobody has joined yet. Share the code <b>${escapeHTML(c.code)}</b>.</p>`}</div></div>
+    <details class="clleave"><summary>Delete this class</summary><p class="small">This removes the class, its homework and everyone's results for good.</p><button class="btn ghost" data-cl="delcls" type="button">Delete ${escapeHTML(c.name)}</button></details>`; }
+/* ---- teachers: a new homework assignment ---- */
+function clAssignHTML(){ const packs=[...BUILTIN_PACKS,...(CL.packs||[])], unl=Math.max(1,SAVE.world||1);
+  const worlds=Array.from({length:WORLDS},(_,i)=>i+1).map(w=>`<div class="hwpick"><b>${escapeHTML(THEMES[w-1].name)}</b><div>${[...Array.from({length:LEVELS_PER_WORLD},(_,j)=>String(j+1)),'B'].map(l=>`<label><input type="checkbox" data-lv="${w}-${l}">${l==='B'?'Boss':l}</label>`).join('')}</div></div>`).join('');
+  return `<div class="row"><button class="btn ghost" data-cl="class" type="button">← ${escapeHTML(CL.cls.name)}</button></div><h3>New homework</h3>
+    <label class="cllab">Title<input id="hwTitle" class="clin" maxlength="40" placeholder="e.g. Rhythm week 1"></label>
+    <label class="cllab">Question pack<select id="hwPack" class="clin">${packs.map(p=>`<option value="${p.id}">${escapeHTML(p.title)}${p.builtin?' (ready-made)':''} · ${p.qs.length} questions</option>`).join('')}</select></label>
+    <div class="clrow"><label class="cllab">Due date<input id="hwDue" class="clin" type="date"></label><label class="cllab">Difficulty<select id="hwDiff" class="clin"><option value="easy">Easy: relaxed timing, no Harmony loss, a second try</option><option value="normal">Normal: the usual rules, one try</option></select></label></div>
+    <label class="clchk"><input type="checkbox" id="hwShuf" checked> Shuffle the questions for each student</label>
+    <div class="lbl">Levels <span class="small">· each level asks 2 questions. Pick up to 12.</span></div><div class="hwpicks">${worlds}</div>
+    <button class="btn" data-cl="savehw" type="button">Give this homework</button>`; }
+async function clSaveHW(){ const lv=[...document.querySelectorAll('[data-lv]:checked')].map(x=>x.dataset.lv).slice(0,12), p=qpById($('hwPack').value);
+  if(!lv.length) return clMsg('Pick at least one level.',true); if(!p||!p.qs.length) return clMsg('Pick a question pack with questions in it.',true);
+  const d=$('hwDue').value, due=d?new Date(d+'T23:59:00').getTime():0;
+  clMsg('Saving…');
+  try{ await ACCT.db.collection('classes').doc(CL.cls.id).collection('assign').add({title:($('hwTitle').value.trim()||p.title).slice(0,40),levels:lv,pack:p.id,packName:p.title.slice(0,60),qs:p.qs.slice(0,100).map(qNorm),due,diff:$('hwDiff').value==='normal'?'normal':'easy',shuffle:$('hwShuf').checked,t:Date.now()});
+    toast('📚 Homework given!'); clSet('class'); }catch(e){ clMsg(clErr(e),true); } }
+/* ---- teachers: one assignment's results ---- */
+async function clResultsHTML(){ const a=CL.assign; let rows=[];
+  try{ const s=await ACCT.db.collection('classes').doc(CL.cls.id).collection('assign').doc(a.id).collection('work').limit(300).get(); rows=s.docs.map(d=>({uid:d.id,...d.data()})); }catch(e){ CL.msg=clErr(e); }
+  const n=(a.levels||[]).length, byU={}; rows.forEach(r=>byU[r.uid]=r);
+  const all=(CL.roster||[]).map(s=>({name:clName(s.name),...(byU[s.uid]||{}),uid:s.uid})); rows.forEach(r=>{ if(!all.some(x=>x.uid===r.uid)) all.push({...r,name:clName(r.name)}); });
+  const pct=r=>r.asked?Math.round(100*r.right/r.asked):null, help=all.filter(r=>r.asked>=2&&pct(r)<60);
+  CL.csv=[['Student','Levels done','Of','Questions right','Questions asked','Percent','Stars','Minutes','Late'],...all.map(r=>[r.name,r.done||0,n,r.right||0,r.asked||0,pct(r)==null?'':pct(r),Object.values(r.lv||{}).reduce((x,L)=>x+(L.s||0),0),Math.round((r.time||0)/60),r.late?'yes':''])];
+  return `<div class="row"><button class="btn ghost" data-cl="class" type="button">← ${escapeHTML(CL.cls.name)}</button><button class="btn ghost" data-cl="csv" type="button">⬇ Download CSV</button><button class="btn ghost" data-cl="delhw" type="button">Delete homework</button></div>
+    <h3>${escapeHTML(a.title||'Homework')}</h3><p class="small">${n} levels · ${escapeHTML(a.packName||'')} · ${a.diff==='easy'?'Easy':'Normal'}${a.due?' · due '+new Date(a.due).toLocaleDateString():''}</p>
+    ${help.length?`<div class="clhelp"><b>Might need help</b> (under 60% of questions right): ${help.map(r=>escapeHTML(r.name)).join(', ')}</div>`:''}
+    <div class="cltable"><table><thead><tr><th>Student</th><th>Levels</th><th>Questions</th><th>Stars</th><th>Time</th></tr></thead><tbody>${all.map(r=>{ const p=pct(r);
+      return `<tr><td>${escapeHTML(r.name)}${r.late?' <em class="late">late</em>':''}</td><td>${r.done||0}/${n}</td><td>${r.asked?`${+(r.right||0).toFixed(1)}/${r.asked} <span class="pct ${p<60?'lo':p<85?'mid':'hi'}">${p}%</span>`:'–'}</td><td>${Object.values(r.lv||{}).reduce((x,L)=>x+(L.s||0),0)}</td><td>${r.time?Math.round(r.time/60)+' min':'–'}</td></tr>`; }).join('')||'<tr><td colspan="5">No students yet.</td></tr>'}</tbody></table></div>`; }
+function clCsv(rows,name){ const esc=v=>{ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const blob=new Blob([rows.map(r=>r.map(esc).join(',')).join('\n')],{type:'text/csv'}), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name.replace(/[^a-z0-9 _-]/gi,'')+'.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
+
+/* ---- teachers: question packs ---- */
+async function clLoadPacks(){ try{ const s=await ACCT.db.collection('packs').where('owner','==',ACCT.user.uid).limit(60).get(); CL.packs=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.t||0)-(a.t||0)); }catch(e){ CL.packs=CL.packs||[]; CL.msg=clErr(e); } }
+async function clPacksHTML(){ await clLoadPacks(); let ver=false; try{ ver=(await ACCT.db.collection('teachers').doc(ACCT.user.uid).get()).exists; }catch(e){} CL.verified=ver;
+  const card=(p,own)=>`<div class="pkcard"><b>${escapeHTML(p.title)}</b><small>${escapeHTML(p.subject||'')}${p.grade?' · grade '+escapeHTML(p.grade):''} · ${(p.qs||[]).length} questions${own?(p.vis==='public'?(p.hidden?' · hidden after a report':' · public'):' · private'):p.builtin?' · ready-made':' · by '+escapeHTML(clName(p.oname))}</small>
+    <div class="row">${own?`<button class="btn ghost sm" data-pke="${p.id}" type="button">Edit</button>`:`<button class="btn ghost sm" data-pkc="${p.id}" type="button">Copy to my packs</button>`}<button class="btn ghost sm" data-pkp="${p.id}" type="button">▶ Try it</button>${!own&&!p.builtin?`<button class="btn ghost sm" data-pkr="${p.id}" type="button">Report</button>`:''}</div></div>`;
+  return `<div class="row"><button class="btn" data-cl="newpack" type="button">＋ New question pack</button><button class="btn ghost" data-cl="browse" type="button">🔎 Browse shared packs</button></div>
+    ${ver?'':'<p class="small">Your packs are private. To share packs with every teacher, ask the Pulseform team to verify your teacher account.</p>'}
+    <div class="lbl">My packs</div><div class="pkgrid">${(CL.packs||[]).map(p=>card(p,true)).join('')||'<p class="small">None yet.</p>'}</div>
+    ${CL.pub?`<div class="lbl">Shared by teachers</div><div class="pkgrid">${CL.pub.map(p=>card(p,false)).join('')||'<p class="small">No shared packs yet.</p>'}</div>`:''}
+    <div class="lbl">Ready-made</div><div class="pkgrid">${BUILTIN_PACKS.map(p=>card(p,false)).join('')}</div>`; }
+async function clBrowse(){ try{ const s=await ACCT.db.collection('packs').where('vis','==','public').where('hidden','==',false).limit(60).get(); CL.pub=s.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.owner!==ACCT.user.uid).sort((a,b)=>(b.t||0)-(a.t||0)); }catch(e){ CL.pub=[]; CL.msg=clErr(e); } buildClass(); }
+function clPackHTML(){ const p=CL.pack;
+  const qrow=(q,i)=>{ q=qNorm(q); const ans=q.k==='type'?`<label class="cllab">Accepted answers (comma between)<input class="clin" data-qf="ans" value="${escapeHTML(q.ans.join(', '))}"></label>`:q.k==='tf'?`<label class="cllab">Answer<select class="clin" data-qf="tf"><option value="0"${q.c[0]===0?' selected':''}>True</option><option value="1"${q.c[0]===1?' selected':''}>False</option></select></label>`
+      :`<div class="qanswers">${[0,1,2,3].map(j=>`<label class="qa"><input type="checkbox" data-qc="${j}"${q.c.includes(j)?' checked':''} aria-label="Correct answer ${j+1}"><input class="clin" data-qa="${j}" maxlength="80" placeholder="Answer ${j+1}${j>1?' (optional)':''}" value="${escapeHTML(q.a[j]||'')}"></label>`).join('')}<small>Tick the correct answer${q.k==='mc'?'(s)':''}.</small></div>`;
+    const lis=q.k==='listen'?`<div class="clrow"><label class="cllab">Rhythm to play (x = clap, . = rest, eighth notes)<input class="clin" data-qf="r" maxlength="16" value="${escapeHTML((q.play&&q.play.r)||'')}" placeholder="x.x.xx.."></label><label class="cllab">…or two notes (MIDI numbers, 60 = middle C)<input class="clin" data-qf="iv" maxlength="9" value="${q.play&&q.play.iv?q.play.iv.join(','):''}" placeholder="60,67"></label><button class="btn ghost sm" data-qplay="${i}" type="button">▶</button></div>`:'';
+    return `<div class="qed" data-qi="${i}"><div class="qedh"><b>${i+1}</b><select class="clin sm" data-qf="k">${Object.entries(QK).map(([k,n])=>`<option value="${k}"${q.k===k?' selected':''}>${n}</option>`).join('')}</select><button class="btn ghost sm" data-qup="${i}" type="button" aria-label="Move up">↑</button><button class="btn ghost sm" data-qdel="${i}" type="button" aria-label="Delete question">✕</button></div>
+      <input class="clin" data-qf="q" maxlength="200" placeholder="Question" value="${escapeHTML(q.q)}">${lis}${ans}<input class="clin" data-qf="e" maxlength="200" placeholder="Explanation shown after answering (optional)" value="${escapeHTML(q.e||'')}"></div>`; };
+  return `<div class="row"><button class="btn ghost" data-cl="packs" type="button">← Packs</button></div><h3>${p.id?'Edit pack':'New pack'}</h3>
+    <div class="clrow"><label class="cllab">Title<input id="pkTitle" class="clin" maxlength="60" value="${escapeHTML(p.title||'')}"></label><label class="cllab">Subject<input id="pkSubj" class="clin sm" maxlength="24" value="${escapeHTML(p.subject||'Music')}"></label><label class="cllab">Grade<input id="pkGrade" class="clin sm" maxlength="12" value="${escapeHTML(p.grade||'')}"></label></div>
+    <label class="cllab">Description<input id="pkDesc" class="clin" maxlength="160" value="${escapeHTML(p.desc||'')}"></label>
+    <label class="cllab">Who can see it<select id="pkVis" class="clin"><option value="private">Only me</option><option value="public"${p.vis==='public'?' selected':''}${CL.verified?'':' disabled'}>Every teacher (verified teachers only)</option></select></label>
+    <div class="lbl">Questions (${p.qs.length}/100)</div><div id="pkQs">${p.qs.map(qrow).join('')}</div>
+    <div class="row"><button class="btn ghost" data-qadd="mc" type="button">＋ Multiple choice</button><button class="btn ghost" data-qadd="tf" type="button">＋ True/false</button><button class="btn ghost" data-qadd="type" type="button">＋ Type the answer</button><button class="btn ghost" data-qadd="listen" type="button">＋ Listen</button></div>
+    <details class="clcsv"><summary>Import from a spreadsheet (CSV)</summary><p class="small">One question per line: <code>question, correct answer, wrong 1, wrong 2, wrong 3, explanation</code>. Leave the wrong answers empty for a type-the-answer question.</p><textarea id="pkCsv" class="clin" rows="5" placeholder="What does forte mean?, Loud, Soft, Fast, Slow"></textarea><button class="btn ghost" data-cl="csvin" type="button">Add these questions</button></details>
+    <div class="row"><button class="btn" data-cl="savepack" type="button">Save pack</button><button class="btn ghost" data-cl="trypack" type="button">▶ Try it as a student</button><button class="btn ghost" data-cl="csvout" type="button">⬇ Export CSV</button>${p.id?'<button class="btn ghost" data-cl="delpack" type="button">Delete</button>':''}</div>`; }
+/* read the editor back into CL.pack */
+function clPackRead(){ const p=CL.pack; p.title=$('pkTitle').value.trim().slice(0,60); p.subject=$('pkSubj').value.trim().slice(0,24); p.grade=$('pkGrade').value.trim().slice(0,12); p.desc=$('pkDesc').value.trim().slice(0,160); p.vis=$('pkVis').value==='public'?'public':'private';
+  p.qs=[...document.querySelectorAll('#pkQs .qed')].map(el=>{ const f=n=>{ const x=el.querySelector(`[data-qf="${n}"]`); return x?x.value:''; }, k=f('k'), q={k,q:f('q'),e:f('e')};
+    if(k==='tf') q.c=[+f('tf')||0];
+    else if(k==='type') q.ans=f('ans').split(',').map(s=>s.trim()).filter(Boolean);
+    else { q.a=[0,1,2,3].map(j=>el.querySelector(`[data-qa="${j}"]`).value.trim()); q.c=[0,1,2,3].filter(j=>el.querySelector(`[data-qc="${j}"]`).checked&&q.a[j]); }
+    if(k==='listen'){ const iv=f('iv').split(',').map(n=>parseInt(n,10)).filter(n=>n>=36&&n<=96); q.play=iv.length===2?{iv}:{r:f('r')}; }
+    return qNorm(q); }); }
+function clCsvParse(txt){ const out=[]; txt.split(/\r?\n/).forEach(line=>{ if(!line.trim()) return; const cells=[]; let cur='', inq=false;
+    for(let i=0;i<line.length;i++){ const ch=line[i]; if(inq){ if(ch==='"'&&line[i+1]==='"'){ cur+='"'; i++; } else if(ch==='"') inq=false; else cur+=ch; } else if(ch==='"') inq=true; else if(ch===','){ cells.push(cur.trim()); cur=''; } else cur+=ch; }
+    cells.push(cur.trim()); const [q,ok,w1,w2,w3,e]=cells; if(!q||!ok) return; const wrong=[w1,w2,w3].filter(Boolean);
+    if(!wrong.length) out.push(qNorm({k:'type',q,ans:ok.split('|'),e})); else if(/^(true|false)$/i.test(ok)&&wrong.length===1&&/^(true|false)$/i.test(wrong[0])) out.push(qNorm({k:'tf',q,c:[/^true$/i.test(ok)?0:1],e}));
+    else { const a=[ok,...wrong].slice(0,4), ord=a.map((_,j)=>j).sort(()=>Math.random()-.5); out.push(qNorm({k:'mc',q,a:ord.map(j=>a[j]),c:[ord.indexOf(0)],e})); } }); return out; }
+async function clSavePack(){ clPackRead(); const p=CL.pack, qs=p.qs.filter(qOk);
+  if(!p.title) return clMsg('Give the pack a title.',true); if(!qs.length) return clMsg('Add at least one finished question.',true);
+  const data={owner:ACCT.user.uid,oname:ensureName().slice(0,24),title:showName(p.title)||p.title,subject:p.subject,grade:p.grade,desc:p.desc,vis:p.vis,hidden:p.hidden===true,qs:qs.slice(0,100),n:qs.length,t:Date.now()};
+  clMsg('Saving…');
+  try{ const col=ACCT.db.collection('packs'); if(p.id) await col.doc(p.id).set(data); else { const r=await col.add(data); p.id=r.id; }
+    toast('Pack saved: '+qs.length+' questions'); CL.packs=null; clSet('packs'); }
+  catch(e){ clMsg(e&&e.code==='permission-denied'&&p.vis==='public'?'Sharing with every teacher needs a verified teacher account. Save it as "Only me" for now.':clErr(e),true); } }
+/* try a pack: its questions one after another, as a student would see them */
+async function clTry(p){ const qs=(p.qs||[]).slice(0,10); let right=0; for(let i=0;i<qs.length;i++){ const r=await qModal(qs[i],{easy:true,head:`<div class="qhead">${escapeHTML(p.title)} · ${i+1} of ${qs.length} <button type="button" class="qstop">Stop</button></div>`}); right+=r.sc; if(CL.stopTry){ CL.stopTry=false; break; } }
+  toast(`Practice done: ${right} right`); }
+document.addEventListener('click',e=>{ if(e.target.closest('.qstop')){ CL.stopTry=true; $('qModal').hidden=true; } });
+
+/* ---- wiring the classroom screen ---- */
+function clWire(box){
+  const on=(sel,f)=>box.querySelectorAll(sel).forEach(b=>b.onclick=()=>f(b));
+  on('[data-cl]',async b=>{ const a=b.dataset.cl; if(CL.busy) return;
+    if(a==='home'||a==='teach'||a==='packs') return clSet(a);
+    if(a==='signin') return showOv('acctOv');
+    if(a==='join'){ CL.busy=true; await clJoin(); CL.busy=false; return; }
+    if(a==='play') return playOpen('');
+    if(a==='leave'){ try{ const au=await clAuth(); await au.db.collection('classes').doc(CL.cls.cid).collection('students').doc(au.uid).delete(); }catch(e){} SAVE.cls=myCls().filter(x=>x.cid!==CL.cls.cid); save(); return clSet('home'); }
+    if(a==='sback') return clSet('sclass');
+    if(a==='newcls'){ CL.busy=true; await clNewClass(); CL.busy=false; return; }
+    if(a==='host') return clSet('host');
+    if(a==='class') return clSet('class');
+    if(a==='copy'){ try{ await navigator.clipboard.writeText(location.origin+location.pathname+'?class='+CL.cls.code); toast('Link copied'); }catch(e){ toast(CL.cls.code); } return; }
+    if(a==='lock'){ try{ await ACCT.db.collection('classes').doc(CL.cls.id).update({locked:!CL.cls.locked}); }catch(e){ return clMsg(clErr(e),true); } return clSet('class'); }
+    if(a==='recode'){ try{ const db=ACCT.db, old=CL.cls.code; let code=''; for(let i=0;i<6&&!code;i++){ const c=clCode(); try{ await db.collection('classCodes').doc(c).set({cid:CL.cls.id,teacher:ACCT.user.uid}); code=c; }catch(e){} }
+        if(!code) throw new Error('code'); await db.collection('classes').doc(CL.cls.id).update({code}); if(old) await db.collection('classCodes').doc(old).delete().catch(()=>{}); toast('New code: '+code); }catch(e){ return clMsg(clErr(e),true); } return clSet('class'); }
+    if(a==='newhw'){ if(!CL.packs) await clLoadPacks(); return clSet('assign'); }
+    if(a==='savehw'){ CL.busy=true; await clSaveHW(); CL.busy=false; return; }
+    if(a==='csv') return clCsv(CL.csv||[],(CL.assign.title||'homework')+' results');
+    if(a==='delhw'){ if(!confirm('Delete this homework and its results?')) return; try{ const r=ACCT.db.collection('classes').doc(CL.cls.id).collection('assign').doc(CL.assign.id), w=await r.collection('work').get(); await Promise.all(w.docs.map(d=>d.ref.delete())); await r.delete(); }catch(e){ return clMsg(clErr(e),true); } return clSet('class'); }
+    if(a==='delcls'){ if(!confirm('Delete '+CL.cls.name+' for good?')) return; try{ const r=ACCT.db.collection('classes').doc(CL.cls.id); for(const a2 of (CL.tAssign||[])){ const w=await r.collection('assign').doc(a2.id).collection('work').get(); await Promise.all(w.docs.map(d=>d.ref.delete())); await r.collection('assign').doc(a2.id).delete(); }
+        const s=await r.collection('students').get(); await Promise.all(s.docs.map(d=>d.ref.delete())); await ACCT.db.collection('classCodes').doc(CL.cls.code).delete().catch(()=>{}); await r.delete(); toast('Class deleted'); }catch(e){ return clMsg(clErr(e),true); } return clSet('teach'); }
+    if(a==='newpack') return clSet('pack',{pack:{title:'',subject:'Music',grade:'',desc:'',vis:'private',qs:[qNorm({k:'mc'})]}});
+    if(a==='browse'){ CL.busy=true; await clBrowse(); CL.busy=false; return; }
+    if(a==='csvin'){ clPackRead(); const add=clCsvParse($('pkCsv').value); CL.pack.qs=[...CL.pack.qs.filter(qOk),...add].slice(0,100); buildClass(); return toast(add.length+' questions added'); }
+    if(a==='csvout'){ clPackRead(); return clCsv([['question','correct','wrong 1','wrong 2','wrong 3','explanation'],...CL.pack.qs.map(q=>q.k==='type'?[q.q,q.ans.join('|'),'','','',q.e]:[q.q,...q.c.map(i=>q.a[i]).slice(0,1),...q.a.filter((_,i)=>!q.c.includes(i)),'','',''].slice(0,5).concat([q.e]))],CL.pack.title||'question pack'); }
+    if(a==='savepack'){ CL.busy=true; await clSavePack(); CL.busy=false; return; }
+    if(a==='trypack'){ clPackRead(); return clTry({title:CL.pack.title||'Pack',qs:CL.pack.qs.filter(qOk)}); }
+    if(a==='delpack'){ if(!confirm('Delete this pack?')) return; try{ await ACCT.db.collection('packs').doc(CL.pack.id).delete(); }catch(e){ return clMsg(clErr(e),true); } CL.packs=null; return clSet('packs'); }
+    if(a==='hoststart'){ CL.busy=true; await liveCreate(); CL.busy=false; return; }
+  });
+  on('[data-scls]',b=>clSet('sclass',{cls:myCls()[+b.dataset.scls]}));
+  on('[data-hw]',b=>{ const a=CL.sAssign[+b.dataset.hw]; CL.curA={...a,cid:CL.cls.cid}; box.innerHTML=hwLevels(CL.curA)+'<p class="small clsmsg" id="clsMsg"></p>'; clWire(box); });
+  on('[data-hwl]',b=>hwPlay(CL.curA,b.dataset.hwl).catch(e=>clMsg(clErr(e),true)));
+  on('[data-tcls]',b=>clSet('class',{cls:CL.teach[+b.dataset.tcls]}));
+  on('[data-tas]',b=>clSet('results',{assign:CL.tAssign[+b.dataset.tas]}));
+  on('[data-ren]',async b=>{ const s=CL.roster[+b.dataset.ren], n=prompt('New name for '+clName(s.name),clName(s.name)); if(!n) return; try{ await ACCT.db.collection('classes').doc(CL.cls.id).collection('students').doc(s.uid).update({name:clName(n)}); }catch(e){ return clMsg(clErr(e),true); } clSet('class'); });
+  on('[data-kick]',async b=>{ const s=CL.roster[+b.dataset.kick]; if(!confirm('Remove '+clName(s.name)+' from the class?')) return;
+    try{ const r=ACCT.db.collection('classes').doc(CL.cls.id); await r.update({kicked:firebase.firestore.FieldValue.arrayUnion(s.uid)}); await r.collection('students').doc(s.uid).delete(); }catch(e){ return clMsg(clErr(e),true); } clSet('class'); });
+  on('[data-pke]',b=>{ const p=(CL.packs||[]).find(x=>x.id===b.dataset.pke); clSet('pack',{pack:JSON.parse(JSON.stringify(p))}); });
+  on('[data-pkc]',b=>{ const p=qpById(b.dataset.pkc); clSet('pack',{pack:{title:(p.title+' (copy)').slice(0,60),subject:p.subject||'',grade:p.grade||'',desc:p.desc||'',vis:'private',qs:JSON.parse(JSON.stringify(p.qs||[]))}}); });
+  on('[data-pkp]',b=>clTry(qpById(b.dataset.pkp)));
+  on('[data-pkr]',async b=>{ if(!confirm('Report this pack? It will be hidden until the Pulseform team reviews it.')) return; try{ await ACCT.db.collection('packs').doc(b.dataset.pkr).update({hidden:true}); toast('Thanks. The pack is hidden for review.'); CL.pub=(CL.pub||[]).filter(p=>p.id!==b.dataset.pkr); buildClass(); }catch(e){ clMsg(clErr(e),true); } });
+  on('[data-qadd]',b=>{ clPackRead(); if(CL.pack.qs.length>=100) return clMsg('A pack can hold up to 100 questions.',true); CL.pack.qs.push(qNorm({k:b.dataset.qadd})); buildClass(); });
+  on('[data-qdel]',b=>{ clPackRead(); CL.pack.qs.splice(+b.dataset.qdel,1); buildClass(); });
+  on('[data-qup]',b=>{ clPackRead(); const i=+b.dataset.qup; if(i>0){ const q=CL.pack.qs; [q[i-1],q[i]]=[q[i],q[i-1]]; } buildClass(); });
+  on('[data-qplay]',b=>{ clPackRead(); listenPlay(CL.pack.qs[+b.dataset.qplay].play); });
+  box.querySelectorAll('#pkQs [data-qf="k"]').forEach(s=>s.onchange=()=>{ clPackRead(); buildClass(); });
+  box.querySelectorAll('input,textarea').forEach(i=>i.addEventListener('keydown',e=>e.stopPropagation()));
+}
+document.querySelectorAll('#clsTabs button').forEach(b=>b.onclick=()=>{ clSet(b.dataset.cv); if(A.ctx) sUI(); });
+$('clsBack').onclick=()=>toMenu();
+$('mClass').onclick=()=>showClass();
+
+/* ================= LIVE CLASS GAMES =================
+   live/{pin}: the host's game (mode, Easy/Normal, questions, phase); live/{pin}/players/{uid}: each student's own score.
+   Every student goes at their own pace: answer a question, then tap along with an 8-beat burst; the board shows the class. */
+const LIVE_MODES={
+  race:{n:'Beat Race',ic:'🏁',d:'Everyone races their block along a track. First to the finish wins.'},
+  tower:{n:'Tempo Tower',ic:'🗼',d:'The whole class builds one tower together. Reach the target before the song ends!'},
+  jam:{n:'Team Jam',ic:'🎸',d:'Teams fill their song with instruments. The fullest song wins.'},
+  last:{n:'Last Note Standing',ic:'❤',d:'Three hearts each. Players who are out keep answering to send hearts to the others. Normal only.'}};
+const LV={pin:null,doc:null,players:{},unsubs:[],host:false,me:null,au:null,qi:0,order:[],phase:'',burst:null,stemT:0,ended:false};
+async function clHostHTML(){ if(!CL.packs) await clLoadPacks(); const packs=[...BUILTIN_PACKS,...(CL.packs||[])];
+  return `<div class="row"><button class="btn ghost" data-cl="teach" type="button">← Teach</button></div><h3>Host a live game</h3>
+    <label class="cllab">Question pack<select id="lvPack" class="clin">${packs.map(p=>`<option value="${p.id}">${escapeHTML(p.title)} · ${p.qs.length} questions</option>`).join('')}</select></label>
+    <div class="lbl">Game mode</div><div class="lvmodes">${Object.entries(LIVE_MODES).map(([k,m],i)=>`<label class="lvmode"><input type="radio" name="lvMode" value="${k}"${i===0?' checked':''}><b>${m.ic} ${m.n}</b><small>${m.d}</small></label>`).join('')}</div>
+    <div class="clrow"><label class="cllab">Difficulty<select id="lvDiff" class="clin"><option value="easy">Easy: no timer, relaxed timing, nobody loses points</option><option value="normal">Normal: a timer, speed bonus and streaks</option></select></label>
+      <label class="cllab">Length<select id="lvLen" class="clin"><option value="180">3 minutes</option><option value="300" selected>5 minutes</option><option value="480">8 minutes</option></select></label></div>
+    <div class="clrow"><label class="cllab">Names<select id="lvNames" class="clin"><option value="normal">Students type a name</option><option value="first">First names only</option><option value="fun">Random fun names</option></select></label>
+      <label class="cllab">Teams (Team Jam)<select id="lvTeams" class="clin"><option value="2">2 teams</option><option value="3">3 teams</option><option value="4">4 teams</option></select></label>
+      ${(CL.teach||[]).length?`<label class="cllab">Save results to a class<select id="lvCls" class="clin"><option value="">Don't save</option>${CL.teach.map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('')}</select></label>`:''}</div>
+    <button class="btn" data-cl="hoststart" type="button">Open the game</button>`; }
+async function liveCreate(){ const p=qpById($('lvPack').value); if(!p||!p.qs.length) return clMsg('Pick a pack with questions in it.',true);
+  let mode=(document.querySelector('[name="lvMode"]:checked')||{}).value||'race'; const diff=$('lvDiff').value==='normal'?'normal':'easy';
+  if(mode==='last'&&diff==='easy') return clMsg('Last Note Standing is Normal only. Pick Normal, or another mode.',true);
+  clMsg('Opening the game…');
+  try{ const db=ACCT.db; let pin='';
+    for(let i=0;i<8&&!pin;i++){ const c=String(100000+Math.floor(bpRand()*900000)); const r=db.collection('live').doc(c);
+      try{ const ex=await r.get(); if(ex.exists&&Date.now()-(ex.data().t||0)<3*3600e3) continue;
+        await r.set({host:ACCT.user.uid,mode,diff,phase:'lobby',qs:p.qs.slice(0,100).map(qNorm),title:p.title.slice(0,60),len:+$('lvLen').value||300,names:$('lvNames').value,teams:+$('lvTeams').value||2,cid:($('lvCls')||{}).value||'',kicked:[],t0:0,t:Date.now(),rev:0}); pin=c; }catch(e){ if(!(e&&e.code==='permission-denied')) throw e; } }
+    if(!pin) throw new Error('pin'); LV.host=true; liveWatch(db,pin); showOv('liveOv');
+  }catch(e){ clMsg(clErr(e),true); } }
+function liveStop(){ LV.unsubs.forEach(u=>{ try{ u(); }catch(e){} }); LV.unsubs=[]; clearInterval(LV.tick); LV.tick=null; }
+function liveWatch(db,pin){ liveStop(); LV.pin=pin; LV.players={}; LV.ended=false; LV.db=db; const ref=db.collection('live').doc(pin);
+  LV.unsubs.push(ref.onSnapshot(d=>{ LV.doc=d.exists?d.data():null; if(LV.host) liveBoard(); else playRender(); },()=>{}));
+  LV.unsubs.push(ref.collection('players').onSnapshot(s=>{ s.docChanges().forEach(ch=>{ if(ch.type==='removed') delete LV.players[ch.doc.id]; else LV.players[ch.doc.id]=ch.doc.data(); });
+    if(LV.host){ liveHostLogic(); liveBoard(); } else playRender(true); },()=>{}));
+  LV.tick=setInterval(()=>{ if(LV.host){ liveHostLogic(); liveClock(); } else playClock(); },500); }
+const lgLeft=()=>{ const d=LV.doc; if(!d||!d.t0) return d?d.len:0; return Math.max(0,Math.round(d.len-(Date.now()-d.t0)/1000)); };
+const liveGoal=d=>d.mode==='race'?(d.diff==='easy'?1500:2000):0;
+const towerTarget=(d,n)=>Math.max(6,Math.round(n*(d.diff==='easy'?2:3)));
+const TEAM_COL=['#FF6B6B','#4FA8FF','#7CD67C','#FFD166'], TEAM_N=['Red','Blue','Green','Gold'];
+/* the host decides when the game ends and hands out revive hearts (Last Note Standing) */
+function liveHostLogic(){ const d=LV.doc; if(!d||d.phase!=='play'||LV.ended) return; const P=Object.values(LV.players), ref=LV.db.collection('live').doc(LV.pin);
+  let end=lgLeft()<=0;
+  if(d.mode==='race'&&P.some(p=>p.score>=liveGoal(d))) end=end||P.filter(p=>p.score>=liveGoal(d)).length>=Math.min(3,P.length);
+  if(d.mode==='tower'&&P.reduce((a,p)=>a+(p.fl||0),0)>=towerTarget(d,P.length)) end=true;
+  if(d.mode==='last'){ const alive=P.filter(p=>(p.hearts||0)>0); if(P.length>1&&alive.length<=1) end=true;
+    const pool=P.reduce((a,p)=>a+(p.rev||0),0), give=Math.floor(pool/3)-(d.rev||0);
+    if(give>0&&alive.length){ ref.update({rev:(d.rev||0)+give}).catch(()=>{}); for(let i=0;i<give;i++){ const t=alive.filter(p=>p.hearts<3).sort((a,b)=>a.hearts-b.hearts)[0]; if(!t) break; const uid=Object.keys(LV.players).find(k=>LV.players[k]===t); t.hearts++; ref.collection('players').doc(uid).update({hearts:t.hearts}).catch(()=>{}); } } }
+  if(end){ LV.ended=true; ref.update({phase:'end',tEnd:Date.now()}).then(liveSaveReport).catch(()=>{}); } }
+/* the board on the projector */
+function liveBoard(){ const d=LV.doc, box=$('liveBody'); if(!d){ box.innerHTML='<p>This game has closed.</p>'; return; }
+  const P=Object.entries(LV.players).map(([uid,p])=>({uid,...p})), M=LIVE_MODES[d.mode], url=/^https?:$/.test(location.protocol)?location.host:'pulseform.org';
+  if(d.phase==='lobby'){ box.innerHTML=`<div class="lvhead"><div><small>${M.ic} ${M.n} · ${d.diff==='easy'?'Easy':'Normal'} · ${escapeHTML(d.title)}</small><h2>Join at <b>${escapeHTML(url)}</b></h2><p>then tap <b>Classroom → Enter a game PIN</b></p></div><div class="lvpin"><small>Game PIN</small><b>${LV.pin.slice(0,3)} ${LV.pin.slice(3)}</b></div></div>
+      <div class="lvplayers">${P.map(p=>`<button type="button" class="lvp" data-lvkick="${p.uid}" title="Remove">${escapeHTML(clName(p.name))}</button>`).join('')||'<p class="small">Waiting for players…</p>'}</div>
+      <div class="row lvctl"><span class="small">${P.length} player${P.length===1?'':'s'} · tap a name to remove it</span><button class="btn" id="lvStart" type="button" ${P.length?'':'disabled'}>Start game ▶</button><button class="btn ghost" id="lvClose" type="button">Close game</button></div>`;
+    box.querySelectorAll('[data-lvkick]').forEach(b=>b.onclick=()=>liveKick(b.dataset.lvkick)); $('lvStart').onclick=lgStart; $('lvClose').onclick=liveClose; return; }
+  if(d.phase==='end'){ liveEndBoard(d,P); return; }
+  const left=lgLeft(), head=`<div class="lvbar"><b>${M.ic} ${M.n}</b><span id="lvClock">${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}</span><span class="small">PIN ${LV.pin}</span><button class="btn ghost sm" id="lvEnd" type="button">End game</button></div>`;
+  let body='';
+  if(d.mode==='race'){ const g=liveGoal(d); body=`<div class="lvrace">${P.sort((a,b)=>b.score-a.score).slice(0,30).map((p,i)=>`<div class="lvlane"><span class="lvn">${escapeHTML(clName(p.name))}</span><div class="lvtrack"><i style="left:${Math.min(100,(p.score||0)/g*100).toFixed(1)}%">${i===0?'👑':'■'}</i></div><span class="lvs">${Math.min(100,Math.round((p.score||0)/g*100))}%</span></div>`).join('')}</div>`; }
+  if(d.mode==='tower'){ const tot=P.reduce((a,p)=>a+(p.fl||0),0), tg=towerTarget(d,P.length), f=Math.min(1,tot/tg);
+    body=`<div class="lvtower"><div class="lvtw"><div class="lvtgt" style="bottom:100%"><span>Target ${tg}</span></div><div class="lvfill" style="height:${(f*100).toFixed(1)}%">${Array.from({length:Math.min(40,tot)},(_,i)=>`<i style="--h:${(i*37)%360}"></i>`).join('')}</div></div><div class="lvtinfo"><b>${tot}</b><small>floors of ${tg}</small><p>Top builders: ${P.sort((a,b)=>(b.fl||0)-(a.fl||0)).slice(0,5).map(p=>escapeHTML(clName(p.name))+' ('+(p.fl||0)+')').join(', ')||'–'}</p></div></div>`; }
+  if(d.mode==='jam'){ const T=Array.from({length:d.teams},(_,t)=>({t,s:P.filter(p=>p.team===t).reduce((a,p)=>a+(p.score||0),0),n:P.filter(p=>p.team===t).length})), mx=Math.max(1,...T.map(x=>x.s)), full=2400*Math.max(1,P.length/d.teams);
+    body=`<div class="lvjam">${T.map(x=>{ const f=Math.min(1,x.s/full); return `<div class="lvteam" style="--c:${TEAM_COL[x.t]}"><b>${TEAM_N[x.t]}</b><div class="lvinst">${['🥁','🎸','🎹','🎺','🎻'].map((ic,i)=>`<span class="${f>=(i+1)/5?'on':''}">${ic}</span>`).join('')}</div><div class="lvjbar"><i style="height:${(f*100).toFixed(1)}%"></i></div><small>${x.n} players · ${x.s.toLocaleString()}</small></div>`; }).join('')}</div>`;
+    const lead=Math.min(1,mx/full); if(A.ctx&&performance.now()-LV.stemT>2000){ LV.stemT=performance.now(); try{ setStemTier(Math.min(4,Math.floor(lead*5)),A.ctx.currentTime,.8); }catch(e){} } }
+  if(d.mode==='last'){ body=`<div class="lvlast">${P.sort((a,b)=>(b.hearts||0)-(a.hearts||0)||b.score-a.score).map(p=>`<div class="lvlp${(p.hearts||0)>0?'':' out'}"><b>${escapeHTML(clName(p.name))}</b><span>${'❤'.repeat(p.hearts||0)}${'🤍'.repeat(Math.max(0,3-(p.hearts||0)))}</span></div>`).join('')}</div><p class="small">Revive notes sent by players who are out: ${P.reduce((a,p)=>a+(p.rev||0),0)} (every 3 give someone a heart)</p>`; }
+  box.innerHTML=head+body; $('lvEnd').onclick=()=>{ LV.ended=true; LV.db.collection('live').doc(LV.pin).update({phase:'end',tEnd:Date.now()}).then(liveSaveReport).catch(()=>{}); }; }
+function liveClock(){ const e=$('lvClock'); if(e){ const l=lgLeft(); e.textContent=Math.floor(l/60)+':'+String(l%60).padStart(2,'0'); } }
+async function lgStart(){ const d=LV.doc, ref=LV.db.collection('live').doc(LV.pin), ids=Object.keys(LV.players).sort(()=>Math.random()-.5);
+  if(d.mode==='jam'||d.mode==='last') await Promise.all(ids.map((uid,i)=>ref.collection('players').doc(uid).update(d.mode==='jam'?{team:i%d.teams}:{hearts:3}).catch(()=>{})));
+  await ref.update({phase:'play',t0:Date.now()}); if(A.ctx) sGo(); }
+async function liveKick(uid){ const p=LV.players[uid]; if(!p||!confirm('Remove '+clName(p.name)+'?')) return; const ref=LV.db.collection('live').doc(LV.pin);
+  await ref.update({kicked:firebase.firestore.FieldValue.arrayUnion(uid)}).catch(()=>{}); await ref.collection('players').doc(uid).delete().catch(()=>{}); }
+async function liveClose(){ liveStop(); try{ const ref=LV.db.collection('live').doc(LV.pin), s=await ref.collection('players').get(); await Promise.all(s.docs.map(d=>d.ref.delete())); await ref.delete(); }catch(e){} LV.pin=null; showClass('teach'); }
+function liveEndBoard(d,P){ const box=$('liveBody');
+  let top; if(d.mode==='tower'){ const tot=P.reduce((a,p)=>a+(p.fl||0),0), tg=towerTarget(d,P.length); top=`<h2>${tot>=tg?'🎉 The class built the tower!':'So close!'}</h2><p>${tot} of ${tg} floors</p>`; }
+  else if(d.mode==='jam'){ const T=Array.from({length:d.teams},(_,t)=>({t,s:P.filter(p=>p.team===t).reduce((a,p)=>a+(p.score||0),0)})).sort((a,b)=>b.s-a.s); top=`<h2 style="color:${TEAM_COL[T[0].t]}">🎸 Team ${TEAM_N[T[0].t]} wins!</h2>`; }
+  else top='<h2>🏆 Winners</h2>';
+  const rank=P.slice().sort((a,b)=>(d.mode==='last'?((b.hearts||0)-(a.hearts||0)):0)||(b.score||0)-(a.score||0)||(a.fin||9e15)-(b.fin||9e15)), pod=rank.slice(0,5);
+  const qa=(d.qs||[]).map((q,i)=>{ let r=0,n=0; P.forEach(p=>{ const v=(p.ans||{})[i]; if(v!=null){ n++; r+=v; } }); return {q:q.q,n,r,p:n?Math.round(100*r/n):null}; }).filter(x=>x.n);
+  box.innerHTML=`<div class="lvend">${top}<div class="lvpod">${pod.map((p,i)=>`<div class="pod p${i}"><span>${['🥇','🥈','🥉','4','5'][i]}</span><b>${escapeHTML(clName(p.name))}</b><small>${(p.score||0).toLocaleString()}</small></div>`).join('')}</div>
+    <details class="lvrep" open><summary>Report: accuracy per question</summary><table><tbody>${qa.sort((a,b)=>a.p-b.p).map(x=>`<tr><td>${escapeHTML(x.q)}</td><td><span class="pct ${x.p<60?'lo':x.p<85?'mid':'hi'}">${x.p}%</span></td><td class="small">${x.n} answers</td></tr>`).join('')}</tbody></table></details>
+    <div class="row"><button class="btn ghost" id="lvCsv" type="button">⬇ Results CSV</button><button class="btn" id="lvDone" type="button">Close game</button></div></div>`;
+  $('lvCsv').onclick=()=>clCsv([['Player','Score','Correct','Answered'],...rank.map(p=>[clName(p.name),p.score||0,p.right||0,p.done||0])],'live game '+LV.pin); $('lvDone').onclick=liveClose; if(A.ctx&&!LV.wonSnd){ LV.wonSnd=1; sWin(); } }
+async function liveSaveReport(){ const d=LV.doc; if(!d||!d.cid) return; try{ const P=Object.values(LV.players);
+  await LV.db.collection('classes').doc(d.cid).collection('games').add({mode:d.mode,diff:d.diff,title:d.title,t:Date.now(),players:P.slice(0,200).map(p=>({n:clName(p.name),s:p.score||0,r:p.right||0,a:p.done||0}))}); }catch(e){} }
+
+/* ---- the student's side of a live game ---- */
+function playOpen(pin){ liveStop(); LV.host=false; LV.pin=null; LV.doc=null; LV.me=null; showOv('playOv');
+  $('playBody').innerHTML=`<div class="pljoin"><h2>Join a game</h2><input id="plPin" class="clin code" inputmode="numeric" maxlength="7" placeholder="Game PIN" value="${escapeHTML(pin||'')}" aria-label="Game PIN"><input id="plNm" class="clin" maxlength="24" placeholder="Your name" value="${escapeHTML(SAVE.clName||'')}" aria-label="Your name"><button class="btn" id="plGo" type="button">Join ▶</button><p class="small" id="plMsg"></p></div>`;
+  ['plPin','plNm'].forEach(id=>$(id).addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') playJoin(); })); $('plGo').onclick=playJoin; }
+async function playJoin(){ const pin=$('plPin').value.replace(/\D/g,''), raw=$('plNm').value.trim(), m=$('plMsg');
+  if(pin.length!==6) return m.textContent='The PIN is 6 numbers.'; if(!raw) return m.textContent='Type your name.'; m.textContent='Joining…';
+  try{ const au=await clAuth(), ref=au.db.collection('live').doc(pin), d=await ref.get();
+    if(!d.exists||Date.now()-(d.data().t||0)>3*3600e3) return m.textContent='No game with that PIN. Check the board.';
+    const g=d.data(); if(g.phase==='end') return m.textContent='That game has finished.';
+    let nm=g.names==='fun'?funName():g.names==='first'?raw.split(' ')[0]:raw; nm=clName(nm);
+    await ref.collection('players').doc(au.uid).set({name:nm,score:0,right:0,done:0,fl:0,rev:0,team:0,hearts:3,ans:{},fin:0,t:TS()});
+    SAVE.clName=clName(raw); save(); LV.au=au; LV.me=au.uid; LV.qi=0; LV.streak=0; LV.order=[]; LV.phase=''; LV.mine={name:nm,score:0,right:0,done:0,fl:0,rev:0,hearts:3,ans:{}};
+    liveWatch(au.db,pin);
+  }catch(e){ m.textContent=e&&e.code==='permission-denied'?'You can\'t join this game.':clErr(e); } }
+function playRender(fromPlayers){ const d=LV.doc, box=$('playBody'), me=LV.players[LV.me];
+  if(!d){ box.innerHTML='<div class="plwait"><h2>The game has closed.</h2><button class="btn" id="plOut" type="button">OK</button></div>'; $('plOut').onclick=()=>{ liveStop(); toMenu(); }; return; }
+  if(fromPlayers&&LV.phase==='play'&&!me&&Object.keys(LV.players).length){ liveStop(); box.innerHTML='<div class="plwait"><h2>You were removed from the game.</h2><button class="btn" id="plOut" type="button">OK</button></div>'; $('plOut').onclick=()=>toMenu(); return; }
+  if(me){ if(me.team!=null) LV.mine.team=me.team; if(me.hearts!=null&&d.mode==='last') LV.mine.hearts=me.hearts; }
+  if(d.phase===LV.phase&&d.phase==='play') return playStatus();
+  LV.phase=d.phase; const M=LIVE_MODES[d.mode];
+  if(d.phase==='lobby'){ box.innerHTML=`<div class="plwait"><div class="pldot"></div><h2>You're in, ${escapeHTML(me?me.name:LV.mine.name)}!</h2><p>${M.ic} ${M.n} · ${d.diff==='easy'?'Easy':'Normal'}</p><p class="small">Watch the board. The game starts soon.</p></div>`; return; }
+  if(d.phase==='end'){ const P=Object.values(LV.players).sort((a,b)=>b.score-a.score), r=P.findIndex(p=>p.name===LV.mine.name&&p.score===LV.mine.score)+1;
+    box.innerHTML=`<div class="plwait"><h2>Game over!</h2><p class="plbig">${(LV.mine.score||0).toLocaleString()}</p><p>${LV.mine.right||0} of ${LV.mine.done||0} answers right${r?` · #${r} of ${P.length}`:''}</p><button class="btn" id="plOut" type="button">Back to the menu</button></div>`;
+    $('plOut').onclick=()=>{ liveStop(); toMenu(); }; SAVE.life=SAVE.life||{}; SAVE.life.liveGames=(SAVE.life.liveGames||0)+1; SAVE.clStars=(SAVE.clStars||0)+Math.min(5,LV.mine.right||0); save(); achCheck(); return; }
+  if(d.phase==='play'){ const n=(d.qs||[]).length; LV.order=Array.from({length:n},(_,i)=>i).sort(()=>Math.random()-.5); LV.qi=0; playNext(); } }
+function playStatus(){ const d=LV.doc, s=$('plStat'); if(!s||!d) return; const me=LV.mine;
+  s.innerHTML=`<span>${LIVE_MODES[d.mode].ic} ${d.mode==='tower'?`🧱 ${me.fl||0} floors`:d.mode==='last'?('❤'.repeat(Math.max(0,me.hearts||0))||'Out: answer to send hearts!'):d.mode==='jam'?`<b style="color:${TEAM_COL[me.team||0]}">Team ${TEAM_N[me.team||0]}</b> · ${(me.score||0).toLocaleString()}`:`${(me.score||0).toLocaleString()}${d.mode==='race'?` / ${liveGoal(d).toLocaleString()}`:''}`}</span><span id="plClock"></span>`; playClock(); }
+function playClock(){ const e=$('plClock'); if(e){ const l=lgLeft(); e.textContent=Math.floor(l/60)+':'+String(l%60).padStart(2,'0'); } }
+function playNext(){ const d=LV.doc; if(!d||d.phase!=='play') return; const n=(d.qs||[]).length; if(!n) return;
+  if(d.mode==='race'&&LV.mine.score>=liveGoal(d)){ $('playBody').innerHTML='<div class="plwait"><h2>🏁 You finished!</h2><p>Watch the board for the winners.</p></div>'; return; }
+  if(LV.qi>=n){ LV.qi=0; LV.order.sort(()=>Math.random()-.5); }
+  const qi=LV.order[LV.qi++], q=d.qs[qi], easy=d.diff==='easy';
+  $('playBody').innerHTML='<div class="plstat" id="plStat"></div><div id="plQ"></div>'; playStatus();
+  qCard($('plQ'),q,{easy,timer:easy?0:20,auto:900,onDone:(sc,ms)=>playAfterQ(qi,sc,ms)}); }
+async function playAfterQ(qi,sc,ms){ const d=LV.doc; if(!d||d.phase!=='play') return; const me=LV.mine, easy=d.diff==='easy';
+  me.done=(me.done||0)+1; me.ans[qi]=sc; if(sc>0) me.right=(me.right||0)+sc; LV.streak=sc>=1?(LV.streak||0)+1:0;
+  // the rhythm burst comes after a right answer: tapping on the beat multiplies the points (and, in Last Note Standing, keeps your hearts)
+  const b=sc>0?await playBurst(easy):0;
+  let gain=0; if(sc>0){ const speed=easy?0:Math.max(0,Math.round(50*(1-ms/20000))), streak=easy?0:Math.min(50,(LV.streak-1)*10); gain=Math.round((100+speed+streak)*sc*(1+b/8)); }
+  const out=d.mode==='last'&&(me.hearts||0)<=0;
+  if(d.mode==='last'&&!out&&(sc===0||b<3)){ me.hearts=Math.max(0,(me.hearts||0)-1); toast(me.hearts?'❤ Lost a heart!':'You\'re out! Keep answering to send hearts to others.'); }
+  if(out&&sc>0) me.rev=(me.rev||0)+1;
+  if(!out) me.score=(me.score||0)+gain;
+  if(d.mode==='tower'&&sc>0) me.fl=(me.fl||0)+1+(b>=6?1:0);
+  if(d.mode==='race'&&me.score>=liveGoal(d)&&!me.fin) me.fin=Date.now();
+  await playPush(); playNext(); }
+/* writes go up at most about once a second (the rules require it); a quick answer waits a moment */
+async function playPush(){ const wait=Math.max(0,(LV.lastPush||0)+1100-Date.now()); if(wait) await new Promise(r=>setTimeout(r,wait)); LV.lastPush=Date.now(); const me=LV.mine;
+  try{ await LV.db.collection('live').doc(LV.pin).collection('players').doc(LV.me).update({score:me.score||0,right:me.right||0,done:me.done||0,fl:me.fl||0,rev:me.rev||0,hearts:me.hearts||0,ans:me.ans,fin:me.fin||0,t:TS()}); }catch(e){} }
+/* 8 beats: tap (or press any key) with the clicks. Perfect = 1, close = 0.6 */
+function playBurst(easy){ return new Promise(res=>{ ensureAudio(); const c=A.ctx; c.resume().catch(()=>{});
+  const spb=easy?.75:.6, t0=c.currentTime+.4+spb*4, N=8, W=easy?{p:.08,g:.17}:{p:.055,g:.12}, hits=new Array(N).fill(0);
+  for(let i=0;i<4;i++) tone(A.sfx,t0-spb*(4-i),'sine',660,.06,.002,.06);
+  for(let i=0;i<N;i++){ tone(A.sfx,t0+i*spb,'sine',i%4?880:1320,.09,.002,.08); }
+  const box=$('plQ'); box.innerHTML=`<div class="plburst" tabindex="0"><div class="bring"><i></i></div><b>Tap with the beat!</b><small>8 beats · tap anywhere or press any key</small><div class="bdots">${'<i></i>'.repeat(N)}</div></div>`;
+  const el=box.querySelector('.plburst'), ring=box.querySelector('.bring i'), dots=box.querySelectorAll('.bdots i'); el.focus();
+  const tap=ev=>{ ev.preventDefault(); const th=gameNow(ev), i=Math.round((th-t0)/spb); if(i<0||i>=N||hits[i]) return;
+    const dd=Math.abs(th-(t0+i*spb)); const v=dd<=W.p?1:dd<=W.g?.6:0; hits[i]=v||-1; dots[i].className=v===1?'p':v?'g':'m'; buzz(v?10:0); };
+  el.addEventListener('pointerdown',tap); const kd=e=>{ if(e.repeat) return; e.stopPropagation(); tap(e); }; el.addEventListener('keydown',kd);
+  let raf=0; const anim=()=>{ const h=gameNow(), ph=(h-t0)/spb, fr=ph-Math.floor(ph); ring.style.transform=`scale(${h>=t0-spb*4.05?1+.35*Math.max(0,1-fr*3):1})`; if(h<t0+N*spb+.3) raf=requestAnimationFrame(anim); };
+  raf=requestAnimationFrame(anim);
+  setTimeout(()=>{ cancelAnimationFrame(raf); el.removeEventListener('pointerdown',tap); res(hits.reduce((a,v)=>a+Math.max(0,v),0)); },(t0-c.currentTime+N*spb+.35)*1000); }); }
+$('liveBack').onclick=()=>{ if(LV.doc&&LV.doc.phase!=='end'&&!confirm('Leave the board? The game keeps going; open it again from Classroom → Teach.')) return; liveStop(); showClass('teach'); };
+$('playBack').onclick=()=>{ liveStop(); toMenu(); };
+/* links: ?class=CODE opens the join form, ?play=123456 opens a live game */
+setTimeout(()=>{ const q=new URLSearchParams(location.search); if(q.get('play')) playOpen(q.get('play').replace(/\D/g,'').slice(0,6)); else if(q.get('class')) showClass('home'); },2500);
 
 /* ---------------- WIRING ---------------- */
 /* playful UI: ripples, tilt, hover ticks */
