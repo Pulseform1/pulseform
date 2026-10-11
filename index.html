@@ -1320,7 +1320,7 @@ button.lvchip{cursor:pointer}button.lvchip:hover{transform:translateY(-2px) rota
 .shoptabs #tabSkins.tabblocks{order:-1;position:relative;font-weight:800;font-size:15px;color:#2B2350;background:linear-gradient(135deg,#FFE27A,#FFB347 55%,#FF8FBF);box-shadow:0 3px 0 #C98A1E,0 0 18px rgba(255,209,102,.45);border-radius:10px;padding-inline:14px}
 .shoptabs #tabSkins.tabblocks:not(.on){animation:blockglow 2.4s ease-in-out infinite}
 .shoptabs #tabSkins.tabblocks.on{outline:3px solid #fff;outline-offset:1px}
-.shoptabs #tabSkins .tbic{display:inline-block;animation:clbob 2s ease-in-out infinite}
+.shoptabs #tabSkins .tbic{display:inline-block;line-height:1}
 @keyframes blockglow{50%{box-shadow:0 3px 0 #C98A1E,0 0 28px rgba(255,209,102,.8)}}
 @media (prefers-reduced-motion:reduce){.shoptabs #tabSkins.tabblocks,.shoptabs #tabSkins .tbic{animation:none}}
 .clcrumbs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px;margin:2px 0 6px}.clcrumbs button{background:rgba(255,255,255,.08);border:1px solid var(--line);color:inherit;border-radius:999px;padding:4px 12px;font:600 13px inherit;cursor:pointer}.clcrumbs button:hover{background:rgba(255,255,255,.16)}.clcrumbs span{opacity:.5}.clcrumbs b{opacity:.9}
@@ -4891,7 +4891,7 @@ function render(now){
       drawCell(x,y,now,L,pulse,vis);
     }
     drawUnderFx(L,now,y);
-    players.forEach((P,i)=>{ const bd=BD[i]; if(!bd.falling&&clamp(Math.ceil(bd.y-.001),0,N-1)===y){ if(fxMeP(P)) drawFxTrail(P,bd,L,now); drawBlock(P,bd,L,now); } });
+    players.forEach((P,i)=>{ const bd=BD[i]; if(!bd.falling&&clamp(Math.ceil(bd.y-.001),0,N-1)===y) drawBlock(P,bd,L,now); });
     if(R.boss&&y===R.boss.y+2) drawBoss(L,now);   // the Round One (even when it slams into the map) stays behind the map's tiles
   }
   drawTether(L,now,players,BD);
@@ -8907,6 +8907,7 @@ function mergeSaves(loc,cl,additive){
   { const a=loc.garden||{}, b=cl.garden||{}; if(a.days||b.days){ const days=Object.assign({},b.days||{},a.days||{}); out.garden={days,n:Math.max(a.n||0,b.n||0,Object.keys(days).length),got:[...new Set([...(a.got||[]),...(b.got||[])])]}; } }
   { const a=(loc.album||{}).got||[], b=(cl.album||{}).got||[]; out.album={got:[...new Set([...a,...b])]}; }
   { const m={}; [...(cl.cls||[]),...(loc.cls||[])].forEach(c=>{ if(c&&c.cid) m[c.cid]=c; }); out.cls=Object.values(m).slice(0,12); out.clStars=Math.max(loc.clStars||0,cl.clStars||0); out.clName=newer.clName||loc.clName||cl.clName||''; }
+  out.fxTrailRefund=!!(loc.fxTrailRefund||cl.fxTrailRefund); if(out.fxTrailRefund) out.owned=out.owned.filter(id=>!String(id).startsWith('tr_'));
   out.presGot=Math.max(loc.presGot||0,cl.presGot||0); out.petStarter=!!(loc.petStarter||cl.petStarter);
   { const a=loc.bpBest, b=cl.bpBest; const w=!a?b:!b?a:(a[1]>=b[1]?a:b); if(w) out.bpBest=w; else delete out.bpBest; }
   out.hardV=HARD_V; out.trailRefund=true; out._t=Math.max(loc._t||0,cl._t||0,1);
@@ -9804,7 +9805,7 @@ function stageRender(){ const s=skinById(STAGE), id=s.id, own=ownsSkin(id), R0=s
   if(s.fuse) where=`Fusion of ${escapeHTML(skinById(s.fuse.a).name)} and ${escapeHTML(skinById(s.fuse.b).name)}`;
   if(s.req&&s.req.spot) where=spot?`This week's spotlight · ♪ ${s.price.toLocaleString()}`:'Weekly spotlight: in the Shop every few weeks';
   const B=[];
-  if(own){ B.push(SAVE.skin===id?`<button class="btn ghost" type="button" disabled>Wearing it</button>`:`<button class="btn" type="button" data-st="wear">Wear it</button>`);
+  if(own){ B.push(SAVE.skin===id?`<button class="btn ghost" type="button" disabled>Equipped</button>`:`<button class="btn" type="button" data-st="wear">Equip</button>`);
     if(pol<2) B.push(`<button class="btn polb" type="button" data-st="polish" ${dustN()<POLISH_COST[pol+1]?'disabled':''}>${pol?'🌈 Polish to Prism':'✨ Polish to Gold'} · ✧${POLISH_COST[pol+1]}</button>`);
     if(pol) B.push(`<button class="btn ghost" type="button" data-st="poltog">${(SAVE.polishOff||{})[id]?'Show the polish':'Hide the polish'}</button>`); }
   else { const buyable=shop||spot;
@@ -11944,7 +11945,7 @@ const NEWS_V='2026-10e', NEWS_WHEN='Update · October 2026';
 const NEWS_ADDED=[
  ['🗄','The Locker','A new home for your stuff: your player card and block mastery. Find it on the menu.'],
  ['🏅','Block mastery','The block you wear levels up as you play it, 1 to 10, with Notes, Stardust and a Master title along the way.'],
- ['✨','Effects','Trails behind your block, bursts on every perfect hit, and your own hit sound. Find them in the Shop under Effects.'],
+ ['✨','Effects','A burst on every perfect hit, and your own hit sound. Find them in the Shop under Effects.'],
  ['🏷','Titles and player cards','Pick a title to show under your name on the leaderboards. Tap any name on a leaderboard to see their full card: rank, top 3 blocks, rarest pull and high scores.'],
  ['✦','Pass prestige','After tier 100 the Pulse Pass keeps going: every prestige level gives Notes and Stardust.'],
  ['🎧','Better Bluetooth sound','No more sound cutting out on wireless headphones, and the beat stays lined up.']];
@@ -13789,7 +13790,7 @@ function buildPacks(){
   const free=`<div class="bpfree${bpFreeReady()?' ready':''}"><span class="bpfgift">🎁</span><div><b>${bpFreeReady()?'Your free daily pack is ready!':'Free daily pack opened'}</b><small>${bpFreeReady()?`One ${escapeHTML(fp.name)} on the house, every day.`:`The next one is ready in ${left()}.`}</small></div>`+
     (bpFreeReady()?`<button class="btn" type="button" id="bpFreeGo">Open free</button>`:'')+`</div>`;
   const tok=bpTokens()?`<div class="bpfree ready"><span class="bpfgift">🎟</span><div><b>${bpTokens()===1?'You have a free pack!':`You have ${bpTokens()} free packs!`}</b><small>Earned by finishing all your weekly quests. Open any pack except the Pulse Pristine Pack for free.</small></div></div>`:'';
-  const tools=`<div class="bptools"><label class="bptog"><input type="checkbox" id="bpFastOn" ${SAVE.bpFast?'checked':''}> ⚡ Quick open <small>(cuts and taps for you)</small></label>`+
+  const tools=`<div class="bptools"><label class="bptog${passPlus()?'':' lockd'}"><input type="checkbox" id="bpFastOn" ${bpFast()?'checked':''} ${passPlus()?'':'disabled'}> ⚡ Quick open <small>${passPlus()?'(cuts and taps for you)':'· a Pulse Pass+ perk'}</small></label>`+
     `<span class="small">Finish all your weekly quests in the Pulse Pass for a free pack.</span></div>`;
   const shelf=BPACKS.filter(bpAvail).sort((a,b)=>(!!b.season)-(!!a.season));
   $('shopGrid').innerHTML=free+tok+tools+`<div class="bpgrid">`+shelf.map((pk,k)=>{ const n=bpOwnedN(pk), tot=Object.keys(pk.rates).length, open=bpRatesOpen===pk.id, done=n>=tot;
@@ -13804,7 +13805,7 @@ function buildPacks(){
     bpHistHTML()+
     `<p class="bpnote">Each pack holds one block. Already own the one you get? You get Notes back instead: from 20% of the pack's price for a common up to the full price for a legendary.</p>`;
   const fg=$('bpFreeGo'); if(fg) fg.onclick=()=>bpBuy(fp,'free');
-  $('bpFastOn').onchange=e=>{ SAVE.bpFast=e.target.checked; save(); };
+  $('bpFastOn').onchange=e=>{ if(!passPlus()){ e.target.checked=false; return; } SAVE.bpFast=e.target.checked; save(); };
   const hd=$('shopGrid').querySelector('.bphist'); if(hd) hd.ontoggle=()=>{ bpHistOpen=hd.open; };
   $('shopGrid').querySelectorAll('[data-bpopen]').forEach(b=>b.onclick=()=>bpBuy(BPACKS.find(p=>p.id===b.dataset.bpopen)));
   $('shopGrid').querySelectorAll('[data-bpfive]').forEach(b=>b.onclick=()=>bpBuyMulti(BPACKS.find(p=>p.id===b.dataset.bpfive)));
@@ -13867,15 +13868,16 @@ function bpmFlip(i){ const c=bpmCard(i); if(!c||c.classList.contains('flip')||BP
 function bpmDone(){ BP.stage='done'; const pk=BP.pk, L=BP.multi, nw=L.filter(r=>!r.dupe).length, back=L.reduce((a,r)=>a+r.refund,0), set=L.reduce((a,r)=>a+(r.set||0),0), ds=L.reduce((a,r)=>a+(r.dust||0),0);
   $('bpmSum').innerHTML=[nw?`<span class="new">${nw} new block${nw>1?'s':''}</span>`:'',back?`♪${back.toLocaleString()} back for repeats`:'',ds?`✧${ds} Stardust`:''].filter(Boolean).join(' · ')+(set?`<div class="bpsetdone">SET COMPLETE! +♪${set.toLocaleString()}</div>`:'');
   if(BP.forge){ const s=skinById(L[0].id); $('bpmSum').innerHTML=L.length>1?`<span class="new">FORGED</span> ${L.length} new blocks!`:`<span class="new">${s.fuse?'FUSED':'FORGED'}</span> ${escapeHTML(s.name)} is yours!`+(set?`<div class="bpsetdone">SET COMPLETE! +♪${set.toLocaleString()}</div>`:'');
-    $('bpmBtns').innerHTML=`<button class="btn" type="button" id="bpmEq">Wear it</button><button class="btn ghost" type="button" id="bpmDone">Back to the Forge</button>`;
-    $('bpmEq').onclick=()=>{ bpmWear(0); $('bpmEq').disabled=true; $('bpmEq').textContent='Wearing it'; }; $('bpmDone').onclick=bpClose; }
+    $('bpmBtns').innerHTML=`<button class="btn" type="button" id="bpmEq">Equip</button><button class="btn ghost" type="button" id="bpmDone">Back to the Forge</button>`;
+    $('bpmEq').onclick=()=>{ bpmWear(0); $('bpmEq').disabled=true; $('bpmEq').textContent='Equipped'; }; $('bpmDone').onclick=bpClose; }
   else { $('bpmSum').innerHTML+=`<div class="small" style="margin-top:4px">Tap a card to wear that block</div>`;
   $('bpmBtns').innerHTML=`<button class="btn ghost" type="button" id="bpmAgain" ${bpCanPay(pk,'',BP_MULTI)?'':'disabled'}>Open ${BP_MULTI} more · ♪ ${(pk.price*BP_MULTI).toLocaleString()}</button><button class="btn ghost" type="button" id="bpmDone">Done</button>`;
   $('bpmAgain').onclick=()=>bpBuyMulti(pk); $('bpmDone').onclick=bpClose; }
   if(set) bpLater(()=>{ const c={x:innerWidth/2,y:innerHeight/2}; for(let k=0;k<140;k++) bpSpark(c.x,c.y,1,'prism',6,k%2); bpRing(c.x,c.y,'prism',3); bpSnd('reveal',3); },400);
   if(typeof acctPush==='function') acctPush(true); }
 /* ---- the opening ---- */
-function bpLater(f,ms){ BP.timers.push(setTimeout(f,SAVE.reduce?Math.min(ms,250):SAVE.bpFast?ms*.5:ms)); }   // Quick open runs everything at double speed
+const bpFast=()=>!!SAVE.bpFast&&passPlus();   // Quick open is a Pulse Pass+ perk
+function bpLater(f,ms){ BP.timers.push(setTimeout(f,SAVE.reduce?Math.min(ms,250):bpFast()?ms*.5:ms)); }   // Quick open runs everything at double speed
 function bpShow(pk,res){ try{ firstGesture(); }catch(e){} BP.timers.forEach(clearTimeout); BP.timers=[];
   BP.pk=pk; BP.res=res; BP.busy=false; BP.tap=null; BP.stage='cut'; BP.cut=null; BP.rays=0; BP.prism=false; BP.parts=[];
   const ov=$('bpOv'), pr=pk.id==='pristine', s=skinById(res.id), r=s.bpr, R=BP_RAR[r];
@@ -13888,9 +13890,9 @@ function bpShow(pk,res){ try{ firstGesture(); }catch(e){} BP.timers.forEach(clea
   const fr=$('bpFront'); fr.className='bpcf bpcfront r'+r; fr.style.setProperty('--rc',R.c);
   fr.innerHTML=`<span class="bprr">${r===5?'✦ Pristine ✦':R.n}</span><canvas class="skprev" data-skin="${s.id}" data-px="220" data-big="1" width="220" height="220" aria-hidden="true"></canvas><b>${escapeHTML(s.name)}</b><small>${escapeHTML(pk.name)}</small>`;
   ov.classList.remove('multi'); $('bpMulti').hidden=true; BP.multi=null;
-  $('bpBanner').className='bpbanner'; $('bpInfo').innerHTML=SAVE.bpFast?'⚡ Quick open':'Swipe across the top of the pack to cut it open'; $('bpBtns').innerHTML=''; $('bpSkip').hidden=true; $('bpTap').hidden=true;
+  $('bpBanner').className='bpbanner'; $('bpInfo').innerHTML=bpFast()?'⚡ Quick open':'Swipe across the top of the pack to cut it open'; $('bpBtns').innerHTML=''; $('bpSkip').hidden=true; $('bpTap').hidden=true;
   bpLater(()=>{ if(BP.stage==='cut') $('bpTap').hidden=false; },5000);
-  if(SAVE.bpFast) bpLater(()=>{ if(BP.stage==='cut') bpCutDone(); },700);
+  if(bpFast()) bpLater(()=>{ if(BP.stage==='cut') bpCutDone(); },700);
   ov.hidden=false; ov.scrollTop=ov.scrollLeft=0; bpFxSize(); if(!BP.raf) BP.raf=requestAnimationFrame(bpFrame); }
 function bpClose(){ BP.timers.forEach(clearTimeout); BP.timers=[]; BP.stage=''; $('bpOv').hidden=true; cancelAnimationFrame(BP.raf); BP.raf=0;
   $('bpOv').classList.remove('multi'); $('bpMulti').hidden=true; BP.multi=null;
@@ -13924,7 +13926,7 @@ function bpCutDone(){ if(BP.stage!=='cut') return; BP.stage='rip'; BP.cut=null; 
 const BP_HYPE=['','It\'s glowing blue…','Purple! Something powerful is in here…','GOLD!! The light is getting stronger…','CRIMSON?! An Ascendant aura is breaking through…','…wait. The light just went out.'];
 function bpHype(){ if(BP.stage!=='rip') return; BP.stage='hype'; $('bpSkip').hidden=false; const r=skinById(BP.res.id).bpr, card=$('bpCard'), back=card.querySelector('.bpcback'); let i=0;
   const show=()=>{ const c=bpCardC();
-    if(SAVE.bpFast) bpLater(()=>{ if(BP.tap) BP.tap(); },300);   // Quick open taps for you
+    if(bpFast()) bpLater(()=>{ if(BP.tap) BP.tap(); },300);   // Quick open taps for you
     if(i===5){ $('bpOv').classList.add('dark'); back.style.setProperty('--glow','#000000'); back.style.setProperty('--pow',0); card.classList.remove('shake'); BP.rays=0; bpSnd('charge');
       $('bpInfo').innerHTML=BP_HYPE[4]+'<br><span class="bptapme">Tap…</span>'; back.classList.add('r4wait'); return; }
     const col=BP_RAR[i].c; back.style.setProperty('--glow',col); back.style.setProperty('--pow',Math.min(1.2,(i+1)/4)); $('bpOv').style.setProperty('--glow',col);
@@ -13970,7 +13972,7 @@ function bpReveal(){ BP.stage='done'; $('bpSkip').hidden=true; const pk=BP.pk, r
   { const bar=$('bpInfo').querySelector('.bpsetline i'); if(bar) setTimeout(()=>{ bar.style.width=Math.round(res.have/res.tot*100)+'%'; },500); }
   if(res.set){ bpLater(()=>{ const c=bpCardC(); for(let k=0;k<140;k++) bpSpark(c.x,c.y,1,'prism',6,k%2); bpRing(c.x,c.y,'prism',3); bpSnd('reveal',3); },900); }
   const again=SAVE.notes>=pk.price, eq=SAVE.skin===s.id;
-  $('bpBtns').innerHTML=(!res.dupe||!eq?`<button class="btn" type="button" id="bpEquip" ${eq?'disabled':''}>${eq?'Equipped':'Equip it'}</button>`:'')+
+  $('bpBtns').innerHTML=(!res.dupe||!eq?`<button class="btn" type="button" id="bpEquip" ${eq?'disabled':''}>${eq?'Equipped':'Equip'}</button>`:'')+
     `<button class="btn ghost" type="button" id="bpAgain" ${again?'':'disabled'}>Open another · ♪ ${pk.price.toLocaleString()}</button><button class="btn ghost" type="button" id="bpDone">Done</button>`;
   const eb=$('bpEquip'); if(eb) eb.onclick=()=>{ equip('skin',s.id); G.players=[mkPlayer(0)]; if(R0()) G.players[0].pos={...R0().start}; try{ netHello(); }catch(e){} eb.textContent='Equipped'; eb.disabled=true; };
   $('bpAgain').onclick=()=>bpBuy(pk); $('bpDone').onclick=bpClose;
@@ -14032,7 +14034,7 @@ function buildCollSkins(){
   const groups=[['shop','Shop blocks'],['earn','Earned by playing'],['pass','Pulse Pass'],['prem','Premium'],...BPACKS.map(p=>['bp_'+p.id,p.name]),['spot','Weekly spotlight'],['fused','Your fusions'],['event','Events']];
   const SORTS={rarity:(a,b)=>rarScore(b)-rarScore(a)||a.name.localeCompare(b.name),az:(a,b)=>a.name.localeCompare(b.name),recent:(a,b)=>own(b)-own(a)||(gt[b.id]||0)-(gt[a.id]||0)||a.name.localeCompare(b.name)};
   let h=`<div class="collhead"><div><b>${got} / ${all.length}</b> blocks collected${(SAVE.wish||[]).length?` · ★ ${SAVE.wish.length} on your wishlist`:''}</div><div class="bpbar"><i style="width:${Math.round(got/all.length*100)}%"></i></div>`+
-    `<div class="collf">${[['all','All'],['own','Owned'],['locked','Not yet'],['wish','★ Wishlist']].map(([k,n])=>`<button type="button" data-cf="${k}" class="${COLL.f===k?'on':''}">${n}</button>`).join('')}</div>`+
+    `<div class="collf">${[['all','All'],['own','Owned'],['locked','Unowned'],['wish','★ Wishlist']].map(([k,n])=>`<button type="button" data-cf="${k}" class="${COLL.f===k?'on':''}">${n}</button>`).join('')}</div>`+
     `<label class="collsort">Sort<select id="collSort">${[['group','By where it\'s from'],['rarity','Rarest first'],['az','A to Z'],['recent','Recently got']].map(([k,n])=>`<option value="${k}" ${(COLL.sort||'group')===k?'selected':''}>${n}</option>`).join('')}</select></label>`+
     `<input type="search" class="collq" id="collQ" placeholder="🔍 Search your blocks" value="${escapeHTML(COLL.q)}" aria-label="Search blocks" autocomplete="off" spellcheck="false">${loadsHTML()}</div>`;
   const pins=SAVE.pins.map(id=>SKINS.find(k=>k.id===id)).filter(Boolean);
@@ -14088,13 +14090,13 @@ function buildFx(){ const f=fxS();
     const btn=eq?'<button class="btn ghost" disabled type="button">Equipped</button>':own?`<button class="btn ghost" data-fxeq="${slot}:${it.id}" type="button">Equip</button>`:it.lk?`<button class="btn ghost" disabled type="button">${escapeHTML(fxLkText(it.lk))}</button>`:`<button class="btn" data-fxbuy="${slot}:${it.id}" type="button" ${SAVE.notes<it.price?'disabled':''}>♪ ${it.price.toLocaleString()}</button>`;
     const hear=slot==='snd'?`<button class="btn ghost hear" data-fxhear="${it.id}" type="button">▶ Listen</button>`:'';
     return `<div class="item${eq?' eq':''}"><div class="lfxp" style="--c:${it.col}"><span>${it.glyph}</span></div><b>${escapeHTML(it.name)}</b>${hear}${btn}</div>`; }).join('')}</div></div>`;
-  $('shopGrid').innerHTML=sec('Trails',FX_TRAILS,'trail','Follows your block as it moves, on any block.')+sec('Perfect bursts',FX_BURSTS,'burst','Pops every time you hit a beat dead on.')+sec('Hit sounds',FX_SOUNDS,'snd','The click you hear on every move.');
+  $('shopGrid').innerHTML=sec('Perfect bursts',FX_BURSTS,'burst','Pops every time you hit a beat dead on.')+sec('Hit sounds',FX_SOUNDS,'snd','The click you hear on every move.');
   const hear=id=>{ ensureAudio(); const c=A.ctx; c.resume().catch(()=>{}); ['down','up','left','right'].forEach((d,i)=>hitSnd(A.sfx,c.currentTime+.05+i*.28,1,d,0,id)); };
   $('shopGrid').querySelectorAll('[data-fxeq]').forEach(b=>b.onclick=()=>{ const [slot,id]=b.dataset.fxeq.split(':'); fxEquip(slot,id); if(slot==='snd') hear(id); buildShop(); });
   $('shopGrid').querySelectorAll('[data-fxbuy]').forEach(b=>b.onclick=()=>{ const [slot,id]=b.dataset.fxbuy.split(':'), it=fxById(id); if(!it||SAVE.notes<it.price||SAVE.owned.includes(id)) return;
     SAVE.notes-=it.price; spendLog(it.name,it.price); SAVE.owned.push(id); fxEquip(slot,id); if(A.ctx) sGem(); if(slot==='snd') hear(id); buildShop(); });
   $('shopGrid').querySelectorAll('[data-fxhear]').forEach(b=>b.onclick=()=>hear(b.dataset.fxhear));
-  $('shopStats').textContent='Effects work with every block. Some unlock from mastery, the garden and Pass prestige.';
+  $('shopStats').textContent='Effects work with every block. The Crown burst unlocks at Pass prestige 3.';
 }
 /* the Banners tab: each preview is a leaderboard tile with your own block, name and rank on it */
 function buildBanners(){
@@ -14509,6 +14511,10 @@ const fxById=id=>FX_ALL.find(f=>f.id===id);
 const fxLkMet=lk=>!lk||((lk.mast?mastBest()>=lk.mast:true)&&(lk.garden?gdnStage()>=lk.garden:true)&&(lk.pres?presLevel()>=lk.pres:true)&&(lk.cls?(SAVE.clStars||0)>=lk.cls:true));
 const fxLkText=lk=>lk.mast?`Any block to mastery ${lk.mast}`:lk.garden?`Garden stage ${lk.garden}`:lk.pres?`Pass prestige ${lk.pres}`:lk.cls?`${lk.cls} class stars`:'';
 const fxOwn=f=>!!f&&(f.price===0||SAVE.owned.includes(f.id)||(!!f.lk&&fxLkMet(f.lk)));
+/* trails were removed: anyone who bought one gets its Notes back, once */
+function fxTrailRefund(){ if(SAVE.fxTrailRefund) return; let n=0; FX_TRAILS.forEach(t=>{ if(t.price&&SAVE.owned.includes(t.id)){ n+=t.price; } }); SAVE.owned=SAVE.owned.filter(id=>!String(id).startsWith('tr_')); if(SAVE.fx) SAVE.fx.trail='tr_none';
+  SAVE.fxTrailRefund=true; if(n){ SAVE.notes+=n; setTimeout(()=>toast(`Trails were removed, so you got ♪${n.toLocaleString()} back.`),4000); } save(); }
+setTimeout(fxTrailRefund,3000);
 function fxS(){ const f=SAVE.fx||(SAVE.fx={}); if(!fxOwn(fxById(f.trail))) f.trail='tr_none'; if(!fxOwn(fxById(f.burst))) f.burst='pb_none'; if(!fxOwn(fxById(f.snd))) f.snd='hs_classic'; return f; }
 const FXC={t:-9,v:null};   // what's equipped, checked once a second rather than every frame
 function fxCur(){ const t=performance.now(); if(!FXC.v||t-FXC.t>1000){ FXC.v={...fxS()}; FXC.t=t; } return FXC.v; }
@@ -14819,12 +14825,12 @@ function denCard(){ const f=fxS(), cur=myTitleId(), L=titleList(), own=L.filter(
     <div class="ttlgrid"><button type="button" class="ttl${!cur?' on':''}" data-ttl="">No title</button>${own.map(t=>`<button type="button" class="ttl${cur===t.id?' on':''}" data-ttl="${escapeHTML(t.id)}">${escapeHTML(t.t)}</button>`).join('')}</div>
     <details class="ttllock"><summary>${lock.length} titles still to earn</summary><ul>${lock.map(t=>`<li><b>${escapeHTML(t.t)}</b><small>${escapeHTML(t.how)}</small></li>`).join('')}</ul></details>
     <div class="lbl">Top 3 blocks <span class="small">· pin blocks in your Collection to choose them</span></div><div class="dshows">${sh||'<p class="small">Get some blocks first!</p>'}</div>
-    <div class="lbl">Effects</div><div class="dfx">${['trail','burst','snd'].map(k=>{ const it=fxById(f[k]); return `<div><div class="lfxp" style="--c:${it.col}"><span>${it.glyph}</span></div><small>${{trail:'Trail',burst:'Perfect burst',snd:'Hit sound'}[k]}</small><b>${escapeHTML(it.name)}</b></div>`; }).join('')}</div>
+    <div class="lbl">Effects</div><div class="dfx">${['burst','snd'].map(k=>{ const it=fxById(f[k]); return `<div><div class="lfxp" style="--c:${it.col}"><span>${it.glyph}</span></div><small>${{trail:'Trail',burst:'Perfect burst',snd:'Hit sound'}[k]}</small><b>${escapeHTML(it.name)}</b></div>`; }).join('')}</div>
     <div class="row"><button class="btn ghost" data-dn="fx" type="button">Get more effects</button></div>`; }
 function denMast(){ const own=SKINS.filter(s=>ownsSkin(s.id)).sort((a,b)=>mastXP(b.id)-mastXP(a.id)||(b.id===SAVE.skin)-(a.id===SAVE.skin)).slice(0,80);
   const rew=Object.entries(MAST_REW).map(([l,r])=>`<li><b>Lv ${l}</b><span>${mastRewTxt(r)}</span></li>`).join('');
   return `<p class="small">The block you wear gets mastery XP: 2 for every perfect hit, 1 for every good one, and 15 for clearing a run. Every block has its own 10 levels. Frames show at levels 5, 8 and 10.</p>
-    <details class="mrew"><summary>Rewards for every block</summary><ul>${rew}<li><b>Any block Lv 3</b><span>unlocks the Mastery Ribbon trail</span></li></ul></details>
+    <details class="mrew"><summary>Rewards for every block</summary><ul>${rew}</ul></details>
     <div class="mlist">${own.map(s=>{ const xp=mastXP(s.id), l=mastLvl(xp), lo=MAST[l-1]||0, hi=MAST[l], fr=hi==null?1:(xp-lo)/(hi-lo), nx=MAST_REW[l+1];
       return `<div class="mrow ${mastTier(l)}${s.id===SAVE.skin?' wear':''}"><canvas class="skprev" data-skin="${s.id}" data-px="44" width="44" height="44" aria-hidden="true"></canvas><div><b>${escapeHTML(s.name)}${s.id===SAVE.skin?' <em>wearing</em>':''}</b><div class="mbar"><i style="width:${(fr*100).toFixed(1)}%"></i></div><small>${hi==null?'Mastered':`${(xp-lo).toLocaleString()} / ${(hi-lo).toLocaleString()} XP`}${nx?` · next: ${mastRewTxt(nx)}`:''}</small></div><span class="mlv">${l}</span></div>`; }).join('')}</div>`; }
 function denPets(){ const P=petS();
