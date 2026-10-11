@@ -562,8 +562,10 @@ service cloud.firestore {
         allow create: if authed() && request.auth.uid == uid
           && get(/databases/$(db)/documents/live/$(pin)).data.phase != 'end'
           && !(uid in get(/databases/$(db)/documents/live/$(pin)).data.kicked)
-          && request.resource.data.keys().hasOnly(['name', 'score', 'right', 'done', 'fl', 'rev', 'team', 'hearts', 'ans', 'fin', 't'])
+          && request.resource.data.keys().hasOnly(['name', 'skin', 'banner', 'score', 'right', 'done', 'fl', 'rev', 'team', 'hearts', 'ans', 'fin', 't'])
           && shortStr(request.resource.data.name, 24) && request.resource.data.name.size() > 0
+          && (!('skin' in request.resource.data) || shortStr(request.resource.data.skin, 40))
+          && (!('banner' in request.resource.data) || shortStr(request.resource.data.banner, 24))
           && request.resource.data.score == 0 && request.resource.data.done == 0 && request.resource.data.t == request.time;
         allow update: if (authed() && request.auth.uid == uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['score', 'right', 'done', 'fl', 'rev', 'hearts', 'ans', 'fin', 't'])

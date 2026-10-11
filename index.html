@@ -1252,6 +1252,71 @@ select.clin{appearance:auto}textarea.clin{resize:vertical;font-size:14px}
 .bring{width:140px;height:140px;display:grid;place-items:center}.bring i{width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,#FFE9A8,#FFB347);box-shadow:0 0 40px rgba(255,209,102,.6)}
 .bdots{display:flex;gap:8px}.bdots i{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.18)}.bdots i.p{background:#7FF0D2}.bdots i.g{background:#FFD166}.bdots i.m{background:#FF8A80}
 @media (max-width:600px){.lvlane{grid-template-columns:90px minmax(0,1fr) 44px}.lvpin b{font-size:40px}.qq{font-size:19px}.qopt{padding:14px 12px;font-size:16px}}
+
+/* classroom revamp: the chalkboard header, name pills, the lobby, the board, the podium */
+.clshero{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:18px;padding:16px 20px;margin-top:6px;background:linear-gradient(135deg,#1F5A48,#2C7A5F 60%,#3E9A72);box-shadow:inset 0 0 0 6px #8B5E3C,inset 0 0 0 8px rgba(0,0,0,.25),0 8px 24px rgba(0,0,0,.25)}
+.clsboard h2{margin:2px 0;font:700 30px var(--display);color:#F4F1E8;text-shadow:0 2px 0 rgba(0,0,0,.2)}.clsboard p{margin:0;color:rgba(244,241,232,.85);font-size:14px}.clsboard .eyebrow{color:#FFE27A}
+.clsdeco{display:flex;gap:8px;font-size:26px}.clsdeco span{animation:clbob 2.4s ease-in-out infinite}.clsdeco span:nth-child(2){animation-delay:-.6s}.clsdeco span:nth-child(3){animation-delay:-1.2s}.clsdeco span:nth-child(4){animation-delay:-1.8s}
+@keyframes clbob{50%{transform:translateY(-6px) rotate(-6deg)}}
+.clme{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 12px}.clme small{opacity:.8;max-width:340px}
+.clbox{position:relative;overflow:hidden}.clbox .cbic{position:absolute;right:10px;top:6px;font-size:34px;opacity:.9}
+.clbox.cb-join{background:linear-gradient(140deg,rgba(255,209,102,.22),rgba(255,138,128,.14))}.clbox.cb-play{background:linear-gradient(140deg,rgba(79,168,255,.25),rgba(181,102,255,.18))}
+.clitem{border-left:5px solid hsl(var(--cc,45),75%,62%);background:linear-gradient(90deg,hsla(var(--cc,45),75%,60%,.16),var(--glass) 60%)}.clitem:hover{filter:brightness(1.12)}
+.lvchip{display:inline-flex;align-items:center;gap:10px;background:#fff;color:#2B2350;border:none;border-radius:16px;padding:5px 16px 5px 5px;font:700 17px var(--body,inherit);box-shadow:0 4px 0 rgba(0,0,0,.18),0 6px 16px rgba(0,0,0,.18);max-width:100%;cursor:default}
+button.lvchip{cursor:pointer}button.lvchip:hover{transform:translateY(-2px) rotate(-1deg);box-shadow:0 0 0 3px #FF8A80,0 6px 16px rgba(0,0,0,.2)}
+.lvchip b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.lvchip.ban{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.65)}
+.lvav{width:44px;height:44px;border-radius:12px;background:rgba(43,35,80,.12);display:grid;place-items:center;flex:none;overflow:hidden}.lvchip.ban .lvav{background:rgba(0,0,0,.2)}
+.lvav canvas{width:40px;height:40px}
+.lvchip.big{font-size:22px;padding:6px 22px 6px 6px;border-radius:20px}.lvchip.big .lvav{width:60px;height:60px;border-radius:16px}.lvchip.big .lvav canvas{width:56px;height:56px}
+.lvchip.sm{font-size:14px;padding:3px 12px 3px 3px;border-radius:12px;box-shadow:0 2px 0 rgba(0,0,0,.15)}.lvchip.sm .lvav{width:30px;height:30px;border-radius:9px}.lvchip.sm .lvav canvas{width:28px;height:28px}
+.lvchip.pop{animation:chippop .45s cubic-bezier(.3,1.6,.5,1) both}@keyframes chippop{from{transform:scale(.3) rotate(-8deg);opacity:0}}
+.funbg{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}.funbg i{position:absolute;bottom:-40px;font-style:normal;color:rgba(255,255,255,.14);animation:funup linear infinite}
+@keyframes funup{to{transform:translateY(-120vh) rotate(40deg)}}
+.lvlobby,.lvplay,.lvend,.pllobby,.plend,.pljoin{position:relative}.lvlobby>*:not(.funbg),.lvplay>*:not(.funbg),.lvend>*:not(.funbg):not(.confetti),.pllobby>*:not(.funbg),.plend>*:not(.funbg):not(.confetti),.pljoin>*:not(.funbg){position:relative;z-index:1}
+.livepanel{background:radial-gradient(circle at 15% 0%,rgba(255,126,182,.25),transparent 45%),radial-gradient(circle at 90% 100%,rgba(79,168,255,.25),transparent 50%),var(--panel,#251B45)}
+.lvjoin h2{font-size:30px}.lvjoin h2 b{color:#FFE27A}
+.lvpin{transform:rotate(-2deg);box-shadow:0 8px 0 #FFB347,0 14px 30px rgba(0,0,0,.3)}
+.lvcount{display:inline-flex;align-items:baseline;gap:6px;background:rgba(255,255,255,.1);border-radius:999px;padding:4px 16px;margin-top:16px}.lvcount b{font:800 26px var(--display);color:#7FF0D2}
+.lvchips{display:flex;flex-wrap:wrap;align-items:flex-start;align-content:flex-start;gap:10px;margin:14px 0;min-height:120px;max-height:52vh;overflow:auto;padding:4px}
+.lvwait{text-align:center;font-size:18px;opacity:.75;animation:pulsea 1.6s ease-in-out infinite}@keyframes pulsea{50%{opacity:.35}}
+.lvctl{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}.lvctl .small{margin-right:auto}
+.btn.lvgo{font-size:18px;padding:12px 26px;box-shadow:0 5px 0 #C98A1E}.btn.lvgo:disabled{box-shadow:none}
+.lvbar{background:rgba(255,255,255,.08);border-radius:14px;padding:8px 14px}.lvpinsm{opacity:.7;font-size:14px}#lvClock.low{color:#FF8A80;animation:pulsea .8s infinite}
+#lvBody.lvbody-race,#lvBody.lvbody-last{display:flex;flex-direction:column;gap:8px}#lvBody.lvbody-last{flex-direction:row;flex-wrap:wrap}
+.lvlane{display:grid;grid-template-columns:180px minmax(0,1fr) 52px;gap:12px;align-items:center;transition:order .3s}.lvlane .lvchip{justify-self:start}
+.lvtrack{position:relative;height:40px;border-radius:20px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.08) 0 22px,rgba(255,255,255,.03) 22px 44px);border-right:6px solid #FFD166}
+.lvrunner{position:absolute;top:50%;transform:translate(-50%,-55%);transition:left .7s cubic-bezier(.3,1.3,.5,1)}.lvrunner canvas{width:34px;height:34px}
+.lvlane.lead .lvrunner::before{content:'👑';position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:16px}.lvlane.fin .lvs{color:#7FF0D2}
+.lvlp{display:flex;flex-direction:column;align-items:flex-start;gap:6px;background:var(--glass);border-radius:14px;padding:8px 10px;min-width:170px;transition:opacity .4s}.lvlp.out{opacity:.35;filter:grayscale(1)}.lvh{font-size:18px;letter-spacing:2px}.lvrevn{text-align:center;opacity:.85}
+.lvtgt{bottom:100%}.lvtop{display:flex;flex-direction:column;gap:4px;margin-top:10px}.lvtop span{background:rgba(255,255,255,.08);border-radius:10px;padding:3px 10px}.lvtop em{font-style:normal;color:#FFE27A;font-weight:700}
+.lvend{text-align:center;padding-bottom:6px}.lvendtop h2{font:800 38px var(--display);margin:6px 0 0}.lvsub{opacity:.85;margin:4px 0 0}
+.confetti{position:absolute;inset:-20px 0 0;pointer-events:none;overflow:hidden;z-index:2}.confetti i{position:absolute;top:-20px;width:9px;height:14px;border-radius:2px;animation:confall linear forwards}
+@keyframes confall{0%{transform:translateY(0) rotate(var(--r))}100%{transform:translateY(110vh) rotate(calc(var(--r) + 720deg))}}
+.lvpod{display:flex;flex-wrap:nowrap;gap:12px;justify-content:center;align-items:flex-end;margin:40px 0 10px}
+.podc{display:flex;flex-direction:column;align-items:center;flex:1 1 0;min-width:0;max-width:200px;animation:podup .7s cubic-bezier(.3,1.4,.5,1) both}.podc.p1{animation-delay:.25s}.podc.p2{animation-delay:.45s}.podc.p0{animation-delay:.7s;max-width:230px;flex-grow:1.15}
+@keyframes podup{from{transform:translateY(60px);opacity:0}}
+.podcard{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;box-sizing:border-box;background:#fff;color:#2B2350;border-radius:20px 20px 0 0;padding:16px 10px 10px;box-shadow:0 -4px 20px rgba(0,0,0,.15)}
+.podcard.ban{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.7)}.podcard b{font:800 20px var(--display);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.podcard small{font-weight:700;opacity:.85}
+.podcard canvas{width:96px;height:96px}.p0 .podcard canvas{width:132px;height:132px}
+.podmed{position:absolute;top:-22px;font-size:40px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.3))}.p0 .podmed{font-size:52px;top:-32px;animation:clbob 1.6s ease-in-out infinite}
+.podstep{width:100%;display:grid;place-items:center;font:800 40px var(--display);color:rgba(255,255,255,.9);border-radius:0 0 12px 12px}.podstep span{opacity:.9}
+.p0 .podstep{height:120px;background:linear-gradient(#FFD166,#E8A93A)}.p1 .podstep{height:84px;background:linear-gradient(#DCE2EE,#A9B3C7)}.p2 .podstep{height:60px;background:linear-gradient(#E8A06A,#B86E3E)}
+.lvrest{display:flex;flex-direction:column;gap:6px;max-width:520px;margin:6px auto 10px;max-height:240px;overflow:auto}
+.lvrestrow{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--glass);border-radius:12px;padding:4px 12px}.lvrk{font:700 16px var(--display);opacity:.7}.lvrestrow .lvchip{justify-self:start}
+.lvrep{max-width:720px;margin:10px auto}
+.playpanel{background:radial-gradient(circle at 50% 0%,rgba(255,209,102,.18),transparent 55%),var(--panel,#251B45)}
+.pllobby,.plend{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:18px 0 10px;min-height:440px}
+.plme{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;background:#fff;color:#2B2350;border-radius:26px;padding:16px 30px 14px;box-shadow:0 8px 0 rgba(0,0,0,.18),0 14px 34px rgba(0,0,0,.25);animation:mebob 2.4s ease-in-out infinite}
+.plme.ban{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.7)}.plme canvas{width:150px;height:150px}.plend .plme canvas{width:130px;height:130px}.plme b{font:800 26px var(--display);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plme .podmed{top:-28px}
+@keyframes mebob{50%{transform:translateY(-6px) rotate(1deg)}}
+.pllobby h2{font:800 32px var(--display);margin:10px 0 0}.plmode{font-size:18px;margin:0}.plothers{color:#7FF0D2;font-weight:700;margin:4px 0}
+.pldots{display:flex;gap:8px}.pldots i{width:12px;height:12px;border-radius:50%;background:#FFD166;animation:pldot .9s ease-in-out infinite alternate}.pldots i:nth-child(2){animation-delay:.3s}.pldots i:nth-child(3){animation-delay:.6s}
+.plend h2{font:800 34px var(--display);margin:6px 0 18px}.plstats2{display:flex;gap:10px}.plstats2 span{display:flex;flex-direction:column;background:var(--glass);border-radius:14px;padding:8px 16px;min-width:70px}.plstats2 b{font:800 22px var(--display)}.plstats2 small{opacity:.8}
+.pljoin{min-height:420px}.pljoinme{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:6px}.pljoinme small{opacity:.75}
+@media (max-width:620px){.lvlane{grid-template-columns:120px minmax(0,1fr) 44px}.lvpod{gap:6px}.podcard canvas{width:64px;height:64px}.p0 .podcard canvas{width:84px;height:84px}.podcard b{font-size:15px}.clshero .clsdeco{display:none}.lvendtop h2{font-size:28px}}
+@media (prefers-reduced-motion:reduce){.funbg,.confetti{display:none}.plme,.clsdeco span,.podc,.lvchip.pop{animation:none}}
 .lb li.me{outline:2px solid #FFD166;background:rgba(255,209,102,.12)}.lb .lbn{font:700 13px var(--display);color:var(--ink-3)}.lb li:nth-child(1) .lbn{color:#FFD166}.lb li:nth-child(2) .lbn{color:#DCE2EE}.lb li:nth-child(3) .lbn{color:#D08A52}
 .lb .gem{width:9px;height:9px;transform:rotate(45deg);border-radius:2px;background:var(--rc)}.lb .lbname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lb b{font:600 13px var(--display);font-variant-numeric:tabular-nums}
 .evchip{border-color:rgba(143,240,224,.55);color:#8FF0E0;animation:evGlow 2.4s ease-in-out infinite}@keyframes evGlow{50%{box-shadow:0 0 14px rgba(143,240,224,.45)}}
@@ -2536,8 +2601,8 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
 <section id="clsOv" class="overlay" hidden>
   <div class="panel wide clspanel">
     <div class="head"><button class="back" id="clsBack" type="button">← Menu</button></div>
-    <div><div class="eyebrow">Learn together</div><h2>Classroom</h2></div>
-    <div class="tabs clstabs" id="clsTabs"><button type="button" data-cv="home">🎒 Student</button><button type="button" data-cv="teach">🍎 Teach</button><button type="button" data-cv="packs">📝 Question packs</button></div>
+    <div class="clshero" aria-hidden="false"><div class="clsboard"><span class="eyebrow">Learn together</span><h2>Classroom</h2><p>Homework, live class games and question packs</p></div><div class="clsdeco" aria-hidden="true"><span>♪</span><span>🍎</span><span>✏️</span><span>♫</span></div></div>
+    <div class="tabs clstabs" id="clsTabs"><button type="button" data-cv="home">🎒 Student</button><button type="button" data-cv="teach">🍎 Teach</button><button type="button" data-cv="packs">📝 Packs</button></div>
     <div id="clsBody"></div>
   </div>
 </section>
@@ -14174,7 +14239,7 @@ function loop(ts){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('denOv').hidden||!$('plOv').hidden) lockerFrame(now); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks'||shopTab==='forge')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('stageOv').hidden) drawSkinPreviews(now,'#stageOv canvas.skprev'); if(!$('wardOv').hidden) drawSkinPreviews(now,'#wardOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('denOv').hidden||!$('plOv').hidden) lockerFrame(now); if(!$('liveOv').hidden||!$('playOv').hidden||!$('clsOv').hidden) drawSkinPreviews(now,'#liveOv canvas.skprev, #playOv canvas.skprev, #clsOv canvas.skprev'); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks'||shopTab==='forge')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('stageOv').hidden) drawSkinPreviews(now,'#stageOv canvas.skprev'); if(!$('wardOv').hidden) drawSkinPreviews(now,'#wardOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
@@ -14929,11 +14994,12 @@ async function buildClass(){
 /* ---- students: join a class, see homework ---- */
 const myCls=()=>SAVE.cls||(SAVE.cls=[]);
 function clHomeHTML(){ const L=myCls(), code=(new URLSearchParams(location.search).get('class')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
-  return `<div class="clgrid2"><div class="clbox"><div class="lbl">Join a class</div><p class="small">Type the code your teacher gave you.</p>
+  return `<div class="clme">${lvChip({name:SAVE.clName||ensureName(),skin:SAVE.skin,banner:SAVE.banner},'','big','div',56)}<small>This is you in class games. Change your block in the Collection and your banner in the Shop.</small></div>
+    <div class="clgrid2"><div class="clbox cb-join"><span class="cbic">🎒</span><div class="lbl">Join a class</div><p class="small">Type the code your teacher gave you.</p>
     <div class="clrow"><input id="clJoinCode" class="clin code" maxlength="6" placeholder="CODE" value="${escapeHTML(code)}" aria-label="Class code"><input id="clJoinName" class="clin" maxlength="24" placeholder="Your name" value="${escapeHTML(SAVE.clName||'')}" aria-label="Your name"></div>
     <button class="btn" data-cl="join" type="button">Join class</button></div>
-    <div class="clbox"><div class="lbl">Play a live game</div><p class="small">Your teacher shows a game PIN on the board.</p><button class="btn" data-cl="play" type="button">🎮 Enter a game PIN</button></div></div>
-    <div class="lbl">My classes</div>${L.length?`<div class="cllist">${L.map((c,i)=>`<button type="button" class="clitem" data-scls="${i}"><b>${escapeHTML(c.name)}</b><small>${escapeHTML(c.tname||'')}</small><span>›</span></button>`).join('')}</div>`:'<p class="small">You haven\'t joined a class yet.</p>'}
+    <div class="clbox cb-play"><span class="cbic">🎮</span><div class="lbl">Play a live game</div><p class="small">Your teacher shows a game PIN on the board.</p><button class="btn" data-cl="play" type="button">Enter a game PIN ▶</button></div></div>
+    <div class="lbl">My classes</div>${L.length?`<div class="cllist">${L.map((c,i)=>`<button type="button" class="clitem" style="--cc:${(hashStr(c.cid||c.name)%360)}" data-scls="${i}"><b>${escapeHTML(c.name)}</b><small>${escapeHTML(c.tname||'')}</small><span>›</span></button>`).join('')}</div>`:'<p class="small">You haven\'t joined a class yet.</p>'}
     ${clReal()?'':'<p class="small">Tip: if you sign in, your classes follow you to other devices.</p>'}`; }
 async function clJoin(){ const code=$('clJoinCode').value.toUpperCase().replace(/[^A-Z0-9]/g,''), nm=clName($('clJoinName').value);
   if(code.length!==6) return clMsg('Class codes are 6 letters or numbers.',true); if(!$('clJoinName').value.trim()) return clMsg('Type your name first.',true);
@@ -14991,9 +15057,9 @@ async function hwSave(key,patch){ try{ const c=CL.cls||{}, a=(HW.cur&&HW.cur.a)|
 /* ---- teachers: classes ---- */
 async function clTeachHTML(){ let L=[];
   try{ const s=await ACCT.db.collection('classes').where('teacher','==',ACCT.user.uid).limit(30).get(); L=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.t||0)-(a.t||0)); CL.teach=L; }catch(e){ CL.msg=clErr(e); }
-  return `<div class="clgrid2"><div class="clbox"><div class="lbl">New class</div><div class="clrow"><input id="clNewName" class="clin" maxlength="40" placeholder="Class name, e.g. 4th grade music"><input id="clNewGrade" class="clin sm" maxlength="12" placeholder="Grade"></div><button class="btn" data-cl="newcls" type="button">Make class</button></div>
-    <div class="clbox"><div class="lbl">Live game</div><p class="small">Put a game on the board. Students join with a PIN.</p><button class="btn" data-cl="host" type="button">🎮 Host a live game</button></div></div>
-    <div class="lbl">Your classes</div>${L.length?`<div class="cllist">${L.map((c,i)=>`<button type="button" class="clitem" data-tcls="${i}"><b>${escapeHTML(c.name)}</b><small>Code <code>${escapeHTML(c.code)}</code>${c.locked?' · locked':''}</small><span>›</span></button>`).join('')}</div>`:'<p class="small">No classes yet. Make one above.</p>'}`; }
+  return `<div class="clgrid2"><div class="clbox cb-join"><span class="cbic">🏫</span><div class="lbl">New class</div><div class="clrow"><input id="clNewName" class="clin" maxlength="40" placeholder="Class name, e.g. 4th grade music"><input id="clNewGrade" class="clin sm" maxlength="12" placeholder="Grade"></div><button class="btn" data-cl="newcls" type="button">Make class</button></div>
+    <div class="clbox cb-play"><span class="cbic">🎮</span><div class="lbl">Live game</div><p class="small">Put a game on the board. Students join with a PIN.</p><button class="btn" data-cl="host" type="button">🎮 Host a live game</button></div></div>
+    <div class="lbl">Your classes</div>${L.length?`<div class="cllist">${L.map((c,i)=>`<button type="button" class="clitem" style="--cc:${(hashStr(c.id||c.name)%360)}" data-tcls="${i}"><b>${escapeHTML(c.name)}</b><small>Code <code>${escapeHTML(c.code)}</code>${c.locked?' · locked':''}</small><span>›</span></button>`).join('')}</div>`:'<p class="small">No classes yet. Make one above.</p>'}`; }
 async function clNewClass(){ const nm=$('clNewName').value.trim().slice(0,40); if(!nm) return clMsg('Give the class a name.',true); clMsg('Making your class…');
   try{ const db=ACCT.db, ref=db.collection('classes').doc(), exp=Date.now()+300*864e5; let code='';
     await ref.set({teacher:ACCT.user.uid,tname:ensureName().slice(0,40),name:nm,grade:$('clNewGrade').value.trim().slice(0,12),code:'',locked:false,kicked:[],exp,t:Date.now()});
@@ -15007,7 +15073,7 @@ async function clClassHTML(){ const c=CL.cls; let st=[], as=[];
   return `<div class="row"><button class="btn ghost" data-cl="teach" type="button">← Classes</button></div><h3>${escapeHTML(c.name)}</h3>
     <div class="clcode"><div><small>Class code</small><b>${escapeHTML(c.code)}</b><small class="cllink">${escapeHTML(url)}</small></div><div class="clcodebtns"><button class="btn ghost" data-cl="copy" type="button">Copy link</button><button class="btn ghost" data-cl="lock" type="button">${c.locked?'🔓 Let students join':'🔒 No new students'}</button><button class="btn ghost" data-cl="recode" type="button">New code</button></div></div>
     <div class="clgrid2"><div class="clbox"><div class="lbl">Homework</div><button class="btn" data-cl="newhw" type="button">＋ New homework</button>
-      ${as.length?`<div class="cllist">${as.map((a,i)=>`<button type="button" class="clitem" data-tas="${i}"><b>${escapeHTML(a.title||'Homework')}</b><small>${(a.levels||[]).length} levels · ${a.diff==='easy'?'Easy':'Normal'}${a.due?' · due '+new Date(a.due).toLocaleDateString():''}</small><span>Results ›</span></button>`).join('')}</div>`:'<p class="small">No homework yet.</p>'}</div>
+      ${as.length?`<div class="cllist">${as.map((a,i)=>`<button type="button" class="clitem" style="--cc:${(hashStr(a.id)%360)}" data-tas="${i}"><b>${escapeHTML(a.title||'Homework')}</b><small>${(a.levels||[]).length} levels · ${a.diff==='easy'?'Easy':'Normal'}${a.due?' · due '+new Date(a.due).toLocaleDateString():''}</small><span>Results ›</span></button>`).join('')}</div>`:'<p class="small">No homework yet.</p>'}</div>
     <div class="clbox"><div class="lbl">Students (${st.length})</div>${st.length?`<ul class="roster">${st.map((s,i)=>`<li><span>${escapeHTML(clName(s.name))}</span><button type="button" class="btn ghost sm" data-ren="${i}">Rename</button><button type="button" class="btn ghost sm" data-kick="${i}">Remove</button></li>`).join('')}</ul>`:`<p class="small">Nobody has joined yet. Share the code <b>${escapeHTML(c.code)}</b>.</p>`}</div></div>
     <details class="clleave"><summary>Delete this class</summary><p class="small">This removes the class, its homework and everyone's results for good.</p><button class="btn ghost" data-cl="delcls" type="button">Delete ${escapeHTML(c.name)}</button></details>`; }
 /* ---- teachers: a new homework assignment ---- */
@@ -15195,24 +15261,48 @@ function liveHostLogic(){ const d=LV.doc; if(!d||d.phase!=='play'||LV.ended) ret
     if(give>0&&alive.length){ ref.update({rev:(d.rev||0)+give}).catch(()=>{}); for(let i=0;i<give;i++){ const t=alive.filter(p=>p.hearts<3).sort((a,b)=>a.hearts-b.hearts)[0]; if(!t) break; const uid=Object.keys(LV.players).find(k=>LV.players[k]===t); t.hearts++; ref.collection('players').doc(uid).update({hearts:t.hearts}).catch(()=>{}); } } }
   if(end){ LV.ended=true; ref.update({phase:'end',tEnd:Date.now()}).then(liveSaveReport).catch(()=>{}); } }
 /* the board on the projector */
+/* a player's name pill: their block on their banner, like on the leaderboards */
+const lvSkin=p=>skinById((p&&p.skin)||'classic').id, lvBan=p=>bannerById((p&&p.banner)||'b_plain');
+function lvChip(p,uid,cls='',tag='div',px=40){ const bn=lvBan(p);
+  return `<${tag}${tag==='button'?' type="button"':''} class="lvchip${bn.bg?' ban':''} ${cls}" data-uid="${escapeHTML(uid||'')}"${bn.bg?` style="background:${bn.bg}"`:''}><span class="lvav"><canvas class="skprev" data-skin="${lvSkin(p)}" data-px="${px}" width="${px}" height="${px}" aria-hidden="true"></canvas></span><b>${escapeHTML(clName(p.name))}</b></${tag}>`; }
+const FUN_BG=()=>`<div class="funbg" aria-hidden="true">${Array.from({length:16},(_,i)=>`<i style="left:${(i*61)%100}%;animation-delay:${-((i*1.7)%9).toFixed(1)}s;animation-duration:${8+(i*7)%7}s;font-size:${18+(i*13)%22}px">${'♪♫♩♬★✦'[i%6]}</i>`).join('')}</div>`;
+const CONFETTI=()=>RM()?'':`<div class="confetti" aria-hidden="true">${Array.from({length:60},(_,i)=>`<i style="left:${(i*37)%100}%;background:${['#FFD166','#FF7EB6','#7FF0D2','#4FA8FF','#FF8A3C','#C9A7FF'][i%6]};animation-delay:${((i*.13)%2.4).toFixed(2)}s;animation-duration:${(2.6+(i*7%10)/10).toFixed(2)}s;--r:${i*29}deg"></i>`).join('')}</div>`;
+const mmss=l=>Math.floor(l/60)+':'+String(l%60).padStart(2,'0');
 function liveBoard(){ const d=LV.doc, box=$('liveBody'); if(!d){ box.innerHTML='<p>This game has closed.</p>'; return; }
   const P=Object.entries(LV.players).map(([uid,p])=>({uid,...p})), M=LIVE_MODES[d.mode], url=/^https?:$/.test(location.protocol)?location.host:'pulseform.org';
-  if(d.phase==='lobby'){ box.innerHTML=`<div class="lvhead"><div><small>${M.ic} ${M.n} · ${d.diff==='easy'?'Easy':'Normal'} · ${escapeHTML(d.title)}</small><h2>Join at <b>${escapeHTML(url)}</b></h2><p>then tap <b>Classroom → Enter a game PIN</b></p></div><div class="lvpin"><small>Game PIN</small><b>${LV.pin.slice(0,3)} ${LV.pin.slice(3)}</b></div></div>
-      <div class="lvplayers">${P.map(p=>`<button type="button" class="lvp" data-lvkick="${p.uid}" title="Remove">${escapeHTML(clName(p.name))}</button>`).join('')||'<p class="small">Waiting for players…</p>'}</div>
-      <div class="row lvctl"><span class="small">${P.length} player${P.length===1?'':'s'} · tap a name to remove it</span><button class="btn" id="lvStart" type="button" ${P.length?'':'disabled'}>Start game ▶</button><button class="btn ghost" id="lvClose" type="button">Close game</button></div>`;
-    box.querySelectorAll('[data-lvkick]').forEach(b=>b.onclick=()=>liveKick(b.dataset.lvkick)); $('lvStart').onclick=lgStart; $('lvClose').onclick=liveClose; return; }
-  if(d.phase==='end'){ liveEndBoard(d,P); return; }
-  const left=lgLeft(), head=`<div class="lvbar"><b>${M.ic} ${M.n}</b><span id="lvClock">${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}</span><span class="small">PIN ${LV.pin}</span><button class="btn ghost sm" id="lvEnd" type="button">End game</button></div>`;
-  let body='';
-  if(d.mode==='race'){ const g=liveGoal(d); body=`<div class="lvrace">${P.sort((a,b)=>b.score-a.score).slice(0,30).map((p,i)=>`<div class="lvlane"><span class="lvn">${escapeHTML(clName(p.name))}</span><div class="lvtrack"><i style="left:${Math.min(100,(p.score||0)/g*100).toFixed(1)}%">${i===0?'👑':'■'}</i></div><span class="lvs">${Math.min(100,Math.round((p.score||0)/g*100))}%</span></div>`).join('')}</div>`; }
+  if(d.phase==='lobby'){ LV.boardMode='';
+    if(!$('lvChips')||LV.lobbyPin!==LV.pin){ LV.lobbyPin=LV.pin;
+      box.innerHTML=`<div class="lvlobby">${FUN_BG()}<div class="lvhead"><div class="lvjoin"><small>${M.ic} ${M.n} · ${d.diff==='easy'?'Easy':'Normal'} · ${escapeHTML(d.title)}</small><h2>Join at <b>${escapeHTML(url)}</b></h2><p>Tap <b>🏫 Classroom → Enter a game PIN</b></p></div><div class="lvpin"><small>Game PIN</small><b>${LV.pin.slice(0,3)} ${LV.pin.slice(3)}</b></div></div>
+        <div class="lvcount"><b id="lvN">0</b><span>players</span></div><div class="lvchips" id="lvChips"></div><p class="lvwait" id="lvWait">Waiting for players to join…</p>
+        <div class="lvctl"><span class="small">Tap a player to remove them</span><button class="btn ghost" id="lvClose" type="button">Close game</button><button class="btn lvgo" id="lvStart" type="button" disabled>Start game ▶</button></div></div>`;
+      $('lvStart').onclick=lgStart; $('lvClose').onclick=liveClose; }
+    const wrap=$('lvChips'), have=new Set();
+    P.forEach(p=>{ have.add(p.uid); if(wrap.querySelector(`[data-uid="${CSS.escape(p.uid)}"]`)) return;
+      wrap.insertAdjacentHTML('beforeend',lvChip(p,p.uid,'pop','button')); const el=wrap.lastElementChild; el.title='Remove '+clName(p.name); el.onclick=()=>liveKick(p.uid);
+      if(A.ctx) tone(A.sfx,A.ctx.currentTime,'sine',[784,880,988,1047,1175][P.length%5],.06,.002,.18); });
+    wrap.querySelectorAll('[data-uid]').forEach(el=>{ if(!have.has(el.dataset.uid)) el.remove(); });
+    $('lvN').textContent=P.length; $('lvWait').hidden=P.length>0; $('lvStart').disabled=!P.length; return; }
+  if(d.phase==='end'){ LV.boardMode=''; liveEndBoard(d,P); return; }
+  if(LV.boardMode!==d.mode+LV.pin||!$('lvBody')){ LV.boardMode=d.mode+LV.pin;
+    box.innerHTML=`<div class="lvplay">${FUN_BG()}<div class="lvbar"><b>${M.ic} ${M.n}</b><span class="lvpinsm">PIN ${LV.pin}</span><span id="lvClock"></span><button class="btn ghost sm" id="lvEnd" type="button">End game</button></div><div id="lvBody" class="lvbody-${d.mode}"></div></div>`;
+    $('lvEnd').onclick=()=>{ LV.ended=true; LV.db.collection('live').doc(LV.pin).update({phase:'end',tEnd:Date.now()}).then(liveSaveReport).catch(()=>{}); }; liveClock(); }
+  const body=$('lvBody');
+  if(d.mode==='race'||d.mode==='last'){ const g=liveGoal(d), sorted=P.slice().sort(d.mode==='race'?(a,b)=>(b.score||0)-(a.score||0):(a,b)=>(b.hearts||0)-(a.hearts||0)||(b.score||0)-(a.score||0)), have=new Set();
+    sorted.forEach((p,i)=>{ have.add(p.uid); let el=body.querySelector(`[data-row="${CSS.escape(p.uid)}"]`);
+      if(!el){ body.insertAdjacentHTML('beforeend',d.mode==='race'?`<div class="lvlane" data-row="${escapeHTML(p.uid)}">${lvChip(p,p.uid,'sm')}<div class="lvtrack"><i class="lvrunner"><canvas class="skprev" data-skin="${lvSkin(p)}" data-px="34" width="34" height="34" aria-hidden="true"></canvas></i></div><span class="lvs"></span></div>`
+        :`<div class="lvlp" data-row="${escapeHTML(p.uid)}">${lvChip(p,p.uid,'sm')}<span class="lvh"></span></div>`); el=body.lastElementChild; }
+      el.style.order=i;
+      if(d.mode==='race'){ const f=Math.min(1,(p.score||0)/g); el.querySelector('.lvrunner').style.left=(f*100).toFixed(1)+'%'; el.querySelector('.lvs').textContent=Math.round(f*100)+'%'; el.classList.toggle('lead',i===0&&(p.score||0)>0); el.classList.toggle('fin',f>=1); }
+      else { const h=p.hearts||0; el.querySelector('.lvh').textContent='❤'.repeat(h)+'🤍'.repeat(Math.max(0,3-h)); el.classList.toggle('out',h<=0); } });
+    body.querySelectorAll('[data-row]').forEach(el=>{ if(!have.has(el.dataset.row)) el.remove(); });
+    if(d.mode==='last'){ let n=$('lvRev'); if(!n){ body.insertAdjacentHTML('afterend','<p class="lvrevn" id="lvRev"></p>'); n=$('lvRev'); } n.textContent=`💌 Revive notes from players who are out: ${P.reduce((a,p)=>a+(p.rev||0),0)} · every 3 give someone a heart`; }
+    return; }
   if(d.mode==='tower'){ const tot=P.reduce((a,p)=>a+(p.fl||0),0), tg=towerTarget(d,P.length), f=Math.min(1,tot/tg);
-    body=`<div class="lvtower"><div class="lvtw"><div class="lvtgt" style="bottom:100%"><span>Target ${tg}</span></div><div class="lvfill" style="height:${(f*100).toFixed(1)}%">${Array.from({length:Math.min(40,tot)},(_,i)=>`<i style="--h:${(i*37)%360}"></i>`).join('')}</div></div><div class="lvtinfo"><b>${tot}</b><small>floors of ${tg}</small><p>Top builders: ${P.sort((a,b)=>(b.fl||0)-(a.fl||0)).slice(0,5).map(p=>escapeHTML(clName(p.name))+' ('+(p.fl||0)+')').join(', ')||'–'}</p></div></div>`; }
+    body.innerHTML=`<div class="lvtower"><div class="lvtw"><div class="lvtgt"><span>🎯 ${tg}</span></div><div class="lvfill" style="height:${(f*100).toFixed(1)}%">${Array.from({length:Math.min(40,tot)},(_,i)=>`<i style="--h:${(i*37)%360}"></i>`).join('')}</div></div><div class="lvtinfo"><b>${tot}</b><small>floors of ${tg}</small><div class="lvtop">${P.sort((a,b)=>(b.fl||0)-(a.fl||0)).slice(0,5).map(p=>`<span>${escapeHTML(clName(p.name))} <em>${p.fl||0}</em></span>`).join('')}</div></div></div>`; }
   if(d.mode==='jam'){ const T=Array.from({length:d.teams},(_,t)=>({t,s:P.filter(p=>p.team===t).reduce((a,p)=>a+(p.score||0),0),n:P.filter(p=>p.team===t).length})), mx=Math.max(1,...T.map(x=>x.s)), full=2400*Math.max(1,P.length/d.teams);
-    body=`<div class="lvjam">${T.map(x=>{ const f=Math.min(1,x.s/full); return `<div class="lvteam" style="--c:${TEAM_COL[x.t]}"><b>${TEAM_N[x.t]}</b><div class="lvinst">${['🥁','🎸','🎹','🎺','🎻'].map((ic,i)=>`<span class="${f>=(i+1)/5?'on':''}">${ic}</span>`).join('')}</div><div class="lvjbar"><i style="height:${(f*100).toFixed(1)}%"></i></div><small>${x.n} players · ${x.s.toLocaleString()}</small></div>`; }).join('')}</div>`;
-    const lead=Math.min(1,mx/full); if(A.ctx&&performance.now()-LV.stemT>2000){ LV.stemT=performance.now(); try{ setStemTier(Math.min(4,Math.floor(lead*5)),A.ctx.currentTime,.8); }catch(e){} } }
-  if(d.mode==='last'){ body=`<div class="lvlast">${P.sort((a,b)=>(b.hearts||0)-(a.hearts||0)||b.score-a.score).map(p=>`<div class="lvlp${(p.hearts||0)>0?'':' out'}"><b>${escapeHTML(clName(p.name))}</b><span>${'❤'.repeat(p.hearts||0)}${'🤍'.repeat(Math.max(0,3-(p.hearts||0)))}</span></div>`).join('')}</div><p class="small">Revive notes sent by players who are out: ${P.reduce((a,p)=>a+(p.rev||0),0)} (every 3 give someone a heart)</p>`; }
-  box.innerHTML=head+body; $('lvEnd').onclick=()=>{ LV.ended=true; LV.db.collection('live').doc(LV.pin).update({phase:'end',tEnd:Date.now()}).then(liveSaveReport).catch(()=>{}); }; }
-function liveClock(){ const e=$('lvClock'); if(e){ const l=lgLeft(); e.textContent=Math.floor(l/60)+':'+String(l%60).padStart(2,'0'); } }
+    body.innerHTML=`<div class="lvjam">${T.map(x=>{ const f=Math.min(1,x.s/full); return `<div class="lvteam" style="--c:${TEAM_COL[x.t]}"><b>${TEAM_N[x.t]}</b><div class="lvinst">${['🥁','🎸','🎹','🎺','🎻'].map((ic,i)=>`<span class="${f>=(i+1)/5?'on':''}">${ic}</span>`).join('')}</div><div class="lvjbar"><i style="height:${(f*100).toFixed(1)}%"></i></div><small>${x.n} players · ${x.s.toLocaleString()}</small></div>`; }).join('')}</div>`;
+    const lead=Math.min(1,mx/full); if(A.ctx&&performance.now()-LV.stemT>2000){ LV.stemT=performance.now(); try{ setStemTier(Math.min(4,Math.floor(lead*5)),A.ctx.currentTime,.8); }catch(e){} } } }
+function liveClock(){ const e=$('lvClock'); if(e){ const l=lgLeft(); e.textContent=mmss(l); e.classList.toggle('low',l<=30); } }
 async function lgStart(){ const d=LV.doc, ref=LV.db.collection('live').doc(LV.pin), ids=Object.keys(LV.players).sort(()=>Math.random()-.5);
   if(d.mode==='jam'||d.mode==='last') await Promise.all(ids.map((uid,i)=>ref.collection('players').doc(uid).update(d.mode==='jam'?{team:i%d.teams}:{hearts:3}).catch(()=>{})));
   await ref.update({phase:'play',t0:Date.now()}); if(A.ctx) sGo(); }
@@ -15220,21 +15310,25 @@ async function liveKick(uid){ const p=LV.players[uid]; if(!p||!confirm('Remove '
   await ref.update({kicked:firebase.firestore.FieldValue.arrayUnion(uid)}).catch(()=>{}); await ref.collection('players').doc(uid).delete().catch(()=>{}); }
 async function liveClose(){ liveStop(); try{ const ref=LV.db.collection('live').doc(LV.pin), s=await ref.collection('players').get(); await Promise.all(s.docs.map(d=>d.ref.delete())); await ref.delete(); }catch(e){} LV.pin=null; showClass('teach'); }
 function liveEndBoard(d,P){ const box=$('liveBody');
-  let top; if(d.mode==='tower'){ const tot=P.reduce((a,p)=>a+(p.fl||0),0), tg=towerTarget(d,P.length); top=`<h2>${tot>=tg?'🎉 The class built the tower!':'So close!'}</h2><p>${tot} of ${tg} floors</p>`; }
-  else if(d.mode==='jam'){ const T=Array.from({length:d.teams},(_,t)=>({t,s:P.filter(p=>p.team===t).reduce((a,p)=>a+(p.score||0),0)})).sort((a,b)=>b.s-a.s); top=`<h2 style="color:${TEAM_COL[T[0].t]}">🎸 Team ${TEAM_N[T[0].t]} wins!</h2>`; }
-  else top='<h2>🏆 Winners</h2>';
-  const rank=P.slice().sort((a,b)=>(d.mode==='last'?((b.hearts||0)-(a.hearts||0)):0)||(b.score||0)-(a.score||0)||(a.fin||9e15)-(b.fin||9e15)), pod=rank.slice(0,5);
+  let top; if(d.mode==='tower'){ const tot=P.reduce((a,p)=>a+(p.fl||0),0), tg=towerTarget(d,P.length); top=`<h2>${tot>=tg?'🎉 The class built the tower!':'🗼 So close!'}</h2><p class="lvsub">${tot} of ${tg} floors, built together</p>`; }
+  else if(d.mode==='jam'){ const T=Array.from({length:d.teams},(_,t)=>({t,s:P.filter(p=>p.team===t).reduce((a,p)=>a+(p.score||0),0)})).sort((a,b)=>b.s-a.s); top=`<h2 style="color:${TEAM_COL[T[0].t]}">🎸 Team ${TEAM_N[T[0].t]} wins!</h2><p class="lvsub">${T.map(x=>`${TEAM_N[x.t]} ${x.s.toLocaleString()}`).join(' · ')}</p>`; }
+  else top=`<h2>🏆 And the winners are…</h2><p class="lvsub">${LIVE_MODES[d.mode].n}</p>`;
+  const rank=P.slice().sort((a,b)=>(d.mode==='last'?((b.hearts||0)-(a.hearts||0)):0)||(b.score||0)-(a.score||0)||(a.fin||9e15)-(b.fin||9e15));
   const qa=(d.qs||[]).map((q,i)=>{ let r=0,n=0; P.forEach(p=>{ const v=(p.ans||{})[i]; if(v!=null){ n++; r+=v; } }); return {q:q.q,n,r,p:n?Math.round(100*r/n):null}; }).filter(x=>x.n);
-  box.innerHTML=`<div class="lvend">${top}<div class="lvpod">${pod.map((p,i)=>`<div class="pod p${i}"><span>${['🥇','🥈','🥉','4','5'][i]}</span><b>${escapeHTML(clName(p.name))}</b><small>${(p.score||0).toLocaleString()}</small></div>`).join('')}</div>
-    <details class="lvrep" open><summary>Report: accuracy per question</summary><table><tbody>${qa.sort((a,b)=>a.p-b.p).map(x=>`<tr><td>${escapeHTML(x.q)}</td><td><span class="pct ${x.p<60?'lo':x.p<85?'mid':'hi'}">${x.p}%</span></td><td class="small">${x.n} answers</td></tr>`).join('')}</tbody></table></details>
-    <div class="row"><button class="btn ghost" id="lvCsv" type="button">⬇ Results CSV</button><button class="btn" id="lvDone" type="button">Close game</button></div></div>`;
+  const pod=(p,i)=>{ if(!p) return ''; const bn=lvBan(p), px=i?96:132;
+    return `<div class="podc p${i}"><div class="podcard${bn.bg?' ban':''}"${bn.bg?` style="background:${bn.bg}"`:''}><span class="podmed">${['🥇','🥈','🥉'][i]}</span><canvas class="skprev" data-skin="${lvSkin(p)}" data-px="${px}" width="${px}" height="${px}" aria-hidden="true"></canvas><b>${escapeHTML(clName(p.name))}</b><small>${(p.score||0).toLocaleString()}</small></div><div class="podstep"><span>${i+1}</span></div></div>`; };
+  box.innerHTML=`<div class="lvend">${FUN_BG()}${CONFETTI()}<div class="lvendtop">${top}</div>
+    <div class="lvpod">${pod(rank[1],1)}${pod(rank[0],0)}${pod(rank[2],2)}</div>
+    ${rank.length>3?`<div class="lvrest">${rank.slice(3,30).map((p,i)=>`<div class="lvrestrow"><span class="lvrk">${i+4}</span>${lvChip(p,p.uid,'sm')}<b>${(p.score||0).toLocaleString()}</b></div>`).join('')}</div>`:''}
+    <details class="lvrep"><summary>📊 Teacher report: how the class did on each question</summary><table><tbody>${qa.sort((a,b)=>a.p-b.p).map(x=>`<tr><td>${escapeHTML(x.q)}</td><td><span class="pct ${x.p<60?'lo':x.p<85?'mid':'hi'}">${x.p}%</span></td><td class="small">${x.n} answers</td></tr>`).join('')||'<tr><td>No answers yet.</td></tr>'}</tbody></table></details>
+    <div class="lvctl"><button class="btn ghost" id="lvCsv" type="button">⬇ Results CSV</button><button class="btn lvgo" id="lvDone" type="button">Close game</button></div></div>`;
   $('lvCsv').onclick=()=>clCsv([['Player','Score','Correct','Answered'],...rank.map(p=>[clName(p.name),p.score||0,p.right||0,p.done||0])],'live game '+LV.pin); $('lvDone').onclick=liveClose; if(A.ctx&&!LV.wonSnd){ LV.wonSnd=1; sWin(); } }
 async function liveSaveReport(){ const d=LV.doc; if(!d||!d.cid) return; try{ const P=Object.values(LV.players);
   await LV.db.collection('classes').doc(d.cid).collection('games').add({mode:d.mode,diff:d.diff,title:d.title,t:Date.now(),players:P.slice(0,200).map(p=>({n:clName(p.name),s:p.score||0,r:p.right||0,a:p.done||0}))}); }catch(e){} }
 
 /* ---- the student's side of a live game ---- */
 function playOpen(pin){ liveStop(); LV.host=false; LV.pin=null; LV.doc=null; LV.me=null; showOv('playOv');
-  $('playBody').innerHTML=`<div class="pljoin"><h2>Join a game</h2><input id="plPin" class="clin code" inputmode="numeric" maxlength="7" placeholder="Game PIN" value="${escapeHTML(pin||'')}" aria-label="Game PIN"><input id="plNm" class="clin" maxlength="24" placeholder="Your name" value="${escapeHTML(SAVE.clName||'')}" aria-label="Your name"><button class="btn" id="plGo" type="button">Join ▶</button><p class="small" id="plMsg"></p></div>`;
+  $('playBody').innerHTML=`<div class="pljoin">${FUN_BG()}<div class="pljoinme">${lvChip({name:SAVE.clName||ensureName(),skin:SAVE.skin,banner:SAVE.banner},'','big','div',56)}<small>This is how you'll look on the board</small></div><h2>Join a game</h2><input id="plPin" class="clin code" inputmode="numeric" maxlength="7" placeholder="Game PIN" value="${escapeHTML(pin||'')}" aria-label="Game PIN"><input id="plNm" class="clin" maxlength="24" placeholder="Your name" value="${escapeHTML(SAVE.clName||'')}" aria-label="Your name"><button class="btn" id="plGo" type="button">Join ▶</button><p class="small" id="plMsg"></p></div>`;
   ['plPin','plNm'].forEach(id=>$(id).addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') playJoin(); })); $('plGo').onclick=playJoin; }
 async function playJoin(){ const pin=$('plPin').value.replace(/\D/g,''), raw=$('plNm').value.trim(), m=$('plMsg');
   if(pin.length!==6) return m.textContent='The PIN is 6 numbers.'; if(!raw) return m.textContent='Type your name.'; m.textContent='Joining…';
@@ -15242,8 +15336,8 @@ async function playJoin(){ const pin=$('plPin').value.replace(/\D/g,''), raw=$('
     if(!d.exists||Date.now()-(d.data().t||0)>3*3600e3) return m.textContent='No game with that PIN. Check the board.';
     const g=d.data(); if(g.phase==='end') return m.textContent='That game has finished.';
     let nm=g.names==='fun'?funName():g.names==='first'?raw.split(' ')[0]:raw; nm=clName(nm);
-    await ref.collection('players').doc(au.uid).set({name:nm,score:0,right:0,done:0,fl:0,rev:0,team:0,hearts:3,ans:{},fin:0,t:TS()});
-    SAVE.clName=clName(raw); save(); LV.au=au; LV.me=au.uid; LV.qi=0; LV.streak=0; LV.order=[]; LV.phase=''; LV.mine={name:nm,score:0,right:0,done:0,fl:0,rev:0,hearts:3,ans:{}};
+    await ref.collection('players').doc(au.uid).set({name:nm,skin:String(SAVE.skin||'classic').slice(0,40),banner:String(SAVE.banner||'b_plain').slice(0,24),score:0,right:0,done:0,fl:0,rev:0,team:0,hearts:3,ans:{},fin:0,t:TS()});
+    SAVE.clName=clName(raw); save(); LV.au=au; LV.me=au.uid; LV.qi=0; LV.streak=0; LV.order=[]; LV.phase=''; LV.mine={name:nm,skin:SAVE.skin,banner:SAVE.banner,score:0,right:0,done:0,fl:0,rev:0,hearts:3,ans:{}};
     liveWatch(au.db,pin);
   }catch(e){ m.textContent=e&&e.code==='permission-denied'?'You can\'t join this game.':clErr(e); } }
 function playRender(fromPlayers){ const d=LV.doc, box=$('playBody'), me=LV.players[LV.me];
@@ -15251,10 +15345,15 @@ function playRender(fromPlayers){ const d=LV.doc, box=$('playBody'), me=LV.playe
   if(fromPlayers&&LV.phase==='play'&&!me&&Object.keys(LV.players).length){ liveStop(); box.innerHTML='<div class="plwait"><h2>You were removed from the game.</h2><button class="btn" id="plOut" type="button">OK</button></div>'; $('plOut').onclick=()=>toMenu(); return; }
   if(me){ if(me.team!=null) LV.mine.team=me.team; if(me.hearts!=null&&d.mode==='last') LV.mine.hearts=me.hearts; }
   if(d.phase===LV.phase&&d.phase==='play') return playStatus();
+  if(d.phase===LV.phase&&d.phase==='lobby'){ const n=$('plOthers'); if(n){ const k=Object.keys(LV.players).length; n.textContent=k>1?`${k} players are in. Get ready!`:'Waiting for your classmates…'; } return; }
   LV.phase=d.phase; const M=LIVE_MODES[d.mode];
-  if(d.phase==='lobby'){ box.innerHTML=`<div class="plwait"><div class="pldot"></div><h2>You're in, ${escapeHTML(me?me.name:LV.mine.name)}!</h2><p>${M.ic} ${M.n} · ${d.diff==='easy'?'Easy':'Normal'}</p><p class="small">Watch the board. The game starts soon.</p></div>`; return; }
+  if(d.phase==='lobby'){ const mine={...LV.mine,name:me?me.name:LV.mine.name}, bn=lvBan(mine);
+    box.innerHTML=`<div class="pllobby">${FUN_BG()}<div class="plme${bn.bg?' ban':''}"${bn.bg?` style="background:${bn.bg}"`:''}><canvas class="skprev" data-skin="${lvSkin(mine)}" data-px="150" width="150" height="150" aria-hidden="true"></canvas><b>${escapeHTML(clName(mine.name))}</b></div><h2>You're in!</h2><p class="plmode">${M.ic} ${M.n} · ${d.diff==='easy'?'Easy':'Normal'}</p><p class="small">Look at the board. Your teacher will start the game.</p><p class="plothers" id="plOthers"></p><div class="pldots"><i></i><i></i><i></i></div></div>`;
+    const k=Object.keys(LV.players).length; $('plOthers').textContent=k>1?`${k} players are in. Get ready!`:'Waiting for your classmates…'; return; }
   if(d.phase==='end'){ const P=Object.values(LV.players).sort((a,b)=>b.score-a.score), r=P.findIndex(p=>p.name===LV.mine.name&&p.score===LV.mine.score)+1;
-    box.innerHTML=`<div class="plwait"><h2>Game over!</h2><p class="plbig">${(LV.mine.score||0).toLocaleString()}</p><p>${LV.mine.right||0} of ${LV.mine.done||0} answers right${r?` · #${r} of ${P.length}`:''}</p><button class="btn" id="plOut" type="button">Back to the menu</button></div>`;
+    const bn=lvBan(LV.mine), med=r>=1&&r<=3?['🥇','🥈','🥉'][r-1]:'';
+    box.innerHTML=`<div class="plend">${FUN_BG()}${r>=1&&r<=3?CONFETTI():''}<h2>${r===1?'You won! 🎉':r&&r<=3?'On the podium!':'Game over!'}</h2><div class="plme${bn.bg?' ban':''}"${bn.bg?` style="background:${bn.bg}"`:''}>${med?`<span class="podmed">${med}</span>`:''}<canvas class="skprev" data-skin="${lvSkin(LV.mine)}" data-px="130" width="130" height="130" aria-hidden="true"></canvas><b>${escapeHTML(clName(LV.mine.name))}</b></div>
+      <p class="plbig">${(LV.mine.score||0).toLocaleString()}</p><div class="plstats2"><span><b>${r?'#'+r:'–'}</b><small>of ${P.length}</small></span><span><b>${+(LV.mine.right||0).toFixed(1)}</b><small>right</small></span><span><b>${LV.mine.done||0}</b><small>answered</small></span></div><button class="btn lvgo" id="plOut" type="button">Back to the menu</button></div>`;
     $('plOut').onclick=()=>{ liveStop(); toMenu(); }; SAVE.life=SAVE.life||{}; SAVE.life.liveGames=(SAVE.life.liveGames||0)+1; SAVE.clStars=(SAVE.clStars||0)+Math.min(5,LV.mine.right||0); save(); achCheck(); return; }
   if(d.phase==='play'){ const n=(d.qs||[]).length; LV.order=Array.from({length:n},(_,i)=>i).sort(()=>Math.random()-.5); LV.qi=0; playNext(); } }
 function playStatus(){ const d=LV.doc, s=$('plStat'); if(!s||!d) return; const me=LV.mine;
