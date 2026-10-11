@@ -1663,7 +1663,8 @@ body.phone.hastabs #toast{top:auto;bottom:calc(84px + env(safe-area-inset-bottom
 #shopOv.storemode .panel h2{background:linear-gradient(90deg,#FFE27A,#FF9E2C);-webkit-background-clip:text;background-clip:text;color:transparent}
 /* ---- block packs: the shop tab ---- */
 #tabPacks{color:#FFE27A}
-#shopOv:not(.storemode) #tabPacks,#shopOv:not(.storemode) #tabPrem{display:none}
+#shopOv:not(.storemode) #tabPacks,#shopOv:not(.storemode) #tabPrem,#shopOv:not(.storemode) #tabForge{display:none}
+#tabForge{color:#FFB070}
 /* the shop: tabs pinned under the header, pill buttons, cards that lift */
 #shopOv .shoptabs{flex:none;position:sticky;top:var(--shopTop,0px);z-index:4;margin:6px 0 12px;background:rgba(30,24,70,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line);box-shadow:0 6px 18px rgba(10,6,30,.35);overflow-x:auto;scrollbar-width:none}
 #shopOv .shoptabs::-webkit-scrollbar{display:none}
@@ -1774,6 +1775,35 @@ body.phone.hastabs #toast{top:auto;bottom:calc(84px + env(safe-area-inset-bottom
 .pqtok{display:block;margin-top:2px;font:700 12px var(--body);color:#FFE27A;text-shadow:none}
 /* the What's new popup */
 .newspanel{max-height:min(86vh,760px);overflow:auto}
+/* trading */
+.trpair{display:flex;align-items:center;justify-content:center;gap:10px}.trpair>div{display:flex;flex-direction:column;align-items:center;gap:2px;width:84px;text-align:center}
+.trpair small{font-size:11px;line-height:1.2}.trpair>b{font-size:22px;color:#FFE27A}
+.trlist{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:8px}
+.trlist li{padding:10px;border-radius:14px;background:linear-gradient(160deg,rgba(255,226,122,.12),rgba(255,255,255,.03));border:1px solid rgba(255,226,122,.45)}
+.trlist li.mine{background:var(--glass);border-color:var(--line)}
+.trlist p{margin:6px 0;font-size:13px;text-align:center}.trlist .row{justify-content:center}.trwarn{color:#FFB3C8}
+/* the Forge */
+.shop>.forgehead,.shop>.forgerates,.shop>.deals{grid-column:1/-1}
+.forgehead{display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;background:radial-gradient(circle at 12% 50%,rgba(255,140,40,.35),rgba(40,20,60,.6) 60%);border:1px solid rgba(255,170,80,.5);margin-top:4px}
+.forgehead p{margin:2px 0 0;font-size:12.5px;color:var(--ink-2)}.forgehead>div:nth-child(2){flex:1;min-width:0}.forgehead>div>b{font:800 18px var(--display)}
+.anvil{font-size:38px;animation:anvil 1.6s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(255,140,40,.8))}
+@keyframes anvil{0%,60%,100%{transform:rotate(0)}70%{transform:rotate(-25deg)}80%{transform:rotate(8deg)}}
+.dustbal{display:flex;flex-direction:column;align-items:flex-end}.dustbal small{font:700 10px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.dustbal b{font:800 20px var(--display);background:linear-gradient(90deg,#9FE8FF,#E0B8FF,#FFE27A);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+.forgerates{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.forgerates span{display:flex;align-items:center;gap:5px;font:600 11.5px var(--body);padding:4px 9px;border-radius:999px;background:rgba(0,0,0,.25)}
+.forgerates i{width:8px;height:8px;border-radius:50%;background:var(--rc)}
+.forgeitem.can{border-color:rgba(255,170,80,.7);box-shadow:0 0 16px rgba(255,140,40,.25)}
+.forgeitem .bpbar{height:5px}
+/* daily deals */
+.deals{padding:12px;border-radius:16px;background:linear-gradient(120deg,rgba(255,90,60,.25),rgba(255,200,80,.15));border:1px solid rgba(255,140,80,.6);margin-bottom:4px}
+.dealshead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}.dealshead b{font:800 16px var(--display)}.dealshead small{color:var(--ink-2);font-size:12px}
+.dealrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.deal{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:12px;background:rgba(0,0,0,.25);text-align:center}
+.deal b{font-size:12.5px;line-height:1.2}.deal small{color:var(--ink-3)}.deal .btn{width:100%;padding:8px 6px;font-size:13px}
+.dealoff{position:absolute;top:-7px;right:-4px;font:800 11px var(--body);padding:2px 7px;border-radius:999px;background:#FF4A3A;color:#fff;transform:rotate(8deg)}
+.bpmc.worn .bpcfront{outline:3px solid #7FF0D2;outline-offset:-3px}
+.collshuf{display:flex;align-items:center;gap:8px;font:600 13px var(--body);cursor:pointer}.collshuf input{width:17px;height:17px;accent-color:#FFD166;margin:0}
+.pqall{display:block;width:100%;margin:8px 0 0}
 .newspanel h3{margin:14px 0 6px;font:800 13px var(--body);letter-spacing:.12em;text-transform:uppercase;color:#FFE27A}
 .newspanel h3.soon{color:#7FF0D2}
 .newslist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
@@ -2092,7 +2122,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   <div class="panel wide">
     <div class="head"><button class="back" id="sBack" type="button">← Menu</button><div class="wallet" id="walletS"></div></div>
     <h2 id="shopTitle">Collection</h2>
-    <div class="tabs shoptabs"><button id="tabPacks" type="button">✦ Packs</button><button id="tabPrem" type="button">★ Premium</button><button id="tabSkins" class="on" type="button">Blocks</button><button id="tabTrails" type="button">Landing effects</button><button id="tabTiles" type="button">Tiles</button><button id="tabSounds" type="button">Sound Tracks</button><button id="tabBanners" type="button">Banners</button></div>
+    <div class="tabs shoptabs"><button id="tabPacks" type="button">✦ Packs</button><button id="tabForge" type="button">⚒ Forge</button><button id="tabPrem" type="button">★ Premium</button><button id="tabSkins" class="on" type="button">Blocks</button><button id="tabTrails" type="button">Landing effects</button><button id="tabTiles" type="button">Tiles</button><button id="tabSounds" type="button">Sound Tracks</button><button id="tabBanners" type="button">Banners</button></div>
     <div class="shopmoney" id="shopMoney" hidden></div>
     <div class="shopfeat" id="shopFeat" hidden></div>
     <div class="shop" id="shopGrid"></div>
@@ -2560,6 +2590,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <div class="frrow"><input id="frCodeIn" maxlength="6" placeholder="FRIEND CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Friend code"><button class="btn" id="frAdd" type="button">Add friend</button></div>
       <div class="small" id="frMsg" role="status"></div>
       <div id="frInvites"></div>
+      <div id="trBox"></div>
       <h2>Your friends</h2>
       <ul class="frlist" id="frList"></ul>
     </div>
@@ -2586,7 +2617,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <div class="stats" id="fpStats"></div>
     <div><div class="lbl" style="margin-bottom:6px">Leaderboard rankings</div><ul class="lb" id="fpRanks"></ul></div>
     <div><div class="lbl" style="margin-bottom:6px">Levels they built</div><ul class="edmine" id="fpMaps"></ul></div>
-    <div><div class="lbl" style="margin-bottom:6px">Gift a block</div><button class="btn ghost" id="fpGift" type="button">🎁 Send them a block</button><div id="fgBox" hidden style="margin-top:8px"></div></div>
+    <div><div class="lbl" style="margin-bottom:6px">Gift or trade</div><div class="row" style="justify-content:flex-start"><button class="btn ghost" id="fpGift" type="button">🎁 Send them a block</button><button class="btn ghost" id="fpTrade" type="button">🔁 Propose a trade</button></div><div id="fgBox" hidden style="margin-top:8px"></div></div>
     <div class="row"><button class="btn ghost" id="fpMod" type="button">Report or block</button></div>
   </div>
 </section>
@@ -3433,7 +3464,7 @@ SKINS.push(
  {id:'bp_eye',name:'Eye of the Storm',vx:'bp_eye',nocore:true,prev:[.52,22],top:'#2A3A5A',front:'#162238',core:'#DDF0FF',bp:'storm',req:{bp:'storm'},bpr:3},
  {id:'sk_ninja',name:'Cyber Ninja',vx:'sk_ninja',nocore:true,prev:[.56,20],top:'#2A2630',front:'#16141C',core:'#FF2A5A',price:6000},
  {id:'sk_mech',name:'Inferno Mech',vx:'sk_mech',nocore:true,prev:[.54,18],top:'#5A5A68',front:'#3A3A46',core:'#FF8A1A',price:7500},
- {id:'sk_wolf',name:'Spirit Wolf',vx:'sk_wolf',nocore:true,prev:[.58,20],top:'#C8D4E4',front:'#8A9CB8',core:'#5CC8FF',price:9000},
+ {id:'sk_wolf',name:'Spirit Wolf',vx:'sk_wolf',nocore:true,prev:[.5,26],top:'#C8D4E4',front:'#8A9CB8',core:'#5CC8FF',price:9000},
  {id:'sk_emperor',name:'Galaxy Emperor',vx:'sk_emperor',nocore:true,prev:[.5,22],top:'#2A1A5A',front:'#1A0E40',core:'#FFE7A0',price:12000},
  {id:'bp_griffin',name:'Golden Griffin',vx:'bp_griffin',nocore:true,prev:[.48,25],top:'#F4EEE4',front:'#C9861A',core:'#FFFFFF',bp:'mythic',req:{bp:'mythic'},bpr:4},
  {id:'bp_titanbass',name:'Bass Titan',vx:'bp_titanbass',nocore:true,prev:[.5,24],top:'#2A1426',front:'#1A0A18',core:'#FFFFFF',bp:'rhythm',req:{bp:'rhythm'},bpr:4},
@@ -3494,14 +3525,14 @@ const BP_SIG={
 const BP_RAR=[{n:'Common',c:'#B9C3D8'},{n:'Rare',c:'#4FA8FF'},{n:'Epic',c:'#B566FF'},{n:'Legendary',c:'#FFB627'},{n:'Ascendant',c:'#FF2E7A'},{n:'Pristine',c:'#FFFFFF'}];
 const BP_DUPE=[.2,.35,.6,1,1,1];
 const BPACKS=[
- {id:'mythic',name:'Mythic Pack',price:1000,c1:'#1FA67E',c2:'#0B3B33',acc:'#7FFFD0',tag:'Ancient myths',star:'bp_hydra',rates:{bp_jade:27.28,bp_bronze:27.69,bp_moss:26.58,bp_siren:12,bp_golem:3.3,bp_kraken:2,bp_hydra:0.75,bp_griffin:.4}},
- {id:'rhythm',name:'Rhythm Pack',price:1400,c1:'#E8503A',c2:'#3A0C14',acc:'#FFD27A',tag:'Feel the beat',star:'bp_piano',rates:{bp_maple:26.6,bp_brass:27,bp_felt:27.3,bp_sheet:14,bp_drums:3.5,bp_piano:1.2,bp_titanbass:.4}},
- {id:'arcane',name:'Arcane Pack',price:1800,c1:'#8A3CFF',c2:'#200A44',acc:'#E0B8FF',tag:'Spells and secrets',star:'bp_oracle',rates:{bp_amethyst:25.96,bp_wax:25.78,bp_ink:25.21,bp_hex:15.2,bp_grimoire:4.2,bp_owl:2.25,bp_oracle:1,bp_djinn:.4}},
- {id:'celestial',name:'Celestial Pack',price:2800,c1:'#3A5AFF',c2:'#0A1036',acc:'#FFE7A0',tag:'Stars and sky',star:'bp_titan',rates:{bp_slate:24.49,bp_moondust:23.71,bp_sky:24.9,bp_meteor:17.6,bp_comet:5.4,bp_saturn:2,bp_titan:1.5,bp_nova:.4}},
- {id:'storm',name:'Storm Pack',price:3500,c1:'#3A6AB8',c2:'#0A1426',acc:'#BFD8FF',tag:'Thunder and lightning',star:'bp_eye',rates:{bp_rain:25.6,bp_fog:26,bp_hail:26.5,bp_static:16,bp_cloud:4.3,bp_eye:1.2,bp_hammer:.4}},
- {id:'eternal',name:'Eternal Pack',price:4500,c1:'#D8283A',c2:'#2A0408',acc:'#FFD34D',tag:'Time without end',star:'bp_ouro',rates:{bp_rust:21.6,bp_ash:22.65,bp_garnet:22,bp_bloodmoon:20,bp_hourglass:6.6,bp_gent:3,bp_knight:1.75,bp_ouro:2,bp_gate:.4}},
- {id:'pristine',name:'Pulse Pristine Pack',price:7000,c1:'#FFFFFF',c2:'#C8D4F0',acc:'#FFFFFF',tag:'The rarest blocks of all',star:'bp_pristine',rates:{bp_pearl:32.4,bp_opal:32.8,bp_haloglass:22.4,bp_choir:7.8,bp_monarch:1.5,bp_harp:2.3,bp_pristine:0.4,bp_seraph:.4}},
- {id:'harvest',name:'Harvest Festival Pack',price:2000,c1:'#E8701A',c2:'#3A1A08',acc:'#FFD166',tag:'Autumn only',star:'bp_oak',season:[10,11],rates:{bp_acorn:26.4,bp_hay:26.5,bp_cider:26.5,bp_mapleglass:16,bp_pumpkin:3.5,bp_cornu:.7,bp_oak:.4}}];
+ {id:'mythic',name:'Mythic Pack',price:800,c1:'#1FA67E',c2:'#0B3B33',acc:'#7FFFD0',tag:'Ancient myths',star:'bp_hydra',rates:{bp_jade:27.28,bp_bronze:27.69,bp_moss:26.58,bp_siren:12,bp_golem:3.3,bp_kraken:2,bp_hydra:0.75,bp_griffin:.4}},
+ {id:'rhythm',name:'Rhythm Pack',price:1100,c1:'#E8503A',c2:'#3A0C14',acc:'#FFD27A',tag:'Feel the beat',star:'bp_piano',rates:{bp_maple:26.6,bp_brass:27,bp_felt:27.3,bp_sheet:14,bp_drums:3.5,bp_piano:1.2,bp_titanbass:.4}},
+ {id:'arcane',name:'Arcane Pack',price:1450,c1:'#8A3CFF',c2:'#200A44',acc:'#E0B8FF',tag:'Spells and secrets',star:'bp_oracle',rates:{bp_amethyst:25.96,bp_wax:25.78,bp_ink:25.21,bp_hex:15.2,bp_grimoire:4.2,bp_owl:2.25,bp_oracle:1,bp_djinn:.4}},
+ {id:'celestial',name:'Celestial Pack',price:2250,c1:'#3A5AFF',c2:'#0A1036',acc:'#FFE7A0',tag:'Stars and sky',star:'bp_titan',rates:{bp_slate:24.49,bp_moondust:23.71,bp_sky:24.9,bp_meteor:17.6,bp_comet:5.4,bp_saturn:2,bp_titan:1.5,bp_nova:.4}},
+ {id:'storm',name:'Storm Pack',price:2800,c1:'#3A6AB8',c2:'#0A1426',acc:'#BFD8FF',tag:'Thunder and lightning',star:'bp_eye',rates:{bp_rain:25.6,bp_fog:26,bp_hail:26.5,bp_static:16,bp_cloud:4.3,bp_eye:1.2,bp_hammer:.4}},
+ {id:'eternal',name:'Eternal Pack',price:3600,c1:'#D8283A',c2:'#2A0408',acc:'#FFD34D',tag:'Time without end',star:'bp_ouro',rates:{bp_rust:21.6,bp_ash:22.65,bp_garnet:22,bp_bloodmoon:20,bp_hourglass:6.6,bp_gent:3,bp_knight:1.75,bp_ouro:2,bp_gate:.4}},
+ {id:'pristine',name:'Pulse Pristine Pack',price:5600,c1:'#FFFFFF',c2:'#C8D4F0',acc:'#FFFFFF',tag:'The rarest blocks of all',star:'bp_pristine',rates:{bp_pearl:32.4,bp_opal:32.8,bp_haloglass:22.4,bp_choir:7.8,bp_monarch:1.5,bp_harp:2.3,bp_pristine:0.4,bp_seraph:.4}},
+ {id:'harvest',name:'Harvest Festival Pack',price:1600,c1:'#E8701A',c2:'#3A1A08',acc:'#FFD166',tag:'Autumn only',star:'bp_oak',season:[10,11],rates:{bp_acorn:26.4,bp_hay:26.5,bp_cider:26.5,bp_mapleglass:16,bp_pumpkin:3.5,bp_cornu:.7,bp_oak:.4}}];
 
 /* every fancy block gets a matching landing effect; owning the block unlocks it */
 const SIG={
@@ -3818,6 +3849,7 @@ function startRun(M){
   if(!SAVE.hpSeen&&!M.net){ SAVE.hpSeen=true; save(); HP.pending=M; ensureAudio(); showOv('hpOv'); $('hpCalib').focus(); return; }
   if(needsTutorial(M)){ ensureAudio(); showTutorialIntro(M); return; }
   ensureAudio(); A.ctx.resume();
+  pinShuffle(M);
   hideAll();
   CUTGEN++; document.body.classList.remove('obscene','talkok'); hushHums(); hideCine();   // nothing from the last run's cutscenes carries over (their timers check CUTGEN)
   if(!M.net&&(M.coop||M.duel)) M.atPerf=performance.now()+PARTY_COUNT*1000;   // every two-player mode
@@ -6754,7 +6786,7 @@ function vxPost10(S,X,T,W,bh,H,now){
 /* ---- the big-ticket Shop blocks ---- */
 const VX8=new Set(['sk_ninja','sk_mech','sk_wolf','sk_emperor']);
 function vxPre8(S,X,T,W,bh,H,now){
-  const v=S.vx, fy=T+bh, cxm=X+W/2, bt=clamp(1-(now-G.lastBeatT)/.35,0,1), oy=fy+H*.35, B=fy+H;
+  const v=S.vx, fy=T+bh, cxm=X+W/2, bt=clamp(1-(now-G.lastBeatT)/.35,0,1), oy=fy+H*.35, B=fy+H, beat=Math.floor(now/(G.spb||.6));
   cx.save(); cx.globalCompositeOperation='lighter';
   switch(v){
     case 'sk_ninja': { vxGlow(cxm,oy,W*(1.2+.25*bt),'#FF1E4A',.22+.3*bt,.85);
@@ -6767,10 +6799,30 @@ function vxPre8(S,X,T,W,bh,H,now){
     case 'sk_mech': { vxGlow(cxm,oy,W*(1.25+.3*bt),'#FF7A1A',.22+.3*bt,.85);
       // jet thrusters firing under the block
       [-1,1].forEach(sg=>{ const x=cxm+sg*W*.3, y=B+W*.02; for(let k=0;k<3;k++) vx4Flame(x,y+W*(.35+.2*bt),W*(.14-.03*k),-W*(.5+.25*bt+.1*Math.sin(now*20+k)),now*9+k,k?'#FFE07A':'#FF5A1A','#FF2A00',.8); vxGlow(x,y+W*.15,W*.3,'#FFB040',.7); }); } break;
-    case 'sk_wolf': { vxGlow(cxm,T,W*(1.5+.25*bt),'#5CC8FF',.22+.25*bt,.95);
-      // a mane of aurora light streaming back in the wind
-      for(let k=0;k<vxN(7);k++){ const col=['#5CFFD0','#5CC8FF','#B48CFF'][k%3], ph=now*2+k*.9; cx.strokeStyle=rgba(col,.55); cx.lineWidth=W*(.12-.01*k);
-        cx.beginPath(); cx.moveTo(cxm+W*.1,T-bh*.2+k*W*.05); cx.bezierCurveTo(cxm-W*.4,T-W*.4+Math.sin(ph)*W*.1,cxm-W*.9,T-W*.1+Math.cos(ph)*W*.15,cxm-W*1.3,T+W*.15*k-W*.2+Math.sin(ph*1.3)*W*.15); cx.stroke(); } } break;
+    case 'sk_wolf': { const howl=(beat%4===0)?bt:0;
+      vxGlow(cxm,oy,W*(1.3+.25*bt),'#5CC8FF',.2+.25*bt,.9);
+      // the night sky behind: a crescent moon and curtains of aurora
+      const mx=cxm-W*.75, my=T-W*1.0; vxGlow(mx,my,W*.55,'#CFEFFF',.3);
+      cx.globalCompositeOperation='source-over'; cx.fillStyle='rgba(235,248,255,.92)'; cx.beginPath(); cx.arc(mx,my,W*.18,Math.PI*.35,Math.PI*1.65,false); cx.arc(mx+W*.08,my-W*.02,W*.15,Math.PI*1.55,Math.PI*.45,true); cx.closePath(); cx.fill();
+      cx.globalCompositeOperation='lighter';
+      // aurora: three soft curtains with wavy tops
+      for(let k=0;k<3;k++){ const col=['#5CFFD0','#5CC8FF','#B48CFF'][k], n=vxN(20), base=T-W*(.3+.2*k), x0=X-W*.9, x1=X+W*1.9, hm=W*.5;
+        const g=cx.createLinearGradient(0,base-hm,0,base+W*.1); g.addColorStop(0,rgba(col,0)); g.addColorStop(.75,rgba(col,.24+.12*bt)); g.addColorStop(1,rgba(col,0)); cx.fillStyle=g;
+        cx.beginPath(); for(let i=0;i<=n;i++){ const u=i/n, x=x0+u*(x1-x0), y=base+Math.sin(u*4.5+now*1.1+k*1.7)*W*.12-W*(.22+.14*Math.sin(u*9+now*1.7+k)); i?cx.lineTo(x,y):cx.moveTo(x,y); }
+        for(let i=n;i>=0;i--){ const u=i/n; cx.lineTo(x0+u*(x1-x0),base+W*.1+Math.sin(u*4.5+now*1.1+k*1.7)*W*.12); } cx.closePath(); cx.fill(); }
+      // the wolf's spirit: a huge glowing wolf rising behind the block, throwing back its head to howl every fourth beat
+      cx.save(); cx.translate(cxm+W*.42,T+bh*.1); cx.scale(1.25,1.25); cx.rotate(-.08-.26*howl); const s=W;
+      const P=[[.55,.5],[.56,.05],[.48,-.32],[.44,-.5],[.36,-.86],[.24,-.62],[.12,-.5],[-.06,-.54],[-.3,-.7],[-.56,-.88],[-.68,-.86],[-.68,-.78],[-.48,-.66],[-.66,-.62+.16*howl],[-.62,-.54+.12*howl],[-.4,-.46],[-.2,-.3],[-.16,-.06],[-.24,.1],[-.12,.2],[-.16,.5]];
+      cx.shadowColor='#5CE8FF'; cx.shadowBlur=W*.25;
+      const gw=cx.createLinearGradient(0,-s*.9,0,s*.5); gw.addColorStop(0,rgba('#DFFAFF',.55+.2*bt)); gw.addColorStop(.6,rgba('#5CC8FF',.25)); gw.addColorStop(1,rgba('#5CC8FF',0)); cx.fillStyle=gw;
+      cx.beginPath(); { const m=(i)=>{ const A=P[i%P.length], B2=P[(i+1)%P.length]; return [(A[0]+B2[0])/2*s,(A[1]+B2[1])/2*s]; }; const m0=m(P.length-1); cx.moveTo(m0[0],m0[1]); P.forEach(([a,b],i)=>{ const q=m(i); cx.quadraticCurveTo(a*s,b*s,q[0],q[1]); }); } cx.closePath(); cx.fill(); cx.shadowBlur=0;   // corners softened
+      cx.strokeStyle=rgba('#EFFCFF',.5+.35*bt); cx.lineWidth=1.3; cx.stroke();
+      // ruff and cheek fur lines, and a bright eye
+      cx.strokeStyle=rgba('#FFFFFF',.35); cx.lineWidth=1; [[.3,-.3,.1,-.05],[.38,-.1,.12,.12],[.4,.1,.05,.3],[-.05,-.4,-.15,-.2]].forEach(([a,b,c,d])=>{ cx.beginPath(); cx.moveTo(a*s,b*s); cx.quadraticCurveTo((a+c)/2*s+s*.06,(b+d)/2*s,c*s,d*s); cx.stroke(); });
+      vxGlow(-.24*s,-.62*s,s*.14,'#FFFFFF',.95); cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.ellipse(-.24*s,-.62*s,s*.05,s*.02,-.5,0,TAU); cx.fill();
+      for(let k=0;k<vxN(5);k++){ const ph=now*2.2+k; cx.strokeStyle=rgba(['#5CFFD0','#BFF4FF','#B48CFF'][k%3],.4); cx.lineWidth=s*.035; cx.beginPath(); cx.moveTo(.5*s,(-.3+k*.15)*s);
+        cx.bezierCurveTo(.8*s,(-.4+k*.15)*s+Math.sin(ph)*s*.08,1.0*s,(-.1+k*.12)*s+Math.cos(ph)*s*.1,1.2*s,(-.25+k*.18)*s+Math.sin(ph*1.3)*s*.1); cx.stroke(); }
+      cx.restore(); } break;
     case 'sk_emperor': { vxGlow(cxm,oy,W*(1.7+.3*bt),'#8A5CFF',.28+.3*bt,.9);
       // a cape of deep space flowing behind, full of stars and a swirl of nebula
       cx.globalCompositeOperation='source-over'; const cw=Math.sin(now*1.3)*W*.08; cx.save();
@@ -6813,18 +6865,42 @@ function vxPost8(S,X,T,W,bh,H,now){
       [-1,1].forEach(sg=>{ const sx=cxm+sg*W*.56, sy=T+bh*.2, rec=bt*W*.05; cx.save(); cx.translate(sx,sy); cx.rotate(sg*-.25);
         cx.fillStyle='#4A4A58'; rr(-W*.13,-W*.1,W*.26,W*.2,3); cx.fill(); cx.fillStyle='#2A2A34'; cx.fillRect(-W*.05,-W*.42+rec,W*.1,W*.34); cx.fillStyle='#FF7A1A'; cx.fillRect(-W*.06,-W*.44+rec,W*.12,W*.04);
         if(bt>.3){ cx.globalCompositeOperation='lighter'; vxGlow(0,-W*.5,W*.2*bt,'#FFE07A',bt); } cx.restore(); }); } break;
-    case 'sk_wolf': {
-      cx.save(); clipBody(); for(let k=0;k<9;k++){ const x=X+W*vxRnd(k*2.3+1), y=fy+H*vxRnd(k*4.1+2); cx.strokeStyle='rgba(220,240,255,.25)'; cx.lineWidth=.8; cx.beginPath(); cx.moveTo(x,y); cx.lineTo(x+W*.06,y+H*.12); cx.stroke(); } cx.restore();
-      // ears, a muzzle and glowing ice-blue eyes; a howl on every fourth beat
-      [-1,1].forEach(sg=>{ cx.fillStyle='#C8D4E4'; cx.beginPath(); cx.moveTo(cxm+sg*W*.12,T+bh*.3); cx.lineTo(cxm+sg*W*.42,T-W*.35); cx.lineTo(cxm+sg*W*.48,T+bh*.4); cx.closePath(); cx.fill();
-        cx.fillStyle='#7A8CA8'; cx.beginPath(); cx.moveTo(cxm+sg*W*.2,T+bh*.25); cx.lineTo(cxm+sg*W*.4,T-W*.2); cx.lineTo(cxm+sg*W*.43,T+bh*.3); cx.closePath(); cx.fill(); });
-      const ey=fy+H*.25; [-1,1].forEach(sg=>{ const ex=cxm+sg*W*.2; cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(ex,ey,W*(.16+.06*bt),'#5CC8FF',1); cx.restore();
-        cx.fillStyle='#E8FAFF'; cx.beginPath(); cx.moveTo(ex-sg*W*.1,ey-H*.02); cx.lineTo(ex+sg*W*.08,ey-H*.05); cx.lineTo(ex+sg*W*.06,ey+H*.03); cx.closePath(); cx.fill(); });
-      const howl=(beat%4===0)?bt:0, mw=W*.3, my=fy+H*.62; cx.fillStyle='#E8EEF6'; cx.beginPath(); cx.ellipse(cxm,my,mw,H*.22,0,0,TAU); cx.fill();
-      cx.fillStyle='#1A1E2A'; cx.beginPath(); cx.ellipse(cxm,my-H*.12,W*.07,H*.05,0,0,TAU); cx.fill();
-      cx.fillStyle='#3A1A2A'; cx.beginPath(); cx.ellipse(cxm,my+H*.08,W*.12,H*(.02+.1*howl),0,0,TAU); cx.fill();
-      if(howl>.1){ cx.save(); cx.globalCompositeOperation='lighter'; cx.strokeStyle=rgba('#BFE8FF',howl); cx.lineWidth=1.4; for(let k=0;k<3;k++){ cx.beginPath(); cx.arc(cxm,T-W*.2,W*(.3+k*.18)*(1.5-howl*.5),Math.PI*1.2,Math.PI*1.8); cx.stroke(); } cx.restore(); }
-      cx.save(); cx.globalCompositeOperation='lighter'; vxRise(vxN(6),.3,X-W*.4,W*1.8,B,W*1.5,now,(x,y,u,i)=>vxFlake(x,y,W*.03,.9*(1-u)),23); cx.restore(); } break;
+    case 'sk_wolf': { const howl=(beat%4===0)?bt:0;
+      // the head: silver fur fading to dusk blue, a dark mask round the eyes, a pale muzzle and cheeks
+      cx.save(); clipBody();
+      const fg=cx.createLinearGradient(0,T,0,B); fg.addColorStop(0,'#EEF4FB'); fg.addColorStop(.3,'#A8B8D0'); fg.addColorStop(1,'#64769A'); cx.fillStyle=fg; cx.fillRect(X,T,W,bh+H);
+      cx.lineWidth=.8; for(let k=0;k<vxN(28);k++){ const x=X+W*vxRnd(k*1.7+3), y=T+(bh+H)*vxRnd(k*2.9+5); cx.strokeStyle=k%3?'rgba(255,255,255,.35)':'rgba(40,50,80,.3)'; cx.beginPath(); cx.moveTo(x,y); cx.quadraticCurveTo(x+W*.025,y+H*.05,x+W*.01,y+H*.1); cx.stroke(); }
+      cx.fillStyle='#34405E'; cx.beginPath(); cx.moveTo(X,fy-bh*.2); cx.lineTo(X+W,fy-bh*.2); cx.lineTo(X+W,fy+H*.38); cx.quadraticCurveTo(cxm+W*.16,fy+H*.36,cxm,fy+H*.6); cx.quadraticCurveTo(cxm-W*.16,fy+H*.36,X,fy+H*.38); cx.closePath(); cx.fill();
+      cx.fillStyle='#F2F6FB'; cx.beginPath(); cx.ellipse(cxm,fy+H*.8,W*.3,H*.28,0,0,TAU); cx.fill();
+      [-1,1].forEach(sg=>{ cx.beginPath(); cx.moveTo(cxm+sg*W*.5,fy+H*.45); for(let k=0;k<4;k++){ cx.lineTo(cxm+sg*W*(.42-k*.05),fy+H*(.55+k*.1)); cx.lineTo(cxm+sg*W*(.5-k*.05),fy+H*(.6+k*.1)); } cx.lineTo(cxm+sg*W*.2,B); cx.lineTo(cxm+sg*W*.5,B); cx.closePath(); cx.fill(); });
+      // a spirit marking on the forehead that glows brighter on every beat
+      cx.globalCompositeOperation='lighter'; const ma=.55+.45*bt; cx.strokeStyle=rgba('#5CFFE0',ma); cx.lineWidth=W*.035;
+      cx.beginPath(); cx.moveTo(cxm,T+bh*.15); cx.lineTo(cxm,fy+H*.1); cx.stroke();
+      [-1,1].forEach(sg=>{ cx.beginPath(); cx.moveTo(cxm+sg*W*.08,T+bh*.3); cx.quadraticCurveTo(cxm+sg*W*.17,fy-bh*.1,cxm+sg*W*.08,fy+H*.07); cx.stroke(); });
+      vxGlow(cxm,fy,W*.3,'#5CFFE0',.25*ma); cx.restore();
+      cx.strokeStyle='#5CC8FF'; cx.lineWidth=1.2; rr(X+.5,T+.5,W-1,bh+H-1,3); cx.stroke();
+      // fur tufts sticking out at the cheeks
+      [-1,1].forEach(sg=>{ const ex=sg<0?X:X+W; cx.fillStyle='#E4ECF6'; cx.beginPath(); cx.moveTo(ex,fy+H*.4); cx.lineTo(ex+sg*W*.14,fy+H*.5); cx.lineTo(ex,fy+H*.56); cx.lineTo(ex+sg*W*.12,fy+H*.68); cx.lineTo(ex,fy+H*.76); cx.closePath(); cx.fill(); });
+      // tall ears with dark inner fur and a wisp of spirit fire at each tip
+      [-1,1].forEach(sg=>{ const tx=cxm+sg*W*(.36+.02*Math.sin(now*3+sg)), ty=T-W*(.42+.04*howl);
+        const eg=cx.createLinearGradient(0,ty,0,T+bh*.5); eg.addColorStop(0,'#E8F0FA'); eg.addColorStop(1,'#7A8CA8'); cx.fillStyle=eg;
+        cx.beginPath(); cx.moveTo(cxm+sg*W*.1,T+bh*.55); cx.quadraticCurveTo(cxm+sg*W*.18,T-W*.15,tx,ty); cx.quadraticCurveTo(cxm+sg*W*.48,T-W*.05,cxm+sg*W*.46,T+bh*.6); cx.closePath(); cx.fill();
+        cx.fillStyle='#2E3550'; cx.beginPath(); cx.moveTo(cxm+sg*W*.17,T+bh*.5); cx.quadraticCurveTo(cxm+sg*W*.22,T-W*.08,tx-sg*W*.01,ty+W*.1); cx.quadraticCurveTo(cxm+sg*W*.4,T-W*.02,cxm+sg*W*.4,T+bh*.5); cx.closePath(); cx.fill();
+        cx.strokeStyle='rgba(255,255,255,.55)'; cx.lineWidth=.8; for(let k=0;k<3;k++){ cx.beginPath(); cx.moveTo(cxm+sg*W*(.22+k*.05),T+bh*.4); cx.lineTo(cxm+sg*W*(.25+k*.04),T-W*(.05+k*.04)); cx.stroke(); }
+        cx.save(); cx.globalCompositeOperation='lighter'; vx4Flame(tx,ty+W*.04,W*.1,W*(.28+.12*bt+.05*Math.sin(now*9+sg)),now*8+sg,'#BFF4FF','#5CFFD0',.8); vxGlow(tx,ty,W*.15,'#5CFFE0',.5); cx.restore(); });
+      // fierce glowing eyes with slit pupils
+      const ey=fy+H*.24; [-1,1].forEach(sg=>{ const ex=cxm+sg*W*.21;
+        cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(ex,ey,W*(.17+.07*bt),'#5CC8FF',.9); cx.restore();
+        cx.fillStyle='#DDF8FF'; cx.beginPath(); cx.moveTo(ex-sg*W*.12,ey+H*.03); cx.quadraticCurveTo(ex,ey-H*.09,ex+sg*W*.1,ey-H*.04); cx.quadraticCurveTo(ex+sg*W*.02,ey+H*.06,ex-sg*W*.12,ey+H*.03); cx.closePath(); cx.fill();
+        cx.fillStyle='#0E2A4A'; cx.beginPath(); cx.ellipse(ex,ey-H*.005,W*.018,H*.045,0,0,TAU); cx.fill(); });
+      // the nose, and a mouth that opens to show its fangs when it howls
+      const ny=fy+H*.62; cx.fillStyle='#141824'; cx.beginPath(); cx.moveTo(cxm-W*.08,ny-H*.04); cx.quadraticCurveTo(cxm,ny-H*.08,cxm+W*.08,ny-H*.04); cx.quadraticCurveTo(cxm+W*.06,ny+H*.05,cxm,ny+H*.06); cx.quadraticCurveTo(cxm-W*.06,ny+H*.05,cxm-W*.08,ny-H*.04); cx.fill();
+      cx.fillStyle='rgba(255,255,255,.5)'; cx.beginPath(); cx.ellipse(cxm-W*.025,ny-H*.03,W*.02,H*.012,0,0,TAU); cx.fill();
+      const mo=howl*H*.14, my=ny+H*.12; cx.strokeStyle='#141824'; cx.lineWidth=1.2; cx.beginPath(); cx.moveTo(cxm,ny+H*.06); cx.lineTo(cxm,my); cx.stroke();
+      if(mo>1){ cx.fillStyle='#2A1020'; cx.beginPath(); cx.ellipse(cxm,my+mo*.5,W*.13,mo*.6+1,0,0,TAU); cx.fill(); cx.fillStyle='#FFFFFF'; [-1,1].forEach(sg=>{ cx.beginPath(); cx.moveTo(cxm+sg*W*.1,my); cx.lineTo(cxm+sg*W*.075,my+mo*.7); cx.lineTo(cxm+sg*W*.05,my); cx.closePath(); cx.fill(); }); }
+      else { cx.beginPath(); cx.moveTo(cxm-W*.12,my+H*.02); cx.quadraticCurveTo(cxm-W*.06,my+H*.05,cxm,my); cx.quadraticCurveTo(cxm+W*.06,my+H*.05,cxm+W*.12,my+H*.02); cx.stroke(); }
+      if(howl>.1){ cx.save(); cx.globalCompositeOperation='lighter'; cx.strokeStyle=rgba('#BFE8FF',howl); cx.lineWidth=1.4; for(let k=0;k<3;k++){ cx.beginPath(); cx.arc(cxm,T-W*.3,W*(.3+k*.2)*(1.5-howl*.5),Math.PI*1.15,Math.PI*1.85); cx.stroke(); } cx.restore(); }
+      cx.save(); cx.globalCompositeOperation='lighter'; vxRise(vxN(8),.3,X-W*.5,W*2,B,W*1.6,now,(x,y,u,i)=>i%2?vxFlake(x,y,W*.03,.9*(1-u)):vxSpark(x,y,W*.035,'#5CFFD0',.8*(1-u)),23); cx.restore(); } break;
     case 'sk_emperor': {
       // robes of midnight and gold, a sigil of stars on the chest
       cx.save(); clipBody(); const g=cx.createLinearGradient(X,0,X+W,0); g.addColorStop(0,'#1A0E40'); g.addColorStop(.5,'#3A1E80'); g.addColorStop(1,'#1A0E40'); cx.fillStyle=g; cx.fillRect(X,fy,W,H);
@@ -8373,8 +8449,10 @@ function admUI(){ ['setAdmin','mAdmin'].forEach(id=>{ const b=$(id); if(b) b.hid
 function inboxStart(u){ inboxStop(); if(!u||!ACCT.db||ACCT.user!==u) return;
   ADM.unsubG=ACCT.db.collection('gifts').doc(u.uid).collection('items').onSnapshot(s=>s.docs.forEach(inboxTake),()=>{});
   ADM.unsubF=ACCT.db.collection('fgifts').doc(u.uid).collection('items').onSnapshot(s=>s.docs.forEach(fgTake),()=>{});   // blocks from friends
+  ADM.unsubT=ACCT.db.collection('trades').doc(u.uid).collection('items').onSnapshot(trInc,()=>{});   // trade offers to you
+  ADM.unsubR=ACCT.db.collection('tradeReplies').doc(u.uid).collection('items').onSnapshot(s=>s.docs.forEach(trReply),()=>{});   // answers to your offers
   likesLoad(u); }
-function inboxStop(){ for(const k of ['unsubG','unsubF']) if(ADM[k]){ try{ ADM[k](); }catch(e){} ADM[k]=null; } }
+function inboxStop(){ TR.inc={}; for(const k of ['unsubG','unsubF','unsubT','unsubR']) if(ADM[k]){ try{ ADM[k](); }catch(e){} ADM[k]=null; } }
 function inboxTake(d){ const g=d.data()||{}; SAVE.giftIds=SAVE.giftIds||[];
   if(!SAVE.giftIds.includes(d.id)){ const txt=giftApply(g); SAVE.giftIds.push(d.id); SAVE.giftIds=SAVE.giftIds.slice(-200); save(); acctPush(true); afterGift();
     toast('🎁 '+txt+(g.msg?' · '+String(g.msg).slice(0,120):'')); if(A.ctx) sGem(); buzz(30); }
@@ -8644,7 +8722,7 @@ function frCard(){
   const worlds=[]; for(let w=1;w<=WORLDS;w++) worlds.push(worldStars(w));
   const nm=ensureName(); return {v:1,name:nm,nameKey:String(nm).toLowerCase(),code:FR.code,rank:myRank(),xp:SAVE.xp||0,skin:SAVE.skin,land:SAVE.land,world:SAVE.world||1,levelStars:levelStars(),worlds,
     bosses:bossesBeaten(),hard:hardCleared(),interDone:!!SAVE.interDone,bestEndless:SAVE.bestEndless||0,bestAscent:SAVE.bestAscent||0,bestRush:SAVE.bestRush||0,bestRaid:SAVE.bestRaid||0,
-    bestTether:SAVE.bestTether||0,levels:(SAVE.myLevels||[]).slice(0,24).map(l=>({n:l.n||'Untitled',code:l.code,k:LIKES.got[lvlKey(l.code)]||0})),show:myShowcase(),seen:Date.now()};
+    bestTether:SAVE.bestTether||0,levels:(SAVE.myLevels||[]).slice(0,24).map(l=>({n:l.n||'Untitled',code:l.code,k:LIKES.got[lvlKey(l.code)]||0})),show:myShowcase(),tr:SKINS.filter(s=>SAVE.owned.includes(s.id)&&fgGiftable(s)&&s.id!==SAVE.skin).map(s=>s.id).slice(0,150),seen:Date.now()};
 }
 /* your public card is refreshed a few seconds after anything is saved, and every few minutes while the game is open */
 function frPush(now){
@@ -8732,6 +8810,7 @@ function frRender(){
   $('frList').querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>frView(b.dataset.view));
   $('frList').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ if(b.dataset.arm){ frRemove(b.dataset.rm); return; } b.dataset.arm='1'; b.textContent='Remove?'; setTimeout(()=>{ if(b.isConnected){ b.dataset.arm=''; b.textContent='✕'; } },2500); });
   $('frInvites').querySelectorAll('[data-join]').forEach(b=>b.onclick=()=>frJoin(FR.invites.find(v=>v.from===b.dataset.join)));
+  trRender();
 }
 function showFriends(){ frMsg(''); frRender(); showOv('friendsOv'); if(ACCT.user&&!FR.code) frStart(); else if(frOn()) frLoadProfiles().then(()=>{ if(!$('friendsOv').hidden) frRender(); }); }
 /* ---- a friend's card ---- */
@@ -8748,7 +8827,7 @@ async function frView(uid){
   $('fpStats').innerHTML=[['Best Endless',(p.bestEndless||0).toLocaleString()],['Best Ascent',p.bestAscent?'floor '+p.bestAscent:'–'],['Best Mastery Jam',p.bestRaid?p.bestRaid+'/'+WORLDS+' bosses':'–'],['Best Tether',p.bestTether?p.bestTether+' rooms':'–'],['Best Mastery Rush',p.bestRush?p.bestRush+'/'+WORLDS+' bosses':'–']].map(([l,v])=>`<div><span class="lbl">${l}</span><b>${v}</b></div>`).join('');
   const maps=p.levels||[];
   $('fpMaps').innerHTML=maps.length?maps.map((l,i)=>`<li><span>${escapeHTML(l.n||'Untitled')}</span><button type="button" class="fplike" data-i="${i}" aria-pressed="false" aria-label="Like this level">♥ <b>${Math.max(0,+l.k||0)}</b></button><button type="button" data-a="play" data-i="${i}">Play</button><button type="button" data-a="edit" data-i="${i}">Open in editor</button></li>`).join(''):'<li class="none">They haven\'t built any levels yet.</li>';
-  frLikes(uid,maps); frShowcase(p); $('fpGift').onclick=()=>fgOpen(uid); $('fgBox').hidden=true; $('fgBox').innerHTML='';
+  frLikes(uid,maps); frShowcase(p); $('fpGift').onclick=()=>fgOpen(uid); $('fpTrade').onclick=()=>trOpen(uid); $('fgBox').hidden=true; $('fgBox').innerHTML='';
   $('fpMaps').querySelectorAll('button:not(.fplike)').forEach(b=>b.onclick=()=>{ const d=edDecode(maps[+b.dataset.i].code); if(!d) return toast('That level could not be opened.'); if(!d.by) d.by=p.name; if(b.dataset.a==='play') playDesign(d,false); else { edLoad(d,-1); showEditor(); } });
   // leaderboard positions: where they sit in the top 100 of each board
   const boards=[['endless','Endless · all time'],['ascent','Ascent · highest floor'],['daily-'+todayKey(),'Today\'s Daily'],['week-'+weekKey(),weekEvent().name+' · this week']];
@@ -8801,6 +8880,122 @@ function fgTake(d){ const g=d.data()||{}, s=SKINS.find(k=>k.id===g.skin), key='f
     else { SAVE.owned.push(s.id); if(SAVE.gone) delete SAVE.gone[s.id]; txt=`${who} sent you the ${s.name} block!`; }
     SAVE.giftIds.push(key); SAVE.giftIds=SAVE.giftIds.slice(-200); save(); acctPush(true); afterGift(); toast('🎁 '+txt); if(A.ctx) sGem(); buzz(30); }
   d.ref.delete().catch(()=>{}); }
+/* ---- trading blocks with a friend ----
+   You offer one of your blocks for one of theirs. Your block is held (out of your collection) while the offer waits.
+   They accept or say no thanks; either way their answer comes back to you: accepted, you get their block; not, yours
+   comes back. You can withdraw an offer they haven't answered yet. The rules make an answer only count for the exact
+   offer it answers, and one open offer between two friends at a time. */
+const TR={inc:{},seen:{}};
+const trOut=()=>SAVE.trOut||(SAVE.trOut={});
+const trOk=s=>fgGiftable(s);
+function trHold(id){ SAVE.owned=SAVE.owned.filter(x=>x!==id); SAVE.pins=(SAVE.pins||[]).filter(x=>x!==id); SAVE.gone=Object.assign({},SAVE.gone,{[id]:Date.now()}); }
+/* a block arriving: if you already own it you get Notes instead (as with a repeat from a pack) */
+function trGet(id){ const s=skinById(id); if(SAVE.owned.includes(id)){ const pk=BPACKS.find(p=>p.id===s.bp), n=pk?bpRefund(pk,s.bpr):Math.round((s.price||0)/2); SAVE.notes+=n; return n; }
+  SAVE.owned.push(id); if(SAVE.gone) delete SAVE.gone[id]; return 0; }
+/* step by step in the friend's card: what you give, what you want, then send */
+function trOpen(uid,give){ const p=FR.profiles[uid]||{}, who=escapeHTML(showName(p.name,'your friend')), box=$('fgBox'); box.hidden=false;
+  if(!frOn()){ box.innerHTML='<p class="small">Sign in to trade.</p>'; return; }
+  const o=trOut()[uid];
+  if(o){ box.innerHTML=`<p class="small" style="margin:0 0 8px">Your offer to ${who} is waiting: your <b>${escapeHTML(skinById(o.give).name)}</b> for their <b>${escapeHTML(skinById(o.want).name)}</b>.</p><button class="btn ghost" type="button" id="trWd">Withdraw the offer</button><p class="small" id="fgMsg"></p>`;
+    $('trWd').onclick=()=>trCancel(uid); return; }
+  const card=(s,attr)=>`<button type="button" class="fgitem" ${attr}="${s.id}"><canvas class="skprev" data-skin="${s.id}" width="56" height="56" aria-hidden="true"></canvas><span>${escapeHTML(s.name)}</span>${s.bp?`<em style="color:${BP_RAR[s.bpr].c}">${BP_RAR[s.bpr].n}</em>`:''}</button>`;
+  const sort=(a,b)=>(b.bpr||0)-(a.bpr||0)||(b.price||0)-(a.price||0);
+  if(!give){ const mine=SKINS.filter(s=>SAVE.owned.includes(s.id)&&trOk(s)&&s.id!==SAVE.skin).sort(sort);
+    if(!mine.length){ box.innerHTML='<p class="small">You don\'t have a block you can trade yet. Blocks from packs and the Shop can be traded (not the one you\'re wearing, and not Premium or event blocks).</p>'; return; }
+    box.innerHTML=`<p class="small" style="margin:0"><b>Step 1 of 2:</b> pick the block you'll give ${who}.</p><div class="fggrid">${mine.map(s=>card(s,'data-trg')).join('')}</div>`;
+    box.querySelectorAll('[data-trg]').forEach(b=>b.onclick=()=>trOpen(uid,b.dataset.trg)); return; }
+  const theirs=(Array.isArray(p.tr)?p.tr:[]).map(id=>SKINS.find(s=>s.id===id)).filter(s=>trOk(s)&&s.id!==give).sort(sort);
+  if(!theirs.length){ box.innerHTML=`<p class="small">${who} doesn't have any blocks to trade right now (or hasn't opened the game since trading arrived).</p><button class="btn ghost" type="button" id="trBack">← Back</button>`; $('trBack').onclick=()=>trOpen(uid); return; }
+  box.innerHTML=`<p class="small" style="margin:0"><b>Step 2 of 2:</b> you give <b>${escapeHTML(skinById(give).name)}</b>. Pick the block you want from ${who}.</p><div class="fggrid">${theirs.map(s=>card(s,'data-trw')+'').join('')}</div><button class="btn ghost" type="button" id="trBack" style="margin-top:6px">← Pick a different block</button>`;
+  $('trBack').onclick=()=>trOpen(uid);
+  box.querySelectorAll('[data-trw]').forEach(b=>b.onclick=()=>{ const want=b.dataset.trw, own=SAVE.owned.includes(want);
+    box.innerHTML=`<div class="trpair">${trPair(give,want)}</div><p class="small" style="margin:6px 0">Offer your <b>${escapeHTML(skinById(give).name)}</b> for their <b>${escapeHTML(skinById(want).name)}</b>? Your block is held until they answer${own?'. You already own theirs, so if they accept you\'ll get Notes for it instead':''}.</p>`+
+      `<div class="row"><button class="btn" type="button" id="trYes">🔁 Send offer</button><button class="btn ghost" type="button" id="trNo">Cancel</button></div><p class="small" id="fgMsg"></p>`;
+    $('trNo').onclick=()=>trOpen(uid); $('trYes').onclick=()=>trSend(uid,give,want); }); }
+const trPair=(a,b)=>`<div><canvas class="skprev" data-skin="${a}" width="64" height="64" aria-hidden="true"></canvas><small>${escapeHTML(skinById(a).name)}</small></div><b aria-hidden="true">⇄</b><div><canvas class="skprev" data-skin="${b}" width="64" height="64" aria-hidden="true"></canvas><small>${escapeHTML(skinById(b).name)}</small></div>`;
+async function trSend(uid,give,want){ const b=$('trYes'); if(!frOn()||trOut()[uid]||!SAVE.owned.includes(give)||give===SAVE.skin||!trOk(skinById(give))) return; b.disabled=true; const t=Date.now();
+  try{ await frDB().collection('trades').doc(uid).collection('items').doc(frMe()).set({from:frMe(),name:ensureName(),give,want,t});
+    trHold(give); trOut()[uid]={give,want,t,name:String((FR.profiles[uid]||{}).name||'').slice(0,24)}; save(); acctPush(true); frPush(true); if(A.ctx) sGem();
+    $('fgBox').innerHTML=`<p class="small">🔁 Offer sent! Your ${escapeHTML(skinById(give).name)} is held until ${escapeHTML(showName((FR.profiles[uid]||{}).name,'your friend'))} answers. You'll see the result as soon as they do.</p>`; }
+  catch(e){ b.disabled=false; $('fgMsg').textContent=e&&e.code==='permission-denied'?'That didn\'t go through. You may already have an offer waiting with them, or they aren\'t on your friends list any more.':'Could not send the offer. Check your connection and try again.'; } }
+async function trCancel(uid){ const o=trOut()[uid]; if(!o||!frOn()) return; const b=$('trWd'); if(b) b.disabled=true;
+  try{ await frDB().collection('trades').doc(uid).collection('items').doc(frMe()).delete();
+    trGet(o.give); delete trOut()[uid]; save(); acctPush(true); frPush(true); $('fgBox').innerHTML=`<p class="small">Offer withdrawn. ${escapeHTML(skinById(o.give).name)} is back in your collection.</p>`; }
+  catch(e){ if(b) b.disabled=false; const m=$('fgMsg'); if(m) m.textContent=e&&e.code==='permission-denied'?'They\'ve already answered, so it can\'t be withdrawn. The result arrives in a moment.':'Could not withdraw it. Check your connection.'; } }
+/* offers waiting for you, shown in the Friends screen */
+function trRender(){ const box=$('trBox'); if(!box) return; const inc=Object.values(TR.inc).sort((a,b)=>b.t-a.t), out=Object.entries(trOut());
+  if(!inc.length&&!out.length){ box.innerHTML=''; return; }
+  box.innerHTML=`<h2 style="margin-top:4px">Trades</h2><ul class="trlist">`+inc.map(o=>{ const g=SKINS.find(s=>s.id===o.give), w=SKINS.find(s=>s.id===o.want); if(!trOk(g)||!trOk(w)) return '';
+      const have=SAVE.owned.includes(w.id), wearing=SAVE.skin===w.id;
+      return `<li><div class="trpair">${trPair(g.id,w.id)}</div><p><b>${escapeHTML(showName(o.name,'A friend'))}</b> offers their <b>${escapeHTML(g.name)}</b> for your <b>${escapeHTML(w.name)}</b>.${have?'':' <span class="trwarn">You don\'t have that block any more.</span>'}${wearing?' <span class="trwarn">You\'re wearing it: accepting switches you to Dawn Cube.</span>':''}</p>`+
+        `<div class="row"><button class="btn" type="button" data-tra="${escapeHTML(o.from)}" ${have?'':'disabled'}>Accept</button><button class="btn ghost" type="button" data-trd="${escapeHTML(o.from)}">No thanks</button></div></li>`; }).join('')+
+    out.map(([uid,o])=>`<li class="mine"><div class="trpair">${trPair(o.give,o.want)}</div><p>Waiting for <b>${escapeHTML(showName(o.name||(FR.profiles[uid]||{}).name,'your friend'))}</b> to answer your offer.</p><div class="row"><button class="btn ghost" type="button" data-trw="${escapeHTML(uid)}">Withdraw</button></div></li>`).join('')+`</ul><p class="small" id="trMsg"></p>`;
+  box.querySelectorAll('[data-tra]').forEach(b=>b.onclick=()=>trAnswer(b.dataset.tra,true));
+  box.querySelectorAll('[data-trd]').forEach(b=>b.onclick=()=>trAnswer(b.dataset.trd,false));
+  box.querySelectorAll('[data-trw]').forEach(b=>b.onclick=async()=>{ b.disabled=true; await trCancel(b.dataset.trw); trRender(); }); }
+async function trAnswer(from,ok){ const o=TR.inc[from]; if(!o||!frOn()) return; const me=frMe(), db=frDB(), msg=t=>{ const m=$('trMsg'); if(m) m.textContent=t; };
+  if(ok&&!SAVE.owned.includes(o.want)) return msg('You don\'t have that block any more.');
+  $('trBox').querySelectorAll('button').forEach(b=>b.disabled=true);
+  try{ const bt=db.batch(); bt.delete(db.collection('trades').doc(me).collection('items').doc(from));
+    bt.set(db.collection('tradeReplies').doc(from).collection('items').doc(me),{from:me,ok,give:o.want,got:o.give,offerT:o.t,t:Date.now()}); await bt.commit();
+    delete TR.inc[from];
+    if(ok){ if(SAVE.skin===o.want) equip('skin',DEF.skin); trHold(o.want); const n=trGet(o.give); SAVE.life=SAVE.life||{}; SAVE.life.trades=(SAVE.life.trades||0)+1; save(); acctPush(true); frPush(true); afterGift(); achCheck();
+      toast(n?`🔁 Trade done! You already had ${skinById(o.give).name}, so here's ♪${n.toLocaleString()}`:`🔁 Trade done! ${skinById(o.give).name} is yours`); if(A.ctx) sGem(); buzz(30); }
+    else toast('Offer declined.');
+    trRender(); frBadge(); }
+  catch(e){ trRender(); msg(e&&e.code==='permission-denied'?'That offer was withdrawn or changed. It\'s gone now.':'Could not answer. Check your connection and try again.'); } }
+/* an answer to one of your offers arriving */
+function trReply(d){ const r=d.data()||{}, o=trOut()[r.from], key='tr:'+r.from+':'+r.offerT; SAVE.giftIds=SAVE.giftIds||[];
+  if(o&&o.t===r.offerT&&!SAVE.giftIds.includes(key)){ const who=showName(o.name||(FR.profiles[r.from]||{}).name,'Your friend');
+    if(r.ok){ const n=trGet(o.want); SAVE.life=SAVE.life||{}; SAVE.life.trades=(SAVE.life.trades||0)+1; toast(`🔁 ${who} accepted your trade! `+(n?`You already had ${skinById(o.want).name}, so here's ♪${n.toLocaleString()}`:`${skinById(o.want).name} is yours`)); if(A.ctx) sGem(); buzz(30); }
+    else { trGet(o.give); toast(`${who} said no thanks. Your ${skinById(o.give).name} is back.`); }
+    delete trOut()[r.from]; SAVE.giftIds.push(key); SAVE.giftIds=SAVE.giftIds.slice(-200); save(); acctPush(true); afterGift(); achCheck(); trRender(); }
+  d.ref.delete().catch(()=>{}); }
+function trInc(snap){ const was=TR.inc, now={}; snap.docs.forEach(d=>{ const o=d.data()||{}; if(o.from===d.id&&typeof o.give==='string'&&typeof o.want==='string') now[d.id]=o; });
+  TR.inc=now; for(const k in now) if(!was[k]&&!TR.seen[k+now[k].t]){ TR.seen[k+now[k].t]=1; const s=SKINS.find(x=>x.id===now[k].give); if(s) toast(`🔁 ${showName(now[k].name,'A friend')} wants to trade their ${s.name}. Open Friends to answer.`); }
+  frBadge(); trRender(); }
+
+/* ================= THE FORGE =================
+   Every repeat block from a pack also leaves Stardust. Stardust forges any pack block you're still missing, so a set
+   can always be finished. Pristine blocks can't be forged. */
+const DUST_GET=[3,6,15,50,150,300], DUST_COST=[40,90,280,900,2400];
+const dustN=()=>SAVE.dust||0;
+function forgeList(){ const out=[]; BPACKS.filter(bpAvail).forEach(pk=>Object.keys(pk.rates).forEach(id=>{ const s=skinById(id); if(s&&s.bpr<5&&!SAVE.owned.includes(id)) out.push({s,pk}); })); return out; }
+function buildForge(){
+  if(!SAVE.forgeGift){ SAVE.forgeGift=1; SAVE.dust=dustN()+60; save(); }   // a little Stardust to start with
+  const L=forgeList(), groups=BPACKS.filter(bpAvail);
+  let h=`<div class="forgehead"><div class="anvil" aria-hidden="true">⚒</div><div><b>The Forge</b><p>Every repeat block you pull from a pack also gives <b>Stardust</b>. Spend it here to forge any pack block you're still missing.</p></div><div class="dustbal"><small>Stardust</small><b>✧ ${dustN().toLocaleString()}</b></div></div>`+
+    `<div class="forgerates">${BP_RAR.slice(0,5).map((R,r)=>`<span><i style="--rc:${R.c}"></i>${R.n}: forge ✧${DUST_COST[r].toLocaleString()} · repeat +✧${DUST_GET[r]}</span>`).join('')}</div>`;
+  if(!L.length) h+=`<p class="bpnote">You've found every block you can forge. Amazing! Pristine blocks can only come from packs.</p>`;
+  groups.forEach(pk=>{ const list=L.filter(x=>x.pk===pk).sort((a,b)=>a.s.bpr-b.s.bpr); if(!list.length) return;
+    h+=`<h3 class="collsec">${escapeHTML(pk.name)}<small>${list.length} to forge</small></h3>`+list.map(({s})=>{ const c=DUST_COST[s.bpr], ok=dustN()>=c, R=BP_RAR[s.bpr];
+      return `<div class="item forgeitem${ok?' can':''}"><canvas class="skprev" data-skin="${s.id}" width="64" height="64" aria-hidden="true"></canvas><span class="crar" style="--rc:${R.c}">${R.n}</span><b>${escapeHTML(s.name)}</b>`+
+        `<div class="bpbar" style="--acc:${R.c}"><i style="width:${Math.min(100,Math.round(dustN()/c*100))}%"></i></div><button class="btn" type="button" data-forge="${s.id}" ${ok?'':'disabled'}>⚒ Forge · ✧ ${c.toLocaleString()}</button></div>`; }).join(''); });
+  $('shopGrid').innerHTML=h;
+  $('shopGrid').querySelectorAll('[data-forge]').forEach(b=>b.onclick=()=>forgeOne(b.dataset.forge));
+  $('shopStats').textContent='Stardust comes from repeat blocks in packs. Forging is never random: you pick exactly the block you get.';
+}
+function forgeOne(id){ const s=skinById(id), pk=BPACKS.find(p=>p.rates[id]); if(!s||!pk||s.bpr>=5||SAVE.owned.includes(id)||dustN()<DUST_COST[s.bpr]||(BP.stage&&BP.stage!=='done')) return;
+  SAVE.dust=dustN()-DUST_COST[s.bpr]; SAVE.owned.push(id); if(SAVE.gone) delete SAVE.gone[id]; SAVE.life=SAVE.life||{}; SAVE.life.forged=(SAVE.life.forged||0)+1;
+  SAVE.bpSet=SAVE.bpSet||{}; const tot=Object.keys(pk.rates).length, have=bpOwnedN(pk); let set=0; if(have>=tot&&!SAVE.bpSet[pk.id]){ SAVE.bpSet[pk.id]=1; set=bpSetBonus(pk); SAVE.notes+=set; }
+  save(); bpShowMulti(pk,[{id,dupe:false,refund:0,have,tot,set}],{forge:true}); }
+
+/* ================= DAILY DEALS =================
+   Three Shop blocks on sale every day, the same three for everyone, picked from the date. */
+const DEAL_OFF=[30,40,50];
+function dealsToday(){ const pool=SKINS.filter(s=>s.price>0&&!s.req&&!s.paid&&!s.hidden&&!s.bp), r=mulberry(hashStr('deals'+todayKey())), a=[...pool];
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a.slice(0,3).sort((x,y)=>x.price-y.price).map((s,i)=>({s,off:DEAL_OFF[i],price:Math.max(25,Math.round(s.price*(100-DEAL_OFF[i])/100/25)*25)})); }
+function dealsHTML(){ const left=()=>{ const d=new Date(); d.setHours(24,0,0,0); const m=Math.ceil((d-Date.now())/6e4); return `${Math.floor(m/60)}h ${m%60}m`; };
+  return `<div class="deals"><div class="dealshead"><b>🔥 Today's deals</b><small>New deals in ${left()}</small></div><div class="dealrow">${dealsToday().map(({s,off,price})=>{ const own=SAVE.owned.includes(s.id);
+    return `<div class="deal"><span class="dealoff">−${off}%</span><canvas class="skprev" data-skin="${s.id}" width="64" height="64" aria-hidden="true"></canvas><b>${escapeHTML(s.name)}</b><small><s>♪ ${s.price.toLocaleString()}</s></small>`+
+      (own?`<button class="btn ghost" type="button" disabled>Owned ✓</button>`:`<button class="btn" type="button" data-deal="${s.id}" ${SAVE.notes<price?'disabled':''}>♪ ${price.toLocaleString()}</button>`)+`</div>`; }).join('')}</div></div>`; }
+function dealBuy(id){ const d=dealsToday().find(x=>x.s.id===id); if(!d||SAVE.owned.includes(id)||SAVE.notes<d.price) return;
+  SAVE.notes-=d.price; SAVE.owned.push(id); equip('skin',id); if(A.ctx) sGem(); buzz(20); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; toast(`${d.s.name} is yours, ${d.off}% off!`); buildShop(); netHello(); }
+
+/* ---- shuffle: wear a random one of your pinned blocks every run ---- */
+function pinShuffle(M){ if(!SAVE.pinShuffle||TRY||M.net) return; const pins=(SAVE.pins||[]).filter(id=>ownsSkin(id)); if(pins.length<2) return;
+  const pick=pins.filter(id=>id!==SAVE.skin); SAVE.skin=pick[Math.floor(Math.random()*pick.length)]; }
 /* ---- party invites ---- */
 function frCoopInvites(){
   const box=$('nInvite'); if(!box) return;
@@ -8830,7 +9025,7 @@ function frJoin(v){
   if(!v) return; $('inviteBar').hidden=true; frDecline(v); FR.invites=FR.invites.filter(x=>x!==v);
   toMenu(); showParty(); $('nCode').value=v.code; netJoin();
 }
-function frBadge(){ const d=$('mFDot'); if(d) d.hidden=!FR.invites.length; }
+function frBadge(){ const d=$('mFDot'); if(d) d.hidden=!FR.invites.length&&!Object.keys(TR.inc).length; }
 setInterval(()=>{ frInviteBar(); if(!$('coopOv').hidden) frCoopInvites(); },1000);
 $('mFriends').onclick=showFriends;
 $('frBack').onclick=()=>toMenu(); $('fpBack').onclick=()=>{ FR.view=null; showFriends(); };
@@ -9473,6 +9668,8 @@ function buildPassQuests(){ const P=ensurePQ();
   $('ppQuests').innerHTML=`<div class="pqsec"><div class="pqh">Daily quests <small>new in ${untilMidnight()}</small></div><ul class="pqlist">${P.d.map((q,i)=>li(q,i,0)).join('')}</ul></div>`+
     `<div class="pqsec" style="margin-top:12px"><div class="pqh"><span>Weekly quests<span class="pqtok">${P.wTok===P.week?'🎟 Free pack earned this week ✓':'🎟 Collect all four for a free pack'}</span></span><small>new in ${untilMonday()}</small></div><ul class="pqlist">${P.w.map((q,i)=>li(q,i,1)).join('')}</ul></div>`;
   $('ppQuests').querySelectorAll('[data-pq]').forEach(b=>b.onclick=()=>{ const [w,i]=b.dataset.pq.split(':').map(Number); pqClaim(w,i); });
+  if(pqReady()>1){ $('ppQuests').insertAdjacentHTML('afterbegin',`<button class="ppbtn pqall" type="button" id="pqAll">Collect all ${pqReady()} quests</button>`);
+    $('pqAll').onclick=()=>{ const P=ensurePQ(); [[P.d,0],[P.w,1]].forEach(([Lq,wk])=>Lq.forEach((q,i)=>{ if(q.prog>=q.goal&&!q.claimed) pqClaim(wk,i); })); }; }
 }
 
 /* ================= DAILY QUESTS ================= */
@@ -10757,27 +10954,31 @@ function giftGive(r){ const out=[]; if(r.n){ SAVE.notes+=r.n; out.push(`♪${r.n
 /* ================= WHAT'S NEW =================
    Shown once to each player after an update (remembered in the save, so it follows their account to other devices),
    once the daily gift is out of the way. Settings → What's new opens it again. Change NEWS_V to show a new one. */
-const NEWS_V='2026-10', NEWS_WHEN='Update · October 2026';
+const NEWS_V='2026-10b', NEWS_WHEN='Update · October 2026';
 const NEWS_ADDED=[
- ['✦','Block packs','Seven packs, from Mythic to Pulse Pristine, every one with its drop rates shown. Ascendant blocks now sit above Legendary.'],
+ ['🔁','Trade blocks with friends','Offer one of your blocks for one of theirs. Your block is held safely until they answer.'],
+ ['⚒','The Forge','Repeat blocks from packs now give Stardust. Forge any pack block you\'re missing, and finish every set.'],
+ ['🔥','Daily deals','Three Shop blocks on sale every day, up to 50% off.'],
+ ['✦','Cheaper packs','Every pack costs about 20% less.'],
+ ['🐺','A new Spirit Wolf','Redrawn, with a giant glowing spirit wolf that howls on the beat.'],
+ ['🔀','Shuffle your blocks','Pin two or more blocks and wear a random one each run.'],
+ ['✅','Handy extras','Collect all your Pass quests at once, tap a card after opening 5 packs to wear it, and use Space or Enter to open packs.']];
+const NEWS_EARLIER=[
  ['🍂','Harvest Festival Pack','October and November only: pumpkins, a golden cornucopia and the Elder Oak.'],
- ['🎁','Free packs','A free pack every day, and another for finishing all your weekly quests in the Pulse Pass.'],
- ['⚡','Opening packs','Open five at once, turn on Quick open, see your pack history, and earn bonus Notes for completing a set.'],
- ['🔍','Collection','Search, filters, and pins for your favourite blocks.'],
- ['▶','Try before you buy','Wear any Shop block for a run before you spend your Notes.'],
- ['💛','Friends','Give a friend one of your blocks, show off your three best on your profile, and like the levels they build.'],
- ['🏆','12 new achievements','Rhythm Patterns scores, long streaks, Studio songs, Remix stars, packs and more.'],
- ['🛍','A new Shop','A fresh look and four big new blocks: Cyber Ninja, Inferno Mech, Spirit Wolf and Galaxy Emperor.'],
- ['🔒','Account','Change your password from the Account screen.'],
- ['📶','Play offline','On the website, the game now opens even without an internet connection.']];
+ ['🎁','Free packs','A free pack every day, and another for finishing all your weekly quests.'],
+ ['⚡','Opening packs','Open five at once, Quick open, pack history and set rewards.'],
+ ['💛','Friends','Gift blocks, show off your three best, and like the levels friends build.'],
+ ['🔍','Collection and Shop','Search your blocks, and try any Shop block in a run before buying.'],
+ ['🏆','New achievements','14 new ones, including trading and the Forge.'],
+ ['📶','Play offline','On the website, the game opens even without a connection.']];
 const NEWS_SOON=[
+ ['🏫','Classrooms','Teachers will be able to make a class code, and students can join and practise rhythm together.'],
  ['❄','A winter pack','A new seasonal pack for December.'],
  ['🌟','Top levels','Browse and play the most-liked levels players have built.'],
- ['🎵','More rhythms','New patterns to learn in Rhythm Patterns.'],
  ['👥','Friend leaderboards','See how you stack up against just your friends.']];
 let newsFrom='menuOv';
 function newsShow(from='menuOv'){ newsFrom=from; const li=L=>`<ul class="newslist">${L.map(([i,t,d])=>`<li><span aria-hidden="true">${i}</span><div><b>${t}</b><small>${d}</small></div></li>`).join('')}</ul>`;
-  $('newsWhen').textContent=NEWS_WHEN; $('newsBody').innerHTML=`<h3>Just added</h3>${li(NEWS_ADDED)}<h3 class="soon">Coming soon</h3>${li(NEWS_SOON)}`;
+  $('newsWhen').textContent=NEWS_WHEN; $('newsBody').innerHTML=`<h3>Just added</h3>${li(NEWS_ADDED)}<h3>Also new this month</h3>${li(NEWS_EARLIER)}<h3 class="soon">Coming soon</h3>${li(NEWS_SOON)}`;
   showOv('newsOv'); $('newsOv').querySelector('.panel').scrollTop=0; }
 function newsCheck(){ if(SAVE.newsSeen===NEWS_V||G.state!=='menu'||$('menuOv').hidden||window.__noNews) return false; newsShow(); return true; }
 $('newsOk').onclick=()=>{ SAVE.newsSeen=NEWS_V; save(); if(typeof acctPush==='function') acctPush(); if(newsFrom==='settingsOv') showOv('settingsOv'); else toMenu(); };
@@ -10882,7 +11083,9 @@ const ACH=[
  ['pack50','Pack Collector','Open 50 block packs',()=>Object.values(SAVE.bpOpened||{}).reduce((a,b)=>a+b,0)>=50],
  ['set1','Full Set','Find every block in a pack',()=>Object.keys(SAVE.bpSet||{}).length>=1],
  ['giver','Generous','Give a block to a friend',()=>LF('giftsSent')>=1],
- ['liked5','Crowd Favourite','Get 5 likes on levels you built',()=>(SAVE.likesGot||0)>=5]];
+ ['liked5','Crowd Favourite','Get 5 likes on levels you built',()=>(SAVE.likesGot||0)>=5],
+ ['trade1','Fair Deal','Complete a trade with a friend',()=>LF('trades')>=1],
+ ['forge1','Blacksmith','Forge a block in the Forge',()=>LF('forged')>=1]];
 let achQ=[], achT=null;
 function achCheck(){
   const A0=SAVE.ach||(SAVE.ach={}); let n=0;
@@ -12525,14 +12728,15 @@ function shopFeature(){ const f=$('shopFeat'); if(shopMode!=='shop'||shopTab!=='
 function showStore(tab){ if(!tab&&shopMode!=='shop') tab='bpacks'; shopMode='shop'; if(tab) shopTab=tab; buildShop(); showOv('shopOv'); }
 function showColl(tab){ shopMode='coll'; if(tab) shopTab=tab; buildShop(); showOv('shopOv'); }
 function buildShop(){
-  if((shopTab==='bpacks'||shopTab==='prem')&&shopMode!=='shop') shopTab='skins';
+  if((shopTab==='bpacks'||shopTab==='prem'||shopTab==='forge')&&shopMode!=='shop') shopTab='skins';
   if(shopTab==='prem'&&window.PF_CG) shopTab='bpacks';
-  $('tabPacks').classList.toggle('on',shopTab==='bpacks'); $('tabPrem').classList.toggle('on',shopTab==='prem'); $('tabPrem').hidden=!!window.PF_CG;
+  $('tabPacks').classList.toggle('on',shopTab==='bpacks'); $('tabForge').classList.toggle('on',shopTab==='forge'); $('tabPrem').classList.toggle('on',shopTab==='prem'); $('tabPrem').hidden=!!window.PF_CG;
   { const hd=$('shopOv').querySelector('.panel > .head'); $('shopOv').style.setProperty('--shopTop',(getComputedStyle(hd).position==='sticky'?hd.offsetHeight:0)+'px'); }
   $('walletS').textContent=notesTxt(); $('shopTitle').textContent=shopMode==='shop'?'Shop':'Collection'; $('shopOv').classList.toggle('storemode',shopMode==='shop'); moneyRender(); shopFeature();
   $('tabSkins').classList.toggle('on',shopTab==='skins'); $('tabTrails').classList.toggle('on',shopTab==='lands'); $('tabTiles').classList.toggle('on',shopTab==='tiles'); $('tabSounds').classList.toggle('on',shopTab==='sounds'); $('tabBanners').classList.toggle('on',shopTab==='banners');
   if(shopTab==='banners'){ buildBanners(); return shopEmpty(); }
   if(shopTab==='bpacks'){ buildPacks(); return shopEmpty(); }
+  if(shopTab==='forge'){ buildForge(); return shopEmpty(); }
   if(shopMode==='coll'&&shopTab==='skins'){ buildCollSkins(); return shopEmpty(); }
   if(shopTab==='prem'){ $('shopGrid').innerHTML=''; $('shopStats').textContent='Premium blocks come with their own landing effect. Everything here is optional.'; return; }
   if(shopTab==='tiles'||shopTab==='sounds'){ buildShop2(); return shopEmpty(); }
@@ -12546,6 +12750,7 @@ function buildShop(){
     else btn=`<button class="btn" data-buy="${it.id}" type="button" ${SAVE.notes<it.price?'disabled':''}>♪ ${it.price}</button>`;
     const tr=shopTab==='skins'&&!owned&&!it.req&&!it.paid?`<button class="btn ghost trybtn" data-try="${it.id}" type="button">▶ Try it</button>`:'';
     return `<div class="item${eq===it.id?' eq':''}">${prev}<b>${it.name}</b>${tr}${btn}</div>`; }).join('');
+  if(shopTab==='skins'&&shopMode==='shop'){ $('shopGrid').insertAdjacentHTML('afterbegin',dealsHTML()); $('shopGrid').querySelectorAll('[data-deal]').forEach(b=>b.onclick=()=>dealBuy(b.dataset.deal)); }
   $('shopGrid').querySelectorAll('[data-try]').forEach(b=>b.onclick=()=>tryBlock(b.dataset.try));
   $('shopGrid').querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{ equip(shopTab==='skins'?'skin':'land',b.dataset.eq); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; buildShop(); netHello(); });
   $('shopGrid').querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{ const it=list.find(x=>x.id===b.dataset.buy); if(SAVE.notes<it.price) return; SAVE.notes-=it.price; SAVE.owned.push(it.id);
@@ -12626,14 +12831,14 @@ function bpRollOne(pk){
   SAVE.bpDry=SAVE.bpDry||{}; const dry=SAVE.bpDry[pk.id]||0;
   const id=bpRoll(pk,undefined,bpBoost(dry)), s=skinById(id), dupe=SAVE.owned.includes(id), refund=dupe?bpRefund(pk,s.bpr):0;
   SAVE.bpDry[pk.id]=s.bpr===0?dry+1:0;
-  if(dupe) SAVE.notes+=refund; else { SAVE.owned.push(id); if(SAVE.gone) delete SAVE.gone[id]; }
+  const dst=dupe?DUST_GET[s.bpr]:0; if(dupe){ SAVE.notes+=refund; SAVE.dust=(SAVE.dust||0)+dst; } else { SAVE.owned.push(id); if(SAVE.gone) delete SAVE.gone[id]; }
   SAVE.bpOpened=SAVE.bpOpened||{}; SAVE.bpOpened[pk.id]=(SAVE.bpOpened[pk.id]||0)+1;
   SAVE.bpCnt=SAVE.bpCnt||[0,0,0,0,0,0]; SAVE.bpCnt[s.bpr]=(SAVE.bpCnt[s.bpr]||0)+1;
   SAVE.bpHist=[[id,pk.id,Date.now(),dupe?1:0],...(SAVE.bpHist||[])].slice(0,20);
   // the set: every block in this pack found
   SAVE.bpSet=SAVE.bpSet||{}; const tot=Object.keys(pk.rates).length, have=bpOwnedN(pk); let set=0;
   if(have>=tot&&!SAVE.bpSet[pk.id]){ SAVE.bpSet[pk.id]=1; set=bpSetBonus(pk); SAVE.notes+=set; }
-  return {id,dupe,refund,have,tot,set}; }
+  return {id,dupe,refund,have,tot,set,dust:dst}; }
 const bpCanPay=(pk,how,n=1)=>!!pk&&bpAvail(pk)&&(how==='free'?bpFreeReady():how==='token'?bpTokens()>=1&&bpTokenOk(pk):SAVE.notes>=pk.price*n);
 function bpBuy(pk,how){ if(how===true) how='free'; if(!bpCanPay(pk,how)||(BP.stage&&BP.stage!=='done')) return;
   if(how==='free') SAVE.bpFree=todayKey(); else if(how==='token') SAVE.bpTokens=bpTokens()-1; else SAVE.notes-=pk.price;
@@ -12641,17 +12846,23 @@ function bpBuy(pk,how){ if(how===true) how='free'; if(!bpCanPay(pk,how)||(BP.sta
 /* opening five at once: five cards face down, turned over one by one or all together */
 function bpBuyMulti(pk){ if(!bpCanPay(pk,'',BP_MULTI)||(BP.stage&&BP.stage!=='done')) return;
   SAVE.notes-=pk.price*BP_MULTI; const list=[]; for(let i=0;i<BP_MULTI;i++) list.push(bpRollOne(pk)); save(); bpShowMulti(pk,list); }
-function bpShowMulti(pk,list){ try{ firstGesture(); }catch(e){} BP.timers.forEach(clearTimeout); BP.timers=[];
-  BP.pk=pk; BP.multi=list; BP.stage='multi'; BP.parts=[]; BP.rays=0; BP.prism=false;
+function bpShowMulti(pk,list,opt={}){ try{ firstGesture(); }catch(e){} BP.timers.forEach(clearTimeout); BP.timers=[];
+  BP.pk=pk; BP.multi=list; BP.stage='multi'; BP.parts=[]; BP.rays=0; BP.prism=false; BP.forge=!!opt.forge;
   const ov=$('bpOv'); ov.classList.add('multi'); ov.classList.remove('dark'); ov.style.setProperty('--glow',pk.acc); $('bpBanner').className='bpbanner'; $('bpSkip').hidden=true; $('bpTap').hidden=true;
   const m=$('bpMulti'); m.hidden=false;
   m.innerHTML=`<div class="bpmsum" id="bpmSum">${escapeHTML(pk.name)} ×${list.length} · tap a card to turn it over</div><div class="bpmgrid">${list.map((res,i)=>{ const s=skinById(res.id), r=s.bpr, R=BP_RAR[r];
     return `<div class="bpmc" data-i="${i}" style="animation-delay:${i*.08}s" role="button" tabindex="0" aria-label="Turn over card ${i+1}"><div class="bpcf bpcback"><b>♪</b></div>`+
-      `<div class="bpcf bpcfront r${r}" style="--rc:${R.c}">${res.dupe?'':'<span class="bpmnew">NEW</span>'}<span class="bprr">${r===5?'✦ Pristine ✦':R.n}</span><canvas class="skprev" data-skin="${s.id}" data-px="120" data-big="1" width="120" height="120" aria-hidden="true"></canvas><b>${escapeHTML(s.name)}</b><small>${res.dupe?`Repeat · +♪${res.refund.toLocaleString()}`:'New block!'}</small></div></div>`; }).join('')}</div>`+
+      `<div class="bpcf bpcfront r${r}" style="--rc:${R.c}">${res.dupe?'':'<span class="bpmnew">NEW</span>'}<span class="bprr">${r===5?'✦ Pristine ✦':R.n}</span><canvas class="skprev" data-skin="${s.id}" data-px="120" data-big="1" width="120" height="120" aria-hidden="true"></canvas><b>${escapeHTML(s.name)}</b><small>${res.dupe?`+♪${res.refund.toLocaleString()} · ✧${res.dust||0}`:'New block!'}</small></div></div>`; }).join('')}</div>`+
     `<div class="bpbtns" id="bpmBtns"><button class="btn" type="button" id="bpmAll">Reveal all</button></div>`;
-  m.querySelectorAll('.bpmc').forEach(c=>{ c.onclick=()=>bpmFlip(+c.dataset.i); c.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); bpmFlip(+c.dataset.i); } }; });
+  m.querySelectorAll('.bpmc').forEach(c=>{ c.onclick=()=>c.classList.contains('flip')?bpmWear(+c.dataset.i):bpmFlip(+c.dataset.i); c.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); bpmFlip(+c.dataset.i); } }; });
   $('bpmAll').onclick=()=>{ $('bpmAll').disabled=true; let k=0; list.forEach((_,i)=>{ if(!bpmCard(i).classList.contains('flip')) bpLater(()=>bpmFlip(i),(k++)*420); }); };
+  if(BP.forge){ $('bpmSum').textContent='⚒ Forging…'; $('bpmBtns').innerHTML=''; ov.style.setProperty('--glow','#FF8A2A');
+    [0,1,2].forEach(k=>bpLater(()=>{ const c=bpmCard(0); if(!c) return; const r=c.getBoundingClientRect(); c.animate([{scale:1},{scale:.94},{scale:1}],{duration:160}); bpSnd('thump',k); buzz(25);
+      for(let j=0;j<22;j++) bpSpark(r.left+r.width/2,r.top+r.height*.3,1,j%2?'#FFB040':'#FFFFFF',3+k); },500+k*420));
+    bpLater(()=>bpmFlip(0),1900); }
   ov.hidden=false; ov.scrollTop=ov.scrollLeft=0; bpFxSize(); if(!BP.raf) BP.raf=requestAnimationFrame(bpFrame); }
+function bpmWear(i){ const r=BP.multi&&BP.multi[i]; if(!r||!ownsSkin(r.id)) return; equip('skin',r.id); G.players=[mkPlayer(0)]; try{ netHello(); }catch(e){}
+  $('bpMulti').querySelectorAll('.bpmc').forEach(c=>c.classList.toggle('worn',+c.dataset.i===i)); buzz(10); toast(`Now wearing ${skinById(r.id).name}`); }
 const bpmCard=i=>$('bpMulti').querySelector(`.bpmc[data-i="${i}"]`);
 function bpmFlip(i){ const c=bpmCard(i); if(!c||c.classList.contains('flip')||BP.stage!=='multi') return; c.classList.add('flip');
   const res=BP.multi[i], r=skinById(res.id).bpr, R=BP_RAR[r], b=c.getBoundingClientRect(), x=b.left+b.width/2, y=b.top+b.height/2;
@@ -12659,10 +12870,14 @@ function bpmFlip(i){ const c=bpmCard(i); if(!c||c.classList.contains('flip')||BP
   bpSnd('reveal',r); buzz([12,20,40,80,120,160][r]);
   if(r>=3){ const bn=$('bpBanner'); bn.textContent=r===5?'PULSE PRISTINE':r===4?'ASCENDANT!':'LEGENDARY!'; bn.style.setProperty('--rc',R.c); bn.className='bpbanner'; void bn.offsetWidth; bn.className='bpbanner go'+(r===5?' r4':r===4?' asc':''); }
   if(BP.multi.every((_,j)=>bpmCard(j).classList.contains('flip'))) bpmDone(); }
-function bpmDone(){ BP.stage='done'; const pk=BP.pk, L=BP.multi, nw=L.filter(r=>!r.dupe).length, back=L.reduce((a,r)=>a+r.refund,0), set=L.reduce((a,r)=>a+(r.set||0),0);
-  $('bpmSum').innerHTML=[nw?`<span class="new">${nw} new block${nw>1?'s':''}</span>`:'',back?`♪${back.toLocaleString()} back for repeats`:''].filter(Boolean).join(' · ')+(set?`<div class="bpsetdone">SET COMPLETE! +♪${set.toLocaleString()}</div>`:'');
+function bpmDone(){ BP.stage='done'; const pk=BP.pk, L=BP.multi, nw=L.filter(r=>!r.dupe).length, back=L.reduce((a,r)=>a+r.refund,0), set=L.reduce((a,r)=>a+(r.set||0),0), ds=L.reduce((a,r)=>a+(r.dust||0),0);
+  $('bpmSum').innerHTML=[nw?`<span class="new">${nw} new block${nw>1?'s':''}</span>`:'',back?`♪${back.toLocaleString()} back for repeats`:'',ds?`✧${ds} Stardust`:''].filter(Boolean).join(' · ')+(set?`<div class="bpsetdone">SET COMPLETE! +♪${set.toLocaleString()}</div>`:'');
+  if(BP.forge){ const s=skinById(L[0].id); $('bpmSum').innerHTML=`<span class="new">FORGED</span> ${escapeHTML(s.name)} is yours!`+(set?`<div class="bpsetdone">SET COMPLETE! +♪${set.toLocaleString()}</div>`:'');
+    $('bpmBtns').innerHTML=`<button class="btn" type="button" id="bpmEq">Wear it</button><button class="btn ghost" type="button" id="bpmDone">Back to the Forge</button>`;
+    $('bpmEq').onclick=()=>{ bpmWear(0); $('bpmEq').disabled=true; $('bpmEq').textContent='Wearing it'; }; $('bpmDone').onclick=bpClose; }
+  else { $('bpmSum').innerHTML+=`<div class="small" style="margin-top:4px">Tap a card to wear that block</div>`;
   $('bpmBtns').innerHTML=`<button class="btn ghost" type="button" id="bpmAgain" ${bpCanPay(pk,'',BP_MULTI)?'':'disabled'}>Open ${BP_MULTI} more · ♪ ${(pk.price*BP_MULTI).toLocaleString()}</button><button class="btn ghost" type="button" id="bpmDone">Done</button>`;
-  $('bpmAgain').onclick=()=>bpBuyMulti(pk); $('bpmDone').onclick=bpClose;
+  $('bpmAgain').onclick=()=>bpBuyMulti(pk); $('bpmDone').onclick=bpClose; }
   if(set) bpLater(()=>{ const c={x:innerWidth/2,y:innerHeight/2}; for(let k=0;k<140;k++) bpSpark(c.x,c.y,1,'prism',6,k%2); bpRing(c.x,c.y,'prism',3); bpSnd('reveal',3); },400);
   if(typeof acctPush==='function') acctPush(true); }
 /* ---- the opening ---- */
@@ -12729,6 +12944,11 @@ function bpHype(){ if(BP.stage!=='rip') return; BP.stage='hype'; $('bpSkip').hid
       const c=bpCardC(); bpRing(c.x,c.y,'#FFFFFF',0); bpSnd('hold'); card.animate([{scale:1},{scale:1.05},{scale:1}],{duration:300});
       BP.stage='holding'; $('bpInfo').textContent=r===5?'':`It holds at ${BP_RAR[r].n}.`; bpLater(()=>{ if(BP.stage==='holding'){ BP.stage='ready'; card.classList.remove('shake'); bpTease(); } },650); },SAVE.reduce?120:380); };
   show(); }
+addEventListener('keydown',e=>{ if($('bpOv').hidden||e.repeat) return; const k=e.key;
+  if(k==='Escape'&&BP.stage==='done'){ e.preventDefault(); bpClose(); return; }
+  if(k!==' '&&k!=='Enter') return; if(e.target&&e.target.matches&&e.target.matches('button,input')) return; e.preventDefault();
+  if(BP.stage==='cut') bpCutDone(); else if(BP.stage==='hype'&&BP.tap) BP.tap(); else if(BP.stage==='ready') bpTease();
+  else if(BP.stage==='multi'&&!BP.forge&&BP.multi){ const i=BP.multi.findIndex((_,j)=>!bpmCard(j).classList.contains('flip')); if(i>=0) bpmFlip(i); } });
 function bpReady(){ if(BP.stage!=='hype') return; BP.stage='ready'; $('bpCard').classList.remove('shake'); $('bpInfo').textContent='Tap the card to reveal it'; }
 $('bpCard').onclick=()=>{ if(BP.stage==='hype'&&BP.tap) BP.tap(); else if(BP.stage==='ready') bpTease(); };
 /* the tap before the flip: the card trembles to a heartbeat that speeds up, the better it is the longer it holds;
@@ -12750,7 +12970,7 @@ function bpReveal(){ BP.stage='done'; $('bpSkip').hidden=true; const pk=BP.pk, r
   for(let k=0;k<=Math.min(r,3);k++) bpLater(()=>bpRing(c.x,c.y,r===5?'prism':R.c,r),k*180);
   bpSnd('reveal',r); buzz([20,40,70,140,200,260][r]);
   if(r>=3){ const b=$('bpBanner'); b.textContent=r===5?'PULSE PRISTINE':r===4?'ASCENDANT!':'LEGENDARY!'; b.style.setProperty('--rc',R.c); b.className='bpbanner go'+(r===5?' r4':r===4?' asc':''); }
-  $('bpInfo').innerHTML=(res.dupe?`<span class="dupe">You already own ${escapeHTML(s.name)}, so you get ♪${res.refund.toLocaleString()} back</span>`:`<span class="new">NEW BLOCK</span><br>${escapeHTML(s.name)} is yours!`)+
+  $('bpInfo').innerHTML=(res.dupe?`<span class="dupe">You already own ${escapeHTML(s.name)}, so you get ♪${res.refund.toLocaleString()} back${res.dust?` and ✧${res.dust} Stardust for the Forge`:''}</span>`:`<span class="new">NEW BLOCK</span><br>${escapeHTML(s.name)} is yours!`)+
     (res.tot?`<div class="bpsetline"><span>${escapeHTML(pk.name.replace(/ Pack$/,''))} set</span><div class="bpbar"><i style="width:${Math.round((res.have-(res.dupe?0:1))/res.tot*100)}%"></i></div><b>${res.have} / ${res.tot}</b></div>`:'')+
     (res.set?`<div class="bpsetdone">SET COMPLETE! +♪${res.set.toLocaleString()}</div>`:'');
   { const bar=$('bpInfo').querySelector('.bpsetline i'); if(bar) setTimeout(()=>{ bar.style.width=Math.round(res.have/res.tot*100)+'%'; },500); }
@@ -12817,12 +13037,13 @@ function buildCollSkins(){
     `<div class="collf">${[['all','All'],['own','Owned'],['locked','Not yet']].map(([k,n])=>`<button type="button" data-cf="${k}" class="${COLL.f===k?'on':''}">${n}</button>`).join('')}</div>`+
     `<input type="search" class="collq" id="collQ" placeholder="🔍 Search your blocks" value="${escapeHTML(COLL.q)}" aria-label="Search blocks" autocomplete="off" spellcheck="false"></div>`;
   const pins=SAVE.pins.map(id=>SKINS.find(k=>k.id===id)).filter(Boolean);
-  if(pins.length) h+=`<h3 class="collsec">📌 Pinned</h3>`+pins.map(card).join('');
+  if(pins.length) h+=`<h3 class="collsec">📌 Pinned${pins.length>=2?`<label class="collshuf"><input type="checkbox" id="pinShuf" ${SAVE.pinShuffle?'checked':''}> 🔀 Wear a random one each run</label>`:''}</h3>`+pins.map(card).join('');
   groups.forEach(([g,name])=>{ const list=all.filter(it=>collGroup(it)===g&&keep(it)).sort((a,b)=>own(b)-own(a)||(a.bpr||0)-(b.bpr||0)); if(!list.length) return;
     const n=all.filter(it=>collGroup(it)===g), have=n.filter(own).length;
     h+=`<h3 class="collsec">${escapeHTML(name)}<small>${have} / ${n.length}</small></h3>`+list.map(card).join(''); });
   $('shopGrid').innerHTML=h;
   $('shopGrid').querySelectorAll('[data-cf]').forEach(b=>b.onclick=()=>{ COLL.f=b.dataset.cf; buildShop(); });
+  { const ps=$('pinShuf'); if(ps) ps.onchange=()=>{ SAVE.pinShuffle=ps.checked; save(); toast(ps.checked?'Each run you\'ll wear a random pinned block':'Shuffle off'); }; }
   { const q=$('collQ'); q.addEventListener('keydown',e=>e.stopPropagation()); q.oninput=()=>{ COLL.q=q.value; collFilter(); }; collFilter(); }
   $('shopGrid').querySelectorAll('[data-pin]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const id=b.dataset.pin, i=SAVE.pins.indexOf(id);
     if(i>=0) SAVE.pins.splice(i,1); else { if(SAVE.pins.length>=12){ toast('You can pin up to 12 blocks. Unpin one first.'); return; } SAVE.pins.push(id); } save(); buildShop(); });
@@ -13075,7 +13296,7 @@ function loop(ts){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks'||shopTab==='forge')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
@@ -13288,7 +13509,7 @@ $('walletM').addEventListener('click',()=>showStore('prem')); $('walletM').title
 $('mSettings').onclick=()=>{ buildSettings(); showOv('settingsOv'); };
 $('wBack').onclick=()=>toMenu(); $('lBack').onclick=()=>{ buildWorlds(); showOv('worldsOv'); };
 $('sBack').onclick=()=>toMenu(); $('setBack').onclick=()=>toMenu();
-$('tabPacks').onclick=()=>{ shopTab='bpacks'; buildShop(); }; $('tabPrem').onclick=()=>{ shopTab='prem'; buildShop(); }; $('tabSkins').onclick=()=>{ shopTab='skins'; buildShop(); }; $('tabTrails').onclick=()=>{ shopTab='lands'; buildShop(); };
+$('tabPacks').onclick=()=>{ shopTab='bpacks'; buildShop(); }; $('tabForge').onclick=()=>{ shopTab='forge'; buildShop(); }; $('tabPrem').onclick=()=>{ shopTab='prem'; buildShop(); }; $('tabSkins').onclick=()=>{ shopTab='skins'; buildShop(); }; $('tabTrails').onclick=()=>{ shopTab='lands'; buildShop(); };
 $('tabTiles').onclick=()=>{ shopTab='tiles'; buildShop(); }; $('tabSounds').onclick=()=>{ shopTab='sounds'; buildShop(); }; $('tabBanners').onclick=()=>{ shopTab='banners'; buildShop(); };
 $('pauseBtn').onclick=()=>G.state==='playing'?pause():null;
 $('resumeBtn').onclick=resume;
