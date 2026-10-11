@@ -1663,7 +1663,8 @@ body.phone.hastabs #toast{top:auto;bottom:calc(84px + env(safe-area-inset-bottom
 #shopOv.storemode .panel h2{background:linear-gradient(90deg,#FFE27A,#FF9E2C);-webkit-background-clip:text;background-clip:text;color:transparent}
 /* ---- block packs: the shop tab ---- */
 #tabPacks{color:#FFE27A}
-#shopOv:not(.storemode) #tabPacks,#shopOv:not(.storemode) #tabPrem,#shopOv:not(.storemode) #tabForge{display:none}
+#shopOv:not(.storemode) #tabPacks,#shopOv:not(.storemode) #tabPrem,#shopOv:not(.storemode) #tabForge,#shopOv:not(.storemode) #tabCreators{display:none}
+#tabCreators{color:#FFB3D8}
 #tabForge{color:#FFB070}
 /* the shop: tabs pinned under the header, pill buttons, cards that lift */
 #shopOv .shoptabs{flex:none;position:sticky;top:var(--shopTop,0px);z-index:4;margin:6px 0 12px;background:rgba(30,24,70,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line);box-shadow:0 6px 18px rgba(10,6,30,.35);overflow-x:auto;scrollbar-width:none}
@@ -1804,6 +1805,143 @@ body.phone.hastabs #toast{top:auto;bottom:calc(84px + env(safe-area-inset-bottom
 .bpmc.worn .bpcfront{outline:3px solid #7FF0D2;outline-offset:-3px}
 .collshuf{display:flex;align-items:center;gap:8px;font:600 13px var(--body);cursor:pointer}.collshuf input{width:17px;height:17px;accent-color:#FFD166;margin:0}
 .pqall{display:block;width:100%;margin:8px 0 0}
+.coupbar{grid-column:1/-1;padding:10px 14px;border-radius:14px;background:linear-gradient(90deg,rgba(127,240,210,.3),rgba(255,226,122,.25));border:1px dashed #7FF0D2;font:700 13.5px var(--body)}
+/* wishlist stars */
+.wishb{position:absolute;top:6px;right:6px;z-index:2;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:rgba(0,0,0,.3);color:#FFE27A;font-size:15px;line-height:1;cursor:pointer;opacity:.6}
+.wishb.on{opacity:1;background:rgba(255,209,102,.3);border-color:#FFD166}.wishb:hover{opacity:1}
+.item.citem .wishb{top:6px;right:6px}
+.newb{position:absolute;top:8px;right:8px;z-index:2;font:800 9px var(--body);letter-spacing:.06em;padding:2px 7px;border-radius:999px;background:#7FF0D2;color:#0C2A22;box-shadow:0 0 10px rgba(127,240,210,.6)}
+.navdot{position:absolute;top:2px;right:calc(50% - 22px);min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#FF4A6A;color:#fff;font:800 10px/16px var(--body);text-align:center;box-sizing:border-box}
+.chipdot{display:inline-block;margin-left:6px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#FF4A6A;color:#fff;font:800 10px/16px var(--body);text-align:center}
+#menuOv canvas.skprev,#shopGrid canvas.skprev,#stageOv canvas.skprev{cursor:pointer}
+/* the spotlight and bundles */
+.shop>.spot,.shop>.bundles,.shop>.forgebulk,.shop>.recipe,.shop>.fusion,.shop>.forgehint,.shop>.crlist,.shop>.loads{grid-column:1/-1}
+.spot{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:linear-gradient(120deg,rgba(255,226,122,.3),rgba(122,92,255,.3));border:1px solid #FFD166;box-shadow:0 0 24px rgba(255,209,102,.2)}
+.spotart canvas{width:96px;height:96px}.spott{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.spott small{font:800 10.5px var(--body);letter-spacing:.12em;text-transform:uppercase;color:#FFE27A}
+.spott b{font:800 19px var(--display)}.spott span{font-size:12px;color:var(--ink-2)}.spotb{display:flex;flex-direction:column;gap:6px;align-items:flex-end;position:relative}.spotb .wishb{position:static}
+@media (max-width:520px){.spot{flex-wrap:wrap}.spotb{flex-direction:row;width:100%;align-items:center}.spotb .btn{flex:1}}
+.bundles{padding:12px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.bunrow{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x mandatory}
+.bun{flex:0 0 200px;scroll-snap-align:start;display:flex;flex-direction:column;gap:5px;padding:10px;border-radius:14px;background:rgba(0,0,0,.25);border:1px solid var(--line)}
+.bunart{display:flex;justify-content:center;gap:2px}.bun b{font:800 14px var(--display)}.bun ul{list-style:none;margin:0;padding:0;font-size:11.5px;color:var(--ink-2);display:grid;gap:1px}
+.bun li.own{text-decoration:line-through;opacity:.55}.bun li.own::after{content:' ✓'}.bun small{color:var(--ink-3)}.bun .btn{margin-top:auto}
+/* the preview stage */
+.stageov{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(6,4,18,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.stageov[hidden]{display:none}
+.stagepanel{position:relative;width:min(440px,100%);max-height:min(92vh,820px);overflow:auto;padding:18px 18px 16px;border-radius:22px;background:linear-gradient(170deg,#2A2360,#15112E);border:1px solid var(--line);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.stagex{position:absolute;top:10px;right:10px;z-index:3;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:rgba(0,0,0,.3);color:#fff;font-size:18px;cursor:pointer}
+.stagepad{position:relative;height:250px;display:grid;place-items:center;perspective:700px;margin-top:4px}
+.stagelight{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--rc) 45%,transparent),transparent 62%);animation:stagelight 3s ease-in-out infinite}
+@keyframes stagelight{50%{opacity:.6}}
+.stagespin{position:relative;z-index:2;animation:stagespin 6s ease-in-out infinite;transform-style:preserve-3d}.stagespin canvas{width:210px;height:210px;display:block}
+@keyframes stagespin{0%,100%{transform:rotateY(-22deg)}50%{transform:rotateY(22deg)}}
+.stagedisc{position:absolute;bottom:14px;left:50%;width:220px;height:46px;margin-left:-110px;border-radius:50%;background:radial-gradient(ellipse,rgba(255,255,255,.28),rgba(255,255,255,.05) 60%,transparent 70%);box-shadow:0 0 30px color-mix(in srgb,var(--rc) 50%,transparent)}
+.stagering{position:absolute;bottom:22px;left:50%;width:120px;height:26px;margin-left:-60px;border-radius:50%;border:2px solid var(--core);opacity:0;animation:stagering 1.6s ease-out infinite}.stagering.r2{animation-delay:.8s}
+@keyframes stagering{0%{transform:scale(.4);opacity:.9}100%{transform:scale(2.2);opacity:0}}
+.stagepad.pol1 .stagelight{background:radial-gradient(circle at 50% 45%,rgba(255,210,90,.55),transparent 62%)}
+.stagepad.pol2 .stagelight{inset:auto;top:6px;left:50%;width:236px;height:236px;margin-left:-118px;filter:blur(18px);background:conic-gradient(from 0deg,rgba(255,90,205,.35),rgba(122,92,255,.35),rgba(34,200,255,.35),rgba(255,176,32,.35),rgba(255,90,205,.35));animation:spin 6s linear infinite;border-radius:50%}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stageinfo{text-align:center}.stageinfo h2{margin:4px 0 2px}.stageinfo p{margin:0}
+.polt{font:800 11px var(--body);letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:999px;vertical-align:middle}.polt.p1{background:linear-gradient(90deg,#FFE7A0,#E0A030);color:#3A2400}.polt.p2{background:linear-gradient(90deg,#FF5ACD,#7A5CFF,#22C8FF,#FFB020);color:#fff}
+.stagebtns{display:grid;gap:8px;margin-top:12px}.stagebtns .btn{width:100%}
+.btn.polb{background:linear-gradient(90deg,#FFE7A0,#E8B84A);color:#2A1600}.btn.coup{background:linear-gradient(90deg,#7FF0D2,#FFE27A);color:#0C2A22}
+.spendsum{display:flex;gap:8px;margin:8px 0}.spendsum span{flex:1;display:flex;flex-direction:column;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.25);font-size:12px;color:var(--ink-2)}.spendsum b{font:800 17px var(--display);color:#fff}
+.spendlist{list-style:none;margin:0;padding:0;display:grid;gap:4px}.spendlist li{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:7px 10px;border-radius:10px;background:rgba(255,255,255,.05);font-size:13px}
+.spendlist em{font-style:normal;color:var(--ink-3);font-size:11.5px}.spendlist b{color:#FFB3C8}
+#shopOv:not(.storemode) #spendBtn{display:none}
+.spendchip{margin-left:auto;margin-right:8px}
+/* loadouts and sorting */
+.loads{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.load{display:flex;align-items:center;gap:4px;padding:3px 6px 3px 4px;border-radius:12px;background:rgba(0,0,0,.25);border:1px solid var(--line)}
+.load canvas{width:30px;height:30px}.load .chip{padding:5px 9px;font-size:12px}.lempty{width:30px;height:30px;display:grid;place-items:center;border-radius:8px;border:1px dashed var(--line);color:var(--ink-3);font:700 12px var(--body)}
+.lsave{border:0;background:none;color:var(--ink-2);font:600 11.5px var(--body);text-decoration:underline;cursor:pointer;padding:2px 4px}
+.collsort{display:flex;align-items:center;gap:8px;font:600 12.5px var(--body);color:var(--ink-2)}.collsort select{flex:1;background:rgba(0,0,0,.25);color:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font:600 13px var(--body)}
+/* the Forge extras */
+.forgebulk{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:rgba(255,140,40,.12);border:1px solid rgba(255,170,80,.45);font:700 13px var(--body)}
+.recipe{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px;border-radius:16px;background:linear-gradient(120deg,rgba(255,138,26,.28),rgba(90,40,10,.35));border:1px solid #FFB020}
+.recart canvas{width:84px;height:84px}.rect{flex:1;min-width:180px;display:flex;flex-direction:column;gap:3px}.rect small{font:800 10.5px var(--body);letter-spacing:.1em;text-transform:uppercase;color:#FFD166}.rect b{font:800 17px var(--display)}.rect>span{font-size:12px;color:var(--ink-2)}
+.recneed{display:flex;flex-wrap:wrap;gap:5px}.recneed span{font:700 11.5px var(--body);padding:3px 8px;border-radius:999px;background:rgba(0,0,0,.3);color:#FFB3C8}.recneed span.ok{color:#7FF0D2}
+.fusion{padding:12px;border-radius:16px;background:linear-gradient(120deg,rgba(92,255,208,.14),rgba(180,140,255,.18));border:1px solid rgba(160,200,255,.5)}
+.fuserow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.fusepick{flex:1;min-width:130px;display:flex;flex-direction:column;gap:3px}.fusepick small{font:700 11px var(--body);color:var(--ink-3)}
+.fusepick select{background:rgba(0,0,0,.3);color:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;font:600 13px var(--body);width:100%}
+.fuseplus{font:800 20px var(--display);color:#9FE8FF}.fuseout{flex:1;min-width:110px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}.fuseout canvas{width:72px;height:72px}.fuseout b{font-size:12.5px}
+.fusion>.btn{width:100%}
+/* trading post */
+.tpmine,.tplist li{padding:10px;border-radius:14px;background:var(--glass);border:1px solid var(--line);display:grid;gap:6px;margin-bottom:8px}
+.tplist{list-style:none;margin:0 0 10px;padding:0}.tprow{display:flex;flex-wrap:wrap;align-items:center;gap:4px}.tprow>small{width:84px;flex:none;color:var(--ink-3);font-size:11.5px}
+.tpchip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 2px;border-radius:999px;background:rgba(0,0,0,.25);font-size:11.5px}.tpchip canvas{width:22px;height:22px}
+.tphit{margin:0;font:700 12.5px var(--body);color:#7FF0D2}.fgitem.on{border-color:#FFD166;background:rgba(255,209,102,.18)}
+/* creators */
+.crlist{list-style:none;margin:6px 0;padding:0;display:grid;gap:6px}.crlist li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--glass);border:1px solid var(--line)}
+.crlist li>div{flex:1;min-width:0;display:flex;flex-direction:column}.crlist li small{color:var(--ink-3);font-size:12px}.crok{font:700 12px var(--body);color:#7FF0D2}.crrw{font:800 12px var(--body);color:#FFE27A}
+.crhead{background:radial-gradient(circle at 12% 50%,rgba(255,126,182,.35),rgba(40,20,60,.6) 60%);border-color:rgba(255,126,182,.5)}
+.admlvs{display:grid;gap:6px;margin:6px 0 12px}.admlv{display:flex;align-items:center;gap:6px;padding:8px;border-radius:12px;background:rgba(255,255,255,.05)}.admlv>span{flex:1;min-width:0;display:flex;flex-direction:column}.admlv small{color:var(--ink-3)}.admlv .btn{padding:7px 10px;font-size:12.5px}
+/* menu banners: savings goal and the Wardrobe Challenge */
+#menuOv .goalban:not([hidden]),#menuOv .wardban:not([hidden]){display:flex;align-items:center;gap:12px;width:100%;max-width:520px;margin-top:10px;padding:12px 14px;border-radius:18px;cursor:pointer;text-align:left;color:#fff;font:inherit;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#menuOv .goalban{border:1px solid rgba(127,240,210,.55);background:linear-gradient(110deg,rgba(127,240,210,.22),rgba(40,70,110,.6) 55%,rgba(24,30,70,.85))}
+#menuOv .goalban.ready{border-color:#FFD166;animation:bpfreeGlow 2.2s ease-in-out infinite}
+.goalban .twban-ic{background:linear-gradient(#B8FFE8,#3FC8A0)}.goalbar{display:block;height:6px;margin-top:5px;border-radius:99px;background:rgba(0,0,0,.35);overflow:hidden}.goalbar i{display:block;height:100%;background:linear-gradient(90deg,#7FF0D2,#FFE27A);border-radius:99px}
+#menuOv .wardban{border:1px solid rgba(255,126,182,.55);background:linear-gradient(110deg,rgba(255,126,182,.26),rgba(110,60,170,.55) 55%,rgba(30,20,80,.85))}
+.wardban .twban-ic{background:linear-gradient(#FFC8E0,#E05A9A)}
+.wardhero{display:flex;gap:14px;align-items:center;flex-wrap:wrap}#wardArt canvas{width:130px;height:130px}.wardhero>div:last-child{flex:1;min-width:200px}
+.wardrw{list-style:none;margin:6px 0;padding:0;display:grid;gap:4px;font-size:13px}.wardrw li.got{color:#7FF0D2}
+#wardLB li.me{outline:2px solid #FFD166}
+#wardLB li.none{display:block;text-align:center;color:var(--ink-2)}
+/* ---- the Pulse Pass, redesigned: a progress ring, the next reward, and a tier ladder ---- */
+.pp2{gap:12px}
+.pphead2{display:flex;align-items:center;gap:10px}.pphead2 .wallet{margin-left:auto}
+.ppseason2{font:800 11px var(--body);letter-spacing:.14em;text-transform:uppercase;color:#FFE27A}
+.pphero2{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:14px 16px;border-radius:22px;background:linear-gradient(120deg,rgba(255,209,102,.24),rgba(122,92,255,.28) 55%,rgba(30,16,70,.65));border:1px solid rgba(255,226,122,.55);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.ppring{position:relative;width:120px;height:120px}.ppring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ppr-bg{fill:none;stroke:rgba(0,0,0,.35);stroke-width:11}.ppr-fg{fill:none;stroke:url(#ppRg);stroke-width:11;stroke-linecap:round;stroke-dasharray:326.73;stroke-dashoffset:326.73;transition:stroke-dashoffset .9s cubic-bezier(.3,1.2,.5,1);filter:drop-shadow(0 0 6px rgba(255,226,122,.6))}
+.ppring-t{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}.ppring-t b{font:900 40px/1 var(--display);color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.4)}
+.ppring-t small{font:800 10px var(--body);letter-spacing:.14em;text-transform:uppercase;color:#F1E8FF;opacity:.8}
+.pphinfo{min-width:0;display:flex;flex-direction:column;gap:7px}
+.pptitle2{margin:0;font:800 18px/1.25 var(--display)}.pptitle2 small{display:block;font:800 10.5px var(--body);letter-spacing:.12em;text-transform:uppercase;color:#FFE27A;margin-bottom:2px}
+.ppxpline{display:flex;align-items:center;gap:10px}.pp2 .ppbar{flex:1;height:14px;border-radius:99px;background:rgba(0,0,0,.4);overflow:hidden;border:1px solid rgba(255,255,255,.15)}
+.pp2 .ppbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#7FF0D2,#FFE27A);box-shadow:0 0 12px rgba(255,226,122,.6);transition:width .9s cubic-bezier(.3,1.2,.5,1)}
+.ppxpline b{font:800 12.5px var(--body);white-space:nowrap}.ppxphint{color:var(--ink-2);font-size:12px}
+.pphbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.pphbtns .ppcta,.pphbtns .ppplus{width:auto;margin:0;flex:1 1 160px}
+.pphbtns .ppplus{display:flex;flex-direction:column;align-items:center}.pphbtns .ppplus[hidden]{display:none}
+.ppgrandcard{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:8px 14px;border-radius:16px;background:rgba(0,0,0,.28);border:1px solid rgba(255,226,122,.45)}
+.ppgrandcard canvas{width:100px;height:100px}.ppgrandcard small{font:700 10.5px var(--body);letter-spacing:.08em;text-transform:uppercase;color:#FFE27A}.ppgrandcard b{font:800 15px var(--display)}
+.pp2 .pptabs{margin-top:2px}
+.ppladder{position:relative;max-height:min(58vh,640px);overflow-y:auto;border-radius:18px;background:rgba(0,0,0,.2);padding:0 10px 10px;border:1px solid rgba(255,255,255,.08)}
+.ppcolhead{position:sticky;top:0;z-index:3;display:grid;grid-template-columns:46px 1fr 1fr;gap:8px;padding:10px 0 8px;background:linear-gradient(#2E1872 75%,rgba(46,24,114,0));font:800 11px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.ppcolhead span:first-child{text-align:center}.pph-plus{color:#FFE27A}
+.pprow{display:grid;grid-template-columns:46px 1fr 1fr;gap:8px;align-items:stretch;padding:4px 0}
+#passOv.cgfree .pprow,#passOv.cgfree .ppcolhead{grid-template-columns:46px 1fr}#passOv.cgfree .pph-plus{display:none}
+.pptn{position:relative;display:flex;align-items:center;justify-content:center}
+.pptn::before{content:'';position:absolute;top:-4px;bottom:-4px;left:50%;width:6px;margin-left:-3px;border-radius:3px;background:rgba(255,255,255,.12)}
+.pprow.on .pptn::before{background:linear-gradient(#7FF0D2,#FFE27A)}
+.pphere{position:absolute;top:-4px;left:50%;width:6px;margin-left:-3px;height:calc(var(--p,0)*50% + 4px);border-radius:3px;background:linear-gradient(#FFE27A,#7FF0D2)}
+.pptn span{position:relative;z-index:1;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font:800 12.5px var(--display);color:#fff;background:#2A1E5A;border:2px solid rgba(255,255,255,.25)}
+.pprow.ten .pptn span{width:38px;height:38px;font-size:14px}
+.pprow.on .pptn span{background:linear-gradient(#FFE27A,#E8A830);color:#2A1600;border-color:#FFF2C0}
+.pprow.cur .pptn span{background:#fff;color:#2A1468;border-color:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.2),0 0 18px #FFD166;animation:pphere 1.6s ease-in-out infinite}
+@keyframes pphere{50%{box-shadow:0 0 0 8px rgba(255,255,255,.08),0 0 26px #FFD166}}
+.pprow.cur .ppcell{border-color:rgba(255,255,255,.4)}
+.pprow.ping .ppcell{animation:ppping 1s ease-out}@keyframes ppping{0%{box-shadow:0 0 0 0 rgba(255,226,122,.9)}100%{box-shadow:0 0 0 14px rgba(255,226,122,0)}}
+.ppcell{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:14px;min-width:0;min-height:60px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);transition:transform .15s}
+.ppcell.prem{background:linear-gradient(120deg,rgba(255,209,102,.14),rgba(255,255,255,.04))}
+.ppcell.big{border-color:rgba(255,209,102,.8);background:linear-gradient(120deg,rgba(255,209,102,.28),rgba(122,92,255,.22))}
+.ppcell.grand{box-shadow:0 0 24px rgba(255,209,102,.55);border-width:2px}
+.ppcell.open{border-color:#7FF0D2;box-shadow:0 0 0 1px rgba(127,240,210,.45) inset,0 0 16px rgba(127,240,210,.2)}
+.ppcell.got{opacity:.7}.ppcell.lock .ppart2>*{filter:saturate(.55) brightness(.75)}
+.ppart2{flex:none;width:48px;height:48px;display:grid;place-items:center;border-radius:12px;background:rgba(0,0,0,.28);overflow:hidden}
+.ppart2 canvas.skprev{width:48px;height:48px}.ppart2 canvas.tileprev{width:48px;height:31px;border-radius:4px}
+.ppart2 .ppban{width:42px;height:26px;border-radius:6px;display:block}.ppart2 .ppglyph{font-size:26px}
+.ppcoin2{position:relative;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:900 18px/1 var(--display);color:#7A4A00;background:radial-gradient(circle at 35% 30%,#FFF6C8,#FFD34D 55%,#C8901A);box-shadow:0 2px 0 #8A5A10,inset 0 0 0 2px rgba(255,255,255,.4)}
+.ppcoin2.big{width:40px;height:40px;font-size:22px;box-shadow:0 2px 0 #8A5A10,0 0 14px rgba(255,211,77,.8),inset 0 0 0 2px rgba(255,255,255,.5)}
+.ppcoin2.rev{background:radial-gradient(circle at 35% 30%,#FFD0DC,#FF5A7A 60%,#B8203A);color:#fff;box-shadow:0 2px 0 #7A1020}.ppcoin2 b{position:absolute;right:-8px;bottom:-4px;font:800 10px var(--body);background:#1A0C2E;color:#fff;padding:1px 4px;border-radius:999px}
+.ppcn{flex:1;min-width:0;display:flex;flex-direction:column}.ppcn b{font-size:13px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ppcn small{font-size:11px;color:var(--ink-3)}
+.ppcell .ppbtn{flex:none;margin:0;min-width:0;padding:6px 10px;font-size:12.5px;border-width:2px}
+.ppcell .ppbtn.plus{display:flex;align-items:center;gap:4px;background:linear-gradient(#FFE7A0,#E8B84A);color:#2A1600;text-shadow:none;box-shadow:0 3px 0 #8A5A10}.ppcell .ppbtn.plus svg{width:12px;height:12px}
+.ppst{flex:none;font:800 11.5px var(--body);color:#7FF0D2;white-space:nowrap}
+.ppst.lk{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.75)}.ppst.lk svg{width:14px;height:14px}
+@media (max-width:640px){.pphero2{grid-template-columns:auto 1fr;gap:12px;padding:12px}.ppgrandcard{display:none}.ppring{width:96px;height:96px}.ppring-t b{font-size:30px}
+  .pptitle2{font-size:15.5px}.ppxphint{display:none}.pprow,.ppcolhead{grid-template-columns:36px 1fr 1fr;gap:5px}.pptn span{width:28px;height:28px;font-size:11px}.pprow.ten .pptn span{width:32px;height:32px}
+  .ppcell{flex-wrap:wrap;gap:5px;padding:6px;min-height:0}.ppart2{width:40px;height:40px}.ppart2 canvas.skprev{width:40px;height:40px}.ppcn{flex-basis:calc(100% - 48px)}.ppcell .ppbtn,.ppcell .ppst{width:100%;text-align:center;justify-content:center}.ppst.lk{width:100%;height:24px;border-radius:999px}
+  .ppladder{max-height:62vh;padding:0 6px 8px}}
 .newspanel h3{margin:14px 0 6px;font:800 13px var(--body);letter-spacing:.12em;text-transform:uppercase;color:#FFE27A}
 .newspanel h3.soon{color:#7FF0D2}
 .newslist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
@@ -1944,6 +2082,8 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <button class="twban duckban" id="mErlaf" type="button" hidden><span class="twban-ic duckic" aria-hidden="true"><canvas class="skprev" data-skin="sk_erlaf" data-px="40" width="40" height="40"></canvas></span><span class="twban-t"><b>Erlaf the Giant Duck</b><small id="mErlafSub">Limited boss challenge</small></span><span class="twban-go" id="mErlafGo" aria-hidden="true">Play ›</span></button>
       <button class="twban liveban" id="mLive" type="button" hidden><span class="twban-ic" aria-hidden="true">★</span><span class="twban-t"><b id="mLiveT">Live event</b><small id="mLiveSub"></small></span><span class="twban-go" id="mLiveGo" aria-hidden="true">›</span></button>
       <button class="twban" id="mTwinBan" type="button" hidden><span class="twban-ic" aria-hidden="true">⚔</span><span class="twban-t"><b>Twin Pulse</b><small id="mTwinBanSub">2v2 event</small></span><span class="twban-go" aria-hidden="true">›</span></button>
+      <button class="twban goalban" id="mGoal" type="button" hidden><span class="twban-ic" aria-hidden="true">🎯</span><span class="twban-t"><b id="mGoalT">Saving up</b><small id="mGoalSub"></small><i class="goalbar"><i id="mGoalBar"></i></i></span><span class="twban-go" aria-hidden="true">›</span></button>
+      <button class="twban wardban" id="mWard" type="button"><span class="twban-ic" aria-hidden="true">👕</span><span class="twban-t"><b>Wardrobe Challenge</b><small id="mWardSub">One block for everyone this week</small></span><span class="twban-go" aria-hidden="true">›</span></button>
     </div>
     <div id="menuArt" aria-hidden="true"></div>
   </div>
@@ -1954,7 +2094,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <button class="chip acct" id="mAcct" type="button">Sign in</button>
       <button class="chip rankchip" id="mProfile" type="button"><i class="gem"></i><span id="mRankTxt">Bronze I</span><em class="qdot" id="mQDot" hidden></em></button>
       <button class="chip c-store" id="mStore" type="button">Shop</button>
-      <button class="chip c-coll" id="mShop" type="button">Collection</button>
+      <button class="chip c-coll" id="mShop" type="button">Collection<em class="chipdot" id="mShopNew" hidden></em></button>
       <button class="chip ppchip" id="mPass" type="button"><span id="mPassTxt">♛ Pulse Pass</span><em class="qdot" id="mPassDot" hidden></em></button>
       <button class="chip twchip" id="mTwin" type="button" hidden>⚔ Twin Pulse</button>
       <button class="chip c-fr" id="mFriends" type="button">Friends<em class="qdot" id="mFDot" hidden></em></button>
@@ -1983,32 +2123,32 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   <button type="button" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" fill-opacity=".18"/></svg>Play</button>
   <button type="button" data-tab="pass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8l4 3.5L12 5l4 6.5L20 8l-1.6 10H5.6z" fill="currentColor" fill-opacity=".18"/></svg>Pass<i class="tdot" data-dot="pass" hidden></i></button>
   <button type="button" data-tab="store" class="tstore"><span class="tsbubble"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8z" fill="currentColor" fill-opacity=".25"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/></svg></span>Shop</button>
-  <button type="button" data-tab="shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" fill="currentColor" fill-opacity=".18"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg>Collection</button>
+  <button type="button" data-tab="shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" fill="currentColor" fill-opacity=".18"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg>Collection<em class="navdot" id="navNew" hidden></em></button>
   <button type="button" data-tab="more"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5.5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18.5" cy="12" r="2"/></svg>More<i class="tdot" data-dot="more" hidden></i></button>
 </nav>
 <div class="sheet" id="moreSheet" hidden><div class="sheet-card" role="dialog" aria-label="More"><div class="sheet-grab"></div><button type="button" class="sheet-me" id="moreMe"></button><div class="sheet-grid" id="moreGrid"></div></div></div>
 
 <section id="passOv" class="overlay ppov" hidden>
-  <div class="panel pppanel">
-    <div class="pphead"><button class="back" id="ppBack" type="button">← Menu</button>
-      <div class="ppxp"><span class="ppxpic" aria-hidden="true">♛</span><div class="ppbar"><i id="ppFill"></i><b id="ppNext">0 / 200</b></div><span class="ppnext" id="ppNextT"><span class="ppnode">1</span></span></div>
-      <div class="wallet" id="walletPP"></div></div>
-    <div class="ppbody">
-      <aside class="pphero"><h2 class="pptitle">PULSE<br>PASS</h2><span class="ppseason">Season 1</span>
-        <canvas class="skprev" data-skin="pp_sovereign" data-px="190" width="190" height="190"></canvas>
-        <div class="ppgrand">Tier 100 grand reward<b>Pulse Sovereign</b></div>
-        <div class="pptierbig" id="ppTier">Tier 0 / 100</div>
-        <button class="ppcta" id="ppClaimAll" type="button">Claim all</button>
-        <button class="ppplus" id="ppBuy" type="button" hidden></button>
-        <span class="ppplus-on" id="ppPlusOn" hidden>★ Pulse Pass+ active · +25% Pass XP</span></aside>
-      <div class="ppmain">
-        <div class="pptabs" role="tablist"><button type="button" data-pt="rewards" class="on">Rewards</button><button type="button" data-pt="quests">Quests<em class="qdot" id="ppQDot" hidden></em></button></div>
-        <div id="ppRewards"><div class="ppmiles" id="ppMiles" aria-label="Big rewards"></div>
-          <div class="pptw"><div class="pplabels" aria-hidden="true"><span class="pplab p">Pass+</span><span class="pplab f">Free</span></div><button class="ppsc l" type="button" data-sc="-1" aria-label="Scroll back">‹</button><div class="pptrack" id="ppTrack"></div><button class="ppsc r" type="button" data-sc="1" aria-label="Scroll forward">›</button></div>
-          <p class="ppnote">Every run fills the pass with the XP it earns (up to 600 a run), and quests give big boosts. Everything you collect is yours to keep.</p></div>
-        <div id="ppQuests" hidden></div>
+  <div class="panel pppanel pp2">
+    <div class="pphead2"><button class="back" id="ppBack" type="button">← Menu</button><span class="ppseason2">Pulse Pass · Season 1</span><div class="wallet" id="walletPP"></div></div>
+    <div class="pphero2">
+      <div class="ppring" aria-hidden="true"><svg viewBox="0 0 120 120"><defs><linearGradient id="ppRg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7FF0D2"/><stop offset="1" stop-color="#FFE27A"/></linearGradient></defs><circle class="ppr-bg" cx="60" cy="60" r="52"/><circle class="ppr-fg" id="ppRingFg" cx="60" cy="60" r="52"/></svg>
+        <div class="ppring-t"><small>Tier</small><b id="ppTierN">0</b><small>of 100</small></div></div>
+      <div class="pphinfo">
+        <h2 class="pptitle2" id="ppNextName">Next reward</h2>
+        <div class="ppxpline"><div class="ppbar"><i id="ppFill"></i></div><b id="ppNext">0 / 200 XP</b></div>
+        <small class="ppxphint">Every run fills the pass (up to 600 XP a run), and quests give big boosts.</small>
+        <div class="pphbtns"><button class="ppcta" id="ppClaimAll" type="button">Claim all</button><button class="ppplus" id="ppBuy" type="button" hidden></button><span class="ppplus-on" id="ppPlusOn" hidden>★ Pass+ active · +25% Pass XP</span></div>
       </div>
+      <div class="ppgrandcard"><canvas class="skprev" data-skin="pp_sovereign" data-px="104" width="104" height="104" aria-hidden="true"></canvas><small>Tier 100 grand reward</small><b>Pulse Sovereign</b></div>
     </div>
+    <div class="pptabs" role="tablist"><button type="button" data-pt="rewards" class="on">Rewards</button><button type="button" data-pt="quests">Quests<em class="qdot" id="ppQDot" hidden></em></button></div>
+    <div id="ppRewards">
+      <div class="ppmiles" id="ppMiles" aria-label="Big rewards: tap one to jump to its tier"></div>
+      <div class="ppladder" id="ppLadder"><div class="ppcolhead"><span>Tier</span><span>Free</span><span class="pph-plus">Pass+</span></div><div id="ppTrack"></div></div>
+      <p class="ppnote">Everything you collect is yours to keep.</p>
+    </div>
+    <div id="ppQuests" hidden></div>
   </div>
 </section>
 <section id="ppBuyOv" class="overlay ppov" hidden>
@@ -2120,9 +2260,9 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
 
 <section id="shopOv" class="overlay" hidden>
   <div class="panel wide">
-    <div class="head"><button class="back" id="sBack" type="button">← Menu</button><div class="wallet" id="walletS"></div></div>
+    <div class="head"><button class="back" id="sBack" type="button">← Menu</button><button class="chip spendchip" id="spendBtn" type="button">🧾 History</button><div class="wallet" id="walletS"></div></div>
     <h2 id="shopTitle">Collection</h2>
-    <div class="tabs shoptabs"><button id="tabPacks" type="button">✦ Packs</button><button id="tabForge" type="button">⚒ Forge</button><button id="tabPrem" type="button">★ Premium</button><button id="tabSkins" class="on" type="button">Blocks</button><button id="tabTrails" type="button">Landing effects</button><button id="tabTiles" type="button">Tiles</button><button id="tabSounds" type="button">Sound Tracks</button><button id="tabBanners" type="button">Banners</button></div>
+    <div class="tabs shoptabs"><button id="tabPacks" type="button">✦ Packs</button><button id="tabForge" type="button">⚒ Forge</button><button id="tabCreators" type="button">🎨 Creators</button><button id="tabPrem" type="button">★ Premium</button><button id="tabSkins" class="on" type="button">Blocks</button><button id="tabTrails" type="button">Landing effects</button><button id="tabTiles" type="button">Tiles</button><button id="tabSounds" type="button">Sound Tracks</button><button id="tabBanners" type="button">Banners</button></div>
     <div class="shopmoney" id="shopMoney" hidden></div>
     <div class="shopfeat" id="shopFeat" hidden></div>
     <div class="shop" id="shopGrid"></div>
@@ -2130,6 +2270,18 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   </div>
 </section>
 
+<section id="stageOv" class="stageov" hidden aria-label="Block preview"><div class="stagepanel"><button class="stagex" id="stageX" type="button" aria-label="Close">✕</button><div id="stageBody"></div></div></section>
+<section id="wardOv" class="overlay" hidden>
+  <div class="panel">
+    <div class="head"><button class="back" id="wardBack" type="button">← Menu</button></div>
+    <div class="eyebrow">Wardrobe Challenge · this week</div><h2>Everyone wears <span id="wardBlock"></span></h2>
+    <div class="wardhero"><div id="wardArt"></div><div><p class="small" style="margin:0">Same block, same rooms, for every player this week. Show what you can do with it! <span id="wardLeft"></span></p><ul class="wardrw" id="wardRw"></ul><p class="small" id="wardBest" style="margin:0"></p></div></div>
+    <button class="btn" id="wardGo" type="button">▶ Play the challenge</button>
+    <button class="btn coup" id="wardCp" type="button" hidden>🎟 Claim your 50% coupon</button>
+    <div class="lbl">This week's board <span class="small" id="wardPos"></span></div>
+    <ul class="lb" id="wardLB"></ul>
+  </div>
+</section>
 <section id="bpOv" class="bpov" hidden aria-label="Open a block pack">
   <canvas id="bpFx" aria-hidden="true"></canvas>
   <div class="bpflash" id="bpFlash"></div>
@@ -2438,7 +2590,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
 <section id="adminOv" class="overlay" hidden>
   <div class="panel adm">
     <div class="head"><button class="back" id="admBack" type="button">← Menu</button><span class="admbadge">Admin</span></div>
-    <div class="admtabs" id="admTabs" role="tablist"><button type="button" data-at="players">Players</button><button type="button" data-at="events">Events</button><button type="button" data-at="me">My account</button></div>
+    <div class="admtabs" id="admTabs" role="tablist"><button type="button" data-at="players">Players</button><button type="button" data-at="events">Events</button><button type="button" data-at="levels">Levels</button><button type="button" data-at="me">My account</button></div>
     <div class="admpane" id="admPlayers">
       <div class="admsearch"><input id="admFind" type="search" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Search a name or friend code"></div>
       <small class="admhint" id="admResHead">Top players</small>
@@ -2470,6 +2622,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <label class="opt admduck" for="admEvDuck"><input id="admEvDuck" type="checkbox"><span>Summon Erlaf the Giant Duck<small>Erlaf only appears when you summon him here, and he stays for exactly as long as this event lasts ("Lasts" above: minutes or hours, from 1 minute). Beating him gives the Erlaf block.</small></span></label>
       <div class="row"><button class="btn" id="admEvGo" type="button">Start event</button><button class="btn ghost" id="admEvEnd" type="button">End event now</button></div>
     </div>
+    <div class="admpane" id="admLevelsPane" hidden><div id="admLvList"></div></div>
     <div class="admpane" id="admMe" hidden>
       <p class="small" id="admWho"></p>
       <div class="g2"><label>Rank<select id="admRank"></select></label><label>Add Notes<input id="admNotes" type="number" min="0" max="1000000" step="100" placeholder="e.g. 5000"></label></div>
@@ -2591,6 +2744,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <div class="small" id="frMsg" role="status"></div>
       <div id="frInvites"></div>
       <div id="trBox"></div>
+      <div id="tpBox"></div>
       <h2>Your friends</h2>
       <ul class="frlist" id="frList"></ul>
     </div>
@@ -2838,11 +2992,11 @@ const bannerById=id=>BANNERS.find(b=>b.id===id)||BANNERS[0];
 const tilesById=id=>TILES.find(t=>t.id===id)||TILES[0], packById=id=>PACKS.find(t=>t.id===id)||PACKS[0];
 /* owned: bought, free, or (for a prize with no price) earned */
 const ownsItem=it=>!!it&&(it.price===0||SAVE.owned.includes(it.id)||(!it.price&&!!it.req&&reqMet(it.req)));
-const skinById=id=>SKINS.find(s=>s.id===id)||SKINS[0], landById=id=>LANDS.find(s=>s.id===id)||LANDS[0];
+const skinById=id=>SKINS.find(s=>s.id===id)||(typeof id==='string'&&id.startsWith('fu_')&&fuseReg(id)&&SKINS.find(s=>s.id===id))||SKINS[0], landById=id=>LANDS.find(s=>s.id===id)||LANDS[0];
 const hardCleared=()=>{ let n=0; for(let i=1;i<=12;i++) if((SAVE.stars['H-'+i]||0)>0) n++; return n; };
 const ownsSkin=id=>{ const s=SKINS.find(k=>k.id===id); return !!s&&(SAVE.owned.includes(id)||s.price===0||(s.req&&reqMet(s.req))); };
-const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?myRank()>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.duck?!!SAVE.erlafWin:true)&&(r.twin?!!SAVE.twinWin:true)&&(r.pass?passGot(r.pass):true)&&(r.passp?passPGot(r.passp):true)&&(r.login?giftDays()>=r.login:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true)&&!r.bp;
-const reqText=r=>r.bp?`Found in the ${(BPACKS.find(p=>p.id===r.bp)||{}).name||'block packs'}`:r.duck?'Limited event: defeat Erlaf the Giant Duck':r.pass?`Pulse Pass · tier ${r.pass}`:r.passp?`Pulse Pass+ · tier ${r.passp}`:r.login?`Log in on ${r.login} different days`:r.twin?'One of a kind: only the Twin Pulse champions will own it':r.boss?`Complete ${BOSS[r.boss-1]}`:r.cvkOn?'Past event reward: Cale vs Korra':r.cvkBet?'Past event reward: Cale vs Korra':r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
+const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?myRank()>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.duck?!!SAVE.erlafWin:true)&&(r.twin?!!SAVE.twinWin:true)&&(r.pass?passGot(r.pass):true)&&(r.passp?passPGot(r.passp):true)&&(r.login?giftDays()>=r.login:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true)&&!r.bp&&!r.spot&&!r.recipe&&!r.fused;
+const reqText=r=>r.spot?'Weekly spotlight: in the Shop every few weeks':r.recipe?'Seasonal Forge recipe':r.fused?'Your fusion':r.bp?`Found in the ${(BPACKS.find(p=>p.id===r.bp)||{}).name||'block packs'}`:r.duck?'Limited event: defeat Erlaf the Giant Duck':r.pass?`Pulse Pass · tier ${r.pass}`:r.passp?`Pulse Pass+ · tier ${r.passp}`:r.login?`Log in on ${r.login} different days`:r.twin?'One of a kind: only the Twin Pulse champions will own it':r.boss?`Complete ${BOSS[r.boss-1]}`:r.cvkOn?'Past event reward: Cale vs Korra':r.cvkBet?'Past event reward: Cale vs Korra':r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
 function hsl2hex(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
   return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); }
 
@@ -3483,6 +3637,13 @@ SKINS.push(
  {id:'bp_pumpkin',name:'Pumpkin Patch',vx:'bp_pumpkin',nocore:true,prev:[.6,19],top:'#5A8A3A',front:'#3A5A22',core:'#FF9A2A',bp:'harvest',req:{bp:'harvest'},bpr:2},
  {id:'bp_cornu',name:'Golden Cornucopia',vx:'bp_cornu',nocore:true,prev:[.56,20],top:'#E8B84A',front:'#9A6A1A',core:'#FFF2C0',bp:'harvest',req:{bp:'harvest'},bpr:3},
  {id:'bp_oak',name:'Elder Oak',vx:'bp_oak',nocore:true,prev:[.44,30],top:'#7A5A3A',front:'#4A3420',core:'#FFD166',bp:'harvest',req:{bp:'harvest'},bpr:4});
+/* the weekly spotlight blocks (one in the Shop each week, in turn) and the Autumn Wreath (a seasonal Forge recipe) */
+SKINS.push(
+ {id:'sp_koi',name:'Koi Pond',vx:'sp_koi',nocore:true,prev:[.62,16],top:'#5CC8E8',front:'#2A88B8',core:'#FF6A2A',price:2500,req:{spot:1},hidden:true},
+ {id:'sp_globe',name:'Snow Globe',vx:'sp_globe',nocore:true,prev:[.54,24],top:'#8A5A30',front:'#5A3418',core:'#FFE7A0',price:2500,req:{spot:1},hidden:true},
+ {id:'sp_crane',name:'Origami Crane',vx:'sp_crane',nocore:true,prev:[.56,22],top:'#FFF4F6',front:'#F4D8E0',core:'#E8506A',price:2500,req:{spot:1},hidden:true},
+ {id:'sp_arcade',name:'Arcade Cabinet',vx:'sp_arcade',nocore:true,prev:[.56,20],top:'#4A1E8A',front:'#2A1050',core:'#4FF0FF',price:2500,req:{spot:1},hidden:true},
+ {id:'rc_wreath',name:'Autumn Wreath',vx:'rc_wreath',nocore:true,prev:[.6,16],top:'#E8A85A',front:'#8A4A1A',core:'#FFD166',req:{recipe:'harvest'},hidden:true,bpr:3});
 /* signature landing effects for the epic, legendary and pristine pack blocks */
 const BP_SIG={
  bp_golem:{n:'Rune Quake',g:'ᚱ',c:['#3CFFB0','#8E8A80','#DFFFF0'],sh:'shard',ring:'#3CFFB0',fx:'spire'},
@@ -3519,7 +3680,12 @@ const BP_SIG={
  bp_pristine:{n:'Pristine Pulse',g:'◆',c:['#FFFFFF','#FFB3E6','#9FE8FF','#FFE7A0'],sh:'shard',ring:'rainbow',fx:'beams'},
  bp_pumpkin:{n:'Pumpkin Pop',g:'●',c:['#FF9A2A','#FFD166','#5A9A3A'],sh:'blob',ring:'#FF9A2A',fx:'waves'},
  bp_cornu:{n:'Bountiful Harvest',g:'❦',c:['#FFD166','#E8302A','#9A6ACF'],sh:'coin',ring:'#FFD166',fx:'gold'},
- bp_oak:{n:'Falling Leaves',g:'❧',c:['#FF8A1A','#FFB020','#D8401A','#FFD166'],sh:'confetti',ring:'#FFB020',fx:'beams'}};
+ bp_oak:{n:'Falling Leaves',g:'❧',c:['#FF8A1A','#FFB020','#D8401A','#FFD166'],sh:'confetti',ring:'#FFB020',fx:'beams'},
+ sp_koi:{n:'Koi Splash',g:'≈',c:['#5CD8FF','#FFFFFF','#FF6A2A'],sh:'bubble',ring:'#5CD8FF',fx:'waves'},
+ sp_globe:{n:'Snow Shake',g:'❄',c:['#FFFFFF','#BFE8FF','#E8C37A'],sh:'flake',ring:'#DDF4FF'},
+ sp_crane:{n:'Paper Petals',g:'✿',c:['#FF8AA0','#FFF4F6','#E8506A'],sh:'petal',ring:'#FF8AA0'},
+ sp_arcade:{n:'Insert Coin',g:'▣',c:['#4FF0FF','#FF4FD8','#FFD23A'],sh:'pixel',ring:'neon',fx:'coins'},
+ rc_wreath:{n:'Autumn Breeze',g:'❦',c:['#FF8A1A','#D8282A','#FFD166'],sh:'confetti',ring:'#FF9A2A',fx:'beams'}};
 /* the five packs, cheapest first. rates are percentages for each block (they add up to 100); a block you already own pays
    back part of the pack's price in Notes instead */
 const BP_RAR=[{n:'Common',c:'#B9C3D8'},{n:'Rare',c:'#4FA8FF'},{n:'Epic',c:'#B566FF'},{n:'Legendary',c:'#FFB627'},{n:'Ascendant',c:'#FF2E7A'},{n:'Pristine',c:'#FFFFFF'}];
@@ -4508,22 +4674,24 @@ function drawBlock(P,bd,L,now){
   if(bd.alpha<=0) return;
   const S=skinCols(P.skin,now), AM=S.anim?animMods(S,now):null, sqq=bd.sq+(AM?AM.sq:0), scl=AM?AM.scale:1;
   const {sx,sy}=blockScreen(bd,L), bw=L.tw*.5*(1+sqq)*scl, bh=L.th*.5*(1+sqq*.5)*scl, H=L.th*.55*(1-sqq)*scl, base=sy-bd.lift+bd.fallY;
+  const FU=S.fuse?[skinCols(skinById(S.fuse.a),now),skinCols(skinById(S.fuse.b),now)]:null, SP=FU?FU[0]:S, SQ=FU?FU[1]:S;   // a fusion: one block's aura, the other's face
   const holoA=S.fx==='holo'?.72+.16*Math.sin(now*23)*Math.sin(now*7):1;
   cx.globalAlpha=bd.alpha*holoA;
   if(!bd.falling){ cx.fillStyle=`rgba(30,20,70,${.28*(1-Math.min(1,bd.lift/(L.th*.6)))})`; cx.beginPath(); cx.ellipse(sx,sy+L.th*.05,bw*.6,bh*.45,0,0,Math.PI*2); cx.fill(); }
   const grey=clamp(1-(now-P.greyT)/.25,0,1), t=G.tier||0;
   const topY=base-H-bh*.5;
-  if(S.vx&&grey<.5) vxPre(S,sx-bw/2,topY,bw,bh,H,now);
-  if(S.anim) skinPre(S,sx-bw/2,topY,bw,bh,H,now,P);
+  if(SP.vx&&grey<.5) vxPre(SP,sx-bw/2,topY,bw,bh,H,now);
+  if(SP.anim) skinPre(SP,sx-bw/2,topY,bw,bh,H,now,P);
   cx.fillStyle=mixc(S.front,'#A8A3BF',grey); cx.fillRect(sx-bw/2,topY+bh*.5,bw,H+bh*.5);
   cx.fillStyle='rgba(40,20,40,.16)'; cx.fillRect(sx,topY+bh,bw/2,H);
   cx.fillStyle=mixc(S.top,'#D8D4E4',grey); rr(sx-bw/2,topY,bw,bh,3); cx.fill();
-  if(S.fx&&grey<.5) skinDeco(S,sx-bw/2,topY,bw,bh,H,now);
-  if(S.anim&&grey<.5){ cx.globalAlpha=bd.alpha; skinPost(S,sx-bw/2,topY,bw,bh,H,now,P); }
-  if(S.vx&&grey<.5){ cx.globalAlpha=bd.alpha; vxPost(S,sx-bw/2,topY,bw,bh,H,now); }
+  if(SQ.fx&&grey<.5) skinDeco(SQ,sx-bw/2,topY,bw,bh,H,now);
+  if(SQ.anim&&grey<.5){ cx.globalAlpha=bd.alpha; skinPost(SQ,sx-bw/2,topY,bw,bh,H,now,P); }
+  if(SQ.vx&&grey<.5){ cx.globalAlpha=bd.alpha; vxPost(SQ,sx-bw/2,topY,bw,bh,H,now); }
   cx.globalAlpha=bd.alpha*holoA;
   cx.fillStyle=mixc(S.core,'#FFFFFF',Math.min(1,t/5)); cx.globalAlpha=bd.alpha*Math.min(1,.55+t*.1);
   if(!S.anim&&!S.nocore){ rr(sx-bw*.28,topY+bh*.36,bw*.56,bh*.28,2); cx.fill(); }
+  { const pl=grey<.5&&polishOf(P); if(pl){ cx.globalAlpha=bd.alpha; drawPolish(pl,sx-bw/2,topY,bw,bh,H,now); } }
   if(t>=3){ const g=cx.createRadialGradient(sx,topY+bh*.5,1,sx,topY+bh*.5,bw); g.addColorStop(0,rgba(TH.acc,.25+t*.05)); g.addColorStop(1,rgba(TH.acc,0)); cx.fillStyle=g; cx.fillRect(sx-bw,topY-bw*.5,bw*2,bw*2); }
   cx.globalAlpha=bd.alpha;
   if(t>=5||S.rim){ cx.strokeStyle=t>=5?TH.acc:'rgba(255,209,102,.8)'; cx.lineWidth=1.6; rr(sx-bw/2,topY,bw,bh+H,3); cx.stroke(); }
@@ -5175,6 +5343,7 @@ function vxRise(n,sp,x0,w,yb,hgt,now,fn,seed=0){ for(let i=0;i<n;i++){ const u=(
 /* n things circling (cx0,cy0); only the ones behind the block (front=false) or in front of it (front=true) */
 function vxOrbit(n,sp,cx0,cy0,rx,ry,now,front,fn,ph=0){ for(let i=0;i<n;i++){ const a=now*sp+i*TAU/n+ph, s=Math.sin(a); if((s>0)!==front) continue; fn(cx0+Math.cos(a)*rx,cy0+s*ry,s,i,a); } }
 function vxPre(S,X,T,W,bh,H,now){
+  if(VX11.has(S.vx)) return vxPre11(S,X,T,W,bh,H,now);
   if(VX10.has(S.vx)) return vxPre10(S,X,T,W,bh,H,now);
   if(VX9.has(S.vx)) return vxPre9(S,X,T,W,bh,H,now);
   if(VX8.has(S.vx)) return vxPre8(S,X,T,W,bh,H,now);
@@ -5222,6 +5391,7 @@ function vxShard(x,y,r,a,al){ cx.save(); cx.translate(x,y); cx.rotate(a*.5); con
 function vxPlanet(x,y,r){ const g=cx.createRadialGradient(x-r*.35,y-r*.35,0,x,y,r); g.addColorStop(0,'#FFD6F5'); g.addColorStop(.6,'#B06CFF'); g.addColorStop(1,'#3A1E7A'); cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r,0,TAU); cx.fill(); }
 function vxHeart(x,y,r,col,a){ cx.fillStyle=rgba(col,a); heartPath(x,y,r); cx.fill(); }
 function vxPost(S,X,T,W,bh,H,now){
+  if(VX11.has(S.vx)) return vxPost11(S,X,T,W,bh,H,now);
   if(VX10.has(S.vx)) return vxPost10(S,X,T,W,bh,H,now);
   if(VX9.has(S.vx)) return vxPost9(S,X,T,W,bh,H,now);
   if(VX8.has(S.vx)) return vxPost8(S,X,T,W,bh,H,now);
@@ -6780,6 +6950,119 @@ function vxPost10(S,X,T,W,bh,H,now){
       cx.strokeStyle=hsl2hex(340+20*Math.sin(now*3),95,60); cx.lineWidth=1.8; rr(X+.5,T+.5,W-1,bh+H-1,3); cx.stroke();
       bpAscSparks(X,W,B,now,41);
       hvFall(14,X,W,T-W*1.2,B-T+W*1.5,now,7,true); } break;
+  }
+  cx.restore();
+}
+/* ---- the weekly spotlight blocks, and the Autumn Wreath from the seasonal Forge recipe ---- */
+const VX11=new Set(['sp_koi','sp_globe','sp_crane','sp_arcade','rc_wreath']);
+function sp11Koi(x,y,s,a,col,spot,now){ cx.save(); cx.translate(x,y); cx.rotate(a); const w=Math.sin(now*5.5+x)*.25;
+  cx.fillStyle=col; cx.beginPath(); cx.moveTo(s,0); cx.quadraticCurveTo(s*.2,-s*.42,-s*.6,0); cx.quadraticCurveTo(s*.2,s*.42,s,0); cx.fill();
+  cx.beginPath(); cx.moveTo(-s*.55,0); cx.lineTo(-s*1.05,-s*.35+w*s*.3); cx.lineTo(-s*.95,0); cx.lineTo(-s*1.05,s*.35+w*s*.3); cx.closePath(); cx.fill();
+  cx.fillStyle=spot; cx.beginPath(); cx.ellipse(s*.15,-s*.05,s*.22,s*.14,.3,0,TAU); cx.fill(); cx.beginPath(); cx.ellipse(-s*.3,s*.06,s*.14,s*.09,0,0,TAU); cx.fill();
+  cx.fillStyle='rgba(255,255,255,.55)'; [-1,1].forEach(sg=>{ cx.beginPath(); cx.ellipse(s*.05,sg*s*.3,s*.2,s*.08,sg*.6,0,TAU); cx.fill(); });
+  cx.fillStyle='#111'; cx.beginPath(); cx.arc(s*.68,-s*.1,s*.05,0,TAU); cx.fill(); cx.restore(); }
+function vxPre11(S,X,T,W,bh,H,now){
+  const v=S.vx, fy=T+bh, cxm=X+W/2, bt=clamp(1-(now-G.lastBeatT)/.35,0,1), oy=fy+H*.35, B=fy+H;
+  cx.save(); cx.lineCap='round'; cx.lineJoin='round';
+  switch(v){
+    case 'sp_koi': { cx.globalCompositeOperation='lighter'; vxGlow(cxm,oy,W*(1.15+.2*bt),'#5CD8FF',.18+.2*bt,.85); cx.globalCompositeOperation='source-over';
+      // lily pads floating round the block
+      vxOrbit(4,.25,cxm,B-H*.1,W*.85,W*.25,now,false,(x,y,s2,i)=>{ cx.fillStyle=i%2?'#3A9A4A':'#4AB85A'; cx.beginPath(); cx.arc(x,y,W*.13,.4,TAU-.1); cx.lineTo(x,y); cx.closePath(); cx.fill(); }); } break;
+    case 'sp_globe': { cx.globalCompositeOperation='lighter'; vxGlow(cxm,T-W*.2,W*(1.1+.2*bt),'#BFE8FF',.2+.2*bt,.9); } break;
+    case 'sp_crane': { cx.globalCompositeOperation='lighter'; vxGlow(cxm,oy,W*(1.1+.2*bt),'#FFB0C8',.16+.2*bt,.85); cx.globalCompositeOperation='source-over';
+      // paper cherry petals drifting behind
+      for(let k=0;k<vxN(8);k++){ const u=(now*.15+vxRnd(k*3))%1, x=X+W*(-.5+2*vxRnd(k*7))+Math.sin(now+k)*W*.1, y=T-W*.8+u*(B-T+W); cx.save(); cx.translate(x,y); cx.rotate(now+k); cx.fillStyle=`rgba(255,${180+k*6},${200+k*4},${.7*Math.sin(u*Math.PI)})`; cx.beginPath(); cx.ellipse(0,0,W*.045,W*.025,0,0,TAU); cx.fill(); cx.restore(); } } break;
+    case 'sp_arcade': { cx.globalCompositeOperation='lighter'; vxGlow(cxm,oy,W*(1.2+.25*bt),'#FF4FD8',.18+.25*bt,.85); vxGlow(cxm,T-W*.3,W*.8,'#4FF0FF',.15+.15*bt); } break;
+    case 'rc_wreath': { cx.globalCompositeOperation='lighter'; vxGlow(cxm,oy,W*(1.3+.25*bt),'#FF9A2A',.22+.25*bt,.85); cx.globalCompositeOperation='source-over';
+      // the back half of the wreath ring
+      rcWreath(cxm,oy,W,now,bt,false); } break;
+  }
+  cx.restore();
+}
+/* a ring of autumn leaves, berries and acorns around the block, back half first */
+function rcWreath(cxm,oy,W,now,bt,front){ const n=vxN(30), rx=W*.92, ry=W*.36;
+  for(let i=0;i<n;i++){ const a=i/n*TAU+now*.15, s=Math.sin(a); if((s>0)!==front) continue; const x=cxm+Math.cos(a)*rx, y=oy+s*ry, lit=front?1:.7;
+    hvLeaf(x,y,W*(.1+.02*Math.sin(i*1.7)),a+i,front?HV_LEAF[i%HV_LEAF.length]:mixc(HV_LEAF[i%HV_LEAF.length],'#3A1A0A',.35),lit);
+    if(i%5===0){ cx.fillStyle=front?'#D8282A':'#8A1A1A'; cx.beginPath(); cx.arc(x+W*.03,y+W*.02,W*.03*(1+.2*bt),0,TAU); cx.fill(); cx.beginPath(); cx.arc(x-W*.02,y+W*.04,W*.025,0,TAU); cx.fill(); }
+    if(i%7===3&&front) hvAcorn(x,y-W*.02,W*.045); } }
+function vxPost11(S,X,T,W,bh,H,now){
+  const v=S.vx, fy=T+bh, cxm=X+W/2, bt=clamp(1-(now-G.lastBeatT)/.35,0,1), oy=fy+H*.35, B=fy+H, beat=Math.floor(now/(G.spb||.6));
+  const clipBody=()=>{ cx.beginPath(); cx.rect(X,T,W,bh+H); cx.clip(); };
+  cx.save(); cx.lineCap='round'; cx.lineJoin='round';
+  switch(v){
+    case 'sp_koi': {
+      // the whole block is a pond: deep water on the sides, two koi circling on top, ripples on the beat
+      cx.save(); clipBody(); const g=cx.createLinearGradient(0,T,0,B); g.addColorStop(0,'#5CC8E8'); g.addColorStop(.35,'#2A88B8'); g.addColorStop(1,'#123E66'); cx.fillStyle=g; cx.fillRect(X,T,W,bh+H);
+      cx.strokeStyle='rgba(255,255,255,.18)'; cx.lineWidth=1; for(let k=0;k<4;k++){ const y=fy+H*(.25+k*.2)+Math.sin(now*2+k)*H*.03; cx.beginPath(); cx.moveTo(X,y); cx.quadraticCurveTo(cxm,y-H*.06,X+W,y); cx.stroke(); }
+      cx.restore();
+      cx.save(); cx.beginPath(); cx.rect(X,T,W,bh); cx.clip(); const tc=T+bh*.5;
+      for(let k=0;k<2;k++){ const u=(beat+k)%2===0?bt:0; cx.strokeStyle=rgba('#FFFFFF',.5*u); cx.lineWidth=1.2; cx.beginPath(); cx.ellipse(cxm+(k?W*.2:-W*.2),tc,W*.3*(1.3-u*.5),bh*.3*(1.3-u*.5),0,0,TAU); cx.stroke(); }
+      [['#FF6A2A','#FFFFFF',0],['#FFFFFF','#FF4A2A',Math.PI]].forEach(([c1,c2,ph])=>{ const a=now*1.1+ph, x=cxm+Math.cos(a)*W*.28, y=tc+Math.sin(a)*bh*.28; sp11Koi(x,y,W*.17,a+Math.PI/2,c1,c2,now); });
+      cx.restore();
+      cx.strokeStyle='#8FE0FF'; cx.lineWidth=1.3; rr(X+.5,T+.5,W-1,bh+H-1,3); cx.stroke();
+      vxOrbit(4,.25,cxm,B-H*.1,W*.85,W*.25,now,true,(x,y,s2,i)=>{ cx.fillStyle=i%2?'#3A9A4A':'#4AB85A'; cx.beginPath(); cx.arc(x,y,W*.13,.4,TAU-.1); cx.lineTo(x,y); cx.closePath(); cx.fill(); if(i===1){ cx.fillStyle='#FFB0D0'; cx.beginPath(); cx.arc(x,y-W*.04,W*.05,0,TAU); cx.fill(); } });
+      cx.save(); cx.globalCompositeOperation='lighter'; vxRise(vxN(5),.25,X-W*.2,W*1.4,B,W*1.1,now,(x,y,u)=>{ cx.strokeStyle=rgba('#CFF4FF',.8*(1-u)); cx.lineWidth=1; cx.beginPath(); cx.arc(x,y,W*.025,0,TAU); cx.stroke(); },31); cx.restore(); } break;
+    case 'sp_globe': {
+      // a wooden base with gold trim, and a glass dome on top with a little snowy pine; it shakes on the beat and the snow swirls
+      cx.save(); clipBody(); const g=cx.createLinearGradient(X,0,X+W,0); g.addColorStop(0,'#5A3418'); g.addColorStop(.5,'#8A5A30'); g.addColorStop(1,'#5A3418'); cx.fillStyle=g; cx.fillRect(X,T,W,bh+H);
+      cx.fillStyle='#E8C37A'; cx.fillRect(X,fy+H*.12,W,H*.06); cx.fillRect(X,B-H*.18,W,H*.06); cx.restore();
+      cx.fillStyle='#FFE7A0'; cx.font=`700 ${Math.round(H*.2)}px Unbounded, system-ui, sans-serif`; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('❄',cxm,fy+H*.5);
+      const sh=Math.sin(now*40)*W*.012*bt, gx=cxm+sh, gy=T+bh*.2, gr=W*.48;
+      cx.save(); cx.beginPath(); cx.arc(gx,gy,gr,Math.PI,TAU); cx.lineTo(gx+gr,gy); cx.lineTo(gx-gr,gy); cx.closePath(); cx.clip();
+      const sky=cx.createLinearGradient(0,gy-gr,0,gy); sky.addColorStop(0,'#2A4A8A'); sky.addColorStop(1,'#8AB8E8'); cx.fillStyle=sky; cx.fillRect(gx-gr,gy-gr,gr*2,gr);
+      cx.fillStyle='#F4FAFF'; cx.beginPath(); cx.ellipse(gx,gy,gr,gr*.22,0,Math.PI,TAU); cx.fill();
+      for(let k=0;k<3;k++){ const ty=gy-gr*(.15+k*.22), tw=gr*(.42-k*.1); cx.fillStyle=k%2?'#2E7A4A':'#246A3E'; cx.beginPath(); cx.moveTo(gx,ty-gr*.3); cx.lineTo(gx+tw,ty); cx.lineTo(gx-tw,ty); cx.closePath(); cx.fill(); cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.moveTo(gx,ty-gr*.3); cx.lineTo(gx+tw*.35,ty-gr*.18); cx.lineTo(gx-tw*.35,ty-gr*.18); cx.closePath(); cx.fill(); }
+      cx.fillStyle='#FFE27A'; vxSpark(gx,gy-gr*.82,gr*.08,'#FFE27A',1);
+      const spd=1+bt*3; for(let k=0;k<vxN(18);k++){ const a=now*spd*.6+k*2.4, r=gr*(.2+.7*vxRnd(k*3.3)), x=gx+Math.cos(a)*r*.9, y=gy-gr*.5+Math.sin(a*1.3)*gr*.42; cx.fillStyle='rgba(255,255,255,.9)'; cx.beginPath(); cx.arc(x,y,W*.012+.4,0,TAU); cx.fill(); }
+      cx.restore();
+      cx.save(); cx.globalCompositeOperation='lighter'; const gl=cx.createLinearGradient(gx-gr,0,gx+gr,0); gl.addColorStop(0,'rgba(255,255,255,.35)'); gl.addColorStop(.3,'rgba(255,255,255,.05)'); gl.addColorStop(1,'rgba(255,255,255,.2)');
+      cx.strokeStyle=gl; cx.lineWidth=2; cx.beginPath(); cx.arc(gx,gy,gr,Math.PI,TAU); cx.stroke(); cx.strokeStyle='rgba(255,255,255,.5)'; cx.lineWidth=1.5; cx.beginPath(); cx.arc(gx,gy,gr*.82,Math.PI*1.15,Math.PI*1.4); cx.stroke(); cx.restore();
+      cx.fillStyle='#E8C37A'; rr(gx-gr*1.02,gy-W*.02,gr*2.04,W*.06,2); cx.fill(); } break;
+    case 'sp_crane': {
+      // folded-paper sides with crease lines, and a paper crane perched on top that flaps on the beat
+      cx.save(); clipBody(); cx.fillStyle='#FFF4F6'; cx.fillRect(X,T,W,bh+H);
+      cx.fillStyle='rgba(255,140,170,.18)'; cx.beginPath(); cx.moveTo(X,fy); cx.lineTo(cxm,B); cx.lineTo(X,B); cx.closePath(); cx.fill(); cx.fillStyle='rgba(255,140,170,.1)'; cx.beginPath(); cx.moveTo(X+W,fy); cx.lineTo(cxm,B); cx.lineTo(X+W,B); cx.closePath(); cx.fill();
+      cx.strokeStyle='rgba(200,110,140,.45)'; cx.lineWidth=.8; cx.beginPath(); cx.moveTo(X,fy); cx.lineTo(X+W,B); cx.moveTo(X+W,fy); cx.lineTo(X,B); cx.moveTo(cxm,fy); cx.lineTo(cxm,B); cx.stroke(); cx.restore();
+      cx.strokeStyle='#F2A8BC'; cx.lineWidth=1.2; rr(X+.5,T+.5,W-1,bh+H-1,3); cx.stroke();
+      const fl=(beat%2===0?bt:0), cy=T+bh*.3-fl*W*.06;
+      // body, neck, head and tail as flat folded planes
+      const P2=(pts,col)=>{ cx.fillStyle=col; cx.beginPath(); pts.forEach(([a,b],i)=>i?cx.lineTo(cxm+a*W,cy+b*W):cx.moveTo(cxm+a*W,cy+b*W)); cx.closePath(); cx.fill(); };
+      P2([[-.18,0],[.18,0],[0,.08]],'#E8506A'); P2([[-.1,-.02],[-.45,-.42],[-.4,-.36],[-.08,.02]],'#FF6A84'); P2([[-.45,-.42],[-.56,-.38],[-.42,-.36]],'#C83A54');
+      P2([[.1,-.02],[.5,-.3],[.12,.04]],'#FF6A84');
+      [[-1,'#FF8AA0'],[1,'#E8506A']].forEach(([sg,col])=>{ const tx=cxm+sg*W*(.08+.1*fl), ty=cy-W*((sg>0?.5:.42)+.1*Math.sin(now*3+sg)+.2*fl);
+        cx.fillStyle=col; cx.beginPath(); cx.moveTo(cxm-W*.1,cy-W*.02); cx.lineTo(cxm+W*.1,cy-W*.02); cx.lineTo(tx,ty); cx.closePath(); cx.fill(); });
+      cx.strokeStyle='rgba(150,40,70,.4)'; cx.lineWidth=.7; cx.beginPath(); cx.moveTo(cxm,cy-W*.02); cx.lineTo(cxm,cy+W*.07); cx.stroke(); } break;
+    case 'sp_arcade': {
+      // a little arcade cabinet: purple sides, a glowing screen playing a game, buttons and a stick on top, a marquee that flashes on the beat
+      cx.save(); clipBody(); const g=cx.createLinearGradient(X,0,X+W,0); g.addColorStop(0,'#2A1050'); g.addColorStop(.5,'#4A1E8A'); g.addColorStop(1,'#2A1050'); cx.fillStyle=g; cx.fillRect(X,T,W,bh+H);
+      cx.fillStyle='#FF4FD8'; cx.fillRect(X,fy,W*.06,H); cx.fillRect(X+W*.94,fy,W*.06,H); cx.restore();
+      cx.strokeStyle='#4FF0FF'; cx.lineWidth=1.3; rr(X+.5,T+.5,W-1,bh+H-1,3); cx.stroke();
+      // the screen: a bat-and-ball game
+      const sx=X+W*.14, sy=fy+H*.14, sw=W*.72, sh2=H*.56; cx.fillStyle='#050812'; rr(sx,sy,sw,sh2,3); cx.fill();
+      cx.save(); cx.beginPath(); cx.rect(sx,sy,sw,sh2); cx.clip(); cx.fillStyle='rgba(80,255,200,.06)'; for(let k=0;k<sh2;k+=3) cx.fillRect(sx,sy+k,sw,1);
+      const t2=now*1.3, bx=sx+sw*(.5+.42*Math.sin(t2*2.1)), by=sy+sh2*(.5+.4*Math.sin(t2*3.3)); cx.fillStyle='#FFFFFF'; cx.fillRect(bx-1.5,by-1.5,3,3);
+      cx.fillStyle='#4FF0FF'; cx.fillRect(sx+2,by-sh2*.15,2.5,sh2*.3); cx.fillStyle='#FF4FD8'; cx.fillRect(sx+sw-4.5,sy+sh2*(.5+.3*Math.sin(t2*3.3-.6))-sh2*.15,2.5,sh2*.3);
+      cx.fillStyle='rgba(255,255,255,.4)'; for(let k=0;k<6;k++) cx.fillRect(sx+sw/2-.5,sy+k*sh2/6+2,1,sh2/12); cx.restore();
+      cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(sx+sw/2,sy+sh2/2,sw*.6,'#4FF0FF',.25); cx.restore();
+      // buttons and stick on the top face
+      [['#FF3A5A',.3],['#FFD23A',.48],['#3AFF8A',.66]].forEach(([c,u],k)=>{ const pr=(beat%3===k)?bt:0; cx.fillStyle=c; cx.beginPath(); cx.ellipse(X+W*u,T+bh*(.55+pr*.1),W*.055,bh*.16,0,0,TAU); cx.fill(); });
+      cx.strokeStyle='#222'; cx.lineWidth=W*.03; const jx=X+W*.82+Math.sin(now*4)*W*.03; cx.beginPath(); cx.moveTo(X+W*.82,T+bh*.6); cx.lineTo(jx,T-bh*.05); cx.stroke(); cx.fillStyle='#FF3A5A'; cx.beginPath(); cx.arc(jx,T-bh*.08,W*.05,0,TAU); cx.fill();
+      // the marquee above
+      const my=T-W*.32; cx.fillStyle='#120828'; rr(X+W*.05,my,W*.9,W*.22,4); cx.fill(); cx.strokeStyle='#FF4FD8'; cx.lineWidth=1.2; cx.stroke();
+      cx.fillStyle=bt>.3?'#FFFFFF':'#FFD23A'; cx.font=`800 ${Math.round(W*.12)}px Unbounded, system-ui, sans-serif`; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('PLAY',cxm,my+W*.115);
+      cx.save(); cx.globalCompositeOperation='lighter'; vxGlow(cxm,my+W*.11,W*.5,'#FF4FD8',.25+.4*bt); cx.restore();
+      cx.strokeStyle='#4A1E8A'; cx.lineWidth=2; cx.beginPath(); cx.moveTo(X+W*.12,my+W*.22); cx.lineTo(X+W*.12,T+bh*.3); cx.moveTo(X+W*.88,my+W*.22); cx.lineTo(X+W*.88,T+bh*.3); cx.stroke(); } break;
+    case 'rc_wreath': {
+      // the block: warm wood with a ribbon bow on the front, the wreath's front half round it, leaves falling
+      cx.save(); clipBody(); const g=cx.createLinearGradient(0,T,0,B); g.addColorStop(0,'#E8A85A'); g.addColorStop(1,'#8A4A1A'); cx.fillStyle=g; cx.fillRect(X,T,W,bh+H);
+      cx.strokeStyle='rgba(90,40,10,.35)'; cx.lineWidth=1; for(let k=1;k<5;k++){ cx.beginPath(); cx.moveTo(X,fy+H*k/5); cx.quadraticCurveTo(cxm,fy+H*k/5+H*.05,X+W,fy+H*k/5); cx.stroke(); } cx.restore();
+      cx.strokeStyle='#FFD166'; cx.lineWidth=1.5; rr(X+.5,T+.5,W-1,bh+H-1,3); cx.stroke();
+      const rx=cxm, ry=fy+H*.3; cx.fillStyle='#C8202A'; [-1,1].forEach(sg=>{ cx.beginPath(); cx.moveTo(rx,ry); cx.quadraticCurveTo(rx+sg*W*.3,ry-H*.25,rx+sg*W*.32,ry+H*.05); cx.quadraticCurveTo(rx+sg*W*.18,ry+H*.08,rx,ry); cx.fill();
+        cx.beginPath(); cx.moveTo(rx,ry); cx.lineTo(rx+sg*W*.18,ry+H*.55+Math.sin(now*2+sg)*H*.03); cx.lineTo(rx+sg*W*.1,ry+H*.5); cx.closePath(); cx.fill(); });
+      cx.fillStyle='#A8101A'; cx.beginPath(); cx.arc(rx,ry,W*.06,0,TAU); cx.fill();
+      rcWreath(cxm,oy,W,now,bt,true);
+      cx.save(); cx.globalCompositeOperation='lighter'; vxRise(vxN(6),.35,X-W*.3,W*1.6,B,W*1.3,now,(x,y,u,i)=>vxSpark(x,y,W*.035,i%2?'#FFD166':'#FF9A2A',1-u),37); cx.restore();
+      hvFall(10,X,W,T-W*.8,B-T+W*1.1,now,11,true); } break;
   }
   cx.restore();
 }
@@ -8531,6 +8814,7 @@ function admLiveNow(){ const L=ACCT.live, now=Date.now(), e=$('admLiveNow'), on=
 function admSelfUI(){ $('admLevels').textContent=SAVE.devAll?'Lock levels again':'Unlock all levels'; $('admPass').textContent=passS().prem?'Pulse Pass+ ✓':'Give me Pulse Pass+'; $('admPass').disabled=!!passS().prem;
   const r=SAVE.rankSet&&typeof SAVE.rankSet.n==='number'?SAVE.rankSet.n:-1; $('admRank').value=String(r); }
 function admTabSet(t){ admTab=t; document.querySelectorAll('#admTabs button').forEach(b=>{ b.classList.toggle('on',b.dataset.at===t); b.setAttribute('aria-selected',b.dataset.at===t); });
+  $('admLevelsPane').hidden=t!=='levels'; if(t==='levels') admLevelsUI();
   $('admPlayers').hidden=t!=='players'; $('admEvents').hidden=t!=='events'; $('admMe').hidden=t!=='me'; admMsg('');
   if(t==='events') admLiveNow(); if(t==='me') admSelfUI(); if(t==='players'&&!ADM.target&&!$('admFind').value.trim()) admTop(); }
 function admOpen(){ if(!ADM.on||!ACCT.user){ toast('Sign in with your admin account first.'); return; }
@@ -8722,7 +9006,7 @@ function frCard(){
   const worlds=[]; for(let w=1;w<=WORLDS;w++) worlds.push(worldStars(w));
   const nm=ensureName(); return {v:1,name:nm,nameKey:String(nm).toLowerCase(),code:FR.code,rank:myRank(),xp:SAVE.xp||0,skin:SAVE.skin,land:SAVE.land,world:SAVE.world||1,levelStars:levelStars(),worlds,
     bosses:bossesBeaten(),hard:hardCleared(),interDone:!!SAVE.interDone,bestEndless:SAVE.bestEndless||0,bestAscent:SAVE.bestAscent||0,bestRush:SAVE.bestRush||0,bestRaid:SAVE.bestRaid||0,
-    bestTether:SAVE.bestTether||0,levels:(SAVE.myLevels||[]).slice(0,24).map(l=>({n:l.n||'Untitled',code:l.code,k:LIKES.got[lvlKey(l.code)]||0})),show:myShowcase(),tr:SKINS.filter(s=>SAVE.owned.includes(s.id)&&fgGiftable(s)&&s.id!==SAVE.skin).map(s=>s.id).slice(0,150),seen:Date.now()};
+    bestTether:SAVE.bestTether||0,levels:(SAVE.myLevels||[]).slice(0,24).map(l=>({n:l.n||'Untitled',code:l.code,k:LIKES.got[lvlKey(l.code)]||0})),show:myShowcase(),post:{give:tpGive(),want:tpWant()},cr:(SAVE.likesGot||0)>=5,tr:SKINS.filter(s=>SAVE.owned.includes(s.id)&&fgGiftable(s)&&s.id!==SAVE.skin).map(s=>s.id).slice(0,150),seen:Date.now()};
 }
 /* your public card is refreshed a few seconds after anything is saved, and every few minutes while the game is open */
 function frPush(now){
@@ -8810,7 +9094,7 @@ function frRender(){
   $('frList').querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>frView(b.dataset.view));
   $('frList').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ if(b.dataset.arm){ frRemove(b.dataset.rm); return; } b.dataset.arm='1'; b.textContent='Remove?'; setTimeout(()=>{ if(b.isConnected){ b.dataset.arm=''; b.textContent='✕'; } },2500); });
   $('frInvites').querySelectorAll('[data-join]').forEach(b=>b.onclick=()=>frJoin(FR.invites.find(v=>v.from===b.dataset.join)));
-  trRender();
+  trRender(); tpRender();
 }
 function showFriends(){ frMsg(''); frRender(); showOv('friendsOv'); if(ACCT.user&&!FR.code) frStart(); else if(frOn()) frLoadProfiles().then(()=>{ if(!$('friendsOv').hidden) frRender(); }); }
 /* ---- a friend's card ---- */
@@ -8821,7 +9105,7 @@ async function frView(uid){
   if(!p){ $('fpName').textContent='Unknown player'; return; }
   $('fpName').textContent=showName(p.name); $('fpSeen').innerHTML=`<i class="odot${frOnline(p)?' on':''}"></i> ${frOnline(p)?'Online now':'Last seen '+frAgo(p.seen)}`;
   $('fpSkin').dataset.skin=p.skin||'classic'; $('fpSkinName').textContent='Block: '+((SKINS.find(k=>k.id===p.skin)||{}).name||'Dawn Cube');
-  $('fpRank').textContent=rankName(p.rank||0); $('fpRank').parentNode.style.setProperty('--rc',rankCol(p.rank||0)); $('fpGem').style.setProperty('--rc',rankCol(p.rank||0));
+  $('fpRank').textContent=rankName(p.rank||0)+(p.cr===true?' · 🎨 Creator':''); $('fpRank').parentNode.style.setProperty('--rc',rankCol(p.rank||0)); $('fpGem').style.setProperty('--rc',rankCol(p.rank||0));
   $('fpLevels').textContent=`Reached world ${Math.min(WORLDS,p.world||1)} of ${WORLDS} · ◆ ${p.levelStars||0}/${WORLDS*27} stars · ${p.bosses||0}/${WORLDS} bosses · Hard Mode ${p.hard||0}/12`+(p.interDone?' · Interlude cleared':'');
   $('fpWorlds').innerHTML=(p.worlds||[]).map((n,i)=>`<span class="${n>=27?'full':''}" style="--c:${THEMES[i]?THEMES[i].acc:'#FFD166'}" title="${escapeHTML(THEMES[i]?THEMES[i].name:'World '+(i+1))}">W${i+1}<b>◆${n}</b></span>`).join('');
   $('fpStats').innerHTML=[['Best Endless',(p.bestEndless||0).toLocaleString()],['Best Ascent',p.bestAscent?'floor '+p.bestAscent:'–'],['Best Mastery Jam',p.bestRaid?p.bestRaid+'/'+WORLDS+' bosses':'–'],['Best Tether',p.bestTether?p.bestTether+' rooms':'–'],['Best Mastery Rush',p.bestRush?p.bestRush+'/'+WORLDS+' bosses':'–']].map(([l,v])=>`<div><span class="lbl">${l}</span><b>${v}</b></div>`).join('');
@@ -8963,22 +9247,24 @@ const dustN=()=>SAVE.dust||0;
 function forgeList(){ const out=[]; BPACKS.filter(bpAvail).forEach(pk=>Object.keys(pk.rates).forEach(id=>{ const s=skinById(id); if(s&&s.bpr<5&&!SAVE.owned.includes(id)) out.push({s,pk}); })); return out; }
 function buildForge(){
   if(!SAVE.forgeGift){ SAVE.forgeGift=1; SAVE.dust=dustN()+60; save(); }   // a little Stardust to start with
-  const L=forgeList(), groups=BPACKS.filter(bpAvail);
-  let h=`<div class="forgehead"><div class="anvil" aria-hidden="true">⚒</div><div><b>The Forge</b><p>Every repeat block you pull from a pack also gives <b>Stardust</b>. Spend it here to forge any pack block you're still missing.</p></div><div class="dustbal"><small>Stardust</small><b>✧ ${dustN().toLocaleString()}</b></div></div>`+
+  const L=forgeList(), groups=BPACKS.filter(bpAvail), commons=L.filter(x=>x.s.bpr===0), canC=Math.min(commons.length,Math.floor(dustN()/DUST_COST[0]));
+  let h=`<div class="forgehead"><div class="anvil" aria-hidden="true">⚒</div><div><b>The Forge</b><p>Every repeat block you pull from a pack also gives <b>Stardust</b>. Spend it here to forge any pack block you're still missing, make fusions, or polish your blocks.</p></div><div class="dustbal"><small>Stardust</small><b>✧ ${dustN().toLocaleString()}</b></div></div>`+
     `<div class="forgerates">${BP_RAR.slice(0,5).map((R,r)=>`<span><i style="--rc:${R.c}"></i>${R.n}: forge ✧${DUST_COST[r].toLocaleString()} · repeat +✧${DUST_GET[r]}</span>`).join('')}</div>`;
+  if(commons.length>=2) h+=`<div class="forgebulk"><span>⚒ ${commons.length} commons still missing</span><button class="btn" type="button" id="forgeAll" ${canC<1?'disabled':''}>${canC>=commons.length?`Forge all ${commons.length} · ✧ ${(commons.length*DUST_COST[0]).toLocaleString()}`:canC?`Forge the ${canC} you can afford · ✧ ${(canC*DUST_COST[0]).toLocaleString()}`:`Forge all · ✧ ${(commons.length*DUST_COST[0]).toLocaleString()}`}</button></div>`;
+  h+=recipeHTML()+fuseHTML()+`<p class="bpnote forgehint">✨ <b>Polish:</b> tap any block you own (here or in the Collection) to polish it Gold (✧${POLISH_COST[1]}) and then Prism (✧${POLISH_COST[2]}).</p>`;
   if(!L.length) h+=`<p class="bpnote">You've found every block you can forge. Amazing! Pristine blocks can only come from packs.</p>`;
   groups.forEach(pk=>{ const list=L.filter(x=>x.pk===pk).sort((a,b)=>a.s.bpr-b.s.bpr); if(!list.length) return;
     h+=`<h3 class="collsec">${escapeHTML(pk.name)}<small>${list.length} to forge</small></h3>`+list.map(({s})=>{ const c=DUST_COST[s.bpr], ok=dustN()>=c, R=BP_RAR[s.bpr];
-      return `<div class="item forgeitem${ok?' can':''}"><canvas class="skprev" data-skin="${s.id}" width="64" height="64" aria-hidden="true"></canvas><span class="crar" style="--rc:${R.c}">${R.n}</span><b>${escapeHTML(s.name)}</b>`+
+      return `<div class="item forgeitem${ok?' can':''}">${wishBtn(s.id)}<canvas class="skprev" data-skin="${s.id}" width="64" height="64" aria-hidden="true"></canvas><span class="crar" style="--rc:${R.c}">${R.n}</span><b>${escapeHTML(s.name)}</b>`+
         `<div class="bpbar" style="--acc:${R.c}"><i style="width:${Math.min(100,Math.round(dustN()/c*100))}%"></i></div><button class="btn" type="button" data-forge="${s.id}" ${ok?'':'disabled'}>⚒ Forge · ✧ ${c.toLocaleString()}</button></div>`; }).join(''); });
   $('shopGrid').innerHTML=h;
   $('shopGrid').querySelectorAll('[data-forge]').forEach(b=>b.onclick=()=>forgeOne(b.dataset.forge));
+  { const fa=$('forgeAll'); if(fa) fa.onclick=()=>forgeMany(commons.map(x=>x.s.id)); const rg=$('recGo'); if(rg) rg.onclick=recipeMake; }
+  $('shopGrid').querySelectorAll('[data-fz]').forEach(s=>s.onchange=()=>{ FUSE[s.dataset.fz]=s.value; buildShop(); });
+  $('fuseGo').onclick=fuseMake; wishWire($('shopGrid'));
   $('shopStats').textContent='Stardust comes from repeat blocks in packs. Forging is never random: you pick exactly the block you get.';
 }
-function forgeOne(id){ const s=skinById(id), pk=BPACKS.find(p=>p.rates[id]); if(!s||!pk||s.bpr>=5||SAVE.owned.includes(id)||dustN()<DUST_COST[s.bpr]||(BP.stage&&BP.stage!=='done')) return;
-  SAVE.dust=dustN()-DUST_COST[s.bpr]; SAVE.owned.push(id); if(SAVE.gone) delete SAVE.gone[id]; SAVE.life=SAVE.life||{}; SAVE.life.forged=(SAVE.life.forged||0)+1;
-  SAVE.bpSet=SAVE.bpSet||{}; const tot=Object.keys(pk.rates).length, have=bpOwnedN(pk); let set=0; if(have>=tot&&!SAVE.bpSet[pk.id]){ SAVE.bpSet[pk.id]=1; set=bpSetBonus(pk); SAVE.notes+=set; }
-  save(); bpShowMulti(pk,[{id,dupe:false,refund:0,have,tot,set}],{forge:true}); }
+function forgeOne(id){ forgeMany([id]); }
 
 /* ================= DAILY DEALS =================
    Three Shop blocks on sale every day, the same three for everyone, picked from the date. */
@@ -8991,11 +9277,297 @@ function dealsHTML(){ const left=()=>{ const d=new Date(); d.setHours(24,0,0,0);
     return `<div class="deal"><span class="dealoff">−${off}%</span><canvas class="skprev" data-skin="${s.id}" width="64" height="64" aria-hidden="true"></canvas><b>${escapeHTML(s.name)}</b><small><s>♪ ${s.price.toLocaleString()}</s></small>`+
       (own?`<button class="btn ghost" type="button" disabled>Owned ✓</button>`:`<button class="btn" type="button" data-deal="${s.id}" ${SAVE.notes<price?'disabled':''}>♪ ${price.toLocaleString()}</button>`)+`</div>`; }).join('')}</div></div>`; }
 function dealBuy(id){ const d=dealsToday().find(x=>x.s.id===id); if(!d||SAVE.owned.includes(id)||SAVE.notes<d.price) return;
-  SAVE.notes-=d.price; SAVE.owned.push(id); equip('skin',id); if(A.ctx) sGem(); buzz(20); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; toast(`${d.s.name} is yours, ${d.off}% off!`); buildShop(); netHello(); }
+  SAVE.notes-=d.price; spendLog(d.s.name+' (deal)',d.price); SAVE.owned.push(id); equip('skin',id); if(A.ctx) sGem(); buzz(20); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; toast(`${d.s.name} is yours, ${d.off}% off!`); buildShop(); netHello(); }
 
 /* ---- shuffle: wear a random one of your pinned blocks every run ---- */
 function pinShuffle(M){ if(!SAVE.pinShuffle||TRY||M.net) return; const pins=(SAVE.pins||[]).filter(id=>ownsSkin(id)); if(pins.length<2) return;
   const pick=pins.filter(id=>id!==SAVE.skin); SAVE.skin=pick[Math.floor(Math.random()*pick.length)]; }
+/* ================= SHOP AND COLLECTION, ROUND THREE =================
+   Wishlist, bundles, a preview stage, Polish, the weekly spotlight, spending history, "New" dots, loadouts, sorting,
+   a savings goal, the trading post, a seasonal Forge recipe, fusion, featured levels and the Wardrobe Challenge. */
+const r25=n=>Math.max(25,Math.round(n/25)*25);
+const agoT=t=>{ const m=Math.round((Date.now()-t)/6e4); return m<1?'just now':m<60?m+'m ago':m<1440?Math.round(m/60)+'h ago':Math.round(m/1440)+'d ago'; };
+
+/* ---- spending history: where your Notes went ---- */
+function spendLog(what,n){ if(!(n>0)) return; SAVE.spend=[[Date.now(),String(what).slice(0,48),Math.round(n)],...(SAVE.spend||[])].slice(0,60); }
+function spendOpen(){ const L=SAVE.spend||[], wk=Date.now()-7*864e5, week=L.filter(x=>x[0]>=wk).reduce((a,x)=>a+x[2],0);
+  modalOpen(`<h2>🧾 Spending history</h2><p class="small">Every Notes purchase on this account, newest first (the last 60).</p><div class="spendsum"><span>This week<b>♪ ${week.toLocaleString()}</b></span><span>All listed<b>♪ ${L.reduce((a,x)=>a+x[2],0).toLocaleString()}</b></span></div>`+
+    (L.length?`<ul class="spendlist">${L.map(([t,w,n])=>`<li><span>${escapeHTML(w)}</span><em>${agoT(t)}</em><b>−♪ ${n.toLocaleString()}</b></li>`).join('')}</ul>`:'<p class="bpnote">Nothing bought yet.</p>')); }
+
+/* ---- a small modal on top of the Shop (the preview stage and a few pickers use it) ---- */
+let STAGE=null;
+function modalOpen(html){ STAGE=null; $('stageBody').innerHTML=html; $('stageOv').hidden=false; $('stageOv').querySelector('.stagepanel').scrollTop=0; }
+function stageClose(){ $('stageOv').hidden=true; STAGE=null; if(!$('shopOv').hidden) buildShop(); }
+$('stageX').onclick=stageClose; $('stageOv').addEventListener('click',e=>{ if(e.target===$('stageOv')) stageClose(); });
+addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('stageOv').hidden){ e.preventDefault(); e.stopPropagation(); stageClose(); } },true);
+
+/* ---- wishlist ---- */
+const wished=id=>(SAVE.wish||[]).includes(id);
+function wishToggle(id){ SAVE.wish=SAVE.wish||[]; const i=SAVE.wish.indexOf(id);
+  if(i>=0) SAVE.wish.splice(i,1); else { if(SAVE.wish.length>=40){ toast('Your wishlist is full (40). Remove one first.'); return false; } SAVE.wish.push(id); }
+  save(); if(frOn()) frPush(); return true; }
+const wishBtn=id=>`<button class="wishb${wished(id)?' on':''}" type="button" data-wish="${id}" aria-label="${wished(id)?'Remove from':'Add to'} wishlist" title="Wishlist">${wished(id)?'★':'☆'}</button>`;
+function wishWire(root){ root.querySelectorAll('[data-wish]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); if(!wishToggle(b.dataset.wish)) return; const on=wished(b.dataset.wish);
+  b.classList.toggle('on',on); b.textContent=on?'★':'☆'; toast(on?'★ Added to your wishlist. You\'ll hear when it\'s on sale or in reach.':'Removed from your wishlist'); }); }
+/* once a day, on the menu: wishlist blocks on sale, in the spotlight, forgeable or affordable */
+function wishCheck(){ SAVE.wish=(SAVE.wish||[]).filter(id=>SKINS.some(s=>s.id===id)&&!ownsSkin(id)); const day=todayKey();
+  const N=SAVE.wishNote&&SAVE.wishNote.day===day?SAVE.wishNote:(SAVE.wishNote={day,ids:[]}), msgs=[], deals=dealsToday(), spot=spotThisWeek();
+  for(const id of SAVE.wish){ if(N.ids.includes(id)) continue; const s=skinById(id), d=deals.find(x=>x.s.id===id); let m='';
+    if(d) m=`★ ${s.name} from your wishlist is ${d.off}% off today!`;
+    else if(spot&&spot.id===id) m=`★ ${s.name} from your wishlist is this week's spotlight!`;
+    else if(s.bp&&s.bpr<5&&dustN()>=DUST_COST[s.bpr]) m=`★ You have enough Stardust to forge ${s.name}!`;
+    else if(s.price>0&&!s.req&&!s.paid&&SAVE.notes>=s.price) m=`★ You can afford ${s.name} from your wishlist!`;
+    if(m){ N.ids.push(id); msgs.push(m); } }
+  if(msgs.length){ save(); msgs.slice(0,2).forEach((m,i)=>setTimeout(()=>toast(m),900+i*3400)); } }
+
+/* ---- the weekly spotlight: one block only in the Shop that week ---- */
+const SPOTS=['sp_koi','sp_globe','sp_crane','sp_arcade'];
+const weekNo=()=>{ const k=weekKey(); return parseInt(k.slice(0,4),10)*53+parseInt(k.slice(-2),10); };
+const spotThisWeek=()=>skinById(SPOTS[weekNo()%SPOTS.length]);
+function spotHTML(){ const s=spotThisWeek(), own=SAVE.owned.includes(s.id);
+  return `<div class="spot"><div class="spotart"><canvas class="skprev" data-skin="${s.id}" data-px="110" width="110" height="110" aria-hidden="true"></canvas></div><div class="spott"><small>⭐ This week's spotlight</small><b>${escapeHTML(s.name)}</b><span>Only in the Shop this week: it leaves in ${untilMonday()} and comes back in a month.</span></div>`+
+    `<div class="spotb">${wishBtn(s.id)}${own?`<button class="btn ghost" type="button" disabled>Owned ✓</button>`:`<button class="btn" type="button" data-spot="${s.id}" ${SAVE.notes<s.price?'disabled':''}>♪ ${s.price.toLocaleString()}</button>`}</div></div>`; }
+function spotBuy(id){ const s=spotThisWeek(); if(!s||s.id!==id||SAVE.owned.includes(id)||SAVE.notes<s.price) return; SAVE.notes-=s.price; spendLog(s.name+' (spotlight)',s.price); SAVE.owned.push(id); equip('skin',id); afterBuy(s.name); }
+function shopBuySkin(id){ const s=SKINS.find(k=>k.id===id); if(!s||!(s.price>0)||s.req||s.paid||SAVE.owned.includes(id)||SAVE.notes<s.price) return; SAVE.notes-=s.price; spendLog(s.name,s.price); SAVE.owned.push(id); equip('skin',id); afterBuy(s.name); }
+function afterBuy(name){ if(A.ctx) sGem(); buzz(20); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; toast(`${name} is yours!`); if(SAVE.goal&&ownsSkin(SAVE.goal.id)) SAVE.goal=null;
+  SAVE.wish=(SAVE.wish||[]).filter(id=>!ownsSkin(id)); save(); if(!$('shopOv').hidden) buildShop(); try{ netHello(); }catch(e){} }
+
+/* ---- bundles: a themed set, 25% off whatever in it you don't own yet ---- */
+const BUNDLES=[
+ {id:'cozy',name:'Cozy Bundle',ic:'🕯',items:[['skin','lantern'],['skin','mint'],['land','petals'],['tiles','t_oak']]},
+ {id:'night',name:'Night Sky Bundle',ic:'🌙',items:[['skin','moon'],['skin','galaxy'],['land','stars'],['tiles','t_night'],['banner','b_stars']]},
+ {id:'retro',name:'Retro Bundle',ic:'🕹',items:[['skin','pixel'],['skin','tv'],['land','pixels'],['pack','s_arcade'],['tiles','t_neon']]},
+ {id:'ice',name:'Ice & Lightning Bundle',ic:'⚡',items:[['skin','frost'],['skin','crystal'],['land','bolt'],['tiles','t_frost'],['banner','b_storm']]},
+ {id:'party',name:'Party Bundle',ic:'🎉',items:[['skin','disco'],['skin','speaker'],['land','notes'],['tiles','t_candy'],['banner','b_candy']]}];
+const BUN_LIST={skin:()=>SKINS,land:()=>LANDS,tiles:()=>TILES,pack:()=>PACKS,banner:()=>BANNERS}, BUN_KIND={skin:'Block',land:'Landing effect',tiles:'Tiles',pack:'Soundtrack',banner:'Banner'};
+const bunItem=([k,id])=>BUN_LIST[k]().find(x=>x.id===id);
+const bunOwn=x=>x[0]==='skin'?ownsSkin(x[1]):ownsItem(bunItem(x));
+function bunPrice(b){ const left=b.items.filter(x=>bunItem(x)&&!bunOwn(x)), full=left.reduce((a,x)=>a+(bunItem(x).price||0),0); return {left,full,price:left.length?r25(full*.75):0}; }
+function bundlesHTML(){ return `<div class="bundles"><div class="dealshead"><b>🎁 Bundles</b><small>25% off everything in a bundle you don't own yet</small></div><div class="bunrow">${BUNDLES.map(b=>{ const P=bunPrice(b);
+  return `<div class="bun"><div class="bunart">${b.items.filter(x=>x[0]==='skin').map(x=>`<canvas class="skprev" data-skin="${x[1]}" width="52" height="52" aria-hidden="true"></canvas>`).join('')}</div><b>${b.ic} ${escapeHTML(b.name)}</b>`+
+    `<ul>${b.items.map(x=>{ const it=bunItem(x); return it?`<li class="${bunOwn(x)?'own':''}">${BUN_KIND[x[0]]}: ${escapeHTML(it.name)}</li>`:''; }).join('')}</ul>`+
+    (P.left.length?`<small><s>♪ ${P.full.toLocaleString()}</s></small><button class="btn" type="button" data-bun="${b.id}" ${SAVE.notes<P.price?'disabled':''}>♪ ${P.price.toLocaleString()}</button>`:`<button class="btn ghost" type="button" disabled>All owned ✓</button>`)+`</div>`; }).join('')}</div></div>`; }
+function bunBuy(id){ const b=BUNDLES.find(x=>x.id===id); if(!b) return; const P=bunPrice(b); if(!P.left.length||SAVE.notes<P.price) return;
+  SAVE.notes-=P.price; spendLog(b.name,P.price); P.left.forEach(x=>{ if(!SAVE.owned.includes(x[1])) SAVE.owned.push(x[1]); }); afterBuy(b.name); }
+
+/* ---- coupons (won in the Wardrobe Challenge): half price on one Shop block ---- */
+const couponOk=()=>!!(SAVE.coupon&&!SAVE.coupon.used);
+function couponBuy(id){ const s=SKINS.find(k=>k.id===id); if(!s) return; const pr=r25(s.price/2); if(!couponOk()||!(s.price>0)||s.req||s.paid||SAVE.owned.includes(id)||SAVE.notes<pr) return;
+  SAVE.notes-=pr; spendLog(s.name+' (coupon)',pr); SAVE.coupon.used=true; SAVE.owned.push(id); equip('skin',id); afterBuy(s.name); }
+
+/* ---- Polish: Stardust turns a block you own Gold, then Prism ---- */
+const POLISH_COST=[0,150,400];
+function polishUp(id){ const p=(SAVE.polish||{})[id]||0; if(!ownsSkin(id)||p>=2||dustN()<POLISH_COST[p+1]) return;
+  SAVE.dust=dustN()-POLISH_COST[p+1]; SAVE.polish=Object.assign({},SAVE.polish,{[id]:p+1}); if(SAVE.polishOff) delete SAVE.polishOff[id];
+  SAVE.life=SAVE.life||{}; SAVE.life.polished=(SAVE.life.polished||0)+1; save(); achCheck(); if(A.ctx) sGem(); buzz(30); toast(`✨ ${skinById(id).name} is now ${p+1===2?'Prism':'Gold'}!`); }
+/* only your own block shows its polish (not other players') */
+const polishOf=P=>{ const id=P&&P.skin&&P.skin.id; if(!id||(P.id||0)>0) return 0; const v=(SAVE.polish||{})[id]||0; return v&&!(SAVE.polishOff||{})[id]?v:0; };
+function drawPolish(v,X,T,W,bh,H,now){ const hh=bh+H; cx.save(); cx.beginPath(); cx.rect(X,T,W,hh); cx.clip();
+  const g=cx.createLinearGradient(X,T,X+W,T+hh);
+  if(v===1){ g.addColorStop(0,'rgba(255,236,160,.6)'); g.addColorStop(.5,'rgba(255,196,60,.3)'); g.addColorStop(1,'rgba(200,140,20,.55)'); }
+  else for(let k=0;k<5;k++) g.addColorStop(k/4,`hsla(${(now*80+k*72)%360},95%,70%,.42)`);
+  cx.globalCompositeOperation='overlay'; cx.fillStyle=g; cx.fillRect(X,T,W,hh);
+  // a shine sweeping across every couple of seconds
+  cx.globalCompositeOperation='lighter'; const u=(now*.45)%1.6-.3, sx=X+u*W*1.4, sg=cx.createLinearGradient(sx-W*.2,0,sx+W*.2,0);
+  sg.addColorStop(0,'rgba(255,255,255,0)'); sg.addColorStop(.5,v===1?'rgba(255,240,190,.55)':'rgba(255,255,255,.6)'); sg.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=sg;
+  cx.save(); cx.translate(sx,T); cx.transform(1,0,-.4,1,0,0); cx.fillRect(-W*.2,0,W*.4,hh); cx.restore(); cx.restore();
+  cx.save(); cx.lineWidth=2; cx.strokeStyle=v===1?'#FFD34D':hsl2hex((now*90)%360,95,70); rr(X+.5,T+.5,W-1,hh-1,3); cx.stroke();
+  cx.globalCompositeOperation='lighter'; for(let k=0;k<(v===1?3:5);k++){ const q=now*.8+k*.37, ph=q%1, a=Math.sin(ph*Math.PI), f=Math.floor(q);
+    vxSpark(X+W*vxRnd(k*3.7+f),T+hh*vxRnd(k*5.3+f),W*.08*a,v===1?'#FFF2C0':hsl2hex((k*70+now*60)%360,90,80),a); } cx.restore(); }
+
+/* ---- savings goal on the menu ---- */
+const goalIs=id=>!!(SAVE.goal&&SAVE.goal.id===id);
+function goalUI(){ const b=$('mGoal'); if(!b) return; if(SAVE.goal&&ownsSkin(SAVE.goal.id)){ SAVE.goal=null; save(); }
+  const s=SAVE.goal&&SKINS.find(k=>k.id===SAVE.goal.id); b.hidden=!s; if(!s) return;
+  const d=dealsToday().find(x=>x.s.id===s.id), price=d?d.price:s.price, ok=SAVE.notes>=price;
+  $('mGoalT').textContent=ok?`You can buy ${s.name} now!`:`Saving for ${s.name}`;
+  $('mGoalSub').textContent=`♪ ${Math.min(SAVE.notes,price).toLocaleString()} / ${price.toLocaleString()}`+(d?` · ${d.off}% off today!`:'');
+  $('mGoalBar').style.width=Math.round(Math.min(1,SAVE.notes/price)*100)+'%'; b.classList.toggle('ready',ok); }
+$('mGoal').onclick=()=>{ if(!SAVE.goal) return; const id=SAVE.goal.id; showStore('skins'); setTimeout(()=>stageOpen(id),60); };
+
+/* ---- when you got each block: "New" dots, the Recently got sort, and Collector milestones ---- */
+function ownedStamp(){ const T=SAVE.gotT||(SAVE.gotT={}), first=!SAVE.gotInit; for(const id of SAVE.owned) if(!(id in T)) T[id]=first?0:Date.now(); if(first) SAVE.gotInit=1;
+  // every 10 blocks you own pays ♪150
+  const n=SKINS.filter(s=>SAVE.owned.includes(s.id)).length, m=Math.floor(n/10), was=SAVE.colMile==null?m:SAVE.colMile;
+  if(SAVE.colMile==null) SAVE.colMile=m; else if(m>was){ const pay=(m-was)*150; SAVE.colMile=m; SAVE.notes+=pay; setTimeout(()=>toast(`🏅 Collector milestone: ${m*10} blocks! +♪${pay}`),600); save(); } }
+const isNewB=id=>((SAVE.gotT||{})[id]||0)>(SAVE.collSeenT||0);
+function newDots(){ ownedStamp(); const n=SAVE.owned.filter(id=>isNewB(id)&&SKINS.some(s=>s.id===id)).length; ['navNew','mShopNew'].forEach(k=>{ const d=$(k); if(d){ d.hidden=!n; d.textContent=n>9?'9+':n; } }); }
+
+/* ---- loadouts: up to three saved looks ---- */
+const LOAD_KEYS=['skin','land','tiles','pack','banner'], LOAD_LISTS={land:()=>LANDS,tiles:()=>TILES,pack:()=>PACKS,banner:()=>BANNERS};
+function loadSave(i){ SAVE.loads=(SAVE.loads||[]).slice(0,3); while(SAVE.loads.length<3) SAVE.loads.push(null); const o={}; LOAD_KEYS.forEach(k=>o[k]=SAVE[k]); SAVE.loads[i]=o; save(); toast(`Saved what you're wearing as loadout ${i+1}`); }
+function loadWear(i){ const o=(SAVE.loads||[])[i]; if(!o) return;
+  if(o.skin&&ownsSkin(o.skin)) equip('skin',o.skin);
+  for(const k of ['land','tiles','pack','banner']){ const it=o[k]&&LOAD_LISTS[k]().find(x=>x.id===o[k]); if(it&&ownsItem(it)) equip(k,o[k]); }
+  G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; try{ netHello(); lbRename(); }catch(e){} toast(`Loadout ${i+1} on`); }
+function loadsHTML(){ const L=SAVE.loads||[]; return `<div class="loads"><span class="small">Loadouts</span>${[0,1,2].map(i=>{ const o=L[i];
+  return `<div class="load">${o?`<canvas class="skprev" data-skin="${o.skin}" width="36" height="36" aria-hidden="true"></canvas><button type="button" class="chip" data-lw="${i}">Wear ${i+1}</button>`:`<span class="lempty">${i+1}</span>`}<button type="button" class="lsave" data-ls="${i}" title="Save what you're wearing now">Save</button></div>`; }).join('')}</div>`; }
+
+/* ---- the preview stage: any block, big, on a turning stand ---- */
+function stageOpen(id){ if(!SKINS.some(k=>k.id===id)) return; STAGE=id; stageRender(); $('stageOv').hidden=false; $('stageOv').querySelector('.stagepanel').scrollTop=0; }
+function stageRender(){ const s=skinById(STAGE), id=s.id, own=ownsSkin(id), R0=s.bp?BP_RAR[s.bpr]:null, sig=SIG[id], d=dealsToday().find(x=>x.s.id===id), spot=spotThisWeek().id===id;
+  const pol=(SAVE.polish||{})[id]||0, shop=s.price>0&&!s.req&&!s.paid, price=d?d.price:s.price, pk=s.bp&&BPACKS.find(p=>p.id===s.bp);
+  let where=R0?`${R0.n} · ${escapeHTML(pk?pk.name:'Block pack')}`:s.paid?'Premium block':s.req?escapeHTML(reqText(s.req)):s.price?`Shop block · ♪ ${s.price.toLocaleString()}`:'Starter block';
+  if(s.fuse) where=`Fusion of ${escapeHTML(skinById(s.fuse.a).name)} and ${escapeHTML(skinById(s.fuse.b).name)}`;
+  if(s.req&&s.req.spot) where=spot?`This week's spotlight · ♪ ${s.price.toLocaleString()}`:'Weekly spotlight: in the Shop every few weeks';
+  const B=[];
+  if(own){ B.push(SAVE.skin===id?`<button class="btn ghost" type="button" disabled>Wearing it</button>`:`<button class="btn" type="button" data-st="wear">Wear it</button>`);
+    if(pol<2) B.push(`<button class="btn polb" type="button" data-st="polish" ${dustN()<POLISH_COST[pol+1]?'disabled':''}>${pol?'🌈 Polish to Prism':'✨ Polish to Gold'} · ✧${POLISH_COST[pol+1]}</button>`);
+    if(pol) B.push(`<button class="btn ghost" type="button" data-st="poltog">${(SAVE.polishOff||{})[id]?'Show the polish':'Hide the polish'}</button>`); }
+  else { const buyable=shop||spot;
+    if(buyable){ B.push(`<button class="btn" type="button" data-st="buy" ${SAVE.notes<price?'disabled':''}>Buy · ♪ ${price.toLocaleString()}${d?` (−${d.off}%)`:''}</button>`);
+      if(couponOk()&&shop) B.push(`<button class="btn coup" type="button" data-st="coupon" ${SAVE.notes<r25(s.price/2)?'disabled':''}>🎟 Use your coupon · ♪ ${r25(s.price/2).toLocaleString()}</button>`);
+      if(shop) B.push(`<button class="btn ghost" type="button" data-st="try">▶ Try it in a run</button>`);
+      if(SAVE.notes<price) B.push(`<button class="btn ghost" type="button" data-st="goal">${goalIs(id)?'🎯 Stop saving for this':'🎯 Save up for this'}</button>`); }
+    if(s.bp&&s.bpr<5&&pk&&bpAvail(pk)) B.push(`<button class="btn ghost" type="button" data-st="forge" ${dustN()<DUST_COST[s.bpr]?'disabled':''}>⚒ Forge · ✧${DUST_COST[s.bpr]}</button>`);
+    if(!s.fuse) B.push(`<button class="btn ghost" type="button" data-st="wish">${wished(id)?'★ On your wishlist':'☆ Add to wishlist'}</button>`); }
+  const shown=pol&&!(SAVE.polishOff||{})[id]?pol:0;
+  $('stageBody').innerHTML=`<div class="stagepad pol${shown}" style="--rc:${R0?R0.c:'#FFD166'};--core:${/^#/.test(s.core||'')?s.core:'#FFD166'}"><div class="stagelight"></div><div class="stagespin"><canvas class="skprev" data-skin="${id}" data-px="230" data-big="1" width="230" height="230" aria-hidden="true"></canvas></div><div class="stagedisc"></div><i class="stagering"></i><i class="stagering r2"></i></div>`+
+    `<div class="stageinfo">${R0?`<span class="crar" style="--rc:${R0.c}">${R0.n}</span>`:''}<h2>${escapeHTML(s.name)}${shown?` <span class="polt p${shown}">${shown===2?'Prism':'Gold'}</span>`:''}</h2><p class="small">${where}${sig?` · comes with the <b>${escapeHTML(sig.n)}</b> landing effect`:''}</p>${!own&&!s.bp&&!shop&&!spot&&!s.fuse&&s.req?'':''}</div><div class="stagebtns">${B.join('')}</div>`;
+  $('stageBody').querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>stageAct(b.dataset.st)); }
+function stageAct(a){ const s=skinById(STAGE), id=s.id;
+  if(a==='wear'){ equip('skin',id); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; try{ netHello(); }catch(e){} toast(`Now wearing ${s.name}`); }
+  if(a==='buy'){ const d=dealsToday().find(x=>x.s.id===id); if(d) dealBuy(id); else if(spotThisWeek().id===id) spotBuy(id); else shopBuySkin(id); }
+  if(a==='coupon') couponBuy(id);
+  if(a==='try'){ $('stageOv').hidden=true; STAGE=null; tryBlock(id); return; }
+  if(a==='goal'){ SAVE.goal=goalIs(id)?null:{id}; save(); toast(SAVE.goal?`🎯 Saving up for ${s.name}. Your progress shows on the menu.`:'Goal cleared'); }
+  if(a==='forge'){ $('stageOv').hidden=true; STAGE=null; forgeOne(id); return; }
+  if(a==='wish') wishToggle(id);
+  if(a==='polish') polishUp(id);
+  if(a==='poltog'){ SAVE.polishOff=Object.assign({},SAVE.polishOff); SAVE.polishOff[id]=!SAVE.polishOff[id]; save(); }
+  if(STAGE) stageRender(); }
+/* tap any block picture in the Shop, Collection or Forge to see it on the stage */
+$('shopGrid').addEventListener('click',e=>{ const c=e.target.closest&&e.target.closest('canvas.skprev[data-skin]'); if(!c||c.closest('.mystery')||c.closest('.fuseout')) return; stageOpen(c.dataset.skin); });
+
+/* ---- the Forge: forge every missing common at once ---- */
+function forgeMany(ids){ if(BP.stage&&BP.stage!=='done') return; const res=[];
+  for(const id of ids){ const s=skinById(id), pk=BPACKS.find(p=>p.rates[id]); if(!pk||!bpAvail(pk)||SAVE.owned.includes(id)||s.bpr>=5) continue; const c=DUST_COST[s.bpr]; if(dustN()<c) break;
+    SAVE.dust=dustN()-c; SAVE.owned.push(id); if(SAVE.gone) delete SAVE.gone[id];
+    SAVE.bpSet=SAVE.bpSet||{}; const tot=Object.keys(pk.rates).length, have=bpOwnedN(pk); let set=0; if(have>=tot&&!SAVE.bpSet[pk.id]){ SAVE.bpSet[pk.id]=1; set=bpSetBonus(pk); SAVE.notes+=set; }
+    res.push({id,dupe:false,refund:0,have,tot,set}); }
+  if(!res.length) return; SAVE.life=SAVE.life||{}; SAVE.life.forged=(SAVE.life.forged||0)+res.length; save(); achCheck();
+  bpShowMulti(BPACKS.find(p=>p.rates[res[0].id]),res,{forge:true}); }
+
+/* ---- a seasonal Forge recipe: three blocks you own become one special block ---- */
+const RECIPES=[{id:'harvest',name:'Autumn Wreath',make:'rc_wreath',months:[10,11],need:['bp_acorn','bp_hay','bp_cider'],dust:50}];
+const recipeNow=()=>RECIPES.find(r=>r.months.includes(new Date().getMonth()+1));
+function recipeHTML(){ const r=recipeNow(); if(!r) return ''; const done=SAVE.owned.includes(r.make), have=r.need.map(id=>SAVE.owned.includes(id)&&SAVE.skin!==id), ok=!done&&have.every(Boolean)&&dustN()>=r.dust;
+  const until=new Date(2000,Math.max(...r.months)-1,1).toLocaleString('en',{month:'long'});
+  return `<div class="recipe"><div class="recart"><canvas class="skprev" data-skin="${r.make}" data-px="96" width="96" height="96" aria-hidden="true"></canvas></div><div class="rect"><small>🍂 Seasonal recipe · until the end of ${until}</small><b>${escapeHTML(r.name)}</b>`+
+    `<span>Forge it from three Harvest Festival blocks (they're used up) and ✧${r.dust} Stardust. You can't be wearing them.</span><div class="recneed">${r.need.map((id,i)=>`<span class="${have[i]?'ok':''}">${have[i]?'✓':'✗'} ${escapeHTML(skinById(id).name)}</span>`).join('')}</div></div>`+
+    (done?`<button class="btn ghost" type="button" disabled>Forged ✓</button>`:`<button class="btn" type="button" id="recGo" ${ok?'':'disabled'}>⚒ Forge it</button>`)+`</div>`; }
+function recipeMake(){ const r=recipeNow(); if(!r||SAVE.owned.includes(r.make)||dustN()<r.dust||!r.need.every(id=>SAVE.owned.includes(id)&&SAVE.skin!==id)||(BP.stage&&BP.stage!=='done')) return;
+  SAVE.dust=dustN()-r.dust; r.need.forEach(id=>trHold(id)); SAVE.owned.push(r.make); SAVE.life=SAVE.life||{}; SAVE.life.forged=(SAVE.life.forged||0)+1; save(); achCheck();
+  bpShowMulti(BPACKS.find(p=>p.id===r.id)||BPACKS[0],[{id:r.make,dupe:false,refund:0}],{forge:true}); }
+
+/* ---- fusion: two blocks you own make a new one (the first one's aura, the second one's face, their colours mixed) ---- */
+const FUSE_COST=250, FUSE_MAX=12, FUSE={a:'',b:''};
+const hexMix=(a,b,t=.5)=>{ const A1=hex(a||'#CCCCCC'), B1=hex(b||'#CCCCCC'); return '#'+[0,1,2].map(i=>Math.round(A1[i]+(B1[i]-A1[i])*t).toString(16).padStart(2,'0')).join(''); };
+function fuseDef(id){ const m=/^fu_(.+)__(.+)$/.exec(id||''); if(!m) return null; const A1=SKINS.find(s=>s.id===m[1]&&!s.fuse), B1=SKINS.find(s=>s.id===m[2]&&!s.fuse); if(!A1||!B1||A1===B1) return null;
+  const wa=A1.name.split(' '), wb=B1.name.split(' '); let name=wa[0]+' '+wb[wb.length-1]; if(wa[0]===wb[wb.length-1]) name=A1.name+' Fusion';
+  const pa=A1.prev||[.84,3], pb=B1.prev||[.84,3];
+  return {id,name,fuse:{a:A1.id,b:B1.id},top:hexMix(A1.top,B1.top),front:hexMix(A1.front,B1.front),core:B1.core||A1.core||'#FFFFFF',nocore:!!(B1.nocore||B1.vx||B1.anim),prev:[Math.min(pa[0],pb[0]),Math.max(pa[1],pb[1])],req:{fused:1},hidden:true}; }
+function fuseReg(id){ if(SKINS.some(s=>s.id===id)) return true; const d=fuseDef(id); if(!d) return false; SKINS.push(d); return true; }
+const fusedN=()=>SAVE.owned.filter(id=>id.startsWith('fu_')).length;
+function fuseHTML(){ const mine=SKINS.filter(s=>ownsSkin(s.id)&&!s.fuse).sort((a,b)=>a.name.localeCompare(b.name)), n=fusedN();
+  const pick=(k,label)=>`<label class="fusepick"><small>${label}</small><select data-fz="${k}"><option value="">Choose a block…</option>${mine.map(s=>`<option value="${s.id}" ${FUSE[k]===s.id?'selected':''}>${escapeHTML(s.name)}</option>`).join('')}</select></label>`;
+  const id=FUSE.a&&FUSE.b&&FUSE.a!==FUSE.b?`fu_${FUSE.a}__${FUSE.b}`:'', ok=id&&fuseReg(id), have=ok&&SAVE.owned.includes(id);
+  return `<div class="fusion"><div class="dealshead"><b>🧬 Fusion</b><small>${n} / ${FUSE_MAX} made</small></div><p class="small" style="margin:0 0 8px">Mix two of your blocks into a brand-new one: the glow and effects around the first, the face of the second, and their colours blended. You keep both originals.</p>`+
+    `<div class="fuserow">${pick('a','Aura from')}<b class="fuseplus">+</b>${pick('b','Face from')}<b class="fuseplus">=</b><div class="fuseout">${ok?`<canvas class="skprev" data-skin="${id}" data-px="84" width="84" height="84" aria-hidden="true"></canvas><b>${escapeHTML(skinById(id).name)}</b>`:'<span class="small">Pick two different blocks</span>'}</div></div>`+
+    `<button class="btn" type="button" id="fuseGo" ${!ok||have||n>=FUSE_MAX||dustN()<FUSE_COST?'disabled':''}>${have?'Already made ✓':n>=FUSE_MAX?'Fusion limit reached':`🧬 Fuse · ✧${FUSE_COST}`}</button></div>`; }
+function fuseMake(){ const id=FUSE.a&&FUSE.b&&FUSE.a!==FUSE.b?`fu_${FUSE.a}__${FUSE.b}`:''; if(!id||!ownsSkin(FUSE.a)||!ownsSkin(FUSE.b)||SAVE.owned.includes(id)||dustN()<FUSE_COST||fusedN()>=FUSE_MAX||!fuseReg(id)||(BP.stage&&BP.stage!=='done')) return;
+  SAVE.dust=dustN()-FUSE_COST; SAVE.owned.push(id); SAVE.life=SAVE.life||{}; SAVE.life.fused=(SAVE.life.fused||0)+1; save(); achCheck();
+  bpShowMulti(BPACKS[0],[{id,dupe:false,refund:0}],{forge:true}); }
+SAVE.owned.forEach(id=>{ if(String(id).startsWith('fu_')) fuseReg(id); });
+
+/* ---- the trading post: what you're looking for (your tradeable wishlist) and what you'll offer, seen by all your friends ---- */
+const tpGive=()=>(SAVE.tpGive||[]).filter(id=>SAVE.owned.includes(id)&&fgGiftable(SKINS.find(s=>s.id===id))&&id!==SAVE.skin).slice(0,6);
+const tpWant=()=>(SAVE.wish||[]).filter(id=>fgGiftable(SKINS.find(s=>s.id===id))).slice(0,6);
+const tpChip=id=>{ const s=SKINS.find(k=>k.id===id); return s?`<span class="tpchip"><canvas class="skprev" data-skin="${id}" width="26" height="26" aria-hidden="true"></canvas>${escapeHTML(s.name)}</span>`:''; };
+function tpRender(){ const box=$('tpBox'); if(!box) return; if(!frOn()){ box.innerHTML=''; return; }
+  const rows=FR.uids.map(u=>{ const p=FR.profiles[u]||{}, po=p.post||{}, ok=id=>typeof id==='string'&&SKINS.some(s=>s.id===id);
+    const want=(Array.isArray(po.want)?po.want:[]).filter(ok).slice(0,6), give=(Array.isArray(po.give)?po.give:[]).filter(ok).slice(0,6); if(!want.length&&!give.length) return '';
+    const iHave=want.filter(id=>SAVE.owned.includes(id)&&fgGiftable(skinById(id))&&id!==SAVE.skin), iWant=give.filter(wished);
+    return `<li><b>${escapeHTML(showName(p.name,'A friend'))}</b>${want.length?`<div class="tprow"><small>Looking for</small>${want.map(tpChip).join('')}</div>`:''}${give.length?`<div class="tprow"><small>Offering</small>${give.map(tpChip).join('')}</div>`:''}`+
+      (iHave.length||iWant.length?`<p class="tphit">${[iHave.length?'You have something they want!':'',iWant.length?'They\'re offering something on your wishlist!':''].filter(Boolean).join(' ')}</p>`:'')+
+      `<button class="btn" type="button" data-tpo="${escapeHTML(u)}" data-give="${iHave[0]||''}">🔁 Make an offer</button></li>`; }).join('');
+  box.innerHTML=`<h2 style="margin-top:4px">📌 Trading post</h2><div class="tpmine"><b>Your post</b><div class="tprow"><small>Looking for</small>${tpWant().length?tpWant().map(tpChip).join(''):'<em class="small">Add tradeable blocks to your ★ wishlist</em>'}</div>`+
+    `<div class="tprow"><small>Offering</small>${tpGive().length?tpGive().map(tpChip).join(''):'<em class="small">Nothing yet</em>'}</div><button class="btn ghost" type="button" id="tpEdit">Choose what you offer</button></div>`+
+    (rows?`<ul class="tplist">${rows}</ul>`:'<p class="small">None of your friends have posted yet.</p>');
+  $('tpEdit').onclick=tpEditor;
+  box.querySelectorAll('[data-tpo]').forEach(b=>b.onclick=async()=>{ const u=b.dataset.tpo, g=b.dataset.give; await frView(u); trOpen(u,g||undefined); $('fgBox').scrollIntoView({block:'center'}); }); }
+function tpEditor(){ const mine=SKINS.filter(s=>SAVE.owned.includes(s.id)&&fgGiftable(s)&&s.id!==SAVE.skin).sort((a,b)=>(b.bpr||0)-(a.bpr||0)), sel=new Set(tpGive());
+  const draw=()=>{ $('stageBody').innerHTML=`<h2>📌 What you'll offer</h2><p class="small">Pick up to 6 blocks your friends can see you'd trade. (What you're looking for comes from your ★ wishlist.)</p><div class="fggrid">${mine.map(s=>`<button type="button" class="fgitem${sel.has(s.id)?' on':''}" data-tpg="${s.id}"><canvas class="skprev" data-skin="${s.id}" width="56" height="56" aria-hidden="true"></canvas><span>${escapeHTML(s.name)}</span></button>`).join('')||'<p class="small">You don\'t have tradeable blocks yet.</p>'}</div><button class="btn" type="button" id="tpDone" style="margin-top:10px;width:100%">Done</button>`;
+    $('stageBody').querySelectorAll('[data-tpg]').forEach(b=>b.onclick=()=>{ const id=b.dataset.tpg; if(sel.has(id)) sel.delete(id); else if(sel.size<6) sel.add(id); else toast('Up to 6 blocks'); draw(); });
+    $('tpDone').onclick=()=>{ SAVE.tpGive=[...sel]; save(); if(frOn()) frPush(true); $('stageOv').hidden=true; tpRender(); }; };
+  STAGE=null; draw(); $('stageOv').hidden=false; }
+
+/* ---- Creators: featured levels built by players and picked by the Pulseform team ---- */
+const CR={list:null,err:'',req:null};
+const isCreator=()=>(SAVE.likesGot||0)>=5;
+async function crLoad(){ CR.list=[]; if(!ACCT.db){ CR.err='signin'; return; }
+  try{ const s=await ACCT.db.collection('featured').orderBy('t','desc').limit(40).get(); CR.list=s.docs.map(d=>({id:d.id,...d.data()})); CR.err=''; }catch(e){ CR.err=e&&e.code||'offline'; }
+  if(ACCT.user){ try{ const d=await ACCT.db.collection('featReq').doc(ACCT.user.uid).get(); CR.req=d.exists?d.data():null; }catch(e){} } }
+function buildCreators(){
+  if(CR.list===null){ $('shopGrid').innerHTML='<p class="bpnote">Loading featured levels…</p>'; crLoad().then(()=>{ if(shopTab==='creators'&&!$('shopOv').hidden) buildShop(); }); return; }
+  const done=SAVE.featDone||[], mine=(SAVE.myLevels||[]).filter(l=>l&&l.code);
+  let h=`<div class="forgehead crhead"><div class="anvil" aria-hidden="true">🎨</div><div><b>Featured levels</b><p>Levels built by players and picked by the Pulseform team. Clear one for the first time: <b>+♪60</b>.</p></div><button class="btn ghost" type="button" id="crRe">↻</button></div>`;
+  if(!ACCT.db) h+=`<p class="bpnote">Sign in to see featured levels.</p>`;
+  else if(!CR.list.length) h+=`<p class="bpnote">${CR.err?'Couldn\'t load featured levels right now.':'No featured levels yet. Build one, get likes from friends, and send it in below!'}</p>`;
+  else h+=`<ul class="crlist">${CR.list.map(f=>`<li><div><b>${escapeHTML(String(f.n||'Untitled').slice(0,40))}</b><small>by ${escapeHTML(showName(f.by,'a player'))} · ♥ ${Math.max(0,+f.likes||0)}</small></div>${done.includes(f.id)?'<span class="crok">✓ Cleared</span>':'<span class="crrw">+♪60</span>'}<button class="btn" type="button" data-crp="${escapeHTML(f.id)}">▶ Play</button></li>`).join('')}</ul>`;
+  h+=`<h3 class="collsec">Your levels${isCreator()?'<small>🎨 Creator badge earned</small>':`<small>${SAVE.likesGot||0} / 5 likes for the 🎨 Creator badge</small>`}</h3>`;
+  if(!mine.length) h+=`<p class="bpnote">Build a level in the Level Editor and share it with friends. Once it has 3 likes you can send it in to be featured.</p>`;
+  else h+=`<ul class="crlist">${mine.slice(0,24).map((l,i)=>{ const k=lvlKey(l.code), n=LIKES.got[k]||0, pend=!!(CR.req&&CR.req.key===k);
+      return `<li><div><b>${escapeHTML(l.n||'Untitled')}</b><small>♥ ${n} like${n===1?'':'s'}${pend?' · sent in, waiting for review':n<3?` · ${3-n} more to send it in`:''}</small></div><button class="btn ghost" type="button" data-crs="${i}" ${n<3||pend||!ACCT.user?'disabled':''}>${pend?'Sent ✓':'Send in'}</button></li>`; }).join('')}</ul><p class="small">One level can wait for review at a time.</p>`;
+  $('shopGrid').innerHTML=h;
+  $('crRe').onclick=()=>{ CR.list=null; buildShop(); };
+  $('shopGrid').querySelectorAll('[data-crp]').forEach(b=>b.onclick=()=>crPlay(b.dataset.crp));
+  $('shopGrid').querySelectorAll('[data-crs]').forEach(b=>b.onclick=()=>crSend(+b.dataset.crs));
+  $('shopStats').textContent=isCreator()?'You have the 🎨 Creator badge: it shows on your profile card.':'Get 5 likes on your levels to earn the 🎨 Creator badge.'; }
+function crPlay(id){ const f=(CR.list||[]).find(x=>x.id===id); if(!f) return; const d=edDecode(f.code); if(!d) return toast('That level could not be opened.'); d.by=showName(f.by,'a player'); const M=modeFor('custom',d); M.feat=f.id; startRun(M); }
+async function crSend(i){ const l=(SAVE.myLevels||[]).filter(l=>l&&l.code)[i]; if(!l||!ACCT.user) return; const k=lvlKey(l.code), n=LIKES.got[k]||0; if(n<3) return;
+  if(String(l.code).length>20000) return toast('That level is too big to send in.');
+  try{ await ACCT.db.collection('featReq').doc(ACCT.user.uid).set({by:ensureName(),n:String(l.n||'Untitled').slice(0,40),code:String(l.code),likes:n,key:k,t:Date.now()}); CR.req={key:k}; toast('🎨 Sent in! The Pulseform team will take a look.'); buildShop(); }
+  catch(e){ toast(e&&e.code==='permission-denied'?'Sending levels in needs the latest Firestore rules.':'Could not send it. Check your connection.'); } }
+/* the admin side: approve or dismiss levels that were sent in */
+async function admLevelsUI(){ const box=$('admLvList'); if(!box) return; box.innerHTML='<small class="admhint">Loading…</small>'; const db=ACCT.db;
+  try{ const [rq,ft]=await Promise.all([db.collection('featReq').limit(60).get(),db.collection('featured').orderBy('t','desc').limit(60).get()]);
+    const reqs=rq.docs.map(d=>({uid:d.id,...d.data()})).sort((a,b)=>(b.likes||0)-(a.likes||0)), feats=ft.docs.map(d=>({id:d.id,...d.data()}));
+    const row=(o,k,i,extra)=>`<div class="admlv"><span><b>${escapeHTML(String(o.n||'Untitled').slice(0,40))}</b><small>by ${escapeHTML(String(o.by||'?').slice(0,24))}${o.likes!=null?` · ♥ ${+o.likes||0}`:''}</small></span><button type="button" class="btn ghost" data-alp="${k}${i}">▶ Play</button>${extra}</div>`;
+    box.innerHTML=`<small class="admhint">Sent in for featuring (${reqs.length})</small><div class="admlvs">${reqs.map((r,i)=>row(r,'r',i,`<button type="button" class="btn" data-alf="${i}">⭐ Feature</button><button type="button" class="btn ghost" data-ald="${i}">✕</button>`)).join('')||'<small class="admhint">Nothing waiting.</small>'}</div>`+
+      `<small class="admhint">Featured now (${feats.length})</small><div class="admlvs">${feats.map((f,i)=>row(f,'f',i,`<button type="button" class="btn ghost" data-alr="${i}">Remove</button>`)).join('')||'<small class="admhint">None yet.</small>'}</div>`;
+    box.querySelectorAll('[data-alp]').forEach(b=>b.onclick=()=>{ const k=b.dataset.alp, o=k[0]==='r'?reqs[+k.slice(1)]:feats[+k.slice(1)], d=o&&edDecode(o.code); if(!d) return admMsg('That level could not be opened.'); d.by=String(o.by||''); playDesign(d,false); });
+    box.querySelectorAll('[data-alf]').forEach(b=>b.onclick=async()=>{ const r=reqs[+b.dataset.alf]; b.disabled=true;
+      try{ await db.collection('featured').doc(r.uid+'_'+String(r.key||'x').slice(0,16)).set({by:String(r.by||'').slice(0,24),uid:r.uid,n:String(r.n||'Untitled').slice(0,40),code:r.code,likes:+r.likes||0,t:Date.now()}); await db.collection('featReq').doc(r.uid).delete(); admMsg('Featured!'); CR.list=null; admLevelsUI(); }
+      catch(e){ b.disabled=false; admMsg('Could not feature it ('+(e&&e.code||'offline')+').'); } });
+    box.querySelectorAll('[data-ald]').forEach(b=>b.onclick=async()=>{ try{ await db.collection('featReq').doc(reqs[+b.dataset.ald].uid).delete(); admLevelsUI(); }catch(e){ admMsg('Could not dismiss it.'); } });
+    box.querySelectorAll('[data-alr]').forEach(b=>b.onclick=async()=>{ try{ await db.collection('featured').doc(feats[+b.dataset.alr].id).delete(); CR.list=null; admLevelsUI(); }catch(e){ admMsg('Could not remove it.'); } }); }
+  catch(e){ box.innerHTML=`<small class="admhint">Could not load (${escapeHTML(e&&e.code||'offline')}). Publish the latest firestore.rules first.</small>`; } }
+
+/* ---- the Wardrobe Challenge: one week, one block for everyone, the same rooms ---- */
+const wardPool=()=>SKINS.filter(s=>!s.paid&&!s.hidden&&!s.fuse&&(s.vx||s.anim)&&(!s.req||s.bp)&&s.bpr!==5);
+function wardBlock(){ const P=wardPool(), r=mulberry(hashStr('ward'+weekKey())); return P[Math.floor(r()*P.length)]||SKINS[0]; }
+const wardBoard=()=>'ward-'+weekKey();
+const wardState=()=>SAVE.ward&&SAVE.ward.wk===weekKey()?SAVE.ward:(SAVE.ward={wk:weekKey(),best:0,done:false,cp:false});
+function wardMode(){ const M=modeFor('endless',{seed:'WR'+weekKey()}); M.ward=true; M.shared=false; return M; }
+function showWard(){ const s=wardBlock(), W=wardState();
+  $('wardArt').innerHTML=`<canvas class="skprev" data-skin="${s.id}" data-px="140" data-big="1" width="140" height="140" aria-hidden="true"></canvas>`;
+  $('wardBlock').textContent=s.name; $('wardLeft').textContent=`New block and rooms in ${untilMonday()}.`;
+  $('wardBest').textContent=W.best?`Your best this week: ${W.best.toLocaleString()}`:'You haven\'t played this week\'s challenge yet.';
+  $('wardRw').innerHTML=`<li class="${W.done?'got':''}">${W.done?'✓':'○'} Clear 3 rooms in a run: <b>+♪100</b> (once a week)</li><li class="${W.cp?'got':''}">${W.cp?'✓':'○'} Finish in the top half of the board: <b>a 50% coupon</b> for any Shop block</li>`;
+  $('wardCp').hidden=true; $('wardPos').textContent=''; showOv('wardOv'); wardBoardLoad(); }
+async function wardBoardLoad(){ const L=$('wardLB'); L.innerHTML='<li class="none">Loading…</li>';
+  if(!ACCT.db||!ACCT.user){ L.innerHTML='<li class="none">Sign in to post scores and win the coupon.</li>'; return; }
+  try{ const s=await ACCT.db.collection('boards').doc(wardBoard()).collection('entries').orderBy('score','desc').limit(100).get(); if($('wardOv').hidden) return;
+    const rows=s.docs.map(d=>({uid:d.id,...d.data()})), n=rows.length, me=rows.findIndex(r=>r.uid===ACCT.user.uid);
+    L.innerHTML=n?rows.slice(0,10).map((r,i)=>`<li${r.uid===ACCT.user.uid?' class="me"':''}><span class="lbn">${i+1}</span><span class="lbname">${escapeHTML(showName(r.name))}</span><b>${(+r.score||0).toLocaleString()}</b></li>`).join('')+(me>=10?`<li class="me"><span class="lbn">${me+1}</span><span class="lbname">You</span><b>${(+rows[me].score||0).toLocaleString()}</b></li>`:''):'<li class="none">No scores yet this week. Be the first!</li>';
+    const top=me>=0&&me<Math.ceil(n/2), W=wardState(); $('wardPos').textContent=me>=0?`You're #${me+1} of ${n}${top?' · top half!':''}`:'';
+    const b=$('wardCp'); b.hidden=!(top&&!W.cp); b.onclick=()=>{ W.cp=true; SAVE.coupon={wk:weekKey(),used:false}; save(); if(A.ctx) sGem(); toast('🎟 Coupon won! 50% off any Shop block: open a block in the Shop to use it.'); showWard(); }; }
+  catch(e){ L.innerHTML='<li class="none">Could not load the board.</li>'; } }
+$('wardGo').onclick=()=>{ TRY=wardBlock().id; startRun(wardMode()); };
+$('wardBack').onclick=()=>toMenu();
+$('mWard').onclick=showWard;
+function wardUI(){ const sub=$('mWardSub'); if(sub) sub.textContent=`This week everyone wears ${wardBlock().name}${couponOk()?' · 🎟 you have a coupon':''}`; }
 /* ---- party invites ---- */
 function frCoopInvites(){
   const box=$('nInvite'); if(!box) return;
@@ -9340,38 +9912,37 @@ function passPrev(r,big){ if(r.kind==='skin') return `<canvas class="skprev" dat
 function passEquipped(r){ return r.kind==='skin'?SAVE.skin===r.id:r.kind==='tiles'?SAVE.tiles===r.id:r.kind==='banner'?SAVE.banner===r.id:r.kind==='pack'?SAVE.pack===r.id:false; }
 const PP_LOCK='<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="7" width="11" height="8" rx="2" fill="#1A0C2E"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="#1A0C2E" stroke-width="2.2"/></svg>';
 let ppTab='rewards';
-function ppCard(r,pt){ const got=rGot(r), open=r.t<=pt.t, eqable=!['notes','revive'].includes(r.kind), plus=passPlus(), locked=r.prem&&!plus;
-  const k=(r.t===100&&r.kind==='skin'?'k-skin grand':r.bonus?'k-bonus':'k-'+r.kind)+(r.prem?' prem':'');
-  const btn=got?(eqable&&!passEquipped(r)?`<button class="ppbtn eq" data-ppeq="${r.prem?'p':'f'}${r.t}" type="button">Equip</button>`:`<button class="ppbtn done" type="button" disabled>${eqable?'Equipped':'Collected'}</button>`)
-    :locked?`<button class="ppbtn plus" data-ppbuy="1" type="button">Pass+</button>`
-    :open?`<button class="ppbtn" data-ppc="${r.prem?'p':'f'}${r.t}" type="button">Collect</button>`:`<span class="ppbtn lk">Tier ${r.t}</span>`;
-  return `<div class="ppcard ${k}${got?' got':open&&!locked?' open':' lock'}" data-t="${r.t}" data-trk="${r.prem?'p':'f'}">${got?'<span class="ppchk">✓</span>':open&&!locked?'':`<span class="pplk">${PP_LOCK}</span>`}`+
-    `<div class="ppart">${passPrev(r)}</div><span class="ppname">${escapeHTML(passName(r))}</span><span class="pprib">${r.bonus?'Bonus':passKind(r)}</span>${btn}</div>`; }
+function ppCell(r,pt){ const got=rGot(r), open=r.t<=pt.t, eqable=!['notes','revive'].includes(r.kind), locked=r.prem&&!passPlus(), big=r.kind==='skin'||r.bonus, grand=r.t===100&&r.kind==='skin';
+  const btn=got?(eqable&&!passEquipped(r)?`<button class="ppbtn eq" data-ppeq="${r.prem?'p':'f'}${r.t}" type="button">Equip</button>`:`<span class="ppst">✓ ${eqable?'Equipped':'Collected'}</span>`)
+    :locked?`<button class="ppbtn plus" data-ppbuy="1" type="button">${PP_LOCK}Pass+</button>`
+    :open?`<button class="ppbtn" data-ppc="${r.prem?'p':'f'}${r.t}" type="button">Collect</button>`:`<span class="ppst lk" title="Reach tier ${r.t}">${PP_LOCK}</span>`;
+  return `<div class="ppcell k-${r.kind}${big?' big':''}${grand?' grand':''}${r.prem?' prem':''}${got?' got':open&&!locked?' open':' lock'}"><div class="ppart2">${r.kind==='notes'?`<span class="ppcoin2${r.bonus?' big':''}">♪</span>`:r.kind==='revive'?`<span class="ppcoin2 rev">♥<b>×${r.n}</b></span>`:passPrev(r)}</div><div class="ppcn"><b>${escapeHTML(passName(r))}</b><small>${r.bonus?'Bonus':passKind(r)}</small></div>${btn}</div>`; }
 const ppRec=id=>id[0]==='p'?PASSP[+id.slice(1)-1]:PASS[+id.slice(1)-1];
 function buildPass(){
-  const pt=passTier(), ready=passReady(), qr=pqReady(), plus=passPlus();
-  $('ppTier').textContent=`Tier ${pt.t} / ${PASS_TIERS}`;
-  $('ppNext').textContent=pt.t>=PASS_TIERS?'MAX':`${pt.into.toLocaleString()} / ${pt.need.toLocaleString()}`;
-  $('ppNextT').innerHTML=`<span class="ppnode">${pt.t>=PASS_TIERS?'★':pt.t+1}</span>`;
-  $('ppFill').style.width=(pt.t>=PASS_TIERS?100:pt.into/pt.need*100)+'%';
+  const pt=passTier(), ready=passReady(), qr=pqReady(), plus=passPlus(), cg=!!window.PF_CG, max=pt.t>=PASS_TIERS, frac=max?1:pt.into/pt.need;
+  $('ppTierN').textContent=pt.t; $('ppRingFg').style.strokeDashoffset=(326.73*(1-frac)).toFixed(1);
+  $('ppNext').textContent=max?'Season complete!':`${pt.into.toLocaleString()} / ${pt.need.toLocaleString()} XP`;
+  $('ppFill').style.width=(frac*100)+'%';
+  { const nf=PASS[pt.t], np=PASSP[pt.t]; $('ppNextName').innerHTML=max?'<small>Season 1</small>Every tier reached!':`<small>Next · tier ${pt.t+1}</small>${escapeHTML(passName(nf))}${!cg&&np?` <span style="color:#FFE27A">+ ${escapeHTML(passName(np))}</span>`:''}`; }
   const cta=$('ppClaimAll'); cta.classList.toggle('alt',!ready);
   cta.textContent=ready?`Claim all (${ready})`:qr?`Quests ready (${qr})`:ppTab==='quests'?'See rewards':'See quests';
   const pr=PRODUCTS.find(p=>p.id===PASS_PRICE_ID);
-  $('ppBuy').hidden=plus||!!window.PF_CG; $('ppBuy').innerHTML=`<b>Unlock Pulse Pass+</b><small>${escapeHTML(iapPrice(pr))} · 6 blocks and more</small>`;
+  $('ppBuy').hidden=plus||cg; $('ppBuy').innerHTML=`<b>Unlock Pulse Pass+</b><small>${escapeHTML(iapPrice(pr))} · 6 blocks and more</small>`;
   $('ppPlusOn').hidden=!plus; $('passOv').classList.toggle('plus',plus);
   $('ppQDot').hidden=!qr;
   document.querySelectorAll('#passOv .pptabs button').forEach(b=>b.classList.toggle('on',b.dataset.pt===ppTab));
   $('ppRewards').hidden=ppTab!=='rewards'; $('ppQuests').hidden=ppTab!=='quests';
-  const cg=!!window.PF_CG; $('passOv').classList.toggle('cgfree',cg);   // CrazyGames: Pass+ can't be bought there, so only the free row shows
-  $('ppTrack').innerHTML=PASS.map((r,i)=>`<div class="ppcol">${cg?'':ppCard(PASSP[i],pt)}${ppCard(r,pt)}`+
-    `<div class="pprail${r.t<=pt.t?' on':''}"><span class="ppnode">${r.t}</span></div></div>`).join('');
+  $('passOv').classList.toggle('cgfree',cg);   // CrazyGames: Pass+ can't be bought there, so only the free row shows
+  // the ladder: one row a tier, the free reward and the Pass+ reward side by side; the rail fills up to your tier
+  $('ppTrack').innerHTML=PASS.map((r,i)=>{ const t=r.t, on=t<=pt.t, cur=t===pt.t+1;
+    return `<div class="pprow${on?' on':''}${cur?' cur':''}${t%10===0?' ten':''}" data-t="${t}"><div class="pptn">${cur?`<i class="pphere" style="--p:${frac.toFixed(3)}"></i>`:''}<span>${t}</span></div>${ppCell(r,pt)}${cg?'':ppCell(PASSP[i],pt)}</div>`; }).join('');
   $('ppTrack').querySelectorAll('canvas.tileprev').forEach(c=>drawTilePreview(c,tilesById(c.dataset.tile)));
   $('ppTrack').querySelectorAll('[data-ppc]').forEach(b=>b.onclick=()=>{ const r=ppRec(b.dataset.ppc); if(!passClaimR(r)) return; if(A.ctx) sGem(); buzz(15);
-    toast(r.kind==='notes'?`+${passName(r)} Notes`:r.kind==='revive'?`+${r.n} boss revive tokens`:`${passName(r)} unlocked!`); buildPass(); });
+    toast(r.kind==='notes'?`+${passName(r)} Notes`:r.kind==='revive'?`+${r.n} boss revive tokens`:`${passName(r)} unlocked!`); const st=$('ppLadder').scrollTop; buildPass(); $('ppLadder').scrollTop=st; });
   $('ppTrack').querySelectorAll('[data-ppeq]').forEach(b=>b.onclick=()=>{ const r=ppRec(b.dataset.ppeq); equip(r.kind==='skin'?'skin':r.kind==='tiles'?'tiles':r.kind==='pack'?'pack':'banner',r.id);
-    if(r.kind==='skin'){ G.players=[mkPlayer(0)]; netHello(); } if(r.kind==='banner') lbRename(); if(A.ctx) sGem(); buildPass(); });
+    if(r.kind==='skin'){ G.players=[mkPlayer(0)]; netHello(); } if(r.kind==='banner') lbRename(); if(A.ctx) sGem(); const st=$('ppLadder').scrollTop; buildPass(); $('ppLadder').scrollTop=st; });
   $('ppTrack').querySelectorAll('[data-ppbuy]').forEach(b=>b.onclick=ppBuyOpen);
-  const miles=PASS.concat(window.PF_CG?[]:PASSP).filter(r=>r.kind==='skin'||r.bonus).sort((a,b)=>a.t-b.t||(a.prem?1:-1));
+  const miles=PASS.concat(cg?[]:PASSP).filter(r=>r.kind==='skin'||r.bonus).sort((a,b)=>a.t-b.t||(a.prem?1:-1));
   $('ppMiles').innerHTML=miles.map(r=>{ const on=r.t<=pt.t, got=rGot(r), lk=r.prem&&!plus;
     const art=r.kind==='skin'?`<canvas class="skprev" data-skin="${r.id}" data-px="44" width="44" height="44"></canvas>`:'<span class="ppmj">♪</span>';
     return `<button type="button" class="ppm${on&&!lk?' on':''}${got?' got':''}${r.prem?' pm':''}${r.t===100&&r.prem?' grand':''}" data-goto="${r.t}" title="Tier ${r.t}${r.prem?' (Pass+)':''}: ${escapeHTML(passName(r))}">${art}<b>${r.t}</b>${r.prem?'<i class="ppmplus">+</i>':''}${on&&!got&&!lk?'<i class="ppmdot"></i>':''}</button>`; }).join('');
@@ -9380,11 +9951,10 @@ function buildPass(){
   if(ppTab==='rewards'&&!$('ppTrack').dataset.scrolled){ $('ppTrack').dataset.scrolled='1'; setTimeout(()=>ppScrollTo(Math.max(1,Math.min(PASS_TIERS,pt.t+1)),false),0); }
   $('walletPP').textContent=notesTxt();
 }
-function ppScrollTo(t,smooth){ const tr=$('ppTrack'), c=tr.querySelector(`.ppcard[data-t="${t}"]`); if(!c) return; const col=c.parentNode;
-  tr.scrollTo({left:Math.max(0,col.offsetLeft-tr.offsetLeft-tr.clientWidth/2+col.offsetWidth/2),behavior:smooth?'smooth':'auto'});
-  if(smooth){ col.classList.remove('ping'); requestAnimationFrame(()=>col.classList.add('ping')); } }
-document.querySelectorAll('#passOv .ppsc').forEach(b=>b.onclick=()=>{ const tr=$('ppTrack'); tr.scrollBy({left:+b.dataset.sc*tr.clientWidth*.8,behavior:'smooth'}); });
-$('ppTrack').addEventListener('scroll',()=>{ const tr=$('ppTrack'); $('passOv').querySelector('.ppsc.l').classList.toggle('off',tr.scrollLeft<8); $('passOv').querySelector('.ppsc.r').classList.toggle('off',tr.scrollLeft>tr.scrollWidth-tr.clientWidth-8); },{passive:true});
+/* scroll the ladder (not the page) so a tier sits in the middle */
+function ppScrollTo(t,smooth){ const L=$('ppLadder'), row=$('ppTrack').querySelector(`.pprow[data-t="${t}"]`); if(!row) return;
+  L.scrollTo({top:Math.max(0,row.offsetTop-L.clientHeight/2+row.offsetHeight/2),behavior:smooth?'smooth':'auto'});
+  if(smooth){ row.classList.remove('ping'); void row.offsetWidth; row.classList.add('ping'); } }
 /* the Pulse Pass+ offer: what it gives, and the buy button */
 function ppBuyOpen(){ if(window.PF_CG) return; webPayCheck(); const pr=PRODUCTS.find(p=>p.id===PASS_PRICE_ID), pt=passTier().t;
   const now=PASSP.filter(r=>r.t<=pt), nNow=now.length, notes=PASSP.filter(r=>r.kind==='notes').reduce((a,r)=>a+r.n,0);
@@ -10954,27 +11524,27 @@ function giftGive(r){ const out=[]; if(r.n){ SAVE.notes+=r.n; out.push(`♪${r.n
 /* ================= WHAT'S NEW =================
    Shown once to each player after an update (remembered in the save, so it follows their account to other devices),
    once the daily gift is out of the way. Settings → What's new opens it again. Change NEWS_V to show a new one. */
-const NEWS_V='2026-10b', NEWS_WHEN='Update · October 2026';
+const NEWS_V='2026-10c', NEWS_WHEN='Update · October 2026';
 const NEWS_ADDED=[
- ['🔁','Trade blocks with friends','Offer one of your blocks for one of theirs. Your block is held safely until they answer.'],
- ['⚒','The Forge','Repeat blocks from packs now give Stardust. Forge any pack block you\'re missing, and finish every set.'],
- ['🔥','Daily deals','Three Shop blocks on sale every day, up to 50% off.'],
- ['✦','Cheaper packs','Every pack costs about 20% less.'],
- ['🐺','A new Spirit Wolf','Redrawn, with a giant glowing spirit wolf that howls on the beat.'],
- ['🔀','Shuffle your blocks','Pin two or more blocks and wear a random one each run.'],
- ['✅','Handy extras','Collect all your Pass quests at once, tap a card after opening 5 packs to wear it, and use Space or Enter to open packs.']];
+ ['💰','More Notes','Levels pay about double, replays pay too, plus +50 for your first win each day, +10 for no misses, and bigger achievement rewards.'],
+ ['🎨','Creators','Play featured levels built by players (+♪60 the first time). Get likes on your own levels to send them in and earn the Creator badge.'],
+ ['👕','Wardrobe Challenge','Every week everyone plays the same block in the same rooms. Top half wins a 50% Shop coupon.'],
+ ['🧬','Fusion and Polish','Mix two blocks into a brand-new one, or polish your favourites Gold and Prism with Stardust.'],
+ ['⭐','Weekly spotlight','A special block in the Shop for one week only: Koi Pond, Snow Globe, Origami Crane or Arcade Cabinet.'],
+ ['🎁','Bundles and a wishlist','Themed bundles at 25% off, and a ★ wishlist that tells you when something is on sale or in reach.'],
+ ['🔍','See blocks up close','Tap any block for a big preview on a turning stand.'],
+ ['🍂','Autumn Wreath','A seasonal Forge recipe: three Harvest blocks become one special block.'],
+ ['📌','Trading post','Show friends what you\'re looking for and what you\'ll trade.'],
+ ['✅','Handy extras','"New" dots, saved loadouts, Collection sorting, a savings goal on the menu, forge all commons at once, spending history, and Collector milestones (+♪150 every 10 blocks).']];
 const NEWS_EARLIER=[
- ['🍂','Harvest Festival Pack','October and November only: pumpkins, a golden cornucopia and the Elder Oak.'],
- ['🎁','Free packs','A free pack every day, and another for finishing all your weekly quests.'],
- ['⚡','Opening packs','Open five at once, Quick open, pack history and set rewards.'],
- ['💛','Friends','Gift blocks, show off your three best, and like the levels friends build.'],
- ['🔍','Collection and Shop','Search your blocks, and try any Shop block in a run before buying.'],
- ['🏆','New achievements','14 new ones, including trading and the Forge.'],
- ['📶','Play offline','On the website, the game opens even without a connection.']];
+ ['🔁','Trading and the Forge','Trade blocks with friends, and forge missing pack blocks with Stardust.'],
+ ['🔥','Daily deals and cheaper packs','Three Shop blocks on sale every day, and every pack costs about 20% less.'],
+ ['🐺','A new Spirit Wolf','Redrawn, with a glowing spirit wolf that howls on the beat.'],
+ ['🍂','Harvest Festival Pack','October and November only.'],
+ ['💛','Friends','Gift blocks, show off your best three, and like friends\' levels.']];
 const NEWS_SOON=[
  ['🏫','Classrooms','Teachers will be able to make a class code, and students can join and practise rhythm together.'],
- ['❄','A winter pack','A new seasonal pack for December.'],
- ['🌟','Top levels','Browse and play the most-liked levels players have built.'],
+ ['❄','A winter pack','A new seasonal pack and Forge recipe for December.'],
  ['👥','Friend leaderboards','See how you stack up against just your friends.']];
 let newsFrom='menuOv';
 function newsShow(from='menuOv'){ newsFrom=from; const li=L=>`<ul class="newslist">${L.map(([i,t,d])=>`<li><span aria-hidden="true">${i}</span><div><b>${t}</b><small>${d}</small></div></li>`).join('')}</ul>`;
@@ -11085,14 +11655,18 @@ const ACH=[
  ['giver','Generous','Give a block to a friend',()=>LF('giftsSent')>=1],
  ['liked5','Crowd Favourite','Get 5 likes on levels you built',()=>(SAVE.likesGot||0)>=5],
  ['trade1','Fair Deal','Complete a trade with a friend',()=>LF('trades')>=1],
- ['forge1','Blacksmith','Forge a block in the Forge',()=>LF('forged')>=1]];
+ ['forge1','Blacksmith','Forge a block in the Forge',()=>LF('forged')>=1],
+ ['polish1','Shiny','Polish a block with Stardust',()=>LF('polished')>=1],
+ ['fuse1','Inventor','Fuse two blocks into a new one',()=>LF('fused')>=1],
+ ['ward1','Dressed for Success','Clear 3 rooms in a Wardrobe Challenge',()=>LF('wards')>=1],
+ ['feat1','Level Explorer','Clear a featured level',()=>(SAVE.featDone||[]).length>=1]];
 let achQ=[], achT=null;
 function achCheck(){
   const A0=SAVE.ach||(SAVE.ach={}); let n=0;
-  ACH.forEach(([id,name])=>{ if(A0[id]) return; let ok=false; try{ ok=ACH.find(a=>a[0]===id)[3](); }catch(e){} if(ok){ A0[id]=todayKey(); n++; SAVE.notes+=earnN(25); achQ.push(name); } });
+  ACH.forEach(([id,name])=>{ if(A0[id]) return; let ok=false; try{ ok=ACH.find(a=>a[0]===id)[3](); }catch(e){} if(ok){ A0[id]=todayKey(); n++; SAVE.notes+=earnN(75); achQ.push(name); } });
   if(n){ save(); achShow(); }
 }
-function achShow(){ if(achT||!achQ.length) return; const name=achQ.shift(); toast('Achievement unlocked: '+name+' · +♪25'); if(A.ctx) sChime(88); achT=setTimeout(()=>{ achT=null; achShow(); },3200); }
+function achShow(){ if(achT||!achQ.length) return; const name=achQ.shift(); toast('Achievement unlocked: '+name+' · +♪'+earnN(75)); if(A.ctx) sChime(88); achT=setTimeout(()=>{ achT=null; achShow(); },3200); }
 function achHTML(){ const A0=SAVE.ach||{}; const got=ACH.filter(a=>A0[a[0]]).length;
   return `<div class="lbl">Achievements <span class="small">${got} / ${ACH.length}</span></div><div class="achgrid">${ACH.map(([id,n,d])=>`<div class="ach${A0[id]?' got':''}" title="${d}"><b>${A0[id]?'★':'☆'} ${n}</b><small>${d}</small></div>`).join('')}</div>`; }
 
@@ -11521,6 +12095,7 @@ setInterval(()=>{ twRender();
 /* ================= LEADERBOARDS (Firestore: boards/{board}/entries/{uid}) ================= */
 function boardFor(M){
   if(M.chal) return null;
+  if(M.ward) return 'ward-'+weekKey();
   if(M.type==='endless'&&!M.coop) return 'endless';
   if(M.type==='ascent') return 'ascent';
   if(M.type==='daily'&&M.seed===todayKey()) return 'daily-'+M.seed;
@@ -12617,7 +13192,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['newsOv','adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
+const OVS=['wardOv','newsOv','adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -12635,13 +13210,15 @@ function fadeMusic(){ if(!A.ctx) return; A.music.gain.setTargetAtTime(0,A.ctx.cu
 function fixEquip(){ let ch=false; if(!ownsSkin(SAVE.skin)){ SAVE.skin='classic'; ch=true; }
   const ld=LANDS.find(l=>l.id===SAVE.land); if(!ld||!(ld.price===0||SAVE.owned.includes(ld.id)||(ld.req&&reqMet(ld.req)))){ SAVE.land='ring'; ch=true; } if(ch) save(); return ch; }
 function toMenu(ov='menuOv'){
+  if(!$('shopOv').hidden&&shopMode==='coll'){ SAVE.collSeenT=Date.now(); save(); }
+  $('stageOv').hidden=true;
   fixEquip();
   document.body.classList.remove('obscene','talkok'); G.obs=null; G.crowd=null; G.follow=null; G.watch=null; mystStop(.4); rollSndStop(); if(RES.boss) setTimeout(resize,0);
   if(A.ctx&&A.ctx.state==='suspended') A.ctx.resume();
   if(G.state!=='menu') fadeMusic(); stopStudioAudio(); hideTalk(); hideCine();
   TRY=null; G=visualDefaults({state:'menu',players:[mkPlayer(0)]}); R=null; setTheme(THEMES[Math.min(WORLDS-1,SAVE.world-1)]);
   hint('');
-  if(ov==='menuOv'){ buildMenu(); setTimeout(()=>{ if(G.state==='menu'&&!$('menuOv').hidden&&!chalOffer()&&!lvlOffer()&&$('cvkWinOv').hidden&&$('twinWinOv').hidden&&!cvkWinPopup()&&!twWinPopup()&&!giftCheck()) newsCheck(); },500); } else if(ov==='hardOv') buildHard(); else if(ov==='remixOv') buildRemix(); else if(ov==='passOv') buildPass(); else if(ov==='worldsOv') buildWorlds(); else if(ov==='shopOv') buildShop(); else if(ov==='settingsOv') buildSettings();
+  if(ov==='menuOv'){ buildMenu(); try{ goalUI(); wardUI(); newDots(); setTimeout(wishCheck,1500); }catch(e){} setTimeout(()=>{ if(G.state==='menu'&&!$('menuOv').hidden&&!chalOffer()&&!lvlOffer()&&$('cvkWinOv').hidden&&$('twinWinOv').hidden&&!cvkWinPopup()&&!twWinPopup()&&!giftCheck()) newsCheck(); },500); } else if(ov==='hardOv') buildHard(); else if(ov==='remixOv') buildRemix(); else if(ov==='passOv') buildPass(); else if(ov==='worldsOv') buildWorlds(); else if(ov==='shopOv') buildShop(); else if(ov==='settingsOv') buildSettings();
   showOv(ov);
 }
 function nextUp(){
@@ -12723,20 +13300,22 @@ function shopFeature(){ const f=$('shopFeat'); if(shopMode!=='shop'||shopTab!=='
   if(!pool.length){ f.hidden=true; return; } const it=pool[hashStr('feat'+todayKey())%pool.length];
   f.hidden=false; f.innerHTML=`<canvas class="skprev" data-skin="${it.id}" data-px="120" width="120" height="120" aria-hidden="true"></canvas><div><small>Today's featured block</small><b>${escapeHTML(it.name)}</b>`+
     `<button class="btn" type="button" data-featbuy="${it.id}" ${SAVE.notes<it.price?'disabled':''}>♪ ${it.price.toLocaleString()}</button></div>`;
-  f.querySelector('[data-featbuy]').onclick=()=>{ if(SAVE.notes<it.price||SAVE.owned.includes(it.id)) return; SAVE.notes-=it.price; SAVE.owned.push(it.id); equip('skin',it.id); if(A.ctx) sGem(); buzz(20);
+  f.querySelector('[data-featbuy]').onclick=()=>{ if(SAVE.notes<it.price||SAVE.owned.includes(it.id)) return; SAVE.notes-=it.price; spendLog(it.name,it.price); SAVE.owned.push(it.id); equip('skin',it.id); if(A.ctx) sGem(); buzz(20);
     G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; netHello(); toast(`${it.name} is yours! Equipped.`); buildShop(); }; }
 function showStore(tab){ if(!tab&&shopMode!=='shop') tab='bpacks'; shopMode='shop'; if(tab) shopTab=tab; buildShop(); showOv('shopOv'); }
 function showColl(tab){ shopMode='coll'; if(tab) shopTab=tab; buildShop(); showOv('shopOv'); }
 function buildShop(){
-  if((shopTab==='bpacks'||shopTab==='prem'||shopTab==='forge')&&shopMode!=='shop') shopTab='skins';
+  newDots();
+  if((shopTab==='bpacks'||shopTab==='prem'||shopTab==='forge'||shopTab==='creators')&&shopMode!=='shop') shopTab='skins';
   if(shopTab==='prem'&&window.PF_CG) shopTab='bpacks';
-  $('tabPacks').classList.toggle('on',shopTab==='bpacks'); $('tabForge').classList.toggle('on',shopTab==='forge'); $('tabPrem').classList.toggle('on',shopTab==='prem'); $('tabPrem').hidden=!!window.PF_CG;
+  $('tabPacks').classList.toggle('on',shopTab==='bpacks'); $('tabForge').classList.toggle('on',shopTab==='forge'); $('tabCreators').classList.toggle('on',shopTab==='creators'); $('tabPrem').classList.toggle('on',shopTab==='prem'); $('tabPrem').hidden=!!window.PF_CG;
   { const hd=$('shopOv').querySelector('.panel > .head'); $('shopOv').style.setProperty('--shopTop',(getComputedStyle(hd).position==='sticky'?hd.offsetHeight:0)+'px'); }
   $('walletS').textContent=notesTxt(); $('shopTitle').textContent=shopMode==='shop'?'Shop':'Collection'; $('shopOv').classList.toggle('storemode',shopMode==='shop'); moneyRender(); shopFeature();
   $('tabSkins').classList.toggle('on',shopTab==='skins'); $('tabTrails').classList.toggle('on',shopTab==='lands'); $('tabTiles').classList.toggle('on',shopTab==='tiles'); $('tabSounds').classList.toggle('on',shopTab==='sounds'); $('tabBanners').classList.toggle('on',shopTab==='banners');
   if(shopTab==='banners'){ buildBanners(); return shopEmpty(); }
   if(shopTab==='bpacks'){ buildPacks(); return shopEmpty(); }
   if(shopTab==='forge'){ buildForge(); return shopEmpty(); }
+  if(shopTab==='creators'){ buildCreators(); return; }
   if(shopMode==='coll'&&shopTab==='skins'){ buildCollSkins(); return shopEmpty(); }
   if(shopTab==='prem'){ $('shopGrid').innerHTML=''; $('shopStats').textContent='Premium blocks come with their own landing effect. Everything here is optional.'; return; }
   if(shopTab==='tiles'||shopTab==='sounds'){ buildShop2(); return shopEmpty(); }
@@ -12749,11 +13328,13 @@ function buildShop(){
     else if(it.req) btn=`<button class="btn ghost" disabled type="button">${reqText(it.req)}</button>`;
     else btn=`<button class="btn" data-buy="${it.id}" type="button" ${SAVE.notes<it.price?'disabled':''}>♪ ${it.price}</button>`;
     const tr=shopTab==='skins'&&!owned&&!it.req&&!it.paid?`<button class="btn ghost trybtn" data-try="${it.id}" type="button">▶ Try it</button>`:'';
-    return `<div class="item${eq===it.id?' eq':''}">${prev}<b>${it.name}</b>${tr}${btn}</div>`; }).join('');
-  if(shopTab==='skins'&&shopMode==='shop'){ $('shopGrid').insertAdjacentHTML('afterbegin',dealsHTML()); $('shopGrid').querySelectorAll('[data-deal]').forEach(b=>b.onclick=()=>dealBuy(b.dataset.deal)); }
+    return `<div class="item${eq===it.id?' eq':''}">${shopTab==='skins'&&!owned&&!it.paid?wishBtn(it.id):''}${prev}<b>${it.name}</b>${tr}${btn}</div>`; }).join('');
+  if(shopTab==='skins'&&shopMode==='shop'){ $('shopGrid').insertAdjacentHTML('afterbegin',(couponOk()?'<div class="coupbar">🎟 You have a 50% coupon! Tap any Shop block to use it.</div>':'')+dealsHTML()+spotHTML()+bundlesHTML());
+    $('shopGrid').querySelectorAll('[data-deal]').forEach(b=>b.onclick=()=>dealBuy(b.dataset.deal)); $('shopGrid').querySelectorAll('[data-spot]').forEach(b=>b.onclick=()=>spotBuy(b.dataset.spot)); $('shopGrid').querySelectorAll('[data-bun]').forEach(b=>b.onclick=()=>bunBuy(b.dataset.bun)); }
+  wishWire($('shopGrid'));
   $('shopGrid').querySelectorAll('[data-try]').forEach(b=>b.onclick=()=>tryBlock(b.dataset.try));
   $('shopGrid').querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{ equip(shopTab==='skins'?'skin':'land',b.dataset.eq); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; buildShop(); netHello(); });
-  $('shopGrid').querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{ const it=list.find(x=>x.id===b.dataset.buy); if(SAVE.notes<it.price) return; SAVE.notes-=it.price; SAVE.owned.push(it.id);
+  $('shopGrid').querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{ const it=list.find(x=>x.id===b.dataset.buy); if(SAVE.notes<it.price) return; SAVE.notes-=it.price; spendLog(it.name,it.price); SAVE.owned.push(it.id);
     equip(shopTab==='skins'?'skin':'land',it.id); if(A.ctx) sGem(); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; buildShop(); netHello(); });
   $('shopStats').textContent=`◆ ${totalStars()} stars · longest streak ${SAVE.maxStreak} · best endless ${SAVE.bestEndless.toLocaleString()} · daily streak ${SAVE.daily.streak} · Notes come from levels, dailies and runs.`;
   shopEmpty();
@@ -12841,38 +13422,38 @@ function bpRollOne(pk){
   return {id,dupe,refund,have,tot,set,dust:dst}; }
 const bpCanPay=(pk,how,n=1)=>!!pk&&bpAvail(pk)&&(how==='free'?bpFreeReady():how==='token'?bpTokens()>=1&&bpTokenOk(pk):SAVE.notes>=pk.price*n);
 function bpBuy(pk,how){ if(how===true) how='free'; if(!bpCanPay(pk,how)||(BP.stage&&BP.stage!=='done')) return;
-  if(how==='free') SAVE.bpFree=todayKey(); else if(how==='token') SAVE.bpTokens=bpTokens()-1; else SAVE.notes-=pk.price;
+  if(how==='free') SAVE.bpFree=todayKey(); else if(how==='token') SAVE.bpTokens=bpTokens()-1; else { SAVE.notes-=pk.price; spendLog(pk.name,pk.price); }
   const res=bpRollOne(pk); save(); bpShow(pk,res); }
 /* opening five at once: five cards face down, turned over one by one or all together */
 function bpBuyMulti(pk){ if(!bpCanPay(pk,'',BP_MULTI)||(BP.stage&&BP.stage!=='done')) return;
-  SAVE.notes-=pk.price*BP_MULTI; const list=[]; for(let i=0;i<BP_MULTI;i++) list.push(bpRollOne(pk)); save(); bpShowMulti(pk,list); }
+  SAVE.notes-=pk.price*BP_MULTI; spendLog(pk.name+' ×'+BP_MULTI,pk.price*BP_MULTI); const list=[]; for(let i=0;i<BP_MULTI;i++) list.push(bpRollOne(pk)); save(); bpShowMulti(pk,list); }
 function bpShowMulti(pk,list,opt={}){ try{ firstGesture(); }catch(e){} BP.timers.forEach(clearTimeout); BP.timers=[];
   BP.pk=pk; BP.multi=list; BP.stage='multi'; BP.parts=[]; BP.rays=0; BP.prism=false; BP.forge=!!opt.forge;
   const ov=$('bpOv'); ov.classList.add('multi'); ov.classList.remove('dark'); ov.style.setProperty('--glow',pk.acc); $('bpBanner').className='bpbanner'; $('bpSkip').hidden=true; $('bpTap').hidden=true;
   const m=$('bpMulti'); m.hidden=false;
-  m.innerHTML=`<div class="bpmsum" id="bpmSum">${escapeHTML(pk.name)} ×${list.length} · tap a card to turn it over</div><div class="bpmgrid">${list.map((res,i)=>{ const s=skinById(res.id), r=s.bpr, R=BP_RAR[r];
+  m.innerHTML=`<div class="bpmsum" id="bpmSum">${opt.forge?'':`${escapeHTML(pk.name)} ×${list.length} · tap a card to turn it over`}</div><div class="bpmgrid">${list.map((res,i)=>{ const s=skinById(res.id), r=s.bpr==null?3:s.bpr, R=BP_RAR[r];
     return `<div class="bpmc" data-i="${i}" style="animation-delay:${i*.08}s" role="button" tabindex="0" aria-label="Turn over card ${i+1}"><div class="bpcf bpcback"><b>♪</b></div>`+
-      `<div class="bpcf bpcfront r${r}" style="--rc:${R.c}">${res.dupe?'':'<span class="bpmnew">NEW</span>'}<span class="bprr">${r===5?'✦ Pristine ✦':R.n}</span><canvas class="skprev" data-skin="${s.id}" data-px="120" data-big="1" width="120" height="120" aria-hidden="true"></canvas><b>${escapeHTML(s.name)}</b><small>${res.dupe?`+♪${res.refund.toLocaleString()} · ✧${res.dust||0}`:'New block!'}</small></div></div>`; }).join('')}</div>`+
+      `<div class="bpcf bpcfront r${r}" style="--rc:${R.c}">${res.dupe?'':'<span class="bpmnew">NEW</span>'}<span class="bprr">${s.fuse?'Fusion':s.req&&s.req.recipe?'Seasonal recipe':r===5?'✦ Pristine ✦':R.n}</span><canvas class="skprev" data-skin="${s.id}" data-px="120" data-big="1" width="120" height="120" aria-hidden="true"></canvas><b>${escapeHTML(s.name)}</b><small>${res.dupe?`+♪${res.refund.toLocaleString()} · ✧${res.dust||0}`:'New block!'}</small></div></div>`; }).join('')}</div>`+
     `<div class="bpbtns" id="bpmBtns"><button class="btn" type="button" id="bpmAll">Reveal all</button></div>`;
   m.querySelectorAll('.bpmc').forEach(c=>{ c.onclick=()=>c.classList.contains('flip')?bpmWear(+c.dataset.i):bpmFlip(+c.dataset.i); c.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); bpmFlip(+c.dataset.i); } }; });
   $('bpmAll').onclick=()=>{ $('bpmAll').disabled=true; let k=0; list.forEach((_,i)=>{ if(!bpmCard(i).classList.contains('flip')) bpLater(()=>bpmFlip(i),(k++)*420); }); };
   if(BP.forge){ $('bpmSum').textContent='⚒ Forging…'; $('bpmBtns').innerHTML=''; ov.style.setProperty('--glow','#FF8A2A');
     [0,1,2].forEach(k=>bpLater(()=>{ const c=bpmCard(0); if(!c) return; const r=c.getBoundingClientRect(); c.animate([{scale:1},{scale:.94},{scale:1}],{duration:160}); bpSnd('thump',k); buzz(25);
       for(let j=0;j<22;j++) bpSpark(r.left+r.width/2,r.top+r.height*.3,1,j%2?'#FFB040':'#FFFFFF',3+k); },500+k*420));
-    bpLater(()=>bpmFlip(0),1900); }
+    list.forEach((_,i)=>bpLater(()=>bpmFlip(i),1900+i*260)); }
   ov.hidden=false; ov.scrollTop=ov.scrollLeft=0; bpFxSize(); if(!BP.raf) BP.raf=requestAnimationFrame(bpFrame); }
 function bpmWear(i){ const r=BP.multi&&BP.multi[i]; if(!r||!ownsSkin(r.id)) return; equip('skin',r.id); G.players=[mkPlayer(0)]; try{ netHello(); }catch(e){}
   $('bpMulti').querySelectorAll('.bpmc').forEach(c=>c.classList.toggle('worn',+c.dataset.i===i)); buzz(10); toast(`Now wearing ${skinById(r.id).name}`); }
 const bpmCard=i=>$('bpMulti').querySelector(`.bpmc[data-i="${i}"]`);
 function bpmFlip(i){ const c=bpmCard(i); if(!c||c.classList.contains('flip')||BP.stage!=='multi') return; c.classList.add('flip');
-  const res=BP.multi[i], r=skinById(res.id).bpr, R=BP_RAR[r], b=c.getBoundingClientRect(), x=b.left+b.width/2, y=b.top+b.height/2;
+  const res=BP.multi[i], r=skinById(res.id).bpr==null?3:skinById(res.id).bpr, R=BP_RAR[r], b=c.getBoundingClientRect(), x=b.left+b.width/2, y=b.top+b.height/2;
   for(let k=0;k<[10,18,30,50,70,90][r];k++) bpSpark(x,y,1,r===5?'prism':(k%3?R.c:'#FFFFFF'),2+r,r>=2&&k%2); if(r>=2) bpRing(x,y,r===5?'prism':R.c,r);
   bpSnd('reveal',r); buzz([12,20,40,80,120,160][r]);
   if(r>=3){ const bn=$('bpBanner'); bn.textContent=r===5?'PULSE PRISTINE':r===4?'ASCENDANT!':'LEGENDARY!'; bn.style.setProperty('--rc',R.c); bn.className='bpbanner'; void bn.offsetWidth; bn.className='bpbanner go'+(r===5?' r4':r===4?' asc':''); }
   if(BP.multi.every((_,j)=>bpmCard(j).classList.contains('flip'))) bpmDone(); }
 function bpmDone(){ BP.stage='done'; const pk=BP.pk, L=BP.multi, nw=L.filter(r=>!r.dupe).length, back=L.reduce((a,r)=>a+r.refund,0), set=L.reduce((a,r)=>a+(r.set||0),0), ds=L.reduce((a,r)=>a+(r.dust||0),0);
   $('bpmSum').innerHTML=[nw?`<span class="new">${nw} new block${nw>1?'s':''}</span>`:'',back?`♪${back.toLocaleString()} back for repeats`:'',ds?`✧${ds} Stardust`:''].filter(Boolean).join(' · ')+(set?`<div class="bpsetdone">SET COMPLETE! +♪${set.toLocaleString()}</div>`:'');
-  if(BP.forge){ const s=skinById(L[0].id); $('bpmSum').innerHTML=`<span class="new">FORGED</span> ${escapeHTML(s.name)} is yours!`+(set?`<div class="bpsetdone">SET COMPLETE! +♪${set.toLocaleString()}</div>`:'');
+  if(BP.forge){ const s=skinById(L[0].id); $('bpmSum').innerHTML=L.length>1?`<span class="new">FORGED</span> ${L.length} new blocks!`:`<span class="new">${s.fuse?'FUSED':'FORGED'}</span> ${escapeHTML(s.name)} is yours!`+(set?`<div class="bpsetdone">SET COMPLETE! +♪${set.toLocaleString()}</div>`:'');
     $('bpmBtns').innerHTML=`<button class="btn" type="button" id="bpmEq">Wear it</button><button class="btn ghost" type="button" id="bpmDone">Back to the Forge</button>`;
     $('bpmEq').onclick=()=>{ bpmWear(0); $('bpmEq').disabled=true; $('bpmEq').textContent='Wearing it'; }; $('bpmDone').onclick=bpClose; }
   else { $('bpmSum').innerHTML+=`<div class="small" style="margin-top:4px">Tap a card to wear that block</div>`;
@@ -13020,35 +13601,46 @@ function bpSnd(k,i=0){ if(!A.ctx||!A.sfx) return; try{ const t=A.ctx.currentTime
     if(i>=4) [1047,1319,1568,2093,2637,3136].slice(0,i===5?6:4).forEach((f,j)=>tone(D,t+.55+j*.09,'sine',f,.09,.005,1.8)); } }catch(e){} }
 /* the Collection's Blocks tab: grouped by where each block comes from, with filters, a progress bar and pins.
    Pinned blocks (up to 12) sit in their own row at the top. Pack blocks you haven't found yet show as silhouettes. */
-const COLL={f:'all',q:''};
-const collGroup=s=>{ if(s.bp) return 'bp_'+s.bp; if(s.paid) return 'prem'; const r=s.req||{};
+const COLL={f:'all',q:'',sort:'group'};
+const collGroup=s=>{ if(s.bp) return 'bp_'+s.bp; if(s.paid) return 'prem'; const r=s.req||{}; if(s.fuse) return 'fused'; if(r.spot) return 'spot'; if(r.recipe) return 'event';
   if(r.pass||r.passp) return 'pass'; if(r.duck||r.twin||r.cvk||r.cvkOn||r.event) return 'event'; if(r.rank||r.streak||r.stars||r.hard||r.boss||r.login) return 'earn'; return 'shop'; };
+const rarScore=s=>s.fuse?55:s.bp?10+s.bpr*10:s.paid?48:s.req?(s.req.spot?42:30):(s.price||0)/1000;
 function buildCollSkins(){
+  SAVE.owned.forEach(id=>{ if(String(id).startsWith('fu_')) fuseReg(id); }); ownedStamp();
   SAVE.pins=(SAVE.pins||[]).filter(id=>SKINS.some(k=>k.id===id));
-  const own=it=>ownsSkin(it.id), all=SKINS.filter(it=>!it.hidden||own(it)), got=all.filter(own).length;
-  const keep=it=>COLL.f==='all'||(COLL.f==='own'?own(it):!own(it));
-  const card=it=>{ const o=own(it), eq=SAVE.skin===it.id, pin=SAVE.pins.includes(it.id), r=it.bp?BP_RAR[it.bpr]:null, mys=it.bp&&!o;
+  const own=it=>ownsSkin(it.id), all=SKINS.filter(it=>!it.hidden||own(it)), got=all.filter(own).length, gt=SAVE.gotT||{};
+  const keep=it=>COLL.f==='all'||(COLL.f==='wish'?wished(it.id):COLL.f==='own'?own(it):!own(it));
+  const card=it=>{ const o=own(it), eq=SAVE.skin===it.id, pin=SAVE.pins.includes(it.id), r=it.bp?BP_RAR[it.bpr]:null, mys=it.bp&&!o, pl=(SAVE.polish||{})[it.id]||0;
     let btn; if(eq) btn=`<button class="btn ghost" disabled type="button">Equipped</button>`; else if(o) btn=`<button class="btn ghost" data-eq="${it.id}" type="button">Equip</button>`;
     else btn=`<button class="btn ghost" disabled type="button">${escapeHTML(it.req?reqText(it.req):it.paid?'Premium block':`♪ ${it.price} in the Shop`)}</button>`;
     return `<div class="item citem${eq?' eq':''}${o?'':' locked'}${mys?' mystery':''}" data-n="${escapeHTML((mys&&it.bpr>=3?'???':it.name).toLowerCase())}"><button class="cpin${pin?' on':''}" type="button" data-pin="${it.id}" aria-label="${pin?'Unpin':'Pin'} ${escapeHTML(it.name)}" title="${pin?'Unpin':'Pin to the top'}">📌</button>`+
-      `<canvas class="skprev" data-skin="${it.id}" width="64" height="64" aria-hidden="true"></canvas>${r?`<span class="crar" style="--rc:${r.c}">${r.n}</span>`:''}<b>${mys&&it.bpr>=3?'???':escapeHTML(it.name)}</b>${btn}</div>`; };
-  const groups=[['shop','Shop blocks'],['earn','Earned by playing'],['pass','Pulse Pass'],['prem','Premium'],...BPACKS.map(p=>['bp_'+p.id,p.name]),['event','Events']];
-  let h=`<div class="collhead"><div><b>${got} / ${all.length}</b> blocks collected</div><div class="bpbar"><i style="width:${Math.round(got/all.length*100)}%"></i></div>`+
-    `<div class="collf">${[['all','All'],['own','Owned'],['locked','Not yet']].map(([k,n])=>`<button type="button" data-cf="${k}" class="${COLL.f===k?'on':''}">${n}</button>`).join('')}</div>`+
-    `<input type="search" class="collq" id="collQ" placeholder="🔍 Search your blocks" value="${escapeHTML(COLL.q)}" aria-label="Search blocks" autocomplete="off" spellcheck="false"></div>`;
+      (o&&isNewB(it.id)?'<span class="newb">NEW</span>':!o&&!(mys&&it.bpr>=3)&&!it.fuse?wishBtn(it.id):'')+
+      `<canvas class="skprev" data-skin="${it.id}" width="64" height="64" aria-hidden="true"></canvas>${r?`<span class="crar" style="--rc:${r.c}">${r.n}</span>`:''}${pl?`<span class="polt p${pl}">${pl===2?'Prism':'Gold'}</span>`:''}<b>${mys&&it.bpr>=3?'???':escapeHTML(it.name)}</b>${btn}</div>`; };
+  const groups=[['shop','Shop blocks'],['earn','Earned by playing'],['pass','Pulse Pass'],['prem','Premium'],...BPACKS.map(p=>['bp_'+p.id,p.name]),['spot','Weekly spotlight'],['fused','Your fusions'],['event','Events']];
+  const SORTS={rarity:(a,b)=>rarScore(b)-rarScore(a)||a.name.localeCompare(b.name),az:(a,b)=>a.name.localeCompare(b.name),recent:(a,b)=>own(b)-own(a)||(gt[b.id]||0)-(gt[a.id]||0)||a.name.localeCompare(b.name)};
+  let h=`<div class="collhead"><div><b>${got} / ${all.length}</b> blocks collected${(SAVE.wish||[]).length?` · ★ ${SAVE.wish.length} on your wishlist`:''}</div><div class="bpbar"><i style="width:${Math.round(got/all.length*100)}%"></i></div>`+
+    `<div class="collf">${[['all','All'],['own','Owned'],['locked','Not yet'],['wish','★ Wishlist']].map(([k,n])=>`<button type="button" data-cf="${k}" class="${COLL.f===k?'on':''}">${n}</button>`).join('')}</div>`+
+    `<label class="collsort">Sort<select id="collSort">${[['group','By where it\'s from'],['rarity','Rarest first'],['az','A to Z'],['recent','Recently got']].map(([k,n])=>`<option value="${k}" ${(COLL.sort||'group')===k?'selected':''}>${n}</option>`).join('')}</select></label>`+
+    `<input type="search" class="collq" id="collQ" placeholder="🔍 Search your blocks" value="${escapeHTML(COLL.q)}" aria-label="Search blocks" autocomplete="off" spellcheck="false">${loadsHTML()}</div>`;
   const pins=SAVE.pins.map(id=>SKINS.find(k=>k.id===id)).filter(Boolean);
   if(pins.length) h+=`<h3 class="collsec">📌 Pinned${pins.length>=2?`<label class="collshuf"><input type="checkbox" id="pinShuf" ${SAVE.pinShuffle?'checked':''}> 🔀 Wear a random one each run</label>`:''}</h3>`+pins.map(card).join('');
-  groups.forEach(([g,name])=>{ const list=all.filter(it=>collGroup(it)===g&&keep(it)).sort((a,b)=>own(b)-own(a)||(a.bpr||0)-(b.bpr||0)); if(!list.length) return;
+  if((COLL.sort||'group')==='group') groups.forEach(([g,name])=>{ const list=all.filter(it=>collGroup(it)===g&&keep(it)).sort((a,b)=>own(b)-own(a)||(a.bpr||0)-(b.bpr||0)); if(!list.length) return;
     const n=all.filter(it=>collGroup(it)===g), have=n.filter(own).length;
     h+=`<h3 class="collsec">${escapeHTML(name)}<small>${have} / ${n.length}</small></h3>`+list.map(card).join(''); });
+  else { const list=all.filter(keep).sort(SORTS[COLL.sort]); h+=`<h3 class="collsec">${{rarity:'Rarest first',az:'A to Z',recent:'Recently got'}[COLL.sort]}<small>${list.length}</small></h3>`+list.map(card).join(''); }
+  if(COLL.f==='wish'&&!(SAVE.wish||[]).length) h+=`<p class="collnone small">Your wishlist is empty. Tap ☆ on any block you don't have yet.</p>`;
   $('shopGrid').innerHTML=h;
   $('shopGrid').querySelectorAll('[data-cf]').forEach(b=>b.onclick=()=>{ COLL.f=b.dataset.cf; buildShop(); });
+  $('collSort').onchange=e=>{ COLL.sort=e.target.value; buildShop(); };
+  $('shopGrid').querySelectorAll('[data-lw]').forEach(b=>b.onclick=()=>{ loadWear(+b.dataset.lw); buildShop(); });
+  $('shopGrid').querySelectorAll('[data-ls]').forEach(b=>b.onclick=()=>{ loadSave(+b.dataset.ls); buildShop(); });
   { const ps=$('pinShuf'); if(ps) ps.onchange=()=>{ SAVE.pinShuffle=ps.checked; save(); toast(ps.checked?'Each run you\'ll wear a random pinned block':'Shuffle off'); }; }
   { const q=$('collQ'); q.addEventListener('keydown',e=>e.stopPropagation()); q.oninput=()=>{ COLL.q=q.value; collFilter(); }; collFilter(); }
   $('shopGrid').querySelectorAll('[data-pin]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const id=b.dataset.pin, i=SAVE.pins.indexOf(id);
     if(i>=0) SAVE.pins.splice(i,1); else { if(SAVE.pins.length>=12){ toast('You can pin up to 12 blocks. Unpin one first.'); return; } SAVE.pins.push(id); } save(); buildShop(); });
   $('shopGrid').querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{ equip('skin',b.dataset.eq); G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; buildShop(); netHello(); });
-  $('shopStats').textContent='Tap 📌 to pin your favourite blocks to the top.';
+  wishWire($('shopGrid'));
+  $('shopStats').textContent='Tap a block to see it up close and polish it. Tap 📌 to pin, ☆ to wishlist.';
 }
 /* the search box: hides the blocks whose names don't match, and any section left empty */
 function collFilter(){ const q=COLL.q.trim().toLowerCase(), g=$('shopGrid'); let head=null, n=0, any=0;
@@ -13073,7 +13665,7 @@ function buildShop2(){
   const done=()=>{ buildShop(); if(!tiles) return; G.players=[mkPlayer(0)]; if(R) G.players[0].pos={...R.start}; };
   $('shopGrid').querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{ equip(kind,b.dataset.eq); if(!tiles) packHear(b.dataset.eq); done(); });
   $('shopGrid').querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{ const it=list.find(x=>x.id===b.dataset.buy); if(!it||SAVE.notes<it.price||(it.req&&!reqMet(it.req))) return;
-    SAVE.notes-=it.price; SAVE.owned.push(it.id); equip(kind,it.id); if(A.ctx) sGem(); if(!tiles) packHear(it.id); done(); });
+    SAVE.notes-=it.price; spendLog(it.name,it.price); SAVE.owned.push(it.id); equip(kind,it.id); if(A.ctx) sGem(); if(!tiles) packHear(it.id); done(); });
   $('shopGrid').querySelectorAll('[data-hear]').forEach(b=>b.onclick=()=>{ packHear(b.dataset.hear); b.textContent='♫ Playing…'; setTimeout(()=>{ if(b.isConnected) b.textContent='▶ Listen'; },8000); });
   $('shopStats').textContent=tiles?'Tile themes tint the tiles and sky of every world. The ones named after a block unlock when you own that block.':'Your equipped sound pack plays the menu music and is the Endless soundtrack, speeding up every room.';
 }
@@ -13089,7 +13681,7 @@ function buildBanners(){
     return `<div class="item banitem${eq===it.id?' eq':''}">${prev}<b>${escapeHTML(it.name)}</b>${btn}</div>`; }).join('');
   $('shopGrid').querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{ equip('banner',b.dataset.eq); lbRename(); buildShop(); });
   $('shopGrid').querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{ const it=list.find(x=>x.id===b.dataset.buy); if(!it||SAVE.notes<it.price||(it.req&&!reqMet(it.req))) return;
-    SAVE.notes-=it.price; SAVE.owned.push(it.id); equip('banner',it.id); if(A.ctx) sGem(); lbRename(); buildShop(); });
+    SAVE.notes-=it.price; spendLog(it.name+' banner',it.price); SAVE.owned.push(it.id); equip('banner',it.id); if(A.ctx) sGem(); lbRename(); buildShop(); });
   $('shopStats').textContent='Your banner shows behind your block, name and rank on every leaderboard.';
 }
 /* hear a sound pack: the menu music plays on it for 8 seconds */
@@ -13120,7 +13712,7 @@ function finishRun(){
   } else if(M.type==='boss'){
     const s2=(G.bossHits||0)<=2, s3=perf>=.8; stars=1+(s2?1:0)+(s3?1:0);
     const key=`${M.world}-B`, prev=SAVE.stars[key]||0; G.prevStars=prev;
-    notes=(prev===0?100:0)+Math.max(0,stars-prev)*20; SAVE.stars[key]=Math.max(prev,stars);
+    notes=(prev===0?150:15)+Math.max(0,stars-prev)*30; SAVE.stars[key]=Math.max(prev,stars);
     if(M.world===6&&!SAVE.interDone&&SAVE.world<=6){ SAVE.interOpen=true; eyebrow='Something stirs past the sky…'; }
     else if(SAVE.world<=M.world&&M.world<WORLDS){ SAVE.world=M.world+1; eyebrow='World '+(M.world+1)+' unlocked'; }
     if(M.world===WORLDS) eyebrow='You finished Pulseform';
@@ -13133,20 +13725,21 @@ function finishRun(){
     const lim=R.par+Math.max(3,Math.ceil(R.par*.3)), s2=G.beatsTotal<=lim, s3=s.miss===0; stars=1+(s2?1:0)+(s3?1:0); G._lim=lim;
     title=M.design.n||'Custom level'; eyebrow=M.test?'Test play cleared':(M.design.by?'A level by '+M.design.by:'Custom level'); if(M.test) M.design.ok=true;
     crit=[['Reach the door',true],[`Finish within ${lim} beats (you took ${G.beatsTotal})`,s2],['No misses',s3]]; SAVE.life.customs=(SAVE.life.customs||0)+1;
+    if(M.feat&&!M.test){ const F=SAVE.featDone||(SAVE.featDone=[]); if(!F.includes(M.feat)){ F.push(M.feat); SAVE.featDone=F.slice(-200); notes+=60; } }
   } else if(M.type==='hard'){
     const lim=G.parTotal+Math.max(2,Math.ceil(G.parTotal*.15)), s2=G.beatsTotal<=lim, s3=s.miss===0; stars=1+(s2?1:0)+(s3?1:0); G._lim=lim;
-    const key=`H-${M.idx}`, prev=SAVE.stars[key]||0; G.prevStars=prev; notes=(prev===0?60+M.idx*5:0)+Math.max(0,stars-prev)*20; SAVE.stars[key]=Math.max(prev,stars);
+    const key=`H-${M.idx}`, prev=SAVE.stars[key]||0; G.prevStars=prev; notes=(prev===0?90+M.idx*8:15)+Math.max(0,stars-prev)*30; SAVE.stars[key]=Math.max(prev,stars);
     title=`Hard ${M.idx} · ${HARD_NAMES[M.idx-1]}`; eyebrow='Hard Mode';
     crit=[['Reach the door',true],[`Finish within ${lim} beats (you took ${G.beatsTotal})`,s2],['No misses',s3]];
   } else if(M.type==='lremix'){
     const slack=Math.max(3,Math.ceil(G.parTotal*.3)), lim=G.parTotal+slack, s2=G.beatsTotal<=lim, s3=s.miss===0; stars=1+(s2?1:0)+(s3?1:0); G._lim=lim;
-    const key=`${M.world}-${M.level}`, RX=SAVE.remix||(SAVE.remix={}), prev=RX[key]||0; G.prevStars=prev; notes=(prev===0?30:0)+Math.max(0,stars-prev)*15; RX[key]=Math.max(prev,stars);
+    const key=`${M.world}-${M.level}`, RX=SAVE.remix||(SAVE.remix={}), prev=RX[key]||0; G.prevStars=prev; notes=(prev===0?45:8)+Math.max(0,stars-prev)*20; RX[key]=Math.max(prev,stars);
     title=`Remix ${M.world}-${M.level} · ${LEVEL_NAMES[M.world-1][M.level-1]}`; eyebrow='Remix';
     crit=[['Reach the door',true],[`Finish within ${lim} beats (you took ${G.beatsTotal})`,s2],['No misses',s3]];
   } else if(M.type==='level'){
     const slack=Math.max(4,Math.ceil(G.parTotal*.35)), lim=G.parTotal+slack, s2=G.beatsTotal<=lim, s3=s.miss===0; stars=1+(s2?1:0)+(s3?1:0); G._lim=lim;
     const key=M.type==='level'?`${M.world}-${M.level}`:`${M.world}-B`, prev=SAVE.stars[key]||0; G.prevStars=prev;
-    notes=(prev===0?(M.type==='boss'?100:20):0)+Math.max(0,stars-prev)*(M.type==='boss'?20:10);
+    notes=(prev===0?(M.type==='boss'?150:40):(M.type==='boss'?15:8))+Math.max(0,stars-prev)*(M.type==='boss'?30:20);
     SAVE.stars[key]=Math.max(prev,stars);
 
     title=M.type==='level'?`${M.world}-${M.level} ${LEVEL_NAMES[M.world-1][M.level-1]}`:`${BOSS[M.world-1]} defeated`;
@@ -13159,7 +13752,10 @@ function finishRun(){
     title='Daily Practice cleared'; eyebrow=`${d.streak}-day streak`;
     crit=[['Clear all 3 rooms',true],['No misses',s2],[`85% perfect (you hit ${Math.round(perf*100)}%)`,s3]];
   }
-  notes=earnN(notes); SAVE.notes+=notes; SAVE.maxStreak=Math.max(SAVE.maxStreak,G.maxStreak);
+  notes=earnN(notes);
+  { const bx=[]; if(!M.test&&!M.erlaf){ if(s.miss===0&&['level','boss','hard','lremix','custom'].includes(M.type)){ notes+=10; bx.push('no misses +10'); }
+      if(SAVE.firstWin!==todayKey()){ SAVE.firstWin=todayKey(); notes+=50; bx.push('first win today +50'); } } G.bonusTxt=bx.join(', '); }
+  SAVE.notes+=notes; SAVE.maxStreak=Math.max(SAVE.maxStreak,G.maxStreak);
   const ex=runExtras(M,{stars,lim:G._lim||0,perf}); save();
   const xpLine=awardRun({cleared:true,newStars:Math.max(0,stars-(G.prevStars||0))});
   const after=[...unlockedSet()].filter(n=>!before.has(n));
@@ -13174,7 +13770,7 @@ function finishRun(){
     [...$('rStars').children].forEach((el,i)=>{ el.classList.toggle('on',i<stars); el.style.animationDelay=(i*.18)+'s'; });
     $('rCrit').innerHTML=crit.map(([t,ok])=>`<li class="${ok?'ok':''}">${t}</li>`).join('');
     { const tgt=G.score, t0=performance.now(); const step=()=>{ const u=Math.min(1,(performance.now()-t0)/900), e=1-Math.pow(1-u,3); $('rScore').textContent=Math.round(tgt*e).toLocaleString(); if(u<1) requestAnimationFrame(step); }; step(); } $('rPerf').textContent=Math.round(perf*100)+'%';
-    $('rReward').textContent=notes?`+${notes} Notes`:'No new Notes. Beat your stars to earn more.';
+    $('rReward').textContent=notes?`+${notes} Notes`+(G.bonusTxt?` (with ${G.bonusTxt})`:''):'No new Notes this time.';
     $('rUnlock').textContent=after.length?'Unlocked: '+after.join(', '):'';
     let next=null;
     if(M.erlaf) next=null;
@@ -13197,7 +13793,7 @@ function gameOver(why){
   G.state='over'; fadeMusic(); hideTalk(); if(why!=='dark') hideCine();
   const before=unlockedSet();
   const M=G.mode, s=G.stats; let notes=0, best=false;
-  if(M.type==='endless'){ notes=Math.floor(G.score/150); if(G.score>SAVE.bestEndless){SAVE.bestEndless=G.score;best=true;} }
+  if(M.type==='endless'){ notes=Math.floor(G.score/150); if(G.score>SAVE.bestEndless&&!M.ward){SAVE.bestEndless=G.score;best=true;} }
   if(M.type==='rhythm'){ notes=Math.floor(G.score/140); if(G.score>(SAVE.bestRhythm||0)){SAVE.bestRhythm=G.score;best=true;} }
   if(M.type==='coop'){ notes=Math.floor(G.score/150); if(G.roomIdx-1>SAVE.bestCoop){SAVE.bestCoop=G.roomIdx-1;best=true;} }
   if(M.type==='tether'){ notes=Math.floor(G.score/150); if(G.roomIdx-1>(SAVE.bestTether||0)){SAVE.bestTether=G.roomIdx-1;best=true;} }
@@ -13206,6 +13802,7 @@ function gameOver(why){
   if(M.type==='duel') notes=Math.floor(G.score/300)+(!M.net||G.winner===NET.me?15:5);
   if(M.type==='studio'){ notes=(G.roomIdx-1)*6+Math.floor(G.score/200); if(G.roomIdx-1>(SAVE.bestStudio||0)){ SAVE.bestStudio=G.roomIdx-1; best=true; } }
   if(M.type==='ascent'){ const f=G.floorBest||1; notes=(f-1)*10+Math.floor(G.score/200); if(f>SAVE.bestAscent){ SAVE.bestAscent=f; best=true; } }
+  if(M.ward){ const W=wardState(); W.best=Math.max(W.best,G.score); if(!W.done&&G.roomIdx-1>=3){ W.done=true; SAVE.notes+=100; SAVE.life.wards=(SAVE.life.wards||0)+1; setTimeout(()=>toast('👕 Wardrobe Challenge cleared: +♪100'),1200); } }
   notes=earnN(notes); SAVE.notes+=notes; SAVE.maxStreak=Math.max(SAVE.maxStreak,G.maxStreak); save();
   if(M.type==='studio') setTimeout(()=>{ if(G.mode===M) stopStudioAudio(); },1500);
   { const L=SAVE.life; if(M.type==='endless') L.endlessRooms=Math.max(L.endlessRooms||0,G.roomIdx-1); if(M.net) L.online=(L.online||0)+1; if(why==='song') L.songs=(L.songs||0)+1; }
@@ -13296,7 +13893,7 @@ function loop(ts){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks'||shopTab==='forge')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks'||shopTab==='forge')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('stageOv').hidden) drawSkinPreviews(now,'#stageOv canvas.skprev'); if(!$('wardOv').hidden) drawSkinPreviews(now,'#wardOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
@@ -13509,7 +14106,7 @@ $('walletM').addEventListener('click',()=>showStore('prem')); $('walletM').title
 $('mSettings').onclick=()=>{ buildSettings(); showOv('settingsOv'); };
 $('wBack').onclick=()=>toMenu(); $('lBack').onclick=()=>{ buildWorlds(); showOv('worldsOv'); };
 $('sBack').onclick=()=>toMenu(); $('setBack').onclick=()=>toMenu();
-$('tabPacks').onclick=()=>{ shopTab='bpacks'; buildShop(); }; $('tabForge').onclick=()=>{ shopTab='forge'; buildShop(); }; $('tabPrem').onclick=()=>{ shopTab='prem'; buildShop(); }; $('tabSkins').onclick=()=>{ shopTab='skins'; buildShop(); }; $('tabTrails').onclick=()=>{ shopTab='lands'; buildShop(); };
+$('tabPacks').onclick=()=>{ shopTab='bpacks'; buildShop(); }; $('tabForge').onclick=()=>{ shopTab='forge'; buildShop(); }; $('tabCreators').onclick=()=>{ shopTab='creators'; CR.list=null; buildShop(); }; $('spendBtn').onclick=spendOpen; $('tabPrem').onclick=()=>{ shopTab='prem'; buildShop(); }; $('tabSkins').onclick=()=>{ shopTab='skins'; buildShop(); }; $('tabTrails').onclick=()=>{ shopTab='lands'; buildShop(); };
 $('tabTiles').onclick=()=>{ shopTab='tiles'; buildShop(); }; $('tabSounds').onclick=()=>{ shopTab='sounds'; buildShop(); }; $('tabBanners').onclick=()=>{ shopTab='banners'; buildShop(); };
 $('pauseBtn').onclick=()=>G.state==='playing'?pause():null;
 $('resumeBtn').onclick=resume;
