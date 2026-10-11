@@ -2550,6 +2550,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <div class="field"><div class="top"><label for="sMusic">Music volume</label><output data-volout="music"></output></div><input id="sMusic" data-vol="music" type="range" min="0" max="100"></div>
     <div class="field"><div class="top"><label for="sSfx">Effects volume</label><output data-volout="sfx"></output></div><input id="sSfx" data-vol="sfx" type="range" min="0" max="100"></div>
     <label class="opt" for="haptics"><input id="haptics" type="checkbox"><span>Vibration<small>A light buzz on hits and misses, on phones that support it.</small></span></label>
+    <label class="opt" for="lowLat"><input id="lowLat" type="checkbox"><span>Lowest sound delay<small>For wired speakers only. Turn off if the sound cuts in and out (always off with Bluetooth).</small></span></label>
     <label class="opt" for="relaxed"><input id="relaxed" type="checkbox"><span>Relaxed timing<small>Windows 30% wider, and skipping a beat never costs Harmony.</small></span></label>
     <label class="opt" for="ghostOn"><input id="ghostOn" type="checkbox"><span>Best-run ghost<small>A see-through copy of your best run of a level plays beside you.</small></span></label>
     <label class="opt" for="metroOn"><input id="metroOn" type="checkbox"><span>Beat bars<small>Two bars at the side of the screen slide together and meet on every beat.</small></span></label>
@@ -3103,7 +3104,9 @@ const mtof=m=>440*Math.pow(2,(m-69)/12);
 function ensureAudio(){
   if(A.ctx) return;
   try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
-  let c; try{ c=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'}); }catch(e){ c=new (window.AudioContext||window.webkitAudioContext)(); } A.ctx=c;
+  // the lowest-latency setting uses tiny sound buffers that Bluetooth can't keep filled, so the sound cuts in and out.
+  // The game's clock follows the real delay of the output (and your calibration), so a bigger buffer stays on the beat.
+  A.smooth=!SAVE.lowLat||A.bt; let c; try{ c=new (window.AudioContext||window.webkitAudioContext)({latencyHint:A.smooth?(A.bt?'playback':'balanced'):'interactive'}); }catch(e){ c=new (window.AudioContext||window.webkitAudioContext)(); } A.ctx=c;
   A.master=c.createGain(); A.master.gain.value=.85;
   const comp=c.createDynamicsCompressor(); comp.threshold.value=-14; comp.ratio.value=3;
   A.master.connect(comp); comp.connect(c.destination);
@@ -3111,7 +3114,7 @@ function ensureAudio(){
   A.music=c.createGain(); A.filt.connect(A.music); A.music.connect(A.master);
   A.sfx=c.createGain(); A.sfx.gain.value=.7*SAVE.sfxVol; A.sfx.connect(A.master);
   const nb=c.createBuffer(1,c.sampleRate,c.sampleRate), nd=nb.getChannelData(0); for(let i=0;i<nd.length;i++) nd[i]=Math.random()*2-1; A.noise=nb;
-  const len=Math.floor(c.sampleRate*(MOB?1.3:2)), ir=c.createBuffer(2,len,c.sampleRate);
+  const len=Math.floor(c.sampleRate*(MOB||A.bt?1.3:2)), ir=c.createBuffer(2,len,c.sampleRate);
   for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6)}
   A.rev=c.createConvolver(); A.rev.buffer=ir; const rg=c.createGain(); rg.gain.value=.55; A.rev.connect(rg); rg.connect(A.filt);
   const ss=c.createGain(); ss.gain.value=.18; A.sfx.connect(ss); ss.connect(A.rev);
@@ -4159,7 +4162,7 @@ const TOUCH_LAG=MOB?.03:0;
 const LATE_OK=.012;
 function win(spb){ const sc=(SAVE.relaxed?1.3:1)*(MOB?1.35:1)*(G.mode&&G.mode.tight?.8:1)*((G.perks&&G.perks.win)||1), cap=.42*spb; return {p:Math.min(.045*sc,cap*.3),g:Math.min(.09*sc,cap*.6),l:Math.min(.15*sc,cap)}; }
 function pump(){
-  const c=A.ctx, lat=G.mode.click?outLat():0, ahead=c.currentTime+(MOB?.35:.25)+lat;
+  const c=A.ctx, lat=G.mode.click?outLat():0, ahead=c.currentTime+(MOB||A.bt?.35:.25)+lat;
   if(G.mode.pattern) return pumpPattern(c,ahead);
   for(;;){
     const last=G.beats[G.beats.length-1]; let t=last?last.t+last.spb:G.startT;
@@ -13737,7 +13740,7 @@ function buildBanners(){
 function packHear(id){ firstGesture(); PACKPREV={id,until:performance.now()+8000}; }
 function buildSettings(){ delUI();
   $('ctrlField').hidden=MOB;
-  $('ghostOn').checked=!SAVE.ghostOff; $('metroOn').checked=!SAVE.metroOff; $('fountOn').checked=!SAVE.fountOff; $('relaxed').checked=SAVE.relaxed; $('reduce').checked=SAVE.reduce; $('haptics').checked=SAVE.haptics; syncOffset(); syncVol();
+  $('ghostOn').checked=!SAVE.ghostOff; $('metroOn').checked=!SAVE.metroOff; $('fountOn').checked=!SAVE.fountOff; $('relaxed').checked=SAVE.relaxed; $('lowLat').checked=!!SAVE.lowLat; $('reduce').checked=SAVE.reduce; $('haptics').checked=SAVE.haptics; syncOffset(); syncVol();
   document.querySelectorAll('#ctrlTabs button').forEach(b=>b.classList.toggle('on',b.dataset.c===SAVE.controls));
 
 }
@@ -14168,6 +14171,7 @@ $('calibBtn').onclick=()=>{ CAL.back=null; startCalib(); }; $('calibDone').oncli
 $('calibAgain').onclick=startCalib; $('calibMinus').onclick=()=>calibNudge(-5); $('calibPlus').onclick=()=>calibNudge(5);
 $('calibDot').addEventListener('pointerdown',e=>{e.preventDefault(); calibTap(e)});
 $('relaxed').onchange=e=>{SAVE.relaxed=e.target.checked; save()};
+$('lowLat').onchange=e=>{SAVE.lowLat=e.target.checked; save(); rebuildAudio(); };
 $('reduce').onchange=e=>{SAVE.reduce=e.target.checked; save()};
 $('metroOn').onchange=e=>{ SAVE.metroOff=!e.target.checked; save(); };
 $('fountOn').onchange=e=>{ SAVE.fountOff=!e.target.checked; save(); };
@@ -14219,10 +14223,12 @@ function rebuildAudio(force){
 var OUTK={k:null};
 async function outKey(){ let lab='';
   try{ const ds=await navigator.mediaDevices.enumerateDevices(), d=ds.find(x=>x.kind==='audiooutput'&&x.deviceId==='default')||ds.find(x=>x.kind==='audiooutput'); lab=((d&&d.label)||'').replace(/^Default - /,''); }catch(e){}
+  A.btLab=/bluetooth|airpods|buds|headset|hands-free|wh-|wf-|jbl|beats|bose|sony|skullcandy|jabra|anker|soundcore/i.test(lab);
   if(lab) return 'L:'+lab.slice(0,60);
   const c=A.ctx, lat=c?(c.outputLatency||0)+(c.baseLatency||0):0; return lat>.08?'B:hi':'B:lo'; }
 function rememberOff(){ if(OUTK.k) (SAVE.offsets||(SAVE.offsets={}))[OUTK.k]=SAVE.offset||0; }
 async function checkOutput(){ if(!A.ctx) return; const k=await outKey(), was=OUTK.k; OUTK.k=k;
+  const bt=!!(A.btLab||k==='B:hi'); if(bt!==!!A.bt){ A.bt=bt; rebuildAudio(); }   // waits for the menu if you're mid-run
   if(was==null){ if((SAVE.offsets||{})[k]==null){ rememberOff(); save(); return; } }
   else if(k===was) return;
   const o=(SAVE.offsets||{})[k];
