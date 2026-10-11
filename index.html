@@ -2083,7 +2083,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <button class="twban liveban" id="mLive" type="button" hidden><span class="twban-ic" aria-hidden="true">★</span><span class="twban-t"><b id="mLiveT">Live event</b><small id="mLiveSub"></small></span><span class="twban-go" id="mLiveGo" aria-hidden="true">›</span></button>
       <button class="twban" id="mTwinBan" type="button" hidden><span class="twban-ic" aria-hidden="true">⚔</span><span class="twban-t"><b>Twin Pulse</b><small id="mTwinBanSub">2v2 event</small></span><span class="twban-go" aria-hidden="true">›</span></button>
       <button class="twban goalban" id="mGoal" type="button" hidden><span class="twban-ic" aria-hidden="true">🎯</span><span class="twban-t"><b id="mGoalT">Saving up</b><small id="mGoalSub"></small><i class="goalbar"><i id="mGoalBar"></i></i></span><span class="twban-go" aria-hidden="true">›</span></button>
-      <button class="twban wardban" id="mWard" type="button"><span class="twban-ic" aria-hidden="true">👕</span><span class="twban-t"><b>Wardrobe Challenge</b><small id="mWardSub">One block for everyone this week</small></span><span class="twban-go" aria-hidden="true">›</span></button>
+      <button class="twban wardban" id="mWard" type="button" hidden><span class="twban-ic" aria-hidden="true">👕</span><span class="twban-t"><b>Wardrobe Challenge</b><small id="mWardSub">One block for everyone this week</small></span><span class="twban-go" aria-hidden="true">›</span></button>
     </div>
     <div id="menuArt" aria-hidden="true"></div>
   </div>
@@ -2557,7 +2557,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <label class="opt" for="reduce"><input id="reduce" type="checkbox"><span>Calmer effects<small>No screen flashes, camera nudges or bobbing.</small></span></label>
     <div class="offset">
       <label for="offset">Audio offset</label><output id="offsetOut">0 ms</output>
-      <input id="offset" type="range" min="-300" max="300" step="1" value="0">
+      <input id="offset" type="range" min="-450" max="450" step="1" value="0">
     </div>
     <button id="calibBtn" class="btn ghost" type="button">Calibrate timing</button>
     <button id="newsBtn" class="btn ghost" type="button">What's new</button>
@@ -3460,6 +3460,10 @@ function syncClock(){
 }
 function evTime(ev){ const pn=performance.now(); return (ev&&ev.timeStamp>0&&Math.abs(ev.timeStamp-pn)<1000)?ev.timeStamp:pn; }
 function heardNow(ev){ if(CLK.off==null) syncClock(); return evTime(ev)/1000+(CLK.off||0); }
+/* the game's clock: the sound you hear, moved by your audio offset (Bluetooth headphones play everything a little later
+   than the device says, so the beats, the tiles and the judging all wait for the sound to reach your ears) */
+const offS=()=>(SAVE.offset||0)/1000;
+function gameNow(ev){ return heardNow(ev)-offS(); }
 /* how long a sound scheduled now takes to reach the speaker */
 function outLat(){ return A.ctx?clamp(A.ctx.currentTime-heardNow(),0,.5):0; }
 
@@ -4070,7 +4074,7 @@ function startRun(M){
   A.music.gain.cancelScheduledValues(c.currentTime); A.music.gain.setValueAtTime(SAVE.musicVol,c.currentTime); A.sfx.gain.value=.7*SAVE.sfxVol;
   A.filt.frequency.cancelScheduledValues(c.currentTime); A.filt.frequency.setValueAtTime(18000,c.currentTime);
   setStemTier(0,c.currentTime,.01);
-  G.now=heardNow(); G.players.forEach(P=>P.lives=M.lives||0);
+  G.now=gameNow(); G.players.forEach(P=>P.lives=M.lives||0);
   if(M.net){ G.players.forEach((P,i)=>{ if(i===NET.me){ P.skin=skinById(SAVE.skin); P.land=landById(SAVE.land); } else P.remote=true; }); netPeerLook(); }
   nextRoom(true); ghostStart(M);
   syncClock(); G.startT=M.atPerf!=null?Math.max(c.currentTime+.05,M.atPerf/1000+(CLK.off||0)):c.currentTime+(MOB?.5:.35); R.rise=G.now;
@@ -4236,7 +4240,7 @@ function input(dir,ev,pid){
   if(G.state!=='playing'||!R) return;
   const P=G.players[pid]; if(!P||P.done||P.dead) return;
   if(G.mode.mods.mirror&&(dir==='left'||dir==='right')) dir=dir==='left'?'right':'left';
-  const t=heardNow(ev)-SAVE.offset/1000;
+  const t=gameNow(ev);
   let b=null,bd=1e9; for(let i=Math.max(0,G.beats.length-5);i<G.beats.length;i++){const d=Math.abs(t-G.beats[i].t); if(d<bd){bd=d;b=G.beats[i]}}
   if(!b) return;
   if(b.k<=G.restUntil){ flash(pid,dir,'guard'); popAt(P,'rest','#DCCBE6',13); return 'rest'; }
@@ -7673,7 +7677,7 @@ function roundOpenBeat(b){
 }
 function arenaTick(now){
   if(!R||!R.arena) return;
-  const jt=now-SAVE.offset/1000-TOUCH_LAG, W=win(G.spb||.6);
+  const jt=now-TOUCH_LAG, W=win(G.spb||.6);
   G.shots=G.shots.filter(s=>{
     if(s.kind==='boss'){ if(now>=s.t1){ G.hitK=s.k; hitBoss(); G.hitK=null; return false; } return true; }
     if(!s.fxd&&now>=s.t1){ s.fxd=true; impactFx(s.tx,s.ty,s.owner===1?'#B8F2E6':'#FFD166'); }
@@ -9612,7 +9616,7 @@ async function wardBoardLoad(){ const L=$('wardLB'); L.innerHTML='<li class="non
 $('wardGo').onclick=()=>{ TRY=wardBlock().id; startRun(wardMode()); };
 $('wardBack').onclick=()=>toMenu();
 $('mWard').onclick=showWard;
-function wardUI(){ const sub=$('mWardSub'); if(sub) sub.textContent=`This week everyone wears ${wardBlock().name}${couponOk()?' · 🎟 you have a coupon':''}`; }
+function wardUI(){ return; const sub=$('mWardSub'); if(sub) sub.textContent=`This week everyone wears ${wardBlock().name}${couponOk()?' · 🎟 you have a coupon':''}`; }
 /* ---- party invites ---- */
 function frCoopInvites(){
   const box=$('nInvite'); if(!box) return;
@@ -9749,7 +9753,7 @@ function drawNewSpecial(c,r,mx,my,now,L){
     const s=r.w*.28; cx.beginPath(); cx.moveTo(s,0); cx.lineTo(-s*.35,-s*.62); cx.lineTo(-s*.1,0); cx.lineTo(-s*.35,s*.62); cx.closePath(); cx.fill(); cx.stroke(); cx.restore(); }
   if(c.beam){ const ch=laserCharge(now); cx.strokeStyle=rgba('#FF3B3B',.22+.55*ch); cx.lineWidth=1.5+2*ch; cx.setLineDash([4,4]); cx.lineDashOffset=-now*20; cx.beginPath();
     if(c.beam==='row'){ cx.moveTo(r.X,my); cx.lineTo(r.X+r.w,my); } else { cx.moveTo(mx,r.Y); cx.lineTo(mx,r.Y+r.h); } cx.stroke(); cx.setLineDash([]); }
-  if(c.ghost){ const g=cx.createLinearGradient(r.X,r.Y,r.X+r.w,r.Y+r.h), sh=(now*.6)%1; g.addColorStop(Math.max(0,sh-.2),'rgba(255,255,255,0)'); g.addColorStop(sh,'rgba(255,255,255,.35)'); g.addColorStop(Math.min(1,sh+.2),'rgba(255,255,255,0)');
+  if(c.ghost){ const g=cx.createLinearGradient(r.X,r.Y,r.X+r.w,r.Y+r.h), sh=((now*.6)%1+1)%1; g.addColorStop(Math.max(0,sh-.2),'rgba(255,255,255,0)'); g.addColorStop(sh,'rgba(255,255,255,.35)'); g.addColorStop(Math.min(1,sh+.2),'rgba(255,255,255,0)');
     cx.fillStyle=g; rr(r.X,r.Y,r.w,r.h,5); cx.fill(); }
 }
 /* lasers fire every bar; in Hard Mode every other bar, so there is time to cross */
@@ -10437,7 +10441,7 @@ function ascentAdvance(){
   G.swapPending=false; G.finishing=false; G.finishQueued=false; G.proj=[]; G.shots=[]; G.floorForgiven=false;
   nextRoom(false); R.rise=G.now;
   // the countdown only starts once the new map has finished rising into place (about a second), never before
-  const bi=beatInfo(heardNow()), k=bi.last?bi.last.k:0, spb=60/(G.pendingBpm||G.bpm||90), riseB=Math.ceil((.45+(R.N*2-2)*.035+.15)/spb);
+  const bi=beatInfo(gameNow()), k=bi.last?bi.last.k:0, spb=60/(G.pendingBpm||G.bpm||90), riseB=Math.ceil((.45+(R.N*2-2)*.035+.15)/spb);
   let d=Math.ceil((k+1+riseB+3)/4)*4; G.restUntil=d-1;
   const f=G.roomIdx, g=isGuardian(f);
   G.banner={text:g?'Guardian · floor '+f:'Floor '+f,sub:(G.newTrack?'♪ '+trackName()+'  ·  ':'')+THEMES[G.mode.world-1].name,t0:G.now,dur:1.9,col:g?'#FF7EB6':'#FFF8EE'}; G.newTrack=false; sChime(79);
@@ -10497,7 +10501,7 @@ $('stTap').addEventListener('pointerdown',e=>{ e.preventDefault(); ensureAudio()
   const t=evTime(e)/1000, T=STUDIO.taps; if(T.length&&t-T[T.length-1]>2) T.length=0; T.push(t); if(T.length>32) T.shift();
   const b=$('stTap'); b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
   if(A.ctx.state==='running'&&STUDIO.src!=='none') tone(A.sfx,A.ctx.currentTime,'sine',1320,.08,.001,.05);
-  const onClock=pt=>heardNow({timeStamp:pt*1000})-SAVE.offset/1000-TOUCH_LAG;
+  const onClock=pt=>gameNow({timeStamp:pt*1000})-TOUCH_LAG;
   STUDIO.tapAt=onClock(t); STUDIO.tapPerf=performance.now();
   if(T.length<3){ b.textContent='Keep tapping…'; return; }
   const n=T.length, mx=(n-1)/2, my=T.reduce((a,v)=>a+v,0)/n; let sxy=0,sxx=0; T.forEach((v,i)=>{ sxy+=(i-mx)*(v-my); sxx+=(i-mx)*(i-mx); });
@@ -10805,7 +10809,7 @@ function skipCut(){
   if(crowdDue(G.mode)){ if(!G.crowd) G.crowd={t0:G.now-CROWD_T.total,intro:false}; else { G.crowd.t0=G.now-CROWD_T.total; G.crowd.intro=false; } }
   if(G.follow&&G.follow.intro){ G.follow.intro=false; G.follow.t0=G.now; G.follow.lt=G.now; }   // it just flies in, like on the later levels
   if(A.ctx){ const t=A.ctx.currentTime; A.music.gain.cancelScheduledValues(t); A.music.gain.setTargetAtTime(SAVE.musicVol,t,.3); }
-  const bi=G.bi||beatInfo(heardNow()), k=bi.last?bi.last.k:0; G.restUntil=Math.min(G.restUntil,k+5);   // a short count-in, then play
+  const bi=G.bi||beatInfo(gameNow()), k=bi.last?bi.last.k:0; G.restUntil=Math.min(G.restUntil,k+5);   // a short count-in, then play
   return true;
 }
 function skipBtnSync(){ const b=$('skipBtn'); if(!b) return; const on=skipActive(); if(b.hidden===on) b.hidden=!on; }
@@ -11575,7 +11579,6 @@ const NEWS_V='2026-10c', NEWS_WHEN='Update · October 2026';
 const NEWS_ADDED=[
  ['💰','More Notes','Levels pay about double, replays pay too, plus +50 for your first win each day, +10 for no misses, and bigger achievement rewards.'],
  ['🎨','Creators','Play featured levels built by players (+♪60 the first time). Get likes on your own levels to send them in and earn the Creator badge.'],
- ['👕','Wardrobe Challenge','Every week everyone plays the same block in the same rooms. Top half wins a 50% Shop coupon.'],
  ['🧬','Fusion and Polish','Mix two blocks into a brand-new one, or polish your favourites Gold and Prism with Stardust.'],
  ['⭐','Weekly spotlight','A special block in the Shop for one week only: Koi Pond, Snow Globe, Origami Crane or Arcade Cabinet.'],
  ['🎁','Bundles and a wishlist','Themed bundles at 25% off, and a ★ wishlist that tells you when something is on sale or in reach.'],
@@ -11705,7 +11708,6 @@ const ACH=[
  ['forge1','Blacksmith','Forge a block in the Forge',()=>LF('forged')>=1],
  ['polish1','Shiny','Polish a block with Stardust',()=>LF('polished')>=1],
  ['fuse1','Inventor','Fuse two blocks into a new one',()=>LF('fused')>=1],
- ['ward1','Dressed for Success','Clear 3 rooms in a Wardrobe Challenge',()=>LF('wards')>=1],
  ['feat1','Level Explorer','Clear a featured level',()=>(SAVE.featDone||[]).length>=1]];
 let achQ=[], achT=null;
 function achCheck(){
@@ -13741,7 +13743,7 @@ function buildSettings(){ delUI();
 }
 function syncVol(){ ['music','sfx'].forEach(k=>{ const v=Math.round(SAVE[k+'Vol']*100); document.querySelectorAll(`[data-vol="${k}"]`).forEach(i=>i.value=v); document.querySelectorAll(`[data-volout="${k}"]`).forEach(o=>o.textContent=v+'%'); }); }
 function applyVol(){ if(!A.ctx) return; A.sfx.gain.value=.7*SAVE.sfxVol; syncSoundChip(); if(['playing','paused','menu'].includes(G.state)) A.music.gain.setTargetAtTime(SAVE.musicVol,A.ctx.currentTime,.05); }
-function syncOffset(){ $('offset').value=SAVE.offset; $('offsetOut').textContent=(SAVE.offset>0?'+':'')+SAVE.offset+' ms'; }
+function syncOffset(){ rememberOff(); $('offset').value=SAVE.offset; $('offsetOut').textContent=(SAVE.offset>0?'+':'')+SAVE.offset+' ms'; }
 function unlockedSet(){ return new Set([...SKINS,...LANDS].filter(i=>i.req&&reqMet(i.req)).map(i=>i.name)); }
 
 /* ---------------- RUN END ---------------- */
@@ -13877,7 +13879,7 @@ function gameOver(why){
   const mx=Math.max(1,...s.hist); $('hist').innerHTML=s.hist.map((v,i)=>`<i class="${i===4||i===5?'mid':''}" style="height:${Math.max(3,v/mx*100)}%"></i>`).join('');
   const avg=s.cnt?s.sum/s.cnt*1000:0;
   $('timingTip').textContent=why==='budget'?'Levels give you a beat budget. Take shorter routes and keep moving when you can.':s.cnt<6?'Play a little longer to see your timing pattern.':Math.abs(avg)<18?`You average ${Math.round(Math.abs(avg))} ms from the beat. Nicely centred.`:`You average ${Math.round(Math.abs(avg))} ms ${avg<0?'early':'late'}. If that feels wrong, set the audio offset in Settings to about ${Math.round(SAVE.offset+avg)} ms.`;
-  { const ao=$('applyOff'), want=Math.round(clamp(SAVE.offset+avg,-300,300)); ao.hidden=!(why!=='budget'&&s.cnt>=12&&Math.abs(avg)>=18&&want!==SAVE.offset);
+  { const ao=$('applyOff'), want=Math.round(clamp(SAVE.offset+avg,-450,450)); ao.hidden=!(why!=='budget'&&s.cnt>=12&&Math.abs(avg)>=18&&want!==SAVE.offset);
     ao.textContent=`Set audio offset to ${want} ms`; ao.onclick=()=>{ SAVE.offset=want; save(); syncOffset(); ao.hidden=true; toast(`Audio offset set to ${want} ms`); }; }
   $('oReward').textContent=notes?`+${notes} Notes`:''; $('oUnlock').textContent=after.length?'Unlocked: '+after.join(', '):'';
   $('oRetry').onclick=()=>startRun(M.type==='daily'?modeFor('daily'):M); $('oRetry').textContent=M.type==='duel'?'Rematch':'Try again';
@@ -13894,7 +13896,7 @@ function gameOver(why){
 }
 function pause(){ if(G.state!=='playing') return;
   if(G.mode.net){ if(G.leaveArm&&performance.now()-G.leaveArm<2500){ G.state='dying'; gameOver('quit'); } else { G.leaveArm=performance.now(); hint('Online matches can\'t pause. Press pause again to leave the match.',2500); } return; } G.state='paused'; A.ctx.suspend(); syncVol(); showOv('pauseOv',false); }
-function resume(){ hideAll(); const c=A.ctx; c.resume().then(()=>{ if(A.ctx!==c||G.state!=='paused') return; const bi=beatInfo(heardNow()); G.restUntil=Math.max(G.restUntil,(bi.last?bi.last.k:0)+5); G.state='playing'; }).catch(()=>{});
+function resume(){ hideAll(); const c=A.ctx; c.resume().then(()=>{ if(A.ctx!==c||G.state!=='paused') return; const bi=beatInfo(gameNow()); G.restUntil=Math.max(G.restUntil,(bi.last?bi.last.k:0)+5); G.state='playing'; }).catch(()=>{});
   // the sound system wouldn't come back (an audio device change on some phones): end the run cleanly instead of hanging
   setTimeout(()=>{ if(G.state==='paused'&&A.ctx===c&&c.state!=='running'&&$('pauseOv').hidden){ rebuildAudio(true); G.state='dying'; gameOver('quit'); toast('Your sound output changed, so the run ended. Your progress is safe.'); } },1800); }
 
@@ -13925,13 +13927,13 @@ function loop(ts){
   // the frame's own timestamp (the same for everything drawn this frame, and evenly spaced) rather than "right now",
   // which drifts by however long the code before it took: motion comes out evenly spaced
   const ft=(typeof ts==='number'&&ts>0&&Math.abs(ts-performance.now())<100?ts:performance.now())/1000;
-  let now=live?ft+(CLK.off||0):ft;
+  let now=live?ft+(CLK.off||0)-offS():ft;
   if(live){ if(G.lastNow!=null&&now<G.lastNow) now=G.lastNow; G.lastNow=now; }
   G.now=now;
   if(G.state==='playing'){
     pump(); netTick();
     while(G.checkIdx<G.beats.length&&G.beats[G.checkIdx].t<=now) onBeat(G.beats[G.checkIdx++]);
-    const jt=now-SAVE.offset/1000-TOUCH_LAG, must=G.mode.mustMove&&!SAVE.relaxed;
+    const jt=now-TOUCH_LAG, must=G.mode.mustMove&&!SAVE.relaxed;
     while(G.idleIdx<G.beats.length){ const b=G.beats[G.idleIdx]; if(b.t+win(b.spb).l>=jt) break; G.idleIdx++;
       if(b.k>G.restUntil) G.players.forEach(P=>{ if(!b.d[P.id]&&!P.done&&!P.dead&&G.state==='playing'){ b.d[P.id]=true; if(must&&!heldBeat(P,b.k)) miss(P,b,'idle'); } }); }
     newTilesTick(now);
@@ -14054,31 +14056,31 @@ function menuDemo(now){
 }
 
 /* ---------------- CALIBRATION ---------------- */
-const CALIB_N=24;
+const CALIB_N=20;
 const HP={pending:null};
 $('hpPlay').onclick=()=>{ const M=HP.pending; HP.pending=null; if(M) startRun(M); else toMenu(); };
 $('hpCalib').onclick=()=>{ CAL.back=HP.pending; HP.pending=null; startCalib(); };
 const CAL={back:null};
 function calibOffTxt(){ $('calibOff').textContent=(SAVE.offset>0?'+':'')+SAVE.offset+' ms'; }
-function calibNudge(d){ SAVE.offset=clamp((SAVE.offset||0)+d,-300,300); save(); syncOffset(); calibOffTxt(); if(A.ctx) tone(A.sfx,A.ctx.currentTime,'sine',d>0?990:770,.05,.002,.08); }
+function calibNudge(d){ SAVE.offset=clamp((SAVE.offset||0)+d,-450,450); save(); syncOffset(); calibOffTxt(); if(A.ctx) tone(A.sfx,A.ctx.currentTime,'sine',d>0?990:770,.05,.002,.08); }
 function startCalib(){
-  ensureAudio(); A.ctx.resume(); const c=A.ctx, t0=c.currentTime+.6, spb=.6;
+  ensureAudio(); A.ctx.resume(); const c=A.ctx, t0=c.currentTime+.8, spb=1;
   for(let i=0;i<CALIB_N;i++) tone(A.master,t0+i*spb,'sine',i%4?600:900,.3,.002,.08);
   const pl=G.players; G=visualDefaults({state:'calib',calib:{t0,spb,taps:[]},players:pl||[mkPlayer(0)]});
-  $('calibMsg').textContent='Tap any direction, Space, or the dot on every click. 24 clicks; the first 4 are warm-up.';
+  $('calibMsg').textContent='Listen and tap any direction, Space, or the dot on every click. Go by the sound, not the dot. 20 clicks; the first 4 are warm-up.';
   $('calibCount').textContent='0 taps'; $('calibDone').hidden=true; $('calibAgain').hidden=true; $('calibTune').hidden=true;
   $('calibDone').textContent=CAL.back?'Let\'s play':'Back to settings'; $('calibDone').classList.toggle('ghost',!CAL.back); showOv('calibOv');
 }
 function calibTap(ev){ const k=G.calib; if(!k||k.finished) return; const t=heardNow(ev)-TOUCH_LAG, i=Math.round((t-k.t0)/k.spb); if(i<4||i>=CALIB_N) return;
-  if(k.taps.some(x=>x.i===i)) return; k.taps.push({i,d:t-(k.t0+i*k.spb)}); $('calibCount').textContent=k.taps.length+' taps'; }
+  k.tapAt=performance.now(); if(k.taps.some(x=>x.i===i)) return; k.taps.push({i,d:t-(k.t0+i*k.spb)}); $('calibCount').textContent=k.taps.length+' taps'; }
 function calibTick(){
   const k=G.calib, c=A.ctx, h=heardNow()+visLead(), ph=((h-k.t0)/k.spb)%1, d=$('calibDot');
-  if(h>k.t0-.05){ d.style.opacity=.3+.7*Math.max(0,1-ph*4); d.style.transform=`scale(${1+.15*Math.max(0,1-ph*4)})`; }
+  { const f=k.tapAt?Math.max(0,1-(performance.now()-k.tapAt)/150):0; d.style.opacity=.3+.7*f; d.style.transform=`scale(${1+.15*f})`; }
   if(!k.finished&&c.currentTime>k.t0+CALIB_N*k.spb+.3){ k.finished=true;
     // average the middle half of the taps: stray early or late taps don't pull the result
     const s=k.taps.map(x=>x.d).sort((a,b)=>a-b), q=Math.floor(s.length/4), mid=s.slice(q,s.length-q), avg=mid.reduce((a,b)=>a+b,0)/Math.max(1,mid.length)*1000;
     const spread=mid.length?(mid[mid.length-1]-mid[0])*500:0;
-    if(k.taps.length>=8){ SAVE.offset=Math.round(clamp(avg,-300,300)); save(); syncOffset();
+    if(k.taps.length>=8){ SAVE.offset=Math.round(clamp(avg,-450,450)); save(); syncOffset();
       $('calibMsg').textContent=`Done. Your taps land ${Math.abs(SAVE.offset)} ms ${SAVE.offset<0?'early':'late'} on average, so the offset is now ${SAVE.offset} ms.`+(spread>40?' Your taps were a bit uneven; run it again for a steadier result.':' Nice and steady.'); }
     else $('calibMsg').textContent='Not enough taps to measure. Try again and tap along with every click.';
     $('calibDone').hidden=false; $('calibAgain').hidden=false; $('calibTune').hidden=k.taps.length<8; calibOffTxt(); $('calibDone').focus(); }
@@ -14200,7 +14202,7 @@ function wakeSync(){
 }
 setInterval(wakeSync,1000);
 /* if the system takes the audio away mid-run (a phone call, another app, iOS interruptions), pause instead of drifting */
-function watchAudio(){ if(!A.ctx||A.stWatch) return; A.stWatch=true; const c=A.ctx;
+function watchAudio(){ if(!A.ctx||A.stWatch) return; A.stWatch=true; const c=A.ctx; setTimeout(checkOutput,1500);
   c.addEventListener('statechange',()=>{ if(A.ctx!==c) return; if(c.state==='running'){ AUD.ok=performance.now(); return; }
     if(G.state==='playing'&&!(G.mode&&G.mode.net)) pause(); }); }
 /* ---- the audio output changing: Bluetooth / wireless headphones connecting or disconnecting, AirPods taken out, a call.
@@ -14213,7 +14215,20 @@ function rebuildAudio(force){
   AUD.rebuild=false; const old=A.ctx; A.ctx=null; A.stems={}; A.stWatch=false; LOBBY.on=false; CLK.off=null;
   try{ old.close(); }catch(e){}
   ensureAudio(); watchAudio(); syncVol(); if(document.visibilityState==='visible') A.ctx.resume().then(syncSoundChip).catch(()=>{}); syncSoundChip(); }
-function audioRouteChanged(){ if(!A.ctx) return; CLK.off=null;
+/* each sound output keeps its own offset, so going between the speaker and Bluetooth headphones brings back the right one */
+var OUTK={k:null};
+async function outKey(){ let lab='';
+  try{ const ds=await navigator.mediaDevices.enumerateDevices(), d=ds.find(x=>x.kind==='audiooutput'&&x.deviceId==='default')||ds.find(x=>x.kind==='audiooutput'); lab=((d&&d.label)||'').replace(/^Default - /,''); }catch(e){}
+  if(lab) return 'L:'+lab.slice(0,60);
+  const c=A.ctx, lat=c?(c.outputLatency||0)+(c.baseLatency||0):0; return lat>.08?'B:hi':'B:lo'; }
+function rememberOff(){ if(OUTK.k) (SAVE.offsets||(SAVE.offsets={}))[OUTK.k]=SAVE.offset||0; }
+async function checkOutput(){ if(!A.ctx) return; const k=await outKey(), was=OUTK.k; OUTK.k=k;
+  if(was==null){ if((SAVE.offsets||{})[k]==null){ rememberOff(); save(); return; } }
+  else if(k===was) return;
+  const o=(SAVE.offsets||{})[k];
+  if(o!=null){ if(o!==SAVE.offset){ SAVE.offset=o; save(); syncOffset(); toast(`Timing set for this sound output (${o>0?'+':''}${o} ms)`); } }
+  else toast('New sound output. If the beat feels off, use Calibrate timing in Settings.'); }
+function audioRouteChanged(){ if(!A.ctx) return; CLK.off=null; setTimeout(checkOutput,800);
   if(G.state==='playing'&&!(G.mode&&G.mode.net)){ pause(); hint('Your sound output changed. Press Resume when ready. If the beat feels off, recalibrate in Settings.',4000); AUD.rebuild=true; }
   else rebuildAudio(); }
 try{ if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener) navigator.mediaDevices.addEventListener('devicechange',()=>setTimeout(audioRouteChanged,350)); }catch(e){}
