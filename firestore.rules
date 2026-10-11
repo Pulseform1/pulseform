@@ -82,17 +82,18 @@ service cloud.firestore {
     //  - A score can only go up, stays under a believable ceiling (the Ascent board packs floor x 1,000,000 + points), and
     //    each new score is stamped with the server's clock (t = request.time), at least 5 seconds after the last one.
     //  - An update that keeps the same score (a rename, a new block or banner) can't touch the time.
-    //  - Ranks are 0-26, names and blocks are short.
+    //  - Ranks are 0-26, names, blocks, banners and titles are short.
     function boardMax(board) {
       return board == 'ascent' ? 2000000000 : 20000000;
     }
     function boardEntryOk(board) {
-      return request.resource.data.keys().hasOnly(['name', 'rank', 'score', 'skin', 't', 'banner'])
+      return request.resource.data.keys().hasOnly(['name', 'rank', 'score', 'skin', 't', 'banner', 'title'])
         && request.resource.data.name is string && request.resource.data.name.size() <= 32
         && request.resource.data.rank is int && request.resource.data.rank >= 0 && request.resource.data.rank <= 26
         && request.resource.data.score is int && request.resource.data.score >= 0 && request.resource.data.score <= boardMax(board)
         && request.resource.data.skin is string && request.resource.data.skin.size() <= 64
-        && (!('banner' in request.resource.data) || (request.resource.data.banner is string && request.resource.data.banner.size() <= 24));
+        && (!('banner' in request.resource.data) || (request.resource.data.banner is string && request.resource.data.banner.size() <= 24))
+        && (!('title' in request.resource.data) || (request.resource.data.title is string && request.resource.data.title.size() <= 40));
     }
     match /boards/{board}/entries/{uid} {
       allow read: if true;
