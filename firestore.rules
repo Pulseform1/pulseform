@@ -525,24 +525,25 @@ service cloud.firestore {
         && cls(request.resource.data.cid).teacher == request.auth.uid;
       allow delete: if signedIn() && resource.data.teacher == request.auth.uid;
     }
-    // question packs: private to their maker, or public (verified teachers only). Anyone signed in can report a
-    // public pack, which hides it until an admin looks at it; the maker can't un-hide it.
+    // question packs: every new or changed pack waits for an admin to approve it (status 'pending' → 'approved' or
+    // 'rejected' with a note); the maker can't approve their own. A public pack is visible to other teachers only once
+    // approved. Anyone signed in can report a public pack, which hides it until an admin looks at it.
     function packOk() {
-      return request.resource.data.keys().hasOnly(['owner', 'oname', 'title', 'subject', 'grade', 'desc', 'vis', 'hidden', 'qs', 'n', 't'])
+      return request.resource.data.keys().hasOnly(['owner', 'oname', 'title', 'subject', 'grade', 'desc', 'vis', 'hidden', 'qs', 'n', 'status', 'note', 't'])
+        && request.resource.data.status == 'pending' && request.resource.data.note == ''
         && request.resource.data.owner == request.auth.uid
         && shortStr(request.resource.data.title, 60) && request.resource.data.title.size() > 0
         && shortStr(request.resource.data.oname, 24) && shortStr(request.resource.data.subject, 24)
         && shortStr(request.resource.data.grade, 12) && shortStr(request.resource.data.desc, 160)
         && request.resource.data.vis in ['private', 'public'] && request.resource.data.hidden is bool
-        && request.resource.data.qs is list && request.resource.data.qs.size() <= 100
-        && (request.resource.data.vis == 'private' || exists(/databases/$(db)/documents/teachers/$(request.auth.uid)));
+        && request.resource.data.qs is list && request.resource.data.qs.size() <= 100;
     }
     match /packs/{pid} {
       allow read: if (signedIn() && resource.data.owner == request.auth.uid)
-        || (signedIn() && resource.data.vis == 'public' && resource.data.hidden == false) || isAdmin();
+        || (signedIn() && resource.data.vis == 'public' && resource.data.status == 'approved' && resource.data.hidden == false) || isAdmin();
       allow create: if signedIn() && packOk() && request.resource.data.hidden == false;
       allow update: if (signedIn() && resource.data.owner == request.auth.uid && packOk() && request.resource.data.hidden == resource.data.hidden)
-        || (signedIn() && resource.data.vis == 'public' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hidden']) && request.resource.data.hidden == true)
+        || (signedIn() && resource.data.vis == 'public' && resource.data.status == 'approved' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hidden']) && request.resource.data.hidden == true)
         || isAdmin();
       allow delete: if (signedIn() && resource.data.owner == request.auth.uid) || isAdmin();
     }

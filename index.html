@@ -1317,6 +1317,27 @@ button.lvchip{cursor:pointer}button.lvchip:hover{transform:translateY(-2px) rota
 .pljoin{min-height:420px}.pljoinme{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:6px}.pljoinme small{opacity:.75}
 @media (max-width:620px){.lvlane{grid-template-columns:120px minmax(0,1fr) 44px}.lvpod{gap:6px}.podcard canvas{width:64px;height:64px}.p0 .podcard canvas{width:84px;height:84px}.podcard b{font-size:15px}.clshero .clsdeco{display:none}.lvendtop h2{font-size:28px}}
 @media (prefers-reduced-motion:reduce){.funbg,.confetti{display:none}.plme,.clsdeco span,.podc,.lvchip.pop{animation:none}}
+.shoptabs #tabSkins.tabblocks{order:-1;position:relative;font-weight:800;font-size:15px;color:#2B2350;background:linear-gradient(135deg,#FFE27A,#FFB347 55%,#FF8FBF);box-shadow:0 3px 0 #C98A1E,0 0 18px rgba(255,209,102,.45);border-radius:10px;padding-inline:14px}
+.shoptabs #tabSkins.tabblocks:not(.on){animation:blockglow 2.4s ease-in-out infinite}
+.shoptabs #tabSkins.tabblocks.on{outline:3px solid #fff;outline-offset:1px}
+.shoptabs #tabSkins .tbic{display:inline-block;animation:clbob 2s ease-in-out infinite}
+@keyframes blockglow{50%{box-shadow:0 3px 0 #C98A1E,0 0 28px rgba(255,209,102,.8)}}
+@media (prefers-reduced-motion:reduce){.shoptabs #tabSkins.tabblocks,.shoptabs #tabSkins .tbic{animation:none}}
+.clcrumbs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px;margin:2px 0 6px}.clcrumbs button{background:rgba(255,255,255,.08);border:1px solid var(--line);color:inherit;border-radius:999px;padding:4px 12px;font:600 13px inherit;cursor:pointer}.clcrumbs button:hover{background:rgba(255,255,255,.16)}.clcrumbs span{opacity:.5}.clcrumbs b{opacity:.9}
+.clh{margin:4px 0 8px;font:700 24px var(--display)}
+.clactions{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
+.tchtiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:4px 0 6px}
+.tchtile{display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:none;border-radius:18px;padding:16px;text-align:left;color:#2B2350;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.2);transition:transform .15s}
+.tchtile:hover{transform:translateY(-3px)}.tchtile:focus-visible{outline:3px solid #fff}.tchtile span{font-size:32px}.tchtile b{font:800 18px var(--display)}.tchtile small{opacity:.8;font-size:13px}
+.tchtile.t1{background:linear-gradient(140deg,#FFE27A,#FFB347)}.tchtile.t2{background:linear-gradient(140deg,#B8F2E6,#7FD6C0)}.tchtile.t3{background:linear-gradient(140deg,#C9B8FF,#8FA8FF)}.tchtile.t4{background:linear-gradient(140deg,#FFC2E0,#FF8FBF)}
+.pkcard{position:relative}.pkcard.own{padding-top:30px}.pkst{position:absolute;top:8px;left:12px;font-size:11px;font-weight:800;border-radius:999px;padding:2px 9px}.pkst.pend{background:rgba(255,209,102,.25);color:#FFE27A}.pkst.ok{background:rgba(127,240,210,.22);color:#7FF0D2}.pkst.no{background:rgba(255,138,128,.25);color:#FFB3AA}
+.pknote{color:#FFB3AA}
+.pkcard.pknew{border:2px dashed rgba(255,255,255,.3);background:transparent;color:inherit;cursor:pointer;align-items:center;justify-content:center;text-align:center;min-height:120px;font:inherit}.pkcard.pknew span{font:800 34px var(--display);color:#FFE27A}.pkcard.pknew:hover{background:rgba(255,255,255,.06)}
+.pkstep{display:flex;align-items:center;gap:10px;margin:18px 0 6px}.pkstep span{width:28px;height:28px;border-radius:50%;background:#FFD166;color:#2B2350;display:grid;place-items:center;font:800 15px var(--display)}.pkstep b{font:700 17px var(--display)}.pkstep small{margin-left:auto;opacity:.7}
+.qaddtiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:10px}.qaddtiles button{display:flex;flex-direction:column;align-items:center;gap:4px;border:2px dashed rgba(255,255,255,.25);background:rgba(255,255,255,.04);color:inherit;border-radius:14px;padding:12px 8px;font:600 14px inherit;cursor:pointer}.qaddtiles button:hover{border-color:#FFD166;background:rgba(255,209,102,.1)}.qaddtiles span{font-size:22px}
+.pkbar{position:sticky;bottom:-1px;z-index:3;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;background:linear-gradient(transparent,var(--panel,#251B45) 30%);padding:18px 0 6px;margin-top:10px}
+.admpk{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;background:rgba(255,255,255,.06);border-radius:12px;padding:10px 12px;margin:6px 0}.admpk small{display:block;opacity:.8}.admpk details{margin-top:4px}.admpk summary{cursor:pointer;font-size:13px}
+.admpkqs{margin:6px 0 0;padding-left:20px;display:grid;gap:4px;font-size:13px}.admpkqs small{color:#B8F2E6}.admpkbtns{display:flex;flex-direction:column;gap:6px}
 .lb li.me{outline:2px solid #FFD166;background:rgba(255,209,102,.12)}.lb .lbn{font:700 13px var(--display);color:var(--ink-3)}.lb li:nth-child(1) .lbn{color:#FFD166}.lb li:nth-child(2) .lbn{color:#DCE2EE}.lb li:nth-child(3) .lbn{color:#D08A52}
 .lb .gem{width:9px;height:9px;transform:rotate(45deg);border-radius:2px;background:var(--rc)}.lb .lbname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lb b{font:600 13px var(--display);font-variant-numeric:tabular-nums}
 .evchip{border-color:rgba(143,240,224,.55);color:#8FF0E0;animation:evGlow 2.4s ease-in-out infinite}@keyframes evGlow{50%{box-shadow:0 0 14px rgba(143,240,224,.45)}}
@@ -2478,7 +2499,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   <div class="panel wide">
     <div class="head"><button class="back" id="sBack" type="button">← Menu</button><button class="chip spendchip" id="spendBtn" type="button">🧾 History</button><div class="wallet" id="walletS"></div></div>
     <h2 id="shopTitle">Collection</h2>
-    <div class="tabs shoptabs"><button id="tabPacks" type="button">✦ Packs</button><button id="tabForge" type="button">⚒ Forge</button><button id="tabCreators" type="button">🎨 Creators</button><button id="tabPrem" type="button">★ Premium</button><button id="tabSkins" class="on" type="button">Blocks</button><button id="tabTrails" type="button">Landing effects</button><button id="tabFx" type="button">✨ Effects</button><button id="tabTiles" type="button">Tiles</button><button id="tabSounds" type="button">Sound Tracks</button><button id="tabBanners" type="button">Banners</button></div>
+    <div class="tabs shoptabs"><button id="tabSkins" class="on tabblocks" type="button"><span class="tbic" aria-hidden="true">🧊</span> Blocks</button><button id="tabPacks" type="button">✦ Packs</button><button id="tabForge" type="button">⚒ Forge</button><button id="tabCreators" type="button">🎨 Creators</button><button id="tabPrem" type="button">★ Premium</button><button id="tabTrails" type="button">Landing effects</button><button id="tabFx" type="button">✨ Effects</button><button id="tabTiles" type="button">Tiles</button><button id="tabSounds" type="button">Sound Tracks</button><button id="tabBanners" type="button">Banners</button></div>
     <div class="shopmoney" id="shopMoney" hidden></div>
     <div class="shopfeat" id="shopFeat" hidden></div>
     <div class="shop" id="shopGrid"></div>
@@ -2535,12 +2556,14 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <div id="aIn" hidden>
       <div class="acct-card"><span class="acct-dot"></span><div><b id="aWho"></b><small class="small" id="aSync"></small></div></div>
       <p class="small">Everything you earn saves to your account automatically. Sign in with the same account on another device to carry it over.</p>
-      <div class="row"><button class="btn ghost" id="aSignOut" type="button">Sign out</button><button class="btn ghost" id="aPwOpen" type="button" hidden>Change password</button></div>
+      <div class="row"><button class="btn" id="aPwOpen" type="button" hidden>🔑 Change password</button><button class="btn ghost" id="aSignOut" type="button">Sign out</button></div>
       <form id="aPwForm" class="acct-form" hidden novalidate>
+        <p class="small" id="aPwHelp"></p>
         <input id="aPwOld" type="password" autocomplete="current-password" placeholder="Current password" aria-label="Current password">
         <input id="aPwNew" type="password" autocomplete="new-password" placeholder="New password (8+ characters)" aria-label="New password">
         <input id="aPwNew2" type="password" autocomplete="new-password" placeholder="New password again" aria-label="New password again">
         <div class="row"><button class="btn" id="aPwGo" type="submit">Save new password</button><button class="btn ghost" id="aPwCancel" type="button">Cancel</button></div>
+        <button class="linkbtn" id="aPwReset" type="button">Forgot your current password? Email me a link to make a new one</button>
       </form>
       <p class="small adelhint">Want to delete your account? It's at the bottom of Settings.</p>
     </div>
@@ -2839,6 +2862,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       </ul>
     </details>
     <p class="small" style="margin:10px 0 0"><a class="pplink" href="about.html" target="_blank" rel="noopener">About</a><span class="ppsep"> · </span><a class="pplink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
+    <div class="row" id="setPwRow" hidden><button class="btn ghost" id="setPw" type="button">🔑 Change password</button></div>
     <details class="adanger" id="setDel" hidden><summary>Delete account</summary>
       <p class="small">This permanently deletes your account, your cloud save, your leaderboard scores, your friend list and your player card. Your progress on this device is erased too. This can't be undone.</p>
       <form class="adelform" id="delForm" novalidate>
@@ -2853,7 +2877,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
 <section id="adminOv" class="overlay" hidden>
   <div class="panel adm">
     <div class="head"><button class="back" id="admBack" type="button">← Menu</button><span class="admbadge">Admin</span></div>
-    <div class="admtabs" id="admTabs" role="tablist"><button type="button" data-at="players">Players</button><button type="button" data-at="events">Events</button><button type="button" data-at="levels">Levels</button><button type="button" data-at="me">My account</button></div>
+    <div class="admtabs" id="admTabs" role="tablist"><button type="button" data-at="players">Players</button><button type="button" data-at="events">Events</button><button type="button" data-at="levels">Levels</button><button type="button" data-at="packs">Packs</button><button type="button" data-at="me">My account</button></div>
     <div class="admpane" id="admPlayers">
       <div class="admsearch"><input id="admFind" type="search" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Search a name or friend code"></div>
       <small class="admhint" id="admResHead">Top players</small>
@@ -2886,6 +2910,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <div class="row"><button class="btn" id="admEvGo" type="button">Start event</button><button class="btn ghost" id="admEvEnd" type="button">End event now</button></div>
     </div>
     <div class="admpane" id="admLevelsPane" hidden><div id="admLvList"></div></div>
+    <div class="admpane" id="admPacksPane" hidden><div id="admPkList"></div></div>
     <div class="admpane" id="admMe" hidden>
       <p class="small" id="admWho"></p>
       <div class="g2"><label>Rank<select id="admRank"></select></label><label>Add Notes<input id="admNotes" type="number" min="0" max="1000000" step="100" placeholder="e.g. 5000"></label></div>
@@ -8837,8 +8862,9 @@ function mergeSaves(loc,cl,additive){
   // what you have equipped: your most recent choice on any device (a device still on the default never wins over a real choice)
   { const pick=(k,def)=>{ const lt=loc[k+'T']||0, ct=cl[k+'T']||0; if(lt!==ct) return lt>ct?loc:cl; const ld=!loc[k]||loc[k]===def, cd=!cl[k]||cl[k]===def; if(ld!==cd) return ld?cl:loc; return newer; };
     const a=pick('skin','classic'), b=pick('land','ring'); out.skin=a.skin||'classic'; out.skinT=a.skinT||0; out.land=b.land||'ring'; out.landT=b.landT||0;
-    const c=pick('tiles','t_world'), d=pick('pack','s_none'); out.tiles=c.tiles||'t_world'; out.tilesT=c.tilesT||0; out.pack=d.pack||'s_none'; out.packT=d.packT||0; }
-  if(!TILES.some(t=>t.id===out.tiles)) out.tiles='t_world'; if(!PACKS.some(t=>t.id===out.pack)) out.pack='s_none';
+    const c=pick('tiles','t_world'), d=pick('pack','s_none'); out.tiles=c.tiles||'t_world'; out.tilesT=c.tilesT||0; out.pack=d.pack||'s_none'; out.packT=d.packT||0;
+    const e=pick('banner','b_plain'); out.banner=e.banner||'b_plain'; out.bannerT=e.bannerT||0; }   // your banner: the one you equipped last, on any device
+  if(!TILES.some(t=>t.id===out.tiles)) out.tiles='t_world'; { const bn=BANNERS.find(x=>x.id===out.banner); if(!bn||!(bn.price===0||out.owned.includes(bn.id)||(bn.req&&!bn.price))) out.banner='b_plain'; } if(!PACKS.some(t=>t.id===out.pack)) out.pack='s_none';
   const sk=SKINS.find(s=>s.id===out.skin), ld=LANDS.find(s=>s.id===out.land);
   if(!sk||(!out.owned.includes(sk.id)&&!sk.req&&sk.price>0)) out.skin='classic';
   if(!ld||(!out.owned.includes(ld.id)&&!ld.req&&ld.price>0)) out.land='ring';
@@ -9140,6 +9166,7 @@ function admSelfUI(){ $('admLevels').textContent=SAVE.devAll?'Lock levels again'
   const r=SAVE.rankSet&&typeof SAVE.rankSet.n==='number'?SAVE.rankSet.n:-1; $('admRank').value=String(r); }
 function admTabSet(t){ admTab=t; document.querySelectorAll('#admTabs button').forEach(b=>{ b.classList.toggle('on',b.dataset.at===t); b.setAttribute('aria-selected',b.dataset.at===t); });
   $('admLevelsPane').hidden=t!=='levels'; if(t==='levels') admLevelsUI();
+  $('admPacksPane').hidden=t!=='packs'; if(t==='packs') admPacksUI();
   $('admPlayers').hidden=t!=='players'; $('admEvents').hidden=t!=='events'; $('admMe').hidden=t!=='me'; admMsg('');
   if(t==='events') admLiveNow(); if(t==='me') admSelfUI(); if(t==='players'&&!ADM.target&&!$('admFind').value.trim()) admTop(); }
 function admOpen(){ if(!ADM.on||!ACCT.user){ toast('Sign in with your admin account first.'); return; }
@@ -9244,17 +9271,27 @@ function acctBlockedUI(){ const L=SAVE.blocked||[]; const box=$('aBlocked'); if(
 
 /* ---- changing your password (email accounts). Firebase stores the password itself, hashed on Google's servers;
    the game never keeps it. Your current password is checked first. ---- */
-function pwUI(){ const u=ACCT.user, can=!!u&&acctProv(u).includes('password'); $('aPwOpen').hidden=!can; if(!can) $('aPwForm').hidden=true; }
-$('aPwOpen').onclick=()=>{ $('aPwForm').hidden=false; $('aPwOpen').hidden=true; ['aPwOld','aPwNew','aPwNew2'].forEach(id=>$(id).value=''); $('aPwOld').focus(); };
+/* changing your password. An email account changes it (after typing the current one); a Google or Apple account can add one,
+   so it can also sign in with email. Forgot the current one? A reset link goes to the account's email. */
+const pwMode=u=>!u||!u.email?'':acctProv(u).includes('password')?'change':'add';
+function pwUI(){ const u=ACCT.user, m=pwMode(u); $('aPwOpen').hidden=!m||!$('aPwForm').hidden; $('aPwOpen').textContent=m==='add'?'🔑 Add a password':'🔑 Change password';
+  if(!m) $('aPwForm').hidden=true; const r=$('setPwRow'); if(r) r.hidden=!m; if($('setPw')) $('setPw').textContent=$('aPwOpen').textContent;
+  $('aPwOld').hidden=m!=='change'; $('aPwReset').hidden=m!=='change'; $('aPwGo').textContent=m==='add'?'Add this password':'Save new password';
+  $('aPwHelp').textContent=m==='add'?`You sign in with ${acctProv(u).includes('apple.com')?'Apple':'Google'}. Add a password to also sign in with ${u.email} and a password.`:'Type your current password, then your new one twice.'; }
+function pwOpen(){ $('aPwForm').hidden=false; $('aPwOpen').hidden=true; ['aPwOld','aPwNew','aPwNew2'].forEach(id=>$(id).value=''); pwUI(); $('aPwForm').scrollIntoView({block:'center'}); ($('aPwOld').hidden?$('aPwNew'):$('aPwOld')).focus(); }
+$('aPwOpen').onclick=pwOpen;
 $('aPwCancel').onclick=()=>{ $('aPwForm').hidden=true; pwUI(); };
+$('setPw').onclick=()=>{ showOv('acctOv'); acctUI(); setTimeout(pwOpen,50); };
+$('aPwReset').onclick=async()=>{ const u=ACCT.user, m=$('aMsg'); if(!u||!u.email) return; try{ await ACCT.auth.sendPasswordResetEmail(u.email); m.textContent=`We sent a link to ${u.email}. Open it to make a new password.`; m.classList.remove('err'); }catch(e){ m.textContent='Could not send the email. Try again in a minute.'; m.classList.add('err'); } };
 $('aPwForm').onsubmit=async e=>{ e.preventDefault(); const u=ACCT.user, m=$('aMsg'), o=$('aPwOld').value, n=$('aPwNew').value, n2=$('aPwNew2').value;
   const say=(t,bad)=>{ m.textContent=t; m.classList.toggle('err',!!bad); };
-  if(!u) return; if(!o) return say('Type your current password.',1); if(n.length<8) return say('Your new password needs at least 8 characters.',1);
-  if(n!==n2) return say('The two new passwords don\'t match.',1); if(n===o) return say('That\'s the same as your current password.',1);
+  const mode=pwMode(u); if(!u||!mode) return; if(mode==='change'&&!o) return say('Type your current password.',1); if(n.length<8) return say('Your new password needs at least 8 characters.',1);
+  if(n!==n2) return say('The two new passwords don\'t match.',1); if(mode==='change'&&n===o) return say('That\'s the same as your current password.',1);
   $('aPwGo').disabled=true; say('Saving…');
-  try{ await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,o)); await u.updatePassword(n);
-    $('aPwForm').hidden=true; pwUI(); say('Password changed. Use the new one next time you sign in.'); if(A.ctx) sGem(); }
-  catch(x){ const c=x&&x.code; say(c==='auth/wrong-password'||c==='auth/invalid-credential'||c==='auth/invalid-login-credentials'?'Your current password isn\'t right.':c==='auth/weak-password'?'Pick a stronger new password.':c==='auth/too-many-requests'?'Too many tries. Wait a few minutes and try again.':'Couldn\'t change the password ('+(c||'offline')+').',1); }
+  try{ if(mode==='add'){ await u.linkWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,n)); await u.reload(); ACCT.user=ACCT.auth.currentUser||u; }
+    else { await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,o)); await u.updatePassword(n); }
+    $('aPwForm').hidden=true; pwUI(); say(mode==='add'?`Password added. You can now also sign in with ${u.email} and this password.`:'Password changed. Use the new one next time you sign in.'); if(A.ctx) sGem(); }
+  catch(x){ const c=x&&x.code; say(c==='auth/wrong-password'||c==='auth/invalid-credential'||c==='auth/invalid-login-credentials'?'Your current password isn\'t right.':c==='auth/weak-password'?'Pick a stronger new password.':c==='auth/too-many-requests'?'Too many tries. Wait a few minutes and try again.':c==='auth/requires-recent-login'?'For your safety, sign out and sign in again, then try once more.':c==='auth/credential-already-in-use'||c==='auth/email-already-in-use'?'That email already has a password on another account.':'Couldn\'t change the password ('+(c||'offline')+').',1); }
   $('aPwGo').disabled=false; };
 /* ---- deleting your account (App Store guideline 5.1.1(v)): every record of you in the cloud, then the sign-in itself ---- */
 const acctProv=u=>((u&&u.providerData)||[]).map(p=>p.providerId);
@@ -9269,7 +9306,7 @@ async function acctReauth(u){
   const prov=apple?new firebase.auth.OAuthProvider('apple.com'):new firebase.auth.GoogleAuthProvider();
   return u.reauthenticateWithPopup(prov);
 }
-function delUI(){ const u=ACCT.user, box=$('setDel'); box.hidden=!u||!ACCT.db; if(!u) return;
+function delUI(){ const u=ACCT.user, box=$('setDel'); box.hidden=!u||!ACCT.db; try{ pwUI(); }catch(e){} if(!u) return;
   const pw=acctProv(u).includes('password'), apple=acctProv(u).includes('apple.com');
   $('delPass').hidden=!pw; $('delUser').value=u.email||''; $('delPass').value=''; $('aDelete').disabled=false;
   $('aDelete').textContent=pw?'Delete my account':`Confirm with ${apple?'Apple':'Google'} and delete`; $('delMsg').textContent=''; $('delMsg').classList.remove('err'); }
@@ -9856,6 +9893,23 @@ async function crSend(i){ const l=(SAVE.myLevels||[]).filter(l=>l&&l.code)[i]; i
   try{ await ACCT.db.collection('featReq').doc(ACCT.user.uid).set({by:ensureName(),n:String(l.n||'Untitled').slice(0,40),code:String(l.code),likes:n,key:k,t:Date.now()}); CR.req={key:k}; toast('🎨 Sent in! The Pulseform team will take a look.'); buildShop(); }
   catch(e){ toast(e&&e.code==='permission-denied'?'Sending levels in needs the latest Firestore rules.':'Could not send it. Check your connection.'); } }
 /* the admin side: approve or dismiss levels that were sent in */
+/* question packs from teachers: nothing reaches students until an admin approves it here */
+async function admPacksUI(){ const box=$('admPkList'); if(!box) return; box.innerHTML='<small class="admhint">Loading…</small>'; const db=ACCT.db;
+  try{ const [pq,hq]=await Promise.all([db.collection('packs').where('status','==','pending').limit(50).get(),db.collection('packs').where('hidden','==',true).limit(50).get()]);
+    const pend=pq.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.t||0)-(b.t||0)), rep=hq.docs.map(d=>({id:d.id,...d.data()}));
+    const qline=q=>{ q=qNorm(q); const right=q.k==='type'?q.ans.join(' / '):q.c.map(i=>q.a[i]).join(' / '), wrong=q.k==='type'||q.k==='tf'?'':q.a.filter((a,i)=>a&&!q.c.includes(i)).join(' · ');
+      return `<li><b>${escapeHTML(q.q)}</b><small>✓ ${escapeHTML(right)}${wrong?` &nbsp;✗ ${escapeHTML(wrong)}`:''}${q.e?` · ${escapeHTML(q.e)}`:''}</small></li>`; };
+    const card=(p,i,kind)=>`<div class="admpk"><div><b>${escapeHTML(p.title||'Untitled')}</b><small>by ${escapeHTML(String(p.oname||'?'))} · ${(p.qs||[]).length} questions · ${escapeHTML(p.subject||'')}${p.grade?' · grade '+escapeHTML(p.grade):''} · ${p.vis==='public'?'to share with every teacher':'for their own classes'}</small>
+      <details><summary>Read the questions</summary><ol class="admpkqs">${(p.qs||[]).map(qline).join('')}</ol></details></div>
+      <div class="admpkbtns">${kind==='p'?`<button type="button" class="btn" data-apk="${i}">✓ Approve</button><button type="button" class="btn ghost" data-apkn="${i}">✗ Send back</button>`:`<button type="button" class="btn" data-apku="${i}">Show it again</button><button type="button" class="btn ghost" data-apkd="${i}">Delete</button>`}</div></div>`;
+    box.innerHTML=`<small class="admhint">Waiting for review (${pend.length})</small>${pend.map((p,i)=>card(p,i,'p')).join('')||'<small class="admhint">Nothing to review. 🎉</small>'}
+      <small class="admhint">Hidden after a report (${rep.length})</small>${rep.map((p,i)=>card(p,i,'r')).join('')||'<small class="admhint">None.</small>'}`;
+    const set=async(p,data,msg)=>{ try{ await db.collection('packs').doc(p.id).update(data); admMsg(msg); admPacksUI(); }catch(e){ admMsg('Could not save that ('+(e&&e.code||'offline')+').'); } };
+    box.querySelectorAll('[data-apk]').forEach(b=>b.onclick=()=>{ const p=pend[+b.dataset.apk]; set(p,{status:'approved',note:''},`✓ "${p.title}" approved.`); });
+    box.querySelectorAll('[data-apkn]').forEach(b=>b.onclick=()=>{ const p=pend[+b.dataset.apkn], n=prompt('What should the teacher change? (they will see this)','')||''; if(n===null) return; set(p,{status:'rejected',note:String(n).slice(0,200)},`"${p.title}" sent back.`); });
+    box.querySelectorAll('[data-apku]').forEach(b=>b.onclick=()=>{ const p=rep[+b.dataset.apku]; set(p,{hidden:false},`"${p.title}" is visible again.`); });
+    box.querySelectorAll('[data-apkd]').forEach(b=>b.onclick=async()=>{ const p=rep[+b.dataset.apkd]; if(!confirm('Delete "'+p.title+'" for good?')) return; try{ await db.collection('packs').doc(p.id).delete(); admPacksUI(); }catch(e){ admMsg('Could not delete it.'); } }); }
+  catch(e){ box.innerHTML=`<small class="admhint">Could not load (${escapeHTML(e&&e.code||'offline')}). Publish the latest firestore.rules first.</small>`; } }
 async function admLevelsUI(){ const box=$('admLvList'); if(!box) return; box.innerHTML='<small class="admhint">Loading…</small>'; const db=ACCT.db;
   try{ const [rq,ft]=await Promise.all([db.collection('featReq').limit(60).get(),db.collection('featured').orderBy('t','desc').limit(60).get()]);
     const reqs=rq.docs.map(d=>({uid:d.id,...d.data()})).sort((a,b)=>(b.likes||0)-(a.likes||0)), feats=ft.docs.map(d=>({id:d.id,...d.data()}));
@@ -15055,11 +15109,20 @@ async function hwSave(key,patch){ try{ const c=CL.cls||{}, a=(HW.cur&&HW.cur.a)|
   }catch(e){ toast('Homework progress will save when you\'re back online.'); } }
 
 /* ---- teachers: classes ---- */
+/* where you are, as a trail of buttons: Teach › Music 4 › Homework results */
+function clCrumbs(...parts){ return `<nav class="clcrumbs" aria-label="Where you are">${parts.map((x,i)=>i<parts.length-1?`<button type="button" data-cl="${x[1]}">${escapeHTML(x[0])}</button><span aria-hidden="true">›</span>`:`<b>${escapeHTML(x[0])}</b>`).join('')}</nav>`; }
+const PK_ST={pending:['⏳','Waiting for review','pend'],approved:['✓','Approved','ok'],rejected:['✗','Needs changes','no']};
+const pkReady=p=>p.builtin||p.status==='approved';
+const usablePacks=()=>[...BUILTIN_PACKS,...(CL.packs||[]).filter(pkReady)];
 async function clTeachHTML(){ let L=[];
   try{ const s=await ACCT.db.collection('classes').where('teacher','==',ACCT.user.uid).limit(30).get(); L=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.t||0)-(a.t||0)); CL.teach=L; }catch(e){ CL.msg=clErr(e); }
-  return `<div class="clgrid2"><div class="clbox cb-join"><span class="cbic">🏫</span><div class="lbl">New class</div><div class="clrow"><input id="clNewName" class="clin" maxlength="40" placeholder="Class name, e.g. 4th grade music"><input id="clNewGrade" class="clin sm" maxlength="12" placeholder="Grade"></div><button class="btn" data-cl="newcls" type="button">Make class</button></div>
-    <div class="clbox cb-play"><span class="cbic">🎮</span><div class="lbl">Live game</div><p class="small">Put a game on the board. Students join with a PIN.</p><button class="btn" data-cl="host" type="button">🎮 Host a live game</button></div></div>
-    <div class="lbl">Your classes</div>${L.length?`<div class="cllist">${L.map((c,i)=>`<button type="button" class="clitem" style="--cc:${(hashStr(c.id||c.name)%360)}" data-tcls="${i}"><b>${escapeHTML(c.name)}</b><small>Code <code>${escapeHTML(c.code)}</code>${c.locked?' · locked':''}</small><span>›</span></button>`).join('')}</div>`:'<p class="small">No classes yet. Make one above.</p>'}`; }
+  return `<div class="tchtiles">
+      <button type="button" class="tchtile t1" data-cl="newclsopen"><span>🏫</span><b>New class</b><small>Get a join code for students</small></button>
+      <button type="button" class="tchtile t2" data-cl="hwpick"><span>📚</span><b>Give homework</b><small>Levels with 2 questions each</small></button>
+      <button type="button" class="tchtile t3" data-cl="host"><span>🎮</span><b>Host a live game</b><small>Put a PIN on the board</small></button>
+      <button type="button" class="tchtile t4" data-cl="packs"><span>📝</span><b>Question packs</b><small>Make your own questions</small></button></div>
+    <div class="clbox cb-join" id="clNewBox" hidden><span class="cbic">🏫</span><div class="lbl">New class</div><div class="clrow"><input id="clNewName" class="clin" maxlength="40" placeholder="Class name, e.g. 4th grade music"><input id="clNewGrade" class="clin sm" maxlength="12" placeholder="Grade"></div><button class="btn" data-cl="newcls" type="button">Make class</button></div>
+    <div class="lbl" id="clYour">Your classes</div>${L.length?`<div class="cllist">${L.map((c,i)=>`<button type="button" class="clitem" style="--cc:${(hashStr(c.id||c.name)%360)}" data-tcls="${i}"><b>${escapeHTML(c.name)}</b><small>Code <code>${escapeHTML(c.code)}</code>${c.locked?' · locked':''}</small><span>›</span></button>`).join('')}</div>`:'<p class="small">No classes yet. Tap <b>New class</b> to make one.</p>'}`; }
 async function clNewClass(){ const nm=$('clNewName').value.trim().slice(0,40); if(!nm) return clMsg('Give the class a name.',true); clMsg('Making your class…');
   try{ const db=ACCT.db, ref=db.collection('classes').doc(), exp=Date.now()+300*864e5; let code='';
     await ref.set({teacher:ACCT.user.uid,tname:ensureName().slice(0,40),name:nm,grade:$('clNewGrade').value.trim().slice(0,12),code:'',locked:false,kicked:[],exp,t:Date.now()});
@@ -15070,16 +15133,17 @@ async function clClassHTML(){ const c=CL.cls; let st=[], as=[];
   try{ const r=ACCT.db.collection('classes').doc(c.id); const [k,s,a]=await Promise.all([r.get(),r.collection('students').limit(200).get(),r.collection('assign').orderBy('t','desc').limit(30).get()]);
     Object.assign(c,k.data()); st=s.docs.map(d=>({uid:d.id,...d.data()})).sort((x,y)=>String(x.name).localeCompare(y.name)); as=a.docs.map(d=>({id:d.id,cid:c.id,...d.data()})); CL.roster=st; CL.tAssign=as; }catch(e){ CL.msg=clErr(e); }
   const url=location.origin+location.pathname+'?class='+c.code;
-  return `<div class="row"><button class="btn ghost" data-cl="teach" type="button">← Classes</button></div><h3>${escapeHTML(c.name)}</h3>
-    <div class="clcode"><div><small>Class code</small><b>${escapeHTML(c.code)}</b><small class="cllink">${escapeHTML(url)}</small></div><div class="clcodebtns"><button class="btn ghost" data-cl="copy" type="button">Copy link</button><button class="btn ghost" data-cl="lock" type="button">${c.locked?'🔓 Let students join':'🔒 No new students'}</button><button class="btn ghost" data-cl="recode" type="button">New code</button></div></div>
-    <div class="clgrid2"><div class="clbox"><div class="lbl">Homework</div><button class="btn" data-cl="newhw" type="button">＋ New homework</button>
+  return `${clCrumbs(['Teach','teach'],[c.name])}<h3 class="clh">${escapeHTML(c.name)}</h3>
+    <div class="clactions"><button class="btn" data-cl="newhw" type="button">📚 Give homework</button><button class="btn ghost" data-cl="hostcls" type="button">🎮 Host a live game</button><button class="btn ghost" data-cl="copy" type="button">🔗 Copy join link</button></div>
+    <div class="clcode"><div><small>Class code</small><b>${escapeHTML(c.code)}</b><small class="cllink">${escapeHTML(url)}</small></div><div class="clcodebtns"><button class="btn ghost" data-cl="lock" type="button">${c.locked?'🔓 Let students join':'🔒 No new students'}</button><button class="btn ghost" data-cl="recode" type="button">New code</button></div></div>
+    <div class="clgrid2"><div class="clbox"><div class="lbl">Homework</div>
       ${as.length?`<div class="cllist">${as.map((a,i)=>`<button type="button" class="clitem" style="--cc:${(hashStr(a.id)%360)}" data-tas="${i}"><b>${escapeHTML(a.title||'Homework')}</b><small>${(a.levels||[]).length} levels · ${a.diff==='easy'?'Easy':'Normal'}${a.due?' · due '+new Date(a.due).toLocaleDateString():''}</small><span>Results ›</span></button>`).join('')}</div>`:'<p class="small">No homework yet.</p>'}</div>
     <div class="clbox"><div class="lbl">Students (${st.length})</div>${st.length?`<ul class="roster">${st.map((s,i)=>`<li><span>${escapeHTML(clName(s.name))}</span><button type="button" class="btn ghost sm" data-ren="${i}">Rename</button><button type="button" class="btn ghost sm" data-kick="${i}">Remove</button></li>`).join('')}</ul>`:`<p class="small">Nobody has joined yet. Share the code <b>${escapeHTML(c.code)}</b>.</p>`}</div></div>
     <details class="clleave"><summary>Delete this class</summary><p class="small">This removes the class, its homework and everyone's results for good.</p><button class="btn ghost" data-cl="delcls" type="button">Delete ${escapeHTML(c.name)}</button></details>`; }
 /* ---- teachers: a new homework assignment ---- */
-function clAssignHTML(){ const packs=[...BUILTIN_PACKS,...(CL.packs||[])], unl=Math.max(1,SAVE.world||1);
+function clAssignHTML(){ const packs=usablePacks(), wait=(CL.packs||[]).filter(p=>!pkReady(p)).length;
   const worlds=Array.from({length:WORLDS},(_,i)=>i+1).map(w=>`<div class="hwpick"><b>${escapeHTML(THEMES[w-1].name)}</b><div>${[...Array.from({length:LEVELS_PER_WORLD},(_,j)=>String(j+1)),'B'].map(l=>`<label><input type="checkbox" data-lv="${w}-${l}">${l==='B'?'Boss':l}</label>`).join('')}</div></div>`).join('');
-  return `<div class="row"><button class="btn ghost" data-cl="class" type="button">← ${escapeHTML(CL.cls.name)}</button></div><h3>New homework</h3>
+  return `${clCrumbs(['Teach','teach'],[CL.cls.name,'class'],['New homework'])}<h3 class="clh">📚 New homework</h3>${wait?`<p class="small">${wait} of your packs ${wait===1?'is':'are'} still waiting for review and can't be used yet.</p>`:''}
     <label class="cllab">Title<input id="hwTitle" class="clin" maxlength="40" placeholder="e.g. Rhythm week 1"></label>
     <label class="cllab">Question pack<select id="hwPack" class="clin">${packs.map(p=>`<option value="${p.id}">${escapeHTML(p.title)}${p.builtin?' (ready-made)':''} · ${p.qs.length} questions</option>`).join('')}</select></label>
     <div class="clrow"><label class="cllab">Due date<input id="hwDue" class="clin" type="date"></label><label class="cllab">Difficulty<select id="hwDiff" class="clin"><option value="easy">Easy: relaxed timing, no Harmony loss, a second try</option><option value="normal">Normal: the usual rules, one try</option></select></label></div>
@@ -15099,7 +15163,7 @@ async function clResultsHTML(){ const a=CL.assign; let rows=[];
   const all=(CL.roster||[]).map(s=>({name:clName(s.name),...(byU[s.uid]||{}),uid:s.uid})); rows.forEach(r=>{ if(!all.some(x=>x.uid===r.uid)) all.push({...r,name:clName(r.name)}); });
   const pct=r=>r.asked?Math.round(100*r.right/r.asked):null, help=all.filter(r=>r.asked>=2&&pct(r)<60);
   CL.csv=[['Student','Levels done','Of','Questions right','Questions asked','Percent','Stars','Minutes','Late'],...all.map(r=>[r.name,r.done||0,n,r.right||0,r.asked||0,pct(r)==null?'':pct(r),Object.values(r.lv||{}).reduce((x,L)=>x+(L.s||0),0),Math.round((r.time||0)/60),r.late?'yes':''])];
-  return `<div class="row"><button class="btn ghost" data-cl="class" type="button">← ${escapeHTML(CL.cls.name)}</button><button class="btn ghost" data-cl="csv" type="button">⬇ Download CSV</button><button class="btn ghost" data-cl="delhw" type="button">Delete homework</button></div>
+  return `${clCrumbs(['Teach','teach'],[CL.cls.name,'class'],['Homework results'])}<div class="clactions"><button class="btn ghost" data-cl="csv" type="button">⬇ Download CSV</button><button class="btn ghost" data-cl="delhw" type="button">Delete homework</button></div>
     <h3>${escapeHTML(a.title||'Homework')}</h3><p class="small">${n} levels · ${escapeHTML(a.packName||'')} · ${a.diff==='easy'?'Easy':'Normal'}${a.due?' · due '+new Date(a.due).toLocaleDateString():''}</p>
     ${help.length?`<div class="clhelp"><b>Might need help</b> (under 60% of questions right): ${help.map(r=>escapeHTML(r.name)).join(', ')}</div>`:''}
     <div class="cltable"><table><thead><tr><th>Student</th><th>Levels</th><th>Questions</th><th>Stars</th><th>Time</th></tr></thead><tbody>${all.map(r=>{ const p=pct(r);
@@ -15109,29 +15173,34 @@ function clCsv(rows,name){ const esc=v=>{ v=String(v==null?'':v); return /[",\n]
 
 /* ---- teachers: question packs ---- */
 async function clLoadPacks(){ try{ const s=await ACCT.db.collection('packs').where('owner','==',ACCT.user.uid).limit(60).get(); CL.packs=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.t||0)-(a.t||0)); }catch(e){ CL.packs=CL.packs||[]; CL.msg=clErr(e); } }
-async function clPacksHTML(){ await clLoadPacks(); let ver=false; try{ ver=(await ACCT.db.collection('teachers').doc(ACCT.user.uid).get()).exists; }catch(e){} CL.verified=ver;
-  const card=(p,own)=>`<div class="pkcard"><b>${escapeHTML(p.title)}</b><small>${escapeHTML(p.subject||'')}${p.grade?' · grade '+escapeHTML(p.grade):''} · ${(p.qs||[]).length} questions${own?(p.vis==='public'?(p.hidden?' · hidden after a report':' · public'):' · private'):p.builtin?' · ready-made':' · by '+escapeHTML(clName(p.oname))}</small>
+async function clPacksHTML(){ await clLoadPacks();
+  const st=p=>{ const x=PK_ST[p.status||'pending']; return `<span class="pkst ${x[2]}">${x[0]} ${x[1]}</span>`; };
+  const card=(p,own)=>`<div class="pkcard${own?' own':''}">${own?st(p):''}<b>${escapeHTML(p.title)}</b><small>${escapeHTML(p.subject||'')}${p.grade?' · grade '+escapeHTML(p.grade):''} · ${(p.qs||[]).length} questions${own?(p.vis==='public'?(p.hidden?' · hidden after a report':' · shared with every teacher'):' · just for you'):p.builtin?' · ready-made':' · by '+escapeHTML(clName(p.oname))}</small>${own&&p.status==='rejected'&&p.note?`<small class="pknote">Reviewer: ${escapeHTML(p.note)}</small>`:''}
     <div class="row">${own?`<button class="btn ghost sm" data-pke="${p.id}" type="button">Edit</button>`:`<button class="btn ghost sm" data-pkc="${p.id}" type="button">Copy to my packs</button>`}<button class="btn ghost sm" data-pkp="${p.id}" type="button">▶ Try it</button>${!own&&!p.builtin?`<button class="btn ghost sm" data-pkr="${p.id}" type="button">Report</button>`:''}</div></div>`;
-  return `<div class="row"><button class="btn" data-cl="newpack" type="button">＋ New question pack</button><button class="btn ghost" data-cl="browse" type="button">🔎 Browse shared packs</button></div>
-    ${ver?'':'<p class="small">Your packs are private. To share packs with every teacher, ask the Pulseform team to verify your teacher account.</p>'}
-    <div class="lbl">My packs</div><div class="pkgrid">${(CL.packs||[]).map(p=>card(p,true)).join('')||'<p class="small">None yet.</p>'}</div>
+  return `${clCrumbs(['Teach','teach'],['Question packs'])}<h3 class="clh">📝 Question packs</h3>
+    <p class="small">New packs, and changes to a pack, are checked by the Pulseform team before students see them. Ready-made packs can be used straight away.</p>
+    <div class="lbl">My packs</div><div class="pkgrid"><button type="button" class="pkcard pknew" data-cl="newpack"><span>＋</span><b>Make a new pack</b><small>Type questions or paste from a spreadsheet</small></button>${(CL.packs||[]).map(p=>card(p,true)).join('')}</div>
+    <div class="row"><button class="btn ghost" data-cl="browse" type="button">🔎 Browse packs shared by teachers</button></div>
     ${CL.pub?`<div class="lbl">Shared by teachers</div><div class="pkgrid">${CL.pub.map(p=>card(p,false)).join('')||'<p class="small">No shared packs yet.</p>'}</div>`:''}
     <div class="lbl">Ready-made</div><div class="pkgrid">${BUILTIN_PACKS.map(p=>card(p,false)).join('')}</div>`; }
-async function clBrowse(){ try{ const s=await ACCT.db.collection('packs').where('vis','==','public').where('hidden','==',false).limit(60).get(); CL.pub=s.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.owner!==ACCT.user.uid).sort((a,b)=>(b.t||0)-(a.t||0)); }catch(e){ CL.pub=[]; CL.msg=clErr(e); } buildClass(); }
+async function clBrowse(){ try{ const s=await ACCT.db.collection('packs').where('vis','==','public').where('status','==','approved').where('hidden','==',false).limit(60).get(); CL.pub=s.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.owner!==ACCT.user.uid).sort((a,b)=>(b.t||0)-(a.t||0)); }catch(e){ CL.pub=[]; CL.msg=clErr(e); } buildClass(); }
 function clPackHTML(){ const p=CL.pack;
   const qrow=(q,i)=>{ q=qNorm(q); const ans=q.k==='type'?`<label class="cllab">Accepted answers (comma between)<input class="clin" data-qf="ans" value="${escapeHTML(q.ans.join(', '))}"></label>`:q.k==='tf'?`<label class="cllab">Answer<select class="clin" data-qf="tf"><option value="0"${q.c[0]===0?' selected':''}>True</option><option value="1"${q.c[0]===1?' selected':''}>False</option></select></label>`
       :`<div class="qanswers">${[0,1,2,3].map(j=>`<label class="qa"><input type="checkbox" data-qc="${j}"${q.c.includes(j)?' checked':''} aria-label="Correct answer ${j+1}"><input class="clin" data-qa="${j}" maxlength="80" placeholder="Answer ${j+1}${j>1?' (optional)':''}" value="${escapeHTML(q.a[j]||'')}"></label>`).join('')}<small>Tick the correct answer${q.k==='mc'?'(s)':''}.</small></div>`;
     const lis=q.k==='listen'?`<div class="clrow"><label class="cllab">Rhythm to play (x = clap, . = rest, eighth notes)<input class="clin" data-qf="r" maxlength="16" value="${escapeHTML((q.play&&q.play.r)||'')}" placeholder="x.x.xx.."></label><label class="cllab">…or two notes (MIDI numbers, 60 = middle C)<input class="clin" data-qf="iv" maxlength="9" value="${q.play&&q.play.iv?q.play.iv.join(','):''}" placeholder="60,67"></label><button class="btn ghost sm" data-qplay="${i}" type="button">▶</button></div>`:'';
     return `<div class="qed" data-qi="${i}"><div class="qedh"><b>${i+1}</b><select class="clin sm" data-qf="k">${Object.entries(QK).map(([k,n])=>`<option value="${k}"${q.k===k?' selected':''}>${n}</option>`).join('')}</select><button class="btn ghost sm" data-qup="${i}" type="button" aria-label="Move up">↑</button><button class="btn ghost sm" data-qdel="${i}" type="button" aria-label="Delete question">✕</button></div>
       <input class="clin" data-qf="q" maxlength="200" placeholder="Question" value="${escapeHTML(q.q)}">${lis}${ans}<input class="clin" data-qf="e" maxlength="200" placeholder="Explanation shown after answering (optional)" value="${escapeHTML(q.e||'')}"></div>`; };
-  return `<div class="row"><button class="btn ghost" data-cl="packs" type="button">← Packs</button></div><h3>${p.id?'Edit pack':'New pack'}</h3>
+  return `${clCrumbs(['Teach','teach'],['Question packs','packs'],[p.id?'Edit pack':'New pack'])}<h3 class="clh">${p.id?'✏️ Edit pack':'📝 New pack'}</h3>${p.status==='rejected'&&p.note?`<div class="clhelp"><b>The reviewer asked for changes:</b> ${escapeHTML(p.note)}</div>`:''}
+    <div class="pkstep"><span>1</span><b>Name your pack</b></div>
     <div class="clrow"><label class="cllab">Title<input id="pkTitle" class="clin" maxlength="60" value="${escapeHTML(p.title||'')}"></label><label class="cllab">Subject<input id="pkSubj" class="clin sm" maxlength="24" value="${escapeHTML(p.subject||'Music')}"></label><label class="cllab">Grade<input id="pkGrade" class="clin sm" maxlength="12" value="${escapeHTML(p.grade||'')}"></label></div>
     <label class="cllab">Description<input id="pkDesc" class="clin" maxlength="160" value="${escapeHTML(p.desc||'')}"></label>
-    <label class="cllab">Who can see it<select id="pkVis" class="clin"><option value="private">Only me</option><option value="public"${p.vis==='public'?' selected':''}${CL.verified?'':' disabled'}>Every teacher (verified teachers only)</option></select></label>
-    <div class="lbl">Questions (${p.qs.length}/100)</div><div id="pkQs">${p.qs.map(qrow).join('')}</div>
-    <div class="row"><button class="btn ghost" data-qadd="mc" type="button">＋ Multiple choice</button><button class="btn ghost" data-qadd="tf" type="button">＋ True/false</button><button class="btn ghost" data-qadd="type" type="button">＋ Type the answer</button><button class="btn ghost" data-qadd="listen" type="button">＋ Listen</button></div>
+    <label class="cllab">Who can use it<select id="pkVis" class="clin"><option value="private">Just me</option><option value="public"${p.vis==='public'?' selected':''}>Every teacher (they can find and copy it)</option></select></label>
+    <div class="pkstep"><span>2</span><b>Add questions</b><small>${p.qs.length}/100</small></div><div id="pkQs">${p.qs.map(qrow).join('')}</div>
+    <div class="qaddtiles"><button type="button" data-qadd="mc"><span>🔠</span>Multiple choice</button><button type="button" data-qadd="tf"><span>✔✖</span>True / false</button><button type="button" data-qadd="type"><span>⌨</span>Type the answer</button><button type="button" data-qadd="listen"><span>🎧</span>Listen</button></div>
     <details class="clcsv"><summary>Import from a spreadsheet (CSV)</summary><p class="small">One question per line: <code>question, correct answer, wrong 1, wrong 2, wrong 3, explanation</code>. Leave the wrong answers empty for a type-the-answer question.</p><textarea id="pkCsv" class="clin" rows="5" placeholder="What does forte mean?, Loud, Soft, Fast, Slow"></textarea><button class="btn ghost" data-cl="csvin" type="button">Add these questions</button></details>
-    <div class="row"><button class="btn" data-cl="savepack" type="button">Save pack</button><button class="btn ghost" data-cl="trypack" type="button">▶ Try it as a student</button><button class="btn ghost" data-cl="csvout" type="button">⬇ Export CSV</button>${p.id?'<button class="btn ghost" data-cl="delpack" type="button">Delete</button>':''}</div>`; }
+    <div class="pkstep"><span>3</span><b>Save and send for review</b></div><p class="small">The Pulseform team checks every pack before students see it${p.status==='approved'?'. Saving changes sends it for review again':''}. You can keep editing and trying it while you wait.</p>
+    <div class="row"><button class="btn ghost" data-cl="csvout" type="button">⬇ Export CSV</button>${p.id?'<button class="btn ghost" data-cl="delpack" type="button">🗑 Delete pack</button>':''}</div>
+    <div class="pkbar"><button class="btn ghost" data-cl="packs" type="button">Cancel</button><button class="btn ghost" data-cl="trypack" type="button">▶ Try it</button><button class="btn" data-cl="savepack" type="button">Save and send for review</button></div>`; }
 /* read the editor back into CL.pack */
 function clPackRead(){ const p=CL.pack; p.title=$('pkTitle').value.trim().slice(0,60); p.subject=$('pkSubj').value.trim().slice(0,24); p.grade=$('pkGrade').value.trim().slice(0,12); p.desc=$('pkDesc').value.trim().slice(0,160); p.vis=$('pkVis').value==='public'?'public':'private';
   p.qs=[...document.querySelectorAll('#pkQs .qed')].map(el=>{ const f=n=>{ const x=el.querySelector(`[data-qf="${n}"]`); return x?x.value:''; }, k=f('k'), q={k,q:f('q'),e:f('e')};
@@ -15147,11 +15216,11 @@ function clCsvParse(txt){ const out=[]; txt.split(/\r?\n/).forEach(line=>{ if(!l
     else { const a=[ok,...wrong].slice(0,4), ord=a.map((_,j)=>j).sort(()=>Math.random()-.5); out.push(qNorm({k:'mc',q,a:ord.map(j=>a[j]),c:[ord.indexOf(0)],e})); } }); return out; }
 async function clSavePack(){ clPackRead(); const p=CL.pack, qs=p.qs.filter(qOk);
   if(!p.title) return clMsg('Give the pack a title.',true); if(!qs.length) return clMsg('Add at least one finished question.',true);
-  const data={owner:ACCT.user.uid,oname:ensureName().slice(0,24),title:showName(p.title)||p.title,subject:p.subject,grade:p.grade,desc:p.desc,vis:p.vis,hidden:p.hidden===true,qs:qs.slice(0,100),n:qs.length,t:Date.now()};
+  const data={owner:ACCT.user.uid,oname:ensureName().slice(0,24),title:showName(p.title)||p.title,subject:p.subject,grade:p.grade,desc:p.desc,vis:p.vis,hidden:p.hidden===true,qs:qs.slice(0,100),n:qs.length,status:'pending',note:'',t:Date.now()};
   clMsg('Saving…');
   try{ const col=ACCT.db.collection('packs'); if(p.id) await col.doc(p.id).set(data); else { const r=await col.add(data); p.id=r.id; }
-    toast('Pack saved: '+qs.length+' questions'); CL.packs=null; clSet('packs'); }
-  catch(e){ clMsg(e&&e.code==='permission-denied'&&p.vis==='public'?'Sharing with every teacher needs a verified teacher account. Save it as "Only me" for now.':clErr(e),true); } }
+    toast('⏳ Saved and sent for review. You can use it once it\'s approved.'); CL.packs=null; clSet('packs'); }
+  catch(e){ clMsg(clErr(e),true); } }
 /* try a pack: its questions one after another, as a student would see them */
 async function clTry(p){ const qs=(p.qs||[]).slice(0,10); let right=0; for(let i=0;i<qs.length;i++){ const r=await qModal(qs[i],{easy:true,head:`<div class="qhead">${escapeHTML(p.title)} · ${i+1} of ${qs.length} <button type="button" class="qstop">Stop</button></div>`}); right+=r.sc; if(CL.stopTry){ CL.stopTry=false; break; } }
   toast(`Practice done: ${right} right`); }
@@ -15169,6 +15238,9 @@ function clWire(box){
     if(a==='sback') return clSet('sclass');
     if(a==='newcls'){ CL.busy=true; await clNewClass(); CL.busy=false; return; }
     if(a==='host') return clSet('host');
+    if(a==='hostcls'){ CL.hostCls=CL.cls.id; return clSet('host'); }
+    if(a==='newclsopen'){ const b=$('clNewBox'); b.hidden=false; b.scrollIntoView({block:'center'}); $('clNewName').focus(); return; }
+    if(a==='hwpick'){ const L=CL.teach||[]; if(L.length===1){ CL.cls=L[0]; if(!CL.packs) await clLoadPacks(); return clSet('assign'); } if(!L.length){ clMsg('Make a class first, then give it homework.'); const b=$('clNewBox'); b.hidden=false; $('clNewName').focus(); return; } clMsg('Pick the class to give homework to:'); $('clYour').scrollIntoView({block:'start'}); return; }
     if(a==='class') return clSet('class');
     if(a==='copy'){ try{ await navigator.clipboard.writeText(location.origin+location.pathname+'?class='+CL.cls.code); toast('Link copied'); }catch(e){ toast(CL.cls.code); } return; }
     if(a==='lock'){ try{ await ACCT.db.collection('classes').doc(CL.cls.id).update({locked:!CL.cls.locked}); }catch(e){ return clMsg(clErr(e),true); } return clSet('class'); }
@@ -15221,15 +15293,15 @@ const LIVE_MODES={
   jam:{n:'Team Jam',ic:'🎸',d:'Teams fill their song with instruments. The fullest song wins.'},
   last:{n:'Last Note Standing',ic:'❤',d:'Three hearts each. Players who are out keep answering to send hearts to the others. Normal only.'}};
 const LV={pin:null,doc:null,players:{},unsubs:[],host:false,me:null,au:null,qi:0,order:[],phase:'',burst:null,stemT:0,ended:false};
-async function clHostHTML(){ if(!CL.packs) await clLoadPacks(); const packs=[...BUILTIN_PACKS,...(CL.packs||[])];
-  return `<div class="row"><button class="btn ghost" data-cl="teach" type="button">← Teach</button></div><h3>Host a live game</h3>
+async function clHostHTML(){ if(!CL.packs) await clLoadPacks(); const packs=usablePacks();
+  return `${clCrumbs(['Teach','teach'],['Host a live game'])}<h3 class="clh">🎮 Host a live game</h3>
     <label class="cllab">Question pack<select id="lvPack" class="clin">${packs.map(p=>`<option value="${p.id}">${escapeHTML(p.title)} · ${p.qs.length} questions</option>`).join('')}</select></label>
     <div class="lbl">Game mode</div><div class="lvmodes">${Object.entries(LIVE_MODES).map(([k,m],i)=>`<label class="lvmode"><input type="radio" name="lvMode" value="${k}"${i===0?' checked':''}><b>${m.ic} ${m.n}</b><small>${m.d}</small></label>`).join('')}</div>
     <div class="clrow"><label class="cllab">Difficulty<select id="lvDiff" class="clin"><option value="easy">Easy: no timer, relaxed timing, nobody loses points</option><option value="normal">Normal: a timer, speed bonus and streaks</option></select></label>
       <label class="cllab">Length<select id="lvLen" class="clin"><option value="180">3 minutes</option><option value="300" selected>5 minutes</option><option value="480">8 minutes</option></select></label></div>
     <div class="clrow"><label class="cllab">Names<select id="lvNames" class="clin"><option value="normal">Students type a name</option><option value="first">First names only</option><option value="fun">Random fun names</option></select></label>
       <label class="cllab">Teams (Team Jam)<select id="lvTeams" class="clin"><option value="2">2 teams</option><option value="3">3 teams</option><option value="4">4 teams</option></select></label>
-      ${(CL.teach||[]).length?`<label class="cllab">Save results to a class<select id="lvCls" class="clin"><option value="">Don't save</option>${CL.teach.map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('')}</select></label>`:''}</div>
+      ${(CL.teach||[]).length?`<label class="cllab">Save results to a class<select id="lvCls" class="clin"><option value="">Don't save</option>${CL.teach.map(c=>`<option value="${c.id}"${CL.hostCls===c.id?' selected':''}>${escapeHTML(c.name)}</option>`).join('')}</select></label>`:''}</div>
     <button class="btn" data-cl="hoststart" type="button">Open the game</button>`; }
 async function liveCreate(){ const p=qpById($('lvPack').value); if(!p||!p.qs.length) return clMsg('Pick a pack with questions in it.',true);
   let mode=(document.querySelector('[name="lvMode"]:checked')||{}).value||'race'; const diff=$('lvDiff').value==='normal'?'normal':'easy';
