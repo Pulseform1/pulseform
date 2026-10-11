@@ -1109,7 +1109,7 @@ body.cg a.pplink,body.cg .ppsep,body.cg #setDel,body.cg .mspecial.passplus,body.
 .lb .lbopen .lbname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:underline dotted rgba(255,255,255,.35);text-underline-offset:3px}
 .lb .lbopen:hover .lbname{text-decoration-color:currentColor}
 .fxsec{grid-column:1/-1}.fxsec h3{margin:10px 0 0;font:700 17px var(--display)}.fxsec>p{margin:2px 0 8px}
-.tabs.dentabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:10px 0 12px;overflow:visible}.tabs.dentabs button{min-width:0;padding-inline:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs.dentabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin:10px 0 12px;overflow:visible}.tabs.dentabs button{min-width:0;padding-inline:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:520px){.tabs.dentabs button{font-size:11.5px;display:flex;flex-direction:column;align-items:center;gap:1px;padding-block:6px;line-height:1.15}}
 .denpanel .lbl{margin-top:14px}
 .dcard .banprev{max-width:340px;margin:6px 0 10px}
@@ -2356,7 +2356,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <button class="chip c-coll" id="mShop" type="button">Collection<em class="chipdot" id="mShopNew" hidden></em></button>
       <button class="chip ppchip" id="mPass" type="button"><span id="mPassTxt">♛ Pulse Pass</span><em class="qdot" id="mPassDot" hidden></em></button>
       <button class="chip twchip" id="mTwin" type="button" hidden>⚔ Twin Pulse</button>
-      <button class="chip c-cls" id="mClass" type="button">Classroom</button>
+      <button class="chip c-cls" id="mClass" type="button" hidden>Classroom</button>
       <button class="chip c-den" id="mDen" type="button">Locker</button>
       <button class="chip c-fr" id="mFriends" type="button">Friends<em class="qdot" id="mFDot" hidden></em></button>
       <button class="chip c-lb" id="mLB" type="button">Leaderboard</button>
@@ -2624,7 +2624,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   <div class="panel wide denpanel">
     <div class="head"><button class="back" id="denBack" type="button">← Menu</button><div class="wallet" id="walletD"></div></div>
     <div><div class="eyebrow">Your stuff</div><h2>Locker</h2></div>
-    <div class="tabs dentabs" id="denTabs"><button type="button" data-d="card"><span aria-hidden="true">🪪</span> Card</button><button type="button" data-d="mast"><span aria-hidden="true">🏅</span> Mastery</button><button type="button" data-d="garden"><span aria-hidden="true">🌱</span> Garden</button><button type="button" data-d="album"><span aria-hidden="true">📖</span> Album</button></div>
+    <div class="tabs dentabs" id="denTabs"><button type="button" data-d="card"><span aria-hidden="true">🪪</span> Card</button><button type="button" data-d="mast"><span aria-hidden="true">🏅</span> Mastery</button></div>
     <div id="denBody"></div>
   </div>
 </section>
@@ -2907,7 +2907,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
 <section id="adminOv" class="overlay" hidden>
   <div class="panel adm">
     <div class="head"><button class="back" id="admBack" type="button">← Menu</button><span class="admbadge">Admin</span></div>
-    <div class="admtabs" id="admTabs" role="tablist"><button type="button" data-at="players">Players</button><button type="button" data-at="events">Events</button><button type="button" data-at="levels">Levels</button><button type="button" data-at="packs">Packs</button><button type="button" data-at="me">My account</button></div>
+    <div class="admtabs" id="admTabs" role="tablist"><button type="button" data-at="players">Players</button><button type="button" data-at="events">Events</button><button type="button" data-at="levels">Levels</button><button type="button" data-at="me">My account</button></div>
     <div class="admpane" id="admPlayers">
       <div class="admsearch"><input id="admFind" type="search" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Search a name or friend code"></div>
       <small class="admhint" id="admResHead">Top players</small>
@@ -2917,7 +2917,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
         <small class="admhint">One tap sends it</small>
         <div class="admquick">
           <button type="button" data-q="notes:1000">+♪1,000</button><button type="button" data-q="notes:5000">+♪5,000</button><button type="button" data-q="notes:25000">+♪25,000</button>
-          <button type="button" class="pp" data-q="passp">♛ Pulse Pass+</button><button type="button" id="admTeach">🏫 Verify teacher</button></div>
+          <button type="button" class="pp" data-q="passp">♛ Pulse Pass+</button></div>
         <small class="admhint">Or pick something</small>
         <div class="g2"><label>Gift<select id="admKind"><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option><option value="notes">Notes (any amount)</option><option value="rank">Set rank</option><option value="msg">Message only</option></select></label>
           <label id="admItemL">Item<select id="admItem"></select></label><label id="admAmtL" hidden>Amount<input id="admAmt" type="number" min="1" max="1000000" step="100" value="1000"></label></div>
@@ -9399,7 +9399,7 @@ function frCard(){
   const worlds=[]; for(let w=1;w<=WORLDS;w++) worlds.push(worldStars(w));
   const nm=ensureName(); return {v:1,name:nm,nameKey:String(nm).toLowerCase(),code:FR.code,rank:myRank(),xp:SAVE.xp||0,skin:SAVE.skin,land:SAVE.land,world:SAVE.world||1,levelStars:levelStars(),worlds,
     bosses:bossesBeaten(),hard:hardCleared(),interDone:!!SAVE.interDone,bestEndless:SAVE.bestEndless||0,bestAscent:SAVE.bestAscent||0,bestRush:SAVE.bestRush||0,bestRaid:SAVE.bestRaid||0,
-    bestTether:SAVE.bestTether||0,levels:(SAVE.myLevels||[]).slice(0,24).map(l=>({n:l.n||'Untitled',code:l.code,k:LIKES.got[lvlKey(l.code)]||0})),show:myShowcase(),post:{give:tpGive(),want:tpWant()},cr:(SAVE.likesGot||0)>=5,title:myTitleId(),banner:SAVE.banner||'b_plain',rare:bpBest()[0]?bpBest().slice(0,3):null,mast:Object.keys(SAVE.mast||{}).filter(k=>SKINS.some(s=>s.id===k)).sort((a,b)=>mastXP(b)-mastXP(a)).slice(0,3).map(k=>({s:k,l:mastOf(k)})),pres:presLevel(),gdn:gdnStage(),bestRhythm:SAVE.bestRhythm||0,tr:SKINS.filter(s=>SAVE.owned.includes(s.id)&&fgGiftable(s)&&s.id!==SAVE.skin).map(s=>s.id).slice(0,150),seen:Date.now()};
+    bestTether:SAVE.bestTether||0,levels:(SAVE.myLevels||[]).slice(0,24).map(l=>({n:l.n||'Untitled',code:l.code,k:LIKES.got[lvlKey(l.code)]||0})),show:myShowcase(),post:{give:tpGive(),want:tpWant()},cr:(SAVE.likesGot||0)>=5,title:myTitleId(),banner:SAVE.banner||'b_plain',rare:bpBest()[0]?bpBest().slice(0,3):null,mast:Object.keys(SAVE.mast||{}).filter(k=>SKINS.some(s=>s.id===k)).sort((a,b)=>mastXP(b)-mastXP(a)).slice(0,3).map(k=>({s:k,l:mastOf(k)})),pres:presLevel(),bestRhythm:SAVE.bestRhythm||0,tr:SKINS.filter(s=>SAVE.owned.includes(s.id)&&fgGiftable(s)&&s.id!==SAVE.skin).map(s=>s.id).slice(0,150),seen:Date.now()};
 }
 /* your public card is refreshed a few seconds after anything is saved, and every few minutes while the game is open */
 function frPush(now){
@@ -10567,7 +10567,7 @@ if(isNativeApp()) setTimeout(()=>{ iapInit(); adsInit(); },1500);
 const PHONE_MQ=matchMedia('(max-width:760px), (max-height:540px) and (pointer:coarse)');
 const TAB_OF={menuOv:'home',worldsOv:'home',levelsOv:'home',hardOv:'home',remixOv:'home',coopOv:'home',passOv:'pass',shopOv:'shop',friendsOv:'more',friendOv:'more',
   lbOv:'more',profOv:'more',denOv:'more',plOv:'more',clsOv:'more',liveOv:'more',settingsOv:'more',adminOv:'more',acctOv:'more',guideOv:'more',eventOv:'more',twinOv:'more'};
-const MORE_ITEMS=[['mClass','Classroom','#FFE27A','#C2771E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-5 9 5-9 5z" fill="currentColor" fill-opacity=".25"/><path d="M7 12v5c3 2 7 2 10 0v-5M21 10v6"/></svg>'],['mDen','Locker','#7FF0D2','#2E8A9E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="1.5" fill="currentColor" fill-opacity=".2"/><path d="M8.5 6h7M8.5 8.5h7M8.5 11h7M15 15v2"/></svg>'],['mTwin','Twin Pulse 2v2','#FFE7A0','#6A4AB0','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2"/></svg>'],['mProfile','Profile & quests','#FF9A4D','#E2541E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 7-7 11-7-11z" fill="currentColor" fill-opacity=".25"/></svg>'],['mFriends','Friends','#3FD9C2','#127E9C','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19c.8-3.3 3.3-5 6.2-5s5.4 1.7 6.2 5"/><path d="M15.5 5.3a3.3 3.3 0 0 1 0 6.4M18 14.4c1.7.7 2.8 2.2 3.2 4.6"/></svg>'],['mLB','Leaderboards','#FFD45E','#E0901A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="currentColor" fill-opacity=".25"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 14v4M8 20h8"/></svg>'],['mTwin',null,'#B79BFF','#5B3BD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M14 5h5v5M19 19L5 5M5 10V5h5"/></svg>'],['mEvent',null,'#FF7EB6','#C2307A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z" fill="currentColor" fill-opacity=".25"/></svg>'],['mAcct',null,'#7FB8FF','#2E5FD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M4.5 20c1.3-3.6 4.2-5.5 7.5-5.5s6.2 1.9 7.5 5.5"/></svg>'],['mName','Player name','#D29BFF','#8A3DD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z" fill="currentColor" fill-opacity=".2"/><path d="M13.5 6.5l4 4"/></svg>'],['mSettings','Settings','#9AA6C8','#4B5578','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>'],['mGuide','Help','#9CF07A','#2E9E54','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01"/></svg>'],['mSound',null,'#8A8CFF','#3F3FC2','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12" /><circle cx="6.5" cy="18" r="2.5" fill="currentColor" fill-opacity=".3"/><circle cx="16.5" cy="16" r="2.5" fill="currentColor" fill-opacity=".3"/></svg>']];
+const MORE_ITEMS=[['mDen','Locker','#7FF0D2','#2E8A9E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="1.5" fill="currentColor" fill-opacity=".2"/><path d="M8.5 6h7M8.5 8.5h7M8.5 11h7M15 15v2"/></svg>'],['mTwin','Twin Pulse 2v2','#FFE7A0','#6A4AB0','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2"/></svg>'],['mProfile','Profile & quests','#FF9A4D','#E2541E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 7-7 11-7-11z" fill="currentColor" fill-opacity=".25"/></svg>'],['mFriends','Friends','#3FD9C2','#127E9C','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19c.8-3.3 3.3-5 6.2-5s5.4 1.7 6.2 5"/><path d="M15.5 5.3a3.3 3.3 0 0 1 0 6.4M18 14.4c1.7.7 2.8 2.2 3.2 4.6"/></svg>'],['mLB','Leaderboards','#FFD45E','#E0901A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="currentColor" fill-opacity=".25"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 14v4M8 20h8"/></svg>'],['mTwin',null,'#B79BFF','#5B3BD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M14 5h5v5M19 19L5 5M5 10V5h5"/></svg>'],['mEvent',null,'#FF7EB6','#C2307A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z" fill="currentColor" fill-opacity=".25"/></svg>'],['mAcct',null,'#7FB8FF','#2E5FD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M4.5 20c1.3-3.6 4.2-5.5 7.5-5.5s6.2 1.9 7.5 5.5"/></svg>'],['mName','Player name','#D29BFF','#8A3DD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z" fill="currentColor" fill-opacity=".2"/><path d="M13.5 6.5l4 4"/></svg>'],['mSettings','Settings','#9AA6C8','#4B5578','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>'],['mGuide','Help','#9CF07A','#2E9E54','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01"/></svg>'],['mSound',null,'#8A8CFF','#3F3FC2','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12" /><circle cx="6.5" cy="18" r="2.5" fill="currentColor" fill-opacity=".3"/><circle cx="16.5" cy="16" r="2.5" fill="currentColor" fill-opacity=".3"/></svg>']];
 const isDot=id=>{ const e=$(id); return !!e&&!e.hidden; };
 function moreBuild(){
   const rk=myRank(); $('moreMe').innerHTML=`<i class="gem" style="--rc:${rankCol(rk)}"></i><span><b>${escapeHTML(ensureName())}</b><small>${escapeHTML(rankName(rk))} · tap for your profile</small></span><em>${notesTxt()}</em>`;
@@ -11942,13 +11942,10 @@ function giftGive(r){ const out=[]; if(r.n){ SAVE.notes+=r.n; out.push(`♪${r.n
    once the daily gift is out of the way. Settings → What's new opens it again. Change NEWS_V to show a new one. */
 const NEWS_V='2026-10e', NEWS_WHEN='Update · October 2026';
 const NEWS_ADDED=[
- ['🏫','Classrooms','Teachers: make a class, give homework (2 questions a level), host live class games and build question packs. Students: join with a class code, no email needed. Find it on the menu.'],
- ['🗄','The Locker','A new home for your stuff: your player card, block mastery, your garden and the Album. Find it on the menu.'],
+ ['🗄','The Locker','A new home for your stuff: your player card and block mastery. Find it on the menu.'],
  ['🏅','Block mastery','The block you wear levels up as you play it, 1 to 10, with Notes, Stardust and a Master title along the way.'],
  ['✨','Effects','Trails behind your block, bursts on every perfect hit, and your own hit sound. Find them in the Shop under Effects.'],
  ['🏷','Titles and player cards','Pick a title to show under your name on the leaderboards. Tap any name on a leaderboard to see their full card: rank, top 3 blocks, rarest pull and high scores.'],
- ['🌱','Practice garden','It grows one step for every day you play, all the way to a World Tree. It wilts if you skip days, but it never dies.'],
- ['📖','The Album','A sticker page for every pack, every world, the Shop and the effects. Fill a page to collect its reward.'],
  ['✦','Pass prestige','After tier 100 the Pulse Pass keeps going: every prestige level gives Notes and Stardust.'],
  ['🎧','Better Bluetooth sound','No more sound cutting out on wireless headphones, and the beat stays lined up.']];
 const NEWS_EARLIER=[
@@ -14486,9 +14483,9 @@ const FX_TRAILS=[
  {id:'tr_flame',name:'Flame',glyph:'▲',col:'#FF8A3C',price:1000,st:'flame'},
  {id:'tr_rainbow',name:'Rainbow',glyph:'≋',col:'#FF7EB6',price:1200,st:'rainbow'},
  {id:'tr_mastery',name:'Mastery Ribbon',glyph:'❖',col:'#7FF0D2',st:'mastery',lk:{mast:3}},
- {id:'tr_leaf',name:'Garden Leaves',glyph:'❦',col:'#8FE07A',st:'leaf',lk:{garden:4}},
+ {id:'tr_leaf',name:'Falling Leaves',glyph:'❦',col:'#8FE07A',price:850,st:'leaf'},
  {id:'tr_prestige',name:'Prestige Comet',glyph:'☄',col:'#C9A7FF',st:'prestige',lk:{pres:1}},
- {id:'tr_chalk',name:'Chalkboard',glyph:'✎',col:'#F4F1E8',st:'chalk',lk:{cls:20}}];
+];
 const FX_BURSTS=[
  {id:'pb_none',name:'Classic',glyph:'✧',col:'#FFF8EE',price:0},
  {id:'pb_ring',name:'Double Ring',glyph:'◎',col:'#B8F2E6',price:400},
@@ -14496,7 +14493,7 @@ const FX_BURSTS=[
  {id:'pb_coin',name:'Note Shower',glyph:'♫',col:'#FFD166',price:600},
  {id:'pb_firework',name:'Firework',glyph:'✺',col:'#FF9A4D',price:750},
  {id:'pb_glitch',name:'Glitch',glyph:'▚',col:'#4FF0FF',price:800},
- {id:'pb_bloom',name:'Bloom',glyph:'❀',col:'#FFC2E0',lk:{garden:8}},
+ {id:'pb_bloom',name:'Bloom',glyph:'❀',col:'#FFC2E0',price:850},
  {id:'pb_crown',name:'Crown',glyph:'♛',col:'#FFE27A',lk:{pres:3}}];
 const FX_SOUNDS=[
  {id:'hs_classic',name:'Classic tick',glyph:'•',col:'#DCE2EE',price:0},
@@ -14744,14 +14741,8 @@ const TITLES=[
  ['vet','Pulse Veteran',()=>presLevel()>=1,'Reach Pass prestige 1'],
  ['passleg','Pass Legend',()=>presLevel()>=5,'Reach Pass prestige 5'],
  ['eternal','Eternal Pulse',()=>presLevel()>=10,'Reach Pass prestige 10'],
- ['gthumb','Green Thumb',()=>gdnStage()>=5,'Grow your garden to stage 5'],
- ['wtree','World Tree Keeper',()=>gdnStage()>=10,'Grow the World Tree'],
  ['achiever','Achiever',()=>Object.keys(SAVE.ach||{}).length>=25,'Earn 25 achievements'],
- ['trend','Trendsetter',()=>albumGot('shop'),'Fill the Shop page of the Album'],
- ['show','Showstopper',()=>albumGot('fx'),'Fill the Effects page of the Album'],
- ['hwhero','Homework Hero',()=>LF('hwDone')>=5,'Finish 5 homework assignments'],
- ['quizwiz','Quiz Whiz',()=>LF('clRight')>=100,'Answer 100 class questions right'],
- ['classact','Class Act',()=>(SAVE.clStars||0)>=50,'Earn 50 class stars']];
+];
 function titleText(id){ id=String(id||''); if(!id) return '';
   if(id.startsWith('m.')){ const s=SKINS.find(k=>k.id===id.slice(2)); return s?s.name+' Master':''; }
   if(id.startsWith('al.')){ const pk=BPACKS.find(p=>'pk_'+p.id===id.slice(3)); return pk?pk.name.replace(/ Pack$/,'')+' Collector':''; }
@@ -14764,7 +14755,6 @@ const myTitleId=()=>SAVE.title&&titleOwned(SAVE.title)?SAVE.title:'';
 /* every title you could pick: the fixed ones, plus one per mastered block and per full pack page */
 function titleList(){ const L=TITLES.map(([id,t,,how])=>({id,t,how,own:titleOwned(id)}));
   Object.keys(SAVE.mast||{}).filter(k=>mastOf(k)>=10&&SKINS.some(s=>s.id===k)).forEach(k=>L.push({id:'m.'+k,t:titleText('m.'+k),how:'Master this block',own:true}));
-  BPACKS.filter(p=>!p.hidden).forEach(p=>{ const id='al.pk_'+p.id; L.push({id,t:titleText(id),how:`Fill the ${p.name} page of the Album`,own:albumGot('pk_'+p.id)}); });
   return L; }
 function setTitle(id){ SAVE.title=id; SAVE.titleT=Date.now(); save(); lbRename(); if(frOn()) frPush(); }
 
@@ -14801,7 +14791,6 @@ function lockerRun(o){
   if(id&&id===SAVE.skin&&!TRY){ const up=mastAdd(id,(G.mastRun||0)+(o&&o.cleared?15:0)); const s=skinById(id);
     up.forEach(l=>msgs.push(l===10?`🏅 ${s.name} mastered! New title: ${s.name} Master`:`${s.name} reached mastery ${l} (${mastRewTxt(MAST_REW[l])})`)); }
   G.mastRun=0; eggTick(G.eggRun||0); G.eggRun=0;
-  gdnPractice().forEach(s=>msgs.push(`🌱 Your garden grew: ${GDN_NAMES[s]} (${gdnRewTxt(GDN_REW[s])})`));
   presClaim(); save();
   msgs.forEach((m,i)=>setTimeout(()=>toast(m),1800+i*2600));
 }
@@ -14927,7 +14916,6 @@ function plRender(p,me,loading){
   $('plStats').innerHTML=loading?'<p class="small">Loading…</p>':st.map(([l,v])=>`<div><span class="lbl">${l}</span><b>${v}</b></div>`).join('');
   const pet=Array.isArray(p.pet)&&petById(p.pet[0])?p.pet:null;
   $('plExtra').innerHTML=loading?'':
-    (p.gdn!=null?`<div class="plx"><canvas class="gdncv" data-st="${+p.gdn||0}" width="80" height="80" aria-hidden="true"></canvas><small>Garden</small><b>${GDN_NAMES[+p.gdn||0]}</b></div>`:'')+
     (ms.length?`<div class="plx wide"><small>Most mastered</small>${ms.slice(0,3).map(({s:id,l})=>{ const s=SKINS.find(k=>k.id===id); return s?`<span class="mchip ${mastTier(+l)}">${escapeHTML(s.name)} · ${+l}</span>`:''; }).join('')}</div>`:'');
   $('plNote').textContent='';
   const uid=PL.uid, canAdd=!me&&!loading&&frOn()&&p.code&&!(FR.uids||[]).includes(uid);
@@ -15077,14 +15065,10 @@ async function buildClass(){
 
 /* ---- students: join a class, see homework ---- */
 const myCls=()=>SAVE.cls||(SAVE.cls=[]);
-function clHomeHTML(){ const L=myCls(), code=(new URLSearchParams(location.search).get('class')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+function clHomeHTML(){
   return `<div class="clme">${lvChip({name:SAVE.clName||ensureName(),skin:SAVE.skin,banner:SAVE.banner},'','big','div',56)}<small>This is you in class games. Change your block in the Collection and your banner in the Shop.</small></div>
-    <div class="clgrid2"><div class="clbox cb-join"><span class="cbic">🎒</span><div class="lbl">Join a class</div><p class="small">Type the code your teacher gave you.</p>
-    <div class="clrow"><input id="clJoinCode" class="clin code" maxlength="6" placeholder="CODE" value="${escapeHTML(code)}" aria-label="Class code"><input id="clJoinName" class="clin" maxlength="24" placeholder="Your name" value="${escapeHTML(SAVE.clName||'')}" aria-label="Your name"></div>
-    <button class="btn" data-cl="join" type="button">Join class</button></div>
-    <div class="clbox cb-play"><span class="cbic">🎮</span><div class="lbl">Play a live game</div><p class="small">Your teacher shows a game PIN on the board.</p><button class="btn" data-cl="play" type="button">Enter a game PIN ▶</button></div></div>
-    <div class="lbl">My classes</div>${L.length?`<div class="cllist">${L.map((c,i)=>`<button type="button" class="clitem" style="--cc:${(hashStr(c.cid||c.name)%360)}" data-scls="${i}"><b>${escapeHTML(c.name)}</b><small>${escapeHTML(c.tname||'')}</small><span>›</span></button>`).join('')}</div>`:'<p class="small">You haven\'t joined a class yet.</p>'}
-    ${clReal()?'':'<p class="small">Tip: if you sign in, your classes follow you to other devices.</p>'}`; }
+    <div class="clgrid2"><div class="clbox cb-play"><span class="cbic">🎮</span><div class="lbl">Play a live game</div><p class="small">Your teacher shows a game PIN on the board.</p><button class="btn" data-cl="play" type="button">Enter a game PIN ▶</button></div>
+    <div class="clbox cb-join"><span class="cbic">🔗</span><div class="lbl">Review from a link</div><p class="small">Got a review link from your teacher (on Google Classroom or by email)? Just open it: it brings you straight to the game modes.</p></div></div>`; }
 async function clJoin(){ const code=$('clJoinCode').value.toUpperCase().replace(/[^A-Z0-9]/g,''), nm=clName($('clJoinName').value);
   if(code.length!==6) return clMsg('Class codes are 6 letters or numbers.',true); if(!$('clJoinName').value.trim()) return clMsg('Type your name first.',true);
   clMsg('Joining…');
@@ -15144,15 +15128,12 @@ function clCrumbs(...parts){ return `<nav class="clcrumbs" aria-label="Where you
 const PK_ST={pending:['⏳','Waiting for review','pend'],approved:['✓','Approved','ok'],rejected:['✗','Needs changes','no']};
 const pkReady=p=>p.builtin||p.status==='approved';
 const usablePacks=()=>[...BUILTIN_PACKS,...(CL.packs||[]).filter(pkReady)];
-async function clTeachHTML(){ let L=[];
-  try{ const s=await ACCT.db.collection('classes').where('teacher','==',ACCT.user.uid).limit(30).get(); L=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.t||0)-(a.t||0)); CL.teach=L; }catch(e){ CL.msg=clErr(e); }
+async function clTeachHTML(){ CL.teach=[];
   return `<div class="tchtiles">
-      <button type="button" class="tchtile t1" data-cl="newclsopen"><span>🏫</span><b>New class</b><small>Get a join code for students</small></button>
-      <button type="button" class="tchtile t2" data-cl="hwpick"><span>📚</span><b>Give homework</b><small>Levels with 2 questions each</small></button>
       <button type="button" class="tchtile t3" data-cl="host"><span>🎮</span><b>Host a live game</b><small>Put a PIN on the board</small></button>
-      <button type="button" class="tchtile t4" data-cl="packs"><span>📝</span><b>Question packs</b><small>Make your own questions</small></button></div>
-    <div class="clbox cb-join" id="clNewBox" hidden><span class="cbic">🏫</span><div class="lbl">New class</div><div class="clrow"><input id="clNewName" class="clin" maxlength="40" placeholder="Class name, e.g. 4th grade music"><input id="clNewGrade" class="clin sm" maxlength="12" placeholder="Grade"></div><button class="btn" data-cl="newcls" type="button">Make class</button></div>
-    <div class="lbl" id="clYour">Your classes</div>${L.length?`<div class="cllist">${L.map((c,i)=>`<button type="button" class="clitem" style="--cc:${(hashStr(c.id||c.name)%360)}" data-tcls="${i}"><b>${escapeHTML(c.name)}</b><small>Code <code>${escapeHTML(c.code)}</code>${c.locked?' · locked':''}</small><span>›</span></button>`).join('')}</div>`:'<p class="small">No classes yet. Tap <b>New class</b> to make one.</p>'}`; }
+      <button type="button" class="tchtile t4" data-cl="packs"><span>📝</span><b>Question packs</b><small>Make your own questions</small></button>
+      <button type="button" class="tchtile t2" data-cl="packs"><span>🔗</span><b>Share a review link</b><small>Post on Google Classroom for review at home</small></button></div>
+    <p class="small">Each pack has a 🔗 Review link button once it's ready to use.</p>`; }
 async function clNewClass(){ const nm=$('clNewName').value.trim().slice(0,40); if(!nm) return clMsg('Give the class a name.',true); clMsg('Making your class…');
   try{ const db=ACCT.db, ref=db.collection('classes').doc(), exp=Date.now()+300*864e5; let code='';
     await ref.set({teacher:ACCT.user.uid,tname:ensureName().slice(0,40),name:nm,grade:$('clNewGrade').value.trim().slice(0,12),code:'',locked:false,kicked:[],exp,t:Date.now()});
@@ -15504,7 +15485,7 @@ function playBurst(easy,into){ return new Promise(res=>{ ensureAudio(); const c=
 $('liveBack').onclick=()=>{ if(LV.doc&&LV.doc.phase!=='end'&&!confirm('Leave the board? The game keeps going; open it again from Classroom → Teach.')) return; liveStop(); showClass('teach'); };
 $('playBack').onclick=()=>{ liveStop(); toMenu(); };
 /* links: ?class=CODE opens the join form, ?play=123456 opens a live game */
-setTimeout(()=>{ const q=new URLSearchParams(location.search); if(q.get('review')) revOpen(q.get('review')); else if(q.get('play')) playOpen(q.get('play').replace(/\D/g,'').slice(0,6)); else if(q.get('class')) showClass('home'); },2500);
+false&&setTimeout(()=>{ const q=new URLSearchParams(location.search); if(q.get('review')) revOpen(q.get('review')); else if(q.get('play')) playOpen(q.get('play').replace(/\D/g,'').slice(0,6)); else if(q.get('class')) showClass('home'); },2500);
 
 
 /* ================= REVIEW LINKS =================
