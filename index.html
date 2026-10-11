@@ -15441,10 +15441,13 @@ async function playJoin(){ const pin=$('plPin').value.replace(/\D/g,''), raw=$('
     if(!d.exists||Date.now()-(d.data().t||0)>3*3600e3) return m.textContent='No game with that PIN. Check the board.';
     const g=d.data(); if(g.phase==='end') return m.textContent='That game has finished.';
     let nm=g.names==='fun'?funName():g.names==='first'?raw.split(' ')[0]:raw; nm=clName(nm);
-    await ref.collection('players').doc(au.uid).set({name:nm,skin:String(SAVE.skin||'classic').slice(0,40),banner:String(SAVE.banner||'b_plain').slice(0,24),score:0,right:0,done:0,fl:0,rev:0,team:0,hearts:3,ans:{},fin:0,t:TS()});
+    const pdoc=ref.collection('players').doc(au.uid), base={name:nm,score:0,right:0,done:0,fl:0,rev:0,team:0,hearts:3,ans:{},fin:0,t:TS()};
+    // your block and banner go along so the board can show them; if the database's rules are older and refuse them, join without
+    try{ await pdoc.set({...base,skin:String(SAVE.skin||'classic').slice(0,40),banner:String(SAVE.banner||'b_plain').slice(0,24)}); }
+    catch(e){ if(!(e&&e.code==='permission-denied')) throw e; await pdoc.set(base); }
     SAVE.clName=clName(raw); save(); LV.au=au; LV.me=au.uid; LV.qi=0; LV.streak=0; LV.order=[]; LV.phase=''; LV.mine={name:nm,skin:SAVE.skin,banner:SAVE.banner,score:0,right:0,done:0,fl:0,rev:0,hearts:3,ans:{}};
     liveWatch(au.db,pin);
-  }catch(e){ m.textContent=e&&e.code==='permission-denied'?'You can\'t join this game.':clErr(e); } }
+  }catch(e){ m.textContent=e&&e.code==='permission-denied'?'You can\'t join this game. It may have started or ended, or the teacher removed you. Check the PIN with your teacher.':clErr(e); } }
 function playRender(fromPlayers){ const d=LV.doc, box=$('playBody'), me=LV.players[LV.me];
   if(!d){ box.innerHTML='<div class="plwait"><h2>The game has closed.</h2><button class="btn" id="plOut" type="button">OK</button></div>'; $('plOut').onclick=()=>{ liveStop(); toMenu(); }; return; }
   if(fromPlayers&&LV.phase==='play'&&!me&&Object.keys(LV.players).length){ liveStop(); box.innerHTML='<div class="plwait"><h2>You were removed from the game.</h2><button class="btn" id="plOut" type="button">OK</button></div>'; $('plOut').onclick=()=>toMenu(); return; }
