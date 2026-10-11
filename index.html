@@ -1772,6 +1772,15 @@ body.phone.hastabs #toast{top:auto;bottom:calc(84px + env(safe-area-inset-bottom
 .fplike{border:1px solid var(--line);background:rgba(0,0,0,.2);color:#fff;border-radius:999px;padding:4px 10px;font:700 12px var(--body);cursor:pointer}
 .fplike[aria-pressed="true"]{background:rgba(255,110,150,.25);border-color:#FF6E96;color:#FFB3C8}
 .pqtok{display:block;margin-top:2px;font:700 12px var(--body);color:#FFE27A;text-shadow:none}
+/* the What's new popup */
+.newspanel{max-height:min(86vh,760px);overflow:auto}
+.newspanel h3{margin:14px 0 6px;font:800 13px var(--body);letter-spacing:.12em;text-transform:uppercase;color:#FFE27A}
+.newspanel h3.soon{color:#7FF0D2}
+.newslist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.newslist li{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:14px;line-height:1.35}
+.newslist li>span{flex:none;width:24px;text-align:center;font-size:17px}
+.newslist li b{display:block;font-size:14px}.newslist li small{color:var(--ink-2);font-size:12.5px}
+.newspanel .btn{margin-top:14px;width:100%;position:sticky;bottom:0;box-shadow:0 -10px 20px rgba(20,16,48,.6),0 3px 0 #9A5A00}
 .bpnote{font-size:12px;color:var(--ink-3);text-align:center;margin:10px 0 0}
 /* the pack itself (shelf version and the big one you cut open) */
 .bppk{--c1:#1FA67E;--c2:#0B3B33;--acc:#7FFFD0;position:relative;border-radius:14px;background:linear-gradient(160deg,var(--c1),var(--c2) 75%);box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 0 2px rgba(255,255,255,.18);overflow:hidden;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;isolation:isolate}
@@ -2314,6 +2323,13 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <div class="row"><button class="btn ghost" id="chNo" type="button">Not now</button><button class="btn" id="chGo" type="button">Accept</button></div>
   </div>
 </section>
+<section id="newsOv" class="overlay" hidden>
+  <div class="panel newspanel">
+    <div class="eyebrow" id="newsWhen"></div><h2>What's new in Pulseform</h2>
+    <div id="newsBody"></div>
+    <button class="btn" id="newsOk" type="button">Let's play!</button>
+  </div>
+</section>
 <section id="giftOv" class="overlay" hidden>
   <div class="panel giftpanel" style="text-align:center;align-items:center">
     <div class="eyebrow">Daily gift</div><h2 id="giftTitle">Day 1 gift</h2>
@@ -2362,6 +2378,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <input id="offset" type="range" min="-300" max="300" step="1" value="0">
     </div>
     <button id="calibBtn" class="btn ghost" type="button">Calibrate timing</button>
+    <button id="newsBtn" class="btn ghost" type="button">What's new</button>
     <button id="setAdmin" class="btn ghost" type="button" hidden>Admin panel</button>
     <details>
       <summary>How to play</summary>
@@ -10737,6 +10754,34 @@ function giftGive(r){ const out=[]; if(r.n){ SAVE.notes+=r.n; out.push(`♪${r.n
   if(r.xp){ const x=addXP(r.xp); out.push(`${r.xp} XP`+(x.after>x.before?` · Rank up! ${rankName(x.after)}`:'')); }
   if(r.banner){ out.push(`the ${bannerById(r.banner).name} banner`); }
   return out; }
+/* ================= WHAT'S NEW =================
+   Shown once to each player after an update (remembered in the save, so it follows their account to other devices),
+   once the daily gift is out of the way. Settings → What's new opens it again. Change NEWS_V to show a new one. */
+const NEWS_V='2026-10', NEWS_WHEN='Update · October 2026';
+const NEWS_ADDED=[
+ ['✦','Block packs','Seven packs, from Mythic to Pulse Pristine, every one with its drop rates shown. Ascendant blocks now sit above Legendary.'],
+ ['🍂','Harvest Festival Pack','October and November only: pumpkins, a golden cornucopia and the Elder Oak.'],
+ ['🎁','Free packs','A free pack every day, and another for finishing all your weekly quests in the Pulse Pass.'],
+ ['⚡','Opening packs','Open five at once, turn on Quick open, see your pack history, and earn bonus Notes for completing a set.'],
+ ['🔍','Collection','Search, filters, and pins for your favourite blocks.'],
+ ['▶','Try before you buy','Wear any Shop block for a run before you spend your Notes.'],
+ ['💛','Friends','Give a friend one of your blocks, show off your three best on your profile, and like the levels they build.'],
+ ['🏆','12 new achievements','Rhythm Patterns scores, long streaks, Studio songs, Remix stars, packs and more.'],
+ ['🛍','A new Shop','A fresh look and four big new blocks: Cyber Ninja, Inferno Mech, Spirit Wolf and Galaxy Emperor.'],
+ ['🔒','Account','Change your password from the Account screen.'],
+ ['📶','Play offline','On the website, the game now opens even without an internet connection.']];
+const NEWS_SOON=[
+ ['❄','A winter pack','A new seasonal pack for December.'],
+ ['🌟','Top levels','Browse and play the most-liked levels players have built.'],
+ ['🎵','More rhythms','New patterns to learn in Rhythm Patterns.'],
+ ['👥','Friend leaderboards','See how you stack up against just your friends.']];
+let newsFrom='menuOv';
+function newsShow(from='menuOv'){ newsFrom=from; const li=L=>`<ul class="newslist">${L.map(([i,t,d])=>`<li><span aria-hidden="true">${i}</span><div><b>${t}</b><small>${d}</small></div></li>`).join('')}</ul>`;
+  $('newsWhen').textContent=NEWS_WHEN; $('newsBody').innerHTML=`<h3>Just added</h3>${li(NEWS_ADDED)}<h3 class="soon">Coming soon</h3>${li(NEWS_SOON)}`;
+  showOv('newsOv'); $('newsOv').querySelector('.panel').scrollTop=0; }
+function newsCheck(){ if(SAVE.newsSeen===NEWS_V||G.state!=='menu'||$('menuOv').hidden||window.__noNews) return false; newsShow(); return true; }
+$('newsOk').onclick=()=>{ SAVE.newsSeen=NEWS_V; save(); if(typeof acctPush==='function') acctPush(); if(newsFrom==='settingsOv') showOv('settingsOv'); else toMenu(); };
+$('newsBtn').onclick=()=>newsShow('settingsOv');
 function giftCheck(){
   const today=todayKey(), g=giftState();
   if(!giftSigned()||g.date===today||!$('giftOv')||G.state!=='menu') return false;
@@ -12369,7 +12414,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
+const OVS=['newsOv','adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -12393,7 +12438,7 @@ function toMenu(ov='menuOv'){
   if(G.state!=='menu') fadeMusic(); stopStudioAudio(); hideTalk(); hideCine();
   TRY=null; G=visualDefaults({state:'menu',players:[mkPlayer(0)]}); R=null; setTheme(THEMES[Math.min(WORLDS-1,SAVE.world-1)]);
   hint('');
-  if(ov==='menuOv'){ buildMenu(); setTimeout(()=>{ if(G.state==='menu'&&!$('menuOv').hidden&&!chalOffer()&&!lvlOffer()&&$('cvkWinOv').hidden&&$('twinWinOv').hidden&&!cvkWinPopup()&&!twWinPopup()) giftCheck(); },500); } else if(ov==='hardOv') buildHard(); else if(ov==='remixOv') buildRemix(); else if(ov==='passOv') buildPass(); else if(ov==='worldsOv') buildWorlds(); else if(ov==='shopOv') buildShop(); else if(ov==='settingsOv') buildSettings();
+  if(ov==='menuOv'){ buildMenu(); setTimeout(()=>{ if(G.state==='menu'&&!$('menuOv').hidden&&!chalOffer()&&!lvlOffer()&&$('cvkWinOv').hidden&&$('twinWinOv').hidden&&!cvkWinPopup()&&!twWinPopup()&&!giftCheck()) newsCheck(); },500); } else if(ov==='hardOv') buildHard(); else if(ov==='remixOv') buildRemix(); else if(ov==='passOv') buildPass(); else if(ov==='worldsOv') buildWorlds(); else if(ov==='shopOv') buildShop(); else if(ov==='settingsOv') buildSettings();
   showOv(ov);
 }
 function nextUp(){
