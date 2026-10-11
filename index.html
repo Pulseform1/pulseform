@@ -3824,6 +3824,45 @@ function findPath(N,a,b,blocked,maxLen){
   };
   return dfs(a)?st.slice():null;
 }
+/* the timed check: a room is only used if it can be cleared playing to the real rules, beat by beat. solve() above
+   ignores time; this one knows when cracked tiles crumble (2 beats after you step on them, back after 8), when blinking
+   tiles are off, that vents fire after even beats and lasers every 8th, that rotating gates open on even beats and
+   arrows turn, and (where every beat needs a move) that you can only stay put by bumping something.
+   Returns the fewest beats to the door, starting on beat k0, or -1. */
+function tSolve(room,k0,must,lim){
+  const N=room.N, C=room.cells, at=(x,y)=>x>=0&&y>=0&&x<N&&y<N?C[y*N+x]:null, hasL=(room.lasers||[]).length>0;
+  const bOn=(c,k)=>(Math.floor(Math.max(0,k)/4)%2)===c.blink;
+  const fallen=(i,k,cr)=>{ const s=cr.get(i); return s!=null&&k>=s+2&&k<s+2+REGEN_BEATS; };
+  const isV=(c,i,k,cr)=>!c||c.t===0||(c.crack&&fallen(i,k,cr))||(c.blink>=0&&!bOn(c,k));
+  const blk=(c,k,p)=>c.t>=2||(c.gate&&!(p&1))||(c.gate2&&(p&6)!==6)||(c.rgate&&k%2!==0);
+  function act(x0,y0,dir,k,p,cr){ const cur=at(x0,y0);
+    if(cur.lock&&cur.lock!==dir) return 1;
+    if(cur.rot>=0&&ROT_DIRS[(cur.rot+Math.max(0,k))%4]!==dir) return 1;
+    const nx=x0+DIRS[dir][0], ny=y0+DIRS[dir][1], nc=at(nx,ny), ni=ny*N+nx, v=isV(nc,ni,k,cr);
+    if(v&&cur.rails[dir]&&!(nc&&((nc.crack&&fallen(ni,k,cr))||nc.blink>=0))) return 1;
+    if(!v&&blk(nc,k,p)) return 1;
+    if(v) return 0;
+    let x=nx,y=ny,d=dir,tele=false,sprung=false,np=p; const cn=new Map(cr);
+    for(let g=0;g<24;g++){ const c=at(x,y), i=y*N+x;
+      if(c.button) np|=1; if(c.btnA) np|=2; if(c.btnB) np|=4; if(c.crack&&!cn.has(i)) cn.set(i,k);
+      if(c.tele>=0&&!tele){ tele=true; x=c.tele%N; y=(c.tele/N)|0; continue; }
+      if(c.spring&&!sprung){ sprung=true; const sx=x+2*DIRS[d][0], sy=y+2*DIRS[d][1], sc=at(sx,sy); if(isV(sc,sy*N+sx,k,cr)) return 0; if(blk(sc,k,p)) break; x=sx; y=sy; continue; }
+      const pd=c.ice?d:c.wind; if(!pd) break; const qx=x+DIRS[pd][0], qy=y+DIRS[pd][1], qc=at(qx,qy), qi=qy*N+qx;
+      if(isV(qc,qi,k,cr)){ if(c.rails[pd]&&!(qc&&qc.crack&&fallen(qi,k,cr))) break; return 0; }
+      if(blk(qc,k,p)) break; x=qx; y=qy; d=pd; }
+    return {x,y,p:np,cr:cn,mud:!!at(x,y).mud}; }
+  const safe=(x,y,k,cr)=>{ const c=at(x,y), i=y*N+x;
+    return !((c.vent&&k%2===0)||(hasL&&c.beam&&k%8===7)||(c.crack&&cr.has(i)&&cr.get(i)<=k-1)||(c.blink>=0&&!bOn(c,k))); };
+  const key=s=>s.x+','+s.y+','+s.p+','+(s.stuck?1:0)+'|'+[...s.cr].sort((a,b)=>a[0]-b[0]).map(([i,v])=>i+':'+(v-s.k)).join(';');
+  let layer=[{x:room.start.x,y:room.start.y,p:0,cr:new Map(),stuck:false,k:k0-1}], states=0;
+  for(let t=0;t<lim;t++){ const k=k0+t, next=new Map();
+    for(const s of layer){ const cr=new Map(); s.cr.forEach((v,i)=>{ if(k<v+2+REGEN_BEATS) cr.set(i,v); });   // cracked tiles that have grown back are forgotten
+      const opts=[], stay={x:s.x,y:s.y,p:s.p,cr,mud:false};
+      if(s.stuck) opts.push(stay); else { for(const dir of DK){ const r=act(s.x,s.y,dir,k,s.p,cr); if(r===1) opts.push(stay); else if(r) opts.push(r); } if(!must) opts.push(stay); }
+      for(const r of opts){ if(r.x===room.goal.x&&r.y===room.goal.y) return t+1; if(!safe(r.x,r.y,k,r.cr)) continue;
+        const ns={x:r.x,y:r.y,p:r.p,cr:r.cr,stuck:r.mud,k}, kk=key(ns); if(!next.has(kk)) next.set(kk,ns); } }
+    layer=[...next.values()]; states+=layer.length; if(!layer.length) return -1; if(states>40000) return -2; }
+  return -1; }
 function cfgEndless(n){
   return {N:n<=2?6:7,rail:n<=2?1:Math.max(.3,1-(n-2)*.14),pillarP:n>=2?.45:0,crackP:n>=3?Math.min(.22,.08+n*.02):0,teleP:n>=4?.5:0,gateP:n>=4?.75:0,
     density:n>=3?Math.min(.5,.2+n*.04):0,M:{lock:n>=3,rgate:n>=5,wind:n>=5,vent:n>=6,ice:n>=7,spring:n>=8,twin:n>=8,laser:n>=10,ghost:n>=11},focus:[],gems:n>=2?2:0};
@@ -3881,7 +3920,9 @@ function genRoom(cfg){
     if(cfg.glass) cells.forEach((c,i)=>{ if(c.t===1&&!room.safe.has(i)&&i!==id(s.x,s.y)&&i!==id(g.x,g.y)&&c.tele<0&&!c.button&&!c.gate&&!c.vent&&!c.ice&&!c.wind&&rng()<.4) c.crack=true; });
     room.has.crack=cells.some(c=>c.crack); room.has.pillar=cells.some(c=>c.t===2);
     if(cfg.need&&at<450){ const ok=cfg.needAll?cfg.need.every(k=>room.has[k]):cfg.need.some(k=>room.has[k]); if(!ok) continue; }
-    const par=solve(room); if(par<0) continue; if(cfg.minPar&&par<cfg.minPar&&at<520) continue;
+    let par=solve(room); if(par<0) continue; if(cfg.minPar&&par<cfg.minPar&&at<520) continue;
+    // and it has to be clearable in real time, from every beat the room can start on; par is the real fewest beats
+    if(cfg.tk){ let tp=par, bad=false; for(const k0 of cfg.tk.k0s){ const r=tSolve(room,k0,cfg.tk.must,par*3+16); if(r===-1){ bad=true; break; } if(r>0) tp=Math.max(tp,r); } if(bad) continue; par=tp; }
     room.par=par; return room;
   }
   const cells=Array.from({length:N*N},(_,i)=>{const c=newCell(); if(i<N){c.t=1; c.rails={up:true,down:true,left:i===0,right:i===N-1};} return c;});
@@ -4086,6 +4127,7 @@ function nextRoom(first){
     if(!G.styleOrder){ if(M.net||M.seed){ const r=mulberry(hashStr('order'+M.seed)), o=[...STYLE_IDS]; for(let q=o.length-1;q>0;q--){ const j=Math.floor(r()*(q+1)); [o[q],o[j]]=[o[j],o[q]]; } G.styleOrder=o; G.runSeed=hashStr(M.seed)%1000000; } else { G.styleOrder=[...STYLE_IDS].sort(()=>Math.random()-.5); G.runSeed=Math.floor(Math.random()*1e6); } }
     const blk=Math.floor((i-1)/3); sid=G.styleOrder[blk%G.styleOrder.length]; tseed='E'+G.runSeed+'-'+blk; bpm=((M.coop?84:90)+(i-1)*(M.coop?3:4))*STYLES[sid].bpm*(M.type==='event'?(weekEvent().bpmMul||1):1); instr=i;
     if(M.type==='rhythm'){ cfg.M.vent=false; cfg.M.rgate=false; cfg.crackP*=.5; bpm=(78+(i-1)*2.5)*STYLES[sid].bpm; } }
+  if(cfg&&!M.pattern&&['level','lremix','hard','endless','daily','event'].includes(M.type)) cfg.tk={must:!!M.mustMove,k0s:i===1?[4]:[8,12]};   // see tSolve
   bpm=M.type==='studio'||M.type==='custom'?M.bpm||M.design.bpm:clamp(Math.round(bpm),68,180);
   if(M.net&&M.type==='duel') rng=mulberry(hashStr('duel'+M.seed+'#'+i));
   R=M.type==='custom'?edRoom(M.design):M.type==='boss'?genArena(M.world):M.type==='raid'?raidArena(M.world):M.type==='duel'?genDuel():M.type==='ascent'&&G.guardian?ascentArena(M.world,i):genRoom(cfg); rng=Math.random;
@@ -4100,7 +4142,7 @@ function nextRoom(first){
   if(first) G.bpm=bpm; else G.pendingBpm=bpm;
   G.budget=M.type==='level'||M.type==='lremix'?R.par*2+12:M.type==='hard'?Math.ceil(R.par*1.3)+5:M.type==='ascent'?ascentBudget():0; G.parTotal+=R.par; G.roomBeats=0;
   G.players.forEach(P=>{ P.pos={...(R.spawns?R.spawns[P.id]:R.start)}; P.prevPos=null; P.netAt=null; P.done=!!P.gone; P.dead=false; P.fallRoom=null; P.anim={kind:'drop',t0:G.now||0,dur:.45}; P.trailPts=[]; });
-  G.ripples=[];
+  G.ripples=[]; G.blinkAt=null;
   if(R.arena){ if(M.type==='raid') G.players.forEach((P,i)=>{ if(!P.gone) spawnBlaster(i); }); else { spawnBlaster(0); if(R.arena==='duel') spawnBlaster(1); }
     // a partner's pad for this arena that arrived before we got here
     if(M.net&&NET.pendBl){ for(const k in NET.pendBl){ const o=NET.pendBl[k]; if(o.r===G.roomIdx){ netPlacePad(o); delete NET.pendBl[k]; } else if(o.r<G.roomIdx) delete NET.pendBl[k]; } } }
@@ -4235,7 +4277,10 @@ function input(dir,ev,pid){
 }
 const inB=(x,y)=>x>=0&&y>=0&&x<R.N&&y<R.N;
 const cellAt=(x,y)=>inB(x,y)?R.cells[y*R.N+x]:null;
-const isVoidC=(c,k)=>!c||c.t===0||c.fallen||c.dark||(c.blink>=0&&!blinkOn(c,k));
+/* whether a tile is down on beat k, worked out from the beat itself, so a move judged to a beat sees that beat's floor even if
+   the beat's own update (crumbling, growing back) hasn't run yet on screen */
+const downAt=(c,k)=>c.fallen?!(c.fallK!=null&&k>=c.fallK+REGEN_BEATS):!!(c.crack&&c.step!=null&&k>=c.step+2);
+const isVoidC=(c,k)=>!c||c.t===0||downAt(c,k)||c.dark||(c.blink>=0&&!blinkOn(c,k));
 const blocks=(c,k)=>c.t>=2||(c.gate&&!c.open)||(c.gate2&&!c.open2)||(c.rgate&&k%2!==0);
 function tryMove(P,dir,b,j){
   const x0=P.pos.x,y0=P.pos.y, cur=cellAt(x0,y0), spb=b.spb;
@@ -4244,7 +4289,7 @@ function tryMove(P,dir,b,j){
   if(cur.lock&&cur.lock!==dir) return bumpIt('locked');
   if(cur.rot>=0&&rotDir(cur,b.k)!==dir) return bumpIt('arrow turning');
   const nx=x0+DIRS[dir][0], ny=y0+DIRS[dir][1], nc=cellAt(nx,ny);
-  if(isVoidC(nc,b.k)&&cur.rails[dir]&&!(nc&&(nc.fallen||nc.blink>=0))) return bumpIt();
+  if(isVoidC(nc,b.k)&&cur.rails[dir]&&!(nc&&(downAt(nc,b.k)||nc.blink>=0))) return bumpIt();
   if(!isVoidC(nc,b.k)&&blocks(nc,b.k)) return bumpIt(nc.gate&&!nc.open?'find the button':nc.rgate&&nc.t!==2?'gate closed':null);
   P.prevPos={x:x0,y:y0};
   const segs=[{to:{x:nx,y:ny},m:'hop'}];
@@ -4254,7 +4299,7 @@ function tryMove(P,dir,b,j){
     if(c.gem&&!c.gemT){ c.gemT=-1; gems.push({x,y}); }
     if(c.button&&!R.pressed){ R.pressed=true; pressed=true; }
     if((c.btnA&&!(R.twin&2))||(c.btnB&&!(R.twin&4))){ R.twin=(R.twin||0)|(c.btnA?2:4); twin=(R.twin&6)===6?'open':'one'; c.pressT=G.now; }
-    if(c.crack&&c.step==null) c.step=b.k;
+    if(c.crack&&(c.step==null||(c.fallen&&c.fallK!=null&&b.k>=c.fallK+REGEN_BEATS))){ if(c.fallen){ c.fallen=false; c.fallK=null; c.regenT=G.now; } c.step=b.k; }
     if(c.tele>=0&&!tele){ const tx=c.tele%R.N, ty=(c.tele/R.N)|0; tele={from:{x,y},to:{x:tx,y:ty}}; x=tx; y=ty; segs.push({to:{x,y},m:'tele'}); continue; }
     if(c.spring&&!sprung){ sprung=true; const sx=x+2*DIRS[d][0], sy=y+2*DIRS[d][1], sc=cellAt(sx,sy); c.springT=G.now;
       if(isVoidC(sc,b.k)){ segs.push({to:{x:sx,y:sy},m:'jump'}); x=sx; y=sy; fall=true; break; }
@@ -4262,7 +4307,7 @@ function tryMove(P,dir,b,j){
       segs.push({to:{x:sx,y:sy},m:'jump'}); x=sx; y=sy; continue; }
     const pd=c.ice?d:c.wind; if(!pd) break;
     const qx=x+DIRS[pd][0], qy=y+DIRS[pd][1], qc=cellAt(qx,qy);
-    if(isVoidC(qc,b.k)){ if(c.rails[pd]&&!(qc&&qc.fallen)) break; segs.push({to:{x:qx,y:qy},m:'slide'}); x=qx; y=qy; fall=true; break; }
+    if(isVoidC(qc,b.k)){ if(c.rails[pd]&&!(qc&&downAt(qc,b.k))) break; segs.push({to:{x:qx,y:qy},m:'slide'}); x=qx; y=qy; fall=true; break; }
     if(blocks(qc,b.k)) break;
     segs.push({to:{x:qx,y:qy},m:'slide'}); x=qx; y=qy; d=pd;
   }
@@ -9656,12 +9701,14 @@ function placeNewTiles(cfg,R0,F,used,free){
 function newTilesBeat(b,rest){
   G.blinkK=b.k;
   const le=laserEvery(); if(!rest&&R.lasers&&R.lasers.length&&b.k%le===le-1) G.laserAt=b.t+b.spb/2;
-  if(b.k%4===0&&R.cells.some(c=>c.blink>=0)){ sBlink();
-    G.players.forEach(P=>{ if(rest||P.remote||P.dead||P.done||G.state!=='playing') return; const c=cellAt(P.pos.x,P.pos.y);
-      if(c&&c.blink>=0&&!blinkOn(c,b.k)&&!(P.anim&&P.anim.kind==='path'&&G.now<P.anim.end&&!(P.anim.to.x===P.pos.x&&P.anim.to.y===P.pos.y))) { popAt(P,'tile vanished','#C9B8FF',12); doFall(P); } }); }
+  // a blinking tile that switches off drops you half a beat later (like vents and lasers), so stepping off it on the beat is always in time
+  if(b.k%4===0&&R.cells.some(c=>c.blink>=0)){ sBlink(); if(!rest) G.blinkAt={t:b.t+b.spb/2,k:b.k}; }
 }
 function newTilesTick(now){
   if(!R) return;
+  if(G.blinkAt&&now>=G.blinkAt.t){ const k=G.blinkAt.k; G.blinkAt=null;
+    G.players.forEach(P=>{ if(P.remote||P.dead||P.done||G.state!=='playing') return; const c=cellAt(P.pos.x,P.pos.y);
+      if(c&&c.blink>=0&&!blinkOn(c,k)){ popAt(P,'tile vanished','#C9B8FF',12); doFall(P); } }); }
   if(G.laserAt&&now>=G.laserAt){ G.laserAt=null; G.laserT=now; sLaser();
     G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.beam&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); }
 }
