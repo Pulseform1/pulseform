@@ -1338,6 +1338,21 @@ button.lvchip{cursor:pointer}button.lvchip:hover{transform:translateY(-2px) rota
 .pkbar{position:sticky;bottom:-1px;z-index:3;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;background:linear-gradient(transparent,var(--panel,#251B45) 30%);padding:18px 0 6px;margin-top:10px}
 .admpk{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;background:rgba(255,255,255,.06);border-radius:12px;padding:10px 12px;margin:6px 0}.admpk small{display:block;opacity:.8}.admpk details{margin-top:4px}.admpk summary{cursor:pointer;font-size:13px}
 .admpkqs{margin:6px 0 0;padding-left:20px;display:grid;gap:4px;font-size:13px}.admpkqs small{color:#B8F2E6}.admpkbtns{display:flex;flex-direction:column;gap:6px}
+.revpanel{max-width:760px}.rvpick{position:relative;display:flex;flex-direction:column;gap:6px}.rvpick>*:not(.funbg){position:relative;z-index:1}
+.rvhead h2{margin:2px 0;font:800 30px var(--display)}
+.rvmodes{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.rvmode{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;border:2px solid transparent;background:var(--glass);color:inherit;border-radius:16px;padding:14px;cursor:pointer;font:inherit;transition:transform .15s}
+.rvmode:hover{transform:translateY(-2px)}.rvmode.on{border-color:#FFD166;background:linear-gradient(140deg,rgba(255,209,102,.22),rgba(255,143,191,.14))}.rvmode span{font-size:30px}.rvmode b{font:800 18px var(--display)}.rvmode small{opacity:.8;font-size:13px}.rvmode em{font-style:normal;color:#7FF0D2;font-weight:700;font-size:12px;margin-top:2px}
+.rvdiff{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}.rvdiff .lbl{margin:0}.rvdiff small{opacity:.8;flex:1 1 200px}
+.rvgo{align-self:center;margin-top:14px}
+.rvstat button.rvquit{background:none;border:none;color:inherit;opacity:.6;font-size:16px;cursor:pointer;margin-left:10px}
+.rvtrack{height:10px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden;margin:-4px 0 12px}.rvtrack i{display:block;height:100%;background:linear-gradient(90deg,#7FF0D2,#FFD166);transition:width .6s}
+.rvnew{color:#FFE27A;font:800 20px var(--display);margin:0}
+.rvend .plbig{font:800 54px/1.05 var(--display);margin:0;color:#FFE27A}
+@media (max-width:520px){.rvmodes{grid-template-columns:repeat(2,minmax(0,1fr))}.rvmode{padding:12px}.rvmode small{font-size:12px}.rvmode span{font-size:26px}.rvhead h2{font-size:26px}}
+.rvmiss{text-align:left;max-width:560px;width:100%}.rvmiss summary{cursor:pointer;font-weight:700}.rvmiss ul{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px}.rvmiss li{background:var(--glass);border-radius:12px;padding:8px 12px;display:flex;flex-direction:column}.rvmiss small{color:#B8F2E6}
+.rvshare h3{margin:4px 0}.rvlink{display:flex;gap:8px;margin:10px 0}.rvlink input{flex:1}
+.btn.gcbtn{background:#1E8E3E;color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .lb li.me{outline:2px solid #FFD166;background:rgba(255,209,102,.12)}.lb .lbn{font:700 13px var(--display);color:var(--ink-3)}.lb li:nth-child(1) .lbn{color:#FFD166}.lb li:nth-child(2) .lbn{color:#DCE2EE}.lb li:nth-child(3) .lbn{color:#D08A52}
 .lb .gem{width:9px;height:9px;transform:rotate(45deg);border-radius:2px;background:var(--rc)}.lb .lbname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lb b{font:600 13px var(--display);font-variant-numeric:tabular-nums}
 .evchip{border-color:rgba(143,240,224,.55);color:#8FF0E0;animation:evGlow 2.4s ease-in-out infinite}@keyframes evGlow{50%{box-shadow:0 0 14px rgba(143,240,224,.45)}}
@@ -2633,6 +2648,12 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   <div class="panel wide livepanel">
     <div class="head"><button class="back" id="liveBack" type="button">← Classroom</button></div>
     <div id="liveBody"></div>
+  </div>
+</section>
+<section id="revOv" class="overlay" hidden>
+  <div class="panel playpanel revpanel">
+    <div class="head"><button class="back" id="revBack" type="button">← Menu</button></div>
+    <div id="revBody"></div>
   </div>
 </section>
 <section id="playOv" class="overlay" hidden>
@@ -10536,7 +10557,7 @@ if(isNativeApp()) setTimeout(()=>{ iapInit(); adsInit(); },1500);
 /* ================= PHONE APP SHELL: bottom tabs and the More sheet (all of them press the menu's own buttons) ================= */
 const PHONE_MQ=matchMedia('(max-width:760px), (max-height:540px) and (pointer:coarse)');
 const TAB_OF={menuOv:'home',worldsOv:'home',levelsOv:'home',hardOv:'home',remixOv:'home',coopOv:'home',passOv:'pass',shopOv:'shop',friendsOv:'more',friendOv:'more',
-  lbOv:'more',profOv:'more',denOv:'more',plOv:'more',clsOv:'more',liveOv:'more',playOv:'more',settingsOv:'more',adminOv:'more',acctOv:'more',guideOv:'more',eventOv:'more',twinOv:'more'};
+  lbOv:'more',profOv:'more',denOv:'more',plOv:'more',clsOv:'more',liveOv:'more',settingsOv:'more',adminOv:'more',acctOv:'more',guideOv:'more',eventOv:'more',twinOv:'more'};
 const MORE_ITEMS=[['mClass','Classroom','#FFE27A','#C2771E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-5 9 5-9 5z" fill="currentColor" fill-opacity=".25"/><path d="M7 12v5c3 2 7 2 10 0v-5M21 10v6"/></svg>'],['mDen','Locker','#7FF0D2','#2E8A9E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="14" height="14" rx="3" fill="currentColor" fill-opacity=".2"/><path d="M9 7V5a3 3 0 0 1 6 0v2M5 13h14"/></svg>'],['mTwin','Twin Pulse 2v2','#FFE7A0','#6A4AB0','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2"/></svg>'],['mProfile','Profile & quests','#FF9A4D','#E2541E','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 7-7 11-7-11z" fill="currentColor" fill-opacity=".25"/></svg>'],['mFriends','Friends','#3FD9C2','#127E9C','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 19c.8-3.3 3.3-5 6.2-5s5.4 1.7 6.2 5"/><path d="M15.5 5.3a3.3 3.3 0 0 1 0 6.4M18 14.4c1.7.7 2.8 2.2 3.2 4.6"/></svg>'],['mLB','Leaderboards','#FFD45E','#E0901A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="currentColor" fill-opacity=".25"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 14v4M8 20h8"/></svg>'],['mTwin',null,'#B79BFF','#5B3BD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M14 5h5v5M19 19L5 5M5 10V5h5"/></svg>'],['mEvent',null,'#FF7EB6','#C2307A','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z" fill="currentColor" fill-opacity=".25"/></svg>'],['mAcct',null,'#7FB8FF','#2E5FD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M4.5 20c1.3-3.6 4.2-5.5 7.5-5.5s6.2 1.9 7.5 5.5"/></svg>'],['mName','Player name','#D29BFF','#8A3DD6','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z" fill="currentColor" fill-opacity=".2"/><path d="M13.5 6.5l4 4"/></svg>'],['mSettings','Settings','#9AA6C8','#4B5578','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>'],['mGuide','Help','#9CF07A','#2E9E54','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01"/></svg>'],['mSound',null,'#8A8CFF','#3F3FC2','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12" /><circle cx="6.5" cy="18" r="2.5" fill="currentColor" fill-opacity=".3"/><circle cx="16.5" cy="16" r="2.5" fill="currentColor" fill-opacity=".3"/></svg>']];
 const isDot=id=>{ const e=$(id); return !!e&&!e.hidden; };
 function moreBuild(){
@@ -13576,7 +13597,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['clsOv','liveOv','playOv','denOv','plOv','wardOv','newsOv','adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
+const OVS=['revOv','clsOv','liveOv','playOv','denOv','plOv','wardOv','newsOv','adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -14293,7 +14314,7 @@ function loop(ts){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('denOv').hidden||!$('plOv').hidden) lockerFrame(now); if(!$('liveOv').hidden||!$('playOv').hidden||!$('clsOv').hidden) drawSkinPreviews(now,'#liveOv canvas.skprev, #playOv canvas.skprev, #clsOv canvas.skprev'); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks'||shopTab==='forge')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('stageOv').hidden) drawSkinPreviews(now,'#stageOv canvas.skprev'); if(!$('wardOv').hidden) drawSkinPreviews(now,'#wardOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('denOv').hidden||!$('plOv').hidden) lockerFrame(now); if(!$('liveOv').hidden||!$('playOv').hidden||!$('clsOv').hidden||!$('revOv').hidden) drawSkinPreviews(now,'#liveOv canvas.skprev, #playOv canvas.skprev, #clsOv canvas.skprev'); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks'||shopTab==='forge')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('stageOv').hidden) drawSkinPreviews(now,'#stageOv canvas.skprev'); if(!$('wardOv').hidden) drawSkinPreviews(now,'#wardOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
@@ -15163,7 +15184,8 @@ async function clResultsHTML(){ const a=CL.assign; let rows=[];
   const all=(CL.roster||[]).map(s=>({name:clName(s.name),...(byU[s.uid]||{}),uid:s.uid})); rows.forEach(r=>{ if(!all.some(x=>x.uid===r.uid)) all.push({...r,name:clName(r.name)}); });
   const pct=r=>r.asked?Math.round(100*r.right/r.asked):null, help=all.filter(r=>r.asked>=2&&pct(r)<60);
   CL.csv=[['Student','Levels done','Of','Questions right','Questions asked','Percent','Stars','Minutes','Late'],...all.map(r=>[r.name,r.done||0,n,r.right||0,r.asked||0,pct(r)==null?'':pct(r),Object.values(r.lv||{}).reduce((x,L)=>x+(L.s||0),0),Math.round((r.time||0)/60),r.late?'yes':''])];
-  return `${clCrumbs(['Teach','teach'],[CL.cls.name,'class'],['Homework results'])}<div class="clactions"><button class="btn ghost" data-cl="csv" type="button">⬇ Download CSV</button><button class="btn ghost" data-cl="delhw" type="button">Delete homework</button></div>
+  const rvp=qpById(a.pack); CL.rvPack=rvp&&(rvp.builtin||rvp.status==='approved')?rvp:null;
+  return `${clCrumbs(['Teach','teach'],[CL.cls.name,'class'],['Homework results'])}<div class="clactions">${CL.rvPack?'<button class="btn" data-cl="rvshare" type="button">🔗 Review link for this pack</button>':''}<button class="btn ghost" data-cl="csv" type="button">⬇ Download CSV</button><button class="btn ghost" data-cl="delhw" type="button">Delete homework</button></div>
     <h3>${escapeHTML(a.title||'Homework')}</h3><p class="small">${n} levels · ${escapeHTML(a.packName||'')} · ${a.diff==='easy'?'Easy':'Normal'}${a.due?' · due '+new Date(a.due).toLocaleDateString():''}</p>
     ${help.length?`<div class="clhelp"><b>Might need help</b> (under 60% of questions right): ${help.map(r=>escapeHTML(r.name)).join(', ')}</div>`:''}
     <div class="cltable"><table><thead><tr><th>Student</th><th>Levels</th><th>Questions</th><th>Stars</th><th>Time</th></tr></thead><tbody>${all.map(r=>{ const p=pct(r);
@@ -15176,7 +15198,7 @@ async function clLoadPacks(){ try{ const s=await ACCT.db.collection('packs').whe
 async function clPacksHTML(){ await clLoadPacks();
   const st=p=>{ const x=PK_ST[p.status||'pending']; return `<span class="pkst ${x[2]}">${x[0]} ${x[1]}</span>`; };
   const card=(p,own)=>`<div class="pkcard${own?' own':''}">${own?st(p):''}<b>${escapeHTML(p.title)}</b><small>${escapeHTML(p.subject||'')}${p.grade?' · grade '+escapeHTML(p.grade):''} · ${(p.qs||[]).length} questions${own?(p.vis==='public'?(p.hidden?' · hidden after a report':' · shared with every teacher'):' · just for you'):p.builtin?' · ready-made':' · by '+escapeHTML(clName(p.oname))}</small>${own&&p.status==='rejected'&&p.note?`<small class="pknote">Reviewer: ${escapeHTML(p.note)}</small>`:''}
-    <div class="row">${own?`<button class="btn ghost sm" data-pke="${p.id}" type="button">Edit</button>`:`<button class="btn ghost sm" data-pkc="${p.id}" type="button">Copy to my packs</button>`}<button class="btn ghost sm" data-pkp="${p.id}" type="button">▶ Try it</button>${!own&&!p.builtin?`<button class="btn ghost sm" data-pkr="${p.id}" type="button">Report</button>`:''}</div></div>`;
+    <div class="row">${own?`<button class="btn ghost sm" data-pke="${p.id}" type="button">Edit</button>`:`<button class="btn ghost sm" data-pkc="${p.id}" type="button">Copy to my packs</button>`}<button class="btn ghost sm" data-pkp="${p.id}" type="button">▶ Try it</button>${p.builtin||p.status==='approved'?`<button class="btn ghost sm" data-pkl="${p.id}" type="button">🔗 Review link</button>`:''}${!own&&!p.builtin?`<button class="btn ghost sm" data-pkr="${p.id}" type="button">Report</button>`:''}</div></div>`;
   return `${clCrumbs(['Teach','teach'],['Question packs'])}<h3 class="clh">📝 Question packs</h3>
     <p class="small">New packs, and changes to a pack, are checked by the Pulseform team before students see them. Ready-made packs can be used straight away.</p>
     <div class="lbl">My packs</div><div class="pkgrid"><button type="button" class="pkcard pknew" data-cl="newpack"><span>＋</span><b>Make a new pack</b><small>Type questions or paste from a spreadsheet</small></button>${(CL.packs||[]).map(p=>card(p,true)).join('')}</div>
@@ -15248,6 +15270,7 @@ function clWire(box){
         if(!code) throw new Error('code'); await db.collection('classes').doc(CL.cls.id).update({code}); if(old) await db.collection('classCodes').doc(old).delete().catch(()=>{}); toast('New code: '+code); }catch(e){ return clMsg(clErr(e),true); } return clSet('class'); }
     if(a==='newhw'){ if(!CL.packs) await clLoadPacks(); return clSet('assign'); }
     if(a==='savehw'){ CL.busy=true; await clSaveHW(); CL.busy=false; return; }
+    if(a==='rvshare'){ if(CL.rvPack) revShare(CL.rvPack); return; }
     if(a==='csv') return clCsv(CL.csv||[],(CL.assign.title||'homework')+' results');
     if(a==='delhw'){ if(!confirm('Delete this homework and its results?')) return; try{ const r=ACCT.db.collection('classes').doc(CL.cls.id).collection('assign').doc(CL.assign.id), w=await r.collection('work').get(); await Promise.all(w.docs.map(d=>d.ref.delete())); await r.delete(); }catch(e){ return clMsg(clErr(e),true); } return clSet('class'); }
     if(a==='delcls'){ if(!confirm('Delete '+CL.cls.name+' for good?')) return; try{ const r=ACCT.db.collection('classes').doc(CL.cls.id); for(const a2 of (CL.tAssign||[])){ const w=await r.collection('assign').doc(a2.id).collection('work').get(); await Promise.all(w.docs.map(d=>d.ref.delete())); await r.collection('assign').doc(a2.id).delete(); }
@@ -15272,6 +15295,7 @@ function clWire(box){
   on('[data-pke]',b=>{ const p=(CL.packs||[]).find(x=>x.id===b.dataset.pke); clSet('pack',{pack:JSON.parse(JSON.stringify(p))}); });
   on('[data-pkc]',b=>{ const p=qpById(b.dataset.pkc); clSet('pack',{pack:{title:(p.title+' (copy)').slice(0,60),subject:p.subject||'',grade:p.grade||'',desc:p.desc||'',vis:'private',qs:JSON.parse(JSON.stringify(p.qs||[]))}}); });
   on('[data-pkp]',b=>clTry(qpById(b.dataset.pkp)));
+  on('[data-pkl]',b=>revShare(qpById(b.dataset.pkl)));
   on('[data-pkr]',async b=>{ if(!confirm('Report this pack? It will be hidden until the Pulseform team reviews it.')) return; try{ await ACCT.db.collection('packs').doc(b.dataset.pkr).update({hidden:true}); toast('Thanks. The pack is hidden for review.'); CL.pub=(CL.pub||[]).filter(p=>p.id!==b.dataset.pkr); buildClass(); }catch(e){ clMsg(clErr(e),true); } });
   on('[data-qadd]',b=>{ clPackRead(); if(CL.pack.qs.length>=100) return clMsg('A pack can hold up to 100 questions.',true); CL.pack.qs.push(qNorm({k:b.dataset.qadd})); buildClass(); });
   on('[data-qdel]',b=>{ clPackRead(); CL.pack.qs.splice(+b.dataset.qdel,1); buildClass(); });
@@ -15453,11 +15477,11 @@ async function playAfterQ(qi,sc,ms){ const d=LV.doc; if(!d||d.phase!=='play') re
 async function playPush(){ const wait=Math.max(0,(LV.lastPush||0)+1100-Date.now()); if(wait) await new Promise(r=>setTimeout(r,wait)); LV.lastPush=Date.now(); const me=LV.mine;
   try{ await LV.db.collection('live').doc(LV.pin).collection('players').doc(LV.me).update({score:me.score||0,right:me.right||0,done:me.done||0,fl:me.fl||0,rev:me.rev||0,hearts:me.hearts||0,ans:me.ans,fin:me.fin||0,t:TS()}); }catch(e){} }
 /* 8 beats: tap (or press any key) with the clicks. Perfect = 1, close = 0.6 */
-function playBurst(easy){ return new Promise(res=>{ ensureAudio(); const c=A.ctx; c.resume().catch(()=>{});
+function playBurst(easy,into){ return new Promise(res=>{ ensureAudio(); const c=A.ctx; c.resume().catch(()=>{});
   const spb=easy?.75:.6, t0=c.currentTime+.4+spb*4, N=8, W=easy?{p:.08,g:.17}:{p:.055,g:.12}, hits=new Array(N).fill(0);
   for(let i=0;i<4;i++) tone(A.sfx,t0-spb*(4-i),'sine',660,.06,.002,.06);
   for(let i=0;i<N;i++){ tone(A.sfx,t0+i*spb,'sine',i%4?880:1320,.09,.002,.08); }
-  const box=$('plQ'); box.innerHTML=`<div class="plburst" tabindex="0"><div class="bring"><i></i></div><b>Tap with the beat!</b><small>8 beats · tap anywhere or press any key</small><div class="bdots">${'<i></i>'.repeat(N)}</div></div>`;
+  const box=into||$('plQ'); box.innerHTML=`<div class="plburst" tabindex="0"><div class="bring"><i></i></div><b>Tap with the beat!</b><small>8 beats · tap anywhere or press any key</small><div class="bdots">${'<i></i>'.repeat(N)}</div></div>`;
   const el=box.querySelector('.plburst'), ring=box.querySelector('.bring i'), dots=box.querySelectorAll('.bdots i'); el.focus();
   const tap=ev=>{ ev.preventDefault(); const th=gameNow(ev), i=Math.round((th-t0)/spb); if(i<0||i>=N||hits[i]) return;
     const dd=Math.abs(th-(t0+i*spb)); const v=dd<=W.p?1:dd<=W.g?.6:0; hits[i]=v||-1; dots[i].className=v===1?'p':v?'g':'m'; buzz(v?10:0); };
@@ -15468,8 +15492,75 @@ function playBurst(easy){ return new Promise(res=>{ ensureAudio(); const c=A.ctx
 $('liveBack').onclick=()=>{ if(LV.doc&&LV.doc.phase!=='end'&&!confirm('Leave the board? The game keeps going; open it again from Classroom → Teach.')) return; liveStop(); showClass('teach'); };
 $('playBack').onclick=()=>{ liveStop(); toMenu(); };
 /* links: ?class=CODE opens the join form, ?play=123456 opens a live game */
-setTimeout(()=>{ const q=new URLSearchParams(location.search); if(q.get('play')) playOpen(q.get('play').replace(/\D/g,'').slice(0,6)); else if(q.get('class')) showClass('home'); },2500);
+setTimeout(()=>{ const q=new URLSearchParams(location.search); if(q.get('review')) revOpen(q.get('review')); else if(q.get('play')) playOpen(q.get('play').replace(/\D/g,'').slice(0,6)); else if(q.get('class')) showClass('home'); },2500);
 
+
+/* ================= REVIEW LINKS =================
+   Any ready-made pack, or a teacher's approved pack, has a link (?review=<pack>) to post on Google Classroom, in an email
+   or anywhere else. It opens a game-mode picker to practise that pack alone: no account, no sign-in, nothing saved online
+   (best scores stay on the device). Teacher packs are fetched by id; the rules let anyone read an approved pack. */
+const REV_MODES={
+  race:{n:'Beat Race',ic:'🏁',d:'Answer, tap along with the beat, and race to the finish. Beat your best time!'},
+  tower:{n:'Tempo Tower',ic:'🗼',d:'Build a 10-floor tower. Every right answer adds a floor; tapping on the beat adds a bonus one.'},
+  last:{n:'Last Note',ic:'❤',d:'Three hearts. How many can you get right before they run out?'},
+  cards:{n:'Practice cards',ic:'🃏',d:'Every question at your own pace, with the answers explained. No timer.'}};
+const RVW={pack:null,mode:'race',diff:'easy',st:null,id:''};
+const revLink=id=>(/^https?:$/.test(location.protocol)?location.origin+location.pathname.replace(/index\.html$/,''):'https://pulseform.org/')+'?review='+encodeURIComponent(id);
+async function revLoad(id){ const b=BUILTIN_PACKS.find(p=>p.id===id); if(b) return b; if(!acctCfg()) return null;
+  await fbLoad(); if(!firebase.apps.length) firebase.initializeApp(acctCfg()); const db=ACCT.db||firebase.firestore();
+  const d=await db.collection('packs').doc(id).get(); if(!d.exists) return null; const p={id:d.id,...d.data()}; p.qs=(p.qs||[]).map(qNorm); return p; }
+async function revOpen(id){ RVW.id=String(id||'').slice(0,64); showOv('revOv'); const box=$('revBody'); box.innerHTML='<div class="plwait"><div class="pldot"></div><p>Loading the review…</p></div>';
+  try{ RVW.pack=await revLoad(RVW.id); }catch(e){ RVW.pack=null; }
+  if(!RVW.pack||!(RVW.pack.qs||[]).length){ box.innerHTML='<div class="plwait"><h2>This review isn\'t available.</h2><p class="small">The link may be wrong, or the pack is still waiting to be checked. Ask your teacher for the link again.</p><button class="btn" id="rvOut" type="button">Back to the menu</button></div>'; $('rvOut').onclick=()=>toMenu(); return; }
+  revPick(); }
+function revPick(){ const p=RVW.pack, box=$('revBody'), best=SAVE.revBest||{};
+  box.innerHTML=`<div class="rvpick">${FUN_BG()}<div class="rvhead"><span class="eyebrow">Review</span><h2>${escapeHTML(p.title)}</h2><p class="small">${escapeHTML(p.subject||'')}${p.grade?' · grade '+escapeHTML(p.grade):''} · ${p.qs.length} questions${p.oname&&!p.builtin?' · made by '+escapeHTML(clName(p.oname)):''}</p></div>
+    <div class="lbl">Pick a game mode</div><div class="rvmodes">${Object.entries(REV_MODES).map(([k,m])=>{ const b=best[RVW.id+':'+k]; return `<button type="button" class="rvmode${RVW.mode===k?' on':''}" data-rvm="${k}"><span>${m.ic}</span><b>${m.n}</b><small>${m.d}</small>${b?`<em>Best: ${escapeHTML(revBestTxt(k,b))}</em>`:''}</button>`; }).join('')}</div>
+    <div class="rvdiff"><span class="lbl">Difficulty</span><div class="segs"><button type="button" data-rvd="easy" class="${RVW.diff==='easy'?'on':''}">Easy</button><button type="button" data-rvd="normal" class="${RVW.diff==='normal'?'on':''}">Normal</button></div><small>${RVW.diff==='easy'?'No timer, relaxed tapping, a second try on every question.':'20 seconds a question, tighter tapping, a speed bonus.'}</small></div>
+    <button class="btn lvgo rvgo" id="rvGo" type="button">Start ${REV_MODES[RVW.mode].ic} ${REV_MODES[RVW.mode].n} ▶</button></div>`;
+  box.querySelectorAll('[data-rvm]').forEach(b=>b.onclick=()=>{ RVW.mode=b.dataset.rvm; if(A.ctx) sUI(); revPick(); });
+  box.querySelectorAll('[data-rvd]').forEach(b=>b.onclick=()=>{ RVW.diff=b.dataset.rvd; revPick(); });
+  $('rvGo').onclick=revStart; }
+const revBestTxt=(k,b)=>k==='race'||k==='tower'?mmss(Math.round(b/1000)):k==='last'?b+' right':b+'%';
+function revStart(){ const n=RVW.pack.qs.length; RVW.st={score:0,right:0,done:0,fl:0,hearts:3,streak:0,qi:0,order:Array.from({length:n},(_,i)=>i).sort(()=>Math.random()-.5),t0:Date.now(),miss:new Set()}; ensureAudio(); if(A.ctx){ A.ctx.resume().catch(()=>{}); sGo(); } revNext(); }
+const REV_GOAL={easy:1500,normal:2000}, REV_FLOORS=10;
+function revNext(){ const st=RVW.st, m=RVW.mode, qs=RVW.pack.qs, easy=RVW.diff==='easy';
+  if((m==='race'&&st.score>=REV_GOAL[RVW.diff])||(m==='tower'&&st.fl>=REV_FLOORS)||(m==='last'&&st.hearts<=0)||(m==='cards'&&st.qi>=qs.length)) return revEnd();
+  if(st.qi>=qs.length){ st.qi=0; st.order.sort(()=>Math.random()-.5); }
+  const qi=st.order[st.qi++], box=$('revBody');
+  box.innerHTML=`<div class="plstat rvstat"><span>${REV_MODES[m].ic} ${m==='race'?`${Math.min(100,Math.round(st.score/REV_GOAL[RVW.diff]*100))}% of the way`:m==='tower'?`🧱 ${st.fl} / ${REV_FLOORS} floors`:m==='last'?'❤'.repeat(st.hearts)+'🤍'.repeat(3-st.hearts)+` · ${st.right} right`:`Card ${st.qi} of ${qs.length}`}</span><span>${m==='race'||m==='tower'?`<span id="rvClock">${mmss(Math.round((Date.now()-st.t0)/1000))}</span>`:''}<button type="button" class="rvquit" id="rvQuit">✕</button></span></div>${m==='race'?`<div class="rvtrack"><i style="width:${Math.min(100,st.score/REV_GOAL[RVW.diff]*100).toFixed(1)}%"></i></div>`:''}<div id="rvQ"></div>`;
+  $('rvQuit').onclick=()=>{ if(confirm('Stop this round?')) revPick(); };
+  clearInterval(RVW.tick); if(m==='race'||m==='tower') RVW.tick=setInterval(()=>{ const e=$('rvClock'); if(!e){ clearInterval(RVW.tick); return; } e.textContent=mmss(Math.round((Date.now()-st.t0)/1000)); },500);
+  qCard($('rvQ'),qs[qi],{easy:easy||m==='cards',timer:easy||m==='cards'?0:20,auto:m==='cards'?0:900,onDone:(sc,ms)=>revAfter(qi,sc,ms)}); }
+async function revAfter(qi,sc,ms){ const st=RVW.st, m=RVW.mode, easy=RVW.diff==='easy'; if(!st) return;
+  st.done++; st.right+=sc; if(sc<1) st.miss.add(qi); st.streak=sc>=1?st.streak+1:0;
+  if(m!=='cards'&&sc>0){ const b=await playBurst(easy,$('rvQ'));
+    if(m==='race'){ const speed=easy?0:Math.max(0,Math.round(50*(1-ms/20000))), streak=easy?0:Math.min(50,(st.streak-1)*10); st.score+=Math.round((100+speed+streak)*sc*(1+b/8)); }
+    if(m==='tower') st.fl+=1+(b>=6?1:0);
+    if(m==='last'&&b<3){ st.hearts--; toast(st.hearts?'❤ Missed the beat: lost a heart!':'Out of hearts!'); } }
+  else if(m==='last'&&sc===0){ st.hearts--; }
+  revNext(); }
+function revEnd(){ clearInterval(RVW.tick); const st=RVW.st, m=RVW.mode, qs=RVW.pack.qs, ms=Date.now()-st.t0, key=RVW.id+':'+m, B=SAVE.revBest||(SAVE.revBest={});
+  const val=m==='race'||m==='tower'?ms:m==='last'?Math.floor(st.right):Math.round(100*st.right/Math.max(1,st.done)), lower=m==='race'||m==='tower';
+  const best=B[key]==null||(lower?val<B[key]:val>B[key]); if(best){ B[key]=val; SAVE.clStars=(SAVE.clStars||0)+1; save(); }
+  const head=m==='race'?'🏁 Finished!':m==='tower'?'🗼 Tower built!':m==='last'?'❤ Out of hearts!':'🃏 All done!';
+  const big=m==='race'||m==='tower'?mmss(Math.round(ms/1000)):m==='last'?`${Math.floor(st.right)} right`:`${val}%`;
+  const miss=[...st.miss].slice(0,20).map(i=>qNorm(qs[i]));
+  $('revBody').innerHTML=`<div class="plend rvend">${FUN_BG()}${best?CONFETTI():''}<h2>${head}</h2><p class="plbig">${big}</p>${best?'<p class="rvnew">⭐ New best!</p>':`<p class="small">Your best: ${escapeHTML(revBestTxt(m,B[key]))}</p>`}
+    <div class="plstats2"><span><b>${+st.right.toFixed(1)}</b><small>right</small></span><span><b>${st.done}</b><small>answered</small></span><span><b>${st.done?Math.round(100*st.right/st.done):0}%</b><small>correct</small></span></div>
+    ${miss.length?`<details class="rvmiss" open><summary>Questions to look at again (${miss.length})</summary><ul>${miss.map(q=>`<li><b>${escapeHTML(q.q)}</b><small>Answer: ${escapeHTML(q.k==='type'?q.ans[0]:q.c.map(i=>q.a[i]).join(' / '))}${q.e?' · '+escapeHTML(q.e):''}</small></li>`).join('')}</ul></details>`:'<p class="small">You got every question right. 🎉</p>'}
+    <div class="lvctl"><button class="btn ghost" id="rvMenu" type="button">Menu</button><button class="btn ghost" id="rvModes" type="button">Other modes</button><button class="btn lvgo" id="rvAgain" type="button">Play again ▶</button></div></div>`;
+  if(A.ctx) best?sWin():sChime(); $('rvAgain').onclick=revStart; $('rvModes').onclick=revPick; $('rvMenu').onclick=()=>toMenu(); }
+/* the teacher's share box: the link, copy, and Google Classroom */
+function revShare(p){ const url=revLink(p.id), m=$('qModal'), gc='https://classroom.google.com/share?url='+encodeURIComponent(url)+'&title='+encodeURIComponent('Review: '+p.title);
+  m.hidden=false; $('qModalBody').innerHTML=`<div class="rvshare"><div class="qhead">Share a review link <button type="button" class="qstop" id="rvShX">Close</button></div><h3>${escapeHTML(p.title)}</h3>
+    <p class="small">Students open it, pick a game mode (Beat Race, Tempo Tower, Last Note or Practice cards) and practise this pack. No account or class code needed.</p>
+    <div class="rvlink"><input class="clin" id="rvShUrl" readonly value="${escapeHTML(url)}" aria-label="Review link"><button class="btn" id="rvShCopy" type="button">Copy</button></div>
+    <div class="row"><a class="btn gcbtn" href="${escapeHTML(gc)}" target="_blank" rel="noopener">🏫 Share to Google Classroom</a><button class="btn ghost" id="rvShTry" type="button">▶ Open it</button></div></div>`;
+  $('rvShX').onclick=()=>{ m.hidden=true; };
+  $('rvShCopy').onclick=async()=>{ const i=$('rvShUrl'); i.select(); try{ await navigator.clipboard.writeText(url); }catch(e){ try{ document.execCommand('copy'); }catch(x){} } $('rvShCopy').textContent='Copied ✓'; };
+  $('rvShTry').onclick=()=>{ m.hidden=true; revOpen(p.id); }; }
+$('revBack').onclick=()=>{ clearInterval(RVW.tick); toMenu(); };
 /* ---------------- WIRING ---------------- */
 /* playful UI: ripples, tilt, hover ticks */
 const HOVER=matchMedia('(hover:hover)').matches;

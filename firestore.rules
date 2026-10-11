@@ -541,6 +541,8 @@ service cloud.firestore {
     match /packs/{pid} {
       allow read: if (signedIn() && resource.data.owner == request.auth.uid)
         || (signedIn() && resource.data.vis == 'public' && resource.data.status == 'approved' && resource.data.hidden == false) || isAdmin();
+      // review links: anyone with the link can open an approved pack (no sign-in), but can't list or search packs
+      allow get: if resource.data.status == 'approved' && resource.data.hidden == false;
       allow create: if signedIn() && packOk() && request.resource.data.hidden == false;
       allow update: if (signedIn() && resource.data.owner == request.auth.uid && packOk() && request.resource.data.hidden == resource.data.hidden)
         || (signedIn() && resource.data.vis == 'public' && resource.data.status == 'approved' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hidden']) && request.resource.data.hidden == true)
