@@ -189,7 +189,7 @@ Many students will be under 13. Build for that from the start.
 - Milestones unlock a few **classroom-only cosmetics**:
   - a "Class Act" banner;
   - a chalkboard trail;
-  - a titles such as "Homework Hero" and "Quiz Whiz", using the existing title system in the Locker (`TITLES`).
+  - titles such as "Homework Hero" and "Quiz Whiz", using the existing title system in the Locker (`TITLES`).
 - No Notes, no packs, nothing that can be bought.
 
 ---
