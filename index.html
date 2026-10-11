@@ -1109,7 +1109,7 @@ body.cg a.pplink,body.cg .ppsep,body.cg #setDel,body.cg .mspecial.passplus,body.
 .lb .lbopen .lbname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:underline dotted rgba(255,255,255,.35);text-underline-offset:3px}
 .lb .lbopen:hover .lbname{text-decoration-color:currentColor}
 .fxsec{grid-column:1/-1}.fxsec h3{margin:10px 0 0;font:700 17px var(--display)}.fxsec>p{margin:2px 0 8px}
-.tabs.dentabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:10px 0 12px;overflow:visible}.tabs.dentabs button{min-width:0;padding-inline:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs.dentabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:10px 0 12px;overflow:visible}.tabs.dentabs button{min-width:0;padding-inline:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:520px){.tabs.dentabs button{font-size:11.5px;display:flex;flex-direction:column;align-items:center;gap:1px;padding-block:6px;line-height:1.15}}
 .denpanel .lbl{margin-top:14px}
 .dcard .banprev{max-width:340px;margin:6px 0 10px}
@@ -2434,7 +2434,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
   <div class="panel wide denpanel">
     <div class="head"><button class="back" id="denBack" type="button">← Menu</button><div class="wallet" id="walletD"></div></div>
     <div><div class="eyebrow">Your stuff</div><h2>Locker</h2></div>
-    <div class="tabs dentabs" id="denTabs"><button type="button" data-d="card"><span aria-hidden="true">🪪</span> Card</button><button type="button" data-d="mast"><span aria-hidden="true">🏅</span> Mastery</button><button type="button" data-d="pets"><span aria-hidden="true">🐾</span> Pets</button><button type="button" data-d="garden"><span aria-hidden="true">🌱</span> Garden</button><button type="button" data-d="album"><span aria-hidden="true">📖</span> Album</button></div>
+    <div class="tabs dentabs" id="denTabs"><button type="button" data-d="card"><span aria-hidden="true">🪪</span> Card</button><button type="button" data-d="mast"><span aria-hidden="true">🏅</span> Mastery</button><button type="button" data-d="garden"><span aria-hidden="true">🌱</span> Garden</button><button type="button" data-d="album"><span aria-hidden="true">📖</span> Album</button></div>
     <div id="denBody"></div>
   </div>
 </section>
@@ -4679,7 +4679,7 @@ function render(now){
   drawDark(L,now); drawGhost(L,now); drawLaserFx(L,now); drawBlooms(now,L); drawRipples(now,L); drawShocks(now,L); drawRays(now,L);
   drawLandFx(L,now);
   players.forEach((P,i)=>{ if(BD[i].falling) drawBlock(P,BD[i],L,now); });
-  drawParts(now,L); drawSpirits(L,now); drawPbFx(L,now); drawPets(L,now,players,BD,bi);
+  drawParts(now,L); drawSpirits(L,now); drawPbFx(L,now);
   if(R.arena) drawArenaFx(L,now);
   if(!cutUI()){ players.forEach((P,i)=>drawRing(P,now,L,BD[i],bi)); drawPops(now,L); }   // the circle cutscenes show only the map and your block
   if(now-G.sweepT<.6){ const u=(now-G.sweepT)/.6, sx=L.ox-N*L.tw*.5+u*N*L.tw*2; const g=cx.createLinearGradient(sx-80,0,sx+80,0);
@@ -9166,7 +9166,7 @@ function frCard(){
   const worlds=[]; for(let w=1;w<=WORLDS;w++) worlds.push(worldStars(w));
   const nm=ensureName(); return {v:1,name:nm,nameKey:String(nm).toLowerCase(),code:FR.code,rank:myRank(),xp:SAVE.xp||0,skin:SAVE.skin,land:SAVE.land,world:SAVE.world||1,levelStars:levelStars(),worlds,
     bosses:bossesBeaten(),hard:hardCleared(),interDone:!!SAVE.interDone,bestEndless:SAVE.bestEndless||0,bestAscent:SAVE.bestAscent||0,bestRush:SAVE.bestRush||0,bestRaid:SAVE.bestRaid||0,
-    bestTether:SAVE.bestTether||0,levels:(SAVE.myLevels||[]).slice(0,24).map(l=>({n:l.n||'Untitled',code:l.code,k:LIKES.got[lvlKey(l.code)]||0})),show:myShowcase(),post:{give:tpGive(),want:tpWant()},cr:(SAVE.likesGot||0)>=5,title:myTitleId(),banner:SAVE.banner||'b_plain',rare:bpBest()[0]?bpBest().slice(0,3):null,mast:Object.keys(SAVE.mast||{}).filter(k=>SKINS.some(s=>s.id===k)).sort((a,b)=>mastXP(b)-mastXP(a)).slice(0,3).map(k=>({s:k,l:mastOf(k)})),pet:petOn()?[petOn().k,petOn().lvl]:null,pres:presLevel(),gdn:gdnStage(),bestRhythm:SAVE.bestRhythm||0,tr:SKINS.filter(s=>SAVE.owned.includes(s.id)&&fgGiftable(s)&&s.id!==SAVE.skin).map(s=>s.id).slice(0,150),seen:Date.now()};
+    bestTether:SAVE.bestTether||0,levels:(SAVE.myLevels||[]).slice(0,24).map(l=>({n:l.n||'Untitled',code:l.code,k:LIKES.got[lvlKey(l.code)]||0})),show:myShowcase(),post:{give:tpGive(),want:tpWant()},cr:(SAVE.likesGot||0)>=5,title:myTitleId(),banner:SAVE.banner||'b_plain',rare:bpBest()[0]?bpBest().slice(0,3):null,mast:Object.keys(SAVE.mast||{}).filter(k=>SKINS.some(s=>s.id===k)).sort((a,b)=>mastXP(b)-mastXP(a)).slice(0,3).map(k=>({s:k,l:mastOf(k)})),pres:presLevel(),gdn:gdnStage(),bestRhythm:SAVE.bestRhythm||0,tr:SKINS.filter(s=>SAVE.owned.includes(s.id)&&fgGiftable(s)&&s.id!==SAVE.skin).map(s=>s.id).slice(0,150),seen:Date.now()};
 }
 /* your public card is refreshed a few seconds after anything is saved, and every few minutes while the game is open */
 function frPush(now){
@@ -10088,7 +10088,7 @@ function buildPass(){
   $('ppFill').style.width=(frac*100)+'%';
   if(max){ presClaim(); const pl=presLevel(), pin=pt.into-pl*PRES_COST, pf=pin/PRES_COST; $('ppRingFg').style.strokeDashoffset=(326.73*(1-pf)).toFixed(1); $('ppFill').style.width=(pf*100)+'%';
     $('ppNext').textContent=`Prestige ${pl} · ${pin.toLocaleString()} / ${PRES_COST.toLocaleString()} XP`; }
-  { const nf=PASS[pt.t], np=PASSP[pt.t]; $('ppNextName').innerHTML=max?`<small>Prestige ${presLevel()} ✦</small>Next prestige: ♪${PRES_N} + ✧${PRES_D}${(presLevel()+1)%3===0?' + an egg':''}`:`<small>Next · tier ${pt.t+1}</small>${escapeHTML(passName(nf))}${!cg&&np?` <span style="color:#FFE27A">+ ${escapeHTML(passName(np))}</span>`:''}`; }
+  { const nf=PASS[pt.t], np=PASSP[pt.t]; $('ppNextName').innerHTML=max?`<small>Prestige ${presLevel()} ✦</small>Next prestige: ♪${PRES_N} + ✧${PRES_D}`:`<small>Next · tier ${pt.t+1}</small>${escapeHTML(passName(nf))}${!cg&&np?` <span style="color:#FFE27A">+ ${escapeHTML(passName(np))}</span>`:''}`; }
   const cta=$('ppClaimAll'); cta.classList.toggle('alt',!ready);
   cta.textContent=ready?`Claim all (${ready})`:qr?`Quests ready (${qr})`:ppTab==='quests'?'See rewards':'See quests';
   const pr=PRODUCTS.find(p=>p.id===PASS_PRICE_ID);
@@ -11691,11 +11691,10 @@ function giftGive(r){ const out=[]; if(r.n){ SAVE.notes+=r.n; out.push(`♪${r.n
    once the daily gift is out of the way. Settings → What's new opens it again. Change NEWS_V to show a new one. */
 const NEWS_V='2026-10d', NEWS_WHEN='Update · October 2026';
 const NEWS_ADDED=[
- ['🎒','The Locker','A new home for your stuff: your player card, block mastery, pets, your garden and the Album. Find it on the menu.'],
- ['🏅','Block mastery','The block you wear levels up as you play it, 1 to 10, with Notes, Stardust, an egg and a Master title along the way.'],
+ ['🎒','The Locker','A new home for your stuff: your player card, block mastery, your garden and the Album. Find it on the menu.'],
+ ['🏅','Block mastery','The block you wear levels up as you play it, 1 to 10, with Notes, Stardust and a Master title along the way.'],
  ['✨','Effects','Trails behind your block, bursts on every perfect hit, and your own hit sound. Find them in the Shop under Effects.'],
  ['🏷','Titles and player cards','Pick a title to show under your name on the leaderboards. Tap any name on a leaderboard to see their full card: rank, top 3 blocks, rarest pull and high scores.'],
- ['🐾','Pets','Hatch eggs with perfect hits, then take a pet along. It hops beside your block on every beat. Feed it Stardust to grow it.'],
  ['🌱','Practice garden','It grows one step for every day you play, all the way to a World Tree. It wilts if you skip days, but it never dies.'],
  ['📖','The Album','A sticker page for every pack, every world, the Shop and the effects. Fill a page to collect its reward.'],
  ['✦','Pass prestige','After tier 100 the Pulse Pass keeps going: every prestige level gives Notes and Stardust.'],
@@ -14337,7 +14336,7 @@ function hitSnd(d,q,v,dir,pid,force){ const id=force||(pid?'hs_classic':fxCur().
 
 /* ---- block mastery: the block you wear levels up as you play it ---- */
 const MAST=[0,80,240,480,800,1250,1850,2600,3500,4600];
-const MAST_REW={2:{n:100},3:{d:25},4:{n:200},5:{n:300},6:{d:50},7:{egg:1},8:{n:500},9:{d:100},10:{n:1000,title:1}};
+const MAST_REW={2:{n:100},3:{d:25},4:{n:200},5:{n:300},6:{d:50},7:{d:75},8:{n:500},9:{d:100},10:{n:1000,title:1}};
 const mastLvl=xp=>{ let l=0; while(l<MAST.length&&xp>=MAST[l]) l++; return l; };
 const mastXP=id=>(SAVE.mast||{})[id]||0;
 const mastOf=id=>mastLvl(mastXP(id));
@@ -14426,7 +14425,7 @@ function drawPets(L,now,players,BD,bi){
 /* ---- the practice garden: one step for each day you play ---- */
 const GDN=[0,1,3,6,10,15,21,30,45,60,90];
 const GDN_NAMES=['Seed','Sprout','Seedling','Young plant','Budding','In bloom','Little tree','Blossom tree','Golden tree','Ancient tree','World Tree'];
-const GDN_REW={1:{n:50},2:{n:200},3:{egg:1},4:{fx:'tr_leaf'},5:{title:'gthumb'},6:{n:600},7:{egg:1},8:{fx:'pb_bloom'},9:{d:200},10:{title:'wtree',n:2000}};
+const GDN_REW={1:{n:50},2:{n:200},3:{d:60},4:{fx:'tr_leaf'},5:{title:'gthumb'},6:{n:600},7:{d:120},8:{fx:'pb_bloom'},9:{d:200},10:{title:'wtree',n:2000}};
 const gdnRewTxt=r=>!r?'':[r.n?'♪'+r.n.toLocaleString():'',r.d?'✧'+r.d:'',r.egg?'an egg':'',r.fx?(fxById(r.fx)||{}).name+(r.fx.startsWith('tr_')?' trail':' burst'):'',r.title?`the "${titleText(r.title)}" title`:''].filter(Boolean).join(' + ');
 function gdnS(){ const g=SAVE.garden||(SAVE.garden={}); g.days=g.days||{}; g.got=g.got||[]; g.n=Math.max(g.n||0,Object.keys(g.days).length); return g; }
 const gdnDays=()=>SAVE.garden?Math.max(SAVE.garden.n||0,Object.keys(SAVE.garden.days||{}).length):0;
@@ -14494,9 +14493,6 @@ const TITLES=[
  ['eternal','Eternal Pulse',()=>presLevel()>=10,'Reach Pass prestige 10'],
  ['gthumb','Green Thumb',()=>gdnStage()>=5,'Grow your garden to stage 5'],
  ['wtree','World Tree Keeper',()=>gdnStage()>=10,'Grow the World Tree'],
- ['petpal','Pet Pal',()=>((SAVE.pets||{}).list||[]).length>=3,'Hatch 3 different pets'],
- ['zoo','Zookeeper',()=>((SAVE.pets||{}).list||[]).length>=PETS.length,'Hatch every pet'],
- ['tamer','Dragon Tamer',()=>((SAVE.pets||{}).list||[]).some(p=>p.k==='dragon'),'Hatch a Drum Dragon'],
  ['achiever','Achiever',()=>Object.keys(SAVE.ach||{}).length>=25,'Earn 25 achievements'],
  ['trend','Trendsetter',()=>albumGot('shop'),'Fill the Shop page of the Album'],
  ['show','Showstopper',()=>albumGot('fx'),'Fill the Effects page of the Album']];
@@ -14524,7 +14520,7 @@ function bpBest(){ if(SAVE.bpBest&&SKINS.some(s=>s.id===SAVE.bpBest[0])) return 
 function albumPages(){ const P=[];
   BPACKS.filter(pk=>!pk.hidden).forEach(pk=>{ const ids=Object.keys(pk.rates); P.push({id:'pk_'+pk.id,name:pk.name,ic:'✦',kind:'blocks',items:ids,have:ids.filter(id=>SAVE.owned.includes(id)).length,rew:{d:80,title:'al.pk_'+pk.id}}); });
   for(let w=1;w<=WORLDS;w++){ const items=[]; for(let l=1;l<=LEVELS_PER_WORLD;l++) items.push(w+'-'+l); items.push(w+'-B');
-    P.push({id:'w'+w,name:THEMES[w-1].name,ic:'◆',kind:'world',w,items,have:items.filter(k=>(SAVE.stars[k]||0)>=3).length,rew:{n:250,egg:w%4===0}}); }
+    P.push({id:'w'+w,name:THEMES[w-1].name,ic:'◆',kind:'world',w,items,have:items.filter(k=>(SAVE.stars[k]||0)>=3).length,rew:{n:250}}); }
   const shop=SKINS.filter(s=>s.price>0&&!s.paid&&!s.bp&&!s.req&&!s.hidden&&!s.fuse).map(s=>s.id);
   P.push({id:'shop',name:'Shop blocks',ic:'🛍',kind:'blocks',items:shop,have:shop.filter(id=>SAVE.owned.includes(id)).length,rew:{n:1000,title:'trend'}});
   const fx=FX_ALL.filter(f=>f.price>0).map(f=>f.id);
@@ -14539,7 +14535,7 @@ function albumClaim(id){ const p=albumPages().find(x=>x.id===id); if(!p||albumGo
 const PRES_COST=passCost(PASS_TIERS), PRES_N=300, PRES_D=30;
 function presLevel(){ const pt=passTier(); return pt.t>=PASS_TIERS?Math.floor(pt.into/PRES_COST):0; }
 function presClaim(){ const L=presLevel(), got=SAVE.presGot||0; if(L<=got) return 0;
-  for(let p=got+1;p<=L;p++){ SAVE.notes+=PRES_N; SAVE.dust=(SAVE.dust||0)+PRES_D; if(p%3===0) eggAdd('prestige'); }
+  for(let p=got+1;p<=L;p++){ SAVE.notes+=PRES_N; SAVE.dust=(SAVE.dust||0)+PRES_D; }
   SAVE.presGot=L; save(); toast(`✦ Pass prestige ${L}! +♪${PRES_N*(L-got)} and ✧${PRES_D*(L-got)}`); return L-got; }
 
 /* ---- after every run: mastery for the block you wore, eggs warm up, the garden grows ---- */
@@ -14549,7 +14545,6 @@ function lockerRun(o){
   if(id&&id===SAVE.skin&&!TRY){ const up=mastAdd(id,(G.mastRun||0)+(o&&o.cleared?15:0)); const s=skinById(id);
     up.forEach(l=>msgs.push(l===10?`🏅 ${s.name} mastered! New title: ${s.name} Master`:`${s.name} reached mastery ${l} (${mastRewTxt(MAST_REW[l])})`)); }
   G.mastRun=0; eggTick(G.eggRun||0); G.eggRun=0;
-  const P=SAVE.pets; if(P&&P.eggs&&P.eggs.some(e=>(e.n||0)>=EGG_NEED&&!e.told)){ P.eggs.forEach(e=>{ if(e.n>=EGG_NEED) e.told=1; }); msgs.push('🥚 An egg is ready to hatch! Open the Locker.'); }
   gdnPractice().forEach(s=>msgs.push(`🌱 Your garden grew: ${GDN_NAMES[s]} (${gdnRewTxt(GDN_REW[s])})`));
   presClaim(); save();
   msgs.forEach((m,i)=>setTimeout(()=>toast(m),1800+i*2600));
@@ -14675,7 +14670,7 @@ function plRender(p,me,loading){
     ['Tether',p.bestTether?p.bestTether+' rooms':'–'],['Rhythm',p.bestRhythm?(+p.bestRhythm).toLocaleString():'–'],['Hard Mode',(p.hard||0)+'/12'],['Level stars','◆ '+(p.levelStars||0)]];
   $('plStats').innerHTML=loading?'<p class="small">Loading…</p>':st.map(([l,v])=>`<div><span class="lbl">${l}</span><b>${v}</b></div>`).join('');
   const pet=Array.isArray(p.pet)&&petById(p.pet[0])?p.pet:null;
-  $('plExtra').innerHTML=loading?'':(pet?`<div class="plx"><canvas class="petcv" data-pet="${pet[0]}" data-lvl="${+pet[1]||1}" width="80" height="80" aria-hidden="true"></canvas><small>Pet</small><b>${escapeHTML(petById(pet[0]).name)}</b><small>Lv ${+pet[1]||1}</small></div>`:'')+
+  $('plExtra').innerHTML=loading?'':
     (p.gdn!=null?`<div class="plx"><canvas class="gdncv" data-st="${+p.gdn||0}" width="80" height="80" aria-hidden="true"></canvas><small>Garden</small><b>${GDN_NAMES[+p.gdn||0]}</b></div>`:'')+
     (ms.length?`<div class="plx wide"><small>Most mastered</small>${ms.slice(0,3).map(({s:id,l})=>{ const s=SKINS.find(k=>k.id===id); return s?`<span class="mchip ${mastTier(+l)}">${escapeHTML(s.name)} · ${+l}</span>`:''; }).join('')}</div>`:'');
   $('plNote').textContent='';
