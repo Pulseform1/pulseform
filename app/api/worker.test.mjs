@@ -106,6 +106,9 @@ test('checkout: server prices, signed-in players only', async () => {
   const refuse = async (u, o) => String(u).includes('stripe.com') ? new Response(JSON.stringify({ error: { message: 'no permission' } }), { status: 403 }) : net(u, o);
   r = await api.fetch(post('/checkout', { product: 'pf_no_ads', idToken: idToken({}) }), ENV, {}, refuse);
   assert.equal(r.status, 502); assert.match((await r.json()).error, /missing a permission/);
+  const refuse400 = async (u, o) => String(u).includes('stripe.com') ? new Response(JSON.stringify({ error: { message: 'Your account cannot currently make live charges.' } }), { status: 400 }) : net(u, o);
+  r = await api.fetch(post('/checkout', { product: 'pf_no_ads', idToken: idToken({}) }), ENV, {}, refuse400);
+  assert.equal(r.status, 502); assert.match((await r.json()).error, /Stripe said: Your account cannot currently make live charges/);
   // payments off until the Stripe key is added
   assert.equal((await api.fetch(post('/checkout', { product: 'pf_no_ads', idToken: idToken({}) }), {}, {}, net)).status, 503);
   const pre = await api.fetch(new Request('https://api.pulseform.org/checkout', { method: 'OPTIONS', headers: { origin: 'https://pulseform.win' } }), ENV, {}, net);

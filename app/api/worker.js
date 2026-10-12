@@ -132,7 +132,7 @@ async function createCheckout(env, uid, email, product, fetchImpl) {
   if (r.ok && j.url) return j.url;
   // Stripe's own message goes to the Worker's logs (Cloudflare: pulseform-api > Logs); the player gets a short cause
   console.error('stripe checkout failed', r.status, JSON.stringify(j.error || j));
-  const e = new Error('stripe'); e.why = r.status === 401 ? 'the Stripe key wasn\'t accepted' : r.status === 403 ? 'the Stripe key is missing a permission' : `Stripe said ${r.status}`; throw e;
+  const e = new Error('stripe'); e.why = r.status === 401 ? 'the Stripe key wasn\'t accepted' : r.status === 403 ? 'the Stripe key is missing a permission' : `Stripe said: ${String((j.error && j.error.message) || r.status).slice(0, 200)}`; throw e;
 }
 
 export default {
