@@ -949,6 +949,17 @@ body.cg a.pplink,body.cg .ppsep,body.cg #setDel,body.cg .mspecial.passplus,body.
 .slotpick span{color:#FFD166;opacity:.85}
 .slotpick:hover span,.slotpick:focus-visible span{opacity:1;text-decoration:underline}
 .mode.only2{opacity:.45}
+.qzpick{display:flex;flex-direction:column;gap:8px;margin-top:10px;padding:12px;border-radius:16px;background:linear-gradient(135deg,rgba(255,126,182,.12),rgba(79,168,255,.12));border:1px solid var(--line)}
+.qzsel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.qzmodes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.qzmodes .mode{margin:0}
+@media (max-width:520px){.qzmodes{grid-template-columns:1fr}}
+.qzboard{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}.qzlane,.qzteamrow{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) 64px;gap:10px;align-items:center}
+.qzlane .lvchip{font-size:13px;padding:3px 10px 3px 3px;justify-self:start;max-width:150px;overflow:hidden}.qzlane .rvtrack,.qzteamrow .rvtrack,.qzboard>.rvtrack{margin:0}.qzlane>b,.qzteamrow>b:last-child{text-align:right;font-size:13px}
+.qzlane.me .rvtrack i{background:linear-gradient(90deg,#FF7EB6,#FFD166)}.qzlane.gone,.qzpodr.gone{opacity:.4}.qztot{font-weight:700;text-align:center}
+.qzwho{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:14px 0}.qzwhoi{display:flex;flex-direction:column;align-items:center;gap:4px}.qzteam{font-weight:700}
+.qzwhoi .lvchip.me{box-shadow:0 0 0 3px #FFD166,0 6px 16px rgba(0,0,0,.2)}
+.qzpod{display:flex;flex-direction:column;gap:8px;margin:14px auto;max-width:440px;width:100%}.qzpodr{display:grid;grid-template-columns:34px minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:10px;align-items:center;background:var(--glass);border-radius:14px;padding:6px 12px;text-align:left}
+.qzpodr .lvchip{justify-self:start;grid-row:span 2;max-width:100%;overflow:hidden}.qzpodr .lvrk{grid-row:span 2;font-size:22px}.qzpodr small{opacity:.7;text-align:right}.qzpodr.me{outline:2px solid #FFD166}
+.qzrew{font:700 18px var(--display);color:#FFD166}
 .pb-skins{display:flex;gap:2px;margin-left:2px}
 .pb-skins .skprev{width:22px;height:22px}
 .slot{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 6px 10px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);text-align:center;min-width:0}
@@ -3019,6 +3030,14 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
           <button class="mode" id="nDuel" type="button"><b>Online Riff-Off</b><small>2 players. Send pulses at your friend's platform from your own device. First to 3 drops wins.</small><em class="mskill">Competitive rhythm timing practice</em><span class="meta">⚔</span></button>
           <button class="mode" id="nRaid" type="button"><b>Online Mastery Jam</b><small>Work together through advanced rhythm challenges, 2 to 4 players. Each player uses timing pads and shares Harmony.</small><em class="mskill">Team timing, anticipating the beat</em><span class="meta">☠</span></button>
           <button class="mode" id="nTether" type="button"><b>Online Tether</b><small>2 players, tied together by a cord. Stray more than 4 tiles apart and it snaps. Stay close for double points.</small><em class="mskill">Moving in time together</em><span class="meta">∞</span></button>
+          <div class="qzpick" id="nQuiz"><div class="lbl">Quiz games · 2 to 4 players</div><small>Answer music questions, then tap along with the beat for bonus points. Everyone plays on their own screen.</small>
+            <div class="qzsel"><select id="nQzPack" class="clin" aria-label="Question pack"></select><select id="nQzDiff" class="clin" aria-label="Difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option></select></div>
+            <div class="qzmodes">
+              <button class="mode" data-qz="race" type="button"><b>🏁 Beat Race</b><small>First to the finish wins.</small></button>
+              <button class="mode" data-qz="tower" type="button"><b>🗼 Tempo Tower</b><small>Build one tower together before time runs out.</small></button>
+              <button class="mode" data-qz="jam" type="button"><b>🎸 Team Jam</b><small>Two teams. The fuller song wins.</small></button>
+              <button class="mode" data-qz="last" type="button"><b>❤ Last Note Standing</b><small>Three hearts each. Players who are out send hearts.</small></button>
+            </div></div>
         </div>
         <div class="small" id="nModeNote"></div>
         <div class="small" id="nWait" hidden>The host picks the mode. The match starts on both screens together.</div>
@@ -8314,7 +8333,7 @@ const netMatch=()=>!!(G.mode&&G.mode.net&&['playing','dying','paused','cutscene'
 function netNames(list){ const n=list.map(m=>m.name||'Friend'); return n.length<=1?(n[0]||''):n.slice(0,-1).join(', ')+' and '+n[n.length-1]; }
 const netOthers=()=>netNames(netMateList());
 const netHostName=()=>(NET.mates[0]&&NET.mates[0].name)||'the host';
-const netMe=()=>({name:ensureName(),skin:SAVE.skin,land:SAVE.land,rank:myRank(),uid:ACCT.user?ACCT.user.uid:''});
+const netMe=()=>({name:ensureName(),skin:SAVE.skin,ban:SAVE.banner||'b_plain',land:SAVE.land,rank:myRank(),uid:ACCT.user?ACCT.user.uid:''});
 /* the party member playing as player i in the current match */
 const netMateAt=i=>NET.order&&NET.mates[NET.order[i]];
 function netUI(){
@@ -8323,11 +8342,11 @@ function netUI(){
   $('nShow').textContent=NET.code||'····';
   { const ci=$('nCgInvite'); if(ci) ci.hidden=!(window.PF_CG&&live&&NET.code&&!(NET.peer&&NET.peer.pending)); }
   const n=netCount(), on=netLive();
-  $('nModes').hidden=!(on&&NET.host);
+  $('nModes').hidden=!(on&&NET.host); qzPickUI();
   $('nWait').hidden=!(on&&!NET.host);
   // Duel and Tether are for exactly two
   [['nDuel','Online Riff-Off'],['nTether','Online Tether']].forEach(([id])=>{ const b=$(id); if(!b) return; b.disabled=n!==2; b.classList.toggle('only2',n!==2); });
-  const note=$('nModeNote'); if(note) note.textContent=n>2?`${n} players: Journey and Mastery Jam are open to everyone. Riff-Off and Tether are for exactly 2.`:'';
+  const note=$('nModeNote'); if(note) note.textContent=n>2?`${n} players: Journey, Mastery Jam and the quiz games are open to everyone. Riff-Off and Tether are for exactly 2.`:'';
 }
 function netHost(){
   ensureAudio(); A.ctx.resume(); netLeave(true);
@@ -8485,7 +8504,7 @@ function netWireHost(c){
   c.on('open',()=>{
     const used=new Set(NET.conns.map(x=>x.slot)); let slot=0; for(let s=1;s<PARTY_MAX;s++) if(!used.has(s)){ slot=s; break; }
     // turned away: say why now and again when they say hello (a message sent the moment the line opens can be lost)
-    if(!slot||netMatch()){ c.refused=slot?'busy':'full'; try{ c.send({t:c.refused}); }catch(e){} setTimeout(()=>{ try{ c.close(); }catch(e){} },1500); return; }
+    if(!slot||netMatch()||(QZ.on&&!QZ.ended)){ c.refused=slot?'busy':'full'; try{ c.send({t:c.refused}); }catch(e){} setTimeout(()=>{ try{ c.close(); }catch(e){} },1500); return; }
     NET.conns.push({c,slot,last:performance.now()}); try{ c.send({t:'welcome',slot}); }catch(e){}
   });
   c.on('data',o=>netFromGuest(c,o));
@@ -8500,10 +8519,11 @@ function netFromGuest(c,o){
     const fresh=!NET.mates[x.slot];
     // welcome them again, now that we know they are listening: a welcome sent the moment the line opens can be lost
     try{ c.send({t:'welcome',slot:x.slot}); }catch(e){}
-    NET.mates[x.slot]={name:cleanName(o.name)||'Friend',skin:o.skin||'classic',land:o.land,rank:clamp(+o.rank||0,0,RANK_MAX),v:c.via==='relay'?'r':'',uid:typeof o.uid==='string'?o.uid.slice(0,128):''};
+    NET.mates[x.slot]={name:cleanName(o.name)||'Friend',skin:o.skin||'classic',ban:typeof o.ban==='string'?o.ban.slice(0,24):'',land:o.land,rank:clamp(+o.rank||0,0,RANK_MAX),v:c.via==='relay'?'r':'',uid:typeof o.uid==='string'?o.uid.slice(0,128):''};
     if(fresh) netRosterSend(); else try{ c.send({t:'roster',you:x.slot,list:netRosterList()}); }catch(e){}
     if(fresh) netRosterChanged(NET.mates[x.slot]); else { netPeerLook(); netUI(); }
     return; }
+  if(o.t==='qz'){ qzFromGuest(x,o); return; }
   // a game event: stamp it with that player's number in the match, pass it on to everyone else, then play it here
   if(!G.mode||!G.mode.net||(o.m!=null&&o.m!==G.mode.seed)) return;   // from a match that has already ended
   const i=NET.order?NET.order.indexOf(x.slot):-1; if(i<0) return; o.p=i;
@@ -8515,6 +8535,7 @@ function netGuestGone(c){
   const m=NET.mates[x.slot], name=m&&m.name||'A friend'; delete NET.mates[x.slot]; netRosterSend();
   const i=NET.order?NET.order.indexOf(x.slot):-1;
   if(i>=0&&netMatch()){ netSend({t:'gone',p:i,n:name}); netPlayerGone(i,name); }
+  if(QZ.on&&!QZ.ended){ const k=QZ.order.indexOf(x.slot); if(k>=0) qzGone(k); }
   if(NET.peer) netStatus(`${name} left. The party is still open with the same code.`,true);
   netUI();
 }
@@ -8544,7 +8565,7 @@ function netFromHost(o){
       NET.off=first||Math.abs(best.off-NET.off)>60?best.off:NET.off+(best.off-NET.off)*.2; return; }
     case 'welcome': NET.slot=o.slot; return;
     case 'roster': { if(o.you) NET.slot=o.you;
-      const before=new Set(Object.keys(NET.mates)), m={}; (o.list||[]).forEach(r=>{ if(r.s!==NET.slot) m[r.s]={name:cleanName(r.name)||'Friend',skin:r.skin||'classic',land:r.land,rank:clamp(+r.rank||0,0,RANK_MAX),v:r.v==='r'?'r':'',uid:typeof r.uid==='string'?r.uid.slice(0,128):''}; });
+      const before=new Set(Object.keys(NET.mates)), m={}; (o.list||[]).forEach(r=>{ if(r.s!==NET.slot) m[r.s]={name:cleanName(r.name)||'Friend',skin:r.skin||'classic',ban:typeof r.ban==='string'?r.ban.slice(0,24):'',land:r.land,rank:clamp(+r.rank||0,0,RANK_MAX),v:r.v==='r'?'r':'',uid:typeof r.uid==='string'?r.uid.slice(0,128):''}; });
       const listed=!!NET.slot&&(o.list||[]).some(r=>r.s===NET.slot);
       if(listed&&!NET.listed){ NET.listed=true; const hn=cleanName(((o.list||[]).find(r=>r.s===0)||{}).name); netStatus(`You're in ${hn?hn+'\'s':'the'} party${NET.via==='relay'?' (through the backup line)':''}! Waiting for the host to pick a mode…`); }
       NET.mates=m; const fresh=Object.keys(m).find(s=>!before.has(s)&&+s!==0);
@@ -8558,6 +8579,7 @@ function netFromHost(o){
       if(!NET.samples.length||at<now+300||at>now+lead+1500) at=now+lead-Math.min(NET.rtt<1e9?NET.rtt/2:80,1000);
       netBegin(o.type,o.seed,at,o.order); return; }
     case 'gone': if(!G.mode||o.m==null||o.m===G.mode.seed) netPlayerGone(o.p,o.n); return;
+    case 'qz': qzMsg(o); return;
   }
   netData(o);
 }
@@ -8583,6 +8605,7 @@ function netClosed(c){
   if(NET.conn!==c) return; NET.conn=null; clearInterval(NET.pingT);
   const who=netHostName();
   if(netMatch()){ G.state='dying'; G.netLeft=true; NET.leftName=who; gameOver('left'); }
+  qzHostLost();
   NET.mates={}; NET.peer&&NET.peer.destroy&&NET.peer.destroy(); NET.peer=null; relayStop();
   const why=NET.refused||'Disconnected from the party.'; netStatus(why,true); $('nStatusIdle').textContent=why;
   netUI();
@@ -14550,7 +14573,7 @@ function drawFxTrail(P,bd,L,now){
 }
 /* a perfect hit's burst, drawn over the map for a moment */
 function fxPerfect(P){ const b=fxCur().burst; if(!b||b==='pb_none'||RM()) return; const q=G.pbFx||(G.pbFx=[]); q.push({k:b,x:P.pos.x,y:P.pos.y,t0:G.now,h:Math.random()*360}); if(q.length>10) q.shift(); }
-function heartPath(g,x,y,s){ g.beginPath(); g.moveTo(x,y+s*.35); g.bezierCurveTo(x-s*1.1,y-s*.35,x-s*.45,y-s*1.05,x,y-s*.45); g.bezierCurveTo(x+s*.45,y-s*1.05,x+s*1.1,y-s*.35,x,y+s*.35); g.closePath(); }
+function fxHeartPath(g,x,y,s){ g.beginPath(); g.moveTo(x,y+s*.35); g.bezierCurveTo(x-s*1.1,y-s*.35,x-s*.45,y-s*1.05,x,y-s*.45); g.bezierCurveTo(x+s*.45,y-s*1.05,x+s*1.1,y-s*.35,x,y+s*.35); g.closePath(); }
 function drawPbFx(L,now){
   if(!G.pbFx||!G.pbFx.length) return; const D=.7;
   G.pbFx=G.pbFx.filter(e=>now-e.t0<D&&e.t0<now+1);
@@ -14559,8 +14582,8 @@ function drawPbFx(L,now){
     switch(e.k){
       case 'pb_ring': cx.lineWidth=3*a+.5; cx.strokeStyle=rgba('#B8F2E6',a); cx.beginPath(); cx.ellipse(x,y,R0,R0*.62,0,0,Math.PI*2); cx.stroke();
         cx.strokeStyle=rgba('#FFFFFF',a*.8); cx.beginPath(); cx.ellipse(x,y,R0*.6,R0*.37,0,0,Math.PI*2); cx.stroke(); break;
-      case 'pb_heart': { const s=L.tw*(.16+.22*u); cx.fillStyle=rgba('#FF7EB6',a); heartPath(cx,x,y-u*L.th*.7,s); cx.fill(); cx.strokeStyle=rgba('#FFFFFF',a*.7); cx.lineWidth=1.5; cx.stroke();
-        for(let i=0;i<4;i++){ const an=i/4*Math.PI*2+u*2; cx.fillStyle=rgba('#FFB3D1',a); heartPath(cx,x+Math.cos(an)*R0*.8,y+Math.sin(an)*R0*.5,L.tw*.06); cx.fill(); } break; }
+      case 'pb_heart': { const s=L.tw*(.16+.22*u); cx.fillStyle=rgba('#FF7EB6',a); fxHeartPath(cx,x,y-u*L.th*.7,s); cx.fill(); cx.strokeStyle=rgba('#FFFFFF',a*.7); cx.lineWidth=1.5; cx.stroke();
+        for(let i=0;i<4;i++){ const an=i/4*Math.PI*2+u*2; cx.fillStyle=rgba('#FFB3D1',a); fxHeartPath(cx,x+Math.cos(an)*R0*.8,y+Math.sin(an)*R0*.5,L.tw*.06); cx.fill(); } break; }
       case 'pb_coin': cx.font=`700 ${Math.round(L.tw*.24)}px sans-serif`; for(let i=0;i<6;i++){ const an=-Math.PI/2+(i-2.5)*.42; cx.fillStyle=rgba(i%2?'#FFD166':'#FFF3C4',a);
           cx.fillText(i%2?'♪':'♫',x+Math.cos(an)*R0,y+Math.sin(an)*R0*.9+u*u*L.th*.9); } break;
       case 'pb_firework': for(let i=0;i<12;i++){ const an=i/12*Math.PI*2, c=hsl2hex((e.h+i*30)%360,95,68), r1=R0*1.1, r0=Math.max(0,r1-L.tw*.22);
@@ -14987,7 +15010,7 @@ function qCard(box,q,opt){ q=qNorm(q); const t0=performance.now(); let tries=0, 
   box.querySelectorAll('.qopt').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i, ok=q.c.includes(i); b.classList.add(ok?'right':'wrong'); if(judge(ok)===false) b.disabled=true; });
   const inp=box.querySelector('.qtype input'); if(inp){ const chk=()=>{ const v=qShort(inp.value); if(!v) return; if(judge(q.ans.some(a=>qShort(a)===v))===false){ inp.value=''; inp.focus(); } };
     box.querySelector('.qtype button').onclick=chk; inp.onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') chk(); }; setTimeout(()=>inp.focus(),50); }
-  if(opt.timer){ const bar=box.querySelector('.qtimer i'); tmr=setInterval(()=>{ const u=(performance.now()-t0)/1000/opt.timer; bar.style.width=Math.max(0,100*(1-u))+'%'; if(u>=1) finish(0,'time'); },100); }
+  if(opt.timer){ const bar=box.querySelector('.qtimer i'); tmr=setInterval(()=>{ if(!box.isConnected){ clearInterval(tmr); return; } const u=(performance.now()-t0)/1000/opt.timer; bar.style.width=Math.max(0,100*(1-u))+'%'; if(u>=1) finish(0,'time'); },100); }
 }
 /* the homework question pop-up: sits on top of whatever screen is showing (the level's start or its result screen) */
 function qModal(q,opt){ return new Promise(res=>{ const m=$('qModal'); m.hidden=false;
@@ -15489,10 +15512,151 @@ function playBurst(easy,into){ return new Promise(res=>{ ensureAudio(); const c=
   raf=requestAnimationFrame(anim);
   setTimeout(()=>{ cancelAnimationFrame(raf); el.removeEventListener('pointerdown',tap); res(hits.reduce((a,v)=>a+Math.max(0,v),0)); },(t0-c.currentTime+N*spb+.35)*1000); }); }
 $('liveBack').onclick=()=>{ if(LV.doc&&LV.doc.phase!=='end'&&!confirm('Leave the board? The game keeps going; open it again from Classroom → Teach.')) return; liveStop(); showClass('teach'); };
-$('playBack').onclick=()=>{ liveStop(); toMenu(); };
+$('playBack').onclick=()=>{ if(QZ.on){ qzLeave(); return; } liveStop(); toMenu(); };
 /* links: ?class=CODE opens the join form, ?play=123456 opens a live game */
 false&&setTimeout(()=>{ const q=new URLSearchParams(location.search); if(q.get('review')) revOpen(q.get('review')); else if(q.get('play')) playOpen(q.get('play').replace(/\D/g,'').slice(0,6)); else if(q.get('class')) showClass('home'); },2500);
 
+
+/* ================= PARTY QUIZ =================
+   The quiz games from the classroom, for an online party of 2 to 4. The host picks a ready-made question pack, Easy or
+   Normal, and a mode. Everyone answers at their own pace on their own screen (answer, then tap along with an 8-beat
+   burst for bonus points), and each new score goes to the others over the party line. The host decides when it ends. */
+const QZ_MODES={
+  race:{n:'Beat Race',ic:'🏁',d:'Race your block down the track. First to the finish wins.',len:180},
+  tower:{n:'Tempo Tower',ic:'🗼',d:'Build one tower together. Every right answer adds a floor. Reach the top before time runs out!',len:180},
+  jam:{n:'Team Jam',ic:'🎸',d:'Two teams fill their song with points. The fuller song wins.',len:150},
+  last:{n:'Last Note Standing',ic:'❤',d:'Three hearts each. Players who are out keep answering to send hearts to the others.',len:240}};
+const QZ={on:false,ended:false,mode:'race',diff:'normal',pack:'',seed:'',qs:[],pl:[],me:0,order:[],qorder:[],qi:0,streak:0,t0:0,len:0,rev:0,lastUp:0,tick:null,why:''};
+const qzGoal=()=>QZ.diff==='easy'?1500:2000;
+const qzTower=()=>Math.max(8,QZ.pl.length*(QZ.diff==='easy'?5:6));
+const qzLeft=()=>Math.max(0,Math.round(QZ.len-Math.max(0,Date.now()-QZ.t0)/1000));
+const qzTeams=()=>[0,1].map(t=>{ const m=QZ.pl.filter(p=>p.team===t&&!p.gone), sum=m.reduce((a,p)=>a+(p.score||0),0);
+  return {t,m,score:m.length?Math.round(sum*2/m.length):0}; });   // a team of one counts double, so 2 against 1 is fair
+const qzShuffle=a=>{ for(let i=a.length-1;i>0;i--){ const j=ri(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+/* the host's pick in the party panel */
+function qzPickUI(){ const s=$('nQzPack'); if(!s||s.options.length) return;
+  s.innerHTML=BUILTIN_PACKS.map(p=>`<option value="${p.id}">${escapeHTML(p.title)} · ${p.qs.length} questions</option>`).join('');
+  document.querySelectorAll('#nQuiz [data-qz]').forEach(b=>b.onclick=()=>qzStart(b.dataset.qz)); }
+function qzStart(mode){
+  if(!netLive()||!NET.host||(QZ.on&&!QZ.ended)||!QZ_MODES[mode]) return;
+  const list=netRosterList(); if(list.length<2){ netStatus('Quiz games need 2 to 4 players.',true); return; }
+  const pk=BUILTIN_PACKS.find(p=>p.id===$('nQzPack').value)||BUILTIN_PACKS[0];
+  const o={t:'qz',k:'start',mode,diff:$('nQzDiff').value==='easy'?'easy':'normal',pack:pk.id,seed:Math.random().toString(36).slice(2,10),len:QZ_MODES[mode].len,
+    order:list.map(r=>r.s),pl:list.map(r=>({name:r.name,skin:r.skin,ban:r.ban||''}))};
+  netSend(o); qzBegin(o); }
+function qzBegin(o){
+  const me=(o.order||[]).indexOf(NET.host?0:NET.slot), pk=BUILTIN_PACKS.find(p=>p.id===o.pack);
+  if(me<0){ netStatus('A quiz game started just as you joined. You\'ll be in the next one.'); return; }
+  if(!pk||!QZ_MODES[o.mode]){ netStatus('The host started a game this version doesn\'t have. Reload the page to update.',true); return; }
+  qzStop();
+  Object.assign(QZ,{on:true,ended:false,mode:o.mode,diff:o.diff==='easy'?'easy':'normal',pack:pk.id,seed:String(o.seed),qs:pk.qs,me,order:o.order.slice(0,PARTY_MAX),
+    qi:0,streak:0,len:clamp(+o.len||180,60,600),rev:0,lastUp:0,why:'',t0:Date.now()+4000,qorder:qzShuffle(pk.qs.map((q,i)=>i)),
+    pl:o.pl.slice(0,PARTY_MAX).map((p,i)=>({name:cleanName(p.name)||'Friend',skin:p.skin||'classic',banner:typeof p.ban==='string'&&p.ban?p.ban.slice(0,24):'b_plain',
+      score:0,right:0,done:0,fl:0,hearts:3,rev:0,fin:0,gone:false,team:i%2}))});
+  ensureAudio(); A.ctx&&A.ctx.resume().catch(()=>{});
+  showOv('playOv'); $('playBack').textContent='← Party'; qzIntro();
+  QZ.tick=setInterval(qzTick,500); }
+function qzStop(){ clearInterval(QZ.tick); QZ.tick=null; QZ.on=false; }
+/* a few seconds to see who's playing, then the first question */
+function qzIntro(){ const M=QZ_MODES[QZ.mode], sg=QZ.seed;
+  const team=QZ.mode==='jam'?p=>`<small class="qzteam" style="color:${TEAM_COL[p.team]}">Team ${TEAM_N[p.team]}</small>`:()=>'';
+  $('playBody').innerHTML=`<div class="pllobby qzintro">${FUN_BG()}<p class="plmode">${M.ic} ${M.n} · ${QZ.diff==='easy'?'Easy':'Normal'}</p><h2 id="qzCount">Get ready…</h2>
+    <p class="small">${escapeHTML(M.d)}</p><div class="qzwho">${QZ.pl.map((p,i)=>`<div class="qzwhoi">${lvChip(p,'',i===QZ.me?'me':'','div',40)}${team(p)}</div>`).join('')}</div>
+    <p class="small">${escapeHTML((BUILTIN_PACKS.find(p=>p.id===QZ.pack)||{}).title||'')}</p></div>`;
+  const step=()=>{ if(!QZ.on||QZ.seed!==sg||QZ.ended) return; const s=Math.ceil((QZ.t0-Date.now())/1000), h=$('qzCount');
+    if(s<=0){ qzNext(); return; } if(h) h.textContent=`Starting in ${s}…`; if(A.ctx) tone(A.sfx,A.ctx.currentTime,'sine',660,.06,.002,.06); setTimeout(step,Math.min(1000,QZ.t0-Date.now()-(s-1)*1000)); };
+  step(); }
+function qzNext(){ if(!QZ.on||QZ.ended) return; const me=QZ.pl[QZ.me];
+  if(QZ.mode==='race'&&me.score>=qzGoal()){ $('playBody').innerHTML='<div class="plstat" id="plStat"></div><div class="plwait"><h2>🏁 You finished!</h2><p>Waiting for the others…</p></div><div class="qzboard" id="qzBoard"></div>'; qzStatus(); qzBoard(); return; }
+  if(QZ.qi>=QZ.qorder.length){ QZ.qi=0; qzShuffle(QZ.qorder); }
+  const q=QZ.qs[QZ.qorder[QZ.qi++]], easy=QZ.diff==='easy';
+  $('playBody').innerHTML='<div class="plstat" id="plStat"></div><div class="qzboard" id="qzBoard"></div><div id="plQ"></div>'; qzStatus(); qzBoard();
+  qCard($('plQ'),q,{easy,timer:easy?0:20,auto:900,onDone:(sc,ms)=>qzAfter(sc,ms)}); }
+async function qzAfter(sc,ms){ if(!QZ.on||QZ.ended) return; const sg=QZ.seed, me=QZ.pl[QZ.me], easy=QZ.diff==='easy';
+  me.done++; if(sc>0) me.right+=sc; QZ.streak=sc>=1?QZ.streak+1:0;
+  // the rhythm burst comes after a right answer: tapping on the beat multiplies the points (and in Last Note Standing keeps your hearts)
+  const b=sc>0?await playBurst(easy):0; if(!QZ.on||QZ.ended||QZ.seed!==sg) return;
+  let gain=0; if(sc>0){ const speed=easy?0:Math.max(0,Math.round(50*(1-ms/20000))), streak=easy?0:Math.min(50,(QZ.streak-1)*10); gain=Math.round((100+speed+streak)*sc*(1+b/8)); }
+  const out=QZ.mode==='last'&&me.hearts<=0;
+  if(QZ.mode==='last'&&!out&&(sc===0||b<3)){ me.hearts=Math.max(0,me.hearts-1); toast(me.hearts?'❤ Lost a heart!':'You\'re out! Keep answering to send hearts to the others.'); }
+  if(out&&sc>0){ me.rev++; toast('💌 Heart sent toward your friends!'); }
+  if(!out) me.score+=gain;
+  if(QZ.mode==='tower'&&sc>0) me.fl+=1+(b>=6?1:0);
+  if(QZ.mode==='race'&&me.score>=qzGoal()&&!me.fin) me.fin=Date.now()-QZ.t0;
+  qzPush(); qzNext(); }
+/* my numbers go to everyone (a guest sends them to the host, who passes them on) */
+function qzPush(){ const me=QZ.pl[QZ.me]; netSend({t:'qz',k:'up',seed:QZ.seed,p:QZ.me,s:{score:me.score,right:me.right,done:me.done,fl:me.fl,hearts:me.hearts,rev:me.rev,fin:me.fin}}); }
+const qzNum=(v,max)=>clamp(Math.round((+v||0)*10)/10,0,max);
+function qzApply(P,s){ if(!P||!s) return; P.score=qzNum(s.score,1e6); P.right=qzNum(s.right,1e4); P.done=qzNum(s.done,1e4); P.fl=qzNum(s.fl,1e4); P.hearts=qzNum(s.hearts,3); P.rev=qzNum(s.rev,1e4); P.fin=qzNum(s.fin,1e7); }
+/* messages: from the host (guests), or relayed and stamped with the sender's place (o.p) by the host */
+function qzMsg(o){
+  if(o.k==='start'){ if(!NET.host) qzBegin(o); return; }
+  if(!QZ.on||o.seed!==QZ.seed) return;
+  const P=QZ.pl[o.p];
+  if(o.k==='up'){ if(o.p!==QZ.me&&P){ qzApply(P,o.s); qzBoard(); } return; }
+  if(o.k==='heart'){ if(!P) return; if(o.p===QZ.me){ P.hearts=Math.min(3,P.hearts+1); toast('💌 A friend sent you a heart!'); sGem(); qzPush(); qzStatus(); } else P.hearts=Math.min(3,P.hearts+1); qzBoard(); return; }
+  if(o.k==='gone'){ if(P&&!P.gone){ P.gone=true; toast(`${P.name} left the game.`); qzBoard(); } return; }
+  if(o.k==='end'){ qzEnd(o); return; } }
+/* host: a quiz message from a guest */
+function qzFromGuest(x,o){
+  const i=QZ.on?QZ.order.indexOf(x.slot):-1; if(i<0||o.seed!==QZ.seed) return; o.p=i;
+  if(o.k==='up'){ for(const q of NET.conns) if(q.c!==x.c&&q.c.open) try{ q.c.send(o); }catch(e){} qzMsg(o); return; }
+  if(o.k==='quit') qzGone(i); }
+function qzGone(i){ const P=QZ.pl[i]; if(!QZ.on||QZ.ended||!P||P.gone) return; const o={t:'qz',k:'gone',seed:QZ.seed,p:i}; netSend(o); qzMsg(o); }
+/* every half second: the clock, and (host) whether the game is over and who gets a heart */
+function qzTick(){ if(!QZ.on||QZ.ended) return; const c=$('plClock'); if(c) c.textContent=mmss(qzLeft());
+  if(!NET.host||Date.now()<QZ.t0) return;
+  const P=QZ.pl.filter(p=>!p.gone); let end=qzLeft()<=0||P.length<2;
+  if(QZ.mode==='race'&&P.some(p=>p.score>=qzGoal())) end=true;
+  if(QZ.mode==='tower'&&P.reduce((a,p)=>a+p.fl,0)>=qzTower()) end=true;
+  if(QZ.mode==='last'){ const alive=P.filter(p=>p.hearts>0); if(alive.length<=1) end=true;
+    // every 3 right answers from players who are out turns into a heart for whoever has the fewest
+    const give=Math.floor(QZ.pl.reduce((a,p)=>a+p.rev,0)/3)-QZ.rev;
+    for(let k=0;k<give&&!end;k++){ const t=alive.filter(p=>p.hearts<3).sort((a,b)=>a.hearts-b.hearts)[0]; QZ.rev++; if(!t) continue;
+      const o={t:'qz',k:'heart',seed:QZ.seed,p:QZ.pl.indexOf(t)}; netSend(o); qzMsg(o); } }
+  if(end) qzFinish(); }
+function qzFinish(why){ if(!QZ.on||QZ.ended) return;
+  const o={t:'qz',k:'end',seed:QZ.seed,why:why||'',pl:QZ.pl.map(p=>({score:p.score,right:p.right,done:p.done,fl:p.fl,hearts:p.hearts,fin:p.fin,gone:p.gone}))};
+  netSend(o); qzEnd(o); }
+/* the places at the end: who won, by mode */
+function qzRanked(){ const P=QZ.pl.map((p,i)=>({...p,i}));
+  if(QZ.mode==='race') return P.sort((a,b)=>(a.gone-b.gone)||((b.fin?1:0)-(a.fin?1:0))||(a.fin&&b.fin?a.fin-b.fin:0)||b.score-a.score);
+  if(QZ.mode==='last') return P.sort((a,b)=>(a.gone-b.gone)||((b.hearts>0)-(a.hearts>0))||b.score-a.score);
+  if(QZ.mode==='tower') return P.sort((a,b)=>(a.gone-b.gone)||b.fl-a.fl||b.score-a.score);
+  return P.sort((a,b)=>(a.gone-b.gone)||b.score-a.score); }
+function qzEnd(o){ if(!QZ.on||QZ.ended) return; QZ.ended=true; clearInterval(QZ.tick); QZ.tick=null;
+  (o.pl||[]).forEach((s,i)=>{ const P=QZ.pl[i]; if(!P) return; if(i!==QZ.me) qzApply(P,s); if(s.gone) P.gone=true; });
+  const me=QZ.pl[QZ.me], R=qzRanked(), M=QZ_MODES[QZ.mode];
+  let won=false, title='', sub='';
+  if(QZ.mode==='tower'){ const tot=QZ.pl.reduce((a,p)=>a+p.fl,0); won=tot>=qzTower(); title=won?'Tower complete! 🎉':'Out of time!'; sub=`${tot} of ${qzTower()} floors, built together`; }
+  else if(QZ.mode==='jam'){ const T=qzTeams(), w=T[0].score===T[1].score?-1:T[0].score>T[1].score?0:1; won=w===me.team; title=w<0?'It\'s a tie!':won?'Your team wins! 🎉':`Team ${TEAM_N[w]} wins`; sub=T.map(t=>`<b style="color:${TEAM_COL[t.t]}">${TEAM_N[t.t]} ${t.score.toLocaleString()}</b>`).join(' · '); }
+  else { won=R[0]&&R[0].i===QZ.me; title=won?'You won! 🎉':`${escapeHTML(R[0]?R[0].name:'')} wins!`; sub=M.n; }
+  if(o.why==='host') { title='The host ended the game'; won=false; }
+  // a small reward for playing: more for a win, nothing for a game you barely played
+  let notes=0, xp=0; if(me.done>=3&&o.why!=='host'){ notes=won?20:8; xp=won?40:20; SAVE.notes+=notes; addXP(xp); passAdd(xp); SAVE.life=SAVE.life||{}; SAVE.life.partyQuiz=(SAVE.life.partyQuiz||0)+1; if(won) SAVE.life.partyQuizWins=(SAVE.life.partyQuizWins||0)+1; save(); }
+  const stat=p=>QZ.mode==='tower'?`🧱 ${p.fl}`:QZ.mode==='last'?(p.hearts>0?'❤'.repeat(p.hearts):'out')+` · ${p.score.toLocaleString()}`:QZ.mode==='race'&&p.fin?`🏁 ${mmss(Math.round(p.fin/1000))}`:p.score.toLocaleString();
+  $('playBody').innerHTML=`<div class="plend qzend">${FUN_BG()}${won?CONFETTI():''}<h2>${title}</h2><p class="plmode">${sub}</p>
+    <div class="qzpod">${R.map((p,k)=>`<div class="qzpodr${p.i===QZ.me?' me':''}${p.gone?' gone':''}"><span class="lvrk">${['🥇','🥈','🥉'][k]||'#'+(k+1)}</span>${lvChip(p,'','','div',40)}<b>${p.gone?'left':stat(p)}</b><small>${+p.right.toFixed(1)} right</small></div>`).join('')}</div>
+    ${notes?`<p class="qzrew">+♪${notes} · +${xp} XP</p>`:''}<button class="btn lvgo" id="qzBack" type="button">Back to the party</button></div>`;
+  $('qzBack').onclick=qzClose; if(won&&A.ctx) sWin(); }
+function qzClose(){ qzStop(); $('playBack').textContent='← Leave'; if(NET.peer) showParty(); else toMenu(); }
+/* leaving mid-game: a guest drops out (the others carry on); the host ends it for everyone */
+function qzLeave(){ if(QZ.ended){ qzClose(); return; }
+  if(!confirm(NET.host?'End the quiz game for everyone?':'Leave this quiz game? You stay in the party.')) return;
+  if(NET.host) qzFinish('host'); else { netSend({t:'qz',k:'quit',seed:QZ.seed}); qzClose(); } }
+/* a guest lost the host mid-game */
+function qzHostLost(){ if(!QZ.on||QZ.ended) return; QZ.ended=true; qzStop();
+  $('playBody').innerHTML='<div class="plwait"><h2>The host left the party.</h2><p>The game has ended.</p><button class="btn" id="qzBack" type="button">OK</button></div>'; $('qzBack').onclick=qzClose; }
+function qzStatus(){ const s=$('plStat'); if(!s||!QZ.on) return; const me=QZ.pl[QZ.me], M=QZ_MODES[QZ.mode];
+  s.innerHTML=`<span>${M.ic} ${QZ.mode==='tower'?`🧱 ${me.fl} floors`:QZ.mode==='last'?('❤'.repeat(Math.max(0,me.hearts))||'Out: answer to send hearts!'):QZ.mode==='jam'?`<b style="color:${TEAM_COL[me.team]}">Team ${TEAM_N[me.team]}</b> · ${me.score.toLocaleString()}`:`${me.score.toLocaleString()} / ${qzGoal().toLocaleString()}`}</span><span id="plClock">${mmss(qzLeft())}</span>`; }
+/* everyone's progress, under the status line */
+function qzBoard(){ const b=$('qzBoard'); if(!b||!QZ.on) return; qzStatus();
+  const row=(p,i,pct,val)=>`<div class="qzlane${i===QZ.me?' me':''}${p.gone?' gone':''}">${lvChip(p,'','','div',28)}<div class="rvtrack"><i style="width:${clamp(pct,0,100).toFixed(1)}%"></i></div><b>${p.gone?'left':val}</b></div>`;
+  if(QZ.mode==='tower'){ const tot=QZ.pl.reduce((a,p)=>a+p.fl,0), tg=qzTower();
+    b.innerHTML=`<div class="qztot">🗼 Tower: <b>${tot} / ${tg}</b> floors</div><div class="rvtrack"><i style="width:${Math.min(100,tot/tg*100).toFixed(1)}%"></i></div>`; return; }
+  if(QZ.mode==='jam'){ const T=qzTeams(), top=Math.max(1,T[0].score,T[1].score);
+    b.innerHTML=T.map(t=>`<div class="qzteamrow"><b style="color:${TEAM_COL[t.t]}">${TEAM_N[t.t]}</b><div class="rvtrack"><i style="width:${(t.score/top*100).toFixed(1)}%;background:${TEAM_COL[t.t]}"></i></div><b>${t.score.toLocaleString()}</b></div>`).join(''); return; }
+  b.innerHTML=QZ.pl.map((p,i)=>QZ.mode==='last'?row(p,i,p.hearts/3*100,p.hearts>0?'❤'.repeat(p.hearts):'out'):row(p,i,p.score/qzGoal()*100,p.score>=qzGoal()?'🏁':p.score.toLocaleString())).join(''); }
 
 /* ================= REVIEW LINKS =================
    Any ready-made pack, or a teacher's approved pack, has a link (?review=<pack>) to post on Google Classroom, in an email
