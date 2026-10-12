@@ -1755,10 +1755,15 @@ body.phone #menuOv .twban:not([hidden]){display:flex;align-items:center;gap:12px
 .admconfbox{box-sizing:border-box;width:100%;max-width:380px;padding:20px;border-radius:20px;background:linear-gradient(180deg,#2A2156,#1C1640);border:1px solid rgba(143,240,224,.4);box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center}
 .admconfbox .row{display:flex;gap:8px;margin-top:14px}.admconfbox .row .btn{flex:1}.admconfbox>b{display:block;font:800 19px var(--display);color:#fff}.admconfbox #admConfP{margin-top:8px;color:var(--ink-2);font-size:14px;line-height:1.45}
 .admconfbox #admConfP .admpv{display:flex;justify-content:center;margin:10px 0 2px}.admconfbox #admConfP canvas.skprev{width:84px;height:84px}.admconfbox #admConfP canvas.tileprev{width:110px;height:70px;border-radius:8px}.admconfbox #admConfP .ppban{display:block;width:150px;height:40px;border-radius:9px}
-#menuOv .admfab:not([hidden]){position:absolute;top:16px;right:18px;z-index:6;display:flex;align-items:center;gap:7px;padding:9px 14px 9px 11px;border-radius:999px;cursor:pointer;
+#menuOv .admfab:not([hidden]){display:flex;align-items:center;gap:7px;padding:9px 14px 9px 11px;border-radius:999px;cursor:pointer;
   font:800 13.5px var(--display);letter-spacing:.02em;color:#06231F;background:linear-gradient(180deg,#B8F2E6,#8FF0E0);border:0;box-shadow:0 6px 20px rgba(0,0,0,.3),0 0 0 3px rgba(143,240,224,.18)}
 #menuOv .admfab svg{width:18px;height:18px}
-body.phone #menuOv .admfab:not([hidden]){position:fixed;top:calc(env(safe-area-inset-top) + 82px);right:12px;padding:8px 12px 8px 9px;font-size:12.5px}
+body.phone #menuOv .admfab:not([hidden]){padding:8px 12px 8px 9px;font-size:12.5px}
+#menuOv .mcorner{position:absolute;top:16px;right:18px;z-index:6;display:flex;align-items:center;gap:8px}
+body.phone #menuOv .mcorner{position:fixed;top:calc(env(safe-area-inset-top) + 82px);right:12px}
+#menuOv .phours{display:flex;align-items:center;gap:4px;padding:9px 13px;border-radius:999px;cursor:pointer;font:800 13.5px var(--display);letter-spacing:.02em;font-variant-numeric:tabular-nums;color:#FFF4D6;background:linear-gradient(180deg,rgba(40,32,86,.92),rgba(24,19,56,.92));border:1px solid rgba(255,209,102,.45);box-shadow:0 6px 20px rgba(0,0,0,.3);backdrop-filter:blur(10px)}
+#menuOv .phours:hover{border-color:#FFD166}
+body.phone #menuOv .phours{padding:7px 11px;font-size:12.5px}
 body.phone #menuOv .mtop-r .wallet{order:0;min-height:38px;padding:0 12px;display:flex;align-items:center;font:700 14px var(--display);border-radius:12px}
 body.phone #mProfile{min-height:38px!important;padding:0 11px!important;border-radius:12px!important;font-size:12.5px!important}
 body.phone #menuOv .mmain{display:flex;flex-direction:column;gap:10px;flex:0 0 auto}
@@ -2606,9 +2611,49 @@ body.calm .enter .panel{animation:none}
 .admgl{display:grid;place-items:center;width:56px;height:56px;border-radius:14px;background:rgba(255,255,255,.07);font-size:28px}.admpv .admgl{width:84px;height:84px;font-size:40px}
 /* phones with the tab bar: the Locker's last buttons scroll clear of the bar */
 body.phone.hastabs #denOv > .panel{padding-bottom:calc(96px + env(safe-area-inset-bottom))!important}
+
+/* ---- reward events (admin Fun tab): piñata, stardust shower, balloons, prize wheel, beat drop, scratch card ---- */
+.funcard{display:grid;place-items:center;background:rgba(10,8,30,.62);padding:16px;overflow:hidden}
+.fecard{position:relative;box-sizing:border-box;width:min(100%,440px);max-height:calc(100vh - 32px);overflow:auto;padding:20px;border-radius:22px;text-align:center;background:linear-gradient(160deg,#3A2E78,#140F34);border:1px solid rgba(255,214,120,.5);box-shadow:0 20px 60px rgba(0,0,0,.5);color:#fff;animation:fecin .35s cubic-bezier(.2,1.4,.4,1)}
+.fecard h3{margin:4px 0 6px;font:800 22px var(--display)}.fecard p{margin:4px 0;font-size:14px;color:#E8E2FF}
+.fecard .fesub{min-height:1.4em;font-weight:700;font-size:15px}.fecard .fesub b{color:#FFD166}
+.fecard .row{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:10px}
+.fecard .confetti{position:absolute;inset:0;pointer-events:none}
+@keyframes fecin{from{transform:scale(.85);opacity:0}}
+.feco{position:absolute;z-index:3;pointer-events:none;font:900 22px system-ui,sans-serif;text-shadow:0 2px 6px rgba(0,0,0,.45);animation:feco 1.2s cubic-bezier(.2,.8,.3,1) both}
+@keyframes feco{0%{transform:translate(-50%,-50%) scale(.4);opacity:1}70%{opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.1);opacity:0}}
+.febar{height:10px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;margin:8px 0 4px}.febar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FF7EB6,#FFD166);transition:width .15s}
+.fepn{border:0;background:none;cursor:pointer;font-size:110px;line-height:1;padding:6px 10px 0;transform-origin:50% 0;animation:feswing 2.2s ease-in-out infinite;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.fepn span{display:inline-block}.fepn.hit span{animation:fehit .25s}.fepn.broke{animation:none}.fepn.broke span{animation:febreak .5s forwards}
+@keyframes feswing{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+@keyframes fehit{30%{transform:scale(.85) rotate(-14deg)}70%{transform:scale(1.08) rotate(9deg)}}
+@keyframes febreak{to{transform:scale(1.9) rotate(30deg);opacity:0}}
+.fsnote.fsstar{border-color:#D8C8FF;background:radial-gradient(circle at 35% 30%,#F4EEFF,#8A6CFF);color:#2A1460;box-shadow:0 6px 18px rgba(138,108,255,.6)}
+.fsnote.fsgold{width:62px;height:62px;border-color:#FFF4C0;background:radial-gradient(circle at 35% 30%,#FFF8E0,#FFB020);color:#6A3A00;box-shadow:0 0 26px rgba(255,200,80,.85)}
+.fsnote.got,.feball.got{opacity:0;transition:opacity .22s;pointer-events:none}
+.feball{position:absolute;bottom:-130px;width:58px;height:70px;padding:0;border:0;border-radius:50% 50% 47% 47%/56% 56% 44% 44%;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.75) 0 7%,rgba(255,255,255,0) 24%),var(--bc);box-shadow:inset -7px -9px 14px rgba(0,0,0,.2);pointer-events:auto;cursor:pointer;animation:ferise linear forwards;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.feball::before{content:'';position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border:5px solid transparent;border-bottom:7px solid var(--bc)}
+.feball::after{content:'';position:absolute;left:50%;top:calc(100% + 6px);width:1.5px;height:44px;background:rgba(255,255,255,.55)}
+.feball.gold{width:70px;height:84px;box-shadow:inset -7px -9px 14px rgba(150,90,0,.25),0 0 26px rgba(255,210,80,.8)}
+@keyframes ferise{0%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(calc(-50vh - 70px)) rotate(6deg)}100%{transform:translateY(calc(-100vh - 220px)) rotate(-4deg)}}
+.fepop{position:absolute;z-index:3;transform:translate(-50%,-50%);font:900 18px var(--display);color:#FFE27A;text-shadow:0 2px 6px rgba(0,0,0,.65);pointer-events:none;white-space:nowrap;animation:fepop 1.1s ease-out forwards}.fepop.big{font-size:24px}
+@keyframes fepop{to{transform:translate(-50%,-190%);opacity:0}}
+.febt{position:relative;width:150px;height:150px;margin:62px auto 58px;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle,#4A3A9A,#1E1650);box-shadow:inset 0 0 0 4px rgba(255,209,102,.55);touch-action:manipulation;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.febr{position:absolute;inset:0;border-radius:50%;border:4px solid #7FF0D2;pointer-events:none;opacity:0;will-change:transform}
+.febc{position:relative;font:800 22px var(--display);color:#fff}.febc.p{color:#FFD166}.febc.g{color:#7FF0D2}.febc.x{color:#FF8A9A}
+.febt.hitp{animation:fehitp .22s}@keyframes fehitp{50%{box-shadow:inset 0 0 0 4px #FFD166,0 0 40px rgba(255,209,102,.75)}}
+.fedots{display:flex;justify-content:center;gap:6px;margin:4px 0}.fedots i{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.18)}.fedots i.p{background:#FFD166}.fedots i.g{background:#7FF0D2}.fedots i.x{background:#FF6A7A}
+.fewheel .fwwrap{width:min(300px,72vw)}
+.fesc{position:relative;width:min(300px,78vw);aspect-ratio:3/2;margin:12px auto;border-radius:16px;overflow:hidden;background:linear-gradient(160deg,#FFF8EE,#FFE6C8);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.fesg{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr)}
+.fesg span{display:grid;place-items:center;font:900 40px system-ui,sans-serif;border:1px dashed rgba(58,46,120,.18)}.fesg .sn{color:#E89A10}.fesg .sd{color:#7A5CFF}
+.fesg span.on{background:radial-gradient(circle,rgba(255,209,102,.85),rgba(255,209,102,0) 70%);animation:fewin .6s ease-in-out 3}
+@keyframes fewin{50%{transform:scale(1.18)}}
+.fesc canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;transition:opacity .6s}.fesc canvas.gone{opacity:0;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.fepn,.feball{animation-duration:9s}.fepn{animation:none}}
 </style>
 <section id="menuOv" class="screen" hidden>
-  <button class="admfab" id="mAdmin" type="button" hidden aria-label="Admin panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-3 7.6-7 9-4-1.4-7-4.8-7-9V6z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></svg><span>Admin</span></button>
+  <div class="mcorner"><button class="admfab" id="mAdmin" type="button" hidden aria-label="Admin panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-3 7.6-7 9-4-1.4-7-4.8-7-9V6z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></svg><span>Admin</span></button><button class="phours" id="mHours" type="button" title="Time played on Pulseform" aria-label="Time played on Pulseform">⏱ 0m</button></div>
   <div id="hween" aria-hidden="true"></div>
   <div class="mmain">
     <div class="mhero">
@@ -3243,11 +3288,23 @@ body.phone.hastabs #denOv > .panel{padding-bottom:calc(96px + env(safe-area-inse
         <button type="button" data-fx="erlaf"><span>🦆</span><b>Erlaf flyover</b><small>The Giant Duck flies by, quacking</small></button>
         <button type="button" data-fx="quake"><span>🌋</span><b>Earthquake</b><small>Every menu shakes</small></button>
         <button type="button" data-fx="disco"><span>🪩</span><b>Disco</b><small>30 seconds of party lights</small></button>
-        <button type="button" data-fx="storm"><span>🎵</span><b>Note Storm</b><small>Catch falling notes for ♪</small></button>
-        <button type="button" data-fx="boxes"><span>🎁</span><b>Mystery boxes</b><small>Everyone picks 1 of 3</small></button>
       </div>
+      <h4 class="admh">🎁 Reward events</h4>
+      <small class="admhint">Everyone who has the game open plays their own round and keeps what they win: Notes ♪ and Stardust ✧. A player in a run gets it when their run ends.</small>
+      <div class="admfx" id="admRwGrid">
+        <button type="button" data-fx="pinata"><span>🪅</span><b>Piñata</b><small>Tap it till it bursts: ♪ + ✧</small></button>
+        <button type="button" data-fx="dust"><span>✨</span><b>Stardust Shower</b><small>Catch stars for ✧, gold comets for ♪</small></button>
+        <button type="button" data-fx="balloons"><span>🎈</span><b>Balloon Pop</b><small>Every balloon hides ♪ or ✧</small></button>
+        <button type="button" data-fx="wheel"><span>🎡</span><b>Prize Wheel</b><small>One free spin each, with a jackpot</small></button>
+        <button type="button" data-fx="beat"><span>🥁</span><b>Beat Drop</b><small>A 12-beat rhythm round: better timing, bigger prize</small></button>
+        <button type="button" data-fx="scratch"><span>🎟</span><b>Scratch card</b><small>Match 3: ♪, ✧ or 💎 both</small></button>
+        <button type="button" data-fx="storm"><span>🎵</span><b>Note Storm</b><small>Catch falling notes for ♪</small></button>
+        <button type="button" data-fx="boxes"><span>🎁</span><b>Mystery boxes</b><small>Pick 1 of 3: ♪, ✧ or a block</small></button>
+        <button type="button" data-fx="surprise"><span>🎲</span><b>Surprise me</b><small>One of the six new ones at random</small></button>
+      </div>
+      <div class="g1"><label>Prize size (the six new events)<select id="admRwT"><option value="s">Small · ♪50–200 and ✧5–20</option><option value="m" selected>Medium · ♪200–800 and ✧20–60</option><option value="b">Big · ♪800–3,000 and ✧60–200</option><option value="h">Huge · ♪3,000–10,000 and ✧200–600</option></select></label></div>
       <div class="g2"><label>Note Storm: ♪ per note<select id="admStormN"><option value="5">♪5</option><option value="10" selected>♪10</option><option value="25">♪25</option><option value="50">♪50</option><option value="100">♪100</option></select></label>
-        <label>Mystery box prizes<select id="admBoxT"><option value="s">Small (♪50–300)</option><option value="m" selected>Medium (♪200–1,200)</option><option value="b">Big (♪1,000–5,000)</option></select></label></div>
+        <label>Mystery box prizes<select id="admBoxT"><option value="s">Small (♪50–300 or ✧5–30)</option><option value="m" selected>Medium (♪200–1,200 or ✧20–120)</option><option value="b">Big (♪1,000–5,000 or ✧100–500)</option></select></label></div>
       <label class="opt" for="admBoxB"><input id="admBoxB" type="checkbox"><span>Boxes can hold a Shop block<small>1 in 4 boxes holds a block the player doesn't own yet.</small></span></label>
       <h4 class="admh">📣 Shout</h4>
       <div class="g1"><label>Message across every screen<input id="admShoutT" type="text" maxlength="120" placeholder="New levels drop tonight at 7!"></label></div>
@@ -12472,8 +12529,10 @@ function giftGive(r){ const out=[]; if(r.n){ SAVE.notes+=r.n; out.push(`♪${r.n
 /* ================= WHAT'S NEW =================
    Shown once to each player after an update (remembered in the save, so it follows their account to other devices),
    once the daily gift is out of the way. Settings → What's new opens it again. Change NEWS_V to show a new one. */
-const NEWS_V='2026-10i', NEWS_WHEN='Update · October 2026';
+const NEWS_V='2026-10j', NEWS_WHEN='Update · October 2026';
 const NEWS_ADDED=[
+ ['⏱','Time played','The clock in the top-right corner of the menu shows how many hours you\'ve spent on Pulseform. Tap it for the exact time.'],
+ ['🪅','Surprise reward events','Keep an eye out: piñatas, stardust showers, balloon pops, prize wheels, scratch cards and Beat Drop rounds can pop up for everyone, full of Notes and Stardust.'],
  ['🏳️','13 new banners','Vinyl, Synthwave, Equalizer, Grand Piano, Sakura, Bioluminescence, Lava Lamp, Holo Foil, Circuit Board, Galaxy, Finish Line, Sound Wave and Diamond Facets. Find them in Shop → Banners.'],
  ['✨','Shinier polish','A polished block now has a Gold or Prism edge all the way round, sitting under its ears and face.'],
  ['🌙','Dusk style','Get any block to mastery 5 and it can wear the Dusk Seraph\'s colours: deep violet with lavender highlights and a violet glow. Switch it on in the Locker or your Collection.'],
@@ -12541,6 +12600,19 @@ const bossesBeaten=()=>{ let n=0; for(let w=1;w<=WORLDS;w++) if(SAVE.stars[w+'-B
 const gradeCount=g=>Object.values(SAVE.grades||{}).filter(r=>r.g===g).length;
 const medalCount=()=>Object.values(SAVE.grades||{}).reduce((a,r)=>a+Object.keys(r.m||{}).length,0);
 const LF=k=>(SAVE.life||{})[k]||0;
+/* ---- time played: counts while the game is on screen and you've touched it in the last 5 minutes (or a run is going).
+   Kept in SAVE.life.playSec, so it follows your account like your other lifetime stats. It goes to this device's save every
+   30 seconds; the cloud gets it with your next normal save, so the clock itself never adds database writes. ---- */
+const PT={last:Date.now(),inp:Date.now(),un:0};
+['pointerdown','keydown','wheel','touchstart'].forEach(e=>addEventListener(e,()=>{ PT.inp=Date.now(); },{passive:true,capture:true}));
+const playSec=()=>LF('playSec');
+function playFmt(s){ const h=s/3600; return h<1?`${Math.max(0,Math.floor(s/60))}m`:h<100?`${(Math.floor(h*10)/10).toFixed(1)}h`:`${Math.floor(h).toLocaleString()}h`; }
+function playTick(){ const now=Date.now(), dt=Math.min(5,Math.max(0,(now-PT.last)/1000)); PT.last=now;
+  if(!document.hidden&&(now-PT.inp<300000||['playing','dying','cutscene'].includes(G.state))){ const L=SAVE.life||(SAVE.life={}); L.playSec=Math.round(((L.playSec||0)+dt)*10)/10; PT.un+=dt; if(PT.un>=30){ PT.un=0; store.set('save',SAVE); } }
+  const e=$('mHours'); if(e&&!$('menuOv').hidden){ const t='⏱ '+playFmt(playSec()); if(e.textContent!==t) e.textContent=t; } }
+setInterval(playTick,1000);
+document.addEventListener('visibilitychange',()=>{ PT.last=Date.now(); if(document.hidden&&PT.un>0){ PT.un=0; store.set('save',SAVE); } });
+$('mHours').onclick=()=>{ const s=Math.floor(playSec()), h=Math.floor(s/3600), m=Math.floor(s%3600/60); toast(`⏱ You've played Pulseform for ${h?`${h.toLocaleString()} hour${h===1?'':'s'} and `:''}${m} minute${m===1?'':'s'}`); };
 const ACH=[
  ['first','First Beat','Clear level 1-1',()=>SAVE.stars['1-1']>0],
  ['boss1','Sparring Partner','Defeat your first boss',()=>bossesBeaten()>=1],
@@ -16206,7 +16278,7 @@ function funStart(){ if(FUN.unsub||!ACCT.db||window.PF_CG) return; try{ FUN.seen
     funWxSync(); funBanners(); },()=>{}); }
 function funRemember(id){ FUN.seen.add(id); SAVE.funSeen=[...FUN.seen].slice(-60); save(); }
 /* ---- one-off effects ---- */
-const FUN_TAKEOVER={quake:1,disco:1,storm:1,boxes:1,erlaf:1};
+const FUN_TAKEOVER={quake:1,disco:1,storm:1,boxes:1,erlaf:1,pinata:1,dust:1,balloons:1,wheel:1,beat:1,scratch:1};
 function funFxIn(d){ if(!d||!d.id||FUN.seen.has(d.id)) return; const age=funNow()-(+d.t||0); if(age>180000||age<-120000) return;
   funRemember(d.id);
   if(FUN_TAKEOVER[d.k]&&G.state!=='menu'){ FUN.queued=d; return; }   // after this run
@@ -16226,6 +16298,12 @@ function funPlay(k,a){ ensureAudio(); if(A.ctx) A.ctx.resume().catch(()=>{});
       setTimeout(()=>{ document.body.classList.remove('fundisco'); L.remove(); },s*1000); break; }
     case 'storm': funStorm(clamp(Math.round(+a.n||10),1,200),clamp(Math.round(+a.c||20),5,30)); break;
     case 'boxes': funBoxes(a.tier||'m',!!a.blk); break;
+    case 'pinata': funPinata(a.t); break;
+    case 'dust': funShower(a.t); break;
+    case 'balloons': funBalloons(a.t); break;
+    case 'wheel': funPrizeWheel(a.t); break;
+    case 'beat': funBeat(a.t); break;
+    case 'scratch': funScratch(a.t); break;
   } }
 /* sounds, all made on the spot (no files) */
 function funSound(id){ ensureAudio(); const c=A.ctx; if(!c) return; const d=A.sfx, t=c.currentTime+.05;
@@ -16278,18 +16356,143 @@ function funStorm(n,count){ const L=funLayer('funstorm'); let got=0, left=count;
     b.addEventListener('animationend',()=>{ if(--left<=0) end(); }); L.appendChild(b); }
   setTimeout(end,15000); }
 /* Mystery boxes: pick one of three */
-function funBoxes(tier,blk){ const R={s:[50,300],m:[200,1200],b:[1000,5000]}[tier]||[200,1200];
+function funBoxes(tier,blk){ const R={s:[50,300],m:[200,1200],b:[1000,5000]}[tier]||[200,1200], RD={s:[5,30],m:[20,120],b:[100,500]}[tier]||[20,120];
   const pool=SKINS.filter(s=>s.price>0&&!s.req&&!s.paid&&!s.hidden&&!s.bp&&!SAVE.owned.includes(s.id));
-  const prize=()=>blk&&pool.length&&Math.random()<.25?{skin:pool[ri(pool.length)]}:{n:Math.round((R[0]+Math.random()*(R[1]-R[0]))/10)*10};
+  const prize=()=>blk&&pool.length&&Math.random()<.25?{skin:pool[ri(pool.length)]}:Math.random()<.35?{d:funRoll(RD,5)}:{n:Math.round((R[0]+Math.random()*(R[1]-R[0]))/10)*10};
   const P=[prize(),prize(),prize()], L=funLayer('funboxes');
   L.innerHTML=`<div class="fbx"><h3>🎁 Mystery boxes!</h3><p>Pick one. It's yours.</p><div class="fbrow">${P.map((p,i)=>`<button type="button" class="fbb" data-i="${i}"><span class="fbl">🎁</span><span class="fbin"></span></button>`).join('')}</div><button type="button" class="btn ghost fbclose" hidden>Nice!</button></div>`;
-  const label=p=>p.skin?`<canvas class="skprev" data-skin="${p.skin.id}" data-px="64" width="64" height="64"></canvas><b>${escapeHTML(p.skin.name)}</b>`:`<b>♪${p.n.toLocaleString()}</b>`;
+  const label=p=>p.skin?`<canvas class="skprev" data-skin="${p.skin.id}" data-px="64" width="64" height="64"></canvas><b>${escapeHTML(p.skin.name)}</b>`:p.d?`<b>✧${p.d.toLocaleString()}</b>`:`<b>♪${p.n.toLocaleString()}</b>`;
   let done=false; L.querySelectorAll('.fbb').forEach(b=>b.onclick=()=>{ if(done) return; done=true; const i=+b.dataset.i, p=P[i];
     L.querySelectorAll('.fbb').forEach((x,j)=>{ x.querySelector('.fbin').innerHTML=label(P[j]); x.classList.add(j===i?'mine':'other','open'); });
-    if(p.skin){ if(!SAVE.owned.includes(p.skin.id)) SAVE.owned.push(p.skin.id); toast(`🎁 ${p.skin.name} is yours!`); } else { SAVE.notes+=p.n; toast(`🎁 +♪${p.n.toLocaleString()}!`); }
+    if(p.skin){ if(!SAVE.owned.includes(p.skin.id)) SAVE.owned.push(p.skin.id); toast(`🎁 ${p.skin.name} is yours!`); } else if(p.d){ SAVE.dust=dustN()+p.d; toast(`🎁 +✧${p.d.toLocaleString()} Stardust!`); } else { SAVE.notes+=p.n; toast(`🎁 +♪${p.n.toLocaleString()}!`); }
     save(); acctPush&&acctPush(true); funSound('tada'); const c=L.querySelector('.fbclose'); c.hidden=false; c.onclick=()=>{ L.remove(); if(funMenu()) buildMenu(); };
     const t0=performance.now(), fr=now=>{ if(!L.isConnected) return; try{ drawSkinPreviews(now/1000,'.funboxes canvas.skprev'); }catch(e){} if(now-t0<20000) requestAnimationFrame(fr); }; requestAnimationFrame(fr); });
   setTimeout(()=>{ if(!done&&L.isConnected){ L.remove(); } },60000); }
+/* ---- reward events: fun things for everyone that pay out Notes and Stardust. The admin picks the prize size; each
+   player plays their own round and gets what they win (once per event, like the Note Storm). ---- */
+const FUN_RW={s:{n:[50,200],d:[5,20]},m:{n:[200,800],d:[20,60]},b:{n:[800,3000],d:[60,200]},h:{n:[3000,10000],d:[200,600]}};
+const FUN_RW_K=['pinata','dust','balloons','wheel','beat','scratch'];
+const funRw=t=>FUN_RW[t]||FUN_RW.m;
+const funStep=(x,s)=>Math.max(s,Math.round(x/s)*s);
+const funRoll=([a,b],s)=>funStep(a+Math.random()*(b-a),s);
+const funAmt=(n,d)=>[n?`♪${n.toLocaleString()}`:'',d?`✧${d.toLocaleString()}`:''].filter(Boolean).join(' + ');
+function funPay(n,d,why){ n=Math.max(0,Math.round(+n||0)); d=Math.max(0,Math.round(+d||0)); if(!n&&!d) return;
+  SAVE.notes+=n; SAVE.dust=dustN()+d; save(); try{ acctPush(true); }catch(e){} try{ updateHUD(); }catch(e){}
+  toast(`${why} +${funAmt(n,d)}`); if(funMenu()) try{ buildMenu(); }catch(e){} }
+/* a popup card for the events that take the whole screen */
+function funCard(cls,html){ const L=funLayer('funcard '+cls); L.innerHTML=`<div class="fecard">${html}</div>`; L.style.pointerEvents='auto'; return L; }
+/* ♪ and ✧ coins bursting out of a point on the screen */
+function funBurst(L,x,y,n){ for(let i=0;i<n;i++){ const s=document.createElement('i'), an=Math.random()*Math.PI*2, r=70+Math.random()*170; s.className='feco'; s.textContent=i%3?'♪':'✧';
+    s.style.cssText=`left:${x}px;top:${y}px;--dx:${(Math.cos(an)*r).toFixed(0)}px;--dy:${(Math.sin(an)*r-70).toFixed(0)}px;animation-delay:${(Math.random()*.15).toFixed(2)}s;color:${i%3?'#FFD166':'#C8B4FF'}`;
+    L.appendChild(s); setTimeout(()=>s.remove(),1500); } }
+/* something caught: it stays where it was caught and pops, instead of jumping back to where its fall started */
+function funGot(b){ const tf=getComputedStyle(b).transform; b.style.animation='none'; b.style.transform=(tf&&tf!=='none'?tf+' ':'')+'scale(1.7)'; b.classList.add('got'); }
+/* Piñata: tap it until it bursts open */
+function funPinata(t){ const R=funRw(t), need=15, n=funRoll(R.n,10), d=funRoll(R.d,5); let hits=0, done=false;
+  const L=funCard('fepin',`<h3>🪅 Piñata time!</h3><p>Tap the piñata until it breaks open.</p><button type="button" class="fepn" aria-label="Hit the piñata"><span>🪅</span></button><div class="febar"><i></i></div><p class="fesub">0 / ${need} hits</p><div class="row"><button type="button" class="btn fego" hidden>Nice!</button></div>`);
+  const P=L.querySelector('.fepn'), bar=L.querySelector('.febar i'), sub=L.querySelector('.fesub');
+  P.onpointerdown=e=>{ e.preventDefault(); if(done) return; hits++; bar.style.width=(hits/need*100)+'%'; sub.textContent=`${hits} / ${need} hits`;
+    P.classList.remove('hit'); void P.offsetWidth; P.classList.add('hit'); funSound(hits%4?'pop':'boing'); buzz(15);
+    const r=P.getBoundingClientRect(), x=r.left+r.width/2, y=r.top+r.height/2; funBurst(L,x,y,2);
+    if(hits>=need){ done=true; P.classList.add('broke'); funSound('boom'); setTimeout(()=>funSound('tada'),250); funBurst(L,x,y,36);
+      const c=document.createElement('div'); c.innerHTML=CONFETTI(); L.querySelector('.fecard').appendChild(c);
+      sub.innerHTML=`It burst open! You got <b>${funAmt(n,d)}</b>`; funPay(n,d,'🪅 Piñata!'); const g=L.querySelector('.fego'); g.hidden=false; g.onclick=()=>L.remove(); } };
+  setTimeout(()=>{ if(L.isConnected&&!done){ L.remove(); toast('🪅 The piñata floated away. Next time!'); } },60000); }
+/* Stardust Shower: catch the falling stars for ✧; the gold comets are worth ♪ */
+function funShower(t){ const R=funRw(t), per=Math.max(1,Math.round((R.d[0]+R.d[1])/20)), gold=funStep((R.n[0]+R.n[1])/6,10), count=26; let gn=0, gd=0, left=count, over=false;
+  const L=funLayer('funstorm'); L.innerHTML=`<div class="fstop">✧ Stardust Shower! Stars <b>✧${per}</b> each, gold comets <b>♪${gold}</b> · <span class="fsg">0</span></div>`;
+  const cnt=L.querySelector('.fsg');
+  const end=()=>{ if(over) return; over=true; L.remove(); if(gn||gd) funPay(gn,gd,'✧ Stardust Shower:'); else toast('✧ The Stardust Shower passed. Next time!'); };
+  for(let i=0;i<count;i++){ const g=i%9===4, b=document.createElement('button'); b.type='button'; b.className='fsnote fsstar'+(g?' fsgold':''); b.textContent=g?'☄':'✦'; b.setAttribute('aria-label',g?'Gold comet':'Star');
+    b.style.left=(5+Math.random()*88)+'%'; b.style.animationDelay=(Math.random()*9).toFixed(2)+'s'; b.style.animationDuration=((g?2.4:3)+Math.random()*2.4).toFixed(2)+'s';
+    b.onpointerdown=e=>{ e.preventDefault(); e.stopPropagation(); if(b.classList.contains('got')) return; funGot(b); if(g) gn+=gold; else gd+=per; cnt.textContent=funAmt(gn,gd); funSound(g?'tada':'pop'); buzz(10); left--; if(left<=0) end(); };
+    b.addEventListener('animationend',()=>{ if(--left<=0) end(); }); L.appendChild(b); }
+  setTimeout(end,15000); }
+/* Balloon Pop: balloons float up, each holding Notes or Stardust; the two gold ones hold a lot */
+function funBalloons(t){ const R=funRw(t), count=18, cols=['#FF5A7A','#FFB020','#22C8FF','#7A5CFF','#2EE89A','#FF7EB6']; let gn=0, gd=0, left=count, over=false;
+  const L=funLayer('funstorm'); L.innerHTML=`<div class="fstop">🎈 Balloon Pop! Pop them for ♪ and ✧ · <span class="fsg">0</span></div>`;
+  const cnt=L.querySelector('.fsg');
+  const end=()=>{ if(over) return; over=true; L.remove(); if(gn||gd) funPay(gn,gd,'🎈 Balloon Pop:'); else toast('🎈 The balloons floated away. Next time!'); };
+  for(let i=0;i<count;i++){ const g=i===5||i===13, b=document.createElement('button'); b.type='button'; b.className='feball'+(g?' gold':''); b.setAttribute('aria-label',g?'Gold balloon':'Balloon');
+    b.style.setProperty('--bc',g?'#FFD34D':cols[i%cols.length]); b.style.left=(4+Math.random()*86)+'%'; b.style.animationDelay=(Math.random()*9).toFixed(2)+'s'; b.style.animationDuration=(4.2+Math.random()*2.6).toFixed(2)+'s';
+    const p=g?{n:funRoll([R.n[0]/2,R.n[1]/2],10),d:funRoll([R.d[0]/2,R.d[1]/2],5)}:Math.random()<.55?{n:funRoll([R.n[0]/8,R.n[1]/8],5),d:0}:{n:0,d:Math.max(1,Math.round((R.d[0]+Math.random()*(R.d[1]-R.d[0]))/8))};
+    b.onpointerdown=e=>{ e.preventDefault(); e.stopPropagation(); if(b.classList.contains('got')) return; const r=b.getBoundingClientRect(); funGot(b); gn+=p.n; gd+=p.d; cnt.textContent=funAmt(gn,gd);
+      const tx=document.createElement('i'); tx.className='fepop'+(g?' big':''); tx.textContent='+'+funAmt(p.n,p.d); tx.style.left=(r.left+r.width/2)+'px'; tx.style.top=(r.top+r.height/3)+'px'; L.appendChild(tx); setTimeout(()=>tx.remove(),1200);
+      funSound(g?'tada':'pop'); buzz(12); left--; if(left<=0) end(); };
+    b.addEventListener('animationend',()=>{ if(--left<=0) end(); }); L.appendChild(b); }
+  setTimeout(end,17000); }
+/* Prize Wheel: one free spin each, with a small chance of the jackpot */
+function funPrizeWheel(t){ const R=funRw(t), mn=funStep((R.n[0]+R.n[1])/2,10), md=funStep((R.d[0]+R.d[1])/2,5);
+  const S=[{n:R.n[0],d:0,w:20},{n:0,d:R.d[0],w:20},{n:mn,d:0,w:16},{n:0,d:md,w:16},{n:R.n[1],d:0,w:8},{n:0,d:R.d[1],w:8},{n:mn,d:md,w:9},{n:R.n[1]*2,d:R.d[1]*2,w:3,jp:1}];
+  const L=funCard('fewheel',`<h3>🎡 Prize Wheel!</h3><p>One free spin. Land on the jackpot for double the top prizes.</p><div class="fwwrap"><canvas width="320" height="320"></canvas><i class="fwptr"></i></div><p class="fesub">&nbsp;</p><div class="row"><button type="button" class="btn fespin">🎡 Spin!</button><button type="button" class="btn fego" hidden>Nice!</button></div>`);
+  const cv=L.querySelector('canvas'), g=cv.getContext('2d'), n=S.length, seg=Math.PI*2/n, sub=L.querySelector('.fesub'); let ang=-Math.PI/2-seg/2;
+  const col=s=>s.jp?'#FF4FA0':s.n&&s.d?'#2EC8A8':s.n?(s.n>=R.n[1]?'#FFB020':'#FFD166'):(s.d>=R.d[1]?'#7A5CFF':'#A890FF');
+  const draw=()=>{ g.clearRect(0,0,320,320); for(let i=0;i<n;i++){ const a0=ang+i*seg, s=S[i]; g.beginPath(); g.moveTo(160,160); g.arc(160,160,150,a0,a0+seg); g.closePath(); g.fillStyle=col(s); g.fill(); g.strokeStyle='rgba(20,14,48,.35)'; g.lineWidth=2; g.stroke();
+      g.save(); g.translate(160,160); g.rotate(a0+seg/2); g.textAlign='right'; g.fillStyle=s.jp?'#FFFFFF':'#1A1440'; g.font='800 14px system-ui,sans-serif';
+      if(s.jp) g.fillText('JACKPOT',140,5); else if(s.n&&s.d){ g.fillText('♪'+s.n.toLocaleString(),140,-3); g.fillText('✧'+s.d.toLocaleString(),140,13); } else g.fillText(s.n?'♪'+s.n.toLocaleString():'✧'+s.d.toLocaleString(),140,5); g.restore(); }
+    g.beginPath(); g.arc(160,160,150,0,Math.PI*2); g.lineWidth=5; g.strokeStyle='#FFD166'; g.stroke();
+    g.beginPath(); g.arc(160,160,22,0,Math.PI*2); g.fillStyle='#FFD166'; g.fill(); g.strokeStyle='#A8761C'; g.lineWidth=3; g.stroke(); };
+  draw(); let spun=false;
+  L.querySelector('.fespin').onclick=e=>{ if(spun) return; spun=true; e.target.disabled=true;
+    let x=Math.random()*S.reduce((a,s)=>a+s.w,0), w=0; for(let i=0;i<n;i++){ x-=S[i].w; if(x<0){ w=i; break; } }
+    const TAU2=Math.PI*2, target=-Math.PI/2-(w+.5+(Math.random()-.5)*.7)*seg, a0=ang, total=TAU2*6+(((target-a0)%TAU2)+TAU2)%TAU2, t0=performance.now(), D=4600; let last=-1;
+    const fr=now=>{ if(!L.isConnected) return; const u=Math.min(1,(now-t0)/D), ease=1-Math.pow(1-u,3); ang=a0+total*ease; draw();
+      const at=Math.floor((((-Math.PI/2-ang)%TAU2)+TAU2*2)%TAU2/seg); if(at!==last){ last=at; funSound('pop'); }
+      if(u<1){ requestAnimationFrame(fr); return; }
+      const s=S[w]; funSound(s.jp?'fanfare':'tada'); const c=document.createElement('div'); c.innerHTML=CONFETTI(); L.querySelector('.fecard').appendChild(c);
+      sub.innerHTML=s.jp?`💥 JACKPOT! <b>${funAmt(s.n,s.d)}</b>`:`You won <b>${funAmt(s.n,s.d)}</b>!`; funPay(s.n,s.d,s.jp?'🎡 JACKPOT!':'🎡 Prize Wheel:');
+      e.target.hidden=true; const gb=L.querySelector('.fego'); gb.hidden=false; gb.onclick=()=>L.remove(); };
+    requestAnimationFrame(fr); };
+  setTimeout(()=>{ if(L.isConnected&&!spun){ L.remove(); toast('🎡 The Prize Wheel rolled away. Next time!'); } },90000); }
+/* Beat Drop: a quick rhythm round. A ring closes in on every beat; tap as it lands. The better your timing, the bigger the prize */
+function funBeat(t){ const R=funRw(t), IV=600, COUNT=4, N=12, J=new Array(N).fill(null); let over=false, t0=0;
+  const L=funCard('febeat',`<h3>🥁 Beat Drop!</h3><p>Tap the circle (or press Space) right as the ring lands on it. 4 to count you in, then 12 beats.</p><div class="febt" role="button" aria-label="Tap on the beat"><i class="febr"></i><b class="febc">Ready?</b></div><div class="fedots">${J.map(()=>'<i></i>').join('')}</div><p class="fesub">&nbsp;</p><div class="row"><button type="button" class="btn festart">▶ Start</button><button type="button" class="btn fego" hidden>Nice!</button></div>`);
+  const pad=L.querySelector('.febt'), ring=L.querySelector('.febr'), cap=L.querySelector('.febc'), sub=L.querySelector('.fesub'), dots=[...L.querySelectorAll('.fedots i')];
+  const mark=(k,j)=>{ J[k]=j; dots[k].className=j; cap.textContent=j==='p'?'PERFECT':j==='g'?'GOOD':'MISS'; cap.className='febc '+j; };
+  const tap=()=>{ if(over||!t0) return; const now=performance.now(), k=Math.round((now-t0)/IV)-COUNT; if(k<0||k>=N||J[k]) return;
+    const a=Math.abs(now-(t0+(k+COUNT)*IV)); mark(k,a<=85?'p':a<=170?'g':'x'); if(J[k]!=='x'){ pad.classList.remove('hitp'); void pad.offsetWidth; pad.classList.add('hitp'); buzz(12); } };
+  const key=e=>{ if(!L.isConnected){ document.removeEventListener('keydown',key,true); return; } if(e.code==='Space'||e.key===' '||e.key==='Enter'){ e.preventDefault(); e.stopPropagation(); if(t0) tap(); } };
+  document.addEventListener('keydown',key,true);
+  pad.onpointerdown=e=>{ e.preventDefault(); tap(); };
+  const finish=()=>{ over=true; J.forEach((v,i)=>{ if(!v) mark(i,'x'); }); const p=J.filter(v=>v==='p').length, gd=J.filter(v=>v==='g').length, sc=(p*2+gd)/(N*2);
+    const n=funStep(R.n[0]/2+(R.n[1]-R.n[0]/2)*sc,10), d=funStep(R.d[0]/2+(R.d[1]-R.d[0]/2)*sc,5);
+    cap.textContent=sc>=.9?'Rhythm god!':sc>=.6?'Nice groove!':sc>=.3?'Not bad!':'Keep at it!'; cap.className='febc p'; ring.style.opacity=0;
+    sub.innerHTML=`${p} perfect · ${gd} good · ${N-p-gd} missed<br>You won <b>${funAmt(n,d)}</b>`; funSound(sc>=.6?'fanfare':'tada');
+    if(sc>=.6){ const c=document.createElement('div'); c.innerHTML=CONFETTI(); L.querySelector('.fecard').appendChild(c); }
+    funPay(n,d,'🥁 Beat Drop:'); document.removeEventListener('keydown',key,true); const gb=L.querySelector('.fego'); gb.hidden=false; gb.onclick=()=>L.remove(); };
+  const fr=now=>{ if(!L.isConnected||over) return; const b=(now-t0)/IV;
+    if(b>=0){ const k=Math.floor(b), frac=b-k; ring.style.opacity=k>=COUNT+N?0:1; ring.style.transform=`scale(${(1+.85*(1-frac)).toFixed(3)})`;
+      if(k<COUNT){ cap.textContent=String(k+1); cap.className='febc'; }
+      for(let i=0;i<N;i++) if(!J[i]&&now>t0+(i+COUNT)*IV+190) mark(i,'x');
+      if(b>COUNT+N-.5){ finish(); return; } }
+    requestAnimationFrame(fr); };
+  L.querySelector('.festart').onclick=e=>{ e.target.hidden=true; ensureAudio(); const c=A.ctx; if(c) c.resume().catch(()=>{});
+    t0=performance.now()+900; if(c){ const ct=c.currentTime+.9; for(let k=0;k<COUNT+N;k++) tone(A.sfx,ct+k*IV/1000,k<COUNT?'triangle':'sine',k<COUNT?660:((k-COUNT)%4===0?1046:784),k<COUNT?.14:.18,.002,.08); }
+    cap.textContent='Get ready…'; requestAnimationFrame(fr); };
+  setTimeout(()=>{ if(L.isConnected&&!t0){ L.remove(); document.removeEventListener('keydown',key,true); } },90000); }
+/* Scratch card: scratch off the silver to find three the same. Every card wins */
+function funScratch(t){ const R=funRw(t), r=Math.random(), win=r<.1?'💎':r<.55?'♪':'✧';
+  const prize=win==='💎'?{n:funRoll(R.n,10)*2,d:funRoll(R.d,5)*2}:win==='♪'?{n:funRoll(R.n,10),d:0}:{n:0,d:funRoll(R.d,5)};
+  const o=['♪','✧','💎'].filter(s=>s!==win), cells=[win,win,win,o[0],o[0],o[1]];
+  for(let i=cells.length-1;i>0;i--){ const j=ri(i+1); [cells[i],cells[j]]=[cells[j],cells[i]]; }
+  const L=funCard('fescr',`<h3>🎟 Scratch card!</h3><p>Scratch off the silver. Three the same wins: ♪ Notes, ✧ Stardust, or 💎 both.</p><div class="fesc"><div class="fesg">${cells.map(s=>`<span class="${s===win?'w ':''}${s==='♪'?'sn':s==='✧'?'sd':'sj'}">${s}</span>`).join('')}</div><canvas width="300" height="200" aria-label="Scratch here"></canvas></div><p class="fesub">&nbsp;</p><div class="row"><button type="button" class="btn ghost fereveal">Reveal all</button><button type="button" class="btn fego" hidden>Nice!</button></div>`);
+  const cv=L.querySelector('canvas'), g=cv.getContext('2d'), sub=L.querySelector('.fesub'); let done=false, down=false, lx=0, ly=0, moves=0, lastS=0;
+  const sg=g.createLinearGradient(0,0,300,200); sg.addColorStop(0,'#D8DCE6'); sg.addColorStop(.5,'#9AA0B0'); sg.addColorStop(1,'#E4E8F0'); g.fillStyle=sg; g.fillRect(0,0,300,200);
+  for(let i=0;i<260;i++){ g.fillStyle=`rgba(255,255,255,${(Math.random()*.5).toFixed(2)})`; g.fillRect(Math.random()*300,Math.random()*200,1.5,1.5); }
+  g.fillStyle='rgba(60,64,80,.55)'; g.font='800 22px system-ui,sans-serif'; g.textAlign='center'; g.fillText('✦ SCRATCH HERE ✦',150,108);
+  const reveal=()=>{ if(done) return; done=true; cv.classList.add('gone'); L.querySelectorAll('.fesg .w').forEach(s=>s.classList.add('on'));
+    sub.innerHTML=`Three ${win}! You won <b>${funAmt(prize.n,prize.d)}</b>`; funSound(win==='💎'?'fanfare':'tada'); const c=document.createElement('div'); c.innerHTML=CONFETTI(); L.querySelector('.fecard').appendChild(c);
+    funPay(prize.n,prize.d,win==='💎'?'🎟 Diamond scratch card!':'🎟 Scratch card:'); L.querySelector('.fereveal').hidden=true; const gb=L.querySelector('.fego'); gb.hidden=false; gb.onclick=()=>L.remove(); };
+  const pos=e=>{ const b=cv.getBoundingClientRect(); return [(e.clientX-b.left)/b.width*300,(e.clientY-b.top)/b.height*200]; };
+  const cleared=()=>{ const D=g.getImageData(0,0,300,200).data; let c=0, n=0; for(let i=3;i<D.length;i+=4*7){ n++; if(D[i]<40) c++; } return c/n; };
+  const scr=(x,y)=>{ g.globalCompositeOperation='destination-out'; g.lineCap='round'; g.lineWidth=38; g.beginPath(); g.moveTo(lx,ly); g.lineTo(x,y); g.stroke(); lx=x; ly=y;
+    const now=performance.now(); if(now-lastS>90){ lastS=now; if(A.ctx) noise(A.sfx,A.ctx.currentTime,.05,.08,'highpass',4000,.8); }
+    if(++moves%8===0&&cleared()>.5) reveal(); };
+  cv.onpointerdown=e=>{ if(done) return; e.preventDefault(); down=true; try{ cv.setPointerCapture(e.pointerId); }catch(_){} [lx,ly]=pos(e); scr(lx+.1,ly+.1); };
+  cv.onpointermove=e=>{ if(!down||done) return; const [x,y]=pos(e); scr(x,y); };
+  cv.onpointerup=cv.onpointercancel=()=>{ down=false; if(!done&&cleared()>.5) reveal(); };
+  L.querySelector('.fereveal').onclick=reveal;
+  setTimeout(()=>{ if(L.isConnected&&!done){ reveal(); } },120000); }
 /* ---- weather and theme for everyone ---- */
 const FUN_WX={snow:['❄','#FFFFFF'],petals:['🌸',''],notes:['♪','#FFE27A'],hearts:['♥','#FF7EB6'],stars:['✦','#FFF4C0'],leaves:['🍂',''],bubbles:['○','#B8F2E6'],confetti:['▮','']};
 function funWxSync(){ const W=FUN.d.wx, now=funNow();
@@ -16466,7 +16669,9 @@ async function admLogUI(){ const box=$('admLogList'); box.innerHTML='<div class=
   catch(e){ box.innerHTML=`<div class="admempty">Could not load (${escapeHTML(e&&e.code||'offline')}).</div>`; } }
 /* ---- wiring ---- */
 document.querySelectorAll('#admTo button').forEach(b=>b.onclick=()=>{ FUN.to=b.dataset.to; admFunUI(); });
-document.querySelectorAll('#admFxGrid [data-fx]').forEach(b=>b.onclick=()=>{ const k=b.dataset.fx, label=b.querySelector('b').textContent;
+document.querySelectorAll('#admFxGrid [data-fx],#admRwGrid [data-fx]').forEach(b=>b.onclick=()=>{ let k=b.dataset.fx, label=b.querySelector('b').textContent;
+  if(k==='surprise'){ k=FUN_RW_K[ri(FUN_RW_K.length)]; label=document.querySelector(`#admRwGrid [data-fx="${k}"] b`).textContent; }
+  if(FUN_RW_K.includes(k)){ const t=$('admRwT').value; admFx(k,{t},`${label} (${$('admRwT').selectedOptions[0].textContent.split(' ·')[0].toLowerCase()} prizes)`); return; }
   const a=k==='storm'?{n:+$('admStormN').value,c:20}:k==='boxes'?{tier:$('admBoxT').value,blk:$('admBoxB').checked}:k==='disco'?{s:30}:{}; admFx(k,a,label); });
 $('admSnd').innerHTML=FUN_SOUNDS.map(([id,ic,n])=>`<button type="button" data-snd="${id}"><span>${ic}</span>${n}</button>`).join('');
 document.querySelectorAll('#admSnd [data-snd]').forEach(b=>b.onclick=()=>{ const id=b.dataset.snd; if(FUN.to==='me'){ funSound(id); return; } admFx('sound',{id},`the “${b.textContent.trim()}” sound`); });

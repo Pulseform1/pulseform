@@ -79,7 +79,7 @@ service cloud.firestore {
 
     // Admin fun: things an admin sends to every player at once. Everyone can read them (the live/{doc} rule above);
     // only an admin can write them, with their own uid in `by`, and only the fields listed.
-    //   live/fx = a one-off effect (confetti, fireworks, a shout, a sound, a note storm…)   live/wx = weather and a theme
+    //   live/fx = a one-off effect (confetti, fireworks, a shout, a sound, a note storm, a reward event…)   live/wx = weather and a theme
     //   live/quiz = a pop quiz   live/poll = a poll   live/spot = player of the day   live/count = a countdown
     function admDoc(keys) {
       return isAdmin() && request.resource.data.keys().hasOnly(keys) && request.resource.data.by == request.auth.uid
@@ -88,7 +88,7 @@ service cloud.firestore {
     match /live/fx {
       allow create, update: if admDoc(['id', 'k', 'a', 't', 'by'])
         && request.resource.data.id is string && request.resource.data.id.size() <= 40
-        && request.resource.data.k in ['confetti', 'fireworks', 'shout', 'sound', 'erlaf', 'quake', 'disco', 'storm', 'boxes']
+        && request.resource.data.k in ['confetti', 'fireworks', 'shout', 'sound', 'erlaf', 'quake', 'disco', 'storm', 'boxes', 'pinata', 'dust', 'balloons', 'wheel', 'beat', 'scratch']
         && request.resource.data.a is map;
     }
     match /live/wx {
