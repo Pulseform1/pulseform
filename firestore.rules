@@ -41,7 +41,7 @@ service cloud.firestore {
       allow read, delete: if signedIn() && (request.auth.uid == uid || isAdmin());
       allow create: if isAdmin()
         && request.resource.data.keys().hasOnly(['kind', 'id', 'n', 'msg', 't', 'by'])
-        && request.resource.data.kind in ['notes', 'skin', 'banner', 'tiles', 'passp', 'rank', 'msg']
+        && request.resource.data.kind in ['notes', 'skin', 'banner', 'tiles', 'passp', 'rank', 'msg', 'land', 'track', 'fx', 'dust', 'tickets', 'passxp', 'xp', 'colxp', 'mastxp']
         && request.resource.data.by == request.auth.uid
         && request.resource.data.t is int
         && (!('id' in request.resource.data) || (request.resource.data.id is string && request.resource.data.id.size() <= 40))
@@ -73,7 +73,7 @@ service cloud.firestore {
         && request.resource.data.by == request.auth.uid
         && (request.resource.data.gift == null
             || (request.resource.data.gift is map && request.resource.data.gift.keys().hasOnly(['kind', 'id', 'n'])
-                && request.resource.data.gift.kind in ['notes', 'skin', 'banner', 'tiles']));
+                && request.resource.data.gift.kind in ['notes', 'skin', 'banner', 'tiles', 'land', 'track', 'fx', 'dust', 'tickets', 'passxp', 'xp', 'colxp', 'mastxp', 'passp']));
       allow delete: if isAdmin();
     }
 

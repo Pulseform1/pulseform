@@ -2603,6 +2603,9 @@ body.calm .enter .panel{animation:none}
 .cdusk.on{background:linear-gradient(135deg,#2A1446,#5A2E9A);box-shadow:0 0 12px rgba(138,79,216,.7)}.cdusk:active{transform:scale(.9)}
 .item.citem .wishb~.cdusk,.item.citem .cdusk+.wishb{right:40px}
 @media (max-width:520px){.mrow{grid-template-columns:44px minmax(0,1fr) 34px;grid-template-areas:none}.mrow .mdusk{grid-column:2/4;justify-self:start}}
+.admgl{display:grid;place-items:center;width:56px;height:56px;border-radius:14px;background:rgba(255,255,255,.07);font-size:28px}.admpv .admgl{width:84px;height:84px;font-size:40px}
+/* phones with the tab bar: the Locker's last buttons scroll clear of the bar */
+body.phone.hastabs #denOv > .panel{padding-bottom:calc(96px + env(safe-area-inset-bottom))!important}
 </style>
 <section id="menuOv" class="screen" hidden>
   <button class="admfab" id="mAdmin" type="button" hidden aria-label="Admin panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-3 7.6-7 9-4-1.4-7-4.8-7-9V6z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></svg><span>Admin</span></button>
@@ -3216,7 +3219,7 @@ body.calm .enter .panel{animation:none}
           <button type="button" data-q="notes:1000">+♪1,000</button><button type="button" data-q="notes:5000">+♪5,000</button><button type="button" data-q="notes:25000">+♪25,000</button>
           <button type="button" class="pp" data-q="passp">♛ Pulse Pass+</button></div>
         <small class="admhint">Or pick something</small>
-        <div class="g2"><label>Gift<select id="admKind"><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option><option value="notes">Notes (any amount)</option><option value="rank">Set rank</option><option value="msg">Message only</option></select></label>
+        <div class="g2"><label>Gift<select id="admKind"><optgroup label="Items"><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option><option value="land">Landing effect</option><option value="track">Sound track</option><option value="fx">Effect (burst or hit sound)</option></optgroup><optgroup label="Amounts"><option value="notes">Notes</option><option value="dust">✧ Stardust</option><option value="tickets">🎟 Free pack tickets</option><option value="passxp">Pulse Pass XP</option><option value="xp">Rank XP</option><option value="colxp">🏅 Collector XP</option><option value="mastxp">Mastery XP (their block)</option></optgroup><optgroup label="Other"><option value="passp">♛ Pulse Pass+</option><option value="rank">Set rank</option><option value="msg">Message only</option></optgroup></select></label>
           <label id="admItemL">Item<select id="admItem"></select></label><label id="admAmtL" hidden>Amount<input id="admAmt" type="number" min="1" max="1000000" step="100" value="1000"></label></div>
         <div class="admpick" id="admPickG" hidden></div>
         <div class="g1"><label>Message (optional)<input id="admNote" type="text" maxlength="120" placeholder="Thanks for playing!"></label></div>
@@ -3303,10 +3306,10 @@ body.calm .enter .panel{animation:none}
       <div class="g2"><label>XP boost<select id="admEvX"><option value="1">None</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option></select></label>
         <label>Notes boost<select id="admEvN"><option value="1">None</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option></select></label>
         <label>Starts in (hours)<input id="admEvS" type="number" min="0" max="720" step="0.5" value="0"></label><label>Lasts<span class="admdur"><input id="admEvH" type="number" min="0" max="720" step="any" value="48"><select id="admEvU" aria-label="Minutes or hours"><option value="m">minutes</option><option value="h" selected>hours</option></select></span></label>
-        <label>Gift for everyone<select id="admEvG"><option value="">None</option><option value="notes">Notes</option><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option></select></label>
+        <label>Gift for everyone<select id="admEvG"><option value="">None</option><optgroup label="Amounts"><option value="notes">Notes</option><option value="dust">✧ Stardust</option><option value="tickets">🎟 Free pack tickets</option><option value="passxp">Pulse Pass XP</option><option value="xp">Rank XP</option><option value="colxp">🏅 Collector XP</option><option value="mastxp">Mastery XP (their block)</option></optgroup><optgroup label="Items"><option value="skin">Block</option><option value="banner">Banner</option><option value="tiles">Tile theme</option><option value="land">Landing effect</option><option value="track">Sound track</option><option value="fx">Effect (burst or hit sound)</option></optgroup><optgroup label="Big ones"><option value="passp">♛ Pulse Pass+ for everyone</option></optgroup></select></label>
         <label id="admEvGL" hidden>Gift item<select id="admEvGI"></select></label></div>
       <div class="admpick" id="admEvPick" hidden></div>
-      <div class="g1" id="admEvGAL"><label>Notes for everyone<input id="admEvGA" type="number" min="1" max="100000" step="100" value="500"></label></div>
+      <div class="g1" id="admEvGAL"><label><span id="admEvGAT">Notes for everyone</span><input id="admEvGA" type="number" min="1" max="100000" step="1" value="500"></label></div>
       <label class="opt admduck" for="admEvDuck"><input id="admEvDuck" type="checkbox"><span>Summon Erlaf the Giant Duck<small>Erlaf only appears when you summon him here, and he stays for exactly as long as this event lasts ("Lasts" above: minutes or hours, from 1 minute). Beating him gives the Erlaf block.</small></span></label>
       <div class="row"><button class="btn" id="admEvGo" type="button">Start event</button><button class="btn ghost" id="admEvEnd" type="button">End event now</button></div>
     </div>
@@ -3392,14 +3395,6 @@ body.calm .enter .panel{animation:none}
           <button class="mode" id="nDuel" type="button"><b>Online Riff-Off</b><small>2 players. Send pulses at your friend's platform from your own device. First to 3 drops wins.</small><em class="mskill">Competitive rhythm timing practice</em><span class="meta">⚔</span></button>
           <button class="mode" id="nRaid" type="button"><b>Online Mastery Jam</b><small>Work together through advanced rhythm challenges, 2 to 4 players. Each player uses timing pads and shares Harmony.</small><em class="mskill">Team timing, anticipating the beat</em><span class="meta">☠</span></button>
           <button class="mode" id="nTether" type="button"><b>Online Tether</b><small>2 players, tied together by a cord. Stray more than 4 tiles apart and it snaps. Stay close for double points.</small><em class="mskill">Moving in time together</em><span class="meta">∞</span></button>
-          <div class="qzpick" id="nQuiz"><div class="lbl">Quiz games · 2 to 4 players</div><small>Answer music questions, then tap along with the beat for bonus points. Everyone plays on their own screen.</small>
-            <div class="qzsel"><select id="nQzPack" class="clin" aria-label="Question pack"></select><select id="nQzDiff" class="clin" aria-label="Difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option></select></div>
-            <div class="qzmodes">
-              <button class="mode" data-qz="race" type="button"><b>🏁 Beat Race</b><small>First to the finish wins.</small></button>
-              <button class="mode" data-qz="tower" type="button"><b>🗼 Tempo Tower</b><small>Build one tower together before time runs out.</small></button>
-              <button class="mode" data-qz="jam" type="button"><b>🎸 Team Jam</b><small>Two teams. The fuller song wins.</small></button>
-              <button class="mode" data-qz="last" type="button"><b>❤ Last Note Standing</b><small>Three hearts each. Players who are out send hearts.</small></button>
-            </div></div>
         </div>
         <div class="small" id="nModeNote"></div>
         <div class="small" id="nWait" hidden>The host picks the mode. The match starts on both screens together.</div>
@@ -8818,7 +8813,7 @@ function netUI(){
   $('nWait').hidden=!(on&&!NET.host);
   // Duel and Tether are for exactly two
   [['nDuel','Online Riff-Off'],['nTether','Online Tether']].forEach(([id])=>{ const b=$(id); if(!b) return; b.disabled=n!==2; b.classList.toggle('only2',n!==2); });
-  const note=$('nModeNote'); if(note) note.textContent=n>2?`${n} players: Journey, Mastery Jam and the quiz games are open to everyone. Riff-Off and Tether are for exactly 2.`:'';
+  const note=$('nModeNote'); if(note) note.textContent=n>2?`${n} players: Journey and Mastery Jam are open to everyone. Riff-Off and Tether are for exactly 2.`:'';
 }
 function netHost(){
   ensureAudio(); A.ctx.resume(); netLeave(true);
@@ -9617,9 +9612,21 @@ function inboxTake(d){ const g=d.data()||{}; SAVE.giftIds=SAVE.giftIds||[];
   if(!SAVE.giftIds.includes(d.id)){ const txt=giftApply(g); SAVE.giftIds.push(d.id); SAVE.giftIds=SAVE.giftIds.slice(-200); save(); acctPush(true); afterGift();
     toast('🎁 '+txt+(g.msg?' · '+String(g.msg).slice(0,120):'')); if(A.ctx) sGem(); buzz(30); }
   d.ref.delete().catch(()=>{}); }
-const GIFT_LISTS={skin:()=>SKINS,banner:()=>BANNERS,tiles:()=>TILES};
+const GIFT_LISTS={skin:()=>SKINS,banner:()=>BANNERS,tiles:()=>TILES,land:()=>LANDS,track:()=>PACKS,fx:()=>[...FX_BURSTS,...FX_SOUNDS]};
+/* amounts an admin can give: what each is called, its cap, and what it does on the player's device */
+const GIFT_AMT={notes:{n:'Notes',p:'♪',max:1000000,def:500},dust:{n:'Stardust',p:'✧',max:100000,def:50},tickets:{n:'free pack tickets',p:'🎟 ',max:50,def:1},
+  passxp:{n:'Pulse Pass XP',p:'',max:100000,def:500},xp:{n:'rank XP',p:'',max:1000000,def:1000},colxp:{n:'Collector XP',p:'🏅 ',max:100000,def:200},mastxp:{n:'mastery XP for their block',p:'',max:100000,def:300}};
+const giftAmtLabel=(k,n)=>{ const a=GIFT_AMT[k]; return a?`${a.p}${(+n).toLocaleString()} ${k==='notes'?'':a.n}`.trim():''; };
 function giftApply(g){ const k=g&&g.kind;
   if(k==='notes'){ const n=Math.max(0,Math.min(1000000,Math.round(+g.n||0))); SAVE.notes+=n; return `+♪${n.toLocaleString()} Notes`; }
+  if(GIFT_AMT[k]){ const n=Math.max(0,Math.min(GIFT_AMT[k].max,Math.round(+g.n||0))); if(!n) return 'A gift from Pulseform';
+    if(k==='dust') SAVE.dust=(SAVE.dust||0)+n;
+    else if(k==='tickets') SAVE.bpTokens=(SAVE.bpTokens||0)+n;
+    else if(k==='passxp'){ passS().xp=(passS().xp||0)+n; }
+    else if(k==='xp') addXP(n);
+    else if(k==='colxp') colAdd(n);
+    else if(k==='mastxp'){ mastAdd(SAVE.skin,n); return `+${n.toLocaleString()} mastery XP for ${skinById(SAVE.skin).name}`; }
+    return `+${giftAmtLabel(k,n)}`; }
   if(GIFT_LISTS[k]){ const it=GIFT_LISTS[k]().find(x=>x.id===g.id); if(!it) return 'A gift from Pulseform'; if(!SAVE.owned.includes(it.id)) SAVE.owned.push(it.id); return `${it.name} unlocked`; }
   if(k==='passp'){ passS().prem=true; return 'Pulse Pass+ unlocked'; }
   if(k==='iap'){ const pr=PRODUCTS.find(p=>p.id===g.id); if(!pr) return 'Your purchase arrived'; iapGrant(pr.id,'stripe-'+g.tx); return `${pr.name}: thank you for your purchase!`; }
@@ -9671,7 +9678,7 @@ function admItems(sel,kind){ const L=GIFT_LISTS[kind]?GIFT_LISTS[kind]().filter(
   sel.innerHTML=L.map(x=>`<option value="${escapeHTML(x.id)}">${escapeHTML(x.name)}</option>`).join(''); }
 /* blocks, banners and tile themes are picked from a grid of pictures (the select underneath holds the choice) */
 const admPrev=(kind,x,px=56)=>kind==='skin'?`<canvas class="skprev" data-skin="${escapeHTML(x.id)}" data-px="${px}" width="${px}" height="${px}" aria-hidden="true"></canvas>`
-  :kind==='tiles'?`<canvas class="tileprev" data-tile="${escapeHTML(x.id)}" width="132" height="84" aria-hidden="true"></canvas>`:`<span class="ppban" style="background:${x.bg||'rgba(255,255,255,.08)'}"></span>`;
+  :kind==='tiles'?`<canvas class="tileprev" data-tile="${escapeHTML(x.id)}" width="132" height="84" aria-hidden="true"></canvas>`:kind==='banner'?`<span class="ppban" style="background:${x.bg||'rgba(255,255,255,.08)'}"></span>`:`<span class="admgl" style="color:${escapeHTML(x.col||'#FFD166')}">${escapeHTML(x.glyph||'✦')}</span>`;
 function admPicker(sel,grid,kind){ const L=GIFT_LISTS[kind]().filter(x=>x.price!==0||kind==='skin'); grid.hidden=false;
   grid.innerHTML=L.map(x=>`<button type="button" class="admpi" data-id="${escapeHTML(x.id)}" title="${escapeHTML(x.name)}">${admPrev(kind,x)}<span>${escapeHTML(x.name)}</span></button>`).join('');
   grid.querySelectorAll('canvas.tileprev').forEach(c=>drawTilePreview(c,tilesById(c.dataset.tile)));
@@ -9679,10 +9686,10 @@ function admPicker(sel,grid,kind){ const L=GIFT_LISTS[kind]().filter(x=>x.price!
   grid.querySelectorAll('.admpi').forEach(b=>b.onclick=()=>pick(b.dataset.id)); pick(L[0]&&L[0].id); grid.scrollTop=0; }
 function admPreviewHTML(kind,id){ const L=GIFT_LISTS[kind]&&GIFT_LISTS[kind](), x=L&&L.find(i=>i.id===id); return x?`<div class="admpv">${admPrev(kind,x,84)}</div>`:''; }
 function admKindUI(){ const k=$('admKind').value;
-  $('admItemL').hidden=k!=='rank'; $('admAmtL').hidden=k!=='notes'; $('admPickG').hidden=!GIFT_LISTS[k];
+  $('admItemL').hidden=k!=='rank'; $('admAmtL').hidden=!GIFT_AMT[k]; $('admPickG').hidden=!GIFT_LISTS[k]; if(GIFT_AMT[k]){ $('admAmt').max=GIFT_AMT[k].max; $('admAmt').value=GIFT_AMT[k].def; $('admAmt').step=k==='tickets'?1:10; }
   if(GIFT_LISTS[k]){ admItems($('admItem'),k); admPicker($('admItem'),$('admPickG'),k); }
   else if(k==='rank') $('admItem').innerHTML='<option value="-1">Earned rank (clear)</option>'+Array.from({length:RANK_MAX+1},(_,n)=>`<option value="${n}">${escapeHTML(rankName(n))}</option>`).join(''); }
-function admEvKindUI(){ const k=$('admEvG').value; $('admEvPick').hidden=!GIFT_LISTS[k]; $('admEvGAL').hidden=k!=='notes'; if(GIFT_LISTS[k]){ admItems($('admEvGI'),k); admPicker($('admEvGI'),$('admEvPick'),k); } }
+function admEvKindUI(){ const k=$('admEvG').value; $('admEvPick').hidden=!GIFT_LISTS[k]; $('admEvGAL').hidden=!GIFT_AMT[k]; if(GIFT_AMT[k]){ $('admEvGAT').textContent=GIFT_AMT[k].n.charAt(0).toUpperCase()+GIFT_AMT[k].n.slice(1)+' for everyone'; $('admEvGA').max=GIFT_AMT[k].max; $('admEvGA').value=GIFT_AMT[k].def; } if(GIFT_LISTS[k]){ admItems($('admEvGI'),k); admPicker($('admEvGI'),$('admEvPick'),k); } }
 function admLiveNow(){ const L=ACCT.live, now=Date.now(), e=$('admLiveNow'), on=!!L&&now<(+L.end||0);
   e.classList.toggle('on',on); $('admEvEnd').disabled=!on;
   if(!on){ e.textContent='No event running. Start one below: everyone sees it on the main menu.'; return; }
@@ -9743,7 +9750,8 @@ $('admSelClear').onclick=admUnpick;
 $('admSel').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{ const q=b.dataset.q;
   if(q==='passp') admGift({kind:'passp'},'Pulse Pass+'); else { const n=+q.split(':')[1]; admGift({kind:'notes',n},`♪${n.toLocaleString()}`); } });
 $('admSend').onclick=()=>{ const k=$('admKind').value, g={kind:k}; let label='';
-  if(k==='notes'){ g.n=Math.max(1,Math.min(1000000,Math.round(+$('admAmt').value||0))); label=`♪${g.n.toLocaleString()}`; }
+  if(GIFT_AMT[k]){ g.n=Math.max(1,Math.min(GIFT_AMT[k].max,Math.round(+$('admAmt').value||0))); label=giftAmtLabel(k,g.n); }
+  else if(k==='passp') label='Pulse Pass+';
   else if(GIFT_LISTS[k]){ g.id=$('admItem').value; label=$('admItem').selectedOptions[0]?$('admItem').selectedOptions[0].textContent:'the gift'; }
   else if(k==='rank'){ g.n=Math.round(+$('admItem').value); label=g.n>=0?`Rank ${rankName(g.n)}`:'Rank reset'; }
   else { if(!$('admNote').value.trim()){ admMsg('Type a message to send.',true); return; } label='Your message'; }
@@ -9760,10 +9768,10 @@ $('admKind').onchange=admKindUI; $('admEvG').onchange=admEvKindUI;
 $('admEvGo').onclick=async()=>{ const db=ACCT.db; if(!db||!ACCT.user) return; const duck=$('admEvDuck').checked, title=($('admEvT').value.trim()||(duck?'Erlaf the Giant Duck':'')).slice(0,40);
   if(!title){ admMsg('Give the event a title.',true); return; }
   const now=Date.now(), start=now+Math.max(0,+$('admEvS').value||0)*3600000, mins=$('admEvU').value==='m', len=Math.max(mins?1:1/60,+$('admEvH').value||(mins?30:48)), end=start+Math.min(720*60,mins?len:len*60)*60000;   // as short as 1 minute, up to 30 days
-  const gk=$('admEvG').value, gift=!gk?null:gk==='notes'?{kind:'notes',n:Math.max(1,Math.min(100000,Math.round(+$('admEvGA').value||0)))}:{kind:gk,id:$('admEvGI').value};
+  const gk=$('admEvG').value, gift=!gk?null:GIFT_AMT[gk]?{kind:gk,n:Math.max(1,Math.min(GIFT_AMT[gk].max,Math.round(+$('admEvGA').value||0)))}:gk==='passp'?{kind:'passp'}:{kind:gk,id:$('admEvGI').value};
   const ev={id:'ev'+now.toString(36),title,msg:($('admEvM').value.trim()||(duck?'A giant white mallard has landed. Beat him for his block!':'')).slice(0,140),xp:+$('admEvX').value,notes:+$('admEvN').value,start,end,gift,by:ACCT.user.uid,t:now}; if(duck) ev.mode='erlaf';
   const it=gift&&GIFT_LISTS[gift.kind]?GIFT_LISTS[gift.kind]().find(x=>x.id===gift.id):null;
-  const sum=[ev.mode==='erlaf'?'Erlaf the Giant Duck':'',ev.xp>1?`${ev.xp}× XP`:'',ev.notes>1?`${ev.notes}× Notes`:'',gift?`gift for everyone: ${gift.kind==='notes'?'♪'+gift.n.toLocaleString():escapeHTML(it?it.name:'an item')}`:''].filter(Boolean).join(' · ')||'no boosts';
+  const sum=[ev.mode==='erlaf'?'Erlaf the Giant Duck':'',ev.xp>1?`${ev.xp}× XP`:'',ev.notes>1?`${ev.notes}× Notes`:'',gift?`gift for everyone: ${GIFT_AMT[gift.kind]?escapeHTML(giftAmtLabel(gift.kind,gift.n)):gift.kind==='passp'?'Pulse Pass+':escapeHTML(it?it.name:'an item')}`:''].filter(Boolean).join(' · ')||'no boosts';
   const old=ACCT.live&&now<(+ACCT.live.end||0);
   if(!await admConfirm(`Start “${title}” for every player?`,(gift&&it?admPreviewHTML(gift.kind,gift.id):'')+`<div>${sum}<br>${start>now?'Starts in '+liveLeft(start-now)+', l':'Starts now, l'}asts ${liveLeft(end-start)}.${old?'<br><b>This replaces the event that\'s running now.</b>':''}</div>`,'Start event')) return;
   admMsg('Starting…'); try{ await db.collection('live').doc('event').set(ev); ACCT.live=ev; liveUI(); admLiveNow(); admMsg('✓ Event is live for every player.'); admLog(`Started the event “${title}”`); if(A.ctx) sGem(); }
@@ -12445,7 +12453,7 @@ const NEWS_ADDED=[
  ['✨','A brighter look','Every screen got a refresh: bouncier buttons, glossy panels and colour that drifts behind every page.'],
  ['🎁','Better pack opening','A real tear across the top, light pouring out, and the card pulled up out of the pack. Plus: a Collector level with rewards, a Legendary guarantee within 40 packs, a luck meter, and a bonus ticket for 7 free packs in a row.'],
  ['🎼','The Grand Crescendo','A community event: everyone fills one bar to 30,000,000 points. Every run you finish adds its score, and each milestone unlocks blocks, banners, effects and updates for everyone who played a part. The finale: Magnum Opus.'],
- ['❓','Quiz games with friends','Beat Race, Tempo Tower, Team Jam and Last Note Standing, for 2 to 4 players. Start a party in Play together and pick a quiz game.']];
+];
 const NEWS_EARLIER=[
  ['🗄','The Locker','Your player card and block mastery, on the menu.'],
  ['✨','Effects','A burst on every perfect hit, and your own hit sound. Find them in the Shop under Effects.'],
