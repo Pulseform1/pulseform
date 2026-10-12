@@ -609,6 +609,9 @@ function renderBattleUI(){
     return;
   }
   $('loading').hidden=true;
+  // When a new version is published while someone is playing, carry their progress across.
+  window.claude?.hot?.snapshot?.(()=>({S}));
+  const start=(data)=>{ if(data?.S){ S=data.S; hub(); } else titleScreen(); };
+  if(window.claude?.hot?.ready) window.claude.hot.ready(start); else start(window.claude?.hot?.data ?? {});
   window.__game={get S(){return S;}, get B(){return B;}, world, testBattle:(f)=>{ if(f) D.floor=f; onEncounter({}, null, false); }, testBoss:()=>{ D.floor=5; onEncounter({}, null, true); }};   // test hooks
-  titleScreen();
 })();

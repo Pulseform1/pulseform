@@ -1,14 +1,14 @@
 // 3D side of Ninth Bell: renderer, characters, Shadows, the Tower, the battle stage and effects.
-import * as THREE from 'three';
-import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
-import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
-import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
-import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
-import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
-import {VRMLoaderPlugin, VRMUtils} from '@pixiv/three-vrm';
+import * as THREE from '../vendor/three.module.min.js';
+import {GLTFLoader} from '../vendor/jsm/loaders/GLTFLoader.js';
+import {FBXLoader} from '../vendor/jsm/loaders/FBXLoader.js';
+import {EffectComposer} from '../vendor/jsm/postprocessing/EffectComposer.js';
+import {RenderPass} from '../vendor/jsm/postprocessing/RenderPass.js';
+import {UnrealBloomPass} from '../vendor/jsm/postprocessing/UnrealBloomPass.js';
+import {OutputPass} from '../vendor/jsm/postprocessing/OutputPass.js';
+import {VRMLoaderPlugin, VRMUtils} from '../vendor/three-vrm.module.min.js';
 import {retarget} from './mixamo.js';
-import {ANIMS, CAST, COLORS, EL_COLOR, LOOKS} from './data.js';
+import {ANIMS, CAST, COLORS, EL_COLOR, LOOKS, STAND_IN} from './data.js';
 
 // ───────────────────────── RENDERER & LOOP ─────────────────────────
 const canvas = document.getElementById('scene');
@@ -112,6 +112,40 @@ function blobShadow(r){
   m.rotation.x=-Math.PI/2; m.position.y=0.01; return m;
 }
 
+// Recolour the shared stand-in model so each character is recognisable. Converts the texture to
+// luminance and tints it, which keeps the painted shading of hair and fabric.
+const SLOTS = [[/hair/i,'hair'], [/tops/i,'top'], [/bottoms/i,'bottom'], [/eyeiris/i,'eye']];
+function dyeTexture(tex, hex, cache){
+  const key=tex.uuid+hex; if(cache[key]) return cache[key];
+  const img=tex.image, c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
+  const g=c.getContext('2d', {willReadFrequently:true}); g.drawImage(img,0,0);
+  const d=g.getImageData(0,0,c.width,c.height), p=d.data;
+  let max=1; for(let i=0;i<p.length;i+=4) if(p[i+3]>8){ const l=.3*p[i]+.59*p[i+1]+.11*p[i+2]; if(l>max) max=l; }
+  const n=parseInt(hex.slice(1),16), tr=n>>16, tg=(n>>8)&255, tb=n&255;
+  for(let i=0;i<p.length;i+=4){
+    const f=.25+.9*((.3*p[i]+.59*p[i+1]+.11*p[i+2])/max);
+    p[i]=Math.min(255,tr*f); p[i+1]=Math.min(255,tg*f); p[i+2]=Math.min(255,tb*f);
+  }
+  g.putImageData(d,0,0);
+  const t=tex.clone(); t.source=new THREE.Source(c); t.needsUpdate=true;
+  return cache[key]=t;
+}
+function dyeStandIn(vrm, look){
+  if(!look) return;
+  const cache={};
+  vrm.scene.traverse(o=>{
+    if(!o.isMesh) return;
+    for(const m of [].concat(o.material)){
+      const slot=SLOTS.find(([re])=>re.test(m.name)); if(!slot) continue;
+      const hex=look[slot[1]];
+      try{
+        if(m.map?.image) m.map=dyeTexture(m.map, hex, cache);
+        if(m.shadeMultiplyTexture?.image) m.shadeMultiplyTexture=dyeTexture(m.shadeMultiplyTexture, hex, cache);
+      }catch(e){ m.color?.set(hex); }   // fall back to a flat tint if the texture can't be read
+    }
+  });
+}
+
 export const chars = {};
 export const customModels = {};
 async function charUrl(id){
@@ -122,23 +156,43 @@ async function charUrl(id){
   }catch(e){}
   return null;
 }
+// Model and animation files are fetched as raw bytes. Hosts that only serve web file types
+// (such as Claude artifacts) get a base64 copy alongside each file: <name>.b64.txt
+const bytesCache = new Map();
+async function loadBytes(url){
+  if(bytesCache.has(url)) return bytesCache.get(url);
+  let buf=null;
+  try{
+    const r=await fetch(url);
+    if(r.ok && !(r.headers.get('content-type')||'').includes('html')) buf=await r.arrayBuffer();
+  }catch(e){}
+  if(!buf){
+    const r=await fetch(url+'.b64.txt');
+    if(!r.ok) throw new Error(`Couldn't load ${url}`);
+    const bin=atob((await r.text()).trim()), u=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+    buf=u.buffer;
+  }
+  bytesCache.set(url, buf);
+  return buf;
+}
 export async function loadAll(progress){
-  THREE.Cache.enabled = true;
   const fbxLoader=new FBXLoader();
   const gltf=new GLTFLoader(); gltf.register(p=>new VRMLoaderPlugin(p));
   const urls={};
   for(const id of CAST){ urls[id]=await charUrl(id); customModels[id]=!!urls[id]; }
-  const ids=CAST.filter(id=>id!=='mira' || urls[id]);   // Mira only appears in 3D once she has her own model
+  const ids=CAST;
   const total=ANIMS.length+ids.length; let done=0;
   const step=(label)=>progress(++done/total, label);
   const fbx={};
-  for(const a of ANIMS){ fbx[a]=await fbxLoader.loadAsync(`assets/anims/${a}.fbx`); step(`Animation: ${a}`); }
+  for(const a of ANIMS){ fbx[a]=fbxLoader.parse(await loadBytes(`assets/anims/${a}.fbx`), 'assets/anims/'); step(`Animation: ${a}`); }
   for(const id of ids){
-    const g=await gltf.loadAsync(urls[id]||'assets/characters/placeholder.vrm');
+    const g=await gltf.parseAsync(await loadBytes(urls[id]||'assets/characters/placeholder.vrm'), 'assets/characters/');
     const vrm=g.userData.vrm;
     VRMUtils.removeUnnecessaryVertices(g.scene);
     VRMUtils.combineSkeletons(g.scene);
     VRMUtils.rotateVRM0(vrm);
+    if(!urls[id]) dyeStandIn(vrm, STAND_IN[id]);
     vrm.scene.traverse(o=>{ o.frustumCulled=false; });
     vrm.scene.updateMatrixWorld(true);
     const clips={}; for(const a of ANIMS) clips[a]=retarget(fbx[a], vrm, a);

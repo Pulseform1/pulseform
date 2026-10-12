@@ -152,3 +152,11 @@ export const LOOKS = {
   'Gatekeeper':   {scale:2.6, stretch:1.3, mask:'#d8c9a8', eye:'#ff2a1f', aura:'#8a1d1d', horns:4},
   'Pale Monarch': {scale:3.2, stretch:1.5, mask:'#ffffff', eye:'#ff2a4f', aura:'#c9c9ff', horns:6, float:true},
 };
+
+// Colours used to dye the stand-in model until each character has their own VRM file
+export const STAND_IN = {
+  mc:    {hair:'#2b3157', top:'#272b47', bottom:'#15141c', eye:'#9a8cff'},
+  rin:   {hair:'#ff3d6e', top:'#e8364f', bottom:'#1a1820', eye:'#ff6a8a'},
+  kaito: {hair:'#35d8f2', top:'#2f6bff', bottom:'#24263a', eye:'#3ee6ff'},
+  mira:  {hair:'#6b45d9', top:'#efe6ff', bottom:'#3a2a5a', eye:'#c9a2ff'},
+};

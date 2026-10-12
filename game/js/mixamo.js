@@ -1,6 +1,6 @@
 // Retargets Mixamo FBX animations onto VRM characters.
 // Based on the approach in pixiv/three-vrm's "humanoidAnimation" example (MIT).
-import * as THREE from 'three';
+import * as THREE from '../vendor/three.module.min.js';
 
 const RIG = {
   mixamorigHips:'hips', mixamorigSpine:'spine', mixamorigSpine1:'chest', mixamorigSpine2:'upperChest',

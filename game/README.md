@@ -23,7 +23,7 @@ Export each character from VRoid Studio as **VRM** (VRM 1.0 or 0.x both work). K
 | `kaito.vrm` | Kaito |
 | `mira.vrm` | Mira (optional; she only appears in dialogue scenes) |
 
-Any character without a file uses `placeholder.vrm`, the pixiv VRM 1.0 sample model ("VRM1_Constraint_Twist_Sample"). Its license allows redistribution, modification and commercial use. The game picks up new files automatically, with no code changes.
+Until then, each character uses `placeholder.vrm` recolored in their own hair and outfit colors (`STAND_IN` in `js/data.js`). The stand-in model is the pixiv VRM 1.0 sample model ("VRM1_Constraint_Twist_Sample"). Its license allows redistribution, modification and commercial use. The game picks up new files automatically, with no code changes.
 
 ## Animations
 
@@ -37,3 +37,7 @@ Any character without a file uses `placeholder.vrm`, the pixiv VRM 1.0 sample mo
 - `js/main.js`: calendar, social links, battle rules and the menus
 - `js/world.js`: the 3D side (rendering, characters, Shadows, the Tower maze, the battle stage and effects)
 - `vendor/`: Three.js r169 and @pixiv/three-vrm 3.5 (MIT), so the game has no CDN dependency
+
+## Hosts that only serve web file types
+
+Model and animation files are loaded as raw bytes. If `<file>` can't be fetched, the game tries `<file>.b64.txt` (the same file, base64-encoded) instead. This is how the Claude artifact version is published.
