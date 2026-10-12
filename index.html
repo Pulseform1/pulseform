@@ -14300,10 +14300,11 @@ const colRewardText=r=>r.tok?'🎟 a free pack ticket':r.dust?`✧${r.dust} Star
 function colAdd(xp){ const before=colLevel(), was=before.L; SAVE.colXP=colXP()+xp; const after=colLevel(), ups=[];
   for(let L=was+1;L<=after.L;L++){ const r=colReward(L); if(r.tok) SAVE.bpTokens=bpTokens()+1; if(r.dust) SAVE.dust=(SAVE.dust||0)+r.dust; if(r.n) SAVE.notes+=r.n; ups.push({L,r}); }
   return {before,after,ups,xp}; }
-/* the Legendary guarantee: 40 packs of one kind in a row without a Legendary or better, and the 40th is one */
-const BP_LEG_PITY=40;
+/* the Legendary guarantee: 80 packs of one kind in a row without a Legendary or better, and the 80th is a Legendary
+   (never an Ascendant or Pristine: those only come from the pack's own odds) */
+const BP_LEG_PITY=80;
 const bpLegLeft=pk=>BP_LEG_PITY-((SAVE.bpLeg||{})[pk.id]||0);
-const bpHasLeg=pk=>Object.keys(pk.rates).some(id=>skinById(id).bpr>=3);
+const bpHasLeg=pk=>Object.keys(pk.rates).some(id=>skinById(id).bpr===3);
 /* luck after a dry spell (see bpBoost): shown as five dots on each pack */
 function bpLuckHTML(pk){ const d=((SAVE.bpDry||{})[pk.id])||0, lvl=d>=10?2:d>=5?1:0, on=lvl===2?5:lvl===1?d-5:d;
   const txt=lvl===2?'Max luck: rare and epic odds +50%':lvl===1?`Lucky! Rare and epic odds +25% · ${10-d} more for +50%`:`${5-d} more common${5-d===1?'':'s'} and rare and epic odds go up`;
@@ -14326,7 +14327,7 @@ function buildPacks(){
     const useTok=bpTokens()&&bpTokenOk(pk)?`<button class="btn" type="button" data-bptok="${pk.id}">🎟 Open free</button>`:'';
     return `<div class="bpshelf${done?' done':''}${pk.season?' seasonal':''}" style="--acc:${pk.acc};--d:${k*.35}s">${pk.season?`<span class="bpseason">Limited · ${bpSeasonLeft(pk)}</span>`:''}<div class="bppk bpmini${pk.id==='pristine'?' pristine':''}" style="${bpStyle(pk)}">${bpPackHTML(pk)}</div><b class="bpn">${escapeHTML(pk.name)}</b>`+
       `<div class="bpbar"><i style="width:${Math.round(n/tot*100)}%"></i></div><span class="bpprog">${done?'Set complete ✓':`${n} / ${tot} found · ${tot-n} left to discover`}</span>`+
-      (bpHasLeg(pk)?`<div class="bpmeter"><span>⭐ Legendary or better guaranteed <b>within ${bpLegLeft(pk)} pack${bpLegLeft(pk)===1?'':'s'}</b></span><div class="bpbar"><i style="width:${Math.round((BP_LEG_PITY-bpLegLeft(pk))/BP_LEG_PITY*100)}%;background:linear-gradient(90deg,#FFB627,#FFE27A)"></i></div></div>`:'')+bpLuckHTML(pk)+
+      (bpHasLeg(pk)?`<div class="bpmeter"><span>⭐ A Legendary guaranteed <b>within ${bpLegLeft(pk)} pack${bpLegLeft(pk)===1?'':'s'}</b></span><div class="bpbar"><i style="width:${Math.round((BP_LEG_PITY-bpLegLeft(pk))/BP_LEG_PITY*100)}%;background:linear-gradient(90deg,#FFB627,#FFE27A)"></i></div></div>`:'')+bpLuckHTML(pk)+
       (done?'':tot-n===1?`<span class="bpone">1 left to complete the set! +♪${bpSetBonus(pk).toLocaleString()}</span>`:`<span class="bpsetr">Complete the set: +♪${bpSetBonus(pk).toLocaleString()}</span>`)+useTok+
       `<button class="btn" type="button" data-bpopen="${pk.id}" ${SAVE.notes<pk.price?'disabled':''}>Open · ♪ ${pk.price.toLocaleString()}</button>`+
       `<button class="btn ghost bp5" type="button" data-bpfive="${pk.id}" ${SAVE.notes<pk.price*BP_MULTI?'disabled':''}>Open ${BP_MULTI} · ♪ ${(pk.price*BP_MULTI).toLocaleString()}</button>`+
@@ -14353,8 +14354,8 @@ function bpHistHTML(){ const C=SAVE.bpCnt||[], H=SAVE.bpHist||[], tot=C.reduce((
 function bpRollOne(pk){
   SAVE.bpDry=SAVE.bpDry||{}; const dry=SAVE.bpDry[pk.id]||0; SAVE.bpLeg=SAVE.bpLeg||{};
   let id=bpRoll(pk,undefined,bpBoost(dry)), guar=false;
-  // the guarantee: the 40th pack in a row without a Legendary or better is one (picked by the pack's own rates)
-  if(bpHasLeg(pk)&&skinById(id).bpr<3&&bpLegLeft(pk)<=1){ const L=Object.entries(pk.rates).filter(([k])=>skinById(k).bpr>=3), tot=L.reduce((a,[,w])=>a+w,0); let x=bpRand()*tot; for(const [k,w] of L){ x-=w; if(x<0){ id=k; break; } } if(skinById(id).bpr<3) id=L[0][0]; guar=true; }
+  // the guarantee: the 80th pack in a row without a Legendary or better is a Legendary (picked by the pack's own rates)
+  if(bpHasLeg(pk)&&skinById(id).bpr<3&&bpLegLeft(pk)<=1){ const L=Object.entries(pk.rates).filter(([k])=>skinById(k).bpr===3), tot=L.reduce((a,[,w])=>a+w,0); let x=bpRand()*tot; for(const [k,w] of L){ x-=w; if(x<0){ id=k; break; } } if(skinById(id).bpr<3) id=L[0][0]; guar=true; }
   const s=skinById(id), dupe=SAVE.owned.includes(id), refund=dupe?bpRefund(pk,s.bpr):0;
   SAVE.bpLeg[pk.id]=s.bpr>=3?0:(SAVE.bpLeg[pk.id]||0)+1;
   SAVE.bpDry[pk.id]=s.bpr===0?dry+1:0;
@@ -14530,7 +14531,7 @@ function bpReveal(){ BP.stage='done'; $('bpSkip').hidden=true; const pk=BP.pk, r
   $('bpInfo').innerHTML=(res.dupe?`<span class="dupe">You already own ${escapeHTML(s.name)}, so you get ♪<span class="bpcount" data-to="${res.refund}">0</span> back${res.dust?` and ✧${res.dust} Stardust for the Forge`:''}</span>`:`<span class="new">NEW BLOCK</span><br>${escapeHTML(s.name)} is yours!`)+
     (res.tot?`<div class="bpsetline"><span>${escapeHTML(pk.name.replace(/ Pack$/,''))} set</span><div class="bpbar"><i style="width:${Math.round((res.have-(res.dupe?0:1))/res.tot*100)}%"></i></div><b>${res.have} / ${res.tot}</b></div>`:'')+
     (res.set?`<div class="bpsetdone">SET COMPLETE! +♪${res.set.toLocaleString()}</div>`:'')+
-    (res.guar?`<div class="bpguar hit">⭐ Your guaranteed Legendary!</div>`:bpHasLeg(pk)&&r<3?`<div class="bpguar">⭐ Legendary or better guaranteed within ${bpLegLeft(pk)} pack${bpLegLeft(pk)===1?'':'s'}</div>`:'')+
+    (res.guar?`<div class="bpguar hit">⭐ Your guaranteed Legendary!</div>`:bpHasLeg(pk)&&r<3?`<div class="bpguar">⭐ A Legendary guaranteed within ${bpLegLeft(pk)} pack${bpLegLeft(pk)===1?'':'s'}</div>`:'')+
     (res.col?bpColHTML(res.col):'');
   if(!res.dupe) $('bpFront').insertAdjacentHTML('beforeend','<span class="bpstamp">NEW!</span>');
   bpCountUp($('bpInfo')); if(res.col) bpColAnim($('bpInfo'),res.col,800);
