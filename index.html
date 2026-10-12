@@ -5498,16 +5498,19 @@ function drawBlock0(P,bd,L,now){
   const topY=base-H-bh*.5;
   if(SP.vx&&grey<.5) vxPre(SP,sx-bw/2,topY,bw,bh,H,now);
   if(SP.anim) skinPre(SP,sx-bw/2,topY,bw,bh,H,now,P);
+  const pl=grey<.5&&polishOf(P);
+  if(pl) drawPolishRing(pl,sx-bw/2,topY,bw,bh,H,now);
   cx.fillStyle=mixc(S.front,'#A8A3BF',grey); cx.fillRect(sx-bw/2,topY+bh*.5,bw,H+bh*.5);
   cx.fillStyle='rgba(40,20,40,.16)'; cx.fillRect(sx,topY+bh,bw/2,H);
   cx.fillStyle=mixc(S.top,'#D8D4E4',grey); rr(sx-bw/2,topY,bw,bh,3); cx.fill();
+  if(pl) drawPolishEdge(pl,sx-bw/2,topY,bw,bh,H,now);
   if(SQ.fx&&grey<.5) skinDeco(SQ,sx-bw/2,topY,bw,bh,H,now);
   if(SQ.anim&&grey<.5){ cx.globalAlpha=bd.alpha; skinPost(SQ,sx-bw/2,topY,bw,bh,H,now,P); }
   if(SQ.vx&&grey<.5){ cx.globalAlpha=bd.alpha; vxPost(SQ,sx-bw/2,topY,bw,bh,H,now); }
   cx.globalAlpha=bd.alpha*holoA;
   cx.fillStyle=mixc(S.core,'#FFFFFF',Math.min(1,t/5)); cx.globalAlpha=bd.alpha*Math.min(1,.55+t*.1);
   if(!S.anim&&!S.nocore){ rr(sx-bw*.28,topY+bh*.36,bw*.56,bh*.28,2); cx.fill(); }
-  { const pl=grey<.5&&polishOf(P); if(pl){ cx.globalAlpha=bd.alpha; drawPolish(pl,sx-bw/2,topY,bw,bh,H,now); } }
+  if(pl){ cx.globalAlpha=bd.alpha; drawPolish(pl,sx-bw/2,topY,bw,bh,H,now); }
   if(t>=3){ const g=cx.createRadialGradient(sx,topY+bh*.5,1,sx,topY+bh*.5,bw); g.addColorStop(0,rgba(TH.acc,.25+t*.05)); g.addColorStop(1,rgba(TH.acc,0)); cx.fillStyle=g; cx.fillRect(sx-bw,topY-bw*.5,bw*2,bw*2); }
   cx.globalAlpha=bd.alpha;
   if(t>=5||S.rim){ cx.strokeStyle=t>=5?TH.acc:'rgba(255,209,102,.8)'; cx.lineWidth=1.6; rr(sx-bw/2,topY,bw,bh+H,3); cx.stroke(); }
@@ -10261,6 +10264,17 @@ function polishUp(id){ const p=(SAVE.polish||{})[id]||0; if(!ownsSkin(id)||p>=2|
   SAVE.life=SAVE.life||{}; SAVE.life.polished=(SAVE.life.polished||0)+1; save(); achCheck(); if(A.ctx) sGem(); buzz(30); toast(`✨ ${skinById(id).name} is now ${p+1===2?'Prism':'Gold'}!`); }
 /* only your own block shows its polish (not other players') */
 const polishOf=P=>{ const id=P&&P.skin&&P.skin.id; if(!id||(P.id||0)>0) return 0; const v=(SAVE.polish||{})[id]||0; return v&&!(SAVE.polishOff||{})[id]?v:0; };
+/* the polish outline: a metal (Gold) or rainbow (Prism) edge all the way round the cube, plus the edge where its top meets its
+   front. It's drawn with the block's body, before its face, ears, horns and the rest, so those sit on top of it. The outer
+   ring sits just outside the body, so a block that paints over its own body still keeps it. */
+function polishPaint(v,X,T,W,hh,now){ if(v===1){ const g=cx.createLinearGradient(X,T,X+W,T+hh); g.addColorStop(0,'#FFF4C2'); g.addColorStop(.35,'#FFD34D'); g.addColorStop(.65,'#C8901A'); g.addColorStop(1,'#FFE27A'); return g; }
+  const g=cx.createLinearGradient(X,T,X+W,T+hh); for(let k=0;k<5;k++) g.addColorStop(k/4,hsl2hex((now*90+k*72)%360,95,70)); return g; }
+function drawPolishRing(v,X,T,W,bh,H,now){ const hh=bh+H, lw=Math.max(2,W*.045), o=lw/2; cx.save(); cx.globalCompositeOperation='source-over';
+  const a=cx.globalAlpha; cx.strokeStyle=polishPaint(v,X,T,W,hh,now); cx.lineJoin='round';
+  cx.globalCompositeOperation='lighter'; cx.globalAlpha=a*.25; cx.lineWidth=lw*2.4; rr(X-o,T-o,W+lw,hh+lw,3+o); cx.stroke();      // a soft glow
+  cx.globalCompositeOperation='source-over'; cx.globalAlpha=a; cx.lineWidth=lw; rr(X-o,T-o,W+lw,hh+lw,3+o); cx.stroke(); cx.restore(); }
+function drawPolishEdge(v,X,T,W,bh,H,now){ const lw=Math.max(1.2,W*.028); cx.save(); cx.globalCompositeOperation='source-over'; cx.strokeStyle=polishPaint(v,X,T,W,bh+H,now); cx.lineWidth=lw; cx.lineCap='round';
+  cx.beginPath(); cx.moveTo(X+lw,T+bh); cx.lineTo(X+W-lw,T+bh); cx.stroke(); cx.restore(); }
 function drawPolish(v,X,T,W,bh,H,now){ const hh=bh+H; cx.save(); cx.beginPath(); cx.rect(X,T,W,hh); cx.clip();
   const g=cx.createLinearGradient(X,T,X+W,T+hh);
   if(v===1){ g.addColorStop(0,'rgba(255,236,160,.6)'); g.addColorStop(.5,'rgba(255,196,60,.3)'); g.addColorStop(1,'rgba(200,140,20,.55)'); }
@@ -10270,8 +10284,7 @@ function drawPolish(v,X,T,W,bh,H,now){ const hh=bh+H; cx.save(); cx.beginPath();
   cx.globalCompositeOperation='lighter'; const u=(now*.45)%1.6-.3, sx=X+u*W*1.4, sg=cx.createLinearGradient(sx-W*.2,0,sx+W*.2,0);
   sg.addColorStop(0,'rgba(255,255,255,0)'); sg.addColorStop(.5,v===1?'rgba(255,240,190,.55)':'rgba(255,255,255,.6)'); sg.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=sg;
   cx.save(); cx.translate(sx,T); cx.transform(1,0,-.4,1,0,0); cx.fillRect(-W*.2,0,W*.4,hh); cx.restore(); cx.restore();
-  cx.save(); cx.lineWidth=2; cx.strokeStyle=v===1?'#FFD34D':hsl2hex((now*90)%360,95,70); rr(X+.5,T+.5,W-1,hh-1,3); cx.stroke();
-  cx.globalCompositeOperation='lighter'; for(let k=0;k<(v===1?3:5);k++){ const q=now*.8+k*.37, ph=q%1, a=Math.sin(ph*Math.PI), f=Math.floor(q);
+  cx.save(); cx.globalCompositeOperation='lighter'; for(let k=0;k<(v===1?3:5);k++){ const q=now*.8+k*.37, ph=q%1, a=Math.sin(ph*Math.PI), f=Math.floor(q);
     vxSpark(X+W*vxRnd(k*3.7+f),T+hh*vxRnd(k*5.3+f),W*.08*a,v===1?'#FFF2C0':hsl2hex((k*70+now*60)%360,90,80),a); } cx.restore(); }
 
 /* ---- savings goal on the menu ---- */
