@@ -2461,6 +2461,140 @@ body.fundisco #menuOv,body.fundisco .overlay:not([hidden]) .panel{animation:fdis
 .ctban{background:linear-gradient(110deg,rgba(156,200,255,.3),rgba(60,60,160,.7) 60%,rgba(20,20,70,.9))!important;cursor:default!important}.ctban #mCountSub{font:700 15px var(--display);font-variant-numeric:tabular-nums}
 .funban .twban-ic{background:rgba(255,255,255,.15)}
 @media (prefers-reduced-motion:reduce){.fsnote{animation-duration:9s!important}.funduck .fdk,.funduck canvas,.fbb,.qzban,body.funquake #menuOv,body.fundisco #menuOv{animation:none}}
+/* ================= UI 2.0: brighter, bouncier, more fun =================
+   One layer on top of everything above: candy buttons with a lip you press down, glossy panels with a rainbow edge,
+   drifting colour behind every screen, cards that lift and tilt. Only looks and motion change, never sizes or layout,
+   so every screen keeps working. "Calmer effects" (body.calm) and reduced motion turn the movement off. */
+:root{--pop1:#FF7EB6;--pop2:#FFD166;--pop3:#7FF0D2;--pop4:#9CC8FF;--pop5:#C9A7FF;--spring:cubic-bezier(.2,1.5,.4,1);--edge:linear-gradient(135deg,rgba(255,126,182,.6),rgba(255,209,102,.4) 35%,rgba(127,240,210,.4) 65%,rgba(156,200,255,.6))}
+/* colour drifting slowly behind every screen (not the main menu, which has its own scene) */
+.overlay:not(#menuOv)::before{content:'';position:absolute;inset:-25%;z-index:-1;pointer-events:none;
+  background:radial-gradient(38% 32% at 14% 18%,rgba(255,126,182,.20),transparent 70%),radial-gradient(34% 30% at 86% 14%,rgba(127,240,210,.16),transparent 70%),radial-gradient(44% 40% at 72% 88%,rgba(156,200,255,.18),transparent 70%),radial-gradient(30% 30% at 18% 86%,rgba(255,209,102,.14),transparent 70%);
+  animation:uiBlobs 24s ease-in-out infinite alternate}
+@keyframes uiBlobs{50%{transform:translate(3%,-2%) rotate(4deg) scale(1.04)}to{transform:translate(-3%,3%) rotate(-3deg) scale(1.07)}}
+/* panels: glossy with a rainbow edge (special event panels keep their own look) */
+.panel:where(:not(.livepanel):not(.playpanel):not(.twpanel):not(.crwin):not(.cvkpanel):not(.rvpanel)){
+  background:radial-gradient(120% 60% at 50% -10%,rgba(255,255,255,.07),transparent 60%) padding-box,linear-gradient(165deg,rgba(48,42,104,.93),rgba(22,19,54,.95)) padding-box,var(--edge) border-box;
+  border:1.5px solid transparent;border-radius:26px;box-shadow:0 26px 70px rgba(8,6,30,.5),inset 0 1px 0 rgba(255,255,255,.1)}
+.enter .panel{animation:uiPanelIn .5s var(--spring) both}
+@keyframes uiPanelIn{from{opacity:0;transform:translateY(18px) scale(.94)}to{opacity:1;transform:none}}
+/* headings get a warm gradient */
+.panel h2{background:linear-gradient(92deg,#FFF3D6,#FFD166 45%,#FF9EC9);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.005em}
+.eyebrow{letter-spacing:.2em;color:#9FF5E2}
+/* candy buttons: a gradient body, a darker lip underneath, a shine that sweeps across on hover, and a real press */
+.btn{position:relative;border-radius:16px;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%) -160% 0/220% 100% no-repeat,linear-gradient(180deg,#FFE48F,#FFC23F);
+  color:#2B1E4A;box-shadow:0 4px 0 #C98A1C,0 8px 18px rgba(255,180,60,.28),inset 0 1px 0 rgba(255,255,255,.65);transform:translateY(0);
+  transition:transform .14s var(--spring),box-shadow .14s,background-position .6s ease,filter .2s;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+.btn:hover:not(:disabled){background-position:160% 0,0 0;filter:brightness(1.05);transform:translateY(-1px)}
+.btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #C98A1C,0 3px 8px rgba(255,180,60,.2),inset 0 1px 0 rgba(255,255,255,.5)}
+.btn:disabled{filter:saturate(.3);box-shadow:0 3px 0 rgba(0,0,0,.25);opacity:.5}
+.btn.ghost{background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.18) 50%,transparent 65%) -160% 0/220% 100% no-repeat,linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.05)) padding-box,linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,.08)) border-box;
+  border:1px solid transparent;color:var(--ink);text-shadow:none;box-shadow:0 3px 0 rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.12)}
+.btn.ghost:active:not(:disabled){box-shadow:0 0 0 rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.1)}
+.btn:focus-visible{outline:3px solid #9FF5E2;outline-offset:3px}
+/* the Google and Apple sign-in buttons keep their own brand colours */
+.btn.gbtn{background:#fff;color:#1F1F1F;text-shadow:none;box-shadow:0 3px 0 rgba(0,0,0,.25)}.btn.abtn{background:#000;color:#fff;text-shadow:none;box-shadow:0 3px 0 rgba(255,255,255,.12)}
+/* list rows and cards lift, glow at the edge and press in */
+.mode,.lvl,.item{transition:transform .2s var(--spring),box-shadow .2s,border-color .2s,background .2s}
+.mode{border-radius:18px;background:linear-gradient(120deg,rgba(255,255,255,.09),rgba(255,255,255,.03))}
+.mode:hover:not(:disabled),.lvl:hover:not(:disabled){transform:translateY(-2px);border-color:rgba(255,209,102,.55);box-shadow:0 10px 24px rgba(0,0,0,.25),0 0 0 1px rgba(255,209,102,.18)}
+.mode:active:not(:disabled),.lvl:active:not(:disabled){transform:translateY(1px) scale(.985)}
+.mode.primary{background:linear-gradient(120deg,rgba(255,209,102,.24),rgba(255,126,182,.12));border-color:rgba(255,209,102,.6)}
+.item{border-radius:18px;background:linear-gradient(170deg,rgba(255,255,255,.1),rgba(255,255,255,.03))}
+.item:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,0,0,.28)}
+.lvl{border-radius:16px}
+/* chips and the back button become friendly pills */
+.chip{transition:transform .18s var(--spring),box-shadow .2s,background .2s}
+.chip:active{transform:scale(.95)}
+.overlay .head .back{display:inline-flex;align-items:center;gap:4px;padding:7px 14px 7px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#FFE6A8;transition:background .2s,transform .18s var(--spring)}
+.overlay .head .back:hover{background:rgba(255,255,255,.15)}.overlay .head .back:active{transform:scale(.95)}
+body.phone .overlay .panel > .head:first-child{border-bottom:0!important;box-shadow:0 1px 0 rgba(255,255,255,.06),0 10px 24px rgba(0,0,0,.18)}
+body.phone .overlay .panel > .head:first-child::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--edge);opacity:.55}
+/* switches: a candy track and a knob that squishes */
+.opt input[type=checkbox]:checked{background:linear-gradient(90deg,#FFD166,#FF9EC9);border-color:transparent;box-shadow:0 0 12px rgba(255,170,120,.35)}
+.opt input[type=checkbox]:active::after{width:19px}
+/* text boxes glow when you type */
+.panel input[type=text],.panel input[type=search],.panel input[type=number],.panel input[type=email],.panel input[type=password],.panel select,.panel textarea{transition:border-color .2s,box-shadow .2s}
+.panel input:focus,.panel select:focus,.panel textarea:focus{outline:none;border-color:#FFD166!important;box-shadow:0 0 0 3px rgba(255,209,102,.22)}
+/* sliders */
+input[type=range]{accent-color:#FFB347}
+/* the main menu: cards with a glossy top, a lift and a little tilt; the big button breathes */
+.mcard{transition:transform .22s var(--spring),box-shadow .22s,background .22s;overflow:hidden}
+.mcard::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.09),transparent 40%)}
+.mcard:hover{transform:translateY(-4px) rotate(-.6deg);box-shadow:0 16px 34px rgba(0,0,0,.32),0 0 0 1px color-mix(in srgb,var(--a,#FFD166) 45%,transparent),0 0 30px color-mix(in srgb,var(--a,#FFD166) 22%,transparent)}
+.mcard:active{transform:translateY(1px) scale(.98)}
+.mcard svg{filter:drop-shadow(0 0 10px color-mix(in srgb,var(--a,#FFD166) 55%,transparent));transition:transform .3s var(--spring)}
+.mcard:hover svg{transform:scale(1.15) rotate(-6deg)}
+#menuOv .cta{transition:transform .2s var(--spring),box-shadow .2s;background-image:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.45) 50%,transparent 65%);background-size:220% 100%;background-repeat:no-repeat;animation:uiCta 4.5s ease-in-out infinite}
+#menuOv .cta:hover{transform:translateY(-3px) scale(1.01)}#menuOv .cta:active{transform:translateY(2px) scale(.99)}
+@keyframes uiCta{0%,70%{background-position:-160% 0}100%{background-position:160% 0}}
+#menuOv .cta .cta-go{animation:uiNudge 1.6s ease-in-out infinite}
+@keyframes uiNudge{50%{transform:translateX(4px)}}
+/* the phone tab bar: the open tab sits on a glowing pill that bounces in */
+.tabbar{border-top:0!important;box-shadow:0 -1px 0 rgba(255,255,255,.07),0 -10px 34px rgba(0,0,0,.32)}
+.tabbar button.on{color:#FFE08A}
+.tabbar button.on::after{content:'';position:absolute;inset:2px 10%;z-index:-1;border-radius:14px;background:radial-gradient(80% 90% at 50% 30%,rgba(255,209,102,.24),rgba(255,126,182,.08));animation:uiTab .35s var(--spring)}
+@keyframes uiTab{from{transform:scale(.6);opacity:0}}
+.tabbar button.on svg{animation:uiTabIc .45s var(--spring)}
+@keyframes uiTabIc{0%{transform:translateY(2px) scale(.8)}60%{transform:translateY(-3px) scale(1.15)}100%{transform:translateY(-1px) scale(1.08)}}
+/* toasts pop in like a bubble */
+.toast{border-radius:999px!important;background:linear-gradient(180deg,rgba(52,44,110,.97),rgba(30,25,70,.97))!important;border:1.5px solid rgba(255,209,102,.6)!important;box-shadow:0 10px 30px rgba(0,0,0,.35),0 0 18px rgba(255,209,102,.18)}
+/* thin colourful scrollbars */
+.panel{scrollbar-width:thin;scrollbar-color:rgba(255,209,102,.45) transparent}
+.panel::-webkit-scrollbar{width:8px;height:8px}.panel::-webkit-scrollbar-thumb{background:linear-gradient(#FFD166,#FF9EC9);border-radius:99px}.panel::-webkit-scrollbar-track{background:transparent}
+/* details/summary sections */
+.panel details>summary{cursor:pointer;transition:color .2s}.panel details>summary:hover{color:#FFE08A}
+/* calmer: no drifting, no bouncing */
+body.calm .overlay::before,body.calm #menuOv .cta,body.calm #menuOv .cta .cta-go,body.calm .tabbar button.on::after,body.calm .tabbar button.on svg{animation:none}
+body.calm .enter .panel{animation:none}
+@media (prefers-reduced-motion:reduce){.overlay::before,#menuOv .cta,#menuOv .cta .cta-go,.tabbar button.on::after,.tabbar button.on svg,.enter .panel{animation:none!important}.btn,.mode,.lvl,.item,.mcard,.chip{transition:none}}
+/* ---- pack opening 2.0: a smoother tear ---- */
+#bpPack{z-index:2;--tear:0}
+#bpPack #bpStrip{inset:0;height:auto;top:0;transform-origin:100% 15%;transition:transform .22s ease-out,opacity .1s;will-change:transform;filter:drop-shadow(0 6px 8px rgba(0,0,0,.35))}
+#bpPack #bpStrip.show{opacity:1}
+#bpPack #bpStrip.off{opacity:1;transition:none;animation:bpcurl .95s cubic-bezier(.25,.75,.3,1) forwards}
+@keyframes bpcurl{28%{transform:translate(-4%,-22%) rotate(-15deg)}60%{opacity:1}100%{transform:translate(58%,-240%) rotate(-46deg) scale(.9);opacity:0}}
+#bpPack .bpleak{opacity:calc(var(--tear)*.9)}
+#bpPack.cutting .bpleak{transition:opacity .1s}
+#bpPack.puff{animation:bppuff .3s ease-out}
+@keyframes bppuff{40%{scale:1.035 .965}100%{scale:1 1}}
+#bpPack.gone{transform:translateY(115%) rotateX(24deg) rotateZ(-4deg);opacity:0;transition:transform .7s cubic-bezier(.55,0,.8,.3),opacity .45s .2s}
+.bpbeam{position:absolute;left:10%;right:10%;bottom:85%;height:150%;z-index:0;pointer-events:none;transform-origin:50% 100%;transform:scaleY(0);opacity:0;
+  background:linear-gradient(to top,color-mix(in srgb,var(--glow,#fff) 85%,#fff),color-mix(in srgb,var(--glow,#fff) 40%,transparent) 45%,transparent);filter:blur(10px);border-radius:50% 50% 0 0}
+.bpbeam.go{animation:bpbeam 1.6s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes bpbeam{15%{transform:scaleY(1);opacity:.95}55%{opacity:.6}100%{transform:scaleY(1.15);opacity:0}}
+/* the card is pulled up out of the opened top, then settles in the middle with a bounce */
+#bpCard{z-index:1}
+#bpCard.rise{opacity:1;transform:translateY(-50%) scale(.88);transition:transform .7s cubic-bezier(.2,.85,.25,1),opacity .15s}
+#bpCard.up,#bpCard.flip{z-index:3}
+#bpCard.up{transition:transform .75s cubic-bezier(.3,1.45,.5,1),opacity .3s}
+/* the revealed card leans toward your finger, with a holographic sheen */
+#bpCard.flip{transform:rotateY(calc(180deg + var(--ty,0deg))) rotateX(var(--tx,0deg)) scale(1.04);transition:transform .7s cubic-bezier(.3,1.3,.5,1)}
+#bpCard.flip.tilt{transition:transform .25s ease-out}
+.bpcfront::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;mix-blend-mode:overlay;opacity:.9;
+  background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,.4) 45%,transparent 62%) var(--sx,50%) 0/260% 100% no-repeat}
+.bpcfront.r3::after,.bpcfront.r4::after,.bpcfront.r5::after{background:linear-gradient(115deg,transparent 20%,rgba(255,120,200,.35) 35%,rgba(255,240,150,.45) 45%,rgba(120,255,220,.35) 55%,transparent 70%) var(--sx,50%) 0/260% 100% no-repeat}
+.bpstamp{position:absolute;top:7%;right:5%;z-index:3;padding:4px 10px;border-radius:10px;font:900 15px var(--display);letter-spacing:.06em;color:#1A1440;background:linear-gradient(90deg,#7FF0D2,#B8F2E6);box-shadow:0 4px 0 #2EA88A,0 6px 16px rgba(0,0,0,.35);
+  transform:rotate(-12deg);animation:bpstamp .5s cubic-bezier(.3,1.6,.5,1) .55s both}
+@keyframes bpstamp{from{transform:scale(3) rotate(-30deg);opacity:0}to{transform:rotate(-12deg);opacity:1}}
+/* collector level, luck and the legendary guarantee */
+.bpcol{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:8px;font:600 12px var(--body);color:var(--ink-2)}
+.bpcol .bpbar{width:120px;--acc:#FFD166}.bpcol b{color:#FFE27A;font-family:var(--display)}
+.bpcol .bpbar i{transition:width .9s cubic-bezier(.3,1,.4,1)}
+.bplvup{margin-top:6px;display:inline-block;padding:5px 12px;border-radius:999px;font:800 14px var(--display);color:#1A1440;background:linear-gradient(90deg,#FFD166,#FF9EC9,#9CC8FF);animation:bplvup .6s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes bplvup{from{transform:scale(.3);opacity:0}}
+.bpluckln,.bpguar{display:flex;align-items:center;gap:6px;justify-content:center;font-size:12px;color:var(--ink-2);margin-top:4px}
+.bpguar.hit{color:#FFE27A;font-weight:700}
+.bpcolhd{grid-column:1/-1;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;align-items:center;padding:12px 14px;border-radius:18px;margin-top:4px;
+  background:linear-gradient(120deg,rgba(255,209,102,.18),rgba(255,126,182,.12) 50%,rgba(156,200,255,.14));border:1px solid rgba(255,209,102,.4)}
+.bpcolhd .bpclv{grid-row:span 3;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font:900 22px var(--display);color:#1A1440;background:conic-gradient(#FFD166 var(--p,0%),rgba(255,255,255,.12) 0);position:relative}
+.bpcolhd .bpclv::before{content:'';position:absolute;inset:5px;border-radius:50%;background:linear-gradient(160deg,#FFE48F,#FFC23F)}.bpcolhd .bpclv span{position:relative}
+.bpcolhd b{font:800 15px var(--display)}.bpcolhd small{font-size:12px;color:var(--ink-2)}
+.bpshelf .bpmeter{display:flex;flex-direction:column;gap:3px;width:100%;margin:2px 0}
+.bpshelf .bpmeter>span{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-2)}.bpshelf .bpmeter>span b{color:#FFE27A;font-weight:700}
+.bpshelf .bpmeter .bpbar{height:6px}
+.bpluck{display:flex;gap:3px}.bpluck i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.15)}.bpluck i.on{background:#7CD67C;box-shadow:0 0 6px #7CD67C}.bpluck.gold i.on{background:#FFD166;box-shadow:0 0 6px #FFD166}
+.bpstreak{font-size:12px;color:#FFB86B;font-weight:700}
+@media (prefers-reduced-motion:reduce){#bpPack #bpStrip.off{animation-duration:.01s}.bpbeam.go,.bpstamp,.bplvup{animation:none;opacity:0}.bpstamp{opacity:1}}
 </style>
 <section id="menuOv" class="screen" hidden>
   <button class="admfab" id="mAdmin" type="button" hidden aria-label="Admin panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-3 7.6-7 9-4-1.4-7-4.8-7-9V6z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></svg><span>Admin</span></button>
@@ -2688,6 +2822,7 @@ body.fundisco #menuOv,body.fundisco .overlay:not([hidden]) .panel{animation:fdis
   <div class="bpbanner" id="bpBanner"></div>
   <button class="bpskip" id="bpSkip" type="button" hidden>Skip</button>
   <div class="bpstage">
+    <div class="bpbeam" id="bpBeam"></div>
     <div id="bpPack"><div class="bppk bpclip" id="bpArt"></div><div class="bpleak"></div><div class="bpdash"></div><span class="bpscis" aria-hidden="true">✂</span><div id="bpCut"></div><div class="bppk" id="bpStrip"><div class="bpcrimp t" style="height:60%"></div></div></div>
     <div id="bpCard"><div class="bpcf bpcback"><b>♪</b></div><div class="bpcf bpcfront" id="bpFront"></div></div>
   </div>
@@ -9184,7 +9319,7 @@ function mergeSaves(loc,cl,additive){
   { const a=loc.remix||{}, b=cl.remix||{}, m={...a}; for(const k in b) m[k]=Math.max(m[k]||0,b[k]); out.remix=m; } out.bestRhythm=Math.max(loc.bestRhythm||0,cl.bestRhythm||0);
   { const a=loc.rankSet, b=cl.rankSet, r=!a?b:!b?a:(a.t||0)>=(b.t||0)?a:b; if(r) out.rankSet=r; else delete out.rankSet; }   // the newest rank setting wins
   for(const k of ['giftIds','liveGot']) out[k]=[...new Set([...(cl[k]||[]),...(loc[k]||[])])].slice(-200);
-  out.twinTeam=newer.twinTeam!==undefined?newer.twinTeam:(loc.twinTeam||cl.twinTeam||null); out.twinWin=!!(loc.twinWin||cl.twinWin); out.erlafWin=!!(loc.erlafWin||cl.erlafWin); for(const k of ['cresMine','cresTier','cresGot','cresPend']) out[k]=Math.max(loc[k]||0,cl[k]||0); out.uiCresAuto=!!(loc.uiCresAuto||cl.uiCresAuto); out.uiCres=newer.uiCres!==undefined?!!newer.uiCres:!!(loc.uiCres||cl.uiCres); out.cresWinSeen=!!(loc.cresWinSeen||cl.cresWinSeen); out.twinWinSeen=!!(loc.twinWinSeen||cl.twinWinSeen); out.twinWinName=loc.twinWinName||cl.twinWinName||'';
+  out.twinTeam=newer.twinTeam!==undefined?newer.twinTeam:(loc.twinTeam||cl.twinTeam||null); out.twinWin=!!(loc.twinWin||cl.twinWin); out.erlafWin=!!(loc.erlafWin||cl.erlafWin); for(const k of ['cresMine','cresTier','cresGot','cresPend','colXP']) out[k]=Math.max(loc[k]||0,cl[k]||0); out.uiCresAuto=!!(loc.uiCresAuto||cl.uiCresAuto); out.uiCres=newer.uiCres!==undefined?!!newer.uiCres:!!(loc.uiCres||cl.uiCres); out.cresWinSeen=!!(loc.cresWinSeen||cl.cresWinSeen); out.twinWinSeen=!!(loc.twinWinSeen||cl.twinWinSeen); out.twinWinName=loc.twinWinName||cl.twinWinName||'';
   const dl=loc.daily||{}, dc=cl.daily||{}; out.daily=Object.assign({},DEF.daily,newer===cl?dc:dl);
   if(dl.date&&dl.date===dc.date){ out.daily.best=Math.max(dl.best||0,dc.best||0); out.daily.stars=Math.max(dl.stars||0,dc.stars||0); }
   out.daily.streak=Math.max(dl.streak||0,dc.streak||0);
@@ -12244,8 +12379,10 @@ function giftGive(r){ const out=[]; if(r.n){ SAVE.notes+=r.n; out.push(`♪${r.n
 /* ================= WHAT'S NEW =================
    Shown once to each player after an update (remembered in the save, so it follows their account to other devices),
    once the daily gift is out of the way. Settings → What's new opens it again. Change NEWS_V to show a new one. */
-const NEWS_V='2026-10f', NEWS_WHEN='Update · October 2026';
+const NEWS_V='2026-10g', NEWS_WHEN='Update · October 2026';
 const NEWS_ADDED=[
+ ['✨','A brighter look','Every screen got a refresh: bouncier buttons, glossy panels and colour that drifts behind every page.'],
+ ['🎁','Better pack opening','A real tear across the top, light pouring out, and the card pulled up out of the pack. Plus: a Collector level with rewards, a Legendary guarantee within 40 packs, a luck meter, and a bonus ticket for 7 free packs in a row.'],
  ['🎼','The Grand Crescendo','A community event: everyone fills one bar to 30,000,000 points. Every run you finish adds its score, and each milestone unlocks blocks, banners, effects and updates for everyone who played a part. The finale: Magnum Opus.'],
  ['❓','Quiz games with friends','Beat Race, Tempo Tower, Team Jam and Last Note Standing, for 2 to 4 players. Start a party in Play together and pick a quiz game.']];
 const NEWS_EARLIER=[
@@ -14083,10 +14220,33 @@ const bpSeasonLeft=pk=>{ const d=new Date(), end=new Date(d.getFullYear(),Math.m
 const bpTokens=()=>SAVE.bpTokens||0;
 const bpTokenOk=pk=>pk.id!=='pristine';
 const BP_MULTI=5;
+/* Collector level: every pack you open gives Collector XP (more for rarer blocks, a bonus for a new one). Each level up
+   pays out: Notes on odd levels, Stardust on even ones, and a free pack ticket every 5th level. */
+const BP_XP=[10,20,35,60,100,150], BP_NEW_XP=15;
+const colXP=()=>SAVE.colXP||0;
+const colNeed=L=>100+L*40;
+function colLevel(xp=colXP()){ let L=1, rest=xp; while(rest>=colNeed(L)&&L<999){ rest-=colNeed(L); L++; } return {L,rest,need:colNeed(L),pct:Math.round(rest/colNeed(L)*100)}; }
+const colReward=L=>L%5===0?{tok:1}:L%2===0?{dust:20+L*2}:{n:150+L*25};
+const colRewardText=r=>r.tok?'🎟 a free pack ticket':r.dust?`✧${r.dust} Stardust`:`♪${r.n.toLocaleString()}`;
+function colAdd(xp){ const before=colLevel(), was=before.L; SAVE.colXP=colXP()+xp; const after=colLevel(), ups=[];
+  for(let L=was+1;L<=after.L;L++){ const r=colReward(L); if(r.tok) SAVE.bpTokens=bpTokens()+1; if(r.dust) SAVE.dust=(SAVE.dust||0)+r.dust; if(r.n) SAVE.notes+=r.n; ups.push({L,r}); }
+  return {before,after,ups,xp}; }
+/* the Legendary guarantee: 40 packs of one kind in a row without a Legendary or better, and the 40th is one */
+const BP_LEG_PITY=40;
+const bpLegLeft=pk=>BP_LEG_PITY-((SAVE.bpLeg||{})[pk.id]||0);
+const bpHasLeg=pk=>Object.keys(pk.rates).some(id=>skinById(id).bpr>=3);
+/* luck after a dry spell (see bpBoost): shown as five dots on each pack */
+function bpLuckHTML(pk){ const d=((SAVE.bpDry||{})[pk.id])||0, lvl=d>=10?2:d>=5?1:0, on=lvl===2?5:lvl===1?d-5:d;
+  const txt=lvl===2?'Max luck: rare and epic odds +50%':lvl===1?`Lucky! Rare and epic odds +25% · ${10-d} more for +50%`:`${5-d} more common${5-d===1?'':'s'} and rare and epic odds go up`;
+  return `<span class="bpluckln"><span class="bpluck${lvl?' gold':''}">${[0,1,2,3,4].map(i=>`<i class="${i<on?'on':''}"></i>`).join('')}</span>🍀 ${txt}</span>`; }
 let bpHistOpen=false;
 function buildPacks(){
   const fp=BPACKS.find(p=>p.id===BP_FREE), left=()=>{ const d=new Date(); d.setHours(24,0,0,0); const m=Math.ceil((d-Date.now())/6e4); return `${Math.floor(m/60)}h ${m%60}m`; };
-  const free=`<div class="bpfree${bpFreeReady()?' ready':''}"><span class="bpfgift">🎁</span><div><b>${bpFreeReady()?'Your free daily pack is ready!':'Free daily pack opened'}</b><small>${bpFreeReady()?`One ${escapeHTML(fp.name)} on the house, every day.`:`The next one is ready in ${left()}.`}</small></div>`+
+  const st=SAVE.bpStreak||{n:0,d:''}, stN=st.d===todayKey()||st.d===todayKey(-1)?st.n:0;
+  const streak=stN?`<span class="bpstreak">🔥 ${stN}-day streak · ${7-stN%7===7?7:7-stN%7} more day${7-stN%7===1?'':'s'} to a bonus ticket</span>`:`<span class="bpstreak">🔥 Open it 7 days in a row for a bonus ticket</span>`;
+  const C=colLevel(), nx=colReward(C.L+1);
+  const colhd=`<div class="bpcolhd"><span class="bpclv" style="--p:${C.pct}%"><span>${C.L}</span></span><b>Collector level ${C.L}</b><div class="bpbar"><i style="width:${C.pct}%"></i></div><small>${C.rest} / ${C.need} XP · next level: ${colRewardText(nx)} · every pack gives XP, new blocks give more</small></div>`;
+  const free=colhd+`<div class="bpfree${bpFreeReady()?' ready':''}"><span class="bpfgift">🎁</span><div><b>${bpFreeReady()?'Your free daily pack is ready!':'Free daily pack opened'}</b><small>${bpFreeReady()?`One ${escapeHTML(fp.name)} on the house, every day.`:`The next one is ready in ${left()}.`}</small>${streak}</div>`+
     (bpFreeReady()?`<button class="btn" type="button" id="bpFreeGo">Open free</button>`:'')+`</div>`;
   const tok=bpTokens()?`<div class="bpfree ready"><span class="bpfgift">🎟</span><div><b>${bpTokens()===1?'You have a free pack!':`You have ${bpTokens()} free packs!`}</b><small>Earned by finishing all your weekly quests. Open any pack except the Pulse Pristine Pack for free.</small></div></div>`:'';
   const tools=`<div class="bptools"><label class="bptog${passPlus()?'':' lockd'}"><input type="checkbox" id="bpFastOn" ${bpFast()?'checked':''} ${passPlus()?'':'disabled'}> ⚡ Quick open <small>${passPlus()?'(cuts and taps for you)':'· a Pulse Pass+ perk'}</small></label>`+
@@ -14097,6 +14257,7 @@ function buildPacks(){
     const useTok=bpTokens()&&bpTokenOk(pk)?`<button class="btn" type="button" data-bptok="${pk.id}">🎟 Open free</button>`:'';
     return `<div class="bpshelf${done?' done':''}${pk.season?' seasonal':''}" style="--acc:${pk.acc};--d:${k*.35}s">${pk.season?`<span class="bpseason">Limited · ${bpSeasonLeft(pk)}</span>`:''}<div class="bppk bpmini${pk.id==='pristine'?' pristine':''}" style="${bpStyle(pk)}">${bpPackHTML(pk)}</div><b class="bpn">${escapeHTML(pk.name)}</b>`+
       `<div class="bpbar"><i style="width:${Math.round(n/tot*100)}%"></i></div><span class="bpprog">${done?'Set complete ✓':`${n} / ${tot} found · ${tot-n} left to discover`}</span>`+
+      (bpHasLeg(pk)?`<div class="bpmeter"><span>⭐ Legendary or better guaranteed <b>within ${bpLegLeft(pk)} pack${bpLegLeft(pk)===1?'':'s'}</b></span><div class="bpbar"><i style="width:${Math.round((BP_LEG_PITY-bpLegLeft(pk))/BP_LEG_PITY*100)}%;background:linear-gradient(90deg,#FFB627,#FFE27A)"></i></div></div>`:'')+bpLuckHTML(pk)+
       (done?'':tot-n===1?`<span class="bpone">1 left to complete the set! +♪${bpSetBonus(pk).toLocaleString()}</span>`:`<span class="bpsetr">Complete the set: +♪${bpSetBonus(pk).toLocaleString()}</span>`)+useTok+
       `<button class="btn" type="button" data-bpopen="${pk.id}" ${SAVE.notes<pk.price?'disabled':''}>Open · ♪ ${pk.price.toLocaleString()}</button>`+
       `<button class="btn ghost bp5" type="button" data-bpfive="${pk.id}" ${SAVE.notes<pk.price*BP_MULTI?'disabled':''}>Open ${BP_MULTI} · ♪ ${(pk.price*BP_MULTI).toLocaleString()}</button>`+
@@ -14121,8 +14282,12 @@ function bpHistHTML(){ const C=SAVE.bpCnt||[], H=SAVE.bpHist||[], tot=C.reduce((
       return `<li><i style="--rc:${R.c}"></i><span>${escapeHTML(s.name)} <em>· ${R.n}${d?' · repeat':''}</em></span><em>${escapeHTML(p?p.name.replace(/ Pack$/,''):'')} · ${ago(t)}</em></li>`; }).join('')}</ul></details>`; }
 /* one block out of a pack: rolled, saved and counted */
 function bpRollOne(pk){
-  SAVE.bpDry=SAVE.bpDry||{}; const dry=SAVE.bpDry[pk.id]||0;
-  const id=bpRoll(pk,undefined,bpBoost(dry)), s=skinById(id), dupe=SAVE.owned.includes(id), refund=dupe?bpRefund(pk,s.bpr):0;
+  SAVE.bpDry=SAVE.bpDry||{}; const dry=SAVE.bpDry[pk.id]||0; SAVE.bpLeg=SAVE.bpLeg||{};
+  let id=bpRoll(pk,undefined,bpBoost(dry)), guar=false;
+  // the guarantee: the 40th pack in a row without a Legendary or better is one (picked by the pack's own rates)
+  if(bpHasLeg(pk)&&skinById(id).bpr<3&&bpLegLeft(pk)<=1){ const L=Object.entries(pk.rates).filter(([k])=>skinById(k).bpr>=3), tot=L.reduce((a,[,w])=>a+w,0); let x=bpRand()*tot; for(const [k,w] of L){ x-=w; if(x<0){ id=k; break; } } if(skinById(id).bpr<3) id=L[0][0]; guar=true; }
+  const s=skinById(id), dupe=SAVE.owned.includes(id), refund=dupe?bpRefund(pk,s.bpr):0;
+  SAVE.bpLeg[pk.id]=s.bpr>=3?0:(SAVE.bpLeg[pk.id]||0)+1;
   SAVE.bpDry[pk.id]=s.bpr===0?dry+1:0;
   const dst=dupe?DUST_GET[s.bpr]:0; if(dupe){ SAVE.notes+=refund; SAVE.dust=(SAVE.dust||0)+dst; } else { SAVE.owned.push(id); if(SAVE.gone) delete SAVE.gone[id]; }
   SAVE.bpOpened=SAVE.bpOpened||{}; SAVE.bpOpened[pk.id]=(SAVE.bpOpened[pk.id]||0)+1;
@@ -14132,10 +14297,11 @@ function bpRollOne(pk){
   // the set: every block in this pack found
   SAVE.bpSet=SAVE.bpSet||{}; const tot=Object.keys(pk.rates).length, have=bpOwnedN(pk); let set=0;
   if(have>=tot&&!SAVE.bpSet[pk.id]){ SAVE.bpSet[pk.id]=1; set=bpSetBonus(pk); SAVE.notes+=set; }
-  return {id,dupe,refund,have,tot,set,dust:dst}; }
+  const col=colAdd(BP_XP[s.bpr]+(dupe?0:BP_NEW_XP));
+  return {id,dupe,refund,have,tot,set,dust:dst,col,guar}; }
 const bpCanPay=(pk,how,n=1)=>!!pk&&bpAvail(pk)&&(how==='free'?bpFreeReady():how==='token'?bpTokens()>=1&&bpTokenOk(pk):SAVE.notes>=pk.price*n);
 function bpBuy(pk,how){ if(how===true) how='free'; if(!bpCanPay(pk,how)||(BP.stage&&BP.stage!=='done')) return;
-  if(how==='free') SAVE.bpFree=todayKey(); else if(how==='token') SAVE.bpTokens=bpTokens()-1; else { SAVE.notes-=pk.price; spendLog(pk.name,pk.price); }
+  if(how==='free'){ const st=SAVE.bpStreak||{n:0,d:''}; st.n=st.d===todayKey(-1)?st.n+1:1; st.d=todayKey(); SAVE.bpStreak=st; SAVE.bpFree=todayKey(); if(st.n%7===0){ SAVE.bpTokens=bpTokens()+1; setTimeout(()=>toast(`🔥 ${st.n}-day free pack streak! +🎟 a free pack ticket`),2600); } } else if(how==='token') SAVE.bpTokens=bpTokens()-1; else { SAVE.notes-=pk.price; spendLog(pk.name,pk.price); }
   const res=bpRollOne(pk); save(); bpShow(pk,res); }
 /* opening five at once: five cards face down, turned over one by one or all together */
 function bpBuyMulti(pk){ if(!bpCanPay(pk,'',BP_MULTI)||(BP.stage&&BP.stage!=='done')) return;
@@ -14172,10 +14338,16 @@ function bpmDone(){ BP.stage='done'; const pk=BP.pk, L=BP.multi, nw=L.filter(r=>
   else { $('bpmSum').innerHTML+=`<div class="small" style="margin-top:4px">Tap a card to wear that block</div>`;
   $('bpmBtns').innerHTML=`<button class="btn ghost" type="button" id="bpmAgain" ${bpCanPay(pk,'',BP_MULTI)?'':'disabled'}>Open ${BP_MULTI} more · ♪ ${(pk.price*BP_MULTI).toLocaleString()}</button><button class="btn ghost" type="button" id="bpmDone">Done</button>`;
   $('bpmAgain').onclick=()=>bpBuyMulti(pk); $('bpmDone').onclick=bpClose; }
+  { const C=L.map(r=>r.col).filter(Boolean); if(C.length&&!BP.forge){ const col={before:C[0].before,after:C[C.length-1].after,xp:C.reduce((a,c)=>a+c.xp,0),ups:C.flatMap(c=>c.ups)}; $('bpmSum').insertAdjacentHTML('beforeend',bpColHTML(col)); bpColAnim($('bpmSum'),col,500); } }
   if(set) bpLater(()=>{ const c={x:innerWidth/2,y:innerHeight/2}; for(let k=0;k<140;k++) bpSpark(c.x,c.y,1,'prism',6,k%2); bpRing(c.x,c.y,'prism',3); bpSnd('reveal',3); },400);
   if(typeof acctPush==='function') acctPush(true); }
 /* ---- the opening ---- */
 const bpFast=()=>!!SAVE.bpFast&&passPlus();   // Quick open is a Pulse Pass+ perk
+/* the tear: a jagged line across the top. The strip above it is a full copy of the pack's art clipped to the top, so
+   when it lifts and flies off it looks exactly like the top of this pack; the pack itself is clipped just below it. */
+const BP_ZZ=(()=>{ const pts=[]; for(let i=0;i<=20;i++) pts.push([i*5,15+(i%2?1.25:-1.05)+(((i*7)%3)-1)*.35]); const f=([x,y])=>`${x}% ${y.toFixed(2)}%`;
+  return {strip:`polygon(0 0,100% 0,${pts.slice().reverse().map(f).join(',')})`,art:`polygon(${pts.map(f).join(',')},100% 100%,0 100%)`}; })();
+function bpTearShow(){ $('bpStrip').classList.add('show'); $('bpArt').style.clipPath=BP_ZZ.art; }
 function bpLater(f,ms){ BP.timers.push(setTimeout(f,SAVE.reduce?Math.min(ms,250):bpFast()?ms*.5:ms)); }   // Quick open runs everything at double speed
 function bpShow(pk,res){ try{ firstGesture(); }catch(e){} BP.timers.forEach(clearTimeout); BP.timers=[];
   BP.pk=pk; BP.res=res; BP.busy=false; BP.tap=null; BP.stage='cut'; BP.cut=null; BP.rays=0; BP.prism=false; BP.parts=[];
@@ -14183,9 +14355,10 @@ function bpShow(pk,res){ try{ firstGesture(); }catch(e){} BP.timers.forEach(clea
   ov.style.setProperty('--glow',pr?'#C8A0FF':pk.acc); ov.classList.remove('dark');
   const pack=$('bpPack'); pack.className=pr?'pristine':''; pack.style.cssText=bpStyle(pk);
   $('bpArt').className='bppk bpclip'+(pr?' pristine':''); $('bpArt').style.cssText=bpStyle(pk); $('bpArt').innerHTML=bpPackHTML(pk,140);
-  $('bpStrip').className='bppk'+(pr?' pristine':''); $('bpStrip').style.cssText=bpStyle(pk);
+  $('bpStrip').className='bppk'+(pr?' pristine':''); $('bpStrip').style.cssText=bpStyle(pk)+`;clip-path:${BP_ZZ.strip}`; $('bpStrip').innerHTML=bpPackHTML(pk,140).replace(/<canvas[^>]*><\/canvas>/,'');
+  $('bpArt').style.clipPath=''; $('bpBeam').className='bpbeam'; $('bpCard').style.removeProperty('--tx'); $('bpCard').style.removeProperty('--ty');
   $('bpCut').style.cssText='width:0';
-  const card=$('bpCard'); card.className=''; const back=card.querySelector('.bpcback'); back.classList.remove('r4wait'); back.style.setProperty('--glow','#5A4AA8'); back.style.setProperty('--pow',0);
+  const card=$('bpCard'); card.className=''; card.style.removeProperty('--sx'); const back=card.querySelector('.bpcback'); back.classList.remove('r4wait'); back.style.setProperty('--glow','#5A4AA8'); back.style.setProperty('--pow',0);
   const fr=$('bpFront'); fr.className='bpcf bpcfront r'+r; fr.style.setProperty('--rc',R.c);
   fr.innerHTML=`<span class="bprr">${r===5?'✦ Pristine ✦':R.n}</span><canvas class="skprev" data-skin="${s.id}" data-px="220" data-big="1" width="220" height="220" aria-hidden="true"></canvas><b>${escapeHTML(s.name)}</b><small>${escapeHTML(pk.name)}</small>`;
   ov.classList.remove('multi'); $('bpMulti').hidden=true; BP.multi=null;
@@ -14200,26 +14373,32 @@ function bpClose(){ BP.timers.forEach(clearTimeout); BP.timers=[]; BP.stage=''; 
 function bpPackRect(){ return $('bpPack').getBoundingClientRect(); }
 $('bpPack').addEventListener('pointerdown',e=>{ if(BP.stage!=='cut') return; const r=bpPackRect(), y=(e.clientY-r.top)/r.height;
   if(y>.32){ $('bpPack').animate([{translate:'0 0'},{translate:'-6px 0'},{translate:'6px 0'},{translate:'0 0'}],{duration:220}); $('bpInfo').innerHTML='Swipe across the <b>top</b> of the pack, along the dashed line ✂'; return; }
-  BP.cut={min:e.clientX,max:e.clientX,last:0}; $('bpPack').classList.add('cutting'); try{ $('bpPack').setPointerCapture(e.pointerId); }catch(x){} bpCutDraw(r); });
+  BP.cut={min:e.clientX,max:e.clientX,last:0}; $('bpPack').classList.add('cutting'); bpTearShow(); try{ $('bpPack').setPointerCapture(e.pointerId); }catch(x){} bpCutDraw(r); });
 $('bpPack').addEventListener('pointermove',e=>{ const r=bpPackRect();
   if(BP.stage==='cut'&&!BP.cut&&e.pointerType==='mouse'){ const dx=(e.clientX-r.left)/r.width-.5, dy=(e.clientY-r.top)/r.height-.5; $('bpPack').style.transform=`rotateY(${dx*16}deg) rotateX(${-dy*12}deg)`; }
   if(!BP.cut||BP.stage!=='cut') return;
   BP.cut.min=Math.min(BP.cut.min,e.clientX); BP.cut.max=Math.max(BP.cut.max,e.clientX); bpCutDraw(r);
+  { const pr=clamp((BP.cut.max-BP.cut.min)/(r.width*.72),0,1); $('bpStrip').style.transform=`rotate(${(-pr*9).toFixed(2)}deg) translateY(${(-pr*5).toFixed(1)}px)`; $('bpPack').style.setProperty('--tear',pr.toFixed(3)); }
   bpSpark(e.clientX,r.top+r.height*.15,3,'#FFFFFF',1.4);
   const now=performance.now(); if(now-BP.cut.last>55){ BP.cut.last=now; bpSnd('tick'); buzz(4); }
   if(BP.cut.max-BP.cut.min>=r.width*.72) bpCutDone(); });
-const bpCutEnd=()=>{ if(!BP.cut||BP.stage!=='cut') return; BP.cut=null; $('bpPack').classList.remove('cutting'); const c=$('bpCut'); c.style.transition='opacity .3s'; c.style.opacity='0'; setTimeout(()=>{ c.style.cssText='width:0'; },300); };
+const bpCutEnd=()=>{ if(!BP.cut||BP.stage!=='cut') return; BP.cut=null; $('bpPack').classList.remove('cutting'); $('bpStrip').style.transform=''; $('bpPack').style.setProperty('--tear',0); const c=$('bpCut'); c.style.transition='opacity .3s'; c.style.opacity='0'; setTimeout(()=>{ c.style.cssText='width:0'; },300); };
 $('bpPack').addEventListener('pointerup',bpCutEnd); $('bpPack').addEventListener('pointercancel',bpCutEnd);
 $('bpPack').addEventListener('pointerleave',()=>{ if(!BP.cut) $('bpPack').style.transform=''; });
 function bpCutDraw(r){ const c=$('bpCut'); c.style.transition=''; c.style.opacity='1'; c.style.left=(BP.cut.min-r.left)+'px'; c.style.width=Math.max(4,BP.cut.max-BP.cut.min)+'px'; }
 $('bpTap').onclick=()=>{ if(BP.stage==='cut') bpCutDone(); };
-function bpCutDone(){ if(BP.stage!=='cut') return; BP.stage='rip'; BP.cut=null; const r=bpPackRect(), pack=$('bpPack');
+function bpCutDone(){ if(BP.stage!=='cut') return; BP.stage='rip'; BP.cut=null; const r=bpPackRect(), pack=$('bpPack'), card=$('bpCard'), pk=BP.pk;
   pack.style.transform=''; $('bpCut').style.cssText=`left:0;width:${r.width}px`; $('bpTap').hidden=true; $('bpInfo').textContent='';
-  $('bpStrip').classList.add('off'); pack.classList.add('open'); bpSnd('rip'); buzz(25);
-  for(let i=0;i<26;i++) bpSpark(r.left+r.width*Math.random(),r.top+r.height*.15,1,i%3?'#FFFFFF':getComputedStyle($('bpOv')).getPropertyValue('--glow').trim()||'#FFFFFF',3);
-  bpLater(()=>{ pack.classList.add('shake'); bpSnd('rumble'); },350);
-  bpLater(()=>{ pack.classList.remove('shake'); pack.classList.add('gone'); $('bpCard').classList.add('up'); bpSnd('whoosh'); },1150);
-  bpLater(bpHype,1900); }
+  bpTearShow(); pack.style.setProperty('--tear',1); $('bpStrip').classList.add('off'); pack.classList.add('open'); bpSnd('rip'); buzz(25);
+  const glow=getComputedStyle($('bpOv')).getPropertyValue('--glow').trim()||'#FFFFFF', y=r.top+r.height*.15;
+  const bm=$('bpBeam'); bm.classList.remove('go'); void bm.offsetWidth; bm.classList.add('go');
+  for(let i=0;i<30;i++) bpSpark(r.left+r.width*Math.random(),y,1,i%3?'#FFFFFF':glow,3);
+  for(let i=0;i<22;i++) bpSpark(r.left+r.width*(.1+.8*Math.random()),y,1,[pk.c1,pk.acc,'#FFFFFF'][i%3],2.4,true);   // foil flakes
+  bpLater(()=>pack.classList.add('puff'),90);
+  bpLater(()=>{ pack.classList.remove('puff'); card.classList.add('rise'); pack.classList.add('shake'); bpSnd('whoosh'); buzz(12); },380);
+  bpLater(()=>pack.classList.remove('shake'),760);
+  bpLater(()=>{ pack.classList.add('gone'); card.classList.remove('rise'); card.classList.add('up'); bpSnd('rumble'); const c=bpCardC(); bpRing(c.x,c.y,glow,0); },1080);
+  bpLater(bpHype,1750); }
 /* the build-up: the card glows at its first rarity, and every tap tries to push it one rarity higher. When it can't
    rise any further the glow holds, and the next stage (the heartbeat before the flip) starts */
 const BP_HYPE=['','It\'s glowing blue…','Purple! Something powerful is in here…','GOLD!! The light is getting stronger…','CRIMSON?! An Ascendant aura is breaking through…','…wait. The light just went out.'];
@@ -14257,6 +14436,20 @@ function bpTease(){ BP.stage='tease'; $('bpSkip').hidden=true; const r=skinById(
     else bpLater(()=>{ if(BP.stage==='tease') bpReveal(); },250); };
   bpLater(beat,250); }
 $('bpSkip').onclick=()=>{ if(BP.stage==='rip'||BP.stage==='hype'||BP.stage==='holding'||BP.stage==='ready'||BP.stage==='tease'){ BP.timers.forEach(clearTimeout); BP.timers=[]; $('bpPack').className='gone'; $('bpCard').className='up'; bpReveal(); } };
+/* the Collector XP bar under a revealed block: it fills, and on a level up it fills to the end, starts again and says what you won */
+const bpColHTML=col=>`<div class="bpcol"><span>🏅 Lv ${col.before.L}</span><div class="bpbar"><i style="width:${col.before.pct}%"></i></div><b>+${col.xp} XP</b></div>`;
+function bpColAnim(box,col,delay){ const bar=box.querySelector('.bpcol i'), lv=box.querySelector('.bpcol span'); if(!bar) return;
+  bpLater(()=>{ if(!col.ups.length){ bar.style.width=col.after.pct+'%'; return; } bar.style.width='100%';
+    bpLater(()=>{ if(!bar.isConnected) return; bar.style.transition='none'; bar.style.width='0%'; void bar.offsetWidth; bar.style.transition=''; bar.style.width=col.after.pct+'%'; lv.textContent='🏅 Lv '+col.after.L;
+      const u=col.ups[col.ups.length-1], d=document.createElement('div'); d.className='bplvup'; d.textContent=`Collector level ${u.L}! +${colRewardText(u.r)}`; box.appendChild(d);
+      bpSnd('reveal',2); buzz(40); const b=bar.getBoundingClientRect(); for(let k=0;k<50;k++) bpSpark(b.left+b.width/2,b.top,1,'prism',3.5,k%2); bpRing(b.left+b.width/2,b.top,'#FFD166',1); },950); },delay); }
+/* numbers that count up from 0 */
+function bpCountUp(box){ box.querySelectorAll('.bpcount').forEach(el=>{ const to=+el.dataset.to||0, t0=performance.now(), D=900;
+  const step=now=>{ const u=Math.min(1,(now-t0)/D), e=1-Math.pow(1-u,3); el.textContent=Math.round(to*e).toLocaleString(); if(u<1&&el.isConnected) requestAnimationFrame(step); }; requestAnimationFrame(step); }); }
+/* the revealed card leans toward your finger or mouse; left alone, it sways gently */
+$('bpOv').addEventListener('pointermove',e=>{ if(BP.stage!=='done'||BP.multi) return; const card=$('bpCard'); if(!card.classList.contains('flip')) return; const r=card.getBoundingClientRect();
+  const dx=clamp((e.clientX-(r.left+r.width/2))/r.width,-1,1), dy=clamp((e.clientY-(r.top+r.height/2))/r.height,-1,1); BP.tiltT=performance.now();
+  card.classList.add('tilt'); card.style.setProperty('--ty',(dx*14).toFixed(1)+'deg'); card.style.setProperty('--tx',(-dy*10).toFixed(1)+'deg'); card.style.setProperty('--sx',(50+dx*55).toFixed(0)+'%'); });
 function bpReveal(){ BP.stage='done'; $('bpSkip').hidden=true; const pk=BP.pk, res=BP.res, s=skinById(res.id), r=s.bpr, R=BP_RAR[r], ov=$('bpOv'), card=$('bpCard'), c=bpCardC();
   ov.classList.remove('dark'); ov.style.setProperty('--glow',r===5?'#C8A0FF':R.c); card.classList.remove('shake'); card.classList.add('flip');
   const fl=$('bpFlash'); fl.style.setProperty('--fc',r===5?'#FFFFFF':R.c); fl.classList.remove('go'); void fl.offsetWidth; if(r>=2) fl.classList.add('go');
@@ -14265,14 +14458,18 @@ function bpReveal(){ BP.stage='done'; $('bpSkip').hidden=true; const pk=BP.pk, r
   for(let k=0;k<=Math.min(r,3);k++) bpLater(()=>bpRing(c.x,c.y,r===5?'prism':R.c,r),k*180);
   bpSnd('reveal',r); buzz([20,40,70,140,200,260][r]);
   if(r>=3){ const b=$('bpBanner'); b.textContent=r===5?'PULSE PRISTINE':r===4?'ASCENDANT!':'LEGENDARY!'; b.style.setProperty('--rc',R.c); b.className='bpbanner go'+(r===5?' r4':r===4?' asc':''); }
-  $('bpInfo').innerHTML=(res.dupe?`<span class="dupe">You already own ${escapeHTML(s.name)}, so you get ♪${res.refund.toLocaleString()} back${res.dust?` and ✧${res.dust} Stardust for the Forge`:''}</span>`:`<span class="new">NEW BLOCK</span><br>${escapeHTML(s.name)} is yours!`)+
+  $('bpInfo').innerHTML=(res.dupe?`<span class="dupe">You already own ${escapeHTML(s.name)}, so you get ♪<span class="bpcount" data-to="${res.refund}">0</span> back${res.dust?` and ✧${res.dust} Stardust for the Forge`:''}</span>`:`<span class="new">NEW BLOCK</span><br>${escapeHTML(s.name)} is yours!`)+
     (res.tot?`<div class="bpsetline"><span>${escapeHTML(pk.name.replace(/ Pack$/,''))} set</span><div class="bpbar"><i style="width:${Math.round((res.have-(res.dupe?0:1))/res.tot*100)}%"></i></div><b>${res.have} / ${res.tot}</b></div>`:'')+
-    (res.set?`<div class="bpsetdone">SET COMPLETE! +♪${res.set.toLocaleString()}</div>`:'');
+    (res.set?`<div class="bpsetdone">SET COMPLETE! +♪${res.set.toLocaleString()}</div>`:'')+
+    (res.guar?`<div class="bpguar hit">⭐ Your guaranteed Legendary!</div>`:bpHasLeg(pk)&&r<3?`<div class="bpguar">⭐ Legendary or better guaranteed within ${bpLegLeft(pk)} pack${bpLegLeft(pk)===1?'':'s'}</div>`:'')+
+    (res.col?bpColHTML(res.col):'');
+  if(!res.dupe) $('bpFront').insertAdjacentHTML('beforeend','<span class="bpstamp">NEW!</span>');
+  bpCountUp($('bpInfo')); if(res.col) bpColAnim($('bpInfo'),res.col,800);
   { const bar=$('bpInfo').querySelector('.bpsetline i'); if(bar) setTimeout(()=>{ bar.style.width=Math.round(res.have/res.tot*100)+'%'; },500); }
   if(res.set){ bpLater(()=>{ const c=bpCardC(); for(let k=0;k<140;k++) bpSpark(c.x,c.y,1,'prism',6,k%2); bpRing(c.x,c.y,'prism',3); bpSnd('reveal',3); },900); }
   const again=SAVE.notes>=pk.price, eq=SAVE.skin===s.id;
   $('bpBtns').innerHTML=(!res.dupe||!eq?`<button class="btn" type="button" id="bpEquip" ${eq?'disabled':''}>${eq?'Equipped':'Equip'}</button>`:'')+
-    `<button class="btn ghost" type="button" id="bpAgain" ${again?'':'disabled'}>Open another · ♪ ${pk.price.toLocaleString()}</button><button class="btn ghost" type="button" id="bpDone">Done</button>`;
+    `<button class="btn${res.dupe?'':' ghost'}" type="button" id="bpAgain" ${again?'':'disabled'}>Open another · ♪ ${pk.price.toLocaleString()}</button><button class="btn ghost" type="button" id="bpDone">Done</button>`;
   const eb=$('bpEquip'); if(eb) eb.onclick=()=>{ equip('skin',s.id); G.players=[mkPlayer(0)]; if(R0()) G.players[0].pos={...R0().start}; try{ netHello(); }catch(e){} eb.textContent='Equipped'; eb.disabled=true; };
   $('bpAgain').onclick=()=>bpBuy(pk); $('bpDone').onclick=bpClose;
   if(typeof acctPush==='function') acctPush(true); }
@@ -14285,6 +14482,7 @@ function bpSpark(x,y,n,col,sp,conf){ for(let i=0;i<n;i++){ const a=Math.random()
   BP.parts.push({k:conf?'c':'s',x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-sp*20,life:0,max:.6+Math.random()*.7,r:2+Math.random()*3,col,rot:Math.random()*TAU,h:Math.random()*360}); } }
 function bpRing(x,y,col,i){ BP.parts.push({k:'r',x,y,life:0,max:.8+i*.15,r:20,grow:220+i*90,col}); }
 function bpFrame(t){ BP.raf=requestAnimationFrame(bpFrame); const c=$('bpFx'), g=c.getContext('2d'), d=c._d||1, now=t/1000, dt=Math.min(.05,now-(BP.lt||now)); BP.lt=now;
+  if(BP.stage==='done'&&!BP.multi&&!SAVE.reduce&&t-(BP.tiltT||0)>1500){ const cd=$('bpCard'); if(cd.classList.contains('flip')){ cd.classList.add('tilt'); cd.style.setProperty('--ty',(Math.sin(now*1.1)*8).toFixed(1)+'deg'); cd.style.setProperty('--tx',(Math.cos(now*.8)*4).toFixed(1)+'deg'); cd.style.setProperty('--sx',(50+Math.sin(now*1.1)*40).toFixed(0)+'%'); } }
   g.setTransform(d,0,0,d,0,0); g.clearRect(0,0,c.width,c.height);
   const cc=BP.rays||BP.prism?bpCardC():null;
   if(BP.rays&&cc){ g.save(); g.translate(cc.x,cc.y); g.globalCompositeOperation='lighter'; const n=BP.prism?16:8+BP.rays*2, L=Math.max(innerWidth,innerHeight)*.75;
@@ -16474,7 +16672,8 @@ $('calibAgain').onclick=startCalib; $('calibMinus').onclick=()=>calibNudge(-5); 
 $('calibDot').addEventListener('pointerdown',e=>{e.preventDefault(); calibTap(e)});
 $('relaxed').onchange=e=>{SAVE.relaxed=e.target.checked; save()};
 $('lowLat').onchange=e=>{SAVE.lowLat=e.target.checked; save(); rebuildAudio(); };
-$('reduce').onchange=e=>{SAVE.reduce=e.target.checked; save()};
+$('reduce').onchange=e=>{SAVE.reduce=e.target.checked; save(); document.body.classList.toggle('calm',!!SAVE.reduce)};
+document.body.classList.toggle('calm',!!SAVE.reduce);
 $('metroOn').onchange=e=>{ SAVE.metroOff=!e.target.checked; save(); };
 /* the Concert Hall interface: the Grand Crescendo's 7.5M update. It switches itself on the first time it unlocks; Settings turns it off or on */
 function uiCresApply(){ const ok=cresHave(5); if(ok&&!SAVE.uiCresAuto){ SAVE.uiCresAuto=true; SAVE.uiCres=true; save(); }
