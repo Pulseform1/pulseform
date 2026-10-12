@@ -2152,6 +2152,32 @@ body.phone.hastabs #toast{top:auto;bottom:calc(84px + env(safe-area-inset-bottom
 .goalban .twban-ic{background:linear-gradient(#B8FFE8,#3FC8A0)}.goalbar{display:block;height:6px;margin-top:5px;border-radius:99px;background:rgba(0,0,0,.35);overflow:hidden}.goalbar i{display:block;height:100%;background:linear-gradient(90deg,#7FF0D2,#FFE27A);border-radius:99px}
 #menuOv .wardban{border:1px solid rgba(255,126,182,.55);background:linear-gradient(110deg,rgba(255,126,182,.26),rgba(110,60,170,.55) 55%,rgba(30,20,80,.85))}
 .wardban .twban-ic{background:linear-gradient(#FFC8E0,#E05A9A)}
+#menuOv .cresban:not([hidden]){display:flex;align-items:center;gap:12px;width:100%;max-width:520px;margin-top:10px;padding:12px 14px;border-radius:18px;cursor:pointer;text-align:left;color:#fff;font:inherit;
+  border:1px solid rgba(255,214,120,.6);background:linear-gradient(110deg,rgba(255,209,102,.3),rgba(58,47,138,.7) 55%,rgba(14,16,48,.9));box-shadow:0 8px 24px rgba(0,0,0,.25),0 0 18px rgba(255,209,102,.18)}
+.cresban .twban-ic{background:linear-gradient(#2E3486,#0E1030);color:#FFD166;border:1px solid rgba(255,209,102,.6)}.cresban .goalbar i{background:linear-gradient(90deg,#FFD166,#FF7EB6,#9CC8FF)}
+.crpanel{max-width:760px}.crhero{position:relative;overflow:hidden;text-align:center;padding:18px 16px 16px;border-radius:20px;background:radial-gradient(ellipse at 50% -10%,rgba(255,209,102,.35),transparent 60%),linear-gradient(160deg,#2E3486,#0E1030 70%);border:1px solid rgba(255,214,120,.35)}
+.crkick{margin:0;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#FFE27A;font-weight:700}
+.crtitle{margin:4px 0 6px;font:800 clamp(26px,6vw,40px) var(--display);line-height:1.05}.crtitle span{color:#FFD166;text-shadow:0 0 18px rgba(255,209,102,.55)}
+.crsub{margin:0 auto 12px;max-width:520px;font-size:14px;opacity:.9}.crbig{display:flex;align-items:baseline;justify-content:center;gap:8px;flex-wrap:wrap}.crbig b{font:800 clamp(26px,7vw,42px) var(--display);color:#fff}.crbig span{opacity:.8;font-size:14px}
+.crbar{position:relative;height:22px;margin:16px 6px 26px;border-radius:99px;background:rgba(0,0,0,.4);box-shadow:0 0 0 1px rgba(255,214,120,.35) inset}
+.crfill{height:100%;border-radius:99px;background:linear-gradient(90deg,#FFD166,#FF7EB6 60%,#9CC8FF);box-shadow:0 0 14px rgba(255,209,102,.6);transition:width 1s}
+.crmark{position:absolute;top:24px;transform:translateX(-50%);font-style:normal;font-size:13px;opacity:.45;filter:grayscale(1)}.crmark::before{content:'';position:absolute;left:50%;top:-26px;width:2px;height:22px;background:rgba(255,255,255,.25)}
+.crmark.on{opacity:1;filter:none}.crmark.fin{font-size:18px;top:22px}
+.crme{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;font-size:14px}.crme b{color:#FFD166}
+.crfinale{display:grid;grid-template-columns:190px minmax(0,1fr);gap:16px;align-items:center;margin:16px 0;padding:14px;border-radius:20px;background:linear-gradient(120deg,rgba(255,209,102,.16),rgba(46,52,134,.4));border:1px solid rgba(255,214,120,.35)}
+.crfinale h3{margin:2px 0 6px;font:800 26px var(--display);color:#FFD166}@media (max-width:560px){.crfinale{grid-template-columns:1fr;text-align:center}}
+.crped{position:relative;display:grid;place-items:center;width:170px;height:170px;margin:auto}.crped canvas{position:relative;width:170px;height:170px}.crped.big{width:230px;height:230px;margin:10px auto}.crped.big canvas{width:230px;height:230px}
+.crrays{position:absolute;inset:-10%;border-radius:50%;background:repeating-conic-gradient(rgba(255,214,120,.22) 0 10deg,transparent 10deg 24deg);animation:crspin 24s linear infinite;mask:radial-gradient(circle,#000 30%,transparent 70%);-webkit-mask:radial-gradient(circle,#000 30%,transparent 70%)}
+@keyframes crspin{to{transform:rotate(360deg)}}
+.crh{margin:18px 0 8px;font:700 18px var(--display)}.crlist,.crtop{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.crrow{display:grid;grid-template-columns:34px 64px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 12px;border-radius:14px;background:var(--glass);opacity:.75}
+.crrow.got{opacity:1;background:linear-gradient(90deg,rgba(255,209,102,.18),var(--glass))}.crrow.fin{border:1px solid rgba(255,214,120,.6);opacity:1;background:linear-gradient(90deg,rgba(255,209,102,.24),rgba(46,52,134,.5))}
+.cric{font-size:20px;text-align:center}.crat{font:700 14px var(--display);color:#FFE27A}.crn{font-size:14px}.crn em{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.1em;padding:2px 6px;border-radius:6px;background:#4FA8FF;color:#06203A;margin-left:4px;vertical-align:middle}
+.crok{color:#7FF0D2;font-size:13px;white-space:nowrap}.crclaim{color:#FFD166;font-size:13px;font-weight:700}.crrow small{opacity:.7;white-space:nowrap}
+@media (max-width:520px){.crrow{grid-template-columns:28px 52px minmax(0,1fr)}.crrow>b,.crrow>small{grid-column:3}}
+.crtop li{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 12px;border-radius:12px;background:var(--glass)}.crtop li.me{outline:2px solid #FFD166}.crtop small{opacity:.8}
+.crwin{position:relative;overflow:hidden;text-align:center;max-width:520px;background:radial-gradient(ellipse at 50% 0%,rgba(255,209,102,.4),transparent 60%),linear-gradient(160deg,#2E3486,#07081C)}
+.crwin h3{font:800 22px var(--display);color:#FFD166;margin:4px 0}.crwinbtns{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
 .wardhero{display:flex;gap:14px;align-items:center;flex-wrap:wrap}#wardArt canvas{width:130px;height:130px}.wardhero>div:last-child{flex:1;min-width:200px}
 .wardrw{list-style:none;margin:6px 0;padding:0;display:grid;gap:4px;font-size:13px}.wardrw li.got{color:#7FF0D2}
 #wardLB li.me{outline:2px solid #FFD166}
@@ -2351,6 +2377,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
        <button class="cta" id="mContinue" type="button"><span class="cta-k" id="mContTitle">Continue</span><span class="cta-s" id="mContSub"></span><span class="cta-go" aria-hidden="true">▶</span></button>
       <button class="twban duckban" id="mErlaf" type="button" hidden><span class="twban-ic duckic" aria-hidden="true"><canvas class="skprev" data-skin="sk_erlaf" data-px="40" width="40" height="40"></canvas></span><span class="twban-t"><b>Erlaf the Giant Duck</b><small id="mErlafSub">Limited boss challenge</small></span><span class="twban-go" id="mErlafGo" aria-hidden="true">Play ›</span></button>
       <button class="twban liveban" id="mLive" type="button" hidden><span class="twban-ic" aria-hidden="true">★</span><span class="twban-t"><b id="mLiveT">Live event</b><small id="mLiveSub"></small></span><span class="twban-go" id="mLiveGo" aria-hidden="true">›</span></button>
+      <button class="twban cresban" id="mCres" type="button" hidden><span class="twban-ic" aria-hidden="true">🎼</span><span class="twban-t"><b>The Grand Crescendo</b><small id="mCresSub">One goal for everyone: 30,000,000 points</small><i class="goalbar"><i id="mCresBar"></i></i></span><span class="twban-go" aria-hidden="true">›</span></button>
       <button class="twban" id="mTwinBan" type="button" hidden><span class="twban-ic" aria-hidden="true">⚔</span><span class="twban-t"><b>Twin Pulse</b><small id="mTwinBanSub">2v2 event</small></span><span class="twban-go" aria-hidden="true">›</span></button>
       <button class="twban goalban" id="mGoal" type="button" hidden><span class="twban-ic" aria-hidden="true">🎯</span><span class="twban-t"><b id="mGoalT">Saving up</b><small id="mGoalSub"></small><i class="goalbar"><i id="mGoalBar"></i></i></span><span class="twban-go" aria-hidden="true">›</span></button>
       <button class="twban wardban" id="mWard" type="button" hidden><span class="twban-ic" aria-hidden="true">👕</span><span class="twban-t"><b>Wardrobe Challenge</b><small id="mWardSub">One block for everyone this week</small></span><span class="twban-go" aria-hidden="true">›</span></button>
@@ -2748,6 +2775,20 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     </div>
     <div class="row" style="justify-content:center"><button class="btn cvkjoin twbtn" id="twWEquip" type="button">✦ Equip everything</button><button class="btn ghost" id="twWLater" type="button">Later</button></div>
     <small class="small" id="twWNote">You can change them any time in the Collection.</small>
+  </div>
+</section>
+<section id="cresOv" class="overlay" hidden>
+  <div class="panel playpanel crpanel">
+    <div class="head"><button class="back" id="cresBack" type="button">← Menu</button></div>
+    <div id="cresBody"></div>
+  </div>
+</section>
+<section id="cresWinOv" class="overlay" hidden>
+  <div class="panel crwin"><div id="cresWinFx"></div>
+    <p class="crkick">The Grand Crescendo · 30,000,000</p><h2 class="crtitle">You did it, <span>together.</span></h2>
+    <div class="crped big"><div class="crrays"></div><canvas class="skprev" data-skin="opus" data-px="230" width="230" height="230" aria-hidden="true"></canvas></div>
+    <h3>Magnum Opus is yours</h3><p class="small">The legendary living-symphony block, plus the Magnum Opus banner and title. Thank you for playing your part.</p>
+    <div class="crwinbtns"><button class="btn lvgo" id="cresWinEquip" type="button">Equip it now</button><button class="btn ghost" id="cresWinLater" type="button">Later</button></div>
   </div>
 </section>
 <section id="twinOv" class="overlay cvkov" hidden>
@@ -3288,6 +3329,7 @@ const TILES=[
  {id:'t_gilded',name:'Gilded',req:{passp:35},tile:'#FFE9A8',front:'#9A6A1A',sky:['#2A1A0A','#7A4A1A','#F2C66A'],m:.45,sm:.26,deco:'filigree',dc:'#FFD166'},
  {id:'t_velvet',name:'Velvet Night',req:{passp:65},tile:'#4A2A5A',front:'#1E0E2A',sky:['#0E0618','#3A1450','#9A4A9A'],m:.5,sm:.3,deco:'stars'},
  {id:'t_equinox',name:'Equinox',req:{twin:true},hidden:true,tile:'#F7F2E6',front:'#3A3262',sky:['#1E1A3A','#6A5A8A','#F6E2B0'],m:.5,sm:.3,deco:'equinox'},
+ {id:'t_hall',name:'Concert Hall',req:{cres:7},tile:'#8A3A40',front:'#3E1218',sky:['#1A0A12','#5A1A2A','#E8B86A'],m:.5,sm:.24,deco:'staff',dc:'#FFD166'},
  {id:'t_eclipse',name:'Eclipse Seraph',req:{cvk:true},hidden:true,tile:'#F2E8D4',front:'#3A2656',sky:['#1E1236','#6A4A7A','#F2D9A0'],m:.6,sm:.36,deco:'eclipse'}];
 /* sound packs swap the band that plays Endless: every room keeps its own groove, chords and tune */
 const PACKS=[
@@ -3297,6 +3339,7 @@ const PACKS=[
  {id:'s_orch',name:'Orchestra',price:3000,glyph:'𝄞',col:'#FFD166',desc:'Timpani, horns and flute',ov:{kick:'tomL',snare:'snareLo',hat:'shaker',perc:'crash',bass:'tri',keys:'horn',lead:'flute',arp:'bell',spark:'bells'}},
  {id:'s_synth',name:'Synthwave',price:3500,glyph:'◢',col:'#FF7EB6',desc:'Big claps and neon saws',ov:{kick:'kickHard',snare:'clap',hat:'hat',perc:'ohat',bass:'saw',keys:'saw',lead:'sawlead',arp:'saw',spark:'crash'}},
  {id:'s_anthem',name:'Pulse Anthem',req:{pass:55},glyph:'♛',col:'#FFD166',desc:'Big drums, horns and saw leads',ov:{kick:'kickHard',snare:'clap',hat:'hat',perc:'crash',bass:'saw',keys:'horn',lead:'sawlead',arp:'bell',spark:'crash'}},
+ {id:'s_grand',name:'Grand Orchestra',req:{cres:9},glyph:'🎻',col:'#E8B86A',desc:'Timpani, brass, flutes and bells: the full stage',ov:{kick:'kickHard',snare:'snareLo',hat:'shaker',perc:'crash',bass:'tri',keys:'flute',lead:'horn',arp:'bell',spark:'shimmer'}},
  {id:'s_box',name:'Music Box',price:4000,glyph:'✧',col:'#C9B8FF',desc:'Tiny bells, soft and sweet',ov:{kick:'kickSoft',snare:'rim',hat:'shaker',perc:'rim',bass:'tri',keys:'bell',lead:'bell',arp:'bell',spark:'shimmer'}}];
 /* banners: the backdrop of your tile on the leaderboards, behind your block, name and rank. Each is pure CSS, so it takes the
    exact shape of the leaderboard tile. bg: null keeps the plain tile. */
@@ -3324,7 +3367,10 @@ const BANNERS=[
  // the final rank: a crimson heartbeat line running across a near-black banner
  {id:'b_truepulse',name:'True Pulse',req:{rank:26},bg:`url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%2240%22 viewBox=%220 0 120 40%22%3E%3Cpolyline points=%220,20 38,20 44,14 50,20 56,20 61,4 67,36 72,20 80,20 85,16 90,20 120,20%22 fill=%22none%22 stroke=%22%23FF1E2E%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22 opacity=%22.85%22/%3E%3C/svg%3E') left center/120px 100% repeat-x,radial-gradient(ellipse at 50% 50%,rgba(255,30,46,.32),transparent 70%),linear-gradient(100deg,#07020A,#3A0A14 55%,#12040A)`},
  {id:'b_watch',name:'The Watchers',req:{boss:14},bg:'radial-gradient(circle,rgba(216,35,43,.6) 0 4px,rgba(0,0,0,.55) 4px 5px,transparent 5.5px) 0 0/20px 16px,linear-gradient(100deg,#1A1030,#3A1E3A)'},
- {id:'b_round',name:'The Round One',req:{boss:16},bg:'radial-gradient(circle at 90% 50%,#FF6B61 0 13px,#2A0B14 13px 15px,transparent 15.5px),linear-gradient(100deg,#20183A,#5A1426 60%,#A81A24)'}];
+ {id:'b_round',name:'The Round One',req:{boss:16},bg:'radial-gradient(circle at 90% 50%,#FF6B61 0 13px,#2A0B14 13px 15px,transparent 15.5px),linear-gradient(100deg,#20183A,#5A1426 60%,#A81A24)'},
+ {id:'b_overture',name:'Overture',req:{cres:1},bg:'repeating-linear-gradient(0deg,transparent 0 7px,rgba(255,226,150,.22) 7px 8px),radial-gradient(ellipse at 90% 50%,rgba(255,209,102,.45),transparent 55%),linear-gradient(100deg,#1C1E4E,#3A2E78 60%,#7A5AA8)'},
+ {id:'b_ovation',name:'Standing Ovation',req:{cres:10},bg:'radial-gradient(circle at 12% 30%,#FFD166 0 2px,transparent 3px),radial-gradient(circle at 34% 70%,#FF7EB6 0 2px,transparent 3px),radial-gradient(circle at 58% 25%,#7FF0D2 0 2px,transparent 3px),radial-gradient(circle at 80% 65%,#FFFFFF 0 2px,transparent 3px),radial-gradient(ellipse at 50% 140%,rgba(255,180,90,.65),transparent 60%),linear-gradient(100deg,#5A1222,#9A2236 55%,#D8424A)'},
+ {id:'b_opus',name:'Magnum Opus',req:{cres:12},bg:'linear-gradient(115deg,transparent 40%,rgba(255,240,200,.45) 47%,transparent 54%),repeating-linear-gradient(0deg,transparent 0 6px,rgba(232,184,74,.35) 6px 7px),radial-gradient(circle at 88% 50%,rgba(255,209,102,.7) 0 10%,transparent 40%),linear-gradient(100deg,#07081C,#1B1E5A 55%,#3A2F8A)'}];
 const bannerById=id=>BANNERS.find(b=>b.id===id)||BANNERS[0];
 const tilesById=id=>TILES.find(t=>t.id===id)||TILES[0], packById=id=>PACKS.find(t=>t.id===id)||PACKS[0];
 /* owned: bought, free, or (for a prize with no price) earned */
@@ -3332,8 +3378,27 @@ const ownsItem=it=>!!it&&(it.price===0||SAVE.owned.includes(it.id)||(!it.price&&
 const skinById=id=>SKINS.find(s=>s.id===id)||(typeof id==='string'&&id.startsWith('fu_')&&fuseReg(id)&&SKINS.find(s=>s.id===id))||SKINS[0], landById=id=>LANDS.find(s=>s.id===id)||LANDS[0];
 const hardCleared=()=>{ let n=0; for(let i=1;i<=12;i++) if((SAVE.stars['H-'+i]||0)>0) n++; return n; };
 const ownsSkin=id=>{ const s=SKINS.find(k=>k.id===id); return !!s&&(SAVE.owned.includes(id)||s.price===0||(s.req&&reqMet(s.req))); };
-const reqMet=r=>!r||(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?myRank()>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.duck?!!SAVE.erlafWin:true)&&(r.twin?!!SAVE.twinWin:true)&&(r.pass?passGot(r.pass):true)&&(r.passp?passPGot(r.passp):true)&&(r.login?giftDays()>=r.login:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true)&&!r.bp&&!r.spot&&!r.recipe&&!r.fused;
-const reqText=r=>r.spot?'Weekly spotlight: in the Shop every few weeks':r.recipe?'Seasonal Forge recipe':r.fused?'Your fusion':r.bp?`Found in the ${(BPACKS.find(p=>p.id===r.bp)||{}).name||'block packs'}`:r.duck?'Limited event: defeat Erlaf the Giant Duck':r.pass?`Pulse Pass · tier ${r.pass}`:r.passp?`Pulse Pass+ · tier ${r.passp}`:r.login?`Log in on ${r.login} different days`:r.twin?'One of a kind: only the Twin Pulse champions will own it':r.boss?`Complete ${BOSS[r.boss-1]}`:r.cvkOn?'Past event reward: Cale vs Korra':r.cvkBet?'Past event reward: Cale vs Korra':r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
+/* The Grand Crescendo: one bar the whole community fills to 30,000,000 points. Each milestone unlocks something for
+   everyone who has added at least one run (see the event's code further down for the bar itself). */
+const CRES_GOAL=30000000;
+const CRES_TIERS=[
+ {at:500000,k:'banner',id:'b_overture',n:'Overture banner',ic:'🎼'},
+ {at:1500000,k:'notes',v:750,n:'♪750 for everyone',ic:'♪'},
+ {at:3000000,k:'sound',id:'hs_timpani',n:'Timpani hit sound',ic:'🥁'},
+ {at:5000000,k:'skin',id:'cres_herald',n:'Brass Herald block',ic:'🎺'},
+ {at:7500000,k:'update',n:'Encore Boost: +10% Notes from every run, for good',ic:'⏫'},
+ {at:10000000,k:'burst',id:'pb_encore',n:'Encore burst effect',ic:'🎆'},
+ {at:13000000,k:'tiles',id:'t_hall',n:'Concert Hall tiles',ic:'🏛'},
+ {at:16500000,k:'title',id:'crew',n:'"Crescendo Crew" title',ic:'🏷'},
+ {at:20000000,k:'pack',id:'s_grand',n:'Grand Orchestra sound pack for Endless',ic:'🎻'},
+ {at:24000000,k:'banner',id:'b_ovation',n:'Standing Ovation banner',ic:'👏'},
+ {at:27000000,k:'notes',v:3000,n:'♪3,000 for everyone',ic:'♪'},
+ {at:30000000,k:'finale',id:'opus',n:'MAGNUM OPUS: the legendary living-symphony block, its banner and title',ic:'👑'}];
+const cresFmt=n=>n>=1e6?(Math.floor(n/1e5)/10).toLocaleString()+'M':n>=1e3?Math.floor(n/1e3)+'K':String(n);
+// milestone n (1-based) is yours once the community reached it and you added at least one run
+const cresHave=n=>(SAVE.cresMine||0)>0&&(SAVE.cresTier||0)>=n;
+const reqMet=r=>!r||(r.cres?cresHave(r.cres):true)&&(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?myRank()>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.duck?!!SAVE.erlafWin:true)&&(r.twin?!!SAVE.twinWin:true)&&(r.pass?passGot(r.pass):true)&&(r.passp?passPGot(r.passp):true)&&(r.login?giftDays()>=r.login:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true)&&!r.bp&&!r.spot&&!r.recipe&&!r.fused;
+const reqText=r=>r.cres?`The Grand Crescendo: community reaches ${cresFmt(CRES_TIERS[r.cres-1].at)}`:r.spot?'Weekly spotlight: in the Shop every few weeks':r.recipe?'Seasonal Forge recipe':r.fused?'Your fusion':r.bp?`Found in the ${(BPACKS.find(p=>p.id===r.bp)||{}).name||'block packs'}`:r.duck?'Limited event: defeat Erlaf the Giant Duck':r.pass?`Pulse Pass · tier ${r.pass}`:r.passp?`Pulse Pass+ · tier ${r.passp}`:r.login?`Log in on ${r.login} different days`:r.twin?'One of a kind: only the Twin Pulse champions will own it':r.boss?`Complete ${BOSS[r.boss-1]}`:r.cvkOn?'Past event reward: Cale vs Korra':r.cvkBet?'Past event reward: Cale vs Korra':r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
 function hsl2hex(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
   return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); }
 
@@ -3908,6 +3973,8 @@ SKINS.push(
  {id:'sk_horizon',name:'Event Horizon',vx:'sk_horizon',nocore:true,prev:[.58,20],top:'#0B0B14',front:'#05050A',core:'#FFB347',paid:'pf_skin_horizon'},
  {id:'pp_sovereign',name:'Pulse Sovereign',vx:'pp_sovereign',nocore:true,prev:[.56,22],top:'#1A1430',front:'#0C0A1C',core:'#FFFFFF',req:{passp:100}},
  {id:'equinox',name:'Equinox',vx:'equinox',nocore:true,prev:[.74,12],top:'#FFFDF6',front:'#EFE8D8',core:'#FFFFFF',req:{twin:true},hidden:true},
+ {id:'cres_herald',name:'Brass Herald',top:'#FFEFB8',front:'#B07A22',core:'#FFF6D0',req:{cres:4}},
+ {id:'opus',name:'Magnum Opus',anim:'opus',top:'#2A2F78',front:'#0E1030',core:'#FFD166',req:{cres:12}},
  {id:'eclipse_seraph',name:'Eclipse Seraph',anim:'eclipse',top:'#FFFBEF',front:'#EFE6D2',core:'#FFFFFF',req:{cvk:true},prev:[.8,11],hidden:true},
  {id:'sk_erlaf',name:'Erlaf',vx:'sk_erlaf',nocore:true,prev:[.66,16],top:'#FFFFFF',front:'#E7EBF1',core:'#F4A12A',req:{duck:true}});   // the limited Erlaf event
 /* ---- block packs: the blocks inside them (bp = which pack, bpr = rarity 0 common … 4 pristine, g = how a common or rare one is decorated) ---- */
@@ -5406,6 +5473,7 @@ function animMods(S,now){
     case 'maestro': case 'supreme': return {sq:-.03*beat,scale:1+.04*beat};
     case 'truepulse': return {sq:-.05*beat*beat,scale:1+.07*beat*beat};   // a heavy heartbeat throb
     case 'eclipse': return {sq:-.03*beat,scale:1+.05*beat};
+    case 'opus': return {sq:-.04*beat*beat,scale:1+.06*beat*beat};
     case 'dawn': case 'dusk': return {sq:-.02*beat,scale:1+.03*beat};
     default: return null;
   }
@@ -5413,6 +5481,13 @@ function animMods(S,now){
 /* the Maestro's accents are gold; the Supreme Conductor's run through the rainbow */
 const mcol=(S,now,off)=>S.anim==='supreme'?hsl2hex((((now*70+(off||0))%360)+360)%360,92,66):'#FFD166';
 function heartPath(x,y,s){ cx.beginPath(); cx.moveTo(x,y+s*.35); cx.bezierCurveTo(x-s*1.1,y-s*.35,x-s*.45,y-s*.95,x,y-s*.35); cx.bezierCurveTo(x+s*.45,y-s*.95,x+s*1.1,y-s*.35,x,y+s*.35); cx.closePath(); }
+/* the Magnum Opus staff ring: half of it (back or front), with four notes riding round it */
+function opusRing(cxp,cyp,bw,now,beat,front){ const rx=bw*(1.02+.05*beat), ry=bw*.32, tilt=-.16, a0=front?0:Math.PI, a1=front?Math.PI:TAU;
+  for(let l=0;l<5;l++){ cx.strokeStyle=`rgba(255,226,150,${(front?.55:.3)+.2*beat})`; cx.lineWidth=1; cx.beginPath(); cx.ellipse(cxp,cyp,rx+l*bw*.04,ry+l*bw*.014,tilt,a0,a1); cx.stroke(); }
+  cx.font=`700 ${Math.round(bw*(.3+.06*beat))}px system-ui,sans-serif`; cx.textAlign='center'; cx.textBaseline='middle';
+  for(let i=0;i<4;i++){ const an=now*.9+i*Math.PI/2, sn=Math.sin(an); if((sn>0)!==front) continue;
+    const ex=Math.cos(an)*(rx+bw*.08), ey=sn*(ry+bw*.03), px=cxp+ex*Math.cos(tilt)-ey*Math.sin(tilt), py=cyp+ex*Math.sin(tilt)+ey*Math.cos(tilt);
+    cx.fillStyle=front?(i%2?'#FFFFFF':'#FFD166'):'rgba(255,214,120,.55)'; cx.fillText(['♪','♫','♩','♬'][i],px,py); } }
 function skinPre(S,x0,topY,bw,bh,H,now,P){
   const fy=topY+bh;
   if(S.anim==='maestro'||S.anim==='supreme'){ const cxp=x0+bw/2, cyp=topY+(bh+H)*.45, beat=clamp(1-(now-G.lastBeatT)/.35,0,1), sup=S.anim==='supreme';
@@ -5425,6 +5500,14 @@ function skinPre(S,x0,topY,bw,bh,H,now,P){
     cx.save(); if(light) cx.globalCompositeOperation='lighter';
     const g=cx.createRadialGradient(cxp,cyp,bw*.2,cxp,cyp,r); g.addColorStop(0,light?`rgba(255,214,120,${.42+.15*beat})`:`rgba(138,79,216,${.5+.15*beat})`); g.addColorStop(.6,light?'rgba(255,200,90,.14)':'rgba(90,40,160,.18)'); g.addColorStop(1,'rgba(0,0,0,0)');
     cx.fillStyle=g; cx.beginPath(); cx.arc(cxp,cyp,r,0,TAU); cx.fill(); cx.restore(); }
+  // Magnum Opus: a gold glow swelling on the beat and the back half of a five-line staff circling the block like a ring,
+  // with notes riding it (the front half and the notes in front are drawn over the block, in skinPost)
+  if(S.anim==='opus'){ const cxp=x0+bw/2, cyp=topY+(bh+H)*.5, beat=clamp(1-(now-G.lastBeatT)/.35,0,1), R=bw*(1.35+.25*beat);
+    cx.save(); cx.globalCompositeOperation='lighter';
+    const g=cx.createRadialGradient(cxp,cyp,0,cxp,cyp,R); g.addColorStop(0,`rgba(255,209,102,${.42+.25*beat})`); g.addColorStop(.5,'rgba(110,130,255,.16)'); g.addColorStop(1,'rgba(40,40,120,0)');
+    cx.fillStyle=g; cx.beginPath(); cx.arc(cxp,cyp,R,0,TAU); cx.fill();
+    for(let i=0;i<8;i++){ const an=now*.25+i*TAU/8, L1=bw*(1.05+.3*beat+(i%2?0:.2)); cx.strokeStyle=`rgba(255,226,150,${i%2?.12:.2})`; cx.lineWidth=bw*.05; cx.beginPath(); cx.moveTo(cxp+Math.cos(an)*bw*.5,cyp+Math.sin(an)*bw*.4); cx.lineTo(cxp+Math.cos(an)*L1,cyp+Math.sin(an)*L1*.8); cx.stroke(); }
+    opusRing(cxp,cyp,bw,now,beat,false); cx.restore(); }
   if(S.anim==='eclipse'){ const cxp=x0+bw/2, cyp=topY+(bh+H)*.48, beat=clamp(1-(now-G.lastBeatT)/.35,0,1), flap=Math.sin(now*2.2);
     cx.save();
     // the dark: violet-black smoke pooling low and to the right, curling tendrils sinking away
@@ -5579,6 +5662,23 @@ function skinPost(S,x0,topY,bw,bh,H,now,P){
         cx.strokeStyle=hc; cx.lineWidth=2.4; cx.beginPath(); cx.ellipse(cxp,hy,hr,ry,0,0,TAU); cx.stroke();
         cx.fillStyle=hc; for(let i=0;i<8;i++){ const an=now*.6+i*TAU/8; cx.beginPath(); cx.arc(cxp+Math.cos(an)*hr,hy+Math.sin(an)*ry,1.4,0,TAU); cx.fill(); } }
       } break;
+    case 'opus': { const cxp=x0+bw/2, Hh=bh+H;
+      clip(x0,topY,bw,Hh);
+      // midnight lacquer, gold staff lines on the front, a slow shimmer sweeping across
+      const lg=cx.createLinearGradient(x0,topY,x0+bw,topY+Hh); lg.addColorStop(0,'#2E3486'); lg.addColorStop(.55,'#151842'); lg.addColorStop(1,'#07081C'); cx.fillStyle=lg; cx.fillRect(x0,topY,bw,Hh);
+      cx.strokeStyle='rgba(232,184,74,.6)'; cx.lineWidth=Math.max(1,bw*.018);
+      for(let l=0;l<5;l++){ const yy=fy+H*(.2+l*.15); cx.beginPath(); cx.moveTo(x0,yy); cx.lineTo(x0+bw,yy); cx.stroke(); }
+      for(let i=0;i<6;i++){ const tw=.5+.5*Math.sin(now*3+i*1.7); cx.fillStyle=`rgba(255,240,200,${.35+.5*tw})`; const px=x0+bw*((i*.37+.1)%1), py=topY+bh*((i*.53+.15)%1)*.9; cx.fillRect(px-1,py-1,2,2); }
+      const sw=((now*.3)%1.8)-.4, sg=cx.createLinearGradient(x0+bw*(sw-.3),topY,x0+bw*(sw+.3),topY+Hh); sg.addColorStop(0,'rgba(255,255,255,0)'); sg.addColorStop(.5,'rgba(255,236,190,.3)'); sg.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=sg; cx.fillRect(x0,topY,bw,Hh);
+      cx.restore();
+      // the treble clef, glowing brighter on every beat
+      cx.save(); cx.globalCompositeOperation='lighter'; cx.shadowColor='#FFD166'; cx.shadowBlur=6+12*beat; cx.fillStyle=`rgba(255,216,130,${.8+.2*beat})`;
+      cx.font=`700 ${Math.round(H*1.05)}px serif`; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('𝄞',cxp,fy+H*.55); cx.restore();
+      cx.strokeStyle='#E8B64A'; cx.lineWidth=2; rr(x0,topY,bw,Hh,3); cx.stroke();
+      // a little crown floating above, and the front half of the staff ring
+      { const hy=topY-bh*.9-Math.sin(now*1.6)*2-beat*2, s=bw*.2; cx.fillStyle='#FFD166'; cx.strokeStyle='#A8761C'; cx.lineWidth=1; cx.beginPath();
+        cx.moveTo(cxp-s,hy+s*.4); cx.lineTo(cxp-s,hy-s*.2); cx.lineTo(cxp-s*.5,hy+s*.1); cx.lineTo(cxp,hy-s*.5); cx.lineTo(cxp+s*.5,hy+s*.1); cx.lineTo(cxp+s,hy-s*.2); cx.lineTo(cxp+s,hy+s*.4); cx.closePath(); cx.fill(); cx.stroke(); }
+      cx.save(); cx.globalCompositeOperation='lighter'; opusRing(cxp,topY+Hh*.5,bw,now,beat,true); cx.restore(); } break;
     case 'eclipse': { const cxp=x0+bw/2, Hh=bh+H;
       cx.save();
       cx.beginPath(); cx.rect(x0,topY,bw,Hh); cx.clip();
@@ -8906,7 +9006,7 @@ function mergeSaves(loc,cl,additive){
   { const a=loc.remix||{}, b=cl.remix||{}, m={...a}; for(const k in b) m[k]=Math.max(m[k]||0,b[k]); out.remix=m; } out.bestRhythm=Math.max(loc.bestRhythm||0,cl.bestRhythm||0);
   { const a=loc.rankSet, b=cl.rankSet, r=!a?b:!b?a:(a.t||0)>=(b.t||0)?a:b; if(r) out.rankSet=r; else delete out.rankSet; }   // the newest rank setting wins
   for(const k of ['giftIds','liveGot']) out[k]=[...new Set([...(cl[k]||[]),...(loc[k]||[])])].slice(-200);
-  out.twinTeam=newer.twinTeam!==undefined?newer.twinTeam:(loc.twinTeam||cl.twinTeam||null); out.twinWin=!!(loc.twinWin||cl.twinWin); out.erlafWin=!!(loc.erlafWin||cl.erlafWin); out.twinWinSeen=!!(loc.twinWinSeen||cl.twinWinSeen); out.twinWinName=loc.twinWinName||cl.twinWinName||'';
+  out.twinTeam=newer.twinTeam!==undefined?newer.twinTeam:(loc.twinTeam||cl.twinTeam||null); out.twinWin=!!(loc.twinWin||cl.twinWin); out.erlafWin=!!(loc.erlafWin||cl.erlafWin); for(const k of ['cresMine','cresTier','cresGot','cresPend']) out[k]=Math.max(loc[k]||0,cl[k]||0); out.cresWinSeen=!!(loc.cresWinSeen||cl.cresWinSeen); out.twinWinSeen=!!(loc.twinWinSeen||cl.twinWinSeen); out.twinWinName=loc.twinWinName||cl.twinWinName||'';
   const dl=loc.daily||{}, dc=cl.daily||{}; out.daily=Object.assign({},DEF.daily,newer===cl?dc:dl);
   if(dl.date&&dl.date===dc.date){ out.daily.best=Math.max(dl.best||0,dc.best||0); out.daily.stars=Math.max(dl.stars||0,dc.stars||0); }
   out.daily.streak=Math.max(dl.streak||0,dc.streak||0);
@@ -10243,7 +10343,7 @@ function playerTag(P){
 
 /* ================= RANKS & XP ================= */
 /* Notes earned from play are 10% below the original rates (purchases and refunds are not affected) */
-const NOTE_RATE=.9, earnN=n=>Math.round((n||0)*NOTE_RATE*liveMul('notes'));   // a live event can boost Notes from play
+const NOTE_RATE=.9, earnN=n=>Math.round((n||0)*NOTE_RATE*liveMul('notes')*(cresHave(5)?1.1:1));   // a live event can boost Notes from play
 /* an admin can set a rank (SAVE.rankSet). It's a starting point, not a cage: XP earned after it was set keeps climbing
    from there, so a player put down to Bronze can earn their way back up */
 const myRank=()=>{ const r=SAVE.rankSet, xp=SAVE.xp||0; if(!r||typeof r.n!=='number') return rankOf(xp);
@@ -11964,19 +12064,15 @@ function giftGive(r){ const out=[]; if(r.n){ SAVE.notes+=r.n; out.push(`♪${r.n
 /* ================= WHAT'S NEW =================
    Shown once to each player after an update (remembered in the save, so it follows their account to other devices),
    once the daily gift is out of the way. Settings → What's new opens it again. Change NEWS_V to show a new one. */
-const NEWS_V='2026-10e', NEWS_WHEN='Update · October 2026';
+const NEWS_V='2026-10f', NEWS_WHEN='Update · October 2026';
 const NEWS_ADDED=[
- ['🗄','The Locker','A new home for your stuff: your player card and block mastery. Find it on the menu.'],
- ['🏅','Block mastery','The block you wear levels up as you play it, 1 to 10, with Notes, Stardust and a Master title along the way.'],
- ['✨','Effects','A burst on every perfect hit, and your own hit sound. Find them in the Shop under Effects.'],
- ['🏷','Titles and player cards','Pick a title to show under your name on the leaderboards. Tap any name on a leaderboard to see their full card: rank, top 3 blocks, rarest pull and high scores.'],
- ['✦','Pass prestige','After tier 100 the Pulse Pass keeps going: every prestige level gives Notes and Stardust.'],
- ['🎧','Better Bluetooth sound','No more sound cutting out on wireless headphones, and the beat stays lined up.']];
+ ['🎼','The Grand Crescendo','A community event: everyone fills one bar to 30,000,000 points. Every run you finish adds its score, and each milestone unlocks blocks, banners, effects and updates for everyone who played a part. The finale: Magnum Opus.'],
+ ['❓','Quiz games with friends','Beat Race, Tempo Tower, Team Jam and Last Note Standing, for 2 to 4 players. Start a party in Play together and pick a quiz game.']];
 const NEWS_EARLIER=[
- ['💰','More Notes','Levels pay more, replays pay too, plus first-win and no-miss bonuses.'],
- ['🎨','Creators','Play featured levels built by players.'],
- ['🧬','Fusion and Polish','Mix two blocks into a new one, or polish your favourites.'],
- ['🔁','Trading and the Forge','Trade blocks with friends, and forge missing pack blocks with Stardust.']];
+ ['🗄','The Locker','Your player card and block mastery, on the menu.'],
+ ['✨','Effects','A burst on every perfect hit, and your own hit sound. Find them in the Shop under Effects.'],
+ ['🏷','Titles and player cards','Pick a title for the leaderboards, and tap any name to see their card.'],
+ ['🎧','Better Bluetooth sound','No more sound cutting out on wireless headphones, and the beat stays lined up.']];
 const NEWS_SOON=[
  ['❄','A winter pack','A new seasonal pack and Forge recipe for December.'],
  ['👥','Friend leaderboards','See how you stack up against just your friends.']];
@@ -13627,7 +13723,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['revOv','clsOv','liveOv','playOv','denOv','plOv','wardOv','newsOv','adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
+const OVS=['cresOv','cresWinOv','revOv','clsOv','liveOv','playOv','denOv','plOv','wardOv','newsOv','adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -13662,7 +13758,7 @@ function nextUp(){
   let best=null; for(let w=1;w<=SAVE.world;w++) for(let l=1;l<=LEVELS_PER_WORLD;l++){ const s=SAVE.stars[`${w}-${l}`]||0; if(s<3&&(!best||s<best.s)) best={w,l,s}; } return best; }
 function untilMidnight(){ const n=new Date(), m=new Date(n); m.setHours(24,0,0,0); const mins=Math.ceil((m-n)/60000); return `${Math.floor(mins/60)}h ${mins%60}m`; }
 function buildMenu(){
-  erlafUI();
+  erlafUI(); try{ cresMenu(); }catch(e){}
   $('walletM').textContent=notesTxt(); syncSoundChip(); acctChip(); nameChip();
   const nu=nextUp(), fresh=totalStars()===0;
   $('mContinue').hidden=!nu;
@@ -14214,7 +14310,7 @@ function finishRun(){
   setTimeout(()=>{
     if(G.mode!==M||G.state!=='done') return;
     $('rXP').innerHTML=xpLine; $('rLore').innerHTML=loreForResult(M); hideTalk(); hideCine(); showExtras(M,ex);
-    cvkPost(M);
+    cvkPost(M); cresPost(M);
   { const cr=chalResult(M), lb=lbPost(M); if(cr) $('rNear').textContent=cr; else if(lb&&!$('rNear').textContent) $('rNear').textContent=lb; }
     $('rShare').hidden=!chalFor(M); $('rShare').onclick=()=>shareChallenge(M); $('rShare').textContent='Challenge a friend';
     if(M.type==='custom'){ $('rShare').hidden=false; $('rShare').textContent='Share this level'; $('rShare').onclick=()=>shareLevel(edCodeOf(M.design)); }
@@ -14259,7 +14355,7 @@ function gameOver(why){
   if(M.type==='studio') setTimeout(()=>{ if(G.mode===M) stopStudioAudio(); },1500);
   { const L=SAVE.life; if(M.type==='endless') L.endlessRooms=Math.max(L.endlessRooms||0,G.roomIdx-1); if(M.net) L.online=(L.online||0)+1; if(why==='song') L.songs=(L.songs||0)+1; }
   overNear(M,why,best);
-  cvkPost(M); twPost(M);
+  cvkPost(M); twPost(M); cresPost(M);
   { const ev=eventDone(M), cr=chalResult(M), lb=lbPost(M); if(cr) $('oNear').textContent=cr; else if(ev) $('oNear').textContent=ev; else if(lb&&!$('oNear').textContent) $('oNear').textContent=lb; }
   $('oShare').hidden=!chalFor(M)||!!M.net; $('oShare').onclick=()=>shareChallenge(M);
   const bf=boardFor(M); $('oLB').hidden=!bf; $('oLB').onclick=()=>{ if(M.type==='event') showEvent(); else showLB(M.type==='endless'?'endless':M.type==='ascent'?'ascent':'daily'); };
@@ -14345,7 +14441,7 @@ function loop(ts){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('denOv').hidden||!$('plOv').hidden) lockerFrame(now); if(!$('liveOv').hidden||!$('playOv').hidden||!$('clsOv').hidden||!$('revOv').hidden) drawSkinPreviews(now,'#liveOv canvas.skprev, #playOv canvas.skprev, #clsOv canvas.skprev'); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks'||shopTab==='forge')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('stageOv').hidden) drawSkinPreviews(now,'#stageOv canvas.skprev'); if(!$('wardOv').hidden) drawSkinPreviews(now,'#wardOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('denOv').hidden||!$('plOv').hidden) lockerFrame(now); if(!$('liveOv').hidden||!$('playOv').hidden||!$('clsOv').hidden||!$('revOv').hidden) drawSkinPreviews(now,'#liveOv canvas.skprev, #playOv canvas.skprev, #clsOv canvas.skprev'); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('cresOv').hidden||!$('cresWinOv').hidden) drawSkinPreviews(now,'#cresOv canvas.skprev, #cresWinOv canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks'||shopTab==='forge')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('stageOv').hidden) drawSkinPreviews(now,'#stageOv canvas.skprev'); if(!$('wardOv').hidden) drawSkinPreviews(now,'#wardOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
@@ -14519,7 +14615,8 @@ const FX_BURSTS=[
  {id:'pb_firework',name:'Firework',glyph:'✺',col:'#FF9A4D',price:750},
  {id:'pb_glitch',name:'Glitch',glyph:'▚',col:'#4FF0FF',price:800},
  {id:'pb_bloom',name:'Bloom',glyph:'❀',col:'#FFC2E0',price:850},
- {id:'pb_crown',name:'Crown',glyph:'♛',col:'#FFE27A',lk:{pres:3}}];
+ {id:'pb_crown',name:'Crown',glyph:'♛',col:'#FFE27A',lk:{pres:3}},
+ {id:'pb_encore',name:'Encore',glyph:'❋',col:'#FFD166',lk:{cres:6}}];
 const FX_SOUNDS=[
  {id:'hs_classic',name:'Classic tick',glyph:'•',col:'#DCE2EE',price:0},
  {id:'hs_wood',name:'Wood Block',glyph:'▭',col:'#E0B07A',price:300},
@@ -14528,11 +14625,12 @@ const FX_SOUNDS=[
  {id:'hs_8bit',name:'8-bit',glyph:'▣',col:'#7CD67C',price:400},
  {id:'hs_chime',name:'Chime',glyph:'♢',col:'#B8F2E6',price:400},
  {id:'hs_bell',name:'Bell',glyph:'🔔',col:'#FFE27A',price:500},
- {id:'hs_laser',name:'Laser',glyph:'ϟ',col:'#C9B8FF',price:600}];
+ {id:'hs_laser',name:'Laser',glyph:'ϟ',col:'#C9B8FF',price:600},
+ {id:'hs_timpani',name:'Timpani',glyph:'◍',col:'#E8B86A',lk:{cres:3}}];
 const FX_ALL=[...FX_TRAILS,...FX_BURSTS,...FX_SOUNDS];
 const fxById=id=>FX_ALL.find(f=>f.id===id);
-const fxLkMet=lk=>!lk||((lk.mast?mastBest()>=lk.mast:true)&&(lk.garden?gdnStage()>=lk.garden:true)&&(lk.pres?presLevel()>=lk.pres:true)&&(lk.cls?(SAVE.clStars||0)>=lk.cls:true));
-const fxLkText=lk=>lk.mast?`Any block to mastery ${lk.mast}`:lk.garden?`Garden stage ${lk.garden}`:lk.pres?`Pass prestige ${lk.pres}`:lk.cls?`${lk.cls} class stars`:'';
+const fxLkMet=lk=>!lk||((lk.mast?mastBest()>=lk.mast:true)&&(lk.garden?gdnStage()>=lk.garden:true)&&(lk.pres?presLevel()>=lk.pres:true)&&(lk.cls?(SAVE.clStars||0)>=lk.cls:true)&&(lk.cres?cresHave(lk.cres):true));
+const fxLkText=lk=>lk.cres?`Grand Crescendo: ${cresFmt(CRES_TIERS[lk.cres-1].at)}`:lk.mast?`Any block to mastery ${lk.mast}`:lk.garden?`Garden stage ${lk.garden}`:lk.pres?`Pass prestige ${lk.pres}`:lk.cls?`${lk.cls} class stars`:'';
 const fxOwn=f=>!!f&&(f.price===0||SAVE.owned.includes(f.id)||(!!f.lk&&fxLkMet(f.lk)));
 /* trails were removed: anyone who bought one gets its Notes back, once */
 function fxTrailRefund(){ if(SAVE.fxTrailRefund) return; let n=0; FX_TRAILS.forEach(t=>{ if(t.price&&SAVE.owned.includes(t.id)){ n+=t.price; } }); SAVE.owned=SAVE.owned.filter(id=>!String(id).startsWith('tr_')); if(SAVE.fx) SAVE.fx.trail='tr_none';
@@ -14597,6 +14695,10 @@ function drawPbFx(L,now){
       case 'pb_crown': { const s=L.tw*.32, cy=y-L.th*.35-u*L.th*.6; cx.fillStyle=rgba('#FFE27A',a); cx.strokeStyle=rgba('#B8860B',a); cx.lineWidth=1.5; cx.beginPath();
         cx.moveTo(x-s,cy+s*.45); cx.lineTo(x-s,cy-s*.2); cx.lineTo(x-s*.5,cy+s*.1); cx.lineTo(x,cy-s*.5); cx.lineTo(x+s*.5,cy+s*.1); cx.lineTo(x+s,cy-s*.2); cx.lineTo(x+s,cy+s*.45); cx.closePath(); cx.fill(); cx.stroke();
         for(let i=0;i<6;i++){ const an=i/6*Math.PI*2+u*3; cx.fillStyle=rgba('#FFFFFF',a); cx.fillRect(x+Math.cos(an)*R0-1.5,cy+Math.sin(an)*R0*.6-1.5,3,3); } break; }
+      case 'pb_encore': { // a curtain-call: confetti flying out and gold notes rising
+        for(let i=0;i<14;i++){ const an=i/14*Math.PI*2+i, r=R0*(.7+.5*((i*37)%10)/10), px=x+Math.cos(an)*r, py=y+Math.sin(an)*r*.6+u*u*L.th*.5;
+          cx.save(); cx.translate(px,py); cx.rotate(u*8+i); cx.fillStyle=rgba(['#FFD166','#FF7EB6','#7FF0D2','#9CC8FF','#FFFFFF'][i%5],a); cx.fillRect(-3,-1.5,6,3); cx.restore(); }
+        cx.font=`700 ${Math.round(L.tw*.28)}px system-ui,sans-serif`; for(let i=0;i<3;i++){ cx.fillStyle=rgba('#FFE27A',a); cx.fillText(i%2?'♪':'♫',x+(i-1)*L.tw*.32,y-u*L.th*(.8+.2*i)); } break; }
     } });
   cx.restore();
 }
@@ -14610,6 +14712,7 @@ function hitSnd(d,q,v,dir,pid,force){ const id=force||(pid?'hs_classic':fxCur().
     case 'hs_chime': tone(d,q,'sine',mtof(96),.08*v,.001,.35); tone(d,q,'sine',mtof(103),.04*v,.001,.25); break;
     case 'hs_bell': tone(d,q,'triangle',mtof(88),.09*v,.001,.6); tone(d,q,'sine',mtof(88)*2.76,.03*v,.001,.3); break;
     case 'hs_laser': tone(d,q,'sawtooth',1900,.05*v,.001,.13,{glide:320,gt:.11,lp:3200}); break;
+    case 'hs_timpani': tone(d,q,'sine',{up:131,down:98,left:110,right:117}[dir]||110,.42*v,.003,.32,{glide:({up:120,down:88,left:100,right:106}[dir]||100),gt:.25}); noise(d,q,.07*v,.06,'lowpass',700); break;
     default: noise(d,q,.09*v,.025,'lowpass',1200);
   } }
 
@@ -14768,6 +14871,8 @@ const TITLES=[
  ['pristine','Pristine Hands',()=>bpBest()[1]>=5,'Pull a Pristine block'],
  ['devoted','Devoted',()=>mastBest()>=5,'Get a block to mastery 5'],
  ['vet','Pulse Veteran',()=>presLevel()>=1,'Reach Pass prestige 1'],
+ ['crew','Crescendo Crew',()=>cresHave(8),'The Grand Crescendo reaches 16.5M'],
+ ['opus','Magnum Opus',()=>cresHave(12),'Finish the Grand Crescendo together'],
  ['passleg','Pass Legend',()=>presLevel()>=5,'Reach Pass prestige 5'],
  ['eternal','Eternal Pulse',()=>presLevel()>=10,'Reach Pass prestige 10'],
  ['achiever','Achiever',()=>Object.keys(SAVE.ach||{}).length>=25,'Earn 25 achievements'],
@@ -15516,6 +15621,85 @@ $('playBack').onclick=()=>{ if(QZ.on){ qzLeave(); return; } liveStop(); toMenu()
 /* links: ?class=CODE opens the join form, ?play=123456 opens a live game */
 false&&setTimeout(()=>{ const q=new URLSearchParams(location.search); if(q.get('review')) revOpen(q.get('review')); else if(q.get('play')) playOpen(q.get('play').replace(/\D/g,'').slice(0,6)); else if(q.get('class')) showClass('home'); },2500);
 
+
+/* ================= THE GRAND CRESCENDO =================
+   A community event with no end date: every finished run adds its score to one bar shared by everyone, until it reaches
+   30,000,000. Each milestone on the way unlocks something (see CRES_TIERS) for every player who has added a run.
+   Data: events/cres/shards/{0..15} hold the total (summed here); events/cres/players/{uid} is each player's own part.
+   The rules make a counter grow only by what the same write adds to that player's own total (at most 400,000 a write,
+   one write every 20 seconds, 2,500,000 a day). Points that can't be sent yet wait in SAVE.cresPend for the next try. */
+const CRES={total:null,lastFetch:0,top:null,topT:0,busy:false,mine:null,tick:null};
+const cresCol=()=>ACCT.db?ACCT.db.collection('events').doc('cres'):null;
+const cresOff=()=>!!window.PF_CG;
+const cresReached=t=>CRES_TIERS.filter(x=>t>=x.at).length;
+const cresNext=()=>CRES_TIERS.find(x=>(CRES.total||0)<x.at);
+async function cresFetch(force){ if(cresOff()||!cresCol()) return; if(!force&&Date.now()-CRES.lastFetch<120000) return; CRES.lastFetch=Date.now();
+  try{ const s=await cresCol().collection('shards').get(); let t=0; s.forEach(d=>{ t+=Math.max(0,+d.data().score||0); }); CRES.total=t; }catch(e){ return; }
+  if(ACCT.user) try{ const d=await cresCol().collection('players').doc(ACCT.user.uid).get(); if(d.exists){ CRES.mine=d.data(); SAVE.cresMine=Math.max(SAVE.cresMine||0,+CRES.mine.score||0); } }catch(e){}
+  cresTiers(); cresUI(); }
+/* the community passed a milestone: remember it, and hand out what's new to a player who has taken part */
+function cresTiers(){ if(CRES.total==null) return; const n=cresReached(CRES.total);
+  if(n>(SAVE.cresTier||0)){ SAVE.cresTier=n; save(); }
+  cresGrant(); }
+function cresGrant(){ if(!((SAVE.cresMine||0)>0)) return; const from=SAVE.cresGot||0, to=SAVE.cresTier||0; if(to<=from) return;
+  const got=[]; for(let i=from;i<to;i++){ const t=CRES_TIERS[i]; if(t.k==='notes') SAVE.notes+=t.v; got.push(t); }
+  SAVE.cresGot=to; save(); if(typeof updateHUD==='function') try{ updateHUD(); }catch(e){}
+  const fin=got.find(t=>t.k==='finale');
+  if(fin&&!SAVE.cresWinSeen) setTimeout(cresFinale,600);
+  else got.slice(-3).forEach((t,i)=>setTimeout(()=>toast(`🎼 Grand Crescendo unlocked: ${t.n}!`),400+i*1800)); }
+/* every finished run adds its score (custom levels and practice don't count) */
+function cresPost(M){ if(cresOff()||!M||M.type==='custom'||M.test||M.type==='studio') return;
+  const sc=Math.max(0,Math.round(G.score||0)); if(sc){ SAVE.cresPend=Math.min(2500000,(SAVE.cresPend||0)+sc); save(); }
+  cresSend(); }
+async function cresSend(){ if(CRES.busy||cresOff()||!ACCT.user||!cresCol()||!((SAVE.cresPend||0)>0)) return; CRES.busy=true;
+  try{ const pref=cresCol().collection('players').doc(ACCT.user.uid), d=await pref.get(), cur=d.exists?d.data():null, day=Math.floor(Date.now()/86400000);
+    // one write every 20 seconds: a quick second run waits its turn
+    const wait=cur&&cur.t&&cur.t.toMillis?cur.t.toMillis()+21000-Date.now():0;
+    if(wait>0){ CRES.busy=false; clearTimeout(CRES.retry); CRES.retry=setTimeout(cresSend,Math.min(wait,25000)+500); return; }
+    const dsNow=cur&&cur.d===day?+cur.ds||0:0, room=2500000-dsNow; if(room<=0){ CRES.busy=false; return; }   // today's limit: the rest goes tomorrow
+    const add=Math.min(400000,SAVE.cresPend,room), sh=ri(16), b=ACCT.db.batch(), now=(cur?+cur.score||0:0)+add;
+    b.set(pref,{score:now,d:day,ds:dsNow+add,t:firebase.firestore.FieldValue.serverTimestamp(),name:String(ensureName()).slice(0,24),sh});
+    b.set(cresCol().collection('shards').doc(String(sh)),{score:firebase.firestore.FieldValue.increment(add)},{merge:true});
+    await b.commit();
+    SAVE.cresPend=Math.max(0,SAVE.cresPend-add); SAVE.cresMine=Math.max(SAVE.cresMine||0,now); save(); CRES.mine={...(cur||{}),score:now};
+    if(CRES.total!=null) CRES.total+=add; else cresFetch(true);
+    toast(`🎼 +${add.toLocaleString()} for the Grand Crescendo!`); cresTiers(); cresUI();
+    if(SAVE.cresPend>0){ clearTimeout(CRES.retry); CRES.retry=setTimeout(cresSend,22000); }
+  }catch(e){}   // offline, or the database's rules aren't published yet: the points wait for the next run
+  CRES.busy=false; }
+/* ---- the menu banner ---- */
+function cresMenu(){ const b=$('mCres'); if(!b) return; b.hidden=cresOff(); if(b.hidden) return; cresFetch();
+  const t=CRES.total, nx=cresNext(), done=t!=null&&t>=CRES_GOAL;
+  $('mCresSub').textContent=t==null?'One goal for everyone: 30,000,000 points':done?(SAVE.cresMine>0?'Complete! Thank you for playing your part 🎉':'Complete! Finish one run to claim every reward'):`${cresFmt(t)} / 30M · next: ${nx?nx.n:''}`;
+  $('mCresBar').style.width=(t==null?0:Math.min(100,t/CRES_GOAL*100)).toFixed(2)+'%'; }
+/* ---- the event screen ---- */
+function showCres(){ if(cresOff()) return; showOv('cresOv'); cresUI(); cresFetch(true); cresTop(true);
+  clearInterval(CRES.tick); CRES.tick=setInterval(()=>{ if($('cresOv').hidden){ clearInterval(CRES.tick); return; } cresFetch(true); cresTop(); },30000); }
+async function cresTop(force){ if(!cresCol()||(!force&&Date.now()-CRES.topT<60000)) return; CRES.topT=Date.now();
+  try{ const s=await cresCol().collection('players').orderBy('score','desc').limit(10).get(); CRES.top=s.docs.map(d=>({uid:d.id,name:cleanName(d.data().name)||'Player',score:+d.data().score||0})); cresUI(); }catch(e){} }
+function cresUI(){ cresMenu(); const box=$('cresBody'); if(!box||$('cresOv').hidden) return;
+  const t=CRES.total, pct=t==null?0:Math.min(100,t/CRES_GOAL*100), have=SAVE.cresTier||0, part=(SAVE.cresMine||0)>0, done=t!=null&&t>=CRES_GOAL;
+  const marks=CRES_TIERS.map((x,i)=>`<i class="crmark${i<have?' on':''}${x.k==='finale'?' fin':''}" style="left:${(x.at/CRES_GOAL*100).toFixed(2)}%" title="${escapeHTML(cresFmt(x.at)+': '+x.n)}">${x.ic}</i>`).join('');
+  const row=(x,i)=>{ const got=i<have, st=got?(part?'<b class="crok">✓ Unlocked</b>':'<b class="crclaim">Play one run to claim</b>'):`<small>${cresFmt(Math.max(0,x.at-(t||0)))} to go</small>`;
+    return `<li class="crrow${got?' got':''}${x.k==='finale'?' fin':''}${x.k==='update'||x.k==='pack'?' upd':''}"><span class="cric">${x.ic}</span><span class="crat">${cresFmt(x.at)}</span><span class="crn">${escapeHTML(x.n)}${x.k==='update'||x.k==='pack'?' <em>UPDATE</em>':''}</span>${st}</li>`; };
+  const me=ACCT.user?((CRES.top||[]).findIndex(p=>p.uid===ACCT.user.uid)+1):0;
+  box.innerHTML=`<div class="crhero">${FUN_BG()}<p class="crkick">Community event</p><h2 class="crtitle">The Grand <span>Crescendo</span></h2>
+      <p class="crsub">One goal for the whole community: <b>30,000,000</b> points. Every run you finish adds its score. Each milestone unlocks something for everyone who played a part.</p>
+      <div class="crbig"><b id="crTotal">${t==null?'…':Math.floor(t).toLocaleString()}</b><span>/ 30,000,000 · ${pct.toFixed(1)}%</span></div>
+      <div class="crbar"><div class="crfill" style="width:${pct.toFixed(2)}%"></div>${marks}</div>
+      <div class="crme">${!ACCT.user?'<span>Sign in to add your runs to the bar.</span><button class="btn" id="crSign" type="button">Sign in</button>':`<span>Your part: <b>${(SAVE.cresMine||0).toLocaleString()}</b>${me?` · #${me} in the community`:''}${SAVE.cresPend>0?` · ${SAVE.cresPend.toLocaleString()} on the way`:''}</span>`}</div></div>
+    <div class="crfinale"><div class="crped"><div class="crrays"></div><canvas class="skprev" data-skin="opus" data-px="170" width="170" height="170" aria-hidden="true"></canvas></div>
+      <div><p class="crkick">The finale at 30,000,000</p><h3>Magnum Opus</h3><p class="small">A living symphony: a midnight block with a glowing treble clef, a crown and a golden staff ring circling it, its notes dancing to every beat. It comes with the <b>Magnum Opus</b> banner and title. For everyone who played a part, forever.</p>${done?(part?'<button class="btn lvgo" id="crEquip" type="button">Equip Magnum Opus</button>':'<p class="crclaim">Finish one run to claim it!</p>'):''}</div></div>
+    <h3 class="crh">Milestones</h3><ol class="crlist">${CRES_TIERS.map(row).join('')}</ol>
+    <h3 class="crh">Top contributors</h3><ol class="crtop">${(CRES.top||[]).map((p,i)=>`<li${ACCT.user&&p.uid===ACCT.user.uid?' class="me"':''}><span>${['🥇','🥈','🥉'][i]||'#'+(i+1)}</span><b>${escapeHTML(p.name)}</b><small>${p.score.toLocaleString()}</small></li>`).join('')||'<li class="small">Be the first to add a run!</li>'}</ol>`;
+  const sb=$('crSign'); if(sb) sb.onclick=()=>{ if(typeof showAcct==='function') showAcct(); };
+  const eb=$('crEquip'); if(eb) eb.onclick=()=>{ equip('skin','opus'); toast('👑 Magnum Opus equipped!'); }; }
+/* the moment the bar is full: a curtain call */
+function cresFinale(){ SAVE.cresWinSeen=true; save(); showOv('cresWinOv'); $('cresWinFx').innerHTML=CONFETTI(); if(A.ctx) try{ sWin(); }catch(e){} }
+$('mCres').onclick=showCres; $('cresBack').onclick=()=>toMenu();
+$('cresWinEquip').onclick=()=>{ equip('skin','opus'); toast('👑 Magnum Opus equipped!'); toMenu(); };
+$('cresWinLater').onclick=()=>toMenu();
+setInterval(()=>{ if(G.state==='menu'&&!$('menuOv').hidden&&!cresOff()){ cresFetch(); if((SAVE.cresPend||0)>0) cresSend(); } },60000);
 
 /* ================= PARTY QUIZ =================
    The quiz games from the classroom, for an online party of 2 to 4. The host picks a ready-made question pack, Easy or

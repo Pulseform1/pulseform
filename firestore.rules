@@ -202,6 +202,53 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // The Grand Crescendo: the whole community fills one bar to 30,000,000 points.
+    //   events/cres/players/{uid} = {score, d, ds, t, name, sh}   your own total; ds = what you added on day d
+    //   events/cres/shards/{n}    = {score}                       the community total, split over 16 counters (n = 0..15)
+    // Your total grows by at most 400,000 a write, one write every 20 seconds, 2,500,000 a day. In the same write,
+    // counter sh must grow by exactly what your total grew by, so the bar only ever holds what players really added.
+    function crDay() { return int(request.time.toMillis() / 86400000); }
+    function crPath(u) { return /databases/$(db)/documents/events/cres/players/$(u); }
+    function crShard(n) { return /databases/$(db)/documents/events/cres/shards/$(n); }
+    function crFields(d) {
+      return d.keys().hasOnly(['score','d','ds','t','name','sh'])
+        && d.name is string && d.name.size() <= 24
+        && d.score is int && d.ds is int && d.ds <= 2500000
+        && d.sh is int && d.sh >= 0 && d.sh < 16
+        && d.t == request.time && d.d == crDay();
+    }
+    function crShardAdds(sh, add) {
+      return getAfter(crShard(sh)).data.score == (exists(crShard(sh)) ? get(crShard(sh)).data.score : 0) + add;
+    }
+    match /events/cres/players/{uid} {
+      allow read: if true;
+      allow create: if signedIn() && request.auth.uid == uid && crFields(request.resource.data)
+        && request.resource.data.score > 0 && request.resource.data.score <= 400000
+        && request.resource.data.ds == request.resource.data.score
+        && crShardAdds(request.resource.data.sh, request.resource.data.score);
+      allow update: if signedIn() && request.auth.uid == uid && crFields(request.resource.data)
+        && request.time > resource.data.t + duration.value(20, 's')
+        && request.resource.data.score > resource.data.score
+        && request.resource.data.score - resource.data.score <= 400000
+        && request.resource.data.ds == (resource.data.d == crDay() ? resource.data.ds : 0) + (request.resource.data.score - resource.data.score)
+        && crShardAdds(request.resource.data.sh, request.resource.data.score - resource.data.score);
+      allow delete: if false;
+    }
+    // a counter: only as part of the write above, by the player whose total grows by the same amount
+    function crPlayerAdds(n, add) {
+      let p = getAfter(crPath(request.auth.uid)).data;
+      return add > 0 && string(p.sh) == n && p.t == request.time
+        && p.score - (exists(crPath(request.auth.uid)) ? get(crPath(request.auth.uid)).data.score : 0) == add;
+    }
+    match /events/cres/shards/{n} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.keys().hasOnly(['score']) && request.resource.data.score is int
+        && crPlayerAdds(n, request.resource.data.score);
+      allow update: if signedIn() && request.resource.data.keys().hasOnly(['score']) && request.resource.data.score is int
+        && crPlayerAdds(n, request.resource.data.score - resource.data.score);
+      allow delete: if false;
+    }
+
     // Betting on Cale vs Korra: everyone can see the bets; you can only add to your own, at most 100,000 notes
     // at a time, until 9:00 AM Central Thu Oct 1 2026 (a day into the event). Amounts never go down.
     match /events/cvk/bets/{uid} {
