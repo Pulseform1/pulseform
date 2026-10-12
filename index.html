@@ -10258,7 +10258,7 @@ function couponBuy(id){ const s=SKINS.find(k=>k.id===id); if(!s) return; const p
   SAVE.notes-=pr; spendLog(s.name+' (coupon)',pr); SAVE.coupon.used=true; SAVE.owned.push(id); equip('skin',id); afterBuy(s.name); }
 
 /* ---- Polish: Stardust turns a block you own Gold, then Prism ---- */
-const POLISH_COST=[0,150,400];
+const POLISH_COST=[0,750,2000];
 function polishUp(id){ const p=(SAVE.polish||{})[id]||0; if(!ownsSkin(id)||p>=2||dustN()<POLISH_COST[p+1]) return;
   SAVE.dust=dustN()-POLISH_COST[p+1]; SAVE.polish=Object.assign({},SAVE.polish,{[id]:p+1}); if(SAVE.polishOff) delete SAVE.polishOff[id];
   SAVE.life=SAVE.life||{}; SAVE.life.polished=(SAVE.life.polished||0)+1; save(); achCheck(); if(A.ctx) sGem(); buzz(30); toast(`✨ ${skinById(id).name} is now ${p+1===2?'Prism':'Gold'}!`); }
