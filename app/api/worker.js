@@ -70,6 +70,17 @@ export async function verifyStripe(raw, header, secret, now = Date.now() / 1000)
   return sigs.some(sg => sg.length === mac.length && [...sg].reduce((d, c, i) => d | (c.charCodeAt(0) ^ mac.charCodeAt(i)), 0) === 0);
 }
 
+// the reason a notice failed the check, in words, without revealing the secret
+export function stripeWhy(header, secret, now = Date.now() / 1000) {
+  if (!header) return 'no Stripe-Signature header: the call did not come from a Stripe webhook';
+  const t = +((String(header).match(/(?:^|,)\s*t=(\d+)/) || [])[1]);
+  if (!t) return 'the Stripe-Signature header has no timestamp';
+  if (Math.abs(now - t) > 300) return `the notice was signed ${Math.round(now - t)}s ago (more than 5 minutes): use Resend in Stripe`;
+  if (!/^whsec_/.test(secret)) return `STRIPE_WEBHOOK_SECRET in Cloudflare does not start with whsec_ (it starts with ${JSON.stringify(secret.slice(0, 3))}): it is not a webhook signing secret`;
+  if (/\s/.test(secret)) return 'STRIPE_WEBHOOK_SECRET in Cloudflare has a space or line break inside it';
+  return `the signature does not match STRIPE_WEBHOOK_SECRET (the saved one is ${secret.length} characters long): copy the signing secret of this exact endpoint (same test/live mode) into Cloudflare`;
+}
+
 /* ---- Firestore, as the server (a Google service account): rules don't apply, so only this code can write purchases ---- */
 async function googleToken(sa, fetchImpl) {
   const now = Math.floor(Date.now() / 1000);
@@ -145,7 +156,14 @@ export default {
     if (url.pathname === '/stripe-webhook' && request.method === 'POST') {
       if (!env.STRIPE_WEBHOOK_SECRET || !env.GOOGLE_SERVICE_ACCOUNT) return json({ error: 'not configured' }, 503);
       const raw = await request.text();
-      if (!(await verifyStripe(raw, request.headers.get('stripe-signature'), env.STRIPE_WEBHOOK_SECRET))) return json({ error: 'bad signature' }, 400);
+      // a secret pasted with a stray space, line break or quotes still works
+      const secret = String(env.STRIPE_WEBHOOK_SECRET).trim().replace(/^["']|["']$/g, '').trim(), sigHdr = request.headers.get('stripe-signature');
+      if (!(await verifyStripe(raw, sigHdr, secret))) {
+        // say why (never the secret itself): Stripe shows this on the webhook's delivery page
+        const why = stripeWhy(sigHdr, secret);
+        console.warn('stripe webhook rejected:', why);
+        return json({ error: 'bad signature', why }, 400);
+      }
       const ev = JSON.parse(raw), s = ev.data && ev.data.object;
       if ((ev.type === 'checkout.session.completed' || ev.type === 'checkout.session.async_payment_succeeded') && s && s.payment_status === 'paid') {
         const uid = (s.metadata && s.metadata.uid) || s.client_reference_id, product = s.metadata && s.metadata.product;

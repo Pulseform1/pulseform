@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, createSign, createHmac } from 'node:crypto';
-import api, { CATALOG, verifyFirebaseToken, verifyStripe, grant, _resetKeys } from './worker.js';
+import api, { CATALOG, verifyFirebaseToken, verifyStripe, stripeWhy, grant, _resetKeys } from './worker.js';
 
 const PROJECT = 'pulseform-d8282', now = () => Math.floor(Date.now() / 1000);
 const b64u = b => Buffer.from(b).toString('base64url');
@@ -71,6 +71,12 @@ test('Stripe signatures', async () => {
   assert.equal(await verifyStripe(raw + ' ', stripeSig(raw, 'whsec_test'), 'whsec_test'), false);
   assert.equal(await verifyStripe(raw, stripeSig(raw, 'whsec_test', now() - 600), 'whsec_test'), false);
   assert.equal(await verifyStripe(raw, '', 'whsec_test'), false);
+  assert.match(stripeWhy('', 'whsec_test'), /no Stripe-Signature/);
+  assert.match(stripeWhy(stripeSig(raw, 'whsec_test', now() - 600), 'whsec_test'), /Resend/);
+  assert.match(stripeWhy(stripeSig(raw, 'whsec_test'), 'sk_test_x'), /does not start with whsec_/);
+  assert.match(stripeWhy(stripeSig(raw, 'whsec_test'), 'whsec_te st'), /space or line break/);
+  assert.match(stripeWhy(stripeSig(raw, 'whsec_other'), 'whsec_test'), /does not match/);
+  assert.doesNotMatch(stripeWhy(stripeSig(raw, 'whsec_other'), 'whsec_test'), /whsec_test/);
 });
 
 test('checkout: server prices, signed-in players only', async () => {
@@ -143,6 +149,7 @@ test('webhook: forged, unpaid and odd notices deliver nothing', async () => {
   const net = mockNet();
   assert.equal((await api.fetch(hook(paidEvent(), 'whsec_guess'), ENV, {}, net)).status, 400);
   assert.equal((await api.fetch(post('/stripe-webhook', paidEvent()), ENV, {}, net)).status, 400);
+  { const r = await api.fetch(hook(paidEvent(), 'whsec_wrong'), ENV, {}, net); assert.equal(r.status, 400); assert.match((await r.json()).why, /does not match/); }
   await api.fetch(hook(paidEvent({ payment_status: 'unpaid' })), ENV, {}, net);
   await api.fetch(hook(paidEvent({ metadata: { uid: 'uidABC123', product: 'pf_made_up' } })), ENV, {}, net);
   await api.fetch(hook(paidEvent({ metadata: { uid: '../admins/x', product: 'pf_no_ads' } })), ENV, {}, net);
@@ -168,4 +175,10 @@ test('grant() signs in to Google with the service account', async () => {
   };
   assert.equal(await grant({ GOOGLE_SERVICE_ACCOUNT: JSON.stringify(sa) }, 'uidABC123', 'pf_pass_s1', { id: 'cs_9', amount_total: 499 }, f), true);
   assert.equal(net.docs.has('purchases/uidABC123/items/cs_9'), true);
+});
+
+test('webhook: a secret pasted with spaces or quotes still works', async () => {
+  const net = mockNet();
+  assert.equal((await api.fetch(hook(paidEvent()), { ...ENV, STRIPE_WEBHOOK_SECRET: ' "whsec_test"\n' }, {}, net)).status, 200);
+  assert.equal(net.docs.has('gifts/uidABC123/items/stripe_cs_live_42'), true);
 });
