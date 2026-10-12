@@ -77,6 +77,95 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Admin fun: things an admin sends to every player at once. Everyone can read them (the live/{doc} rule above);
+    // only an admin can write them, with their own uid in `by`, and only the fields listed.
+    //   live/fx = a one-off effect (confetti, fireworks, a shout, a sound, a note storm…)   live/wx = weather and a theme
+    //   live/quiz = a pop quiz   live/poll = a poll   live/spot = player of the day   live/count = a countdown
+    function admDoc(keys) {
+      return isAdmin() && request.resource.data.keys().hasOnly(keys) && request.resource.data.by == request.auth.uid
+        && request.resource.data.t is int;
+    }
+    match /live/fx {
+      allow create, update: if admDoc(['id', 'k', 'a', 't', 'by'])
+        && request.resource.data.id is string && request.resource.data.id.size() <= 40
+        && request.resource.data.k in ['confetti', 'fireworks', 'shout', 'sound', 'erlaf', 'quake', 'disco', 'storm', 'boxes']
+        && request.resource.data.a is map;
+    }
+    match /live/wx {
+      allow create, update: if admDoc(['wx', 'wxEnd', 'theme', 'themeEnd', 't', 'by'])
+        && request.resource.data.wx in ['', 'snow', 'petals', 'notes', 'hearts', 'stars', 'leaves', 'bubbles', 'confetti']
+        && request.resource.data.theme in ['', 'hween', 'cres', 'plain']
+        && request.resource.data.wxEnd is int && request.resource.data.themeEnd is int;
+    }
+    match /live/quiz {
+      allow create, update: if admDoc(['id', 'q', 'n', 'end', 't', 'by'])
+        && request.resource.data.id is string && request.resource.data.id.size() <= 40
+        && request.resource.data.q is map && request.resource.data.end is int
+        && request.resource.data.n is int && request.resource.data.n >= 0 && request.resource.data.n <= 5000;
+    }
+    match /live/poll {
+      allow create, update: if admDoc(['id', 'q', 'opts', 'end', 't', 'by'])
+        && request.resource.data.id is string && request.resource.data.id.size() <= 40
+        && request.resource.data.q is string && request.resource.data.q.size() <= 100
+        && request.resource.data.opts is list && request.resource.data.opts.size() >= 2 && request.resource.data.opts.size() <= 4
+        && request.resource.data.end is int;
+    }
+    match /live/spot {
+      allow create, update: if admDoc(['uid', 'name', 'skin', 'banner', 'msg', 'end', 't', 'by'])
+        && request.resource.data.uid is string && request.resource.data.uid.size() <= 128
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24
+        && request.resource.data.msg is string && request.resource.data.msg.size() <= 100
+        && request.resource.data.end is int;
+    }
+    match /live/count {
+      allow create, update: if admDoc(['title', 'msg', 'at', 't', 'by'])
+        && request.resource.data.title is string && request.resource.data.title.size() <= 40
+        && request.resource.data.msg is string && request.resource.data.msg.size() <= 80
+        && request.resource.data.at is int;
+    }
+    // A poll vote: one per signed-in player, for themselves, never changed. Everyone can count the votes.
+    match /polls/{pid}/votes/{uid} {
+      allow read: if true;
+      allow create: if signedIn() && request.auth.uid == uid && pid.size() <= 40
+        && request.resource.data.keys().hasOnly(['o', 't'])
+        && request.resource.data.o is int && request.resource.data.o >= 0 && request.resource.data.o < 4
+        && request.resource.data.t == request.time;
+      allow update, delete: if false;
+    }
+    // A pop quiz answer: one per player (right or not, how fast), so the admin can see who was quickest.
+    match /quizAns/{qid}/a/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create: if signedIn() && request.auth.uid == uid && qid.size() <= 40
+        && request.resource.data.keys().hasOnly(['ok', 'ms', 'name', 't'])
+        && request.resource.data.ok is bool && request.resource.data.ms is int && request.resource.data.ms >= 0
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24
+        && request.resource.data.t == request.time;
+      allow update, delete: if false;
+    }
+    // Who's online: a signed-in player's game says so every couple of minutes, with the screen they're on.
+    // Only admins can read it (the Online tab of the admin panel).
+    match /online/{uid} {
+      allow read: if isAdmin();
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'skin', 'banner', 'st', 't'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24
+        && request.resource.data.skin is string && request.resource.data.skin.size() <= 40
+        && request.resource.data.banner is string && request.resource.data.banner.size() <= 24
+        && request.resource.data.st is string && request.resource.data.st.size() <= 60
+        && request.resource.data.t == request.time;
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+    // The admin log: what admins did (gifts, events, effects), for admins only. Never changed.
+    match /adminLog/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.keys().hasOnly(['txt', 'by', 'name', 't'])
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.txt is string && request.resource.data.txt.size() <= 200
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24
+        && request.resource.data.t is int;
+      allow update, delete: if false;
+    }
+
     match /users/{uid} {
       allow read, delete: if signedIn() && request.auth.uid == uid;
       // one save per account: only the save itself, its time and the account's display name, and no giant documents
@@ -240,12 +329,16 @@ service cloud.firestore {
       return add > 0 && string(p.sh) == n && p.t == request.time
         && p.score - (exists(crPath(request.auth.uid)) ? get(crPath(request.auth.uid)).data.score : 0) == add;
     }
+    // an admin can give the bar a boost, at most 5,000,000 at a time, on one of the 16 counters
+    function crAdminAdds(n, add) {
+      return isAdmin() && add > 0 && add <= 5000000 && n in ['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'];
+    }
     match /events/cres/shards/{n} {
       allow read: if true;
       allow create: if signedIn() && request.resource.data.keys().hasOnly(['score']) && request.resource.data.score is int
-        && crPlayerAdds(n, request.resource.data.score);
+        && (crPlayerAdds(n, request.resource.data.score) || crAdminAdds(n, request.resource.data.score));
       allow update: if signedIn() && request.resource.data.keys().hasOnly(['score']) && request.resource.data.score is int
-        && crPlayerAdds(n, request.resource.data.score - resource.data.score);
+        && (crPlayerAdds(n, request.resource.data.score - resource.data.score) || crAdminAdds(n, request.resource.data.score - resource.data.score));
       allow delete: if false;
     }
 

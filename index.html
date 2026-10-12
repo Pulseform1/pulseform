@@ -23,28 +23,6 @@
 <meta name="audience" content="Learners and players practicing music, rhythm, timing, and listening skills">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Pulseform","applicationCategory":"EducationalApplication","applicationSubCategory":"Music Education","url":"https://pulseform.org/","image":"https://pulseform.org/icons/icon-512.png","operatingSystem":"Any","isAccessibleForFree":true,"inLanguage":"en","publisher":{"@type":"Organization","name":"Pulseform","url":"https://pulseform.org/"},"description":"An interactive music education game for practicing rhythm, timing, musical listening, coordination, and other musical skills through puzzles and challenges."}</script>
 <style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}.eduIntro{display:grid;gap:3px;max-width:620px;margin:10px auto 14px;padding:10px 14px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.045);text-align:center}.eduIntro b{font-family:var(--display);font-size:13px;letter-spacing:.04em}.eduIntro span{font-size:12px;line-height:1.45;color:var(--ink-2)}
-/* ---- the Concert Hall interface (the Grand Crescendo's 7.5M update): midnight lacquer, gold leaf and staff lines ---- */
-body.ui-cres{--panel:rgba(14,16,48,.9);--glass:rgba(255,214,120,.08);--glass-2:rgba(255,214,120,.14);--line:rgba(255,214,120,.26);--lantern:#FFD166;--lantern-ink:#1A1440;--mint:#FFE6A8}
-body.ui-cres .overlay{background:radial-gradient(ellipse at 50% 0%,rgba(255,209,102,.12),transparent 55%),rgba(8,8,30,.55)}
-body.ui-cres .panel{background:repeating-linear-gradient(0deg,transparent 0 28px,rgba(255,214,120,.035) 28px 29px),linear-gradient(165deg,rgba(38,42,110,.94),rgba(10,11,36,.95) 70%);border:1px solid rgba(255,214,120,.42);box-shadow:0 0 0 1px rgba(255,214,120,.08) inset,0 24px 60px rgba(0,0,0,.45),0 0 40px rgba(255,209,102,.08)}
-body.ui-cres h2,body.ui-cres .panel h3{color:#FFE6A8;letter-spacing:.01em}
-body.ui-cres .btn{background:linear-gradient(180deg,#FFE08A,#E8B64A);color:#1A1440;box-shadow:0 3px 0 #A8761C,0 6px 18px rgba(232,182,74,.28)}
-body.ui-cres .btn:active{transform:translateY(2px);box-shadow:0 1px 0 #A8761C}
-body.ui-cres .btn.ghost{background:rgba(255,214,120,.06);color:#FFF3D6;border:1px solid rgba(255,214,120,.38);box-shadow:none}
-body.ui-cres .mode{background:linear-gradient(120deg,rgba(255,214,120,.09),rgba(46,52,134,.28));border:1px solid rgba(255,214,120,.28)}
-body.ui-cres .mode:hover{border-color:rgba(255,214,120,.65)}
-body.ui-cres .chip{background:rgba(255,214,120,.07);border-color:rgba(255,214,120,.34);color:#FFF3D6}
-body.ui-cres .back{color:#FFE08A}
-body.ui-cres #menuOv{--lantern:#FFD166;--lantern-ink:#1A1440}
-body.ui-cres #menuOv .logo{color:#FFF3D6;text-shadow:0 0 30px rgba(255,209,102,.35)}body.ui-cres #menuOv .logo span{color:#FFD166}
-body.ui-cres #menuOv .cta{background:linear-gradient(110deg,#FFE08A,#E8B64A 60%,#D39A2E);box-shadow:0 10px 34px rgba(232,182,74,.35),0 0 0 1px rgba(255,240,200,.5) inset}
-body.ui-cres #menuOv .mcard,body.hween.ui-cres #menuOv .mcard{background:repeating-linear-gradient(0deg,transparent 0 22px,rgba(255,214,120,.04) 22px 23px),linear-gradient(160deg,rgba(40,44,112,.9),rgba(12,13,40,.92));border:1px solid rgba(255,214,120,.3);border-top:3px solid #FFD166}
-body.ui-cres #menuOv .mcard:hover{border-color:rgba(255,214,120,.7);box-shadow:0 10px 30px rgba(255,209,102,.15)}
-body.ui-cres #menuOv .eduIntro{background:rgba(14,16,48,.6);border-color:rgba(255,214,120,.3)}
-body.ui-cres .tabbar{background:linear-gradient(180deg,rgba(24,26,72,.96),rgba(8,8,30,.98));border-top:1px solid rgba(255,214,120,.4)}
-body.ui-cres .tabbar button.on{color:#FFE08A}
-body.ui-cres input[type=range]{accent-color:#FFD166}body.ui-cres .opt input{accent-color:#FFD166}
-label.opt.locked{opacity:.55}
 </style>
 <script>
 /* ===== CLOUD SAVES (sign in with Google or email) =====
@@ -2386,6 +2364,103 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
 .sp-cross{display:none!important}
 .sp-hint{margin-top:auto!important;margin-bottom:14px;align-self:end;font-size:10.5px!important;opacity:.75}
 .swipepad.learned .sp-hint,.swipepad.learned .sp-arrows{opacity:.35}
+/* ---- the Concert Hall interface (the Grand Crescendo's 7.5M update): midnight lacquer, gold leaf and staff lines ---- */
+body.ui-cres{--panel:rgba(14,16,48,.9);--glass:rgba(255,214,120,.08);--glass-2:rgba(255,214,120,.14);--line:rgba(255,214,120,.26);--lantern:#FFD166;--lantern-ink:#1A1440;--mint:#FFE6A8}
+body.ui-cres .overlay{background:radial-gradient(ellipse at 50% 0%,rgba(255,209,102,.12),transparent 55%),rgba(8,8,30,.55)}
+body.ui-cres .panel{background:repeating-linear-gradient(0deg,transparent 0 28px,rgba(255,214,120,.035) 28px 29px),linear-gradient(165deg,rgba(38,42,110,.94),rgba(10,11,36,.95) 70%);border:1px solid rgba(255,214,120,.42);box-shadow:0 0 0 1px rgba(255,214,120,.08) inset,0 24px 60px rgba(0,0,0,.45),0 0 40px rgba(255,209,102,.08)}
+body.ui-cres h2,body.ui-cres .panel h3{color:#FFE6A8;letter-spacing:.01em}
+body.ui-cres .btn{background:linear-gradient(180deg,#FFE08A,#E8B64A);color:#1A1440;box-shadow:0 3px 0 #A8761C,0 6px 18px rgba(232,182,74,.28)}
+body.ui-cres .btn:active{transform:translateY(2px);box-shadow:0 1px 0 #A8761C}
+body.ui-cres .btn.ghost{background:rgba(255,214,120,.06);color:#FFF3D6;border:1px solid rgba(255,214,120,.38);box-shadow:none}
+body.ui-cres .mode{background:linear-gradient(120deg,rgba(255,214,120,.09),rgba(46,52,134,.28));border:1px solid rgba(255,214,120,.28)}
+body.ui-cres .mode:hover{border-color:rgba(255,214,120,.65)}
+body.ui-cres .chip{background:rgba(255,214,120,.07);border-color:rgba(255,214,120,.34);color:#FFF3D6}
+body.ui-cres .back{color:#FFE08A}
+body.ui-cres #menuOv{--lantern:#FFD166;--lantern-ink:#1A1440}
+body.ui-cres #menuOv .logo{color:#FFF3D6;text-shadow:0 0 30px rgba(255,209,102,.35)}body.ui-cres #menuOv .logo span{color:#FFD166}
+body.ui-cres #menuOv .cta{background:linear-gradient(110deg,#FFE08A,#E8B64A 60%,#D39A2E);box-shadow:0 10px 34px rgba(232,182,74,.35),0 0 0 1px rgba(255,240,200,.5) inset}
+body.ui-cres #menuOv .mcard,body.hween.ui-cres #menuOv .mcard{background:repeating-linear-gradient(0deg,transparent 0 22px,rgba(255,214,120,.04) 22px 23px),linear-gradient(160deg,rgba(40,44,112,.9),rgba(12,13,40,.92));border:1px solid rgba(255,214,120,.3);border-top:3px solid #FFD166}
+body.ui-cres #menuOv .mcard:hover{border-color:rgba(255,214,120,.7);box-shadow:0 10px 30px rgba(255,209,102,.15)}
+body.ui-cres #menuOv .eduIntro{background:rgba(14,16,48,.6);border-color:rgba(255,214,120,.3)}
+body.ui-cres .tabbar{background:linear-gradient(180deg,rgba(24,26,72,.96),rgba(8,8,30,.98));border-top:1px solid rgba(255,214,120,.4)}
+body.ui-cres .tabbar button.on{color:#FFE08A}
+body.ui-cres input[type=range]{accent-color:#FFD166}body.ui-cres .opt input{accent-color:#FFD166}
+label.opt.locked{opacity:.55}
+/* ---- admin fun: the new tabs ---- */
+.admtabs{grid-template-columns:repeat(4,1fr)}.admtabs button{font-size:12.5px;padding:8px 4px}
+.admh{margin:14px 0 2px;font:700 15px var(--display)}
+.admto{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px;border-radius:12px;background:rgba(255,255,255,.05)}.admto span{font-size:12px;opacity:.7;margin-right:4px}
+.admto button{flex:1;font:700 13px var(--body);padding:8px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer}.admto button.on{background:#FFD166;color:#2B2350;border-color:#FFD166}
+.admfx{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.admfx button{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:8px;text-align:left;padding:10px;border-radius:14px;border:1px solid var(--line);background:linear-gradient(135deg,rgba(255,126,182,.12),rgba(79,168,255,.1));color:var(--ink);cursor:pointer;font:inherit}
+.admfx button span{grid-row:span 2;font-size:26px;align-self:center}.admfx button b{font-size:14px}.admfx button small{font-size:11.5px;opacity:.75}.admfx button:hover{border-color:#FFD166;transform:translateY(-1px)}
+.admsnd,.admwx{display:flex;flex-wrap:wrap;gap:6px}
+.admsnd button,.admwx button,.admtpl button{font:600 13px var(--body);padding:8px 11px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);cursor:pointer}
+.admsnd button span{margin-right:4px}.admsnd button:hover,.admwx button:hover,.admtpl button:hover{border-color:#FFD166}
+.admtpl{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}.admtpl button{font-size:12px;padding:6px 9px}
+.admsm{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}.admsm select{flex:1}
+.adm .g2 input,.adm .g2 select,.admsm select,.admqzopts input[type=text]{background:rgba(0,0,0,.25);border:1px solid var(--line);color:inherit;border-radius:10px;padding:8px 10px;font:inherit;font-size:14px;min-width:0}
+.adm label .btn{width:100%}
+.admonl{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto}
+.admonr{display:flex;align-items:center;gap:10px;text-align:left;padding:6px 10px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);cursor:pointer;font:inherit}
+.admonr .lvav{width:36px;height:36px;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.08);display:grid;place-items:center;flex:none}.admonr .lvav canvas{width:36px;height:36px}
+.admonr span:last-child{display:flex;flex-direction:column;min-width:0}.admonr small{opacity:.7;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.admonr:hover{border-color:#7FF0D2}
+.admdet{border:1px solid var(--line);border-radius:12px;padding:8px 10px}.admdet summary{cursor:pointer;font-weight:700;font-size:13px}
+.admqzopts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}.admqzopts label{display:flex;align-items:center;gap:6px}.admqzopts input[type=text]{flex:1}
+.admres2{font-size:13px}.admqzl,.admlog{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}
+.admqzl li{display:grid;grid-template-columns:30px 1fr auto;gap:8px;padding:5px 10px;border-radius:10px;background:rgba(255,255,255,.05)}
+.admlog li{display:flex;flex-direction:column;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.05)}.admlog small{opacity:.65;font-size:11.5px}
+.admplr{display:grid;grid-template-columns:minmax(0,1fr) 1.2fr auto;gap:8px;align-items:center;margin-top:5px;font-size:13px}.admplr>i{height:10px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden}.admplr>i>i{display:block;height:100%;background:linear-gradient(90deg,#7FF0D2,#FFD166)}
+/* ---- admin fun: what every player sees ---- */
+.funlayer{position:fixed;inset:0;z-index:90;pointer-events:none}
+.funlayer .confetti{position:absolute;inset:0}
+.funshout{display:flex;justify-content:center;align-items:flex-start;padding-top:max(14px,env(safe-area-inset-top))}
+.funshoutbox{pointer-events:auto;display:flex;align-items:center;gap:12px;max-width:min(92vw,720px);padding:14px 20px;border-radius:20px;color:#1A1440;box-shadow:0 14px 40px rgba(0,0,0,.4);animation:fshin .55s cubic-bezier(.3,1.4,.5,1)}
+.funshoutbox b{display:block;font:800 clamp(17px,3.6vw,24px) var(--display);line-height:1.2}.funshoutbox small{display:block;font-size:12.5px;opacity:.75;margin-top:2px}.fsic{font-size:30px}
+.s-gold .funshoutbox{background:linear-gradient(110deg,#FFE08A,#FFB347)}.s-mint .funshoutbox{background:linear-gradient(110deg,#B8F2E6,#7FF0D2)}
+.s-red .funshoutbox{background:linear-gradient(110deg,#FF8A80,#FF4F5E);color:#fff}.s-rainbow .funshoutbox{background:linear-gradient(90deg,#FF7EB6,#FFD166,#7FF0D2,#9CC8FF,#C9A7FF);background-size:300% 100%;animation:fshin .55s cubic-bezier(.3,1.4,.5,1),fsrb 3s linear infinite}
+.funshout.out .funshoutbox{transition:transform .5s,opacity .5s;transform:translateY(-140%);opacity:0}
+@keyframes fshin{from{transform:translateY(-140%) scale(.9)}to{transform:none}}@keyframes fsrb{to{background-position:300% 0}}
+.funfw canvas{width:100%;height:100%}
+.funduck .fdk{position:absolute;top:22%;left:-200px;display:flex;flex-direction:column;align-items:center;animation:fdfly 6.4s linear forwards}.funduck canvas{width:150px;height:150px;animation:fdbob .5s ease-in-out infinite alternate}
+.funduck .fdk b{font:900 26px var(--display);color:#FFE27A;text-shadow:0 3px 0 #A8761C,0 0 18px rgba(0,0,0,.4);transform:rotate(-8deg)}
+@keyframes fdfly{to{left:calc(100vw + 60px)}}@keyframes fdbob{to{transform:translateY(-18px) rotate(-6deg)}}
+body.funquake #menuOv,body.funquake .overlay:not([hidden]){animation:fquake .12s linear 12}@keyframes fquake{25%{transform:translate(-6px,3px) rotate(-.6deg)}50%{transform:translate(5px,-4px)}75%{transform:translate(-4px,-2px) rotate(.6deg)}}
+body.fundisco #menuOv,body.fundisco .overlay:not([hidden]) .panel{animation:fdisco 1.2s linear infinite}@keyframes fdisco{to{filter:hue-rotate(360deg)}}
+.funlights i{position:absolute;top:-30%;width:40vw;height:160%;opacity:.28;mix-blend-mode:screen;filter:blur(30px);transform-origin:50% 0;animation:fspot 2.4s ease-in-out infinite alternate}
+.funlights i:nth-child(1){left:-5%;background:#FF4FA8}.funlights i:nth-child(2){left:25%;background:#4FF0FF;animation-delay:-.6s}.funlights i:nth-child(3){left:55%;background:#FFE27A;animation-delay:-1.2s}.funlights i:nth-child(4){left:80%;background:#9C7CFF;animation-delay:-1.8s}
+@keyframes fspot{from{transform:rotate(-25deg)}to{transform:rotate(25deg)}}
+.funstorm{pointer-events:none}.fstop{position:absolute;top:max(12px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);pointer-events:none;padding:9px 16px;border-radius:999px;background:rgba(20,16,46,.88);border:1px solid #FFD166;color:#fff;font-weight:700;font-size:14px;text-align:center;width:max-content;max-width:calc(100vw - 24px)}
+.fsnote{position:absolute;top:-60px;pointer-events:auto;width:54px;height:54px;border-radius:50%;border:2px solid #FFE27A;background:radial-gradient(circle at 35% 30%,#FFF6D0,#FFB347);color:#5A2A00;font:900 28px system-ui,sans-serif;cursor:pointer;box-shadow:0 6px 18px rgba(255,180,70,.5);animation:fsfall linear forwards;touch-action:manipulation}
+.fsnote.got{animation:none;opacity:0;transform:scale(1.8);transition:transform .25s,opacity .25s;pointer-events:none}
+@keyframes fsfall{from{transform:translateY(0) rotate(-10deg)}to{transform:translateY(calc(100vh + 120px)) rotate(14deg)}}
+.funboxes,.funpoll,.funwheel{display:grid;place-items:center;background:rgba(10,8,30,.6);pointer-events:auto;padding:16px}
+.fbx,.fpl,.fwh{position:relative;width:min(100%,460px);padding:20px;border-radius:22px;text-align:center;background:linear-gradient(160deg,#3A2E78,#140F34);border:1px solid rgba(255,214,120,.5);box-shadow:0 20px 60px rgba(0,0,0,.5);color:#fff}
+.fbx h3,.fpl h3,.fwh h3{margin:4px 0 8px;font:800 22px var(--display)}
+.fbrow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.fbb{position:relative;aspect-ratio:1;border-radius:18px;border:2px solid #FFD166;background:linear-gradient(160deg,#FF7EB6,#9C7CFF);cursor:pointer;display:grid;place-items:center;animation:fbwob 1.4s ease-in-out infinite;color:#fff;font:inherit}
+.fbb:nth-child(2){animation-delay:-.4s}.fbb:nth-child(3){animation-delay:-.8s}.fbl{font-size:44px}
+.fbb .fbin{display:none;flex-direction:column;align-items:center;gap:2px}.fbb.open{animation:none;background:rgba(255,255,255,.08)}.fbb.open .fbl{display:none}.fbb.open .fbin{display:flex}
+.fbb.mine{border-color:#7FF0D2;box-shadow:0 0 22px rgba(127,240,210,.6)}.fbb.other{opacity:.55}.fbin canvas{width:56px;height:56px}.fbin b{font-size:14px}
+@keyframes fbwob{50%{transform:rotate(-4deg) scale(1.04)}}
+.fplx{position:absolute;top:10px;right:12px;border:0;background:none;color:#fff;font-size:20px;cursor:pointer}
+.fplopts{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.fplo{position:relative;overflow:hidden;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:#fff;font:inherit;cursor:pointer;text-align:left}
+.fplo b,.fplo small{position:relative}.fplbar{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,rgba(127,240,210,.45),rgba(255,209,102,.35));transition:width .8s}
+.fplo.mine{border-color:#FFD166}.fplo:hover:not(:disabled){border-color:#FFD166}
+.fwwrap{position:relative;width:min(320px,80vw);aspect-ratio:1;margin:8px auto}.fwwrap canvas{width:100%;height:100%}
+.fwptr{position:absolute;top:-6px;left:50%;transform:translateX(-50%);border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid #FFD166;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.fwh .row{justify-content:center;flex-wrap:wrap}.fwh .confetti{position:absolute;inset:0}
+#funWx{position:fixed;inset:0;width:100%;height:100%;z-index:60;pointer-events:none}
+.qzhead{font:800 13px var(--display);letter-spacing:.06em;color:#FFD166;margin-bottom:6px}
+#menuOv .funban:not([hidden]){display:flex;align-items:center;gap:12px;width:100%;max-width:520px;margin-top:10px;padding:12px 14px;border-radius:18px;cursor:pointer;text-align:left;color:#fff;font:inherit;border:1px solid rgba(255,255,255,.4);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.qzban{background:linear-gradient(110deg,rgba(255,126,182,.35),rgba(120,60,170,.7) 60%,rgba(40,20,80,.9))!important;animation:qzpulse 1.6s ease-in-out infinite}.qzban.done{animation:none}
+@keyframes qzpulse{50%{box-shadow:0 0 0 4px rgba(255,126,182,.35),0 8px 24px rgba(0,0,0,.25)}}
+.plban{background:linear-gradient(110deg,rgba(127,240,210,.3),rgba(40,90,140,.7) 60%,rgba(20,30,70,.9))!important}
+.spban{background:linear-gradient(110deg,rgba(255,226,122,.35),rgba(150,100,30,.6) 60%,rgba(60,40,20,.9))!important}.spban .spic{background:rgba(0,0,0,.25);overflow:hidden}.spban .spic canvas{width:40px;height:40px}
+.ctban{background:linear-gradient(110deg,rgba(156,200,255,.3),rgba(60,60,160,.7) 60%,rgba(20,20,70,.9))!important;cursor:default!important}.ctban #mCountSub{font:700 15px var(--display);font-variant-numeric:tabular-nums}
+.funban .twban-ic{background:rgba(255,255,255,.15)}
+@media (prefers-reduced-motion:reduce){.fsnote{animation-duration:9s!important}.funduck .fdk,.funduck canvas,.fbb,.qzban,body.funquake #menuOv,body.fundisco #menuOv{animation:none}}
 </style>
 <section id="menuOv" class="screen" hidden>
   <button class="admfab" id="mAdmin" type="button" hidden aria-label="Admin panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-3 7.6-7 9-4-1.4-7-4.8-7-9V6z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></svg><span>Admin</span></button>
@@ -2400,6 +2475,10 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <button class="twban duckban" id="mErlaf" type="button" hidden><span class="twban-ic duckic" aria-hidden="true"><canvas class="skprev" data-skin="sk_erlaf" data-px="40" width="40" height="40"></canvas></span><span class="twban-t"><b>Erlaf the Giant Duck</b><small id="mErlafSub">Limited boss challenge</small></span><span class="twban-go" id="mErlafGo" aria-hidden="true">Play ›</span></button>
       <button class="twban liveban" id="mLive" type="button" hidden><span class="twban-ic" aria-hidden="true">★</span><span class="twban-t"><b id="mLiveT">Live event</b><small id="mLiveSub"></small></span><span class="twban-go" id="mLiveGo" aria-hidden="true">›</span></button>
       <button class="twban cresban" id="mCres" type="button" hidden><span class="twban-ic" aria-hidden="true">🎼</span><span class="twban-t"><b>The Grand Crescendo</b><small id="mCresSub">One goal for everyone: 30,000,000 points</small><i class="goalbar"><i id="mCresBar"></i></i></span><span class="twban-go" aria-hidden="true">›</span></button>
+      <button class="twban funban qzban" id="mQuiz" type="button" hidden><span class="twban-ic" aria-hidden="true">❓</span><span class="twban-t"><b>Pop quiz!</b><small id="mQuizSub"></small></span><span class="twban-go" aria-hidden="true">›</span></button>
+      <button class="twban funban plban" id="mPoll" type="button" hidden><span class="twban-ic" aria-hidden="true">📊</span><span class="twban-t"><b id="mPollT">Poll</b><small id="mPollSub"></small></span><span class="twban-go" aria-hidden="true">›</span></button>
+      <button class="twban funban spban" id="mSpot" type="button" hidden><span class="twban-ic spic" aria-hidden="true"><canvas class="skprev" data-skin="classic" data-px="40" width="40" height="40"></canvas></span><span class="twban-t"><b id="mSpotT">Player of the day</b><small id="mSpotSub"></small></span><span class="twban-go" aria-hidden="true">⭐</span></button>
+      <button class="twban funban ctban" id="mCount" type="button" hidden><span class="twban-ic" aria-hidden="true">⏳</span><span class="twban-t"><b id="mCountT"></b><small id="mCountSub"></small></span></button>
       <button class="twban" id="mTwinBan" type="button" hidden><span class="twban-ic" aria-hidden="true">⚔</span><span class="twban-t"><b>Twin Pulse</b><small id="mTwinBanSub">2v2 event</small></span><span class="twban-go" aria-hidden="true">›</span></button>
       <button class="twban goalban" id="mGoal" type="button" hidden><span class="twban-ic" aria-hidden="true">🎯</span><span class="twban-t"><b id="mGoalT">Saving up</b><small id="mGoalSub"></small><i class="goalbar"><i id="mGoalBar"></i></i></span><span class="twban-go" aria-hidden="true">›</span></button>
       <button class="twban wardban" id="mWard" type="button" hidden><span class="twban-ic" aria-hidden="true">👕</span><span class="twban-t"><b>Wardrobe Challenge</b><small id="mWardSub">One block for everyone this week</small></span><span class="twban-go" aria-hidden="true">›</span></button>
@@ -2982,13 +3061,13 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
 <section id="adminOv" class="overlay" hidden>
   <div class="panel adm">
     <div class="head"><button class="back" id="admBack" type="button">← Menu</button><span class="admbadge">Admin</span></div>
-    <div class="admtabs" id="admTabs" role="tablist"><button type="button" data-at="players">Players</button><button type="button" data-at="events">Events</button><button type="button" data-at="levels">Levels</button><button type="button" data-at="me">My account</button></div>
+    <div class="admtabs" id="admTabs" role="tablist"><button type="button" data-at="players">Players</button><button type="button" data-at="online">🟢 Online</button><button type="button" data-at="fun">🎉 Fun</button><button type="button" data-at="comm">💬 Community</button><button type="button" data-at="events">Events</button><button type="button" data-at="levels">Levels</button><button type="button" data-at="me">My account</button></div>
     <div class="admpane" id="admPlayers">
       <div class="admsearch"><input id="admFind" type="search" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Search a name or friend code"></div>
       <small class="admhint" id="admResHead">Top players</small>
       <div class="admres" id="admRes"></div>
       <div class="admsel" id="admSel" hidden>
-        <div class="admwho"><span class="admav" id="admSelAv"></span><span><b id="admSelName"></b><small id="admSelInfo"></small></span><button class="btn ghost" id="admSelClear" type="button">Change</button></div>
+        <div class="admwho"><span class="admav" id="admSelAv"></span><span><b id="admSelName"></b><small id="admSelInfo"></small></span><button class="btn ghost" id="admSelCard" type="button">👤 Card</button><button class="btn ghost" id="admSelClear" type="button">Change</button></div>
         <small class="admhint">One tap sends it</small>
         <div class="admquick">
           <button type="button" data-q="notes:1000">+♪1,000</button><button type="button" data-q="notes:5000">+♪5,000</button><button type="button" data-q="notes:25000">+♪25,000</button>
@@ -2998,8 +3077,82 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
           <label id="admItemL">Item<select id="admItem"></select></label><label id="admAmtL" hidden>Amount<input id="admAmt" type="number" min="1" max="1000000" step="100" value="1000"></label></div>
         <div class="admpick" id="admPickG" hidden></div>
         <div class="g1"><label>Message (optional)<input id="admNote" type="text" maxlength="120" placeholder="Thanks for playing!"></label></div>
+        <div class="admtpl" id="admTpl"><button type="button" data-tpl="Thanks for playing Pulseform! 💛">💛 Thanks</button><button type="button" data-tpl="Happy birthday from the Pulseform team! 🎂">🎂 Birthday</button><button type="button" data-tpl="GG! That run was amazing. 🔥">🔥 GG</button><button type="button" data-tpl="You won our giveaway! 🎉">🎉 Giveaway</button><button type="button" data-tpl="Thanks for reporting that bug! 🐞">🐞 Bug hunter</button><button type="button" data-tpl="Welcome to Pulseform! 👋">👋 Welcome</button></div>
         <div class="row"><button class="btn" id="admSend" type="button">Send gift</button></div>
       </div>
+    </div>
+    <div class="admpane" id="admOnline" hidden>
+      <div class="admcard on" id="admOnHead">Looking for players…</div>
+      <div class="admonl" id="admOnList"></div>
+      <div class="row"><button class="btn ghost" id="admOnRef" type="button">↻ Refresh</button><button class="btn ghost" id="admOnWheel" type="button">🎡 Spin the wheel</button></div>
+      <div class="g2"><label>Make it rain on everyone online<input id="admOnN" type="number" min="1" max="100000" step="100" value="500"></label><label>&nbsp;<button class="btn" id="admOnGift" type="button">🌧 Send ♪ to all</button></label></div>
+    </div>
+    <div class="admpane" id="admFun" hidden>
+      <div class="admto" id="admTo"><span>Send to</span><button type="button" data-to="all">📡 Everyone</button><button type="button" data-to="me">🧪 Just my screen</button></div>
+      <small class="admhint">"Just my screen" lets you try anything first. Nobody else sees it.</small>
+      <h4 class="admh">Instant effects</h4>
+      <div class="admfx" id="admFxGrid">
+        <button type="button" data-fx="confetti"><span>🎊</span><b>Confetti</b><small>Rains on every screen</small></button>
+        <button type="button" data-fx="fireworks"><span>🎆</span><b>Fireworks</b><small>A 7-second show</small></button>
+        <button type="button" data-fx="erlaf"><span>🦆</span><b>Erlaf flyover</b><small>The Giant Duck flies by, quacking</small></button>
+        <button type="button" data-fx="quake"><span>🌋</span><b>Earthquake</b><small>Every menu shakes</small></button>
+        <button type="button" data-fx="disco"><span>🪩</span><b>Disco</b><small>30 seconds of party lights</small></button>
+        <button type="button" data-fx="storm"><span>🎵</span><b>Note Storm</b><small>Catch falling notes for ♪</small></button>
+        <button type="button" data-fx="boxes"><span>🎁</span><b>Mystery boxes</b><small>Everyone picks 1 of 3</small></button>
+      </div>
+      <div class="g2"><label>Note Storm: ♪ per note<select id="admStormN"><option value="5">♪5</option><option value="10" selected>♪10</option><option value="25">♪25</option><option value="50">♪50</option><option value="100">♪100</option></select></label>
+        <label>Mystery box prizes<select id="admBoxT"><option value="s">Small (♪50–300)</option><option value="m" selected>Medium (♪200–1,200)</option><option value="b">Big (♪1,000–5,000)</option></select></label></div>
+      <label class="opt" for="admBoxB"><input id="admBoxB" type="checkbox"><span>Boxes can hold a Shop block<small>1 in 4 boxes holds a block the player doesn't own yet.</small></span></label>
+      <h4 class="admh">📣 Shout</h4>
+      <div class="g1"><label>Message across every screen<input id="admShoutT" type="text" maxlength="120" placeholder="New levels drop tonight at 7!"></label></div>
+      <div class="g2"><label>Style<select id="admShoutS"><option value="gold">Gold</option><option value="rainbow">Rainbow</option><option value="red">Red alert</option><option value="mint">Mint</option></select></label>
+        <label>&nbsp;<button class="btn" id="admShoutGo" type="button">📣 Shout it</button></label></div>
+      <label class="opt" for="admShoutF"><input id="admShoutF" type="checkbox" checked><span>Sign it with my name</span></label>
+      <h4 class="admh">🔊 Sound board</h4>
+      <div class="admsnd" id="admSnd"></div>
+      <h4 class="admh">🌦 Weather for everyone</h4>
+      <small class="admhint" id="admWxNow"></small>
+      <div class="admwx" id="admWxGrid"><button type="button" data-wx="snow">❄ Snow</button><button type="button" data-wx="petals">🌸 Petals</button><button type="button" data-wx="notes">♪ Music notes</button><button type="button" data-wx="hearts">♥ Hearts</button><button type="button" data-wx="stars">✦ Stars</button><button type="button" data-wx="leaves">🍂 Leaves</button><button type="button" data-wx="bubbles">○ Bubbles</button><button type="button" data-wx="confetti">▮ Confetti</button><button type="button" data-wx="">☀ Clear</button></div>
+      <label class="admsm">For<select id="admWxD"><option value="15">15 minutes</option><option value="60" selected>1 hour</option><option value="180">3 hours</option><option value="720">12 hours</option><option value="1440">1 day</option><option value="4320">3 days</option></select></label>
+      <h4 class="admh">🎨 Theme for everyone</h4>
+      <div class="admwx" id="admThGrid"><button type="button" data-th="hween">🎃 Halloween</button><button type="button" data-th="cres">🎼 Concert Hall</button><button type="button" data-th="plain">◻ Plain</button><button type="button" data-th="">↩ Their own</button></div>
+      <label class="admsm">For<select id="admThD"><option value="60">1 hour</option><option value="360">6 hours</option><option value="1440" selected>1 day</option><option value="4320">3 days</option><option value="10080">1 week</option></select></label>
+    </div>
+    <div class="admpane" id="admComm" hidden>
+      <h4 class="admh">❓ Pop quiz</h4>
+      <small class="admhint">Everyone sees a "Pop quiz!" card on the menu. A right answer wins Notes, and you see who was fastest.</small>
+      <div class="admcard" id="admQzPrev"></div>
+      <div class="row"><button class="btn ghost" id="admQzRand" type="button">🎲 Random question</button><button class="btn" id="admQzGo" type="button">Send this one</button></div>
+      <details class="admdet"><summary>Or write your own</summary>
+        <div class="g1"><label>Question<input id="admQzQ" type="text" maxlength="200" placeholder="How many beats in a bar of 4/4?"></label></div>
+        <div class="admqzopts"><label><input type="radio" name="admQzOk" value="0" checked aria-label="Answer 1 is right"><input id="admQzA1" type="text" maxlength="80" placeholder="Answer 1"></label><label><input type="radio" name="admQzOk" value="1" aria-label="Answer 2 is right"><input id="admQzA2" type="text" maxlength="80" placeholder="Answer 2"></label><label><input type="radio" name="admQzOk" value="2" aria-label="Answer 3 is right"><input id="admQzA3" type="text" maxlength="80" placeholder="Answer 3 (optional)"></label><label><input type="radio" name="admQzOk" value="3" aria-label="Answer 4 is right"><input id="admQzA4" type="text" maxlength="80" placeholder="Answer 4 (optional)"></label></div>
+        <small class="admhint">Tick the right answer.</small>
+        <div class="row"><button class="btn" id="admQzOwnGo" type="button">Send my question</button></div></details>
+      <div class="g2"><label>Prize<select id="admQzN"><option value="50">♪50</option><option value="100">♪100</option><option value="250" selected>♪250</option><option value="500">♪500</option><option value="1000">♪1,000</option><option value="2500">♪2,500</option></select></label>
+        <label>Open for<select id="admQzD"><option value="5">5 minutes</option><option value="15" selected>15 minutes</option><option value="60">1 hour</option><option value="1440">1 day</option></select></label></div>
+      <div class="admres2" id="admQzRes"></div>
+      <div class="row"><button class="btn ghost" id="admQzRef" type="button">↻ Who answered</button><button class="btn ghost" id="admQzEnd" type="button">Close the quiz</button></div>
+      <h4 class="admh">📊 Poll</h4>
+      <div class="g1"><label>Question<input id="admPlQ" type="text" maxlength="100" placeholder="What should the next block pack be?"></label></div>
+      <div class="g2"><input id="admPlO1" type="text" maxlength="40" placeholder="Choice 1"><input id="admPlO2" type="text" maxlength="40" placeholder="Choice 2"><input id="admPlO3" type="text" maxlength="40" placeholder="Choice 3 (optional)"><input id="admPlO4" type="text" maxlength="40" placeholder="Choice 4 (optional)"></div>
+      <label class="admsm">Open for<select id="admPlD"><option value="60">1 hour</option><option value="1440" selected>1 day</option><option value="4320">3 days</option><option value="10080">1 week</option></select></label>
+      <div class="row"><button class="btn" id="admPlGo" type="button">Start poll</button><button class="btn ghost" id="admPlRef" type="button">↻ Results</button><button class="btn ghost" id="admPlEnd" type="button">Close poll</button></div>
+      <div class="admres2" id="admPlRes"></div>
+      <h4 class="admh">⭐ Player of the day</h4>
+      <small class="admhint" id="admSpNow"></small>
+      <small class="admhint">Pick someone in the Players or Online tab first, then come back here.</small>
+      <div class="g2"><label>Message<input id="admSpM" type="text" maxlength="100" placeholder="Beat every Hard stage this week!"></label><label>For<select id="admSpD"><option value="12">12 hours</option><option value="24" selected>1 day</option><option value="72">3 days</option><option value="168">1 week</option></select></label></div>
+      <div class="row"><button class="btn" id="admSpGo" type="button">⭐ Spotlight them</button><button class="btn ghost" id="admSpEnd" type="button">Clear</button></div>
+      <h4 class="admh">⏳ Countdown</h4>
+      <small class="admhint" id="admCtNow"></small>
+      <div class="g2"><label>Title<input id="admCtT" type="text" maxlength="40" placeholder="Winter update"></label><label>Message<input id="admCtM" type="text" maxlength="80" placeholder="New world, new blocks"></label>
+        <label>Ends at<input id="admCtAt" type="datetime-local"></label><label>…or in (hours)<input id="admCtH" type="number" min="0.1" max="2000" step="0.5" value="24"></label></div>
+      <div class="row"><button class="btn" id="admCtGo" type="button">Start countdown</button><button class="btn ghost" id="admCtEnd" type="button">Clear</button></div>
+      <h4 class="admh">🎼 Grand Crescendo</h4>
+      <small class="admhint" id="admCresNow"></small>
+      <div class="row" id="admCresB"><button class="btn ghost" type="button" data-cres="100000">+100K</button><button class="btn ghost" type="button" data-cres="1000000">+1M</button><button class="btn ghost" type="button" data-cres="5000000">+5M</button></div>
+      <h4 class="admh">🎡 Giveaway wheel</h4>
+      <div class="row"><button class="btn ghost" id="admWheel2" type="button">🎡 Spin the wheel</button></div>
     </div>
     <div class="admpane" id="admEvents" hidden>
       <div class="admcard" id="admLiveNow">No event running.</div>
@@ -3021,6 +3174,8 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
       <div class="g2"><label>Rank<select id="admRank"></select></label><label>Add Notes<input id="admNotes" type="number" min="0" max="1000000" step="100" placeholder="e.g. 5000"></label></div>
       <div class="row"><button class="btn ghost" id="admRankGo" type="button">Set rank</button><button class="btn ghost" id="admNotesGo" type="button">Add Notes</button></div>
       <div class="row"><button class="btn ghost" id="admLevels" type="button">Unlock all levels</button><button class="btn ghost" id="admPass" type="button">Give me Pulse Pass+</button><button class="btn ghost" id="admAll" type="button">Own every item</button></div>
+      <small class="admhint">You also have the <b>Pulseform Dev</b> title: pick it in the Locker to show it under your name on the leaderboards.</small>
+      <h4 class="admh">📜 Recent admin actions</h4><ol class="admlog" id="admLogList"></ol><div class="row"><button class="btn ghost" id="admLogRef" type="button">↻ Refresh</button></div>
     </div>
     <p class="amsg" id="admMsg" role="status"></p>
   </div>
@@ -8964,7 +9119,7 @@ function acctInit(){
   const cfg=acctCfg(); if(!cfg) return;
   fbLoad().then(()=>{
     if(!firebase.apps.length) firebase.initializeApp(cfg);
-    ACCT.auth=firebase.auth(); ACCT.db=firebase.firestore(); liveStart();
+    ACCT.auth=firebase.auth(); ACCT.db=firebase.firestore(); liveStart(); setTimeout(()=>{ try{ funStart(); }catch(e){} },0);
     ACCT.auth.getRedirectResult().catch(e=>{ ACCT.err=authMsg(e); acctUI(); });
     ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; try{ if(u&&IAP.ok) rcPlugin().logIn({appUserID:u.uid}).catch(()=>{}); }catch(e){} admAuth(u); if(u) acctPull(true).then(lbRename,lbRename).then(()=>{ cvkFindSide(); cvkLoadMyBet(); twFind(); inboxStart(u); webRestore(u); }); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
   }).catch(()=>{ ACCT.err='Could not load sign-in. Check your connection.'; acctUI(); });
@@ -9345,6 +9500,8 @@ function admTabSet(t){ admTab=t; document.querySelectorAll('#admTabs button').fo
   $('admLevelsPane').hidden=t!=='levels'; if(t==='levels') admLevelsUI();
   $('admPacksPane').hidden=t!=='packs'; if(t==='packs') admPacksUI();
   $('admPlayers').hidden=t!=='players'; $('admEvents').hidden=t!=='events'; $('admMe').hidden=t!=='me'; admMsg('');
+  $('admOnline').hidden=t!=='online'; $('admFun').hidden=t!=='fun'; $('admComm').hidden=t!=='comm';
+  if(t==='online') admOnline(); if(t==='fun') admFunUI(); if(t==='comm'){ cresFetch(true); admCommUI(); } if(t==='me') admLogUI();
   if(t==='events') admLiveNow(); if(t==='me') admSelfUI(); if(t==='players'&&!ADM.target&&!$('admFind').value.trim()) admTop(); }
 function admOpen(){ if(!ADM.on||!ACCT.user){ toast('Sign in with your admin account first.'); return; }
   $('admWho').textContent=`Signed in as ${SAVE.name||ACCT.user.email||'you'}.`;
@@ -9375,14 +9532,14 @@ ADM.qid=0;
 function admPick(f){ ADM.target=f; $('admSel').hidden=false; $('admRes').hidden=true; $('admResHead').hidden=true; $('admFind').closest('.admsearch').hidden=true;
   $('admSelAv').textContent=String(f.name||'?').charAt(0).toUpperCase(); $('admSelName').textContent=f.name||'Player'; $('admSelInfo').textContent=rankName(f.rank||0)+(f.score?` · best ${(+f.score).toLocaleString()}`:'');
   $('admSel').querySelectorAll('button').forEach(b=>b.disabled=false); admKindUI(); admMsg('');
-  $('admTeach').onclick=async()=>{ const uid=f.uid||f.id; if(!uid) return; try{ await ACCT.db.collection('teachers').doc(uid).set({ok:true,by:ACCT.user.uid,t:Date.now()}); admMsg(`✓ ${f.name||'They'} can now share question packs with every teacher.`); }catch(e){ admMsg('Could not verify: '+((e&&e.code)||'error')); } }; }
+  if($('admTeach')) $('admTeach').onclick=async()=>{ const uid=f.uid||f.id; if(!uid) return; try{ await ACCT.db.collection('teachers').doc(uid).set({ok:true,by:ACCT.user.uid,t:Date.now()}); admMsg(`✓ ${f.name||'They'} can now share question packs with every teacher.`); }catch(e){ admMsg('Could not verify: '+((e&&e.code)||'error')); } }; }
 function admUnpick(){ ADM.target=null; $('admSel').hidden=true; $('admRes').hidden=false; $('admResHead').hidden=false; $('admFind').closest('.admsearch').hidden=false; admMsg(''); const q=$('admFind').value; if(q.trim()) admSearch(q); else admTop(); $('admFind').focus({preventScroll:true}); }
 async function admGift(g,label,pic){ const T=ADM.target, db=ACCT.db; if(!T||!db||!ACCT.user) return;
   const note=$('admNote').value.trim().slice(0,120);
   if(!await admConfirm(`Send ${label} to ${T.name||'this player'}?`,(pic||'')+`<div>They get it the next time they open the game signed in.${note?` Your message: “${escapeHTML(note)}”`:''}</div>`,'Send it')){ admMsg('Cancelled. Nothing was sent.'); return; }
   Object.assign(g,{t:Date.now(),by:ACCT.user.uid}); if(note) g.msg=note;
   const btns=$('admSel').querySelectorAll('button'); btns.forEach(b=>b.disabled=true); admMsg('Sending…');
-  try{ await db.collection('gifts').doc(T.uid).collection('items').add(g); admMsg(`✓ ${label} sent to ${T.name||'that player'}. They get it the next time they open the game signed in.`); if(A.ctx) sGem(); buzz(20); }
+  try{ await db.collection('gifts').doc(T.uid).collection('items').add(g); admMsg(`✓ ${label} sent to ${T.name||'that player'}. They get it the next time they open the game signed in.`); admLog(`Gave ${label} to ${T.name||'a player'}`); if(A.ctx) sGem(); buzz(20); }
   catch(e){ admMsg('Could not send ('+(e&&e.code||'offline')+').',true); }
   btns.forEach(b=>b.disabled=false); }
 let admFindT=0;
@@ -9415,7 +9572,7 @@ $('admEvGo').onclick=async()=>{ const db=ACCT.db; if(!db||!ACCT.user) return; co
   const sum=[ev.mode==='erlaf'?'Erlaf the Giant Duck':'',ev.xp>1?`${ev.xp}× XP`:'',ev.notes>1?`${ev.notes}× Notes`:'',gift?`gift for everyone: ${gift.kind==='notes'?'♪'+gift.n.toLocaleString():escapeHTML(it?it.name:'an item')}`:''].filter(Boolean).join(' · ')||'no boosts';
   const old=ACCT.live&&now<(+ACCT.live.end||0);
   if(!await admConfirm(`Start “${title}” for every player?`,(gift&&it?admPreviewHTML(gift.kind,gift.id):'')+`<div>${sum}<br>${start>now?'Starts in '+liveLeft(start-now)+', l':'Starts now, l'}asts ${liveLeft(end-start)}.${old?'<br><b>This replaces the event that\'s running now.</b>':''}</div>`,'Start event')) return;
-  admMsg('Starting…'); try{ await db.collection('live').doc('event').set(ev); ACCT.live=ev; liveUI(); admLiveNow(); admMsg('✓ Event is live for every player.'); if(A.ctx) sGem(); }
+  admMsg('Starting…'); try{ await db.collection('live').doc('event').set(ev); ACCT.live=ev; liveUI(); admLiveNow(); admMsg('✓ Event is live for every player.'); admLog(`Started the event “${title}”`); if(A.ctx) sGem(); }
   catch(e){ admMsg('Could not start the event ('+(e&&e.code||'offline')+').',true); } };
 $('admEvEnd').onclick=async()=>{ const db=ACCT.db, L=ACCT.live; if(!db||!L){ admMsg('No event to end.'); return; } if(!await admConfirm(`End “${L.title||'the event'}” now?`,'Boosts stop and the banner disappears for every player.','End event')) return;
   try{ const ev=Object.assign({},L,{end:Date.now(),t:Date.now(),by:ACCT.user.uid}); if(ev.start>ev.end) ev.start=ev.end; await db.collection('live').doc('event').set(ev); ACCT.live=ev; liveUI(); admLiveNow(); admMsg('Event ended.'); }
@@ -9507,7 +9664,7 @@ async function acctDelete(){
     await Promise.all(mates.map(f=>quiet(db.collection('friends').doc(f).update({uids:firebase.firestore.FieldValue.arrayRemove(uid)}))));
     const inv=await quiet(db.collection('invites').doc(uid).collection('items').get()); if(inv) await Promise.all(inv.docs.map(d=>quiet(d.ref.delete())));
     if(FR.code) await quiet(db.collection('codes').doc(FR.code).delete());
-    await Promise.all([quiet(db.collection('friends').doc(uid).delete()),quiet(db.collection('profiles').doc(uid).delete())]);
+    await Promise.all([quiet(db.collection('friends').doc(uid).delete()),quiet(db.collection('profiles').doc(uid).delete()),quiet(db.collection('online').doc(uid).delete())]);
     inboxStop(); await quiet(db.collection('admins').doc(uid).delete());
     await db.collection('users').doc(uid).delete();
     await u.delete();
@@ -14464,7 +14621,7 @@ function loop(ts){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('denOv').hidden||!$('plOv').hidden) lockerFrame(now); if(!$('liveOv').hidden||!$('playOv').hidden||!$('clsOv').hidden||!$('revOv').hidden) drawSkinPreviews(now,'#liveOv canvas.skprev, #playOv canvas.skprev, #clsOv canvas.skprev'); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('cresOv').hidden||!$('cresWinOv').hidden) drawSkinPreviews(now,'#cresOv canvas.skprev, #cresWinOv canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks'||shopTab==='forge')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('stageOv').hidden) drawSkinPreviews(now,'#stageOv canvas.skprev'); if(!$('wardOv').hidden) drawSkinPreviews(now,'#wardOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('denOv').hidden||!$('plOv').hidden) lockerFrame(now); if(!$('liveOv').hidden||!$('playOv').hidden||!$('clsOv').hidden||!$('revOv').hidden) drawSkinPreviews(now,'#liveOv canvas.skprev, #playOv canvas.skprev, #clsOv canvas.skprev'); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('cresOv').hidden||!$('cresWinOv').hidden) drawSkinPreviews(now,'#cresOv canvas.skprev, #cresWinOv canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('mSpot').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mSpot canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks'||shopTab==='forge')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('stageOv').hidden) drawSkinPreviews(now,'#stageOv canvas.skprev'); if(!$('wardOv').hidden) drawSkinPreviews(now,'#wardOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
@@ -14502,7 +14659,7 @@ function beatBar(t){
    colour turns pumpkin orange. It's decoration only: it sits behind the buttons and never takes a tap. */
 const HWEEN=(()=>new Date().getMonth()===9)();
 function hweenBuild(){
-  const host=$('hween'); if(!HWEEN||!host||host.dataset.on) return; host.dataset.on='1'; document.body.classList.add('hween');
+  const host=$('hween'); if(!(HWEEN||window.__hwForce==='hween')||!host||host.dataset.on) return; host.dataset.on='1'; document.body.classList.add('hween');
   // a quarter cobweb fanning out of a corner: spokes, and threads sagging between them
   const web=(size,cls)=>{ const n=6, ang=i=>i/(n-1)*Math.PI/2, rings=[.2,.36,.53,.71,.9]; let d='';
     for(let i=0;i<n;i++){ const L=size*(i%2?.92:1); d+=`M0 0L${(Math.cos(ang(i))*L).toFixed(1)} ${(Math.sin(ang(i))*L).toFixed(1)}`; }
@@ -14518,11 +14675,11 @@ function hweenBuild(){
     <ellipse cx="60" cy="60" rx="50" ry="38" fill="#D9600F"/><ellipse cx="38" cy="60" rx="24" ry="36" fill="#E8741A"/><ellipse cx="82" cy="60" rx="24" ry="36" fill="#E8741A"/><ellipse cx="60" cy="60" rx="20" ry="38" fill="#F58A2A"/>
     <g class="hw-glow" fill="#FFE27A"><path d="M34 50L48 44L46 60Z"/><path d="M86 50L72 44L74 60Z"/><path d="M60 58L55 68H65Z"/><path d="M30 72Q38 76 44 72L48 80L54 74L60 82L66 74L72 80L76 72Q82 76 90 72Q82 92 60 92Q38 92 30 72Z"/></g></svg>`;
   host.innerHTML='<div class="hw-moon"></div>'+web(210,'tl')+web(170,'tr')+spider+bat(1)+bat(2)+bat(3);
-  const main=document.querySelector('#menuOv .mmain'); if(main){ const p=document.createElement('div'); p.className='hw-pumpwrap'; p.setAttribute('aria-hidden','true'); p.innerHTML=pumpkin; main.appendChild(p); }
+  const main=document.querySelector('#menuOv .mmain'); if(main&&!main.querySelector('.hw-pumpwrap')){ const p=document.createElement('div'); p.className='hw-pumpwrap'; p.setAttribute('aria-hidden','true'); p.innerHTML=pumpkin; main.appendChild(p); }
 }
 hweenBuild();
 function syncHweenSeason(){
-  const active=new Date().getMonth()===9, host=$('hween');
+  const ov=window.__hwForce||'', active=ov==='hween'||(ov!=='plain'&&ov!=='cres'&&new Date().getMonth()===9), host=$('hween');
   document.body.classList.toggle('hween',active);
   if(!host) return;
   if(active && !host.dataset.on){ host.dataset.on=''; hweenBuild(); }
@@ -14895,6 +15052,7 @@ const TITLES=[
  ['devoted','Devoted',()=>mastBest()>=5,'Get a block to mastery 5'],
  ['vet','Pulse Veteran',()=>presLevel()>=1,'Reach Pass prestige 1'],
  ['crew','Crescendo Crew',()=>cresHave(8),'The Grand Crescendo reaches 16.5M'],
+ ['dev','Pulseform Dev',()=>!!(ADM&&ADM.on),'Only for the people who make Pulseform'],
  ['opus','Magnum Opus',()=>cresHave(12),'Finish the Grand Crescendo together'],
  ['passleg','Pass Legend',()=>presLevel()>=5,'Reach Pass prestige 5'],
  ['eternal','Eternal Pulse',()=>presLevel()>=10,'Reach Pass prestige 10'],
@@ -15724,6 +15882,308 @@ $('cresWinEquip').onclick=()=>{ equip('skin','opus'); toast('👑 Magnum Opus eq
 $('cresWinLater').onclick=()=>toMenu();
 setInterval(()=>{ if(G.state==='menu'&&!$('menuOv').hidden&&!cresOff()){ cresFetch(); if((SAVE.cresPend||0)>0) cresSend(); } },60000);
 
+/* ================= ADMIN FUN: things an admin sends to every player at once =================
+   Six small documents in live/ (anyone can read them, only an admin can write them; see firestore.rules):
+     live/fx    = {id, k, a, t, by}                       a one-off effect: confetti, fireworks, a shout, a sound, a note storm…
+     live/wx    = {wx, wxEnd, theme, themeEnd, t, by}     weather and a theme for everyone, until a time
+     live/quiz  = {id, q, n, end, t, by}                  a pop quiz: a right answer wins n Notes (answers in quizAns/{id}/a/{uid})
+     live/poll  = {id, q, opts, end, t, by}               a poll (votes in polls/{id}/votes/{uid})
+     live/spot  = {uid, name, skin, banner, msg, end, t, by}   player of the day
+     live/count = {title, msg, at, t, by}                 a countdown on the menu
+   Every player's game listens to all six with one query. An effect plays once (its id is remembered); the ones that
+   take over the screen wait until the player is back on the menu, so nobody's run is interrupted.
+   Signed-in players also report that they're online (online/{uid} = {name, skin, banner, st, t}); only admins can read it. */
+const FUN={d:{},unsub:null,seen:new Set(),queued:null,wxRaf:0,wxP:[],wxKind:'',theme:'',countFired:'',online:[],to:'all'};
+const FUN_DOCS=['fx','wx','quiz','poll','spot','count'];
+const funNow=()=>Date.now();
+const funMenu=()=>G.state==='menu'&&!$('menuOv').hidden;
+function funStart(){ if(FUN.unsub||!ACCT.db||window.PF_CG) return; try{ FUN.seen=new Set(SAVE.funSeen||[]); }catch(e){}
+  FUN.unsub=ACCT.db.collection('live').where(firebase.firestore.FieldPath.documentId(),'in',FUN_DOCS).onSnapshot(s=>{
+    s.docChanges().forEach(ch=>{ const id=ch.doc.id; FUN.d[id]=ch.type==='removed'?null:ch.doc.data(); if(id==='fx'&&FUN.d.fx) funFxIn(FUN.d.fx); });
+    funWxSync(); funBanners(); },()=>{}); }
+function funRemember(id){ FUN.seen.add(id); SAVE.funSeen=[...FUN.seen].slice(-60); save(); }
+/* ---- one-off effects ---- */
+const FUN_TAKEOVER={quake:1,disco:1,storm:1,boxes:1,erlaf:1};
+function funFxIn(d){ if(!d||!d.id||FUN.seen.has(d.id)) return; const age=funNow()-(+d.t||0); if(age>180000||age<-120000) return;
+  funRemember(d.id);
+  if(FUN_TAKEOVER[d.k]&&G.state!=='menu'){ FUN.queued=d; return; }   // after this run
+  funPlay(d.k,d.a||{}); }
+setInterval(()=>{ const q=FUN.queued; if(q&&G.state==='menu'){ FUN.queued=null; if(funNow()-(+q.t||0)<300000) funPlay(q.k,q.a||{}); } },1500);
+function funLayer(cls){ const e=document.createElement('div'); e.className='funlayer '+(cls||''); e.setAttribute('aria-hidden','true'); document.body.appendChild(e); return e; }
+const funRM=()=>RM()||!!SAVE.reduce;
+function funPlay(k,a){ ensureAudio(); if(A.ctx) A.ctx.resume().catch(()=>{});
+  switch(k){
+    case 'confetti': { const L=funLayer(); L.innerHTML=CONFETTI()+CONFETTI(); setTimeout(()=>L.remove(),5200); funSound('fanfare'); break; }
+    case 'fireworks': funFireworks(); break;
+    case 'shout': funShout(String(a.msg||'').slice(0,120),a.style||'gold',a.from||''); break;
+    case 'sound': funSound(a.id); break;
+    case 'erlaf': funErlaf(); break;
+    case 'quake': { document.body.classList.add('funquake'); funSound('rumble'); setTimeout(()=>document.body.classList.remove('funquake'),1600); break; }
+    case 'disco': { const s=clamp(+a.s||20,5,60); document.body.classList.add('fundisco'); const L=funLayer('funlights'); L.innerHTML='<i></i><i></i><i></i><i></i>'; funSound('disco');
+      setTimeout(()=>{ document.body.classList.remove('fundisco'); L.remove(); },s*1000); break; }
+    case 'storm': funStorm(clamp(Math.round(+a.n||10),1,200),clamp(Math.round(+a.c||20),5,30)); break;
+    case 'boxes': funBoxes(a.tier||'m',!!a.blk); break;
+  } }
+/* sounds, all made on the spot (no files) */
+function funSound(id){ ensureAudio(); const c=A.ctx; if(!c) return; const d=A.sfx, t=c.currentTime+.05;
+  switch(id){
+    case 'airhorn': for(let i=0;i<3;i++){ const s=t+i*.32, L=i===2?.9:.22; [466,470,700].forEach((f,j)=>tone(d,s,'sawtooth',f,.07,.01,L,{lp:2600,det:j*6})); } break;
+    case 'quack': [0,.28,.5].forEach((o,i)=>quack(d,t+o,[330,300,360][i],.32,.25)); break;
+    case 'drumroll': for(let i=0;i<34;i++) noise(d,t+i*.045,.05+.12*i/34,.06,'bandpass',1800,.9); noise(d,t+1.6,.35,1.6,'highpass',5000,.7); tone(d,t+1.6,'sine',90,.4,.003,.4); break;
+    case 'cheer': for(let i=0;i<26;i++) noise(d,t+Math.random()*1.6,.05+Math.random()*.07,.25+Math.random()*.4,'bandpass',900+Math.random()*1800,2); for(let i=0;i<6;i++) tone(d,t+.2+i*.18,'triangle',700+Math.random()*500,.03,.02,.25,{glide:1100+Math.random()*400,gt:.2}); break;
+    case 'applause': for(let i=0;i<70;i++) noise(d,t+Math.random()*2.2,.04+Math.random()*.06,.04,'bandpass',1500+Math.random()*1500,1.2); break;
+    case 'trombone': [[392,.45],[370,.45],[349,.45],[330,1.3]].reduce((s,[f,L])=>{ tone(d,s,'sawtooth',f,.09,.03,L,{lp:1400,glide:L>1?f*.94:f*.99,gt:L}); return s+L*.9; },t); break;
+    case 'fanfare': [[523,.16],[659,.16],[784,.16],[1047,.6]].reduce((s,[f,L])=>{ tone(d,s,'sawtooth',f,.06,.01,L,{lp:2600}); tone(d,s,'square',f/2,.03,.01,L,{lp:1200}); return s+.17; },t); break;
+    case 'gong': tone(d,t,'sine',110,.4,.005,3.5); tone(d,t,'sine',177,.15,.005,2.8); tone(d,t,'triangle',263,.08,.005,2.2); noise(d,t,.2,1.8,'bandpass',600,.6); break;
+    case 'tada': tone(d,t,'triangle',523,.12,.01,.12); tone(d,t+.14,'triangle',784,.14,.01,.8); tone(d,t+.14,'sine',1047,.08,.01,.9); break;
+    case 'boing': tone(d,t,'sine',180,.3,.005,.5,{glide:620,gt:.25}); break;
+    case 'rumble': noise(d,t,.5,1.4,'lowpass',140,.8); tone(d,t,'sine',48,.5,.02,1.2); break;
+    case 'disco': for(let i=0;i<8;i++){ tone(d,t+i*.25,'sine',55,.5,.003,.18,{glide:40,gt:.15}); noise(d,t+i*.25+.125,.06,.05,'highpass',7000,.7); } break;
+    case 'boom': noise(d,t,.35,.9,'lowpass',400,.7); tone(d,t,'sine',70,.35,.003,.5); break;
+    case 'pop': tone(d,t,'sine',900,.12,.002,.08,{glide:1600,gt:.05}); break;
+  } }
+const FUN_SOUNDS=[['airhorn','📯','Air horn'],['quack','🦆','Quack'],['drumroll','🥁','Drum roll'],['cheer','🙌','Cheer'],['applause','👏','Applause'],['trombone','🎺','Sad trombone'],['fanfare','🎉','Fanfare'],['gong','🔔','Gong'],['tada','✨','Ta-da'],['boing','🌀','Boing']];
+/* a big message across the top of every screen */
+function funShout(msg,style,from){ if(!msg) return; const L=funLayer('funshout s-'+(['gold','rainbow','red','mint'].includes(style)?style:'gold'));
+  L.innerHTML=`<div class="funshoutbox"><span class="fsic">📣</span><div><b>${escapeHTML(msg)}</b>${from?`<small>${escapeHTML(from)}</small>`:''}</div></div>`;
+  funSound('fanfare'); setTimeout(()=>L.classList.add('out'),8200); setTimeout(()=>L.remove(),9000); }
+/* fireworks over everything for about 7 seconds */
+function funFireworks(){ const L=funLayer('funfw'), cv=document.createElement('canvas'); L.appendChild(cv); const g=cv.getContext('2d');
+  const W=cv.width=innerWidth, H=cv.height=innerHeight, parts=[], rockets=[], t0=performance.now(); let last=t0, nextR=0;
+  const frame=now=>{ const dt=Math.min(.05,(now-last)/1000); last=now; const el=(now-t0)/1000;
+    if(el<5.5&&now>=nextR){ nextR=now+260+Math.random()*320; rockets.push({x:W*(.15+.7*Math.random()),y:H,vy:-(H*.9+Math.random()*H*.3),h:Math.random()*360,ty:H*(.15+.3*Math.random())}); }
+    g.clearRect(0,0,W,H);
+    for(let i=rockets.length-1;i>=0;i--){ const r=rockets[i]; r.y+=r.vy*dt; g.fillStyle='#FFF4D0'; g.fillRect(r.x-1.5,r.y,3,8);
+      if(r.y<=r.ty){ rockets.splice(i,1); funSound('boom'); const n=funRM()?20:46; for(let j=0;j<n;j++){ const an=j/n*Math.PI*2, sp=90+Math.random()*170; parts.push({x:r.x,y:r.y,vx:Math.cos(an)*sp,vy:Math.sin(an)*sp,l:1,c:`hsl(${(r.h+Math.random()*50)%360},95%,${62+Math.random()*15}%)`}); } } }
+    for(let i=parts.length-1;i>=0;i--){ const p=parts[i]; p.vy+=120*dt; p.vx*=.985; p.x+=p.vx*dt; p.y+=p.vy*dt; p.l-=dt*.6; if(p.l<=0){ parts.splice(i,1); continue; }
+      g.globalAlpha=p.l; g.fillStyle=p.c; g.beginPath(); g.arc(p.x,p.y,2.2,0,Math.PI*2); g.fill(); }
+    g.globalAlpha=1;
+    if(el<8.5) requestAnimationFrame(frame); else L.remove(); };
+  requestAnimationFrame(frame); }
+/* Erlaf flies across every screen, quacking */
+function funErlaf(){ const L=funLayer('funduck'); L.innerHTML='<div class="fdk"><canvas class="skprev" data-skin="sk_erlaf" data-px="150" width="150" height="150"></canvas><b>QUACK!</b></div>';
+  funSound('quack'); setTimeout(()=>funSound('quack'),2600); const t0=performance.now();
+  const frame=now=>{ if(!L.isConnected) return; try{ drawSkinPreviews(now/1000,'.funduck canvas.skprev'); }catch(e){} if(now-t0<6500) requestAnimationFrame(frame); else L.remove(); };
+  requestAnimationFrame(frame); }
+/* Note Storm: notes rain down; every one you catch is worth n Notes */
+function funStorm(n,count){ const L=funLayer('funstorm'); let got=0, left=count;
+  L.innerHTML=`<div class="fstop">🎵 Note Storm! Catch the notes: <b>♪${n}</b> each · <span id="fsGot">0</span></div>`;
+  const end=()=>{ if(!L.isConnected) return; L.remove(); if(got){ SAVE.notes+=got; save(); acctPush&&acctPush(true); toast(`🎵 You caught ♪${got.toLocaleString()} in the Note Storm!`); if(typeof buildMenu==='function'&&funMenu()) buildMenu(); } else toast('🎵 The Note Storm passed. Next time!'); };
+  for(let i=0;i<count;i++){ const b=document.createElement('button'); b.type='button'; b.className='fsnote'; b.textContent=['♪','♫','♬','♩'][i%4];
+    b.style.left=(5+Math.random()*88)+'%'; b.style.animationDelay=(Math.random()*9).toFixed(2)+'s'; b.style.animationDuration=(3.2+Math.random()*2.6).toFixed(2)+'s';
+    b.onpointerdown=e=>{ e.preventDefault(); e.stopPropagation(); if(b.classList.contains('got')) return; b.classList.add('got'); got+=n; const s=$('fsGot'); if(s) s.textContent='♪'+got.toLocaleString(); funSound('pop'); buzz(10); };
+    b.addEventListener('animationend',()=>{ if(--left<=0) end(); }); L.appendChild(b); }
+  setTimeout(end,15000); }
+/* Mystery boxes: pick one of three */
+function funBoxes(tier,blk){ const R={s:[50,300],m:[200,1200],b:[1000,5000]}[tier]||[200,1200];
+  const pool=SKINS.filter(s=>s.price>0&&!s.req&&!s.paid&&!s.hidden&&!s.bp&&!SAVE.owned.includes(s.id));
+  const prize=()=>blk&&pool.length&&Math.random()<.25?{skin:pool[ri(pool.length)]}:{n:Math.round((R[0]+Math.random()*(R[1]-R[0]))/10)*10};
+  const P=[prize(),prize(),prize()], L=funLayer('funboxes');
+  L.innerHTML=`<div class="fbx"><h3>🎁 Mystery boxes!</h3><p>Pick one. It's yours.</p><div class="fbrow">${P.map((p,i)=>`<button type="button" class="fbb" data-i="${i}"><span class="fbl">🎁</span><span class="fbin"></span></button>`).join('')}</div><button type="button" class="btn ghost fbclose" hidden>Nice!</button></div>`;
+  const label=p=>p.skin?`<canvas class="skprev" data-skin="${p.skin.id}" data-px="64" width="64" height="64"></canvas><b>${escapeHTML(p.skin.name)}</b>`:`<b>♪${p.n.toLocaleString()}</b>`;
+  let done=false; L.querySelectorAll('.fbb').forEach(b=>b.onclick=()=>{ if(done) return; done=true; const i=+b.dataset.i, p=P[i];
+    L.querySelectorAll('.fbb').forEach((x,j)=>{ x.querySelector('.fbin').innerHTML=label(P[j]); x.classList.add(j===i?'mine':'other','open'); });
+    if(p.skin){ if(!SAVE.owned.includes(p.skin.id)) SAVE.owned.push(p.skin.id); toast(`🎁 ${p.skin.name} is yours!`); } else { SAVE.notes+=p.n; toast(`🎁 +♪${p.n.toLocaleString()}!`); }
+    save(); acctPush&&acctPush(true); funSound('tada'); const c=L.querySelector('.fbclose'); c.hidden=false; c.onclick=()=>{ L.remove(); if(funMenu()) buildMenu(); };
+    const t0=performance.now(), fr=now=>{ if(!L.isConnected) return; try{ drawSkinPreviews(now/1000,'.funboxes canvas.skprev'); }catch(e){} if(now-t0<20000) requestAnimationFrame(fr); }; requestAnimationFrame(fr); });
+  setTimeout(()=>{ if(!done&&L.isConnected){ L.remove(); } },60000); }
+/* ---- weather and theme for everyone ---- */
+const FUN_WX={snow:['❄','#FFFFFF'],petals:['🌸',''],notes:['♪','#FFE27A'],hearts:['♥','#FF7EB6'],stars:['✦','#FFF4C0'],leaves:['🍂',''],bubbles:['○','#B8F2E6'],confetti:['▮','']};
+function funWxSync(){ const W=FUN.d.wx, now=funNow();
+  const wx=W&&W.wx&&FUN_WX[W.wx]&&now<(+W.wxEnd||0)?W.wx:'', th=W&&W.theme&&now<(+W.themeEnd||0)?W.theme:'';
+  if(wx!==FUN.wxKind) funWeather(wx);
+  if(th!==FUN.theme) funTheme(th); }
+setInterval(funWxSync,20000);
+function funTheme(th){ FUN.theme=th; window.__hwForce=th; try{ uiCresApply(); }catch(e){} try{ syncHweenSeason(); }catch(e){} }
+function funWeather(kind){ FUN.wxKind=kind; cancelAnimationFrame(FUN.wxRaf); const old=document.getElementById('funWx'); if(old) old.remove(); if(!kind||funRM()) return;
+  const cv=document.createElement('canvas'); cv.id='funWx'; cv.setAttribute('aria-hidden','true'); document.body.appendChild(cv); const g=cv.getContext('2d');
+  const [glyph,col]=FUN_WX[kind], N=MOB?26:44, P=[]; let W=0,H=0, last=performance.now();
+  const size=()=>{ W=cv.width=innerWidth; H=cv.height=innerHeight; }; size(); addEventListener('resize',size);
+  for(let i=0;i<N;i++) P.push({x:Math.random()*W,y:Math.random()*H,s:10+Math.random()*14,v:20+Math.random()*45,w:Math.random()*Math.PI*2,r:Math.random()*6,c:`hsl(${Math.random()*360},90%,65%)`});
+  const frame=now=>{ if(!cv.isConnected) return; const dt=Math.min(.05,(now-last)/1000); last=now; g.clearRect(0,0,W,H); g.textAlign='center'; g.textBaseline='middle';
+    const up=kind==='bubbles';
+    P.forEach(p=>{ p.w+=dt*(kind==='petals'||kind==='leaves'?1.6:.9); p.y+=(up?-1:1)*p.v*dt; p.x+=Math.sin(p.w)*(kind==='snow'?14:22)*dt; p.r+=dt;
+      if(p.y>H+20) { p.y=-20; p.x=Math.random()*W; } if(p.y<-20&&up){ p.y=H+20; p.x=Math.random()*W; }
+      g.save(); g.globalAlpha=.75; g.translate(p.x,p.y); if(kind!=='snow'&&kind!=='bubbles') g.rotate(Math.sin(p.r)*.6);
+      if(kind==='confetti'){ g.fillStyle=p.c; g.fillRect(-p.s*.25,-p.s*.4,p.s*.5,p.s*.8); }
+      else { g.font=`${Math.round(p.s)}px system-ui,"Segoe UI Emoji",sans-serif`; if(col) g.fillStyle=col; g.fillText(glyph,0,0); }
+      g.restore(); });
+    FUN.wxRaf=requestAnimationFrame(frame); };
+  FUN.wxRaf=requestAnimationFrame(frame); }
+/* ---- menu banners: pop quiz, poll, player of the day, countdown ---- */
+function funBanners(){ if(window.PF_CG) return; const now=funNow(), D=FUN.d;
+  const Q=D.quiz, qOn=!!Q&&Q.id&&now<(+Q.end||0), qDone=qOn&&(SAVE.quizDone||[]).includes(Q.id);
+  $('mQuiz').hidden=!qOn; if(qOn){ $('mQuizSub').textContent=qDone?'You answered. Thanks for playing!':`Answer one question to win ♪${(+Q.n||0).toLocaleString()} · ${liveLeft(+Q.end-now)} left`; $('mQuiz').classList.toggle('done',qDone); }
+  const P=D.poll, pOn=!!P&&P.id&&now<(+P.end||0); $('mPoll').hidden=!pOn;
+  if(pOn){ $('mPollT').textContent=String(P.q||'Poll').slice(0,80); $('mPollSub').textContent=((SAVE.pollVoted||{})[P.id]!=null?'You voted · see the results':'Tap to vote')+` · ${liveLeft(+P.end-now)} left`; }
+  const S=D.spot, sOn=!!S&&S.uid&&now<(+S.end||0); $('mSpot').hidden=!sOn;
+  if(sOn){ $('mSpotT').textContent=`Player of the day: ${cleanName(S.name)||'Player'}`; $('mSpotSub').textContent=S.msg?String(S.msg).slice(0,100):'Tap to see their card'; const cv=$('mSpot').querySelector('canvas'); if(cv&&cv.dataset.skin!==S.skin){ cv.dataset.skin=S.skin||'classic'; cv._drawn=false; } }
+  const C=D.count, cOn=!!C&&C.at&&now<(+C.at||0)+3600000; $('mCount').hidden=!cOn;
+  if(cOn) funCountTick(); }
+function funCountTick(){ const C=FUN.d.count; if(!C||$('mCount').hidden) return; const left=(+C.at)-funNow();
+  $('mCountT').textContent=C.title||'Something is coming';
+  if(left>0){ const s=Math.floor(left/1000), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60), x=s%60;
+    $('mCountSub').textContent=(C.msg?C.msg+' · ':'')+(d?`${d}d `:'')+`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`; }
+  else { $('mCountSub').textContent='🎉 It\'s here!'+(C.msg?' · '+C.msg:'');
+    const key=String(C.at)+C.title; if(FUN.countFired!==key&&left>-600000&&!(SAVE.funSeen||[]).includes('cnt'+key)){ FUN.countFired=key; funRemember('cnt'+key); if(funMenu()) funPlay('confetti',{}); } } }
+setInterval(()=>{ if(funMenu()) funCountTick(); },1000);
+setInterval(funBanners,30000);
+/* the pop quiz */
+async function funQuiz(){ const Q=FUN.d.quiz; if(!Q||!Q.id||funNow()>=(+Q.end||0)) return; if((SAVE.quizDone||[]).includes(Q.id)){ toast('You already answered this one. Watch for the next pop quiz!'); return; }
+  SAVE.quizDone=[...(SAVE.quizDone||[]),Q.id].slice(-50); save();
+  const r=await qModal(Q.q,{easy:false,timer:20,auto:0,head:`<div class="qzhead">❓ Pop quiz · win ♪${(+Q.n||0).toLocaleString()}</div>`}); const win=r.sc>0?Math.round((+Q.n||0)*r.sc):0;
+  if(win){ SAVE.notes+=win; save(); acctPush&&acctPush(true); toast(`❓ Correct! +♪${win.toLocaleString()}`); funSound('tada'); } else toast('❓ Not this time. Watch for the next one!');
+  if(ACCT.user&&ACCT.db) ACCT.db.collection('quizAns').doc(Q.id).collection('a').doc(ACCT.user.uid).set({ok:r.sc>0,ms:Math.round(r.ms),name:String(ensureName()).slice(0,24),t:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{});
+  funBanners(); if(funMenu()) buildMenu(); }
+/* the poll */
+async function funPollOpen(){ const P=FUN.d.poll; if(!P||!P.id) return; const mine=(SAVE.pollVoted||{})[P.id];
+  const L=funLayer('funpoll'); L.innerHTML=`<div class="fpl"><button class="fplx" type="button" aria-label="Close">✕</button><p class="crkick">Poll</p><h3>${escapeHTML(P.q||'')}</h3><div class="fplopts">${(P.opts||[]).map((o,i)=>`<button type="button" class="fplo" data-o="${i}"><span class="fplbar"></span><b>${escapeHTML(o)}</b><small></small></button>`).join('')}</div><p class="small fplnote"></p></div>`;
+  L.querySelector('.fplx').onclick=()=>L.remove(); L.onclick=e=>{ if(e.target===L) L.remove(); };
+  const show=async()=>{ let c=[0,0,0,0], tot=0; try{ const s=await ACCT.db.collection('polls').doc(P.id).collection('votes').get(); s.forEach(d=>{ const o=+d.data().o; if(o>=0&&o<4){ c[o]++; tot++; } }); }catch(e){}
+    const m=(SAVE.pollVoted||{})[P.id]; L.querySelectorAll('.fplo').forEach(b=>{ const o=+b.dataset.o, pc=tot?Math.round(c[o]/tot*100):0; b.classList.add('shown'); b.classList.toggle('mine',o===m); b.querySelector('.fplbar').style.width=pc+'%'; b.querySelector('small').textContent=`${pc}%`; b.disabled=true; });
+    L.querySelector('.fplnote').textContent=`${tot} vote${tot===1?'':'s'} so far`; };
+  if(mine!=null||!ACCT.user){ if(!ACCT.user) L.querySelector('.fplnote').textContent='Sign in to vote.'; if(mine!=null) show(); }
+  L.querySelectorAll('.fplo').forEach(b=>b.onclick=async()=>{ if(!ACCT.user){ toast('Sign in to vote.'); return; } const o=+b.dataset.o;
+    try{ await ACCT.db.collection('polls').doc(P.id).collection('votes').doc(ACCT.user.uid).set({o,t:firebase.firestore.FieldValue.serverTimestamp()}); }catch(e){}
+    SAVE.pollVoted={...(SAVE.pollVoted||{}),[P.id]:o}; save(); funSound('pop'); show(); funBanners(); }); }
+$('mQuiz').onclick=funQuiz; $('mPoll').onclick=funPollOpen;
+$('mSpot').onclick=()=>{ const S=FUN.d.spot; if(S&&S.uid) plOpen(S.uid,{name:S.name,skin:S.skin,banner:S.banner,rank:0}); };
+$('mCount').onclick=()=>{ const C=FUN.d.count; if(C) toast(C.msg||C.title||''); };
+/* ---- "I'm online": signed-in players say so every couple of minutes, with the screen they're on ---- */
+const FUN_PLACES={menuOv:'On the menu',shopOv:'In the Shop',passOv:'Looking at the Pulse Pass',coopOv:'In Play together',levelsOv:'Picking a level',worldsOv:'Picking a world',settingsOv:'In Settings',lbOv:'Looking at leaderboards',friendsOv:'With friends',denOv:'In the Locker',cresOv:'At the Grand Crescendo',playOv:'Playing a quiz game',studioOv:'In the Studio',edOv:'Building a level',adminOv:'In the admin panel'};
+function funStatus(){ if(['playing','dying','paused','cutscene','picking'].includes(G.state)) return ('Playing '+((G.banner&&G.banner.text)||(G.mode&&G.mode.type)||'')).slice(0,60);
+  const ov=OVS.find(id=>!$(id).hidden); return (FUN_PLACES[ov]||'Playing').slice(0,60); }
+function funPing(force){ if(!ACCT.user||!ACCT.db||window.PF_CG||document.hidden) return; const st=funStatus(), now=funNow();
+  if(!force&&st===FUN.lastSt&&now-(FUN.lastPing||0)<120000) return; if(!force&&now-(FUN.lastPing||0)<30000&&st!==FUN.lastSt&&FUN.lastSt) { FUN.pendSt=true; return; }
+  FUN.lastSt=st; FUN.lastPing=now; FUN.pendSt=false;
+  ACCT.db.collection('online').doc(ACCT.user.uid).set({name:String(ensureName()).slice(0,24),skin:String(SAVE.skin||'classic').slice(0,40),banner:String(SAVE.banner||'b_plain').slice(0,24),st,t:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{}); }
+setInterval(()=>funPing(false),15000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) funPing(true); });
+/* ======== the admin side ======== */
+async function admLog(txt){ try{ await ACCT.db.collection('adminLog').add({txt:String(txt).slice(0,200),by:ACCT.user.uid,name:String(ensureName()).slice(0,24),t:Date.now()}); }catch(e){} }
+/* send a one-off effect to everyone (or try it on this screen only) */
+async function admFx(k,a,label){ if(FUN.to==='me'){ funPlay(k,a||{}); admMsg(`Tried ${label} on your screen only.`); return; }
+  if(!await admConfirm(`Send ${label} to everyone?`,'Every player with the game open sees it now. Effects that take over the screen wait until a player\'s run ends.','Send it')) return;
+  const id='fx'+Date.now().toString(36)+ri(1000);
+  try{ await ACCT.db.collection('live').doc('fx').set({id,k,a:a||{},t:Date.now(),by:ACCT.user.uid}); admMsg(`✓ ${label} sent to everyone.`); admLog(`Sent ${label} to everyone`); }
+  catch(e){ admMsg('Could not send ('+(e&&e.code||'offline')+'). Publish the latest firestore.rules first.',true); } }
+async function admSetDoc(doc,data,label){ try{ await ACCT.db.collection('live').doc(doc).set({...data,t:Date.now(),by:ACCT.user.uid}); admMsg('✓ '+label); admLog(label); if(A.ctx) sGem(); return true; }
+  catch(e){ admMsg('Could not save ('+(e&&e.code||'offline')+'). Publish the latest firestore.rules first.',true); return false; } }
+async function admClearDoc(doc,label){ try{ await ACCT.db.collection('live').doc(doc).delete(); admMsg('✓ '+label); admLog(label); }catch(e){ admMsg('Could not clear ('+(e&&e.code||'offline')+').',true); } }
+/* ---- Online: who's playing right now ---- */
+async function admOnline(){ const box=$('admOnList'); box.innerHTML='<div class="admempty">Looking for players…</div>';
+  try{ const s=await ACCT.db.collection('online').where('t','>',new Date(Date.now()-5*60000)).orderBy('t','desc').limit(100).get();
+    FUN.online=s.docs.map(d=>({uid:d.id,...d.data()}));
+    $('admOnHead').innerHTML=`<b>${FUN.online.length} player${FUN.online.length===1?'':'s'} online now</b><br><small>Signed-in players in the last 5 minutes. Tap one to send them something.</small>`;
+    box.innerHTML=FUN.online.length?FUN.online.map((p,i)=>{ const ago=p.t&&p.t.toMillis?Math.max(0,Math.round((Date.now()-p.t.toMillis())/60000)):0;
+      return `<button type="button" class="admonr" data-i="${i}"><span class="lvav"><canvas class="skprev" data-skin="${escapeHTML(skinById(p.skin||'classic').id)}" data-px="36" width="36" height="36"></canvas></span><span><b>${escapeHTML(cleanName(p.name)||'Player')}</b><small>${escapeHTML(p.st||'')} · ${ago?ago+'m ago':'now'}</small></span></button>`; }).join(''):'<div class="admempty">Nobody signed in is online right now.</div>';
+    box.querySelectorAll('.admonr').forEach(b=>b.onclick=()=>{ const p=FUN.online[+b.dataset.i]; admTabSet('players'); admPick({uid:p.uid,name:cleanName(p.name)||'Player',rank:0}); }); }
+  catch(e){ box.innerHTML=`<div class="admempty">Could not load (${escapeHTML(e&&e.code||'offline')}). Publish the latest firestore.rules first.</div>`; } }
+async function admOnGift(){ const n=Math.max(1,Math.min(100000,Math.round(+$('admOnN').value||0))), L=FUN.online; if(!L.length){ admMsg('Nobody is online right now.',true); return; }
+  if(!await admConfirm(`Send ♪${n.toLocaleString()} to all ${L.length} players online?`,'Each of them gets it in a moment, with a message from you.','Make it rain')) return;
+  try{ const b=ACCT.db.batch(), now=Date.now(); L.slice(0,400).forEach(p=>b.set(ACCT.db.collection('gifts').doc(p.uid).collection('items').doc(),{kind:'notes',n,msg:'Surprise from the Pulseform team! 🎉',t:now,by:ACCT.user.uid})); await b.commit();
+    admMsg(`✓ ♪${n.toLocaleString()} sent to ${L.length} players.`); admLog(`Gave ♪${n.toLocaleString()} to ${L.length} online players`); if(A.ctx) sGem(); }
+  catch(e){ admMsg('Could not send ('+(e&&e.code||'offline')+').',true); } }
+/* ---- Spin the wheel: a random winner from the players online (or the top players) ---- */
+async function admWheel(){ let L=FUN.online.map(p=>({uid:p.uid,name:cleanName(p.name)||'Player'})), src='online now';
+  if(L.length<2){ try{ const s=await ACCT.db.collection('boards').doc('endless').collection('entries').orderBy('score','desc').limit(16).get(); L=s.docs.map(d=>({uid:d.id,name:cleanName(d.data().name)||'Player',rank:d.data().rank||0})); src='top Endless players'; }catch(e){} }
+  L=L.slice(0,16); if(L.length<2){ admMsg('Need at least 2 players for the wheel.',true); return; }
+  const M=funLayer('funwheel'); M.innerHTML=`<div class="fwh"><button class="fplx" type="button" aria-label="Close">✕</button><p class="crkick">Spin the wheel · ${escapeHTML(src)}</p><div class="fwwrap"><canvas width="320" height="320"></canvas><i class="fwptr"></i></div><h3 class="fwwin">&nbsp;</h3><div class="row"><button class="btn" type="button" data-w="spin">🎡 Spin!</button><button class="btn ghost" type="button" data-w="gift" hidden>🎁 Gift the winner</button><button class="btn ghost" type="button" data-w="shout" hidden>📣 Announce it</button></div></div>`;
+  M.style.pointerEvents='auto'; M.querySelector('.fplx').onclick=()=>M.remove();
+  const cv=M.querySelector('canvas'), g=cv.getContext('2d'), n=L.length, seg=Math.PI*2/n; let ang=0, win=null;
+  const draw=()=>{ g.clearRect(0,0,320,320); for(let i=0;i<n;i++){ const a0=ang+i*seg; g.beginPath(); g.moveTo(160,160); g.arc(160,160,150,a0,a0+seg); g.closePath(); g.fillStyle=`hsl(${i*360/n},75%,${i%2?58:66}%)`; g.fill(); g.strokeStyle='rgba(0,0,0,.25)'; g.stroke();
+      g.save(); g.translate(160,160); g.rotate(a0+seg/2); g.textAlign='right'; g.fillStyle='#1A1440'; g.font=`700 ${n>10?11:13}px system-ui,sans-serif`; g.fillText(L[i].name.slice(0,14),140,4); g.restore(); }
+    g.beginPath(); g.arc(160,160,22,0,Math.PI*2); g.fillStyle='#FFD166'; g.fill(); g.strokeStyle='#A8761C'; g.lineWidth=3; g.stroke(); };
+  draw();
+  M.querySelector('[data-w="spin"]').onclick=e=>{ e.target.disabled=true; const total=Math.PI*2*(5+Math.random()*3), t0=performance.now(), D=4200, a0=ang; let lastSeg=-1;
+    const fr=now=>{ const u=Math.min(1,(now-t0)/D), ease=1-Math.pow(1-u,3); ang=a0+total*ease; draw();
+      const at=Math.floor((((-Math.PI/2-ang)%(Math.PI*2))+Math.PI*4)%(Math.PI*2)/seg); if(at!==lastSeg){ lastSeg=at; funSound('pop'); }
+      if(u<1) requestAnimationFrame(fr); else { win=L[at]; M.querySelector('.fwwin').textContent=`🎉 ${win.name} wins!`; funSound('fanfare'); const c=document.createElement('div'); c.innerHTML=CONFETTI(); M.querySelector('.fwh').appendChild(c);
+        M.querySelectorAll('[data-w="gift"],[data-w="shout"]').forEach(b=>b.hidden=false); e.target.disabled=false; e.target.textContent='Spin again'; admLog(`Wheel winner: ${win.name}`); } };
+    requestAnimationFrame(fr); };
+  M.querySelector('[data-w="gift"]').onclick=()=>{ if(!win) return; M.remove(); admTabSet('players'); admPick({uid:win.uid,name:win.name,rank:win.rank||0}); $('admNote').value='You won the Pulseform wheel! 🎡'; };
+  M.querySelector('[data-w="shout"]').onclick=()=>{ if(!win) return; FUN.to='all'; admFx('shout',{msg:`🎡 ${win.name} just won the Pulseform wheel!`,style:'rainbow',from:'The Pulseform team'},'a shout about the winner'); }; }
+/* ---- the Fun tab ---- */
+function admFunUI(){ document.querySelectorAll('#admTo button').forEach(b=>b.classList.toggle('on',b.dataset.to===FUN.to));
+  const W=FUN.d.wx, now=funNow(); $('admWxNow').textContent=[W&&W.wx&&now<W.wxEnd?`Weather: ${W.wx} for ${liveLeft(W.wxEnd-now)}`:'No weather',W&&W.theme&&now<W.themeEnd?`Theme: ${({hween:'Halloween',cres:'Concert Hall',plain:'Plain'})[W.theme]||W.theme} for ${liveLeft(W.themeEnd-now)}`:'No theme override'].join(' · '); }
+async function admWx(kind,label){ const mins=+$('admWxD').value, W=FUN.d.wx||{}, now=Date.now();
+  if(FUN.to==='me'){ funWeather(kind); admMsg(kind?`Trying ${label} on your screen (until you reload).`:'Weather cleared on your screen.'); return; }
+  if(!await admConfirm(kind?`Make it ${label} for everyone?`:'Clear the weather for everyone?',kind?`For ${liveLeft(mins*60000)}, on every screen.`:'')) return;
+  if(await admSetDoc('wx',{wx:kind,wxEnd:kind?now+mins*60000:0,theme:W.theme||'',themeEnd:+W.themeEnd||0},kind?`Weather: ${label} for ${liveLeft(mins*60000)}`:'Weather cleared')) { FUN.d.wx={...W,wx:kind,wxEnd:kind?now+mins*60000:0}; funWxSync(); admFunUI(); } }
+async function admTheme(th,label){ const mins=+$('admThD').value, W=FUN.d.wx||{}, now=Date.now();
+  if(FUN.to==='me'){ funTheme(th); admMsg(`Trying the ${label} theme on your screen.`); return; }
+  if(!await admConfirm(th?`Switch everyone to the ${label} theme?`:'Give the theme back to everyone?',th?`For ${liveLeft(mins*60000)}.`:'Everyone goes back to their own look.')) return;
+  if(await admSetDoc('wx',{wx:W.wx||'',wxEnd:+W.wxEnd||0,theme:th,themeEnd:th?now+mins*60000:0},th?`Theme: ${label} for ${liveLeft(mins*60000)}`:'Theme override cleared')) { FUN.d.wx={...W,theme:th,themeEnd:th?now+mins*60000:0}; funWxSync(); admFunUI(); } }
+/* ---- the Community tab ---- */
+let admQz=null;
+function admQuizPick(){ const all=BUILTIN_PACKS.flatMap(p=>p.qs.filter(q=>q.k!=='listen').map(q=>({...q,pack:p.title}))); admQz=qNorm(all[ri(all.length)]); admQuizShow(); }
+function admQuizShow(){ const q=admQz; $('admQzPrev').innerHTML=q?`<b>${escapeHTML(q.q)}</b><br><small>${q.k==='type'?'Answer: '+escapeHTML(q.ans[0]):q.a.map((a,i)=>(q.c.includes(i)?'✓ ':'· ')+escapeHTML(a)).join('<br>')}</small>`:'Pick a random question, or write your own below.'; }
+function admQuizOwn(){ const qq=$('admQzQ').value.trim(), A=[1,2,3,4].map(i=>$('admQzA'+i).value.trim()), ok=+document.querySelector('input[name="admQzOk"]:checked').value;
+  if(!qq||!A[0]||!A[1]){ admMsg('Write a question and at least two answers.',true); return null; } if(!A[ok]){ admMsg('The answer marked right is empty.',true); return null; }
+  const keep=A.map((a,i)=>({a,i})).filter(x=>x.a); return qNorm({k:'mc',q:qq,a:keep.map(x=>x.a),c:[keep.findIndex(x=>x.i===ok)]}); }
+async function admQuizGo(own){ const q=own?admQuizOwn():admQz; if(!q){ if(!own) admMsg('Pick a question first.',true); return; } const n=+$('admQzN').value, mins=+$('admQzD').value;
+  if(!await admConfirm(`Send this pop quiz to everyone?`,`<div><b>${escapeHTML(q.q)}</b><br>A right answer wins ♪${n.toLocaleString()}. Open for ${liveLeft(mins*60000)}.</div>`,'Send quiz')) return;
+  const id='qz'+Date.now().toString(36), doc={id,q:{k:q.k,q:q.q,e:q.e||'',...(q.k==='type'?{ans:q.ans}:{a:q.a,c:q.c})},n,end:Date.now()+mins*60000};
+  if(await admSetDoc('quiz',doc,`Pop quiz sent: “${q.q.slice(0,60)}”`)){ FUN.d.quiz={...doc}; funBanners(); setTimeout(admQuizRes,1500); } }
+async function admQuizRes(){ const Q=FUN.d.quiz, box=$('admQzRes'); if(!Q||!Q.id){ box.innerHTML='<div class="admempty">No quiz yet.</div>'; return; }
+  try{ const s=await ACCT.db.collection('quizAns').doc(Q.id).collection('a').get(); const R=s.docs.map(d=>d.data()), right=R.filter(r=>r.ok).sort((a,b)=>a.ms-b.ms);
+    box.innerHTML=`<small>${R.length} answered · ${right.length} right${funNow()<Q.end?' · still open':' · closed'}</small>`+(right.length?`<ol class="admqzl">${right.slice(0,10).map((r,i)=>`<li><span>${['🥇','🥈','🥉'][i]||'#'+(i+1)}</span><b>${escapeHTML(cleanName(r.name)||'Player')}</b><small>${(r.ms/1000).toFixed(1)}s</small></li>`).join('')}</ol>`:''); }
+  catch(e){ box.innerHTML=`<div class="admempty">Could not load answers (${escapeHTML(e&&e.code||'offline')}).</div>`; } }
+async function admPollGo(){ const q=$('admPlQ').value.trim(), opts=[1,2,3,4].map(i=>$('admPlO'+i).value.trim()).filter(Boolean), mins=+$('admPlD').value;
+  if(!q||opts.length<2){ admMsg('A poll needs a question and at least two choices.',true); return; }
+  if(!await admConfirm('Start this poll for everyone?',`<div><b>${escapeHTML(q)}</b><br>${opts.map(escapeHTML).join(' · ')}<br>Open for ${liveLeft(mins*60000)}.</div>`,'Start poll')) return;
+  const doc={id:'pl'+Date.now().toString(36),q:q.slice(0,100),opts:opts.map(o=>o.slice(0,40)),end:Date.now()+mins*60000};
+  if(await admSetDoc('poll',doc,`Poll started: “${q.slice(0,60)}”`)){ FUN.d.poll=doc; funBanners(); admPollRes(); } }
+async function admPollRes(){ const P=FUN.d.poll, box=$('admPlRes'); if(!P||!P.id){ box.innerHTML='<div class="admempty">No poll yet.</div>'; return; }
+  try{ const s=await ACCT.db.collection('polls').doc(P.id).collection('votes').get(); const c=[0,0,0,0]; let tot=0; s.forEach(d=>{ const o=+d.data().o; if(o>=0&&o<4){ c[o]++; tot++; } });
+    box.innerHTML=`<small>“${escapeHTML(P.q)}” · ${tot} vote${tot===1?'':'s'}${funNow()<P.end?' · open':' · closed'}</small>`+(P.opts||[]).map((o,i)=>{ const pc=tot?Math.round(c[i]/tot*100):0; return `<div class="admplr"><span>${escapeHTML(o)}</span><i><i style="width:${pc}%"></i></i><b>${pc}% (${c[i]})</b></div>`; }).join(''); }
+  catch(e){ box.innerHTML=`<div class="admempty">Could not load votes (${escapeHTML(e&&e.code||'offline')}).</div>`; } }
+async function admSpotGo(){ const T=ADM.target; if(!T){ admMsg('Pick a player first in the Players tab (or the Online tab), then come back.',true); return; } const hrs=+$('admSpD').value, msg=$('admSpM').value.trim().slice(0,100);
+  let card={skin:'classic',banner:'b_plain'}; try{ const p=await ACCT.db.collection('profiles').doc(T.uid).get(); if(p.exists) card={...card,...p.data()}; }catch(e){}
+  if(!await admConfirm(`Make ${T.name} the player of the day?`,`Everyone sees them on the main menu for ${liveLeft(hrs*3600000)}.${msg?`<br>“${escapeHTML(msg)}”`:''}`,'Spotlight them')) return;
+  const doc={uid:T.uid,name:String(T.name||'Player').slice(0,24),skin:String(card.skin||'classic').slice(0,40),banner:String(card.banner||'b_plain').slice(0,24),msg,end:Date.now()+hrs*3600000};
+  if(await admSetDoc('spot',doc,`Player of the day: ${doc.name}`)){ FUN.d.spot=doc; funBanners(); } }
+async function admCountGo(){ const title=$('admCtT').value.trim().slice(0,40), msg=$('admCtM').value.trim().slice(0,80); let at=0;
+  const dt=$('admCtAt').value; if(dt) at=new Date(dt).getTime(); else at=Date.now()+(+$('admCtH').value||1)*3600000;
+  if(!title){ admMsg('Give the countdown a title.',true); return; } if(!(at>Date.now()+30000)){ admMsg('Pick a time in the future.',true); return; }
+  if(!await admConfirm(`Start a countdown to “${title}”?`,`It ends ${new Date(at).toLocaleString()} (in ${liveLeft(at-Date.now())}). At zero, everyone gets confetti.`,'Start countdown')) return;
+  const doc={title,msg,at}; if(await admSetDoc('count',doc,`Countdown: ${title}`)){ FUN.d.count=doc; funBanners(); } }
+async function admCresAdd(n){ if(!await admConfirm(`Add ${n.toLocaleString()} points to the Grand Crescendo?`,'The whole community\'s bar jumps up. Milestones it passes unlock for everyone who has played a part.','Add points')) return;
+  try{ await ACCT.db.collection('events').doc('cres').collection('shards').doc(String(ri(16))).set({score:firebase.firestore.FieldValue.increment(n)},{merge:true});
+    admMsg(`✓ +${n.toLocaleString()} added to the Grand Crescendo.`); admLog(`Added ${n.toLocaleString()} to the Grand Crescendo`); cresFetch(true); setTimeout(admCommUI,1200); }
+  catch(e){ admMsg('Could not add ('+(e&&e.code||'offline')+'). Publish the latest firestore.rules first.',true); } }
+function admCommUI(){ admQuizShow(); admQuizRes(); admPollRes(); const S=FUN.d.spot, C=FUN.d.count, now=funNow();
+  $('admSpNow').textContent=S&&now<S.end?`Now: ${S.name} (${liveLeft(S.end-now)} left)`:'Nobody in the spotlight.';
+  $('admCtNow').textContent=C&&now<(+C.at)+3600000?`Now: “${C.title}” · ${C.at>now?'in '+liveLeft(C.at-now):'reached'}`:'No countdown running.';
+  $('admCresNow').textContent=CRES.total==null?'Loading the bar…':`The bar: ${Math.floor(CRES.total).toLocaleString()} / 30,000,000`; }
+/* ---- the admin log (Me tab) ---- */
+async function admLogUI(){ const box=$('admLogList'); box.innerHTML='<div class="admempty">Loading…</div>';
+  try{ const s=await ACCT.db.collection('adminLog').orderBy('t','desc').limit(30).get();
+    box.innerHTML=s.docs.length?s.docs.map(d=>{ const x=d.data(); return `<li><b>${escapeHTML(x.txt||'')}</b><small>${escapeHTML(cleanName(x.name)||'admin')} · ${new Date(+x.t).toLocaleString()}</small></li>`; }).join(''):'<div class="admempty">Nothing yet.</div>'; }
+  catch(e){ box.innerHTML=`<div class="admempty">Could not load (${escapeHTML(e&&e.code||'offline')}).</div>`; } }
+/* ---- wiring ---- */
+document.querySelectorAll('#admTo button').forEach(b=>b.onclick=()=>{ FUN.to=b.dataset.to; admFunUI(); });
+document.querySelectorAll('#admFxGrid [data-fx]').forEach(b=>b.onclick=()=>{ const k=b.dataset.fx, label=b.querySelector('b').textContent;
+  const a=k==='storm'?{n:+$('admStormN').value,c:20}:k==='boxes'?{tier:$('admBoxT').value,blk:$('admBoxB').checked}:k==='disco'?{s:30}:{}; admFx(k,a,label); });
+$('admSnd').innerHTML=FUN_SOUNDS.map(([id,ic,n])=>`<button type="button" data-snd="${id}"><span>${ic}</span>${n}</button>`).join('');
+document.querySelectorAll('#admSnd [data-snd]').forEach(b=>b.onclick=()=>{ const id=b.dataset.snd; if(FUN.to==='me'){ funSound(id); return; } admFx('sound',{id},`the “${b.textContent.trim()}” sound`); });
+$('admShoutGo').onclick=()=>{ const msg=$('admShoutT').value.trim().slice(0,120); if(!msg){ admMsg('Type something to shout.',true); return; } admFx('shout',{msg,style:$('admShoutS').value,from:$('admShoutF').checked?'— '+String(ensureName()).slice(0,24)+', Pulseform team':''},'a shout'); };
+$('admShoutT').addEventListener('keydown',e=>e.stopPropagation());
+document.querySelectorAll('#admWxGrid [data-wx]').forEach(b=>b.onclick=()=>admWx(b.dataset.wx,b.textContent.trim()));
+document.querySelectorAll('#admThGrid [data-th]').forEach(b=>b.onclick=()=>admTheme(b.dataset.th,b.textContent.trim()));
+$('admOnRef').onclick=admOnline; $('admOnGift').onclick=admOnGift; $('admOnWheel').onclick=admWheel; $('admWheel2').onclick=admWheel;
+$('admQzRand').onclick=admQuizPick; $('admQzGo').onclick=()=>admQuizGo(false); $('admQzOwnGo').onclick=()=>admQuizGo(true); $('admQzRef').onclick=admQuizRes;
+$('admQzEnd').onclick=async()=>{ const Q=FUN.d.quiz; if(!Q||funNow()>=Q.end){ admMsg('No quiz is open.'); return; } if(await admSetDoc('quiz',{...Q,end:Date.now()},'Pop quiz closed')){ FUN.d.quiz={...Q,end:Date.now()}; funBanners(); admQuizRes(); } };
+$('admPlGo').onclick=admPollGo; $('admPlRef').onclick=admPollRes;
+$('admPlEnd').onclick=async()=>{ const P=FUN.d.poll; if(!P||funNow()>=P.end){ admMsg('No poll is open.'); return; } if(await admSetDoc('poll',{...P,end:Date.now()},'Poll closed')){ FUN.d.poll={...P,end:Date.now()}; funBanners(); admPollRes(); } };
+$('admSpGo').onclick=admSpotGo; $('admSpEnd').onclick=async()=>{ await admClearDoc('spot','Spotlight cleared'); FUN.d.spot=null; funBanners(); admCommUI(); };
+$('admCtGo').onclick=admCountGo; $('admCtEnd').onclick=async()=>{ await admClearDoc('count','Countdown cleared'); FUN.d.count=null; funBanners(); admCommUI(); };
+document.querySelectorAll('#admCresB [data-cres]').forEach(b=>b.onclick=()=>admCresAdd(+b.dataset.cres));
+document.querySelectorAll('#admComm input,#admComm textarea,#admFun input').forEach(i=>i.addEventListener('keydown',e=>e.stopPropagation()));
+$('admLogRef').onclick=admLogUI;
+document.querySelectorAll('#admTpl [data-tpl]').forEach(b=>b.onclick=()=>{ $('admNote').value=b.dataset.tpl; });
+$('admSelCard').onclick=()=>{ const T=ADM.target; if(T) plOpen(T.uid,{name:T.name,rank:T.rank||0}); };
+
 /* ================= PARTY QUIZ =================
    The quiz games from the classroom, for an online party of 2 to 4. The host picks a ready-made question pack, Easy or
    Normal, and a mode. Everyone answers at their own pace on their own screen (answer, then tap along with an 8-beat
@@ -16018,7 +16478,7 @@ $('reduce').onchange=e=>{SAVE.reduce=e.target.checked; save()};
 $('metroOn').onchange=e=>{ SAVE.metroOff=!e.target.checked; save(); };
 /* the Concert Hall interface: the Grand Crescendo's 7.5M update. It switches itself on the first time it unlocks; Settings turns it off or on */
 function uiCresApply(){ const ok=cresHave(5); if(ok&&!SAVE.uiCresAuto){ SAVE.uiCresAuto=true; SAVE.uiCres=true; save(); }
-  document.body.classList.toggle('ui-cres',ok&&!!SAVE.uiCres); const c=$('uiCres'); if(c){ c.disabled=!ok; c.checked=ok&&!!SAVE.uiCres; c.closest('label').classList.toggle('locked',!ok);
+  const th=FUN.theme; document.body.classList.toggle('ui-cres',th==='cres'||(th!=='plain'&&th!=='hween'&&ok&&!!SAVE.uiCres)); const c=$('uiCres'); if(c){ c.disabled=!ok; c.checked=ok&&!!SAVE.uiCres; c.closest('label').classList.toggle('locked',!ok);
     $('uiCresSub').textContent=ok?'Midnight and gold for every screen: the Grand Crescendo\'s interface revamp.':'Midnight and gold for every screen. Unlocks when the Grand Crescendo reaches 7.5M.'; } }
 $('uiCres').onchange=e=>{ SAVE.uiCres=e.target.checked; save(); uiCresApply(); };
 uiCresApply(); setInterval(uiCresApply,5000);
