@@ -2,799 +2,202 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Ninth Bell</title>
+<meta name="description" content="A Persona-style RPG in your browser. 30 days until the full moon.">
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three.module.min.js",
+  "three/addons/": "./vendor/jsm/",
+  "@pixiv/three-vrm": "./vendor/three-vrm.module.min.js"
+} }
+</script>
 <style>
-  :root{--bg:#0B0617;--panel:#170C2B;--panel2:#22113f;--ink:#F3EEFF;--dim:#A99BC9;--a:#B66BFF;--b:#3EE6FF;
-    --hot:#FF3D7F;--gold:#FFD23F;--good:#52f2a0;--line:#ffffff1f}
+  :root{--bg:#0B0617;--panel:#170C2Bdd;--panel2:#22113fcc;--ink:#F3EEFF;--dim:#A99BC9;--a:#B66BFF;--b:#3EE6FF;
+    --hot:#FF3D7F;--gold:#FFD23F;--good:#52f2a0;--line:#ffffff24}
   *{box-sizing:border-box}
-  html,body{margin:0;min-height:100%}
-  body{background:radial-gradient(120% 80% at 50% 0%,#2A1150 0%,var(--bg) 60%) fixed;color:var(--ink);
-    font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-  #app{max-width:760px;margin:0 auto;padding:16px}
-  button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:10px;
-    padding:10px 14px;cursor:pointer;text-align:left;transition:transform .08s,border-color .15s,background .15s}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
+    font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+  #scene{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+  #ui{position:fixed;inset:0;pointer-events:none}
+  #ui>*{pointer-events:none}
+  [hidden]{display:none!important}
+  button,.button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+    padding:10px 14px;cursor:pointer;text-align:left;transition:transform .08s,border-color .15s,background .15s;pointer-events:auto;text-decoration:none}
   button:hover:not(:disabled){border-color:var(--b);background:#2c1752}
   button:active:not(:disabled){transform:translateY(1px)}
   button:disabled{opacity:.4;cursor:not-allowed}
-  button.big{display:block;width:100%;margin:6px 0;font-weight:700}
-  button.hot{background:linear-gradient(90deg,var(--hot),var(--a));border:none;color:#fff;font-weight:900;letter-spacing:.5px}
+  .big{display:block;width:100%;margin:6px 0;font-weight:700}
+  .hot{background:linear-gradient(90deg,var(--hot),var(--a))!important;border:none!important;color:#fff;font-weight:900;letter-spacing:.5px}
   .slant{display:inline-block;transform:skew(-12deg);background:linear-gradient(90deg,var(--a),var(--b));color:#0B0617;
-    padding:4px 14px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
+    padding:3px 14px;font-weight:900;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
   .slant>span{display:inline-block;transform:skew(12deg)}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
   .row{display:flex;gap:8px;flex-wrap:wrap}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
   .dim{color:var(--dim)} .small{font-size:12px}
-  .title{text-align:center;padding-top:12vh}
-  .logo{font-size:56px;font-weight:900;letter-spacing:4px;margin:0;font-style:italic;
-    background:linear-gradient(90deg,var(--hot),var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .bar{height:6px;background:#ffffff1c;border-radius:4px;overflow:hidden;margin-top:3px}
+  .bar>i{display:block;height:100%;background:var(--good);transition:width .4s}
+  .bar.sp>i{background:var(--b)} .bar.en>i{background:var(--hot)}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px;position:relative}
+  .card.active{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+  .aff{display:flex;gap:3px;margin-top:6px;flex-wrap:wrap}
+  .aff span{font-size:10px;padding:1px 5px;border-radius:4px;background:#ffffff14;color:var(--dim)}
+  .aff .w{background:var(--hot);color:#fff}.aff .r{background:#3b5bdb;color:#fff}.aff .n{background:#555;color:#fff}
+  .pips{letter-spacing:2px;color:var(--gold)} .stat{display:flex;justify-content:space-between}
+  .toast{text-align:center;font-size:22px;font-weight:900;color:var(--gold);font-style:italic;margin:6px 0}
+  .flash{animation:fl .6s}
+  @keyframes fl{0%{background:#ffd23f55}}
+
+  /* menus */
+  #screen{position:absolute;inset:0;overflow-y:auto;pointer-events:auto;-webkit-overflow-scrolling:touch}
+  .sheet{max-width:480px;padding:16px;margin-left:max(16px,4vw)}
+  @media (max-width:700px){ .sheet{margin:0 auto;padding-top:46vh;background:linear-gradient(transparent 44vh,#0b0617ee 52vh,var(--bg) 70vh)} .title{padding-top:0} }
   .hdr{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap}
   .date{font-size:34px;font-weight:900;font-style:italic;line-height:1}
   .date small{font-size:15px;color:var(--b);margin-left:6px}
   .moon{color:var(--gold);font-weight:700}
-  .bar{height:6px;background:#ffffff14;border-radius:4px;overflow:hidden;margin-top:3px}
-  .bar>i{display:block;height:100%;background:var(--good)}
-  .bar.sp>i{background:var(--b)} .bar.en>i{background:var(--hot)}
-  .card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px;position:relative}
-  .card.active{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset,0 0 18px #ffd23f33}
-  .card.ko{opacity:.35}
-  .card.pick{cursor:pointer;border-color:var(--hot)}
-  .card.pick:hover{background:#3a1636}
-  .badge{position:absolute;top:-8px;right:8px;background:var(--hot);color:#fff;font-size:11px;font-weight:900;padding:1px 7px;border-radius:6px;transform:skew(-12deg)}
-  .aff{display:flex;gap:3px;margin-top:6px;flex-wrap:wrap}
-  .aff span{font-size:10px;padding:1px 5px;border-radius:4px;background:#ffffff10;color:var(--dim)}
-  .aff .w{background:var(--hot);color:#fff}.aff .r{background:#3b5bdb;color:#fff}.aff .n{background:#555;color:#fff}
-  .log{min-height:84px;font-size:14px}
-  .log div{padding:2px 0;border-bottom:1px dashed #ffffff10}
-  .log div:last-child{color:var(--gold);font-weight:600}
-  .portrait{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-size:28px;font-weight:900;color:#0B0617;flex:none}
-  .dlg{display:flex;gap:14px;align-items:flex-start}
-  .speech{font-size:17px;min-height:60px}
-  .flash{animation:fl .5s}
-  @keyframes fl{0%{background:#ffd23f44}100%{background:var(--panel)}}
-  .toast{text-align:center;font-size:22px;font-weight:900;color:var(--gold);font-style:italic;margin:10px 0}
-  .stat{display:flex;justify-content:space-between}
-  .pips{letter-spacing:2px;color:var(--gold)}
+  .title{text-align:center;padding-top:8vh}
+  .logo{font-size:52px;font-weight:900;letter-spacing:4px;margin:0;font-style:italic;line-height:1.05;
+    background:linear-gradient(90deg,var(--hot),var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 4px 18px #b66bff66)}
+  .menu{max-width:320px;margin:24px auto} .menu a{display:block;margin-top:14px}
+  .shoprow{align-items:center;justify-content:space-between;margin:6px 0}
+  ul{padding-left:20px} li{margin:6px 0}
+
+  /* dialogue */
+  .dialogue{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);width:min(720px,calc(100% - 32px));
+    background:#0b0617ee;border:2px solid #fff;border-radius:4px 22px 4px 22px;padding:22px 18px 14px;pointer-events:auto;box-shadow:0 10px 40px #000a}
+  .namebox{position:absolute;top:-18px;left:16px;background:var(--c);color:#0B0617;font-weight:900;padding:4px 18px;transform:skew(-12deg);font-size:17px}
+  .speech{font-size:18px;min-height:56px}
+  .choices .big{margin:6px 0 0}
+
+  /* modal */
+  #modal{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0006;pointer-events:auto;padding:16px}
+  .modalbox{width:min(420px,100%);max-height:80vh;overflow:auto}
+  #modal.low{align-items:flex-end;background:linear-gradient(transparent 50%,#0008)}
+
+  /* tower hud */
+  #hud{position:absolute;inset:0}
+  #floorlabel{position:absolute;top:14px;left:16px;background:#0b0617cc;padding:8px 14px;border-left:4px solid var(--b);transform:skew(-8deg)}
+  #floorlabel b{font-size:18px;font-style:italic;letter-spacing:1px}
+  #minimap{position:absolute;top:12px;right:12px;width:140px;height:140px;border-radius:12px;border:1px solid var(--line)}
+  #hudparty{position:absolute;left:16px;bottom:16px;display:flex;flex-direction:column;gap:6px;width:170px}
+  .mini{background:#0b0617cc;padding:6px 10px;border-radius:8px;font-size:12px}.mini.ko{opacity:.4}
+  #hudbtns{position:absolute;right:16px;bottom:16px;display:flex;gap:8px;align-items:flex-end}
+  #btnStrike{width:74px;height:74px;border-radius:50%;font-size:30px;text-align:center;padding:0;background:var(--hot);border:3px solid #fff}
+  #hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--dim);background:#0b0617aa;padding:4px 10px;border-radius:8px;white-space:nowrap}
+  @media (pointer:coarse){ #hint{display:none} #hudparty{bottom:auto;top:80px;width:140px} }
+  #towermsg{position:absolute;top:22%;left:50%;transform:translateX(-50%);font-size:24px;font-weight:900;font-style:italic;
+    text-shadow:0 2px 12px #000;opacity:0;white-space:nowrap;letter-spacing:1px}
+  #towermsg.show{animation:tm 2.6s}
+  @keyframes tm{0%{opacity:0;transform:translate(-50%,10px)}12%,75%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+  #joy{position:absolute;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;border:2px solid #ffffff55;background:#ffffff10;display:none}
+  #knob{position:absolute;left:50%;top:50%;width:46px;height:46px;border-radius:50%;background:#ffffffaa;transform:translate(-50%,-50%)}
+
+  /* battle hud */
+  #bhud{position:absolute;inset:0}
+  #blog{position:absolute;top:14px;left:50%;transform:translateX(-50%) skew(-8deg);background:#0b0617dd;border-left:4px solid var(--hot);
+    padding:8px 16px;max-width:min(680px,calc(100% - 24px));font-weight:600;font-size:14px;text-align:center}
+  #blog.pulse{animation:pl .35s}
+  @keyframes pl{0%{background:#ff3d7f88}}
+  #cmd{position:absolute;left:16px;bottom:16px;display:flex;flex-direction:column;gap:6px;width:min(250px,48vw);max-height:62vh;overflow-y:auto;pointer-events:auto}
+  .cbtn{transform:skew(-10deg);background:#0b0617e6;border:2px solid #fff;border-radius:2px;font-weight:800;font-size:15px;padding:9px 14px;width:100%}
+  .cbtn:hover:not(:disabled){background:var(--hot);border-color:#fff}
+  .cbtn .sub{display:block;font-size:11px;font-weight:500;color:var(--dim)}
+  .cbtn:hover .sub{color:#fff}
+  .cbtn.allout{background:linear-gradient(90deg,var(--hot),var(--gold));color:#0B0617;font-size:18px}
+  .turn{font-weight:900;font-style:italic;font-size:18px;color:var(--c,var(--gold));text-shadow:0 2px 8px #000;margin-bottom:2px}
+  .hotturn{color:var(--gold)}
+  #bparty{position:absolute;right:16px;bottom:16px;display:flex;flex-direction:column;gap:6px;width:min(230px,46vw)}
+  .pcard{background:#0b0617dd;border-left:5px solid var(--c);padding:6px 10px;transform:skew(-8deg);transition:transform .2s}
+  .pcard.active{transform:skew(-8deg) translateX(-14px);background:#22113fee;box-shadow:0 0 0 2px var(--gold)}
+  .pcard.ko{opacity:.45}
+  .pname{font-weight:900}
+  .nums{display:flex;justify-content:space-between;font-size:12px}.nums .sp{color:var(--b)}
+  i.down{font-style:normal;background:var(--hot);color:#fff;font-size:10px;padding:1px 5px;margin-left:5px;border-radius:3px}
+  i.grd{font-style:normal;background:#3b5bdb;color:#fff;font-size:10px;padding:1px 5px;margin-left:5px;border-radius:3px}
+  @media (max-width:560px), (max-height:460px){ #bparty{width:200px} .pcard{font-size:12px;padding:3px 8px} #cmd{width:210px} .cbtn{font-size:13px;padding:6px 10px} #cmd{gap:4px} }
+  @media (max-aspect-ratio:1/1){
+    #blog{top:8px;font-size:12px;padding:6px 12px}
+    #bparty{top:auto;bottom:calc(10px + var(--cmdh,0px));left:8px;right:8px;width:auto;flex-direction:row;gap:4px}
+    .pcard{flex:1;transform:none;padding:4px 6px;font-size:11px;min-width:0}
+    .pcard.active{transform:translateY(-6px)}
+    .pname .small{display:none}
+    #cmd{left:8px;right:8px;bottom:8px;width:auto;display:grid;grid-template-columns:1fr 1fr;max-height:40vh;gap:5px}
+    #cmd .turn{grid-column:1/-1;font-size:15px}
+    .cbtn{transform:none;font-size:13px;padding:8px 10px}
+    .elabel{font-size:11px;min-width:80px}
+  }
+
+  /* enemy labels */
+  #labels{position:absolute;inset:0}
+  .elabel{position:absolute;transform:translate(-50%,-100%);background:#0b0617cc;padding:3px 8px;border-radius:6px;font-size:12px;min-width:96px;text-align:center;white-space:nowrap}
+  #labels.picking .elabel{pointer-events:auto;cursor:pointer;border:2px solid var(--hot);animation:bob 1s infinite}
+  @keyframes bob{50%{transform:translate(-50%,-110%)}}
+
+  /* effects */
+  #fx{position:absolute;inset:0;overflow:hidden}
+  .pop{position:absolute;transform:translate(-50%,-50%);font-weight:900;font-size:26px;color:#fff;font-style:italic;
+    text-shadow:0 0 6px #000,2px 2px 0 #000;animation:pop 1.2s forwards}
+  .pop.weak{color:var(--hot);font-size:30px}.pop.crit{color:var(--gold);font-size:30px}.pop.res{color:#8fb0ff;font-size:18px}
+  .pop.null{color:#bbb}.pop.heal{color:var(--good)}
+  @keyframes pop{0%{transform:translate(-50%,-50%) scale(1.8);opacity:0}15%{transform:translate(-50%,-50%) scale(1);opacity:1}80%{opacity:1}100%{transform:translate(-50%,-130%);opacity:0}}
+  .cutin{position:absolute;left:0;right:0;top:34%;height:120px}
+  .cutin .stripe{position:absolute;inset:0;background:repeating-linear-gradient(-60deg,#0b0617 0 18px,var(--c) 18px 22px);transform:skewY(-6deg);animation:sl 1.1s}
+  .cutin .who{position:absolute;left:8%;top:18px;font-size:48px;font-weight:900;font-style:italic;color:#fff;text-shadow:4px 4px 0 var(--c),0 0 20px #000;animation:sw 1.1s}
+  .cutin .sub{position:absolute;right:8%;bottom:16px;font-size:30px;font-weight:900;font-style:italic;color:var(--gold);text-shadow:3px 3px 0 #000;animation:sw2 1.1s}
+  @keyframes sl{0%{transform:skewY(-6deg) scaleX(0);transform-origin:left}15%{transform:skewY(-6deg) scaleX(1)}85%{opacity:1}100%{opacity:0}}
+  @keyframes sw{0%{transform:translateX(-120%)}20%{transform:none}85%{opacity:1}100%{transform:translateX(30%);opacity:0}}
+  @keyframes sw2{0%{transform:translateX(120%)}25%{transform:none}85%{opacity:1}100%{opacity:0}}
+  .banner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+  .banner span{font-size:clamp(34px,8vw,80px);font-weight:900;font-style:italic;color:#fff;transform:skew(-10deg);
+    text-shadow:5px 5px 0 var(--hot),0 0 30px #000;animation:bn .9s both}
+  .banner.adv span{text-shadow:5px 5px 0 var(--b),0 0 30px #000}
+  .banner.eadv span{color:var(--hot);text-shadow:5px 5px 0 #000}
+  .banner.persona span{font-size:clamp(28px,6vw,60px);text-shadow:4px 4px 0 var(--a),0 0 30px #000}
+  .banner.win span{color:var(--gold);text-shadow:5px 5px 0 var(--a),0 0 30px #000}
+  @keyframes bn{0%{transform:skew(-10deg) scale(2.5);opacity:0}20%{transform:skew(-10deg) scale(1);opacity:1}80%{opacity:1}100%{opacity:0}}
+  body.transition #fx{animation:tr .6s}
+  @keyframes tr{0%{background:#fff}30%{background:#ff3d7fcc}100%{background:transparent}}
+
+  /* loading */
+  #loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);pointer-events:auto;padding:16px;text-align:center}
+  #loadbar{width:min(320px,80vw);height:6px;background:#ffffff1c;border-radius:4px;overflow:hidden;margin:18px 0 8px}
+  #loadfill{height:100%;width:0;background:linear-gradient(90deg,var(--hot),var(--b));transition:width .3s}
 </style>
 </head>
 <body>
-<div id="app"></div>
-<script>
-'use strict';
-// ───────────────────────── DATA ─────────────────────────
-const ELEMENTS = ['phys','fire','ice','elec','wind'];
-const EL_NAME = {phys:'Phys',fire:'Fire',ice:'Ice',elec:'Elec',wind:'Wind'};
-
-const SKILLS = {
-  cleave:   {name:'Cleave',      el:'phys', pow:24, hp:8,  target:'one'},
-  rampage:  {name:'Rampage',     el:'phys', pow:20, hp:16, target:'all'},
-  ember:    {name:'Ember',       el:'fire', pow:22, sp:4,  target:'one'},
-  blaze:    {name:'Blaze',       el:'fire', pow:18, sp:10, target:'all'},
-  inferno:  {name:'Inferno',     el:'fire', pow:48, sp:14, target:'one'},
-  frost:    {name:'Frost',       el:'ice',  pow:22, sp:4,  target:'one'},
-  blizzard: {name:'Blizzard',    el:'ice',  pow:18, sp:10, target:'all'},
-  spark:    {name:'Spark',       el:'elec', pow:22, sp:4,  target:'one'},
-  thunder:  {name:'Thunderclap', el:'elec', pow:18, sp:10, target:'all'},
-  gust:     {name:'Gust',        el:'wind', pow:22, sp:4,  target:'one'},
-  gale:     {name:'Gale',        el:'wind', pow:18, sp:10, target:'all'},
-  mend:     {name:'Mend',        heal:40,   sp:5,  target:'ally'},
-  mendall:  {name:'Mend All',    heal:32,   sp:12, target:'allies'},
-};
-
-const PERSONAS = {
-  lantern: {name:'Lantern',  arcana:'Fool',      str:5,  mag:5,  weak:['ice'],  res:[],              skills:['cleave','ember','mend']},
-  mistral: {name:'Mistral',  arcana:'Fool',      str:3,  mag:6,  weak:['elec'], res:['wind'],        skills:['gust','frost']},
-  valkyr:  {name:'Valkyr',   arcana:'Chariot',   str:9,  mag:3,  weak:['wind'], res:['phys'],        skills:['cleave','rampage','spark']},
-  brunhild:{name:'Brunhild', arcana:'Chariot',   str:14, mag:6,  weak:['ice'],  res:['phys','fire'], skills:['rampage','blaze','inferno']},
-  tinker:  {name:'Tinker',   arcana:'Magician',  str:4,  mag:9,  weak:['fire'], res:['elec'],        skills:['spark','thunder','gust']},
-  daedal:  {name:'Daedal',   arcana:'Magician',  str:6,  mag:14, weak:['fire'], res:['elec','wind'], skills:['thunder','gale','mendall']},
-  sibyl:   {name:'Sibyl',    arcana:'Priestess', str:3,  mag:9,  weak:['phys'], res:['ice'],         skills:['frost','blizzard','mend']},
-  seraph:  {name:'Seraph',   arcana:'Priestess', str:5,  mag:15, weak:[],       res:['ice','wind'],  skills:['blizzard','gale','mendall']},
-  ferryman:{name:'Ferryman', arcana:'Hermit',    str:8,  mag:8,  weak:['wind'], res:['fire','ice'],  skills:['inferno','gale','mend']},
-  anchor:  {name:'Anchor',   arcana:'Hermit',    str:13, mag:13, weak:['wind'], res:['phys','elec','ice'], skills:['rampage','blizzard','thunder','mendall']},
-};
-
-const ALLIES = {
-  rin:   {name:'Rin',   str:7, mag:3, hpBonus:15, weak:['ice'],  res:['fire'],
-          learn:[['cleave',1],['ember',1],['blaze',4],['rampage',7],['inferno',10]]},
-  kaito: {name:'Kaito', str:3, mag:7, hpBonus:0,  weak:['wind'], res:['elec'],
-          learn:[['spark',1],['mend',1],['gust',3],['thunder',5],['mendall',8]]},
-};
-
-// days: 0=Mon … 6=Sun
-const LINKS = {
-  rin: {name:'Rin Asakura', arcana:'Chariot', color:'#FF3D7F', days:[0,2,4,6], req:null, unlock:{3:'valkyr',5:'brunhild'},
-    blurb:'Track team ace. Fights alongside you.',
-    scenes:[
-      {lines:['Hey, transfer student! You were in the Tower last night too, right?','I saw you swing that thing. Not bad. Want to train together sometime?'],
-       choices:[['"Only if you can keep up."',2],['"Sure, I guess."',1]]},
-      {lines:['Coach says my form is off. I keep thinking about the Tower instead of the track.','Is it weird that the fighting feels more real than racing?'],
-       choices:[['"Both are part of you."',2],['"Kind of weird, yeah."',1]]},
-      {lines:['I bombed the qualifier. Three tenths of a second. Three!','...Sorry. I don\'t usually vent like this.'],
-       choices:[['"Vent all you want. I\'m here."',2],['"There\'s always next time."',1]]},
-      {lines:['I\'ve decided. I\'m running the regional, and I\'m clearing the Tower. Both.','You\'ll be at the finish line, right?'],
-       choices:[['"Front row."',2],['"If I\'m not busy."',0]]},
-      {lines:['Personal best. And you were there, yelling louder than anyone.','Whatever\'s at the top of that Tower — we take it down together. Promise.'],
-       choices:[['"Promise."',2],['*fist bump*',2]]},
-    ]},
-  kaito: {name:'Kaito Mori', arcana:'Magician', color:'#3EE6FF', days:[1,3,5], req:['courage',2], unlock:{3:'tinker',5:'daedal'},
-    blurb:'Class clown who hides how scared he is. Fights alongside you.',
-    scenes:[
-      {lines:['Duuude. You actually went back into that creepy Tower? On purpose?','Okay, okay, I\'m in. Somebody has to keep you entertained.'],
-       choices:[['"Glad to have you."',2],['"Try not to scream."',1]]},
-      {lines:['Real talk... my hands shook the whole time last night.','Don\'t tell Rin, okay? She already thinks I\'m a joke.'],
-       choices:[['"Being scared and going anyway is brave."',2],['"Your secret\'s safe."',1]]},
-      {lines:['My dad called. First time in a year. He wants me to "get serious."','Maybe he\'s right. Maybe I\'m just the funny guy and that\'s it.'],
-       choices:[['"You\'re a lot more than that."',2],['"Ignore him."',1]]},
-      {lines:['I\'ve been studying the Tower\'s patterns. Look — the bell rings exactly at 12:09.','Pretty smart for a clown, huh?'],
-       choices:[['"Smartest guy I know."',2],['"Huh. Neat."',1]]},
-      {lines:['I told my dad about the stuff I care about. He actually listened.','Thanks, partner. Let\'s ring that Ninth Bell for good.'],
-       choices:[['"Partner."',2],['"Let\'s go."',2]]},
-    ]},
-  mira: {name:'Mira Hoshino', arcana:'Priestess', color:'#B66BFF', days:[2,5,6], req:['knowledge',2], unlock:{3:'sibyl',5:'seraph'},
-    blurb:'Student council president. Knows more than she says.',
-    scenes:[
-      {lines:['You\'re the one asking about the Ninth Bell. The library has a record of it.','It\'s rung before. Thirty years ago. Nobody who heard it remembers why.'],
-       choices:[['"Will you help me find out?"',2],['"Creepy."',1]]},
-      {lines:['My grandmother was a student here thirty years ago.','She kept a diary. Half the pages are torn out.'],
-       choices:[['"Let\'s read it together."',2],['"Maybe leave it alone."',0]]},
-      {lines:['Everyone expects the council president to have every answer.','I don\'t. I\'m terrified of being wrong.'],
-       choices:[['"Nobody has every answer."',2],['"You seem fine to me."',1]]},
-      {lines:['The diary mentions a "Pale Monarch" who wakes when the moon is full.','The next full moon is... on the 30th day.'],
-       choices:[['"Then we\'ll be ready."',2],['"That\'s soon..."',1]]},
-      {lines:['I finally let someone else lead for once. It felt... freeing.','Take this — Grandma\'s charm. I think it was meant for you.'],
-       choices:[['"I\'ll keep it close."',2],['"Thank you, Mira."',2]]},
-    ]},
-  gen: {name:'Old Gen', arcana:'Hermit', color:'#FFD23F', days:[0,1,2,3,4,5,6], req:['charm',2], unlock:{3:'ferryman',5:'anchor'},
-    blurb:'Runs the corner shop. Ranks give shop discounts.',
-    scenes:[
-      {lines:['Hm. You buy a lot of medicine for a high schooler.','...I won\'t ask. Want some tea?'],
-       choices:[['"I\'d love some."',2],['"I\'m in a hurry."',0]]},
-      {lines:['This shop\'s been here forty years. Kids come and go.','You remind me of someone. Same eyes. Same trouble.'],
-       choices:[['"Who?"',2],['"Lots of people have my eyes."',1]]},
-      {lines:['My old friend climbed a tower like yours once. Came back different.','Never told anyone what he saw up there.'],
-       choices:[['"Tell me about him."',2],['"Sounds made up."',0]]},
-      {lines:['I\'m old. Can\'t climb anything anymore.','But I can make sure you never run out of supplies. Discount\'s on me.'],
-       choices:[['"Thank you, Gen."',2],['"Bigger discount?"',1]]},
-      {lines:['Here. My friend\'s old pocket watch. Stopped at 12:09.','Finish what he couldn\'t, kid.'],
-       choices:[['"I will."',2],['*bow deeply*',2]]},
-    ]},
-};
-
-const ENEMIES = [
-  {name:'Gloom Slime',   hp:45, str:3, mag:3, weak:['fire'],  res:['phys'], nul:[],      xp:8,  yen:40, f:[1,4],
-    skills:[['Ooze','phys',12,'one'],['Chill','ice',14,'one']]},
-  {name:'Wailing Mask',  hp:40, str:2, mag:5, weak:['elec'],  res:['wind'], nul:[],      xp:9,  yen:45, f:[1,5],
-    skills:[['Shriek','wind',14,'one'],['Spark','elec',13,'one']]},
-  {name:'Iron Hound',    hp:55, str:5, mag:2, weak:['wind'],  res:['phys'], nul:[],      xp:10, yen:50, f:[2,7],
-    skills:[['Maul','phys',16,'one'],['Ember','fire',12,'one']]},
-  {name:'Frost Wisp',    hp:42, str:2, mag:6, weak:['fire'],  res:[],       nul:['ice'], xp:11, yen:55, f:[3,8],
-    skills:[['Frost','ice',16,'one'],['Blizzard','ice',11,'all']]},
-  {name:'Static Idol',   hp:60, str:3, mag:7, weak:['ice'],   res:['elec'], nul:[],      xp:14, yen:70, f:[5,10],
-    skills:[['Thunderclap','elec',12,'all'],['Gust','wind',17,'one']]},
-  {name:'Choir Knight',  hp:75, str:8, mag:4, weak:['elec'],  res:['phys','fire'], nul:[], xp:18, yen:90, f:[6,10],
-    skills:[['Cleave','phys',20,'one'],['Blaze','fire',12,'all']]},
-  {name:'Hollow Moth',   hp:58, str:4, mag:8, weak:['fire','phys'], res:['wind'], nul:[], xp:16, yen:80, f:[7,10],
-    skills:[['Gale','wind',13,'all'],['Frost','ice',18,'one']]},
-];
-const BOSSES = {
-  5:  {name:'Gatekeeper', hp:460, str:9, mag:9, weak:['wind'], res:['phys','fire'], nul:[], xp:120, yen:1500, acts:2, boss:true,
-       skills:[['Crush','phys',22,'one'],['Pyre','fire',14,'all'],['Shock','elec',22,'one']]},
-  10: {name:'Pale Monarch', hp:1300, str:15, mag:15, weak:['fire'], res:['ice','elec'], nul:[], xp:0, yen:0, acts:2, boss:true, final:true,
-       skills:[['Dread Blade','phys',30,'one'],['Frozen Requiem','ice',18,'all'],['Storm Crown','elec',18,'all'],['Annihilate','wind',40,'one']]},
-};
-
-const ITEMS = {
-  medicine:{name:'Medicine',     desc:'Restore 60 HP to one ally', price:200, use:(m)=>m.hp>0&&m.hp<m.max, fx:(m)=>{m.hp=Math.min(m.max,m.hp+60)}},
-  soul:    {name:'Soul Drop',    desc:'Restore 25 SP to one ally', price:400, use:(m)=>m.hp>0&&m.sp<m.maxsp, fx:(m)=>{m.sp=Math.min(m.maxsp,m.sp+25)}},
-  bead:    {name:'Revival Bead', desc:'Revive a fallen ally at half HP', price:800, use:(m)=>m.hp<=0, fx:(m)=>{m.hp=Math.ceil(m.max/2)}},
-};
-
-const SOCIAL = {courage:'Courage', knowledge:'Knowledge', charm:'Charm'};
-const SOCIAL_NEXT = [0,3,4,5,6];            // points needed to go from rank r to r+1
-const LAST_DAY = 30;
-const SAVE_KEY = 'ninth-bell-save';
-const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-const PARTY = ['mc','rin','kaito'];
-
-// ───────────────────────── STATE ─────────────────────────
-let S = null;   // persistent game state
-let B = null;   // battle
-let D = null;   // dungeon run
-
-function newGame(){
-  const s = {day:1, time:'day', lv:1, xp:0, yen:1000,
-    stats:{courage:1,knowledge:1,charm:1}, statPts:{courage:0,knowledge:0,charm:0},
-    links:{}, personas:['lantern','mistral'], active:'lantern',
-    items:{medicine:3, soul:1, bead:0}, hp:{}, sp:{}, known:{}, bossesBeaten:0, cleared:false};
-  for(const k in LINKS) s.links[k] = {rank:0, pts:0};
-  S = s; restoreParty();
-  return s;
-}
-const rand = (a,b)=>a+Math.random()*(b-a);
-const pick = (arr)=>arr[Math.floor(Math.random()*arr.length)];
-const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
-
-function maxHP(id){ return 80 + S.lv*10 + (ALLIES[id]?.hpBonus||0); }
-function maxSP(id){ return 30 + S.lv*5 + (id==='mc' ? S.stats.knowledge*6 : 0); }
-function restoreParty(){ for(const id of PARTY){ S.hp[id]=maxHP(id); S.sp[id]=maxSP(id); } }
-function weekday(){ return (S.day-1)%7; }
-function dateLabel(){
-  const d = new Date(2026,3,6+S.day-1);
-  return `${d.getMonth()+1}/${d.getDate()}`;
-}
-function linkRank(id){ return S.links[id].rank; }
-function memberName(id){ return id==='mc' ? 'You' : ALLIES[id].name; }
-
-function memberStats(id){
-  if(id==='mc'){ const p=PERSONAS[S.active]; return {str:p.str+S.lv, mag:p.mag+S.lv, weak:p.weak, res:p.res, skills:p.skills}; }
-  const a=ALLIES[id], r=linkRank(id);
-  return {str:a.str+S.lv+(a.str>a.mag?r:0), mag:a.mag+S.lv+(a.mag>a.str?r:0), weak:a.weak, res:a.res,
-    skills:a.learn.filter(([,lv])=>lv<=S.lv).map(([k])=>k)};
-}
-
-function gainSocial(k, n){
-  S.statPts[k]+=n; const msgs=[];
-  while(S.stats[k]<5 && S.statPts[k]>=SOCIAL_NEXT[S.stats[k]]){
-    S.statPts[k]-=SOCIAL_NEXT[S.stats[k]]; S.stats[k]++;
-    msgs.push(`${SOCIAL[k]} rose to rank ${S.stats[k]}!`);
-  }
-  return msgs;
-}
-
-function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); return true; }catch(e){ return false; } }
-function loadSave(){ try{ const raw=localStorage.getItem(SAVE_KEY); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
-
-// ───────────────────────── DOM HELPERS ─────────────────────────
-const $app = document.getElementById('app');
-function h(tag, props, ...kids){
-  const e=document.createElement(tag);
-  for(const [k,v] of Object.entries(props||{})){
-    if(v==null || v===false) continue;
-    if(k.startsWith('on')) e.addEventListener(k.slice(2), v);
-    else if(k==='class') e.className=v;
-    else if(k==='style') e.style.cssText=v;
-    else if(k==='disabled') e.disabled=!!v;
-    else e.setAttribute(k,v);
-  }
-  for(const c of kids.flat()){ if(c==null||c===false) continue; e.append(c.nodeType?c:document.createTextNode(String(c))); }
-  return e;
-}
-const show = (...n)=>{ $app.replaceChildren(...n); window.scrollTo(0,0); };
-const btn = (label, fn, opts={}) => h('button', {class:'big '+(opts.cls||''), onclick:fn, disabled:opts.disabled}, label);
-const slant = (t)=>h('div',{class:'slant'},h('span',null,t));
-const bar = (v,m,cls='')=>h('div',{class:'bar '+cls},h('i',{style:`width:${Math.max(0,Math.min(100,v/m*100))}%`}));
-
-function header(){
-  const left = LAST_DAY - S.day;
-  return h('div',{class:'panel hdr'},
-    h('div',null,
-      h('div',{class:'date'}, dateLabel(), h('small',null, WEEKDAYS[weekday()]+' · '+(S.time==='day'?'After School':'Evening'))),
-      h('div',{class:'moon small'}, left>0 ? `🌕 Full moon in ${left} day${left>1?'s':''}` : '🌕 The moon is full tonight')),
-    h('div',{class:'small dim', style:'text-align:right'},
-      `Lv ${S.lv} · ¥${S.yen.toLocaleString()}`, h('br'),
-      Object.keys(SOCIAL).map(k=>`${SOCIAL[k][0]}${S.stats[k]}`).join(' · ')));
-}
-
-// ───────────────────────── TITLE ─────────────────────────
-function titleScreen(){
-  const existing = loadSave();
-  show(h('div',{class:'title'},
-    h('h1',{class:'logo'},'NINTH BELL'),
-    h('p',{class:'dim'},'When the bell tolls nine at midnight, the Tower rises.'),
-    h('div',{style:'max-width:320px;margin:28px auto'},
-      existing && btn('Continue', ()=>{ S=existing; hub(); }, {cls:'hot'}),
-      btn('New Game', ()=>{ newGame(); intro(); }, {cls: existing?'':'hot'}),
-      btn('How to play', howTo)),
-    h('p',{class:'small dim'},'A prototype. Placeholder art; all systems playable.')));
-}
-function howTo(){
-  show(h('div',{class:'panel'}, slant('How to play'),
-    h('ul',null,
-      h('li',null,'You have 30 days. On the 30th night the Pale Monarch awakens at the top of the Tower (floor 10).'),
-      h('li',null,'After school: spend time with friends (Social Links) or raise Courage, Knowledge and Charm.'),
-      h('li',null,'Evening: climb the Tower to fight and level up. Floor 5 has a guardian.'),
-      h('li',null,'Hit an enemy\'s WEAKNESS or land a CRITICAL to knock it down and earn ONE MORE action.'),
-      h('li',null,'Knock down every enemy to launch an ALL-OUT ATTACK.'),
-      h('li',null,'Ranking up Social Links unlocks new Personas. Switch Personas in battle to exploit weaknesses.'),
-      h('li',null,'If you fall, it\'s game over — your party can\'t go on without you.')),
-    btn('Back', titleScreen)));
-}
-function intro(){
-  dialogue({name:'???', color:'#B66BFF', initial:'?'},
-    ['Welcome, newcomer. You arrive at Kurogane High on a quiet April day.',
-     'At midnight a bell tolls nine times — and a Tower climbs out of the school grounds.',
-     'Inside, a mask forms on your face. A voice answers: "I am Lantern. I am thou."',
-     'Rin and Kaito saw it too. In thirty days the moon will be full, and something will wake at the top.'],
-    ()=>{ save(); hub(); });
-}
-
-// ───────────────────────── DIALOGUE ─────────────────────────
-function portrait(color, initial){ return h('div',{class:'portrait',style:`background:${color}`}, initial); }
-function dialogue(who, lines, done, choices){
-  let i=0;
-  const render=()=>{
-    const last = i===lines.length-1;
-    show(h('div',{class:'panel'},
-      h('div',{class:'dlg'}, portrait(who.color, who.initial||who.name[0]),
-        h('div',{style:'flex:1'}, h('b',{style:`color:${who.color}`}, who.name),
-          h('div',{class:'speech'}, lines[i]))),
-      h('div',{style:'margin-top:12px'},
-        last && choices
-          ? choices.map(([t,v])=>btn(t, ()=>done(v)))
-          : btn(last?'▶':'▶ Next', ()=>{ if(last) done(); else { i++; render(); } }))));
-  };
-  render();
-}
-
-// ───────────────────────── HUB / CALENDAR ─────────────────────────
-function linkAvailable(id){
-  const L=LINKS[id];
-  if(!L.days.includes(weekday())) return {ok:false, why:'Not around today'};
-  if(L.req && S.stats[L.req[0]]<L.req[1]) return {ok:false, why:`Needs ${SOCIAL[L.req[0]]} ${L.req[1]}`};
-  return {ok:true};
-}
-function hub(note){
-  if(S.cleared) return ending();
-  if(S.day===LAST_DAY && S.time==='evening') return finalNight();
-  const kids=[header()];
-  if(note) kids.push(h('div',{class:'panel flash'}, ...[].concat(note).map(n=>h('div',null,n))));
-  if(S.time==='day'){
-    kids.push(h('div',{class:'panel'}, slant('Social Links'),
-      h('div',{class:'grid',style:'margin-top:10px'},
-        Object.keys(LINKS).map(id=>{
-          const L=LINKS[id], av=linkAvailable(id), r=S.links[id].rank;
-          return h('button',{onclick:()=>hangout(id), disabled:!av.ok},
-            h('b',{style:`color:${L.color}`},L.name), h('br'),
-            h('span',{class:'small dim'}, `${L.arcana} · `), h('span',{class:'pips small'}, '★'.repeat(r)+'☆'.repeat(5-r)),
-            h('br'), h('span',{class:'small dim'}, av.ok?L.blurb:av.why));
-        }))));
-    kids.push(h('div',{class:'panel'}, slant('Around Town'),
-      h('div',{class:'grid',style:'margin-top:10px'},
-        h('button',{onclick:()=>activity('Library', 'You hit the books until closing.', {knowledge:2})},'📚 Library',h('br'),h('span',{class:'small dim'},'Knowledge ↑')),
-        h('button',{onclick:()=>activity('Café shift', 'Smiling at customers for four hours pays off.', {charm:2}, 1500)},'☕ Café shift',h('br'),h('span',{class:'small dim'},'Charm ↑ · +¥1,500')),
-        h('button',{onclick:()=>activity('Rooftop', 'You stand at the edge of the roof and don\'t flinch.', {courage:2})},'🏫 Rooftop dare',h('br'),h('span',{class:'small dim'},'Courage ↑')))));
-  } else {
-    kids.push(h('div',{class:'panel'}, slant('Tonight'),
-      h('div',{style:'margin-top:10px'},
-        btn('🗼 Enter the Tower', enterTower, {cls:'hot'}),
-        h('div',{class:'grid'},
-          h('button',{onclick:()=>activity('Study', 'You study at your desk until the bell nearly tolls.', {knowledge:2})},'✏️ Study at desk',h('br'),h('span',{class:'small dim'},'Knowledge ↑')),
-          h('button',{onclick:()=>activity('Arcade', 'You beat the horror game\'s final boss. Hands only shook a little.', {courage:2}, -300), disabled:S.yen<300},'🕹️ Arcade',h('br'),h('span',{class:'small dim'},'Courage ↑ · −¥300')),
-          h('button',{onclick:()=>activity('Rest', 'You turn in early.', {})},'🛏️ Sleep early',h('br'),h('span',{class:'small dim'},'Nothing happens'))))));
-  }
-  kids.push(h('div',{class:'panel row'},
-    h('button',{onclick:shop},'🏪 Gen\'s Shop'),
-    h('button',{onclick:statusScreen},'🎭 Status & Personas'),
-    h('button',{onclick:()=>{ hub(save()?'Game saved.':'Saving is unavailable in this browser.'); }},'💾 Save'),
-    h('button',{onclick:titleScreen},'⏏ Title')));
-  show(...kids);
-}
-function passTime(notes){
-  notes=[].concat(notes||[]);
-  if(S.time==='day'){ S.time='evening'; }
-  else { S.time='day'; S.day++; restoreParty(); notes.push('A new day begins. Your party is fully rested.'); save(); }
-  hub(notes);
-}
-function activity(name, text, gains, yen=0){
-  S.yen+=yen;
-  const notes=[text];
-  for(const k in gains) notes.push(...gainSocial(k, gains[k]));
-  if(yen>0) notes.push(`Earned ¥${yen.toLocaleString()}.`);
-  passTime(notes);
-}
-function hangout(id){
-  const L=LINKS[id], st=S.links[id];
-  const who={name:L.name, color:L.color};
-  if(st.rank>=5){
-    return dialogue(who, ['You spend a relaxed afternoon together. Your bond is as strong as it gets.'], ()=>passTime([]));
-  }
-  const sc=L.scenes[st.rank];
-  dialogue(who, sc.lines, (v)=>{
-    const notes=[];
-    if(st.rank===0){ st.rank=1; notes.push(`New Social Link: ${L.arcana} — ${L.name}!`); }
-    else {
-      st.pts += v + (S.stats.charm>=3?1:0);
-      if(v>=2) notes.push(`${L.name} seems happy with your answer.`);
-      if(st.pts>=3){ st.pts=0; st.rank++; notes.push(`★ ${L.arcana} rank up! (Rank ${st.rank})`); }
-      else notes.push('You feel your bond deepening…');
-    }
-    const p=L.unlock[st.rank];
-    if(p && !S.personas.includes(p)){ S.personas.push(p); notes.push(`🎭 New Persona unlocked: ${PERSONAS[p].name} (${PERSONAS[p].arcana})!`); }
-    passTime(notes);
-  }, sc.choices);
-}
-
-// ───────────────────────── SHOP / STATUS ─────────────────────────
-function priceOf(k){ return Math.round(ITEMS[k].price*(1-0.08*linkRank('gen'))); }
-function shop(note){
-  show(header(), h('div',{class:'panel'}, slant('Gen\'s Shop'),
-    note && h('p',{class:'toast'}, note),
-    h('p',{class:'dim small'}, linkRank('gen')>0 ? `Hermit rank ${linkRank('gen')} discount: ${linkRank('gen')*8}%` : 'Rank up with Old Gen for discounts.'),
-    Object.keys(ITEMS).map(k=>h('div',{class:'row',style:'align-items:center;justify-content:space-between;margin:6px 0'},
-      h('div',null, h('b',null,ITEMS[k].name), ` ×${S.items[k]}`, h('br'), h('span',{class:'small dim'},ITEMS[k].desc)),
-      h('button',{disabled:S.yen<priceOf(k), onclick:()=>{ S.yen-=priceOf(k); S.items[k]++; shop(`Bought ${ITEMS[k].name}.`); }}, `¥${priceOf(k)}`))),
-    btn('Leave', ()=>hub())));
-}
-function affRow(weak,res,nul=[]){
-  return h('div',{class:'aff'}, ELEMENTS.map(e=>{
-    const c = weak.includes(e)?'w':nul.includes(e)?'n':res.includes(e)?'r':'';
-    const t = weak.includes(e)?'Wk':nul.includes(e)?'Nul':res.includes(e)?'Res':'–';
-    return h('span',{class:c}, `${EL_NAME[e]} ${t}`);
-  }));
-}
-function statusScreen(){
-  const xpNeed=S.lv*25;
-  show(header(),
-    h('div',{class:'panel'}, slant('Party'),
-      h('div',{class:'grid',style:'margin-top:10px'}, PARTY.map(id=>{
-        const m=memberStats(id);
-        return h('div',{class:'card'}, h('b',null,memberName(id)),
-          h('div',{class:'small dim'},`HP ${S.hp[id]}/${maxHP(id)} · SP ${S.sp[id]}/${maxSP(id)}`),
-          h('div',{class:'small'},`St ${m.str} · Ma ${m.mag}`),
-          h('div',{class:'small dim'}, m.skills.map(k=>SKILLS[k].name).join(', ')));
-      })),
-      h('p',{class:'small dim'},`Level ${S.lv} · XP ${S.xp}/${xpNeed}`)),
-    h('div',{class:'panel'}, slant('Personas'), h('p',{class:'small dim'},'Choose which Persona you start battles with.'),
-      h('div',{class:'grid'}, S.personas.map(k=>{
-        const p=PERSONAS[k];
-        return h('button',{class:k===S.active?'card active':'card', onclick:()=>{S.active=k; statusScreen();}},
-          h('b',null,p.name), h('span',{class:'small dim'},` ${p.arcana}`),
-          h('div',{class:'small'},`St ${p.str+S.lv} · Ma ${p.mag+S.lv}`),
-          h('div',{class:'small dim'}, p.skills.map(s=>SKILLS[s].name).join(', ')),
-          affRow(p.weak,p.res));
-      }))),
-    h('div',{class:'panel'}, slant('Social Stats'),
-      Object.keys(SOCIAL).map(k=>h('div',{class:'stat'}, SOCIAL[k], h('span',{class:'pips'},'★'.repeat(S.stats[k])+'☆'.repeat(5-S.stats[k]))))),
-    btn('Back', ()=>hub()));
-}
-
-// ───────────────────────── TOWER ─────────────────────────
-function enterTower(){
-  D = {floor: S.bossesBeaten>=1 ? 6 : 1, steps:0, stairs:false, log:['You step through the gate. The bell echoes somewhere above.']};
-  tower();
-}
-function tower(){
-  const kids=[header(),
-    h('div',{class:'panel'}, slant(`The Tower — Floor ${D.floor}`),
-      h('div',{class:'log',style:'margin-top:10px'}, D.log.slice(-4).map(l=>h('div',null,l)))),
-    partyPanel(),
-    h('div',{class:'panel'},
-      btn('🔦 Explore', explore, {cls: D.stairs?'':'hot'}),
-      D.stairs && btn(`⬆ Climb to floor ${D.floor+1}`, climb, {cls:'hot'}),
-      btn('🎒 Use item', ()=>itemMenuField()),
-      btn('🚪 Leave the Tower (ends the night)', ()=>{ D=null; passTime(['You slip out of the Tower before dawn.']); }))];
-  show(...kids);
-}
-function partyPanel(activeId, pickFn){
-  return h('div',{class:'grid'}, PARTY.map(id=>{
-    const hp=B?B.p[id].hp:S.hp[id], mx=B?B.p[id].max:maxHP(id), sp=B?B.p[id].sp:S.sp[id], msp=B?B.p[id].maxsp:maxSP(id);
-    const down=B&&B.p[id].down, ko=hp<=0;
-    const cls='card'+(id===activeId?' active':'')+(ko?' ko':'')+(pickFn?' pick':'');
-    return h('div',{class:cls, onclick:pickFn?()=>pickFn(id):null},
-      down && h('span',{class:'badge'},'DOWN'), B&&B.p[id].guard && h('span',{class:'badge',style:'background:#3b5bdb'},'GUARD'),
-      h('b',null,memberName(id)), id==='mc' && h('span',{class:'small dim'},` · ${PERSONAS[S.active].name}`),
-      h('div',{class:'small'},`HP ${Math.max(0,hp)}/${mx}`), bar(hp,mx),
-      h('div',{class:'small'},`SP ${sp}/${msp}`), bar(sp,msp,'sp'));
-  }));
-}
-function itemMenuField(){
-  const avail=Object.keys(ITEMS).filter(k=>S.items[k]>0);
-  show(header(), h('div',{class:'panel'}, slant('Items'),
-    avail.length? avail.map(k=>btn(`${ITEMS[k].name} ×${S.items[k]} — ${ITEMS[k].desc}`, ()=>{
-      show(header(), h('div',{class:'panel'}, slant(`Use ${ITEMS[k].name} on…`)),
-        partyPanel(null, (id)=>{
-          const m={hp:S.hp[id],max:maxHP(id),sp:S.sp[id],maxsp:maxSP(id)};
-          if(!ITEMS[k].use(m)){ D.log.push('It would have no effect.'); return tower(); }
-          ITEMS[k].fx(m); S.hp[id]=m.hp; S.sp[id]=m.sp; S.items[k]--;
-          D.log.push(`Used ${ITEMS[k].name} on ${memberName(id)}.`); tower();
-        }), btn('Cancel', tower));
-    })) : h('p',{class:'dim'},'No items.'),
-    btn('Back', tower)));
-}
-function explore(){
-  D.steps++;
-  const r=Math.random();
-  if(!D.stairs && (D.steps>=4 || (D.steps>=2 && r<0.2))){ D.stairs=true; D.log.push('You found the stairs up!'); return tower(); }
-  if(r<0.62) return startBattle(makeEncounter(D.floor), ()=>tower());
-  if(r<0.85){
-    if(Math.random()<0.5){ const y=Math.round(rand(80,180)*D.floor); S.yen+=y; D.log.push(`Found a chest: ¥${y}.`); }
-    else { const k=pick(['medicine','medicine','soul','bead']); S.items[k]++; D.log.push(`Found a chest: ${ITEMS[k].name}!`); }
-  } else D.log.push('Silence. The corridor twists on.');
-  tower();
-}
-function climb(){
-  const next=D.floor+1;
-  const bossFloor = (next===5 && S.bossesBeaten<1) || next===10;
-  if(next===10){
-    if(S.day<LAST_DAY){ D.log.push('A sealed door. Something sleeps beyond it — it will wake on the full moon.'); D.stairs=false; return tower(); }
-  }
-  D.floor=next; D.steps=0; D.stairs=false;
-  if(bossFloor){
-    D.log.push(`A colossal presence fills floor ${next}…`);
-    return startBattle([spawn(BOSSES[next],next)], ()=>{
-      if(next===5){ S.bossesBeaten=1; D.log.push('The Gatekeeper crumbles. A shortcut opens to floor 6.'); D.stairs=true; }
-      tower();
-    });
-  }
-  D.log.push(`You climb to floor ${next}.`);
-  tower();
-}
-function spawn(def, floor){
-  const sc = def.boss?1:1+0.3*(floor-1);
-  const hp=Math.round(def.hp*sc);
-  return {...def, hp, max:hp, str:def.str+(def.boss?0:floor*1.2), mag:def.mag+(def.boss?0:floor*1.2),
-    xp:Math.round(def.xp*sc), yen:Math.round(def.yen*sc), down:false};
-}
-function makeEncounter(floor){
-  const pool=ENEMIES.filter(e=>floor>=e.f[0] && floor<=e.f[1]);
-  const n = floor<3 ? (Math.random()<0.5?1:2) : 1+Math.floor(Math.random()*3);
-  const out=[]; for(let i=0;i<n;i++) out.push(spawn(pick(pool),floor));
-  // number duplicate names A/B/C
-  const counts={}; out.forEach(e=>{counts[e.name]=(counts[e.name]||0)+1;});
-  const seen={}; out.forEach(e=>{ if(counts[e.name]>1){ seen[e.name]=(seen[e.name]||0)+1; e.name+=' '+'ABC'[seen[e.name]-1]; e.base=e.name.slice(0,-2);} });
-  return out;
-}
-function finalNight(){
-  dialogue({name:'The Ninth Bell', color:'#FFD23F', initial:'🔔'},
-    ['The moon hangs full and white. The bell tolls nine times… then a tenth.',
-     'The sealed door at the top of the Tower swings open.',
-     'Rin grips your shoulder. Kaito forces a grin. There is no turning back.'],
-    ()=>{ D={floor:10,steps:0,stairs:false,log:[]}; startBattle([spawn(BOSSES[10],10)], ()=>{ S.cleared=true; save(); ending(); }); });
-}
-function ending(){
-  const ranks=Object.keys(LINKS).map(id=>`${LINKS[id].name}: rank ${S.links[id].rank}`);
-  show(h('div',{class:'title'}, h('h1',{class:'logo',style:'font-size:40px'},'THE BELL IS SILENT'),
-    h('div',{class:'panel',style:'text-align:left'},
-      h('p',null,'The Pale Monarch shatters into moonlight. When you open your eyes, it is morning, and the Tower is gone.'),
-      h('p',null,'Rin is already arguing with Kaito about who landed the final blow. Mira is waiting at the gate. Gen has tea ready.'),
-      h('p',{class:'dim small'}, `Finished at level ${S.lv} on day ${S.day}.`), ranks.map(r=>h('div',{class:'small'},r))),
-    btn('Back to title', ()=>{ try{localStorage.removeItem(SAVE_KEY);}catch(e){} titleScreen(); }, {cls:'hot'})));
-}
-
-// ───────────────────────── BATTLE ─────────────────────────
-function startBattle(enemies, onWin){
-  enemies.forEach(e=>{ e.key=e.base||e.name; if(!S.known[e.key]) S.known[e.key]={}; });
-  const p={};
-  for(const id of PARTY) p[id]={id, hp:S.hp[id], max:maxHP(id), sp:S.sp[id], maxsp:maxSP(id), down:false, guard:false};
-  B={enemies, p, turn:0, phase:'cmd', log:[enemies.some(e=>e.boss)?`${enemies[0].name} blocks the way!`:`Shadows appear: ${enemies.map(e=>e.name).join(', ')}!`],
-     pending:null, switched:false, onWin, busy:false};
-  B.turn = -1; nextActor();
-}
-const actorId = ()=>PARTY[B.turn];
-const aliveEnemies = ()=>B.enemies.filter(e=>e.hp>0);
-const aliveParty = ()=>PARTY.filter(id=>B.p[id].hp>0);
-function blog(t){ B.log.push(t); }
-
-function fighterStats(id){ return memberStats(id); }
-function hit(srcStat, target, el, pow, isParty, critBonus=0){
-  // target: enemy object or party member object
-  const aff = isParty ? fighterStats(target.id) : target;
-  const weak=aff.weak.includes(el), nul=(aff.nul||[]).includes(el), res=aff.res.includes(el);
-  if(!isParty && S.known[target.key]) S.known[target.key][el] = weak?'w':nul?'n':res?'r':'-';
-  if(nul) return {dmg:0, tag:'NULL', knock:false};
-  let mult=1, tag='';
-  if(weak){ mult=1.5; tag='WEAK!'; }
-  else if(res){ mult=0.5; tag='resist'; }
-  else if(el==='phys' && Math.random()<0.08+critBonus){ mult=1.6; tag='CRITICAL!'; }
-  if(target.guard){ mult*=0.5; if(tag!=='resist') tag=tag?'guarded':''; }
-  const dmg=Math.max(1, Math.round(pow*(1+srcStat/15)*rand(0.9,1.1)*mult));
-  target.hp-=dmg;
-  const knock = (tag==='WEAK!'||tag==='CRITICAL!') && !target.down && target.hp>0;
-  if(knock) target.down=true;
-  return {dmg, tag, knock};
-}
-
-function nextActor(){
-  if(checkEnd()) return;
-  B.switched=false;
-  while(true){
-    B.turn++;
-    if(B.turn>=PARTY.length){ return enemyPhase(); }
-    const m=B.p[actorId()];
-    if(m.hp<=0) continue;
-    m.guard=false;
-    if(m.down){ m.down=false; blog(`${memberName(m.id)} gets back up.`); continue; }
-    break;
-  }
-  B.phase='cmd'; renderBattle();
-}
-
-function useSkill(id, key, target){
-  const sk=SKILLS[key], m=B.p[id], st=fighterStats(id);
-  if(sk.hp) m.hp-=sk.hp; if(sk.sp) m.sp-=sk.sp;
-  if(sk.heal){
-    const amt=Math.round(sk.heal*(1+st.mag/30));
-    const tgts = sk.target==='allies' ? aliveParty() : [target];
-    tgts.forEach(t=>{ B.p[t].hp=Math.min(B.p[t].max, B.p[t].hp+amt); });
-    blog(`${memberName(id)} casts ${sk.name}: +${amt} HP${tgts.length>1?' to all':' to '+memberName(target)}.`);
-    return false;
-  }
-  const stat = sk.el==='phys'?st.str:st.mag;
-  const tgts = sk.target==='all' ? aliveEnemies() : [target];
-  let more=false; const parts=[];
-  for(const e of tgts){
-    const r=hit(stat, e, sk.el, sk.pow, false, id==='mc'?S.stats.courage*0.03:0);
-    parts.push(`${e.name} ${r.tag==='NULL'?'nullifies it':'−'+r.dmg}${r.tag&&r.tag!=='NULL'?' '+r.tag:''}${r.knock?' ⬇DOWN':''}${e.hp<=0?' ✖':''}`);
-    if(r.knock) more=true;
-  }
-  blog(`${memberName(id)} uses ${sk.name}! ${parts.join(' · ')}`);
-  return more;
-}
-function attack(id, target){
-  const st=fighterStats(id);
-  const r=hit(st.str, target, 'phys', 15, false, id==='mc'?S.stats.courage*0.03:0);
-  blog(`${memberName(id)} attacks ${target.name}: −${r.dmg}${r.tag?' '+r.tag:''}${r.knock?' ⬇DOWN':''}${target.hp<=0?' ✖':''}`);
-  return r.knock;
-}
-
-function afterPartyAction(oneMore){
-  if(checkEnd()) return;
-  const alive=aliveEnemies();
-  if(alive.length && alive.every(e=>e.down)){ B.phase='allout'; return renderBattle(); }
-  if(oneMore){ blog(`★ ONE MORE! ${memberName(actorId())} acts again.`); B.phase='cmd'; B.switched=false; return renderBattle(); }
-  nextActor();
-}
-function allOut(){
-  const power = PARTY.filter(id=>B.p[id].hp>0).reduce((a,id)=>a+fighterStats(id).str+fighterStats(id).mag, 0);
-  const parts=[];
-  for(const e of aliveEnemies()){
-    const dmg=Math.round((40+power*2.2)*rand(0.9,1.1)); e.hp-=dmg; e.down=false;
-    parts.push(`${e.name} −${dmg}${e.hp<=0?' ✖':''}`);
-  }
-  blog(`💥 ALL-OUT ATTACK! ${parts.join(' · ')}`);
-  nextActor();
-}
-
-async function enemyPhase(){
-  B.phase='busy'; B.busy=true; renderBattle();
-  for(const e of B.enemies){
-    if(e.hp<=0) continue;
-    if(e.down){ e.down=false; blog(`${e.name} gets back up.`); renderBattle(); await sleep(450); continue; }
-    for(let a=0;a<(e.acts||1);a++){
-      const targets=aliveParty(); if(!targets.length) break;
-      const [name,el,pow,tt]=pick(e.skills);
-      const tgts = tt==='all'?targets:[pick(targets)];
-      const parts=tgts.map(id=>{
-        const m=B.p[id]; const r=hit(el==='phys'?e.str:e.mag, m, el, pow, true);
-        return `${memberName(id)} ${r.tag==='NULL'?'nullifies':'−'+r.dmg}${r.tag&&r.tag!=='NULL'?' '+r.tag:''}${r.knock?' ⬇DOWN':''}${m.hp<=0?' ✖ KO':''}`;
-      });
-      blog(`${e.name} uses ${name}! ${parts.join(' · ')}`);
-      renderBattle(); await sleep(550);
-      if(B.p.mc.hp<=0) break;
-    }
-    if(B.p.mc.hp<=0) break;
-  }
-  B.busy=false;
-  if(checkEnd()) return;
-  B.turn=-1; nextActor();
-}
-
-function checkEnd(){
-  if(B.p.mc.hp<=0){ B.phase='over'; gameOver(); return true; }
-  if(!aliveEnemies().length){ B.phase='over'; victory(); return true; }
-  return false;
-}
-function writeBack(){ for(const id of PARTY){ S.hp[id]=Math.max(0,B.p[id].hp); S.sp[id]=B.p[id].sp; } }
-function victory(){
-  writeBack();
-  const xp=B.enemies.reduce((a,e)=>a+e.xp,0), yen=B.enemies.reduce((a,e)=>a+e.yen,0);
-  S.xp+=xp; S.yen+=yen;
-  const notes=[`+${xp} XP · +¥${yen}`];
-  while(S.xp>=S.lv*25){
-    S.xp-=S.lv*25; S.lv++;
-    for(const id of PARTY){ S.hp[id]=Math.min(maxHP(id), S.hp[id]+10); }
-    notes.push(`⬆ LEVEL UP! Party reached level ${S.lv}.`);
-    for(const id in ALLIES) for(const [k,lv] of ALLIES[id].learn) if(lv===S.lv) notes.push(`${ALLIES[id].name} learned ${SKILLS[k].name}!`);
-  }
-  if(Math.random()<0.15){ const k=pick(['medicine','soul']); S.items[k]++; notes.push(`Dropped: ${ITEMS[k].name}.`); }
-  const onWin=B.onWin, final=B.enemies.some(e=>e.final);
-  B=null;
-  if(final) return onWin();
-  show(h('div',{class:'panel'}, h('div',{class:'toast'},'VICTORY'), notes.map(n=>h('div',null,n)),
-    btn('Continue', ()=>{ D && D.log.push('The shadows dissolve.'); onWin(); }, {cls:'hot'})));
-}
-function gameOver(){
-  B=null; D=null;
-  show(h('div',{class:'title'}, h('h1',{class:'logo',style:'font-size:44px'},'GAME OVER'),
-    h('p',{class:'dim'},'Your light goes out. Without you, the others cannot go on.'),
-    h('div',{style:'max-width:320px;margin:24px auto'},
-      btn('Load last save', ()=>{ const s=loadSave(); if(s){ S=s; hub('You wake with a start. Was it a dream?'); } else titleScreen(); }, {cls:'hot'}),
-      btn('Title', titleScreen))));
-}
-
-// ── battle input ──
-function cmd(type){
-  const id=actorId();
-  if(type==='attack'){ B.pending={type:'attack'}; B.phase='target'; }
-  else if(type==='skill'){ B.phase='skills'; }
-  else if(type==='persona'){ B.phase='persona'; }
-  else if(type==='item'){ B.phase='items'; }
-  else if(type==='guard'){ B.p[id].guard=true; blog(`${memberName(id)} braces for impact.`); return nextActor(); }
-  renderBattle();
-}
-function chooseSkill(key){
-  const sk=SKILLS[key];
-  B.pending={type:'skill', key};
-  if(sk.target==='all' || sk.target==='allies') return resolve(null);
-  B.phase = sk.target==='ally' ? 'allyTarget' : 'target';
-  renderBattle();
-}
-function chooseItem(k){ B.pending={type:'item', key:k}; B.phase='allyTarget'; renderBattle(); }
-function resolve(target){
-  const id=actorId(), P=B.pending; let more=false;
-  if(P.type==='attack') more=attack(id, target);
-  else if(P.type==='skill') more=useSkill(id, P.key, target);
-  else if(P.type==='item'){
-    const m=B.p[target];
-    if(!ITEMS[P.key].use(m)){ blog('It would have no effect.'); B.phase='cmd'; return renderBattle(); }
-    ITEMS[P.key].fx(m); S.items[P.key]--; blog(`${memberName(id)} uses ${ITEMS[P.key].name} on ${memberName(target)}.`);
-  }
-  B.pending=null;
-  afterPartyAction(more);
-}
-
-function renderBattle(){
-  if(!B) return;
-  const id=actorId(), phase=B.phase;
-  const enemyPick = phase==='target';
-  const enemies=h('div',{class:'grid'}, B.enemies.map(e=>{
-    const k=S.known[e.key]||{};
-    const dead=e.hp<=0;
-    return h('div',{class:'card'+(dead?' ko':'')+(enemyPick&&!dead?' pick':''), onclick: enemyPick&&!dead?()=>resolve(e):null},
-      e.down && !dead && h('span',{class:'badge'},'DOWN'),
-      h('b',null,e.name), h('div',{class:'small'},`HP ${Math.max(0,e.hp)}/${e.max}`), bar(e.hp,e.max,'en'),
-      h('div',{class:'aff'}, ELEMENTS.map(el=>{
-        const v=k[el]; const cls=v==='w'?'w':v==='r'?'r':v==='n'?'n':'';
-        return h('span',{class:cls}, `${EL_NAME[el]} ${v==='w'?'Wk':v==='r'?'Res':v==='n'?'Nul':v==='-'?'–':'?'}`);
-      })));
-  }));
-  const log=h('div',{class:'panel log'}, B.log.slice(-4).map(l=>h('div',null,l)));
-  const m=B.p[id]; const st=id?fighterStats(id):null;
-  let panel;
-  const back=btn('↩ Back', ()=>{ B.phase='cmd'; B.pending=null; renderBattle(); });
-  if(phase==='busy') panel=h('div',{class:'panel dim'},'Enemy turn…');
-  else if(phase==='allout') panel=h('div',{class:'panel'},
-    h('div',{class:'toast'},'All enemies are down!'),
-    btn('💥 ALL-OUT ATTACK!', allOut, {cls:'hot'}),
-    btn('Hold back', ()=>nextActor()));
-  else if(phase==='cmd') panel=h('div',{class:'panel'},
-    h('div',{style:'margin-bottom:6px'}, slant(`${memberName(id)}'s turn`)),
-    h('div',{class:'grid'},
-      h('button',{onclick:()=>cmd('attack')},'⚔️ Attack'),
-      h('button',{onclick:()=>cmd('skill')},'✨ Skill'),
-      id==='mc' && h('button',{onclick:()=>cmd('persona'), disabled:B.switched||S.personas.length<2},'🎭 Persona'),
-      h('button',{onclick:()=>cmd('item'), disabled:!Object.values(S.items).some(n=>n>0)},'🎒 Item'),
-      h('button',{onclick:()=>cmd('guard')},'🛡️ Guard')));
-  else if(phase==='skills') panel=h('div',{class:'panel'}, slant('Skills'),
-    h('div',{class:'grid',style:'margin-top:8px'}, st.skills.map(k=>{
-      const sk=SKILLS[k];
-      const cost=sk.hp?`${sk.hp} HP`:`${sk.sp} SP`;
-      const can=sk.hp? m.hp>sk.hp : m.sp>=sk.sp;
-      return h('button',{onclick:()=>chooseSkill(k), disabled:!can}, h('b',null,sk.name), h('br'),
-        h('span',{class:'small dim'}, `${sk.heal?'Heal':EL_NAME[sk.el]} · ${sk.target==='all'?'all foes':sk.target==='allies'?'party':sk.target==='ally'?'one ally':'one foe'} · ${cost}`));
-    })), back);
-  else if(phase==='persona') panel=h('div',{class:'panel'}, slant('Change Persona'),
-    h('div',{class:'grid',style:'margin-top:8px'}, S.personas.map(k=>{
-      const p=PERSONAS[k];
-      return h('button',{class:k===S.active?'card active':'card', disabled:k===S.active,
-        onclick:()=>{ S.active=k; B.switched=true; blog(`You summon ${p.name}!`); B.phase='cmd'; renderBattle(); }},
-        h('b',null,p.name), h('div',{class:'small dim'}, p.skills.map(s=>SKILLS[s].name).join(', ')), affRow(p.weak,p.res));
-    })), back);
-  else if(phase==='items') panel=h('div',{class:'panel'}, slant('Items'),
-    Object.keys(ITEMS).filter(k=>S.items[k]>0).map(k=>btn(`${ITEMS[k].name} ×${S.items[k]} — ${ITEMS[k].desc}`, ()=>chooseItem(k))), back);
-  else if(phase==='target') panel=h('div',{class:'panel'}, slant('Choose a target'),
-    h('div',{class:'grid',style:'margin-top:8px'}, aliveEnemies().map(e=>h('button',{onclick:()=>resolve(e)}, e.name))), back);
-  else if(phase==='allyTarget') panel=h('div',{class:'panel'}, slant('Choose an ally'),
-    h('div',{class:'grid',style:'margin-top:8px'}, PARTY.map(pid=>h('button',{onclick:()=>resolve(pid),
-      disabled: B.pending.type==='skill' && B.p[pid].hp<=0}, memberName(pid)))), back);
-  else panel=h('div');
-  show(enemies, log, partyPanel(phase==='busy'?null:id), panel);
-}
-
-titleScreen();
-</script>
+<canvas id="scene"></canvas>
+<div id="ui">
+  <div id="screen" hidden></div>
+  <div id="hud" hidden>
+    <div id="floorlabel"></div>
+    <canvas id="minimap" width="140" height="140"></canvas>
+    <div id="towermsg"></div>
+    <div id="hudparty"></div>
+    <div id="hint">WASD / arrows move · Shift walk · Space strike · Q/E or drag to turn</div>
+    <div id="hudbtns">
+      <button id="btnItems">🎒</button>
+      <button id="btnLeave">🚪</button>
+      <button id="btnStrike" aria-label="Strike">⚔</button>
+    </div>
+  </div>
+  <div id="joy"><div id="knob"></div></div>
+  <div id="labels"></div>
+  <div id="bhud" hidden>
+    <div id="blog"></div>
+    <div id="cmd"></div>
+    <div id="bparty"></div>
+  </div>
+  <div id="fx"></div>
+  <div id="modal" hidden></div>
+  <div id="loading">
+    <h1 class="logo">NINTH BELL</h1>
+    <div id="loadbar"><div id="loadfill"></div></div>
+    <div id="loadlabel" class="small dim">Loading…</div>
+  </div>
+</div>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
