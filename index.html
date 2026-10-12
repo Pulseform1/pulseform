@@ -23,6 +23,28 @@
 <meta name="audience" content="Learners and players practicing music, rhythm, timing, and listening skills">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Pulseform","applicationCategory":"EducationalApplication","applicationSubCategory":"Music Education","url":"https://pulseform.org/","image":"https://pulseform.org/icons/icon-512.png","operatingSystem":"Any","isAccessibleForFree":true,"inLanguage":"en","publisher":{"@type":"Organization","name":"Pulseform","url":"https://pulseform.org/"},"description":"An interactive music education game for practicing rhythm, timing, musical listening, coordination, and other musical skills through puzzles and challenges."}</script>
 <style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}.eduIntro{display:grid;gap:3px;max-width:620px;margin:10px auto 14px;padding:10px 14px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.045);text-align:center}.eduIntro b{font-family:var(--display);font-size:13px;letter-spacing:.04em}.eduIntro span{font-size:12px;line-height:1.45;color:var(--ink-2)}
+/* ---- the Concert Hall interface (the Grand Crescendo's 7.5M update): midnight lacquer, gold leaf and staff lines ---- */
+body.ui-cres{--panel:rgba(14,16,48,.9);--glass:rgba(255,214,120,.08);--glass-2:rgba(255,214,120,.14);--line:rgba(255,214,120,.26);--lantern:#FFD166;--lantern-ink:#1A1440;--mint:#FFE6A8}
+body.ui-cres .overlay{background:radial-gradient(ellipse at 50% 0%,rgba(255,209,102,.12),transparent 55%),rgba(8,8,30,.55)}
+body.ui-cres .panel{background:repeating-linear-gradient(0deg,transparent 0 28px,rgba(255,214,120,.035) 28px 29px),linear-gradient(165deg,rgba(38,42,110,.94),rgba(10,11,36,.95) 70%);border:1px solid rgba(255,214,120,.42);box-shadow:0 0 0 1px rgba(255,214,120,.08) inset,0 24px 60px rgba(0,0,0,.45),0 0 40px rgba(255,209,102,.08)}
+body.ui-cres h2,body.ui-cres .panel h3{color:#FFE6A8;letter-spacing:.01em}
+body.ui-cres .btn{background:linear-gradient(180deg,#FFE08A,#E8B64A);color:#1A1440;box-shadow:0 3px 0 #A8761C,0 6px 18px rgba(232,182,74,.28)}
+body.ui-cres .btn:active{transform:translateY(2px);box-shadow:0 1px 0 #A8761C}
+body.ui-cres .btn.ghost{background:rgba(255,214,120,.06);color:#FFF3D6;border:1px solid rgba(255,214,120,.38);box-shadow:none}
+body.ui-cres .mode{background:linear-gradient(120deg,rgba(255,214,120,.09),rgba(46,52,134,.28));border:1px solid rgba(255,214,120,.28)}
+body.ui-cres .mode:hover{border-color:rgba(255,214,120,.65)}
+body.ui-cres .chip{background:rgba(255,214,120,.07);border-color:rgba(255,214,120,.34);color:#FFF3D6}
+body.ui-cres .back{color:#FFE08A}
+body.ui-cres #menuOv{--lantern:#FFD166;--lantern-ink:#1A1440}
+body.ui-cres #menuOv .logo{color:#FFF3D6;text-shadow:0 0 30px rgba(255,209,102,.35)}body.ui-cres #menuOv .logo span{color:#FFD166}
+body.ui-cres #menuOv .cta{background:linear-gradient(110deg,#FFE08A,#E8B64A 60%,#D39A2E);box-shadow:0 10px 34px rgba(232,182,74,.35),0 0 0 1px rgba(255,240,200,.5) inset}
+body.ui-cres #menuOv .mcard,body.hween.ui-cres #menuOv .mcard{background:repeating-linear-gradient(0deg,transparent 0 22px,rgba(255,214,120,.04) 22px 23px),linear-gradient(160deg,rgba(40,44,112,.9),rgba(12,13,40,.92));border:1px solid rgba(255,214,120,.3);border-top:3px solid #FFD166}
+body.ui-cres #menuOv .mcard:hover{border-color:rgba(255,214,120,.7);box-shadow:0 10px 30px rgba(255,209,102,.15)}
+body.ui-cres #menuOv .eduIntro{background:rgba(14,16,48,.6);border-color:rgba(255,214,120,.3)}
+body.ui-cres .tabbar{background:linear-gradient(180deg,rgba(24,26,72,.96),rgba(8,8,30,.98));border-top:1px solid rgba(255,214,120,.4)}
+body.ui-cres .tabbar button.on{color:#FFE08A}
+body.ui-cres input[type=range]{accent-color:#FFD166}body.ui-cres .opt input{accent-color:#FFD166}
+label.opt.locked{opacity:.55}
 </style>
 <script>
 /* ===== CLOUD SAVES (sign in with Google or email) =====
@@ -2920,6 +2942,7 @@ body.phone .segs button,body.phone .tabs button{flex:0 0 auto;white-space:nowrap
     <label class="opt" for="lowLat"><input id="lowLat" type="checkbox"><span>Lowest sound delay<small>For wired speakers only. Turn off if the sound cuts in and out (always off with Bluetooth).</small></span></label>
     <label class="opt" for="relaxed"><input id="relaxed" type="checkbox"><span>Relaxed timing<small>Windows 30% wider, and skipping a beat never costs Harmony.</small></span></label>
     <label class="opt" for="ghostOn"><input id="ghostOn" type="checkbox"><span>Best-run ghost<small>A see-through copy of your best run of a level plays beside you.</small></span></label>
+    <label class="opt" for="uiCres"><input id="uiCres" type="checkbox"><span>Concert Hall interface<small id="uiCresSub">Midnight and gold for every screen. Unlocked by the Grand Crescendo at 7.5M.</small></span></label>
     <label class="opt" for="metroOn"><input id="metroOn" type="checkbox"><span>Beat bars<small>Two bars at the side of the screen slide together and meet on every beat.</small></span></label>
     <label class="opt" for="fountOn"><input id="fountOn" type="checkbox"><span>Fountain tips<small>The Fountain explains the game during every Courtyard level.</small></span></label>
     <label class="opt" for="reduce"><input id="reduce" type="checkbox"><span>Calmer effects<small>No screen flashes, camera nudges or bobbing.</small></span></label>
@@ -3383,10 +3406,10 @@ const ownsSkin=id=>{ const s=SKINS.find(k=>k.id===id); return !!s&&(SAVE.owned.i
 const CRES_GOAL=30000000;
 const CRES_TIERS=[
  {at:500000,k:'banner',id:'b_overture',n:'Overture banner',ic:'🎼'},
- {at:1500000,k:'notes',v:750,n:'♪750 for everyone',ic:'♪'},
+ {at:1500000,k:'notes',v:20000,n:'♪20,000 for everyone',ic:'♪'},
  {at:3000000,k:'sound',id:'hs_timpani',n:'Timpani hit sound',ic:'🥁'},
  {at:5000000,k:'skin',id:'cres_herald',n:'Brass Herald block',ic:'🎺'},
- {at:7500000,k:'update',n:'Encore Boost: +10% Notes from every run, for good',ic:'⏫'},
+ {at:7500000,k:'update',n:'Interface revamp: the Concert Hall look for every screen',ic:'🎨'},
  {at:10000000,k:'burst',id:'pb_encore',n:'Encore burst effect',ic:'🎆'},
  {at:13000000,k:'tiles',id:'t_hall',n:'Concert Hall tiles',ic:'🏛'},
  {at:16500000,k:'title',id:'crew',n:'"Crescendo Crew" title',ic:'🏷'},
@@ -9006,7 +9029,7 @@ function mergeSaves(loc,cl,additive){
   { const a=loc.remix||{}, b=cl.remix||{}, m={...a}; for(const k in b) m[k]=Math.max(m[k]||0,b[k]); out.remix=m; } out.bestRhythm=Math.max(loc.bestRhythm||0,cl.bestRhythm||0);
   { const a=loc.rankSet, b=cl.rankSet, r=!a?b:!b?a:(a.t||0)>=(b.t||0)?a:b; if(r) out.rankSet=r; else delete out.rankSet; }   // the newest rank setting wins
   for(const k of ['giftIds','liveGot']) out[k]=[...new Set([...(cl[k]||[]),...(loc[k]||[])])].slice(-200);
-  out.twinTeam=newer.twinTeam!==undefined?newer.twinTeam:(loc.twinTeam||cl.twinTeam||null); out.twinWin=!!(loc.twinWin||cl.twinWin); out.erlafWin=!!(loc.erlafWin||cl.erlafWin); for(const k of ['cresMine','cresTier','cresGot','cresPend']) out[k]=Math.max(loc[k]||0,cl[k]||0); out.cresWinSeen=!!(loc.cresWinSeen||cl.cresWinSeen); out.twinWinSeen=!!(loc.twinWinSeen||cl.twinWinSeen); out.twinWinName=loc.twinWinName||cl.twinWinName||'';
+  out.twinTeam=newer.twinTeam!==undefined?newer.twinTeam:(loc.twinTeam||cl.twinTeam||null); out.twinWin=!!(loc.twinWin||cl.twinWin); out.erlafWin=!!(loc.erlafWin||cl.erlafWin); for(const k of ['cresMine','cresTier','cresGot','cresPend']) out[k]=Math.max(loc[k]||0,cl[k]||0); out.uiCresAuto=!!(loc.uiCresAuto||cl.uiCresAuto); out.uiCres=newer.uiCres!==undefined?!!newer.uiCres:!!(loc.uiCres||cl.uiCres); out.cresWinSeen=!!(loc.cresWinSeen||cl.cresWinSeen); out.twinWinSeen=!!(loc.twinWinSeen||cl.twinWinSeen); out.twinWinName=loc.twinWinName||cl.twinWinName||'';
   const dl=loc.daily||{}, dc=cl.daily||{}; out.daily=Object.assign({},DEF.daily,newer===cl?dc:dl);
   if(dl.date&&dl.date===dc.date){ out.daily.best=Math.max(dl.best||0,dc.best||0); out.daily.stars=Math.max(dl.stars||0,dc.stars||0); }
   out.daily.streak=Math.max(dl.streak||0,dc.streak||0);
@@ -10343,7 +10366,7 @@ function playerTag(P){
 
 /* ================= RANKS & XP ================= */
 /* Notes earned from play are 10% below the original rates (purchases and refunds are not affected) */
-const NOTE_RATE=.9, earnN=n=>Math.round((n||0)*NOTE_RATE*liveMul('notes')*(cresHave(5)?1.1:1));   // a live event can boost Notes from play
+const NOTE_RATE=.9, earnN=n=>Math.round((n||0)*NOTE_RATE*liveMul('notes'));   // a live event can boost Notes from play
 /* an admin can set a rank (SAVE.rankSet). It's a starting point, not a cage: XP earned after it was set keeps climbing
    from there, so a player put down to Bronze can earn their way back up */
 const myRank=()=>{ const r=SAVE.rankSet, xp=SAVE.xp||0; if(!r||typeof r.n!=='number') return rankOf(xp);
@@ -14236,7 +14259,7 @@ function buildBanners(){
 function packHear(id){ firstGesture(); PACKPREV={id,until:performance.now()+8000}; }
 function buildSettings(){ delUI();
   $('ctrlField').hidden=MOB;
-  $('ghostOn').checked=!SAVE.ghostOff; $('metroOn').checked=!SAVE.metroOff; $('fountOn').checked=!SAVE.fountOff; $('relaxed').checked=SAVE.relaxed; $('lowLat').checked=!!SAVE.lowLat; $('reduce').checked=SAVE.reduce; $('haptics').checked=SAVE.haptics; syncOffset(); syncVol();
+  uiCresApply(); $('ghostOn').checked=!SAVE.ghostOff; $('metroOn').checked=!SAVE.metroOff; $('fountOn').checked=!SAVE.fountOff; $('relaxed').checked=SAVE.relaxed; $('lowLat').checked=!!SAVE.lowLat; $('reduce').checked=SAVE.reduce; $('haptics').checked=SAVE.haptics; syncOffset(); syncVol();
   document.querySelectorAll('#ctrlTabs button').forEach(b=>b.classList.toggle('on',b.dataset.c===SAVE.controls));
 
 }
@@ -15993,6 +16016,12 @@ $('relaxed').onchange=e=>{SAVE.relaxed=e.target.checked; save()};
 $('lowLat').onchange=e=>{SAVE.lowLat=e.target.checked; save(); rebuildAudio(); };
 $('reduce').onchange=e=>{SAVE.reduce=e.target.checked; save()};
 $('metroOn').onchange=e=>{ SAVE.metroOff=!e.target.checked; save(); };
+/* the Concert Hall interface: the Grand Crescendo's 7.5M update. It switches itself on the first time it unlocks; Settings turns it off or on */
+function uiCresApply(){ const ok=cresHave(5); if(ok&&!SAVE.uiCresAuto){ SAVE.uiCresAuto=true; SAVE.uiCres=true; save(); }
+  document.body.classList.toggle('ui-cres',ok&&!!SAVE.uiCres); const c=$('uiCres'); if(c){ c.disabled=!ok; c.checked=ok&&!!SAVE.uiCres; c.closest('label').classList.toggle('locked',!ok);
+    $('uiCresSub').textContent=ok?'Midnight and gold for every screen: the Grand Crescendo\'s interface revamp.':'Midnight and gold for every screen. Unlocks when the Grand Crescendo reaches 7.5M.'; } }
+$('uiCres').onchange=e=>{ SAVE.uiCres=e.target.checked; save(); uiCresApply(); };
+uiCresApply(); setInterval(uiCresApply,5000);
 $('fountOn').onchange=e=>{ SAVE.fountOff=!e.target.checked; save(); };
 $('offset').oninput=e=>{SAVE.offset=+e.target.value; save(); syncOffset()};
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&G.state==='playing'&&!(G.mode&&G.mode.net)) pause(); wakeSync(); mobAudioSync(); });
