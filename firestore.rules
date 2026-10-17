@@ -363,6 +363,63 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ---- Jack vs Haron: live from Sat Oct 17 2026 until 3:30 PM Central Fri Oct 23 2026 ----
+    // Signing up: the code must match that side's fingerprint (SHA-256), each side can be claimed once, until the duel ends.
+    // Only the person who signed up can read their claim (it holds their code).
+    match /events/jvh/claims/{side} {
+      allow get: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn()
+        && (side == 'jack' || side == 'haron')
+        && request.resource.data.keys().hasOnly(['uid','code','t'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.code is string && request.resource.data.code.size() <= 24
+        && hashing.sha256(request.resource.data.code).toHexString().lower()
+             == (side == 'jack' ? 'a726dc4c1ebe8eda620152cf1a3f32c72fc6faaf936d5097780368904e4c19cd' : 'b4308f6e8b2857046f5cbc9887b8ac49bf3a3f83c22184167c91d2d2aba11352')
+        && request.time < timestamp.value(1792787400000);
+      allow update, delete: if false;
+    }
+    // The bars: everyone can watch; only the side's player can add to it, only while the duel is live (plus 5 minutes for a
+    // run that finishes right at the end), and at most 400,000 points at a time. The bar also shows the player's username.
+    match /events/jvh/sides/{side} {
+      allow read: if true;
+      allow create: if signedIn() && (side == 'jack' || side == 'haron')
+        && get(/databases/$(db)/documents/events/jvh/claims/$(side)).data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['score','t','name'])
+        && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 24))
+        && request.resource.data.score == 0;
+      allow update: if signedIn()
+        && get(/databases/$(db)/documents/events/jvh/claims/$(side)).data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['score','t','name'])
+        && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 24))
+        && request.resource.data.score is number
+        && request.resource.data.score >= resource.data.score
+        && request.resource.data.score - resource.data.score <= 400000
+        // the score only moves while the duel is live; the player's username can be updated any time
+        && (request.resource.data.score == resource.data.score
+            || (request.time >= timestamp.value(1792213200000) && request.time < timestamp.value(1792787700000)));
+      allow delete: if false;
+    }
+    // Betting on Jack vs Haron: everyone can see the bets; you can only add to your own, at most 100,000 notes at a time,
+    // until 12:00 AM Central Fri Oct 23 2026. Amounts never go down.
+    match /events/jvh/bets/{uid} {
+      allow read: if true;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['jack','haron','name','t'])
+        && request.resource.data.jack is number && request.resource.data.haron is number
+        && request.resource.data.jack >= 0 && request.resource.data.haron >= 0
+        && request.resource.data.jack + request.resource.data.haron <= 100000
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24
+        && request.time < timestamp.value(1792731600000);
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['jack','haron','name','t'])
+        && request.resource.data.jack is number && request.resource.data.haron is number
+        && request.resource.data.jack >= resource.data.jack && request.resource.data.haron >= resource.data.haron
+        && (request.resource.data.jack - resource.data.jack) + (request.resource.data.haron - resource.data.haron) <= 100000
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24
+        && request.time < timestamp.value(1792731600000);
+      allow delete: if false;
+    }
+
     // Party invites: only someone on the recipient's friends list can invite them
     match /invites/{to}/items/{from} {
       allow create, update: if signedIn() && request.auth.uid == from

@@ -2651,6 +2651,37 @@ body.phone.hastabs #denOv > .panel{padding-bottom:calc(96px + env(safe-area-inse
 @keyframes fewin{50%{transform:scale(1.18)}}
 .fesc canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;transition:opacity .6s}.fesc canvas.gone{opacity:0;pointer-events:none}
 @media (prefers-reduced-motion:reduce){.fepn,.feball{animation-duration:9s}.fepn{animation:none}}
+/* ---- Jack vs Haron (the duel screens reuse Cale vs Korra's layout; Jack is green, Haron is purple) ---- */
+:root{--dla:#9CFF7E;--dla2:#3FCB3A;--dla3:#0F5A1E;--dlb:#D3B2FF;--dlb2:#9B5CFF;--dlb3:#3A1584}
+.duelpanel{background:linear-gradient(120deg,rgba(14,70,30,.97),rgba(10,10,24,.98) 48%,rgba(62,22,128,.97));
+  box-shadow:-24px 0 60px -20px rgba(63,203,58,.55),24px 0 60px -20px rgba(155,92,255,.6),0 20px 60px rgba(0,0,0,.5)}
+.duelpanel .cvkrays{background:conic-gradient(from 0deg,rgba(255,214,228,0),rgba(255,214,228,.38) 8%,rgba(255,214,228,0) 16%,rgba(156,255,126,.22) 30%,rgba(255,214,228,0) 40%,rgba(255,214,228,.32) 55%,rgba(255,214,228,0) 64%,rgba(211,178,255,.24) 78%,rgba(255,214,228,0) 88%)}
+.duelpanel .cvkglow{background:radial-gradient(ellipse,rgba(255,226,236,.42),rgba(155,92,255,.16) 55%,transparent 72%)}
+.duelpanel .cvkprize b{background:linear-gradient(90deg,#FFFFFF,#FFD6E4 45%,#D3B2FF 70%,#9CFF7E);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cvktitle .a{background:linear-gradient(180deg,#E6FFDC,var(--dla2));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(63,203,58,.7))}
+.cvktitle .b{background:linear-gradient(180deg,#F2E8FF,var(--dlb2));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(155,92,255,.75))}
+.cvktimer.final.a b{color:var(--dla);text-shadow:0 0 26px rgba(63,203,58,.75),0 0 60px rgba(63,203,58,.35)}.cvktimer.final.b b{color:var(--dlb);text-shadow:0 0 26px rgba(155,92,255,.8),0 0 60px rgba(155,92,255,.35)}
+.cvkrow.dla .cvklbl{color:var(--dla)}.cvkrow.dlb .cvklbl{color:var(--dlb)}
+.cvkrow.dla .cvktrack i{background:linear-gradient(90deg,var(--dla3),var(--dla2) 70%,#E6FFDC);box-shadow:0 0 18px rgba(63,203,58,.8)}
+.cvkrow.dlb .cvktrack i{background:linear-gradient(90deg,var(--dlb3),var(--dlb2) 70%,#F2E8FF);box-shadow:0 0 18px rgba(155,92,255,.8)}
+.cvkyou b.a,.cvkpots .a{color:var(--dla)}.cvkyou b.b,.cvkpots .b{color:var(--dlb)}
+.cvkside.a.on{background:linear-gradient(90deg,var(--dla3),var(--dla2));border-color:var(--dla);box-shadow:0 0 16px rgba(63,203,58,.5)}
+.cvkside.b.on{background:linear-gradient(90deg,var(--dlb3),var(--dlb2));border-color:var(--dlb);box-shadow:0 0 16px rgba(155,92,255,.55)}
+.cvkmb.a{border-color:rgba(63,203,58,.45)}.cvkmb.a span{color:var(--dla)}.cvkmb.b{border-color:rgba(155,92,255,.5)}.cvkmb.b span{color:var(--dlb)}
+.duelpanel .cvkjoin{background:linear-gradient(90deg,var(--dla2),#5C8A6A 50%,var(--dlb2))!important}
+.duelplace{display:flex;flex-direction:column;gap:8px}
+.duelnote{margin:0;color:var(--ink-2);max-width:42ch}
+.duelglyph{color:#E6FFDC!important;text-shadow:0 0 10px rgba(156,255,126,.6),0 0 18px rgba(211,178,255,.5)!important}
+.duelrwban{display:block;width:72px;height:26px;margin:11px 0;border-radius:8px;border:1px solid rgba(255,255,255,.25)}
+.duelprizes{grid-template-columns:repeat(2,1fr)}
+.duelprizes .glyph{background-image:linear-gradient(90deg,#FFFFFF 50%,#FFB3C9 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.duelpanel .cvkrules,.duelpanel .duelnote{font-size:12.5px;line-height:1.45}
+#duelPromo,#duelWinOv{align-items:start;overflow-y:auto;padding-block:16px}
+#duelCode{min-width:0;min-height:44px;font:700 15px var(--display);letter-spacing:.12em;text-align:center;text-transform:uppercase;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink)}
+#duelAmt{min-width:0;min-height:40px;padding:0 10px;font:700 15px var(--display);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;color:var(--ink)}
+.duelban{background:linear-gradient(110deg,rgba(63,203,58,.42),rgba(20,16,40,.88) 50%,rgba(155,92,255,.5))!important}
+.duelban .duelic{background:linear-gradient(#FFE3EE,#C9B8E8);overflow:hidden}.duelban .duelic canvas{width:40px;height:40px}
+@media (max-width:420px){.duelrwban{width:44px;margin:0}}
 </style>
 <section id="menuOv" class="screen" hidden>
   <div class="mcorner"><button class="admfab" id="mAdmin" type="button" hidden aria-label="Admin panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-3 7.6-7 9-4-1.4-7-4.8-7-9V6z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></svg><span>Admin</span></button><button class="phours" id="mHours" type="button" title="Time played on Pulseform" aria-label="Time played on Pulseform">⏱ 0m</button></div>
@@ -2662,6 +2693,7 @@ body.phone.hastabs #denOv > .panel{padding-bottom:calc(96px + env(safe-area-inse
       <p class="tag">Practice rhythm, timing, and musical listening one beat at a time. Each level turns musical practice into an interactive learning challenge.</p>
       <div class="eduIntro" aria-label="About Pulseform learning"><b>Learn through play</b><span>Pulseform combines rhythm practice, listening exercises, timing challenges, and interactive puzzles to help players develop musical skills.</span></div>
        <button class="cta" id="mContinue" type="button"><span class="cta-k" id="mContTitle">Continue</span><span class="cta-s" id="mContSub"></span><span class="cta-go" aria-hidden="true">▶</span></button>
+      <button class="twban duelban" id="mDuel" type="button" hidden><span class="twban-ic duelic" aria-hidden="true"><canvas class="skprev" data-skin="sk_gubby" data-px="40" width="40" height="40"></canvas></span><span class="twban-t"><b>⚔ Jack vs Haron</b><small id="mDuelSub">Live now · bet on the winner</small></span><span class="twban-go" aria-hidden="true">›</span></button>
       <button class="twban duckban" id="mErlaf" type="button" hidden><span class="twban-ic duckic" aria-hidden="true"><canvas class="skprev" data-skin="sk_erlaf" data-px="40" width="40" height="40"></canvas></span><span class="twban-t"><b>Erlaf the Giant Duck</b><small id="mErlafSub">Limited boss challenge</small></span><span class="twban-go" id="mErlafGo" aria-hidden="true">Play ›</span></button>
       <button class="twban liveban" id="mLive" type="button" hidden><span class="twban-ic" aria-hidden="true">★</span><span class="twban-t"><b id="mLiveT">Live event</b><small id="mLiveSub"></small></span><span class="twban-go" id="mLiveGo" aria-hidden="true">›</span></button>
       <button class="twban cresban" id="mCres" type="button" hidden><span class="twban-ic" aria-hidden="true">🎼</span><span class="twban-t"><b>The Grand Crescendo</b><small id="mCresSub">One goal for everyone: 30,000,000 points</small><i class="goalbar"><i id="mCresBar"></i></i></span><span class="twban-go" aria-hidden="true">›</span></button>
@@ -3105,6 +3137,77 @@ body.phone.hastabs #denOv > .panel{padding-bottom:calc(96px + env(safe-area-inse
     <div class="twbhead"><b>The bracket</b><small>Every day at 3:30 PM Central the bottom teams are cut.</small></div>
     <div class="twbracket" id="twBracket"></div>
     <p class="small cvkrules">Teams of two, both signed in. A team's score each round is its best Online Journey run played by just the two teammates, and scores start fresh every round. The field is cut each day until one team is left on Friday at 3:30 PM. Both players on that team win Equinox.</p>
+  </div>
+</section>
+<section id="duelPromo" class="overlay" hidden>
+  <div class="panel cvkpanel cvkpromo duelpanel" role="dialog" aria-labelledby="duelPTitle">
+    <div class="cvkpedestal small" aria-hidden="true"><div class="cvkrays"></div><div class="cvkglow"></div>
+      <canvas class="skprev" data-skin="sk_gubby" data-px="170" width="170" height="170"></canvas>
+      <div class="cvkstone"><i></i><i></i><i></i></div></div>
+    <span class="cvkbadge">Live event</span>
+    <h2 class="cvktitle"><span class="a">JACK</span><em>VS</em><span class="b">HARON</span></h2>
+    <p class="cvkask" id="duelPTitle">Who wins? Bet on the real winner.</p>
+    <div class="cvktimer"><small>Betting closes in</small><b id="duelPTime">--</b></div>
+    <div class="cvkpots"><span class="a">Jack <b id="duelPA">♪0</b></span><span class="b">Haron <b id="duelPB">♪0</b></span></div>
+    <p class="small duelnote">Back the winner and take a share of the other side's notes. Bet ♪2,000 or ♪4,000 to unlock rewards you keep either way. Whoever wins the duel gets Gubby.</p>
+    <div class="row" style="justify-content:center"><button class="btn cvkjoin" id="duelPGo" type="button">⚔ Bet now</button><button class="btn ghost" id="duelPNo" type="button">Maybe later</button></div>
+  </div>
+</section>
+<section id="duelOv" class="overlay cvkov" hidden>
+  <div class="panel cvkpanel duelpanel">
+    <div class="cvkpedestal" aria-hidden="true"><div class="cvkrays"></div><div class="cvkglow"></div>
+      <canvas class="skprev" data-skin="sk_gubby" data-px="250" width="250" height="250"></canvas>
+      <div class="cvkstone"><i></i><i></i><i></i></div></div>
+    <div class="cvkprize"><b>Gubby</b><span>The prize: Gubby and his Gubby Hop landing effect. One of a kind: only the winner will ever own them.</span></div>
+    <div class="head cvkhead"><button class="back" id="duelBack" type="button">← Menu</button><span class="cvkbadge">Live event</span></div>
+    <h2 class="cvktitle"><span class="a">JACK</span><em>VS</em><span class="b">HARON</span></h2>
+    <div class="cvktimer" id="duelTimer"><small id="duelPhase">Ends in</small><b id="duelTime">--</b><span class="small" id="duelWhen"></span></div>
+    <div class="cvkbars">
+      <div class="cvkrow dla" id="duelRowA"><div class="cvklbl"><span class="who"><b id="duelNmA">Jack</b><small id="duelRlA"></small></span><span id="duelScA">0</span></div><div class="cvktrack"><i id="duelBarA"></i></div><div class="cvkbets" id="duelBetsA"></div></div>
+      <div class="cvkrow dlb" id="duelRowB"><div class="cvklbl"><span class="who"><b id="duelNmB">Haron</b><small id="duelRlB"></small></span><span id="duelScB">0</span></div><div class="cvktrack"><i id="duelBarB"></i></div><div class="cvkbets" id="duelBetsB"></div></div>
+    </div>
+    <div id="duelYou" class="cvkyou"></div>
+    <div class="cvkbet" id="duelBet">
+      <div class="cvkbethead"><b id="duelBetHead">Place your bet</b><span class="small" id="duelBetWhen"></span></div>
+      <div id="duelPlaceArea" class="duelplace">
+        <div class="cvkpick"><button type="button" class="cvkside a" data-side="jack">Jack</button><button type="button" class="cvkside b" data-side="haron">Haron</button></div>
+        <div class="cvkamt"><button type="button" data-amt="100">100</button><button type="button" data-amt="500">500</button><button type="button" data-amt="1000">1,000</button><button type="button" data-amt="2000">2,000</button><button type="button" data-amt="4000">4,000</button></div>
+        <div class="joinrow"><input id="duelAmt" inputmode="numeric" placeholder="Notes to bet" aria-label="Notes to bet"><button class="btn" id="duelPlace" type="button">Bet</button></div>
+      </div>
+      <div class="small" id="duelBetMsg" role="status"></div>
+      <div class="cvkmybets">
+        <div class="cvkmb a"><span>Jack</span><b id="duelMbA">♪0</b><small id="duelWinA"></small></div>
+        <div class="cvkmb b"><span>Haron</span><b id="duelMbB">♪0</b><small id="duelWinB"></small></div>
+      </div>
+      <div class="cvkrewards">
+        <div class="cvkrw" id="duelRw1"><span class="glyph duelglyph">⚔</span><b>Ringside</b><small>Landing effect · bet ♪2,000 in total</small><i></i></div>
+        <div class="cvkrw" id="duelRw2"><span class="duelrwban" id="duelRwB2"></span><b>Team Jack</b><small>Banner · bet ♪4,000 on Jack</small><i></i></div>
+        <div class="cvkrw" id="duelRw3"><span class="duelrwban" id="duelRwB3"></span><b>Team Haron</b><small>Banner · bet ♪4,000 on Haron</small><i></i></div>
+      </div>
+      <p class="small cvkrules">If your pick wins, you get your notes back plus a share of everything bet on the other side, in proportion to your bet. Rewards are yours to keep either way. Jack and Haron can only bet on themselves.</p>
+    </div>
+    <div id="duelJoin">
+      <button class="btn cvkjoin" id="duelOpen" type="button">⚔ Are you Jack or Haron? Sign up with your code</button>
+      <div id="duelForm" class="joinrow" hidden><input id="duelCode" maxlength="24" placeholder="YOUR EVENT CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Event code"><button class="btn" id="duelGo" type="button">Sign up</button></div>
+      <div class="small" id="duelMsg" role="status"></div>
+    </div>
+    <p class="small cvkrules">Every point Jack and Haron score, in any mode, while the duel is live adds to their bar. The higher total when the timer runs out wins.</p>
+  </div>
+</section>
+<section id="duelWinOv" class="overlay" hidden>
+  <div class="panel cvkpanel cvkpromo cvkwin duelpanel" role="dialog" aria-labelledby="duelWTitle">
+    <div class="cvkpedestal small" aria-hidden="true"><div class="cvkrays"></div><div class="cvkglow"></div>
+      <canvas class="skprev" data-skin="sk_gubby" data-px="170" width="170" height="170"></canvas>
+      <div class="cvkstone"><i></i><i></i><i></i></div></div>
+    <span class="cvkbadge">Jack vs Haron · champion</span>
+    <h2 class="cvkwintitle" id="duelWTitle">You won!</h2>
+    <p class="cvkask" id="duelWSub">Gubby is yours, and only yours.</p>
+    <div class="cvkprizes duelprizes">
+      <div><canvas class="skprev" data-skin="sk_gubby" width="64" height="64"></canvas><b>Gubby</b><small>Block</small></div>
+      <div><span class="glyph">ω</span><b>Gubby Hop</b><small>Landing effect</small></div>
+    </div>
+    <div class="row" style="justify-content:center"><button class="btn cvkjoin" id="duelWEquip" type="button">✦ Equip both</button><button class="btn ghost" id="duelWLater" type="button">Later</button></div>
+    <small class="small" id="duelWNote">You can change them any time in the Collection.</small>
   </div>
 </section>
 <section id="cvkWinOv" class="overlay" hidden>
@@ -3741,6 +3844,8 @@ const BANNERS=[
  {id:'b_finish',name:'Finish Line',price:900,bg:'linear-gradient(100deg,#14121E 0 45%,rgba(20,18,30,.55) 75%,rgba(20,18,30,.15)),repeating-conic-gradient(#F4F4F4 0 25%,#16141E 0 50%) 0 0/14px 14px'},
  {id:'b_wave',name:'Sound Wave',price:1500,bg:`url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%2260%22 viewBox=%220 0 300 60%22 preserveAspectRatio=%22none%22%3E%3Cpolyline points=%220,30.0 4,30.1 8,30.4 12,30.9 16,31.6 20,32.3 24,33.1 28,33.9 32,34.6 36,35.1 40,35.5 44,35.6 48,35.4 52,34.9 56,34.1 60,33.0 64,31.7 68,30.1 72,28.3 76,26.5 80,24.6 84,22.8 88,21.2 92,19.8 96,18.7 100,17.9 104,17.6 108,17.8 112,18.4 116,19.4 120,20.9 124,22.7 128,24.9 132,27.3 136,29.8 140,32.3 144,34.8 148,37.2 152,39.2 156,41.0 160,42.3 164,43.2 168,43.7 172,43.6 176,43.0 180,42.0 184,40.6 188,38.9 192,36.9 196,34.8 200,32.5 204,30.3 208,28.2 212,26.2 216,24.6 220,23.2 224,22.2 228,21.5 232,21.3 236,21.4 240,21.8 244,22.5 248,23.4 252,24.5 256,25.7 260,26.8 264,28.0 268,29.0 272,29.9 276,30.5 280,31.0 284,31.2 288,31.1 292,30.9 296,30.5 300,30.0%22 fill=%22none%22 stroke=%22%2322C8FF%22 stroke-width=%221.6%22 opacity=%220.9%22 stroke-linecap=%22round%22/%3E%3Cpolyline points=%220,30.0 4,30.4 8,30.8 12,31.1 16,31.2 20,31.1 24,30.7 28,30.1 32,29.2 36,28.2 40,27.2 44,26.2 48,25.4 52,24.8 56,24.6 60,24.8 64,25.4 68,26.5 72,27.9 76,29.7 80,31.6 84,33.5 88,35.3 92,36.9 96,38.0 100,38.6 104,38.7 108,38.1 112,36.9 116,35.2 120,33.1 124,30.7 128,28.2 132,25.8 136,23.6 140,21.8 144,20.6 148,20.0 152,20.2 156,20.9 160,22.3 164,24.3 168,26.6 172,29.0 176,31.5 180,33.9 184,35.9 188,37.4 192,38.4 196,38.8 200,38.6 204,37.8 208,36.4 212,34.8 216,32.9 220,30.9 224,29.0 228,27.4 232,26.0 236,25.1 240,24.6 244,24.5 248,24.9 252,25.5 256,26.4 260,27.5 264,28.5 268,29.5 272,30.3 276,30.9 280,31.2 284,31.3 288,31.1 292,30.8 296,30.4 300,30.0%22 fill=%22none%22 stroke=%22%23FF4FD8%22 stroke-width=%221.6%22 opacity=%220.8%22 stroke-linecap=%22round%22/%3E%3Cpolyline points=%220,30.0 4,30.2 8,30.2 12,30.0 16,29.5 20,29.0 24,28.4 28,28.0 32,27.8 36,27.9 40,28.4 44,29.3 48,30.5 52,31.7 56,32.9 60,33.9 64,34.3 68,34.3 72,33.6 76,32.3 80,30.6 84,28.7 88,26.8 92,25.3 96,24.3 100,24.0 104,24.5 108,25.7 112,27.6 116,29.9 120,32.2 124,34.3 128,35.9 132,36.8 136,36.8 140,35.9 144,34.2 148,31.9 152,29.4 156,27.0 160,25.0 164,23.6 168,23.1 172,23.5 176,24.7 180,26.6 184,28.8 188,31.2 192,33.3 196,34.9 200,35.8 204,35.9 208,35.3 212,34.0 216,32.3 220,30.4 224,28.6 228,27.1 232,26.1 236,25.7 240,25.9 244,26.6 248,27.7 252,28.9 256,30.1 260,31.1 264,31.7 268,32.1 272,32.0 276,31.7 280,31.2 284,30.7 288,30.2 292,29.9 296,29.9 300,30.0%22 fill=%22none%22 stroke=%22%23FFD166%22 stroke-width=%221.6%22 opacity=%220.7%22 stroke-linecap=%22round%22/%3E%3C/svg%3E') center/100% 100% no-repeat,radial-gradient(ellipse at 50% 50%,rgba(122,92,255,.35),transparent 70%),linear-gradient(100deg,#0A0A1E,#1A1640 60%,#2A1A50)`},
  {id:'b_diamond',name:'Diamond Facets',price:5000,bg:`linear-gradient(115deg,transparent 35%,rgba(255,255,255,.45) 47%,transparent 58%),linear-gradient(100deg,rgba(10,24,52,.85) 0 30%,rgba(10,24,52,.2) 75%),url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2240%22 viewBox=%220 0 60 40%22 preserveAspectRatio=%22none%22%3E%3Cpolygon points=%220,0 30,0 15,20%22 fill=%22%23BFE8FF%22 opacity=%22.55%22/%3E%3Cpolygon points=%2230,0 60,0 45,20%22 fill=%22%238AC8F0%22 opacity=%22.5%22/%3E%3Cpolygon points=%2215,20 45,20 30,0%22 fill=%22%23E8F8FF%22 opacity=%22.45%22/%3E%3Cpolygon points=%220,0 15,20 0,40%22 fill=%22%236AA8E0%22 opacity=%22.5%22/%3E%3Cpolygon points=%2260,0 45,20 60,40%22 fill=%22%23A8DCFF%22 opacity=%22.45%22/%3E%3Cpolygon points=%2215,20 45,20 30,40%22 fill=%22%235A90D0%22 opacity=%22.5%22/%3E%3Cpolygon points=%220,40 15,20 30,40%22 fill=%22%239AD0F8%22 opacity=%22.4%22/%3E%3Cpolygon points=%2230,40 45,20 60,40%22 fill=%22%237AB8E8%22 opacity=%22.45%22/%3E%3Cpath d=%22M48 6 l1.2 3 3 1.2 -3 1.2 -1.2 3 -1.2 -3 -3 -1.2 3 -1.2z%22 fill=%22%23fff%22/%3E%3Cpath d=%22M10 28 l.8 2 2 .8 -2 .8 -.8 2 -.8 -2 -2 -.8 2 -.8z%22 fill=%22%23fff%22/%3E%3C/svg%3E') 0 0/60px 40px repeat,linear-gradient(100deg,#0A1834,#1E4A84 60%,#3A7AC0)`},
+ {id:'b_team_jack',name:'Team Jack',req:{duelOn:['jvh','jack',4000]},hidden:true,bg:'linear-gradient(115deg,transparent 46%,rgba(230,255,220,.8) 47%,transparent 49.5%),repeating-linear-gradient(115deg,rgba(255,255,255,.07) 0 10px,transparent 10px 20px),radial-gradient(ellipse at 88% 50%,rgba(156,255,126,.5),transparent 55%),linear-gradient(100deg,#08200E,#145A20 55%,#3FCB3A)'},
+ {id:'b_team_haron',name:'Team Haron',req:{duelOn:['jvh','haron',4000]},hidden:true,bg:'linear-gradient(115deg,transparent 46%,rgba(242,232,255,.8) 47%,transparent 49.5%),repeating-linear-gradient(115deg,rgba(255,255,255,.07) 0 10px,transparent 10px 20px),radial-gradient(ellipse at 88% 50%,rgba(211,178,255,.5),transparent 55%),linear-gradient(100deg,#120830,#3A1584 55%,#9B5CFF)'},
  {id:'b_stormfront',name:'Stormfront',req:{pass:15},bg:'linear-gradient(112deg,transparent 46%,rgba(159,216,255,.85) 47%,transparent 49%),linear-gradient(118deg,transparent 64%,rgba(255,255,255,.6) 65%,transparent 66.5%),linear-gradient(100deg,#0E1220,#2A3450 55%,#4A5A7A)'},
  {id:'b_phoenix',name:'Phoenix Rise',req:{pass:35},bg:'radial-gradient(ellipse at 50% 140%,rgba(255,224,138,.8),transparent 55%),radial-gradient(ellipse at 80% 120%,rgba(255,90,31,.7),transparent 50%),linear-gradient(100deg,#2A0A08,#7A1E10 50%,#D8501A)'},
  {id:'b_deepglow',name:'Deep Glow',req:{pass:75},bg:'radial-gradient(circle at 20% 40%,rgba(92,255,224,.6) 0 2px,transparent 3px),radial-gradient(circle at 55% 70%,rgba(92,255,224,.5) 0 2px,transparent 3px),radial-gradient(circle at 82% 30%,rgba(92,255,224,.55) 0 2px,transparent 3px),linear-gradient(100deg,#04121A,#0C2E3A 60%,#145A60)'},
@@ -3784,8 +3889,8 @@ const CRES_TIERS=[
 const cresFmt=n=>n>=1e6?(Math.floor(n/1e5)/10).toLocaleString()+'M':n>=1e3?Math.floor(n/1e3)+'K':String(n);
 // milestone n (1-based) is yours once the community reached it and you added at least one run
 const cresHave=n=>(SAVE.cresMine||0)>0&&(SAVE.cresTier||0)>=n;
-const reqMet=r=>!r||(r.cres?cresHave(r.cres):true)&&(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?myRank()>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.duck?!!SAVE.erlafWin:true)&&(r.twin?!!SAVE.twinWin:true)&&(r.pass?passGot(r.pass):true)&&(r.passp?passPGot(r.passp):true)&&(r.login?giftDays()>=r.login:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true)&&!r.bp&&!r.spot&&!r.recipe&&!r.fused;
-const reqText=r=>r.cres?`The Grand Crescendo: community reaches ${cresFmt(CRES_TIERS[r.cres-1].at)}`:r.spot?'Weekly spotlight: in the Shop every few weeks':r.recipe?'Seasonal Forge recipe':r.fused?'Your fusion':r.bp?`Found in the ${(BPACKS.find(p=>p.id===r.bp)||{}).name||'block packs'}`:r.duck?'Limited event: defeat Erlaf the Giant Duck':r.pass?`Pulse Pass · tier ${r.pass}`:r.passp?`Pulse Pass+ · tier ${r.passp}`:r.login?`Log in on ${r.login} different days`:r.twin?'One of a kind: only the Twin Pulse champions will own it':r.boss?`Complete ${BOSS[r.boss-1]}`:r.cvkOn?'Past event reward: Cale vs Korra':r.cvkBet?'Past event reward: Cale vs Korra':r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
+const reqMet=r=>!r||(r.cres?cresHave(r.cres):true)&&(r.streak?SAVE.maxStreak>=r.streak:true)&&(r.stars?totalStars()>=r.stars:true)&&(r.hard?hardCleared()>=r.hard:true)&&(r.rank?myRank()>=r.rank:true)&&(r.skin?ownsSkin(r.skin):true)&&(r.event?!!(SAVE.events||{})[r.event]:true)&&(r.cvk?!!SAVE.cvkWin:true)&&(r.duel?duelWon(r.duel):true)&&(r.duelBet?duelBetSum(r.duelBet[0])>=r.duelBet[1]:true)&&(r.duelOn?duelBetOf(r.duelOn[0],r.duelOn[1])>=r.duelOn[2]:true)&&(r.duck?!!SAVE.erlafWin:true)&&(r.twin?!!SAVE.twinWin:true)&&(r.pass?passGot(r.pass):true)&&(r.passp?passPGot(r.passp):true)&&(r.login?giftDays()>=r.login:true)&&(r.cvkBet?cvkMyBet('cale')+cvkMyBet('korra')>=r.cvkBet:true)&&(r.cvkOn?cvkMyBet(r.cvkOn)>=CVK_BET_BLOCK:true)&&(r.boss?(SAVE.stars[r.boss+'-B']||0)>0:true)&&!r.bp&&!r.spot&&!r.recipe&&!r.fused;
+const reqText=r=>r.cres?`The Grand Crescendo: community reaches ${cresFmt(CRES_TIERS[r.cres-1].at)}`:r.spot?'Weekly spotlight: in the Shop every few weeks':r.recipe?'Seasonal Forge recipe':r.fused?'Your fusion':r.bp?`Found in the ${(BPACKS.find(p=>p.id===r.bp)||{}).name||'block packs'}`:r.duck?'Limited event: defeat Erlaf the Giant Duck':r.pass?`Pulse Pass · tier ${r.pass}`:r.passp?`Pulse Pass+ · tier ${r.passp}`:r.login?`Log in on ${r.login} different days`:r.twin?'One of a kind: only the Twin Pulse champions will own it':r.boss?`Complete ${BOSS[r.boss-1]}`:r.duel?`One of a kind: only the winner of ${duelTitle(r.duel)} will own it`:r.duelBet?`${duelTitle(r.duelBet[0])}: bet ♪${r.duelBet[1].toLocaleString()} in total`:r.duelOn?`${duelTitle(r.duelOn[0])}: bet ♪${r.duelOn[2].toLocaleString()} on ${r.duelOn[1].charAt(0).toUpperCase()+r.duelOn[1].slice(1)}`:r.cvkOn?'Past event reward: Cale vs Korra':r.cvkBet?'Past event reward: Cale vs Korra':r.cvk?'One of a kind: only the winner of Cale vs Korra will own it':r.event?`Limited: hit the ${(EVENTS.find(e=>e.id===r.event)||{}).name} target`:r.skin?`Own the ${(SKINS.find(k=>k.id===r.skin)||{}).name} block`:r.rank?`Reach ${rankName(r.rank)} rank`:r.hard?`Beat all ${r.hard} Hard Mode stages (${hardCleared()}/${r.hard})`:r.streak?`Reach a ${r.streak} streak`:`Earn ${r.stars} stars`;
 function hsl2hex(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
   return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); }
 
@@ -4375,6 +4480,7 @@ SKINS.push(
  {id:'cres_herald',name:'Brass Herald',top:'#FFEFB8',front:'#B07A22',core:'#FFF6D0',req:{cres:4}},
  {id:'opus',name:'Magnum Opus',anim:'opus',top:'#2A2F78',front:'#0E1030',core:'#FFD166',req:{cres:12}},
  {id:'eclipse_seraph',name:'Eclipse Seraph',anim:'eclipse',top:'#FFFBEF',front:'#EFE6D2',core:'#FFFFFF',req:{cvk:true},prev:[.8,11],hidden:true},
+ {id:'sk_gubby',name:'Gubby',vx:'sk_gubby',nocore:true,prev:[.66,18],top:'#FFFFFF',front:'#EDF0F5',core:'#FFB3C9',req:{duel:'jvh'},hidden:true},   // the Jack vs Haron prize
  {id:'sk_erlaf',name:'Erlaf',vx:'sk_erlaf',nocore:true,prev:[.66,16],top:'#FFFFFF',front:'#E7EBF1',core:'#F4A12A',req:{duck:true}});   // the limited Erlaf event
 /* ---- block packs: the blocks inside them (bp = which pack, bpr = rarity 0 common … 4 pristine, g = how a common or rare one is decorated) ---- */
 SKINS.push(
@@ -4552,6 +4658,7 @@ const SIG={
  sk_prism:{n:'Prism Roar',g:'◆',c:['#BFF4FF','#C9A0FF','#FFFFFF'],sh:'shard',ring:'#9FD8FF',fx:'crystal'},
  sk_lich:{n:'Spirit Flame',g:'☠',c:['#3CFF8A','#B8FFD4','#2A1E3E'],sh:'blob',ring:'#3CFF8A',fx:'void'},
  sk_core:{n:'Overload',g:'◎',c:['#5CF6FF','#FF5CF0','#FFFFFF'],sh:'pixel',ring:'#5CF6FF',fx:'neonrings'},
+ sk_gubby:{n:'Gubby Hop',g:'ω',c:['#FFFFFF','#FFB3C9','#F2F4F8'],sh:'paw',ring:'#FFD6E4',fx:'gubby'},
  sk_erlaf:{n:'Quack',g:'◒',c:['#FFFFFF','#F4A12A','#DDE3EA'],sh:'petal',ring:'#FFD45C',fx:'pillar'},
  sk_kitsune:{n:'Fox Fire',g:'✿',c:['#5CB8FF','#FF8A3C','#FFB4CC'],sh:'petal',ring:'#FF8A3C',fx:'pillar'},
  sk_pharaoh:{n:'Solar Decree',g:'☥',c:['#FFD34D','#2A5BD6','#FFF2C0'],sh:'coin',ring:'#FFD34D',fx:'beams'},
@@ -4571,10 +4678,12 @@ const SIG={
  eclipse_seraph:{n:'Eclipse',g:'◑',c:['#FFF3C4','#FFD166','#8A4FD8','#1A0B2E'],sh:null,ring:'#FFE7A0',fx:'eclipse'}};   // its own id: the older 'eclipse' is the Lights Out event block
 Object.assign(SIG,BP_SIG);
 LANDS.push({id:'match',name:'Match my block',glyph:'⟲',col:'#FFF8EE',price:0,note:'Uses your block\'s signature effect'});
-Object.keys(SIG).forEach(k=>{ const s=SIG[k]; LANDS.push({id:'sig_'+k,name:s.n,glyph:s.g,col:s.c[0],req:{skin:k},sig:k,hidden:k==='eclipse_seraph'||k==='equinox'||!!(SKINS.find(x=>x.id===k)||{}).paid||!!(SKINS.find(x=>x.id===k)||{}).bp}); });   // the Eclipse effect, like its block, only shows for the winner
+Object.keys(SIG).forEach(k=>{ const s=SIG[k]; LANDS.push({id:'sig_'+k,name:s.n,glyph:s.g,col:s.c[0],req:{skin:k},sig:k,hidden:k==='eclipse_seraph'||k==='equinox'||k==='sk_gubby'||!!(SKINS.find(x=>x.id===k)||{}).paid||!!(SKINS.find(x=>x.id===k)||{}).bp}); });   // the Eclipse effect, like its block, only shows for the winner
 SIG.ovation={n:'Standing Ovation',g:'♛',c:['#FFD166','#FF7EB6','#B8F2E6','#C9B8FF'],sh:'confetti',ring:'rainbow',fx:'beams'};   // the Crown's effect (added after the loop so it has no block of its own)
 LANDS.push({id:'crown',name:'Crown',glyph:'♛',col:'#FFD166',req:{rank:18},sig:'ovation'});
+SIG.ringside={n:'Ringside',g:'⚔',c:['#9CFF7E','#C79BFF','#FFFFFF'],sh:'star5',ring:'#E6FFD6',fx:'ringside'};
 SIG.twilight={n:'Twilight',g:'☾',c:['#FFE3A8','#C9A6FF','#FFFFFF'],sh:'star5',ring:'#D8B4FF',fx:'twilight'};   // for betting 2,000 notes on Cale vs Korra
+LANDS.push({id:'ringside',name:'Ringside',glyph:'⚔',col:'#C9FFB0',req:{duelBet:['jvh',2000]},sig:'ringside',hidden:true});   // for betting 2,000 notes on Jack vs Haron
 LANDS.push({id:'twilight',name:'Twilight',glyph:'☾',col:'#D8B4FF',req:{cvkBet:2000},sig:'twilight',hidden:true});
 
 /* ---- ranks: XP from every run ---- */
@@ -5732,6 +5841,13 @@ function sigFx(id,x,y,j){
   if(S.fx==='truepulse'){   // embers torn upward, a heavy camera slam and a red pulse at the screen's edge on a perfect
     for(let i=0;i<n(4);i++) spawnP(x,y,{col:['#FF1E2E','#FF6A3A','#B0001A'][i%3],shape:i%3?'shard':'star5',sz:1.5+Math.random()*1.5,a:up+(Math.random()-.5)*1.1,s:20+Math.random()*35,vy:-60,g:-10,life:.6+Math.random()*.25,add:true,spin:6});
     if(!RM()) G.nudge.y+=j==='perfect'?1.5:.7; }
+  if(S.fx==='ringside'){   // green sparks from one corner, purple from the other, crossing over the block
+    for(let i=0;i<n(6);i++){ const g=i%2===0; spawnP(x,y,{col:g?'#9CFF7E':'#C79BFF',shape:'star5',sz:2.5+Math.random()*2,a:up+(g?-.8:.8)+(Math.random()-.5)*.5,s:60+Math.random()*60,vy:-100,g:60,life:.9,add:true,spin:5}); }
+    if(!RM()&&j==='perfect') G.nudge.y+=1.5; }
+  if(S.fx==='gubby'){   // white fluff puffs bouncing out, a couple of pink hearts floating up, and a little hop on a perfect
+    for(let i=0;i<n(5);i++) spawnP(x,y,{col:i%2?'#FFFFFF':'#F2F4F8',shape:'bubble',sz:3+Math.random()*2.5,a:up+(Math.random()-.5)*2,s:50+Math.random()*70,vy:-120,g:240,life:.8});
+    for(let i=0;i<n(2);i++) spawnP(x,y,{col:'#FF9EBB',shape:'heart',sz:4+Math.random()*2,a:up+(Math.random()-.5)*.8,s:25+Math.random()*30,vy:-70,g:-15,life:1.1});
+    if(!RM()&&j==='perfect') G.nudge.y-=2; }
   if(S.fx==='twilight'){   // a few stars rising, lilac and gold
     for(let i=0;i<n(5);i++) spawnP(x,y,{col:i%2?'#FFE3A8':'#C9A6FF',shape:'star5',sz:2.5+Math.random()*2,a:up+(Math.random()-.5)*1.4,s:30+Math.random()*50,vy:-80,g:-10,life:1,add:true,spin:3}); }
   if(S.fx==='eclipse'){
@@ -6810,7 +6926,7 @@ function vxPost3(S,X,T,W,bh,H,now){
   cx.restore();
 }
 /* ===== Premium blocks (bought with real money in the app): their animated effects ===== */
-const VX4=new Set(['sk_erlaf','sk_clock','sk_magma','sk_prism','sk_lich','sk_core','sk_kitsune','sk_pharaoh','sk_aurora','sk_paladin','sk_horizon']);
+const VX4=new Set(['sk_gubby','sk_erlaf','sk_clock','sk_magma','sk_prism','sk_lich','sk_core','sk_kitsune','sk_pharaoh','sk_aurora','sk_paladin','sk_horizon']);
 
 
 function vx4Gear(x,y,r,teeth,a,fill,stroke){ cx.save(); cx.translate(x,y); cx.rotate(a); cx.beginPath();
@@ -6901,6 +7017,10 @@ function vxPre4(S,X,T,W,bh,H,now){
       cx.globalCompositeOperation='source-over'; cx.save(); cx.translate(X+W*.9,fy+H*.42); cx.rotate(-.15-.3*bt+Math.sin(now*3)*.05);
       cx.fillStyle='#E3E8EF'; cx.beginPath(); cx.moveTo(-W*.05,H*.32); cx.quadraticCurveTo(W*.3,H*.05,W*.48,-H*.62); cx.quadraticCurveTo(W*.2,-H*.18,-W*.05,-H*.2); cx.closePath(); cx.fill();
       cx.strokeStyle='rgba(90,100,125,.55)'; cx.lineWidth=1.2; cx.stroke(); cx.strokeStyle='#C3CBD6'; cx.lineWidth=Math.max(1.2,W*.04); cx.lineCap='round'; cx.beginPath(); cx.arc(W*.44,-H*.6,W*.055,Math.PI*1.1,Math.PI*2.35); cx.stroke(); cx.restore(); } break;
+    case 'sk_gubby': {   // a soft pink glow, and the cotton tail peeking out at the back, wiggling on the beat
+      vxGlow(cxm,oy,W*1.15,'#FFD6E4',.14+.2*bt,.8);
+      cx.globalCompositeOperation='source-over';
+      gubbyFluff(X+W*1.0+Math.sin(now*9)*W*.012*(1+2*bt),fy+H*.66,W*(.15+.02*bt),Math.max(1,W*.026)); } break;
     case 'sk_kitsune': { vxGlow(cxm,oy,W*1.3,'#FF8A3C',.22+.25*bt,.8);
       cx.globalCompositeOperation='source-over';
       for(let i=0;i<9;i++){ const a=-Math.PI/2+(i-4)*.36+Math.sin(now*1.6+i*.7)*.07, L=W*(1.45+.12*Math.sin(now*2+i)+.12*bt), bx=cxm, by=fy+H*.7;
@@ -7082,6 +7202,42 @@ function vxPost4(S,X,T,W,bh,H,now){
       cx.fillStyle='rgba(120,50,0,.6)'; [-1,1].forEach(s=>{ cx.fillRect(cxm+s*bw*.18-1,by-H*.01,2.2,1.4); });
       cx.strokeStyle='#D8DEE7'; cx.lineWidth=Math.max(1.2,W*.035); cx.lineCap='round';
       for(let k=-1;k<=1;k++){ cx.beginPath(); cx.moveTo(cxm+k*W*.06,T+bh*.55); cx.quadraticCurveTo(cxm+k*W*.12,T-bh*.5,cxm+k*W*.02+W*.08,T-bh*.45-Math.sin(now*4+k)*bh*.12); cx.stroke(); } } break;
+    case 'sk_gubby': {   // Gubby: a chubby white bunny with tall pointed ears, the Roblox "Mysterious" face, a round belly and stubby feet
+      const ol='#A9B2C3', lw=Math.max(1.1,W*.03), flop=clamp(Math.sin(now*.9)*3-2.2,0,1);   // every ~7 s the right ear droops for a moment
+      [-1,1].forEach(sg=>{ const h=W*(.74+.03*Math.sin(now*2.1+sg)), w=W*.14, a=sg*(.1+.16*bt)+(sg>0?flop*.5:0);
+        cx.save(); cx.translate(cxm+sg*W*.21,T+bh*.6); cx.rotate(a);
+        cx.beginPath(); cx.moveTo(-w,0); cx.quadraticCurveTo(-w*1.2,-h*.6,-w*.1,-h); cx.quadraticCurveTo(0,-h*1.03,w*.1,-h); cx.quadraticCurveTo(w*1.2,-h*.6,w,0); cx.closePath();
+        cx.fillStyle='#FFFFFF'; cx.fill(); cx.strokeStyle=ol; cx.lineWidth=lw; cx.stroke();
+        const g=cx.createLinearGradient(0,0,0,-h); g.addColorStop(0,'#FFADC5'); g.addColorStop(1,'#FFDCE7'); cx.fillStyle=g;
+        cx.beginPath(); cx.moveTo(-w*.48,-h*.1); cx.quadraticCurveTo(-w*.68,-h*.56,-w*.06,-h*.84); cx.quadraticCurveTo(w*.68,-h*.56,w*.48,-h*.1); cx.closePath(); cx.fill(); cx.restore(); });
+      // now and then: a stack of pancakes drops onto Gubby's head (the meme)
+      const pc=now%14; if(pc<3.6){ const drop=pc<.35?(1-pc/.35)*W*.9:0, bob=Math.sin(Math.min(1,pc/.5)*Math.PI)*W*.03, px=cxm, py=T+bh*.32-drop-bob;
+        for(let i=0;i<2;i++){ const y=py-i*W*.075; cx.fillStyle='#B97A34'; cx.beginPath(); cx.ellipse(px,y+W*.025,W*.24,W*.075,0,0,TAU); cx.fill(); cx.fillStyle='#F0BE6A'; cx.beginPath(); cx.ellipse(px,y,W*.24,W*.07,0,0,TAU); cx.fill(); }
+        const ty=py-W*.075; cx.fillStyle='#8A4A14'; cx.beginPath(); cx.ellipse(px,ty,W*.17,W*.045,0,0,TAU); cx.fill(); cx.fillRect(px+W*.1,ty,W*.035,W*.1);
+        cx.fillStyle='#FFE88A'; cx.fillRect(px-W*.045,ty-W*.05,W*.09,W*.05); }
+      // stubby arms at the sides, waving a little on the beat
+      [-1,1].forEach(sg=>{ cx.save(); cx.translate(sg<0?X+W*.03:X+W*.97,fy+H*.58); cx.rotate(sg*(.55+.35*bt)); cx.beginPath(); cx.ellipse(0,0,W*.06,H*.12,0,0,TAU);
+        cx.fillStyle='#FFFFFF'; cx.fill(); cx.strokeStyle=ol; cx.lineWidth=lw; cx.stroke(); cx.restore(); });
+      // the round belly
+      cx.beginPath(); cx.ellipse(cxm,fy+H*.74,W*.31,H*.23,0,0,TAU); cx.fillStyle='#FFFFFF'; cx.fill(); cx.strokeStyle='rgba(169,178,195,.7)'; cx.lineWidth=Math.max(1,W*.022); cx.stroke();
+      // the face: half-lidded eyes glancing to one side, a pink nose and a sly little smile
+      const ey=fy+H*.27, er=Math.max(1.5,W*.06), look=Math.sin(now*.55)>.2?1:Math.sin(now*.55)<-.6?-1:0, blink=(now%4.6)<.12;
+      [-1,1].forEach(sg=>{ const x=cxm+sg*W*.17;
+        if(blink){ cx.strokeStyle='#22181C'; cx.lineWidth=Math.max(1.2,W*.035); cx.beginPath(); cx.moveTo(x-er*.9,ey); cx.lineTo(x+er*.9,ey); cx.stroke(); return; }
+        // the heavy upper lid, lower on the outside: the "mysterious" look (the eye is cut off above the lid line)
+        const l0=ey-er*(sg>0?.45:.05), l1=ey-er*(sg>0?.05:.45);
+        cx.save(); cx.beginPath(); cx.moveTo(x-er*1.2,l0); cx.lineTo(x+er*1.2,l1); cx.lineTo(x+er*1.2,ey+er*2); cx.lineTo(x-er*1.2,ey+er*2); cx.closePath(); cx.clip();
+        cx.fillStyle='#22181C'; cx.beginPath(); cx.ellipse(x,ey,er*.8,er*1.25,0,0,TAU); cx.fill();
+        cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.arc(x+look*er*.3-er*.1,ey+er*.15,er*.27,0,TAU); cx.fill(); cx.restore();
+        cx.strokeStyle='#22181C'; cx.lineWidth=Math.max(1,W*.025); cx.beginPath(); cx.moveTo(x-er*.95,l0+(l1-l0)*.04); cx.lineTo(x+er*.95,l1-(l1-l0)*.04); cx.stroke(); });
+      const mx=cxm+W*.015, my=fy+H*.47;
+      cx.fillStyle='#FF8FAE'; cx.beginPath(); cx.moveTo(mx-W*.04,my-H*.08); cx.lineTo(mx+W*.04,my-H*.08); cx.lineTo(mx,my-H*.03); cx.closePath(); cx.fill();
+      cx.strokeStyle='#3A2A2E'; cx.lineWidth=Math.max(1,W*.028); cx.beginPath(); cx.moveTo(mx-W*.1,my-H*.005); cx.quadraticCurveTo(mx-W*.05,my+H*.07,mx,my); cx.quadraticCurveTo(mx+W*.06,my+H*.08,mx+W*.11,my-H*.05); cx.stroke();
+      cx.fillStyle='rgba(255,130,165,.28)'; [-1,1].forEach(sg=>{ cx.beginPath(); cx.ellipse(cxm+sg*W*.32,fy+H*.42,W*.07,H*.05,0,0,TAU); cx.fill(); });
+      // stubby feet with pink toe beans, squashing on the beat
+      [-1,1].forEach(sg=>{ const x=cxm+sg*W*.2, y=fy+H+H*.02, rx=W*(.14+.02*bt), ry=H*(.1-.025*bt);
+        cx.beginPath(); cx.ellipse(x,y,rx,ry,0,0,TAU); cx.fillStyle='#FFFFFF'; cx.fill(); cx.strokeStyle=ol; cx.lineWidth=lw; cx.stroke();
+        cx.fillStyle='#FFB3C9'; [-1,0,1].forEach(k=>{ cx.beginPath(); cx.arc(x+k*rx*.45,y-ry*.15,Math.max(.8,rx*.13),0,TAU); cx.fill(); }); }); } break;
     case 'sk_kitsune': {
       [-1,1].forEach(sg=>{ const ex=cxm+sg*W*.28; cx.fillStyle='#FFF4EA'; cx.beginPath(); cx.moveTo(ex-W*.15,T+bh*.5); cx.lineTo(ex+sg*W*.04,T-bh*1.5); cx.lineTo(ex+W*.15,T+bh*.5); cx.closePath(); cx.fill();
         cx.fillStyle='#FF8A9A'; cx.beginPath(); cx.moveTo(ex-W*.07,T+bh*.3); cx.lineTo(ex+sg*W*.03,T-bh*.9); cx.lineTo(ex+W*.07,T+bh*.3); cx.closePath(); cx.fill(); });
@@ -8751,6 +8907,10 @@ function drawBoss(L,now){
 /* ---- Erlaf the Giant Duck, a white mallard in the game's block style: a giant white cube like the other bosses (flat top face, shaded
    front), with a slab bill sticking out of his front, mismatched googly eyes that wobble after you, wing slabs that flap on
    the beat, a wedge tail with a drake's curl and a tuft on top. His bill drops open when he's about to throw a duckling. ---- */
+function gubbyFluff(x,y,r,lw){ const P=[[0,0,1],[-.55,-.35,.62],[.5,-.42,.6],[.62,.25,.58],[-.5,.4,.6],[0,.6,.55],[.05,-.65,.55]];
+  cx.strokeStyle='#A9B2C3'; cx.lineWidth=lw*2; P.forEach(([a,b,k])=>{ cx.beginPath(); cx.arc(x+a*r,y+b*r,r*k*.7,0,TAU); cx.stroke(); });
+  cx.fillStyle='#FFFFFF'; P.forEach(([a,b,k])=>{ cx.beginPath(); cx.arc(x+a*r,y+b*r,r*k*.7,0,TAU); cx.fill(); });
+  cx.fillStyle='rgba(200,208,222,.45)'; cx.beginPath(); cx.arc(x+r*.2,y+r*.25,r*.35,0,TAU); cx.fill(); }
 function googly(x,y,r,tx,ty,now,seed){ cx.fillStyle='#FFFFFF'; cx.beginPath(); cx.arc(x,y,r,0,TAU); cx.fill(); cx.strokeStyle='#2A1A08'; cx.lineWidth=Math.max(1.2,r*.12); cx.stroke();
   const d=Math.hypot(tx-x,ty-y)||1, wob=Math.sin(now*5.3+seed)*.35, ax=(tx-x)/d+Math.cos(now*2.1+seed)*wob, ay=(ty-y)/d+Math.sin(now*3.7+seed)*wob+.35, k=Math.hypot(ax,ay)||1;
   const pr=r*.48; cx.fillStyle='#1A1008'; cx.beginPath(); cx.arc(x+ax/k*(r-pr)*.9,y+ay/k*(r-pr)*.9,pr,0,TAU); cx.fill();
@@ -9396,7 +9556,7 @@ function acctInit(){
     if(!firebase.apps.length) firebase.initializeApp(cfg);
     ACCT.auth=firebase.auth(); ACCT.db=firebase.firestore(); liveStart(); setTimeout(()=>{ try{ funStart(); }catch(e){} },0);
     ACCT.auth.getRedirectResult().catch(e=>{ ACCT.err=authMsg(e); acctUI(); });
-    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; try{ if(u&&IAP.ok) rcPlugin().logIn({appUserID:u.uid}).catch(()=>{}); }catch(e){} admAuth(u); if(u) acctPull(true).then(lbRename,lbRename).then(()=>{ cvkFindSide(); cvkLoadMyBet(); twFind(); inboxStart(u); webRestore(u); }); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
+    ACCT.auth.onAuthStateChanged(u=>{ ACCT.user=u; ACCT.ready=true; try{ if(u&&IAP.ok) rcPlugin().logIn({appUserID:u.uid}).catch(()=>{}); }catch(e){} admAuth(u); if(u) acctPull(true).then(lbRename,lbRename).then(()=>{ cvkFindSide(); cvkLoadMyBet(); duelFindSide(); duelLoadMyBet(); twFind(); inboxStart(u); webRestore(u); }); if(u) frStart(); else frStop(); acctUI(); acctChip(); });
   }).catch(()=>{ ACCT.err='Could not load sign-in. Check your connection.'; acctUI(); });
 }
 
@@ -9451,6 +9611,10 @@ function mergeSaves(loc,cl,additive){
   out.name=nw.name||loc.name||cl.name||''; out.nameT=nw.nameT||0; out.nameAuto=!!nw.nameAuto&&nameRank(nw)===1;
   out.cvkWin=!!(loc.cvkWin||cl.cvkWin); out.cvkWinSeen=!!(loc.cvkWinSeen||cl.cvkWinSeen); out.cvkPaid=!!(loc.cvkPaid||cl.cvkPaid); out.cvkPayout=Math.max(loc.cvkPayout||0,cl.cvkPayout||0);
   { const a=loc.cvkBet||{}, b=cl.cvkBet||{}; if(a.cale||a.korra||b.cale||b.korra) out.cvkBet={cale:Math.max(+a.cale||0,+b.cale||0),korra:Math.max(+a.korra||0,+b.korra||0)}; } out.cvkSide=newer.cvkSide||loc.cvkSide||cl.cvkSide||null;
+  { const a=loc.duels||{}, b=cl.duels||{}, ids=[...new Set([...Object.keys(a),...Object.keys(b)])], m={};
+    ids.forEach(id=>{ const x=a[id]||{}, y=b[id]||{}, nw=newer===cl?y:x, bet={}; [...new Set([...Object.keys(x.bet||{}),...Object.keys(y.bet||{})])].forEach(k=>{ bet[k]=Math.max(+(x.bet||{})[k]||0,+(y.bet||{})[k]||0); });
+      m[id]={side:nw.side||x.side||y.side||null,bet,paid:!!(x.paid||y.paid),payout:Math.max(+x.payout||0,+y.payout||0),win:!!(x.win||y.win),winSeen:!!(x.winSeen||y.winSeen),pend:Math.max(+x.pend||0,+y.pend||0)}; });
+    if(ids.length) out.duels=m; }
   { const a=loc.pq||{}, b=cl.pq||{}, m=(ka,kb,la,lb)=>ka&&ka===kb&&Array.isArray(la)&&Array.isArray(lb)?la.map(q=>{ const o=lb.find(x=>x.id===q.id)||{}; return {...q,prog:Math.max(q.prog||0,o.prog||0),claimed:!!(q.claimed||o.claimed)}; }):(ka||'')>=(kb||'')?la:lb;
     if(a.day||b.day){ const dA=(a.day||'')>=(b.day||''), wA=(a.week||'')>=(b.week||''); out.pq={day:dA?a.day:b.day,d:m(a.day,b.day,a.d,b.d)||(dA?a.d:b.d),week:wA?a.week:b.week,w:m(a.week,b.week,a.w,b.w)||(wA?a.w:b.w)}; } }
   { const seen=new Set(), bl=[]; [...(loc.blocked||[]),...(cl.blocked||[])].forEach(x=>{ if(x&&x.u&&!seen.has(x.u)){ seen.add(x.u); bl.push(x); } }); out.blocked=bl.slice(-200); }
@@ -10794,7 +10958,7 @@ function ensureName(){ if(!SAVE.name){ SAVE.name=NAME_A[ri(NAME_A.length)]+' '+N
 function setName(v,quiet){ const n=cleanName(v); if(n.length<2) return false; const changed=SAVE.name!==n; SAVE.name=n; store.set('name',n); if(changed){ SAVE.nameT=Date.now(); SAVE.nameAuto=false; save(); }
   ['nName','pName'].forEach(id=>{ const e=$(id); if(e&&document.activeElement!==e) e.value=n; });
   if(changed&&netLive()){ clearTimeout(setName.hiT); setName.hiT=setTimeout(netHello,quiet?600:0); }
-  if(changed){ netRoster(); lbRename(); clearTimeout(setName.cvkT); setName.cvkT=setTimeout(cvkSendName,1500); }
+  if(changed){ netRoster(); lbRename(); clearTimeout(setName.cvkT); setName.cvkT=setTimeout(()=>{ cvkSendName(); duelSendName(); },1500); }
   if(changed&&!quiet) toast('Name saved: '+n);
   if(typeof nameChip==='function') nameChip();
   return true; }
@@ -12542,8 +12706,9 @@ function giftGive(r){ const out=[]; if(r.n){ SAVE.notes+=r.n; out.push(`♪${r.n
 /* ================= WHAT'S NEW =================
    Shown once to each player after an update (remembered in the save, so it follows their account to other devices),
    once the daily gift is out of the way. Settings → What's new opens it again. Change NEWS_V to show a new one. */
-const NEWS_V='2026-10k', NEWS_WHEN='Update · October 2026';
+const NEWS_V='2026-10l', NEWS_WHEN='Update · October 2026';
 const NEWS_ADDED=[
+ ['⚔','Jack vs Haron','A live duel: every point Jack and Haron score adds to their bar, and the winner takes Gubby, a one-of-a-kind bunny block. Bet your Notes on who wins: back the winner and take a share of the other side\'s pot.'],
  ['🎭','Phantom Heist','A new sound pack with a song all its own: acid-jazz funk with slap bass, Rhodes chords and brass stabs. It plays on the menu and drives your Endless runs. In Shop → Sound Tracks.'],
  ['⏱','Time played','The clock in the top-right corner of the menu shows how many hours you\'ve spent on Pulseform. Tap it for the exact time.'],
  ['🪅','Surprise reward events','Keep an eye out: piñatas, stardust showers, balloon pops, prize wheels, scratch cards and Beat Drop rounds can pop up for everyone, full of Notes and Stardust.'],
@@ -12856,6 +13021,221 @@ setInterval(()=>{
     Promise.all(['cale','korra'].map(k=>cvkCol().collection('sides').doc(k).get().then(d=>{ CVK.scores[k]=d.exists?d.data():null; if(cvkFresh(d)) CVK.fresh[k]=true; })))
       .then(()=>needPay?cvkCol().collection('bets').get().then(q=>{ const m={}; q.forEach(d=>{ m[d.id]=d.data(); }); CVK.bets=m; if(cvkFresh(q)) CVK.betsLoaded=true; }):null)
       .then(()=>{ cvkCheckWin(); cvkSettle(); }).catch(()=>{}); }
+},1000);
+
+/* ================= JACK VS HARON: a one-off duel, run like Cale vs Korra =================
+   Live straight away (from Sat Oct 17 2026) until 3:30 PM Central Fri Oct 23. Jack and Haron sign up with secret codes (the game
+   and firestore.rules keep only their SHA-256 fingerprints). Every point either of them scores, in any mode, while it's live adds
+   to their bar; the higher total at the end wins, and the winner, alone in the world, gets Gubby. Everyone else can bet Notes on
+   who wins until 12:00 AM Central going into Fri Oct 23: backers of the winner get their Notes back plus a share of the losing
+   side's pot, in proportion to their bet (if nobody backed the winner, or nobody scored at all, everyone gets their Notes back).
+   Betting ♪2,000 in total, or ♪4,000 on one side, unlocks rewards that stay either way. The game invites you to bet as it opens.
+   Firestore: events/jvh/claims/{side} = {uid,code,t} (only its owner can read it), events/jvh/sides/{side} = {score,t,name},
+   events/jvh/bets/{uid} = {jack,haron,name,t}. Only DUEL is about Jack and Haron: the next "X vs Y" needs a new DUEL and rules. */
+const DUEL={id:'jvh',title:'Jack vs Haron',start:1792213200000,betClose:1792731600000,end:1792787400000,hide:1792818000000,
+  ends:'3:30 PM Central, Fri Oct 23',closes:'12:00 AM Central, Fri Oct 23',
+  sides:{jack:{name:'Jack',cls:'a',h:'a726dc4c1ebe8eda620152cf1a3f32c72fc6faaf936d5097780368904e4c19cd'},
+         haron:{name:'Haron',cls:'b',h:'b4308f6e8b2857046f5cbc9887b8ac49bf3a3f83c22184167c91d2d2aba11352'}},
+  prize:{skin:'sk_gubby',land:'sig_sk_gubby',name:'Gubby'},block:4000,all:2000,max:100000};
+const DUEL_K=Object.keys(DUEL.sides);
+const DS={scores:{},fresh:{},unsub:[],lastFetch:0,bets:{},betsLoaded:false,pick:null,promoted:false};
+// these four are function declarations on purpose: the shop asks reqMet/reqText about the rewards before this part of the code has run
+function duelOf(id){ return (SAVE.duels||{})[id]||{}; }
+function duelBetOf(id,k){ return Math.max(0,+((duelOf(id).bet||{})[k])||0); }
+function duelBetSum(id){ return Object.keys(duelOf(id).bet||{}).reduce((a,k)=>a+duelBetOf(id,k),0); }
+function duelWon(id){ return !!duelOf(id).win; }
+function duelTitle(id){ return ({jvh:'Jack vs Haron'})[id]||'a past duel'; }
+function duelMine(){ const D=SAVE.duels||(SAVE.duels={}); return D[DUEL.id]||(D[DUEL.id]={}); }
+const duelMyBet=k=>duelBetOf(DUEL.id,k);
+const duelOther=k=>DUEL_K.find(x=>x!==k);
+const duelPot=k=>Object.values(DS.bets).reduce((a,b)=>a+Math.max(0,+b[k]||0),0);
+const duelBackers=k=>Object.values(DS.bets).filter(b=>(+b[k]||0)>0).length;
+const duelPhase=()=>{ const n=Date.now(); return n<DUEL.start?'soon':n<DUEL.end?'live':'over'; };
+const duelShown=()=>!window.PF_CG&&!!acctCfg()&&Date.now()<DUEL.hide;   // on the menu until midnight after it ends (the prize and winnings still arrive after that)
+const duelBetOpen=()=>!window.PF_CG&&Date.now()<DUEL.betClose;
+const duelCol=()=>ACCT.db&&ACCT.db.collection('events').doc(DUEL.id);
+const duelWallet=()=>['walletM','walletP','walletW'].forEach(id=>{ const e=$(id); if(e) e.textContent=notesTxt(); });
+function duelMsg(id,t,err){ const m=$(id); if(!m) return; m.textContent=t||''; m.classList.toggle('err',!!err); }
+/* what a bet of `stake` on k pays if k wins, with the pots as they are now */
+function duelPayout(k,stake){ const pw=duelPot(k), pl=duelPot(duelOther(k)); return pw>0?Math.floor(stake+stake/pw*pl):stake; }
+/* the winner: the higher total; on a tie, whoever got there first */
+function duelWinner(){ const [ka,kb]=DUEL_K, a=DS.scores[ka], b=DS.scores[kb], sa=a?+a.score||0:0, sb=b?+b.score||0:0;
+  if(!sa&&!sb) return null; if(sa!==sb) return sa>sb?ka:kb; return (+a.t||0)<=(+b.t||0)?ka:kb; }
+function duelWatch(){
+  if(DS.unsub.length||!duelCol()) return;
+  DS.unsub.push(duelCol().collection('bets').onSnapshot(q=>{ const m={}; q.forEach(d=>{ m[d.id]=d.data(); }); DS.bets=m; if(cvkFresh(q)) DS.betsLoaded=true; duelSettle(); duelRender(); duelPromoTick(); },()=>{}));
+  DUEL_K.forEach(k=>DS.unsub.push(duelCol().collection('sides').doc(k).onSnapshot(d=>{ DS.scores[k]=d.exists?d.data():null; if(cvkFresh(d)) DS.fresh[k]=true; duelCheckWin(); duelSettle(); duelRender(); },()=>{})));
+}
+function duelUnwatch(){ DS.unsub.forEach(f=>{ try{ f(); }catch(e){} }); DS.unsub=[]; }
+/* after the duel: each better's own game pays out, once */
+function duelSettle(){
+  const all=duelBetSum(DUEL.id), D=duelOf(DUEL.id);
+  if(duelPhase()!=='over'||D.paid||!all||!DS.betsLoaded||!DUEL_K.every(k=>DS.fresh[k])) return;
+  const w=duelWinner(), backed=w&&duelPot(w)>0, back=backed?duelPayout(w,duelMyBet(w)):all, me=duelMine();
+  me.paid=true; me.payout=back; if(back>0) SAVE.notes+=back; save(); duelWallet();
+  toast(!w?`${DUEL.title}: nobody scored, so your ♪${all.toLocaleString()} came back.`:!backed?`${DUEL.title}: ${DUEL.sides[w].name} won and nobody backed them, so your ♪${all.toLocaleString()} came back.`
+    :back>0?`${DUEL.title}: ${DUEL.sides[w].name} won! You collect ♪${back.toLocaleString()}.`:`${DUEL.title}: ${DUEL.sides[w].name} won. Better luck next time!`);
+}
+/* after the duel: the winner's own game hands them the prize, once */
+function duelCheckWin(){
+  const D=duelOf(DUEL.id); if(duelPhase()!=='over'||!D.side||D.win||!DUEL_K.every(k=>DS.fresh[k])) return;
+  const w=duelWinner(); if(!w||w!==D.side) return;
+  duelMine().win=true; save(); sChime(90);
+  if(typeof buildShop==='function'&&!$('shopOv').hidden) buildShop();
+  duelWinPopup();
+}
+/* the champion's screen: once, on the menu, as soon as nothing else is open */
+function duelWinPopup(){
+  const D=duelOf(DUEL.id); if(!D.win||D.winSeen||G.state!=='menu') return false;
+  const busy=['duelWinOv','duelPromo','cvkWinOv','twinWinOv','hpOv','tutOv','calibOv','edOv','studioOv','giftOv','chalOv','swtOv','newsOv'].some(id=>$(id)&&!$(id).hidden)||$('menuOv').hidden; if(busy) return false;
+  duelMine().winSeen=true; save();
+  const s=DUEL.sides[D.side]; $('duelWSub').textContent=`${s?s.name+', you':'You'} won ${DUEL.title}. ${DUEL.prize.name} is yours, and only yours.`;
+  $('duelWEquip').disabled=false; $('duelWEquip').textContent='✦ Equip both'; $('duelWNote').textContent='You can change them any time in the Collection.';
+  showOv('duelWinOv'); if(A.ctx) sChime(92); buzz(40); return true;
+}
+$('duelWEquip').onclick=()=>{ equip('skin',DUEL.prize.skin); equip('land',DUEL.prize.land); G.players=[mkPlayer(0)]; netHello(); if(A.ctx) sGem();
+  $('duelWEquip').disabled=true; $('duelWEquip').textContent='✦ Equipped'; $('duelWNote').textContent=`Your block and landing effect are now ${DUEL.prize.name}'s.`; setTimeout(()=>{ if(!$('duelWinOv').hidden) toMenu(); },1400); };
+$('duelWLater').onclick=()=>toMenu();
+/* your bar exists and carries your username (it follows you when you rename yourself) */
+async function duelEnsureBar(){
+  const D=duelOf(DUEL.id); if(!D.side||!ACCT.user||!duelCol()||window.PF_CG) return false;
+  const ref=duelCol().collection('sides').doc(D.side), name=String(ensureName()).slice(0,24);
+  try{ const d=await ref.get();
+    if(!d.exists) await ref.set({score:0,t:Date.now(),name});
+    else if(d.data().name!==name) await ref.set({name},{merge:true});
+    return true; }catch(e){ return false; }
+}
+function duelSendName(){ duelEnsureBar().then(()=>duelRender(),()=>{}); }
+/* which side this account signed up as, so it follows you to another device */
+async function duelFindSide(){
+  if(!ACCT.user||!duelCol()) return;
+  if(duelOf(DUEL.id).side){ duelSendName(); return; }
+  for(const k of DUEL_K){ try{ const d=await duelCol().collection('claims').doc(k).get(); if(d.exists&&d.data().uid===ACCT.user.uid){ duelMine().side=k; save(); duelSendName(); duelRender(); return; } }catch(e){} }
+}
+async function duelSignUp(){
+  const code=($('duelCode').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(!ACCT.user){ duelMsg('duelMsg','Sign in to your account first, then enter your code.',true); return; }
+  if(duelPhase()==='over'){ duelMsg('duelMsg','The duel is over.',true); return; }
+  let side=null; try{ const h=await sha256hex(code); side=DUEL_K.find(k=>DUEL.sides[k].h===h); }catch(e){}
+  if(!side){ duelMsg('duelMsg','That code isn\'t right. Check it and try again.',true); return; }
+  duelMsg('duelMsg','Signing you up…'); const col=duelCol(), me=ACCT.user.uid, nm=DUEL.sides[side].name;
+  try{ await col.collection('claims').doc(side).set({uid:me,code,t:Date.now()}); }
+  catch(e){ let mine=false; try{ const d=await col.collection('claims').doc(side).get(); mine=d.exists&&d.data().uid===me; }catch(_){}
+    if(!mine){ duelMsg('duelMsg',`Someone has already signed up as ${nm}.`,true); return; } }
+  duelMine().side=side; save(); await duelEnsureBar(); $('duelForm').hidden=true; duelMsg('duelMsg',''); if(A.ctx) sChime(88);
+  toast(`You're in! You're fighting as ${nm}.`); duelRender();
+}
+/* every run's points go to your side while it's live (anything that can't be sent waits for the next run) */
+function duelPost(M){
+  if(M&&(M.type==='custom'||M.type==='studio'||M.test)) return;   // sandbox runs never count
+  const D=duelOf(DUEL.id); if(!D.side||!ACCT.user||!ACCT.db||window.PF_CG||duelPhase()!=='live') return;
+  const me=duelMine(), add=Math.min(400000,Math.max(0,Math.round(G.score||0))+(me.pend||0)); if(!add) return;
+  me.pend=0; save(); const side=me.side, ref=duelCol().collection('sides').doc(side), inc=firebase.firestore.FieldValue.increment(add);
+  duelEnsureBar().then(ok=>{ if(!ok) throw new Error('bar'); return ref.set({score:inc,t:Date.now(),name:String(ensureName()).slice(0,24)},{merge:true}); })
+    .then(()=>toast(`+${add.toLocaleString()} for ${DUEL.sides[side].name}!`))
+    .catch(()=>{ me.pend=Math.min(400000,(me.pend||0)+add); save(); });
+}
+/* your bets follow your account to other devices */
+async function duelLoadMyBet(){
+  if(!ACCT.user||!duelCol()) return;
+  try{ const d=await duelCol().collection('bets').doc(ACCT.user.uid).get(); if(!d.exists) return; const v=d.data(), me=duelMine(), B=me.bet||(me.bet={});
+    let ch=false; DUEL_K.forEach(k=>{ if((+v[k]||0)>(+B[k]||0)){ B[k]=+v[k]; ch=true; } }); if(ch){ save(); duelRender(); } }catch(e){}
+}
+async function duelPlaceBet(){
+  const side=DS.pick, amt=Math.floor(+($('duelAmt').value||'').replace(/[^\d]/g,'')), msg=(t,e)=>duelMsg('duelBetMsg',t,e), D=duelOf(DUEL.id);
+  if(!ACCT.user){ msg('Sign in to your account to bet.',true); return; }
+  if(!duelBetOpen()){ msg('Betting has closed.',true); return; }
+  if(!side){ msg(`Pick ${DUEL.sides[DUEL_K[0]].name} or ${DUEL.sides[DUEL_K[1]].name} first.`,true); return; }
+  if(D.side&&D.side!==side){ msg(`You're fighting as ${DUEL.sides[D.side].name}, so you can only bet on yourself.`,true); return; }
+  if(!(amt>0)){ msg('How many notes do you want to bet?',true); return; }
+  if(amt>SAVE.notes){ msg(`You only have ♪${SAVE.notes.toLocaleString()}.`,true); return; }
+  if(amt>DUEL.max){ msg(`The most you can bet at once is ♪${DUEL.max.toLocaleString()}.`,true); return; }
+  const owned=()=>[...SKINS,...LANDS,...BANNERS].filter(i=>i.req&&(i.req.duelBet||i.req.duelOn)&&reqMet(i.req)).map(i=>i.name), before=new Set(owned());
+  const me=duelMine(), B=me.bet||(me.bet={}); SAVE.notes-=amt; B[side]=(+B[side]||0)+amt; save(); msg('Placing your bet…');
+  const inc=firebase.firestore.FieldValue.increment, doc={name:String(ensureName()).slice(0,24),t:Date.now()}; DUEL_K.forEach(k=>{ doc[k]=inc(k===side?amt:0); });
+  try{ await duelCol().collection('bets').doc(ACCT.user.uid).set(doc,{merge:true}); }
+  catch(e){ SAVE.notes+=amt; B[side]-=amt; save(); duelWallet(); msg('Your bet didn\'t go through ('+(e&&e.code||'offline')+'). Your notes are back.',true); return; }
+  if(A.ctx) sGem(); const nm=DUEL.sides[side].name; msg(`♪${amt.toLocaleString()} on ${nm}. If ${nm} wins right now, you'd get about ♪${duelPayout(side,duelMyBet(side)).toLocaleString()} back.`);
+  const got=owned().filter(n=>!before.has(n)); if(got.length){ toast('Unlocked: '+got.join(', ')+'!'); sChime(90); }
+  $('duelAmt').value=''; duelWallet(); duelRender();
+}
+/* the menu banner */
+function duelMenu(){
+  const b=$('mDuel'); if(!b) return; const on=duelShown(); if(b.hidden===on) b.hidden=!on; if(!on) return;
+  const ph=duelPhase(), n=Date.now(), short=ms=>cvkFmt(ms).replace(/ \d+s$/,'');
+  const t=ph==='soon'?`Starts in ${short(DUEL.start-n)}`:ph==='live'?(duelBetOpen()?`LIVE · bet on the winner · betting closes in ${short(DUEL.betClose-n)}`:`LIVE · betting closed · ends in ${short(DUEL.end-n)}`):'It\'s over · tap for the results';
+  const s=$('mDuelSub'); if(s.textContent!==t) s.textContent=t;
+}
+function duelRender(){
+  duelMenu(); if($('duelOv').hidden) return;
+  const ph=duelPhase(), n=Date.now(), w=ph==='over'?duelWinner():null, D=duelOf(DUEL.id), S=DUEL.sides, [ka,kb]=DUEL_K;
+  const who=k=>{ const v=DS.scores[k]; return v&&v.name?cleanName(v.name):''; };   // their username, as it is now
+  // while it's live the page counts down to the end; when it's over the winner takes the timer's place, in big letters
+  const tm=$('duelTimer'); tm.classList.toggle('final',ph==='over'); DUEL_K.forEach(k=>tm.classList.toggle(S[k].cls,w===k));
+  $('duelPhase').textContent=ph==='soon'?'Starts in':ph==='live'?'Ends in':w?'The winner':'Final result';
+  $('duelTime').textContent=ph==='soon'?cvkFmt(DUEL.start-n):ph==='live'?cvkFmt(DUEL.end-n):w?`${S[w].name} wins!`:DUEL_K.every(k=>DS.fresh[k])?'No winner':'…';
+  $('duelWhen').textContent=ph==='over'?(w&&who(w)?who(w)+' · ':'')+`Ended ${DUEL.ends} · results stay up until midnight`:`Ends ${DUEL.ends}`;
+  const sc=k=>DS.scores[k]?+DS.scores[k].score||0:0, top=Math.max(sc(ka),sc(kb),1), lead=sc(ka)===sc(kb)?null:sc(ka)>sc(kb)?ka:kb;
+  DUEL_K.forEach((k,i)=>{ const L=i?'B':'A', nm=who(k), p=duelPot(k), nb=duelBackers(k);
+    $('duelSc'+L).textContent=sc(k).toLocaleString(); $('duelNm'+L).textContent=nm||S[k].name; $('duelRl'+L).textContent=nm?`(${S[k].name})`:DS.scores[k]?'':'(not signed up yet)';
+    $('duelBar'+L).style.width=Math.max(3,sc(k)/top*100)+'%'; $('duelRow'+L).classList.toggle('lead',lead===k); $('duelRow'+L).classList.toggle('win',w===k);
+    $('duelBets'+L).textContent=p?`Bets: ♪${p.toLocaleString()} from ${nb} player${nb===1?'':'s'}`:'No bets yet'; });
+  $('duelYou').innerHTML=D.side?`${ph==='over'?'You fought as':'You\'re fighting as'} <b class="${S[D.side].cls}">${S[D.side].name}</b>. `+(ph==='live'?'Every point you score, in any mode, adds to your bar.':'')+(D.win?`<span class="won">✦ ${DUEL.prize.name} is yours ✦</span>`:'')
+    :ph==='over'?'':'Watching? Back your pick below. The bars update live.';
+  $('duelJoin').hidden=!!D.side||ph==='over';
+  $('duelOpen').textContent=ACCT.user?`⚔ Are you ${S[ka].name} or ${S[kb].name}? Sign up with your code`:`⚔ Are you ${S[ka].name} or ${S[kb].name}? Sign in, then sign up`;
+  // betting: while it's open you pick a side and an amount; after that the card shows how your bets did
+  const open=duelBetOpen(), ma=duelMyBet(ka), mb=duelMyBet(kb);
+  $('duelBetHead').textContent=open?'Place your bet':'Your bets';
+  $('duelBetWhen').textContent=open?`Closes ${DUEL.closes} · you have ♪${SAVE.notes.toLocaleString()}`:ph==='over'?(D.paid?'Paid out':'Final result'):'Betting closed';
+  $('duelPlaceArea').hidden=!open;
+  $('duelBet').querySelectorAll('.cvkside').forEach(b=>b.classList.toggle('on',b.dataset.side===DS.pick));
+  const setCard=(L,cls,label,val,note,gold)=>{ const card=$('duelMb'+L).parentNode; card.className='cvkmb '+cls+(gold?' won':''); card.querySelector('span').textContent=label; $('duelMb'+L).textContent=val; $('duelWin'+L).textContent=note; };
+  if(ph==='over'&&w){
+    const l=duelOther(w), wn=S[w].name, ln=S[l].name, st=duelMyBet(w), lost=duelMyBet(l), backed=duelPot(w)>0, pay=backed?(st?duelPayout(w,st):0):st+lost, gain=Math.max(0,pay-st-(backed?0:lost));
+    if(!backed&&(st||lost)){ setCard('A',S[w].cls,`${wn} won`,'♪'+(st+lost).toLocaleString(),'Nobody backed the winner, so every bet came back',false); setCard('B','gain','You gained','♪0','Your notes were refunded',false); }
+    else { setCard('A',S[w].cls,`Your bet on ${wn}`,'♪'+st.toLocaleString(),st?`${wn} won, so you got it back`:`You didn't bet on ${wn}`,false);
+      setCard('B','gain','You gained','♪'+gain.toLocaleString(),st?`You collected ♪${pay.toLocaleString()} in total`+(lost?` · your ♪${lost.toLocaleString()} on ${ln} was lost`:''):(lost?`Your ♪${lost.toLocaleString()} on ${ln} was lost`:'Nothing to collect'),gain>0); }
+  } else [[ka,'A',ma],[kb,'B',mb]].forEach(([k,L,mine])=>{ const nm=S[k].name, pay=duelPayout(k,mine);
+    setCard(L,S[k].cls,nm,'♪'+mine.toLocaleString(),!mine?`You haven't bet on ${nm}`:ph==='over'?'Refunded':`If ${nm} wins you collect ♪${pay.toLocaleString()} (♪${(pay-mine).toLocaleString()} profit)`,false); });
+  const rw=(id,have,need)=>{ const e=$(id); e.style.setProperty('--p',Math.min(100,have/need*100)+'%'); e.classList.toggle('got',have>=need); };
+  rw('duelRw1',ma+mb,DUEL.all); rw('duelRw2',ma,DUEL.block); rw('duelRw3',mb,DUEL.block);
+}
+/* the invitation: when the game opens while betting is open, once per visit (the daily gift and news wait until after) */
+function duelPromo(){
+  if(DS.promoted||!duelShown()||!duelBetOpen()||duelPhase()!=='live'||G.state!=='menu') return false;
+  DS.promoted=true; showOv('duelPromo'); duelWatch(); duelPromoTick(); if(A.ctx) sChime(86); return true;
+}
+function duelPromoTick(){
+  if($('duelPromo').hidden) return; const n=Date.now();
+  $('duelPTime').textContent=cvkFmt(DUEL.betClose-n); $('duelPA').textContent='♪'+duelPot(DUEL_K[0]).toLocaleString(); $('duelPB').textContent='♪'+duelPot(DUEL_K[1]).toLocaleString();
+}
+function showDuel(){ showOv('duelOv'); duelMsg('duelMsg',''); duelMsg('duelBetMsg',''); if(acctCfg()&&!ACCT.ready&&!ACCT.loading) acctInit(); duelWatch(); duelFindSide(); duelLoadMyBet(); duelRender(); }
+$('duelPGo').onclick=()=>showDuel();
+$('duelPNo').onclick=()=>{ duelUnwatch(); toMenu(); };
+$('mDuel').onclick=showDuel;
+$('duelBack').onclick=()=>{ duelUnwatch(); toMenu(); };
+$('duelOpen').onclick=()=>{ if(!ACCT.user){ showAcct(); return; } const f=$('duelForm'); f.hidden=!f.hidden; if(!f.hidden) $('duelCode').focus(); };
+$('duelGo').onclick=duelSignUp;
+$('duelCode').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') duelSignUp(); });
+$('duelBet').querySelectorAll('.cvkside').forEach(b=>b.onclick=()=>{ DS.pick=b.dataset.side; duelRender(); });
+$('duelBet').querySelectorAll('.cvkamt button').forEach(b=>b.onclick=()=>{ $('duelAmt').value=b.dataset.amt; });
+$('duelPlace').onclick=duelPlaceBet;
+$('duelAmt').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') duelPlaceBet(); });
+// the reward pills show the real banners
+[['duelRwB2','b_team_jack'],['duelRwB3','b_team_haron']].forEach(([id,b])=>{ const e=$(id), bn=BANNERS.find(x=>x.id===b); if(e&&bn) e.style.background=bn.bg; });
+setInterval(()=>{ duelRender(); duelPromoTick();
+  // the invitation can open before sign-in has loaded the database: start watching as soon as it's there
+  if((!$('duelOv').hidden||!$('duelPromo').hidden)&&!DS.unsub.length) duelWatch();
+  // at midnight after it ends the page closes and its banner leaves the menu
+  if(!duelShown()&&!$('duelOv').hidden){ duelUnwatch(); toMenu(); }
+  const D=duelOf(DUEL.id); if(D.win&&!D.winSeen&&G.state==='menu') duelWinPopup();
+  // after the duel, a fighter or a better checks the result now and then, so the prize and the winnings arrive even with the page closed
+  const needWin=D.side&&!D.win, needPay=!D.paid&&duelBetSum(DUEL.id)>0;
+  if(duelPhase()==='over'&&(needWin||needPay)&&ACCT.db&&!DS.unsub.length&&Date.now()-DS.lastFetch>60000){ DS.lastFetch=Date.now();
+    Promise.all(DUEL_K.map(k=>duelCol().collection('sides').doc(k).get().then(d=>{ DS.scores[k]=d.exists?d.data():null; if(cvkFresh(d)) DS.fresh[k]=true; })))
+      .then(()=>needPay?duelCol().collection('bets').get().then(q=>{ const m={}; q.forEach(d=>{ m[d.id]=d.data(); }); DS.bets=m; if(cvkFresh(q)) DS.betsLoaded=true; }):null)
+      .then(()=>{ duelCheckWin(); duelSettle(); }).catch(()=>{}); }
 },1000);
 
 /* ================= TWIN PULSE: the 2v2 bracket (Mon Oct 5 – Fri Oct 9, 2026, all times Central) =================
@@ -14223,7 +14603,7 @@ function flash(pid,dir,cls){ const b=document.querySelector(`.dir[data-p="${pid}
   const k=pid+dir; clearTimeout(flashT[k]); flashT[k]=setTimeout(()=>b.classList.remove('j-perfect','j-good','j-drift','j-miss','j-guard','press'),130); }
 
 /* ---------------- OVERLAYS ---------------- */
-const OVS=['cresOv','cresWinOv','revOv','clsOv','liveOv','playOv','denOv','plOv','wardOv','newsOv','adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
+const OVS=['duelPromo','duelOv','duelWinOv','cresOv','cresWinOv','revOv','clsOv','liveOv','playOv','denOv','plOv','wardOv','newsOv','adminOv','ppBuyOv','reviveOv','modOv','remixOv','passOv','cvkWinOv','twinWinOv','twinOv','hpOv','friendsOv','friendOv','edOv','lbOv','eventOv','chalOv','giftOv','swtOv','tutOv','studioOv','menuOv','worldsOv','levelsOv','resultOv','overOv','pauseOv','shopOv','settingsOv','calibOv','guideOv','coopOv','hardOv','acctOv','profOv','cardOv','nameOv'];
 const visBtns=el=>[...el.querySelectorAll('button,input')].filter(b=>b.offsetParent!==null&&!b.disabled);
 const visibleOv=()=>OVS.map(id=>$(id)).find(el=>!el.hidden);
 function hideAll(){ OVS.forEach(id=>$(id).hidden=true); document.body.classList.remove('in-menu'); }
@@ -14249,7 +14629,7 @@ function toMenu(ov='menuOv'){
   if(G.state!=='menu') fadeMusic(); stopStudioAudio(); hideTalk(); hideCine();
   TRY=null; G=visualDefaults({state:'menu',players:[mkPlayer(0)]}); R=null; setTheme(THEMES[Math.min(WORLDS-1,SAVE.world-1)]);
   hint('');
-  if(ov==='menuOv'){ buildMenu(); try{ goalUI(); wardUI(); newDots(); setTimeout(wishCheck,1500); }catch(e){} setTimeout(()=>{ if(G.state==='menu'&&!$('menuOv').hidden&&!chalOffer()&&!lvlOffer()&&$('cvkWinOv').hidden&&$('twinWinOv').hidden&&!cvkWinPopup()&&!twWinPopup()&&!giftCheck()) newsCheck(); },500); } else if(ov==='hardOv') buildHard(); else if(ov==='remixOv') buildRemix(); else if(ov==='passOv') buildPass(); else if(ov==='worldsOv') buildWorlds(); else if(ov==='shopOv') buildShop(); else if(ov==='settingsOv') buildSettings();
+  if(ov==='menuOv'){ buildMenu(); try{ goalUI(); wardUI(); newDots(); setTimeout(wishCheck,1500); }catch(e){} setTimeout(()=>{ if(G.state==='menu'&&!$('menuOv').hidden&&!chalOffer()&&!lvlOffer()&&$('cvkWinOv').hidden&&$('twinWinOv').hidden&&$('duelWinOv').hidden&&!cvkWinPopup()&&!twWinPopup()&&!duelWinPopup()&&!duelPromo()&&!giftCheck()) newsCheck(); },500); } else if(ov==='hardOv') buildHard(); else if(ov==='remixOv') buildRemix(); else if(ov==='passOv') buildPass(); else if(ov==='worldsOv') buildWorlds(); else if(ov==='shopOv') buildShop(); else if(ov==='settingsOv') buildSettings();
   showOv(ov);
 }
 function nextUp(){
@@ -14874,7 +15254,7 @@ function finishRun(){
   setTimeout(()=>{
     if(G.mode!==M||G.state!=='done') return;
     $('rXP').innerHTML=xpLine; $('rLore').innerHTML=loreForResult(M); hideTalk(); hideCine(); showExtras(M,ex);
-    cvkPost(M); cresPost(M);
+    cvkPost(M); duelPost(M); cresPost(M);
   { const cr=chalResult(M), lb=lbPost(M); if(cr) $('rNear').textContent=cr; else if(lb&&!$('rNear').textContent) $('rNear').textContent=lb; }
     $('rShare').hidden=!chalFor(M); $('rShare').onclick=()=>shareChallenge(M); $('rShare').textContent='Challenge a friend';
     if(M.type==='custom'){ $('rShare').hidden=false; $('rShare').textContent='Share this level'; $('rShare').onclick=()=>shareLevel(edCodeOf(M.design)); }
@@ -14919,7 +15299,7 @@ function gameOver(why){
   if(M.type==='studio') setTimeout(()=>{ if(G.mode===M) stopStudioAudio(); },1500);
   { const L=SAVE.life; if(M.type==='endless') L.endlessRooms=Math.max(L.endlessRooms||0,G.roomIdx-1); if(M.net) L.online=(L.online||0)+1; if(why==='song') L.songs=(L.songs||0)+1; }
   overNear(M,why,best);
-  cvkPost(M); twPost(M); cresPost(M);
+  cvkPost(M); duelPost(M); twPost(M); cresPost(M);
   { const ev=eventDone(M), cr=chalResult(M), lb=lbPost(M); if(cr) $('oNear').textContent=cr; else if(ev) $('oNear').textContent=ev; else if(lb&&!$('oNear').textContent) $('oNear').textContent=lb; }
   $('oShare').hidden=!chalFor(M)||!!M.net; $('oShare').onclick=()=>shareChallenge(M);
   const bf=boardFor(M); $('oLB').hidden=!bf; $('oLB').onclick=()=>{ if(M.type==='event') showEvent(); else showLB(M.type==='endless'?'endless':M.type==='ascent'?'ascent':'daily'); };
@@ -15005,7 +15385,7 @@ function loop(ts){
       G.players.forEach(P=>{ const c=cellAt(P.pos.x,P.pos.y); if(G.state==='playing'&&!P.remote&&c&&c.vent&&!P.dead&&!P.done&&!(P.anim&&P.anim.kind==='path'&&now<P.anim.end)) burn(P); }); } }
   } else if(G.state==='cutscene') pump();
   else if(G.state==='calib') calibTick();
-  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('denOv').hidden||!$('plOv').hidden) lockerFrame(now); if(!$('liveOv').hidden||!$('playOv').hidden||!$('clsOv').hidden||!$('revOv').hidden) drawSkinPreviews(now,'#liveOv canvas.skprev, #playOv canvas.skprev, #clsOv canvas.skprev'); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('cresOv').hidden||!$('cresWinOv').hidden) drawSkinPreviews(now,'#cresOv canvas.skprev, #cresWinOv canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('mSpot').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mSpot canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks'||shopTab==='forge')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('stageOv').hidden) drawSkinPreviews(now,'#stageOv canvas.skprev'); if(!$('wardOv').hidden) drawSkinPreviews(now,'#wardOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
+  else if(G.state==='menu'){ lobbyTick(); menuDemo(now); if(!$('denOv').hidden||!$('plOv').hidden) lockerFrame(now); if(!$('liveOv').hidden||!$('playOv').hidden||!$('clsOv').hidden||!$('revOv').hidden) drawSkinPreviews(now,'#liveOv canvas.skprev, #playOv canvas.skprev, #clsOv canvas.skprev'); if(!$('adminOv').hidden) drawSkinPreviews(now,'#adminOv canvas.skprev, #admConf canvas.skprev'); if(!$('cresOv').hidden||!$('cresWinOv').hidden) drawSkinPreviews(now,'#cresOv canvas.skprev, #cresWinOv canvas.skprev'); if(!$('mErlaf').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mErlaf canvas.skprev'); if(!$('mDuel').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mDuel canvas.skprev'); if(!$('duelOv').hidden||!$('duelPromo').hidden||!$('duelWinOv').hidden) drawSkinPreviews(now,'#duelOv canvas.skprev, #duelPromo canvas.skprev, #duelWinOv canvas.skprev'); if(!$('mSpot').hidden&&!$('menuOv').hidden) drawSkinPreviews(now,'#mSpot canvas.skprev'); if(!$('shopOv').hidden&&(shopTab==='skins'||shopTab==='banners'||shopTab==='bpacks'||shopTab==='forge')) drawSkinPreviews(now); if(!$('bpOv').hidden) drawSkinPreviews(now,'#bpOv canvas.skprev'); if(!$('stageOv').hidden) drawSkinPreviews(now,'#stageOv canvas.skprev'); if(!$('wardOv').hidden) drawSkinPreviews(now,'#wardOv canvas.skprev'); if(!$('shopOv').hidden&&!$('shopFeat').hidden) drawSkinPreviews(now,'#shopFeat canvas.skprev'); if(!$('shopOv').hidden&&!$('shopMoney').hidden) drawSkinPreviews(now,'#shopMoney canvas.skprev'); if(!$('coopOv').hidden) drawSkinPreviews(now,'#coopOv canvas.skprev'); if(!$('partyBar').hidden) drawSkinPreviews(now,'#pbSkins canvas.skprev'); if(!$('friendsOv').hidden) drawSkinPreviews(now,'#friendsOv canvas.skprev'); if(!$('cvkWinOv').hidden) drawSkinPreviews(now,'#cvkWinOv canvas.skprev'); if(!$('twinOv').hidden) drawSkinPreviews(now,'#twinOv canvas.skprev'); if(!$('passOv').hidden) drawSkinPreviews(now,'#passOv canvas.skprev'); if(!$('ppBuyOv').hidden) drawSkinPreviews(now,'#ppBuyOv canvas.skprev'); if(!$('twinWinOv').hidden) drawSkinPreviews(now,'#twinWinOv canvas.skprev'); if(!$('friendOv').hidden) drawSkinPreviews(now,'#friendOv canvas.skprev'); if(!$('lbOv').hidden) drawSkinPreviews(now,'#lbList canvas.skprev'); }
   if((G.state==='menu'||G.state==='calib')&&!R){ rng=Math.random; R=genRoom(cfgEndless(4)); R.rise=now; if(!G.players) G.players=[mkPlayer(0)]; G.players[0].pos={...R.start}; }
   if(G.stats&&G.disp!==G.score){ G.disp=Math.min(G.score,G.disp+Math.max(1,Math.ceil((G.score-G.disp)*.16))); $('score').textContent=G.disp.toLocaleString(); }
   if(!G.nudge) visualDefaults(G);
