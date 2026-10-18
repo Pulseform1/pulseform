@@ -17,10 +17,31 @@ It is a standalone installable web app: a single `index.html` with no build step
   - Low-impact and pull-up-bar options change the exercise pool.
 - **Hunter rank and jobs.** Reassessment Trials unlock at levels 10, 20, 30, 45 and 60. The first one lets you choose a job: Berserker, Assassin, Guardian, Sage or Ranger.
 - **Runs.** GPS tracking with distance, pace and a route sketch, plus manual entry for treadmills. Runs count toward the Daily Quest.
+- **Joint recovery (Recover tab).** A daily check-in for knees, shoulders, lower back, hips, ankles & feet, wrists & elbows and neck: OK, Sore or Hurts.
+  - **Sore:** Daily Quest goals that load the joint are swapped for joint-friendly versions (wall push-ups, dead bugs, glute bridges, a brisk walk timed at 10 minutes per km of the run goal). Gates and the Penalty Quest leave out exercises that load it.
+  - **Hurts:** the joint's warning signs come up first. Once you confirm none apply, its recovery session becomes the day's main task and clears the Daily Quest; other goals turn optional, there is no penalty, and any Penalty Quest is paused.
+  - Guided 8–12 minute recovery sessions for each joint and for the full body, recovery habits, and a "when to get help" section with red flags. Flags last 3 days, then the app asks again; long-running flags prompt a check by a physio or doctor.
 - **Optional quests.** Three small habits a day (water, stretching, meditation and so on) that train INT, PER and VIT.
 - **Items, shop and skins.** Random Boxes, Recovery Potions, Instant Dungeon Keys, Penalty Wards, Elixirs, plus System Blue, Shadow Violet and Ruler Gold skins.
 - **Titles, skills and records.** Titles unlock from achievements and give a bonus while equipped; passive skills unlock from milestones. The records tab has the streak, a 12-week quest calendar, lifetime totals and a log of System messages.
 - **Settings.** Difficulty, which goals are in the Daily Quest, rest days, the time the day resets, km or miles, sound, vibration, backup export and restore, and a progress reset.
+
+## Installed-app extras
+
+What an installed web app can get differs by platform. Everything below is feature-detected, so unsupported platforms simply skip it.
+
+| Platform | Home-screen widget | Long-press / right-click shortcuts | Icon badge (goals left) |
+| --- | --- | --- | --- |
+| iPhone / iPad | Not possible for web apps (needs a native app) | No | Yes, after allowing notifications |
+| Android (Chrome) | Not possible for web apps (needs a native app) | Yes | No |
+| Windows 11 (Edge) | Yes: a Daily Quest card in the Widgets Board (Microsoft calls it experimental; the Microsoft Store build via PWABuilder is the reliable route) | Yes | Yes |
+| Windows (Chrome), macOS, ChromeOS | No | Yes | Yes |
+
+The page writes a small snapshot of today's quest to Cache Storage; the service worker renders the Windows widget from it and refreshes it after the daily reset with periodic background sync where available. Real iPhone and Android home-screen widgets need the Capacitor wrapper below plus a native widget (WidgetKit on iOS, App Widgets on Android).
+
+## Recovery content
+
+The recovery moves, habits, joint-friendly swaps and warning signs were drafted from current physiotherapy guidance (load management, the 0–10 pain-monitoring rule, isometrics and gentle mobility), then checked by a clinical-safety review and a usability review before going in. It is general guidance for everyday aches from training, not a diagnosis or treatment, and the app says so. The content lives in the `RECOVERY` constant in `index.html`.
 
 ## Run it locally
 
@@ -61,17 +82,19 @@ The app is plain HTML, CSS and JavaScript, so it can be wrapped with [Capacitor]
 
 - **Local notifications** for a daily reminder before reset.
 - **Background geolocation** so runs keep tracking with the screen locked.
+- **Home-screen widgets** (WidgetKit on iOS, App Widgets on Android) reading the same quest snapshot.
 
 ## Files
 
 | File | What it is |
 | --- | --- |
 | `index.html` | The whole app: markup, styles and script |
-| `manifest.webmanifest` | Install metadata (name, colors, icons) |
-| `sw.js` | Offline cache. Bump `VERSION` when you change the app files |
-| `icons/` | App icons (SVG source and rendered PNGs) |
+| `manifest.webmanifest` | Install metadata (name, colors, icons, shortcuts, Windows widget) |
+| `sw.js` | Offline cache and Windows widget. Bump `VERSION` when you change the app files |
+| `icons/` | App icons (SVG source and rendered PNGs) and `shortcuts/` icons |
+| `widgets/` | Windows widget: Adaptive Card template, default data and picker screenshot |
 | `wrangler.jsonc`, `.assetsignore` | Cloudflare hosting config |
 
 ## Data and privacy
 
-Everything is stored in the browser's local storage on the device. Location is read only while a run is being tracked, and is used to measure distance on the device. Nothing is sent anywhere. Use **Settings → Save Data** to back up or move progress to another phone.
+Everything is stored in the browser's local storage on the device. Location is read only while a run or walk is being tracked, and is used to measure distance on the device. On iPhone, notification permission is only used to show the icon badge. Nothing is sent anywhere. Use **Settings → Save Data** to back up or move progress to another phone.

@@ -1200,7 +1200,7 @@ function finishRecovery(){
   S.totals.rec++;d.recDone=[...(d.recDone||[]),g.region];
   S.session=null;UI.screen=null;UI.hit=0;unwake();
   notify({kind:'quest',head:'Recovery Complete',lines:[`[${g.name}: recovery session complete.]`,soreLv(g.region)?'Update your check-in in Recover when it feels better.':'Recovery done. Train smart tomorrow.'],
-    rewards:[['XP from moves',`+${fmt(s.xp)}`],['Recovery bonus',`+${fmt(xpPreview)} XP`],['HP',`+${fmt(heal)}`],['Fatigue','−30']],foot:RECOVERY.painRule});
+    rewards:[['XP from moves',`+${fmt(s.xp)}`],['Recovery bonus',`+${fmt(xpPreview)} XP`],...(heal?[['HP',`+${fmt(heal)}`]]:[]),['Fatigue','−30']],foot:RECOVERY.painRule});
   gainXP(base);
   if(d.heal&&!d.cleared&&soreLv(g.region)>=2) clearDaily();
   if(S.penalty&&!S.penalty.tasks.length&&!penaltyPaused()&&soreLv(g.region)) clearPenalty('Your recovery session cleared it.');
@@ -1664,7 +1664,7 @@ const SHEETS={
     const label=m=>`${m.type==='time'?m.target+' s':'× '+m.target}${m.perSide?' each side':''}${m.sets>1?` · ${m.sets} sets`:''}`;
     return `<div class="sh-head"><div><p class="eyebrow">Recovery session</p><h3>${esc(R.name)}</h3></div>${closeBtn}</div>
       <p class="hint" style="margin:0">${esc(R.overview)}</p>
-      <ul class="moves">${moves.map(m=>`<li><b>${esc(m.name)}</b><span>${label(m)}</span><small>${esc(m.cue)}</small><small>Skip if: ${esc(m.avoidIf)}</small></li>`).join('')}</ul>
+      <ul class="moves">${moves.map(m=>`<li><b>${esc(m.name)}</b><span>${label(m)}</span><small>${esc(m.cue)}</small><small>${esc(m.avoidIf)}</small></li>`).join('')}</ul>
       ${first?'<p class="note" style="color:var(--gold)">Before your first session, check these warning signs.</p>':''}
       <details class="help"${first?' open':''}><summary>Stop and get checked if</summary><ul>${R.redFlags.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></details>
       <p class="note">${esc(RECOVERY.painRule)}</p>
@@ -1756,7 +1756,7 @@ const SCREENS={
     const s=S.session,g=s.g,set=sessSet(),e=EX[set.ex],R=RANKS[g.rank],rec=g.mode==='rec';
     const total=g.sets.reduce((a,b)=>a+b.hp,0),left=Math.max(0,total-s.dealt),wave=set.round+1,next=g.sets[s.i+1];
     const side=set.side?` · ${set.side}`:'',nextSide=next&&next.side?` · ${next.side.toLowerCase()}`:'';
-    const extra=rec?`${e.easier?`<p class="cue">Easier: ${esc(e.easier)}</p>`:''}${e.avoidIf?`<p class="cue">Skip if: ${esc(e.avoidIf)}</p>`:''}`:'';
+    const extra=rec?`${e.easier?`<p class="cue">Easier: ${esc(e.easier)}</p>`:''}${e.avoidIf?`<p class="cue">${esc(e.avoidIf)}</p>`:''}`:'';
     let main;
     if(s.phase==='rest'){
       main=`<div class="phase rest"><p class="ph-l">${rec?'Breathe':'Rest'}</p><div class="timer" id="sess-t">${mmss((s.end-Date.now())/1000)}</div>
@@ -1806,7 +1806,7 @@ const SCREENS={
         <canvas id="run-map" width="640" height="320" role="img" aria-label="Route sketch"></canvas></section>
       <div class="row2">${!r?`<button class="btn pri xl" data-a="runStart">${walking()?'Start walk':'Start run'}</button>`:r.seg?'<button class="btn xl" data-a="runPause">Pause</button><button class="btn pri xl" data-a="runFinish">Finish</button>':'<button class="btn pri xl" data-a="runStart">Resume</button><button class="btn xl" data-a="runFinish">Finish</button>'}</div>
       ${r&&!r.seg?(UI.confirmDiscard?'<div class="confirm"><p>Discard this run? Nothing will be logged.</p><div class="row2"><button class="btn" data-a="runDiscardNo">Keep it</button><button class="btn danger" data-a="runDiscardYes">Discard</button></div></div>':'<button class="btn ghost block" data-a="runDiscard">Discard run</button>'):''}
-      <p class="hint" style="margin:0">Keep this screen open while you run; it stays awake. Your location is used only for distance and never leaves this device.</p>`;
+      <p class="hint" style="margin:0">Keep this screen open while you ${walking()?'walk':'run'}; it stays awake. Your location is used only for distance and never leaves this device.</p>`;
     const walk=walking();
     const manual=walk?`<section class="win"><label class="field"><span>Minutes walked</span><input id="man-t" type="number" inputmode="numeric" min="1" placeholder="15"></label>
         <button class="btn pri block" data-a="runManual">Log walk</button></section><p class="hint" style="margin:0">Walk on flat ground at a pace you could talk at. Stop if pain goes above 3/10.</p>`
