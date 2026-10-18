@@ -1,7 +1,13 @@
-/* Awaken offline cache. Bump VERSION whenever the app files change. */
-const VERSION = 'awaken-v1';
+/* Awaken offline cache and Windows widget. Bump VERSION whenever the app files change. */
+const VERSION = 'awaken-v2';
 const FONTS = 'awaken-fonts';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+const WIDGET_CACHE = 'awaken-widget'; // the page writes the widget's data snapshot here; it must survive updates
+const SHELL = [
+  './', './index.html', './manifest.webmanifest',
+  './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
+  './icons/shortcuts/quest.png', './icons/shortcuts/run.png', './icons/shortcuts/recover.png', './icons/shortcuts/gates.png',
+  './widgets/quest-template.json', './widgets/quest-data.json',
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -10,8 +16,9 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== FONTS).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== FONTS && k !== WIDGET_CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
+      .then(refreshOutside)
   );
 });
 
@@ -19,6 +26,12 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+
+  // Widget data: the page's latest snapshot, or the static default before the app has run.
+  if (url.href === SNAPSHOT_URL) {
+    e.respondWith(caches.open(WIDGET_CACHE).then(c => c.match(SNAPSHOT_URL)).then(hit => hit || fetch(req)));
+    return;
+  }
 
   // App pages: try the network first so updates arrive, fall back to the cached copy offline.
   if (req.mode === 'navigate') {
@@ -47,4 +60,88 @@ self.addEventListener('fetch', e => {
       return hit || net;
     }));
   }
+});
+
+/* ---------- Windows 11 Widgets Board (Microsoft Edge only; a no-op everywhere else) ---------- */
+const WIDGET_TAG = 'daily-quest';
+const SCOPE = self.registration.scope;
+const TEMPLATE_URL = new URL('widgets/quest-template.json', SCOPE).href;
+const SNAPSHOT_URL = new URL('widgets/quest-data.json', SCOPE).href;
+
+// The app's day starts at its reset hour, so "today" here must match the page's day key.
+function dayKey(resetHour) {
+  const d = new Date(Date.now() - (resetHour || 0) * 3600000);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+async function readSnapshot() {
+  let data = {};
+  try {
+    const hit = await (await caches.open(WIDGET_CACHE)).match(SNAPSHOT_URL);
+    data = await (hit || await fetch(SNAPSHOT_URL)).json();
+  } catch (e) {}
+  // Last written on an earlier day: show a fresh quest instead of yesterday's numbers.
+  if (data.date && data.date !== dayKey(data.resetHour)) {
+    data = Object.assign({}, data, {
+      date: dayKey(data.resetHour), cleared: false, stale: true, left: (data.goals || []).length,
+      status: 'New day. Open Awaken for today\'s Daily Quest.',
+      goals: (data.goals || []).map(g => Object.assign({}, g, { done: false, mark: '○', progress: g.target })),
+    });
+  }
+  return data;
+}
+
+async function widgetPayload(data) {
+  const hit = await caches.match(TEMPLATE_URL);
+  const template = await (hit || await fetch(TEMPLATE_URL)).text();
+  return { template, data: JSON.stringify(data) };
+}
+
+async function renderWidgets(data) {
+  if (!self.widgets) return;
+  try {
+    if (!(await self.widgets.getByTag(WIDGET_TAG))) return;
+    await self.widgets.updateByTag(WIDGET_TAG, await widgetPayload(data || await readSnapshot()));
+  } catch (e) {}
+}
+
+// Re-render the widget and the icon badge from the latest snapshot (also used by periodic sync on a new day).
+async function refreshOutside() {
+  const data = await readSnapshot();
+  await renderWidgets(data);
+  if (data.stale && self.navigator && 'setAppBadge' in self.navigator && data.badge !== false && !data.optional && data.left) {
+    try { await self.navigator.setAppBadge(data.left); } catch (e) {}
+  }
+}
+
+self.addEventListener('widgetinstall', event => {
+  event.waitUntil((async () => {
+    const payload = await widgetPayload(await readSnapshot());
+    try { await self.widgets.updateByInstanceId(event.instanceId, payload); }
+    catch (e) { try { await self.widgets.updateByTag(WIDGET_TAG, payload); } catch (e2) {} }
+  })());
+});
+
+self.addEventListener('widgetresume', event => event.waitUntil(renderWidgets()));
+
+self.addEventListener('widgetclick', event => {
+  const routes = { quest: './?go=quest', recover: './?go=recover', run: './?go=run' };
+  if (routes[event.action]) event.waitUntil(openApp(routes[event.action]));
+});
+
+async function openApp(path) {
+  const target = new URL(path, SCOPE).href;
+  const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  for (const c of wins) {
+    try { await c.focus(); c.postMessage({ type: 'awaken:nav', url: target }); return; } catch (e) {}
+  }
+  await self.clients.openWindow(target);
+}
+
+self.addEventListener('periodicsync', event => {
+  if (event.tag === 'awaken-refresh') event.waitUntil(refreshOutside());
+});
+
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'widgets-refresh') event.waitUntil(renderWidgets());
 });

@@ -1,7 +1,7 @@
 {
   "name": "Awaken",
   "short_name": "Awaken",
-  "description": "A workout system that levels you up: daily quests, penalty zones, gates and stats for real-world training.",
+  "description": "A workout system that levels you up: daily quests, penalty zones, gates, joint recovery and stats for real-world training.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
@@ -15,5 +15,28 @@
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Daily Quest", "short_name": "Quest", "description": "Open today's Daily Quest", "url": "./?go=quest", "icons": [{ "src": "icons/shortcuts/quest.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Start a run", "short_name": "Run", "description": "Track a run with GPS", "url": "./?go=run", "icons": [{ "src": "icons/shortcuts/run.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Joint recovery", "short_name": "Recover", "description": "Check in on sore joints and start a recovery session", "url": "./?go=recover", "icons": [{ "src": "icons/shortcuts/recover.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Gates", "short_name": "Gates", "description": "See today's gates", "url": "./?go=gates", "icons": [{ "src": "icons/shortcuts/gates.png", "sizes": "96x96", "type": "image/png" }] }
+  ],
+  "widgets": [
+    {
+      "name": "Awaken Daily Quest",
+      "short_name": "Daily Quest",
+      "description": "Today's Daily Quest goals, streak and level.",
+      "tag": "daily-quest",
+      "template": "daily-quest",
+      "ms_ac_template": "widgets/quest-template.json",
+      "data": "widgets/quest-data.json",
+      "type": "application/json",
+      "screenshots": [{ "src": "widgets/screenshot.png", "sizes": "600x400", "label": "The Awaken Daily Quest widget" }],
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }],
+      "auth": false,
+      "update": 21600,
+      "multiple": false
+    }
   ]
 }

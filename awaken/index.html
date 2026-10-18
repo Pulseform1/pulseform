@@ -27,7 +27,7 @@
   --ink:#e7f4ff;       /* primary text */
   --dim:#86a2c3;       /* secondary text */
   --red:#ff3e5a; --red-glow:#ff9aa8;
-  --gold:#ffc94a; --ok:#62f5c4; --violet:#a684ff;
+  --gold:#ffc94a; --ok:#62f5c4; --ok-glow:#c2ffe9; --violet:#a684ff;
   --on-accent:#02101f; --scrim:rgba(1,4,10,.74);
   --rank-e:#a8b8cc; --rank-d:#62f5c4; --rank-c:#45b0ff; --rank-b:#a684ff; --rank-a:#ff8a4c; --rank-s:#ffc94a;
   --f-disp:"Chakra Petch","Rajdhani","Segoe UI",system-ui,sans-serif;
@@ -37,8 +37,9 @@
 :root[data-skin=shadow]{--line:#9a6bff;--glow:#d6c6ff}
 :root[data-skin=ruler]{--line:#f0b429;--glow:#ffe6a3}
 .tone-red{--line:var(--red);--glow:var(--red-glow)}
+.tone-ok{--line:var(--ok);--glow:var(--ok-glow)}
 /* derived tints are re-declared wherever --line can change, so they follow the local tone */
-:root,.tone-red{--line-a:color-mix(in srgb,var(--line) 72%,transparent);--line-b:color-mix(in srgb,var(--line) 30%,transparent);--line-c:color-mix(in srgb,var(--line) 12%,transparent)}
+:root,.tone-red,.tone-ok{--line-a:color-mix(in srgb,var(--line) 72%,transparent);--line-b:color-mix(in srgb,var(--line) 30%,transparent);--line-c:color-mix(in srgb,var(--line) 12%,transparent)}
 
 *{box-sizing:border-box}
 html{height:100%;-webkit-text-size-adjust:100%}
@@ -76,8 +77,8 @@ h1,h2,h3,h4{text-wrap:balance}
 /* ---------- tab bar ---------- */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:color-mix(in srgb,var(--void) 86%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid var(--line-b);
   padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
-.tabs-in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
-.tab{position:relative;background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 0 5px;color:var(--dim);font:600 10.5px/1 var(--f-disp);letter-spacing:.14em;text-transform:uppercase}
+.tabs-in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+.tab{position:relative;min-width:0;background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 0 5px;color:var(--dim);font:600 10px/1 var(--f-disp);letter-spacing:.08em;text-transform:uppercase}
 .tab .i{width:24px;height:24px}
 .tab.on{color:var(--glow);text-shadow:0 0 10px var(--line)}
 .tab.on .i{filter:drop-shadow(0 0 6px var(--line))}
@@ -388,7 +389,42 @@ h1,h2,h3,h4{text-wrap:balance}
 @keyframes dmg{0%{opacity:0;transform:translateY(6px) scale(.8)}15%{opacity:1;transform:scale(1.15)}100%{opacity:0;transform:translateY(-34px)}}
 @keyframes hit{50%{transform:scale(.95);box-shadow:0 0 70px var(--line-a),inset 0 0 60px var(--line-a)}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
-@media (max-width:360px){.vitals{grid-template-columns:1fr}.stats{gap:4px 12px}.timer{font-size:60px}.run-d b{font-size:62px}}
+/* recovery */
+.joints{list-style:none;margin:0;padding:0;display:grid}
+.joint{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line-c)}
+.joint h4{margin:0;font:600 15px/1.2 var(--f-disp);letter-spacing:.03em}
+.joint small{grid-column:1/-1;color:var(--dim);font-size:13px}
+.joint small.warn-old{color:var(--gold)}
+.tri{display:flex;border:1px solid var(--line-b);border-radius:3px;overflow:hidden}
+.tri button{min-width:52px;min-height:36px;padding:6px 8px;border:0;border-left:1px solid var(--line-b);background:none;color:var(--dim);font:600 11.5px/1 var(--f-disp);letter-spacing:.06em;text-transform:uppercase}
+.tri button:first-child{border-left:0}
+.tri button[aria-pressed=true]{color:var(--on-accent);background:var(--ok)}
+.tri button.l1[aria-pressed=true]{background:var(--gold)}
+.tri button.l2[aria-pressed=true]{background:var(--red)}
+.adapt{list-style:none;margin:14px 0 0;padding:12px 0 0;border-top:1px solid var(--line-b);display:grid;gap:6px;font-size:14px}
+.adapt li{display:flex;justify-content:space-between;gap:12px}
+.adapt li span{color:var(--dim)}
+.adapt li b{font:600 14px/1.3 var(--f-disp);letter-spacing:.02em;text-align:right}
+.recs{display:grid;gap:10px}
+.rec{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:12px;border:1px solid var(--line-b);border-radius:3px;background:var(--line-c)}
+.rec.hot{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent)}
+.rec h3{margin:0;font:600 16px/1.2 var(--f-disp);letter-spacing:.03em}
+.rec p{margin:0;grid-column:1/-1;color:var(--dim);font-size:13.5px}
+.rec .btn{grid-row:1/3;grid-column:2}
+.ail{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+details.help{border-top:1px solid var(--line-b);padding-top:10px;margin-top:12px}
+details.help summary{cursor:pointer;font:600 13px/1.4 var(--f-disp);letter-spacing:.08em;text-transform:uppercase;color:var(--glow)}
+details.help ul{margin:8px 0 0;padding-left:18px;color:var(--dim);font-size:14px;display:grid;gap:4px}
+.moves{list-style:none;margin:0;padding:0;display:grid}
+.moves li{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:9px 0;border-bottom:1px solid var(--line-c)}
+.moves li b{font:600 15px/1.2 var(--f-disp)}
+.moves li span{font:600 14px/1.2 var(--f-disp);font-variant-numeric:tabular-nums;color:var(--glow);white-space:nowrap}
+.moves li small{grid-column:1/-1;color:var(--dim);font-size:13px}
+.recbar{height:10px;border:1px solid var(--line-a);background:var(--line-c);overflow:hidden}
+.recbar i{display:block;height:100%;background:linear-gradient(90deg,var(--line),var(--glow));box-shadow:0 0 12px var(--line);transition:width .5s cubic-bezier(.2,.9,.3,1)}
+.tag.teal{color:var(--ok)}
+
+@media (max-width:360px){.vitals{grid-template-columns:1fr}.stats{gap:4px 12px}.timer{font-size:60px}.run-d b{font-size:62px}.tab{font-size:9px;letter-spacing:.03em}.tri button{min-width:44px;padding:6px 5px}}
 </style>
 </head>
 <body>
@@ -448,6 +484,7 @@ const ICONS={
   coin:'<path d="M12 3l7 9-7 9-7-9z"/><path d="M12 7.5l3.5 4.5-3.5 4.5-3.5-4.5z"/>',
   flame:'<path d="M12 3c1 4 5.2 5.6 5.2 10.2a5.2 5.2 0 0 1-10.4 0c0-2.6 1.4-4.2 2.6-5.2.3 2 1.2 3.1 2.3 3.4C11 8.9 11 6 12 3z"/>',
   skin:'<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17"/>',
+  recover:'<path d="M12 20.3s-7.6-4.6-7.6-10.4A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.6 2.5c0 5.8-7.6 10.4-7.6 10.4z"/><path d="M7.4 12.4h2.4l1.4-2.4 2 4.2 1.4-1.8h2"/>',
 };
 const ico=(n)=>`<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||''}</svg>`;
 
@@ -539,6 +576,7 @@ const TITLES=[
   {id:'earlybird',name:'Early Bird',req:'Clear the Daily Quest before 8 AM.',b:{side:.1},ok:()=>!!S.flags.earlybird},
   {id:'nighthunter',name:'Night Hunter',req:'Clear a gate after 10 PM.',b:{gate:.05},ok:()=>!!S.flags.nighthunter},
   {id:'srank',name:'National Level Hunter',req:'Reach S-Rank.',b:{all:.2},ok:()=>S.player.rank>=5},
+  {id:'healer',name:'Self-Healer',req:'Complete 5 recovery sessions.',b:{all:.03},ok:()=>S.totals.rec>=5},
 ];
 const SKILLS=[
   {id:'persistence',name:'Persistence',req:'Clear 3 Daily Quests.',b:{all:.05},ok:()=>S.totals.clears>=3},
@@ -549,6 +587,7 @@ const SKILLS=[
   {id:'secondwind',name:'Second Wind',req:'Clear 15 Daily Quests.',b:{gold:.1},ok:()=>S.totals.clears>=15},
   {id:'clearmind',name:'Clear Mind',req:'Complete 20 optional quests.',b:{side:.2},ok:()=>S.totals.side>=20},
   {id:'bloodlust',name:'Bloodlust',req:'Clear a B-Rank gate.',b:{str:.1},ok:()=>S.totals.maxGate>=3},
+  {id:'regen',name:'Regeneration',req:'Complete 10 recovery sessions.',b:{regen:1},ok:()=>S.totals.rec>=10},
 ];
 const TITLE_BY=Object.fromEntries(TITLES.map(t=>[t.id,t]));
 const SKILL_BY=Object.fromEntries(SKILLS.map(t=>[t.id,t]));
@@ -567,18 +606,37 @@ const SKINS={
 const BONUS_LABEL={all:'all XP',str:'strength XP',run:'running & cardio XP',gate:'gate clear XP',side:'optional quest XP',gold:'gold',hp:'max HP',mp:'max MP',guard:'less penalty damage'};
 const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
+/* ---------- joint recovery ----------
+   Content was drafted from current physiotherapy guidance and reviewed for safety (see README).
+   regions: moves, session order, habits and red flags per joint; stress: which joints each exercise loads;
+   dailySubs: joint-friendly swaps for the Daily Quest. */
+const RECOVERY={"regions":[{"id":"knee","name":"Knees","overview":"Overdone knees usually ache at the front, around or below the kneecap, after squats, jumps, stairs or running. That ache tends to flare after a sudden jump in training. Recovery means cutting back for a while, not stopping completely: keep moving, calm the knee with gentle holds, then build thigh and hip strength again.","moves":[{"id":"heelslide","name":"Heel slides","type":"reps","target":12,"perSide":true,"sets":2,"cue":"Lie on your back with your legs straight. Slowly slide one heel toward your bottom, then slide it back out.","avoidIf":"Stop if you feel a sharp pinch or the knee locks or catches.","easier":"Only bend as far as feels comfortable, or put a towel under your heel so it slides more easily."},{"id":"quadset","name":"Quad sets","type":"reps","target":10,"perSide":false,"sets":2,"cue":"Sit with your legs straight and a rolled towel under your knees. Push the backs of your knees into the towel, tighten your thighs and hold for 5 seconds.","avoidIf":"Skip if pushing down causes sharp pain behind the knee.","easier":"Do one leg at a time and press more gently."},{"id":"kneeexthold","name":"Seated knee straightening hold","type":"time","target":30,"perSide":true,"sets":2,"cue":"Sit tall on a chair. Straighten one knee until the leg is level, or as close as is comfortable, and hold it still. Breathe normally.","avoidIf":"Stop if the pain goes above 3/10 or gets sharp.","easier":"Hold the leg a little lower or for 20 seconds, with the heel just off the floor."},{"id":"slr","name":"Straight leg raise","type":"reps","target":10,"perSide":true,"sets":2,"cue":"Lie down with one knee bent. Tighten the thigh of the straight leg, lift it to the height of the other knee, then lower it slowly.","avoidIf":"Skip if it strains your lower back or causes sharp knee pain.","easier":"Lift only a few centimetres, or prop yourself on your elbows."},{"id":"sitstand","name":"Chair sit-to-stand","type":"reps","target":10,"perSide":false,"sets":2,"cue":"Sit near the front of a chair with your feet hip-width apart. Stand up without using your hands, then sit back down slowly. Keep your knees in line with your toes.","avoidIf":"Stop if the knee gives way or the pain goes above 3/10.","easier":"Use a higher seat, a cushion, or push off your thighs with your hands."},{"id":"stepup","name":"Low step-up","type":"reps","target":10,"perSide":true,"sets":2,"cue":"Place one foot on a low step and stand up onto it, keeping the knee over your middle toes. Step down slowly with the same leg leading.","avoidIf":"Skip if stairs are clearly painful today or your balance feels shaky.","easier":"Use the lowest step and hold a wall or rail."},{"id":"quadstretch","name":"Standing thigh stretch","type":"time","target":30,"perSide":true,"sets":2,"cue":"Hold a chair or wall. Bend one knee and hold your ankle behind you, keeping your knees together, until you feel a gentle stretch at the front of the thigh.","avoidIf":"Skip if bending the knee deeply pinches or hurts at the front of the knee.","easier":"Loop a towel around your ankle, or lie face down and use the towel to pull your heel toward you."},{"id":"hamstretch","name":"Seated hamstring stretch","type":"time","target":30,"perSide":true,"sets":2,"cue":"Sit on the edge of a chair with one leg straight and the heel on the floor. Sit tall and lean forward from the hips until you feel a gentle stretch behind the thigh.","avoidIf":"Stop if you feel tingling or pulling down the back of the leg.","easier":"Bend the straight knee a little and lean forward less."}],"sessionOrder":["heelslide","quadset","kneeexthold","sitstand","stepup","quadstretch"],"habits":[{"id":"kneepaincheck","text":"Keep knee pain at 3/10 or less during training","why":"Mild discomfort that has settled by next morning is fine; sharp or rising pain means do less."},{"id":"kneemorning","text":"Check your knee each morning before you train","why":"If it feels worse than yesterday, the previous day's load was too much, so ease off."},{"id":"kneetrim","text":"Swap jumps and deep squats for low-impact moves today","why":"Cutting back on the activity that flares the knee lets it settle while you stay active."},{"id":"kneewalk","text":"Take a 10-minute easy walk on flat ground","why":"Gentle movement keeps the joint and muscles working and usually eases stiffness."},{"id":"kneehip","text":"Do one hip-strength move as well as your knee work","why":"Guidelines find hip plus knee strengthening works better for front-of-knee pain than knee work alone."},{"id":"kneeramp","text":"Raise training volume by no more than about 10% a week","why":"Building up slowly gives the knee time to adapt and lowers the chance of another flare."}],"redFlags":["Rapid or major swelling, or a knee that is hot and red, especially if you have a fever","The knee locks, catches or gives way","You cannot put weight on the leg or walk normally","Pain started with a pop, a twist or a fall","Numbness, tingling, or a cold or pale foot","Pain at night or at rest that does not ease","Unexplained weight loss or feeling generally unwell","No improvement after about 2 weeks of easing off, or pain that keeps getting worse"]},{"id":"shoulder","name":"Shoulders","overview":"Too many push-ups, pike push-ups or pull-ups too soon often leaves a dull ache at the front or top of the shoulder, worse with overhead reaching. Keep the shoulder moving, use gentle isometric holds to calm it, then rebuild with light strength work. Discomfort up to about 3/10 that settles by next morning is fine.","moves":[{"id":"shpendulum","name":"Pendulum swings","type":"time","target":30,"perSide":true,"sets":2,"cue":"Lean on a chair with your good hand and let the sore arm hang loose. Rock your body so the arm swings in small circles. Don't use the shoulder muscles to lift it.","avoidIf":"Skip if the swinging causes sharp pain or makes you dizzy when you bend forward.","easier":"Make the circles tiny, or just let the arm hang and relax for the full time."},{"id":"shsqueeze","name":"Shoulder blade squeeze","type":"reps","target":12,"perSide":false,"sets":2,"cue":"Sit or stand tall, arms by your sides. Gently draw your shoulder blades back and down, hold 3 seconds, relax.","avoidIf":"Stop if it brings on neck pain or tingling into the arm.","easier":"Squeeze at half strength and hold for only 1 second."},{"id":"shwallext","name":"Wall press: outward","type":"time","target":30,"perSide":true,"sets":2,"cue":"Stand side-on to a wall, elbow bent 90 degrees and tucked at your side. Press the back of your wrist into the wall at about half effort and hold still. Keep your shoulder down.","avoidIf":"Stop if pain goes above 3/10 during the hold or feels sharp.","easier":"Press more softly, or hold for 15 seconds and repeat twice."},{"id":"shwallint","name":"Wall press: inward","type":"time","target":30,"perSide":true,"sets":2,"cue":"Stand in a doorway, elbow bent 90 degrees at your side. Press your palm into the door frame at about half effort and hold still.","avoidIf":"Stop if pain goes above 3/10 or you feel a catch in the front of the shoulder.","easier":"Use a lighter push or a shorter 15-second hold."},{"id":"shwallslide","name":"Wall slides","type":"reps","target":10,"perSide":false,"sets":2,"cue":"Face a wall with your forearms on it. Slowly slide your arms up as far as feels comfortable, then slide back down.","avoidIf":"Stop at the point where pain starts. Skip it on days when lifting the arm hurts more than 3/10.","easier":"Slide only to shoulder height, or slide one arm at a time."},{"id":"shsideer","name":"Side-lying outward turn","type":"reps","target":12,"perSide":true,"sets":2,"cue":"Lie on your good side with a rolled towel under the top elbow, elbow bent 90 degrees. Slowly rotate the forearm up toward the ceiling, then lower over 3 seconds.","avoidIf":"Stop if you feel sharp pain or a clunk in the shoulder.","easier":"Do it with an empty hand before adding a small water bottle, and use a smaller range."},{"id":"shcross","name":"Cross-body stretch","type":"time","target":30,"perSide":true,"sets":2,"cue":"Bring one arm across your chest at shoulder height. Use the other hand to gently hug it closer until you feel a mild stretch behind the shoulder.","avoidIf":"Skip if you feel a pinch at the front or top of the shoulder rather than a stretch.","easier":"Keep the arm lower, below shoulder height, and pull more lightly."},{"id":"shdoorway","name":"Low doorway chest stretch","type":"time","target":30,"perSide":false,"sets":2,"cue":"Stand in a doorway with forearms on the frame, elbows below shoulder height. Step one foot through until you feel a gentle stretch across the chest.","avoidIf":"Stop if it causes pain in the front of the shoulder or tingling down the arm.","easier":"Do one arm at a time and take a smaller step."}],"sessionOrder":["shpendulum","shsqueeze","shwallext","shwallslide","shsideer","shcross","shdoorway"],"habits":[{"id":"shh1","text":"Cut push-up and pull-up volume by half until the ache settles","why":"Lowering the load lets the tendon calm down without losing the habit of training."},{"id":"shh2","text":"Do the wall press holds once today, even on rest days","why":"Gentle isometric holds can ease tendon pain and keep the shoulder strong."},{"id":"shh3","text":"Rate shoulder pain 0-10 the morning after training","why":"If it's back to normal by morning, the load was OK; if worse, ease off."},{"id":"shh4","text":"Keep reaching and daily tasks going instead of resting the arm","why":"Movement within comfort helps recovery more than keeping the arm still."},{"id":"shh5","text":"Avoid sleeping on the sore shoulder; hug a pillow instead","why":"Lying on it compresses the sore area and can disturb sleep."},{"id":"shh6","text":"Stand up and roll your shoulders every hour you sit","why":"Breaking long slouched periods eases stiffness around the shoulder."}],"redFlags":["Pain started after a fall, a pop or a sudden jerk","You can't lift your arm at all, or it looks out of place","Big swelling, bruising, or a hot, red shoulder","Fever or feeling unwell with the shoulder pain","Numbness, tingling or weakness spreading down the arm","Pain that wakes you at night and won't ease with changing position","Chest pain, shortness of breath or left arm pain: call emergency services","Pain getting worse each day, or no better after about 2 weeks"]},{"id":"back","name":"Lower back","overview":"After overexertion, the lower back usually feels stiff, achy or tight, often after lots of sit-ups, jumps or lifting with a rounded back. Recovery means staying gently active rather than resting in bed: easy mobility and low-load core work, with discomfort kept at about 3/10 or less and settled by the next morning.","moves":[{"id":"pelvictilt","name":"Pelvic tilt","type":"reps","target":10,"perSide":false,"sets":2,"cue":"Lie on your back, knees bent. Gently flatten your low back into the floor, then let it arch a little. Move slowly.","avoidIf":"Pain gets sharp, spreads into your leg, or goes above 3/10.","easier":"Do smaller rocks, or do it sitting on a chair."},{"id":"kneeroll","name":"Knee rolls","type":"reps","target":8,"perSide":true,"sets":2,"cue":"Lie on your back, knees bent and together. Let them roll slowly to one side, then the other, keeping your shoulders down.","avoidIf":"Twisting causes sharp pain or pain down your leg.","easier":"Roll only a short way, or keep your feet wider apart."},{"id":"catcamel","name":"Cat-camel","type":"reps","target":10,"perSide":false,"sets":2,"cue":"On hands and knees, slowly round your back up, then let it gently dip. Stay in a comfortable range.","avoidIf":"Your wrists or knees hurt, or back pain gets sharp.","easier":"Do it sitting on a chair, hands on your knees."},{"id":"kneehug","name":"Single knee hug","type":"time","target":30,"perSide":true,"sets":1,"cue":"Lie on your back. Hug one knee gently toward your chest and breathe slowly.","avoidIf":"It causes sharp pain, or pain or tingling down the leg.","easier":"Hold behind your thigh instead of over the knee, and pull less."},{"id":"birddog","name":"Bird dog","type":"reps","target":8,"perSide":true,"sets":2,"cue":"On hands and knees, reach one arm forward and the opposite leg back. Hold 3 seconds with your back level, then swap.","avoidIf":"You can't keep your back still, or pain rises above 3/10.","easier":"Move only the leg, or only the arm, at a time."},{"id":"deadbug","name":"Dead bug heel taps","type":"reps","target":8,"perSide":true,"sets":2,"cue":"Lie on your back with your hips and knees bent at 90 degrees. Keep your low back quiet and slowly tap one heel to the floor, then the other.","avoidIf":"Your back arches off the floor or pain gets worse.","easier":"Keep your feet on the floor and slide one heel out at a time."},{"id":"proneprop","name":"Lying prop on elbows","type":"time","target":30,"perSide":false,"sets":2,"cue":"Lie face down and prop up on your forearms. Let your belly and hips relax into the floor.","avoidIf":"Arching makes the pain sharper or sends pain into your leg.","easier":"Lie flat face down with a pillow under your belly."},{"id":"childpose","name":"Child's pose","type":"time","target":40,"perSide":false,"sets":1,"cue":"Kneel, sit back toward your heels and reach your arms forward. Breathe slowly into your back.","avoidIf":"Your knees hurt or bending forward makes your back pain worse.","easier":"Put a pillow between your heels and bottom or under your chest."}],"sessionOrder":["pelvictilt","kneeroll","catcamel","kneehug","birddog","deadbug","proneprop","childpose"],"habits":[{"id":"back-walk","text":"Take an easy 10-20 minute walk","why":"Gentle movement helps a sore back recover faster than bed rest."},{"id":"back-sitbreak","text":"Stand up and move every 30-45 minutes of sitting","why":"Long stretches of sitting usually make a sore back stiffer."},{"id":"back-hinge","text":"Bend at your hips and knees when you pick things up","why":"Keeping the load close and the spine relaxed spreads the effort."},{"id":"back-swap","text":"Swap sit-ups and burpees for dead bugs until it settles","why":"This keeps your core training without repeatedly bending a sore back."},{"id":"back-sleep","text":"Sleep with a pillow under or between your knees","why":"A supported position lets your back muscles relax overnight."},{"id":"back-rate","text":"Rate your back pain 0-10 each morning","why":"Pain that is the same or lower the next day means your load is about right."}],"redFlags":["Numbness around the groin, buttocks or inner thighs (saddle area): get emergency care now","New trouble peeing, leaking, or loss of bladder or bowel control: get emergency care now","Numbness, tingling or weakness in one or both legs, or pain spreading below the knee","Back pain that started after a fall, accident or a sudden pop","Fever, feeling generally unwell, or unexplained weight loss along with back pain","Constant pain at night that no position eases","Severe pain that keeps getting worse, or you can't walk normally","New back pain with a history of cancer, osteoporosis or long-term steroid use","Pain not clearly improving after about 2 weeks"]},{"id":"hip","name":"Hips","overview":"Overdone hips usually feel tight or achy at the front of the groin, or sore on the outer hip when lying on that side, climbing stairs or standing on one leg. Recovery means calming things down: keep moving gently, avoid positions that squash the outer hip, and steadily rebuild hip and glute strength.","moves":[{"id":"hiprock","name":"Lying knee rocks","type":"reps","target":10,"perSide":true,"sets":1,"cue":"Lie on your back with your knees bent and feet flat. Slowly let both knees sway to one side, then the other, only as far as is comfortable.","avoidIf":"Keep the range small if it pinches in the groin or outer hip.","easier":"Make the sway smaller and slower."},{"id":"kneetochest","name":"Knee to chest","type":"time","target":30,"perSide":true,"sets":2,"cue":"Lie on your back. Gently pull one knee toward your chest with both hands and keep the other leg relaxed.","avoidIf":"Ease off if you feel a sharp pinch deep in the groin.","easier":"Hold behind the thigh instead of the shin, and pull less far."},{"id":"clamshell","name":"Clamshells","type":"reps","target":12,"perSide":true,"sets":2,"cue":"Lie on your pain-free side with your knees bent and a pillow between them. Keep your feet together and lift the top knee a little, then lower it slowly. Keep your hips stacked.","avoidIf":"Skip if lying on your side hurts, or if your outer hip pain rises above 3/10.","easier":"Make the lift smaller, or do the same move lying on your back by pressing your knees outward."},{"id":"hipabdhold","name":"Standing outer-hip wall press","type":"time","target":30,"perSide":true,"sets":2,"cue":"Stand side-on to a wall with a folded pillow at knee height. Bend the knee closest to the wall and press the outside of it gently into the pillow. Stand tall and hold.","avoidIf":"Stop if the pain gets sharp or goes above 3/10.","easier":"Press more softly, or hold for 20 seconds."},{"id":"bridgehold","name":"Bridge hold","type":"time","target":30,"perSide":false,"sets":2,"cue":"Lie on your back with your knees bent. Squeeze your glutes and lift your hips into a straight line from knees to shoulders, then hold still and keep breathing.","avoidIf":"Lower down if you feel cramping at the back of the thigh or pain in your lower back.","easier":"Lift your hips only halfway, or hold for 15 to 20 seconds."},{"id":"hipflexstretch","name":"Kneeling hip flexor stretch","type":"time","target":30,"perSide":true,"sets":2,"cue":"Kneel on one knee on a pillow with the other foot in front of you. Tuck your tailbone under and shift forward slightly until you feel a stretch at the front of the back hip.","avoidIf":"Skip if kneeling hurts your knee or the stretch pinches at the front of the hip.","easier":"Do it standing: hold a chair and take a long step back with the leg you want to stretch."},{"id":"hiphinge","name":"Standing hip hinge","type":"reps","target":10,"perSide":false,"sets":2,"cue":"Stand with your feet hip-width apart and your hands on your hips. Push your hips back with a flat back and soft knees, then squeeze your glutes to stand tall.","avoidIf":"Skip if bending forward sends pain into your back or down your leg.","easier":"Make the hinge shallower, or keep your bottom touching a wall behind you as a guide."}],"sessionOrder":["hiprock","kneetochest","clamshell","hipabdhold","bridgehold","hipflexstretch"],"habits":[{"id":"hippaincheck","text":"Keep hip pain at 3/10 or less during training","why":"Mild discomfort that has settled by next morning is fine; sharp or rising pain means do less."},{"id":"hipnocross","text":"Sit and stand without crossing your legs","why":"Crossing the legs or hanging on one hip squeezes the outer-hip tendons and can keep them sore."},{"id":"hippillow","text":"Sleep with a pillow between your knees","why":"It stops the top leg dropping across your body, which takes pressure off the hip overnight."},{"id":"hipmovebreak","text":"Get up and move for 2 minutes every hour you sit","why":"Long spells sitting stiffen the hips, and short walks ease that."},{"id":"hipeasycardio","text":"Swap hills and long runs for flat walks for a few days","why":"Reducing the load that flared the hip lets it calm down while you stay active."}],"redFlags":["Severe hip pain after a fall or injury, or you cannot walk or put weight on the leg","A hot, swollen or red hip, or hip pain with a fever or feeling unwell","Sudden severe pain that started without any injury","Numbness, tingling or weakness spreading down the leg","Pain at night or at rest that does not ease","Groin pain that keeps getting worse with each run or hop","Unexplained weight loss","No improvement after about 2 weeks of easing off, or pain that keeps coming back"]},{"id":"ankle","name":"Ankles & feet","overview":"Overdone ankles and feet usually show up as an achy Achilles at the back of the heel, sharp heel pain with the first steps in the morning, or sore shins after too much running or jumping. Recovery means cutting back the pounding for a while, keeping the foot moving, and steadily rebuilding calf and foot strength, plus stretching for heel pain.","moves":[{"id":"ankleabc","name":"Ankle circles","type":"reps","target":10,"perSide":true,"sets":1,"cue":"Sit with one foot off the floor. Slowly draw big circles with your toes, 10 one way and 10 the other.","avoidIf":"Make the circles smaller if any direction causes sharp pain.","easier":"Point your foot up and down instead of drawing circles."},{"id":"calfhold","name":"Heel-raise hold","type":"time","target":30,"perSide":false,"sets":2,"cue":"Stand holding a wall. Rise up onto the balls of both feet, about halfway up, and hold still with your knees slightly bent.","avoidIf":"Stop if Achilles or heel pain goes above 3/10 or gets sharp.","easier":"Do it sitting: press the balls of your feet down to lift your heels while you lean on your knees."},{"id":"calfraise","name":"Slow calf raises","type":"reps","target":12,"perSide":false,"sets":2,"cue":"Hold a wall. Rise onto your toes for 3 seconds, pause, then lower for 3 seconds. Do it on flat ground.","avoidIf":"Skip on days when walking is clearly painful, or if the pain is still worse the next morning.","easier":"Do it seated, or lift your heels only partway."},{"id":"toeraise","name":"Toe raises","type":"reps","target":12,"perSide":false,"sets":2,"cue":"Stand with your back against a wall and your heels a foot from it. Lift your toes and the front of your feet, then lower them slowly.","avoidIf":"Stop if your shin gets a sharp or pinpoint pain.","easier":"Do it sitting in a chair."},{"id":"onelegbal","name":"Single-leg balance","type":"time","target":30,"perSide":true,"sets":2,"cue":"Stand on one foot next to a wall or chair, with the knee soft and your eyes looking ahead. Touch the support only if you need to.","avoidIf":"Skip if standing on that foot is painful, or if you feel dizzy.","easier":"Keep a fingertip on the wall, or rest the other toes lightly on the floor."},{"id":"calfstretch","name":"Wall calf stretch","type":"time","target":30,"perSide":true,"sets":2,"cue":"Face a wall with your hands on it and step one foot back. Keep that leg straight, the heel down and the toes forward, and lean in until the calf stretches.","avoidIf":"Skip if your pain is right where the Achilles meets the heel bone, since stretching can squeeze that spot.","easier":"Take a shorter step back and lean less."},{"id":"soleusstretch","name":"Bent-knee calf stretch","type":"time","target":30,"perSide":true,"sets":2,"cue":"Do the same stance as the wall calf stretch, but bend both knees and sink down, keeping the back heel on the floor. Feel the stretch low in the calf.","avoidIf":"Skip if it causes pain at the back of the heel bone.","easier":"Take a smaller step back and bend the knees less."},{"id":"footroll","name":"Foot roll","type":"time","target":30,"perSide":true,"sets":2,"cue":"Sit and roll the arch of one foot slowly back and forth over a water bottle, using gentle pressure.","avoidIf":"Skip if you have numbness in your feet or an open cut on the sole.","easier":"Press more lightly, or roll a rolled-up towel instead."}],"sessionOrder":["ankleabc","calfhold","calfraise","toeraise","onelegbal","calfstretch"],"habits":[{"id":"anklepaincheck","text":"Keep foot and ankle pain at 3/10 or less during training","why":"Mild discomfort that has settled by next morning is fine; sharp or rising pain means do less."},{"id":"anklefirststeps","text":"Circle your ankles before your first steps out of bed","why":"Heel and Achilles pain is often worst in the first steps after rest, and moving first eases it."},{"id":"anklesupportshoes","text":"Wear supportive shoes on hard floors instead of going barefoot","why":"Cushioning and support take some of the load off a sore heel or Achilles."},{"id":"ankleimpact","text":"Swap running or jumping for a walk or low-impact moves today","why":"Cutting back the pounding gives an overworked tendon or shin time to settle while you stay active."},{"id":"ankleramp","text":"Raise running time by no more than about 10% a week","why":"Sudden jumps in mileage are a common cause of Achilles, heel and shin overload."}],"redFlags":["You cannot take 4 steps or put weight on the foot","A pop or a feeling of being kicked in the back of the heel, or you cannot rise onto your toes","Major swelling or bruising, or the ankle looks misshapen","Pain right on a bone that is tender to press, especially after a fall or twist","Numbness, tingling, or a cold or pale foot","A hot, red, swollen calf, or calf pain with shortness of breath (get urgent help)","Pinpoint shin pain that hurts at rest or at night","No improvement after about 2 weeks of easing off, or pain that keeps getting worse"]},{"id":"wrist","name":"Wrists & elbows","overview":"Lots of push-ups, planks and burpees can overload the wrists, and pull-ups or gripping can leave the outer or inner elbow sore. Keep the joint moving, use gentle holds to calm the tendons, then rebuild slowly with light loading. Discomfort up to about 3/10 that settles by next morning is fine.","moves":[{"id":"wrmobility","name":"Wrist bends and circles","type":"reps","target":10,"perSide":false,"sets":2,"cue":"Rest your forearms on a table, hands off the edge. Slowly bend your wrists up and down, then make slow circles each way.","avoidIf":"Stop if a movement clicks painfully or gives sharp pain.","easier":"Move only through the pain-free range, or do one hand at a time."},{"id":"wrglide","name":"Finger tendon glides","type":"reps","target":8,"perSide":false,"sets":2,"cue":"Start with fingers straight. Bend the top knuckles into a hook, then make a full fist, then a flat fist with fingers straight from the knuckles. Open up between each.","avoidIf":"Stop if fingers go numb or tingle, or if any shape causes sharp pain.","easier":"Do just the hook and the open hand until it feels easy."},{"id":"wrextiso","name":"Wrist-back hold","type":"time","target":30,"perSide":true,"sets":2,"cue":"Rest your forearm on a table, palm down. Place your other hand on the back of it and press up into it, not letting the wrist move. Use about half effort.","avoidIf":"Stop if pain at the elbow or wrist goes above 3/10 during the hold.","easier":"Press more softly, or hold for 20 seconds."},{"id":"wrflexiso","name":"Wrist-forward hold","type":"time","target":30,"perSide":true,"sets":2,"cue":"Rest your forearm on a table, palm up. Place your other hand on your palm and press up into it, keeping the wrist still. Use about half effort.","avoidIf":"Stop if pain at the inner elbow or wrist goes above 3/10.","easier":"Press more softly, or hold for 20 seconds."},{"id":"wrrotate","name":"Forearm turns","type":"reps","target":12,"perSide":true,"sets":2,"cue":"Sit with your elbow bent at your side, holding a water bottle by one end. Slowly turn your palm up, then down.","avoidIf":"Stop if turning causes sharp pain at the elbow or wrist.","easier":"Do it with an empty hand, or hold the bottle near the middle."},{"id":"wrecc","name":"Slow wrist lowers","type":"reps","target":10,"perSide":true,"sets":2,"cue":"Rest your forearm on a table, palm down, holding a small water bottle. Use your other hand to lift the wrist up, then lower it slowly on its own over 3 seconds.","avoidIf":"Skip it on days when the elbow or wrist is above 3/10 at rest.","easier":"Use an empty hand or a half-full bottle."},{"id":"wrprayer","name":"Prayer stretch","type":"time","target":30,"perSide":false,"sets":2,"cue":"Press your palms together in front of your chest. Slowly lower your hands, keeping palms together, until you feel a gentle stretch in the wrists.","avoidIf":"Stop if you feel tingling in the fingers or sharp wrist pain.","easier":"Lower your hands only a little, or press more lightly."},{"id":"wrextstretch","name":"Forearm back stretch","type":"time","target":30,"perSide":true,"sets":2,"cue":"Hold one arm out in front, palm down. Use the other hand to gently bend the wrist down until you feel a mild stretch along the top of the forearm.","avoidIf":"Skip if it causes sharp pain at the outer elbow.","easier":"Keep the elbow slightly bent and stretch more gently."}],"sessionOrder":["wrmobility","wrglide","wrextiso","wrrotate","wrecc","wrprayer","wrextstretch"],"habits":[{"id":"wrh1","text":"Do push-ups on fists or a raised surface if wrists ache","why":"Less wrist bend takes strain off a sore wrist while you keep training."},{"id":"wrh2","text":"Do the wrist holds once today, even on rest days","why":"Gentle holds can ease tendon pain and keep the forearm strong."},{"id":"wrh3","text":"Rate wrist or elbow pain 0-10 the morning after training","why":"If it's back to normal by morning, the load was OK; if worse, ease off."},{"id":"wrh4","text":"Loosen your grip on phone, mouse and bags today","why":"Tight gripping all day keeps loading sore forearm tendons."},{"id":"wrh5","text":"Take a 1-minute hand break every 30 minutes of typing","why":"Short breaks stop the same tendons working nonstop."},{"id":"wrh6","text":"Add training volume back by about 10% per week","why":"Small steps let tendons adapt instead of flaring up again."}],"redFlags":["Pain started after a fall onto your hand or a pop","Major swelling, bruising or a visible bump or change in shape","You can't grip, or you can't bend or straighten the elbow fully","Numbness, tingling or pins and needles in the fingers","Weakness, or dropping things more often","Hot, red, swollen joint, or fever","Pain at night or at rest that keeps getting worse","No improvement after about 2 weeks of easing off"]},{"id":"neck","name":"Neck","overview":"Neck soreness from training usually comes from straining during sit-ups, crunches or leg raises, or from long slouched sitting after. Gentle movement and light strength work help more than keeping the neck still. Discomfort up to about 3/10 that settles by next morning is fine.","moves":[{"id":"nkchintuck","name":"Chin tucks","type":"reps","target":10,"perSide":false,"sets":2,"cue":"Sit tall and look ahead. Gently slide your chin straight back, like making a double chin. Hold 3 seconds, then relax.","avoidIf":"Stop if it causes dizziness, or tingling in your arms.","easier":"Do it lying on your back with your head on a pillow."},{"id":"nkturn","name":"Gentle head turns","type":"reps","target":8,"perSide":true,"sets":2,"cue":"Sit tall. Slowly turn your head to look over one shoulder as far as is comfortable, then back to centre.","avoidIf":"Stop if you feel dizzy, sick or see blurred vision. Don't roll your head in full circles.","easier":"Turn only halfway, or do fewer reps."},{"id":"nkrolls","name":"Shoulder rolls","type":"reps","target":10,"perSide":false,"sets":2,"cue":"Let your arms hang. Slowly roll your shoulders up, back and down in big circles.","avoidIf":"Stop if it brings on sharp neck pain.","easier":"Make the circles smaller and slower."},{"id":"nknod","name":"Lying head nod","type":"time","target":20,"perSide":false,"sets":3,"cue":"Lie on your back with your head on a thin pillow. Make a tiny nod as if saying yes, and hold. Keep your head resting on the pillow.","avoidIf":"Stop if the front of your neck shakes hard or the pain goes above 3/10.","easier":"Hold for 10 seconds and repeat more times."},{"id":"nkiso","name":"Side press hold","type":"time","target":20,"perSide":true,"sets":2,"cue":"Sit tall. Place your palm on the side of your head and press your head into it lightly, about a quarter effort. Don't let your head move.","avoidIf":"Stop if pain spreads into the arm or goes above 3/10.","easier":"Press even more lightly, or hold for 10 seconds."},{"id":"nkchairext","name":"Chair back arch","type":"reps","target":10,"perSide":false,"sets":2,"cue":"Sit in a chair with your hands behind your head. Gently lean your upper back over the top of the backrest, then return to upright.","avoidIf":"Skip if leaning back gives you dizziness or sharp pain.","easier":"Cross your arms over your chest and make the movement smaller."},{"id":"nktrap","name":"Side neck stretch","type":"time","target":30,"perSide":true,"sets":2,"cue":"Sit tall and hold the chair seat with one hand. Gently tip your ear toward the other shoulder until you feel a mild stretch.","avoidIf":"Stop if you feel tingling into the arm or a sharp pain.","easier":"Let go of the chair and tilt less."},{"id":"nklevator","name":"Look-down stretch","type":"time","target":30,"perSide":true,"sets":2,"cue":"Turn your head slightly to one side, then look down toward your armpit. Rest a hand lightly on your head for a gentle stretch.","avoidIf":"Stop if you feel dizzy or have tingling in the arm.","easier":"Skip the hand and just let your head drop gently."}],"sessionOrder":["nkchintuck","nkturn","nkrolls","nknod","nkiso","nkchairext","nktrap"],"habits":[{"id":"nkh1","text":"During sit-ups, rest fingers lightly at your temples, don't pull","why":"Pulling on the head strains the neck instead of training the core."},{"id":"nkh2","text":"Raise your phone to eye level instead of looking down","why":"Long periods of looking down load the neck muscles."},{"id":"nkh3","text":"Get up and move for 1 minute every 30-45 minutes sitting","why":"Changing position often eases neck stiffness more than one perfect posture."},{"id":"nkh4","text":"Do 10 chin tucks at some point today","why":"Little-and-often movement keeps the neck from stiffening up."},{"id":"nkh5","text":"Use one pillow that keeps your head level with your body","why":"A level head position at night reduces morning neck stiffness."},{"id":"nkh6","text":"Rate neck pain 0-10 the morning after training","why":"If it's back to normal by morning, the load was OK; if worse, ease off."}],"redFlags":["Neck pain after a fall, a crash or a hit to the head","Numbness, tingling or weakness in the arms or legs","Trouble walking, clumsy hands, or problems with bladder or bowels","Dizziness, double vision, trouble speaking or swallowing, or fainting","Severe headache with a stiff neck, fever or rash: get help urgently","Pain at night that doesn't ease with changing position","Unexplained weight loss or feeling generally unwell with the pain","Pain getting worse, or no better after about 2 weeks"]},{"id":"general","name":"Full body","overview":"After a hard training block, overexertion often shows up as widespread muscle soreness that peaks 1-3 days later, heavy legs, stiff joints, poor sleep and low drive to train. Recovery means an easy active-recovery day: light movement, gentle stretching, good sleep, food and water, then building back up gradually.","moves":[{"id":"easymarch","name":"Easy march in place","type":"time","target":45,"perSide":false,"sets":2,"cue":"March in place at an easy pace, swinging your arms. You should be able to chat comfortably.","avoidIf":"You feel dizzy, short of breath or have chest discomfort.","easier":"March while sitting on a chair, or hold a wall for balance."},{"id":"armcircle","name":"Arm circles","type":"reps","target":10,"perSide":false,"sets":2,"cue":"Arms out to the sides, make slow, easy circles. First set forward, second set backward.","avoidIf":"Your shoulders pinch or hurt above 3/10.","easier":"Make small circles, or do one arm at a time."},{"id":"openbook","name":"Open book rotation","type":"reps","target":8,"perSide":true,"sets":1,"cue":"Lie on your side, knees bent, arms out in front. Open your top arm across to the other side, following it with your eyes, then return.","avoidIf":"Your back or shoulder pain gets sharp.","easier":"Open only halfway, or put a pillow under your head and knees."},{"id":"kneelhipflex","name":"Half-kneeling hip flexor stretch","type":"time","target":30,"perSide":true,"sets":1,"cue":"Kneel on one knee on a pillow, other foot forward. Tuck your tailbone and shift forward until you feel a stretch at the front of your hip.","avoidIf":"Kneeling hurts your knee, or the stretch causes back pain.","easier":"Stand in a split stance and hold a chair instead of kneeling."},{"id":"stephamstring","name":"Step hamstring stretch","type":"time","target":30,"perSide":true,"sets":1,"cue":"Rest one heel on a low step, leg straight. Hinge forward from your hips with a long back until you feel the back of your thigh.","avoidIf":"You feel tingling down the leg or pain behind the knee.","easier":"Bend the stretching knee slightly, or lean forward less."},{"id":"wallcalf","name":"Wall calf stretch","type":"time","target":30,"perSide":true,"sets":1,"cue":"Hands on a wall, one foot back with the heel down. Lean in until you feel your calf stretch.","avoidIf":"You feel sharp pain in your heel, Achilles or calf.","easier":"Step your back foot closer to the wall."},{"id":"openchest","name":"Doorway chest opener","type":"time","target":30,"perSide":false,"sets":2,"cue":"Forearms on each side of a doorway, elbows at shoulder height. Step through gently until you feel a stretch across your chest.","avoidIf":"Your shoulder pinches or you feel tingling in your arm.","easier":"Lower your elbows, or step through less."},{"id":"bellybreath","name":"Belly breathing, legs up","type":"reps","target":8,"perSide":false,"sets":2,"cue":"Lie on your back with your calves resting on a chair. Breathe in through your nose into your belly, then out slowly for about 6 seconds.","avoidIf":"You feel lightheaded; breathe normally for a while.","easier":"Lie with your knees bent and feet flat, and take fewer breaths."}],"sessionOrder":["easymarch","armcircle","openbook","kneelhipflex","stephamstring","wallcalf","openchest","bellybreath"],"habits":[{"id":"gen-sleep","text":"Aim for 7-9 hours of sleep tonight","why":"Most of your repair and recovery happens during sleep."},{"id":"gen-water","text":"Drink water through the day until your pee is pale","why":"Staying hydrated supports recovery and helps you spot warning signs."},{"id":"gen-protein","text":"Eat protein with each meal today","why":"Muscles need protein and enough total food to rebuild after hard training."},{"id":"gen-walk","text":"Take an easy 15-30 minute walk","why":"Light movement eases stiffness better than sitting still all day."},{"id":"gen-nomax","text":"Skip max-effort sets until soreness is 3/10 or less","why":"Training hard on very sore muscles raises the risk of a real injury."},{"id":"gen-rate","text":"Rate overall soreness and energy 0-10 each morning","why":"Tracking the trend shows when you are ready to train hard again."}],"redFlags":["Dark, cola- or tea-coloured pee, or peeing much less than usual after hard exercise: get urgent medical care","Muscles that are very swollen, hard, or too weak to move","Soreness far worse than usual, or still getting worse after 3 days instead of easing","Chest pain, fainting, severe breathlessness or a racing, irregular heartbeat during or after exercise","Fever, confusion or feeling generally unwell along with muscle aches","A single joint that is hot, red and swollen","Numbness or tingling anywhere that does not go away","Tiredness, poor sleep, low mood or dropping performance lasting more than about 2 weeks despite rest"]}],"stress":[{"exercise":"pushup","joints":["shoulder","wrist"]},{"exercise":"diamond","joints":["shoulder","wrist"]},{"exercise":"pike","joints":["shoulder","wrist","neck"]},{"exercise":"pullup","joints":["shoulder","wrist"]},{"exercise":"squat","joints":["knee","hip"]},{"exercise":"jumpsquat","joints":["knee","hip","ankle"]},{"exercise":"lunge","joints":["knee","hip","ankle"]},{"exercise":"glute","joints":["hip"]},{"exercise":"wallsit","joints":["knee"]},{"exercise":"situp","joints":["back","neck","hip"]},{"exercise":"crunch","joints":["neck","back"]},{"exercise":"legraise","joints":["back","hip"]},{"exercise":"plank","joints":["shoulder","wrist","back"]},{"exercise":"hollow","joints":["back","neck"]},{"exercise":"superman","joints":["back","neck"]},{"exercise":"burpee","joints":["knee","hip","ankle","shoulder","wrist","back"]},{"exercise":"jack","joints":["knee","ankle","shoulder"]},{"exercise":"climber","joints":["shoulder","wrist","hip"]},{"exercise":"highknees","joints":["knee","ankle","hip"]},{"exercise":"stepjack","joints":["ankle"]},{"exercise":"run","joints":["knee","ankle","hip"]}],"dailySubs":[{"task":"pushup","joints":["shoulder","wrist"],"altId":"wallpush","altName":"Wall Push-ups","altCue":"Stand an arm's length from a wall with your hands flat on it at chest height, a little wider than your shoulders. Keep your body straight, bend your elbows to bring your chest toward the wall, then press back.","countsAs":"same reps"},{"task":"situp","joints":["back","neck","hip"],"altId":"deadbug","altName":"Dead Bugs","altCue":"Lie on your back with arms pointing at the ceiling and knees bent over your hips, and press your lower back gently into the floor. Slowly reach one arm back and straighten the opposite leg, then return and switch sides.","countsAs":"same reps (each side counts as one rep)"},{"task":"squat","joints":["knee","hip"],"altId":"glute","altName":"Glute Bridges","altCue":"Lie on your back with knees bent and feet flat, hip-width apart. Squeeze your glutes to lift your hips until your body makes a straight line from shoulders to knees, hold for a moment, then lower slowly.","countsAs":"same reps"},{"task":"run","joints":["knee","ankle","hip"],"altId":"walk","altName":"Brisk Walk","altCue":"Walk at a pace where you can talk but would struggle to sing, with short, quick steps and your arms swinging. Go on the flattest route you have and avoid downhill stretches and stairs.","countsAs":"same distance walked"}],"painRule":"Mild discomfort up to about 3 out of 10 is fine if it settles by the next morning. Sharp, worsening or lingering pain means stop.","generalRedFlags":["Pain after a fall, twist or a pop","Major swelling, bruising or a joint that looks deformed","Numbness, tingling or weakness spreading into an arm or leg","A joint that locks, catches or gives way","You cannot put weight on it or move it normally","Pain at night or at rest that keeps getting worse","No improvement after about 2 weeks"],"disclaimer":"Awaken gives general fitness guidance, not medical advice. If you are unsure, ask a physiotherapist or doctor."};
+const JOINT_IDS=['knee','shoulder','back','hip','ankle','wrist','neck'];
+const REC_BY=Object.fromEntries(RECOVERY.regions.map(r=>[r.id,r]));
+const STRESS=Object.fromEntries(RECOVERY.stress.map(s=>[s.exercise,s.joints]));
+const AILMENT=j=>`Overworked ${REC_BY[j].name.toLowerCase()}`;
+for(const r of RECOVERY.regions) for(const m of r.moves) if(!EX[m.id]){
+  const hold=m.type==='time';
+  EX[m.id]={name:m.name,type:m.type,f:1,xp:hold?.12:.3,stat:hold?{vit:.04,per:.04}:{vit:.12,per:.12},kind:'rec',cue:m.cue,avoidIf:m.avoidIf,easier:m.easier,perSide:m.perSide};
+}
+for(const s of RECOVERY.dailySubs) if(!EX[s.altId]){
+  const base=EX[DAILY_BY[s.task].ex];
+  EX[s.altId]=s.task==='run'?{name:s.altName,type:'km',xp:15,stat:{agi:6,vit:6},kind:'run',cue:s.altCue}
+    :{name:s.altName,type:'reps',f:1,xp:.5,stat:Object.fromEntries(Object.entries(base.stat).map(([k,v])=>[k,v*.6])),kind:base.kind,cue:s.altCue};
+}
+
 /* ---------- state ---------- */
 const KEY='awaken.save.v1';
 function freshState(){
   return {v:1,created:Date.now(),awakened:false,
     player:{name:'Player',level:1,xp:0,gold:0,points:0,rank:0,title:'awakened',job:null,hp:200,mp:100,fatigue:0,fatigueTs:Date.now()},
     stats:{str:{t:0,a:0,x:0},vit:{t:0,a:0,x:0},agi:{t:0,a:0,x:0},int:{t:0,a:0,x:0},per:{t:0,a:0,x:0}},
-    settings:{diff:'normal',units:'km',resetHour:0,restDays:[0],sound:true,haptics:true,lowImpact:false,bar:false,skin:'blue',tasks:{pushup:true,situp:true,squat:true,run:true}},
+    settings:{diff:'normal',units:'km',resetHour:0,restDays:[0],sound:true,haptics:true,badge:true,lowImpact:false,bar:false,skin:'blue',tasks:{pushup:true,situp:true,squat:true,run:true}},
     baseline:{pushup:10,situp:15,squat:20,run:1},
-    daily:null,history:{},streak:{cur:0,best:0},penalty:null,
+    daily:null,history:{},streak:{cur:0,best:0},penalty:null,joints:{},
     inv:{box:0,potion:0,key:0,ward:0,elixir:0},skins:['blue'],titles:['awakened'],skills:[],flags:{},
-    totals:{ex:{},clears:0,gates:0,red:0,penalties:0,side:0,maxGate:-1},
-    gates:{date:null,list:[]},trial:null,session:null,run:null,log:[]};
+    totals:{ex:{},clears:0,gates:0,red:0,penalties:0,side:0,maxGate:-1,rec:0,recHabits:0},
+    gates:{date:null,list:[],done:[]},trial:null,session:null,run:null,log:[]};
 }
 function merge(base,src){
   if(!src||typeof src!=='object') return base;
@@ -592,7 +650,7 @@ function merge(base,src){
 function load(){try{const raw=localStorage.getItem(KEY);if(raw) return merge(freshState(),JSON.parse(raw))}catch(e){}return freshState()}
 let S=load(),saveTimer=0;
 function save(){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,250)}
-function saveNow(){clearTimeout(saveTimer);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function saveNow(){clearTimeout(saveTimer);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}syncOutside()}
 const UI={tab:'quest',sheet:null,screen:null,aw:null,runMode:'gps',hit:0,confirmReset:false,confirmDiscard:false,geoErr:''};
 
 /* ---------- time ---------- */
@@ -630,9 +688,23 @@ function xpMult(kind){let m=1+bonus('all')+(kind?bonus(kind)+statBonus(kind):0);
 const goldMult=()=>1+bonus('gold')+statBonus('gold');
 const xpNeed=l=>Math.round(60*Math.pow(l,1.4)+40);
 const rankOf=()=>RANKS[S.player.rank];
-function fatigue(){const p=S.player;return Math.max(0,Math.round(p.fatigue-(Date.now()-p.fatigueTs)/3600000*4))}
-function addFatigue(v){const p=S.player;p.fatigue=Math.min(100,fatigue()+v);p.fatigueTs=Date.now()}
-function bonusText(b){return Object.entries(b).map(([k,v])=>k==='guard'?`Penalty damage −${Math.round(v*100)}%`:`+${Math.round(v*100)}% ${BONUS_LABEL[k]}`).join(' · ')||'No bonus'}
+function fatigue(){const p=S.player,rate=bonus('regen')?8:4;return Math.max(0,Math.round(p.fatigue-(Date.now()-p.fatigueTs)/3600000*rate))}
+function addFatigue(v){const p=S.player;p.fatigue=clamp(fatigue()+v,0,100);p.fatigueTs=Date.now()}
+function bonusText(b){return Object.entries(b).map(([k,v])=>k==='guard'?`Penalty damage −${Math.round(v*100)}%`:k==='regen'?'Fatigue fades twice as fast':`+${Math.round(v*100)}% ${BONUS_LABEL[k]}`).join(' · ')||'No bonus'}
+
+/* ---------- joint check-in ---------- */
+const soreLv=j=>(S.joints[j]&&S.joints[j].lv)||0;
+const soreJoints=()=>JOINT_IDS.filter(j=>soreLv(j)>0);
+const maxSore=()=>Math.max(0,...JOINT_IDS.map(soreLv));
+const stressLv=id=>Math.max(0,...(STRESS[id]||[]).map(soreLv));
+// the joint-friendly swap for a Daily Quest task, if a joint it covers is sore
+function subFor(task){
+  for(const s of RECOVERY.dailySubs) if(s.task===task){const lv=Math.max(0,...s.joints.map(soreLv));if(lv) return {id:s.altId,lv}}
+  return null;
+}
+function todaysSubs(){const o={};for(const t of DAILY){const s=subFor(t.id);if(s) o[t.id]=s.id}return o}
+const taskEx=id=>(S.daily&&S.daily.subs&&S.daily.subs[id])||DAILY_BY[id].ex;
+const taskName=id=>EX[taskEx(id)].name;
 
 /* ---------- daily targets ---------- */
 function targetsWith(b,diff,level){
@@ -644,12 +716,18 @@ function targetsWith(b,diff,level){
 }
 function todaysTargets(){
   const all=targetsWith(S.baseline,S.settings.diff,S.player.level),tg={};
-  for(const t of DAILY) if(S.settings.tasks[t.id]) tg[t.id]=all[t.id];
+  for(const t of DAILY) if(S.settings.tasks[t.id]){
+    let v=all[t.id];
+    // a joint that hurts halves the goals that load it
+    const sub=subFor(t.id);
+    if(sub&&sub.lv>=2) v=t.id==='run'?Math.max(.5,rHalf(v/2)):Math.max(5,r5(v/2));
+    tg[t.id]=v;
+  }
   return tg;
 }
 function retarget(){
   const d=S.daily;if(!d||d.cleared) return;
-  d.targets=todaysTargets();
+  d.targets=todaysTargets();d.subs=todaysSubs();d.heal=maxSore()>=2;
   for(const id in d.targets) if(d.prog[id]==null) d.prog[id]=0;
   checkDaily();
 }
@@ -687,7 +765,7 @@ function doReps(id,n){
   for(const k in e.stat) st[k]=e.stat[k]*n;
   gainStats(st);
   S.totals.ex[id]=r2((S.totals.ex[id]||0)+n);
-  addFatigue(e.type==='km'?n*4:e.type==='time'?n*.04:n*.08*e.xp);
+  if(e.kind!=='rec') addFatigue(e.type==='km'?n*4:e.type==='time'?n*.04:n*.08*e.xp);
   return {xp,st};
 }
 function flag(k){S.flags[k]=true}
@@ -707,20 +785,37 @@ function pickSide(k){return shuffle(rng('side'+k+S.created),SIDE).slice(0,3).map
 function newDay(k,first){
   const tg=todaysTargets(),prog={};
   for(const id in tg) prog[id]=0;
-  // the awakening day is always a real quest, but missing it carries no penalty
-  S.daily={date:k,targets:tg,prog,sets:[],rest:!first&&isRest(k),grace:!!first,cleared:false,side:pickSide(k),announced:false};
+  // the awakening day is always a real quest, but missing it carries no penalty.
+  // heal: a joint hurts, so the day is penalty-free.
+  S.daily={date:k,targets:tg,prog,sets:[],rest:!first&&isRest(k),grace:!!first,heal:maxSore()>=2,subs:todaysSubs(),cleared:false,side:pickSide(k),rh:[],recDone:[],announced:false};
+  syncRecHabits();
   S.player.mp=maxMP();
   S.player.hp=Math.min(maxHP(),S.player.hp+Math.round(maxHP()*.2));
   genGates(k);
 }
+// recovery habits for the day: two per sore joint (one each when many are sore), topped up with general ones
+function recHabitPool(){
+  const js=soreJoints(),r=rng('rh'+S.daily.date+S.created),out=[];
+  for(const j of js) shuffle(r,REC_BY[j].habits).slice(0,js.length>2?1:2).forEach(h=>out.push({r:j,id:h.id}));
+  if(out.length<4) shuffle(r,REC_BY.general.habits).slice(0,4-out.length).forEach(h=>out.push({r:'general',id:h.id}));
+  return out.slice(0,4);
+}
+function syncRecHabits(){
+  const d=S.daily;if(!d) return;
+  const old=d.rh||[],same=(a,b)=>a.r===b.r&&a.id===b.id;
+  d.rh=recHabitPool().map(h=>old.find(o=>same(o,h))||{...h,done:false,xp:0});
+  // habits already ticked today stay, even if their joint has recovered
+  for(const o of old) if(o.done&&!d.rh.some(h=>same(h,o))) d.rh.push(o);
+}
+const recHabit=q=>(REC_BY[q.r]&&REC_BY[q.r].habits.find(h=>h.id===q.id))||{text:'',why:''};
 function rollover(){
   const today=dayKey();
   // same day, or the clock moved backwards (time zone travel, clock change): keep the current quest
   if(S.daily&&S.daily.date>=today) return false;
   if(S.daily){
     const d=S.daily,missed=[];
-    if(!d.cleared) missed.push({k:d.date,rest:d.rest||d.grace});
-    for(let k=addDays(d.date,1),n=0;k<today&&n<400;k=addDays(k,1),n++) missed.push({k,rest:isRest(k)});
+    if(!d.cleared) missed.push({k:d.date,rest:d.rest||d.grace||d.heal});
+    for(let k=addDays(d.date,1),n=0;k<today&&n<400;k=addDays(k,1),n++) missed.push({k,rest:isRest(k)||maxSore()>=2});
     const need=missed.filter(m=>!m.rest);
     missed.filter(m=>m.rest).forEach(m=>S.history[m.k]={s:'rest'});
     if(need.length){
@@ -744,8 +839,12 @@ function rollover(){
 function announce(){
   const d=S.daily;if(!d||d.announced) return;
   d.announced=true;
-  const goals=Object.keys(d.targets).map(id=>[DAILY_BY[id].name,`${fmtTask(id,d.targets[id])}${id==='run'?' '+unit():''}`]);
-  notify({kind:'quest',head:'Quest Info',lines:d.rest?['[Today is a rest day.]','The Daily Quest is optional. Clearing it still counts toward your streak.']:['[Daily Quest: Strength Training has arrived.]','Complete every goal before the day resets.'],rewards:goals,foot:d.rest?'':d.grace?'First day: no penalty yet. From tomorrow, failure will result in an appropriate penalty.':'Failure to complete the Daily Quest will result in an appropriate penalty.',btn:'Accept'});
+  const goals=Object.keys(d.targets).map(id=>[taskName(id),`${fmtTask(id,d.targets[id])}${id==='run'?' '+unit():''}`]);
+  const lines=d.rest?['[Today is a rest day.]','The Daily Quest is optional. Clearing it still counts toward your streak.']
+    :d.heal?['[Recovery day.]','A joint hurts, so the System has eased today\'s quest. There is no penalty today.']
+    :['[Daily Quest: Strength Training has arrived.]','Complete every goal before the day resets.'];
+  if(soreJoints().length) lines.push(`Status ailments: ${soreJoints().map(AILMENT).join(', ')}. Still sore? Update your check-in in Recover.`);
+  notify({kind:'quest',head:'Quest Info',lines,rewards:goals,foot:d.rest||d.heal?'':d.grace?'First day: no penalty yet. From tomorrow, failure will result in an appropriate penalty.':'Failure to complete the Daily Quest will result in an appropriate penalty.',btn:'Accept'});
   save();
 }
 
@@ -753,14 +852,15 @@ function announce(){
 function logDaily(task,n,quiet){
   const d=S.daily;n=task==='run'?r2(n):Math.round(n);
   if(!d||n<=0) return 0;
-  const rec=doReps(DAILY_BY[task].ex,n);
+  const exId=taskEx(task),rec=doReps(exId,n);
   if(d.targets[task]!=null){
     d.prog[task]=r2(d.prog[task]+n);
-    d.sets.push({task,n,xp:rec.xp,st:rec.st});
-    if(task==='pushup'&&d.prog.pushup>=100) flag('centurion');
-    if(task==='run'&&d.prog.run>=10) flag('windrunner');
+    d.sets.push({task,ex:exId,n,xp:rec.xp,st:rec.st});
+    // the titles are for the real thing, not the joint-friendly swap
+    if(task==='pushup'&&exId==='pushup'&&d.prog.pushup>=100) flag('centurion');
+    if(task==='run'&&exId==='run'&&d.prog.run>=10) flag('windrunner');
   }
-  if(!quiet) toast(`${DAILY_BY[task].name} +${task==='run'?trim(toUser(n))+' '+unit():n}  ·  +${rec.xp} XP`);
+  if(!quiet) toast(`${EX[exId].name} +${task==='run'?trim(toUser(n))+' '+unit():n}  ·  +${rec.xp} XP`);
   checkDaily();checkUnlocks();save();refresh();
   return rec.xp;
 }
@@ -768,7 +868,7 @@ function undoDaily(task){
   const d=S.daily;if(!d||d.cleared) return;
   let i=-1;for(let j=d.sets.length-1;j>=0;j--) if(d.sets[j].task===task){i=j;break}
   if(i<0) return;
-  const s=d.sets.splice(i,1)[0],exId=DAILY_BY[task].ex;
+  const s=d.sets.splice(i,1)[0],exId=s.ex||DAILY_BY[task].ex;
   d.prog[task]=Math.max(0,r2(d.prog[task]-s.n));
   S.player.xp=Math.max(0,S.player.xp-s.xp);
   for(const k in s.st){const st=S.stats[k];st.x-=s.st[k];while(st.x<0&&st.t>0){st.x+=100;st.t--}if(st.x<0) st.x=0}
@@ -813,11 +913,69 @@ function toggleSide(i){
   checkUnlocks();save();refresh();
 }
 
+/* ---------- recovery ---------- */
+// what the System has changed because of sore joints, as [label, value] rows
+function adaptLines(){
+  const d=S.daily,rows=[];
+  if(!d) return rows;
+  for(const id of Object.keys(d.subs||{})) if(d.targets[id]!=null){
+    const sub=subFor(id);
+    rows.push([DAILY_BY[id].name,`${EX[d.subs[id]].name}${sub&&sub.lv>=2?' · half target':''}`]);
+  }
+  const out=Object.values(POOL).flat().filter(id=>stressLv(id)).length;
+  if(out) rows.push(['Gates',`${out} exercise${out===1?'':'s'} left out`]);
+  if(S.penalty&&S.penalty.tasks.some(t=>t.done<t.target)) rows.push(['Penalty Quest',S.penalty.tasks.map(t=>EX[t.ex].name).join(' + ')]);
+  if(d.heal&&!d.cleared) rows.push(['Today','Recovery day · no penalty']);
+  return rows;
+}
+function setJoint(j,lv){
+  const prev=soreLv(j);if(prev===lv||!REC_BY[j]) return;
+  if(lv) S.joints[j]={lv,since:prev?S.joints[j].since:S.daily.date}; else delete S.joints[j];
+  retarget();syncRecHabits();regenGates();adaptPenalty();
+  if(lv>prev){
+    const rows=adaptLines(),lines=[`[Status ailment detected: ${AILMENT(j)}.]`,lv>=2?'The System has eased your training and made today penalty-free.':'The System has adjusted your training.'];
+    if(S.daily.cleared) lines.push('Today\'s Daily Quest is already complete. Goal swaps apply from tomorrow.');
+    notify({kind:'info',head:'Status Ailment',lines,rewards:rows.length?rows:null,foot:RECOVERY.painRule});
+  } else toast(lv?`${REC_BY[j].name}: sore`:`${REC_BY[j].name}: feeling OK. Ailment removed.`);
+  save();refresh();
+}
+function toggleRecHabit(i){
+  const d=S.daily,q=d&&d.rh&&d.rh[i];if(!q) return;
+  if(!q.done){
+    q.done=true;q.xp=gainXP(10,'side');gainStats({vit:15});S.totals.recHabits++;
+    toast(`+${q.xp} XP  ·  VIT training`);
+  } else {
+    q.done=false;S.player.xp=Math.max(0,S.player.xp-q.xp);
+    const st=S.stats.vit;st.x-=15;while(st.x<0&&st.t>0){st.x+=100;st.t--}if(st.x<0) st.x=0;
+    S.totals.recHabits=Math.max(0,S.totals.recHabits-1);q.xp=0;
+  }
+  checkUnlocks();save();refresh();
+}
+
 /* ---------- penalty ---------- */
+// penalty exercises in order of preference, with their base targets; sore joints and low-impact mode skip ahead
+const PEN_REPS={burpee:25,squat:50,glute:50,crunch:50};
+const PEN_HOLD={plank:120,wallsit:90,hollow:60};
+const penScale=()=>({beginner:.6,normal:1,hard:1.4,hunter:1.6}[S.settings.diff]||1);
+function penaltyPick(list){
+  const ids=Object.keys(list),ok=id=>!(S.settings.lowImpact&&(EX[id].tags||[]).includes('jump'));
+  return ids.find(id=>ok(id)&&!stressLv(id))||ids.find(id=>ok(id)&&stressLv(id)<2)||ids[ids.length-1];
+}
+const penTarget=(list,id)=>EX[id].type==='time'?Math.round(list[id]*penScale()/10)*10:r5(list[id]*penScale());
 function makePenalty(){
-  const sc={beginner:.6,normal:1,hard:1.4,hunter:1.6}[S.settings.diff]||1;
-  const first=S.settings.lowImpact?{ex:'squat',target:r5(50*sc)}:{ex:'burpee',target:r5(25*sc)};
-  return {tasks:[{...first,done:0},{ex:'plank',target:Math.round(120*sc/10)*10,done:0}]};
+  const reps=penaltyPick(PEN_REPS),hold=penaltyPick(PEN_HOLD);
+  return {tasks:[{ex:reps,target:penTarget(PEN_REPS,reps),done:0},{ex:hold,target:penTarget(PEN_HOLD,hold),done:0}]};
+}
+// when a joint becomes sore, swap unfinished penalty tasks that load it, keeping the share already done
+function adaptPenalty(){
+  const p=S.penalty;if(!p) return;
+  for(const t of p.tasks){
+    if(t.done>=t.target||!stressLv(t.ex)) continue;
+    const list=EX[t.ex].type==='time'?PEN_HOLD:PEN_REPS,id=penaltyPick(list);
+    if(id===t.ex) continue;
+    const target=penTarget(list,id);
+    t.done=Math.min(target-1,Math.round(t.done/t.target*target));t.ex=id;t.target=target;
+  }
 }
 function logPenalty(i,n){
   const p=S.penalty,t=p&&p.tasks[i];n=Math.round(n);
@@ -834,7 +992,8 @@ function logPenalty(i,n){
 }
 
 /* ---------- gates ---------- */
-function allowed(id){const t=EX[id].tags||[];return !(t.includes('jump')&&S.settings.lowImpact)&&!(t.includes('bar')&&!S.settings.bar)}
+function allowed(id){const t=EX[id].tags||[];return !(t.includes('jump')&&S.settings.lowImpact)&&!(t.includes('bar')&&!S.settings.bar)&&!stressLv(id)}
+// returns null when sore joints rule out every exercise
 function makeGate(r,rk,o={}){
   const red=o.red??r()<(rk?.14:.08);
   const nEx=[3,3,4,4,5,5][rk],rounds=[2,3,3,4,4,5][rk];
@@ -844,8 +1003,10 @@ function makeGate(r,rk,o={}){
   for(const c of cats){
     let opts=(c==='any'?everything:POOL[c]).filter(id=>allowed(id)&&!used.has(id));
     if(!opts.length) opts=everything.filter(id=>allowed(id)&&!used.has(id));
+    if(!opts.length) continue;
     const id=pick(r,opts);used.add(id);exs.push(id);
   }
+  if(!exs.length) return null;
   const dm=DIFF[S.settings.diff].gate*(red?1.15:1)*(o.trial?1.1:1),sets=[];
   for(let ro=0;ro<rounds;ro++) for(const id of exs){
     const e=EX[id];
@@ -857,21 +1018,34 @@ function makeGate(r,rk,o={}){
   return {rank:rk,red,trial:!!o.trial,name:pick(r,PLACES),boss:pick(r,BOSSES[rk]),rounds,exs,sets,rest,
     est:Math.max(5,Math.round(secs/60)),xp:Math.round([60,120,200,320,500,800][rk]*mul),gold:Math.round([40,80,140,220,350,600][rk]*mul)};
 }
+// today's three gates; ones already cleared today stay cleared when the list is rebuilt
 function genGates(k){
-  const r=rng('gates'+k+S.created),base=S.player.rank;
+  const r=rng('gates'+k+S.created),base=S.player.rank,done=S.gates&&S.gates.date===k?(S.gates.done||[]):[];
   const ranks=[base,base,Math.min(5,base+1)];
   if(base>0&&r()<.3) ranks[0]=base-1;
-  S.gates={date:k,list:ranks.map((rk,i)=>({...makeGate(r,rk),id:k+'-'+i}))};
+  const list=ranks.map((rk,i)=>{const g=makeGate(r,rk);return g&&{...g,id:k+'-'+i}}).filter(g=>g&&!done.includes(g.id));
+  S.gates={date:k,list,done};
+}
+// rebuild today's gates around sore joints (bought key gates keep their id and rank)
+function regenGates(){
+  if(!S.daily) return;
+  const keys=S.gates.list.filter(g=>g.id[0]==='k');
+  genGates(S.daily.date);
+  for(const k of keys){const g=makeGate(rng(k.id+'|'+soreJoints().join()),k.rank,{red:k.red});if(g) S.gates.list.push({...g,id:k.id})}
+  S.trial=null;
 }
 function addKeyGate(){
-  const r=rng('key'+Date.now()+Math.random()),rk=Math.min(5,S.player.rank+(r()<.35?1:0));
-  S.gates.list.push({...makeGate(r,rk),id:'k'+Date.now()});
+  const r=rng('key'+Date.now()+Math.random()),rk=Math.min(5,S.player.rank+(r()<.35?1:0)),g=makeGate(r,rk);
+  if(!g) return false;
+  S.gates.list.push({...g,id:'k'+Date.now()});
+  return true;
 }
 function trialGate(){
   const p=S.player;if(p.rank>=5) return null;
   const nx=p.rank+1;if(p.level<RANKS[nx].min) return null;
   if(!S.trial||S.trial.rank!==nx){
     const g=makeGate(rng('trial'+nx+S.created),nx,{red:false,trial:true});
+    if(!g) return null;
     S.trial={...g,id:'trial',name:`${RANKS[nx].id}-Rank Reassessment`,boss:TRIAL_BOSS[nx]};
   }
   return S.trial;
@@ -884,12 +1058,34 @@ function enterGate(id){
     if(S.player.mp<10){notify({kind:'info',head:'Notification',lines:['[Not enough MP.]','Entering a gate costs 10 MP. MP refills at the daily reset, on level up, or with a Recovery Potion.']});return}
     S.player.mp-=10;
   }
+  startSession(g);
+  toast(g.trial?'The trial has begun.':'You have entered the gate.');
+}
+function startSession(g){
   const first=g.sets[0];
   S.session={gid:g.id,g:JSON.parse(JSON.stringify(g)),i:0,phase:'work',adj:first.target,left:first.target,run:false,prep:0,end:0,dealt:0,xp:0,t0:Date.now(),beep:0,confirm:false};
   UI.sheet=null;UI.screen={kind:'gate'};UI.hit=0;
   wake();Sfx.go();buzz(80);
-  toast(g.trial?'The trial has begun.':'You have entered the gate.');
   save();refresh();
+}
+// a recovery session is a gentle "gate": the region's moves in order, timed holds split per side, short rests
+function recPlan(region){
+  const R=REC_BY[region],sets=[];
+  for(const id of R.sessionOrder){
+    const m=R.moves.find(x=>x.id===id);if(!m) continue;
+    for(let n=0;n<Math.max(1,m.sets||1);n++){
+      if(m.perSide&&m.type==='time') for(const side of ['Left side','Right side']) sets.push({ex:id,target:m.target,round:0,hp:1,side});
+      else sets.push({ex:id,target:m.target,round:0,hp:1,side:m.perSide?'Each side':''});
+    }
+  }
+  const rest=12,secs=sets.reduce((a,s)=>a+(EX[s.ex].type==='time'?s.target:s.target*3*(s.side==='Each side'?2:1)),0)+rest*(sets.length-1);
+  return {id:'rec-'+region,mode:'rec',region,rank:0,red:false,trial:false,name:R.name,boss:'',rounds:1,
+    exs:[...new Set(sets.map(s=>s.ex))],sets,rest,est:Math.max(3,Math.round(secs/60)),xp:30,gold:0};
+}
+function enterRecovery(region){
+  if(!REC_BY[region]) return;
+  startSession(recPlan(region));
+  toast('Recovery session started. Move gently.');
 }
 function sessSet(){const s=S.session;return s.g.sets[s.i]}
 function completeSet(actual){
@@ -897,10 +1093,9 @@ function completeSet(actual){
   actual=Math.max(0,Math.round(actual));
   const rec=doReps(set.ex,actual);
   s.xp+=rec.xp;
-  const dmg=Math.round(set.hp*Math.min(1.2,actual/set.target));
-  s.dealt+=dmg;UI.hit=dmg;
-  Sfx.hit();buzz([30,40,30]);
-  if(s.i>=g.sets.length-1){finishGate();return}
+  if(g.mode==='rec'){UI.hit=0;Sfx.beep();buzz(30)}
+  else{const dmg=Math.round(set.hp*Math.min(1.2,actual/set.target));s.dealt+=dmg;UI.hit=dmg;Sfx.hit();buzz([30,40,30])}
+  if(s.i>=g.sets.length-1){g.mode==='rec'?finishRecovery():finishGate();return}
   const roundEnd=g.sets[s.i+1].round!==set.round;
   s.phase='rest';s.end=Date.now()+(g.rest+(roundEnd?20:0))*1000;s.beep=0;s.run=false;s.prep=0;
   save();refresh();
@@ -923,7 +1118,7 @@ function finishGate(){
   S.totals.gates++;if(g.red) S.totals.red++;
   S.totals.maxGate=Math.max(S.totals.maxGate,g.rank);
   if(new Date().getHours()>=22) flag('nighthunter');
-  if(g.trial) S.trial=null; else S.gates.list=S.gates.list.filter(x=>x.id!==g.id);
+  if(g.trial) S.trial=null; else{S.gates.list=S.gates.list.filter(x=>x.id!==g.id);S.gates.done.push(g.id)}
   S.session=null;UI.screen=null;UI.hit=0;unwake();
   notify({kind:'quest',head:g.trial?'Trial Cleared':'Dungeon Cleared',lines:[`[${g.boss} has been defeated.]`,`Clear time ${mmss((Date.now()-s.t0)/1000)}`],
     rewards:[['XP from sets',`+${fmt(s.xp)}`],['Clear bonus',`+${fmt(xpPreview)} XP`],['Gold',`+${fmt(gold)}`],...loot]});
@@ -936,8 +1131,27 @@ function finishGate(){
   }
   checkUnlocks();save();refresh();
 }
+function finishRecovery(){
+  const s=S.session,g=s.g,p=S.player,d=S.daily;
+  // the full bonus once per region per day; repeats still help but give less
+  const first=!(d.recDone||[]).includes(g.region),base=first?g.xp:Math.round(g.xp/3);
+  const xpPreview=Math.round(base*xpMult()),heal=Math.max(0,Math.min(maxHP()-p.hp,Math.round(maxHP()*.25)));
+  p.hp+=heal;p.fatigue=Math.max(0,fatigue()-30);p.fatigueTs=Date.now();
+  gainStats({vit:10,per:10});
+  S.totals.rec++;d.recDone=[...(d.recDone||[]),g.region];
+  S.session=null;UI.screen=null;UI.hit=0;unwake();
+  notify({kind:'quest',head:'Recovery Complete',lines:[`[${g.name}: recovery session complete.]`,soreLv(g.region)?'Update your check-in in Recover when it feels better.':'Recovery done. Train smart tomorrow.'],
+    rewards:[['XP from moves',`+${fmt(s.xp)}`],['Recovery bonus',`+${fmt(xpPreview)} XP`],['HP',`+${fmt(heal)}`],['Fatigue','−30']],foot:RECOVERY.painRule});
+  gainXP(base);
+  checkUnlocks();save();refresh();
+}
 function retreat(){
   const s=S.session;if(!s) return;
+  if(s.g.mode==='rec'){
+    S.session=null;UI.screen=null;unwake();
+    toast('Session ended. Finished moves still count.');
+    save();refresh();return;
+  }
   let dmg=0;
   if(s.g.red){dmg=Math.round(maxHP()*.2);S.player.hp=Math.max(1,S.player.hp-dmg)}
   S.session=null;UI.screen=null;unwake();
@@ -967,7 +1181,10 @@ function useItem(id){
   S.inv[id]--;
   if(id==='box') openBox();
   else if(id==='potion'){recover();toast('HP and MP fully restored')}
-  else if(id==='key'){addKeyGate();UI.tab='gates';toast('A new gate has opened')}
+  else if(id==='key'){
+    if(addKeyGate()){UI.tab='gates';toast('A new gate has opened')}
+    else{S.inv.key++;toast('Your sore joints rule out every gate exercise right now. The key is kept.','bad')}
+  }
   else if(id==='elixir'){S.player.points++;toast('Ability point +1','stat')}
   save();refresh();
 }
@@ -1041,7 +1258,7 @@ function runFinish(){
 }
 function logRun(km,sec){
   const d=S.daily;
-  if(km>=10) flag('windrunner');
+  if(km>=10&&taskEx('run')==='run') flag('windrunner');
   const xp=d&&d.targets.run!=null?logDaily('run',km,true):(()=>{const x=doReps('run',km).xp;checkUnlocks();return x})();
   notify({kind:'quest',head:'Run Complete',big:`${trim(toUser(km))} ${unit()}`,lines:sec?[`Time ${hms(sec*1000)}  ·  Pace ${paceStr(sec,km)} per ${unit()}`]:['Distance logged.'],rewards:[['XP',`+${fmt(xp)}`],['Training','AGI · VIT']]});
   save();refresh();
@@ -1121,14 +1338,15 @@ function refresh(){
 function renderTop(){
   const p=S.player,R=rankOf(),need=xpNeed(p.level);
   $('#top').innerHTML=`<button class="lv" data-a="tab" data-x="status" aria-label="Level ${p.level}. Open status"><small>LV</small><b>${p.level}</b></button>
-    <div class="who"><div class="who-n"><span class="rk rk-${R.id}" title="${R.id}-Rank">${R.id}</span><span class="nm">${esc(p.name)}</span>${weakened()?'<span class="tag red">Weakened</span>':''}</div>
+    <div class="who"><div class="who-n"><span class="rk rk-${R.id}" title="${R.id}-Rank">${R.id}</span><span class="nm">${esc(p.name)}</span>${weakened()?'<span class="tag red">Weakened</span>':soreJoints().length?'<span class="tag gold">Recovering</span>':''}</div>
     <div class="xpbar" role="progressbar" aria-label="Experience" aria-valuemin="0" aria-valuemax="${need}" aria-valuenow="${p.xp}"><i style="width:${p.xp/need*100}%"></i></div></div>
     <div class="coin" aria-label="${fmt(p.gold)} gold">${ico('coin')}<b>${fmt(p.gold)}</b></div>
     <button class="icon-btn" data-a="settings" aria-label="Settings">${ico('gear')}</button>`;
 }
 function renderTabs(){
-  const d=S.daily,dots={quest:(d&&!d.cleared&&!d.rest)||weakened(),status:S.player.points>0,gates:!!trialGate(),items:S.inv.box>0,records:false};
-  const tabs=[['quest','Quest'],['status','Status'],['gates','Gates'],['items','Items'],['records','Records']];
+  const d=S.daily,dots={quest:(d&&!d.cleared&&!d.rest&&!d.heal)||weakened(),status:S.player.points>0,gates:!!trialGate(),
+    recover:soreJoints().length>0&&!(d&&d.recDone&&d.recDone.length),items:S.inv.box>0,records:false};
+  const tabs=[['quest','Quest'],['status','Status'],['gates','Gates'],['recover','Recover'],['items','Items'],['records','Records']];
   $('#tabs').innerHTML=`<div class="tabs-in">${tabs.map(([id,l])=>`<button class="tab${UI.tab===id?' on':''}" data-a="tab" data-x="${id}" ${UI.tab===id?'aria-current="page"':''}>${ico(id)}${l}${dots[id]?'<span class="dot" aria-label="needs attention"></span>':''}</button>`).join('')}</div>`;
 }
 function goalRow(act,x,name,val,tg,label,done){
@@ -1141,12 +1359,15 @@ function vQuest(){
   const d=S.daily;let h='';
   if(S.penalty) h+=penaltyWin();
   const ids=Object.keys(d.targets);
-  const rows=ids.map(id=>{const v=d.prog[id],tg=d.targets[id];return goalRow('task',id,DAILY_BY[id].name,v,tg,`${fmtTask(id,v)}/${fmtTask(id,tg)}${id==='run'?' '+unit():''}`,v>=tg-1e-6)}).join('');
+  const rows=ids.map(id=>{const v=d.prog[id],tg=d.targets[id],swapped=d.subs&&d.subs[id];
+    return goalRow('task',id,`${taskName(id)}${swapped?' <span class="tag teal">Adapted</span>':''}`,v,tg,`${fmtTask(id,v)}/${fmtTask(id,tg)}${id==='run'?' '+unit():''}`,v>=tg-1e-6)}).join('');
+  const sore=soreJoints();
   h+=`<section class="win">${winHead('Quest Info','!')}
-    <p class="sys">${d.rest?'[Rest Day] The Daily Quest is optional today.':'[Daily Quest: Strength Training has arrived.]'}</p>
+    <p class="sys">${d.rest?'[Rest Day] The Daily Quest is optional today.':d.heal&&!d.cleared?'[Recovery Day] The System has eased today\'s quest.':'[Daily Quest: Strength Training has arrived.]'}</p>
+    ${sore.length?`<p class="note" style="text-align:center;margin:-6px 0 12px">Status ailment: ${sore.map(AILMENT).join(', ')}. <button class="link" data-a="tab" data-x="recover">Recovery</button></p>`:''}
     <h3 class="goal-h">GOAL</h3><ul class="goals">${rows}</ul>
     ${d.cleared?`<div class="stamp">COMPLETE</div><p class="rw-line">Rewards received: Status Recovery · Ability points +3 · Random Box</p>`
-      :`<p class="warn">${d.rest?'Clearing it anyway still adds to your streak.':d.grace?'<b>FIRST DAY:</b> No penalty yet. From tomorrow, failure will result in an appropriate <u>penalty</u>.':'<b>WARNING:</b> Failure to complete the daily quest will result in an appropriate <u>penalty</u>.'}</p>`}
+      :`<p class="warn">${d.rest?'Clearing it anyway still adds to your streak.':d.heal?'No penalty today. Go easy, and do a recovery session for the joint that hurts.':d.grace?'<b>FIRST DAY:</b> No penalty yet. From tomorrow, failure will result in an appropriate <u>penalty</u>.':'<b>WARNING:</b> Failure to complete the daily quest will result in an appropriate <u>penalty</u>.'}</p>`}
     <div class="clock">${ico('clock')}<span data-live="reset">${hms(nextReset()-Date.now())}</span><small>until reset</small></div>
   </section>`;
   h+=`<section class="win">${winHead('Optional Quests')}<ul class="side">${d.side.map((q,i)=>{const s=SIDE_BY[q.id];return `<li><button class="side-q${q.done?' done':''}" data-a="side" data-x="${i}" aria-pressed="${q.done}"><span class="box">${q.done?ico('check'):''}</span><span class="side-n">${s.name}</span><span class="side-r">+${SIDE_XP} XP · ${STAT_INFO[s.stat].short}</span></button></li>`}).join('')}</ul>
@@ -1186,6 +1407,7 @@ function vStatus(){
     <div class="vitals">${meter('hp','HP',p.hp,hm)}${meter('mp','MP',p.mp,mm)}<div class="fat"><span>FATIGUE</span><b>${fatigue()}</b></div></div>
     <div class="stats">${STAT_KEYS.map(cell).join('')}<div class="pts"><span>Available ability points</span><b>${p.points}</b></div></div>
     ${weakened()?'<p class="debuff">Debuff: Weakened (all XP −50%)</p>':''}
+    ${soreJoints().length?`<ul class="ail" aria-label="Status ailments">${soreJoints().map(j=>`<li><button class="tag ${soreLv(j)>1?'red':'gold'}" style="background:none" data-a="tab" data-x="recover">${AILMENT(j)}${soreLv(j)>1?' · hurts':''}</button></li>`).join('')}</ul>`:''}
     ${effects?`<ul class="effects" aria-label="Active effects">${effects}</ul>`:''}
     <p class="note">Stats grow on their own as you train. The thin line under each stat is progress to its next point. Tap a stat name for details.</p>
   </section>
@@ -1207,12 +1429,15 @@ function vGates(){
   const tr=trialGate(),p=S.player,list=S.gates.list,nx=RANKS[p.rank+1];
   return `${tr?`<section class="win">${winHead('Reassessment','!')}<p class="sys">[You have met the level requirement for ${RANKS[tr.rank].id}-Rank.]</p><div class="gates">${gateCard(tr)}</div><p class="note">Trials cost no MP and stay open until you clear them.</p></section>`:''}
   <section class="win">${winHead('Gates Detected')}
-    ${list.length?`<div class="gates">${list.map(gateCard).join('')}</div>`:`<p class="empty">Every gate is cleared for today. New gates open in <span data-live="reset">${hms(nextReset()-Date.now())}</span>.</p>`}
+    ${soreJoints().length?`<p class="note" style="margin:-4px 0 12px;text-align:center">Gates leave out exercises that load your sore joints. <button class="link" data-a="tab" data-x="recover">Recovery</button></p>`:''}
+    ${list.length?`<div class="gates">${list.map(gateCard).join('')}</div>`
+      :S.gates.done.length?`<p class="empty">Every gate is cleared for today. New gates open in <span data-live="reset">${hms(nextReset()-Date.now())}</span>.</p>`
+      :`<p class="empty">Your sore joints rule out every gate exercise today. Try a recovery session instead.</p>`}
     <div class="mp-row"><span>MP ${fmt(p.mp)} / ${fmt(maxMP())} · 10 MP per gate</span>${S.inv.key?`<button class="btn sm" data-a="use" data-x="key">${ico('key')}Use key (${S.inv.key})</button>`:''}</div>
   </section>
   <section class="win">${winHead('Hunter Rank')}
     <ol class="ladder">${RANKS.map((r,i)=>`<li class="${i===p.rank?'on':i<p.rank?'past':''}"><span class="rk rk-${r.id}">${r.id}</span>Lv ${r.min}</li>`).join('')}</ol>
-    <p class="note">${nx?(p.level>=nx.min?`Clear the ${nx.id}-Rank Reassessment Trial above to rank up.`:`The ${nx.id}-Rank Reassessment Trial unlocks at level ${nx.min}.`):'You stand at the top. There is no rank above S.'}</p>
+    <p class="note">${nx?(p.level>=nx.min?(tr?`Clear the ${nx.id}-Rank Reassessment Trial above to rank up.`:`Your sore joints rule out the ${nx.id}-Rank trial for now. It returns when you recover.`):`The ${nx.id}-Rank Reassessment Trial unlocks at level ${nx.min}.`):'You stand at the top. There is no rank above S.'}</p>
   </section>`;
 }
 
@@ -1250,7 +1475,7 @@ function calendar(){
 function vRecords(){
   const days=Math.floor((Date.now()-S.created)/864e5)+1;
   const rows=[['Push-ups',fmt(ex('pushup'))],['Sit-ups',fmt(ex('situp'))],['Squats',fmt(ex('squat'))],['Burpees',fmt(ex('burpee'))],['Distance',`${trim(toUser(ex('run')))} ${unit()}`],
-    ['Gates cleared',`${fmt(S.totals.gates)}${S.totals.red?` (${S.totals.red} red)`:''}`],['Daily Quests cleared',fmt(S.totals.clears)],['Penalties survived',fmt(S.totals.penalties)],['Optional quests',fmt(S.totals.side)],['Days since awakening',fmt(days)]];
+    ['Gates cleared',`${fmt(S.totals.gates)}${S.totals.red?` (${S.totals.red} red)`:''}`],['Daily Quests cleared',fmt(S.totals.clears)],['Penalties survived',fmt(S.totals.penalties)],['Optional quests',fmt(S.totals.side)],['Recovery sessions',fmt(S.totals.rec)],['Recovery habits',fmt(S.totals.recHabits)],['Days since awakening',fmt(days)]];
   return `<section class="win">${winHead('Streak')}
     <div class="streak"><div class="streak-n">${ico('flame')}<b>${S.streak.cur}</b><span>day streak</span></div>
     <dl class="kv"><div><dt>Best streak</dt><dd>${S.streak.best}</dd></div><div><dt>Penalty Wards</dt><dd>${S.inv.ward}</dd></div><div><dt>Rest days</dt><dd>${S.settings.restDays.length?S.settings.restDays.map(i=>DOW[i]).join(', '):'None'}</dd></div></dl></div>
@@ -1260,7 +1485,38 @@ function vRecords(){
   <section class="win">${winHead('System Log')}${S.log.length?`<ul class="log">${S.log.slice(0,15).map(l=>`<li><time>${clockTime(l.t)}</time><span><b>${esc(l.h)}</b> ${esc(l.l)}</span></li>`).join('')}</ul>`:'<p class="empty">No messages yet.</p>'}</section>
   <button class="btn block" data-a="settings">${ico('gear')}Settings</button>`;
 }
-const VIEWS={quest:vQuest,status:vStatus,gates:vGates,items:vItems,records:vRecords};
+/* recover tab */
+function vRecover(){
+  const d=S.daily,sore=soreJoints();
+  const joints=JOINT_IDS.map(j=>{
+    const lv=soreLv(j),days=lv?Math.max(1,Math.round((keyDate(d.date)-keyDate(S.joints[j].since))/864e5)+1):0;
+    const note=!lv?'':days>=14?`<small class="warn-old">Sore for ${days} days. If it is not getting better, see a physiotherapist or doctor.</small>`:`<small>${AILMENT(j)} · day ${days}</small>`;
+    return `<li class="joint"><h4>${esc(REC_BY[j].name)}</h4><div class="tri" role="group" aria-label="${esc(REC_BY[j].name)}">${['OK','Sore','Hurts'].map((l,i)=>`<button class="l${i}" data-a="joint" data-x="${j}:${i}" aria-pressed="${lv===i}">${l}</button>`).join('')}</div>${note}</li>`;
+  }).join('');
+  const rows=adaptLines();
+  const cards=[...sore,...JOINT_IDS.filter(j=>!sore.includes(j)),'general'].map(id=>{
+    const R=REC_BY[id],plan=recPlan(id),done=(d.recDone||[]).includes(id);
+    return `<article class="rec${soreLv(id)?' hot':''}"><h3>${esc(R.name)}${done?' <span class="tag ok">Done today</span>':''}</h3>
+      <button class="btn sm${soreLv(id)?' pri':''}" data-a="recInfo" data-x="${id}">View</button>
+      <p>${esc(R.overview)}</p><p>About ${plan.est} min · ${plan.exs.length} moves</p></article>`;
+  }).join('');
+  const habits=(d.rh||[]).map((q,i)=>`<li><button class="side-q${q.done?' done':''}" data-a="recHabit" data-x="${i}" aria-pressed="${q.done}"><span class="box">${q.done?ico('check'):''}</span><span class="side-n">${esc(recHabit(q).text)}</span><span class="side-r">+10 XP · VIT</span></button></li>`).join('');
+  return `<section class="win">${winHead('Joint Check-in','+')}
+    <p class="sys">[How do your joints feel today?]</p>
+    <ul class="joints">${joints}</ul>
+    ${rows.length?`<ul class="adapt" aria-label="What the System changed">${rows.map(([a,b])=>`<li><span>${esc(a)}</span><b>${esc(b)}</b></li>`).join('')}</ul>`:''}
+    <p class="note">Sore: the System swaps out exercises that load the joint. Hurts: it also halves those goals and makes the day penalty-free.</p>
+  </section>
+  <section class="win tone-ok">${winHead('Recovery Sessions')}<div class="recs">${cards}</div></section>
+  <section class="win tone-ok">${winHead('Recovery Habits')}<ul class="side">${habits}</ul>
+    <p class="note">${sore.length?'Picked for your sore joints.':'General habits that help you recover.'} New ones arrive at every reset.</p></section>
+  <section class="win">${winHead('When to Get Help','!')}
+    <p class="sys" style="font-size:14.5px">${esc(RECOVERY.painRule)}</p>
+    <details class="help"${sore.length?' open':''}><summary>Stop and get checked if</summary><ul>${RECOVERY.generalRedFlags.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></details>
+    <p class="note">${esc(RECOVERY.disclaimer)}</p>
+  </section>`;
+}
+const VIEWS={quest:vQuest,status:vStatus,gates:vGates,recover:vRecover,items:vItems,records:vRecords};
 
 /* ---------- sheets ---------- */
 function renderSheet(){
@@ -1270,7 +1526,8 @@ function renderSheet(){
   if(html==null){UI.sheet=null;el.innerHTML='';return}
   const prev=el.querySelector('.sheet'),st=prev&&el.dataset.k===k?prev.scrollTop:0;
   el.dataset.k=k;
-  el.innerHTML=`<div class="layer" data-a="sheetClose"><div class="win sheet${UI.sheet.tone?' tone-red':''}" role="dialog" aria-modal="true" data-stop>${html}</div></div>`;
+  const tone=UI.sheet.tone===true?'red':UI.sheet.tone;
+  el.innerHTML=`<div class="layer" data-a="sheetClose"><div class="win sheet${tone?' tone-'+tone:''}" role="dialog" aria-modal="true" data-stop>${html}</div></div>`;
   if(st) el.querySelector('.sheet').scrollTop=st;
   if(prev) el.querySelector('.layer').style.animation='none',el.querySelector('.sheet').style.animation='none';
 }
@@ -1279,11 +1536,11 @@ const SHEETS={
   counter(){
     const u=UI.sheet,pen=u.ctx==='pen',t=pen?S.penalty&&S.penalty.tasks[u.i]:null;
     if(pen&&!t) return null;
-    const name=pen?EX[t.ex].name:DAILY_BY[u.task].name,cur=pen?t.done:S.daily.prog[u.task],tg=pen?t.target:S.daily.targets[u.task],left=Math.max(0,tg-cur);
+    const exId=pen?t.ex:taskEx(u.task),name=EX[exId].name,cur=pen?t.done:S.daily.prog[u.task],tg=pen?t.target:S.daily.targets[u.task],left=Math.max(0,tg-cur);
     const sets=pen?[]:S.daily.sets.filter(s=>s.task===u.task),last=sets[sets.length-1];
     const chips=[...new Set([5,10,15,20,25,left].filter(v=>v>0))].sort((a,b)=>a-b);
-    const exId=pen?t.ex:DAILY_BY[u.task].ex;
-    return `<div class="sh-head"><div><p class="eyebrow">${pen?'Penalty Quest':'Daily Quest'}</p><h3>${name}</h3></div>${closeBtn}</div>
+    const swapped=!pen&&exId!==DAILY_BY[u.task].ex;
+    return `<div class="sh-head"><div><p class="eyebrow">${pen?'Penalty Quest':swapped?`Daily Quest · instead of ${DAILY_BY[u.task].name.toLowerCase()}`:'Daily Quest'}</p><h3>${name}</h3></div>${closeBtn}</div>
       <div class="prog-line"><b>${fmt(cur)}</b> / ${fmt(tg)}<span>${left?`${fmt(left)} to go`:'Goal reached · extra reps still give XP'}</span></div>
       <div class="bar"><i style="width:${Math.min(100,cur/tg*100)}%"></i></div>
       <p class="lbl">Reps in this set</p>
@@ -1295,12 +1552,23 @@ const SHEETS={
   },
   runTask(){
     const d=S.daily,cur=d.prog.run,tg=d.targets.run,last=d.sets.filter(s=>s.task==='run').pop();
-    return `<div class="sh-head"><div><p class="eyebrow">Daily Quest</p><h3>Running</h3></div>${closeBtn}</div>
+    return `<div class="sh-head"><div><p class="eyebrow">${taskEx('run')==='run'?'Daily Quest':'Daily Quest · instead of running'}</p><h3>${taskName('run')}</h3></div>${closeBtn}</div>
       <div class="prog-line"><b>${fmtTask('run',cur)}</b> / ${fmtTask('run',tg)} ${unit()}<span>${cur>=tg?'Goal reached':`${trim(toUser(Math.max(0,tg-cur)))} ${unit()} to go`}</span></div>
       <div class="bar"><i style="width:${Math.min(100,cur/tg*100)}%"></i></div>
       <button class="btn pri block xl" data-a="runOpen" data-x="gps">${ico('run')}${S.run?'Resume tracked run':'Track a run with GPS'}</button>
       <div class="row2"><button class="btn" data-a="runOpen" data-x="manual">Log distance</button>${last&&!d.cleared?`<button class="btn ghost" data-a="cUndoRun">Undo last (${trim(toUser(last.n))})</button>`:''}</div>
-      <p class="cue">${EX.run.cue}</p>`;
+      <p class="cue">${EX[taskEx('run')].cue}</p>`;
+  },
+  rec(){
+    const id=UI.sheet.id,R=REC_BY[id];if(!R) return null;
+    const plan=recPlan(id),moves=R.sessionOrder.map(mid=>R.moves.find(m=>m.id===mid)).filter(Boolean);
+    const label=m=>`${m.type==='time'?m.target+' s':'× '+m.target}${m.perSide?' each side':''}${m.sets>1?` · ${m.sets} sets`:''}`;
+    return `<div class="sh-head"><div><p class="eyebrow">Recovery session</p><h3>${esc(R.name)}</h3></div>${closeBtn}</div>
+      <p class="hint" style="margin:0">${esc(R.overview)}</p>
+      <ul class="moves">${moves.map(m=>`<li><b>${esc(m.name)}</b><span>${label(m)}</span><small>${esc(m.cue)}</small><small>Skip if: ${esc(m.avoidIf)}</small></li>`).join('')}</ul>
+      <details class="help"><summary>Stop and get checked if</summary><ul>${R.redFlags.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></details>
+      <p class="note">${esc(RECOVERY.painRule)}</p>
+      <div class="row2"><button class="btn" data-a="sheetClose">Not now</button><button class="btn pri" data-a="recStart" data-x="${id}">Start · ${plan.est} min</button></div>`;
   },
   hold(){
     const u=UI.sheet,t=S.penalty&&S.penalty.tasks[u.i];
@@ -1385,37 +1653,48 @@ const SCREENS={
       <div class="row2" style="margin-top:16px"><button class="btn" data-a="awBack">Back</button><button class="btn pri" data-a="awBegin">${a.recal?'Save':'Begin training'}</button></div></section></div>`;
   },
   gate(){
-    const s=S.session,g=s.g,set=sessSet(),e=EX[set.ex],R=RANKS[g.rank];
+    const s=S.session,g=s.g,set=sessSet(),e=EX[set.ex],R=RANKS[g.rank],rec=g.mode==='rec';
     const total=g.sets.reduce((a,b)=>a+b.hp,0),left=Math.max(0,total-s.dealt),wave=set.round+1,next=g.sets[s.i+1];
+    const side=set.side?` · ${set.side}`:'',nextSide=next&&next.side?` · ${next.side.toLowerCase()}`:'';
+    const extra=rec?`${e.easier?`<p class="cue">Easier: ${esc(e.easier)}</p>`:''}${e.avoidIf?`<p class="cue">Skip if: ${esc(e.avoidIf)}</p>`:''}`:'';
     let main;
     if(s.phase==='rest'){
-      main=`<div class="phase rest"><p class="ph-l">Rest</p><div class="timer" id="sess-t">${mmss((s.end-Date.now())/1000)}</div>
-        <p class="ph-n">Next: <b>${EX[next.ex].name}</b> ${tgtLabel(next)}${next.round!==set.round?` · ${next.round===g.rounds-1?'Boss wave':`Wave ${next.round+1}`}`:''}</p>
-        <div class="row2"><button class="btn" data-a="restAdd">+15 s</button><button class="btn pri" data-a="restSkip">Skip rest</button></div></div>`;
+      main=`<div class="phase rest"><p class="ph-l">${rec?'Breathe':'Rest'}</p><div class="timer" id="sess-t">${mmss((s.end-Date.now())/1000)}</div>
+        <p class="ph-n">Next: <b>${esc(EX[next.ex].name)}</b> ${tgtLabel(next)}${nextSide}${!rec&&next.round!==set.round?` · ${next.round===g.rounds-1?'Boss wave':`Wave ${next.round+1}`}`:''}</p>
+        <div class="row2"><button class="btn" data-a="restAdd">+15 s</button><button class="btn pri" data-a="restSkip">${rec?'Next move':'Skip rest'}</button></div></div>`;
     } else if(e.type==='time'){
       const tl=s.prep?'':mmss(s.run?(s.end-Date.now())/1000:s.left);
-      main=`<div class="phase"><p class="ph-l">Set ${s.i+1} of ${g.sets.length}</p><h3 class="ex-n">${e.name}</h3><p class="cue">${e.cue}</p>
+      main=`<div class="phase"><p class="ph-l">${rec?'Move':'Set'} ${s.i+1} of ${g.sets.length}${side}</p><h3 class="ex-n">${esc(e.name)}</h3><p class="cue">${esc(e.cue)}</p>${extra}
         <div class="timer" id="sess-t">${s.prep?Math.ceil((s.prep-Date.now())/1000):tl}</div><p class="ph-n">Hold for ${set.target} seconds</p>
         <div class="row2">${s.run||s.prep?'<button class="btn xl" data-a="timePause">Pause</button>':`<button class="btn pri xl" data-a="timeStart">${s.left<set.target?'Resume':'Start'}</button>`}<button class="btn xl" data-a="timeDone">Finish set</button></div></div>`;
     } else {
-      main=`<div class="phase"><p class="ph-l">Set ${s.i+1} of ${g.sets.length}</p><h3 class="ex-n">${e.name}</h3><p class="cue">${e.cue}</p>
+      main=`<div class="phase"><p class="ph-l">${rec?'Move':'Set'} ${s.i+1} of ${g.sets.length}${side}</p><h3 class="ex-n">${esc(e.name)}</h3><p class="cue">${esc(e.cue)}</p>${extra}
         <div class="stepper"><button class="btn sq" data-a="adj" data-x="-1" aria-label="One less">−</button><output id="adj" aria-live="polite">${s.adj}</output><button class="btn sq" data-a="adj" data-x="1" aria-label="One more">+</button></div>
-        <p class="ph-n">Target ${set.target} reps. Adjust if you did fewer or more.</p>
-        <button class="btn pri block xl" data-a="setDone">Done · Strike</button></div>`;
+        <p class="ph-n">Target ${set.target} reps${set.side==='Each side'?' on each side':''}. Adjust if you did fewer or more.</p>
+        <button class="btn pri block xl" data-a="setDone">${rec?'Done':'Done · Strike'}</button></div>`;
     }
     const hit=UI.hit;UI.hit=0;
-    return `<div class="screen-in${g.red?' tone-red':''}">
-      <div class="scr-head"><div><p class="eyebrow">${g.trial?'Reassessment Trial':`${R.id}-Rank Gate`}${g.red?' · Red Gate':''}</p><h2>${esc(g.name)}</h2></div><button class="btn sm ghost" data-a="retreat">Retreat</button></div>
-      ${s.confirm?`<div class="confirm"><p>Leave the gate? You keep XP from finished sets but get no clear rewards.${g.red?' Fleeing a Red Gate costs 20% HP.':''}${g.trial?'':' The 10 MP is not refunded.'}</p><div class="row2"><button class="btn" data-a="retreatNo">Keep fighting</button><button class="btn danger" data-a="retreatYes">Retreat</button></div></div>`:''}
-      <section class="win boss">
+    const doneSets=s.i+(s.phase==='rest'?1:0);
+    const top=rec?`<section class="win">
+        <div class="boss-top"><span>Recovery</span><span id="sess-el">${mmss((Date.now()-s.t0)/1000)}</span></div>
+        <div class="recbar" role="progressbar" aria-label="Session progress" aria-valuemin="0" aria-valuemax="${g.sets.length}" aria-valuenow="${doneSets}" style="margin-top:10px"><i style="width:${doneSets/g.sets.length*100}%"></i></div>
+        <p class="hp-n">${doneSets} / ${g.sets.length} done · discomfort up to 3/10 is OK, sharp pain means stop</p>
+      </section>`
+      :`<section class="win boss">
         <div class="boss-top"><span>${wave===g.rounds?'Boss wave':`Wave ${wave} / ${g.rounds}`}</span><span id="sess-el">${mmss((Date.now()-s.t0)/1000)}</span></div>
         <h3 class="boss-n">${esc(g.boss)}</h3>
         <div class="hpbar" role="progressbar" aria-label="Boss HP" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${left}"><i style="width:${left/total*100}%"></i></div>
         <p class="hp-n">${fmt(left)} / ${fmt(total)}</p>
         ${hit?`<span class="dmg">−${fmt(hit)}</span>`:''}
-      </section>
+      </section>`;
+    const confirm=rec?`<div class="confirm"><p>End the session? Moves you finished still count.</p><div class="row2"><button class="btn" data-a="retreatNo">Keep going</button><button class="btn danger" data-a="retreatYes">End session</button></div></div>`
+      :`<div class="confirm"><p>Leave the gate? You keep XP from finished sets but get no clear rewards.${g.red?' Fleeing a Red Gate costs 20% HP.':''}${g.trial?'':' The 10 MP is not refunded.'}</p><div class="row2"><button class="btn" data-a="retreatNo">Keep fighting</button><button class="btn danger" data-a="retreatYes">Retreat</button></div></div>`;
+    return `<div class="screen-in${g.red?' tone-red':rec?' tone-ok':''}">
+      <div class="scr-head"><div><p class="eyebrow">${rec?'Recovery session':g.trial?'Reassessment Trial':`${R.id}-Rank Gate`}${g.red?' · Red Gate':''}</p><h2>${esc(g.name)}</h2></div><button class="btn sm ghost" data-a="retreat">${rec?'End':'Retreat'}</button></div>
+      ${s.confirm?confirm:''}
+      ${top}
       <section class="win">${main}</section>
-      <ol class="sets" aria-label="Sets">${g.sets.map((x,i)=>`<li class="${i<s.i||(i===s.i&&s.phase==='rest')?'done':i===s.i?'now':''}${x.round===g.rounds-1?' boss':''}"></li>`).join('')}</ol>
+      <ol class="sets" aria-label="Sets">${g.sets.map((x,i)=>`<li class="${i<s.i||(i===s.i&&s.phase==='rest')?'done':i===s.i?'now':''}${!rec&&x.round===g.rounds-1?' boss':''}"></li>`).join('')}</ol>
     </div>`;
   },
   run(){
@@ -1431,12 +1710,13 @@ const SCREENS={
     const manual=`<section class="win"><label class="field"><span>Distance (${unit()})</span><input id="man-d" type="number" inputmode="decimal" step="0.01" min="0" placeholder="3.2"></label>
         <label class="field"><span>Time in minutes (optional)</span><input id="man-t" type="number" inputmode="numeric" min="0" placeholder="25"></label>
         <button class="btn pri block" data-a="runManual">Log run</button></section><p class="hint" style="margin:0">Use this for treadmill runs, or if you tracked the run with another app.</p>`;
-    return `<div class="screen-in"><div class="scr-head"><div><p class="eyebrow">Daily Quest · Running</p><h2>Run</h2></div><button class="icon-btn" data-a="runClose" aria-label="Close">${ico('close')}</button></div>
+    const walk=d&&d.targets.run!=null&&taskEx('run')!=='run';
+    return `<div class="screen-in"><div class="scr-head"><div><p class="eyebrow">Daily Quest · ${walk?esc(taskName('run')):'Running'}</p><h2>${walk?'Walk':'Run'}</h2></div><button class="icon-btn" data-a="runClose" aria-label="Close">${ico('close')}</button></div>
       <div class="seg"><button class="seg-b${mode==='gps'?' on':''}" data-a="runMode" data-x="gps">GPS tracking</button><button class="seg-b${mode==='manual'?' on':''}" data-a="runMode" data-x="manual">Manual entry</button></div>
       ${mode==='gps'?gps:manual}${daily}</div>`;
   },
   tap(){
-    const t=UI.screen,name=t.ctx==='pen'?EX[S.penalty.tasks[t.i].ex].name:DAILY_BY[t.task].name;
+    const t=UI.screen,name=t.ctx==='pen'?EX[S.penalty.tasks[t.i].ex].name:taskName(t.task);
     return `<div class="tap-scr"><div class="scr-head"><div><p class="eyebrow">Tap counter</p><h2>${name}</h2></div><button class="btn sm ghost" data-a="tapClose">Cancel</button></div>
       <button class="pad" id="pad" aria-label="Add one rep"><b id="pad-n">${t.n}</b><small>Tap per rep</small></button>
       <p class="hint" style="text-align:center;margin:0">For push-ups, put the phone under your chest and touch it with your chin or nose at the bottom of each rep.</p>
@@ -1460,6 +1740,7 @@ const SCREENS={
       </section>
       <section class="win">${winHead('App')}
         ${tog('sound','Sound effects')}${tog('haptics','Vibration','On phones that support it.')}
+        ${tog('badge','App icon badge','Shows how many Daily Quest goals are left on the installed app icon. On iPhone, allow notifications when asked; Awaken only uses that for the badge.')}
         ${standalone?'':deferredInstall?'<button class="btn pri block" data-a="install" style="margin-top:8px">Install app</button>':`<p class="hint">${ios?'To install: tap the Share button in Safari, then <b>Add to Home Screen</b>.':'To install: open your browser menu and choose <b>Install app</b> or <b>Add to Home screen</b>.'}</p>`}
       </section>
       <section class="win">${winHead('Save Data')}
@@ -1552,6 +1833,16 @@ function importText(txt){
   if(S.trial&&!okGate(S.trial)) S.trial=null;
   if(S.penalty&&!(Array.isArray(S.penalty.tasks)&&S.penalty.tasks.every(t=>EX[t.ex]))) S.penalty=makePenalty();
   if(S.daily&&!(S.daily.targets&&S.daily.prog&&Array.isArray(S.daily.side)&&S.daily.side.every(q=>SIDE_BY[q.id]))) S.daily=null;
+  const joints={};
+  for(const j of JOINT_IDS){const v=S.joints&&S.joints[j];if(v&&(v.lv===1||v.lv===2)&&/^\d{4}-\d\d-\d\d$/.test(v.since)) joints[j]={lv:v.lv,since:v.since}}
+  S.joints=joints;
+  if(S.daily){
+    const d=S.daily;
+    d.subs=Object.fromEntries(Object.entries(d.subs||{}).filter(([t,id])=>DAILY_BY[t]&&EX[id]));
+    d.rh=Array.isArray(d.rh)?d.rh.filter(q=>q&&REC_BY[q.r]&&REC_BY[q.r].habits.some(h=>h.id===q.id)):[];
+    d.recDone=Array.isArray(d.recDone)?d.recDone.filter(id=>REC_BY[id]):[];
+  }
+  if(!Array.isArray(S.gates.done)) S.gates.done=[];
   UI.screen=null;UI.sheet=null;UI.tab='quest';
   applySkin();saveNow();
   if(S.awakened){rollover();announce()} else startAwakening();
@@ -1579,6 +1870,10 @@ const ACT={
   task(x){if(x==='run') UI.sheet={kind:'runTask'}; else openCounter('daily',x);refresh()},
   pen(x){const t=S.penalty.tasks[x];if(EX[t.ex].type==='time') UI.sheet={kind:'hold',i:+x,acc:0,start:0,tone:true}; else openCounter('pen',x);refresh()},
   side(x){toggleSide(+x)},
+  joint(x){const[j,lv]=x.split(':');setJoint(j,+lv)},
+  recInfo(x){UI.sheet={kind:'rec',id:x,tone:'ok'};refresh()},
+  recStart(x){enterRecovery(x)},
+  recHabit(x){toggleRecHabit(+x)},
   cAdj(x){const u=UI.sheet;u.n=clamp(u.n+(+x),1,500);refresh()},
   cSet(x){UI.sheet.n=+x;refresh()},
   cLog(){const u=UI.sheet;if(u.ctx==='pen'){logPenalty(u.i,u.n)}else{logDaily(u.task,u.n);const left=Math.max(0,S.daily.targets[u.task]-S.daily.prog[u.task]);if(UI.sheet) {UI.sheet.n=left?Math.min(u.n,left):u.n;refresh()}}},
@@ -1655,7 +1950,16 @@ const ACT={
   setTask(x){const t=S.settings.tasks;if(t[x]&&Object.values(t).filter(Boolean).length===1){toast('Keep at least one goal in the Daily Quest.','bad');return}t[x]=!t[x];retarget();save();refresh()},
   setRest(x){const i=+x,r=S.settings.restDays;if(r.includes(i)) S.settings.restDays=r.filter(v=>v!==i); else{if(r.length>=3){toast('Up to 3 rest days a week.','bad');return}r.push(i);r.sort()}save();refresh()},
   setUnits(x){S.settings.units=x;save();refresh()},
-  setTog(x){S.settings[x]=!S.settings[x];if(x==='sound'&&S.settings.sound) Sfx.notify();save();refresh()},
+  setTog(x){
+    S.settings[x]=!S.settings[x];
+    if(x==='sound'&&S.settings.sound) Sfx.notify();
+    if(x==='badge'){
+      lastSnap='';
+      // iPhone and iPad only show web app badges after notification permission is granted
+      if(S.settings.badge&&'Notification' in window&&Notification.permission==='default') try{Notification.requestPermission().then(()=>{lastSnap='';saveNow()},()=>{})}catch(e){}
+    }
+    save();refresh();
+  },
   recal(){startAwakening(true);refresh()},
   install(){if(deferredInstall){deferredInstall.prompt();deferredInstall.userChoice.finally(()=>{deferredInstall=null;refresh()})}},
   exportDl(){
@@ -1735,6 +2039,48 @@ function tick(){
   }
 }
 
+/* ---------- outside the app: icon badge and widget data ---------- */
+// The installed app's shortcuts and the Windows widget open ./?go=<tab> (or ?go=run)
+function applyGo(go){
+  if(!go||!S.awakened) return;
+  if(VIEWS[go]){UI.tab=go;if(UI.screen&&UI.screen.kind!=='gate'&&UI.screen.kind!=='awaken') UI.screen=null;UI.sheet=null}
+  if(go==='run'&&!S.session){UI.runMode='gps';UI.sheet=null;UI.screen={kind:'run'}}
+}
+function deepLink(){
+  let go=null;
+  try{go=new URLSearchParams(location.search).get('go');if(go) history.replaceState(null,'',location.pathname)}catch(e){}
+  applyGo(go);
+}
+// Shared with the service worker, which can't read localStorage: a small snapshot in Cache Storage
+const WIDGET_CACHE='awaken-widget',WIDGET_DATA='widgets/quest-data.json';
+let lastSnap='';
+function snapshot(){
+  const d=S.daily,p=S.player,ids=Object.keys(d.targets);
+  const goals=ids.map(id=>{const done=d.prog[id]>=d.targets[id]-1e-6,u=id==='run'?' '+unit():'';
+    return {name:taskName(id),progress:`${fmtTask(id,Math.min(d.prog[id],d.targets[id]))} / ${fmtTask(id,d.targets[id])}${u}`,target:`0 / ${fmtTask(id,d.targets[id])}${u}`,done,mark:done?'✓':'○'}});
+  const left=d.cleared?0:goals.filter(g=>!g.done).length,optional=!!(d.rest||d.heal);
+  const status=S.penalty?'Penalty Quest active':d.cleared?'Daily Quest complete':d.heal?'Recovery day · no penalty':d.rest?'Rest day · optional':`${left} goal${left===1?'':'s'} left`;
+  const h=S.settings.resetHour;
+  return {name:p.name,level:p.level,rank:rankOf().id,streak:S.streak.cur,cleared:d.cleared,optional,penalty:!!S.penalty,left,status,goals,
+    ailments:soreJoints().map(AILMENT).join(', '),resets:h?`Resets at ${h}:00 AM`:'Resets at midnight',date:d.date,resetHour:h,badge:!!S.settings.badge};
+}
+function syncOutside(){
+  if(!S.awakened||!S.daily) return;
+  const snap=snapshot(),json=JSON.stringify(snap);
+  if(json===lastSnap) return;
+  lastSnap=json;
+  // icon badge: goals left on days the quest is required
+  try{
+    if(S.settings.badge&&'setAppBadge' in navigator&&snap.left&&!snap.optional) navigator.setAppBadge(snap.left).catch(()=>{});
+    else if('clearAppBadge' in navigator) navigator.clearAppBadge().catch(()=>{});
+  }catch(e){}
+  if(!('caches' in window)) return;
+  caches.open(WIDGET_CACHE)
+    .then(c=>c.put(new URL(WIDGET_DATA,location.href).href,new Response(json,{headers:{'content-type':'application/json'}})))
+    .then(()=>{const sw=navigator.serviceWorker&&navigator.serviceWorker.controller;if(sw) sw.postMessage({type:'widgets-refresh'})})
+    .catch(()=>{});
+}
+
 /* ---------- boot ---------- */
 (function boot(){
   FX.start();applySkin();
@@ -1742,13 +2088,24 @@ function tick(){
   if(!S.awakened) startAwakening();
   else{
     rollover();
+    // saves from before the recovery update have no recovery habits for the current day
+    if(S.daily&&!Array.isArray(S.daily.rh)){S.daily.recDone=S.daily.recDone||[];syncRecHabits()}
     if(S.session) UI.screen={kind:'gate'};
+    deepLink();
     announce();
     if(S.run) setTimeout(()=>toast(`Your run is paused at ${trim(toUser(S.run.dist))} ${unit()}. Open Run to resume.`),900);
   }
   saveNow();refresh();
   setInterval(tick,250);
-  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    // the Windows widget's buttons focus an open window and send it where to go
+    navigator.serviceWorker.addEventListener('message',e=>{
+      if(e.data&&e.data.type==='awaken:nav'){try{applyGo(new URL(e.data.url).searchParams.get('go'))}catch(err){}refresh()}
+    });
+    // installed Chromium apps: refresh the widget and badge after the daily reset even if the app stays closed
+    navigator.serviceWorker.ready.then(reg=>reg.periodicSync&&reg.periodicSync.register('awaken-refresh',{minInterval:6*3600000})).catch(()=>{});
+  }
 })();
 </script>
 </body>
