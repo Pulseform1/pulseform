@@ -1,0 +1,1755 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Awaken</title>
+<meta name="description" content="A workout system that levels you up: daily quests, penalty zones, gates and stats for real-world training.">
+<meta name="theme-color" content="#03060d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Awaken">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Chakra+Petch:wght@500;600;700&display=swap">
+<style>
+:root{
+  /* Layout: one narrow column (max 520px) of stacked glass "System" windows over a dark mana field,
+     a fixed bottom tab bar, and full-screen takeovers for runs, gates, the tap counter and settings. */
+  --void:#03060d;      /* page ground */
+  --deep:#06142a;      /* window fill */
+  --line:#45b0ff;      /* system window border */
+  --glow:#9be3ff;      /* highlight and glow */
+  --ink:#e7f4ff;       /* primary text */
+  --dim:#86a2c3;       /* secondary text */
+  --red:#ff3e5a; --red-glow:#ff9aa8;
+  --gold:#ffc94a; --ok:#62f5c4; --violet:#a684ff;
+  --on-accent:#02101f; --scrim:rgba(1,4,10,.74);
+  --rank-e:#a8b8cc; --rank-d:#62f5c4; --rank-c:#45b0ff; --rank-b:#a684ff; --rank-a:#ff8a4c; --rank-s:#ffc94a;
+  --f-disp:"Chakra Petch","Rajdhani","Segoe UI",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+:root[data-skin=shadow]{--line:#9a6bff;--glow:#d6c6ff}
+:root[data-skin=ruler]{--line:#f0b429;--glow:#ffe6a3}
+.tone-red{--line:var(--red);--glow:var(--red-glow)}
+/* derived tints are re-declared wherever --line can change, so they follow the local tone */
+:root,.tone-red{--line-a:color-mix(in srgb,var(--line) 72%,transparent);--line-b:color-mix(in srgb,var(--line) 30%,transparent);--line-c:color-mix(in srgb,var(--line) 12%,transparent)}
+
+*{box-sizing:border-box}
+html{height:100%;-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100%;background:var(--void);color:var(--ink);font:400 16px/1.45 var(--f-body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+body.locked{overflow:hidden}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:2px solid var(--glow);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance}
+.i{width:20px;height:20px;flex:none}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;
+  background:radial-gradient(130% 60% at 50% -8%,var(--line-b),transparent 62%),radial-gradient(90% 50% at 50% 115%,var(--line-c),transparent 70%),var(--void)}
+#app{position:relative;z-index:1;max-width:520px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+
+/* ---------- top bar ---------- */
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 10px) 0 14px;background:linear-gradient(var(--void) 72%,transparent)}
+.lv{flex:none;width:48px;height:48px;display:grid;place-items:center;align-content:center;gap:1px;background:var(--line-c);border:1px solid var(--line-a);border-radius:3px;box-shadow:0 0 14px var(--line-b),inset 0 0 10px var(--line-c)}
+.lv small{font:600 9px/1 var(--f-disp);letter-spacing:.2em;color:var(--dim)}
+.lv b{font:700 20px/1 var(--f-disp);font-variant-numeric:tabular-nums}
+.who{flex:1;min-width:0;display:grid;gap:7px}
+.who-n{display:flex;align-items:center;gap:8px;min-width:0}
+.nm{font:600 17px/1.1 var(--f-disp);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xpbar,.bar{height:5px;background:var(--line-c);border-radius:1px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line-c)}
+.xpbar i,.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--line),var(--glow));box-shadow:0 0 10px var(--line)}
+.coin{display:flex;align-items:center;gap:5px;color:var(--gold);font:600 15px/1 var(--f-disp);font-variant-numeric:tabular-nums}
+.coin .i{width:16px;height:16px}
+.icon-btn{flex:none;width:42px;height:42px;display:grid;place-items:center;background:none;border:1px solid var(--line-b);border-radius:3px;color:var(--ink)}
+.icon-btn:active{background:var(--line-c)}
+.rk{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 5px;border:1px solid currentColor;border-radius:2px;font:700 12px/1 var(--f-disp);letter-spacing:.04em;flex:none}
+.rk-E{color:var(--rank-e)}.rk-D{color:var(--rank-d)}.rk-C{color:var(--rank-c)}.rk-B{color:var(--rank-b)}.rk-A{color:var(--rank-a)}.rk-S{color:var(--rank-s)}
+.tag{display:inline-block;padding:2px 6px;border:1px solid currentColor;border-radius:2px;font:600 10px/1.2 var(--f-disp);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.tag.red{color:var(--red)}.tag.gold{color:var(--gold)}.tag.ok{color:var(--ok)}
+
+/* ---------- tab bar ---------- */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:color-mix(in srgb,var(--void) 86%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid var(--line-b);
+  padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+.tabs-in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tab{position:relative;background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 0 5px;color:var(--dim);font:600 10.5px/1 var(--f-disp);letter-spacing:.14em;text-transform:uppercase}
+.tab .i{width:24px;height:24px}
+.tab.on{color:var(--glow);text-shadow:0 0 10px var(--line)}
+.tab.on .i{filter:drop-shadow(0 0 6px var(--line))}
+.tab.on::before{content:"";position:absolute;top:-7px;left:28%;right:28%;height:2px;background:var(--glow);box-shadow:0 0 10px var(--line)}
+.tab .dot{position:absolute;top:3px;left:calc(50% + 9px);width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red)}
+
+/* ---------- system window ---------- */
+.view{display:grid;gap:18px;padding-top:2px}
+.win{position:relative;padding:18px 16px 16px;border:1px solid var(--line-a);border-radius:3px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--deep) 90%,transparent),color-mix(in srgb,var(--void) 84%,transparent));
+  box-shadow:0 0 0 1px var(--line-c),0 0 24px var(--line-b),inset 0 0 32px var(--line-c);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.win::before,.win::after{content:"";position:absolute;width:14px;height:14px;border:2px solid var(--glow);pointer-events:none;filter:drop-shadow(0 0 4px var(--line))}
+.win::before{top:-2px;left:-2px;border-right:0;border-bottom:0}
+.win::after{bottom:-2px;right:-2px;border-left:0;border-top:0}
+.win-head{display:flex;justify-content:center;align-items:center;gap:8px;margin:0 0 16px}
+.win-ico,.win-ttl{border:1.5px solid var(--ink);border-radius:3px;box-shadow:0 0 10px var(--line-b),inset 0 0 8px var(--line-b)}
+.win-ico{width:30px;height:30px;display:grid;place-items:center;font:700 18px/1 var(--f-disp)}
+.win-ttl{margin:0;padding:7px 16px 6px;font:600 14px/1 var(--f-disp);letter-spacing:.24em;text-transform:uppercase;text-shadow:0 0 10px var(--line)}
+.sys{margin:0 0 14px;text-align:center;font:500 15.5px/1.4 var(--f-disp);letter-spacing:.02em;text-wrap:balance}
+.note,.hint{margin:10px 0 0;font-size:13.5px;color:var(--dim)}
+.eyebrow{margin:0 0 2px;font:600 11px/1.2 var(--f-disp);letter-spacing:.2em;text-transform:uppercase;color:var(--glow)}
+.empty{margin:4px 0;text-align:center;color:var(--dim)}
+
+/* daily quest */
+.goal-h{margin:0 0 4px;text-align:center;font:600 13px/1 var(--f-disp);letter-spacing:.34em;color:var(--glow)}
+.goals{list-style:none;margin:0;padding:0;display:grid}
+.goal{position:relative;width:100%;display:grid;grid-template-columns:1fr auto 24px;align-items:center;gap:12px;padding:13px 4px 13px;background:none;border:0;border-bottom:1px solid var(--line-b);text-align:left}
+.goal:active{background:var(--line-c)}
+.g-name{font:500 17px/1.2 var(--f-body)}
+.g-val{font:600 16px/1 var(--f-disp);font-variant-numeric:tabular-nums;letter-spacing:.03em;white-space:nowrap}
+.chk{width:22px;height:22px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:2px}
+.chk .i{width:16px;height:16px}
+.goal.done .chk{border-color:var(--ok);color:var(--ok);box-shadow:0 0 10px color-mix(in srgb,var(--ok) 50%,transparent)}
+.goal.done .g-val{color:var(--ok)}
+.g-bar{position:absolute;left:0;bottom:-1px;height:2px;width:calc(var(--p)*100%);background:var(--glow);box-shadow:0 0 8px var(--line)}
+.goal.done .g-bar{background:var(--ok)}
+.warn{margin:16px 0 0;text-align:center;font-size:14px;color:var(--dim);text-wrap:balance}
+.warn b{color:var(--red);letter-spacing:.08em;font-family:var(--f-disp)}
+.warn u{color:var(--red);text-decoration:none;border-bottom:1px solid currentColor}
+.clock{margin-top:14px;display:flex;justify-content:center;align-items:baseline;gap:8px;font:600 24px/1 var(--f-disp);font-variant-numeric:tabular-nums;letter-spacing:.06em}
+.clock .i{width:20px;height:20px;color:var(--glow);align-self:center}
+.clock small{font:500 12px var(--f-body);color:var(--dim);letter-spacing:.12em;text-transform:uppercase}
+.stamp{margin:16px auto 0;width:max-content;padding:8px 18px 7px;border:2px solid var(--ok);color:var(--ok);font:700 19px/1 var(--f-disp);letter-spacing:.32em;transform:rotate(-2deg);box-shadow:0 0 18px color-mix(in srgb,var(--ok) 35%,transparent),inset 0 0 12px color-mix(in srgb,var(--ok) 25%,transparent)}
+.rw-line{margin:12px 0 0;text-align:center;color:var(--dim);font-size:14px}
+.side{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.side-q{width:100%;display:grid;grid-template-columns:22px 1fr auto;gap:12px;align-items:center;padding:11px 2px;background:none;border:0;border-bottom:1px solid var(--line-c);text-align:left}
+.side-q .box{width:20px;height:20px;border:1.5px solid var(--line-a);border-radius:2px;display:grid;place-items:center}
+.side-q .box .i{width:14px;height:14px}
+.side-q.done .box{border-color:var(--ok);color:var(--ok)}
+.side-q.done .side-n{color:var(--dim);text-decoration:line-through}
+.side-r{font:600 12px/1 var(--f-disp);letter-spacing:.06em;color:var(--glow);white-space:nowrap}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pill{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--line);color:var(--on-accent);font:700 11px/1 var(--f-disp)}
+
+/* buttons */
+.btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 16px;border:1px solid var(--line-a);border-radius:3px;background:var(--line-c);color:var(--ink);
+  font:600 14px/1.1 var(--f-disp);letter-spacing:.12em;text-transform:uppercase;text-align:center;transition:background .15s,box-shadow .15s,transform .05s}
+.btn:active{background:var(--line-b);box-shadow:0 0 18px var(--line-b);transform:translateY(1px)}
+.btn.pri{background:linear-gradient(180deg,var(--glow),var(--line));border-color:var(--glow);color:var(--on-accent);box-shadow:0 0 18px var(--line-b)}
+.btn.pri:active{box-shadow:0 0 26px var(--line-a)}
+.btn.sm{min-height:38px;padding:8px 12px;font-size:12px}
+.btn.xl{min-height:58px;font-size:16px}
+.btn.block{width:100%}
+.btn.ghost{background:none;border-color:var(--line-b)}
+.btn.danger{background:var(--red);border-color:var(--red);color:var(--on-accent)}
+.btn.danger-ghost{background:none;border-color:color-mix(in srgb,var(--red) 60%,transparent);color:var(--red)}
+.btn.sq{width:56px;min-height:56px;padding:0;font-size:26px;letter-spacing:0}
+.btn:disabled{opacity:.45;pointer-events:none}
+.btn .i{width:18px;height:18px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row2>:only-child{grid-column:1/-1}
+.link{background:none;border:0;padding:0;color:var(--glow);text-align:left;border-bottom:1px dashed var(--line-a);font:inherit}
+
+/* status */
+.st-top{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.st-lv{display:grid;justify-items:center;padding:10px 14px;border:1px solid var(--line-a);box-shadow:inset 0 0 18px var(--line-c)}
+.st-lv b{font:700 46px/1 var(--f-disp);font-variant-numeric:tabular-nums;text-shadow:0 0 18px var(--line)}
+.st-lv span{font:600 11px/1 var(--f-disp);letter-spacing:.3em;color:var(--dim);margin-top:4px}
+.st-id{margin:0;display:grid;gap:6px;min-width:0}
+.st-id div{display:grid;grid-template-columns:52px 1fr;gap:8px;align-items:baseline;min-width:0}
+.st-id dt{font:600 11px/1 var(--f-disp);letter-spacing:.16em;color:var(--dim);text-transform:uppercase}
+.st-id dd{margin:0;font-weight:500;min-width:0;overflow-wrap:anywhere}
+.xp{margin:16px 0 0;display:grid;gap:6px}
+.xp small{text-align:right;color:var(--dim);font:500 12.5px/1 var(--f-disp);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.vitals{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+.meter{display:grid;gap:5px}
+.meter-l{display:flex;justify-content:space-between;font:600 12.5px/1 var(--f-disp);letter-spacing:.08em;font-variant-numeric:tabular-nums}
+.meter .bar{height:7px}
+.meter.hp .bar i{background:linear-gradient(90deg,#d32b47,var(--red));box-shadow:0 0 10px var(--red)}
+.meter.mp .bar i{background:linear-gradient(90deg,var(--line),var(--glow))}
+.fat{grid-column:1/-1;display:flex;justify-content:space-between;font:600 12.5px/1 var(--f-disp);letter-spacing:.08em;color:var(--dim)}
+.fat b{color:var(--ink)}
+.stats{margin-top:18px;padding-top:14px;border-top:1px solid var(--line-b);display:grid;grid-template-columns:1fr 1fr;gap:4px 20px}
+.stat{position:relative;display:grid;grid-template-columns:1fr auto 32px;align-items:center;gap:8px;padding:8px 0 10px}
+.st-name{background:none;border:0;padding:0;text-align:left;font:600 15px/1 var(--f-disp);letter-spacing:.12em;color:var(--ink)}
+.stat b{font:700 22px/1 var(--f-disp);font-variant-numeric:tabular-nums}
+.plus{width:30px;height:30px;padding:0;display:grid;place-items:center;border:1px solid var(--glow);border-radius:2px;background:var(--line-b);color:var(--ink);font:700 18px/1 var(--f-disp);box-shadow:0 0 10px var(--line-b)}
+.plus:active{background:var(--line)}
+.st-x{position:absolute;left:0;right:0;bottom:2px;height:2px;background:var(--line-c)}
+.st-x i{display:block;height:100%;background:var(--line-a)}
+.pts{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;font:600 12px/1.2 var(--f-disp);letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
+.pts b{font-size:22px;color:var(--gold);text-shadow:0 0 12px color-mix(in srgb,var(--gold) 50%,transparent)}
+.debuff{margin:12px 0 0;padding:8px 10px;border:1px solid color-mix(in srgb,var(--red) 60%,transparent);color:var(--red);font:600 13px/1.3 var(--f-disp);letter-spacing:.06em;text-align:center}
+.effects{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.effects li{padding:5px 8px;border:1px solid var(--line-b);font:500 12.5px/1 var(--f-disp);letter-spacing:.04em;color:var(--glow)}
+.list{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.li{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line-c)}
+.li h4{margin:0;font:600 15px/1.2 var(--f-disp);letter-spacing:.04em}
+.li p{margin:0;grid-column:1/-1;font-size:13.5px;color:var(--dim)}
+.li.locked h4{color:var(--dim)}
+.li .tag{justify-self:end}
+
+/* gates */
+.gates{display:grid;gap:12px}
+.gate{display:grid;grid-template-columns:58px 1fr;gap:14px;padding:14px 12px;border:1px solid var(--line-b);background:var(--line-c);border-radius:3px}
+.gate.red{border-color:color-mix(in srgb,var(--red) 60%,transparent);background:color-mix(in srgb,var(--red) 8%,transparent)}
+.gate.trial{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 7%,transparent)}
+.portal{width:58px;height:74px;border-radius:50%;display:grid;place-items:center;border:2px solid currentColor;font:700 24px/1 var(--f-disp);
+  background:radial-gradient(closest-side,color-mix(in srgb,currentColor 55%,transparent),color-mix(in srgb,currentColor 12%,transparent) 70%,transparent);box-shadow:0 0 18px color-mix(in srgb,currentColor 45%,transparent),inset 0 0 14px color-mix(in srgb,currentColor 40%,transparent)}
+.portal span{color:var(--ink);text-shadow:0 0 10px currentColor}
+.portal.red{color:var(--red)}
+.portal.big{width:70px;height:90px;font-size:30px}
+.g-info{min-width:0;display:grid;gap:4px;align-content:start}
+.g-info h3{margin:0;font:600 17px/1.2 var(--f-disp);letter-spacing:.02em}
+.g-meta,.g-ex,.g-rw{margin:0;font-size:13.5px;color:var(--dim)}
+.g-rw{color:var(--gold);font:600 13px/1.3 var(--f-disp);letter-spacing:.04em}
+.g-info .btn{justify-self:start;margin-top:6px}
+.mp-row{margin-top:14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;font:500 13px/1.2 var(--f-disp);letter-spacing:.04em;color:var(--dim)}
+.ladder{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.ladder li{display:grid;justify-items:center;gap:6px;padding:10px 0 8px;border:1px solid var(--line-c);font:500 11px/1 var(--f-disp);color:var(--dim);letter-spacing:.04em}
+.ladder li.on{border-color:var(--line-a);background:var(--line-c);color:var(--ink);box-shadow:0 0 14px var(--line-b)}
+.ladder li.past{opacity:.6}
+.gi-top{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;margin-bottom:12px}
+.gi-top h3{margin:0 0 4px;font:600 19px/1.2 var(--f-disp)}
+.waves{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:10px}
+.waves h4{margin:0 0 4px;font:600 12px/1 var(--f-disp);letter-spacing:.2em;text-transform:uppercase;color:var(--glow)}
+.waves ul{list-style:none;margin:0;padding:0}
+.waves ul li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line-c);font-size:15px}
+.waves b{font:600 15px/1 var(--f-disp);font-variant-numeric:tabular-nums}
+
+/* items */
+.gold-big{display:flex;align-items:center;justify-content:center;gap:8px;margin:-2px 0 12px;color:var(--gold);font:700 26px/1 var(--f-disp);font-variant-numeric:tabular-nums}
+.gold-big .i{width:22px;height:22px}
+.item{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line-c)}
+.it-ico{width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--line-a);background:var(--line-c);color:var(--glow);box-shadow:inset 0 0 12px var(--line-c)}
+.it-ico .i{width:24px;height:24px}
+.it-b{min-width:0}
+.it-b h4{margin:0 0 2px;font:600 15px/1.2 var(--f-disp);letter-spacing:.03em}
+.it-b h4 span{color:var(--glow);margin-left:4px}
+.it-b p{margin:0;font-size:13.5px;color:var(--dim)}
+.price{display:inline-flex;align-items:center;gap:4px;color:var(--gold)}
+.price .i{width:13px;height:13px}
+.swatch{width:44px;height:44px;border:1px solid var(--ink);background:linear-gradient(135deg,var(--sw1),var(--sw2))}
+
+/* records */
+.streak{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.streak-n{display:grid;justify-items:center;gap:2px;color:var(--gold)}
+.streak-n .i{width:30px;height:30px;filter:drop-shadow(0 0 8px var(--gold))}
+.streak-n b{font:700 40px/1 var(--f-disp);font-variant-numeric:tabular-nums;color:var(--ink)}
+.streak-n span{font:600 10px/1 var(--f-disp);letter-spacing:.2em;color:var(--dim);text-transform:uppercase}
+.kv{margin:0;display:grid;gap:8px}
+.kv div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line-c);padding-bottom:6px}
+.kv dt{color:var(--dim);font-size:14.5px}
+.kv dd{margin:0;font:600 15px/1.2 var(--f-disp);font-variant-numeric:tabular-nums}
+.cal-wrap{display:grid;grid-template-columns:auto 1fr;gap:6px}
+.cal-d{display:grid;grid-template-rows:repeat(7,1fr);gap:3px;font:500 10px/1 var(--f-disp);color:var(--dim)}
+.cal-d span{display:grid;place-items:center}
+.cal{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;grid-auto-columns:1fr;gap:3px}
+.c{display:block;aspect-ratio:1;max-width:100%;border-radius:1px;background:var(--line-c)}
+.c.clear{background:var(--line);box-shadow:0 0 6px var(--line-b)}
+.c.fail{background:var(--red)}
+.c.rest{background:color-mix(in srgb,var(--dim) 45%,transparent)}
+.c.ward{background:var(--gold)}
+.c.today{outline:1.5px solid var(--glow);outline-offset:-1.5px}
+.c.fut{background:none}
+.legend{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--dim)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .c{width:11px;height:11px}
+.log{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.log li{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-c);font-size:14px}
+.log time{font:500 12px/1.5 var(--f-disp);color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.log b{font-family:var(--f-disp);font-weight:600;letter-spacing:.04em}
+
+/* sheets */
+.layer{position:fixed;inset:0;z-index:50;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center;animation:fade .18s ease-out}
+.sheet{width:100%;max-width:520px;max-height:90%;overflow-y:auto;border-bottom:0;border-radius:3px 3px 0 0;
+  padding:20px max(18px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));animation:rise .26s cubic-bezier(.2,.9,.3,1)}
+.sheet>*+*{margin-top:14px}
+.sh-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.sh-head h3{margin:0;font:600 22px/1.15 var(--f-disp);letter-spacing:.03em}
+.prog-line{display:flex;align-items:baseline;gap:6px;font:600 18px/1 var(--f-disp);font-variant-numeric:tabular-nums}
+.prog-line b{font-size:30px}
+.prog-line span{margin-left:auto;font:500 13px/1 var(--f-disp);letter-spacing:.06em;color:var(--dim)}
+.lbl{margin:0;text-align:center;font:600 12px/1 var(--f-disp);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.stepper{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+.stepper output,.stepper input{text-align:center;font:700 52px/1 var(--f-disp);font-variant-numeric:tabular-nums;text-shadow:0 0 16px var(--line)}
+.stepper input{width:100%;min-width:0;background:none;border:0;border-bottom:1px solid var(--line-a);padding:4px 0;font-size:36px;-moz-appearance:textfield}
+.stepper input::-webkit-inner-spin-button{-webkit-appearance:none}
+.stepper.sm .btn.sq{width:46px;min-height:46px;font-size:22px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:38px;padding:8px 13px;border:1px solid var(--line-b);border-radius:3px;background:none;font:600 13px/1 var(--f-disp);letter-spacing:.06em}
+.chip.on{border-color:var(--glow);background:var(--line-b);box-shadow:0 0 12px var(--line-b)}
+.days .chip{min-width:42px}
+.cue{margin:0;font-size:14px;color:var(--dim);text-align:center;text-wrap:balance}
+
+/* full screens */
+.screen{position:fixed;inset:0;z-index:40;overflow-y:auto;overscroll-behavior:contain;
+  background:radial-gradient(120% 60% at 50% -10%,var(--line-b),transparent 60%),var(--void);
+  padding:calc(env(safe-area-inset-top,0px) + 14px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 24px) max(16px,env(safe-area-inset-left,0px))}
+.screen-in{max-width:520px;margin:0 auto;display:grid;gap:16px;align-content:start}
+.scr-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.scr-head h2{margin:0;font:600 24px/1.15 var(--f-disp);letter-spacing:.03em;overflow-wrap:anywhere}
+.boss{padding-bottom:14px}
+.boss-top{display:flex;justify-content:space-between;font:600 12px/1 var(--f-disp);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.boss-top span:last-child{font-variant-numeric:tabular-nums;letter-spacing:.06em}
+.boss-n{margin:8px 0 10px;font:700 22px/1.15 var(--f-disp);letter-spacing:.04em;color:var(--ink)}
+.hpbar{position:relative;height:14px;border:1px solid color-mix(in srgb,var(--red) 70%,transparent);background:color-mix(in srgb,var(--red) 10%,transparent);overflow:hidden}
+.hpbar i{display:block;height:100%;background:linear-gradient(90deg,#9e1530,var(--red));box-shadow:0 0 14px var(--red);transition:width .5s cubic-bezier(.2,.9,.3,1)}
+.hp-n{margin:6px 0 0;text-align:right;font:600 13px/1 var(--f-disp);font-variant-numeric:tabular-nums;color:var(--dim)}
+.dmg{position:absolute;right:16px;top:46px;font:700 26px/1 var(--f-disp);color:var(--red);text-shadow:0 0 12px var(--red);animation:dmg 1.1s ease-out forwards;pointer-events:none}
+.phase{display:grid;gap:12px;text-align:center}
+.ph-l{margin:0;font:600 12px/1 var(--f-disp);letter-spacing:.24em;text-transform:uppercase;color:var(--glow)}
+.ex-n{margin:0;font:700 30px/1.1 var(--f-disp);letter-spacing:.02em}
+.ph-n{margin:0;color:var(--dim);font-size:15px}
+.ph-n b{color:var(--ink)}
+.timer{font:700 72px/1 var(--f-disp);font-variant-numeric:tabular-nums;letter-spacing:.02em;text-shadow:0 0 24px var(--line)}
+.rest .timer{color:var(--glow)}
+.sets{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+.sets li{width:12px;height:12px;border:1px solid var(--line-a);transform:rotate(45deg)}
+.sets li.done{background:var(--line);box-shadow:0 0 8px var(--line)}
+.sets li.now{border-color:var(--glow);background:var(--line-b);box-shadow:0 0 10px var(--glow)}
+.sets li.boss{border-color:var(--red)}
+.confirm{padding:14px;border:1px solid color-mix(in srgb,var(--red) 60%,transparent);background:color-mix(in srgb,var(--red) 8%,transparent);display:grid;gap:12px}
+.confirm p{margin:0;text-align:center}
+.run-d{display:flex;align-items:baseline;justify-content:center;gap:8px}
+.run-d b{font:700 76px/1 var(--f-disp);font-variant-numeric:tabular-nums;text-shadow:0 0 24px var(--line)}
+.run-d span{font:600 18px/1 var(--f-disp);letter-spacing:.1em;color:var(--dim)}
+.run-stats{margin:14px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.run-stats small{display:block;font:600 10.5px/1 var(--f-disp);letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.run-stats b{font:600 17px/1.1 var(--f-disp);font-variant-numeric:tabular-nums}
+#run-map{display:block;width:100%;max-width:100%;aspect-ratio:2/1;border:1px solid var(--line-c);background:var(--line-c)}
+.seg{display:flex;border:1px solid var(--line-a);border-radius:3px;overflow:hidden}
+.seg-b{flex:1;min-height:42px;padding:8px 6px;border:0;border-left:1px solid var(--line-b);background:none;font:600 12.5px/1.1 var(--f-disp);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.seg-b:first-child{border-left:0}
+.seg-b.on{background:var(--line-b);color:var(--ink);text-shadow:0 0 10px var(--line)}
+.field{display:grid;gap:8px;margin:0 0 16px}
+.field>span{font:600 12px/1 var(--f-disp);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.field input,.field select,.field textarea{width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--line-a);border-radius:3px;background:color-mix(in srgb,var(--void) 70%,transparent);color:var(--ink)}
+.field textarea{resize:vertical;font-size:13px;font-family:ui-monospace,Menlo,monospace}
+.field .hint{margin:0}
+.tog{width:100%;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px 0;margin:0;background:none;border:0;border-top:1px solid var(--line-c);text-align:left}
+.tog-l b{display:block;font:600 15px/1.2 var(--f-disp);letter-spacing:.03em}
+.tog-l small{color:var(--dim);font-size:13px}
+.tog-s{width:46px;height:26px;border:1px solid var(--line-a);border-radius:13px;position:relative;background:var(--line-c);transition:background .2s}
+.tog-s::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--dim);transition:transform .2s,background .2s}
+.tog[aria-checked=true] .tog-s{background:var(--line-b)}
+.tog[aria-checked=true] .tog-s::after{transform:translateX(20px);background:var(--glow);box-shadow:0 0 10px var(--line)}
+.win p{text-wrap:pretty}
+.about p{margin:0 0 10px;color:var(--dim);font-size:14.5px}
+
+/* onboarding */
+.aw{min-height:100%;display:grid;align-content:center;gap:16px;max-width:460px;margin:0 auto;padding-block:20px}
+.aw .win{padding:22px 18px 18px}
+.aw h3{margin:0 0 4px;font:600 15px/1.3 var(--f-disp);letter-spacing:.04em}
+.assess{display:grid;gap:18px}
+.diffs{display:grid;gap:8px}
+.diff{display:grid;gap:4px;padding:12px 14px;border:1px solid var(--line-b);border-radius:3px;background:none;text-align:left}
+.diff b{font:600 15px/1.2 var(--f-disp);letter-spacing:.06em;text-transform:uppercase}
+.diff small{color:var(--dim);font-size:13.5px}
+.diff.on{border-color:var(--glow);background:var(--line-c);box-shadow:0 0 14px var(--line-b)}
+.preview{margin:14px 0 0;padding:10px 12px;border:1px dashed var(--line-a);font:500 14px/1.5 var(--f-disp);letter-spacing:.02em;text-align:center}
+.brand{text-align:center;font:700 13px/1 var(--f-disp);letter-spacing:.6em;color:var(--dim);text-indent:.6em}
+
+/* notifications */
+.ntf-layer{position:fixed;inset:0;z-index:60;background:var(--scrim);display:grid;place-items:center;animation:fade .2s;
+  padding:24px max(18px,env(safe-area-inset-right,0px)) 24px max(18px,env(safe-area-inset-left,0px))}
+.ntf{width:100%;max-width:420px;max-height:calc(100vh - 48px);overflow-y:auto;animation:unfold .5s cubic-bezier(.2,.9,.25,1) both}
+.lines p{margin:0 0 8px;text-align:center;font:500 16px/1.45 var(--f-disp);letter-spacing:.01em}
+.lines .ghost{visibility:hidden}
+.big{margin:0 0 14px;text-align:center;font:700 40px/1 var(--f-disp);letter-spacing:.06em;text-shadow:0 0 20px var(--line)}
+.rewards{list-style:none;margin:14px 0 0;padding:12px 0 0;border-top:1px solid var(--line-b);display:grid;gap:8px}
+.rewards li{display:flex;justify-content:space-between;gap:12px;font:600 15px/1.2 var(--f-disp);letter-spacing:.03em}
+.rewards li span{color:var(--dim);font-weight:500}
+.ntf-foot{margin:12px 0 0;text-align:center;font-size:13.5px;color:var(--dim)}
+.ntf .btn.block{margin-top:16px}
+.choices{display:grid;gap:8px;margin-top:14px}
+.choice{display:grid;gap:3px;padding:12px 14px;border:1px solid var(--line-a);border-radius:3px;background:var(--line-c);text-align:left}
+.choice b{font:600 16px/1.2 var(--f-disp);letter-spacing:.06em}
+.choice small{color:var(--dim);font-size:13.5px}
+.choice .tag{justify-self:start;margin-top:4px}
+#toasts{position:fixed;top:calc(env(safe-area-inset-top,0px) + 74px);left:0;right:0;z-index:70;display:grid;justify-items:center;gap:6px;pointer-events:none;padding:0 16px}
+.toast{max-width:100%;padding:8px 14px;border:1px solid var(--line-a);background:color-mix(in srgb,var(--deep) 94%,transparent);font:600 14px/1.2 var(--f-disp);letter-spacing:.05em;box-shadow:0 0 16px var(--line-b);animation:toast 2.3s ease forwards;text-align:center}
+.toast.stat{border-color:var(--gold);color:var(--gold)}
+.toast.bad{border-color:var(--red);color:var(--red)}
+
+/* tap counter */
+.tap-scr{min-height:100%;display:grid;grid-template-rows:auto 1fr auto auto;gap:18px;max-width:520px;margin:0 auto;user-select:none;-webkit-user-select:none}
+.pad{justify-self:center;align-self:center;width:min(80vw,56vh);max-width:100%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;align-content:center;gap:8px;
+  border:2px solid var(--glow);background:radial-gradient(closest-side,var(--line-b),var(--line-c) 70%,transparent);box-shadow:0 0 40px var(--line-b),inset 0 0 40px var(--line-b);touch-action:manipulation}
+.pad b{font:700 min(26vw,18vh)/1 var(--f-disp);font-variant-numeric:tabular-nums;text-shadow:0 0 24px var(--line)}
+.pad small{font:600 12px/1 var(--f-disp);letter-spacing:.24em;text-transform:uppercase;color:var(--dim)}
+.pad.hit{animation:hit .18s ease-out}
+
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{transform:translateY(40px);opacity:0}}
+@keyframes unfold{0%{transform:scale(.6,.012);opacity:0}35%{transform:scale(1,.012);opacity:1}100%{transform:none;opacity:1}}
+@keyframes toast{0%{opacity:0;transform:translateY(-8px)}10%,80%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-6px)}}
+@keyframes dmg{0%{opacity:0;transform:translateY(6px) scale(.8)}15%{opacity:1;transform:scale(1.15)}100%{opacity:0;transform:translateY(-34px)}}
+@keyframes hit{50%{transform:scale(.95);box-shadow:0 0 70px var(--line-a),inset 0 0 60px var(--line-a)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+@media (max-width:360px){.vitals{grid-template-columns:1fr}.stats{gap:4px 12px}.timer{font-size:60px}.run-d b{font-size:62px}}
+</style>
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="app" hidden>
+  <header class="top" id="top"></header>
+  <main class="view" id="view"></main>
+</div>
+<nav class="tabs" id="tabs" hidden aria-label="Sections"></nav>
+<div id="screen"></div>
+<div id="sheet"></div>
+<div id="ntf"></div>
+<div id="toasts" aria-live="polite"></div>
+<noscript><p style="padding:24px;color:#e7f4ff">Awaken needs JavaScript to run.</p></noscript>
+<script>
+'use strict';
+/* =====================================================================
+   AWAKEN: a Hunter-style training system.
+   Everything is stored on this device (localStorage). No accounts, no server.
+   ===================================================================== */
+
+/* ---------- small helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const pad=n=>String(n).padStart(2,'0');
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+const r5=v=>Math.round(v/5)*5;
+const rHalf=v=>Math.round(v*2)/2;
+const r2=v=>Math.round(v*100)/100;
+const trim=v=>String(+(+v).toFixed(2));
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function seed(str){let h=2166136261>>>0;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function rng(str){let a=seed(String(str));return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const pick=(r,a)=>a[Math.floor(r()*a.length)];
+function shuffle(r,a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+/* ---------- icons ---------- */
+const ICONS={
+  quest:'<rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M12 7.5v6M12 16.6v.4"/>',
+  status:'<circle cx="12" cy="8" r="3.6"/><path d="M4.8 20.5c1.1-4 4-6 7.2-6s6.1 2 7.2 6"/>',
+  gate:'<ellipse cx="12" cy="12" rx="6.5" ry="9"/><ellipse cx="12" cy="12" rx="2.6" ry="4.8"/>',
+  items:'<path d="M5 8.5h14l-1.2 11.5H6.2z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/>',
+  records:'<path d="M5 20v-6M10 20V8M15 20v-9M20 20V5M3 20.5h18"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  gear:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8"/>',
+  run:'<circle cx="14.5" cy="4.5" r="2"/><path d="M8.5 21l2.8-5.6 3.2 2.8v3.3M6.5 11.2l3.2-3 4.1.9 2 3.6 3 1M11.3 15.4l1.2-6"/>',
+  box:'<path d="M3.5 8L12 4l8.5 4L12 12z"/><path d="M3.5 8v8.2L12 20l8.5-3.8V8M12 12v8"/>',
+  potion:'<path d="M9 3h6M10 3v5.2L5.6 15.7A3.4 3.4 0 0 0 8.5 21h7a3.4 3.4 0 0 0 2.9-5.3L14 8.2V3"/><path d="M7.2 14.5h9.6"/>',
+  key:'<circle cx="7.5" cy="12" r="3.6"/><path d="M11.1 12h9.4M17.5 12v3M20.5 12v2.2"/>',
+  ward:'<path d="M12 3l7 2.8v5.4c0 4.7-3 8.3-7 9.8-4-1.5-7-5.1-7-9.8V5.8z"/><path d="M9 12l2.2 2.2L15.2 10"/>',
+  elixir:'<path d="M12 3.2c3.1 4 6 7.4 6 10.9a6 6 0 0 1-12 0c0-3.5 2.9-6.9 6-10.9z"/><path d="M9.2 14.5a2.9 2.9 0 0 0 2.8 2.8"/>',
+  tap:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.2"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  close:'<path d="M6 6l12 12M18 6L6 18"/>',
+  coin:'<path d="M12 3l7 9-7 9-7-9z"/><path d="M12 7.5l3.5 4.5-3.5 4.5-3.5-4.5z"/>',
+  flame:'<path d="M12 3c1 4 5.2 5.6 5.2 10.2a5.2 5.2 0 0 1-10.4 0c0-2.6 1.4-4.2 2.6-5.2.3 2 1.2 3.1 2.3 3.4C11 8.9 11 6 12 3z"/>',
+  skin:'<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17"/>',
+};
+const ico=(n)=>`<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||''}</svg>`;
+
+/* ---------- game data ---------- */
+const STAT_KEYS=['str','vit','agi','int','per'];
+const STAT_INFO={
+  str:{name:'Strength',short:'STR',effect:'+0.5% XP from strength exercises for each point above 10 (up to +50%).',train:'Push-ups, squats, sit-ups and other strength work.'},
+  vit:{name:'Vitality',short:'VIT',effect:'Max HP = 100 + 10 × VIT.',train:'Core work, planks, long runs and healthy habits.'},
+  agi:{name:'Agility',short:'AGI',effect:'+0.5% XP from running and cardio for each point above 10 (up to +50%).',train:'Running, burpees, jumping jacks and mountain climbers.'},
+  int:{name:'Intelligence',short:'INT',effect:'Max MP = 50 + 5 × INT. +0.5% optional quest XP for each point above 10.',train:'Meditation, reading, sleep and other optional quests.'},
+  per:{name:'Perception',short:'PER',effect:'+0.5% gold for each point above 10, and luckier Random Boxes.',train:'Clearing gates, mobility and balance work.'},
+};
+const RANKS=[{id:'E',min:1},{id:'D',min:10},{id:'C',min:20},{id:'B',min:30},{id:'A',min:45},{id:'S',min:60}];
+const DIFF={
+  beginner:{name:'Beginner',ramp:60,mul:1,gate:.8,desc:'A gentle start. You reach the full 100 / 100 / 100 / 10 km quest around level 60.'},
+  normal:{name:'Normal',ramp:40,mul:1.25,gate:1,desc:'Steady growth. You reach the full quest around level 40.'},
+  hard:{name:'Hard',ramp:20,mul:1.6,gate:1.2,desc:'A steep climb. You reach the full quest around level 20.'},
+  hunter:{name:'Hunter',fixed:true,gate:1.3,desc:'The original quest from day one: 100 push-ups, 100 sit-ups, 100 squats and a 10 km run.'},
+};
+const EX={
+  pushup:{name:'Push-ups',type:'reps',f:1,xp:1,stat:{str:1},kind:'str',cue:'Hands under shoulders, body in one straight line. Knee or incline push-ups count.'},
+  diamond:{name:'Diamond push-ups',type:'reps',f:.6,xp:1.5,stat:{str:1.3},kind:'str',cue:'Hands together under your chest, thumbs and index fingers touching.'},
+  pike:{name:'Pike push-ups',type:'reps',f:.6,xp:1.4,stat:{str:1.1,per:.1},kind:'str',cue:'Hips high in an upside-down V. Lower the top of your head toward the floor.'},
+  pullup:{name:'Pull-ups',type:'reps',f:.35,xp:3,stat:{str:2.5},kind:'str',tags:['bar'],cue:'From a full hang, pull until your chin clears the bar. Band-assisted reps count.'},
+  squat:{name:'Squats',type:'reps',f:1.5,xp:.7,stat:{str:.5,vit:.4},kind:'str',cue:'Feet shoulder-width apart, chest up, hips down to knee height or lower.'},
+  jumpsquat:{name:'Jump squats',type:'reps',f:.8,xp:1.2,stat:{str:.5,agi:.6},kind:'run',tags:['jump'],cue:'Squat down, jump up, land softly and go straight into the next rep.'},
+  lunge:{name:'Lunges',type:'reps',f:1.2,xp:.8,stat:{str:.5,agi:.2,per:.1},kind:'str',cue:'Alternate legs. Each leg counts as one rep. Back knee hovers over the floor.'},
+  glute:{name:'Glute bridges',type:'reps',f:1.5,xp:.6,stat:{str:.4,vit:.4},kind:'str',cue:'On your back, knees bent. Drive through your heels and squeeze at the top.'},
+  wallsit:{name:'Wall sit',type:'time',f:1,xp:.5,stat:{str:.08,vit:.08},kind:'str',cue:'Back flat on the wall, thighs parallel to the floor.'},
+  situp:{name:'Sit-ups',type:'reps',f:1.2,xp:.8,stat:{vit:.6,str:.3},kind:'str',cue:'Knees bent, feet flat. Curl all the way up. Crunches count if sit-ups hurt your back.'},
+  crunch:{name:'Crunches',type:'reps',f:1.5,xp:.6,stat:{vit:.6},kind:'str',cue:'Lift your shoulder blades off the floor and keep your neck relaxed.'},
+  legraise:{name:'Leg raises',type:'reps',f:.9,xp:1,stat:{vit:.6,str:.3},kind:'str',cue:'Press your lower back into the floor. Lower your legs slowly.'},
+  plank:{name:'Plank',type:'time',f:1,xp:.5,stat:{vit:.12},kind:'str',cue:'Forearms down, body straight from head to heels. Squeeze your glutes.'},
+  hollow:{name:'Hollow hold',type:'time',f:.8,xp:.6,stat:{vit:.12,str:.03},kind:'str',cue:'Arms overhead, legs off the floor, lower back pressed flat.'},
+  superman:{name:'Superman raises',type:'reps',f:1.2,xp:.6,stat:{vit:.4,per:.2},kind:'str',cue:'Face down. Lift arms and legs together, pause, then lower.'},
+  burpee:{name:'Burpees',type:'reps',f:.6,xp:2,stat:{agi:.6,vit:.5,str:.3},kind:'run',tags:['jump'],cue:'Squat, kick back to a plank, chest to the floor, then jump up.'},
+  jack:{name:'Jumping jacks',type:'reps',f:2.5,xp:.4,stat:{agi:.4,vit:.2},kind:'run',tags:['jump'],cue:'Arms and legs out and in. Stay light on your feet.'},
+  climber:{name:'Mountain climbers',type:'reps',f:2,xp:.5,stat:{agi:.5,vit:.2},kind:'run',cue:'From a plank, drive your knees to your chest. Each leg counts as one.'},
+  highknees:{name:'High knees',type:'time',f:1,xp:.6,stat:{agi:.14},kind:'run',tags:['jump'],cue:'Run in place and bring your knees up to hip height.'},
+  stepjack:{name:'Step jacks',type:'reps',f:2,xp:.35,stat:{agi:.35,vit:.2},kind:'run',cue:'Step one foot out as you raise your arms. Alternate sides, no jumping.'},
+  run:{name:'Running',type:'km',xp:25,stat:{agi:12,vit:6},kind:'run',cue:'Walking counts while you build up. Keep a pace you could talk at.'},
+};
+const POOL={push:['pushup','diamond','pike','pullup'],legs:['squat','jumpsquat','lunge','glute','wallsit'],core:['situp','crunch','legraise','plank','hollow','superman'],cardio:['burpee','jack','climber','highknees','stepjack']};
+const DAILY=[{id:'pushup',ex:'pushup',name:'Push-ups'},{id:'situp',ex:'situp',name:'Sit-ups'},{id:'squat',ex:'squat',name:'Squats'},{id:'run',ex:'run',name:'Running'}];
+const DAILY_BY=Object.fromEntries(DAILY.map(d=>[d.id,d]));
+const SIDE=[
+  {id:'water',name:'Drink 2 liters of water',stat:'vit'},{id:'stretch',name:'Stretch for 10 minutes',stat:'per'},
+  {id:'meditate',name:'Meditate for 5 minutes',stat:'int'},{id:'sleep',name:'Slept 7+ hours last night',stat:'vit'},
+  {id:'steps',name:'Walk 8,000 steps',stat:'agi'},{id:'read',name:'Read for 20 minutes',stat:'int'},
+  {id:'nosugar',name:'No sugary drinks today',stat:'vit'},{id:'mobility',name:'5 minutes of mobility work',stat:'per'},
+  {id:'balance',name:'Stand on one leg, 1 minute per side',stat:'per'},{id:'protein',name:'Eat a protein-rich meal',stat:'str'},
+  {id:'cold',name:'Finish your shower cold',stat:'int'},{id:'screens',name:'No screens 30 minutes before bed',stat:'int'},
+  {id:'breath',name:'Box breathing for 3 minutes',stat:'int'},{id:'stairs',name:'Take the stairs every time today',stat:'agi'},
+];
+const SIDE_BY=Object.fromEntries(SIDE.map(s=>[s.id,s]));
+const SIDE_XP=15;
+const PLACES=['Goblin Warrens','Howling Cave','Sunken Shrine','Frostbite Spire','Ashen Barracks','Crimson Hive','Bone Crypt','Storm Ridge','Abandoned Iron Mine','Serpent Marsh','Moonlit Forest','Obsidian Keep','Flooded Subway','Collapsed Mall','Silent Hospital','Burning Foundry','Glass Desert','Drowned Library'];
+const BOSSES=[
+  ['Goblin Chieftain','Dire Wolf','Cave Rat King','Kobold Shaman'],
+  ['Steel-Fang Wolf','Hobgoblin Captain','Swamp Lizardman','Stone Gargoyle'],
+  ['Ice Bear','Orc Warlord','Giant Centipede','Naga Warrior'],
+  ['High Orc Shaman','Frost Elf Sentinel','Ogre Brute','Spider Matriarch'],
+  ['Wyvern','Demon Knight','Frost Giant','Lich Priest'],
+  ['Hive Queen','Ancient Dragon','Demon Lord','Titan of the Deep'],
+];
+const TRIAL_BOSS=['','Iron Warden','Stone Colossus','Flame Sentinel','Storm Titan','Shadow Examiner'];
+const JOBS={
+  berserker:{name:'Berserker',stat:'str',desc:'+15% strength XP.',b:{str:.15}},
+  assassin:{name:'Assassin',stat:'agi',desc:'+15% running and cardio XP.',b:{run:.15}},
+  guardian:{name:'Guardian',stat:'vit',desc:'+25% max HP. Penalty damage halved.',b:{hp:.25,guard:.5}},
+  sage:{name:'Sage',stat:'int',desc:'+30% max MP and +30% optional quest XP.',b:{mp:.3,side:.3}},
+  ranger:{name:'Ranger',stat:'per',desc:'+20% gold and +5% gate clear XP.',b:{gold:.2,gate:.05}},
+};
+const ex=id=>S.totals.ex[id]||0;
+const TITLES=[
+  {id:'awakened',name:'The Awakened',req:'Accept the System.',b:{},ok:()=>true},
+  {id:'firststep',name:'First Step',req:'Clear your first Daily Quest.',b:{all:.03},ok:()=>S.totals.clears>=1},
+  {id:'ironwill',name:'Iron Will',req:'Reach a 7-day streak.',b:{all:.05},ok:()=>S.streak.best>=7},
+  {id:'unbreakable',name:'Unbreakable',req:'Reach a 30-day streak.',b:{all:.1},ok:()=>S.streak.best>=30},
+  {id:'centurion',name:'Centurion',req:'Do 100 push-ups in one day.',b:{str:.1},ok:()=>!!S.flags.centurion},
+  {id:'windrunner',name:'Wind Runner',req:'Run 10 km in one day.',b:{run:.1},ok:()=>!!S.flags.windrunner},
+  {id:'thousand',name:'Thousand Fists',req:'Do 1,000 push-ups in total.',b:{str:.05},ok:()=>ex('pushup')>=1000},
+  {id:'marathon',name:'Marathoner',req:'Run 42.2 km in total.',b:{run:.05},ok:()=>ex('run')>=42.2},
+  {id:'gatebreaker',name:'Gatebreaker',req:'Clear 10 gates.',b:{gate:.1},ok:()=>S.totals.gates>=10},
+  {id:'crimson',name:'Crimson Survivor',req:'Clear a Red Gate.',b:{gold:.1},ok:()=>S.totals.red>=1},
+  {id:'survivor',name:'Penalty Survivor',req:'Survive a Penalty Quest.',b:{hp:.1},ok:()=>S.totals.penalties>=1},
+  {id:'limitless',name:'One Who Overcame Limits',req:'Clear the Daily Quest on Hunter difficulty.',b:{all:.15},ok:()=>!!S.flags.limitless},
+  {id:'risingstar',name:'Rising Star',req:'Reach level 10.',b:{gold:.05},ok:()=>S.player.level>=10},
+  {id:'earlybird',name:'Early Bird',req:'Clear the Daily Quest before 8 AM.',b:{side:.1},ok:()=>!!S.flags.earlybird},
+  {id:'nighthunter',name:'Night Hunter',req:'Clear a gate after 10 PM.',b:{gate:.05},ok:()=>!!S.flags.nighthunter},
+  {id:'srank',name:'National Level Hunter',req:'Reach S-Rank.',b:{all:.2},ok:()=>S.player.rank>=5},
+];
+const SKILLS=[
+  {id:'persistence',name:'Persistence',req:'Clear 3 Daily Quests.',b:{all:.05},ok:()=>S.totals.clears>=3},
+  {id:'ironbody',name:'Iron Body',req:'Do 500 push-ups in total.',b:{hp:.1},ok:()=>ex('pushup')>=500},
+  {id:'sprint',name:'Sprint',req:'Run 20 km in total.',b:{run:.1},ok:()=>ex('run')>=20},
+  {id:'instinct',name:'Battle Instinct',req:'Clear 5 gates.',b:{gate:.1},ok:()=>S.totals.gates>=5},
+  {id:'willpower',name:'Willpower',req:'Survive a Penalty Quest.',b:{guard:.5},ok:()=>S.totals.penalties>=1},
+  {id:'secondwind',name:'Second Wind',req:'Clear 15 Daily Quests.',b:{gold:.1},ok:()=>S.totals.clears>=15},
+  {id:'clearmind',name:'Clear Mind',req:'Complete 20 optional quests.',b:{side:.2},ok:()=>S.totals.side>=20},
+  {id:'bloodlust',name:'Bloodlust',req:'Clear a B-Rank gate.',b:{str:.1},ok:()=>S.totals.maxGate>=3},
+];
+const TITLE_BY=Object.fromEntries(TITLES.map(t=>[t.id,t]));
+const SKILL_BY=Object.fromEntries(SKILLS.map(t=>[t.id,t]));
+const ITEMS={
+  box:{name:'Random Box',icon:'box',desc:'Open it for a random reward. Every cleared Daily Quest gives one.'},
+  potion:{name:'Recovery Potion',icon:'potion',desc:'Restores HP and MP to full and clears fatigue.',price:120},
+  key:{name:'Instant Dungeon Key',icon:'key',desc:'Opens a new gate right away.',price:250},
+  ward:{name:'Penalty Ward',icon:'ward',desc:'Used automatically if you miss a Daily Quest. Blocks the penalty and keeps your streak.',price:600,passive:true},
+  elixir:{name:'Elixir of Growth',icon:'elixir',desc:'Grants 1 ability point.',price:1500},
+};
+const SKINS={
+  blue:{name:'System Blue',price:0,c:['#45b0ff','#9be3ff']},
+  shadow:{name:'Shadow Violet',price:3000,c:['#9a6bff','#d6c6ff']},
+  ruler:{name:'Ruler Gold',price:6000,c:['#f0b429','#ffe6a3']},
+};
+const BONUS_LABEL={all:'all XP',str:'strength XP',run:'running & cardio XP',gate:'gate clear XP',side:'optional quest XP',gold:'gold',hp:'max HP',mp:'max MP',guard:'less penalty damage'};
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+/* ---------- state ---------- */
+const KEY='awaken.save.v1';
+function freshState(){
+  return {v:1,created:Date.now(),awakened:false,
+    player:{name:'Player',level:1,xp:0,gold:0,points:0,rank:0,title:'awakened',job:null,hp:200,mp:100,fatigue:0,fatigueTs:Date.now()},
+    stats:{str:{t:0,a:0,x:0},vit:{t:0,a:0,x:0},agi:{t:0,a:0,x:0},int:{t:0,a:0,x:0},per:{t:0,a:0,x:0}},
+    settings:{diff:'normal',units:'km',resetHour:0,restDays:[0],sound:true,haptics:true,lowImpact:false,bar:false,skin:'blue',tasks:{pushup:true,situp:true,squat:true,run:true}},
+    baseline:{pushup:10,situp:15,squat:20,run:1},
+    daily:null,history:{},streak:{cur:0,best:0},penalty:null,
+    inv:{box:0,potion:0,key:0,ward:0,elixir:0},skins:['blue'],titles:['awakened'],skills:[],flags:{},
+    totals:{ex:{},clears:0,gates:0,red:0,penalties:0,side:0,maxGate:-1},
+    gates:{date:null,list:[]},trial:null,session:null,run:null,log:[]};
+}
+function merge(base,src){
+  if(!src||typeof src!=='object') return base;
+  for(const k of Object.keys(src)){
+    const v=src[k],b=base[k];
+    if(v&&typeof v==='object'&&!Array.isArray(v)&&b&&typeof b==='object'&&!Array.isArray(b)) base[k]=merge(b,v);
+    else base[k]=v;
+  }
+  return base;
+}
+function load(){try{const raw=localStorage.getItem(KEY);if(raw) return merge(freshState(),JSON.parse(raw))}catch(e){}return freshState()}
+let S=load(),saveTimer=0;
+function save(){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,250)}
+function saveNow(){clearTimeout(saveTimer);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const UI={tab:'quest',sheet:null,screen:null,aw:null,runMode:'gps',hit:0,confirmReset:false,confirmDiscard:false,geoErr:''};
+
+/* ---------- time ---------- */
+const keyOf=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const dayKey=(t=Date.now())=>keyOf(new Date(t-S.settings.resetHour*3600000));
+function keyDate(k){const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d,12)}
+function addDays(k,n){const d=keyDate(k);d.setDate(d.getDate()+n);return keyOf(d)}
+function nextReset(){const now=new Date(),d=new Date(now);d.setHours(S.settings.resetHour,0,0,0);if(d<=now) d.setDate(d.getDate()+1);return d.getTime()}
+const isRest=k=>S.settings.restDays.includes(keyDate(k).getDay());
+function hms(ms){const s=Math.max(0,Math.floor(ms/1000));return `${pad(Math.floor(s/3600))}:${pad(Math.floor(s/60)%60)}:${pad(s%60)}`}
+function mmss(sec){sec=Math.max(0,Math.ceil(sec));return `${Math.floor(sec/60)}:${pad(sec%60)}`}
+function clockTime(t){const d=new Date(t);return d.toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
+
+/* ---------- units ---------- */
+const unit=()=>S.settings.units==='mi'?'mi':'km';
+const toUser=km=>S.settings.units==='mi'?km*0.621371:km;
+const fromUser=v=>S.settings.units==='mi'?v/0.621371:v;
+function fmtTask(id,v){return id==='run'?trim(Math.floor(toUser(v)*100)/100):fmt(v)}
+function paceStr(sec,km){if(km<0.02||!sec) return '--';const p=sec/toUser(km);return `${Math.floor(p/60)}'${pad(Math.round(p%60))}"`}
+
+/* ---------- derived numbers ---------- */
+const stat=k=>10+S.stats[k].t+S.stats[k].a;
+function bonus(key){
+  let b=0;
+  for(const id of S.skills){const d=SKILL_BY[id];if(d&&d.b[key]) b+=d.b[key]}
+  const t=TITLE_BY[S.player.title];if(t&&t.b[key]) b+=t.b[key];
+  const j=JOBS[S.player.job];if(j&&j.b[key]) b+=j.b[key];
+  return b;
+}
+function statBonus(kind){const k={str:'str',run:'agi',side:'int',gold:'per'}[kind];return k?clamp((stat(k)-10)*.005,0,.5):0}
+const maxHP=()=>Math.round((100+stat('vit')*10)*(1+bonus('hp')));
+const maxMP=()=>Math.round((50+stat('int')*5)*(1+bonus('mp')));
+const weakened=()=>!!S.penalty;
+function xpMult(kind){let m=1+bonus('all')+(kind?bonus(kind)+statBonus(kind):0);if(weakened()) m*=.5;return m}
+const goldMult=()=>1+bonus('gold')+statBonus('gold');
+const xpNeed=l=>Math.round(60*Math.pow(l,1.4)+40);
+const rankOf=()=>RANKS[S.player.rank];
+function fatigue(){const p=S.player;return Math.max(0,Math.round(p.fatigue-(Date.now()-p.fatigueTs)/3600000*4))}
+function addFatigue(v){const p=S.player;p.fatigue=Math.min(100,fatigue()+v);p.fatigueTs=Date.now()}
+function bonusText(b){return Object.entries(b).map(([k,v])=>k==='guard'?`Penalty damage −${Math.round(v*100)}%`:`+${Math.round(v*100)}% ${BONUS_LABEL[k]}`).join(' · ')||'No bonus'}
+
+/* ---------- daily targets ---------- */
+function targetsWith(b,diff,level){
+  const D=DIFF[diff];
+  if(D.fixed) return {pushup:100,situp:100,squat:100,run:10};
+  const m=D.mul,p=clamp((level-1)/(D.ramp-1),0,1);
+  const st={pushup:clamp(r5(b.pushup*2*m),10,100),situp:clamp(r5(b.situp*2*m),10,100),squat:clamp(r5(b.squat*2*m),15,100),run:clamp(rHalf(b.run*.5*m),.5,10)};
+  return {pushup:r5(st.pushup+(100-st.pushup)*p),situp:r5(st.situp+(100-st.situp)*p),squat:r5(st.squat+(100-st.squat)*p),run:rHalf(st.run+(10-st.run)*p)};
+}
+function todaysTargets(){
+  const all=targetsWith(S.baseline,S.settings.diff,S.player.level),tg={};
+  for(const t of DAILY) if(S.settings.tasks[t.id]) tg[t.id]=all[t.id];
+  return tg;
+}
+function retarget(){
+  const d=S.daily;if(!d||d.cleared) return;
+  d.targets=todaysTargets();
+  for(const id in d.targets) if(d.prog[id]==null) d.prog[id]=0;
+  checkDaily();
+}
+
+/* ---------- gains ---------- */
+function gainXP(base,kind){
+  const p=S.player,amt=Math.max(0,Math.round(base*xpMult(kind)));
+  if(!amt) return 0;
+  p.xp+=amt;
+  let ups=0;
+  while(p.xp>=xpNeed(p.level)){p.xp-=xpNeed(p.level);p.level++;ups++;p.points+=3}
+  if(ups) onLevelUp(ups);
+  return amt;
+}
+function onLevelUp(n){
+  recover();
+  const p=S.player,lines=[`You have reached Level ${p.level}.`,'HP and MP fully restored.'];
+  const nx=RANKS[p.rank+1];
+  if(nx&&p.level>=nx.min&&p.level-n<nx.min) lines.push(`[A ${nx.id}-Rank Reassessment Trial is now available.]`);
+  notify({kind:'level',head:'Level Up',big:`LV. ${p.level}`,lines,rewards:[['Ability points',`+${3*n}`]],prio:2});
+  checkUnlocks();
+}
+function gainGold(base){const g=Math.round(base*goldMult());S.player.gold+=g;return g}
+function gainStats(map){
+  const ups={};
+  for(const k in map){const s=S.stats[k];s.x+=map[k];while(s.x>=100){s.x-=100;s.t++;ups[k]=(ups[k]||0)+1}}
+  const msg=Object.entries(ups).map(([k,n])=>`${STAT_INFO[k].short} +${n}`).join('   ');
+  if(msg) toast(msg,'stat');
+}
+function recover(){const p=S.player;p.hp=maxHP();p.mp=maxMP();p.fatigue=0;p.fatigueTs=Date.now()}
+function doReps(id,n){
+  const e=EX[id];n=+n||0;
+  if(n<=0) return {xp:0,st:{}};
+  const xp=gainXP(e.xp*n,e.kind),st={};
+  for(const k in e.stat) st[k]=e.stat[k]*n;
+  gainStats(st);
+  S.totals.ex[id]=r2((S.totals.ex[id]||0)+n);
+  addFatigue(e.type==='km'?n*4:e.type==='time'?n*.04:n*.08*e.xp);
+  return {xp,st};
+}
+function flag(k){S.flags[k]=true}
+function checkUnlocks(){
+  for(const t of TITLES) if(!S.titles.includes(t.id)&&t.ok()){
+    S.titles.push(t.id);
+    notify({kind:'info',head:'Title Acquired',big:t.name,lines:[`[You have acquired the title "${t.name}".]`],rewards:[['Effect when equipped',bonusText(t.b)]],foot:'Equip titles from the Status window.',prio:3});
+  }
+  for(const s of SKILLS) if(!S.skills.includes(s.id)&&s.ok()){
+    S.skills.push(s.id);
+    notify({kind:'info',head:'Skill Acquired',big:s.name,lines:[`[You have learned the passive skill "${s.name}".]`],rewards:[['Effect',bonusText(s.b)]],prio:3});
+  }
+}
+
+/* ---------- day cycle ---------- */
+function pickSide(k){return shuffle(rng('side'+k+S.created),SIDE).slice(0,3).map(s=>({id:s.id,done:false,xp:0}))}
+function newDay(k,first){
+  const tg=todaysTargets(),prog={};
+  for(const id in tg) prog[id]=0;
+  // the awakening day is always a real quest, but missing it carries no penalty
+  S.daily={date:k,targets:tg,prog,sets:[],rest:!first&&isRest(k),grace:!!first,cleared:false,side:pickSide(k),announced:false};
+  S.player.mp=maxMP();
+  S.player.hp=Math.min(maxHP(),S.player.hp+Math.round(maxHP()*.2));
+  genGates(k);
+}
+function rollover(){
+  const today=dayKey();
+  // same day, or the clock moved backwards (time zone travel, clock change): keep the current quest
+  if(S.daily&&S.daily.date>=today) return false;
+  if(S.daily){
+    const d=S.daily,missed=[];
+    if(!d.cleared) missed.push({k:d.date,rest:d.rest||d.grace});
+    for(let k=addDays(d.date,1),n=0;k<today&&n<400;k=addDays(k,1),n++) missed.push({k,rest:isRest(k)});
+    const need=missed.filter(m=>!m.rest);
+    missed.filter(m=>m.rest).forEach(m=>S.history[m.k]={s:'rest'});
+    if(need.length){
+      if(S.inv.ward>=need.length){
+        S.inv.ward-=need.length;
+        need.forEach(m=>S.history[m.k]={s:'ward'});
+        notify({kind:'info',head:'Notification',lines:['[A Penalty Ward has shattered.]',need.length>1?`It protected you through ${need.length} missed Daily Quests.`:'It protected you from the penalty for a missed Daily Quest.','Your streak is safe.']});
+      } else {
+        need.forEach(m=>S.history[m.k]={s:'fail'});
+        S.streak.cur=0;
+        const dmg=Math.round(maxHP()*.3*(1-Math.min(.75,bonus('guard'))));
+        S.player.hp=Math.max(1,S.player.hp-dmg);
+        if(!S.penalty) S.penalty=makePenalty();
+        notify({kind:'penalty',head:'Warning',lines:[need.length>1?`[You missed ${need.length} Daily Quests.]`:'[You did not complete the Daily Quest.]','You have been sent to the Penalty Zone.','Debuff applied: Weakened. All XP is halved until you survive the Penalty Quest.'],rewards:[['HP',`−${fmt(dmg)}`],['Streak','Reset to 0']]});
+      }
+    }
+  }
+  newDay(today);
+  return true;
+}
+function announce(){
+  const d=S.daily;if(!d||d.announced) return;
+  d.announced=true;
+  const goals=Object.keys(d.targets).map(id=>[DAILY_BY[id].name,`${fmtTask(id,d.targets[id])}${id==='run'?' '+unit():''}`]);
+  notify({kind:'quest',head:'Quest Info',lines:d.rest?['[Today is a rest day.]','The Daily Quest is optional. Clearing it still counts toward your streak.']:['[Daily Quest: Strength Training has arrived.]','Complete every goal before the day resets.'],rewards:goals,foot:d.rest?'':d.grace?'First day: no penalty yet. From tomorrow, failure will result in an appropriate penalty.':'Failure to complete the Daily Quest will result in an appropriate penalty.',btn:'Accept'});
+  save();
+}
+
+/* ---------- daily quest ---------- */
+function logDaily(task,n,quiet){
+  const d=S.daily;n=task==='run'?r2(n):Math.round(n);
+  if(!d||n<=0) return 0;
+  const rec=doReps(DAILY_BY[task].ex,n);
+  if(d.targets[task]!=null){
+    d.prog[task]=r2(d.prog[task]+n);
+    d.sets.push({task,n,xp:rec.xp,st:rec.st});
+    if(task==='pushup'&&d.prog.pushup>=100) flag('centurion');
+    if(task==='run'&&d.prog.run>=10) flag('windrunner');
+  }
+  if(!quiet) toast(`${DAILY_BY[task].name} +${task==='run'?trim(toUser(n))+' '+unit():n}  ·  +${rec.xp} XP`);
+  checkDaily();checkUnlocks();save();refresh();
+  return rec.xp;
+}
+function undoDaily(task){
+  const d=S.daily;if(!d||d.cleared) return;
+  let i=-1;for(let j=d.sets.length-1;j>=0;j--) if(d.sets[j].task===task){i=j;break}
+  if(i<0) return;
+  const s=d.sets.splice(i,1)[0],exId=DAILY_BY[task].ex;
+  d.prog[task]=Math.max(0,r2(d.prog[task]-s.n));
+  S.player.xp=Math.max(0,S.player.xp-s.xp);
+  for(const k in s.st){const st=S.stats[k];st.x-=s.st[k];while(st.x<0&&st.t>0){st.x+=100;st.t--}if(st.x<0) st.x=0}
+  S.totals.ex[exId]=Math.max(0,r2((S.totals.ex[exId]||0)-s.n));
+  toast(`Removed the last set (${task==='run'?trim(toUser(s.n))+' '+unit():s.n})`);
+  save();refresh();
+}
+function checkDaily(){
+  const d=S.daily;if(!d||d.cleared) return;
+  const ids=Object.keys(d.targets);
+  if(ids.length&&ids.every(id=>d.prog[id]>=d.targets[id]-1e-6)) clearDaily();
+}
+function clearDaily(){
+  const d=S.daily,p=S.player;
+  d.cleared=true;d.clearedAt=Date.now();
+  S.history[d.date]={s:'clear'};
+  S.streak.cur++;S.streak.best=Math.max(S.streak.best,S.streak.cur);
+  S.totals.clears++;
+  if(S.settings.diff==='hunter') flag('limitless');
+  if(new Date().getHours()<8) flag('earlybird');
+  const base=40+8*p.level,xpPreview=Math.round(base*xpMult()),gold=gainGold(30+3*p.level);
+  p.points+=3;S.inv.box++;
+  recover();
+  notify({kind:'quest',head:'Quest Complete',lines:['[You have completed the Daily Quest: Strength Training.]','Rewards have been distributed.'],
+    rewards:[['Status Recovery','HP · MP · Fatigue'],['Ability points','+3'],['Random Box','×1'],['XP',`+${fmt(xpPreview)}`],['Gold',`+${fmt(gold)}`]],
+    foot:`Streak: ${S.streak.cur} day${S.streak.cur===1?'':'s'}`});
+  gainXP(base);
+  checkUnlocks();
+}
+function toggleSide(i){
+  const d=S.daily,q=d&&d.side[i];if(!q) return;
+  const s=SIDE_BY[q.id];
+  if(!q.done){
+    q.done=true;q.xp=gainXP(SIDE_XP,'side');
+    gainStats({[s.stat]:25});S.totals.side++;
+    toast(`+${q.xp} XP  ·  ${STAT_INFO[s.stat].short} training`);
+  } else {
+    q.done=false;S.player.xp=Math.max(0,S.player.xp-q.xp);
+    const st=S.stats[s.stat];st.x-=25;while(st.x<0&&st.t>0){st.x+=100;st.t--}if(st.x<0) st.x=0;
+    S.totals.side=Math.max(0,S.totals.side-1);q.xp=0;
+  }
+  checkUnlocks();save();refresh();
+}
+
+/* ---------- penalty ---------- */
+function makePenalty(){
+  const sc={beginner:.6,normal:1,hard:1.4,hunter:1.6}[S.settings.diff]||1;
+  const first=S.settings.lowImpact?{ex:'squat',target:r5(50*sc)}:{ex:'burpee',target:r5(25*sc)};
+  return {tasks:[{...first,done:0},{ex:'plank',target:Math.round(120*sc/10)*10,done:0}]};
+}
+function logPenalty(i,n){
+  const p=S.penalty,t=p&&p.tasks[i];n=Math.round(n);
+  if(!t||n<=0) return;
+  const rec=doReps(t.ex,n);
+  t.done+=n;
+  toast(`${EX[t.ex].name} +${n}${EX[t.ex].type==='time'?' s':''}  ·  +${rec.xp} XP`);
+  if(p.tasks.every(x=>x.done>=x.target)){
+    S.penalty=null;S.totals.penalties++;UI.sheet=null;
+    notify({kind:'quest',head:'Quest Complete',lines:['[You have survived the Penalty Quest.]','Debuff removed: Weakened.','You have returned from the Penalty Zone.']});
+    checkUnlocks();
+  }
+  save();refresh();
+}
+
+/* ---------- gates ---------- */
+function allowed(id){const t=EX[id].tags||[];return !(t.includes('jump')&&S.settings.lowImpact)&&!(t.includes('bar')&&!S.settings.bar)}
+function makeGate(r,rk,o={}){
+  const red=o.red??r()<(rk?.14:.08);
+  const nEx=[3,3,4,4,5,5][rk],rounds=[2,3,3,4,4,5][rk];
+  const baseR=[8,10,12,14,16,20][rk],baseT=[20,30,35,40,45,50][rk],rest=[45,40,35,30,30,25][rk];
+  const cats=['push','legs','core','cardio','any'].slice(0,nEx),used=new Set(),exs=[];
+  const everything=Object.values(POOL).flat();
+  for(const c of cats){
+    let opts=(c==='any'?everything:POOL[c]).filter(id=>allowed(id)&&!used.has(id));
+    if(!opts.length) opts=everything.filter(id=>allowed(id)&&!used.has(id));
+    const id=pick(r,opts);used.add(id);exs.push(id);
+  }
+  const dm=DIFF[S.settings.diff].gate*(red?1.15:1)*(o.trial?1.1:1),sets=[];
+  for(let ro=0;ro<rounds;ro++) for(const id of exs){
+    const e=EX[id];
+    const target=e.type==='time'?Math.max(10,Math.round(baseT*dm*e.f/5)*5):Math.max(3,Math.round(baseR*e.f*dm));
+    sets.push({ex:id,target,round:ro,hp:Math.round(target*e.xp*10*(rk+1))});
+  }
+  const secs=sets.reduce((a,s)=>a+(EX[s.ex].type==='time'?s.target:s.target*2.5),0)+rest*(sets.length-1)+20*(rounds-1);
+  const mul=(red?1.5:1)*(o.trial?1.5:1);
+  return {rank:rk,red,trial:!!o.trial,name:pick(r,PLACES),boss:pick(r,BOSSES[rk]),rounds,exs,sets,rest,
+    est:Math.max(5,Math.round(secs/60)),xp:Math.round([60,120,200,320,500,800][rk]*mul),gold:Math.round([40,80,140,220,350,600][rk]*mul)};
+}
+function genGates(k){
+  const r=rng('gates'+k+S.created),base=S.player.rank;
+  const ranks=[base,base,Math.min(5,base+1)];
+  if(base>0&&r()<.3) ranks[0]=base-1;
+  S.gates={date:k,list:ranks.map((rk,i)=>({...makeGate(r,rk),id:k+'-'+i}))};
+}
+function addKeyGate(){
+  const r=rng('key'+Date.now()+Math.random()),rk=Math.min(5,S.player.rank+(r()<.35?1:0));
+  S.gates.list.push({...makeGate(r,rk),id:'k'+Date.now()});
+}
+function trialGate(){
+  const p=S.player;if(p.rank>=5) return null;
+  const nx=p.rank+1;if(p.level<RANKS[nx].min) return null;
+  if(!S.trial||S.trial.rank!==nx){
+    const g=makeGate(rng('trial'+nx+S.created),nx,{red:false,trial:true});
+    S.trial={...g,id:'trial',name:`${RANKS[nx].id}-Rank Reassessment`,boss:TRIAL_BOSS[nx]};
+  }
+  return S.trial;
+}
+const findGate=id=>id==='trial'?trialGate():S.gates.list.find(g=>g.id===id);
+const tgtLabel=s=>EX[s.ex].type==='time'?`${s.target} s`:`× ${s.target}`;
+function enterGate(id){
+  const g=findGate(id);if(!g) return;
+  if(!g.trial){
+    if(S.player.mp<10){notify({kind:'info',head:'Notification',lines:['[Not enough MP.]','Entering a gate costs 10 MP. MP refills at the daily reset, on level up, or with a Recovery Potion.']});return}
+    S.player.mp-=10;
+  }
+  const first=g.sets[0];
+  S.session={gid:g.id,g:JSON.parse(JSON.stringify(g)),i:0,phase:'work',adj:first.target,left:first.target,run:false,prep:0,end:0,dealt:0,xp:0,t0:Date.now(),beep:0,confirm:false};
+  UI.sheet=null;UI.screen={kind:'gate'};UI.hit=0;
+  wake();Sfx.go();buzz(80);
+  toast(g.trial?'The trial has begun.':'You have entered the gate.');
+  save();refresh();
+}
+function sessSet(){const s=S.session;return s.g.sets[s.i]}
+function completeSet(actual){
+  const s=S.session,g=s.g,set=sessSet();
+  actual=Math.max(0,Math.round(actual));
+  const rec=doReps(set.ex,actual);
+  s.xp+=rec.xp;
+  const dmg=Math.round(set.hp*Math.min(1.2,actual/set.target));
+  s.dealt+=dmg;UI.hit=dmg;
+  Sfx.hit();buzz([30,40,30]);
+  if(s.i>=g.sets.length-1){finishGate();return}
+  const roundEnd=g.sets[s.i+1].round!==set.round;
+  s.phase='rest';s.end=Date.now()+(g.rest+(roundEnd?20:0))*1000;s.beep=0;s.run=false;s.prep=0;
+  save();refresh();
+}
+function nextSet(){
+  const s=S.session;s.i++;
+  const set=sessSet();
+  Object.assign(s,{phase:'work',adj:set.target,left:set.target,run:false,prep:0,beep:0});
+  UI.hit=0;Sfx.go();buzz(80);save();refresh();
+}
+function finishGate(){
+  const s=S.session,g=s.g,p=S.player;
+  const xpPreview=Math.round(g.xp*xpMult('gate')),gold=gainGold(g.gold);
+  gainStats({per:12*(g.rank+1)});
+  const loot=[],luck=clamp((stat('per')-10)*.004,0,.25);
+  if(g.red){S.inv.box++;loot.push(['Random Box','×1'])}
+  if(Math.random()<.25+luck){S.inv.box++;loot.push(['Random Box','×1'])}
+  if(Math.random()<.08+luck/2){S.inv.key++;loot.push(['Instant Dungeon Key','×1'])}
+  if(Math.random()<.12){S.inv.potion++;loot.push(['Recovery Potion','×1'])}
+  S.totals.gates++;if(g.red) S.totals.red++;
+  S.totals.maxGate=Math.max(S.totals.maxGate,g.rank);
+  if(new Date().getHours()>=22) flag('nighthunter');
+  if(g.trial) S.trial=null; else S.gates.list=S.gates.list.filter(x=>x.id!==g.id);
+  S.session=null;UI.screen=null;UI.hit=0;unwake();
+  notify({kind:'quest',head:g.trial?'Trial Cleared':'Dungeon Cleared',lines:[`[${g.boss} has been defeated.]`,`Clear time ${mmss((Date.now()-s.t0)/1000)}`],
+    rewards:[['XP from sets',`+${fmt(s.xp)}`],['Clear bonus',`+${fmt(xpPreview)} XP`],['Gold',`+${fmt(gold)}`],...loot]});
+  gainXP(g.xp,'gate');
+  if(g.trial){
+    p.rank=Math.min(5,p.rank+1);
+    const R=rankOf();
+    notify({kind:'level',head:'Reassessment',big:`${R.id}-RANK`,lines:['[Your rank has been reassessed.]',`You are now a ${R.id}-Rank Hunter.`,`${R.id}-Rank gates will appear from the next reset.`]});
+    if(p.rank===1&&!p.job) offerJob();
+  }
+  checkUnlocks();save();refresh();
+}
+function retreat(){
+  const s=S.session;if(!s) return;
+  let dmg=0;
+  if(s.g.red){dmg=Math.round(maxHP()*.2);S.player.hp=Math.max(1,S.player.hp-dmg)}
+  S.session=null;UI.screen=null;unwake();
+  notify({kind:s.g.red?'penalty':'info',head:'Notification',lines:['[You have retreated from the gate.]','XP from finished sets is kept. The gate is still open.'],rewards:dmg?[['HP',`−${fmt(dmg)}`]]:null});
+  save();refresh();
+}
+function offerJob(){
+  const top=Object.entries(JOBS).sort((a,b)=>S.stats[b[1].stat].t-S.stats[a[1].stat].t)[0][0];
+  notify({kind:'level',head:'Job Change',lines:['[You have qualified for a Job.]','Choose the path that matches your training. Your choice is permanent.'],
+    choices:Object.entries(JOBS).map(([id,j])=>({id,name:j.name,desc:j.desc,rec:id===top})),onChoose:id=>{S.player.job=id;toast(`Job acquired: ${JOBS[id].name}`);save();refresh()}});
+}
+
+/* ---------- items ---------- */
+function openBox(){
+  const luck=clamp((stat('per')-10)*.004,0,.25),r=Math.random()*(1-luck);
+  let got;
+  if(r<.02){S.inv.elixir++;got=['Elixir of Growth','×1']}
+  else if(r<.07){const k=pick(Math.random,STAT_KEYS);S.stats[k].t++;got=[`${STAT_INFO[k].name} crystal`,`${STAT_INFO[k].short} +1`]}
+  else if(r<.15){S.inv.ward++;got=['Penalty Ward','×1']}
+  else if(r<.26){S.inv.key++;got=['Instant Dungeon Key','×1']}
+  else if(r<.42){S.inv.potion++;got=['Recovery Potion','×1']}
+  else{const g=gainGold((60+Math.random()*180)*(1+S.player.rank*.5));got=['Gold',`+${fmt(g)}`]}
+  notify({kind:'info',head:'Random Box',lines:['[You opened a Random Box.]','You have acquired:'],rewards:[got]});
+}
+function useItem(id){
+  if(!S.inv[id]) return;
+  S.inv[id]--;
+  if(id==='box') openBox();
+  else if(id==='potion'){recover();toast('HP and MP fully restored')}
+  else if(id==='key'){addKeyGate();UI.tab='gates';toast('A new gate has opened')}
+  else if(id==='elixir'){S.player.points++;toast('Ability point +1','stat')}
+  save();refresh();
+}
+function buy(id){
+  const it=ITEMS[id];if(!it||!it.price) return;
+  if(S.player.gold<it.price){toast(`You need ${fmt(it.price-S.player.gold)} more gold`,'bad');return}
+  S.player.gold-=it.price;S.inv[id]++;toast(`Purchased: ${it.name}`);save();refresh();
+}
+function skinAct(id){
+  const sk=SKINS[id];if(!sk) return;
+  if(!S.skins.includes(id)){
+    if(S.player.gold<sk.price){toast(`You need ${fmt(sk.price-S.player.gold)} more gold`,'bad');return}
+    S.player.gold-=sk.price;S.skins.push(id);
+  }
+  S.settings.skin=id;applySkin();save();refresh();
+}
+function applySkin(){
+  const k=S.settings.skin;
+  if(k&&k!=='blue') document.documentElement.dataset.skin=k; else delete document.documentElement.dataset.skin;
+  FX.color();
+}
+
+/* ---------- run tracking ---------- */
+let geoWatch=null;
+function hav(a,b){const R=6371000,t=Math.PI/180,dLa=(b.la-a.la)*t,dLo=(b.lo-a.lo)*t;const s=Math.sin(dLa/2)**2+Math.cos(a.la*t)*Math.cos(b.la*t)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(s))}
+const runElapsed=()=>{const r=S.run;return r?r.el+(r.seg?Date.now()-r.seg:0):0};
+function runStart(){
+  if(!S.run) S.run={dist:0,el:0,seg:null,last:null,path:[],acc:null,started:Date.now(),ts:Date.now()};
+  S.run.seg=Date.now();S.run.last=null;UI.confirmDiscard=false;
+  startGeo();wake();Sfx.go();buzz(80);save();refresh();
+}
+function runPause(){
+  const r=S.run;if(!r||!r.seg) return;
+  r.el+=Date.now()-r.seg;r.seg=null;r.last=null;
+  stopGeo();save();refresh();
+}
+function startGeo(){
+  UI.geoErr='';
+  if(!('geolocation' in navigator)){UI.geoErr='GPS is not available here. Use manual entry.';return}
+  if(geoWatch!=null) return;
+  geoWatch=navigator.geolocation.watchPosition(onPos,err=>{
+    UI.geoErr=err.code===1?'Location permission denied. Allow it in your browser settings, or log the run manually.':'Waiting for a GPS signal…';
+    runLive();
+  },{enableHighAccuracy:true,maximumAge:0,timeout:30000});
+}
+function stopGeo(){if(geoWatch!=null&&navigator.geolocation) navigator.geolocation.clearWatch(geoWatch);geoWatch=null}
+function onPos(pos){
+  const r=S.run;if(!r) return;
+  const {latitude:la,longitude:lo,accuracy:acc}=pos.coords;
+  r.acc=Math.round(acc);UI.geoErr='';
+  if(r.seg&&acc<=40){
+    const pt={la,lo,t:pos.timestamp};
+    if(!r.last){r.last=pt;r.path.push([la,lo])}
+    else{
+      const d=hav(r.last,pt),dt=(pt.t-r.last.t)/1000;
+      if(!(dt>0&&d/dt>12)&&d>=Math.max(4,acc*.5)){
+        r.dist+=d/1000;r.last=pt;r.path.push([la,lo]);
+        if(r.path.length>3000) r.path=r.path.filter((_,i)=>i%2===0);
+        r.ts=Date.now();save();
+      }
+    }
+  }
+  runLive();drawPath();
+}
+function runFinish(){
+  const r=S.run;if(!r) return;
+  const km=r2(r.dist),sec=runElapsed()/1000;
+  if(km<0.01){toast('No distance recorded yet. Keep moving, or discard the run.','bad');return}
+  stopGeo();unwake();S.run=null;UI.screen=null;
+  logRun(km,sec);
+}
+function logRun(km,sec){
+  const d=S.daily;
+  if(km>=10) flag('windrunner');
+  const xp=d&&d.targets.run!=null?logDaily('run',km,true):(()=>{const x=doReps('run',km).xp;checkUnlocks();return x})();
+  notify({kind:'quest',head:'Run Complete',big:`${trim(toUser(km))} ${unit()}`,lines:sec?[`Time ${hms(sec*1000)}  ·  Pace ${paceStr(sec,km)} per ${unit()}`]:['Distance logged.'],rewards:[['XP',`+${fmt(xp)}`],['Training','AGI · VIT']]});
+  save();refresh();
+}
+
+/* ---------- audio & haptics ---------- */
+const Sfx={ctx:null,
+  unlock(){if(this.ctx) {if(this.ctx.state==='suspended') this.ctx.resume();return}try{const C=window.AudioContext||window.webkitAudioContext;if(C) this.ctx=new C()}catch(e){}},
+  t(f,d=.15,type='sine',v=.12,w=0,f2){
+    if(!S.settings.sound) return;this.unlock();const c=this.ctx;if(!c) return;
+    const t=c.currentTime+w,o=c.createOscillator(),g=c.createGain();
+    o.type=type;o.frequency.setValueAtTime(f,t);if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g).connect(c.destination);o.start(t);o.stop(t+d+.05);
+  },
+  notify(){this.t(1318,.35,'sine',.08);this.t(1760,.55,'sine',.06,.09)},
+  tick(){this.t(1200,.04,'square',.03)},
+  beep(){this.t(1046,.12,'sine',.1)},
+  go(){this.t(1568,.28,'sine',.11)},
+  level(){[523,659,784,1046,1318].forEach((f,i)=>this.t(f,.32,'triangle',.08,i*.08))},
+  clear(){[784,988,1175,1568].forEach((f,i)=>this.t(f,.6,'sine',.06,i*.06))},
+  alarm(){for(let i=0;i<3;i++) this.t(240,.26,'sawtooth',.05,i*.32,170)},
+  hit(){this.t(190,.18,'square',.06,0,60)},
+};
+function buzz(p){if(S.settings.haptics&&navigator.vibrate) try{navigator.vibrate(p)}catch(e){}}
+let wakeLock=null;
+async function wake(){try{if('wakeLock' in navigator&&!wakeLock){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null})}}catch(e){}}
+function unwake(){try{wakeLock&&wakeLock.release()}catch(e){}wakeLock=null}
+
+/* ---------- notifications & toasts ---------- */
+const NQ=[];let curN=null,nSeq=0,twTimer=0;
+function notify(n){NQ.push({prio:1,...n,seq:nSeq++});if(!curN&&NQ.length===1) setTimeout(nextNotify,40)}
+function nextNotify(){
+  if(curN) return;
+  NQ.sort((a,b)=>a.prio-b.prio||a.seq-b.seq);
+  const n=NQ.shift();
+  if(!n){$('#ntf').innerHTML='';return}
+  curN=n;
+  S.log.unshift({t:Date.now(),h:n.head,l:n.big&&n.kind!=='quest'?n.big:(n.lines||[])[0]||''});
+  S.log.length=Math.min(S.log.length,60);save();
+  const tone=n.kind==='penalty'?' tone-red':'';
+  $('#ntf').innerHTML=`<div class="ntf-layer" data-a="ntfSkip"><div class="win ntf${tone}" role="alertdialog" aria-modal="true" aria-labelledby="ntf-t">
+    <div class="win-head"><span class="win-ico">!</span><h2 class="win-ttl" id="ntf-t">${esc(n.head||'Notification')}</h2></div>
+    ${n.big?`<div class="big">${esc(n.big)}</div>`:''}
+    <div class="lines">${(n.lines||[]).map(l=>`<p data-tw="${esc(l)}"><span></span><span class="ghost">${esc(l)}</span></p>`).join('')}</div>
+    ${n.rewards&&n.rewards.length?`<ul class="rewards">${n.rewards.map(([a,b])=>`<li><span>${esc(a)}</span><b>${esc(b)}</b></li>`).join('')}</ul>`:''}
+    ${n.foot?`<p class="ntf-foot">${esc(n.foot)}</p>`:''}
+    ${n.choices?`<div class="choices">${n.choices.map(c=>`<button class="choice" data-a="ntfChoose" data-x="${c.id}"><b>${esc(c.name)}</b><small>${esc(c.desc)}</small>${c.rec?'<span class="tag gold">Fits your training</span>':''}</button>`).join('')}</div>`
+      :`<button class="btn pri block" data-a="ntfOk">${esc(n.btn||'Confirm')}</button>`}
+  </div></div>`;
+  typewrite($('#ntf'));
+  Sfx[{penalty:'alarm',level:'level',quest:'clear'}[n.kind]||'notify']();
+  buzz(n.kind==='penalty'?[120,80,120,80,200]:[40,40,40]);
+  setTimeout(()=>{const b=$('#ntf .btn, #ntf .choice');b&&b.focus({preventScroll:true})},60);
+}
+function closeNotify(){const n=curN;curN=null;$('#ntf').innerHTML='';n&&n.onClose&&n.onClose();setTimeout(nextNotify,120)}
+function typewrite(root){
+  clearInterval(twTimer);
+  const ps=$$('[data-tw]',root);
+  const set=(p,c)=>{const full=p.dataset.tw;p.firstChild.textContent=full.slice(0,c);p.lastChild.textContent=full.slice(c)};
+  if(reduceMotion){ps.forEach(p=>set(p,p.dataset.tw.length));return}
+  let i=0,c=0;
+  twTimer=setInterval(()=>{const p=ps[i];if(!p){clearInterval(twTimer);return}c+=2;set(p,c);if(c>=p.dataset.tw.length){i++;c=0}},16);
+}
+function twFinish(root){clearInterval(twTimer);$$('[data-tw]',root).forEach(p=>{p.firstChild.textContent=p.dataset.tw;p.lastChild.textContent=''})}
+function toast(msg,kind=''){const t=document.createElement('div');t.className='toast '+kind;t.textContent=msg;$('#toasts').append(t);setTimeout(()=>t.remove(),2400)}
+
+/* ---------- rendering ---------- */
+const winHead=(t,i)=>`<div class="win-head">${i?`<span class="win-ico">${i}</span>`:''}<h2 class="win-ttl">${t}</h2></div>`;
+function refresh(){
+  const on=S.awakened;
+  $('#app').hidden=!on;$('#tabs').hidden=!on;
+  if(on){renderTop();$('#view').innerHTML=VIEWS[UI.tab]();renderTabs()}
+  renderSheet();renderScreen();
+  document.body.classList.toggle('locked',!!(UI.screen||UI.sheet));
+}
+function renderTop(){
+  const p=S.player,R=rankOf(),need=xpNeed(p.level);
+  $('#top').innerHTML=`<button class="lv" data-a="tab" data-x="status" aria-label="Level ${p.level}. Open status"><small>LV</small><b>${p.level}</b></button>
+    <div class="who"><div class="who-n"><span class="rk rk-${R.id}" title="${R.id}-Rank">${R.id}</span><span class="nm">${esc(p.name)}</span>${weakened()?'<span class="tag red">Weakened</span>':''}</div>
+    <div class="xpbar" role="progressbar" aria-label="Experience" aria-valuemin="0" aria-valuemax="${need}" aria-valuenow="${p.xp}"><i style="width:${p.xp/need*100}%"></i></div></div>
+    <div class="coin" aria-label="${fmt(p.gold)} gold">${ico('coin')}<b>${fmt(p.gold)}</b></div>
+    <button class="icon-btn" data-a="settings" aria-label="Settings">${ico('gear')}</button>`;
+}
+function renderTabs(){
+  const d=S.daily,dots={quest:(d&&!d.cleared&&!d.rest)||weakened(),status:S.player.points>0,gates:!!trialGate(),items:S.inv.box>0,records:false};
+  const tabs=[['quest','Quest'],['status','Status'],['gates','Gates'],['items','Items'],['records','Records']];
+  $('#tabs').innerHTML=`<div class="tabs-in">${tabs.map(([id,l])=>`<button class="tab${UI.tab===id?' on':''}" data-a="tab" data-x="${id}" ${UI.tab===id?'aria-current="page"':''}>${ico(id)}${l}${dots[id]?'<span class="dot" aria-label="needs attention"></span>':''}</button>`).join('')}</div>`;
+}
+function goalRow(act,x,name,val,tg,label,done){
+  const p=tg?Math.min(1,val/tg):0;
+  return `<li><button class="goal${done?' done':''}" data-a="${act}" data-x="${x}"><span class="g-name">${name}</span><span class="g-val">[${label}]</span><span class="chk">${done?ico('check'):''}</span><span class="g-bar" style="--p:${p}"></span></button></li>`;
+}
+
+/* quest tab */
+function vQuest(){
+  const d=S.daily;let h='';
+  if(S.penalty) h+=penaltyWin();
+  const ids=Object.keys(d.targets);
+  const rows=ids.map(id=>{const v=d.prog[id],tg=d.targets[id];return goalRow('task',id,DAILY_BY[id].name,v,tg,`${fmtTask(id,v)}/${fmtTask(id,tg)}${id==='run'?' '+unit():''}`,v>=tg-1e-6)}).join('');
+  h+=`<section class="win">${winHead('Quest Info','!')}
+    <p class="sys">${d.rest?'[Rest Day] The Daily Quest is optional today.':'[Daily Quest: Strength Training has arrived.]'}</p>
+    <h3 class="goal-h">GOAL</h3><ul class="goals">${rows}</ul>
+    ${d.cleared?`<div class="stamp">COMPLETE</div><p class="rw-line">Rewards received: Status Recovery · Ability points +3 · Random Box</p>`
+      :`<p class="warn">${d.rest?'Clearing it anyway still adds to your streak.':d.grace?'<b>FIRST DAY:</b> No penalty yet. From tomorrow, failure will result in an appropriate <u>penalty</u>.':'<b>WARNING:</b> Failure to complete the daily quest will result in an appropriate <u>penalty</u>.'}</p>`}
+    <div class="clock">${ico('clock')}<span data-live="reset">${hms(nextReset()-Date.now())}</span><small>until reset</small></div>
+  </section>`;
+  h+=`<section class="win">${winHead('Optional Quests')}<ul class="side">${d.side.map((q,i)=>{const s=SIDE_BY[q.id];return `<li><button class="side-q${q.done?' done':''}" data-a="side" data-x="${i}" aria-pressed="${q.done}"><span class="box">${q.done?ico('check'):''}</span><span class="side-n">${s.name}</span><span class="side-r">+${SIDE_XP} XP · ${STAT_INFO[s.stat].short}</span></button></li>`}).join('')}</ul>
+    <p class="note">Tick these off yourself. Three new ones arrive at every reset.</p></section>`;
+  const open=S.gates.list.length+(trialGate()?1:0);
+  h+=`<div class="quick"><button class="btn" data-a="runOpen" data-x="gps">${ico('run')}${S.run?`Run · ${trim(toUser(S.run.dist))} ${unit()}`:'Start a run'}</button>
+    <button class="btn" data-a="tab" data-x="gates">${ico('gate')}Gates${open?` <span class="pill">${open}</span>`:''}</button></div>`;
+  return h;
+}
+function penaltyWin(){
+  const p=S.penalty;
+  return `<section class="win tone-red">${winHead('Penalty Quest','!')}
+    <p class="sys">[Survive the Penalty Zone]</p>
+    <ul class="goals">${p.tasks.map((t,i)=>{const tm=EX[t.ex].type==='time';return goalRow('pen',i,EX[t.ex].name,t.done,t.target,`${Math.min(t.done,t.target)}/${t.target}${tm?' s':''}`,t.done>=t.target)}).join('')}</ul>
+    <p class="warn"><b>DEBUFF:</b> Weakened. All XP is halved until you survive.</p>
+  </section>`;
+}
+
+/* status tab */
+function meter(cls,l,v,m){return `<div class="meter ${cls}"><div class="meter-l"><span>${l}</span><span>${fmt(v)} / ${fmt(m)}</span></div><div class="bar"><i style="width:${clamp(v/m,0,1)*100}%"></i></div></div>`}
+function vStatus(){
+  const p=S.player,need=xpNeed(p.level),R=rankOf(),hm=maxHP(),mm=maxMP();
+  p.hp=Math.min(p.hp,hm);p.mp=Math.min(p.mp,mm);
+  const cell=k=>{const s=S.stats[k];return `<div class="stat"><button class="st-name" data-a="statInfo" data-x="${k}" aria-label="${STAT_INFO[k].name} details">${STAT_INFO[k].short}:</button><b>${stat(k)}</b>${p.points?`<button class="plus" data-a="alloc" data-x="${k}" aria-label="Add a point to ${STAT_INFO[k].name}">+</button>`:'<span></span>'}<span class="st-x" aria-hidden="true"><i style="width:${s.x}%"></i></span></div>`};
+  const fx=['all','str','run','gate','side','gold','hp','mp'].map(k=>[k,bonus(k)+statBonus(k)]).filter(([,v])=>v>0.0001);
+  const guard=Math.min(.75,bonus('guard'));
+  const effects=fx.map(([k,v])=>`<li>+${Math.round(v*100)}% ${BONUS_LABEL[k]}</li>`).join('')+(guard?`<li>Penalty damage −${Math.round(guard*100)}%</li>`:'');
+  return `<section class="win">${winHead('Status')}
+    <div class="st-top"><div class="st-lv"><b>${p.level}</b><span>LEVEL</span></div>
+      <dl class="st-id">
+        <div><dt>Name</dt><dd>${esc(p.name)}</dd></div>
+        <div><dt>Job</dt><dd>${p.job?JOBS[p.job].name:'None'}</dd></div>
+        <div><dt>Title</dt><dd><button class="link" data-a="titles">${esc(TITLE_BY[p.title]?.name||'None')}</button></dd></div>
+        <div><dt>Rank</dt><dd><span class="rk rk-${R.id}">${R.id}</span> Hunter</dd></div>
+      </dl></div>
+    <div class="xp"><div class="bar"><i style="width:${p.xp/need*100}%"></i></div><small>${fmt(p.xp)} / ${fmt(need)} XP to level ${p.level+1}</small></div>
+    <div class="vitals">${meter('hp','HP',p.hp,hm)}${meter('mp','MP',p.mp,mm)}<div class="fat"><span>FATIGUE</span><b>${fatigue()}</b></div></div>
+    <div class="stats">${STAT_KEYS.map(cell).join('')}<div class="pts"><span>Available ability points</span><b>${p.points}</b></div></div>
+    ${weakened()?'<p class="debuff">Debuff: Weakened (all XP −50%)</p>':''}
+    ${effects?`<ul class="effects" aria-label="Active effects">${effects}</ul>`:''}
+    <p class="note">Stats grow on their own as you train. The thin line under each stat is progress to its next point. Tap a stat name for details.</p>
+  </section>
+  <section class="win">${winHead('Skills')}<ul class="list">${SKILLS.map(s=>{const on=S.skills.includes(s.id);return `<li class="li${on?'':' locked'}"><h4>${s.name}</h4><span class="tag ${on?'ok':''}">${on?'Passive':'Locked'}</span><p>${on?bonusText(s.b):'Unlock: '+s.req}</p></li>`}).join('')}</ul></section>`;
+}
+
+/* gates tab */
+function gateCard(g){
+  const R=RANKS[g.rank];
+  return `<article class="gate${g.red?' red':''}${g.trial?' trial':''}">
+    <div class="portal rk-${R.id}${g.red?' red':''}" aria-hidden="true"><span>${R.id}</span></div>
+    <div class="g-info"><h3>${esc(g.name)}</h3>
+      <p class="g-meta">${g.red?'<span class="tag red">Red Gate</span> ':''}${g.trial?'<span class="tag gold">Trial</span> ':''}${R.id}-Rank · Boss: ${esc(g.boss)} · about ${g.est} min</p>
+      <p class="g-ex">${g.exs.map(id=>EX[id].name).join(' · ')}</p>
+      <p class="g-rw">${fmt(g.xp*xpMult('gate'))} XP · ${fmt(g.gold*goldMult())} gold${g.trial?' · Rank up':''}</p>
+      <button class="btn sm ${g.trial||g.red?'':'pri'}" data-a="gateInfo" data-x="${esc(g.id)}">Inspect gate</button></div></article>`;
+}
+function vGates(){
+  const tr=trialGate(),p=S.player,list=S.gates.list,nx=RANKS[p.rank+1];
+  return `${tr?`<section class="win">${winHead('Reassessment','!')}<p class="sys">[You have met the level requirement for ${RANKS[tr.rank].id}-Rank.]</p><div class="gates">${gateCard(tr)}</div><p class="note">Trials cost no MP and stay open until you clear them.</p></section>`:''}
+  <section class="win">${winHead('Gates Detected')}
+    ${list.length?`<div class="gates">${list.map(gateCard).join('')}</div>`:`<p class="empty">Every gate is cleared for today. New gates open in <span data-live="reset">${hms(nextReset()-Date.now())}</span>.</p>`}
+    <div class="mp-row"><span>MP ${fmt(p.mp)} / ${fmt(maxMP())} · 10 MP per gate</span>${S.inv.key?`<button class="btn sm" data-a="use" data-x="key">${ico('key')}Use key (${S.inv.key})</button>`:''}</div>
+  </section>
+  <section class="win">${winHead('Hunter Rank')}
+    <ol class="ladder">${RANKS.map((r,i)=>`<li class="${i===p.rank?'on':i<p.rank?'past':''}"><span class="rk rk-${r.id}">${r.id}</span>Lv ${r.min}</li>`).join('')}</ol>
+    <p class="note">${nx?(p.level>=nx.min?`Clear the ${nx.id}-Rank Reassessment Trial above to rank up.`:`The ${nx.id}-Rank Reassessment Trial unlocks at level ${nx.min}.`):'You stand at the top. There is no rank above S.'}</p>
+  </section>`;
+}
+
+/* items tab */
+function vItems(){
+  const p=S.player;
+  return `<section class="win">${winHead('Inventory')}
+    <div class="gold-big">${ico('coin')}${fmt(p.gold)} <small style="font-size:14px;letter-spacing:.1em">GOLD</small></div>
+    <ul class="list">${Object.entries(ITEMS).map(([id,it])=>`<li class="item"><div class="it-ico">${ico(it.icon)}</div><div class="it-b"><h4>${it.name}<span>×${S.inv[id]}</span></h4><p>${it.desc}</p></div>
+      ${S.inv[id]&&!it.passive?`<button class="btn sm" data-a="use" data-x="${id}">${id==='box'?'Open':'Use'}</button>`:'<span></span>'}</li>`).join('')}</ul>
+  </section>
+  <section class="win">${winHead('Shop')}
+    <ul class="list">${Object.entries(ITEMS).filter(([,it])=>it.price).map(([id,it])=>`<li class="item"><div class="it-ico">${ico(it.icon)}</div><div class="it-b"><h4>${it.name}</h4><p><span class="price">${ico('coin')}${fmt(it.price)}</span></p></div>
+      <button class="btn sm" data-a="buy" data-x="${id}" ${p.gold<it.price?'disabled':''}>Buy</button></li>`).join('')}</ul>
+    <p class="note">Earn gold from Daily Quests, gates and Random Boxes.</p>
+  </section>
+  <section class="win">${winHead('System Skins')}
+    <ul class="list">${Object.entries(SKINS).map(([id,sk])=>{const own=S.skins.includes(id),on=S.settings.skin===id;return `<li class="item"><div class="swatch" style="--sw1:${sk.c[0]};--sw2:${sk.c[1]}" aria-hidden="true"></div><div class="it-b"><h4>${sk.name}</h4><p>${own?(on?'In use':'Owned'):`<span class="price">${ico('coin')}${fmt(sk.price)}</span>`}</p></div>
+      ${on?'<span class="tag ok">Active</span>':`<button class="btn sm" data-a="skin" data-x="${id}" ${!own&&p.gold<sk.price?'disabled':''}>${own?'Use':'Buy'}</button>`}</li>`}).join('')}</ul>
+  </section>`;
+}
+
+/* records tab */
+function calendar(){
+  const today=S.daily.date,start=addDays(today,-(11*7+keyDate(today).getDay()));
+  let cells='';
+  for(let i=0,k=start;i<84;i++,k=addDays(k,1)){
+    let s=k>today?'fut':(S.history[k]?.s||'');
+    if(k===today) s=S.daily.cleared?'clear today':'today';
+    cells+=`<i class="c ${s}" title="${k}"></i>`;
+  }
+  return `<div class="cal-wrap"><div class="cal-d" aria-hidden="true">${['S','M','T','W','T','F','S'].map(d=>`<span>${d}</span>`).join('')}</div><div class="cal" role="img" aria-label="Daily Quest history, last 12 weeks">${cells}</div></div>
+    <div class="legend"><span><i class="c clear"></i>Cleared</span><span><i class="c fail"></i>Failed</span><span><i class="c rest"></i>Rest day</span><span><i class="c ward"></i>Ward used</span></div>`;
+}
+function vRecords(){
+  const days=Math.floor((Date.now()-S.created)/864e5)+1;
+  const rows=[['Push-ups',fmt(ex('pushup'))],['Sit-ups',fmt(ex('situp'))],['Squats',fmt(ex('squat'))],['Burpees',fmt(ex('burpee'))],['Distance',`${trim(toUser(ex('run')))} ${unit()}`],
+    ['Gates cleared',`${fmt(S.totals.gates)}${S.totals.red?` (${S.totals.red} red)`:''}`],['Daily Quests cleared',fmt(S.totals.clears)],['Penalties survived',fmt(S.totals.penalties)],['Optional quests',fmt(S.totals.side)],['Days since awakening',fmt(days)]];
+  return `<section class="win">${winHead('Streak')}
+    <div class="streak"><div class="streak-n">${ico('flame')}<b>${S.streak.cur}</b><span>day streak</span></div>
+    <dl class="kv"><div><dt>Best streak</dt><dd>${S.streak.best}</dd></div><div><dt>Penalty Wards</dt><dd>${S.inv.ward}</dd></div><div><dt>Rest days</dt><dd>${S.settings.restDays.length?S.settings.restDays.map(i=>DOW[i]).join(', '):'None'}</dd></div></dl></div>
+  </section>
+  <section class="win">${winHead('Quest Log')}${calendar()}</section>
+  <section class="win">${winHead('Totals')}<dl class="kv">${rows.map(([a,b])=>`<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl></section>
+  <section class="win">${winHead('System Log')}${S.log.length?`<ul class="log">${S.log.slice(0,15).map(l=>`<li><time>${clockTime(l.t)}</time><span><b>${esc(l.h)}</b> ${esc(l.l)}</span></li>`).join('')}</ul>`:'<p class="empty">No messages yet.</p>'}</section>
+  <button class="btn block" data-a="settings">${ico('gear')}Settings</button>`;
+}
+const VIEWS={quest:vQuest,status:vStatus,gates:vGates,items:vItems,records:vRecords};
+
+/* ---------- sheets ---------- */
+function renderSheet(){
+  const el=$('#sheet'),k=UI.sheet&&UI.sheet.kind;
+  if(!k){el.innerHTML='';el.dataset.k='';return}
+  const html=SHEETS[k]();
+  if(html==null){UI.sheet=null;el.innerHTML='';return}
+  const prev=el.querySelector('.sheet'),st=prev&&el.dataset.k===k?prev.scrollTop:0;
+  el.dataset.k=k;
+  el.innerHTML=`<div class="layer" data-a="sheetClose"><div class="win sheet${UI.sheet.tone?' tone-red':''}" role="dialog" aria-modal="true" data-stop>${html}</div></div>`;
+  if(st) el.querySelector('.sheet').scrollTop=st;
+  if(prev) el.querySelector('.layer').style.animation='none',el.querySelector('.sheet').style.animation='none';
+}
+const closeBtn=`<button class="icon-btn" data-a="sheetClose" aria-label="Close">${ico('close')}</button>`;
+const SHEETS={
+  counter(){
+    const u=UI.sheet,pen=u.ctx==='pen',t=pen?S.penalty&&S.penalty.tasks[u.i]:null;
+    if(pen&&!t) return null;
+    const name=pen?EX[t.ex].name:DAILY_BY[u.task].name,cur=pen?t.done:S.daily.prog[u.task],tg=pen?t.target:S.daily.targets[u.task],left=Math.max(0,tg-cur);
+    const sets=pen?[]:S.daily.sets.filter(s=>s.task===u.task),last=sets[sets.length-1];
+    const chips=[...new Set([5,10,15,20,25,left].filter(v=>v>0))].sort((a,b)=>a-b);
+    const exId=pen?t.ex:DAILY_BY[u.task].ex;
+    return `<div class="sh-head"><div><p class="eyebrow">${pen?'Penalty Quest':'Daily Quest'}</p><h3>${name}</h3></div>${closeBtn}</div>
+      <div class="prog-line"><b>${fmt(cur)}</b> / ${fmt(tg)}<span>${left?`${fmt(left)} to go`:'Goal reached · extra reps still give XP'}</span></div>
+      <div class="bar"><i style="width:${Math.min(100,cur/tg*100)}%"></i></div>
+      <p class="lbl">Reps in this set</p>
+      <div class="stepper"><button class="btn sq" data-a="cAdj" data-x="-1" aria-label="One less">−</button><output id="c-n" aria-live="polite">${u.n}</output><button class="btn sq" data-a="cAdj" data-x="1" aria-label="One more">+</button></div>
+      <div class="chips">${chips.map(v=>`<button class="chip${u.n===v?' on':''}" data-a="cSet" data-x="${v}">${v===left&&left>0?`All ${v}`:v}</button>`).join('')}</div>
+      <button class="btn pri block xl" data-a="cLog">Log ${u.n} rep${u.n===1?'':'s'}</button>
+      <div class="row2"><button class="btn" data-a="tapOpen">${ico('tap')}Tap counter</button>${last&&!S.daily.cleared?`<button class="btn ghost" data-a="cUndo">Undo last (${last.n})</button>`:''}</div>
+      <p class="cue">${EX[exId].cue}</p>`;
+  },
+  runTask(){
+    const d=S.daily,cur=d.prog.run,tg=d.targets.run,last=d.sets.filter(s=>s.task==='run').pop();
+    return `<div class="sh-head"><div><p class="eyebrow">Daily Quest</p><h3>Running</h3></div>${closeBtn}</div>
+      <div class="prog-line"><b>${fmtTask('run',cur)}</b> / ${fmtTask('run',tg)} ${unit()}<span>${cur>=tg?'Goal reached':`${trim(toUser(Math.max(0,tg-cur)))} ${unit()} to go`}</span></div>
+      <div class="bar"><i style="width:${Math.min(100,cur/tg*100)}%"></i></div>
+      <button class="btn pri block xl" data-a="runOpen" data-x="gps">${ico('run')}${S.run?'Resume tracked run':'Track a run with GPS'}</button>
+      <div class="row2"><button class="btn" data-a="runOpen" data-x="manual">Log distance</button>${last&&!d.cleared?`<button class="btn ghost" data-a="cUndoRun">Undo last (${trim(toUser(last.n))})</button>`:''}</div>
+      <p class="cue">${EX.run.cue}</p>`;
+  },
+  hold(){
+    const u=UI.sheet,t=S.penalty&&S.penalty.tasks[u.i];
+    if(!t) return null;
+    const secs=Math.floor(holdSecs());
+    return `<div class="sh-head"><div><p class="eyebrow">Penalty Quest</p><h3>${EX[t.ex].name}</h3></div>${closeBtn}</div>
+      <div class="prog-line"><b>${t.done}</b> / ${t.target} s<span>${Math.max(0,t.target-t.done)} s to go</span></div>
+      <div class="bar"><i style="width:${Math.min(100,t.done/t.target*100)}%"></i></div>
+      <div class="timer" style="text-align:center" id="hold-t">${mmss(secs)}</div>
+      <div class="row2"><button class="btn ${u.start?'':'pri'} xl" data-a="holdToggle">${u.start?'Stop':'Start'}</button><button class="btn xl" data-a="holdLog" id="hold-log" ${secs<1?'disabled':''}>Log ${secs} s</button></div>
+      <p class="cue">${EX[t.ex].cue} Rest whenever you need. Every logged second counts.</p>`;
+  },
+  gate(){
+    const g=findGate(UI.sheet.id);if(!g) return null;
+    const R=RANKS[g.rank],waves=[];
+    for(let w=0;w<g.rounds;w++) waves.push(g.sets.filter(s=>s.round===w));
+    return `<div class="sh-head"><div><p class="eyebrow">${g.trial?'Reassessment Trial':`${R.id}-Rank Gate`}</p><h3>${esc(g.name)}</h3></div>${closeBtn}</div>
+      <div class="gi-top"><div class="portal big rk-${R.id}${g.red?' red':''}" aria-hidden="true"><span>${R.id}</span></div><div><p class="g-meta">Boss: <b>${esc(g.boss)}</b></p><p class="g-meta">About ${g.est} min · ${g.rest} s rest between sets</p></div></div>
+      ${g.red?'<p class="warn"><b>RED GATE:</b> Harder sets and 1.5× rewards. Retreating costs 20% HP.</p>':''}
+      ${g.trial?`<p class="sys">Clear this trial to be reassessed as a ${R.id}-Rank Hunter.</p>`:''}
+      <ol class="waves">${waves.map((ws,i)=>`<li><h4>${i===g.rounds-1?'Boss wave':`Wave ${i+1}`}</h4><ul>${ws.map(s=>`<li><span>${EX[s.ex].name}</span><b>${tgtLabel(s)}</b></li>`).join('')}</ul></li>`).join('')}</ol>
+      <ul class="rewards"><li><span>Clear bonus</span><b>${fmt(g.xp*xpMult('gate'))} XP</b></li><li><span>Gold</span><b>${fmt(g.gold*goldMult())}</b></li><li><span>Drops</span><b>${g.red?'Random Box + chances':'Chance of items'}</b></li></ul>
+      <div class="row2"><button class="btn" data-a="sheetClose">Not now</button><button class="btn pri" data-a="enterGate" data-x="${esc(g.id)}">${g.trial?'Begin trial':'Enter · 10 MP'}</button></div>`;
+  },
+  titles(){
+    const p=S.player;
+    return `<div class="sh-head"><div><p class="eyebrow">Status</p><h3>Titles</h3></div>${closeBtn}</div>
+      <p class="note">Equip one title at a time. Its effect is active while it is equipped.</p>
+      <ul class="list">${TITLES.map(t=>{const own=S.titles.includes(t.id),on=p.title===t.id;return `<li class="li${own?'':' locked'}"><h4>${t.name}</h4>${on?'<span class="tag ok">Equipped</span>':own?`<button class="btn sm" data-a="equip" data-x="${t.id}">Equip</button>`:'<span class="tag">Locked</span>'}<p>${own?bonusText(t.b):'Unlock: '+t.req}</p></li>`}).join('')}</ul>`;
+  },
+  stat(){
+    const k=UI.sheet.k,s=S.stats[k],I=STAT_INFO[k];
+    return `<div class="sh-head"><div><p class="eyebrow">${I.short}</p><h3>${I.name} ${stat(k)}</h3></div>${closeBtn}</div>
+      <dl class="kv"><div><dt>Starting value</dt><dd>10</dd></div><div><dt>From training</dt><dd>+${s.t}</dd></div><div><dt>From ability points</dt><dd>+${s.a}</dd></div></dl>
+      <p class="lbl">Training progress to next point</p><div class="bar"><i style="width:${s.x}%"></i></div><p class="hint" style="text-align:right">${Math.floor(s.x)} / 100</p>
+      <p><b>Effect.</b> ${I.effect}</p><p><b>Trained by.</b> ${I.train}</p>
+      ${S.player.points?`<button class="btn pri block" data-a="alloc" data-x="${k}">Add an ability point (${S.player.points} left)</button>`:''}`;
+  },
+};
+function holdSecs(){const u=UI.sheet;return u?(u.acc+(u.start?Date.now()-u.start:0))/1000:0}
+
+/* ---------- full screens ---------- */
+function renderScreen(){
+  const el=$('#screen'),k=UI.screen&&UI.screen.kind;
+  if(!k){el.innerHTML='';el.dataset.k='';return}
+  const prev=el.querySelector('.screen'),st=prev&&el.dataset.k===k?prev.scrollTop:0;
+  el.dataset.k=k;
+  el.innerHTML=`<div class="screen scr-${k}" role="dialog" aria-modal="true">${SCREENS[k]()}</div>`;
+  if(st) el.querySelector('.screen').scrollTop=st;
+  if(k==='awaken') typewrite(el);
+  if(k==='run') drawPath();
+}
+const SCREENS={
+  awaken(){
+    const a=UI.aw;
+    if(a.step===0) return `<div class="aw"><p class="brand">AWAKEN</p><section class="win">${winHead('Notification','!')}
+      <div class="lines">${(a.declined?['[Declining is not an option.]','The System has already chosen you.']:['[You have acquired the qualifications to be a Player.]','Will you accept?']).map(l=>`<p data-tw="${esc(l)}"><span></span><span class="ghost">${esc(l)}</span></p>`).join('')}</div>
+      <div class="row2" style="margin-top:16px">${a.declined?'':'<button class="btn" data-a="awDecline">Decline</button>'}<button class="btn pri" data-a="awAccept">Accept</button></div></section></div>`;
+    if(a.step===1) return `<div class="aw"><section class="win">${winHead('Registration')}
+      <p class="sys">[Enter your name, Player.]</p>
+      <label class="field"><span>Player name</span><input id="aw-name" maxlength="16" autocomplete="nickname" value="${esc(a.name)}" placeholder="Your name"></label>
+      <button class="btn pri block" data-a="awName">Continue</button></section></div>`;
+    if(a.step===2){
+      const st=(id,l,h)=>`<div><h3>${l}</h3><p class="hint" style="margin:0 0 8px">${h}</p><div class="stepper sm"><button class="btn sq" data-a="awStep" data-x="${id}:-1" aria-label="Less">−</button><input id="aw-${id}" type="number" inputmode="numeric" min="0" max="300" value="${a.base[id]}" aria-label="${l}"><button class="btn sq" data-a="awStep" data-x="${id}:1" aria-label="More">+</button></div></div>`;
+      const runs=S.settings.units==='mi'?['I mostly walk','About 0.5 mi','1–2 mi','3 mi','6 mi or more']:['I mostly walk','About 1 km','2–3 km','5 km','10 km or more'];
+      return `<div class="aw"><section class="win">${winHead('Assessment')}
+        <p class="sys">[The System will measure your current ability.]</p>
+        <p class="hint" style="text-align:center;margin:-6px 0 16px">Test yourself now or give your best guess. You can retake this any time in Settings.</p>
+        <div class="assess">${st('pushup','Push-ups in one set','Knee push-ups count.')}${st('situp','Sit-ups in one set','Crunches count.')}${st('squat','Squats in one set','Bodyweight squats.')}
+          <div><h3>How far can you run without stopping?</h3>
+            <div class="seg" style="margin:8px 0 10px"><button class="seg-b${unit()==='km'?' on':''}" data-a="awUnits" data-x="km">km</button><button class="seg-b${unit()==='mi'?' on':''}" data-a="awUnits" data-x="mi">miles</button></div>
+            <div class="chips">${[.5,1,2,5,10].map((v,i)=>`<button class="chip${a.base.run===v?' on':''}" data-a="awRun" data-x="${v}">${runs[i]}</button>`).join('')}</div></div></div>
+        <div class="row2" style="margin-top:18px">${a.recal?'<button class="btn" data-a="awCancel">Cancel</button>':''}<button class="btn pri" data-a="awAssess">Continue</button></div></section></div>`;
+    }
+    const tg=targetsWith(a.base,a.diff,a.recal?S.player.level:1);
+    return `<div class="aw"><section class="win">${winHead('Difficulty')}
+      <p class="sys">[Choose how fast the Daily Quest grows.]</p>
+      <div class="diffs">${Object.entries(DIFF).map(([k,d])=>`<button class="diff${a.diff===k?' on':''}" data-a="awDiff" data-x="${k}" aria-pressed="${a.diff===k}"><b>${d.name}</b><small>${d.desc}</small></button>`).join('')}</div>
+      <p class="preview">${a.recal?'Today':'Day 1'}: ${tg.pushup} push-ups · ${tg.situp} sit-ups · ${tg.squat} squats · ${trim(toUser(tg.run))} ${unit()} run</p>
+      <div class="field" style="margin-top:18px"><span>Rest days (no penalty)</span><div class="chips days">${DOW.map((d,i)=>`<button class="chip${a.rest.includes(i)?' on':''}" data-a="awRest" data-x="${i}" aria-pressed="${a.rest.includes(i)}">${d}</button>`).join('')}</div></div>
+      <p class="hint">Train within your limits. Stop if you feel sharp pain, dizziness or chest discomfort, and check with a doctor before starting if you have a health condition.</p>
+      <div class="row2" style="margin-top:16px"><button class="btn" data-a="awBack">Back</button><button class="btn pri" data-a="awBegin">${a.recal?'Save':'Begin training'}</button></div></section></div>`;
+  },
+  gate(){
+    const s=S.session,g=s.g,set=sessSet(),e=EX[set.ex],R=RANKS[g.rank];
+    const total=g.sets.reduce((a,b)=>a+b.hp,0),left=Math.max(0,total-s.dealt),wave=set.round+1,next=g.sets[s.i+1];
+    let main;
+    if(s.phase==='rest'){
+      main=`<div class="phase rest"><p class="ph-l">Rest</p><div class="timer" id="sess-t">${mmss((s.end-Date.now())/1000)}</div>
+        <p class="ph-n">Next: <b>${EX[next.ex].name}</b> ${tgtLabel(next)}${next.round!==set.round?` · ${next.round===g.rounds-1?'Boss wave':`Wave ${next.round+1}`}`:''}</p>
+        <div class="row2"><button class="btn" data-a="restAdd">+15 s</button><button class="btn pri" data-a="restSkip">Skip rest</button></div></div>`;
+    } else if(e.type==='time'){
+      const tl=s.prep?'':mmss(s.run?(s.end-Date.now())/1000:s.left);
+      main=`<div class="phase"><p class="ph-l">Set ${s.i+1} of ${g.sets.length}</p><h3 class="ex-n">${e.name}</h3><p class="cue">${e.cue}</p>
+        <div class="timer" id="sess-t">${s.prep?Math.ceil((s.prep-Date.now())/1000):tl}</div><p class="ph-n">Hold for ${set.target} seconds</p>
+        <div class="row2">${s.run||s.prep?'<button class="btn xl" data-a="timePause">Pause</button>':`<button class="btn pri xl" data-a="timeStart">${s.left<set.target?'Resume':'Start'}</button>`}<button class="btn xl" data-a="timeDone">Finish set</button></div></div>`;
+    } else {
+      main=`<div class="phase"><p class="ph-l">Set ${s.i+1} of ${g.sets.length}</p><h3 class="ex-n">${e.name}</h3><p class="cue">${e.cue}</p>
+        <div class="stepper"><button class="btn sq" data-a="adj" data-x="-1" aria-label="One less">−</button><output id="adj" aria-live="polite">${s.adj}</output><button class="btn sq" data-a="adj" data-x="1" aria-label="One more">+</button></div>
+        <p class="ph-n">Target ${set.target} reps. Adjust if you did fewer or more.</p>
+        <button class="btn pri block xl" data-a="setDone">Done · Strike</button></div>`;
+    }
+    const hit=UI.hit;UI.hit=0;
+    return `<div class="screen-in${g.red?' tone-red':''}">
+      <div class="scr-head"><div><p class="eyebrow">${g.trial?'Reassessment Trial':`${R.id}-Rank Gate`}${g.red?' · Red Gate':''}</p><h2>${esc(g.name)}</h2></div><button class="btn sm ghost" data-a="retreat">Retreat</button></div>
+      ${s.confirm?`<div class="confirm"><p>Leave the gate? You keep XP from finished sets but get no clear rewards.${g.red?' Fleeing a Red Gate costs 20% HP.':''}${g.trial?'':' The 10 MP is not refunded.'}</p><div class="row2"><button class="btn" data-a="retreatNo">Keep fighting</button><button class="btn danger" data-a="retreatYes">Retreat</button></div></div>`:''}
+      <section class="win boss">
+        <div class="boss-top"><span>${wave===g.rounds?'Boss wave':`Wave ${wave} / ${g.rounds}`}</span><span id="sess-el">${mmss((Date.now()-s.t0)/1000)}</span></div>
+        <h3 class="boss-n">${esc(g.boss)}</h3>
+        <div class="hpbar" role="progressbar" aria-label="Boss HP" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${left}"><i style="width:${left/total*100}%"></i></div>
+        <p class="hp-n">${fmt(left)} / ${fmt(total)}</p>
+        ${hit?`<span class="dmg">−${fmt(hit)}</span>`:''}
+      </section>
+      <section class="win">${main}</section>
+      <ol class="sets" aria-label="Sets">${g.sets.map((x,i)=>`<li class="${i<s.i||(i===s.i&&s.phase==='rest')?'done':i===s.i?'now':''}${x.round===g.rounds-1?' boss':''}"></li>`).join('')}</ol>
+    </div>`;
+  },
+  run(){
+    const r=S.run,mode=UI.runMode,d=S.daily;
+    const status=UI.geoErr||(r&&r.seg?(r.acc!=null?`±${r.acc} m`:'Searching…'):r?'Paused':'Ready');
+    const daily=d&&d.targets.run!=null?`<p class="hint" style="text-align:center;margin:0">Daily Quest: ${fmtTask('run',d.prog.run)} / ${fmtTask('run',d.targets.run)} ${unit()}</p>`:'';
+    const gps=`<section class="win"><div class="run-d"><b id="run-d">${r?trim(Math.floor(toUser(r.dist)*100)/100):'0'}</b><span>${unit().toUpperCase()}</span></div>
+        <div class="run-stats"><div><small>Time</small><b id="run-t">${hms(runElapsed())}</b></div><div><small>Pace / ${unit()}</small><b id="run-p">${r?paceStr(runElapsed()/1000,r.dist):'--'}</b></div><div><small>GPS</small><b id="run-acc">${esc(status)}</b></div></div>
+        <canvas id="run-map" width="640" height="320" role="img" aria-label="Route sketch"></canvas></section>
+      <div class="row2">${!r?'<button class="btn pri xl" data-a="runStart">Start run</button>':r.seg?'<button class="btn xl" data-a="runPause">Pause</button><button class="btn pri xl" data-a="runFinish">Finish</button>':'<button class="btn pri xl" data-a="runStart">Resume</button><button class="btn xl" data-a="runFinish">Finish</button>'}</div>
+      ${r&&!r.seg?(UI.confirmDiscard?'<div class="confirm"><p>Discard this run? Nothing will be logged.</p><div class="row2"><button class="btn" data-a="runDiscardNo">Keep it</button><button class="btn danger" data-a="runDiscardYes">Discard</button></div></div>':'<button class="btn ghost block" data-a="runDiscard">Discard run</button>'):''}
+      <p class="hint" style="margin:0">Keep this screen open while you run; it stays awake. Your location is used only for distance and never leaves this device.</p>`;
+    const manual=`<section class="win"><label class="field"><span>Distance (${unit()})</span><input id="man-d" type="number" inputmode="decimal" step="0.01" min="0" placeholder="3.2"></label>
+        <label class="field"><span>Time in minutes (optional)</span><input id="man-t" type="number" inputmode="numeric" min="0" placeholder="25"></label>
+        <button class="btn pri block" data-a="runManual">Log run</button></section><p class="hint" style="margin:0">Use this for treadmill runs, or if you tracked the run with another app.</p>`;
+    return `<div class="screen-in"><div class="scr-head"><div><p class="eyebrow">Daily Quest · Running</p><h2>Run</h2></div><button class="icon-btn" data-a="runClose" aria-label="Close">${ico('close')}</button></div>
+      <div class="seg"><button class="seg-b${mode==='gps'?' on':''}" data-a="runMode" data-x="gps">GPS tracking</button><button class="seg-b${mode==='manual'?' on':''}" data-a="runMode" data-x="manual">Manual entry</button></div>
+      ${mode==='gps'?gps:manual}${daily}</div>`;
+  },
+  tap(){
+    const t=UI.screen,name=t.ctx==='pen'?EX[S.penalty.tasks[t.i].ex].name:DAILY_BY[t.task].name;
+    return `<div class="tap-scr"><div class="scr-head"><div><p class="eyebrow">Tap counter</p><h2>${name}</h2></div><button class="btn sm ghost" data-a="tapClose">Cancel</button></div>
+      <button class="pad" id="pad" aria-label="Add one rep"><b id="pad-n">${t.n}</b><small>Tap per rep</small></button>
+      <p class="hint" style="text-align:center;margin:0">For push-ups, put the phone under your chest and touch it with your chin or nose at the bottom of each rep.</p>
+      <div class="row2"><button class="btn xl" data-a="tapUndo">−1</button><button class="btn pri xl" data-a="tapDone" id="tap-log">Log ${t.n}</button></div></div>`;
+  },
+  settings(){
+    const st=S.settings;
+    const tog=(k,l,h)=>`<button class="tog" data-a="setTog" data-x="${k}" role="switch" aria-checked="${!!st[k]}"><span class="tog-l"><b>${l}</b>${h?`<small>${h}</small>`:''}</span><span class="tog-s" aria-hidden="true"></span></button>`;
+    const ios=/iphone|ipad|ipod/i.test(navigator.userAgent),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+    return `<div class="screen-in"><div class="scr-head"><h2>Settings</h2><button class="icon-btn" data-a="scrClose" aria-label="Close settings">${ico('close')}</button></div>
+      <section class="win">${winHead('Player')}<label class="field" style="margin:0"><span>Name</span><input id="set-name" data-c="name" maxlength="16" value="${esc(S.player.name)}" autocomplete="nickname"></label></section>
+      <section class="win">${winHead('Training')}
+        <div class="field"><span>Difficulty</span><div class="seg">${Object.entries(DIFF).map(([k,d])=>`<button class="seg-b${st.diff===k?' on':''}" data-a="setDiff" data-x="${k}" aria-pressed="${st.diff===k}">${d.name}</button>`).join('')}</div><p class="hint">${DIFF[st.diff].desc} Changes apply to today's quest unless it is already cleared.</p></div>
+        <div class="field"><span>Daily Quest goals</span><div class="chips">${DAILY.map(t=>`<button class="chip${st.tasks[t.id]?' on':''}" data-a="setTask" data-x="${t.id}" aria-pressed="${!!st.tasks[t.id]}">${t.name}</button>`).join('')}</div></div>
+        <div class="field"><span>Rest days</span><div class="chips days">${DOW.map((d,i)=>`<button class="chip${st.restDays.includes(i)?' on':''}" data-a="setRest" data-x="${i}" aria-pressed="${st.restDays.includes(i)}">${d}</button>`).join('')}</div><p class="hint">No penalty on rest days. Clearing the quest anyway still counts. Applies from the next reset.</p></div>
+        <label class="field"><span>New day starts at</span><select id="set-reset" data-c="reset">${[0,1,2,3,4,5,6].map(h=>`<option value="${h}"${st.resetHour===h?' selected':''}>${h===0?'Midnight':h+':00 AM'}</option>`).join('')}</select></label>
+        <div class="field"><span>Distance units</span><div class="seg"><button class="seg-b${st.units==='km'?' on':''}" data-a="setUnits" data-x="km">Kilometers</button><button class="seg-b${st.units==='mi'?' on':''}" data-a="setUnits" data-x="mi">Miles</button></div></div>
+        ${tog('lowImpact','Low-impact gates','No jumping. Kinder to knees and downstairs neighbors.')}
+        ${tog('bar','I have a pull-up bar','Adds pull-ups to gates.')}
+        <button class="btn block" data-a="recal" style="margin-top:8px">Retake the assessment</button>
+      </section>
+      <section class="win">${winHead('App')}
+        ${tog('sound','Sound effects')}${tog('haptics','Vibration','On phones that support it.')}
+        ${standalone?'':deferredInstall?'<button class="btn pri block" data-a="install" style="margin-top:8px">Install app</button>':`<p class="hint">${ios?'To install: tap the Share button in Safari, then <b>Add to Home Screen</b>.':'To install: open your browser menu and choose <b>Install app</b> or <b>Add to Home screen</b>.'}</p>`}
+      </section>
+      <section class="win">${winHead('Save Data')}
+        <p class="hint" style="margin:0 0 12px">Your progress lives on this device only. Export a backup now and then, and use it to move to a new phone.</p>
+        <div class="row2"><button class="btn" data-a="exportDl">Download</button><button class="btn" data-a="exportCopy">Copy text</button></div>
+        <label class="field" style="margin-top:16px"><span>Restore a backup</span><textarea id="imp-text" rows="3" placeholder="Paste backup text here"></textarea></label>
+        <div class="row2"><button class="btn" data-a="importPaste">Restore text</button><label class="btn">Choose file<input type="file" id="imp-file" accept="application/json,.json,.txt" data-c="importFile" hidden></label></div>
+        <div style="margin-top:16px">${UI.confirmReset?'<div class="confirm"><p>Erase all progress on this device? This cannot be undone.</p><div class="row2"><button class="btn" data-a="resetNo">Keep progress</button><button class="btn danger" data-a="resetYes">Erase all</button></div></div>':'<button class="btn block danger-ghost" data-a="resetAsk">Reset all progress</button>'}</div>
+      </section>
+      <section class="win about">${winHead('About')}
+        <p>Awaken turns your training into a game. Clear the Daily Quest, survive the penalty when you don't, enter gates for extra workouts and watch your stats grow.</p>
+        <p>Train within your limits. Stop if you feel sharp pain, dizziness or chest discomfort. Check with a doctor before starting if you have a health condition.</p>
+        <p>No account, no ads, no tracking. Everything stays on this device. Location is used only while you track a run.</p>
+        <p class="hint">Version 1.0</p>
+      </section></div>`;
+  },
+};
+
+/* ---------- run canvas ---------- */
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function drawPath(){
+  const c=$('#run-map');if(!c) return;
+  const x=c.getContext('2d'),W=c.width,H=c.height,pts=(S.run&&S.run.path)||[];
+  x.clearRect(0,0,W,H);
+  x.globalAlpha=.18;x.strokeStyle=cssVar('--line');x.lineWidth=1;
+  for(let i=40;i<W;i+=40){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.stroke()}
+  for(let i=40;i<H;i+=40){x.beginPath();x.moveTo(0,i);x.lineTo(W,i);x.stroke()}
+  x.globalAlpha=1;
+  if(pts.length<2){x.fillStyle=cssVar('--dim');x.font='500 24px '+cssVar('--f-body');x.textAlign='center';x.fillText(pts.length?'Keep moving to draw your route':'Your route will appear here',W/2,H/2+8);return}
+  const k=Math.cos(pts[0][0]*Math.PI/180),xs=pts.map(p=>p[1]*k),ys=pts.map(p=>-p[0]);
+  const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  const sc=Math.min((W-60)/(x1-x0||1e-9),(H-60)/(y1-y0||1e-9)),ox=(W-(x1-x0)*sc)/2,oy=(H-(y1-y0)*sc)/2;
+  const P=i=>[ox+(xs[i]-x0)*sc,oy+(ys[i]-y0)*sc];
+  x.strokeStyle=cssVar('--glow');x.lineWidth=5;x.lineJoin='round';x.lineCap='round';x.shadowColor=cssVar('--line');x.shadowBlur=14;
+  x.beginPath();pts.forEach((_,i)=>{const[a,b]=P(i);i?x.lineTo(a,b):x.moveTo(a,b)});x.stroke();
+  x.shadowBlur=0;const[ea,eb]=P(pts.length-1);x.fillStyle=cssVar('--ink');x.beginPath();x.arc(ea,eb,8,0,7);x.fill();
+}
+function runLive(){
+  const r=S.run;if(!r||!UI.screen||UI.screen.kind!=='run') return;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e&&e.textContent!==v) e.textContent=v};
+  set('run-d',trim(Math.floor(toUser(r.dist)*100)/100));set('run-t',hms(runElapsed()));set('run-p',paceStr(runElapsed()/1000,r.dist));
+  set('run-acc',UI.geoErr||(r.seg?(r.acc!=null?`±${r.acc} m`:'Searching…'):'Paused'));
+}
+
+/* ---------- background mana field ---------- */
+const FX=(()=>{
+  const c=$('#fx'),x=c.getContext('2d');let w=0,h=0,dpr=1,col='#9be3ff',last=0;
+  const parts=Array.from({length:44},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.5+.4,s:Math.random()*.00003+.00001,a:Math.random()*.5+.2,ph:Math.random()*6.28}));
+  function size(){dpr=Math.min(2,devicePixelRatio||1);w=c.width=innerWidth*dpr;h=c.height=innerHeight*dpr}
+  function draw(t){
+    x.clearRect(0,0,w,h);x.fillStyle=col;
+    for(const p of parts){
+      x.globalAlpha=p.a*(.55+.45*Math.sin(t/1100+p.ph));
+      x.beginPath();x.arc(p.x*w,p.y*h,p.r*dpr,0,7);x.fill();
+      x.globalAlpha*=.15;x.beginPath();x.arc(p.x*w,p.y*h,p.r*dpr*5,0,7);x.fill();
+    }
+    x.globalAlpha=1;
+  }
+  function frame(t){
+    if(!document.hidden&&t-last>40){const dt=Math.min(100,t-last);last=t;for(const p of parts){p.y-=p.s*dt;if(p.y<-.02){p.y=1.02;p.x=Math.random()}}draw(t)}
+    requestAnimationFrame(frame);
+  }
+  return {start(){size();addEventListener('resize',()=>{size();draw(performance.now())});if(reduceMotion) draw(0); else requestAnimationFrame(frame)},color(){col=cssVar('--glow')||col;if(reduceMotion&&w) draw(0)}};
+})();
+
+/* ---------- actions ---------- */
+function openCounter(ctx,x){
+  if(ctx==='daily'){const left=Math.max(0,S.daily.targets[x]-S.daily.prog[x]);UI.sheet={kind:'counter',ctx,task:x,n:left?Math.min(10,left):10}}
+  else{const t=S.penalty.tasks[x],left=Math.max(0,t.target-t.done);UI.sheet={kind:'counter',ctx,i:+x,n:left?Math.min(10,left):10,tone:true}}
+}
+function exportText(){return JSON.stringify(S)}
+function importText(txt){
+  let obj;
+  try{obj=JSON.parse(txt)}catch(e){toast('That backup could not be read. Paste the full text, starting with {.','bad');return}
+  if(!obj||typeof obj!=='object'||!obj.player||!obj.stats){toast('That text is not an Awaken backup.','bad');return}
+  stopGeo();S=merge(freshState(),obj);S.session=null;S.run=null;
+  // repair anything the rest of the app looks up by key
+  const st=S.settings,valid=(id,arr)=>Array.isArray(arr)?arr.filter(x=>x in id):[];
+  if(!DIFF[st.diff]) st.diff='normal';
+  if(!['km','mi'].includes(st.units)) st.units='km';
+  if(!SKINS[st.skin]) st.skin='blue';
+  st.resetHour=clamp(Math.round(+st.resetHour)||0,0,6);
+  st.restDays=Array.isArray(st.restDays)?st.restDays.map(Number).filter(n=>n>=0&&n<=6):[];
+  S.titles=valid(TITLE_BY,S.titles);S.skills=valid(SKILL_BY,S.skills);S.skins=valid(SKINS,S.skins);
+  if(!TITLE_BY[S.player.title]) S.player.title='awakened';
+  if(S.player.job&&!JOBS[S.player.job]) S.player.job=null;
+  S.player.rank=clamp(Math.round(+S.player.rank)||0,0,5);
+  const okGate=g=>g&&Array.isArray(g.exs)&&Array.isArray(g.sets)&&g.exs.every(id=>EX[id])&&g.sets.every(x=>EX[x.ex])&&BOSSES[g.rank];
+  S.gates.list=Array.isArray(S.gates.list)?S.gates.list.filter(okGate):[];
+  if(S.trial&&!okGate(S.trial)) S.trial=null;
+  if(S.penalty&&!(Array.isArray(S.penalty.tasks)&&S.penalty.tasks.every(t=>EX[t.ex]))) S.penalty=makePenalty();
+  if(S.daily&&!(S.daily.targets&&S.daily.prog&&Array.isArray(S.daily.side)&&S.daily.side.every(q=>SIDE_BY[q.id]))) S.daily=null;
+  UI.screen=null;UI.sheet=null;UI.tab='quest';
+  applySkin();saveNow();
+  if(S.awakened){rollover();announce()} else startAwakening();
+  toast('Backup restored');refresh();
+}
+function startAwakening(recal){
+  UI.aw={step:recal?2:0,declined:false,name:S.player.name==='Player'?'':S.player.name,base:{...S.baseline},diff:S.settings.diff,rest:[...S.settings.restDays],recal:!!recal};
+  UI.screen={kind:'awaken'};
+}
+function readAssess(){
+  const a=UI.aw;
+  for(const k of ['pushup','situp','squat']){const el=$('#aw-'+k);if(el) a.base[k]=clamp(Math.round(+el.value||0),0,300)}
+}
+let deferredInstall=null;
+const ACT={
+  tab(x){UI.tab=x;UI.sheet=null;window.scrollTo(0,0);refresh()},
+  settings(){UI.screen={kind:'settings'};UI.confirmReset=false;refresh()},
+  scrClose(){UI.screen=null;refresh()},
+  sheetClose(){
+    const u=UI.sheet;UI.sheet=null;
+    // never throw away a hold that was timed but not logged yet
+    if(u&&u.kind==='hold'){const secs=Math.floor((u.acc+(u.start?Date.now()-u.start:0))/1000);if(secs>=1){logPenalty(u.i,secs);return}}
+    refresh();
+  },
+  task(x){if(x==='run') UI.sheet={kind:'runTask'}; else openCounter('daily',x);refresh()},
+  pen(x){const t=S.penalty.tasks[x];if(EX[t.ex].type==='time') UI.sheet={kind:'hold',i:+x,acc:0,start:0,tone:true}; else openCounter('pen',x);refresh()},
+  side(x){toggleSide(+x)},
+  cAdj(x){const u=UI.sheet;u.n=clamp(u.n+(+x),1,500);refresh()},
+  cSet(x){UI.sheet.n=+x;refresh()},
+  cLog(){const u=UI.sheet;if(u.ctx==='pen'){logPenalty(u.i,u.n)}else{logDaily(u.task,u.n);const left=Math.max(0,S.daily.targets[u.task]-S.daily.prog[u.task]);if(UI.sheet) {UI.sheet.n=left?Math.min(u.n,left):u.n;refresh()}}},
+  cUndo(){undoDaily(UI.sheet.task)},
+  cUndoRun(){undoDaily('run')},
+  tapOpen(){const u=UI.sheet;UI.screen={kind:'tap',ctx:u.ctx,task:u.task,i:u.i,n:0};UI.sheet=null;wake();refresh()},
+  tapClose(){UI.screen=null;unwake();refresh()},
+  tapUndo(){const t=UI.screen;t.n=Math.max(0,t.n-1);padUpdate()},
+  tapDone(){const t=UI.screen;UI.screen=null;unwake();if(t.n>0){t.ctx==='pen'?logPenalty(t.i,t.n):logDaily(t.task,t.n)}else refresh()},
+  holdToggle(){const u=UI.sheet;if(u.start){u.acc+=Date.now()-u.start;u.start=0}else{u.start=Date.now();Sfx.go();buzz(60)}refresh()},
+  holdLog(){const u=UI.sheet,secs=Math.floor(holdSecs());u.acc=0;u.start=0;logPenalty(u.i,secs)},
+  titles(){UI.sheet={kind:'titles'};refresh()},
+  equip(x){if(S.titles.includes(x)){S.player.title=x;toast(`Title equipped: ${TITLE_BY[x].name}`);save();refresh()}},
+  statInfo(x){UI.sheet={kind:'stat',k:x};refresh()},
+  alloc(x){if(S.player.points>0){S.player.points--;S.stats[x].a++;Sfx.tick();buzz(15);save();refresh()}},
+  gateInfo(x){UI.sheet={kind:'gate',id:x,tone:findGate(x)?.red};refresh()},
+  enterGate(x){enterGate(x)},
+  adj(x){const s=S.session;s.adj=clamp(s.adj+(+x),0,999);const o=$('#adj');if(o) o.textContent=s.adj;save()},
+  setDone(){completeSet(S.session.adj)},
+  timeStart(){const s=S.session;s.prep=Date.now()+3000;s.beep=0;Sfx.beep();save();refresh()},
+  timePause(){const s=S.session;if(s.run) s.left=Math.max(0,(s.end-Date.now())/1000);s.run=false;s.prep=0;save();refresh()},
+  timeDone(){
+    // running or paused part-way: credit the time held. Never started: trust that the set was done.
+    const s=S.session,set=sessSet(),rem=s.run?(s.end-Date.now())/1000:s.left<set.target?s.left:0;
+    s.run=false;s.prep=0;completeSet(set.target-Math.max(0,rem));
+  },
+  restAdd(){S.session.end+=15000;save();sessTick()},
+  restSkip(){nextSet()},
+  retreat(){S.session.confirm=true;refresh()},
+  retreatNo(){S.session.confirm=false;refresh()},
+  retreatYes(){retreat()},
+  runOpen(x){UI.runMode=x==='manual'?'manual':'gps';UI.sheet=null;UI.screen={kind:'run'};UI.confirmDiscard=false;if(S.run&&S.run.seg){startGeo();wake()}refresh()},
+  runClose(){UI.screen=null;if(!(S.run&&S.run.seg)) unwake();refresh()},
+  runMode(x){UI.runMode=x;refresh()},
+  runStart(){runStart()},
+  runPause(){runPause()},
+  runFinish(){runFinish()},
+  runDiscard(){UI.confirmDiscard=true;refresh()},
+  runDiscardNo(){UI.confirmDiscard=false;refresh()},
+  runDiscardYes(){stopGeo();unwake();S.run=null;UI.confirmDiscard=false;save();refresh()},
+  runManual(){
+    const v=parseFloat($('#man-d').value),mins=parseFloat($('#man-t').value)||0,km=r2(fromUser(v));
+    if(!(km>0&&km<=100)){toast(`Enter a distance between 0.01 and ${S.settings.units==='mi'?62:100} ${unit()}.`,'bad');return}
+    UI.screen=null;logRun(km,mins*60);
+  },
+  use(x){useItem(x)},
+  buy(x){buy(x)},
+  skin(x){skinAct(x)},
+  ntfOk(){closeNotify()},
+  ntfSkip(){twFinish($('#ntf'))},
+  ntfChoose(x){const n=curN;n&&n.onChoose&&n.onChoose(x);closeNotify()},
+  awAccept(){UI.aw.step=1;Sfx.notify();refresh();setTimeout(()=>{const i=$('#aw-name');i&&i.focus()},50)},
+  awDecline(){UI.aw.declined=true;Sfx.alarm();buzz([100,60,100]);refresh()},
+  awName(){const v=($('#aw-name').value||'').trim().slice(0,16);if(!v){toast('Enter a name to continue.','bad');return}UI.aw.name=v;UI.aw.step=2;refresh()},
+  awStep(x){readAssess();const[k,d]=x.split(':');UI.aw.base[k]=clamp(UI.aw.base[k]+(+d),0,300);refresh()},
+  awRun(x){readAssess();UI.aw.base.run=+x;refresh()},
+  awUnits(x){readAssess();S.settings.units=x;refresh()},
+  awAssess(){readAssess();UI.aw.step=3;refresh()},
+  awCancel(){UI.screen={kind:'settings'};refresh()},
+  awBack(){UI.aw.step=2;refresh()},
+  awDiff(x){UI.aw.diff=x;refresh()},
+  awRest(x){const a=UI.aw,i=+x;a.rest=a.rest.includes(i)?a.rest.filter(v=>v!==i):[...a.rest,i];if(a.rest.length>3){a.rest.shift();toast('Up to 3 rest days a week.')}refresh()},
+  awBegin(){
+    const a=UI.aw;
+    S.baseline={...a.base};S.settings.diff=a.diff;S.settings.restDays=a.rest.slice().sort();
+    if(a.recal){retarget();UI.screen={kind:'settings'};toast('Assessment saved. Today\'s goals updated.');save();refresh();return}
+    S.player.name=a.name;S.awakened=true;S.created=Date.now();
+    recover();newDay(dayKey(),true);
+    UI.screen=null;UI.tab='quest';
+    notify({kind:'info',head:'Notification',lines:['[Registration complete.]',`Welcome, Player ${a.name}.`,'The System will now assign your first Daily Quest.'],btn:'Continue'});
+    announce();save();refresh();
+  },
+  setDiff(x){S.settings.diff=x;retarget();save();refresh()},
+  setTask(x){const t=S.settings.tasks;if(t[x]&&Object.values(t).filter(Boolean).length===1){toast('Keep at least one goal in the Daily Quest.','bad');return}t[x]=!t[x];retarget();save();refresh()},
+  setRest(x){const i=+x,r=S.settings.restDays;if(r.includes(i)) S.settings.restDays=r.filter(v=>v!==i); else{if(r.length>=3){toast('Up to 3 rest days a week.','bad');return}r.push(i);r.sort()}save();refresh()},
+  setUnits(x){S.settings.units=x;save();refresh()},
+  setTog(x){S.settings[x]=!S.settings[x];if(x==='sound'&&S.settings.sound) Sfx.notify();save();refresh()},
+  recal(){startAwakening(true);refresh()},
+  install(){if(deferredInstall){deferredInstall.prompt();deferredInstall.userChoice.finally(()=>{deferredInstall=null;refresh()})}},
+  exportDl(){
+    try{const b=new Blob([exportText()],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=`awaken-backup-${dayKey()}.json`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);toast('Backup downloaded')}
+    catch(e){toast('Download is not available here. Use Copy text instead.','bad')}
+  },
+  exportCopy(){
+    const txt=exportText();
+    const fallback=()=>{const t=$('#imp-text');if(t){t.value=txt;t.focus();t.select()}toast('Copy the selected text from the box below.')};
+    try{navigator.clipboard.writeText(txt).then(()=>toast('Backup copied. Paste it somewhere safe.'),fallback)}catch(e){fallback()}
+  },
+  importPaste(){const v=($('#imp-text').value||'').trim();if(!v){toast('Paste a backup into the box first.','bad');return}importText(v)},
+  resetAsk(){UI.confirmReset=true;refresh()},
+  resetNo(){UI.confirmReset=false;refresh()},
+  resetYes(){stopGeo();unwake();try{localStorage.removeItem(KEY)}catch(e){}S=freshState();UI.confirmReset=false;UI.sheet=null;UI.tab='quest';applySkin();startAwakening();refresh()},
+};
+const CHANGE={
+  name(el){const v=el.value.trim().slice(0,16);if(v){S.player.name=v;save();renderTop()}else el.value=S.player.name},
+  reset(el){
+    S.settings.resetHour=+el.value;
+    // moving the start of the day forward carries today's quest over instead of failing it
+    const k=dayKey(),d=S.daily;
+    if(d&&d.date<k){if(d.cleared){delete S.history[d.date];S.history[k]={s:'clear'}}d.date=k;S.gates.date=k}
+    toast('New day start time saved');save();refresh();
+  },
+  importFile(el){const f=el.files&&el.files[0];if(!f) return;const rd=new FileReader();rd.onload=()=>importText(String(rd.result||''));rd.readAsText(f);el.value=''},
+};
+function padUpdate(){const t=UI.screen;const n=$('#pad-n'),b=$('#tap-log');if(n) n.textContent=t.n;if(b) b.textContent=`Log ${t.n}`}
+function padHit(){
+  const t=UI.screen;if(!t||t.kind!=='tap') return;
+  t.n++;padUpdate();Sfx.tick();buzz(12);
+  const p=$('#pad');if(p){p.classList.remove('hit');void p.offsetWidth;p.classList.add('hit')}
+}
+
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-a]');if(!a) return;
+  const stop=e.target.closest('[data-stop]');if(stop&&!stop.contains(a)) return;
+  if(a.id==='pad') return;
+  const fn=ACT[a.dataset.a];if(fn) fn(a.dataset.x,a,e);
+});
+document.addEventListener('change',e=>{const el=e.target.closest('[data-c]');if(el&&CHANGE[el.dataset.c]) CHANGE[el.dataset.c](el)});
+document.addEventListener('pointerdown',e=>{Sfx.unlock();if(e.target.closest('#pad')){e.preventDefault();padHit()}},{passive:false});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(curN&&!curN.choices) closeNotify(); else if(UI.sheet) ACT.sheetClose(); else if(UI.screen&&['settings','run'].includes(UI.screen.kind)){UI.screen.kind==='run'?ACT.runClose():ACT.scrClose()}}
+  if(UI.screen&&UI.screen.kind==='tap'&&(e.key===' '||e.key==='Enter')&&!e.repeat&&document.activeElement===$('#pad')){e.preventDefault();padHit()}
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){saveNow();return}
+  if(S.awakened&&rollover()){announce();save()}
+  if(S.session||(S.run&&S.run.seg)||(UI.screen&&UI.screen.kind==='tap')) wake();
+  refresh();
+});
+addEventListener('pagehide',saveNow);
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;if(UI.screen&&UI.screen.kind==='settings') refresh()});
+
+/* ---------- clock ---------- */
+function sessTick(){
+  const s=S.session;if(!s) return;
+  const now=Date.now(),view=UI.screen&&UI.screen.kind==='gate',set=t=>{if(!view) return;const e=$('#sess-t');if(e) e.textContent=t};
+  const beep3=left=>{const c=Math.ceil(left);if(c<=3&&c>0&&c!==s.beep){s.beep=c;Sfx.beep();buzz(20)}};
+  if(s.phase==='rest'){const left=(s.end-now)/1000;if(left<=0){nextSet();return}beep3(left);set(mmss(left))}
+  else if(s.prep){const left=(s.prep-now)/1000;if(left<=0){s.prep=0;s.run=true;s.end=now+s.left*1000;s.beep=0;Sfx.go();buzz(60);save();refresh();return}beep3(left);set(String(Math.ceil(left)))}
+  else if(s.run){const left=(s.end-now)/1000;if(left<=0){s.run=false;completeSet(sessSet().target);return}beep3(left);set(mmss(left))}
+  if(view){const e=$('#sess-el');if(e) e.textContent=mmss((now-s.t0)/1000)}
+}
+function tick(){
+  if(!S.awakened) return;
+  if(rollover()){announce();save();refresh()}
+  const t=hms(nextReset()-Date.now());
+  $$('[data-live=reset]').forEach(e=>{if(e.textContent!==t) e.textContent=t});
+  if(S.session) sessTick();
+  if(S.run) runLive();
+  if(UI.sheet&&UI.sheet.kind==='hold'){
+    const secs=Math.floor(holdSecs()),e=$('#hold-t'),b=$('#hold-log');
+    if(e) e.textContent=mmss(secs);
+    if(b){b.textContent=`Log ${secs} s`;b.disabled=secs<1}
+  }
+}
+
+/* ---------- boot ---------- */
+(function boot(){
+  FX.start();applySkin();
+  if(S.run&&S.run.seg){S.run.el+=Math.max(0,(S.run.ts||S.run.seg)-S.run.seg);S.run.seg=null;S.run.last=null}
+  if(!S.awakened) startAwakening();
+  else{
+    rollover();
+    if(S.session) UI.screen={kind:'gate'};
+    announce();
+    if(S.run) setTimeout(()=>toast(`Your run is paused at ${trim(toUser(S.run.dist))} ${unit()}. Open Run to resume.`),900);
+  }
+  saveNow();refresh();
+  setInterval(tick,250);
+  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>
