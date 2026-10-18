@@ -1,0 +1,10 @@
+// Cloudflare Workers config for hosting Awaken as static files.
+// Deploy from this folder with: npx wrangler deploy
+{
+  "name": "awaken",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./",
+    "not_found_handling": "404-page"
+  }
+}

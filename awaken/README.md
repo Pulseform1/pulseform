@@ -34,9 +34,21 @@ python3 -m http.server 8000
 
 Then open the printed address. The service worker (offline support) only runs over `http://localhost` or `https://`.
 
+## Live app
+
+**https://awaken.philip-realivasquez.workers.dev**
+
+It is hosted as a Cloudflare Worker named `awaken`. To publish changes, bump `VERSION` in `sw.js` so installed copies pick up the update, then from this folder run:
+
+```sh
+npx wrangler deploy
+```
+
+`wrangler.jsonc` serves this folder as static files; `.assetsignore` keeps the README and config out of the upload.
+
 ## Put it on a phone
 
-Host the `awaken/` folder on any HTTPS static host (GitHub Pages, Netlify, Cloudflare Pages), open it on the phone, then:
+Open the live app on the phone (or host the folder on any HTTPS static host), then:
 
 - **iPhone:** Safari, then Share, then **Add to Home Screen**.
 - **Android:** Chrome menu, then **Install app**, or use the **Install app** button in Settings.
@@ -58,6 +70,7 @@ The app is plain HTML, CSS and JavaScript, so it can be wrapped with [Capacitor]
 | `manifest.webmanifest` | Install metadata (name, colors, icons) |
 | `sw.js` | Offline cache. Bump `VERSION` when you change the app files |
 | `icons/` | App icons (SVG source and rendered PNGs) |
+| `wrangler.jsonc`, `.assetsignore` | Cloudflare hosting config |
 
 ## Data and privacy
 
