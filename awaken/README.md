@@ -6,7 +6,7 @@ It is a standalone installable web app: a single `index.html` with no build step
 
 ## What's in it
 
-- **Awakening.** Accept the System, register a name, take a quick fitness assessment (max push-ups, sit-ups and squats in one set, and how far you can run) and pick a difficulty.
+- **Awakening.** Accept the System, register a name, sign the Player Contract with your finger (the System seals it), take a quick fitness assessment (max push-ups, sit-ups and squats in one set, and how far you can run) and pick a difficulty.
 - **Daily Quest: Strength Training.** Push-ups, sit-ups, squats and a run, with a countdown to the daily reset. Targets start from your assessment and climb with your level toward 100 / 100 / 100 / 10 km. Hunter difficulty starts there on day one.
   - Log reps with quick chips, or use the full-screen **tap counter** (touch the phone with your chin or nose at the bottom of each push-up).
   - Clearing it gives Status Recovery, +3 ability points, a Random Box, XP and gold.
@@ -18,11 +18,13 @@ It is a standalone installable web app: a single `index.html` with no build step
 - **Hunter rank and jobs.** Reassessment Trials unlock at levels 10, 20, 30, 45 and 60. The first one lets you choose a job: Berserker, Assassin, Guardian, Sage or Ranger.
 - **Runs.** GPS tracking with distance, pace and a route sketch, plus manual entry for treadmills. Runs count toward the Daily Quest.
 - **Joint recovery (Recover tab).** A daily check-in for knees, shoulders, lower back, hips, ankles & feet, wrists & elbows and neck: OK, Sore or Hurts.
-  - **Sore:** Daily Quest goals that load the joint are swapped for joint-friendly versions (wall push-ups, dead bugs, glute bridges, a brisk walk timed at 10 minutes per km of the run goal). Gates and the Penalty Quest leave out exercises that load it.
+  - Gates and the Penalty Quest always avoid a flagged joint. The Daily Quest only changes if you allow it: each new flag asks "Adapt my Daily Quest?", and you can switch it later from the joint's row.
+  - **Sore (if allowed):** Daily Quest goals that load the joint are swapped for joint-friendly versions (wall push-ups, dead bugs, glute bridges, a brisk walk timed at 10 minutes per km of the run goal). Gates and the Penalty Quest leave out exercises that load it.
   - **Hurts:** the joint's warning signs come up first. Once you confirm none apply, its recovery session becomes the day's main task and clears the Daily Quest; other goals turn optional, there is no penalty, and any Penalty Quest is paused.
   - Guided 8–12 minute recovery sessions for each joint and for the full body, recovery habits, and a "when to get help" section with red flags. Flags last 3 days, then the app asks again; long-running flags prompt a check by a physio or doctor.
-- **Optional quests.** Three small habits a day (water, stretching, meditation and so on) that train INT, PER and VIT.
-- **Items, shop and skins.** Random Boxes, Recovery Potions, Instant Dungeon Keys, Penalty Wards, Elixirs, plus System Blue, Shadow Violet and Ruler Gold skins.
+- **Optional quests.** Five a day from a pool of 40 (water, stretching, meditation, daylight, journaling and so on) that train INT, PER, VIT, AGI and STR. Swap one per day; clearing all five pays a Full Discipline bonus.
+- **Items, equipment and shop.** Random Boxes, Recovery Potions, Instant Dungeon Keys, Penalty Wards, Elixirs, XP Scrolls, Stamina Draughts, Gate Compasses and Joint Balms. Weapon, armor and accessory slots with 14 pieces of gear (from the shop, gate drops and boxes), a daily 30%-off deal, and six System skins.
+- **Shadow Army.** After you defeat a gate boss you can try to extract its shadow (Arise, 20 MP). Each of the 29 shadows gives a small bonus that grows with duplicates, capped at +25% per bonus type.
 - **Titles, skills and records.** Titles unlock from achievements and give a bonus while equipped; passive skills unlock from milestones. The records tab has the streak, a 12-week quest calendar, lifetime totals and a log of System messages.
 - **Settings.** Difficulty, which goals are in the Daily Quest, rest days, the time the day resets, km or miles, sound, vibration, backup export and restore, and a progress reset.
 

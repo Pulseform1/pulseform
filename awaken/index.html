@@ -36,6 +36,9 @@
 }
 :root[data-skin=shadow]{--line:#9a6bff;--glow:#d6c6ff}
 :root[data-skin=ruler]{--line:#f0b429;--glow:#ffe6a3}
+:root[data-skin=crimson]{--line:#ff4d6a;--glow:#ffb3c0}
+:root[data-skin=frost]{--line:#7fe7ff;--glow:#e0fbff}
+:root[data-skin=verdant]{--line:#3ddc97;--glow:#c6ffe6}
 .tone-red{--line:var(--red);--glow:var(--red-glow)}
 .tone-ok{--line:var(--ok);--glow:var(--ok-glow)}
 /* derived tints are re-declared wherever --line can change, so they follow the local tone */
@@ -352,6 +355,36 @@ h1,h2,h3,h4{text-wrap:balance}
 .preview{margin:14px 0 0;padding:10px 12px;border:1px dashed var(--line-a);font:500 14px/1.5 var(--f-disp);letter-spacing:.02em;text-align:center}
 .brand{text-align:center;font:700 13px/1 var(--f-disp);letter-spacing:.6em;color:var(--dim);text-indent:.6em}
 
+.tone-violet{--line:var(--violet);--glow:#d9ccff}
+:root,.tone-red,.tone-ok,.tone-violet{--line-a:color-mix(in srgb,var(--line) 72%,transparent);--line-b:color-mix(in srgb,var(--line) 30%,transparent);--line-c:color-mix(in srgb,var(--line) 12%,transparent)}
+.army{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:12px}
+.sh{display:grid;justify-items:center;gap:3px;padding:10px 6px;border:1px solid var(--line-c);text-align:center;min-width:0;opacity:.45}
+.sh.got{opacity:1;border-color:var(--line-a);background:var(--line-c);box-shadow:0 0 12px var(--line-b)}
+.sh-ico{width:40px;height:40px;display:grid;place-items:center;color:var(--glow)}
+.sh-ico .i{width:30px;height:30px;filter:drop-shadow(0 0 6px var(--line))}
+.sh b{font:600 12.5px/1.2 var(--f-disp);overflow-wrap:anywhere}
+.sh small{font-size:11px;color:var(--dim);line-height:1.3}
+.seg+.gold-big,.seg+.win{margin-top:0}
+/* contract */
+.contract .ct-name{margin:0 0 10px;text-align:center;font:500 15px/1.3 var(--f-disp);color:var(--dim)}
+.contract .ct-name b{color:var(--ink);letter-spacing:.06em}
+.terms{margin:0 0 14px;padding-left:22px;display:grid;gap:8px;font-size:14.5px;line-height:1.4}
+.terms li::marker{color:var(--glow);font-family:var(--f-disp)}
+.sigbox{position:relative;margin-top:8px;border:1px dashed var(--line-a);background:color-mix(in srgb,var(--void) 60%,transparent);border-radius:3px}
+#sig{display:block;width:100%;max-width:100%;aspect-ratio:3/1;touch-action:none;cursor:crosshair}
+.sigline{position:absolute;left:12px;right:12px;bottom:22%;border-bottom:1px solid var(--line-b);color:var(--dim);font:600 16px/1 var(--f-disp);pointer-events:none;padding-bottom:4px}
+.seal{position:absolute;right:6%;top:50%;width:96px;height:96px;margin-top:-48px;border-radius:50%;display:grid;place-items:center;align-content:center;gap:2px;
+  border:3px double var(--gold);color:var(--gold);background:radial-gradient(closest-side,color-mix(in srgb,var(--gold) 26%,transparent),transparent);
+  box-shadow:0 0 26px color-mix(in srgb,var(--gold) 45%,transparent);transform:rotate(-12deg);animation:stamp .5s cubic-bezier(.2,1.6,.4,1) both;pointer-events:none}
+.seal span{font:700 34px/1 var(--f-disp)}
+.seal small{font:700 10px/1 var(--f-disp);letter-spacing:.24em}
+.contract.sealed{animation:shake .35s .12s}
+.contract.burn{animation:burn 1s ease-in forwards}
+.sig-img{display:block;max-width:150px;height:auto;margin-top:4px;opacity:.9}
+@keyframes stamp{0%{transform:scale(2.4) rotate(-30deg);opacity:0}60%{opacity:1}100%{transform:scale(1) rotate(-12deg)}}
+@keyframes shake{25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
+@keyframes burn{0%{filter:none;opacity:1}40%{filter:brightness(1.8) blur(1px)}100%{filter:brightness(3) blur(10px);opacity:0;transform:translateY(-24px) scale(.96)}}
+
 /* notifications */
 .ntf-layer{position:fixed;inset:0;z-index:60;background:var(--scrim);display:grid;place-items:center;animation:fade .2s;
   padding:24px max(18px,env(safe-area-inset-right,0px)) 24px max(18px,env(safe-area-inset-left,0px))}
@@ -485,6 +518,10 @@ const ICONS={
   coin:'<path d="M12 3l7 9-7 9-7-9z"/><path d="M12 7.5l3.5 4.5-3.5 4.5-3.5-4.5z"/>',
   flame:'<path d="M12 3c1 4 5.2 5.6 5.2 10.2a5.2 5.2 0 0 1-10.4 0c0-2.6 1.4-4.2 2.6-5.2.3 2 1.2 3.1 2.3 3.4C11 8.9 11 6 12 3z"/>',
   skin:'<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17"/>',
+  scroll:'<path d="M7 4h11a2 2 0 0 1 2 2v1H9"/><path d="M7 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/><path d="M9 11h7M9 15h5"/>',
+  compass:'<circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  sword:'<path d="M14.5 3.5H20v5.5L9 20l-5-5z"/><path d="M6 13l5 5M3.5 20.5l2-2"/>',
+  shadow:'<path d="M12 3c3.5 0 6 2.8 6 6.4 0 2.2-1 3.6-1 5.6v5l-2-1.5-1.5 1.5-1.5-1.5-1.5 1.5L9 18.5 7 20v-5c0-2-1-3.4-1-5.6C6 5.8 8.5 3 12 3z"/><circle cx="10" cy="10" r=".8"/><circle cx="14" cy="10" r=".8"/>',
   recover:'<path d="M12 20.3s-7.6-4.6-7.6-10.4A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.6 2.5c0 5.8-7.6 10.4-7.6 10.4z"/><path d="M7.4 12.4h2.4l1.4-2.4 2 4.2 1.4-1.8h2"/>',
 };
 const ico=(n)=>`<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||''}</svg>`;
@@ -541,7 +578,21 @@ const SIDE=[
   {id:'balance',name:'Stand on one leg, 1 minute per side',stat:'per'},{id:'protein',name:'Eat a protein-rich meal',stat:'str'},
   {id:'cold',name:'Finish your shower cold',stat:'int'},{id:'screens',name:'No screens 30 minutes before bed',stat:'int'},
   {id:'breath',name:'Box breathing for 3 minutes',stat:'int'},{id:'stairs',name:'Take the stairs every time today',stat:'agi'},
+  {id:'veg',name:'Eat 3 servings of vegetables',stat:'vit'},{id:'fruit',name:'Eat a piece of fruit',stat:'vit'},
+  {id:'bedtime',name:'Go to bed at your planned time',stat:'vit'},{id:'nocaff',name:'No caffeine after 2 PM',stat:'vit'},
+  {id:'outside',name:'Spend 20 minutes outside',stat:'per'},{id:'sunlight',name:'Get morning daylight within an hour of waking',stat:'per'},
+  {id:'walkmeal',name:'Take a 10-minute walk after a meal',stat:'agi'},{id:'deadhang',name:'Hang or hold a doorframe stretch for 30 seconds',stat:'str'},
+  {id:'grip',name:'Squeeze a towel or ball 3 × 20 times',stat:'str'},{id:'carry',name:'Carry the groceries or a heavy bag the long way',stat:'str'},
+  {id:'posture',name:'Check your posture 3 times today',stat:'per'},{id:'eyes',name:'Rest your eyes: look 20 m away for 20 s, 3 times',stat:'per'},
+  {id:'hipopen',name:'Sit on the floor for 10 minutes instead of a chair',stat:'per'},{id:'toetouch',name:'Work toward touching your toes: 2 minutes',stat:'per'},
+  {id:'journal',name:'Write 3 lines about today\'s training',stat:'int'},{id:'plan',name:'Plan tomorrow\'s workout time',stat:'int'},
+  {id:'learn',name:'Learn one new exercise and try it once',stat:'int'},{id:'gratitude',name:'Write down 3 things you\'re grateful for',stat:'int'},
+  {id:'phonefree',name:'One meal without your phone',stat:'int'},{id:'tidy',name:'Tidy your training space for 5 minutes',stat:'int'},
+  {id:'friend',name:'Invite someone to train or walk with you',stat:'per'},{id:'thank',name:'Message someone who helps you stay on track',stat:'int'},
+  {id:'dance',name:'Dance to two songs',stat:'agi'},{id:'skipstep',name:'Do 2 minutes of quick feet on the spot',stat:'agi'},
+  {id:'cooldown',name:'Cool down for 5 minutes after training',stat:'vit'},{id:'warmup',name:'Warm up for 5 minutes before training',stat:'vit'},
 ];
+const SIDE_PER_DAY=5,SIDE_FULL={xp:30,gold:20};
 const SIDE_BY=Object.fromEntries(SIDE.map(s=>[s.id,s]));
 const SIDE_XP=15;
 const PLACES=['Goblin Warrens','Howling Cave','Sunken Shrine','Frostbite Spire','Ashen Barracks','Crimson Hive','Bone Crypt','Storm Ridge','Abandoned Iron Mine','Serpent Marsh','Moonlit Forest','Obsidian Keep','Flooded Subway','Collapsed Mall','Silent Hospital','Burning Foundry','Glass Desert','Drowned Library'];
@@ -579,6 +630,9 @@ const TITLES=[
   {id:'earlybird',name:'Early Bird',req:'Clear the Daily Quest before 8 AM.',b:{side:.1},ok:()=>!!S.flags.earlybird},
   {id:'nighthunter',name:'Night Hunter',req:'Clear a gate after 10 PM.',b:{gate:.05},ok:()=>!!S.flags.nighthunter},
   {id:'srank',name:'National Level Hunter',req:'Reach S-Rank.',b:{all:.2},ok:()=>S.player.rank>=5},
+  {id:'commander',name:'Shadow Commander',req:'Extract 5 shadows.',b:{gate:.05},ok:()=>Object.keys(S.shadows).length>=5},
+  {id:'legion',name:'Lord of the Legion',req:'Extract 15 shadows.',b:{all:.05},ok:()=>Object.keys(S.shadows).length>=15},
+  {id:'outfitted',name:'Fully Equipped',req:'Fill all three equipment slots.',b:{gold:.05},ok:()=>Object.values(S.gear.eq).every(Boolean)},
   {id:'healer',name:'Self-Healer',req:'Complete 5 recovery sessions.',b:{all:.03},ok:()=>S.totals.rec>=5},
 ];
 const SKILLS=[
@@ -600,11 +654,43 @@ const ITEMS={
   key:{name:'Instant Dungeon Key',icon:'key',desc:'Opens a new gate right away.',price:250},
   ward:{name:'Penalty Ward',icon:'ward',desc:'Used automatically if you miss a Daily Quest. Blocks the penalty and keeps your streak.',price:600,passive:true},
   elixir:{name:'Elixir of Growth',icon:'elixir',desc:'Grants 1 ability point.',price:1500},
+  scroll:{name:'XP Scroll',icon:'scroll',desc:'Your next gate clear gives +50% clear XP.',price:300},
+  draught:{name:'Stamina Draught',icon:'potion',desc:'Removes 50 fatigue.',price:80},
+  compass:{name:'Gate Compass',icon:'compass',desc:'Rerolls today\'s uncleared gates.',price:200},
+  balm:{name:'Joint Balm',icon:'recover',desc:'Your next recovery session gives +50 bonus XP.',price:150},
 };
+// Equipment: one piece per slot, each with a small bonus. Shop stock unlocks with Hunter rank.
+const SLOTS={weapon:'Weapon',armor:'Armor',acc:'Accessory'};
+const GEAR={
+  knuckle:{name:'Iron Knuckles',slot:'weapon',rank:0,b:{str:.03},price:400},
+  dagger:{name:'Rusted Dagger',slot:'weapon',rank:0,b:{gate:.03},price:400},
+  fang:{name:'Venom Fang',slot:'weapon',rank:1,b:{str:.05,run:.02},price:1200},
+  swift:{name:'Swiftedge',slot:'weapon',rank:2,b:{run:.06,gate:.02},price:2400},
+  breaker:{name:'Gatebreaker Axe',slot:'weapon',rank:3,b:{gate:.08,str:.04},price:4500},
+  storm:{name:'Storm Edge',slot:'weapon',rank:4,b:{str:.1,gate:.06},price:9000},
+  vest:{name:'Training Vest',slot:'armor',rank:0,b:{hp:.05},price:300},
+  leather:{name:'Hunter\'s Leather',slot:'armor',rank:1,b:{hp:.08,guard:.1},price:900},
+  plate:{name:'Warden Plate',slot:'armor',rank:2,b:{hp:.12,guard:.15},price:2600},
+  mantle:{name:'Night Mantle',slot:'armor',rank:3,b:{hp:.15,gold:.05},price:5200},
+  ring:{name:'Ring of Focus',slot:'acc',rank:0,b:{side:.05},price:350},
+  band:{name:'Swift Band',slot:'acc',rank:1,b:{run:.05},price:1000},
+  amulet:{name:'Lucky Amulet',slot:'acc',rank:2,b:{gold:.08},price:2200},
+  crest:{name:'Hunter\'s Crest',slot:'acc',rank:5,b:{all:.08},price:15000},
+};
+// Shadow army: bosses you defeat can be extracted. Each shadow gives a small bonus that grows with duplicates.
+const GRADES=['Normal','Normal','Elite','Elite','Knight','Knight'];
+const ARMY_KEYS=['gate','gold','str','run','side','hp'];
+const slug=t=>t.toLowerCase().replace(/[^a-z]+/g,'');
+const SHADOWS=Object.fromEntries([...BOSSES.flatMap((list,rk)=>list.map((name,i)=>({name,rk,i}))),...TRIAL_BOSS.slice(1).map((name,i)=>({name,rk:i+1,i,trial:true}))]
+  .map(({name,rk,i,trial},n)=>[slug(name),{name,rank:rk,grade:trial?'Knight':GRADES[rk],key:ARMY_KEYS[n%ARMY_KEYS.length],v:trial?.04:[.01,.01,.02,.02,.04,.04][rk]}]));
+const ARMY_CAP=.25;
 const SKINS={
   blue:{name:'System Blue',price:0,c:['#45b0ff','#9be3ff']},
   shadow:{name:'Shadow Violet',price:3000,c:['#9a6bff','#d6c6ff']},
   ruler:{name:'Ruler Gold',price:6000,c:['#f0b429','#ffe6a3']},
+  crimson:{name:'Red Gate Crimson',price:4500,c:['#ff4d6a','#ffb3c0']},
+  frost:{name:'Frost Spire',price:4000,c:['#7fe7ff','#e0fbff']},
+  verdant:{name:'Verdant Hunter',price:3500,c:['#3ddc97','#c6ffe6']},
 };
 const BONUS_LABEL={all:'all XP',str:'strength XP',run:'running & cardio XP',gate:'gate clear XP',side:'optional quest XP',gold:'gold',hp:'max HP',mp:'max MP',guard:'less penalty damage'};
 const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -638,7 +724,8 @@ function freshState(){
     settings:{diff:'normal',units:'km',resetHour:0,restDays:[0],sound:true,haptics:true,badge:true,lowImpact:false,bar:false,skin:'blue',tasks:{pushup:true,situp:true,squat:true,run:true}},
     baseline:{pushup:10,situp:15,squat:20,run:1},
     daily:null,history:{},streak:{cur:0,best:0},penalty:null,joints:{},
-    inv:{box:0,potion:0,key:0,ward:0,elixir:0},skins:['blue'],titles:['awakened'],skills:[],flags:{},
+    inv:{box:0,potion:0,key:0,ward:0,elixir:0,scroll:0,draught:0,compass:0,balm:0},
+    gear:{owned:[],eq:{weapon:null,armor:null,acc:null}},shadows:{},buffs:{},skins:['blue'],titles:['awakened'],skills:[],flags:{},
     totals:{ex:{},clears:0,gates:0,red:0,penalties:0,side:0,maxGate:-1,rec:0,recHabits:0},recSeen:{},
     gates:{date:null,list:[],done:[]},trial:null,session:null,run:null,log:[]};
 }
@@ -686,7 +773,13 @@ function bonus(key){
   for(const id of S.skills){const d=SKILL_BY[id];if(d&&d.b[key]) b+=d.b[key]}
   const t=TITLE_BY[S.player.title];if(t&&t.b[key]) b+=t.b[key];
   const j=JOBS[S.player.job];if(j&&j.b[key]) b+=j.b[key];
-  return b;
+  for(const id of Object.values(S.gear.eq)){const g=GEAR[id];if(g&&g.b[key]) b+=g.b[key]}
+  return b+armyBonus(key);
+}
+function armyBonus(key){
+  let b=0;
+  for(const [id,v] of Object.entries(S.shadows)){const sh=SHADOWS[id];if(sh&&sh.key===key) b+=sh.v*(1+.5*((v.lv||1)-1))}
+  return Math.min(ARMY_CAP,b);
 }
 function statBonus(kind){const k={str:'str',run:'agi',side:'int',gold:'per'}[kind];return k?clamp((stat(k)-10)*.005,0,.5):0}
 const maxHP=()=>Math.round((100+stat('vit')*10)*(1+bonus('hp')));
@@ -705,9 +798,12 @@ const soreLv=j=>(S.joints[j]&&S.joints[j].lv)||0;
 const soreJoints=()=>JOINT_IDS.filter(j=>soreLv(j)>0);
 const maxSore=()=>Math.max(0,...JOINT_IDS.map(soreLv));
 const stressLv=id=>Math.max(0,...(STRESS[id]||[]).map(soreLv));
-// the joint-friendly swap for a Daily Quest task, if a joint it covers is sore
+// The Daily Quest only changes for joints the player allowed to adapt it. Gates and penalties always avoid sore joints.
+const adaptLv=j=>S.joints[j]&&S.joints[j].adapt?soreLv(j):0;
+const maxAdapt=()=>Math.max(0,...JOINT_IDS.map(adaptLv));
+// the joint-friendly swap for a Daily Quest task, if a joint it covers is sore and allowed to adapt the quest
 function subFor(task){
-  for(const s of RECOVERY.dailySubs) if(s.task===task){const lv=Math.max(0,...s.joints.map(soreLv));if(lv) return {id:s.altId,lv}}
+  for(const s of RECOVERY.dailySubs) if(s.task===task){const lv=Math.max(0,...s.joints.map(adaptLv));if(lv) return {id:s.altId,lv}}
   return null;
 }
 function todaysSubs(){const o={};for(const t of DAILY){const s=subFor(t.id);if(s) o[t.id]=s.id}return o}
@@ -738,7 +834,7 @@ function todaysTargets(){
 const runUnit=()=>{const s=subFor('run');return s&&EX[s.id].type==='min'?'min':'km'};
 function retarget(){
   const d=S.daily;if(!d||d.cleared) return;
-  d.targets=todaysTargets();d.subs=todaysSubs();d.heal=maxSore()>=2;
+  d.targets=todaysTargets();d.subs=todaysSubs();d.heal=maxAdapt()>=2;
   for(const id in d.targets) if(d.prog[id]==null) d.prog[id]=0;
   // switching between running and walking mid-day: carry progress over at 10 minutes per km
   // saves from before the walk swap have no unit recorded; their run progress is always km
@@ -801,13 +897,13 @@ function checkUnlocks(){
 }
 
 /* ---------- day cycle ---------- */
-function pickSide(k){return shuffle(rng('side'+k+S.created),SIDE).slice(0,3).map(s=>({id:s.id,done:false,xp:0}))}
+function pickSide(k){return shuffle(rng('side'+k+S.created),SIDE).slice(0,SIDE_PER_DAY).map(s=>({id:s.id,done:false,xp:0}))}
 function newDay(k,first){
   const tg=todaysTargets(),prog={};
   for(const id in tg) prog[id]=0;
   // the awakening day is always a real quest, but missing it carries no penalty.
   // heal: a joint hurts, so the day is penalty-free.
-  S.daily={date:k,targets:tg,prog,sets:[],rest:!first&&isRest(k),grace:!!first,heal:maxSore()>=2,subs:todaysSubs(),runUnit:runUnit(),cleared:false,side:pickSide(k),rh:[],recDone:[],announced:false};
+  S.daily={date:k,targets:tg,prog,sets:[],rest:!first&&isRest(k),grace:!!first,heal:maxAdapt()>=2,subs:todaysSubs(),runUnit:runUnit(),cleared:false,side:pickSide(k),rh:[],recDone:[],announced:false};
   syncRecHabits();
   S.player.mp=maxMP();
   S.player.hp=Math.min(maxHP(),S.player.hp+Math.round(maxHP()*.2));
@@ -835,7 +931,7 @@ function rollover(){
   if(S.daily){
     const d=S.daily,missed=[];
     if(!d.cleared) missed.push({k:d.date,rest:d.rest||d.grace||d.heal});
-    for(let k=addDays(d.date,1),n=0;k<today&&n<400;k=addDays(k,1),n++) missed.push({k,rest:isRest(k)||maxSore()>=2});
+    for(let k=addDays(d.date,1),n=0;k<today&&n<400;k=addDays(k,1),n++) missed.push({k,rest:isRest(k)||maxAdapt()>=2});
     const need=missed.filter(m=>!m.rest);
     missed.filter(m=>m.rest).forEach(m=>S.history[m.k]={s:'rest'});
     if(need.length){
@@ -934,12 +1030,26 @@ function toggleSide(i){
     const st=S.stats[s.stat];st.x-=25;while(st.x<0&&st.t>0){st.x+=100;st.t--}if(st.x<0) st.x=0;
     S.totals.side=Math.max(0,S.totals.side-1);q.xp=0;
   }
+  // clearing every optional quest of the day pays a one-time bonus
+  if(!d.sideFull&&d.side.length>=SIDE_PER_DAY&&d.side.every(x=>x.done)){
+    d.sideFull=true;gainGold(SIDE_FULL.gold);
+    notify({kind:'quest',head:'Full Discipline',lines:['[All optional quests cleared.]','Discipline is a stat too.'],rewards:[['XP',`+${fmt(Math.round(SIDE_FULL.xp*xpMult('side')))}`],['Gold',`+${SIDE_FULL.gold}`]]});
+    gainXP(SIDE_FULL.xp,'side');
+  }
   checkUnlocks();save();refresh();
+}
+// once a day, swap one unticked optional quest for a new one
+function rerollSide(i){
+  const d=S.daily,q=d&&d.side[i];if(!q||q.done||d.sideReroll) return;
+  const used=new Set(d.side.map(x=>x.id)),opts=SIDE.filter(x=>!used.has(x.id));
+  if(!opts.length) return;
+  d.side[i]={id:pick(rng('reroll'+d.date+S.created),opts).id,done:false,xp:0};d.sideReroll=true;
+  toast('Optional quest swapped');save();refresh();
 }
 
 /* ---------- recovery ---------- */
 const daysBetween=(a,b)=>Math.round((keyDate(b)-keyDate(a))/864e5);
-const hurting=()=>JOINT_IDS.filter(j=>soreLv(j)>=2);
+const hurting=()=>JOINT_IDS.filter(j=>adaptLv(j)>=2);
 // a joint flagged for about two weeks, or marked "hurts" on 3 check-ins in a row, should be checked by a professional
 function needsCheck(j){const v=S.joints[j];return !!(v&&v.lv&&S.daily&&(daysBetween(v.since,S.daily.date)+1>=14||v.l2>=3))}
 // what the System has changed because of sore joints, as [label, value] rows
@@ -955,10 +1065,11 @@ function adaptLines(){
   if(out) rows.push(['Gates',`${out} exercise${out===1?'':'s'} left out`]);
   if(S.penalty) rows.push(['Penalty Quest',penaltyPaused()?'Paused while a joint hurts':S.penalty.tasks.length?S.penalty.tasks.map(t=>EX[t.ex].name).join(' + '):'Clears with a recovery session']);
   if(d.heal&&!d.cleared) rows.push(['Today','No penalty · streak kept']);
+  if(soreJoints().some(j=>!S.joints[j].adapt)) rows.push(['Daily Quest',soreJoints().some(j=>S.joints[j].adapt)?'Only adapted for joints you allowed':'Unchanged (your choice)']);
   return rows;
 }
 // A check-in sets or confirms a joint's level. Flags last 3 days, then the System asks again.
-function setJoint(j,lv){
+function setJoint(j,lv,adapt){
   if(!REC_BY[j]||!S.daily) return;
   const today=S.daily.date,prev=S.joints[j],prevLv=soreLv(j);
   if(!lv){
@@ -968,15 +1079,24 @@ function setJoint(j,lv){
     // flagged again soon after a flag ended: keep counting from the original "sore since" day
     const cont=prev&&(prev.lv>0||daysBetween(prev.checked,today)<=4);
     const l2=lv===2?(prev&&prev.lastLv===2?(prev.l2||0)+(prev.checked===today?0:1):1):0;
-    S.joints[j]={lv,lastLv:lv,since:cont?prev.since:today,checked:today,l2};
+    // a re-check keeps the earlier answer about adapting the Daily Quest
+    const keep=prev&&prev.lv>0&&typeof prev.adapt==='boolean'?prev.adapt:!!adapt;
+    S.joints[j]={lv,lastLv:lv,since:cont?prev.since:today,checked:today,l2,adapt:adapt===undefined?keep:!!adapt};
   }
   retarget();syncRecHabits();regenGates();adaptPenalty();
   if(lv>prevLv){
-    const rows=adaptLines(),lines=[`[Status ailment detected: ${AILMENT(j)}.]`,lv>=2?'Recovery comes first today. Finish its recovery session to clear the Daily Quest. Everything else is optional.':'The System has adjusted your training.'];
-    if(S.daily.cleared) lines.push('Today\'s Daily Quest is already complete. Changes to it apply from tomorrow.');
+    const ad=S.joints[j].adapt,rows=adaptLines(),lines=[`[Status ailment detected: ${AILMENT(j)}.]`,!ad?'Gates and penalties will avoid it. Your Daily Quest stays as it is.':lv>=2?'Recovery comes first today. Finish its recovery session to clear the Daily Quest. Everything else is optional.':'The System has adjusted your training.'];
+    if(S.daily.cleared&&ad) lines.push('Today\'s Daily Quest is already complete. Changes to it apply from tomorrow.');
     notify({kind:'info',head:'Status Ailment',lines,rewards:rows.length?rows:null,
       foot:lv>=2?'Ease off, don\'t train through sharp pain. Keep gently moving within comfort.':RECOVERY.painRule});
   } else toast(!lv?`${REC_BY[j].name}: feeling OK. Ailment removed.`:lv===prevLv?`${REC_BY[j].name}: check-in saved.`:`${REC_BY[j].name}: marked as sore.`);
+  save();refresh();
+}
+function toggleAdapt(j){
+  const v=S.joints[j];if(!v||!v.lv) return;
+  v.adapt=!v.adapt;
+  retarget();syncRecHabits();regenGates();adaptPenalty();
+  toast(v.adapt?`${REC_BY[j].name}: the Daily Quest now adapts`:`${REC_BY[j].name}: the Daily Quest stays as it is`);
   save();refresh();
 }
 // at the daily reset: flags older than 3 days end (the System asks again); ended flags are forgotten after a few more days
@@ -1009,7 +1129,7 @@ const PEN_REPS={burpee:25,squat:50,glute:50,crunch:50};
 const PEN_HOLD={plank:120,wallsit:90,hollow:60};
 const penScale=()=>({beginner:.6,normal:1,hard:1.4,hunter:1.6}[S.settings.diff]||1);
 // while a joint hurts the Penalty Quest is paused: no debuff, nothing to do
-const penaltyPaused=()=>!!S.penalty&&maxSore()>=2;
+const penaltyPaused=()=>!!S.penalty&&maxAdapt()>=2;
 function penaltyPick(list){
   const ok=id=>!(S.settings.lowImpact&&(EX[id].tags||[]).includes('jump'))&&!stressLv(id);
   return Object.keys(list).find(ok)||null;
@@ -1080,11 +1200,12 @@ function makeGate(r,rk,o={}){
 }
 // today's three gates; ones already cleared today stay cleared when the list is rebuilt
 function genGates(k){
-  const r=rng('gates'+k+S.created),base=S.player.rank,done=S.gates&&S.gates.date===k?(S.gates.done||[]):[];
+  const same=S.gates&&S.gates.date===k,salt=same?(S.gates.salt||0):0;
+  const r=rng('gates'+k+S.created+(salt?'#'+salt:'')),base=S.player.rank,done=same?(S.gates.done||[]):[];
   const ranks=[base,base,Math.min(5,base+1)];
   if(base>0&&r()<.3) ranks[0]=base-1;
-  const list=ranks.map((rk,i)=>{const g=makeGate(r,rk);return g&&{...g,id:k+'-'+i}}).filter(g=>g&&!done.includes(g.id));
-  S.gates={date:k,list,done};
+  const list=ranks.map((rk,i)=>{const g=makeGate(r,rk);return g&&{...g,id:k+(salt?'-r'+salt:'')+'-'+i}}).filter(g=>g&&!done.includes(g.id));
+  S.gates={date:k,list,done,salt};
 }
 // rebuild today's gates around sore joints (bought key gates keep their id and rank)
 function regenGates(){
@@ -1175,6 +1296,8 @@ function finishGate(){
   if(Math.random()<.25+luck){S.inv.box++;loot.push(['Random Box','×1'])}
   if(Math.random()<.08+luck/2){S.inv.key++;loot.push(['Instant Dungeon Key','×1'])}
   if(Math.random()<.12){S.inv.potion++;loot.push(['Recovery Potion','×1'])}
+  const drop=gearDrop(g.rank,.05+.01*g.rank+(g.red?.05:0)+(g.trial?.2:0));if(drop) loot.push([GEAR[drop].name,'Equipment']);
+  let scroll=0;if(S.buffs.scroll){S.buffs.scroll=false;scroll=Math.round(g.xp*.5);loot.push(['XP Scroll',`+${fmt(Math.round(scroll*xpMult('gate')))} XP`])}
   S.totals.gates++;if(g.red) S.totals.red++;
   S.totals.maxGate=Math.max(S.totals.maxGate,g.rank);
   if(new Date().getHours()>=22) flag('nighthunter');
@@ -1182,7 +1305,8 @@ function finishGate(){
   S.session=null;UI.screen=null;UI.hit=0;unwake();
   notify({kind:'quest',head:g.trial?'Trial Cleared':'Dungeon Cleared',lines:[`[${g.boss} has been defeated.]`,`Clear time ${mmss((Date.now()-s.t0)/1000)}`],
     rewards:[['XP from sets',`+${fmt(s.xp)}`],['Clear bonus',`+${fmt(xpPreview)} XP`],['Gold',`+${fmt(gold)}`],...loot]});
-  gainXP(g.xp,'gate');
+  gainXP(g.xp+scroll,'gate');
+  offerExtraction(g);
   if(g.trial){
     p.rank=Math.min(5,p.rank+1);
     const R=rankOf();
@@ -1194,7 +1318,8 @@ function finishGate(){
 function finishRecovery(){
   const s=S.session,g=s.g,p=S.player,d=S.daily;
   // the full bonus once per region per day; repeats still help but give less
-  const first=!(d.recDone||[]).includes(g.region),base=first?g.xp:Math.round(g.xp/3);
+  const balm=S.buffs.balm?50:0;S.buffs.balm=false;
+  const first=!(d.recDone||[]).includes(g.region),base=(first?g.xp:Math.round(g.xp/3))+balm;
   const xpPreview=Math.round(base*xpMult()),heal=Math.max(0,Math.min(maxHP()-p.hp,Math.round(maxHP()*.25)));
   p.hp+=heal;p.fatigue=Math.max(0,fatigue()-30);p.fatigueTs=Date.now();
   gainStats({vit:10,per:10});
@@ -1203,7 +1328,7 @@ function finishRecovery(){
   notify({kind:'quest',head:'Recovery Complete',lines:[`[${g.name}: recovery session complete.]`,soreLv(g.region)?'Update your check-in in Recover when it feels better.':'Recovery done. Train smart tomorrow.'],
     rewards:[['XP from moves',`+${fmt(s.xp)}`],['Recovery bonus',`+${fmt(xpPreview)} XP`],...(heal?[['HP',`+${fmt(heal)}`]]:[]),['Fatigue','−30']],foot:RECOVERY.painRule});
   gainXP(base);
-  if(d.heal&&!d.cleared&&soreLv(g.region)>=2) clearDaily();
+  if(d.heal&&!d.cleared&&adaptLv(g.region)>=2) clearDaily();
   if(S.penalty&&!S.penalty.tasks.length&&!penaltyPaused()&&soreLv(g.region)) clearPenalty('Your recovery session cleared it.');
   checkUnlocks();save();refresh();
 }
@@ -1235,6 +1360,7 @@ function openBox(){
   else if(r<.15){S.inv.ward++;got=['Penalty Ward','×1']}
   else if(r<.26){S.inv.key++;got=['Instant Dungeon Key','×1']}
   else if(r<.42){S.inv.potion++;got=['Recovery Potion','×1']}
+  else if(r<.47&&gearDrop(Math.min(5,S.player.rank+1),1)){got=[GEAR[S.gear.owned[S.gear.owned.length-1]].name,'Equipment']}
   else{const g=gainGold((60+Math.random()*180)*(1+S.player.rank*.5));got=['Gold',`+${fmt(g)}`]}
   notify({kind:'info',head:'Random Box',lines:['[You opened a Random Box.]','You have acquired:'],rewards:[got]});
 }
@@ -1248,6 +1374,72 @@ function useItem(id){
     else{S.inv.key++;toast('Your sore joints rule out every gate exercise right now. The key is kept.','bad')}
   }
   else if(id==='elixir'){S.player.points++;toast('Ability point +1','stat')}
+  else if(id==='scroll'){if(S.buffs.scroll){S.inv.scroll++;toast('An XP Scroll is already active.','bad')}else{S.buffs.scroll=true;toast('XP Scroll active: +50% on your next gate clear')}}
+  else if(id==='draught'){addFatigue(-50);toast('Fatigue −50')}
+  else if(id==='compass'){
+    if(S.session&&S.session.g.mode!=='rec'){S.inv.compass++;toast('Finish your gate first.','bad')}
+    else{S.gates.salt=(S.gates.salt||0)+1;const keys=S.gates.list.filter(g=>g.id[0]==='k');genGates(S.daily.date);S.gates.list.push(...keys);UI.tab='gates';toast('The gates shift. New gates detected.')}
+  }
+  else if(id==='balm'){if(S.buffs.balm){S.inv.balm++;toast('A Joint Balm is already applied.','bad')}else{S.buffs.balm=true;toast('Joint Balm applied: +50 XP on your next recovery session')}}
+  save();refresh();
+}
+/* ---------- equipment ---------- */
+// a random unowned piece up to the given rank, with the given chance
+function gearDrop(maxRank,chance){
+  if(Math.random()>=chance) return null;
+  const pool=Object.keys(GEAR).filter(id=>GEAR[id].rank<=maxRank&&!S.gear.owned.includes(id));
+  if(!pool.length) return null;
+  const id=pick(Math.random,pool);S.gear.owned.push(id);return id;
+}
+function buyGear(id,price){
+  const g=GEAR[id];if(!g||S.gear.owned.includes(id)) return;
+  price=price??g.price;
+  if(S.player.gold<price){toast(`You need ${fmt(price-S.player.gold)} more gold`,'bad');return false}
+  S.player.gold-=price;S.gear.owned.push(id);toast(`Acquired: ${g.name}`);
+  if(!S.gear.eq[g.slot]) equipGear(id,true);
+  checkUnlocks();save();refresh();return true;
+}
+function equipGear(id,quiet){
+  const g=GEAR[id];if(!g||!S.gear.owned.includes(id)) return;
+  S.gear.eq[g.slot]=S.gear.eq[g.slot]===id?null:id;
+  if(!quiet) toast(S.gear.eq[g.slot]?`Equipped: ${g.name}`:`Unequipped: ${g.name}`);
+  S.player.hp=Math.min(S.player.hp,maxHP());
+  checkUnlocks();save();refresh();
+}
+// one discounted offer a day, from what the player can use and doesn't own
+function dailyDeal(){
+  const d=S.daily;if(!d) return null;
+  const r=rng('deal'+d.date+S.created),gear=Object.keys(GEAR).filter(id=>GEAR[id].rank<=S.player.rank+1&&!S.gear.owned.includes(id));
+  const opts=[...Object.keys(ITEMS).filter(id=>ITEMS[id].price).map(id=>({kind:'item',id,price:ITEMS[id].price})),...gear.map(id=>({kind:'gear',id,price:GEAR[id].price}))];
+  const o=pick(r,opts);
+  return {...o,price:Math.round(o.price*.7),name:o.kind==='gear'?GEAR[o.id].name:ITEMS[o.id].name,bought:!!d.dealBought};
+}
+function buyDeal(){
+  const o=dailyDeal();if(!o||o.bought) return;
+  if(o.kind==='gear'){if(buyGear(o.id,o.price)){S.daily.dealBought=true;save();refresh()}return}
+  if(S.player.gold<o.price){toast(`You need ${fmt(o.price-S.player.gold)} more gold`,'bad');return}
+  S.player.gold-=o.price;S.inv[o.id]++;S.daily.dealBought=true;toast(`Deal claimed: ${o.name}`);save();refresh();
+}
+/* ---------- shadow extraction ---------- */
+function offerExtraction(g){
+  const id=slug(g.boss),sh=SHADOWS[id];if(!sh) return;
+  const chance=g.trial?1:Math.min(.9,[.6,.5,.4,.35,.3,.25][g.rank]+(g.red?.1:0)+clamp((stat('int')-10)*.004,0,.15));
+  const have=S.shadows[id];
+  notify({kind:'level',head:'Shadow Extraction',big:g.boss.toUpperCase(),lines:[`[A shadow lingers where ${g.boss} fell.]`,have?`You already command it. Extracting again raises it to level ${Math.min(5,have.lv+1)}.`:'Command it to rise and it joins your army.'],prio:1,
+    choices:[{id:'arise',name:`Arise · 20 MP`,desc:`${Math.round(chance*100)}% chance · ${sh.grade} shadow · ${bonusText({[sh.key]:sh.v})}`},{id:'leave',name:'Let it fade',desc:'No cost.'}],
+    onChoose:c=>{if(c==='arise') extract(id,chance)}});
+}
+function extract(id,chance){
+  const sh=SHADOWS[id];
+  if(S.player.mp<20){toast('Not enough MP to extract (20 MP).','bad');return}
+  S.player.mp-=20;
+  if(Math.random()<chance){
+    const v=S.shadows[id];
+    if(v) v.lv=Math.min(5,v.lv+1); else S.shadows[id]={lv:1};
+    Sfx.level();buzz([60,40,60,40,160]);
+    notify({kind:'level',head:'Arise',big:sh.name.toUpperCase(),lines:[v?`[${sh.name} grows stronger.]`:`[${sh.name} has joined your army.]`,`${sh.grade} shadow · level ${S.shadows[id].lv}`],rewards:[['Army bonus',bonusText({[sh.key]:sh.v})]]});
+    checkUnlocks();
+  } else notify({kind:'info',head:'Shadow Extraction',lines:['[Extraction failed.]','The shadow faded. Defeat it again for another chance.']});
   save();refresh();
 }
 function buy(id){
@@ -1355,6 +1547,7 @@ const Sfx={ctx:null,
   clear(){[784,988,1175,1568].forEach((f,i)=>this.t(f,.6,'sine',.06,i*.06))},
   alarm(){for(let i=0;i<3;i++) this.t(240,.26,'sawtooth',.05,i*.32,170)},
   hit(){this.t(190,.18,'square',.06,0,60)},
+  seal(){this.t(110,.45,'sine',.22,0,45);this.t(70,.3,'triangle',.12,.02,40);[659,988,1318].forEach((f,i)=>this.t(f,.7,'sine',.05,.25+i*.09))},
 };
 function buzz(p){if(S.settings.haptics&&navigator.vibrate) try{navigator.vibrate(p)}catch(e){}}
 let wakeLock=null;
@@ -1436,7 +1629,7 @@ function vQuest(){
     return goalRow('task',id,`${taskName(id)}${swapped?' <span class="tag teal">Adapted</span>':''}`,v,tg,`${fmtTask(id,v)}/${fmtTask(id,tg)}${taskSfx(id)}`,v>=tg-1e-6)}).join('');
   const sore=soreJoints(),hj=d.heal&&hurting()[0];
   let main='';
-  if(hj){const done=d.cleared||(d.recDone||[]).some(r=>soreLv(r)>=2);main=goalRow('recInfo',hj,`Recovery session: ${esc(REC_BY[hj].name)}`,done?1:0,1,done?'1/1':'0/1',done)}
+  if(hj){const done=d.cleared||(d.recDone||[]).some(r=>adaptLv(r)>=2);main=goalRow('recInfo',hj,`Recovery session: ${esc(REC_BY[hj].name)}`,done?1:0,1,done?'1/1':'0/1',done)}
   h+=`<section class="win">${winHead('Quest Info','!')}
     <p class="sys">${d.rest?'[Rest Day] The Daily Quest is optional today.':d.heal&&!d.cleared?'[Recovery Day] The System has eased today\'s quest.':'[Daily Quest: Strength Training has arrived.]'}</p>
     ${sore.length?`<p class="note" style="text-align:center;margin:-6px 0 12px">Status ailment: ${sore.map(AILMENT).join(', ')}. <button class="link" data-a="tab" data-x="recover">Recovery</button></p>`:''}
@@ -1446,8 +1639,11 @@ function vQuest(){
       :`<p class="warn">${d.rest?'Clearing it anyway still adds to your streak.':d.heal?'No penalty today. Go easy, and do a recovery session for the joint that hurts.':d.grace?'<b>FIRST DAY:</b> No penalty yet. From tomorrow, failure will result in an appropriate <u>penalty</u>.':'<b>WARNING:</b> Failure to complete the daily quest will result in an appropriate <u>penalty</u>.'}</p>`}
     <div class="clock">${ico('clock')}<span data-live="reset">${hms(nextReset()-Date.now())}</span><small>until reset</small></div>
   </section>`;
+  const sideDone=d.side.filter(q=>q.done).length;
   h+=`<section class="win">${winHead('Optional Quests')}<ul class="side">${d.side.map((q,i)=>{const s=SIDE_BY[q.id];return `<li><button class="side-q${q.done?' done':''}" data-a="side" data-x="${i}" aria-pressed="${q.done}"><span class="box">${q.done?ico('check'):''}</span><span class="side-n">${s.name}</span><span class="side-r">+${SIDE_XP} XP · ${STAT_INFO[s.stat].short}</span></button></li>`}).join('')}</ul>
-    <p class="note">Tick these off yourself. Three new ones arrive at every reset.</p></section>`;
+    <div class="mp-row"><span>${sideDone} / ${d.side.length} done${d.sideFull?' · Full Discipline earned':` · all ${d.side.length}: +${SIDE_FULL.xp} XP, +${SIDE_FULL.gold} gold`}</span>
+      ${d.sideReroll||d.side.every(q=>q.done)?'':`<button class="btn sm ghost" data-a="sideReroll">Swap one</button>`}</div>
+    <p class="note">Tick these off yourself. New ones arrive at every reset.</p></section>`;
   const open=S.gates.list.length+(trialGate()?1:0);
   h+=`<div class="quick"><button class="btn" data-a="runOpen" data-x="gps">${ico('run')}${S.run?`Run · ${trim(toUser(S.run.dist))} ${unit()}`:'Start a run'}</button>
     <button class="btn" data-a="tab" data-x="gates">${ico('gate')}Gates${open?` <span class="pill">${open}</span>`:''}</button></div>`;
@@ -1478,7 +1674,7 @@ function vStatus(){
   return `<section class="win">${winHead('Status')}
     <div class="st-top"><div class="st-lv"><b>${p.level}</b><span>LEVEL</span></div>
       <dl class="st-id">
-        <div><dt>Name</dt><dd>${esc(p.name)}</dd></div>
+        <div><dt>Name</dt><dd>${esc(p.name)}${p.sig?`<img class="sig-img" src="${esc(p.sig)}" alt="Your signature">`:''}</dd></div>
         <div><dt>Job</dt><dd>${p.job?JOBS[p.job].name:'None'}</dd></div>
         <div><dt>Title</dt><dd><button class="link" data-a="titles">${esc(TITLE_BY[p.title]?.name||'None')}</button></dd></div>
         <div><dt>Rank</dt><dd><span class="rk rk-${R.id}">${R.id}</span> Hunter</dd></div>
@@ -1523,20 +1719,52 @@ function vGates(){
 
 /* items tab */
 function vItems(){
-  const p=S.player;
-  return `<section class="win">${winHead('Inventory')}
-    <div class="gold-big">${ico('coin')}${fmt(p.gold)} <small style="font-size:14px;letter-spacing:.1em">GOLD</small></div>
-    <ul class="list">${Object.entries(ITEMS).map(([id,it])=>`<li class="item"><div class="it-ico">${ico(it.icon)}</div><div class="it-b"><h4>${it.name}<span>×${S.inv[id]}</span></h4><p>${it.desc}</p></div>
+  const p=S.player,tab=UI.itemsTab||'inv';
+  const segs=[['inv','Inventory'],['gear','Equipment'],['shop','Shop'],['army','Shadows']];
+  const head=`<div class="seg" role="tablist">${segs.map(([id,l])=>`<button class="seg-b${tab===id?' on':''}" data-a="itemsTab" data-x="${id}" role="tab" aria-selected="${tab===id}">${l}</button>`).join('')}</div>`;
+  const gold=`<div class="gold-big">${ico('coin')}${fmt(p.gold)} <small style="font-size:14px;letter-spacing:.1em">GOLD</small></div>`;
+  const gearRow=(id,btn)=>{const g=GEAR[id],R=RANKS[g.rank];return `<li class="item"><div class="it-ico"><span class="rk rk-${R.id}">${R.id}</span></div><div class="it-b"><h4>${esc(g.name)}</h4><p>${SLOTS[g.slot]} · ${bonusText(g.b)}</p></div>${btn}</li>`};
+  if(tab==='gear'){
+    const owned=S.gear.owned.filter(id=>GEAR[id]);
+    return `${head}<section class="win">${winHead('Equipment')}
+      <ul class="list">${Object.entries(SLOTS).map(([slot,l])=>{const id=S.gear.eq[slot],g=GEAR[id];return `<li class="item"><div class="it-ico">${ico(slot==='weapon'?'sword':slot==='armor'?'ward':'elixir')}</div><div class="it-b"><h4>${l}</h4><p>${g?`<b>${esc(g.name)}</b> · ${bonusText(g.b)}`:'Empty'}</p></div><span></span></li>`}).join('')}</ul>
+    </section>
+    <section class="win">${winHead('Owned Gear')}
+      ${owned.length?`<ul class="list">${owned.map(id=>gearRow(id,S.gear.eq[GEAR[id].slot]===id?`<button class="btn sm" data-a="equip2" data-x="${id}">Unequip</button>`:`<button class="btn sm pri" data-a="equip2" data-x="${id}">Equip</button>`)).join('')}</ul>`
+        :'<p class="empty">No gear yet. Buy it in the Shop, or find it in gates and Random Boxes.</p>'}
+    </section>`;
+  }
+  if(tab==='shop'){
+    const deal=dailyDeal();
+    const stock=Object.keys(GEAR).filter(id=>GEAR[id].rank<=p.rank+1&&!S.gear.owned.includes(id));
+    return `${head}${gold}
+    ${deal?`<section class="win tone-ok">${winHead('Daily Deal','✦')}<ul class="list"><li class="item"><div class="it-ico">${deal.kind==='gear'?`<span class="rk rk-${RANKS[GEAR[deal.id].rank].id}">${RANKS[GEAR[deal.id].rank].id}</span>`:ico(ITEMS[deal.id].icon)}</div>
+      <div class="it-b"><h4>${esc(deal.name)}</h4><p><span class="price">${ico('coin')}${fmt(deal.price)}</span> · 30% off today</p></div>
+      ${deal.bought?'<span class="tag ok">Claimed</span>':`<button class="btn sm pri" data-a="buyDeal" ${p.gold<deal.price?'disabled':''}>Buy</button>`}</li></ul><p class="note">A new deal arrives at every reset.</p></section>`:''}
+    <section class="win">${winHead('Items')}
+      <ul class="list">${Object.entries(ITEMS).filter(([,it])=>it.price).map(([id,it])=>`<li class="item"><div class="it-ico">${ico(it.icon)}</div><div class="it-b"><h4>${it.name}</h4><p>${it.desc} <span class="price">${ico('coin')}${fmt(it.price)}</span></p></div>
+        <button class="btn sm" data-a="buy" data-x="${id}" ${p.gold<it.price?'disabled':''}>Buy</button></li>`).join('')}</ul></section>
+    <section class="win">${winHead('Gear')}
+      ${stock.length?`<ul class="list">${stock.map(id=>gearRow(id,`<button class="btn sm" data-a="buyGear" data-x="${id}" ${p.gold<GEAR[id].price?'disabled':''}>${fmt(GEAR[id].price)}</button>`)).join('')}</ul>`:'<p class="empty">You own everything available at your rank. Rank up for more.</p>'}
+      <p class="note">Stock up to one rank above yours.</p></section>
+    <section class="win">${winHead('System Skins')}
+      <ul class="list">${Object.entries(SKINS).map(([id,sk])=>{const own=S.skins.includes(id),on=S.settings.skin===id;return `<li class="item"><div class="swatch" style="--sw1:${sk.c[0]};--sw2:${sk.c[1]}" aria-hidden="true"></div><div class="it-b"><h4>${sk.name}</h4><p>${own?(on?'In use':'Owned'):`<span class="price">${ico('coin')}${fmt(sk.price)}</span>`}</p></div>
+        ${on?'<span class="tag ok">Active</span>':`<button class="btn sm" data-a="skin" data-x="${id}" ${!own&&p.gold<sk.price?'disabled':''}>${own?'Use':'Buy'}</button>`}</li>`}).join('')}</ul></section>`;
+  }
+  if(tab==='army'){
+    const ids=Object.keys(SHADOWS),have=ids.filter(id=>S.shadows[id]);
+    const totals=ARMY_KEYS.map(k=>[k,armyBonus(k)]).filter(([,v])=>v>0);
+    return `${head}<section class="win tone-violet">${winHead('Shadow Army')}
+      <p class="sys">${have.length} / ${ids.length} shadows</p>
+      ${totals.length?`<ul class="effects" aria-label="Army bonus">${totals.map(([k,v])=>`<li>+${Math.round(v*100)}% ${BONUS_LABEL[k]}</li>`).join('')}</ul>`:''}
+      <div class="army">${ids.map(id=>{const sh=SHADOWS[id],v=S.shadows[id];return `<div class="sh${v?' got':''}" title="${esc(sh.name)}"><div class="sh-ico">${ico('shadow')}</div>
+        <b>${v?esc(sh.name):'???'}</b><small>${RANKS[sh.rank].id} · ${sh.grade}${v?` · Lv ${v.lv}`:''}</small>${v?`<small>${bonusText({[sh.key]:sh.v*(1+.5*(v.lv-1))})}</small>`:''}</div>`}).join('')}</div>
+      <p class="note">Defeat a gate boss, then choose Arise to extract its shadow (20 MP). Extracting a shadow you own levels it up (max 5). Each army bonus is capped at +${Math.round(ARMY_CAP*100)}%.</p></section>`;
+  }
+  return `${head}<section class="win">${winHead('Inventory')}${gold}
+    <ul class="list">${Object.entries(ITEMS).map(([id,it])=>`<li class="item"><div class="it-ico">${ico(it.icon)}</div><div class="it-b"><h4>${it.name}<span>×${S.inv[id]||0}</span></h4><p>${it.desc}</p></div>
       ${S.inv[id]&&!it.passive?`<button class="btn sm" data-a="use" data-x="${id}">${id==='box'?'Open':'Use'}</button>`:'<span></span>'}</li>`).join('')}</ul>
-  </section>
-  <section class="win">${winHead('Shop')}
-    <ul class="list">${Object.entries(ITEMS).filter(([,it])=>it.price).map(([id,it])=>`<li class="item"><div class="it-ico">${ico(it.icon)}</div><div class="it-b"><h4>${it.name}</h4><p><span class="price">${ico('coin')}${fmt(it.price)}</span></p></div>
-      <button class="btn sm" data-a="buy" data-x="${id}" ${p.gold<it.price?'disabled':''}>Buy</button></li>`).join('')}</ul>
-    <p class="note">Earn gold from Daily Quests, gates and Random Boxes.</p>
-  </section>
-  <section class="win">${winHead('System Skins')}
-    <ul class="list">${Object.entries(SKINS).map(([id,sk])=>{const own=S.skins.includes(id),on=S.settings.skin===id;return `<li class="item"><div class="swatch" style="--sw1:${sk.c[0]};--sw2:${sk.c[1]}" aria-hidden="true"></div><div class="it-b"><h4>${sk.name}</h4><p>${own?(on?'In use':'Owned'):`<span class="price">${ico('coin')}${fmt(sk.price)}</span>`}</p></div>
-      ${on?'<span class="tag ok">Active</span>':`<button class="btn sm" data-a="skin" data-x="${id}" ${!own&&p.gold<sk.price?'disabled':''}>${own?'Use':'Buy'}</button>`}</li>`}).join('')}</ul>
+    ${S.buffs.scroll||S.buffs.balm?`<p class="note">Active: ${[S.buffs.scroll&&'XP Scroll',S.buffs.balm&&'Joint Balm'].filter(Boolean).join(', ')}</p>`:''}
   </section>`;
 }
 
@@ -1575,6 +1803,7 @@ function vRecover(){
       const days=daysBetween(v.since,d.date)+1;
       note=needsCheck(j)?`<small class="warn-old">Time to get this checked by a physio or doctor. <button class="link" data-a="flagsInfo" data-x="${j}">Warning signs</button></small>`
         :`<small>${AILMENT(j)} · day ${days}. ${v.checked===d.date?'Checked in today.':`Still ${lv===2?'hurting':'sore'}? Tap ${lv===2?'Hurts':'Sore'} to confirm.`}</small>`;
+      note+=`<small><button class="chip${v.adapt?' on':''}" style="min-height:30px;padding:5px 10px" data-a="adaptToggle" data-x="${j}" aria-pressed="${!!v.adapt}">${v.adapt?'Daily Quest adapted':'Daily Quest unchanged'}</button></small>`;
     } else if(v) note='<small>Your flag ended after 3 days. Still sore? Flag it again.</small>';
     return `<li class="joint"><h4>${esc(REC_BY[j].name)}</h4><div class="tri" role="group" aria-label="${esc(REC_BY[j].name)}">${['OK','Sore','Hurts'].map((l,i)=>`<button class="l${i}" data-a="joint" data-x="${j}:${i}" aria-pressed="${lv===i}">${l}</button>`).join('')}</div>${note}</li>`;
   }).join('');
@@ -1590,7 +1819,7 @@ function vRecover(){
     <p class="sys">[How do your joints feel today?]</p>
     <ul class="joints">${joints}</ul>
     ${rows.length?`<ul class="adapt" aria-label="What the System changed">${rows.map(([a,b])=>`<li><span>${esc(a)}</span><b>${esc(b)}</b></li>`).join('')}</ul>`:''}
-    <p class="note">Sore: the System swaps out exercises that load the joint. Hurts: its recovery session becomes the day's main task, other goals turn optional and there is no penalty. Flags last 3 days, then the System asks again.</p>
+    <p class="note">Gates and the Penalty Quest always avoid a sore joint. The Daily Quest only changes if you allow it: Sore swaps exercises that load the joint; Hurts makes its recovery session the day's main task, with no penalty. Flags last 3 days, then the System asks again.</p>
   </section>
   <section class="win tone-ok">${winHead('Recovery Sessions')}<div class="recs">${cards}</div></section>
   <section class="win tone-ok">${winHead('Recovery Habits')}<ul class="side">${habits}</ul>
@@ -1643,6 +1872,17 @@ const SHEETS={
       <button class="btn pri block xl" data-a="runOpen" data-x="gps">${ico('run')}${S.run?(walk?'Resume timed walk':'Resume tracked run'):(walk?'Time a walk':'Track a run with GPS')}</button>
       <div class="row2"><button class="btn" data-a="runOpen" data-x="manual">${walk?'Log minutes':'Log distance'}</button>${last&&!d.cleared?`<button class="btn ghost" data-a="cUndoRun">Undo last (${fmtAmt('run',last.pn??last.n)})</button>`:''}</div>
       <p class="cue">${EX[taskEx('run')].cue}</p>`;
+  },
+  adaptAsk(){
+    const {j,lv}=UI.sheet,R=REC_BY[j];if(!R) return null;
+    const swaps=RECOVERY.dailySubs.filter(s=>s.joints.includes(j)&&S.daily.targets[s.task]!=null);
+    const rows=swaps.map(s=>`<li><span>${DAILY_BY[s.task].name}</span><b>${esc(EX[s.altId].name)}${lv>=2?' · optional':''}</b></li>`);
+    if(lv>=2) rows.unshift(`<li><span>Main task</span><b>${esc(R.name)} recovery session</b></li>`),rows.push('<li><span>Today</span><b>No penalty · streak kept</b></li>');
+    return `<div class="sh-head"><div><p class="eyebrow">${AILMENT(j)}</p><h3>Adapt your Daily Quest?</h3></div>${closeBtn}</div>
+      <p>Gates and the Penalty Quest will avoid your ${esc(R.name.toLowerCase())} either way. Should the System also change today's Daily Quest?</p>
+      ${rows.length?`<ul class="adapt">${rows.join('')}</ul>`:'<p class="note">None of your Daily Quest goals load this joint, so nothing would change today.</p>'}
+      <div class="row2"><button class="btn" data-a="adaptNo" data-x="${j}">Keep my quest as is</button><button class="btn pri" data-a="adaptYes" data-x="${j}">Adapt my Daily Quest</button></div>
+      <p class="note">You can change this later from the joint's row in Recover.</p>`;
   },
   flags(){
     const {j,mode}=UI.sheet,R=REC_BY[j];if(!R) return null;
@@ -1719,7 +1959,7 @@ function renderScreen(){
   el.dataset.k=k;
   el.innerHTML=`<div class="screen scr-${k}" role="dialog" aria-modal="true">${SCREENS[k]()}</div>`;
   if(st) el.querySelector('.screen').scrollTop=st;
-  if(k==='awaken') typewrite(el);
+  if(k==='awaken'){typewrite(el);if(UI.aw&&UI.aw.step==='sign') initSig()}
   if(k==='run') drawPath();
 }
 const SCREENS={
@@ -1732,6 +1972,18 @@ const SCREENS={
       <p class="sys">[Enter your name, Player.]</p>
       <label class="field"><span>Player name</span><input id="aw-name" maxlength="16" autocomplete="nickname" value="${esc(a.name)}" placeholder="Your name"></label>
       <button class="btn pri block" data-a="awName">Continue</button></section></div>`;
+    if(a.step==='sign'){
+      const terms=['I will clear the Daily Quest every day the System assigns one.','I accept the penalty that follows failure.','I will rest when my body asks, and recover before I return.','I will become stronger than I was yesterday.'];
+      return `<div class="aw"><section class="win contract${a.sealed?' sealed':''}" id="contract">${winHead('Player Contract','✦')}
+        <p class="sys">${['[A contract has been prepared for you.]'].map(l=>`<span data-tw="${esc(l)}"><span></span><span class="ghost">${esc(l)}</span></span>`).join('')}</p>
+        <p class="ct-name">Player: <b>${esc(a.name)}</b></p>
+        <ol class="terms">${terms.map(t=>`<li>${t}</li>`).join('')}</ol>
+        <p class="lbl">${a.sealed?'Contract sealed':'Sign here with your finger'}</p>
+        <div class="sigbox"><canvas id="sig" width="600" height="200" aria-label="Signature pad"></canvas><span class="sigline" aria-hidden="true">✕</span>
+          ${a.sealed?'<div class="seal" aria-hidden="true"><span>!</span><small>SEALED</small></div>':''}</div>
+        ${a.sealed?'':`<div class="row2" style="margin-top:14px"><button class="btn" data-a="sigClear">Clear</button><button class="btn pri" data-a="sigSeal" id="sig-seal" ${a.sigLen>120?'':'disabled'}>Seal the contract</button></div>`}
+      </section></div>`;
+    }
     if(a.step===2){
       const st=(id,l,h)=>`<div><h3>${l}</h3><p class="hint" style="margin:0 0 8px">${h}</p><div class="stepper sm"><button class="btn sq" data-a="awStep" data-x="${id}:-1" aria-label="Less">−</button><input id="aw-${id}" type="number" inputmode="numeric" min="0" max="300" value="${a.base[id]}" aria-label="${l}"><button class="btn sq" data-a="awStep" data-x="${id}:1" aria-label="More">+</button></div></div>`;
       const runs=S.settings.units==='mi'?['I mostly walk','About 0.5 mi','1–2 mi','3 mi','6 mi or more']:['I mostly walk','About 1 km','2–3 km','5 km','10 km or more'];
@@ -1938,7 +2190,7 @@ function importText(txt){
   if(S.daily&&!(S.daily.targets&&S.daily.prog&&Array.isArray(S.daily.side)&&S.daily.side.every(q=>SIDE_BY[q.id]))) S.daily=null;
   const joints={};
   const day=/^\d{4}-\d\d-\d\d$/;
-  for(const j of JOINT_IDS){const v=S.joints&&S.joints[j];if(v&&[0,1,2].includes(v.lv)&&day.test(v.since)&&day.test(v.checked||'')) joints[j]={lv:v.lv,lastLv:[1,2].includes(v.lastLv)?v.lastLv:v.lv||1,since:v.since,checked:v.checked,l2:clamp(Math.round(+v.l2)||0,0,99)}}
+  for(const j of JOINT_IDS){const v=S.joints&&S.joints[j];if(v&&[0,1,2].includes(v.lv)&&day.test(v.since)&&day.test(v.checked||'')) joints[j]={lv:v.lv,lastLv:[1,2].includes(v.lastLv)?v.lastLv:v.lv||1,since:v.since,checked:v.checked,l2:clamp(Math.round(+v.l2)||0,0,99),adapt:v.adapt!==false}}
   S.joints=joints;
   if(S.daily){
     const d=S.daily;
@@ -1948,6 +2200,11 @@ function importText(txt){
   }
   if(!Array.isArray(S.gates.done)) S.gates.done=[];
   if(!S.recSeen||typeof S.recSeen!=='object'||Array.isArray(S.recSeen)) S.recSeen={};
+  S.gear={owned:(Array.isArray(S.gear&&S.gear.owned)?S.gear.owned:[]).filter(id=>GEAR[id]),eq:Object.fromEntries(Object.keys(SLOTS).map(sl=>{const id=S.gear&&S.gear.eq&&S.gear.eq[sl];return [sl,GEAR[id]&&GEAR[id].slot===sl&&S.gear.owned.includes(id)?id:null]}))};
+  S.shadows=Object.fromEntries(Object.entries(S.shadows||{}).filter(([id,v])=>SHADOWS[id]&&v).map(([id,v])=>[id,{lv:clamp(Math.round(+v.lv)||1,1,5)}]));
+  S.buffs={scroll:!!(S.buffs&&S.buffs.scroll),balm:!!(S.buffs&&S.buffs.balm)};
+  for(const k of Object.keys(ITEMS)) S.inv[k]=clamp(Math.round(+S.inv[k])||0,0,9999);
+  if(S.player.sig&&!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(S.player.sig)) S.player.sig=null;
   UI.screen=null;UI.sheet=null;UI.tab='quest';
   applySkin();saveNow();
   if(S.awakened){rollover();announce()} else startAwakening();
@@ -1960,6 +2217,39 @@ function startAwakening(recal){
 function readAssess(){
   const a=UI.aw;
   for(const k of ['pushup','situp','squat']){const el=$('#aw-'+k);if(el) a.base[k]=clamp(Math.round(+el.value||0),0,300)}
+}
+// A new flag asks whether it may change the Daily Quest; re-checks and OK go straight through
+function askAdapt(j,lv){
+  const v=S.joints[j];
+  if(!lv||(v&&v.lv>0&&typeof v.adapt==='boolean')){UI.sheet=null;setJoint(j,lv);return}
+  UI.sheet={kind:'adaptAsk',j,lv,tone:'ok'};refresh();
+}
+/* ---------- contract signature ---------- */
+// strokes are kept in UI.aw so a re-render redraws them; the stored signature is a small PNG
+function initSig(){
+  const c=$('#sig');if(!c) return;
+  const a=UI.aw,x=c.getContext('2d');
+  const draw=()=>{x.clearRect(0,0,c.width,c.height);x.lineCap=x.lineJoin='round';x.lineWidth=5;x.strokeStyle=cssVar('--glow');x.shadowColor=cssVar('--line');x.shadowBlur=10;
+    for(const st of a.strokes||[]){x.beginPath();st.forEach(([px,py],i)=>i?x.lineTo(px,py):x.moveTo(px,py));if(st.length===1) x.lineTo(st[0][0]+.1,st[0][1]);x.stroke()}};
+  draw();
+  if(a.sealed) return;
+  const pos=e=>{const r=c.getBoundingClientRect();return [(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};
+  let cur=null;
+  c.addEventListener('pointerdown',e=>{e.preventDefault();c.setPointerCapture(e.pointerId);cur=[pos(e)];a.strokes.push(cur);draw()});
+  c.addEventListener('pointermove',e=>{if(!cur) return;const p=pos(e),l=cur[cur.length-1];a.sigLen+=Math.hypot(p[0]-l[0],p[1]-l[1]);cur.push(p);draw();
+    const b=$('#sig-seal');if(b) b.disabled=a.sigLen<=120});
+  const end=()=>{cur=null};
+  c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end);
+}
+function sealContract(){
+  const a=UI.aw,c=$('#sig');if(!c||a.sigLen<=120) return;
+  const small=document.createElement('canvas');small.width=300;small.height=100;
+  small.getContext('2d').drawImage(c,0,0,300,100);
+  try{a.sig=small.toDataURL('image/png')}catch(e){a.sig=null}
+  a.sealed=true;Sfx.seal();buzz([60,40,140]);refresh();
+  // the stamp lands, then the contract dissolves into the assessment
+  setTimeout(()=>{const w=$('#contract');if(w) w.classList.add('burn')},reduceMotion?200:1500);
+  setTimeout(()=>{if(UI.aw&&UI.aw.step==='sign'){UI.aw.step=2;refresh()}},reduceMotion?400:2500);
 }
 let deferredInstall=null;
 const ACT={
@@ -1974,14 +2264,18 @@ const ACT={
   },
   task(x){if(x==='run') UI.sheet={kind:'runTask'}; else openCounter('daily',x);refresh()},
   pen(x){const t=S.penalty.tasks[x];if(EX[t.ex].type==='time') UI.sheet={kind:'hold',i:+x,acc:0,start:0,tone:true}; else openCounter('pen',x);refresh()},
-  side(x){toggleSide(+x)},
+  side(x){if(UI.rerolling){UI.rerolling=false;rerollSide(+x);return}toggleSide(+x)},
+  sideReroll(){UI.rerolling=true;toast('Tap the optional quest you want to swap.')},
   joint(x){
     const[j,l]=x.split(':'),lv=+l;
     // "Hurts" first checks the joint's warning signs
     if(lv===2&&soreLv(j)<2){UI.sheet={kind:'flags',j,mode:'confirm',tone:'red'};refresh();return}
-    setJoint(j,lv);
+    askAdapt(j,lv);
   },
-  flagsNone(x){UI.sheet=null;setJoint(x,2)},
+  flagsNone(x){askAdapt(x,2)},
+  adaptYes(x){const lv=UI.sheet.lv;UI.sheet=null;setJoint(x,lv,true)},
+  adaptNo(x){const lv=UI.sheet.lv;UI.sheet=null;setJoint(x,lv,false)},
+  adaptToggle(x){toggleAdapt(x)},
   flagsSome(){UI.sheet.mode='stop';refresh()},
   flagsInfo(x){UI.sheet={kind:'flags',j:x,mode:'info',tone:'red'};refresh()},
   recInfo(x){UI.sheet={kind:'rec',id:x,tone:'ok'};refresh()},
@@ -2039,13 +2333,19 @@ const ACT={
   },
   use(x){useItem(x)},
   buy(x){buy(x)},
+  itemsTab(x){UI.itemsTab=x;refresh()},
+  equip2(x){equipGear(x)},
+  buyGear(x){buyGear(x)},
+  buyDeal(){buyDeal()},
   skin(x){skinAct(x)},
   ntfOk(){closeNotify()},
   ntfSkip(){twFinish($('#ntf'))},
   ntfChoose(x){const n=curN;n&&n.onChoose&&n.onChoose(x);closeNotify()},
   awAccept(){UI.aw.step=1;Sfx.notify();refresh();setTimeout(()=>{const i=$('#aw-name');i&&i.focus()},50)},
   awDecline(){UI.aw.declined=true;Sfx.alarm();buzz([100,60,100]);refresh()},
-  awName(){const v=($('#aw-name').value||'').trim().slice(0,16);if(!v){toast('Enter a name to continue.','bad');return}UI.aw.name=v;UI.aw.step=2;refresh()},
+  awName(){const v=($('#aw-name').value||'').trim().slice(0,16);if(!v){toast('Enter a name to continue.','bad');return}UI.aw.name=v;UI.aw.step='sign';UI.aw.sigLen=0;UI.aw.sealed=false;UI.aw.strokes=[];refresh()},
+  sigClear(){const a=UI.aw;a.strokes=[];a.sigLen=0;refresh()},
+  sigSeal(){sealContract()},
   awStep(x){readAssess();const[k,d]=x.split(':');UI.aw.base[k]=clamp(UI.aw.base[k]+(+d),0,300);refresh()},
   awRun(x){readAssess();UI.aw.base.run=+x;refresh()},
   awUnits(x){readAssess();S.settings.units=x;refresh()},
@@ -2058,7 +2358,7 @@ const ACT={
     const a=UI.aw;
     S.baseline={...a.base};S.settings.diff=a.diff;S.settings.restDays=a.rest.slice().sort();
     if(a.recal){retarget();UI.screen={kind:'settings'};toast('Assessment saved. Today\'s goals updated.');save();refresh();return}
-    S.player.name=a.name;S.awakened=true;S.created=Date.now();
+    S.player.name=a.name;S.player.sig=a.sig||null;S.awakened=true;S.created=Date.now();
     recover();newDay(dayKey(),true);
     UI.screen=null;UI.tab='quest';
     notify({kind:'info',head:'Notification',lines:['[Registration complete.]',`Welcome, Player ${a.name}.`,'The System will now assign your first Daily Quest.'],btn:'Continue'});
@@ -2181,12 +2481,12 @@ function snapshot(){
   const goals=ids.map(id=>{const done=d.prog[id]>=d.targets[id]-1e-6,u=taskSfx(id);
     return {name:taskName(id),progress:`${fmtTask(id,Math.min(d.prog[id],d.targets[id]))} / ${fmtTask(id,d.targets[id])}${u}`,target:`0 / ${fmtTask(id,d.targets[id])}${u}`,done,mark:done?'✓':'○'}});
   const hj=d.heal&&hurting()[0];
-  if(hj){const done=d.cleared||(d.recDone||[]).some(r=>soreLv(r)>=2);goals.unshift({name:`Recovery: ${REC_BY[hj].name}`,progress:done?'1 / 1':'0 / 1',target:'0 / 1',done,mark:done?'✓':'○'})}
+  if(hj){const done=d.cleared||(d.recDone||[]).some(r=>adaptLv(r)>=2);goals.unshift({name:`Recovery: ${REC_BY[hj].name}`,progress:done?'1 / 1':'0 / 1',target:'0 / 1',done,mark:done?'✓':'○'})}
   const left=d.cleared?0:hj?(goals[0].done?0:1):goals.filter(g=>!g.done).length,optional=!!(d.rest||d.heal);
   const status=S.penalty?'Penalty Quest active':d.cleared?'Daily Quest complete':d.heal?'Recovery day · no penalty':d.rest?'Rest day · optional':`${left} goal${left===1?'':'s'} left`;
   const h=S.settings.resetHour;
   return {name:p.name,level:p.level,rank:rankOf().id,streak:S.streak.cur,cleared:d.cleared,optional,penalty:!!S.penalty,left,status,goals,
-    ailments:soreJoints().map(AILMENT).join(', '),resets:h?`Resets at ${h}:00 AM`:'Resets at midnight',date:d.date,resetHour:h,badge:!!S.settings.badge,restDays:S.settings.restDays.slice(),heal:maxSore()>=2};
+    ailments:soreJoints().map(AILMENT).join(', '),resets:h?`Resets at ${h}:00 AM`:'Resets at midnight',date:d.date,resetHour:h,badge:!!S.settings.badge,restDays:S.settings.restDays.slice(),heal:maxAdapt()>=2};
 }
 function syncOutside(){
   if(!S.awakened||!S.daily){
@@ -2222,6 +2522,8 @@ function syncOutside(){
     rollover();
     // saves from before the recovery update have no recovery habits for the current day
     if(S.daily&&!Array.isArray(S.daily.rh)){S.daily.recDone=S.daily.recDone||[];syncRecHabits()}
+    // flags from before the opt-in always adapted the Daily Quest
+    for(const v of Object.values(S.joints)) if(typeof v.adapt!=='boolean') v.adapt=true;
     if(S.session) UI.screen={kind:'gate'};
     deepLink();
     announce();
