@@ -1,5 +1,5 @@
 /* Awaken offline cache and Windows widget. Bump VERSION whenever the app files change. */
-const VERSION = 'awaken-v8';
+const VERSION = 'awaken-v9';
 const FONTS = 'awaken-fonts';
 const WIDGET_CACHE = 'awaken-widget'; // the page writes the widget's data snapshot here; it must survive updates
 const SHELL = [
