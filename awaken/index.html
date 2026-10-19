@@ -255,6 +255,8 @@ h1,h2,h3,h4{text-wrap:balance}
 .c.fail{background:var(--red)}
 .c.rest{background:color-mix(in srgb,var(--dim) 45%,transparent)}
 .c.ward{background:var(--gold)}
+.code-box{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:10px 12px;border:1px solid var(--line-a);border-radius:3px;background:color-mix(in srgb,var(--line) 6%,transparent)}
+.code-box code{flex:1;min-width:0;font:600 13px/1.3 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em;color:var(--ink);overflow-wrap:anywhere}
 .c.freeze{background:#7fd8ff;box-shadow:inset 0 0 0 1px #fff6}
 .event{display:flex;flex-direction:column;gap:2px;margin:0 0 14px;padding:10px 14px;border:1px solid var(--line-a);border-left:3px solid var(--glow);background:color-mix(in srgb,var(--line) 8%,transparent);border-radius:3px}
 .event b{font:700 12.5px/1.2 var(--f-disp);letter-spacing:.12em;text-transform:uppercase;color:var(--glow)}
@@ -769,7 +771,7 @@ function merge(base,src){
 function load(){try{const raw=localStorage.getItem(KEY);if(raw) return merge(freshState(),JSON.parse(raw))}catch(e){}return freshState()}
 let S=load(),saveTimer=0;
 function save(){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,250)}
-function saveNow(){clearTimeout(saveTimer);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}syncOutside()}
+function saveNow(){clearTimeout(saveTimer);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}syncOutside();remindSync();cloudSoon()}
 const UI={tab:'quest',sheet:null,screen:null,aw:null,runMode:'gps',hit:0,confirmReset:false,confirmDiscard:false,geoErr:''};
 
 /* ---------- time ---------- */
@@ -1653,8 +1655,19 @@ function runPause(){
   r.el+=Date.now()-r.seg;r.seg=null;r.last=null;
   stopGeo();save();refresh();
 }
+// In the Android app, GPS keeps running with the screen off (with a notification while a run is tracked)
+let bgWatch=null;
 function startGeo(){
   UI.geoErr='';
+  const BG=PLUG('BackgroundGeolocation');
+  if(BG){
+    if(bgWatch) return;
+    bgWatch=BG.addWatcher({backgroundTitle:'Awaken is tracking your run',backgroundMessage:'Tap to return to your run.',requestPermissions:true,stale:false,distanceFilter:3},(loc,err)=>{
+      if(err){UI.geoErr=err.code==='NOT_AUTHORIZED'?'Location permission denied. Allow it in Android settings, or log the run manually.':'Waiting for a GPS signal…';runLive();return}
+      if(loc) onPos({coords:{latitude:loc.latitude,longitude:loc.longitude,accuracy:loc.accuracy},timestamp:loc.time||Date.now()});
+    });
+    return;
+  }
   if(!('geolocation' in navigator)){UI.geoErr='GPS is not available here. Use manual entry.';return}
   if(geoWatch!=null) return;
   geoWatch=navigator.geolocation.watchPosition(onPos,err=>{
@@ -1662,7 +1675,7 @@ function startGeo(){
     runLive();
   },{enableHighAccuracy:true,maximumAge:0,timeout:30000});
 }
-function stopGeo(){if(geoWatch!=null&&navigator.geolocation) navigator.geolocation.clearWatch(geoWatch);geoWatch=null}
+function stopGeo(){if(bgWatch){const BG=PLUG('BackgroundGeolocation');Promise.resolve(bgWatch).then(id=>BG&&BG.removeWatcher({id})).catch(()=>{});bgWatch=null}if(geoWatch!=null&&navigator.geolocation) navigator.geolocation.clearWatch(geoWatch);geoWatch=null}
 function onPos(pos){
   const r=S.run;if(!r) return;
   const {latitude:la,longitude:lo,accuracy:acc}=pos.coords;
@@ -2212,7 +2225,9 @@ const SCREENS={
     const a=UI.aw;
     if(a.step===0) return `<div class="aw"><p class="brand">AWAKEN</p><section class="win">${winHead('Notification','!')}
       <div class="lines">${(a.declined?['[Declining is not an option.]','The System has already chosen you.']:['[You have acquired the qualifications to be a Player.]','Will you accept?']).map(l=>`<p data-tw="${esc(l)}"><span></span><span class="ghost">${esc(l)}</span></p>`).join('')}</div>
-      <div class="row2" style="margin-top:16px">${a.declined?'':'<button class="btn" data-a="awDecline">Decline</button>'}<button class="btn pri" data-a="awAccept">Accept</button></div></section></div>`;
+      <div class="row2" style="margin-top:16px">${a.declined?'':'<button class="btn" data-a="awDecline">Decline</button>'}<button class="btn pri" data-a="awAccept">Accept</button></div></section>
+      <p style="text-align:center;margin-top:18px"><button class="link" data-a="awLink">${a.link?'Close':'Already a Player? Load your cloud save'}</button></p>
+      ${a.link?`<section class="win">${winHead('Cloud Save')}<label class="field"><span>Your cloud save code</span><input id="cloud-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"></label><button class="btn pri block" data-a="cloudLink">Load my progress</button></section>`:''}</div>`;
     if(a.step===1) return `<div class="aw"><section class="win">${winHead('Registration')}
       <p class="sys">[Enter your name, Player.]</p>
       <label class="field"><span>Player name</span><input id="aw-name" maxlength="16" autocomplete="nickname" value="${esc(a.name)}" placeholder="Your name"></label>
@@ -2345,8 +2360,27 @@ const SCREENS={
         ${tog('badge','App icon badge','Shows how many Daily Quest goals are left on the installed app icon. On iPhone, allow notifications when asked; Awaken only uses that for the badge.')}
         ${standalone?'':deferredInstall?'<button class="btn pri block" data-a="install" style="margin-top:8px">Install app</button>':`<p class="hint">${ios?'To install: tap the Share button in Safari, then <b>Add to Home Screen</b>.':'To install: open your browser menu and choose <b>Install app</b> or <b>Add to Home screen</b>.'}</p>`}
       </section>
+      <section class="win">${winHead('Reminders')}
+        ${Push.cfg?`<p class="hint" style="margin:0 0 12px">The System reminds you <b>${Push.cfg.before} hour${Push.cfg.before>1?'s':''}</b> before the reset if the Daily Quest isn't cleared. No reminder on rest days, recovery days or once it's done.</p>
+          <label class="field"><span>Remind me</span><select data-c="remindBefore">${[1,2,3,4,6,8].map(h=>`<option value="${h}"${Push.cfg.before===h?' selected':''}>${h} hour${h>1?'s':''} before the reset</option>`).join('')}</select></label>
+          <div class="row2"><button class="btn" data-a="remindTest">Send a test</button><button class="btn" data-a="remindOff">Turn off</button></div>`
+        :`<p class="hint" style="margin:0 0 12px">Get a notification a few hours before the reset when the Daily Quest isn't done yet.${!NATIVE&&/iphone|ipad|ipod/i.test(navigator.userAgent)&&!standalone?' On iPhone, add Awaken to your Home Screen first, then turn this on from there.':''}</p>
+          <button class="btn pri block" data-a="remindOn" ${pushSupported()?'':'disabled'}>Turn on reminders</button>
+          ${pushSupported()?'':'<p class="hint">This browser can\'t show reminders.</p>'}`}
+      </section>
+      <section class="win">${winHead('Cloud Save')}
+        ${Cloud.cfg?`<p class="hint" style="margin:0 0 12px">${Cloud.busy?'Syncing…':Cloud.err?'Offline. Your progress is saved on this device and syncs when you are back online.':Cloud.cfg.at?`Synced ${clockTime(Cloud.cfg.at)}.`:'Not synced yet.'} Use your code to link another device or restore on a new phone.</p>
+          <div class="code-box"><code>${UI.showCode?esc(Cloud.cfg.code):'••••-••••-••••-••••-••••-••••'}</code><button class="btn sm" data-a="cloudShow">${UI.showCode?'Hide':'Show'}</button><button class="btn sm" data-a="cloudCopy">Copy</button></div>
+          <p class="hint">Keep this code private and somewhere safe. Anyone with it can load your progress, and it can't be recovered if lost.</p>
+          <div class="row2"><button class="btn" data-a="cloudSync" ${Cloud.busy?'disabled':''}>Sync now</button><button class="btn" data-a="cloudUnlink">Unlink device</button></div>
+          ${UI.confirmCloudDel?'<div class="confirm" style="margin-top:12px"><p>Delete the cloud save for every device? Progress on this device stays.</p><div class="row2"><button class="btn" data-a="cloudDelNo">Keep it</button><button class="btn danger" data-a="cloudDelYes">Delete</button></div></div>':'<button class="btn ghost block" data-a="cloudDelAsk" style="margin-top:8px">Delete cloud save</button>'}`
+        :`<p class="hint" style="margin:0 0 12px">Optional. Keeps your progress in sync across devices and safe if you lose your phone. No account: you get a private code instead. Your save is encrypted on this device with that code before it is uploaded, so the server can't read it.</p>
+          <button class="btn pri block" data-a="cloudCreate">Create a cloud save</button>
+          <label class="field" style="margin-top:14px"><span>Already have a code?</span><input id="cloud-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"></label>
+          <button class="btn block" data-a="cloudLink">Link this device</button>`}
+      </section>
       <section class="win">${winHead('Save Data')}
-        <p class="hint" style="margin:0 0 12px">Your progress lives on this device only. Export a backup now and then, and use it to move to a new phone.</p>
+        <p class="hint" style="margin:0 0 12px">Your progress lives on this device${Cloud.cfg?' and in your cloud save':''}. Export a backup now and then, and use it to move to a new phone.</p>
         <div class="row2"><button class="btn" data-a="exportDl">Download</button><button class="btn" data-a="exportCopy">Copy text</button></div>
         <label class="field" style="margin-top:16px"><span>Restore a backup</span><textarea id="imp-text" rows="3" placeholder="Paste backup text here"></textarea></label>
         <div class="row2"><button class="btn" data-a="importPaste">Restore text</button><label class="btn">Choose file<input type="file" id="imp-file" accept="application/json,.json,.txt" data-c="importFile" hidden></label></div>
@@ -2355,7 +2389,7 @@ const SCREENS={
       <section class="win about">${winHead('About')}
         <p>Awaken turns your training into a game. Clear the Daily Quest, survive the penalty when you don't, enter gates for extra workouts and watch your stats grow.</p>
         <p>Train within your limits. Stop if you feel sharp pain, dizziness or chest discomfort. Check with a doctor before starting if you have a health condition.</p>
-        <p>No account, no ads, no tracking. Everything stays on this device. Location is used only while you track a run.</p>
+        <p>No account, no ads, no tracking. Everything stays on this device unless you turn on cloud save or reminders. Location is used only while you track a run, and never leaves this device. <a href="${NATIVE?API+'/':''}privacy.html" target="_blank" rel="noopener">Privacy</a></p>
         <p class="hint">Version 1.0</p>
       </section></div>`;
   },
@@ -2414,7 +2448,7 @@ function openCounter(ctx,x){
   else{const t=S.penalty.tasks[x],left=Math.max(0,t.target-t.done);UI.sheet={kind:'counter',ctx,i:+x,n:left?Math.min(10,left):10,tone:true}}
 }
 function exportText(){return JSON.stringify(S)}
-function importText(txt){
+function importText(txt,quiet){
   let obj;
   try{obj=JSON.parse(txt)}catch(e){toast('That backup could not be read. Paste the full text, starting with {.','bad');return}
   if(!obj||typeof obj!=='object'||!obj.player||!obj.stats){toast('That text is not an Awaken backup.','bad');return}
@@ -2466,7 +2500,7 @@ function importText(txt){
   UI.screen=null;UI.sheet=null;UI.tab='quest';
   applySkin();saveNow();
   if(S.awakened){rollover();announce()} else startAwakening();
-  toast('Backup restored');refresh();
+  if(!quiet) toast('Backup restored');refresh();
 }
 // fills in state that older saves lack; runs before the first rollover so it sees the right flags
 function migrate(){
@@ -2608,6 +2642,19 @@ const ACT={
   ntfOk(){closeNotify()},
   ntfSkip(){twFinish($('#ntf'))},
   ntfChoose(x){const n=curN;n&&n.onChoose&&n.onChoose(x);closeNotify()},
+  remindOn(){remindOn(3)},
+  remindOff(){remindOff()},
+  remindTest(){remindTest()},
+  cloudCreate(){cloudCreate()},
+  cloudLink(){cloudLink(($('#cloud-code')||{}).value)},
+  cloudSync(){cloudSync(true)},
+  cloudShow(){UI.showCode=!UI.showCode;refresh()},
+  cloudCopy(){navigator.clipboard&&navigator.clipboard.writeText(Cloud.cfg.code).then(()=>toast('Code copied'),()=>toast('Copy failed. Tap Show and write it down.','bad'))},
+  cloudUnlink(){Cloud.cfg=null;Cloud.keys=null;cloudStore();toast('This device is unlinked. The cloud save is kept.');refresh()},
+  cloudDelAsk(){UI.confirmCloudDel=true;refresh()},
+  cloudDelNo(){UI.confirmCloudDel=false;refresh()},
+  cloudDelYes(){cloudDelete()},
+  awLink(){UI.aw.link=!UI.aw.link;refresh()},
   awAccept(){UI.aw.step=1;Sfx.notify();refresh();setTimeout(()=>{const i=$('#aw-name');i&&i.focus()},50)},
   awDecline(){UI.aw.declined=true;Sfx.alarm();buzz([100,60,100]);refresh()},
   awName(){const v=($('#aw-name').value||'').trim().slice(0,16);if(!v){toast('Enter a name to continue.','bad');return}UI.aw.name=v;UI.aw.step='sign';UI.aw.sigLen=0;UI.aw.sealed=false;UI.aw.strokes=[];refresh()},
@@ -2671,6 +2718,7 @@ const ACT={
   resetYes(){stopGeo();unwake();try{localStorage.removeItem(KEY)}catch(e){}S=freshState();UI.confirmReset=false;UI.sheet=null;UI.tab='quest';applySkin();startAwakening();refresh()},
 };
 const CHANGE={
+  remindBefore(el){if(!Push.cfg) return;Push.cfg.before=clamp(+el.value||3,1,12);pushStore();Push.last='';remindSync();refresh()},
   name(el){const v=el.value.trim().slice(0,16);if(v){S.player.name=v;save();renderTop()}else el.value=S.player.name},
   reset(el){
     S.settings.resetHour=+el.value;
@@ -2701,7 +2749,8 @@ document.addEventListener('keydown',e=>{
   if(UI.screen&&UI.screen.kind==='tap'&&(e.key===' '||e.key==='Enter')&&!e.repeat&&document.activeElement===$('#pad')){e.preventDefault();padHit()}
 });
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){saveNow();return}
+  if(document.hidden){saveNow();if(Cloud.cfg) cloudSync();return}
+  if(Cloud.cfg) cloudSync();
   if(S.awakened&&rollover()){announce();save()}
   if(S.session||(S.run&&S.run.seg)||(UI.screen&&UI.screen.kind==='tap')) wake();
   refresh();
@@ -2787,6 +2836,208 @@ function syncOutside(){
     .catch(()=>{});
 }
 
+/* ---------- cloud save & reminders (optional; they use the Awaken server) ---------- */
+const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+const PLUG=n=>NATIVE&&window.Capacitor.Plugins?window.Capacitor.Plugins[n]:null;
+// the Android app's pages are bundled inside it, so it talks to the public server
+const API=NATIVE?'https://awaken.philip-realivasquez.workers.dev':'';
+const CLOUD_KEY='awaken.cloud.v1',PUSH_KEY='awaken.push.v1';
+const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
+const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+async function api(path,opt={}){
+  const r=await fetch(API+path,{...opt,headers:{'content-type':'application/json'},cache:'no-store'});
+  let body={};try{body=await r.json()}catch(e){}
+  return {ok:r.ok,status:r.status,body};
+}
+const b64=u=>{let s='';for(let i=0;i<u.length;i+=32768) s+=String.fromCharCode(...u.subarray(i,i+32768));return btoa(s)};
+const unb64=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+const hashS=()=>String(seed(exportText()));
+
+// The cloud save code is the only key: the server stores the save encrypted with it and can't read it.
+const B32='0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+function newCode(){
+  const b=crypto.getRandomValues(new Uint8Array(15));let bits=0,v=0,out='';
+  for(const x of b){v=(v<<8)|x;bits+=8;while(bits>=5){out+=B32[(v>>>(bits-5))&31];bits-=5}v&=(1<<bits)-1}
+  return out.match(/.{4}/g).join('-');
+}
+function normCode(s){
+  const c=String(s||'').toUpperCase().replace(/[IL]/g,'1').replace(/O/g,'0').replace(/[^0-9A-Z]/g,'');
+  return c.length===24&&[...c].every(ch=>B32.includes(ch))?c.match(/.{4}/g).join('-'):null;
+}
+async function codeKeys(code){
+  const h=async s=>new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)));
+  const id=[...await h('awaken-id:'+code)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  return {id,key:await crypto.subtle.importKey('raw',await h('awaken-key:'+code),'AES-GCM',false,['encrypt','decrypt'])};
+}
+async function gz(u,pack){
+  if(!('CompressionStream' in window)) return null;
+  const t=pack?new CompressionStream('gzip'):new DecompressionStream('gzip');
+  return new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(t)).arrayBuffer());
+}
+async function sealText(key,text){
+  const raw=new TextEncoder().encode(text),z=await gz(raw,true),iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,z||raw));
+  return JSON.stringify({v:1,z:!!z,iv:b64(iv),ct:b64(ct)});
+}
+async function openText(key,data){
+  const o=JSON.parse(data);
+  let pt=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(o.iv)},key,unb64(o.ct)));
+  if(o.z) pt=await gz(pt,false);
+  return new TextDecoder().decode(pt);
+}
+const Cloud={cfg:lsGet(CLOUD_KEY),keys:null,busy:false,timer:0,err:false};
+const cloudStore=()=>lsSet(CLOUD_KEY,Cloud.cfg);
+async function cloudKeys(){if(!Cloud.keys||Cloud.keys.code!==Cloud.cfg.code) Cloud.keys={code:Cloud.cfg.code,...await codeKeys(Cloud.cfg.code)};return Cloud.keys}
+function cloudSoon(){if(!Cloud.cfg||!S.awakened) return;clearTimeout(Cloud.timer);Cloud.timer=setTimeout(()=>cloudSync(),15000)}
+const busyNow=()=>!!(S.session||(S.run&&S.run.seg)||(UI.screen&&['tap','awaken'].includes(UI.screen.kind)));
+function cloudUnlinked(msg){Cloud.cfg=null;Cloud.keys=null;cloudStore();notify({kind:'info',head:'Cloud Save',lines:[msg,'Your progress on this device is unchanged.']});refresh()}
+async function cloudApply(rec,key,msg){
+  const text=await openText(key,rec.data);
+  importText(text,true);
+  Object.assign(Cloud.cfg,{rev:rec.rev,hash:hashS(),at:rec.updated});cloudStore();
+  toast(msg);
+}
+// uploads changes from this device, loads newer saves from other devices, and asks when both changed
+async function cloudSync(manual){
+  const c=Cloud.cfg;if(!c||Cloud.busy||!S.awakened) return;
+  Cloud.busy=true;clearTimeout(Cloud.timer);if(manual) refresh();
+  try{
+    const {id,key}=await cloudKeys();
+    if(hashS()!==c.hash){
+      const r=await api('/api/sync/'+id,{method:'PUT',body:JSON.stringify({data:await sealText(key,exportText()),base:c.rev})});
+      if(r.ok){Object.assign(c,{rev:r.body.rev,hash:hashS(),at:r.body.updated});cloudStore();if(manual) toast('Cloud save updated')}
+      else if(r.status===409){
+        if(!r.body.rev) cloudUnlinked('[The cloud save was deleted on another device.]');
+        else await cloudConflict(id,key);
+      }
+      else throw new Error(r.status);
+    } else {
+      const r=await api('/api/sync/'+id);
+      if(r.status===404){if(c.rev>0) cloudUnlinked('[The cloud save was deleted on another device.]')}
+      else if(!r.ok) throw new Error(r.status);
+      else if(r.body.rev>c.rev){if(!busyNow()) await cloudApply(r.body,key,'Progress loaded from your cloud save')}
+      else if(manual) toast('Cloud save is up to date');
+    }
+    Cloud.err=false;
+  }catch(e){Cloud.err=true;if(manual) toast('Could not reach the cloud save. Your progress is safe on this device.','bad')}
+  Cloud.busy=false;
+  if(UI.screen&&UI.screen.kind==='settings') refresh();
+}
+async function cloudConflict(id,key){
+  const r=await api('/api/sync/'+id);if(!r.ok) throw new Error(r.status);
+  let other;try{other=JSON.parse(await openText(key,r.body.data))}catch(e){throw new Error('decrypt')}
+  const op=other.player||{};
+  notify({kind:'info',head:'Cloud Save',lines:['[Two versions of your progress were found.]','Both this device and another one changed since they last synced. Choose which to keep.'],prio:3,
+    choices:[{id:'cloud',name:'Use the cloud save',desc:`${esc(op.name||'Player')} · Lv ${+op.level||1} · saved ${clockTime(r.body.updated)}`},{id:'local',name:'Keep this device',desc:`${esc(S.player.name)} · Lv ${S.player.level} · replaces the cloud save`}],
+    onChoose:x=>{
+      if(x==='cloud'){if(busyNow()){toast('Finish your workout first, then sync again.','bad');return}cloudApply(r.body,key,'Progress loaded from your cloud save').catch(()=>toast('Could not load the cloud save.','bad'))}
+      else{Cloud.cfg.rev=r.body.rev;Cloud.cfg.hash='';cloudStore();cloudSync(true)}
+    }});
+}
+async function cloudCreate(){
+  Cloud.cfg={code:newCode(),rev:0,hash:'',at:0};cloudStore();UI.showCode=true;
+  await cloudSync(true);
+  if(Cloud.err){Cloud.cfg=null;cloudStore()}
+  refresh();
+}
+async function cloudLink(raw){
+  const code=normCode(raw);if(!code){toast('That code doesn\'t look right. It has 24 letters and numbers.','bad');return}
+  try{
+    const {id,key}=await codeKeys(code),r=await api('/api/sync/'+id);
+    if(r.status===404){toast('No cloud save uses that code.','bad');return}
+    if(!r.ok) throw new Error(r.status);
+    let other;try{other=JSON.parse(await openText(key,r.body.data))}catch(e){toast('That code doesn\'t open this cloud save.','bad');return}
+    const op=other.player||{};
+    notify({kind:'info',head:'Cloud Save',lines:['[Cloud save found.]',`${esc(op.name||'Player')} · Lv ${+op.level||1} · saved ${clockTime(r.body.updated)}`,S.awakened?'Linking replaces the progress on this device with the cloud save.':'Linking loads this progress onto this device.'],prio:3,
+      choices:[{id:'link',name:'Link and load',desc:'This device then stays in sync.'},{id:'no',name:'Cancel',desc:'Nothing changes.'}],
+      onChoose:x=>{if(x!=='link') return;Cloud.cfg={code,rev:0,hash:'',at:0};Cloud.keys=null;cloudApply(r.body,key,'Cloud save linked').then(()=>{UI.linking=false;refresh()}).catch(()=>{Cloud.cfg=null;cloudStore();toast('Could not load the cloud save.','bad')})}});
+  }catch(e){toast('Could not reach the cloud save. Check your connection.','bad')}
+}
+async function cloudDelete(){
+  try{const {id}=await cloudKeys(),r=await api('/api/sync/'+id,{method:'DELETE'});if(!r.ok) throw new Error(r.status)}
+  catch(e){toast('Could not reach the cloud save. Try again later.','bad');return}
+  Cloud.cfg=null;Cloud.keys=null;cloudStore();UI.confirmCloudDel=false;toast('Cloud save deleted');refresh();
+}
+
+// Reminders: web push from the server on the web, local notifications in the Android app
+const Push={cfg:lsGet(PUSH_KEY),last:''};
+const pushStore=()=>lsSet(PUSH_KEY,Push.cfg);
+const pushSupported=()=>NATIVE?!!PLUG('LocalNotifications'):('serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window);
+function remindPrefs(){
+  const d=S.daily;
+  return {tz:Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC',reset:S.settings.resetHour,before:Push.cfg?Push.cfg.before:3,rest:S.settings.restDays,
+    skip:d&&(d.cleared||d.rest||d.heal)?d.date:null};
+}
+async function remindOn(before){
+  before=clamp(+before||3,1,12);
+  try{
+    if(NATIVE){
+      const LN=PLUG('LocalNotifications');if(!LN) throw new Error('none');
+      const p=await LN.requestPermissions();if(p.display!=='granted'){toast('Notifications are off for Awaken. Turn them on in Android settings.','bad');return}
+      Push.cfg={native:true,before};pushStore();Push.last='';remindSync();toast('Reminders on');refresh();return;
+    }
+    if(!pushSupported()){toast('This browser can\'t show reminders. On iPhone, add Awaken to your Home Screen first.','bad');return}
+    if(await Notification.requestPermission()!=='granted'){toast('Notifications are blocked. Allow them for this site in your browser settings.','bad');return}
+    const k=await api('/api/push/key');if(!k.ok) throw new Error('key');
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription()||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:unb64(k.body.key)});
+    Push.cfg={endpoint:sub.endpoint,before};
+    const r=await api('/api/push/subscribe',{method:'POST',body:JSON.stringify({endpoint:sub.endpoint,...remindPrefs()})});
+    if(!r.ok) throw new Error(r.status);
+    pushStore();Push.last=JSON.stringify(remindPrefs());toast('Reminders on');
+  }catch(e){Push.cfg=null;pushStore();toast('Could not turn on reminders. Try again later.','bad')}
+  refresh();
+}
+async function remindOff(){
+  const c=Push.cfg;Push.cfg=null;pushStore();refresh();
+  try{
+    if(c&&c.native){const LN=PLUG('LocalNotifications');if(LN) await LN.cancel({notifications:Array.from({length:8},(_,i)=>({id:100+i}))});return}
+    if(c&&c.endpoint) await api('/api/push/unsubscribe',{method:'POST',body:JSON.stringify({endpoint:c.endpoint})});
+    const reg=await navigator.serviceWorker.ready,sub=await reg.pushManager.getSubscription();if(sub) await sub.unsubscribe();
+  }catch(e){}
+}
+// keep the reminder in step with the reset time, rest days and whether today is already done
+function remindSync(){
+  if(!Push.cfg||!S.awakened||!S.daily) return;
+  const p=JSON.stringify(remindPrefs());if(p===Push.last) return;Push.last=p;
+  if(Push.cfg.native){nativeSchedule();return}
+  api('/api/push/state',{method:'POST',body:JSON.stringify({endpoint:Push.cfg.endpoint,...remindPrefs()})})
+    .then(r=>{if(r.status===404){Push.cfg=null;pushStore()}else if(!r.ok) Push.last=''}).catch(()=>{Push.last=''});
+}
+async function nativeSchedule(){
+  const LN=PLUG('LocalNotifications');if(!LN) return;
+  const ids=Array.from({length:8},(_,i)=>({id:100+i}));
+  try{await LN.cancel({notifications:ids})}catch(e){}
+  const d=S.daily,list=[],h=Push.cfg.before;
+  for(let i=0;i<8;i++){
+    const k=addDays(d.date,i);
+    if(i===0&&(d.cleared||d.rest||d.heal)) continue;
+    if(i>0&&isRest(k)) continue;
+    const at=keyDate(k);at.setHours(S.settings.resetHour+24-h,0,0,0);
+    if(at.getTime()<=Date.now()) continue;
+    list.push({id:100+i,title:'Daily Quest',body:`[The Daily Quest resets in ${h} hour${h>1?'s':''}.] Clear it to avoid the penalty.`,schedule:{at,allowWhileIdle:true},extra:{go:'quest'}});
+  }
+  try{if(list.length) await LN.schedule({notifications:list})}catch(e){}
+}
+async function remindTest(){
+  const c=Push.cfg;if(!c) return;
+  if(c.native){const LN=PLUG('LocalNotifications');try{await LN.schedule({notifications:[{id:99,title:'Daily Quest',body:'[Reminders are working.]',schedule:{at:new Date(Date.now()+3000)}}]});toast('A test reminder arrives in a few seconds')}catch(e){toast('Could not send a test reminder.','bad')}return}
+  try{const r=await api('/api/push/test',{method:'POST',body:JSON.stringify({endpoint:c.endpoint})});if(!r.ok||!r.body.ok) throw 0;toast('Test reminder sent')}
+  catch(e){toast('Could not send a test reminder.','bad')}
+}
+
+// Android app: a tapped reminder opens the quest; the back button closes sheets and screens first
+function nativeBoot(){
+  const LN=PLUG('LocalNotifications'),App=PLUG('App');
+  if(LN) LN.addListener('localNotificationActionPerformed',e=>{const go=e&&e.notification&&e.notification.extra&&e.notification.extra.go;applyGo(go||'quest');refresh()});
+  if(App) App.addListener('backButton',()=>{
+    if(curN&&!curN.choices) closeNotify();
+    else if(UI.sheet) ACT.sheetClose();
+    else if(UI.screen&&['settings','run'].includes(UI.screen.kind)) UI.screen.kind==='run'?ACT.runClose():ACT.scrClose();
+    else if(UI.tab!=='quest') ACT.tab('quest');
+    else App.minimizeApp();
+  });
+}
 /* ---------- boot ---------- */
 (function boot(){
   FX.start();applySkin();
@@ -2803,7 +3054,9 @@ function syncOutside(){
     if(S.run) setTimeout(()=>toast(`Your run is paused at ${trim(toUser(S.run.dist))} ${unit()}. Open Run to resume.`),900);
   }
   saveNow();refresh();
+  if(Cloud.cfg) cloudSync();
   setInterval(tick,250);
+  if(NATIVE) nativeBoot();
   if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
     // the Windows widget's buttons focus an open window and send it where to go

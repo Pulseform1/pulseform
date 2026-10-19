@@ -1,5 +1,5 @@
 /* Awaken offline cache and Windows widget. Bump VERSION whenever the app files change. */
-const VERSION = 'awaken-v5';
+const VERSION = 'awaken-v6';
 const FONTS = 'awaken-fonts';
 const WIDGET_CACHE = 'awaken-widget'; // the page writes the widget's data snapshot here; it must survive updates
 const SHELL = [
@@ -26,6 +26,8 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // the reminder and cloud save API is always live
+  if (url.origin === location.origin && url.pathname.startsWith(new URL(SCOPE).pathname + 'api/')) return;
 
   // Widget data: the page's latest snapshot, or the static default before the app has run.
   if (url.href === SNAPSHOT_URL) {
@@ -36,10 +38,12 @@ self.addEventListener('fetch', e => {
 
   // App pages: try the network first so updates arrive, fall back to the cached copy offline.
   if (req.mode === 'navigate') {
+    // only the app page itself is stored as index.html; other pages (privacy) are cached under their own URL
+    const isApp = url.origin === location.origin && (url.pathname === new URL(SCOPE).pathname || url.pathname.endsWith('/index.html'));
     e.respondWith(
       fetch(req)
-        .then(res => { const copy = res.clone(); caches.open(VERSION).then(c => c.put('./index.html', copy)); return res; })
-        .catch(() => caches.match('./index.html'))
+        .then(res => { if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(isApp ? './index.html' : req, copy)); } return res; })
+        .catch(() => isApp ? caches.match('./index.html') : caches.match(req).then(hit => hit || caches.match('./index.html')))
     );
     return;
   }
@@ -150,4 +154,22 @@ self.addEventListener('periodicsync', event => {
 
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'widgets-refresh') event.waitUntil(renderWidgets());
+});
+
+/* ---------- daily reminder (web push without a payload: the message comes from the app's own snapshot) ---------- */
+self.addEventListener('push', event => {
+  event.waitUntil((async () => {
+    const d = await readSnapshot();
+    const left = d.left || (d.goals || []).filter(g => !g.done).length;
+    const title = d.cleared ? 'Daily Quest complete' : 'Daily Quest';
+    const body = d.cleared ? 'You already cleared today\'s quest. Rest well, Player.'
+      : left ? `[${left} goal${left > 1 ? 's' : ''} left before the reset.] Failure will result in an appropriate penalty.`
+      : '[The Daily Quest resets soon.] Open Awaken to clear it.';
+    await self.registration.showNotification(title, { body, tag: 'awaken-reminder', renotify: true, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', data: { go: 'quest' } });
+  })());
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(openApp('./?go=' + ((event.notification.data && event.notification.data.go) || 'quest')));
 });

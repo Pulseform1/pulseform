@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Awaken Privacy</title>
+<meta name="description" content="What Awaken stores, where, and how to delete it.">
+<meta name="theme-color" content="#03060d">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<style>
+:root{--void:#03060d;--deep:#06142a;--line:#45b0ff;--glow:#9be3ff;--ink:#e7f4ff;--dim:#86a2c3;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(120% 80% at 50% -10%,#0b2448 0%,var(--void) 60%);background-color:var(--void);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:680px;margin:0 auto;padding:32px 16px 64px}
+.brand{font:700 13px/1 system-ui,sans-serif;letter-spacing:.4em;text-transform:uppercase;color:var(--glow);text-align:center;margin:0 0 18px}
+h1{font-size:28px;line-height:1.2;margin:0 0 6px;text-align:center}
+.sub{color:var(--dim);text-align:center;margin:0 0 28px}
+section{border:1px solid color-mix(in srgb,var(--line) 45%,transparent);background:color-mix(in srgb,var(--deep) 85%,transparent);border-radius:4px;padding:18px 18px 8px;margin:0 0 16px}
+h2{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--glow);margin:0 0 10px}
+p,li{color:var(--ink)}
+ul{padding-left:20px;margin:0 0 12px}
+li{margin:0 0 6px}
+.dim{color:var(--dim);font-size:14px}
+a{color:var(--glow)}
+code{font-size:14px;color:var(--glow)}
+</style>
+</head>
+<body>
+<main>
+<p class="brand">Awaken</p>
+<h1>Privacy</h1>
+<p class="sub">Short version: no account, no ads, no tracking. Your progress stays on your device unless you turn on cloud save or reminders.</p>
+
+<section>
+<h2>On your device</h2>
+<p>Everything you do in Awaken is saved in your browser's storage (or the Android app's storage) on your device. That includes:</p>
+<ul>
+<li>your player name, contract signature, levels, stats, quests, items and history;</li>
+<li>exercise logs, personal bests and assessment results;</li>
+<li>joint check-ins and recovery sessions;</li>
+<li>runs, including the route while a run is being tracked.</li>
+</ul>
+<p>None of this is sent anywhere unless you turn on one of the optional features below. You can export, restore or erase it at any time in Settings.</p>
+</section>
+
+<section>
+<h2>Location</h2>
+<p>Awaken asks for your location only when you start a run, to measure distance. It is used while that run is being tracked. The route never leaves your device.</p>
+<p>In the Android app, tracking keeps running with the screen off while a run is active. Android shows a notification for as long as that lasts. Tracking stops when you pause, finish or discard the run.</p>
+</section>
+
+<section>
+<h2>Cloud save (optional)</h2>
+<p>If you create a cloud save, Awaken gives you a private code. Your save is encrypted on your device with that code before it is uploaded. The server stores:</p>
+<ul>
+<li>the encrypted save, which the server can't read;</li>
+<li>an ID worked out from your code (not the code itself);</li>
+<li>a revision number and the time of the last upload.</li>
+</ul>
+<p>Anyone with your code can load your progress, so keep it private. To remove the server copy, use <b>Settings → Cloud Save → Delete cloud save</b>. It is deleted immediately.</p>
+</section>
+
+<section>
+<h2>Reminders (optional)</h2>
+<p>On the web, reminders use your browser's push service: Google, Apple, Mozilla or Microsoft, depending on your browser. For each subscription the server stores:</p>
+<ul>
+<li>the push address your browser gives it;</li>
+<li>your time zone, the hour your day resets, and how many hours before the reset to remind you;</li>
+<li>your rest days;</li>
+<li>the date of the last reminder;</li>
+<li>whether today's quest is already done or optional. It stores only that, not what you did.</li>
+</ul>
+<p>Reminders carry no message from the server. Your device writes the text itself from your own data. Turning reminders off deletes the subscription. Subscriptions your browser has ended are removed automatically.</p>
+<p>In the Android app, reminders are scheduled on the phone itself, and nothing is sent to the server.</p>
+</section>
+
+<section>
+<h2>Hosting and other services</h2>
+<ul>
+<li>Awaken is served by Cloudflare. Cloudflare handles network requests, including your IP address, under its own privacy policy. Awaken itself keeps no access logs or analytics.</li>
+<li>The app loads its fonts from Google Fonts, which receives a request from your device when the fonts download.</li>
+<li>No cookies, no ads, no analytics, and nothing is sold or shared.</li>
+</ul>
+</section>
+
+<section>
+<h2>Health information</h2>
+<p>Awaken is a training game, not medical advice. Your joint check-ins and recovery notes stay on your device. If you use cloud save, they are inside your encrypted save like everything else.</p>
+</section>
+
+<p class="dim">Last updated October 2026. This page applies to Awaken as published at this address. If the app changes what it stores, this page changes with it.</p>
+<p class="dim"><a href="./">← Back to Awaken</a></p>
+</main>
+</body>
+</html>

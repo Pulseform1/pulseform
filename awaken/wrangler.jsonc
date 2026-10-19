@@ -1,10 +1,21 @@
-// Cloudflare Workers config for hosting Awaken as static files.
+// Cloudflare Workers config for Awaken: the static app plus a small API for reminders and cloud saves.
 // Deploy from this folder with: npx wrangler deploy
+// Reminders also need a VAPID key pair (see README): wrangler secret put VAPID_PRIVATE_JWK, and set VAPID_PUBLIC below.
 {
   "name": "awaken",
+  "main": "server/worker.js",
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./",
-    "not_found_handling": "404-page"
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  "durable_objects": { "bindings": [{ "name": "STORE", "class_name": "Store" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Store"] }],
+  "triggers": { "crons": ["*/15 * * * *"] },
+  "vars": {
+    "VAPID_PUBLIC": "",
+    "VAPID_SUBJECT": "mailto:you@example.com"
   }
 }
