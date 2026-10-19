@@ -267,6 +267,11 @@ h1,h2,h3,h4{text-wrap:balance}
 .c.fail{background:var(--red)}
 .c.rest{background:color-mix(in srgb,var(--dim) 45%,transparent)}
 .c.ward{background:var(--gold)}
+.burn{margin:14px 0 4px;padding:12px 14px;border:1px solid var(--line-b);border-radius:3px;background:color-mix(in srgb,var(--gold) 5%,transparent)}
+.burn-t{display:flex;align-items:center;gap:8px;margin-bottom:8px}.burn-t .i{color:var(--gold)}.burn-t b{font:700 20px/1 var(--f-disp);color:var(--ink)}.burn-t span{font-size:13px;color:var(--dim)}
+.burn .bar i{background:linear-gradient(90deg,var(--gold),#ff8a4c)}
+.burn small{display:block;margin-top:8px;font-size:12px;line-height:1.4;color:var(--dim)}
+.seg-wrap{flex-wrap:wrap}.seg-wrap .seg-b{flex:1 1 30%;min-width:0;border-top:1px solid var(--line-b);margin-top:-1px}
 .code-box{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:10px 12px;border:1px solid var(--line-a);border-radius:3px;background:color-mix(in srgb,var(--line) 6%,transparent)}
 .code-box code{flex:1;min-width:0;font:600 13px/1.3 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em;color:var(--ink);overflow-wrap:anywhere}
 .c.freeze{background:#7fd8ff;box-shadow:inset 0 0 0 1px #fff6}
@@ -762,7 +767,7 @@ function freshState(){
   return {v:1,created:Date.now(),awakened:false,
     player:{name:'Player',level:1,xp:0,gold:0,points:0,rank:0,title:'awakened',job:null,hp:200,mp:100,fatigue:0,fatigueTs:Date.now()},
     stats:{str:{t:0,a:0,x:0},vit:{t:0,a:0,x:0},agi:{t:0,a:0,x:0},int:{t:0,a:0,x:0},per:{t:0,a:0,x:0}},
-    settings:{diff:'normal',units:'km',resetHour:0,restDays:[0],sound:true,haptics:true,badge:true,lowImpact:false,bar:false,skin:'blue',tasks:{pushup:true,situp:true,squat:true,run:true}},
+    settings:{diff:'normal',units:'km',resetHour:0,restDays:[0],sound:true,haptics:true,badge:true,lowImpact:false,bar:false,skin:'blue',weight:null,tasks:{pushup:true,situp:true,squat:true,run:true}},
     baseline:{pushup:10,situp:15,squat:20,run:1},
     daily:null,history:{},streak:{cur:0,best:0,freeze:0},penalty:null,joints:{},
     periods:{w:null,m:null},login:{last:null,n:0},days:{},pb:{},tests:[],
@@ -796,6 +801,26 @@ const isRest=k=>S.settings.restDays.includes(keyDate(k).getDay());
 function hms(ms){const s=Math.max(0,Math.floor(ms/1000));return `${pad(Math.floor(s/3600))}:${pad(Math.floor(s/60)%60)}:${pad(s%60)}`}
 function mmss(sec){sec=Math.max(0,Math.ceil(sec));return `${Math.floor(sec/60)}:${pad(sec%60)}`}
 function clockTime(t){const d=new Date(t);return d.toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
+
+/* ---------- calories (estimate) ---------- */
+// kcal = MET x body weight (kg) x hours. Rep exercises use [MET, seconds per rep]; holds use MET per second;
+// running is about 1 kcal per kg per km; the joint-friendly walk is MET 3.5 per minute.
+const CAL={pushup:[8,2.5],diamond:[8,2.8],pike:[8,3],pullup:[8,4],wallpush:[3.5,2.5],squat:[5.5,2.5],jumpsquat:[8,2.5],lunge:[5,2.5],glute:[3.5,2.5],
+  situp:[4.5,3],crunch:[3.8,2.5],legraise:[4,3],superman:[3.5,3],deadbug:[3,3],burpee:[8,4],jack:[8,1],climber:[8,1],stepjack:[4.5,1.2],
+  wallsit:[4],plank:[4],hollow:[4],highknees:[8]};
+const DEFAULT_KG=70;
+const bodyKg=()=>S.settings.weight>0?S.settings.weight:DEFAULT_KG;
+function calOf(id,n){
+  const e=EX[id];if(!e||!(n>0)) return 0;
+  const kg=bodyKg(),c=CAL[id]||[e.kind==='rec'?2.5:4,3];
+  if(e.type==='km') return kg*n;
+  if(e.type==='min') return 3.5*kg*n/60;
+  if(e.type==='time') return c[0]*kg*n/3600;
+  return c[0]*kg*(c[1]||3)*n/3600;
+}
+const calDay=k=>Object.entries(S.days[k]||{}).reduce((a,[id,n])=>a+calOf(id,n),0);
+const calTotal=()=>Object.entries(S.totals.ex).reduce((a,[id,n])=>a+calOf(id,n),0);
+const kcal=v=>`${fmt(v)} kcal`;
 
 /* ---------- units ---------- */
 const unit=()=>S.settings.units==='mi'?'mi':'km';
@@ -1031,7 +1056,7 @@ function logDaily(task,n,quiet){
     if(task==='pushup'&&exId==='pushup'&&d.prog.pushup>=100) flag('centurion');
     if(task==='run'&&exId==='run'&&d.prog.run>=10) flag('windrunner');
   }
-  if(!quiet) toast(`${EX[exId].name} +${fmtAmt(task,n)}  ·  +${rec.xp} XP`);
+  if(!quiet) toast(`${EX[exId].name} +${fmtAmt(task,n)}  ·  +${rec.xp} XP  ·  ~${Math.round(calOf(exId,n))} kcal`);
   checkDaily();checkUnlocks();save();refresh();
   return rec.xp;
 }
@@ -1462,7 +1487,7 @@ function completeSet(actual){
   const s=S.session,g=s.g,set=sessSet();
   actual=Math.max(0,Math.round(actual));
   const rec=doReps(set.ex,actual);
-  s.xp+=rec.xp;
+  s.xp+=rec.xp;s.kcal=(s.kcal||0)+calOf(set.ex,actual);
   if(g.mode==='rec'){UI.hit=0;Sfx.beep();buzz(30)}
   else{const dmg=Math.round(set.hp*Math.min(1.2,actual/set.target));s.dealt+=dmg;UI.hit=dmg;Sfx.hit();buzz([30,40,30])}
   if(s.i>=g.sets.length-1){g.mode==='rec'?finishRecovery():finishGate();return}
@@ -1496,7 +1521,7 @@ function finishGate(){
   if(g.trial) S.trial=null; else{S.gates.list=S.gates.list.filter(x=>x.id!==g.id);S.gates.done.push(g.id)}
   S.session=null;UI.screen=null;UI.hit=0;unwake();
   notify({kind:'quest',head:g.trial?'Trial Cleared':'Dungeon Cleared',lines:[`[${g.boss} has been defeated.]`,`Clear time ${mmss((Date.now()-s.t0)/1000)}`],
-    rewards:[['XP from sets',`+${fmt(s.xp)}`],['Clear bonus',`+${fmt(xpPreview)} XP`],['Gold',`+${fmt(gold)}`],...loot]});
+    rewards:[['Calories',`~${kcal(s.kcal||0)}`],['XP from sets',`+${fmt(s.xp)}`],['Clear bonus',`+${fmt(xpPreview)} XP`],['Gold',`+${fmt(gold)}`],...loot]});
   gainXP(g.xp*sm+scroll,'gate');
   offerExtraction(g);
   if(g.trial){
@@ -1845,6 +1870,7 @@ function vQuest(){
     ${sore.length?`<p class="note" style="text-align:center;margin:-6px 0 12px">Status ailment: ${sore.map(AILMENT).join(', ')}. <button class="link" data-a="tab" data-x="recover">Recovery</button></p>`:''}
     <h3 class="goal-h">GOAL</h3>${main?`<ul class="goals">${main}</ul>`:''}
     ${hj?'<p class="note" style="text-align:center;margin:12px 0 0">Optional today. Stop if pain goes above 3/10.</p>':''}<ul class="goals">${rows}</ul>
+    ${calMeter(d)}
     ${d.cleared?`<div class="stamp">COMPLETE</div><p class="rw-line">Rewards received: Status Recovery · Ability points +3 · Random Box</p>`
       :`<p class="warn">${d.rest?'Clearing it anyway still adds to your streak.':d.heal?'No penalty today. Go easy, and do a recovery session for the joint that hurts.':d.grace?'<b>FIRST DAY:</b> No penalty yet. From tomorrow, failure will result in an appropriate <u>penalty</u>.':'<b>WARNING:</b> Failure to complete the daily quest will result in an appropriate <u>penalty</u>.'}</p>`}
     <div class="clock">${ico('clock')}<span data-live="reset">${hms(nextReset()-Date.now())}</span><small>until reset</small></div>
@@ -1859,6 +1885,13 @@ function vQuest(){
   h+=`<div class="quick"><button class="btn" data-a="runOpen" data-x="gps">${ico('run')}${S.run?`Run · ${trim(toUser(S.run.dist))} ${unit()}`:'Start a run'}</button>
     <button class="btn" data-a="tab" data-x="gates">${ico('gate')}Gates${open?` <span class="pill">${open}</span>`:''}</button></div>`;
   return h;
+}
+// calories burned today next to what the full Daily Quest burns, so every set visibly adds up
+function calMeter(d){
+  const today=calDay(d.date),quest=Object.keys(d.targets).reduce((a,id)=>a+calOf(taskEx(id),d.targets[id]),0);
+  return `<div class="burn" role="group" aria-label="Calories burned today"><div class="burn-t">${ico('flame')}<b>${kcal(today)}</b><span>burned today</span></div>
+    <div class="bar" role="progressbar" aria-label="Calories toward the full Daily Quest" aria-valuemin="0" aria-valuemax="${Math.round(quest)}" aria-valuenow="${Math.round(Math.min(today,quest))}"><i style="width:${quest?clamp(today/quest,0,1)*100:0}%"></i></div>
+    <small>The full Daily Quest burns about ${kcal(quest)}. Estimate${S.settings.weight?'':` for ${S.settings.units==='mi'?'154 lb':'70 kg'}: set your weight in Settings`}.</small></div>`;
 }
 function periodWin(kind){
   const P=S.periods[kind];if(!P) return '';
@@ -2004,9 +2037,9 @@ function calendar(){
 }
 // weekly volume for one exercise group over the last 8 weeks (Monday to Sunday)
 const CHART={push:{name:'Push-ups',ids:['pushup','diamond','pike','wallpush']},core:{name:'Core',ids:['situp','crunch','legraise','superman','deadbug']},
-  legs:{name:'Legs',ids:['squat','glute','lunge','jumpsquat']},dist:{name:'Distance',ids:['run','walk']}};
+  legs:{name:'Legs',ids:['squat','glute','lunge','jumpsquat']},dist:{name:'Distance',ids:['run','walk']},cal:{name:'Calories',ids:[]}};
 function weekVolume(g,wk){
-  let v=0;for(let i=0;i<7;i++){const d=S.days[addDays(wk,i)];if(!d) continue;for(const id of CHART[g].ids) v+=g==='dist'&&id==='walk'?(d[id]||0)/10:(d[id]||0)}
+  let v=0;for(let i=0;i<7;i++){const d=S.days[addDays(wk,i)];if(!d) continue;if(g==='cal'){v+=calDay(addDays(wk,i));continue}for(const id of CHART[g].ids) v+=g==='dist'&&id==='walk'?(d[id]||0)/10:(d[id]||0)}
   return v;
 }
 function progressWin(){
@@ -2014,7 +2047,7 @@ function progressWin(){
   const weeks=Array.from({length:N},(_,i)=>addDays(now,-7*(N-1-i)));
   const vals=weeks.map(w=>g==='dist'?r2(toUser(weekVolume(g,w))):Math.round(weekVolume(g,w)));
   const max=Math.max(1,...vals),nice=(()=>{const m=Math.pow(10,Math.floor(Math.log10(max)));return [1,2,2.5,5,10].map(x=>x*m).find(x=>x>=max)})();
-  const W=320,H=150,pl=34,pb=22,pt=16,bw=(W-pl)/N,u=g==='dist'?' '+unit():'';
+  const W=320,H=150,pl=34,pb=22,pt=16,bw=(W-pl)/N,u=g==='dist'?' '+unit():g==='cal'?' kcal':'';
   const y=v=>pt+(H-pt-pb)*(1-v/nice);
   const bar=(x,top,w,h)=>{if(h<=0) return '';const r=Math.min(4,h,w/2);return `M${x},${top+h}V${top+r}Q${x},${top} ${x+r},${top}H${x+w-r}Q${x+w},${top} ${x+w},${top+r}V${top+h}Z`};
   const sel=UI.chartPick;
@@ -2024,10 +2057,10 @@ function progressWin(){
       <text x="${x+w/2}" y="${H-6}" class="ch-ax" text-anchor="middle">${i===N-1?'Now':`${d.getMonth()+1}/${d.getDate()}`}</text>${sel===i||(sel==null&&i===N-1&&v>0)?`<text x="${x+w/2}" y="${top-5}" class="ch-v" text-anchor="middle">${trim(v)}</text>`:''}</g>`}).join('');
   const cur=vals[N-1],prev=vals[N-2];
   return `<section class="win">${winHead('Progress')}
-    <div class="seg" role="tablist" style="margin-bottom:12px">${Object.entries(CHART).map(([id,c])=>`<button class="seg-b${g===id?' on':''}" data-a="chartEx" data-x="${id}" role="tab" aria-selected="${g===id}">${c.name}</button>`).join('')}</div>
+    <div class="seg seg-wrap" role="tablist" style="margin-bottom:12px">${Object.entries(CHART).map(([id,c])=>`<button class="seg-b${g===id?' on':''}" data-a="chartEx" data-x="${id}" role="tab" aria-selected="${g===id}">${c.name}</button>`).join('')}</div>
     <div class="ch-hero"><b>${trim(cur)}${u}</b><span>so far this week · last week ${trim(prev)}${u}</span></div>
     <svg class="chart" viewBox="0 0 ${W} ${H}" role="list" aria-label="${CHART[g].name} per week, last ${N} weeks">${grid}${bars}</svg>
-    <p class="note">Weekly totals, Monday to Sunday${g==='dist'?'. 10 walking minutes count as 1 km':''}. Tap a bar for its value.</p></section>`;
+    <p class="note">Weekly totals, Monday to Sunday${g==='dist'?'. 10 walking minutes count as 1 km':g==='cal'?'. Calories are an estimate from your logged exercise and body weight':''}. Tap a bar for its value.</p></section>`;
 }
 function pbWin(){
   const ids=Object.keys(S.pb).filter(id=>EX[id]&&EX[id].kind!=='rec'&&S.pb[id].set>0).sort((a,b)=>(ex(b)-ex(a)));
@@ -2045,7 +2078,7 @@ function testsWin(){
 function vRecords(){
   const days=Math.floor((Date.now()-S.created)/864e5)+1;
   const rows=[['Push-ups',fmt(ex('pushup'))],['Sit-ups',fmt(ex('situp'))],['Squats',fmt(ex('squat'))],['Burpees',fmt(ex('burpee'))],['Distance',`${trim(toUser(ex('run')))} ${unit()}`],
-    ['Gates cleared',`${fmt(S.totals.gates)}${S.totals.red?` (${S.totals.red} red)`:''}`],['Daily Quests cleared',fmt(S.totals.clears)],['Penalties survived',fmt(S.totals.penalties)],['Optional quests',fmt(S.totals.side)],['Recovery sessions',fmt(S.totals.rec)],['Recovery habits',fmt(S.totals.recHabits)],['Days since awakening',fmt(days)]];
+    ['Gates cleared',`${fmt(S.totals.gates)}${S.totals.red?` (${S.totals.red} red)`:''}`],['Daily Quests cleared',fmt(S.totals.clears)],['Penalties survived',fmt(S.totals.penalties)],['Optional quests',fmt(S.totals.side)],['Recovery sessions',fmt(S.totals.rec)],['Recovery habits',fmt(S.totals.recHabits)],['Calories burned (estimate)',kcal(calTotal())],['Days since awakening',fmt(days)]];
   return `<section class="win">${winHead('Streak')}
     <div class="streak"><div class="streak-n">${ico('flame')}<b>${S.streak.cur}</b><span>day streak</span></div>
     <dl class="kv"><div><dt>Best streak</dt><dd>${S.streak.best}</dd></div><div><dt>Streak Freezes</dt><dd>${S.streak.freeze||0} / ${FREEZE_MAX}</dd></div><div><dt>Penalty Wards</dt><dd>${S.inv.ward}</dd></div><div><dt>Rest days</dt><dd>${S.settings.restDays.length?S.settings.restDays.map(i=>DOW[i]).join(', '):'None'}</dd></div></dl></div>
@@ -2363,6 +2396,7 @@ const SCREENS={
         <div class="field"><span>Difficulty</span><div class="seg">${Object.entries(DIFF).map(([k,d])=>`<button class="seg-b${st.diff===k?' on':''}" data-a="setDiff" data-x="${k}" aria-pressed="${st.diff===k}">${d.name}</button>`).join('')}</div><p class="hint">${DIFF[st.diff].desc} Changes apply to today's quest unless it is already cleared.</p></div>
         <div class="field"><span>Daily Quest goals</span><div class="chips">${DAILY.map(t=>`<button class="chip${st.tasks[t.id]?' on':''}" data-a="setTask" data-x="${t.id}" aria-pressed="${!!st.tasks[t.id]}">${t.name}</button>`).join('')}</div></div>
         <div class="field"><span>Rest days</span><div class="chips days">${DOW.map((d,i)=>`<button class="chip${st.restDays.includes(i)?' on':''}" data-a="setRest" data-x="${i}" aria-pressed="${st.restDays.includes(i)}">${d}</button>`).join('')}</div><p class="hint">No penalty on rest days. Clearing the quest anyway still counts. Applies from the next reset.</p></div>
+        <label class="field"><span>Body weight (for calories)</span><input id="set-weight" data-c="weight" data-u="${S.settings.units==='mi'?'lb':'kg'}" type="number" inputmode="decimal" min="25" max="350" step="0.1" placeholder="${S.settings.units==='mi'?'154':'70'}" value="${S.settings.weight?trim(S.settings.units==='mi'?S.settings.weight*2.20462:S.settings.weight):''}"><small class="hint">${S.settings.units==='mi'?'Pounds':'Kilograms'}. Stays on this device. Leave empty to use ${S.settings.units==='mi'?'154 lb':'70 kg'}.</small></label>
         <label class="field"><span>New day starts at</span><select id="set-reset" data-c="reset">${[0,1,2,3,4,5,6].map(h=>`<option value="${h}"${st.resetHour===h?' selected':''}>${h===0?'Midnight':h+':00 AM'}</option>`).join('')}</select></label>
         <div class="field"><span>Distance units</span><div class="seg"><button class="seg-b${st.units==='km'?' on':''}" data-a="setUnits" data-x="km">Kilometers</button><button class="seg-b${st.units==='mi'?' on':''}" data-a="setUnits" data-x="mi">Miles</button></div></div>
         ${tog('lowImpact','Low-impact gates','No jumping. Kinder to knees and downstairs neighbors.')}
@@ -2503,6 +2537,7 @@ function importText(txt,quiet){
   S.buffs={scroll:!!(S.buffs&&S.buffs.scroll),balm:!!(S.buffs&&S.buffs.balm)};
   for(const k of Object.keys(ITEMS)) S.inv[k]=clamp(Math.round(+S.inv[k])||0,0,9999);
   if(S.player.sig&&!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(S.player.sig)) S.player.sig=null;
+  S.settings.weight=+S.settings.weight>=25&&+S.settings.weight<=350?+S.settings.weight:null;
   S.streak.freeze=clamp(Math.round(+S.streak.freeze)||0,0,FREEZE_MAX);
   const isKey=k=>typeof k==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(k),num=v=>Number.isFinite(+v)&&+v>=0;
   for(const kind of ['w','m']){const P=S.periods&&S.periods[kind];
@@ -2736,6 +2771,13 @@ const ACT={
 const CHANGE={
   remindBefore(el){if(!Push.cfg) return;Push.cfg.before=clamp(+el.value||3,1,12);pushStore();Push.last='';remindSync();refresh()},
   name(el){const v=el.value.trim().slice(0,16);if(v){S.player.name=v;save();renderTop()}else el.value=S.player.name},
+  weight(el){
+    // the unit the box was shown in, even if the distance units changed since
+    const v=parseFloat(el.value),kg=el.dataset.u==='lb'?v/2.20462:v;
+    S.settings.weight=v>0&&kg>=25&&kg<=350?Math.round(kg*10)/10:null;
+    if(el.value&&!S.settings.weight) toast('Enter a weight between 25 and 350 kg (55 to 770 lb).','bad');
+    save();
+  },
   reset(el){
     S.settings.resetHour=+el.value;
     // moving the start of the day forward carries today's quest over instead of failing it
