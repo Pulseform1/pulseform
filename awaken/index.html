@@ -255,6 +255,28 @@ h1,h2,h3,h4{text-wrap:balance}
 .c.fail{background:var(--red)}
 .c.rest{background:color-mix(in srgb,var(--dim) 45%,transparent)}
 .c.ward{background:var(--gold)}
+.c.freeze{background:#7fd8ff;box-shadow:inset 0 0 0 1px #fff6}
+.event{display:flex;flex-direction:column;gap:2px;margin:0 0 14px;padding:10px 14px;border:1px solid var(--line-a);border-left:3px solid var(--glow);background:color-mix(in srgb,var(--line) 8%,transparent);border-radius:3px}
+.event b{font:700 12.5px/1.2 var(--f-disp);letter-spacing:.12em;text-transform:uppercase;color:var(--glow)}
+.event span{font-size:13px;color:var(--dim)}
+.event.ev-red{border-left-color:var(--red);background:color-mix(in srgb,var(--red) 8%,transparent)}.event.ev-red b{color:var(--red)}
+.pqs{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.pq{position:relative;display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;padding-bottom:8px}
+.pq-t{display:flex;flex-direction:column;gap:2px;font-size:14px}.pq-t b{font:600 12px/1 var(--f-disp);letter-spacing:.06em;color:var(--dim)}
+.pq .g-bar{bottom:0}.pq.claimed{opacity:.55}.pq.claimed .g-bar{background:var(--ok)}
+.summon-b{margin:12px auto 0;display:flex}
+.summoned{display:flex;align-items:center;justify-content:center;gap:6px;margin:10px 0 0;font-size:13px;color:var(--violet)}
+.ch-hero{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}.ch-hero b{font:700 26px/1 var(--f-disp);color:var(--ink)}.ch-hero span{font-size:13px;color:var(--dim)}
+.chart{display:block;width:100%;height:auto;overflow:visible}
+.chart .ch-grid{stroke:var(--line-b);stroke-width:1}
+.chart .ch-ax{font:500 10px var(--f-body);fill:var(--dim)}
+.chart .ch-v{font:700 11px var(--f-disp);fill:var(--ink)}
+.chart .ch-b{cursor:pointer}.chart .ch-b path{fill:var(--line);opacity:.75}.chart .ch-b:last-child path{opacity:1}
+.chart .ch-b:hover path,.chart .ch-b.on path{fill:var(--glow);opacity:1}
+.pbt{width:100%;border-collapse:collapse;font-size:13.5px}
+.pbt th{font:600 11px/1.2 var(--f-disp);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);text-align:right;padding:6px 4px;border-bottom:1px solid var(--line-b)}
+.pbt th:first-child,.pbt td:first-child{text-align:left}
+.pbt td{text-align:right;padding:7px 4px;border-bottom:1px solid color-mix(in srgb,var(--line-b) 50%,transparent);font-variant-numeric:tabular-nums}
 .c.today{outline:1.5px solid var(--glow);outline-offset:-1.5px}
 .c.fut{background:none}
 .legend{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--dim)}
@@ -595,6 +617,7 @@ const SIDE=[
 const SIDE_PER_DAY=5,SIDE_FULL={xp:30,gold:20};
 const SIDE_BY=Object.fromEntries(SIDE.map(s=>[s.id,s]));
 const SIDE_XP=15;
+const FREEZE_MAX=2;
 const PLACES=['Goblin Warrens','Howling Cave','Sunken Shrine','Frostbite Spire','Ashen Barracks','Crimson Hive','Bone Crypt','Storm Ridge','Abandoned Iron Mine','Serpent Marsh','Moonlit Forest','Obsidian Keep','Flooded Subway','Collapsed Mall','Silent Hospital','Burning Foundry','Glass Desert','Drowned Library'];
 const BOSSES=[
   ['Goblin Chieftain','Dire Wolf','Cave Rat King','Kobold Shaman'],
@@ -633,6 +656,10 @@ const TITLES=[
   {id:'commander',name:'Shadow Commander',req:'Extract 5 shadows.',b:{gate:.05},ok:()=>Object.keys(S.shadows).length>=5},
   {id:'legion',name:'Lord of the Legion',req:'Extract 15 shadows.',b:{all:.05},ok:()=>Object.keys(S.shadows).length>=15},
   {id:'outfitted',name:'Fully Equipped',req:'Fill all three equipment slots.',b:{gold:.05},ok:()=>Object.values(S.gear.eq).every(Boolean)},
+  {id:'weekly',name:'Weekly Warrior',req:'Claim every weekly quest in one week.',b:{gold:.05},ok:()=>!!S.flags.weekall},
+  {id:'monthly',name:'Relentless',req:'Claim every monthly quest in one month.',b:{all:.05},ok:()=>!!S.flags.monthall},
+  {id:'stronger',name:'Stronger Than Yesterday',req:'Beat your awakening results in a Reassessment Test.',b:{str:.05,run:.05},ok:()=>!!S.flags.stronger},
+  {id:'monarch',name:'Shadow Monarch',req:'Summon shadows in 10 gates.',b:{gate:.1},ok:()=>(S.totals.summons||0)>=10},
   {id:'healer',name:'Self-Healer',req:'Complete 5 recovery sessions.',b:{all:.03},ok:()=>S.totals.rec>=5},
 ];
 const SKILLS=[
@@ -723,10 +750,11 @@ function freshState(){
     stats:{str:{t:0,a:0,x:0},vit:{t:0,a:0,x:0},agi:{t:0,a:0,x:0},int:{t:0,a:0,x:0},per:{t:0,a:0,x:0}},
     settings:{diff:'normal',units:'km',resetHour:0,restDays:[0],sound:true,haptics:true,badge:true,lowImpact:false,bar:false,skin:'blue',tasks:{pushup:true,situp:true,squat:true,run:true}},
     baseline:{pushup:10,situp:15,squat:20,run:1},
-    daily:null,history:{},streak:{cur:0,best:0},penalty:null,joints:{},
+    daily:null,history:{},streak:{cur:0,best:0,freeze:0},penalty:null,joints:{},
+    periods:{w:null,m:null},login:{last:null,n:0},days:{},pb:{},tests:[],
     inv:{box:0,potion:0,key:0,ward:0,elixir:0,scroll:0,draught:0,compass:0,balm:0},
     gear:{owned:[],eq:{weapon:null,armor:null,acc:null}},shadows:{},buffs:{},skins:['blue'],titles:['awakened'],skills:[],flags:{},
-    totals:{ex:{},clears:0,gates:0,red:0,penalties:0,side:0,maxGate:-1,rec:0,recHabits:0},recSeen:{},
+    totals:{ex:{},clears:0,gates:0,red:0,penalties:0,side:0,maxGate:-1,rec:0,recHabits:0,summons:0},recSeen:{},
     gates:{date:null,list:[],done:[]},trial:null,session:null,run:null,log:[]};
 }
 function merge(base,src){
@@ -785,7 +813,7 @@ function statBonus(kind){const k={str:'str',run:'agi',side:'int',gold:'per'}[kin
 const maxHP=()=>Math.round((100+stat('vit')*10)*(1+bonus('hp')));
 const maxMP=()=>Math.round((50+stat('int')*5)*(1+bonus('mp')));
 const weakened=()=>!!S.penalty&&!penaltyPaused();
-function xpMult(kind){let m=1+bonus('all')+(kind?bonus(kind)+statBonus(kind):0);if(weakened()) m*=.5;return m}
+function xpMult(kind){let m=(1+bonus('all')+(kind?bonus(kind)+statBonus(kind):0))*(kind==='gate'&&isEvent('dxp')?2:1);if(weakened()) m*=.5;return m}
 const goldMult=()=>1+bonus('gold')+statBonus('gold');
 const xpNeed=l=>Math.round(60*Math.pow(l,1.4)+40);
 const rankOf=()=>RANKS[S.player.rank];
@@ -881,6 +909,7 @@ function doReps(id,n){
   for(const k in e.stat) st[k]=e.stat[k]*n;
   gainStats(st);
   S.totals.ex[id]=r2((S.totals.ex[id]||0)+n);
+  if(track(id,n)&&e.kind!=='rec') setTimeout(()=>toast(`New personal best: ${e.name} ${pbFmt(id,n)}`,'stat'),700);
   if(e.kind!=='rec') addFatigue(e.type==='km'?n*4:e.type==='time'?n*.04:n*.08*e.xp);
   return {xp,st};
 }
@@ -908,6 +937,7 @@ function newDay(k,first){
   S.player.mp=maxMP();
   S.player.hp=Math.min(maxHP(),S.player.hp+Math.round(maxHP()*.2));
   genGates(k);
+  ensurePeriods(k);pruneDays(k);
 }
 // recovery habits for the day: two per sore joint (one each when many are sore), topped up with general ones
 function recHabitPool(){
@@ -935,10 +965,14 @@ function rollover(){
     const need=missed.filter(m=>!m.rest);
     missed.filter(m=>m.rest).forEach(m=>S.history[m.k]={s:'rest'});
     if(need.length){
-      if(S.inv.ward>=need.length){
-        S.inv.ward-=need.length;
-        need.forEach(m=>S.history[m.k]={s:'ward'});
-        notify({kind:'info',head:'Notification',lines:['[A Penalty Ward has shattered.]',need.length>1?`It protected you through ${need.length} missed Daily Quests.`:'It protected you from the penalty for a missed Daily Quest.','Your streak is safe.']});
+      const fz=S.streak.freeze||0;
+      if(fz+S.inv.ward>=need.length){
+        // Streak Freezes are used before Penalty Wards
+        const nf=Math.min(fz,need.length),nw=need.length-nf;
+        S.streak.freeze=fz-nf;S.inv.ward-=nw;
+        need.forEach((m,i)=>S.history[m.k]={s:i<nf?'freeze':'ward'});
+        const what=[nf&&(nf>1?`${nf} Streak Freezes`:'A Streak Freeze'),nw&&(nw>1?`${nw} Penalty Wards`:'A Penalty Ward')].filter(Boolean).join(' and ');
+        notify({kind:'info',head:'Notification',lines:[`[${what} ${nf+nw>1?'were':'was'} used.]`,need.length>1?`You were protected through ${need.length} missed Daily Quests.`:'You were protected from the penalty for a missed Daily Quest.','Your streak is safe.']});
       } else {
         need.forEach(m=>S.history[m.k]={s:'fail'});
         S.streak.cur=0;
@@ -964,7 +998,10 @@ function announce(){
     :['[Daily Quest: Strength Training has arrived.]','Complete every goal before the day resets.'];
   if(soreJoints().length) lines.push(`Status ailments: ${soreJoints().map(AILMENT).join(', ')}. Still sore? Update your check-in in Recover.`);
   for(const j of soreJoints()) if(needsCheck(j)) lines.push(`Time to get your ${REC_BY[j].name.toLowerCase()} checked by a physio or doctor.`);
+  const ev=eventOn();if(ev) lines.push(`Event: ${ev.name}. ${ev.desc}`);
+  if(retestDue()) lines.push('[A Reassessment Test is ready.] Four weeks have passed. Take it from the Quest tab.');
   notify({kind:'quest',head:'Quest Info',lines,rewards:goals,foot:d.rest||d.heal?'':d.grace?'First day: no penalty yet. From tomorrow, failure will result in an appropriate penalty.':'Failure to complete the Daily Quest will result in an appropriate penalty.',btn:'Accept'});
+  loginReward();
   save();
 }
 
@@ -993,6 +1030,7 @@ function undoDaily(task){
   S.player.xp=Math.max(0,S.player.xp-s.xp);
   for(const k in s.st){const st=S.stats[k];st.x-=s.st[k];while(st.x<0&&st.t>0){st.x+=100;st.t--}if(st.x<0) st.x=0}
   S.totals.ex[exId]=Math.max(0,r2((S.totals.ex[exId]||0)-s.n));
+  untrack(exId,s.n);
   toast(`Removed the last set (${fmtAmt(task,s.pn??s.n)})`);
   save();refresh();
 }
@@ -1011,9 +1049,11 @@ function clearDaily(){
   if(new Date().getHours()<8) flag('earlybird');
   const base=40+8*p.level,xpPreview=Math.round(base*xpMult()),gold=gainGold(30+3*p.level);
   p.points+=3;S.inv.box++;
+  // every 7 days in a row earns a Streak Freeze (hold up to 2)
+  const freeze=S.streak.cur%7===0&&(S.streak.freeze||0)<FREEZE_MAX;if(freeze) S.streak.freeze=(S.streak.freeze||0)+1;
   recover();
   notify({kind:'quest',head:'Quest Complete',lines:['[You have completed the Daily Quest: Strength Training.]','Rewards have been distributed.'],
-    rewards:[['Status Recovery','HP · MP · Fatigue'],['Ability points','+3'],['Random Box','×1'],['XP',`+${fmt(xpPreview)}`],['Gold',`+${fmt(gold)}`]],
+    rewards:[['Status Recovery','HP · MP · Fatigue'],['Ability points','+3'],['Random Box','×1'],['XP',`+${fmt(xpPreview)}`],['Gold',`+${fmt(gold)}`],...(freeze?[['Streak Freeze','×1']]:[])],
     foot:`Streak: ${S.streak.cur} day${S.streak.cur===1?'':'s'}`});
   gainXP(base);
   checkUnlocks();
@@ -1045,6 +1085,138 @@ function rerollSide(i){
   if(!opts.length) return;
   d.side[i]={id:pick(rng('reroll'+d.date+S.created),opts).id,done:false,xp:0};d.sideReroll=true;
   toast('Optional quest swapped');save();refresh();
+}
+
+/* ---------- weekly & monthly quests ---------- */
+// progress is measured against a snapshot of the totals taken when the period starts
+const sumEx=ids=>ids.reduce((a,id)=>a+ex(id),0);
+const METRIC={
+  clears:()=>S.totals.clears,gates:()=>S.totals.gates,red:()=>S.totals.red,side:()=>S.totals.side,
+  rec:()=>S.totals.rec+S.totals.recHabits,
+  push:()=>sumEx(['pushup','diamond','pike','wallpush']),core:()=>sumEx(['situp','crunch','legraise','superman','deadbug']),
+  legs:()=>sumEx(['squat','glute','lunge','jumpsquat']),dist:()=>ex('run')+ex('walk')/10,
+};
+const qTarget=id=>(S.daily&&S.daily.targets[id]!=null&&taskEx(id)===DAILY_BY[id].ex?S.daily.targets[id]:null)??targetsWith(S.baseline,S.settings.diff,S.player.level)[id];
+const distName=n=>`Run ${trim(toUser(n))} ${unit()} (10 walking minutes count as 1 km)`;
+const PQ={
+  w:[{id:'clears',t:()=>5,name:n=>`Clear the Daily Quest ${n} times`},
+    {id:'gates',t:()=>3,name:n=>`Clear ${n} gates`},
+    {id:'side',t:()=>12,name:n=>`Finish ${n} optional quests`},
+    {id:'push',task:'pushup',t:()=>r5(qTarget('pushup')*5),name:n=>`Do ${n} push-ups (any kind)`},
+    {id:'core',task:'situp',t:()=>r5(qTarget('situp')*5),name:n=>`Do ${n} sit-ups or crunches`},
+    {id:'legs',task:'squat',t:()=>r5(qTarget('squat')*5),name:n=>`Do ${n} squats or bridges`},
+    {id:'dist',task:'run',t:()=>Math.max(2,Math.round(qTarget('run')*4)),name:distName}],
+  m:[{id:'clears',t:()=>20,name:n=>`Clear the Daily Quest ${n} times`},
+    {id:'gates',t:()=>12,name:n=>`Clear ${n} gates`},
+    {id:'red',t:()=>2,name:n=>`Clear ${n} Red Gates`},
+    {id:'side',t:()=>45,name:n=>`Finish ${n} optional quests`},
+    {id:'push',task:'pushup',t:()=>r5(qTarget('pushup')*18),name:n=>`Do ${n} push-ups (any kind)`},
+    {id:'legs',task:'squat',t:()=>r5(qTarget('squat')*18),name:n=>`Do ${n} squats or bridges`},
+    {id:'dist',task:'run',t:()=>Math.max(5,Math.round(qTarget('run')*15)),name:distName},
+    {id:'rec',t:()=>8,name:n=>`Do ${n} recovery sessions or habits`}],
+};
+const PQ_INFO={w:{name:'Weekly Quests',bonus:[['box',2],['key',1]]},m:{name:'Monthly Quests',bonus:[['elixir',1],['ward',1]]}};
+const pqReward=kind=>kind==='w'?{xp:120+10*S.player.level,gold:100+10*S.player.level}:{xp:400+30*S.player.level,gold:300+30*S.player.level};
+const weekKey=k=>addDays(k,-((keyDate(k).getDay()+6)%7));
+const periodKey=(kind,k)=>kind==='w'?weekKey(k):k.slice(0,7)+'-01';
+function periodEnd(kind,key){if(kind==='w') return addDays(key,7);const d=keyDate(key);d.setMonth(d.getMonth()+1,1);return keyOf(d)}
+function ensurePeriods(k){
+  for(const kind of ['w','m']){
+    const key=periodKey(kind,k),cur=S.periods[kind];
+    if(cur&&cur.key===key) continue;
+    // a finished quest left unclaimed when the period ends is paid out, not lost
+    if(cur) cur.list.forEach((q,i)=>{if(!q.claimed&&pqProg(q)>=q.target) claimPQ(kind,i,true)});
+    const r=rng(kind+key+S.created),pool=PQ[kind].filter(q=>!q.task||S.settings.tasks[q.task]);
+    S.periods[kind]={key,bonus:false,list:shuffle(r,pool).slice(0,3).map(q=>({id:q.id,target:q.t(),base:METRIC[q.id](),claimed:false}))};
+  }
+}
+const pqDef=(kind,q)=>PQ[kind].find(x=>x.id===q.id);
+const pqProg=q=>Math.max(0,METRIC[q.id]()-q.base);
+function claimPQ(kind,i,quiet){
+  const P=S.periods[kind],q=P&&P.list[i];if(!q||q.claimed||pqProg(q)<q.target) return;
+  q.claimed=true;const rw=pqReward(kind),gold=gainGold(rw.gold),xpPreview=Math.round(rw.xp*xpMult());
+  const rewards=[['XP',`+${fmt(xpPreview)}`],['Gold',`+${fmt(gold)}`]];
+  if(!P.bonus&&P.list.every(x=>x.claimed)){
+    P.bonus=true;flag(kind==='w'?'weekall':'monthall');
+    for(const [id,n] of PQ_INFO[kind].bonus){S.inv[id]+=n;rewards.push([ITEMS[id].name,'×'+n])}
+  }
+  if(!quiet){Sfx.clear();notify({kind:'quest',head:'Quest Complete',lines:[`[${PQ_INFO[kind].name.slice(0,-1)}: ${pqDef(kind,q).name(q.target)}]`,'Rewards have been distributed.'],rewards})}
+  gainXP(rw.xp);
+  checkUnlocks();save();refresh();
+}
+
+/* ---------- login rewards & events ---------- */
+const LOGIN=[['gold',50],['potion',1],['gold',100],['box',1],['scroll',1],['gold',200],['key',1]];
+const loginName=([id,n])=>id==='gold'?['Gold',`+${n}`]:[ITEMS[id].name,'×'+n];
+function loginReward(){
+  const k=S.daily&&S.daily.date;if(!k||S.login.last===k) return;
+  const i=S.login.n%LOGIN.length,[id,n]=LOGIN[i];
+  S.login.last=k;S.login.n++;
+  if(id==='gold') S.player.gold+=n; else S.inv[id]+=n;
+  notify({kind:'info',head:'Login Reward',big:`DAY ${i+1}`,lines:['[You have logged in today.]',i===LOGIN.length-1?'The cycle is complete. It starts again tomorrow.':'Log in every day to work through the cycle.'],
+    rewards:[loginName(LOGIN[i])],foot:`Tomorrow: ${loginName(LOGIN[(i+1)%LOGIN.length]).join(' ')}`,prio:0});
+}
+// days 1-7 of each month are Red Gate Week; Saturdays and Sundays double gate clear XP
+function eventOn(k){
+  k=k||(S.daily&&S.daily.date)||dayKey();const d=keyDate(k);
+  if(d.getDate()<=7) return {id:'red',name:'Red Gate Week',desc:'One of today\'s gates is a Red Gate, and Red Gates drop an extra Random Box.'};
+  if(d.getDay()===0||d.getDay()===6) return {id:'dxp',name:'Double XP Weekend',desc:'Gate clear XP is doubled.'};
+  return null;
+}
+const isEvent=id=>{const e=eventOn();return !!e&&e.id===id};
+
+/* ---------- personal bests, daily volume & re-tests ---------- */
+// per-day volume powers the progress chart; a "set" is one logged amount (a gate set, a counter entry, one run)
+function track(id,n){
+  const k=S.daily?S.daily.date:dayKey(),d=S.days[k]||(S.days[k]={});
+  d[id]=r2((d[id]||0)+n);
+  const pb=S.pb[id]||(S.pb[id]={set:0,day:0,prev:0}),beat=pb.set>0&&n>pb.set;
+  if(n>pb.set){pb.prev=pb.set;pb.set=r2(n)}
+  if(d[id]>pb.day) pb.day=d[id];
+  return beat;
+}
+function untrack(id,n){
+  const k=S.daily?S.daily.date:dayKey(),d=S.days[k],pb=S.pb[id];
+  if(d&&d[id]!=null){const was=d[id];d[id]=Math.max(0,r2(d[id]-n));if(pb&&pb.day===was) pb.day=Math.max(d[id],...Object.entries(S.days).filter(([x])=>x!==k).map(([,v])=>v[id]||0))}
+  if(pb&&pb.set===r2(n)){pb.set=pb.prev||0;pb.prev=0}
+}
+function pruneDays(k){const old=addDays(k,-400);for(const x of Object.keys(S.days)) if(x<old) delete S.days[x]}
+const pbFmt=(id,v)=>EX[id].type==='km'?`${trim(toUser(v))} ${unit()}`:EX[id].type==='time'?`${Math.round(v)} s`:EX[id].type==='min'?`${Math.round(v)} min`:`× ${fmt(v)}`;
+const TEST_EVERY=28;
+const lastTest=()=>S.tests[S.tests.length-1];
+const retestDue=()=>!!(S.daily&&lastTest()&&daysBetween(lastTest().date,S.daily.date)>=TEST_EVERY);
+function startRetest(){
+  const t=lastTest()||S.baseline;
+  UI.aw={step:2,declined:false,name:S.player.name,base:{pushup:t.pushup,situp:t.situp,squat:t.squat,run:t.run},diff:S.settings.diff,rest:[...S.settings.restDays],recal:true,retest:true};
+  UI.screen={kind:'awaken'};UI.sheet=null;refresh();
+}
+function finishRetest(){
+  const a=UI.aw,prev=lastTest(),first=S.tests[0],cur={date:S.daily.date,...a.base};
+  S.tests.push(cur);if(S.tests.length>60) S.tests.splice(1,1);
+  S.baseline={...a.base};retarget();
+  UI.screen=null;UI.aw=null;
+  const unitOf=k=>k==='run'?` ${unit()}`:'',show=(k,v)=>k==='run'?trim(toUser(v)):v;
+  const rows=['pushup','situp','squat','run'].map(k=>{const d=r2(cur[k]-prev[k]);return [DAILY_BY[k].name,`${show(k,prev[k])} → ${show(k,cur[k])}${unitOf(k)}${d?` (${d>0?'+':''}${k==='run'?trim(toUser(d)):d})`:''}`]});
+  const better=['pushup','situp','squat','run'].some(k=>cur[k]>first[k]);
+  if(better) flag('stronger');
+  const xp=100+10*S.player.level,gold=gainGold(100);
+  notify({kind:'level',head:'Reassessment',big:better?'STRONGER':'MEASURED',lines:['[Test results recorded.]',better?'You are stronger than when you awakened.':'Progress takes time. The System will test you again in four weeks.','Today\'s goals have been updated to match.'],
+    rewards:[...rows,['XP',`+${fmt(Math.round(xp*xpMult()))}`],['Gold',`+${fmt(gold)}`]]});
+  gainXP(xp);checkUnlocks();save();refresh();
+}
+
+/* ---------- shadow summons ---------- */
+// one shadow per gate: it strikes the boss and raises that gate's clear rewards
+const summonPct=id=>({Normal:10,Elite:15,Knight:20}[SHADOWS[id].grade]||10)+5*((S.shadows[id]||{lv:1}).lv-1);
+function summonShadow(id){
+  const s=S.session;if(!s||s.g.mode==='rec'||s.summon||!S.shadows[id]||!SHADOWS[id]) return;
+  if(S.player.mp<5){toast('Not enough MP to summon (5 MP).','bad');return}
+  S.player.mp-=5;
+  const total=s.g.sets.reduce((a,b)=>a+b.hp,0),strike=Math.round(total*summonPct(id)/200);
+  s.summon={id,pct:summonPct(id)};s.dealt+=strike;UI.hit=strike;UI.sheet=null;
+  S.totals.summons=(S.totals.summons||0)+1;
+  Sfx.seal();buzz([60,40,120]);toast(`Arise, ${SHADOWS[id].name}.`);
+  checkUnlocks();save();refresh();
 }
 
 /* ---------- recovery ---------- */
@@ -1204,7 +1376,10 @@ function genGates(k){
   const r=rng('gates'+k+S.created+(salt?'#'+salt:'')),base=S.player.rank,done=same?(S.gates.done||[]):[];
   const ranks=[base,base,Math.min(5,base+1)];
   if(base>0&&r()<.3) ranks[0]=base-1;
-  const list=ranks.map((rk,i)=>{const g=makeGate(r,rk);return g&&{...g,id:k+(salt?'-r'+salt:'')+'-'+i}}).filter(g=>g&&!done.includes(g.id));
+  const red=eventOn(k)?.id==='red';
+  let list=ranks.map((rk,i)=>{const g=makeGate(r,rk,red&&i===2?{red:true}:{});return g&&{...g,id:k+(salt?'-r'+salt:'')+'-'+i}}).filter(g=>g&&!done.includes(g.id));
+  // after a Gate Compass reroll the new ids never match, so gates already cleared today are not handed out again
+  if(salt) list=list.slice(0,Math.max(0,3-done.filter(id=>id[0]!=='k').length));
   S.gates={date:k,list,done,salt};
 }
 // rebuild today's gates around sore joints (bought key gates keep their id and rank)
@@ -1289,10 +1464,13 @@ function nextSet(){
 }
 function finishGate(){
   const s=S.session,g=s.g,p=S.player;
-  const xpPreview=Math.round(g.xp*xpMult('gate')),gold=gainGold(g.gold);
+  const sm=s.summon&&SHADOWS[s.summon.id]?1+s.summon.pct/100:1;
+  const xpPreview=Math.round(g.xp*sm*xpMult('gate')),gold=gainGold(g.gold*sm);
   gainStats({per:12*(g.rank+1)});
   const loot=[],luck=clamp((stat('per')-10)*.004,0,.25);
   if(g.red){S.inv.box++;loot.push(['Random Box','×1'])}
+  if(g.red&&isEvent('red')){S.inv.box++;loot.push(['Random Box (Red Gate Week)','×1'])}
+  if(sm>1) loot.unshift([`Shadow: ${SHADOWS[s.summon.id].name}`,`+${s.summon.pct}% clear rewards`]);
   if(Math.random()<.25+luck){S.inv.box++;loot.push(['Random Box','×1'])}
   if(Math.random()<.08+luck/2){S.inv.key++;loot.push(['Instant Dungeon Key','×1'])}
   if(Math.random()<.12){S.inv.potion++;loot.push(['Recovery Potion','×1'])}
@@ -1305,7 +1483,7 @@ function finishGate(){
   S.session=null;UI.screen=null;UI.hit=0;unwake();
   notify({kind:'quest',head:g.trial?'Trial Cleared':'Dungeon Cleared',lines:[`[${g.boss} has been defeated.]`,`Clear time ${mmss((Date.now()-s.t0)/1000)}`],
     rewards:[['XP from sets',`+${fmt(s.xp)}`],['Clear bonus',`+${fmt(xpPreview)} XP`],['Gold',`+${fmt(gold)}`],...loot]});
-  gainXP(g.xp+scroll,'gate');
+  gainXP(g.xp*sm+scroll,'gate');
   offerExtraction(g);
   if(g.trial){
     p.rank=Math.min(5,p.rank+1);
@@ -1624,6 +1802,11 @@ function goalRow(act,x,name,val,tg,label,done){
 function vQuest(){
   const d=S.daily;let h='';
   if(S.penalty) h+=penaltyWin();
+  const ev=eventOn();
+  if(ev) h+=`<div class="event ev-${ev.id}"><b>${ev.name}</b><span>${ev.desc}</span></div>`;
+  if(retestDue()) h+=`<section class="win tone-ok">${winHead('Reassessment Test','!')}<p class="sys">[Four weeks have passed. Show the System how far you have come.]</p>
+    <p class="note" style="text-align:center">One honest set each of push-ups, sit-ups and squats, plus your running distance. Your goals update to match.</p>
+    <button class="btn pri block" data-a="retest">Take the test</button></section>`;
   const ids=Object.keys(d.targets);
   const rows=ids.map(id=>{const v=d.prog[id],tg=d.targets[id],swapped=d.subs&&d.subs[id];
     return goalRow('task',id,`${taskName(id)}${swapped?' <span class="tag teal">Adapted</span>':''}`,v,tg,`${fmtTask(id,v)}/${fmtTask(id,tg)}${taskSfx(id)}`,v>=tg-1e-6)}).join('');
@@ -1644,10 +1827,22 @@ function vQuest(){
     <div class="mp-row"><span>${sideDone} / ${d.side.length} done${d.sideFull?' · Full Discipline earned':` · all ${d.side.length}: +${SIDE_FULL.xp} XP, +${SIDE_FULL.gold} gold`}</span>
       ${d.sideReroll||d.side.every(q=>q.done)?'':`<button class="btn sm ghost" data-a="sideReroll">Swap one</button>`}</div>
     <p class="note">Tick these off yourself. New ones arrive at every reset.</p></section>`;
+  h+=periodWin('w')+periodWin('m');
   const open=S.gates.list.length+(trialGate()?1:0);
   h+=`<div class="quick"><button class="btn" data-a="runOpen" data-x="gps">${ico('run')}${S.run?`Run · ${trim(toUser(S.run.dist))} ${unit()}`:'Start a run'}</button>
     <button class="btn" data-a="tab" data-x="gates">${ico('gate')}Gates${open?` <span class="pill">${open}</span>`:''}</button></div>`;
   return h;
+}
+function periodWin(kind){
+  const P=S.periods[kind];if(!P) return '';
+  const left=daysBetween(S.daily.date,periodEnd(kind,P.key)),rw=pqReward(kind);
+  const rows=P.list.map((q,i)=>{const def=pqDef(kind,q),v=Math.min(q.target,pqProg(q)),done=v>=q.target,dist=q.id==='dist';
+    const lbl=dist?`${trim(toUser(v))}/${trim(toUser(q.target))}`:`${fmt(Math.floor(v))}/${fmt(q.target)}`;
+    return `<li class="pq${q.claimed?' claimed':''}"><div class="pq-t"><span>${def.name(q.target)}</span><b>${q.claimed?'Claimed':lbl}</b></div><span class="g-bar" style="--p:${v/q.target}"></span>
+      ${done&&!q.claimed?`<button class="btn sm pri" data-a="claimPQ" data-x="${kind}:${i}">Claim</button>`:''}</li>`}).join('');
+  const bonus=PQ_INFO[kind].bonus.map(([id,n])=>`${ITEMS[id].name}${n>1?' ×'+n:''}`).join(' + ');
+  return `<section class="win">${winHead(PQ_INFO[kind].name)}<ul class="pqs">${rows}</ul>
+    <div class="mp-row"><span>Each: +${fmt(rw.xp)} XP · +${fmt(rw.gold)} gold<br>All 3: ${P.bonus?'bonus claimed':bonus}</span><span class="tag">${left} day${left===1?'':'s'} left</span></div></section>`;
 }
 function penaltyWin(){
   const p=S.penalty,paused=penaltyPaused();
@@ -1778,7 +1973,47 @@ function calendar(){
     cells+=`<i class="c ${s}" title="${k}"></i>`;
   }
   return `<div class="cal-wrap"><div class="cal-d" aria-hidden="true">${['S','M','T','W','T','F','S'].map(d=>`<span>${d}</span>`).join('')}</div><div class="cal" role="img" aria-label="Daily Quest history, last 12 weeks">${cells}</div></div>
-    <div class="legend"><span><i class="c clear"></i>Cleared</span><span><i class="c fail"></i>Failed</span><span><i class="c rest"></i>Rest day</span><span><i class="c ward"></i>Ward used</span></div>`;
+    <div class="legend"><span><i class="c clear"></i>Cleared</span><span><i class="c fail"></i>Failed</span><span><i class="c rest"></i>Rest day</span><span><i class="c ward"></i>Ward used</span><span><i class="c freeze"></i>Freeze used</span></div>`;
+}
+// weekly volume for one exercise group over the last 8 weeks (Monday to Sunday)
+const CHART={push:{name:'Push-ups',ids:['pushup','diamond','pike','wallpush']},core:{name:'Core',ids:['situp','crunch','legraise','superman','deadbug']},
+  legs:{name:'Legs',ids:['squat','glute','lunge','jumpsquat']},dist:{name:'Distance',ids:['run','walk']}};
+function weekVolume(g,wk){
+  let v=0;for(let i=0;i<7;i++){const d=S.days[addDays(wk,i)];if(!d) continue;for(const id of CHART[g].ids) v+=g==='dist'&&id==='walk'?(d[id]||0)/10:(d[id]||0)}
+  return v;
+}
+function progressWin(){
+  const g=CHART[UI.chartEx]?UI.chartEx:'push',now=weekKey(S.daily.date),N=8;
+  const weeks=Array.from({length:N},(_,i)=>addDays(now,-7*(N-1-i)));
+  const vals=weeks.map(w=>g==='dist'?r2(toUser(weekVolume(g,w))):Math.round(weekVolume(g,w)));
+  const max=Math.max(1,...vals),nice=(()=>{const m=Math.pow(10,Math.floor(Math.log10(max)));return [1,2,2.5,5,10].map(x=>x*m).find(x=>x>=max)})();
+  const W=320,H=150,pl=34,pb=22,pt=16,bw=(W-pl)/N,u=g==='dist'?' '+unit():'';
+  const y=v=>pt+(H-pt-pb)*(1-v/nice);
+  const bar=(x,top,w,h)=>{if(h<=0) return '';const r=Math.min(4,h,w/2);return `M${x},${top+h}V${top+r}Q${x},${top} ${x+r},${top}H${x+w-r}Q${x+w},${top} ${x+w},${top+r}V${top+h}Z`};
+  const sel=UI.chartPick;
+  const grid=[0,.5,1].map(f=>`<line x1="${pl}" x2="${W}" y1="${y(nice*f)}" y2="${y(nice*f)}" class="ch-grid"/><text x="${pl-6}" y="${y(nice*f)+4}" class="ch-ax" text-anchor="end">${trim(nice*f)}</text>`).join('');
+  const bars=vals.map((v,i)=>{const x=pl+i*bw+bw*.2,w=bw*.6,top=y(v),d=keyDate(weeks[i]);
+    return `<g class="ch-b${sel===i?' on':''}" data-a="chartPick" data-x="${i}" role="listitem" aria-label="Week of ${d.getMonth()+1}/${d.getDate()}: ${trim(v)}${u}"><rect x="${pl+i*bw}" y="0" width="${bw}" height="${H}" fill="transparent"/><path d="${bar(x,top,w,H-pb-top)}"/>
+      <text x="${x+w/2}" y="${H-6}" class="ch-ax" text-anchor="middle">${i===N-1?'Now':`${d.getMonth()+1}/${d.getDate()}`}</text>${sel===i||(sel==null&&i===N-1&&v>0)?`<text x="${x+w/2}" y="${top-5}" class="ch-v" text-anchor="middle">${trim(v)}</text>`:''}</g>`}).join('');
+  const cur=vals[N-1],prev=vals[N-2];
+  return `<section class="win">${winHead('Progress')}
+    <div class="seg" role="tablist" style="margin-bottom:12px">${Object.entries(CHART).map(([id,c])=>`<button class="seg-b${g===id?' on':''}" data-a="chartEx" data-x="${id}" role="tab" aria-selected="${g===id}">${c.name}</button>`).join('')}</div>
+    <div class="ch-hero"><b>${trim(cur)}${u}</b><span>so far this week · last week ${trim(prev)}${u}</span></div>
+    <svg class="chart" viewBox="0 0 ${W} ${H}" role="list" aria-label="${CHART[g].name} per week, last ${N} weeks">${grid}${bars}</svg>
+    <p class="note">Weekly totals, Monday to Sunday${g==='dist'?'. 10 walking minutes count as 1 km':''}. Tap a bar for its value.</p></section>`;
+}
+function pbWin(){
+  const ids=Object.keys(S.pb).filter(id=>EX[id]&&EX[id].kind!=='rec'&&S.pb[id].set>0).sort((a,b)=>(ex(b)-ex(a)));
+  return `<section class="win">${winHead('Personal Bests')}${ids.length?`<table class="pbt"><thead><tr><th>Exercise</th><th>Best set</th><th>Best day</th></tr></thead><tbody>${ids.map(id=>`<tr><td>${esc(EX[id].name)}</td><td>${pbFmt(id,S.pb[id].set)}</td><td>${pbFmt(id,S.pb[id].day)}</td></tr>`).join('')}</tbody></table>`
+    :'<p class="empty">Log a set and your bests appear here.</p>'}</section>`;
+}
+function testsWin(){
+  const T=S.tests;if(!T.length) return '';
+  const first=T[0],last=T[T.length-1],next=addDays(last.date,TEST_EVERY),show=(k,v)=>k==='run'?`${trim(toUser(v))} ${unit()}`:v;
+  const cols=T.length>2?[first,T[T.length-2],last]:T;
+  return `<section class="win">${winHead('Assessments')}<table class="pbt"><thead><tr><th></th>${cols.map(t=>{const d=keyDate(t.date);return `<th>${d.getMonth()+1}/${d.getDate()}${t===first?'<br><small>Start</small>':''}</th>`}).join('')}</tr></thead>
+    <tbody>${['pushup','situp','squat','run'].map(k=>`<tr><td>${DAILY_BY[k].name}</td>${cols.map(t=>`<td>${show(k,t[k])}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    <p class="note">${retestDue()?'A Reassessment Test is ready on the Quest tab.':`Next Reassessment Test: ${keyDate(next).toLocaleDateString([], {month:'short',day:'numeric'})}.`}</p></section>`;
 }
 function vRecords(){
   const days=Math.floor((Date.now()-S.created)/864e5)+1;
@@ -1786,9 +2021,11 @@ function vRecords(){
     ['Gates cleared',`${fmt(S.totals.gates)}${S.totals.red?` (${S.totals.red} red)`:''}`],['Daily Quests cleared',fmt(S.totals.clears)],['Penalties survived',fmt(S.totals.penalties)],['Optional quests',fmt(S.totals.side)],['Recovery sessions',fmt(S.totals.rec)],['Recovery habits',fmt(S.totals.recHabits)],['Days since awakening',fmt(days)]];
   return `<section class="win">${winHead('Streak')}
     <div class="streak"><div class="streak-n">${ico('flame')}<b>${S.streak.cur}</b><span>day streak</span></div>
-    <dl class="kv"><div><dt>Best streak</dt><dd>${S.streak.best}</dd></div><div><dt>Penalty Wards</dt><dd>${S.inv.ward}</dd></div><div><dt>Rest days</dt><dd>${S.settings.restDays.length?S.settings.restDays.map(i=>DOW[i]).join(', '):'None'}</dd></div></dl></div>
+    <dl class="kv"><div><dt>Best streak</dt><dd>${S.streak.best}</dd></div><div><dt>Streak Freezes</dt><dd>${S.streak.freeze||0} / ${FREEZE_MAX}</dd></div><div><dt>Penalty Wards</dt><dd>${S.inv.ward}</dd></div><div><dt>Rest days</dt><dd>${S.settings.restDays.length?S.settings.restDays.map(i=>DOW[i]).join(', '):'None'}</dd></div></dl></div>
   </section>
+  <p class="note" style="margin:-6px 0 14px;text-align:center">Every 7-day streak earns a Streak Freeze. It covers one missed day before a Penalty Ward is used.</p>
   <section class="win">${winHead('Quest Log')}${calendar()}</section>
+  ${progressWin()}${pbWin()}${testsWin()}
   <section class="win">${winHead('Totals')}<dl class="kv">${rows.map(([a,b])=>`<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl></section>
   <section class="win">${winHead('System Log')}${S.log.length?`<ul class="log">${S.log.slice(0,15).map(l=>`<li><time>${clockTime(l.t)}</time><span><b>${esc(l.h)}</b> ${esc(l.l)}</span></li>`).join('')}</ul>`:'<p class="empty">No messages yet.</p>'}</section>
   <button class="btn block" data-a="settings">${ico('gear')}Settings</button>`;
@@ -1934,6 +2171,14 @@ const SHEETS={
       <ul class="rewards"><li><span>Clear bonus</span><b>${fmt(g.xp*xpMult('gate'))} XP</b></li><li><span>Gold</span><b>${fmt(g.gold*goldMult())}</b></li><li><span>Drops</span><b>${g.red?'Random Box + chances':'Chance of items'}</b></li></ul>
       <div class="row2"><button class="btn" data-a="sheetClose">Not now</button><button class="btn pri" data-a="enterGate" data-x="${esc(g.id)}">${g.trial?'Begin trial':'Enter · 10 MP'}</button></div>`;
   },
+  summon(){
+    const s=S.session;if(!s||s.summon) return null;
+    const ids=Object.keys(S.shadows).filter(id=>SHADOWS[id]).sort((a,b)=>summonPct(b)-summonPct(a));
+    return `<div class="sh-head"><div><p class="eyebrow">Shadow Army · MP ${fmt(S.player.mp)}</p><h3>Summon a shadow</h3></div>${closeBtn}</div>
+      <p class="note">One shadow per gate. It strikes the boss at once and raises this gate's clear XP and gold.</p>
+      <ul class="list">${ids.map(id=>{const sh=SHADOWS[id];return `<li class="item"><div class="it-ico">${ico('shadow')}</div><div class="it-b"><h4>${esc(sh.name)}</h4><p>${sh.grade} · Lv ${S.shadows[id].lv} · +${summonPct(id)}% clear rewards</p></div>
+        <button class="btn sm pri" data-a="summon" data-x="${id}" ${S.player.mp<5?'disabled':''}>Arise</button></li>`}).join('')}</ul>`;
+  },
   titles(){
     const p=S.player;
     return `<div class="sh-head"><div><p class="eyebrow">Status</p><h3>Titles</h3></div>${closeBtn}</div>
@@ -1987,14 +2232,14 @@ const SCREENS={
     if(a.step===2){
       const st=(id,l,h)=>`<div><h3>${l}</h3><p class="hint" style="margin:0 0 8px">${h}</p><div class="stepper sm"><button class="btn sq" data-a="awStep" data-x="${id}:-1" aria-label="Less">−</button><input id="aw-${id}" type="number" inputmode="numeric" min="0" max="300" value="${a.base[id]}" aria-label="${l}"><button class="btn sq" data-a="awStep" data-x="${id}:1" aria-label="More">+</button></div></div>`;
       const runs=S.settings.units==='mi'?['I mostly walk','About 0.5 mi','1–2 mi','3 mi','6 mi or more']:['I mostly walk','About 1 km','2–3 km','5 km','10 km or more'];
-      return `<div class="aw"><section class="win">${winHead('Assessment')}
-        <p class="sys">[The System will measure your current ability.]</p>
-        <p class="hint" style="text-align:center;margin:-6px 0 16px">Test yourself now or give your best guess. You can retake this any time in Settings.</p>
+      return `<div class="aw"><section class="win">${winHead(a.retest?'Reassessment Test':'Assessment')}
+        <p class="sys">${a.retest?'[Show the System how far you have come.]':'[The System will measure your current ability.]'}</p>
+        <p class="hint" style="text-align:center;margin:-6px 0 16px">${a.retest?'Warm up, then do one honest set of each with a few minutes of rest between them. Your last results are filled in.':'Test yourself now or give your best guess. You can retake this any time in Settings.'}</p>
         <div class="assess">${st('pushup','Push-ups in one set','Knee push-ups count.')}${st('situp','Sit-ups in one set','Crunches count.')}${st('squat','Squats in one set','Bodyweight squats.')}
           <div><h3>How far can you run without stopping?</h3>
             <div class="seg" style="margin:8px 0 10px"><button class="seg-b${unit()==='km'?' on':''}" data-a="awUnits" data-x="km">km</button><button class="seg-b${unit()==='mi'?' on':''}" data-a="awUnits" data-x="mi">miles</button></div>
             <div class="chips">${[.5,1,2,5,10].map((v,i)=>`<button class="chip${a.base.run===v?' on':''}" data-a="awRun" data-x="${v}">${runs[i]}</button>`).join('')}</div></div></div>
-        <div class="row2" style="margin-top:18px">${a.recal?'<button class="btn" data-a="awCancel">Cancel</button>':''}<button class="btn pri" data-a="awAssess">Continue</button></div></section></div>`;
+        <div class="row2" style="margin-top:18px">${a.recal?'<button class="btn" data-a="awCancel">Cancel</button>':''}<button class="btn pri" data-a="awAssess">${a.retest?'Submit results':'Continue'}</button></div></section></div>`;
     }
     const tg=targetsWith(a.base,a.diff,a.recal?S.player.level:1);
     return `<div class="aw"><section class="win">${winHead('Difficulty')}
@@ -2039,6 +2284,8 @@ const SCREENS={
         <div class="hpbar" role="progressbar" aria-label="Boss HP" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${left}"><i style="width:${left/total*100}%"></i></div>
         <p class="hp-n">${fmt(left)} / ${fmt(total)}</p>
         ${hit?`<span class="dmg">−${fmt(hit)}</span>`:''}
+        ${s.summon&&SHADOWS[s.summon.id]?`<p class="summoned">${ico('shadow')}${esc(SHADOWS[s.summon.id].name)} fights beside you · +${s.summon.pct}% clear rewards</p>`
+          :Object.keys(S.shadows).some(id=>SHADOWS[id])?`<button class="btn sm summon-b" data-a="summonOpen">${ico('shadow')}Summon a shadow · 5 MP</button>`:''}
       </section>`;
     const confirm=rec?`<div class="confirm"><p>End the session? Moves you finished still count.</p><div class="row2"><button class="btn" data-a="retreatNo">Keep going</button><button class="btn danger" data-a="retreatYes">End session</button></div></div>`
       :`<div class="confirm"><p>Leave the gate? You keep XP from finished sets but get no clear rewards.${g.red?' Fleeing a Red Gate costs 20% HP.':''}${g.trial?'':' The 10 MP is not refunded.'}</p><div class="row2"><button class="btn" data-a="retreatNo">Keep fighting</button><button class="btn danger" data-a="retreatYes">Retreat</button></div></div>`;
@@ -2200,15 +2447,34 @@ function importText(txt){
   }
   if(!Array.isArray(S.gates.done)) S.gates.done=[];
   if(!S.recSeen||typeof S.recSeen!=='object'||Array.isArray(S.recSeen)) S.recSeen={};
-  S.gear={owned:(Array.isArray(S.gear&&S.gear.owned)?S.gear.owned:[]).filter(id=>GEAR[id]),eq:Object.fromEntries(Object.keys(SLOTS).map(sl=>{const id=S.gear&&S.gear.eq&&S.gear.eq[sl];return [sl,GEAR[id]&&GEAR[id].slot===sl&&S.gear.owned.includes(id)?id:null]}))};
+  const owned=[...new Set((Array.isArray(S.gear&&S.gear.owned)?S.gear.owned:[]).filter(id=>GEAR[id]))];
+  S.gear={owned,eq:Object.fromEntries(Object.keys(SLOTS).map(sl=>{const id=S.gear&&S.gear.eq&&S.gear.eq[sl];return [sl,GEAR[id]&&GEAR[id].slot===sl&&owned.includes(id)?id:null]}))};
   S.shadows=Object.fromEntries(Object.entries(S.shadows||{}).filter(([id,v])=>SHADOWS[id]&&v).map(([id,v])=>[id,{lv:clamp(Math.round(+v.lv)||1,1,5)}]));
   S.buffs={scroll:!!(S.buffs&&S.buffs.scroll),balm:!!(S.buffs&&S.buffs.balm)};
   for(const k of Object.keys(ITEMS)) S.inv[k]=clamp(Math.round(+S.inv[k])||0,0,9999);
   if(S.player.sig&&!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(S.player.sig)) S.player.sig=null;
+  S.streak.freeze=clamp(Math.round(+S.streak.freeze)||0,0,FREEZE_MAX);
+  const isKey=k=>typeof k==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(k),num=v=>Number.isFinite(+v)&&+v>=0;
+  for(const kind of ['w','m']){const P=S.periods&&S.periods[kind];
+    S.periods[kind]=P&&isKey(P.key)&&Array.isArray(P.list)&&P.list.every(q=>q&&METRIC[q.id]&&PQ[kind].some(x=>x.id===q.id)&&num(q.target)&&+q.target>0&&num(q.base))
+      ?{key:P.key,bonus:!!P.bonus,list:P.list.map(q=>({id:q.id,target:+q.target,base:+q.base,claimed:!!q.claimed}))}:null}
+  S.login={last:isKey(S.login&&S.login.last)?S.login.last:null,n:clamp(Math.round(+(S.login&&S.login.n))||0,0,1e6)};
+  S.days=Object.fromEntries(Object.entries(S.days&&typeof S.days==='object'?S.days:{}).filter(([k,v])=>isKey(k)&&v&&typeof v==='object').map(([k,v])=>[k,Object.fromEntries(Object.entries(v).filter(([id,n])=>EX[id]&&num(n)).map(([id,n])=>[id,+n]))]));
+  S.pb=Object.fromEntries(Object.entries(S.pb&&typeof S.pb==='object'?S.pb:{}).filter(([id,v])=>EX[id]&&v).map(([id,v])=>[id,{set:num(v.set)?+v.set:0,day:num(v.day)?+v.day:0,prev:num(v.prev)?+v.prev:0}]));
+  S.tests=(Array.isArray(S.tests)?S.tests:[]).filter(t=>t&&isKey(t.date)&&['pushup','situp','squat','run'].every(k=>num(t[k]))).map(t=>({date:t.date,pushup:+t.pushup,situp:+t.situp,squat:+t.squat,run:+t.run}));
+  migrate();
   UI.screen=null;UI.sheet=null;UI.tab='quest';
   applySkin();saveNow();
   if(S.awakened){rollover();announce()} else startAwakening();
   toast('Backup restored');refresh();
+}
+// fills in state that older saves lack; runs before the first rollover so it sees the right flags
+function migrate(){
+  // flags from before the opt-in always adapted the Daily Quest
+  for(const v of Object.values(S.joints)) if(v&&typeof v.adapt!=='boolean') v.adapt=true;
+  // the awakening assessment is the first test result
+  if(S.awakened&&!S.tests.length) S.tests.push({date:keyOf(new Date(S.created)),...S.baseline});
+  if(S.awakened&&S.daily) ensurePeriods(S.daily.date);
 }
 function startAwakening(recal){
   UI.aw={step:recal?2:0,declined:false,name:S.player.name==='Player'?'':S.player.name,base:{...S.baseline},diff:S.settings.diff,rest:[...S.settings.restDays],recal:!!recal};
@@ -2234,11 +2500,12 @@ function initSig(){
   draw();
   if(a.sealed) return;
   const pos=e=>{const r=c.getBoundingClientRect();return [(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};
-  let cur=null;
-  c.addEventListener('pointerdown',e=>{e.preventDefault();c.setPointerCapture(e.pointerId);cur=[pos(e)];a.strokes.push(cur);draw()});
-  c.addEventListener('pointermove',e=>{if(!cur) return;const p=pos(e),l=cur[cur.length-1];a.sigLen+=Math.hypot(p[0]-l[0],p[1]-l[1]);cur.push(p);draw();
+  // one finger at a time: extra touches are ignored so they can't join strokes or inflate the length
+  let cur=null,pid=null;
+  c.addEventListener('pointerdown',e=>{e.preventDefault();if(cur) return;pid=e.pointerId;c.setPointerCapture(pid);cur=[pos(e)];a.strokes.push(cur);draw()});
+  c.addEventListener('pointermove',e=>{if(!cur||e.pointerId!==pid) return;const p=pos(e),l=cur[cur.length-1];a.sigLen+=Math.hypot(p[0]-l[0],p[1]-l[1]);cur.push(p);draw();
     const b=$('#sig-seal');if(b) b.disabled=a.sigLen<=120});
-  const end=()=>{cur=null};
+  const end=e=>{if(e.pointerId===pid){cur=null;pid=null}};
   c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end);
 }
 function sealContract(){
@@ -2253,7 +2520,7 @@ function sealContract(){
 }
 let deferredInstall=null;
 const ACT={
-  tab(x){UI.tab=x;UI.sheet=null;window.scrollTo(0,0);refresh()},
+  tab(x){UI.tab=x;UI.sheet=null;UI.rerolling=false;window.scrollTo(0,0);refresh()},
   settings(){UI.screen={kind:'settings'};UI.confirmReset=false;refresh()},
   scrClose(){UI.screen=null;refresh()},
   sheetClose(){
@@ -2264,7 +2531,7 @@ const ACT={
   },
   task(x){if(x==='run') UI.sheet={kind:'runTask'}; else openCounter('daily',x);refresh()},
   pen(x){const t=S.penalty.tasks[x];if(EX[t.ex].type==='time') UI.sheet={kind:'hold',i:+x,acc:0,start:0,tone:true}; else openCounter('pen',x);refresh()},
-  side(x){if(UI.rerolling){UI.rerolling=false;rerollSide(+x);return}toggleSide(+x)},
+  side(x){const q=S.daily.side[+x];if(UI.rerolling&&q&&!q.done&&!S.daily.sideReroll){UI.rerolling=false;rerollSide(+x);return}UI.rerolling=false;toggleSide(+x)},
   sideReroll(){UI.rerolling=true;toast('Tap the optional quest you want to swap.')},
   joint(x){
     const[j,l]=x.split(':'),lv=+l;
@@ -2349,8 +2616,14 @@ const ACT={
   awStep(x){readAssess();const[k,d]=x.split(':');UI.aw.base[k]=clamp(UI.aw.base[k]+(+d),0,300);refresh()},
   awRun(x){readAssess();UI.aw.base.run=+x;refresh()},
   awUnits(x){readAssess();S.settings.units=x;refresh()},
-  awAssess(){readAssess();UI.aw.step=3;refresh()},
-  awCancel(){UI.screen={kind:'settings'};refresh()},
+  awAssess(){readAssess();if(UI.aw.retest){finishRetest();return}UI.aw.step=3;refresh()},
+  awCancel(){UI.screen=UI.aw&&UI.aw.retest?null:{kind:'settings'};refresh()},
+  retest(){startRetest()},
+  claimPQ(x){const[k,i]=x.split(':');claimPQ(k,+i)},
+  summonOpen(){UI.sheet={kind:'summon',tone:'violet'};refresh()},
+  summon(x){summonShadow(x)},
+  chartEx(x){UI.chartEx=x;UI.chartPick=null;refresh()},
+  chartPick(x){UI.chartPick=UI.chartPick===+x?null:+x;refresh()},
   awBack(){UI.aw.step=2;refresh()},
   awDiff(x){UI.aw.diff=x;refresh()},
   awRest(x){const a=UI.aw,i=+x;a.rest=a.rest.includes(i)?a.rest.filter(v=>v!==i):[...a.rest,i];if(a.rest.length>3){a.rest.shift();toast('Up to 3 rest days a week.')}refresh()},
@@ -2359,6 +2632,7 @@ const ACT={
     S.baseline={...a.base};S.settings.diff=a.diff;S.settings.restDays=a.rest.slice().sort();
     if(a.recal){retarget();UI.screen={kind:'settings'};toast('Assessment saved. Today\'s goals updated.');save();refresh();return}
     S.player.name=a.name;S.player.sig=a.sig||null;S.awakened=true;S.created=Date.now();
+    S.tests=[{date:dayKey(),...S.baseline}];
     recover();newDay(dayKey(),true);
     UI.screen=null;UI.tab='quest';
     notify({kind:'info',head:'Notification',lines:['[Registration complete.]',`Welcome, Player ${a.name}.`,'The System will now assign your first Daily Quest.'],btn:'Continue'});
@@ -2519,11 +2793,10 @@ function syncOutside(){
   if(S.run&&S.run.seg){S.run.el+=Math.max(0,(S.run.ts||S.run.seg)-S.run.seg);S.run.seg=null;S.run.last=null}
   if(!S.awakened) startAwakening();
   else{
+    migrate();
     rollover();
     // saves from before the recovery update have no recovery habits for the current day
     if(S.daily&&!Array.isArray(S.daily.rh)){S.daily.recDone=S.daily.recDone||[];syncRecHabits()}
-    // flags from before the opt-in always adapted the Daily Quest
-    for(const v of Object.values(S.joints)) if(typeof v.adapt!=='boolean') v.adapt=true;
     if(S.session) UI.screen={kind:'gate'};
     deepLink();
     announce();
