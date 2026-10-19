@@ -1,5 +1,5 @@
 /* Awaken offline cache and Windows widget. Bump VERSION whenever the app files change. */
-const VERSION = 'awaken-v2';
+const VERSION = 'awaken-v3';
 const FONTS = 'awaken-fonts';
 const WIDGET_CACHE = 'awaken-widget'; // the page writes the widget's data snapshot here; it must survive updates
 const SHELL = [
@@ -29,7 +29,8 @@ self.addEventListener('fetch', e => {
 
   // Widget data: the page's latest snapshot, or the static default before the app has run.
   if (url.href === SNAPSHOT_URL) {
-    e.respondWith(caches.open(WIDGET_CACHE).then(c => c.match(SNAPSHOT_URL)).then(hit => hit || fetch(req)));
+    e.respondWith(caches.open(WIDGET_CACHE).then(c => c.match(SNAPSHOT_URL))
+      .then(hit => hit || caches.match(SNAPSHOT_URL, { cacheName: VERSION })).then(hit => hit || fetch(req)));
     return;
   }
 
@@ -77,13 +78,18 @@ function dayKey(resetHour) {
 async function readSnapshot() {
   let data = {};
   try {
-    const hit = await (await caches.open(WIDGET_CACHE)).match(SNAPSHOT_URL);
+    const hit = await (await caches.open(WIDGET_CACHE)).match(SNAPSHOT_URL)
+      || await caches.match(SNAPSHOT_URL, { cacheName: VERSION });
     data = await (hit || await fetch(SNAPSHOT_URL)).json();
   } catch (e) {}
   // Last written on an earlier day: show a fresh quest instead of yesterday's numbers.
   if (data.date && data.date !== dayKey(data.resetHour)) {
+    const today = dayKey(data.resetHour), [y, m, d] = today.split('-').map(Number);
+    const rest = (data.restDays || []).includes(new Date(y, m - 1, d).getDay());
     data = Object.assign({}, data, {
-      date: dayKey(data.resetHour), cleared: false, stale: true, left: (data.goals || []).length,
+      date: today, cleared: false, stale: true, left: (data.goals || []).length,
+      // a joint that hurt yesterday is probably still flagged, so keep that day penalty-free too
+      optional: rest || !!data.heal,
       status: 'New day. Open Awaken for today\'s Daily Quest.',
       goals: (data.goals || []).map(g => Object.assign({}, g, { done: false, mark: '○', progress: g.target })),
     });

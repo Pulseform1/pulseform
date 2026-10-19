@@ -741,8 +741,9 @@ function retarget(){
   d.targets=todaysTargets();d.subs=todaysSubs();d.heal=maxSore()>=2;
   for(const id in d.targets) if(d.prog[id]==null) d.prog[id]=0;
   // switching between running and walking mid-day: carry progress over at 10 minutes per km
-  const u=runUnit();
-  if(d.runUnit&&d.runUnit!==u){
+  // saves from before the walk swap have no unit recorded; their run progress is always km
+  const u=runUnit(),was=d.runUnit||'km';
+  if(was!==u){
     const f=u==='min'?10:.1;
     d.prog.run=r2((d.prog.run||0)*f);
     for(const s of d.sets) if(s.task==='run') s.pn=r2((s.pn??s.n)*f);
@@ -2073,7 +2074,9 @@ const ACT={
     if(x==='badge'){
       lastSnap='';
       // iPhone and iPad only show web app badges after notification permission is granted
-      if(S.settings.badge&&'Notification' in window&&Notification.permission==='default') try{Notification.requestPermission().then(()=>{lastSnap='';saveNow()},()=>{})}catch(e){}
+      const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+      const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+      if(S.settings.badge&&ios&&standalone&&'Notification' in window&&Notification.permission==='default') try{Notification.requestPermission().then(()=>{lastSnap='';saveNow()},()=>{})}catch(e){}
     }
     save();refresh();
   },
@@ -2160,8 +2163,10 @@ function tick(){
 // The installed app's shortcuts and the Windows widget open ./?go=<tab> (or ?go=run)
 function applyGo(go){
   if(!go||!S.awakened) return;
-  if(VIEWS[go]){UI.tab=go;if(UI.screen&&UI.screen.kind!=='gate'&&UI.screen.kind!=='awaken') UI.screen=null;UI.sheet=null}
-  if(go==='run'&&!S.session){UI.runMode='gps';UI.sheet=null;UI.screen={kind:'run'}}
+  const k=UI.screen&&UI.screen.kind,busy=k==='gate'||k==='awaken'||k==='tap'||(k==='run'&&S.run)||(UI.sheet&&(UI.sheet.kind==='hold'||UI.sheet.kind==='counter'));
+  if(busy) return;
+  if(VIEWS[go]){UI.tab=go;UI.screen=null;UI.sheet=null}
+  if(go==='run'){UI.runMode='gps';UI.sheet=null;UI.screen={kind:'run'}}
 }
 function deepLink(){
   let go=null;
@@ -2181,10 +2186,18 @@ function snapshot(){
   const status=S.penalty?'Penalty Quest active':d.cleared?'Daily Quest complete':d.heal?'Recovery day · no penalty':d.rest?'Rest day · optional':`${left} goal${left===1?'':'s'} left`;
   const h=S.settings.resetHour;
   return {name:p.name,level:p.level,rank:rankOf().id,streak:S.streak.cur,cleared:d.cleared,optional,penalty:!!S.penalty,left,status,goals,
-    ailments:soreJoints().map(AILMENT).join(', '),resets:h?`Resets at ${h}:00 AM`:'Resets at midnight',date:d.date,resetHour:h,badge:!!S.settings.badge};
+    ailments:soreJoints().map(AILMENT).join(', '),resets:h?`Resets at ${h}:00 AM`:'Resets at midnight',date:d.date,resetHour:h,badge:!!S.settings.badge,restDays:S.settings.restDays.slice(),heal:maxSore()>=2};
 }
 function syncOutside(){
-  if(!S.awakened||!S.daily) return;
+  if(!S.awakened||!S.daily){
+    // no player (e.g. after a reset): clear the badge and put the widget back to its default
+    if(lastSnap==='none') return;
+    lastSnap='none';
+    try{if('clearAppBadge' in navigator) navigator.clearAppBadge().catch(()=>{})}catch(e){}
+    if('caches' in window) caches.open(WIDGET_CACHE).then(c=>c.delete(new URL(WIDGET_DATA,location.href).href))
+      .then(()=>{const sw=navigator.serviceWorker&&navigator.serviceWorker.controller;if(sw) sw.postMessage({type:'widgets-refresh'})}).catch(()=>{});
+    return;
+  }
   const snap=snapshot(),json=JSON.stringify(snap);
   if(json===lastSnap) return;
   lastSnap=json;
