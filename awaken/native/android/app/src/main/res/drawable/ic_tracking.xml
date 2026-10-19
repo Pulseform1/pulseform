@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Run-tracking notification icon: a location pin, white on transparent -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12,2a7,7 0,0 1,7 7c0,5 -7,13 -7,13S5,14 5,9a7,7 0,0 1,7 -7zM12,6.5a2.5,2.5 0,1 0,0 5a2.5,2.5 0,1 0,0 -5z"/>
+</vector>

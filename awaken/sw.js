@@ -1,5 +1,5 @@
 /* Awaken offline cache and Windows widget. Bump VERSION whenever the app files change. */
-const VERSION = 'awaken-v6';
+const VERSION = 'awaken-v7';
 const FONTS = 'awaken-fonts';
 const WIDGET_CACHE = 'awaken-widget'; // the page writes the widget's data snapshot here; it must survive updates
 const SHELL = [
@@ -26,8 +26,8 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  // the reminder and cloud save API is always live
-  if (url.origin === location.origin && url.pathname.startsWith(new URL(SCOPE).pathname + 'api/')) return;
+  // the reminder and cloud save API is always live, and the APK download isn't worth caching
+  if (url.origin === location.origin && (url.pathname.startsWith(new URL(SCOPE).pathname + 'api/') || url.pathname.endsWith('.apk'))) return;
 
   // Widget data: the page's latest snapshot, or the static default before the app has run.
   if (url.href === SNAPSHOT_URL) {

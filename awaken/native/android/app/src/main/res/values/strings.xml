@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Awaken</string>
+    <string name="title_activity_main">Awaken</string>
+    <string name="package_name">app.awaken.system</string>
+    <string name="custom_url_scheme">app.awaken.system</string>
+    <string name="capacitor_background_geolocation_notification_channel_name">Run tracking</string>
+    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_tracking</string>
+    <string name="capacitor_background_geolocation_notification_color">#45B0FF</string>
+</resources>

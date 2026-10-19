@@ -1662,6 +1662,8 @@ function startGeo(){
   const BG=PLUG('BackgroundGeolocation');
   if(BG){
     if(bgWatch) return;
+    // Android 13+ needs notification permission to show the "tracking your run" notification
+    const LN=PLUG('LocalNotifications');if(LN) LN.requestPermissions().catch(()=>{});
     bgWatch=BG.addWatcher({backgroundTitle:'Awaken is tracking your run',backgroundMessage:'Tap to return to your run.',requestPermissions:true,stale:false,distanceFilter:3},(loc,err)=>{
       if(err){UI.geoErr=err.code==='NOT_AUTHORIZED'?'Location permission denied. Allow it in Android settings, or log the run manually.':'Waiting for a GPS signal…';runLive();return}
       if(loc) onPos({coords:{latitude:loc.latitude,longitude:loc.longitude,accuracy:loc.accuracy},timestamp:loc.time||Date.now()});
@@ -2342,7 +2344,7 @@ const SCREENS={
   settings(){
     const st=S.settings;
     const tog=(k,l,h)=>`<button class="tog" data-a="setTog" data-x="${k}" role="switch" aria-checked="${!!st[k]}"><span class="tog-l"><b>${l}</b>${h?`<small>${h}</small>`:''}</span><span class="tog-s" aria-hidden="true"></span></button>`;
-    const ios=/iphone|ipad|ipod/i.test(navigator.userAgent),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+    const ios=/iphone|ipad|ipod/i.test(navigator.userAgent),standalone=NATIVE||matchMedia('(display-mode: standalone)').matches||navigator.standalone;
     return `<div class="screen-in"><div class="scr-head"><h2>Settings</h2><button class="icon-btn" data-a="scrClose" aria-label="Close settings">${ico('close')}</button></div>
       <section class="win">${winHead('Player')}<label class="field" style="margin:0"><span>Name</span><input id="set-name" data-c="name" maxlength="16" value="${esc(S.player.name)}" autocomplete="nickname"></label></section>
       <section class="win">${winHead('Training')}
@@ -2357,9 +2359,11 @@ const SCREENS={
       </section>
       <section class="win">${winHead('App')}
         ${tog('sound','Sound effects')}${tog('haptics','Vibration','On phones that support it.')}
-        ${tog('badge','App icon badge','Shows how many Daily Quest goals are left on the installed app icon. On iPhone, allow notifications when asked; Awaken only uses that for the badge.')}
+        ${NATIVE?'':tog('badge','App icon badge','Shows how many Daily Quest goals are left on the installed app icon. On iPhone, allow notifications when asked; Awaken only uses that for the badge.')}
         ${standalone?'':deferredInstall?'<button class="btn pri block" data-a="install" style="margin-top:8px">Install app</button>':`<p class="hint">${ios?'To install: tap the Share button in Safari, then <b>Add to Home Screen</b>.':'To install: open your browser menu and choose <b>Install app</b> or <b>Add to Home screen</b>.'}</p>`}
       </section>
+      ${!NATIVE&&/android/i.test(navigator.userAgent)?`<section class="win">${winHead('Android App')}<p class="hint" style="margin:0 0 12px">The Android app keeps tracking runs with the screen off and reminds you without the internet. It's a direct download, not from the Play Store. After downloading, open the file and allow your browser to install apps when Android asks. Move your progress over with a cloud save code.</p>
+        <a class="btn block" href="awaken.apk" download>Download the Android app</a></section>`:''}
       <section class="win">${winHead('Reminders')}
         ${Push.cfg?`<p class="hint" style="margin:0 0 12px">The System reminds you <b>${Push.cfg.before} hour${Push.cfg.before>1?'s':''}</b> before the reset if the Daily Quest isn't cleared. No reminder on rest days, recovery days or once it's done.</p>
           <label class="field"><span>Remind me</span><select data-c="remindBefore">${[1,2,3,4,6,8].map(h=>`<option value="${h}"${Push.cfg.before===h?' selected':''}>${h} hour${h>1?'s':''} before the reset</option>`).join('')}</select></label>

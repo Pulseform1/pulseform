@@ -1,0 +1,15 @@
+{
+  "appId": "app.awaken.system",
+  "appName": "Awaken",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#03060d",
+    "useLegacyBridge": true
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_awaken",
+      "iconColor": "#45B0FF"
+    }
+  }
+}
