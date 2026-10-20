@@ -15,6 +15,13 @@ It is an installable web app: a single `index.html` with no build step and no ac
 - **Gates.** Three gates open every day, from E-Rank to S-Rank, with Red Gates now and then. Each one is a guided circuit with waves, a boss HP bar that drops as you finish sets, rest timers, and loot.
   - Hold exercises run on a countdown with a 3-2-1 start.
   - Low-impact and pull-up-bar options change the exercise pool.
+- **Gate battles.** Every round of a gate is a wave with its own pixel-art enemy, minions first and then the boss, each with its own HP bar.
+  - **Strikes:** every set you finish strikes the enemy. You see the damage number, slashes, sparks and your equipped weapon swinging. The last set of a wave always lands the finishing blow.
+  - **Combos:** finishing sets at their target builds a combo.
+  - **Rewards:** each cleared wave pays out on the spot with a celebration, and the payout grows wave by wave: wave *k* pays *k* × 12% of the gate's clear XP and gold, up to +50% more with a combo, plus a growing chance of a chest or gear.
+  - **The boss:** the boss arrives with a warning, enrages at low HP, and plays a defeat before the clear rewards.
+  - **Shadows and gear:** summoned shadows fight beside you as violet silhouettes. Gear, the Shadow Army, gate cards and reward pop-ups all use the sprites too.
+  - **Art:** the sprites live in `sprites.js` (62 sprites, one pixel row per line, rebuilt with `tools/build-sprites.py`). The app falls back to plain icons if the file is missing.
 - **Hunter rank and jobs.** Reassessment Trials unlock at levels 10, 20, 30, 45 and 60. The first one lets you choose a job: Berserker, Assassin, Guardian, Sage or Ranger.
 - **Runs.** GPS tracking with distance, pace and a route sketch, plus manual entry for treadmills. Runs count toward the Daily Quest.
 - **Joint recovery (Recover tab).** A daily check-in for knees, shoulders, lower back, hips, ankles & feet, wrists & elbows and neck: OK, Sore or Hurts.
@@ -167,6 +174,8 @@ npm run apk                  # copies the web app into www/, syncs, builds
 | File | What it is |
 | --- | --- |
 | `index.html` | The whole app: markup, styles and script |
+| `sprites.js` | Pixel-art sprites for enemies, gear and the reward chest (palette + rows per sprite) |
+| `tools/` | `build-sprites.py` (sprite batches to `sprites.js`) |
 | `manifest.webmanifest` | Install metadata (name, colors, icons, shortcuts, Windows widget) |
 | `sw.js` | Offline cache and Windows widget. Bump `VERSION` when you change the app files |
 | `icons/` | App icons (SVG source and rendered PNGs) and `shortcuts/` icons |

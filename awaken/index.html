@@ -240,6 +240,21 @@ h1,h2,h3,h4{text-wrap:balance}
 .item{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line-c)}
 .it-ico{width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--line-a);background:var(--line-c);color:var(--glow);box-shadow:inset 0 0 12px var(--line-c)}
 .it-ico .i{width:24px;height:24px}
+.gear-ico{position:relative;background:radial-gradient(closest-side,color-mix(in srgb,var(--line) 22%,transparent),var(--line-c))}
+.gear-spr{width:40px;height:40px}
+.rk-corner{position:absolute;right:-6px;bottom:-6px;transform:scale(.8)}
+.sh-spr{width:56px;height:56px;filter:drop-shadow(0 0 6px var(--violet))}
+.sh:not(.got) .sh-spr{filter:none;opacity:.9}
+.sum-spr{width:42px;height:42px;filter:drop-shadow(0 0 5px var(--violet))}
+.portal{position:relative}
+.portal .p-foe{position:absolute;left:50%;bottom:-6px;width:64px;height:64px;margin-left:-32px;filter:drop-shadow(0 0 4px #000)}
+.portal.big .p-foe{width:84px;height:84px;margin-left:-42px}
+.portal.has-foe span{position:absolute;top:-8px;right:-8px;font-size:15px;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;background:var(--deep);border:1px solid currentColor;z-index:1}
+.w-foe{display:inline-block;width:30px;height:30px;vertical-align:middle;margin:-6px 6px -6px 0}
+.waves h4 small{color:var(--gold);font-weight:600;letter-spacing:.04em;margin-left:4px}
+.ntf-art{display:grid;place-items:center;margin:4px 0 -6px}.ntf-art .spr{width:120px;height:120px;filter:drop-shadow(0 0 14px var(--violet))}
+.ntf-art.beaten .spr{filter:saturate(.35) brightness(.75) drop-shadow(0 0 10px rgba(255,62,90,.5));transform:rotate(-8deg)}
+.rw-spr{display:inline-block;width:26px;height:26px;vertical-align:middle;margin:-6px 6px -6px 0}
 .it-b{min-width:0}
 .it-b h4{margin:0 0 2px;font:600 15px/1.2 var(--f-disp);letter-spacing:.03em}
 .it-b h4 span{color:var(--glow);margin-left:4px}
@@ -342,7 +357,58 @@ h1,h2,h3,h4{text-wrap:balance}
 .hpbar{position:relative;height:14px;border:1px solid color-mix(in srgb,var(--red) 70%,transparent);background:color-mix(in srgb,var(--red) 10%,transparent);overflow:hidden}
 .hpbar i{display:block;height:100%;background:linear-gradient(90deg,#9e1530,var(--red));box-shadow:0 0 14px var(--red);transition:width .5s cubic-bezier(.2,.9,.3,1)}
 .hp-n{margin:6px 0 0;text-align:right;font:600 13px/1 var(--f-disp);font-variant-numeric:tabular-nums;color:var(--dim)}
-.dmg{position:absolute;right:16px;top:46px;font:700 26px/1 var(--f-disp);color:var(--red);text-shadow:0 0 12px var(--red);animation:dmg 1.1s ease-out forwards;pointer-events:none}
+.dmg{position:absolute;left:0;right:0;margin:0 auto;width:max-content;top:18px;z-index:4;display:grid;justify-items:center;font:700 30px/1 var(--f-disp);color:#ffd6dc;text-shadow:0 0 12px var(--red),0 2px 0 #000;animation:dmg 1.1s ease-out forwards;pointer-events:none;white-space:nowrap}
+.dmg.crit{font-size:40px;color:#fff3c4;text-shadow:0 0 16px var(--gold),0 0 32px #ff8a4c,0 2px 0 #000}
+.dmg.crit small{font-size:13px;letter-spacing:.3em;color:var(--gold)}
+.dmg.shade-dmg{color:#e6d9ff;text-shadow:0 0 14px var(--violet),0 2px 0 #000}
+/* battle stage: the enemy sprite, its aura, effects and the wave-clear celebration */
+.spr{display:block;image-rendering:pixelated;image-rendering:crisp-edges;-webkit-user-drag:none;user-select:none}
+.foe-win{position:relative;overflow:hidden}
+.foe-win.boss-wave{border-color:color-mix(in srgb,var(--red) 70%,transparent);box-shadow:0 0 34px color-mix(in srgb,var(--red) 28%,transparent),inset 0 0 50px color-mix(in srgb,var(--red) 12%,transparent)}
+.foe-win.quake{animation:quake .45s ease-out}
+.foe-stage{position:relative;height:196px;display:flex;align-items:flex-end;justify-content:center;margin:6px 0 2px}
+.foe-aura{position:absolute;left:50%;bottom:6px;width:200px;height:46px;margin-left:-100px;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--line) 45%,transparent),transparent);filter:blur(2px)}
+.foe-stage.boss .foe-aura{background:radial-gradient(closest-side,rgba(255,62,90,.55),transparent);width:240px;margin-left:-120px;animation:aura 1.8s ease-in-out infinite}
+.foe{position:relative;z-index:2;width:168px;height:168px;transform-origin:50% 100%;animation:foe-idle 2.6s ease-in-out infinite;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--line) 40%,transparent))}
+.foe.boss{width:188px;height:188px;filter:drop-shadow(0 0 14px rgba(255,62,90,.45))}
+.foe-ph{display:grid;place-items:center;color:var(--glow)}.foe-ph .i{width:110px;height:110px}
+.foe.enraged{filter:drop-shadow(0 0 6px var(--red)) drop-shadow(0 0 18px rgba(255,62,90,.7));animation:foe-idle 1.1s ease-in-out infinite}
+.foe.hit{animation:foe-hit .45s ease-out}
+.foe.crit{animation:foe-crit .6s ease-out}
+.foe.enter{animation:foe-enter .9s cubic-bezier(.2,.9,.3,1.15) both}
+.foe.die{animation:foe-die 1.3s ease-in forwards}
+.wpn{position:absolute;z-index:3;right:10px;bottom:10px;width:58px;height:58px;transform-origin:15% 85%;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--glow) 60%,transparent))}
+.wpn.swing{animation:swing .42s cubic-bezier(.3,1.4,.5,1)}
+.shade{position:absolute;z-index:1;left:6px;bottom:8px;width:96px;height:96px;opacity:.92;filter:drop-shadow(0 0 10px var(--violet));animation:foe-idle 2.2s ease-in-out infinite}
+.shade.arise{animation:arise 1.2s ease-out both}
+.slash{position:absolute;z-index:3;left:50%;top:46%;width:230px;height:5px;margin-left:-115px;border-radius:3px;background:linear-gradient(90deg,transparent,#fff 45%,var(--glow) 60%,transparent);box-shadow:0 0 16px var(--glow);--r:-28deg;transform:rotate(var(--r)) scaleX(0);animation:slash .32s ease-out forwards;pointer-events:none}
+.slash.x2{--r:30deg;animation-delay:.09s;background:linear-gradient(90deg,transparent,#fff 45%,var(--gold) 60%,transparent);box-shadow:0 0 18px var(--gold)}
+.pts{position:absolute;z-index:3;left:50%;top:50%;width:0;height:0;pointer-events:none}
+.pt{position:absolute;width:5px;height:5px;margin:-2px;border-radius:1px;box-shadow:0 0 6px currentColor;animation:pt .75s ease-out forwards}
+.pts.big .pt{width:7px;height:7px;animation-duration:1.2s}
+.combo{position:absolute;z-index:4;left:10px;top:8px;font:700 16px/1 var(--f-disp);letter-spacing:.08em;color:var(--gold);text-shadow:0 0 10px var(--gold)}
+.combo.pop{animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+.wpips{display:flex;gap:4px;align-items:center}
+.wpips i{width:14px;height:4px;border-radius:2px;background:var(--line-b)}
+.wpips i.done{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+.wpips i.now{background:var(--glow);box-shadow:0 0 6px var(--glow)}
+.wpips i.boss{width:20px}.wpips i.boss.now{background:var(--red);box-shadow:0 0 8px var(--red)}
+.wfx{position:absolute;inset:0;z-index:6;display:grid;align-content:center;justify-items:center;gap:6px;padding:12px;background:radial-gradient(80% 70% at 50% 45%,rgba(3,6,13,.82),rgba(3,6,13,.55));pointer-events:none;animation:wfx 2.9s ease-in-out both;overflow:hidden}
+.wfx-rays{position:absolute;left:50%;top:44%;width:420px;height:420px;margin:-210px 0 0 -210px;border-radius:50%;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--glow) 30%,transparent) 0 8deg,transparent 8deg 24deg);mask:radial-gradient(closest-side,#000 20%,transparent);-webkit-mask:radial-gradient(closest-side,#000 20%,transparent);animation:rays 2.9s linear both;opacity:.5}
+.wfx.lv-2 .wfx-rays{opacity:.65}.wfx.lv-3 .wfx-rays,.wfx.lv-4 .wfx-rays,.wfx.lv-5 .wfx-rays{background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--gold) 40%,transparent) 0 8deg,transparent 8deg 20deg);opacity:.8}
+.wfx-t{position:relative;margin:0;font:700 26px/1 var(--f-disp);letter-spacing:.16em;text-transform:uppercase;color:#e7f4ff;text-shadow:0 0 14px var(--glow);animation:stampin .5s cubic-bezier(.2,1.5,.4,1) both}
+.wfx.lv-3 .wfx-t,.wfx.lv-4 .wfx-t,.wfx.lv-5 .wfx-t{color:#fff3c4;text-shadow:0 0 16px var(--gold),0 0 34px #ff8a4c;font-size:28px}
+.wfx-chest{position:relative;width:64px;height:64px;filter:drop-shadow(0 0 12px var(--gold));animation:chest .7s cubic-bezier(.2,1.6,.4,1) both}
+.wfx-r{position:relative;list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:6px 12px;font:600 15px/1.2 var(--f-disp);color:var(--ink)}
+.wfx-r li{display:flex;align-items:center;gap:6px;animation:rpop .4s cubic-bezier(.2,1.5,.4,1) both}
+.wfx-r b{color:var(--gold);font-size:18px}
+.wfx-r .loot{color:var(--glow)}.wfx-r .cmb{color:#ff8a4c}
+.wfx-li{width:28px;height:28px}
+.wfx-cf{position:absolute;inset:0;pointer-events:none}
+.wfx-cf i{position:absolute;top:-10px;width:6px;height:10px;background:hsl(var(--h),90%,65%);animation:confetti 1.8s ease-in both}
+.bwarn{position:absolute;left:0;right:0;top:34px;padding:8px;text-align:center;font:700 15px/1 var(--f-disp);letter-spacing:.3em;text-transform:uppercase;color:#fff;background:linear-gradient(90deg,transparent,rgba(255,62,90,.85),transparent);text-shadow:0 0 10px #000;animation:bwarn 1.5s steps(1,end) both}
+.dfx{position:absolute;inset:0;z-index:6;display:grid;place-items:center;pointer-events:none;animation:fade .3s both}
+.dfx p{margin:0;font:700 34px/1 var(--f-disp);letter-spacing:.3em;text-transform:uppercase;color:#fff3c4;text-shadow:0 0 18px var(--gold),0 0 40px #ff8a4c;animation:stampin .6s cubic-bezier(.2,1.5,.4,1) both}
 .phase{display:grid;gap:12px;text-align:center}
 .ph-l{margin:0;font:600 12px/1 var(--f-disp);letter-spacing:.24em;text-transform:uppercase;color:var(--glow)}
 .ex-n{margin:0;font:700 30px/1.1 var(--f-disp);letter-spacing:.02em}
@@ -401,7 +467,7 @@ h1,h2,h3,h4{text-wrap:balance}
 .army{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:12px}
 .sh{display:grid;justify-items:center;gap:3px;padding:10px 6px;border:1px solid var(--line-c);text-align:center;min-width:0;opacity:.45}
 .sh.got{opacity:1;border-color:var(--line-a);background:var(--line-c);box-shadow:0 0 12px var(--line-b)}
-.sh-ico{width:40px;height:40px;display:grid;place-items:center;color:var(--glow)}
+.sh-ico{width:56px;height:56px;display:grid;place-items:center;color:var(--glow)}
 .sh-ico .i{width:30px;height:30px;filter:drop-shadow(0 0 6px var(--line))}
 .sh b{font:600 12.5px/1.2 var(--f-disp);overflow-wrap:anywhere}
 .sh small{font-size:11px;color:var(--dim);line-height:1.3}
@@ -460,9 +526,30 @@ h1,h2,h3,h4{text-wrap:balance}
 @keyframes rise{from{transform:translateY(40px);opacity:0}}
 @keyframes unfold{0%{transform:scale(.6,.012);opacity:0}35%{transform:scale(1,.012);opacity:1}100%{transform:none;opacity:1}}
 @keyframes toast{0%{opacity:0;transform:translateY(-8px)}10%,80%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-6px)}}
+@keyframes foe-idle{0%,100%{transform:translateY(0) scale(1,1)}50%{transform:translateY(-4px) scale(1.015,.985)}}
+@keyframes foe-hit{0%{filter:brightness(4) saturate(0)}20%{transform:translateX(-10px) rotate(-3deg)}40%{transform:translateX(8px) rotate(2deg)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}100%{transform:none}}
+@keyframes foe-crit{0%{filter:brightness(5) saturate(0);transform:scale(1.08)}15%{transform:translateX(-16px) scale(1.05) rotate(-6deg)}35%{transform:translateX(13px) rotate(4deg)}55%{transform:translateX(-7px)}75%{transform:translateX(4px)}100%{transform:none}}
+@keyframes foe-enter{0%{transform:translateX(90px) scale(.6);opacity:0;filter:brightness(4) saturate(0)}55%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes foe-die{0%{filter:brightness(5) saturate(0)}20%{transform:translateX(-8px)}35%{transform:translateX(6px);filter:brightness(2.5)}100%{opacity:0;transform:translateY(-14px) scale(1.15,.5);filter:brightness(4) blur(4px)}}
+@keyframes swing{0%{transform:rotate(30deg) translate(10px,10px)}35%{transform:rotate(-75deg) translate(-40px,-20px)}100%{transform:none}}
+@keyframes arise{0%{opacity:0;transform:translateY(40px) scaleY(.2);filter:brightness(4) drop-shadow(0 0 20px var(--violet))}50%{opacity:1}100%{opacity:.92;transform:none}}
+@keyframes slash{0%{transform:rotate(var(--r)) scaleX(0);opacity:1}55%{transform:rotate(var(--r)) scaleX(1);opacity:1}100%{transform:rotate(var(--r)) scaleX(1.1);opacity:0}}
+@keyframes pt{0%{transform:none;opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.3);opacity:0}}
+@keyframes quake{15%{transform:translate(-5px,2px)}30%{transform:translate(5px,-2px)}45%{transform:translate(-3px,1px)}60%{transform:translate(3px,0)}80%{transform:translate(-1px,0)}}
+@keyframes aura{50%{opacity:.6;transform:scaleX(1.12)}}
+@keyframes pop{0%{transform:scale(1.8)}100%{transform:none}}
+@keyframes wfx{0%{opacity:0}8%{opacity:1}82%{opacity:1}100%{opacity:0}}
+@keyframes rays{from{transform:rotate(0) scale(.6)}to{transform:rotate(60deg) scale(1.1)}}
+@keyframes stampin{0%{transform:scale(2.2);opacity:0}100%{transform:none;opacity:1}}
+@keyframes chest{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.25) rotate(6deg);opacity:1}100%{transform:none;opacity:1}}
+@keyframes rpop{0%{transform:translateY(10px) scale(.6);opacity:0}100%{transform:none;opacity:1}}
+@keyframes confetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(260px) rotate(540deg);opacity:0}}
+@keyframes bwarn{0%{opacity:0}1%,20%,40%,60%,80%{opacity:1}10%,30%,50%,70%{opacity:.25}100%{opacity:1}}
 @keyframes dmg{0%{opacity:0;transform:translateY(6px) scale(.8)}15%{opacity:1;transform:scale(1.15)}100%{opacity:0;transform:translateY(-34px)}}
 @keyframes hit{50%{transform:scale(.95);box-shadow:0 0 70px var(--line-a),inset 0 0 60px var(--line-a)}}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  /* keep the wave rewards and the defeat readable without motion */
+  .wfx,.wfx *,.dfx,.dfx *,.foe,.shade{animation:none!important}.foe.die{opacity:.3;filter:grayscale(1)}.wfx-cf,.pts,.slash{display:none}}
 /* recovery */
 .joints{list-style:none;margin:0;padding:0;display:grid}
 .joint{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line-c)}
@@ -514,6 +601,7 @@ details.help ul{margin:8px 0 0;padding-left:18px;color:var(--dim);font-size:14px
 <div id="ntf"></div>
 <div id="toasts" aria-live="polite"></div>
 <noscript><p style="padding:24px;color:#e7f4ff">Awaken needs JavaScript to run.</p></noscript>
+<script src="sprites.js"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -730,6 +818,43 @@ const slug=t=>t.toLowerCase().replace(/[^a-z]+/g,'');
 const SHADOWS=Object.fromEntries([...BOSSES.flatMap((list,rk)=>list.map((name,i)=>({name,rk,i}))),...TRIAL_BOSS.slice(1).map((name,i)=>({name,rk:i+1,i,trial:true}))]
   .map(({name,rk,i,trial},n)=>[slug(name),{name,rank:rk,grade:trial?'Knight':GRADES[rk],key:ARMY_KEYS[n%ARMY_KEYS.length],v:trial?.04:[.01,.01,.02,.02,.04,.04][rk]}]));
 const ARMY_CAP=.25;
+// Every round of a gate is a wave with its own enemy: minions from the gate's rank, then the boss.
+const MINIONS=[['Goblin Grunt','Giant Rat','Green Slime'],['Hobgoblin','Cave Bat','Skeleton Soldier'],['Orc Raider','Ice Wolf','Venom Spider'],
+  ['Ghoul','Dark Elf Archer','Stone Golem'],['Hellhound','Wraith','Imp'],['Drake','Soldier Ant','Abyss Watcher']];
+function foeFor(g,w){
+  if(w>=g.rounds-1) return {id:slug(g.boss),name:g.boss,boss:true};
+  const name=pick(rng((g.id||g.name)+'|wave'+w),MINIONS[g.rank]||MINIONS[0]);
+  return {id:slug(name),name,boss:false};
+}
+const waveHP=(g,w)=>g.sets.reduce((a,x)=>a+(x.round===w?x.hp:0),0);
+// each wave cleared pays more than the last: wave k pays k x 12% of the gate's clear reward, more with a combo
+const WAVE_SHARE=.12;
+const comboMult=c=>1+Math.min(.5,.1*Math.max(0,c-1));
+const waveReward=(g,w,combo)=>({xp:Math.round(g.xp*WAVE_SHARE*(w+1)*comboMult(combo)),gold:Math.round(g.gold*WAVE_SHARE*(w+1)*comboMult(combo))});
+
+/* pixel-art sprites (sprites.js): rendered once to data URLs; "shadow" tints them violet, "dark" is an unknown silhouette */
+const SPR_CACHE={};
+function sprURL(id,variant){
+  const key=id+'|'+(variant||'');
+  if(key in SPR_CACHE) return SPR_CACHE[key];
+  const sp=window.SPRITES&&window.SPRITES[id];
+  if(!sp||!document.createElement('canvas').getContext) return SPR_CACHE[key]=null;
+  try{
+    const n=sp.n,rows=Array.isArray(sp.r)?sp.r.join(''):sp.r,c=document.createElement('canvas');c.width=c.height=n;
+    const x=c.getContext('2d'),img=x.createImageData(n,n),pal={};
+    for(const [k,h] of Object.entries(sp.p)) pal[k]=[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+    for(let i=0;i<n*n;i++){
+      const ch=rows[i];if(ch==='.'||!pal[ch]) continue;
+      let [r,g,b]=pal[ch];
+      if(variant==='shadow'){const l=(.3*r+.59*g+.11*b)/255;r=30+l*150;g=12+l*95;b=70+l*185}
+      else if(variant==='dark'){r=34;g=50;b=78}
+      img.data.set([r,g,b,255],i*4);
+    }
+    x.putImageData(img,0,0);
+    return SPR_CACHE[key]=c.toDataURL();
+  }catch(e){return SPR_CACHE[key]=null}
+}
+const sprImg=(id,cls,variant,style)=>{const u=sprURL(id,variant);return u?`<img class="spr ${cls||''}" src="${u}" alt="" aria-hidden="true" draggable="false"${style?` style="${style}"`:''}>`:''};
 const SKINS={
   blue:{name:'System Blue',price:0,c:['#45b0ff','#9be3ff']},
   shadow:{name:'Shadow Violet',price:3000,c:['#9a6bff','#d6c6ff']},
@@ -1247,12 +1372,14 @@ function finishRetest(){
 /* ---------- shadow summons ---------- */
 // one shadow per gate: it strikes the boss and raises that gate's clear rewards
 const summonPct=id=>({Normal:10,Elite:15,Knight:20}[SHADOWS[id].grade]||10)+5*((S.shadows[id]||{lv:1}).lv-1);
+// the wave whose enemy is on screen: after a wave's last set, the next wave's enemy is already up
+function foeWave(s){const set=s.g.sets[s.i],next=s.g.sets[s.i+1];return s.phase==='rest'&&next&&next.round!==set.round?next.round:set.round}
 function summonShadow(id){
   const s=S.session;if(!s||s.g.mode==='rec'||s.summon||!S.shadows[id]||!SHADOWS[id]) return;
   if(S.player.mp<5){toast('Not enough MP to summon (5 MP).','bad');return}
   S.player.mp-=5;
-  const total=s.g.sets.reduce((a,b)=>a+b.hp,0),strike=Math.round(total*summonPct(id)/200);
-  s.summon={id,pct:summonPct(id)};s.dealt+=strike;UI.hit=strike;UI.sheet=null;
+  const w=foeWave(s),hp=waveHP(s.g,w),strike=Math.min(Math.round(hp*summonPct(id)/100),Math.max(0,hp-(s.wdmg||0)-1));
+  s.summon={id,pct:summonPct(id),at:Date.now()};s.dealt+=strike;s.wdmg=(s.wdmg||0)+strike;UI.hit={dmg:strike,shadow:true};UI.sheet=null;
   S.totals.summons=(S.totals.summons||0)+1;
   Sfx.seal();buzz([60,40,120]);toast(`Arise, ${SHADOWS[id].name}.`);
   checkUnlocks();save();refresh();
@@ -1458,7 +1585,8 @@ function enterGate(id){
 }
 function startSession(g){
   const first=g.sets[0];
-  S.session={gid:g.id,g:JSON.parse(JSON.stringify(g)),i:0,phase:'work',adj:first.target,left:first.target,run:false,prep:0,end:0,dealt:0,xp:0,t0:Date.now(),beep:0,confirm:false};
+  S.session={gid:g.id,g:JSON.parse(JSON.stringify(g)),i:0,phase:'work',adj:first.target,left:first.target,run:false,prep:0,end:0,dealt:0,xp:0,t0:Date.now(),beep:0,confirm:false,
+    wdmg:0,combo:0,waves:[],enterAt:Date.now()};
   UI.sheet=null;UI.screen={kind:'gate'};UI.hit=0;
   wake();Sfx.go();buzz(80);
   save();refresh();
@@ -1488,12 +1616,39 @@ function completeSet(actual){
   actual=Math.max(0,Math.round(actual));
   const rec=doReps(set.ex,actual);
   s.xp+=rec.xp;s.kcal=(s.kcal||0)+calOf(set.ex,actual);
-  if(g.mode==='rec'){UI.hit=0;Sfx.beep();buzz(30)}
-  else{const dmg=Math.round(set.hp*Math.min(1.2,actual/set.target));s.dealt+=dmg;UI.hit=dmg;Sfx.hit();buzz([30,40,30])}
-  if(s.i>=g.sets.length-1){g.mode==='rec'?finishRecovery():finishGate();return}
-  const roundEnd=g.sets[s.i+1].round!==set.round;
+  const last=s.i>=g.sets.length-1,roundEnd=last||g.sets[s.i+1].round!==set.round;
+  if(g.mode==='rec'){UI.hit=0;Sfx.beep();buzz(30);if(last){finishRecovery();return}}
+  else{
+    const w=set.round,hp=waveHP(g,w);
+    s.wdmg=s.wdmg||0;
+    s.combo=actual>=set.target?(s.combo||0)+1:0;
+    let dmg=Math.round(set.hp*Math.min(1.2,actual/set.target));
+    // the last set of a wave always lands the finishing blow; earlier sets can't end the wave early
+    dmg=roundEnd?Math.max(dmg,hp-s.wdmg):Math.min(dmg,Math.max(0,hp-s.wdmg-1));
+    s.wdmg+=dmg;s.dealt+=dmg;
+    UI.hit={dmg,crit:roundEnd,combo:s.combo};
+    if(roundEnd){Sfx.crit();buzz([40,30,110])}else{Sfx.hit();buzz([30,40,30])}
+    // the boss falls: play the defeat, then the tick finishes the gate
+    if(last){s.phase='defeat';s.defeatAt=Date.now();Sfx.die();save();refresh();return}
+    if(roundEnd) payWave(s,w);
+  }
   s.phase='rest';s.end=Date.now()+(g.rest+(roundEnd?20:0))*1000;s.beep=0;s.run=false;s.prep=0;
   save();refresh();
+}
+// clearing a wave pays at once and grows with each wave: XP, gold, and a better chance of a chest or gear
+function payWave(s,w){
+  const g=s.g,r=waveReward(g,w,s.combo),loot=[],k=w+1;
+  const gold=gainGold(r.gold);
+  if(Math.random()<Math.min(.6,.12*k)){const it=pick(Math.random,['potion','draught','box','box','scroll','key']);S.inv[it]++;loot.push({name:ITEMS[it].name,spr:'chest'})}
+  if(k>=3){const drop=gearDrop(g.rank,.02*k);if(drop) loot.push({name:GEAR[drop].name,spr:drop})}
+  const xp=gainXP(r.xp,'gate');
+  s.waves=s.waves||[];s.waves.push({w,xp,gold,loot:loot.map(l=>l.name)});
+  s.wdmg=0;
+  const now=Date.now();
+  s.fx={w,at:now,xp,gold,loot,combo:s.combo,mult:comboMult(s.combo),boss:w+1>=g.rounds-1,swapped:false};
+  // the next enemy steps in once the defeated one has faded
+  s.enterAt=now+(reduceMotion?0:1300);
+  Sfx.wave(k);buzz(Array.from({length:Math.min(6,k+1)},(_,i)=>i%2?40:60+15*k));
 }
 function nextSet(){
   const s=S.session;s.i++;
@@ -1513,15 +1668,15 @@ function finishGate(){
   if(Math.random()<.25+luck){S.inv.box++;loot.push(['Random Box','×1'])}
   if(Math.random()<.08+luck/2){S.inv.key++;loot.push(['Instant Dungeon Key','×1'])}
   if(Math.random()<.12){S.inv.potion++;loot.push(['Recovery Potion','×1'])}
-  const drop=gearDrop(g.rank,.05+.01*g.rank+(g.red?.05:0)+(g.trial?.2:0));if(drop) loot.push([GEAR[drop].name,'Equipment']);
+  const drop=gearDrop(g.rank,.05+.01*g.rank+(g.red?.05:0)+(g.trial?.2:0));if(drop) loot.push([GEAR[drop].name,'Equipment',drop]);
   let scroll=0;if(S.buffs.scroll){S.buffs.scroll=false;scroll=Math.round(g.xp*.5);loot.push(['XP Scroll',`+${fmt(Math.round(scroll*xpMult('gate')))} XP`])}
   S.totals.gates++;if(g.red) S.totals.red++;
   S.totals.maxGate=Math.max(S.totals.maxGate,g.rank);
   if(new Date().getHours()>=22) flag('nighthunter');
   if(g.trial) S.trial=null; else{S.gates.list=S.gates.list.filter(x=>x.id!==g.id);S.gates.done.push(g.id)}
   S.session=null;UI.screen=null;UI.hit=0;unwake();
-  notify({kind:'quest',head:g.trial?'Trial Cleared':'Dungeon Cleared',lines:[`[${g.boss} has been defeated.]`,`Clear time ${mmss((Date.now()-s.t0)/1000)}`],
-    rewards:[['Calories',`~${kcal(s.kcal||0)}`],['XP from sets',`+${fmt(s.xp)}`],['Clear bonus',`+${fmt(xpPreview)} XP`],['Gold',`+${fmt(gold)}`],...loot]});
+  notify({kind:'quest',head:g.trial?'Trial Cleared':'Dungeon Cleared',art:slug(g.boss),artClass:'beaten',lines:[`[${g.boss} has been defeated.]`,`Clear time ${mmss((Date.now()-s.t0)/1000)}`],
+    rewards:[['Calories',`~${kcal(s.kcal||0)}`],['XP from sets',`+${fmt(s.xp)}`],...((s.waves||[]).length?[['Wave rewards',`+${fmt(s.waves.reduce((a,x)=>a+x.xp,0))} XP · +${fmt(s.waves.reduce((a,x)=>a+x.gold,0))} gold`]]:[]),['Clear bonus',`+${fmt(xpPreview)} XP`],['Gold',`+${fmt(gold)}`],...loot]});
   gainXP(g.xp*sm+scroll,'gate');
   offerExtraction(g);
   if(g.trial){
@@ -1559,7 +1714,7 @@ function retreat(){
   let dmg=0;
   if(s.g.red){dmg=Math.round(maxHP()*.2);S.player.hp=Math.max(1,S.player.hp-dmg)}
   S.session=null;UI.screen=null;unwake();
-  notify({kind:s.g.red?'penalty':'info',head:'Notification',lines:['[You have retreated from the gate.]','XP from finished sets is kept. The gate is still open.'],rewards:dmg?[['HP',`−${fmt(dmg)}`]]:null});
+  notify({kind:s.g.red?'penalty':'info',head:'Notification',lines:['[You have retreated from the gate.]',`XP from finished sets${(s.waves||[]).length?' and wave rewards':''} is kept. The gate is still open.`],rewards:dmg?[['HP',`−${fmt(dmg)}`]]:null});
   save();refresh();
 }
 function offerJob(){
@@ -1642,7 +1797,7 @@ function offerExtraction(g){
   const id=slug(g.boss),sh=SHADOWS[id];if(!sh) return;
   const chance=g.trial?1:Math.min(.9,[.6,.5,.4,.35,.3,.25][g.rank]+(g.red?.1:0)+clamp((stat('int')-10)*.004,0,.15));
   const have=S.shadows[id];
-  notify({kind:'level',head:'Shadow Extraction',big:g.boss.toUpperCase(),lines:[`[A shadow lingers where ${g.boss} fell.]`,have?`You already command it. Extracting again raises it to level ${Math.min(5,have.lv+1)}.`:'Command it to rise and it joins your army.'],prio:1,
+  notify({kind:'level',head:'Shadow Extraction',art:id,artVariant:'shadow',big:g.boss.toUpperCase(),lines:[`[A shadow lingers where ${g.boss} fell.]`,have?`You already command it. Extracting again raises it to level ${Math.min(5,have.lv+1)}.`:'Command it to rise and it joins your army.'],prio:1,
     choices:[{id:'arise',name:`Arise · 20 MP`,desc:`${Math.round(chance*100)}% chance · ${sh.grade} shadow · ${bonusText({[sh.key]:sh.v})}`},{id:'leave',name:'Let it fade',desc:'No cost.'}],
     onChoose:c=>{if(c==='arise') extract(id,chance)}});
 }
@@ -1654,7 +1809,7 @@ function extract(id,chance){
     const v=S.shadows[id];
     if(v) v.lv=Math.min(5,v.lv+1); else S.shadows[id]={lv:1};
     Sfx.level();buzz([60,40,60,40,160]);
-    notify({kind:'level',head:'Arise',big:sh.name.toUpperCase(),lines:[v?`[${sh.name} grows stronger.]`:`[${sh.name} has joined your army.]`,`${sh.grade} shadow · level ${S.shadows[id].lv}`],rewards:[['Army bonus',bonusText({[sh.key]:sh.v})]]});
+    notify({kind:'level',head:'Arise',art:id,artVariant:'shadow',big:sh.name.toUpperCase(),lines:[v?`[${sh.name} grows stronger.]`:`[${sh.name} has joined your army.]`,`${sh.grade} shadow · level ${S.shadows[id].lv}`],rewards:[['Army bonus',bonusText({[sh.key]:sh.v})]]});
     checkUnlocks();
   } else notify({kind:'info',head:'Shadow Extraction',lines:['[Extraction failed.]','The shadow faded. Defeat it again for another chance.']});
   save();refresh();
@@ -1777,6 +1932,10 @@ const Sfx={ctx:null,
   clear(){[784,988,1175,1568].forEach((f,i)=>this.t(f,.6,'sine',.06,i*.06))},
   alarm(){for(let i=0;i<3;i++) this.t(240,.26,'sawtooth',.05,i*.32,170)},
   hit(){this.t(190,.18,'square',.06,0,60)},
+  crit(){this.t(150,.32,'square',.1,0,40);this.t(1320,.18,'triangle',.07,.03,880)},
+  die(){this.t(420,.7,'sawtooth',.06,0,50);this.t(90,.6,'sine',.18,.05,30)},
+  // the wave fanfare grows with every wave: more notes, higher and louder
+  wave(k){const n=[523,659,784,988,1175,1318,1568,1760];for(let i=0;i<Math.min(n.length,k+2);i++) this.t(n[i]*(1+.06*(k-1)),.35+.04*k,'triangle',.05+.012*Math.min(k,5),i*.07)},
   seal(){this.t(110,.45,'sine',.22,0,45);this.t(70,.3,'triangle',.12,.02,40);[659,988,1318].forEach((f,i)=>this.t(f,.7,'sine',.05,.25+i*.09))},
 };
 function buzz(p){if(S.settings.haptics&&navigator.vibrate) try{navigator.vibrate(p)}catch(e){}}
@@ -1798,9 +1957,10 @@ function nextNotify(){
   const tone=n.kind==='penalty'?' tone-red':'';
   $('#ntf').innerHTML=`<div class="ntf-layer" data-a="ntfSkip"><div class="win ntf${tone}" role="alertdialog" aria-modal="true" aria-labelledby="ntf-t">
     <div class="win-head"><span class="win-ico">!</span><h2 class="win-ttl" id="ntf-t">${esc(n.head||'Notification')}</h2></div>
+    ${n.art&&sprURL(n.art,n.artVariant)?`<div class="ntf-art ${n.artClass||''}">${sprImg(n.art,'',n.artVariant)}</div>`:''}
     ${n.big?`<div class="big">${esc(n.big)}</div>`:''}
     <div class="lines">${(n.lines||[]).map(l=>`<p data-tw="${esc(l)}"><span></span><span class="ghost">${esc(l)}</span></p>`).join('')}</div>
-    ${n.rewards&&n.rewards.length?`<ul class="rewards">${n.rewards.map(([a,b])=>`<li><span>${esc(a)}</span><b>${esc(b)}</b></li>`).join('')}</ul>`:''}
+    ${n.rewards&&n.rewards.length?`<ul class="rewards">${n.rewards.map(([a,b,sp])=>`<li><span>${sp?sprImg(sp,'rw-spr'):''}${esc(a)}</span><b>${esc(b)}</b></li>`).join('')}</ul>`:''}
     ${n.foot?`<p class="ntf-foot">${esc(n.foot)}</p>`:''}
     ${n.choices?`<div class="choices">${n.choices.map(c=>`<button class="choice" data-a="ntfChoose" data-x="${c.id}"><b>${esc(c.name)}</b><small>${esc(c.desc)}</small>${c.rec?'<span class="tag gold">Fits your training</span>':''}</button>`).join('')}</div>`
       :`<button class="btn pri block" data-a="ntfOk">${esc(n.btn||'Confirm')}</button>`}
@@ -1949,7 +2109,7 @@ function vStatus(){
 function gateCard(g){
   const R=RANKS[g.rank];
   return `<article class="gate${g.red?' red':''}${g.trial?' trial':''}">
-    <div class="portal rk-${R.id}${g.red?' red':''}" aria-hidden="true"><span>${R.id}</span></div>
+    <div class="portal rk-${R.id}${g.red?' red':''}${sprURL(slug(g.boss))?' has-foe':''}" aria-hidden="true"><span>${R.id}</span>${sprImg(slug(g.boss),'p-foe')}</div>
     <div class="g-info"><h3>${esc(g.name)}</h3>
       <p class="g-meta">${g.red?'<span class="tag red">Red Gate</span> ':''}${g.trial?'<span class="tag gold">Trial</span> ':''}${R.id}-Rank · Boss: ${esc(g.boss)} · about ${g.est} min</p>
       <p class="g-ex">${g.exs.map(id=>EX[id].name).join(' · ')}</p>
@@ -1973,16 +2133,17 @@ function vGates(){
 }
 
 /* items tab */
+const gearIcon=id=>{const R=RANKS[GEAR[id].rank];return (sprImg(id,'gear-spr')||'')+`<span class="rk rk-${R.id}${sprURL(id)?' rk-corner':''}">${R.id}</span>`};
 function vItems(){
   const p=S.player,tab=UI.itemsTab||'inv';
   const segs=[['inv','Inventory'],['gear','Equipment'],['shop','Shop'],['army','Shadows']];
   const head=`<div class="seg" role="tablist">${segs.map(([id,l])=>`<button class="seg-b${tab===id?' on':''}" data-a="itemsTab" data-x="${id}" role="tab" aria-selected="${tab===id}">${l}</button>`).join('')}</div>`;
   const gold=`<div class="gold-big">${ico('coin')}${fmt(p.gold)} <small style="font-size:14px;letter-spacing:.1em">GOLD</small></div>`;
-  const gearRow=(id,btn)=>{const g=GEAR[id],R=RANKS[g.rank];return `<li class="item"><div class="it-ico"><span class="rk rk-${R.id}">${R.id}</span></div><div class="it-b"><h4>${esc(g.name)}</h4><p>${SLOTS[g.slot]} · ${bonusText(g.b)}</p></div>${btn}</li>`};
+  const gearRow=(id,btn)=>{const g=GEAR[id],R=RANKS[g.rank];return `<li class="item"><div class="it-ico gear-ico">${gearIcon(id)}</div><div class="it-b"><h4>${esc(g.name)}</h4><p>${SLOTS[g.slot]} · ${bonusText(g.b)}</p></div>${btn}</li>`};
   if(tab==='gear'){
     const owned=S.gear.owned.filter(id=>GEAR[id]);
     return `${head}<section class="win">${winHead('Equipment')}
-      <ul class="list">${Object.entries(SLOTS).map(([slot,l])=>{const id=S.gear.eq[slot],g=GEAR[id];return `<li class="item"><div class="it-ico">${ico(slot==='weapon'?'sword':slot==='armor'?'ward':'elixir')}</div><div class="it-b"><h4>${l}</h4><p>${g?`<b>${esc(g.name)}</b> · ${bonusText(g.b)}`:'Empty'}</p></div><span></span></li>`}).join('')}</ul>
+      <ul class="list">${Object.entries(SLOTS).map(([slot,l])=>{const id=S.gear.eq[slot],g=GEAR[id];return `<li class="item"><div class="it-ico${g?' gear-ico':''}">${g?gearIcon(id):ico(slot==='weapon'?'sword':slot==='armor'?'ward':'elixir')}</div><div class="it-b"><h4>${l}</h4><p>${g?`<b>${esc(g.name)}</b> · ${bonusText(g.b)}`:'Empty'}</p></div><span></span></li>`}).join('')}</ul>
     </section>
     <section class="win">${winHead('Owned Gear')}
       ${owned.length?`<ul class="list">${owned.map(id=>gearRow(id,S.gear.eq[GEAR[id].slot]===id?`<button class="btn sm" data-a="equip2" data-x="${id}">Unequip</button>`:`<button class="btn sm pri" data-a="equip2" data-x="${id}">Equip</button>`)).join('')}</ul>`
@@ -1993,7 +2154,7 @@ function vItems(){
     const deal=dailyDeal();
     const stock=Object.keys(GEAR).filter(id=>GEAR[id].rank<=p.rank+1&&!S.gear.owned.includes(id));
     return `${head}${gold}
-    ${deal?`<section class="win tone-ok">${winHead('Daily Deal','✦')}<ul class="list"><li class="item"><div class="it-ico">${deal.kind==='gear'?`<span class="rk rk-${RANKS[GEAR[deal.id].rank].id}">${RANKS[GEAR[deal.id].rank].id}</span>`:ico(ITEMS[deal.id].icon)}</div>
+    ${deal?`<section class="win tone-ok">${winHead('Daily Deal','✦')}<ul class="list"><li class="item"><div class="it-ico${deal.kind==='gear'?' gear-ico':''}">${deal.kind==='gear'?gearIcon(deal.id):ico(ITEMS[deal.id].icon)}</div>
       <div class="it-b"><h4>${esc(deal.name)}</h4><p><span class="price">${ico('coin')}${fmt(deal.price)}</span> · 30% off today</p></div>
       ${deal.bought?'<span class="tag ok">Claimed</span>':`<button class="btn sm pri" data-a="buyDeal" ${p.gold<deal.price?'disabled':''}>Buy</button>`}</li></ul><p class="note">A new deal arrives at every reset.</p></section>`:''}
     <section class="win">${winHead('Items')}
@@ -2012,7 +2173,7 @@ function vItems(){
     return `${head}<section class="win tone-violet">${winHead('Shadow Army')}
       <p class="sys">${have.length} / ${ids.length} shadows</p>
       ${totals.length?`<ul class="effects" aria-label="Army bonus">${totals.map(([k,v])=>`<li>+${Math.round(v*100)}% ${BONUS_LABEL[k]}</li>`).join('')}</ul>`:''}
-      <div class="army">${ids.map(id=>{const sh=SHADOWS[id],v=S.shadows[id];return `<div class="sh${v?' got':''}" title="${esc(sh.name)}"><div class="sh-ico">${ico('shadow')}</div>
+      <div class="army">${ids.map(id=>{const sh=SHADOWS[id],v=S.shadows[id];return `<div class="sh${v?' got':''}" title="${esc(sh.name)}"><div class="sh-ico">${sprImg(id,'sh-spr',v?'shadow':'dark')||ico('shadow')}</div>
         <b>${v?esc(sh.name):'???'}</b><small>${RANKS[sh.rank].id} · ${sh.grade}${v?` · Lv ${v.lv}`:''}</small>${v?`<small>${bonusText({[sh.key]:sh.v*(1+.5*(v.lv-1))})}</small>`:''}</div>`}).join('')}</div>
       <p class="note">Defeat a gate boss, then choose Arise to extract its shadow (20 MP). Extracting a shadow you own levels it up (max 5). Each army bonus is capped at +${Math.round(ARMY_CAP*100)}%.</p></section>`;
   }
@@ -2224,10 +2385,11 @@ const SHEETS={
     const R=RANKS[g.rank],waves=[];
     for(let w=0;w<g.rounds;w++) waves.push(g.sets.filter(s=>s.round===w));
     return `<div class="sh-head"><div><p class="eyebrow">${g.trial?'Reassessment Trial':`${R.id}-Rank Gate`}</p><h3>${esc(g.name)}</h3></div>${closeBtn}</div>
-      <div class="gi-top"><div class="portal big rk-${R.id}${g.red?' red':''}" aria-hidden="true"><span>${R.id}</span></div><div><p class="g-meta">Boss: <b>${esc(g.boss)}</b></p><p class="g-meta">About ${g.est} min · ${g.rest} s rest between sets</p></div></div>
+      <div class="gi-top"><div class="portal big rk-${R.id}${g.red?' red':''}${sprURL(slug(g.boss))?' has-foe':''}" aria-hidden="true"><span>${R.id}</span>${sprImg(slug(g.boss),'p-foe')}</div><div><p class="g-meta">Boss: <b>${esc(g.boss)}</b></p><p class="g-meta">About ${g.est} min · ${g.rest} s rest between sets</p></div></div>
       ${g.red?'<p class="warn"><b>RED GATE:</b> Harder sets and 1.5× rewards. Retreating costs 20% HP.</p>':''}
       ${g.trial?`<p class="sys">Clear this trial to be reassessed as a ${R.id}-Rank Hunter.</p>`:''}
-      <ol class="waves">${waves.map((ws,i)=>`<li><h4>${i===g.rounds-1?'Boss wave':`Wave ${i+1}`}</h4><ul>${ws.map(s=>`<li><span>${EX[s.ex].name}</span><b>${tgtLabel(s)}</b></li>`).join('')}</ul></li>`).join('')}</ol>
+      <ol class="waves">${waves.map((ws,i)=>{const f=foeFor(g,i);return `<li><h4>${sprImg(f.id,'w-foe')}${i===g.rounds-1?'Boss wave':`Wave ${i+1}`} · ${esc(f.name)}${i<g.rounds-1?` <small>+${fmt(waveReward(g,i,0).xp*xpMult('gate'))} XP</small>`:''}</h4><ul>${ws.map(s=>`<li><span>${EX[s.ex].name}</span><b>${tgtLabel(s)}</b></li>`).join('')}</ul></li>`}).join('')}</ol>
+      <p class="note">Each wave you clear pays out on the spot, more than the last, with a growing chance of a chest. Finish every set at its target to build a combo for up to +50%.</p>
       <ul class="rewards"><li><span>Clear bonus</span><b>${fmt(g.xp*xpMult('gate'))} XP</b></li><li><span>Gold</span><b>${fmt(g.gold*goldMult())}</b></li><li><span>Drops</span><b>${g.red?'Random Box + chances':'Chance of items'}</b></li></ul>
       <div class="row2"><button class="btn" data-a="sheetClose">Not now</button><button class="btn pri" data-a="enterGate" data-x="${esc(g.id)}">${g.trial?'Begin trial':'Enter · 10 MP'}</button></div>`;
   },
@@ -2236,7 +2398,7 @@ const SHEETS={
     const ids=Object.keys(S.shadows).filter(id=>SHADOWS[id]).sort((a,b)=>summonPct(b)-summonPct(a));
     return `<div class="sh-head"><div><p class="eyebrow">Shadow Army · MP ${fmt(S.player.mp)}</p><h3>Summon a shadow</h3></div>${closeBtn}</div>
       <p class="note">One shadow per gate. It strikes the boss at once and raises this gate's clear XP and gold.</p>
-      <ul class="list">${ids.map(id=>{const sh=SHADOWS[id];return `<li class="item"><div class="it-ico">${ico('shadow')}</div><div class="it-b"><h4>${esc(sh.name)}</h4><p>${sh.grade} · Lv ${S.shadows[id].lv} · +${summonPct(id)}% clear rewards</p></div>
+      <ul class="list">${ids.map(id=>{const sh=SHADOWS[id];return `<li class="item"><div class="it-ico">${sprImg(id,'sum-spr','shadow')||ico('shadow')}</div><div class="it-b"><h4>${esc(sh.name)}</h4><p>${sh.grade} · Lv ${S.shadows[id].lv} · +${summonPct(id)}% clear rewards</p></div>
         <button class="btn sm pri" data-a="summon" data-x="${id}" ${S.player.mp<5?'disabled':''}>Arise</button></li>`}).join('')}</ul>`;
   },
   titles(){
@@ -2314,13 +2476,15 @@ const SCREENS={
   },
   gate(){
     const s=S.session,g=s.g,set=sessSet(),e=EX[set.ex],R=RANKS[g.rank],rec=g.mode==='rec';
-    const total=g.sets.reduce((a,b)=>a+b.hp,0),left=Math.max(0,total-s.dealt),wave=set.round+1,next=g.sets[s.i+1];
+    const next=g.sets[s.i+1];
     const side=set.side?` · ${set.side}`:'',nextSide=next&&next.side?` · ${next.side.toLowerCase()}`:'';
     const extra=rec?`${e.easier?`<p class="cue">Easier: ${esc(e.easier)}</p>`:''}${e.avoidIf?`<p class="cue">${esc(e.avoidIf)}</p>`:''}`:'';
     let main;
-    if(s.phase==='rest'){
+    if(s.phase==='defeat'){
+      main=`<div class="phase"><p class="ph-l">Victory</p><h3 class="ex-n">${esc(g.boss)} falls</h3><p class="ph-n">The System is tallying your rewards…</p></div>`;
+    } else if(s.phase==='rest'){
       main=`<div class="phase rest"><p class="ph-l">${rec?'Breathe':'Rest'}</p><div class="timer" id="sess-t">${mmss((s.end-Date.now())/1000)}</div>
-        <p class="ph-n">Next: <b>${esc(EX[next.ex].name)}</b> ${tgtLabel(next)}${nextSide}${!rec&&next.round!==set.round?` · ${next.round===g.rounds-1?'Boss wave':`Wave ${next.round+1}`}`:''}</p>
+        <p class="ph-n">Next: <b>${esc(EX[next.ex].name)}</b> ${tgtLabel(next)}${nextSide}${!rec&&next.round!==set.round?` · ${next.round===g.rounds-1?'Boss wave':`Wave ${next.round+1}`}: <b>${esc(foeFor(g,next.round).name)}</b>`:''}</p>
         <div class="row2"><button class="btn" data-a="restAdd">+15 s</button><button class="btn pri" data-a="restSkip">${rec?'Next move':'Skip rest'}</button></div></div>`;
     } else if(e.type==='time'){
       const tl=s.prep?'':mmss(s.run?(s.end-Date.now())/1000:s.left);
@@ -2334,29 +2498,21 @@ const SCREENS={
         <button class="btn pri block xl" data-a="setDone">${rec?'Done':'Done · Strike'}</button></div>`;
     }
     const hit=UI.hit;UI.hit=0;
-    const doneSets=s.i+(s.phase==='rest'?1:0);
+    const doneSets=s.i+(s.phase==='rest'||s.phase==='defeat'?1:0);
     const top=rec?`<section class="win">
         <div class="boss-top"><span>Recovery</span><span id="sess-el">${mmss((Date.now()-s.t0)/1000)}</span></div>
         <div class="recbar" role="progressbar" aria-label="Session progress" aria-valuemin="0" aria-valuemax="${g.sets.length}" aria-valuenow="${doneSets}" style="margin-top:10px"><i style="width:${doneSets/g.sets.length*100}%"></i></div>
         <p class="hp-n">${doneSets} / ${g.sets.length} done · discomfort up to 3/10 is OK, sharp pain means stop</p>
       </section>`
-      :`<section class="win boss">
-        <div class="boss-top"><span>${wave===g.rounds?'Boss wave':`Wave ${wave} / ${g.rounds}`}</span><span id="sess-el">${mmss((Date.now()-s.t0)/1000)}</span></div>
-        <h3 class="boss-n">${esc(g.boss)}</h3>
-        <div class="hpbar" role="progressbar" aria-label="Boss HP" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${left}"><i style="width:${left/total*100}%"></i></div>
-        <p class="hp-n">${fmt(left)} / ${fmt(total)}</p>
-        ${hit?`<span class="dmg">−${fmt(hit)}</span>`:''}
-        ${s.summon&&SHADOWS[s.summon.id]?`<p class="summoned">${ico('shadow')}${esc(SHADOWS[s.summon.id].name)} fights beside you · +${s.summon.pct}% clear rewards</p>`
-          :Object.keys(S.shadows).some(id=>SHADOWS[id])?`<button class="btn sm summon-b" data-a="summonOpen">${ico('shadow')}Summon a shadow · 5 MP</button>`:''}
-      </section>`;
+      :battleWin(s,hit);
     const confirm=rec?`<div class="confirm"><p>End the session? Moves you finished still count.</p><div class="row2"><button class="btn" data-a="retreatNo">Keep going</button><button class="btn danger" data-a="retreatYes">End session</button></div></div>`
       :`<div class="confirm"><p>Leave the gate? You keep XP from finished sets but get no clear rewards.${g.red?' Fleeing a Red Gate costs 20% HP.':''}${g.trial?'':' The 10 MP is not refunded.'}</p><div class="row2"><button class="btn" data-a="retreatNo">Keep fighting</button><button class="btn danger" data-a="retreatYes">Retreat</button></div></div>`;
     return `<div class="screen-in${g.red?' tone-red':rec?' tone-ok':''}">
-      <div class="scr-head"><div><p class="eyebrow">${rec?'Recovery session':g.trial?'Reassessment Trial':`${R.id}-Rank Gate`}${g.red?' · Red Gate':''}</p><h2>${esc(g.name)}</h2></div><button class="btn sm ghost" data-a="retreat">${rec?'End':'Retreat'}</button></div>
+      <div class="scr-head"><div><p class="eyebrow">${rec?'Recovery session':g.trial?'Reassessment Trial':`${R.id}-Rank Gate`}${g.red?' · Red Gate':''}</p><h2>${esc(g.name)}</h2></div>${s.phase==='defeat'?'':`<button class="btn sm ghost" data-a="retreat">${rec?'End':'Retreat'}</button>`}</div>
       ${s.confirm?confirm:''}
       ${top}
       <section class="win">${main}</section>
-      <ol class="sets" aria-label="Sets">${g.sets.map((x,i)=>`<li class="${i<s.i||(i===s.i&&s.phase==='rest')?'done':i===s.i?'now':''}${!rec&&x.round===g.rounds-1?' boss':''}"></li>`).join('')}</ol>
+      <ol class="sets" aria-label="Sets">${g.sets.map((x,i)=>`<li class="${i<s.i||(i===s.i&&(s.phase==='rest'||s.phase==='defeat'))?'done':i===s.i?'now':''}${!rec&&x.round===g.rounds-1?' boss':''}"></li>`).join('')}</ol>
     </div>`;
   },
   run(){
@@ -2444,6 +2600,68 @@ const SCREENS={
       </section></div>`;
   },
 };
+
+/* ---------- battle window ---------- */
+// Animations survive re-renders: each one is drawn with a negative delay equal to the time already elapsed.
+function battleWin(s,hit){
+  const g=s.g,now=Date.now(),set=g.sets[s.i],defeat=s.phase==='defeat';
+  const fx=s.fx&&now-s.fx.at<3000?s.fx:null;
+  // right after a wave falls the beaten enemy is still on screen, fading out, until the next one steps in
+  const dying=defeat||(fx&&now<s.enterAt);
+  const w=defeat?set.round:dying?fx.w:foeWave(s);
+  const foe=foeFor(g,w),hp=waveHP(g,w),left=dying?0:Math.max(0,hp-(s.wdmg||0));
+  const hitNow=hit&&hit.dmg!=null;
+  let cls='foe'+(foe.boss?' boss':''),delay=0;
+  if(dying){cls+=' die';delay=-(defeat?now-s.defeatAt:now-fx.at)}
+  else if(s.enterAt&&now>=s.enterAt&&now-s.enterAt<900){cls+=' enter';delay=-(now-s.enterAt)}
+  else if(hitNow) cls+=hit.crit?' crit':' hit';
+  if(!dying&&left>0&&left<=hp*.3) cls+=' enraged';
+  const art=sprImg(foe.id,cls,'',delay?`animation-delay:${delay}ms`:'')||`<div class="${cls} foe-ph">${ico('shadow')}</div>`;
+  const d=ms=>`animation-delay:${ms}ms`;
+  const parts=(n,col)=>Array.from({length:n},(_,i)=>{const a=i/n*Math.PI*2+Math.random()*.5,r=50+Math.random()*60;
+    return `<i class="pt" style="--dx:${Math.round(Math.cos(a)*r)}px;--dy:${Math.round(Math.sin(a)*r-20)}px;background:${col}"></i>`}).join('');
+  let fxHtml='';
+  if(hitNow){
+    const col=hit.shadow?'var(--violet)':hit.crit?'var(--gold)':foe.boss?'var(--red)':'var(--glow)';
+    fxHtml+=`<span class="dmg${hit.crit?' crit':''}${hit.shadow?' shade-dmg':''}">${hit.crit?'<small>FINISH</small>':''}−${fmt(hit.dmg)}</span>
+      ${hit.shadow?'':`<i class="slash"></i>${hit.crit?'<i class="slash x2"></i>':''}`}<div class="pts">${parts(hit.crit?16:7,col)}</div>`;
+  }
+  // the weapon you have equipped swings with every strike
+  const wid=S.gear.eq.weapon;
+  const wpn=wid&&!dying?sprImg(wid,'wpn'+(hitNow&&!hit.shadow?' swing':'')):'';
+  const shade=s.summon&&SHADOWS[s.summon.id]?sprImg(s.summon.id,'shade'+(now-s.summon.at<1200?' arise':''),'shadow',now-s.summon.at<1200?d(-(now-s.summon.at)):''):'';
+  let over='';
+  if(fx){
+    const el=now-fx.at,k=fx.w+1;
+    over=`<div class="wfx lv-${Math.min(k,5)}" style="${d(-el)}" aria-live="polite">
+      <div class="wfx-rays" style="${d(-el)}"></div>
+      <p class="wfx-t" style="${d(150-el)}">Wave ${k} cleared</p>
+      ${sprImg('chest','wfx-chest','',d(300-el))}
+      <ul class="wfx-r">
+        <li style="${d(550-el)}"><b>+${fmt(fx.xp)}</b> XP</li><li style="${d(700-el)}"><b>+${fmt(fx.gold)}</b> gold</li>
+        ${fx.loot.map((l,i)=>`<li class="loot" style="${d(850+i*150-el)}">${sprImg(l.spr,'wfx-li')}${esc(l.name)}</li>`).join('')}
+        ${fx.mult>1?`<li class="cmb" style="${d(850+fx.loot.length*150-el)}">Combo ×${fx.mult.toFixed(1)}</li>`:''}
+      </ul>
+      <div class="wfx-cf">${Array.from({length:Math.min(30,6*k)},(_,i)=>`<i style="left:${(i*37)%100}%;${d(200+(i%6)*60-el)};--h:${(i*47)%360}"></i>`).join('')}</div>
+      ${fx.boss?`<div class="bwarn" style="${d(1300-el)}">Warning · Boss approaching</div>`:''}
+    </div>`;
+  }
+  if(defeat){const el=now-s.defeatAt;over=`<div class="dfx" style="${d(-el)}"><p style="${d(250-el)}">Defeated</p><div class="pts big">${el<400?parts(24,'var(--gold)'):''}</div></div>`}
+  const waves=Array.from({length:g.rounds},(_,i)=>`<i class="${i<w||(i===w&&dying)?'done':i===w?'now':''}${i===g.rounds-1?' boss':''}" title="${i===g.rounds-1?'Boss wave':`Wave ${i+1}`}"></i>`).join('');
+  return `<section class="win boss foe-win${foe.boss?' boss-wave':''}${hitNow&&hit.crit?' quake':''}">
+    <div class="boss-top"><span>${foe.boss?'Boss wave':`Wave ${w+1} / ${g.rounds}`}</span><span class="wpips" aria-hidden="true">${waves}</span><span id="sess-el">${mmss((now-s.t0)/1000)}</span></div>
+    <div class="foe-stage${foe.boss?' boss':''}">
+      <div class="foe-aura"></div>${shade}${art}${wpn}${fxHtml}
+      ${(s.combo||0)>=2&&!dying?`<span class="combo${hitNow?' pop':''}">Combo ×${s.combo}</span>`:''}
+    </div>
+    <h3 class="boss-n">${esc(foe.name)}${foe.boss?' <span class="tag red">Boss</span>':''}</h3>
+    <div class="hpbar" role="progressbar" aria-label="${esc(foe.name)} HP" aria-valuemin="0" aria-valuemax="${hp}" aria-valuenow="${left}"><i style="width:${hp?left/hp*100:0}%"></i></div>
+    <p class="hp-n">${fmt(left)} / ${fmt(hp)}</p>
+    ${dying?'':s.summon&&SHADOWS[s.summon.id]?`<p class="summoned">${ico('shadow')}${esc(SHADOWS[s.summon.id].name)} fights beside you · +${s.summon.pct}% clear rewards</p>`
+      :Object.keys(S.shadows).some(id=>SHADOWS[id])?`<button class="btn sm summon-b" data-a="summonOpen">${ico('shadow')}Summon a shadow · 5 MP</button>`:''}
+    ${over}
+  </section>`;
+}
 
 /* ---------- run canvas ---------- */
 function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
@@ -2821,6 +3039,8 @@ function sessTick(){
   const s=S.session;if(!s) return;
   const now=Date.now(),view=UI.screen&&UI.screen.kind==='gate',set=t=>{if(!view) return;const e=$('#sess-t');if(e) e.textContent=t};
   const beep3=left=>{const c=Math.ceil(left);if(c<=3&&c>0&&c!==s.beep){s.beep=c;Sfx.beep();buzz(20)}};
+  if(s.phase==='defeat'){if(now-s.defeatAt>=(reduceMotion?200:1600)) finishGate();return}
+  if(s.fx&&!s.fx.swapped&&now>=s.enterAt){s.fx.swapped=true;if(s.fx.boss){Sfx.alarm();buzz([200,80,200])}if(view) refresh()}
   if(s.phase==='rest'){const left=(s.end-now)/1000;if(left<=0){nextSet();return}beep3(left);set(mmss(left))}
   else if(s.prep){const left=(s.prep-now)/1000;if(left<=0){s.prep=0;s.run=true;s.end=now+s.left*1000;s.beep=0;Sfx.go();buzz(60);save();refresh();return}beep3(left);set(String(Math.ceil(left)))}
   else if(s.run){const left=(s.end-now)/1000;if(left<=0){s.run=false;completeSet(sessSet().target);return}beep3(left);set(mmss(left))}
