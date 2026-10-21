@@ -6,11 +6,11 @@ Everything runs in the browser (Stockfish is WebAssembly); there is no server co
 
 ## Deploy (Cloudflare Workers)
 
-Live at https://chess.pulseform.win, served by the `gambit-club` Worker.
+Live at https://chess.pulseform.org, served by the `gambit-club` Worker.
 
 ```sh
 python3 build-worker.py      # bundles public/ into worker.js
-npx wrangler deploy          # uploads it and keeps chess.pulseform.win attached
+npx wrangler deploy          # uploads it and keeps chess.pulseform.org attached
 ```
 
 `worker.js` embeds the app files. The two large engine files (`sf17.wasm`, `stockfish.js`) are
