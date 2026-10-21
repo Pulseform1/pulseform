@@ -1,0 +1,12 @@
+{
+  "hosting": {
+    "target": "chess",
+    "public": "public",
+    "ignore": ["firebase.json", "**/.*"],
+    "headers": [
+      { "source": "**/*.wasm", "headers": [{ "key": "Content-Type", "value": "application/wasm" }, { "key": "Cache-Control", "value": "public, max-age=604800" }] },
+      { "source": "**/@(sf17|stockfish|pieces|puzzles).js", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }] },
+      { "source": "**/@(index.html|app.js|openings.js)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+    ]
+  }
+}
