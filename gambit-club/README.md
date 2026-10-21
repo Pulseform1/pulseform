@@ -4,21 +4,19 @@ Chess training app: rated bots with clocks, live move ratings from Stockfish 17,
 game review, openings with game plans, puzzles, Puzzle Rush, endgame drills and insights.
 Everything runs in the browser (Stockfish is WebAssembly); there is no server code.
 
-## Deploy to Firebase Hosting
+## Deploy (Cloudflare Workers)
 
-From this folder, with the Firebase CLI (`npm i -g firebase-tools`):
+Live at https://chess.pulseform.win, served by the `gambit-club` Worker.
 
 ```sh
-firebase login
-# one-time: create a hosting site for the app, e.g. pulseform-chess -> https://pulseform-chess.web.app
-firebase hosting:sites:create pulseform-chess --project <your-project-id>
-firebase target:apply hosting chess pulseform-chess --project <your-project-id>
-# every deploy
-firebase deploy --only hosting:chess --project <your-project-id>
+python3 build-worker.py      # bundles public/ into worker.js
+npx wrangler deploy          # uploads it and keeps chess.pulseform.win attached
 ```
 
-To serve it on your own subdomain (for example `chess.pulseform.win`), add the domain in the
-Firebase console under Hosting > the site > Add custom domain, then create the DNS records it shows.
+`worker.js` embeds the app files. The two large engine files (`sf17.wasm`, `stockfish.js`) are
+fetched from unpkg and jsDelivr (byte-identical to the copies in `public/`) and cached at the edge,
+which keeps the Worker small. `public/` also runs as a plain static site for local testing:
+`cd public && python3 -m http.server`.
 
 ## Notes
 

@@ -1,0 +1,5 @@
+name = "gambit-club"
+main = "worker.js"
+account_id = "5bc70055125c3d8b33c79d12be0f1505"
+compatibility_date = "2025-06-01"
+routes = [{ pattern = "chess.pulseform.win", custom_domain = true }]
