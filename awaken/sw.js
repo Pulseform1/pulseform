@@ -1,9 +1,9 @@
 /* Awaken offline cache and Windows widget. Bump VERSION whenever the app files change. */
-const VERSION = 'awaken-v11';
+const VERSION = 'awaken-v12';
 const FONTS = 'awaken-fonts';
 const WIDGET_CACHE = 'awaken-widget'; // the page writes the widget's data snapshot here; it must survive updates
 const SHELL = [
-  './', './index.html', './sprites.js', './manifest.webmanifest',
+  './', './index.html', './manifest.webmanifest',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
   './icons/shortcuts/quest.png', './icons/shortcuts/run.png', './icons/shortcuts/recover.png', './icons/shortcuts/gates.png',
   './widgets/quest-template.json', './widgets/quest-data.json',

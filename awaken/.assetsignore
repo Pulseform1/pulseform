@@ -10,4 +10,3 @@ package.json
 package-lock.json
 capacitor.config.json
 share/card.html
-tools
