@@ -1,6 +1,6 @@
 # Gambit Club
 
-Chess training app: rated bots with clocks, live move ratings from Stockfish 17,
+Chess training app: rated bots with clocks, live move ratings from Stockfish 19,
 game review, openings with game plans, puzzles, Puzzle Rush, endgame drills and insights.
 Everything runs in the browser (Stockfish is WebAssembly); there is no server code.
 
@@ -14,7 +14,7 @@ npx wrangler deploy          # uploads it and keeps chess.pulseform.org attached
 ```
 
 `worker.js` embeds the app files. The two large engine files (`sf17.wasm`, `stockfish.js`) are
-fetched from unpkg and jsDelivr (byte-identical to the copies in `public/`) and cached at the edge,
+fetched from unpkg and jsDelivr (byte-identical to the copies in `public/`); the Worker also sends cross-origin isolation headers so Stockfish 19 can run multi-threaded and cached at the edge,
 which keeps the Worker small. `public/` also runs as a plain static site for local testing:
 `cd public && python3 -m http.server`.
 

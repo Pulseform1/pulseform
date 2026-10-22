@@ -73,16 +73,21 @@
     var type = t[si + 1], val = +t[si + 2];
     return { depth: +at('depth'), multipv: +(at('multipv') || 1), cp: type === 'cp' ? val : null, mate: type === 'mate' ? val : null, pv: t.slice(pi + 1) };
   }
-  function Engine() {
+  // Multi-threaded Stockfish needs a cross-origin isolated page (set by the site's headers).
+  var MULTI = !!(window.crossOriginIsolated && window.SharedArrayBuffer);
+  function Engine(threads) {
     var self = this;
     this.listeners = [];
     this.chain = Promise.resolve();
     this.cur = null;
     this.failed = false;
     this.name = null;
-    this.ready = this.boot('sf17.js', 'Stockfish 17', 20000)
+    var first = MULTI ? this.boot('sf19.js', 'Stockfish 19', 20000) : Promise.reject(new Error('single-threaded page'));
+    this.ready = first
+      .then(function (name) { self.post('setoption name Threads value ' + (threads || 1)); self.threads = threads || 1; return name; })
+      .catch(function () { self.threads = 1; return self.boot('sf19s.js', 'Stockfish 19', 20000); })
       .catch(function () { return self.boot('stockfish.js', 'Stockfish 10', 45000); })
-      .then(function (name) { self.name = name; }, function (e) { self.failed = true; throw e; });
+      .then(function (name) { self.name = name; self.post('setoption name Hash value 32'); }, function (e) { self.failed = true; throw e; });
     this.ready.catch(function () {});
   }
   // Start a worker and wait for the UCI handshake; reject if it never comes.
@@ -144,8 +149,8 @@
     return job;
   };
 
-  var analyser = new Engine();
-  var botEngine = new Engine();
+  var analyser = new Engine(Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1)));
+  var botEngine = new Engine(1);
   var engineOk = null;
   analyser.ready.then(function () { engineOk = true; onEngineState(); }, function () { engineOk = false; onEngineState(); });
   function onEngineState() {
@@ -153,7 +158,7 @@
     var el = document.getElementById('engineSt');
     if (el) {
       el.className = 'engine-st' + (engineOk ? ' ok' : engineOk === false ? ' bad' : '');
-      el.lastChild.textContent = engineOk ? (analyser.name || 'Stockfish') + ' ready' : engineOk === false ? 'Engine unavailable' : 'Loading Stockfish\u2026';
+      el.lastChild.textContent = engineOk ? (analyser.name || 'Stockfish') + ' ready' + (analyser.threads > 1 ? ' \u00b7 ' + analyser.threads + ' threads' : '') : engineOk === false ? 'Engine unavailable' : 'Loading Stockfish\u2026';
     }
     renderPanel();
   }
@@ -234,7 +239,7 @@
     botJob: null,
     showRatings: store.get('ratings', true),
     tc: store.get('tc', 'none'), clock: null, flagged: null, threatMsg: null,
-    anTab: 'engine', opFilter: 'all', importDraft: '',
+    anTab: 'engine', opFilter: 'all', opCat: 'all', importDraft: '',
     resigned: false,
     // analyse
     liveJob: null, liveLines: [], liveDepth: 0, liveFen: null,
@@ -392,8 +397,8 @@
       var m = pool[Math.floor(Math.random() * pool.length)];
       choose = Promise.resolve({ from: m.from, to: m.to, promotion: m.promotion });
     } else {
-      // Stockfish 17 has calibrated Elo limiting; the old fallback only knows Skill Level.
-      var useElo = bot.elo && botEngine.name === 'Stockfish 17';
+      // Stockfish 19 has calibrated Elo limiting; the old fallback only knows Skill Level.
+      var useElo = bot.elo && botEngine.name === 'Stockfish 19';
       S.botJob = botEngine.search(fen, { skill: bot.skill, elo: useElo ? bot.elo : null, depth: bot.depth, movetime: bot.time });
       choose = S.botJob.promise.then(function (r) {
         if (!r || !r.best || r.best === '(none)') return null;
@@ -1547,7 +1552,7 @@
   }
 
   function engineNote() {
-    if (engineOk === null) return '<div class="loading"><span class="thinking"><i></i><i></i><i></i></span>Loading Stockfish 17…</div>';
+    if (engineOk === null) return '<div class="loading"><span class="thinking"><i></i><i></i><i></i></span>Loading Stockfish 19…</div>';
     if (engineOk === false) return '<p class="err">Stockfish couldn\'t start in this browser, so ratings and analysis are off. Bots will play random moves.</p>';
     return '';
   }
@@ -1732,12 +1737,16 @@
       var tabs = '<div class="ptabs" role="tablist" aria-label="Filter openings">' + [['all', 'All'], ['w', 'For White'], ['b', 'For Black']].map(function (t) {
         return '<button role="tab" data-opf="' + t[0] + '" aria-selected="' + (f === t[0]) + '">' + t[1] + '</button>';
       }).join('') + '</div>';
-      var list = OPENINGS.COURSES.filter(function (c) { return f === 'all' || c.side === f; }).map(function (c) {
+      var cat = S.opCat, CATL = { all: 'All', popular: 'Popular', control: 'Control', aggressive: 'Aggressive', fast: 'Fast', offbeat: 'Less known' };
+      var shown = OPENINGS.COURSES.filter(function (c) { return (f === 'all' || c.side === f) && (cat === 'all' || c.cats.indexOf(cat) >= 0); });
+      var chips = '<div class="chips" role="group" aria-label="Opening style">' + Object.keys(CATL).map(function (k) { return '<button data-opcat="' + k + '" aria-pressed="' + (cat === k) + '">' + CATL[k] + '</button>'; }).join('') + '</div>';
+      var list = shown.map(function (c) {
         var p = prog[c.id], moves = Math.ceil(c.moves.split(' ').length / 2);
         var st = p ? (p.best === 0 ? '<span class="ostat ok">' + icon('best', 16) + 'Mastered</span>' : '<span class="ostat">Done ' + p.runs + '× · best ' + p.best + ' slip' + (p.best === 1 ? '' : 's') + '</span>') : '<span class="ostat">' + moves + ' moves · new</span>';
-        return '<button class="ocard" data-course="' + c.id + '">' + miniBoard(courseFen(c), c.side) + '<span class="ot"><span class="ometa"><span class="eco">' + c.eco + '</span><span class="side side-' + c.side + '">' + (c.side === 'w' ? 'White' : 'Black') + '</span></span><b>' + esc(c.name) + '</b><small>' + esc(c.sub) + '</small>' + st + '</span></button>';
+        return '<button class="ocard" data-course="' + c.id + '">' + miniBoard(courseFen(c), c.side) + '<span class="ot"><span class="ometa"><span class="eco">' + c.eco + '</span><span class="side side-' + c.side + '">' + (c.side === 'w' ? 'White' : 'Black') + '</span>' + c.cats.map(function (k) { return '<span class="ctag c-' + k + '">' + CATL[k] + '</span>'; }).join('') + '</span><b>' + esc(c.name) + '</b><small>' + esc(c.sub) + '</small>' + st + '</span></button>';
       }).join('');
-      return { key: 'list-' + f, head: { title: 'Openings', sub: mastered + ' of ' + OPENINGS.COURSES.length + ' mastered', tabs: tabs }, body: '<div class="sec"><p class="muted">Pick a line. You play your side, the book plays the other, and every move comes with the idea behind it.</p><div class="olist">' + list + '</div></div>' };
+      return { key: 'list-' + f + cat, head: { title: 'Openings', sub: mastered + ' of ' + OPENINGS.COURSES.length + ' mastered \u00b7 ' + shown.length + ' shown', tabs: tabs },
+        body: '<div class="sec">' + chips + '<p class="muted">Pick a line. You play your side, the book plays the other, and every move comes with the idea behind it.</p><div class="olist">' + (list || '<p class="muted">No openings match these filters.</p>') + '</div></div>' };
     }
     var c = S.course, mv = courseMoves(), n = S.plies.length, mineIdx = c.side === 'w' ? 0 : 1;
     var prev = '';
@@ -1792,6 +1801,7 @@
     if (t.dataset.bot) { S.bot = BOTS.find(function (b) { return b.id === t.dataset.bot; }); store.set('bot', S.bot.id); renderPanel(); renderStrips(); return; }
     if (t.dataset.antab) { S.anTab = t.dataset.antab; renderPanel(); return; }
     if (t.dataset.opf) { S.opFilter = t.dataset.opf; renderPanel(); return; }
+    if (t.dataset.opcat) { S.opCat = t.dataset.opcat; renderPanel(); return; }
     if (t.dataset.tc) { S.tc = t.dataset.tc; store.set('tc', S.tc); renderPanel(); return; }
     if (t.dataset.explain != null) { explainMove(+t.dataset.explain); return; }
     if (t.dataset.retry != null) { startRetry(+t.dataset.retry); return; }
