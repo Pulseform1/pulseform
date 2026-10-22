@@ -1,0 +1,2579 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Raceword</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+  /* ============================================================
+     RACEWORD — a daily speed crossword that goes off like an alarm.
+     Look: night-time scoreboard. Deep navy, electric violet, signal cyan,
+     warm paper squares. Feedback colors stay separate from the brand
+     colors so green / amber / red always mean the same thing.
+     ============================================================ */
+  :root {
+    color-scheme: dark;
+
+    --ink: #0B1023;
+    --ink-2: #141B36;
+    --panel: #1B2447;
+    --edge: #2C3A6B;
+    --edge-soft: #223060;
+
+    --violet: #7C5CFF;
+    --violet-hot: #9B83FF;
+    --cyan: #35D6F5;
+    --pink: #FF4D9D;
+
+    --text: #F2F5FF;
+    --muted: #96A0C8;
+
+    --paper: #FFF8EC;
+    --paper-dim: #F0E7D8;
+    --cell-ink: #131A33;
+    --cell-focus: #FFD75E;
+    --cell-word: #FFEFC2;
+
+    --right: #2FC77E;
+    --close: #F5A524;
+    --wrong: #F2555A;
+
+    --r-sm: 9px;
+    --r-md: 16px;
+    --r-lg: 24px;
+    --shadow: 0 18px 40px rgba(5, 8, 25, .55);
+    --glow: 0 0 0 3px rgba(124, 92, 255, .35);
+
+    --display: 'Baloo 2', 'Trebuchet MS', sans-serif;
+    --body: 'Nunito', system-ui, -apple-system, sans-serif;
+    --mono: 'Baloo 2', system-ui, sans-serif;
+  }
+
+  /* Colorblind mode: amber becomes blue, red becomes slate. */
+  :root[data-cb="on"] {
+    --close: #2E8BE0;
+    --wrong: #6B7590;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(90% 60% at 12% -8%, #2A1C63 0%, transparent 62%),
+      radial-gradient(70% 50% at 100% 0%, #0E3A57 0%, transparent 60%),
+      var(--ink);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* ---------- header ---------- */
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .logo {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(25px, 6vw, 34px);
+    letter-spacing: -1px;
+    line-height: 1;
+    margin: 0;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .logo span { color: var(--violet-hot); }
+  .tagline { color: var(--muted); font-size: 13px; margin: 5px 0 0; }
+
+  .modes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    font-family: var(--body);
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--panel);
+    border: 1.5px solid var(--edge);
+    border-radius: 999px;
+    padding: 9px 15px;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease, transform .07s ease;
+  }
+  .chip:hover { border-color: var(--violet); }
+  .chip:active { transform: translateY(1px); }
+  .chip[aria-pressed="true"] {
+    background: var(--violet);
+    border-color: var(--violet);
+    color: #FFFFFF;
+  }
+  .chip.fresh { border-color: var(--cyan); color: var(--cyan); background: transparent; }
+  .chip.fresh:hover { background: rgba(53, 214, 245, .12); }
+  @media (max-width: 720px) {
+    .modes {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+      max-width: 100%;
+      padding-bottom: 2px;
+    }
+    .modes::-webkit-scrollbar { display: none; }
+    .chip { flex: 0 0 auto; padding: 8px 13px; font-size: 13.5px; }
+  }
+
+  /* ---------- game shell ---------- */
+  #game {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    gap: 10px;
+  }
+  .play { display: flex; gap: 16px; min-height: 0; justify-content: center; }
+  .bottom { display: flex; flex-direction: column; gap: 8px; }
+
+  /* ---------- status bar ---------- */
+  .status {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(180deg, rgba(124, 92, 255, .14), rgba(0, 0, 0, 0)) , var(--ink-2);
+    border: 1.5px solid var(--edge);
+    border-radius: var(--r-md);
+    padding: 11px 16px;
+  }
+  .status .left, .status .right { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .status .right { align-items: flex-end; text-align: right; }
+  .label { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+  .value { font-size: 15px; font-weight: 700; }
+  .timer {
+    font-family: var(--mono);
+    font-size: clamp(28px, 7vw, 38px);
+    font-weight: 500;
+    color: var(--cyan);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+
+  /* ---------- board ---------- */
+  .board-area {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    min-width: 0;
+    overflow: auto;
+  }
+  .board { margin: auto; } /* centered when it fits, scrollable when it can't */
+  .board { display: grid; gap: 4px; }
+  .cell {
+    position: relative;
+    background: var(--paper);
+    color: var(--cell-ink);
+    border: none;
+    border-radius: var(--r-sm);
+    font-family: var(--body);
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease, transform .1s ease, box-shadow .15s ease;
+  }
+  .cell.void { background: transparent; cursor: default; pointer-events: none; }
+  .cell .num { position: absolute; top: 2px; left: 4px; font-size: .26em; font-weight: 800; opacity: .5; }
+  .cell.inword { background: var(--cell-word); }
+  .cell.cursor { background: var(--cell-focus); box-shadow: inset 0 0 0 3px #C98A00; }
+  .cell.right { background: var(--right); color: #FFFFFF; }
+  .cell.close { background: var(--close); color: #FFFFFF; }
+  .cell.wrong { background: var(--wrong); color: #FFFFFF; }
+  .cell.right .num, .cell.close .num, .cell.wrong .num { opacity: .85; }
+  .cell.pop { animation: pop .2s ease; }
+  @keyframes pop { 50% { transform: scale(1.14); } }
+
+  /* colorblind mode adds a mark so color isn't the only signal */
+  :root[data-cb="on"] .cell.right::after,
+  :root[data-cb="on"] .cell.close::after,
+  :root[data-cb="on"] .cell.wrong::after {
+    position: absolute;
+    bottom: 1px;
+    right: 4px;
+    font-size: .28em;
+    font-weight: 900;
+    opacity: .95;
+  }
+  :root[data-cb="on"] .cell.right::after { content: '✓'; }
+  :root[data-cb="on"] .cell.close::after { content: '~'; }
+  :root[data-cb="on"] .cell.wrong::after { content: '✕'; }
+
+  /* ---------- clue list ---------- */
+  .clues { display: none; }
+  @media (min-width: 900px) {
+    #game {
+      grid-template-columns: minmax(0, 1fr) 320px;
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
+      column-gap: 16px;
+    }
+    .status { grid-column: 1; grid-row: 1; }
+    .play { grid-column: 1; grid-row: 2; }
+    .bottom { grid-column: 1; grid-row: 3; }
+    .leader { grid-column: 1; grid-row: 4; }
+    .clues { grid-column: 2; grid-row: 1 / 5; }
+    .clues {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: auto;
+      min-height: 0;
+      overflow-y: auto;
+      background: var(--ink-2);
+      border: 1.5px solid var(--edge);
+      border-radius: var(--r-md);
+      padding: 14px;
+    }
+    #allClues { display: none; }
+    #keys { display: none; }
+  }
+  .clue-col h3 { margin: 0 0 6px; }
+  .clue-col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .clue-col li {
+    display: flex;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    font-size: 14.5px;
+    line-height: 1.3;
+    cursor: pointer;
+  }
+  .clue-col li:hover { background: rgba(255, 255, 255, .06); }
+  .clue-col li .n { color: var(--cyan); font-weight: 800; min-width: 18px; font-variant-numeric: tabular-nums; }
+  .clue-col li.active { background: rgba(124, 92, 255, .28); }
+  .clue-col li.solved { color: var(--right); text-decoration: line-through; text-decoration-color: rgba(47, 199, 126, .5); }
+
+  /* ---------- clue bar + tools ---------- */
+  .clue {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(180deg, rgba(124, 92, 255, .2), rgba(124, 92, 255, .06)), var(--panel);
+    border: 1.5px solid var(--edge);
+    border-radius: var(--r-md);
+    min-height: 66px;
+    padding: 8px 6px;
+  }
+  .arrow {
+    background: none;
+    border: none;
+    color: var(--cyan);
+    font-size: 26px;
+    line-height: 1;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: var(--r-sm);
+  }
+  .arrow:hover { background: rgba(53, 214, 245, .12); }
+  .clue-body { flex: 1; min-width: 0; }
+  .clue-num { font-size: 10.5px; font-weight: 800; letter-spacing: .16em; color: var(--cyan); text-transform: uppercase; }
+  .clue-text { font-size: clamp(15px, 4vw, 19px); font-weight: 700; line-height: 1.25; }
+
+  .note { text-align: center; font-size: 13.5px; font-weight: 700; min-height: 19px; margin: 0; }
+  .note.hint { color: var(--muted); }
+  .note.warn { color: #FFC9BE; }
+
+  .tools { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .tool {
+    background: transparent;
+    border: 1.5px solid var(--edge);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-family: var(--body);
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .tool:hover { border-color: var(--cyan); color: var(--text); }
+  .tool b { color: var(--cyan); font-weight: 800; }
+  .tool[disabled] { opacity: .4; cursor: default; }
+  .typehint { display: none; text-align: center; color: var(--muted); font-size: 12.5px; font-weight: 600; margin: 0; }
+  @media (min-width: 900px) { .typehint { display: block; } }
+
+  /* ---------- keyboard ---------- */
+  .keys { display: flex; flex-direction: column; gap: 7px; }
+  .krow { display: flex; gap: 5px; justify-content: center; }
+  .key {
+    flex: 1 1 0;
+    max-width: 46px;
+    height: 50px;
+    border: none;
+    border-radius: 10px;
+    background: var(--panel);
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .35);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .12s ease, transform .06s ease;
+  }
+  .key:hover { background: var(--edge); }
+  .key:active { transform: translateY(2px); box-shadow: none; }
+  .key.wide { max-width: 74px; flex: 1.6 1 0; font-size: 16px; }
+
+  /* ---------- locked / leaderboard ---------- */
+  .locked { width: 100%; display: flex; justify-content: center; align-items: center; }
+  .lock-card {
+    width: 100%;
+    max-width: 470px;
+    text-align: center;
+    background: var(--ink-2);
+    border: 1.5px dashed var(--violet);
+    border-radius: var(--r-lg);
+    padding: 26px 22px;
+  }
+  .lock-card h2 { font-family: var(--display); font-weight: 700; font-size: 22px; margin: 0 0 8px; }
+  .lock-card p { color: var(--muted); font-size: 14.5px; line-height: 1.5; margin: 0 0 4px; }
+  .lock-card p.sub { font-size: 13px; }
+  .lock-card .big { font-size: 40px; margin: 12px 0 6px; }
+
+  .leader {
+    background: var(--ink-2);
+    border: 1.5px solid var(--edge);
+    border-radius: var(--r-md);
+    padding: 12px 14px;
+  }
+  .leader-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .leader-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .leader-list li { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 9px; font-size: 15px; }
+  .leader-list li.me { background: rgba(124, 92, 255, .2); }
+  .leader-list li.empty { color: var(--muted); font-size: 14px; }
+  .leader-list .rank { width: 22px; color: var(--muted); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .leader-list .who { flex: 1; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .leader-list .ms { font-weight: 800; font-variant-numeric: tabular-nums; font-family: var(--mono); }
+  .leader-note { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
+
+  /* ---------- overlay sheet ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 9, 24, .82);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 20;
+  }
+  .sheet {
+    width: 100%;
+    max-width: 430px;
+    background: var(--ink-2);
+    border: 1.5px solid var(--violet);
+    border-radius: var(--r-lg);
+    padding: 24px;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+  .sheet h2 { font-family: var(--display); font-weight: 800; font-size: 28px; margin: 0 0 4px; letter-spacing: -.5px; }
+  .sheet .big {
+    font-family: var(--mono);
+    font-size: 52px;
+    font-weight: 500;
+    color: var(--cyan);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    margin: 6px 0;
+    letter-spacing: -2px;
+  }
+  .sheet p { color: var(--muted); margin: 6px 0 0; font-size: 15px; line-height: 1.45; }
+  .rows { margin: 16px 0 4px; display: flex; flex-direction: column; gap: 6px; }
+  .row { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; text-align: left; }
+  .row .k { color: var(--muted); font-weight: 600; }
+  .row .v { font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  .btn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 15px 18px;
+    border: none;
+    border-radius: var(--r-md);
+    background: var(--violet);
+    color: #FFFFFF;
+    font-family: var(--body);
+    font-weight: 800;
+    font-size: 17px;
+    cursor: pointer;
+    transition: transform .07s ease, background .15s ease;
+  }
+  .btn:hover { background: var(--violet-hot); }
+  .btn:active { transform: translateY(1px); }
+  .btn.ghost { background: transparent; color: var(--text); border: 1.5px solid var(--edge); }
+  .btn.ghost:hover { border-color: var(--cyan); background: rgba(53, 214, 245, .08); }
+
+  /* ---------- landing ---------- */
+  .landing {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+    max-width: 640px;
+    padding-block: 4px;
+  }
+  .live-strip {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    align-self: flex-start;
+    background: rgba(255, 77, 157, .14);
+    border: 1.5px solid var(--pink);
+    color: #FFC7E0;
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 12.5px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .live-strip.waiting { background: rgba(53, 214, 245, .1); border-color: var(--cyan); color: #BDEDF8; }
+  .live-strip i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 50% { opacity: .25; transform: scale(.8); } }
+
+  .hero {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(36px, 10vw, 62px);
+    line-height: .98;
+    letter-spacing: -2px;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .hero em { font-style: normal; color: var(--violet-hot); }
+  .lede { margin: 0; color: var(--muted); font-size: clamp(15px, 4vw, 18px); line-height: 1.55; max-width: 46ch; }
+
+  /* the try-it puzzle on the front page */
+  .tryit {
+    background: var(--ink-2);
+    border: 1.5px solid var(--edge);
+    border-radius: var(--r-md);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .tryit-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .tryit-clue { font-size: 17px; font-weight: 800; }
+  .tryit-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .slot {
+    width: 44px;
+    height: 48px;
+    border-radius: var(--r-sm);
+    background: var(--paper);
+    color: var(--cell-ink);
+    font-size: 24px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .2s ease, color .2s ease, transform .18s ease;
+  }
+  .slot.empty { background: rgba(255, 248, 236, .12); }
+  .slot.next { box-shadow: inset 0 0 0 3px var(--cell-focus); }
+  .slot.right { background: var(--right); color: #FFFFFF; }
+  .slot.wrong { background: var(--wrong); color: #FFFFFF; }
+  .slot.hop { transform: translateY(-6px); }
+  .letters { display: flex; gap: 6px; flex-wrap: wrap; }
+  .letter-btn {
+    width: 44px;
+    height: 46px;
+    border-radius: var(--r-sm);
+    border: none;
+    background: var(--panel);
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .35);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 19px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .letter-btn:hover { background: var(--edge); }
+  .letter-btn:disabled { opacity: .25; cursor: default; }
+  .tryit-msg { font-size: 13.5px; font-weight: 700; color: var(--muted); min-height: 18px; margin: 0; }
+  .tryit-msg.win { color: var(--right); }
+
+  .cta { display: flex; gap: 10px; flex-wrap: wrap; }
+  .cta .btn { width: auto; margin-top: 0; flex: 1 1 210px; }
+
+  .beats { list-style: none; margin: 0; padding: 0; display: flex; gap: 16px; flex-wrap: wrap; }
+  .beats li { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 13.5px; font-weight: 600; }
+  .beats span { font-size: 16px; }
+
+  /* confetti canvas sits on top and never blocks clicks */
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 30; }
+
+  :focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  /* Phones: squeeze the furniture so the grid gets the room. */
+  @media (max-width: 720px) {
+    .tagline { display: none; }
+    .tools {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      justify-content: flex-start;
+      scrollbar-width: none;
+    }
+    .tools::-webkit-scrollbar { display: none; }
+    .tool { flex: 0 0 auto; }
+    .note { font-size: 12.5px; line-height: 1.25; }
+    .status { padding: 8px 12px; }
+    .logo { font-size: 26px; }
+  }
+  @media (max-width: 480px) {
+    .key { height: 44px; }
+    .slot, .letter-btn { width: 40px; }
+  }
+  @media (max-height: 800px) {
+    .key { height: 42px; font-size: 16px; }
+    .clue { min-height: 54px; padding: 6px 4px; }
+    .tool { padding: 5px 10px; font-size: 11.5px; }
+    .wrap { gap: 9px; padding-block: 9px 10px; }
+    #game { gap: 8px; }
+    .keys { gap: 5px; }
+    .krow { gap: 4px; }
+  }
+  @media (max-height: 700px) {
+    .key { height: 38px; font-size: 15px; }
+    .status { padding: 7px 12px; }
+    .timer { font-size: 27px; }
+    .buddy { width: 34px; height: 34px; }
+    .progress { margin-top: 6px; height: 6px; }
+    .note { min-height: 0; font-size: 12.5px; }
+    .tagline { display: none; }
+  }
+  @media (max-height: 600px) {
+    .key { height: 33px; font-size: 14px; }
+    .clue { min-height: 46px; }
+    .clue-text { font-size: 15px; }
+    .tools { display: none; }  /* the same things live in the All clues / How to play sheets */
+  }
+
+  /* ---------- score, combo, buddy, progress (dark) ---------- */
+  .status .left { flex-direction: row; align-items: center; gap: 9px; }
+  .who-col { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .who-col .value, .who-col .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .buddy { width: 42px; height: 42px; flex: 0 0 auto; }
+  .buddy.cheer { animation: cheer .5s ease; }
+  .buddy.oops { animation: shake .4s ease; }
+  @keyframes cheer { 30% { transform: translateY(-8px) rotate(-8deg) scale(1.08); } 70% { transform: translateY(-3px) rotate(6deg); } }
+  @keyframes shake { 25% { transform: translateX(-5px) rotate(-6deg); } 60% { transform: translateX(5px) rotate(5deg); } }
+
+  .score { font-family: var(--display); font-size: 22px; font-weight: 800; color: var(--cyan); }
+  .score.bump { animation: bump .35s ease; }
+  @keyframes bump { 40% { transform: scale(1.3); color: var(--pink); } }
+  .combo {
+    font-size: 11.5px;
+    font-weight: 900;
+    color: #FFFFFF;
+    background: var(--pink);
+    border-radius: 999px;
+    padding: 2px 9px;
+    margin-top: 3px;
+  }
+  .progress {
+    grid-column: 1 / -1;
+    height: 8px;
+    background: rgba(255, 255, 255, .09);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 9px;
+  }
+  .progress span {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--violet), var(--cyan));
+    transition: width .35s ease;
+  }
+
+  .stars { font-size: 42px; letter-spacing: 6px; margin: 2px 0 0; }
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(124, 92, 255, .22);
+    border: 1.5px solid var(--violet);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .rankup {
+    background: linear-gradient(90deg, rgba(124, 92, 255, .35), rgba(53, 214, 245, .25));
+    border: 1.5px solid var(--cyan);
+    border-radius: var(--r-md);
+    padding: 11px;
+    font-weight: 800;
+    margin-top: 12px;
+  }
+
+  /* ---------- hero with the mascot ---------- */
+  .hero-row { display: flex; align-items: center; gap: 14px; }
+  .hero { flex: 1; }
+  .mascot { width: 96px; height: 96px; flex: 0 0 auto; animation: bob 3s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-7px) rotate(3deg); } }
+  @media (max-width: 480px) { .mascot { width: 74px; height: 74px; } }
+
+  .sheet { max-height: 88vh; overflow-y: auto; }
+</style>
+
+<div class="wrap">
+  <header class="bar">
+    <div>
+      <h1 class="logo">Race<span>word</span></h1>
+      <p class="tagline">Fill in the words as fast as you can!</p>
+    </div>
+    <nav class="modes" id="modes" aria-label="Game modes" hidden>
+      <button class="chip daily" data-mode="daily" aria-pressed="true">★ Daily</button>
+      <button class="chip" data-diff="easy" aria-pressed="false">Easy</button>
+      <button class="chip" data-diff="medium" aria-pressed="false">Medium</button>
+      <button class="chip" data-diff="hard" aria-pressed="false">Hard</button>
+      <button class="chip" data-diff="insane" aria-pressed="false">Insane</button>
+      <button class="chip fresh" id="newWords" hidden>↻ New words</button>
+    </nav>
+  </header>
+
+  <section class="landing" id="landing">
+    <div class="live-strip waiting" id="liveStrip"><i></i><span id="liveText">Today's puzzle is still hiding</span></div>
+
+    <div class="hero-row">
+      <h2 class="hero">One crossword a day. <em>Surprise time!</em></h2>
+      <svg class="mascot" viewBox="0 0 100 100" role="img" aria-label="Zip, the Raceword stopwatch">
+        <ellipse cx="50" cy="92" rx="26" ry="5" fill="#000000" opacity=".25"/>
+        <rect x="44" y="8" width="12" height="9" rx="3.5" fill="#FFC531" stroke="#191F3D" stroke-width="3"/>
+        <circle cx="50" cy="54" r="33" fill="#FF5E9C" stroke="#191F3D" stroke-width="3.5"/>
+        <circle cx="50" cy="54" r="23" fill="#FFF6DE" stroke="#191F3D" stroke-width="3"/>
+        <circle cx="42" cy="50" r="4" fill="#191F3D"/>
+        <circle cx="58" cy="50" r="4" fill="#191F3D"/>
+        <path d="M41 61 q9 8 18 0" fill="none" stroke="#191F3D" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M78 34 l9 -7" stroke="#191F3D" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M22 34 l-9 -7" stroke="#191F3D" stroke-width="3.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <p class="lede">Every day the puzzle pops up at a time nobody knows ahead of time. Everyone gets the same one. Whoever fills it in fastest wins the day!</p>
+
+    <div class="tryit" id="tryit">
+      <div class="tryit-head">
+        <span class="label">Try one! Takes 10 seconds</span>
+        <span class="label" id="tryHint"></span>
+      </div>
+      <p class="tryit-clue" id="tryClue">—</p>
+      <div class="tryit-row" id="trySlots"></div>
+      <div class="letters" id="tryLetters"></div>
+      <p class="tryit-msg" id="tryMsg">Tap the letters in the right order!</p>
+    </div>
+
+    <div class="cta">
+      <button class="btn" id="ctaDaily">Play today's puzzle</button>
+      <button class="btn ghost" id="ctaFree">Just practice</button>
+    </div>
+
+    <ul class="beats">
+      <li><span>⏰</span>Pops up between 9am and 9pm</li>
+      <li><span>🟩</span>Colors tell you how close you are</li>
+      <li><span>⚡</span>Everybody gets the same one</li>
+    </ul>
+  </section>
+
+  <div id="game" hidden>
+    <section class="status">
+      <div class="left">
+        <svg class="buddy" id="buddy" viewBox="0 0 100 100" role="img" aria-label="Zip">
+          <rect x="44" y="8" width="12" height="9" rx="3.5" fill="#FFC531" stroke="#191F3D" stroke-width="3"/>
+          <circle cx="50" cy="54" r="33" fill="#FF5E9C" stroke="#191F3D" stroke-width="3.5"/>
+          <circle cx="50" cy="54" r="23" fill="#FFF6DE" stroke="#191F3D" stroke-width="3"/>
+          <g id="buddyFace">
+            <circle cx="42" cy="50" r="4" fill="#191F3D"/>
+            <circle cx="58" cy="50" r="4" fill="#191F3D"/>
+            <path d="M41 61 q9 8 18 0" fill="none" stroke="#191F3D" stroke-width="3.5" stroke-linecap="round"/>
+          </g>
+        </svg>
+        <div class="who-col">
+          <span class="label" id="modeLabel">Daily</span>
+          <span class="value" id="modeSub">Puzzle #1</span>
+        </div>
+      </div>
+      <div class="timer" id="timer">0:00</div>
+      <div class="right">
+        <span class="label">Points</span>
+        <span class="value score" id="score">0</span>
+        <span class="combo" id="combo" hidden>🔥 ×2</span>
+      </div>
+      <div class="progress"><span id="progressBar"></span></div>
+    </section>
+
+    <div class="play">
+      <div class="board-area">
+        <div class="board" id="board" role="grid" aria-label="Crossword grid"></div>
+        <div class="locked" id="locked" hidden>
+          <div class="lock-card">
+            <h2>Today's puzzle is still hiding 👀</h2>
+            <p>It shows up at a surprise time between 9am and 9pm, and it's brand new every day. You and your friends all get it at the same second, so keep this page open and be ready!</p>
+            <div class="big" id="countdown">⏳</div>
+            <p class="sub">Warm up with a practice puzzle while you wait!</p>
+            <button class="btn ghost" id="unlockTest">Peek at it now (just for testing)</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <aside class="clues" id="cluePanel" aria-label="All clues">
+      <div class="clue-col">
+        <h3 class="label">Across</h3>
+        <ul id="listAcross"></ul>
+      </div>
+      <div class="clue-col">
+        <h3 class="label">Down</h3>
+        <ul id="listDown"></ul>
+      </div>
+    </aside>
+
+    <section class="leader" id="leader" hidden>
+      <div class="leader-head">
+        <span class="label">Today's race</span>
+        <span class="label" id="leaderCount"></span>
+      </div>
+      <ol id="leaderList" class="leader-list"><li class="empty">Be the first to post a time.</li></ol>
+      <p class="leader-note" id="leaderNote">Send this link to your friends! Everyone gets the same puzzle today, so you can see who was fastest.</p>
+    </section>
+
+    <div class="bottom">
+      <p class="note hint" id="note"></p>
+
+      <div class="clue">
+        <button class="arrow" id="prev" aria-label="Previous clue">‹</button>
+        <div class="clue-body">
+          <div class="clue-num" id="clueNum">1 Across</div>
+          <div class="clue-text" id="clueText">—</div>
+        </div>
+        <button class="arrow" id="next" aria-label="Next clue">›</button>
+      </div>
+
+      <div class="tools">
+        <button class="tool" id="allClues">📋 All clues</button>
+        <button class="tool" id="reveal">💡 Give me a letter <b>+15s</b></button>
+        <button class="tool" id="howTo">❓ How to play</button>
+        <button class="tool" id="soundBtn" aria-pressed="true">🔊 Sound</button>
+      </div>
+
+      <div class="keys" id="keys"></div>
+      <p class="typehint">Type with your keyboard · Tab jumps to the next clue</p>
+    </div>
+  </div>
+</div>
+
+<canvas id="confetti" hidden></canvas>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+/* ============================================================
+   WORD BANKS
+   ============================================================ */
+const WORDS = {
+  easy: [
+    ['SOCK', 'Goes on your foot under a shoe'],
+    ['FROG', 'Green hopper by the pond'],
+    ['DUCK', 'It says quack'],
+    ['BEAR', 'Big furry animal that loves honey'],
+    ['LION', 'King of the jungle'],
+    ['COW', 'Farm animal that gives milk'],
+    ['PIG', 'Farm animal that says oink'],
+    ['HEN', 'Female chicken'],
+    ['BOAT', 'It floats on water'],
+    ['PLANE', 'It flies people across the sky'],
+    ['BIKE', 'You pedal it'],
+    ['ROAD', 'Cars drive on it'],
+    ['DOOR', 'You open it to go inside'],
+    ['WALL', 'Side of a room'],
+    ['ROOF', 'Top of a house'],
+    ['LAMP', 'It lights up a room'],
+    ['SOAP', 'You wash with it'],
+    ['TOWEL', 'Dries you off'],
+    ['SPOON', 'You eat soup with it'],
+    ['FORK', 'It has pointy prongs'],
+    ['PLATE', 'Your food sits on it'],
+    ['CUP', 'You drink from it'],
+    ['JUICE', 'Sweet drink from fruit'],
+    ['SODA', 'Fizzy drink'],
+    ['CHIPS', 'Crunchy snack in a bag'],
+    ['TACO', 'Folded Mexican food'],
+    ['SOUP', 'Warm food in a bowl'],
+    ['RICE', 'Small white grains'],
+    ['BEANS', 'They come in a can and go in chili'],
+    ['CORN', 'Yellow vegetable on a cob'],
+    ['GRAPE', 'Small round purple fruit'],
+    ['PEACH', 'Fuzzy sweet fruit'],
+    ['LEMON', 'Sour yellow fruit'],
+    ['CHERRY', 'Tiny red fruit with a pit'],
+    ['PARK', 'Place with swings and grass'],
+    ['POOL', 'You swim in it'],
+    ['LAKE', 'Water you can fish in'],
+    ['HILL', 'Small mountain'],
+    ['ROCK', 'Hard thing on the ground'],
+    ['SAND', 'Tiny bits at the beach'],
+    ['WIND', 'You feel it but cannot see it'],
+    ['STORM', 'Rain, thunder, and wind together'],
+    ['NIGHT', 'When it is dark out'],
+    ['DAY', 'When the sun is up'],
+    ['CLOCK', 'It tells time'],
+    ['KEY', 'It unlocks a door'],
+    ['COIN', 'Metal money'],
+    ['GIFT', 'You unwrap it on your birthday'],
+    ['PARTY', 'Fun get-together with cake'],
+    ['TEAM', 'Group that plays together'],
+    ['COACH', 'Leads the team'],
+    ['RACE', 'See who is fastest'],
+    ['JUMP', 'Push off the ground'],
+    ['SWIM', 'Move through water'],
+    ['READ', 'What you do with a book'],
+    ['SING', 'Make music with your voice'],
+    ['DANCE', 'Move to the music'],
+    ['LAUGH', 'What a joke makes you do'],
+    ['DREAM', 'What you see while asleep'],
+    ['QUIET', 'Not loud'],
+    ['CAT', 'Pet that purrs'],
+    ['DOG', 'Pet that barks'],
+    ['SUN', 'Big bright star that keeps us warm'],
+    ['MOON', 'It glows in the night sky'],
+    ['APPLE', 'Red or green fruit'],
+    ['BREAD', 'You make toast with it'],
+    ['HOUSE', 'Place you live'],
+    ['WATER', 'You drink it and swim in it'],
+    ['PIZZA', 'Cheesy food cut into slices'],
+    ['TRAIN', 'It runs on rails'],
+    ['OCEAN', 'Huge salty sea'],
+    ['RIVER', 'Flowing body of water'],
+    ['CHAIR', 'Something to sit on'],
+    ['TABLE', 'You eat dinner at it'],
+    ['GREEN', 'Color of grass'],
+    ['SMILE', 'Happy face'],
+    ['PHONE', 'Device for calls and texts'],
+    ['MUSIC', 'Songs and beats'],
+    ['HAPPY', 'Opposite of sad'],
+    ['CLOUD', 'Fluffy thing in the sky'],
+    ['BEACH', 'Sandy shore'],
+    ['SNOW', 'Winter white stuff'],
+    ['RAIN', 'Drops from the sky'],
+    ['BIRD', 'Feathered flyer'],
+    ['FISH', 'Swims with fins'],
+    ['TREE', 'Tall plant with branches and leaves'],
+    ['BOOK', 'You read it'],
+    ['BALL', 'Round toy'],
+    ['CAKE', 'Birthday dessert'],
+    ['MILK', 'White drink from cows'],
+    ['SHOE', 'Goes on your foot'],
+    ['HAT', 'Goes on your head'],
+    ['BED', 'Where you sleep'],
+    ['CAR', 'Vehicle with four wheels'],
+    ['BUS', 'Big yellow school ride'],
+    ['EGG', 'Breakfast item in a shell'],
+    ['ICE', 'Frozen water'],
+    ['RED', 'Color of a stop sign'],
+    ['BLUE', 'Color of the sky'],
+    ['TIGER', 'Striped big cat'],
+    ['HORSE', 'Animal you ride in a saddle'],
+    ['TRUCK', 'Big vehicle with a bed in the back'],
+    ['GAME', 'Something you play'],
+    ['FRIEND', 'Your buddy'],
+    ['SCHOOL', 'Place for classes'],
+    ['SUMMER', 'Hottest season'],
+    ['WINTER', 'Coldest season'],
+    ['GARDEN', 'Where flowers grow'],
+    ['BANANA', 'Yellow fruit monkeys love'],
+    ['ORANGE', 'Fruit and color'],
+    ['DOCTOR', 'Person who helps when you are sick'],
+    ['PENCIL', 'Writing tool with an eraser'],
+    ['ROBOT', 'Machine that can move on its own'],
+    ['SPORT', 'Soccer or basketball, for example'],
+    ['CANDY', 'Sweet treat'],
+    ['KITE', 'Flies on a string on windy days'],
+    ['STAR', 'Twinkler in the night sky'],
+    ['FARM', 'Place with barns and cows'],
+    ['NOSE', 'You smell with it'],
+    ['HAND', 'It has five fingers'],
+  ],
+  medium: [
+    ['ROCKET', 'It blasts into space'],
+    ['COMET', 'Space snowball with a tail'],
+    ['METEOR', 'Shooting star'],
+    ['SATURN', 'Planet with rings'],
+    ['CAMERA', 'It takes pictures'],
+    ['MIRROR', 'You see yourself in it'],
+    ['CANDLE', 'Wax stick with a flame'],
+    ['BASKET', 'You carry things in it'],
+    ['BUCKET', 'Holds water at the beach'],
+    ['SHOVEL', 'You dig with it'],
+    ['HAMMER', 'It pounds nails'],
+    ['WRENCH', 'Tool that turns bolts'],
+    ['PUPPY', 'Baby dog'],
+    ['KITTEN', 'Baby cat'],
+    ['BUNNY', 'Hopping pet with long ears'],
+    ['PONY', 'Small horse'],
+    ['DONKEY', 'Farm animal with long ears'],
+    ['CAMEL', 'Desert animal with a hump'],
+    ['MOOSE', 'Big animal with wide antlers'],
+    ['OTTER', 'Playful river swimmer'],
+    ['BEAVER', 'It builds dams with sticks'],
+    ['RACCOON', 'Masked critter in the trash'],
+    ['SKUNK', 'Do not scare this stripey animal'],
+    ['EAGLE', 'Bird on the US seal'],
+    ['ROBIN', 'Bird with a red chest'],
+    ['PIGEON', 'Common city bird'],
+    ['TOUCAN', 'Tropical bird with a huge beak'],
+    ['LIZARD', 'Small reptile on a rock'],
+    ['SNAKE', 'It slithers'],
+    ['SHARK', 'Fish with a fin on top'],
+    ['WHALE', 'Biggest animal in the ocean'],
+    ['CORAL', 'Colorful reef builder'],
+    ['BRIDGE', 'It goes over a river'],
+    ['TUNNEL', 'Road through a mountain'],
+    ['SUBWAY', 'Underground train'],
+    ['AIRPORT', 'Where planes take off'],
+    ['MARKET', 'Where you buy food'],
+    ['BAKERY', 'Where bread is made'],
+    ['STADIUM', 'Where big games are played'],
+    ['THEATER', 'Where you watch a movie'],
+    ['CIRCUS', 'Show with clowns and tents'],
+    ['PARADE', 'March with floats and bands'],
+    ['SUNSET', 'When the sun goes down'],
+    ['SUNRISE', 'When the day starts'],
+    ['SHADOW', 'It follows you on a sunny day'],
+    ['BREEZE', 'Light wind'],
+    ['PUDDLE', 'Little pool after rain'],
+    ['BLIZZARD', 'Huge snowstorm'],
+    ['DESSERT', 'Sweet course at the end'],
+    ['WAFFLE', 'Breakfast with square dips'],
+    ['MUFFIN', 'Cupcake without frosting'],
+    ['NOODLE', 'Long thing in soup'],
+    ['PEPPER', 'Salt goes with it'],
+    ['HONEY', 'Sweet stuff bees make'],
+    ['CHEESE', 'Say it for the camera'],
+    ['BUTTER', 'You spread it on toast'],
+    ['SILVER', 'Second place medal'],
+    ['BRONZE', 'Third place medal'],
+    ['CASTLE', 'Where a king and queen live'],
+    ['KNIGHT', 'Fighter in armor'],
+    ['PLANET', 'Mars or Venus'],
+    ['GUITAR', 'Instrument you strum'],
+    ['VOLCANO', 'Mountain that can blast out lava'],
+    ['DESERT', 'Hot, dry, sandy place'],
+    ['ISLAND', 'Land surrounded by water'],
+    ['JUNGLE', 'Thick forest where monkeys live'],
+    ['MAGNET', 'It sticks to the fridge'],
+    ['RECIPE', 'Steps for cooking something'],
+    ['LADDER', 'Climbing tool with rungs'],
+    ['PUZZLE', 'Game where pieces fit together'],
+    ['OXYGEN', 'Gas we need to breathe'],
+    ['FOSSIL', 'Old bone or shell turned to stone'],
+    ['THUNDER', 'Sound after lightning'],
+    ['COMPASS', 'Tool that points north'],
+    ['GALAXY', 'Huge group of stars, like the Milky Way'],
+    ['ANCHOR', 'Heavy thing that keeps a boat from floating away'],
+    ['CACTUS', 'Prickly desert plant'],
+    ['DRAGON', 'Fire-breathing monster from stories'],
+    ['ENGINE', 'What makes a car go'],
+    ['FALCON', 'Fast bird that hunts'],
+    ['HARBOR', 'Where boats park'],
+    ['IGLOO', 'House made of ice'],
+    ['JACKET', 'Light coat'],
+    ['KETTLE', 'It whistles when water boils'],
+    ['LANTERN', 'Light you carry when camping'],
+    ['MARBLE', 'Small glass ball'],
+    ['NAPKIN', 'Wipe your mouth with it'],
+    ['OYSTER', 'Shellfish that can make a pearl'],
+    ['PARROT', 'Talking bird'],
+    ['RODEO', 'Cowboy show with bull riding'],
+    ['SALMON', 'Fish that swims upstream'],
+    ['TORNADO', 'Twisting windstorm'],
+    ['UMPIRE', 'Calls strikes in baseball'],
+    ['WALRUS', 'Tusked sea mammal'],
+    ['YOGURT', 'Creamy snack you eat with a spoon'],
+    ['ZIPPER', 'Pull it up to close your jacket'],
+    ['ARCADE', 'Place full of games'],
+    ['BISCUIT', 'Fluffy bread you eat with gravy'],
+    ['CANYON', 'The Grand ___ in Arizona'],
+    ['DIAMOND', 'Sparkly gem in a ring'],
+    ['ECLIPSE', 'When the moon blocks the sun'],
+    ['GLACIER', 'Giant, slow-moving sheet of ice'],
+    ['HOCKEY', 'Sport with a puck'],
+    ['LAPTOP', 'Computer you can carry'],
+    ['MEADOW', 'Big grassy field'],
+    ['PICNIC', 'Meal on a blanket'],
+    ['SQUIRREL', 'Critter that hides nuts'],
+    ['TROPHY', 'Shiny prize for winning'],
+    ['WIZARD', 'Magic person with a wand and a pointy hat'],
+    ['BUFFALO', 'Big furry animal, also called a bison'],
+    ['TEXAS', 'The Lone Star State'],
+    ['RANCH', 'Texas farm with cattle'],
+    ['ARMADILLO', 'Armored Texas critter'],
+  ],
+  hard: [
+    ['PENCILS', 'They get shorter the more you use them'],
+    ['MARKERS', 'Cap them or they dry out'],
+    ['SCISSORS', 'Two blades, one job'],
+    ['STAPLER', 'It bites paper to hold it together'],
+    ['CALCULATOR', 'Upside down it can spell words'],
+    ['GYMNASIUM', 'Where squeaky shoes echo'],
+    ['CAFETERIA', 'Trays, lines, and a lot of noise at noon'],
+    ['PRINCIPAL', 'The office nobody wants to visit'],
+    ['HOMEWORK', 'It follows you home'],
+    ['RECESS', 'The twenty best minutes of the school day'],
+    ['CHAPTER', 'A book comes in these'],
+    ['SENTENCE', 'Starts with a capital, ends with a dot'],
+    ['PARAGRAPH', 'An indented group of sentences'],
+    ['QUESTION', 'It curls at the end'],
+    ['SURPRISE', 'Nobody warned you'],
+    ['COSTUME', 'Worn to be someone else'],
+    ['SWIMSUIT', 'The only clothes you want soaked'],
+    ['SNEAKERS', 'Quiet shoes, by name'],
+    ['MITTENS', 'Your fingers share a room in these'],
+    ['SCARF', 'A long wrap for a cold neck'],
+    ['CAMPFIRE', 'Stories get told around it'],
+    ['FLASHLIGHT', 'Point it where the dark is'],
+    ['SLEEPING', 'Eight hours of doing nothing'],
+    ['BREAKFAST', 'The meal that breaks the fast'],
+    ['SANDPAPER', 'Rough on purpose'],
+    ['TELEPHONE', 'It used to hang on the wall'],
+    ['ELEVATOR', 'Stairs for people in a hurry'],
+    ['ESCALATOR', 'Stairs that do the walking'],
+    ['FOUNTAIN', 'Coins get tossed in'],
+    ['WATERFALL', 'A river that runs off the edge'],
+    ['SEASHELL', 'Hold it up and hear the ocean'],
+    ['STARFISH', 'Five arms, no brain'],
+    ['JELLYFISH', 'Almost all water, all sting'],
+    ['SEAHORSE', 'The dad carries the babies'],
+    ['PELICAN', 'Its beak holds more than its belly'],
+    ['FLAMINGO', 'Pink because of what it eats'],
+    ['PEACOCK', 'It shows off with its tail'],
+    ['OSTRICH', 'A bird that runs instead'],
+    ['CHEETAH', 'Zero to sixty in three seconds'],
+    ['LEOPARD', 'It cannot change its spots'],
+    ['GORILLA', 'The biggest of all apes'],
+    ['PANDA', 'Bamboo, every meal'],
+    ['KOALA', 'It sleeps twenty hours a day'],
+    ['ZEBRA', 'No two have the same stripes'],
+    ['DOLPHINS', 'Miami football team'],
+    ['BASEMENT', 'The floor below the floor'],
+    ['CEILING', 'You only notice it lying down'],
+    ['DRIVEWAY', 'You park on it more than drive on it'],
+    ['MAILBOX', 'Put the flag up'],
+    ['GARDENER', 'Works on their knees'],
+    ['FARMER', 'Up before the sun'],
+    ['PILOT', 'Works above the clouds'],
+    ['SAILOR', 'Works on deck'],
+    ['SOLDIER', 'Serves in the army'],
+    ['DENTIST', 'Tells you to floss more'],
+    ['LIBRARIAN', 'Keeps a very quiet room'],
+    ['ARTIST', 'Makes a mess on purpose'],
+    ['SINGER', 'The one with the microphone'],
+    ['DRUMMER', 'Sits in back but sets the pace'],
+    ['GOALIE', 'The only one allowed to use hands'],
+    ['PENGUIN', 'A bird that swims instead of flies'],
+    ['DOLPHIN', 'It sleeps with half its brain awake'],
+    ['OCTOPUS', 'Three hearts and eight arms'],
+    ['GIRAFFE', 'Same number of neck bones as you'],
+    ['KANGAROO', 'It cannot walk backward'],
+    ['SKELETON', 'Two hundred and six pieces of you'],
+    ['RAINBOW', 'You can never reach the end of it'],
+    ['SANDWICH', 'Named after an earl'],
+    ['PAJAMAS', 'Clothes with nowhere to go'],
+    ['BACKPACK', 'Your shoulders carry the school day'],
+    ['MUSEUM', 'Do not touch anything in here'],
+    ['LIBRARY', 'Borrow, do not buy'],
+    ['BIRTHDAY', 'Everyone gets one a year'],
+    ['TREASURE', 'X marks it'],
+    ['PIRATE', 'Buries what it steals'],
+    ['ROCKET', 'It has to beat gravity'],
+    ['ASTRONAUT', 'Their workplace has no up or down'],
+    ['SCIENCE', 'Guess, test, repeat'],
+    ['HISTORY', 'Everything that already happened'],
+    ['PANCAKE', 'Flip it before it burns'],
+    ['POPCORN', 'Corn that explodes'],
+    ['BLANKET', 'Nobody wants to share it'],
+    ['UMBRELLA', 'Useless until it rains'],
+    ['SNOWMAN', 'It never lasts until spring'],
+    ['LIGHTNING', 'You see it before you hear it'],
+    ['BUTTERFLY', 'It had a completely different life first'],
+    ['SPIDER', 'Eight legs, no bones'],
+    ['TURTLE', 'It carries its house'],
+    ['MONKEY', 'It has a tail; an ape does not'],
+    ['HAMSTER', 'Runs all night, goes nowhere'],
+    ['GOLDFISH', 'Blamed for a bad memory'],
+    ['CUPCAKE', 'Cake for one'],
+    ['BICYCLE', 'It stays up only while moving'],
+    ['SCOOTER', 'One foot pushes, one foot rides'],
+    ['HELMET', 'Put it on before you need it'],
+    ['SOCCER', 'The rest of the world calls it football'],
+    ['BASEBALL', 'Nine innings and no clock'],
+    ['FOOTBALL', 'Six points in the end zone'],
+    ['CHOCOLATE', 'Bad for dogs, great for people'],
+    ['PUMPKIN', 'Grown to be carved'],
+    ['CRAYON', 'It melts in a hot car'],
+    ['TEACHER', 'Learns your name before you learn theirs'],
+    ['KITCHEN', 'Everyone ends up in this room'],
+    ['PICTURE', 'Worth a thousand words'],
+    ['WHISTLE', 'One blow stops the game'],
+    ['PLANET', 'It has to clear its own orbit'],
+  ],
+  insane: [
+    ['PLAYSTATION', 'Sony console'],
+    ['SKYSCRAPER', 'Tall enough to scrape something'],
+    ['LIGHTHOUSE', 'A house whose whole job is one light'],
+    ['ROLLERCOASTER', 'The line lasts longer than the ride'],
+    ['TRAMPOLINE', 'Gravity loses for a second'],
+    ['BINOCULARS', 'Two telescopes sharing a job'],
+    ['PARACHUTE', 'It turns a fall into a float'],
+    ['SUBMARINES', 'They sink on purpose'],
+    ['CONSTELLATION', 'Dot-to-dot in the night sky'],
+    ['ASTEROID', 'A rock that never became a planet'],
+    ['ATMOSPHERE', 'The blanket of air'],
+    ['EQUATOR', 'The belt of the planet'],
+    ['CONTINENT', 'There are seven'],
+    ['PENINSULA', 'Water on three sides'],
+    ['WILDERNESS', 'No roads, no lights, no people'],
+    ['RAINFOREST', 'Half the world’s species live here'],
+    ['ENVELOPE', 'It gets sealed and then sent'],
+    ['CALCULATORS', 'Math machines, plural'],
+    ['INGREDIENTS', 'The list before the steps'],
+    ['INVENTION', 'It did not exist yesterday'],
+    ['EXPERIMENT', 'You need a guess before you start'],
+    ['LABORATORY', 'Goggles required'],
+    ['TELEVISION', 'The box families used to gather around'],
+    ['REFRIGERATOR', 'The coldest place in the house'],
+    ['DISHWASHER', 'A machine that ended a chore'],
+    ['VACUUM', 'It works by having nothing inside'],
+    ['BULLDOZER', 'It pushes and never pulls'],
+    ['AMBULANCE', 'Its name is backward on the front'],
+    ['MOTORCYCLE', 'Two wheels, no roof, plenty of noise'],
+    ['HELICOPTERS', 'They fly without going forward'],
+    ['SKATEBOARDS', 'Boards that ollie'],
+    ['TOURNAMENT', 'Lose once and you are out'],
+    ['CHAMPIONSHIP', 'The last game of the season'],
+    ['SCOREBOARD', 'The only opinion that counts'],
+    ['QUARTERBACK', 'Touches the ball every single play'],
+    ['TOUCHDOWN', 'Worth six, then a choice'],
+    ['BASKETBALLS', 'Orange and bouncing, plural'],
+    ['GYMNASTICS', 'Perfect is a ten'],
+    ['SNOWBOARDING', 'Down the mountain sideways'],
+    ['SKATEBOARDING', 'Tony Hawk’s sport'],
+    ['CHEESEBURGER', 'A burger with one upgrade'],
+    ['SPAGHETTI', 'Twirl it, do not cut it'],
+    ['PEPPERONI', 'America’s favorite topping'],
+    ['CHOCOLATES', 'A boxed gift in February'],
+    ['STRAWBERRIES', 'Their seeds ride on the outside'],
+    ['WATERMELONS', 'Mostly what their name says'],
+    ['BLUEBERRIES', 'Small, round, and good for your brain'],
+    ['MILKSHAKES', 'Too thick for the straw'],
+    ['POPSICLES', 'A kid invented them by accident'],
+    ['BIRTHDAYS', 'Everyone gets the same number each year'],
+    ['VACATION', 'School is closed and so is the alarm clock'],
+    ['CAMPGROUND', 'Bring your own roof'],
+    ['ADVENTURES', 'What stories are made of'],
+    ['TREASURES', 'Buried, sunk, or hidden'],
+    ['DINOSAURS', 'They ruled, then lost'],
+    ['BUTTERFLIES', 'Also what nerves feel like'],
+    ['ELEPHANTS', 'They mourn their dead'],
+    ['KANGAROOS', 'Australia’s bouncers'],
+    ['PENGUINS', 'Tuxedos that cannot fly'],
+    ['CROCODILES', 'Older than dinosaurs and still here'],
+    ['DINOSAUR', 'Its name means terrible lizard'],
+    ['ELEPHANT', 'Its nose has forty thousand muscles'],
+    ['CROCODILE', 'Famous for fake tears'],
+    ['HELICOPTER', 'It can stand still in the air'],
+    ['PLAYGROUND', 'Where the slide burns your legs'],
+    ['WATERMELON', 'Ninety percent water, as promised'],
+    ['STRAWBERRY', 'Not actually a berry'],
+    ['GRASSHOPPER', 'It hears with its legs'],
+    ['HALLOWEEN', 'One night of free candy'],
+    ['TELESCOPE', 'It looks into the past'],
+    ['MICROSCOPE', 'It makes tiny things enormous'],
+    ['THERMOMETER', 'It has no opinion, only a number'],
+    ['CALENDAR', 'Its pages run out every year'],
+    ['KEYBOARD', 'It has keys but opens nothing'],
+    ['COMPUTER', 'It only understands ones and zeros'],
+    ['DICTIONARY', 'Every word, in order'],
+    ['MAGICIAN', 'Never tells you how'],
+    ['FIREFIGHTER', 'Runs toward the danger'],
+    ['CHAMPION', 'Nobody remembers who came second'],
+    ['ADVENTURE', 'It starts when the plan ends'],
+    ['DETECTIVE', 'Follows what everyone else missed'],
+    ['TRIANGLE', 'Its angles add up to 180'],
+    ['RECTANGLE', 'A square that got stretched'],
+    ['MULTIPLY', 'What times tables do'],
+    ['ALPHABET', 'Twenty-six in a row'],
+    ['SUBMARINE', 'A sandwich or a ship'],
+    ['SKATEBOARD', 'Four wheels and a lot of falling'],
+    ['AQUARIUM', 'A window into the water'],
+    ['BLUEBERRY', 'Pancake add-in'],
+    ['PINEAPPLE', 'Neither a pine nor an apple'],
+    ['SUNFLOWER', 'It turns to follow the light'],
+    ['CATERPILLAR', 'It will not look like this for long'],
+    ['MARSHMALLOW', 'Best a little burned'],
+    ['NOTEBOOK', 'Blank until you fill it'],
+    ['SPACESHIP', 'Its passengers float'],
+    ['VOLLEYBALL', 'Three touches, then it must go over'],
+    ['BASKETBALL', 'The hoop is ten feet up'],
+    ['MOUNTAIN', 'Climbed because it is there'],
+    ['SANDCASTLE', 'The tide takes it'],
+    ['TOOTHBRUSH', 'Replace it every three months'],
+    ['SNOWFLAKE', 'No two alike'],
+    ['BIRTHDAY', 'The candles say how many'],
+    ['LEMONADE', 'What you make when life hands you the fruit'],
+  ],
+};
+
+const DIFFICULTY = {
+  // hint = how much of the first word you get for free (1 = the whole word)
+  easy:   { label: 'Easy',   words: 4, maxSize: 7,  hint: 1 },
+  medium: { label: 'Medium', words: 5, maxSize: 8,  hint: 0.6 },
+  hard:   { label: 'Hard',   words: 6, maxSize: 9,  hint: 0.35 },
+  insane: { label: 'Insane', words: 7, maxSize: 11, hint: 0 },
+};
+const DAILY_DIFFICULTY = 'medium';
+const LAUNCH = new Date(2026, 8, 20);
+// The daily race goes live at a random time between these hours. Every
+// player's browser works it out from the date, so it is the same moment for
+// everyone — nobody gets told in advance.
+const DROP_START_HOUR = 9;
+const DROP_END_HOUR = 21;
+
+/* ============================================================
+   SEEDED RANDOM — same seed, same puzzle for everyone
+   ============================================================ */
+function hashString(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  h = Math.imul(h ^ (h >>> 16), 2246822507);
+  h = Math.imul(h ^ (h >>> 13), 3266489909);
+  return (h ^= h >>> 16) >>> 0;
+}
+function makeRng(seed) {
+  let a = hashString(String(seed));
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffle(list, rng) {
+  const arr = list.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+
+/* ============================================================
+   CROSSWORD BUILDER
+   ============================================================ */
+const ACROSS = 'across', DOWN = 'down';
+const key = (r, c) => r + ',' + c;
+
+function tryPlace(cells, word, r, c, dir, maxSize, b, isFirst) {
+  const dr = dir === DOWN ? 1 : 0, dc = dir === ACROSS ? 1 : 0, len = word.length;
+  if (cells.has(key(r - dr, c - dc))) return -1;
+  if (cells.has(key(r + dr * len, c + dc * len))) return -1;
+  let crossings = 0;
+  for (let i = 0; i < len; i++) {
+    const rr = r + dr * i, cc = c + dc * i, cell = cells.get(key(rr, cc));
+    if (cell) {
+      if (cell.letter !== word[i]) return -1;
+      if (cell[dir]) return -1;
+      crossings++;
+    } else if (cells.has(key(rr + dc, cc + dr)) || cells.has(key(rr - dc, cc - dr))) {
+      return -1;
+    }
+  }
+  if (!isFirst && crossings === 0) return -1;
+  const minR = Math.min(b.minR, r), minC = Math.min(b.minC, c);
+  const maxR = Math.max(b.maxR, r + dr * (len - 1)), maxC = Math.max(b.maxC, c + dc * (len - 1));
+  if (maxR - minR + 1 > maxSize || maxC - minC + 1 > maxSize) return -1;
+  return crossings;
+}
+
+function place(cells, word, r, c, dir, b) {
+  const dr = dir === DOWN ? 1 : 0, dc = dir === ACROSS ? 1 : 0;
+  for (let i = 0; i < word.length; i++) {
+    const k = key(r + dr * i, c + dc * i);
+    const cell = cells.get(k) || { letter: word[i] };
+    cell[dir] = true;
+    cells.set(k, cell);
+  }
+  b.minR = Math.min(b.minR, r); b.minC = Math.min(b.minC, c);
+  b.maxR = Math.max(b.maxR, r + dr * (word.length - 1));
+  b.maxC = Math.max(b.maxC, c + dc * (word.length - 1));
+}
+
+function attempt(pool, target, maxSize, rng) {
+  const cells = new Map(), b = { minR: 0, minC: 0, maxR: 0, maxC: 0 }, placed = [];
+  place(cells, pool[0][0], 0, 0, ACROSS, b);
+  placed.push({ answer: pool[0][0], clue: pool[0][1], row: 0, col: 0, dir: ACROSS });
+  for (let w = 1; w < pool.length && placed.length < target; w++) {
+    const word = pool[w][0], clue = pool[w][1];
+    let best = null;
+    cells.forEach(function (cell, k) {
+      const parts = k.split(','), cr = +parts[0], cc = +parts[1];
+      for (let i = 0; i < word.length; i++) {
+        if (word[i] !== cell.letter) continue;
+        [ACROSS, DOWN].forEach(function (dir) {
+          if (cell[dir]) return;
+          const r = dir === DOWN ? cr - i : cr, c = dir === ACROSS ? cc - i : cc;
+          const score = tryPlace(cells, word, r, c, dir, maxSize, b, false);
+          if (score > 0) {
+            const s = score + rng() * 0.9;
+            if (!best || s > best.s) best = { s: s, r: r, c: c, dir: dir };
+          }
+        });
+      }
+    });
+    if (best) {
+      place(cells, word, best.r, best.c, best.dir, b);
+      placed.push({ answer: word, clue: clue, row: best.r, col: best.c, dir: best.dir });
+    }
+  }
+  return { bounds: b, placed: placed };
+}
+
+function finalize(res, meta) {
+  const b = res.bounds;
+  const rows = b.maxR - b.minR + 1, cols = b.maxC - b.minC + 1;
+  const grid = [];
+  for (let r = 0; r < rows; r++) grid.push(new Array(cols).fill(null));
+  const words = res.placed.map(function (p) {
+    return { answer: p.answer, clue: p.clue, dir: p.dir, row: p.row - b.minR, col: p.col - b.minC };
+  });
+  words.forEach(function (w, id) {
+    w.id = id;
+    for (let i = 0; i < w.answer.length; i++) {
+      const r = w.row + (w.dir === DOWN ? i : 0), c = w.col + (w.dir === ACROSS ? i : 0);
+      if (!grid[r][c]) grid[r][c] = { letter: w.answer[i] };
+      grid[r][c][w.dir === ACROSS ? 'acrossId' : 'downId'] = id;
+    }
+  });
+  let n = 1;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const starts = words.filter(function (w) { return w.row === r && w.col === c; });
+      if (starts.length) {
+        grid[r][c].number = n;
+        starts.forEach(function (w) { w.number = n; });
+        n++;
+      }
+    }
+  }
+  words.sort(function (a, b2) {
+    return a.dir === b2.dir ? a.number - b2.number : (a.dir === ACROSS ? -1 : 1);
+  });
+  return { difficulty: meta.difficulty, seed: meta.seed, rows: rows, cols: cols, grid: grid, words: words };
+}
+
+function generatePuzzle(difficulty, seed) {
+  const config = DIFFICULTY[difficulty];
+  const rng = makeRng(difficulty + '-' + seed);
+  const bank = WORDS[difficulty].filter(function (e) { return e[1] && e[0].length <= config.maxSize; });
+  let best = null;
+  for (let t = 0; t < 30; t++) {
+    const res = attempt(shuffle(bank, rng), config.words, config.maxSize, rng);
+    if (!best || res.placed.length > best.placed.length) best = res;
+    if (best.placed.length >= config.words) break;
+  }
+  const puzzle = finalize(best, { difficulty: difficulty, seed: String(seed) });
+  // One hint only: the first clue's word starts filled in.
+  puzzle.hintId = puzzle.words[0].id;
+  return puzzle;
+}
+
+function wordCells(w) {
+  const out = [];
+  for (let i = 0; i < w.answer.length; i++) {
+    out.push({ r: w.row + (w.dir === DOWN ? i : 0), c: w.col + (w.dir === ACROSS ? i : 0) });
+  }
+  return out;
+}
+
+/* ============================================================
+   DATES
+   ============================================================ */
+function dateKey(d) {
+  d = d || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function keyToDate(k) { const p = k.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+function addDays(k, n) { const d = keyToDate(k); d.setDate(d.getDate() + n); return dateKey(d); }
+function puzzleNumber(k) { return Math.round((keyToDate(k) - LAUNCH) / 86400000) + 1; }
+function formatTime(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return Math.floor(total / 60) + ':' + String(total % 60).padStart(2, '0');
+}
+function formatCountdown(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
+  return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+}
+function dropTimeFor(k) {
+  const rng = makeRng('drop-' + k);
+  const minute = DROP_START_HOUR * 60 + Math.floor(rng() * (DROP_END_HOUR - DROP_START_HOUR) * 60);
+  const d = keyToDate(k);
+  d.setHours(Math.floor(minute / 60), minute % 60, 0, 0);
+  return d;
+}
+
+/* ============================================================
+   SAVED DATA (this browser only)
+   ============================================================ */
+const DEFAULT_SAVE = { best: {}, daily: {}, streak: 0, lastDaily: null, name: '', playerId: '', unlocked: {}, sound: true, colorblind: false, dailyStart: {}, dailyPenalty: {}, xp: 0, stars: 0, badges: {}, played: 0 };
+function loadSave() {
+  try {
+    const raw = localStorage.getItem('raceword');
+    return Object.assign({}, DEFAULT_SAVE, raw ? JSON.parse(raw) : {});
+  } catch (e) { return Object.assign({}, DEFAULT_SAVE); }
+}
+function persist() { try { localStorage.setItem('raceword', JSON.stringify(SAVE)); } catch (e) {} }
+let SAVE = loadSave();
+if (!SAVE.playerId) { SAVE.playerId = 'p' + Math.random().toString(36).slice(2, 10); persist(); }
+
+/* ============================================================
+   TODAY'S RACE PANEL
+   Your own time is stored in this browser. Friends' times need an online
+   server — until that exists, you share your time with the copy button and
+   compare by hand.
+   ============================================================ */
+function drawLeaderboard() {
+  const list = el('leaderList');
+  const mine = SAVE.daily[dateKey()];
+  list.innerHTML = '';
+  if (!mine) {
+    const li = document.createElement('li');
+    li.className = 'empty';
+    li.textContent = "You haven't finished today's puzzle yet.";
+    list.appendChild(li);
+    el('leaderCount').textContent = '';
+    return;
+  }
+  el('leaderCount').textContent = '🔥 ' + (SAVE.streak || 1) + ' day streak';
+  const li = document.createElement('li');
+  li.className = 'me';
+  const rank = document.createElement('span'); rank.className = 'rank'; rank.textContent = '1';
+  const who = document.createElement('span'); who.className = 'who';
+  who.textContent = (SAVE.name || 'You') + ' (you)';
+  const ms = document.createElement('span'); ms.className = 'ms'; ms.textContent = formatTime(mine);
+  li.appendChild(rank); li.appendChild(who); li.appendChild(ms);
+  list.appendChild(li);
+}
+
+/* ============================================================
+   GAME STATE
+   ============================================================ */
+const el = function (id) { return document.getElementById(id); };
+const board = el('board');
+let G = null;
+
+function startGame(mode, difficulty) {
+  const today = dateKey();
+  const isDaily = mode === 'daily';
+  const diff = isDaily ? DAILY_DIFFICULTY : difficulty;
+  const seed = isDaily ? 'daily-' + today : 'free-' + Date.now();
+  const puzzle = generatePuzzle(diff, seed);
+  const entries = [];
+  for (let r = 0; r < puzzle.rows; r++) entries.push(new Array(puzzle.cols).fill(''));
+  const marks = {};
+
+  const hint = puzzle.words.find(function (w) { return w.id === puzzle.hintId; });
+  const shown = hintIndexes(hint.answer.length, DIFFICULTY[diff].hint);
+  wordCells(hint).forEach(function (p, i) {
+    if (shown.indexOf(i) === -1) return;
+    entries[p.r][p.c] = hint.answer[i];
+    marks[key(p.r, p.c)] = 'right';
+  });
+
+  const firstOpen = puzzle.words.find(function (w) { return w.id !== puzzle.hintId; }) || puzzle.words[0];
+
+  // The daily clock starts the first time you open today's race and keeps
+  // running even if you leave the page — no restarting for a better time.
+  let startedAt = Date.now(), penalty = 0;
+  if (isDaily) {
+    if (!SAVE.dailyStart[today]) { SAVE.dailyStart[today] = startedAt; persist(); }
+    startedAt = SAVE.dailyStart[today];
+    penalty = SAVE.dailyPenalty[today] || 0;
+  }
+
+  G = {
+    mode: mode, difficulty: diff, puzzle: puzzle, entries: entries, marks: marks,
+    cursor: { r: firstOpen.row, c: firstOpen.col }, dir: firstOpen.dir,
+    startedAt: startedAt, penalty: penalty, done: false, date: today,
+    points: 0, combo: 0, bestCombo: 0, mistakes: 0, revealsUsed: 0,
+    solvedWords: {}, flubbed: {},
+  };
+  el('score').textContent = '0';
+  el('combo').hidden = true;
+  face('happy');
+  el('reveal').disabled = false;
+  drawBoard();
+  render();
+  el('note').className = 'note hint';
+  el('note').textContent = hintNote(hint, shown.length);
+}
+
+/* Easy hands you the whole first word. Every level up gives back fewer
+   letters, and Insane gives you one — the first one — and nothing else. */
+function hintIndexes(len, strength) {
+  if (strength >= 1) return Array.from({ length: len }, function (_, i) { return i; });
+  const count = Math.max(1, Math.round(len * strength));
+  if (count === 1) return [0];
+  const out = [];
+  for (let i = 0; i < count; i++) out.push(Math.round((i * (len - 1)) / (count - 1)));
+  return out.filter(function (v, i, a) { return a.indexOf(v) === i; });
+}
+
+function hintNote(hint, count) {
+  const where = hint.number + ' ' + hint.dir;
+  if (count >= hint.answer.length) return '💡 ' + where + ' is filled in for free. That is the only hint you get.';
+  if (count === 1) return '💡 One letter of ' + where + ' is free. That is all the help there is.';
+  return '💡 ' + count + ' letters of ' + where + ' are free. That is the only hint you get.';
+}
+
+/* ---------- building the grid once per puzzle ---------- */
+function drawBoard() {
+  const p = G.puzzle;
+  board.innerHTML = '';
+  board.style.gridTemplateColumns = 'repeat(' + p.cols + ', var(--cell))';
+  for (let r = 0; r < p.rows; r++) {
+    for (let c = 0; c < p.cols; c++) {
+      const cell = p.grid[r][c];
+      const d = document.createElement(cell ? 'button' : 'div');
+      d.className = 'cell' + (cell ? '' : ' void');
+      if (cell) {
+        d.type = 'button';
+        d.dataset.r = r; d.dataset.c = c;
+        d.setAttribute('aria-label', 'Row ' + (r + 1) + ' column ' + (c + 1));
+        if (cell.number) {
+          const n = document.createElement('span');
+          n.className = 'num';
+          n.textContent = cell.number;
+          d.appendChild(n);
+        }
+        const t = document.createElement('span');
+        t.className = 'letter';
+        d.appendChild(t);
+        d.addEventListener('click', function () { tapCell(r, c); });
+      }
+      board.appendChild(d);
+    }
+  }
+  sizeBoard();
+  requestAnimationFrame(sizeBoard); // again once the layout has settled
+}
+
+function sizeBoard() {
+  const p = G.puzzle;
+  const area = board.parentElement;
+  const gap = 4;
+  const w = (area.clientWidth || 340) - 6;
+  const h = (area.clientHeight || 300) - 6;
+  const size = Math.max(20, Math.floor(Math.min(
+    (w - gap * (p.cols - 1)) / p.cols,
+    (h - gap * (p.rows - 1)) / p.rows,
+    58
+  )));
+  board.style.setProperty('--cell', size + 'px');
+  board.style.gridAutoRows = size + 'px';
+  board.querySelectorAll('.cell').forEach(function (c) {
+    c.style.width = size + 'px';
+    c.style.height = size + 'px';
+    c.style.fontSize = Math.round(size * 0.54) + 'px';
+  });
+}
+window.addEventListener('resize', function () { if (G) sizeBoard(); });
+window.addEventListener('orientationchange', function () { setTimeout(function () { if (G) sizeBoard(); }, 250); });
+
+/* ---------- current word ---------- */
+function cellAt(r, c) { return (G.puzzle.grid[r] || [])[c] || null; }
+function activeWord() {
+  const cell = cellAt(G.cursor.r, G.cursor.c);
+  if (!cell) return null;
+  let id = G.dir === ACROSS ? cell.acrossId : cell.downId;
+  if (id === undefined) id = G.dir === ACROSS ? cell.downId : cell.acrossId;
+  return G.puzzle.words.find(function (w) { return w.id === id; }) || null;
+}
+function isLocked(r, c) { return G.marks[key(r, c)] === 'right'; }
+
+/* ---------- drawing state ---------- */
+function render() {
+  const p = G.puzzle, w = activeWord();
+  const inWord = {};
+  if (w) wordCells(w).forEach(function (q) { inWord[key(q.r, q.c)] = true; });
+
+  board.querySelectorAll('.cell:not(.void)').forEach(function (d) {
+    const r = +d.dataset.r, c = +d.dataset.c, k = key(r, c);
+    const mark = G.marks[k];
+    d.className = 'cell' +
+      (mark ? ' ' + mark : '') +
+      (inWord[k] && !mark ? ' inword' : '') +
+      (G.cursor.r === r && G.cursor.c === c ? ' cursor' : '');
+    d.querySelector('.letter').textContent = G.entries[r][c];
+  });
+
+  let total = 0, filled = 0;
+  for (let r = 0; r < G.puzzle.rows; r++) {
+    for (let c = 0; c < G.puzzle.cols; c++) {
+      if (!G.puzzle.grid[r][c]) continue;
+      total++;
+      if (G.entries[r][c]) filled++;
+    }
+  }
+  el('progressBar').style.width = Math.round((filled / total) * 100) + '%';
+  if (w) {
+    el('clueNum').textContent = w.number + ' ' + (w.dir === ACROSS ? 'Across' : 'Down');
+    el('clueText').textContent = w.clue;
+  }
+  drawClueList(w);
+}
+
+/* The full clue list: beside the board on a laptop, behind the
+   "All clues" button on a phone. */
+function drawClueList(active) {
+  [[ACROSS, 'listAcross'], [DOWN, 'listDown']].forEach(function (pair) {
+    const ul = el(pair[1]);
+    if (!ul) return;
+    ul.innerHTML = '';
+    G.puzzle.words.filter(function (w) { return w.dir === pair[0]; }).forEach(function (w) {
+      const li = document.createElement('li');
+      li.className = (active && active.id === w.id ? 'active ' : '') + (wordDone(w) ? 'solved' : '');
+      const n = document.createElement('span'); n.className = 'n'; n.textContent = w.number;
+      const t = document.createElement('span'); t.textContent = w.clue;
+      li.appendChild(n); li.appendChild(t);
+      li.addEventListener('click', function () { goToClue(w); });
+      ul.appendChild(li);
+    });
+  });
+}
+
+function goToClue(w) {
+  const cells = wordCells(w);
+  G.cursor = cells.find(function (q) { return !G.entries[q.r][q.c]; }) || cells[0];
+  G.dir = w.dir;
+  closeSheet();
+  render();
+}
+
+function elapsed() { return Date.now() - G.startedAt + (G.penalty || 0); }
+
+function wordDone(w) {
+  return wordCells(w).every(function (q, i) { return G.entries[q.r][q.c] === w.answer[i]; });
+}
+
+/* ---------- typing ---------- */
+function tapCell(r, c) {
+  const cell = cellAt(r, c);
+  if (!cell || G.done) return;
+  if (G.cursor.r === r && G.cursor.c === c) {
+    const other = G.dir === ACROSS ? DOWN : ACROSS;
+    if (cell[other === ACROSS ? 'acrossId' : 'downId'] !== undefined) G.dir = other;
+  } else {
+    G.cursor = { r: r, c: c };
+    if (cell[G.dir === ACROSS ? 'acrossId' : 'downId'] === undefined) G.dir = G.dir === ACROSS ? DOWN : ACROSS;
+  }
+  render();
+}
+
+function typeLetter(letter) {
+  if (G.done) return;
+  const w = activeWord();
+  if (!w) return;
+  const cells = wordCells(w);
+
+  // Green squares are locked — move to the next square you can still change.
+  let target = G.cursor;
+  if (isLocked(target.r, target.c)) {
+    const idx = cells.findIndex(function (q) { return q.r === target.r && q.c === target.c; });
+    target = cells.slice(idx + 1).find(function (q) { return !isLocked(q.r, q.c); }) ||
+             cells.find(function (q) { return !isLocked(q.r, q.c); });
+    if (!target) { jumpToNextWord(w); return; }
+  }
+
+  G.entries[target.r][target.c] = letter;
+  delete G.marks[key(target.r, target.c)]; // typing clears that square's color
+  bump(target.r, target.c);
+  G.cursor = target;
+
+  scoreWords();
+  if (G.puzzle.words.every(wordDone)) { finish(); return; }
+
+  const idx = cells.findIndex(function (q) { return q.r === target.r && q.c === target.c; });
+  const nextEmpty = cells.slice(idx + 1).find(function (q) { return !G.entries[q.r][q.c]; });
+  if (nextEmpty) G.cursor = nextEmpty;
+  else jumpToNextWord(w);
+  render();
+}
+
+function backspace() {
+  if (G.done) return;
+  const w = activeWord();
+  if (!w) return;
+  const cells = wordCells(w);
+  const cur = G.cursor;
+  if (G.entries[cur.r][cur.c] && !isLocked(cur.r, cur.c)) {
+    G.entries[cur.r][cur.c] = '';
+    delete G.marks[key(cur.r, cur.c)];
+  } else {
+    const idx = cells.findIndex(function (q) { return q.r === cur.r && q.c === cur.c; });
+    const prev = cells.slice(0, idx).reverse().find(function (q) { return !isLocked(q.r, q.c); });
+    if (prev) {
+      G.entries[prev.r][prev.c] = '';
+      delete G.marks[key(prev.r, prev.c)];
+      G.cursor = prev;
+    }
+  }
+  scoreWords();
+  render();
+}
+
+function jumpToNextWord(from) {
+  const words = G.puzzle.words;
+  const i = words.findIndex(function (w) { return w.id === from.id; });
+  for (let k = 1; k <= words.length; k++) {
+    const w = words[(i + k) % words.length];
+    const open = wordCells(w).filter(function (q) { return !isLocked(q.r, q.c); });
+    if (open.length && !wordDone(w)) {
+      const spot = open.find(function (q) { return !G.entries[q.r][q.c]; }) || open[0];
+      G.cursor = spot;
+      G.dir = w.dir;
+      return;
+    }
+  }
+}
+
+function stepClue(delta) {
+  const words = G.puzzle.words, w = activeWord();
+  const i = words.findIndex(function (x) { return x.id === (w ? w.id : 0); });
+  const next = words[(i + delta + words.length) % words.length];
+  const cells = wordCells(next);
+  G.cursor = cells.find(function (q) { return !G.entries[q.r][q.c]; }) || cells[0];
+  G.dir = next.dir;
+  render();
+}
+
+/* ============================================================
+   COLORS — the Wordle part
+   Green  = right letter, right spot
+   Yellow = letter is in the word, wrong spot
+   Red    = letter is not in the word at all
+   ============================================================ */
+function scoreWords() {
+  let anyWrong = false;
+  G.puzzle.words.forEach(function (w) {
+    const cells = wordCells(w);
+    const guess = cells.map(function (q) { return G.entries[q.r][q.c]; });
+    if (guess.some(function (g) { return !g; })) return; // not finished yet
+
+    const answer = w.answer.split('');
+    const result = new Array(guess.length).fill('wrong');
+    const pool = {};
+    answer.forEach(function (ch, i) {
+      if (guess[i] === ch) result[i] = 'right';
+      else pool[ch] = (pool[ch] || 0) + 1;
+    });
+    guess.forEach(function (ch, i) {
+      if (result[i] === 'right') return;
+      if (pool[ch] > 0) { result[i] = 'close'; pool[ch]--; }
+    });
+
+    const correct = result.every(function (x) { return x === 'right'; });
+    if (!correct) anyWrong = true;
+
+    if (correct && !G.solvedWords[w.id]) {
+      // a word just went green: points, combo, sparks
+      G.solvedWords[w.id] = true;
+      G.flubbed[w.id] = false;
+      G.combo++;
+      G.bestCombo = Math.max(G.bestCombo, G.combo);
+      const mult = Math.min(3, G.combo);
+      addPoints(100 * mult);
+      sparkleAt(cells[Math.floor(cells.length / 2)]);
+      blip(true, Math.min(G.combo, 5));
+      face('cheer');
+    } else if (!correct && !G.flubbed[w.id]) {
+      // a finished word that is wrong: combo resets
+      G.flubbed[w.id] = true;
+      G.mistakes++;
+      G.combo = 0;
+      blip(false);
+      face('oops');
+    }
+    cells.forEach(function (q, i) {
+      const k = key(q.r, q.c);
+      const cur = G.marks[k];
+      // A square shared by two words keeps its best news: green over yellow over red.
+      if (cur === 'right') return;
+      if (result[i] === 'right' || !cur || (cur === 'wrong' && result[i] === 'close')) G.marks[k] = result[i];
+    });
+  });
+  el('note').className = 'note ' + (anyWrong ? 'warn' : 'hint');
+  if (anyWrong) el('note').textContent = 'Yellow letters are in the word but in the wrong spot. Red ones are not in it.';
+}
+
+function addPoints(n) {
+  G.points += n;
+  const sc = el('score');
+  sc.textContent = G.points.toLocaleString();
+  sc.classList.remove('bump');
+  void sc.offsetWidth;
+  sc.classList.add('bump');
+  const chip = el('combo');
+  if (G.combo >= 2) {
+    chip.hidden = false;
+    chip.textContent = '🔥 ×' + Math.min(3, G.combo);
+  } else {
+    chip.hidden = true;
+  }
+}
+
+/* Zip's face: happy by default, cheering on a word, wincing on a mistake. */
+let faceTimer = null;
+function face(mood) {
+  const b = el('buddy'), f = el('buddyFace');
+  if (!b || !f) return;
+  const eyes = mood === 'cheer'
+    ? '<path d="M37 50 q5 -6 10 0" fill="none" stroke="#191F3D" stroke-width="3.5" stroke-linecap="round"/>' +
+      '<path d="M53 50 q5 -6 10 0" fill="none" stroke="#191F3D" stroke-width="3.5" stroke-linecap="round"/>'
+    : mood === 'oops'
+      ? '<path d="M38 47 l9 5 M62 47 l-9 5" stroke="#191F3D" stroke-width="3.5" stroke-linecap="round"/>'
+      : '<circle cx="42" cy="50" r="4" fill="#191F3D"/><circle cx="58" cy="50" r="4" fill="#191F3D"/>';
+  const mouth = mood === 'oops'
+    ? '<path d="M42 65 q8 -7 16 0" fill="none" stroke="#191F3D" stroke-width="3.5" stroke-linecap="round"/>'
+    : mood === 'cheer'
+      ? '<path d="M39 58 q11 14 22 0 z" fill="#191F3D"/>'
+      : '<path d="M41 61 q9 8 18 0" fill="none" stroke="#191F3D" stroke-width="3.5" stroke-linecap="round"/>';
+  f.innerHTML = eyes + mouth;
+  b.classList.remove('cheer', 'oops');
+  void b.offsetWidth;
+  if (mood === 'cheer') b.classList.add('cheer');
+  if (mood === 'oops') b.classList.add('oops');
+  clearTimeout(faceTimer);
+  if (mood !== 'happy') faceTimer = setTimeout(function () { face('happy'); }, 1400);
+}
+
+/* A few sparks right on the word you just finished. */
+function sparkleAt(cell) {
+  const d = board.querySelector('.cell[data-r="' + cell.r + '"][data-c="' + cell.c + '"]');
+  if (!d) return;
+  const box = d.getBoundingClientRect();
+  confetti({ x: box.left + box.width / 2, y: box.top + box.height / 2, count: 18, spread: 60 });
+}
+
+function bump(r, c) {
+  const d = board.querySelector('.cell[data-r="' + r + '"][data-c="' + c + '"]');
+  if (!d) return;
+  d.classList.remove('pop');
+  void d.offsetWidth;
+  d.classList.add('pop');
+}
+
+/* ============================================================
+   FINISH
+   ============================================================ */
+/* ============================================================
+   RANKS, STARS AND BADGES
+   ============================================================ */
+const RANKS = [
+  { at: 0, name: 'Rookie', icon: '🐣' },
+  { at: 2500, name: 'Speedster', icon: '🏃' },
+  { at: 7000, name: 'Word Wizard', icon: '🧙' },
+  { at: 16000, name: 'Champion', icon: '🏆' },
+  { at: 40000, name: 'Legend', icon: '👑' },
+];
+function rankFor(xp) {
+  let r = RANKS[0];
+  RANKS.forEach(function (x) { if (xp >= x.at) r = x; });
+  return r;
+}
+
+const BADGES = {
+  first: { icon: '🎉', name: 'First puzzle' },
+  solo: { icon: '🧠', name: 'No help needed' },
+  flawless: { icon: '✨', name: 'No mistakes' },
+  quick: { icon: '⚡', name: 'Under a minute' },
+  combo: { icon: '🔥', name: 'Four in a row' },
+  streak3: { icon: '📅', name: '3 days in a row' },
+  insane: { icon: '💀', name: 'Beat Insane' },
+};
+
+function starsFor(ms, words) {
+  const par = words * 14000 + 10000;
+  if (ms <= par) return 3;
+  if (ms <= par * 1.7) return 2;
+  return 1;
+}
+
+function finish() {
+  G.done = true;
+  el('timer').textContent = formatTime(elapsed());
+  el('reveal').disabled = true;
+  render();
+  confetti({ count: 140 });
+  face('cheer');
+
+  const ms = elapsed();
+  const diff = G.difficulty;
+  const words = G.puzzle.words.length;
+
+  // points: words you got + a speed bonus + one bonus per star
+  const stars = starsFor(ms, words);
+  const speedBonus = Math.max(0, 500 - Math.round(ms / 1000) * 2);
+  const starBonus = stars * 200;
+  const total = G.points + speedBonus + starBonus;
+
+  let bestNote = '';
+  if (G.mode === 'daily') {
+    if (!SAVE.daily[G.date]) {
+      SAVE.daily[G.date] = ms;
+      SAVE.streak = SAVE.lastDaily === addDays(G.date, -1) ? (SAVE.streak || 0) + 1 : 1;
+      SAVE.lastDaily = G.date;
+    }
+    drawLeaderboard();
+  } else {
+    const prev = SAVE.best[diff];
+    if (!prev || ms < prev) { SAVE.best[diff] = ms; bestNote = 'New best time! 🎉'; }
+  }
+
+  // rank up?
+  const before = rankFor(SAVE.xp || 0);
+  SAVE.xp = (SAVE.xp || 0) + total;
+  SAVE.stars = (SAVE.stars || 0) + stars;
+  SAVE.played = (SAVE.played || 0) + 1;
+  const after = rankFor(SAVE.xp);
+
+  // badges earned this round
+  const fresh = [];
+  function earn(k) { if (!SAVE.badges[k]) { SAVE.badges[k] = true; fresh.push(BADGES[k]); } }
+  if (SAVE.played === 1) earn('first');
+  if (!G.revealsUsed) earn('solo');
+  if (!G.mistakes) earn('flawless');
+  if (ms < 60000) earn('quick');
+  if (G.bestCombo >= 4) earn('combo');
+  if ((SAVE.streak || 0) >= 3) earn('streak3');
+  if (diff === 'insane') earn('insane');
+  persist();
+
+  const rows = [
+    ['Words in a row', '🔥 ' + G.bestCombo],
+    ['Points this puzzle', '+' + total.toLocaleString()],
+  ];
+  if (G.mode === 'daily') rows.push(['Day streak', '🔥 ' + (SAVE.streak || 1)]);
+  else rows.push(['Your best', formatTime(SAVE.best[diff] || ms)]);
+  rows.push(['Rank', after.icon + ' ' + after.name]);
+
+  showSheet({
+    title: 'You got it! 🎉',
+    big: formatTime(ms),
+    note: bestNote || (G.mode === 'daily' ? 'Come back tomorrow for a brand new one!' : 'Think you can go faster? Play it again!'),
+    rows: rows,
+    primary: {
+      text: G.mode === 'daily' ? 'Copy my time to send to friends' : 'Play another one!',
+      action: G.mode === 'daily' ? shareDaily : function () { closeSheet(); startGame('free', diff); },
+    },
+    secondary: { text: 'Close', action: closeSheet },
+  });
+
+  // stars go right under the time
+  const sheet = el('sheet');
+  const starEl = document.createElement('p');
+  starEl.className = 'stars';
+  starEl.textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+  sheet.insertBefore(starEl, sheet.querySelector('p'));
+
+  if (after.name !== before.name) {
+    const up = document.createElement('div');
+    up.className = 'rankup';
+    up.textContent = 'New rank! ' + after.icon + ' ' + after.name;
+    sheet.insertBefore(up, sheet.querySelector('.btn'));
+  }
+
+  if (fresh.length) {
+    const row = document.createElement('div');
+    row.className = 'badge-row';
+    fresh.forEach(function (bd) {
+      const b = document.createElement('span');
+      b.className = 'badge';
+      b.textContent = bd.icon + ' ' + bd.name;
+      row.appendChild(b);
+    });
+    sheet.insertBefore(row, sheet.querySelector('.btn'));
+  }
+}
+
+function shareDaily() {
+  const ms = SAVE.daily[G.date] || (Date.now() - G.startedAt);
+  const art = G.puzzle.grid.map(function (row) {
+    return row.map(function (c) { return c ? '🟩' : '⬛'; }).join('');
+  }).join('\n');
+  const text = 'Raceword #' + puzzleNumber(G.date) + ' — ' + formatTime(ms) + ' 🔥' + (SAVE.streak || 1) + '\n' +
+    art + '\nCan you beat me? ' + location.href.split('#')[0];
+  const btn = el('sheetPrimary');
+  navigator.clipboard.writeText(text).then(function () {
+    btn.textContent = 'Copied! Paste it to a friend';
+  }).catch(function () {
+    const box = document.createElement('textarea');
+    box.value = text;
+    box.style.cssText = 'width:100%;height:120px;margin-top:10px;border-radius:10px;padding:8px;font-family:inherit';
+    btn.after(box);
+    box.select();
+    btn.textContent = 'Copy the text above';
+  });
+}
+
+/* ============================================================
+   OVERLAY SHEET
+   ============================================================ */
+function showSheet(opts) {
+  const s = el('sheet');
+  s.innerHTML = '';
+  const h = document.createElement('h2'); h.textContent = opts.title; s.appendChild(h);
+  if (opts.big) { const b = document.createElement('div'); b.className = 'big'; b.textContent = opts.big; s.appendChild(b); }
+  if (opts.note) { const p = document.createElement('p'); p.textContent = opts.note; s.appendChild(p); }
+  if (opts.rows) {
+    const wrap = document.createElement('div'); wrap.className = 'rows';
+    opts.rows.forEach(function (r) {
+      const row = document.createElement('div'); row.className = 'row';
+      const k = document.createElement('span'); k.className = 'k'; k.textContent = r[0];
+      const v = document.createElement('span'); v.className = 'v'; v.textContent = r[1];
+      row.appendChild(k); row.appendChild(v); wrap.appendChild(row);
+    });
+    s.appendChild(wrap);
+  }
+  if (opts.primary) {
+    const b = document.createElement('button');
+    b.className = 'btn'; b.id = 'sheetPrimary'; b.textContent = opts.primary.text;
+    b.addEventListener('click', opts.primary.action);
+    s.appendChild(b);
+  }
+  if (opts.secondary) {
+    const b = document.createElement('button');
+    b.className = 'btn ghost'; b.textContent = opts.secondary.text;
+    b.addEventListener('click', opts.secondary.action);
+    s.appendChild(b);
+  }
+  el('overlay').hidden = false;
+}
+function closeSheet() { el('overlay').hidden = true; }
+
+/* ============================================================
+   KEYBOARD + CONTROLS
+   ============================================================ */
+const ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+(function buildKeys() {
+  const wrap = el('keys');
+  ROWS.forEach(function (row, i) {
+    const d = document.createElement('div');
+    d.className = 'krow';
+    row.split('').forEach(function (ch) {
+      const b = document.createElement('button');
+      b.className = 'key'; b.textContent = ch;
+      b.addEventListener('click', function () { typeLetter(ch); });
+      d.appendChild(b);
+    });
+    if (i === 2) {
+      const b = document.createElement('button');
+      b.className = 'key wide'; b.textContent = '⌫';
+      b.setAttribute('aria-label', 'Delete');
+      b.addEventListener('click', backspace);
+      d.appendChild(b);
+    }
+    wrap.appendChild(d);
+  });
+})();
+
+document.addEventListener('keydown', function (e) {
+  if (el('overlay').hidden === false) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (/^[a-zA-Z]$/.test(e.key)) { typeLetter(e.key.toUpperCase()); e.preventDefault(); }
+  else if (e.key === 'Backspace') { backspace(); e.preventDefault(); }
+  else if (e.key === 'Tab') { stepClue(e.shiftKey ? -1 : 1); e.preventDefault(); }
+  else if (e.key.indexOf('Arrow') === 0) {
+    const map = { ArrowRight: [0, 1], ArrowLeft: [0, -1], ArrowUp: [-1, 0], ArrowDown: [1, 0] };
+    const m = map[e.key];
+    let r = G.cursor.r + m[0], c = G.cursor.c + m[1];
+    while (G.puzzle.grid[r] && !G.puzzle.grid[r][c] && c >= 0 && c < G.puzzle.cols && r >= 0) { r += m[0]; c += m[1]; }
+    if (cellAt(r, c)) { G.dir = m[0] === 0 ? ACROSS : DOWN; tapCell(r, c); }
+    e.preventDefault();
+  }
+});
+
+el('prev').addEventListener('click', function () { stepClue(-1); });
+el('next').addEventListener('click', function () { stepClue(1); });
+
+/* ============================================================
+   DAILY RACE — it goes live at a surprise time
+   ============================================================ */
+function dropMoment() {
+  const today = dateKey();
+  const real = dropTimeFor(today).getTime();
+  const forced = SAVE.unlocked[today];
+  return forced && forced < real ? forced : real;
+}
+function dailyIsLive() { return Date.now() >= dropMoment(); }
+
+function openDaily() {
+  el('newWords').hidden = true; // the daily is the same puzzle for everyone
+  el('modeLabel').textContent = 'Daily race';
+  el('modeSub').textContent = 'Puzzle #' + puzzleNumber(dateKey());
+  drawLeaderboard();
+  el('leader').hidden = dailyIsLive() && !SAVE.daily[dateKey()];
+  if (dailyIsLive()) {
+    showPlayArea(true);
+    startGame('daily');
+    if (SAVE.daily[dateKey()]) {
+      el('note').className = 'note hint';
+      el('note').textContent = "You already raced today in " + formatTime(SAVE.daily[dateKey()]) + " — this run is just for fun.";
+    }
+  } else {
+    showPlayArea(false);
+    G = null;
+    el('timer').textContent = '0:00';
+    el('left').textContent = '—';
+    el('note').textContent = '';
+  }
+}
+
+function openFree(diff) {
+  el('newWords').hidden = false;
+  el('modeLabel').textContent = 'Free play';
+  const best = SAVE.best[diff];
+  el('modeSub').textContent = best ? DIFFICULTY[diff].label + ' · ' + formatTime(best) : DIFFICULTY[diff].label;
+  el('leader').hidden = true;
+  showPlayArea(true);
+  startGame('free', diff);
+}
+
+function showPlayArea(playing) {
+  board.hidden = !playing;
+  el('locked').hidden = playing;
+  el('cluePanel').hidden = !playing;
+  document.querySelector('.clue').hidden = !playing;
+  document.querySelector('.tools').hidden = !playing;
+  el('keys').hidden = !playing;
+}
+
+el('unlockTest').addEventListener('click', function () {
+  SAVE.unlocked[dateKey()] = Date.now();
+  persist();
+  openDaily();
+});
+
+el('modes').addEventListener('click', function (e) {
+  const b = e.target.closest('.chip');
+  if (!b) return;
+  closeSheet();
+  // Free Play only: deal a whole new puzzle with different words.
+  if (b.id === 'newWords') {
+    if (G && G.mode === 'free') openFree(G.difficulty);
+    return;
+  }
+  document.querySelectorAll('.chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c === b)); });
+  if (b.dataset.mode === 'daily') openDaily();
+  else openFree(b.dataset.diff);
+});
+
+setInterval(function () {
+  if (G && !G.done) el('timer').textContent = formatTime(elapsed());
+  // No countdown on purpose — the drop time is a surprise. The page just
+  // flips to the race the moment it goes live.
+  if (!el('locked').hidden && dailyIsLive()) openDaily();
+  if (!el('landing').hidden) updateLiveStrip();
+}, 250);
+
+/* ============================================================
+   HELPERS WHILE YOU PLAY
+   ============================================================ */
+const REVEAL_PENALTY = 15000;
+
+function revealLetter() {
+  if (!G || G.done) return;
+  const w = activeWord();
+  if (!w) return;
+  const cells = wordCells(w);
+  const spot =
+    (!isLocked(G.cursor.r, G.cursor.c) && G.entries[G.cursor.r][G.cursor.c] !== cellAt(G.cursor.r, G.cursor.c).letter ? G.cursor : null) ||
+    cells.find(function (q) { return G.entries[q.r][q.c] !== cellAt(q.r, q.c).letter; });
+  if (!spot) {
+    flashNote('That word is already done!');
+    return;
+  }
+  G.entries[spot.r][spot.c] = cellAt(spot.r, spot.c).letter;
+  delete G.marks[key(spot.r, spot.c)];
+  G.penalty += REVEAL_PENALTY;
+  G.revealsUsed = (G.revealsUsed || 0) + 1;
+  if (G.mode === 'daily') { SAVE.dailyPenalty[G.date] = G.penalty; persist(); }
+  bump(spot.r, spot.c);
+  G.cursor = spot;
+  scoreWords();
+  flashNote('Here is your letter! That costs you 15 seconds.');
+  if (G.puzzle.words.every(wordDone)) { finish(); return; }
+  render();
+}
+
+let noteTimer = null;
+function flashNote(text) {
+  const n = el('note');
+  n.className = 'note warn';
+  n.textContent = text;
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(function () {
+    n.className = 'note hint';
+    n.textContent = '';
+  }, 3200);
+}
+
+/* A short blip when a word goes green. */
+let AC = null;
+function blip(good, step) {
+  if (!SAVE.sound) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = 'sine';
+    const base = 620 * Math.pow(1.12, (step || 1) - 1); // each word in a row rings higher
+    o.frequency.setValueAtTime(good ? base : 300, AC.currentTime);
+    if (good) o.frequency.exponentialRampToValueAtTime(base * 1.5, AC.currentTime + 0.12);
+    g.gain.setValueAtTime(0.0001, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.12, AC.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + 0.22);
+    o.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime + 0.24);
+  } catch (e) { /* no sound here, no problem */ }
+  if (navigator.vibrate) { try { navigator.vibrate(good ? 25 : 12); } catch (e) {} }
+}
+
+function showHowTo() {
+  const s = el('sheet');
+  showSheet({
+    title: 'How to play',
+    note: 'Fill in the whole crossword as fast as you can! Tap a square, read the clue at the bottom, and start typing.',
+  });
+  const list = document.createElement('div');
+  list.className = 'rows';
+  [
+    ['🟩 Green', 'right letter, right spot'],
+    ['🟨 Yellow', 'that letter is in the word, but somewhere else'],
+    ['🟥 Red', 'that letter is not in the word at all'],
+    ['💡 Hint', 'the first clue starts partly filled in — Easy gives the whole word, Insane gives one letter'],
+    ['⏰ Daily', 'one puzzle a day at a surprise time, the same for everyone'],
+    ['🎚 Levels', 'harder levels have longer words, trickier clues and a smaller hint'],
+    ['↻ New words', 'practice only: get a whole new puzzle'],
+  ].forEach(function (r) {
+    const row = document.createElement('div'); row.className = 'row';
+    const k = document.createElement('span'); k.className = 'k'; k.textContent = r[0];
+    const v = document.createElement('span'); v.className = 'v'; v.textContent = r[1];
+    v.style.cssText = 'font-weight:600;text-align:right;max-width:60%';
+    row.appendChild(k); row.appendChild(v); list.appendChild(row);
+  });
+  s.insertBefore(list, s.querySelector('.btn'));
+
+  const cb = document.createElement('button');
+  cb.className = 'btn ghost';
+  cb.textContent = SAVE.colorblind ? '🎨 Colorblind mode: on' : '🎨 Colorblind mode: off';
+  cb.addEventListener('click', function () {
+    SAVE.colorblind = !SAVE.colorblind;
+    persist();
+    applyColorblind();
+    cb.textContent = SAVE.colorblind ? '🎨 Colorblind mode: on' : '🎨 Colorblind mode: off';
+  });
+  s.insertBefore(cb, s.querySelector('.btn'));
+}
+
+function showAllClues() {
+  if (!G) return;
+  const s = el('sheet');
+  showSheet({ title: 'All clues', primary: { text: 'Back to the puzzle', action: closeSheet } });
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'text-align:left;max-height:55vh;overflow:auto;margin-top:10px';
+  [[ACROSS, 'Across'], [DOWN, 'Down']].forEach(function (pair) {
+    const h = document.createElement('h3');
+    h.className = 'label';
+    h.textContent = pair[1];
+    h.style.margin = '10px 0 4px';
+    wrap.appendChild(h);
+    const ul = document.createElement('ul');
+    ul.className = 'sheet-clues';
+    ul.style.cssText = 'list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px';
+    G.puzzle.words.filter(function (w) { return w.dir === pair[0]; }).forEach(function (w) {
+      const li = document.createElement('li');
+      li.style.cssText = 'display:flex;gap:8px;padding:8px;border-radius:8px;font-size:15px;cursor:pointer';
+      if (wordDone(w)) { li.style.color = 'var(--mint)'; li.style.textDecoration = 'line-through'; }
+      const n = document.createElement('span'); n.textContent = w.number;
+      n.style.cssText = 'color:var(--sun);font-weight:800;min-width:18px';
+      const t = document.createElement('span'); t.textContent = w.clue;
+      li.appendChild(n); li.appendChild(t);
+      li.addEventListener('click', function () { goToClue(w); });
+      ul.appendChild(li);
+    });
+    wrap.appendChild(ul);
+  });
+  s.insertBefore(wrap, s.querySelector('.btn'));
+}
+
+/* Colorblind mode: red and green are the hardest pair to tell apart, so this
+   swaps in blue and slate and adds a small mark to every colored square. */
+function applyColorblind() {
+  document.documentElement.setAttribute('data-cb', SAVE.colorblind ? 'on' : 'off');
+}
+applyColorblind();
+
+el('soundBtn').textContent = SAVE.sound ? '🔊 Sound' : '🔇 Muted';
+el('soundBtn').setAttribute('aria-pressed', String(!!SAVE.sound));
+el('reveal').addEventListener('click', revealLetter);
+el('howTo').addEventListener('click', showHowTo);
+el('allClues').addEventListener('click', showAllClues);
+el('soundBtn').addEventListener('click', function () {
+  SAVE.sound = !SAVE.sound;
+  persist();
+  this.textContent = SAVE.sound ? '🔊 Sound' : '🔇 Muted';
+  this.setAttribute('aria-pressed', String(SAVE.sound));
+  if (SAVE.sound) blip(true);
+});
+
+/* ============================================================
+   LANDING PAGE
+   The little row of letters up top plays out one guess so you can see
+   what the colors mean before you start.
+   ============================================================ */
+/* ============================================================
+   THE TRY-IT PUZZLE ON THE FRONT PAGE
+   One short word, its letters scrambled underneath. Solving it takes ten
+   seconds and shows people the game before they commit to a whole grid.
+   ============================================================ */
+let TRY = null;
+
+function newTryPuzzle() {
+  const pool = WORDS.easy.filter(function (e) { return e[0].length >= 4 && e[0].length <= 6; });
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  const letters = pick[0].split('');
+  // scramble, and make sure it isn't already in order
+  for (let i = letters.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = letters[i]; letters[i] = letters[j]; letters[j] = t;
+  }
+  if (letters.join('') === pick[0]) { letters.push(letters.shift()); }
+  TRY = { answer: pick[0], clue: pick[1], letters: letters, used: [], filled: [], done: false };
+  drawTry();
+}
+
+function drawTry() {
+  const slots = el('trySlots'), letters = el('tryLetters');
+  el('tryClue').textContent = TRY.clue;
+  el('tryHint').textContent = TRY.answer.length + ' letters';
+  slots.innerHTML = '';
+  TRY.answer.split('').forEach(function (ch, i) {
+    const d = document.createElement('div');
+    const got = TRY.filled[i];
+    d.className = 'slot' + (got ? '' : ' empty') +
+      (!got && TRY.filled.length === i ? ' next' : '') +
+      (TRY.done ? ' right' : '');
+    d.textContent = got || '';
+    slots.appendChild(d);
+  });
+  letters.innerHTML = '';
+  TRY.letters.forEach(function (ch, i) {
+    const b = document.createElement('button');
+    b.className = 'letter-btn';
+    b.textContent = ch;
+    b.disabled = TRY.used.indexOf(i) !== -1 || TRY.done;
+    b.addEventListener('click', function () { tryPick(i); });
+    letters.appendChild(b);
+  });
+}
+
+function tryPick(i) {
+  if (TRY.done) return;
+  const ch = TRY.letters[i];
+  const pos = TRY.filled.length;
+  TRY.used.push(i);
+  TRY.filled.push(ch);
+  const msg = el('tryMsg');
+
+  if (ch !== TRY.answer[pos]) {
+    // wrong letter: show it red for a beat, then hand it back
+    drawTry();
+    const slot = el('trySlots').children[pos];
+    if (slot) { slot.className = 'slot wrong'; slot.textContent = ch; }
+    msg.className = 'tryit-msg';
+    msg.textContent = 'Nope! Try a different letter.';
+    blip(false);
+    setTimeout(function () {
+      TRY.used.pop();
+      TRY.filled.pop();
+      drawTry();
+    }, 450);
+    return;
+  }
+
+  blip(true);
+  if (TRY.filled.length === TRY.answer.length) {
+    TRY.done = true;
+    drawTry();
+    msg.className = 'tryit-msg win';
+    msg.textContent = 'You did it! Ready for a real puzzle?';
+    confetti();
+  } else {
+    msg.className = 'tryit-msg';
+    msg.textContent = 'Nice! Keep going.';
+    drawTry();
+  }
+}
+
+/* ============================================================
+   CONFETTI — for solving something
+   ============================================================ */
+function confetti(opts) {
+  opts = opts || {};
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const c = el('confetti');
+  const ctx = c.getContext('2d');
+  c.hidden = false;
+  c.width = window.innerWidth;
+  c.height = window.innerHeight;
+  const colors = ['#7B5CFF', '#35B8F5', '#FF5E9C', '#35C46A', '#FFC531'];
+  const count = opts.count || 90;
+  const spread = opts.spread || c.width * 0.6;
+  const cx = opts.x != null ? opts.x : c.width / 2;
+  const cy = opts.y != null ? opts.y : c.height * 0.35;
+  const bits = [];
+  for (let i = 0; i < count; i++) {
+    bits.push({
+      x: cx + (Math.random() - 0.5) * spread,
+      y: cy + (Math.random() - 0.5) * 40,
+      vx: (Math.random() - 0.5) * 9,
+      vy: -Math.random() * 11 - 3,
+      s: 5 + Math.random() * 7,
+      rot: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 0.35,
+      col: colors[Math.floor(Math.random() * colors.length)],
+    });
+  }
+  let frames = 0;
+  (function step() {
+    ctx.clearRect(0, 0, c.width, c.height);
+    bits.forEach(function (b) {
+      b.vy += 0.34;
+      b.x += b.vx;
+      b.y += b.vy;
+      b.rot += b.vr;
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(b.rot);
+      ctx.fillStyle = b.col;
+      ctx.fillRect(-b.s / 2, -b.s / 2, b.s, b.s * 0.6);
+      ctx.restore();
+    });
+    frames++;
+    if (frames < 150) requestAnimationFrame(step);
+    else { ctx.clearRect(0, 0, c.width, c.height); c.hidden = true; }
+  })();
+}
+
+const tagline = document.querySelector('.tagline');
+
+function showLanding() {
+  el('landing').hidden = false;
+  el('game').hidden = true;
+  el('modes').hidden = true;
+  tagline.hidden = true; // the hero says it better
+  closeSheet();
+  newTryPuzzle();
+  updateLiveStrip();
+}
+
+/* The strip at the top of the front page: is the race live right now? */
+function updateLiveStrip() {
+  const strip = el('liveStrip'), text = el('liveText');
+  const played = SAVE.daily[dateKey()];
+  if (played) {
+    strip.className = 'live-strip waiting';
+    text.textContent = 'You raced today in ' + formatTime(played) + ' · 🔥 ' + (SAVE.streak || 1) + ' day streak';
+  } else if (dailyIsLive()) {
+    strip.className = 'live-strip';
+    text.textContent = "Today's puzzle is LIVE — go!";
+  } else {
+    strip.className = 'live-strip waiting';
+    text.textContent = "Today's puzzle is still hiding";
+  }
+}
+function leaveLanding() {
+  el('landing').hidden = true;
+  el('game').hidden = false;
+  el('modes').hidden = false;
+  tagline.hidden = false;
+}
+
+el('ctaDaily').addEventListener('click', function () {
+  leaveLanding();
+  document.querySelectorAll('.chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c.dataset.mode === 'daily')); });
+  openDaily();
+});
+el('ctaFree').addEventListener('click', function () {
+  leaveLanding();
+  document.querySelectorAll('.chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c.dataset.diff === 'easy')); });
+  openFree('easy');
+});
+document.querySelector('.logo').addEventListener('click', showLanding);
+document.querySelector('.logo').style.cursor = 'pointer';
+document.querySelector('.logo').title = 'Back to the start';
+
+/* ============================================================
+   START
+   Newcomers get the front page. Anyone who has played before goes straight
+   to today's race — fewer taps between them and the puzzle.
+   ============================================================ */
+if (SAVE.lastDaily || Object.keys(SAVE.best).length) {
+  leaveLanding();
+  document.querySelectorAll('.chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c.dataset.mode === 'daily')); });
+  openDaily();
+} else {
+  showLanding();
+}
+</script>
+
+</body></html>

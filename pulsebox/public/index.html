@@ -1,0 +1,853 @@
+<title>Pulsebox | Interactive Learning & Skill Practice</title>
+<meta name="description" content="Pulsebox is a collection of interactive activities that invite practice with timing, strategy, pattern recognition, and problem-solving. Explore activities on desktop, tablet, or phone.">
+<meta property="og:title" content="Pulsebox | Interactive Learning & Skill Practice">
+<meta property="og:description" content="Interactive activities for practicing timing, strategy, pattern recognition, and problem-solving.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow:wght@500;600;700;800&display=swap">
+<style>
+  /* Pulsebox: a dark, neon-accented interface for interactive activities. One committed dark theme with neon
+     accents, so every color is set here and nothing depends on the viewer's theme. */
+  :root {
+    color-scheme: dark;
+    --bg: #0a0c12;
+    --bg2: #11141d;
+    --panel: #161a26;
+    --panel2: #1d2231;
+    --edge: #2a3144;
+    --text: #eef1f8;
+    --muted: #8d95ab;
+    --lime: #c6ff3d;
+    --pink: #ff2e88;
+    --cyan: #29e0ff;
+    --display: 'Chakra Petch', 'Arial Narrow', system-ui, sans-serif;
+    --body: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --r: 16px;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { background: var(--bg); }
+  body {
+    margin: 0; font-family: var(--body); font-size: 16px; color: var(--text); background: var(--bg);
+    background-image:
+      radial-gradient(60% 40% at 85% -5%, rgba(255,46,136,.18), transparent 70%),
+      radial-gradient(50% 35% at 0% 10%, rgba(41,224,255,.12), transparent 70%),
+      linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+    background-attachment: fixed;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 40px); padding-block: 14px 64px; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+  .outline-title { font-family: var(--display); font-weight: 700; color: var(--text); margin: 0; letter-spacing: .01em; text-transform: uppercase; }
+
+  /* ---------- top bar ---------- */
+  .top {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    background: rgba(10,12,18,.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--edge); border-radius: 14px; padding: 10px 12px 10px 16px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; cursor: pointer; background: none; border: 0; padding: 0; }
+  .logo .mark { width: 34px; height: 34px; border-radius: 9px; background: var(--lime); display: grid; place-items: center; box-shadow: 0 0 18px rgba(198,255,61,.45); transform: rotate(-6deg); transition: transform .2s ease; }
+  .logo .mark svg { width: 20px; height: 20px; }
+  .logo:hover .mark { transform: rotate(6deg) scale(1.06); }
+  .logo .word { font-family: var(--display); font-weight: 700; font-size: 25px; letter-spacing: .04em; text-transform: uppercase; position: relative; }
+  .logo .word b { color: var(--lime); font-weight: 700; }
+  .logo:hover .word { text-shadow: -2px 0 var(--pink), 2px 0 var(--cyan); }
+  .nav-count { font-family: var(--display); font-size: 13px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; }
+  .search { flex: 1 1 220px; display: flex; align-items: center; gap: 10px; max-width: 460px; margin-left: auto; background: var(--panel); border: 1px solid var(--edge); border-radius: 10px; padding: 9px 14px; min-width: 0; }
+  .search svg circle, .search svg path { stroke: var(--muted); }
+  .search input { border: 0; background: transparent; outline: none; width: 100%; font-size: 16px; font-weight: 600; min-width: 0; }
+  .search input::placeholder { color: var(--muted); }
+  .search:focus-within { border-color: var(--lime); box-shadow: 0 0 0 3px rgba(198,255,61,.15); }
+  @media (max-width: 560px) { .search { margin-left: 0; max-width: none; } .nav-count { display: none; } }
+
+  /* ---------- home ---------- */
+  .home { display: flex; flex-direction: column; gap: clamp(40px, 5vw, 64px); padding-top: clamp(20px, 3vw, 32px); }
+  .hero { position: relative; border-radius: 22px; overflow: hidden; border: 1px solid var(--edge); background: #000; min-height: clamp(300px, 42vw, 480px); display: flex; align-items: flex-end; }
+  .hero video, .hero .poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,12,18,.95) 0%, rgba(10,12,18,.7) 38%, rgba(10,12,18,.1) 70%), linear-gradient(0deg, rgba(10,12,18,.9), transparent 45%); pointer-events: none; }
+  .hero-body { position: relative; z-index: 1; padding: clamp(20px, 4vw, 44px); display: flex; flex-direction: column; gap: 14px; max-width: 560px; }
+  .pill { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--bg); background: var(--lime); border-radius: 6px; padding: 4px 10px; }
+  .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--bg); animation: blink 1.4s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+  .hero h1 { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: clamp(38px, 6vw, 72px); line-height: .92; margin: 0; letter-spacing: .01em; text-wrap: balance; }
+  .hero p { margin: 0; font-size: 18px; line-height: 1.5; color: #cfd5e4; max-width: 44ch; font-weight: 500; }
+  @media (max-width: 700px) {
+    .hero { display: block; min-height: 0; background: var(--panel); }
+    .hero video { position: relative; display: block; aspect-ratio: 16 / 9; height: auto; }
+    .hero::after { display: none; }
+    .hero-body { padding: 18px; max-width: none; }
+    .hero-actions .play-btn { flex: 1; justify-content: center; }
+  }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; padding-top: 6px; }
+  .hero-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { border: 1px solid var(--edge); background: var(--panel); border-radius: 999px; padding: 8px 18px; font-weight: 700; font-size: 15px; cursor: pointer; transition: border-color .15s ease, color .15s ease, background .15s ease; }
+  .chip:hover { border-color: var(--lime); color: var(--lime); }
+  .chip.solid { background: var(--text); color: var(--bg); }
+
+
+  .learning-intro { border: 1px solid var(--edge); border-radius: 18px; padding: clamp(22px, 3.5vw, 38px); background: linear-gradient(135deg, rgba(198,255,61,.07), rgba(80,210,255,.045)), var(--panel); }
+  .learning-intro h2 { margin: 0 0 14px; font-family: var(--display); font-size: clamp(23px, 3vw, 34px); line-height: 1.05; text-transform: uppercase; letter-spacing: .015em; }
+  .learning-intro h2::before { content: ''; display: inline-block; width: 4px; height: .95em; margin-right: 12px; vertical-align: -.08em; background: var(--lime); border-radius: 2px; box-shadow: 0 0 10px rgba(198,255,61,.45); }
+  .learning-intro p { margin: 0; max-width: 100ch; color: var(--muted); font-size: clamp(15px, 1.35vw, 17px); line-height: 1.85; }
+  .learning-intro strong { color: var(--text); font-weight: 750; }
+
+  .shelf { display: flex; flex-direction: column; gap: 20px; scroll-margin-top: 100px; }
+  .shelf-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .shelf-head h2 { font-size: clamp(22px, 2.6vw, 28px); display: flex; align-items: center; gap: 12px; }
+  .shelf-head h2::before { content: ''; width: 4px; height: 1em; background: var(--lime); border-radius: 2px; box-shadow: 0 0 10px rgba(198,255,61,.6); }
+  .shelf-head span { font-family: var(--display); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 32px 24px; }
+  @media (max-width: 460px) { .icons { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 16px; } }
+
+  .app { display: flex; flex-direction: column; gap: 10px; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
+  .app .cover { position: relative; aspect-ratio: 1; width: 100%; border-radius: 22%; overflow: hidden; border: 1px solid var(--edge); background: var(--panel); transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+  .app .cover img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .35s ease; }
+  .app .cover::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,0) 35%); pointer-events: none; }
+  .app:hover .cover { transform: translateY(-6px); border-color: var(--lime); box-shadow: 0 14px 30px rgba(0,0,0,.5), 0 0 0 1px var(--lime), 0 0 26px rgba(198,255,61,.3); }
+  .app:hover .cover img { transform: scale(1.06); }
+  .app:active .cover { transform: translateY(-2px); }
+  .app .name { font-family: var(--display); font-weight: 700; font-size: 19px; line-height: 1.1; text-transform: uppercase; letter-spacing: .01em; }
+  .app .kind { font-size: 14px; font-weight: 600; color: var(--muted); margin-top: -6px; }
+  .badge { position: absolute; top: 10px; left: 10px; z-index: 1; font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .12em; border-radius: 6px; padding: 3px 8px; }
+  .badge.hot { background: var(--pink); color: #fff; box-shadow: 0 0 14px rgba(255,46,136,.6); }
+  .badge.new { background: var(--lime); color: var(--bg); box-shadow: 0 0 14px rgba(198,255,61,.55); }
+  .app.soon { cursor: default; }
+  .app.soon .cover { background: repeating-linear-gradient(135deg, var(--panel) 0 12px, var(--bg2) 12px 24px); border-style: dashed; display: grid; place-items: center; }
+  .app.soon .cover::after { display: none; }
+  .app.soon:hover .cover { transform: none; box-shadow: none; border-color: var(--edge); }
+  .app.soon .cover span { font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; }
+  .app.soon .name { color: var(--muted); }
+  .empty { background: var(--panel); border: 1px dashed var(--edge); border-radius: var(--r); padding: 28px; text-align: center; font-weight: 600; color: var(--muted); grid-column: 1 / -1; }
+
+  /* ---------- buttons ---------- */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--edge); background: var(--panel); border-radius: 10px; padding: 10px 18px; font-weight: 700; font-size: 16px; cursor: pointer; transition: border-color .15s ease, background .15s ease, transform .08s ease; }
+  .btn:hover { border-color: var(--text); }
+  .btn:active { transform: translateY(1px); }
+  .btn.dark { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .btn .heart path { fill: transparent; stroke: currentColor; stroke-width: 2.5; }
+  .btn[aria-pressed="true"] { border-color: var(--pink); color: var(--pink); }
+  .btn[aria-pressed="true"] .heart path { fill: var(--pink); stroke: var(--pink); }
+  .play-btn { display: inline-flex; align-items: center; gap: 12px; background: var(--lime); color: var(--bg); border: 0; border-radius: 12px; padding: 14px 30px 14px 24px; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; box-shadow: 0 0 0 0 rgba(198,255,61,.5); transition: box-shadow .2s ease, transform .08s ease; }
+  .play-btn:hover { box-shadow: 0 0 28px rgba(198,255,61,.55); }
+  .play-btn:active { transform: translateY(2px); }
+  .play-btn .tri { width: 0; height: 0; border-left: 15px solid var(--bg); border-top: 10px solid transparent; border-bottom: 10px solid transparent; }
+
+  /* ---------- game page ---------- */
+  .detail { display: flex; flex-direction: column; gap: clamp(28px, 4vw, 44px); padding-top: clamp(20px, 3vw, 32px); }
+  .back-row { display: flex; }
+  .d-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(20px, 4vw, 40px); align-items: center; }
+  .d-cover { width: clamp(130px, 18vw, 200px); aspect-ratio: 1; border-radius: 22%; overflow: hidden; border: 1px solid var(--edge); box-shadow: 0 0 40px rgba(198,255,61,.15); background: var(--panel); }
+  .d-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .d-info { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .d-info h1 { font-size: clamp(36px, 5.5vw, 64px); line-height: .95; text-wrap: balance; }
+  .d-info .kind { font-family: var(--display); font-weight: 600; font-size: 15px; letter-spacing: .14em; text-transform: uppercase; color: var(--lime); margin: 0; }
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag { font-size: 13px; font-weight: 700; background: var(--panel); border: 1px solid var(--edge); border-radius: 999px; padding: 4px 12px; color: #cfd5e4; }
+  .d-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; padding-top: 6px; }
+  @media (max-width: 600px) { .d-head { grid-template-columns: 1fr; } .play-btn { width: 100%; justify-content: center; } }
+  .section-label { font-size: clamp(20px, 2.4vw, 26px); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  .section-label::before { content: ''; width: 4px; height: 1em; background: var(--pink); border-radius: 2px; box-shadow: 0 0 10px rgba(255,46,136,.6); }
+  .media { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; }
+  .media-main, .shot { position: relative; border: 1px solid var(--edge); border-radius: var(--r); overflow: hidden; background: #000; }
+  .media-main { aspect-ratio: 16 / 9; }
+  .media-main video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .shots { display: grid; grid-template-rows: 1fr 1fr; gap: 16px; min-height: 0; }
+  .shot { padding: 0; cursor: zoom-in; min-height: 0; }
+  .shot img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s ease, opacity .2s ease; opacity: .9; }
+  .shot:hover img { transform: scale(1.05); opacity: 1; }
+  @media (max-width: 760px) { .media { grid-template-columns: 1fr; } .shots { grid-template-rows: none; grid-template-columns: 1fr 1fr; } .shot { aspect-ratio: 16 / 9; } }
+  .info { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 760px) { .info { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--edge); border-radius: var(--r); padding: 22px 24px; }
+  .card h3 { font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 12px; color: var(--muted); }
+  .card p { margin: 0; line-height: 1.6; color: #cfd5e4; max-width: 62ch; font-size: 17px; }
+  .card ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; counter-reset: s; }
+  .card li { display: flex; gap: 12px; line-height: 1.45; font-weight: 500; color: #cfd5e4; counter-increment: s; }
+  .card li::before { content: counter(s, decimal-leading-zero); font-family: var(--display); font-weight: 700; color: var(--lime); flex: 0 0 26px; }
+
+  /* ---------- playing ---------- */
+  .playing { display: flex; flex-direction: column; gap: 16px; padding-top: 20px; }
+  .play-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .play-bar h1 { font-size: clamp(22px, 3vw, 30px); flex: 1 1 auto; min-width: 0; }
+  .stage { position: relative; width: 100%; background: #000; border: 1px solid var(--edge); border-radius: var(--r); overflow: hidden; box-shadow: 0 0 60px rgba(41,224,255,.08); }
+  .stage iframe { display: block; width: 100%; height: 100%; border: 0; background: #000; }
+  .stage:fullscreen { border: 0; border-radius: 0; }
+  .stage .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--lime); pointer-events: none; font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: .3em; transition: opacity .3s ease; }
+  .stage .loading span { animation: blink 1s ease-in-out infinite; }
+  .stage.ready .loading { opacity: 0; }
+
+  .lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(5,6,10,.9); display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
+  .lightbox img { max-width: min(1100px, 100%); max-height: 88vh; border: 1px solid var(--edge); border-radius: 14px; }
+  footer { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; color: var(--muted); padding-top: 64px; margin-top: 64px; border-top: 1px solid var(--edge); }
+  footer b { font-family: var(--display); color: var(--text); letter-spacing: .08em; }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <button class="logo" id="logo" aria-label="Pulsebox home"><span class="mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v4h-4v2h4v4H7v-4h2v-2H7z" fill="#0a0c12"/></svg></span><span class="word">Pulse<b>box</b></span></button>
+    <span class="nav-count" id="navCount"></span>
+    <label class="search" for="q">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke-width="2.5"/><path d="M15.5 15.5 21 21" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="Search activities, like racing or puzzles" autocomplete="off">
+    </label>
+  </header>
+
+  <!-- HOME: categories of interactive activities -->
+  <main id="home" class="home">
+    <section class="hero" id="hero"></section>
+    <nav class="chips" id="chips" aria-label="Jump to a category"></nav>
+    <section class="learning-intro" aria-labelledby="pulsebox-learning-heading">
+      <h2 id="pulsebox-learning-heading">Interactive Activities for Skills, Strategy and Discovery</h2>
+      <p><strong>Pulsebox</strong> is an interactive browser-based activity hub where visitors can explore a variety of challenges, practice useful skills, and discover new ways to think. Depending on the activity, users may work on <strong>problem-solving, logical reasoning, strategic planning, pattern recognition, spatial awareness, timing, coordination, attention, memory, creativity, and decision-making</strong>. Browse different categories, try an unfamiliar challenge, learn its rules, test an approach, and adjust your strategy as you gain experience. Puzzle-style activities can encourage careful observation and step-by-step thinking; racing and timing challenges can build familiarity with pace, precision, and quick decisions; building and strategy activities can invite planning, resource management, experimentation, and adapting to changing situations. Pulsebox offers an easy-to-access, browser-based way to explore interactive entertainment, mental challenges, skill practice, and hands-on discovery at your own pace. Activities vary in their goals and difficulty, and they are presented for interactive enjoyment rather than as a formal curriculum or a substitute for classroom instruction. Choose an activity that interests you, focus on its specific challenge, and enjoy exploring different approaches, learning from attempts, and improving through practice.</p>
+    </section>
+    <div id="shelves" style="display:flex;flex-direction:column;gap:clamp(48px,6vw,72px)"></div>
+  </main>
+
+  <!-- ACTIVITY PAGE: cover, video, pictures, and launch controls -->
+  <main id="detail" class="detail" hidden>
+    <div class="back-row"><button class="btn" id="dBack">‹ All games</button></div>
+    <section class="d-head">
+      <div class="d-cover"><img id="dCover" alt=""></div>
+      <div class="d-info">
+        <h1 class="outline-title" id="dTitle"></h1>
+        <p class="kind" id="dKind"></p>
+        <div class="tags" id="dTags"></div>
+        <div class="d-actions">
+          <button class="play-btn" id="dPlay"><span class="tri"></span>Play</button>
+          <button class="btn" id="dFav" aria-pressed="false"><svg class="heart" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.3C1.6 7.8 3.9 4.5 7.3 4.5c2 0 3.6 1.1 4.7 2.7 1.1-1.6 2.7-2.7 4.7-2.7 3.4 0 5.7 3.3 4.5 6.7-1.7 4.7-9.2 9.3-9.2 9.3Z"/></svg><span>Favorite</span></button>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h2 class="outline-title section-label">Gameplay</h2>
+      <div class="media">
+        <div class="media-main"><video id="dVideo" muted loop playsinline autoplay preload="metadata"></video></div>
+        <div class="shots" id="dShots"></div>
+      </div>
+    </section>
+    <section class="info">
+      <div class="card"><h3>About this game</h3><p id="dAbout"></p></div>
+      <div class="card"><h3>How to play</h3><ul id="dHow"></ul></div>
+    </section>
+  </main>
+
+  <!-- PLAYING -->
+  <main id="playing" class="playing" hidden>
+    <div class="play-bar">
+      <button class="btn" id="pBack">‹ Back</button>
+      <h1 class="outline-title" id="pTitle"></h1>
+      <button class="btn dark" id="pFull">Full screen</button>
+    </div>
+    <div class="stage" id="stage"><div class="loading"><span>Loading…</span></div></div>
+  </main>
+
+  <footer><span><b>PULSEBOX</b> · Interactive activities for timing, strategy, and problem-solving.</span><span>Works on phones, tablets, and computers.</span></footer>
+</div>
+
+<div class="lightbox" id="lightbox" hidden><img id="lbImg" alt=""></div>
+
+<script>
+/* ============================================================
+   THE GAME LIST
+   To add a game: put its HTML in games/, and its cover (square),
+   trailer (.mp4) and two screenshots in media/. Then add one entry.
+   category: the shelf it sits on · badge: 'HOT', 'NEW' or ''
+   aspect: the game's width / height when it's being played
+   ============================================================ */
+const GAMES = [
+  {
+    id: "chaos-climb",
+    title: "Chaos Climb",
+    category: "Action",
+    kind: "Action \u00b7 Precision Platformer",
+    tags: ["Platformer", "Tricky traps", "Speedrun", "Robot"],
+    badge: 'NEW',
+    file: 'games/chaos-climb.html',
+    cover: 'media/chaos-climb-cover.jpg',
+    video: 'media/chaos-climb-trailer.mp4',
+    shots: ['media/chaos-climb-shot1.jpg', 'media/chaos-climb-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Guide a tiny robot up through a glitchy lab full of sneaky traps, where every fall teaches you something.",
+    blurb: "Nib the little survey robot wakes up at the bottom of a lab that has gone haywire. Climb through 24 rooms in four wild parts of the lab: crumbly floors and pop-up spikes, crushers and saws, blinking floors and warp pads, then lasers, dart vents and rising goo. Traps can surprise you, but every one has a warning sign if you look closely, and you are back on your feet in a blink after each fall. Grab the hidden data chips to open four secret vaults, beat the target times for stars, and unlock new paint jobs for Nib.",
+    how: ["Move with A/D or the arrow keys. Jump with Space, W or Up. Hold jump to go higher.", "Reach the green EXIT door. Touch flags to save your spot. Press R to go back to the last flag.", "Every trap has a clue: cracks, little holes, dotted wires, flickers, shaking blocks and red eyes.", "On phones, use the arrow buttons and the pink jump button at the bottom of the screen."]
+  },
+  {
+    id: "turbo-trail",
+    title: "Turbo Trail",
+    category: "Racing",
+    kind: "Racing \u00b7 Physics Driving",
+    tags: ["Physics", "Stunts", "Time Trial", "Unlocks"],
+    badge: 'NEW',
+    file: 'games/turbo-trail.html',
+    cover: 'media/turbo-trail-cover.jpg',
+    video: 'media/turbo-trail-trailer.mp4',
+    shots: ['media/turbo-trail-shot1.jpg', 'media/turbo-trail-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Drive bouncy toy cars over ramps, wobbly bridges and moving platforms, and reach the finish without landing on your head!",
+    blurb: "Turbo Trail is a side-view physics driving game with a tiny toy-world look. Every wheel has its own spring, so your car bounces, squashes and tips over bumps just like a real little machine. Race across 12 tracks in 6 places: a test track, snowy mountains, an old building site, floating sky factories, a red canyon and a neon night stadium. Hit ramps, smash crates and walls, ride lifts and ferries, cross saggy rope bridges before the planks fall, and tilt in the air to land on your wheels. Beat the clock for up to three stars per track, unlock a heavy truck, a six-wheel rover and a speedy trike, and spend the bolts you find on new paint, helmets and wheels. Checkpoints save you on long tracks, and one tap puts you back if you get stuck.",
+    how: ["Hold GAS (W or Up) to drive and BRAKE (S or Down) to slow down or back up.", "Use TILT (A/D or Left/Right) to spin in the air and land flat on your wheels.", "Don't let your helmet touch the ground and don't fall off. R restarts, C goes back to the last checkpoint.", "Finish fast for stars, grab bolts and flip for bonus bolts, then visit the Garage."]
+  },
+  {
+    id: "arena-rush",
+    title: "Arena Rush",
+    category: "Action",
+    kind: "Action \u00b7 Kart Battle",
+    tags: ["Hover-buggies", "Battle arena", "CPU rivals", "2 players"],
+    badge: 'NEW',
+    file: 'games/arena-rush.html',
+    cover: 'media/arena-rush-cover.jpg',
+    video: 'media/arena-rush-trailer.mp4',
+    shots: ['media/arena-rush-shot1.jpg', 'media/arena-rush-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Drift neon hover-buggies around wild sci-fi arenas, grab energy cells and blast CPU rivals with gadgets before the clock runs out.",
+    blurb: "Arena Rush is a top-down battle arena for hover-buggies. Grab glowing energy cells for points, but watch out: every hit makes you drop some, and rivals can scoop them up. Drift into turns for a speed boost, grab ? pods for gadgets like the Ricochet Orb, Bubble Shield and Shock Ring, and dodge each arena's hazards: molten metal and stamping presses in the Foundry, sticky vines and spore pods in the jungle outpost, floaty low gravity and airlock vents on the space station, and lightning strikes in the storm plant. Race through four career cups against CPU bots that get smarter every cup, unlock new buggies, paints, trails and decals, or battle a friend on one keyboard.",
+    how: ["Drive with WASD or the arrow keys. On a phone, drag on the left side.", "Grab energy cells for points. Get hit and you drop some.", "Space uses your gadget, Shift boosts. Hold a hard turn to drift for a mini boost.", "Most points when the timer runs out wins the round."]
+  },
+  {
+    id: "nightwatch",
+    title: "Nightwatch",
+    category: "Horror",
+    kind: "Horror \u00b7 First person",
+    tags: ["Horror", "Security cameras", "Mystery", "Multiple endings"],
+    badge: 'NEW',
+    file: 'games/nightwatch.html',
+    cover: 'media/nightwatch-cover.jpg',
+    video: 'media/nightwatch-trailer.mp4',
+    shots: ['media/nightwatch-shot1.jpg', 'media/nightwatch-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Work the night shift in an empty office building, watch the security cameras, and survive until 6 AM while the building slowly stops making sense.",
+    blurb: "It is your first night as the security guard at the Castellan Building. Sit at the desk, flip through twelve security cameras, and walk your rounds with a flashlight. At first nothing happens. Then a chair moves on camera. A phone rings on an empty floor. The elevator stops at a third floor the building doesn't have, and a tape shows you walking somewhere you have never been. Hour by hour you restore the power, fix cameras, crack codes and dig through old files to find out what the NIGHTWATCH system really records. After 4 AM something tall with a black bar over its face starts looking for you, so you hide in lockers and hold your breath. Every night shuffles the clues, codes and scares, and there are five endings, one of them secret.",
+    how: ["WASD to move, mouse to look, E to use things, F for the flashlight, Shift to run, C to crouch.", "Sit at the security desk to watch the cameras. Keys 1-9 and 0 switch feeds.", "Follow the objectives in the top-left corner. Read notes; they hold codes and clues.", "When it hunts you, break its line of sight and hide. Hold Space to hold your breath."]
+  },
+  {
+    id: "tiny-kingdom",
+    title: "Tiny Kingdom",
+    category: "Arcade",
+    kind: "Arcade · Farm & build",
+    tags: ["Farm", "Build", "Cozy", "Crafting"],
+    badge: 'NEW',
+    file: 'games/tiny-kingdom.html',
+    cover: 'media/tiny-kingdom-cover.jpg',
+    video: 'media/tiny-kingdom-trailer.mp4',
+    shots: ['media/tiny-kingdom-shot1.jpg', 'media/tiny-kingdom-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Turn a little patch of dirt into a whole kingdom of fields, animals, busy shops, a fishing port and a royal castle.",
+    blurb: "Start with six fields of wheat and a friendly order board. Plant and harvest crops, raise chickens, cows, sheep and pigs, and build 18 shops like the Bakery, Dairy, Windmill and Sewing Shop to turn crops into more than 170 kinds of goods. Fill orders for coins, level up to unlock new crops and buildings, and meet villagers who move in with little stories and requests. Clear the clouds to open Whisper Forest, Pebble Mines, Port Town and finally Sunny Castle, where the King and Princess have royal requests. Your farm keeps growing while you are away, with day and night, rain and snow, seasons, festivals, decorations, trophies and a daily gift.",
+    how: ["Tap a field to plant. Tap or drag over ripe crops to harvest.", "Deliver orders on the Order Board to earn coins and XP.", "Build shops in the Shop, then tap them to make goods from your crops.", "Drag to look around, pinch or scroll to zoom, hold anything to move it."]
+  },
+  {
+    id: "stick-brawl",
+    title: "Stick Brawl Arena",
+    category: "Action",
+    kind: "Action · Fighting",
+    tags: ["Fighting", "Stickman", "Weapons", "Bosses"],
+    badge: 'NEW',
+    file: 'games/stick-brawl.html',
+    cover: 'media/stick-brawl-cover.jpg',
+    video: 'media/stick-brawl-trailer.mp4',
+    shots: ['media/stick-brawl-shot1.jpg', 'media/stick-brawl-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Punch, kick and bonk your way through 50 floppy stickman fights with 40 silly weapons and five giant bosses.",
+    blurb: "Stick Brawl Arena is a cartoony stickman fighting game where every knockout ends in a funny ragdoll flop. Chain punches and kicks into combos, grab foes and toss them across the arena, and pick up 40 weapons, from swords and laser swords to rubber chickens, frying pans and pool noodles. Fight through 50 story battles in five arenas full of falling crates, pop-up spikes, zappy floors and lava, and take on a giant, a ninja, a robot, a wizard and the champion. Earn coins and XP to grow your skill tree, dress up with hats, capes and colors, unlock goofy finishing moves like the Anvil Drop and Party Cannon, then try Survival waves, Boss Rush, the Daily Fight, or battle a friend on one keyboard.",
+    how: ["Move with the arrow keys or WASD, and jump with Up or Space. On a phone, use the stick on the left.", "J punches and K kicks (or Z and X). Mix them for combos. Hold Down to block.", "L is your special move, and I grabs and throws. Walk over weapons to pick them up.", "When a foe is almost out of health, get close and press Special for a finishing move!"]
+  },
+  {
+    id: "merge-monsters",
+    title: "Merge Monsters",
+    category: "Puzzle",
+    kind: "Puzzle · Merge & battle",
+    tags: ["Merge", "Monsters", "Battle", "Collect"],
+    badge: 'NEW',
+    file: 'games/merge-monsters.html',
+    cover: 'media/merge-monsters-cover.jpg',
+    video: 'media/merge-monsters-trailer.mp4',
+    shots: ['media/merge-monsters-shot1.jpg', 'media/merge-monsters-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Hatch cute monsters, drag twins together to evolve them, then send your best team into battle.",
+    blurb: "Your board is full of eggs and baby monsters. Drag two of the same monster together and they merge into a bigger, stronger one, all the way up to fully grown legends with crowns and stars. There are 50 original monsters in 10 families, each with its own element and special move. Fire beats Leaf, Water beats Fire, Spark beats Water, so pick your team wisely! Fight through 120 stages across five worlds with a boss every 10 stages, climb the 40-floor Boss Tower, and beat a new Daily Battle every day. Your monsters earn coins while you play, so buy eggs, train your team, grow your board, finish quests, collect trophies and fill every page of the Monster Book.",
+    how: ["Tap Buy Egg to hatch a baby monster. Tap free eggs on your board to hatch them.", "Drag a monster onto the same monster to merge and evolve it.", "Drag your best monsters into the 5 team slots (or tap Best team), then tap Battle!", "Use the type wheel: bring monsters that beat the enemy's element. Keys: arrows + Space, E = egg, B = battle."]
+  },
+  {
+    id: "reel-legends",
+    title: "Reel Legends",
+    category: "Arcade",
+    kind: "Arcade · Fishing Adventure",
+    tags: ["Fishing", "Collecting", "Relaxing", "Boss fights"],
+    badge: 'NEW',
+    file: 'games/reel-legends.html',
+    cover: 'media/reel-legends-cover.jpg',
+    video: 'media/reel-legends-trailer.mp4',
+    shots: ['media/reel-legends-shot1.jpg', 'media/reel-legends-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Cast, hook and reel in 116 kinds of fish across eight wild fishing spots, from a sunny pond to the deepest trench.",
+    blurb: "Grab your rod and your bucket hat! Hold to swing, let go to cast, and aim for the bubbly spots where the best fish hide. When the bobber dips, tap fast, then win the tug of war: keep your pull inside the moving green zone, but don't pull too hard or the line snaps. Every spot has its own look and its own fish: Sunny Pond, River Rapids, Ocean Pier, Coral Reef, Frozen Lake (fish through the ice!), Haunted Swamp, Volcano Lagoon and the dark Abyss Trench. Day turns to night and rain rolls in, and each one brings rarer fish. Sell your catch, buy better rods, reels, lines, bait and boats, and fill your Fish Book from Common all the way to Legendary. Find six kinds of fish in a spot to wake its giant boss, help the townsfolk with quests, beat the daily challenge, and build your own aquarium where your best fish swim. And somewhere out there, four secret Mythic fish are waiting.",
+    how: ["Hold (mouse, finger or Space) and let go to cast. Aim for the bubbles.", "When the bobber dips and you see \"!\", tap fast to hook the fish.", "Hold to pull, let go to ease off. Keep the white bar in the green box. Let go when a fish jumps!", "Sell fish, upgrade your gear and bait, and open new spots to fill your Fish Book."]
+  },
+  {
+    id: "dig-deep",
+    title: "Dig Deep",
+    category: "Arcade",
+    kind: "Arcade · Mining adventure",
+    tags: ["Mining", "Upgrades", "Explore", "Collect"],
+    badge: 'NEW',
+    file: 'games/dig-deep.html',
+    cover: 'media/dig-deep-cover.jpg',
+    video: 'media/dig-deep-trailer.mp4',
+    shots: ['media/dig-deep-shot1.jpg', 'media/dig-deep-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Drive a drill pod down through ten wild underground layers, sell your ore and upgrade until you reach the planet's glowing core.",
+    blurb: "Planet Gravelle is getting cold, and only you can wake its sleeping heart. Drill down through topsoil, red clay, crystal caves, ice, fossil beds, glowing mushroom caverns, lava rock and a lost ancient city, all the way to the core. Grab coal, gold, rubies and diamonds, then fly back to base before your fuel runs out to sell your haul and upgrade your drill, hull, fuel tank, cargo hold, thrusters and radar. Watch out for gas pockets, falling boulders, lava, crushing pressure and hungry cave worms. Dig up 60 fossils and relics for your museum, find secret treasure rooms, beat daily dig challenges and missions, and once you save Gravelle, fly to a tougher new planet.",
+    how: ["Arrow keys or WASD: left, right and down drill. Hold Up to fly with your thrusters. On a phone, use the arrow pad.", "Watch your fuel and cargo. Fly back up to the base pad to sell ore, refuel and repair.", "Buy a better drill for harder rock and a better hull to go deeper without getting crushed.", "Keys 1 to 4 use Dynamite, Fuel cans, Repair kits and Teleporters."]
+  },
+  {
+    id: "cluck-launch",
+    title: "Cluck Launch",
+    category: "Arcade",
+    kind: "Arcade · Launch & Upgrade",
+    tags: ["Launch", "Upgrade", "Flying", "Space"],
+    badge: 'NEW',
+    file: 'games/cluck-launch.html',
+    cover: 'media/cluck-launch-cover.jpg',
+    video: 'media/cluck-launch-trailer.mp4',
+    shots: ['media/cluck-launch-shot1.jpg', 'media/cluck-launch-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Slide a brave chicken down a snowy mountain ramp, glide, blast rockets and upgrade your gear until you reach space.",
+    blurb: "Nugget the chicken has one dream: space. Every day she slides down a steep snowy ramp, jumps off the end and flies as far and as high as her gear allows. Tilt to glide, fire your rocket while the fuel lasts, grab coins, pop balloons and bounce off smiling pink clouds. Climb from Cloud Land to the Sunset Sky, the Stratosphere and the Edge of Space while dodging birds, planes and UFOs. Spend your coins on taller ramps, faster sleds, bigger gliders, stronger rockets, fuel tanks and handy gadgets, and dress Nugget up with hats and skins. Finish missions, break records and make it to space, then chase hard challenges and the Moon.",
+    how: ["Press Space or tap to slide down the ramp.", "Arrow keys (or hold the left / right side of the screen) tip your nose up or down.", "Hold Space or the ROCKET button to blast off while you have fuel.", "Spend coins in the shop and fly higher every day."]
+  },
+  {
+    id: "getaway-heat",
+    title: "Getaway Heat",
+    category: "Racing",
+    kind: "Racing · Police chase",
+    tags: ["Cars", "Police", "Endless", "Upgrades"],
+    badge: 'NEW',
+    file: 'games/getaway-heat.html',
+    cover: 'media/getaway-heat-cover.jpg',
+    video: 'media/getaway-heat-trailer.mp4',
+    shots: ['media/getaway-heat-shot1.jpg', 'media/getaway-heat-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Floor it through an endless city and make the cops crash before they box you in.",
+    blurb: "Your car never stops, and neither do the police. Weave through an endless city of tall 3D buildings, busy traffic and tight alleys while patrol cars, SWAT trucks, helicopters and even tanks join the chase. Trick cops into walls and into each other for huge combos, grab coins and power-ups, and spend your loot on 15 cars, upgrades and paint. Unlock five maps from sunny Palm Beach to icy Frozen Pines and Neon Night, finish missions to rank up, and spin the wheel every day.",
+    how: ["Steer with the left and right arrows (or A and D). On a phone, hold the left or right side of the screen.", "Hold Up or Space (or the NITRO button) to boost. Near misses and wrecks refill nitro.", "Don't slow down next to a cop or you get BUSTED. Crash them into walls to wreck them.", "Spend coins in the Garage on new cars and upgrades, and unlock new maps."]
+  },
+  {
+    id: "neon-drop",
+    title: "Neon Drop",
+    category: "Arcade",
+    kind: "Arcade · Runner",
+    tags: ["3D", "Endless", "Neon", "Reflex"],
+    badge: 'NEW',
+    featured: true,
+    file: 'games/neon-drop.html',
+    cover: 'media/neon-drop-cover.jpg',
+    video: 'media/neon-drop-trailer.mp4',
+    shots: ['media/neon-drop-shot1.jpg', 'media/neon-drop-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Steer a glowing ball down an endless neon slope that keeps getting faster. Don't fall, don't touch red!",
+    blurb: "Neon Drop is a fast 3D downhill runner. Your ball rolls down a glowing track that tilts, twists, splits into lanes and flies over gaps on yellow ramps. Dodge red blocks, sliding walls and spinning bars, squeeze through tunnels and narrow bridges, and slip past danger by a hair for CLOSE! bonuses that pump up your combo. The colors shift every 500 m and every 1000 m you reach a new zone. Grab pink gems to unlock 18 balls, 12 trails and 6 world themes, finish three new missions every day, and spend gems on one revive per run when you really want to beat your best.",
+    how: ["Steer with the arrow keys or A and D. On a phone, hold the left or right side of the screen.", "Stay on the track and never touch anything red. Yellow ramps jump you over gaps.", "Pass red things closely for CLOSE! bonuses and a bigger combo.", "Collect gems to buy balls, trails and worlds, and finish daily missions."]
+  },
+  {
+    id: "pulse-dash",
+    title: "Pulse Dash",
+    category: "Arcade",
+    kind: "Arcade · Rhythm Runner",
+    tags: ["Rhythm", "One button", "Neon", "Platformer"],
+    badge: 'NEW',
+    file: 'games/pulse-dash.html',
+    cover: 'media/pulse-dash-cover.jpg',
+    video: 'media/pulse-dash-trailer.mp4',
+    shots: ['media/pulse-dash-shot1.jpg', 'media/pulse-dash-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Jump, fly and zigzag to the beat through eight neon songs where every spike lands on the music.",
+    blurb: "Your little neon cube runs on its own. All you do is jump, and every spike, orb and portal is timed to the song. Start with First Pulse, an easy warm-up for anyone, then work up to the wild Voltage Storm. Portals turn you into a ship that flies while you hold, or a wave that zigzags up and down. Gravity flips, pads and orbs mix things up. Each level has its own song, colors and speed, plus three secret coins hidden off the main path. Stuck? Practice mode drops flags so you can learn one tricky part at a time. Earn notes on every try and spend them in the Garage on 26 icons, 18 colors, trails and crash effects, and chase 20 awards.",
+    how: ["Tap, click or press Space to jump. Hold to keep jumping.", "Hold on yellow, red and blue orbs to bounce. Pink pads bounce you for free.", "Ship: hold to fly up. Wave: hold to go up, let go to go down.", "Stuck? Use Practice mode, then find all 3 secret coins in each song."]
+  },
+  {
+    id: "pizza-empire",
+    title: "Pizza Empire",
+    category: "Arcade",
+    kind: "Arcade · Idle tycoon",
+    tags: ["Idle", "Clicker", "Tycoon", "Pizza"],
+    badge: 'NEW',
+    file: 'games/pizza-empire.html',
+    cover: 'media/pizza-empire-cover.jpg',
+    video: 'media/pizza-empire-trailer.mp4',
+    shots: ['media/pizza-empire-shot1.jpg', 'media/pizza-empire-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Tap a giant pizza, hire helpers and grow a tiny slice stand into a pizza empire that spans the whole multiverse.",
+    blurb: "It starts with one kid selling slices at a little stand. Tap the giant pizza to earn coins, then build Grandmas, brick ovens, delivery scooters, food trucks, cheese mines, rockets, a moon base and finally a portal to the pizza multiverse. Watch your town grow on screen as you buy. Grab golden toppings for pizza parties and tap frenzies, buy upgrades that double everything, collect 80+ trophies and a daily gift, and open new franchises to earn stars that make you richer forever. Your empire even keeps earning while you are away.",
+    how: ["Tap the big pizza (or press Space) to earn coins.", "Buy buildings in the Build tab. They earn coins for you every second.", "Grab golden toppings when they float by for big bonuses.", "Open a new franchise to earn stars that boost everything forever."]
+  },
+  {
+    id: 'endless-halls',
+    title: 'The Endless Halls',
+    category: 'Horror',
+    kind: 'Horror · First person',
+    tags: ['Horror', 'Jump scares', '5 floors', 'Endless'],
+    badge: 'HOT',
+    file: 'games/endless-halls.html',
+    cover: 'media/eh-cover.jpg',
+    video: 'media/eh-trailer.mp4',
+    shots: ['media/eh-shot1.jpg', 'media/eh-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: 'Lost in yellow halls that never end. Find the fuses. Don\'t let it see you.',
+    blurb: 'You wake up on damp carpet under buzzing lights, in halls that go on forever. Find three fuses on each floor to power the EXIT door, and escape before something finds you. Every floor is a new maze, and each has its own monster with its own rules: the faceless Hollow Man, a blind Crawler that hunts by sound, the Drowned that appears behind you, a Watcher that only moves when you look away, and a Grin that hides from your flashlight. Manage your battery, your breath and your mind, read the notes left by people who were lost before you, and try to reach daylight. Then see how deep you can go in Endless mode. Best with headphones.',
+    how: [
+      'Move with WASD, look with the mouse (click to lock it). On a phone, left thumb moves and right thumb looks.',
+      'Find 3 glowing fuses, then bring them to the EXIT door. The beeping gets faster as you get closer.',
+      'F turns your flashlight on and off. Hold Shift to run, but running is loud.',
+      'Read the notes you find. They tell you how to survive the monster on that floor.'
+    ]
+  },
+  {
+    id: 'tower-siege',
+    title: 'Tower Siege',
+    category: 'Action',
+    kind: 'Strategy · Tower defense',
+    tags: ['Tower defense', 'Heroes', '25 levels', 'Bosses'],
+    badge: 'HOT',
+    file: 'games/tower-siege.html',
+    cover: 'media/ts-cover.jpg',
+    video: 'media/ts-trailer.mp4',
+    shots: ['media/ts-shot1.jpg', 'media/ts-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: 'Build towers, lead your hero and stop the invasion across 5 kingdoms.',
+    blurb: 'Goblins, orcs, dark knights and giant bosses are marching on your castle. Build towers along the road to stop them: archers, cannons, mages, barracks, frost, tesla, flame and plague towers, plus gold mines. Upgrade each tower three times, then turn it into one of two elite towers like the Crossbow Fort, Big Bertha or the Dragon\'s Maw. Lead a hero into battle, cast meteors and frost spells, and beat the boss at the end of every world. Fight across 25 levels in 5 worlds, each with Heroic and Iron challenges, plus an Endless mode. Spend crowns in the Armory on 9 towers, 5 heroes, spells, kingdom upgrades and banners.',
+    how: [
+      'Tap a grass spot by the road, pick a tower, then tap it again to build.',
+      'Tap a tower to upgrade or sell it. At level 3, pick one of two elite towers.',
+      'Tap your hero, then tap the map to move. Hit the ability button for a big attack.',
+      'Tap the skull to call the next wave early for bonus gold. Don\'t let enemies reach your castle!'
+    ]
+  },
+  {
+    id: 'neon-swarm',
+    title: 'Neon Swarm',
+    category: 'Action',
+    kind: 'Action · Survivor',
+    tags: ['Survivor', 'Bosses', '30 levels', 'Upgrades'],
+    badge: 'HOT',
+    file: 'games/neon-swarm.html',
+    cover: 'media/ns-cover.jpg',
+    video: 'media/ns-trailer.mp4',
+    shots: ['media/ns-shot1.jpg', 'media/ns-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: 'One tiny robot against thousands of glowing enemies. Survive, level up, evolve.',
+    blurb: 'Pilot a tiny robot through 6 neon worlds and 30 levels while thousands of glowing enemies close in. You only move — your weapons fire on their own. Every level-up you pick a new weapon or upgrade, and if you max a weapon and pair it with the right upgrade, it evolves into something way stronger. Beat the boss at the end of each world to unlock the next. Spend chips in the Workshop on 14 permanent upgrades, 9 robots, 12 weapons, paint jobs, effects and boosters, then take on Endless mode and 26 challenges.',
+    how: [
+      'Move with WASD / arrow keys, or drag anywhere on a phone. Weapons fire automatically.',
+      'Grab the glowing gems to level up, then pick one of three upgrades.',
+      'Max a weapon and own its matching upgrade, then open a chest to evolve it.',
+      'Survive the timer, beat the boss, and spend your chips in the Workshop.'
+    ]
+  },
+  {
+    id: 'paper-plane-glide',
+    title: 'Paper Plane Glide',
+    category: 'Arcade',
+    kind: 'Arcade · Upgrade',
+    tags: ['Flying', 'Upgrades', 'Collect coins', 'Relaxing'],
+    badge: 'NEW',
+    file: 'games/paper-plane-glide.html',
+    cover: 'media/ppg-cover.jpg',
+    video: 'media/ppg-trailer.mp4',
+    shots: ['media/ppg-shot1.jpg', 'media/ppg-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: 'Throw a paper plane from your bedroom and fly it all the way to the lighthouse.',
+    blurb: 'Throw a paper plane off your bedroom desk and see how far it can go. Glide down the hallway, over the kitchen counters and out the patio door, then ride warm air over the backyard, the park, downtown and the beach, all the way to the lighthouse. Every throw earns coins to spend in the Hangar: 10 upgrades with 10 levels each, 8 planes, 6 launchers from a rubber band to a bottle rocket, launch spots farther along the way, 12 paper patterns, 10 trails, stickers and power-ups.',
+    how: [
+      'Tap once to pick your angle, then tap when the power bar is in the green for a perfect throw.',
+      'Hold anywhere (or Space) to tip your nose up. Let go to glide down and pick up speed.',
+      'Ride heater vents, fans and chimneys. Bounce on trampolines. Fly through hoops for bonus coins.',
+      'Tap FLAP for a quick lift and hold ROCKET for a boost once you buy them.',
+      'Spend your coins in the Hangar, then throw again to fly even farther.'
+    ]
+  },
+  {
+    id: 'shopping-cart-derby',
+    title: 'Shopping Cart Derby',
+    category: 'Racing',
+    kind: 'Racing · Upgrade',
+    tags: ['Racing', 'Upgrades', 'Boss race', 'Supermarket'],
+    badge: 'HOT',
+    file: 'games/shopping-cart-derby.html',
+    cover: 'media/scd-cover.jpg',
+    video: 'media/scd-trailer.mp4',
+    shots: ['media/scd-shot1.jpg', 'media/scd-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: 'Race shopping carts through the aisles of a giant supermarket.',
+    blurb: 'Race shopping carts through Cartopia Superstore. Weave around can towers, wet floor signs and runaway watermelons, grab soda cans to fill your boost, and ride right behind other racers to go even faster. Race the cereal aisle, frozen foods, the produce section and the parking lot, then take on Mr. Grumbles, the store manager, on his scooter. Win coins to buy better wheels and new carts in the Cart Garage.',
+    how: [
+      'Steer with the arrow keys or A and D. On a phone, hold the arrow buttons.',
+      'Press Space or the red button to boost. Soda cans fill your boost.',
+      'Press boost right as the light turns green for a rocket start.',
+      'Ride right behind another cart to fill your boost faster.',
+      'Finish in the top 3 to open the next part of the store.'
+    ]
+  },
+  {
+    id: 'cardboard-car-wars',
+    title: 'Cardboard Car Wars',
+    category: 'Action',
+    kind: 'Action · Upgrade',
+    tags: ['Cars', 'Upgrades', 'Bosses', 'Waves'],
+    badge: '',
+    file: 'games/cardboard-car-wars.html',
+    cover: 'media/ccw-cover.jpg',
+    video: 'media/ccw-trailer.mp4',
+    shots: ['media/ccw-shot1.jpg', 'media/ccw-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: 'Build a battle car out of a cardboard box and stop the Duct Tape Gang.',
+    blurb: 'Build a battle car out of cardboard and hold off waves of duct tape bad guys, veggie invaders and army men. Upgrade your armor from cardboard all the way to metal and your gun from a spit wad straw to a mini gun, pick power-ups between waves, and take down a giant boss at wave 10.',
+    how: [
+      'Your gun fires on its own. Tap or click to aim it yourself.',
+      'Tap the glowing weak spots for big critical hits.',
+      'Drive with the arrow buttons or the A and D keys to dodge boss attacks.',
+      'Swipe across your roof to knock off bad guys who climb on.',
+      'After each run, spend your coins on upgrades in your Box Fort.'
+    ]
+  },
+  {
+    id: 'raceword',
+    title: 'Raceword',
+    category: 'Puzzle',
+    kind: 'Puzzle · Words',
+    tags: ['Crossword', 'Daily race', 'Speed'],
+    badge: 'NEW',
+    file: 'games/raceword.html',
+    cover: 'media/rw-cover.jpg',
+    video: 'media/rw-trailer.mp4',
+    shots: ['media/rw-shot1.jpg', 'media/rw-shot2.jpg'],
+    aspect: 4 / 3,
+    pitch: 'A speed crossword where the colors tell you how close you are.',
+    blurb: 'A speed crossword. Fill in the grid as fast as you can while the colors tell you how close each guess is. A new daily race pops up at a surprise time, and practice mode has four levels from Easy to Insane.',
+    how: [
+      'Tap a square, read the clue, and type the answer.',
+      'Green means right letter, right spot. Yellow means it belongs somewhere else in the word.',
+      'Red means that letter is not in the word at all.',
+      'Solve words in a row to build a combo and earn more points.',
+      'Need help? A free letter costs you 15 seconds.'
+    ]
+  }
+];
+/* The order shelves appear in. A shelf with no games shows "Coming soon" covers. */
+const CATEGORIES = ['Action', 'Puzzle', 'Racing', 'Arcade', 'Horror'];
+
+/* ============================================================
+   SAVED STUFF (this browser only)
+   ============================================================ */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('bopbox-' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('bopbox-' + k, JSON.stringify(v)); } catch (e) {} }
+};
+let favs = store.get('favs', []);
+let recent = store.get('recent', []);
+const $ = id => document.getElementById(id);
+const byId = id => GAMES.find(g => g.id === id);
+let query = '', current = null;
+
+/* ============================================================
+   COVERS
+   ============================================================ */
+function appTile(g) {
+  const b = document.createElement('button');
+  b.className = 'app'; b.setAttribute('aria-label', g.title);
+  b.innerHTML = '<div class="cover">' + (g.badge ? '<span class="badge ' + g.badge.toLowerCase() + '">' + g.badge + '</span>' : '') +
+    '<img alt="" loading="lazy"></div><span class="name"></span><span class="kind"></span>';
+  b.querySelector('img').src = g.cover;
+  b.querySelector('.name').textContent = g.title;
+  b.querySelector('.kind').textContent = g.kind;
+  b.addEventListener('click', () => go('#' + g.id));
+  return b;
+}
+function soonTile() {
+  const d = document.createElement('div');
+  d.className = 'app soon';
+  d.innerHTML = '<div class="cover"><span>Soon</span></div><span class="name">Coming soon</span><span class="kind">New game loading</span>';
+  return d;
+}
+
+/* ============================================================
+   HOME
+   ============================================================ */
+function renderHero() {
+  const g = GAMES.find(x => x.featured) || GAMES[0];
+  const h = $('hero');
+  h.innerHTML = '<video muted loop playsinline autoplay preload="metadata"></video>' +
+    '<div class="hero-body"><span class="pill"><i></i>New drop</span><h1></h1><p></p><div class="hero-meta"></div>' +
+    '<div class="hero-actions"><button class="play-btn" id="heroPlay"><span class="tri"></span>Play now</button><button class="btn" id="heroInfo">See the game</button></div></div>';
+  const v = h.querySelector('video'); v.src = g.video; v.poster = g.shots[0];
+  h.querySelector('h1').textContent = g.title;
+  h.querySelector('p').textContent = g.pitch;
+  const meta = h.querySelector('.hero-meta'); g.tags.slice(0, 3).forEach(x => { const s = document.createElement('span'); s.className = 'tag'; s.textContent = x; meta.append(s); });
+  h.querySelector('#heroPlay').addEventListener('click', () => go('#play-' + g.id));
+  h.querySelector('#heroInfo').addEventListener('click', () => go('#' + g.id));
+  $('navCount').textContent = GAMES.length + ' games';
+  playQuietly(v);
+}
+function renderChips() {
+  const box = $('chips'); box.innerHTML = '';
+  const cats = [];
+  if (recent.some(byId)) cats.push(['Keep playing', 'shelf-recent']);
+  if (favs.some(byId)) cats.push(['Favorites', 'shelf-favs']);
+  CATEGORIES.forEach(c => cats.push([c, 'shelf-' + c.toLowerCase()]));
+  cats.forEach(([label, target], i) => {
+    const b = document.createElement('button'); b.className = 'chip'; b.textContent = label;
+    b.addEventListener('click', () => { const s = $(target); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    box.append(b);
+  });
+}
+function shelf(id, title, games, soon) {
+  const s = document.createElement('section'); s.className = 'shelf'; s.id = id;
+  s.innerHTML = '<div class="shelf-head"><h2 class="outline-title"></h2><span></span></div><div class="icons"></div>';
+  s.querySelector('h2').textContent = title;
+  s.querySelector('.shelf-head span').textContent = games.length ? games.length + (games.length === 1 ? ' game' : ' games') : 'Coming soon';
+  const grid = s.querySelector('.icons');
+  games.forEach(g => grid.append(appTile(g)));
+  for (let i = 0; i < soon; i++) grid.append(soonTile());
+  return s;
+}
+function renderShelves() {
+  const box = $('shelves'); box.innerHTML = '';
+  const q = query.trim().toLowerCase();
+  if (q) {
+    const found = GAMES.filter(g => (g.title + ' ' + g.kind + ' ' + g.tags.join(' ') + ' ' + g.category).toLowerCase().includes(q));
+    const s = shelf('shelf-search', 'Search results', found, 0);
+    if (!found.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No games match "' + query.trim() + '" yet. Try another word.'; s.querySelector('.icons').append(e); }
+    box.append(s); return;
+  }
+  const r = recent.map(byId).filter(Boolean), f = favs.map(byId).filter(Boolean);
+  if (r.length) box.append(shelf('shelf-recent', 'Keep playing', r, 0));
+  if (f.length) box.append(shelf('shelf-favs', 'Your favorites', f, 0));
+  CATEGORIES.forEach(c => {
+    const list = GAMES.filter(g => g.category === c);
+    box.append(shelf('shelf-' + c.toLowerCase(), c + ' games', list, list.length ? 1 : 3));
+  });
+}
+function renderHome() { renderHero(); renderChips(); renderShelves(); }
+
+/* ============================================================
+   GAME PAGE
+   ============================================================ */
+function showDetail(g) {
+  current = g;
+  $('dCover').src = g.cover;
+  $('dTitle').textContent = g.title;
+  $('dKind').textContent = g.kind;
+  const tags = $('dTags'); tags.innerHTML = '';
+  g.tags.forEach(x => { const s = document.createElement('span'); s.className = 'tag'; s.textContent = x; tags.append(s); });
+  $('dAbout').textContent = g.blurb;
+  const how = $('dHow'); how.innerHTML = '';
+  g.how.forEach(x => { const li = document.createElement('li'); li.textContent = x; how.append(li); });
+  const v = $('dVideo'); if (v.getAttribute('src') !== g.video) { v.src = g.video; v.poster = g.shots[0]; }
+  playQuietly(v);
+  const shots = $('dShots'); shots.innerHTML = '';
+  g.shots.forEach((src, i) => {
+    const b = document.createElement('button'); b.className = 'shot'; b.setAttribute('aria-label', 'Bigger picture ' + (i + 1));
+    const img = document.createElement('img'); img.src = src; img.alt = g.title + ' picture ' + (i + 1); b.append(img);
+    b.addEventListener('click', () => { $('lbImg').src = src; $('lightbox').hidden = false; });
+    shots.append(b);
+  });
+  syncFav();
+}
+function syncFav() {
+  if (!current) return;
+  const on = favs.includes(current.id);
+  $('dFav').setAttribute('aria-pressed', String(on));
+  $('dFav').querySelector('span').textContent = on ? 'Favorited' : 'Favorite';
+}
+function playQuietly(v) { try { const p = v.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+
+/* ============================================================
+   PLAYING
+   ============================================================ */
+function sizeStage() {
+  if (!current || $('playing').hidden) return;
+  const st = $('stage');
+  if (document.fullscreenElement === st) { st.style.height = ''; return; }
+  const maxH = Math.max(320, window.innerHeight - 130);
+  st.style.height = Math.round(Math.min(st.clientWidth / current.aspect, maxH)) + 'px';
+}
+function startGame(g) {
+  current = g;
+  recent = [g.id, ...recent.filter(x => x !== g.id)].slice(0, 8); store.set('recent', recent);
+  $('pTitle').textContent = g.title;
+  const st = $('stage'); st.classList.remove('ready');
+  stopGame();
+  const f = document.createElement('iframe');
+  f.dataset.id = g.id; f.title = g.title; f.allow = 'fullscreen; autoplay; gamepad';
+  f.addEventListener('load', () => { st.classList.add('ready'); try { f.focus(); } catch (e) {} });
+  f.src = g.file;
+  st.prepend(f);
+  requestAnimationFrame(sizeStage);
+}
+function stopGame() { const f = $('stage').querySelector('iframe'); if (f) f.remove(); }
+
+/* ============================================================
+   PAGES: #game-id shows the game page, #play-game-id plays it
+   ============================================================ */
+let lastShelf = null;
+function show(view) {
+  ['home', 'detail', 'playing'].forEach(v => $(v).hidden = v !== view);
+  if (view !== 'playing') stopGame();
+  if (view !== 'detail') $('dVideo').pause();
+  if (view !== 'home') { const hv = document.querySelector('.hero video'); if (hv) hv.pause(); }
+}
+function route() {
+  const h = location.hash.slice(1);
+  if (h.indexOf('play-') === 0 && byId(h.slice(5))) {
+    const g = byId(h.slice(5)), f = $('stage').querySelector('iframe');
+    if (!$('playing').hidden && f && f.dataset.id === g.id) return;
+    show('playing'); startGame(g); window.scrollTo(0, 0); return;
+  }
+  if (byId(h)) {
+    show('detail'); showDetail(byId(h)); lastShelf = 'shelf-' + byId(h).category.toLowerCase(); window.scrollTo(0, 0); return;
+  }
+  show('home'); current = null;
+  renderChips(); renderShelves();
+  const hv = document.querySelector('.hero video'); if (hv) playQuietly(hv);
+  if (lastShelf && $(lastShelf)) { const s = $(lastShelf); lastShelf = null; requestAnimationFrame(() => s.scrollIntoView({ block: 'start' })); }
+  else window.scrollTo(0, 0);
+}
+function go(hash) {
+  if (location.hash === hash) { route(); return; }
+  try { history.pushState(null, '', hash || location.pathname + location.search); } catch (e) {}
+  route();
+}
+
+$('dBack').addEventListener('click', () => go(''));
+$('dPlay').addEventListener('click', () => { if (current) go('#play-' + current.id); });
+$('pBack').addEventListener('click', () => { if (current) go('#' + current.id); else go(''); });
+$('dFav').addEventListener('click', () => {
+  if (!current) return;
+  favs = favs.includes(current.id) ? favs.filter(x => x !== current.id) : [current.id, ...favs];
+  store.set('favs', favs); syncFav();
+});
+$('logo').addEventListener('click', () => { query = ''; $('q').value = ''; lastShelf = null; go(''); });
+$('q').addEventListener('input', e => { query = e.target.value; if ($('home').hidden) go(''); else renderShelves(); });
+$('pFull').addEventListener('click', () => {
+  const st = $('stage'), req = st.requestFullscreen || st.webkitRequestFullscreen;
+  const fail = () => { $('pFull').textContent = 'Full screen not available here'; };
+  if (!req) return fail();
+  try { const p = req.call(st); if (p && p.catch) p.catch(fail); } catch (e) { fail(); }
+});
+$('lightbox').addEventListener('click', () => { $('lightbox').hidden = true; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('lightbox').hidden = true; });
+document.addEventListener('fullscreenchange', () => setTimeout(sizeStage, 50));
+window.addEventListener('resize', sizeStage);
+window.addEventListener('popstate', route);
+window.addEventListener('hashchange', route);
+
+renderHome();
+route();
+</script>
