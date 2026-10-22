@@ -148,7 +148,15 @@
   var botEngine = new Engine();
   var engineOk = null;
   analyser.ready.then(function () { engineOk = true; onEngineState(); }, function () { engineOk = false; onEngineState(); });
-  function onEngineState() { if (analyser.failed) engineOk = false; renderPanel(); }
+  function onEngineState() {
+    if (analyser.failed) engineOk = false;
+    var el = document.getElementById('engineSt');
+    if (el) {
+      el.className = 'engine-st' + (engineOk ? ' ok' : engineOk === false ? ' bad' : '');
+      el.lastChild.textContent = engineOk ? (analyser.name || 'Stockfish') + ' ready' : engineOk === false ? 'Engine unavailable' : 'Loading Stockfish\u2026';
+    }
+    renderPanel();
+  }
 
   // Eval cache keyed by FEN, scores from White's point of view.
   var evalCache = {}, evalPending = {};
@@ -199,12 +207,12 @@
 
   // ---------- State ----------
   var BOTS = [
-    { id: 'pip', name: 'Pip', init: 'Pi', rating: 400, skill: 0, depth: 1, rand: 0.35, time: 200, book: false, blurb: 'Just learned how the knight moves. Leaves pieces hanging and sometimes notices yours.' },
-    { id: 'mara', name: 'Mara', init: 'Ma', rating: 800, skill: 2, depth: 2, rand: 0.15, time: 300, book: true, blurb: 'Knows a few openings and loves an early queen raid. Misses quiet threats.' },
-    { id: 'theo', name: 'Theo', init: 'Th', rating: 1200, skill: 6, depth: 4, rand: 0.05, time: 500, book: true, blurb: 'Club regular. Plays sound openings and punishes loose pieces.' },
-    { id: 'iris', name: 'Iris', init: 'Ir', rating: 1600, elo: 1600, skill: 10, depth: 12, rand: 0, time: 600, book: true, blurb: 'Patient and solid. Happy to grind a small edge into a won endgame.' },
-    { id: 'viktor', name: 'Viktor', init: 'Vi', rating: 2000, elo: 2000, skill: 15, depth: 14, rand: 0, time: 700, book: true, blurb: 'Sharp tactician. Calculates deep and rarely gives anything away.' },
-    { id: 'sf', name: 'Stockfish', init: 'SF', rating: 3000, skill: 20, depth: 22, rand: 0, time: 900, book: true, blurb: 'The engine at full strength. Every mistake gets punished.' }
+    { id: 'pip', piece: 'p', color: '#6F9E48', tag: 'Beginner', name: 'Pip', init: 'Pi', rating: 400, skill: 0, depth: 1, rand: 0.35, time: 200, book: false, blurb: 'Just learned how the knight moves. Leaves pieces hanging and sometimes notices yours.' },
+    { id: 'mara', piece: 'n', color: '#C9773E', tag: 'Casual', name: 'Mara', init: 'Ma', rating: 800, skill: 2, depth: 2, rand: 0.15, time: 300, book: true, blurb: 'Knows a few openings and loves an early queen raid. Misses quiet threats.' },
+    { id: 'theo', piece: 'b', color: '#4C83B5', tag: 'Intermediate', name: 'Theo', init: 'Th', rating: 1200, skill: 6, depth: 4, rand: 0.05, time: 500, book: true, blurb: 'Club regular. Plays sound openings and punishes loose pieces.' },
+    { id: 'iris', piece: 'r', color: '#8963B7', tag: 'Club player', name: 'Iris', init: 'Ir', rating: 1600, elo: 1600, skill: 10, depth: 12, rand: 0, time: 600, book: true, blurb: 'Patient and solid. Happy to grind a small edge into a won endgame.' },
+    { id: 'viktor', piece: 'q', color: '#B4433B', tag: 'Advanced', name: 'Viktor', init: 'Vi', rating: 2000, elo: 2000, skill: 15, depth: 14, rand: 0, time: 700, book: true, blurb: 'Sharp tactician. Calculates deep and rarely gives anything away.' },
+    { id: 'sf', piece: 'k', color: '#1E1D1B', tag: 'Engine', name: 'Stockfish', init: 'SF', rating: 3000, skill: 20, depth: 22, rand: 0, time: 900, book: true, blurb: 'The engine at full strength. Every mistake gets punished.' }
   ];
 
   var S = {
@@ -226,6 +234,7 @@
     botJob: null,
     showRatings: store.get('ratings', true),
     tc: store.get('tc', 'none'), clock: null, flagged: null, threatMsg: null,
+    anTab: 'engine', opFilter: 'all', importDraft: '',
     resigned: false,
     // analyse
     liveJob: null, liveLines: [], liveDepth: 0, liveFen: null,
@@ -478,6 +487,7 @@
     var gen = S.gen;
     var todo = S.plies.filter(function (p) { return !p.cls; });
     S.review = { done: S.plies.length - todo.length, total: S.plies.length };
+    S.anTab = 'review';
     stopLive(); render();
     var chain = Promise.resolve();
     todo.forEach(function (p) {
@@ -496,7 +506,7 @@
     var fenTry = new Chess();
     if (/^[rnbqkpRNBQKP1-8]+(\/[rnbqkpRNBQKP1-8]+){7}\s[wb]/.test(text)) {
       if (!fenTry.load(text)) { S.importErr = 'That FEN isn\'t a legal position. Check the piece placement and side to move.'; render(); return; }
-      resetGame(fenTry.fen()); S.orient = fenTry.turn(); render(); startLive(); return;
+      resetGame(fenTry.fen()); S.orient = fenTry.turn(); S.anTab = 'engine'; render(); startLive(); return;
     }
     if (!c.load_pgn(text, { sloppy: true })) { S.importErr = 'Couldn\'t read that PGN. Paste the full game text, including the move numbers.'; render(); return; }
     var hdr = c.header(), moves = c.history();
@@ -718,27 +728,44 @@
     num.style.color = whiteAhead ? 'var(--evb)' : 'var(--evw)';
   }
 
+  var START_COUNT = { p: 8, n: 2, b: 2, r: 2, q: 1 };
+  // Pieces each side has captured, plus White's material lead in pawns.
+  function material(fen) {
+    var m = pieceMap(fen), have = { w: { p: 0, n: 0, b: 0, r: 0, q: 0 }, b: { p: 0, n: 0, b: 0, r: 0, q: 0 } }, pts = { w: 0, b: 0 };
+    Object.keys(m).forEach(function (sq) {
+      var ch = m[sq], c = ch === ch.toUpperCase() ? 'w' : 'b', t = ch.toLowerCase();
+      if (t !== 'k') { have[c][t]++; pts[c] += VAL[t]; }
+    });
+    var took = function (c) {
+      var o = c === 'w' ? 'b' : 'w', out = '';
+      ['p', 'n', 'b', 'r', 'q'].forEach(function (t) {
+        var k = Math.max(0, START_COUNT[t] - have[o][t]);
+        if (!k) return;
+        out += '<span class="cg">';
+        for (var i = 0; i < k; i++) out += '<span class="pc ' + o + t + '"></span>';
+        out += '</span>';
+      });
+      return out;
+    };
+    return { w: took('w'), b: took('b'), diff: pts.w - pts.b };
+  }
   function stripHtml(color) {
-    var top = color !== S.orient;
-    var opening = '';
-    if (top && S.mode !== 'train') {
-      var o = openingName(sansTo(S.view));
-      opening = o ? '<div class="opening" title="' + esc(o.name) + '"><b>' + o.eco + '</b>' + esc(o.name) + '</div>' : '<div class="opening"></div>';
-    }
-    var who;
+    var av, name, sub = '';
     if (S.mode === 'train' && T.view !== 'menu') {
       var mine = (T.view === 'puzzle' || T.view === 'rush') && T.pz ? T.pz.side : T.view === 'endgame' && T.eg ? T.eg.side : S.orient;
-      who = color === mine ? '<div class="avatar">You</div><b>You</b>' : '<div class="avatar">' + (color === 'w' ? 'W' : 'B') + '</div><b>' + (color === 'w' ? 'White' : 'Black') + '</b>';
+      av = sideAvatar(color, 36);
+      name = color === mine ? 'You' : T.view === 'endgame' ? 'Stockfish' : (color === 'w' ? 'White' : 'Black');
     } else if (S.mode === 'play' && (S.playing || S.plies.length)) {
-      if (color === S.you) who = '<div class="avatar">You</div><b>You</b>';
-      else who = '<div class="avatar">' + S.bot.init + '</div><b>' + esc(S.bot.name) + '</b><small>≈' + S.bot.rating + '</small>' + (S.botThinking ? '<span class="thinking" aria-label="Thinking"><i></i><i></i><i></i></span>' : '');
+      if (color === S.you) { av = sideAvatar(color, 36); name = 'You'; }
+      else { av = botAvatar(S.bot, 36); name = esc(S.bot.name); sub = '<small>' + S.bot.rating + '</small>' + (S.botThinking ? '<span class="thinking" aria-label="Thinking"><i></i><i></i><i></i></span>' : ''); }
     } else if (S.mode === 'learn' && S.course) {
-      who = color === S.course.side ? '<div class="avatar">You</div><b>You</b>' : '<div class="avatar">Bk</div><b>Book</b><small>' + esc(S.course.name) + '</small>';
-    } else {
-      who = '<div class="avatar">' + (color === 'w' ? 'W' : 'B') + '</div><b>' + (color === 'w' ? 'White' : 'Black') + '</b>';
-    }
+      if (color === S.course.side) { av = sideAvatar(color, 36); name = 'You'; }
+      else { av = '<span class="bav book" style="--s:36px">' + icon('book', 24) + '</span>'; name = 'Opening book'; }
+    } else { av = sideAvatar(color, 36); name = color === 'w' ? 'White' : 'Black'; }
+    var blind = S.mode === 'train' && T.view === 'coords', mat = blind ? { w: '', b: '', diff: 0 } : material(curFen()), lead = color === 'w' ? mat.diff : -mat.diff;
+    var caps = '<span class="caps">' + mat[color] + (lead > 0 ? '<em>+' + lead + '</em>' : '') + '</span>';
     var clock = S.mode === 'play' && S.clock ? '<span class="clock' + (S.clock.turn === color && S.clock.on && !S.clock.hold ? ' run' : '') + '" data-c="' + color + '">' + fmtClock(clockLeft(color)) + '</span>' : '';
-    return '<div class="who">' + who + '</div>' + (clock ? '<div class="stripr">' + opening + clock + '</div>' : opening);
+    return '<div class="who">' + av + '<div class="wn"><span class="nm"><b>' + name + '</b>' + sub + '</span>' + caps + '</div></div>' + clock;
   }
   function renderStrips() {
     var topColor = S.orient === 'w' ? 'b' : 'w';
@@ -1066,9 +1093,9 @@
   }
 
   // ---------- Insights: patterns across your games ----------
-  function insightsHtml(back) {
+  function insightsHtml() {
     var hist = store.get('history', []), g = hist.filter(function (x) { return x.phases; });
-    var h = '<div class="sec"><div class="spread"><h3>Insights</h3>' + back + '</div>';
+    var h = '<div class="sec">';
     if (g.length < 3) return h + '<p class="muted">Play or import at least 3 games and this page will show where you gain and lose the most: by game phase, by color, by opening, and by the kinds of mistakes you make.</p><p class="status">' + g.length + ' of 3 games so far.</p></div>';
     var ph = { o: [0, 0], m: [0, 0], e: [0, 0] }, cnt = {}, col = { w: [0, 0], b: [0, 0] }, ops = {};
     g.forEach(function (x) {
@@ -1081,7 +1108,7 @@
     var names = { o: 'Opening', m: 'Middlegame', e: 'Endgame' }, accs = {};
     ['o', 'm', 'e'].forEach(function (k) { if (ph[k][1] >= 3) accs[k] = ph[k][0] / ph[k][1]; });
     var weakest = Object.keys(accs).sort(function (a, b) { return accs[a] - accs[b]; })[0];
-    h += '<p class="muted">Based on your last ' + g.length + ' games.</p></div>';
+    h += '<p class="muted">Accuracy, results and mistake types from your games against the bots and your imports.</p></div>';
     h += '<div class="sec"><h3>Accuracy by phase</h3><div class="bars">' + ['o', 'm', 'e'].map(function (k) {
       var v = accs[k];
       return '<div class="bar' + (k === weakest ? ' weak' : '') + '"><span class="bl">' + names[k] + '</span><span class="bt"><i style="width:' + (v || 0) + '%"></i></span><b>' + (v == null ? '\u2014' : v.toFixed(0) + '%') + '</b></div>';
@@ -1144,7 +1171,7 @@
     });
     games = games.slice(0, 10);
     if (!games.length) { S.importErr = 'Couldn\u2019t read any games in that file.'; render(); return; }
-    S.imp = { done: 0, total: games.length };
+    S.imp = { done: 0, total: games.length }; S.anTab = 'import';
     stopLive(); render();
     var chain = Promise.resolve();
     games.forEach(function (g) {
@@ -1300,84 +1327,115 @@
     return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + pts.join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/><circle cx="' + last[0] + '" cy="' + last[1] + '" r="3" fill="var(--accent)"/></svg>';
   }
 
+  // Each panel view returns { key, head: { title, sub, back, right, tabs }, body, foot }.
   function renderTrain() {
     var st = pzStats(), mistakes = store.get('mistakes', []);
+    var backTo = 'id="trainBack"';
     if (T.view === 'menu') {
-      return '<div class="sec"><h2>Train</h2><p class="muted">Short, focused drills. Puzzles sharpen tactics, your own mistakes turn into lessons, and the coordinates drill makes notation automatic.</p></div>' +
-        '<div class="sec"><div class="cards">' +
-        '<button class="card" data-train="puzzle"><span class="cico">' + icon('brilliant', 34) + '</span><b>Puzzles</b><small>Rating ' + st.rating + ' · ' + st.solved + ' solved</small><span class="cdesc">' + PUZZLES.length.toLocaleString() + ' real positions from Lichess games, matched to your level.</span></button>' +
-        '<button class="card" data-train="rush"><span class="cico">' + icon('great', 34) + '</span><b>Puzzle Rush</b><small>Best ' + store.get('rushBest', 0) + '</small><span class="cdesc">3 minutes, 3 strikes. Puzzles get harder as you go.</span></button>' +
-        '<button class="card" data-train="endgames"><span class="cico">' + icon('best', 34) + '</span><b>Endgame drills</b><small>' + Object.keys(store.get('egDone', {})).length + ' of ' + ENDGAMES.length + ' done</small><span class="cdesc">Convert the must-know endings against full-strength Stockfish.</span></button>' +
-        '<button class="card" data-train="insights"><span class="cico">' + icon('excellent', 34) + '</span><b>Insights</b><small>' + store.get('history', []).length + ' games analysed</small><span class="cdesc">Where you lose points: by phase, color, opening and mistake type, with what to practice.</span></button>' +
-        '<button class="card" data-train="mistakes"><span class="cico">' + icon('miss', 34) + '</span><b>Fix your mistakes</b><small>' + mistakes.length + ' saved</small><span class="cdesc">Every mistake you make against a bot is saved here. Find the move you missed.</span></button>' +
-        '<button class="card" data-train="coords"><span class="cico">' + icon('book', 34) + '</span><b>Coordinates</b><small>Best ' + store.get('coBest', 0) + ' in 30s</small><span class="cdesc">Click the named square as fast as you can. Makes reading moves instant.</span></button>' +
-        '</div></div>';
+      var egDone = Object.keys(store.get('egDone', {})).length, hist = store.get('history', []).length;
+      var tile = function (id, ic, title, stat, desc, extra) {
+        return '<button class="tile" data-train="' + id + '"><span class="tile-top">' + icon(ic, 30) + '<b>' + title + '</b></span><span class="tile-stat">' + stat + '</span>' + (extra || '') + '<span class="tile-d">' + desc + '</span></button>';
+      };
+      return {
+        key: 'menu',
+        head: { title: 'Train', sub: 'Short drills that make you stronger' },
+        body: '<div class="sec"><button class="hero-tile" data-train="puzzle"><span class="ht-l"><small>Puzzle rating</small><b>' + st.rating + '</b>' +
+          '<span class="muted">' + st.solved + ' solved · streak ' + st.streak + ' · best ' + st.best + '</span></span>' +
+          '<span class="ht-r">' + (sparkline(st.hist) || '<span class="muted">Your rating graph appears after a few puzzles.</span>') + '</span>' +
+          '<span class="ht-cta">Solve puzzles ' + svgIcon('next') + '</span></button></div>' +
+          '<div class="sec"><div class="tiles">' +
+          tile('rush', 'great', 'Puzzle Rush', 'Best ' + store.get('rushBest', 0), '3 minutes, 3 strikes, rising difficulty.') +
+          tile('endgames', 'best', 'Endgames', egDone + ' of ' + ENDGAMES.length + ' done', 'Convert must-know endings vs Stockfish.', '<span class="meter"><i style="width:' + (egDone / ENDGAMES.length * 100) + '%"></i></span>') +
+          tile('mistakes', 'miss', 'Fix mistakes', mistakes.length + ' saved', 'Positions from your own games.') +
+          tile('insights', 'excellent', 'Insights', hist + ' game' + (hist === 1 ? '' : 's'), 'Where you lose points, and what to drill.') +
+          '</div><button class="slim-tile" data-train="coords">' + icon('book', 26) + '<span><b>Coordinates</b><small>Click the named square as fast as you can</small></span><span class="tile-stat">Best ' + store.get('coBest', 0) + '</span></button></div>'
+      };
     }
-    var back = '<button class="ib" id="trainBack" style="height:30px">All drills</button>';
-    if (T.view === 'insights') return insightsHtml(back);
+    if (T.view === 'insights') {
+      var n = store.get('history', []).filter(function (x) { return x.phases; }).length;
+      return { key: 'insights', head: { title: 'Insights', sub: n >= 3 ? 'Patterns across your last ' + n + ' games' : 'Needs 3 games to get started', back: backTo }, body: insightsHtml() };
+    }
     if (T.view === 'rush' && T.rush) {
       var r = T.rush;
       if (!r.running) {
-        return '<div class="sec"><div class="spread"><h3>Puzzle Rush</h3>' + back + '</div><div class="result"><b>' + r.score + ' solved</b><p class="muted">' + esc(r.why || '') + (r.newBest ? ' New personal best!' : ' Best: ' + store.get('rushBest', 0) + '.') + '</p></div>' +
-          '<div class="row"><button class="ib primary" data-train="rush">Play again</button></div></div>';
+        return {
+          key: 'rush-end',
+          head: { title: 'Puzzle Rush', sub: 'Best run: ' + store.get('rushBest', 0), back: backTo },
+          body: '<div class="sec"><div class="result big">' + icon(r.newBest ? 'brilliant' : 'great', 44) + '<div><b>' + r.score + ' solved</b><p class="muted">' + esc(r.why || '') + (r.newBest ? ' New personal best!' : '') + '</p></div></div></div>',
+          foot: '<button class="ib primary big" data-train="rush">Play again</button>'
+        };
       }
       var strikes = [0, 1, 2].map(function (i) { return '<span class="strike' + (i < r.strikes ? ' on' : '') + '">' + icon(i < r.strikes ? 'blunder' : 'miss', 22) + '</span>'; }).join('');
-      return '<div class="sec"><div class="spread"><h3>Puzzle Rush</h3><button class="ib sm" id="rushEnd">End run</button></div>' +
-        '<div class="stats"><div><small>Solved</small><b>' + r.score + '</b></div><div><small>Time</small><b id="rushTime">' + fmtClock(r.end - Date.now()) + '</b></div><div><small>Strikes</small><b class="strikes">' + strikes + '</b></div></div>' +
-        '<div class="pzhead"><span class="turn ' + (T.pz ? T.pz.side : 'w') + '"></span><b>' + (T.pz && T.pz.status === 'opp' ? 'Watch\u2026' : (T.pz && T.pz.side === 'w' ? 'White' : 'Black') + ' to move') + '</b></div>' +
-        '<p class="status">Puzzle rating ' + (T.pz ? T.pz.data[3] : '') + '. Best run: ' + store.get('rushBest', 0) + '.</p></div>';
+      return {
+        key: 'rush',
+        head: { title: 'Puzzle Rush', sub: 'Puzzle rated ' + (T.pz ? T.pz.data[3] : '—'), right: '<button class="ib sm" id="rushEnd">End run</button>' },
+        body: '<div class="sec"><div class="stats"><div><small>Solved</small><b>' + r.score + '</b></div><div><small>Time</small><b id="rushTime">' + fmtClock(r.end - Date.now()) + '</b></div><div><small>Strikes</small><b class="strikes">' + strikes + '</b></div></div>' +
+          '<div class="turnline"><span class="turn ' + (T.pz ? T.pz.side : 'w') + '"></span><b>' + (T.pz && T.pz.status === 'opp' ? 'Watch the opponent’s move…' : (T.pz && T.pz.side === 'w' ? 'White' : 'Black') + ' to move') + '</b></div></div>'
+      };
     }
     if (T.view === 'endgames') {
       var done = store.get('egDone', {});
-      return '<div class="sec"><div class="spread"><h3>Endgame drills</h3>' + back + '</div><p class="muted">Every player needs these. You play against Stockfish at full strength, so it defends perfectly.</p><div class="courses">' +
-        ENDGAMES.map(function (d) { return '<button class="course" data-eg="' + d.id + '"><span class="eco">' + (d.side === 'b' ? 'Def' : 'Win') + '</span><b>' + esc(d.name) + '</b><span class="st' + (done[d.id] ? ' done' : '') + '">' + (done[d.id] ? 'Done' : '') + '</span><small>' + esc(d.sub) + '</small></button>'; }).join('') + '</div></div>';
+      return {
+        key: 'endgames',
+        head: { title: 'Endgame drills', sub: Object.keys(done).length + ' of ' + ENDGAMES.length + ' done', back: backTo },
+        body: '<div class="sec"><p class="muted">Stockfish plays the other side at full strength, so it defends perfectly. Win the winning ones, hold the draws.</p><div class="list">' +
+          ENDGAMES.map(function (d) {
+            return '<button class="lrow" data-eg="' + d.id + '"><span class="pill ' + (d.side === 'b' ? 'def' : 'win') + '">' + (d.side === 'b' ? 'Hold' : 'Win') + '</span><span class="lt"><b>' + esc(d.name) + '</b><small>' + esc(d.sub) + '</small></span>' + (done[d.id] ? '<span class="ok">' + icon('good', 20) + '</span>' : '<span class="chev">' + svgIcon('next') + '</span>') + '</button>';
+          }).join('') + '</div></div>'
+      };
     }
     if (T.view === 'endgame' && T.eg) {
       var eg = T.eg, d = eg.d, over = eg.status === 'won' || eg.status === 'lost';
-      var hh = '<div class="sec"><div class="spread"><h3>' + esc(d.sub) + '</h3><button class="ib sm" data-train="endgames">All endgames</button></div><h2>' + esc(d.name) + '</h2>' +
-        '<div class="stats"><div><small>Goal</small><b class="goaltext">' + egGoal(d) + '</b></div><div><small>Moves used</small><b>' + eg.moves + (d.goal === 'draw' ? '' : ' / ' + d.limit) + '</b></div></div>';
-      if (over) hh += '<div class="result"><b>' + (eg.status === 'won' ? 'Done!' : 'Not this time') + '</b><p class="muted">' + esc(eg.msg) + '</p></div>';
-      else hh += '<p class="status">' + (eg.status === 'bot' ? 'Stockfish is thinking\u2026' : eg.status === 'checking' ? 'Checking\u2026' : 'Your move.') + '</p>';
-      hh += '<div class="row">' + (over ? '' : '<button class="ib" id="hintBtn">Hint</button>') + '<button class="ib' + (over ? ' primary' : '') + '" data-eg="' + d.id + '">Restart</button></div></div>';
-      hh += '<div class="sec"><details class="strat"' + (over && eg.status === 'lost' ? ' open' : '') + '><summary>How to do it</summary><div class="body"><p class="structure">' + esc(d.tip) + '</p></div></details></div>';
-      return hh;
+      var b = '<div class="sec"><div class="stats two"><div><small>Goal</small><b class="goaltext">' + egGoal(d) + '</b></div><div><small>Moves used</small><b>' + eg.moves + (d.goal === 'draw' ? '' : ' / ' + d.limit) + '</b></div></div>';
+      if (over) b += '<div class="result">' + icon(eg.status === 'won' ? 'best' : 'blunder', 36) + '<div><b>' + (eg.status === 'won' ? 'Done!' : 'Not this time') + '</b><p class="muted">' + esc(eg.msg) + '</p></div></div>';
+      else b += '<div class="turnline"><span class="turn ' + eg.side + '"></span><b>' + (eg.status === 'bot' ? 'Stockfish is thinking…' : eg.status === 'checking' ? 'Checking…' : 'Your move') + '</b></div>';
+      b += '</div><div class="sec"><details class="strat"' + (over && eg.status === 'lost' ? ' open' : '') + '><summary>How to do it</summary><div class="body"><p class="structure">' + esc(d.tip) + '</p></div></details></div>';
+      return {
+        key: 'eg-' + d.id,
+        head: { title: esc(d.name), sub: esc(d.sub), back: 'data-train="endgames"' },
+        body: b,
+        foot: (over ? '' : '<button class="ib" id="hintBtn">' + svgIcon('hint') + 'Hint</button>') + '<button class="ib' + (over ? ' primary big' : '') + '" data-eg="' + d.id + '">' + svgIcon('undo') + 'Restart</button>'
+      };
     }
     if (T.view === 'puzzle' && T.pz) {
-      var pz = T.pz, d = pz.data, h = '';
-      h += '<div class="sec"><div class="spread"><h3>Puzzle · ' + d[3] + '</h3>' + back + '</div>';
-      var head = { opp: 'Watch the opponent’s move…', you: (pz.side === 'w' ? 'White' : 'Black') + ' to move. Find the best move.', retry: 'Try again.', wrong: 'Not quite.', solved: 'Solved!', shown: 'Here’s the solution.', checking: '' }[pz.status];
-      h += '<div class="pzhead"><span class="turn ' + pz.side + '"></span><b>' + head + '</b></div>';
-      if (pz.msg && pz.status !== 'solved' && pz.status !== 'shown') h += '<p class="muted">' + esc(pz.msg) + '</p>';
-      if (pz.rated) h += '<p class="delta ' + (pz.delta >= 0 ? 'up' : 'down') + '">' + (pz.delta >= 0 ? '+' : '−') + Math.abs(pz.delta) + ' → rating ' + st.rating + '</p>';
-      h += '<div class="row">';
-      if (pz.status === 'solved' || pz.status === 'shown') h += '<button class="ib primary" id="pzNext">Next puzzle</button>';
-      else h += '<button class="ib" id="pzHint">Hint</button><button class="ib" id="pzShow">Show solution</button><button class="ib" id="pzSkip">Skip</button>';
-      h += '</div>';
-      if (pz.status === 'solved' || pz.status === 'shown') h += '<p class="status">Themes: ' + esc(d[4].split(' ').map(function (t) { var x = PZ_THEMES.find(function (p) { return p[0] === t; }); return x ? x[1] : t; }).join(', ') || 'mixed') + '. <a href="https://lichess.org/training/' + d[0] + '" target="_blank" rel="noopener">View on Lichess</a></p>';
-      h += '</div>';
-      h += '<div class="sec"><div class="stats"><div><small>Rating</small><b>' + st.rating + '</b></div><div><small>Streak</small><b>' + st.streak + '</b></div><div><small>Best streak</small><b>' + st.best + '</b></div></div>' + sparkline(st.hist) + '</div>';
-      h += '<div class="sec"><h3>Theme</h3><div class="chips">' + PZ_THEMES.map(function (t) { return '<button data-theme="' + t[0] + '" aria-pressed="' + (T.theme === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div></div>';
-      return h;
+      var pz = T.pz, pd = pz.data, solved = pz.status === 'solved' || pz.status === 'shown';
+      var line = { opp: 'Watch the opponent’s move…', you: (pz.side === 'w' ? 'White' : 'Black') + ' to move. Find the best move.', retry: 'Try again.', wrong: 'Not quite.', solved: 'Solved!', shown: 'Here’s the solution.', checking: '' }[pz.status];
+      var pb = '<div class="sec"><div class="turnline' + (pz.status === 'solved' ? ' good' : pz.status === 'wrong' ? ' bad' : '') + '"><span class="turn ' + pz.side + '"></span><b>' + line + '</b></div>';
+      if (pz.msg && !solved) pb += '<p class="muted">' + esc(pz.msg) + '</p>';
+      if (pz.rated) pb += '<p class="delta ' + (pz.delta >= 0 ? 'up' : 'down') + '">' + (pz.delta >= 0 ? '+' : '−') + Math.abs(pz.delta) + ' → rating ' + st.rating + '</p>';
+      if (solved) pb += '<p class="status">Themes: ' + esc(pd[4].split(' ').map(function (t) { var x = PZ_THEMES.find(function (q) { return q[0] === t; }); return x ? x[1] : t; }).join(', ') || 'mixed') + '. <a href="https://lichess.org/training/' + pd[0] + '" target="_blank" rel="noopener">View on Lichess</a></p>';
+      pb += '</div><div class="sec"><div class="stats"><div><small>Rating</small><b>' + st.rating + '</b></div><div><small>Streak</small><b>' + st.streak + '</b></div><div><small>Best streak</small><b>' + st.best + '</b></div></div>' + sparkline(st.hist) + '</div>';
+      pb += '<div class="sec"><h3>Theme</h3><div class="chips">' + PZ_THEMES.map(function (t) { return '<button data-theme="' + t[0] + '" aria-pressed="' + (T.theme === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div></div>';
+      return {
+        key: 'puzzle',
+        head: { title: 'Puzzle', sub: 'Rated ' + pd[3] + (T.theme !== 'all' ? ' · ' + (PZ_THEMES.find(function (q) { return q[0] === T.theme; }) || [0, ''])[1] : ''), back: backTo },
+        body: pb,
+        foot: solved ? '<button class="ib primary big" id="pzNext">Next puzzle</button>' :
+          '<button class="ib" id="pzHint">' + svgIcon('hint') + 'Hint</button><button class="ib" id="pzShow">' + svgIcon('eye') + 'Solution</button><button class="ib" id="pzSkip">' + svgIcon('next') + 'Skip</button>'
+      };
     }
     if (T.view === 'mistakes') {
-      if (!T.mk) return '<div class="sec"><div class="spread"><h3>Fix your mistakes</h3>' + back + '</div><p class="muted">No saved mistakes yet. Play a few games against the bots: every mistake, miss or blunder you make shows up here as a puzzle.</p></div>';
+      if (!T.mk) return { key: 'mk-empty', head: { title: 'Fix your mistakes', sub: 'Nothing saved yet', back: backTo }, body: '<div class="sec"><div class="empty-state">' + icon('miss', 40) + '<p>Play a few games against the bots. Every mistake, miss or blunder you make shows up here as a puzzle from your own game.</p></div></div>', foot: '<button class="ib primary big" data-act="tab:play">Play a game</button>' };
       var mk = T.mk, m = mk.m, list = store.get('mistakes', []);
-      var h2 = '<div class="sec"><div class="spread"><h3>' + (mk.temp ? 'Retry' : 'Mistake ' + (mk.i + 1) + ' of ' + Math.max(list.length, mk.i + 1)) + '</h3>' + (mk.temp ? '<button class="ib sm" id="mkBack">Back to game</button>' : back) + '</div>';
-      h2 += '<div class="coach"><div class="ico">' + icon(m.cls, 38) + '</div><div><div class="t">You played ' + esc(m.played) + ' here</div><div class="d">' + CLASSES[m.cls].label + (mk.temp ? ' in this game' : ' against ' + esc(m.bot)) + '. Find the better move for ' + (m.fen.split(' ')[1] === 'w' ? 'White' : 'Black') + '.</div></div></div>';
-      if (mk.msg) h2 += '<div class="note" style="border-color:' + (mk.status === 'fixed' ? 'var(--c-best)' : 'var(--c-mistake)') + '">' + esc(mk.msg) + '</div>';
-      h2 += '<div class="row">' + (mk.status === 'fixed' ? (mk.temp ? '<button class="ib primary" id="mkBack">Back to game</button>' : '<button class="ib primary" id="mkNext">Next mistake</button>') : '<button class="ib" id="mkHint">Hint</button><button class="ib" id="mkShow">Show answer</button><button class="ib" id="mkSkip">Skip</button>') + '</div></div>';
-      return h2;
+      var mb = '<div class="sec"><div class="coach"><div class="ico">' + icon(m.cls, 38) + '</div><div><div class="t">You played ' + esc(m.played) + ' here</div><div class="d">' + CLASSES[m.cls].label + (mk.temp ? ' in this game' : ' against ' + esc(m.bot)) + '. Find the better move for ' + (m.fen.split(' ')[1] === 'w' ? 'White' : 'Black') + '.</div></div></div>';
+      if (mk.msg) mb += '<div class="note" style="border-color:' + (mk.status === 'fixed' ? 'var(--c-best)' : 'var(--c-mistake)') + '">' + esc(mk.msg) + '</div>';
+      mb += '</div>';
+      return {
+        key: 'mk-' + mk.i + (mk.temp ? 't' : ''),
+        head: { title: mk.temp ? 'Retry' : 'Fix your mistakes', sub: mk.temp ? 'Find the move you missed' : 'Mistake ' + (mk.i + 1) + ' of ' + Math.max(list.length, mk.i + 1), back: mk.temp ? 'id="mkBack"' : backTo },
+        body: mb,
+        foot: mk.status === 'fixed' ? (mk.temp ? '<button class="ib primary big" id="mkBack">Back to game</button>' : '<button class="ib primary big" id="mkNext">Next mistake</button>') :
+          '<button class="ib" id="mkHint">' + svgIcon('hint') + 'Hint</button><button class="ib" id="mkShow">' + svgIcon('eye') + 'Answer</button><button class="ib" id="mkSkip">' + svgIcon('next') + 'Skip</button>'
+      };
     }
     if (T.view === 'coords') {
-      var co = T.co;
-      var h3 = '<div class="sec"><div class="spread"><h3>Coordinates</h3>' + back + '</div>';
-      if (co.running) h3 += '<div class="cobig"><span class="lab">Click</span><b id="coTarget">' + co.target + '</b></div><div class="stats"><div><small>Score</small><b id="coScore">' + co.score + '</b></div><div><small>Time</small><b id="coTime">30.0s</b></div><div><small>Best</small><b>' + store.get('coBest', 0) + '</b></div></div>';
-      else h3 += '<div class="result"><b>' + co.score + ' correct</b><p class="muted">' + co.misses + ' missed. Best so far: ' + store.get('coBest', 0) + '.</p></div>';
-      h3 += '<div class="row"><button class="ib primary" id="coStart">' + (co.running ? 'Restart' : 'Go again') + '</button>' +
-        '<div class="seg" style="flex:1"><button data-co="w" aria-pressed="' + (co.color === 'w') + '">As White</button><button data-co="b" aria-pressed="' + (co.color === 'b') + '">As Black</button></div></div></div>';
-      return h3;
+      var co = T.co, cb = '<div class="sec">';
+      if (co.running) cb += '<div class="cobig"><span class="lab">Click</span><b id="coTarget">' + co.target + '</b></div><div class="stats"><div><small>Score</small><b id="coScore">' + co.score + '</b></div><div><small>Time</small><b id="coTime">30.0s</b></div><div><small>Best</small><b>' + store.get('coBest', 0) + '</b></div></div>';
+      else cb += '<div class="result big">' + icon('book', 44) + '<div><b>' + co.score + ' correct</b><p class="muted">' + co.misses + ' missed. Best so far: ' + store.get('coBest', 0) + '.</p></div></div>';
+      cb += '<div class="seg"><button data-co="w" aria-pressed="' + (co.color === 'w') + '">As White</button><button data-co="b" aria-pressed="' + (co.color === 'b') + '">As Black</button></div></div>';
+      return { key: 'coords', head: { title: 'Coordinates', sub: 'Best: ' + store.get('coBest', 0) + ' in 30 seconds', back: backTo }, body: cb, foot: '<button class="ib primary big" id="coStart">' + (co.running ? 'Restart' : 'Go again') + '</button>' };
     }
-    return '';
+    return { key: 'none', head: { title: 'Train' }, body: '' };
   }
   function trainHint() {
     var u = T.view === 'puzzle' ? T.pz.sol[T.pz.step] : T.mk.m.best;
@@ -1393,33 +1451,65 @@
 
   // ---------- Panel ----------
   var panel = $('#panel');
+  var ICONS = {
+    hint: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>',
+    threat: '<path d="M12 3.5l9 16H3z"/><path d="M12 10v4M12 17v.4"/>',
+    undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>',
+    flag: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    back: '<path d="M15 5l-7 7 7 7"/>',
+    next: '<path d="M9 5l7 7-7 7"/>',
+    eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+    chart: '<path d="M4 4v16h16"/><path d="M7 15l4-5 3 3 5-7"/>',
+    file: '<path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M12 11v6M9 14l3 3 3-3"/>'
+  };
+  function svgIcon(n) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICONS[n] + '</svg>'; }
+  function botAvatar(b, size) { return '<span class="bav" style="--bc:' + b.color + ';--s:' + size + 'px"><span class="pc w' + b.piece + '"></span></span>'; }
+  function sideAvatar(color, size) { return '<span class="bav as-' + color + '" style="--s:' + size + 'px"><span class="pc ' + color + 'k"></span></span>'; }
   function sym(cls) { return '<span class="s" title="' + CLASSES[cls].label + '">' + icon(cls, 16) + '</span>'; }
 
+  // Small static board, e.g. for opening cards.
+  var lineFens = {};
+  function courseFen(c) {
+    if (!lineFens[c.id]) { var g = new Chess(); c.moves.split(' ').forEach(function (m) { g.move(m); }); lineFens[c.id] = g.fen(); }
+    return lineFens[c.id];
+  }
+  function miniBoard(fen, orient) {
+    var m = pieceMap(fen), h = '<span class="mb" aria-hidden="true">';
+    for (var r = 0; r < 8; r++) for (var f = 0; f < 8; f++) {
+      var rr = orient === 'w' ? r : 7 - r, ff = orient === 'w' ? f : 7 - f, p = m[FILES[ff] + (8 - rr)];
+      h += '<i class="' + ((rr + ff) % 2 ? 'd' : 'l') + '">' + (p ? '<span class="pc ' + (p === p.toUpperCase() ? 'w' : 'b') + p.toLowerCase() + '"></span>' : '') + '</i>';
+    }
+    return h + '</span>';
+  }
+
   function movesHtml() {
-    if (!S.plies.length) return '<div class="moves"><div class="empty">' + (S.mode === 'analyse' ? 'Move pieces on the board, or paste a game below.' : 'Moves will appear here.') + '</div></div>';
-    var h = '<div class="moves" id="moveList">', startBlack = S.plies[0].color === 'b';
-    var num = +(S.startFen.split(' ')[5] || 1), i = 0;
+    if (!S.plies.length) return '<div class="moves"><p class="empty">' + (S.mode === 'analyse' ? 'Move pieces for both sides, or load a game from the Import tab.' : 'Moves will appear here.') + '</p></div>';
     var showCls = S.showRatings || S.mode !== 'play' || !S.playing;
-    if (startBlack) { h += '<div class="n">' + num + '.</div><div class="n">…</div>'; }
-    S.plies.forEach(function (p, idx) {
-      if (p.color === 'w') h += '<div class="n">' + num + '.</div>';
-      h += '<button data-ply="' + (idx + 1) + '"' + (S.view === idx + 1 ? ' class="cur"' : '') + '>' + esc(p.san) + (showCls && p.cls ? sym(p.cls) : '') + '</button>';
-      if (p.color === 'b') num++;
-      i++;
+    var num = +(S.startFen.split(' ')[5] || 1), rows = [], cur = null;
+    S.plies.forEach(function (p, i) {
+      if (p.color === 'w' || !cur) { cur = { n: num, w: null, b: null }; rows.push(cur); }
+      if (p.color === 'w') cur.w = i; else { cur.b = i; num++; }
     });
-    return h + '</div>';
+    var cell = function (i, filler) {
+      if (i == null) return '<span class="mv none">' + filler + '</span>';
+      var p = S.plies[i];
+      return '<button class="mv' + (S.view === i + 1 ? ' cur' : '') + '" data-ply="' + (i + 1) + '">' + (showCls && p.cls ? sym(p.cls) : '') + '<span>' + esc(p.san) + '</span></button>';
+    };
+    return '<div class="moves" id="moveList">' + rows.map(function (r) { return '<div class="mrow"><span class="n">' + r.n + '.</span>' + cell(r.w, '…') + cell(r.b, '') + '</div>'; }).join('') + '</div>';
   }
 
   function accuracy(color) { return accuracyOf(S.plies, color); }
   function accHtml(labels) {
     var aw = accuracy('w'), ab = accuracy('b');
-    return '<div class="acc"><div class="accbox"><small>' + labels[0] + ' accuracy</small><b>' + (aw == null ? '—' : aw.toFixed(1) + '%') + '</b></div>' +
-      '<div class="accbox"><small>' + labels[1] + ' accuracy</small><b>' + (ab == null ? '—' : ab.toFixed(1) + '%') + '</b></div></div>';
+    var box = function (lab, v, c) { return '<div class="accbox"><span class="dot-' + c + '"></span><small>' + lab + '</small><b>' + (v == null ? '—' : v.toFixed(1) + '%') + '</b></div>'; };
+    return '<div class="acc">' + box(labels[0], aw, 'w') + box(labels[1], ab, 'b') + '</div>';
   }
 
   function coachHtml(p, whoLabel) {
-    if (!p) return '<div class="coach"><div class="ico" style="background:var(--accent)">?</div><div><div class="t">Your coach is watching</div><div class="d">Every move gets rated by Stockfish as soon as it\'s played.</div></div></div>';
-    if (!p.cls) return '<div class="coach"><div class="ico">…</div><div><div class="t">Checking ' + esc(p.san) + '…</div><div class="d">Stockfish is looking at the position.</div></div></div>';
+    if (!p) return '<div class="coach"><div class="ico idle">' + icon('best', 38) + '</div><div><div class="t">Your coach is watching</div><div class="d">Every move gets graded by Stockfish the moment it’s played.</div></div></div>';
+    if (!p.cls) return '<div class="coach"><div class="ico idle"><span class="thinking"><i></i><i></i><i></i></span></div><div><div class="t">Checking ' + esc(p.san) + '…</div><div class="d">Stockfish is looking at the position.</div></div></div>';
     var o = openingName(sansTo(S.plies.indexOf(p) + 1));
     var who = whoLabel ? whoLabel + ' ' : '';
     var t = esc(p.san) + ' is ' + ({ brilliant: 'brilliant', great: 'a great move', best: 'the best move', excellent: 'excellent', good: 'good', book: 'a book move', inaccuracy: 'an inaccuracy', mistake: 'a mistake', miss: 'a miss', blunder: 'a blunder' })[p.cls];
@@ -1436,19 +1526,19 @@
       d = (p.bestSan ? 'Better was <b>' + esc(p.bestSan) + '</b>' + (onBoard ? ' (green arrow).' : '.') : '') +
         (p.replySan ? ' The problem: <b>' + esc(p.replySan) + '</b> is now strong for your opponent' + (onBoard ? ' (red arrow).' : '.') : '');
     }
-    var ev = p.evalBefore && p.evalAfter ? '<div class="ev">Eval ' + fmtEval(p.evalBefore) + ' → ' + fmtEval(p.evalAfter) + '</div>' : '';
+    var ev = p.evalBefore && p.evalAfter ? '<span class="evchip">' + fmtEval(p.evalBefore) + ' → ' + fmtEval(p.evalAfter) + '</span>' : '';
     var idx = S.plies.indexOf(p), acts = '';
     if (sampler && p.cls !== 'book') acts += '<button class="ib sm" data-explain="' + idx + '">' + (p.explain ? 'Explain again' : 'Explain this move') + '</button>';
-    if (BAD.indexOf(p.cls) >= 0 && p.bestUci && (S.mode !== 'play' || !S.playing)) acts += '<button class="ib sm" data-retry="' + idx + '">Retry this move</button>';
+    if (BAD.indexOf(p.cls) >= 0 && p.bestUci && (S.mode !== 'play' || !S.playing)) acts += '<button class="ib sm" data-retry="' + idx + '">' + svgIcon('undo') + 'Retry this move</button>';
     var expl = p.explain != null ? '<p class="explain" data-explain-out="' + idx + '">' + esc(p.explain) + '</p>' : '';
-    return '<div class="coach"><div class="ico">' + icon(p.cls, 38) + '</div><div><div class="t">' + who + t + '</div><div class="d">' + d + '</div>' + ev + expl + (acts ? '<div class="row" style="margin-top:8px">' + acts + '</div>' : '') + '</div></div>';
+    return '<div class="coach c-' + p.cls + '"><div class="ico">' + icon(p.cls, 38) + '</div><div><div class="t">' + who + t + '</div><div class="d">' + d + '</div>' + ev + expl + (acts ? '<div class="row acts">' + acts + '</div>' : '') + '</div></div>';
   }
 
   function resultText() {
     var c = S.game;
-    if (S.flagged) return S.flagged === S.you ? { head: 'You ran out of time', sub: S.bot.name + ' wins on time.' } : { head: S.bot.name + ' ran out of time. You win!', sub: 'Won on the clock.' };
-    if (S.resigned) return { head: 'You resigned', sub: S.bot.name + ' wins.' };
-    if (c.in_checkmate()) { var youWon = c.turn() !== S.you; return { head: youWon ? 'Checkmate. You win!' : 'Checkmate. ' + S.bot.name + ' wins.', sub: youWon ? 'Nice finish.' : 'Review the game to see where it turned.' }; }
+    if (S.flagged) return S.flagged === S.you ? { head: 'You ran out of time', sub: S.bot.name + ' wins on time.', won: false } : { head: S.bot.name + ' ran out of time', sub: 'You win on the clock.', won: true };
+    if (S.resigned) return { head: 'You resigned', sub: S.bot.name + ' wins.', won: false };
+    if (c.in_checkmate()) { var youWon = c.turn() !== S.you; return { head: youWon ? 'Checkmate. You win!' : 'Checkmate. ' + S.bot.name + ' wins.', sub: youWon ? 'Nice finish.' : 'Review the game to see where it turned.', won: youWon }; }
     if (c.in_stalemate()) return { head: 'Draw by stalemate', sub: 'The side to move has no legal moves.' };
     if (c.in_threefold_repetition()) return { head: 'Draw by repetition', sub: 'The same position came up three times.' };
     if (c.insufficient_material()) return { head: 'Draw', sub: 'Neither side has enough material to mate.' };
@@ -1468,60 +1558,65 @@
     var last = hist.slice(0, 10), accs = last.filter(function (g) { return g.acc != null; });
     var avg = accs.length ? accs.reduce(function (a, g) { return a + g.acc; }, 0) / accs.length : null;
     var wins = last.filter(function (g) { return g.result === 'win'; }).length;
-    var h = '<div class="sec"><h3>Your progress</h3><div class="stats">' +
+    var h = '<div class="sec"><div class="spread"><h3>Your progress</h3><button class="link" data-act="insights">Insights ' + svgIcon('next') + '</button></div><div class="stats">' +
       '<div><small>Games</small><b>' + hist.length + '</b></div>' +
-      '<div><small>Avg accuracy</small><b>' + (avg == null ? '\u2014' : avg.toFixed(0) + '%') + '</b></div>' +
-      '<div><small>Puzzle rating</small><b>' + st.rating + '</b></div></div>';
-    if (accs.length >= 2) h += '<div class="spark-wrap"><small class="muted">Accuracy, last ' + accs.length + ' games</small>' + sparkline(accs.slice().reverse().map(function (g) { return g.acc; })) + '</div>';
-    if (last.length) h += '<p class="status">' + wins + ' win' + (wins === 1 ? '' : 's') + ' in your last ' + last.length + ' game' + (last.length === 1 ? '' : 's') + '.</p>';
+      '<div><small>Avg accuracy</small><b>' + (avg == null ? '—' : avg.toFixed(0) + '%') + '</b></div>' +
+      '<div><small>Puzzles</small><b>' + st.rating + '</b></div></div>';
+    if (accs.length >= 2) h += '<div class="spark-wrap"><small class="muted">Accuracy, last ' + accs.length + ' games · ' + wins + ' win' + (wins === 1 ? '' : 's') + '</small>' + sparkline(accs.slice().reverse().map(function (g) { return g.acc; })) + '</div>';
     h += '</div>';
     if (hist.length) {
       h += '<div class="sec"><h3>Recent games</h3><div class="hist">';
       hist.slice(0, 6).forEach(function (g, i) {
-        var bot = BOTS.find(function (b) { return b.id === g.bot; }) || { name: g.vs || 'Opponent' };
-        h += '<button class="hrow" data-hist="' + i + '"><span class="res ' + g.result + '">' + { win: 'W', loss: 'L', draw: 'D' }[g.result] + '</span><span class="hmain"><b>vs ' + esc(g.vs || bot.name) + (g.source === 'import' ? ' <span class="tag">imported</span>' : '') + '</b><small>' + esc(g.opening || 'Unnamed opening') + ' · ' + Math.ceil(g.sans.length / 2) + ' moves</small></span><span class="hacc">' + (g.acc != null ? g.acc.toFixed(0) + '%' : '') + '</span></button>';
+        var bot = BOTS.find(function (b) { return b.id === g.bot; });
+        var av = bot ? botAvatar(bot, 34) : sideAvatar(g.you === 'w' ? 'b' : 'w', 34);
+        h += '<button class="hrow" data-hist="' + i + '">' + av + '<span class="hmain"><b>' + esc(g.vs || (bot ? bot.name : 'Opponent')) + (g.source === 'import' ? ' <span class="tag">imported</span>' : '') + '</b><small>' + esc(g.opening || 'Unnamed opening') + ' · ' + Math.ceil(g.sans.length / 2) + ' moves</small></span>' +
+          '<span class="hres"><span class="res ' + g.result + '">' + { win: 'Won', loss: 'Lost', draw: 'Draw' }[g.result] + '</span><span class="hacc">' + (g.acc != null ? g.acc.toFixed(0) + '%' : '') + '</span></span></button>';
       });
-      h += '</div><div class="row"><button class="ib" data-act="insights">See your insights</button></div><p class="status">Tap a game to review it move by move.</p></div>';
+      h += '</div></div>';
     }
     return h;
   }
 
   function renderPlay() {
     if (!S.playing && !S.plies.length) {
-      var h = '<div class="sec"><h2>Pick an opponent</h2>' + engineNote() + '<div class="bots" role="group" aria-label="Opponents">';
-      var recs = store.get('records', {});
-      BOTS.forEach(function (b) {
-        var r = recs[b.id];
-        h += '<button class="bot" data-bot="' + b.id + '" aria-pressed="' + (S.bot.id === b.id) + '"><span class="avatar">' + b.init + '</span><b>' + esc(b.name) + '</b><small>≈' + b.rating + (r ? ' · ' + r.w + 'W ' + r.l + 'L' + (r.d ? ' ' + r.d + 'D' : '') : '') + '</small></button>';
-      });
-      h += '</div><p class="botblurb">' + esc(S.bot.blurb) + '</p></div>';
-      h += '<div class="sec"><h3>Play as</h3><div class="seg" role="group" aria-label="Your color">' +
-        ['w', 'r', 'b'].map(function (c) { return '<button data-color="' + c + '" aria-pressed="' + (S.youPick === c) + '">' + { w: 'White', r: 'Random', b: 'Black' }[c] + '</button>'; }).join('') + '</div>' +
-        '<h3>Time control</h3><div class="seg" role="group" aria-label="Time control">' +
-        TCS.map(function (t) { return '<button data-tc="' + t[0] + '" aria-pressed="' + (S.tc === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
-        '<label class="toggle" for="rateToggle">Rate my moves live<input type="checkbox" id="rateToggle"' + (S.showRatings ? ' checked' : '') + '></label>' +
-        '<button class="ib primary" id="startBtn" style="height:44px">Play ' + esc(S.bot.name) + '</button></div>';
+      var b = S.bot, rec = (store.get('records', {}))[b.id];
+      var h = (engineNote() ? '<div class="sec">' + engineNote() + '</div>' : '');
+      h += '<div class="sec"><div class="opp">' + botAvatar(b, 76) + '<div class="opp-t"><div class="opp-n"><b>' + esc(b.name) + '</b><span class="chip">≈' + b.rating + '</span></div>' +
+        '<span class="lvl">' + b.tag + (rec ? ' · your record ' + rec.w + 'W ' + rec.l + 'L' + (rec.d ? ' ' + rec.d + 'D' : '') : '') + '</span><p>' + esc(b.blurb) + '</p></div></div>' +
+        '<div class="botrow" role="group" aria-label="Opponents">' + BOTS.map(function (x) {
+          return '<button class="botpick" data-bot="' + x.id + '" aria-pressed="' + (b.id === x.id) + '" aria-label="' + esc(x.name) + ', about ' + x.rating + '">' + botAvatar(x, 44) + '<b>' + esc(x.name) + '</b><small>' + x.rating + '</small></button>';
+        }).join('') + '</div></div>';
+      h += '<div class="sec"><h3>Game settings</h3>' +
+        '<div class="setrow"><span>Play as</span><div class="seg colors" role="group" aria-label="Your color">' +
+        ['w', 'r', 'b'].map(function (c) { return '<button data-color="' + c + '" aria-pressed="' + (S.youPick === c) + '" aria-label="' + { w: 'White', r: 'Random', b: 'Black' }[c] + '">' + (c === 'r' ? '<span class="rnd"></span>' : '<span class="pc ' + c + 'k"></span>') + '</button>'; }).join('') + '</div></div>' +
+        '<div class="setrow col"><span>Time control</span><div class="chips" role="group" aria-label="Time control">' +
+        TCS.map(function (t) { return '<button data-tc="' + t[0] + '" aria-pressed="' + (S.tc === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div></div>' +
+        '<label class="toggle" for="rateToggle"><span>Live move ratings<small>Grade every move as you play</small></span><input type="checkbox" id="rateToggle"' + (S.showRatings ? ' checked' : '') + '></label></div>';
       h += progressHtml();
-      return h;
+      return { key: 'setup', head: { title: 'Play', sub: 'Choose an opponent and time control' }, body: h, foot: '<button class="ib primary big" id="startBtn">Play ' + esc(b.name) + '</button>' };
     }
     var mine = S.plies.filter(function (p) { return p.color === S.you; });
-    var lastMine = mine[mine.length - 1];
-    var res = resultText();
+    var lastMine = mine[mine.length - 1], res = resultText(), o = openingName(sansTo(S.plies.length));
+    var status = res ? res.head : S.botThinking ? S.bot.name + ' is thinking…' : S.game.turn() === S.you ? 'Your move' : S.bot.name + ' to move';
+    var tcLabel = S.clock ? (TCS.find(function (t) { return t[0] === S.tc; }) || [0, ''])[1].replace(' | ', '+') : 'Untimed';
     var h2 = '';
-    if (res) h2 += '<div class="sec"><div class="result"><b>' + res.head + '</b><p class="muted">' + res.sub + '</p><div class="row"><button class="ib primary" id="reviewBtn">Review game</button><button class="ib" id="newBtn">New game</button></div></div></div>';
+    if (res) h2 += '<div class="sec"><div class="result big ' + (res.won ? 'won' : res.won === false ? 'lost' : 'drawn') + '">' + icon(res.won ? 'best' : res.won === false ? 'blunder' : 'good', 44) + '<div><b>' + res.head + '</b><p class="muted">' + res.sub + '</p></div></div><div class="row"><button class="ib primary" id="reviewBtn">' + svgIcon('chart') + 'Review game</button><button class="ib" id="newBtn">' + svgIcon('plus') + 'New game</button></div></div>';
     if (S.threatMsg) h2 += '<div class="sec"><p class="note threat">' + esc(S.threatMsg) + '</p></div>';
-    h2 += '<div class="sec">' + (S.showRatings || res ? coachHtml(lastMine, null) : '<div class="coach"><div class="ico" style="background:var(--muted)">–</div><div><div class="t">Live ratings are hidden</div><div class="d">They\'re still recorded. Review the game when it ends.</div></div></div>') + engineNote() + '</div>';
+    h2 += '<div class="sec">' + (S.showRatings || res ? coachHtml(lastMine, null) : '<div class="coach"><div class="ico idle">' + icon('book', 38) + '</div><div><div class="t">Live ratings are hidden</div><div class="d">They’re still recorded. Review the game when it ends.</div></div></div>') + engineNote() + '</div>';
     var pc = S.plies.length >= 6 ? planCourse(S.you) : null;
     if (pc) h2 += planCardHtml(pc);
-    h2 += '<div class="sec">' + (S.showRatings || res ? accHtml(S.you === 'w' ? ['Your', S.bot.name + '’s'] : [S.bot.name + '’s', 'Your']) : '') + movesHtml() + '</div>';
-    h2 += '<div class="sec"><div class="row">' +
-      '<button class="ib" id="hintBtn"' + (res || S.botThinking ? ' disabled' : '') + '><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>Hint</button>' +
-      '<button class="ib" id="threatBtn"' + (res || S.botThinking ? ' disabled' : '') + '>Threats</button>' +
-      '<button class="ib" id="undoBtn"' + (!S.plies.some(function (p) { return p.color === S.you; }) ? ' disabled' : '') + '><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></svg>Takeback</button>' +
-      (res ? '' : '<button class="ib" id="resignBtn"><svg viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>Resign</button>') +
-      '<button class="ib" id="newBtn2">New game</button></div>' +
-      '<label class="toggle" for="rateToggle">Rate my moves live<input type="checkbox" id="rateToggle"' + (S.showRatings ? ' checked' : '') + '></label></div>';
-    return h2;
+    h2 += '<div class="sec">' + (S.showRatings || res ? accHtml(S.you === 'w' ? ['You', S.bot.name] : [S.bot.name, 'You']) : '') + movesHtml() +
+      '<label class="toggle" for="rateToggle"><span>Live move ratings</span><input type="checkbox" id="rateToggle"' + (S.showRatings ? ' checked' : '') + '></label></div>';
+    var tool = function (id, ic, label, dis) { return '<button class="tool" id="' + id + '"' + (dis ? ' disabled' : '') + '>' + svgIcon(ic) + '<span>' + label + '</span></button>'; };
+    var busy = !!res || S.botThinking;
+    return {
+      key: 'game',
+      head: { title: status, sub: (o ? '<b class="eco">' + o.eco + '</b>' + esc(o.name) + ' · ' : '') + tcLabel },
+      body: h2,
+      foot: '<div class="tools">' + tool('hintBtn', 'hint', 'Hint', busy) + tool('threatBtn', 'threat', 'Threats', busy) +
+        tool('undoBtn', 'undo', 'Takeback', !S.plies.some(function (p) { return p.color === S.you; })) +
+        (res ? tool('newBtn2', 'plus', 'New game') : tool('resignBtn', 'flag', 'Resign')) + '</div>'
+    };
   }
 
   function linesHtml() {
@@ -1572,10 +1667,9 @@
     }).sort(function (a, b) { return (b.p.cls === 'brilliant' ? 99 : b.p.drop) - (a.p.cls === 'brilliant' ? 99 : a.p.drop); }).slice(0, 4).sort(function (a, b) { return a.i - b.i; });
     if (!picks.length) return '';
     return '<div class="moments"><h3>Key moments</h3>' + picks.map(function (x) {
-      var p = x.p;
-      var label = (p.color === 'w' ? 'White' : 'Black') + ' ' + p.san;
-      var detail = BAD.indexOf(p.cls) >= 0 ? fmtEval(p.evalBefore) + ' \u2192 ' + fmtEval(p.evalAfter) : CLASSES[p.cls].label + ' move';
-      return '<button class="moment" data-ply="' + (x.i + 1) + '">' + icon(p.cls, 22) + '<span><b>' + esc(label) + '</b><small>' + detail + '</small></span></button>';
+      var p = x.p, label = Math.floor(x.i / 2 + 1) + (p.color === 'w' ? '. ' : '… ') + p.san;
+      var detail = BAD.indexOf(p.cls) >= 0 ? CLASSES[p.cls].label + ' · ' + fmtEval(p.evalBefore) + ' → ' + fmtEval(p.evalAfter) : CLASSES[p.cls].label + ' move';
+      return '<button class="moment" data-ply="' + (x.i + 1) + '">' + icon(p.cls, 24) + '<span><b>' + esc(label) + '</b><small>' + detail + '</small></span>' + svgIcon('next') + '</button>';
     }).join('') + '</div>';
   }
   function tallyHtml() {
@@ -1584,79 +1678,104 @@
       var w = 0, b = 0; S.plies.forEach(function (p) { if (p.cls === k) { if (p.color === 'w') w++; else b++; } });
       rows += '<tr><td><span class="lab">' + sym(k) + CLASSES[k].label + '</span></td><td>' + w + '</td><td>' + b + '</td></tr>';
     });
-    return '<table class="tally"><tr><td></td><td class="muted">W</td><td class="muted">B</td></tr>' + rows + '</table>';
+    return '<table class="tally"><tr><td></td><td class="muted">White</td><td class="muted">Black</td></tr>' + rows + '</table>';
   }
 
   function renderAnalyse() {
-    var p = S.view ? S.plies[S.view - 1] : null;
-    var h = '<div class="sec"><div class="spread"><h3>' + (analyser.name || 'Stockfish') + '</h3><span class="muted" style="font:12px var(--f-mono)" id="liveDepth">' + (S.liveDepth ? 'depth ' + S.liveDepth : '') + '</span></div><div class="lines" id="lines">' + linesHtml() + '</div></div>';
-    if (S.review && S.review.done < S.review.total) {
-      h += '<div class="sec"><div class="spread"><h3>Reviewing game</h3><span class="muted" style="font:12px var(--f-mono)">' + S.review.done + '/' + S.review.total + '</span></div><div class="prog"><i style="width:' + (S.review.done / Math.max(1, S.review.total) * 100) + '%"></i></div></div>';
-    }
-    h += '<div class="sec">' + (p ? coachHtml(p, p.color === 'w' ? 'White:' : 'Black:') : '<p class="muted">Play moves for both sides. Each one gets rated, with the better move drawn on the board when you slip.</p>') + '</div>';
+    var tab = S.anTab, p = S.view ? S.plies[S.view - 1] : null;
+    var reviewing = S.review && S.review.done < S.review.total, importing = S.imp && !S.imp.finished;
+    var tabs = '<div class="ptabs" role="tablist" aria-label="Analysis views">' + [['engine', 'Engine'], ['review', 'Review'], ['import', 'Import']].map(function (t) {
+      var busy = (t[0] === 'review' && reviewing) || (t[0] === 'import' && importing);
+      return '<button role="tab" id="antab-' + t[0] + '" data-antab="' + t[0] + '" aria-selected="' + (tab === t[0]) + '">' + t[1] + (busy ? '<span class="busy"></span>' : '') + '</button>';
+    }).join('') + '</div>';
+    var o = openingName(sansTo(S.view));
+    var head = { title: 'Analysis', sub: esc(analyser.name || 'Stockfish') + ' · <span id="liveDepth">' + (S.liveDepth ? 'depth ' + S.liveDepth : '') + '</span>', tabs: tabs };
     var unrated = S.plies.some(function (q) { return !q.cls; });
-    h += '<div class="sec">' + graphHtml() + keyMomentsHtml() + accHtml(['White', 'Black']) + movesHtml() +
-      '<div class="row">' + (S.plies.length ? '<button class="ib" id="reviewRun"' + (!unrated || (S.review && S.review.done < S.review.total) ? ' disabled' : '') + '>Rate all moves</button>' : '') +
-      '<button class="ib" id="hintBtn"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>Best move</button>' +
-      '<button class="ib" id="threatBtn">Threats</button><button class="ib" id="clearBtn">Clear board</button></div>' + (S.threatMsg ? '<p class="note threat">' + esc(S.threatMsg) + '</p>' : '') + '</div>';
-    if (S.plies.some(function (q) { return q.cls; }) && S.plies.length > 3) h += '<div class="sec"><h3>Move summary</h3>' + tallyHtml() + '</div>';
-    var un = store.get('username', ''), enc = encodeURIComponent(un || 'USERNAME');
-    h += '<div class="sec"><h3>Import your games</h3>';
-    if (S.imp && !S.imp.finished) h += '<div class="spread"><span class="status">Analysing game ' + Math.min(S.imp.done + 1, S.imp.total) + ' of ' + S.imp.total + '\u2026</span></div><div class="prog"><i style="width:' + (S.imp.done / S.imp.total * 100) + '%"></i></div>';
-    else if (S.imp && S.imp.finished) h += '<p class="note">Imported ' + S.imp.total + ' games. They\u2019re in Recent games, your mistakes went to Train, and Insights is updated.</p>';
-    h += '<label class="fld" for="impUser">Your Lichess or Chess.com username<input type="text" id="impUser" value="' + esc(un) + '" placeholder="e.g. magnus" autocomplete="off"></label>' +
-      '<p class="status">1. Download your games: <a id="lnkLichess" href="https://lichess.org/api/games/user/' + enc + '?max=10&amp;evals=false&amp;clocks=false" target="_blank" rel="noopener">Lichess (last 10)</a> or <a id="lnkChesscom" href="https://www.chess.com/games/archive/' + enc + '" target="_blank" rel="noopener">Chess.com archive</a> (tick games, then Download).<br>2. Choose the file below, or paste its text.</p>' +
-      '<textarea id="importBox" rows="4" placeholder="Paste one or more games (PGN), or a FEN position"></textarea>' +
-      (S.importErr ? '<p class="err">' + esc(S.importErr) + '</p>' : '') +
-      '<div class="row"><label class="ib" for="impFile">Choose PGN file</label><input type="file" id="impFile" accept=".pgn,.txt,application/x-chess-pgn,text/plain" hidden><button class="ib primary" id="importBtn">Load and review</button></div></div>';
-    return h;
+    if (tab === 'review') {
+      var h = '';
+      if (reviewing) h += '<div class="sec"><div class="spread"><h3>Rating moves</h3><span class="muted mono">' + S.review.done + ' / ' + S.review.total + '</span></div><div class="prog"><i style="width:' + (S.review.done / Math.max(1, S.review.total) * 100) + '%"></i></div></div>';
+      if (!S.plies.length) h += '<div class="sec"><div class="empty-state">' + icon('excellent', 40) + '<p>Load a game from the Import tab, or play moves in Engine, and the full review shows up here: accuracy, key moments and every move graded.</p></div></div>';
+      else {
+        h += '<div class="sec">' + (p ? coachHtml(p, p.color === 'w' ? 'White:' : 'Black:') : '<p class="muted">Step through the game with the arrows, or tap a key moment.</p>') + '</div>';
+        h += '<div class="sec">' + graphHtml() + accHtml(['White', 'Black']) + keyMomentsHtml() + '</div>';
+        h += '<div class="sec"><h3>Moves</h3>' + movesHtml() + '</div>';
+        if (S.plies.some(function (q) { return q.cls; }) && S.plies.length > 3) h += '<div class="sec"><h3>Move summary</h3>' + tallyHtml() + '</div>';
+      }
+      return { key: 'review', head: head, body: h, foot: S.plies.length ? '<button class="ib' + (unrated && !reviewing ? ' primary' : '') + ' big" id="reviewRun"' + (!unrated || reviewing ? ' disabled' : '') + '>' + (unrated ? 'Rate all moves' : 'All moves rated') + '</button>' : '' };
+    }
+    if (tab === 'import') {
+      var un = store.get('username', ''), enc = encodeURIComponent(un || 'USERNAME');
+      var hi = '<div class="sec">';
+      if (importing) hi += '<div class="spread"><span class="status">Analysing game ' + Math.min(S.imp.done + 1, S.imp.total) + ' of ' + S.imp.total + '…</span></div><div class="prog"><i style="width:' + (S.imp.done / S.imp.total * 100) + '%"></i></div>';
+      else if (S.imp && S.imp.finished) hi += '<p class="note">Imported ' + S.imp.total + ' games. They’re in Recent games on the Play tab, your mistakes went to Train, and Insights is updated.</p>';
+      hi += '<label class="fld" for="impUser">Your Lichess or Chess.com username<input type="text" id="impUser" value="' + esc(un) + '" placeholder="e.g. magnus" autocomplete="off"></label>' +
+        '<ol class="steps"><li>Download your games: <a id="lnkLichess" href="https://lichess.org/api/games/user/' + enc + '?max=10&amp;evals=false&amp;clocks=false" target="_blank" rel="noopener">Lichess (last 10)</a> or <a id="lnkChesscom" href="https://www.chess.com/games/archive/' + enc + '" target="_blank" rel="noopener">Chess.com archive</a>.</li><li>Choose the file below, or paste its text. One game opens for review; several are analysed in the background.</li></ol>' +
+        '<textarea id="importBox" rows="5" placeholder="Paste one or more games (PGN), or a FEN position">' + esc(S.importDraft || '') + '</textarea>' +
+        (S.importErr ? '<p class="err">' + esc(S.importErr) + '</p>' : '') + '</div>';
+      return { key: 'import', head: head, body: hi, foot: '<label class="ib" for="impFile">' + svgIcon('file') + 'Choose file</label><input type="file" id="impFile" accept=".pgn,.txt,application/x-chess-pgn,text/plain" hidden><button class="ib primary grow" id="importBtn">Load and review</button>' };
+    }
+    var he = '<div class="sec"><div class="enginecard"><div class="spread"><h3>Top lines</h3>' + (o ? '<span class="openlabel"><b class="eco">' + o.eco + '</b>' + esc(o.name) + '</span>' : '') + '</div><div class="lines" id="lines">' + linesHtml() + '</div></div>' +
+      (S.threatMsg ? '<p class="note threat">' + esc(S.threatMsg) + '</p>' : '') + '</div>';
+    he += '<div class="sec">' + (p ? coachHtml(p, p.color === 'w' ? 'White:' : 'Black:') : '<p class="muted">Play moves for both sides. Each one gets graded, with the better move drawn on the board when you slip.</p>') + '</div>';
+    he += '<div class="sec"><h3>Moves</h3>' + movesHtml() + '</div>';
+    var tool = function (id, ic, label, dis) { return '<button class="tool" id="' + id + '"' + (dis ? ' disabled' : '') + '>' + svgIcon(ic) + '<span>' + label + '</span></button>'; };
+    return {
+      key: 'engine', head: head, body: he,
+      foot: '<div class="tools">' + tool('hintBtn', 'hint', 'Best move') + tool('threatBtn', 'threat', 'Threats') + tool('reviewRun', 'chart', 'Review', !S.plies.length) + tool('clearBtn', 'trash', 'Clear') + '</div>'
+    };
   }
 
   function renderLearn() {
     var prog = courseProgress();
     if (!S.course) {
-      var h = '<div class="sec"><h2>Learn an opening</h2><p class="muted">Pick a line. You play your side, the book plays the other, and each move comes with the idea behind it.</p></div>';
-      [['w', 'Openings for White'], ['b', 'Defenses for Black']].forEach(function (g) {
-        h += '<div class="sec"><h3>' + g[1] + '</h3><div class="courses">';
-        OPENINGS.COURSES.filter(function (c) { return c.side === g[0]; }).forEach(function (c) {
-          var p = prog[c.id], st = p ? (p.best === 0 ? 'Mastered' : 'Done ' + p.runs + '×') : Math.ceil(c.moves.split(' ').length / 2) + ' moves';
-          h += '<button class="course" data-course="' + c.id + '"><span class="eco">' + c.eco + '</span><b>' + esc(c.name) + '</b><span class="st' + (p && p.best === 0 ? ' done' : '') + '">' + st + '</span><small>' + esc(c.sub) + '</small></button>';
-        });
-        h += '</div></div>';
-      });
-      return h;
+      var f = S.opFilter, mastered = OPENINGS.COURSES.filter(function (c) { return prog[c.id] && prog[c.id].best === 0; }).length;
+      var tabs = '<div class="ptabs" role="tablist" aria-label="Filter openings">' + [['all', 'All'], ['w', 'For White'], ['b', 'For Black']].map(function (t) {
+        return '<button role="tab" data-opf="' + t[0] + '" aria-selected="' + (f === t[0]) + '">' + t[1] + '</button>';
+      }).join('') + '</div>';
+      var list = OPENINGS.COURSES.filter(function (c) { return f === 'all' || c.side === f; }).map(function (c) {
+        var p = prog[c.id], moves = Math.ceil(c.moves.split(' ').length / 2);
+        var st = p ? (p.best === 0 ? '<span class="ostat ok">' + icon('best', 16) + 'Mastered</span>' : '<span class="ostat">Done ' + p.runs + '× · best ' + p.best + ' slip' + (p.best === 1 ? '' : 's') + '</span>') : '<span class="ostat">' + moves + ' moves · new</span>';
+        return '<button class="ocard" data-course="' + c.id + '">' + miniBoard(courseFen(c), c.side) + '<span class="ot"><span class="ometa"><span class="eco">' + c.eco + '</span><span class="side side-' + c.side + '">' + (c.side === 'w' ? 'White' : 'Black') + '</span></span><b>' + esc(c.name) + '</b><small>' + esc(c.sub) + '</small>' + st + '</span></button>';
+      }).join('');
+      return { key: 'list-' + f, head: { title: 'Openings', sub: mastered + ' of ' + OPENINGS.COURSES.length + ' mastered', tabs: tabs }, body: '<div class="sec"><p class="muted">Pick a line. You play your side, the book plays the other, and every move comes with the idea behind it.</p><div class="olist">' + list + '</div></div>' };
     }
-    var c = S.course, mv = courseMoves(), n = S.plies.length;
+    var c = S.course, mv = courseMoves(), n = S.plies.length, mineIdx = c.side === 'w' ? 0 : 1;
     var prev = '';
     mv.forEach(function (m, i) {
-      if (i % 2 === 0) prev += (i / 2 + 1) + '.';
-      var cls = i < n ? 'done' : (i === n && i % 2 === (c.side === 'w' ? 0 : 1) ? 'next' : '');
-      var txt = i < n ? esc(m) : (i % 2 === (c.side === 'w' ? 0 : 1) ? '?' : '…');
-      if (i === n && !S.courseDone) txt = (i % 2 === (c.side === 'w' ? 0 : 1)) ? 'your move' : '…';
+      if (i % 2 === 0) prev += '<span class="no">' + (i / 2 + 1) + '.</span>';
+      var cls = i < n ? 'done' : (i === n && i % 2 === mineIdx && !S.courseDone ? 'next' : 'todo');
+      var txt = i < n ? esc(m) : (i === n && i % 2 === mineIdx && !S.courseDone ? 'your move' : '···');
       prev += '<span class="' + cls + '">' + txt + '</span> ';
     });
     var msg = S.courseMsg ? '<div class="note" style="border-color:var(--' + (S.courseMsg.tone === 'no' ? 'c-blunder' : S.courseMsg.tone === 'ok' ? 'c-best' : 'accent') + ')">' + esc(S.courseMsg.text) + '</div>' : '';
-    var h2 = '<div class="sec"><div class="spread"><h3>' + c.eco + ' · ' + (c.side === 'w' ? 'You play White' : 'You play Black') + '</h3><button class="ib" id="backCourses" style="height:30px">All openings</button></div><h2>' + esc(c.name) + ': ' + esc(c.sub) + '</h2><p class="plan">' + esc(c.plan) + '</p></div>';
-    h2 += '<div class="sec"><h3>The line</h3><p class="linepreview">' + prev + '</p>' + msg + '<div class="prog"><i style="width:' + (n / mv.length * 100) + '%"></i></div></div>';
-    h2 += '<div class="sec"><h3>' + (S.courseDone ? 'Now you\u2019re out of book' : 'After the opening') + '</h3>' + strategyHtml(c, S.courseDone) +
+    var b = '<div class="sec"><p class="plan">' + esc(c.plan) + '</p></div>';
+    b += '<div class="sec"><div class="spread"><h3>The line</h3><span class="muted mono">' + Math.min(n, mv.length) + ' / ' + mv.length + (S.courseMistakes ? ' · ' + S.courseMistakes + ' slip' + (S.courseMistakes === 1 ? '' : 's') : '') + '</span></div><p class="linepreview">' + prev + '</p><div class="prog"><i style="width:' + (n / mv.length * 100) + '%"></i></div>' + msg + '</div>';
+    b += '<div class="sec"><h3>' + (S.courseDone ? 'Now you’re out of book' : 'After the opening') + '</h3>' + strategyHtml(c, S.courseDone) +
       '<details class="strat"' + (S.courseDone ? ' open' : '') + '><summary>Goals to aim for</summary><div class="body">' + goalsHtml(c) + '</div></details></div>';
-    if (S.courseDone) {
-      h2 += '<div class="sec"><div class="row"><button class="ib primary" id="playFrom">Play it out vs ' + esc(S.bot.name) + '</button><button class="ib" id="drillAgain">Drill again</button></div><p class="status">Playing it out keeps this position against the bot. The game plan stays on screen and ticks off each goal as you reach it.</p></div>';
-    } else {
-      h2 += '<div class="sec"><div class="row"><button class="ib" id="hintBtn"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>Hint</button><button class="ib" id="drillAgain">Restart</button></div><p class="status">Mistakes this run: ' + S.courseMistakes + '</p></div>';
-    }
-    return h2;
+    return {
+      key: 'course-' + c.id,
+      head: { title: esc(c.name), sub: '<b class="eco">' + c.eco + '</b>' + esc(c.sub) + ' · you play ' + (c.side === 'w' ? 'White' : 'Black'), back: 'id="backCourses"' },
+      body: b,
+      foot: S.courseDone ? '<button class="ib primary grow" id="playFrom">Play it out vs ' + esc(S.bot.name) + '</button><button class="ib" id="drillAgain">' + svgIcon('undo') + 'Again</button>' :
+        '<button class="ib" id="hintBtn">' + svgIcon('hint') + 'Hint</button><button class="ib" id="drillAgain">' + svgIcon('undo') + 'Restart</button>'
+    };
   }
 
   function renderPanel() {
-    var keepScroll = $('#moveList') ? $('#moveList').scrollTop : 0;
+    var pb = $('#pbody'), keep = pb ? pb.scrollTop : 0, prevKey = panel.getAttribute('data-key');
+    var ml = $('#moveList'), keepMl = ml ? ml.scrollTop : 0;
     var ae = document.activeElement, focusId = ae && panel.contains(ae) && ae.id && /INPUT|TEXTAREA/.test(ae.tagName) ? ae.id : null;
     var sel = focusId ? [ae.selectionStart, ae.selectionEnd] : null;
-    var importVal = $('#importBox') ? $('#importBox').value : '';
-    panel.innerHTML = S.mode === 'play' ? renderPlay() : S.mode === 'analyse' ? renderAnalyse() : S.mode === 'learn' ? renderLearn() : renderTrain();
-    var ml = $('#moveList');
-    if (ml) { ml.scrollTop = keepScroll; var cur = ml.querySelector('.cur'); if (cur && atEnd()) ml.scrollTop = ml.scrollHeight; }
-    if ($('#importBox') && importVal) $('#importBox').value = importVal;
+    var v = S.mode === 'play' ? renderPlay() : S.mode === 'analyse' ? renderAnalyse() : S.mode === 'learn' ? renderLearn() : renderTrain();
+    var hd = v.head, key = S.mode + ':' + v.key;
+    panel.innerHTML = '<div class="pin"><header class="phead"><div class="ph-row">' +
+      (hd.back ? '<button class="ib icon" ' + hd.back + ' aria-label="Back">' + svgIcon('back') + '</button>' : '') +
+      '<div class="ph-t"><h2>' + hd.title + '</h2>' + (hd.sub ? '<p>' + hd.sub + '</p>' : '') + '</div>' + (hd.right || '') + '</div>' + (hd.tabs || '') + '</header>' +
+      '<div class="pbody" id="pbody">' + v.body + '</div>' + (v.foot ? '<footer class="pfoot">' + v.foot + '</footer>' : '') + '</div>';
+    panel.setAttribute('data-key', key);
+    if (key === prevKey) { var nb = $('#pbody'); if (nb) nb.scrollTop = keep; }
+    ml = $('#moveList');
+    if (ml) { ml.scrollTop = keepMl; if (atEnd() && ml.querySelector('.cur')) ml.scrollTop = ml.scrollHeight; }
     if (focusId && document.getElementById(focusId)) { var fe = document.getElementById(focusId); fe.focus(); try { fe.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
   }
 
@@ -1671,6 +1790,8 @@
   panel.addEventListener('click', function (e) {
     var t = e.target.closest('button'); if (!t) return;
     if (t.dataset.bot) { S.bot = BOTS.find(function (b) { return b.id === t.dataset.bot; }); store.set('bot', S.bot.id); renderPanel(); renderStrips(); return; }
+    if (t.dataset.antab) { S.anTab = t.dataset.antab; renderPanel(); return; }
+    if (t.dataset.opf) { S.opFilter = t.dataset.opf; renderPanel(); return; }
     if (t.dataset.tc) { S.tc = t.dataset.tc; store.set('tc', S.tc); renderPanel(); return; }
     if (t.dataset.explain != null) { explainMove(+t.dataset.explain); return; }
     if (t.dataset.retry != null) { startRetry(+t.dataset.retry); return; }
@@ -1708,13 +1829,14 @@
       case 'reviewBtn': toAnalyse(); break;
       case 'reviewRun': runReview(); break;
       case 'clearBtn': resetGame(); render(); startLive(); break;
-      case 'importBtn': loadImport($('#importBox').value); break;
+      case 'importBtn': S.importDraft = $('#importBox').value; loadImport(S.importDraft); break;
       case 'backCourses': resetGame(); S.course = null; render(); break;
       case 'drillAgain': startCourse(S.course); break;
       case 'playFrom': playFromHere(); break;
     }
   });
   panel.addEventListener('input', function (e) {
+    if (e.target.id === 'importBox') { S.importDraft = e.target.value; return; }
     if (e.target.id !== 'impUser') return;
     var v = e.target.value.trim(), enc = encodeURIComponent(v || 'USERNAME');
     store.set('username', v);
