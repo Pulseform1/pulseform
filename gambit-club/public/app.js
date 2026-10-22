@@ -260,7 +260,7 @@
     S.startFen = fen || START;
     S.game = new Chess(S.startFen);
     S.plies = []; S.view = 0; S.selected = null; S.hintArrow = null;
-    S.botThinking = false; S.resigned = false; S.review = null; S.planCourse = null;
+    S.botThinking = false; S.resigned = false; S.review = null; S.planCourse = null; S.reviewYou = null; S.planMsg = null; S.markSq = null; S.threatArrow = null;
   }
   function rebuildGame() {
     S.game = new Chess(S.startFen);
@@ -275,7 +275,7 @@
     var rec = { san: mv.san, from: mv.from, to: mv.to, uci: mv.from + mv.to + (mv.promotion || ''), color: mv.color, fenBefore: fenBefore, fen: S.game.fen(), cls: null };
     S.plies.push(rec);
     S.view = S.plies.length;
-    S.selected = null; S.hintArrow = null; S.threatMsg = null;
+    S.selected = null; S.hintArrow = null; S.threatMsg = null; S.planMsg = null; S.markSq = null; S.threatArrow = null;
     return rec;
   }
 
@@ -370,7 +370,7 @@
 
   function canInteract() {
     if (S.mode === 'play') return S.playing && atEnd() && !S.botThinking && S.game.turn() === S.you && !S.game.game_over();
-    if (S.mode === 'learn') return !!S.course && !S.courseDone && atEnd() && S.game.turn() === S.course.side && !S.learnBusy;
+    if (S.mode === 'learn') return !!S.course && S.courseMode !== 'watch' && !S.courseDone && atEnd() && S.game.turn() === S.course.side && !S.learnBusy;
     if (S.mode === 'train') {
       if (T.view === 'puzzle') return T.pz && (T.pz.status === 'you' || T.pz.status === 'retry') && atEnd();
       if (T.view === 'rush') return T.rush && T.rush.running && T.pz && T.pz.status === 'you' && atEnd();
@@ -519,56 +519,149 @@
     moves.forEach(function (s) { pushMove(s); });
     var un = (store.get('username', '') || '').toLowerCase();
     S.view = 0; S.orient = un && (hdr.Black || '').toLowerCase() === un ? 'b' : 'w';
+    if (un && [(hdr.White || '').toLowerCase(), (hdr.Black || '').toLowerCase()].indexOf(un) >= 0) S.reviewYou = S.orient;
     render(); runReview();
   }
 
-  // ---------- Openings trainer ----------
+  // ---------- Openings trainer: watch, practice, test ----------
   function courseProgress() { return store.get('courses', {}); }
-  function startCourse(c) {
-    resetGame(); S.course = c; S.orient = c.side; S.courseMistakes = 0; S.courseDone = false; S.learnBusy = false;
-    S.courseMsg = { tone: 'info', text: c.side === 'w' ? 'You have White. Play the first move of the line.' : 'You have Black. Watch White\'s move, then reply.' };
+  // new -> watched -> practiced (clean practice run) -> mastered (clean test from memory)
+  function courseStage(c) {
+    var p = courseProgress()[c.id] || {};
+    return p.passed ? 'mastered' : p.best === 0 ? 'practiced' : p.watched || p.runs ? 'watched' : 'new';
+  }
+  function markProgress(fn) { var prog = courseProgress(), p = prog[S.course.id] || { runs: 0, best: null }; fn(p); prog[S.course.id] = p; store.set('courses', prog); }
+  function moveLabel(i, san) { return (Math.floor(i / 2) + 1) + (i % 2 === 0 ? '. ' : '… ') + san; }
+
+  function startCourse(c, mode) {
+    var stage = courseStage(c);
+    mode = mode || (stage === 'new' ? 'watch' : stage === 'watched' ? 'practice' : 'test');
+    resetGame(); S.course = c; S.courseMode = mode; S.orient = c.side; S.courseMistakes = 0; S.courseDone = false; S.learnBusy = false;
+    S.courseTries = 0; S.oppNote = null; S.threatArrow = null;
+    S.courseMsg = mode === 'watch' ? { tone: 'info', text: 'Step through the line with Next. The arrow shows each move before it’s played.' } :
+      mode === 'test' ? { tone: 'info', text: 'Test: play the whole line from memory. No hints, and every slip counts.' } :
+      { tone: 'info', text: c.side === 'w' ? 'You have White. Play the first move of the line.' : 'You have Black. Watch White’s first move, then reply.' };
+    if (mode === 'watch') { watchPreview(); render(); return; }
     render();
     if (c.side === 'b') learnOpponent();
   }
   function courseMoves() { return S.course.moves.split(' '); }
+
+  function watchPreview() {
+    var mv = courseMoves()[S.plies.length];
+    S.hintArrow = null;
+    if (!mv) return;
+    var m = new Chess(S.game.fen()).move(mv);
+    if (m) S.hintArrow = { from: m.from, to: m.to, tone: 'hint' };
+  }
+  function watchStep(dir) {
+    var mv = courseMoves();
+    S.threatArrow = null;
+    if (dir > 0) {
+      if (S.plies.length >= mv.length) return;
+      var i = S.plies.length, rec = pushMove(mv[i]);
+      rec.cls = 'book'; sfx(rec);
+      var mine = rec.color === S.course.side;
+      S.courseMsg = { tone: mine ? 'ok' : 'info', who: mine ? 'You' : (rec.color === 'w' ? 'White' : 'Black'), move: moveLabel(i, rec.san),
+        text: mine ? (S.course.notes[i] || 'The main book move here.') : 'Their reply. See what it threatens below.' };
+      S.oppNote = null;
+      if (!mine) explainOpponent(rec);
+      if (S.plies.length >= mv.length) { S.courseDone = true; markProgress(function (p) { p.watched = true; }); }
+    } else {
+      if (!S.plies.length) return;
+      S.plies.pop(); rebuildGame(); S.view = S.plies.length; S.courseDone = false; S.oppNote = null;
+      S.courseMsg = { tone: 'info', text: 'Stepped back. Press Next to replay the move.' };
+    }
+    watchPreview(); render();
+  }
+
+  // What does the opponent's last move threaten? Compare the position with the same side to move again.
+  function explainOpponent(rec) {
+    var gen = S.gen, fen = rec.fen, who = rec.color === 'w' ? 'White' : 'Black';
+    var c = new Chess(fen);
+    if (c.in_check()) { S.oppNote = { san: rec.san, text: rec.san + ' gives check. Answer the check first.' }; return; }
+    var parts = fen.split(' '); parts[1] = parts[1] === 'w' ? 'b' : 'w'; parts[3] = '-';
+    var nf = parts.join(' '), t = new Chess();
+    if (!t.load(nf)) { S.oppNote = null; return; }
+    S.oppNote = { san: rec.san, text: 'Checking what ' + rec.san + ' threatens…' };
+    Promise.all([evaluate(fen), evaluate(nf)]).then(function (r) {
+      if (gen !== S.gen || !S.oppNote || S.oppNote.san !== rec.san) return;
+      var sign = rec.color === 'w' ? 1 : -1, now = r[0] ? sign * r[0].cp : 0, again = r[1] ? sign * r[1].cp : 0, gain = again - now;
+      var san = r[1] && r[1].best ? uciToSan(nf, r[1].best) : null;
+      var lead = rec.san.indexOf('x') >= 0 ? who + ' captured with ' + rec.san + '. ' : who + ' played ' + rec.san + '. ';
+      if (san && gain >= 150) { S.oppNote = { san: rec.san, tone: 'threat', text: lead + 'It threatens ' + san + ', which would win material (red arrow). Your book move deals with it.' }; S.threatArrow = { from: r[1].best.slice(0, 2), to: r[1].best.slice(2, 4), tone: 'threat' }; }
+      else if (san && gain >= 70) { S.oppNote = { san: rec.san, tone: 'idea', text: lead + 'The idea is ' + san + ' next (red arrow). Keep it in mind.' }; S.threatArrow = { from: r[1].best.slice(0, 2), to: r[1].best.slice(2, 4), tone: 'threat' }; }
+      else S.oppNote = { san: rec.san, tone: 'calm', text: lead + 'No direct threat, so keep following your plan.' };
+      render();
+    });
+  }
+
   function learnOpponent() {
     var gen = S.gen; S.learnBusy = true; render();
-    sleep(550).then(function () {
+    sleep(650).then(function () {
       if (gen !== S.gen) return;
       var mv = courseMoves()[S.plies.length];
-      var rec = pushMove(mv); if (rec) { rec.cls = 'book'; sfx(rec); }
+      var rec = pushMove(mv); if (rec) { rec.cls = 'book'; sfx(rec); explainOpponent(rec); }
       S.learnBusy = false;
       checkCourseEnd(); render();
     });
   }
   function learnMove(m) {
-    var exp = courseMoves()[S.plies.length];
+    var exp = courseMoves()[S.plies.length], idx = S.plies.length;
     var test = new Chess(S.game.fen()), mv = test.move(m);
     if (!mv) return;
     var gen = S.gen;
+    S.threatArrow = null;
     if (mv.san === exp) {
       var rec = pushMove(m); rec.cls = 'book'; sfx(rec); flash('ok');
-      var note = S.course.notes[S.plies.length - 1];
-      S.courseMsg = { tone: 'ok', text: mv.san + ' is the book move.' + (note ? ' ' + note : '') };
+      S.courseTries = 0; S.oppNote = null;
+      S.courseMsg = { tone: 'ok', who: 'You', move: moveLabel(idx, mv.san), text: S.course.notes[idx] || 'Correct: that’s the book move.' };
       if (!checkCourseEnd()) learnOpponent(); else render();
-    } else {
-      S.courseMistakes++;
-      var rec2 = pushMove(m); sfx(rec2); flash('no'); S.learnBusy = true;
-      S.courseMsg = { tone: 'no', text: mv.san + ' isn\'t the move in this line. Try again, or tap Hint to see it.' };
-      render();
-      sleep(750).then(function () {
-        if (gen !== S.gen) return;
-        S.plies.pop(); rebuildGame(); S.view = S.plies.length; S.learnBusy = false; render();
-      });
+      return;
     }
+    // Not the line: ask Stockfish whether it's a reasonable alternative or a real mistake.
+    var rec2 = pushMove(m); sfx(rec2); S.learnBusy = true; S.courseTries++;
+    S.courseMsg = { tone: 'info', text: 'Checking ' + mv.san + '…' };
+    render();
+    Promise.all([evaluate(rec2.fenBefore), evaluate(rec2.fen), sleep(700)]).then(function (r) {
+      if (gen !== S.gen) return;
+      var sign = rec2.color === 'w' ? 1 : -1;
+      var drop = r[0] && r[1] ? Math.max(0, winPct(sign * r[0].cp) - winPct(sign * r[1].cp)) : 99;
+      var note = S.course.notes[idx];
+      var alt = drop < 4;
+      if (alt && S.courseMode === 'practice') {
+        flash('ok');
+        S.courseMsg = { tone: 'alt', text: mv.san + ' is playable too: Stockfish rates it about the same. This line continues with ' + exp + ' instead.' + (note ? ' ' + note : '') };
+      } else {
+        flash('no'); S.courseMistakes++;
+        var reply = r[1] && r[1].best && r[1].best !== '(none)' ? uciToSan(rec2.fen, r[1].best) : null;
+        if (reply && !alt) S.threatArrow = { from: r[1].best.slice(0, 2), to: r[1].best.slice(2, 4), tone: 'threat' };
+        S.courseMsg = { tone: 'no', text: alt ? mv.san + ' is playable, but in a test only the line counts.' :
+          mv.san + ' is weaker than the book move' + (reply ? ': it allows ' + reply + ' (red arrow).' : '.') + (S.courseMode === 'practice' ? ' Try again or tap Hint.' : ' Try again.') };
+      }
+      render();
+      return sleep(alt ? 900 : 1700);
+    }).then(function () {
+      if (gen !== S.gen) return;
+      S.plies.pop(); rebuildGame(); S.view = S.plies.length; S.learnBusy = false; S.threatArrow = null;
+      if (S.courseMode === 'practice' && S.courseTries >= 2) {
+        var h = new Chess(S.game.fen()).move(exp);
+        if (h) { S.hintArrow = { from: h.from, to: h.to, tone: 'hint' }; S.courseMsg = { tone: 'info', text: 'Here’s the book move (arrow). Play it to continue.' }; }
+      }
+      render();
+    });
   }
   function checkCourseEnd() {
     if (S.plies.length < courseMoves().length) return false;
     S.courseDone = true;
-    var prog = courseProgress(), p = prog[S.course.id] || { runs: 0, best: null };
-    p.runs++; p.best = p.best == null ? S.courseMistakes : Math.min(p.best, S.courseMistakes);
-    prog[S.course.id] = p; store.set('courses', prog);
-    S.courseMsg = { tone: 'ok', text: S.courseMistakes === 0 ? 'Line complete with no mistakes.' : 'Line complete with ' + S.courseMistakes + (S.courseMistakes === 1 ? ' mistake.' : ' mistakes.') };
+    var n = S.courseMistakes, mode = S.courseMode;
+    markProgress(function (p) {
+      p.watched = true;
+      if (mode === 'practice') { p.runs = (p.runs || 0) + 1; p.best = p.best == null ? n : Math.min(p.best, n); }
+      if (mode === 'test') { p.tests = (p.tests || 0) + 1; p.testBest = p.testBest == null ? n : Math.min(p.testBest, n); if (n === 0) p.passed = true; }
+    });
+    if (mode === 'test') S.courseMsg = { tone: n === 0 ? 'ok' : 'no', text: n === 0 ? 'Mastered! You played the whole line from memory.' : n + ' slip' + (n === 1 ? '' : 's') + '. Practice once more, then retake the test.' };
+    else S.courseMsg = { tone: 'ok', text: n === 0 ? 'Clean run! Next, take the test and play it from memory.' : 'Line complete with ' + n + ' slip' + (n === 1 ? '' : 's') + '. Run it again until it’s clean.' };
     return true;
   }
   function playFromHere() {
@@ -635,6 +728,7 @@
       if (ply && (ply.from === s.sq || ply.to === s.sq)) cls += ' last';
       if (S.selected === s.sq) cls += ' sel';
       if (checkSq === s.sq) cls += ' check';
+      if (S.markSq && S.markSq.indexOf(s.sq) >= 0) cls += ' mark';
       html += '<div class="' + cls + '" data-sq="' + s.sq + '">';
       if (OPT.coords && !blind && s.col === 0) html += '<span class="co r">' + s.sq[1] + '</span>';
       if (OPT.coords && !blind && s.row === 7) html += '<span class="co f">' + s.sq[0] + '</span>';
@@ -646,8 +740,9 @@
     });
     // Arrows: the hint, or the better move after a slip.
     var arrows = [];
+    if (S.threatArrow && S.mode === 'learn') arrows.push(S.threatArrow);
     if (S.hintArrow && S.hintArrow.from) arrows.push(S.hintArrow);
-    else if (showBadge && ply.bestUci && BAD.indexOf(ply.cls) >= 0 && (S.mode !== 'play' || ply.color === S.you)) {
+    else if (S.mode !== 'learn' && showBadge && ply.bestUci && BAD.indexOf(ply.cls) >= 0 && (S.mode !== 'play' || ply.color === S.you)) {
       arrows.push({ from: ply.bestUci.slice(0, 2), to: ply.bestUci.slice(2, 4), tone: 'better' });
       if (ply.replyUci && ply.replyUci !== '(none)') arrows.push({ from: ply.replyUci.slice(0, 2), to: ply.replyUci.slice(2, 4), tone: 'threat' });
     }
@@ -826,11 +921,131 @@
       '<details class="strat"><summary>Where your pieces belong</summary><div class="body">' + listHtml(st.pieces) + '</div></details>' +
       '<details class="strat"><summary>Watch out for</summary><div class="body">' + listHtml(st.watch, 'watch') + '</div></details>';
   }
+  // First ply index (in plies) where each goal was reached, or -1.
+  function goalReach(course, plies) {
+    var maps = plies.map(function (p) { return pieceMap(p.fen); });
+    return course.strategy.goals.map(function (g) {
+      for (var i = 0; i < maps.length; i++) if (goalHit(g[1], maps[i])) return i;
+      return -1;
+    });
+  }
+  // The plan sentence that explains a goal: one mentioning its square, else its piece.
+  function goalWhy(course, g) {
+    var st = course.strategy, pool = st.plans.concat(st.pieces), sqs = g[1].slice(2).split('|');
+    var kw = { k: 'castle', q: 'queen', r: 'rook', b: 'bishop', n: 'knight', p: null }[g[1][0].toLowerCase()];
+    return pool.find(function (t) { return sqs.some(function (sq) { return t.indexOf(sq) >= 0; }); }) ||
+      (kw && pool.find(function (t) { return t.toLowerCase().indexOf(kw) >= 0; })) || st.plans[0];
+  }
+  function goalMove(g, fen) {
+    var c = new Chess(fen), L = g[1][0], color = L === L.toUpperCase() ? 'w' : 'b', type = L.toLowerCase(), sqs = g[1].slice(2).split('|');
+    if (c.turn() !== color) return null;
+    return c.moves({ verbose: true }).filter(function (m) { return m.piece === type && sqs.indexOf(m.to) >= 0; })[0] || null;
+  }
+  // Where the game left the course line, if it did.
+  function bookDeviation(course, plies) {
+    var mv = course.moves.split(' ');
+    for (var i = 0; i < Math.min(mv.length, plies.length); i++) if (plies[i].san !== mv[i]) return { i: i, played: plies[i].san, book: mv[i], color: plies[i].color };
+    return null;
+  }
+  var PIECE_NAME = { k: 'king', q: 'queen', r: 'rook', b: 'bishop', n: 'knight', p: 'pawn' };
+
   function planCardHtml(course) {
-    return '<div class="sec"><div class="spread"><h3>Game plan</h3><span class="planhead"><span class="eco">' + course.eco + '</span><b>' + esc(course.name) + '</b></span></div>' +
-      goalsHtml(course) + strategyHtml(course, false) + '</div>';
+    var plies = S.plies.slice(0, S.view), reach = goalReach(course, plies), goals = course.strategy.goals;
+    var next = reach.indexOf(-1), dev = bookDeviation(course, plies), you = course.side;
+    var h = '<div class="sec plancard"><div class="spread"><h3>Game plan</h3><span class="planhead"><span class="eco">' + course.eco + '</span><b>' + esc(course.name) + '</b></span></div>';
+    if (dev) {
+      var byYou = dev.color === you, who = byYou ? 'You' : (S.mode === 'play' ? esc(S.bot.name) : (dev.color === 'w' ? 'White' : 'Black'));
+      h += '<p class="devnote">' + who + ' left the line at <b>' + moveLabel(dev.i, dev.played) + '</b> (the line plays ' + esc(dev.book) + '). ' + (byYou ? 'That’s fine if it fits the plan below.' : 'The plan below still applies.') + '</p>';
+    } else if (plies.length < course.moves.split(' ').length) {
+      h += '<p class="devnote">Still in the book line.</p>';
+    }
+    if (next >= 0) {
+      var g = goals[next];
+      h += '<div class="nextstep"><small>Next step</small><b>' + esc(g[0]) + '</b><p>' + esc(goalWhy(course, g)) + '</p>' +
+        '<div class="row"><button class="ib sm" data-plan="' + next + '">' + svgIcon('eye') + 'Show me</button></div>' +
+        (S.planMsg ? '<p class="planmsg ' + (S.planMsg.tone || '') + '">' + esc(S.planMsg.text) + '</p>' : '') + '</div>';
+    } else {
+      h += '<div class="nextstep done"><small>All goals reached</small><b>Now work on the bigger plans</b><p>' + esc(course.strategy.plans[0]) + '</p></div>';
+    }
+    h += '<div class="goalchips">' + goals.map(function (g, i) {
+      return '<span class="gchip' + (reach[i] >= 0 ? ' met' : i === next ? ' now' : '') + '" title="' + (reach[i] >= 0 ? 'Reached on move ' + (Math.floor(reach[i] / 2) + 1) : 'Not reached yet') + '">' + (reach[i] >= 0 ? '✓ ' : '') + esc(g[0]) + '</span>';
+    }).join('') + '</div>';
+    return h + strategyHtml(course, false) + '</div>';
   }
 
+  // "Show me": draw the move that reaches the goal, and warn if it isn't safe yet.
+  function showPlanStep(i) {
+    var course = S.mode === 'play' ? planCourse(S.you) : S.course; if (!course) return;
+    var g = course.strategy.goals[i], fen = curFen(), m = goalMove(g, fen), gen = S.gen;
+    S.markSq = null; S.hintArrow = null;
+    if (!m) {
+      var c = new Chess(fen), L = g[1][0], type = L.toLowerCase(), color = L === L.toUpperCase() ? 'w' : 'b', sqs = g[1].slice(2).split('|'), own = [];
+      c.board().forEach(function (row, r) { row.forEach(function (p, f) { if (p && p.type === type && p.color === color) own.push(FILES[f] + (8 - r)); }); });
+      S.markSq = sqs.concat(own);
+      S.planMsg = { tone: 'warn', text: c.turn() !== color ? 'Wait for your move.' : type === 'k' ? 'You can’t castle yet: clear the squares between king and rook first, and make sure the king isn’t in check.' :
+        'Not possible in one move. Your ' + PIECE_NAME[type] + ' needs to travel toward ' + sqs.join(' or ') + ' (highlighted). Make room or bring it closer first.' };
+      render(); return;
+    }
+    S.hintArrow = { from: m.from, to: m.to, tone: 'hint' };
+    S.planMsg = { text: 'Checking ' + m.san + '…' }; render();
+    var after = new Chess(fen); after.move(m);
+    Promise.all([evaluate(fen), evaluate(after.fen())]).then(function (r) {
+      if (gen !== S.gen || curFen() !== fen) return;
+      var sign = m.color === 'w' ? 1 : -1, drop = r[0] && r[1] ? winPct(sign * r[0].cp) - winPct(sign * r[1].cp) : 0;
+      var best = r[0] && r[0].best ? uciToSan(fen, r[0].best) : null;
+      if (drop >= 10) S.planMsg = { tone: 'warn', text: m.san + ' reaches it, but not safely right now: it would cost material. ' + (best ? 'Stockfish prefers ' + best + ' first.' : 'Prepare it first.') };
+      else S.planMsg = { tone: 'good', text: m.san + ' does it (arrow), and it’s safe to play now.' };
+      render();
+    });
+  }
+
+  // ---------- Plain-language game summary for reviews ----------
+  function reviewSummaryHtml() {
+    var P = S.plies;
+    if (P.length < 6) return '';
+    if (P.some(function (p) { return !p.cls; })) return '<div class="sec"><h3>Game summary</h3><p class="muted">Your summary appears once every move is rated.</p></div>';
+    var side = S.reviewYou || S.orient, youLabel = S.reviewYou ? 'You' : (side === 'w' ? 'White' : 'Black'), your = S.reviewYou ? 'Your' : youLabel + '’s';
+    var rows = [];
+    var row = function (ic, title, text, act) { rows.push('<div class="srow">' + icon(ic, 22) + '<div><b>' + title + '</b><p>' + text + '</p>' + (act || '') + '</div></div>'); };
+    var sans = P.map(function (p) { return p.san; }), o = openingName(sans), bookN = 0;
+    while (bookN < P.length && P[bookN].cls === 'book') bookN++;
+    row('book', 'Opening', (o ? '<b class="eco">' + o.eco + '</b>' + esc(o.name) + '. ' : '') + (bookN ? 'The first ' + Math.ceil(bookN / 2) + ' move' + (bookN > 2 ? 's were' : ' was') + ' known theory.' : 'You left known theory right away.'));
+    // Course line and plan progress
+    var course = null, bestK = 3;
+    OPENINGS.COURSES.forEach(function (c) { if (c.side !== side) return; var mv = c.moves.split(' '), k = 0; while (k < mv.length && k < sans.length && mv[k] === sans[k]) k++; if (k > bestK) { bestK = k; course = c; } });
+    if (course) {
+      var dev = bookDeviation(course, P), reach = goalReach(course, P), got = [], miss = [];
+      course.strategy.goals.forEach(function (g, i) { if (reach[i] >= 0) got.push(esc(g[0]) + ' (move ' + (Math.floor(reach[i] / 2) + 1) + ')'); else miss.push(g); });
+      var devTxt = dev ? (dev.color === side ? youLabel + ' left the ' + esc(course.name) + ' line at ' + moveLabel(dev.i, dev.played) + '; the line plays ' + esc(dev.book) + '.' : 'The opponent left the ' + esc(course.name) + ' line at ' + moveLabel(dev.i, dev.played) + '.') : 'The game followed the ' + esc(course.name) + ' line all the way.';
+      row('best', 'Game plan', devTxt + ' Plan goals reached: ' + got.length + ' of ' + course.strategy.goals.length + (got.length ? ': ' + got.join(', ') + '.' : '.') + (miss.length ? ' Missed: ' + miss.map(function (g) { return esc(g[0]); }).join(', ') + '.' : ''));
+    }
+    // Accuracy by phase for this side
+    var ph = { o: [0, 0], m: [0, 0], e: [0, 0] };
+    P.forEach(function (p, i) { if (p.color === side && p.acc != null) { var k = phaseOf(i, p.fenBefore); ph[k][0] += p.acc; ph[k][1]++; } });
+    var names = { o: 'opening', m: 'middlegame', e: 'endgame' }, parts = [], worst = null;
+    ['o', 'm', 'e'].forEach(function (k) { if (ph[k][1]) { var v = ph[k][0] / ph[k][1]; parts.push(names[k] + ' ' + v.toFixed(0) + '%'); if (ph[k][1] >= 3 && (!worst || v < worst[1])) worst = [k, v]; } });
+    row('excellent', your + ' accuracy', parts.join(', ') + '.' + (worst && worst[1] < 85 ? ' The ' + names[worst[0]] + ' cost the most.' : ''));
+    // Turning point and best moment
+    var mine = P.map(function (p, i) { return { p: p, i: i }; }).filter(function (x) { return x.p.color === side; });
+    var worstMove = mine.filter(function (x) { return BAD.indexOf(x.p.cls) >= 0; }).sort(function (a, b) { return b.p.drop - a.p.drop; })[0];
+    if (worstMove) {
+      var w = worstMove.p;
+      row(w.cls, 'Turning point', moveLabel(worstMove.i, w.san) + ' was ' + ({ inaccuracy: 'an inaccuracy', mistake: 'a mistake', miss: 'a miss', blunder: 'a blunder' })[w.cls] + ' (' + fmtEval(w.evalBefore) + ' → ' + fmtEval(w.evalAfter) + ').' + (w.bestSan ? ' Better was <b>' + esc(w.bestSan) + '</b>.' : '') + (w.replySan ? ' It allowed <b>' + esc(w.replySan) + '</b>.' : ''),
+        '<button class="link" data-ply="' + (worstMove.i + 1) + '">Go to this move ' + svgIcon('next') + '</button>');
+    } else row('best', 'Turning point', 'No real mistakes from ' + (S.reviewYou ? 'you' : youLabel) + '. Well played.');
+    var star = mine.filter(function (x) { return x.p.cls === 'brilliant' || x.p.cls === 'great'; })[0];
+    if (star) row(star.p.cls, 'Best moment', moveLabel(star.i, star.p.san) + ' was ' + (star.p.cls === 'brilliant' ? 'brilliant: a sacrifice that works.' : 'great: the only good move.'), '<button class="link" data-ply="' + (star.i + 1) + '">See it ' + svgIcon('next') + '</button>');
+    // One takeaway
+    var blunders = mine.filter(function (x) { return x.p.cls === 'blunder' || x.p.cls === 'miss'; }).length, take;
+    var weak = worst && worst[1] < 85 ? worst[0] : null;
+    if (blunders) take = 'Before each move, check what your opponent can capture or attack. The Threats button shows it.';
+    else if (course && miss && miss.length && weak !== 'o') take = 'Next time, aim for "' + esc(miss[0][0]) + '": ' + esc(goalWhy(course, miss[0]));
+    else if (weak === 'o') take = 'Your opening cost the most. Drill this line in Openings until you can play it from memory.';
+    else if (weak === 'e') take = 'Practice the endgame drills in Train: converting won endings is where points slip.';
+    else take = 'A clean game. Try a stronger bot to find your next weak spot.';
+    row('great', 'Takeaway', take);
+    return '<div class="sec summary"><h3>Game summary</h3>' + rows.join('') + '</div>';
+  }
 
   // ---------- AI coach: plain-language explanations (needs the viewer's consent) ----------
   var sampler = null;
@@ -985,7 +1200,7 @@
     switchMode('analyse', true);
     resetGame(h.start || START);
     h.sans.forEach(function (san) { pushMove(san); });
-    S.view = 0; S.orient = h.you;
+    S.view = 0; S.orient = h.you; S.reviewYou = h.you;
     render(); runReview();
   }
 
@@ -1609,6 +1824,11 @@
     if (S.threatMsg) h2 += '<div class="sec"><p class="note threat">' + esc(S.threatMsg) + '</p></div>';
     h2 += '<div class="sec">' + (S.showRatings || res ? coachHtml(lastMine, null) : '<div class="coach"><div class="ico idle">' + icon('book', 38) + '</div><div><div class="t">Live ratings are hidden</div><div class="d">They’re still recorded. Review the game when it ends.</div></div></div>') + engineNote() + '</div>';
     var pc = S.plies.length >= 6 ? planCourse(S.you) : null;
+    if (pc && lastMine) {
+      var reachNow = goalReach(pc, S.plies), li = S.plies.indexOf(lastMine);
+      var hit = pc.strategy.goals.filter(function (g, i) { return reachNow[i] === li; });
+      if (hit.length) h2 = h2.replace(/<\/div>$/, '<p class="goalhit">' + icon('best', 18) + 'Plan goal reached: ' + hit.map(function (g) { return esc(g[0]); }).join(', ') + '</p></div>');
+    }
     if (pc) h2 += planCardHtml(pc);
     h2 += '<div class="sec">' + (S.showRatings || res ? accHtml(S.you === 'w' ? ['You', S.bot.name] : [S.bot.name, 'You']) : '') + movesHtml() +
       '<label class="toggle" for="rateToggle"><span>Live move ratings</span><input type="checkbox" id="rateToggle"' + (S.showRatings ? ' checked' : '') + '></label></div>';
@@ -1701,6 +1921,7 @@
       if (reviewing) h += '<div class="sec"><div class="spread"><h3>Rating moves</h3><span class="muted mono">' + S.review.done + ' / ' + S.review.total + '</span></div><div class="prog"><i style="width:' + (S.review.done / Math.max(1, S.review.total) * 100) + '%"></i></div></div>';
       if (!S.plies.length) h += '<div class="sec"><div class="empty-state">' + icon('excellent', 40) + '<p>Load a game from the Import tab, or play moves in Engine, and the full review shows up here: accuracy, key moments and every move graded.</p></div></div>';
       else {
+        h += reviewSummaryHtml();
         h += '<div class="sec">' + (p ? coachHtml(p, p.color === 'w' ? 'White:' : 'Black:') : '<p class="muted">Step through the game with the arrows, or tap a key moment.</p>') + '</div>';
         h += '<div class="sec">' + graphHtml() + accHtml(['White', 'Black']) + keyMomentsHtml() + '</div>';
         h += '<div class="sec"><h3>Moves</h3>' + movesHtml() + '</div>';
@@ -1733,7 +1954,7 @@
   function renderLearn() {
     var prog = courseProgress();
     if (!S.course) {
-      var f = S.opFilter, mastered = OPENINGS.COURSES.filter(function (c) { return prog[c.id] && prog[c.id].best === 0; }).length;
+      var f = S.opFilter, mastered = OPENINGS.COURSES.filter(function (c) { return courseStage(c) === 'mastered'; }).length;
       var tabs = '<div class="ptabs" role="tablist" aria-label="Filter openings">' + [['all', 'All'], ['w', 'For White'], ['b', 'For Black']].map(function (t) {
         return '<button role="tab" data-opf="' + t[0] + '" aria-selected="' + (f === t[0]) + '">' + t[1] + '</button>';
       }).join('') + '</div>';
@@ -1742,31 +1963,50 @@
       var chips = '<div class="chips" role="group" aria-label="Opening style">' + Object.keys(CATL).map(function (k) { return '<button data-opcat="' + k + '" aria-pressed="' + (cat === k) + '">' + CATL[k] + '</button>'; }).join('') + '</div>';
       var list = shown.map(function (c) {
         var p = prog[c.id], moves = Math.ceil(c.moves.split(' ').length / 2);
-        var st = p ? (p.best === 0 ? '<span class="ostat ok">' + icon('best', 16) + 'Mastered</span>' : '<span class="ostat">Done ' + p.runs + '× · best ' + p.best + ' slip' + (p.best === 1 ? '' : 's') + '</span>') : '<span class="ostat">' + moves + ' moves · new</span>';
+        var stage = courseStage(c), lvl = { 'new': 0, watched: 1, practiced: 2, mastered: 3 }[stage];
+        var st = '<span class="ostat' + (stage === 'mastered' ? ' ok' : '') + '"><span class="steps3">' + [0, 1, 2].map(function (k) { return '<i class="' + (k < lvl ? 'on' : '') + '"></i>'; }).join('') + '</span>' +
+          ({ 'new': moves + ' moves · start by watching', watched: 'Watched · next: practice', practiced: 'Practiced · next: test', mastered: 'Mastered' })[stage] + '</span>';
         return '<button class="ocard" data-course="' + c.id + '">' + miniBoard(courseFen(c), c.side) + '<span class="ot"><span class="ometa"><span class="eco">' + c.eco + '</span><span class="side side-' + c.side + '">' + (c.side === 'w' ? 'White' : 'Black') + '</span>' + c.cats.map(function (k) { return '<span class="ctag c-' + k + '">' + CATL[k] + '</span>'; }).join('') + '</span><b>' + esc(c.name) + '</b><small>' + esc(c.sub) + '</small>' + st + '</span></button>';
       }).join('');
       return { key: 'list-' + f + cat, head: { title: 'Openings', sub: mastered + ' of ' + OPENINGS.COURSES.length + ' mastered \u00b7 ' + shown.length + ' shown', tabs: tabs },
         body: '<div class="sec">' + chips + '<p class="muted">Pick a line. You play your side, the book plays the other, and every move comes with the idea behind it.</p><div class="olist">' + (list || '<p class="muted">No openings match these filters.</p>') + '</div></div>' };
     }
-    var c = S.course, mv = courseMoves(), n = S.plies.length, mineIdx = c.side === 'w' ? 0 : 1;
+    var c = S.course, mv = courseMoves(), n = S.plies.length, mineIdx = c.side === 'w' ? 0 : 1, mode = S.courseMode, stage = courseStage(c);
+    var modes = [['watch', 'Watch', stage !== 'new'], ['practice', 'Practice', stage === 'practiced' || stage === 'mastered'], ['test', 'Test', stage === 'mastered']];
+    var tabs = '<div class="ptabs" role="tablist" aria-label="Training step">' + modes.map(function (m, k) {
+      return '<button role="tab" data-cmode="' + m[0] + '" aria-selected="' + (mode === m[0]) + '"><span class="stepn' + (m[2] ? ' ok' : '') + '">' + (m[2] ? '✓' : k + 1) + '</span>' + m[1] + '</button>';
+    }).join('') + '</div>';
     var prev = '';
     mv.forEach(function (m, i) {
       if (i % 2 === 0) prev += '<span class="no">' + (i / 2 + 1) + '.</span>';
-      var cls = i < n ? 'done' : (i === n && i % 2 === mineIdx && !S.courseDone ? 'next' : 'todo');
-      var txt = i < n ? esc(m) : (i === n && i % 2 === mineIdx && !S.courseDone ? 'your move' : '···');
+      var mineMove = i % 2 === mineIdx, upcoming = i === n && !S.courseDone;
+      var show = i < n || (mode === 'watch' && upcoming);
+      var cls = i < n ? 'done' : upcoming ? 'next' : 'todo';
+      var txt = show ? esc(m) : (upcoming && mineMove ? 'your move' : '···');
       prev += '<span class="' + cls + '">' + txt + '</span> ';
     });
-    var msg = S.courseMsg ? '<div class="note" style="border-color:var(--' + (S.courseMsg.tone === 'no' ? 'c-blunder' : S.courseMsg.tone === 'ok' ? 'c-best' : 'accent') + ')">' + esc(S.courseMsg.text) + '</div>' : '';
-    var b = '<div class="sec"><p class="plan">' + esc(c.plan) + '</p></div>';
-    b += '<div class="sec"><div class="spread"><h3>The line</h3><span class="muted mono">' + Math.min(n, mv.length) + ' / ' + mv.length + (S.courseMistakes ? ' · ' + S.courseMistakes + ' slip' + (S.courseMistakes === 1 ? '' : 's') : '') + '</span></div><p class="linepreview">' + prev + '</p><div class="prog"><i style="width:' + (n / mv.length * 100) + '%"></i></div>' + msg + '</div>';
+    var cm = S.courseMsg, tone = cm ? ({ no: 'bad', ok: 'good', alt: 'alt' })[cm.tone] || '' : '';
+    var msg = cm ? '<div class="lesson ' + tone + '">' + (cm.move ? '<span class="lmove"><small>' + esc(cm.who) + '</small><b>' + esc(cm.move) + '</b></span>' : '') + '<p>' + esc(cm.text) + '</p></div>' : '';
+    var opp = S.oppNote ? '<div class="oppnote ' + (S.oppNote.tone || '') + '"><small>Opponent’s idea</small><p>' + esc(S.oppNote.text) + '</p></div>' : '';
+    var intro = { watch: 'Step 1: watch the line once with explanations.', practice: 'Step 2: play your side. Hints are allowed, and good alternatives are pointed out.', test: 'Step 3: play it from memory. A clean run masters the line.' }[mode];
+    var b = '<div class="sec"><p class="stepintro">' + intro + '</p><p class="plan">' + esc(c.plan) + '</p></div>';
+    b += '<div class="sec"><div class="spread"><h3>The line</h3><span class="muted mono">' + Math.min(n, mv.length) + ' / ' + mv.length + (S.courseMistakes ? ' · ' + S.courseMistakes + ' slip' + (S.courseMistakes === 1 ? '' : 's') : '') + '</span></div><p class="linepreview">' + prev + '</p><div class="prog"><i style="width:' + (n / mv.length * 100) + '%"></i></div>' + msg + opp + '</div>';
     b += '<div class="sec"><h3>' + (S.courseDone ? 'Now you’re out of book' : 'After the opening') + '</h3>' + strategyHtml(c, S.courseDone) +
       '<details class="strat"' + (S.courseDone ? ' open' : '') + '><summary>Goals to aim for</summary><div class="body">' + goalsHtml(c) + '</div></details></div>';
+    var foot;
+    if (mode === 'watch') foot = S.courseDone ? '<button class="ib primary grow" data-cmode="practice">Practice it ' + svgIcon('next') + '</button><button class="ib" id="watchBack">' + svgIcon('back') + 'Back</button>' :
+      '<button class="ib" id="watchBack"' + (n ? '' : ' disabled') + '>' + svgIcon('back') + 'Back</button><button class="ib primary grow" id="watchNext">Next move ' + svgIcon('next') + '</button>';
+    else if (S.courseDone) {
+      var passed = mode === 'test' && S.courseMistakes === 0;
+      foot = (mode === 'practice' && S.courseMistakes === 0 ? '<button class="ib primary grow" data-cmode="test">Take the test ' + svgIcon('next') + '</button>' :
+        passed ? '<button class="ib primary grow" id="playFrom">Play it out vs ' + esc(S.bot.name) + '</button>' : '<button class="ib primary grow" data-cmode="' + mode + '">Run it again</button>') +
+        (passed ? '' : '<button class="ib" id="playFrom">Play it out</button>');
+    } else foot = (mode === 'practice' ? '<button class="ib" id="hintBtn">' + svgIcon('hint') + 'Hint</button>' : '') + '<button class="ib" data-cmode="' + mode + '">' + svgIcon('undo') + 'Restart</button>';
     return {
-      key: 'course-' + c.id,
-      head: { title: esc(c.name), sub: '<b class="eco">' + c.eco + '</b>' + esc(c.sub) + ' · you play ' + (c.side === 'w' ? 'White' : 'Black'), back: 'id="backCourses"' },
+      key: 'course-' + c.id + '-' + mode,
+      head: { title: esc(c.name), sub: '<b class="eco">' + c.eco + '</b>' + esc(c.sub) + ' · you play ' + (c.side === 'w' ? 'White' : 'Black'), back: 'id="backCourses"', tabs: tabs },
       body: b,
-      foot: S.courseDone ? '<button class="ib primary grow" id="playFrom">Play it out vs ' + esc(S.bot.name) + '</button><button class="ib" id="drillAgain">' + svgIcon('undo') + 'Again</button>' :
-        '<button class="ib" id="hintBtn">' + svgIcon('hint') + 'Hint</button><button class="ib" id="drillAgain">' + svgIcon('undo') + 'Restart</button>'
+      foot: foot
     };
   }
 
@@ -1818,6 +2058,8 @@
     if (t.dataset.theme) { T.theme = t.dataset.theme; store.set('pzTheme', T.theme); nextPuzzle(); return; }
     if (t.dataset.co) { T.co.color = t.dataset.co; startCoords(); return; }
     if (t.dataset.hist != null) { loadHistoryGame(store.get('history', [])[+t.dataset.hist]); return; }
+    if (t.dataset.plan != null) { showPlanStep(+t.dataset.plan); return; }
+    if (t.dataset.cmode) { startCourse(S.course, t.dataset.cmode); return; }
     if (t.dataset.course) { startCourse(OPENINGS.COURSES.find(function (c) { return c.id === t.dataset.course; })); return; }
     switch (t.id) {
       case 'startBtn': startPlay(); break;
@@ -1841,7 +2083,9 @@
       case 'clearBtn': resetGame(); render(); startLive(); break;
       case 'importBtn': S.importDraft = $('#importBox').value; loadImport(S.importDraft); break;
       case 'backCourses': resetGame(); S.course = null; render(); break;
-      case 'drillAgain': startCourse(S.course); break;
+      case 'drillAgain': startCourse(S.course, S.courseMode); break;
+      case 'watchNext': watchStep(1); break;
+      case 'watchBack': watchStep(-1); break;
       case 'playFrom': playFromHere(); break;
     }
   });
@@ -1870,12 +2114,12 @@
   function toAnalyse() {
     var plies = S.plies, start = S.startFen;
     switchMode('analyse', true);
-    S.gen++; S.startFen = start; S.plies = plies; rebuildGame(); S.view = 0; S.playing = false;
+    S.gen++; S.startFen = start; S.plies = plies; rebuildGame(); S.view = 0; S.playing = false; S.reviewYou = S.you;
     render(); runReview();
   }
 
   function goto(v) {
-    S.view = Math.max(0, Math.min(S.plies.length, v)); S.selected = null; S.hintArrow = null; S.threatMsg = null;
+    S.view = Math.max(0, Math.min(S.plies.length, v)); S.selected = null; S.hintArrow = null; S.threatMsg = null; S.planMsg = null; S.markSq = null;
     render();
     if (S.mode === 'analyse') startLive();
     else evaluate(curFen()).then(function () { renderEval(); });
@@ -1900,7 +2144,7 @@
     if (S.botJob) S.botJob.cancel();
     if (S.mode === 'play') clockPause();
     stopLive(); stopTrain();
-    S.gen++; S.botThinking = false; S.selected = null; S.hintArrow = null; S.learnBusy = false; S.threatMsg = null;
+    S.gen++; S.botThinking = false; S.selected = null; S.hintArrow = null; S.learnBusy = false; S.threatMsg = null; S.markSq = null; S.planMsg = null; S.threatArrow = null;
     if (m === 'train') { T.view = 'menu'; fresh = true; }
     S.mode = m;
     document.querySelectorAll('.tabs button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.mode === m); });

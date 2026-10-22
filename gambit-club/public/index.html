@@ -448,6 +448,53 @@ details.strat .body{padding:0 12px 12px;display:grid;gap:8px}
 .ctag{font:700 10px/1 var(--f-body);padding:3px 6px;border-radius:4px;background:var(--bg);color:var(--muted)}
 .ctag.c-popular{color:#E8C65A}.ctag.c-control{color:#9CC3E6}.ctag.c-aggressive{color:#FF8F7A}.ctag.c-fast{color:#7FD8C4}.ctag.c-offbeat{color:#C9A8F0}
 
+/* ---------- Opening lessons ---------- */
+.stepintro{font-size:12.5px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+.stepn{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--surface-3);font:800 10.5px/1 var(--f-body);margin-right:6px;vertical-align:1px}
+.stepn.ok{background:var(--accent);color:#fff}
+.steps3{display:inline-flex;gap:3px;margin-right:6px}
+.steps3 i{width:14px;height:4px;border-radius:2px;background:var(--surface-3)}
+.steps3 i.on{background:var(--accent)}
+.lesson{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:12px;border-radius:10px;background:var(--surface-2);font-size:14.5px;line-height:1.5}
+.lesson p{grid-column:2}
+.lesson:not(:has(.lmove)) p{grid-column:1/-1}
+.lmove{display:grid;gap:2px;padding:6px 9px;border-radius:7px;background:rgb(0 0 0 / .22);min-width:4.5em;text-align:center}
+.lmove small{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.lmove b{font:700 15px/1.1 var(--f-mono)}
+.lesson.good{background:color-mix(in srgb, var(--accent) 16%, var(--surface-2))}
+.lesson.bad{background:color-mix(in srgb, var(--c-blunder) 14%, var(--surface-2))}
+.lesson.alt{background:color-mix(in srgb, var(--c-great) 18%, var(--surface-2))}
+.oppnote{padding:10px 12px;border-radius:10px;border:1px dashed var(--surface-3);font-size:14px;line-height:1.5}
+.oppnote small{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-bottom:2px}
+.oppnote.threat{border-color:var(--c-blunder);border-style:solid}
+.oppnote.idea{border-color:var(--c-inacc)}
+
+/* ---------- Game plan card ---------- */
+.devnote{font-size:13px;color:var(--muted);line-height:1.45}
+.devnote b{color:var(--ink);font-family:var(--f-mono)}
+.nextstep{display:grid;gap:4px;padding:12px;border-radius:10px;background:color-mix(in srgb, var(--accent) 12%, var(--surface-2));border:1px solid color-mix(in srgb, var(--accent) 40%, transparent)}
+.nextstep small{font-size:10.5px;color:var(--accent-hi);text-transform:uppercase;letter-spacing:.08em;font-weight:800}
+.nextstep b{font:800 17px/1.2 var(--f-display)}
+.nextstep p{font-size:13.5px;color:var(--muted);line-height:1.45}
+.nextstep .row{margin-top:6px}
+.planmsg{font-size:13.5px;line-height:1.45;color:var(--ink)!important;padding-top:4px}
+.planmsg.good{color:var(--accent-hi)!important}.planmsg.warn{color:var(--c-inacc)!important}
+.goalchips{display:flex;flex-wrap:wrap;gap:6px}
+.gchip{font-size:12.5px;padding:4px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.gchip.met{background:color-mix(in srgb, var(--accent) 22%, var(--surface-2));color:var(--ink)}
+.gchip.now{box-shadow:inset 0 0 0 1.5px var(--accent);color:var(--ink)}
+.goalhit{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--accent-hi)}
+.sq.mark::before{content:"";position:absolute;inset:6%;border-radius:50%;box-shadow:inset 0 0 0 calc(var(--bs) / 140) var(--accent-hi);z-index:3;pointer-events:none}
+
+/* ---------- Review summary ---------- */
+.summary{gap:10px}
+.srow{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:10px 12px;border-radius:10px;background:var(--surface-2)}
+.srow .ci{margin-top:1px}
+.srow b{font-size:14px}
+.srow p{font-size:13.5px;color:var(--muted);line-height:1.5;margin-top:2px}
+.srow p b{color:var(--ink);font-size:inherit}
+.srow .link{margin-top:6px}
+
 .brand .mark{background-image:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMiAxMGMxMC41IDEgMTYuNSA4IDE2IDI5SDE1YzAtOSAxMC02LjUgOC0yMSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0yNCAxOGMuMzggMi45MS01LjU1IDcuMzctOCA5LTMgMi0yLjgyIDQuMzQtNSA0LTEuMDQyLS45NCAxLjQxLTMuMDQgMC0zLTEgMCAuMTkgMS4yMy0xIDItMSAwLTQuMDAzIDEtNC00IDAtMiA2LTEyIDYtMTJzMS44OS0xLjkgMi0zLjVjLS43My0uOTk0LS41LTItLjUtMyAxLTEgMyAyLjUgMyAyLjVoMnMuNzgtMS45OTIgMi41LTNjMSAwIDEgMyAxIDMiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNOS41IDI1LjVhLjUuNSAwIDEgMS0xIDAgLjUuNSAwIDEgMSAxIDB6bTUuNDMzLTkuNzVhLjUgMS41IDMwIDEgMS0uODY2LS41LjUgMS41IDMwIDEgMSAuODY2LjV6IiBmaWxsPSIjMDAwIi8+PC9nPjwvc3ZnPg==')}
 
 /* Pieces: cburnett set by Colin M.L. Burnett (GPLv2+), via lichess/chessground */
