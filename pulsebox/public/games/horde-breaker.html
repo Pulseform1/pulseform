@@ -90,6 +90,12 @@ const GAME = {
     { n: 'brute', hp: 90, sp: 48, r: 28, dmg: 18, xp: 8, c: '#a24a3a', from: 150 },
   ];
   let me, foes, shots, gems, fx, t, lvl, xp, need, weap, stat, kills, pick, cam, keys, drag, spawnT, bossT, dead, cd, rangs, ground;
+  GAME.pose = () => {
+    weap = { knife: 3, orbit: 3, aura: 2 }; t = 140; lvl = 12; kills = 312;
+    for (let i = 0; i < 90; i++) { const f = FOES[i % 5], a = Math.random() * 6.283, d = K.rand(150, 560); foes.push({ ...f, x: Math.cos(a) * d, y: Math.sin(a) * d * .7, hp: 1, max: 1, flash: 0 }); }
+    for (let i = 0; i < 30; i++) gems.push({ x: K.rand(-400, 400), y: K.rand(-250, 250), v: 1 });
+    fx.push({ k: 'zap', x: 220, y: 60, t: .1 }, { k: 'boom', x: -260, y: -90, r: 80, t: .15 });
+  };
   GAME.reset = () => {
     me = { x: 0, y: 0, hp: 100, max: 100, sp: 210, face: 1, hurt: 0 }; foes = []; shots = []; gems = []; fx = []; rangs = [];
     t = 0; lvl = 1; xp = 0; need = 5; weap = { knife: 1 }; stat = { might: 1, haste: 1, magnet: 70 }; kills = 0; pick = null; cam = { x: 0, y: 0 }; keys = {}; drag = null; spawnT = 0; bossT = 180; dead = false; cd = {};

@@ -71,6 +71,9 @@ const GAME = {
     phase = 'call'; phaseT = 0; callOpen = !K.bot; view = null; g = null; lamp = false; bubble = ''; asked = false;
     if (K.bot) { phase = 'gap'; phaseT = 1; }
   }
+  GAME.pose = () => {
+    g = guests.find(q => q.other) || guests[0]; g.other = true; g.x = GX; g.walk = 1; phase = 'wait'; flash = 0; nextFlash = 99; g.lean = .7; GAME._poseGlow = true; lamp = false; view = null; bubble = '...I\'ve got a reservation.'; bubbleT = 99; callOpen = false; gi = 3;
+  };
   GAME.reset = () => {
     best0 = K.save.night || 1; lastNight = K.bot ? K.irand(1, 5) : best0;
     flash = 0; nextFlash = 6; deathT = 0; scareT = 0; hover = null;
@@ -192,7 +195,7 @@ const GAME = {
       gr.globalAlpha = Math.min(1, g.walk * 1.5);
       if (lamp && !(g.other && g.tell === 'shadow')) { gr.globalAlpha *= .9; drawPerson(gr, g.look, g.x - 120 * s, y + 10, s * 1.18, { silhouette: true }); gr.globalAlpha = Math.min(1, g.walk * 1.5); }
       const reveal = phase === 'reveal' ? Math.min(1, phaseT * 3) : 0;
-      drawPerson(gr, g.look, g.x, y + reveal * 20, s * (1 + reveal * .35), { glow: g.other && flash > .3, reveal, smile: g.smile && phase === 'leave', look: Math.sin(K.t * .7) });
+      drawPerson(gr, g.look, g.x, y + reveal * 20, s * (1 + reveal * .35), { glow: g.other && (flash > .3 || GAME._poseGlow), reveal, smile: g.smile && phase === 'leave', look: Math.sin(K.t * .7) });
       gr.globalAlpha = 1;
       if (!lamp) { const sh = gr.createRadialGradient(g.x, y + 40, 60, g.x, y + 40, 360); sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,.55)'); gr.fillStyle = sh; gr.fillRect(WX, WY, WW, WH); }
       else { const lg = gr.createRadialGradient(g.x + 160, WY + WH, 40, g.x + 160, WY + WH, 520); lg.addColorStop(0, 'rgba(255,214,140,.25)'); lg.addColorStop(1, 'rgba(255,214,140,0)'); gr.fillStyle = lg; gr.fillRect(WX, WY, WW, WH); }
