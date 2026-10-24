@@ -279,7 +279,7 @@ const GAME = {
     if (t >= DUR && !ended) {
       ended = .001; dlg = null; cust = null; lookDown = false;
       if (!K.bot) { K.save.night = Math.max(K.save.night || 1, Math.min(5, night + 1)); K.persist(); K.add(3); K.coin(5); K.chime(392, [0, 4, 7, 12]); }
-      if (night >= 5 && !K.bot) setTimeout(() => { if (K.state !== 'play') return; if (strikes === 0) { K.save.perfect = true; K.persist(); K.over({ title: 'Employee of the month', text: 'Five nights, every rule followed. At 5 AM the phone rings and the manager says: "You\'re perfect for this place. You never have to leave." Behind you, the door locks itself.' }); } else K.over({ title: 'Shift over', text: `The sun comes up. You broke ${strikes} rule${strikes > 1 ? 's' : ''} and lived anyway. You hang up the apron and never come back.` }); }, 3000);
+      if (night >= 5 && !K.bot) setTimeout(() => { if (K.state !== 'play') return; K.save.night = 1; K.persist(); if (strikes === 0) { K.save.perfect = true; K.persist(); K.over({ title: 'Employee of the month', text: 'Five nights, every rule followed. At 5 AM the phone rings and the manager says: "You\'re perfect for this place. You never have to leave." Behind you, the door locks itself.' }); } else K.over({ title: 'Shift over', text: `The sun comes up. You broke ${strikes} rule${strikes > 1 ? 's' : ''} and lived anyway. You hang up the apron and never come back.` }); }, 3000);
     }
   };
 

@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Space Colony</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron&family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+:root { color-scheme: dark; --accent: #c6ff3d; --accent2: #29e0ff; --bg: #0a0c12; --text: #f3f5ff; --muted: #a3a9c4; --panel: rgba(10,12,22,.86); --edge: rgba(255,255,255,.14); --display: 'Lilita One', 'Arial Black', system-ui, sans-serif; --body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--bg); }
+body { font-family: var(--body); color: var(--text); user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; touch-action: none; overscroll-behavior: none; }
+#cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* HUD */
+.hud { position: fixed; inset: 0; pointer-events: none; font-family: var(--display); }
+.hud-score { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); font-size: clamp(28px, 6vh, 56px); line-height: 1; text-shadow: 0 3px 0 rgba(0,0,0,.35), 0 0 18px rgba(0,0,0,.4); letter-spacing: .02em; }
+.hud-score.bump { animation: bump .18s ease-out; }
+@keyframes bump { 40% { transform: translateX(-50%) scale(1.18); } }
+.hud-coins { position: absolute; top: 12px; right: 14px; display: flex; align-items: center; gap: 6px; font-size: clamp(16px, 3.2vh, 24px); background: rgba(0,0,0,.35); padding: 4px 12px 4px 8px; border-radius: 999px; }
+.coin-i { width: 1em; height: 1em; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6c4, #ffcf2e 45%, #c98a00); box-shadow: 0 0 8px rgba(255,207,46,.6); display: inline-block; flex: none; }
+.hud-pause { position: absolute; top: 10px; left: 12px; width: 40px; height: 40px; border-radius: 12px; background: rgba(0,0,0,.35); pointer-events: auto; display: grid; place-items: center; }
+.hud-pause::before { content: ''; width: 14px; height: 16px; border-left: 5px solid #fff; border-right: 5px solid #fff; }
+
+/* screens */
+.scr { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: radial-gradient(ellipse at center, rgba(0,0,0,.25), rgba(0,0,0,.65)); }
+.card { width: min(440px, 100%); max-height: 100%; overflow: auto; text-align: center; background: var(--panel); border: 1px solid var(--edge); border-radius: 26px; padding: clamp(16px, 4vh, 28px) 22px; box-shadow: 0 24px 70px rgba(0,0,0,.5); backdrop-filter: blur(6px); }
+.title { font-family: var(--display); font-size: clamp(36px, 9vh, 64px); line-height: .95; margin: 0 0 6px; color: var(--accent); text-shadow: 0 4px 0 rgba(0,0,0,.35); letter-spacing: .01em; }
+.sub { margin: 0 0 14px; color: var(--muted); font-weight: 700; font-size: 15px; }
+.stats { display: flex; justify-content: center; gap: 10px; margin: 0 0 16px; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.07); border: 1px solid var(--edge); border-radius: 14px; padding: 6px 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.stat small { color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+.big { display: block; width: 100%; font-family: var(--display); font-size: clamp(22px, 5vh, 30px); padding: 12px 18px; border-radius: 18px; background: var(--accent); color: #0b0d14; box-shadow: 0 6px 0 rgba(0,0,0,.35), 0 0 30px color-mix(in srgb, var(--accent) 40%, transparent); transition: transform .1s; }
+.big:hover { transform: translateY(-2px); }
+.big:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.row { display: flex; gap: 10px; margin-top: 10px; }
+.row button { flex: 1; padding: 10px; border-radius: 14px; background: rgba(255,255,255,.08); border: 1px solid var(--edge); font-weight: 800; }
+.row button:hover { background: rgba(255,255,255,.14); }
+.how { margin: 14px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 14px; font-weight: 600; line-height: 1.45; }
+.score-big { font-family: var(--display); font-size: clamp(54px, 14vh, 96px); line-height: 1; margin: 4px 0; }
+.newbest { display: inline-block; font-family: var(--display); background: var(--accent2); color: #0b0d14; padding: 3px 12px; border-radius: 999px; margin-bottom: 8px; animation: pop .5s ease-out; }
+@keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } }
+.hint { color: var(--muted); font-size: 13px; margin-top: 10px; font-weight: 700; }
+
+/* skins */
+.skins { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin: 6px 0 14px; }
+.skin { border-radius: 16px; padding: 10px 6px 8px; background: rgba(255,255,255,.06); border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; }
+.skin.on { border-color: var(--accent); background: rgba(255,255,255,.12); }
+.skin.locked { opacity: .9; }
+.skin canvas { width: 56px; height: 56px; }
+.skin .price { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #ffe07a; }
+.skin.cant .price { color: #ff8a8a; }
+
+.mute { position: fixed; right: 12px; bottom: 12px; width: 42px; height: 42px; border-radius: 50%; background: rgba(0,0,0,.4); border: 1px solid var(--edge); font-size: 18px; display: grid; place-items: center; }
+.toast { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); font-family: var(--display); font-size: clamp(22px, 5vh, 38px); color: #fff; text-shadow: 0 3px 0 rgba(0,0,0,.4), 0 0 20px var(--accent); pointer-events: none; animation: toast 1.4s ease-out forwards; white-space: nowrap; }
+@keyframes toast { 0% { opacity: 0; transform: translate(-50%, 20px) scale(.7); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.08); } 25% { transform: translate(-50%, 0) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -20px); } }
+body.demo .hud-pause, body.demo .mute { display: none; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<script>
+const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
+/* Space Colony: build a base on Mars. Balance power, oxygen, food and water so colonists keep arriving.
+   Dust storms dim the solar panels, meteors smash buildings (unless shields are up), supply drops help.
+   Run out of oxygen or food and the colony is evacuated. The colony is saved between visits. */
+const GAME = {
+  id: 'space-colony', title: 'Space Colony', tagline: 'Build a Mars base. Keep everyone breathing.',
+  font: 'Orbitron', accent: '#ff8a4a', accent2: '#7cf2ff', bg: '#1a0a06', noHud: true, scoreLabel: 'Colonists',
+  how: ['Pick a building on the left, then tap the ground to build it.', 'Power runs everything. Colonists need oxygen, food and water.', 'Watch out for dust storms and meteor showers!'],
+  skins: [
+    { name: 'Mars', price: 0, c: ['#c2552a', '#7a2e14'] }, { name: 'Moon', price: 60, c: ['#9a9aa2', '#4a4a52'] }, { name: 'Ice world', price: 150, c: ['#bfe6f2', '#5a8aa2'] },
+    { name: 'Venus', price: 250, c: ['#d8b24a', '#7a5a1a'] }, { name: 'Alien', price: 400, c: ['#6ad28a', '#1a5a3a'] }, { name: 'Void', price: 700, c: ['#3a2a5a', '#120a22'] },
+  ],
+};
+(() => {
+  const B = {
+    solar: { n: 'Solar panel', cost: 10, pw: 6, c: '#3a6ad2' }, o2: { n: 'Oxygen maker', cost: 20, pw: -2, o2: 5, c: '#7cf2ff' },
+    farm: { n: 'Greenhouse', cost: 20, pw: -2, food: 5, water: -1, c: '#5fd36a' }, water: { n: 'Ice drill', cost: 15, pw: -1, water: 5, c: '#4a9aff' },
+    hab: { n: 'Habitat', cost: 30, pw: -1, house: 5, c: '#e6e0d0' }, mine: { n: 'Metal mine', cost: 25, pw: -2, metal: 3, c: '#b0a090' },
+    shield: { n: 'Meteor shield', cost: 80, pw: -4, c: '#c79bff' }, reactor: { n: 'Reactor', cost: 150, pw: 30, c: '#ffd23f' },
+  };
+  const KEYS = Object.keys(B), GX = 12, GY = 7, TS = 84, OX = 250, OY = 112, SOL = 24;
+  let S, sel, hover, tip, evt, evtT, meteors, saveT, rocket, stars, gameOver;
+  function fresh() {
+    const grid = Array(GX * GY).fill(null), rocks = Array.from({ length: GX * GY }, () => Math.random() < .12);
+    grid[3 * GX + 5] = 'hab'; grid[3 * GX + 6] = 'solar'; grid[2 * GX + 6] = 'solar'; grid[4 * GX + 6] = 'o2'; grid[4 * GX + 5] = 'farm'; grid[2 * GX + 5] = 'water';
+    [3 * GX + 5, 3 * GX + 6, 2 * GX + 6, 4 * GX + 6, 4 * GX + 5, 2 * GX + 5].forEach(i => rocks[i] = false);
+    return { grid, rocks, metal: 40, o2: 60, food: 60, water: 60, pop: 3, best: 3, sol: 1, t: 0 };
+  }
+  GAME.reset = () => {
+    S = K.bot ? fresh() : (K.save.col && !K.save.col.over ? K.save.col : fresh());
+    if (K.bot) { S.metal = 400; }
+    sel = 'solar'; hover = -1; tip = ''; evt = null; evtT = 40; meteors = []; saveT = 0; rocket = null; gameOver = false;
+    stars = Array.from({ length: 80 }, () => ({ x: Math.random() * W, y: Math.random() * 100, r: Math.random() * 1.5 + .3 }));
+    K.score = S.best;
+  };
+  const count = k => S.grid.filter(g => g === k).length;
+  function rates() {
+    const storm = evt && evt.k === 'storm' ? .35 : 1;
+    let pw = 0, use = 0; for (const g of S.grid) if (g) { const b = B[g]; if (b.pw > 0) pw += b.pw * (g === 'solar' ? storm : 1); else use -= b.pw; }
+    const eff = use ? Math.min(1, pw / use) : 1, r = { pw, use, eff, o2: 0, food: 0, water: 0, metal: 0, house: 0 };
+    for (const g of S.grid) if (g) { const b = B[g]; for (const k of ['o2', 'food', 'water', 'metal']) if (b[k]) r[k] += b[k] * (b[k] > 0 ? eff : 1); if (b.house) r.house += b.house; }
+    r.o2 -= S.pop * 1; r.food -= S.pop * .8; r.water -= S.pop * .6; return r;
+  }
+  function persist() { if (K.bot) return; K.save.col = S; K.save.best = Math.max(K.save.best || 0, S.best); K.persist(); }
+  /* ---------- input ---------- */
+  const card = i => ({ x: 14, y: 112 + i * 64, w: 222, h: 58 });
+  const inB = (b, x, y) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
+  const tileAt = (x, y) => { const gx = Math.floor((x - OX) / TS), gy = Math.floor((y - OY) / TS); return gx >= 0 && gy >= 0 && gx < GX && gy < GY ? gy * GX + gx : -1; };
+  function place(i) {
+    if (i < 0) return;
+    if (S.grid[i]) { if (sel === 'remove') { const k = S.grid[i]; S.grid[i] = null; S.metal += Math.floor(B[k].cost / 2); K.noise(.2, .15, 600); persist(); } return; }
+    if (sel === 'remove') return;
+    if (S.rocks[i]) { if (S.metal >= 5) { S.metal -= 5; S.rocks[i] = false; K.noise(.2, .2, 300); } else tipMsg('Clearing rocks costs 5 metal'); return; }
+    const b = B[sel]; if (S.metal < b.cost) { tipMsg(`Need ${b.cost} metal`); K.sfx(160, .1, 'square', .05); return; }
+    S.metal -= b.cost; S.grid[i] = sel; K.sfx(440, .08, 'square', .06); K.sfx(660, .08, 'square', .05, 0, .06);
+    const x = OX + (i % GX) * TS + TS / 2, y = OY + Math.floor(i / GX) * TS + TS / 2; K.burst(x, y, ['#ffb38a', '#fff'], 10, 160, { life: .4 }); persist();
+  }
+  const tipMsg = s => { tip = s; GAME._tipT = 2; };
+  GAME.down = (x, y) => {
+    if (gameOver) return;
+    KEYS.forEach((k, i) => { if (inB(card(i), x, y)) { sel = k; K.sfx(600, .04, 'triangle', .04); } });
+    if (inB(card(KEYS.length), x, y)) sel = 'remove';
+    place(tileAt(x, y));
+  };
+  GAME.move = (x, y) => { hover = tileAt(x, y); };
+  GAME.key = (c, d) => { if (!d) return; const n = +c.replace('Digit', ''); if (n >= 1 && n <= KEYS.length) sel = KEYS[n - 1]; if (c === 'KeyX' || c === 'Digit0') sel = 'remove'; };
+  let botT = 0;
+  GAME.bot = dt => {
+    botT += dt; if (botT < .8) return; botT = 0;
+    const r = rates(), need = r.eff < 1 ? 'solar' : r.o2 < 1 ? 'o2' : r.food < 1 ? 'farm' : r.water < 1 ? 'water' : r.house <= S.pop ? 'hab' : count('mine') < 2 + S.pop / 8 ? 'mine' : K.pick(['solar', 'hab', 'mine', 'o2', 'farm']);
+    sel = need; const free = S.grid.map((g, i) => !g && !S.rocks[i] ? i : -1).filter(i => i >= 0); if (free.length) place(K.pick(free));
+  };
+  /* ---------- update ---------- */
+  GAME.update = dt => {
+    if (gameOver) return;
+    const r = rates(), k = dt / SOL * 10;
+    S.o2 = Math.min(200, S.o2 + r.o2 * k); S.food = Math.min(200, S.food + r.food * k); S.water = Math.min(200, S.water + r.water * k); S.metal += r.metal * k;
+    if (S.water <= 0) { S.water = 0; S.food -= S.pop * .5 * k; }
+    S.t += dt; if (S.t >= SOL) { S.t -= SOL; S.sol++; }
+    // newcomers arrive by rocket when there's room and supplies
+    GAME._arrive = (GAME._arrive || 0) + dt;
+    if (GAME._arrive > 9 && S.pop < r.house && r.o2 > 0 && r.food > 0 && S.o2 > 20 && S.food > 20 && !rocket) { GAME._arrive = 0; rocket = { y: -80, t: 0, n: Math.min(r.house - S.pop, K.irand(1, 3)) }; K.sfx(120, 2.5, 'sawtooth', .06, 200); }
+    if (rocket) { rocket.t += dt; rocket.y = rocket.t < 2 ? -80 + rocket.t * 120 : 160 - (rocket.t - 2) * 260; if (rocket.t > 2 && !rocket.done) { rocket.done = true; S.pop += rocket.n; if (S.pop > S.best) { S.best = S.pop; K.score = S.best; for (const m of [10, 25, 50, 100]) if (S.best >= m && S.best - rocket.n < m) { K.toast(`${m} colonists!`); K.chime(523, [0, 4, 7, 12]); if (!K.bot) K.coin(5); } } K.pop(1000, 120, `+${rocket.n} colonist${rocket.n > 1 ? 's' : ''}`, '#7cf2ff', 30); if (!K.bot) K.coin(1); } if (rocket.t > 3) rocket = null; }
+    // people leave when supplies run low
+    if ((S.o2 < 5 || S.food < 5) && S.pop > 0 && Math.random() < dt * .4) { S.pop--; tipMsg(S.o2 < 5 ? 'A colonist left: not enough oxygen!' : 'A colonist left: not enough food!'); K.sfx(220, .4, 'sawtooth', .06, -100); }
+    if (S.pop <= 0 || S.o2 <= 0 && S.food <= 0) { gameOver = true; S.over = true; persist(); if (K.bot) K.over(); else K.over({ title: 'Colony evacuated', text: `The last colonists packed up on sol ${S.sol}. Best population: ${S.best}. Next time, keep an eye on oxygen and food!` }); return; }
+    // events
+    evtT -= dt;
+    if (!evt && evtT <= 0) { const k = K.pick(['storm', 'meteor', 'supply', 'storm', 'meteor']); evt = { k, t: k === 'storm' ? 25 : k === 'meteor' ? 8 : 0 }; evtT = K.rand(45, 80);
+      if (k === 'storm') tipMsg('DUST STORM! Solar panels are weak.'); if (k === 'meteor') { tipMsg(count('shield') ? 'Meteor shower! Shields are up.' : 'METEOR SHOWER! Build shields!'); } if (k === 'supply') { S.metal += 40; S.food += 20; tipMsg('Supply drop: +40 metal, +20 food'); K.chime(660); evt = null; } }
+    if (evt) { evt.t -= dt; if (evt.k === 'meteor' && Math.random() < dt * 2.5) meteors.push({ x: K.rand(OX, OX + GX * TS) + 200, y: -40, tx: K.irand(0, GX * GY - 1) }); if (evt.t <= 0) evt = null; }
+    for (const m of meteors) { const tx = OX + (m.tx % GX) * TS + TS / 2, ty = OY + Math.floor(m.tx / GX) * TS + TS / 2; m.x += (tx - m.x) * dt * 2.2; m.y += (ty - m.y) * dt * 2.2; if (Math.abs(m.y - ty) < 8) { m.hit = true; const sh = count('shield'); if (sh && Math.random() < Math.min(.95, sh * .45)) { K.burst(tx, ty - 60, ['#c79bff', '#fff'], 12, 200, { gravity: 0, life: .4 }); } else { K.shake(10); K.noise(.4, .25, 120); K.burst(tx, ty, ['#ff8a4a', '#ffd23f', '#555'], 18, 260, { life: .6 }); if (S.grid[m.tx] && S.grid[m.tx] !== 'hab' && Math.random() < .5) { S.grid[m.tx] = null; S.rocks[m.tx] = true; } } } }
+    meteors = meteors.filter(m => !m.hit);
+    GAME._tipT = (GAME._tipT || 0) - dt;
+    saveT += dt; if (saveT > 5) { saveT = 0; persist(); }
+  };
+  /* ---------- draw ---------- */
+  function building(gr, k, x, y, s = 1) {
+    const b = B[k]; gr.save(); gr.translate(x, y); gr.scale(s, s);
+    if (k === 'solar') { gr.fillStyle = '#555'; gr.fillRect(-3, 0, 6, 24); gr.save(); gr.transform(1, 0, -.4, 1, 0, 0); gr.fillStyle = b.c; gr.fillRect(-26, -22, 52, 30); gr.strokeStyle = '#8ab0ff'; gr.lineWidth = 1.5; for (let i = -1; i <= 1; i++) { gr.beginPath(); gr.moveTo(i * 17, -22); gr.lineTo(i * 17, 8); gr.stroke(); } gr.restore(); }
+    else if (k === 'hab') { gr.fillStyle = b.c; gr.beginPath(); gr.arc(0, 14, 30, Math.PI, 0); gr.fill(); gr.fillStyle = '#7cf2ff'; for (const wx of [-14, 0, 14]) { gr.beginPath(); gr.arc(wx, 0, 5, 0, 7); gr.fill(); } }
+    else if (k === 'o2') { gr.fillStyle = '#d0d8e0'; gr.fillRect(-18, -20, 36, 40); gr.fillStyle = b.c; gr.beginPath(); gr.arc(0, -4, 12, 0, 7); gr.fill(); gr.fillStyle = '#fff'; gr.font = 'bold 12px Orbitron'; gr.textAlign = 'center'; gr.fillText('O₂', 0, 0); }
+    else if (k === 'farm') { gr.fillStyle = 'rgba(200,255,220,.5)'; gr.beginPath(); gr.arc(0, 16, 32, Math.PI, 0); gr.fill(); gr.fillStyle = b.c; for (const px of [-16, 0, 16]) { gr.beginPath(); gr.ellipse(px, 6, 6, 10, 0, 0, 7); gr.fill(); } }
+    else if (k === 'water') { gr.fillStyle = '#7a7a8a'; gr.beginPath(); gr.moveTo(-20, 22); gr.lineTo(0, -28); gr.lineTo(20, 22); gr.fill(); gr.fillStyle = b.c; gr.beginPath(); gr.arc(0, 14, 9, 0, 7); gr.fill(); }
+    else if (k === 'mine') { gr.fillStyle = '#6a5a4a'; gr.fillRect(-26, 0, 52, 22); gr.fillStyle = b.c; gr.fillRect(-8, -24, 16, 26); gr.fillStyle = '#ffd23f'; gr.beginPath(); gr.arc(0, -14 + Math.sin(K.t * 6) * 3, 5, 0, 7); gr.fill(); }
+    else if (k === 'shield') { gr.strokeStyle = b.c; gr.lineWidth = 3; gr.globalAlpha = .7 + Math.sin(K.t * 3) * .2; gr.beginPath(); gr.arc(0, 18, 34, Math.PI, 0); gr.stroke(); gr.globalAlpha = 1; gr.fillStyle = '#555'; gr.fillRect(-5, 0, 10, 20); gr.fillStyle = b.c; gr.beginPath(); gr.arc(0, -2, 7, 0, 7); gr.fill(); }
+    else if (k === 'reactor') { gr.fillStyle = '#8a8a90'; gr.beginPath(); gr.moveTo(-26, 24); gr.lineTo(-18, -20); gr.lineTo(18, -20); gr.lineTo(26, 24); gr.fill(); gr.fillStyle = b.c; gr.shadowColor = b.c; gr.shadowBlur = 16; gr.beginPath(); gr.arc(0, 2, 10, 0, 7); gr.fill(); gr.shadowBlur = 0; }
+    gr.restore();
+  }
+  GAME.drawSkin = (gr, s) => { gr.fillStyle = s.c[0]; gr.beginPath(); gr.arc(0, 0, 40, 0, 7); gr.fill(); gr.fillStyle = s.c[1]; gr.beginPath(); gr.arc(-10, -8, 10, 0, 7); gr.arc(14, 14, 7, 0, 7); gr.fill(); };
+  GAME.draw = gr => {
+    const v = K.view, sk = K.skin, r = rates(), storm = evt && evt.k === 'storm';
+    const sky = gr.createLinearGradient(0, v.y0, 0, OY); sky.addColorStop(0, '#0a0614'); sky.addColorStop(1, '#3a1a14'); gr.fillStyle = sky; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    gr.fillStyle = '#fff'; for (const s of stars) { gr.globalAlpha = .7; gr.fillRect(s.x, s.y, s.r * 2, s.r * 2); } gr.globalAlpha = 1;
+    gr.fillStyle = sk.c[0]; gr.fillRect(v.x0, OY - 10, v.x1 - v.x0, v.y1 - OY + 10);
+    for (let i = 0; i < GX * GY; i++) {
+      const x = OX + (i % GX) * TS, y = OY + Math.floor(i / GX) * TS;
+      gr.fillStyle = (i + Math.floor(i / GX)) % 2 ? 'rgba(0,0,0,.06)' : 'rgba(255,255,255,.03)'; gr.fillRect(x, y, TS, TS);
+      if (S.rocks[i]) { gr.fillStyle = sk.c[1]; gr.beginPath(); gr.ellipse(x + TS / 2, y + TS / 2 + 10, 26, 16, 0, 0, 7); gr.fill(); gr.beginPath(); gr.ellipse(x + TS / 2 + 14, y + TS / 2 - 4, 14, 10, 0, 0, 7); gr.fill(); }
+      if (S.grid[i]) building(gr, S.grid[i], x + TS / 2, y + TS / 2);
+      if (i === hover && !K.bot) { gr.strokeStyle = sel === 'remove' ? '#ff4a4a' : 'rgba(255,255,255,.6)'; gr.lineWidth = 3; gr.strokeRect(x + 3, y + 3, TS - 6, TS - 6); if (!S.grid[i] && !S.rocks[i] && sel !== 'remove') { gr.globalAlpha = .5; building(gr, sel, x + TS / 2, y + TS / 2); gr.globalAlpha = 1; } }
+    }
+    for (const m of meteors) { gr.strokeStyle = 'rgba(255,180,90,.6)'; gr.lineWidth = 6; gr.beginPath(); gr.moveTo(m.x, m.y); gr.lineTo(m.x + 50, m.y - 70); gr.stroke(); gr.fillStyle = '#ffd23f'; gr.beginPath(); gr.arc(m.x, m.y, 9, 0, 7); gr.fill(); }
+    if (rocket) { gr.save(); gr.translate(1000, rocket.y); gr.fillStyle = '#e6e6ee'; gr.beginPath(); gr.moveTo(0, -40); gr.lineTo(16, 0); gr.lineTo(16, 30); gr.lineTo(-16, 30); gr.lineTo(-16, 0); gr.fill(); gr.fillStyle = '#ff8a4a'; gr.beginPath(); gr.moveTo(-10, 30); gr.lineTo(0, 50 + Math.random() * 20); gr.lineTo(10, 30); gr.fill(); gr.restore(); }
+    if (storm) { gr.fillStyle = 'rgba(200,120,70,.35)'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); gr.strokeStyle = 'rgba(255,200,150,.25)'; gr.lineWidth = 2; for (let i = 0; i < 60; i++) { const x = (i * 97 + K.t * 600) % 1500 - 100, y = (i * 53) % 720; gr.beginPath(); gr.moveTo(x, y); gr.lineTo(x - 60, y + 6); gr.stroke(); } }
+    // resource bar
+    gr.fillStyle = 'rgba(10,6,20,.85)'; gr.fillRect(v.x0, 0, v.x1 - v.x0, 96);
+    const res = [['POWER', `${Math.round(r.pw)}/${Math.round(r.use)}`, r.eff < 1 ? '#ff4a4a' : '#ffd23f', null], ['O₂', S.o2, '#7cf2ff', r.o2], ['FOOD', S.food, '#5fd36a', r.food], ['WATER', S.water, '#4a9aff', r.water], ['METAL', S.metal, '#d8c8b0', r.metal], ['PEOPLE', `${S.pop}/${r.house}`, '#fff', null]];
+    res.forEach(([n, val, c, rate], i) => {
+      const x = 70 + i * 196; gr.fillStyle = c; gr.font = '13px Orbitron'; gr.textAlign = 'left'; gr.textBaseline = 'middle'; gr.fillText(n, x, 22);
+      gr.font = '24px Orbitron'; gr.fillText(typeof val === 'number' ? Math.floor(val) : val, x, 52);
+      if (rate !== null) { gr.font = '13px Orbitron'; gr.fillStyle = rate < 0 ? '#ff6a6a' : '#9aff9a'; gr.fillText(`${rate >= 0 ? '+' : ''}${Math.round(rate * 10)}/sol`, x, 80); if (typeof val === 'number' && val < 25 && n !== 'METAL' && Math.sin(K.t * 8) > 0) { gr.strokeStyle = '#ff4a4a'; gr.lineWidth = 2; gr.strokeRect(x - 8, 8, 170, 82); } }
+    });
+    gr.fillStyle = '#ffb38a'; gr.font = '14px Orbitron'; gr.textAlign = 'right'; gr.fillText(`SOL ${S.sol}`, W - 16, 22); gr.fillText(`BEST ${S.best}`, W - 16, 44);
+    // build menu
+    KEYS.concat(['remove']).forEach((k, i) => {
+      const b = card(i), on = sel === k, info = B[k]; gr.fillStyle = on ? '#3a2a5a' : 'rgba(20,10,30,.85)'; gr.beginPath(); gr.roundRect(b.x, b.y, b.w, b.h, 12); gr.fill(); if (on) { gr.strokeStyle = '#ff8a4a'; gr.lineWidth = 3; gr.stroke(); }
+      if (k === 'remove') { gr.fillStyle = '#ff6a6a'; gr.font = '15px Orbitron'; gr.textAlign = 'center'; gr.fillText('✕ Remove (X)', b.x + b.w / 2, b.y + b.h / 2); return; }
+      building(gr, k, b.x + 32, b.y + 30, .55);
+      gr.fillStyle = '#fff'; gr.font = '13px Orbitron'; gr.textAlign = 'left'; gr.fillText(`${i + 1} ${info.n}`, b.x + 62, b.y + 18);
+      const eff = [info.pw > 0 ? `+${info.pw}⚡` : `${info.pw}⚡`, info.o2 ? `+${info.o2} O₂` : '', info.food ? `+${info.food} food` : '', info.water > 0 ? `+${info.water} water` : '', info.house ? `+${info.house} beds` : '', info.metal ? `+${info.metal} metal` : '', k === 'shield' ? 'blocks meteors' : ''].filter(Boolean).join(' ');
+      gr.fillStyle = 'rgba(255,255,255,.6)'; gr.font = '10px Orbitron'; gr.fillText(eff, b.x + 62, b.y + 36); gr.fillStyle = S.metal >= info.cost ? '#d8c8b0' : '#ff6a6a'; gr.fillText(`${info.cost} metal`, b.x + 62, b.y + 50);
+    });
+    if (GAME._tipT > 0) { gr.font = '20px Orbitron'; gr.textAlign = 'center'; const w = gr.measureText(tip).width + 40; gr.fillStyle = 'rgba(0,0,0,.75)'; gr.fillRect(OX + GX * TS / 2 - w / 2, 690 - 20, w, 36); gr.fillStyle = '#ffd8b0'; gr.fillText(tip, OX + GX * TS / 2, 690); }
+  };
+})();
+
+/* Pulsebox game kit: canvas scaling, input, menus, skins shop, coins, best score, sound and effects.
+   A game defines GAME before this runs: { id, title, tagline, how:[], bg, skins:[{name,price,c:[]}],
+   reset(), update(dt), draw(g), down(x,y), move(x,y), up(x,y), key(code,isDown), bot(dt), drawSkin(g,skin,size) }.
+   Everything is in a 1280x720 world; K.view is the visible part of it (it can be wider or taller on odd screens).
+   ?demo plays the bot forever with no menus (used to record trailers). */
+'use strict';
+const $ = id => document.getElementById(id);
+const DEMO = /[?&]demo/.test(location.search), POSE = /[?&]pose/.test(location.search) && GAME.pose;  // ?demo&pose freezes a staged scene for cover art
+const cv = $('cv'), g = cv.getContext('2d');
+const K = {
+  W, H, t: 0, state: 'title', score: 0, runCoins: 0, bot: true, view: { x0: 0, y0: 0, x1: W, y1: H },
+  rand: (a, b) => a + Math.random() * (b - a),
+  irand: (a, b) => Math.floor(a + Math.random() * (b - a + 1)),
+  pick: a => a[Math.floor(Math.random() * a.length)],
+  clamp: (v, a, b) => v < a ? a : v > b ? b : v,
+  lerp: (a, b, t) => a + (b - a) * t,
+  dist: (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by),
+};
+document.documentElement.style.setProperty('--accent', GAME.accent || '#c6ff3d');
+document.documentElement.style.setProperty('--accent2', GAME.accent2 || '#29e0ff');
+document.documentElement.style.setProperty('--bg', GAME.bg || '#0a0c12');
+if (GAME.font) document.documentElement.style.setProperty('--display', `'${GAME.font}', 'Arial Black', system-ui, sans-serif`);
+if (DEMO) document.body.classList.add('demo');
+
+/* ---------- save ---------- */
+const SKEY = 'pbx-' + GAME.id;
+const save = { best: 0, coins: 0, owned: [0], skin: 0, plays: 0, mute: false };
+try { Object.assign(save, JSON.parse(localStorage.getItem(SKEY) || '{}')); } catch (e) {}
+const persist = () => { try { localStorage.setItem(SKEY, JSON.stringify(save)); } catch (e) {} };
+K.save = save; K.persist = persist;
+Object.defineProperty(K, 'skin', { get: () => GAME.skins[DEMO || K.bot ? (K.demoSkin || 0) : save.skin] || GAME.skins[0] });
+
+/* ---------- screen ---------- */
+let sc = 1, ox = 0, oy = 0, dpr = 1;
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+  sc = Math.min(innerWidth / W, innerHeight / H); ox = (innerWidth - W * sc) / 2; oy = (innerHeight - H * sc) / 2;
+  K.view = { x0: -ox / sc, y0: -oy / sc, x1: W + ox / sc, y1: H + oy / sc };
+}
+addEventListener('resize', resize); resize();
+
+/* ---------- sound ---------- */
+let ac = null;
+// every sound goes through K.master, which is silent on menus, while paused and when muted, so games can run looping sounds
+function audio() {
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); K.ac = ac; K.master = ac.createGain(); K.master.gain.value = 0; K.master.connect(ac.destination); } catch (e) {} }
+  if (ac && ac.state === 'suspended') ac.resume(); return ac;
+}
+K.audio = audio;
+let masterOn = false;
+function masterSync() {
+  const on = !!ac && !save.mute && (K.state === 'play' || K.state === 'over') && !K.bot;
+  if (ac && on !== masterOn) { masterOn = on; K.master.gain.setTargetAtTime(on ? 1 : 0, ac.currentTime, .05); }
+}
+K.sfx = (f = 440, d = .1, type = 'square', v = .12, slide = 0, delay = 0) => {
+  if (save.mute || K.bot || !ac) return;
+  const t = ac.currentTime + delay, o = ac.createOscillator(), a = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
+  a.gain.setValueAtTime(v, t); a.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(a).connect(K.master); o.start(t); o.stop(t + d + .02);
+};
+K.noise = (d = .15, v = .15, hp = 800) => {
+  if (save.mute || K.bot || !ac) return;
+  const n = Math.floor(ac.sampleRate * d), b = ac.createBuffer(1, n, ac.sampleRate), ch = b.getChannelData(0);
+  for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), a = ac.createGain();
+  f.type = 'highpass'; f.frequency.value = hp; a.gain.value = v; s.buffer = b; s.connect(f).connect(a).connect(K.master); s.start();
+};
+K.chime = (base = 523, steps = [0, 4, 7, 12]) => steps.forEach((s, i) => K.sfx(base * Math.pow(2, s / 12), .16, 'triangle', .1, 0, i * .07));
+
+/* ---------- effects ---------- */
+const parts = [], pops = [];
+let shake = 0, flashA = 0, flashC = '#fff';
+K.burst = (x, y, c, n = 14, sp = 320, o = {}) => {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = sp * (.3 + Math.random() * .7);
+    parts.push({ x, y, vx: Math.cos(a) * s + (o.vx || 0), vy: Math.sin(a) * s + (o.vy || 0), life: 0, max: (o.life || .6) * (.6 + Math.random() * .6), c: Array.isArray(c) ? K.pick(c) : c, s: (o.size || 7) * (.5 + Math.random()), gr: o.gravity ?? 600, sq: o.square });
+  }
+};
+K.pop = (x, y, text, c = '#fff', size = 34) => pops.push({ x, y, text, c, size, life: 0 });
+K.shake = a => { shake = Math.max(shake, a); };
+K.flash = (c = '#fff', a = .5) => { flashC = c; flashA = a; };
+K.toast = text => { if (K.bot) return; const d = document.createElement('div'); d.className = 'toast'; d.textContent = text; document.body.appendChild(d); setTimeout(() => d.remove(), 1500); };
+function fx(dt) {
+  for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.life += dt; if (p.life > p.max) { parts.splice(i, 1); continue; } p.vy += p.gr * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .99; }
+  for (let i = pops.length - 1; i >= 0; i--) { const p = pops[i]; p.life += dt; p.y -= 60 * dt; if (p.life > .9) pops.splice(i, 1); }
+  shake = Math.max(0, shake - 60 * dt); flashA = Math.max(0, flashA - 2.5 * dt);
+}
+function drawFx() {
+  for (const p of parts) { g.globalAlpha = 1 - p.life / p.max; g.fillStyle = p.c; if (p.sq) g.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s); else { g.beginPath(); g.arc(p.x, p.y, p.s / 2, 0, 7); g.fill(); } }
+  g.globalAlpha = 1; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const p of pops) {
+    const k = p.life < .12 ? p.life / .12 : 1; g.globalAlpha = p.life > .6 ? 1 - (p.life - .6) / .3 : 1;
+    g.font = `${Math.round(p.size * (0.6 + .4 * k))}px ${getComputedStyle(document.documentElement).getPropertyValue('--display')}`;
+    g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,.45)'; g.strokeText(p.text, p.x, p.y); g.fillStyle = p.c; g.fillText(p.text, p.x, p.y);
+  }
+  g.globalAlpha = 1;
+}
+
+/* ---------- UI ---------- */
+const coinHTML = '<i class="coin-i"></i>';
+document.body.insertAdjacentHTML('beforeend', `
+<div class="hud" id="hud" hidden><div class="hud-score" id="hScore">0</div><div class="hud-coins">${coinHTML}<span id="hCoins">0</span></div><button class="hud-pause" id="hPause" aria-label="Pause"></button></div>
+<div class="scr" id="sTitle" ${DEMO ? 'hidden' : ''}><div class="card">
+  <h1 class="title">${GAME.title}</h1><p class="sub">${GAME.tagline}</p>
+  <div class="stats"><span class="stat"><small>Best</small><b id="tBest">0</b></span><span class="stat">${coinHTML}<b id="tCoins">0</b></span></div>
+  <button class="big" id="bPlay">Play</button>
+  <div class="row"><button id="bSkins">Skins</button></div>
+  <ul class="how">${GAME.how.map(h => `<li>${h}</li>`).join('')}</ul>
+</div></div>
+<div class="scr" id="sOver" hidden><div class="card">
+  <h2 class="title" id="oTitle" style="font-size:40px" hidden></h2><p class="sub" id="oText" hidden></p><p class="sub" style="margin:0" id="oLabel">Score</p><div class="score-big" id="oScore">0</div><div id="oNew" class="newbest" hidden>New best!</div>
+  <div class="stats"><span class="stat"><small>Best</small><b id="oBest">0</b></span><span class="stat">+${coinHTML}<b id="oCoins">0</b></span></div>
+  <button class="big" id="bAgain">Play again</button>
+  <div class="row"><button id="bMenu">Menu</button><button id="bSkins2">Skins</button></div>
+  <p class="hint" id="oHint"></p>
+</div></div>
+<div class="scr" id="sSkins" hidden><div class="card">
+  <h2 class="title" style="font-size:40px">Skins</h2>
+  <div class="stats"><span class="stat">${coinHTML}<b id="kCoins">0</b></span></div>
+  <div class="skins" id="kGrid"></div>
+  <button class="big" id="bBack">Back</button>
+</div></div>
+<div class="scr" id="sPause" hidden><div class="card">
+  <h2 class="title" style="font-size:44px">Paused</h2>
+  <button class="big" id="bResume">Resume</button>
+  <div class="row"><button id="bQuit">Menu</button></div>
+</div></div>
+<button class="mute" id="bMute" aria-label="Sound on or off"></button>`);
+
+const screens = ['sTitle', 'sOver', 'sSkins', 'sPause'];
+let skinsFrom = 'sTitle';
+function showScr(id) { screens.forEach(s => $(s).hidden = s !== id || DEMO); }
+function refresh() {
+  $('tBest').textContent = save.best; $('tCoins').textContent = save.coins; $('kCoins').textContent = save.coins;
+  $('bMute').textContent = save.mute ? '🔇' : '🔊';
+}
+function hud() { $('hScore').textContent = K.score; $('hCoins').textContent = K.runCoins; }
+K.add = (n = 1, x, y, c) => {
+  K.score += n; hud();
+  if (!K.bot) { const s = $('hScore'); s.classList.remove('bump'); void s.offsetWidth; s.classList.add('bump'); }
+  if (x !== undefined) K.pop(x, y, '+' + n, c || '#fff');
+};
+K.coin = (n = 1, x, y) => {
+  K.runCoins += n; hud();
+  if (x !== undefined) K.burst(x, y, ['#ffcf2e', '#fff3a8'], 6, 200, { life: .4, size: 6, gravity: 300 });
+  K.sfx(1320, .07, 'square', .05); K.sfx(1760, .08, 'square', .05, 0, .05);
+};
+
+function buildSkins() {
+  const grid = $('kGrid'); grid.innerHTML = '';
+  GAME.skins.forEach((s, i) => {
+    const own = save.owned.includes(i), b = document.createElement('button');
+    b.className = 'skin' + (save.skin === i ? ' on' : '') + (own ? '' : ' locked') + (!own && save.coins < s.price ? ' cant' : '');
+    const c = document.createElement('canvas'); c.width = c.height = 112; const cg = c.getContext('2d'); cg.translate(56, 56);
+    if (GAME.drawSkin) GAME.drawSkin(cg, s, 40); else { cg.fillStyle = s.c[0]; cg.beginPath(); cg.arc(0, 0, 40, 0, 7); cg.fill(); }
+    if (!own) { cg.fillStyle = 'rgba(0,0,0,.45)'; cg.fillRect(-56, -56, 112, 112); }
+    b.appendChild(c);
+    b.insertAdjacentHTML('beforeend', `<span>${s.name}</span>${own ? (save.skin === i ? '<span class="price">Equipped</span>' : '<span class="price" style="color:#cfd5ef">Equip</span>') : `<span class="price">${coinHTML}${s.price}</span>`}`);
+    b.onclick = () => {
+      audio();
+      if (own) { save.skin = i; K.sfx(660, .08, 'triangle'); }
+      else if (save.coins >= s.price) { save.coins -= s.price; save.owned.push(i); save.skin = i; K.chime(660); }
+      else { K.sfx(160, .15, 'sawtooth', .08); return; }
+      persist(); refresh(); buildSkins();
+    };
+    grid.appendChild(b);
+  });
+}
+
+/* ---------- flow ---------- */
+let overAt = 0, botOverAt = 0;
+function start() {
+  audio(); K.bot = false; K.score = 0; K.runCoins = 0; hud(); parts.length = 0; pops.length = 0;
+  GAME.reset(); K.state = 'play'; showScr(null); $('hud').hidden = false; save.plays++; persist();
+}
+function attract() { K.bot = true; K.demoSkin = DEMO ? 0 : K.irand(0, GAME.skins.length - 1); K.score = 0; K.runCoins = 0; hud(); GAME.reset(); if (POSE) GAME.pose(); K.state = 'title'; $('hud').hidden = !DEMO; }
+K.over = (o = {}) => {
+  if (K.bot) { if (!botOverAt) botOverAt = K.t + 1.2; return; }
+  if (K.state !== 'play') return;
+  K.state = 'over'; overAt = performance.now();
+  const best = K.score > save.best; if (best) save.best = K.score;
+  save.coins += K.runCoins; persist(); refresh();
+  $('oTitle').hidden = !o.title; $('oTitle').textContent = o.title || ''; $('oText').hidden = !o.text; $('oText').textContent = o.text || ''; $('oLabel').textContent = GAME.scoreLabel || 'Score';
+  $('oScore').textContent = K.score; $('oBest').textContent = save.best; $('oCoins').textContent = K.runCoins; $('oNew').hidden = !best || K.score === 0;
+  const next = GAME.skins.map((s, i) => [s, i]).find(([s, i]) => !save.owned.includes(i));
+  $('oHint').textContent = next ? (save.coins >= next[0].price ? `You can unlock ${next[0].name} now!` : `${next[0].price - save.coins} more coins to unlock ${next[0].name}`) : 'You own every skin. Legend!';
+  if (GAME.noSkins) $('oHint').textContent = '';
+  setTimeout(() => { if (K.state === 'over') { showScr('sOver'); $('hud').hidden = true; } }, o.delay ?? 650);
+  if (best && K.score > 0) setTimeout(() => K.chime(523, [0, 4, 7, 12, 16]), 700);
+};
+function pause() { if (K.state !== 'play') return; K.state = 'paused'; showScr('sPause'); }
+function resume() { K.state = 'play'; showScr(null); last = performance.now(); }
+function toMenu() { refresh(); attract(); showScr('sTitle'); }
+
+$('bPlay').onclick = start; $('bAgain').onclick = start; $('bResume').onclick = resume;
+$('bMenu').onclick = toMenu; $('bQuit').onclick = toMenu;
+$('bSkins').onclick = () => { skinsFrom = 'sTitle'; buildSkins(); refresh(); showScr('sSkins'); };
+$('bSkins2').onclick = () => { skinsFrom = 'sOver'; buildSkins(); refresh(); showScr('sSkins'); };
+$('bBack').onclick = () => { if (skinsFrom === 'sOver') toMenu(); else showScr('sTitle'); };
+$('hPause').onclick = pause;
+$('bMute').onclick = () => { save.mute = !save.mute; persist(); refresh(); audio(); };
+addEventListener('blur', pause);
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+/* ---------- input ---------- */
+const toW = e => [(e.clientX - ox) / sc, (e.clientY - oy) / sc];
+cv.addEventListener('pointerdown', e => { audio(); if (K.state === 'play' && GAME.down) { const [x, y] = toW(e); GAME.down(x, y, e); } });
+addEventListener('pointermove', e => { if (K.state === 'play' && GAME.move) { const [x, y] = toW(e); GAME.move(x, y, e); } });
+addEventListener('pointerup', e => { if (K.state === 'play' && GAME.up) { const [x, y] = toW(e); GAME.up(x, y, e); } });
+addEventListener('keydown', e => {
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  if (e.repeat && K.state !== 'play') return;
+  if (e.code === 'Escape' || e.code === 'KeyP') { if (K.state === 'play') pause(); else if (K.state === 'paused') resume(); return; }
+  if ((e.code === 'Space' || e.code === 'Enter') && K.state !== 'play') {
+    if (K.state === 'title' && !$('sTitle').hidden) start();
+    else if (K.state === 'over' && performance.now() - overAt > 900) start();
+    else if (K.state === 'paused') resume();
+    return;
+  }
+  if (K.state === 'play' && GAME.key) GAME.key(e.code, true);
+});
+addEventListener('keyup', e => { if (K.state === 'play' && GAME.key) GAME.key(e.code, false); });
+
+/* ---------- loop ---------- */
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
+  const run = K.state === 'play' || K.state === 'title' || K.state === 'over';
+  if (run && !POSE) {
+    K.t += dt;
+    if (K.bot && K.state === 'title') { if (botOverAt && K.t > botOverAt) { botOverAt = 0; attract(); } else if (!botOverAt && GAME.bot) GAME.bot(dt); }
+    GAME.update(dt); fx(dt);
+  }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = GAME.bg || '#000'; g.fillRect(0, 0, innerWidth, innerHeight);
+  const sx = shake ? (Math.random() - .5) * shake : 0, sy = shake ? (Math.random() - .5) * shake : 0;
+  g.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * (ox + sx * sc), dpr * (oy + sy * sc));
+  GAME.draw(g); drawFx();
+  if (flashA > 0) { g.globalAlpha = flashA; g.fillStyle = flashC; g.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0); g.globalAlpha = 1; }
+  masterSync();
+  requestAnimationFrame(frame);
+}
+if (GAME.noSkins) { $('bSkins').parentNode.hidden = true; $('bSkins2').hidden = true; }
+if (GAME.noHud) { $('hScore').hidden = true; document.querySelector('.hud-coins').hidden = true; }
+refresh(); attract(); showScr('sTitle');
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

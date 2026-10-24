@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lemonade Empire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+:root { color-scheme: dark; --accent: #c6ff3d; --accent2: #29e0ff; --bg: #0a0c12; --text: #f3f5ff; --muted: #a3a9c4; --panel: rgba(10,12,22,.86); --edge: rgba(255,255,255,.14); --display: 'Lilita One', 'Arial Black', system-ui, sans-serif; --body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--bg); }
+body { font-family: var(--body); color: var(--text); user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; touch-action: none; overscroll-behavior: none; }
+#cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* HUD */
+.hud { position: fixed; inset: 0; pointer-events: none; font-family: var(--display); }
+.hud-score { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); font-size: clamp(28px, 6vh, 56px); line-height: 1; text-shadow: 0 3px 0 rgba(0,0,0,.35), 0 0 18px rgba(0,0,0,.4); letter-spacing: .02em; }
+.hud-score.bump { animation: bump .18s ease-out; }
+@keyframes bump { 40% { transform: translateX(-50%) scale(1.18); } }
+.hud-coins { position: absolute; top: 12px; right: 14px; display: flex; align-items: center; gap: 6px; font-size: clamp(16px, 3.2vh, 24px); background: rgba(0,0,0,.35); padding: 4px 12px 4px 8px; border-radius: 999px; }
+.coin-i { width: 1em; height: 1em; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6c4, #ffcf2e 45%, #c98a00); box-shadow: 0 0 8px rgba(255,207,46,.6); display: inline-block; flex: none; }
+.hud-pause { position: absolute; top: 10px; left: 12px; width: 40px; height: 40px; border-radius: 12px; background: rgba(0,0,0,.35); pointer-events: auto; display: grid; place-items: center; }
+.hud-pause::before { content: ''; width: 14px; height: 16px; border-left: 5px solid #fff; border-right: 5px solid #fff; }
+
+/* screens */
+.scr { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: radial-gradient(ellipse at center, rgba(0,0,0,.25), rgba(0,0,0,.65)); }
+.card { width: min(440px, 100%); max-height: 100%; overflow: auto; text-align: center; background: var(--panel); border: 1px solid var(--edge); border-radius: 26px; padding: clamp(16px, 4vh, 28px) 22px; box-shadow: 0 24px 70px rgba(0,0,0,.5); backdrop-filter: blur(6px); }
+.title { font-family: var(--display); font-size: clamp(36px, 9vh, 64px); line-height: .95; margin: 0 0 6px; color: var(--accent); text-shadow: 0 4px 0 rgba(0,0,0,.35); letter-spacing: .01em; }
+.sub { margin: 0 0 14px; color: var(--muted); font-weight: 700; font-size: 15px; }
+.stats { display: flex; justify-content: center; gap: 10px; margin: 0 0 16px; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.07); border: 1px solid var(--edge); border-radius: 14px; padding: 6px 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.stat small { color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+.big { display: block; width: 100%; font-family: var(--display); font-size: clamp(22px, 5vh, 30px); padding: 12px 18px; border-radius: 18px; background: var(--accent); color: #0b0d14; box-shadow: 0 6px 0 rgba(0,0,0,.35), 0 0 30px color-mix(in srgb, var(--accent) 40%, transparent); transition: transform .1s; }
+.big:hover { transform: translateY(-2px); }
+.big:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.row { display: flex; gap: 10px; margin-top: 10px; }
+.row button { flex: 1; padding: 10px; border-radius: 14px; background: rgba(255,255,255,.08); border: 1px solid var(--edge); font-weight: 800; }
+.row button:hover { background: rgba(255,255,255,.14); }
+.how { margin: 14px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 14px; font-weight: 600; line-height: 1.45; }
+.score-big { font-family: var(--display); font-size: clamp(54px, 14vh, 96px); line-height: 1; margin: 4px 0; }
+.newbest { display: inline-block; font-family: var(--display); background: var(--accent2); color: #0b0d14; padding: 3px 12px; border-radius: 999px; margin-bottom: 8px; animation: pop .5s ease-out; }
+@keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } }
+.hint { color: var(--muted); font-size: 13px; margin-top: 10px; font-weight: 700; }
+
+/* skins */
+.skins { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin: 6px 0 14px; }
+.skin { border-radius: 16px; padding: 10px 6px 8px; background: rgba(255,255,255,.06); border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; }
+.skin.on { border-color: var(--accent); background: rgba(255,255,255,.12); }
+.skin.locked { opacity: .9; }
+.skin canvas { width: 56px; height: 56px; }
+.skin .price { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #ffe07a; }
+.skin.cant .price { color: #ff8a8a; }
+
+.mute { position: fixed; right: 12px; bottom: 12px; width: 42px; height: 42px; border-radius: 50%; background: rgba(0,0,0,.4); border: 1px solid var(--edge); font-size: 18px; display: grid; place-items: center; }
+.toast { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); font-family: var(--display); font-size: clamp(22px, 5vh, 38px); color: #fff; text-shadow: 0 3px 0 rgba(0,0,0,.4), 0 0 20px var(--accent); pointer-events: none; animation: toast 1.4s ease-out forwards; white-space: nowrap; }
+@keyframes toast { 0% { opacity: 0; transform: translate(-50%, 20px) scale(.7); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.08); } 25% { transform: translate(-50%, 0) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -20px); } }
+body.demo .hud-pause, body.demo .mute { display: none; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<script>
+const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
+/* Lemonade Empire: an idle tycoon. Squeeze lemons, buy businesses, hire managers to run them, and franchise for
+   Golden Lemons that boost every business forever. Progress is saved, and managers keep earning while you're away. */
+const GAME = {
+  id: 'lemonade-empire', title: 'Lemonade Empire', tagline: 'From one lemonade stand to a soda empire.',
+  font: 'Fredoka One', accent: '#ffd23f', accent2: '#5fd36a', bg: '#7fd3ff', noHud: true, scoreLabel: 'Golden Lemons',
+  how: ['Tap the big lemon to squeeze it for cash.', 'Buy businesses, tap them to run, and hire managers to run them for you.', 'Franchise to start over with Golden Lemons: +10% income each, forever.'],
+  skins: [
+    { name: 'Sunny', price: 0, c: ['#ffd23f', '#ff6b6b'] }, { name: 'Mint', price: 60, c: ['#7dffb0', '#2ab06a'] }, { name: 'Berry', price: 150, c: ['#ff7ae0', '#a23bff'] },
+    { name: 'Ocean', price: 250, c: ['#7cc8ff', '#2a6ad2'] }, { name: 'Sunset', price: 400, c: ['#ffb347', '#ff4d6a'] }, { name: 'Royal', price: 700, c: ['#ffe36e', '#7a2bd6'] },
+  ],
+};
+(() => {
+  const BIZ = [
+    { n: 'Lemonade Stand', i: '🍋', cost: 4, rev: 1, t: .7 },
+    { n: 'Juice Cart', i: '🧃', cost: 60, rev: 60, t: 3 },
+    { n: 'Smoothie Bar', i: '🥤', cost: 720, rev: 540, t: 6 },
+    { n: 'Soda Truck', i: '🚚', cost: 8640, rev: 4320, t: 12 },
+    { n: 'Bottling Plant', i: '🏭', cost: 103680, rev: 51840, t: 24 },
+    { n: 'Soda Factory', i: '🏗️', cost: 1244160, rev: 622080, t: 96 },
+    { n: 'Global Brand', i: '🌍', cost: 14929920, rev: 7464960, t: 384 },
+  ];
+  const MGR = BIZ.map((b, i) => b.cost * (i === 0 ? 250 : 120));
+  const MILES = [10, 25, 50, 100, 200, 300, 400];
+  let S, prog, pops, tapScale, buyN, saveT, away, hover, walkers, flash;
+  const fmt = n => { if (n < 1000) return n < 10 ? n.toFixed(n % 1 ? 2 : 0) : Math.floor(n).toString(); const u = ['K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc']; let i = -1; while (n >= 1000 && i < u.length - 1) { n /= 1000; i++; } return n.toFixed(n < 10 ? 2 : n < 100 ? 1 : 0) + u[i]; };
+  const mult = i => { let m = 1; for (const ms of MILES) if (S.own[i] >= ms) m *= 2; return m * (1 + S.gold * .1) * (S.boost > 0 ? 2 : 1); };
+  const speed = i => Math.pow(.5, [25, 50, 100].filter(ms => S.own[i] >= ms).length);  // runs get faster at 25, 50 and 100 owned
+  const cycle = i => BIZ[i].t * speed(i);
+  const revenue = i => BIZ[i].rev * S.own[i] * mult(i);
+  const costOf = (i, n) => { const c = BIZ[i].cost * Math.pow(1.15, S.own[i]); return c * (Math.pow(1.15, n) - 1) / .15; };
+  const maxBuy = i => { let n = 0; while (n < 1000 && costOf(i, n + 1) <= S.cash) n++; return n; };
+  const perSec = () => BIZ.reduce((a, b, i) => a + (S.mgr[i] && S.own[i] ? revenue(i) / cycle(i) : 0), 0);
+  const goldFor = () => Math.floor(Math.sqrt(S.total / 1e9) * 2) - S.goldEarned;
+  function fresh() { return { cash: 0, total: 0, own: BIZ.map((_, i) => i === 0 ? 1 : 0), mgr: BIZ.map(() => false), gold: 0, goldEarned: 0, boost: 0, t: Date.now(), runs: 0 }; }
+  GAME.reset = () => {
+    prog = BIZ.map(() => 0); pops = []; tapScale = 1; buyN = 1; saveT = 0; away = null; hover = null; flash = 0;
+    walkers = Array.from({ length: 6 }, () => ({ x: Math.random() * 520, sp: K.rand(30, 70) * (Math.random() < .5 ? 1 : -1), c: `hsl(${K.irand(0, 360)},60%,55%)` }));
+    if (K.bot) { S = fresh(); S.cash = 5e5; S.own = [40, 22, 12, 6, 2, 0, 0]; S.mgr = [true, true, true, false, false, false, false]; return; }
+    S = Object.assign(fresh(), K.save.ty || {});
+    // money made while away (managers only, at half speed, up to 8 hours)
+    const secs = Math.min(8 * 3600, (Date.now() - (S.t || Date.now())) / 1000), earned = perSec() * secs * .5;
+    if (secs > 60 && earned > 0) { S.cash += earned; S.total += earned; away = { secs, earned }; }
+  };
+  function persist() { if (K.bot) return; S.t = Date.now(); K.save.ty = S; K.save.best = Math.max(K.save.best || 0, S.gold); K.persist(); }
+  function earn(v, x, y) { S.cash += v; S.total += v; if (x !== undefined) pops.push({ x, y, t: 0, s: '+$' + fmt(v) }); }
+  function run(i) { if (S.own[i] && prog[i] === 0) { prog[i] = .0001; if (!K.bot) K.sfx(520 + i * 60, .05, 'triangle', .05); } }
+  function buy(i) {
+    const n = buyN === 'max' ? Math.max(1, maxBuy(i)) : buyN, c = costOf(i, n); if (c > S.cash) { K.sfx(160, .1, 'square', .05); return; }
+    const before = S.own[i]; S.cash -= c; S.own[i] += n; K.sfx(880, .06, 'square', .05); K.sfx(1320, .08, 'square', .04, 0, .05);
+    for (const ms of MILES) if (before < ms && S.own[i] >= ms) { K.toast(`${BIZ[i].n} x${ms}: profits doubled!`); K.chime(523); if (!K.bot) K.coin(1); }
+    if (before === 0) { K.toast(`New: ${BIZ[i].n}!`); if (!K.bot) K.coin(2); }
+    persist();
+  }
+  function hire(i) { if (S.mgr[i] || S.cash < MGR[i] || !S.own[i]) return; S.cash -= MGR[i]; S.mgr[i] = true; K.chime(660, [0, 4, 7]); K.toast(`Manager hired: ${BIZ[i].n} runs itself now`); if (!K.bot) K.coin(2); persist(); }
+  function franchise() {
+    const g = goldFor(); if (g < 1) return;
+    const runs = (S.runs || 0) + 1, gold = S.gold + g; S = fresh(); S.gold = gold; S.runs = runs;
+    prog = BIZ.map(() => 0); K.flash('#fff', .8); K.chime(392, [0, 4, 7, 12, 16, 19]); K.toast(`Franchised! ${S.gold} Golden Lemons: +${S.gold * 10}% income`); if (!K.bot) K.coin(10); persist();
+  }
+  /* ---------- layout ---------- */
+  const ROW = i => ({ x: 548, y: 108 + i * 78, w: 718, h: 70 });
+  const LEMON = { x: 260, y: 420, r: 92 };
+  const BUYN = { x: 548, y: 64, w: 150, h: 36 }, FR = { x: 20, y: 632, w: 480, h: 70 }, BOOST = { x: 1110, y: 64, w: 156, h: 36 };
+  const inB = (b, x, y) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
+  GAME.down = (x, y) => {
+    if (away) { away = null; return; }
+    if (K.dist(x, y, LEMON.x, LEMON.y) < LEMON.r) { const v = Math.max(1, perSec() * .04 + S.own[0] * mult(0) * .5); earn(v, x + K.rand(-30, 30), y - 90); tapScale = .86; K.sfx(700 + Math.random() * 200, .04, 'triangle', .06); K.burst(x, y, ['#ffe36e', '#fff8b0'], 5, 200, { life: .4 }); return; }
+    if (inB(BUYN, x, y)) { buyN = buyN === 1 ? 10 : buyN === 10 ? 100 : buyN === 100 ? 'max' : 1; return; }
+    if (inB(FR, x, y)) return franchise();
+    if (inB(BOOST, x, y) && S.boost <= 0 && K.save.coins >= 5) { K.save.coins -= 5; S.boost = 120; K.chime(784); persist(); return; }
+    BIZ.forEach((b, i) => { const r = ROW(i); if (!inB(r, x, y)) return; if (x > r.x + r.w - 150) buy(i); else if (x > r.x + r.w - 270 && !S.mgr[i] && S.own[i]) hire(i); else run(i); });
+  };
+  GAME.move = (x, y) => { hover = null; BIZ.forEach((b, i) => { if (inB(ROW(i), x, y)) hover = i; }); };
+  GAME.key = (c, d) => { if (!d) return; if (c === 'Space') GAME.down(LEMON.x, LEMON.y); const n = +c.replace('Digit', ''); if (n >= 1 && n <= 7) buy(n - 1); };
+  let botT = 0;
+  GAME.bot = dt => { botT += dt; if (botT > .25) { botT = 0; if (Math.random() < .5) GAME.down(LEMON.x + K.rand(-40, 40), LEMON.y + K.rand(-40, 40)); BIZ.forEach((b, i) => { if (!S.mgr[i]) run(i); }); const i = K.irand(0, 6); if (costOf(i, 1) < S.cash * .3) buy(i); if (!S.mgr[i] && S.cash > MGR[i]) hire(i); } };
+  GAME.update = dt => {
+    if (away) return;
+    S.boost = Math.max(0, (S.boost || 0) - dt);
+    BIZ.forEach((b, i) => {
+      if (S.mgr[i] && S.own[i] && prog[i] === 0) prog[i] = .0001;
+      if (prog[i] > 0) { prog[i] += dt / cycle(i); if (prog[i] >= 1) { const laps = Math.floor(prog[i]); earn(revenue(i) * laps, ROW(i).x + 330, ROW(i).y + 20); prog[i] = S.mgr[i] ? prog[i] - laps : 0; } }
+    });
+    for (const p of pops) p.t += dt; pops = pops.filter(p => p.t < .9).slice(-30);
+    tapScale += (1 - tapScale) * Math.min(1, dt * 12);
+    for (const w of walkers) { w.x += w.sp * dt; if (w.x < -20) w.x = 540; if (w.x > 540) w.x = -20; }
+    saveT += dt; if (saveT > 5) { saveT = 0; persist(); }
+    K.score = S.gold;
+  };
+  GAME.draw = gr => {
+    const v = K.view, sk = K.skin;
+    const sky = gr.createLinearGradient(0, v.y0, 0, 560); sky.addColorStop(0, '#7fd3ff'); sky.addColorStop(1, '#d6f3ff'); gr.fillStyle = sky; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    gr.fillStyle = '#fff6b0'; gr.beginPath(); gr.arc(470, 180, 40, 0, 7); gr.fill();
+    // the town grows with what you own
+    const tiers = BIZ.map((b, i) => S.own[i] > 0);
+    gr.fillStyle = '#b6dcef'; for (let i = 0; i < 8; i++) if (tiers[Math.min(6, 3 + (i % 4))]) gr.fillRect(20 + i * 62, 340 - (i % 3) * 60 - (tiers[5] ? 60 : 0), 50, 240);
+    gr.fillStyle = '#6cc46a'; gr.fillRect(v.x0, 520, 540 - v.x0, 220);
+    gr.fillStyle = '#c9c0b0'; gr.fillRect(v.x0, 560, 540 - v.x0, 40);
+    for (const w of walkers) { gr.fillStyle = w.c; gr.fillRect(w.x - 7, 548, 14, 26); gr.fillStyle = '#f1c7a5'; gr.beginPath(); gr.arc(w.x, 540, 8, 0, 7); gr.fill(); }
+    // the stand
+    gr.fillStyle = '#8a5a2b'; gr.fillRect(330, 470, 170, 70); gr.fillStyle = sk.c[0]; gr.fillRect(320, 440, 190, 36);
+    for (let i = 0; i < 5; i++) { gr.fillStyle = i % 2 ? '#fff' : sk.c[1]; gr.beginPath(); gr.moveTo(320 + i * 38, 400); gr.lineTo(358 + i * 38, 400); gr.lineTo(358 + i * 38, 432); gr.lineTo(320 + i * 38, 432); gr.fill(); }
+    gr.fillStyle = '#5a3a1a'; gr.fillRect(330, 400, 8, 70); gr.fillRect(490, 400, 8, 70);
+    gr.fillStyle = '#5a3a1a'; gr.font = '18px "Fredoka One", sans-serif'; gr.textAlign = 'center'; gr.fillText('LEMONADE', 415, 464);
+    if (S.own[3] > 0) { gr.fillStyle = '#ff6b6b'; gr.fillRect(40, 490, 110, 50); gr.fillRect(150, 506, 34, 34); gr.fillStyle = '#333'; gr.beginPath(); gr.arc(70, 542, 12, 0, 7); gr.arc(160, 542, 12, 0, 7); gr.fill(); }
+    // big lemon
+    gr.save(); gr.translate(LEMON.x, LEMON.y); gr.scale(tapScale, tapScale);
+    gr.fillStyle = '#ffd23f'; gr.shadowColor = 'rgba(0,0,0,.25)'; gr.shadowBlur = 20; gr.beginPath(); gr.ellipse(0, 0, LEMON.r, LEMON.r * .78, -.3, 0, 7); gr.fill(); gr.shadowBlur = 0;
+    gr.fillStyle = '#ffe98a'; gr.beginPath(); gr.ellipse(-26, -24, 30, 16, -.6, 0, 7); gr.fill(); gr.fillStyle = '#4caf50'; gr.beginPath(); gr.ellipse(60, -70, 26, 11, -.7, 0, 7); gr.fill();
+    gr.fillStyle = '#7a5a10'; gr.font = '22px "Fredoka One", sans-serif'; gr.fillText('SQUEEZE!', 0, 8); gr.restore();
+    // top bar
+    gr.fillStyle = 'rgba(255,255,255,.8)'; gr.beginPath(); gr.roundRect(20, 16, 500, 92, 18); gr.fill();
+    gr.fillStyle = '#2a7a2a'; gr.font = '46px "Fredoka One", sans-serif'; gr.textAlign = 'left'; gr.textBaseline = 'middle'; gr.fillText('$' + fmt(S.cash), 40, 52);
+    gr.fillStyle = '#4a6a4a'; gr.font = '18px "Fredoka One", sans-serif'; gr.fillText(`$${fmt(perSec())}/sec`, 40, 88); gr.fillStyle = '#c99a00'; gr.fillText(`🍋 ${S.gold} Golden Lemons (+${S.gold * 10}%)`, 220, 88);
+    // business list
+    gr.fillStyle = 'rgba(20,40,60,.88)'; gr.beginPath(); gr.roundRect(536, 12, 742, 696, 20); gr.fill();
+    gr.fillStyle = '#fff'; gr.font = '28px "Fredoka One", sans-serif'; gr.textAlign = 'left'; gr.fillText('Your businesses', 560, 40);
+    gr.fillStyle = '#3a6a8a'; gr.beginPath(); gr.roundRect(BUYN.x, BUYN.y, BUYN.w, BUYN.h, 10); gr.fill(); gr.fillStyle = '#fff'; gr.font = '18px "Fredoka One", sans-serif'; gr.textAlign = 'center'; gr.fillText(`Buy x${buyN === 'max' ? 'MAX' : buyN}`, BUYN.x + BUYN.w / 2, BUYN.y + 19);
+    gr.fillStyle = S.boost > 0 ? '#5fd36a' : K.save.coins >= 5 ? '#c99a00' : '#555'; gr.beginPath(); gr.roundRect(BOOST.x, BOOST.y, BOOST.w, BOOST.h, 10); gr.fill(); gr.fillStyle = '#fff'; gr.fillText(S.boost > 0 ? `2x income ${Math.ceil(S.boost)}s` : '2x boost (5 coins)', BOOST.x + BOOST.w / 2, BOOST.y + 19);
+    BIZ.forEach((b, i) => {
+      const r = ROW(i), owned = S.own[i] > 0, locked = !owned && i > 0 && !S.own[i - 1];
+      gr.fillStyle = hover === i ? '#2a5a7a' : '#1e4660'; gr.beginPath(); gr.roundRect(r.x, r.y, r.w, r.h, 14); gr.fill();
+      if (locked) { gr.fillStyle = 'rgba(255,255,255,.35)'; gr.font = '22px "Fredoka One", sans-serif'; gr.textAlign = 'left'; gr.fillText(`🔒 ${b.n}  ·  $${fmt(costOf(i, 1))}`, r.x + 20, r.y + r.h / 2); return; }
+      gr.font = '34px serif'; gr.textAlign = 'center'; gr.fillText(b.i, r.x + 36, r.y + r.h / 2 + 2);
+      gr.fillStyle = '#ffe36e'; gr.font = '16px "Fredoka One", sans-serif'; gr.fillText(S.own[i], r.x + 36, r.y + r.h - 8);
+      gr.textAlign = 'left'; gr.fillStyle = '#fff'; gr.font = '20px "Fredoka One", sans-serif'; gr.fillText(b.n, r.x + 72, r.y + 20);
+      const bw = 300, bx = r.x + 72, by = r.y + 36; gr.fillStyle = '#0e2a3a'; gr.beginPath(); gr.roundRect(bx, by, bw, 24, 12); gr.fill();
+      const p = cycle(i) < .25 && prog[i] > 0 ? 1 : prog[i]; gr.fillStyle = sk.c[0]; gr.beginPath(); gr.roundRect(bx, by, Math.max(0, bw * p), 24, 12); gr.fill();
+      gr.fillStyle = '#fff'; gr.font = '15px "Fredoka One", sans-serif'; gr.textAlign = 'center'; gr.fillText(owned ? `$${fmt(revenue(i))} ${S.mgr[i] ? '' : '· tap to run'}` : '', bx + bw / 2, by + 13);
+      gr.textAlign = 'right'; gr.fillStyle = 'rgba(255,255,255,.7)'; gr.fillText(`${cycle(i).toFixed(1)}s`, bx + bw + 46, by + 13);
+      if (owned && !S.mgr[i]) { const can = S.cash >= MGR[i]; gr.fillStyle = can ? '#a23bff' : '#3a3a5a'; gr.beginPath(); gr.roundRect(r.x + r.w - 262, r.y + 10, 104, r.h - 20, 10); gr.fill(); gr.fillStyle = '#fff'; gr.textAlign = 'center'; gr.font = '14px "Fredoka One", sans-serif'; gr.fillText('Manager', r.x + r.w - 210, r.y + 28); gr.fillText('$' + fmt(MGR[i]), r.x + r.w - 210, r.y + 46); }
+      if (S.mgr[i]) { gr.fillStyle = '#a2ffb0'; gr.font = '14px "Fredoka One", sans-serif'; gr.textAlign = 'center'; gr.fillText('✓ managed', r.x + r.w - 210, r.y + r.h / 2); }
+      const n = buyN === 'max' ? Math.max(1, maxBuy(i)) : buyN, c = costOf(i, n), can = c <= S.cash;
+      gr.fillStyle = can ? '#5fd36a' : '#3a5a3a'; gr.beginPath(); gr.roundRect(r.x + r.w - 146, r.y + 8, 136, r.h - 16, 12); gr.fill();
+      gr.fillStyle = can ? '#0e2a0e' : 'rgba(255,255,255,.5)'; gr.font = '15px "Fredoka One", sans-serif'; gr.fillText(`Buy x${n}`, r.x + r.w - 78, r.y + 26); gr.font = '19px "Fredoka One", sans-serif'; gr.fillText('$' + fmt(c), r.x + r.w - 78, r.y + 48);
+    });
+    // franchise
+    const g = goldFor(); gr.fillStyle = g >= 1 ? '#c99a00' : 'rgba(0,0,0,.35)'; gr.beginPath(); gr.roundRect(FR.x, FR.y, FR.w, FR.h, 16); gr.fill();
+    gr.fillStyle = '#fff'; gr.font = '22px "Fredoka One", sans-serif'; gr.textAlign = 'center'; gr.fillText(g >= 1 ? `Franchise now: +${g} Golden Lemon${g > 1 ? 's' : ''}` : `Franchise at $${fmt(Math.pow((S.goldEarned + 1) / 2, 2) * 1e9)} earned`, FR.x + FR.w / 2, FR.y + 26);
+    gr.font = '15px "Fredoka One", sans-serif'; gr.fillText(g >= 1 ? 'Start over, keep the lemons: +10% income each' : `Earned this run: $${fmt(S.total)}`, FR.x + FR.w / 2, FR.y + 52);
+    // money pops
+    gr.textAlign = 'center'; for (const p of pops) { gr.globalAlpha = 1 - p.t / .9; gr.fillStyle = '#1e7a1e'; gr.font = '22px "Fredoka One", sans-serif'; gr.fillText(p.s, p.x, p.y - p.t * 50); } gr.globalAlpha = 1;
+    if (away) {
+      gr.fillStyle = 'rgba(0,0,0,.55)'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+      gr.fillStyle = '#fff'; gr.beginPath(); gr.roundRect(390, 220, 500, 260, 24); gr.fill();
+      gr.fillStyle = '#2a7a2a'; gr.font = '36px "Fredoka One", sans-serif'; gr.fillText('Welcome back!', 640, 280);
+      gr.fillStyle = '#333'; gr.font = '22px "Fredoka One", sans-serif'; gr.fillText(`Your managers worked for ${Math.floor(away.secs / 3600)}h ${Math.floor(away.secs % 3600 / 60)}m`, 640, 330);
+      gr.fillStyle = '#2a7a2a'; gr.font = '44px "Fredoka One", sans-serif'; gr.fillText('+$' + fmt(away.earned), 640, 390); gr.fillStyle = '#777'; gr.font = '18px "Fredoka One", sans-serif'; gr.fillText('Tap to collect', 640, 448);
+    }
+  };
+})();
+
+/* Pulsebox game kit: canvas scaling, input, menus, skins shop, coins, best score, sound and effects.
+   A game defines GAME before this runs: { id, title, tagline, how:[], bg, skins:[{name,price,c:[]}],
+   reset(), update(dt), draw(g), down(x,y), move(x,y), up(x,y), key(code,isDown), bot(dt), drawSkin(g,skin,size) }.
+   Everything is in a 1280x720 world; K.view is the visible part of it (it can be wider or taller on odd screens).
+   ?demo plays the bot forever with no menus (used to record trailers). */
+'use strict';
+const $ = id => document.getElementById(id);
+const DEMO = /[?&]demo/.test(location.search), POSE = /[?&]pose/.test(location.search) && GAME.pose;  // ?demo&pose freezes a staged scene for cover art
+const cv = $('cv'), g = cv.getContext('2d');
+const K = {
+  W, H, t: 0, state: 'title', score: 0, runCoins: 0, bot: true, view: { x0: 0, y0: 0, x1: W, y1: H },
+  rand: (a, b) => a + Math.random() * (b - a),
+  irand: (a, b) => Math.floor(a + Math.random() * (b - a + 1)),
+  pick: a => a[Math.floor(Math.random() * a.length)],
+  clamp: (v, a, b) => v < a ? a : v > b ? b : v,
+  lerp: (a, b, t) => a + (b - a) * t,
+  dist: (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by),
+};
+document.documentElement.style.setProperty('--accent', GAME.accent || '#c6ff3d');
+document.documentElement.style.setProperty('--accent2', GAME.accent2 || '#29e0ff');
+document.documentElement.style.setProperty('--bg', GAME.bg || '#0a0c12');
+if (GAME.font) document.documentElement.style.setProperty('--display', `'${GAME.font}', 'Arial Black', system-ui, sans-serif`);
+if (DEMO) document.body.classList.add('demo');
+
+/* ---------- save ---------- */
+const SKEY = 'pbx-' + GAME.id;
+const save = { best: 0, coins: 0, owned: [0], skin: 0, plays: 0, mute: false };
+try { Object.assign(save, JSON.parse(localStorage.getItem(SKEY) || '{}')); } catch (e) {}
+const persist = () => { try { localStorage.setItem(SKEY, JSON.stringify(save)); } catch (e) {} };
+K.save = save; K.persist = persist;
+Object.defineProperty(K, 'skin', { get: () => GAME.skins[DEMO || K.bot ? (K.demoSkin || 0) : save.skin] || GAME.skins[0] });
+
+/* ---------- screen ---------- */
+let sc = 1, ox = 0, oy = 0, dpr = 1;
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+  sc = Math.min(innerWidth / W, innerHeight / H); ox = (innerWidth - W * sc) / 2; oy = (innerHeight - H * sc) / 2;
+  K.view = { x0: -ox / sc, y0: -oy / sc, x1: W + ox / sc, y1: H + oy / sc };
+}
+addEventListener('resize', resize); resize();
+
+/* ---------- sound ---------- */
+let ac = null;
+// every sound goes through K.master, which is silent on menus, while paused and when muted, so games can run looping sounds
+function audio() {
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); K.ac = ac; K.master = ac.createGain(); K.master.gain.value = 0; K.master.connect(ac.destination); } catch (e) {} }
+  if (ac && ac.state === 'suspended') ac.resume(); return ac;
+}
+K.audio = audio;
+let masterOn = false;
+function masterSync() {
+  const on = !!ac && !save.mute && (K.state === 'play' || K.state === 'over') && !K.bot;
+  if (ac && on !== masterOn) { masterOn = on; K.master.gain.setTargetAtTime(on ? 1 : 0, ac.currentTime, .05); }
+}
+K.sfx = (f = 440, d = .1, type = 'square', v = .12, slide = 0, delay = 0) => {
+  if (save.mute || K.bot || !ac) return;
+  const t = ac.currentTime + delay, o = ac.createOscillator(), a = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
+  a.gain.setValueAtTime(v, t); a.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(a).connect(K.master); o.start(t); o.stop(t + d + .02);
+};
+K.noise = (d = .15, v = .15, hp = 800) => {
+  if (save.mute || K.bot || !ac) return;
+  const n = Math.floor(ac.sampleRate * d), b = ac.createBuffer(1, n, ac.sampleRate), ch = b.getChannelData(0);
+  for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), a = ac.createGain();
+  f.type = 'highpass'; f.frequency.value = hp; a.gain.value = v; s.buffer = b; s.connect(f).connect(a).connect(K.master); s.start();
+};
+K.chime = (base = 523, steps = [0, 4, 7, 12]) => steps.forEach((s, i) => K.sfx(base * Math.pow(2, s / 12), .16, 'triangle', .1, 0, i * .07));
+
+/* ---------- effects ---------- */
+const parts = [], pops = [];
+let shake = 0, flashA = 0, flashC = '#fff';
+K.burst = (x, y, c, n = 14, sp = 320, o = {}) => {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = sp * (.3 + Math.random() * .7);
+    parts.push({ x, y, vx: Math.cos(a) * s + (o.vx || 0), vy: Math.sin(a) * s + (o.vy || 0), life: 0, max: (o.life || .6) * (.6 + Math.random() * .6), c: Array.isArray(c) ? K.pick(c) : c, s: (o.size || 7) * (.5 + Math.random()), gr: o.gravity ?? 600, sq: o.square });
+  }
+};
+K.pop = (x, y, text, c = '#fff', size = 34) => pops.push({ x, y, text, c, size, life: 0 });
+K.shake = a => { shake = Math.max(shake, a); };
+K.flash = (c = '#fff', a = .5) => { flashC = c; flashA = a; };
+K.toast = text => { if (K.bot) return; const d = document.createElement('div'); d.className = 'toast'; d.textContent = text; document.body.appendChild(d); setTimeout(() => d.remove(), 1500); };
+function fx(dt) {
+  for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.life += dt; if (p.life > p.max) { parts.splice(i, 1); continue; } p.vy += p.gr * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .99; }
+  for (let i = pops.length - 1; i >= 0; i--) { const p = pops[i]; p.life += dt; p.y -= 60 * dt; if (p.life > .9) pops.splice(i, 1); }
+  shake = Math.max(0, shake - 60 * dt); flashA = Math.max(0, flashA - 2.5 * dt);
+}
+function drawFx() {
+  for (const p of parts) { g.globalAlpha = 1 - p.life / p.max; g.fillStyle = p.c; if (p.sq) g.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s); else { g.beginPath(); g.arc(p.x, p.y, p.s / 2, 0, 7); g.fill(); } }
+  g.globalAlpha = 1; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const p of pops) {
+    const k = p.life < .12 ? p.life / .12 : 1; g.globalAlpha = p.life > .6 ? 1 - (p.life - .6) / .3 : 1;
+    g.font = `${Math.round(p.size * (0.6 + .4 * k))}px ${getComputedStyle(document.documentElement).getPropertyValue('--display')}`;
+    g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,.45)'; g.strokeText(p.text, p.x, p.y); g.fillStyle = p.c; g.fillText(p.text, p.x, p.y);
+  }
+  g.globalAlpha = 1;
+}
+
+/* ---------- UI ---------- */
+const coinHTML = '<i class="coin-i"></i>';
+document.body.insertAdjacentHTML('beforeend', `
+<div class="hud" id="hud" hidden><div class="hud-score" id="hScore">0</div><div class="hud-coins">${coinHTML}<span id="hCoins">0</span></div><button class="hud-pause" id="hPause" aria-label="Pause"></button></div>
+<div class="scr" id="sTitle" ${DEMO ? 'hidden' : ''}><div class="card">
+  <h1 class="title">${GAME.title}</h1><p class="sub">${GAME.tagline}</p>
+  <div class="stats"><span class="stat"><small>Best</small><b id="tBest">0</b></span><span class="stat">${coinHTML}<b id="tCoins">0</b></span></div>
+  <button class="big" id="bPlay">Play</button>
+  <div class="row"><button id="bSkins">Skins</button></div>
+  <ul class="how">${GAME.how.map(h => `<li>${h}</li>`).join('')}</ul>
+</div></div>
+<div class="scr" id="sOver" hidden><div class="card">
+  <h2 class="title" id="oTitle" style="font-size:40px" hidden></h2><p class="sub" id="oText" hidden></p><p class="sub" style="margin:0" id="oLabel">Score</p><div class="score-big" id="oScore">0</div><div id="oNew" class="newbest" hidden>New best!</div>
+  <div class="stats"><span class="stat"><small>Best</small><b id="oBest">0</b></span><span class="stat">+${coinHTML}<b id="oCoins">0</b></span></div>
+  <button class="big" id="bAgain">Play again</button>
+  <div class="row"><button id="bMenu">Menu</button><button id="bSkins2">Skins</button></div>
+  <p class="hint" id="oHint"></p>
+</div></div>
+<div class="scr" id="sSkins" hidden><div class="card">
+  <h2 class="title" style="font-size:40px">Skins</h2>
+  <div class="stats"><span class="stat">${coinHTML}<b id="kCoins">0</b></span></div>
+  <div class="skins" id="kGrid"></div>
+  <button class="big" id="bBack">Back</button>
+</div></div>
+<div class="scr" id="sPause" hidden><div class="card">
+  <h2 class="title" style="font-size:44px">Paused</h2>
+  <button class="big" id="bResume">Resume</button>
+  <div class="row"><button id="bQuit">Menu</button></div>
+</div></div>
+<button class="mute" id="bMute" aria-label="Sound on or off"></button>`);
+
+const screens = ['sTitle', 'sOver', 'sSkins', 'sPause'];
+let skinsFrom = 'sTitle';
+function showScr(id) { screens.forEach(s => $(s).hidden = s !== id || DEMO); }
+function refresh() {
+  $('tBest').textContent = save.best; $('tCoins').textContent = save.coins; $('kCoins').textContent = save.coins;
+  $('bMute').textContent = save.mute ? '🔇' : '🔊';
+}
+function hud() { $('hScore').textContent = K.score; $('hCoins').textContent = K.runCoins; }
+K.add = (n = 1, x, y, c) => {
+  K.score += n; hud();
+  if (!K.bot) { const s = $('hScore'); s.classList.remove('bump'); void s.offsetWidth; s.classList.add('bump'); }
+  if (x !== undefined) K.pop(x, y, '+' + n, c || '#fff');
+};
+K.coin = (n = 1, x, y) => {
+  K.runCoins += n; hud();
+  if (x !== undefined) K.burst(x, y, ['#ffcf2e', '#fff3a8'], 6, 200, { life: .4, size: 6, gravity: 300 });
+  K.sfx(1320, .07, 'square', .05); K.sfx(1760, .08, 'square', .05, 0, .05);
+};
+
+function buildSkins() {
+  const grid = $('kGrid'); grid.innerHTML = '';
+  GAME.skins.forEach((s, i) => {
+    const own = save.owned.includes(i), b = document.createElement('button');
+    b.className = 'skin' + (save.skin === i ? ' on' : '') + (own ? '' : ' locked') + (!own && save.coins < s.price ? ' cant' : '');
+    const c = document.createElement('canvas'); c.width = c.height = 112; const cg = c.getContext('2d'); cg.translate(56, 56);
+    if (GAME.drawSkin) GAME.drawSkin(cg, s, 40); else { cg.fillStyle = s.c[0]; cg.beginPath(); cg.arc(0, 0, 40, 0, 7); cg.fill(); }
+    if (!own) { cg.fillStyle = 'rgba(0,0,0,.45)'; cg.fillRect(-56, -56, 112, 112); }
+    b.appendChild(c);
+    b.insertAdjacentHTML('beforeend', `<span>${s.name}</span>${own ? (save.skin === i ? '<span class="price">Equipped</span>' : '<span class="price" style="color:#cfd5ef">Equip</span>') : `<span class="price">${coinHTML}${s.price}</span>`}`);
+    b.onclick = () => {
+      audio();
+      if (own) { save.skin = i; K.sfx(660, .08, 'triangle'); }
+      else if (save.coins >= s.price) { save.coins -= s.price; save.owned.push(i); save.skin = i; K.chime(660); }
+      else { K.sfx(160, .15, 'sawtooth', .08); return; }
+      persist(); refresh(); buildSkins();
+    };
+    grid.appendChild(b);
+  });
+}
+
+/* ---------- flow ---------- */
+let overAt = 0, botOverAt = 0;
+function start() {
+  audio(); K.bot = false; K.score = 0; K.runCoins = 0; hud(); parts.length = 0; pops.length = 0;
+  GAME.reset(); K.state = 'play'; showScr(null); $('hud').hidden = false; save.plays++; persist();
+}
+function attract() { K.bot = true; K.demoSkin = DEMO ? 0 : K.irand(0, GAME.skins.length - 1); K.score = 0; K.runCoins = 0; hud(); GAME.reset(); if (POSE) GAME.pose(); K.state = 'title'; $('hud').hidden = !DEMO; }
+K.over = (o = {}) => {
+  if (K.bot) { if (!botOverAt) botOverAt = K.t + 1.2; return; }
+  if (K.state !== 'play') return;
+  K.state = 'over'; overAt = performance.now();
+  const best = K.score > save.best; if (best) save.best = K.score;
+  save.coins += K.runCoins; persist(); refresh();
+  $('oTitle').hidden = !o.title; $('oTitle').textContent = o.title || ''; $('oText').hidden = !o.text; $('oText').textContent = o.text || ''; $('oLabel').textContent = GAME.scoreLabel || 'Score';
+  $('oScore').textContent = K.score; $('oBest').textContent = save.best; $('oCoins').textContent = K.runCoins; $('oNew').hidden = !best || K.score === 0;
+  const next = GAME.skins.map((s, i) => [s, i]).find(([s, i]) => !save.owned.includes(i));
+  $('oHint').textContent = next ? (save.coins >= next[0].price ? `You can unlock ${next[0].name} now!` : `${next[0].price - save.coins} more coins to unlock ${next[0].name}`) : 'You own every skin. Legend!';
+  if (GAME.noSkins) $('oHint').textContent = '';
+  setTimeout(() => { if (K.state === 'over') { showScr('sOver'); $('hud').hidden = true; } }, o.delay ?? 650);
+  if (best && K.score > 0) setTimeout(() => K.chime(523, [0, 4, 7, 12, 16]), 700);
+};
+function pause() { if (K.state !== 'play') return; K.state = 'paused'; showScr('sPause'); }
+function resume() { K.state = 'play'; showScr(null); last = performance.now(); }
+function toMenu() { refresh(); attract(); showScr('sTitle'); }
+
+$('bPlay').onclick = start; $('bAgain').onclick = start; $('bResume').onclick = resume;
+$('bMenu').onclick = toMenu; $('bQuit').onclick = toMenu;
+$('bSkins').onclick = () => { skinsFrom = 'sTitle'; buildSkins(); refresh(); showScr('sSkins'); };
+$('bSkins2').onclick = () => { skinsFrom = 'sOver'; buildSkins(); refresh(); showScr('sSkins'); };
+$('bBack').onclick = () => { if (skinsFrom === 'sOver') toMenu(); else showScr('sTitle'); };
+$('hPause').onclick = pause;
+$('bMute').onclick = () => { save.mute = !save.mute; persist(); refresh(); audio(); };
+addEventListener('blur', pause);
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+/* ---------- input ---------- */
+const toW = e => [(e.clientX - ox) / sc, (e.clientY - oy) / sc];
+cv.addEventListener('pointerdown', e => { audio(); if (K.state === 'play' && GAME.down) { const [x, y] = toW(e); GAME.down(x, y, e); } });
+addEventListener('pointermove', e => { if (K.state === 'play' && GAME.move) { const [x, y] = toW(e); GAME.move(x, y, e); } });
+addEventListener('pointerup', e => { if (K.state === 'play' && GAME.up) { const [x, y] = toW(e); GAME.up(x, y, e); } });
+addEventListener('keydown', e => {
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  if (e.repeat && K.state !== 'play') return;
+  if (e.code === 'Escape' || e.code === 'KeyP') { if (K.state === 'play') pause(); else if (K.state === 'paused') resume(); return; }
+  if ((e.code === 'Space' || e.code === 'Enter') && K.state !== 'play') {
+    if (K.state === 'title' && !$('sTitle').hidden) start();
+    else if (K.state === 'over' && performance.now() - overAt > 900) start();
+    else if (K.state === 'paused') resume();
+    return;
+  }
+  if (K.state === 'play' && GAME.key) GAME.key(e.code, true);
+});
+addEventListener('keyup', e => { if (K.state === 'play' && GAME.key) GAME.key(e.code, false); });
+
+/* ---------- loop ---------- */
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
+  const run = K.state === 'play' || K.state === 'title' || K.state === 'over';
+  if (run && !POSE) {
+    K.t += dt;
+    if (K.bot && K.state === 'title') { if (botOverAt && K.t > botOverAt) { botOverAt = 0; attract(); } else if (!botOverAt && GAME.bot) GAME.bot(dt); }
+    GAME.update(dt); fx(dt);
+  }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = GAME.bg || '#000'; g.fillRect(0, 0, innerWidth, innerHeight);
+  const sx = shake ? (Math.random() - .5) * shake : 0, sy = shake ? (Math.random() - .5) * shake : 0;
+  g.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * (ox + sx * sc), dpr * (oy + sy * sc));
+  GAME.draw(g); drawFx();
+  if (flashA > 0) { g.globalAlpha = flashA; g.fillStyle = flashC; g.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0); g.globalAlpha = 1; }
+  masterSync();
+  requestAnimationFrame(frame);
+}
+if (GAME.noSkins) { $('bSkins').parentNode.hidden = true; $('bSkins2').hidden = true; }
+if (GAME.noHud) { $('hScore').hidden = true; document.querySelector('.hud-coins').hidden = true; }
+refresh(); attract(); showScr('sTitle');
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

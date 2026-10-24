@@ -130,7 +130,7 @@ const GAME = {
     const m = { Digit1: 'book', Digit2: 'id', Digit3: 'lamp', Digit4: 'ask', KeyK: 'admit', KeyX: 'refuse', Space: callOpen ? 'answer' : phase === 'dawn' ? 'next' : null, Enter: callOpen ? 'answer' : phase === 'dawn' ? 'next' : null }[c];
     if (m) { if (m === 'next' && night >= 5) { if (phaseT > 2) win(); } else act(m); }
   };
-  function win() { if (K.state !== 'play') return; K.coin(25); K.over({ title: 'Checkout time', text: 'You kept the lights on for five nights. The sun is up, and the motel is quiet. For now.' }); }
+  function win() { if (K.state !== 'play') return; K.save.night = 1; K.persist(); K.coin(25); K.over({ title: 'Checkout time', text: 'You kept the lights on for five nights. The sun is up, and the motel is quiet. For now.' }); }
   let botT = 0;
   GAME.bot = dt => {
     if (phase === 'dawn') { if (phaseT > 2.5) startNight(night % 5 + 1); return; }
