@@ -1,12 +1,14 @@
 """Builds the kit-based games: src/games/<id>.js + src/kit.js + src/kit.css -> public/games/<id>.html (one file each).
-Run from anywhere: python3 tools/build-games.py"""
-import glob, os, re, urllib.parse
+Run from anywhere: python3 tools/build-games.py [game-id ...]  (no ids builds every game)"""
+import glob, os, re, sys, urllib.parse
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 src = lambda *p: open(os.path.join(HERE, 'src', *p), encoding='utf-8').read()
 kit_js, kit_css = src('kit.js'), src('kit.css')
+only = set(sys.argv[1:])
 for path in sorted(glob.glob(os.path.join(HERE, 'src', 'games', '*.js'))):
     gid = os.path.splitext(os.path.basename(path))[0]
+    if only and gid not in only: continue
     js = open(path, encoding='utf-8').read()
     # shared code a game asks for with a line like  // @use person  (from src/lib/person.js)
     for lib in re.findall(r'^// @use (\w+)', js, re.M): js = src('lib', lib + '.js') + '\n' + js
