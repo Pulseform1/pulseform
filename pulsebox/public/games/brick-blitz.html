@@ -317,13 +317,13 @@ const GAME = {
     return (SPR[key] = c);
   }
   function drawPaddle(g, x, y, w, s, h = 20, sq = 0, f = {}) {
-    const hh = h * (1 - sq * .28), ww = w * (1 + sq * .07), x0 = x - ww / 2, y0 = y + (h - hh), cap = Math.min(22, ww * .16);
+    const hh = h * (1 - sq * .28), ww = w * (1 + sq * .07), x0 = x - ww / 2, y0 = y + (h - hh), cap = Math.min(16, ww * .12);
     add(g); g.globalAlpha = .5; g.drawImage(glow(s.c[0]), x0 - 26, y0 - 22, ww + 52, hh + 50); norm(g);
     g.fillStyle = 'rgba(0,0,0,.35)'; rr(g, x0 + 3, y0 + 7, ww, hh, hh / 2); g.fill();
     const gd = g.createLinearGradient(x0, 0, x0 + ww, 0); gd.addColorStop(0, s.c[1]); gd.addColorStop(.5, s.c[0]); gd.addColorStop(1, s.c[1]);
     g.fillStyle = gd; rr(g, x0, y0, ww, hh, hh / 2); g.fill();
-    const vs = g.createLinearGradient(0, y0, 0, y0 + hh); vs.addColorStop(0, 'rgba(255,255,255,.7)'); vs.addColorStop(.35, 'rgba(255,255,255,.1)'); vs.addColorStop(.6, 'rgba(0,0,0,0)'); vs.addColorStop(1, 'rgba(0,0,0,.45)');
-    g.fillStyle = vs; rr(g, x0, y0, ww, hh, hh / 2); g.fill();
+    const vs = g.createLinearGradient(0, y0, 0, y0 + hh); vs.addColorStop(0, 'rgba(255,255,255,.55)'); vs.addColorStop(.3, 'rgba(255,255,255,.04)'); vs.addColorStop(.62, 'rgba(0,0,0,0)'); vs.addColorStop(1, 'rgba(0,0,0,.4)');
+    g.fillStyle = vs; rr(g, x0, y0, ww, hh, hh / 2); g.fill(); g.strokeStyle = s.c[0]; g.lineWidth = 1.5; g.stroke();
     for (const sd of [0, 1]) {
       const cx = sd ? x0 + ww - cap : x0, cg = g.createLinearGradient(0, y0, 0, y0 + hh); cg.addColorStop(0, '#f4f6ff'); cg.addColorStop(.45, '#9098b0'); cg.addColorStop(1, '#353a4e');
       g.fillStyle = cg; rr(g, cx, y0, cap, hh, sd ? [2, hh / 2, hh / 2, 2] : [hh / 2, 2, 2, hh / 2]); g.fill();
@@ -749,12 +749,13 @@ const GAME = {
     // onboarding hints
     if (!K.bot && X && !dead && phase !== 'clear') {
       const pulse = .65 + .35 * Math.sin(K.t * 5);
-      if (!(X.tut & 1)) { g.globalAlpha = pulse; txt(g, '◀  DRAG OR ← →  ▶', pad.x, PY + 38, 18, '#fff', 'center', 5); g.globalAlpha = 1; }
+      if (!(X.tut & 1)) { g.globalAlpha = pulse; txt(g, '◀  DRAG OR USE ARROW KEYS  ▶', pad.x, PY + 38, 18, '#fff', 'center', 5); g.globalAlpha = 1; }
       if (!(X.tut & 2) && balls.some(b => b.stuck)) { const by = PY - 70 - 8 * Math.sin(K.t * 6); txt(g, 'TAP OR SPACE TO LAUNCH', pad.x, by - 30, 20, '#5ff3ff'); g.fillStyle = '#5ff3ff'; g.beginPath(); g.moveTo(pad.x - 10, by); g.lineTo(pad.x + 10, by); g.lineTo(pad.x, by - 14); g.fill(); }
       if (!(X.tut & 4)) { const d = drops.find(o => o.t !== '$'); if (d) { g.strokeStyle = '#fff'; g.globalAlpha = pulse; g.lineWidth = 3; g.beginPath(); g.arc(d.x, d.y, 44 + 6 * Math.sin(K.t * 8), 0, TAU); g.stroke(); g.globalAlpha = 1; txt(g, 'CATCH IT!', d.x, d.y - 62, 20, '#fff'); } }
     }
     drawBanners(g);
   };
+  GAME._dbg = c => eval(c); /*DBG*/
 })();
 
 /* Pulsebox game kit: canvas scaling, input, menus, skins shop, coins, best score, sound and effects.

@@ -124,7 +124,7 @@ const GAME = {
     return (Math.floor(n * (n < 10 ? 100 : n < 100 ? 10 : 1)) / (n < 10 ? 100 : n < 100 ? 10 : 1)).toFixed(n < 10 ? 2 : n < 100 ? 1 : 0) + u[i];
   };
   const today = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5);
-  let S, prog, cache, shown, buyN, tab, page, focus, hover, saveT, away, ev, evT, achT, combo, comboT, tapS, hint, frConfirm, banners, pops, bills, peeps, queues, cars, puffs, rainL, clouds, spawnT, lastPop, acc, chingT, juice, lemonRot, celebP, newAch, shift, bump, carT;
+  let S, prog, cache, shown, buyN, tab, page, focus, hover, saveT, away, ev, evT, achT, combo, comboT, tapS, hint, frConfirm, banners, pops, bills, peeps, queues, cars, puffs, rainL, clouds, spawnT, lastPop, acc, chingT, juice, lemonRot, celebP, newAch, shift, bump, carT, serveT;
   const fresh = () => ({ cash: 0, total: 0, own: BIZ.map((_, i) => i === 0 ? 1 : 0), mgr: BIZ.map(() => false), gold: 0, goldEarned: 0, boost: 0, t: Date.now(), runs: 0, upg: [], ach: {}, st: {}, day: 0, streak: 0, tut: 0 });
   function recalc() {
     const m = BIZ.map(() => 1); let tap = .04;
@@ -151,17 +151,17 @@ const GAME = {
   const BUYB = r => ({ x: r.x + r.w - 128, y: r.y + 8, w: 120, h: 55 }), MGRB = r => ({ x: r.x + r.w - 226, y: r.y + 8, w: 92, h: 55 });
   const BUYN = { x: PX + 10, y: 74, w: 128, h: 34 }, PGL = { x: PX + 418, y: 74, w: 54, h: 34 }, PGR = { x: PX + 480, y: 74, w: 54, h: 34 };
   const FRB = { x: PX + 92, y: 430, w: 360, h: 74 };
-  const LEMON = { x: 150, y: 262, r: 78 };
+  const LEMON = { x: 150, y: 210, r: 76 };
   const CASH = { x: 64, y: 12, w: 380, h: 98 };
   const GOAL = { x: 14, y: 616, w: 372, h: 92 }, GIFT = { x: 394, y: 616, w: 150, h: 92 }, BOOST = { x: 552, y: 616, w: 164, h: 92 };
   const AWAY = { x: 380, y: 200, w: 520, h: 300 };
-  const SHOPX = [118, 298, 478], DEPOT = 640, BPOS = [[118, 318], [298, 330], [478, 280], [640, 330], [342, 262], [611, 222], [474, 98]];
+  const SHOPX = [110, 292, 470], PLX = 640, FX = 318, HQX = 548, BPOS = [[110, 330], [292, 330], [470, 280], [640, 520], [640, 270], [318, 190], [548, 120]];
   const GROUND = 455, QY = 470;
   const inB = (b, x, y) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
 
   /* ---------- state ---------- */
   GAME.reset = () => {
-    prog = BIZ.map(() => 0); acc = BIZ.map(() => 0); lastPop = BIZ.map(() => -9); queues = [[], [], []];
+    prog = BIZ.map(() => 0); acc = BIZ.map(() => 0); serveT = [0, 0, 0]; lastPop = BIZ.map(() => -9); queues = [[], [], []];
     buyN = 1; tab = 0; page = 0; focus = -1; hover = null; saveT = 0; away = null; ev = null; achT = 0; combo = 0; comboT = 0; tapS = [1, 1]; hint = 0; frConfirm = 0;
     banners = []; pops = []; bills = []; peeps = []; cars = []; puffs = []; rainL = []; spawnT = 0; chingT = 0; juice = []; lemonRot = 0; celebP = null; newAch = 0; shift = false; bump = 0; carT = 3;
     clouds = Array.from({ length: 6 }, (_, i) => ({ x: i * 150 + K.rand(0, 80), y: K.rand(40, 190), s: K.rand(.6, 1.2), v: K.rand(6, 14) }));
@@ -184,11 +184,12 @@ const GAME = {
     for (let i = 0; i < 360; i++) scene(1 / 30, true);  // fill the streets before the first frame
     K.score = S.gold;
   };
+  GAME._dbg = () => ({ S, startEvent, recalc, tab: n => { tab = n; } });
   GAME.pose = () => { S.cash = 8.4e9; S.own = [120, 60, 50, 30, 12, 6, 3]; recalc(); ev = { k: 'heat', t: 20, d: 30 }; for (let i = 0; i < 300; i++) { K.t += 1 / 30; scene(1 / 30, true); } shown = S.cash; };
   function persist() { if (K.bot) return; S.t = Date.now(); K.save.ty = S; K.save.best = Math.max(K.save.best || 0, S.gold); K.persist(); }
   function earn(v) { S.cash += v; S.total += v; S.st.life = (S.st.life || 0) + v; }
   function bank(n, x, y) { if (K.bot || n <= 0) return; K.coin(n, x, y); K.runCoins -= n; K.save.coins += n; K.persist(); }
-  const pop = (x, y, s, c = '#2f9e3a', size = 24) => { pops.push({ x, y, s, c, size, t: 0 }); if (pops.length > 40) pops.shift(); };
+  const pop = (x, y, s, c = '#2f9e3a', size = 24) => { pops.push({ x: K.clamp(x, 70, 1220), y, s, c, size, t: 0 }); if (pops.length > 40) pops.shift(); };
   const banner = (s, sub, c = '#ff9f1a') => { banners.push({ s, sub, c, t: 0 }); if (banners.length > 3) banners.shift(); };
   function ching() { if (chingT > 0) return; chingT = .22; K.sfx(1568, .05, 'square', .025); K.sfx(2093, .09, 'square', .025, 0, .05); }
 
@@ -196,7 +197,7 @@ const GAME = {
   function squeeze(x, y) {
     const v = tapValue(); earn(v); S.st.taps = st('taps') + 1; combo = Math.min(60, combo + 1); comboT = 1.2;
     tapS = [1.16, .82]; bump = 1;
-    pop(x + K.rand(-30, 30), y - 70, '+$' + fmt(v), combo > 20 ? '#ff8a00' : '#2f9e3a', 26 + Math.min(10, combo / 4));
+    pop(LEMON.x + K.pick([-1, 1]) * K.rand(60, 110), LEMON.y + K.rand(-40, 10), '+$' + fmt(v), combo > 20 ? '#ff8a00' : '#2f9e3a', 26 + Math.min(10, combo / 4));
     for (let i = 0; i < 7; i++) { const a = K.rand(0, 6.28), s = K.rand(120, 320); juice.push({ x: LEMON.x + Math.cos(a) * 40, y: LEMON.y + Math.sin(a) * 30, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 120, t: 0, r: K.rand(3, 7) }); }
     if (juice.length > 80) juice.splice(0, juice.length - 80);
     if (!K.bot) { K.sfx(320 + Math.min(combo, 40) * 14, .07, 'triangle', .09, 240); K.noise(.05, .05, 2500); }
@@ -291,7 +292,7 @@ const GAME = {
       const open = shops.filter(i => queues[i].length < 5); if (open.length && Math.random() < .8) { const i = K.pick(open); p.st = 'go'; p.shop = i; queues[i].push(p); }
       peeps.push(p);
     }
-    for (let qi = 0; qi < 3; qi++) queues[qi].forEach((p, k) => { p.tx = SHOPX[qi] - 6 - k * 26; });
+    for (let qi = 0; qi < 3; qi++) { queues[qi].forEach((p, k) => { p.tx = SHOPX[qi] - 6 - k * 26; }); if (S.mgr[qi] && S.own[qi]) { serveT[qi] -= dt; if (serveT[qi] <= 0) { serveT[qi] = K.clamp(cycle(qi), .6, 2.2); serve(qi); } } }
     for (const p of peeps) {
       if (p.st === 'go' || p.st === 'wait') {
         const dx = p.tx - p.x, dy = QY - p.y;
@@ -314,8 +315,8 @@ const GAME = {
     cars = cars.filter(c => c.x > -260 && c.x < 1000);
     if (celebP) celebP.t += dt;
     // factory smoke
-    if (S.own[5] && Math.random() < dt * 4) { const sx = K.pick([-58, -20, 22]); puffs.push({ x: 611 + sx, y: GROUND - 64 - 250 + (sx === -20 ? -12 : 0) + 64, r: K.rand(8, 13), t: 0 }); }
-    for (const p of puffs) { p.t += dt; p.y -= 26 * dt; p.x += 14 * dt; p.r += 8 * dt; } puffs = puffs.filter(p => p.t < 3.5);
+    if (S.own[5] && Math.random() < dt * 3) { const k = K.irand(0, 2); puffs.push({ x: FX + [-58, -20, 22][k], y: 400 - [230, 250, 220][k], r: K.rand(6, 10), t: 0 }); }
+    for (const p of puffs) { p.t += dt; p.y -= 22 * dt; p.x += 12 * dt; p.r += 5 * dt; } puffs = puffs.filter(p => p.t < 3.5);
     if (warm) return;
     // lemon rain
     if (ev && ev.k === 'rain' && ev.t > 1.5 && Math.random() < dt * 4) rainL.push({ x: K.rand(30, 700), y: -30, vy: K.rand(80, 160), r: K.rand(0, 6), vr: K.rand(-3, 3), t: 0 });
@@ -406,8 +407,8 @@ const GAME = {
   function complete(i, laps) {
     const v = revenue(i) * laps; earn(v); acc[i] += v;
     if (K.t - lastPop[i] > .45) { const [x, y] = BPOS[i]; pop(x + K.rand(-14, 14), y, '+$' + fmt(acc[i]), '#2f9e3a', 22 + i * 1.5); acc[i] = 0; lastPop[i] = K.t; bill(x, y); ching(); }
-    if (i < 3) serve(i);
-    if (i === 5) for (let k = 0; k < 3; k++) puffs.push({ x: 611 + K.rand(-60, 30), y: GROUND - 250, r: 16, t: 0 });
+    if (i < 3 && !S.mgr[i]) serve(i);
+    if (i === 5) for (let k = 0; k < 3; k++) puffs.push({ x: FX + [-58, -20, 22][k], y: 400 - [230, 250, 220][k], r: 12, t: 0 });
     if (i === 3 && !K.bot) K.sfx(392, .12, 'square', .03), K.sfx(330, .14, 'square', .03, 0, .12);
   }
 
@@ -458,7 +459,7 @@ const GAME = {
   }
   function cupIcon(gr, x, y, s, c) { gr.fillStyle = '#fff'; gr.beginPath(); gr.moveTo(x - 5 * s, y - 12 * s); gr.lineTo(x + 5 * s, y - 12 * s); gr.lineTo(x + 4 * s, y); gr.lineTo(x - 4 * s, y); gr.fill(); gr.fillStyle = c; gr.fillRect(x - 4.5 * s, y - 9 * s, 9 * s, 7 * s); gr.strokeStyle = '#ff5a7a'; gr.lineWidth = 1.5 * s; gr.beginPath(); gr.moveTo(x + 1 * s, y - 12 * s); gr.lineTo(x + 4 * s, y - 18 * s); gr.stroke(); }
   function person(gr, p, t, sc = 1) {
-    const walking = p.st !== 'wait', sw = walking ? Math.sin(p.ph) : 0, bob = walking ? Math.abs(Math.cos(p.ph)) * 2 : Math.sin(t * 2 + p.ph) * .6, s = (p.kid ? .78 : 1) * sc;
+    const walking = p.st !== 'wait', sw = walking ? Math.sin(p.ph) : 0, bob = walking ? Math.abs(Math.cos(p.ph)) * 2 : Math.sin(t * 2 + p.ph) * .6, s = (p.kid ? .78 : p.gold ? 1.3 : 1) * sc;
     gr.save(); gr.translate(p.x, p.y); gr.scale(s, s);
     ell(gr, 0, 0, 12, 3.5, 'rgba(0,0,0,.18)');
     if (p.gold) { const gl = gr.createRadialGradient(0, -26, 4, 0, -26, 46); gl.addColorStop(0, 'rgba(255,230,90,.7)'); gl.addColorStop(1, 'rgba(255,230,90,0)'); gr.fillStyle = gl; gr.beginPath(); gr.arc(0, -26, 46, 0, 7); gr.fill(); }
@@ -473,7 +474,8 @@ const GAME = {
     circ(gr, 4.5, -44, 1.4, '#222');
     if (p.gold) { gr.fillStyle = '#ffd23f'; gr.beginPath(); gr.moveTo(-8, -52); gr.lineTo(-8, -60); gr.lineTo(-4, -55); gr.lineTo(0, -62); gr.lineTo(4, -55); gr.lineTo(8, -60); gr.lineTo(8, -52); gr.fill(); }
     if (p.cup) cupIcon(gr, 12, -20, 1, p.cup);
-    if (p.st === 'wait' && p.wait > 6) { gr.scale(p.dir, 1); rr(gr, -14, -78, 28, 18, 9, 'rgba(255,255,255,.92)'); gr.fillStyle = '#555'; for (let k = -1; k <= 1; k++) circ(gr, k * 7, -69, 2, '#666'); }
+    if (p.gold) { gr.scale(p.dir, 1); const b = Math.abs(Math.sin(t * 5)) * 6; gr.fillStyle = '#fff'; rr(gr, -15, -96 - b, 30, 26, 13, '#fff'); gr.beginPath(); gr.moveTo(-5, -71 - b); gr.lineTo(5, -71 - b); gr.lineTo(0, -64 - b); gr.fill(); T(gr, '$', 0, -83 - b, 18, '#e0a000', 'center', null); gr.scale(p.dir, 1); }
+    if (p.st === 'wait' && p.wait > 5 && !S.mgr[p.shop]) { gr.scale(p.dir, 1); rr(gr, -14, -78, 28, 18, 9, 'rgba(255,255,255,.92)'); gr.fillStyle = '#555'; for (let k = -1; k <= 1; k++) circ(gr, k * 7, -69, 2, '#666'); }
     gr.restore();
   }
   /* ---------- buildings (x, y = bottom center) ---------- */
@@ -493,7 +495,6 @@ const GAME = {
     gr.fillStyle = '#a0662e'; gr.fillRect(78, -24, 34, 24); for (let i = 0; i < 3; i++) lemonShape(gr, 86 + i * 9, -28 - (i % 2) * 4, 7, i, 0);
     for (let i = 0; i < 6; i++) { gr.fillStyle = i % 2 ? '#fff' : sk.c[0]; gr.beginPath(); gr.moveTo(-82 + i * 27.3, -136); gr.lineTo(-82 + (i + 1) * 27.3, -136); gr.lineTo(-82 + (i + 1) * 27.3, -112); gr.arc(-82 + (i + .5) * 27.3, -112, 13.65, 0, Math.PI); gr.fill(); }
     gr.fillStyle = 'rgba(0,0,0,.1)'; gr.fillRect(-82, -118, 164, 6);
-    lemonShape(gr, 0, -150, 17, -.2 + Math.sin(t * 2) * .08, 1);
     if (lvl >= 1) for (let i = 0; i < 9; i++) circ(gr, -76 + i * 19, -98 + Math.sin(i * 1.3) * 2, 3.2, Math.sin(t * 3 + i) > 0 ? ['#ff5a5a', '#ffe14d', '#5fd3ff', '#7dff9a'][i % 4] : 'rgba(255,255,255,.5)');
     if (lvl >= 2) { gr.save(); gr.shadowColor = '#ffe14d'; gr.shadowBlur = 14 + Math.sin(t * 4) * 6; gr.strokeStyle = '#fff36a'; gr.lineWidth = 2.5; rr(gr, -54, -50, 108, 30, 8); gr.stroke(); gr.restore(); }
     if (lvl >= 3) { gr.fillStyle = '#ffcf2e'; for (const sx of [-1, 1]) { gr.beginPath(); gr.moveTo(sx * 92, -150); for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5 - Math.PI / 2 + t; gr.lineTo(sx * 92 + Math.cos(a) * (k % 2 ? 5 : 11), -150 + Math.sin(a) * (k % 2 ? 5 : 11)); } gr.fill(); } }
@@ -538,17 +539,6 @@ const GAME = {
     if (lvl >= 1) { gr.save(); gr.shadowColor = '#ff6fa8'; gr.shadowBlur = 10 + Math.sin(t * 3) * 5; T(gr, 'SMOOTHIE', 46, -152, 15, '#fff', 'center', null); gr.restore(); } else T(gr, 'SMOOTHIE', 46, -152, 15, '#b84a78', 'center', null);
     if (lvl >= 2) for (let i = 0; i < 8; i++) circ(gr, -80 + i * 23, -138, 3, Math.sin(t * 4 + i * .8) > 0 ? '#7dffe0' : '#fff');
     if (lvl >= 3) { gr.strokeStyle = `rgba(255,220,90,${.6 + Math.sin(t * 4) * .3})`; gr.lineWidth = 3; gr.strokeRect(-86, -130, 172, 130); }
-    gr.restore();
-  }
-  function depot(gr, x, y, s, t) {
-    gr.save(); gr.translate(x, y); gr.scale(s, s);
-    ell(gr, 0, 2, 74, 7, 'rgba(0,0,0,.18)');
-    rr(gr, -70, -104, 140, 104, 4, lin(gr, -104, 0, '#8fb3cc', '#5f87a3'));
-    gr.fillStyle = '#3f6a88'; gr.beginPath(); gr.moveTo(-78, -100); gr.lineTo(0, -126); gr.lineTo(78, -100); gr.fill();
-    rr(gr, -52, -70, 104, 70, 3, '#2d3c48'); const open = .5 + Math.sin(t * .6) * .1;
-    gr.save(); gr.beginPath(); gr.rect(-52, -70, 104, 70); gr.clip(); truck(gr, 6, 4, 1, .9, t, true); gr.restore();
-    gr.fillStyle = '#c9d6df'; gr.fillRect(-52, -70, 104, 70 * (1 - open)); gr.strokeStyle = '#9fb0bc'; gr.lineWidth = 2; for (let k = 1; k < 7; k++) { const yy = -70 + k * 10; if (yy < -70 + 70 * (1 - open)) { gr.beginPath(); gr.moveTo(-52, yy); gr.lineTo(52, yy); gr.stroke(); } }
-    rr(gr, -46, -98, 92, 22, 6, '#ffd23f'); T(gr, 'SODA CO.', 0, -87, 14, '#5a3a00', 'center', null);
     gr.restore();
   }
   function truck(gr, x, y, dir, s, t, parked) {
@@ -623,7 +613,7 @@ const GAME = {
     const v = K.view, t = K.t, heat = ev && ev.k === 'heat';
     gr.fillStyle = lin(gr, v.y0, 400, heat ? '#ffb15a' : '#5ec2ff', heat ? '#ffe7a8' : '#d4f3ff'); gr.fillRect(v.x0, v.y0, v.x1 - v.x0, 420 - v.y0);
     // sun
-    const sx = 620, sy = 64, sr = heat ? 54 : 40; gr.save(); gr.translate(sx, sy); gr.rotate(t * .15); gr.fillStyle = heat ? 'rgba(255,170,60,.35)' : 'rgba(255,250,190,.45)';
+    const sx = 664, sy = 70, sr = heat ? 54 : 40; gr.save(); gr.translate(sx, sy); gr.rotate(t * .15); gr.fillStyle = heat ? 'rgba(255,170,60,.35)' : 'rgba(255,250,190,.45)';
     for (let i = 0; i < 12; i++) { gr.rotate(Math.PI / 6); gr.beginPath(); gr.moveTo(sr * .9, -7); gr.lineTo(sr * 1.9, 0); gr.lineTo(sr * .9, 7); gr.fill(); } gr.restore();
     const sg = gr.createRadialGradient(sx, sy, 4, sx, sy, sr); sg.addColorStop(0, '#fffbe0'); sg.addColorStop(1, heat ? '#ff9a2a' : '#ffe56a'); circ(gr, sx, sy, sr, sg);
     for (const c of clouds) { gr.save(); gr.translate(c.x, c.y); gr.scale(c.s, c.s); gr.fillStyle = 'rgba(255,255,255,.9)'; gr.beginPath(); gr.arc(0, 0, 22, 0, 7); gr.arc(24, -10, 28, 0, 7); gr.arc(52, 0, 22, 0, 7); gr.rect(0, 0, 52, 22); gr.fill(); gr.restore(); }
@@ -632,11 +622,11 @@ const GAME = {
     const total = S.own.reduce((a, b) => a + b, 0), towers = Math.min(16, Math.floor(total / 12));
     for (let i = 0; i < towers; i++) { const h = 70 + ((i * 73) % 110), x = -30 + ((i * 157) % 760), w = 34 + (i * 31) % 30; gr.fillStyle = `rgba(${130 + i % 3 * 12},${170 + i % 4 * 8},${205},.55)`; gr.fillRect(x, 392 - h - 20, w, h + 20); gr.fillStyle = 'rgba(255,255,255,.25)'; for (let r = 0; r < h / 18; r++) gr.fillRect(x + 6, 392 - h - 10 + r * 18, w - 12, 5); }
     gr.fillStyle = '#9fd88a'; gr.beginPath(); gr.moveTo(v.x0, 396); for (let x = v.x0; x <= 740; x += 40) gr.lineTo(x, 372 + Math.sin(x * .011) * 14 + Math.sin(x * .03) * 6); gr.lineTo(740, 420); gr.lineTo(v.x0, 420); gr.fill();
-    // back row: plant, headquarters, factory
-    gr.save(); if (!S.own[4]) gr.globalAlpha = .22; plant(gr, 342, 400, 1, t); gr.restore(); if (!S.own[4] && unlocked(4)) forSale(gr, 342, 400, costOf(4, 1));
-    gr.save(); if (!S.own[6]) gr.globalAlpha = .18; hq(gr, 474, 400, 1, t); gr.restore(); if (!S.own[6] && unlocked(6)) forSale(gr, 474, 400, costOf(6, 1));
-    gr.save(); if (!S.own[5]) gr.globalAlpha = .22; factory(gr, 611, 400, 1, t); gr.restore(); if (!S.own[5] && unlocked(5)) forSale(gr, 611, 400, costOf(5, 1));
-    for (const p of puffs) { gr.globalAlpha = Math.max(0, .75 - p.t / 3.5 * .75); circ(gr, p.x, p.y, p.r, '#fffbe8'); } gr.globalAlpha = 1;
+    // back row: factory, headquarters, bottling plant
+    const ghost = (i, f) => { gr.save(); if (!S.own[i]) gr.globalAlpha = .13; f(); gr.restore(); };
+    ghost(5, () => factory(gr, FX, 400, 1, t)); ghost(6, () => hq(gr, HQX, 400, 1, t)); ghost(4, () => plant(gr, PLX, 400, 1, t));
+    if (!S.own[4] && unlocked(4)) forSale(gr, PLX, 404, costOf(4, 1));
+    for (const p of puffs) { gr.globalAlpha = Math.max(0, .6 - p.t / 3.5 * .6); circ(gr, p.x, p.y, p.r, '#f4f1ea'); } gr.globalAlpha = 1;
     // grass, sidewalk
     gr.fillStyle = '#6cc46a'; gr.fillRect(v.x0, 396, 740 - v.x0, 22);
     gr.fillStyle = lin(gr, 410, 508, '#e9e1d2', '#d4c9b4'); gr.fillRect(v.x0, 412, 740 - v.x0, 98);
@@ -646,12 +636,12 @@ const GAME = {
     if (S.own[0]) stand(gr, SHOPX[0], GROUND, 1, lvlOf(0), t); else unk(0, SHOPX[0]);
     if (S.own[1]) cart(gr, SHOPX[1], GROUND, 1, lvlOf(1), t); else unk(1, SHOPX[1]);
     if (S.own[2]) bar(gr, SHOPX[2], GROUND, 1, lvlOf(2), t); else unk(2, SHOPX[2]);
-    if (S.own[3]) depot(gr, DEPOT, GROUND - 6, .9, t); else unk(3, DEPOT);
+    if (!S.own[3]) unk(3, PLX);
     // progress rings over shops that are running
-    for (let i = 0; i < 4; i++) {
-      if (!S.own[i]) continue; const x = i < 3 ? SHOPX[i] : DEPOT, y = GROUND + 2;
+    for (let i = 0; i < 3; i++) {
+      if (!S.own[i]) continue; const x = SHOPX[i], y = GROUND + 2;
       if (prog[i] > 0 && cycle(i) > .3) { gr.lineWidth = 5; gr.strokeStyle = 'rgba(0,0,0,.25)'; gr.beginPath(); gr.arc(x + 62, y - 14, 10, 0, 7); gr.stroke(); gr.strokeStyle = '#5fd36a'; gr.beginPath(); gr.arc(x + 62, y - 14, 10, -Math.PI / 2, -Math.PI / 2 + prog[i] * 6.283); gr.stroke(); }
-      else if (!S.mgr[i] && prog[i] === 0 && i < 3) { const b = Math.abs(Math.sin(t * 4)) * 6; rr(gr, x - 34, y - 196 - b, 68, 28, 14, '#fff'); T(gr, 'TAP!', x, y - 182 - b, 16, '#e05a00', 'center', null); }
+      else if (!S.mgr[i] && prog[i] === 0) { const b = Math.abs(Math.sin(t * 4)) * 6, ty = y - (i === 1 ? 128 : 112) - b; gr.fillStyle = '#fff'; gr.beginPath(); gr.moveTo(x - 6, ty + 26); gr.lineTo(x + 6, ty + 26); gr.lineTo(x, ty + 34); gr.fill(); rr(gr, x - 34, ty, 68, 28, 14, '#fff'); T(gr, 'TAP!', x, ty + 14, 16, '#e05a00', 'center', null); }
     }
     // customers
     const ps = peeps.slice().sort((a, b) => a.y - b.y); for (const p of ps) person(gr, p, t);
@@ -670,7 +660,7 @@ const GAME = {
     glow.addColorStop(0, 'rgba(255,240,120,.55)'); glow.addColorStop(1, 'rgba(255,240,120,0)'); circ(gr, L.x, L.y + by, L.r * 1.6, glow);
     lemonShape(gr, L.x, L.y + by, L.r * (hover === 'lemon' ? 1.04 : 1), -.25 + Math.sin(t * 1.3) * .06, tapS[0] > 1.05 ? 2 : 1, tapS);
     for (const j of juice) { gr.globalAlpha = 1 - j.t / .7; circ(gr, j.x, j.y, j.r, '#ffe14d'); } gr.globalAlpha = 1;
-    if (combo > 4) { const a = Math.min(1, combo / 10); gr.globalAlpha = a; T(gr, combo >= 40 ? 'MAX JUICE ×2!' : `Juicy ×${(1 + Math.min(combo, 40) / 40).toFixed(2)}`, L.x, L.y + L.r + 18, 18, combo >= 40 ? '#ff6a00' : '#c97a00', 'center', 'rgba(255,255,255,.8)'); gr.globalAlpha = 1; }
+    if (combo > 4) { const a = Math.min(1, combo / 10); gr.globalAlpha = a; T(gr, combo >= 40 ? 'MAX JUICE ×2!' : `Juicy ×${(1 + Math.min(combo, 40) / 40).toFixed(2)}`, L.x, L.y + L.r + 16, 18, combo >= 40 ? '#ff6a00' : '#c97a00', 'center', 'rgba(255,255,255,.8)'); gr.globalAlpha = 1; }
   }
   function drawCash(gr) {
     const b = CASH, s = 1 + bump * .06;
@@ -741,7 +731,7 @@ const GAME = {
     let shownLocked = false;
     for (let i = 0; i < 7; i++) {
       const r = ROW(i), owned = S.own[i] > 0;
-      if (!unlocked(i)) { if (shownLocked) continue; shownLocked = true; rr(gr, r.x, r.y, r.w, r.h, 16, 'rgba(255,255,255,.05)'); T(gr, `🔒  ${BIZ[i].n}`, r.x + 24, r.y + r.h / 2, 20, 'rgba(255,255,255,.4)', 'left', null); T(gr, 'Buy the one above first', r.x + r.w - 20, r.y + r.h / 2, 15, 'rgba(255,255,255,.3)', 'right', null); continue; }
+      if (!unlocked(i)) { rr(gr, r.x, r.y, r.w, r.h, 16, 'rgba(255,255,255,.05)'); circ(gr, r.x + 38, r.y + 35, 27, 'rgba(255,255,255,.08)'); T(gr, '?', r.x + 38, r.y + 36, 30, 'rgba(255,255,255,.3)', 'center', null); T(gr, BIZ[i].n, r.x + 78, r.y + 24, 19, 'rgba(255,255,255,.45)', 'left', null); T(gr, shownLocked ? 'Locked' : `Open a ${BIZ[i - 1].n} first`, r.x + 78, r.y + 48, 15, 'rgba(255,255,255,.3)', 'left', null); T(gr, '$' + fmt(BIZ[i].cost), r.x + r.w - 24, r.y + r.h / 2, 18, 'rgba(255,255,255,.3)', 'right', null); shownLocked = true; continue; }
       rowBg(gr, r, i, hover === i);
       bizIcon(gr, i, r.x + 38, r.y + 35, 29);
       rr(gr, r.x + 14, r.y + 52, 48, 20, 10, '#ffe46a'); T(gr, String(S.own[i]), r.x + 38, r.y + 62, 15, '#6a3c00', 'center', null);
@@ -780,7 +770,7 @@ const GAME = {
     T(gr, `${page + 1}/4`, PGL.x - 12, 91, 16, '#a8cfe4', 'right', null);
     const order = ACH.map((a, i) => i).sort((a, b) => (S.ach[a] ? 1 : 0) - (S.ach[b] ? 1 : 0) || Math.min(1, ACH[b][2]() / ACH[b][3]) - Math.min(1, ACH[a][2]() / ACH[a][3]));
     order.slice(page * 7, page * 7 + 7).forEach((ai, k) => {
-      const a = ACH[ai], r = ROW(k), got = !!S.ach[ai], p = Math.min(1, a[2]() / a[3]); rowBg(gr, r, -1, false);
+      const a = ACH[ai], r = ROW(k), got = !!S.ach[ai], p = Math.min(1, a[2]() / a[3]); rowBg(gr, r, 'none', false);
       trophy(gr, r.x + 38, r.y + 38, 26, got, p);
       T(gr, a[0], r.x + 78, r.y + 20, 19, got ? '#ffe46a' : '#fff', 'left'); T(gr, a[1], r.x + 78, r.y + 44, 15, '#a8cfe4', 'left', null);
       if (!got) { rr(gr, r.x + 78, r.y + 56, 250, 8, 4, '#0f2c3f'); rr(gr, r.x + 78, r.y + 56, Math.max(8, 250 * p), 8, 4, '#ffb300'); }

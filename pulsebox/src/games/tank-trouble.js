@@ -195,7 +195,7 @@ const GAME = {
     const bg = f.createRadialGradient(W / 2, H / 2, 80, W / 2, H / 2, 760); bg.addColorStop(0, th.fl[0]); bg.addColorStop(1, th.fl[1]);
     f.fillStyle = bg; f.fillRect(OX, OY, mw, mh);
     f.save(); f.beginPath(); f.rect(OX, OY, mw, mh); f.clip();
-    const blob = (x, y, r, c) => { const g2 = f.createRadialGradient(x, y, 0, x, y, r); g2.addColorStop(0, c); g2.addColorStop(1, 'rgba(0,0,0,0)'); f.fillStyle = g2; f.beginPath(); f.arc(x, y, r, 0, TAU); f.fill(); };
+    const blob = (x, y, r, c) => { const g2 = f.createRadialGradient(x, y, 0, x, y, r); g2.addColorStop(0, c); g2.addColorStop(1, c.replace(/[\d.]+\)$/, '0)')); f.fillStyle = g2; f.beginPath(); f.arc(x, y, r, 0, TAU); f.fill(); };
     const rx = () => R(OX, OX + mw), ry = () => R(OY, OY + mh);
     if (thK === 'desert') {
       for (let i = 0; i < 26; i++) blob(rx(), ry(), R(60, 160), i % 2 ? 'rgba(160,120,60,.16)' : 'rgba(255,240,200,.18)');
@@ -240,6 +240,13 @@ const GAME = {
     if (thK === 'snow') { w.fillStyle = 'rgba(160,200,230,.5)'; for (const r of walls) for (let i = 0; i < (r.w + r.h) / 14; i++) w.fillRect(r.x + Math.random() * r.w, r.y + Math.random() * r.h, 2, 2); }
   }
 
+  // team colours that don't clash with the player's skin
+  function hsl(h) { const n = parseInt(h.slice(1), 16), r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    let hu = 0; if (d) hu = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [(hu * 60 + 360) % 360, d, (mx + mn) / 2]; }
+  function palette(sk) {
+    const [h, s, l] = hsl(sk.c[0]);
+    return TEAM.filter(c => { const [h2, s2, l2] = hsl(c[0]); if (s < .15 || s2 < .15) return Math.abs(l - l2) > .25 || (s < .15) !== (s2 < .15); const dh = Math.abs(h - h2); return Math.min(dh, 360 - dh) > 40; });
+  }
   /* ---------- setup and rounds ---------- */
   function defaults() { const s = K.save.ttSetup; cfg = Object.assign({ hum: 1, tanks: 2, diff: 1, arena: 0 }, s || {}); fixCfg(); }
   function fixCfg() { cfg.tanks = Math.max(cfg.tanks, cfg.hum === 1 ? 2 : cfg.hum); }
@@ -252,13 +259,12 @@ const GAME = {
     CW = Math.floor(Math.min(1236 / MX, (H - TOP - 8) / MY)); OX = Math.round((W - MX * CW) / 2); OY = Math.round(TOP + 2 + (H - TOP - 6 - MY * CW) / 2);
   }
   function newMatch() {
-    const sk = K.skin, pal = TEAM.filter(c => c[0] !== sk.c[0]).sort(() => Math.random() - .5);
-    if (K.bot) pal.sort((a, b) => TEAM.indexOf(a) - TEAM.indexOf(b));
+    const sk = K.skin, pal = palette(sk); if (!K.bot) pal.sort(() => Math.random() - .5);
     players = [];
     for (let i = 0; i < cfg.tanks; i++) {
       const human = !K.bot && i < cfg.hum ? i : -1, c = i === 0 ? sk.c : pal[i - 1], ncpu = cfg.tanks - cfg.hum;
       const name = K.bot ? (i === 0 ? sk.name : c[2]).toUpperCase() : human === 0 ? (cfg.hum === 1 ? 'YOU' : 'P1') : human > 0 ? 'P' + (human + 1) : ncpu > 1 ? 'CPU ' + (i - cfg.hum + 1) : 'CPU';
-      players.push({ i, human, c: [c[0], c[1]], pat: i === 0 ? sk.p : null, name, wins: 0, kills: 0, deaths: 0, shots: 0, hits: 0, crates: 0, rk: 0, mvps: 0 });
+      players.push({ i, human, c: [c[0], c[1]], pat: i === 0 ? sk.p : null, name, bd: K.irand(1, 2), wins: 0, kills: 0, deaths: 0, shots: 0, hits: 0, crates: 0, rk: 0, mvps: 0 });
     }
     round = 0; startRound();
   }
@@ -271,7 +277,7 @@ const GAME = {
     bullets = []; missiles = []; mines = []; beams = []; pickups = []; parts = []; wrecks = []; feed = [];
     tanks = players.map((p, i) => {
       const [x, y] = ctr(sc[i]);
-      return { p, id: i, x, y, a: Math.atan2(H / 2 + 20 - y, W / 2 - x), alive: true, cd: 0, wep: null, shield: 0, speed: 0, recoil: 0, flash: 0, tl: 0, tr: 0, go: 0, inv: 0, ai: p.human < 0, diff: DIFF[K.bot ? 1 + (i % 2) : cfg.diff], ait: K.rand(0, .3), lx: x, ly: y, stuck: 0, unst: 0, drop: 0 };
+      return { p, id: i, x, y, a: Math.atan2(H / 2 + 20 - y, W / 2 - x), alive: true, cd: 0, wep: null, shield: 0, speed: 0, recoil: 0, flash: 0, tl: 0, tr: 0, go: 0, inv: 0, ai: p.human < 0, diff: DIFF[K.bot ? p.bd : cfg.diff], ait: K.rand(0, .3), lx: x, ly: y, stuck: 0, unst: 0, drop: 0 };
     });
     for (const t of tanks) t.a = Math.round(t.a / (Math.PI / 2)) * Math.PI / 2;
     players.forEach(p => p.rk = 0);
@@ -373,7 +379,7 @@ const GAME = {
   }
 
   /* ---------- input ---------- */
-  const FIRE = { x: 1185, y: 630, r: 62 };
+  const FIRE = { x: 1150, y: 596, r: 62 };
   GAME.down = (x, y, e) => {
     if (e && e.pointerType === 'touch') touch = true;
     if (phase === 'setup') { for (const b of btns) if (x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h) { b.f(); SND.click(); } return; }
@@ -408,6 +414,7 @@ const GAME = {
   function ctl(h) { if (h === 0 && cfg.hum === 1) { const a = KEYS[0], b = KEYS[1]; return { u: [...a.u, ...b.u], d: [...a.d, ...b.d], l: [...a.l, ...b.l], r: [...a.r, ...b.r], f: [...a.f, ...b.f] }; } return KEYS[h]; }
   const down = list => list.some(k => keys[k]);
   GAME.bot = () => {};
+  GAME.dbg = () => ({ phase, phT, round, ts, slowT, endT, alive: tanks && tanks.filter(t => t.alive).length });
 
   /* ---------- AI ---------- */
   function steer(t, want, go, rev) {
@@ -476,7 +483,7 @@ const GAME = {
   GAME.update = dt0 => {
     if (!K.bot && K.state === 'play') { music(); } engine(tanks ? tanks.reduce((m, t) => Math.max(m, t.alive && !t.ai ? Math.abs(t.go) : 0), 0) : 0);
     phT += dt0;
-    if (phase === 'setup') { for (const p of parts) p.t += dt0; return; }
+    if (phase === 'setup') return;
     if (slowT > 0) { slowT -= dt0; ts = slowT > 0 ? .3 : 1; }
     const dt = dt0 * ts;
     if (players[0]) K.score = K.bot ? players.reduce((n, p) => n + p.wins + p.kills, 0) : players[0].wins;
@@ -488,7 +495,7 @@ const GAME = {
     if (banner) banner.t += dt0;
     for (const f of feed) f.t += dt0;
     if (phase === 'fight' || phase === 'end' || phase === 'intro') world(dt);
-    else for (const p of parts) p.t += dt;
+    else { for (const p of parts) p.t += dt; parts = parts.filter(p => p.t < p.life); }
     if (phase === 'fight') {
       const alive = tanks.filter(t => t.alive);
       if (alive.length <= 1) { endT += dt0; if (endT > .9) endRound(alive[0]); }
@@ -525,7 +532,7 @@ const GAME = {
   function finish() {
     if (K.bot) return newMatch();
     const me = players[0], champ = roundWin, solo = cfg.hum === 1;
-    K.over({ title: solo ? (champ === me ? 'Victory!' : 'Defeated') : `${champ.name} wins!`, text: `Final score ${players.map(p => p.wins).join(' - ')}. MVP: ${mvp.name} with ${mvp.kills} kills.`, delay: 100 });
+    K.over({ title: solo ? (champ === me ? 'Victory!' : 'Defeated') : `${champ.name} wins!`, text: `Final score ${players.map(p => p.wins).join(' - ')}. MVP: ${mvp.name}${mvp.kills ? ` with ${mvp.kills} kill${mvp.kills > 1 ? 's' : ''}` : ''}.`, delay: 100 });
   }
   function world(dt) {
     const fight = phase === 'fight' || phase === 'end';
@@ -551,7 +558,7 @@ const GAME = {
       if (!hitW(nx, t.y, TR - 3)) t.x = nx; if (!hitW(t.x, ny, TR - 3)) t.y = ny;
       const mv = Math.hypot(t.x - ox, t.y - oy) * Math.sign(go || 1);
       t.tl += mv + da * 20; t.tr += mv - da * 20;
-      if ((go || turn) && fctx && Math.random() < .5) { fctx.save(); fctx.translate(t.x, t.y); fctx.rotate(t.a); fctx.fillStyle = thK === 'snow' ? 'rgba(120,150,175,.13)' : thK === 'desert' ? 'rgba(110,80,40,.1)' : 'rgba(10,10,12,.09)'; fctx.fillRect(-20, -20, 6, 8); fctx.fillRect(-20, 12, 6, 8); fctx.restore(); }
+      if ((go || turn) && fctx && Math.random() < .35) { fctx.save(); fctx.translate(t.x, t.y); fctx.rotate(t.a); fctx.fillStyle = thK === 'snow' ? 'rgba(120,150,175,.1)' : thK === 'desert' ? 'rgba(110,80,40,.08)' : 'rgba(10,10,12,.06)'; fctx.fillRect(-20, -20, 6, 8); fctx.fillRect(-20, 12, 6, 8); fctx.restore(); }
       if ((go || turn) && Math.random() < dt * (t.speed > 0 ? 30 : 9)) { const bx = t.x - Math.cos(t.a) * 22, by = t.y - Math.sin(t.a) * 22; part({ k: 'smoke', x: bx, y: by, vx: -Math.cos(t.a) * 20, vy: -Math.sin(t.a) * 20 - 6, r: 4, g: thK === 'desert' ? 190 : thK === 'snow' ? 235 : 120, al: .35, life: .7, dust: 1 }); }
       if (t.speed > 0 && go && Math.random() < .5) part({ k: 'fire', x: t.x - Math.cos(t.a) * 24, y: t.y - Math.sin(t.a) * 24, vx: -Math.cos(t.a) * 60, vy: -Math.sin(t.a) * 60, r: 5, life: .25, blue: 1 });
       for (const pk of pickups) if (!pk.got && K.dist(pk.x, pk.y, t.x, t.y) < 30) { pk.got = true; givePU(t, pk.k); }
@@ -667,7 +674,7 @@ const GAME = {
     }
     gr.restore();
   }
-  GAME.drawSkin = (gr, s) => { gr.fillStyle = 'rgba(0,0,0,.25)'; gr.beginPath(); gr.ellipse(0, 30, 40, 9, 0, 0, TAU); gr.fill(); drawTank(gr, { x: 0, y: 2, a: -Math.PI / 2 - .55, c: s.c, pat: s.p || null, tl: 0, tr: 0 }, 1.55); };
+  GAME.drawSkin = (gr, s) => { gr.fillStyle = 'rgba(0,0,0,.25)'; gr.beginPath(); gr.ellipse(0, 30, 40, 9, 0, 0, TAU); gr.fill(); drawTank(gr, { x: -3, y: 4, a: -Math.PI / 2 - .55, c: s.c, pat: s.p || null, tl: 0, tr: 0 }, 1.8); };
   function drawWreck(gr, w) {
     gr.save(); gr.translate(w.x, w.y); gr.rotate(w.a);
     gr.fillStyle = 'rgba(0,0,0,.35)'; rr(gr, -20, -18, 46, 42, 8); gr.fill();
@@ -769,7 +776,8 @@ const GAME = {
     for (const m of missiles) { gr.save(); gr.translate(m.x, m.y); gr.rotate(m.a); gr.fillStyle = '#e8ecf0'; rr(gr, -9, -3.5, 16, 7, 3.5); gr.fill(); gr.fillStyle = m.o.c[0]; gr.fillRect(-9, -3.5, 5, 7); gr.beginPath(); gr.moveTo(-9, -3); gr.lineTo(-13, -7); gr.lineTo(-12, 0); gr.lineTo(-13, 7); gr.lineTo(-9, 3); gr.fill(); gr.fillStyle = '#ff3b3b'; gr.beginPath(); gr.arc(6, 0, 2, 0, TAU); gr.fill(); gr.globalCompositeOperation = 'lighter'; gr.fillStyle = `rgba(255,190,80,${.7 + Math.random() * .3})`; gr.beginPath(); gr.arc(-14, 0, 4 + Math.random() * 2, 0, TAU); gr.fill(); gr.restore(); }
     for (const b of bullets) {
       const sp = Math.hypot(b.vx, b.vy) || 1;
-      gr.strokeStyle = b.ghost ? 'rgba(200,140,255,.4)' : b.o.c[0]; gr.globalAlpha = b.ghost ? .6 : .35; gr.lineWidth = b.r * 1.3; gr.lineCap = 'round'; gr.beginPath(); gr.moveTo(b.x, b.y); gr.lineTo(b.x - b.vx / sp * 16, b.y - b.vy / sp * 16); gr.stroke(); gr.globalAlpha = 1;
+      const tx = b.x - b.vx / sp * 22, ty = b.y - b.vy / sp * 22, tg = gr.createLinearGradient(b.x, b.y, tx, ty); tg.addColorStop(0, b.ghost ? 'rgba(200,140,255,.7)' : 'rgba(255,255,255,.55)'); tg.addColorStop(1, 'rgba(255,255,255,0)');
+      gr.strokeStyle = tg; gr.lineWidth = b.r * 1.6; gr.lineCap = 'round'; gr.beginPath(); gr.moveTo(b.x, b.y); gr.lineTo(tx, ty); gr.stroke();
       if (b.ghost) { gr.fillStyle = 'rgba(210,160,255,.85)'; gr.beginPath(); gr.arc(b.x, b.y, b.r + 1.5, 0, TAU); gr.fill(); continue; }
       gr.fillStyle = 'rgba(255,255,255,.8)'; gr.beginPath(); gr.arc(b.x, b.y, b.r + 1.4, 0, TAU); gr.fill();
       gr.fillStyle = '#1d1e22'; gr.beginPath(); gr.arc(b.x, b.y, b.r, 0, TAU); gr.fill();
@@ -896,7 +904,7 @@ const GAME = {
     txt(gr, 'Arrows choose · Space starts', 460, 572, 16, '#7d8770', 'center', FB);
     // line-up
     txt(gr, 'LINE-UP', 990, 118, 22, '#fff');
-    const sk = K.skin, pal = TEAM.filter(c => c[0] !== sk.c[0]);
+    const sk = K.skin, pal = palette(sk);
     for (let i = 0; i < 4; i++) {
       const y = 150 + i * 92, on = i < cfg.tanks, hum = i < cfg.hum, c = i === 0 ? sk.c : pal[i - 1];
       gr.globalAlpha = on ? 1 : .3; gr.fillStyle = 'rgba(255,255,255,.07)'; rr(gr, 800, y, 380, 80, 14); gr.fill();
@@ -918,7 +926,7 @@ const GAME = {
     const [a, b, c] = tanks, mid = (i, j) => ctr(cellAt(OX + i * CW, OY + j * CW));
     [a.x, a.y] = mid(3.5, 3.5); a.a = -.3; a.recoil = 6; a.flash = .06; a.shield = 5;
     [b.x, b.y] = mid(6.5, 2.5); b.a = 2.6; b.wep = { k: 'laser', n: 1 };
-    [c.x, c.y] = mid(8.5, 4.5); c.alive = false; explode(c.x, c.y, 1.2, c.p.c); for (const p of parts) { p.t = p.life * .25; if (p.k === 'chunk') { p.x += p.vx * .15; p.y += p.vy * .15; p.z = 20; } }
+    [c.x, c.y] = mid(8.5, 4.5); c.alive = false; explode(c.x, c.y, 1.2, c.p.c); round = 4; parts = parts.filter(p => p.k !== 'flash'); for (const p of parts) { p.t = p.life * .25; if (p.k === 'chunk') { p.x += p.vx * .15; p.y += p.vy * .15; p.z = 20; } }
     for (let i = 0; i < 4; i++) bullets.push({ x: a.x + 60 + i * 70, y: a.y - 20 - i * 22, vx: 300, vy: -90, life: 5, o: a.p, safe: 0, r: 4, bn: 0 });
     pickups.push({ x: ctr(cellAt(OX + 1.5 * CW, OY + 1.5 * CW))[0], y: ctr(cellAt(OX + 1.5 * CW, OY + 1.5 * CW))[1], k: 'missile', t: 1 });
     K.shake(0);
