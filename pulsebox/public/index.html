@@ -187,6 +187,33 @@
   footer { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; color: var(--muted); padding-top: 64px; margin-top: 64px; border-top: 1px solid var(--edge); }
   footer b { font-family: var(--display); color: var(--text); letter-spacing: .08em; }
 
+  /* ---------- account (Pulseform sign-in, cloud saves) ---------- */
+  .acct-btn { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; background: var(--lime); color: #0a0c12; border: 0; font-weight: 800; cursor: pointer; white-space: nowrap; }
+  .acct-btn.in { background: var(--panel); color: var(--text); border: 1px solid var(--edge); }
+  .acct-btn .av { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--pink), var(--cyan)); color: #fff; display: grid; place-items: center; font-family: var(--display); font-size: 13px; }
+  .acct-btn .sync { width: 8px; height: 8px; border-radius: 50%; background: var(--lime); }
+  .acct-btn .sync.busy { background: #ffd23f; animation: blink .8s infinite; } .acct-btn .sync.bad { background: var(--pink); }
+  @keyframes blink { 50% { opacity: .3; } }
+  .modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(5,6,10,.72); backdrop-filter: blur(6px); }
+  .modal .box { width: min(420px, 100%); max-height: 100%; overflow: auto; background: var(--panel); border: 1px solid var(--edge); border-radius: 20px; padding: 24px; position: relative; }
+  .modal h2 { font-family: var(--display); text-transform: uppercase; margin: 0 0 6px; font-size: 26px; letter-spacing: .02em; }
+  .modal p { margin: 0 0 16px; color: var(--muted); line-height: 1.45; }
+  .modal .x { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--edge); background: transparent; cursor: pointer; font-size: 16px; }
+  .modal label { display: block; font-weight: 700; font-size: 14px; margin: 10px 0 6px; }
+  .modal input { width: 100%; padding: 11px 13px; border-radius: 10px; border: 1px solid var(--edge); background: var(--bg2); font-size: 16px; }
+  .modal input:focus { outline: none; border-color: var(--lime); }
+  .modal .go { width: 100%; margin-top: 16px; padding: 12px; border-radius: 12px; border: 0; background: var(--lime); color: #0a0c12; font-weight: 800; font-size: 17px; cursor: pointer; }
+  .modal .alt { width: 100%; margin-top: 10px; padding: 11px; border-radius: 12px; border: 1px solid var(--edge); background: transparent; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .modal .go:disabled, .modal .alt:disabled { opacity: .5; cursor: default; }
+  .modal .links { display: flex; justify-content: space-between; gap: 10px; margin-top: 14px; font-size: 14px; }
+  .modal .links button { background: none; border: 0; color: var(--cyan); font-weight: 700; cursor: pointer; padding: 0; }
+  .modal .err { color: #ff8aa8; font-weight: 700; font-size: 14px; margin-top: 12px; min-height: 1em; }
+  .modal .ok { color: var(--lime); }
+  .modal .or { text-align: center; color: var(--muted); font-size: 13px; margin: 14px 0 4px; }
+  .modal .stat { display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--edge); font-weight: 600; }
+  .modal .stat span { color: var(--muted); }
+  .acct-btn .nm { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 560px) { .acct-btn .nm { display: none; } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 
@@ -198,6 +225,7 @@
       <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke-width="2.5"/><path d="M15.5 15.5 21 21" stroke-width="2.5" stroke-linecap="round"/></svg>
       <input id="q" type="search" placeholder="Search activities, like racing or puzzles" autocomplete="off">
     </label>
+    <button class="acct-btn" id="acctBtn" type="button">Sign in</button>
   </header>
 
   <!-- HOME: categories of interactive activities -->
@@ -962,4 +990,153 @@ window.addEventListener('hashchange', route);
 
 renderHome();
 route();
+</script>
+
+<div class="modal" id="acctModal" hidden role="dialog" aria-modal="true" aria-labelledby="amTitle">
+  <div class="box" id="amBox"></div>
+</div>
+<script>
+/* ============================================================
+   ACCOUNT: sign in with a Pulseform account (Firebase Auth) and keep every game's progress in the cloud.
+   Games save to this site's localStorage; the hub copies it to /api/save (see api.js) and back.
+   ============================================================ */
+(() => {
+  const FB_VER = '10.14.1';
+  const CFG = { apiKey: 'AIzaSyBrAUF7jmH7gBKxBfJ6Un9bZRySC-jTTVU', authDomain: 'pulseform-d8282.firebaseapp.com', projectId: 'pulseform-d8282', appId: '1:653074377253:web:802ea5afbd1523319dedcc' };
+  const SYNC_KEY = 'pbx-sync';  // { t: cloud time of the last sync, uid }
+  const A = { user: null, mode: 'in', busy: false, err: '', state: 'ok', auth: null };
+  const $ = id => document.getElementById(id), esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const ls = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+
+  function load() {
+    if (window.firebase && firebase.auth) return Promise.resolve();
+    const one = src => new Promise((ok, bad) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = bad; document.head.appendChild(s); });
+    const seq = base => ['app', 'auth'].reduce((p, m) => p.then(() => one(`${base}/firebase-${m}-compat.js`)), Promise.resolve());
+    return seq(`https://www.gstatic.com/firebasejs/${FB_VER}`).catch(() => seq(`https://cdn.jsdelivr.net/npm/firebase@${FB_VER}`));
+  }
+
+  /* ---------- sync ---------- */
+  const mine = k => k && !k.startsWith('firebase:') && k !== SYNC_KEY && !k.startsWith('bopbox-recent');
+  function localData() { const d = {}; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (mine(k)) d[k] = localStorage.getItem(k); } } catch (e) {} return d; }
+  // two copies of the same game's save: keep the one that has played more (Pulsebox kit saves), otherwise the newer one
+  function pick(k, local, cloud, cloudNewer) {
+    if (k.startsWith('pbx-')) { try { const a = JSON.parse(local), b = JSON.parse(cloud); const m = (b.plays || 0) > (a.plays || 0) ? b : a, o = m === a ? b : a; m.best = Math.max(a.best || 0, b.best || 0); m.owned = [...new Set([...(a.owned || []), ...(b.owned || [])])]; return JSON.stringify(m); } catch (e) {} }
+    return cloudNewer ? cloud : local;
+  }
+  let lastPushed = '';
+  async function call(method, body) {
+    const tok = await A.user.getIdToken();
+    const r = await fetch('/api/save', { method, headers: { authorization: 'Bearer ' + tok, 'content-type': 'application/json' }, body: body && JSON.stringify(body), keepalive: method === 'PUT' && JSON.stringify(body).length < 60000 });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'sync failed');
+    return r.json();
+  }
+  async function sync() {
+    if (!A.user || A.syncing) return; A.syncing = true; setState('busy');
+    try {
+      const cloud = await call('GET'), meta = JSON.parse(ls.get(SYNC_KEY) || '{}'), local = localData();
+      const cloudNewer = cloud.t > (meta.uid === A.user.uid ? meta.t || 0 : 0);
+      const merged = { ...local };
+      for (const [k, v] of Object.entries(cloud.data || {})) merged[k] = k in local && local[k] !== v ? pick(k, local[k], v, cloudNewer) : v;
+      for (const [k, v] of Object.entries(merged)) if (local[k] !== v) ls.set(k, v);
+      const str = JSON.stringify(merged);
+      let t = cloud.t;
+      if (str !== JSON.stringify(cloud.data || {})) t = (await call('PUT', { data: merged })).t;
+      lastPushed = str; ls.set(SYNC_KEY, JSON.stringify({ t, uid: A.user.uid }));
+      if (Object.keys(merged).some(k => local[k] !== merged[k])) { try { favs = store.get('favs', []); recent = store.get('recent', []); renderHome(); } catch (e) {} }
+      setState('ok');
+    } catch (e) { setState('bad'); }
+    A.syncing = false;
+  }
+  async function push() {
+    if (!A.user || A.syncing) return;
+    const d = localData(), str = JSON.stringify(d); if (str === lastPushed) return;
+    try { setState('busy'); const r = await call('PUT', { data: d }); lastPushed = str; ls.set(SYNC_KEY, JSON.stringify({ t: r.t, uid: A.user.uid })); setState('ok'); } catch (e) { setState('bad'); }
+  }
+  setInterval(push, 30000);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) push(); else sync(); });
+  // a game just closed: save its progress now
+  const stop0 = window.stopGame; window.stopGame = function () { stop0.apply(this, arguments); setTimeout(push, 300); };
+
+  /* ---------- UI ---------- */
+  function setState(s) { A.state = s; btn(); if (!$('acctModal').hidden && A.user) draw(); }
+  function btn() {
+    const b = $('acctBtn'), u = A.user;
+    if (!u) { b.className = 'acct-btn'; b.textContent = 'Sign in'; return; }
+    const name = u.displayName || (u.email || '').split('@')[0] || 'Player';
+    b.className = 'acct-btn in'; b.innerHTML = `<span class="av">${esc(name[0].toUpperCase())}</span><span class="nm">${esc(name)}</span><span class="sync ${A.state === 'busy' ? 'busy' : A.state === 'bad' ? 'bad' : ''}" title="${A.state === 'bad' ? 'Not synced' : 'Progress saved'}"></span>`;
+  }
+  const G_ICON = '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+  function draw() {
+    const box = $('amBox'), u = A.user;
+    if (u) {
+      const n = Object.keys(localData()).filter(k => k.startsWith('pbx-')).length;
+      box.innerHTML = `<button class="x" data-a="close" aria-label="Close">✕</button><h2 id="amTitle">Your account</h2>
+        <p>Signed in as <b>${esc(u.email || u.displayName || 'Player')}</b>. This is the same account you use on Pulseform.</p>
+        <div class="stat"><span>Progress</span>${A.state === 'bad' ? 'Not synced yet' : A.state === 'busy' ? 'Saving…' : 'Saved to your account'}</div>
+        <div class="stat"><span>Games with saved progress</span>${n}</div>
+        <button class="go" data-a="sync" ${A.state === 'busy' ? 'disabled' : ''}>Sync now</button>
+        <button class="alt" data-a="out">Sign out</button>`;
+    } else {
+      const up = A.mode === 'up', reset = A.mode === 'reset';
+      box.innerHTML = `<button class="x" data-a="close" aria-label="Close">✕</button>
+        <h2 id="amTitle">${reset ? 'Reset password' : up ? 'Create account' : 'Sign in'}</h2>
+        <p>${reset ? 'We\'ll email you a link to choose a new password.' : 'Use your Pulseform account. Your coins, skins and best scores follow you to any device.'}</p>
+        <form id="amForm" novalidate>
+          <label for="amEmail">Email</label><input id="amEmail" type="email" autocomplete="email" required value="${esc(A.email || '')}">
+          ${reset ? '' : `<label for="amPw">Password</label><input id="amPw" type="password" autocomplete="${up ? 'new-password' : 'current-password'}" minlength="6" required>`}
+          <button class="go" type="submit" ${A.busy ? 'disabled' : ''}>${reset ? 'Send link' : up ? 'Create account' : 'Sign in'}</button>
+        </form>
+        ${reset ? '' : `<div class="or">or</div><button class="alt" data-a="google" ${A.busy ? 'disabled' : ''}>${G_ICON} Continue with Google</button>`}
+        <div class="err ${A.ok ? 'ok' : ''}" role="status">${esc(A.err)}</div>
+        <div class="links">${reset ? '<button data-a="in">Back to sign in</button>' : up ? '<button data-a="in">I have an account</button>' : '<button data-a="up">Create an account</button><button data-a="reset">Forgot password?</button>'}</div>`;
+      $('amForm').onsubmit = e => { e.preventDefault(); submit(); };
+    }
+  }
+  function open() { A.err = ''; A.ok = false; $('acctModal').hidden = false; draw(); const f = $('amEmail'); if (f) setTimeout(() => f.focus(), 30); }
+  function close() { $('acctModal').hidden = true; }
+  const MSG = { 'auth/invalid-credential': 'Wrong email or password.', 'auth/invalid-login-credentials': 'Wrong email or password.', 'auth/wrong-password': 'Wrong email or password.', 'auth/user-not-found': 'No account with that email. Create one?',
+    'auth/email-already-in-use': 'That email already has an account. Sign in instead.', 'auth/weak-password': 'Use at least 6 characters.', 'auth/invalid-email': 'That email doesn\'t look right.',
+    'auth/too-many-requests': 'Too many tries. Wait a minute and try again.', 'auth/network-request-failed': 'No connection. Check your internet.',
+    'auth/unauthorized-domain': 'Google sign-in isn\'t switched on for this site yet. Use email and password for now.', 'auth/popup-closed-by-user': '' };
+  function fail(e) { A.busy = false; A.ok = false; A.err = MSG[e && e.code] ?? 'Something went wrong. Try again.'; draw(); }
+  async function submit() {
+    const email = ($('amEmail').value || '').trim(), pw = $('amPw') ? $('amPw').value : ''; A.email = email;
+    if (!email) { A.err = 'Enter your email.'; return draw(); }
+    if (A.mode !== 'reset' && pw.length < 6) { A.err = 'Passwords are at least 6 characters.'; return draw(); }
+    A.busy = true; A.err = ''; draw();
+    try {
+      await ready();
+      if (A.mode === 'reset') { await A.auth.sendPasswordResetEmail(email); A.busy = false; A.ok = true; A.err = 'Check your email for the link.'; A.mode = 'in'; return draw(); }
+      await (A.mode === 'up' ? A.auth.createUserWithEmailAndPassword(email, pw) : A.auth.signInWithEmailAndPassword(email, pw));
+      A.busy = false; close();
+    } catch (e) { fail(e); }
+  }
+  async function google() {
+    A.busy = true; A.err = ''; draw();
+    try { await ready(); await A.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); A.busy = false; close(); }
+    catch (e) { if (e && e.code === 'auth/popup-blocked') { try { return await A.auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()); } catch (e2) { e = e2; } } fail(e); }
+  }
+  $('acctModal').addEventListener('click', e => {
+    if (e.target.id === 'acctModal') return close();
+    const a = e.target.closest('[data-a]'); if (!a) return; const k = a.dataset.a;
+    if (k === 'close') close(); else if (k === 'google') google(); else if (k === 'sync') sync();
+    else if (k === 'out') { push().finally(() => A.auth.signOut()); close(); }
+    else { A.mode = k; A.err = ''; A.ok = false; draw(); }
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('acctModal').hidden) close(); });
+  $('acctBtn').onclick = () => { A.mode = 'in'; open(); };
+
+  let readyP = null;
+  function ready() {
+    return readyP || (readyP = load().then(() => {
+      if (!firebase.apps.length) firebase.initializeApp(CFG);
+      A.auth = firebase.auth();
+      A.auth.onAuthStateChanged(u => { A.user = u; btn(); if (u) sync(); else lastPushed = '';
+        // redraw only when someone signed in, so a half-typed sign-in form isn't wiped
+        if (u && !$('acctModal').hidden) draw(); });
+    }).catch(e => { readyP = null; throw e; }));
+  }
+  // load sign-in in the background: it remembers who was signed in on this device
+  setTimeout(() => ready().catch(() => {}), 800);
+})();
 </script>
