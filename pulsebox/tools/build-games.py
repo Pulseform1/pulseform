@@ -8,6 +8,8 @@ kit_js, kit_css = src('kit.js'), src('kit.css')
 for path in sorted(glob.glob(os.path.join(HERE, 'src', 'games', '*.js'))):
     gid = os.path.splitext(os.path.basename(path))[0]
     js = open(path, encoding='utf-8').read()
+    # shared code a game asks for with a line like  // @use person  (from src/lib/person.js)
+    for lib in re.findall(r'^// @use (\w+)', js, re.M): js = src('lib', lib + '.js') + '\n' + js
     title = re.search(r"title: '([^']+)'", js).group(1)
     font = re.search(r"font: '([^']+)'", js).group(1)
     fam = urllib.parse.quote_plus(font)

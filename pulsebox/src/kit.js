@@ -27,7 +27,7 @@ const SKEY = 'pbx-' + GAME.id;
 const save = { best: 0, coins: 0, owned: [0], skin: 0, plays: 0, mute: false };
 try { Object.assign(save, JSON.parse(localStorage.getItem(SKEY) || '{}')); } catch (e) {}
 const persist = () => { try { localStorage.setItem(SKEY, JSON.stringify(save)); } catch (e) {} };
-K.save = save;
+K.save = save; K.persist = persist;
 Object.defineProperty(K, 'skin', { get: () => GAME.skins[DEMO || K.bot ? (K.demoSkin || 0) : save.skin] || GAME.skins[0] });
 
 /* ---------- screen ---------- */
@@ -42,20 +42,30 @@ addEventListener('resize', resize); resize();
 
 /* ---------- sound ---------- */
 let ac = null;
-function audio() { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (ac && ac.state === 'suspended') ac.resume(); return ac; }
+// every sound goes through K.master, which is silent on menus, while paused and when muted, so games can run looping sounds
+function audio() {
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); K.ac = ac; K.master = ac.createGain(); K.master.gain.value = 0; K.master.connect(ac.destination); } catch (e) {} }
+  if (ac && ac.state === 'suspended') ac.resume(); return ac;
+}
+K.audio = audio;
+let masterOn = false;
+function masterSync() {
+  const on = !!ac && !save.mute && (K.state === 'play' || K.state === 'over') && !K.bot;
+  if (ac && on !== masterOn) { masterOn = on; K.master.gain.setTargetAtTime(on ? 1 : 0, ac.currentTime, .05); }
+}
 K.sfx = (f = 440, d = .1, type = 'square', v = .12, slide = 0, delay = 0) => {
   if (save.mute || K.bot || !ac) return;
   const t = ac.currentTime + delay, o = ac.createOscillator(), a = ac.createGain();
   o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
   a.gain.setValueAtTime(v, t); a.gain.exponentialRampToValueAtTime(.0001, t + d);
-  o.connect(a).connect(ac.destination); o.start(t); o.stop(t + d + .02);
+  o.connect(a).connect(K.master); o.start(t); o.stop(t + d + .02);
 };
 K.noise = (d = .15, v = .15, hp = 800) => {
   if (save.mute || K.bot || !ac) return;
   const n = Math.floor(ac.sampleRate * d), b = ac.createBuffer(1, n, ac.sampleRate), ch = b.getChannelData(0);
   for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / n);
   const s = ac.createBufferSource(), f = ac.createBiquadFilter(), a = ac.createGain();
-  f.type = 'highpass'; f.frequency.value = hp; a.gain.value = v; s.buffer = b; s.connect(f).connect(a).connect(ac.destination); s.start();
+  f.type = 'highpass'; f.frequency.value = hp; a.gain.value = v; s.buffer = b; s.connect(f).connect(a).connect(K.master); s.start();
 };
 K.chime = (base = 523, steps = [0, 4, 7, 12]) => steps.forEach((s, i) => K.sfx(base * Math.pow(2, s / 12), .16, 'triangle', .1, 0, i * .07));
 
@@ -100,7 +110,7 @@ document.body.insertAdjacentHTML('beforeend', `
   <ul class="how">${GAME.how.map(h => `<li>${h}</li>`).join('')}</ul>
 </div></div>
 <div class="scr" id="sOver" hidden><div class="card">
-  <p class="sub" style="margin:0">Score</p><div class="score-big" id="oScore">0</div><div id="oNew" class="newbest" hidden>New best!</div>
+  <h2 class="title" id="oTitle" style="font-size:40px" hidden></h2><p class="sub" id="oText" hidden></p><p class="sub" style="margin:0" id="oLabel">Score</p><div class="score-big" id="oScore">0</div><div id="oNew" class="newbest" hidden>New best!</div>
   <div class="stats"><span class="stat"><small>Best</small><b id="oBest">0</b></span><span class="stat">+${coinHTML}<b id="oCoins">0</b></span></div>
   <button class="big" id="bAgain">Play again</button>
   <div class="row"><button id="bMenu">Menu</button><button id="bSkins2">Skins</button></div>
@@ -166,16 +176,18 @@ function start() {
   GAME.reset(); K.state = 'play'; showScr(null); $('hud').hidden = false; save.plays++; persist();
 }
 function attract() { K.bot = true; K.demoSkin = DEMO ? 0 : K.irand(0, GAME.skins.length - 1); K.score = 0; K.runCoins = 0; hud(); GAME.reset(); if (POSE) GAME.pose(); K.state = 'title'; $('hud').hidden = !DEMO; }
-K.over = () => {
+K.over = (o = {}) => {
   if (K.bot) { if (!botOverAt) botOverAt = K.t + 1.2; return; }
   if (K.state !== 'play') return;
   K.state = 'over'; overAt = performance.now();
   const best = K.score > save.best; if (best) save.best = K.score;
   save.coins += K.runCoins; persist(); refresh();
+  $('oTitle').hidden = !o.title; $('oTitle').textContent = o.title || ''; $('oText').hidden = !o.text; $('oText').textContent = o.text || ''; $('oLabel').textContent = GAME.scoreLabel || 'Score';
   $('oScore').textContent = K.score; $('oBest').textContent = save.best; $('oCoins').textContent = K.runCoins; $('oNew').hidden = !best || K.score === 0;
   const next = GAME.skins.map((s, i) => [s, i]).find(([s, i]) => !save.owned.includes(i));
   $('oHint').textContent = next ? (save.coins >= next[0].price ? `You can unlock ${next[0].name} now!` : `${next[0].price - save.coins} more coins to unlock ${next[0].name}`) : 'You own every skin. Legend!';
-  setTimeout(() => { if (K.state === 'over') { showScr('sOver'); $('hud').hidden = true; } }, 650);
+  if (GAME.noSkins) $('oHint').textContent = '';
+  setTimeout(() => { if (K.state === 'over') { showScr('sOver'); $('hud').hidden = true; } }, o.delay ?? 650);
   if (best && K.score > 0) setTimeout(() => K.chime(523, [0, 4, 7, 12, 16]), 700);
 };
 function pause() { if (K.state !== 'play') return; K.state = 'paused'; showScr('sPause'); }
@@ -226,7 +238,10 @@ function frame(now) {
   g.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * (ox + sx * sc), dpr * (oy + sy * sc));
   GAME.draw(g); drawFx();
   if (flashA > 0) { g.globalAlpha = flashA; g.fillStyle = flashC; g.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0); g.globalAlpha = 1; }
+  masterSync();
   requestAnimationFrame(frame);
 }
+if (GAME.noSkins) { $('bSkins').parentNode.hidden = true; $('bSkins2').hidden = true; }
+if (GAME.noHud) { $('hScore').hidden = true; document.querySelector('.hud-coins').hidden = true; }
 refresh(); attract(); showScr('sTitle');
 requestAnimationFrame(frame);

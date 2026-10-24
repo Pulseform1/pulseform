@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Night Shift</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+:root { color-scheme: dark; --accent: #c6ff3d; --accent2: #29e0ff; --bg: #0a0c12; --text: #f3f5ff; --muted: #a3a9c4; --panel: rgba(10,12,22,.86); --edge: rgba(255,255,255,.14); --display: 'Lilita One', 'Arial Black', system-ui, sans-serif; --body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--bg); }
+body { font-family: var(--body); color: var(--text); user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; touch-action: none; overscroll-behavior: none; }
+#cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* HUD */
+.hud { position: fixed; inset: 0; pointer-events: none; font-family: var(--display); }
+.hud-score { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); font-size: clamp(28px, 6vh, 56px); line-height: 1; text-shadow: 0 3px 0 rgba(0,0,0,.35), 0 0 18px rgba(0,0,0,.4); letter-spacing: .02em; }
+.hud-score.bump { animation: bump .18s ease-out; }
+@keyframes bump { 40% { transform: translateX(-50%) scale(1.18); } }
+.hud-coins { position: absolute; top: 12px; right: 14px; display: flex; align-items: center; gap: 6px; font-size: clamp(16px, 3.2vh, 24px); background: rgba(0,0,0,.35); padding: 4px 12px 4px 8px; border-radius: 999px; }
+.coin-i { width: 1em; height: 1em; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6c4, #ffcf2e 45%, #c98a00); box-shadow: 0 0 8px rgba(255,207,46,.6); display: inline-block; flex: none; }
+.hud-pause { position: absolute; top: 10px; left: 12px; width: 40px; height: 40px; border-radius: 12px; background: rgba(0,0,0,.35); pointer-events: auto; display: grid; place-items: center; }
+.hud-pause::before { content: ''; width: 14px; height: 16px; border-left: 5px solid #fff; border-right: 5px solid #fff; }
+
+/* screens */
+.scr { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: radial-gradient(ellipse at center, rgba(0,0,0,.25), rgba(0,0,0,.65)); }
+.card { width: min(440px, 100%); max-height: 100%; overflow: auto; text-align: center; background: var(--panel); border: 1px solid var(--edge); border-radius: 26px; padding: clamp(16px, 4vh, 28px) 22px; box-shadow: 0 24px 70px rgba(0,0,0,.5); backdrop-filter: blur(6px); }
+.title { font-family: var(--display); font-size: clamp(36px, 9vh, 64px); line-height: .95; margin: 0 0 6px; color: var(--accent); text-shadow: 0 4px 0 rgba(0,0,0,.35); letter-spacing: .01em; }
+.sub { margin: 0 0 14px; color: var(--muted); font-weight: 700; font-size: 15px; }
+.stats { display: flex; justify-content: center; gap: 10px; margin: 0 0 16px; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.07); border: 1px solid var(--edge); border-radius: 14px; padding: 6px 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.stat small { color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+.big { display: block; width: 100%; font-family: var(--display); font-size: clamp(22px, 5vh, 30px); padding: 12px 18px; border-radius: 18px; background: var(--accent); color: #0b0d14; box-shadow: 0 6px 0 rgba(0,0,0,.35), 0 0 30px color-mix(in srgb, var(--accent) 40%, transparent); transition: transform .1s; }
+.big:hover { transform: translateY(-2px); }
+.big:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.row { display: flex; gap: 10px; margin-top: 10px; }
+.row button { flex: 1; padding: 10px; border-radius: 14px; background: rgba(255,255,255,.08); border: 1px solid var(--edge); font-weight: 800; }
+.row button:hover { background: rgba(255,255,255,.14); }
+.how { margin: 14px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 14px; font-weight: 600; line-height: 1.45; }
+.score-big { font-family: var(--display); font-size: clamp(54px, 14vh, 96px); line-height: 1; margin: 4px 0; }
+.newbest { display: inline-block; font-family: var(--display); background: var(--accent2); color: #0b0d14; padding: 3px 12px; border-radius: 999px; margin-bottom: 8px; animation: pop .5s ease-out; }
+@keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } }
+.hint { color: var(--muted); font-size: 13px; margin-top: 10px; font-weight: 700; }
+
+/* skins */
+.skins { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin: 6px 0 14px; }
+.skin { border-radius: 16px; padding: 10px 6px 8px; background: rgba(255,255,255,.06); border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; }
+.skin.on { border-color: var(--accent); background: rgba(255,255,255,.12); }
+.skin.locked { opacity: .9; }
+.skin canvas { width: 56px; height: 56px; }
+.skin .price { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #ffe07a; }
+.skin.cant .price { color: #ff8a8a; }
+
+.mute { position: fixed; right: 12px; bottom: 12px; width: 42px; height: 42px; border-radius: 50%; background: rgba(0,0,0,.4); border: 1px solid var(--edge); font-size: 18px; display: grid; place-items: center; }
+.toast { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); font-family: var(--display); font-size: clamp(22px, 5vh, 38px); color: #fff; text-shadow: 0 3px 0 rgba(0,0,0,.4), 0 0 20px var(--accent); pointer-events: none; animation: toast 1.4s ease-out forwards; white-space: nowrap; }
+@keyframes toast { 0% { opacity: 0; transform: translate(-50%, 20px) scale(.7); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.08); } 25% { transform: translate(-50%, 0) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -20px); } }
+body.demo .hud-pause, body.demo .mute { display: none; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<script>
+const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
+/* Shared by the horror games: draws a person from the shoulders up at (x, y), scaled by s.
+   p = { skin, hair, style 0-3, eyes, shirt, glasses, beard, hat }. o: silhouette, reveal (0-1, the face splits open),
+   glow (red eyes), smile, look (-1..1, where the eyes point). */
+function drawPerson(gr, p, x, y, s, o = {}) {
+  gr.save(); gr.translate(x, y); gr.scale(s, s);
+  const dark = o.silhouette;
+  gr.fillStyle = dark ? 'rgba(0,0,0,.85)' : p.shirt; gr.beginPath(); gr.moveTo(-120, 260); gr.quadraticCurveTo(-110, 110, -40, 95); gr.lineTo(40, 95); gr.quadraticCurveTo(110, 110, 120, 260); gr.fill();
+  if (!dark) { gr.fillStyle = 'rgba(0,0,0,.25)'; gr.fillRect(-8, 100, 16, 160); }
+  gr.fillStyle = dark ? 'rgba(0,0,0,.85)' : p.skin; gr.fillRect(-18, 70, 36, 34);
+  const stretch = o.reveal ? 1 + o.reveal * .25 : 1;
+  gr.beginPath(); gr.ellipse(0, 10, 58, 74 * stretch, 0, 0, 7); gr.fill();
+  if (dark) { gr.restore(); return; }
+  // hair
+  gr.fillStyle = p.hair;
+  if (p.style === 0) { gr.beginPath(); gr.ellipse(0, -30, 62, 42, 0, Math.PI, 0); gr.fill(); }
+  else if (p.style === 1) { gr.beginPath(); gr.ellipse(0, -20, 66, 56, 0, Math.PI * .95, Math.PI * 2.05); gr.fill(); gr.fillRect(-66, -20, 16, 90); gr.fillRect(50, -20, 16, 90); }
+  else if (p.style === 2) { gr.beginPath(); gr.ellipse(0, -38, 56, 30, 0, Math.PI, 0); gr.fill(); }
+  else { gr.beginPath(); gr.ellipse(0, -26, 64, 48, 0, Math.PI, 0); gr.fill(); gr.beginPath(); gr.arc(0, -70, 22, 0, 7); gr.fill(); }
+  if (p.hat) { gr.fillStyle = '#2a2420'; gr.fillRect(-70, -52, 140, 12); gr.fillRect(-46, -96, 92, 46); }
+  if (p.beard) { gr.fillStyle = p.hair; gr.beginPath(); gr.ellipse(0, 52, 46, 34, 0, 0, Math.PI); gr.fill(); }
+  // eyes
+  const ey = 4, glow = o.glow;
+  for (const k of [-1, 1]) {
+    gr.fillStyle = o.reveal ? '#000' : '#f4efe6'; gr.beginPath(); gr.ellipse(k * 22, ey, 12 + (o.reveal || 0) * 6, 7 + (o.reveal || 0) * 8, 0, 0, 7); gr.fill();
+    if (!o.reveal) { gr.fillStyle = glow ? '#ff2a2a' : p.eyes; gr.beginPath(); gr.arc(k * 22 + (o.look || 0) * 4, ey, 5, 0, 7); gr.fill(); gr.fillStyle = glow ? '#ffd0d0' : '#000'; gr.beginPath(); gr.arc(k * 22 + (o.look || 0) * 4, ey, 2.4, 0, 7); gr.fill(); }
+    if (glow) { gr.shadowColor = '#ff2a2a'; gr.shadowBlur = 20; gr.fillStyle = '#ff5a5a'; gr.beginPath(); gr.arc(k * 22, ey, 3, 0, 7); gr.fill(); gr.shadowBlur = 0; }
+  }
+  gr.strokeStyle = 'rgba(0,0,0,.45)'; gr.lineWidth = 4; gr.beginPath(); gr.moveTo(-34, ey - 16); gr.lineTo(-12, ey - 18); gr.moveTo(12, ey - 18); gr.lineTo(34, ey - 16); gr.stroke();
+  if (p.glasses) { gr.strokeStyle = '#111'; gr.lineWidth = 3.5; gr.strokeRect(-38, ey - 11, 30, 22); gr.strokeRect(8, ey - 11, 30, 22); gr.beginPath(); gr.moveTo(-8, ey); gr.lineTo(8, ey); gr.stroke(); }
+  gr.fillStyle = 'rgba(0,0,0,.18)'; gr.beginPath(); gr.moveTo(0, 8); gr.lineTo(-7, 30); gr.lineTo(6, 30); gr.fill();
+  // mouth
+  gr.strokeStyle = '#5a2a22'; gr.lineWidth = 4;
+  if (o.reveal) { gr.fillStyle = '#000'; gr.beginPath(); gr.ellipse(0, 50, 26 + o.reveal * 10, 10 + o.reveal * 40, 0, 0, 7); gr.fill(); gr.fillStyle = '#e8e2d0'; for (let i = -3; i <= 3; i++) { gr.beginPath(); gr.moveTo(i * 8 - 4, 42 - o.reveal * 20); gr.lineTo(i * 8, 54 - o.reveal * 10); gr.lineTo(i * 8 + 4, 42 - o.reveal * 20); gr.fill(); } }
+  else if (o.smile) { gr.beginPath(); gr.arc(0, 30, 34, .25, Math.PI - .25); gr.stroke(); }
+  else { gr.beginPath(); gr.moveTo(-16, 46); gr.quadraticCurveTo(0, 50, 16, 46); gr.stroke(); }
+  gr.restore();
+}
+const PERSON_LOOKS = {
+  skin: ['#f1c7a5', '#d9a07a', '#b97850', '#8a5636', '#5e3a24', '#f5d6c0'], hair: ['#1c1410', '#4a2e1a', '#8a5a2b', '#c9a35a', '#d8d2c8', '#7a1f1a', '#2e2e2e'],
+  shirt: ['#3a4a6a', '#6a2a2a', '#2a5a3a', '#5a4a2a', '#4a3a5a', '#2a4a5a', '#6a6a6a'], eyes: ['#3a2a1a', '#2a4a7a', '#3a6a3a', '#5a4a2a'],
+};
+function randomPerson() {
+  const L = PERSON_LOOKS, r = a => a[Math.floor(Math.random() * a.length)];
+  return { skin: r(L.skin), hair: r(L.hair), style: Math.floor(Math.random() * 4), eyes: r(L.eyes), shirt: r(L.shirt), glasses: Math.random() < .3, beard: Math.random() < .25, hat: Math.random() < .15 };
+}
+
+// @use person
+/* Night Shift: run the register at a gas station from 11 PM to 5 AM, for five nights, and follow the manager's rules.
+   Each night adds a rule. Breaking a rule is a strike; three strikes and the night shift claims another clerk.
+   How many strikes you finish with decides the ending. */
+const GAME = {
+  id: 'night-shift', title: 'Night Shift', tagline: 'Gas station. 11 PM to 5 AM. Follow the rules.',
+  font: 'Special Elite', accent: '#ffd23f', accent2: '#ff4d4d', bg: '#06070a', noSkins: true, noHud: true, scoreLabel: 'Shift score',
+  how: ['Ring up customers by clicking each item on the counter.', 'Read the RULES on the wall. A new one is added every night.', 'Three broken rules and you won\'t clock out. Wear headphones.'],
+  skins: [{ name: 'Clerk', price: 0 }],
+};
+(() => {
+  const DUR = 150, HOUR = DUR / 6, DOOR = { x: 830, y: 66, w: 300, h: 394 }, CX = 470;
+  const RULES = [
+    'If a customer has NO REFLECTION in the door glass, press LOOK DOWN and keep your eyes down until they leave. Never serve them.',
+    'If the lights flicker three times, LOCK THE DOOR right away. Unlock it only after the knocking stops.',
+    'Never answer the phone between 2:00 and 3:00 AM.',
+    'Pump 4 is broken. Never turn it on, no matter who asks. If anyone asks what time it is, tell them it is closing time.',
+    'If the security camera shows someone you cannot see in the store, press the ALARM.',
+  ];
+  const ITEMS = [['Chips', 2.49, '#e8b23a'], ['Soda', 1.99, '#d23a3a'], ['Gum', .99, '#3ad2a0'], ['Coffee', 1.49, '#6a3a1a'], ['Jerky', 5.99, '#8a4a2a'], ['Candy', 1.29, '#c23ad2'], ['Water', 1.19, '#3a8ad2'], ['Batteries', 6.49, '#4a4a4a'], ['Hot dog', 2.99, '#d2703a'], ['Energy', 3.29, '#7ad23a']];
+  let night, t, events, cust, queue, strikes, lookDown, locked, flick, phone, pump, cctv, view, dlg, scareT, deadT, ended, msg, msgT, served, hover, amb, buzzT, knockT, noteOpen;
+
+  function sched(n) {
+    const ev = [];
+    for (let s = 4; s < DUR - 10; s += K.rand(11, 16) - n * .6) {
+      const r = Math.random(); let kind = 'normal';
+      if (r < .22) kind = 'noreflect'; else if (n >= 4 && r < .34) kind = 'time';
+      ev.push({ at: s, type: 'cust', kind });
+    }
+    if (n >= 2) for (let i = 0; i < (n >= 4 ? 2 : 1); i++) ev.push({ at: K.rand(25, DUR - 30), type: 'flicker' });
+    if (n >= 3) { ev.push({ at: K.rand(3 * HOUR + 2, 4 * HOUR - 8), type: 'phone' }); ev.push({ at: K.rand(10, 2 * HOUR), type: 'phone' }); if (n >= 4) ev.push({ at: K.rand(4 * HOUR + 2, DUR - 15), type: 'phone' }); }
+    if (n >= 4) ev.push({ at: K.rand(30, DUR - 25), type: 'pump' });
+    if (n >= 5) { ev.push({ at: K.rand(20, 70), type: 'cctv' }); ev.push({ at: K.rand(80, DUR - 20), type: 'cctv' }); }
+    if (!ev.some(e => e.kind === 'noreflect')) { const c = ev.find(e => e.type === 'cust' && e.at > 15); if (c) c.kind = 'noreflect'; }
+    return ev.sort((a, b) => a.at - b.at);
+  }
+  function startNight(n) {
+    night = n; t = 0; events = sched(n); cust = null; queue = []; lookDown = false; locked = false; flick = null; phone = null; pump = null; cctv = null; view = null; dlg = null; knockT = 0;
+    noteOpen = !K.bot; msg = ''; msgT = 0;
+  }
+  GAME.reset = () => { GAME._dl = null; strikes = 0; scareT = 0; deadT = 0; ended = 0; served = 0; buzzT = 0; hover = null; startNight(K.bot ? K.irand(1, 5) : (K.save.night || 1)); sound(); };
+  const clock = () => { const h = 11 + Math.floor(t / HOUR), m = Math.floor((t % HOUR) / HOUR * 60); const hh = h > 12 ? h - 12 : h; return `${hh}:${String(m).padStart(2, '0')} ${h >= 12 && h < 24 ? 'AM' : 'PM'}`; };
+  const forbidden = () => t >= 3 * HOUR && t < 4 * HOUR;
+  const say = (s, d = 3.5) => { msg = s; msgT = d; };
+
+  /* ---------- sound ---------- */
+  function sound() {
+    if (amb || !K.ac || K.bot) return;
+    const ac = K.ac, o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 120; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 240; f.Q.value = 4; const gn = ac.createGain(); gn.gain.value = .03;
+    o.connect(f).connect(gn).connect(K.master); o.start();
+    const fr = ac.createOscillator(); fr.type = 'sine'; fr.frequency.value = 52; const fg = ac.createGain(); fg.gain.value = .05; fr.connect(fg).connect(K.master); fr.start();
+    amb = { gn, fg };
+  }
+  const beep = () => K.sfx(1850, .07, 'square', .07);
+  const ring = () => { K.sfx(880, .35, 'square', .07); K.sfx(1100, .35, 'square', .05, 0, .02); };
+  function scare() { if (K.bot) return; K.noise(1.1, .5, 700); K.sfx(700, 1, 'sawtooth', .22, -560); K.sfx(1300, .7, 'square', .08, -1000); }
+  function strike(why) {
+    strikes++; K.shake(22); K.flash('#600', .6); scare(); scareT = K.t; say('RULE BROKEN: ' + why, 4);
+    if (strikes >= 3) { deadT = K.t; if (K.bot) K.over(); else K.over({ title: 'Clocked out', text: `Three rules broken. ${why}. The night shift is looking for a new clerk.`, delay: 2400 }); }
+  }
+
+  /* ---------- people ---------- */
+  function newCust(kind) {
+    const items = Array.from({ length: K.irand(2, 4) }, () => { const [n, p, c] = K.pick(ITEMS); return { n, p, c, scanned: false }; });
+    items.forEach((it, i) => { it.x = 330 + i * 92 + K.rand(-8, 8); it.y = 560 + K.rand(-8, 8); });
+    return { look: randomPerson(), kind, items, walk: 0, phase: 'in', pt: 0, patience: Math.max(14, 24 - night), lookT: 0, asked: false, answered: false };
+  }
+  const ITEM_HIT = (it, x, y) => x > it.x - 38 && x < it.x + 38 && y > it.y - 34 && y < it.y + 34;
+
+  /* ---------- input ---------- */
+  const B = { look: { x: 30, y: 640, w: 190, h: 64, t: 'Look down' }, lock: { x: 232, y: 640, w: 190, h: 64, t: 'Lock door' }, alarm: { x: 1060, y: 640, w: 190, h: 64, t: 'Alarm' }, rules: { x: 40, y: 330, w: 150, h: 150 }, phone: { x: 60, y: 150, w: 110, h: 130 } };
+  const inB = (b, x, y) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
+  function act(k, arg) {
+    if (deadT || ended) return;
+    if (noteOpen) { if (k === 'note') { noteOpen = false; K.sfx(400, .05, 'triangle', .05); } return; }
+    if (dlg) { if (k === 'opt') { const d = dlg; dlg = null; d.pick(arg); } return; }
+    if (k === 'rules') { view = view === 'rules' ? null : 'rules'; return; }
+    if (view) { view = null; return; }
+    if (k === 'look') { lookDown = !lookDown; K.sfx(lookDown ? 300 : 500, .06, 'triangle', .05); }
+    if (k === 'lock') { locked = !locked; K.sfx(locked ? 200 : 260, .12, 'square', .1); K.noise(.1, .2, 1200); if (!locked && flick && flick.state === 'knock') strike('You unlocked the door while it was still knocking'); }
+    if (k === 'alarm') { K.sfx(600, .4, 'square', .1); K.sfx(800, .4, 'square', .1, 0, .4); if (cctv && cctv.state === 'on') { cctv = null; K.add(2); say('The alarm blares. When you check the camera again, the aisle is empty.'); } else { K.add(-1); say('False alarm. The manager won\'t like that.'); } }
+    if (k === 'phone' && phone && phone.state === 'ring') {
+      phone.state = 'done';
+      if (forbidden()) { strike('You answered the phone between 2 and 3'); say('"...I can see you. You\'re holding the phone right now."', 4); }
+      else { K.add(1); say(K.pick(['"Manager here. Just checking you\'re reading the rules. All of them."', '"It\'s me. Don\'t let anyone in after the lights go funny, okay?"', '"Hey. If someone asks for pump four... you know what to do."'])); }
+    }
+    if (k === 'item' && cust && cust.phase === 'at' && !lookDown) {
+      const it = arg; if (it.scanned) return; it.scanned = true; beep();
+      if (cust.kind === 'noreflect') { strike('You served a customer with no reflection'); cust.phase = 'out'; cust.pt = 0; return; }
+      if (cust.items.every(i => i.scanned)) { const tot = cust.items.reduce((a, i) => a + i.p, 0); K.add(1); served++; if (served % 3 === 0) K.coin(1); say(`Total $${tot.toFixed(2)}. "Thanks. Have a good one."`, 2.4); K.sfx(1200, .1, 'triangle', .06, 0, .1); cust.phase = 'out'; cust.pt = 0; }
+    }
+  }
+  GAME.down = (x, y) => {
+    if (noteOpen) return act('note');
+    if (dlg) { dlg.opts.forEach((o, i) => { if (inB(dlgBtn(i), x, y)) act('opt', i); }); return; }
+    if (view) return act('close');
+    for (const k of ['look', 'lock', 'alarm', 'rules', 'phone']) if (inB(B[k], x, y)) return act(k);
+    if (cust) for (const it of cust.items) if (ITEM_HIT(it, x, y)) return act('item', it);
+  };
+  GAME.move = (x, y) => { hover = null; for (const k of ['look', 'lock', 'alarm', 'rules', 'phone']) if (inB(B[k], x, y)) hover = k; if (cust && !hover) for (const it of cust.items) if (ITEM_HIT(it, x, y)) hover = it; };
+  GAME.key = (c, d) => {
+    if (!d) return;
+    if (c === 'Space' || c === 'Enter') { if (noteOpen) return act('note'); if (ended && night >= 5) return; if (ended) return nextNight(); if (cust && cust.phase === 'at') { const it = cust.items.find(i => !i.scanned); if (it) act('item', it); } }
+    if (c === 'KeyL') act('look'); if (c === 'KeyD') act('lock'); if (c === 'KeyA') act('alarm'); if (c === 'KeyR') act('rules'); if (c === 'KeyP') act('phone');
+    if (dlg && (c === 'Digit1' || c === 'Digit2')) act('opt', c === 'Digit1' ? 0 : 1);
+  };
+  const dlgBtn = i => ({ x: 340 + i * 310, y: 380, w: 290, h: 64 });
+  function nextNight() { if (night < 5) { ended = 0; startNight(night + 1); } }
+
+  let botT = 0;
+  GAME.bot = dt => {
+    if (ended) { botT += dt; if (botT > 2) { botT = 0; ended = 0; startNight(night % 5 + 1); } return; }
+    botT += dt; if (botT < .5) return; botT = 0;
+    const smart = Math.random() < .9;
+    if (dlg) return act('opt', smart ? dlg.right : 1 - dlg.right);
+    if (flick && flick.state === 'window' && !locked && smart) return act('lock');
+    if (flick && flick.state === 'gone' && locked) return act('lock');
+    if (!flick && locked) return act('lock');
+    if (phone && phone.state === 'ring' && !forbidden() && Math.random() < .3) return act('phone');
+    if (cctv && cctv.state === 'on' && smart) return act('alarm');
+    if (cust && cust.phase === 'at') {
+      if (cust.kind === 'noreflect') { if (!lookDown && smart) act('look'); return; }
+      if (lookDown) return act('look');
+      const it = cust.items.find(i => !i.scanned); if (it) act('item', it);
+    } else if (lookDown && (!cust || cust.phase === 'gone')) act('look');
+  };
+
+  /* ---------- update ---------- */
+  GAME.update = dt => {
+    if (deadT) return;
+    if (noteOpen) return;
+    if (ended) { ended += dt; return; }
+    t += dt; msgT -= dt; buzzT += dt;
+    while (events.length && events[0].at <= t) {
+      const e = events.shift();
+      if (e.type === 'cust') queue.push(e.kind);
+      if (e.type === 'flicker' && !flick) { flick = { state: 'flicker', t: 0 }; }
+      if (e.type === 'phone' && (!phone || phone.state !== 'ring')) { phone = { state: 'ring', t: 0 }; }
+      if (e.type === 'pump' && !pump) { pump = { t: 0 }; K.noise(.3, .08, 2000); dlg = { who: 'Intercom, pump 4', text: '"Hey... hey. Can you turn on pump four? I really need pump four."', opts: ['Turn on pump 4', 'Sorry, it\'s out of order'], right: 1, pick: i => { if (i === 0) strike('You turned on pump 4'); else { K.add(2); say('The figure at pump 4 doesn\'t move. Then it\'s just... gone.'); } pump.done = true; } }; }
+      if (e.type === 'cctv' && !cctv) { cctv = { state: 'on', t: 0 }; K.sfx(60, 1.2, 'sine', .1); }
+    }
+    // customers
+    if (!cust && queue.length && !(locked)) { cust = newCust(queue.shift()); K.sfx(1568, .5, 'sine', .07); K.sfx(1318, .6, 'sine', .07, 0, .25); }
+    if (cust) {
+      cust.pt += dt;
+      if (cust.phase === 'in') { cust.walk = Math.min(1, cust.pt / 1.8); if (cust.pt > 1.8) { cust.phase = 'at'; cust.pt = 0; if (cust.kind === 'time') dlg = { who: 'Customer', text: '"Hey, quick question. What time is it?"', opts: [`"It's ${clock()}."`, '"It\'s closing time."'], right: 1, pick: i => { if (i === 0) strike('You told them the real time'); else { K.add(2); say('"...Right. Closing time." They smile with too many teeth, and leave.', 3); cust.phase = 'out'; cust.pt = 0; } } }; } }
+      else if (cust.phase === 'at') {
+        if (cust.kind === 'noreflect') {
+          if (!lookDown && cust.pt > 2.6) { cust.lookT += dt; if (cust.lookT > 2.2) { strike('You looked at a customer with no reflection'); cust.phase = 'out'; cust.pt = 0; } }
+          if (lookDown && Math.random() < dt * .4 && !K.bot) say(K.pick(['"Look at me."', '"Why won\'t you look at me?"', '"I know you can hear me."']), 1.8);
+          if (cust.pt > 9) { cust.phase = 'out'; cust.pt = 0; if (strikes < 3) { K.add(2); K.coin(1); } }
+        } else if (!dlg) { cust.patience -= dt; if (cust.patience <= 0) { say('"Forget it."', 1.8); cust.phase = 'out'; cust.pt = 0; } }
+      } else if (cust.phase === 'out') { cust.walk = Math.max(0, 1 - cust.pt / 1.5); if (cust.pt > 1.6) cust = null; }
+    }
+    // lights flicker, then something knocks
+    if (flick) {
+      flick.t += dt;
+      if (flick.state === 'flicker' && flick.t > 2.2) { flick.state = 'window'; flick.t = 0; }
+      else if (flick.state === 'window') { if (locked) { flick.state = 'knock'; flick.t = 0; K.add(2); } else if (flick.t > 9) { strike('You didn\'t lock the door when the lights flickered'); flick.state = 'gone'; flick.t = 0; } }
+      else if (flick.state === 'knock') { knockT -= dt; if (knockT <= 0) { knockT = K.rand(.6, 1.2); [0, .18, .36].forEach(d => K.sfx(85, .1, 'square', .25, -20, d)); K.noise(.1, .2, 200); } if (flick.t > 7) { flick.state = 'gone'; flick.t = 0; say('The knocking stops. You can unlock the door now.', 3); } }
+      else if (flick.state === 'gone' && (!locked || flick.t > 12)) flick = null;
+    }
+    if (phone && phone.state === 'ring') { phone.t += dt; if (Math.floor(phone.t / .9) !== Math.floor((phone.t - dt) / .9) && Math.floor(phone.t / .9) % 2 === 0) ring(); if (phone.t > 8) phone.state = 'done'; }
+    if (cctv && cctv.state === 'on') { cctv.t += dt; if (cctv.t > 10) { cctv = null; strike('Something was in the store and you didn\'t raise the alarm'); } }
+    if (t >= DUR && !ended) {
+      ended = .001; dlg = null; cust = null; lookDown = false;
+      if (!K.bot) { K.save.night = Math.max(K.save.night || 1, Math.min(5, night + 1)); K.persist(); K.add(3); K.coin(5); K.chime(392, [0, 4, 7, 12]); }
+      if (night >= 5 && !K.bot) setTimeout(() => { if (K.state !== 'play') return; if (strikes === 0) { K.save.perfect = true; K.persist(); K.over({ title: 'Employee of the month', text: 'Five nights, every rule followed. At 5 AM the phone rings and the manager says: "You\'re perfect for this place. You never have to leave." Behind you, the door locks itself.' }); } else K.over({ title: 'Shift over', text: `The sun comes up. You broke ${strikes} rule${strikes > 1 ? 's' : ''} and lived anyway. You hang up the apron and never come back.` }); }, 3000);
+    }
+  };
+
+  /* ---------- draw ---------- */
+  function lights() { if (flick && flick.state === 'flicker') { const k = flick.t; return (k > .2 && k < .45) || (k > .9 && k < 1.1) || (k > 1.6 && k < 1.9) ? .08 : 1; } if (flick && flick.state === 'window') return .55 + .1 * Math.sin(K.t * 40); return Math.random() < .002 ? .6 : 1; }
+  function button(gr, b, label, on, hot) { gr.fillStyle = on ? '#6a5a1a' : hot ? '#3a3a44' : '#22222a'; gr.beginPath(); gr.roundRect(b.x, b.y, b.w, b.h, 12); gr.fill(); gr.strokeStyle = on ? '#ffd23f' : 'rgba(255,255,255,.15)'; gr.lineWidth = 2; gr.stroke(); gr.fillStyle = on ? '#ffe68a' : '#e6e0d0'; gr.font = '24px "Special Elite", monospace'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText(label, b.x + b.w / 2, b.y + b.h / 2); }
+  function wrap(gr, text, x, y, w, lh) { const words = text.split(' '); let line = ''; for (const wd of words) { const tt = line ? line + ' ' + wd : wd; if (gr.measureText(tt).width > w) { gr.fillText(line, x, y); y += lh; line = wd; } else line = tt; } gr.fillText(line, x, y); return y; }
+  GAME.draw = gr => {
+    const v = K.view, L = lights();
+    gr.fillStyle = '#0b0c10'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    if (deadT && K.t - deadT > .2) { const k = Math.min(1, (K.t - deadT) * 2); gr.fillStyle = '#000'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); drawPerson(gr, GAME._dl || (GAME._dl = (cust && cust.look) || randomPerson()), W / 2, 260, 1.4 + k * 1.6, { reveal: 1 }); gr.fillStyle = `rgba(150,0,0,${.25 * k})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); return; }
+    // the store
+    gr.fillStyle = `rgb(${Math.round(46 * L)},${Math.round(50 * L)},${Math.round(44 * L)})`; gr.fillRect(v.x0, 0, v.x1 - v.x0, 520);
+    for (const side of [0]) { const x0 = 230; for (let r = 0; r < 4; r++) { gr.fillStyle = `rgba(30,30,34,${L})`; gr.fillRect(x0, 120 + r * 92, 260, 10); for (let i = 0; i < 9; i++) { gr.fillStyle = `hsla(${(i * 47 + r * 90 + side * 30) % 360},55%,${45 * L}%,1)`; gr.fillRect(x0 + 8 + i * 28, 120 + r * 92 - 44 + (i % 2) * 6, 22, 44 - (i % 2) * 6); } } }
+    // outside through the door
+    gr.save(); gr.beginPath(); gr.rect(DOOR.x, DOOR.y, DOOR.w, DOOR.h); gr.clip();
+    gr.fillStyle = '#05060a'; gr.fillRect(DOOR.x, DOOR.y, DOOR.w, DOOR.h);
+    gr.fillStyle = 'rgba(255,240,200,.12)'; gr.fillRect(DOOR.x, DOOR.y + 40, DOOR.w, 30);
+    for (let i = 0; i < 4; i++) { const x = DOOR.x + 22 + i * 70, y = DOOR.y + 200; gr.fillStyle = '#2a2a30'; gr.fillRect(x, y, 34, 70); gr.fillStyle = i === 3 ? '#7a2020' : '#3a6a3a'; gr.fillRect(x + 6, y + 8, 22, 14); gr.fillStyle = '#ccc'; gr.font = '12px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(i + 1, x + 17, y + 46); }
+    if (pump && !pump.done) { gr.fillStyle = '#000'; gr.fillRect(DOOR.x + 240, DOOR.y + 110, 22, 160); gr.beginPath(); gr.ellipse(DOOR.x + 251, DOOR.y + 112, 13, 18, 0, 0, 7); gr.fill(); }
+    if (flick && flick.state === 'knock') drawPerson(gr, { skin: '#111', hair: '#000', style: 1, eyes: '#000', shirt: '#000' }, DOOR.x + DOOR.w / 2, DOOR.y + 160, 1.15, { silhouette: true });
+    if (flick && flick.state === 'knock') { gr.fillStyle = 'rgba(255,255,255,.12)'; for (const [dx, dy] of [[-60, 120], [70, 110]]) { gr.beginPath(); gr.ellipse(DOOR.x + DOOR.w / 2 + dx, DOOR.y + dy, 22, 30, 0, 0, 7); gr.fill(); } }
+    // reflection in the glass: the counter and whoever is standing at it
+    gr.globalAlpha = .38 * L; gr.fillStyle = '#6a5a40'; gr.fillRect(DOOR.x, DOOR.y + DOOR.h - 70, DOOR.w, 70);
+    if (cust && cust.kind !== 'noreflect' && cust.phase !== 'gone') { gr.save(); gr.translate(DOOR.x + DOOR.w / 2, 0); gr.scale(-1, 1); drawPerson(gr, cust.look, 40, DOOR.y + 190, .62 * Math.max(.3, cust.walk), {}); gr.restore(); }
+    gr.globalAlpha = 1; gr.restore();
+    gr.strokeStyle = '#3a3a3a'; gr.lineWidth = 14; gr.strokeRect(DOOR.x, DOOR.y, DOOR.w, DOOR.h); gr.fillStyle = '#9a9a9a'; gr.fillRect(DOOR.x + DOOR.w - 40, DOOR.y + 200, 8, 50);
+    gr.fillStyle = locked ? '#ff4d4d' : '#3aff7a'; gr.font = '16px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(locked ? 'LOCKED' : 'OPEN', DOOR.x + DOOR.w / 2, DOOR.y - 12);
+    // lights
+    for (const x of [300, 980]) { gr.fillStyle = L > .5 ? '#f4fff0' : '#3a3a3a'; gr.fillRect(x - 120, 8, 240, 12); if (L > .5) { const lg = gr.createRadialGradient(x, 14, 10, x, 14, 340); lg.addColorStop(0, `rgba(230,255,230,${.18 * L})`); lg.addColorStop(1, 'rgba(0,0,0,0)'); gr.fillStyle = lg; gr.fillRect(x - 340, 0, 680, 400); } }
+    // the customer
+    if (cust) {
+      const s = .7 + .3 * cust.walk, y = 200 + (1 - cust.walk) * 40;
+      gr.globalAlpha = Math.min(1, cust.walk * 1.4);
+      drawPerson(gr, cust.look, CX, y, s * 1.05, { look: Math.sin(K.t), smile: cust.kind === 'noreflect' && cust.pt > 5 });
+      gr.globalAlpha = 1;
+    }
+    // phone, rules, camera
+    const ph = phone && phone.state === 'ring', shake = ph ? Math.sin(K.t * 60) * 3 : 0;
+    gr.fillStyle = hover === 'phone' ? '#3a3a40' : '#2a2a2e'; gr.fillRect(B.phone.x + shake, B.phone.y, B.phone.w, B.phone.h); gr.fillStyle = ph ? '#ffd23f' : '#1a1a1a'; gr.fillRect(B.phone.x + 14 + shake, B.phone.y + 14, 82, 34); gr.fillStyle = '#e6e0d0'; gr.font = '16px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(ph ? 'RING' : 'PHONE', B.phone.x + 55 + shake, B.phone.y + 36);
+    for (let i = 0; i < 9; i++) { gr.fillStyle = '#444'; gr.fillRect(B.phone.x + 18 + (i % 3) * 26, B.phone.y + 60 + Math.floor(i / 3) * 20, 18, 14); }
+    gr.fillStyle = hover === 'rules' ? '#fff8e0' : '#ece4cc'; gr.save(); gr.translate(B.rules.x + 75, B.rules.y + 75); gr.rotate(-.04); gr.fillRect(-75, -75, 150, 150); gr.fillStyle = '#7a1f1a'; gr.font = '26px "Special Elite"'; gr.fillText('RULES', 0, -42); gr.fillStyle = '#333'; for (let i = 0; i < night; i++) gr.fillRect(-55, -16 + i * 18, 110 - (i % 2) * 20, 6); gr.restore();
+    if (night >= 5) {
+      gr.save(); gr.translate(-230, 430); gr.fillStyle = '#111'; gr.fillRect(1080, 40, 180, 130); gr.fillStyle = '#0d1a10'; gr.fillRect(1088, 48, 164, 104);
+      gr.strokeStyle = 'rgba(120,255,140,.3)'; gr.strokeRect(1100, 60, 140, 80); gr.fillStyle = 'rgba(120,255,140,.6)'; gr.fillRect(1160, 120, 12, 12);
+      if (cust) { gr.fillRect(1166, 96, 10, 10); }
+      if (cctv && cctv.state === 'on') { gr.fillStyle = Math.sin(K.t * 8) > 0 ? 'rgba(255,90,90,.9)' : 'rgba(120,255,140,.6)'; gr.fillRect(1205, 125, 10, 14); }
+      gr.fillStyle = '#ff4d4d'; gr.font = '11px "Special Elite"'; gr.textAlign = 'left'; gr.fillText('● CAM 2  STORE', 1092, 62); gr.restore();
+    }
+    // counter and items
+    gr.fillStyle = '#4a3a2a'; gr.fillRect(v.x0, 520, v.x1 - v.x0, 200); gr.fillStyle = '#5a4632'; gr.fillRect(v.x0, 516, v.x1 - v.x0, 12);
+    gr.fillStyle = '#222'; gr.fillRect(660, 470, 160, 110); gr.fillStyle = '#0a1a0a'; gr.fillRect(674, 484, 132, 44); gr.fillStyle = '#3aff7a'; gr.font = '24px "Courier New", monospace'; gr.textAlign = 'right';
+    const tot = cust ? cust.items.filter(i => i.scanned).reduce((a, i) => a + i.p, 0) : 0; gr.fillText('$' + tot.toFixed(2), 798, 514);
+    if (cust && cust.phase === 'at') for (const it of cust.items) if (!it.scanned) { gr.fillStyle = it.c; gr.beginPath(); gr.roundRect(it.x - 34, it.y - 30, 68, 60, 8); gr.fill(); if (hover === it) { gr.strokeStyle = '#ffd23f'; gr.lineWidth = 3; gr.stroke(); } gr.fillStyle = '#fff'; gr.font = '15px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(it.n, it.x, it.y + 5); }
+    // looking down: only the counter is visible
+    if (lookDown) { const lg = gr.createLinearGradient(0, 300, 0, 560); lg.addColorStop(0, '#000'); lg.addColorStop(1, 'rgba(0,0,0,.2)'); gr.fillStyle = lg; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, 560 - v.y0); gr.fillStyle = '#c9c0a8'; gr.font = '22px "Special Elite"'; gr.textAlign = 'center'; gr.fillText('(eyes on the counter)', CX, 470); }
+    // darkness when the lights go
+    if (L < 1) { gr.fillStyle = `rgba(0,0,0,${1 - L})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
+    // buttons and clock
+    button(gr, B.look, 'Look down [L]', lookDown, hover === 'look'); button(gr, B.lock, (locked ? 'Unlock' : 'Lock door') + ' [D]', locked, hover === 'lock'); button(gr, B.alarm, 'Alarm [A]', false, hover === 'alarm');
+    gr.fillStyle = '#100808'; gr.fillRect(560, 650, 160, 50); gr.fillStyle = forbidden() ? '#ff4d4d' : '#ff6a3a'; gr.font = '30px "Courier New", monospace'; gr.textAlign = 'center'; gr.fillText(clock(), 640, 676);
+    gr.fillStyle = '#e6e0d0'; gr.font = '20px "Special Elite"'; gr.textAlign = 'left'; gr.fillText(`NIGHT ${night}`, 760, 668); gr.fillStyle = '#ff6a6a'; gr.fillText('✕ '.repeat(strikes) + '· '.repeat(3 - strikes), 760, 694);
+    if (msgT > 0) { gr.font = '22px "Special Elite"'; gr.textAlign = 'center'; const w = Math.min(1000, gr.measureText(msg).width + 40); gr.fillStyle = 'rgba(0,0,0,.75)'; gr.fillRect(640 - w / 2, 590 - 22, w, 40); gr.fillStyle = msg.startsWith('RULE') ? '#ff6a6a' : '#f0e8d8'; gr.fillText(msg, 640, 592); }
+    // vignette and grain
+    const vg = gr.createRadialGradient(640, 330, 280, 640, 360, 900); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.7)'); gr.fillStyle = vg; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    for (let i = 0; i < 220; i++) { gr.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.1)'; gr.fillRect(v.x0 + Math.random() * (v.x1 - v.x0), v.y0 + Math.random() * (v.y1 - v.y0), 2, 2); }
+    if (scareT && K.t - scareT < .35 && !deadT) { gr.fillStyle = 'rgba(0,0,0,.6)'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); drawPerson(gr, randomPerson(), 640, 240, 2.4, { reveal: 1 }); }
+    // overlays: rules, dialog, manager's note, end of night
+    if (view === 'rules' || noteOpen) {
+      gr.fillStyle = 'rgba(0,0,0,.7)'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+      gr.fillStyle = '#ece4cc'; gr.fillRect(300, 50, 680, 560); gr.fillStyle = '#7a1f1a'; gr.font = '38px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(noteOpen ? `Night ${night}: a note from the manager` : 'RULES (read them)', 640, 104);
+      gr.font = '20px "Special Elite"'; gr.textAlign = 'left'; let y = 160;
+      for (let i = 0; i < night; i++) { gr.fillStyle = noteOpen && i === night - 1 ? '#7a1f1a' : '#2a2420'; y = wrap(gr, `${i + 1}. ${RULES[i]}`, 330, y, 620, 28) + 44; }
+      gr.fillStyle = '#5a5040'; gr.textAlign = 'center'; gr.fillText(noteOpen ? (night === 1 ? 'Click each item on the counter to ring it up. Tap to start your shift.' : 'Tap to start your shift.') : 'Tap anywhere to close.', 640, 584);
+    }
+    if (dlg) {
+      gr.fillStyle = 'rgba(0,0,0,.6)'; gr.fillRect(v.x0, 230, v.x1 - v.x0, 240);
+      gr.fillStyle = '#ffd23f'; gr.font = '20px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(dlg.who, 640, 272); gr.fillStyle = '#f0e8d8'; gr.font = '26px "Special Elite"'; gr.fillText(dlg.text, 640, 320);
+      dlg.opts.forEach((o, i) => { const b = dlgBtn(i); gr.fillStyle = '#2a2a32'; gr.beginPath(); gr.roundRect(b.x, b.y, b.w, b.h, 12); gr.fill(); gr.strokeStyle = 'rgba(255,255,255,.25)'; gr.stroke(); gr.fillStyle = '#fff'; gr.font = '19px "Special Elite"'; gr.fillText(`[${i + 1}] ${o}`, b.x + b.w / 2, b.y + 38); });
+    }
+    if (ended) {
+      gr.fillStyle = `rgba(0,0,0,${Math.min(.85, ended)})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+      gr.fillStyle = '#ffd8a8'; gr.font = '54px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(`5:00 AM · Night ${night} done`, 640, 300);
+      gr.font = '24px "Special Elite"'; gr.fillStyle = '#efe6d8'; gr.fillText(night >= 5 ? 'The sun is coming up...' : `Strikes: ${strikes}/3. Tap or press Space for night ${night + 1}.`, 640, 360);
+    }
+  };
+  // tap anywhere on the end-of-night card to go on
+  const down0 = GAME.down; GAME.down = (x, y) => { if (ended && night < 5 && ended > .8) return nextNight(); if (ended) return; down0(x, y); };
+})();
+
+/* Pulsebox game kit: canvas scaling, input, menus, skins shop, coins, best score, sound and effects.
+   A game defines GAME before this runs: { id, title, tagline, how:[], bg, skins:[{name,price,c:[]}],
+   reset(), update(dt), draw(g), down(x,y), move(x,y), up(x,y), key(code,isDown), bot(dt), drawSkin(g,skin,size) }.
+   Everything is in a 1280x720 world; K.view is the visible part of it (it can be wider or taller on odd screens).
+   ?demo plays the bot forever with no menus (used to record trailers). */
+'use strict';
+const $ = id => document.getElementById(id);
+const DEMO = /[?&]demo/.test(location.search), POSE = /[?&]pose/.test(location.search) && GAME.pose;  // ?demo&pose freezes a staged scene for cover art
+const cv = $('cv'), g = cv.getContext('2d');
+const K = {
+  W, H, t: 0, state: 'title', score: 0, runCoins: 0, bot: true, view: { x0: 0, y0: 0, x1: W, y1: H },
+  rand: (a, b) => a + Math.random() * (b - a),
+  irand: (a, b) => Math.floor(a + Math.random() * (b - a + 1)),
+  pick: a => a[Math.floor(Math.random() * a.length)],
+  clamp: (v, a, b) => v < a ? a : v > b ? b : v,
+  lerp: (a, b, t) => a + (b - a) * t,
+  dist: (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by),
+};
+document.documentElement.style.setProperty('--accent', GAME.accent || '#c6ff3d');
+document.documentElement.style.setProperty('--accent2', GAME.accent2 || '#29e0ff');
+document.documentElement.style.setProperty('--bg', GAME.bg || '#0a0c12');
+if (GAME.font) document.documentElement.style.setProperty('--display', `'${GAME.font}', 'Arial Black', system-ui, sans-serif`);
+if (DEMO) document.body.classList.add('demo');
+
+/* ---------- save ---------- */
+const SKEY = 'pbx-' + GAME.id;
+const save = { best: 0, coins: 0, owned: [0], skin: 0, plays: 0, mute: false };
+try { Object.assign(save, JSON.parse(localStorage.getItem(SKEY) || '{}')); } catch (e) {}
+const persist = () => { try { localStorage.setItem(SKEY, JSON.stringify(save)); } catch (e) {} };
+K.save = save; K.persist = persist;
+Object.defineProperty(K, 'skin', { get: () => GAME.skins[DEMO || K.bot ? (K.demoSkin || 0) : save.skin] || GAME.skins[0] });
+
+/* ---------- screen ---------- */
+let sc = 1, ox = 0, oy = 0, dpr = 1;
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+  sc = Math.min(innerWidth / W, innerHeight / H); ox = (innerWidth - W * sc) / 2; oy = (innerHeight - H * sc) / 2;
+  K.view = { x0: -ox / sc, y0: -oy / sc, x1: W + ox / sc, y1: H + oy / sc };
+}
+addEventListener('resize', resize); resize();
+
+/* ---------- sound ---------- */
+let ac = null;
+// every sound goes through K.master, which is silent on menus, while paused and when muted, so games can run looping sounds
+function audio() {
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); K.ac = ac; K.master = ac.createGain(); K.master.gain.value = 0; K.master.connect(ac.destination); } catch (e) {} }
+  if (ac && ac.state === 'suspended') ac.resume(); return ac;
+}
+K.audio = audio;
+let masterOn = false;
+function masterSync() {
+  const on = !!ac && !save.mute && (K.state === 'play' || K.state === 'over') && !K.bot;
+  if (ac && on !== masterOn) { masterOn = on; K.master.gain.setTargetAtTime(on ? 1 : 0, ac.currentTime, .05); }
+}
+K.sfx = (f = 440, d = .1, type = 'square', v = .12, slide = 0, delay = 0) => {
+  if (save.mute || K.bot || !ac) return;
+  const t = ac.currentTime + delay, o = ac.createOscillator(), a = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
+  a.gain.setValueAtTime(v, t); a.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(a).connect(K.master); o.start(t); o.stop(t + d + .02);
+};
+K.noise = (d = .15, v = .15, hp = 800) => {
+  if (save.mute || K.bot || !ac) return;
+  const n = Math.floor(ac.sampleRate * d), b = ac.createBuffer(1, n, ac.sampleRate), ch = b.getChannelData(0);
+  for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), a = ac.createGain();
+  f.type = 'highpass'; f.frequency.value = hp; a.gain.value = v; s.buffer = b; s.connect(f).connect(a).connect(K.master); s.start();
+};
+K.chime = (base = 523, steps = [0, 4, 7, 12]) => steps.forEach((s, i) => K.sfx(base * Math.pow(2, s / 12), .16, 'triangle', .1, 0, i * .07));
+
+/* ---------- effects ---------- */
+const parts = [], pops = [];
+let shake = 0, flashA = 0, flashC = '#fff';
+K.burst = (x, y, c, n = 14, sp = 320, o = {}) => {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = sp * (.3 + Math.random() * .7);
+    parts.push({ x, y, vx: Math.cos(a) * s + (o.vx || 0), vy: Math.sin(a) * s + (o.vy || 0), life: 0, max: (o.life || .6) * (.6 + Math.random() * .6), c: Array.isArray(c) ? K.pick(c) : c, s: (o.size || 7) * (.5 + Math.random()), gr: o.gravity ?? 600, sq: o.square });
+  }
+};
+K.pop = (x, y, text, c = '#fff', size = 34) => pops.push({ x, y, text, c, size, life: 0 });
+K.shake = a => { shake = Math.max(shake, a); };
+K.flash = (c = '#fff', a = .5) => { flashC = c; flashA = a; };
+K.toast = text => { if (K.bot) return; const d = document.createElement('div'); d.className = 'toast'; d.textContent = text; document.body.appendChild(d); setTimeout(() => d.remove(), 1500); };
+function fx(dt) {
+  for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.life += dt; if (p.life > p.max) { parts.splice(i, 1); continue; } p.vy += p.gr * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .99; }
+  for (let i = pops.length - 1; i >= 0; i--) { const p = pops[i]; p.life += dt; p.y -= 60 * dt; if (p.life > .9) pops.splice(i, 1); }
+  shake = Math.max(0, shake - 60 * dt); flashA = Math.max(0, flashA - 2.5 * dt);
+}
+function drawFx() {
+  for (const p of parts) { g.globalAlpha = 1 - p.life / p.max; g.fillStyle = p.c; if (p.sq) g.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s); else { g.beginPath(); g.arc(p.x, p.y, p.s / 2, 0, 7); g.fill(); } }
+  g.globalAlpha = 1; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const p of pops) {
+    const k = p.life < .12 ? p.life / .12 : 1; g.globalAlpha = p.life > .6 ? 1 - (p.life - .6) / .3 : 1;
+    g.font = `${Math.round(p.size * (0.6 + .4 * k))}px ${getComputedStyle(document.documentElement).getPropertyValue('--display')}`;
+    g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,.45)'; g.strokeText(p.text, p.x, p.y); g.fillStyle = p.c; g.fillText(p.text, p.x, p.y);
+  }
+  g.globalAlpha = 1;
+}
+
+/* ---------- UI ---------- */
+const coinHTML = '<i class="coin-i"></i>';
+document.body.insertAdjacentHTML('beforeend', `
+<div class="hud" id="hud" hidden><div class="hud-score" id="hScore">0</div><div class="hud-coins">${coinHTML}<span id="hCoins">0</span></div><button class="hud-pause" id="hPause" aria-label="Pause"></button></div>
+<div class="scr" id="sTitle" ${DEMO ? 'hidden' : ''}><div class="card">
+  <h1 class="title">${GAME.title}</h1><p class="sub">${GAME.tagline}</p>
+  <div class="stats"><span class="stat"><small>Best</small><b id="tBest">0</b></span><span class="stat">${coinHTML}<b id="tCoins">0</b></span></div>
+  <button class="big" id="bPlay">Play</button>
+  <div class="row"><button id="bSkins">Skins</button></div>
+  <ul class="how">${GAME.how.map(h => `<li>${h}</li>`).join('')}</ul>
+</div></div>
+<div class="scr" id="sOver" hidden><div class="card">
+  <h2 class="title" id="oTitle" style="font-size:40px" hidden></h2><p class="sub" id="oText" hidden></p><p class="sub" style="margin:0" id="oLabel">Score</p><div class="score-big" id="oScore">0</div><div id="oNew" class="newbest" hidden>New best!</div>
+  <div class="stats"><span class="stat"><small>Best</small><b id="oBest">0</b></span><span class="stat">+${coinHTML}<b id="oCoins">0</b></span></div>
+  <button class="big" id="bAgain">Play again</button>
+  <div class="row"><button id="bMenu">Menu</button><button id="bSkins2">Skins</button></div>
+  <p class="hint" id="oHint"></p>
+</div></div>
+<div class="scr" id="sSkins" hidden><div class="card">
+  <h2 class="title" style="font-size:40px">Skins</h2>
+  <div class="stats"><span class="stat">${coinHTML}<b id="kCoins">0</b></span></div>
+  <div class="skins" id="kGrid"></div>
+  <button class="big" id="bBack">Back</button>
+</div></div>
+<div class="scr" id="sPause" hidden><div class="card">
+  <h2 class="title" style="font-size:44px">Paused</h2>
+  <button class="big" id="bResume">Resume</button>
+  <div class="row"><button id="bQuit">Menu</button></div>
+</div></div>
+<button class="mute" id="bMute" aria-label="Sound on or off"></button>`);
+
+const screens = ['sTitle', 'sOver', 'sSkins', 'sPause'];
+let skinsFrom = 'sTitle';
+function showScr(id) { screens.forEach(s => $(s).hidden = s !== id || DEMO); }
+function refresh() {
+  $('tBest').textContent = save.best; $('tCoins').textContent = save.coins; $('kCoins').textContent = save.coins;
+  $('bMute').textContent = save.mute ? '🔇' : '🔊';
+}
+function hud() { $('hScore').textContent = K.score; $('hCoins').textContent = K.runCoins; }
+K.add = (n = 1, x, y, c) => {
+  K.score += n; hud();
+  if (!K.bot) { const s = $('hScore'); s.classList.remove('bump'); void s.offsetWidth; s.classList.add('bump'); }
+  if (x !== undefined) K.pop(x, y, '+' + n, c || '#fff');
+};
+K.coin = (n = 1, x, y) => {
+  K.runCoins += n; hud();
+  if (x !== undefined) K.burst(x, y, ['#ffcf2e', '#fff3a8'], 6, 200, { life: .4, size: 6, gravity: 300 });
+  K.sfx(1320, .07, 'square', .05); K.sfx(1760, .08, 'square', .05, 0, .05);
+};
+
+function buildSkins() {
+  const grid = $('kGrid'); grid.innerHTML = '';
+  GAME.skins.forEach((s, i) => {
+    const own = save.owned.includes(i), b = document.createElement('button');
+    b.className = 'skin' + (save.skin === i ? ' on' : '') + (own ? '' : ' locked') + (!own && save.coins < s.price ? ' cant' : '');
+    const c = document.createElement('canvas'); c.width = c.height = 112; const cg = c.getContext('2d'); cg.translate(56, 56);
+    if (GAME.drawSkin) GAME.drawSkin(cg, s, 40); else { cg.fillStyle = s.c[0]; cg.beginPath(); cg.arc(0, 0, 40, 0, 7); cg.fill(); }
+    if (!own) { cg.fillStyle = 'rgba(0,0,0,.45)'; cg.fillRect(-56, -56, 112, 112); }
+    b.appendChild(c);
+    b.insertAdjacentHTML('beforeend', `<span>${s.name}</span>${own ? (save.skin === i ? '<span class="price">Equipped</span>' : '<span class="price" style="color:#cfd5ef">Equip</span>') : `<span class="price">${coinHTML}${s.price}</span>`}`);
+    b.onclick = () => {
+      audio();
+      if (own) { save.skin = i; K.sfx(660, .08, 'triangle'); }
+      else if (save.coins >= s.price) { save.coins -= s.price; save.owned.push(i); save.skin = i; K.chime(660); }
+      else { K.sfx(160, .15, 'sawtooth', .08); return; }
+      persist(); refresh(); buildSkins();
+    };
+    grid.appendChild(b);
+  });
+}
+
+/* ---------- flow ---------- */
+let overAt = 0, botOverAt = 0;
+function start() {
+  audio(); K.bot = false; K.score = 0; K.runCoins = 0; hud(); parts.length = 0; pops.length = 0;
+  GAME.reset(); K.state = 'play'; showScr(null); $('hud').hidden = false; save.plays++; persist();
+}
+function attract() { K.bot = true; K.demoSkin = DEMO ? 0 : K.irand(0, GAME.skins.length - 1); K.score = 0; K.runCoins = 0; hud(); GAME.reset(); if (POSE) GAME.pose(); K.state = 'title'; $('hud').hidden = !DEMO; }
+K.over = (o = {}) => {
+  if (K.bot) { if (!botOverAt) botOverAt = K.t + 1.2; return; }
+  if (K.state !== 'play') return;
+  K.state = 'over'; overAt = performance.now();
+  const best = K.score > save.best; if (best) save.best = K.score;
+  save.coins += K.runCoins; persist(); refresh();
+  $('oTitle').hidden = !o.title; $('oTitle').textContent = o.title || ''; $('oText').hidden = !o.text; $('oText').textContent = o.text || ''; $('oLabel').textContent = GAME.scoreLabel || 'Score';
+  $('oScore').textContent = K.score; $('oBest').textContent = save.best; $('oCoins').textContent = K.runCoins; $('oNew').hidden = !best || K.score === 0;
+  const next = GAME.skins.map((s, i) => [s, i]).find(([s, i]) => !save.owned.includes(i));
+  $('oHint').textContent = next ? (save.coins >= next[0].price ? `You can unlock ${next[0].name} now!` : `${next[0].price - save.coins} more coins to unlock ${next[0].name}`) : 'You own every skin. Legend!';
+  if (GAME.noSkins) $('oHint').textContent = '';
+  setTimeout(() => { if (K.state === 'over') { showScr('sOver'); $('hud').hidden = true; } }, o.delay ?? 650);
+  if (best && K.score > 0) setTimeout(() => K.chime(523, [0, 4, 7, 12, 16]), 700);
+};
+function pause() { if (K.state !== 'play') return; K.state = 'paused'; showScr('sPause'); }
+function resume() { K.state = 'play'; showScr(null); last = performance.now(); }
+function toMenu() { refresh(); attract(); showScr('sTitle'); }
+
+$('bPlay').onclick = start; $('bAgain').onclick = start; $('bResume').onclick = resume;
+$('bMenu').onclick = toMenu; $('bQuit').onclick = toMenu;
+$('bSkins').onclick = () => { skinsFrom = 'sTitle'; buildSkins(); refresh(); showScr('sSkins'); };
+$('bSkins2').onclick = () => { skinsFrom = 'sOver'; buildSkins(); refresh(); showScr('sSkins'); };
+$('bBack').onclick = () => { if (skinsFrom === 'sOver') toMenu(); else showScr('sTitle'); };
+$('hPause').onclick = pause;
+$('bMute').onclick = () => { save.mute = !save.mute; persist(); refresh(); audio(); };
+addEventListener('blur', pause);
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+/* ---------- input ---------- */
+const toW = e => [(e.clientX - ox) / sc, (e.clientY - oy) / sc];
+cv.addEventListener('pointerdown', e => { audio(); if (K.state === 'play' && GAME.down) { const [x, y] = toW(e); GAME.down(x, y, e); } });
+addEventListener('pointermove', e => { if (K.state === 'play' && GAME.move) { const [x, y] = toW(e); GAME.move(x, y, e); } });
+addEventListener('pointerup', e => { if (K.state === 'play' && GAME.up) { const [x, y] = toW(e); GAME.up(x, y, e); } });
+addEventListener('keydown', e => {
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  if (e.repeat && K.state !== 'play') return;
+  if (e.code === 'Escape' || e.code === 'KeyP') { if (K.state === 'play') pause(); else if (K.state === 'paused') resume(); return; }
+  if ((e.code === 'Space' || e.code === 'Enter') && K.state !== 'play') {
+    if (K.state === 'title' && !$('sTitle').hidden) start();
+    else if (K.state === 'over' && performance.now() - overAt > 900) start();
+    else if (K.state === 'paused') resume();
+    return;
+  }
+  if (K.state === 'play' && GAME.key) GAME.key(e.code, true);
+});
+addEventListener('keyup', e => { if (K.state === 'play' && GAME.key) GAME.key(e.code, false); });
+
+/* ---------- loop ---------- */
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
+  const run = K.state === 'play' || K.state === 'title' || K.state === 'over';
+  if (run && !POSE) {
+    K.t += dt;
+    if (K.bot && K.state === 'title') { if (botOverAt && K.t > botOverAt) { botOverAt = 0; attract(); } else if (!botOverAt && GAME.bot) GAME.bot(dt); }
+    GAME.update(dt); fx(dt);
+  }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = GAME.bg || '#000'; g.fillRect(0, 0, innerWidth, innerHeight);
+  const sx = shake ? (Math.random() - .5) * shake : 0, sy = shake ? (Math.random() - .5) * shake : 0;
+  g.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * (ox + sx * sc), dpr * (oy + sy * sc));
+  GAME.draw(g); drawFx();
+  if (flashA > 0) { g.globalAlpha = flashA; g.fillStyle = flashC; g.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0); g.globalAlpha = 1; }
+  masterSync();
+  requestAnimationFrame(frame);
+}
+if (GAME.noSkins) { $('bSkins').parentNode.hidden = true; $('bSkins2').hidden = true; }
+if (GAME.noHud) { $('hScore').hidden = true; document.querySelector('.hud-coins').hidden = true; }
+refresh(); attract(); showScr('sTitle');
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

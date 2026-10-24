@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lights Out Motel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+:root { color-scheme: dark; --accent: #c6ff3d; --accent2: #29e0ff; --bg: #0a0c12; --text: #f3f5ff; --muted: #a3a9c4; --panel: rgba(10,12,22,.86); --edge: rgba(255,255,255,.14); --display: 'Lilita One', 'Arial Black', system-ui, sans-serif; --body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--bg); }
+body { font-family: var(--body); color: var(--text); user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; touch-action: none; overscroll-behavior: none; }
+#cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* HUD */
+.hud { position: fixed; inset: 0; pointer-events: none; font-family: var(--display); }
+.hud-score { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); font-size: clamp(28px, 6vh, 56px); line-height: 1; text-shadow: 0 3px 0 rgba(0,0,0,.35), 0 0 18px rgba(0,0,0,.4); letter-spacing: .02em; }
+.hud-score.bump { animation: bump .18s ease-out; }
+@keyframes bump { 40% { transform: translateX(-50%) scale(1.18); } }
+.hud-coins { position: absolute; top: 12px; right: 14px; display: flex; align-items: center; gap: 6px; font-size: clamp(16px, 3.2vh, 24px); background: rgba(0,0,0,.35); padding: 4px 12px 4px 8px; border-radius: 999px; }
+.coin-i { width: 1em; height: 1em; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6c4, #ffcf2e 45%, #c98a00); box-shadow: 0 0 8px rgba(255,207,46,.6); display: inline-block; flex: none; }
+.hud-pause { position: absolute; top: 10px; left: 12px; width: 40px; height: 40px; border-radius: 12px; background: rgba(0,0,0,.35); pointer-events: auto; display: grid; place-items: center; }
+.hud-pause::before { content: ''; width: 14px; height: 16px; border-left: 5px solid #fff; border-right: 5px solid #fff; }
+
+/* screens */
+.scr { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: radial-gradient(ellipse at center, rgba(0,0,0,.25), rgba(0,0,0,.65)); }
+.card { width: min(440px, 100%); max-height: 100%; overflow: auto; text-align: center; background: var(--panel); border: 1px solid var(--edge); border-radius: 26px; padding: clamp(16px, 4vh, 28px) 22px; box-shadow: 0 24px 70px rgba(0,0,0,.5); backdrop-filter: blur(6px); }
+.title { font-family: var(--display); font-size: clamp(36px, 9vh, 64px); line-height: .95; margin: 0 0 6px; color: var(--accent); text-shadow: 0 4px 0 rgba(0,0,0,.35); letter-spacing: .01em; }
+.sub { margin: 0 0 14px; color: var(--muted); font-weight: 700; font-size: 15px; }
+.stats { display: flex; justify-content: center; gap: 10px; margin: 0 0 16px; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.07); border: 1px solid var(--edge); border-radius: 14px; padding: 6px 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.stat small { color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+.big { display: block; width: 100%; font-family: var(--display); font-size: clamp(22px, 5vh, 30px); padding: 12px 18px; border-radius: 18px; background: var(--accent); color: #0b0d14; box-shadow: 0 6px 0 rgba(0,0,0,.35), 0 0 30px color-mix(in srgb, var(--accent) 40%, transparent); transition: transform .1s; }
+.big:hover { transform: translateY(-2px); }
+.big:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.row { display: flex; gap: 10px; margin-top: 10px; }
+.row button { flex: 1; padding: 10px; border-radius: 14px; background: rgba(255,255,255,.08); border: 1px solid var(--edge); font-weight: 800; }
+.row button:hover { background: rgba(255,255,255,.14); }
+.how { margin: 14px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 14px; font-weight: 600; line-height: 1.45; }
+.score-big { font-family: var(--display); font-size: clamp(54px, 14vh, 96px); line-height: 1; margin: 4px 0; }
+.newbest { display: inline-block; font-family: var(--display); background: var(--accent2); color: #0b0d14; padding: 3px 12px; border-radius: 999px; margin-bottom: 8px; animation: pop .5s ease-out; }
+@keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } }
+.hint { color: var(--muted); font-size: 13px; margin-top: 10px; font-weight: 700; }
+
+/* skins */
+.skins { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin: 6px 0 14px; }
+.skin { border-radius: 16px; padding: 10px 6px 8px; background: rgba(255,255,255,.06); border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; }
+.skin.on { border-color: var(--accent); background: rgba(255,255,255,.12); }
+.skin.locked { opacity: .9; }
+.skin canvas { width: 56px; height: 56px; }
+.skin .price { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #ffe07a; }
+.skin.cant .price { color: #ff8a8a; }
+
+.mute { position: fixed; right: 12px; bottom: 12px; width: 42px; height: 42px; border-radius: 50%; background: rgba(0,0,0,.4); border: 1px solid var(--edge); font-size: 18px; display: grid; place-items: center; }
+.toast { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); font-family: var(--display); font-size: clamp(22px, 5vh, 38px); color: #fff; text-shadow: 0 3px 0 rgba(0,0,0,.4), 0 0 20px var(--accent); pointer-events: none; animation: toast 1.4s ease-out forwards; white-space: nowrap; }
+@keyframes toast { 0% { opacity: 0; transform: translate(-50%, 20px) scale(.7); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.08); } 25% { transform: translate(-50%, 0) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -20px); } }
+body.demo .hud-pause, body.demo .mute { display: none; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<script>
+const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
+/* Shared by the horror games: draws a person from the shoulders up at (x, y), scaled by s.
+   p = { skin, hair, style 0-3, eyes, shirt, glasses, beard, hat }. o: silhouette, reveal (0-1, the face splits open),
+   glow (red eyes), smile, look (-1..1, where the eyes point). */
+function drawPerson(gr, p, x, y, s, o = {}) {
+  gr.save(); gr.translate(x, y); gr.scale(s, s);
+  const dark = o.silhouette;
+  gr.fillStyle = dark ? 'rgba(0,0,0,.85)' : p.shirt; gr.beginPath(); gr.moveTo(-120, 260); gr.quadraticCurveTo(-110, 110, -40, 95); gr.lineTo(40, 95); gr.quadraticCurveTo(110, 110, 120, 260); gr.fill();
+  if (!dark) { gr.fillStyle = 'rgba(0,0,0,.25)'; gr.fillRect(-8, 100, 16, 160); }
+  gr.fillStyle = dark ? 'rgba(0,0,0,.85)' : p.skin; gr.fillRect(-18, 70, 36, 34);
+  const stretch = o.reveal ? 1 + o.reveal * .25 : 1;
+  gr.beginPath(); gr.ellipse(0, 10, 58, 74 * stretch, 0, 0, 7); gr.fill();
+  if (dark) { gr.restore(); return; }
+  // hair
+  gr.fillStyle = p.hair;
+  if (p.style === 0) { gr.beginPath(); gr.ellipse(0, -30, 62, 42, 0, Math.PI, 0); gr.fill(); }
+  else if (p.style === 1) { gr.beginPath(); gr.ellipse(0, -20, 66, 56, 0, Math.PI * .95, Math.PI * 2.05); gr.fill(); gr.fillRect(-66, -20, 16, 90); gr.fillRect(50, -20, 16, 90); }
+  else if (p.style === 2) { gr.beginPath(); gr.ellipse(0, -38, 56, 30, 0, Math.PI, 0); gr.fill(); }
+  else { gr.beginPath(); gr.ellipse(0, -26, 64, 48, 0, Math.PI, 0); gr.fill(); gr.beginPath(); gr.arc(0, -70, 22, 0, 7); gr.fill(); }
+  if (p.hat) { gr.fillStyle = '#2a2420'; gr.fillRect(-70, -52, 140, 12); gr.fillRect(-46, -96, 92, 46); }
+  if (p.beard) { gr.fillStyle = p.hair; gr.beginPath(); gr.ellipse(0, 52, 46, 34, 0, 0, Math.PI); gr.fill(); }
+  // eyes
+  const ey = 4, glow = o.glow;
+  for (const k of [-1, 1]) {
+    gr.fillStyle = o.reveal ? '#000' : '#f4efe6'; gr.beginPath(); gr.ellipse(k * 22, ey, 12 + (o.reveal || 0) * 6, 7 + (o.reveal || 0) * 8, 0, 0, 7); gr.fill();
+    if (!o.reveal) { gr.fillStyle = glow ? '#ff2a2a' : p.eyes; gr.beginPath(); gr.arc(k * 22 + (o.look || 0) * 4, ey, 5, 0, 7); gr.fill(); gr.fillStyle = glow ? '#ffd0d0' : '#000'; gr.beginPath(); gr.arc(k * 22 + (o.look || 0) * 4, ey, 2.4, 0, 7); gr.fill(); }
+    if (glow) { gr.shadowColor = '#ff2a2a'; gr.shadowBlur = 20; gr.fillStyle = '#ff5a5a'; gr.beginPath(); gr.arc(k * 22, ey, 3, 0, 7); gr.fill(); gr.shadowBlur = 0; }
+  }
+  gr.strokeStyle = 'rgba(0,0,0,.45)'; gr.lineWidth = 4; gr.beginPath(); gr.moveTo(-34, ey - 16); gr.lineTo(-12, ey - 18); gr.moveTo(12, ey - 18); gr.lineTo(34, ey - 16); gr.stroke();
+  if (p.glasses) { gr.strokeStyle = '#111'; gr.lineWidth = 3.5; gr.strokeRect(-38, ey - 11, 30, 22); gr.strokeRect(8, ey - 11, 30, 22); gr.beginPath(); gr.moveTo(-8, ey); gr.lineTo(8, ey); gr.stroke(); }
+  gr.fillStyle = 'rgba(0,0,0,.18)'; gr.beginPath(); gr.moveTo(0, 8); gr.lineTo(-7, 30); gr.lineTo(6, 30); gr.fill();
+  // mouth
+  gr.strokeStyle = '#5a2a22'; gr.lineWidth = 4;
+  if (o.reveal) { gr.fillStyle = '#000'; gr.beginPath(); gr.ellipse(0, 50, 26 + o.reveal * 10, 10 + o.reveal * 40, 0, 0, 7); gr.fill(); gr.fillStyle = '#e8e2d0'; for (let i = -3; i <= 3; i++) { gr.beginPath(); gr.moveTo(i * 8 - 4, 42 - o.reveal * 20); gr.lineTo(i * 8, 54 - o.reveal * 10); gr.lineTo(i * 8 + 4, 42 - o.reveal * 20); gr.fill(); } }
+  else if (o.smile) { gr.beginPath(); gr.arc(0, 30, 34, .25, Math.PI - .25); gr.stroke(); }
+  else { gr.beginPath(); gr.moveTo(-16, 46); gr.quadraticCurveTo(0, 50, 16, 46); gr.stroke(); }
+  gr.restore();
+}
+const PERSON_LOOKS = {
+  skin: ['#f1c7a5', '#d9a07a', '#b97850', '#8a5636', '#5e3a24', '#f5d6c0'], hair: ['#1c1410', '#4a2e1a', '#8a5a2b', '#c9a35a', '#d8d2c8', '#7a1f1a', '#2e2e2e'],
+  shirt: ['#3a4a6a', '#6a2a2a', '#2a5a3a', '#5a4a2a', '#4a3a5a', '#2a4a5a', '#6a6a6a'], eyes: ['#3a2a1a', '#2a4a7a', '#3a6a3a', '#5a4a2a'],
+};
+function randomPerson() {
+  const L = PERSON_LOOKS, r = a => a[Math.floor(Math.random() * a.length)];
+  return { skin: r(L.skin), hair: r(L.hair), style: Math.floor(Math.random() * 4), eyes: r(L.eyes), shirt: r(L.shirt), glasses: Math.random() < .3, beard: Math.random() < .25, hat: Math.random() < .15 };
+}
+
+/* Lights Out Motel: the night clerk decides who gets a room. Some guests aren't human, and each night the tells get subtler.
+   Night 1: they aren't in the guest book. Night 2: their ID photo doesn't match. Night 3: no shadow under the lamp.
+   Night 4: they don't know their room. Night 5: anything goes, and guests lose patience faster.
+   Let one in and the lights go out at dawn. Turn away two real guests in one night and you're fired. */
+// @use person
+const GAME = {
+  id: 'lights-out-motel', title: 'Lights Out Motel', tagline: 'Five nights at the front desk. Not every guest is human.',
+  font: 'Creepster', accent: '#ff4f7b', accent2: '#4ff0c8', bg: '#05040a', noSkins: true, noHud: true, scoreLabel: 'Guests handled right',
+  how: ['Check the guest book, their ID, the lamp and their answers.', 'Hand over a key if they\'re human. Pull the shutter if they\'re not.', 'Let one of them in and the lights go out. Wear headphones.'],
+  skins: [{ name: 'Clerk', price: 0 }],
+};
+(() => {
+  const WX = 230, WY = 34, WW = 820, WH = 400, GX = 640;
+  const FIRST = ['Mara', 'Dale', 'Ruth', 'Ellis', 'June', 'Otis', 'Vera', 'Hank', 'Iris', 'Lloyd', 'Nina', 'Walt', 'Opal', 'Gus', 'Edie', 'Floyd', 'Hazel', 'Earl', 'Doris', 'Clyde', 'Lena', 'Abe', 'Faye', 'Roy'];
+  const LAST = ['Pike', 'Hollow', 'Crane', 'Mercer', 'Vance', 'Doyle', 'Ashby', 'Reyes', 'Kowal', 'Burke', 'Lund', 'Pratt', 'Sato', 'Greer', 'Moss', 'Okafor', 'Banks', 'Fenn'];
+  const SKIN = ['#f1c7a5', '#d9a07a', '#b97850', '#8a5636', '#5e3a24', '#f5d6c0'], HAIR = ['#1c1410', '#4a2e1a', '#8a5a2b', '#c9a35a', '#d8d2c8', '#7a1f1a', '#2e2e2e'];
+  const SHIRT = ['#3a4a6a', '#6a2a2a', '#2a5a3a', '#5a4a2a', '#4a3a5a', '#2a4a5a', '#6a6a6a'], EYES = ['#3a2a1a', '#2a4a7a', '#3a6a3a', '#5a4a2a'];
+  const NIGHT_TELLS = [null, ['list'], ['list', 'id'], ['id', 'shadow'], ['shadow', 'room', 'id'], ['list', 'id', 'shadow', 'room']];
+  const CALLS = [null,
+    'Manager here. Rule one: only give keys to people in the guest book. Nobody else. I mean it. If they\'re not in the book, pull the shutter.',
+    'Night two. Some of them have figured out the names. Check every ID. If the photo doesn\'t match the face, shutter.',
+    'They\'ve started faking IDs. But they can\'t fake a shadow. Turn on the lamp and look behind them.',
+    'Last night one of them had a shadow. Ask which room they booked. Real guests know. The book has the rooms.',
+    'This is the last night. They know all our tricks now. Check everything. And whatever you do... keep the lights on.'];
+  let night, guests, gi, g, phase, phaseT, lamp, view, strikes, complaints, admittedOther, bubble, bubbleT, flash, nextFlash, rain, drops, rooms, callOpen, deathT, scareT, hover, best0, amb, patience, asked, lastNight;
+
+  /* ---------- people ---------- */
+  function person() {
+    return { skin: K.pick(SKIN), hair: K.pick(HAIR), style: K.irand(0, 3), eyes: K.pick(EYES), shirt: K.pick(SHIRT), glasses: Math.random() < .3, beard: Math.random() < .25, hat: Math.random() < .15 };
+  }
+  function makeNight(n) {
+    const count = 6, list = [], used = new Set(), others = n === 1 ? 2 : K.irand(2, 3);
+    const roomsLeft = K.pick([[1, 2, 3, 4, 5, 6, 7, 8]]).sort(() => Math.random() - .5);
+    for (let i = 0; i < count + 2; i++) { let nm; do { nm = K.pick(FIRST) + ' ' + K.pick(LAST); } while (used.has(nm)); used.add(nm); list.push({ name: nm, room: roomsLeft[i % 8], done: false }); }
+    const order = Array.from({ length: count }, (_, i) => i < others).sort(() => Math.random() - .5);
+    return { list, queue: order.map((other, i) => {
+      const booking = list[i], look = person(), tells = NIGHT_TELLS[n];
+      const q = { other, look, name: booking.name, room: booking.room, id: { ...look }, tell: null, booking };
+      if (other) {
+        q.tell = K.pick(tells);
+        if (q.tell === 'list') { let nm; do { nm = K.pick(FIRST) + ' ' + K.pick(LAST); } while (used.has(nm)); q.name = nm; q.booking = null; }
+        if (q.tell === 'id') { const k = K.pick(['hair', 'glasses', 'eyes', 'beard']); if (k === 'hair') { let h; do { h = K.pick(HAIR); } while (h === look.hair); q.id.hair = h; } else if (k === 'eyes') { q.id.glasses = !look.glasses; } else q.id[k] = !look[k]; }
+        if (q.tell === 'room') { let r; do { r = K.irand(1, 8); } while (r === q.room); q.saysRoom = r; }
+      }
+      q.saysRoom = q.saysRoom || q.room;
+      return q;
+    }) };
+  }
+  /* ---------- sound ---------- */
+  function ambience() {
+    if (amb || !K.ac || K.bot) return;
+    const ac = K.ac, n = ac.sampleRate * 2, buf = ac.createBuffer(1, n, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400; const rg = ac.createGain(); rg.gain.value = .07;
+    src.connect(lp).connect(rg).connect(K.master); src.start();
+    const hum = ac.createOscillator(); hum.type = 'sawtooth'; hum.frequency.value = 60; const hf = ac.createBiquadFilter(); hf.type = 'lowpass'; hf.frequency.value = 180; const hg = ac.createGain(); hg.gain.value = .025;
+    hum.connect(hf).connect(hg).connect(K.master); hum.start();
+    const drone = ac.createOscillator(); drone.type = 'sine'; drone.frequency.value = 43; const dg = ac.createGain(); dg.gain.value = 0; drone.connect(dg).connect(K.master); drone.start();
+    amb = { rg, hg, dg };
+  }
+  const thunder = () => { if (!K.ac || K.bot) return; K.noise(2.2, .35, 40); setTimeout(() => K.noise(1.2, .2, 30), 300); };
+  const bell = () => { K.sfx(1318, .9, 'sine', .12); K.sfx(1046, 1.1, 'sine', .1, 0, .18); };
+  function scream() { if (!K.ac || K.bot) return; K.noise(1.2, .5, 900); K.sfx(900, 1.1, 'sawtooth', .22, -700); K.sfx(1400, .9, 'square', .1, -1100); }
+  const say = (t, d = 4.5) => { bubble = t; bubbleT = d; if (!K.bot) K.sfx(220 + Math.random() * 80, .05, 'triangle', .04); };
+
+  /* ---------- flow ---------- */
+  function startNight(n) {
+    night = n; const nn = makeNight(n); guests = nn.queue; GAME.list = nn.list; gi = -1; strikes = 0; complaints = 0; admittedOther = false;
+    rooms = Array.from({ length: 8 }, () => ({ on: false, other: false }));
+    phase = 'call'; phaseT = 0; callOpen = !K.bot; view = null; g = null; lamp = false; bubble = ''; asked = false;
+    if (K.bot) { phase = 'gap'; phaseT = 1; }
+  }
+  GAME.reset = () => {
+    best0 = K.save.night || 1; lastNight = K.bot ? K.irand(1, 5) : best0;
+    flash = 0; nextFlash = 6; deathT = 0; scareT = 0; hover = null;
+    rain = Array.from({ length: 130 }, () => ({ x: WX + Math.random() * WW, y: WY + Math.random() * WH, v: K.rand(700, 1000) }));
+    drops = Array.from({ length: 26 }, () => ({ x: WX + Math.random() * WW, y: WY + Math.random() * WH, r: K.rand(2, 5) }));
+    ambience(); startNight(lastNight);
+  };
+  function nextGuest() {
+    gi++; asked = false; lamp = false; view = null;
+    if (gi >= guests.length) { endNight(); return; }
+    g = guests[gi]; g.x = GX + K.rand(-60, 60); g.walk = 0; phase = 'arrive'; phaseT = 0; patience = Math.max(18, 42 - night * 5);
+    if (!K.bot) K.sfx(80, .2, 'sine', .08);
+  }
+  function decide(admit) {
+    if (phase !== 'wait') return;
+    view = null; phase = 'leave'; phaseT = 0;
+    if (admit) {
+      bell(); rooms[g.room - 1].on = true;
+      if (g.other) { admittedOther = true; rooms[g.room - 1].other = true; say('Thank you. I\'ll be in room ' + g.room + '.', 3); g.smile = true; }
+      else { K.add(1); say(K.pick(['Thanks. Long drive.', 'Finally. Thank you.', 'Appreciate it. Quiet night?', 'Great, thanks.']), 2.5); }
+      if (g.booking) g.booking.done = true;
+    } else {
+      K.noise(.5, .25, 200); K.sfx(70, .4, 'square', .12, -30);
+      if (g.other) { K.add(1); phase = 'reveal'; phaseT = 0; K.shake(18); K.flash('#300', .5); scream(); }
+      else { complaints++; say(K.pick(['Are you serious? I booked this!', 'Unbelievable. I\'m leaving a review.', 'I have a reservation! Hello?']), 2.5); K.sfx(160, .3, 'sawtooth', .06); if (complaints >= 2) { phase = 'fired'; phaseT = 0; } }
+    }
+  }
+  function endNight() {
+    phase = admittedOther ? 'lightsout' : 'dawn'; phaseT = 0; g = null;
+    if (!admittedOther && !K.bot) { K.save.night = Math.max(K.save.night || 1, Math.min(5, night + 1)); K.persist(); K.chime(392, [0, 3, 7, 12]); }
+  }
+  /* ---------- input ---------- */
+  const BTN = {
+    book: { x: 40, y: 600, w: 150, h: 92, t: 'Guest book', k: '1' }, id: { x: 205, y: 600, w: 150, h: 92, t: 'Check ID', k: '2' },
+    lamp: { x: 370, y: 600, w: 150, h: 92, t: 'Lamp', k: '3' }, ask: { x: 535, y: 600, w: 150, h: 92, t: 'Ask room', k: '4' },
+    admit: { x: 830, y: 596, w: 200, h: 100, t: 'Give key', k: 'K' }, refuse: { x: 1045, y: 596, w: 200, h: 100, t: 'Shutter', k: 'X' },
+  };
+  const inB = (b, x, y) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
+  function act(k) {
+    if (callOpen) { if (k === 'answer') { callOpen = false; phase = 'gap'; phaseT = 0; } return; }
+    if (phase === 'dawn' && k === 'next') { startNight(night + 1 > 5 ? 5 : night + 1); return; }
+    if (phase !== 'wait') return;
+    if (k === 'book' || k === 'id') { view = view === k ? null : k; K.sfx(500, .05, 'triangle', .05); if (k === 'id' && !g.idShown) { g.idShown = true; say(g.other ? 'Here.' : 'Sure, here you go.', 1.6); } }
+    if (k === 'lamp') { lamp = !lamp; K.sfx(lamp ? 900 : 500, .04, 'square', .06); }
+    if (k === 'ask' && night >= 4) { asked = true; say(`Room ${g.saysRoom}. I booked room ${g.saysRoom}.`, 3.5); }
+    if (k === 'admit') decide(true); if (k === 'refuse') decide(false);
+  }
+  GAME.down = (x, y) => {
+    if (callOpen) { if (inB({ x: 490, y: 470, w: 300, h: 70 }, x, y)) act('answer'); return; }
+    if (phase === 'dawn') { if (inB({ x: 490, y: 470, w: 300, h: 70 }, x, y) && night < 5) act('next'); else if (night >= 5 && phaseT > 2) win(); return; }
+    if (view && !Object.values(BTN).some(b => inB(b, x, y))) { view = null; return; }
+    for (const [k, b] of Object.entries(BTN)) if (inB(b, x, y)) act(k);
+  };
+  GAME.move = (x, y) => { hover = null; for (const [k, b] of Object.entries(BTN)) if (inB(b, x, y)) hover = k; };
+  GAME.key = (c, d) => {
+    if (!d) return;
+    const m = { Digit1: 'book', Digit2: 'id', Digit3: 'lamp', Digit4: 'ask', KeyK: 'admit', KeyX: 'refuse', Space: callOpen ? 'answer' : phase === 'dawn' ? 'next' : null, Enter: callOpen ? 'answer' : phase === 'dawn' ? 'next' : null }[c];
+    if (m) { if (m === 'next' && night >= 5) { if (phaseT > 2) win(); } else act(m); }
+  };
+  function win() { if (K.state !== 'play') return; K.coin(25); K.over({ title: 'Checkout time', text: 'You kept the lights on for five nights. The sun is up, and the motel is quiet. For now.' }); }
+  let botT = 0;
+  GAME.bot = dt => {
+    if (phase === 'dawn') { if (phaseT > 2.5) startNight(night % 5 + 1); return; }
+    if (phase !== 'wait') return; botT += dt;
+    if (botT > 1 && !view && !g.idShown) act('id'); if (botT > 2.4 && view) view = null; if (botT > 3 && !lamp && night >= 3) act('lamp'); if (botT > 3.6 && night >= 4 && !asked) act('ask');
+    if (botT > 5) { botT = 0; const right = Math.random() < .85; decide(right ? !g.other : g.other); }
+  };
+
+  GAME.update = dt => {
+    phaseT += dt; bubbleT -= dt; if (bubbleT <= 0) bubble = '';
+    if (g) g.lean = K.clamp((g.lean || 0) + (g.other && view && phase === 'wait' ? dt * .35 : -dt * 2), 0, 1);
+    if (phase === 'gap' && !K.bot && !GAME.ev && Math.random() < dt * .25) { GAME.ev = K.pick(['figure', 'knock', 'knock', 'figure']); if (GAME.ev === 'knock') { [0, .35, .7].forEach(d => K.sfx(90, .12, 'square', .2, -20, d)); K.noise(.08, .2, 300); } else nextFlash = Math.min(nextFlash, .6); }
+    if (phase !== 'gap') GAME.ev = null;
+    for (const r of rain) { r.y += r.v * dt; r.x -= r.v * .08 * dt; if (r.y > WY + WH) { r.y = WY - 10; r.x = WX + Math.random() * WW; } }
+    nextFlash -= dt; if (nextFlash <= 0) { flash = 1; nextFlash = K.rand(9, 20); setTimeout(thunder, K.rand(300, 1400)); } flash = Math.max(0, flash - dt * 2.2);
+    if (amb) amb.dg.gain.setTargetAtTime(phase === 'lightsout' ? .18 : (g && g.other && phase === 'wait') ? .04 : 0, K.ac.currentTime, .5);
+    if (phase === 'gap' && phaseT > (gi < 0 ? 1.5 : K.rand(1.5, 2.5))) nextGuest();
+    else if (phase === 'arrive') { g.walk = Math.min(1, phaseT / 2.2); if (phaseT > 2.2) { phase = 'wait'; phaseT = 0; say(`Evening. I've got a reservation. ${g.name}.`); bell(); } }
+    else if (phase === 'wait' && !K.bot) { patience -= dt; if (patience <= 0) { if (g.other) { phase = 'leave'; phaseT = 0; say('...', 1); } else { complaints++; say('Forget it. I\'ll sleep in my car.', 2.5); phase = complaints >= 2 ? 'fired' : 'leave'; phaseT = 0; } } }
+    else if (phase === 'leave') { g.walk = Math.max(0, 1 - phaseT / 1.6); if (phaseT > 1.8) { phase = 'gap'; phaseT = 0; } }
+    else if (phase === 'reveal' && phaseT > 1.6) { phase = 'leave'; phaseT = .8; }
+    else if (phase === 'fired' && phaseT > 2.8 && K.bot) K.over();
+    else if (phase === 'fired' && phaseT > 2.8 && K.state === 'play') K.over({ title: 'You\'re fired', text: 'Two real guests turned away in one night. The manager\'s voice on the phone was very calm. That was worse.' });
+    else if (phase === 'lightsout') {
+      if (phaseT > 1 && phaseT < 4.2) rooms.forEach((r, i) => { if (phaseT > 1 + i * .35) r.on = false; });
+      if (phaseT > 4.2 && !scareT) { scareT = K.t; scream(); K.shake(30); if (K.bot) K.over(); else K.over({ title: 'Lights out', text: `You gave room ${rooms.findIndex(r => r.other) + 1} to something that wasn't a guest. It came back for the clerk.`, delay: 1800 }); }
+    }
+  };
+  /* ---------- drawing ---------- */
+  function btn(gr, k, b, label, enabled = true) {
+    const hot = hover === k && enabled;
+    gr.fillStyle = k === 'admit' ? (hot ? '#3a8a5a' : '#2a6a44') : k === 'refuse' ? (hot ? '#9a2a3a' : '#7a1f2c') : hot ? '#3a3448' : '#24202e';
+    if (k === 'lamp' && lamp) gr.fillStyle = '#6a5a2a';
+    if (view === k) gr.fillStyle = '#4a3a6a';
+    gr.globalAlpha = enabled ? 1 : .35; gr.beginPath(); gr.roundRect(b.x, b.y, b.w, b.h, 14); gr.fill();
+    gr.strokeStyle = 'rgba(255,255,255,.12)'; gr.lineWidth = 2; gr.stroke();
+    gr.fillStyle = '#eee6f0'; gr.font = '22px Creepster, Impact'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText(label, b.x + b.w / 2, b.y + b.h / 2 - 8);
+    gr.font = '13px Nunito, sans-serif'; gr.fillStyle = 'rgba(255,255,255,.45)'; gr.fillText(`[${b.k}]`, b.x + b.w / 2, b.y + b.h - 16); gr.globalAlpha = 1;
+  }
+  function paper(gr, x, y, w, h) { gr.fillStyle = '#e9e2cf'; gr.shadowColor = 'rgba(0,0,0,.6)'; gr.shadowBlur = 30; gr.fillRect(x, y, w, h); gr.shadowBlur = 0; }
+  GAME.draw = gr => {
+    const v = K.view, dark = phase === 'lightsout' && phaseT > 4;
+    gr.fillStyle = '#07060b'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    if (dark) { if (scareT) { const k = Math.min(1, (K.t - scareT) * 3); drawPerson(gr, g0(), GX, 300 - k * 60, 1.3 + k * 1.8, { reveal: 1 }); gr.fillStyle = `rgba(120,0,0,${.3 * k})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); } return; }
+    // outside
+    gr.save(); gr.beginPath(); gr.rect(WX, WY, WW, WH); gr.clip();
+    const sky = gr.createLinearGradient(0, WY, 0, WY + WH); sky.addColorStop(0, '#0a0d1a'); sky.addColorStop(1, '#141020'); gr.fillStyle = sky; gr.fillRect(WX, WY, WW, WH);
+    gr.fillStyle = '#05060c'; for (let i = 0; i < 14; i++) { const x = WX + i * 64; gr.beginPath(); gr.moveTo(x - 30, WY + 250); gr.lineTo(x, WY + 150 + (i * 37) % 60); gr.lineTo(x + 34, WY + 250); gr.fill(); }
+    gr.fillStyle = '#121018'; gr.fillRect(WX, WY + 250, WW, 200);
+    gr.strokeStyle = 'rgba(255,255,255,.08)'; gr.lineWidth = 4; for (let i = 0; i < 7; i++) { gr.beginPath(); gr.moveTo(WX + 60 + i * 120, WY + 300); gr.lineTo(WX + 20 + i * 140, WY + WH); gr.stroke(); }
+    // neon sign
+    const fl = Math.sin(K.t * 37) > .2 || Math.sin(K.t * 3.1) > -.6;
+    gr.font = '46px Creepster, Impact'; gr.textAlign = 'left'; gr.textBaseline = 'alphabetic'; gr.shadowBlur = 24;
+    gr.fillStyle = '#ff4f7b'; gr.shadowColor = '#ff4f7b'; gr.fillText('MOTEL', WX + 26, WY + 70);
+    gr.font = '26px Creepster, Impact'; gr.fillStyle = fl ? '#4ff0c8' : '#123a30'; gr.shadowColor = fl ? '#4ff0c8' : 'transparent'; gr.fillText(night >= 5 ? 'NO VACANCY' : 'VACANCY', WX + 30, WY + 104); gr.shadowBlur = 0;
+    // the guest, and their shadow if the lamp is on
+    if (g && (phase === 'arrive' || phase === 'wait' || phase === 'leave' || phase === 'reveal')) {
+      const s = (.45 + .55 * g.walk) * (1 + (g.lean || 0) * .22), y = WY + 140 + (1 - g.walk) * 70 + (g.lean || 0) * 30;
+      gr.globalAlpha = Math.min(1, g.walk * 1.5);
+      if (lamp && !(g.other && g.tell === 'shadow')) { gr.globalAlpha *= .9; drawPerson(gr, g.look, g.x - 120 * s, y + 10, s * 1.18, { silhouette: true }); gr.globalAlpha = Math.min(1, g.walk * 1.5); }
+      const reveal = phase === 'reveal' ? Math.min(1, phaseT * 3) : 0;
+      drawPerson(gr, g.look, g.x, y + reveal * 20, s * (1 + reveal * .35), { glow: g.other && flash > .3, reveal, smile: g.smile && phase === 'leave', look: Math.sin(K.t * .7) });
+      gr.globalAlpha = 1;
+      if (!lamp) { const sh = gr.createRadialGradient(g.x, y + 40, 60, g.x, y + 40, 360); sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,.55)'); gr.fillStyle = sh; gr.fillRect(WX, WY, WW, WH); }
+      else { const lg = gr.createRadialGradient(g.x + 160, WY + WH, 40, g.x + 160, WY + WH, 520); lg.addColorStop(0, 'rgba(255,214,140,.25)'); lg.addColorStop(1, 'rgba(255,214,140,0)'); gr.fillStyle = lg; gr.fillRect(WX, WY, WW, WH); }
+    }
+    if (GAME.ev === 'figure' && flash > .15) { gr.globalAlpha = flash; drawPerson(gr, guests[0].look, WX + 140, WY + 250, .32, { silhouette: true }); gr.globalAlpha = 1; }
+    gr.strokeStyle = 'rgba(170,190,255,.35)'; gr.lineWidth = 1.5; for (const r of rain) { gr.beginPath(); gr.moveTo(r.x, r.y); gr.lineTo(r.x - 3, r.y + 16); gr.stroke(); }
+    if (flash > 0) { gr.fillStyle = `rgba(210,220,255,${flash * .55})`; gr.fillRect(WX, WY, WW, WH); }
+    gr.fillStyle = 'rgba(255,255,255,.04)'; gr.beginPath(); gr.moveTo(WX + 100, WY); gr.lineTo(WX + 260, WY); gr.lineTo(WX + 60, WY + WH); gr.lineTo(WX - 100, WY + WH); gr.fill();
+    gr.fillStyle = 'rgba(200,220,255,.25)'; for (const d of drops) { gr.beginPath(); gr.arc(d.x, d.y, d.r, 0, 7); gr.fill(); }
+    gr.restore();
+    // window frame and the shutter
+    gr.strokeStyle = '#2a2230'; gr.lineWidth = 18; gr.strokeRect(WX, WY, WW, WH); gr.lineWidth = 8; gr.beginPath(); gr.moveTo(GX, WY); gr.lineTo(GX, WY + 60); gr.stroke();
+    const shut = phase === 'reveal' || (phase === 'leave' && g && !rooms[g.room - 1].on && gi >= 0 && phaseT < 1.2) ? 1 : 0;
+    if (shut) { gr.fillStyle = '#3a3440'; for (let i = 0; i < 12; i++) { gr.fillRect(WX, WY + i * 34, WW, 30); } if (phase === 'reveal') { gr.fillStyle = 'rgba(120,0,0,.6)'; for (let i = 0; i < 5; i++) { gr.beginPath(); gr.ellipse(GX - 120 + i * 60, WY + 180 + (i % 2) * 30, 16, 44, .2 * i, 0, 7); gr.fill(); } } }
+    // speech
+    if (bubble) {
+      gr.font = '22px Nunito, sans-serif'; const w = Math.min(760, gr.measureText(bubble).width + 44);
+      gr.fillStyle = 'rgba(10,8,16,.86)'; gr.beginPath(); gr.roundRect(GX - w / 2, WY + WH - 84, w, 56, 14); gr.fill();
+      gr.fillStyle = '#f2ecdf'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText(bubble, GX, WY + WH - 56);
+    }
+    // desk
+    const desk = gr.createLinearGradient(0, 470, 0, H); desk.addColorStop(0, '#3a2618'); desk.addColorStop(1, '#1a100a'); gr.fillStyle = desk; gr.fillRect(v.x0, WY + WH + 20, v.x1 - v.x0, H);
+    gr.fillStyle = '#4a3020'; gr.fillRect(v.x0, WY + WH + 20, v.x1 - v.x0, 10);
+    // ID tray, clock and room board
+    gr.fillStyle = '#15100c'; gr.fillRect(GX - 110, WY + WH + 2, 220, 20);
+    const hr = 12 + Math.max(0, gi), clock = `${hr > 12 ? hr - 12 : hr}:${gi >= 0 && phase !== 'gap' ? '30' : '00'} AM`;
+    gr.fillStyle = '#100808'; gr.fillRect(40, WY, 160, 70); gr.fillStyle = '#ff3a3a'; gr.shadowColor = '#ff3a3a'; gr.shadowBlur = 12; gr.font = '34px "Courier New", monospace'; gr.textAlign = 'center'; gr.fillText(clock, 120, WY + 46); gr.shadowBlur = 0;
+    gr.fillStyle = '#c9bca8'; gr.font = '20px Creepster, Impact'; gr.fillText(`NIGHT ${night}`, 120, WY + 110);
+    gr.fillStyle = '#1a1418'; gr.fillRect(1080, WY, 160, 300); gr.fillStyle = '#c9bca8'; gr.font = '18px Creepster, Impact'; gr.fillText('ROOMS', 1160, WY + 26);
+    rooms.forEach((r, i) => { const x = 1100 + (i % 2) * 70, y = WY + 50 + Math.floor(i / 2) * 60, on = r.on && !(r.other && Math.sin(K.t * 23 + i) > .6); gr.fillStyle = on ? (r.other ? '#ffd88a' : '#ffe6a8') : '#2a2228'; if (on) { gr.shadowColor = '#ffd88a'; gr.shadowBlur = 14; } gr.fillRect(x, y, 50, 40); gr.shadowBlur = 0; gr.fillStyle = on ? '#3a2a10' : '#776a70'; gr.font = '20px Nunito, sans-serif'; gr.fillText(i + 1, x + 25, y + 21); });
+    gr.fillStyle = '#c9bca8'; gr.font = '15px Nunito, sans-serif'; gr.fillText(`Complaints: ${complaints}/2`, 1160, WY + 286);
+    // lamp
+    gr.fillStyle = '#2a2a2a'; gr.fillRect(790, 520, 14, 60); gr.fillStyle = lamp ? '#ffd27a' : '#4a4038'; gr.beginPath(); gr.moveTo(760, 530); gr.lineTo(835, 530); gr.lineTo(815, 488); gr.lineTo(780, 488); gr.fill();
+    if (lamp) { const lg = gr.createRadialGradient(797, 540, 10, 797, 540, 260); lg.addColorStop(0, 'rgba(255,210,120,.35)'); lg.addColorStop(1, 'rgba(255,210,120,0)'); gr.fillStyle = lg; gr.fillRect(540, 300, 520, 420); }
+    // buttons
+    const waiting = phase === 'wait';
+    btn(gr, 'book', BTN.book, 'Guest book', waiting); btn(gr, 'id', BTN.id, 'Check ID', waiting); btn(gr, 'lamp', BTN.lamp, lamp ? 'Lamp: on' : 'Lamp: off', waiting);
+    btn(gr, 'ask', BTN.ask, 'Ask room', waiting && night >= 4); btn(gr, 'admit', BTN.admit, 'Give key', waiting); btn(gr, 'refuse', BTN.refuse, 'Shutter', waiting);
+    if (waiting && !K.bot) { gr.fillStyle = 'rgba(255,255,255,.12)'; gr.fillRect(830, 580, 415, 6); gr.fillStyle = patience < 8 ? '#ff4f7b' : '#c9bca8'; gr.fillRect(830, 580, 415 * Math.max(0, patience / Math.max(18, 42 - night * 5)), 6); }
+    gr.fillStyle = 'rgba(255,60,120,.05)'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    const vg = gr.createRadialGradient(640, 330, 260, 640, 360, 900); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.75)'); gr.fillStyle = vg; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    for (let i = 0; i < 260; i++) { gr.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.12)'; gr.fillRect(v.x0 + Math.random() * (v.x1 - v.x0), v.y0 + Math.random() * (v.y1 - v.y0), 2, 2); }
+    if (Math.random() < .004) { gr.fillStyle = 'rgba(0,0,0,.55)'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
+    // book and ID views
+    if (view === 'book') {
+      paper(gr, 300, 60, 680, 500); gr.fillStyle = '#3a2a1a'; gr.font = '34px Creepster, Impact'; gr.textAlign = 'center'; gr.fillText(`Guest book · Night ${night}`, 640, 110);
+      gr.font = '24px "Courier New", monospace'; gr.textAlign = 'left';
+      GAME.list.forEach((b, i) => { const y = 160 + i * 46; gr.fillStyle = '#2a1a10'; gr.fillText(b.name, 360, y); gr.fillText('Room ' + b.room, 780, y); if (b.done) { gr.strokeStyle = '#7a1f1a'; gr.lineWidth = 3; gr.beginPath(); gr.moveTo(350, y - 7); gr.lineTo(920, y - 7); gr.stroke(); } gr.fillStyle = 'rgba(0,0,0,.12)'; gr.fillRect(350, y + 14, 580, 1); });
+    }
+    if (view === 'id' && g) {
+      paper(gr, 370, 140, 540, 320); gr.fillStyle = '#d8e2ea'; gr.fillRect(370, 140, 540, 320); gr.fillStyle = '#2a4a7a'; gr.fillRect(370, 140, 540, 54);
+      gr.fillStyle = '#fff'; gr.font = '28px Creepster, Impact'; gr.textAlign = 'left'; gr.fillText('DRIVER LICENSE', 392, 178);
+      gr.save(); gr.beginPath(); gr.rect(392, 214, 180, 220); gr.clip(); gr.fillStyle = '#b8c4cc'; gr.fillRect(392, 214, 180, 220); drawPerson(gr, g.id, 482, 300, .62, {}); gr.restore();
+      gr.fillStyle = '#1a2a3a'; gr.font = '24px "Courier New", monospace'; gr.fillText(g.name.toUpperCase(), 596, 250);
+      gr.font = '18px "Courier New", monospace'; const hsh = [...g.name].reduce((a, c) => a * 31 + c.charCodeAt(0) >>> 0, 7); gr.fillText(`DOB ${String(hsh % 12 + 1).padStart(2, '0')}/${String(hsh % 28 + 1).padStart(2, '0')}/19${60 + hsh % 39}`, 596, 290); gr.fillText(`EYES ${g.id.eyes === EYES[1] ? 'BLU' : g.id.eyes === EYES[2] ? 'GRN' : 'BRN'}`, 596, 322); gr.fillText(`ID ${(g.name.length * 7919) % 900000 + 100000}`, 596, 354);
+    }
+    // manager call, dawn card
+    if (callOpen) {
+      gr.fillStyle = 'rgba(0,0,0,.75)'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+      gr.fillStyle = '#c9bca8'; gr.font = '40px Creepster, Impact'; gr.textAlign = 'center'; gr.fillText(`Night ${night} · The phone is ringing`, 640, 150);
+      wrap(gr, CALLS[night], 640, 230, 760, 30, '22px Nunito, sans-serif', '#efe6d8');
+      gr.fillStyle = '#2a6a44'; gr.beginPath(); gr.roundRect(490, 470, 300, 70, 16); gr.fill(); gr.fillStyle = '#fff'; gr.font = '28px Creepster, Impact'; gr.fillText('Hang up and open', 640, 507);
+    }
+    if (phase === 'dawn') {
+      const k = Math.min(1, phaseT / 1.5); gr.fillStyle = `rgba(255,170,110,${.35 * k})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+      gr.fillStyle = `rgba(0,0,0,${.7 * k})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+      gr.fillStyle = '#ffd8a8'; gr.font = '64px Creepster, Impact'; gr.textAlign = 'center'; gr.fillText(night >= 5 ? 'You made it to morning' : `6:00 AM · Night ${night} survived`, 640, 300);
+      gr.font = '24px Nunito, sans-serif'; gr.fillStyle = '#efe6d8'; gr.fillText(night >= 5 ? 'Tap to check out.' : 'Every room is still lit. Nobody wrong got in.', 640, 360);
+      if (night < 5) { gr.fillStyle = '#2a6a44'; gr.beginPath(); gr.roundRect(490, 470, 300, 70, 16); gr.fill(); gr.fillStyle = '#fff'; gr.font = '28px Creepster, Impact'; gr.fillText(`Start night ${night + 1}`, 640, 507); }
+    }
+    if (phase === 'lightsout' && phaseT > 2.6) { gr.fillStyle = `rgba(0,0,0,${Math.min(1, (phaseT - 2.6) / 1.4)})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
+  };
+  const g0 = () => (guests.find(q => q.other && rooms[q.room - 1].other) || guests[0]).look;
+  function wrap(gr, text, x, y, w, lh, font, color) {
+    gr.font = font; gr.fillStyle = color; gr.textAlign = 'center'; const words = text.split(' '); let line = '';
+    for (const wd of words) { const t = line ? line + ' ' + wd : wd; if (gr.measureText(t).width > w) { gr.fillText(line, x, y); y += lh; line = wd; } else line = t; }
+    gr.fillText(line, x, y);
+  }
+})();
+
+/* Pulsebox game kit: canvas scaling, input, menus, skins shop, coins, best score, sound and effects.
+   A game defines GAME before this runs: { id, title, tagline, how:[], bg, skins:[{name,price,c:[]}],
+   reset(), update(dt), draw(g), down(x,y), move(x,y), up(x,y), key(code,isDown), bot(dt), drawSkin(g,skin,size) }.
+   Everything is in a 1280x720 world; K.view is the visible part of it (it can be wider or taller on odd screens).
+   ?demo plays the bot forever with no menus (used to record trailers). */
+'use strict';
+const $ = id => document.getElementById(id);
+const DEMO = /[?&]demo/.test(location.search), POSE = /[?&]pose/.test(location.search) && GAME.pose;  // ?demo&pose freezes a staged scene for cover art
+const cv = $('cv'), g = cv.getContext('2d');
+const K = {
+  W, H, t: 0, state: 'title', score: 0, runCoins: 0, bot: true, view: { x0: 0, y0: 0, x1: W, y1: H },
+  rand: (a, b) => a + Math.random() * (b - a),
+  irand: (a, b) => Math.floor(a + Math.random() * (b - a + 1)),
+  pick: a => a[Math.floor(Math.random() * a.length)],
+  clamp: (v, a, b) => v < a ? a : v > b ? b : v,
+  lerp: (a, b, t) => a + (b - a) * t,
+  dist: (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by),
+};
+document.documentElement.style.setProperty('--accent', GAME.accent || '#c6ff3d');
+document.documentElement.style.setProperty('--accent2', GAME.accent2 || '#29e0ff');
+document.documentElement.style.setProperty('--bg', GAME.bg || '#0a0c12');
+if (GAME.font) document.documentElement.style.setProperty('--display', `'${GAME.font}', 'Arial Black', system-ui, sans-serif`);
+if (DEMO) document.body.classList.add('demo');
+
+/* ---------- save ---------- */
+const SKEY = 'pbx-' + GAME.id;
+const save = { best: 0, coins: 0, owned: [0], skin: 0, plays: 0, mute: false };
+try { Object.assign(save, JSON.parse(localStorage.getItem(SKEY) || '{}')); } catch (e) {}
+const persist = () => { try { localStorage.setItem(SKEY, JSON.stringify(save)); } catch (e) {} };
+K.save = save; K.persist = persist;
+Object.defineProperty(K, 'skin', { get: () => GAME.skins[DEMO || K.bot ? (K.demoSkin || 0) : save.skin] || GAME.skins[0] });
+
+/* ---------- screen ---------- */
+let sc = 1, ox = 0, oy = 0, dpr = 1;
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+  sc = Math.min(innerWidth / W, innerHeight / H); ox = (innerWidth - W * sc) / 2; oy = (innerHeight - H * sc) / 2;
+  K.view = { x0: -ox / sc, y0: -oy / sc, x1: W + ox / sc, y1: H + oy / sc };
+}
+addEventListener('resize', resize); resize();
+
+/* ---------- sound ---------- */
+let ac = null;
+// every sound goes through K.master, which is silent on menus, while paused and when muted, so games can run looping sounds
+function audio() {
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); K.ac = ac; K.master = ac.createGain(); K.master.gain.value = 0; K.master.connect(ac.destination); } catch (e) {} }
+  if (ac && ac.state === 'suspended') ac.resume(); return ac;
+}
+K.audio = audio;
+let masterOn = false;
+function masterSync() {
+  const on = !!ac && !save.mute && (K.state === 'play' || K.state === 'over') && !K.bot;
+  if (ac && on !== masterOn) { masterOn = on; K.master.gain.setTargetAtTime(on ? 1 : 0, ac.currentTime, .05); }
+}
+K.sfx = (f = 440, d = .1, type = 'square', v = .12, slide = 0, delay = 0) => {
+  if (save.mute || K.bot || !ac) return;
+  const t = ac.currentTime + delay, o = ac.createOscillator(), a = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
+  a.gain.setValueAtTime(v, t); a.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(a).connect(K.master); o.start(t); o.stop(t + d + .02);
+};
+K.noise = (d = .15, v = .15, hp = 800) => {
+  if (save.mute || K.bot || !ac) return;
+  const n = Math.floor(ac.sampleRate * d), b = ac.createBuffer(1, n, ac.sampleRate), ch = b.getChannelData(0);
+  for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), a = ac.createGain();
+  f.type = 'highpass'; f.frequency.value = hp; a.gain.value = v; s.buffer = b; s.connect(f).connect(a).connect(K.master); s.start();
+};
+K.chime = (base = 523, steps = [0, 4, 7, 12]) => steps.forEach((s, i) => K.sfx(base * Math.pow(2, s / 12), .16, 'triangle', .1, 0, i * .07));
+
+/* ---------- effects ---------- */
+const parts = [], pops = [];
+let shake = 0, flashA = 0, flashC = '#fff';
+K.burst = (x, y, c, n = 14, sp = 320, o = {}) => {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = sp * (.3 + Math.random() * .7);
+    parts.push({ x, y, vx: Math.cos(a) * s + (o.vx || 0), vy: Math.sin(a) * s + (o.vy || 0), life: 0, max: (o.life || .6) * (.6 + Math.random() * .6), c: Array.isArray(c) ? K.pick(c) : c, s: (o.size || 7) * (.5 + Math.random()), gr: o.gravity ?? 600, sq: o.square });
+  }
+};
+K.pop = (x, y, text, c = '#fff', size = 34) => pops.push({ x, y, text, c, size, life: 0 });
+K.shake = a => { shake = Math.max(shake, a); };
+K.flash = (c = '#fff', a = .5) => { flashC = c; flashA = a; };
+K.toast = text => { if (K.bot) return; const d = document.createElement('div'); d.className = 'toast'; d.textContent = text; document.body.appendChild(d); setTimeout(() => d.remove(), 1500); };
+function fx(dt) {
+  for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.life += dt; if (p.life > p.max) { parts.splice(i, 1); continue; } p.vy += p.gr * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .99; }
+  for (let i = pops.length - 1; i >= 0; i--) { const p = pops[i]; p.life += dt; p.y -= 60 * dt; if (p.life > .9) pops.splice(i, 1); }
+  shake = Math.max(0, shake - 60 * dt); flashA = Math.max(0, flashA - 2.5 * dt);
+}
+function drawFx() {
+  for (const p of parts) { g.globalAlpha = 1 - p.life / p.max; g.fillStyle = p.c; if (p.sq) g.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s); else { g.beginPath(); g.arc(p.x, p.y, p.s / 2, 0, 7); g.fill(); } }
+  g.globalAlpha = 1; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const p of pops) {
+    const k = p.life < .12 ? p.life / .12 : 1; g.globalAlpha = p.life > .6 ? 1 - (p.life - .6) / .3 : 1;
+    g.font = `${Math.round(p.size * (0.6 + .4 * k))}px ${getComputedStyle(document.documentElement).getPropertyValue('--display')}`;
+    g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,.45)'; g.strokeText(p.text, p.x, p.y); g.fillStyle = p.c; g.fillText(p.text, p.x, p.y);
+  }
+  g.globalAlpha = 1;
+}
+
+/* ---------- UI ---------- */
+const coinHTML = '<i class="coin-i"></i>';
+document.body.insertAdjacentHTML('beforeend', `
+<div class="hud" id="hud" hidden><div class="hud-score" id="hScore">0</div><div class="hud-coins">${coinHTML}<span id="hCoins">0</span></div><button class="hud-pause" id="hPause" aria-label="Pause"></button></div>
+<div class="scr" id="sTitle" ${DEMO ? 'hidden' : ''}><div class="card">
+  <h1 class="title">${GAME.title}</h1><p class="sub">${GAME.tagline}</p>
+  <div class="stats"><span class="stat"><small>Best</small><b id="tBest">0</b></span><span class="stat">${coinHTML}<b id="tCoins">0</b></span></div>
+  <button class="big" id="bPlay">Play</button>
+  <div class="row"><button id="bSkins">Skins</button></div>
+  <ul class="how">${GAME.how.map(h => `<li>${h}</li>`).join('')}</ul>
+</div></div>
+<div class="scr" id="sOver" hidden><div class="card">
+  <h2 class="title" id="oTitle" style="font-size:40px" hidden></h2><p class="sub" id="oText" hidden></p><p class="sub" style="margin:0" id="oLabel">Score</p><div class="score-big" id="oScore">0</div><div id="oNew" class="newbest" hidden>New best!</div>
+  <div class="stats"><span class="stat"><small>Best</small><b id="oBest">0</b></span><span class="stat">+${coinHTML}<b id="oCoins">0</b></span></div>
+  <button class="big" id="bAgain">Play again</button>
+  <div class="row"><button id="bMenu">Menu</button><button id="bSkins2">Skins</button></div>
+  <p class="hint" id="oHint"></p>
+</div></div>
+<div class="scr" id="sSkins" hidden><div class="card">
+  <h2 class="title" style="font-size:40px">Skins</h2>
+  <div class="stats"><span class="stat">${coinHTML}<b id="kCoins">0</b></span></div>
+  <div class="skins" id="kGrid"></div>
+  <button class="big" id="bBack">Back</button>
+</div></div>
+<div class="scr" id="sPause" hidden><div class="card">
+  <h2 class="title" style="font-size:44px">Paused</h2>
+  <button class="big" id="bResume">Resume</button>
+  <div class="row"><button id="bQuit">Menu</button></div>
+</div></div>
+<button class="mute" id="bMute" aria-label="Sound on or off"></button>`);
+
+const screens = ['sTitle', 'sOver', 'sSkins', 'sPause'];
+let skinsFrom = 'sTitle';
+function showScr(id) { screens.forEach(s => $(s).hidden = s !== id || DEMO); }
+function refresh() {
+  $('tBest').textContent = save.best; $('tCoins').textContent = save.coins; $('kCoins').textContent = save.coins;
+  $('bMute').textContent = save.mute ? '🔇' : '🔊';
+}
+function hud() { $('hScore').textContent = K.score; $('hCoins').textContent = K.runCoins; }
+K.add = (n = 1, x, y, c) => {
+  K.score += n; hud();
+  if (!K.bot) { const s = $('hScore'); s.classList.remove('bump'); void s.offsetWidth; s.classList.add('bump'); }
+  if (x !== undefined) K.pop(x, y, '+' + n, c || '#fff');
+};
+K.coin = (n = 1, x, y) => {
+  K.runCoins += n; hud();
+  if (x !== undefined) K.burst(x, y, ['#ffcf2e', '#fff3a8'], 6, 200, { life: .4, size: 6, gravity: 300 });
+  K.sfx(1320, .07, 'square', .05); K.sfx(1760, .08, 'square', .05, 0, .05);
+};
+
+function buildSkins() {
+  const grid = $('kGrid'); grid.innerHTML = '';
+  GAME.skins.forEach((s, i) => {
+    const own = save.owned.includes(i), b = document.createElement('button');
+    b.className = 'skin' + (save.skin === i ? ' on' : '') + (own ? '' : ' locked') + (!own && save.coins < s.price ? ' cant' : '');
+    const c = document.createElement('canvas'); c.width = c.height = 112; const cg = c.getContext('2d'); cg.translate(56, 56);
+    if (GAME.drawSkin) GAME.drawSkin(cg, s, 40); else { cg.fillStyle = s.c[0]; cg.beginPath(); cg.arc(0, 0, 40, 0, 7); cg.fill(); }
+    if (!own) { cg.fillStyle = 'rgba(0,0,0,.45)'; cg.fillRect(-56, -56, 112, 112); }
+    b.appendChild(c);
+    b.insertAdjacentHTML('beforeend', `<span>${s.name}</span>${own ? (save.skin === i ? '<span class="price">Equipped</span>' : '<span class="price" style="color:#cfd5ef">Equip</span>') : `<span class="price">${coinHTML}${s.price}</span>`}`);
+    b.onclick = () => {
+      audio();
+      if (own) { save.skin = i; K.sfx(660, .08, 'triangle'); }
+      else if (save.coins >= s.price) { save.coins -= s.price; save.owned.push(i); save.skin = i; K.chime(660); }
+      else { K.sfx(160, .15, 'sawtooth', .08); return; }
+      persist(); refresh(); buildSkins();
+    };
+    grid.appendChild(b);
+  });
+}
+
+/* ---------- flow ---------- */
+let overAt = 0, botOverAt = 0;
+function start() {
+  audio(); K.bot = false; K.score = 0; K.runCoins = 0; hud(); parts.length = 0; pops.length = 0;
+  GAME.reset(); K.state = 'play'; showScr(null); $('hud').hidden = false; save.plays++; persist();
+}
+function attract() { K.bot = true; K.demoSkin = DEMO ? 0 : K.irand(0, GAME.skins.length - 1); K.score = 0; K.runCoins = 0; hud(); GAME.reset(); if (POSE) GAME.pose(); K.state = 'title'; $('hud').hidden = !DEMO; }
+K.over = (o = {}) => {
+  if (K.bot) { if (!botOverAt) botOverAt = K.t + 1.2; return; }
+  if (K.state !== 'play') return;
+  K.state = 'over'; overAt = performance.now();
+  const best = K.score > save.best; if (best) save.best = K.score;
+  save.coins += K.runCoins; persist(); refresh();
+  $('oTitle').hidden = !o.title; $('oTitle').textContent = o.title || ''; $('oText').hidden = !o.text; $('oText').textContent = o.text || ''; $('oLabel').textContent = GAME.scoreLabel || 'Score';
+  $('oScore').textContent = K.score; $('oBest').textContent = save.best; $('oCoins').textContent = K.runCoins; $('oNew').hidden = !best || K.score === 0;
+  const next = GAME.skins.map((s, i) => [s, i]).find(([s, i]) => !save.owned.includes(i));
+  $('oHint').textContent = next ? (save.coins >= next[0].price ? `You can unlock ${next[0].name} now!` : `${next[0].price - save.coins} more coins to unlock ${next[0].name}`) : 'You own every skin. Legend!';
+  if (GAME.noSkins) $('oHint').textContent = '';
+  setTimeout(() => { if (K.state === 'over') { showScr('sOver'); $('hud').hidden = true; } }, o.delay ?? 650);
+  if (best && K.score > 0) setTimeout(() => K.chime(523, [0, 4, 7, 12, 16]), 700);
+};
+function pause() { if (K.state !== 'play') return; K.state = 'paused'; showScr('sPause'); }
+function resume() { K.state = 'play'; showScr(null); last = performance.now(); }
+function toMenu() { refresh(); attract(); showScr('sTitle'); }
+
+$('bPlay').onclick = start; $('bAgain').onclick = start; $('bResume').onclick = resume;
+$('bMenu').onclick = toMenu; $('bQuit').onclick = toMenu;
+$('bSkins').onclick = () => { skinsFrom = 'sTitle'; buildSkins(); refresh(); showScr('sSkins'); };
+$('bSkins2').onclick = () => { skinsFrom = 'sOver'; buildSkins(); refresh(); showScr('sSkins'); };
+$('bBack').onclick = () => { if (skinsFrom === 'sOver') toMenu(); else showScr('sTitle'); };
+$('hPause').onclick = pause;
+$('bMute').onclick = () => { save.mute = !save.mute; persist(); refresh(); audio(); };
+addEventListener('blur', pause);
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+/* ---------- input ---------- */
+const toW = e => [(e.clientX - ox) / sc, (e.clientY - oy) / sc];
+cv.addEventListener('pointerdown', e => { audio(); if (K.state === 'play' && GAME.down) { const [x, y] = toW(e); GAME.down(x, y, e); } });
+addEventListener('pointermove', e => { if (K.state === 'play' && GAME.move) { const [x, y] = toW(e); GAME.move(x, y, e); } });
+addEventListener('pointerup', e => { if (K.state === 'play' && GAME.up) { const [x, y] = toW(e); GAME.up(x, y, e); } });
+addEventListener('keydown', e => {
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  if (e.repeat && K.state !== 'play') return;
+  if (e.code === 'Escape' || e.code === 'KeyP') { if (K.state === 'play') pause(); else if (K.state === 'paused') resume(); return; }
+  if ((e.code === 'Space' || e.code === 'Enter') && K.state !== 'play') {
+    if (K.state === 'title' && !$('sTitle').hidden) start();
+    else if (K.state === 'over' && performance.now() - overAt > 900) start();
+    else if (K.state === 'paused') resume();
+    return;
+  }
+  if (K.state === 'play' && GAME.key) GAME.key(e.code, true);
+});
+addEventListener('keyup', e => { if (K.state === 'play' && GAME.key) GAME.key(e.code, false); });
+
+/* ---------- loop ---------- */
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
+  const run = K.state === 'play' || K.state === 'title' || K.state === 'over';
+  if (run && !POSE) {
+    K.t += dt;
+    if (K.bot && K.state === 'title') { if (botOverAt && K.t > botOverAt) { botOverAt = 0; attract(); } else if (!botOverAt && GAME.bot) GAME.bot(dt); }
+    GAME.update(dt); fx(dt);
+  }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = GAME.bg || '#000'; g.fillRect(0, 0, innerWidth, innerHeight);
+  const sx = shake ? (Math.random() - .5) * shake : 0, sy = shake ? (Math.random() - .5) * shake : 0;
+  g.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * (ox + sx * sc), dpr * (oy + sy * sc));
+  GAME.draw(g); drawFx();
+  if (flashA > 0) { g.globalAlpha = flashA; g.fillStyle = flashC; g.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0); g.globalAlpha = 1; }
+  masterSync();
+  requestAnimationFrame(frame);
+}
+if (GAME.noSkins) { $('bSkins').parentNode.hidden = true; $('bSkins2').hidden = true; }
+if (GAME.noHud) { $('hScore').hidden = true; document.querySelector('.hud-coins').hidden = true; }
+refresh(); attract(); showScr('sTitle');
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
