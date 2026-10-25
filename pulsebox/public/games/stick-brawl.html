@@ -3418,7 +3418,7 @@ function superStep(f, dt) {
     for (const o of G.fighters) {
       if (o.team === f.team || o.ko || o.rag || o.down || o.state === 'held') continue;
       if (Math.abs(o.x - (f.x + f.face * 34 * f.s)) < 90 * f.s && Math.abs(o.y - f.y) < 140) {
-        const r = hitFighter(f, o, { dmg: 2.6 * f.power, kb: [0, 0], noKb: 1, stun: 0.1, snd: 'punch', pt: { x: o.J.neck.x, y: o.J.neck.y }, unblock: 1 });
+        const r = hitFighter(f, o, { dmg: 3.2 * f.power, kb: [0, 0], noKb: 1, stun: 0.1, snd: 'punch', pt: { x: o.J.neck.x, y: o.J.neck.y }, unblock: 1 });
         if (r === 'hit') { o.x = lerp(o.x, f.x + f.face * 58 * f.s, 0.5); o.vx = f.vx; if (o.state !== 'hurt') o.setState('hurt'); o.hurtT = 0.35; o.atk = null; }
       }
     }
@@ -3430,7 +3430,7 @@ function superBlast(f) {
   for (const o of G.fighters) {
     if (o.team === f.team || o.ko || o.state === 'held') continue;
     if (Math.abs(o.x - x) < 150 * f.s && Math.abs(o.y - f.y) < 170) {
-      const r = hitFighter(f, o, { dmg: 12 * f.power, kb: [780, -660], down: 1, unblock: 1, stun: 0.6, snd: 'heavy', pt: { x: o.J.neck.x, y: o.J.neck.y } });
+      const r = hitFighter(f, o, { dmg: 14 * f.power, kb: [780, -660], down: 1, unblock: 1, stun: 0.6, snd: 'heavy', pt: { x: o.J.neck.x, y: o.J.neck.y } });
       if (r && f.human) unlockAch('super1');
     }
   }
@@ -3470,7 +3470,7 @@ function updateNewHazards(dt) {
   if (ar.haz.includes('icicles')) {
     G.iciT -= dt;
     if (G.iciT <= 0 && !G.intro && !G.over) {
-      G.iciT = rnd(2.2, 4);
+      G.iciT = rnd(3.4, 6);
       const live = G.fighters.filter(f => !f.ko), tg = live.length ? pick(live) : null;
       const x = clamp((tg ? tg.x : 0) + rnd(-90, 90), -ar.w / 2 + 40, ar.w / 2 - 40);
       G.icis.push({ x, y: 0, ph: 'warn', t: 0, vy: 0 });
@@ -3492,7 +3492,7 @@ function updateNewHazards(dt) {
   if (ar.haz.includes('wind')) {
     const w = G.wind; w.t -= dt;
     if (w.t <= 0) {
-      if (w.ph === 'calm') { w.ph = 'warn'; w.t = 1.1; w.dir = Math.random() < 0.5 ? -1 : 1; floatText(G.cam.x, camTop() + 90, w.dir > 0 ? 'WIND  >>>' : '<<<  WIND', '#ffffff', 30); sfx.wind(); }
+      if (w.ph === 'calm') { w.ph = 'warn'; w.t = 1.1; w.dir = Math.random() < 0.5 ? -1 : 1; floatText(G.cam.x, camTop() + 170, w.dir > 0 ? 'WIND  >>>' : '<<<  WIND', '#ffffff', 30); sfx.wind(); }
       else if (w.ph === 'warn') { w.ph = 'gust'; w.t = 2.6; }
       else { w.ph = 'calm'; w.t = rnd(4, 6.5); }
     }
