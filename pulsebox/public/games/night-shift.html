@@ -66,308 +66,1299 @@ body.demo .hud-pause, body.demo .mute { display: none; }
 <canvas id="cv"></canvas>
 <script>
 const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
-/* Shared by the horror games: draws a person from the shoulders up at (x, y), scaled by s.
-   p = { skin, hair, style 0-3, eyes, shirt, glasses, beard, hat }. o: silhouette, reveal (0-1, the face splits open),
-   glow (red eyes), smile, look (-1..1, where the eyes point). */
-function drawPerson(gr, p, x, y, s, o = {}) {
-  gr.save(); gr.translate(x, y); gr.scale(s, s);
-  const dark = o.silhouette;
-  gr.fillStyle = dark ? 'rgba(0,0,0,.85)' : p.shirt; gr.beginPath(); gr.moveTo(-120, 260); gr.quadraticCurveTo(-110, 110, -40, 95); gr.lineTo(40, 95); gr.quadraticCurveTo(110, 110, 120, 260); gr.fill();
-  if (!dark) { gr.fillStyle = 'rgba(0,0,0,.25)'; gr.fillRect(-8, 100, 16, 160); }
-  gr.fillStyle = dark ? 'rgba(0,0,0,.85)' : p.skin; gr.fillRect(-18, 70, 36, 34);
-  const stretch = o.reveal ? 1 + o.reveal * .25 : 1;
-  gr.beginPath(); gr.ellipse(0, 10, 58, 74 * stretch, 0, 0, 7); gr.fill();
-  if (dark) { gr.restore(); return; }
-  // hair
-  gr.fillStyle = p.hair;
-  if (p.style === 0) { gr.beginPath(); gr.ellipse(0, -30, 62, 42, 0, Math.PI, 0); gr.fill(); }
-  else if (p.style === 1) { gr.beginPath(); gr.ellipse(0, -20, 66, 56, 0, Math.PI * .95, Math.PI * 2.05); gr.fill(); gr.fillRect(-66, -20, 16, 90); gr.fillRect(50, -20, 16, 90); }
-  else if (p.style === 2) { gr.beginPath(); gr.ellipse(0, -38, 56, 30, 0, Math.PI, 0); gr.fill(); }
-  else { gr.beginPath(); gr.ellipse(0, -26, 64, 48, 0, Math.PI, 0); gr.fill(); gr.beginPath(); gr.arc(0, -70, 22, 0, 7); gr.fill(); }
-  if (p.hat) { gr.fillStyle = '#2a2420'; gr.fillRect(-70, -52, 140, 12); gr.fillRect(-46, -96, 92, 46); }
-  if (p.beard) { gr.fillStyle = p.hair; gr.beginPath(); gr.ellipse(0, 52, 46, 34, 0, 0, Math.PI); gr.fill(); }
-  // eyes
-  const ey = 4, glow = o.glow;
-  for (const k of [-1, 1]) {
-    gr.fillStyle = o.reveal ? '#000' : '#f4efe6'; gr.beginPath(); gr.ellipse(k * 22, ey, 12 + (o.reveal || 0) * 6, 7 + (o.reveal || 0) * 8, 0, 0, 7); gr.fill();
-    if (!o.reveal) { gr.fillStyle = glow ? '#ff2a2a' : p.eyes; gr.beginPath(); gr.arc(k * 22 + (o.look || 0) * 4, ey, 5, 0, 7); gr.fill(); gr.fillStyle = glow ? '#ffd0d0' : '#000'; gr.beginPath(); gr.arc(k * 22 + (o.look || 0) * 4, ey, 2.4, 0, 7); gr.fill(); }
-    if (glow) { gr.shadowColor = '#ff2a2a'; gr.shadowBlur = 20; gr.fillStyle = '#ff5a5a'; gr.beginPath(); gr.arc(k * 22, ey, 3, 0, 7); gr.fill(); gr.shadowBlur = 0; }
-  }
-  gr.strokeStyle = 'rgba(0,0,0,.45)'; gr.lineWidth = 4; gr.beginPath(); gr.moveTo(-34, ey - 16); gr.lineTo(-12, ey - 18); gr.moveTo(12, ey - 18); gr.lineTo(34, ey - 16); gr.stroke();
-  if (p.glasses) { gr.strokeStyle = '#111'; gr.lineWidth = 3.5; gr.strokeRect(-38, ey - 11, 30, 22); gr.strokeRect(8, ey - 11, 30, 22); gr.beginPath(); gr.moveTo(-8, ey); gr.lineTo(8, ey); gr.stroke(); }
-  gr.fillStyle = 'rgba(0,0,0,.18)'; gr.beginPath(); gr.moveTo(0, 8); gr.lineTo(-7, 30); gr.lineTo(6, 30); gr.fill();
-  // mouth
-  gr.strokeStyle = '#5a2a22'; gr.lineWidth = 4;
-  if (o.reveal) { gr.fillStyle = '#000'; gr.beginPath(); gr.ellipse(0, 50, 26 + o.reveal * 10, 10 + o.reveal * 40, 0, 0, 7); gr.fill(); gr.fillStyle = '#e8e2d0'; for (let i = -3; i <= 3; i++) { gr.beginPath(); gr.moveTo(i * 8 - 4, 42 - o.reveal * 20); gr.lineTo(i * 8, 54 - o.reveal * 10); gr.lineTo(i * 8 + 4, 42 - o.reveal * 20); gr.fill(); } }
-  else if (o.smile) { gr.beginPath(); gr.arc(0, 30, 34, .25, Math.PI - .25); gr.stroke(); }
-  else { gr.beginPath(); gr.moveTo(-16, 46); gr.quadraticCurveTo(0, 50, 16, 46); gr.stroke(); }
-  gr.restore();
-}
-const PERSON_LOOKS = {
-  skin: ['#f1c7a5', '#d9a07a', '#b97850', '#8a5636', '#5e3a24', '#f5d6c0'], hair: ['#1c1410', '#4a2e1a', '#8a5a2b', '#c9a35a', '#d8d2c8', '#7a1f1a', '#2e2e2e'],
-  shirt: ['#3a4a6a', '#6a2a2a', '#2a5a3a', '#5a4a2a', '#4a3a5a', '#2a4a5a', '#6a6a6a'], eyes: ['#3a2a1a', '#2a4a7a', '#3a6a3a', '#5a4a2a'],
-};
-function randomPerson() {
-  const L = PERSON_LOOKS, r = a => a[Math.floor(Math.random() * a.length)];
-  return { skin: r(L.skin), hair: r(L.hair), style: Math.floor(Math.random() * 4), eyes: r(L.eyes), shirt: r(L.shirt), glasses: Math.random() < .3, beard: Math.random() < .25, hat: Math.random() < .15 };
-}
-
-// @use person
-/* Night Shift: run the register at a gas station from 11 PM to 5 AM, for five nights, and follow the manager's rules.
-   Each night adds a rule. Breaking a rule is a strike; three strikes and the night shift claims another clerk.
-   How many strikes you finish with decides the ending. */
+/* Night Shift: work the register at the Starlite gas station from 11 PM to 5 AM, five nights in a row.
+   The manager's clipboard gains two rules every night. Ring up customers, turn on the pumps, answer the phone (sometimes),
+   and follow every rule. Strikes carry over between nights; three and the night shift keeps you. The ending depends on how you played. */
 const GAME = {
   id: 'night-shift', title: 'Night Shift', tagline: 'Gas station. 11 PM to 5 AM. Follow the rules.',
-  font: 'Special Elite', accent: '#ffd23f', accent2: '#ff4d4d', bg: '#06070a', noSkins: true, noHud: true, scoreLabel: 'Shift score',
-  how: ['Ring up customers by clicking each item on the counter.', 'Read the RULES on the wall. A new one is added every night.', 'Three broken rules and you won\'t clock out. Wear headphones.'],
+  font: 'Special Elite', accent: '#ffd23f', accent2: '#ff4d4d', bg: '#030406', noSkins: true, noHud: true, scoreLabel: 'Shift score',
+  how: ['Ring up customers: click their items or press Space.', 'Read the rules (R). Two new rules every night.', 'L look down · D lock · P phone · G pump · M radio · A alarm', 'Three broken rules and you won\'t clock out. Wear headphones.'],
   skins: [{ name: 'Clerk', price: 0 }],
 };
 (() => {
-  const DUR = 150, HOUR = DUR / 6, DOOR = { x: 830, y: 66, w: 300, h: 394 }, CX = 470;
-  const RULES = [
-    'If a customer has NO REFLECTION in the door glass, press LOOK DOWN and keep your eyes down until they leave. Never serve them.',
-    'If the lights flicker three times, LOCK THE DOOR right away. Unlock it only after the knocking stops.',
-    'Never answer the phone between 2:00 and 3:00 AM.',
-    'Pump 4 is broken. Never turn it on, no matter who asks. If anyone asks what time it is, tell them it is closing time.',
-    'If the security camera shows someone you cannot see in the store, press the ALARM.',
-  ];
-  const ITEMS = [['Chips', 2.49, '#e8b23a'], ['Soda', 1.99, '#d23a3a'], ['Gum', .99, '#3ad2a0'], ['Coffee', 1.49, '#6a3a1a'], ['Jerky', 5.99, '#8a4a2a'], ['Candy', 1.29, '#c23ad2'], ['Water', 1.19, '#3a8ad2'], ['Batteries', 6.49, '#4a4a4a'], ['Hot dog', 2.99, '#d2703a'], ['Energy', 3.29, '#7ad23a']];
-  let night, t, events, cust, queue, strikes, lookDown, locked, flick, phone, pump, cctv, view, dlg, scareT, deadT, ended, msg, msgT, served, hover, amb, buzzT, knockT, noteOpen;
+const DUR = 168, HR = DUR / 6, at = h => h * HR;   // a night is 6 game hours; at(3) is 2:00 AM
+const RULES = [
+  { n: 1, ic: 'eye', t: 'No reflection', d: 'If a customer has NO REFLECTION in the door glass, LOOK DOWN [L] and keep your eyes down until they leave. Never serve them.' },
+  { n: 1, ic: 'pump', t: 'Pump 4', d: 'Turn on pumps 1, 2 and 3 for anyone who pulls up [G]. Pump 4 is broken. Never turn it on, no matter who asks.' },
+  { n: 2, ic: 'bulb', t: 'Three flickers', d: 'If the lights flicker three times, LOCK THE DOOR [D] right away. Unlock it only after the knocking stops.' },
+  { n: 2, ic: 'key', t: 'The restroom', d: 'The restroom closes at 2:00 AM. After that, if anyone asks for the key, tell them it is out of order.' },
+  { n: 3, ic: 'phone', t: 'The phone', d: 'Never answer the phone between 2:00 and 3:00 AM. Any other time, pick up [P]. It might be me.' },
+  { n: 3, ic: 'radio', t: 'The radio', d: 'If the radio stops playing music and starts talking to YOU, switch it OFF [M] right away.' },
+  { n: 4, ic: 'clock', t: 'The time', d: 'If anyone asks what time it is, tell them it is closing time.' },
+  { n: 4, ic: 'tag', t: 'Your name', d: 'Never tell a customer your name. Not even the regulars.' },
+  { n: 5, ic: 'cam', t: 'The camera', d: 'If the camera shows someone in the store that you cannot see, press the ALARM [A].' },
+  { n: 5, ic: 'stay', t: 'Stay', d: 'Do not leave the counter before 5:00 AM. Not for anyone. Not even for me.' },
+];
+const NOTES = [null,
+  'Welcome to the Starlite. Pay is forty an hour, cash, because nobody stays. The rules are on the clipboard. They are not a joke. Danny thought they were. Walt comes in around 12:30 for coffee. He\'s harmless.',
+  'You came back. Good. I had the wiring checked three times, and it\'s fine. So if the lights flicker, it isn\'t the wiring.',
+  'If the phone rings between 2 and 3, it isn\'t me. I\'m asleep. It will sound like Danny. Danny went missing in March. Let it ring. And keep the radio on. It keeps things quiet.',
+  'You asked about pump 4. It was here before the station. Before the road. The company put a pump on it so people would stop digging. It doesn\'t sell gas. And don\'t give anyone your name. Names are how it finds you.',
+  'Last night of the week. After tonight it goes quiet for a month. Stay behind that counter until 5:00. I\'ll be in at 5:01. If I walk in before then, it isn\'t me.',
+];
+const DJ = [null,
+  ['You\'re up late with Marv on WKNT, AM 1170. Keeping the truckers and the night shift company.', 'Fog\'s rolling in off the reservoir. Drive slow on Route 9, owls.'],
+  ['Route 9 detour is still closed. If your GPS sends you past the old Starlite, just keep driving.', 'A caller says the lights on Route 9 blink in threes tonight. Funny thing to notice.'],
+  ['Still no word on Danny Reyes, 24, last seen working nights at the Starlite on Route 9.', 'Got a request here with no name on it. It just says: for the new clerk.'],
+  ['Fun fact, owls: before the Starlite went up in \'62, there was one pump out in that field. Nobody knows who put it there.', 'Every call tonight comes from the same number. A pay phone. At a gas station.'],
+  ['Last night of the week. Sunrise is at 5:04. Hang in there.', 'If you\'re working alone tonight... don\'t go outside. Not until it\'s light.'],
+];
+const RAY = [null,
+  'Ray here. Just checking you found the clipboard. Read it twice.',
+  'It\'s Ray. Walt says you\'re doing fine. If the lights go, lock up. Don\'t argue with it.',
+  'Ray. It\'s not 2 yet, right? Good. When it rings later, let it ring.',
+  'Ray. They found Danny\'s car this morning. Parked at pump 4. Engine still warm. Just... follow the list.',
+  'It\'s Ray. I\'m at home, and I\'m staying home. Whatever walks in wearing my face, you stay behind that counter.',
+];
+const DANNY = ['...hey. It\'s Danny. You picked up. Now it knows you\'re there.', '...is someone there? It\'s so dark out here by the pumps...', '...don\'t hang up. I can see the store from here. I can see you.'];
+const VOICE = ['...clerk... clerk... look at the door...', '...we can see you through the glass...', '...turn on pump four... just once...', '...what\'s your name? say your name...', '...come outside. it\'s warm out here...'];
+// regulars: one line per night, and a reaction when something strange happened recently
+const REG = {
+  walt: { name: 'Walt', at: 1.5, items: ['coffee', 'donut', 'paper'], lines: [null, 'New kid, huh? Coffee, black. I\'m Walt. I come in every night. Don\'t let the place get to you.', 'Old building. The lights do things. Just do what the list says.', 'Danny used to work your shift. Good kid. Never read the list.', 'You hear the radio fella say a name last night? ...Never mind. Coffee.', 'Last night of the week, huh? Whatever you hear tonight, kid, you stay behind that counter.'], odd: 'Lights went funny just now. You locked up? Good. Danny never did.' },
+  mari: { name: 'Marisol', at: 2.5, items: ['coffee', 'candy', 'energy'], lines: [null, 'Twelve hours at the hospital. Just need caffeine and sugar.', 'Did you know pump 4 looks lit from the road? Only from the road.', 'A patient kept asking for "the clerk" all night. Weird shift.', 'You look tired, hon. Find another job, okay?', 'I\'m not even stopping. I just... don\'t open the door after four.'], odd: 'Was somebody knocking on your door when I pulled in?' },
+  earl: { name: 'Big Earl', at: 4.1, items: ['jerky', 'soda', 'chips'], lines: [null, 'Long haul to Tulsa. Filled up on two. You\'re new.', 'There\'s somebody standing out by pump 4. Thought you should know.', 'Radio\'s playing that song again. Same one, every night, 3 AM.', 'Drove past this place twice tonight. Same exit. Same road.', 'Real glad you\'re still here, kid.'], odd: 'Your lights do that a lot?' },
+};
+const GEN = ['Just these, thanks.', 'Cold out there.', 'Long night?', 'Hey. Just this.', 'Is the coffee fresh?', 'Pretty dead tonight, huh?', 'Fog\'s thick. Could barely see the road.', 'Evening.'];
+const ODD = ['You look jumpy.', 'Did your lights just flicker?', 'Somebody\'s just standing out there in the fog.', 'This place gives me the creeps at night.'];
+const ITEMS = { chips: ['Chips', 2.49], soda: ['Soda', 1.99], gum: ['Gum', .99], coffee: ['Coffee', 1.49], jerky: ['Jerky', 5.99], candy: ['Candy', 1.29], water: ['Water', 1.19], batt: ['Batteries', 6.49], hotdog: ['Hot dog', 2.99], energy: ['Energy', 3.29], donut: ['Donut', 1.09], paper: ['Paper', 1.5] };
+const IK = Object.keys(ITEMS);
+// the clerk's own name, for the name rule
+const MYNAME = 'Sam';
 
-  function sched(n) {
-    const ev = [];
-    for (let s = 4; s < DUR - 10; s += K.rand(11, 16) - n * .6) {
-      const r = Math.random(); let kind = 'normal';
-      if (r < .22) kind = 'noreflect'; else if (n >= 4 && r < .34) kind = 'time';
-      ev.push({ at: s, type: 'cust', kind });
+/* ---------- state ---------- */
+let night, t, ev, cust, queue, strikes, nStrikes, look, lookK, locked, flick, phone, cars, radio, cctv, dlg, cap, banners, scare, dead, ended, endT,
+  served, followed, hover, noteOpen, view, tense, hint, hintsSeen, doorK, ambT, endingId, poseMode, lastOdd, fog, roadCar, lightL = 1, pumps = [], s0 = 0, vT = 0, hbT = 0;
+const S = {};   // sound nodes
+const now = () => K.t;
+const clockH = () => 11 + t / HR;   // 11 .. 17
+const clock = (short) => { const hf = clockH(), h = Math.floor(hf) % 12 || 12, m = Math.floor((hf % 1) * 60); return `${h}:${String(m).padStart(2, '0')}` + (short ? '' : (hf >= 12 ? ' AM' : ' PM')); };
+const forbidden = () => t >= at(3) && t < at(4);
+const rulesNow = () => RULES.filter(r => r.n <= night);
+// perspective: the clerk's eye is 1.6 m up, looking at the store front 5.2 m away
+const F = 560, X0 = 640, Y0 = 270, EYE = 1.6, ZB = 5.2;
+const P = (x, y, z) => [X0 + x * F / z, Y0 - (y - EYE) * F / z];
+
+/* ---------- sound: everything is synthesized and goes through K.master ---------- */
+const A = () => (K.ac && !K.bot && !K.save.mute && S.on) ? K.ac : null;
+function tone(f, d, type = 'sine', v = .1, slide = 0, delay = 0, dest, atk = .005) {
+  const ac = A(); if (!ac) return;
+  const t0 = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t0); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(20, f + slide), t0 + d);
+  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(v, t0 + atk); g.gain.exponentialRampToValueAtTime(.0001, t0 + d);
+  o.connect(g).connect(dest || K.master); o.start(t0); o.stop(t0 + d + .05);
+}
+function nz(d, v, type = 'bandpass', f = 1000, delay = 0, q = 1, dest) {
+  const ac = A(); if (!ac) return;
+  const t0 = ac.currentTime + delay, s = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain();
+  s.buffer = S.nb; fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(v, t0 + .004); g.gain.exponentialRampToValueAtTime(.0001, t0 + d);
+  s.connect(fl).connect(g).connect(dest || K.master); s.start(t0, Math.random()); s.stop(t0 + d + .05);
+}
+function ambInit() {
+  if (S.on || !K.ac || K.bot) return;
+  const ac = K.ac; S.on = 1;
+  const n = ac.sampleRate * 2, nb = ac.createBuffer(1, n, ac.sampleRate), d = nb.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  S.nb = nb;
+  const gain = (v, dest) => { const g = ac.createGain(); g.gain.value = v; g.connect(dest || K.master); return g; };
+  const osc = (f, type, dest) => { const o = ac.createOscillator(); o.type = type; o.frequency.value = f; o.connect(dest); o.start(); return o; };
+  const loop = (f, type, q, dest) => { const s = ac.createBufferSource(); s.buffer = nb; s.loop = true; const fl = ac.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; s.connect(fl).connect(dest); s.start(); return fl; };
+  S.hum = gain(.03); osc(58, 'sine', S.hum); osc(116.4, 'triangle', gain(.25, S.hum));
+  S.buzz = gain(.012); const bf = ac.createBiquadFilter(); bf.type = 'bandpass'; bf.frequency.value = 2600; bf.Q.value = 1.5; bf.connect(S.buzz); osc(120, 'sawtooth', bf); osc(240.6, 'square', gain(.3, bf));
+  S.wind = gain(.045); S.windF = loop(320, 'lowpass', .7, S.wind);
+  S.drone = gain(0); osc(41.2, 'sine', S.drone); osc(43.6, 'sine', S.drone); osc(61.7, 'triangle', gain(.4, S.drone));
+  // the radio: music and voices go into S.rin, through a narrow AM-radio band with crackle
+  S.radio = gain(0); const rf = ac.createBiquadFilter(); rf.type = 'bandpass'; rf.frequency.value = 1150; rf.Q.value = .55; S.rin = ac.createGain(); S.rin.connect(rf).connect(S.radio);
+  S.crk = gain(.0, S.radio); loop(3000, 'highpass', .5, S.crk);
+  S.next = ac.currentTime + .4; S.step = 0; S.det = 0;
+}
+// a slow 3/4 doo-wop waltz, the only song the station seems to have
+const CH = [[48, 60, 64, 67], [45, 57, 60, 64], [41, 57, 60, 65], [43, 59, 62, 67]];
+const MEL = [76, 0, 74, 72, 0, 69, 69, 72, 77, 74, 0, 0, 76, 79, 76, 72, 0, 71, 69, 72, 74, 71, 74, 79, 81, 0, 79, 76, 0, 72, 77, 76, 74, 74, 0, 0, 76, 0, 74, 72, 0, 69, 69, 72, 77, 74, 72, 71, 72, 0, 0, 0, 0, 0];
+const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+function music() {
+  const ac = A(); if (!ac || !S.rin) return;
+  const beat = .72 * (1 + S.det * .35);
+  if (S.next < ac.currentTime - 1) S.next = ac.currentTime + .1;
+  while (S.next < ac.currentTime + .35) {
+    const st = S.step, bar = Math.floor(st / 3) % 4, b = st % 3, ch = CH[bar], t0 = S.next - ac.currentTime;
+    const det = S.det ? K.rand(-60, 20) * S.det * 6 : 0, w = 1 + det / 1730;
+    if (radio.on) {
+      if (b === 0) tone(mf(ch[0]) * w, beat * 1.4, 'triangle', .22, 0, t0, S.rin, .01);
+      else for (let i = 1; i < 4; i++) tone(mf(ch[i]) * w, beat * .8, 'square', .025, 0, t0, S.rin, .02);
+      const m = MEL[st % MEL.length]; if (m) tone(mf(m) * w, beat * 1.3, 'triangle', .13, S.det ? -mf(m) * .3 * S.det : 0, t0, S.rin, .03);
     }
-    if (n >= 2) for (let i = 0; i < (n >= 4 ? 2 : 1); i++) ev.push({ at: K.rand(25, DUR - 30), type: 'flicker' });
-    if (n >= 3) { ev.push({ at: K.rand(3 * HOUR + 2, 4 * HOUR - 8), type: 'phone' }); ev.push({ at: K.rand(10, 2 * HOUR), type: 'phone' }); if (n >= 4) ev.push({ at: K.rand(4 * HOUR + 2, DUR - 15), type: 'phone' }); }
-    if (n >= 4) ev.push({ at: K.rand(30, DUR - 25), type: 'pump' });
-    if (n >= 5) { ev.push({ at: K.rand(20, 70), type: 'cctv' }); ev.push({ at: K.rand(80, DUR - 20), type: 'cctv' }); }
-    if (!ev.some(e => e.kind === 'noreflect')) { const c = ev.find(e => e.type === 'cust' && e.at > 15); if (c) c.kind = 'noreflect'; }
-    return ev.sort((a, b) => a.at - b.at);
+    S.step++; S.next += beat;
   }
-  function startNight(n) {
-    night = n; t = 0; events = sched(n); cust = null; queue = []; lookDown = false; locked = false; flick = null; phone = null; pump = null; cctv = null; view = null; dlg = null; knockT = 0;
-    noteOpen = !K.bot; msg = ''; msgT = 0;
+}
+// fake speech: formant-filtered buzz (or breathy noise) in syllables
+function speak(n, pitch = 110, dest, whisper = 0, v = .25, delay = 0) {
+  const ac = A(); if (!ac) return;
+  let tt = ac.currentTime + delay;
+  for (let i = 0; i < n; i++) {
+    const d = K.rand(.11, .26), g = ac.createGain(), f1 = ac.createBiquadFilter(), f2 = ac.createBiquadFilter(), src = whisper ? ac.createBufferSource() : ac.createOscillator();
+    if (whisper) { src.buffer = S.nb; } else { src.type = 'sawtooth'; src.frequency.setValueAtTime(pitch * K.rand(.9, 1.12), tt); src.frequency.linearRampToValueAtTime(pitch * K.rand(.85, 1.05), tt + d); }
+    f1.type = f2.type = 'bandpass'; f1.Q.value = f2.Q.value = whisper ? 4 : 7; f1.frequency.value = K.pick([320, 450, 600, 780]); f2.frequency.value = K.pick([950, 1300, 1800, 2400]);
+    g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(v, tt + .03); g.gain.linearRampToValueAtTime(v * .7, tt + d * .7); g.gain.linearRampToValueAtTime(0, tt + d);
+    src.connect(f1).connect(g); src.connect(f2).connect(g); g.connect(dest || K.master);
+    src.start(tt); src.stop(tt + d + .05); tt += d + K.rand(.02, .1) + (Math.random() < .2 ? .25 : 0);
   }
-  GAME.reset = () => { GAME._dl = null; strikes = 0; scareT = 0; deadT = 0; ended = 0; served = 0; buzzT = 0; hover = null; startNight(K.bot ? K.irand(1, 5) : (K.save.night || 1)); sound(); };
-  const clock = () => { const h = 11 + Math.floor(t / HOUR), m = Math.floor((t % HOUR) / HOUR * 60); const hh = h > 12 ? h - 12 : h; return `${hh}:${String(m).padStart(2, '0')} ${h >= 12 && h < 24 ? 'AM' : 'PM'}`; };
-  const forbidden = () => t >= 3 * HOUR && t < 4 * HOUR;
-  const say = (s, d = 3.5) => { msg = s; msgT = d; };
+}
+const snd = {
+  chime: () => { tone(1568, 1.1, 'sine', .07); tone(1318, 1.3, 'sine', .07, 0, .3); },
+  beep: () => tone(1850, .08, 'square', .05),
+  drawer: () => { nz(.18, .25, 'bandpass', 1800, 0, 2); tone(2093, .7, 'triangle', .06, 0, .06); tone(2637, .5, 'triangle', .03, 0, .06); },
+  knock: (v = .5) => { for (let i = 0; i < 3; i++) { tone(85, .16, 'sine', v, -35, i * .2); nz(.09, v * .8, 'lowpass', 500, i * .2); } },
+  rattle: () => { for (let i = 0; i < 3; i++) nz(.08, .18, 'bandpass', 1100, i * .09, 3); },
+  lock: on => { nz(.07, .3, 'highpass', 2500); tone(on ? 160 : 220, .1, 'square', .07, 0, .05); },
+  ring: () => { const ac = A(); if (!ac) return; const t0 = ac.currentTime, g = ac.createGain(); g.gain.value = 0; g.connect(K.master);
+    for (const f of [1180, 1620, 2350]) { const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.value = f; o.connect(g); o.start(t0); o.stop(t0 + 1.4); }
+    for (let k = 0; k < 28; k++) g.gain.setValueAtTime(k % 2 ? .006 : .035, t0 + k * .05); g.gain.setValueAtTime(0, t0 + 1.4); },
+  pickup: () => { nz(.1, .2, 'bandpass', 700, 0, 2); tone(420, .05, 'square', .04, 0, .05); },
+  honk: () => { tone(370, .32, 'square', .035); tone(466, .32, 'square', .03); },
+  pump: () => { tone(90, 1.2, 'sawtooth', .035, 50, 0, null, .2); nz(.05, .2, 'highpass', 3000); },
+  alarm: () => { for (let i = 0; i < 4; i++) tone(650, .4, 'sawtooth', .05, 500, i * .4); },
+  pop: () => { nz(.07, .3, 'highpass', 2800); tone(55, .12, 'square', .1); },
+  heart: () => { tone(55, .2, 'sine', .4, -12); tone(50, .2, 'sine', .3, -10, .22); },
+  good: () => { tone(392, .9, 'triangle', .045); tone(587, .9, 'triangle', .035, 0, .12); tone(784, 1.1, 'triangle', .03, 0, .24); },
+  bad: () => { tone(98, 1.2, 'sawtooth', .1, -30); tone(104, 1.2, 'sawtooth', .08, -30); nz(.6, .2, 'lowpass', 600); },
+  scream: (big) => { nz(big ? 2 : 1.1, big ? .8 : .55, 'highpass', 450); tone(1150, 1, 'sawtooth', .12, -800); tone(1235, .9, 'sawtooth', .1, -900); tone(1720, .7, 'square', .05, -1300); tone(72, 1.2, 'sine', .55, -40); if (big) { tone(620, 1.8, 'sawtooth', .1, -500, .1); nz(1.5, .4, 'lowpass', 300, .2); } },
+  click: () => tone(900, .03, 'square', .03),
+  static: (d = .5) => nz(d, .12, 'highpass', 1500),
+  bird: () => { const f = K.rand(2600, 3600); tone(f, .09, 'sine', .025, 900); tone(f * 1.1, .07, 'sine', .02, 700, .12); },
+};
 
-  /* ---------- sound ---------- */
-  function sound() {
-    if (amb || !K.ac || K.bot) return;
-    const ac = K.ac, o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 120; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 240; f.Q.value = 4; const gn = ac.createGain(); gn.gain.value = .03;
-    o.connect(f).connect(gn).connect(K.master); o.start();
-    const fr = ac.createOscillator(); fr.type = 'sine'; fr.frequency.value = 52; const fg = ac.createGain(); fg.gain.value = .05; fr.connect(fg).connect(K.master); fr.start();
-    amb = { gn, fg };
+/* ---------- colour helpers ---------- */
+const CC = new Map();
+const hx = c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+function mix(a, b, k) {
+  const key = a + b + k; let r = CC.get(key); if (r) return r;
+  const A = hx(a), B = hx(b); r = '#' + A.map((v, i) => Math.round(v + (B[i] - v) * k).toString(16).padStart(2, '0')).join('');
+  CC.set(key, r); return r;
+}
+const sh = (c, k) => k < 0 ? mix(c, '#000000', -k) : mix(c, '#ffffff', k);
+const rgba = (c, a) => { const [r, g, b] = hx(c); return `rgba(${r},${g},${b},${a})`; };
+
+/* ---------- people: full figures, shaded, breathing and blinking ---------- */
+const SKIN = ['#f1c7a5', '#e0ac88', '#c68c64', '#a26a45', '#7a4b2e', '#5a3620', '#f3d3bc'];
+const HAIRC = ['#1b1411', '#3b2618', '#6b4426', '#a8763c', '#c9a25e', '#2b2b2e', '#d7d2c8', '#7a2a1a'];
+const TOPS = ['jacket', 'hoodie', 'flannel', 'vest', 'tee', 'raincoat', 'jacket', 'hoodie'];
+const CLOTH = ['#2f3e5c', '#5a2b2b', '#2c4a38', '#5b4a2e', '#463a5a', '#264a58', '#5e5e62', '#7a5a2a', '#3a3a3e', '#8a3a2a', '#2a5a6a'];
+const STYLES = ['short', 'long', 'bald', 'bun', 'curly', 'buzz', 'bob', 'short'];
+function randomLook() {
+  const p = { skin: K.pick(SKIN), hair: K.pick(HAIRC), hs: K.pick(STYLES), eye: K.pick(['#3a2a1a', '#2a4a7a', '#3a6a3a', '#4a3a24']), top: K.pick(TOPS), c1: K.pick(CLOTH), c2: K.pick(['#d8d0c0', '#2a2a2a', '#8a8a90', '#b04a3a', '#3a5a8a']), pants: K.pick(['#22283a', '#2a2a2a', '#3a3428', '#283a4a']), build: K.rand(.9, 1.18), tall: K.rand(.95, 1.04), seed: K.rand(0, 9) };
+  if (Math.random() < .25) p.glasses = 1;
+  if (Math.random() < .3) p.beard = K.pick(['stubble', 'full', 'mustache']);
+  if (Math.random() < .25) { p.hat = K.pick(['cap', 'beanie', 'trucker']); p.hatC = K.pick(CLOTH); }
+  if (Math.random() < .2) p.age = K.rand(.5, 1);
+  return p;
+}
+const LOOKS = {
+  walt: { skin: '#e8b898', hair: '#d9d5cc', hs: 'bald', eye: '#3a4a6a', top: 'flannel', c1: '#7a2a24', c2: '#2a1a18', pants: '#3a3428', glasses: 1, hat: 'cap', hatC: '#24304a', age: 1, build: 1.05, tall: .97, beard: 'mustache', seed: 1 },
+  mari: { skin: '#c48a62', hair: '#22160f', hs: 'bun', eye: '#3a2a1a', top: 'scrubs', c1: '#3a8a8a', c2: '#2c6a6a', pants: '#3a8a8a', build: .92, seed: 2 },
+  earl: { skin: '#e6a98a', hair: '#5a3a22', hs: 'short', eye: '#2a4a7a', top: 'vest', c1: '#3a4a2a', c2: '#8a8a8a', pants: '#2a3044', beard: 'full', hat: 'trucker', hatC: '#a02a2a', build: 1.25, tall: 1.03, seed: 3 },
+  mom: { skin: '#f0c6a8', hair: '#8a5a2b', hs: 'long', eye: '#3a6a3a', top: 'raincoat', c1: '#c9a03a', c2: '#e8d8a0', pants: '#22283a', build: .95, seed: 4 },
+  kid: { skin: '#f0c6a8', hair: '#8a5a2b', hs: 'short', eye: '#3a6a3a', top: 'tee', c1: '#3a6ab0', c2: '#e8e0d0', pants: '#22283a', kid: 1, seed: 5 },
+  teen: { skin: '#7a4b2e', hair: '#1b1411', hs: 'buzz', eye: '#3a2a1a', top: 'hoodie', c1: '#2a2a30', c2: '#c0c0c8', pants: '#283a4a', seed: 6 },
+  deputy: { skin: '#d9a07a', hair: '#2b2b2e', hs: 'short', eye: '#3a2a1a', top: 'uniform', c1: '#a08a5a', c2: '#3a2a1a', pants: '#3a3428', hat: 'deputy', hatC: '#6a5a3a', build: 1.08, beard: 'mustache', seed: 7 },
+  ray: { skin: '#e6b090', hair: '#4a3a2a', hs: 'short', eye: '#3a2a1a', top: 'polo', c1: '#2a4a3a', c2: '#e8e0c8', pants: '#3a3428', tag: 'RAY', build: 1.2, tall: 1.03, beard: 'mustache', age: .5, seed: 8 },
+  pale: { skin: '#e8ddd2', hair: '#121010', hs: 'long', eye: '#111111', top: 'suit', c1: '#1c1c22', c2: '#d8d4cc', pants: '#151518', build: .9, tall: 1.06, seed: 9 },
+};
+function face(gr, p, o, skin) {
+  const blink = o.blink || 0, look = o.look || 0, wrong = o.wrong;
+  // ears
+  gr.fillStyle = sh(skin, -.12); for (const k of [-1, 1]) { gr.beginPath(); gr.ellipse(k * 41, 2, 8, 14, 0, 0, 7); gr.fill(); }
+  const fg = gr.createRadialGradient(-14, -18, 6, 0, 0, 66); fg.addColorStop(0, sh(skin, .14)); fg.addColorStop(.55, skin); fg.addColorStop(1, sh(skin, -.32));
+  gr.fillStyle = fg; gr.beginPath(); gr.ellipse(0, 0, 41, 53, 0, 0, 7); gr.fill();
+  // jaw shadow and cheek warmth
+  gr.fillStyle = 'rgba(0,0,0,.12)'; gr.beginPath(); gr.ellipse(0, 40, 30, 12, 0, 0, Math.PI); gr.fill();
+  if (!wrong) { gr.fillStyle = 'rgba(200,70,60,.08)'; for (const k of [-1, 1]) { gr.beginPath(); gr.arc(k * 22, 16, 9, 0, 7); gr.fill(); } }
+  if (p.age) { gr.strokeStyle = rgba(sh(skin, -.4), .35 * p.age); gr.lineWidth = 1.5; gr.beginPath(); gr.moveTo(-16, -30); gr.quadraticCurveTo(0, -33, 16, -30); gr.moveTo(-12, -24); gr.quadraticCurveTo(0, -26, 12, -24); gr.moveTo(-13, 14); gr.quadraticCurveTo(-17, 24, -14, 30); gr.moveTo(13, 14); gr.quadraticCurveTo(17, 24, 14, 30); gr.stroke(); }
+  // brows
+  gr.strokeStyle = sh(p.hair, p.hs === 'bald' ? .1 : -.1); gr.lineWidth = 4; gr.lineCap = 'round';
+  for (const k of [-1, 1]) { gr.beginPath(); gr.moveTo(k * 8, -18 + (wrong ? 1 : 0)); gr.quadraticCurveTo(k * 17, -23 - (o.worry || 0) * k * 0, k * 27, -17); gr.stroke(); }
+  // eyes
+  for (const k of [-1, 1]) {
+    const ex = k * 16, ey = -5;
+    gr.fillStyle = 'rgba(0,0,0,.14)'; gr.beginPath(); gr.ellipse(ex, ey - 1, 11, 7.5, 0, 0, 7); gr.fill();
+    if (blink > .5) { gr.strokeStyle = sh(skin, -.45); gr.lineWidth = 2.2; gr.beginPath(); gr.moveTo(ex - 8, ey); gr.quadraticCurveTo(ex, ey + 3, ex + 8, ey); gr.stroke(); continue; }
+    gr.fillStyle = wrong ? '#e8e4dc' : '#f2ede4'; gr.beginPath(); gr.ellipse(ex, ey, 8.5, 5.2, 0, 0, 7); gr.fill();
+    gr.save(); gr.clip();
+    gr.fillStyle = wrong ? '#0a0a0a' : p.eye; gr.beginPath(); gr.arc(ex + look * 3, ey, wrong ? 4.6 : 4.2, 0, 7); gr.fill();
+    gr.fillStyle = '#050505'; gr.beginPath(); gr.arc(ex + look * 3, ey, wrong ? 3.8 : 2, 0, 7); gr.fill();
+    gr.restore();
+    if (!wrong) { gr.fillStyle = 'rgba(255,255,255,.85)'; gr.beginPath(); gr.arc(ex + look * 3 - 1.5, ey - 1.6, 1.2, 0, 7); gr.fill(); }
+    gr.strokeStyle = 'rgba(30,15,10,.75)'; gr.lineWidth = 2; gr.beginPath(); gr.ellipse(ex, ey, 8.5, 5.2, 0, Math.PI * 1.05, Math.PI * 1.95); gr.stroke();
   }
-  const beep = () => K.sfx(1850, .07, 'square', .07);
-  const ring = () => { K.sfx(880, .35, 'square', .07); K.sfx(1100, .35, 'square', .05, 0, .02); };
-  function scare() { if (K.bot) return; K.noise(1.1, .5, 700); K.sfx(700, 1, 'sawtooth', .22, -560); K.sfx(1300, .7, 'square', .08, -1000); }
-  function strike(why) {
-    strikes++; K.shake(22); K.flash('#600', .6); scare(); scareT = K.t; say('RULE BROKEN: ' + why, 4);
-    if (strikes >= 3) { deadT = K.t; if (K.bot) K.over(); else K.over({ title: 'Clocked out', text: `Three rules broken. ${why}. The night shift is looking for a new clerk.`, delay: 2400 }); }
+  // nose
+  gr.fillStyle = rgba(sh(skin, -.35), .45); gr.beginPath(); gr.moveTo(2, -4); gr.quadraticCurveTo(7, 10, 6, 14); gr.quadraticCurveTo(0, 17, -6, 13); gr.quadraticCurveTo(-1, 12, 2, -4); gr.fill();
+  gr.fillStyle = rgba(sh(skin, .2), .6); gr.beginPath(); gr.ellipse(-2, 6, 2, 5, 0, 0, 7); gr.fill();
+  // beard sits under the mouth
+  if (p.beard === 'full') { gr.fillStyle = sh(p.hair, -.05); gr.beginPath(); gr.moveTo(-41, -2); gr.quadraticCurveTo(-40, 44, 0, 58); gr.quadraticCurveTo(40, 44, 41, -2); gr.quadraticCurveTo(30, 20, 14, 18); gr.quadraticCurveTo(0, 14, -14, 18); gr.quadraticCurveTo(-30, 20, -41, -2); gr.fill(); }
+  if (p.beard === 'stubble') { gr.fillStyle = rgba(sh(p.hair, -.2), .28); gr.beginPath(); gr.ellipse(0, 26, 34, 26, 0, 0, Math.PI); gr.fill(); }
+  // mouth
+  const sm = o.smile || 0, mw = 12 + sm * 18;
+  if (o.open) { gr.fillStyle = '#1a0a0a'; gr.beginPath(); gr.ellipse(0, 27, 9, 4 + o.open * 9, 0, 0, 7); gr.fill(); }
+  else {
+    gr.strokeStyle = wrong ? '#5a3a3a' : rgba(sh(skin, -.5), .9); gr.lineWidth = 3;
+    gr.beginPath(); gr.moveTo(-mw, 25 - sm * 3); gr.quadraticCurveTo(0, 28 + sm * 10, mw, 25 - sm * 3); gr.stroke();
+    if (sm > .6) { gr.fillStyle = '#ece6da'; gr.beginPath(); gr.moveTo(-mw + 6, 25); gr.quadraticCurveTo(0, 26 + sm * 10, mw - 6, 25); gr.quadraticCurveTo(0, 30, -mw + 6, 25); gr.fill(); }
+    if (!sm) { gr.strokeStyle = rgba(sh(skin, -.25), .5); gr.lineWidth = 2; gr.beginPath(); gr.moveTo(-6, 32); gr.quadraticCurveTo(0, 34, 6, 32); gr.stroke(); }
   }
-
-  /* ---------- people ---------- */
-  function newCust(kind) {
-    const items = Array.from({ length: K.irand(2, 4) }, () => { const [n, p, c] = K.pick(ITEMS); return { n, p, c, scanned: false }; });
-    items.forEach((it, i) => { it.x = 330 + i * 92 + K.rand(-8, 8); it.y = 560 + K.rand(-8, 8); });
-    return { look: randomPerson(), kind, items, walk: 0, phase: 'in', pt: 0, patience: Math.max(14, 24 - night), lookT: 0, asked: false, answered: false };
+  if (p.beard === 'mustache' || p.beard === 'full') { gr.fillStyle = sh(p.hair, p.beard === 'full' ? -.05 : 0); gr.beginPath(); gr.moveTo(-16, 23); gr.quadraticCurveTo(-8, 13, 0, 17); gr.quadraticCurveTo(8, 13, 16, 23); gr.quadraticCurveTo(0, 20, -16, 23); gr.fill(); }
+  if (p.glasses) {
+    gr.strokeStyle = '#141414'; gr.lineWidth = 2.6; gr.fillStyle = 'rgba(190,215,255,.13)';
+    for (const k of [-1, 1]) { gr.beginPath(); gr.roundRect(k * 16 - 12, -14, 24, 17, 5); gr.fill(); gr.stroke(); }
+    gr.beginPath(); gr.moveTo(-4, -8); gr.lineTo(4, -8); gr.stroke();
+    gr.strokeStyle = 'rgba(255,255,255,.35)'; gr.lineWidth = 2; gr.beginPath(); gr.moveTo(-24, -11); gr.lineTo(-18, -3); gr.moveTo(8, -11); gr.lineTo(14, -3); gr.stroke();
   }
-  const ITEM_HIT = (it, x, y) => x > it.x - 38 && x < it.x + 38 && y > it.y - 34 && y < it.y + 34;
-
-  /* ---------- input ---------- */
-  const B = { look: { x: 30, y: 640, w: 190, h: 64, t: 'Look down' }, lock: { x: 232, y: 640, w: 190, h: 64, t: 'Lock door' }, alarm: { x: 1060, y: 640, w: 190, h: 64, t: 'Alarm' }, rules: { x: 40, y: 330, w: 150, h: 150 }, phone: { x: 60, y: 150, w: 110, h: 130 } };
-  const inB = (b, x, y) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
-  function act(k, arg) {
-    if (deadT || ended) return;
-    if (noteOpen) { if (k === 'note') { noteOpen = false; K.sfx(400, .05, 'triangle', .05); } return; }
-    if (dlg) { if (k === 'opt') { const d = dlg; dlg = null; d.pick(arg); } return; }
-    if (k === 'rules') { view = view === 'rules' ? null : 'rules'; return; }
-    if (view) { view = null; return; }
-    if (k === 'look') { lookDown = !lookDown; K.sfx(lookDown ? 300 : 500, .06, 'triangle', .05); }
-    if (k === 'lock') { locked = !locked; K.sfx(locked ? 200 : 260, .12, 'square', .1); K.noise(.1, .2, 1200); if (!locked && flick && flick.state === 'knock') strike('You unlocked the door while it was still knocking'); }
-    if (k === 'alarm') { K.sfx(600, .4, 'square', .1); K.sfx(800, .4, 'square', .1, 0, .4); if (cctv && cctv.state === 'on') { cctv = null; K.add(2); say('The alarm blares. When you check the camera again, the aisle is empty.'); } else { K.add(-1); say('False alarm. The manager won\'t like that.'); } }
-    if (k === 'phone' && phone && phone.state === 'ring') {
-      phone.state = 'done';
-      if (forbidden()) { strike('You answered the phone between 2 and 3'); say('"...I can see you. You\'re holding the phone right now."', 4); }
-      else { K.add(1); say(K.pick(['"Manager here. Just checking you\'re reading the rules. All of them."', '"It\'s me. Don\'t let anyone in after the lights go funny, okay?"', '"Hey. If someone asks for pump four... you know what to do."'])); }
-    }
-    if (k === 'item' && cust && cust.phase === 'at' && !lookDown) {
-      const it = arg; if (it.scanned) return; it.scanned = true; beep();
-      if (cust.kind === 'noreflect') { strike('You served a customer with no reflection'); cust.phase = 'out'; cust.pt = 0; return; }
-      if (cust.items.every(i => i.scanned)) { const tot = cust.items.reduce((a, i) => a + i.p, 0); K.add(1); served++; if (served % 3 === 0) K.coin(1); say(`Total $${tot.toFixed(2)}. "Thanks. Have a good one."`, 2.4); K.sfx(1200, .1, 'triangle', .06, 0, .1); cust.phase = 'out'; cust.pt = 0; }
-    }
+}
+function hairBack(gr, p) {
+  gr.fillStyle = sh(p.hair, -.15);
+  if (p.hs === 'long') { gr.beginPath(); gr.moveTo(-48, -20); gr.quadraticCurveTo(-60, 60, -50, 92); gr.lineTo(50, 92); gr.quadraticCurveTo(60, 60, 48, -20); gr.fill(); }
+  if (p.hs === 'bob') { gr.beginPath(); gr.roundRect(-52, -30, 104, 74, 24); gr.fill(); }
+  if (p.top === 'hoodie' && p.hood) { gr.fillStyle = sh(p.c1, -.2); gr.beginPath(); gr.ellipse(0, 4, 58, 70, 0, 0, 7); gr.fill(); }
+}
+function hairFront(gr, p) {
+  const c = p.hair; gr.fillStyle = c;
+  if (p.hs === 'short' || p.hs === 'bun' || p.hs === 'long' || p.hs === 'bob') {
+    gr.beginPath(); gr.moveTo(-43, 0); gr.quadraticCurveTo(-50, -58, 0, -58); gr.quadraticCurveTo(50, -58, 43, 0); gr.lineTo(38, -18);
+    if (p.hs === 'bob') { gr.lineTo(38, -20); gr.quadraticCurveTo(0, -30, -38, -20); }
+    else { gr.quadraticCurveTo(14, -42, -6, -36); gr.quadraticCurveTo(-28, -32, -38, -16); }
+    gr.closePath(); gr.fill();
+    if (p.hs === 'bun') { gr.beginPath(); gr.arc(0, -60, 17, 0, 7); gr.fill(); }
+    if (p.hs === 'long') { for (const k of [-1, 1]) { gr.beginPath(); gr.moveTo(k * 43, -6); gr.quadraticCurveTo(k * 50, 40, k * 44, 80); gr.lineTo(k * 34, 80); gr.quadraticCurveTo(k * 38, 30, k * 36, -14); gr.fill(); } }
+  } else if (p.hs === 'curly') { for (let a = Math.PI * 1.05; a < Math.PI * 1.98; a += .2) { gr.beginPath(); gr.arc(Math.cos(a) * 40, Math.sin(a) * 46 - 6, 15, 0, 7); gr.fill(); } }
+  else if (p.hs === 'buzz') { gr.globalAlpha *= .75; gr.beginPath(); gr.moveTo(-42, -8); gr.quadraticCurveTo(-44, -56, 0, -55); gr.quadraticCurveTo(44, -56, 42, -8); gr.quadraticCurveTo(0, -40, -42, -8); gr.fill(); gr.globalAlpha /= .75; }
+  else if (p.hs === 'bald') { for (const k of [-1, 1]) { gr.beginPath(); gr.moveTo(k * 42, 6); gr.quadraticCurveTo(k * 46, -26, k * 32, -38); gr.lineTo(k * 30, -22); gr.quadraticCurveTo(k * 36, -8, k * 36, 8); gr.fill(); } gr.fillStyle = 'rgba(255,255,255,.18)'; gr.beginPath(); gr.ellipse(-10, -40, 14, 7, -.3, 0, 7); gr.fill(); }
+  // sheen
+  if (p.hs !== 'bald') { gr.strokeStyle = 'rgba(255,255,255,.12)'; gr.lineWidth = 3; gr.beginPath(); gr.arc(-6, -10, 44, Math.PI * 1.25, Math.PI * 1.45); gr.stroke(); }
+  if (p.hat === 'cap' || p.hat === 'trucker') {
+    const hc = p.hatC; gr.fillStyle = hc; gr.beginPath(); gr.ellipse(0, -28, 46, 36, 0, Math.PI, 0); gr.fill();
+    if (p.hat === 'trucker') { gr.fillStyle = '#ece6d8'; gr.beginPath(); gr.ellipse(0, -30, 30, 32, 0, Math.PI, 0); gr.fill(); gr.fillStyle = hc; gr.fillRect(-14, -50, 28, 10); }
+    gr.fillStyle = sh(hc, -.35); gr.beginPath(); gr.ellipse(0, -27, 48, 11, 0, 0, Math.PI); gr.fill();
+    gr.fillStyle = 'rgba(0,0,0,.2)'; gr.beginPath(); gr.ellipse(0, -14, 40, 9, 0, 0, Math.PI); gr.fill();
   }
-  GAME.down = (x, y) => {
-    if (noteOpen) return act('note');
-    if (dlg) { dlg.opts.forEach((o, i) => { if (inB(dlgBtn(i), x, y)) act('opt', i); }); return; }
-    if (view) return act('close');
-    for (const k of ['look', 'lock', 'alarm', 'rules', 'phone']) if (inB(B[k], x, y)) return act(k);
-    if (cust) for (const it of cust.items) if (ITEM_HIT(it, x, y)) return act('item', it);
-  };
-  GAME.move = (x, y) => { hover = null; for (const k of ['look', 'lock', 'alarm', 'rules', 'phone']) if (inB(B[k], x, y)) hover = k; if (cust && !hover) for (const it of cust.items) if (ITEM_HIT(it, x, y)) hover = it; };
-  GAME.key = (c, d) => {
-    if (!d) return;
-    if (c === 'Space' || c === 'Enter') { if (noteOpen) return act('note'); if (ended && night >= 5) return; if (ended) return nextNight(); if (cust && cust.phase === 'at') { const it = cust.items.find(i => !i.scanned); if (it) act('item', it); } }
-    if (c === 'KeyL') act('look'); if (c === 'KeyD') act('lock'); if (c === 'KeyA') act('alarm'); if (c === 'KeyR') act('rules'); if (c === 'KeyP') act('phone');
-    if (dlg && (c === 'Digit1' || c === 'Digit2')) act('opt', c === 'Digit1' ? 0 : 1);
-  };
-  const dlgBtn = i => ({ x: 340 + i * 310, y: 380, w: 290, h: 64 });
-  function nextNight() { if (night < 5) { ended = 0; startNight(night + 1); } }
+  if (p.hat === 'beanie') { gr.fillStyle = p.hatC; gr.beginPath(); gr.moveTo(-45, -18); gr.quadraticCurveTo(-46, -70, 0, -70); gr.quadraticCurveTo(46, -70, 45, -18); gr.fill(); gr.fillStyle = sh(p.hatC, -.2); gr.fillRect(-46, -30, 92, 14); }
+  if (p.hat === 'deputy') { gr.fillStyle = p.hatC; gr.beginPath(); gr.ellipse(0, -30, 70, 12, 0, 0, 7); gr.fill(); gr.beginPath(); gr.moveTo(-30, -32); gr.quadraticCurveTo(-28, -72, 0, -74); gr.quadraticCurveTo(28, -72, 30, -32); gr.fill(); gr.fillStyle = sh(p.hatC, -.35); gr.fillRect(-30, -40, 60, 7); }
+}
+function torsoDetail(gr, p, shY, shW, hipY) {
+  const c1 = p.c1, c2 = p.c2, top = p.top;
+  if (top === 'jacket' || top === 'raincoat' || top === 'suit') {
+    gr.fillStyle = c2; gr.beginPath(); gr.moveTo(-30, shY); gr.lineTo(0, shY + (top === 'suit' ? 110 : 70)); gr.lineTo(30, shY); gr.fill();
+    if (top === 'suit') { gr.fillStyle = '#3a1218'; gr.beginPath(); gr.moveTo(-6, shY + 8); gr.lineTo(6, shY + 8); gr.lineTo(9, shY + 100); gr.lineTo(0, shY + 114); gr.lineTo(-9, shY + 100); gr.fill(); }
+    gr.strokeStyle = sh(c1, -.4); gr.lineWidth = 4; gr.beginPath(); gr.moveTo(0, shY + (top === 'suit' ? 110 : 70)); gr.lineTo(0, hipY + 20); gr.stroke();
+    gr.fillStyle = sh(c1, -.18); for (const k of [-1, 1]) { gr.beginPath(); gr.moveTo(k * 32, shY - 4); gr.lineTo(k * 4, shY + (top === 'suit' ? 100 : 66)); gr.lineTo(k * 40, shY + 40); gr.fill(); }
+    if (top === 'raincoat') { gr.fillStyle = sh(c1, -.3); for (let i = 0; i < 3; i++) for (const k of [-1, 1]) { gr.beginPath(); gr.arc(k * 18, shY + 95 + i * 40, 4, 0, 7); gr.fill(); } gr.fillRect(-70, hipY - 20, 140, 12); }
+  } else if (top === 'hoodie') {
+    gr.fillStyle = sh(c1, -.25); gr.beginPath(); gr.ellipse(0, shY + 4, 46, 18, 0, 0, Math.PI); gr.fill();
+    gr.strokeStyle = c2; gr.lineWidth = 3; gr.beginPath(); gr.moveTo(-12, shY + 12); gr.lineTo(-14, shY + 70); gr.moveTo(12, shY + 12); gr.lineTo(14, shY + 70); gr.stroke();
+    gr.strokeStyle = sh(c1, -.35); gr.lineWidth = 3; gr.beginPath(); gr.roundRect(-46, hipY - 70, 92, 56, 10); gr.stroke();
+  } else if (top === 'flannel') {
+    gr.globalAlpha *= .55; gr.fillStyle = c2;
+    for (let x = -100; x < 100; x += 34) gr.fillRect(x, shY - 10, 9, hipY - shY + 40);
+    for (let y = shY; y < hipY + 30; y += 34) gr.fillRect(-100, y, 200, 8);
+    gr.globalAlpha /= .55; gr.fillStyle = sh(c1, .15); gr.globalAlpha *= .25; for (let x = -100; x < 100; x += 34) gr.fillRect(x + 16, shY - 10, 3, hipY - shY + 40); gr.globalAlpha /= .25;
+    gr.fillStyle = sh(c1, -.3); for (const k of [-1, 1]) { gr.beginPath(); gr.moveTo(0, shY + 26); gr.lineTo(k * 30, shY - 4); gr.lineTo(k * 34, shY + 14); gr.fill(); }
+    gr.fillStyle = '#ddd'; for (let i = 0; i < 4; i++) { gr.beginPath(); gr.arc(0, shY + 40 + i * 36, 2.5, 0, 7); gr.fill(); }
+  } else if (top === 'scrubs') {
+    gr.fillStyle = c2; gr.beginPath(); gr.moveTo(-26, shY); gr.lineTo(0, shY + 46); gr.lineTo(26, shY); gr.fill();
+    gr.strokeStyle = sh(c1, -.3); gr.lineWidth = 3; gr.strokeRect(22, shY + 60, 30, 34);
+    gr.fillStyle = '#e8e8f0'; gr.fillRect(28, shY + 54, 4, 14);
+  } else if (top === 'vest') {
+    gr.fillStyle = c2; gr.fillRect(-26, shY - 6, 52, hipY - shY + 30);
+    gr.strokeStyle = sh(c1, -.35); gr.lineWidth = 3; for (let y = shY + 30; y < hipY; y += 30) { gr.beginPath(); gr.moveTo(-90, y); gr.lineTo(-26, y + 4); gr.moveTo(26, y + 4); gr.lineTo(90, y); gr.stroke(); }
+    gr.fillStyle = sh(c2, -.3); gr.beginPath(); gr.ellipse(0, shY, 24, 9, 0, 0, Math.PI); gr.fill();
+  } else if (top === 'polo' || top === 'uniform') {
+    gr.fillStyle = sh(c1, .1); for (const k of [-1, 1]) { gr.beginPath(); gr.moveTo(0, shY + 4); gr.lineTo(k * 34, shY - 6); gr.lineTo(k * 26, shY + 22); gr.fill(); }
+    gr.fillStyle = sh(c1, -.35); for (let i = 0; i < (top === 'uniform' ? 5 : 3); i++) { gr.beginPath(); gr.arc(0, shY + 24 + i * 22, 2.6, 0, 7); gr.fill(); }
+    if (top === 'uniform') { gr.strokeStyle = sh(c1, -.3); gr.lineWidth = 3; gr.strokeRect(-62, shY + 44, 36, 30); gr.strokeRect(26, shY + 44, 36, 30); gr.fillStyle = '#e0b83a'; gr.beginPath(); for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, r = i % 2 ? 6 : 14; gr.lineTo(-44 + Math.cos(a) * r, shY + 34 + Math.sin(a) * r); } gr.fill(); }
+    if (p.tag) { gr.fillStyle = '#f2efe6'; gr.fillRect(22, shY + 40, 52, 22); gr.fillStyle = '#1a3a6a'; gr.font = 'bold 16px Arial'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText(p.tag, 48, shY + 52); }
+  } else if (top === 'tee') {
+    gr.fillStyle = sh(c1, -.3); gr.beginPath(); gr.ellipse(0, shY + 2, 24, 10, 0, 0, Math.PI); gr.fill();
+    gr.fillStyle = c2; gr.beginPath(); gr.arc(0, shY + 80, 22, 0, 7); gr.fill(); gr.fillStyle = c1; gr.beginPath(); gr.arc(0, shY + 80, 10, 0, 7); gr.fill();
+  }
+}
+// feet at (x, y); s scales a 560-unit tall adult. o: walk (phase), blink, look, smile, open, tilt, wrong, sil (colour), still
+function man(gr, p, x, y, s, o = {}) {
+  const k = p.kid ? .62 : (p.tall || 1), bw = p.build || 1, sil = o.sil;
+  gr.save(); gr.translate(x, y); gr.scale(s * k, s * k);
+  const walking = o.walk != null, wk = o.walk || 0, step = walking ? Math.sin(wk) : 0, bob = walking ? Math.abs(Math.cos(wk)) * 8 : 0;
+  const br = o.still ? 0 : Math.sin(K.t * 1.7 + (p.seed || 0)), sway = o.still ? 0 : Math.sin(K.t * .6 + (p.seed || 0)) * 3;
+  gr.translate(sway, -bob);
+  const hipY = -262, shY = -428 + br * 2.2, shW = 86 * bw, hipW = 64 * bw;
+  const col = c => sil || c;
+  // legs and shoes
+  for (const sd of [-1, 1]) {
+    const sw = step * sd * 26; gr.fillStyle = col(sh(p.pants, sd > 0 ? -.25 : 0));
+    gr.beginPath(); gr.moveTo(sd * 4, hipY); gr.lineTo(sd * (hipW - 2), hipY); gr.lineTo(sd * 36 + sw + sd * 20, -16); gr.lineTo(sd * 36 + sw - sd * 22, -16); gr.closePath(); gr.fill();
+    gr.fillStyle = col('#141210'); gr.beginPath(); gr.ellipse(sd * 36 + sw, -10, 30, 13, 0, 0, 7); gr.fill();
+  }
+  // arms behind the torso edge
+  const swing = walking ? Math.sin(wk) * 16 : 0;
+  gr.lineCap = 'round';
+  for (const sd of [-1, 1]) {
+    gr.strokeStyle = col(sh(p.c1, sd > 0 ? -.38 : -.12)); gr.lineWidth = 34 * Math.min(1.15, bw);
+    gr.beginPath(); gr.moveTo(sd * (shW - 16), shY + 18); gr.quadraticCurveTo(sd * (shW + 8), shY + 100, sd * (shW + 2) - sd * swing * .3, -250 - swing * sd); gr.stroke();
+    gr.fillStyle = col(sh(p.skin, sd > 0 ? -.22 : -.05)); gr.beginPath(); gr.arc(sd * (shW + 2) - sd * swing * .3, -238 - swing * sd, 16, 0, 7); gr.fill();
+  }
+  // torso
+  gr.beginPath(); gr.moveTo(-shW + 12, shY); gr.quadraticCurveTo(-shW - 4, shY + 8, -shW, shY + 54); gr.lineTo(-hipW, hipY + 22); gr.lineTo(hipW, hipY + 22); gr.lineTo(shW, shY + 54); gr.quadraticCurveTo(shW + 4, shY + 8, shW - 12, shY); gr.closePath();
+  if (sil) { gr.fillStyle = sil; gr.fill(); }
+  else {
+    const tg = gr.createLinearGradient(-shW, 0, shW, 0); tg.addColorStop(0, sh(p.c1, .1)); tg.addColorStop(.4, p.c1); tg.addColorStop(1, sh(p.c1, -.42));
+    gr.fillStyle = tg; gr.fill(); gr.save(); gr.clip(); torsoDetail(gr, p, shY, shW, hipY);
+    const vg = gr.createLinearGradient(0, shY, 0, hipY + 22); vg.addColorStop(0, 'rgba(255,255,255,.07)'); vg.addColorStop(.25, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.32)'); gr.fillStyle = vg; gr.fillRect(-120, shY - 10, 240, hipY - shY + 40);
+    gr.restore();
+  }
+  // neck
+  gr.fillStyle = col(sh(p.skin, -.28)); gr.fillRect(-17, shY - 34, 34, 40);
+  // head
+  gr.save(); gr.translate(0, -500 + br * 1.5); gr.rotate(o.tilt || 0); if (p.kid) gr.scale(1.3, 1.3);
+  if (sil) { gr.fillStyle = sil; gr.beginPath(); gr.ellipse(0, 0, 43, 54, 0, 0, 7); gr.fill(); if (p.hs === 'long' || p.hat) { gr.beginPath(); gr.ellipse(0, p.hat ? -26 : 10, p.hat ? 52 : 48, p.hat ? 28 : 60, 0, 0, 7); gr.fill(); } if (o.glint) { gr.fillStyle = o.glint; for (const k of [-1, 1]) { gr.beginPath(); gr.arc(k * 15, -5, 2.4, 0, 7); gr.fill(); } } }
+  else {
+    const skin = o.wrong ? mix(p.skin, '#c8ccc4', .55) : p.skin;
+    hairBack(gr, p); face(gr, p, o, skin); hairFront(gr, p);
+    const hg = gr.createLinearGradient(0, -60, 0, 60); hg.addColorStop(0, 'rgba(255,255,240,.08)'); hg.addColorStop(1, 'rgba(0,0,0,.1)'); gr.fillStyle = hg; gr.beginPath(); gr.ellipse(0, 0, 44, 56, 0, 0, 7); gr.fill();
+  }
+  gr.restore(); gr.restore();
+}
+// the jump-scare face: pale, hollow-eyed, fills the screen. No gore, just wrong.
+function scareFace(gr, x, y, s, k) {
+  gr.save(); gr.translate(x + K.rand(-6, 6) * k, y + K.rand(-6, 6) * k); gr.scale(s, s);
+  gr.fillStyle = '#0b0b0d'; gr.beginPath(); gr.ellipse(0, -10, 150, 200, 0, 0, 7); gr.fill();
+  const fg = gr.createRadialGradient(-20, -40, 10, 0, 0, 170); fg.addColorStop(0, '#f2efe8'); fg.addColorStop(.6, '#c9c6bd'); fg.addColorStop(1, '#5a5a58');
+  gr.fillStyle = fg; gr.beginPath(); gr.ellipse(0, 10, 112, 160, 0, 0, 7); gr.fill();
+  gr.fillStyle = '#0b0b0d'; for (const sd of [-1, 1]) { gr.beginPath(); gr.moveTo(sd * 20, -150); gr.quadraticCurveTo(sd * 120, -120, sd * 128, 60); gr.lineTo(sd * 150, 60); gr.quadraticCurveTo(sd * 150, -170, sd * 10, -168); gr.fill(); }
+  for (const sd of [-1, 1]) {
+    const eg = gr.createRadialGradient(sd * 42, -10, 4, sd * 42, -10, 44); eg.addColorStop(0, '#000'); eg.addColorStop(.7, '#050505'); eg.addColorStop(1, 'rgba(40,40,40,0)');
+    gr.fillStyle = eg; gr.beginPath(); gr.ellipse(sd * 42, -10, 40, 50 + k * 8, sd * .15, 0, 7); gr.fill();
+    gr.fillStyle = '#fff'; gr.beginPath(); gr.arc(sd * 40, -8, 3.2, 0, 7); gr.fill();
+  }
+  const mg = gr.createRadialGradient(0, 95, 4, 0, 95, 60); mg.addColorStop(0, '#000'); mg.addColorStop(.8, '#0a0505'); mg.addColorStop(1, 'rgba(30,20,20,0)');
+  gr.fillStyle = mg; gr.beginPath(); gr.ellipse(0, 95, 30 + k * 10, 46 + k * 26, 0, 0, 7); gr.fill();
+  gr.restore();
+}
 
-  let botT = 0;
-  GAME.bot = dt => {
-    if (ended) { botT += dt; if (botT > 2) { botT = 0; ended = 0; startNight(night % 5 + 1); } return; }
-    botT += dt; if (botT < .5) return; botT = 0;
-    const smart = Math.random() < .9;
-    if (dlg) return act('opt', smart ? dlg.right : 1 - dlg.right);
-    if (flick && flick.state === 'window' && !locked && smart) return act('lock');
-    if (flick && flick.state === 'gone' && locked) return act('lock');
-    if (!flick && locked) return act('lock');
-    if (phone && phone.state === 'ring' && !forbidden() && Math.random() < .3) return act('phone');
-    if (cctv && cctv.state === 'on' && smart) return act('alarm');
-    if (cust && cust.phase === 'at') {
-      if (cust.kind === 'noreflect') { if (!lookDown && smart) act('look'); return; }
-      if (lookDown) return act('look');
-      const it = cust.items.find(i => !i.scanned); if (it) act('item', it);
-    } else if (lookDown && (!cust || cust.phase === 'gone')) act('look');
-  };
+/* ---------- the store: baked once into offscreen canvases ---------- */
+const WIN = { x0: -2.0, x1: 1.5, y0: .95, y1: 2.75 }, DOORX = [1.85, 3.25], DOORY = 2.4;
+let bgC = null, fgC = null, fogC = null, grainC = null, camC = null;
+const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+const poly = (gr, pts) => { gr.beginPath(); pts.forEach((p, i) => i ? gr.lineTo(p[0], p[1]) : gr.moveTo(p[0], p[1])); gr.closePath(); };
+const quad = (gr, a, b, c, d, fill) => { poly(gr, [a, b, c, d]); gr.fillStyle = fill; gr.fill(); };
+// products drawn small on shelves (screen space, w = width in px)
+const PCOL = ['#d23a2a', '#e8b23a', '#2a7ad2', '#3aa04a', '#c23ad2', '#e8702a', '#f0e04a', '#2ac0c0', '#8a2a4a', '#f2f2f2'];
+function shelfRow(gr, xa, xb, y, h, seed, kind) {
+  let x = xa, i = seed;
+  while (x < xb - 4) {
+    const c = PCOL[(i * 7 + seed) % PCOL.length], typ = kind || ['bag', 'box', 'can', 'bag', 'bottle'][(i * 3 + seed) % 5];
+    const w = typ === 'bag' ? h * .8 : typ === 'box' ? h * .62 : h * .3, hh = typ === 'bag' ? h * .92 : typ === 'box' ? h * .95 : typ === 'can' ? h * .5 : h * .85;
+    if (x + w > xb) break;
+    if (typ === 'bag') { gr.fillStyle = c; gr.beginPath(); gr.moveTo(x, y); gr.lineTo(x + w * .08, y - hh); gr.lineTo(x + w * .92, y - hh); gr.lineTo(x + w, y); gr.fill(); gr.fillStyle = 'rgba(255,255,255,.55)'; gr.fillRect(x + w * .2, y - hh * .62, w * .6, hh * .2); gr.fillStyle = 'rgba(255,255,255,.18)'; gr.fillRect(x + w * .12, y - hh, w * .1, hh); }
+    else if (typ === 'box') { gr.fillStyle = c; gr.fillRect(x, y - hh, w, hh); gr.fillStyle = 'rgba(255,255,255,.4)'; gr.fillRect(x + 1, y - hh * .7, w - 2, hh * .18); gr.fillStyle = 'rgba(0,0,0,.25)'; gr.fillRect(x + w - 2, y - hh, 2, hh); }
+    else if (typ === 'can') { for (let r = 0; r < 2; r++) { gr.fillStyle = c; gr.fillRect(x, y - hh * (r + 1), w, hh - 1); gr.fillStyle = 'rgba(255,255,255,.35)'; gr.fillRect(x + w * .2, y - hh * (r + 1), w * .2, hh - 1); } }
+    else { gr.fillStyle = c; gr.globalAlpha = .85; gr.fillRect(x, y - hh * .75, w, hh * .75); gr.fillRect(x + w * .3, y - hh, w * .4, hh * .3); gr.globalAlpha = 1; gr.fillStyle = 'rgba(255,255,255,.5)'; gr.fillRect(x, y - hh * .5, w, hh * .15); }
+    x += w + Math.max(1, h * .06); i++;
+  }
+}
+function bakeBg() {
+  const c = mk(W, H), gr = c.getContext('2d');
+  // ceiling
+  let cg = gr.createLinearGradient(0, 0, 0, 125); cg.addColorStop(0, '#2a2d2c'); cg.addColorStop(1, '#4a4c46');
+  gr.fillStyle = cg; gr.fillRect(0, 0, W, 130);
+  gr.strokeStyle = 'rgba(0,0,0,.25)'; gr.lineWidth = 1.5;
+  for (let x = -2.3; x <= 4.7; x += .7) { const a = P(x, 3, 1.2), b = P(x, 3, ZB); gr.beginPath(); gr.moveTo(a[0], a[1]); gr.lineTo(b[0], b[1]); gr.stroke(); }
+  for (let z = 1.6; z <= ZB; z += .6) { const a = P(-2.3, 3, z), b = P(4.6, 3, z); gr.beginPath(); gr.moveTo(a[0], a[1]); gr.lineTo(b[0], b[1]); gr.stroke(); }
+  // back wall (the store front)
+  const bw0 = P(-2.3, 3, ZB), bw1 = P(4.6, 0, ZB);
+  cg = gr.createLinearGradient(0, bw0[1], 0, bw1[1]); cg.addColorStop(0, '#6a6a5e'); cg.addColorStop(1, '#4a4a42');
+  gr.fillStyle = cg; gr.fillRect(bw0[0], bw0[1], bw1[0] - bw0[0], bw1[1] - bw0[1]);
+  // header band with the store name
+  const hb0 = P(-2.3, 2.98, ZB), hb1 = P(4.6, 2.8, ZB);
+  gr.fillStyle = '#7a1c1c'; gr.fillRect(hb0[0], hb0[1], hb1[0] - hb0[0], hb1[1] - hb0[1]); gr.fillStyle = '#e8d8b0'; gr.fillRect(hb0[0], hb1[1] - 2, hb1[0] - hb0[0], 2);
+  // floor strip
+  const fl0 = P(-2.3, 0, ZB); cg = gr.createLinearGradient(0, fl0[1], 0, 520); cg.addColorStop(0, '#5a5a52'); cg.addColorStop(1, '#3a3a36');
+  gr.fillStyle = cg; gr.fillRect(0, fl0[1], W, 120);
+  for (let z = 3.6; z < ZB; z += .5) for (let x = -2.3; x < 4.6; x += .5) { if (((x + 2.3) / .5 + (z - 3.6) / .5 | 0) % 2) continue; poly(gr, [P(x, 0, z), P(x + .5, 0, z), P(x + .5, 0, z + .5), P(x, 0, z + .5)]); gr.fillStyle = 'rgba(230,230,210,.07)'; gr.fill(); }
+  // left wall + coolers
+  quad(gr, P(-2.3, 3, 1), P(-2.3, 3, ZB), P(-2.3, 0, ZB), P(-2.3, 0, 1), '#3c3e3a');
+  quad(gr, P(-2.3, 2.75, 2.1), P(-2.3, 2.75, 5.1), P(-2.3, 2.25, 5.1), P(-2.3, 2.25, 2.1), '#1c3a6a');
+  for (let i = 0; i < 4; i++) {
+    const z0 = 2.2 + i * .72, z1 = z0 + .68;
+    quad(gr, P(-2.3, 2.2, z0), P(-2.3, 2.2, z1), P(-2.3, .05, z1), P(-2.3, .05, z0), '#9ab8c8');
+    for (let s = 0; s < 5; s++) {
+      const y = .25 + s * .4, a = P(-2.3, y, z0 + .04), b = P(-2.3, y, z1 - .04);
+      gr.strokeStyle = '#6a7a80'; gr.lineWidth = 2; gr.beginPath(); gr.moveTo(a[0], a[1]); gr.lineTo(b[0], b[1]); gr.stroke();
+      for (let k = 0; k < 6; k++) { const zz = z0 + .06 + k * .1, p0 = P(-2.3, y, zz), p1 = P(-2.3, y + .3, zz), w = 60 / zz; gr.fillStyle = PCOL[(i * 11 + s * 5 + k * 3) % 10]; gr.fillRect(p0[0] - w * .5, p1[1], w, (p0[1] - p1[1]) * .95); gr.fillStyle = 'rgba(255,255,255,.35)'; gr.fillRect(p0[0] - w * .3, p1[1] + (p0[1] - p1[1]) * .4, w * .6, (p0[1] - p1[1]) * .14); }
+    }
+    // frame + handle
+    gr.strokeStyle = '#2a2c2e'; gr.lineWidth = 7; poly(gr, [P(-2.3, 2.2, z0), P(-2.3, 2.2, z1), P(-2.3, .05, z1), P(-2.3, .05, z0)]); gr.stroke();
+    const h0 = P(-2.3, 1.5, z1 - .08), h1 = P(-2.3, .8, z1 - .08); gr.strokeStyle = '#c8ccd0'; gr.lineWidth = 4; gr.beginPath(); gr.moveTo(h0[0], h0[1]); gr.lineTo(h1[0], h1[1]); gr.stroke();
+    // glass sheen
+    gr.fillStyle = 'rgba(255,255,255,.08)'; poly(gr, [P(-2.3, 2.2, z0 + .1), P(-2.3, 2.2, z0 + .25), P(-2.3, .05, z0 + .45), P(-2.3, .05, z0 + .3)]); gr.fill();
+  }
+  // the window and door openings are drawn later; frame them here
+  const w0 = P(WIN.x0, WIN.y1, ZB), w1 = P(WIN.x1, WIN.y0, ZB);
+  gr.fillStyle = '#000'; gr.fillRect(w0[0], w0[1], w1[0] - w0[0], w1[1] - w0[1]);
+  const d0 = P(DOORX[0], DOORY, ZB), d1 = P(DOORX[1], 0, ZB);
+  gr.fillStyle = '#000'; gr.fillRect(d0[0], d0[1], d1[0] - d0[0], d1[1] - d0[1]);
+  // right of the door: ice chest and a poster
+  const ic0 = P(3.45, .9, 5.05), ic1 = P(4.45, 0, 5.05);
+  gr.fillStyle = '#d8dce0'; gr.fillRect(ic0[0], ic0[1], ic1[0] - ic0[0], ic1[1] - ic0[1]); gr.fillStyle = '#2a6ab0'; gr.fillRect(ic0[0] + 6, ic0[1] + 10, ic1[0] - ic0[0] - 12, 22);
+  gr.fillStyle = '#fff'; gr.font = 'bold 18px Arial'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText('ICE', (ic0[0] + ic1[0]) / 2, ic0[1] + 22);
+  const po0 = P(3.6, 2.3, ZB), po1 = P(4.3, 1.4, ZB); gr.fillStyle = '#c8b890'; gr.fillRect(po0[0], po0[1], po1[0] - po0[0], po1[1] - po0[1]); gr.fillStyle = '#2a2a2a'; gr.font = 'bold 11px Arial'; gr.fillText('MISSING', (po0[0] + po1[0]) / 2, po0[1] + 12); gr.fillStyle = '#555'; gr.fillRect(po0[0] + 18, po0[1] + 22, po1[0] - po0[0] - 36, 40); gr.fillStyle = '#333'; gr.fillRect(po0[0] + 10, po1[1] - 18, po1[0] - po0[0] - 20, 4); gr.fillRect(po0[0] + 14, po1[1] - 10, po1[0] - po0[0] - 28, 4);
+  // right wall strip: cigarette rack and lottery tickets behind the counter
+  quad(gr, P(4.6, 3, 4.0), P(4.6, 3, ZB), P(4.6, 0, ZB), P(4.6, 0, 4.0), '#34322c');
+  quad(gr, P(4.6, 2.7, 4.05), P(4.6, 2.7, 5.1), P(4.6, 1.25, 5.1), P(4.6, 1.25, 4.05), '#1e1a16');
+  for (let r = 0; r < 7; r++) for (let k = 0; k < 9; k++) {
+    const z = 4.08 + k * .114, y = 2.62 - r * .2, a = P(4.6, y, z), b = P(4.6, y - .16, z + .1);
+    gr.fillStyle = ['#e8e8e8', '#c82a2a', '#2a4ab0', '#e8c83a', '#2a8a4a', '#f0f0f0', '#8a2a2a'][(r * 3 + k) % 7]; gr.fillRect(a[0], a[1], b[0] - a[0] - 1, b[1] - a[1]);
+    gr.fillStyle = 'rgba(0,0,0,.3)'; gr.fillRect(a[0], a[1] + (b[1] - a[1]) * .6, b[0] - a[0] - 1, (b[1] - a[1]) * .4);
+  }
+  quad(gr, P(4.6, 1.2, 4.05), P(4.6, 1.2, 5.1), P(4.6, .85, 5.1), P(4.6, .85, 4.05), '#0e2a4a');
+  for (let k = 0; k < 8; k++) { const z = 4.1 + k * .125, a = P(4.6, 1.17, z), b = P(4.6, .88, z + .11); gr.fillStyle = ['#ff5a8a', '#5ad0ff', '#ffd23f', '#7aff6a'][k % 4]; gr.fillRect(a[0], a[1], b[0] - a[0] - 1, b[1] - a[1]); }
+  // low shelf under the window
+  const ls0 = P(-2.0, .85, 5.0), ls1 = P(1.6, 0, 5.0); gr.fillStyle = '#2c2e30'; gr.fillRect(ls0[0], ls0[1], ls1[0] - ls0[0], ls1[1] - ls0[1]);
+  for (let s = 0; s < 2; s++) { const y = P(0, .45 + s * .4, 5)[1]; gr.fillStyle = '#7a7e80'; gr.fillRect(ls0[0], y, ls1[0] - ls0[0], 3); shelfRow(gr, ls0[0] + 4, ls1[0] - 4, y, 40 / 5 * 4.2, 3 + s, 'bag'); }
+  // two snack aisles, receding
+  for (const [z, seed] of [[4.4, 2], [3.3, 5]]) {
+    const x0 = -2.2, x1 = -.45, hgt = 1.0;
+    quad(gr, P(x0, hgt, z), P(x1, hgt, z), P(x1, hgt, z + .55), P(x0, hgt, z + .55), '#8a8c86');
+    quad(gr, P(x1, hgt, z), P(x1, hgt, z + .55), P(x1, 0, z + .55), P(x1, 0, z), '#3a3c3e');
+    const f0 = P(x0, hgt, z), f1 = P(x1, 0, z); gr.fillStyle = '#2a2c2e'; gr.fillRect(f0[0], f0[1], f1[0] - f0[0], f1[1] - f0[1]);
+    for (let s = 0; s < 3; s++) { const y = P(0, .02 + s * .33, z)[1], hh = .3 * F / z; gr.fillStyle = '#9a9e9c'; gr.fillRect(f0[0], y, f1[0] - f0[0], 3); gr.fillStyle = '#e8e0a0'; gr.fillRect(f0[0], y + 3, f1[0] - f0[0], 4); shelfRow(gr, f0[0] + 3, f1[0] - 3, y, hh, seed + s * 3); }
+    // end cap sign
+    const e0 = P(x1, hgt + .35, z + .1), e1 = P(x1, hgt + .05, z + .45); gr.fillStyle = '#e8c83a'; poly(gr, [e0, [e1[0], e0[1] + (e1[0] - e0[0]) * .1], e1, [e0[0], e1[1]]]); gr.fill();
+  }
+  return c;
+}
+// the counter in the foreground, with the phone, radio, register and pump console
+const OBJ = { phone: { x: 26, y: 512, w: 150, h: 112 }, radio: { x: 186, y: 520, w: 150, h: 104 }, reg: { x: 846, y: 404, w: 214, h: 226 }, pumps: { x: 1078, y: 508, w: 188, h: 122 }, cam: { x: 64, y: 8, w: 252, h: 182 }, door: { x: 839, y: 184, w: 151, h: 258 } };
+function bakeFg() {
+  const c = mk(W, H), gr = c.getContext('2d');
+  // counter top
+  let g0 = gr.createLinearGradient(0, 486, 0, 720); g0.addColorStop(0, '#8a7a5e'); g0.addColorStop(.15, '#6e5e46'); g0.addColorStop(1, '#3e3226');
+  gr.fillStyle = g0; gr.fillRect(0, 488, W, 232);
+  gr.strokeStyle = 'rgba(0,0,0,.08)'; gr.lineWidth = 2; for (let i = 0; i < 18; i++) { gr.beginPath(); gr.moveTo(0, 500 + i * 13 + i * i * .5); gr.bezierCurveTo(400, 495 + i * 14, 800, 508 + i * 13, W, 498 + i * 14 + i * i * .4); gr.stroke(); }
+  gr.fillStyle = '#b8a88a'; gr.fillRect(0, 484, W, 6); gr.fillStyle = 'rgba(0,0,0,.35)'; gr.fillRect(0, 490, W, 5);
+  // rubber mat
+  gr.fillStyle = '#26282a'; gr.beginPath(); gr.roundRect(352, 528, 486, 106, 10); gr.fill(); gr.strokeStyle = '#3a3c3e'; gr.lineWidth = 2; gr.stroke();
+  gr.fillStyle = 'rgba(255,255,255,.03)'; for (let x = 360; x < 830; x += 12) gr.fillRect(x, 532, 4, 98);
+  // scanner window
+  gr.fillStyle = '#18181a'; gr.beginPath(); gr.roundRect(760, 590, 74, 40, 6); gr.fill(); gr.fillStyle = '#3a0a0a'; gr.fillRect(768, 598, 58, 24);
+  // register
+  const R = OBJ.reg;
+  gr.fillStyle = '#2a2a2c'; gr.fillRect(R.x + 92, R.y + 54, 20, 70);
+  gr.fillStyle = '#1a1a1c'; gr.beginPath(); gr.roundRect(R.x + 30, R.y, 156, 66, 8); gr.fill();
+  let rg = gr.createLinearGradient(0, R.y + 110, 0, R.y + 226); rg.addColorStop(0, '#d8d2c4'); rg.addColorStop(1, '#8a8478');
+  gr.fillStyle = rg; gr.beginPath(); gr.moveTo(R.x + 14, R.y + 120); gr.lineTo(R.x + 200, R.y + 120); gr.lineTo(R.x + 214, R.y + 226); gr.lineTo(R.x, R.y + 226); gr.fill();
+  gr.fillStyle = '#5a564e'; for (let r = 0; r < 4; r++) for (let k = 0; k < 6; k++) { gr.beginPath(); gr.roundRect(R.x + 30 + k * 26 - r * 1, R.y + 132 + r * 18, 20, 13, 3); gr.fill(); }
+  gr.fillStyle = '#c84a3a'; gr.beginPath(); gr.roundRect(R.x + 178, R.y + 150, 22, 30, 3); gr.fill();
+  gr.fillStyle = '#4a4640'; gr.fillRect(R.x + 4, R.y + 206, 206, 6);
+  // phone
+  const Ph = OBJ.phone; gr.fillStyle = '#1a1816'; gr.beginPath(); gr.ellipse(Ph.x + 75, Ph.y + 104, 74, 12, 0, 0, 7); gr.fill();
+  rg = gr.createLinearGradient(0, Ph.y + 30, 0, Ph.y + 108); rg.addColorStop(0, '#d8cfb8'); rg.addColorStop(1, '#8a8270');
+  gr.fillStyle = rg; gr.beginPath(); gr.moveTo(Ph.x + 22, Ph.y + 34); gr.lineTo(Ph.x + 128, Ph.y + 34); gr.lineTo(Ph.x + 148, Ph.y + 104); gr.lineTo(Ph.x + 2, Ph.y + 104); gr.fill();
+  gr.fillStyle = '#4a463e'; for (let i = 0; i < 12; i++) { gr.beginPath(); gr.roundRect(Ph.x + 44 + (i % 3) * 22 - Math.floor(i / 3) * 1.5, Ph.y + 50 + Math.floor(i / 3) * 13, 16, 9, 2); gr.fill(); }
+  // radio
+  const Ra = OBJ.radio; gr.fillStyle = '#1a1410'; gr.beginPath(); gr.ellipse(Ra.x + 75, Ra.y + 100, 72, 10, 0, 0, 7); gr.fill();
+  rg = gr.createLinearGradient(0, Ra.y + 16, 0, Ra.y + 100); rg.addColorStop(0, '#8a5a32'); rg.addColorStop(1, '#4a2e18');
+  gr.fillStyle = rg; gr.beginPath(); gr.roundRect(Ra.x + 4, Ra.y + 18, 142, 82, 14); gr.fill();
+  gr.fillStyle = '#2a1c12'; gr.beginPath(); gr.arc(Ra.x + 44, Ra.y + 60, 28, 0, 7); gr.fill();
+  gr.strokeStyle = '#6a4a2a'; gr.lineWidth = 2; for (let i = -24; i <= 24; i += 6) { gr.beginPath(); gr.moveTo(Ra.x + 20, Ra.y + 60 + i); gr.lineTo(Ra.x + 68, Ra.y + 60 + i); gr.stroke(); }
+  gr.fillStyle = '#c8b890'; gr.beginPath(); gr.arc(Ra.x + 122, Ra.y + 80, 10, 0, 7); gr.fill();
+  gr.strokeStyle = '#9a9a9a'; gr.lineWidth = 3; gr.beginPath(); gr.moveTo(Ra.x + 128, Ra.y + 20); gr.lineTo(Ra.x + 170, Ra.y - 70); gr.stroke();
+  // pump console
+  const Pu = OBJ.pumps; rg = gr.createLinearGradient(0, Pu.y, 0, Pu.y + Pu.h); rg.addColorStop(0, '#5a5e62'); rg.addColorStop(1, '#2a2c30');
+  gr.fillStyle = rg; gr.beginPath(); gr.roundRect(Pu.x, Pu.y, Pu.w, Pu.h, 12); gr.fill();
+  gr.fillStyle = '#d8d8d8'; gr.font = 'bold 15px Arial'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText('PUMP CONTROL', Pu.x + Pu.w / 2, Pu.y + 16);
+  return c;
+}
+function bakeMisc() {
+  // soft fog puff and film grain tiles
+  fogC = mk(128, 128); let gr = fogC.getContext('2d'); const fg = gr.createRadialGradient(64, 64, 4, 64, 64, 64); fg.addColorStop(0, 'rgba(150,160,170,.5)'); fg.addColorStop(1, 'rgba(150,160,170,0)'); gr.fillStyle = fg; gr.fillRect(0, 0, 128, 128);
+  grainC = mk(256, 256); gr = grainC.getContext('2d'); const id = gr.createImageData(256, 256);
+  for (let i = 0; i < id.data.length; i += 4) { const v = Math.random() * 255; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = Math.random() < .5 ? 22 : 0; }
+  gr.putImageData(id, 0, 0);
+  camC = mk(120, 84);
+}
+function bake() { bgC = bakeBg(); fgC = bakeFg(); bakeMisc(); }
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (bgC) bake(); });
 
-  /* ---------- update ---------- */
-  GAME.update = dt => {
-    if (deadT) return;
-    if (noteOpen) return;
-    if (ended) { ended += dt; return; }
-    t += dt; msgT -= dt; buzzT += dt;
-    while (events.length && events[0].at <= t) {
-      const e = events.shift();
-      if (e.type === 'cust') queue.push(e.kind);
-      if (e.type === 'flicker' && !flick) { flick = { state: 'flicker', t: 0 }; }
-      if (e.type === 'phone' && (!phone || phone.state !== 'ring')) { phone = { state: 'ring', t: 0 }; }
-      if (e.type === 'pump' && !pump) { pump = { t: 0 }; K.noise(.3, .08, 2000); dlg = { who: 'Intercom, pump 4', text: '"Hey... hey. Can you turn on pump four? I really need pump four."', opts: ['Turn on pump 4', 'Sorry, it\'s out of order'], right: 1, pick: i => { if (i === 0) strike('You turned on pump 4'); else { K.add(2); say('The figure at pump 4 doesn\'t move. Then it\'s just... gone.'); } pump.done = true; } }; }
-      if (e.type === 'cctv' && !cctv) { cctv = { state: 'on', t: 0 }; K.sfx(60, 1.2, 'sine', .1); }
-    }
-    // customers
-    if (!cust && queue.length && !(locked)) { cust = newCust(queue.shift()); K.sfx(1568, .5, 'sine', .07); K.sfx(1318, .6, 'sine', .07, 0, .25); }
-    if (cust) {
-      cust.pt += dt;
-      if (cust.phase === 'in') { cust.walk = Math.min(1, cust.pt / 1.8); if (cust.pt > 1.8) { cust.phase = 'at'; cust.pt = 0; if (cust.kind === 'time') dlg = { who: 'Customer', text: '"Hey, quick question. What time is it?"', opts: [`"It's ${clock()}."`, '"It\'s closing time."'], right: 1, pick: i => { if (i === 0) strike('You told them the real time'); else { K.add(2); say('"...Right. Closing time." They smile with too many teeth, and leave.', 3); cust.phase = 'out'; cust.pt = 0; } } }; } }
-      else if (cust.phase === 'at') {
-        if (cust.kind === 'noreflect') {
-          if (!lookDown && cust.pt > 2.6) { cust.lookT += dt; if (cust.lookT > 2.2) { strike('You looked at a customer with no reflection'); cust.phase = 'out'; cust.pt = 0; } }
-          if (lookDown && Math.random() < dt * .4 && !K.bot) say(K.pick(['"Look at me."', '"Why won\'t you look at me?"', '"I know you can hear me."']), 1.8);
-          if (cust.pt > 9) { cust.phase = 'out'; cust.pt = 0; if (strikes < 3) { K.add(2); K.coin(1); } }
-        } else if (!dlg) { cust.patience -= dt; if (cust.patience <= 0) { say('"Forget it."', 1.8); cust.phase = 'out'; cust.pt = 0; } }
-      } else if (cust.phase === 'out') { cust.walk = Math.max(0, 1 - cust.pt / 1.5); if (cust.pt > 1.6) cust = null; }
-    }
-    // lights flicker, then something knocks
-    if (flick) {
-      flick.t += dt;
-      if (flick.state === 'flicker' && flick.t > 2.2) { flick.state = 'window'; flick.t = 0; }
-      else if (flick.state === 'window') { if (locked) { flick.state = 'knock'; flick.t = 0; K.add(2); } else if (flick.t > 9) { strike('You didn\'t lock the door when the lights flickered'); flick.state = 'gone'; flick.t = 0; } }
-      else if (flick.state === 'knock') { knockT -= dt; if (knockT <= 0) { knockT = K.rand(.6, 1.2); [0, .18, .36].forEach(d => K.sfx(85, .1, 'square', .25, -20, d)); K.noise(.1, .2, 200); } if (flick.t > 7) { flick.state = 'gone'; flick.t = 0; say('The knocking stops. You can unlock the door now.', 3); } }
-      else if (flick.state === 'gone' && (!locked || flick.t > 12)) flick = null;
-    }
-    if (phone && phone.state === 'ring') { phone.t += dt; if (Math.floor(phone.t / .9) !== Math.floor((phone.t - dt) / .9) && Math.floor(phone.t / .9) % 2 === 0) ring(); if (phone.t > 8) phone.state = 'done'; }
-    if (cctv && cctv.state === 'on') { cctv.t += dt; if (cctv.t > 10) { cctv = null; strike('Something was in the store and you didn\'t raise the alarm'); } }
-    if (t >= DUR && !ended) {
-      ended = .001; dlg = null; cust = null; lookDown = false;
-      if (!K.bot) { K.save.night = Math.max(K.save.night || 1, Math.min(5, night + 1)); K.persist(); K.add(3); K.coin(5); K.chime(392, [0, 4, 7, 12]); }
-      if (night >= 5 && !K.bot) setTimeout(() => { if (K.state !== 'play') return; K.save.night = 1; K.persist(); if (strikes === 0) { K.save.perfect = true; K.persist(); K.over({ title: 'Employee of the month', text: 'Five nights, every rule followed. At 5 AM the phone rings and the manager says: "You\'re perfect for this place. You never have to leave." Behind you, the door locks itself.' }); } else K.over({ title: 'Shift over', text: `The sun comes up. You broke ${strikes} rule${strikes > 1 ? 's' : ''} and lived anyway. You hang up the apron and never come back.` }); }, 3000);
-    }
-  };
+/* ---------- outside: forecourt, pumps, cars, fog ---------- */
+const PUMPX = [-4.4, -1.8, .8, 3.7], PZ = 15, CARZ = 13.2;
+function drawPump(gr, i, on, req) {
+  const x = PUMPX[i], [bx, by] = P(x, 0, PZ), s = F / PZ, w = .7 * s, h = 1.7 * s;
+  gr.fillStyle = '#1a1c1e'; gr.fillRect(bx - w * .8, by - 4, w * 1.6, 6);
+  const pg = gr.createLinearGradient(bx - w / 2, 0, bx + w / 2, 0); pg.addColorStop(0, i === 3 ? '#3a3632' : '#c8c8c0'); pg.addColorStop(1, i === 3 ? '#1a1816' : '#6a6a64');
+  gr.fillStyle = pg; gr.fillRect(bx - w / 2, by - h, w, h);
+  gr.fillStyle = i === 3 ? '#4a1a1a' : '#b02a2a'; gr.fillRect(bx - w / 2, by - h, w, h * .16);
+  gr.fillStyle = on ? (i === 3 ? '#ff3a2a' : '#6aff8a') : req ? (Math.sin(K.t * 10) > 0 ? '#ffd23f' : '#3a3a2a') : '#0a140c'; gr.fillRect(bx - w * .32, by - h * .72, w * .64, h * .18);
+  gr.fillStyle = '#ddd'; gr.font = `bold ${Math.round(s * .38)}px Arial`; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText(i + 1, bx, by - h * .38);
+  gr.strokeStyle = '#111'; gr.lineWidth = 2; gr.beginPath(); gr.moveTo(bx + w / 2, by - h * .5); gr.quadraticCurveTo(bx + w, by - h * .2, bx + w * .7, by - h * .05); gr.stroke();
+}
+function drawCar(gr, c) {
+  const [cx, cy] = P(c.x, 0, c.z), s = F / c.z, w = 1.8 * s, h = 1.35 * s, col = c.col;
+  if (cx < 300 || cx > 1100) return;
+  gr.fillStyle = 'rgba(0,0,0,.5)'; gr.beginPath(); gr.ellipse(cx, cy, w * .62, h * .1, 0, 0, 7); gr.fill();
+  gr.fillStyle = '#0c0c0c'; gr.fillRect(cx - w * .46, cy - h * .2, w * .16, h * .2); gr.fillRect(cx + w * .3, cy - h * .2, w * .16, h * .2);
+  const bg = gr.createLinearGradient(0, cy - h, 0, cy); bg.addColorStop(0, sh(col, .15)); bg.addColorStop(1, sh(col, -.5));
+  gr.fillStyle = bg; gr.beginPath(); gr.moveTo(cx - w * .5, cy - h * .12); gr.lineTo(cx - w * .5, cy - h * .5); gr.quadraticCurveTo(cx - w * .48, cy - h * .58, cx - w * .4, cy - h * .6); gr.lineTo(cx - w * .32, cy - h); gr.lineTo(cx + w * .32, cy - h); gr.lineTo(cx + w * .4, cy - h * .6); gr.quadraticCurveTo(cx + w * .48, cy - h * .58, cx + w * .5, cy - h * .5); gr.lineTo(cx + w * .5, cy - h * .12); gr.fill();
+  gr.fillStyle = c.ghost ? '#050505' : '#1a2430'; gr.beginPath(); gr.moveTo(cx - w * .36, cy - h * .62); gr.lineTo(cx - w * .29, cy - h * .95); gr.lineTo(cx + w * .29, cy - h * .95); gr.lineTo(cx + w * .36, cy - h * .62); gr.fill();
+  gr.fillStyle = 'rgba(160,190,220,.15)'; gr.beginPath(); gr.moveTo(cx - w * .2, cy - h * .62); gr.lineTo(cx - w * .1, cy - h * .95); gr.lineTo(cx, cy - h * .95); gr.lineTo(cx - w * .1, cy - h * .62); gr.fill();
+  gr.fillStyle = '#111'; gr.fillRect(cx - w * .2, cy - h * .45, w * .4, h * .14);
+  gr.fillStyle = '#888'; gr.fillRect(cx - w * .5, cy - h * .2, w, h * .07);
+  if (c.lights) for (const k of [-1, 1]) {
+    const lx = cx + k * w * .37, ly = cy - h * .4;
+    const hg = gr.createRadialGradient(lx, ly, 1, lx, ly, w * .55); hg.addColorStop(0, 'rgba(255,250,220,.9)'); hg.addColorStop(.2, 'rgba(255,240,200,.35)'); hg.addColorStop(1, 'rgba(255,240,200,0)');
+    gr.fillStyle = hg; gr.fillRect(lx - w * .6, ly - w * .6, w * 1.2, w * 1.2); gr.fillStyle = '#fffbe8'; gr.beginPath(); gr.ellipse(lx, ly, w * .08, h * .06, 0, 0, 7); gr.fill();
+  }
+}
+function drawOutside(gr, L) {
+  const w0 = P(WIN.x0, WIN.y1, ZB), d1 = P(DOORX[1], 0, ZB);
+  gr.save(); gr.beginPath(); gr.rect(w0[0], w0[1], P(WIN.x1, 0, ZB)[0] - w0[0], P(0, WIN.y0, ZB)[1] - w0[1]);
+  const dd = P(DOORX[0] + .08, DOORY - .08, ZB); gr.rect(dd[0], dd[1], d1[0] - 10 - dd[0], d1[1] - dd[1]); gr.clip();
+  const sun = ended && night >= 5 ? Math.min(1, endT / 6) : 0;
+  let sg = gr.createLinearGradient(0, 140, 0, 300); sg.addColorStop(0, mix('#04060a', '#3a4a7a', sun)); sg.addColorStop(1, mix('#10141c', '#e8907a', sun));
+  gr.fillStyle = sg; gr.fillRect(400, 140, 620, 320);
+  // treeline and the price sign
+  gr.fillStyle = mix('#06080b', '#2a2a3a', sun); gr.beginPath(); gr.moveTo(400, 300); for (let x = 400; x <= 1010; x += 14) gr.lineTo(x, 262 - Math.abs(Math.sin(x * .07) * 14 + Math.sin(x * .023) * 10)); gr.lineTo(1010, 300); gr.fill();
+  const ps = P(-9.5, 6, 32), pb = P(-9.5, 0, 32); gr.fillStyle = '#111'; gr.fillRect(ps[0] - 2, ps[1], 4, pb[1] - ps[1]);
+  gr.fillStyle = '#1a1a1a'; gr.fillRect(ps[0] - 26, ps[1] - 30, 52, 40); gr.fillStyle = '#c8202a'; gr.fillRect(ps[0] - 24, ps[1] - 28, 48, 12); gr.fillStyle = '#ff5040'; gr.font = 'bold 11px monospace'; gr.textAlign = 'center'; gr.fillText('3.49', ps[0], ps[1] - 2);
+  // ground
+  sg = gr.createLinearGradient(0, 270, 0, 450); sg.addColorStop(0, '#101214'); sg.addColorStop(1, '#2a2a2c'); gr.fillStyle = sg; gr.fillRect(400, 272, 620, 200);
+  gr.fillStyle = '#16181a'; gr.fillRect(400, 280, 620, 10);
+  if (roadCar) { const rx = roadCar.x; const hg = gr.createRadialGradient(rx, 284, 1, rx, 284, 40); hg.addColorStop(0, 'rgba(255,240,200,.8)'); hg.addColorStop(1, 'rgba(255,240,200,0)'); gr.fillStyle = hg; gr.fillRect(rx - 40, 244, 80, 80); }
+  // canopy over pumps 1-3, with light pools
+  const c0 = P(-7.5, 4.6, 11), c1 = P(2.7, 4.6, 11), c2 = P(2.7, 4.6, 19), c3 = P(-7.5, 4.6, 19);
+  for (const lx of [-5.5, -3.1, -.6, 1.6]) { const [gx, gy] = P(lx, 0, 15); const lg = gr.createRadialGradient(gx, gy, 2, gx, gy, 70); lg.addColorStop(0, 'rgba(255,250,235,.32)'); lg.addColorStop(1, 'rgba(255,250,235,0)'); gr.fillStyle = lg; gr.beginPath(); gr.ellipse(gx, gy, 80, 22, 0, 0, 7); gr.fill(); }
+  quad(gr, c0, c1, c2, c3, '#d8d8d0');
+  quad(gr, c3, c2, P(2.7, 5.2, 19), P(-7.5, 5.2, 19), '#8a1c1c');
+  for (const z of [12.5, 15.5]) for (const lx of [-5.5, -3.1, -.6, 1.6]) { const a = P(lx - .5, 4.58, z), b = P(lx + .5, 4.58, z + 1.4); gr.fillStyle = '#fffff4'; gr.fillRect(a[0], b[1], b[0] - a[0], Math.max(2, a[1] - b[1])); }
+  // pump 4, out past the canopy under its own old lamp
+  const lp = P(5.1, 5, 16), lb = P(5.1, 0, 16); gr.fillStyle = '#0c0c0c'; gr.fillRect(lp[0] - 1.5, lp[1], 3, lb[1] - lp[1]);
+  const p4on = pumps[3] && pumps[3].on, fl4 = p4on ? 1 : (Math.sin(K.t * 13) * Math.sin(K.t * 3.1) > .55 ? .15 : .55);
+  let lg = gr.createRadialGradient(lp[0] - 14, lp[1] + 4, 1, lp[0] - 14, lp[1] + 60, 70); lg.addColorStop(0, p4on ? 'rgba(255,60,40,.5)' : `rgba(255,190,120,${.3 * fl4})`); lg.addColorStop(1, 'rgba(255,190,120,0)'); gr.fillStyle = lg; gr.fillRect(lp[0] - 90, lp[1], 150, 140);
+  gr.fillStyle = p4on ? '#ff6040' : `rgba(255,210,150,${fl4})`; gr.fillRect(lp[0] - 22, lp[1] - 2, 18, 4);
+  for (let i = 0; i < 4; i++) drawPump(gr, i, pumps[i] && pumps[i].on, cars.some(c => c.pump === i && c.state === 'wait'));
+  // cars, and whatever stands at pump 4
+  for (const c of cars.slice().sort((a, b) => b.z - a.z)) { if (c.fig) { const [fx, fy] = P(c.x, 0, c.z); gr.globalAlpha = Math.min(1, c.a); man(gr, c.look, fx, fy, F / c.z / 300 * 1.05, { sil: '#030303', still: true, glint: c.state === 'wait' && Math.sin(K.t * 2) > .3 ? '#ffe8d0' : null }); gr.globalAlpha = 1; } else drawCar(gr, c); }
+  // someone walking up to the door
+  if (cust && cust.phase === 'approach') { const [fx, fy] = P(cust.ox, 0, cust.oz); man(gr, cust.look, fx, fy, F / cust.oz / 300, { walk: K.t * 7, sil: L > .5 ? null : '#050505' }); gr.fillStyle = 'rgba(8,10,14,.35)'; gr.fillRect(fx - 60, fy - 220, 120, 230); }
+  if (cust && cust.mate && cust.phase === 'approach') { const [fx, fy] = P(cust.ox + .7, 0, cust.oz + .2); man(gr, cust.mate, fx, fy, F / (cust.oz + .2) / 300, { walk: K.t * 8 }); }
+  // the knocker
+  if (flick && flick.state === 'knock') { const [fx, fy] = P(2.55, 0, 5.9); man(gr, LOOKS.pale, fx + Math.sin(K.t * 3) * 2, fy, F / 5.9 / 300 * 1.12, { sil: '#020202', glint: '#ffffff', still: true }); }
+  if (ambT && ambT.k === 'fog') { const [fx, fy] = P(ambT.x, 0, 24); gr.globalAlpha = Math.min(1, ambT.t, (ambT.d - ambT.t)) * .8; man(gr, LOOKS.pale, fx, fy, F / 24 / 300, { sil: '#050505', still: true }); gr.globalAlpha = 1; }
+  // fog
+  gr.globalAlpha = .22 + night * .05 - sun * .2;
+  for (const f of fog) { const fx = ((f.x + K.t * f.v) % 800 + 800) % 800 + 330; gr.drawImage(fogC, fx - f.r, f.y - f.r * .45, f.r * 2, f.r * .9); }
+  gr.globalAlpha = 1;
+  // glass tint, then reflections of the lit store
+  gr.fillStyle = `rgba(30,40,46,${.12 + .1 * L})`; gr.fillRect(400, 140, 620, 320);
+  gr.restore();
+}
 
-  /* ---------- draw ---------- */
-  function lights() { if (flick && flick.state === 'flicker') { const k = flick.t; return (k > .2 && k < .45) || (k > .9 && k < 1.1) || (k > 1.6 && k < 1.9) ? .08 : 1; } if (flick && flick.state === 'window') return .55 + .1 * Math.sin(K.t * 40); return Math.random() < .002 ? .6 : 1; }
-  function button(gr, b, label, on, hot) { gr.fillStyle = on ? '#6a5a1a' : hot ? '#3a3a44' : '#22222a'; gr.beginPath(); gr.roundRect(b.x, b.y, b.w, b.h, 12); gr.fill(); gr.strokeStyle = on ? '#ffd23f' : 'rgba(255,255,255,.15)'; gr.lineWidth = 2; gr.stroke(); gr.fillStyle = on ? '#ffe68a' : '#e6e0d0'; gr.font = '24px "Special Elite", monospace'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText(label, b.x + b.w / 2, b.y + b.h / 2); }
-  function wrap(gr, text, x, y, w, lh) { const words = text.split(' '); let line = ''; for (const wd of words) { const tt = line ? line + ' ' + wd : wd; if (gr.measureText(tt).width > w) { gr.fillText(line, x, y); y += lh; line = wd; } else line = tt; } gr.fillText(line, x, y); return y; }
-  GAME.draw = gr => {
-    const v = K.view, L = lights();
-    gr.fillStyle = '#0b0c10'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
-    if (deadT && K.t - deadT > .2) { const k = Math.min(1, (K.t - deadT) * 2); gr.fillStyle = '#000'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); drawPerson(gr, GAME._dl || (GAME._dl = (cust && cust.look) || randomPerson()), W / 2, 260, 1.4 + k * 1.6, { reveal: 1 }); gr.fillStyle = `rgba(150,0,0,${.25 * k})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); return; }
-    // the store
-    gr.fillStyle = `rgb(${Math.round(46 * L)},${Math.round(50 * L)},${Math.round(44 * L)})`; gr.fillRect(v.x0, 0, v.x1 - v.x0, 520);
-    for (const side of [0]) { const x0 = 230; for (let r = 0; r < 4; r++) { gr.fillStyle = `rgba(30,30,34,${L})`; gr.fillRect(x0, 120 + r * 92, 260, 10); for (let i = 0; i < 9; i++) { gr.fillStyle = `hsla(${(i * 47 + r * 90 + side * 30) % 360},55%,${45 * L}%,1)`; gr.fillRect(x0 + 8 + i * 28, 120 + r * 92 - 44 + (i % 2) * 6, 22, 44 - (i % 2) * 6); } } }
-    // outside through the door
-    gr.save(); gr.beginPath(); gr.rect(DOOR.x, DOOR.y, DOOR.w, DOOR.h); gr.clip();
-    gr.fillStyle = '#05060a'; gr.fillRect(DOOR.x, DOOR.y, DOOR.w, DOOR.h);
-    gr.fillStyle = 'rgba(255,240,200,.12)'; gr.fillRect(DOOR.x, DOOR.y + 40, DOOR.w, 30);
-    for (let i = 0; i < 4; i++) { const x = DOOR.x + 22 + i * 70, y = DOOR.y + 200; gr.fillStyle = '#2a2a30'; gr.fillRect(x, y, 34, 70); gr.fillStyle = i === 3 ? '#7a2020' : '#3a6a3a'; gr.fillRect(x + 6, y + 8, 22, 14); gr.fillStyle = '#ccc'; gr.font = '12px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(i + 1, x + 17, y + 46); }
-    if (pump && !pump.done) { gr.fillStyle = '#000'; gr.fillRect(DOOR.x + 240, DOOR.y + 110, 22, 160); gr.beginPath(); gr.ellipse(DOOR.x + 251, DOOR.y + 112, 13, 18, 0, 0, 7); gr.fill(); }
-    if (flick && flick.state === 'knock') drawPerson(gr, { skin: '#111', hair: '#000', style: 1, eyes: '#000', shirt: '#000' }, DOOR.x + DOOR.w / 2, DOOR.y + 160, 1.15, { silhouette: true });
-    if (flick && flick.state === 'knock') { gr.fillStyle = 'rgba(255,255,255,.12)'; for (const [dx, dy] of [[-60, 120], [70, 110]]) { gr.beginPath(); gr.ellipse(DOOR.x + DOOR.w / 2 + dx, DOOR.y + dy, 22, 30, 0, 0, 7); gr.fill(); } }
-    // reflection in the glass: the counter and whoever is standing at it
-    gr.globalAlpha = .38 * L; gr.fillStyle = '#6a5a40'; gr.fillRect(DOOR.x, DOOR.y + DOOR.h - 70, DOOR.w, 70);
-    if (cust && cust.kind !== 'noreflect' && cust.phase !== 'gone') { gr.save(); gr.translate(DOOR.x + DOOR.w / 2, 0); gr.scale(-1, 1); drawPerson(gr, cust.look, 40, DOOR.y + 190, .62 * Math.max(.3, cust.walk), {}); gr.restore(); }
-    gr.globalAlpha = 1; gr.restore();
-    gr.strokeStyle = '#3a3a3a'; gr.lineWidth = 14; gr.strokeRect(DOOR.x, DOOR.y, DOOR.w, DOOR.h); gr.fillStyle = '#9a9a9a'; gr.fillRect(DOOR.x + DOOR.w - 40, DOOR.y + 200, 8, 50);
-    gr.fillStyle = locked ? '#ff4d4d' : '#3aff7a'; gr.font = '16px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(locked ? 'LOCKED' : 'OPEN', DOOR.x + DOOR.w / 2, DOOR.y - 12);
-    // lights
-    for (const x of [300, 980]) { gr.fillStyle = L > .5 ? '#f4fff0' : '#3a3a3a'; gr.fillRect(x - 120, 8, 240, 12); if (L > .5) { const lg = gr.createRadialGradient(x, 14, 10, x, 14, 340); lg.addColorStop(0, `rgba(230,255,230,${.18 * L})`); lg.addColorStop(1, 'rgba(0,0,0,0)'); gr.fillStyle = lg; gr.fillRect(x - 340, 0, 680, 400); } }
-    // the customer
-    if (cust) {
-      const s = .7 + .3 * cust.walk, y = 200 + (1 - cust.walk) * 40;
-      gr.globalAlpha = Math.min(1, cust.walk * 1.4);
-      drawPerson(gr, cust.look, CX, y, s * 1.05, { look: Math.sin(K.t), smile: cust.kind === 'noreflect' && cust.pt > 5 });
-      gr.globalAlpha = 1;
+/* ---------- items on the counter ---------- */
+function drawItem(gr, it, x, y) {
+  const k = it.k || 0; gr.save(); gr.translate(x, y); gr.globalAlpha = 1 - k;
+  gr.fillStyle = 'rgba(0,0,0,.35)'; gr.beginPath(); gr.ellipse(0, 4, 40, 9, 0, 0, 7); gr.fill();
+  const lbl = (s, yy, c = '#fff', sz = 13) => { gr.fillStyle = c; gr.font = `bold ${sz}px Arial`; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText(s, 0, yy); };
+  const grad = (c, w) => { const g = gr.createLinearGradient(-w, 0, w, 0); g.addColorStop(0, sh(c, .25)); g.addColorStop(.5, c); g.addColorStop(1, sh(c, -.4)); return g; };
+  switch (it.id) {
+    case 'chips': gr.fillStyle = grad('#e8a42a', 36); gr.beginPath(); gr.moveTo(-34, 0); gr.lineTo(-38, -78); gr.lineTo(38, -78); gr.lineTo(34, 0); gr.fill(); gr.fillStyle = '#b0302a'; gr.fillRect(-36, -58, 72, 22); lbl('CHIPS', -47); gr.fillStyle = '#f6d36a'; gr.beginPath(); gr.ellipse(0, -18, 16, 10, 0, 0, 7); gr.fill(); gr.fillStyle = 'rgba(0,0,0,.25)'; for (let i = -36; i < 36; i += 5) { gr.fillRect(i, -80, 2, 6); gr.fillRect(i, -4, 2, 5); } break;
+    case 'soda': gr.fillStyle = 'rgba(60,20,10,.9)'; gr.beginPath(); gr.roundRect(-15, -78, 30, 78, 8); gr.fill(); gr.fillStyle = '#c82020'; gr.fillRect(-15, -50, 30, 24); lbl('COLA', -38, '#fff', 10); gr.fillStyle = '#c82020'; gr.fillRect(-7, -92, 14, 12); gr.fillStyle = 'rgba(255,255,255,.3)'; gr.fillRect(-10, -74, 4, 66); break;
+    case 'water': gr.fillStyle = 'rgba(170,210,240,.55)'; gr.beginPath(); gr.roundRect(-14, -76, 28, 76, 8); gr.fill(); gr.fillStyle = '#2a6ac8'; gr.fillRect(-14, -46, 28, 20); lbl('AQUA', -36, '#fff', 9); gr.fillStyle = '#2a6ac8'; gr.fillRect(-6, -88, 12, 10); gr.fillStyle = 'rgba(255,255,255,.5)'; gr.fillRect(-9, -72, 3, 62); break;
+    case 'energy': gr.fillStyle = grad('#1a1a1a', 15); gr.fillRect(-15, -72, 30, 72); gr.fillStyle = '#7aff3a'; gr.beginPath(); gr.moveTo(-8, -60); gr.lineTo(6, -40); gr.lineTo(-2, -38); gr.lineTo(8, -16); gr.lineTo(-8, -38); gr.lineTo(0, -40); gr.fill(); gr.fillStyle = '#aaa'; gr.fillRect(-15, -74, 30, 4); break;
+    case 'coffee': gr.fillStyle = grad('#f2ece0', 22); gr.beginPath(); gr.moveTo(-20, -64); gr.lineTo(20, -64); gr.lineTo(15, 0); gr.lineTo(-15, 0); gr.fill(); gr.fillStyle = '#7a4a2a'; gr.fillRect(-19, -46, 37, 20); gr.fillStyle = '#2a2a2a'; gr.beginPath(); gr.roundRect(-23, -72, 46, 10, 4); gr.fill(); if (!k) { gr.strokeStyle = 'rgba(255,255,255,.18)'; gr.lineWidth = 3; gr.beginPath(); gr.moveTo(0, -76); gr.bezierCurveTo(8, -88, -8, -96, 4, -110 - Math.sin(K.t * 2) * 4); gr.stroke(); } break;
+    case 'jerky': gr.fillStyle = grad('#5a3a22', 28); gr.beginPath(); gr.roundRect(-28, -76, 56, 76, 6); gr.fill(); gr.fillStyle = '#a0603a'; gr.beginPath(); gr.ellipse(0, -30, 16, 12, 0, 0, 7); gr.fill(); gr.fillStyle = '#e8c83a'; gr.fillRect(-28, -68, 56, 16); lbl('JERKY', -60, '#3a1a0a', 12); break;
+    case 'candy': gr.rotate(-.12); gr.fillStyle = grad('#6a2a8a', 40); gr.beginPath(); gr.roundRect(-40, -26, 80, 24, 4); gr.fill(); gr.fillStyle = '#ffd23f'; gr.fillRect(-20, -24, 40, 20); lbl('NOVA', -14, '#6a2a8a', 12); break;
+    case 'gum': gr.fillStyle = grad('#2ac0a0', 24); gr.beginPath(); gr.roundRect(-24, -20, 48, 20, 3); gr.fill(); lbl('MINT', -10, '#fff', 11); break;
+    case 'batt': gr.fillStyle = '#e8e8e8'; gr.beginPath(); gr.roundRect(-26, -74, 52, 74, 4); gr.fill(); gr.fillStyle = '#1a1a1a'; gr.fillRect(-26, -74, 52, 18); lbl('AA', -65, '#ffd23f', 12); for (const bx of [-14, 2]) { gr.fillStyle = '#c8a02a'; gr.fillRect(bx, -50, 12, 42); gr.fillStyle = '#222'; gr.fillRect(bx, -30, 12, 22); } break;
+    case 'hotdog': gr.fillStyle = '#e8e0d0'; gr.beginPath(); gr.moveTo(-40, -22); gr.lineTo(40, -22); gr.lineTo(34, 0); gr.lineTo(-34, 0); gr.fill(); gr.fillStyle = '#d8a060'; gr.beginPath(); gr.ellipse(0, -24, 36, 12, 0, 0, 7); gr.fill(); gr.fillStyle = '#a8402a'; gr.beginPath(); gr.ellipse(0, -30, 38, 7, 0, 0, 7); gr.fill(); gr.strokeStyle = '#e8c020'; gr.lineWidth = 3; gr.beginPath(); for (let i = -26; i <= 26; i += 8) gr.lineTo(i, -32 + (i / 8 % 2 ? 3 : -2)); gr.stroke(); break;
+    case 'donut': gr.fillStyle = 'rgba(240,235,220,.85)'; gr.beginPath(); gr.moveTo(-30, 0); gr.lineTo(-26, -52); gr.lineTo(26, -52); gr.lineTo(30, 0); gr.fill(); gr.fillStyle = '#c8884a'; gr.beginPath(); gr.ellipse(0, -22, 22, 16, 0, 0, 7); gr.fill(); gr.fillStyle = '#e8709a'; gr.beginPath(); gr.ellipse(0, -24, 19, 12, 0, 0, 7); gr.fill(); gr.fillStyle = '#5a3a2a'; gr.beginPath(); gr.ellipse(0, -24, 6, 4, 0, 0, 7); gr.fill(); break;
+    case 'paper': gr.rotate(.08); gr.fillStyle = '#e8e4d8'; gr.fillRect(-42, -30, 84, 30); gr.fillStyle = '#2a2a2a'; gr.fillRect(-36, -26, 50, 6); for (let i = 0; i < 3; i++) gr.fillRect(-36, -16 + i * 5, 70, 2); gr.fillStyle = '#888'; gr.fillRect(20, -26, 16, 12); break;
+  }
+  if (it.hot && !k) { gr.globalAlpha = .6 + .4 * Math.sin(K.t * 6); gr.strokeStyle = '#ffd23f'; gr.lineWidth = 3; gr.beginPath(); gr.roundRect(-46, -100, 92, 108, 12); gr.stroke(); }
+  gr.restore();
+}
+
+/* ---------- the CCTV feed: the store from the corner camera above the door ---------- */
+function drawCam(gr) {
+  const c = camC.getContext('2d'), cw = 120, ch = 84;
+  c.fillStyle = '#3a3e3a'; c.fillRect(0, 0, cw, ch);
+  c.fillStyle = '#5c625c'; c.beginPath(); c.moveTo(0, 30); c.lineTo(120, 22); c.lineTo(120, 84); c.lineTo(0, 84); c.fill();
+  c.fillStyle = '#8a948c'; c.fillRect(0, 4, 9, 50); c.fillStyle = '#b8c4bc'; for (let i = 0; i < 4; i++) c.fillRect(1, 8 + i * 11, 7, 8);
+  c.fillStyle = '#262a26'; c.fillRect(14, 38, 34, 12); c.fillRect(20, 27, 30, 8); c.fillStyle = '#4a504a'; c.fillRect(14, 36, 34, 3); c.fillRect(20, 25, 30, 3);
+  c.fillStyle = '#22261f'; c.fillRect(70, 12, 50, 20); c.fillStyle = '#6a726a'; for (let i = 0; i < 18; i++) c.fillRect(72 + (i % 9) * 5, 14 + Math.floor(i / 9) * 8, 3, 5);
+  // the clerk: you, from the front
+  c.fillStyle = '#5a2a2a'; c.fillRect(88, 28, 10, 14); c.fillStyle = '#a8a098'; c.beginPath(); c.arc(93, 25, 4, 0, 7); c.fill();
+  if (look) { c.fillStyle = '#2a2420'; c.fillRect(89, 21, 8, 3); }
+  c.fillStyle = '#7a7466'; c.fillRect(62, 42, 58, 6); c.fillStyle = '#4a463e'; c.fillRect(62, 48, 58, 14);
+  const fig = (x, y, s, col, head) => { c.fillStyle = col; c.fillRect(x - 4 * s, y - 14 * s, 8 * s, 14 * s); c.fillStyle = head; c.beginPath(); c.arc(x, y - 17 * s, 3.4 * s, 0, 7); c.fill(); };
+  if (cust && (cust.phase === 'in' || cust.phase === 'at' || cust.phase === 'leave')) { const u = cust.u; fig(K.lerp(30, 84, u), K.lerp(82, 58, u), K.lerp(1.6, 1.1, u), '#2a2c2a', cust.ghost ? '#2a2c2a' : '#8a8478'); }
+  if (cctv && cctv.on) { const spot = cctv.spot; const [x, y, s] = spot === 0 ? [30, 52, 1.2] : spot === 1 ? [12, 50, 1.3] : [104, 40, 1.05]; fig(x, y, s * 1.15, '#0a0a0a', '#d8d8d0'); }
+  if (ambT && ambT.k === 'cam') fig(40, 60, 1.3, '#0a0a0a', '#d8d8d0');
+  // grain and tint
+  const id = c.getImageData(0, 0, cw, ch), d = id.data, glitch = (cctv && cctv.on) || (cust && cust.ghost && cust.phase === 'at') ? .2 : .03;
+  for (let i = 0; i < d.length; i += 4) { const v = (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11) + (Math.random() - .5) * 46; d[i] = v * .82; d[i + 1] = v * 1.02; d[i + 2] = v * .86; }
+  if (Math.random() < glitch) { const r = K.irand(0, ch - 4) * cw * 4; for (let i = r; i < r + cw * 12 && i < d.length; i += 4) { d[i] += 60; d[i + 1] += 60; d[i + 2] += 60; } }
+  c.putImageData(id, 0, 0);
+  const M = OBJ.cam;
+  gr.fillStyle = '#121214'; gr.fillRect(M.x + M.w / 2 - 5, 0, 10, M.y + 4);
+  gr.fillStyle = '#1c1c1e'; gr.beginPath(); gr.roundRect(M.x, M.y, M.w, M.h, 10); gr.fill(); gr.strokeStyle = '#38383c'; gr.lineWidth = 2; gr.stroke();
+  gr.imageSmoothingEnabled = false; gr.drawImage(camC, M.x + 10, M.y + 10, M.w - 20, M.h - 26); gr.imageSmoothingEnabled = true;
+  gr.fillStyle = 'rgba(0,0,0,.22)'; for (let y = M.y + 10; y < M.y + M.h - 16; y += 3) gr.fillRect(M.x + 10, y, M.w - 20, 1);
+  gr.font = 'bold 16px "Courier New", monospace'; gr.textAlign = 'left'; gr.textBaseline = 'top'; gr.fillStyle = 'rgba(230,255,230,.85)';
+  const hf = clockH(), hh = Math.floor(hf) % 24, mm = Math.floor((hf % 1) * 60), ss = Math.floor((hf * 3600) % 60);
+  gr.fillText(`CAM 2  ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`, M.x + 16, M.y + 14);
+  if (Math.sin(K.t * 4) > 0) { gr.fillStyle = '#ff3a3a'; gr.beginPath(); gr.arc(M.x + M.w - 30, M.y + 22, 5, 0, 7); gr.fill(); }
+  gr.fillStyle = '#8a8a8a'; gr.font = 'bold 13px Arial'; gr.textAlign = 'center'; gr.fillText('SECURITY', M.x + M.w / 2, M.y + M.h - 14);
+  const sg = gr.createLinearGradient(M.x, M.y, M.x + M.w, M.y + M.h); sg.addColorStop(0, 'rgba(255,255,255,.08)'); sg.addColorStop(.4, 'rgba(255,255,255,0)'); gr.fillStyle = sg; gr.fillRect(M.x + 10, M.y + 10, M.w - 20, M.h - 26);
+}
+
+/* ---------- per-frame store drawing ---------- */
+const ME = { skin: '#e0ac88', hair: '#3b2618', hs: 'short', eye: '#3a2a1a', top: 'polo', c1: '#8a1c1c', c2: '#e8e0c8', pants: '#22283a', seed: 0 };
+const PANELS = []; for (const z of [2.0, 3.1, 4.2]) for (const x of [-1.3, 1.3, 3.7]) PANELS.push([P(x - .35, 3, z), P(x + .35, 3, z), P(x + .35, 3, z + .75), P(x - .35, 3, z + .75)]);
+let actC = null;
+function custPos(c) {
+  const u = c.u, x = K.lerp(2.55, c.cx || .15, u), z = K.lerp(5.0, 1.75, u);
+  return { x, z, sx: P(x, 0, z)[0], sy: P(x, 0, z)[1], s: F / z / 320 };
+}
+function drawCust(gr, c) {
+  const p = custPos(c), walking = c.phase === 'in' || c.phase === 'leave';
+  const ghost = c.ghost, stare = c.phase === 'at' && ghost;
+  const o = { walk: walking ? c.u * 26 : null, blink: ghost ? 0 : (Math.sin(K.t * .9 + c.look.seed * 3) > .985 ? 1 : 0), look: ghost ? 0 : Math.sin(K.t * .5 + c.look.seed) * .8, wrong: ghost && c.phase === 'at' && c.pt > 2, still: ghost && c.phase === 'at', tilt: ghost && c.phase === 'at' ? Math.min(.16, c.pt * .02) : 0, smile: c.grin ? Math.min(1, c.pt * .4) : stare && c.pt > 5 ? .7 : 0 };
+  if (c.mate) { const kp = { ...p }; man(gr, c.mate, kp.sx + 170 * p.s * (1 - c.u * .3), kp.sy + 30 * p.s, p.s * .95, { walk: o.walk, blink: Math.sin(K.t * 1.3) > .98 ? 1 : 0, look: -.6 }); }
+  man(gr, c.look, p.sx, p.sy, p.s, o);
+}
+function drawDoor(gr) {
+  const d0 = P(DOORX[0], DOORY, ZB), d1 = P(DOORX[1], 0, ZB), w = d1[0] - d0[0], h = d1[1] - d0[1];
+  gr.fillStyle = '#8a8c8e'; gr.fillRect(d0[0] - 6, d0[1] - 6, w + 12, 8); gr.fillRect(d0[0] - 6, d0[1], 8, h); gr.fillRect(d1[0] - 2, d0[1], 8, h);
+  const pw = w * (1 - doorK * .7);
+  gr.strokeStyle = '#a8aaac'; gr.lineWidth = 7; gr.strokeRect(d0[0] + 3, d0[1] + 3, pw - 6, h - 4);
+  gr.fillStyle = '#c8cacc'; gr.fillRect(d0[0] + 8, d0[1] + h * .5, pw - 16, 7);
+  gr.fillStyle = locked ? '#ff3a2a' : '#3aff6a'; gr.beginPath(); gr.arc(d0[0] + pw - 16, d0[1] + h * .5 - 14, 4, 0, 7); gr.fill();
+  // hanging sign, mirrored because it faces outside
+  gr.save(); gr.translate(d0[0] + pw / 2, d0[1] + 46); gr.rotate(Math.sin(K.t * 1.3) * .03); gr.strokeStyle = '#555'; gr.lineWidth = 1; gr.beginPath(); gr.moveTo(-20, -24); gr.lineTo(0, -34); gr.lineTo(20, -24); gr.stroke();
+  gr.fillStyle = locked ? '#7a1a1a' : '#e8e0c8'; gr.fillRect(-34, -24, 68, 26); gr.scale(-1, 1); gr.fillStyle = locked ? '#fff' : '#2a6a2a'; gr.font = 'bold 15px Arial'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText(locked ? 'CLOSED' : 'OPEN', 0, -11); gr.restore();
+  gr.fillStyle = 'rgba(255,255,255,.75)'; gr.font = 'bold 12px Arial'; gr.textAlign = 'center'; gr.fillText('PUSH', d0[0] + pw / 2, d0[1] + h * .5 + 22);
+}
+function drawReflections(gr, L) {
+  // the door glass reflects the lit store: the counter, you, and whoever is standing at it
+  const d0 = P(DOORX[0] + .08, DOORY - .08, ZB), d1 = P(DOORX[1], 0, ZB);
+  gr.save(); gr.beginPath(); gr.rect(d0[0], d0[1], d1[0] - 10 - d0[0], d1[1] - d0[1]); gr.clip();
+  const a = .18 + .3 * L; gr.globalAlpha = a;
+  const cx = (d0[0] + d1[0]) / 2;
+  gr.fillStyle = '#e8f0e8'; gr.fillRect(d0[0], d0[1] + 14, 140, 4); gr.fillRect(d0[0], d0[1] + 40, 140, 3);
+  man(gr, ME, cx + 30, d1[1] - 14, .2, { still: 1 });
+  gr.fillStyle = '#6a5a44'; gr.fillRect(d0[0], d1[1] - 78, 160, 24); gr.fillStyle = '#9a8a6a'; gr.fillRect(d0[0], d1[1] - 80, 160, 4);
+  if (cust && !cust.ghost && ['in', 'at', 'leave'].includes(cust.phase)) { const u = cust.u; man(gr, cust.look, cx - 22 + (1 - u) * 30, d1[1] + 10 - (1 - u) * 50, .26 - (1 - u) * .1, { still: 1 }); if (cust.mate) man(gr, cust.mate, cx - 60, d1[1] + 10, .24, { still: 1 }); }
+  gr.globalAlpha = 1; const sg = gr.createLinearGradient(d0[0], d0[1], d1[0], d1[1]); sg.addColorStop(0, 'rgba(255,255,255,.1)'); sg.addColorStop(.3, 'rgba(255,255,255,0)'); sg.addColorStop(.6, 'rgba(255,255,255,.05)'); sg.addColorStop(.7, 'rgba(255,255,255,0)');
+  gr.fillStyle = sg; gr.fillRect(d0[0], d0[1], 200, 300); gr.restore();
+  // the window: faint interior reflection, mullions, decals and the neon sign
+  const w0 = P(WIN.x0, WIN.y1, ZB), w1 = P(WIN.x1, WIN.y0, ZB);
+  gr.fillStyle = `rgba(200,210,200,${.05 * L})`; gr.fillRect(w0[0], w0[1], w1[0] - w0[0], w1[1] - w0[1]);
+  gr.fillStyle = '#7a7c7e'; gr.fillRect(w0[0] - 5, w0[1] - 5, w1[0] - w0[0] + 10, 7); gr.fillRect(w0[0] - 5, w1[1] - 3, w1[0] - w0[0] + 10, 8);
+  for (const mx of [WIN.x0, -.85, .3, WIN.x1]) { const m = P(mx, 0, ZB)[0]; gr.fillRect(m - 4, w0[1], 8, w1[1] - w0[1]); }
+  gr.save(); gr.translate(P(-1.45, 0, ZB)[0], w1[1] - 30); gr.scale(-1, 1); gr.fillStyle = 'rgba(255,255,255,.55)'; gr.font = 'bold 20px Arial'; gr.textAlign = 'center'; gr.fillText('LOTTO', 0, 0); gr.fillStyle = 'rgba(120,200,255,.5)'; gr.fillText('ICE', -110, 0); gr.restore();
+  const on = !locked && !dead;
+  gr.save(); gr.translate(P(.95, 0, ZB)[0], w1[1] - 46); gr.scale(-1, 1);
+  gr.shadowColor = on ? '#ff3a3a' : 'transparent'; gr.shadowBlur = on ? 18 : 0; gr.strokeStyle = on ? '#4ab0ff' : '#1a2a3a'; gr.lineWidth = 3; gr.beginPath(); gr.roundRect(-46, -20, 92, 38, 8); gr.stroke();
+  gr.fillStyle = on ? '#ff5a4a' : '#3a1a1a'; gr.font = 'bold 26px Arial'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText('OPEN', 0, 0); gr.restore();
+  gr.shadowBlur = 0;
+}
+function lightLevel() {
+  if (dead) return K.t - dead.t < 1.3 ? (Math.random() < .08 ? .4 : 0) : 0;
+  if (ended && night >= 5) return 1;
+  if (flick) {
+    const k = flick.t;
+    if (flick.state === 'flick') return (k > .25 && k < .5) || (k > 1.0 && k < 1.2) || (k > 1.75 && k < 2.05) ? .05 : 1;
+    if (flick.state === 'warn') return .45 + .08 * Math.sin(K.t * 37) + (Math.random() < .05 ? -.3 : 0);
+    if (flick.state === 'knock') return .32 + (Math.random() < .03 ? .3 : 0);
+    if (flick.state === 'after') return Math.min(1, .4 + k * .4);
+  }
+  if (scare && K.t - scare.t < .8) return .35;
+  return K.t % 23 < .07 ? .6 : 1;
+}
+function drawStore(gr) {
+  const L = lightL = lightLevel(), v = K.view;
+  gr.drawImage(bgC, 0, 0);
+  // ceiling panels
+  for (const pnl of PANELS) { poly(gr, pnl); gr.fillStyle = L > .3 ? `rgba(250,255,245,${.55 + .45 * L})` : '#3a3c3a'; gr.fill(); }
+  if (L > .3) { gr.globalCompositeOperation = 'lighter'; for (const pnl of PANELS) { const cx = (pnl[0][0] + pnl[2][0]) / 2, cy = (pnl[0][1] + pnl[2][1]) / 2, r = Math.abs(pnl[1][0] - pnl[0][0]) * 2.2; const lg = gr.createRadialGradient(cx, cy, 2, cx, cy + r * .3, r); lg.addColorStop(0, `rgba(200,220,200,${.22 * L})`); lg.addColorStop(1, 'rgba(0,0,0,0)'); gr.fillStyle = lg; gr.fillRect(cx - r, cy - r, r * 2, r * 2); } gr.globalCompositeOperation = 'source-over'; }
+  // darkness over the interior, but not over the glass
+  const w0 = P(WIN.x0, WIN.y1, ZB), w1 = P(WIN.x1, WIN.y0, ZB), d0 = P(DOORX[0], DOORY, ZB), d1 = P(DOORX[1], 0, ZB);
+  gr.fillStyle = `rgba(3,5,10,${.18 + (1 - L) * .78})`; gr.beginPath(); gr.rect(v.x0, v.y0, v.x1 - v.x0, 720 - v.y0); gr.rect(w0[0], w0[1], w1[0] - w0[0], w1[1] - w0[1]); gr.rect(d0[0], d0[1], d1[0] - d0[0], d1[1] - d0[1]); gr.fill('evenodd');
+  // the coolers keep glowing
+  gr.globalCompositeOperation = 'lighter'; gr.globalAlpha = .18 + (1 - L) * .35;
+  for (let i = 0; i < 4; i++) { const z0 = 2.2 + i * .72; poly(gr, [P(-2.3, 2.2, z0), P(-2.3, 2.2, z0 + .68), P(-2.3, .05, z0 + .68), P(-2.3, .05, z0)]); gr.fillStyle = '#5a8ab0'; gr.fill(); }
+  gr.globalAlpha = 1; gr.globalCompositeOperation = 'source-over';
+  drawOutside(gr, L);
+  drawReflections(gr, L); drawDoor(gr);
+  // wall clock over the door
+  const ck = P(2.55, 2.72, ZB); gr.fillStyle = '#0a0a0a'; gr.beginPath(); gr.roundRect(ck[0] - 46, ck[1] - 16, 92, 32, 5); gr.fill(); gr.fillStyle = forbidden() && night >= 3 ? '#ff2a2a' : '#ff5a3a'; gr.font = 'bold 22px "Courier New", monospace'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText(clock(true), ck[0], ck[1] + 1);
+  // people inside, lit by the store lights
+  if (cust && ['in', 'at', 'leave'].includes(cust.phase)) {
+    const ac = actC || (actC = mk(W, H)), a = ac.getContext('2d'); a.setTransform(1, 0, 0, 1, 0, 0); a.clearRect(0, 0, W, H); drawCust(a, cust);
+    a.globalCompositeOperation = 'source-atop'; a.fillStyle = `rgba(4,6,12,${(1 - L) * .88})`; a.fillRect(0, 0, W, H);
+    if (cust.ghost && cust.phase === 'at') { a.fillStyle = 'rgba(120,140,150,.08)'; a.fillRect(0, 0, W, H); }
+    a.globalCompositeOperation = 'source-over'; gr.drawImage(ac, 0, 0);
+  }
+  // the counter
+  gr.drawImage(fgC, 0, 0);
+  drawCounter(gr, L);
+  gr.fillStyle = `rgba(3,5,10,${(1 - L) * .75})`; gr.fillRect(v.x0, 484, v.x1 - v.x0, v.y1 - 484);
+  drawCounterLights(gr);
+  drawCam(gr);
+  return L;
+}
+function drawCounter(gr) {
+  // phone handset (lifted while you're on a call)
+  const Ph = OBJ.phone, up = phone && phone.state === 'talk', rg = phone && phone.state === 'ring' ? Math.sin(K.t * 50) * 2 : 0;
+  gr.save(); gr.translate(Ph.x + 75 + rg, Ph.y + 30 - (up ? 40 : 0)); gr.rotate(up ? -.3 : 0);
+  gr.fillStyle = '#c8bfa8'; gr.beginPath(); gr.roundRect(-64, -10, 128, 22, 10); gr.fill(); gr.fillStyle = '#a89e88'; for (const k of [-1, 1]) { gr.beginPath(); gr.roundRect(k * 52 - 16, -14, 32, 30, 10); gr.fill(); }
+  gr.restore();
+  gr.strokeStyle = '#2a2a2a'; gr.lineWidth = 2; gr.beginPath(); gr.moveTo(Ph.x + 12, Ph.y + 40 - (up ? 40 : 0)); gr.bezierCurveTo(Ph.x - 10, Ph.y + 80, Ph.x + 10, Ph.y + 100, Ph.x + 20, Ph.y + 96); gr.stroke();
+  // items waiting to be rung up, and their total
+  if (cust && cust.phase === 'at') cust.items.forEach(it => drawItem(gr, it, it.x + (it.k || 0) * (790 - it.x), it.y + (it.k || 0) * (606 - it.y) - Math.sin((it.k || 0) * 3) * 30));
+  if (cust && cust.phase === 'at' && cust.items.length && !cust.ghost && cust.items.some(i => !i.done) && !look) { const it = cust.items.find(i => !i.done); gr.fillStyle = 'rgba(255,210,63,.9)'; gr.beginPath(); const bx = it.x, by = it.y - 108 - Math.abs(Math.sin(K.t * 4)) * 8; gr.moveTo(bx, by + 14); gr.lineTo(bx - 10, by); gr.lineTo(bx + 10, by); gr.fill(); }
+}
+function drawCounterLights(gr) {
+  const R = OBJ.reg, Ra = OBJ.radio, Pu = OBJ.pumps;
+  // register pole display
+  gr.fillStyle = '#04140c'; gr.fillRect(R.x + 40, R.y + 10, 136, 46);
+  gr.fillStyle = '#5affa0'; gr.shadowColor = '#3aff8a'; gr.shadowBlur = 8; gr.font = 'bold 15px "Courier New", monospace'; gr.textAlign = 'center'; gr.textBaseline = 'middle';
+  const tot = cust && cust.phase === 'at' ? cust.items.filter(i => i.done).reduce((a, i) => a + ITEMS[i.id][1], 0) : 0;
+  if (cust && cust.phase === 'at' && cust.items.length) { gr.fillText('TOTAL', R.x + 108, R.y + 22); gr.font = 'bold 22px "Courier New", monospace'; gr.fillText('$' + tot.toFixed(2), R.x + 108, R.y + 43); }
+  else { gr.fillText('STARLITE', R.x + 108, R.y + 24); gr.fillText(clock(), R.x + 108, R.y + 42); }
+  gr.shadowBlur = 0;
+  // scanner glow
+  gr.fillStyle = `rgba(255,40,30,${.25 + .15 * Math.sin(K.t * 20)})`; gr.fillRect(770, 600, 54, 20);
+  // radio dial
+  const talk = radio.talk > 0;
+  gr.fillStyle = radio.on ? (talk ? '#ff3a2a' : '#ffb04a') : '#2a1a10'; gr.shadowColor = gr.fillStyle; gr.shadowBlur = radio.on ? 12 : 0;
+  gr.beginPath(); gr.roundRect(Ra.x + 82, Ra.y + 34, 56, 22, 4); gr.fill(); gr.shadowBlur = 0;
+  gr.strokeStyle = '#2a1a10'; gr.lineWidth = 2; for (let i = 0; i < 7; i++) { gr.beginPath(); gr.moveTo(Ra.x + 86 + i * 8, Ra.y + 38); gr.lineTo(Ra.x + 86 + i * 8, Ra.y + 44); gr.stroke(); }
+  gr.fillStyle = '#c82a1a'; gr.fillRect(Ra.x + 104 + (talk ? Math.sin(K.t * 30) * 10 : 0), Ra.y + 36, 3, 18);
+  gr.fillStyle = 'rgba(255,255,255,.85)'; gr.font = 'bold 13px Arial'; gr.textAlign = 'center'; gr.fillText(radio.on ? 'AM 1170' : 'OFF', Ra.x + 110, Ra.y + 68);
+  // phone line light
+  const Ph = OBJ.phone; gr.fillStyle = phone && phone.state === 'ring' && Math.sin(K.t * 12) > 0 ? '#ff4a3a' : '#3a1a14'; gr.beginPath(); gr.arc(Ph.x + 120, Ph.y + 56, 6, 0, 7); gr.fill();
+  // pump buttons
+  for (let i = 0; i < 4; i++) {
+    const bx = Pu.x + 14 + i * 43, by = Pu.y + 34, wait = cars.some(c => c.pump === i && c.state === 'wait'), on = pumps[i].on;
+    gr.fillStyle = on ? (i === 3 ? '#ff3a2a' : '#3aff6a') : wait ? (Math.sin(K.t * 9) > 0 ? '#ffd23f' : '#5a4a1a') : i === 3 ? '#3a1414' : '#2a3a2c';
+    if (on || wait) { gr.shadowColor = gr.fillStyle; gr.shadowBlur = 14; }
+    gr.beginPath(); gr.roundRect(bx, by, 36, 52, 6); gr.fill(); gr.shadowBlur = 0;
+    gr.fillStyle = on || wait ? '#111' : '#9a9a9a'; gr.font = 'bold 24px Arial'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText(i + 1, bx + 18, by + 22);
+    gr.font = 'bold 10px Arial'; gr.fillText(i === 3 ? 'OUT' : on ? 'ON' : wait ? 'CALL' : 'OFF', bx + 18, by + 42);
+    if (hover === 'pump' + i) { gr.strokeStyle = '#fff'; gr.lineWidth = 2; gr.strokeRect(bx - 2, by - 2, 40, 56); }
+  }
+  gr.fillStyle = 'rgba(255,255,255,.6)'; gr.font = 'bold 13px Arial'; gr.fillText('click or press G', Pu.x + Pu.w / 2, Pu.y + 104);
+}
+
+/* ---------- the night: schedule, customers, rule events, strikes and endings ---------- */
+const CARC = ['#8a2a2a', '#2a4a7a', '#c8c8c0', '#26262a', '#5a6a3a', '#7a6a4a', '#3a6a7a', '#a8862a'];
+const SPEC = {
+  mom: ['Kid', ['candy', 'water'], 'Mom, why is that man standing by the broken pump?'],
+  deputy: ['Deputy Hale', ['coffee', 'donut'], 'Still looking for Danny Reyes. If he ever calls here... you call me first.'],
+  teen: ['Teen', ['energy', 'chips'], 'Everyone at school says if you turn on pump 4 you can hear Danny. Do it. Do it!'],
+};
+const ENDS = { dead: 'Clocked Out', perfect: 'Employee of the Month', dawn: 'Sunrise', followed: 'Followed Home' };
+const ASKS = ['restroom', 'time', 'name', 'fake'];
+let nServ = 0, nFol = 0, botT = 0, sumN = null, nextT = 0, p4T = 0, beat = 0;
+const pen = n => { const v = Math.min(n, K.score); if (v > 0) K.add(-v); };
+const say = (who, text, d) => { cap = { who, text, t: 0, d: d || Math.max(3.4, text.length * .06) }; };
+const banner = (text, sub, c) => { banners = [{ text, sub, c, t: 0 }]; };
+function tip(key, text) { if (K.bot || hintsSeen.has(key)) return; hintsSeen.add(key); K.save.seen = [...hintsSeen]; K.persist(); hint = { text, t: 0 }; }
+function good(msg) { followed++; nFol++; K.add(15, 640, 210, '#7aff9a'); snd.good(); if (msg) say('', msg); }
+function jump(big) { scare = { t: K.t, big }; snd.scream(big); K.shake(big ? 42 : 26); }
+function strike(why, sc) {
+  if (dead || ended) return;
+  strikes++; nStrikes++; lastOdd = K.t; hint = null;
+  banner(`STRIKE ${strikes} OF 3`, why, '#ff4d4d'); snd.bad(); K.flash('#700', .5); K.shake(16);
+  if (strikes >= 3) { dead = { t: K.t, why }; jump(true); finish('dead'); }
+  else if (sc) jump(false);
+}
+function finish(id) {
+  endingId = id;
+  if (K.bot) { K.over(); return; }
+  const got = K.save.endings || (K.save.endings = []); if (!got.includes(id)) got.push(id);
+  K.save.strikes = 0; if (id !== 'dead') K.save.night = 1; K.persist();
+  const tx = {
+    dead: `${dead && dead.why}. That was strike three. The lights went out, and the Starlite is hiring again. Night ${night} is waiting for you.`,
+    perfect: 'Five nights, every rule followed. At 5:01 Ray walks in, smiling a little too wide. "You\'re perfect for this place." Behind you, the door locks itself.',
+    dawn: 'The sun comes up over Route 9. Ray takes the keys at 5:01 and you walk out into the light. You never look back at pump 4.',
+    followed: 'You made it to sunrise, barely. Driving home, your car radio clicks on by itself. A slow waltz, and a voice: "See you tomorrow, clerk."',
+  }[id];
+  K.over({ title: ENDS[id], text: tx + ` (Endings found: ${got.length} of 4)`, delay: id === 'dead' ? 2600 : 900 });
+}
+function plan(n) {
+  const E = [], r = K.rand, add = (h, k, o) => E.push({ at: at(h), at0: at(h), k, ...o });
+  const ng = 2 + Math.round(n * 1.6);
+  for (let i = 0; i < ng; i++) add(.12 + 5.5 * i / ng + r(0, .3), 'cust', { kind: 'gen' });
+  add(1.5, 'cust', { kind: 'walt' }); if (n >= 2) add(2.5, 'cust', { kind: 'mari' }); add(4.1, 'cust', { kind: 'earl' });
+  if (n === 2) add(2.1, 'cust', { kind: 'mom' }); if (n === 3) add(.9, 'cust', { kind: 'deputy' }); if (n === 4) add(1.1, 'cust', { kind: 'teen' });
+  for (let i = 0; i < 2 + n; i++) add(r(.25, 5.6), 'car');
+  add(r(.45, .8), 'ray');
+  add(n === 1 ? 3.4 : r(1.8, 3.6), 'cust', { kind: 'ghost' }); if (n >= 3) add(r(4.3, 5.2), 'cust', { kind: 'ghost' });
+  add(r(1.7, 2.5), 'fig'); if (n >= 4) add(r(4.4, 5.3), 'fig');
+  if (n >= 2) { add(r(.9, 1.6), 'flick'); add(r(.6, 1.9), 'cust', { kind: 'restroom' }); add(r(3.2, 5), 'cust', { kind: 'restroom' }); }
+  if (n >= 4) add(r(3.7, 4.6), 'flick');
+  if (n >= 3) { add(r(3.03, 3.12), 'danny'); add(r(4.2, 5), 'radio'); }
+  if (n >= 4) { add(3.58, 'danny'); add(r(1.4, 2.6), 'cust', { kind: 'time' }); add(r(3.1, 5), 'cust', { kind: 'name' }); }
+  if (n >= 5) { add(r(1.9, 2.5), 'radio'); add(r(1, 1.6), 'cam'); add(r(3.3, 3.8), 'cam'); add(4.45, 'cust', { kind: 'fake' }); add(r(2.6, 3), 'cust', { kind: 'time' }); }
+  add(.3, 'dj', { i: 0 }); add(2.8, 'dj', { i: 1 });
+  for (let i = 0; i < 4; i++) add(r(.2, 5.8), 'road');
+  if (n >= 2) add(r(1, 5), 'fog'); if (n >= 3) add(r(2, 5), 'face'); if (n >= 4) add(r(.5, 5), 'knock');
+  return E.sort((a, b) => a.at - b.at);
+}
+function startNight(n) {
+  night = n; t = 0; ev = plan(n); cust = null; look = false; lookK = 0; locked = false; flick = null; phone = null; cars = []; pumps = [0, 1, 2, 3].map(() => ({ on: false }));
+  radio = { on: true, talk: 0 }; cctv = null; dlg = null; cap = null; ambT = null; roadCar = null; doorK = 0; nStrikes = 0; nServ = 0; nFol = 0; tense = 0; view = null; hint = null; noteOpen = null; banners = [];
+}
+function clockIn() { const n = noteOpen ? noteOpen.n : night; startNight(n); snd.chime(); banner('NIGHT ' + n, n === 5 ? 'The last night of the week.' : '11:00 PM. Clocked in.', '#ffd23f'); }
+GAME.reset = () => {
+  strikes = K.bot ? 0 : K.clamp(K.save.strikes || 0, 0, 2); served = 0; followed = 0; endingId = null; dead = null; ended = 0; endT = 0; scare = null; poseMode = 0; lastOdd = 0; hbT = 0; botT = 1;
+  hintsSeen = new Set(K.save.seen || []);
+  fog = Array.from({ length: 9 }, () => ({ x: K.rand(0, 800), y: K.rand(250, 430), r: K.rand(90, 220), v: K.rand(5, 14) * (Math.random() < .5 ? -1 : 1) }));
+  const n = K.bot ? K.irand(1, 5) : K.clamp(K.save.night || 1, 1, 5);
+  startNight(n);
+  if (K.bot) { t = K.rand(at(.3), at(3)); ev = ev.filter(e => e.at > t); cust = newCust('gen'); cust.pt = 2; } else noteOpen = { n };
+  ambInit();
+};
+GAME.pose = () => {
+  startNight(5); t = at(3.3); poseMode = 1;
+  cust = newCust('ghost'); cust.look = LOOKS.pale; cust.phase = 'at'; cust.u = 1; cust.pt = 8; cust.cx = .1;
+  cars.push({ x: PUMPX[1] + 1, z: CARZ + .35, col: '#8a2a2a', lights: 1, pump: 1, state: 'wait', t: 0 }, { fig: 1, look: LOOKS.pale, x: PUMPX[3] + .55, z: PZ - .4, a: 1, state: 'wait', pump: 3, t: 0 });
+  cctv = { on: 1, spot: 0, t: 1 }; phone = { state: 'ring', t: 0, rt: 9, who: 'danny', d: 5 }; radio.talk = 4;
+  cap = { who: 'The radio', text: '...we can see you through the glass...', t: 1, d: 99 };
+};
+
+/* ---------- customers ---------- */
+function newCust(kind) {
+  const c = { kind, phase: 'approach', pt: 0, u: 0, ox0: K.rand(-3, 0), oz: 12, cx: K.rand(-.1, .4), items: [], look: randomLook(), bye: null };
+  let list = null;
+  if (REG[kind]) { c.look = LOOKS[kind]; list = REG[kind].items.slice(0, K.irand(1, 3)); }
+  else if (SPEC[kind]) { c.look = LOOKS[kind]; if (kind === 'mom') c.mate = LOOKS.kid; list = SPEC[kind][1]; }
+  else if (kind === 'fake' || kind === 'ray') { c.look = LOOKS.ray; c.noDoor = kind === 'fake'; }
+  else if (kind === 'gen' || kind === 'ghost') list = Array.from({ length: K.irand(1, Math.min(4, 1 + night)) }, () => K.pick(IK));
+  if (kind === 'gen' && Math.random() < .12) c.look = LOOKS.teen;
+  if (kind === 'ghost') c.ghost = c.noDoor = 1;
+  if (list) c.items = list.map((id, i) => ({ id, x: 560 - (list.length - 1) * 55 + i * 110, y: 624 + (i % 2) * 5, done: 0, k: 0 }));
+  c.ox = c.ox0; return c;
+}
+const leave = c => { c.phase = 'leave'; c.pt = 0; c.bye = null; };
+function arrive(c) {
+  const k = c.kind;
+  if (ASKS.includes(k)) return ask(c);
+  if (k === 'ghost' || k === 'ray') return;
+  if (REG[k]) { const R = REG[k]; say(R.name, lastOdd && K.t - lastOdd < 45 ? R.odd : R.lines[night]); speak(9, k === 'mari' ? 190 : k === 'walt' ? 100 : 82, null, 0, .2); }
+  else if (SPEC[k]) { say(SPEC[k][0], SPEC[k][2]); speak(9, k === 'mom' ? 270 : 120, null, 0, .2); }
+  else { say('Customer', night >= 3 && Math.random() < .35 ? K.pick(ODD) : K.pick(GEN)); speak(4, K.rand(90, 210), null, 0, .18); }
+  tip('serve', 'Click each item on the counter (or press SPACE) to ring it up.');
+}
+function ask(c) {
+  const k = c.kind, late = t >= at(3);
+  const Q = {
+    restroom: ['Customer', 'Can I get the restroom key? It\'s kind of urgent.', ['Here\'s the key.', 'Sorry, it\'s out of order.'], late ? 1 : 0, late && 'You gave out the restroom key after 2:00'],
+    time: ['Customer', 'Hey, what time is it? My phone died.', ['It\'s ' + clock() + '.', 'It\'s closing time.'], 1, 'You told a customer the time'],
+    name: ['Customer', 'Your name tag\'s blank, hon. What\'s your name?', ['I\'m ' + MYNAME + '.', 'Just the clerk.'], 1, 'You told a customer your name'],
+    fake: ['Ray?', 'Hey kid, it\'s me. Truck died out by pump 4. Come around the counter and give me a hand?', ['Come around the counter', 'Stay behind the counter'], 1, 'You left the counter before 5:00'],
+  }[k];
+  speak(9, k === 'fake' ? 105 : K.rand(100, 200), null, 0, .2);
+  dlg = { who: Q[0], text: Q[1], opts: Q[2], ok: Q[3], t: 0, pick: i => {
+    dlg = null; c.bye = 1.6;
+    if (i === Q[3]) {
+      if (Q[4]) good();
+      say(Q[0], { restroom: late ? '...Out of order. Sure it is.' : 'Thanks! Be right back.', time: '...Closing time. Right. Of course it is.', name: '"Just the clerk." ...For now.', fake: 'Suit yourself, kid.' }[k]);
+      if (k !== 'restroom') c.grin = 1;
+    } else if (Q[4]) { say(Q[0], k === 'name' ? MYNAME + '. ' + MYNAME + '. We\'ll remember that.' : k === 'fake' ? 'Good. Now hold still.' : 'Thank you, clerk.'); c.grin = 1; strike(Q[4], k !== 'restroom'); }
+    else { pen(2); say(Q[0], 'Seriously? Fine.'); }
+  } };
+}
+function custUpdate(dt) {
+  const c = cust; c.pt += dt;
+  if (c.phase === 'approach') {
+    const k = Math.min(1, c.pt / 3.2); c.ox = K.lerp(c.ox0, 2.55, k); c.oz = K.lerp(12, 5.7, k);
+    if (k < 1) return;
+    if (locked) { if (!c.rat) { c.rat = 1; snd.rattle(); } if (c.pt > 9) { cust = null; if (!flick && !ended) { pen(5); say('', 'They rattle the locked door, then give up and leave.'); } } return; }
+    c.phase = 'in'; c.pt = 0; snd.chime();
+  } else if (c.phase === 'in') { c.u = Math.min(1, c.pt / 2.2); if (c.u >= 1) { c.phase = 'at'; c.pt = 0; arrive(c); } }
+  else if (c.phase === 'at') {
+    for (const it of c.items) if (it.done) it.k = Math.min(1, it.k + dt * 3);
+    if (c.bye != null) { if ((c.bye -= dt) <= 0) leave(c); return; }
+    if (c.ghost) {
+      if (look) { c.lt = (c.lt || 0) + dt; if (Math.random() < dt * .7) speak(3, 0, null, 1, .14); if (c.lt > 4.5) leave(c); }
+      else { if (c.pt > 3) tip('ghost', 'Look at the door glass: this customer has NO reflection! Press L to look down.'); if (c.pt > (night === 1 ? 10 : 7.5)) { c.failed = 1; strike('You looked the one with no reflection in the eye', true); leave(c); } }
+    } else if (c.pt > 40 && !dlg && !ended) { pen(5); say('Customer', 'Forget it. I\'m leaving.'); leave(c); }
+  } else { c.u = Math.max(0, c.u - dt / 2); if (c.u <= 0) { cust = null; if (c.ghost && !c.failed) good('It left without opening the door. You can look up now.'); } }
+}
+function scan(i) {
+  const c = cust; if (!c || c.phase !== 'at' || c.bye != null || dlg || look || dead || ended) return;
+  if (i == null) i = c.items.findIndex(x => !x.done);
+  const it = c.items[i]; if (!it || it.done) return;
+  if (c.ghost) { c.failed = 1; strike('You served the customer with no reflection', true); leave(c); return; }
+  it.done = 1; snd.beep(); K.burst(it.x, it.y - 50, ['#ffd23f', '#fff'], 6, 160, { life: .3, size: 5, gravity: 200 });
+  if (c.items.every(x => x.done)) {
+    snd.drawer(); served++; nServ++; K.add(10, 940, 380, '#ffd23f'); c.bye = 1.1;
+    if (!cap || cap.t > 2.5) say(REG[c.kind] ? REG[c.kind].name : SPEC[c.kind] ? SPEC[c.kind][0] : 'Customer', K.pick(['Thanks. Night.', 'Have a good one.', 'Thanks, kid.', 'Stay safe out here.', 'Keep the change.']), 2.4);
+  }
+}
+
+/* ---------- cars and pump 4 ---------- */
+function carAdd() {
+  const free = [0, 1, 2].filter(i => !cars.some(c => c.pump === i)); if (!free.length) return;
+  const p = K.pick(free); cars.push({ x: -17, z: CARZ + (2 - p) * .35, col: K.pick(CARC), lights: 1, pump: p, state: 'in', t: 0, tx: PUMPX[p] + 1 });
+}
+function carsUpdate(dt) {
+  for (const c of cars) {
+    c.t += dt;
+    if (c.fig) {
+      if (c.state === 'wait') {
+        c.a = Math.min(1, c.a + dt * .4);
+        if (c.t > 3 && !c.v) { c.v = 1; say('Intercom, pump 4', '...hey... turn on pump four... just once...', 5); speak(7, 0, null, 1, .35); tip('p4', 'Something wants pump 4. Rule 2: NEVER turn it on. Just wait it out.'); }
+        if (c.t > 17 && !ended) { c.state = 'gone'; good('The figure at pump 4 is gone. You never turned it on.'); }
+      } else if ((c.a -= dt * .6) <= 0) c.dead = 1;
+      continue;
     }
-    // phone, rules, camera
-    const ph = phone && phone.state === 'ring', shake = ph ? Math.sin(K.t * 60) * 3 : 0;
-    gr.fillStyle = hover === 'phone' ? '#3a3a40' : '#2a2a2e'; gr.fillRect(B.phone.x + shake, B.phone.y, B.phone.w, B.phone.h); gr.fillStyle = ph ? '#ffd23f' : '#1a1a1a'; gr.fillRect(B.phone.x + 14 + shake, B.phone.y + 14, 82, 34); gr.fillStyle = '#e6e0d0'; gr.font = '16px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(ph ? 'RING' : 'PHONE', B.phone.x + 55 + shake, B.phone.y + 36);
-    for (let i = 0; i < 9; i++) { gr.fillStyle = '#444'; gr.fillRect(B.phone.x + 18 + (i % 3) * 26, B.phone.y + 60 + Math.floor(i / 3) * 20, 18, 14); }
-    gr.fillStyle = hover === 'rules' ? '#fff8e0' : '#ece4cc'; gr.save(); gr.translate(B.rules.x + 75, B.rules.y + 75); gr.rotate(-.04); gr.fillRect(-75, -75, 150, 150); gr.fillStyle = '#7a1f1a'; gr.font = '26px "Special Elite"'; gr.fillText('RULES', 0, -42); gr.fillStyle = '#333'; for (let i = 0; i < night; i++) gr.fillRect(-55, -16 + i * 18, 110 - (i % 2) * 20, 6); gr.restore();
-    if (night >= 5) {
-      gr.save(); gr.translate(-230, 430); gr.fillStyle = '#111'; gr.fillRect(1080, 40, 180, 130); gr.fillStyle = '#0d1a10'; gr.fillRect(1088, 48, 164, 104);
-      gr.strokeStyle = 'rgba(120,255,140,.3)'; gr.strokeRect(1100, 60, 140, 80); gr.fillStyle = 'rgba(120,255,140,.6)'; gr.fillRect(1160, 120, 12, 12);
-      if (cust) { gr.fillRect(1166, 96, 10, 10); }
-      if (cctv && cctv.state === 'on') { gr.fillStyle = Math.sin(K.t * 8) > 0 ? 'rgba(255,90,90,.9)' : 'rgba(120,255,140,.6)'; gr.fillRect(1205, 125, 10, 14); }
-      gr.fillStyle = '#ff4d4d'; gr.font = '11px "Special Elite"'; gr.textAlign = 'left'; gr.fillText('● CAM 2  STORE', 1092, 62); gr.restore();
-    }
-    // counter and items
-    gr.fillStyle = '#4a3a2a'; gr.fillRect(v.x0, 520, v.x1 - v.x0, 200); gr.fillStyle = '#5a4632'; gr.fillRect(v.x0, 516, v.x1 - v.x0, 12);
-    gr.fillStyle = '#222'; gr.fillRect(660, 470, 160, 110); gr.fillStyle = '#0a1a0a'; gr.fillRect(674, 484, 132, 44); gr.fillStyle = '#3aff7a'; gr.font = '24px "Courier New", monospace'; gr.textAlign = 'right';
-    const tot = cust ? cust.items.filter(i => i.scanned).reduce((a, i) => a + i.p, 0) : 0; gr.fillText('$' + tot.toFixed(2), 798, 514);
-    if (cust && cust.phase === 'at') for (const it of cust.items) if (!it.scanned) { gr.fillStyle = it.c; gr.beginPath(); gr.roundRect(it.x - 34, it.y - 30, 68, 60, 8); gr.fill(); if (hover === it) { gr.strokeStyle = '#ffd23f'; gr.lineWidth = 3; gr.stroke(); } gr.fillStyle = '#fff'; gr.font = '15px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(it.n, it.x, it.y + 5); }
-    // looking down: only the counter is visible
-    if (lookDown) { const lg = gr.createLinearGradient(0, 300, 0, 560); lg.addColorStop(0, '#000'); lg.addColorStop(1, 'rgba(0,0,0,.2)'); gr.fillStyle = lg; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, 560 - v.y0); gr.fillStyle = '#c9c0a8'; gr.font = '22px "Special Elite"'; gr.textAlign = 'center'; gr.fillText('(eyes on the counter)', CX, 470); }
-    // darkness when the lights go
-    if (L < 1) { gr.fillStyle = `rgba(0,0,0,${1 - L})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
-    // buttons and clock
-    button(gr, B.look, 'Look down [L]', lookDown, hover === 'look'); button(gr, B.lock, (locked ? 'Unlock' : 'Lock door') + ' [D]', locked, hover === 'lock'); button(gr, B.alarm, 'Alarm [A]', false, hover === 'alarm');
-    gr.fillStyle = '#100808'; gr.fillRect(560, 650, 160, 50); gr.fillStyle = forbidden() ? '#ff4d4d' : '#ff6a3a'; gr.font = '30px "Courier New", monospace'; gr.textAlign = 'center'; gr.fillText(clock(), 640, 676);
-    gr.fillStyle = '#e6e0d0'; gr.font = '20px "Special Elite"'; gr.textAlign = 'left'; gr.fillText(`NIGHT ${night}`, 760, 668); gr.fillStyle = '#ff6a6a'; gr.fillText('✕ '.repeat(strikes) + '· '.repeat(3 - strikes), 760, 694);
-    if (msgT > 0) { gr.font = '22px "Special Elite"'; gr.textAlign = 'center'; const w = Math.min(1000, gr.measureText(msg).width + 40); gr.fillStyle = 'rgba(0,0,0,.75)'; gr.fillRect(640 - w / 2, 590 - 22, w, 40); gr.fillStyle = msg.startsWith('RULE') ? '#ff6a6a' : '#f0e8d8'; gr.fillText(msg, 640, 592); }
-    // vignette and grain
-    const vg = gr.createRadialGradient(640, 330, 280, 640, 360, 900); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.7)'); gr.fillStyle = vg; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
-    for (let i = 0; i < 220; i++) { gr.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.1)'; gr.fillRect(v.x0 + Math.random() * (v.x1 - v.x0), v.y0 + Math.random() * (v.y1 - v.y0), 2, 2); }
-    if (scareT && K.t - scareT < .35 && !deadT) { gr.fillStyle = 'rgba(0,0,0,.6)'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); drawPerson(gr, randomPerson(), 640, 240, 2.4, { reveal: 1 }); }
-    // overlays: rules, dialog, manager's note, end of night
-    if (view === 'rules' || noteOpen) {
-      gr.fillStyle = 'rgba(0,0,0,.7)'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
-      gr.fillStyle = '#ece4cc'; gr.fillRect(300, 50, 680, 560); gr.fillStyle = '#7a1f1a'; gr.font = '38px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(noteOpen ? `Night ${night}: a note from the manager` : 'RULES (read them)', 640, 104);
-      gr.font = '20px "Special Elite"'; gr.textAlign = 'left'; let y = 160;
-      for (let i = 0; i < night; i++) { gr.fillStyle = noteOpen && i === night - 1 ? '#7a1f1a' : '#2a2420'; y = wrap(gr, `${i + 1}. ${RULES[i]}`, 330, y, 620, 28) + 44; }
-      gr.fillStyle = '#5a5040'; gr.textAlign = 'center'; gr.fillText(noteOpen ? (night === 1 ? 'Click each item on the counter to ring it up. Tap to start your shift.' : 'Tap to start your shift.') : 'Tap anywhere to close.', 640, 584);
-    }
-    if (dlg) {
-      gr.fillStyle = 'rgba(0,0,0,.6)'; gr.fillRect(v.x0, 230, v.x1 - v.x0, 240);
-      gr.fillStyle = '#ffd23f'; gr.font = '20px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(dlg.who, 640, 272); gr.fillStyle = '#f0e8d8'; gr.font = '26px "Special Elite"'; gr.fillText(dlg.text, 640, 320);
-      dlg.opts.forEach((o, i) => { const b = dlgBtn(i); gr.fillStyle = '#2a2a32'; gr.beginPath(); gr.roundRect(b.x, b.y, b.w, b.h, 12); gr.fill(); gr.strokeStyle = 'rgba(255,255,255,.25)'; gr.stroke(); gr.fillStyle = '#fff'; gr.font = '19px "Special Elite"'; gr.fillText(`[${i + 1}] ${o}`, b.x + b.w / 2, b.y + 38); });
-    }
-    if (ended) {
-      gr.fillStyle = `rgba(0,0,0,${Math.min(.85, ended)})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
-      gr.fillStyle = '#ffd8a8'; gr.font = '54px "Special Elite"'; gr.textAlign = 'center'; gr.fillText(`5:00 AM · Night ${night} done`, 640, 300);
-      gr.font = '24px "Special Elite"'; gr.fillStyle = '#efe6d8'; gr.fillText(night >= 5 ? 'The sun is coming up...' : `Strikes: ${strikes}/3. Tap or press Space for night ${night + 1}.`, 640, 360);
-    }
-  };
-  // tap anywhere on the end-of-night card to go on
-  const down0 = GAME.down; GAME.down = (x, y) => { if (ended && night < 5 && ended > .8) return nextNight(); if (ended) return; down0(x, y); };
+    if (c.state === 'in') { c.x += (c.tx - c.x) * Math.min(1, dt * 1.4); if (c.tx - c.x < .06) { c.x = c.tx; c.state = 'wait'; c.t = 0; tip('car', 'A car pulled up. Press G or click its flashing PUMP button to turn that pump on.'); } }
+    else if (c.state === 'wait') { if (c.t > 12 && !c.h) { c.h = 1; snd.honk(); } if (c.t > 26) { c.state = 'out'; pen(5); say('', 'The driver gives up and pulls away.'); } }
+    else if (c.state === 'fuel') { if (c.t > 6) { c.state = 'out'; pumps[c.pump].on = false; K.add(5, 1172, 490, '#7aff9a'); } }
+    else { c.vx = (c.vx || 0) + dt * 3; c.x += c.vx * dt; if (c.x > 17) c.dead = 1; }
+  }
+  cars = cars.filter(c => !c.dead);
+}
+function pumpOn(i) {
+  if (i == null) { const w = cars.find(c => !c.fig && c.state === 'wait'); if (!w) return snd.click(); i = w.pump; }
+  if (i === 3) { if (!pumps[3].on) { pumps[3].on = true; p4T = 0; snd.pump(); const f = cars.find(c => c.fig); if (f) f.state = 'gone'; strike('You turned on pump 4', true); } return; }
+  const c = cars.find(c => c.pump === i && c.state === 'wait');
+  if (!c) return snd.click();
+  pumps[i].on = true; c.state = 'fuel'; c.t = 0; snd.pump();
+}
+
+/* ---------- player actions ---------- */
+function act(k, a) {
+  if (dead || ended || noteOpen || K.state === 'over') return;
+  if (k === 'rules') { view = view ? null : 'rules'; nz(.15, .15, 'bandpass', 2500, 0, .8); hint = null; return; }
+  if (view) return;
+  if (k === 'look') { look = !look; hint = null; nz(.25, .08, 'lowpass', 700); if (!look && cust && cust.ghost && cust.phase === 'at' && !cust.failed) { cust.failed = 1; strike('You looked up while it was still standing there', true); leave(cust); } return; }
+  if (k === 'lock') { locked = !locked; snd.lock(locked); return; }
+  if (k === 'alarm') { snd.alarm(); K.flash('#f22', .25); if (cctv) { cctv = null; good('The alarm screams. On the camera, the aisle is empty again.'); } else { pen(5); say('', 'False alarm. Ray gets billed for those.'); } return; }
+  if (k === 'radio') { if (radio.talk > 0) { radio.talk = 0; radio.on = false; snd.static(.25); good('Click. Silence. Whatever was on that station, it\'s gone.'); } else { radio.on = !radio.on; snd.click(); } return; }
+  if (k === 'pump') return pumpOn(a);
+  if (k === 'phone') {
+    if (!phone || phone.state !== 'ring') return snd.click();
+    snd.pickup(); phone.state = 'talk'; phone.t = 0;
+    if (phone.who === 'ray') { say('Ray (phone)', RAY[night], 6); speak(14, 120, null, 0, .22); K.add(5, 100, 470, '#7aff9a'); phone.d = 6; }
+    else { say('??? (phone)', K.pick(DANNY), 5); speak(9, 0, null, 1, .5); phone.d = 4; strike('You answered the phone between 2:00 and 3:00', true); }
+  }
+}
+
+/* ---------- events ---------- */
+function fire(e) {
+  const k = e.k;
+  if (k === 'cust') { if (cust || dlg || (flick && flick.state !== 'after')) return false; cust = newCust(e.kind); return true; }
+  if (k === 'car') { carAdd(); return true; }
+  if (k === 'fig') { if (cars.some(c => c.fig)) return false; cars.push({ fig: 1, look: LOOKS.pale, x: PUMPX[3] + .55, z: PZ - .4, a: 0, state: 'wait', pump: 3, t: 0 }); return true; }
+  if (k === 'ray' || k === 'danny') {
+    if (phone) return false; if (k === 'danny' && !forbidden()) return true;
+    phone = { state: 'ring', t: 0, rt: 0, who: k, d: 5 };
+    if (k === 'danny') tip('danny', 'It\'s between 2:00 and 3:00 AM. Rule 5: do NOT answer. Let it ring.');
+    return true;
+  }
+  if (k === 'radio') { if (radio.talk) return false; radio.on = true; radio.talk = 9; snd.static(.6); say('The radio', K.pick(VOICE), 8); speak(10, 0, S.rin, 1, .7, .3); return true; }
+  if (k === 'dj') { if (radio.on && !radio.talk) { say('WKNT 1170 AM', DJ[night][e.i], 6); speak(16, 92, S.rin, 0, .4); } return true; }
+  if (k === 'flick') {
+    if (flick || (cust && cust.phase !== 'approach')) return false;
+    cust = null; flick = { state: 'flick', t: 0 }; lastOdd = K.t; [.25, 1, 1.75].forEach(d => setTimeout(() => snd.pop(), d * 1000)); return true;
+  }
+  if (k === 'cam') { if (cctv) return false; cctv = { on: 1, spot: K.irand(0, 2), t: 0 }; snd.static(.4); return true; }
+  if (k === 'road') { if (!roadCar) roadCar = { x: 400, v: K.rand(110, 200) }; return true; }
+  if (ambT) return false;
+  ambT = { k, t: 0, d: k === 'fog' ? 7 : k === 'face' ? 1.2 : 1, x: K.rand(-5, 1) };
+  if (k === 'face') { tone(1400, .7, 'sawtooth', .07, -900); nz(.5, .3, 'highpass', 1200); K.shake(8); }
+  if (k === 'knock') { snd.knock(.35); say('', '*knock knock knock* ...There\'s no one at the door.'); }
+  return true;
+}
+function endNight() {
+  t = DUR; nextT = 3.4; sumN = { n: night, s: nServ, f: nFol, k: nStrikes };
+  cust = null; dlg = null; phone = null; cctv = null; flick = null; radio.talk = 0; look = false; locked = false; view = null; hint = null;
+  cars.forEach(c => { if (c.fig) c.state = 'gone'; else if (c.state !== 'fuel') c.state = 'out'; });
+  K.add(50, 640, 320, '#ffd23f'); snd.good(); banner('5:00 AM', night >= 5 ? 'You survived the week.' : `Night ${night} survived.`, '#ffd23f');
+  if (night >= 5) { ended = 1; endT = 0; endingId = strikes === 0 ? 'perfect' : strikes === 1 ? 'dawn' : 'followed'; if (endingId === 'perfect') K.add(100); return; }
+  if (!K.bot) { K.save.night = night + 1; K.save.strikes = strikes; K.persist(); }
+}
+function endUpdate(dt) {
+  const e0 = endT; endT += dt; const hit = s => e0 < s && endT >= s;
+  carsUpdate(dt); if (cust) custUpdate(dt);
+  if (hit(.6) || hit(1.5) || hit(4)) snd.bird();
+  if (endingId === 'perfect') {
+    if (hit(1.5)) say('', 'The sky over Route 9 turns grey, then gold. A truck pulls in. 5:01.');
+    if (hit(3)) cust = newCust('ray');
+    if (hit(9)) { say('Ray', 'Five nights. Every single rule. Nobody\'s ever done that, kid.'); speak(10, 110); }
+    if (hit(13)) { say('Ray', 'You\'re perfect for this place. You never have to leave.'); speak(9, 100); if (cust) cust.grin = 1; locked = true; snd.lock(true); }
+    if (hit(17)) finish('perfect');
+  } else if (endingId === 'dawn') {
+    if (hit(1.5)) say('', 'The sky over Route 9 turns grey, then gold. Birds. Actual birds.');
+    if (hit(5.5)) say('', 'Ray\'s truck pulls in at 5:01. It\'s really him. You hand over the keys.');
+    if (hit(10)) finish('dawn');
+  } else {
+    if (hit(1.5)) say('', 'Sunrise. You made it... with two strikes on the clipboard.');
+    if (hit(5)) { radio.on = true; radio.talk = 3; say('The radio', '...see you tomorrow, clerk...', 4); speak(8, 0, S.rin, 1, .7); }
+    if (hit(10)) finish('followed');
+  }
+}
+function ambUpdate(dt) {
+  if (!S.on) { if (K.ac && !K.bot) ambInit(); if (!S.on) return; }
+  const ct = K.ac.currentTime, set = (p, v) => p.setTargetAtTime(v, ct, .12), L = lightL;
+  set(S.hum.gain, .028 * L); set(S.buzz.gain, (flick && flick.state !== 'after' ? .045 : .01) * L);
+  set(S.drone.gain, dead ? 0 : tense * .16); set(S.radio.gain, radio.on && !dead ? .55 : 0); set(S.crk.gain, radio.talk > 0 ? .07 : .006);
+  set(S.wind.gain, .035 + doorK * .1); S.windF.frequency.setTargetAtTime(280 + Math.sin(K.t * .23) * 90 + doorK * 300, ct, .3);
+  S.det += ((radio.talk > 0 ? 1 : 0) - S.det) * Math.min(1, dt * 2);
+  music();
+}
+GAME.update = dt => {
+  if (!bgC) bake();
+  ambUpdate(dt);
+  for (const b of banners) b.t += dt; if (cap) cap.t += dt; if (hint && (hint.t += dt) > 8) hint = null;
+  lookK += ((look ? 1 : 0) - lookK) * Math.min(1, dt * 7);
+  const c = cust, dT = c && ((c.phase === 'in' && c.u < .45) || (c.phase === 'leave' && c.u < .45 && !c.noDoor) || (c.phase === 'approach' && c.oz < 6.3 && !locked)) ? 1 : 0;
+  doorK += (dT - doorK) * Math.min(1, dt * 6);
+  if (roadCar && (roadCar.x += roadCar.v * dt) > 1030) roadCar = null;
+  if (ambT && (ambT.t += dt) > ambT.d) ambT = null;
+  if (K.state === 'over' || dead) return;
+  if (ended) { endUpdate(dt); return; }
+  if (noteOpen || view) return;
+  if (t >= DUR) { carsUpdate(dt); if ((nextT -= dt) <= 0) { if (K.bot) startNight(night % 5 + 1); else noteOpen = { n: night + 1, sum: sumN }; } return; }
+  t += dt;
+  for (const e of ev) if (!e.done && e.at <= t) { if (fire(e)) e.done = 1; else if ((e.at += 1.5) > at(5.8) || (e.kind === 'gen' && e.at - e.at0 > 25)) e.done = 1; }
+  if (cust) custUpdate(dt);
+  carsUpdate(dt);
+  if (dlg && (dlg.t += dt) > 15) { const k = cust && cust.kind; dlg = null; if (cust) cust.bye = .4; if (k === 'fake') good('You stayed put. "Ray" leaves... and the door never opens.'); else say('Customer', 'Never mind.'); }
+  if (phone) {
+    phone.t += dt;
+    if (phone.state === 'ring') {
+      if ((phone.rt -= dt) <= 0) { phone.rt = 2.4; snd.ring(); }
+      if (phone.who === 'danny' && (phone.t > 11 || !forbidden())) { phone = null; good('The phone stops ringing. You let it ring.'); }
+      else if (phone.who === 'ray' && phone.t > 12) { phone = null; pen(3); say('', 'Missed call. It was probably Ray.'); }
+    } else if (phone.t > phone.d) { phone = null; snd.click(); }
+  }
+  if (radio.talk > 0) { radio.talk -= dt; if (radio.talk < 7) tip('radio', 'The radio is talking to YOU. Rule 6: press M to switch it off!'); if (radio.talk <= 0) { radio.talk = 0; strike('You let the radio talk to you', true); } }
+  if (flick) {
+    const f = flick; f.t += dt;
+    if (f.state === 'flick' && f.t > 2.2) { f.state = 'warn'; f.t = 0; tip('flick', 'The lights flickered three times. Rule 3: press D to LOCK the door!'); }
+    else if (f.state === 'warn') { if (locked) { f.state = 'knock'; f.t = 0; beat = 0; } else if (f.t > 7.5) { strike('You didn\'t lock the door after three flickers', true); f.state = 'after'; f.t = 0; } }
+    else if (f.state === 'knock') {
+      if ((beat -= dt) <= 0) { beat = 1.7; snd.knock(.55); K.shake(5); say('', '*KNOCK KNOCK KNOCK*', 1.4); }
+      if (!locked) { strike('You unlocked the door while it was knocking', true); f.state = 'after'; f.t = 0; }
+      else if (f.t > 7) { f.state = 'after'; f.t = 0; good('The knocking stops. The lights steady. You can unlock now.'); }
+    } else if (f.state === 'after' && f.t > 2.5) flick = null;
+  }
+  if (cctv) { cctv.t += dt; if (cctv.t > 3) tip('cam', 'The camera shows someone who is NOT in the store. Rule 9: press A for the alarm!'); if (cctv.t > 11) { cctv = null; strike('You ignored the figure on the camera', true); } }
+  if (pumps[3].on && (p4T += dt) > 3) pumps[3].on = false;
+  if (night === 1 && t > 8) tip('rules', 'Press R (or tap RULES) any time to read the rules. Time stops while you read.');
+  const tg = Math.max(.07 * night, c && c.ghost && c.phase === 'at' ? 1 : 0, flick && flick.state !== 'after' ? .9 : 0, radio.talk ? .8 : 0, cctv ? .75 : 0, phone && phone.who === 'danny' ? .6 : 0, cars.some(x => x.fig && x.state === 'wait') ? .45 : 0, strikes >= 2 ? .4 : 0);
+  tense += (tg - tense) * Math.min(1, dt * 1.5);
+  if (tense > .55 && (hbT -= dt) <= 0) { hbT = 1.15 - tense * .4; snd.heart(); }
+  if (t >= DUR) endNight();
+};
+
+/* ---------- UI: HUD, buttons, captions, dialog, notes, rulebook ---------- */
+const rr = (gr, x, y, w, h, r) => { gr.beginPath(); gr.roundRect(x, y, w, h, r); };
+const hit = (r, x, y) => r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+const TF = "'Special Elite', 'Courier New', monospace";
+const BAR = [['rules', 'R'], ['look', 'L'], ['lock', 'D'], ['alarm', 'A'], ['phone', 'P'], ['radio', 'M']].map(([id, k], i) => ({ id, k, x: 12 + i * 201, y: 648, w: 191, h: 62 }));
+const NOTEBTN = { x: 470, y: 612, w: 340, h: 66 };
+const pumpR = i => ({ x: OBJ.pumps.x + 10 + i * 43, y: OBJ.pumps.y + 30, w: 44, h: 60 });
+function wrap(gr, s, w) { const out = []; let line = ''; for (const wd of s.split(' ')) { const tt = line ? line + ' ' + wd : wd; if (line && gr.measureText(tt).width > w) { out.push(line); line = wd; } else line = tt; } if (line) out.push(line); return out; }
+function txt(gr, s, x, y, font, c, al = 'center') { gr.font = font; gr.fillStyle = c; gr.textAlign = al; gr.textBaseline = 'middle'; gr.fillText(s, x, y); }
+function para(gr, s, x, y, w, font, c, lh) { gr.font = font; const L = wrap(gr, s, w); gr.fillStyle = c; gr.textAlign = 'left'; gr.textBaseline = 'top'; L.forEach((l, i) => gr.fillText(l, x, y + i * lh)); return y + L.length * lh; }
+const label = id => ({ rules: 'RULES', look: look ? 'LOOK UP' : 'LOOK DOWN', lock: locked ? 'UNLOCK' : 'LOCK DOOR', alarm: 'ALARM', phone: phone && phone.state === 'ring' ? 'ANSWER' : 'PHONE', radio: radio.on ? 'RADIO OFF' : 'RADIO ON' }[id]);
+function drawBar(gr) {
+  for (const b of BAR) {
+    const on = (b.id === 'look' && look) || (b.id === 'lock' && locked) || (b.id === 'rules' && view), ring = b.id === 'phone' && phone && phone.state === 'ring', hv = hover === b.id;
+    rr(gr, b.x, b.y, b.w, b.h, 12); gr.fillStyle = on ? '#ffd23f' : ring ? (Math.sin(K.t * 10) > 0 ? '#8a2a1a' : '#2a1410') : hv ? 'rgba(40,40,48,.95)' : 'rgba(14,14,18,.9)'; gr.fill();
+    gr.lineWidth = hv ? 3 : 2; gr.strokeStyle = hv ? '#fff' : 'rgba(255,210,63,.5)'; gr.stroke();
+    rr(gr, b.x + 10, b.y + 14, 34, 34, 7); gr.fillStyle = on ? '#1a1a1a' : '#ffd23f'; gr.fill();
+    txt(gr, b.k, b.x + 27, b.y + 32, 'bold 22px Arial', on ? '#ffd23f' : '#141414');
+    txt(gr, label(b.id), b.x + 119, b.y + 32, 'bold 21px Arial', on ? '#141414' : '#f4efe2');
+  }
+}
+function drawHud(gr) {
+  const x = 972, y = 10; rr(gr, x, y, 296, 130, 14); gr.fillStyle = 'rgba(8,8,12,.84)'; gr.fill(); gr.strokeStyle = 'rgba(255,210,63,.35)'; gr.lineWidth = 2; gr.stroke();
+  txt(gr, 'NIGHT ' + night + ' / 5', x + 16, y + 24, 'bold 20px Arial', '#ffd23f', 'left');
+  txt(gr, K.score + ' pts', x + 280, y + 24, 'bold 20px Arial', '#e8e4da', 'right');
+  gr.shadowColor = '#ff3a2a'; gr.shadowBlur = 10; txt(gr, clock(), x + 148, y + 66, 'bold 40px "Courier New", monospace', forbidden() && night >= 3 ? '#ff2a2a' : '#ff6a4a'); gr.shadowBlur = 0;
+  txt(gr, 'STRIKES', x + 16, y + 110, 'bold 17px Arial', '#bbb', 'left');
+  for (let i = 0; i < 3; i++) {
+    const bx = x + 116 + i * 54, on = i < strikes; rr(gr, bx, y + 94, 42, 32, 6); gr.fillStyle = on ? '#c81e1e' : 'rgba(255,255,255,.08)'; gr.fill();
+    gr.strokeStyle = on ? '#ff8a8a' : 'rgba(255,255,255,.25)'; gr.stroke(); if (on) txt(gr, 'X', bx + 21, y + 111, 'bold 24px Arial', '#fff');
+  }
+}
+function drawCap(gr) {
+  if (!cap || cap.t > cap.d) return;
+  const eerie = /radio|\?\?\?|Intercom/.test(cap.who) && !/WKNT/.test(cap.who);
+  gr.globalAlpha = Math.max(0, Math.min(1, cap.t * 5, (cap.d - cap.t) * 2.5));
+  const f = (eerie ? 'italic ' : '') + '21px Arial'; gr.font = f; const L = wrap(gr, cap.text, 560), h = 22 + (cap.who ? 26 : 0) + L.length * 27;
+  rr(gr, 340, 12, 600, h, 12); gr.fillStyle = eerie ? 'rgba(30,4,4,.88)' : 'rgba(6,6,10,.85)'; gr.fill();
+  let y = 22; if (cap.who) { txt(gr, cap.who.toUpperCase(), 360, y + 10, 'bold 17px Arial', eerie ? '#ff5a4a' : '#ffd23f', 'left'); y += 26; }
+  gr.font = f; gr.fillStyle = eerie ? '#ffc8c0' : '#f2ede2'; gr.textAlign = 'left'; gr.textBaseline = 'top'; L.forEach((l, i) => gr.fillText(l, 360, y + i * 27));
+  gr.globalAlpha = 1;
+}
+function drawDlg(gr) {
+  if (!dlg) return;
+  gr.font = 'bold 23px Arial'; const L = wrap(gr, '"' + dlg.text + '"', 596), h = 66 + L.length * 30 + 84, y0 = 636 - h;
+  rr(gr, 320, y0, 640, h, 16); gr.fillStyle = 'rgba(10,10,14,.93)'; gr.fill(); gr.strokeStyle = '#ffd23f'; gr.lineWidth = 2; gr.stroke();
+  txt(gr, dlg.who.toUpperCase(), 344, y0 + 26, 'bold 18px Arial', '#ffd23f', 'left');
+  gr.fillStyle = 'rgba(255,210,63,.6)'; gr.fillRect(344 + 592 * Math.min(1, dlg.t / 15), y0 + 20, 592 * Math.max(0, 1 - dlg.t / 15), 4);
+  gr.font = 'bold 23px Arial'; gr.fillStyle = '#fff'; gr.textAlign = 'left'; gr.textBaseline = 'top'; L.forEach((l, i) => gr.fillText(l, 344, y0 + 44 + i * 30));
+  dlg.r = dlg.opts.map((o, i) => ({ x: 336 + i * 308, y: y0 + h - 76, w: 296, h: 62 }));
+  dlg.r.forEach((r, i) => {
+    const hv = hover === 'opt' + i; rr(gr, r.x, r.y, r.w, r.h, 10); gr.fillStyle = hv ? '#ffd23f' : '#26262c'; gr.fill(); gr.strokeStyle = '#ffd23f'; gr.stroke();
+    gr.font = 'bold 20px Arial'; const ll = wrap(gr, (i + 1) + '.  ' + dlg.opts[i], 276);
+    ll.forEach((l, j) => txt(gr, l, r.x + r.w / 2, r.y + r.h / 2 + (j - (ll.length - 1) / 2) * 23, 'bold 20px Arial', hv ? '#111' : '#fff'));
+  });
+}
+function drawHint(gr) {
+  if (!hint || dlg || noteOpen || view) return;
+  gr.globalAlpha = Math.max(0, Math.min(1, hint.t * 4, (8 - hint.t) * 2)); gr.font = 'bold 20px Arial';
+  const L = wrap(gr, hint.text, 620), h = 20 + L.length * 26, w = Math.max(...L.map(l => gr.measureText(l).width)) + 44, y = 470 - h + Math.sin(K.t * 3) * 3;
+  rr(gr, 640 - w / 2, y, w, h, 12); gr.fillStyle = 'rgba(255,210,63,.96)'; gr.fill(); gr.strokeStyle = '#1a1a1a'; gr.lineWidth = 2; gr.stroke();
+  L.forEach((l, i) => txt(gr, l, 640, y + 23 + i * 26, 'bold 20px Arial', '#151515'));
+  gr.globalAlpha = 1;
+}
+function drawBanner(gr) {
+  const b = banners[0]; if (!b || b.t > 3.2) return;
+  const a = Math.min(1, b.t * 5, (3.2 - b.t) * 2), s = 1 + Math.max(0, .2 - b.t) * 1.5;
+  gr.globalAlpha = a; gr.save(); gr.translate(640, 250); gr.scale(s, s);
+  gr.font = 'bold 22px Arial'; const ll = b.sub ? wrap(gr, b.sub, 600).slice(0, 2) : [];
+  rr(gr, -340, -64, 680, 92 + ll.length * 28, 16); gr.fillStyle = 'rgba(0,0,0,.72)'; gr.fill(); gr.strokeStyle = b.c; gr.lineWidth = 2; gr.stroke();
+  gr.font = `48px ${TF}`; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillStyle = b.c; gr.fillText(b.text, 0, -20);
+  gr.font = 'bold 22px Arial'; gr.fillStyle = '#fff'; ll.forEach((l, i) => gr.fillText(l, 0, 26 + i * 28));
+  gr.restore(); gr.globalAlpha = 1;
+}
+function dim(gr, a) { const v = K.view; gr.fillStyle = `rgba(0,0,0,${a})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
+function drawNote(gr) {
+  dim(gr, .82); const n = noteOpen.n, sm = noteOpen.sum;
+  gr.save(); gr.translate(640, 360); gr.rotate(-.006); gr.translate(-640, -360);
+  gr.shadowColor = 'rgba(0,0,0,.6)'; gr.shadowBlur = 30; gr.fillStyle = '#ebe3cd'; gr.fillRect(200, 18, 880, 684); gr.shadowBlur = 0;
+  gr.strokeStyle = 'rgba(80,110,160,.22)'; gr.lineWidth = 1; for (let y = 92; y < 600; y += 29) { gr.beginPath(); gr.moveTo(212, y); gr.lineTo(1068, y); gr.stroke(); }
+  gr.fillStyle = 'rgba(200,40,40,.3)'; gr.fillRect(236, 18, 2, 684);
+  let y = 34;
+  if (sm) { txt(gr, `5:00 AM. NIGHT ${sm.n} SURVIVED.`, 640, y + 12, 'bold 22px Arial', '#2a6a2a'); txt(gr, `Served ${sm.s}  ·  Rules followed ${sm.f}  ·  Strikes tonight ${sm.k}  (total ${strikes} of 3)`, 640, y + 42, 'bold 18px Arial', '#4a4436'); y += 62; }
+  txt(gr, 'NIGHT ' + n + (n === 5 ? ': THE LAST ONE' : ''), 640, y + 28, `46px ${TF}`, '#7a1c1c'); y += 62;
+  y = para(gr, NOTES[n] + '  - Ray', 256, y, 780, `21px ${TF}`, '#2a2620', 28) + 10;
+  txt(gr, n === 1 ? 'THE RULES SO FAR' : 'NEW RULES TONIGHT', 256, y + 10, 'bold 20px Arial', '#7a1c1c', 'left'); y += 30;
+  RULES.forEach((r, i) => { if (r.n !== n) return; txt(gr, (i + 1) + '. ' + r.t.toUpperCase(), 256, y + 10, 'bold 20px Arial', '#1a1a1a', 'left'); y = para(gr, r.d, 256, y + 24, 780, '18px Arial', '#333', 23) + 8; });
+  gr.restore();
+  const b = NOTEBTN; rr(gr, b.x, b.y, b.w, b.h, 14); gr.fillStyle = hover === 'clock' ? '#ffe680' : '#ffd23f'; gr.fill(); gr.strokeStyle = '#1a1a1a'; gr.lineWidth = 3; gr.stroke();
+  txt(gr, 'CLOCK IN  (Space)', 640, b.y + b.h / 2 + 1, 'bold 28px Arial', '#151515');
+}
+function drawRules(gr) {
+  dim(gr, .8);
+  rr(gr, 60, 12, 1160, 696, 18); gr.fillStyle = '#5e4026'; gr.fill();
+  gr.fillStyle = '#efe8d6'; gr.fillRect(82, 52, 1116, 640);
+  rr(gr, 565, 2, 150, 46, 10); gr.fillStyle = '#b8b8b0'; gr.fill(); gr.fillStyle = '#7a7a72'; gr.fillRect(600, 20, 80, 8);
+  txt(gr, 'STARLITE GAS  ·  NIGHT SHIFT RULES', 640, 86, `30px ${TF}`, '#7a1c1c');
+  txt(gr, 'Time is stopped while you read. Click anywhere or press R to close.', 640, 118, '17px Arial', '#555');
+  const y = [146, 146];
+  rulesNow().forEach((r, i) => {
+    const c = i < 5 ? 0 : 1, x = 108 + c * 552, nw = r.n === night;
+    rr(gr, x, y[c], 34, 34, 8); gr.fillStyle = nw ? '#c81e1e' : '#2a2a2a'; gr.fill(); txt(gr, String(i + 1), x + 17, y[c] + 18, 'bold 20px Arial', '#fff');
+    txt(gr, r.t.toUpperCase() + (nw ? '   NEW TONIGHT' : ''), x + 46, y[c] + 18, 'bold 20px Arial', nw ? '#a01818' : '#1a1a1a', 'left');
+    y[c] = para(gr, r.d, x + 46, y[c] + 38, 478, '17px Arial', '#333', 20) + 12;
+  });
+  if (night < 5) txt(gr, 'More rules will be added tomorrow night.', 660 + 46, y[1] + 14, 'italic bold 17px Arial', '#7a1c1c', 'left');
+}
+GAME.draw = gr => {
+  if (!bgC) bake();
+  const v = K.view;
+  gr.save();
+  if (lookK > .01) { const s = 1 + lookK * .16; gr.translate(640, 700); gr.scale(s, s); gr.translate(-640, -700); }
+  drawStore(gr);
+  if (ambT && ambT.k === 'face') {
+    const w0 = P(WIN.x0, WIN.y1, ZB), w1 = P(WIN.x1, WIN.y0, ZB); gr.save(); gr.beginPath(); gr.rect(w0[0], w0[1], w1[0] - w0[0], w1[1] - w0[1]); gr.clip();
+    gr.globalAlpha = Math.max(0, Math.min(1, ambT.t * 8, (ambT.d - ambT.t) * 3)) * .9; scareFace(gr, 530, 262, .42, .4); gr.restore(); gr.globalAlpha = 1;
+  }
+  gr.restore();
+  if (lookK > .02) {
+    const lg = gr.createLinearGradient(0, v.y0, 0, 600); lg.addColorStop(0, `rgba(0,0,0,${.97 * lookK})`); lg.addColorStop(.72, `rgba(0,0,0,${.93 * lookK})`); lg.addColorStop(1, 'rgba(0,0,0,0)');
+    gr.fillStyle = lg; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, 600 - v.y0);
+    gr.globalAlpha = lookK; txt(gr, 'EYES DOWN', 640, 290, `46px ${TF}`, '#d8d0c0'); txt(gr, 'Stare at the counter. Press L to look up.', 640, 342, 'bold 21px Arial', '#a8a294'); gr.globalAlpha = 1;
+  }
+  if (ended && night >= 5) { gr.fillStyle = `rgba(255,170,90,${Math.min(.16, endT * .03)})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
+  const vg = gr.createRadialGradient(640, 330, 250, 640, 360, 860); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, strikes >= 2 && !ended ? `rgba(70,0,0,${.6 + .1 * Math.sin(K.t * 3)})` : `rgba(0,0,0,${.5 + tense * .25})`);
+  gr.fillStyle = vg; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+  if (grainC) { gr.globalAlpha = .45; const ox = K.irand(0, 255), oy = K.irand(0, 255); for (let x = -ox; x < 1280; x += 256) for (let y = -oy; y < 720; y += 256) gr.drawImage(grainC, x, y); gr.globalAlpha = 1; }
+  if (!poseMode) { drawHud(gr); drawBar(gr); drawBanner(gr); drawHint(gr); drawDlg(gr); }
+  drawCap(gr);
+  if (!poseMode && noteOpen) drawNote(gr);
+  if (!poseMode && view) drawRules(gr);
+  if (scare) {
+    const k = K.t - scare.t, d = scare.big ? 2.4 : 1.1;
+    if (k < d) { gr.globalAlpha = Math.max(0, Math.min(1, k * 25, (d - k) * 4)); dim(gr, 1); scareFace(gr, 640, 390, (scare.big ? 2.1 : 1.6) + Math.min(.4, k) * 1.2, 1); gr.fillStyle = 'rgba(140,0,0,.18)'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); gr.globalAlpha = 1; }
+  }
+  if (dead && K.t - dead.t > 2.2) dim(gr, Math.min(1, (K.t - dead.t - 2.2) * 2));
+};
+
+/* ---------- input ---------- */
+function itemAt(x, y) { if (!cust || cust.phase !== 'at' || look || dlg) return -1; return cust.items.findIndex(it => !it.done && Math.abs(x - it.x) < 52 && y > it.y - 112 && y < it.y + 16); }
+GAME.down = (x, y) => {
+  ambInit();
+  if (dead || ended) return;
+  if (noteOpen) { if (hit(NOTEBTN, x, y)) clockIn(); return; }
+  if (view) { view = null; snd.click(); return; }
+  if (dlg && dlg.r) { const i = dlg.r.findIndex(r => hit(r, x, y)); if (i >= 0) return dlg.pick(i); }
+  const b = BAR.find(b => hit(b, x, y)); if (b) return act(b.id);
+  for (let i = 0; i < 4; i++) if (hit(pumpR(i), x, y)) return act('pump', i);
+  const it = itemAt(x, y); if (it >= 0) return scan(it);
+  if (hit(OBJ.phone, x, y)) return act('phone');
+  if (hit(OBJ.radio, x, y)) return act('radio');
+  if (hit(OBJ.door, x, y)) return act('lock');
+  if (hit(OBJ.reg, x, y)) return scan();
+};
+GAME.move = (x, y) => {
+  let h = null;
+  if (noteOpen) h = hit(NOTEBTN, x, y) ? 'clock' : null;
+  else if (!view) {
+    if (dlg && dlg.r) dlg.r.forEach((r, i) => { if (hit(r, x, y)) h = 'opt' + i; });
+    const b = !h && BAR.find(b => hit(b, x, y)); if (b) h = b.id;
+    if (!h) for (let i = 0; i < 4; i++) if (hit(pumpR(i), x, y)) h = 'pump' + i;
+    const ii = itemAt(x, y); if (cust) cust.items.forEach((it, i) => it.hot = i === ii);
+    if (!h && (ii >= 0 || hit(OBJ.phone, x, y) || hit(OBJ.radio, x, y) || hit(OBJ.door, x, y) || hit(OBJ.reg, x, y))) h = 'obj';
+  }
+  hover = h; const c = document.getElementById('cv'); if (c) c.style.cursor = h ? 'pointer' : 'default';
+};
+GAME.key = (c, d) => {
+  if (!d) return;
+  if (noteOpen) { if (c === 'Space' || c === 'Enter') clockIn(); return; }
+  if (view) { if (c === 'KeyR' || c === 'Space' || c === 'Enter') { view = null; snd.click(); } return; }
+  if (dlg && /^(Digit|Numpad)[12]$/.test(c)) return dlg.pick(+c.slice(-1) - 1);
+  const m = { KeyR: 'rules', KeyL: 'look', KeyD: 'lock', KeyA: 'alarm', KeyM: 'radio', KeyG: 'pump' }[c];
+  if (m) act(m); else if (c === 'Space' || c === 'Enter') scan();
+};
+// the kit uses P for pause; during a shift P answers the phone instead (Escape still pauses)
+addEventListener('keydown', e => { if (e.code === 'KeyP' && K.state === 'play' && !K.bot) { e.stopPropagation(); e.preventDefault(); if (!e.repeat) act('phone'); } }, true);
+
+/* ---------- the bot: plays by the rules behind the title screen and in ?demo ---------- */
+GAME.bot = dt => {
+  if ((botT -= dt) > 0) return; botT = K.rand(.3, .65);
+  if (noteOpen) return clockIn();
+  if (dead || ended || t >= DUR || view) return;
+  if (dlg) { if (dlg.t > 1.4) dlg.pick(dlg.ok); return; }
+  if (flick && (flick.state === 'flick' || flick.state === 'warn')) { if (!locked && flick.t > .6) act('lock'); return; }
+  if (locked && !flick) return act('lock');
+  const gh = cust && cust.ghost && cust.phase === 'at';
+  if (gh && !look && cust.pt > 1.6) return act('look');
+  if (look && !gh) return act('look');
+  if (radio.talk > 0 && radio.talk < 7.6) return act('radio');
+  if (!radio.on && !radio.talk && Math.random() < .3) return act('radio');
+  if (cctv && cctv.t > 1.8) return act('alarm');
+  if (phone && phone.state === 'ring' && phone.who === 'ray' && phone.t > 1.5) return act('phone');
+  if (cars.some(c => !c.fig && c.state === 'wait' && c.t > 1)) return act('pump');
+  if (cust && cust.phase === 'at' && !cust.ghost && !look && cust.pt > .8) scan();
+};
+GAME.test = s => eval(s);
 })();
 
 /* Pulsebox game kit: canvas scaling, input, menus, skins shop, coins, best score, sound and effects.
