@@ -860,12 +860,12 @@ const OT = (() => {
     const yy = Y(h); gr.fillStyle = '#fff'; gr.beginPath(); gr.moveTo(x - 12, yy); gr.lineTo(x - 24, yy - 9); gr.lineTo(x - 24, yy + 9); gr.fill(); OT.label(gr, h, x - 32, yy + 1, 22, '#fff', { al: 'right' });
   }
   GAME.pose = () => {
-    world = 0; scen = mkScenery(); const n = 24;
+    world = 0; scen = mkScenery(); const n = 17;
     for (let i = 1; i <= n; i++) blocks.push({ x: 640 + (i % 3 - 1) * 3, w: 300 - i * 2, tw: 300 - i * 2, born: -9, sp: i === 17 ? 'gold' : null });
     h = n; zone = 1; fy = 360 - (n + 1 - 5) * BH; bgR = 360 - fy; skyC = skyAt(bgR / BH + 7); night = 0; t = 1.3; combo = 6;
     cur = { x: 900, w: blocks[n].w, dir: 1, born: -9, sp: null, mul: 1, ph: 0, ins: true };
     evs = [{ ty: 'balloon', x: 200, y: 260, t: 1, R0: bgR, f: .35, dir: 1, c: 0, sp: 0 }, { ty: 'plane', x: 1060, y: 150, t: 0, R0: bgR, f: .35, dir: -1, sp: 0 }, { ty: 'birds', x: 330, y: 120, t: .3, R0: bgR, f: .35, dir: 1, sp: 0 }];
-    const y = BASE - n * BH; OT.text(640, y - 50, 'PERFECT x6', '#ffd23f', 44, { life: 99, l0: .5 }); OT.ring(640, y + BH / 2, '#fff', 180, 230, 99, 5, .32);
+    const y = BASE - n * BH; OT.text(640, y - 50, 'PERFECT x6', '#ffd23f', 44, { life: 99, l0: .5 }); K.add(n);
   };
 })();
 
