@@ -434,3 +434,218 @@ const GAME = {
     noiseR = sub.thr > 3 ? (55 + sub.thr * sub.thr * .0135) * (1 - .2 * up('quiet')) + (boosting ? 160 : 0) : listen ? 0 : 22;
     if (sub.thr > 20 && Math.random() < dt * (boosting ? 30 : 10)) fxp.push({ x: sub.x - ca * 27 + K.rand(-3, 3), y: sub.y - sa * 27 + K.rand(-3, 3), vx: -ca * 40 + K.rand(-15, 15), vy: -sa * 40 + K.rand(-15, 15), life: 0, max: K.rand(.8, 1.6), k: 'bub', s: K.rand(1.5, 3.5) });
   }
+
+  /* ---------- sonar ---------- */
+  const PR = 210;
+  const angIn = (a, a0, span) => { let d = (a - a0) % TAU; if (d < 0) d += TAU; return d < span; };
+  function pingStep(p, dt) {
+    const r0 = p.r; p.r += 860 * dt; const R = p.r, own = p.kind === 'sub';
+    const x0 = Math.max(0, Math.floor((p.x - R) / C)), x1 = Math.min(GW - 1, Math.floor((p.x + R) / C)), y0 = Math.max(0, Math.floor((p.y - R) / C)), y1 = Math.min(GH - 1, Math.floor((p.y + R) / C));
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const i = y * GW + x; if (!grid[i]) continue; const cx = x * C + C / 2 - p.x, cy = y * C + C / 2 - p.y, d = Math.hypot(cx, cy);
+      if (d >= r0 - C && d < R && d <= rayAt(p, Math.atan2(cy, cx)) + C * 1.3) { lit[i] = K.t; seen[i] = 1; }
+    }
+    const vis = (x, y, m) => { const d = K.dist(x, y, p.x, p.y); return d < R && d >= r0 - m && d <= rayAt(p, Math.atan2(y - p.y, x - p.x)) + m; };
+    for (const o of [...items, hatch, ...logs, ...eggs, ...rocks]) if (vis(o.x, o.y, 30)) { o.seenT = K.t; o.mem = 1; }
+    for (const l of lurkers) if (vis(l.x, l.y, 50)) { l.seenT = K.t; ghosts.push({ t: K.t, k: 'lurk', x: l.x, y: l.y, a: l.a }); }
+    for (const m of mites) if (vis(m.x, m.y, 12)) ghosts.push({ t: K.t, k: 'mite', x: m.x, y: m.y, a: Math.atan2(m.vy, m.vx) });
+    for (const s of stalkers) {
+      if (p.hit.has(s)) continue; let md = 1e9; for (const q of s.seg) md = Math.min(md, K.dist(q.x, q.y, p.x, p.y) - q.r);
+      if (md > R || md > p.range) continue; p.hit.add(s);
+      const pts = s.seg.map(q => { const d = K.dist(q.x, q.y, p.x, p.y); return d - q.r < p.range && d - q.r <= rayAt(p, Math.atan2(q.y - p.y, q.x - p.x)) + 12 ? { x: q.x, y: q.y, r: q.r } : null; });
+      if (pts.some(q => q)) {
+        ghosts.push({ t: K.t, k: 'body', pts, a: s.a });
+        if (own) { const pn = panOf(s.x, s.y); tone(520, .9, 'triangle', .14, -170, .03, pn, .9); tone(250, 1.1, 'sine', .12, -90, .05, pn, .6); }
+      }
+    }
+  }
+  function sweepStep(a0, span) {
+    const r = Math.ceil(PR / C) + 1, cx = Math.floor(sub.x / C), cy = Math.floor(sub.y / C);
+    for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) {
+      if (x < 0 || y < 0 || x >= GW || y >= GH) continue; const i = y * GW + x; if (!grid[i]) continue;
+      const px = x * C + C / 2 - sub.x, py = y * C + C / 2 - sub.y; if (px * px + py * py > PR * PR) continue;
+      if (angIn(Math.atan2(py, px), a0, span)) swl[i] = K.t;
+    }
+    const hit = (x, y, m = 0) => K.dist(x, y, sub.x, sub.y) < PR + m && angIn(Math.atan2(y - sub.y, x - sub.x), a0, span);
+    for (const s of stalkers) { const pts = s.seg.map(q => hit(q.x, q.y, q.r) ? { x: q.x, y: q.y, r: q.r } : null); if (pts.some(q => q)) ghosts.push({ t: K.t, k: 'body', pts, a: s.a, sw: 1 }); }
+    for (const m of mites) if (hit(m.x, m.y)) ghosts.push({ t: K.t, k: 'mite', x: m.x, y: m.y, a: Math.atan2(m.vy, m.vx) });
+    for (const l of lurkers) if (hit(l.x, l.y, 40)) { l.seenT = K.t; ghosts.push({ t: K.t, k: 'lurk', x: l.x, y: l.y, a: l.a }); }
+    for (const o of [...items, hatch, ...logs, ...eggs, ...rocks]) if (hit(o.x, o.y, 20)) { o.seenT = K.t; o.mem = 1; }
+  }
+
+  /* ---------- update ---------- */
+  function nextDive() {
+    win = 0; level++; dives++; K.add(2); K.coin(3 + level); hull = Math.min(hullMax, hull + 30);
+    if (!K.bot) { const s = sv(); s.deep = Math.max(s.deep || 0, depthM()); s.dives = (s.dives || 0) + 1; K.persist(); }
+    buildLevel(); if (!K.bot) openStation(false);
+  }
+  function audioStep() {
+    if (!A || !sub) return; const t = A.ac.currentTime, on = !dead && !station && !win;
+    A.amb.gain.setTargetAtTime(on ? .3 : .08, t, .5); A.drone.gain.setTargetAtTime(on ? .5 + distort * .5 : .12, t, .5);
+    A.eg.gain.setTargetAtTime(on ? sub.thr / 172 * .17 : 0, t, .1); A.eng.frequency.setTargetAtTime(34 + sub.thr * .22, t, .1); A.ef.frequency.setTargetAtTime(150 + sub.thr * 2.6, t, .1);
+    A.wg.gain.setTargetAtTime(on && boosting ? .022 : 0, t, .2); A.wh.frequency.setTargetAtTime(300 + sub.thr * 1.6, t, .2);
+    A.hg.gain.setTargetAtTime(on && listen ? .03 : 0, t, .2);
+  }
+  function fxStep(dt) {
+    for (let i = fxp.length - 1; i >= 0; i--) { const p = fxp[i]; p.life += dt; if (p.life > p.max) { fxp.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 1 - dt * 1.5; p.vy *= 1 - dt * 1.5; if (p.k === 'rock') p.vy += 160 * dt; }
+    for (const s of silt) {
+      s.x += Math.sin(K.t * .3 + s.z * 9) * 4 * dt; s.y += Math.cos(K.t * .23 + s.s * 5) * 4 * dt;
+      for (const c of currents) { const d = K.dist(c.x, c.y, s.x, s.y); if (d < c.r * 1.3) { s.x += c.dx * c.s * 1.4 * dt; s.y += c.dy * c.s * 1.4 * dt; } }
+      if (Math.abs(s.x - cam.x) > 490) s.x = cam.x - Math.sign(s.x - cam.x) * K.rand(400, 480);
+      if (Math.abs(s.y - cam.y) > 490) s.y = cam.y - Math.sign(s.y - cam.y) * K.rand(400, 480);
+    }
+    for (let i = ghosts.length - 1; i >= 0; i--) if (K.t - ghosts[i].t > 3) ghosts.splice(i, 1);
+    for (let i = bear.length - 1; i >= 0; i--) if (K.t - bear[i].t > 3) bear.splice(i, 1);
+  }
+  const HINTS = [
+    ['move', () => levelT > 1, 'Hold the screen where you want to go, or use WASD / the arrows.'],
+    ['ping', () => levelT > 5, 'SPACE or PING lights up the cave. It hears every ping.'],
+    ['beacon', () => hintDone.ping && levelT > 10, 'Find 3 amber PARTS. LISTEN (Q) shows their beacons on the rim.'],
+    ['loud', () => boosting, 'Full speed is LOUD. The dashed ring shows how far you can be heard.'],
+    ['seen', () => ghosts.some(g => g.k === 'body' && !g.sw), 'That red shape is IT. Stay quiet. Flares (F) drive it off, decoys (E) lure it away.'],
+    ['vent', () => vent[idx(sub.x, sub.y)] || vent[idx(sub.x + Math.cos(sub.a) * 60, sub.y + Math.sin(sub.a) * 60)], 'A narrow vent: too tight for it to follow you in.'],
+    ['pods', () => eggs.some(e => e.seenT > 0 && K.dist(e.x, e.y, sub.x, sub.y) < 320), 'Pods. Do not touch them, and do not race past them.'],
+  ];
+  function hintStep(dt) {
+    hintT -= dt; if (hintT > 0) { if (hintDone[hint.id]) hintT = Math.min(hintT, .6); return; }
+    if (K.bot || (sv().dives || 0) >= 3) return;
+    for (const [id, cond, text] of HINTS) if (!hintDone['h' + id] && !hintDone[id] && cond()) { hintDone['h' + id] = 1; hint = { id, text }; hintT = 6.5; return; }
+  }
+  GAME.update = dt => {
+    if (!sub) return;
+    if (!K.bot && K.ac) au();
+    audioStep(); fxStep(dt);
+    if (dead || station) { if (station) { station.t += dt; station.fT -= dt; } return; }
+    if (win) { win += dt; sub.x += (hatch.x - sub.x) * Math.min(1, dt * 2); sub.y += (hatch.y - sub.y) * Math.min(1, dt * 2); sub.a += dt * 2; cam.x = sub.x; cam.y = sub.y; if (win > 2.4) nextDive(); return; }
+    levelT += dt; msgT -= dt; hurtT -= dt; scare = Math.max(0, scare - dt * 1.4);
+    const sw0 = sweep; sweep += dt * 2.1;
+    pingCharge = Math.min(1, pingCharge + dt / pingCd() * (listen ? 1.6 : 1));
+    subStep(dt); if (dead) return;
+    cam.x = sub.x; cam.y = sub.y; evR = Math.max(0, evR - dt * 700);
+    for (const p of pings) pingStep(p, dt);
+    pings = pings.filter(p => p.r < p.range);
+    sweepStep(sw0, sweep - sw0);
+    // flares and decoys
+    for (const f of flares) {
+      f.t += dt; f.vx *= 1 - dt * 1.4; f.vy *= 1 - dt * 1.4; const nx = f.x + f.vx * dt, ny = f.y + f.vy * dt;
+      if (fieldAt(nx, ny) > .45) { f.vx *= -.5; f.vy *= -.5; } else { f.x = nx; f.y = ny; }
+      const FR = 230 * Math.min(1, f.t * 3) * (f.t > f.life - 1 ? f.life - f.t : 1);
+      const r = Math.ceil(FR / C), cx = Math.floor(f.x / C), cy = Math.floor(f.y / C);
+      for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) { const i = y * GW + x; if (x >= 0 && y >= 0 && x < GW && y < GH && grid[i] && K.dist(x * C + C / 2, y * C + C / 2, f.x, f.y) < FR) { lit[i] = K.t - .3; seen[i] = 1; } }
+      for (const o of [...items, hatch, ...logs, ...eggs, ...rocks]) if (K.dist(o.x, o.y, f.x, f.y) < FR) { o.seenT = K.t; o.mem = 1; }
+      for (const s of stalkers) if (s.seg.some(q => K.dist(q.x, q.y, f.x, f.y) < FR + 50)) flee(s, f.x, f.y);
+      if (Math.random() < dt * 25) fxp.push({ x: f.x, y: f.y, vx: K.rand(-40, 40), vy: K.rand(-60, 10), life: 0, max: K.rand(.4, 1), k: 'flare' });
+    }
+    flares = flares.filter(f => f.t < f.life);
+    for (const d of decoys) {
+      d.t += dt; d.vx *= 1 - dt * 2.2; d.vy *= 1 - dt * 2.2; const nx = d.x + d.vx * dt, ny = d.y + d.vy * dt;
+      if (fieldAt(nx, ny) > .45) { d.vx *= -.5; d.vy *= -.5; } else { d.x = nx; d.y = ny; }
+      if (d.t > .8 && d.n < 5 && d.t - (d.last || 0) > 1.7) { d.n++; d.last = d.t; newPing(d.x, d.y, 380, 'decoy'); emit(d.x, d.y, 1400, 'decoy'); tone(1500, 1, 'sine', .08, -40, 0, panOf(d.x, d.y), .8); }
+    }
+    decoys = decoys.filter(d => d.n < 5 || d.t - d.last < 1.5);
+    // creatures
+    for (const s of stalkers) {
+      if (noiseR > 30 && K.dist(s.x, s.y, sub.x, sub.y) < noiseR * hearMul()) { if (s.mode === 'hunt') { s.tx = sub.x; s.ty = sub.y; s.lastHeard = K.t; } else hear(s, sub.x, sub.y, noiseR, 'engine'); }
+      stalkerStep(s, dt);
+      if (K.dist(s.x, s.y, sub.x, sub.y) < 38) { if (vent[idx(sub.x, sub.y)]) { if (scare < .2) { scare = .9; K.shake(22); tone(60, .5, 'square', .3, -20); hiss(.4, .5, 'lowpass', 500); show('It cannot fit. Stay in the vent.', 2); } } else return die('beast'); }
+    }
+    for (const l of lurkers) lurkerStep(l, dt);
+    for (const m of mites) { if (noiseR > 30 && K.dist(m.x, m.y, sub.x, sub.y) < noiseR * 1.2) { m.tx = sub.x; m.ty = sub.y; m.chase = 3; } miteStep(m, dt); }
+    if (dead) return;
+    // cave features
+    for (const e of eggs) {
+      if (e.angry) { e.angry += dt; continue; }
+      if (e.pods.some(p => K.dist(p.x, p.y, sub.x, sub.y) < p.r + 22) || (boosting && K.dist(e.x, e.y, sub.x, sub.y) < 170)) {
+        e.angry = .001; e.seenT = K.t; e.mem = 1; scare = Math.max(scare, .5); K.shake(10); show('You woke the pods. It is coming.', 3);
+        tone(1700, 1.8, 'sine', .1, 900, 0, panOf(e.x, e.y), .7, 40); tone(1760, 1.8, 'sine', .08, 1000, .1, panOf(e.x, e.y), .7, 50);
+        for (const s of stalkers) { s.mode = 'roam'; hear(s, sub.x, sub.y, 1e6, 'egg'); s.rage = 10; }
+        for (const m of mites) { m.tx = sub.x; m.ty = sub.y; m.chase = 6; }
+      }
+    }
+    for (const rk of rocks) if (rk.fall && !rk.done) {
+      rk.fall += dt; K.shake(3);
+      if (rk.fall > 1) {
+        rk.done = true; rk.seenT = K.t; K.shake(16); hiss(2.2, .45, 'lowpass', 150, 0, panOf(rk.x, rk.y), .6); tone(48, 1.6, 'sine', .3, -14);
+        for (let n = 0; n < 34; n++) fxp.push({ x: rk.x + K.rand(-20, 20), y: rk.y + K.rand(-20, 20), vx: (rk.ox - rk.x) * K.rand(.5, 2) + K.rand(-60, 60), vy: (rk.oy - rk.y) * K.rand(.5, 2) + K.rand(-60, 60), life: 0, max: K.rand(.8, 1.8), k: 'rock', s: K.rand(3, 8) });
+        for (let i = 0; i < GW * GH; i++) if (grid[i]) { const [x, y] = ctr(i); if (K.dist(x, y, rk.ox, rk.oy) < 170) { lit[i] = K.t; seen[i] = 1; } }
+        if (K.dist(rk.ox, rk.oy, sub.x, sub.y) < 95) { hurt(K.bot ? 6 : 22); show('Rockfall!', 1.5); }
+        emit(rk.ox, rk.oy, 900, 'rock');
+      }
+    }
+    if (dead) return;
+    // objectives
+    for (const it of items) if (!it.got && K.dist(it.x, it.y, sub.x, sub.y) < 40) {
+      it.got = true; got++; K.add(1); K.coin(2); tone(660, .25, 'triangle', .12); tone(990, .3, 'triangle', .1, 0, .08); tone(1320, .6, 'sine', .08, 0, .16, 0, .5);
+      show(got < 3 ? `Part ${got} of 3 recovered` : 'All parts aboard. Follow the teal arrow to the hatch.', 3);
+      for (let n = 0; n < 16; n++) fxp.push({ x: it.x, y: it.y, vx: K.rand(-120, 120), vy: K.rand(-120, 120), life: 0, max: K.rand(.4, .9), k: 'gold' });
+    }
+    for (const lg of logs) if (!lg.got && K.dist(lg.x, lg.y, sub.x, sub.y) < 40) {
+      lg.got = true; runLogs++; K.coin(4); K.add(2); const s = sv(); let n = -1;
+      for (let j = 0; j < LOGS.length; j++) if (!s.logs.includes(j)) { n = j; break; }
+      if (n >= 0 && !K.bot) { s.logs.push(n); K.persist(); logView = { i: n, t: 0 }; } else show('Black box recovered: salvage +4', 2.5);
+      hiss(.6, .2, 'bandpass', 1800, 0, 0, 0, 2); for (let j = 0; j < 3; j++) tone(880, .08, 'square', .05, 0, .3 + j * .13);
+    }
+    if (logView) { logView.t += dt; if (logView.t > LOGS[logView.i].length / 26 + 5) logView = null; }
+    if (got >= 3 && K.dist(hatch.x, hatch.y, sub.x, sub.y) < 46) { win = .001; listen = false; tone(330, 1.2, 'triangle', .12); tone(415, 1.2, 'triangle', .1, 0, .15); tone(494, 1.6, 'sine', .1, 0, .3, 0, .6); hiss(2, .2, 'lowpass', 300, .2, 0, .5); show(`Hatch open. Descending to ${depthM() + 250} m.`, 2.5); return; }
+    // air, danger, ambience
+    o2 -= dt; if (o2 <= 0) { o2 = 0; return die('o2'); }
+    if (o2 < 30 && (alarmT -= dt) <= 0) { alarmT = 1.2; tone(980, .14, 'square', .05); }
+    nearD = 1e9; let ns = null;
+    for (const s of stalkers) for (const q of s.seg) { const d = K.dist(q.x, q.y, sub.x, sub.y) - q.r; if (d < nearD) { nearD = d; ns = s; } }
+    distort += (K.clamp((480 - nearD) / 380, 0, 1) - distort) * Math.min(1, dt * 3);
+    if (nearD < 160 && !scareSeen && !K.bot) { scareSeen = true; scare = 1; scareSnd(); K.shake(20); }
+    if (nearD < 650) { beatT -= dt; if (beatT <= 0) { beatT = .3 + nearD / 650 * .85; heartbeat(K.clamp(1.2 - nearD / 700, .25, 1)); } }
+    if ((callT -= dt) <= 0 && ns) { callT = K.rand(10, 20); const s = stalkers[K.irand(0, stalkers.length - 1)], d = K.dist(s.x, s.y, sub.x, sub.y); moan(d, panOf(s.x, s.y)); bear.push({ a: Math.atan2(s.y - sub.y, s.x - sub.x), t: K.t, c: '255,80,70', w: .2 }); }
+    if ((creakT -= dt) <= 0) { creakT = K.rand(6, 14) / (1 + level * .08); creak(); }
+    if (mites.some(m => K.dist(m.x, m.y, sub.x, sub.y) < 420) && Math.random() < dt * 3) { const m = mites[K.irand(0, mites.length - 1)]; for (let j = 0; j < 4; j++) hiss(.03, .12, 'highpass', 3600, j * .05 + Math.random() * .03, panOf(m.x, m.y), .2); }
+    if (listen && Math.random() < dt * 1.2) { const o = [...items.filter(i => !i.got), ...logs.filter(l => !l.got), ...(got >= 3 ? [hatch] : [])]; const t = o[K.irand(0, o.length - 1)]; if (t) tone(1400, .1, 'sine', .04, 0, 0, panOf(t.x, t.y), .6); }
+    hintStep(dt);
+  };
+
+  /* ---------- bot ---------- */
+  let bField = null, bGoal = null, bT = 0, bChk = 0, bLast = [0, 0], bWay = null, bWayT = 0, bListen = 0, bNext = 12;
+  GAME.bot = dt => {
+    if (!sub || dead || win) { GAME._steer = null; return; }
+    if (station) { if (station.t > 1.6) dive(); return; }
+    if (listen) { GAME._steer = null; if ((bListen -= dt) <= 0) setListen(false); return; }
+    let goal = null, gd = 1e9;
+    if (got < 3) for (const it of items) if (!it.got) { const d = K.dist(it.x, it.y, sub.x, sub.y); if (d < gd) { gd = d; goal = it; } }
+    for (const lg of logs) if (!lg.got && K.dist(lg.x, lg.y, sub.x, sub.y) < Math.min(gd, 520)) { goal = lg; gd = 0; }
+    if (got >= 3) goal = hatch;
+    bT -= dt;
+    if (goal !== bGoal || bT <= 0 || !bField) { bGoal = goal; bT = .8; const gi = idx(goal.x, goal.y); bField = bfsFrom(gi, k => passable(k) && !avoid[k]); if (bField[idx(sub.x, sub.y)] < 0) bField = bfsFrom(gi, passable); }
+    let k = idx(sub.x, sub.y), tgt = null;
+    for (let j = 0; j < 9; j++) {
+      let nb = -1, nd = bField[k] >= 0 ? bField[k] : 1e9, nw = -1;
+      for (const [dx, dy] of D8) {
+        const q = k + dy * GW + dx; if (q < 0 || q >= GW * GH || bField[q] < 0) continue;
+        if (dx && dy && (bField[k + dx] < 0 || bField[k + dy * GW] < 0)) continue;
+        if (bField[q] < nd || (nb >= 0 && bField[q] === nd && wd[q] > nw)) { nd = bField[q]; nb = q; nw = wd[q]; }
+      }
+      if (nb < 0) break; k = nb; const [x, y] = ctr(k);
+      if (j < 1 || clearLine(sub.x, sub.y, x, y, .3)) tgt = [x, y]; else break;
+    }
+    if (!tgt) tgt = [goal.x, goal.y];
+    if ((bChk -= dt) <= 0) { bChk = 2; if (K.dist(sub.x, sub.y, bLast[0], bLast[1]) < 25) { const p = pickCell([sub.x, sub.y], 4, passable); if (p) { bWay = p; bWayT = 1.2; } } bLast = [sub.x, sub.y]; }
+    if (bWayT > 0) { bWayT -= dt; tgt = bWay; }
+    GAME._steer = { x: tgt[0], y: tgt[1], boost: false };
+    if (pingCharge >= 1 && K.t - lastPing > 2.4) use('ping');
+    if (nearD < 290 && tools.flare && !flares.length) use('flare');
+    else if (nearD < 650 && nearD > 320 && tools.decoy && !decoys.length && stalkers.some(s => s.mode === 'hunt')) use('decoy');
+    if (levelT > bNext && nearD > 750 && got < 3) { bNext = levelT + K.rand(15, 24); bListen = 1.7; setListen(true); }
+  };
+
+  /* ---------- cover pose: the sweep catches the stalker coiled around the sub ---------- */
+  GAME.pose = () => {
+    let bi = 0; for (let i = 0; i < GW * GH; i++) if (wd[i] > wd[bi]) bi = i;
+    [sub.x, sub.y] = ctr(bi); cam.x = sub.x; cam.y = sub.y; sub.a = -.6; sub.thr = 50;
+    const s = stalkers[0];
+    for (let j = 0; j < NSEG; j++) { const a = 2.75 - j * .2, r = 105 + j * 7; s.seg[j].x = sub.x + Math.cos(a) * r; s.seg[j].y = sub.y + Math.sin(a) * r; }
+    s.x = s.seg[0].x; s.y = s.seg[0].y; s.a = Math.atan2(sub.y - s.y, sub.x - s.x) - .6;
+    ghosts = [{ t: K.t - .25, k: 'body', pts: s.seg.map(q => ({ x: q.x, y: q.y, r: q.r })), a: s.a }];
+    const p = (newPing(sub.x, sub.y, 600, 'sub'), pings[pings.length - 1]); pingStep(p, 600 / 860);
+    for (let i = 0; i < GW * GH; i++) if (lit[i] === K.t) lit[i] = K.t - .2 - Math.random() * 1.3;
+    p.r = 360; p.hit.add(s); ghosts.length = 1;
+    for (const o of [...items, hatch, ...logs]) o.mem = 1;
+    sweep = Math.atan2(s.y - sub.y, s.x - sub.x) + .35; distort = .3; noiseR = 120; GAME._pose = 1; msgT = 0; hintT = 0;
+  };

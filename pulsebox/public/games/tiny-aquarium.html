@@ -204,7 +204,7 @@ const GAME = {
       : { x: PANEL.x + 24 + (i % 3) * 300, y: PANEL.y + 84 + Math.floor(i / 3) * 230, w: 290, h: 218 };
   const nItems = () => panel === 'shop' ? 8 : panel === 'decor' ? DECOR.length : panel === 'theme' ? THEMES.length : 0;
   const cardRect = () => { const f = card; return { x: K.clamp(f.x - 160, T.x0 + 10, T.x1 - 330), y: K.clamp(f.y - 250, T.y0 + 90, SAND - 300), w: 320, h: 216 }; };
-  const fishR = f => (f.sp === 4 ? SP[f.sp].H * .5 : SP[f.sp].L * .55) * (.45 + .55 * f.age) + 10;
+  const FS = 1.65, fishR = f => (f.sp === 4 ? SP[f.sp].H * .5 : SP[f.sp].L * .55) * FS * (.45 + .55 * f.age) + 10;
   function openPanel(k) { panel = k; psel = 0; card = null; K.sfx(600, .05, 'triangle', .05); }
   function itemAct(i) { if (panel === 'shop') buyFish(i); else if (panel === 'decor') buyDecor(i); else if (panel === 'theme') buyTheme(i); }
   GAME.down = (x, y) => {
@@ -451,7 +451,7 @@ const GAME = {
       for (let k = 0; k < 6; k++) gr.fillRect(-70 + k * 25, -142, 14, 14);
       gr.strokeStyle = 'rgba(60,60,80,.25)'; gr.lineWidth = 1.5; for (let r = 0; r < 8; r++) { gr.beginPath(); gr.moveTo(-70, -16 * r); gr.lineTo(70, -16 * r); gr.stroke(); }
       rr(gr, -20, -60, 40, 60, [20, 20, 0, 0], '#23233a'); for (const wx of [-48, 34, -8]) rr(gr, wx, -110, 16, 24, [8, 8, 0, 0], '#23233a');
-      gr.fillStyle = '#5a9a5a'; for (let k = 0; k < 6; k++) circ(gr, -70 + k * 28, -2, 8 + k % 3 * 3, 'rgba(70,140,80,.75)');
+      for (let k = 0; k < 6; k++) ell(gr, -70 + k * 28, 0, 12 + k % 3 * 3, 5, 0, 'rgba(70,140,80,.55)');
       gr.strokeStyle = '#555'; gr.lineWidth = 2; gr.beginPath(); gr.moveTo(71, -182); gr.lineTo(71, -214); gr.stroke(); gr.fillStyle = '#ff5a6a'; gr.beginPath(); gr.moveTo(72, -214); gr.quadraticCurveTo(84, -210 + Math.sin(t * 3) * 3, 96, -206); gr.lineTo(72, -198); gr.fill();
     }
     else if (i === 4) {
@@ -485,7 +485,7 @@ const GAME = {
     // theme scenery behind the decorations (drawn as soft silhouettes so the water color still shows)
     const sb = y0 + h;
     if (th === 0) { gr.fillStyle = 'rgba(180,230,255,.12)'; gr.beginPath(); gr.moveTo(x0, sb); for (let x = 0; x <= w; x += 40) gr.lineTo(x0 + x, sb - 120 - Math.sin(x * .008) * 60 - Math.sin(x * .021) * 25); gr.lineTo(x0 + w, sb); gr.fill(); }
-    if (th === 1) { for (let k = 0; k < 9; k++) { const bx = x0 + 60 + k * w / 9, c = ['#ff7aa0', '#ffb36a', '#c58aff', '#6ae0c0'][k % 4]; gr.fillStyle = c; gr.globalAlpha = .28; gr.beginPath(); gr.arc(bx, sb - 40, 50 + (k % 3) * 15, Math.PI, 0); gr.fill(); for (let j = 0; j < 4; j++) { gr.fillRect(bx - 34 + j * 20, sb - 150 - (j * 23 % 40), 10, 120); circ(gr, bx - 29 + j * 20, sb - 152 - (j * 23 % 40), 9, c); } } gr.globalAlpha = 1; }
+    if (th === 1) { gr.lineCap = 'round'; for (let k = 0; k < 10; k++) { const bx = x0 + 40 + k * w / 10 + (k % 2) * 30, c = ['#ff7aa0', '#ffb36a', '#c58aff', '#6ae0c0', '#ff9a7a'][k % 5]; gr.globalAlpha = .3; if (k % 3 === 0) { gr.fillStyle = c; gr.beginPath(); gr.moveTo(bx, sb); for (let j = 0; j <= 12; j++) { const an = Math.PI + j / 12 * Math.PI; gr.lineTo(bx + Math.cos(an) * 90, sb - 20 + Math.sin(an) * 110); } gr.fill(); } else { gr.strokeStyle = c; const br = (px, py, an, l, d) => { const qx = px + Math.cos(an) * l, qy = py + Math.sin(an) * l; gr.lineWidth = 4 + d * 3; gr.beginPath(); gr.moveTo(px, py); gr.lineTo(qx, qy); gr.stroke(); if (d) { br(qx, qy, an - .5, l * .75, d - 1); br(qx, qy, an + .45, l * .7, d - 1); } }; br(bx, sb, -Math.PI / 2 + (k % 2 ? .1 : -.1), 70 + (k % 3) * 20, 3); } gr.beginPath(); gr.ellipse(bx + 40, sb - 6, 60, 40, 0, Math.PI, 0); gr.fillStyle = c; gr.fill(); } gr.globalAlpha = 1; }
     if (th === 2) { gr.fillStyle = 'rgba(30,90,30,.22)'; gr.fillRect(x0, y0, w, h); for (let k = 0; k < 14; k++) { const bx = x0 + 30 + k * w / 14 + (k % 2) * 30; gr.strokeStyle = 'rgba(20,60,20,.45)'; gr.lineWidth = 10; gr.beginPath(); gr.moveTo(bx, sb); for (let j = 1; j <= 8; j++) gr.lineTo(bx + Math.sin(t * .5 + j * .6 + k) * j * 3, sb - j * h / 8.5); gr.stroke(); } }
     if (th === 3) { gr.fillStyle = 'rgba(20,30,60,.3)'; for (let k = 0; k < 6; k++) { const bx = x0 + 40 + k * w / 6, bh = 160 + (k * 71) % 140; gr.fillRect(bx, sb - bh, 70, bh); gr.beginPath(); gr.arc(bx + 35, sb - bh, 35, Math.PI, 0); gr.fill(); gr.fillStyle = 'rgba(255,230,150,.12)'; gr.fillRect(bx + 26, sb - bh + 20, 18, 30); gr.fillStyle = 'rgba(20,30,60,.3)'; } for (let k = 0; k < 5; k++) gr.fillRect(x0 + 120 + k * w / 5, sb - 110, 18, 110); }
     if (th === 4) { gr.fillStyle = 'rgba(0,0,30,.5)'; gr.fillRect(x0, y0, w, h); for (let k = 0; k < 50; k++) { const px = x0 + (k * 263.7 + t * 6 * (k % 3 + 1)) % w, py = y0 + (k * 131.3 + Math.sin(t * .5 + k) * 20) % h, a = .4 + Math.sin(t * 2 + k) * .4; circ(gr, px, py, 1.5 + k % 3, hsl(160 + (k % 4) * 40, 100, 70, Math.max(0, a))); } }
@@ -493,7 +493,7 @@ const GAME = {
   }
   function causticTile() {
     const N = 192, c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d'), img = x.createImageData(N, N), pts = Array.from({ length: 16 }, () => [Math.random() * N, Math.random() * N]);
-    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { let d1 = 1e9, d2 = 1e9; for (const [px, py] of pts) { let dx = Math.abs(i - px), dy = Math.abs(j - py); if (dx > N / 2) dx = N - dx; if (dy > N / 2) dy = N - dy; const d = dx * dx + dy * dy; if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d; } const e = Math.sqrt(d2) - Math.sqrt(d1), v = Math.max(0, 1 - e / 6), k = (j * N + i) * 4; img.data[k] = img.data[k + 1] = img.data[k + 2] = 255; img.data[k + 3] = v * v * 255; }
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { let d1 = 1e9, d2 = 1e9; for (const [px, py] of pts) { let dx = Math.abs(i - px), dy = Math.abs(j - py); if (dx > N / 2) dx = N - dx; if (dy > N / 2) dy = N - dy; const d = dx * dx + dy * dy; if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d; } const e = Math.sqrt(d2) - Math.sqrt(d1), v = Math.max(0, 1 - e / 9), k = (j * N + i) * 4; img.data[k] = img.data[k + 1] = img.data[k + 2] = 255; img.data[k + 3] = v * v * 255; }
     x.putImageData(img, 0, 0); return c;
   }
   GAME.drawSkin = (gr, s) => { gr.fillStyle = lin(gr, 0, -40, 0, 40, s.c); gr.beginPath(); gr.roundRect(-46, -40, 92, 80, 14); gr.fill(); gr.fillStyle = '#e8d3a0'; gr.fillRect(-46, 26, 92, 14); gr.save(); gr.scale(1.2, 1.2); fishArt(gr, 1, 0, 0, 0, 0); gr.restore(); };
@@ -516,19 +516,21 @@ const GAME = {
     // sand
     gr.fillStyle = lin(gr, 0, SAND - 20, 0, T.y1, ['#e8d3a0', '#d8bd84', '#b89a62']); gr.beginPath(); gr.moveTo(T.x0, SAND); for (let x = T.x0; x <= T.x1; x += 30) gr.lineTo(x, SAND - 6 + Math.sin(x * .013) * 7 + Math.sin(x * .041) * 3); gr.lineTo(T.x1, T.y1); gr.lineTo(T.x0, T.y1); gr.fill();
     gr.fillStyle = 'rgba(120,90,50,.25)'; for (let k = 0; k < 40; k++) ell(gr, T.x0 + (k * 97.3) % W0, SAND + 10 + (k * 13) % 34, 3 + k % 4, 2, 0, 'rgba(120,90,50,.22)');
+    for (const [rx, rw, rh, c] of [[380, 70, 34, '#6a7280'], [430, 40, 22, '#7a828e'], [900, 60, 28, '#6a7280'], [1200, 80, 40, '#5e6672'], [60, 50, 26, '#6a7280']]) { gr.fillStyle = lin(gr, 0, SAND - rh, 0, SAND + 10, [c, '#3a404a']); gr.beginPath(); gr.ellipse(rx, SAND + 8, rw, rh, 0, Math.PI, 0); gr.fill(); gr.fillStyle = 'rgba(255,255,255,.12)'; gr.beginPath(); gr.ellipse(rx - rw * .3, SAND + 8 - rh * .7, rw * .35, rh * .18, -.2, 0, 7); gr.fill(); }
+    gr.lineCap = 'round'; for (let k = 0; k < 16; k++) { const gx = T.x0 + 40 + (k * 211.7) % (W0 - 80), n = 4 + k % 3; for (let j = 0; j < n; j++) { const hh = 24 + ((k * 7 + j * 13) % 26); gr.strokeStyle = hsl(110 + (k * 13 + j * 7) % 40, 55, 34 + j * 4); gr.lineWidth = 4; gr.beginPath(); gr.moveTo(gx + j * 6, SAND + 10); gr.quadraticCurveTo(gx + j * 6 + Math.sin(t * 1.5 + k + j) * 6, SAND + 10 - hh * .6, gx + j * 6 + Math.sin(t * 1.5 + k + j) * 10 + (j - n / 2) * 4, SAND + 10 - hh); gr.stroke(); } }
     for (const i of DRAW_ORDER) if (S.decor.includes(i)) deco(gr, i, DECOR[i].x, SAND + 6, 1, t);
     // caustics dance over everything below the surface
     if (!caust) { caust = causticTile(); cPat = gr.createPattern(caust, 'repeat'); }
     gr.save(); gr.globalCompositeOperation = 'lighter'; gr.fillStyle = cPat;
-    for (const [sc, sp, al] of [[2.2, 9, .07], [1.6, -6, .06]]) { gr.save(); gr.globalAlpha = al * (S.theme === 4 ? .5 : 1); gr.translate(t * sp, t * sp * .5 + Math.sin(t * .4) * 10); gr.scale(sc, sc * .8); gr.fillRect((T.x0 - t * sp - 400) / sc, (T.y0 - 400) / sc, (W0 + 800) / sc, (T.y1 - T.y0 + 800) / sc); gr.restore(); }
-    gr.globalAlpha = .12; gr.translate(t * 4, 0); gr.fillRect((T.x0 - t * 4) / 1, SAND - 10, W0, T.y1 - SAND + 10); gr.restore();
+    for (const [sc, sp, al] of [[1.5, 9, .035], [1.15, -7, .03]]) { gr.save(); gr.globalAlpha = al * (S.theme === 4 ? .5 : 1); gr.translate(t * sp, t * sp * .5 + Math.sin(t * .4) * 10); gr.scale(sc, sc * .8); gr.fillRect((T.x0 - t * sp - 400) / sc, (T.y0 - 400) / sc, (W0 + 800) / sc, (T.y1 - T.y0 + 800) / sc); gr.restore(); }
+    gr.globalAlpha = .1; gr.translate(t * 4, 0); gr.fillRect(T.x0 - t * 4, SAND - 10, W0, T.y1 - SAND + 10); gr.restore();
     // treasure
     if (treasure) { const tr = treasure; if (!tr.open) { const a = .5 + Math.sin(t * 6) * .5; ell(gr, tr.x, tr.y, 30, 10, 0, 'rgba(160,120,60,.4)'); gr.save(); gr.globalAlpha = a; Tx(gr, '✦', tr.x - 10, tr.y - 10, 26, '#fff7c0', 'center', false, null); Tx(gr, '✦', tr.x + 14, tr.y - 2, 16, '#fff7c0', 'center', false, null); gr.restore(); for (let k = 0; k < tr.dig; k++) ell(gr, tr.x - 20 + k * 20, tr.y + 4, 12, 5, 0, '#c8aa70'); if (tr.t > 1 && !K.bot) Tx(gr, `Dig! ${3 - tr.dig}`, tr.x, tr.y - 42 - Math.abs(Math.sin(t * 4)) * 6, 20, '#fff7c0', 'center', true); } else { gr.save(); gr.globalAlpha = Math.max(0, 1 - (tr.open - 2.5)); deco(gr, 2, tr.x, tr.y - 4 - Math.min(1, tr.open * 2) * 12, .55, t + 2); gr.restore(); } }
     // eggs, food, fish, pearls, bubbles
     for (const e of eggs) { const wob = Math.sin(t * 8) * (e.t < 3 ? 3 : 1) + Math.sin(t * 30) * (e.wob || 0) * 3, c = e.v ? hsl((SP[e.sp].h + VARIANTS[e.v]) % 360, 80, 78) : '#fff6e0'; gr.save(); gr.translate(e.x, e.y); gr.rotate(wob * .05); const g = gr.createRadialGradient(-4, -18, 2, 0, -12, 16); g.addColorStop(0, '#fff'); g.addColorStop(1, c); ell(gr, 0, -12, 11, 14, 0, g); if (e.v) { gr.globalAlpha = .5 + Math.sin(t * 5) * .4; Tx(gr, '✦', 12, -26, 14, '#fff', 'center', false, null); } gr.restore(); }
     for (const p of food) { gr.save(); gr.translate(p.x, p.y); gr.rotate(p.r); gr.globalAlpha = p.t > 18 ? (22 - p.t) / 4 : 1; gr.fillStyle = p.gold ? '#ffd23f' : '#d08a4a'; gr.fillRect(-4, -3, 8, 6); gr.fillStyle = p.gold ? '#fff6b0' : '#e8b07a'; gr.fillRect(-4, -3, 4, 3); gr.restore(); }
     const fs = fish.slice().sort((a, b) => a.age - b.age);
-    for (const f of fs) drawFish(gr, f, f.x, f.y, .45 + .55 * f.age, t);
+    for (const f of fs) drawFish(gr, f, f.x, f.y, FS * (.45 + .55 * f.age), t);
     if (turtle) turtleArt(gr, turtle, t);
     for (const f of fish) {
       if (f.hunger > .62 && !panel) { const bx = f.x + 18, by = f.y - fishR(f) - 18 + Math.sin(t * 3 + f.seed) * 3, starving = f.hunger > .85; circ(gr, bx - 10, by + 16, 3, 'rgba(255,255,255,.7)'); rr(gr, bx - 16, by - 14, 32, 26, 13, starving ? 'rgba(255,220,220,.95)' : 'rgba(255,255,255,.9)'); gr.fillStyle = '#d08a4a'; for (let k = 0; k < 3; k++) gr.fillRect(bx - 9 + k * 7, by - 4 + (k % 2) * 4, 5, 4); if (starving) Tx(gr, '!', bx + 12, by - 12, 18, '#e0303a', 'center', true, null); }
