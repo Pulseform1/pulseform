@@ -10,16 +10,16 @@ const GAME = {
 (() => {
 const DUR = 168, HR = DUR / 6, at = h => h * HR;   // a night is 6 game hours; at(3) is 2:00 AM
 const RULES = [
-  { n: 1, ic: 'eye', t: 'No reflection', d: 'If a customer has NO REFLECTION in the door glass, LOOK DOWN [L] and keep your eyes down until they leave. Never serve them.' },
-  { n: 1, ic: 'pump', t: 'Pump 4', d: 'Turn on pumps 1, 2 and 3 for anyone who pulls up [G]. Pump 4 is broken. Never turn it on, no matter who asks.' },
-  { n: 2, ic: 'bulb', t: 'Three flickers', d: 'If the lights flicker three times, LOCK THE DOOR [D] right away. Unlock it only after the knocking stops.' },
-  { n: 2, ic: 'key', t: 'The restroom', d: 'The restroom closes at 2:00 AM. After that, if anyone asks for the key, tell them it is out of order.' },
-  { n: 3, ic: 'phone', t: 'The phone', d: 'Never answer the phone between 2:00 and 3:00 AM. Any other time, pick up [P]. It might be me.' },
-  { n: 3, ic: 'radio', t: 'The radio', d: 'If the radio stops playing music and starts talking to YOU, switch it OFF [M] right away.' },
-  { n: 4, ic: 'clock', t: 'The time', d: 'If anyone asks what time it is, tell them it is closing time.' },
-  { n: 4, ic: 'tag', t: 'Your name', d: 'Never tell a customer your name. Not even the regulars.' },
-  { n: 5, ic: 'cam', t: 'The camera', d: 'If the camera shows someone in the store that you cannot see, press the ALARM [A].' },
-  { n: 5, ic: 'stay', t: 'Stay', d: 'Do not leave the counter before 5:00 AM. Not for anyone. Not even for me.' },
+  { n: 1, t: 'No reflection', d: 'If a customer has NO REFLECTION in the door glass, LOOK DOWN [L] and keep your eyes down until they leave. Never serve them.' },
+  { n: 1, t: 'Pump 4', d: 'Turn on pumps 1, 2 and 3 for anyone who pulls up [G]. Pump 4 is broken. Never turn it on, no matter who asks.' },
+  { n: 2, t: 'Three flickers', d: 'If the lights flicker three times, LOCK THE DOOR [D] right away. Unlock it only after the knocking stops.' },
+  { n: 2, t: 'The restroom', d: 'The restroom closes at 2:00 AM. After that, if anyone asks for the key, tell them it is out of order.' },
+  { n: 3, t: 'The phone', d: 'Never answer the phone between 2:00 and 3:00 AM. Any other time, pick up [P]. It might be me.' },
+  { n: 3, t: 'The radio', d: 'If the radio stops playing music and starts talking to YOU, switch it OFF [M] right away.' },
+  { n: 4, t: 'The time', d: 'If anyone asks what time it is, tell them it is closing time.' },
+  { n: 4, t: 'Your name', d: 'Never tell a customer your name. Not even the regulars.' },
+  { n: 5, t: 'The camera', d: 'If the camera shows someone in the store that you cannot see, press the ALARM [A].' },
+  { n: 5, t: 'Stay', d: 'Do not leave the counter before 5:00 AM. Not for anyone. Not even for me.' },
 ];
 const NOTES = [null,
   'Welcome to the Starlite. Pay is forty an hour, cash, because nobody stays. The rules are on the clipboard. They are not a joke. Danny thought they were. Walt comes in around 12:30 for coffee. He\'s harmless.',
@@ -58,10 +58,9 @@ const IK = Object.keys(ITEMS);
 const MYNAME = 'Sam';
 
 /* ---------- state ---------- */
-let night, t, ev, cust, queue, strikes, nStrikes, look, lookK, locked, flick, phone, cars, radio, cctv, dlg, cap, banners, scare, dead, ended, endT,
-  served, followed, hover, noteOpen, view, tense, hint, hintsSeen, doorK, ambT, endingId, poseMode, lastOdd, fog, roadCar, lightL = 1, pumps = [], s0 = 0, vT = 0, hbT = 0;
+let night, t, ev, cust, strikes, nStrikes, look, lookK, locked, flick, phone, cars, radio, cctv, dlg, cap, banners, scare, dead, ended, endT,
+  served, followed, hover, noteOpen, view, tense, hint, hintsSeen, doorK, ambT, endingId, poseMode, lastOdd, fog, roadCar, lightL = 1, pumps = [], hbT = 0;
 const S = {};   // sound nodes
-const now = () => K.t;
 const clockH = () => 11 + t / HR;   // 11 .. 17
 const clock = (short) => { const hf = clockH(), h = Math.floor(hf) % 12 || 12, m = Math.floor((hf % 1) * 60); return `${h}:${String(m).padStart(2, '0')}` + (short ? '' : (hf >= 12 ? ' AM' : ' PM')); };
 const forbidden = () => t >= at(3) && t < at(4);
@@ -932,7 +931,7 @@ function scan(i) {
   if (c.ghost) { c.failed = 1; strike('You served the customer with no reflection', true); leave(c); return; }
   it.done = 1; snd.beep(); K.burst(it.x, it.y - 50, ['#ffd23f', '#fff'], 6, 160, { life: .3, size: 5, gravity: 200 });
   if (c.items.every(x => x.done)) {
-    snd.drawer(); served++; nServ++; K.add(10, 940, 380, '#ffd23f'); c.bye = 1.1;
+    snd.drawer(); served++; nServ++; if (hint && /ring it up/.test(hint.text)) hint = null; K.add(10, 940, 380, '#ffd23f'); c.bye = 1.1;
     if (!cap || cap.t > 2.5) say(REG[c.kind] ? REG[c.kind].name : SPEC[c.kind] ? SPEC[c.kind][0] : 'Customer', K.pick(['Thanks. Night.', 'Have a good one.', 'Thanks, kid.', 'Stay safe out here.', 'Keep the change.']), 2.4);
   }
 }
@@ -1290,5 +1289,4 @@ GAME.bot = dt => {
   if (cars.some(c => !c.fig && c.state === 'wait' && c.t > 1)) return act('pump');
   if (cust && cust.phase === 'at' && !cust.ghost && !look && cust.pt > .8) scan();
 };
-GAME.test = s => eval(s);
 })();
