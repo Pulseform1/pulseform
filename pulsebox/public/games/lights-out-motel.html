@@ -428,12 +428,17 @@ const GAME = {
     gr.strokeStyle = 'rgba(70,30,20,.38)'; gr.lineWidth = 2.2; gr.beginPath(); gr.moveTo(6, -2); gr.quadraticCurveTo(10, ny * .7, 10, ny); gr.quadraticCurveTo(5, ny + 5, -2, ny + 3); gr.stroke();
     gr.fillStyle = 'rgba(40,10,10,.45)'; for (const d of [-1, 1]) { gr.beginPath(); gr.ellipse(d * 5.5, ny + 2, 3.2, 1.8, 0, 0, 7); gr.fill(); }
     gr.fillStyle = 'rgba(255,255,255,.16)'; gr.beginPath(); gr.ellipse(-2, ny - 4, 4, 3, 0, 0, 7); gr.fill();
-    // mouth
-    const my = 42 * jw, sm = st.smile || 0, wd = st.wide || 0, mw = 15 * L.mw * (1 + sm * .3 + wd * .7), lc = mix(sk, '#8a2e2e', .45), op = Math.max(st.talk || 0, rv);
-    if (wd > .1) { gr.fillStyle = '#140606'; gr.beginPath(); gr.moveTo(-mw, my - 5); gr.quadraticCurveTo(0, my - 1, mw, my - 5); gr.quadraticCurveTo(0, my + 12 * wd, -mw, my - 5); gr.fill(); gr.fillStyle = '#e8e2d2'; gr.beginPath(); gr.moveTo(-mw + 3, my - 4); gr.quadraticCurveTo(0, my, mw - 3, my - 4); gr.quadraticCurveTo(0, my + 4, -mw + 3, my - 4); gr.fill(); }
-    if (op > .05) { gr.fillStyle = '#1a0707'; gr.beginPath(); gr.ellipse(0, my + 2 + rv * 10, mw * (.7 + rv * .2), 2 + op * 6 + rv * 20, 0, 0, 7); gr.fill(); }
-    gr.strokeStyle = shade(lc, -.35); gr.lineWidth = 2.6; gr.beginPath(); gr.moveTo(-mw, my - sm * 5 - wd * 4); gr.quadraticCurveTo(0, my + 2 + sm * 6, mw, my - sm * 5 - wd * 4); gr.stroke();
-    gr.fillStyle = rgba(lc, .55); gr.beginPath(); gr.ellipse(0, my + 5 + sm * 3, mw * .55, 2.6 * L.lips, 0, 0, 7); gr.fill();
+    // mouth: upper lip with a soft cupid's bow, fuller lit lower lip, shadow beneath. Talking parts the lips (upper teeth just showing),
+    // a smile lifts the corners, and the "held smile" quirk (wide) stretches it a little too far over a clean, closed row of teeth.
+    const my = 41 * jw, sm = st.smile || 0, wd = st.wide || 0, lp = L.lips, op = Math.max(st.talk || 0, rv), lc = mix(sk, '#a03c3c', .42), dark = rv || op > .05;
+    const mw = 14 * L.mw * (1 + sm * .14) + wd * 9, cy = my - sm * 3.5 - wd * 3, A = my + .4 + sm * 2.4 + wd * 1.6, B = A + op * 8 + rv * 22 + wd * 4.5 + (sm > .5 ? sm * 1.5 : 0), lb = B + 3.4 * lp - wd;
+    const lip = (t1, t2, f, k = 1) => { const x = mw * k; gr.fillStyle = f; gr.beginPath(); gr.moveTo(-x, cy); gr.quadraticCurveTo(0, 2 * t1 - cy, x, cy); gr.quadraticCurveTo(0, 2 * t2 - cy, -x, cy); gr.fill(); };
+    gr.fillStyle = 'rgba(60,20,15,.14)'; gr.beginPath(); gr.ellipse(0, lb + 2.6, mw * .42, 2.2, 0, 0, 7); gr.fill();
+    lip(A, lb, lc);
+    if (B - A > .8) { lip(A, B, dark ? '#240a0a' : '#e4dccb', .94); if (dark && op > .25) lip(A, Math.min(B, A + 2.6 + wd * 2), '#d8cebd', .72); }
+    const ut = my - 3 * lp; gr.fillStyle = shade(lc, -.18); gr.beginPath(); gr.moveTo(-mw, cy); gr.quadraticCurveTo(-mw * .45, ut - 1.5, 0, ut + .7 + sm); gr.quadraticCurveTo(mw * .45, ut - 1.5, mw, cy); gr.quadraticCurveTo(0, 2 * A - cy, -mw, cy); gr.fill();
+    gr.strokeStyle = shade(lc, -.5); gr.lineWidth = 1.5; gr.beginPath(); gr.moveTo(-mw, cy); gr.quadraticCurveTo(0, 2 * A - cy, mw, cy); gr.stroke();
+    gr.fillStyle = 'rgba(255,255,255,.14)'; gr.beginPath(); gr.ellipse(0, B + 1.5 * lp, mw * .32, 1.1, 0, 0, 7); gr.fill();
     if (L.beard === 3 || L.beard === 2) { gr.fillStyle = shade(hc, -.1); gr.beginPath(); gr.moveTo(-mw - 4, my - 2); gr.quadraticCurveTo(0, my - 16, mw + 4, my - 2); gr.quadraticCurveTo(0, my - 7, -mw - 4, my - 2); gr.fill(); }
     hairFront(gr, L, hw); paintHat(gr, L, hw);
     if (L.glasses) {

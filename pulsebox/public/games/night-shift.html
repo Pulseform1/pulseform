@@ -295,15 +295,15 @@ function face(gr, p, o, skin) {
   // beard sits under the mouth
   if (p.beard === 'full') { gr.fillStyle = sh(p.hair, -.05); gr.beginPath(); gr.moveTo(-41, -2); gr.quadraticCurveTo(-40, 44, 0, 58); gr.quadraticCurveTo(40, 44, 41, -2); gr.quadraticCurveTo(30, 20, 14, 18); gr.quadraticCurveTo(0, 14, -14, 18); gr.quadraticCurveTo(-30, 20, -41, -2); gr.fill(); }
   if (p.beard === 'stubble') { gr.fillStyle = rgba(sh(p.hair, -.2), .28); gr.beginPath(); gr.ellipse(0, 26, 34, 26, 0, 0, Math.PI); gr.fill(); }
-  // mouth
-  const sm = o.smile || 0, mw = 12 + sm * 18;
-  if (o.open) { gr.fillStyle = '#1a0a0a'; gr.beginPath(); gr.ellipse(0, 27, 9, 4 + o.open * 9, 0, 0, 7); gr.fill(); }
-  else {
-    gr.strokeStyle = wrong ? '#5a3a3a' : rgba(sh(skin, -.5), .9); gr.lineWidth = 3;
-    gr.beginPath(); gr.moveTo(-mw, 25 - sm * 3); gr.quadraticCurveTo(0, 28 + sm * 10, mw, 25 - sm * 3); gr.stroke();
-    if (sm > .6) { gr.fillStyle = '#ece6da'; gr.beginPath(); gr.moveTo(-mw + 6, 25); gr.quadraticCurveTo(0, 26 + sm * 10, mw - 6, 25); gr.quadraticCurveTo(0, 30, -mw + 6, 25); gr.fill(); }
-    if (!sm) { gr.strokeStyle = rgba(sh(skin, -.25), .5); gr.lineWidth = 2; gr.beginPath(); gr.moveTo(-6, 32); gr.quadraticCurveTo(0, 34, 6, 32); gr.stroke(); }
-  }
+  // mouth: darker upper lip, lit lower lip, soft shadow; talking parts the lips, a held grin shows teeth
+  const sm = o.smile || 0, op = o.open || 0, mw = 12 + sm * 10, cy = 26 - sm * 4, a = 25.5 + sm * 4, b = 26.5 + sm * 9 + op * 8;
+  const q = (t1, t2, f, k = 1) => { gr.fillStyle = f; gr.beginPath(); gr.moveTo(-mw * k, cy); gr.quadraticCurveTo(0, t1, mw * k, cy); gr.quadraticCurveTo(0, t2, -mw * k, cy); gr.fill(); };
+  gr.fillStyle = rgba(sh(skin, -.45), .2); gr.beginPath(); gr.ellipse(0, b / 2 + 18, 7 + sm * 4, 2, 0, 0, 7); gr.fill();
+  q(22 + sm * 4, b + 4.5, wrong ? '#7a4848' : sh(skin, -.2));
+  q(22 + sm * 4, a + .5, wrong ? '#5a3434' : sh(skin, -.33));
+  if (sm > .3 || op) q(a, b, op ? '#2a0e0e' : '#ebe4d6', .92);
+  gr.strokeStyle = rgba(sh(skin, -.65), .85); gr.lineWidth = 1.7; gr.beginPath(); gr.moveTo(-mw, cy); gr.quadraticCurveTo(0, a, mw, cy); gr.stroke();
+  gr.fillStyle = 'rgba(255,255,255,.13)'; gr.beginPath(); gr.ellipse(0, b / 2 + 14, 4, 1, 0, 0, 7); gr.fill();
   if (p.beard === 'mustache' || p.beard === 'full') { gr.fillStyle = sh(p.hair, p.beard === 'full' ? -.05 : 0); gr.beginPath(); gr.moveTo(-16, 23); gr.quadraticCurveTo(-8, 13, 0, 17); gr.quadraticCurveTo(8, 13, 16, 23); gr.quadraticCurveTo(0, 20, -16, 23); gr.fill(); }
   if (p.glasses) {
     gr.strokeStyle = '#141414'; gr.lineWidth = 2.6; gr.fillStyle = 'rgba(190,215,255,.13)';
@@ -728,6 +728,7 @@ function drawCust(gr, c) {
   const ghost = c.ghost, stare = c.phase === 'at' && ghost;
   const o = { walk: walking ? c.u * 26 : null, blink: ghost ? 0 : (Math.sin(K.t * .9 + c.look.seed * 3) > .985 ? 1 : 0), look: ghost ? 0 : Math.sin(K.t * .5 + c.look.seed) * .8, wrong: ghost && c.phase === 'at' && c.pt > 2, still: ghost && c.phase === 'at', tilt: ghost && c.phase === 'at' ? Math.min(.16, c.pt * .02) : 0, smile: c.grin ? Math.min(1, c.pt * .4) : stare && c.pt > 5 ? .7 : 0 };
   if (c.mate) { const kp = { ...p }; man(gr, c.mate, kp.sx + 170 * p.s * (1 - c.u * .3), kp.sy + 30 * p.s, p.s * .95, { walk: o.walk, blink: Math.sin(K.t * 1.3) > .98 ? 1 : 0, look: -.6 }); }
+  if (c.phase === 'at' && (dlg ? dlg.t < 1 + dlg.text.length * .045 : cap && cap.who && cap.who !== 'Ray' && cap.who !== 'The radio' && cap.t < cap.text.length * .045)) o.open = (Math.sin(K.t * 19) + 1) * .4 + .1;
   man(gr, c.look, p.sx, p.sy, p.s, o);
 }
 function drawDoor(gr) {
