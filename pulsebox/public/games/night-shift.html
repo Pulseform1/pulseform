@@ -296,14 +296,15 @@ function face(gr, p, o, skin) {
   if (p.beard === 'full') { gr.fillStyle = sh(p.hair, -.05); gr.beginPath(); gr.moveTo(-41, -2); gr.quadraticCurveTo(-40, 44, 0, 58); gr.quadraticCurveTo(40, 44, 41, -2); gr.quadraticCurveTo(30, 20, 14, 18); gr.quadraticCurveTo(0, 14, -14, 18); gr.quadraticCurveTo(-30, 20, -41, -2); gr.fill(); }
   if (p.beard === 'stubble') { gr.fillStyle = rgba(sh(p.hair, -.2), .28); gr.beginPath(); gr.ellipse(0, 26, 34, 26, 0, 0, Math.PI); gr.fill(); }
   // mouth: darker upper lip, lit lower lip, soft shadow; talking parts the lips, a held grin shows teeth
-  const sm = o.smile || 0, op = o.open || 0, mw = 12 + sm * 10, cy = 26 - sm * 4, a = 25.5 + sm * 4, b = 26.5 + sm * 9 + op * 8;
+  const sm = o.smile || 0, op = o.open || 0, mw = 12 + sm * 10, cy = 27 - sm * 4, a = 26.5 + sm * 4, b = 27.5 + sm * 9 + op * 8;
   const q = (t1, t2, f, k = 1) => { gr.fillStyle = f; gr.beginPath(); gr.moveTo(-mw * k, cy); gr.quadraticCurveTo(0, t1, mw * k, cy); gr.quadraticCurveTo(0, t2, -mw * k, cy); gr.fill(); };
-  gr.fillStyle = rgba(sh(skin, -.45), .2); gr.beginPath(); gr.ellipse(0, b / 2 + 18, 7 + sm * 4, 2, 0, 0, 7); gr.fill();
-  q(22 + sm * 4, b + 4.5, wrong ? '#7a4848' : sh(skin, -.2));
-  q(22 + sm * 4, a + .5, wrong ? '#5a3434' : sh(skin, -.33));
+  gr.fillStyle = rgba(sh(skin, -.5), .25); gr.beginPath(); gr.ellipse(0, b / 2 + 20, 8 + sm * 4, 2.2, 0, 0, 7); gr.fill();
+  q(22 + sm * 5, b + 6.5, wrong ? '#7a4848' : sh(skin, -.25));
+  q(22 + sm * 5, a + .5, wrong ? '#5a3434' : sh(skin, -.42));
+  if (!wrong) q(22 + sm * 5, b + 6.5, 'rgba(160,45,45,.22)');
   if (sm > .3 || op) q(a, b, op ? '#2a0e0e' : '#ebe4d6', .92);
-  gr.strokeStyle = rgba(sh(skin, -.65), .85); gr.lineWidth = 1.7; gr.beginPath(); gr.moveTo(-mw, cy); gr.quadraticCurveTo(0, a, mw, cy); gr.stroke();
-  gr.fillStyle = 'rgba(255,255,255,.13)'; gr.beginPath(); gr.ellipse(0, b / 2 + 14, 4, 1, 0, 0, 7); gr.fill();
+  gr.strokeStyle = rgba(sh(skin, -.75), .95); gr.lineWidth = 2; gr.beginPath(); gr.moveTo(-mw, cy); gr.quadraticCurveTo(0, a, mw, cy); gr.stroke();
+  gr.fillStyle = 'rgba(255,255,255,.15)'; gr.beginPath(); gr.ellipse(0, b / 2 + 15.5, 4.5, 1.1, 0, 0, 7); gr.fill();
   if (p.beard === 'mustache' || p.beard === 'full') { gr.fillStyle = sh(p.hair, p.beard === 'full' ? -.05 : 0); gr.beginPath(); gr.moveTo(-16, 23); gr.quadraticCurveTo(-8, 13, 0, 17); gr.quadraticCurveTo(8, 13, 16, 23); gr.quadraticCurveTo(0, 20, -16, 23); gr.fill(); }
   if (p.glasses) {
     gr.strokeStyle = '#141414'; gr.lineWidth = 2.6; gr.fillStyle = 'rgba(190,215,255,.13)';
