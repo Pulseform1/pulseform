@@ -12,3 +12,12 @@ class_name = "Saves"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Saves"]
+
+# play stats (api.js): one global Durable Object counts plays per game per day
+[[durable_objects.bindings]]
+name = "STATS"
+class_name = "Stats"
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Stats"]

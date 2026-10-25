@@ -3,6 +3,9 @@
 // Each account's save lives in its own Durable Object: one JSON blob of the games' saved progress.
 //   GET  /api/save   -> { t, data } (or { t: 0, data: {} } for a new account)
 //   PUT  /api/save   <- { data }      -> { t }
+// Play stats: one global Durable Object (Stats) counts game starts per day.
+//   POST /api/play   <- { id }        -> { ok, counted }   (same IP + game counts once per 10 minutes; IPs are only kept hashed)
+//   GET  /api/stats  -> { games: { id: { total, week, today } }, updated }   (week = last 7 UTC days incl. today; cached ~60 s)
 const PROJECT = 'pulseform-d8282';
 const JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 const MAX_BYTES = 400000;
@@ -28,8 +31,41 @@ async function verify(token) {
   return claims.sub;
 }
 
-export async function api(request, env) {
+const ID_RE = /^[a-z0-9-]{2,40}$/;
+const day = (t = Date.now()) => new Date(t).toISOString().slice(0, 10);
+const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+
+async function play(request, env, ids) {
+  if (request.method !== 'POST') return json({ error: 'method' }, 405);
+  const body = await request.text();
+  if (body.length > 200) return json({ error: 'bad play' }, 400);
+  let id;
+  try { id = JSON.parse(body).id; } catch (e) {}
+  if (typeof id !== 'string' || !ID_RE.test(id) || (ids && !ids.includes(id))) return json({ error: 'unknown game' }, 400);
+  // the raw IP never leaves this function: the Stats object only sees a salted hash of IP + game + day
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  const k = hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('pulsebox-play|' + ip + '|' + id + '|' + day()))).slice(0, 24);
+  const stub = env.STATS.get(env.STATS.idFromName('global'));
+  return stub.fetch('https://stats/play', { method: 'POST', body: JSON.stringify({ id, k }) });
+}
+
+async function stats(request, env, ctx) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return json({ error: 'method' }, 405);
+  const cache = typeof caches !== 'undefined' ? caches.default : null;
+  const key = new Request(new URL('/api/stats', request.url).toString());
+  if (cache) { const hit = await cache.match(key); if (hit) return hit; }
+  const stub = env.STATS.get(env.STATS.idFromName('global'));
+  const r = await stub.fetch('https://stats/stats');
+  const res = new Response(await r.text(), { status: r.status, headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=60' } });
+  if (cache && r.ok) { const put = cache.put(key, res.clone()); if (ctx && ctx.waitUntil) ctx.waitUntil(put); else await put; }
+  return res;
+}
+
+// ids: the game ids the worker embeds from the hub's GAMES list (optional; without it only the id pattern is checked)
+export async function api(request, env, ctx, ids) {
   const url = new URL(request.url);
+  if (url.pathname === '/api/play') return play(request, env, ids);
+  if (url.pathname === '/api/stats') return stats(request, env, ctx);
   if (url.pathname !== '/api/save') return json({ error: 'not found' }, 404);
   if (request.method !== 'GET' && request.method !== 'PUT') return json({ error: 'method' }, 405);
   let uid = null;
@@ -53,5 +89,40 @@ export class Saves {
     const save = { t: Date.now(), data: JSON.parse(await request.text()) };
     await this.state.storage.put('save', save);
     return json({ t: save.t });
+  }
+}
+
+// One global instance (idFromName('global')). SQLite-backed: plays(day, id, n) holds one row per game per UTC day,
+// seen(k, t) holds the hashed IP+game keys counted in the last 10 minutes.
+const REPEAT_MS = 10 * 60 * 1000, MEMO_MS = 60 * 1000;
+export class Stats {
+  constructor(state) {
+    this.state = state; this.sql = state.storage.sql; this.memo = null; this.memoAt = 0;
+    this.sql.exec('CREATE TABLE IF NOT EXISTS plays (day TEXT NOT NULL, id TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, id))');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS seen (k TEXT PRIMARY KEY, t INTEGER NOT NULL)');
+    this.sql.exec('CREATE INDEX IF NOT EXISTS seen_t ON seen (t)');
+  }
+  async fetch(request) {
+    const path = new URL(request.url).pathname, now = Date.now();
+    if (path === '/play') {
+      const { id, k } = JSON.parse(await request.text());
+      this.sql.exec('DELETE FROM seen WHERE t < ?', now - REPEAT_MS);
+      if (this.sql.exec('SELECT t FROM seen WHERE k = ?', k).toArray().length) return json({ ok: true, counted: false });
+      this.sql.exec('INSERT INTO seen (k, t) VALUES (?, ?)', k, now);
+      this.sql.exec('INSERT INTO plays (day, id, n) VALUES (?, ?, 1) ON CONFLICT (day, id) DO UPDATE SET n = n + 1', day(now), id);
+      return json({ ok: true, counted: true });
+    }
+    if (path === '/stats') {
+      if (!this.memo || now - this.memoAt > MEMO_MS) {
+        const today = day(now), weekStart = day(now - 6 * 86400000), games = {};
+        for (const r of this.sql.exec(
+          'SELECT id, SUM(n) AS total, SUM(CASE WHEN day >= ? THEN n ELSE 0 END) AS week, SUM(CASE WHEN day = ? THEN n ELSE 0 END) AS today FROM plays GROUP BY id',
+          weekStart, today))
+          games[r.id] = { total: r.total, week: r.week, today: r.today };
+        this.memo = JSON.stringify({ games, updated: now }); this.memoAt = now;
+      }
+      return new Response(this.memo, { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+    }
+    return json({ error: 'not found' }, 404);
   }
 }

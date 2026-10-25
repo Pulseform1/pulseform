@@ -1,3 +1,7 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pulsebox | Interactive Learning & Skill Practice</title>
 <meta name="description" content="Pulsebox is a collection of interactive activities that invite practice with timing, strategy, pattern recognition, and problem-solving. Explore activities on desktop, tablet, or phone.">
 <meta property="og:title" content="Pulsebox | Interactive Learning & Skill Practice">
@@ -23,10 +27,11 @@
     --display: 'Chakra Petch', 'Arial Narrow', system-ui, sans-serif;
     --body: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
     --r: 16px;
+    --gut: clamp(16px, 4vw, 40px);
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  html { background: var(--bg); }
+  html { background: var(--bg); overflow-x: hidden; }
   body {
     margin: 0; font-family: var(--body); font-size: 16px; color: var(--text); background: var(--bg);
     background-image:
@@ -37,7 +42,7 @@
     background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
     background-attachment: fixed;
   }
-  .wrap { max-width: 1240px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 40px); padding-block: 14px 64px; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding-inline: var(--gut); padding-block: 14px 64px; }
   button, input { font: inherit; color: inherit; }
   :focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
   .outline-title { font-family: var(--display); font-weight: 700; color: var(--text); margin: 0; letter-spacing: .01em; text-transform: uppercase; }
@@ -65,31 +70,72 @@
   @media (max-width: 560px) { .search { margin-left: 0; max-width: none; } .nav-count { display: none; } }
 
   /* ---------- home ---------- */
-  .home { display: flex; flex-direction: column; gap: clamp(40px, 5vw, 64px); padding-top: clamp(20px, 3vw, 32px); }
-  .hero { position: relative; border-radius: 22px; overflow: hidden; border: 1px solid var(--edge); background: #000; min-height: clamp(300px, 42vw, 480px); display: flex; align-items: flex-end; }
-  .hero video, .hero .poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,12,18,.95) 0%, rgba(10,12,18,.7) 38%, rgba(10,12,18,.1) 70%), linear-gradient(0deg, rgba(10,12,18,.9), transparent 45%); pointer-events: none; }
-  .hero-body { position: relative; z-index: 1; padding: clamp(20px, 4vw, 44px); display: flex; flex-direction: column; gap: 14px; max-width: 560px; }
+  .home { display: flex; flex-direction: column; gap: clamp(36px, 5vw, 56px); padding-top: clamp(20px, 3vw, 32px); }
+  .home-top { display: flex; flex-direction: column; gap: 14px; margin-top: calc(-1 * clamp(14px, 2.5vw, 30px)); }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+
+  /* hero carousel: slides share one grid cell, so the hero is as tall as its tallest slide and never jumps */
+  .hero { position: relative; border-radius: 22px; overflow: hidden; border: 1px solid var(--edge); background: #000; isolation: isolate; touch-action: pan-y; }
+  .hero .slides { display: grid; }
+  .slide { grid-area: 1 / 1; position: relative; display: flex; align-items: flex-end; min-height: clamp(330px, 42vw, 500px); opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s linear .6s; }
+  .slide.on { opacity: 1; visibility: visible; z-index: 1; transition: opacity .6s ease; }
+  .s-media { position: absolute; inset: 0; background: #000; }
+  .s-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .s-media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,12,18,.95) 0%, rgba(10,12,18,.72) 36%, rgba(10,12,18,.08) 70%), linear-gradient(0deg, rgba(10,12,18,.9), transparent 45%); pointer-events: none; }
+  .hero-body { position: relative; z-index: 1; padding: clamp(20px, 4vw, 44px); display: flex; flex-direction: column; gap: 14px; max-width: 580px; }
+  .slide.on .hero-body > * { animation: rise .55s cubic-bezier(.2,.7,.2,1) both; }
+  .slide.on .hero-body > :nth-child(2) { animation-delay: .06s; } .slide.on .hero-body > :nth-child(3) { animation-delay: .12s; }
+  .slide.on .hero-body > :nth-child(4) { animation-delay: .18s; } .slide.on .hero-body > :nth-child(5) { animation-delay: .24s; }
   .pill { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--bg); background: var(--lime); border-radius: 6px; padding: 4px 10px; }
+  .pill.hot { background: var(--pink); color: #fff; box-shadow: 0 0 16px rgba(255,46,136,.55); }
+  .pill.hot i { background: #fff; }
   .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--bg); animation: blink 1.4s ease-in-out infinite; }
   @keyframes blink { 50% { opacity: .25; } }
-  .hero h1 { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: clamp(38px, 6vw, 72px); line-height: .92; margin: 0; letter-spacing: .01em; text-wrap: balance; }
+  .hero h1 { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: clamp(36px, 6vw, 72px); line-height: .92; margin: 0; letter-spacing: .01em; text-wrap: balance; }
   .hero p { margin: 0; font-size: 18px; line-height: 1.5; color: #cfd5e4; max-width: 44ch; font-weight: 500; }
-  @media (max-width: 700px) {
-    .hero { display: block; min-height: 0; background: var(--panel); }
-    .hero video { position: relative; display: block; aspect-ratio: 16 / 9; height: auto; }
-    .hero::after { display: none; }
-    .hero-body { padding: 18px; max-width: none; }
-    .hero-actions .play-btn { flex: 1; justify-content: center; }
-  }
   .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; padding-top: 6px; }
-  .hero-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hero-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .hero-meta .plays { font-family: var(--display); font-weight: 700; font-size: 14px; letter-spacing: .06em; color: var(--pink); text-transform: uppercase; }
+  .hero .play-btn { animation: rise .55s cubic-bezier(.2,.7,.2,1) both, glow 2.4s ease-in-out 1s infinite; }
+  @keyframes glow { 50% { box-shadow: 0 0 30px rgba(198,255,61,.6); } }
+  .h-ctrl { position: absolute; z-index: 3; top: 16px; right: 16px; display: flex; align-items: center; gap: 4px; background: rgba(10,12,18,.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.1); border-radius: 999px; padding: 4px; }
+  .h-arrow { width: 34px; height: 34px; border-radius: 50%; border: 0; background: transparent; color: var(--text); font-size: 24px; line-height: 1; cursor: pointer; display: grid; place-items: center; padding: 0 0 3px; transition: background .15s ease, color .15s ease; }
+  .h-arrow:hover { background: var(--lime); color: var(--bg); }
+  .dots { display: flex; align-items: center; }
+  .dot { width: 18px; height: 30px; border: 0; padding: 0 4px; background: none; cursor: pointer; display: grid; align-items: center; transition: width .3s ease; }
+  .dot i { display: block; height: 8px; border-radius: 99px; background: rgba(255,255,255,.3); position: relative; overflow: hidden; }
+  .dot b { position: absolute; inset: 0; background: var(--lime); transform-origin: left; transform: scaleX(0); }
+  .dot.on { width: 46px; }
+  .dot.on b { animation: fill 7s linear forwards; }
+  .hero.paused .dot.on b { animation-play-state: paused; }
+  @keyframes fill { to { transform: scaleX(1); } }
+  @media (max-width: 700px) {
+    .slide { display: block; min-height: 0; background: var(--panel); }
+    .s-media { position: relative; aspect-ratio: 16 / 9; }
+    .s-media::after { background: linear-gradient(0deg, var(--panel), transparent 30%); }
+    .hero-body { padding: 4px 18px 62px; max-width: none; gap: 12px; }
+    .hero p { font-size: 16px; }
+    .h-ctrl { top: auto; bottom: 12px; right: auto; left: 50%; transform: translateX(-50%); }
+    .hero-actions .play-btn { flex: 1 1 auto; width: auto; justify-content: center; white-space: nowrap; font-size: 19px; padding: 14px 18px; gap: 10px; }
+    .hero-actions .btn { padding-inline: 14px; }
+  }
+
+  .pulse-line { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; font-weight: 600; color: var(--muted); font-size: 15px; }
+  .pulse-line b { color: var(--text); font-family: var(--display); font-weight: 700; letter-spacing: .02em; font-size: 16px; }
+  .pulse-line .live { width: 9px; height: 9px; border-radius: 50%; background: var(--pink); animation: ping 1.8s ease-out infinite; flex: 0 0 auto; }
+  .pulse-line .sep { opacity: .5; }
+  @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(255,46,136,.7); } 70%, 100% { box-shadow: 0 0 0 9px rgba(255,46,136,0); } }
 
   .chips { display: flex; gap: 8px; flex-wrap: wrap; }
-  .chip { border: 1px solid var(--edge); background: var(--panel); border-radius: 999px; padding: 8px 18px; font-weight: 700; font-size: 15px; cursor: pointer; transition: border-color .15s ease, color .15s ease, background .15s ease; }
+  .chip { border: 1px solid var(--edge); background: var(--panel); border-radius: 999px; padding: 8px 18px; font-weight: 700; font-size: 15px; cursor: pointer; white-space: nowrap; transition: border-color .15s ease, color .15s ease, background .15s ease; }
   .chip:hover { border-color: var(--lime); color: var(--lime); }
-  .chip.solid { background: var(--text); color: var(--bg); }
-
+  .chip.hot { border-color: rgba(255,46,136,.6); color: #ff8dbd; }
+  .chip.hot:hover { border-color: var(--pink); color: var(--pink); }
+  @media (max-width: 700px) {
+    .chips { flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(-1 * var(--gut)); padding: 2px var(--gut); scrollbar-width: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip { flex: 0 0 auto; }
+  }
 
   .learning-intro { border: 1px solid var(--edge); border-radius: 18px; padding: clamp(22px, 3.5vw, 38px); background: linear-gradient(135deg, rgba(198,255,61,.07), rgba(80,210,255,.045)), var(--panel); }
   .learning-intro h2 { margin: 0 0 14px; font-family: var(--display); font-size: clamp(23px, 3vw, 34px); line-height: 1.05; text-transform: uppercase; letter-spacing: .015em; }
@@ -97,33 +143,67 @@
   .learning-intro p { margin: 0; max-width: 100ch; color: var(--muted); font-size: clamp(15px, 1.35vw, 17px); line-height: 1.85; }
   .learning-intro strong { color: var(--text); font-weight: 750; }
 
-  .shelf { display: flex; flex-direction: column; gap: 20px; scroll-margin-top: 100px; }
-  .shelf-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-  .shelf-head h2 { font-size: clamp(22px, 2.6vw, 28px); display: flex; align-items: center; gap: 12px; }
-  .shelf-head h2::before { content: ''; width: 4px; height: 1em; background: var(--lime); border-radius: 2px; box-shadow: 0 0 10px rgba(198,255,61,.6); }
-  .shelf-head span { font-family: var(--display); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  #shelves { display: flex; flex-direction: column; gap: clamp(40px, 5vw, 60px); }
+  .shelf { display: flex; flex-direction: column; gap: 16px; scroll-margin-top: 100px; min-width: 0; }
+  .shelf-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .shelf-head h2 { font-size: clamp(21px, 2.6vw, 28px); display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .shelf-head h2::before { content: ''; flex: 0 0 4px; height: 1em; background: var(--lime); border-radius: 2px; box-shadow: 0 0 10px rgba(198,255,61,.6); }
+  .shelf.trend .shelf-head h2::before { background: var(--pink); box-shadow: 0 0 10px rgba(255,46,136,.7); }
+  .sh-right { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+  .sh-right > span { font-family: var(--display); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .rail-nav { display: flex; gap: 6px; }
+  .rail-nav button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--edge); background: var(--panel); cursor: pointer; font-size: 20px; line-height: 1; padding: 0 0 3px; display: grid; place-items: center; transition: border-color .15s ease, color .15s ease; }
+  .rail-nav button:hover { border-color: var(--lime); color: var(--lime); }
+  @media (hover: none), (max-width: 560px) { .rail-nav { display: none; } }
   .icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 32px 24px; }
   @media (max-width: 460px) { .icons { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 16px; } }
+  .rail { display: grid; grid-auto-flow: column; grid-auto-columns: clamp(140px, 15vw, 184px); gap: 22px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gut); margin: -10px calc(-1 * var(--gut)) -14px; padding: 10px var(--gut) 14px; scrollbar-width: none; }
+  .rail::-webkit-scrollbar { display: none; }
+  .rail > * { scroll-snap-align: start; }
+  @media (max-width: 460px) { .rail { gap: 16px; } .shelf.is-rail .sh-right > span { display: none; } }
 
-  .app { display: flex; flex-direction: column; gap: 10px; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
-  .app .cover { position: relative; aspect-ratio: 1; width: 100%; border-radius: 22%; overflow: hidden; border: 1px solid var(--edge); background: var(--panel); transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+  /* game cards: a big open button plus a quick-play button over the cover */
+  .app { position: relative; display: flex; flex-direction: column; min-width: 0; animation: rise .5s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i, 0) * 45ms); }
+  .app .open { display: flex; flex-direction: column; gap: 10px; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; width: 100%; min-width: 0; }
+  .app .cover { display: block; position: relative; aspect-ratio: 1; width: 100%; border-radius: 22%; overflow: hidden; border: 1px solid var(--edge); background: var(--panel); transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
   .app .cover img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .35s ease; }
-  .app .cover::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,0) 35%); pointer-events: none; }
-  .app:hover .cover { transform: translateY(-6px); border-color: var(--lime); box-shadow: 0 14px 30px rgba(0,0,0,.5), 0 0 0 1px var(--lime), 0 0 26px rgba(198,255,61,.3); }
+  .app .cover video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .3s ease; }
+  .app .cover.vid video { opacity: 1; }
+  .app .cover::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,0) 35%); pointer-events: none; z-index: 1; }
+  .app:hover .cover, .app .open:focus-visible .cover { transform: translateY(-6px); border-color: var(--lime); box-shadow: 0 14px 30px rgba(0,0,0,.5), 0 0 0 1px var(--lime), 0 0 26px rgba(198,255,61,.3); }
+  .app .open:focus-visible { outline: none; }
   .app:hover .cover img { transform: scale(1.06); }
   .app:active .cover { transform: translateY(-2px); }
   .app .name { font-family: var(--display); font-weight: 700; font-size: 19px; line-height: 1.1; text-transform: uppercase; letter-spacing: .01em; }
   .app .kind { font-size: 14px; font-weight: 600; color: var(--muted); margin-top: -6px; }
-  .badge { position: absolute; top: 10px; left: 10px; z-index: 1; font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .12em; border-radius: 6px; padding: 3px 8px; }
+  .app .plays { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; letter-spacing: .02em; color: #ff8dbd; margin-top: -6px; }
+  .app .plays::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 8px var(--pink); }
+  .rank { position: absolute; left: 10px; bottom: 0; z-index: 2; font-family: var(--display); font-weight: 700; font-size: clamp(46px, 5vw, 64px); line-height: 1; color: rgba(10,12,18,.6); -webkit-text-stroke: 2px var(--lime); text-shadow: 0 0 22px rgba(198,255,61,.45); pointer-events: none; }
+  .qp-wrap { position: absolute; left: 0; top: 0; width: 100%; aspect-ratio: 1; pointer-events: none; display: flex; align-items: flex-end; justify-content: flex-end; padding: 10px; z-index: 3; transition: transform .2s ease; }
+  .app:hover .qp-wrap { transform: translateY(-6px); }
+  .qp { pointer-events: auto; width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--lime); display: grid; place-items: center; cursor: pointer; padding: 0; box-shadow: 0 6px 18px rgba(0,0,0,.45), 0 0 18px rgba(198,255,61,.5); opacity: 0; transform: scale(.6); transition: opacity .18s ease, transform .18s ease; }
+  .qp .tri { width: 0; height: 0; border-left: 14px solid var(--bg); border-top: 9px solid transparent; border-bottom: 9px solid transparent; margin-left: 4px; }
+  .app:hover .qp, .app .qp:focus-visible { opacity: 1; transform: scale(1); }
+  .app .qp:hover { transform: scale(1.12); }
+  @media (hover: none) { .qp { opacity: 1; transform: none; width: 38px; height: 38px; } .qp .tri { border-left-width: 12px; border-top-width: 7px; border-bottom-width: 7px; } }
+  .badge { position: absolute; top: 10px; left: 10px; z-index: 2; font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .12em; border-radius: 6px; padding: 3px 8px; }
   .badge.hot { background: var(--pink); color: #fff; box-shadow: 0 0 14px rgba(255,46,136,.6); }
   .badge.new { background: var(--lime); color: var(--bg); box-shadow: 0 0 14px rgba(198,255,61,.55); }
-  .app.soon { cursor: default; }
+  .app.soon { cursor: default; gap: 10px; }
   .app.soon .cover { background: repeating-linear-gradient(135deg, var(--panel) 0 12px, var(--bg2) 12px 24px); border-style: dashed; display: grid; place-items: center; }
   .app.soon .cover::after { display: none; }
   .app.soon:hover .cover { transform: none; box-shadow: none; border-color: var(--edge); }
   .app.soon .cover span { font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; }
   .app.soon .name { color: var(--muted); }
   .empty { background: var(--panel); border: 1px dashed var(--edge); border-radius: var(--r); padding: 28px; text-align: center; font-weight: 600; color: var(--muted); grid-column: 1 / -1; }
+
+  /* "play next" suggestions on the game and playing pages */
+  .next { display: flex; flex-direction: column; min-width: 0; }
+  .next .section-label::before { background: var(--lime); box-shadow: 0 0 10px rgba(198,255,61,.6); }
+  .next.done { border: 1px solid rgba(198,255,61,.35); border-radius: 18px; padding: 20px var(--gut) 8px; background: linear-gradient(135deg, rgba(198,255,61,.08), rgba(255,46,136,.05)), var(--panel); animation: rise .5s ease both; }
+  .next.done .rail { margin-inline: calc(-1 * var(--gut)); }
+  .next .rail { grid-auto-columns: clamp(140px, 16vw, 184px); }
+  .playing .next { padding-top: 12px; }
 
   /* ---------- buttons ---------- */
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--edge); background: var(--panel); border-radius: 10px; padding: 10px 18px; font-weight: 700; font-size: 16px; cursor: pointer; transition: border-color .15s ease, background .15s ease, transform .08s ease; }
@@ -230,13 +310,16 @@
 
   <!-- HOME: categories of interactive activities -->
   <main id="home" class="home">
-    <section class="hero" id="hero"></section>
-    <nav class="chips" id="chips" aria-label="Jump to a category"></nav>
+    <section class="hero" id="hero" aria-roledescription="carousel" aria-label="Featured games"></section>
+    <div class="home-top">
+      <p class="pulse-line" id="pulseLine" hidden></p>
+      <nav class="chips" id="chips" aria-label="Jump to a category"></nav>
+    </div>
+    <div id="shelves"></div>
     <section class="learning-intro" aria-labelledby="pulsebox-learning-heading">
       <h2 id="pulsebox-learning-heading">Interactive Activities for Skills, Strategy and Discovery</h2>
       <p><strong>Pulsebox</strong> is an interactive browser-based activity hub where visitors can explore a variety of challenges, practice useful skills, and discover new ways to think. Depending on the activity, users may work on <strong>problem-solving, logical reasoning, strategic planning, pattern recognition, spatial awareness, timing, coordination, attention, memory, creativity, and decision-making</strong>. Browse different categories, try an unfamiliar challenge, learn its rules, test an approach, and adjust your strategy as you gain experience. Puzzle-style activities can encourage careful observation and step-by-step thinking; racing and timing challenges can build familiarity with pace, precision, and quick decisions; building and strategy activities can invite planning, resource management, experimentation, and adapting to changing situations. Pulsebox offers an easy-to-access, browser-based way to explore interactive entertainment, mental challenges, skill practice, and hands-on discovery at your own pace. Activities vary in their goals and difficulty, and they are presented for interactive enjoyment rather than as a formal curriculum or a substitute for classroom instruction. Choose an activity that interests you, focus on its specific challenge, and enjoy exploring different approaches, learning from attempts, and improving through practice.</p>
     </section>
-    <div id="shelves" style="display:flex;flex-direction:column;gap:clamp(48px,6vw,72px)"></div>
   </main>
 
   <!-- ACTIVITY PAGE: cover, video, pictures, and launch controls -->
@@ -265,6 +348,10 @@
       <div class="card"><h3>About this game</h3><p id="dAbout"></p></div>
       <div class="card"><h3>How to play</h3><ul id="dHow"></ul></div>
     </section>
+    <section class="next" id="dNext">
+      <h2 class="outline-title section-label" id="dNextTitle">Play next</h2>
+      <div class="rail" id="dNextRail"></div>
+    </section>
   </main>
 
   <!-- PLAYING -->
@@ -275,6 +362,10 @@
       <button class="btn dark" id="pFull">Full screen</button>
     </div>
     <div class="stage" id="stage"><div class="loading"><span>Loading…</span></div></div>
+    <section class="next" id="pNext">
+      <h2 class="outline-title section-label">Up next</h2>
+      <div class="rail" id="pNextRail"></div>
+    </section>
   </main>
 
   <footer><span><b>PULSEBOX</b> · Interactive activities for timing, strategy, and problem-solving.</span><span>Works on phones, tablets, and computers.</span></footer>
@@ -951,18 +1042,79 @@ const byId = id => GAMES.find(g => g.id === id);
 let query = '', current = null;
 
 /* ============================================================
+   PLAY STATS: /api/stats says what people actually play.
+   Without it (offline, local preview, too little data yet) the
+   hub falls back to the hand-picked order below.
+   ============================================================ */
+const CURATED = ['lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
+const MIN_WEEK = 20;   // fewer plays than this across the hub in a week = not enough to rank by
+let STATS = null;      // { id: { total, week, today } } once real numbers are in
+let HOT = new Set();   // top 5 by plays this week
+const st = id => (STATS && STATS[id]) || { total: 0, week: 0, today: 0 };
+function fmt(n) {
+  const short = (v, u) => (v < 10 ? (Math.floor(v * 10) / 10).toFixed(1).replace(/\.0$/, '') : Math.floor(v)) + u;
+  return n < 1000 ? String(n) : n < 1e6 ? short(n / 1000, 'K') : short(n / 1e6, 'M');
+}
+function curated() { return [...new Set([...CURATED, ...GAMES.filter(g => g.badge === 'HOT' || g.featured).map(g => g.id), ...GAMES.map(g => g.id)])].map(byId).filter(Boolean); }
+function ranked() {
+  const base = curated(); if (!STATS) return base;
+  const pos = new Map(base.map((g, i) => [g.id, i]));
+  return base.slice().sort((a, b) => st(b.id).week - st(a.id).week || st(b.id).total - st(a.id).total || pos.get(a.id) - pos.get(b.id));
+}
+function badgeOf(g) { return STATS ? (HOT.has(g.id) ? 'HOT' : g.badge === 'NEW' ? 'NEW' : '') : g.badge || ''; }
+function trackPlay(id) {
+  try { fetch('/api/play', { method: 'POST', keepalive: true, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) }).catch(() => {}); } catch (e) {}
+}
+function loadStats() {
+  const ctl = window.AbortController ? new AbortController() : null, timer = setTimeout(() => ctl && ctl.abort(), 2500);
+  fetch('/api/stats', ctl ? { signal: ctl.signal } : {}).then(r => r.ok ? r.json() : null).then(d => {
+    clearTimeout(timer);
+    if (!d || !d.games || typeof d.games !== 'object') return;
+    const clean = {}; let week = 0, today = 0;
+    GAMES.forEach(g => { const x = d.games[g.id]; if (!x) return; const o = { total: Math.max(0, +x.total || 0), week: Math.max(0, +x.week || 0), today: Math.max(0, +x.today || 0) }; clean[g.id] = o; week += o.week; today += o.today; });
+    if (week < MIN_WEEK) return;
+    STATS = clean;
+    HOT = new Set(ranked().filter(g => st(g.id).week > 0).slice(0, 5).map(g => g.id));
+    renderPulse(today, week);
+    renderHero();
+    if (!$('home').hidden) { renderChips(); renderShelves(); }
+  }).catch(() => clearTimeout(timer));
+}
+function renderPulse(today, week) {
+  const el = $('pulseLine');
+  const big = n => n < 10000 ? n.toLocaleString('en-US') : fmt(n);
+  el.innerHTML = '<span class="live" aria-hidden="true"></span>' + (today ? '<span><b>' + big(today) + '</b> plays today</span><span class="sep">·</span>' : '') + '<span><b>' + big(week) + '</b> plays this week</span>';
+  el.hidden = false;
+}
+
+/* ============================================================
    COVERS
    ============================================================ */
-function appTile(g) {
-  const b = document.createElement('button');
-  b.className = 'app'; b.setAttribute('aria-label', g.title);
-  b.innerHTML = '<div class="cover">' + (g.badge ? '<span class="badge ' + g.badge.toLowerCase() + '">' + g.badge + '</span>' : '') +
-    '<img alt="" loading="lazy"></div><span class="name"></span><span class="kind"></span>';
-  b.querySelector('img').src = g.cover;
-  b.querySelector('.name').textContent = g.title;
-  b.querySelector('.kind').textContent = g.kind;
-  b.addEventListener('click', () => go('#' + g.id));
-  return b;
+const canHover = !!(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches);
+function appTile(g, i, rank) {
+  const d = document.createElement('div');
+  d.className = 'app'; d.style.setProperty('--i', Math.min(i || 0, 10));
+  const b = badgeOf(g), n = st(g.id).total;
+  d.innerHTML = '<button class="open" type="button"><span class="cover">' + (b ? '<span class="badge ' + b.toLowerCase() + '">' + b + '</span>' : '') +
+    (rank ? '<span class="rank" aria-hidden="true">' + rank + '</span>' : '') + '<img alt="" loading="lazy" decoding="async"></span>' +
+    '<span class="name"></span><span class="kind"></span>' + (STATS && n >= 10 ? '<span class="plays">' + fmt(n) + ' plays</span>' : '') + '</button>' +
+    '<span class="qp-wrap"><button class="qp" type="button"><span class="tri"></span></button></span>';
+  d.querySelector('img').src = g.cover;
+  d.querySelector('.name').textContent = g.title;
+  d.querySelector('.kind').textContent = g.kind;
+  d.querySelector('.open').setAttribute('aria-label', g.title + (rank ? ', number ' + rank + ' trending' : ''));
+  d.querySelector('.qp').setAttribute('aria-label', 'Play ' + g.title + ' now');
+  d.querySelector('.open').addEventListener('click', () => go('#' + g.id));
+  d.querySelector('.qp').addEventListener('click', () => go('#play-' + g.id));
+  if (canHover) {   // trailer preview after a short hover
+    const cover = d.querySelector('.cover'); let t = 0, v = null;
+    d.addEventListener('mouseenter', () => { t = setTimeout(() => {
+      v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto';
+      v.addEventListener('playing', () => cover.classList.add('vid')); v.src = g.video; cover.append(v); playQuietly(v);
+    }, 300); });
+    d.addEventListener('mouseleave', () => { clearTimeout(t); cover.classList.remove('vid'); if (v) { v.pause(); v.removeAttribute('src'); v.load(); v.remove(); v = null; } });
+  }
+  return d;
 }
 function soonTile() {
   const d = document.createElement('div');
@@ -972,43 +1124,107 @@ function soonTile() {
 }
 
 /* ============================================================
-   HOME
+   HOME: hero carousel
    ============================================================ */
-function renderHero() {
-  const g = GAMES.find(x => x.featured) || GAMES[0];
-  const h = $('hero');
-  h.innerHTML = '<video muted loop playsinline autoplay preload="metadata"></video>' +
-    '<div class="hero-body"><span class="pill"><i></i>New drop</span><h1></h1><p></p><div class="hero-meta"></div>' +
-    '<div class="hero-actions"><button class="play-btn" id="heroPlay"><span class="tri"></span>Play now</button><button class="btn" id="heroInfo">See the game</button></div></div>';
-  const v = h.querySelector('video'); v.src = g.video; v.poster = g.shots[0];
-  h.querySelector('h1').textContent = g.title;
-  h.querySelector('p').textContent = g.pitch;
-  const meta = h.querySelector('.hero-meta'); g.tags.slice(0, 3).forEach(x => { const s = document.createElement('span'); s.className = 'tag'; s.textContent = x; meta.append(s); });
-  h.querySelector('#heroPlay').addEventListener('click', () => go('#play-' + g.id));
-  h.querySelector('#heroInfo').addEventListener('click', () => go('#' + g.id));
-  $('navCount').textContent = GAMES.length + ' games';
-  playQuietly(v);
+let heroIdx = 0, heroKey = '';
+function heroGames() {
+  if (STATS) {
+    const top = ranked().filter(g => st(g.id).week > 0).slice(0, 5);
+    if (top.length >= 3) return [...top, ...CURATED.map(byId).filter(g => g && !top.includes(g))].slice(0, 5);
+  }
+  return CURATED.map(byId).filter(Boolean);
 }
+function renderHero() {
+  $('navCount').textContent = GAMES.length + ' games';
+  const list = heroGames(), key = list.map(g => g.id).join() + (STATS ? '+' : '');
+  if (key === heroKey) return; heroKey = key; heroIdx = 0;
+  const h = $('hero'), order = ranked();
+  h.innerHTML = '<div class="slides"></div><div class="h-ctrl"><button class="h-arrow" data-d="-1" aria-label="Previous game">‹</button><div class="dots"></div><button class="h-arrow" data-d="1" aria-label="Next game">›</button></div>';
+  list.forEach((g, i) => {
+    const s = document.createElement('article'); s.className = 'slide';
+    s.setAttribute('aria-roledescription', 'slide'); s.setAttribute('aria-label', (i + 1) + ' of ' + list.length);
+    const r = order.indexOf(g) + 1, hot = STATS && HOT.has(g.id);
+    s.innerHTML = '<div class="s-media"><video muted loop playsinline preload="none"></video></div>' +
+      '<div class="hero-body"><span class="pill' + (hot ? ' hot' : '') + '"><i></i></span><h1></h1><p></p><div class="hero-meta"></div>' +
+      '<div class="hero-actions"><button class="play-btn" type="button"><span class="tri"></span>Play now</button><button class="btn" type="button">See the game</button></div></div>';
+    const v = s.querySelector('video'); v.poster = g.shots[0]; v.dataset.src = g.video;
+    s.querySelector('.pill').append(hot ? '#' + r + ' trending' : g.badge === 'NEW' ? 'New drop' : 'Featured');
+    s.querySelector('h1').textContent = g.title;
+    s.querySelector('p').textContent = g.pitch;
+    const meta = s.querySelector('.hero-meta');
+    if (STATS && st(g.id).total >= 10) { const p = document.createElement('span'); p.className = 'plays'; p.textContent = fmt(st(g.id).total) + ' plays'; meta.append(p); }
+    g.tags.slice(0, 3).forEach(x => { const t = document.createElement('span'); t.className = 'tag'; t.textContent = x; meta.append(t); });
+    const [play, info] = s.querySelectorAll('.hero-actions button');
+    play.addEventListener('click', () => go('#play-' + g.id));
+    info.addEventListener('click', () => go('#' + g.id));
+    h.querySelector('.slides').append(s);
+    const dot = document.createElement('button'); dot.className = 'dot'; dot.type = 'button'; dot.innerHTML = '<i><b></b></i>';
+    dot.setAttribute('aria-label', 'Show ' + g.title);
+    dot.addEventListener('click', () => heroGo(i));
+    dot.querySelector('b').addEventListener('animationend', () => heroGo(heroIdx + 1));   // the dot's fill is the timer, so pausing it pauses the carousel
+    h.querySelector('.dots').append(dot);
+  });
+  h.querySelectorAll('.h-arrow').forEach(a => a.addEventListener('click', () => heroGo(heroIdx + +a.dataset.d)));
+  heroGo(0);
+}
+function heroGo(i) {
+  const h = $('hero'), slides = h.querySelectorAll('.slide'), dots = h.querySelectorAll('.dot');
+  if (!slides.length) return;
+  heroIdx = ((i % slides.length) + slides.length) % slides.length;
+  slides.forEach((s, j) => {
+    const on = j === heroIdx, v = s.querySelector('video');
+    s.classList.toggle('on', on); s.setAttribute('aria-hidden', String(!on)); s.inert = !on;
+    if (on) { if (!v.getAttribute('src')) v.src = v.dataset.src; if (!$('home').hidden) playQuietly(v); }
+    else v.pause();
+  });
+  dots.forEach((d, j) => { d.classList.remove('on'); d.setAttribute('aria-current', String(j === heroIdx)); });
+  void h.offsetWidth;   // restart the active dot's fill
+  dots[heroIdx].classList.add('on');
+}
+(function heroControls() {
+  const h = $('hero'); let x0 = null, y0 = 0;
+  const pause = on => h.classList.toggle('paused', on);
+  h.addEventListener('mouseenter', () => pause(true)); h.addEventListener('mouseleave', () => pause(false));
+  h.addEventListener('focusin', () => pause(true)); h.addEventListener('focusout', () => pause(false));
+  h.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; pause(true); }, { passive: true });
+  h.addEventListener('touchend', e => {
+    pause(false); if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) heroGo(heroIdx + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+  h.addEventListener('keydown', e => { if (e.key === 'ArrowRight') heroGo(heroIdx + 1); if (e.key === 'ArrowLeft') heroGo(heroIdx - 1); });
+})();
+
+/* ============================================================
+   HOME: chips and shelves
+   ============================================================ */
 function renderChips() {
   const box = $('chips'); box.innerHTML = '';
-  const cats = [];
+  const cats = [['🔥 Trending', 'shelf-trending', 'hot']];
   if (recent.some(byId)) cats.push(['Keep playing', 'shelf-recent']);
   if (favs.some(byId)) cats.push(['Favorites', 'shelf-favs']);
+  cats.push(['New', 'shelf-new']);
   CATEGORIES.forEach(c => cats.push([c, 'shelf-' + c.toLowerCase()]));
-  cats.forEach(([label, target], i) => {
-    const b = document.createElement('button'); b.className = 'chip'; b.textContent = label;
-    b.addEventListener('click', () => { const s = $(target); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  cats.forEach(([label, target, cls]) => {
+    const b = document.createElement('button'); b.className = 'chip' + (cls ? ' ' + cls : ''); b.textContent = label; b.type = 'button';
+    b.addEventListener('click', () => { if (query) { query = ''; $('q').value = ''; renderShelves(); } const s = $(target); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
     box.append(b);
   });
 }
-function shelf(id, title, games, soon) {
-  const s = document.createElement('section'); s.className = 'shelf'; s.id = id;
-  s.innerHTML = '<div class="shelf-head"><h2 class="outline-title"></h2><span></span></div><div class="icons"></div>';
+function shelf(id, title, games, soon, o = {}) {
+  const s = document.createElement('section'); s.className = 'shelf' + (o.rail ? ' is-rail' : '') + (o.cls ? ' ' + o.cls : ''); s.id = id;
+  s.innerHTML = '<div class="shelf-head"><h2 class="outline-title"></h2><div class="sh-right"><span></span></div></div><div class="' + (o.rail ? 'rail' : 'icons') + '"></div>';
   s.querySelector('h2').textContent = title;
-  s.querySelector('.shelf-head span').textContent = games.length ? games.length + (games.length === 1 ? ' game' : ' games') : 'Coming soon';
-  const grid = s.querySelector('.icons');
-  games.forEach(g => grid.append(appTile(g)));
+  s.querySelector('.sh-right span').textContent = o.note != null ? o.note : games.length ? games.length + (games.length === 1 ? ' game' : ' games') : 'Coming soon';
+  const grid = s.querySelector(o.rail ? '.rail' : '.icons');
+  games.forEach((g, i) => grid.append(appTile(g, i, o.ranks && i < 5 ? i + 1 : 0)));
   for (let i = 0; i < soon; i++) grid.append(soonTile());
+  if (o.rail && games.length > 2) {
+    const nav = document.createElement('div'); nav.className = 'rail-nav';
+    nav.innerHTML = '<button type="button" aria-label="Scroll back">‹</button><button type="button" aria-label="Scroll on">›</button>';
+    nav.querySelectorAll('button').forEach((b, k) => b.addEventListener('click', () => grid.scrollBy({ left: (k ? 1 : -1) * grid.clientWidth * .8, behavior: 'smooth' })));
+    s.querySelector('.sh-right').append(nav);
+  }
   return s;
 }
 function renderShelves() {
@@ -1020,11 +1236,16 @@ function renderShelves() {
     if (!found.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No games match "' + query.trim() + '" yet. Try another word.'; s.querySelector('.icons').append(e); }
     box.append(s); return;
   }
+  const order = ranked(), pos = new Map(order.map((g, i) => [g.id, i]));
+  box.append(shelf('shelf-trending', '🔥 Trending now', order.slice(0, 10), 0, { rail: true, ranks: !!STATS, cls: 'trend', note: STATS ? 'Most played this week' : 'Players love these' }));
   const r = recent.map(byId).filter(Boolean), f = favs.map(byId).filter(Boolean);
-  if (r.length) box.append(shelf('shelf-recent', 'Keep playing', r, 0));
-  if (f.length) box.append(shelf('shelf-favs', 'Your favorites', f, 0));
+  if (r.length) box.append(shelf('shelf-recent', 'Keep playing', r, 0, { rail: true }));
+  if (f.length) box.append(shelf('shelf-favs', 'Your favorites', f, 0, { rail: true }));
+  const fresh = GAMES.filter(g => g.badge === 'NEW').slice(0, 12);
+  if (fresh.length) box.append(shelf('shelf-new', 'New & updated', fresh, 0, { rail: true, note: 'Just landed' }));
   CATEGORIES.forEach(c => {
-    const list = GAMES.filter(g => g.category === c);
+    let list = GAMES.filter(g => g.category === c);
+    if (STATS) list = list.sort((a, b) => pos.get(a.id) - pos.get(b.id));   // most played first
     box.append(shelf('shelf-' + c.toLowerCase(), c + ' games', list, list.length ? 1 : 3));
   });
 }
@@ -1033,7 +1254,12 @@ function renderHome() { renderHero(); renderChips(); renderShelves(); }
 /* ============================================================
    GAME PAGE
    ============================================================ */
-function showDetail(g) {
+function similar(g, n = 3) {
+  const pool = ranked().filter(x => x.id !== g.id), same = pool.filter(x => x.category === g.category);
+  return [...same, ...pool.filter(x => !same.includes(x))].slice(0, n);
+}
+function renderNext(g, box) { box.innerHTML = ''; similar(g).forEach((x, i) => box.append(appTile(x, i))); }
+function showDetail(g, fromPlay) {
   current = g;
   $('dCover').src = g.cover;
   $('dTitle').textContent = g.title;
@@ -1052,6 +1278,12 @@ function showDetail(g) {
     b.addEventListener('click', () => { $('lbImg').src = src; $('lightbox').hidden = false; });
     shots.append(b);
   });
+  // just finished playing this one: lead with what to play next
+  const next = $('dNext'), done = !!fromPlay && recent[0] === g.id;
+  renderNext(g, $('dNextRail'));
+  $('dNextTitle').textContent = done ? 'Play next' : 'More like this';
+  next.classList.toggle('done', done);
+  if (done) $('detail').querySelector('.d-head').after(next); else $('detail').append(next);
   syncFav();
 }
 function syncFav() {
@@ -1075,6 +1307,8 @@ function sizeStage() {
 function startGame(g) {
   current = g;
   recent = [g.id, ...recent.filter(x => x !== g.id)].slice(0, 8); store.set('recent', recent);
+  trackPlay(g.id);
+  renderNext(g, $('pNextRail'));
   $('pTitle').textContent = g.title;
   const st = $('stage'); st.classList.remove('ready');
   stopGame();
@@ -1091,11 +1325,13 @@ function stopGame() { const f = $('stage').querySelector('iframe'); if (f) f.rem
    PAGES: #game-id shows the game page, #play-game-id plays it
    ============================================================ */
 let lastShelf = null;
+let curView = 'home', prevView = 'home';
 function show(view) {
+  prevView = curView; curView = view;
   ['home', 'detail', 'playing'].forEach(v => $(v).hidden = v !== view);
   if (view !== 'playing') stopGame();
   if (view !== 'detail') $('dVideo').pause();
-  if (view !== 'home') { const hv = document.querySelector('.hero video'); if (hv) hv.pause(); }
+  if (view !== 'home') document.querySelectorAll('.hero video').forEach(v => v.pause());
 }
 function route() {
   const h = location.hash.slice(1);
@@ -1105,11 +1341,10 @@ function route() {
     show('playing'); startGame(g); window.scrollTo(0, 0); return;
   }
   if (byId(h)) {
-    show('detail'); showDetail(byId(h)); lastShelf = 'shelf-' + byId(h).category.toLowerCase(); window.scrollTo(0, 0); return;
+    show('detail'); showDetail(byId(h), prevView === 'playing'); lastShelf = 'shelf-' + byId(h).category.toLowerCase(); window.scrollTo(0, 0); return;
   }
   show('home'); current = null;
-  renderChips(); renderShelves();
-  const hv = document.querySelector('.hero video'); if (hv) playQuietly(hv);
+  renderChips(); renderShelves(); heroGo(heroIdx);
   if (lastShelf && $(lastShelf)) { const s = $(lastShelf); lastShelf = null; requestAnimationFrame(() => s.scrollIntoView({ block: 'start' })); }
   else window.scrollTo(0, 0);
 }
@@ -1142,8 +1377,9 @@ window.addEventListener('resize', sizeStage);
 window.addEventListener('popstate', route);
 window.addEventListener('hashchange', route);
 
-renderHome();
+renderHero();
 route();
+loadStats();
 </script>
 
 <div class="modal" id="acctModal" hidden role="dialog" aria-modal="true" aria-labelledby="amTitle">
