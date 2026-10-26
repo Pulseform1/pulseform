@@ -1,6 +1,6 @@
 # Pulsebox
 
-A hub of 21 browser games, each a single HTML file in `public/games/`, with covers, trailers and screenshots in `public/media/`.
+A hub of browser games (41 so far), each a single HTML file in `public/games/`, with covers, trailers and screenshots in `public/media/`.
 The game list lives in `GAMES` at the top of the script in `public/index.html`; its comment says how to add a game.
 
 ## Deploy (Cloudflare Workers)

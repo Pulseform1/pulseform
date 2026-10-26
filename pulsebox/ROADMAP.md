@@ -13,7 +13,7 @@ Build one at a time with a single efficient agent each (the revamps cost about 2
 3. **Drift King** (Racing): top-down drifting with a car garage.
 4. **Dodgeball Kings** (Sports, new shelf): 3v3 against computer teams, with a tournament.
 5. **Mini Golf Mayhem** (Sports): physics mini-golf with themed courses and trick holes.
-6. **Penalty Shootout** (Sports): one-touch soccer with a World Cup-style bracket.
-7. **Block Blast Grid** (Puzzle): drop shapes onto a 10x10 grid and clear rows and columns.
+6. **Penalty Shootout** (Sports) — shipped: one-touch soccer with a World Cup-style bracket.
+7. **Block Blast** (Puzzle) — shipped: drop shapes onto an 8x8 grid and clear rows and columns.
 
-New shelves to add to CATEGORIES in public/index.html: Sports and Strategy.
+The Sports and Strategy shelves are live.

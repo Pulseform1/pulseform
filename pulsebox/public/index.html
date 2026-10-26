@@ -383,6 +383,38 @@
    ============================================================ */
 const GAMES = [
   {
+    id: "block-blast",
+    title: "Block Blast",
+    category: "Puzzle",
+    kind: "Puzzle · Blocks",
+    tags: ["Drag & drop", "Combos", "One more go", "6 block skins"],
+    badge: 'NEW',
+    file: 'games/block-blast.html',
+    cover: 'media/block-blast-cover.jpg',
+    video: 'media/block-blast-trailer.mp4',
+    shots: ['media/block-blast-shot1.jpg', 'media/block-blast-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Drop the blocks, clear the lines, chase the combo.",
+    blurb: "Three pieces, an 8x8 board and no time limit. Drag pieces into place, fill whole rows or columns to blast them away, and chain clears on back-to-back drops for a growing combo. Clear the entire board for a big bonus. The run ends when nothing fits, so plan ahead.",
+    how: ["Drag a piece from the tray onto the board.", "Fill a full row or column to clear it. Several at once scores more.", "Clear lines on drops in a row for a combo.", "Keys: 1 2 3 picks a piece, the arrows move it, Space drops it."]
+  },
+  {
+    id: "penalty-shootout",
+    title: "Penalty Shootout",
+    category: "Sports",
+    kind: "Sports · Soccer",
+    tags: ["16 nations", "Knockout cup", "Shoot & save", "Sudden death"],
+    badge: 'NEW',
+    file: 'games/penalty-shootout.html',
+    cover: 'media/penalty-shootout-cover.jpg',
+    video: 'media/penalty-shootout-trailer.mp4',
+    shots: ['media/penalty-shootout-shot1.jpg', 'media/penalty-shootout-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Five kicks. Sudden death. Win the cup.",
+    blurb: "Pick one of 16 nations and win four shootouts in a row to lift the cup. Take your kick by aiming at the goal and timing the power bar: more power is harder to stop but easier to miss. Then go in goal and dive your gloves to the ball. Keepers read you better and strikers shoot harder every round.",
+    how: ["Shooting: hold on the goal to aim, let the power bar build, release to shoot.", "Saving: move your gloves to where the ball is going.", "Five kicks each, then sudden death.", "Keyboard: arrows aim or move the gloves, hold Space to charge."]
+  },
+  {
     id: "afterhours",
     title: "Afterhours",
     category: "Strategy",
@@ -1042,7 +1074,7 @@ const GAMES = [
   }
 ];
 /* The order shelves appear in. A shelf with no games shows "Coming soon" covers. */
-const CATEGORIES = ['Action', 'Horror', 'Strategy', 'Arcade', 'Puzzle', 'Racing', 'Idle'];
+const CATEGORIES = ['Action', 'Horror', 'Strategy', 'Sports', 'Arcade', 'Puzzle', 'Racing', 'Idle'];
 
 /* ============================================================
    SAVED STUFF (this browser only)
