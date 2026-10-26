@@ -383,6 +383,86 @@
    ============================================================ */
 const GAMES = [
   {
+    id: "bumper-brawl",
+    title: "Bumper Brawl",
+    category: "Multiplayer",
+    kind: "Multiplayer · Arena",
+    tags: ["Online 2-4 players", "Bots fill seats", "Shrinking arena", "Power-ups"],
+    badge: 'NEW',
+    file: 'games/bumper-brawl.html',
+    cover: 'media/bumper-brawl-cover.jpg',
+    video: 'media/bumper-brawl-trailer.mp4',
+    shots: ['media/bumper-brawl-shot1.jpg', 'media/bumper-brawl-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Ram your friends off the shrinking arena.",
+    blurb: "Up to 4 glowing bumper cars on a floating neon platform that keeps shrinking. Steer, charge up a dash and smash your friends off the edge. Grab MEGA to become huge and heavy, SHOCK to blast everyone away, or ZOOM for speed. Last car standing wins the round, first to 3 rounds wins. Create a room and share the code, or play against bots.",
+    how: ["Create a room and send friends the 4-letter code, or play with bots.", "Drive with WASD or the arrows; on a phone drag on the left side.", "Space (or tap the right side) to DASH. Dashing hits much harder.", "Last car on the platform wins the round. First to 3 wins."]
+  },
+  {
+    id: "paint-wars",
+    title: "Paint Wars",
+    category: "Multiplayer",
+    kind: "Multiplayer · Party",
+    tags: ["Online 2-4 players", "75-second rounds", "Paint bombs", "Bots fill seats"],
+    badge: 'NEW',
+    file: 'games/paint-wars.html',
+    cover: 'media/paint-wars-cover.jpg',
+    video: 'media/paint-wars-trailer.mp4',
+    shots: ['media/paint-wars-shot1.jpg', 'media/paint-wars-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Cover the floor in your color. Splat your friends.",
+    blurb: "Everyone rolls paint across the floor at once, and the player who covers the most of it in 75 seconds wins. Steal territory by painting over rivals, grab paint bombs for huge splashes, a wide brush or a speed boost, and dash into opponents to stun them and splat your color all over their patch.",
+    how: ["Create a room and send friends the 4-letter code, or play with bots.", "Move with WASD or the arrows; on a phone drag on the left side.", "Space to DASH into rivals: it stuns them and splats your paint.", "Most floor painted when the clock runs out wins."]
+  },
+  {
+    id: "turbo-laps",
+    title: "Turbo Laps",
+    category: "Multiplayer",
+    kind: "Multiplayer · Racing",
+    tags: ["Online 2-6 racers", "3 tracks", "Drift boosts", "Bots fill the grid"],
+    badge: 'NEW',
+    file: 'games/turbo-laps.html',
+    cover: 'media/turbo-laps-cover.jpg',
+    video: 'media/turbo-laps-trailer.mp4',
+    shots: ['media/turbo-laps-shot1.jpg', 'media/turbo-laps-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Drift, boost and race your friends.",
+    blurb: "Top-down kart racing for up to 6 on three tracks: Sunset Loop, Twisty Pines and Harbor Run. Hold the handbrake through corners to drift and charge a mini-turbo, hit the yellow boost pads, and keep off the grass. Three laps, live positions and a minimap. Race friends online or a grid of bots.",
+    how: ["Create a room and send friends the 4-letter code, or race bots.", "W/Up to accelerate, S/Down to brake, A/D to steer.", "Hold Space while turning to drift, then let go for a mini-turbo.", "On a phone the car drives itself: hold left or right to steer."]
+  },
+  {
+    id: "doodle-guess",
+    title: "Doodle Guess",
+    category: "Multiplayer",
+    kind: "Multiplayer · Drawing",
+    tags: ["Online 2-8 players", "Draw & guess", "220 words", "Practice vs bot"],
+    badge: 'NEW',
+    file: 'games/doodle-guess.html',
+    cover: 'media/doodle-guess-cover.jpg',
+    video: 'media/doodle-guess-trailer.mp4',
+    shots: ['media/doodle-guess-shot1.jpg', 'media/doodle-guess-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Draw it. Guess it. Laugh at it.",
+    blurb: "One player draws a secret word and everyone else races to guess it. The faster you guess, the more points you score, and the artist earns points for every correct guess. Letter hints appear as time runs low. Everyone draws twice, using a 12-color palette, brush sizes, undo and clear. Play with up to 8 friends, or practice guessing the bot's doodles.",
+    how: ["Create a room and send friends the 4-letter code (2 to 8 players).", "On your turn pick a word and draw it. No letters!", "Everyone else types guesses in the box at the bottom.", "Faster guesses score more. Most points after two rounds wins."]
+  },
+  {
+    id: "sea-battle",
+    title: "Sea Battle",
+    category: "Multiplayer",
+    kind: "Multiplayer · Strategy",
+    tags: ["Online 2 players", "Classic fleet battle", "Vs computer", "Hit = shoot again"],
+    badge: 'NEW',
+    file: 'games/sea-battle.html',
+    cover: 'media/sea-battle-cover.jpg',
+    video: 'media/sea-battle-trailer.mp4',
+    shots: ['media/sea-battle-shot1.jpg', 'media/sea-battle-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Hide your fleet. Hunt theirs.",
+    blurb: "The classic naval battle for two. Hide your 5 ships on your grid, then take turns firing at the enemy waters. Hit a ship and you fire again, and sink all 5 to win. Each fleet stays hidden on its owner's own device. Challenge a friend online, or take on the computer admiral, which hunts methodically and finishes off every ship it finds.",
+    how: ["Create a room and send a friend the 4-letter code, or play the computer.", "Drag ships to move them, tap to turn them, or press Shuffle. Then Ready.", "Fire at the right-hand grid. A hit lets you fire again.", "Sink all 5 enemy ships to win."]
+  },
+  {
     id: "still-here",
     title: "Still Here",
     category: "Horror",
@@ -1090,7 +1170,7 @@ const GAMES = [
   }
 ];
 /* The order shelves appear in. A shelf with no games shows "Coming soon" covers. */
-const CATEGORIES = ['Action', 'Horror', 'Strategy', 'Sports', 'Arcade', 'Puzzle', 'Racing', 'Idle'];
+const CATEGORIES = ['Multiplayer', 'Action', 'Horror', 'Strategy', 'Sports', 'Arcade', 'Puzzle', 'Racing', 'Idle'];
 
 /* ============================================================
    SAVED STUFF (this browser only)
@@ -1110,7 +1190,7 @@ let query = '', current = null;
    Without it (offline, local preview, too little data yet) the
    hub falls back to the hand-picked order below.
    ============================================================ */
-const CURATED = ['still-here', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
+const CURATED = ['still-here', 'bumper-brawl', 'doodle-guess', 'turbo-laps', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
 const MIN_WEEK = 20;   // fewer plays than this across the hub in a week = not enough to rank by
 let STATS = null;      // { id: { total, week, today } } once real numbers are in
 let HOT = new Set();   // top 5 by plays this week

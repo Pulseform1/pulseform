@@ -6,7 +6,7 @@
 // Play stats: one global Durable Object (Stats) counts game starts per day.
 //   POST /api/play   <- { id }        -> { ok, counted }   (same IP + game counts once per 10 minutes; IPs are only kept hashed)
 //   GET  /api/stats  -> { games: { id: { total, week, today } }, updated }   (week = last 7 UTC days incl. today; cached ~60 s)
-// Multiplayer rooms: one Durable Object (Rooms) per 4-character room code relays JSON messages between up to 4 players.
+// Multiplayer rooms: one Durable Object (Rooms) per 4-character room code relays JSON messages between up to 8 players.
 //   GET  /api/room/CODE?n=NAME  (WebSocket) -> { t: 'hello', id, host, players } then every other player's messages
 const PROJECT = 'pulseform-d8282';
 const JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
@@ -138,7 +138,7 @@ export class Stats {
 // One instance per room code. Players stay connected only while the game is open; nothing is stored.
 // A message { to: id } goes to that player only; anything else goes to everyone else in the room.
 // The first player in is the host (they run the monsters); if the host leaves, the next player takes over.
-const MAX_PLAYERS = 4, MAX_MSG = 6000;
+const MAX_PLAYERS = 8, MAX_MSG = 8000;
 export class Rooms {
   constructor(state) { this.state = state; this.socks = new Map(); this.next = 1; this.host = 0; }
   async fetch(request) {

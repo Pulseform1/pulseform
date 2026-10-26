@@ -1,6 +1,6 @@
 # Pulsebox
 
-A hub of browser games (42 so far), each a single HTML file in `public/games/`, with covers, trailers and screenshots in `public/media/`.
+A hub of browser games (47 so far), each a single HTML file in `public/games/`, with covers, trailers and screenshots in `public/media/`.
 The game list lives in `GAMES` at the top of the script in `public/index.html`; its comment says how to add a game.
 
 ## Deploy (Cloudflare Workers)
@@ -29,4 +29,4 @@ Email and password work without it.
 
 ## Multiplayer rooms
 
-`/api/room/CODE` is a WebSocket relay (the `Rooms` Durable Object in `api.js`): up to 4 players per 4-character code; the first player in is the host. Still Here uses it; the host runs the monsters and everyone else sends their position about 12 times a second.
+`/api/room/CODE` is a WebSocket relay (the `Rooms` Durable Object in `api.js`): up to 4 players per 4-character code; the first player in is the host. Still Here and the Multiplayer shelf (Bumper Brawl, Paint Wars, Turbo Laps, Doodle Guess, Sea Battle) use it. The shared lobby is `src/lib/mp.js`.

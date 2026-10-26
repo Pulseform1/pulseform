@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sea Battle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+:root { color-scheme: dark; --accent: #c6ff3d; --accent2: #29e0ff; --bg: #0a0c12; --text: #f3f5ff; --muted: #a3a9c4; --panel: rgba(10,12,22,.86); --edge: rgba(255,255,255,.14); --display: 'Lilita One', 'Arial Black', system-ui, sans-serif; --body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--bg); }
+body { font-family: var(--body); color: var(--text); user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; touch-action: none; overscroll-behavior: none; }
+#cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* HUD */
+.hud { position: fixed; inset: 0; pointer-events: none; font-family: var(--display); }
+.hud-score { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); font-size: clamp(28px, 6vh, 56px); line-height: 1; text-shadow: 0 3px 0 rgba(0,0,0,.35), 0 0 18px rgba(0,0,0,.4); letter-spacing: .02em; }
+.hud-score.bump { animation: bump .18s ease-out; }
+@keyframes bump { 40% { transform: translateX(-50%) scale(1.18); } }
+.hud-coins { position: absolute; top: 12px; right: 14px; display: flex; align-items: center; gap: 6px; font-size: clamp(16px, 3.2vh, 24px); background: rgba(0,0,0,.35); padding: 4px 12px 4px 8px; border-radius: 999px; }
+.coin-i { width: 1em; height: 1em; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6c4, #ffcf2e 45%, #c98a00); box-shadow: 0 0 8px rgba(255,207,46,.6); display: inline-block; flex: none; }
+.hud-pause { position: absolute; top: 10px; left: 12px; width: 40px; height: 40px; border-radius: 12px; background: rgba(0,0,0,.35); pointer-events: auto; display: grid; place-items: center; }
+.hud-pause::before { content: ''; width: 14px; height: 16px; border-left: 5px solid #fff; border-right: 5px solid #fff; }
+
+/* screens */
+.scr { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: radial-gradient(ellipse at center, rgba(0,0,0,.25), rgba(0,0,0,.65)); }
+.card { width: min(440px, 100%); max-height: 100%; overflow: auto; text-align: center; background: var(--panel); border: 1px solid var(--edge); border-radius: 26px; padding: clamp(16px, 4vh, 28px) 22px; box-shadow: 0 24px 70px rgba(0,0,0,.5); backdrop-filter: blur(6px); }
+.title { font-family: var(--display); font-size: clamp(36px, 9vh, 64px); line-height: .95; margin: 0 0 6px; color: var(--accent); text-shadow: 0 4px 0 rgba(0,0,0,.35); letter-spacing: .01em; }
+.sub { margin: 0 0 14px; color: var(--muted); font-weight: 700; font-size: 15px; }
+.stats { display: flex; justify-content: center; gap: 10px; margin: 0 0 16px; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.07); border: 1px solid var(--edge); border-radius: 14px; padding: 6px 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.stat small { color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+.big { display: block; width: 100%; font-family: var(--display); font-size: clamp(22px, 5vh, 30px); padding: 12px 18px; border-radius: 18px; background: var(--accent); color: #0b0d14; box-shadow: 0 6px 0 rgba(0,0,0,.35), 0 0 30px color-mix(in srgb, var(--accent) 40%, transparent); transition: transform .1s; }
+.big:hover { transform: translateY(-2px); }
+.big:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.row { display: flex; gap: 10px; margin-top: 10px; }
+.row button { flex: 1; padding: 10px; border-radius: 14px; background: rgba(255,255,255,.08); border: 1px solid var(--edge); font-weight: 800; }
+.row button:hover { background: rgba(255,255,255,.14); }
+.how { margin: 14px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 14px; font-weight: 600; line-height: 1.45; }
+.score-big { font-family: var(--display); font-size: clamp(54px, 14vh, 96px); line-height: 1; margin: 4px 0; }
+.newbest { display: inline-block; font-family: var(--display); background: var(--accent2); color: #0b0d14; padding: 3px 12px; border-radius: 999px; margin-bottom: 8px; animation: pop .5s ease-out; }
+@keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } }
+.hint { color: var(--muted); font-size: 13px; margin-top: 10px; font-weight: 700; }
+
+/* skins */
+.skins { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin: 6px 0 14px; }
+.skin { border-radius: 16px; padding: 10px 6px 8px; background: rgba(255,255,255,.06); border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; }
+.skin.on { border-color: var(--accent); background: rgba(255,255,255,.12); }
+.skin.locked { opacity: .9; }
+.skin canvas { width: 56px; height: 56px; }
+.skin .price { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #ffe07a; }
+.skin.cant .price { color: #ff8a8a; }
+
+.mute { position: fixed; right: 12px; bottom: 12px; width: 42px; height: 42px; border-radius: 50%; background: rgba(0,0,0,.4); border: 1px solid var(--edge); font-size: 18px; display: grid; place-items: center; }
+.toast { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); font-family: var(--display); font-size: clamp(22px, 5vh, 38px); color: #fff; text-shadow: 0 3px 0 rgba(0,0,0,.4), 0 0 20px var(--accent); pointer-events: none; animation: toast 1.4s ease-out forwards; white-space: nowrap; }
+@keyframes toast { 0% { opacity: 0; transform: translate(-50%, 20px) scale(.7); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.08); } 25% { transform: translate(-50%, 0) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -20px); } }
+body.demo .hud-pause, body.demo .mute { display: none; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<script>
+const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
+/* Shared by the online multiplayer games: the lobby (your name, play with bots, create or join a room by its 4-letter code,
+   who is in, start) and the room connection (/api/room/CODE, relayed by the Rooms Durable Object in api.js).
+   The first player in a room is the host: the host picks the seats and starts every match.
+   A game fills in MP.opts and calls MP.show() from GAME.reset():
+     { max, min, bots: seats to fill with bots (0 = none), solo: label of the offline button (false = none),
+       config(): match settings the host sends, onStart(cfg, roster), onMsg(m), onLeave(id), onHost(id) }
+   roster: [{ id, name, col, bot, seat }] in seat order, the same on every device. Bots are run by the host. */
+const MP = (() => {
+  const COLS = ['#ff4d6d', '#3ec5ff', '#ffd23f', '#5cf28a', '#c77dff', '#ff9f43', '#f2f2f2', '#ff7ad9'];
+  const BOTS = ['Bot Blip', 'Bot Zap', 'Bot Mango', 'Bot Pixel', 'Bot Turbo', 'Bot Noodle', 'Bot Ziggy'];
+  const WSHOST = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? location.host : 'box.pulseform.org';
+  const opts = {};
+  let ws = null, me = 0, host = 0, code = '', pending = null, box = null, name = '';
+  const players = new Map();
+  try { name = localStorage.getItem('pbx-mp-name') || ''; } catch (e) {}
+  const $m = id => document.getElementById('mp-' + id), esc = s => String(s).replace(/[<>&"]/g, '');
+  const online = () => !!(ws && ws.readyState === 1 && me);
+  function build() {
+    if (box) return;
+    const st = document.createElement('style');
+    st.textContent = `#mp-box .card{max-width:470px}#mp-box input{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--edge);background:rgba(0,0,0,.4);color:#fff;font:800 18px Nunito,sans-serif;margin:6px 0;text-align:center}#mp-box .code{font-family:var(--display);font-size:46px;letter-spacing:.18em;color:var(--accent)}#mp-box ul{list-style:none;padding:0;margin:8px 0;text-align:left}#mp-box li{padding:7px 12px;border-radius:12px;background:rgba(255,255,255,.07);margin:5px 0;font-weight:800}#mp-box .msg{min-height:20px;color:#ff9a9a;font-weight:800;font-size:14px;margin:6px 0 0}#mp-box .or{color:var(--muted);font-weight:800;font-size:13px;margin:12px 0 2px}`;
+    document.head.appendChild(st);
+    box = document.createElement('div'); box.className = 'scr'; box.id = 'mp-box'; box.hidden = true;
+    box.innerHTML = `<div class="card"><h2 class="title" id="mp-title"></h2><p class="sub" id="mp-sub"></p>
+      <input id="mp-name" maxlength="12" placeholder="Your name">
+      <div id="mp-out"><button class="big" id="mp-solo"></button><p class="or">or play online with friends</p>
+        <div class="row"><button id="mp-create">Create a room</button><button id="mp-joinb">Join a room</button></div>
+        <div id="mp-joinbox" hidden><input id="mp-code" maxlength="4" placeholder="ROOM CODE" autocomplete="off"><button class="big" id="mp-joingo">Join</button></div></div>
+      <div id="mp-in" hidden><p class="sub" style="margin:8px 0 0">Room code: tell your friends</p><div class="code" id="mp-codeshow"></div><ul id="mp-list"></ul>
+        <button class="big" id="mp-start">Start</button><p class="hint" id="mp-wait"></p><div class="row"><button id="mp-leave">Leave the room</button></div></div>
+      <p class="msg" id="mp-msg"></p></div>`;
+    document.body.appendChild(box);
+    for (const id of ['name', 'code']) $m(id).onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter' && id === 'code') $m('joingo').click(); };
+    $m('solo').onclick = () => { saveName(); leave(); K.audio && K.audio(); start(); };
+    $m('create').onclick = () => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; connect(Array.from({ length: 4 }, () => A[Math.floor(Math.random() * A.length)]).join('')); };
+    $m('joinb').onclick = () => { $m('joinbox').hidden = false; $m('code').focus(); };
+    $m('joingo').onclick = () => { const c = ($m('code').value || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (c.length !== 4) return msg('Room codes are 4 letters.'); connect(c); };
+    $m('start').onclick = () => { K.audio && K.audio(); start(); };
+    $m('leave').onclick = () => { leave(); refresh(); };
+  }
+  function saveName() { name = ($m('name').value || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12) || 'Player'; try { localStorage.setItem('pbx-mp-name', name); } catch (e) {} return name; }
+  function msg(s) { $m('msg').textContent = s || ''; }
+  function list() { return [...(online() ? [[me, { name }]] : []), ...players].map(([id, p]) => ({ id, name: p.name })).sort((a, b) => a.id - b.id); }
+  function refresh() {
+    if (!box) return;
+    const on = online();
+    $m('title').textContent = GAME.title; $m('sub').textContent = opts.sub || GAME.tagline;
+    $m('name').value = name; $m('out').hidden = on; $m('in').hidden = !on;
+    $m('solo').hidden = opts.solo === false; $m('solo').textContent = opts.solo || 'Play with bots';
+    if (!on) return;
+    const ps = list();
+    $m('codeshow').textContent = code;
+    $m('list').innerHTML = ps.map((p, i) => `<li style="border-left:7px solid ${COLS[i % 8]}">${esc(p.name)}${p.id === me ? ' (you)' : ''}${p.id === host ? ' · host' : ''}</li>`).join('') + (opts.bots && ps.length < opts.max ? `<li style="opacity:.55">+ ${opts.max - ps.length} bots fill the empty seats</li>` : '');
+    const enough = ps.length >= (opts.min || 1);
+    $m('start').hidden = host !== me; $m('start').disabled = !enough; $m('start').style.opacity = enough ? 1 : .4;
+    $m('wait').textContent = host !== me ? 'Waiting for the host to start.' : enough ? (ps.length > 1 ? 'Everyone in? Start when ready.' : 'Waiting for friends to join...') : `Needs at least ${opts.min} players.`;
+  }
+  function connect(c) {
+    saveName(); leave(); K.audio && K.audio(); msg('Connecting...');
+    try { ws = new WebSocket(`wss://${WSHOST}/api/room/${c}?n=${encodeURIComponent(name)}`); } catch (e) { msg('Could not connect.'); return; }
+    code = c; const my = ws;
+    ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (err) { return; } onNet(m); };
+    ws.onclose = () => { if (ws !== my) return; ws = null; me = 0; players.clear(); if (opts.onLeave && K.state === 'play' && box && box.hidden) opts.onLeave(-1); else { refresh(); msg('Disconnected from the room.'); } };
+  }
+  function onNet(m) {
+    switch (m.t) {
+      case 'full': msg('That room is full.'); leave(); refresh(); return;
+      case 'hello':
+        me = m.id; host = m.host; players.clear(); m.players.forEach(p => { if (p.id !== me) players.set(p.id, { name: p.name }); });
+        if (players.size + 1 > opts.max) { msg(`This game takes up to ${opts.max} players.`); leave(); }
+        msg(''); refresh(); return;
+      case 'join': players.set(m.id, { name: m.name }); refresh(); if (opts.onJoin) opts.onJoin(m.id, m.name); return;
+      case 'leave': players.delete(m.id); refresh(); if (opts.onLeave) opts.onLeave(m.id); return;
+      case 'host': host = m.id; refresh(); if (opts.onHost) opts.onHost(m.id); return;
+      case 'mp-start': if (K.state !== 'play') pending = m; else begin(m); return;
+    }
+    if (opts.onMsg) opts.onMsg(m);
+  }
+  function begin(m) { if (box) box.hidden = true; opts.onStart(m.cfg || {}, m.roster); }
+  function start() {
+    const ps = online() ? list() : [{ id: 0, name: name || 'You' }];
+    const roster = ps.slice(0, opts.max).map((p, i) => ({ id: p.id, name: p.name, col: COLS[i], seat: i }));
+    const fill = online() ? (opts.bots ? opts.max : 0) : (opts.bots || opts.soloSeats || 1);
+    let b = 0; while (roster.length < fill) roster.push({ id: 'b' + roster.length, name: BOTS[b++ % BOTS.length], col: COLS[roster.length], bot: true, seat: roster.length });
+    const m = { t: 'mp-start', cfg: opts.config ? opts.config() : {}, roster };
+    send(m); begin(m);
+  }
+  function send(m) { if (online()) ws.send(JSON.stringify(m)); }
+  function leave() { const w = ws; ws = null; me = 0; host = 0; players.clear(); if (w) try { w.close(); } catch (e) {} }
+  function show() {
+    build();
+    if (pending && online()) { const p = pending; pending = null; return begin(p); }
+    box.hidden = false; refresh();
+  }
+  return {
+    opts, show, start, send, leave, online, colors: COLS,
+    hide() { if (box) box.hidden = true; },
+    to(id, m) { m.to = id; send(m); },
+    isHost: () => !online() || host === me,
+    get id() { return online() ? me : 0; }, get hostId() { return online() ? host : 0; }, get code() { return code; }, get name() { return name || 'You'; },
+  };
+})();
+
+/* Sea Battle: the classic fleet game for 2. Hide your 5 ships, then take turns firing at the enemy's waters;
+   a hit earns another shot. Sink the whole fleet to win. Online through the shared MP lobby (each fleet stays on its
+   owner's device: you only ever learn hit or miss), or against the computer, which hunts and then finishes ships off. */
+// @use mp
+const GAME = {
+  id: 'sea-battle', title: 'Sea Battle', tagline: 'Hide your fleet. Hunt theirs. Two admirals, one ocean.',
+  font: 'Black Ops One', accent: '#ffd23f', accent2: '#3ec5ff', bg: '#06243d', noSkins: true, noHud: true, scoreLabel: 'Ships sunk',
+  how: ['Place your ships: drag one to move it, tap it to turn it, or press Shuffle. Then press Ready.', 'Take turns firing at the enemy grid on the right. Hit a ship and you fire again.', 'A ship sinks when every square of it is hit. Sink all 5 to win.', 'Play the computer, or create a room and send a friend the code.'],
+  skins: [{ name: 'Default', price: 0, c: ['#fff'] }],
+};
+(() => {
+  const N = 10, CS = 46, LX = 92, RX = 728, GY = 178, FLEET = [['Carrier', 5], ['Battleship', 4], ['Cruiser', 3], ['Submarine', 3], ['Destroyer', 2]];
+  let oppId = -1, mode = 'lobby', phase = 'place', vsAI = true, myTurn = false, mine = [], shotsMe = [], shotsThem = [], enemySunk = [], ready = { me: false, them: false }, drag = null, msg = '', msgT = 0, missile = null, ai = null, aiShips = [], oppName = 'Computer', myName = 'You', fx = [], waveT = 0, sunkCount = 0, lostCount = 0, demo = false, demoTurn = 0;
+  Object.assign(MP.opts, {
+    max: 2, min: 2, bots: 0, solo: 'Play the computer', sub: '2 players. Each fleet stays hidden on its own device.',
+    onStart: (cfg, ros) => start(ros),
+    onMsg: m => {
+      if (mode !== 'play') return;
+      if (m.t === 'ready') { ready.them = true; if (MP.isHost() && ready.me) begin(); }
+      if (m.t === 'begin') { phase = 'battle'; myTurn = m.first === MP.id; say(myTurn ? 'You fire first!' : `${oppName} fires first.`); }
+      if (m.t === 'fire') incoming(m.x, m.y);
+      if (m.t === 'res') result(m);
+    },
+    onLeave: id => { if (mode === 'play') end(true, `${oppName} left the battle.`); },
+  });
+  /* ---------- fleets ---------- */
+  function randomFleet() {
+    for (;;) {
+      const ships = [], occ = new Set(); let ok = true;
+      for (const [name, len] of FLEET) {
+        let placed = false;
+        for (let t = 0; t < 200 && !placed; t++) { const v = Math.random() < .5, x = Math.floor(Math.random() * (N - (v ? 0 : len - 1))), y = Math.floor(Math.random() * (N - (v ? len - 1 : 0))), s = { name, len, x, y, v }; if (fits(s, ships)) { ships.push(s); placed = true; } }
+        if (!placed) { ok = false; break; }
+      }
+      if (ok) return ships;
+    }
+  }
+  const cells = s => Array.from({ length: s.len }, (_, i) => [s.x + (s.v ? 0 : i), s.y + (s.v ? i : 0)]);
+  function fits(s, ships) {
+    if (s.x < 0 || s.y < 0 || s.x + (s.v ? 0 : s.len - 1) >= N || s.y + (s.v ? s.len - 1 : 0) >= N) return false;
+    const mine2 = new Set(cells(s).map(([x, y]) => x + ',' + y));
+    return !ships.some(o => o !== s && cells(o).some(([x, y]) => mine2.has(x + ',' + y)));
+  }
+  const shipAt = (ships, x, y) => ships.find(s => cells(s).some(([a, b]) => a === x && b === y));
+  /* ---------- flow ---------- */
+  function start(ros) {
+    mode = 'play'; phase = 'place'; vsAI = !MP.online(); mine = randomFleet(); shotsMe = []; shotsThem = []; enemySunk = []; ready = { me: false, them: false }; fx = []; missile = null; sunkCount = lostCount = 0; K.score = 0;
+    myName = MP.name; const opp = ros.find(r => r.id !== MP.id); oppName = vsAI ? 'Computer' : opp ? opp.name : 'Opponent'; oppId = opp ? opp.id : -1;
+    if (vsAI) { aiShips = randomFleet(); ai = { hits: [], tried: new Set() }; }
+    say('Place your fleet, then press READY.');
+  }
+  function readyUp() {
+    if (ready.me) return; ready.me = true; K.sfx(660, .15, 'triangle', .08);
+    if (vsAI) { phase = 'battle'; myTurn = Math.random() < .5; say(myTurn ? 'You fire first!' : 'The computer fires first.'); if (!myTurn) setTimeout(aiFire, 1200); return; }
+    MP.send({ t: 'ready' }); say(`Waiting for ${oppName}...`);
+    if (MP.isHost() && ready.them) begin();
+  }
+  function begin() { const m = { t: 'begin', first: Math.random() < .5 ? MP.id : oppId }; MP.send(m); phase = 'battle'; myTurn = m.first === MP.id; say(myTurn ? 'You fire first!' : `${oppName} fires first.`); }
+  function say(s) { msg = s; msgT = 3.5; }
+  // you fire
+  function fire(x, y) {
+    if (phase !== 'battle' || !myTurn || missile || shotsMe.some(s => s.x === x && s.y === y)) return;
+    myTurn = false;
+    missile = { from: [LX + 230, GY + 470], to: [RX + (x + .5) * CS, GY + (y + .5) * CS], t: 0, x, y, side: 'them' };
+    K.sfx(900, .55, 'sine', .05, -700);
+    if (vsAI) setTimeout(() => { const s = shipAt(aiShips, x, y), hit = !!s; let sunk = null; if (hit) { s.hits = (s.hits || 0) + 1; if (s.hits >= s.len) sunk = { name: s.name, cells: cells(s) }; } result({ x, y, hit, sunk, lose: aiShips.every(q => (q.hits || 0) >= q.len) }); }, 600);
+    else MP.send({ t: 'fire', x, y });
+  }
+  function result(m) {
+    shotsMe.push({ x: m.x, y: m.y, hit: m.hit });
+    boom(RX, m.x, m.y, m.hit);
+    if (m.sunk) { enemySunk.push(m.sunk); sunkCount++; K.add(1); K.coin(1); say(`You sank their ${m.sunk.name}!`); K.chime(523, [0, 4, 7, 12]); } else say(m.hit ? 'HIT! Fire again.' : 'Miss.');
+    if (m.lose) return setTimeout(() => end(true), 1200);
+    myTurn = m.hit; if (!m.hit && vsAI) setTimeout(aiFire, 1100);
+  }
+  // they fire at you
+  function incoming(x, y) {
+    missile = { from: [RX + 230, GY + 470], to: [LX + (x + .5) * CS, GY + (y + .5) * CS], t: 0, x, y, side: 'me' };
+    K.sfx(900, .55, 'sine', .05, -700);
+    setTimeout(() => {
+      const s = shipAt(mine, x, y), hit = !!s; let sunk = null;
+      shotsThem.push({ x, y, hit }); boom(LX, x, y, hit);
+      if (hit) { s.hits = (s.hits || 0) + 1; if (s.hits >= s.len) { sunk = { name: s.name, cells: cells(s) }; s.sunk = true; lostCount++; say(`They sank your ${s.name}!`); } else say(`${oppName} hit your ${s.name}!`); } else say(`${oppName} missed.`);
+      const lose = mine.every(q => (q.hits || 0) >= q.len);
+      if (!vsAI) MP.send({ t: 'res', x, y, hit, sunk, lose });
+      if (lose) return setTimeout(() => end(false), 1200);
+      myTurn = !hit; if (hit && vsAI) setTimeout(aiFire, 1100);
+    }, 600);
+  }
+  function aiFire() {
+    if (phase !== 'battle' || mode !== 'play') return;
+    const tried = ai.tried, ok = (x, y) => x >= 0 && y >= 0 && x < N && y < N && !tried.has(x + ',' + y);
+    let pick = null;
+    const open = ai.hits.filter(h => !h.done);
+    if (open.length) {
+      const line = open.length > 1 ? (open[0].x === open[1].x ? 'v' : open[0].y === open[1].y ? 'h' : null) : null, cand = [];
+      for (const h of open) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { if (line === 'v' && dx) continue; if (line === 'h' && dy) continue; if (ok(h.x + dx, h.y + dy)) cand.push([h.x + dx, h.y + dy]); }
+      if (cand.length) pick = K.pick(cand);
+    }
+    if (!pick) { const c = []; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (ok(x, y) && (x + y) % 2 === 0) c.push([x, y]); if (!c.length) for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (ok(x, y)) c.push([x, y]); pick = K.pick(c); }
+    tried.add(pick[0] + ',' + pick[1]);
+    const before = mine.map(s => s.hits || 0);
+    incoming(pick[0], pick[1]);
+    setTimeout(() => { const s = shipAt(mine, pick[0], pick[1]); if (s) { ai.hits.push({ x: pick[0], y: pick[1] }); if (s.sunk) for (const h of ai.hits) if (cells(s).some(([a, b]) => a === h.x && b === h.y)) h.done = true; } void before; }, 650);
+  }
+  function boom(ox, x, y, hit) {
+    const cx = ox + (x + .5) * CS, cy = GY + (y + .5) * CS;
+    if (hit) { K.burst(cx, cy, ['#ffd23f', '#ff6a3d', '#fff'], 26, 340, { life: .7, size: 8 }); K.noise(.4, .3, 200); K.sfx(80, .5, 'square', .12, -40); K.shake(12); fx.push({ k: 'fire', x: cx, y: cy, t: 0 }); }
+    else { K.burst(cx, cy, ['#bfe8ff', '#fff'], 16, 200, { life: .5, size: 5 }); K.noise(.25, .12, 1500); fx.push({ k: 'ring', x: cx, y: cy, t: 0 }); }
+  }
+  function end(won, why) {
+    if (mode !== 'play') return; mode = 'over'; phase = 'over';
+    K.score = sunkCount; if (won) K.coin(10);
+    K.over({ title: won ? 'Victory at sea!' : 'Your fleet is sunk', text: why || `You sank ${sunkCount} ships and lost ${lostCount}.`, delay: 400 });
+  }
+  /* ---------- input ---------- */
+  const cellAt = (ox, x, y) => { const cx = Math.floor((x - ox) / CS), cy = Math.floor((y - GY) / CS); return cx >= 0 && cy >= 0 && cx < N && cy < N ? [cx, cy] : null; };
+  const BTN = { shuffle: [LX + 40, 668, 170, 44], ready: [LX + 250, 668, 170, 44] };
+  const inB = (b, x, y) => x > b[0] && x < b[0] + b[2] && y > b[1] && y < b[1] + b[3];
+  GAME.down = (x, y) => {
+    if (mode !== 'play') return;
+    if (phase === 'place' && !ready.me) {
+      if (inB(BTN.shuffle, x, y)) { mine = randomFleet(); K.sfx(500, .08, 'square', .05); return; }
+      if (inB(BTN.ready, x, y)) return readyUp();
+      const c = cellAt(LX, x, y); if (!c) return; const s = shipAt(mine, c[0], c[1]); if (!s) return;
+      drag = { s, ox: s.x, oy: s.y, gx: c[0] - s.x, gy: c[1] - s.y, moved: false };
+      return;
+    }
+    if (phase === 'battle') { const c = cellAt(RX, x, y); if (c) fire(c[0], c[1]); }
+  };
+  GAME.move = (x, y) => {
+    if (!drag) return; const c = cellAt(LX, x, y); if (!c) return;
+    const nx = c[0] - drag.gx, ny = c[1] - drag.gy; if (nx === drag.s.x && ny === drag.s.y) return;
+    const keep = [drag.s.x, drag.s.y]; drag.s.x = nx; drag.s.y = ny; if (!fits(drag.s, mine)) { drag.s.x = keep[0]; drag.s.y = keep[1]; } else drag.moved = true;
+  };
+  GAME.up = () => {
+    if (!drag) return;
+    if (!drag.moved) { drag.s.v = !drag.s.v; if (!fits(drag.s, mine)) drag.s.v = !drag.s.v; else K.sfx(600, .06, 'square', .05); }
+    drag = null;
+  };
+  GAME.key = (c, d) => { if (!d || mode !== 'play') return; if (c === 'KeyR' && phase === 'place') { mine = randomFleet(); } if ((c === 'Enter' || c === 'Space') && phase === 'place') readyUp(); };
+  /* ---------- kit hooks ---------- */
+  GAME.reset = () => {
+    drag = null; demo = false;
+    if (K.bot) { demo = true; mode = 'play'; phase = 'battle'; vsAI = true; mine = randomFleet(); aiShips = randomFleet(); shotsMe = []; shotsThem = []; enemySunk = []; fx = []; ai = { hits: [], tried: new Set() }; oppName = 'Computer'; myName = 'Admiral Bot'; demoTurn = 0; myTurn = true; demo2 = { hits: [], tried: new Set() }; return; }
+    mode = 'lobby'; MP.show();
+  };
+  let demo2 = null, demoT = 0;
+  function demoFire() {
+    // the attract-mode bot plays your side with the same hunting logic
+    const tried = demo2.tried, ok = (x, y) => x >= 0 && y >= 0 && x < N && y < N && !tried.has(x + ',' + y);
+    let pick = null; const open = demo2.hits.filter(h => !h.done);
+    for (const h of open) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!pick && ok(h.x + dx, h.y + dy)) pick = [h.x + dx, h.y + dy];
+    if (!pick) { const c = []; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (ok(x, y) && (x + y) % 2 === 0) c.push([x, y]); pick = c.length ? K.pick(c) : null; }
+    if (!pick) return; tried.add(pick[0] + ',' + pick[1]);
+    const s = shipAt(aiShips, pick[0], pick[1]); fire(pick[0], pick[1]); if (s) { demo2.hits.push({ x: pick[0], y: pick[1] }); setTimeout(() => { if ((s.hits || 0) >= s.len) for (const h of demo2.hits) if (cells(s).some(([a, b]) => a === h.x && b === h.y)) h.done = true; }, 700); }
+  }
+  GAME.update = dt => {
+    waveT += dt; msgT -= dt;
+    if (missile) { missile.t += dt / .6; if (missile.t >= 1) missile = null; }
+    for (let i = fx.length - 1; i >= 0; i--) { fx[i].t += dt; if (fx[i].k === 'ring' && fx[i].t > 1) fx.splice(i, 1); }
+    if (demo && mode === 'play' && phase === 'battle' && myTurn && !missile) { demoT -= dt; if (demoT <= 0) { demoT = .7; demoFire(); } }
+    if (demo && mode === 'over') { /* the kit restarts attract mode */ }
+  };
+  /* ---------- drawing ---------- */
+  function water(g, ox, t) {
+    const gr = g.createLinearGradient(0, GY, 0, GY + N * CS); gr.addColorStop(0, '#0d4c7a'); gr.addColorStop(1, '#072f50'); g.fillStyle = gr; g.fillRect(ox, GY, N * CS, N * CS);
+    g.strokeStyle = 'rgba(160,220,255,.12)'; g.lineWidth = 2;
+    for (let k = 0; k < 14; k++) { g.beginPath(); for (let x = 0; x <= N * CS; x += 10) { const y = GY + k * 34 + 10 + Math.sin(x * .04 + t * 1.6 + k) * 4; x ? g.lineTo(ox + x, y) : g.moveTo(ox + x, y); } g.stroke(); }
+    g.strokeStyle = 'rgba(190,230,255,.22)'; g.lineWidth = 1; for (let i = 0; i <= N; i++) { g.beginPath(); g.moveTo(ox + i * CS, GY); g.lineTo(ox + i * CS, GY + N * CS); g.stroke(); g.beginPath(); g.moveTo(ox, GY + i * CS); g.lineTo(ox + N * CS, GY + i * CS); g.stroke(); }
+    g.fillStyle = 'rgba(200,235,255,.7)'; g.font = '14px "Black Ops One"'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let i = 0; i < N; i++) { g.fillText('ABCDEFGHIJ'[i], ox + (i + .5) * CS, GY - 14); g.fillText(i + 1, ox - 16, GY + (i + .5) * CS); }
+    g.strokeStyle = '#9fd8ff'; g.lineWidth = 3; g.strokeRect(ox, GY, N * CS, N * CS);
+  }
+  function ship(g, s, ox, sunk) {
+    const x = ox + s.x * CS + 4, y = GY + s.y * CS + 4, w = (s.v ? 1 : s.len) * CS - 8, h = (s.v ? s.len : 1) * CS - 8;
+    g.save(); g.translate(x + w / 2, y + h / 2); if (s.v) g.rotate(Math.PI / 2); const L = Math.max(w, h), Wd = Math.min(w, h);
+    g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(3, 4, L / 2, Wd / 2, 0, 0, 7); g.fill();
+    const hull = g.createLinearGradient(0, -Wd / 2, 0, Wd / 2); hull.addColorStop(0, sunk ? '#3a2a2a' : '#c6ced8'); hull.addColorStop(.5, sunk ? '#2a1a1a' : '#8e98a6'); hull.addColorStop(1, sunk ? '#1a1010' : '#5a6472');
+    g.fillStyle = hull; g.beginPath(); g.moveTo(-L / 2 + 6, -Wd / 2); g.lineTo(L / 2 - 14, -Wd / 2); g.quadraticCurveTo(L / 2 + 4, 0, L / 2 - 14, Wd / 2); g.lineTo(-L / 2 + 6, Wd / 2); g.quadraticCurveTo(-L / 2 - 2, 0, -L / 2 + 6, -Wd / 2); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 1.5; g.stroke();
+    g.fillStyle = sunk ? '#2a1a1a' : '#66707e'; for (let k = 0; k < s.len - 1; k++) { const px = -L / 2 + CS * (k + .75); g.beginPath(); g.arc(px, 0, Wd * .22, 0, 7); g.fill(); g.fillRect(px, -2, Wd * .45, 4); }
+    if (s.len >= 4) { g.fillStyle = sunk ? '#3a2020' : '#dfe6ee'; g.fillRect(-6, -Wd * .3, 16, Wd * .6); }
+    g.restore();
+  }
+  function marks(g, ox, shots, t) {
+    for (const s of shots) {
+      const cx = ox + (s.x + .5) * CS, cy = GY + (s.y + .5) * CS;
+      if (s.hit) { g.fillStyle = 'rgba(255,90,40,.35)'; g.beginPath(); g.arc(cx, cy, 18, 0, 7); g.fill(); for (let k = 0; k < 4; k++) { const f = (t * 3 + k * .25 + s.x * .3) % 1; g.fillStyle = `rgba(${255},${120 + k * 30},40,${1 - f})`; g.beginPath(); g.arc(cx + Math.sin(k * 2 + t * 5) * 5, cy - f * 26, 9 * (1 - f) + 3, 0, 7); g.fill(); g.fillStyle = `rgba(60,60,60,${.5 * (1 - f)})`; g.beginPath(); g.arc(cx + Math.sin(k + t) * 8, cy - 18 - f * 30, 7 + f * 8, 0, 7); g.fill(); } g.strokeStyle = '#ff4d2a'; g.lineWidth = 4; g.beginPath(); g.moveTo(cx - 10, cy - 10); g.lineTo(cx + 10, cy + 10); g.moveTo(cx + 10, cy - 10); g.lineTo(cx - 10, cy + 10); g.stroke(); }
+      else { g.fillStyle = 'rgba(220,240,255,.75)'; g.beginPath(); g.arc(cx, cy, 6, 0, 7); g.fill(); g.strokeStyle = 'rgba(220,240,255,.35)'; g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, 12 + Math.sin(t * 3 + s.x) * 2, 0, 7); g.stroke(); }
+    }
+  }
+  GAME.draw = g => {
+    const v = K.view, t = K.t;
+    if (posed) { g.translate(640, 410); g.scale(1.25, 1.25); g.translate(-(RX + 200), -(GY + 250)); }
+    const bg = g.createLinearGradient(0, v.y0, 0, v.y1); bg.addColorStop(0, '#0a3558'); bg.addColorStop(1, '#03182b'); g.fillStyle = bg; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    g.textBaseline = 'middle';
+    g.font = '30px "Black Ops One"'; g.textAlign = 'center'; g.fillStyle = '#ffd23f'; g.fillText('SEA BATTLE', 640, 40);
+    water(g, LX, t); water(g, RX, t);
+    g.font = '22px "Black Ops One"'; g.fillStyle = '#cfefff'; g.fillText(`${myName.toUpperCase()}'S FLEET`, LX + N * CS / 2, GY - 52); g.fillText(`${oppName.toUpperCase()}'S WATERS`, RX + N * CS / 2, GY - 52);
+    if (mode === 'play' || mode === 'over') {
+      for (const s of mine) ship(g, s, LX, s.sunk);
+      for (const s of enemySunk) { const a = s.cells[0], b = s.cells[s.cells.length - 1]; ship(g, { x: a[0], y: a[1], len: s.cells.length, v: a[0] === b[0] && s.cells.length > 1 }, RX, true); }
+      marks(g, LX, shotsThem, t); marks(g, RX, shotsMe, t);
+      for (const f of fx) if (f.k === 'ring') { g.strokeStyle = `rgba(220,240,255,${1 - f.t})`; g.lineWidth = 3; g.beginPath(); g.arc(f.x, f.y, 8 + f.t * 40, 0, 7); g.stroke(); }
+      // radar sweep over the enemy grid while it is your turn
+      if (phase === 'battle' && myTurn) { g.save(); g.beginPath(); g.rect(RX, GY, N * CS, N * CS); g.clip(); const a = t * 1.6, cx = RX + N * CS / 2, cy = GY + N * CS / 2; const sw = g.createConicGradient ? g.createConicGradient(a, cx, cy) : null; if (sw) { sw.addColorStop(0, 'rgba(90,255,140,.22)'); sw.addColorStop(.12, 'rgba(90,255,140,0)'); sw.addColorStop(1, 'rgba(90,255,140,0)'); g.fillStyle = sw; g.fillRect(RX, GY, N * CS, N * CS); } g.restore(); }
+      if (missile) { const k = missile.t, x = K.lerp(missile.from[0], missile.to[0], k), y = K.lerp(missile.from[1], missile.to[1], k) - Math.sin(k * Math.PI) * 220; g.fillStyle = '#fff'; g.beginPath(); g.arc(x, y, 6, 0, 7); g.fill(); g.fillStyle = 'rgba(255,200,120,.5)'; for (let i = 1; i < 6; i++) { const kk = Math.max(0, k - i * .03); g.beginPath(); g.arc(K.lerp(missile.from[0], missile.to[0], kk), K.lerp(missile.from[1], missile.to[1], kk) - Math.sin(kk * Math.PI) * 220, 6 - i, 0, 7); g.fill(); } }
+      // hover marker
+      if (phase === 'battle' && myTurn && hover) { const c = cellAt(RX, hover[0], hover[1]); if (c) { g.strokeStyle = '#ffd23f'; g.lineWidth = 3; g.strokeRect(RX + c[0] * CS + 2, GY + c[1] * CS + 2, CS - 4, CS - 4); } }
+      // status
+      g.font = '24px "Black Ops One"'; g.fillStyle = phase === 'battle' ? (myTurn ? '#5cf28a' : '#ff9f43') : '#ffd23f';
+      const status = phase === 'place' ? (ready.me ? `Waiting for ${oppName}...` : 'Drag to move, tap to turn') : phase === 'battle' ? (myTurn ? 'YOUR TURN: FIRE!' : `${oppName.toUpperCase()} IS AIMING...`) : '';
+      g.fillText(status, 640, 110);
+      if (msgT > 0) { g.globalAlpha = Math.min(1, msgT); g.font = '20px "Black Ops One"'; g.fillStyle = '#fff'; g.fillText(msg, 640, 142); g.globalAlpha = 1; }
+      if (phase === 'place' && !ready.me) for (const [k, b] of Object.entries(BTN)) { g.fillStyle = k === 'ready' ? '#ffd23f' : 'rgba(255,255,255,.15)'; g.beginPath(); g.roundRect(b[0], b[1], b[2], b[3], 12); g.fill(); g.fillStyle = k === 'ready' ? '#06243d' : '#fff'; g.font = '20px "Black Ops One"'; g.fillText(k.toUpperCase(), b[0] + b[2] / 2, b[1] + b[3] / 2 + 1); }
+      if (phase === 'place' && !vsAI) { g.font = '18px "Black Ops One"'; g.fillStyle = ready.them ? '#5cf28a' : 'rgba(255,255,255,.5)'; g.fillText(ready.them ? `${oppName} is ready` : `${oppName} is placing ships...`, RX + N * CS / 2, GY + N * CS / 2); }
+      // fleet status
+      const left = FLEET.length - enemySunk.length; g.font = '18px "Black Ops One"'; g.fillStyle = '#cfefff'; g.textAlign = 'center';
+      if (phase !== 'place') { g.fillText(`Enemy ships left: ${left}`, RX + N * CS / 2, 680); g.fillText(`Your ships left: ${mine.filter(s => !s.sunk).length}`, LX + N * CS / 2, 680); }
+    }
+  };
+  let hover = null;
+  const mv = GAME.move; GAME.move = (x, y, e) => { hover = [x, y]; mv(x, y, e); };
+  let posed = 0;
+  GAME.pose = () => {
+    posed = 1;
+    shotsMe = [[2, 3, 0], [4, 3, 1], [5, 3, 1], [6, 3, 1], [7, 6, 0], [1, 8, 0], [8, 1, 1], [8, 2, 1], [3, 7, 0], [6, 8, 1], [4, 5, 1], [4, 6, 1], [2, 5, 0], [6, 5, 0]].map(([x, y, h]) => ({ x, y, hit: !!h }));
+    shotsThem = [[1, 1, 1], [5, 5, 0], [7, 2, 0], [3, 8, 1]].map(([x, y, h]) => ({ x, y, hit: !!h }));
+    enemySunk = [{ name: 'Destroyer', cells: [[8, 1], [8, 2]] }]; missile = { from: [LX + 230, GY + 470], to: [RX + 6.5 * CS, GY + 6.5 * CS], t: .62 }; phase = 'battle'; myTurn = true;
+  };
+  if (/[?&]test/.test(location.search)) window.SB = { get phase() { return phase; }, get myTurn() { return myTurn; }, get shotsMe() { return shotsMe; }, get shotsThem() { return shotsThem; }, get mine() { return mine; }, get mode() { return mode; }, fire };
+})();
+
+/* Pulsebox game kit: canvas scaling, input, menus, skins shop, coins, best score, sound and effects.
+   A game defines GAME before this runs: { id, title, tagline, how:[], bg, skins:[{name,price,c:[]}],
+   reset(), update(dt), draw(g), down(x,y), move(x,y), up(x,y), key(code,isDown), bot(dt), drawSkin(g,skin,size) }.
+   Everything is in a 1280x720 world; K.view is the visible part of it (it can be wider or taller on odd screens).
+   ?demo plays the bot forever with no menus (used to record trailers). */
+'use strict';
+const $ = id => document.getElementById(id);
+const DEMO = /[?&]demo/.test(location.search), POSE = /[?&]pose/.test(location.search) && GAME.pose;  // ?demo&pose freezes a staged scene for cover art
+const cv = $('cv'), g = cv.getContext('2d');
+const K = {
+  W, H, t: 0, state: 'title', score: 0, runCoins: 0, bot: true, view: { x0: 0, y0: 0, x1: W, y1: H },
+  rand: (a, b) => a + Math.random() * (b - a),
+  irand: (a, b) => Math.floor(a + Math.random() * (b - a + 1)),
+  pick: a => a[Math.floor(Math.random() * a.length)],
+  clamp: (v, a, b) => v < a ? a : v > b ? b : v,
+  lerp: (a, b, t) => a + (b - a) * t,
+  dist: (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by),
+};
+document.documentElement.style.setProperty('--accent', GAME.accent || '#c6ff3d');
+document.documentElement.style.setProperty('--accent2', GAME.accent2 || '#29e0ff');
+document.documentElement.style.setProperty('--bg', GAME.bg || '#0a0c12');
+if (GAME.font) document.documentElement.style.setProperty('--display', `'${GAME.font}', 'Arial Black', system-ui, sans-serif`);
+if (DEMO) document.body.classList.add('demo');
+
+/* ---------- save ---------- */
+const SKEY = 'pbx-' + GAME.id;
+const save = { best: 0, coins: 0, owned: [0], skin: 0, plays: 0, mute: false };
+try { Object.assign(save, JSON.parse(localStorage.getItem(SKEY) || '{}')); } catch (e) {}
+const persist = () => { try { localStorage.setItem(SKEY, JSON.stringify(save)); } catch (e) {} };
+K.save = save; K.persist = persist;
+Object.defineProperty(K, 'skin', { get: () => GAME.skins[DEMO || K.bot ? (K.demoSkin || 0) : save.skin] || GAME.skins[0] });
+
+/* ---------- screen ---------- */
+let sc = 1, ox = 0, oy = 0, dpr = 1;
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+  sc = Math.min(innerWidth / W, innerHeight / H); ox = (innerWidth - W * sc) / 2; oy = (innerHeight - H * sc) / 2;
+  K.view = { x0: -ox / sc, y0: -oy / sc, x1: W + ox / sc, y1: H + oy / sc };
+}
+addEventListener('resize', resize); resize();
+
+/* ---------- sound ---------- */
+let ac = null;
+// every sound goes through K.master, which is silent on menus, while paused and when muted, so games can run looping sounds
+function audio() {
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); K.ac = ac; K.master = ac.createGain(); K.master.gain.value = 0; K.master.connect(ac.destination); } catch (e) {} }
+  if (ac && ac.state === 'suspended') ac.resume(); return ac;
+}
+K.audio = audio;
+let masterOn = false;
+function masterSync() {
+  const on = !!ac && !save.mute && (K.state === 'play' || K.state === 'over') && !K.bot;
+  if (ac && on !== masterOn) { masterOn = on; K.master.gain.setTargetAtTime(on ? 1 : 0, ac.currentTime, .05); }
+}
+K.sfx = (f = 440, d = .1, type = 'square', v = .12, slide = 0, delay = 0) => {
+  if (save.mute || K.bot || !ac) return;
+  const t = ac.currentTime + delay, o = ac.createOscillator(), a = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
+  a.gain.setValueAtTime(v, t); a.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(a).connect(K.master); o.start(t); o.stop(t + d + .02);
+};
+K.noise = (d = .15, v = .15, hp = 800) => {
+  if (save.mute || K.bot || !ac) return;
+  const n = Math.floor(ac.sampleRate * d), b = ac.createBuffer(1, n, ac.sampleRate), ch = b.getChannelData(0);
+  for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), a = ac.createGain();
+  f.type = 'highpass'; f.frequency.value = hp; a.gain.value = v; s.buffer = b; s.connect(f).connect(a).connect(K.master); s.start();
+};
+K.chime = (base = 523, steps = [0, 4, 7, 12]) => steps.forEach((s, i) => K.sfx(base * Math.pow(2, s / 12), .16, 'triangle', .1, 0, i * .07));
+
+/* ---------- effects ---------- */
+const parts = [], pops = [];
+let shake = 0, flashA = 0, flashC = '#fff';
+K.burst = (x, y, c, n = 14, sp = 320, o = {}) => {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = sp * (.3 + Math.random() * .7);
+    parts.push({ x, y, vx: Math.cos(a) * s + (o.vx || 0), vy: Math.sin(a) * s + (o.vy || 0), life: 0, max: (o.life || .6) * (.6 + Math.random() * .6), c: Array.isArray(c) ? K.pick(c) : c, s: (o.size || 7) * (.5 + Math.random()), gr: o.gravity ?? 600, sq: o.square });
+  }
+};
+K.pop = (x, y, text, c = '#fff', size = 34) => pops.push({ x, y, text, c, size, life: 0 });
+K.shake = a => { shake = Math.max(shake, a); };
+K.flash = (c = '#fff', a = .5) => { flashC = c; flashA = a; };
+K.toast = text => { if (K.bot) return; const d = document.createElement('div'); d.className = 'toast'; d.textContent = text; document.body.appendChild(d); setTimeout(() => d.remove(), 1500); };
+function fx(dt) {
+  for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.life += dt; if (p.life > p.max) { parts.splice(i, 1); continue; } p.vy += p.gr * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .99; }
+  for (let i = pops.length - 1; i >= 0; i--) { const p = pops[i]; p.life += dt; p.y -= 60 * dt; if (p.life > .9) pops.splice(i, 1); }
+  shake = Math.max(0, shake - 60 * dt); flashA = Math.max(0, flashA - 2.5 * dt);
+}
+function drawFx() {
+  for (const p of parts) { g.globalAlpha = 1 - p.life / p.max; g.fillStyle = p.c; if (p.sq) g.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s); else { g.beginPath(); g.arc(p.x, p.y, p.s / 2, 0, 7); g.fill(); } }
+  g.globalAlpha = 1; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const p of pops) {
+    const k = p.life < .12 ? p.life / .12 : 1; g.globalAlpha = p.life > .6 ? 1 - (p.life - .6) / .3 : 1;
+    g.font = `${Math.round(p.size * (0.6 + .4 * k))}px ${getComputedStyle(document.documentElement).getPropertyValue('--display')}`;
+    g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,.45)'; g.strokeText(p.text, p.x, p.y); g.fillStyle = p.c; g.fillText(p.text, p.x, p.y);
+  }
+  g.globalAlpha = 1;
+}
+
+/* ---------- UI ---------- */
+const coinHTML = '<i class="coin-i"></i>';
+document.body.insertAdjacentHTML('beforeend', `
+<div class="hud" id="hud" hidden><div class="hud-score" id="hScore">0</div><div class="hud-coins">${coinHTML}<span id="hCoins">0</span></div><button class="hud-pause" id="hPause" aria-label="Pause"></button></div>
+<div class="scr" id="sTitle" ${DEMO ? 'hidden' : ''}><div class="card">
+  <h1 class="title">${GAME.title}</h1><p class="sub">${GAME.tagline}</p>
+  <div class="stats"><span class="stat"><small>Best</small><b id="tBest">0</b></span><span class="stat">${coinHTML}<b id="tCoins">0</b></span></div>
+  <button class="big" id="bPlay">Play</button>
+  <div class="row"><button id="bSkins">Skins</button></div>
+  <ul class="how">${GAME.how.map(h => `<li>${h}</li>`).join('')}</ul>
+</div></div>
+<div class="scr" id="sOver" hidden><div class="card">
+  <h2 class="title" id="oTitle" style="font-size:40px" hidden></h2><p class="sub" id="oText" hidden></p><p class="sub" style="margin:0" id="oLabel">Score</p><div class="score-big" id="oScore">0</div><div id="oNew" class="newbest" hidden>New best!</div>
+  <div class="stats"><span class="stat"><small>Best</small><b id="oBest">0</b></span><span class="stat">+${coinHTML}<b id="oCoins">0</b></span></div>
+  <button class="big" id="bAgain">Play again</button>
+  <div class="row"><button id="bMenu">Menu</button><button id="bSkins2">Skins</button></div>
+  <p class="hint" id="oHint"></p>
+</div></div>
+<div class="scr" id="sSkins" hidden><div class="card">
+  <h2 class="title" style="font-size:40px">Skins</h2>
+  <div class="stats"><span class="stat">${coinHTML}<b id="kCoins">0</b></span></div>
+  <div class="skins" id="kGrid"></div>
+  <button class="big" id="bBack">Back</button>
+</div></div>
+<div class="scr" id="sPause" hidden><div class="card">
+  <h2 class="title" style="font-size:44px">Paused</h2>
+  <button class="big" id="bResume">Resume</button>
+  <div class="row"><button id="bQuit">Menu</button></div>
+</div></div>
+<button class="mute" id="bMute" aria-label="Sound on or off"></button>`);
+
+const screens = ['sTitle', 'sOver', 'sSkins', 'sPause'];
+let skinsFrom = 'sTitle';
+function showScr(id) { screens.forEach(s => $(s).hidden = s !== id || DEMO); }
+function refresh() {
+  $('tBest').textContent = save.best; $('tCoins').textContent = save.coins; $('kCoins').textContent = save.coins;
+  $('bMute').textContent = save.mute ? '🔇' : '🔊';
+}
+function hud() { $('hScore').textContent = K.score; $('hCoins').textContent = K.runCoins; }
+K.add = (n = 1, x, y, c) => {
+  K.score += n; hud();
+  if (!K.bot) { const s = $('hScore'); s.classList.remove('bump'); void s.offsetWidth; s.classList.add('bump'); }
+  if (x !== undefined) K.pop(x, y, '+' + n, c || '#fff');
+};
+K.coin = (n = 1, x, y) => {
+  K.runCoins += n; hud();
+  if (x !== undefined) K.burst(x, y, ['#ffcf2e', '#fff3a8'], 6, 200, { life: .4, size: 6, gravity: 300 });
+  K.sfx(1320, .07, 'square', .05); K.sfx(1760, .08, 'square', .05, 0, .05);
+};
+
+function buildSkins() {
+  const grid = $('kGrid'); grid.innerHTML = '';
+  GAME.skins.forEach((s, i) => {
+    const own = save.owned.includes(i), b = document.createElement('button');
+    b.className = 'skin' + (save.skin === i ? ' on' : '') + (own ? '' : ' locked') + (!own && save.coins < s.price ? ' cant' : '');
+    const c = document.createElement('canvas'); c.width = c.height = 112; const cg = c.getContext('2d'); cg.translate(56, 56);
+    if (GAME.drawSkin) GAME.drawSkin(cg, s, 40); else { cg.fillStyle = s.c[0]; cg.beginPath(); cg.arc(0, 0, 40, 0, 7); cg.fill(); }
+    if (!own) { cg.fillStyle = 'rgba(0,0,0,.45)'; cg.fillRect(-56, -56, 112, 112); }
+    b.appendChild(c);
+    b.insertAdjacentHTML('beforeend', `<span>${s.name}</span>${own ? (save.skin === i ? '<span class="price">Equipped</span>' : '<span class="price" style="color:#cfd5ef">Equip</span>') : `<span class="price">${coinHTML}${s.price}</span>`}`);
+    b.onclick = () => {
+      audio();
+      if (own) { save.skin = i; K.sfx(660, .08, 'triangle'); }
+      else if (save.coins >= s.price) { save.coins -= s.price; save.owned.push(i); save.skin = i; K.chime(660); }
+      else { K.sfx(160, .15, 'sawtooth', .08); return; }
+      persist(); refresh(); buildSkins();
+    };
+    grid.appendChild(b);
+  });
+}
+
+/* ---------- flow ---------- */
+let overAt = 0, botOverAt = 0;
+function start() {
+  audio(); K.bot = false; K.score = 0; K.runCoins = 0; hud(); parts.length = 0; pops.length = 0;
+  GAME.reset(); K.state = 'play'; showScr(null); $('hud').hidden = false; save.plays++; persist();
+}
+function attract() { K.bot = true; K.demoSkin = DEMO ? 0 : K.irand(0, GAME.skins.length - 1); K.score = 0; K.runCoins = 0; hud(); GAME.reset(); if (POSE) GAME.pose(); K.state = 'title'; $('hud').hidden = !DEMO; }
+K.over = (o = {}) => {
+  if (K.bot) { if (!botOverAt) botOverAt = K.t + 1.2; return; }
+  if (K.state !== 'play') return;
+  K.state = 'over'; overAt = performance.now();
+  const best = K.score > save.best; if (best) save.best = K.score;
+  save.coins += K.runCoins; persist(); refresh();
+  $('oTitle').hidden = !o.title; $('oTitle').textContent = o.title || ''; $('oText').hidden = !o.text; $('oText').textContent = o.text || ''; $('oLabel').textContent = GAME.scoreLabel || 'Score';
+  $('oScore').textContent = K.score; $('oBest').textContent = save.best; $('oCoins').textContent = K.runCoins; $('oNew').hidden = !best || K.score === 0;
+  const next = GAME.skins.map((s, i) => [s, i]).find(([s, i]) => !save.owned.includes(i));
+  $('oHint').textContent = next ? (save.coins >= next[0].price ? `You can unlock ${next[0].name} now!` : `${next[0].price - save.coins} more coins to unlock ${next[0].name}`) : 'You own every skin. Legend!';
+  if (GAME.noSkins) $('oHint').textContent = '';
+  setTimeout(() => { if (K.state === 'over') { showScr('sOver'); $('hud').hidden = true; } }, o.delay ?? 650);
+  if (best && K.score > 0) setTimeout(() => K.chime(523, [0, 4, 7, 12, 16]), 700);
+};
+function pause() { if (K.state !== 'play') return; K.state = 'paused'; showScr('sPause'); }
+function resume() { K.state = 'play'; showScr(null); last = performance.now(); }
+function toMenu() { refresh(); attract(); showScr('sTitle'); }
+
+$('bPlay').onclick = start; $('bAgain').onclick = start; $('bResume').onclick = resume;
+$('bMenu').onclick = toMenu; $('bQuit').onclick = toMenu;
+$('bSkins').onclick = () => { skinsFrom = 'sTitle'; buildSkins(); refresh(); showScr('sSkins'); };
+$('bSkins2').onclick = () => { skinsFrom = 'sOver'; buildSkins(); refresh(); showScr('sSkins'); };
+$('bBack').onclick = () => { if (skinsFrom === 'sOver') toMenu(); else showScr('sTitle'); };
+$('hPause').onclick = pause;
+$('bMute').onclick = () => { save.mute = !save.mute; persist(); refresh(); audio(); };
+addEventListener('blur', pause);
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+/* ---------- input ---------- */
+const toW = e => [(e.clientX - ox) / sc, (e.clientY - oy) / sc];
+cv.addEventListener('pointerdown', e => { audio(); if (K.state === 'play' && GAME.down) { const [x, y] = toW(e); GAME.down(x, y, e); } });
+addEventListener('pointermove', e => { if (K.state === 'play' && GAME.move) { const [x, y] = toW(e); GAME.move(x, y, e); } });
+addEventListener('pointerup', e => { if (K.state === 'play' && GAME.up) { const [x, y] = toW(e); GAME.up(x, y, e); } });
+addEventListener('keydown', e => {
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  if (e.repeat && K.state !== 'play') return;
+  if (e.code === 'Escape' || e.code === 'KeyP') { if (K.state === 'play') pause(); else if (K.state === 'paused') resume(); return; }
+  if ((e.code === 'Space' || e.code === 'Enter') && K.state !== 'play') {
+    if (K.state === 'title' && !$('sTitle').hidden) start();
+    else if (K.state === 'over' && performance.now() - overAt > 900) start();
+    else if (K.state === 'paused') resume();
+    return;
+  }
+  if (K.state === 'play' && GAME.key) GAME.key(e.code, true);
+});
+addEventListener('keyup', e => { if (K.state === 'play' && GAME.key) GAME.key(e.code, false); });
+
+/* ---------- loop ---------- */
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
+  const run = K.state === 'play' || K.state === 'title' || K.state === 'over';
+  if (run && !POSE) {
+    K.t += dt;
+    if (K.bot && K.state === 'title') { if (botOverAt && K.t > botOverAt) { botOverAt = 0; attract(); } else if (!botOverAt && GAME.bot) GAME.bot(dt); }
+    GAME.update(dt); fx(dt);
+  }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = GAME.bg || '#000'; g.fillRect(0, 0, innerWidth, innerHeight);
+  const sx = shake ? (Math.random() - .5) * shake : 0, sy = shake ? (Math.random() - .5) * shake : 0;
+  g.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * (ox + sx * sc), dpr * (oy + sy * sc));
+  GAME.draw(g); drawFx();
+  if (flashA > 0) { g.globalAlpha = flashA; g.fillStyle = flashC; g.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0); g.globalAlpha = 1; }
+  masterSync();
+  requestAnimationFrame(frame);
+}
+if (GAME.noSkins) { $('bSkins').parentNode.hidden = true; $('bSkins2').hidden = true; }
+if (GAME.noHud) { $('hScore').hidden = true; document.querySelector('.hud-coins').hidden = true; }
+refresh(); attract(); showScr('sTitle');
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
