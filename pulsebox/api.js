@@ -6,6 +6,8 @@
 // Play stats: one global Durable Object (Stats) counts game starts per day.
 //   POST /api/play   <- { id }        -> { ok, counted }   (same IP + game counts once per 10 minutes; IPs are only kept hashed)
 //   GET  /api/stats  -> { games: { id: { total, week, today } }, updated }   (week = last 7 UTC days incl. today; cached ~60 s)
+// Multiplayer rooms: one Durable Object (Rooms) per 4-character room code relays JSON messages between up to 4 players.
+//   GET  /api/room/CODE?n=NAME  (WebSocket) -> { t: 'hello', id, host, players } then every other player's messages
 const PROJECT = 'pulseform-d8282';
 const JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 const MAX_BYTES = 400000;
@@ -66,6 +68,12 @@ export async function api(request, env, ctx, ids) {
   const url = new URL(request.url);
   if (url.pathname === '/api/play') return play(request, env, ids);
   if (url.pathname === '/api/stats') return stats(request, env, ctx);
+  if (url.pathname.startsWith('/api/room/')) {
+    const code = url.pathname.slice(10).toUpperCase();
+    if (!/^[A-Z0-9]{4}$/.test(code)) return json({ error: 'bad room code' }, 400);
+    if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
+    return env.ROOMS.get(env.ROOMS.idFromName(code)).fetch(request);
+  }
   if (url.pathname !== '/api/save') return json({ error: 'not found' }, 404);
   if (request.method !== 'GET' && request.method !== 'PUT') return json({ error: 'method' }, 405);
   let uid = null;
@@ -125,4 +133,38 @@ export class Stats {
     }
     return json({ error: 'not found' }, 404);
   }
+}
+
+// One instance per room code. Players stay connected only while the game is open; nothing is stored.
+// A message { to: id } goes to that player only; anything else goes to everyone else in the room.
+// The first player in is the host (they run the monsters); if the host leaves, the next player takes over.
+const MAX_PLAYERS = 4, MAX_MSG = 6000;
+export class Rooms {
+  constructor(state) { this.state = state; this.socks = new Map(); this.next = 1; this.host = 0; }
+  async fetch(request) {
+    const pair = new WebSocketPair(), [client, sock] = Object.values(pair);
+    sock.accept();
+    if (this.socks.size >= MAX_PLAYERS) { sock.send(JSON.stringify({ t: 'full' })); sock.close(1000, 'room full'); return new Response(null, { status: 101, webSocket: client }); }
+    const id = this.next++, name = (new URL(request.url).searchParams.get('n') || 'Player').replace(/[^\w .'-]/g, '').slice(0, 12) || 'Player';
+    if (!this.host) this.host = id;
+    this.socks.set(id, { sock, name });
+    sock.send(JSON.stringify({ t: 'hello', id, host: this.host, players: [...this.socks].map(([i, p]) => ({ id: i, name: p.name })) }));
+    this.send({ t: 'join', id, name }, id);
+    sock.addEventListener('message', e => {
+      if (typeof e.data !== 'string' || e.data.length > MAX_MSG) return;
+      let m; try { m = JSON.parse(e.data); } catch (err) { return; }
+      if (!m || typeof m !== 'object') return;
+      m.from = id;
+      if (m.to) { const p = this.socks.get(m.to); if (p) try { p.sock.send(JSON.stringify(m)); } catch (err) {} }
+      else this.send(m, id);
+    });
+    const bye = () => {
+      if (!this.socks.delete(id)) return;
+      this.send({ t: 'leave', id });
+      if (this.host === id) { this.host = this.socks.size ? this.socks.keys().next().value : 0; if (this.host) this.send({ t: 'host', id: this.host }); }
+    };
+    sock.addEventListener('close', bye); sock.addEventListener('error', bye);
+    return new Response(null, { status: 101, webSocket: client });
+  }
+  send(m, except) { const d = JSON.stringify(m); for (const [i, p] of this.socks) if (i !== except) try { p.sock.send(d); } catch (err) {} }
 }

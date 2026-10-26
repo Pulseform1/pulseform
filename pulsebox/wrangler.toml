@@ -21,3 +21,12 @@ class_name = "Stats"
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["Stats"]
+
+# multiplayer rooms (api.js): one Durable Object per room code relays messages between players
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Rooms"
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["Rooms"]

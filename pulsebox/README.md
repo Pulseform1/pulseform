@@ -1,6 +1,6 @@
 # Pulsebox
 
-A hub of browser games (41 so far), each a single HTML file in `public/games/`, with covers, trailers and screenshots in `public/media/`.
+A hub of browser games (42 so far), each a single HTML file in `public/games/`, with covers, trailers and screenshots in `public/media/`.
 The game list lives in `GAMES` at the top of the script in `public/index.html`; its comment says how to add a game.
 
 ## Deploy (Cloudflare Workers)
@@ -26,3 +26,7 @@ against Google's public keys and keeps one save per account in a Durable Object 
 
 Google sign-in needs `box.pulseform.org` in Firebase console → Authentication → Settings → Authorized domains.
 Email and password work without it.
+
+## Multiplayer rooms
+
+`/api/room/CODE` is a WebSocket relay (the `Rooms` Durable Object in `api.js`): up to 4 players per 4-character code; the first player in is the host. Still Here uses it; the host runs the monsters and everyone else sends their position about 12 times a second.

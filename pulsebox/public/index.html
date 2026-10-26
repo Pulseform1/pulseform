@@ -383,6 +383,22 @@
    ============================================================ */
 const GAMES = [
   {
+    id: "still-here",
+    title: "Still Here",
+    category: "Horror",
+    kind: "Horror · Online co-op",
+    tags: ["1-4 players online", "Jump scares", "Endless floors", "Headphones"],
+    badge: 'NEW',
+    file: 'games/still-here.html',
+    cover: 'media/still-here-cover.jpg',
+    video: 'media/still-here-trailer.mp4',
+    shots: ['media/still-here-shot1.jpg', 'media/still-here-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Something in this building knows your name. Bring friends.",
+    blurb: "A first-person horror game you can play alone or with up to 3 friends, each on their own phone or computer: one of you creates a room and the others join with its 4-letter code. Every floor of the abandoned Saint Verity Hospital goes deeper than it should. Find the fuses, power the elevator and ride it down while the Hollow hunts you by sight and sound and the dolls creep closer whenever nobody is looking. Hide in lockers, blind it with your camera flash, collect the lost files and spend relics on upgrades between runs.",
+    how: ["Create a room and send friends the 4-letter code, or play alone.", "WASD to move, mouse to look, Shift to run, F for the flashlight, E to hide or ride the elevator.", "C fires the camera flash to stun monsters. Q pings your spot for friends, but the Hollow hears it too.", "Find every fuse on the floor, then get everyone into the elevator. Phones get on-screen controls."]
+  },
+  {
     id: "block-blast",
     title: "Block Blast",
     category: "Puzzle",
@@ -1094,7 +1110,7 @@ let query = '', current = null;
    Without it (offline, local preview, too little data yet) the
    hub falls back to the hand-picked order below.
    ============================================================ */
-const CURATED = ['afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
+const CURATED = ['still-here', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
 const MIN_WEEK = 20;   // fewer plays than this across the hub in a week = not enough to rank by
 let STATS = null;      // { id: { total, week, today } } once real numbers are in
 let HOT = new Set();   // top 5 by plays this week
