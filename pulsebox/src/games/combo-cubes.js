@@ -1,7 +1,9 @@
-/* Block Blast: drag the three pieces onto the 8x8 board. Fill a whole row or column to clear it; clear lines on
+/* Combo Cubes: drag the three pieces onto the 8x8 board. Fill a whole row or column to clear it; clear lines on
    back-to-back drops for a combo, clear the whole board for a bonus. The run ends when none of your pieces fits. */
+// this game used to be called Block Blast: carry over best score, coins and skins saved under the old name
+try { if (!localStorage.getItem('pbx-combo-cubes') && localStorage.getItem('pbx-block-blast')) localStorage.setItem('pbx-combo-cubes', localStorage.getItem('pbx-block-blast')); } catch (e) {}
 const GAME = {
-  id: 'block-blast', title: 'Block Blast', tagline: 'Drop the blocks. Clear the lines. Chase the combo!',
+  id: 'combo-cubes', title: 'Combo Cubes', tagline: 'Drop the blocks. Clear the lines. Chase the combo!',
   font: 'Chewy', accent: '#ffd23f', accent2: '#4fc3ff', bg: '#16204a', noHud: true,
   how: ['Drag a piece from the tray onto the board. Keys: 1 2 3 to pick, arrows to move, Space to drop.', 'Fill a full row or column to blast it away. Several at once scores big.', 'Clear lines on drops in a row for a combo. You lose when no piece fits!'],
   skins: [

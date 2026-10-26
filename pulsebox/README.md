@@ -29,4 +29,4 @@ Email and password work without it.
 
 ## Multiplayer rooms
 
-`/api/room/CODE` is a WebSocket relay (the `Rooms` Durable Object in `api.js`): up to 4 players per 4-character code; the first player in is the host. Still Here and the Multiplayer shelf (Bumper Brawl, Paint Wars, Turbo Laps, Doodle Guess, Sea Battle) use it. The shared lobby is `src/lib/mp.js`.
+`/api/room/CODE` is a WebSocket relay (the `Rooms` Durable Object in `api.js`): up to 4 players per 4-character code; the first player in is the host. Still Here and the rest of the Co-op shelf (Bumper Brawl, Paint Wars, Turbo Laps, Doodle Guess, Sea Battle) use it. The shared lobby is `src/lib/mp.js`.

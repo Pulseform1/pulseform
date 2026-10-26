@@ -14,6 +14,6 @@ Build one at a time with a single efficient agent each (the revamps cost about 2
 4. **Dodgeball Kings** (Sports, new shelf): 3v3 against computer teams, with a tournament.
 5. **Mini Golf Mayhem** (Sports): physics mini-golf with themed courses and trick holes.
 6. **Penalty Shootout** (Sports) — shipped: one-touch soccer with a World Cup-style bracket.
-7. **Block Blast** (Puzzle) — shipped: drop shapes onto an 8x8 grid and clear rows and columns.
+7. **Combo Cubes** (Puzzle; first shipped as Block Blast) — shipped: drop shapes onto an 8x8 grid and clear rows and columns.
 
 The Sports and Strategy shelves are live.
