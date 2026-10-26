@@ -1,0 +1,1633 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Afterhours</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+:root { color-scheme: dark; --accent: #c6ff3d; --accent2: #29e0ff; --bg: #0a0c12; --text: #f3f5ff; --muted: #a3a9c4; --panel: rgba(10,12,22,.86); --edge: rgba(255,255,255,.14); --display: 'Lilita One', 'Arial Black', system-ui, sans-serif; --body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--bg); }
+body { font-family: var(--body); color: var(--text); user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; touch-action: none; overscroll-behavior: none; }
+#cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* HUD */
+.hud { position: fixed; inset: 0; pointer-events: none; font-family: var(--display); }
+.hud-score { position: absolute; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); font-size: clamp(28px, 6vh, 56px); line-height: 1; text-shadow: 0 3px 0 rgba(0,0,0,.35), 0 0 18px rgba(0,0,0,.4); letter-spacing: .02em; }
+.hud-score.bump { animation: bump .18s ease-out; }
+@keyframes bump { 40% { transform: translateX(-50%) scale(1.18); } }
+.hud-coins { position: absolute; top: 12px; right: 14px; display: flex; align-items: center; gap: 6px; font-size: clamp(16px, 3.2vh, 24px); background: rgba(0,0,0,.35); padding: 4px 12px 4px 8px; border-radius: 999px; }
+.coin-i { width: 1em; height: 1em; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6c4, #ffcf2e 45%, #c98a00); box-shadow: 0 0 8px rgba(255,207,46,.6); display: inline-block; flex: none; }
+.hud-pause { position: absolute; top: 10px; left: 12px; width: 40px; height: 40px; border-radius: 12px; background: rgba(0,0,0,.35); pointer-events: auto; display: grid; place-items: center; }
+.hud-pause::before { content: ''; width: 14px; height: 16px; border-left: 5px solid #fff; border-right: 5px solid #fff; }
+
+/* screens */
+.scr { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: radial-gradient(ellipse at center, rgba(0,0,0,.25), rgba(0,0,0,.65)); }
+.card { width: min(440px, 100%); max-height: 100%; overflow: auto; text-align: center; background: var(--panel); border: 1px solid var(--edge); border-radius: 26px; padding: clamp(16px, 4vh, 28px) 22px; box-shadow: 0 24px 70px rgba(0,0,0,.5); backdrop-filter: blur(6px); }
+.title { font-family: var(--display); font-size: clamp(36px, 9vh, 64px); line-height: .95; margin: 0 0 6px; color: var(--accent); text-shadow: 0 4px 0 rgba(0,0,0,.35); letter-spacing: .01em; }
+.sub { margin: 0 0 14px; color: var(--muted); font-weight: 700; font-size: 15px; }
+.stats { display: flex; justify-content: center; gap: 10px; margin: 0 0 16px; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.07); border: 1px solid var(--edge); border-radius: 14px; padding: 6px 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.stat small { color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+.big { display: block; width: 100%; font-family: var(--display); font-size: clamp(22px, 5vh, 30px); padding: 12px 18px; border-radius: 18px; background: var(--accent); color: #0b0d14; box-shadow: 0 6px 0 rgba(0,0,0,.35), 0 0 30px color-mix(in srgb, var(--accent) 40%, transparent); transition: transform .1s; }
+.big:hover { transform: translateY(-2px); }
+.big:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.row { display: flex; gap: 10px; margin-top: 10px; }
+.row button { flex: 1; padding: 10px; border-radius: 14px; background: rgba(255,255,255,.08); border: 1px solid var(--edge); font-weight: 800; }
+.row button:hover { background: rgba(255,255,255,.14); }
+.how { margin: 14px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 14px; font-weight: 600; line-height: 1.45; }
+.score-big { font-family: var(--display); font-size: clamp(54px, 14vh, 96px); line-height: 1; margin: 4px 0; }
+.newbest { display: inline-block; font-family: var(--display); background: var(--accent2); color: #0b0d14; padding: 3px 12px; border-radius: 999px; margin-bottom: 8px; animation: pop .5s ease-out; }
+@keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } }
+.hint { color: var(--muted); font-size: 13px; margin-top: 10px; font-weight: 700; }
+
+/* skins */
+.skins { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin: 6px 0 14px; }
+.skin { border-radius: 16px; padding: 10px 6px 8px; background: rgba(255,255,255,.06); border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; }
+.skin.on { border-color: var(--accent); background: rgba(255,255,255,.12); }
+.skin.locked { opacity: .9; }
+.skin canvas { width: 56px; height: 56px; }
+.skin .price { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #ffe07a; }
+.skin.cant .price { color: #ff8a8a; }
+
+.mute { position: fixed; right: 12px; bottom: 12px; width: 42px; height: 42px; border-radius: 50%; background: rgba(0,0,0,.4); border: 1px solid var(--edge); font-size: 18px; display: grid; place-items: center; }
+.toast { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); font-family: var(--display); font-size: clamp(22px, 5vh, 38px); color: #fff; text-shadow: 0 3px 0 rgba(0,0,0,.4), 0 0 20px var(--accent); pointer-events: none; animation: toast 1.4s ease-out forwards; white-space: nowrap; }
+@keyframes toast { 0% { opacity: 0; transform: translate(-50%, 20px) scale(.7); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.08); } 25% { transform: translate(-50%, 0) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -20px); } }
+body.demo .hud-pause, body.demo .mute { display: none; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<script>
+const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
+/* Shared by the horror games: draws a person from the shoulders up at (x, y), scaled by s.
+   p = { skin, hair, style 0-3, eyes, shirt, glasses, beard, hat }. o: silhouette, reveal (0-1, the face splits open),
+   glow (red eyes), smile, look (-1..1, where the eyes point). */
+function drawPerson(gr, p, x, y, s, o = {}) {
+  gr.save(); gr.translate(x, y); gr.scale(s, s);
+  const dark = o.silhouette;
+  gr.fillStyle = dark ? 'rgba(0,0,0,.85)' : p.shirt; gr.beginPath(); gr.moveTo(-120, 260); gr.quadraticCurveTo(-110, 110, -40, 95); gr.lineTo(40, 95); gr.quadraticCurveTo(110, 110, 120, 260); gr.fill();
+  if (!dark) { gr.fillStyle = 'rgba(0,0,0,.25)'; gr.fillRect(-8, 100, 16, 160); }
+  gr.fillStyle = dark ? 'rgba(0,0,0,.85)' : p.skin; gr.fillRect(-18, 70, 36, 34);
+  const stretch = o.reveal ? 1 + o.reveal * .25 : 1;
+  gr.beginPath(); gr.ellipse(0, 10, 58, 74 * stretch, 0, 0, 7); gr.fill();
+  if (dark) { gr.restore(); return; }
+  // hair
+  gr.fillStyle = p.hair;
+  if (p.style === 0) { gr.beginPath(); gr.ellipse(0, -30, 62, 42, 0, Math.PI, 0); gr.fill(); }
+  else if (p.style === 1) { gr.beginPath(); gr.ellipse(0, -20, 66, 56, 0, Math.PI * .95, Math.PI * 2.05); gr.fill(); gr.fillRect(-66, -20, 16, 90); gr.fillRect(50, -20, 16, 90); }
+  else if (p.style === 2) { gr.beginPath(); gr.ellipse(0, -38, 56, 30, 0, Math.PI, 0); gr.fill(); }
+  else { gr.beginPath(); gr.ellipse(0, -26, 64, 48, 0, Math.PI, 0); gr.fill(); gr.beginPath(); gr.arc(0, -70, 22, 0, 7); gr.fill(); }
+  if (p.hat) { gr.fillStyle = '#2a2420'; gr.fillRect(-70, -52, 140, 12); gr.fillRect(-46, -96, 92, 46); }
+  if (p.beard) { gr.fillStyle = p.hair; gr.beginPath(); gr.ellipse(0, 52, 46, 34, 0, 0, Math.PI); gr.fill(); }
+  // eyes
+  const ey = 4, glow = o.glow;
+  for (const k of [-1, 1]) {
+    gr.fillStyle = o.reveal ? '#000' : '#f4efe6'; gr.beginPath(); gr.ellipse(k * 22, ey, 12 + (o.reveal || 0) * 6, 7 + (o.reveal || 0) * 8, 0, 0, 7); gr.fill();
+    if (!o.reveal) { gr.fillStyle = glow ? '#ff2a2a' : p.eyes; gr.beginPath(); gr.arc(k * 22 + (o.look || 0) * 4, ey, 5, 0, 7); gr.fill(); gr.fillStyle = glow ? '#ffd0d0' : '#000'; gr.beginPath(); gr.arc(k * 22 + (o.look || 0) * 4, ey, 2.4, 0, 7); gr.fill(); }
+    if (glow) { gr.shadowColor = '#ff2a2a'; gr.shadowBlur = 20; gr.fillStyle = '#ff5a5a'; gr.beginPath(); gr.arc(k * 22, ey, 3, 0, 7); gr.fill(); gr.shadowBlur = 0; }
+  }
+  gr.strokeStyle = 'rgba(0,0,0,.45)'; gr.lineWidth = 4; gr.beginPath(); gr.moveTo(-34, ey - 16); gr.lineTo(-12, ey - 18); gr.moveTo(12, ey - 18); gr.lineTo(34, ey - 16); gr.stroke();
+  if (p.glasses) { gr.strokeStyle = '#111'; gr.lineWidth = 3.5; gr.strokeRect(-38, ey - 11, 30, 22); gr.strokeRect(8, ey - 11, 30, 22); gr.beginPath(); gr.moveTo(-8, ey); gr.lineTo(8, ey); gr.stroke(); }
+  gr.fillStyle = 'rgba(0,0,0,.18)'; gr.beginPath(); gr.moveTo(0, 8); gr.lineTo(-7, 30); gr.lineTo(6, 30); gr.fill();
+  // mouth
+  gr.strokeStyle = '#5a2a22'; gr.lineWidth = 4;
+  if (o.reveal) { gr.fillStyle = '#000'; gr.beginPath(); gr.ellipse(0, 50, 26 + o.reveal * 10, 10 + o.reveal * 40, 0, 0, 7); gr.fill(); gr.fillStyle = '#e8e2d0'; for (let i = -3; i <= 3; i++) { gr.beginPath(); gr.moveTo(i * 8 - 4, 42 - o.reveal * 20); gr.lineTo(i * 8, 54 - o.reveal * 10); gr.lineTo(i * 8 + 4, 42 - o.reveal * 20); gr.fill(); } }
+  else if (o.smile) { gr.beginPath(); gr.arc(0, 30, 34, .25, Math.PI - .25); gr.stroke(); }
+  else { gr.beginPath(); gr.moveTo(-16, 46); gr.quadraticCurveTo(0, 50, 16, 46); gr.stroke(); }
+  gr.restore();
+}
+const PERSON_LOOKS = {
+  skin: ['#f1c7a5', '#d9a07a', '#b97850', '#8a5636', '#5e3a24', '#f5d6c0'], hair: ['#1c1410', '#4a2e1a', '#8a5a2b', '#c9a35a', '#d8d2c8', '#7a1f1a', '#2e2e2e'],
+  shirt: ['#3a4a6a', '#6a2a2a', '#2a5a3a', '#5a4a2a', '#4a3a5a', '#2a4a5a', '#6a6a6a'], eyes: ['#3a2a1a', '#2a4a7a', '#3a6a3a', '#5a4a2a'],
+};
+function randomPerson() {
+  const L = PERSON_LOOKS, r = a => a[Math.floor(Math.random() * a.length)];
+  return { skin: r(L.skin), hair: r(L.hair), style: Math.floor(Math.random() * 4), eyes: r(L.eyes), shirt: r(L.shirt), glasses: Math.random() < .3, beard: Math.random() < .25, hat: Math.random() < .15 };
+}
+
+/* Afterhours: a Persona-style RPG over 30 days. Afternoons and evenings in the town of Lanternfall (bonds, stats, jobs);
+   nights in the Undertow behind the mirrors, a top-down dungeon with turn-based battles. Hitting a weakness knocks an
+   enemy DOWN and gives that character One More action; knock them all down for an All-Out Attack, or talk to win a mask. */
+// @use person
+const GAME = {
+  id: 'afterhours', title: 'Afterhours', tagline: '30 days until the Lantern Festival. The mirrors open at 11:11.',
+  font: 'Anton', accent: '#ff2e4d', accent2: '#35e0ff', bg: '#07070f', noSkins: true, noHud: true, scoreLabel: 'Final score',
+  how: ['Days: choose where to spend each afternoon and evening. Raise 4 stats and deepen 4 bonds before the festival.',
+    'Nights: touch the mirror at home to enter the Undertow. Walk with WASD, the arrows or by holding the mouse; strike shadows first with Space or a tap.',
+    'Battles: hit a weakness to knock an enemy DOWN and act again. Knock them all down for an All-Out Attack, or Talk to win their mask.',
+    'Fuse masks at the shrine. Rescue each missing student before the fog rolls in!'],
+  skins: [{ name: 'Default', price: 0, c: ['#ff2e4d'] }],
+};
+(() => {
+  const EL = ['Phys', 'Fire', 'Ice', 'Elec', 'Wind', 'Light', 'Dark'], ELC = ['#e9e4dc', '#ff6a3d', '#6fd8ff', '#ffe23d', '#7dff8f', '#fff2a8', '#c06bff'];
+  const RED = '#ff2e4d', INK = '#07070f', WH = '#f6f1ea', CY = '#35e0ff', GOLD = '#ffd23f';
+  const DF = s => s + "px Anton, Impact, 'Arial Black', sans-serif", BF = (s, w = 800) => w + ' ' + s + 'px Nunito, system-ui, sans-serif';
+  const STATS = ['Courage', 'Wits', 'Charm', 'Kindness'], STC = ['#ff6a5a', '#5ab4ff', '#ff7ad9', '#7dffb0'];
+  const STN = [['Timid', 'Steady', 'Bold', 'Daring', 'Lionhearted'], ['Average', 'Sharp', 'Clever', 'Brilliant', 'Genius'], ['Plain', 'Pleasant', 'Charming', 'Magnetic', 'Radiant'], ['Distant', 'Gentle', 'Caring', 'Warm', 'Angelic']];
+  const STP = [0, 4, 10, 18, 28], REQ = [1, 1, 1, 2, 2, 2, 3, 3, 3, 4];  // stat points per level; stat level a bond rank needs
+
+  /* ---------- skills ---------- */
+  const SK = { Attack: { e: 0, p: 34, c: 0, t: 'one' } };
+  [['Strike', 'Rampage', 'Sweep'], ['Spark', 'Blaze', 'Firestorm'], ['Frost', 'Glacier', 'Blizzard'], ['Jolt', 'Thunder', 'Tempest'], ['Gust', 'Gale', 'Cyclone']].forEach((a, e) => {
+    SK[a[0]] = { e, p: e ? 50 : 60, c: e ? 4 : 8, t: 'one' }; SK[a[1]] = { e, p: e ? 95 : 100, c: e ? 9 : 15, t: 'one' }; SK[a[2]] = { e, p: 44, c: e ? 11 : 12, t: 'all' };
+  });
+  Object.assign(SK, {
+    Inferno: { e: 1, p: 170, c: 20, t: 'one' }, Ray: { e: 5, p: 58, c: 5, t: 'one' }, Radiance: { e: 5, p: 105, c: 11, t: 'one' }, Hex: { e: 6, p: 58, c: 5, t: 'one' }, Eclipse: { e: 6, p: 105, c: 11, t: 'one' },
+    Mend: { k: 'heal', p: 70, c: 4, t: 'ally' }, Restore: { k: 'heal', p: 170, c: 9, t: 'ally' }, 'Mend All': { k: 'heal', p: 65, c: 11, t: 'party' },
+    Charge: { k: 'buff', s: 'atk', c: 8, t: 'party' }, 'Guard Up': { k: 'buff', s: 'def', c: 8, t: 'party' }, Weaken: { k: 'debuff', s: 'atk', c: 7, t: 'all' },
+  });
+  for (const [n, s] of Object.entries(SK)) { s.n = n; s.k = s.k || 'dmg'; }
+
+  /* ---------- masks: name, arcana, level, element, affinities (Phys Fire Ice Elec Wind Light Dark: w weak, r resist, n null), skills, body, color ---------- */
+  const ARC = ['Fool', 'Chariot', 'Star', 'Hermit', 'Sun', 'Moon'];
+  const MK = [
+    ['Lanternling', 0, 1, 1, '--w----', ['Spark'], 'wisp', '#ff8a3d'], ['Puddle Imp', 5, 2, 2, '-w-----', ['Frost', 'Mend'], 'imp', '#5fb8ff'],
+    ['Static Moth', 2, 3, 3, '----w--', ['Jolt', 'Weaken'], 'moth', '#ffe23d'], ['Breeze Fox', 3, 3, 4, '---w---', ['Gust', 'Strike'], 'beast', '#7dff8f'],
+    ['Tin Knight', 1, 4, 0, 'r--w---', ['Strike', 'Guard Up'], 'knight', '#b8bccf'], ['Candle Saint', 4, 5, 5, '------w', ['Ray', 'Mend'], 'angel', '#fff0a0'],
+    ['Hollow Doll', 5, 5, 6, '-----w-', ['Hex', 'Weaken'], 'doll', '#c06bff'], ['Ember Hound', 1, 6, 1, '-rw----', ['Spark', 'Strike', 'Charge'], 'beast', '#ff5a36'],
+    ['Frost Maiden', 2, 7, 2, '--r---w', ['Frost', 'Glacier', 'Mend'], 'angel', '#8fe3ff'], ['Thunder Ram', 0, 8, 3, '---rw--', ['Jolt', 'Thunder', 'Sweep'], 'beast', '#ffd23f'],
+    ['Owl Sage', 3, 9, 4, '---wr--', ['Gale', 'Mend', 'Weaken'], 'bird', '#9dffb0'], ['Mirror Jester', 0, 10, 6, 'w-----r', ['Hex', 'Eclipse', 'Charge'], 'doll', '#ff7ad9'],
+    ['Coral Siren', 5, 11, 2, '--rw---', ['Glacier', 'Blizzard', 'Mend All'], 'angel', '#4fe0d0'], ['Iron Bull', 1, 12, 0, 'r---w--', ['Rampage', 'Sweep', 'Charge'], 'beast', '#9aa0b8'],
+    ['Star Weaver', 2, 13, 5, '-----rw', ['Radiance', 'Restore', 'Guard Up'], 'moth', '#fff2a8'], ['Storm Crow', 3, 14, 4, '--w-r--', ['Gale', 'Cyclone', 'Thunder'], 'bird', '#6dd38a'],
+    ['Sun Lion', 4, 15, 1, '-rw--r-', ['Blaze', 'Firestorm', 'Charge'], 'beast', '#ffb03d'], ['Night Mare', 5, 16, 6, '-----wn', ['Eclipse', 'Hex', 'Weaken'], 'beast', '#7a3dff'],
+    ['Thunder Queen', 2, 18, 3, '---nw--', ['Thunder', 'Tempest', 'Guard Up'], 'angel', '#ffe23d'], ['Dawn Seraph', 4, 20, 5, '-----nw', ['Radiance', 'Mend All', 'Restore'], 'angel', '#ffe9b0'],
+  ].map(([n, a, lv, e, af, sk, sh, c], i) => ({ i, n, a, lv, e, af, sk, sh, c, key: 'm' + i }));
+  const BOSS = [
+    { i: 20, n: 'Thorn Queen', lv: 8, hp: 430, e: 1, af: '-rw----', sk: ['Blaze', 'Firestorm', 'Charge', 'Strike'], sh: 'angel', c: '#ff3d6e', key: 'b0', boss: 1 },
+    { i: 21, n: 'Tide Regent', lv: 14, hp: 900, e: 2, af: '--nw---', sk: ['Glacier', 'Blizzard', 'Weaken', 'Rampage'], sh: 'knight', c: '#2fb8ff', key: 'b1', boss: 1 },
+  ];
+  const FL = [
+    { n: 'Ember Halls', who: 'hana', lo: 1, wall: '#100508', face: '#6a2430', floor: '#3a181e', floor2: '#452029', acc: '#ff5a36', mote: '#ff9a3d' },
+    { n: 'Drowned Arcade', who: 'taro', lo: 6, wall: '#03080f', face: '#1e5080', floor: '#10283c', floor2: '#163249', acc: '#35e0ff', mote: '#8fe3ff' },
+  ];
+
+  /* ---------- people ---------- */
+  const CAST = {
+    you: { n: 'You', p: { skin: '#f0c9a6', hair: '#20202c', style: 0, eyes: '#3b2a20', shirt: '#1c2242' } },
+    rin: { n: 'Rin', p: { skin: '#f3cdb0', hair: '#c91f37', style: 1, eyes: '#7a2a10', shirt: '#1c2242' } },
+    mika: { n: 'Mika', p: { skin: '#f6d5bd', hair: '#f2c14e', style: 3, eyes: '#4a7a2a', shirt: '#f2e6d8' } },
+    juno: { n: 'Juno', p: { skin: '#e9c09c', hair: '#2a2638', style: 1, eyes: '#2a2a50', shirt: '#2f5a44', glasses: 1 } },
+    sato: { n: 'Old Sato', p: { skin: '#e2b893', hair: '#dcdcdc', style: 2, eyes: '#3a2a20', shirt: '#8a1c22', beard: 1 } },
+    hana: { n: 'Hana', p: { skin: '#f6d2bb', hair: '#6b3d2a', style: 3, eyes: '#5a3a20', shirt: '#1c2242' } },
+    taro: { n: 'Taro', p: { skin: '#d9a77f', hair: '#1a120c', style: 0, eyes: '#2a1a10', shirt: '#2c5f8a' } },
+    voice: { n: '???' }, queen: { n: 'Thorn Queen', f: BOSS[0] }, regent: { n: 'Tide Regent', f: BOSS[1] },
+  };
+  const MEM = {
+    rin: { af: '-rw----', st: 1.6, ma: 1.2, learn: [[1, 'Strike'], [1, 'Spark'], [4, 'Charge'], [7, 'Blaze'], [10, 'Rampage'], [12, 'Firestorm']] },
+    hana: { af: '---wr--', st: 1.1, ma: 1.6, learn: [[1, 'Gust'], [1, 'Mend'], [5, 'Guard Up'], [8, 'Gale'], [11, 'Mend All'], [14, 'Cyclone'], [16, 'Restore']] },
+  };
+  const BONDS = [
+    { id: 'rin', arc: 1, stat: 0, likes: 'bold', where: 'the school rooftop', perks: [[3, 'Follow-up: may strike after you knock a foe down'], [6, 'Endure: survives one fatal hit a battle'], [10, 'Learns Inferno (Fire)']],
+      fest: "Next year you're running the relay with me. Not optional.",
+      lines: ["Race me to the fence. Loser buys melon bread. ...Okay, you win this time. Rematch tomorrow.", "Coach says I run angry. Maybe. Running is the only time my head goes quiet.", "In the Undertow I'm not scared. Up here, at a starting line? Terrified.", "My sister held the school record. Eleven point eight. She moved away and never called.", "I keep thinking: if I beat her time, she'll hear about it. Dumb, right?", "I found her in a news article. She coaches kids now. She looks happy.", "I called her. We talked for an hour. She still has my old spikes.", "District meet is next week. I'm not racing her anymore. I'm just running.", "Eleven point seven. I did it. ...And the first person I wanted to tell was you.", "Whatever's waiting behind that mirror, I'll be right beside you. That's a promise, partner."] },
+    { id: 'mika', arc: 2, stat: 3, likes: 'kind', where: 'Café Lumen', perks: [[3, 'Mart prices 20% off'], [6, 'Party heals 10% after every battle'], [10, 'A free Snack every night']],
+      fest: "I brought croissants for everyone. The first one's yours.",
+      lines: ["Welcome to Café Lumen! You're the one who tips in coins, right? Kidding. Mostly.", "My grandma opened this place. The coffee machine is older than both of us.", "I want to be a pastry chef in Paris someday. Don't laugh! ...Okay, you can smile.", "Regulars come in after a bad day. I like being the good part of it.", "Grandma's knees are getting worse. If I leave, who runs the café?", "I baked something new. Be honest. ...Too much salt. Noted!", "Grandma found my Paris brochure. She wasn't mad. She cried and said 'finally'.", "The application is due festival weekend. My hands shake every time I open it.", "I sent it. I actually sent it. Will you have the first croissant if I get in?", "Wherever I end up, there will always be a seat saved for you. That's a Lumen promise."] },
+    { id: 'juno', arc: 3, stat: 1, likes: 'witty', where: 'the library', perks: [[3, 'Reveals enemy weaknesses at once'], [6, '+20% EXP from battles'], [10, 'Running away always works']],
+      fest: "I documented every lantern. For science. And because they're pretty.",
+      lines: ["You're in my seat. ...It's a public library, I know. It's still my seat.", "I collect urban legends. The 11:11 mirror? Forty pages of notes.", "Everyone thinks I make it up. Everyone also thinks I'm weird. Two for two.", "The missing people have a pattern: they all hid what they really felt. Interesting, right?", "I used to post my theories online. Then people found out who I was. I stopped talking.", "I could help you from out here. Maps, notes, weaknesses. Navigator Juno.", "I started a new blog. Real name this time. Three followers. One is my mom.", "Someone at school asked me about the legend today. Nicely. I didn't know what to do.", "I think I hid in these books because they couldn't stare back. You never stared.", "Case file closed: 'Juno Kiri has a friend.' Confirmed. Underlined twice."] },
+    { id: 'sato', arc: 4, stat: 2, likes: 'honest', where: 'the shrine', perks: [[3, 'Carry 10 masks instead of 8'], [7, 'Every fusion gains +1 level']],
+      fest: 'She would have liked you. Light this lantern with me.',
+      lines: ['Hm. A young one who can see the lanterns. Sweep the steps and we will talk.', 'This shrine is older than the town. It keeps the mirror-world from spilling over.', 'Masks are not lies, child. They are the faces we need to survive the day.', 'My wife made lanterns for the festival every year. I still fold her pattern.', 'When she passed, I stopped coming down the hill. The town went on without me.', 'You climb all these steps for an old man. Why? ...Hah. An honest answer. Good.', 'I think I will sell lanterns at the festival again. Will you help me carry them?', 'The fog grows weaker each time you bring someone home. The town feels it.', 'I was hiding too, up here, behind the shrine. You pulled me out.', 'Take this charm. It was hers. Light it on festival night and she will see us both.'] },
+  ];
+  const TONES = {
+    bold: ["Then let's do something about it.", 'No backing down now.', 'Show them who you are.', "You've got this. I mean it."],
+    kind: ["That sounds hard. I'm here.", "Take your time. I'm listening.", "You don't have to carry that alone.", "I'm glad you told me."],
+    witty: ['Plot twist. I love it.', "I'd make a joke, but you'd steal it.", 'Sounds like a sequel hook.', 'Bold move, statistically speaking.'],
+    honest: ['Honestly? I think you already know.', "I'll be straight with you: it's scary.", "I don't know, but I'll find out with you.", 'You deserve a straight answer.'],
+  };
+  const TALK = [
+    ['Why do you humans even come down here?', { bold: 'To tear this place apart.', kind: 'To bring someone home.', witty: 'The view. Obviously.', honest: "Honestly? I'm not sure yet." }],
+    ['Do you think I look scary?', { bold: 'Not even a little.', kind: 'You seem lonely, not scary.', witty: 'Your mask is very on-trend.', honest: 'A little, yeah.' }],
+    ['What would you do without your mask?', { bold: 'Face the world anyway.', kind: 'Find people who accept me.', witty: 'Buy a better mask.', honest: 'Probably hide.' }],
+    ['Is it bad to want to disappear?', { bold: 'Then fight to stay!', kind: "Wanting a rest is okay.", witty: 'Only on Mondays.', honest: 'Everyone feels that sometimes.' }],
+    ['Say something nice about me.', { bold: 'You hit hard. Respect.', kind: 'You stopped to talk. That was brave.', witty: "You're my favorite shadow on this floor.", honest: "You're more honest than most people." }],
+    ['Who are you, really?', { bold: "Someone who doesn't back down.", kind: 'Someone who wants to help.', witty: 'A transfer student with poor life choices.', honest: 'Still figuring that out.' }],
+  ];
+  const QUIZ = { 3: ['Which planet has the shortest day?', ['Jupiter', 'Mars', 'Venus'], 0], 6: ['What gas do plants take in to make food?', ['Oxygen', 'Carbon dioxide', 'Nitrogen'], 1],
+    9: ['Which ocean is the largest?', ['Atlantic', 'Indian', 'Pacific'], 2], 13: ['What is the chemical symbol for gold?', ['Au', 'Ag', 'Gd'], 0],
+    16: ['How many sides does a hexagon have?', ['Five', 'Six', 'Eight'], 1], 20: ['Which is the smallest prime number?', ['One', 'Two', 'Three'], 1],
+    23: ['Who wrote Romeo and Juliet?', ['Shakespeare', 'Dickens', 'Austen'], 0], 27: ['At sea level, water boils at...', ['90 °C', '100 °C', '120 °C'], 1] };
+
+  /* ---------- places ---------- */
+  const TOWN = [
+    { id: 'school', n: 'School', r: [50, 66, 320, 170], d: [210, 262], c: '#3d4f9a', open: [1, 0], who: 0 },
+    { id: 'gym', n: 'Gym', r: [420, 66, 210, 150], d: [525, 242], c: '#a8452f', open: [1, 0] },
+    { id: 'library', n: 'Library', r: [910, 66, 320, 170], d: [1070, 262], c: '#3f7a58', open: [1, 0], who: 2 },
+    { id: 'cafe', n: 'Café Lumen', r: [50, 320, 230, 160], d: [304, 400], c: '#b8763a', open: [1, 1], who: 1 },
+    { id: 'karaoke', n: 'Karaoke', r: [1000, 320, 230, 160], d: [976, 400], c: '#9a3d8a', open: [1, 1] },
+    { id: 'shrine', n: 'Shrine', r: [50, 560, 270, 140], d: [344, 630], c: '#b0202c', open: [1, 1], who: 3 },
+    { id: 'mart', n: 'Mart', r: [960, 560, 270, 140], d: [936, 630], c: '#2f7fb0', open: [1, 1] },
+    { id: 'home', n: 'Home', r: [560, 604, 160, 110], d: [640, 582], c: '#6b5a4a', open: [1, 1] },
+  ];
+  const ROOM = [
+    { id: 'desk', n: 'Desk', r: [110, 80, 230, 100], d: [225, 205] }, { id: 'shelf', n: 'Bookshelf', r: [430, 64, 220, 70], d: [540, 160] },
+    { id: 'kitchen', n: 'Kitchen', r: [880, 64, 320, 110], d: [1040, 200] }, { id: 'mirror', n: 'Mirror', r: [1170, 300, 46, 170], d: [1130, 385] },
+    { id: 'bed', n: 'Bed', r: [90, 420, 170, 240], d: [295, 540] }, { id: 'mat', n: 'Workout mat', r: [560, 380, 200, 110], d: [660, 435], walk: 1 },
+    { id: 'door', n: 'Front door', r: [590, 694, 100, 30], d: [640, 660] },
+  ];
+
+  /* ---------- state ---------- */
+  let S, G, mode = 'menu', B = null, D = null, M = null, P = null, ov = null, cal = null, tr = 0, confirmNew = false;
+  let ui = [], focus = 0, uiSig = '', back = null, walker = null;
+  const mouse = { x: 640, y: 360, held: false }, keys = {};
+  const fresh = ng => ({ v: 1, day: 1, slot: 0, lv: ng ? ng.lv : 1, xp: ng ? ng.xp : 0, yen: ng ? ng.yen : 3000, st: ng ? ng.st.slice() : [0, 0, 0, 0], bond: [0, 0, 0, 0],
+    party: ['you'], hp: {}, sp: {}, masks: ng ? ng.masks : [{ i: 0, b: 0 }], mask: 0, seen: ng ? ng.seen : [0], known: {}, items: { snack: 2, soda: 1 },
+    cases: [0, 0], dl: [0, 0], reach: [0, 0], flags: {}, clears: ng ? ng.clears : 0, ended: 0, ckpt: null });
+  const save = () => { if (!K.bot) { K.save.rpg = S; K.persist(); } };
+  const stLv = i => STP.filter(p => S.st[i] >= p).length;
+  const need = L => 30 + L * L * 9;
+  const maskCap = () => S.bond[3] >= 3 ? 10 : 8;
+  const curMask = () => { const m = S.masks[S.mask] || S.masks[0]; return { d: MK[m.i], b: m.b, lv: MK[m.i].lv }; };
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const DOW = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'], dow = d => DOW[(d + 1) % 7];  // October 1st is a Wednesday
+  const knows = (key, e) => S.bond[2] >= 3 || ((S.known[key] || 0) >> e & 1);
+  function gain(i, n) {
+    const before = stLv(i); S.st[i] += n; const after = stLv(i);
+    return `${STATS[i]} +${n}` + (after > before ? `. Your ${STATS[i]} rose to "${STN[i][after - 1]}"!` : '.');
+  }
+  function stats(id) {
+    const L = S.lv;
+    if (id === 'you') {
+      const m = curMask(), pw = m.lv + m.b, o = { mhp: 60 + L * 12, msp: 34 + L * 7, st: 5 + L * 1.3, ma: 5 + L * 1.3, en: 5 + L * 1.3 + pw * .3, ag: 5 + L * 1.3 + pw * .3, af: m.d.af, sk: ['Attack', ...m.d.sk] };
+      if (m.d.e === 0) o.st += pw * .8; else o.ma += pw * .8;
+      return o;
+    }
+    const d = MEM[id];
+    return { mhp: 54 + L * 11, msp: 30 + L * 6, st: 4 + L * d.st, ma: 4 + L * d.ma, en: 5 + L * 1.3, ag: 5 + L * 1.3, af: d.af, sk: ['Attack', ...d.learn.filter(l => l[0] <= L).map(l => l[1]), ...(id === 'rin' && S.bond[0] >= 10 ? ['Inferno'] : [])] };
+  }
+  function heal() { for (const id of S.party) { const s = stats(id); S.hp[id] = s.mhp; S.sp[id] = s.msp; } }
+
+  /* ---------- sound ---------- */
+  const midi = n => 440 * Math.pow(2, (n - 69) / 12);
+  const SONG = {
+    town: { bpm: 104, bass: [48, 0, 55, 0, 52, 0, 55, 0, 45, 0, 52, 0, 50, 0, 47, 0], lead: [0, 0, 0, 0, 72, 0, 71, 0, 0, 0, 67, 0, 0, 0, 69, 0] },
+    home: { bpm: 78, bass: [50, 0, 0, 0, 57, 0, 0, 0, 53, 0, 0, 0, 57, 0, 0, 0], lead: [0, 0, 74, 0, 0, 0, 0, 0, 0, 0, 72, 0, 0, 0, 69, 0] },
+    dungeon: { bpm: 88, bass: [38, 0, 0, 38, 0, 0, 41, 0, 37, 0, 0, 37, 0, 0, 40, 0], lead: [0, 0, 0, 0, 0, 0, 0, 0, 62, 0, 0, 0, 61, 0, 0, 0] },
+    battle: { bpm: 144, bass: [40, 52, 40, 52, 43, 55, 43, 55, 45, 57, 45, 57, 47, 59, 47, 50], lead: [64, 0, 0, 67, 0, 0, 69, 0, 71, 0, 69, 0, 67, 0, 64, 0] },
+  };
+  let beat = 0, bt = 0;
+  function music(dt) {
+    if (K.bot || !K.ac || K.save.mute || K.state !== 'play') return;
+    bt -= dt; if (bt > 0) return;
+    const sg = SONG[mode === 'battle' ? 'battle' : mode === 'dungeon' ? 'dungeon' : mode === 'home' ? 'home' : 'town'], i = beat++ % 16;
+    bt += 60 / sg.bpm / 2;
+    if (sg.bass[i]) K.sfx(midi(sg.bass[i]), .22, 'triangle', .08);
+    if (sg.lead[i]) K.sfx(midi(sg.lead[i]), .16, 'square', .022);
+    if (i % 4 === 2) K.noise(.035, .02, 7000);
+  }
+  const tick = () => K.sfx(880, .04, 'square', .04);
+
+  /* ---------- drawing helpers ---------- */
+  function slant(x, y, w, h, k = 12) { G.beginPath(); G.moveTo(x + k, y); G.lineTo(x + w, y); G.lineTo(x + w - k, y + h); G.lineTo(x, y + h); G.closePath(); }
+  function txt(s, x, y, size, col = WH, align = 'left', disp = false) { G.font = disp ? DF(size) : BF(size); G.fillStyle = col; G.textAlign = align; G.textBaseline = 'middle'; G.fillText(s, x, y); }
+  function wrap(s, w, size) {
+    G.font = BF(size); const out = []; let line = '';
+    for (const word of s.split(' ')) { const t = line ? line + ' ' + word : word; if (G.measureText(t).width > w && line) { out.push(line); line = word; } else line = t; }
+    if (line) out.push(line); return out;
+  }
+  function btn(x, y, w, h, label, fn, o = {}) {
+    const i = ui.length; ui.push({ x, y, w, h, fn, off: o.off, nk: o.nk, label });
+    const f = i === focus && !o.nk;
+    if (o.hid) return f;
+    G.save(); G.translate(f ? 8 : 0, 0);
+    if (f) { slant(x - 4, y + 4, w + 4, h, o.k ?? 12); G.fillStyle = o.off ? '#333' : WH; G.fill(); }
+    slant(x, y, w, h, o.k ?? 12); G.fillStyle = o.off ? 'rgba(30,30,40,.85)' : f ? RED : (o.bg || 'rgba(7,7,15,.88)'); G.fill();
+    G.strokeStyle = f ? WH : 'rgba(255,255,255,.25)'; G.lineWidth = 2; G.stroke();
+    const sz = o.size || Math.min(26, h * .55);
+    txt(label, x + 18 + (o.k ?? 12) / 2, y + h / 2 + (o.sub ? -h * .16 : 0), sz, o.off ? '#777' : WH, 'left', !o.body);
+    if (o.sub) txt(o.sub, x + 20 + (o.k ?? 12) / 2, y + h * .74, Math.max(12, sz * .5), o.off ? '#888' : f ? '#ffe0e4' : '#aab', 'left');
+    if (o.right) txt(o.right, x + w - 18, y + h / 2, sz * .75, o.off ? '#777' : GOLD, 'right', true);
+    G.restore(); return f;
+  }
+  function panel(title, opts, o = {}) {
+    const w = o.w || 430, x = o.x ?? W - w - 40, h = 70 + opts.length * 66, y = o.y ?? Math.max(70, Math.min(H - h - 20, 380 - h / 2));
+    G.save(); G.fillStyle = 'rgba(7,7,15,.92)'; slant(x - 10, y, w + 30, h, 26); G.fill(); G.strokeStyle = RED; G.lineWidth = 3; G.stroke(); G.restore();
+    G.fillStyle = RED; slant(x - 26, y - 22, Math.min(w, 60 + title.length * 17), 50, 16); G.fill();
+    txt(title, x - 4, y + 3, 32, WH, 'left', true);
+    if (o.note) txt(o.note, x + w - 10, y + 38, 15, '#cfd0e0', 'right');
+    opts.forEach((p, i) => btn(x + i * 4, y + 58 + i * 66, w - 20, 56, p.l, p.fn, { sub: p.s, off: p.off, right: p.r, size: 24 }));
+    back = o.back || (opts.length ? opts[opts.length - 1].fn : null);
+  }
+  function bar(x, y, w, h, v, c, bg = 'rgba(255,255,255,.12)') { G.fillStyle = bg; G.fillRect(x, y, w, h); G.fillStyle = c; G.fillRect(x, y, w * Math.max(0, Math.min(1, v)), h); }
+  function affRow(af, x, y, sz, key) {
+    for (let e = 0; e < 7; e++) {
+      const k = key ? knows(key, e) : 1, a = af[e], cx = x + e * (sz + 4);
+      G.fillStyle = ELC[e]; G.globalAlpha = .9; G.fillRect(cx, y, sz, sz * .5); G.globalAlpha = 1;
+      txt(EL[e].slice(0, 2), cx + sz / 2, y + sz * .27, sz * .36, '#000', 'center');
+      txt(!k ? '?' : a === 'w' ? 'Wk' : a === 'r' ? 'Rs' : a === 'n' ? 'Nu' : '-', cx + sz / 2, y + sz * .8, sz * .42, !k ? '#888' : a === 'w' ? GOLD : a === '-' ? '#777' : WH, 'center', true);
+    }
+  }
+  function drawMask(d, x, y, r, rot = 0) {
+    G.save(); G.translate(x, y); G.rotate(rot);
+    G.fillStyle = WH; G.beginPath(); G.ellipse(0, 0, r, r * 1.15, 0, 0, 7); G.fill();
+    G.save(); G.clip(); G.fillStyle = d.c; G.strokeStyle = d.c; G.lineWidth = r * .12;
+    const v = d.i % 4;
+    if (v === 0) { for (const k of [-1, 1]) { G.beginPath(); G.moveTo(k * r * .38, r * .05); G.lineTo(k * r * .3, r * .9); G.stroke(); } }
+    else if (v === 1) { G.beginPath(); G.moveTo(0, -r * 1.1); G.lineTo(r * .25, -r * .5); G.lineTo(0, -r * .2); G.lineTo(-r * .25, -r * .5); G.fill(); }
+    else if (v === 2) { G.globalAlpha = .85; G.fillRect(0, -r * 1.2, r, r * 2.4); G.globalAlpha = 1; }
+    else { G.beginPath(); for (let i = 0; i <= 6; i++) G.lineTo(-r * .5 + i * r / 6, r * .55 + (i % 2 ? r * .18 : 0)); G.stroke(); }
+    G.restore();
+    G.strokeStyle = '#000'; G.lineWidth = r * .08; G.beginPath(); G.ellipse(0, 0, r, r * 1.15, 0, 0, 7); G.stroke();
+    for (const k of [-1, 1]) {
+      G.fillStyle = '#000'; G.beginPath(); G.ellipse(k * r * .38, -r * .12, r * .26, r * .12, k * .35, 0, 7); G.fill();
+      G.fillStyle = ELC[d.e]; G.beginPath(); G.arc(k * r * .38, -r * .12, r * .07, 0, 7); G.fill();
+    }
+    G.restore();
+  }
+  // a shadow (or a mask's true form) standing at x, y (feet), facing right
+  function drawFoe(d, x, y, s, t, o = {}) {
+    G.save(); if (o.hurt > 0) G.filter = `brightness(${1 + o.hurt * 5})`; G.translate(x, y); if (o.down) { G.translate(0, 26 * s); G.rotate(-.42); } G.scale(s, s);
+    if (o.a !== undefined) G.globalAlpha = o.a;
+    const c = d.c, bob = Math.sin(t * 2.4 + d.i) * 6;
+    const gl = G.createRadialGradient(0, -90, 10, 0, -90, 170); gl.addColorStop(0, c + '55'); gl.addColorStop(1, c + '00'); G.fillStyle = gl; G.fillRect(-180, -270, 360, 300);
+    G.fillStyle = 'rgba(0,0,0,.5)'; G.beginPath(); G.ellipse(0, 0, 72, 14, 0, 0, 7); G.fill();
+    G.translate(0, bob);
+    const body = G.createLinearGradient(0, -200, 0, 0); body.addColorStop(0, c); body.addColorStop(.45, '#1a1024'); body.addColorStop(1, '#07060c');
+    G.fillStyle = body; G.strokeStyle = c; G.lineWidth = 3;
+    let hx = 0, hy = -110, hr = 30;
+    const flap = Math.sin(t * 9 + d.i) * .35;
+    switch (d.sh) {
+      case 'wisp': G.beginPath(); G.moveTo(0, -190 + Math.sin(t * 7) * 8); G.quadraticCurveTo(70, -90, 34, -20); G.quadraticCurveTo(0, 6, -34, -20); G.quadraticCurveTo(-70, -90, 0, -190 + Math.sin(t * 7) * 8); G.fill(); G.stroke(); hy = -80; hr = 32; break;
+      case 'imp': G.beginPath(); G.arc(0, -62, 54, 0, 7); G.fill(); G.stroke(); for (const k of [-1, 1]) { G.beginPath(); G.moveTo(k * 22, -108); G.lineTo(k * 42, -150); G.lineTo(k * 44, -100); G.fill(); G.stroke(); G.fillRect(k * 24 - 8, -14, 16, 14); } hy = -66; hr = 30; break;
+      case 'moth': for (const k of [-1, 1]) for (const j of [0, 1]) { G.save(); G.translate(0, -90 + j * 30); G.rotate(k * (j ? .9 : .35) + k * flap * (j ? .5 : 1)); G.beginPath(); G.ellipse(k * 62, 0, 62, j ? 26 : 38, 0, 0, 7); G.globalAlpha = .85; G.fill(); G.stroke(); G.restore(); }
+        G.globalAlpha = o.a ?? 1; G.beginPath(); G.ellipse(0, -80, 18, 56, 0, 0, 7); G.fill(); G.stroke(); hy = -136; hr = 24; break;
+      case 'beast': G.beginPath(); G.ellipse(-6, -64, 82, 40, 0, 0, 7); G.fill(); G.stroke(); for (const k of [-58, -28, 26, 52]) G.fillRect(k - 8, -40, 16, 40 + Math.sin(t * 6 + k) * 3);
+        G.beginPath(); G.moveTo(-84, -70); G.quadraticCurveTo(-140, -120 + Math.sin(t * 3) * 10, -120, -150); G.lineWidth = 9; G.stroke(); G.lineWidth = 3; hx = 74; hy = -100; hr = 32; break;
+      case 'knight': G.fillRect(-30, -50, 22, 50); G.fillRect(8, -50, 22, 50); G.beginPath(); G.moveTo(-52, -158); G.lineTo(52, -158); G.lineTo(36, -46); G.lineTo(-36, -46); G.closePath(); G.fill(); G.stroke();
+        G.fillStyle = '#2a2a38'; G.beginPath(); G.ellipse(-62, -100, 26, 44, 0, 0, 7); G.fill(); G.stroke(); G.save(); G.translate(54, -120); G.rotate(-.6 + Math.sin(t * 2) * .1); G.fillStyle = WH; G.fillRect(-4, -110, 8, 110); G.fillStyle = c; G.fillRect(-18, -4, 36, 8); G.restore(); hy = -184; hr = 30; break;
+      case 'angel': for (const k of [-1, 1]) { G.save(); G.rotate(k * flap * .3); G.beginPath(); G.moveTo(0, -150); G.quadraticCurveTo(k * 150, -230, k * 130, -60); G.quadraticCurveTo(k * 80, -120, 0, -110); G.globalAlpha = .55; G.fill(); G.stroke(); G.restore(); }
+        G.globalAlpha = o.a ?? 1; G.beginPath(); G.moveTo(0, -170); G.lineTo(58, 0); G.lineTo(-58, 0); G.closePath(); G.fill(); G.stroke(); G.strokeStyle = GOLD; G.beginPath(); G.ellipse(0, -222, 30, 9, 0, 0, 7); G.stroke(); hy = -180; hr = 30; break;
+      case 'doll': for (const k of [-30, 0, 30]) { G.strokeStyle = 'rgba(255,255,255,.35)'; G.lineWidth = 1.5; G.beginPath(); G.moveTo(k * .6, -190); G.lineTo(k, -400); G.stroke(); }
+        G.strokeStyle = c; G.lineWidth = 3; G.beginPath(); G.moveTo(-14, -100); G.quadraticCurveTo(-70, -10, -60, 0); G.lineTo(60, 0); G.quadraticCurveTo(70, -10, 14, -100); G.closePath(); G.fill(); G.stroke();
+        G.beginPath(); G.arc(0, -146, 44, 0, 7); G.fill(); G.stroke(); hy = -146; hr = 36; break;
+      case 'bird': for (const k of [-1, 1]) { G.save(); G.translate(0, -100); G.rotate(k * (.3 + flap)); G.beginPath(); G.moveTo(0, 0); G.quadraticCurveTo(k * 90, -70, k * 160, -10); G.quadraticCurveTo(k * 90, -10, 0, 20); G.fill(); G.stroke(); G.restore(); }
+        G.beginPath(); G.ellipse(0, -80, 34, 54, .3, 0, 7); G.fill(); G.stroke(); hx = 28; hy = -132; hr = 26; break;
+    }
+    if (d.boss) {
+      G.strokeStyle = c; G.lineWidth = 4;
+      for (let i = 0; i < 6; i++) { G.beginPath(); const a = i / 6 * 6.28 + t * .3; G.moveTo(Math.cos(a) * 60, -90 + Math.sin(a) * 90); G.quadraticCurveTo(Math.cos(a + .6) * 140, -90 + Math.sin(a + .6) * 140, Math.cos(a + 1) * 110, -90 + Math.sin(a + 1) * 120); G.stroke(); }
+      G.fillStyle = GOLD; G.beginPath(); G.moveTo(hx - 34, hy - hr * 1.1); for (let i = 0; i <= 4; i++) G.lineTo(hx - 34 + i * 17, hy - hr * 1.1 - (i % 2 ? 18 : 44)); G.lineTo(hx + 34, hy - hr * 1.1); G.fill();
+    }
+    drawMask(d, hx, hy, hr, Math.sin(t * 1.7 + d.i) * .08);
+    G.restore();
+  }
+  // top-down person: dir 0 down, 1 left, 2 right, 3 up
+  function chibi(x, y, p, dir, walk, o = {}) {
+    const b = walk ? Math.abs(Math.sin(walk * 11)) * 3 : 0, sw = walk ? Math.sin(walk * 11) * 4 : 0;
+    G.fillStyle = 'rgba(0,0,0,.32)'; G.beginPath(); G.ellipse(x, y + 16, 15, 6, 0, 0, 7); G.fill();
+    G.fillStyle = '#16161e'; G.fillRect(x - 8, y + 2 + sw * .5, 6, 13); G.fillRect(x + 2, y + 2 - sw * .5, 6, 13);
+    G.fillStyle = p.shirt; G.beginPath(); G.roundRect(x - 12, y - 13 - b, 24, 19, 6); G.fill();
+    G.fillStyle = p.skin; G.beginPath(); G.arc(x, y - 24 - b, 13, 0, 7); G.fill();
+    G.fillStyle = p.hair;
+    if (dir === 3) { G.beginPath(); G.arc(x, y - 25 - b, 14, 0, 7); G.fill(); }
+    else { G.beginPath(); G.ellipse(x + (dir === 1 ? 3 : dir === 2 ? -3 : 0), y - 30 - b, 14.5, 10, 0, Math.PI, 0); G.fill(); G.fillRect(x - 14, y - 31 - b, 28, 6); }
+    if (p.style === 1) { G.fillRect(x - 15, y - 30 - b, 6, 22); G.fillRect(x + 9, y - 30 - b, 6, 22); }
+    if (p.style === 3) { G.beginPath(); G.arc(x, y - 40 - b, 7, 0, 7); G.fill(); }
+    if (p.beard) { G.beginPath(); G.arc(x, y - 16 - b, 8, 0, Math.PI); G.fill(); }
+    if (dir !== 3) {
+      G.fillStyle = '#111'; const ex = dir === 1 ? [-6] : dir === 2 ? [6] : [-5, 5];
+      for (const e of ex) G.fillRect(x + e - 1.5, y - 24 - b, 3, 4);
+      if (p.glasses) { G.strokeStyle = '#111'; G.lineWidth = 1.5; for (const e of ex) G.strokeRect(x + e - 4, y - 26 - b, 8, 7); }
+    }
+    if (o.mark) { G.fillStyle = o.markC || GOLD; G.font = DF(22); G.textAlign = 'center'; G.fillText(o.mark, x, y - 52 - Math.abs(Math.sin(K.t * 4)) * 5); }
+  }
+  function portrait(id, x, y, s, o = {}) {
+    const c = CAST[id]; if (!c) return;
+    if (c.p) drawPerson(G, c.p, x, y, s, o);
+    else if (c.f) drawFoe(c.f, x, y + 230 * s, s * 1.2, K.t);
+    else { drawMask({ i: 3, c: '#9a8aff', e: 6 }, x, y + 40 * s, 70 * s); }
+  }
+
+  /* ---------- UI flow helpers ---------- */
+  function say(lines, done) { D = { L: lines.slice(), i: 0, ch: 0, done }; P = null; }
+  function dAdvance() {
+    const l = D.L[D.i]; if (D.ch < l[1].length) { D.ch = 9999; return; }
+    if (l[2]) return;
+    D.i++; D.ch = 0;
+    if (D.i >= D.L.length) { const f = D.done; D = null; f && f(); }
+    else tick();
+  }
+  function dChoose(fn) { const more = fn() || []; D.L.splice(D.i + 1, 0, ...more); D.L[D.i] = [D.L[D.i][0], D.L[D.i][1]]; D.ch = 9999; dAdvance(); }
+  function calCard(cb) { cal = { t: 0, cb }; P = null; K.sfx(330, .3, 'triangle', .08, 330); }
+  function closeP() { P = null; if (walker) walker.cool = true; }
+
+  /* ---------- time ---------- */
+  function endSlot() {
+    P = null; ov = null;
+    if (S.slot === 0) { S.slot = 1; save(); calCard(enterHome); }
+    else newDay();
+  }
+  function newDay() {
+    S.day++; S.slot = 0; heal(); M = null; B = null; save();
+    calCard(morning);
+  }
+  function startCase(c) {
+    S.cases[c] = 1; S.dl[c] = c === 0 ? 13 : Math.min(29, S.day + 12);
+    S.ckpt = JSON.stringify(Object.assign({}, S, { ckpt: null }));
+  }
+  function morning() {
+    const d = S.day, L = [];
+    for (let c = 0; c < 2; c++) if (S.cases[c] === 1 && d > S.dl[c]) return badEnd(c);
+    if (d >= 30) return festival();
+    if (S.flags.joined === 'hana') {
+      delete S.flags.joined; if (!S.party.includes('hana')) S.party.push('hana'); heal();
+      L.push(['hana', "Morning! ...Sorry. I'm still getting used to saying that. Thank you for coming for me."], ['hana', 'I can feel my mask now. Let me fight with you. Whoever is taking people, we stop them.'], [null, 'Hana joined the party!']);
+      L.push([null, 'At lunch, the news breaks: Taro Mori, the arcade champion from class 2-A, never came home last night.']);
+      startCase(1);
+      L.push(['juno', `Fog is forecast for ${S.dl[1] - d} days from now. If the pattern holds, that's our deadline.`]);
+    }
+    if (S.flags.calm) { delete S.flags.calm; L.push([null, 'Taro is back at school, a little quieter than before. For the first time in weeks, nobody is missing.'], ['rin', `${30 - d} days until the festival. Let's actually enjoy them, okay?`]); }
+    if (d === 2 && !S.cases[0]) {
+      startCase(0);
+      L.push([null, 'Homeroom. The teacher reads a notice in a flat voice: Hana Kuroda of class 2-B has been missing since last night.'],
+        ['rin', "Hana sits two seats from me. If she's in that place... we go tonight. After school, come to the shrine first."],
+        ['juno', '(A girl with glasses leans over.) Lanternfall fog warning: day 13. That is when the missing stop being missing. Permanently.'],
+        [null, 'Rescue Hana before the fog on Day 13. Enter the Undertow through the mirror at home, in the evening.']);
+    }
+    for (let c = 0; c < 2; c++) if (S.cases[c] === 1 && S.dl[c] - d <= 3 && S.dl[c] - d >= 0) L.push([null, `The radio says fog is coming. ${S.dl[c] - d === 0 ? 'Tonight is the last chance' : S.dl[c] - d + ' days left'} to save ${CAST[FL[c].who].n}.`]);
+    const q = QUIZ[d];
+    if (q) L.push([null, `Class. The teacher points at you: "${q[0]}"`, q[1].map((a, i) => [a, () => i === q[2] ? [[null, `Correct! The class murmurs. ${gain(2, 2)}`]] : [[null, `Wrong... it was ${q[1][q[2]]}. You make a note. ${gain(1, 1)}`]]])]);
+    const go = () => { save(); enterTown(); };
+    if (L.length) say(L, go); else go();
+  }
+  function badEnd(c) {
+    const who = CAST[FL[c].who].n;
+    say([[null, 'The fog rolled over Lanternfall in the night. In the morning, the streets were silent.'], [null, `${who} was found at dawn, sitting by the river. ${c ? 'He' : 'She'} didn't remember ${c ? 'his' : 'her'} own name.`]], () => {
+      const back = S.ckpt ? JSON.parse(S.ckpt) : fresh(); back.ckpt = S.ckpt; S = back; save();
+      K.score = 0; K.over({ title: 'Bad End', text: `The fog took ${who}. Continue to try again from Day ${S.day}.`, delay: 200 });
+    });
+  }
+  function festival() {
+    const allMax = S.bond.every(r => r >= 10), L = [[null, 'October 30th. The Lantern Festival. A thousand paper lights drift over Lanternfall.']];
+    BONDS.forEach((b, i) => { if (S.bond[i] >= 5) L.push([b.id, b.fest]); });
+    L.push(allMax ? ['sato', 'Every lantern tonight was lit by someone you reached. ...But look. The shrine mirror is humming again.'] : [null, 'The fog is gone, for now. Somewhere under the town, the Undertow waits.']);
+    L.push([null, 'Afterhours, Part Two: coming soon.']);
+    say(L, () => {
+      const sc = S.bond.reduce((a, r) => a + r * 20, 0) + S.st.reduce((a, b) => a + b, 0) * 2 + S.seen.length * 10 + S.lv * 5 + 200;
+      S.ended = 1; S.clears++; save();
+      K.score = sc; K.over({ title: allMax ? 'True Lantern' : 'Festival Night', text: allMax ? 'Every bond at its peak. The true ending!' : `Ending reached with ${S.bond.filter(r => r >= 10).length} of 4 bonds maxed. New Game+ keeps your stats and masks.`, delay: 200 });
+    });
+  }
+
+  /* ---------- town & home ---------- */
+  function enterTown() { mode = 'town'; P = null; ov = null; walker = { x: 640, y: 490, dir: 0, walk: 0, to: null, cool: false }; }
+  function enterHome() {
+    mode = 'home'; P = null; ov = null; walker = { x: 640, y: 610, dir: 3, walk: 0, to: null, cool: false };
+    if (S.day === 1 && !S.flags.intro) introNight();
+  }
+  const places = () => mode === 'town' ? TOWN : ROOM;
+  function hang(b) {
+    const bd = BONDS[b], r = S.bond[b], ok = r < 10 && stLv(bd.stat) >= REQ[r];
+    return { l: r >= 10 ? `${CAST[bd.id].n}: max rank` : `Hang out with ${CAST[bd.id].n}`, s: r >= 10 ? 'Your bond is as strong as it gets' : ok ? `${ARC[bd.arc]} · Rank ${r} → ${r + 1}` : `Needs ${STATS[bd.stat]} "${STN[bd.stat][REQ[r] - 1]}"`, off: !ok, fn: () => hangout(b) };
+  }
+  function doAct(i, n, text, extra) { P = null; extra && extra(); say([[null, text], [null, gain(i, n)]], endSlot); }
+  function spotOpts(sp) {
+    const ev = S.slot === 1, o = [];
+    switch (sp.id) {
+      case 'school': o.push(hang(0)); break;
+      case 'gym': o.push({ l: 'Train', s: 'Courage +2', fn: () => doAct(0, 2, 'You run sprints until your legs shake, then run one more.') }); break;
+      case 'library': o.push(hang(2), { l: 'Study', s: 'Wits +2', fn: () => doAct(1, 2, 'You study in the quiet corner until closing time.') }); break;
+      case 'cafe': o.push(hang(1), { l: 'Work a shift', s: 'Kindness +2 · earn ¥3,000', fn: () => doAct(3, 2, 'You serve coffee and listen to the regulars. Somebody leaves you a thank-you note.', () => { S.yen += 3000; }) }); break;
+      case 'karaoke': o.push({ l: 'Sing', s: 'Charm +2 · costs ¥800', off: S.yen < 800, fn: () => doAct(2, 2, 'You belt out three ballads and an anime opening. The booth next door applauds.', () => { S.yen -= 800; }) }); break;
+      case 'shrine': o.push(hang(3), { l: 'Fuse masks', s: 'Takes no time', fn: () => { P = null; ov = { k: 'fuse', a: -1, b: -1 }; } }); break;
+      case 'mart': o.push({ l: 'Shop', s: 'Takes no time', fn: () => { P = null; ov = { k: 'shop' }; } }); break;
+      case 'home': o.push(ev ? { l: 'Go inside', s: 'Takes no time', fn: enterHome } : { l: 'Go home early', s: 'Skip to the evening', fn: endSlot }); break;
+      case 'desk': o.push({ l: 'Study', s: 'Wits +2', fn: () => doAct(1, 2, 'You review your notes under the desk lamp.') }); break;
+      case 'shelf': o.push({ l: 'Read a novel', s: 'Charm +2', fn: () => doAct(2, 2, 'You read a romance novel cover to cover. You feel... smoother.') }); break;
+      case 'kitchen': o.push({ l: 'Cook a bento', s: 'Kindness +1 · +1 Snack', fn: () => doAct(3, 1, 'You cook an extra bento. You will share it with someone. (+1 Snack)', () => { S.items.snack++; }) }); break;
+      case 'mat': o.push({ l: 'Work out', s: 'Courage +2', fn: () => doAct(0, 2, 'Push-ups, sit-ups, and a plank that lasts longer than you expected.') }); break;
+      case 'bed': o.push({ l: 'Go to sleep', s: 'End the day', fn: () => { P = null; say([[null, 'You turn in early.']], newDay); } }); break;
+      case 'door': o.push({ l: 'Go out', s: 'The café, karaoke, shrine and mart are open', fn: enterTown }); break;
+      case 'mirror': {
+        const any = S.cases.some(c => c > 0);
+        if (!any) o.push({ l: 'Just your reflection', s: 'Nothing happens', off: 1, fn: () => {} });
+        FL.forEach((f, i) => {
+          if (!S.cases[i]) return;
+          o.push({ l: `${f.n}`, s: S.cases[i] === 2 ? 'Rescued · train here' : `Find ${CAST[f.who].n} · fog in ${S.dl[i] - S.day} days`, fn: () => enterUndertow(i, 0) });
+          if (S.reach[i] > 0) o.push({ l: `${f.n} · ${S.reach[i] === 3 ? 'the deepest room' : 'level ' + (S.reach[i] + 1)}`, s: 'Continue from the deepest point you reached', fn: () => enterUndertow(i, S.reach[i]) });
+        });
+        break;
+      }
+    }
+    o.push({ l: 'Back', fn: closeP });
+    return o;
+  }
+  function hangout(b) {
+    const bd = BONDS[b], r = S.bond[b];
+    P = null;
+    const tones = shuffle([bd.likes, ...shuffle(Object.keys(TONES).filter(t => t !== bd.likes)).slice(0, 2)]);
+    say([[null, `You spend time with ${CAST[bd.id].n} at ${bd.where}.`], [bd.id, bd.lines[r], tones.map(t => [K.pick(TONES[t]), () => {
+      const good = t === bd.likes;
+      S.bond[b]++;
+      const L = [[bd.id, good ? '...Yeah. Thanks. That is exactly what I needed to hear.' : 'Ha. Okay. Thanks for listening, anyway.'], [null, `${good ? '♥♥ ' : ''}Bond with ${CAST[bd.id].n} rose to Rank ${S.bond[b]}! ${gain(bd.stat, good ? 2 : 1)}`]];
+      const pk = bd.perks.find(p => p[0] === S.bond[b]); if (pk) L.push([null, `New ability: ${pk[1]}.`]);
+      if (S.bond[b] % 2 === 0) L.push([null, `${ARC[bd.arc]} masks you fuse now gain +${Math.floor(S.bond[b] / 2)} levels.`]);
+      K.chime(660);
+      return L;
+    }])]], endSlot);
+  }
+  function updWalk(dt) {
+    const w = walker; if (!w || P || D || ov || cal) return;
+    let ix = 0, iy = 0;
+    if (keys.l) ix--; if (keys.r) ix++; if (keys.u) iy--; if (keys.d) iy++;
+    if (ix || iy) w.to = null;
+    else if (w.to) { const dx = w.to.x - w.x, dy = w.to.y - w.y, d = Math.hypot(dx, dy); if (d < 6) w.to = null; else { ix = dx / d; iy = dy / d; } }
+    const n = Math.hypot(ix, iy);
+    if (n) {
+      ix /= n; iy /= n; const sp = 260 * dt, rs = places().filter(p => !p.walk).map(p => p.r);
+      const free = (x, y) => x > 20 && x < W - 20 && y > 70 && y < H - 14 && !rs.some(r => x > r[0] - 12 && x < r[0] + r[2] + 12 && y > r[1] - 16 && y < r[1] + r[3] + 12);
+      if (free(w.x + ix * sp, w.y)) w.x += ix * sp; if (free(w.x, w.y + iy * sp)) w.y += iy * sp;
+      w.walk += dt; w.dir = Math.abs(ix) > Math.abs(iy) ? (ix < 0 ? 1 : 2) : (iy < 0 ? 3 : 0);
+    } else w.walk = 0;
+    let near = null;
+    for (const p of places()) if (Math.hypot(p.d[0] - w.x, p.d[1] - w.y) < 30) near = p;
+    if (!near) w.cool = false;
+    else if (!w.cool) {
+      w.to = null; w.cool = true;
+      if (mode === 'town' && !near.open[S.slot]) { K.toast?.(near.n + ' is closed in the evening'); return; }
+      P = { sp: near }; tick();
+    }
+  }
+
+  /* ---------- the Undertow (dungeon) ---------- */
+  const T = 48;
+  function genLevel(f, L) {
+    const boss = L === 3, cw = boss ? 22 : 34, rh = boss ? 17 : 24, grid = new Uint8Array(cw * rh), rooms = [];
+    const carve = (x, y, w, h) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) grid[j * cw + i] = 1; };
+    if (boss) { rooms.push({ x: 3, y: 2, w: 16, h: 13 }); carve(3, 2, 16, 13); }
+    else {
+      for (let t = 0; t < 500 && rooms.length < 8; t++) {
+        const w = K.irand(5, 9), h = K.irand(4, 7), x = K.irand(1, cw - w - 2), y = K.irand(1, rh - h - 2);
+        if (rooms.some(r => x < r.x + r.w + 2 && x + w + 2 > r.x && y < r.y + r.h + 2 && y + h + 2 > r.y)) continue;
+        rooms.push({ x, y, w, h }); carve(x, y, w, h);
+      }
+      const ctr = r => [r.x + (r.w >> 1) - 1, r.y + (r.h >> 1) - 1], left = rooms.slice(1), order = [rooms[0]];
+      while (left.length) { const [ax, ay] = ctr(order[order.length - 1]); left.sort((a, b) => Math.hypot(ctr(a)[0] - ax, ctr(a)[1] - ay) - Math.hypot(ctr(b)[0] - ax, ctr(b)[1] - ay)); order.push(left.shift()); }
+      for (let i = 1; i < order.length; i++) {
+        const [ax, ay] = ctr(order[i - 1]), [bx, by] = ctr(order[i]);
+        carve(Math.min(ax, bx), ay, Math.abs(bx - ax) + 2, 2); carve(bx, Math.min(ay, by), 2, Math.abs(by - ay) + 2);
+      }
+      rooms.splice(0, rooms.length, ...order);
+    }
+    const px = r => ({ x: (r.x + r.w / 2) * T, y: (r.y + r.h / 2) * T });
+    const m = { f, L, cw, rh, grid, rooms, boss, shadows: [], chests: [], motes: [], cam: { x: 0, y: 0 }, t: 0, hint: 3 };
+    const st = boss ? { x: 11 * T, y: 13.5 * T } : px(rooms[0]);
+    m.p = { x: st.x, y: st.y, dir: 0, walk: 0, ang: Math.PI / 2, sw: 0 };
+    m.lantern = { x: st.x - T * 1.2, y: st.y - T * .6 };
+    if (boss) { if (S.cases[f] === 1) m.bossAt = { x: 11 * T, y: 5 * T }; }
+    else {
+      m.stairs = px(rooms[rooms.length - 1]);
+      const pool = MK.filter(k => k.lv >= FL[f].lo + L * 2 - 1 && k.lv <= FL[f].lo + L * 2 + 2);
+      rooms.slice(1).forEach((r, i) => {
+        const n = 1 + (Math.random() < .3);
+        for (let k = 0; k < n; k++) {
+          const grp = [K.pick(pool)]; if (Math.random() < .6) grp.push(K.pick(pool)); if (L > 0 && Math.random() < .3) grp.push(K.pick(pool));
+          m.shadows.push({ x: (r.x + 1 + Math.random() * (r.w - 2)) * T, y: (r.y + 1 + Math.random() * (r.h - 2)) * T, grp, alert: false, stun: 0, t: 0, a: Math.random() * 6.28, home: px(r) });
+        }
+        if (i < 3 && Math.random() < .7) m.chests.push({ x: (r.x + 1 + Math.random() * (r.w - 2)) * T, y: (r.y + 1) * T, open: false });
+      });
+    }
+    for (let i = 0; i < 40; i++) m.motes.push({ x: Math.random() * cw * T, y: Math.random() * rh * T, s: Math.random() * 3 + 1, v: 10 + Math.random() * 25 });
+    return m;
+  }
+  const wall = (x, y) => { const i = Math.floor(x / T), j = Math.floor(y / T); return i < 0 || j < 0 || i >= M.cw || j >= M.rh || !M.grid[j * M.cw + i]; };
+  const free = (x, y, r) => !wall(x - r, y - r) && !wall(x + r, y - r) && !wall(x - r, y + r) && !wall(x + r, y + r);
+  function moveEnt(e, dx, dy, r) { if (free(e.x + dx, e.y, r)) e.x += dx; if (free(e.x, e.y + dy, r)) e.y += dy; }
+  function los(a, b) { const d = Math.hypot(b.x - a.x, b.y - a.y), n = Math.ceil(d / 16); for (let i = 1; i < n; i++) if (wall(a.x + (b.x - a.x) * i / n, a.y + (b.y - a.y) * i / n)) return false; return true; }
+  function enterUndertow(f, L) {
+    P = null; if (S.bond[1] >= 10 && L === 0) S.items.snack++;
+    S.reach[f] = Math.max(S.reach[f], L); save();
+    M = genLevel(f, L); mode = 'dungeon'; tr = .6; K.flash('#000', .8); K.sfx(220, .5, 'sawtooth', .06, -120);
+  }
+  function endNight(text) { M = null; say([[null, text || 'You step back through the mirror. Your room is dark and quiet. It is almost midnight.']], newDay); }
+  function nextLevel() {
+    if (M.L === 2 && S.cases[M.f] === 2) { M.stairs = null; say([[null, 'The way down is sealed now. Whoever waited below is safe.']]); return; }
+    const f = M.f, L = M.L + 1; S.reach[f] = Math.max(S.reach[f], L); save();
+    M = genLevel(f, L); tr = .5; K.sfx(180, .4, 'triangle', .08, -90);
+    if (L === 3) say([[null, `The air turns heavy. Something waits ahead, wearing ${CAST[FL[f].who].n}'s voice.`], ['juno', '(Through your phone) Heal up first. Use the lantern to leave if you need to rest.']]);
+  }
+  // bot: breadth-first distance field toward a target tile
+  function field(tx, ty) {
+    const d = new Int16Array(M.cw * M.rh).fill(-1), q = [ty * M.cw + tx]; d[q[0]] = 0;
+    for (let h = 0; h < q.length; h++) { const c = q[h], x = c % M.cw, y = (c / M.cw) | 0; for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + ax, ny = y + ay, n = ny * M.cw + nx; if (nx >= 0 && ny >= 0 && nx < M.cw && ny < M.rh && M.grid[n] && d[n] < 0) { d[n] = d[c] + 1; q.push(n); } } }
+    return d;
+  }
+  function botSteer() {
+    const p = M.p; let tg = null, best = 1e9;
+    for (const s of M.shadows) if (s.stun <= 0) { const d = Math.hypot(s.x - p.x, s.y - p.y); if (d < best) { best = d; tg = s; } }
+    if (!tg) tg = M.stairs || M.bossAt; if (!tg) return [0, 0];
+    if (tg.grp && best < 80) { p.ang = Math.atan2(tg.y - p.y, tg.x - p.x); if (p.sw <= 0) strike(); return [0, 0]; }
+    if (!M.fd || M.fdT <= 0) { M.fd = field(Math.floor(tg.x / T), Math.floor(tg.y / T)); M.fdT = .3; }
+    const i = Math.floor(p.x / T), j = Math.floor(p.y / T), here = M.fd[j * M.cw + i];
+    if (los(p, tg) && best < 300) { const d = Math.hypot(tg.x - p.x, tg.y - p.y) || 1; return [(tg.x - p.x) / d, (tg.y - p.y) / d]; }
+    let to = null; for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const v = M.fd[(j + ay) * M.cw + i + ax]; if (v >= 0 && v < here) to = [ax, ay]; }
+    if (!to) return [0, 0];
+    const cx = (i + to[0] + .5) * T, cy = (j + to[1] + .5) * T, d = Math.hypot(cx - p.x, cy - p.y) || 1;
+    return [(cx - p.x) / d, (cy - p.y) / d];
+  }
+  function strike() { M.p.sw = .28; K.sfx(500, .08, 'sawtooth', .06, -300); K.noise(.08, .06, 2500); }
+  function updDungeon(dt) {
+    const p = M.p; M.t += dt; M.fdT -= dt; M.hint -= dt;
+    for (const m of M.motes) { m.y -= m.v * dt; m.x += Math.sin(M.t + m.s) * 8 * dt; if (m.y < 0) m.y = M.rh * T; }
+    if (D || P || ov || tr > 0) return;
+    let ix = 0, iy = 0;
+    if (K.bot) [ix, iy] = botSteer();
+    else {
+      if (keys.l) ix--; if (keys.r) ix++; if (keys.u) iy--; if (keys.d) iy++;
+      if (!ix && !iy && mouse.held) { const dx = mouse.x - (p.x - M.cam.x), dy = mouse.y - (p.y - M.cam.y), d = Math.hypot(dx, dy); if (d > 24) { ix = dx / d; iy = dy / d; } }
+    }
+    const n = Math.hypot(ix, iy);
+    if (n) { ix /= n; iy /= n; moveEnt(p, ix * 250 * dt, iy * 250 * dt, 15); p.walk += dt; p.ang = Math.atan2(iy, ix); p.dir = Math.abs(ix) > Math.abs(iy) ? (ix < 0 ? 1 : 2) : (iy < 0 ? 3 : 0); }
+    else p.walk = 0;
+    p.sw = Math.max(0, p.sw - dt);
+    for (const s of M.shadows) {
+      s.t += dt; if (s.stun > 0) { s.stun -= dt; continue; }
+      const d = Math.hypot(p.x - s.x, p.y - s.y);
+      if (!s.alert && d < 240 && los(s, p)) { s.alert = true; K.sfx(900, .1, 'square', .05, 300); }
+      if (s.alert && d > 460) s.alert = false;
+      if (s.alert) moveEnt(s, (p.x - s.x) / d * 170 * dt, (p.y - s.y) / d * 170 * dt, 14);
+      else { s.a += (Math.random() - .5) * 2 * dt; const hx = s.home.x - s.x, hy = s.home.y - s.y; moveEnt(s, (Math.cos(s.a) * 60 + hx * .15) * dt, (Math.sin(s.a) * 60 + hy * .15) * dt, 14); }
+      if (p.sw > 0 && d < 96 && Math.abs(((Math.atan2(s.y - p.y, s.x - p.x) - p.ang + 9.42) % 6.283) - 3.14) < 1.3) return encounter(s, 'adv');
+      if (d < 36) return encounter(s, s.alert ? 'foes' : 'party');
+    }
+    for (const c of M.chests) if (!c.open && Math.hypot(p.x - c.x, p.y - c.y) < 40) {
+      c.open = true; const r = Math.random(); let got;
+      if (r < .4) { S.items.snack++; got = 'a Snack (+70 HP)'; } else if (r < .7) { S.items.soda++; got = 'a Soda (+30 SP)'; } else { const y = 400 + M.f * 600 + M.L * 200; S.yen += y; got = '¥' + y; }
+      K.chime(784); K.toast('Found ' + got);
+    }
+    if (M.stairs && Math.hypot(p.x - M.stairs.x, p.y - M.stairs.y) < 34) return nextLevel();
+    const ld = Math.hypot(p.x - M.lantern.x, p.y - M.lantern.y);
+    if (ld < 40 && !M.lcool && !K.bot) { M.lcool = true; P = { k: 'lantern' }; }
+    if (ld > 70) M.lcool = false;
+    if (M.bossAt && Math.hypot(p.x - M.bossAt.x, p.y - M.bossAt.y) < 110) bossFight();
+  }
+  function camFollow(dt) {
+    const p = M.p, mw = M.cw * T, mh = M.rh * T;
+    const tx = mw < W ? (mw - W) / 2 : K.clamp(p.x - W / 2, 0, mw - W), ty = mh < H ? (mh - H) / 2 : K.clamp(p.y - H / 2, 0, mh - H);
+    M.cam.x += (tx - M.cam.x) * Math.min(1, dt * 8); M.cam.y += (ty - M.cam.y) * Math.min(1, dt * 8);
+  }
+  function encounter(s, first) {
+    tr = .45; K.flash('#fff', .6); K.shake(10); K.noise(.25, .15, 900);
+    const foes = s.grp.map(d => foe(d));
+    startBattle(foes, { first, th: FL[M.f], onWin: () => { M.shadows.splice(M.shadows.indexOf(s), 1); mode = 'dungeon'; tr = .3; }, onRun: () => { s.stun = 2.5; s.alert = false; mode = 'dungeon'; }, onLose: wipe });
+  }
+  function bossFight() {
+    const f = M.f, bd = BOSS[f]; M.bossAt = null;
+    const lines = f === 0
+      ? [['queen', 'Oh, look. Visitors. Everyone loves Hana. Smile, Hana. Be perfect, Hana. Never be tired, never be angry.'], ['queen', "I'm the part she buried under all that smiling. And I am SO. TIRED."], ['rin', "Hana's in there somewhere. Let's knock that crown off!"]]
+      : [['regent', 'High score. High score. Every night, every game. If I stop winning, nobody will even look at me.'], ['regent', 'Down here I am the champion forever. Why would I ever go back up?'], ['hana', 'Because people care about you even when you lose! Everyone, get ready!']];
+    say(lines, () => startBattle([foe(bd)], { boss: 1, th: FL[f], onWin: () => rescue(f), onLose: wipe }));
+  }
+  function rescue(f) {
+    S.cases[f] = 2; mode = 'dungeon'; M.bossAt = null;
+    const L = f === 0
+      ? [[null, 'The crown shatters. The Thorn Queen shrinks into a quiet girl in a school uniform.'], ['hana', "...You saw all of that. The ugly part. And you still came?"], ['rin', "Everybody gets tired, Hana. You're allowed."], ['hana', 'Then... I accept her. She is me too. (A pale green mask settles over her heart.)'], [null, 'Hana is safe! She will join you tomorrow.']]
+      : [[null, 'The Tide Regent collapses into a boy clutching an arcade token.'], ['taro', '...Guess I lost this one. Funny. It feels kind of good.'], [null, 'Taro is safe! The fog over Lanternfall thins.']];
+    if (f === 0) S.flags.joined = 'hana'; else S.flags.calm = 1;
+    save(); K.chime(523, [0, 4, 7, 12, 16]);
+    say(L, () => endNight('You carry the rescued student back through the mirror. The night is over.'));
+  }
+  function wipe() { M = null; heal(); say([[null, 'Everything goes dark...'], [null, 'You wake up on your bedroom floor, the mirror cold and silent. The night is lost.']], newDay); }
+
+  /* ---------- battle ---------- */
+  function foe(d) {
+    const lv = d.lv, s = 4 + lv * 1.45, hp = d.hp || 20 + lv * 10;
+    return { d, n: d.n, lv, key: d.key, mhp: hp, hp, dh: hp, st: s, ma: s, en: s, ag: s, af: d.af, sk: d.sk.length ? d.sk : ['Attack'], side: 1, boss: d.boss, acts: d.boss ? 2 : 1, x: 0, y: 0, hurt: 0, dead: 0 };
+  }
+  function mkP(id) { const s = stats(id); if (S.hp[id] == null) { S.hp[id] = s.mhp; S.sp[id] = s.msp; } return Object.assign(s, { id, n: CAST[id].n, side: 0, hp: Math.max(0, Math.min(S.hp[id], s.mhp)), sp: Math.min(S.sp[id], s.msp), dh: S.hp[id], hurt: 0 }); }
+  function startBattle(foes, o = {}) {
+    const n = foes.length;
+    foes.forEach((f, i) => { f.x = f.boss ? 450 : n === 1 ? 440 : n === 2 ? [320, 560][i] : [230, 430, 630][i]; f.y = f.boss ? 430 : 380 + (i % 2) * 18; });
+    B = { foes, party: S.party.map(mkP), phase: o.first === 'foes' ? 'foes' : 'party', ai: 0, fi: 0, wait: 1.1, next: null, cur: null, menu: null, o, th: o.th || FL[0],
+      buf: [{ atk: 0, def: 0, ta: 0, td: 0 }, { atk: 0, def: 0, ta: 0, td: 0 }], cut: null, all: 0, res: null, pq: [], dq: [], ban: o.first === 'foes' ? ['AMBUSHED!', RED] : o.first === 'adv' ? ['ADVANTAGE!', CY] : o.boss ? ['BOSS', RED] : null, banT: 1.4, botT: 0, msg: '', endured: false };
+    B.next = nextTurn; mode = 'battle'; tr = .4;
+  }
+  const later = (t, f) => { B.wait = t; B.next = f; }, later2 = (t, f) => B.dq.push({ t, f });
+  const ban = (s, c = RED, t = 1) => { B.ban = [s, c]; B.banT = t; };
+  const ppos = u => { const i = B.party.indexOf(u); return { x: 809 + i * 186, y: 590 }; };
+  const upos = u => u.side ? { x: u.x, y: u.y - 120 * (u.boss ? 1.5 : 1) } : ppos(u);
+  const qpop = (u, s, c, z = 34, t = .38) => { const p = upos(u); B.pq.push({ t, x: p.x + K.rand(-20, 20), y: p.y + K.rand(-10, 10), s, c, z }); };
+  function tickBuf(side) { const b = B.buf[side]; if (b.ta > 0 && --b.ta === 0) b.atk = 0; if (b.td > 0 && --b.td === 0) b.def = 0; }
+  function nextTurn() {
+    if (endCheck()) return;
+    if (B.phase === 'party') {
+      for (; B.ai < B.party.length; B.ai++) {
+        const u = B.party[B.ai]; if (u.hp <= 0) continue;
+        if (u.down) { u.down = false; qpop(u, 'Back up', WH, 24, 0); B.ai++; later(.5, nextTurn); return; }
+        u.guard = false; B.cur = u; B.menu = 'root'; B.swapped = false; B.botT = .55; return;
+      }
+      B.phase = 'foes'; B.fi = 0; tickBuf(1); B.cur = null;
+    }
+    for (; B.fi < B.foes.length; B.fi++) {
+      const f = B.foes[B.fi]; if (f.hp <= 0) continue;
+      if (f.down && !f.boss) { f.down = false; B.fi++; later(.45, nextTurn); return; }
+      f.down = false; B.fi++; f.om = false; foeAct(f, f.acts); return;
+    }
+    B.phase = 'party'; B.ai = 0; tickBuf(0); nextTurn();
+  }
+  function aiPick(f) {
+    const alive = B.party.filter(u => u.hp > 0), mates = B.foes.filter(x => x.hp > 0), sks = f.sk.map(n => SK[n]);
+    const hurt = mates.find(x => x.hp < x.mhp * .45), healer = sks.find(s => s.k === 'heal');
+    if (hurt && healer && Math.random() < .7) return { sk: healer.n, tg: healer.t === 'party' ? mates : [hurt] };
+    const sup = sks.filter(s => (s.k === 'buff' && !B.buf[1][s.s]) || (s.k === 'debuff' && !B.buf[0].atk));
+    if (sup.length && Math.random() < .2) { const s = K.pick(sup); return { sk: s.n, tg: [] }; }
+    const dmg = sks.filter(s => s.k === 'dmg');
+    if (!dmg.length) return { sk: 'Attack', tg: [K.pick(alive)] };
+    for (const s of shuffle(dmg.slice())) { const t = alive.find(u => u.af[s.e] === 'w' && !u.down); if (t && Math.random() < .55) return { sk: s.n, tg: s.t === 'all' ? alive : [t] }; }
+    const s = K.pick(dmg); return { sk: s.n, tg: s.t === 'all' ? alive : [K.pick(alive)] };
+  }
+  function foeAct(f, n) {
+    const a = aiPick(f), knock = act(f, a);
+    let more = n - 1; if (knock && !f.om) { f.om = true; more++; }
+    later(1.05, () => { if (endCheck()) return; if (more > 0) foeAct(f, more); else nextTurn(); });
+  }
+  function act(u, a) {
+    const s = SK[a.sk]; let knock = false;
+    if (u.side === 0 && s.c) { if (s.e === 0 && s.k === 'dmg') u.hp = Math.max(1, u.hp - Math.ceil(u.mhp * s.c / 100)); else u.sp -= s.c; }
+    B.msg = `${u.n} used ${s.n}!`;
+    if (a.sk !== 'Attack') B.cut = { u, s, t: 0 };
+    if (s.k === 'dmg') {
+      K.sfx(s.e === 0 ? 180 : 300 + s.e * 90, .18, s.e === 0 ? 'square' : 'sawtooth', .07, s.e === 0 ? -100 : 200, .3);
+      for (const t of a.tg) if (hit(u, t, s)) knock = true;
+    } else if (s.k === 'heal') {
+      for (const t of a.tg) { if (t.hp <= 0 && u.side === 0) continue; const h = Math.round(s.p * (1 + S.lv * .05)); t.hp = Math.min(t.mhp, t.hp + h); qpop(t, '+' + h, '#7dffb0', 30); }
+      K.chime(880, [0, 7, 12]);
+    } else {
+      const side = s.k === 'buff' ? u.side : 1 - u.side, b = B.buf[side];
+      if (s.s === 'atk') { b.atk = s.k === 'buff' ? 1 : -1; b.ta = 3; } else { b.def = 1; b.td = 3; }
+      const tg = side === 0 ? B.party : B.foes; tg.filter(x => x.hp > 0).forEach(x => qpop(x, s.k === 'buff' ? (s.s === 'atk' ? 'ATK ▲' : 'DEF ▲') : 'ATK ▼', s.k === 'buff' ? CY : '#ff8a8a', 24));
+      K.sfx(s.k === 'buff' ? 520 : 260, .3, 'triangle', .07, s.k === 'buff' ? 400 : -150, .2);
+    }
+    return knock;
+  }
+  function hit(u, t, s) {
+    if (t.hp <= 0) return false;
+    const a = t.af[s.e], mul = a === 'w' ? 1.5 : a === 'r' ? .5 : a === 'n' ? 0 : 1;
+    if (t.side) S.known[t.key] = (S.known[t.key] || 0) | (1 << s.e);
+    let d = s.p * ((s.e === 0 ? u.st : u.ma) + 12) / (t.en + 12) * .55 * K.rand(.92, 1.08);
+    d *= 1 + .3 * B.buf[u.side].atk; d *= 1 - .25 * B.buf[t.side].def;
+    const crit = s.e === 0 && mul > 0 && Math.random() < .08 + (u.ag - t.ag) * .01;
+    if (crit) d *= 1.5; if (t.guard) d *= .5; if (u.boss) d *= .72;
+    d = Math.round(d * mul);
+    t.hp = Math.max(0, t.hp - d); t.hurt = .35;
+    if (t.id === 'rin' && t.hp === 0 && S.bond[0] >= 6 && !B.endured) { t.hp = 1; B.endured = true; qpop(t, 'ENDURED!', GOLD, 26, .7); }
+    qpop(t, mul === 0 ? 'NULL' : String(d), mul === 0 ? '#999' : t.side ? WH : '#ff8a8a', 40);
+    if (a === 'w') qpop(t, 'WEAK!', GOLD, 30, .55); else if (a === 'r') qpop(t, 'RESIST', '#9ab', 22, .55); else if (crit) qpop(t, 'CRITICAL!', GOLD, 30, .55);
+    later2(.38, () => { K.shake(a === 'w' || crit ? 14 : 7); K.noise(.12, .1, 1500); });
+    if ((a === 'w' || crit) && !t.guard && !t.down && t.hp > 0) { t.down = true; if (t.side === 0) qpop(t, 'DOWN', RED, 30, .8); return true; }
+    return false;
+  }
+  function pAct(a) {
+    const u = B.cur; B.menu = null;
+    const knock = act(u, a);
+    if (knock && u.id === 'you' && S.bond[0] >= 3) {
+      const rin = B.party.find(x => x.id === 'rin' && x.hp > 0 && !x.down), tg = B.foes.filter(f => f.hp > 0 && !f.down);
+      if (rin && tg.length && Math.random() < .4) later2(.65, () => { B.msg = 'Rin: "I got this!" Follow-up!'; hit(rin, K.pick(tg), { e: 0, p: 70, n: 'Follow-up' }); });
+    }
+    later(knock ? 1.25 : 1.0, () => {
+      if (endCheck()) return;
+      const alive = B.foes.filter(f => f.hp > 0);
+      if (alive.length && alive.every(f => f.down && !f.boss)) { B.menu = 'allout'; ban('HOLD UP!', RED, 1.1); B.botT = .8; K.sfx(330, .2, 'square', .06, 300); return; }
+      if (knock) { ban('1 MORE!', RED, .9); K.chime(784, [0, 5, 12]); B.menu = 'root'; B.botT = .7; return; }
+      B.ai++; nextTurn();
+    });
+  }
+  function allOut() {
+    B.menu = null; B.all = 1.8; B.msg = ''; K.noise(1.2, .16, 400);
+    for (let i = 0; i < 6; i++) K.sfx(200 + i * 60, .1, 'square', .06, -100, i * .12);
+    later(1.0, () => {
+      const n = B.party.filter(u => u.hp > 0).length;
+      for (const f of B.foes) if (f.hp > 0 && f.down) { const d = Math.round((24 + S.lv * 10) * n * K.rand(.9, 1.1)); f.hp = Math.max(0, f.hp - d); f.hurt = .4; qpop(f, String(d), WH, 48, .2); f.down = false; }
+      K.shake(22);
+      later(1.1, () => { if (endCheck()) return; B.ai++; nextTurn(); });
+    });
+  }
+  function talk() {
+    const f = B.foes.find(x => x.hp > 0 && x.down && !x.boss), q = K.pick(TALK), p = f.d.i % 4;
+    const liked = ['kind', 'honest', 'witty', 'bold'][p], hated = ['bold', 'witty', 'honest', 'kind'][p], neutral = K.pick(Object.keys(TONES).filter(t => t !== liked && t !== hated));
+    B.talk = { f, q, ans: shuffle([liked, hated, neutral]), liked, hated }; B.menu = 'talk';
+  }
+  function answer(t) {
+    const T_ = B.talk, f = T_.f; B.menu = null;
+    if (t === T_.hated) {
+      B.msg = `${f.n}: "That's what you think of me?!" The shadows leap back up!`;
+      B.foes.forEach(x => { x.down = false; }); K.sfx(160, .4, 'sawtooth', .08, -80);
+      later(1.6, () => { B.phase = 'foes'; B.fi = 0; nextTurn(); });
+      return;
+    }
+    f.gone = true; f.hp = 0;
+    if (t === T_.liked && !S.masks.some(m => m.i === f.d.i) && S.masks.length < maskCap()) {
+      S.masks.push({ i: f.d.i, b: 0 }); if (!S.seen.includes(f.d.i)) S.seen.push(f.d.i);
+      B.msg = `${f.n}: "I am the mask you hide behind. Wear me well." You got ${f.n}!`; K.chime(523, [0, 4, 7, 12]);
+    } else { const y = f.lv * 150; S.yen += y; B.msg = `${f.n}: "${t === T_.liked ? 'I like you, but your pockets are full of masks.' : 'Fine. Take this and leave me be.'}" Got ¥${y}.`; K.sfx(1320, .1, 'square', .05); }
+    later(2.0, () => { if (endCheck()) return; B.ai++; nextTurn(); });
+  }
+  function endCheck() {
+    if (B.res) return true;
+    if (B.party[0].hp <= 0 || B.party.every(u => u.hp <= 0)) { B.res = { lose: 1 }; B.menu = 'res'; B.botT = 1.5; K.sfx(200, .8, 'sawtooth', .08, -150); return true; }
+    if (B.foes.every(f => f.hp <= 0)) { win(); return true; }
+    return false;
+  }
+  function win() {
+    const fs = B.foes.filter(f => !f.gone);
+    let xp = fs.reduce((a, f) => a + (f.boss ? 400 + f.lv * 60 : 10 + f.lv * f.lv * 2.4), 0); if (S.bond[2] >= 6) xp *= 1.2; xp = Math.round(xp);
+    const yen = fs.reduce((a, f) => a + f.lv * 60, 0), oldSk = B.party.map(u => u.sk.join()), oldLv = S.lv;
+    S.xp += xp; S.yen += yen;
+    while (S.xp >= need(S.lv)) { S.xp -= need(S.lv); S.lv++; }
+    for (const u of B.party) { S.hp[u.id] = Math.max(1, u.hp); S.sp[u.id] = u.sp; }
+    if (S.lv > oldLv) heal();
+    else if (S.bond[1] >= 6) for (const u of B.party) { const s = stats(u.id); S.hp[u.id] = Math.min(s.mhp, S.hp[u.id] + Math.round(s.mhp * .1)); }
+    const learned = []; B.party.forEach((u, i) => { const now = stats(u.id).sk; now.forEach(k => { if (!oldSk[i].split(',').includes(k)) learned.push(`${u.n === 'You' ? 'Your mask' : u.n} learned ${k}`); }); });
+    B.res = { xp, yen, lv: S.lv > oldLv ? S.lv : 0, learned }; B.menu = 'res'; B.botT = 1.6;
+    if (!K.bot) save();
+    K.chime(523, [0, 4, 7, 12]);
+  }
+  function battleDone() {
+    const r = B.res, o = B.o; B = null;
+    if (r.lose) (o.onLose || wipe)(); else if (r.ran) o.onRun && o.onRun(); else o.onWin && o.onWin();
+  }
+  function swapMask(k) {
+    const u = B.cur, hp = u.hp, sp = u.sp; S.mask = k;
+    Object.assign(u, stats('you'), { hp, sp }); u.hp = Math.min(u.hp, u.mhp); u.sp = Math.min(u.sp, u.msp);
+    B.swapped = true; B.menu = 'root'; ov = null; B.cut = { u, s: { n: MK[S.masks[k].i].n, e: MK[S.masks[k].i].e }, t: 0, swap: 1 };
+    K.sfx(440, .3, 'triangle', .08, 440); K.flash(ELC[MK[S.masks[k].i].e], .25);
+  }
+  const afford = (u, s) => !s.c || (s.e === 0 && s.k === 'dmg' ? u.hp > Math.ceil(u.mhp * s.c / 100) : u.sp >= s.c);
+  function botPick() {
+    if (B.menu === 'res') return battleDone();
+    if (B.menu === 'allout') return allOut();
+    if (B.menu === 'talk') return answer(B.talk.liked);
+    const u = B.cur, up = B.foes.filter(f => f.hp > 0 && !f.down), alive = B.foes.filter(f => f.hp > 0);
+    B.menu = 'root';
+    const low = B.party.find(x => x.hp > 0 && x.hp < x.mhp * .35);
+    if (low) for (const n of u.sk) { const s = SK[n]; if (s.k === 'heal' && afford(u, s)) return pAct({ sk: n, tg: s.t === 'party' ? B.party.filter(x => x.hp > 0) : [low] }); }
+    const tgs = up.length ? up : alive;
+    for (const n of u.sk) { const s = SK[n]; if (s.k !== 'dmg' || !afford(u, s)) continue; const t = tgs.find(f => f.af[s.e] === 'w'); if (t) return pAct({ sk: n, tg: s.t === 'all' ? alive : [t] }); }
+    if (u.id === 'you' && !B.swapped) {
+      const k = S.masks.findIndex((m, i) => i !== S.mask && MK[m.i].lv <= S.lv && MK[m.i].sk.some(n => SK[n].k === 'dmg' && tgs.some(f => f.af[SK[n].e] === 'w')));
+      if (k >= 0) { swapMask(k); B.botT = .8; return; }
+    }
+    const best = u.sk.map(n => SK[n]).filter(s => s.k === 'dmg' && s.e > 0 && afford(u, s) && tgs.some(f => f.af[s.e] === '-')).sort((a, b) => b.p - a.p)[0];
+    if (best && Math.random() < .6) return pAct({ sk: best.n, tg: best.t === 'all' ? alive : [tgs.find(f => f.af[best.e] === '-')] });
+    pAct({ sk: 'Attack', tg: [K.pick(tgs)] });
+  }
+  function updBattle(dt) {
+    const spd = K.bot ? 1.6 : 1;
+    B.banT -= dt; if (B.cut) { B.cut.t += dt; if (B.cut.t > .75) B.cut = null; }
+    if (B.all > 0) B.all -= dt;
+    for (let i = B.dq.length - 1; i >= 0; i--) { const q = B.dq[i]; q.t -= dt; if (q.t <= 0) { B.dq.splice(i, 1); q.f(); } }
+    for (let i = B.pq.length - 1; i >= 0; i--) { const q = B.pq[i]; q.t -= dt; if (q.t <= 0) { K.pop(q.x, q.y, q.s, q.c, q.z); B.pq.splice(i, 1); } }
+    for (const u of [...B.party, ...B.foes]) { u.hurt = Math.max(0, u.hurt - dt); u.dh += (u.hp - u.dh) * Math.min(1, dt * 6); if (u.side && u.hp <= 0) u.dead = Math.min(1, u.dead + dt * 1.5); }
+    if (B.wait > 0) { B.wait -= dt * spd; if (B.wait <= 0 && B.next) { const f = B.next; B.next = null; f(); } return; }
+    if (B.menu && K.bot) { B.botT -= dt; if (B.botT <= 0) botPick(); }
+  }
+
+  /* ---------- GAME hooks ---------- */
+  function demo() {
+    S = fresh(); S.lv = 9; S.party = ['you', 'rin', 'hana']; S.cases = [1, 0]; S.dl = [13, 0]; S.day = 6;
+    S.masks = [2, 0, 3, 5, 7, 1].map(i => ({ i, b: 0 })); S.mask = 0; S.bond = [3, 4, 3, 2]; heal();
+    M = genLevel(0, 1); mode = 'dungeon';
+    const s = { x: M.p.x, y: M.p.y, grp: [MK[3], MK[1], MK[2]], home: M.p, alert: false, stun: 0, t: 0, a: 0 };
+    M.shadows.push(s); encounter(s, 'adv');
+  }
+  GAME.reset = () => {
+    ui = []; D = null; P = null; ov = null; cal = null; B = null; M = null; walker = null; confirmNew = false; tr = 0;
+    for (const k in keys) keys[k] = false;
+    if (K.bot) return demo();
+    const sv = K.save.rpg;
+    if (sv && sv.v === 1) { S = sv; mode = 'menu'; } else newGame();
+  };
+  function newGame(ng) {
+    S = fresh(ng); heal(); mode = 'town';
+    calCard(() => say([
+      [null, 'October 1st. Your first day at Lanternfall High. You will live with your uncle until the Lantern Festival at the end of the month.'],
+      ['rin', "So you're the transfer student? I'm Rin. Track team, class rep, local legend. Ask me anything."],
+      ['rin', "One rule around here: don't look into a mirror at 11:11 PM. People who do... stop coming to school."],
+      [null, 'After school, walk around town with WASD, the arrow keys, or by tapping where you want to go. Walk up to a door to see what you can do there.'],
+      [null, 'Each afternoon and evening you can do one thing: hang out with a friend, train a stat, or work. Choose well. The festival is in 30 days.'],
+    ], enterTown));
+  }
+  function introNight() {
+    S.flags.intro = 1;
+    say([[null, '11:11 PM. You are brushing your teeth when the bedroom mirror begins to hum.'], [null, 'Your reflection does not move when you do. It smiles and reaches out.', [['Touch the mirror', () => []]]],
+      [null, 'You fall through cold glass into a hallway lit by floating lanterns. Something wet and grinning crawls out of the dark.'],
+      ['rin', 'Hey! I saw the light from across the street and... what are THOSE?!'],
+      ['voice', 'Every mask you wear is still you. Take this one, and fight.'],
+      [null, 'A burning mask settles over your face. You got Lanternling! Rin gasps and a red mask blooms on her face too.'],
+    ], () => {
+      S.party = ['you', 'rin']; heal();
+      const imp = () => Object.assign(foe(MK[1]), { hp: 75, mhp: 75, dh: 75 });
+      startBattle([imp(), imp()], { tip: 1, th: FL[0], onWin: () => say([
+        ['rin', "We... did that? We actually did that!"],
+        ['voice', 'Come to the shrine on the hill. People who fall here and are not found before the fog... are never quite themselves again.'],
+        [null, 'The lanterns pull you back through the mirror. Your room. 11:58 PM.'],
+      ], newDay), onLose: () => say([[null, 'Rin drags you back through the mirror just in time.']], newDay) });
+    });
+  }
+  function resume() { if (S.ended) return newGame(S); if (S.slot === 0) enterTown(); else enterHome(); }
+  GAME.pose = () => {
+    const b = B; if (!b) return;
+    b.wait = 99; b.cur = null; b.menu = null; b.ban = null; b.cut = null; b.pose = 1; K.flash('#fff', 0); mode = 'battle'; tr = 0;
+    b.foes.forEach((f, i) => { f.x = [470, 650, 830][i]; f.y = 500 + (i % 2) * 20; f.down = i === 1; });
+  };
+
+  GAME.update = dt => {
+    music(dt);
+    if (tr > 0) tr -= dt;
+    if (cal) { cal.t += dt; if (cal.t > 1.7) { const f = cal.cb; cal = null; f(); } return; }
+    if (D) { D.ch += dt * 75; if (K.bot) { D.bt = (D.bt || 0) + dt; if (D.bt > 1.2) { D.bt = 0; const l = D.L[D.i]; if (l[2]) dChoose(l[2][0][1]); else { D.ch = 9999; dAdvance(); } } } }
+    if (mode === 'battle' && B) updBattle(dt);
+    else if (mode === 'dungeon' && M) { updDungeon(dt); camFollow(dt); }
+    else if (mode === 'town' || mode === 'home') updWalk(dt);
+    if (K.bot && mode === 'dungeon' && M && !M.shadows.some(s => s.stun <= 0) && !D && !B) { M = genLevel(0, 1); }
+    if (K.bot && P) P = null;
+    if (K.bot && (mode === 'town' || mode === 'home' || mode === 'menu') && !D && !cal) demo();
+  };
+
+  /* ---------- drawing ---------- */
+  function bgFill(c) { G.fillStyle = c; G.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0); }
+  function drawMenu() {
+    const t = K.t, gr = G.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#0b0b24'); gr.addColorStop(1, '#2a0a18'); G.fillStyle = gr; G.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0);
+    G.fillStyle = '#fff6d8'; G.beginPath(); G.arc(980, 170, 80, 0, 7); G.fill(); G.fillStyle = '#0b0b24'; G.beginPath(); G.arc(1010, 150, 74, 0, 7); G.fill();
+    for (let i = 0; i < 26; i++) { const x = i * 52 - 20, h = 120 + ((i * 73) % 160); G.fillStyle = '#05050d'; G.fillRect(x, H - h, 50, h); G.fillStyle = '#ffd23f'; for (let j = 0; j < 6; j++) if ((i * 7 + j * 3) % 5 === 0) G.fillRect(x + 8 + (j % 3) * 14, H - h + 16 + Math.floor(j / 3) * 22, 6, 9); }
+    for (let i = 0; i < 18; i++) { const x = (i * 97 + t * 14) % 1400 - 60, y = 470 - ((i * 53 + t * 20) % 420); G.fillStyle = i % 3 ? '#ff6a3d' : GOLD; G.globalAlpha = .75; G.beginPath(); G.roundRect(x, y, 16, 22, 5); G.fill(); G.globalAlpha = 1; }
+    G.save(); G.translate(640, 220); G.rotate(-.06); G.fillStyle = RED; slant(-380, -70, 760, 140, 40); G.fill(); G.fillStyle = INK; slant(-360, -56, 720, 112, 34); G.fill();
+    txt('AFTERHOURS', 0, 4, 104, WH, 'center', true); G.restore();
+    txt('30 days. 4 bonds. One mirror.', 640, 330, 24, '#cfd0e0', 'center');
+    const opts = [];
+    if (!S.ended) opts.push({ l: `Continue · Day ${S.day} ${S.slot ? 'evening' : 'afternoon'}`, fn: resume });
+    if (S.clears) opts.push({ l: 'New Game+', s: 'Keep your level, stats, money and masks', fn: () => newGame(S) });
+    opts.push({ l: confirmNew ? 'Tap again to erase your save' : 'New Game', fn: () => { if (S.ended || confirmNew || !S.day) newGame(); else confirmNew = true; } });
+    opts.forEach((o, i) => btn(440 + i * 10, 400 + i * 74, 400, 60, o.l, o.fn, { sub: o.s, size: 26 }));
+  }
+  function hudTop() {
+    G.fillStyle = 'rgba(7,7,15,.82)'; G.fillRect(K.view.x0, 0, K.view.x1 - K.view.x0, 52);
+    G.fillStyle = RED; slant(62, 4, 140, 44, 14); G.fill();
+    txt(`10/${S.day}`, 78, 27, 28, WH, 'left', true); txt(dow(S.day), 190, 27, 17, WH, 'right', true);
+    G.fillStyle = WH; slant(204, 10, 150, 32, 10); G.fill(); txt(S.slot ? 'EVENING' : 'AFTER SCHOOL', 279, 27, 16, INK, 'center', true);
+    txt('¥' + S.yen.toLocaleString(), 366, 27, 18, GOLD, 'left', true);
+    STATS.forEach((n, i) => { const x = 466 + i * 100; txt(n.slice(0, 3).toUpperCase(), x, 18, 13, STC[i], 'left', true); const l = stLv(i), p0 = STP[l - 1], p1 = STP[l] ?? STP[4] + 10; bar(x, 32, 82, 6, (S.st[i] - p0) / (p1 - p0), STC[i]); txt('Lv' + l, x + 82, 18, 13, WH, 'right', true); });
+    const c = S.cases.findIndex(x => x === 1);
+    if (c >= 0) { const left = S.dl[c] - S.day; txt(left ? `FOG IN ${left} DAY${left === 1 ? '' : 'S'}` : 'FOG TONIGHT', 880, 27, 20, left <= 3 && Math.sin(K.t * 6) > 0 ? WH : RED, 'left', true); }
+    else txt(`FESTIVAL IN ${30 - S.day} DAYS`, 880, 27, 18, GOLD, 'left', true);
+    btn(1050, 8, 106, 36, 'MASKS', () => { ov = { k: 'masks' }; }, { nk: 1, size: 18, k: 10 });
+    btn(1162, 8, 106, 36, 'BONDS', () => { ov = { k: 'bonds' }; }, { nk: 1, size: 18, k: 10 });
+  }
+  function drawTown() {
+    const ev = S.slot === 1;
+    bgFill(ev ? '#141a2e' : '#d8c7a4');
+    G.fillStyle = ev ? '#1f2740' : '#c4b08a'; G.beginPath(); G.ellipse(640, 410, 330, 150, 0, 0, 7); G.fill();
+    G.strokeStyle = ev ? '#2a3456' : '#b39f7a'; G.lineWidth = 46; G.lineCap = 'round';
+    for (const p of TOWN) { G.beginPath(); G.moveTo(640, 410); G.lineTo(p.d[0], p.d[1]); G.stroke(); }
+    G.lineCap = 'butt';
+    G.fillStyle = ev ? '#2c4a8a' : '#6fb7d8'; G.beginPath(); G.arc(640, 410, 54, 0, 7); G.fill(); G.fillStyle = ev ? '#3a64b0' : '#a8e0f0'; G.beginPath(); G.arc(640, 410, 36 + Math.sin(K.t * 2) * 3, 0, 7); G.fill();
+    for (const [x, y] of [[690, 120], [760, 170], [840, 110], [880, 190], [720, 230], [400, 300], [880, 300], [430, 520], [850, 520]]) { G.fillStyle = ev ? '#0e2a1e' : '#4f8a4a'; G.beginPath(); G.arc(x, y, 30, 0, 7); G.fill(); G.fillStyle = ev ? '#163a2a' : '#6aa860'; G.beginPath(); G.arc(x - 8, y - 8, 18, 0, 7); G.fill(); }
+    for (const p of TOWN) {
+      const [x, y, w, h] = p.r, open = p.open[S.slot];
+      G.fillStyle = 'rgba(0,0,0,.3)'; G.fillRect(x + 8, y + 10, w, h);
+      G.fillStyle = p.c; G.fillRect(x, y, w, h); G.fillStyle = 'rgba(255,255,255,.12)'; G.fillRect(x, y, w, 26); G.fillStyle = 'rgba(0,0,0,.25)'; G.fillRect(x, y + h - 10, w, 10);
+      for (let i = 0; i < Math.floor(w / 50); i++) { G.fillStyle = ev && open ? '#ffd86a' : ev ? '#2a2a3a' : '#cfe8ff'; G.fillRect(x + 18 + i * 50, y + 44, 26, 30); }
+      G.fillStyle = INK; slant(x + w / 2 - 80, y + h - 56, 160, 34, 10); G.fill();
+      txt(p.n.toUpperCase(), x + w / 2, y + h - 39, 20, open ? WH : '#666', 'center', true);
+      if (!open) txt('CLOSED', x + w / 2, y + h - 76, 16, RED, 'center', true);
+      else { G.fillStyle = GOLD; G.globalAlpha = .4 + Math.sin(K.t * 3) * .2; G.beginPath(); G.arc(p.d[0], p.d[1], 14, 0, 7); G.fill(); G.globalAlpha = 1; }
+    }
+    G.strokeStyle = 'rgba(0,0,0,.5)'; G.lineWidth = 2;
+    for (const [a, b] of [[[0, 260], [640, 300]], [[640, 300], [1280, 260]]]) { G.beginPath(); G.moveTo(a[0], a[1]); G.quadraticCurveTo((a[0] + b[0]) / 2, a[1] + 60, b[0], b[1]); G.stroke(); for (let i = 1; i < 10; i++) { const k = i / 10, x = a[0] + (b[0] - a[0]) * k, y = (1 - k) * (1 - k) * a[1] + 2 * k * (1 - k) * (a[1] + 60) + k * k * b[1]; G.fillStyle = i % 2 ? RED : GOLD; G.beginPath(); G.roundRect(x - 7, y, 14, 18, 4); G.fill(); if (ev) { G.fillStyle = 'rgba(255,200,80,.25)'; G.beginPath(); G.arc(x, y + 9, 20, 0, 7); G.fill(); } } }
+    BONDS.forEach((b, i) => { const sp = TOWN.find(p => p.who === i); if (!sp.open[S.slot]) return; chibi(sp.d[0] + (sp.d[0] < 640 ? 40 : -40), sp.d[1] + 22, CAST[b.id].p, 0, 0, { mark: S.bond[i] >= 10 ? '★' : stLv(b.stat) >= REQ[S.bond[i]] ? '♥' + S.bond[i] : '', markC: S.bond[i] >= 10 ? GOLD : '#ff7ad9' }); });
+    chibi(walker.x, walker.y, CAST.you.p, walker.dir, walker.walk);
+    if (ev) { const v = G.createRadialGradient(walker.x, walker.y, 120, walker.x, walker.y, 760); v.addColorStop(0, 'rgba(5,5,20,0)'); v.addColorStop(1, 'rgba(5,5,20,.55)'); G.fillStyle = v; G.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0); }
+    hudTop();
+  }
+  function drawHome() {
+    bgFill('#120e14');
+    G.fillStyle = '#5a3f2c'; G.fillRect(60, 60, 1160, 650);
+    for (let j = 0; j < 13; j++) { G.fillStyle = j % 2 ? '#62452f' : '#563b29'; G.fillRect(60, 60 + j * 50, 1160, 48); }
+    G.strokeStyle = '#2a1e18'; G.lineWidth = 16; G.strokeRect(52, 52, 1176, 666);
+    G.fillStyle = '#1c2a4a'; G.fillRect(700, 44, 140, 18); G.fillStyle = '#fff6d8'; G.beginPath(); G.arc(800, 52, 6, 0, 7); G.fill();
+    const lamp = G.createRadialGradient(225, 130, 10, 225, 130, 260); lamp.addColorStop(0, 'rgba(255,210,120,.35)'); lamp.addColorStop(1, 'rgba(255,210,120,0)'); G.fillStyle = lamp; G.fillRect(0, 0, 600, 500);
+    const drawR = (id, f) => { const p = ROOM.find(r => r.id === id); f(...p.r); };
+    drawR('desk', (x, y, w, h) => { G.fillStyle = '#3a2618'; G.fillRect(x, y, w, h); G.fillStyle = '#e8e2d0'; G.fillRect(x + 30, y + 30, 70, 46); G.fillStyle = '#20283a'; G.fillRect(x + 130, y + 20, 70, 50); G.fillStyle = GOLD; G.beginPath(); G.arc(x + 200, y + 18, 12, 0, 7); G.fill(); });
+    drawR('shelf', (x, y, w, h) => { G.fillStyle = '#2e1e14'; G.fillRect(x, y, w, h); for (let i = 0; i < 16; i++) { G.fillStyle = ['#b0202c', '#2f7fb0', '#e8c060', '#3f7a58', '#9a3d8a'][i % 5]; G.fillRect(x + 8 + i * 13, y + 10, 10, h - 20); } });
+    drawR('kitchen', (x, y, w, h) => { G.fillStyle = '#b8b8c4'; G.fillRect(x, y, w, h); G.fillStyle = '#2a2a33'; for (const k of [0, 1]) { G.beginPath(); G.arc(x + 200 + k * 70, y + 55, 24, 0, 7); G.fill(); } G.fillStyle = '#8fd0ff'; G.fillRect(x + 20, y + 20, 110, 70); });
+    drawR('bed', (x, y, w, h) => { G.fillStyle = '#2a2236'; G.fillRect(x, y, w, h); G.fillStyle = '#f2ece0'; G.fillRect(x + 16, y + 14, w - 32, 50); G.fillStyle = '#3d4f9a'; G.fillRect(x + 6, y + 80, w - 12, h - 86); });
+    drawR('mat', (x, y, w, h) => { G.fillStyle = '#2f7f6a'; G.beginPath(); G.roundRect(x, y, w, h, 14); G.fill(); G.strokeStyle = '#7dffb0'; G.lineWidth = 2; G.strokeRect(x + 10, y + 10, w - 20, h - 20); });
+    drawR('door', (x, y, w, h) => { G.fillStyle = '#2a1e18'; G.fillRect(x, y - 6, w, h + 6); });
+    drawR('mirror', (x, y, w, h) => {
+      const hot = S.cases.some(c => c > 0);
+      if (hot) { const gl = G.createRadialGradient(x + w / 2, y + h / 2, 10, x + w / 2, y + h / 2, 180); gl.addColorStop(0, 'rgba(160,90,255,.5)'); gl.addColorStop(1, 'rgba(160,90,255,0)'); G.fillStyle = gl; G.fillRect(x - 200, y - 120, 400, 420); }
+      G.fillStyle = '#c9a35a'; G.beginPath(); G.ellipse(x + w / 2, y + h / 2, w / 2 + 6, h / 2 + 6, 0, 0, 7); G.fill();
+      G.fillStyle = hot ? `hsl(${265 + Math.sin(K.t * 2) * 15},70%,${30 + Math.sin(K.t * 3) * 8}%)` : '#9ab8d8'; G.beginPath(); G.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, 7); G.fill();
+    });
+    for (const p of ROOM) { G.fillStyle = GOLD; G.globalAlpha = .35 + Math.sin(K.t * 3) * .2; G.beginPath(); G.arc(p.d[0], p.d[1], 10, 0, 7); G.fill(); G.globalAlpha = 1; txt(p.n, p.d[0], p.d[1] + 24, 13, 'rgba(255,255,255,.7)', 'center'); }
+    chibi(walker.x, walker.y, CAST.you.p, walker.dir, walker.walk);
+    txt('11:11 PM: the mirror opens', 1120, 520, 13, 'rgba(200,170,255,.8)', 'center');
+    hudTop();
+  }
+  function drawDungeon() {
+    const f = FL[M.f], cx = M.cam.x, cy = M.cam.y;
+    bgFill('#000');
+    G.save(); G.translate(-Math.round(cx), -Math.round(cy));
+    const i0 = Math.max(0, Math.floor(cx / T)), i1 = Math.min(M.cw - 1, Math.floor((cx + W) / T)), j0 = Math.max(0, Math.floor(cy / T) - 1), j1 = Math.min(M.rh - 1, Math.floor((cy + H) / T) + 1);
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+      const fl = M.grid[j * M.cw + i], x = i * T, y = j * T;
+      if (fl) { G.fillStyle = (i + j) % 2 ? f.floor : f.floor2; G.fillRect(x, y, T, T); }
+      else { G.fillStyle = f.wall; G.fillRect(x, y, T, T); if (j + 1 < M.rh && M.grid[(j + 1) * M.cw + i]) { G.fillStyle = f.face; G.fillRect(x, y + T - 18, T, 18); G.fillStyle = f.acc; G.globalAlpha = .5; G.fillRect(x, y + T - 2, T, 2); G.globalAlpha = 1;
+        if ((i * 7 + j * 13) % 9 === 0) { const fl2 = .8 + Math.sin(M.t * 12 + i) * .2, gl = G.createRadialGradient(x + T / 2, y + T - 26, 2, x + T / 2, y + T - 26, 90 * fl2); gl.addColorStop(0, f.acc + '88'); gl.addColorStop(1, f.acc + '00'); G.fillStyle = gl; G.fillRect(x - 80, y - 60, 210, 200); G.fillStyle = f.mote; G.beginPath(); G.arc(x + T / 2, y + T - 26, 5 * fl2, 0, 7); G.fill(); } } }
+    }
+    if (M.stairs) { const s = M.stairs; G.fillStyle = '#000'; G.beginPath(); G.ellipse(s.x, s.y, 34, 26, 0, 0, 7); G.fill(); G.strokeStyle = f.acc; G.lineWidth = 3; for (let k = 0; k < 3; k++) { G.globalAlpha = 1 - ((M.t * .8 + k / 3) % 1); G.beginPath(); G.ellipse(s.x, s.y, 34 * ((M.t * .8 + k / 3) % 1), 26 * ((M.t * .8 + k / 3) % 1), 0, 0, 7); G.stroke(); } G.globalAlpha = 1; txt('▼', s.x, s.y - 44 - Math.sin(M.t * 4) * 4, 20, f.acc, 'center', true); }
+    for (const c of M.chests) { G.fillStyle = c.open ? '#3a2a1a' : '#8a5a2b'; G.fillRect(c.x - 18, c.y - 12, 36, 24); G.fillStyle = GOLD; G.fillRect(c.x - 18, c.y - 3, 36, 4); if (!c.open) { G.globalAlpha = .4 + Math.sin(M.t * 4) * .3; G.fillRect(c.x - 3, c.y - 6, 6, 10); G.globalAlpha = 1; } }
+    { const l = M.lantern; G.strokeStyle = '#555'; G.lineWidth = 3; G.beginPath(); G.moveTo(l.x, l.y + 24); G.lineTo(l.x, l.y - 30); G.stroke(); const gl = G.createRadialGradient(l.x, l.y - 30, 2, l.x, l.y - 30, 70); gl.addColorStop(0, 'rgba(255,200,90,.6)'); gl.addColorStop(1, 'rgba(255,200,90,0)'); G.fillStyle = gl; G.fillRect(l.x - 70, l.y - 100, 140, 140); G.fillStyle = '#ffb347'; G.beginPath(); G.roundRect(l.x - 11, l.y - 46, 22, 30, 7); G.fill(); }
+    if (M.bossAt) drawFoe(BOSS[M.f], M.bossAt.x, M.bossAt.y, .8, M.t);
+    const ents = [...M.shadows.map(s => ({ y: s.y, s })), { y: M.p.y, p: 1 }].sort((a, b) => a.y - b.y);
+    for (const e of ents) {
+      if (e.p) {
+        const p = M.p; chibi(p.x, p.y, CAST.you.p, p.dir, p.walk);
+        if (p.sw > 0) { G.strokeStyle = WH; G.lineWidth = 6; G.globalAlpha = p.sw / .28; G.beginPath(); G.arc(p.x, p.y - 10, 60, p.ang - 1.1, p.ang + 1.1); G.stroke(); G.globalAlpha = 1; }
+        continue;
+      }
+      const s = e.s, w = Math.sin(s.t * 5) * 3, d = s.grp[0];
+      G.globalAlpha = s.stun > 0 ? .35 : 1;
+      G.fillStyle = 'rgba(0,0,0,.45)'; G.beginPath(); G.ellipse(s.x, s.y + 14, 22, 8, 0, 0, 7); G.fill();
+      G.fillStyle = '#0b0710'; G.beginPath(); G.moveTo(s.x - 22, s.y + 14); for (let k = 0; k <= 6; k++) G.lineTo(s.x - 22 + k * 7.3, s.y + 14 - (k % 2 ? 8 : 0) + Math.sin(s.t * 8 + k) * 3); G.quadraticCurveTo(s.x + 30, s.y - 40 + w, s.x, s.y - 46 + w); G.quadraticCurveTo(s.x - 30, s.y - 40 + w, s.x - 22, s.y + 14); G.fill();
+      G.strokeStyle = d.c; G.lineWidth = 2; G.stroke();
+      drawMask(d, s.x, s.y - 26 + w, 12);
+      G.globalAlpha = 1;
+      if (s.alert) txt('!', s.x, s.y - 66 - Math.abs(Math.sin(M.t * 10)) * 4, 30, RED, 'center', true);
+    }
+    for (const m of M.motes) { G.fillStyle = f.mote; G.globalAlpha = .5; G.fillRect(m.x, m.y, m.s, m.s); } G.globalAlpha = 1;
+    G.restore();
+    const px = M.p.x - cx, py = M.p.y - cy, v = G.createRadialGradient(px, py, 240, px, py, 760); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.7)'); G.fillStyle = v; G.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0);
+    // HUD
+    G.fillStyle = INK; slant(60, 12, 300, 54, 16); G.fill(); G.fillStyle = f.acc; slant(60, 62, 280, 4, 2); G.fill();
+    txt(f.n.toUpperCase(), 80, 32, 26, WH, 'left', true); txt(M.boss ? 'THE DEEPEST ROOM' : `LEVEL ${M.L + 1}`, 80, 54, 14, f.acc, 'left', true);
+    S.party.forEach((id, i) => { const s = stats(id), y = 84 + i * 44; S.hp[id] ??= s.mhp; S.sp[id] ??= s.msp; G.fillStyle = 'rgba(7,7,15,.85)'; slant(14, y, 230, 38, 10); G.fill(); txt(CAST[id].n.toUpperCase(), 30, y + 13, 14, WH, 'left', true); bar(30, y + 24, 140, 5, S.hp[id] / s.mhp, '#7dffb0'); bar(30, y + 31, 140, 4, S.sp[id] / s.msp, '#5ab4ff'); txt(`${S.hp[id]}/${s.mhp}`, 232, y + 13, 12, '#cfd0e0', 'right'); });
+    const c = S.cases[M.f] === 1 ? S.dl[M.f] - S.day : -1;
+    if (c >= 0) txt(c ? `FOG IN ${c} DAY${c === 1 ? '' : 'S'}` : 'FOG TONIGHT', 640, 30, 22, c <= 3 ? RED : WH, 'center', true);
+    const ms = 5, mx = W - M.cw * ms - 20, my = 16; G.fillStyle = 'rgba(0,0,0,.6)'; G.fillRect(mx - 6, my - 6, M.cw * ms + 12, M.rh * ms + 12);
+    G.fillStyle = 'rgba(255,255,255,.22)'; for (let j = 0; j < M.rh; j++) for (let i = 0; i < M.cw; i++) if (M.grid[j * M.cw + i]) G.fillRect(mx + i * ms, my + j * ms, ms, ms);
+    if (M.stairs) { G.fillStyle = f.acc; G.fillRect(mx + M.stairs.x / T * ms - 3, my + M.stairs.y / T * ms - 3, 6, 6); }
+    G.fillStyle = RED; for (const s of M.shadows) G.fillRect(mx + s.x / T * ms - 2, my + s.y / T * ms - 2, 4, 4);
+    G.fillStyle = WH; G.fillRect(mx + M.p.x / T * ms - 3, my + M.p.y / T * ms - 3, 6, 6);
+    if (M.hint > 0 || K.bot) { G.globalAlpha = K.bot ? .9 : Math.min(1, M.hint); txt('Strike first with SPACE or a tap · find the ▼ stairs · the lantern leads home', 640, H - 26, 17, WH, 'center'); G.globalAlpha = 1; }
+    if (!K.bot) btn(W - 140, H - 60, 120, 40, 'MASKS', () => { ov = { k: 'masks' }; }, { nk: 1, size: 18, k: 10 });
+  }
+  function drawBattle() {
+    const th = B.th, t = K.t;
+    bgFill(INK);
+    G.save(); G.translate(440, 260); G.rotate(t * .04);
+    for (let i = 0; i < 18; i++) { G.rotate(Math.PI / 9); G.fillStyle = i % 2 ? th.acc + '1c' : 'rgba(255,255,255,.025)'; G.beginPath(); G.moveTo(0, 0); G.lineTo(1500, -130); G.lineTo(1500, 130); G.fill(); }
+    G.restore();
+    const fg = G.createLinearGradient(0, 330, 0, H); fg.addColorStop(0, th.face); fg.addColorStop(1, '#000'); G.fillStyle = fg; G.fillRect(K.view.x0, 360, K.view.x1 - K.view.x0, H);
+    G.strokeStyle = th.acc; G.globalAlpha = .4; G.lineWidth = 2; for (let i = 0; i < 9; i++) { G.beginPath(); G.moveTo(-200, 380 + i * i * 5); G.lineTo(1500, 380 + i * i * 5); G.stroke(); } G.globalAlpha = 1;
+    G.fillStyle = RED; G.beginPath(); G.moveTo(K.view.x1, K.view.y0); G.lineTo(K.view.x1, 140); G.lineTo(980, K.view.y0); G.fill();
+    // foes
+    B.foes.forEach((f, i) => {
+      if (f.dead >= 1) return;
+      const sh = f.hurt > 0 ? Math.sin(t * 80) * 8 * f.hurt : 0;
+      drawFoe(f.d, f.x + sh, f.y + f.dead * 40, f.boss ? 1.4 : 1, t, { down: f.down && !f.boss, hurt: f.hurt, a: 1 - f.dead });
+      if (f.hp <= 0 || B.pose) return;
+      const top = f.boss ? 90 : f.y - 250, ix = f.boss ? 150 : f.x;
+      G.fillStyle = 'rgba(7,7,15,.8)'; slant(ix - 90, top - 30, 180, 26, 8); G.fill();
+      txt(`${f.n}  Lv${f.lv}`, ix, top - 17, 14, WH, 'center', true);
+      bar(ix - 70, top, 140, 6, f.dh / f.mhp, RED, 'rgba(255,255,255,.18)');
+      affRow(f.af, ix - 87, top + 12, 22, f.key);
+      if (f.down && !f.boss) { G.fillStyle = GOLD; slant(f.x - 40, f.y - 40, 80, 26, 8); G.fill(); txt('DOWN', f.x, f.y - 27, 18, INK, 'center', true); }
+    });
+    // party cards
+    B.party.forEach((u, i) => {
+      const x = 720 + i * 186, cur = u === B.cur, y = 580 - (cur ? 18 : 0);
+      G.save(); G.fillStyle = 'rgba(0,0,0,.5)'; slant(x + 6, y + 6, 178, 118, 20); G.fill();
+      G.fillStyle = u.hp <= 0 ? '#2a2a30' : cur ? RED : WH; slant(x, y, 178, 118, 20); G.fill();
+      slant(x, y, 178, 118, 20); G.clip(); portrait(u.id, x + 50, y + 40, .36, { smile: cur }); G.restore();
+      if (u.id === 'you' && u.hp > 0) drawMask(curMask().d, x + 150, y + 22, 14);
+      txt(u.n.toUpperCase(), x + 96, y + 70, 20, u.hp <= 0 ? '#777' : cur ? WH : INK, 'left', true);
+      G.fillStyle = INK; G.fillRect(x + 6, y + 84, 160, 30);
+      bar(x + 12, y + 90, 150, 7, u.dh / u.mhp, '#7dffb0', '#333'); bar(x + 12, y + 102, 150, 6, u.sp / u.msp, '#5ab4ff', '#333');
+      txt(`${Math.round(u.hp)}`, x + 164, y + 76, 16, u.hp <= 0 ? '#777' : cur ? WH : INK, 'right', true);
+      if (u.down) { G.fillStyle = GOLD; slant(x + 100, y - 18, 70, 22, 6); G.fill(); txt('DOWN', x + 135, y - 7, 15, INK, 'center', true); }
+      if (u.guard) txt('GUARD', x + 135, y - 7, 15, CY, 'center', true);
+    });
+    // cut-in
+    if (B.cut) {
+      const c = B.cut, k = Math.min(1, c.t / .16), out = c.t > .6 ? (c.t - .6) / .15 : 0, ox = (1 - k) * 700 - out * 900;
+      G.save(); G.translate(ox, 0); G.globalAlpha = 1 - out;
+      G.fillStyle = INK; G.beginPath(); G.moveTo(-100, 250); G.lineTo(1400, 170); G.lineTo(1400, 330); G.lineTo(-100, 400); G.fill();
+      const col = c.s.e !== undefined ? ELC[c.s.e] : c.s.k === 'heal' ? '#7dffb0' : CY;
+      G.fillStyle = col; G.beginPath(); G.moveTo(-100, 392); G.lineTo(1400, 322); G.lineTo(1400, 330); G.lineTo(-100, 400); G.fill();
+      if (c.u.side === 0) { G.save(); G.beginPath(); G.moveTo(-100, 250); G.lineTo(1400, 170); G.lineTo(1400, 330); G.lineTo(-100, 400); G.clip(); portrait(c.u.id, 860, 220, .62, { smile: 1 }); if (c.u.id === 'you') drawMask(c.swap ? MK[S.masks[S.mask].i] : curMask().d, 1060, 250, 56, -.2); G.restore(); }
+      else drawFoe(c.u.d, 1000, 380, .6, t);
+      txt(c.s.n.toUpperCase(), 150, 300, 64, WH, 'left', true);
+      txt(c.swap ? 'MASK CHANGE' : c.u.side ? c.u.n : `${c.u.n === 'You' ? curMask().d.n : c.u.n}`, 160, 352, 20, col, 'left', true);
+      G.restore();
+    }
+    // all-out attack
+    if (B.all > 0) {
+      const k = 1.8 - B.all; G.fillStyle = 'rgba(0,0,0,.85)'; G.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0);
+      for (let i = 0; i < 14; i++) { const a = (i * 2.4 + k * 3) % 6.28, r = 200 + (i * 53) % 300; G.strokeStyle = i % 3 ? RED : WH; G.lineWidth = 6 + i % 4 * 4; G.beginPath(); G.moveTo(440 + Math.cos(a) * r, 300 + Math.sin(a) * r * .6); G.lineTo(440 - Math.cos(a) * r, 300 - Math.sin(a) * r * .6); G.stroke(); }
+      B.party.forEach((u, i) => { if (u.hp > 0) { G.fillStyle = '#000'; G.save(); G.translate(300 + i * 160 + Math.sin(k * 20 + i) * 30, 260 + Math.cos(k * 17 + i) * 40); G.rotate(Math.sin(k * 9 + i)); G.beginPath(); G.ellipse(0, 0, 26, 50, 0, 0, 7); G.fill(); G.restore(); } });
+      G.save(); G.translate(640, 560); G.rotate(-.08); G.fillStyle = RED; slant(-400, -50, 800, 100, 30); G.fill(); txt(k < 1.1 ? 'ALL-OUT ATTACK!' : 'FINISH!', 0, 4, 70, WH, 'center', true); G.restore();
+    }
+    // banner
+    if (B.ban && B.banT > 0) {
+      const k = Math.min(1, (B.banT > 99 ? 1 : 1.4 - B.banT) * 6);
+      G.save(); G.translate(640 - (1 - k) * 800, 150); G.rotate(-.1); G.fillStyle = B.ban[1]; slant(-300, -46, 600, 92, 30); G.fill(); G.fillStyle = INK; slant(-280, -36, 560, 72, 24); G.fill();
+      txt(B.ban[0], 0, 4, 66, B.ban[1] === RED ? WH : B.ban[1], 'center', true); G.restore();
+    }
+    if (B.msg && B.wait > 0) { G.fillStyle = 'rgba(7,7,15,.85)'; G.fillRect(K.view.x0, 0, K.view.x1 - K.view.x0, 40); txt(B.msg, 640, 21, 18, WH, 'center'); }
+    const tip = !B.o.tip ? null : B.menu === 'allout' ? ['Every enemy is DOWN!', 'Finish them with an ALL-OUT ATTACK, or TALK to win a mask.'] : B.cur && B.menu === 'root' && B.cur.id === 'you' ? ['Puddle Imps are weak to FIRE. Choose SKILL, then Spark.', 'A weak hit knocks a foe DOWN and you act again!'] : B.cur && B.menu === 'root' ? ['Rin knows Spark too. Fire at the one still standing!', 'Weakness hits never get old.'] : null;
+    if (tip) { G.fillStyle = 'rgba(7,7,15,.92)'; slant(640, 470, 620, 66, 16); G.fill(); G.strokeStyle = GOLD; G.lineWidth = 2; G.stroke(); txt(tip[0], 950, 492, 18, GOLD, 'center'); txt(tip[1], 950, 516, 15, WH, 'center'); }
+    drawCommands();
+  }
+  function drawCommands() {
+    const u = B.cur, m = B.menu;
+    if (!m) return;
+    if (m === 'res') {
+      const r = B.res; G.fillStyle = 'rgba(7,7,15,.9)'; slant(330, 150, 620, r.lose ? 200 : 300 + r.learned.length * 26, 30); G.fill(); G.strokeStyle = r.lose ? RED : GOLD; G.lineWidth = 3; G.stroke();
+      if (r.lose) { txt('YOU BLACKED OUT', 640, 210, 52, RED, 'center', true); btn(520, 280, 260, 54, 'Continue', battleDone); return; }
+      txt('VICTORY', 640, 200, 64, GOLD, 'center', true);
+      txt(`+${r.xp} EXP     +¥${r.yen}`, 640, 262, 24, WH, 'center');
+      txt(r.lv ? `LEVEL UP! Your party is now Lv ${r.lv}. HP and SP restored.` : `Lv ${S.lv} · next level in ${need(S.lv) - S.xp} EXP`, 640, 300, 18, r.lv ? CY : '#cfd0e0', 'center');
+      r.learned.forEach((l, i) => txt(l + '!', 640, 332 + i * 26, 17, GOLD, 'center'));
+      btn(520, 360 + r.learned.length * 26, 260, 54, 'Continue', battleDone); return;
+    }
+    if (m === 'allout') {
+      txt('Every enemy is DOWN!', 200, 420, 22, GOLD, 'center', true);
+      btn(40, 450, 300, 62, 'ALL-OUT ATTACK', allOut, { size: 30 });
+      btn(54, 524, 300, 56, 'TALK', talk, { sub: 'Win a mask, money or an item', size: 26 });
+      back = null; return;
+    }
+    if (m === 'talk') {
+      const T_ = B.talk; G.fillStyle = 'rgba(7,7,15,.92)'; slant(30, 300, 760, 110, 24); G.fill(); G.strokeStyle = T_.f.d.c; G.lineWidth = 3; G.stroke();
+      drawMask(T_.f.d, 90, 352, 34);
+      txt(T_.f.n, 140, 328, 18, T_.f.d.c, 'left', true); wrap(`"${T_.q[0]}"`, 600, 22).forEach((l, i) => txt(l, 140, 360 + i * 26, 22, WH));
+      T_.ans.forEach((a, i) => btn(40 + i * 12, 430 + i * 70, 640, 60, T_.q[1][a], () => answer(a), { body: 1, size: 21 }));
+      return;
+    }
+    if (!u || B.wait > 0) return;
+    if (m === 'root') {
+      txt(u.id === 'you' ? 'YOUR MOVE' : `${u.n.toUpperCase()}'S MOVE`, 46, 412, 22, RED, 'left', true);
+      const L = [['ATTACK', () => { B.pend = { sk: 'Attack' }; B.menu = 'target'; }], ['SKILL', () => { B.menu = 'skill'; }]];
+      if (u.id === 'you') L.push(['MASK', () => { ov = { k: 'masks', battle: 1 }; }, B.swapped || S.masks.length < 2]);
+      L.push(['GUARD', () => { u.guard = true; B.menu = null; B.msg = `${u.n} is guarding.`; later(.6, () => { B.ai++; nextTurn(); }); }], ['ITEM', () => { B.menu = 'item'; }, !S.items.snack && !S.items.soda]);
+      if (!B.o.boss && !B.o.tip) L.push(['RUN', () => { B.menu = null; if (Math.random() < .65 || S.bond[2] >= 10) { B.msg = 'You got away!'; later(.7, () => { B.res = { ran: 1 }; battleDone(); }); } else { B.msg = "Couldn't get away!"; later(.9, () => { B.ai++; nextTurn(); }); } }]);
+      L.forEach(([l, fn, off], i) => btn(40 + i * 14, 430 + i * 46, 250, 40, l, fn, { off, size: 26 }));
+      back = null; return;
+    }
+    if (m === 'skill') {
+      const L = u.sk.filter(n => n !== 'Attack'), y0 = Math.min(436, 680 - (L.length + 1) * 42);
+      L.forEach((n, i) => {
+        const s = SK[n], ok = afford(u, s);
+        btn(40 + i * 8, y0 + i * 42, 330, 38, n, () => { B.pend = { sk: n }; if (s.t === 'one') B.menu = 'target'; else if (s.t === 'ally') B.menu = 'ally'; else pAct({ sk: n, tg: s.t === 'all' ? B.foes.filter(f => f.hp > 0) : s.t === 'party' ? B.party.filter(x => x.hp > 0) : [] }); },
+          { off: !ok, size: 22, right: s.c ? (s.e === 0 && s.k === 'dmg' ? s.c + '% HP' : s.c + ' SP') : '', bg: s.e !== undefined ? 'rgba(7,7,15,.9)' : 'rgba(10,30,30,.9)' });
+        G.fillStyle = s.e !== undefined ? ELC[s.e] : s.k === 'heal' ? '#7dffb0' : CY; G.fillRect(28 + i * 8, y0 + 6 + i * 42, 8, 26);
+      });
+      btn(40 + L.length * 8, y0 + L.length * 42, 160, 36, 'BACK', () => { B.menu = 'root'; }, { size: 20 });
+      back = () => { B.menu = 'root'; }; return;
+    }
+    if (m === 'item') {
+      btn(40, 440, 330, 46, `Snack ×${S.items.snack}`, () => { B.pend = { item: 'snack' }; B.menu = 'ally'; }, { off: !S.items.snack, sub: '+70 HP to one ally', size: 22 });
+      btn(52, 496, 330, 46, `Soda ×${S.items.soda}`, () => { B.pend = { item: 'soda' }; B.menu = 'ally'; }, { off: !S.items.soda, sub: '+30 SP to one ally', size: 22 });
+      btn(64, 552, 160, 36, 'BACK', () => { B.menu = 'root'; }, { size: 20 });
+      back = () => { B.menu = 'root'; }; return;
+    }
+    if (m === 'target') {
+      txt('Choose a target', 46, 450, 20, WH, 'left', true);
+      B.foes.forEach(f => { if (f.hp <= 0) return; const sz = f.boss ? 200 : 120; if (btn(f.x - sz / 2, f.y - sz * 2, sz, sz * 2, f.n, () => pAct({ sk: B.pend.sk, tg: [f] }), { hid: 1 })) { txt('▼', f.x, f.y - (f.boss ? 400 : 290) + Math.sin(K.t * 8) * 6, 40, RED, 'center', true); } });
+      btn(40, 480, 160, 36, 'BACK', () => { B.menu = 'root'; }, { size: 20 });
+      back = () => { B.menu = 'root'; }; return;
+    }
+    if (m === 'ally') {
+      txt('Choose an ally', 46, 450, 20, WH, 'left', true);
+      B.party.forEach((p, i) => { if (p.hp <= 0) return; if (btn(720 + i * 186, 560, 178, 140, p.n, () => {
+        const pd = B.pend;
+        if (pd.item) { S.items[pd.item]--; if (pd.item === 'snack') { p.hp = Math.min(p.mhp, p.hp + 70); qpop(p, '+70', '#7dffb0', 30, .05); } else { p.sp = Math.min(p.msp, p.sp + 30); qpop(p, '+30 SP', '#5ab4ff', 30, .05); } B.menu = null; B.msg = 'Used a ' + (pd.item === 'snack' ? 'Snack' : 'Soda') + '.'; K.chime(880, [0, 7]); later(.8, () => { B.ai++; nextTurn(); }); }
+        else pAct({ sk: pd.sk, tg: [p] });
+      }, { hid: 1 })) txt('▼', 809 + i * 186, 535 + Math.sin(K.t * 8) * 5, 30, GOLD, 'center', true); });
+      btn(40, 480, 160, 36, 'BACK', () => { B.menu = 'root'; }, { size: 20 });
+      back = () => { B.menu = 'root'; };
+    }
+  }
+  function maskCard(k, x, y, w, h, fn, o = {}) {
+    const m = S.masks[k], d = MK[m.i], eq = k === S.mask, ok = d.lv <= S.lv;
+    const f = btn(x, y, w, h, '', fn, { off: o.off, k: 14 });
+    drawMask(d, x + 46 + (f ? 8 : 0), y + h / 2, 30);
+    const tx = x + 92 + (f ? 8 : 0);
+    txt(d.n, tx, y + 20, 21, o.sel ? GOLD : WH, 'left', true);
+    txt(`Lv ${d.lv}${m.b ? ' +' + m.b : ''} · ${ARC[d.a]} · ${EL[d.e]}`, tx, y + 42, 13, ok ? '#cfd0e0' : RED);
+    txt(ok ? d.sk.join(', ') : `Needs party Lv ${d.lv}`, tx, y + 60, 13, ok ? ELC[d.e] : RED);
+    affRow(d.af, tx, y + 72, 22);
+    if (eq) { G.fillStyle = RED; slant(x + w - 104, y - 8, 96, 22, 6); G.fill(); txt('EQUIPPED', x + w - 56, y + 3, 13, WH, 'center', true); }
+    if (o.sel) { G.strokeStyle = GOLD; G.lineWidth = 4; slant(x, y, w, h, 14); G.stroke(); }
+  }
+  function drawOverlay() {
+    G.fillStyle = 'rgba(5,5,12,.88)'; G.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0);
+    const close = () => { ov = null; }; back = close;
+    if (ov.k === 'masks') {
+      txt('MASKS', 60, 50, 52, RED, 'left', true); txt(`${S.masks.length}/${maskCap()} carried · party Lv ${S.lv} · ${ov.battle ? 'switching is free once per turn' : 'tap a mask to wear it'}`, 260, 56, 17, '#cfd0e0');
+      S.masks.forEach((m, k) => maskCard(k, 50 + (k % 2) * 600, 100 + Math.floor(k / 2) * 112, 570, 100, () => {
+        if (MK[m.i].lv > S.lv) { K.sfx(160, .15, 'sawtooth', .08); return; }
+        if (ov.battle) { if (k !== S.mask) swapMask(k); else ov = null; } else { S.mask = k; heal1(); K.sfx(660, .1, 'triangle', .08); save(); }
+      }));
+      btn(1060, 650, 180, 50, 'CLOSE', close, { size: 24 });
+    } else if (ov.k === 'bonds') {
+      txt('BONDS', 60, 50, 52, RED, 'left', true); txt('Fusing a mask of a friend\'s arcana adds +1 level per 2 ranks.', 270, 56, 17, '#cfd0e0');
+      BONDS.forEach((b, i) => {
+        const x = 50 + (i % 2) * 600, y = 96 + Math.floor(i / 2) * 270, r = S.bond[i];
+        G.fillStyle = 'rgba(20,20,34,.95)'; slant(x, y, 570, 250, 20); G.fill();
+        G.save(); slant(x, y, 570, 250, 20); G.clip(); portrait(b.id, x + 90, y + 90, .55, { smile: r >= 5 }); G.restore();
+        txt(CAST[b.id].n.toUpperCase(), x + 200, y + 30, 30, WH, 'left', true); txt(`${ARC[b.arc]} · ${b.where}`, x + 200, y + 58, 15, '#cfd0e0');
+        for (let k = 0; k < 10; k++) { G.fillStyle = k < r ? GOLD : 'rgba(255,255,255,.15)'; slant(x + 200 + k * 34, y + 76, 30, 14, 4); G.fill(); }
+        txt(r >= 10 ? 'MAX RANK' : REQ[r] === 1 ? 'Ready for the next rank ✓' : `Next rank needs ${STATS[b.stat]} "${STN[b.stat][REQ[r] - 1]}"${stLv(b.stat) >= REQ[r] ? ' ✓' : ''}`, x + 200, y + 106, 15, r >= 10 ? GOLD : stLv(b.stat) >= REQ[r] ? '#7dffb0' : RED);
+        b.perks.forEach((p, k) => txt(`R${p[0]}  ${p[1]}`, x + 200, y + 136 + k * 24, 14, r >= p[0] ? CY : '#666'));
+      });
+      btn(1060, 650, 180, 50, 'CLOSE', close, { size: 24 });
+    } else if (ov.k === 'shop') {
+      const disc = S.bond[1] >= 3 ? .8 : 1, ps = [Math.round(400 * disc), Math.round(600 * disc)];
+      panel('MART', [
+        { l: `Snack · you have ${S.items.snack}`, s: '+70 HP to one ally', r: '¥' + ps[0], off: S.yen < ps[0], fn: () => { S.yen -= ps[0]; S.items.snack++; K.sfx(1320, .07, 'square', .05); save(); } },
+        { l: `Soda · you have ${S.items.soda}`, s: '+30 SP to one ally', r: '¥' + ps[1], off: S.yen < ps[1], fn: () => { S.yen -= ps[1]; S.items.soda++; K.sfx(1320, .07, 'square', .05); save(); } },
+        { l: 'Done', fn: close }], { note: `You have ¥${S.yen.toLocaleString()}${disc < 1 ? ' · Mika discount!' : ''}`, x: 420, y: 220 });
+    } else if (ov.k === 'fuse') {
+      txt('SHRINE FUSION', 60, 50, 46, RED, 'left', true); txt('Pick two masks. They become one new mask.', 420, 56, 17, '#cfd0e0');
+      S.masks.forEach((m, k) => maskCard(k, 50 + (k % 2) * 400, 96 + Math.floor(k / 2) * 106, 380, 96, () => {
+        if (ov.a === k) ov.a = -1; else if (ov.b === k) ov.b = -1; else if (ov.a < 0) ov.a = k; else ov.b = k; tick();
+      }, { sel: k === ov.a || k === ov.b }));
+      const x = 870, y = 100; G.fillStyle = 'rgba(20,20,34,.95)'; slant(x, y, 380, 500, 20); G.fill();
+      if (ov.a >= 0 && ov.b >= 0) {
+        const r = fuseRes(ov.a, ov.b);
+        if (!r) txt('These two will not fuse.', x + 190, y + 200, 20, RED, 'center');
+        else {
+          drawMask(r.m, x + 190, y + 110, 60);
+          txt(r.m.n, x + 190, y + 205, 34, WH, 'center', true);
+          txt(`${ARC[r.m.a]} · Lv ${r.m.lv}${r.b ? ' +' + r.b + ' bond bonus' : ''} · ${EL[r.m.e]}`, x + 190, y + 240, 16, '#cfd0e0', 'center');
+          txt(r.m.sk.join(', '), x + 190, y + 268, 16, ELC[r.m.e], 'center');
+          affRow(r.m.af, x + 75, y + 290, 30);
+          const why = r.owned ? 'You already carry this mask' : r.m.lv > S.lv ? `Needs party Lv ${r.m.lv}` : '';
+          if (why) txt(why, x + 190, y + 360, 18, RED, 'center');
+          btn(x + 60, y + 400, 260, 56, 'FUSE', () => {
+            const keep = [ov.a, ov.b]; S.masks = S.masks.filter((_, k) => !keep.includes(k)); S.masks.push({ i: r.m.i, b: r.b }); S.mask = S.masks.length - 1;
+            if (!S.seen.includes(r.m.i)) S.seen.push(r.m.i); heal1(); ov.a = ov.b = -1; K.flash(ELC[r.m.e], .5); K.chime(523, [0, 4, 7, 12, 16]); save();
+            K.toast(`${r.m.n} was born!`);
+          }, { off: !!why, size: 30 });
+        }
+      } else txt(ov.a >= 0 ? 'Pick a second mask' : 'Pick two masks', x + 190, y + 240, 22, '#cfd0e0', 'center');
+      btn(1060, 650, 180, 50, 'DONE', close, { size: 24 });
+    }
+  }
+  function heal1() { const s = stats('you'); S.hp.you = Math.min(S.hp.you ?? s.mhp, s.mhp); S.sp.you = Math.min(S.sp.you ?? s.msp, s.msp); }
+  function fuseRes(a, b) {
+    const A = MK[S.masks[a].i], Bm = MK[S.masks[b].i], arc = A.a === Bm.a ? A.a : (A.a + Bm.a + 1) % 6, avg = (A.lv + Bm.lv) / 2;
+    const c = MK.filter(m => m.a === arc && m !== A && m !== Bm).sort((x, y) => x.lv - y.lv);
+    if (!c.length) return null;
+    const m = c.find(x => x.lv >= Math.floor(avg) + 1) || c[c.length - 1];
+    const bi = BONDS.findIndex(x => x.arc === arc), bonus = (bi >= 0 ? Math.floor(S.bond[bi] / 2) : 0) + (S.bond[3] >= 7 ? 1 : 0);
+    return { m, b: bonus, owned: S.masks.some(x => x.i === m.i && x !== S.masks[a] && x !== S.masks[b]) };
+  }
+  function drawDialog() {
+    const l = D.L[D.i], who = l[0], text = l[1].slice(0, Math.floor(D.ch));
+    if (who && CAST[who] && who !== 'you') { G.save(); G.globalAlpha = Math.min(1, D.ch / 10 + .3); portrait(who, 220, 330, .78, { smile: /!|Thank|Ha|yes/i.test(l[1]) }); G.restore(); }
+    G.fillStyle = 'rgba(0,0,0,.35)'; G.fillRect(K.view.x0, 500, K.view.x1 - K.view.x0, 220);
+    G.fillStyle = WH; slant(40, 534, 1210, 170, 30); G.fill(); G.fillStyle = INK; slant(48, 540, 1194, 158, 28); G.fill();
+    if (who) { G.fillStyle = RED; slant(70, 510, 40 + CAST[who].n.length * 17, 44, 14); G.fill(); txt(CAST[who].n.toUpperCase(), 92, 533, 26, WH, 'left', true); }
+    wrap(text, 1100, 25).forEach((s, i) => txt(s, 90, 590 + i * 36, 25, WH));
+    if (l[2] && D.ch >= l[1].length) l[2].forEach((c, i) => btn(560 + i * 12, 330 + i * 64 - (l[2].length - 3) * 60, 640, 54, c[0], () => dChoose(c[1]), { body: 1, size: 21 }));
+    else if (D.ch >= l[1].length) txt('▼', 1200, 680 + Math.sin(K.t * 6) * 4, 20, RED, 'center', true);
+  }
+  function drawCal() {
+    const k = cal.t, a = k < .25 ? k / .25 : k > 1.4 ? 1 - (k - 1.4) / .3 : 1;
+    G.globalAlpha = Math.max(0, a); bgFill(INK);
+    G.save(); G.translate(640, 330); G.rotate(-.08);
+    G.fillStyle = RED; slant(-560 + (1 - Math.min(1, k * 4)) * -400, -120, 1120, 240, 60); G.fill();
+    txt(`10/${S.day}`, -160, -10, 170, WH, 'center', true); txt(dow(S.day), 140, -50, 70, INK, 'center', true);
+    txt(S.slot ? 'EVENING' : S.day >= 30 ? 'FESTIVAL' : 'DAYTIME', 140, 30, 50, WH, 'center', true);
+    G.restore();
+    const c = S.cases.findIndex(x => x === 1);
+    txt(c >= 0 ? `Fog in ${S.dl[c] - S.day} days · ${CAST[FL[c].who].n} is missing` : `${Math.max(0, 30 - S.day)} days until the Lantern Festival`, 640, 520, 26, '#cfd0e0', 'center');
+    G.globalAlpha = 1;
+  }
+  GAME.draw = gr => {
+    G = gr; ui = []; back = null;
+    if (mode === 'menu') drawMenu();
+    else if (mode === 'town' && walker) drawTown();
+    else if (mode === 'home' && walker) drawHome();
+    else if (mode === 'dungeon' && M) drawDungeon();
+    else if (mode === 'battle' && B) drawBattle();
+    else bgFill(INK);
+    if (P && !D && !ov) {
+      if (P.k === 'lantern') panel('THE LANTERN', [{ l: 'Leave the Undertow', s: 'Go home. The night ends.', fn: () => { P = null; endNight(); } }, { l: 'Stay', fn: () => { P = null; } }]);
+      else panel(P.sp.n.toUpperCase(), spotOpts(P.sp));
+    }
+    if (ov) { ui = []; drawOverlay(); }
+    if (D) { if (ui.length) ui = []; drawDialog(); }
+    if (cal) { ui = []; drawCal(); }
+    if (tr > 0) { G.fillStyle = `rgba(0,0,0,${Math.min(1, tr * 2)})`; G.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0); }
+    const sig = ui.map(u => u.label).join('|');
+    if (sig !== uiSig) { uiSig = sig; focus = ui.findIndex(u => !u.nk && !u.off); if (focus < 0) focus = ui.findIndex(u => !u.nk); }
+  };
+
+  /* ---------- input ---------- */
+  const hitUI = (x, y) => { for (let i = ui.length - 1; i >= 0; i--) { const u = ui[i]; if (x >= u.x && x <= u.x + u.w && y >= u.y && y <= u.y + u.h) return i; } return -1; };
+  GAME.down = (x, y) => {
+    mouse.x = x; mouse.y = y;
+    if (cal) { cal.t = Math.max(cal.t, 1.4); return; }
+    const i = hitUI(x, y);
+    if (i >= 0) { const u = ui[i]; if (!u.off) { focus = i; tick(); u.fn(); } return; }
+    if (D) { if (!D.L[D.i][2]) dAdvance(); else if (D.ch < D.L[D.i][1].length) D.ch = 9999; return; }
+    if (P || ov) return;
+    if (mode === 'town' || mode === 'home') {
+      const sp = places().find(p => x >= p.r[0] - 10 && x <= p.r[0] + p.r[2] + 10 && y >= p.r[1] - 10 && y <= p.r[1] + p.r[3] + 10);
+      walker.to = sp ? { x: sp.d[0], y: sp.d[1] } : { x, y }; if (sp) walker.cool = false;
+    } else if (mode === 'dungeon' && M) {
+      const wx = x + M.cam.x, wy = y + M.cam.y, p = M.p;
+      const near = M.shadows.find(s => Math.hypot(s.x - wx, s.y - wy) < 60 && Math.hypot(s.x - p.x, s.y - p.y) < 110);
+      if (near) { p.ang = Math.atan2(near.y - p.y, near.x - p.x); strike(); } else mouse.held = true;
+    }
+  };
+  GAME.move = (x, y) => { mouse.x = x; mouse.y = y; const i = hitUI(x, y); if (i >= 0 && !ui[i].nk && i !== focus) focus = i; };
+  GAME.up = () => { mouse.held = false; };
+  const DIRS = { ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd' };
+  GAME.key = (c, dn) => {
+    const dir = DIRS[c];
+    const menu = cal || D || P || ov || mode === 'battle' || mode === 'menu';
+    if (dir) {
+      if (!menu) { keys[dir] = dn; return; }
+      keys[dir] = false;
+      if (!dn) return;
+      const idx = ui.map((u, i) => i).filter(i => !ui[i].nk); if (!idx.length) return;
+      let p = idx.indexOf(focus); p = (p + (dir === 'u' || dir === 'l' ? -1 : 1) + idx.length) % idx.length; focus = idx[p]; tick(); return;
+    }
+    if (!dn) return;
+    if (c === 'Space' || c === 'Enter') {
+      if (cal) { cal.t = Math.max(cal.t, 1.4); return; }
+      if (D && !D.L[D.i][2]) return dAdvance();
+      if (D && D.ch < D.L[D.i][1].length) { D.ch = 9999; return; }
+      if (menu && ui[focus] && !ui[focus].nk) { if (!ui[focus].off) { tick(); ui[focus].fn(); } return; }
+      if (mode === 'dungeon' && M && M.p.sw <= 0) strike();
+      return;
+    }
+    if ((c === 'Backspace' || c === 'KeyX') && back) { back(); return; }
+    if (c === 'KeyM' && !menu && S) ov = { k: 'masks' };
+    if (c === 'KeyB' && !menu && S && mode !== 'dungeon') ov = { k: 'bonds' };
+  };
+  if (/[?&]test/.test(location.search)) window.AH = { get K() { return K; }, botPick: () => botPick(), get S() { return S; }, set S(v) { S = v; }, get B() { return B; }, get M() { return M; }, get D() { return D; }, get mode() { return mode; }, get ui() { return ui; }, startBattle, foe, MK, BOSS, enterUndertow, newDay, endSlot, festival };
+})();
+
+/* Pulsebox game kit: canvas scaling, input, menus, skins shop, coins, best score, sound and effects.
+   A game defines GAME before this runs: { id, title, tagline, how:[], bg, skins:[{name,price,c:[]}],
+   reset(), update(dt), draw(g), down(x,y), move(x,y), up(x,y), key(code,isDown), bot(dt), drawSkin(g,skin,size) }.
+   Everything is in a 1280x720 world; K.view is the visible part of it (it can be wider or taller on odd screens).
+   ?demo plays the bot forever with no menus (used to record trailers). */
+'use strict';
+const $ = id => document.getElementById(id);
+const DEMO = /[?&]demo/.test(location.search), POSE = /[?&]pose/.test(location.search) && GAME.pose;  // ?demo&pose freezes a staged scene for cover art
+const cv = $('cv'), g = cv.getContext('2d');
+const K = {
+  W, H, t: 0, state: 'title', score: 0, runCoins: 0, bot: true, view: { x0: 0, y0: 0, x1: W, y1: H },
+  rand: (a, b) => a + Math.random() * (b - a),
+  irand: (a, b) => Math.floor(a + Math.random() * (b - a + 1)),
+  pick: a => a[Math.floor(Math.random() * a.length)],
+  clamp: (v, a, b) => v < a ? a : v > b ? b : v,
+  lerp: (a, b, t) => a + (b - a) * t,
+  dist: (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by),
+};
+document.documentElement.style.setProperty('--accent', GAME.accent || '#c6ff3d');
+document.documentElement.style.setProperty('--accent2', GAME.accent2 || '#29e0ff');
+document.documentElement.style.setProperty('--bg', GAME.bg || '#0a0c12');
+if (GAME.font) document.documentElement.style.setProperty('--display', `'${GAME.font}', 'Arial Black', system-ui, sans-serif`);
+if (DEMO) document.body.classList.add('demo');
+
+/* ---------- save ---------- */
+const SKEY = 'pbx-' + GAME.id;
+const save = { best: 0, coins: 0, owned: [0], skin: 0, plays: 0, mute: false };
+try { Object.assign(save, JSON.parse(localStorage.getItem(SKEY) || '{}')); } catch (e) {}
+const persist = () => { try { localStorage.setItem(SKEY, JSON.stringify(save)); } catch (e) {} };
+K.save = save; K.persist = persist;
+Object.defineProperty(K, 'skin', { get: () => GAME.skins[DEMO || K.bot ? (K.demoSkin || 0) : save.skin] || GAME.skins[0] });
+
+/* ---------- screen ---------- */
+let sc = 1, ox = 0, oy = 0, dpr = 1;
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+  sc = Math.min(innerWidth / W, innerHeight / H); ox = (innerWidth - W * sc) / 2; oy = (innerHeight - H * sc) / 2;
+  K.view = { x0: -ox / sc, y0: -oy / sc, x1: W + ox / sc, y1: H + oy / sc };
+}
+addEventListener('resize', resize); resize();
+
+/* ---------- sound ---------- */
+let ac = null;
+// every sound goes through K.master, which is silent on menus, while paused and when muted, so games can run looping sounds
+function audio() {
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); K.ac = ac; K.master = ac.createGain(); K.master.gain.value = 0; K.master.connect(ac.destination); } catch (e) {} }
+  if (ac && ac.state === 'suspended') ac.resume(); return ac;
+}
+K.audio = audio;
+let masterOn = false;
+function masterSync() {
+  const on = !!ac && !save.mute && (K.state === 'play' || K.state === 'over') && !K.bot;
+  if (ac && on !== masterOn) { masterOn = on; K.master.gain.setTargetAtTime(on ? 1 : 0, ac.currentTime, .05); }
+}
+K.sfx = (f = 440, d = .1, type = 'square', v = .12, slide = 0, delay = 0) => {
+  if (save.mute || K.bot || !ac) return;
+  const t = ac.currentTime + delay, o = ac.createOscillator(), a = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
+  a.gain.setValueAtTime(v, t); a.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(a).connect(K.master); o.start(t); o.stop(t + d + .02);
+};
+K.noise = (d = .15, v = .15, hp = 800) => {
+  if (save.mute || K.bot || !ac) return;
+  const n = Math.floor(ac.sampleRate * d), b = ac.createBuffer(1, n, ac.sampleRate), ch = b.getChannelData(0);
+  for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), a = ac.createGain();
+  f.type = 'highpass'; f.frequency.value = hp; a.gain.value = v; s.buffer = b; s.connect(f).connect(a).connect(K.master); s.start();
+};
+K.chime = (base = 523, steps = [0, 4, 7, 12]) => steps.forEach((s, i) => K.sfx(base * Math.pow(2, s / 12), .16, 'triangle', .1, 0, i * .07));
+
+/* ---------- effects ---------- */
+const parts = [], pops = [];
+let shake = 0, flashA = 0, flashC = '#fff';
+K.burst = (x, y, c, n = 14, sp = 320, o = {}) => {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = sp * (.3 + Math.random() * .7);
+    parts.push({ x, y, vx: Math.cos(a) * s + (o.vx || 0), vy: Math.sin(a) * s + (o.vy || 0), life: 0, max: (o.life || .6) * (.6 + Math.random() * .6), c: Array.isArray(c) ? K.pick(c) : c, s: (o.size || 7) * (.5 + Math.random()), gr: o.gravity ?? 600, sq: o.square });
+  }
+};
+K.pop = (x, y, text, c = '#fff', size = 34) => pops.push({ x, y, text, c, size, life: 0 });
+K.shake = a => { shake = Math.max(shake, a); };
+K.flash = (c = '#fff', a = .5) => { flashC = c; flashA = a; };
+K.toast = text => { if (K.bot) return; const d = document.createElement('div'); d.className = 'toast'; d.textContent = text; document.body.appendChild(d); setTimeout(() => d.remove(), 1500); };
+function fx(dt) {
+  for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.life += dt; if (p.life > p.max) { parts.splice(i, 1); continue; } p.vy += p.gr * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .99; }
+  for (let i = pops.length - 1; i >= 0; i--) { const p = pops[i]; p.life += dt; p.y -= 60 * dt; if (p.life > .9) pops.splice(i, 1); }
+  shake = Math.max(0, shake - 60 * dt); flashA = Math.max(0, flashA - 2.5 * dt);
+}
+function drawFx() {
+  for (const p of parts) { g.globalAlpha = 1 - p.life / p.max; g.fillStyle = p.c; if (p.sq) g.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s); else { g.beginPath(); g.arc(p.x, p.y, p.s / 2, 0, 7); g.fill(); } }
+  g.globalAlpha = 1; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const p of pops) {
+    const k = p.life < .12 ? p.life / .12 : 1; g.globalAlpha = p.life > .6 ? 1 - (p.life - .6) / .3 : 1;
+    g.font = `${Math.round(p.size * (0.6 + .4 * k))}px ${getComputedStyle(document.documentElement).getPropertyValue('--display')}`;
+    g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,.45)'; g.strokeText(p.text, p.x, p.y); g.fillStyle = p.c; g.fillText(p.text, p.x, p.y);
+  }
+  g.globalAlpha = 1;
+}
+
+/* ---------- UI ---------- */
+const coinHTML = '<i class="coin-i"></i>';
+document.body.insertAdjacentHTML('beforeend', `
+<div class="hud" id="hud" hidden><div class="hud-score" id="hScore">0</div><div class="hud-coins">${coinHTML}<span id="hCoins">0</span></div><button class="hud-pause" id="hPause" aria-label="Pause"></button></div>
+<div class="scr" id="sTitle" ${DEMO ? 'hidden' : ''}><div class="card">
+  <h1 class="title">${GAME.title}</h1><p class="sub">${GAME.tagline}</p>
+  <div class="stats"><span class="stat"><small>Best</small><b id="tBest">0</b></span><span class="stat">${coinHTML}<b id="tCoins">0</b></span></div>
+  <button class="big" id="bPlay">Play</button>
+  <div class="row"><button id="bSkins">Skins</button></div>
+  <ul class="how">${GAME.how.map(h => `<li>${h}</li>`).join('')}</ul>
+</div></div>
+<div class="scr" id="sOver" hidden><div class="card">
+  <h2 class="title" id="oTitle" style="font-size:40px" hidden></h2><p class="sub" id="oText" hidden></p><p class="sub" style="margin:0" id="oLabel">Score</p><div class="score-big" id="oScore">0</div><div id="oNew" class="newbest" hidden>New best!</div>
+  <div class="stats"><span class="stat"><small>Best</small><b id="oBest">0</b></span><span class="stat">+${coinHTML}<b id="oCoins">0</b></span></div>
+  <button class="big" id="bAgain">Play again</button>
+  <div class="row"><button id="bMenu">Menu</button><button id="bSkins2">Skins</button></div>
+  <p class="hint" id="oHint"></p>
+</div></div>
+<div class="scr" id="sSkins" hidden><div class="card">
+  <h2 class="title" style="font-size:40px">Skins</h2>
+  <div class="stats"><span class="stat">${coinHTML}<b id="kCoins">0</b></span></div>
+  <div class="skins" id="kGrid"></div>
+  <button class="big" id="bBack">Back</button>
+</div></div>
+<div class="scr" id="sPause" hidden><div class="card">
+  <h2 class="title" style="font-size:44px">Paused</h2>
+  <button class="big" id="bResume">Resume</button>
+  <div class="row"><button id="bQuit">Menu</button></div>
+</div></div>
+<button class="mute" id="bMute" aria-label="Sound on or off"></button>`);
+
+const screens = ['sTitle', 'sOver', 'sSkins', 'sPause'];
+let skinsFrom = 'sTitle';
+function showScr(id) { screens.forEach(s => $(s).hidden = s !== id || DEMO); }
+function refresh() {
+  $('tBest').textContent = save.best; $('tCoins').textContent = save.coins; $('kCoins').textContent = save.coins;
+  $('bMute').textContent = save.mute ? '🔇' : '🔊';
+}
+function hud() { $('hScore').textContent = K.score; $('hCoins').textContent = K.runCoins; }
+K.add = (n = 1, x, y, c) => {
+  K.score += n; hud();
+  if (!K.bot) { const s = $('hScore'); s.classList.remove('bump'); void s.offsetWidth; s.classList.add('bump'); }
+  if (x !== undefined) K.pop(x, y, '+' + n, c || '#fff');
+};
+K.coin = (n = 1, x, y) => {
+  K.runCoins += n; hud();
+  if (x !== undefined) K.burst(x, y, ['#ffcf2e', '#fff3a8'], 6, 200, { life: .4, size: 6, gravity: 300 });
+  K.sfx(1320, .07, 'square', .05); K.sfx(1760, .08, 'square', .05, 0, .05);
+};
+
+function buildSkins() {
+  const grid = $('kGrid'); grid.innerHTML = '';
+  GAME.skins.forEach((s, i) => {
+    const own = save.owned.includes(i), b = document.createElement('button');
+    b.className = 'skin' + (save.skin === i ? ' on' : '') + (own ? '' : ' locked') + (!own && save.coins < s.price ? ' cant' : '');
+    const c = document.createElement('canvas'); c.width = c.height = 112; const cg = c.getContext('2d'); cg.translate(56, 56);
+    if (GAME.drawSkin) GAME.drawSkin(cg, s, 40); else { cg.fillStyle = s.c[0]; cg.beginPath(); cg.arc(0, 0, 40, 0, 7); cg.fill(); }
+    if (!own) { cg.fillStyle = 'rgba(0,0,0,.45)'; cg.fillRect(-56, -56, 112, 112); }
+    b.appendChild(c);
+    b.insertAdjacentHTML('beforeend', `<span>${s.name}</span>${own ? (save.skin === i ? '<span class="price">Equipped</span>' : '<span class="price" style="color:#cfd5ef">Equip</span>') : `<span class="price">${coinHTML}${s.price}</span>`}`);
+    b.onclick = () => {
+      audio();
+      if (own) { save.skin = i; K.sfx(660, .08, 'triangle'); }
+      else if (save.coins >= s.price) { save.coins -= s.price; save.owned.push(i); save.skin = i; K.chime(660); }
+      else { K.sfx(160, .15, 'sawtooth', .08); return; }
+      persist(); refresh(); buildSkins();
+    };
+    grid.appendChild(b);
+  });
+}
+
+/* ---------- flow ---------- */
+let overAt = 0, botOverAt = 0;
+function start() {
+  audio(); K.bot = false; K.score = 0; K.runCoins = 0; hud(); parts.length = 0; pops.length = 0;
+  GAME.reset(); K.state = 'play'; showScr(null); $('hud').hidden = false; save.plays++; persist();
+}
+function attract() { K.bot = true; K.demoSkin = DEMO ? 0 : K.irand(0, GAME.skins.length - 1); K.score = 0; K.runCoins = 0; hud(); GAME.reset(); if (POSE) GAME.pose(); K.state = 'title'; $('hud').hidden = !DEMO; }
+K.over = (o = {}) => {
+  if (K.bot) { if (!botOverAt) botOverAt = K.t + 1.2; return; }
+  if (K.state !== 'play') return;
+  K.state = 'over'; overAt = performance.now();
+  const best = K.score > save.best; if (best) save.best = K.score;
+  save.coins += K.runCoins; persist(); refresh();
+  $('oTitle').hidden = !o.title; $('oTitle').textContent = o.title || ''; $('oText').hidden = !o.text; $('oText').textContent = o.text || ''; $('oLabel').textContent = GAME.scoreLabel || 'Score';
+  $('oScore').textContent = K.score; $('oBest').textContent = save.best; $('oCoins').textContent = K.runCoins; $('oNew').hidden = !best || K.score === 0;
+  const next = GAME.skins.map((s, i) => [s, i]).find(([s, i]) => !save.owned.includes(i));
+  $('oHint').textContent = next ? (save.coins >= next[0].price ? `You can unlock ${next[0].name} now!` : `${next[0].price - save.coins} more coins to unlock ${next[0].name}`) : 'You own every skin. Legend!';
+  if (GAME.noSkins) $('oHint').textContent = '';
+  setTimeout(() => { if (K.state === 'over') { showScr('sOver'); $('hud').hidden = true; } }, o.delay ?? 650);
+  if (best && K.score > 0) setTimeout(() => K.chime(523, [0, 4, 7, 12, 16]), 700);
+};
+function pause() { if (K.state !== 'play') return; K.state = 'paused'; showScr('sPause'); }
+function resume() { K.state = 'play'; showScr(null); last = performance.now(); }
+function toMenu() { refresh(); attract(); showScr('sTitle'); }
+
+$('bPlay').onclick = start; $('bAgain').onclick = start; $('bResume').onclick = resume;
+$('bMenu').onclick = toMenu; $('bQuit').onclick = toMenu;
+$('bSkins').onclick = () => { skinsFrom = 'sTitle'; buildSkins(); refresh(); showScr('sSkins'); };
+$('bSkins2').onclick = () => { skinsFrom = 'sOver'; buildSkins(); refresh(); showScr('sSkins'); };
+$('bBack').onclick = () => { if (skinsFrom === 'sOver') toMenu(); else showScr('sTitle'); };
+$('hPause').onclick = pause;
+$('bMute').onclick = () => { save.mute = !save.mute; persist(); refresh(); audio(); };
+addEventListener('blur', pause);
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+/* ---------- input ---------- */
+const toW = e => [(e.clientX - ox) / sc, (e.clientY - oy) / sc];
+cv.addEventListener('pointerdown', e => { audio(); if (K.state === 'play' && GAME.down) { const [x, y] = toW(e); GAME.down(x, y, e); } });
+addEventListener('pointermove', e => { if (K.state === 'play' && GAME.move) { const [x, y] = toW(e); GAME.move(x, y, e); } });
+addEventListener('pointerup', e => { if (K.state === 'play' && GAME.up) { const [x, y] = toW(e); GAME.up(x, y, e); } });
+addEventListener('keydown', e => {
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  if (e.repeat && K.state !== 'play') return;
+  if (e.code === 'Escape' || e.code === 'KeyP') { if (K.state === 'play') pause(); else if (K.state === 'paused') resume(); return; }
+  if ((e.code === 'Space' || e.code === 'Enter') && K.state !== 'play') {
+    if (K.state === 'title' && !$('sTitle').hidden) start();
+    else if (K.state === 'over' && performance.now() - overAt > 900) start();
+    else if (K.state === 'paused') resume();
+    return;
+  }
+  if (K.state === 'play' && GAME.key) GAME.key(e.code, true);
+});
+addEventListener('keyup', e => { if (K.state === 'play' && GAME.key) GAME.key(e.code, false); });
+
+/* ---------- loop ---------- */
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
+  const run = K.state === 'play' || K.state === 'title' || K.state === 'over';
+  if (run && !POSE) {
+    K.t += dt;
+    if (K.bot && K.state === 'title') { if (botOverAt && K.t > botOverAt) { botOverAt = 0; attract(); } else if (!botOverAt && GAME.bot) GAME.bot(dt); }
+    GAME.update(dt); fx(dt);
+  }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = GAME.bg || '#000'; g.fillRect(0, 0, innerWidth, innerHeight);
+  const sx = shake ? (Math.random() - .5) * shake : 0, sy = shake ? (Math.random() - .5) * shake : 0;
+  g.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * (ox + sx * sc), dpr * (oy + sy * sc));
+  GAME.draw(g); drawFx();
+  if (flashA > 0) { g.globalAlpha = flashA; g.fillStyle = flashC; g.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0); g.globalAlpha = 1; }
+  masterSync();
+  requestAnimationFrame(frame);
+}
+if (GAME.noSkins) { $('bSkins').parentNode.hidden = true; $('bSkins2').hidden = true; }
+if (GAME.noHud) { $('hScore').hidden = true; document.querySelector('.hud-coins').hidden = true; }
+refresh(); attract(); showScr('sTitle');
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

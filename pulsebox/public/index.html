@@ -383,6 +383,22 @@
    ============================================================ */
 const GAMES = [
   {
+    id: "afterhours",
+    title: "Afterhours",
+    category: "Strategy",
+    kind: "Strategy · RPG",
+    tags: ["Persona-style", "30-day calendar", "Turn-based", "Mask fusion", "Saves progress"],
+    badge: 'NEW',
+    file: 'games/afterhours.html',
+    cover: 'media/afterhours-cover.jpg',
+    video: 'media/afterhours-trailer.mp4',
+    shots: ['media/afterhours-shot1.jpg', 'media/afterhours-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "30 days until the festival. The mirrors open at 11:11.",
+    blurb: "You've just transferred to Lanternfall High, and students keep vanishing into the Undertow, a world behind the mirrors. Spend your afternoons and evenings building four friendships and four stats, then step through the mirror at night to explore the dungeon, hit enemy weaknesses for One More turn, finish fights with an All-Out Attack, and talk shadows into giving you their masks. Fuse masks at the shrine and rescue each missing student before the fog rolls in.",
+    how: ["Walk around town with WASD, the arrow keys or a tap, and choose what to do each afternoon and evening.", "Hang out with friends to raise your bonds; train, study, work and sing to raise your stats.", "In the evening, touch the mirror at home to enter the Undertow. Strike shadows first with Space or a tap.", "In battle, hit a weakness to knock a foe DOWN and act again. Knock them all down for an All-Out Attack, or Talk to win their mask."]
+  },
+  {
     id: "lights-out-motel",
     title: "Lights Out Motel",
     category: "Horror",
@@ -1026,7 +1042,7 @@ const GAMES = [
   }
 ];
 /* The order shelves appear in. A shelf with no games shows "Coming soon" covers. */
-const CATEGORIES = ['Action', 'Horror', 'Arcade', 'Puzzle', 'Racing', 'Idle'];
+const CATEGORIES = ['Action', 'Horror', 'Strategy', 'Arcade', 'Puzzle', 'Racing', 'Idle'];
 
 /* ============================================================
    SAVED STUFF (this browser only)
@@ -1046,7 +1062,7 @@ let query = '', current = null;
    Without it (offline, local preview, too little data yet) the
    hub falls back to the hand-picked order below.
    ============================================================ */
-const CURATED = ['lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
+const CURATED = ['afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
 const MIN_WEEK = 20;   // fewer plays than this across the hub in a week = not enough to rank by
 let STATS = null;      // { id: { total, week, today } } once real numbers are in
 let HOT = new Set();   // top 5 by plays this week

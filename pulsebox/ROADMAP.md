@@ -1,8 +1,8 @@
-# Pulsebox roadmap: next batch of games (chosen by the owner, not started yet)
+# Pulsebox roadmap: next batch of games (chosen by the owner)
 
 Build one at a time with a single efficient agent each (the revamps cost about 220–290k tokens per game).
 
-1. **Afterhours** (Strategy): a Persona-style game, top-down 2D. A transfer student in the city of Lanternfall has 30 days before the festival.
+1. **Afterhours** (Strategy) — stage 1 shipped: town, calendar, 4 bonds, battles, 2 floors, 20 masks, fusion, 3 endings and New Game+. Stage 2 still to do: a Persona-style game, top-down 2D. A transfer student in the city of Lanternfall has 30 days before the festival.
    - Days: daily-life calendar (class, then after school, then evening), four stats (Courage, Wits, Charm, Kindness), and 8 bonds with 10 ranks each.
    - Nights: at 11:11 PM mirrors open into the Undertow, a top-down dungeon with patrolling shadows; strike first for a free turn. Each victim has a themed floor with a boss and a rescue deadline.
    - Battles: turn-based, side view, 7 elements. Hitting a weakness knocks the enemy DOWN and gives One More turn; with all enemies down, choose All Out or Talk to recruit a mask.
