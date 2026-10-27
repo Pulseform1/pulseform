@@ -30,3 +30,12 @@ class_name = "Rooms"
 [[migrations]]
 tag = "v3"
 new_sqlite_classes = ["Rooms"]
+
+# THE HOLLOW co-op (hollow-rooms.js): one Durable Object runs every room with the game's own engine
+[[durable_objects.bindings]]
+name = "HOLLOW"
+class_name = "HollowRooms"
+
+[[migrations]]
+tag = "v4"
+new_sqlite_classes = ["HollowRooms"]

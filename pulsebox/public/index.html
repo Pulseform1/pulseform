@@ -383,6 +383,23 @@
    ============================================================ */
 const GAMES = [
   {
+    id: "the-hollow",
+    title: "THE HOLLOW",
+    category: "Co-op",
+    kind: "Co-op · 3D Horror",
+    tags: ["3D", "Online co-op, 1-4 players", "5 sectors", "Headphones"],
+    badge: 'NEW',
+    mic: true,
+    file: 'games/the-hollow.html',
+    cover: 'media/the-hollow-cover.jpg',
+    video: 'media/the-hollow-trailer.mp4',
+    shots: ['media/the-hollow-shot1.jpg', 'media/the-hollow-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "A real 3D creature. Nowhere to hide.",
+    blurb: "Beneath the surface, something is still awake. Enter an abandoned research facility alone or with up to three friends online, restore the power, solve each sector's terminal and reach the lift through five sectors, each hunted by a different 3D creature: the Hollow, the Listener, the Crawler, the Maw and the Warden. They hear your footsteps and see your flashlight. Hide in the blue lockers, watch your stamina, and stay together.",
+    how: ["Press PLAY SOLO, or HOST CO-OP and send friends the room code (JOIN A TEAM to enter one).", "Arrows or WASD to move. Hold Space + arrows to look around, or turn on Use Mouse Look.", "Shift toggles sprint, H hides in a blue locker, F flashlight, E interact, Tab map.", "On a phone or tablet, use the on-screen arrows and buttons and drag the right side to look."]
+  },
+  {
     id: "bumper-brawl",
     title: "Bumper Brawl",
     category: "Co-op",
@@ -1190,7 +1207,7 @@ let query = '', current = null;
    Without it (offline, local preview, too little data yet) the
    hub falls back to the hand-picked order below.
    ============================================================ */
-const CURATED = ['still-here', 'bumper-brawl', 'doodle-guess', 'turbo-laps', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
+const CURATED = ['the-hollow', 'still-here', 'bumper-brawl', 'doodle-guess', 'turbo-laps', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
 const MIN_WEEK = 20;   // fewer plays than this across the hub in a week = not enough to rank by
 let STATS = null;      // { id: { total, week, today } } once real numbers are in
 let HOT = new Set();   // top 5 by plays this week
@@ -1457,7 +1474,7 @@ function startGame(g) {
   const st = $('stage'); st.classList.remove('ready');
   stopGame();
   const f = document.createElement('iframe');
-  f.dataset.id = g.id; f.title = g.title; f.allow = 'fullscreen; autoplay; gamepad';
+  f.dataset.id = g.id; f.title = g.title; f.allow = 'fullscreen; autoplay; gamepad' + (g.mic ? '; microphone' : '');
   f.addEventListener('load', () => { st.classList.add('ready'); try { f.focus(); } catch (e) {} });
   f.src = g.file;
   st.prepend(f);

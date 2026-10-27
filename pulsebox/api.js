@@ -8,6 +8,7 @@
 //   GET  /api/stats  -> { games: { id: { total, week, today } }, updated }   (week = last 7 UTC days incl. today; cached ~60 s)
 // Multiplayer rooms: one Durable Object (Rooms) per 4-character room code relays JSON messages between up to 8 players.
 //   GET  /api/room/CODE?n=NAME  (WebSocket) -> { t: 'hello', id, host, players } then every other player's messages
+// THE HOLLOW co-op: /api/hollow (WebSocket) goes to the HollowRooms Durable Object (hollow-rooms.js), which runs the game's own engine.
 const PROJECT = 'pulseform-d8282';
 const JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 const MAX_BYTES = 400000;
@@ -68,6 +69,10 @@ export async function api(request, env, ctx, ids) {
   const url = new URL(request.url);
   if (url.pathname === '/api/play') return play(request, env, ids);
   if (url.pathname === '/api/stats') return stats(request, env, ctx);
+  if (url.pathname === '/api/hollow') {
+    if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
+    return env.HOLLOW.get(env.HOLLOW.idFromName('global')).fetch(request);
+  }
   if (url.pathname.startsWith('/api/room/')) {
     const code = url.pathname.slice(10).toUpperCase();
     if (!/^[A-Z0-9]{4}$/.test(code)) return json({ error: 'bad room code' }, 400);
