@@ -1,13 +1,24 @@
 // Builds the AFTERHOURS arcade (five 3D co-op games) for box.pulseform.org: public/media/arcade.html.
-// The source is the user's own portable build, arcade/AFTERHOURS.html, used as is apart from a joystick for touch screens and two links: co-op connects to
-// wss://<this site>/api/arcade (the ArcadeRooms Durable Object, arcade-rooms.js) and THE HOLLOW link points at our copy.
+// The source is the user's own, in arcade/public/arcade, built the way their scripts/build-arcade.mjs builds AFTERHOURS.html
+// (kept as arcade/upstream-build-arcade.mjs), with esbuild and three taken from the-hollow's node_modules (run `npm ci` there).
+// On top of that: a joystick for touch screens, co-op connects to wss://<this site>/api/arcade (the ArcadeRooms Durable
+// Object, arcade-rooms.js) and the THE HOLLOW link points at our copy.
 // It is 2 MB of embedded art, too big for the worker script, so it lives in media/ and is served from jsDelivr like the trailers.
 // public/games/<id>.html are small pages that open one game: media/arcade.html?game=<sim id>.
 // Run from anywhere: node tools/build-arcade.mjs
+import { createRequire } from 'node:module';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-const here = resolve(import.meta.dirname, '..');
-let html = await readFile(resolve(here, 'arcade/AFTERHOURS.html'), 'utf8');
+const here = resolve(import.meta.dirname, '..'), root = resolve(here, 'arcade'), deps = resolve(here, 'the-hollow');
+const { build } = createRequire(resolve(deps, 'package.json'))('esbuild');
+const result = await build({ absWorkingDir: root, entryPoints: ['public/arcade/app.js'], bundle: true, write: false, minify: true, format: 'iife', target: 'es2022',
+  plugins: [{ name: 'local-three', setup(b) { b.onResolve({ filter: /^\/vendor\/three.module.js$/ }, () => ({ path: resolve(deps, 'node_modules/three/build/three.module.js') })); } }] });
+let css = await readFile(resolve(root, 'public/arcade/style.css'), 'utf8');
+for (const name of ['barlow-condensed-latin-800-normal.woff2', 'ibm-plex-mono-latin-400-normal.woff2', 'inter-latin-400-normal.woff2']) { const font = await readFile(resolve(root, 'public/fonts', name)); css = css.replaceAll(`/fonts/${name}`, `data:font/woff2;base64,${font.toString('base64')}`); }
+for (const [name, key] of [['covers.webp', 'cover-sheet'], ['neon-hero.webp', 'hero-art']]) { const art = await readFile(resolve(root, 'public/arcade/art', name)); css = css.replaceAll(`url('/arcade/art/${name}')`, `var(--${key})`); css += `\n:root{--${key}:url("data:image/webp;base64,${art.toString('base64')}")}`; }
+let html = await readFile(resolve(root, 'public/arcade/index.html'), 'utf8');
+html = html.replace('<link rel="stylesheet" href="/arcade/style.css">', () => `<style>${css}</style>`).replace('<script type="module" src="/arcade/app.js"></script>', () => `<script>${result.outputFiles[0].text.replace(/<\/script/gi, '<\\/script')}</script>`)
+  .replace('href="/favicon.svg"', 'href="data:,"').replaceAll('href="/arcade/"', 'href=""').replaceAll('href="/"', 'href="THE-HOLLOW.html"');
 const swaps = [['location.host}/arcade/socket`', 'location.host}/api/arcade`'], ['href="THE-HOLLOW.html"', 'href="/games/the-hollow.html" target="_top"']];
 for (const [from, to] of swaps) { if (!html.includes(from)) throw new Error(`AFTERHOURS.html changed shape (${from}); update build-arcade.mjs`); html = html.replace(from, to); }
 // Roblox-style thumbstick, as in THE HOLLOW: the arrow pad is replaced by a floating joystick on the left of the screen that

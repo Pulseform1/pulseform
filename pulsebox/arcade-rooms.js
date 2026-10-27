@@ -1,8 +1,8 @@
 // AFTERHOURS co-op rooms on Cloudflare: arcade/arcade-server.js ported to a Durable Object. One instance (named "global")
-// holds every room and runs the games' own shared simulations (arcade/session.js) 30 times a second, sending snapshots at 15.
+// holds every room and runs the games' own shared simulations (arcade/public/arcade/session.js) 30 times a second, sending snapshots at 15.
 // Same rules: 6-character codes, up to 4 players, the first player hosts and the next one takes over if they leave.
 //   GET /api/arcade  (WebSocket)  then  { type: 'join', code?, game }  ->  { type: 'joined', ... }, then { type: 'state' } snapshots
-import { createSession, addPlayer, removePlayer, setInput, advance } from './arcade/session.js';
+import { createSession, addPlayer, removePlayer, setInput, advance } from './arcade/public/arcade/session.js';
 
 const MAX_PAYLOAD = 4096;
 const hex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b => b.toString(16).padStart(2, '0')).join('');
