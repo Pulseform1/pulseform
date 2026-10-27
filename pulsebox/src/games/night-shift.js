@@ -1,16 +1,18 @@
-/* Night Shift: work the register at the Starlite gas station from 11 PM to 5 AM, five nights in a row.
-   The manager's clipboard gains two rules every night. Ring up customers, turn on the pumps, answer the phone (sometimes),
+/* Night Shift: work the register at the Starlite gas station from 11 PM to 5 AM, ten nights in a row.
+   The manager's clipboard gains two rules every night. From night 6 you also turn around to the back room: the fusebox,
+   the back door where deliveries come in, the stock boxes for restocking, and the pump 4 maintenance log. Ring up customers, turn on the pumps, answer the phone (sometimes),
    and follow every rule. Strikes carry over between nights; three and the night shift keeps you. The ending depends on how you played. */
 const GAME = {
   id: 'night-shift', title: 'Night Shift', tagline: 'Gas station. 11 PM to 5 AM. Follow the rules.',
   font: 'Special Elite', accent: '#ffd23f', accent2: '#ff4d4d', bg: '#030406', noSkins: true, noHud: true, scoreLabel: 'Shift score',
-  how: ['Ring up customers: click their items or press Space.', 'Read the rules (R). Two new rules every night.', 'L look down · D lock · P phone · G pump · M radio · A alarm', 'Three broken rules and you won\'t clock out. Wear headphones.'],
+  how: ['Ring up customers: click their items or press Space.', 'Read the rules (R). Two new rules every night.', 'L look down · D lock · P phone · G pump · M radio · A alarm · T turn around', 'Three broken rules and you won\'t clock out. Wear headphones.'],
   skins: [{ name: 'Clerk', price: 0 }],
 };
 (() => {
 const DUR = 168, HR = DUR / 6, at = h => h * HR;   // a night is 6 game hours; at(3) is 2:00 AM
+const NN = 10;   // nights in the run
 const RULES = [
-  { n: 1, t: 'No reflection', d: 'If a customer has NO REFLECTION in the door glass, LOOK DOWN [L] and keep your eyes down until they leave. Never serve them.' },
+  { n: 1, t: 'No reflection', d: 'If a customer has NO REFLECTION in the glass, LOOK DOWN [L] and keep your eyes down until they leave. Never serve them.' },
   { n: 1, t: 'Pump 4', d: 'Turn on pumps 1, 2 and 3 for anyone who pulls up [G]. Pump 4 is broken. Never turn it on, no matter who asks.' },
   { n: 2, t: 'Three flickers', d: 'If the lights flicker three times, LOCK THE DOOR [D] right away. Unlock it only after the knocking stops.' },
   { n: 2, t: 'The restroom', d: 'The restroom closes at 2:00 AM. After that, if anyone asks for the key, tell them it is out of order.' },
@@ -20,13 +22,29 @@ const RULES = [
   { n: 4, t: 'Your name', d: 'Never tell a customer your name. Not even the regulars.' },
   { n: 5, t: 'The camera', d: 'If the camera shows someone in the store that you cannot see, press the ALARM [A].' },
   { n: 5, t: 'Stay', d: 'Do not leave the counter before 5:00 AM. Not for anyone. Not even for me.' },
+  { n: 6, t: 'The fusebox', d: 'If the power goes out, TURN AROUND [T] and flip the breakers back on in the order on the card. Wrong order and they trip again.' },
+  { n: 6, t: 'Breaker 4', d: 'Never touch breaker 4, the red one with the tape. It does not power anything in this store.' },
+  { n: 7, t: 'Deliveries', d: 'Halvorsen Supply knocks TWICE at the back door, with yellow truck lights. Open it for them. Never open the back door for THREE knocks.' },
+  { n: 7, t: 'Restock', d: 'Keep the shelves full. If a shelf is EMPTY, grab a box from the back and restock it. An empty aisle is a place for something to stand.' },
+  { n: 8, t: 'Whistling', d: 'If something behind you starts whistling, do NOT turn around until it stops.' },
+  { n: 8, t: 'Your reflection', d: 'If your reflection in the glass moves when you do not, LOOK DOWN [L] until it stops.' },
+  { n: 9, t: 'Red ink', d: 'Every rule I write is in black ink. If you see a rule in RED, I did not write it. Ignore it.' },
+  { n: 9, t: 'Danny', d: 'If Danny Reyes comes in, be kind. Serve him. Never tell him how long he has been gone.' },
+  { n: 10, t: 'Pump 4', d: 'At 4:44, pump 4 will turn itself on. Turn around and pull breaker 4 OFF. This is the only time you ever touch it.' },
+  { n: 10, t: 'Last call', d: 'If anyone asks you to come outside with them, you are on shift. Say so.' },
+  { n: 9, t: 'Pump 4 is fixed', d: 'Pump 4 works now. At 3:33, turn it on [G] for whoever is waiting there. - Ray', red: 1 },
 ];
 const NOTES = [null,
   'Welcome to the Starlite. Pay is forty an hour, cash, because nobody stays. The rules are on the clipboard. They are not a joke. Danny thought they were. Walt comes in around 12:30 for coffee. He\'s harmless.',
   'You came back. Good. I had the wiring checked three times, and it\'s fine. So if the lights flicker, it isn\'t the wiring.',
   'If the phone rings between 2 and 3, it isn\'t me. I\'m asleep. It will sound like Danny. Danny went missing in March. Let it ring. And keep the radio on. It keeps things quiet.',
   'You asked about pump 4. It was here before the station. Before the road. The company put a pump on it so people would stop digging. It doesn\'t sell gas. And don\'t give anyone your name. Names are how it finds you.',
-  'Last night of the week. After tonight it goes quiet for a month. Stay behind that counter until 5:00. I\'ll be in at 5:01. If I walk in before then, it isn\'t me.',
+  'Last night of the week. Stay behind that counter until 5:00. I\'ll be in at 5:01. If I walk in before then, it isn\'t me. And if you can stand it, I could use you for a second week.',
+  'Second week. Nobody has ever come back for one. I tore up your write-ups: clean slate. The fusebox is on the wall behind you. When the power drops, turn around and reset the breakers in the order on the card. The order changes every time. I stopped asking why. Breaker 4 has tape on it. Leave the tape alone.',
+  'Gus from Halvorsen Supply brings stock to the back door. Two knocks, yellow lights. Gus has delivered here for thirty years and has never once knocked three times. Keep the shelves full. Every clerk who let the aisles go empty said the same thing afterwards: something was standing in them.',
+  'The pump 4 log is on the wall by the back door. I read it last night. I wish I hadn\'t. If you hear whistling, it\'s the tune Danny used to whistle on shift. Don\'t turn around for it. And watch the glass. It watches back.',
+  'Someone has been writing on my clipboard. My rules are black ink. If you see red, it isn\'t mine, even if it\'s signed Ray. Deputy Hale says Danny might come in tonight. If he does, be kind to him. He doesn\'t know.',
+  'Last night. The meter on pump 4 goes up one gallon for every clerk it keeps. Tonight at 4:44 it will switch itself on. Turn around and pull breaker 4. That is the only time anyone touches it. Then wait for the sun. I\'ll be in at 5:01. I promise.',
 ];
 const DJ = [null,
   ['You\'re up late with Marv on WKNT, AM 1170. Keeping the truckers and the night shift company.', 'Fog\'s rolling in off the reservoir. Drive slow on Route 9, owls.'],
@@ -34,6 +52,11 @@ const DJ = [null,
   ['Still no word on Danny Reyes, 24, last seen working nights at the Starlite on Route 9.', 'Got a request here with no name on it. It just says: for the new clerk.'],
   ['Fun fact, owls: before the Starlite went up in \'62, there was one pump out in that field. Nobody knows who put it there.', 'Every call tonight comes from the same number. A pay phone. At a gas station.'],
   ['Last night of the week. Sunrise is at 5:04. Hang in there.', 'If you\'re working alone tonight... don\'t go outside. Not until it\'s light.'],
+  ['Power company says Route 9 will see brownouts all week. Keep a flashlight handy, owls.', 'Caller asked me what pump 4 sells. I said gas, ma\'am. She said: not anymore.'],
+  ['Halvorsen Supply is still running deliveries out to the Starlite. Bless Gus. Thirty years on Route 9.', 'Old timer called in. Says the Halvorsen field was already fenced off when his granddad was a boy. Fenced around one pump.'],
+  ['Here\'s that waltz again. Nobody requested it. It\'s just... on the record.', 'If you\'re hearing whistling tonight, it isn\'t coming from this station.'],
+  ['Strange one, owls: the county says there\'s no fuel line under the Starlite\'s fourth pump. Never was.', 'Danny Reyes\' mom called in. She says he phoned her last night. She says he sounded cold.'],
+  ['Last broadcast of the season. Sunrise is at 5:04. 4:44 is twenty minutes too early.', 'To the clerk at the Starlite: Marv says thanks for keeping the lights on.'],
 ];
 const RAY = [null,
   'Ray here. Just checking you found the clipboard. Read it twice.',
@@ -41,14 +64,28 @@ const RAY = [null,
   'Ray. It\'s not 2 yet, right? Good. When it rings later, let it ring.',
   'Ray. They found Danny\'s car this morning. Parked at pump 4. Engine still warm. Just... follow the list.',
   'It\'s Ray. I\'m at home, and I\'m staying home. Whatever walks in wearing my face, you stay behind that counter.',
+  'Ray. Welcome back, crazy. Breakers are behind you. Card on the panel door. Not breaker 4.',
+  'Ray. Gus says you\'re his favorite clerk because you open the door on two. Keep it that way.',
+  'It\'s Ray. I counted the gallons on the pump 4 meter. Seven. There were six when I hired Danny.',
+  'Ray. If you see red ink tonight, it\'s not me. My pen\'s been black for twenty years.',
+  'It\'s Ray. 4:44. Breaker 4. Then it\'s over. I\'m proud of you, kid.',
+];
+// the pump 4 maintenance log on the back-room wall; the last line is filled in each night
+const LOG = [
+  ['06/02/1962', 'Pump set over the old fixture in the Halvorsen field per county order. Fixture could not be dug out. Ground warm to the touch. - H.H.'],
+  ['11/14/1962', 'Meter reads 0.4 gal. Tank is not connected to anything. Pump lit anyway.'],
+  ['03/09/1971', 'Night man reports pump 4 running with the breaker off. Breaker relabeled 4.'],
+  ['08/22/1984', 'Meter 3.0 gal. Gary says one gallon per clerk that didn\'t clock out. Not funny, Gary.'],
+  ['10/30/1997', 'Breaker 4 taped. DO NOT FLIP. Gary did not clock out.'],
+  ['03/17', 'Meter 7.0 gal. D. Reyes did not clock out. His car is at pump 4.'],
 ];
 const DANNY = ['...hey. It\'s Danny. You picked up. Now it knows you\'re there.', '...is someone there? It\'s so dark out here by the pumps...', '...don\'t hang up. I can see the store from here. I can see you.'];
 const VOICE = ['...clerk... clerk... look at the door...', '...we can see you through the glass...', '...turn on pump four... just once...', '...what\'s your name? say your name...', '...come outside. it\'s warm out here...'];
 // regulars: one line per night, and a reaction when something strange happened recently
 const REG = {
-  walt: { name: 'Walt', at: 1.5, items: ['coffee', 'donut', 'paper'], lines: [null, 'New kid, huh? Coffee, black. I\'m Walt. I come in every night. Don\'t let the place get to you.', 'Old building. The lights do things. Just do what the list says.', 'Danny used to work your shift. Good kid. Never read the list.', 'You hear the radio fella say a name last night? ...Never mind. Coffee.', 'Last night of the week, huh? Whatever you hear tonight, kid, you stay behind that counter.'], odd: 'Lights went funny just now. You locked up? Good. Danny never did.' },
-  mari: { name: 'Marisol', at: 2.5, items: ['coffee', 'candy', 'energy'], lines: [null, 'Twelve hours at the hospital. Just need caffeine and sugar.', 'Did you know pump 4 looks lit from the road? Only from the road.', 'A patient kept asking for "the clerk" all night. Weird shift.', 'You look tired, hon. Find another job, okay?', 'I\'m not even stopping. I just... don\'t open the door after four.'], odd: 'Was somebody knocking on your door when I pulled in?' },
-  earl: { name: 'Big Earl', at: 4.1, items: ['jerky', 'soda', 'chips'], lines: [null, 'Long haul to Tulsa. Filled up on two. You\'re new.', 'There\'s somebody standing out by pump 4. Thought you should know.', 'Radio\'s playing that song again. Same one, every night, 3 AM.', 'Drove past this place twice tonight. Same exit. Same road.', 'Real glad you\'re still here, kid.'], odd: 'Your lights do that a lot?' },
+  walt: { name: 'Walt', at: 1.5, items: ['coffee', 'donut', 'paper'], lines: [null, 'New kid, huh? Coffee, black. I\'m Walt. I come in every night. Don\'t let the place get to you.', 'Old building. The lights do things. Just do what the list says.', 'Danny used to work your shift. Good kid. Never read the list.', 'You hear the radio fella say a name last night? ...Never mind. Coffee.', 'Last night of the week, huh? Whatever you hear tonight, kid, you stay behind that counter.', 'You came back. Nobody comes back. Coffee, black. Same as always.', 'Saw a yellow truck out back. That\'s just Gus. Gus is fine. Gus is the only thing out here that\'s fine.', 'My wife used to whistle that tune. The one from the radio. She worked nights here in \'71.', 'Danny used to call me sir. Nobody calls me sir. If he comes in... tell him Walt says hi.', 'Ten nights. I\'ve been coming in here forty years, kid, and you\'re the first clerk I ever said goodbye to.'], odd: 'Lights went funny just now. You locked up? Good. Danny never did.' },
+  mari: { name: 'Marisol', at: 2.5, items: ['coffee', 'candy', 'energy'], lines: [null, 'Twelve hours at the hospital. Just need caffeine and sugar.', 'Did you know pump 4 looks lit from the road? Only from the road.', 'A patient kept asking for "the clerk" all night. Weird shift.', 'You look tired, hon. Find another job, okay?', 'I\'m not even stopping. I just... don\'t open the door after four.', 'Back again? Then I\'m back again. Somebody has to check you\'re alive.', 'Your shelves were empty last time I came in. Something was standing in the chip aisle. I thought it was you.', 'I looked at my reflection in your door. It looked at me first.', 'A kid in a Starlite shirt was walking Route 9 at midnight. Soaking wet. I didn\'t stop. I should have stopped.', 'Whatever happens at 4:44, hon, I want you at the hospital at 6 for a coffee. That\'s an order.'], odd: 'Was somebody knocking on your door when I pulled in?' },
+  earl: { name: 'Big Earl', at: 4.1, items: ['jerky', 'soda', 'chips'], lines: [null, 'Long haul to Tulsa. Filled up on two. You\'re new.', 'There\'s somebody standing out by pump 4. Thought you should know.', 'Radio\'s playing that song again. Same one, every night, 3 AM.', 'Drove past this place twice tonight. Same exit. Same road.', 'Real glad you\'re still here, kid.', 'Second week? Huh. I\'ve got a cousin who did one night here in \'97. Gary. You ever hear of a Gary?', 'Lights went out on the whole stretch of 9 tonight, except one. The lamp over pump 4.', 'Somebody\'s whistling out by the pumps. I didn\'t look. You don\'t look either.', 'There\'s red paint on your clipboard. Or, you know. Something red.', 'Pulled in at 4:30 so I could see it with my own eyes. Then I thought better of it. Jerky. Then I\'m gone.'], odd: 'Your lights do that a lot?' },
 };
 const GEN = ['Just these, thanks.', 'Cold out there.', 'Long night?', 'Hey. Just this.', 'Is the coffee fresh?', 'Pretty dead tonight, huh?', 'Fog\'s thick. Could barely see the road.', 'Evening.'];
 const ODD = ['You look jumpy.', 'Did your lights just flicker?', 'Somebody\'s just standing out there in the fog.', 'This place gives me the creeps at night.'];
@@ -59,7 +96,9 @@ const MYNAME = 'Sam';
 
 /* ---------- state ---------- */
 let night, t, ev, cust, strikes, nStrikes, look, lookK, locked, flick, phone, cars, radio, cctv, dlg, cap, banners, scare, dead, ended, endT,
-  served, followed, hover, noteOpen, view, tense, hint, hintsSeen, doorK, ambT, endingId, poseMode, lastOdd, fog, roadCar, lightL = 1, pumps = [], hbT = 0;
+  served, followed, hover, noteOpen, view, tense, hint, hintsSeen, doorK, ambT, endingId, poseMode, lastOdd, fog, roadCar, lightL = 1, pumps = [], hbT = 0,
+  // week two: the back room behind the counter
+  turned = false, turnK = 0, power = null, brk = [1, 1, 1, 0, 1, 1], boxes = 0, carry = 0, empties = [], deliv = null, whistle = null, mirror = null, p4self = null, rulePage = 0;
 const S = {};   // sound nodes
 const clockH = () => 11 + t / HR;   // 11 .. 17
 const clock = (short) => { const hf = clockH(), h = Math.floor(hf) % 12 || 12, m = Math.floor((hf % 1) * 60); return `${h}:${String(m).padStart(2, '0')}` + (short ? '' : (hf >= 12 ? ' AM' : ' PM')); };
@@ -156,6 +195,11 @@ const snd = {
   scream: (big) => { nz(big ? 2 : 1.1, big ? .8 : .55, 'highpass', 450); tone(1150, 1, 'sawtooth', .12, -800); tone(1235, .9, 'sawtooth', .1, -900); tone(1720, .7, 'square', .05, -1300); tone(72, 1.2, 'sine', .55, -40); if (big) { tone(620, 1.8, 'sawtooth', .1, -500, .1); nz(1.5, .4, 'lowpass', 300, .2); } },
   click: () => tone(900, .03, 'square', .03),
   static: (d = .5) => nz(d, .12, 'highpass', 1500),
+  turn: () => { nz(.22, .07, 'bandpass', 420, 0, .7); nz(.12, .05, 'lowpass', 300, .14); },
+  breaker: () => { tone(140, .07, 'square', .09); nz(.05, .25, 'highpass', 3000); },
+  spark: () => { for (let i = 0; i < 5; i++) nz(.04, .3, 'highpass', 4000, i * .05); tone(90, .3, 'sawtooth', .08, -40); },
+  backDoor: () => { tone(70, .4, 'sawtooth', .06, -20); nz(.5, .12, 'lowpass', 600); },
+  outage: () => { tone(120, .5, 'sawtooth', .1, -90); nz(.3, .2, 'lowpass', 400); },
   bird: () => { const f = K.rand(2600, 3600); tone(f, .09, 'sine', .025, 900); tone(f * 1.1, .07, 'sine', .02, 700, .12); },
 };
 
@@ -193,6 +237,8 @@ const LOOKS = {
   teen: { skin: '#7a4b2e', hair: '#1b1411', hs: 'buzz', eye: '#3a2a1a', top: 'hoodie', c1: '#2a2a30', c2: '#c0c0c8', pants: '#283a4a', seed: 6 },
   deputy: { skin: '#d9a07a', hair: '#2b2b2e', hs: 'short', eye: '#3a2a1a', top: 'uniform', c1: '#a08a5a', c2: '#3a2a1a', pants: '#3a3428', hat: 'deputy', hatC: '#6a5a3a', build: 1.08, beard: 'mustache', seed: 7 },
   ray: { skin: '#e6b090', hair: '#4a3a2a', hs: 'short', eye: '#3a2a1a', top: 'polo', c1: '#2a4a3a', c2: '#e8e0c8', pants: '#3a3428', tag: 'RAY', build: 1.2, tall: 1.03, beard: 'mustache', age: .5, seed: 8 },
+  danny: { skin: '#d8b8a0', hair: '#2a1a12', hs: 'short', eye: '#3a2a1a', top: 'polo', c1: '#8a1c1c', c2: '#e8e0c8', pants: '#22283a', tag: 'DANNY', build: .95, seed: 10 },
+  gus: { skin: '#c89070', hair: '#bdb6a8', hs: 'short', eye: '#3a2a1a', top: 'jacket', c1: '#c8a02a', c2: '#3a3a3a', pants: '#2a3044', hat: 'cap', hatC: '#3a3a3a', beard: 'stubble', age: .9, build: 1.15, seed: 11 },
   pale: { skin: '#e8ddd2', hair: '#121010', hs: 'long', eye: '#111111', top: 'suit', c1: '#1c1c22', c2: '#d8d4cc', pants: '#151518', build: .9, tall: 1.06, seed: 9 },
 };
 function face(gr, p, o, skin) {
@@ -550,7 +596,7 @@ function drawOutside(gr, L) {
   const w0 = P(WIN.x0, WIN.y1, ZB), d1 = P(DOORX[1], 0, ZB);
   gr.save(); gr.beginPath(); gr.rect(w0[0], w0[1], P(WIN.x1, 0, ZB)[0] - w0[0], P(0, WIN.y0, ZB)[1] - w0[1]);
   const dd = P(DOORX[0] + .08, DOORY - .08, ZB); gr.rect(dd[0], dd[1], d1[0] - 10 - dd[0], d1[1] - dd[1]); gr.clip();
-  const sun = ended && night >= 5 ? Math.min(1, endT / 6) : 0;
+  const sun = ended && night >= NN ? Math.min(1, endT / 6) : 0;
   let sg = gr.createLinearGradient(0, 140, 0, 300); sg.addColorStop(0, mix('#04060a', '#3a4a7a', sun)); sg.addColorStop(1, mix('#10141c', '#e8907a', sun));
   gr.fillStyle = sg; gr.fillRect(400, 140, 620, 320);
   // treeline and the price sign
@@ -576,7 +622,12 @@ function drawOutside(gr, L) {
   // cars, and whatever stands at pump 4
   for (const c of cars.slice().sort((a, b) => b.z - a.z)) { if (c.fig) { const [fx, fy] = P(c.x, 0, c.z); gr.globalAlpha = Math.min(1, c.a); man(gr, c.look, fx, fy, F / c.z / 300 * 1.05, { sil: '#030303', still: true, glint: c.state === 'wait' && Math.sin(K.t * 2) > .3 ? '#ffe8d0' : null }); gr.globalAlpha = 1; } else drawCar(gr, c); }
   // someone walking up to the door
-  if (cust && cust.phase === 'approach') { const [fx, fy] = P(cust.ox, 0, cust.oz); man(gr, cust.look, fx, fy, F / cust.oz / 300, { walk: K.t * 7, sil: L > .5 ? null : '#050505' }); gr.fillStyle = 'rgba(8,10,14,.35)'; gr.fillRect(fx - 60, fy - 220, 120, 230); }
+  if (cust && cust.phase === 'approach') {
+    // lit by the canopy as they cross the lot, then by the store as they reach the door; no box around them
+    const [fx, fy] = P(cust.ox, 0, cust.oz), s = F / cust.oz / 300;
+    if (L > .5) { gr.fillStyle = 'rgba(0,0,0,.32)'; gr.beginPath(); gr.ellipse(fx, fy, 70 * s, 11 * s, 0, 0, 7); gr.fill(); }
+    man(gr, cust.look, fx, fy, s, { walk: K.t * 7, sil: L > .5 ? null : '#050505' });
+  }
   if (cust && cust.mate && cust.phase === 'approach') { const [fx, fy] = P(cust.ox + .7, 0, cust.oz + .2); man(gr, cust.mate, fx, fy, F / (cust.oz + .2) / 300, { walk: K.t * 8 }); }
   // the knocker
   if (flick && flick.state === 'knock') { const [fx, fy] = P(2.55, 0, 5.9); man(gr, LOOKS.pale, fx + Math.sin(K.t * 3) * 2, fy, F / 5.9 / 300 * 1.12, { sil: '#020202', glint: '#ffffff', still: true }); }
@@ -648,6 +699,110 @@ function drawCam(gr) {
   const sg = gr.createLinearGradient(M.x, M.y, M.x + M.w, M.y + M.h); sg.addColorStop(0, 'rgba(255,255,255,.08)'); sg.addColorStop(.4, 'rgba(255,255,255,0)'); gr.fillStyle = sg; gr.fillRect(M.x + 10, M.y + 10, M.w - 20, M.h - 26);
 }
 
+/* ---------- week two: shelves that run empty, the back room ---------- */
+// the near snack aisle's three shelves, left and right halves: the spots that can run empty
+const SLOTS = []; { const z = 3.3, f0 = P(-2.2, 1, z), f1 = P(-.45, 0, z), hw = (f1[0] - f0[0]) / 2, hh = .3 * F / z; for (let s = 0; s < 3; s++) for (let h = 0; h < 2; h++) { const y = P(0, .02 + s * .33, z)[1]; SLOTS.push({ x: f0[0] + 3 + h * hw, y: y - hh, w: hw - 4, h: hh }); } }
+function drawEmpties(gr) {
+  for (const e of empties) {
+    const r = SLOTS[e.s]; gr.fillStyle = '#1e2022'; gr.fillRect(r.x, r.y, r.w, r.h);
+    gr.fillStyle = 'rgba(255,255,255,.06)'; gr.fillRect(r.x, r.y + r.h - 6, r.w, 3);
+    gr.fillStyle = '#ff8a2a'; gr.fillRect(r.x + r.w / 2 - 14, r.y + r.h - 12, 28, 10); gr.fillStyle = '#111'; gr.font = 'bold 8px Arial'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText('OUT', r.x + r.w / 2, r.y + r.h - 7);
+    if (e.p && night >= 8) { gr.globalAlpha = .55 + .2 * Math.sin(K.t * 2); gr.fillStyle = '#050505'; gr.beginPath(); gr.ellipse(r.x + r.w / 2, r.y + r.h * .45, r.w * .18, r.h * .55, 0, 0, 7); gr.fill(); gr.globalAlpha = 1; }
+  }
+}
+// the back room: fusebox on the left, the back door in the middle, the pump 4 log and the stock shelves on the right
+const FUSE = { x: 92, y: 150, w: 300, h: 390 }, BDOOR = { x: 520, y: 92, w: 250, h: 470 }, LOGR = { x: 800, y: 196, w: 88, h: 112 }, STOCK = { x: 920, y: 150, w: 320, h: 410 };
+const brkR = i => ({ x: FUSE.x + 34 + (i % 3) * 86, y: FUSE.y + 116 + Math.floor(i / 3) * 128, w: 62, h: 96 });
+const boxR = () => ({ x: STOCK.x + 20, y: STOCK.y + 150, w: STOCK.w - 40, h: 120 });
+let backC = null;
+function bakeBack() {
+  const c = mk(W, H), gr = c.getContext('2d');
+  let g = gr.createLinearGradient(0, 0, 0, 560); g.addColorStop(0, '#3a3f3a'); g.addColorStop(1, '#262a26'); gr.fillStyle = g; gr.fillRect(0, 0, W, 560);
+  gr.strokeStyle = 'rgba(0,0,0,.22)'; gr.lineWidth = 2;
+  for (let y = 70; y < 560; y += 38) { gr.beginPath(); gr.moveTo(0, y); gr.lineTo(W, y); gr.stroke(); for (let x = (y / 38 % 2) * 60; x < W; x += 120) { gr.beginPath(); gr.moveTo(x, y); gr.lineTo(x, y + 38); gr.stroke(); } }
+  gr.fillStyle = '#1c1e1c'; gr.fillRect(0, 0, W, 60); gr.fillStyle = '#d8dcd0'; gr.fillRect(300, 26, 680, 12);
+  g = gr.createLinearGradient(0, 560, 0, 720); g.addColorStop(0, '#3a3832'); g.addColorStop(1, '#1e1c18'); gr.fillStyle = g; gr.fillRect(0, 560, W, 160);
+  gr.fillStyle = 'rgba(0,0,0,.35)'; gr.fillRect(0, 556, W, 8);
+  // fusebox: grey panel, open door, card holder
+  const F0 = FUSE; gr.fillStyle = '#1a1c1e'; gr.fillRect(F0.x - 8, F0.y - 8, F0.w + 16, F0.h + 16);
+  g = gr.createLinearGradient(F0.x, 0, F0.x + F0.w, 0); g.addColorStop(0, '#8a8e90'); g.addColorStop(1, '#5a5e60'); gr.fillStyle = g; gr.fillRect(F0.x, F0.y, F0.w, F0.h);
+  gr.fillStyle = '#4a4e50'; gr.beginPath(); gr.moveTo(F0.x - 8, F0.y - 8); gr.lineTo(F0.x - 60, F0.y + 20); gr.lineTo(F0.x - 60, F0.y + F0.h - 20); gr.lineTo(F0.x - 8, F0.y + F0.h + 8); gr.fill();
+  gr.fillStyle = '#d8b02a'; gr.fillRect(F0.x + 14, F0.y + F0.h - 46, F0.w - 28, 30); gr.fillStyle = '#111'; gr.font = 'bold 15px Arial'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText('DANGER  ·  208V', F0.x + F0.w / 2, F0.y + F0.h - 31);
+  // back door
+  const D = BDOOR; gr.fillStyle = '#141614'; gr.fillRect(D.x - 12, D.y - 12, D.w + 24, D.h + 12);
+  g = gr.createLinearGradient(D.x, 0, D.x + D.w, 0); g.addColorStop(0, '#5a6a6a'); g.addColorStop(1, '#3a4646'); gr.fillStyle = g; gr.fillRect(D.x, D.y, D.w, D.h);
+  gr.fillStyle = '#9a9e9a'; gr.fillRect(D.x + 18, D.y + 250, D.w - 36, 18); gr.fillStyle = '#6a6e6a'; gr.fillRect(D.x + 18, D.y + 266, D.w - 36, 4);
+  gr.fillStyle = '#c82a2a'; gr.fillRect(D.x + 50, D.y + 300, D.w - 100, 34); gr.fillStyle = '#fff'; gr.font = 'bold 17px Arial'; gr.fillText('EMPLOYEES ONLY', D.x + D.w / 2, D.y + 317);
+  gr.fillStyle = '#e8d070'; gr.fillRect(D.x + 66, D.y + 352, D.w - 132, 26); gr.fillStyle = '#3a2a0a'; gr.font = 'bold 12px Arial'; gr.fillText('DELIVERIES: HALVORSEN', D.x + D.w / 2, D.y + 365);
+  gr.fillStyle = '#1a1a1a'; gr.fillRect(D.x + 66, D.y + 28, D.w - 132, 130);
+  // the pump 4 log on a clipboard, and a calendar with a date circled
+  const Lg = LOGR; gr.fillStyle = '#6a4a2a'; gr.fillRect(Lg.x, Lg.y, Lg.w, Lg.h); gr.fillStyle = '#e8e2d0'; gr.fillRect(Lg.x + 6, Lg.y + 14, Lg.w - 12, Lg.h - 20); gr.fillStyle = '#9a9a9a'; gr.fillRect(Lg.x + 24, Lg.y - 4, 40, 14);
+  gr.fillStyle = '#7a1c1c'; gr.font = 'bold 11px Arial'; gr.fillText('PUMP 4', Lg.x + Lg.w / 2, Lg.y + 26); gr.fillText('LOG', Lg.x + Lg.w / 2, Lg.y + 39);
+  gr.fillStyle = 'rgba(40,40,40,.6)'; for (let i = 0; i < 6; i++) gr.fillRect(Lg.x + 14, Lg.y + 52 + i * 8, Lg.w - 28 - (i % 3) * 8, 2);
+  gr.fillStyle = '#e8e4d8'; gr.fillRect(806, 340, 76, 86); gr.fillStyle = '#7a1c1c'; gr.fillRect(806, 340, 76, 18); gr.fillStyle = '#fff'; gr.font = 'bold 11px Arial'; gr.fillText('MARCH', 844, 349);
+  gr.fillStyle = '#555'; for (let i = 0; i < 20; i++) gr.fillRect(812 + (i % 5) * 14, 366 + Math.floor(i / 5) * 14, 8, 6);
+  gr.strokeStyle = '#c81e1e'; gr.lineWidth = 2; gr.beginPath(); gr.arc(812 + 2 * 14 + 4, 366 + 3 * 14 + 3, 8, 0, 7); gr.stroke();
+  // stock shelves
+  const St = STOCK; gr.fillStyle = '#5a5e62';
+  for (const y of [St.y, St.y + 140, St.y + 280, St.y + 405]) gr.fillRect(St.x, y, St.w, 8);
+  gr.fillRect(St.x, St.y, 8, St.h); gr.fillRect(St.x + St.w - 8, St.y, 8, St.h);
+  const jug = (x, y, c) => { gr.fillStyle = c; gr.beginPath(); gr.roundRect(x, y - 70, 44, 70, 6); gr.fill(); gr.fillStyle = 'rgba(255,255,255,.4)'; gr.fillRect(x + 8, y - 40, 28, 16); };
+  jug(St.x + 30, St.y, '#2a7ad2'); jug(St.x + 90, St.y, '#e8c83a'); jug(St.x + 150, St.y, '#3aa04a');
+  gr.fillStyle = '#8a6a3a'; gr.fillRect(St.x + 30, St.y + 330, 90, 75); gr.fillStyle = '#6a8a9a'; gr.fillRect(St.x + 150, St.y + 350, 120, 55);
+  gr.fillStyle = '#a8a8a0'; gr.fillRect(St.x + St.w + 6, St.y + 120, 10, 330); gr.fillStyle = '#c8c0a0'; gr.fillRect(St.x + St.w - 2, St.y + 430, 28, 30);
+  return c;
+}
+function drawBack(gr) {
+  if (!backC) backC = bakeBack();
+  const L = lightL; gr.drawImage(backC, 0, 0);
+  // fusebox: the card, the six breakers (4 is red and taped), indicator lights
+  const F0 = FUSE; gr.fillStyle = '#efe8d2'; gr.fillRect(F0.x + 20, F0.y + 16, F0.w - 40, 74);
+  gr.fillStyle = '#7a1c1c'; gr.font = 'bold 14px Arial'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText('RESET ORDER', F0.x + F0.w / 2, F0.y + 32);
+  gr.font = `bold 30px ${TF}`; gr.fillStyle = '#1a1a1a';
+  gr.fillText(power ? power.order.map((i, k) => k < power.step ? '✓' : String(i + 1)).join('  →  ') : '—', F0.x + F0.w / 2, F0.y + 66);
+  for (let i = 0; i < 6; i++) {
+    const r = brkR(i), on = !!brk[i], red = i === 3, hv = hover === 'brk' + i;
+    gr.fillStyle = '#2a2c2e'; gr.fillRect(r.x, r.y, r.w, r.h); gr.strokeStyle = hv ? '#ffd23f' : '#141414'; gr.lineWidth = hv ? 3 : 2; gr.strokeRect(r.x, r.y, r.w, r.h);
+    gr.fillStyle = '#111'; gr.font = 'bold 18px Arial'; gr.fillText(String(i + 1), r.x + r.w / 2, r.y - 14);
+    const ly = on ? r.y + 12 : r.y + r.h - 46; gr.fillStyle = red ? '#b01e1e' : '#d8d8d0'; gr.beginPath(); gr.roundRect(r.x + 12, ly, r.w - 24, 34, 5); gr.fill();
+    gr.fillStyle = on ? (red ? '#ff4a2a' : '#5aff7a') : '#4a1a1a'; gr.beginPath(); gr.arc(r.x + r.w / 2, r.y + r.h / 2, 5, 0, 7); gr.fill();
+    if (red) { gr.save(); gr.translate(r.x + r.w / 2, r.y + r.h / 2); gr.rotate(-.5); gr.fillStyle = 'rgba(230,220,180,.92)'; gr.fillRect(-46, -11, 92, 22); gr.fillStyle = '#7a1c1c'; gr.font = 'bold 10px Arial'; gr.fillText('DO NOT FLIP', 0, 0); gr.restore(); }
+  }
+  if (power && Math.random() < .06) { const r = brkR(power.order[power.step]); K.burst(r.x + r.w / 2, r.y, ['#ffd23f', '#fff'], 2, 90, { life: .2, size: 3, gravity: 300 }); }
+  // the back door window: the alley, the delivery truck's yellow lights, or something pressed to the glass
+  const D = BDOOR, wx = D.x + 72, wy = D.y + 34, ww = D.w - 144, wh = 118;
+  gr.save(); gr.beginPath(); gr.rect(wx, wy, ww, wh); gr.clip(); gr.fillStyle = '#05070a'; gr.fillRect(wx, wy, ww, wh);
+  if (deliv && deliv.real) {
+    // the back of the Halvorsen truck, its amber lamps flashing
+    gr.fillStyle = '#2a2a2e'; gr.fillRect(wx + 6, wy + 30, ww - 12, wh); gr.fillStyle = '#c8a02a'; gr.fillRect(wx + 6, wy + 30, ww - 12, 10);
+    gr.fillStyle = 'rgba(200,190,160,.5)'; gr.font = 'bold 10px Arial'; gr.textAlign = 'center'; gr.fillText('HALVORSEN', wx + ww / 2, wy + 64);
+    const k = .5 + .5 * Math.sin(K.t * 6); gr.globalCompositeOperation = 'lighter';
+    for (const lx of [wx + 18, wx + ww - 18]) { const lg = gr.createRadialGradient(lx, wy + 88, 1, lx, wy + 88, 48); lg.addColorStop(0, `rgba(255,190,40,${.95 * k})`); lg.addColorStop(.25, `rgba(255,170,30,${.5 * k})`); lg.addColorStop(1, 'rgba(255,160,30,0)'); gr.fillStyle = lg; gr.fillRect(wx, wy, ww, wh); gr.fillStyle = `rgba(255,230,140,${k})`; gr.beginPath(); gr.arc(lx, wy + 88, 6, 0, 7); gr.fill(); }
+    gr.globalCompositeOperation = 'source-over';
+  }
+  else if (deliv) { man(gr, LOOKS.pale, wx + ww / 2 + Math.sin(K.t * .8) * 4, wy + 384, .6, { still: 1, wrong: 1, tilt: .12, smile: Math.min(1, deliv.t * .2) }); }
+  gr.restore();
+  gr.strokeStyle = 'rgba(160,170,170,.5)'; gr.lineWidth = 1; for (let x = wx; x <= wx + ww; x += 14) { gr.beginPath(); gr.moveTo(x, wy); gr.lineTo(x + 14, wy + wh); gr.moveTo(x + 14, wy); gr.lineTo(x, wy + wh); gr.stroke(); }
+  gr.strokeStyle = hover === 'bdoor' ? '#ffd23f' : 'transparent'; gr.lineWidth = 3; gr.strokeRect(D.x, D.y, D.w, D.h);
+  // stock boxes from Halvorsen Supply
+  const B = boxR(); for (let i = 0; i < Math.min(boxes, 6); i++) { const bx = B.x + (i % 3) * 94, by = B.y + B.h - 56 - Math.floor(i / 3) * 58; gr.fillStyle = '#b8884a'; gr.fillRect(bx, by, 86, 54); gr.fillStyle = '#8a6030'; gr.fillRect(bx, by + 22, 86, 6); gr.fillStyle = '#3a2a10'; gr.font = 'bold 9px Arial'; gr.fillText('HALVORSEN', bx + 43, by + 40); }
+  if (!boxes) { gr.fillStyle = '#efe8d2'; gr.fillRect(B.x + 90, B.y + 60, 110, 40); gr.fillStyle = '#7a1c1c'; gr.font = `bold 16px ${TF}`; gr.fillText('NO STOCK', B.x + 145, B.y + 80); }
+  if (hover === 'box') { gr.strokeStyle = '#ffd23f'; gr.lineWidth = 3; gr.strokeRect(B.x, B.y, B.w, B.h); }
+  if (hover === 'log') { gr.strokeStyle = '#ffd23f'; gr.lineWidth = 3; gr.strokeRect(LOGR.x - 4, LOGR.y - 8, LOGR.w + 8, LOGR.h + 12); }
+  // lighting: the tube light, or the dark with the red exit sign and a battery lamp over the fusebox
+  if (L > .3) { gr.globalCompositeOperation = 'lighter'; const lg = gr.createRadialGradient(640, 32, 10, 640, 200, 620); lg.addColorStop(0, 'rgba(220,235,220,.22)'); lg.addColorStop(1, 'rgba(220,235,220,0)'); gr.fillStyle = lg; gr.fillRect(0, 0, W, 560); gr.globalCompositeOperation = 'source-over'; }
+  gr.fillStyle = `rgba(2,3,6,${.12 + (1 - L) * .74})`; gr.fillRect(0, 0, W, H);
+  if (L < .5) {
+    gr.globalCompositeOperation = 'lighter';
+    let lg = gr.createRadialGradient(F0.x + F0.w / 2, F0.y - 30, 6, F0.x + F0.w / 2, F0.y + 200, 300); lg.addColorStop(0, 'rgba(255,230,180,.38)'); lg.addColorStop(1, 'rgba(255,230,180,0)'); gr.fillStyle = lg; gr.fillRect(0, 0, 640, 600);
+    lg = gr.createRadialGradient(D.x + D.w / 2, D.y - 30, 4, D.x + D.w / 2, D.y, 160); lg.addColorStop(0, 'rgba(255,40,30,.5)'); lg.addColorStop(1, 'rgba(255,40,30,0)'); gr.fillStyle = lg; gr.fillRect(D.x - 160, D.y - 120, D.w + 320, 300);
+    gr.globalCompositeOperation = 'source-over';
+  }
+  gr.fillStyle = L < .5 ? '#ff3a2a' : '#7a1a1a'; gr.fillRect(D.x + D.w / 2 - 34, D.y - 38, 68, 22); gr.fillStyle = '#fff'; gr.font = 'bold 14px Arial'; gr.fillText('EXIT', D.x + D.w / 2, D.y - 27);
+  gr.fillStyle = 'rgba(255,255,255,.7)'; gr.font = 'bold 15px Arial';
+  gr.fillText('BREAKERS  (1-6)', F0.x + F0.w / 2, F0.y + F0.h + 32); gr.fillText('BACK DOOR', D.x + D.w / 2, D.y + D.h + 30); gr.fillText('STOCK', STOCK.x + STOCK.w / 2, STOCK.y + STOCK.h + 32);
+}
+
 /* ---------- per-frame store drawing ---------- */
 const ME = { skin: '#e0ac88', hair: '#3b2618', hs: 'short', eye: '#3a2a1a', top: 'polo', c1: '#8a1c1c', c2: '#e8e0c8', pants: '#22283a', seed: 0 };
 const PANELS = []; for (const z of [2.0, 3.1, 4.2]) for (const x of [-1.3, 1.3, 3.7]) PANELS.push([P(x - .35, 3, z), P(x + .35, 3, z), P(x + .35, 3, z + .75), P(x - .35, 3, z + .75)]);
@@ -676,25 +831,82 @@ function drawDoor(gr) {
   gr.fillStyle = locked ? '#7a1a1a' : '#e8e0c8'; gr.fillRect(-34, -24, 68, 26); gr.scale(-1, 1); gr.fillStyle = locked ? '#fff' : '#2a6a2a'; gr.font = 'bold 15px Arial'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText(locked ? 'CLOSED' : 'OPEN', 0, -11); gr.restore();
   gr.fillStyle = 'rgba(255,255,255,.75)'; gr.font = 'bold 12px Arial'; gr.textAlign = 'center'; gr.fillText('PUSH', d0[0] + pw / 2, d0[1] + h * .5 + 22);
 }
+// the glass is a mirror at z = ZB: anything in the store at depth z shows up at depth 2*ZB - z, small and far,
+// added on top of the night outside (screen blend), stronger where it is dark outside and with a faint second image
+// from the back of the thick glass. Customers face the counter, so the glass shows their backs; you see your own face.
+let refC = null, smudgeC = null;
+function glassRects() { const w0 = P(WIN.x0, WIN.y1, ZB), w1 = P(WIN.x1, WIN.y0, ZB), d0 = P(DOORX[0] + .08, DOORY - .08, ZB), d1 = P(DOORX[1], 0, ZB); return [[w0[0], w0[1], w1[0] - w0[0], w1[1] - w0[1]], [d0[0], d0[1], d1[0] - 10 - d0[0], d1[1] - d0[1]]]; }
+function backOf(gr, p, x, y, s) {
+  // a person seen from behind: body in their clothes, head all hair
+  man(gr, { ...p, glasses: 0, beard: 0, tag: 0 }, x, y, s, { still: 1, sil: sh(p.c1, -.25) });
+  const hy = y - (p.kid ? .62 : (p.tall || 1)) * s * 500; gr.fillStyle = p.hs === 'bald' ? sh(p.skin, -.3) : p.hair; gr.beginPath(); gr.ellipse(x, hy - 4 * s, 46 * s, 56 * s, 0, 0, 7); gr.fill();
+  if (p.hat) { gr.fillStyle = p.hatC || '#333'; gr.beginPath(); gr.ellipse(x, hy - 34 * s, 50 * s, 26 * s, 0, 0, 7); gr.fill(); }
+}
+// your own reflection: normal, or on the nights it decides to move without you
+function meLook() {
+  if (!mirror) return { still: 1 };
+  const k = Math.min(1, mirror.t / 2.5);
+  return { still: 1, tilt: .2 * k * Math.sin(mirror.t * .7 + 1), look: -.9 * k, smile: k, wrong: mirror.t > 1.5 };
+}
+function reflection(c, L) {
+  c.clearRect(0, 0, W, H);
+  const M = (x, y, z) => P(x, y, 2 * ZB - z);
+  c.save(); c.beginPath(); c.rect(...glassRects()[0]); c.clip();
+  // ceiling lights
+  for (const z of [2.0, 3.1, 4.2]) for (const x of [-1.3, 1.3, 3.7]) { poly(c, [M(x - .35, 3, z), M(x + .35, 3, z), M(x + .35, 3, z + .75), M(x - .35, 3, z + .75)]); c.fillStyle = L > .3 ? '#f2f8ee' : '#2a2c2a'; c.fill(); }
+  // the coolers along the left wall glow blue
+  poly(c, [M(-2.3, 2.2, 2.2), M(-2.3, 2.2, 5.1), M(-2.3, .05, 5.1), M(-2.3, .05, 2.2)]); c.fillStyle = 'rgba(110,160,200,.75)'; c.fill();
+  // the counter, the register's green display and the pump console
+  poly(c, [M(-2.3, 1, .9), M(4.6, 1, .9), M(4.6, 1, 1.5), M(-2.3, 1, 1.5)]); c.fillStyle = '#8a7a5a'; c.fill();
+  poly(c, [M(-2.3, 1, .9), M(4.6, 1, .9), M(4.6, 0, .9), M(-2.3, 0, .9)]); c.fillStyle = '#5a4a36'; c.fill();
+  const rg = M(1.25, 1.42, 1.1); c.fillStyle = '#3a3a3a'; c.fillRect(rg[0] - 9, rg[1], 18, 12); c.fillStyle = '#5aff7a'; c.fillRect(rg[0] - 6, rg[1] + 2, 12, 3);
+  // you, behind the counter, facing the glass (a customer at the counter stands in front of this one)
+  const me = M(0, 0, .25), sm = F / (2 * ZB - .25) / 320;
+  c.save(); c.translate(me[0], me[1]); c.scale(-1, 1); man(c, ME, 0, 0, sm, meLook()); c.restore();
+  c.restore();
+  // the door: the glass is angled toward the counter, so it shows the register end of the store, you, and whoever is
+  // standing at the counter, from behind. The ones with no reflection are simply not there.
+  const [, D] = glassRects(), cx = D[0] + D[2] / 2, by = D[1] + D[3];
+  c.save(); c.beginPath(); c.rect(...D); c.clip();
+  c.fillStyle = L > .3 ? '#f2f8ee' : '#2a2c2a'; c.fillRect(D[0], D[1] + 14, D[2], 5); c.fillRect(D[0], D[1] + 42, D[2], 4);
+  c.fillStyle = 'rgba(110,160,200,.6)'; c.fillRect(D[0], D[1] + 70, 20, 120);
+  const grow = mirror ? 1 + Math.min(.6, mirror.t * .08) : 1;
+  c.save(); c.translate(cx + 30, by - 14); c.scale(-1, 1); man(c, ME, 0, 0, .2 * grow, meLook()); c.restore();
+  c.fillStyle = '#6a5a44'; c.fillRect(D[0], by - 78, D[2], 24); c.fillStyle = '#9a8a6a'; c.fillRect(D[0], by - 80, D[2], 4); c.fillStyle = '#5aff7a'; c.fillRect(cx + 46, by - 92, 14, 5);
+  if (cust && !cust.ghost && ['in', 'at', 'leave'].includes(cust.phase)) {
+    const u = cust.u, x = cx - 22 + (1 - u) * 34, y = by + 12 - (1 - u) * 30, sc = .26 + (1 - u) * .1;
+    if (cust.mate) backOf(c, cust.mate, x - 40, y, sc * .9);
+    backOf(c, cust.look, x, y, sc);
+  }
+  c.restore();
+  // the room light falls off with the power
+  c.globalCompositeOperation = 'source-atop'; c.fillStyle = `rgba(0,0,0,${(1 - L) * .9})`; c.fillRect(0, 0, W, H); c.globalCompositeOperation = 'source-over';
+}
 function drawReflections(gr, L) {
-  // the door glass reflects the lit store: the counter, you, and whoever is standing at it
-  const d0 = P(DOORX[0] + .08, DOORY - .08, ZB), d1 = P(DOORX[1], 0, ZB);
-  gr.save(); gr.beginPath(); gr.rect(d0[0], d0[1], d1[0] - 10 - d0[0], d1[1] - d0[1]); gr.clip();
-  const a = .18 + .3 * L; gr.globalAlpha = a;
-  const cx = (d0[0] + d1[0]) / 2;
-  gr.fillStyle = '#e8f0e8'; gr.fillRect(d0[0], d0[1] + 14, 140, 4); gr.fillRect(d0[0], d0[1] + 40, 140, 3);
-  man(gr, ME, cx + 30, d1[1] - 14, .2, { still: 1 });
-  gr.fillStyle = '#6a5a44'; gr.fillRect(d0[0], d1[1] - 78, 160, 24); gr.fillStyle = '#9a8a6a'; gr.fillRect(d0[0], d1[1] - 80, 160, 4);
-  if (cust && !cust.ghost && ['in', 'at', 'leave'].includes(cust.phase)) { const u = cust.u; man(gr, cust.look, cx - 22 + (1 - u) * 30, d1[1] + 10 - (1 - u) * 50, .26 - (1 - u) * .1, { still: 1 }); if (cust.mate) man(gr, cust.mate, cx - 60, d1[1] + 10, .24, { still: 1 }); }
-  gr.globalAlpha = 1; const sg = gr.createLinearGradient(d0[0], d0[1], d1[0], d1[1]); sg.addColorStop(0, 'rgba(255,255,255,.1)'); sg.addColorStop(.3, 'rgba(255,255,255,0)'); sg.addColorStop(.6, 'rgba(255,255,255,.05)'); sg.addColorStop(.7, 'rgba(255,255,255,0)');
-  gr.fillStyle = sg; gr.fillRect(d0[0], d0[1], 200, 300); gr.restore();
-  // the window: faint interior reflection, mullions, decals and the neon sign
+  if (!refC) {
+    refC = mk(W, H); smudgeC = mk(W, H); const g = smudgeC.getContext('2d');
+    for (let i = 0; i < 60; i++) { const x = K.rand(400, 1020), y = K.rand(140, 460), r = K.rand(6, 26); const sg = g.createRadialGradient(x, y, 1, x, y, r); sg.addColorStop(0, 'rgba(255,255,255,.06)'); sg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = sg; g.fillRect(x - r, y - r, r * 2, r * 2); }
+    g.strokeStyle = 'rgba(255,255,255,.035)'; g.lineWidth = 2; for (let i = 0; i < 30; i++) { const x = K.rand(400, 1020), y = K.rand(150, 440); g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + K.rand(-20, 20), y + 20, x + K.rand(-10, 10), y + K.rand(25, 60)); g.stroke(); }
+  }
+  const rc = refC.getContext('2d'); reflection(rc, L);
+  const G = glassRects();
+  gr.save(); gr.beginPath(); for (const r of G) gr.rect(...r); gr.clip();
+  // the reflection is brighter where the night outside is darker; the second, fainter image comes from the back surface
+  gr.globalCompositeOperation = 'screen';
+  gr.globalAlpha = .3 + .22 * L; gr.drawImage(refC, 0, 0);
+  gr.globalAlpha = .1 + .08 * L; gr.drawImage(refC, 3, 2);
+  gr.globalCompositeOperation = 'source-over'; gr.globalAlpha = 1;
+  // fresnel: the glass gets more mirror-like toward its edges; then smudges, and a sweep of light along the panes
+  for (const [x, y, w, h] of G) { const fg = gr.createRadialGradient(x + w / 2, y + h / 2, Math.min(w, h) * .3, x + w / 2, y + h / 2, Math.max(w, h) * .75); fg.addColorStop(0, 'rgba(180,200,210,0)'); fg.addColorStop(1, `rgba(180,200,210,${.06 + .05 * L})`); gr.fillStyle = fg; gr.fillRect(x, y, w, h); }
+  gr.drawImage(smudgeC, 0, 0);
+  const sw = (K.t * 18) % 900 + 300, sg = gr.createLinearGradient(sw - 140, 140, sw + 40, 460); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, `rgba(255,255,255,${.04 + .03 * L})`); sg.addColorStop(1, 'rgba(255,255,255,0)'); gr.fillStyle = sg; gr.fillRect(400, 140, 620, 320);
+  gr.restore();
+  // mullions, decals and the neon sign
   const w0 = P(WIN.x0, WIN.y1, ZB), w1 = P(WIN.x1, WIN.y0, ZB);
-  gr.fillStyle = `rgba(200,210,200,${.05 * L})`; gr.fillRect(w0[0], w0[1], w1[0] - w0[0], w1[1] - w0[1]);
   gr.fillStyle = '#7a7c7e'; gr.fillRect(w0[0] - 5, w0[1] - 5, w1[0] - w0[0] + 10, 7); gr.fillRect(w0[0] - 5, w1[1] - 3, w1[0] - w0[0] + 10, 8);
   for (const mx of [WIN.x0, -.85, .3, WIN.x1]) { const m = P(mx, 0, ZB)[0]; gr.fillRect(m - 4, w0[1], 8, w1[1] - w0[1]); }
   gr.save(); gr.translate(P(-1.45, 0, ZB)[0], w1[1] - 30); gr.scale(-1, 1); gr.fillStyle = 'rgba(255,255,255,.55)'; gr.font = 'bold 20px Arial'; gr.textAlign = 'center'; gr.fillText('LOTTO', 0, 0); gr.fillStyle = 'rgba(120,200,255,.5)'; gr.fillText('ICE', -110, 0); gr.restore();
-  const on = !locked && !dead;
+  const on = !locked && !dead && !power;
   gr.save(); gr.translate(P(.95, 0, ZB)[0], w1[1] - 46); gr.scale(-1, 1);
   gr.shadowColor = on ? '#ff3a3a' : 'transparent'; gr.shadowBlur = on ? 18 : 0; gr.strokeStyle = on ? '#4ab0ff' : '#1a2a3a'; gr.lineWidth = 3; gr.beginPath(); gr.roundRect(-46, -20, 92, 38, 8); gr.stroke();
   gr.fillStyle = on ? '#ff5a4a' : '#3a1a1a'; gr.font = 'bold 26px Arial'; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText('OPEN', 0, 0); gr.restore();
@@ -702,7 +914,8 @@ function drawReflections(gr, L) {
 }
 function lightLevel() {
   if (dead) return K.t - dead.t < 1.3 ? (Math.random() < .08 ? .4 : 0) : 0;
-  if (ended && night >= 5) return 1;
+  if (ended && night >= NN) return 1;
+  if (power) return .06 + (Math.random() < .02 ? .12 : 0);
   if (flick) {
     const k = flick.t;
     if (flick.state === 'flick') return (k > .25 && k < .5) || (k > 1.0 && k < 1.2) || (k > 1.75 && k < 2.05) ? .05 : 1;
@@ -719,6 +932,7 @@ function drawStore(gr) {
   // ceiling panels
   for (const pnl of PANELS) { poly(gr, pnl); gr.fillStyle = L > .3 ? `rgba(250,255,245,${.55 + .45 * L})` : '#3a3c3a'; gr.fill(); }
   if (L > .3) { gr.globalCompositeOperation = 'lighter'; for (const pnl of PANELS) { const cx = (pnl[0][0] + pnl[2][0]) / 2, cy = (pnl[0][1] + pnl[2][1]) / 2, r = Math.abs(pnl[1][0] - pnl[0][0]) * 2.2; const lg = gr.createRadialGradient(cx, cy, 2, cx, cy + r * .3, r); lg.addColorStop(0, `rgba(200,220,200,${.22 * L})`); lg.addColorStop(1, 'rgba(0,0,0,0)'); gr.fillStyle = lg; gr.fillRect(cx - r, cy - r, r * 2, r * 2); } gr.globalCompositeOperation = 'source-over'; }
+  drawEmpties(gr);
   // darkness over the interior, but not over the glass
   const w0 = P(WIN.x0, WIN.y1, ZB), w1 = P(WIN.x1, WIN.y0, ZB), d0 = P(DOORX[0], DOORY, ZB), d1 = P(DOORX[1], 0, ZB);
   gr.fillStyle = `rgba(3,5,10,${.18 + (1 - L) * .78})`; gr.beginPath(); gr.rect(v.x0, v.y0, v.x1 - v.x0, 720 - v.y0); gr.rect(w0[0], w0[1], w1[0] - w0[0], w1[1] - w0[1]); gr.rect(d0[0], d0[1], d1[0] - d0[0], d1[1] - d0[1]); gr.fill('evenodd');
@@ -795,9 +1009,11 @@ const SPEC = {
   mom: ['Kid', ['candy', 'water'], 'Mom, why is that man standing by the broken pump?'],
   deputy: ['Deputy Hale', ['coffee', 'donut'], 'Still looking for Danny Reyes. If he ever calls here... you call me first.'],
   teen: ['Teen', ['energy', 'chips'], 'Everyone at school says if you turn on pump 4 you can hear Danny. Do it. Do it!'],
+  gus: ['Gus (Halvorsen Supply)', ['coffee', 'paper'], 'Thirty years on this route. You know what my granddad called pump 4? The well. Said you don\'t pump it. It pumps you.'],
 };
 const ENDS = { dead: 'Clocked Out', perfect: 'Employee of the Month', dawn: 'Sunrise', followed: 'Followed Home' };
-const ASKS = ['restroom', 'time', 'name', 'fake'];
+const ASKS = ['restroom', 'time', 'name', 'fake', 'danny', 'lastcall'];
+const GUS = ['Two boxes, kid. Sign nowhere. Your pump 4\'s lit again. Swear it was dark when I pulled in.', 'Here you go. Don\'t look at the field on your way back in.', 'Two boxes. Hey. The meter on pump 4 moved while I was parking. You ever see it move?', 'Thirty years and that pump never sold a drop. Two boxes. Lock this behind me.'];
 let nServ = 0, nFol = 0, botT = 0, sumN = null, nextT = 0, p4T = 0, beat = 0;
 const pen = n => { const v = Math.min(n, K.score); if (v > 0) K.add(-v); };
 const say = (who, text, d) => { cap = { who, text, t: 0, d: d || Math.max(3.4, text.length * .06) }; };
@@ -819,7 +1035,7 @@ function finish(id) {
   K.save.strikes = 0; if (id !== 'dead') K.save.night = 1; K.persist();
   const tx = {
     dead: `${dead && dead.why}. That was strike three. The lights went out, and the Starlite is hiring again. Night ${night} is waiting for you.`,
-    perfect: 'Five nights, every rule followed. At 5:01 Ray walks in, smiling a little too wide. "You\'re perfect for this place." Behind you, the door locks itself.',
+    perfect: 'Ten nights, every rule followed. At 5:01 Ray walks in, smiling a little too wide. "You\'re perfect for this place." Behind you, the door locks itself.',
     dawn: 'The sun comes up over Route 9. Ray takes the keys at 5:01 and you walk out into the light. You never look back at pump 4.',
     followed: 'You made it to sunrise, barely. Driving home, your car radio clicks on by itself. A slow waltz, and a voice: "See you tomorrow, clerk."',
   }[id];
@@ -827,7 +1043,7 @@ function finish(id) {
 }
 function plan(n) {
   const E = [], r = K.rand, add = (h, k, o) => E.push({ at: at(h), at0: at(h), k, ...o });
-  const ng = 2 + Math.round(n * 1.6);
+  const ng = 2 + Math.round(Math.min(n, 6) * 1.6);
   for (let i = 0; i < ng; i++) add(.12 + 5.5 * i / ng + r(0, .3), 'cust', { kind: 'gen' });
   add(1.5, 'cust', { kind: 'walt' }); if (n >= 2) add(2.5, 'cust', { kind: 'mari' }); add(4.1, 'cust', { kind: 'earl' });
   if (n === 2) add(2.1, 'cust', { kind: 'mom' }); if (n === 3) add(.9, 'cust', { kind: 'deputy' }); if (n === 4) add(1.1, 'cust', { kind: 'teen' });
@@ -843,18 +1059,26 @@ function plan(n) {
   add(.3, 'dj', { i: 0 }); add(2.8, 'dj', { i: 1 });
   for (let i = 0; i < 4; i++) add(r(.2, 5.8), 'road');
   if (n >= 2) add(r(1, 5), 'fog'); if (n >= 3) add(r(2, 5), 'face'); if (n >= 4) add(r(.5, 5), 'knock');
+  // week two
+  if (n >= 6) { add(r(1.1, 2.2), 'power'); if (n >= 8) add(r(3.4, 4.4), 'power'); }
+  if (n >= 7) { add(r(.8, 2.4), 'deliv', { real: 1 }); add(r(3.1, 4.3), 'deliv', { real: 0 }); add(r(.4, 2.6), 'empty'); add(r(2.8, 5), 'empty'); add(r(1.8, 3.2), 'cust', { kind: 'gus' }); }
+  if (n >= 8) { add(r(1.4, 4.6), 'whistle'); add(r(2, 5.2), 'mirror'); }
+  if (n >= 9) { add(r(.6, 1.4), 'empty'); add(r(3.8, 5.4), 'mirror'); }
+  if (n === 9) { add(1.2, 'cust', { kind: 'danny' }); add(4.55, 'red'); }
+  if (n === 10) { add(5.73, 'p4self'); add(r(2.2, 3), 'cust', { kind: 'lastcall' }); add(r(4.6, 5.3), 'deliv', { real: 1 }); }
   return E.sort((a, b) => a.at - b.at);
 }
 function startNight(n) {
   night = n; t = 0; ev = plan(n); cust = null; look = false; lookK = 0; locked = false; flick = null; phone = null; cars = []; pumps = [0, 1, 2, 3].map(() => ({ on: false }));
   radio = { on: true, talk: 0 }; cctv = null; dlg = null; cap = null; ambT = null; roadCar = null; doorK = 0; nStrikes = 0; nServ = 0; nFol = 0; tense = 0; view = null; hint = null; noteOpen = null; banners = [];
+  turned = false; turnK = 0; power = null; brk = [1, 1, 1, 0, 1, 1]; boxes = n >= 7 ? 1 : 0; carry = 0; empties = []; deliv = null; whistle = null; mirror = null; p4self = null;
 }
-function clockIn() { const n = noteOpen ? noteOpen.n : night; startNight(n); snd.chime(); banner('NIGHT ' + n, n === 5 ? 'The last night of the week.' : '11:00 PM. Clocked in.', '#ffd23f'); }
+function clockIn() { const n = noteOpen ? noteOpen.n : night; startNight(n); snd.chime(); banner('NIGHT ' + n, n === NN ? 'The last night.' : n === 5 ? 'The last night of the week.' : n === 6 ? 'Week two. Clean slate.' : '11:00 PM. Clocked in.', '#ffd23f'); }
 GAME.reset = () => {
   strikes = K.bot ? 0 : K.clamp(K.save.strikes || 0, 0, 2); served = 0; followed = 0; endingId = null; dead = null; ended = 0; endT = 0; scare = null; poseMode = 0; lastOdd = 0; hbT = 0; botT = 1;
   hintsSeen = new Set(K.save.seen || []);
   fog = Array.from({ length: 9 }, () => ({ x: K.rand(0, 800), y: K.rand(250, 430), r: K.rand(90, 220), v: K.rand(5, 14) * (Math.random() < .5 ? -1 : 1) }));
-  const n = K.bot ? K.irand(1, 5) : K.clamp(K.save.night || 1, 1, 5);
+  const n = K.bot ? K.irand(1, NN) : K.clamp(K.save.night || 1, 1, NN);
   startNight(n);
   if (K.bot) { t = K.rand(at(.3), at(3)); ev = ev.filter(e => e.at > t); cust = newCust('gen'); cust.pt = 2; } else noteOpen = { n };
   ambInit();
@@ -874,6 +1098,8 @@ function newCust(kind) {
   if (REG[kind]) { c.look = LOOKS[kind]; list = REG[kind].items.slice(0, K.irand(1, 3)); }
   else if (SPEC[kind]) { c.look = LOOKS[kind]; if (kind === 'mom') c.mate = LOOKS.kid; list = SPEC[kind][1]; }
   else if (kind === 'fake' || kind === 'ray') { c.look = LOOKS.ray; c.noDoor = kind === 'fake'; }
+  else if (kind === 'danny') c.look = LOOKS.danny;
+  else if (kind === 'lastcall') { c.look = LOOKS.walt; c.noDoor = 1; }
   else if (kind === 'gen' || kind === 'ghost') list = Array.from({ length: K.irand(1, Math.min(4, 1 + night)) }, () => K.pick(IK));
   if (kind === 'gen' && Math.random() < .12) c.look = LOOKS.teen;
   if (kind === 'ghost') c.ghost = c.noDoor = 1;
@@ -897,15 +1123,17 @@ function ask(c) {
     time: ['Customer', 'Hey, what time is it? My phone died.', ['It\'s ' + clock() + '.', 'It\'s closing time.'], 1, 'You told a customer the time'],
     name: ['Customer', 'Your name tag\'s blank, hon. What\'s your name?', ['I\'m ' + MYNAME + '.', 'Just the clerk.'], 1, 'You told a customer your name'],
     fake: ['Ray?', 'Hey kid, it\'s me. Truck died out by pump 4. Come around the counter and give me a hand?', ['Come around the counter', 'Stay behind the counter'], 1, 'You left the counter before 5:00'],
+    danny: ['Danny', 'Hey. I... work here, right? Ray\'s gonna kill me, I\'m so late. What day is it? How long was I gone?', ['Since March. Everyone\'s been looking for you.', 'Not long. Coffee\'s on the house.'], 1, 'You told Danny how long he had been gone'],
+    lastcall: ['Walt?', 'Kid. We\'re all out by pump 4 tonight. Me, Marisol, Earl. Danny too. Come on out. We saved you a spot.', ['Okay. I\'m coming.', 'I\'m on shift.'], 1, 'You said you would go out to pump 4'],
   }[k];
   speak(9, k === 'fake' ? 105 : K.rand(100, 200), null, 0, .2);
   dlg = { who: Q[0], text: Q[1], opts: Q[2], ok: Q[3], t: 0, pick: i => {
     dlg = null; c.bye = 1.6;
     if (i === Q[3]) {
       if (Q[4]) good();
-      say(Q[0], { restroom: late ? '...Out of order. Sure it is.' : 'Thanks! Be right back.', time: '...Closing time. Right. Of course it is.', name: '"Just the clerk." ...For now.', fake: 'Suit yourself, kid.' }[k]);
-      if (k !== 'restroom') c.grin = 1;
-    } else if (Q[4]) { say(Q[0], k === 'name' ? MYNAME + '. ' + MYNAME + '. We\'ll remember that.' : k === 'fake' ? 'Good. Now hold still.' : 'Thank you, clerk.'); c.grin = 1; strike(Q[4], k !== 'restroom'); }
+      say(Q[0], { restroom: late ? '...Out of order. Sure it is.' : 'Thanks! Be right back.', time: '...Closing time. Right. Of course it is.', name: '"Just the clerk." ...For now.', fake: 'Suit yourself, kid.', danny: 'On the house. Ray always says that. ...Hey. Don\'t ever turn on pump 4, okay? It\'s cold in there.', lastcall: '...On shift. Sure. We\'ll wait. We\'re good at waiting.' }[k]);
+      if (k !== 'restroom' && k !== 'danny') c.grin = 1;
+    } else if (Q[4]) { say(Q[0], k === 'name' ? MYNAME + '. ' + MYNAME + '. We\'ll remember that.' : k === 'fake' ? 'Good. Now hold still.' : k === 'danny' ? 'March...? Then who\'s been... oh. Oh no. It\'s so cold.' : k === 'lastcall' ? 'Good. Don\'t bother with the door.' : 'Thank you, clerk.'); c.grin = 1; strike(Q[4], k !== 'restroom'); }
     else { pen(2); say(Q[0], 'Seriously? Fine.'); }
   } };
 }
@@ -921,13 +1149,14 @@ function custUpdate(dt) {
     for (const it of c.items) if (it.done) it.k = Math.min(1, it.k + dt * 3);
     if (c.bye != null) { if ((c.bye -= dt) <= 0) leave(c); return; }
     if (c.ghost) {
-      if (look) { c.lt = (c.lt || 0) + dt; if (Math.random() < dt * .7) speak(3, 0, null, 1, .14); if (c.lt > 4.5) leave(c); }
-      else { if (c.pt > 3) tip('ghost', 'Look at the door glass: this customer has NO reflection! Press L to look down.'); if (c.pt > (night === 1 ? 10 : 7.5)) { c.failed = 1; strike('You looked the one with no reflection in the eye', true); leave(c); } }
+      if (look || turned) { c.lt = (c.lt || 0) + dt; if (Math.random() < dt * .7) speak(3, 0, null, 1, .14); if (c.lt > 4.5) leave(c); }
+      else { if (c.pt > 3) tip('ghost', 'Look at the glass: this customer has NO reflection! Press L to look down.'); if (c.pt > (night === 1 ? 10 : 7.5)) { c.failed = 1; strike('You looked the one with no reflection in the eye', true); leave(c); } }
     } else if (c.pt > 40 && !dlg && !ended) { pen(5); say('Customer', 'Forget it. I\'m leaving.'); leave(c); }
   } else { c.u = Math.max(0, c.u - dt / 2); if (c.u <= 0) { cust = null; if (c.ghost && !c.failed) good('It left without opening the door. You can look up now.'); } }
 }
 function scan(i) {
-  const c = cust; if (!c || c.phase !== 'at' || c.bye != null || dlg || look || dead || ended) return;
+  const c = cust; if (!c || c.phase !== 'at' || c.bye != null || dlg || look || dead || ended || turned) return;
+  if (power) { if (!cap || cap.t > 2) say('', 'The register is dead. Get the power back on first.'); return; }
   if (i == null) i = c.items.findIndex(x => !x.done);
   const it = c.items[i]; if (!it || it.done) return;
   if (c.ghost) { c.failed = 1; strike('You served the customer with no reflection', true); leave(c); return; }
@@ -949,7 +1178,7 @@ function carsUpdate(dt) {
     if (c.fig) {
       if (c.state === 'wait') {
         c.a = Math.min(1, c.a + dt * .4);
-        if (c.t > 3 && !c.v) { c.v = 1; say('Intercom, pump 4', '...hey... turn on pump four... just once...', 5); speak(7, 0, null, 1, .35); tip('p4', 'Something wants pump 4. Rule 2: NEVER turn it on. Just wait it out.'); }
+        if (c.t > 3 && !c.v) { c.v = 1; if (c.red) { say('Intercom, pump 4', 'Kid, it\'s Ray. It\'s 3:33. I fixed pump 4, it\'s right there on the clipboard. Turn it on.', 6); speak(12, 105, null, 0, .3); tip('red', 'That rule is in RED ink. Ray only writes in black. Do NOT turn on pump 4.'); } else { say('Intercom, pump 4', '...hey... turn on pump four... just once...', 5); speak(7, 0, null, 1, .35); tip('p4', 'Something wants pump 4. Rule 2: NEVER turn it on. Just wait it out.'); } }
         if (c.t > 17 && !ended) { c.state = 'gone'; good('The figure at pump 4 is gone. You never turned it on.'); }
       } else if ((c.a -= dt * .6) <= 0) c.dead = 1;
       continue;
@@ -964,18 +1193,61 @@ function carsUpdate(dt) {
 function pumpOn(i) {
   if (i == null) { const w = cars.find(c => !c.fig && c.state === 'wait'); if (!w) return snd.click(); i = w.pump; }
   if (i === 3) { if (!pumps[3].on) { pumps[3].on = true; p4T = 0; snd.pump(); const f = cars.find(c => c.fig); if (f) f.state = 'gone'; strike('You turned on pump 4', true); } return; }
+  if (power) { say('', 'No power to the pumps.'); return snd.click(); }
   const c = cars.find(c => c.pump === i && c.state === 'wait');
   if (!c) return snd.click();
   pumps[i].on = true; c.state = 'fuel'; c.t = 0; snd.pump();
 }
 
+/* ---------- the back room ---------- */
+function flip(i) {
+  if (dead || ended) return;
+  if (i === 3) {
+    if (p4self) { p4self = null; brk[3] = 0; pumps[3].on = false; snd.breaker(); snd.spark(); K.shake(12); good('You pull breaker 4. Out in the lot the pump 4 lamp dies, and something in the Halvorsen field screams.'); return; }
+    brk[3] = 1; pumps[3].on = true; p4T = 0; snd.breaker(); strike(night >= 6 ? 'You flipped breaker 4' : 'You turned on pump 4 at the breaker', true); return;
+  }
+  if (!power) { snd.click(); if (!cap || cap.t > 2) say('', 'Breaker ' + (i + 1) + ' is fine. Better leave it alone.'); return; }
+  if (brk[i]) return snd.click();
+  if (power.order[power.step] === i) {
+    brk[i] = 1; power.step++; snd.breaker();
+    if (power.step >= power.order.length) { power = null; snd.chime(); good('The lights buzz back on.'); }
+  } else {
+    for (const j of power.trip) brk[j] = 0; power.step = 0; snd.spark(); K.shake(7); pen(3);
+    const r = brkR(i); K.burst(r.x + r.w / 2, r.y + r.h / 2, ['#ffd23f', '#fff', '#ff8a2a'], 14, 260, { life: .35, size: 4, gravity: 400 });
+    say('', 'Sparks. Wrong order. They all trip again. Check the card.');
+  }
+}
+function openBack() {
+  if (dead || ended) return;
+  snd.backDoor();
+  if (!deliv) { say('', 'Just the alley, the dumpster and the fog. You pull the door shut fast.'); return; }
+  if (deliv.real) { boxes += 2; deliv = null; good(); say('Gus (Halvorsen Supply)', K.pick(GUS), 5); speak(12, 95, null, 0, .2); }
+  else { deliv = null; strike('You opened the back door for three knocks', true); }
+}
+function takeBox() {
+  if (carry) return say('', 'You already have a box. Turn around and stock the empty shelf.');
+  if (!boxes) return say('', 'No stock left. Halvorsen Supply delivers to the back door.');
+  if (!empties.length) return say('', 'The shelves are full right now.');
+  boxes--; carry = 1; snd.click(); say('', 'You grab a box of stock. Turn around (T) and click the empty shelf.', 3);
+}
+function restock(i) {
+  if (!carry) return say('', 'You need stock. Turn around (T) and grab a box from the back.');
+  empties.splice(i, 1); carry = 0; snd.beep(); K.add(10, 300, 330, '#7aff9a'); followed++; nFol++;
+}
+
 /* ---------- player actions ---------- */
 function act(k, a) {
   if (dead || ended || noteOpen || K.state === 'over') return;
-  if (k === 'rules') { view = view ? null : 'rules'; nz(.15, .15, 'bandpass', 2500, 0, .8); hint = null; return; }
+  if (k === 'rules') { view = view ? null : 'rules'; if (view) { const i = rulesNow().findIndex(r => r.n === night && !r.red); rulePage = Math.max(0, Math.floor(Math.max(0, i) / 10)); } nz(.15, .15, 'bandpass', 2500, 0, .8); hint = null; return; }
   if (view) return;
   if (k === 'look') { look = !look; hint = null; nz(.25, .08, 'lowpass', 700); if (!look && cust && cust.ghost && cust.phase === 'at' && !cust.failed) { cust.failed = 1; strike('You looked up while it was still standing there', true); leave(cust); } return; }
   if (k === 'lock') { locked = !locked; snd.lock(locked); return; }
+  if (k === 'turn') {
+    turned = !turned; snd.turn(); hint = null;
+    if (whistle) { whistle = null; strike('You turned around while something was whistling behind you', true); return; }
+    if (!turned && !look && cust && cust.ghost && cust.phase === 'at' && !cust.failed && cust.lt > 0) { cust.failed = 1; strike('You turned back while it was still standing there', true); leave(cust); }
+    return;
+  }
   if (k === 'alarm') { snd.alarm(); K.flash('#f22', .25); if (cctv) { cctv = null; good('The alarm screams. On the camera, the aisle is empty again.'); } else { pen(5); say('', 'False alarm. Ray gets billed for those.'); } return; }
   if (k === 'radio') { if (radio.talk > 0) { radio.talk = 0; radio.on = false; snd.static(.25); good('Click. Silence. Whatever was on that station, it\'s gone.'); } else { radio.on = !radio.on; snd.click(); } return; }
   if (k === 'pump') return pumpOn(a);
@@ -1007,6 +1279,22 @@ function fire(e) {
   }
   if (k === 'cam') { if (cctv) return false; cctv = { on: 1, spot: K.irand(0, 2), t: 0 }; snd.static(.4); return true; }
   if (k === 'road') { if (!roadCar) roadCar = { x: 400, v: K.rand(110, 200) }; return true; }
+  if (k === 'power') {
+    if (power || flick || p4self) return false;
+    const trip = [0, 1, 2, 4, 5].sort(() => Math.random() - .5).slice(0, 3);
+    power = { t: 0, trip, order: trip.slice().sort(() => Math.random() - .5), step: 0 }; for (const i of trip) brk[i] = 0;
+    for (let i = 0; i < 3; i++) pumps[i].on = false; snd.outage(); lastOdd = K.t;
+    tip('power', 'The power is out! Press T to turn around, then flip the breakers in the order on the card.'); return true;
+  }
+  if (k === 'deliv') { if (deliv) return false; deliv = { real: e.real, t: 0, beat: .4 }; return true; }
+  if (k === 'empty') { const free = SLOTS.map((_, i) => i).filter(i => !empties.some(x => x.s === i)); if (free.length) empties.push({ s: K.pick(free), t: 0 }); tip('restock', 'A shelf is EMPTY. Turn around (T), grab a box from the stock shelf, turn back and click the empty shelf.'); return true; }
+  if (k === 'whistle') { if (whistle || power) return false; whistle = { t: 0, d: 7.5, nt: 0, i: 0 }; tip('whistle', 'Something behind you is whistling. Do NOT turn around until it stops.'); return true; }
+  if (k === 'mirror') { if (mirror || (cust && cust.ghost) || turned) return false; mirror = { t: 0, lt: 0 }; return true; }
+  if (k === 'red') { if (cars.some(c => c.fig)) return false; cars.push({ fig: 1, look: LOOKS.ray, x: PUMPX[3] + .55, z: PZ - .4, a: 0, state: 'wait', pump: 3, t: 0, red: 1 }); return true; }
+  if (k === 'p4self') {
+    if (p4self || power) return false; p4self = { t: 0 }; brk[3] = 1; pumps[3].on = true; snd.pump(); lastOdd = K.t;
+    say('Intercom, pump 4', '...4:44... it\'s on... it\'s finally on...', 5); speak(7, 0, null, 1, .4); tip('p4self', '4:44. Pump 4 switched itself on! Turn around (T) and pull breaker 4 OFF.'); return true;
+  }
   if (ambT) return false;
   ambT = { k, t: 0, d: k === 'fog' ? 7 : k === 'face' ? 1.2 : 1, x: K.rand(-5, 1) };
   if (k === 'face') { tone(1400, .7, 'sawtooth', .07, -900); nz(.5, .3, 'highpass', 1200); K.shake(8); }
@@ -1016,9 +1304,11 @@ function fire(e) {
 function endNight() {
   t = DUR; nextT = 3.4; sumN = { n: night, s: nServ, f: nFol, k: nStrikes };
   cust = null; dlg = null; phone = null; cctv = null; flick = null; radio.talk = 0; look = false; locked = false; view = null; hint = null;
+  turned = false; power = null; deliv = null; whistle = null; mirror = null; p4self = null; carry = 0; empties = []; brk = [1, 1, 1, 0, 1, 1];
   cars.forEach(c => { if (c.fig) c.state = 'gone'; else if (c.state !== 'fuel') c.state = 'out'; });
-  K.add(50, 640, 320, '#ffd23f'); snd.good(); banner('5:00 AM', night >= 5 ? 'You survived the week.' : `Night ${night} survived.`, '#ffd23f');
-  if (night >= 5) { ended = 1; endT = 0; endingId = strikes === 0 ? 'perfect' : strikes === 1 ? 'dawn' : 'followed'; if (endingId === 'perfect') K.add(100); return; }
+  K.add(50, 640, 320, '#ffd23f'); snd.good(); banner('5:00 AM', night >= NN ? 'Ten nights. You made it.' : night === 5 ? 'You survived the week.' : `Night ${night} survived.`, '#ffd23f');
+  if (night >= NN) { ended = 1; endT = 0; endingId = strikes === 0 ? 'perfect' : strikes === 1 ? 'dawn' : 'followed'; if (endingId === 'perfect') K.add(100); return; }
+  if (night === 5) strikes = 0;   // week two starts with a clean slate
   if (!K.bot) { K.save.night = night + 1; K.save.strikes = strikes; K.persist(); }
 }
 function endUpdate(dt) {
@@ -1028,7 +1318,7 @@ function endUpdate(dt) {
   if (endingId === 'perfect') {
     if (hit(1.5)) say('', 'The sky over Route 9 turns grey, then gold. A truck pulls in. 5:01.');
     if (hit(3)) cust = newCust('ray');
-    if (hit(9)) { say('Ray', 'Five nights. Every single rule. Nobody\'s ever done that, kid.'); speak(10, 110); }
+    if (hit(9)) { say('Ray', 'Ten nights. Every single rule. Nobody\'s ever done that, kid.'); speak(10, 110); }
     if (hit(13)) { say('Ray', 'You\'re perfect for this place. You never have to leave.'); speak(9, 100); if (cust) cust.grin = 1; locked = true; snd.lock(true); }
     if (hit(17)) finish('perfect');
   } else if (endingId === 'dawn') {
@@ -1062,12 +1352,12 @@ GAME.update = dt => {
   if (K.state === 'over' || dead) return;
   if (ended) { endUpdate(dt); return; }
   if (noteOpen || view) return;
-  if (t >= DUR) { carsUpdate(dt); if ((nextT -= dt) <= 0) { if (K.bot) startNight(night % 5 + 1); else noteOpen = { n: night + 1, sum: sumN }; } return; }
+  if (t >= DUR) { carsUpdate(dt); if ((nextT -= dt) <= 0) { if (K.bot) startNight(night % NN + 1); else noteOpen = { n: night + 1, sum: sumN }; } return; }
   t += dt;
   for (const e of ev) if (!e.done && e.at <= t) { if (fire(e)) e.done = 1; else if ((e.at += 1.5) > at(5.8) || (e.kind === 'gen' && e.at - e.at0 > 25)) e.done = 1; }
   if (cust) custUpdate(dt);
   carsUpdate(dt);
-  if (dlg && (dlg.t += dt) > 15) { const k = cust && cust.kind; dlg = null; if (cust) cust.bye = .4; if (k === 'fake') good('You stayed put. "Ray" leaves... and the door never opens.'); else say('Customer', 'Never mind.'); }
+  if (dlg && (dlg.t += dt) > 15) { const k = cust && cust.kind; dlg = null; if (cust) cust.bye = .4; if (k === 'fake') good('You stayed put. "Ray" leaves... and the door never opens.'); else if (k === 'lastcall') good('You stay on shift. "Walt" walks back out to pump 4, and the door never opens.'); else if (k === 'danny') say('Danny', '...Okay. I\'ll wait outside. Tell Ray I\'m sorry I\'m late.'); else say('Customer', 'Never mind.'); }
   if (phone) {
     phone.t += dt;
     if (phone.state === 'ring') {
@@ -1088,9 +1378,30 @@ GAME.update = dt => {
     } else if (f.state === 'after' && f.t > 2.5) flick = null;
   }
   if (cctv) { cctv.t += dt; if (cctv.t > 3) tip('cam', 'The camera shows someone who is NOT in the store. Rule 9: press A for the alarm!'); if (cctv.t > 11) { cctv = null; strike('You ignored the figure on the camera', true); } }
-  if (pumps[3].on && (p4T += dt) > 3) pumps[3].on = false;
+  if (pumps[3].on && !p4self && (p4T += dt) > 3) { pumps[3].on = false; brk[3] = 0; }
+  // week two
+  turnK += ((turned ? 1 : 0) - turnK) * Math.min(1, dt * 9);
+  if (power) { power.t += dt; if (power.t > 35) { for (const i of power.trip) brk[i] = 1; power = null; strike('You left the store dark too long', true); } }
+  if (deliv) {
+    const d = deliv; d.t += dt;
+    if ((d.beat -= dt) <= 0) { d.beat = 4.4; const n = d.real ? 2 : 3; for (let i = 0; i < n; i++) setTimeout(() => snd.knock(.22), i * 330); say('', d.real ? '*knock knock*  (the back door)' : '*knock knock knock*  (the back door)', 2); if (d.real) tip('deliv', 'TWO knocks at the back door: that\'s the delivery. Turn around (T) and open the back door.'); else tip('deliv3', 'THREE knocks at the back door. Rule: never open it for three. Leave it.'); }
+    if (d.real && d.t > 30) { deliv = null; pen(5); say('', 'The yellow lights pull away. Gus couldn\'t wait any longer.'); }
+    else if (!d.real && d.t > 15) { deliv = null; good('The knocking at the back door stops. Nothing was out there. Nothing that delivers, anyway.'); }
+  }
+  for (const e of empties) { e.t += dt; if (e.t > 55 && !e.p) { e.p = 1; pen(5); say('', night >= 8 ? 'Something is standing in the empty aisle. When you blink, it is gone.' : 'A customer frowns at the empty shelf and leaves without buying.'); } }
+  if (whistle) {
+    const w = whistle; w.t += dt;
+    if ((w.nt -= dt) <= 0) { const m = [79, 0, 77, 76, 0, 72, 72, 76, 81, 77, 0, 0][w.i++ % 12]; w.nt = .3; if (m) tone(440 * Math.pow(2, (m + 12 - 69) / 12), .28, 'sine', .045, 8, 0, null, .04); }
+    if (w.t > w.d) { whistle = null; good('The whistling fades. You never turned around.'); }
+  }
+  if (mirror) {
+    const m = mirror; m.t += dt;
+    if (look || turned) { if ((m.lt += dt) > 4) { mirror = null; good('When you look up again, your reflection is only you.'); } }
+    else { if (m.t > 2.2) tip('mirror', 'Your reflection in the glass is moving on its own! Look down (L) until it stops.'); if (m.t > 9.5) { mirror = null; strike('You watched your reflection move on its own', true); } }
+  }
+  if (p4self) { p4self.t += dt; pumps[3].on = true; if (p4self.t > 22) { p4self = null; pumps[3].on = false; brk[3] = 0; strike('You let pump 4 run at 4:44', true); } }
   if (night === 1 && t > 8) tip('rules', 'Press R (or tap RULES) any time to read the rules. Time stops while you read.');
-  const tg = Math.max(.07 * night, c && c.ghost && c.phase === 'at' ? 1 : 0, flick && flick.state !== 'after' ? .9 : 0, radio.talk ? .8 : 0, cctv ? .75 : 0, phone && phone.who === 'danny' ? .6 : 0, cars.some(x => x.fig && x.state === 'wait') ? .45 : 0, strikes >= 2 ? .4 : 0);
+  const tg = Math.max(.07 * night, c && c.ghost && c.phase === 'at' ? 1 : 0, flick && flick.state !== 'after' ? .9 : 0, radio.talk ? .8 : 0, cctv ? .75 : 0, phone && phone.who === 'danny' ? .6 : 0, cars.some(x => x.fig && x.state === 'wait') ? .45 : 0, strikes >= 2 ? .4 : 0, power ? .6 : 0, whistle ? .85 : 0, mirror ? .8 : 0, p4self ? 1 : 0, deliv && !deliv.real ? .5 : 0);
   tense += (tg - tense) * Math.min(1, dt * 1.5);
   if (tense > .55 && (hbT -= dt) <= 0) { hbT = 1.15 - tense * .4; snd.heart(); }
   if (t >= DUR) endNight();
@@ -1100,26 +1411,27 @@ GAME.update = dt => {
 const rr = (gr, x, y, w, h, r) => { gr.beginPath(); gr.roundRect(x, y, w, h, r); };
 const hit = (r, x, y) => r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 const TF = "'Special Elite', 'Courier New', monospace";
-const BAR = [['rules', 'R'], ['look', 'L'], ['lock', 'D'], ['alarm', 'A'], ['phone', 'P'], ['radio', 'M']].map(([id, k], i) => ({ id, k, x: 12 + i * 201, y: 648, w: 191, h: 62 }));
+const BAR = [['rules', 'R'], ['look', 'L'], ['lock', 'D'], ['alarm', 'A'], ['phone', 'P'], ['radio', 'M'], ['turn', 'T']].map(([id, k], i) => ({ id, k, x: 12 + i * 180, y: 648, w: 172, h: 62 }));
+const PAGEB = [{ x: 950, y: 96, w: 46, h: 40, d: -1 }, { x: 1150, y: 96, w: 46, h: 40, d: 1 }];
 const NOTEBTN = { x: 470, y: 612, w: 340, h: 66 };
 const pumpR = i => ({ x: OBJ.pumps.x + 10 + i * 43, y: OBJ.pumps.y + 30, w: 44, h: 60 });
 function wrap(gr, s, w) { const out = []; let line = ''; for (const wd of s.split(' ')) { const tt = line ? line + ' ' + wd : wd; if (line && gr.measureText(tt).width > w) { out.push(line); line = wd; } else line = tt; } if (line) out.push(line); return out; }
 function txt(gr, s, x, y, font, c, al = 'center') { gr.font = font; gr.fillStyle = c; gr.textAlign = al; gr.textBaseline = 'middle'; gr.fillText(s, x, y); }
 function para(gr, s, x, y, w, font, c, lh) { gr.font = font; const L = wrap(gr, s, w); gr.fillStyle = c; gr.textAlign = 'left'; gr.textBaseline = 'top'; L.forEach((l, i) => gr.fillText(l, x, y + i * lh)); return y + L.length * lh; }
-const label = id => ({ rules: 'RULES', look: look ? 'LOOK UP' : 'LOOK DOWN', lock: locked ? 'UNLOCK' : 'LOCK DOOR', alarm: 'ALARM', phone: phone && phone.state === 'ring' ? 'ANSWER' : 'PHONE', radio: radio.on ? 'RADIO OFF' : 'RADIO ON' }[id]);
+const label = id => ({ rules: 'RULES', look: look ? 'LOOK UP' : 'LOOK DOWN', lock: locked ? 'UNLOCK' : 'LOCK DOOR', alarm: 'ALARM', phone: phone && phone.state === 'ring' ? 'ANSWER' : 'PHONE', radio: radio.on ? 'RADIO OFF' : 'RADIO ON', turn: turned ? 'FACE FRONT' : 'TURN' }[id]);
 function drawBar(gr) {
   for (const b of BAR) {
-    const on = (b.id === 'look' && look) || (b.id === 'lock' && locked) || (b.id === 'rules' && view), ring = b.id === 'phone' && phone && phone.state === 'ring', hv = hover === b.id;
+    const on = (b.id === 'look' && look) || (b.id === 'lock' && locked) || (b.id === 'rules' && view) || (b.id === 'turn' && turned), ring = (b.id === 'phone' && phone && phone.state === 'ring') || (b.id === 'turn' && !turned && (power || p4self || (deliv && deliv.real))), hv = hover === b.id;
     rr(gr, b.x, b.y, b.w, b.h, 12); gr.fillStyle = on ? '#ffd23f' : ring ? (Math.sin(K.t * 10) > 0 ? '#8a2a1a' : '#2a1410') : hv ? 'rgba(40,40,48,.95)' : 'rgba(14,14,18,.9)'; gr.fill();
     gr.lineWidth = hv ? 3 : 2; gr.strokeStyle = hv ? '#fff' : 'rgba(255,210,63,.5)'; gr.stroke();
     rr(gr, b.x + 10, b.y + 14, 34, 34, 7); gr.fillStyle = on ? '#1a1a1a' : '#ffd23f'; gr.fill();
     txt(gr, b.k, b.x + 27, b.y + 32, 'bold 22px Arial', on ? '#ffd23f' : '#141414');
-    txt(gr, label(b.id), b.x + 119, b.y + 32, 'bold 21px Arial', on ? '#141414' : '#f4efe2');
+    txt(gr, label(b.id), b.x + 44 + (b.w - 44) / 2, b.y + 32, `bold ${label(b.id).length > 9 ? 17 : 20}px Arial`, on ? '#141414' : '#f4efe2');
   }
 }
 function drawHud(gr) {
   const x = 972, y = 10; rr(gr, x, y, 296, 130, 14); gr.fillStyle = 'rgba(8,8,12,.84)'; gr.fill(); gr.strokeStyle = 'rgba(255,210,63,.35)'; gr.lineWidth = 2; gr.stroke();
-  txt(gr, 'NIGHT ' + night + ' / 5', x + 16, y + 24, 'bold 20px Arial', '#ffd23f', 'left');
+  txt(gr, 'NIGHT ' + night + ' / ' + NN, x + 16, y + 24, 'bold 20px Arial', '#ffd23f', 'left');
   txt(gr, K.score + ' pts', x + 280, y + 24, 'bold 20px Arial', '#e8e4da', 'right');
   gr.shadowColor = '#ff3a2a'; gr.shadowBlur = 10; txt(gr, clock(), x + 148, y + 66, 'bold 40px "Courier New", monospace', forbidden() && night >= 3 ? '#ff2a2a' : '#ff6a4a'); gr.shadowBlur = 0;
   txt(gr, 'STRIKES', x + 16, y + 110, 'bold 17px Arial', '#bbb', 'left');
@@ -1155,7 +1467,7 @@ function drawDlg(gr) {
 function drawHint(gr) {
   if (!hint || dlg || noteOpen || view) return;
   gr.globalAlpha = Math.max(0, Math.min(1, hint.t * 4, (8 - hint.t) * 2)); gr.font = 'bold 20px Arial';
-  const L = wrap(gr, hint.text, 620), h = 20 + L.length * 26, w = Math.max(...L.map(l => gr.measureText(l).width)) + 44, y = 470 - h + Math.sin(K.t * 3) * 3;
+  const L = wrap(gr, hint.text, 620), h = 20 + L.length * 26, w = Math.max(...L.map(l => gr.measureText(l).width)) + 44, y = (turned ? 636 : 470) - h + Math.sin(K.t * 3) * 3;
   rr(gr, 640 - w / 2, y, w, h, 12); gr.fillStyle = 'rgba(255,210,63,.96)'; gr.fill(); gr.strokeStyle = '#1a1a1a'; gr.lineWidth = 2; gr.stroke();
   L.forEach((l, i) => txt(gr, l, 640, y + 23 + i * 26, 'bold 20px Arial', '#151515'));
   gr.globalAlpha = 1;
@@ -1170,6 +1482,13 @@ function drawBanner(gr) {
   gr.font = 'bold 22px Arial'; gr.fillStyle = '#fff'; ll.forEach((l, i) => gr.fillText(l, 0, 26 + i * 28));
   gr.restore(); gr.globalAlpha = 1;
 }
+function drawCarry(gr) {
+  if (!carry && !(turned && night >= 7)) return;
+  rr(gr, 12, 568, 250, 66, 12); gr.fillStyle = 'rgba(8,8,12,.84)'; gr.fill(); gr.strokeStyle = 'rgba(255,210,63,.35)'; gr.lineWidth = 2; gr.stroke();
+  gr.fillStyle = carry ? '#b8884a' : '#3a3a3a'; gr.fillRect(26, 582, 50, 38); gr.fillStyle = carry ? '#8a6030' : '#2a2a2a'; gr.fillRect(26, 596, 50, 5);
+  txt(gr, carry ? 'CARRYING STOCK' : 'STOCK IN BACK: ' + boxes, 90, 592, 'bold 16px Arial', '#ffd23f', 'left');
+  txt(gr, carry ? 'Click the empty shelf' : empties.length ? empties.length + ' shelf empty' : 'Shelves are full', 90, 615, '15px Arial', '#ddd', 'left');
+}
 function dim(gr, a) { const v = K.view; gr.fillStyle = `rgba(0,0,0,${a})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
 function drawNote(gr) {
   dim(gr, .82); const n = noteOpen.n, sm = noteOpen.sum;
@@ -1179,7 +1498,7 @@ function drawNote(gr) {
   gr.fillStyle = 'rgba(200,40,40,.3)'; gr.fillRect(236, 18, 2, 684);
   let y = 34;
   if (sm) { txt(gr, `5:00 AM. NIGHT ${sm.n} SURVIVED.`, 640, y + 12, 'bold 22px Arial', '#2a6a2a'); txt(gr, `Served ${sm.s}  ·  Rules followed ${sm.f}  ·  Strikes tonight ${sm.k}  (total ${strikes} of 3)`, 640, y + 42, 'bold 18px Arial', '#4a4436'); y += 62; }
-  txt(gr, 'NIGHT ' + n + (n === 5 ? ': THE LAST ONE' : ''), 640, y + 28, `46px ${TF}`, '#7a1c1c'); y += 62;
+  txt(gr, 'NIGHT ' + n + (n === NN ? ': THE LAST ONE' : n === 6 ? ': WEEK TWO' : ''), 640, y + 28, `46px ${TF}`, '#7a1c1c'); y += 62;
   y = para(gr, NOTES[n] + '  - Ray', 256, y, 780, `21px ${TF}`, '#2a2620', 28) + 10;
   txt(gr, n === 1 ? 'THE RULES SO FAR' : 'NEW RULES TONIGHT', 256, y + 10, 'bold 20px Arial', '#7a1c1c', 'left'); y += 30;
   RULES.forEach((r, i) => { if (r.n !== n) return; txt(gr, (i + 1) + '. ' + r.t.toUpperCase(), 256, y + 10, 'bold 20px Arial', '#1a1a1a', 'left'); y = para(gr, r.d, 256, y + 24, 780, '18px Arial', '#333', 23) + 8; });
@@ -1193,23 +1512,46 @@ function drawRules(gr) {
   gr.fillStyle = '#efe8d6'; gr.fillRect(82, 52, 1116, 640);
   rr(gr, 565, 2, 150, 46, 10); gr.fillStyle = '#b8b8b0'; gr.fill(); gr.fillStyle = '#7a7a72'; gr.fillRect(600, 20, 80, 8);
   txt(gr, 'STARLITE GAS  ·  NIGHT SHIFT RULES', 640, 86, `30px ${TF}`, '#7a1c1c');
-  txt(gr, 'Time is stopped while you read. Click anywhere or press R to close.', 640, 118, '17px Arial', '#555');
+  const list = rulesNow(), pages = Math.ceil(list.length / 10), pg = Math.min(rulePage, pages - 1);
+  txt(gr, 'Time is stopped while you read. Click the page or press R to close.', pages > 1 ? 520 : 640, 118, '17px Arial', '#555');
+  if (pages > 1) for (const b of PAGEB) { rr(gr, b.x, b.y, b.w, b.h, 8); gr.fillStyle = hover === 'pg' + b.d ? '#ffd23f' : '#2a2a2a'; gr.fill(); txt(gr, b.d < 0 ? '◀' : '▶', b.x + b.w / 2, b.y + b.h / 2 + 1, 'bold 20px Arial', hover === 'pg' + b.d ? '#111' : '#fff'); }
+  if (pages > 1) txt(gr, `PAGE ${pg + 1} / ${pages}`, 1073, 116, 'bold 17px Arial', '#7a1c1c');
   const y = [146, 146];
-  rulesNow().forEach((r, i) => {
-    const c = i < 5 ? 0 : 1, x = 108 + c * 552, nw = r.n === night;
-    rr(gr, x, y[c], 34, 34, 8); gr.fillStyle = nw ? '#c81e1e' : '#2a2a2a'; gr.fill(); txt(gr, String(i + 1), x + 17, y[c] + 18, 'bold 20px Arial', '#fff');
-    txt(gr, r.t.toUpperCase() + (nw ? '   NEW TONIGHT' : ''), x + 46, y[c] + 18, 'bold 20px Arial', nw ? '#a01818' : '#1a1a1a', 'left');
-    y[c] = para(gr, r.d, x + 46, y[c] + 38, 478, '17px Arial', '#333', 20) + 12;
+  list.slice(pg * 10, pg * 10 + 10).forEach((r, j) => {
+    const i = pg * 10 + j, c = j < 5 ? 0 : 1, x = 108 + c * 552, nw = r.n === night && !r.red, red = r.red;
+    rr(gr, x, y[c], 34, 34, 8); gr.fillStyle = red ? '#d01010' : nw ? '#c81e1e' : '#2a2a2a'; gr.fill(); txt(gr, String(i + 1), x + 17, y[c] + 18, 'bold 20px Arial', '#fff');
+    txt(gr, r.t.toUpperCase() + (nw ? '   NEW TONIGHT' : ''), x + 46, y[c] + 18, red ? `bold 21px ${TF}` : 'bold 20px Arial', red ? '#c01010' : nw ? '#a01818' : '#1a1a1a', 'left');
+    y[c] = para(gr, r.d, x + 46, y[c] + 38, 478, red ? `18px ${TF}` : '17px Arial', red ? '#b01010' : '#333', 20) + 12;
   });
-  if (night < 5) txt(gr, 'More rules will be added tomorrow night.', 660 + 46, y[1] + 14, 'italic bold 17px Arial', '#7a1c1c', 'left');
+  if (night < NN && pg === pages - 1) txt(gr, 'More rules will be added tomorrow night.', 660 + 46, Math.min(670, y[1] + 14), 'italic bold 17px Arial', '#7a1c1c', 'left');
+}
+function drawLog(gr) {
+  dim(gr, .8);
+  gr.save(); gr.translate(640, 360); gr.rotate(.008); gr.translate(-640, -360);
+  gr.shadowColor = 'rgba(0,0,0,.6)'; gr.shadowBlur = 30; gr.fillStyle = '#e4dcc4'; gr.fillRect(170, 20, 940, 600); gr.shadowBlur = 0;
+  gr.fillStyle = '#6a4a2a'; gr.fillRect(170, 20, 940, 16); gr.fillStyle = '#9a9a9a'; gr.fillRect(590, 6, 100, 26);
+  txt(gr, 'STARLITE GAS  ·  PUMP 4  ·  MAINTENANCE LOG', 640, 70, `30px ${TF}`, '#5a1414');
+  gr.strokeStyle = 'rgba(80,110,160,.25)'; gr.lineWidth = 1; for (let yy = 110; yy < 600; yy += 32) { gr.beginPath(); gr.moveTo(190, yy); gr.lineTo(1090, yy); gr.stroke(); }
+  let y = 100;
+  for (const [d, e] of LOG) { txt(gr, d, 200, y + 16, `bold 18px ${TF}`, '#2a2620', 'left'); y = para(gr, e, 340, y + 4, 740, `18px ${TF}`, '#2a2620', 24) + 8; }
+  const gal = (7 + strikes + (night >= NN ? 0 : 0)).toFixed(1);
+  txt(gr, 'TONIGHT', 200, y + 16, `bold 18px ${TF}`, '#a01818', 'left'); para(gr, `Meter reads ${gal} gal. I checked it twice. ${strikes ? 'It moved while I watched.' : 'It has not moved. Keep it that way.'}`, 340, y + 4, 740, `18px ${TF}`, '#a01818', 24);
+  gr.save(); gr.translate(880, 540); gr.rotate(-.05); gr.fillStyle = '#cfc6ae'; gr.fillRect(-150, -46, 300, 92); gr.fillStyle = '#2a2620';
+  gr.font = `bold 14px ${TF}`; gr.textAlign = 'center'; gr.textBaseline = 'middle'; gr.fillText('ROUTE 9 COURIER  ·  JUNE 1962', 0, -28);
+  gr.font = '13px Arial'; gr.fillText('MYSTERY PUMP IN HALVORSEN FIELD', 0, -8); gr.fillText('"It was already there when I bought the land,"', 0, 12); gr.fillText('says farmer. "We fenced it off in \'31."', 0, 30); gr.restore();
+  gr.restore();
+  txt(gr, 'Click anywhere or press Space to put it back.', 640, 650, 'bold 18px Arial', '#d8d0c0');
 }
 GAME.draw = gr => {
   if (!bgC) bake();
   const v = K.view;
   gr.save();
   if (lookK > .01) { const s = 1 + lookK * .16; gr.translate(640, 700); gr.scale(s, s); gr.translate(-640, -700); }
-  drawStore(gr);
-  if (ambT && ambT.k === 'face') {
+  lightL = lightLevel();
+  if (turnK < .995) { if (turnK > .005) { gr.save(); gr.translate(-turnK * 1300, 0); } drawStore(gr); if (turnK > .005) gr.restore(); }
+  if (turnK > .005) { gr.save(); gr.translate((1 - turnK) * 1300, 0); drawBack(gr); gr.restore(); }
+  if (turnK < .5 && carry) for (const [i, e] of empties.entries()) { const r = SLOTS[e.s]; gr.strokeStyle = `rgba(255,210,63,${.6 + .4 * Math.sin(K.t * 6)})`; gr.lineWidth = 3; gr.strokeRect(r.x - 3, r.y - 3, r.w + 6, r.h + 6); }
+  if (ambT && ambT.k === 'face' && turnK < .5) {
     const w0 = P(WIN.x0, WIN.y1, ZB), w1 = P(WIN.x1, WIN.y0, ZB); gr.save(); gr.beginPath(); gr.rect(w0[0], w0[1], w1[0] - w0[0], w1[1] - w0[1]); gr.clip();
     gr.globalAlpha = Math.max(0, Math.min(1, ambT.t * 8, (ambT.d - ambT.t) * 3)) * .9; scareFace(gr, 530, 262, .42, .4); gr.restore(); gr.globalAlpha = 1;
   }
@@ -1219,14 +1561,15 @@ GAME.draw = gr => {
     gr.fillStyle = lg; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, 600 - v.y0);
     gr.globalAlpha = lookK; txt(gr, 'EYES DOWN', 640, 290, `46px ${TF}`, '#d8d0c0'); txt(gr, 'Stare at the counter. Press L to look up.', 640, 342, 'bold 21px Arial', '#a8a294'); gr.globalAlpha = 1;
   }
-  if (ended && night >= 5) { gr.fillStyle = `rgba(255,170,90,${Math.min(.16, endT * .03)})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
+  if (ended && night >= NN) { gr.fillStyle = `rgba(255,170,90,${Math.min(.16, endT * .03)})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
   const vg = gr.createRadialGradient(640, 330, 250, 640, 360, 860); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, strikes >= 2 && !ended ? `rgba(70,0,0,${.6 + .1 * Math.sin(K.t * 3)})` : `rgba(0,0,0,${.5 + tense * .25})`);
   gr.fillStyle = vg; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
   if (grainC) { gr.globalAlpha = .45; const ox = K.irand(0, 255), oy = K.irand(0, 255); for (let x = -ox; x < 1280; x += 256) for (let y = -oy; y < 720; y += 256) gr.drawImage(grainC, x, y); gr.globalAlpha = 1; }
-  if (!poseMode) { drawHud(gr); drawBar(gr); drawBanner(gr); drawHint(gr); drawDlg(gr); }
+  if (!poseMode) { drawHud(gr); drawBar(gr); drawBanner(gr); drawHint(gr); drawDlg(gr); drawCarry(gr); }
   drawCap(gr);
   if (!poseMode && noteOpen) drawNote(gr);
-  if (!poseMode && view) drawRules(gr);
+  if (!poseMode && view === 'rules') drawRules(gr);
+  if (!poseMode && view === 'log') drawLog(gr);
   if (scare) {
     const k = K.t - scare.t, d = scare.big ? 2.4 : 1.1;
     if (k < d) { gr.globalAlpha = Math.max(0, Math.min(1, k * 25, (d - k) * 4)); dim(gr, 1); scareFace(gr, 640, 390, (scare.big ? 2.1 : 1.6) + Math.min(.4, k) * 1.2, 1); gr.fillStyle = 'rgba(140,0,0,.18)'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); gr.globalAlpha = 1; }
@@ -1240,9 +1583,18 @@ GAME.down = (x, y) => {
   ambInit();
   if (dead || ended) return;
   if (noteOpen) { if (hit(NOTEBTN, x, y)) clockIn(); return; }
+  if (view === 'rules') { const pb = PAGEB.find(b => hit(b, x, y)); if (pb) { rulePage = K.clamp(rulePage + pb.d, 0, Math.ceil(rulesNow().length / 10) - 1); snd.click(); return; } }
   if (view) { view = null; snd.click(); return; }
   if (dlg && dlg.r) { const i = dlg.r.findIndex(r => hit(r, x, y)); if (i >= 0) return dlg.pick(i); }
   const b = BAR.find(b => hit(b, x, y)); if (b) return act(b.id);
+  if (turned) {
+    for (let i = 0; i < 6; i++) if (hit(brkR(i), x, y)) return flip(i);
+    if (hit(BDOOR, x, y)) return openBack();
+    if (hit(boxR(), x, y)) return takeBox();
+    if (hit(LOGR, x, y)) { view = 'log'; nz(.15, .15, 'bandpass', 2500, 0, .8); return; }
+    return;
+  }
+  for (const [i, e] of empties.entries()) if (hit(SLOTS[e.s], x, y)) return restock(i);
   for (let i = 0; i < 4; i++) if (hit(pumpR(i), x, y)) return act('pump', i);
   const it = itemAt(x, y); if (it >= 0) return scan(it);
   if (hit(OBJ.phone, x, y)) return act('phone');
@@ -1253,9 +1605,16 @@ GAME.down = (x, y) => {
 GAME.move = (x, y) => {
   let h = null;
   if (noteOpen) h = hit(NOTEBTN, x, y) ? 'clock' : null;
+  else if (view === 'rules') { const pb = PAGEB.find(b => hit(b, x, y)); if (pb) h = 'pg' + pb.d; }
+  else if (!view && turned) {
+    const b = BAR.find(b => hit(b, x, y)); if (b) h = b.id;
+    for (let i = 0; i < 6; i++) if (!h && hit(brkR(i), x, y)) h = 'brk' + i;
+    if (!h && hit(BDOOR, x, y)) h = 'bdoor'; if (!h && hit(boxR(), x, y)) h = 'box'; if (!h && hit(LOGR, x, y)) h = 'log';
+  }
   else if (!view) {
     if (dlg && dlg.r) dlg.r.forEach((r, i) => { if (hit(r, x, y)) h = 'opt' + i; });
     const b = !h && BAR.find(b => hit(b, x, y)); if (b) h = b.id;
+    if (!h && empties.some(e => hit(SLOTS[e.s], x, y))) h = 'obj';
     if (!h) for (let i = 0; i < 4; i++) if (hit(pumpR(i), x, y)) h = 'pump' + i;
     const ii = itemAt(x, y); if (cust) cust.items.forEach((it, i) => it.hot = i === ii);
     if (!h && (ii >= 0 || hit(OBJ.phone, x, y) || hit(OBJ.radio, x, y) || hit(OBJ.door, x, y) || hit(OBJ.reg, x, y))) h = 'obj';
@@ -1265,13 +1624,22 @@ GAME.move = (x, y) => {
 GAME.key = (c, d) => {
   if (!d) return;
   if (noteOpen) { if (c === 'Space' || c === 'Enter') clockIn(); return; }
-  if (view) { if (c === 'KeyR' || c === 'Space' || c === 'Enter') { view = null; snd.click(); } return; }
+  if (view === 'rules' && (c === 'ArrowLeft' || c === 'ArrowRight')) { rulePage = K.clamp(rulePage + (c === 'ArrowLeft' ? -1 : 1), 0, Math.ceil(rulesNow().length / 10) - 1); return snd.click(); }
+  if (view) { if (c === 'KeyR' || c === 'Space' || c === 'Enter' || c === 'Escape') { view = null; snd.click(); } return; }
   if (dlg && /^(Digit|Numpad)[12]$/.test(c)) return dlg.pick(+c.slice(-1) - 1);
-  const m = { KeyR: 'rules', KeyL: 'look', KeyD: 'lock', KeyA: 'alarm', KeyM: 'radio', KeyG: 'pump' }[c];
-  if (m) act(m); else if (c === 'Space' || c === 'Enter') scan();
+  if (turned && /^(Digit|Numpad)[1-6]$/.test(c)) return flip(+c.slice(-1) - 1);
+  const m = { KeyR: 'rules', KeyL: 'look', KeyD: 'lock', KeyA: 'alarm', KeyM: 'radio', KeyG: 'pump', KeyT: 'turn' }[c];
+  if (m) act(m); else if ((c === 'Space' || c === 'Enter') && !turned) scan();
 };
 // the kit uses P for pause; during a shift P answers the phone instead (Escape still pauses)
 addEventListener('keydown', e => { if (e.code === 'KeyP' && K.state === 'play' && !K.bot) { e.stopPropagation(); e.preventDefault(); if (!e.repeat) act('phone'); } }, true);
+
+// for automated checks: jump to a night and hour, fire an event, read the state
+GAME.test = {
+  go: (n, h = .2) => { startNight(n); noteOpen = null; t = at(h); ev = ev.filter(e => e.at > t + at(.4)); },
+  fire: (k, o = {}) => fire({ k, ...o }), act: (k, a) => act(k, a), flip, openBack, takeBox, restock,
+  st: () => ({ night, t: +(t / HR).toFixed(2), turned, power: power && power.order, step: power && power.step, deliv, empties: empties.length, boxes, carry, whistle: !!whistle, mirror: !!mirror, p4self: !!p4self, strikes, brk: brk.slice(), cust: cust && cust.kind, phase: cust && cust.phase, dlg: dlg && dlg.who, look, view }),
+};
 
 /* ---------- the bot: plays by the rules behind the title screen and in ?demo ---------- */
 GAME.bot = dt => {
@@ -1282,8 +1650,22 @@ GAME.bot = dt => {
   if (flick && (flick.state === 'flick' || flick.state === 'warn')) { if (!locked && flick.t > .6) act('lock'); return; }
   if (locked && !flick) return act('lock');
   const gh = cust && cust.ghost && cust.phase === 'at';
+  // week two: never turn while something whistles; handle the back room, then face front again
+  if (!whistle) {
+    const back = p4self || power || (deliv && deliv.real && deliv.t > 1.2) || (empties.length && !carry && boxes);
+    if (back && !turned && !gh) return act('turn');
+    if (turned) {
+      if (p4self) return flip(3);
+      if (power) return flip(power.order[power.step]);
+      if (deliv && deliv.real) return openBack();
+      if (empties.length && !carry && boxes) return takeBox();
+      return act('turn');
+    }
+  }
+  if (carry && empties.length && !turned) return restock(0);
+  if (mirror && !look) return act('look');
   if (gh && !look && cust.pt > 1.6) return act('look');
-  if (look && !gh) return act('look');
+  if (look && !gh && !mirror) return act('look');
   if (radio.talk > 0 && radio.talk < 7.6) return act('radio');
   if (!radio.on && !radio.talk && Math.random() < .3) return act('radio');
   if (cctv && cctv.t > 1.8) return act('alarm');
