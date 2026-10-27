@@ -39,3 +39,12 @@ class_name = "HollowRooms"
 [[migrations]]
 tag = "v4"
 new_sqlite_classes = ["HollowRooms"]
+
+# AFTERHOURS co-op (arcade-rooms.js): one Durable Object runs every room of the five arcade games
+[[durable_objects.bindings]]
+name = "ARCADE"
+class_name = "ArcadeRooms"
+
+[[migrations]]
+tag = "v5"
+new_sqlite_classes = ["ArcadeRooms"]
