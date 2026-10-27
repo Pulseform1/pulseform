@@ -1390,7 +1390,7 @@ function renderShelves() {
   CATEGORIES.forEach(c => {
     let list = GAMES.filter(g => g.category === c);
     if (STATS) list = list.sort((a, b) => pos.get(a.id) - pos.get(b.id));   // most played first
-    box.append(shelf('shelf-' + c.toLowerCase(), c + ' games', list, list.length ? 1 : 3));
+    box.append(shelf('shelf-' + c.toLowerCase(), c, list, list.length ? 1 : 3));
   });
 }
 function renderHome() { renderHero(); renderChips(); renderShelves(); }
