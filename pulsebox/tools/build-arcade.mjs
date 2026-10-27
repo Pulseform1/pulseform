@@ -25,7 +25,7 @@ addEventListener('resize',()=>{if(id===null)rest()});new MutationObserver(()=>id
 if (!html.includes('<div class="move-pad">') || !html.includes('</body>')) throw new Error('AFTERHOURS.html touch controls changed shape; update build-arcade.mjs');
 html = html.replace('</body>', () => stick + '</body>');
 await writeFile(resolve(here, 'public/media/arcade.html'), html);
-const GAMES = { 'neon-overdrive': ['neon', 'Neon Overdrive'], 'deep-signal-coop': ['deep', 'Deep Signal Co-op'], 'ashfall-arena': ['ash', 'Ashfall Arena'], 'skybound': ['sky', 'Skybound'], 'chamber-zero': ['chamber', 'Chamber Zero'] };
+const GAMES = { 'neon-overdrive': ['neon', 'Neon Overdrive'], 'deep-signal-coop': ['deep', 'Deep Signal Extraction'], 'ashfall-arena': ['ash', 'Ashfall Arena'], 'skybound': ['sky', 'Skybound'], 'chamber-zero': ['chamber', 'Chamber Zero'] };
 for (const [id, [sim, title]] of Object.entries(GAMES)) {
   const url = `../media/arcade.html?game=${sim}`;
   await writeFile(resolve(here, `public/games/${id}.html`), `<!doctype html>
