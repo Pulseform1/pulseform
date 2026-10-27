@@ -432,6 +432,22 @@ const GAMES = [
     how: ["Press PLAY SOLO, or HOST CO-OP ROOM and send friends the 6-character code (JOIN A FRIEND to enter one).", "WASD or arrows to move; drag to look, or J/L and I/K.", "E repairs and interacts, Space sends sonar, Shift swims faster.", "Stay together and watch your oxygen."]
   },
   {
+    id: "ashfall-arena",
+    title: "Ashfall Arena",
+    category: "Co-op",
+    kind: "Co-op · 3D Action",
+    tags: ["3D", "Online co-op, 1-4 players", "5 waves + boss", "Upgrades"],
+    badge: 'NEW',
+    file: 'games/ashfall-arena.html',
+    cover: 'media/ashfall-arena-cover.jpg',
+    video: 'media/ashfall-arena-trailer.mp4',
+    shots: ['media/ashfall-arena-shot1.jpg', 'media/ashfall-arena-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Hold the volcano. Face the inferno.",
+    blurb: "The mountain has opened and its creatures are coming. Dodge, fire and hold a 3D volcanic arena through five waves, grab upgrades and supplies, then face the boss. Play solo or with up to three friends online.",
+    how: ["Press PLAY SOLO, or HOST CO-OP ROOM and send friends the 6-character code (JOIN A FRIEND to enter one).", "WASD or arrows to move.", "Hold E to fire at nearby enemies, Space dodges.", "Keep moving and collect supplies between waves."]
+  },
+  {
     id: "skybound",
     title: "Skybound",
     category: "Co-op",
@@ -1255,7 +1271,7 @@ let query = '', current = null;
    Without it (offline, local preview, too little data yet) the
    hub falls back to the hand-picked order below.
    ============================================================ */
-const CURATED = ['the-hollow', 'neon-overdrive', 'still-here', 'bumper-brawl', 'doodle-guess', 'turbo-laps', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
+const CURATED = ['the-hollow', 'neon-overdrive', 'still-here', 'ashfall-arena', 'bumper-brawl', 'doodle-guess', 'turbo-laps', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
 const MIN_WEEK = 20;   // fewer plays than this across the hub in a week = not enough to rank by
 let STATS = null;      // { id: { total, week, today } } once real numbers are in
 let HOT = new Set();   // top 5 by plays this week
