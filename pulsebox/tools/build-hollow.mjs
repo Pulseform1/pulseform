@@ -26,6 +26,11 @@ for (const name of ['barlow-condensed-latin-800-normal.woff2', 'ibm-plex-mono-la
   const font = await readFile(resolve(root, 'public/fonts', name)); css = css.replace(`/fonts/${name}`, `data:font/woff2;base64,${font.toString('base64')}`);
 }
 const icon = await readFile(resolve(root, 'public/favicon.svg'));
+// phones: the menu and the briefing overlays are taller than a phone screen, so let them scroll and shrink the title
+css += '\n@media (max-width:900px),(max-height:700px){main{top:56px!important;bottom:0;left:0!important;right:0;padding:0 6% 24px;overflow-y:auto;-webkit-overflow-scrolling:touch}h1{font-size:min(84px,18vw)!important;margin:14px 0!important}.description{display:none}footer{display:none}.actions{width:auto!important;max-width:320px}.overlay{overflow-y:auto;place-items:start center!important;-webkit-overflow-scrolling:touch}.overlay>div{margin:auto;padding:24px 16px 40px!important}.overlay h2{font-size:36px!important}.overlay p{font-size:11px!important;line-height:1.5!important;margin-bottom:14px!important}}';
+// three layout sizes: iPhone (narrow), iPad/tablet (touch, mid-size), laptop (the game's own desktop layout)
+css += '\n@media (max-width:600px){#navigation canvas{width:132px!important;height:76px!important}#navigation{top:auto!important;bottom:300px}.mission{max-width:calc(100% - 28px)}.move-pad button{width:56px!important;height:56px!important}.touch-actions button,#playButtons button{padding:12px 10px!important;font-size:9px!important}}';
+css += '\n@media (min-width:601px) and (max-width:1366px) and (pointer:coarse){.move-pad button{width:72px!important;height:72px!important;font-size:22px}.touch-actions button,#playButtons button{padding:20px 22px!important;font-size:12px!important}.touch-mode #touchControls{bottom:40px!important;left:36px!important;right:36px!important}#navigation canvas{width:240px!important;height:137px!important}main{left:7%!important}h1{font-size:120px!important}}';
 let html = await readFile(resolve(root, 'public/index.html'), 'utf8');
 html = html.replace('<link rel="stylesheet" href="/style.css">', `<style>${css}</style>`)
   .replace('<link rel="icon" href="/favicon.svg">', `<link rel="icon" href="data:image/svg+xml;base64,${icon.toString('base64')}">`)
