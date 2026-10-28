@@ -1,8 +1,15 @@
-// AFTERHOURS co-op rooms on Cloudflare: arcade/arcade-server.js ported to a Durable Object. One instance (named "global")
+// AFTERHOURS and ENCORE co-op rooms on Cloudflare: arcade/arcade-server.js ported to a Durable Object. One instance (named "global")
 // holds every room and runs the games' own shared simulations (arcade/public/arcade/session.js) 30 times a second, sending snapshots at 15.
 // Same rules: 6-character codes, up to 4 players, the first player hosts and the next one takes over if they leave.
 //   GET /api/arcade  (WebSocket)  then  { type: 'join', code?, game }  ->  { type: 'joined', ... }, then { type: 'state' } snapshots
-import { createSession, addPlayer, removePlayer, setInput, advance } from './arcade/public/arcade/session.js';
+import * as first from './arcade/public/arcade/session.js';
+import * as encore from './arcade/encore/encore-session.js';
+// the first five games run the simulations built from source; the ENCORE five run the ones from the ENCORE build
+const ENCORE = new Set(['prop', 'heist', 'golf', 'cafe', 'rooftop']);
+const lib = game => ENCORE.has(game) ? encore : first;
+const createSession = (game, seed) => lib(game).createSession(game, seed);
+const addPlayer = (s, id) => lib(s.game).addPlayer(s, id), removePlayer = (s, id) => lib(s.game).removePlayer(s, id);
+const setInput = (s, id, i) => lib(s.game).setInput(s, id, i), advance = (s, dt) => lib(s.game).advance(s, dt);
 
 const MAX_PAYLOAD = 4096;
 const hex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b => b.toString(16).padStart(2, '0')).join('');

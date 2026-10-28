@@ -20,7 +20,7 @@ for path in ['index.html'] + sorted(os.path.relpath(p, PUB) for p in glob.glob(o
 # version the media links in the hub page, so browsers fetch new covers and trailers after each media change
 files['/index.html'] = re.sub(r'(media/[\w.-]+\.(?:jpg|png|webp|mp4))', r'\1?v=' + sha[:8], files['/index.html'])
 # and the arcade link in the AFTERHOURS game pages, for the same reason
-for k in files: files[k] = files[k].replace('media/arcade.html?', 'media/arcade.html?v=' + sha[:8] + '&')
+for k in files: files[k] = re.sub(r'media/(arcade|encore)\.html\?', lambda m: m.group(0) + 'v=' + sha[:8] + '&', files[k])
 # the game ids from the hub's GAMES list, so /api/play only counts real games
 games_src = files['/index.html'].split('const GAMES = [', 1)[1].split('const CATEGORIES', 1)[0]
 game_ids = sorted(set(re.findall(r'''\n\s*id:\s*['"]([a-z0-9-]+)['"]''', games_src)))
