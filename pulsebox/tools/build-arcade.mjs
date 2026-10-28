@@ -49,4 +49,4 @@ async function publish(html, name, from, games) {
 }
 await publish(html, 'arcade', 'href="THE-HOLLOW.html"', { 'neon-overdrive': ['neon', 'Neon Overdrive'], 'deep-signal-coop': ['deep', 'Deep Signal Extraction'], 'ashfall-arena': ['ash', 'Ashfall Arena'], 'skybound': ['sky', 'Skybound'], 'chamber-zero': ['chamber', 'Chamber Zero'] });
 // ENCORE: five more games from the user's prebuilt arcade/encore/ENCORE.html (it came without source, so it is used as built)
-await publish(await readFile(resolve(root, 'encore/ENCORE.html'), 'utf8'), 'encore', 'href="../THE-HOLLOW.html"', { 'prop-panic': ['prop', 'Prop Panic'], 'midnight-heist': ['heist', 'Midnight Heist'], 'pocket-planet-golf': ['golf', 'Pocket Planet Golf'], 'cosmic-cafe': ['cafe', 'Cosmic Cafe'], 'rooftop-rush': ['rooftop', 'Rooftop Rush'] });
+await publish(await readFile(resolve(root, 'encore/ENCORE.html'), 'utf8'), 'encore', 'href="../THE-HOLLOW.html"', { 'prop-panic': ['prop', 'Prop Panic'], 'midnight-heist': ['heist', 'Midnight Heist'], 'pocket-planet-golf': ['golf', 'Pocket Planet Golf'], 'cosmic-cafe': ['cafe', 'Cosmic Cafe'], 'rooftop-rush-coop': ['rooftop', 'Rooftop Rush Co-op'] });

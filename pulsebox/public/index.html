@@ -464,16 +464,16 @@ const GAMES = [
     how: ["Press PLAY SOLO, or HOST CO-OP ROOM and send friends the 6-character code (JOIN A FRIEND to enter one).", "Arrows or WASD to move. USE is a tap: pick up, put in the oven, serve.", "Wait for the oven to turn green before you take the food out.", "Clean spills, fix the blue power station, and trash anything you don't need."]
   },
   {
-    id: "rooftop-rush",
-    title: "Rooftop Rush",
+    id: "rooftop-rush-coop",
+    title: "Rooftop Rush Co-op",
     category: "Co-op",
     kind: "Co-op · 3D Runner",
     tags: ["3D", "Online co-op, 1-4 players", "Parkour", "Medals"],
     badge: 'NEW',
-    file: 'games/rooftop-rush.html',
-    cover: 'media/rooftop-rush-cover.jpg',
-    video: 'media/rooftop-rush-trailer.mp4',
-    shots: ['media/rooftop-rush-shot1.jpg', 'media/rooftop-rush-shot2.jpg'],
+    file: 'games/rooftop-rush-coop.html',
+    cover: 'media/rooftop-rush-coop-cover.jpg',
+    video: 'media/rooftop-rush-coop-trailer.mp4',
+    shots: ['media/rooftop-rush-coop-shot1.jpg', 'media/rooftop-rush-coop-shot2.jpg'],
     aspect: 16 / 9,
     pitch: "The city is collapsing behind you. Run.",
     blurb: "An auto-running parkour race across collapsing rooftops. Steer, jump gaps and vents, slide under amber beams, and grab tokens while the city falls apart behind you. Run solo or with up to three friends online: shared checkpoints respawn falls, and one runner reaching the extraction wins it for the team.",
@@ -1367,7 +1367,7 @@ let query = '', current = null;
    Without it (offline, local preview, too little data yet) the
    hub falls back to the hand-picked order below.
    ============================================================ */
-const CURATED = ['the-hollow', 'prop-panic', 'neon-overdrive', 'rooftop-rush', 'still-here', 'ashfall-arena', 'bumper-brawl', 'doodle-guess', 'turbo-laps', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
+const CURATED = ['the-hollow', 'prop-panic', 'neon-overdrive', 'rooftop-rush-coop', 'still-here', 'ashfall-arena', 'bumper-brawl', 'doodle-guess', 'turbo-laps', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
 const MIN_WEEK = 20;   // fewer plays than this across the hub in a week = not enough to rank by
 let STATS = null;      // { id: { total, week, today } } once real numbers are in
 let HOT = new Set();   // top 5 by plays this week
