@@ -346,7 +346,8 @@ const HERO = 'Nugget';
 /* ---------- the sky, from the valley to space (meters) ---------- */
 const LIP_ALT = 40;      // the jump lip height
 const SPACE = 4000;       // the story goal
-const MOON = 12000;       // a sandbox challenge
+const MOON = 12000;       // the first late-game goal
+const COSMIC = 65000;     // the true ending: the Cosmic Egg
 const LAYERS = [
   { id: 'valley', name: 'Snowy Valley', at: 0 },
   { id: 'clouds', name: 'Cloud Land', at: 300 },
@@ -354,7 +355,12 @@ const LAYERS = [
   { id: 'strato', name: 'Stratosphere', at: 1800 },
   { id: 'edge', name: 'Edge of Space', at: 3000 },
   { id: 'space', name: 'SPACE!', at: SPACE },
-  { id: 'deep', name: 'Deep Space', at: 7000 }
+  { id: 'deep', name: 'Deep Space', at: 7000 },
+  { id: 'moon', name: 'The Moon', at: MOON },
+  { id: 'belt', name: 'Asteroid Belt', at: 20000 },
+  { id: 'rings', name: 'Ringed Giant', at: 30000 },
+  { id: 'nebula', name: 'Star Nebula', at: 45000 },
+  { id: 'cosmic', name: 'THE COSMIC EGG', at: COSMIC }
 ];
 const layerAt = y => { let z = LAYERS[0]; for (const q of LAYERS) if (y >= q.at) z = q; return z; };
 
@@ -366,7 +372,9 @@ const RAMPS = [
   { name: 'Big Ramp', h: 52, price: 100, desc: 'Higher up the mountain. Hold on to your comb.' },
   { name: 'Giant Ramp', h: 74, price: 300, desc: 'So tall it has a snack stand at the top.' },
   { name: 'Mega Ramp', h: 100, price: 800, desc: 'The clouds are jealous of this ramp.' },
-  { name: 'Sky Ramp', h: 130, price: 1800, desc: 'Starts almost at the peak. Maximum whoosh.' }
+  { name: 'Sky Ramp', h: 130, price: 1800, desc: 'Starts almost at the peak. Maximum whoosh.' },
+  { name: 'Launch Tower', h: 170, price: 8000, desc: 'A steel tower on the summit. The view is wild.', post: 1 },
+  { name: 'Sky Cannon', h: 225, price: 26000, desc: 'Not technically a ramp. Definitely a cannon.', post: 2 }
 ];
 // sled: mu = friction, tol = how hard you can land without a crash (m/s)
 const SLEDS = [
@@ -374,7 +382,9 @@ const SLEDS = [
   { name: 'Lunch Tray', mu: 0.11, tol: 9, price: 20, desc: 'Borrowed from the school lunch room.' },
   { name: 'Wood Sled', mu: 0.075, tol: 12, price: 80, desc: 'A classic sled with steel runners.' },
   { name: 'Racing Sled', mu: 0.05, tol: 15, price: 300, desc: 'Waxed, red and very fast.' },
-  { name: 'Bobsled', mu: 0.03, tol: 19, price: 900, desc: 'Shiny, slick and built for speed.' }
+  { name: 'Bobsled', mu: 0.03, tol: 19, price: 900, desc: 'Shiny, slick and built for speed.' },
+  { name: 'Rocket Sled', mu: 0.02, tol: 24, price: 5000, desc: 'Runners made of rocket parts. Lands like a pillow.', post: 1 },
+  { name: 'Maglev Sled', mu: 0.012, tol: 30, price: 18000, desc: 'Floats a finger above the snow on magnets.', post: 2 }
 ];
 // glider: lift, best glide ratio (ld) and angle (ab); rate = how fast you can tilt (rad/s)
 const GLIDERS = [
@@ -383,7 +393,9 @@ const GLIDERS = [
   { name: 'Big Kite', lk: 0.022, ld: 2.8, ab: 0.22, rate: 2.0, price: 140, desc: 'A striped kite. Catches the wind nicely.' },
   { name: 'Hang Glider', lk: 0.028, ld: 3.7, ab: 0.2, rate: 2.1, price: 450, desc: 'A real glider. Floats for ages.' },
   { name: 'Carbon Wing', lk: 0.034, ld: 4.7, ab: 0.18, rate: 2.3, price: 1100, desc: 'Light, stiff and super smooth.' },
-  { name: 'Jet Wing', lk: 0.04, ld: 5.8, ab: 0.16, rate: 2.5, price: 2600, desc: 'A sleek wing with glowing tips.' }
+  { name: 'Jet Wing', lk: 0.04, ld: 5.8, ab: 0.16, rate: 2.5, price: 2600, desc: 'A sleek wing with glowing tips.' },
+  { name: 'Solar Sail', lk: 0.046, ld: 6.8, ab: 0.15, rate: 2.7, price: 9000, desc: 'A shimmering sail that drinks sunlight.', post: 1 },
+  { name: 'Gravity Wing', lk: 0.052, ld: 8, ab: 0.14, rate: 3, price: 30000, desc: 'Alien tech. Glides like gravity is optional.', post: 2 }
 ];
 // rocket: thrust (m/s^2)
 const ROCKETS = [
@@ -394,7 +406,10 @@ const ROCKETS = [
   { name: 'Jet Pack', thrust: 32, price: 1400, desc: 'A proper jet pack with steady blue flames.' },
   { name: 'Turbo Jet', thrust: 40, price: 2600, desc: 'A roaring jet engine with a big red stripe.' },
   { name: 'Mega Rocket', thrust: 51, price: 4200, desc: 'A rocket big enough for space. Almost.' },
-  { name: 'Star Engine', thrust: 95, price: 16000, desc: 'Space tech. Only for chickens who made it.', post: true }
+  { name: 'Star Engine', thrust: 95, price: 16000, desc: 'Space tech. Only for chickens who made it.', post: 1 },
+  { name: 'Ion Drive', thrust: 110, price: 34000, desc: 'A soft blue glow that never stops pushing.', post: 2 },
+  { name: 'Warp Core', thrust: 145, price: 80000, desc: 'Bends space a little. Hold on to your feathers.', post: 2 },
+  { name: 'Cosmic Thruster', thrust: 178, price: 190000, desc: 'The engine of legends. Points at the stars.', post: 3 }
 ];
 // fuel: seconds of burn
 const TANKS = [
@@ -406,14 +421,20 @@ const TANKS = [
   { name: 'Big Tank', fuel: 6.6, price: 1500, desc: 'A tank as big as you are.' },
   { name: 'Huge Tank', fuel: 8.0, price: 2400, desc: 'Painted with flames. Goes on and on.' },
   { name: 'Mega Tank', fuel: 10, price: 3600, desc: 'Enough fuel for a trip to space.' },
-  { name: 'Star Tank', fuel: 15, price: 14000, desc: 'Holds starlight. Or something like that.', post: true }
+  { name: 'Star Tank', fuel: 15, price: 14000, desc: 'Holds starlight. Or something like that.', post: 1 },
+  { name: 'Comet Tank', fuel: 17, price: 30000, desc: 'Filled with comet ice. Melts into rocket juice.', post: 2 },
+  { name: 'Antimatter Cell', fuel: 22, price: 70000, desc: 'Tiny, glowing, and a little scary.', post: 2 },
+  { name: 'Singularity Core', fuel: 27, price: 170000, desc: 'A pocket black hole. Infinite. Almost.', post: 3 }
 ];
 // gadgets: each has a few levels
 const GADGETS = [
   { id: 'cone', name: 'Beak Cone', desc: 'A pointy cone for your beak. Less air drag.', lv: [0.93, 0.86, 0.78], prices: [120, 500, 1400] },
   { id: 'magnet', name: 'Coin Magnet', desc: 'Pulls coins toward you from farther away.', lv: [7, 12, 18], prices: [50, 220, 800] },
   { id: 'boots', name: 'Boing Boots', desc: 'Springy boots. Bounce instead of crash.', lv: [1, 2], prices: [90, 400] },
-  { id: 'shield', name: 'Bubble Shield', desc: 'A bubble that blocks hits from birds and planes.', lv: [1, 2], prices: [160, 700] }
+  { id: 'shield', name: 'Bubble Shield', desc: 'A bubble that blocks hits from birds and planes.', lv: [1, 2, 3, 4], prices: [160, 700, 9000, 30000] },
+  { id: 'burner', name: 'Afterburner', desc: 'More rocket power from every engine.', lv: [1.05, 1.1, 1.15], prices: [6000, 20000, 50000], post: 1 },
+  { id: 'doubler', name: 'Coin Doubler', desc: 'Every coin you grab is worth more.', lv: [1.25, 1.5, 2], prices: [5000, 16000, 45000], post: 1 },
+  { id: 'recycler', name: 'Fuel Recycler', desc: 'Slowly refills your tank up in space while the rocket is off.', lv: [0.12, 0.22, 0.35], prices: [9000, 26000, 60000], post: 2 }
 ];
 const HATS = [
   { id: 'none', name: 'No Hat', price: 0 },
@@ -425,7 +446,8 @@ const HATS = [
   { id: 'viking', name: 'Viking Helmet', price: 650 },
   { id: 'top', name: 'Top Hat', price: 900 },
   { id: 'crown', name: 'Crown', price: 1600 },
-  { id: 'astro', name: 'Space Helmet', price: 3000 }
+  { id: 'astro', name: 'Space Helmet', price: 3000 },
+  { id: 'halo', name: 'Golden Halo', price: 0, need: 'cosmic' }
 ];
 const SKINS = [
   { id: 'white', name: 'Classic White', price: 0, body: '#fbfbf7', shade: '#dcdcd2', wing: '#eeeee6' },
@@ -436,7 +458,9 @@ const SKINS = [
   { id: 'robo', name: 'Robo Hen', price: 900, body: '#b9c6d3', shade: '#8795a4', wing: '#a4b3c2', robo: true },
   { id: 'rainbow', name: 'Rainbow', price: 1800, body: '#ff6b6b', shade: '#d94f4f', wing: '#ffd93d', rainbow: true },
   { id: 'gold', name: 'Golden Egg', price: 4000, body: '#ffd54a', shade: '#e0a820', wing: '#ffe27a', shine: true },
-  { id: 'galaxy', name: 'Galaxy', price: 8000, body: '#3b2a8a', shade: '#271a66', wing: '#5a44c0', galaxy: true }
+  { id: 'galaxy', name: 'Galaxy', price: 8000, body: '#3b2a8a', shade: '#271a66', wing: '#5a44c0', galaxy: true },
+  { id: 'nebula', name: 'Nebula', price: 30000, body: '#c04aa0', shade: '#8a2a78', wing: '#ff8ad8', galaxy: true, need: 'moon' },
+  { id: 'cosmic', name: 'Cosmic Gold', price: 0, body: '#ffe08a', shade: '#e0a820', wing: '#fff0b8', shine: true, galaxy: true, need: 'cosmic' }
 ];
 const CATS = [
   { id: 'ramp', name: 'Ramp', list: RAMPS },
@@ -446,11 +470,14 @@ const CATS = [
   { id: 'tank', name: 'Fuel', list: TANKS }
 ];
 
+// late gear unlocks as you go further
+const unlocked = it => !it.post || (it.post === 1 || it.post === true ? S.won : it.post === 2 ? S.best.alt >= MOON : S.best.alt >= 30000);
+const lockText = it => it.post === 2 ? 'Touch the Moon (12,000 m) to unlock' : it.post === 3 ? 'Reach the Ringed Giant (30,000 m) to unlock' : 'Reach space to unlock';
 /* ---------- records: one-time coin bonuses ---------- */
 const RECORDS = [
-  ...[100, 250, 500, 1000, 2000, 4000, 8000, 15000].map((n, i) => ({ id: 'd' + n, kind: 'dist', n, pay: [15, 40, 90, 200, 450, 900, 1800, 4000][i] })),
-  ...[60, 150, 300, 900, 1800, 3000, 4000, 8000, 12000].map((n, i) => ({ id: 'a' + n, kind: 'alt', n, pay: [15, 40, 100, 300, 700, 1200, 2500, 4000, 8000][i] })),
-  ...[100, 200, 400, 700, 1000, 1500, 2500].map((n, i) => ({ id: 's' + n, kind: 'speed', n, pay: [15, 50, 150, 400, 800, 1500, 3000][i] }))
+  ...[100, 250, 500, 1000, 2000, 4000, 8000, 15000, 30000, 60000, 100000].map((n, i) => ({ id: 'd' + n, kind: 'dist', n, pay: [15, 40, 90, 200, 450, 900, 1800, 4000, 8000, 16000, 30000][i] })),
+  ...[60, 150, 300, 900, 1800, 3000, 4000, 8000, 12000, 20000, 30000, 45000, 65000].map((n, i) => ({ id: 'a' + n, kind: 'alt', n, pay: [15, 40, 100, 300, 700, 1200, 2500, 4000, 8000, 15000, 30000, 55000, 100000][i] })),
+  ...[100, 200, 400, 700, 1000, 1500, 2500, 5000, 10000].map((n, i) => ({ id: 's' + n, kind: 'speed', n, pay: [15, 50, 150, 400, 800, 1500, 3000, 9000, 20000][i] }))
 ];
 
 /* ---------- missions: three at a time ---------- */
@@ -492,7 +519,14 @@ const CHALLENGES = [
   { id: 'c_nogl', text: 'Reach space with Tiny Wings (tap the glider dots in the shop to swap)', stat: 'spaceNoGlider', n: 1, pay: 6000 },
   { id: 'c_a8k', text: 'Get 8,000 m high', stat: 'alt', n: 8000, pay: 8000 },
   { id: 'c_d40k', text: 'Fly 40,000 m', stat: 'dist', n: 40000, pay: 10000 },
-  { id: 'c_moon', text: 'Touch the Moon (12,000 m high)', stat: 'alt', n: MOON, pay: 20000 }
+  { id: 'c_moon', text: 'Touch the Moon (12,000 m high)', stat: 'alt', n: MOON, pay: 20000 },
+  { id: 'c_coin600', text: 'Grab 600 coins in one run', stat: 'coinsRun', n: 600, pay: 15000 },
+  { id: 'c_belt', text: 'Fly through the Asteroid Belt (20,000 m)', stat: 'alt', n: 20000, pay: 25000 },
+  { id: 'c_kmh5k', text: 'Go 5,000 km/h', stat: 'speed', n: 5000, pay: 25000 },
+  { id: 'c_rings', text: 'Reach the Ringed Giant (30,000 m)', stat: 'alt', n: 30000, pay: 45000 },
+  { id: 'c_d100k', text: 'Fly 100,000 m', stat: 'dist', n: 100000, pay: 50000 },
+  { id: 'c_nebula', text: 'Reach the Star Nebula (45,000 m)', stat: 'alt', n: 45000, pay: 80000 },
+  { id: 'c_cosmic', text: 'Touch the Cosmic Egg (65,000 m)', stat: 'alt', n: COSMIC, pay: 150000 }
 ];
 
 /* ---------- save ---------- */
@@ -500,9 +534,10 @@ const SAVE_KEY = 'cluck-launch-save-v1';
 const DEFAULT = {
   coins: 0, day: 1, best: { dist: 0, alt: 0, speed: 0 }, tier: { ramp: 0, sled: 0, glider: 0, rocket: 0, tank: 0 },
   eq: { glider: -1 }, // -1 = best owned
-  gad: { cone: 0, magnet: 0, boots: 0, shield: 0 },
+  gad: { cone: 0, magnet: 0, boots: 0, shield: 0, burner: 0, doubler: 0, recycler: 0 },
   hat: 'none', skin: 'white', own: { hats: ['none'], skins: ['white'] },
-  rec: {}, done: {}, cnt: {}, sound: true, music: true, intro: false, won: false, wonDay: 0, bought: 0, runs: 0
+  rec: {}, done: {}, cnt: {}, sound: true, music: true, intro: false, won: false, wonDay: 0, bought: 0, runs: 0,
+  cosmic: false, feathers: 0, perks: { coin: 0, thrust: 0, fuel: 0, start: 0 }, lives: 1, lifeBest: 0
 };
 let S = load();
 function load() {
@@ -512,7 +547,7 @@ function load() {
       const d = JSON.parse(JSON.stringify(DEFAULT));
       return Object.assign(d, raw, {
         best: Object.assign(d.best, raw.best || {}), tier: Object.assign(d.tier, raw.tier || {}), eq: Object.assign(d.eq, raw.eq || {}),
-        gad: Object.assign(d.gad, raw.gad || {}), own: Object.assign(d.own, raw.own || {}), rec: raw.rec || {}, done: raw.done || {}, cnt: raw.cnt || {}
+        gad: Object.assign(d.gad, raw.gad || {}), own: Object.assign(d.own, raw.own || {}), perks: Object.assign(d.perks, raw.perks || {}), rec: raw.rec || {}, done: raw.done || {}, cnt: raw.cnt || {}
       });
     }
   } catch (e) {}
@@ -530,7 +565,8 @@ function stats() {
   return {
     h: RAMPS[t.ramp].h, mu: SLEDS[t.sled].mu, tol: SLEDS[t.sled].tol + (S.gad.boots ? 3 * S.gad.boots : 0),
     lk: g.lk, ab: g.ab, d0: d0 * cone + 0.00035 * cone, dk, rate: g.rate,
-    thrust: ROCKETS[t.rocket].thrust, fuel: t.rocket > 0 ? TANKS[t.tank].fuel : 0,
+    thrust: ROCKETS[t.rocket].thrust * (S.gad.burner ? GADGETS[4].lv[S.gad.burner - 1] : 1) * (1 + 0.04 * (S.perks ? S.perks.thrust : 0)), fuel: t.rocket > 0 ? TANKS[t.tank].fuel * (1 + 0.08 * (S.perks ? S.perks.fuel : 0)) : 0,
+    recycle: S.gad.recycler ? GADGETS[6].lv[S.gad.recycler - 1] : 0,
     magnet: S.gad.magnet ? GADGETS[1].lv[S.gad.magnet - 1] : 0,
     bounce: S.gad.boots ? 0.45 + 0.15 * S.gad.boots : 0.3,
     shield: S.gad.shield ? GADGETS[3].lv[S.gad.shield - 1] : 0
@@ -538,12 +574,13 @@ function stats() {
 }
 // money for one run
 function runPay(r) {
+  const k = 1 + 0.2 * ((S.perks && S.perks.coin) || 0), cm = S.gad && S.gad.doubler ? GADGETS[5].lv[S.gad.doubler - 1] : 1;
   return {
-    dist: Math.round(r.dist * 0.25),
-    alt: Math.round(Math.max(0, r.alt - LIP_ALT) * 1.0),
-    speed: Math.round(r.speed * 0.18),
-    air: Math.round(r.air * 1.5),
-    coins: Math.round(r.coins)
+    dist: Math.round(r.dist * 0.25 * k),
+    alt: Math.round(Math.max(0, r.alt - LIP_ALT) * 1.0 * k),
+    speed: Math.round(r.speed * 0.18 * k),
+    air: Math.round(r.air * 1.5 * k),
+    coins: Math.round(r.coins * cm * k)
   };
 }
 function missionList() { return S.won ? MISSIONS.concat(CHALLENGES) : MISSIONS; }
@@ -604,9 +641,9 @@ function makeCell(i, j) {
   const ok = (x, y) => y > groundY(x) + 2.5;
   if (x0 < -CELL || j < 0) return out;
   // coins: lines, arcs and rings
-  const coinP = alt < 120 ? 0.55 : alt < 900 ? 0.42 : alt < 3000 ? 0.34 : 0.3;
+  const coinP = alt < 120 ? 0.55 : alt < 900 ? 0.42 : alt < 3000 ? 0.34 : alt < MOON ? 0.3 : 0.14;
   if (r() < coinP && x0 > -10) {
-    const val = alt < 300 ? 1 : alt < 1200 ? 2 : 5, sp = Math.min(9, 2.6 * (1 + alt / 700)), n = 5 + Math.floor(r() * 5);
+    const val = alt < 300 ? 1 : alt < 1200 ? 2 : alt < MOON ? 5 : alt < 30000 ? 10 : alt < 45000 ? 20 : 30, sp = Math.min(9, 2.6 * (1 + alt / 700)), n = 5 + Math.floor(r() * 5);
     const kind = r(); let cx = x0 + 8 + r() * (CELL - 16), cy = y0 + 8 + r() * (CELL - 16);
     if (y0 < gy + 30 && y0 <= gy) cy = gy + 4 + r() * 18;
     for (let k = 0; k < n; k++) {
@@ -625,7 +662,9 @@ function makeCell(i, j) {
   if (alt > 850 && alt < 2700 && r() < 0.035) put('plane', 3.2, { dir: r() < 0.5 ? -1 : 1, col: Math.floor(r() * 3) });
   if (alt > 2300 && alt < 5200 && r() < 0.03) put('ufo', 2.6);
   if (alt > 3700 && r() < 0.035) put('sat', 2.4);
-  if (alt > 4200 && r() < 0.03) put('rock', 2.0 + r() * 1.5);
+  if (alt > 4200 && r() < (alt > 18000 && alt < 32000 ? 0.05 : 0.03)) put('rock', 2.0 + r() * (alt > 18000 ? 3 : 1.5));
+  if (alt > MOON && r() < 0.03) put('fuel', 1.3);
+  if (alt > 40000 && r() < 0.025) put('ufo', 2.6);
   return out;
 }
 function cellAt(i, j) { const key = i * 100003 + j; let c = world.cells.get(key); if (!c) { c = makeCell(i, j); world.cells.set(key, c); } return c; }
@@ -671,7 +710,8 @@ function update(dt) {
   let w = 1;
   if (!F.demo || F.demoWarp) {
     if (F.phase === 'air' && !F.firing && F.vy < 0 && F.air > 4 && (F.fuel <= 0 || F.st.thrust <= 0)) w = clamp(1 + (F.air - 4) / 4, 1, 2.8 + clamp(F.y / 400, 0, 3.2));
-    if (F.skip) w = 12;
+    if (F.phase === 'air' && !F.firing && F.y > SPACE) w = Math.max(w, clamp(3 + F.y / 4000, 3, 24));
+    if (F.skip) w = Math.max(12, w * 2);
     else if (F.phase === 'ground' && F.landT > 1.2) w = 2.2;
     else if (F.phase === 'ramp') w = 1.35;
   }
@@ -688,6 +728,7 @@ function step(dt) {
   const st = F.st;
   F.firing = input.rocket && F.fuel > 0 && st.thrust > 0 && F.phase !== 'ready';
   if (F.firing) { F.fuel = Math.max(0, F.fuel - dt); F.rocketT += dt; }
+  else if (st.recycle && F.y > SPACE && F.fuelMax > 0) F.fuel = Math.min(F.fuelMax, F.fuel + st.recycle * dt);
   if (F.phase === 'ready') { const p = rampAt(F.rp, 0); F.x = p.x; F.y = p.y; F.th = p.a; return; }
   if (F.phase === 'ramp') {
     const p = rampAt(F.rp, F.s), v = F.v;
@@ -800,9 +841,12 @@ function step(dt) {
   const sp = Math.hypot(vx, vy);
   F.maxX = Math.max(F.maxX, x); if (F.y > F.maxY) F.maxY = F.y; F.top = Math.max(F.top, sp);
   if (!F.space && F.y >= SPACE) { F.space = true; FXH('space'); }
+  if (!F.cosmic && F.y >= COSMIC) { F.cosmic = true; FXH('cosmic'); }
   // stop when resting on the snow
   if (touching && sp < 2.5 && !F.firing) { F.stopT += dt; if (F.stopT > 0.5) { F.done = true; FXH('stop'); } } else F.stopT = 0;
-  if (F.t > 600) { F.done = true; FXH('stop'); }
+  // coming back down from deep space: the flight ends at the edge of space and Nugget parachutes home
+  if (F.maxY > SPACE * 1.5 && F.vy < 0 && F.y < SPACE && !F.firing) { F.done = true; F.reentry = true; FXH('stop'); }
+  if (F.t > (F.maxY > SPACE ? 3600 : 600)) { F.done = true; FXH('stop'); }
 }
 function runResult() {
   return { real: F.real, t: F.t, dist: Math.max(0, F.maxX), alt: F.maxY, speed: F.top * 3.6, air: F.air, coins: F.coins, nCoins: F.nCoins, balloons: F.balloons, clouds: F.clouds, fuels: F.fuels, rocketT: F.rocketT, slide: F.slide, hits: F.hits };
@@ -855,7 +899,12 @@ const SKY = [
   { a: 1800, top: '#141c5c', mid: '#34469a', bot: '#7a7fd0' },
   { a: 2800, top: '#060927', mid: '#121a52', bot: '#2c3a88' },
   { a: 4000, top: '#02030b', mid: '#060920', bot: '#101845' },
-  { a: 9000, top: '#000000', mid: '#04030f', bot: '#0b0a24' }
+  { a: 9000, top: '#000000', mid: '#04030f', bot: '#0b0a24' },
+  { a: 16000, top: '#030206', mid: '#140c18', bot: '#2c1c26' },
+  { a: 26000, top: '#020812', mid: '#0a2232', bot: '#1a4252' },
+  { a: 40000, top: '#10021c', mid: '#3c0c4c', bot: '#8a2c7a' },
+  { a: 56000, top: '#140a02', mid: '#4a300c', bot: '#c89a3a' },
+  { a: 70000, top: '#2a1a04', mid: '#8a6420', bot: '#ffe08a' }
 ];
 function skyAt(alt) {
   let i = 0; while (i < SKY.length - 2 && alt > SKY[i + 1].a) i++;
@@ -979,12 +1028,13 @@ function drawSky(t) {
   // the Moon (grows as you get closer)
   const mA = clamp((alt - 3000) / 1500, 0, 1);
   if (mA > 0) {
-    const r = H * (0.05 + 0.3 * clamp((alt - 4000) / (MOON - 4000), 0, 1)), X = W * 0.78, Y = H * 0.24 + clamp((alt - 4000) / (MOON - 4000), 0, 1) * H * 0.1;
-    g.globalAlpha = mA; const mg = g.createRadialGradient(X - r * 0.3, Y - r * 0.3, r * 0.1, X, Y, r); mg.addColorStop(0, '#fbfbf2'); mg.addColorStop(1, '#b9b9c8');
+    const r = H * (0.05 + 0.3 * clamp((alt - 4000) / (MOON - 4000), 0, 1)), X = W * 0.78, Y = H * 0.24 + clamp((alt - 4000) / (MOON - 4000), 0, 1) * H * 0.1 + Math.max(0, alt - MOON) / 6000 * H;
+    g.globalAlpha = mA * clamp(1 - (alt - MOON) / 9000, 0, 1); const mg = g.createRadialGradient(X - r * 0.3, Y - r * 0.3, r * 0.1, X, Y, r); mg.addColorStop(0, '#fbfbf2'); mg.addColorStop(1, '#b9b9c8');
     g.fillStyle = mg; g.beginPath(); g.arc(X, Y, r, 0, 7); g.fill();
     g.fillStyle = 'rgba(120,120,140,.35)'; for (const [a, b, c] of [[0.2, -0.3, 0.18], [-0.35, 0.1, 0.22], [0.3, 0.35, 0.12], [-0.05, 0.5, 0.1]]) { g.beginPath(); g.arc(X + a * r, Y + b * r, c * r, 0, 7); g.fill(); }
     g.globalAlpha = 1;
   }
+  deepSky(alt, t);
   // far mountains (parallax)
   const base = H * 0.72 + cam.y * cam.k * 0.1;
   if (base < H + 50) {
@@ -993,6 +1043,40 @@ function drawSky(t) {
   }
   // decorative cloud layers, each one moving slower than the world
   for (const [p, a] of [[0.25, 1], [0.45, 1]]) cloudLayer(p, a);
+}
+// past the Moon: the asteroid belt, a ringed giant, a nebula and, at the very top, the Cosmic Egg
+const BELT = []; { const r = seeded(91); for (let i = 0; i < 70; i++) BELT.push({ x: r(), y: r(), s: 0.4 + r() * 1.2, sp: 0.2 + r() * 0.8, rot: r() * 6 }); }
+function deepSky(alt, t) {
+  const bA = clamp(1 - Math.abs(alt - 24000) / 9000, 0, 1);
+  if (bA > 0) { g.globalAlpha = bA * 0.9; for (const b of BELT) { const X = ((b.x - cam.x * 0.00002 * b.sp + 2) % 1) * W, Y = ((b.y + cam.y * 0.00003 * b.sp) % 1) * H, r = H * 0.012 * b.s; g.fillStyle = '#5a4a46'; g.beginPath(); for (let k = 0; k < 7; k++) { const a = b.rot + k * 0.9, rr = r * (0.7 + 0.3 * Math.sin(k * 2.3 + b.rot)); g.lineTo(X + Math.cos(a) * rr, Y + Math.sin(a) * rr); } g.fill(); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(X - r * 0.4, Y - r * 0.4, r * 0.5, r * 0.3); } g.globalAlpha = 1; }
+  const pA = clamp(1 - Math.abs(alt - 33000) / 12000, 0, 1);
+  if (pA > 0) {
+    const X = W * 0.25, Y = H * (0.5 - (alt - 33000) / 40000), R = H * 0.26;
+    g.save(); g.globalAlpha = pA;
+    g.strokeStyle = 'rgba(230,200,150,.55)'; g.lineWidth = R * 0.12; g.beginPath(); g.ellipse(X, Y, R * 1.9, R * 0.42, -0.25, Math.PI, Math.PI * 2); g.stroke();
+    const pg = g.createRadialGradient(X - R * 0.3, Y - R * 0.3, R * 0.1, X, Y, R); pg.addColorStop(0, '#f2d9a6'); pg.addColorStop(0.6, '#c98f56'); pg.addColorStop(1, '#6a4428');
+    g.fillStyle = pg; g.beginPath(); g.arc(X, Y, R, 0, 7); g.fill();
+    g.strokeStyle = 'rgba(120,70,40,.35)'; g.lineWidth = R * 0.06; for (const k of [-0.4, -0.1, 0.25]) { g.beginPath(); g.ellipse(X, Y + k * R, R * 0.98 * Math.sqrt(1 - k * k), R * 0.06, 0, 0, 7); g.stroke(); }
+    g.strokeStyle = 'rgba(240,215,170,.75)'; g.lineWidth = R * 0.12; g.beginPath(); g.ellipse(X, Y, R * 1.9, R * 0.42, -0.25, 0, Math.PI); g.stroke();
+    g.restore();
+  }
+  const nA = clamp((alt - 36000) / 9000, 0, 1) * clamp((72000 - alt) / 10000, 0.3, 1);
+  if (nA > 0) {
+    g.save(); g.globalCompositeOperation = 'lighter';
+    for (const [x, y, r, c] of [[0.2, 0.3, 0.5, '255,80,180'], [0.7, 0.6, 0.6, '120,90,255'], [0.5, 0.15, 0.4, '80,200,255'], [0.85, 0.25, 0.35, '255,170,80']]) {
+      const X = W * x + Math.sin(t * 0.1 + x * 9) * 20, Y = H * y + (cam.y * 0.00002 % 1) * 40, gr = g.createRadialGradient(X, Y, 0, X, Y, H * r);
+      gr.addColorStop(0, `rgba(${c},${0.28 * nA})`); gr.addColorStop(1, `rgba(${c},0)`); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    }
+    g.restore();
+  }
+  const eA = clamp((alt - 50000) / 12000, 0, 1);
+  if (eA > 0) {
+    const X = W * 0.5, Y = H * (0.42 - 0.2 * eA), rx = H * (0.06 + 0.22 * eA), ry = rx * 1.3;
+    g.save(); g.globalCompositeOperation = 'lighter'; const gl = g.createRadialGradient(X, Y, rx * 0.5, X, Y, rx * 3); gl.addColorStop(0, `rgba(255,220,120,${0.5 * eA})`); gl.addColorStop(1, 'rgba(255,200,80,0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H); g.restore();
+    const eg = g.createRadialGradient(X - rx * 0.3, Y - ry * 0.35, rx * 0.1, X, Y, ry); eg.addColorStop(0, '#fffbe8'); eg.addColorStop(0.5, '#ffe08a'); eg.addColorStop(1, '#d99a20');
+    g.globalAlpha = eA; g.fillStyle = eg; g.beginPath(); g.ellipse(X, Y, rx, ry, 0, 0, 7); g.fill();
+    g.strokeStyle = 'rgba(160,100,10,.5)'; g.lineWidth = rx * 0.05; g.beginPath(); g.moveTo(X - rx * 0.8, Y); for (let k = 0; k < 8; k++) g.lineTo(X - rx * 0.8 + k * rx * 0.23, Y + (k % 2 ? -1 : 1) * ry * 0.08); g.stroke(); g.globalAlpha = 1;
+  }
 }
 function mountains(p, base, hgt, col, snow, seed) {
   const r = seeded(seed), pts = [], step = 90, off = cam.x * cam.k * p * 0.25;
@@ -1224,7 +1308,7 @@ function drawObjects(t) {
 }
 function coinSprite(X, Y, r, t, v) {
   const w = Math.abs(Math.cos(t * 3)) * 0.8 + 0.2;
-  const col = v >= 5 ? ['#ffffff', '#ffc93a', '#d9780a'] : v >= 2 ? ['#f2fbff', '#9fd6ff', '#3b7fb8'] : ['#fff5b0', '#f2c230', '#a8760a'];
+  const col = v >= 30 ? ['#ffffff', '#ff8ae0', '#8a2aa8'] : v >= 20 ? ['#ffffff', '#7affd8', '#1a8a7a'] : v >= 10 ? ['#ffffff', '#c9b0ff', '#5a3ab8'] : v >= 5 ? ['#ffffff', '#ffc93a', '#d9780a'] : v >= 2 ? ['#f2fbff', '#9fd6ff', '#3b7fb8'] : ['#fff5b0', '#f2c230', '#a8760a'];
   if (!QUAL.low) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = v >= 5 ? 0.55 : 0.35; g.fillStyle = v >= 5 ? '#ffe27a' : col[1]; g.beginPath(); g.arc(X, Y, r * (v >= 5 ? 1.7 : 1.5), 0, 7); g.fill(); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
   const gr = g.createLinearGradient(X - r, Y - r, X + r, Y + r); gr.addColorStop(0, col[0]); gr.addColorStop(0.5, col[1]); gr.addColorStop(1, col[2]);
   g.fillStyle = gr; g.beginPath(); g.ellipse(X, Y, r * w, r, 0, 0, 7); g.fill();
@@ -1584,6 +1668,7 @@ function drawHat(c, hat, t) {
   else if (hat === 'viking') { c.fillStyle = '#9aa3ad'; c.beginPath(); c.arc(0, 0.08, 0.32, Math.PI, 0); c.fill(); c.stroke(); c.fillStyle = '#fff3d6'; for (const s of [-1, 1]) { c.beginPath(); c.moveTo(s * 0.26, -0.05); c.quadraticCurveTo(s * 0.55, -0.1, s * 0.5, -0.45); c.quadraticCurveTo(s * 0.42, -0.15, s * 0.18, -0.15); c.fill(); c.stroke(); } c.fillStyle = '#c9985a'; c.fillRect(-0.33, 0.02, 0.66, 0.08); }
   else if (hat === 'top') { c.fillStyle = '#222'; c.beginPath(); c.ellipse(0, 0.05, 0.38, 0.08, 0, 0, 7); c.fill(); c.fillRect(-0.22, -0.5, 0.44, 0.55); c.fillStyle = '#e8362f'; c.fillRect(-0.22, -0.08, 0.44, 0.08); }
   else if (hat === 'crown') { c.fillStyle = '#ffd23f'; c.beginPath(); c.moveTo(-0.28, 0.05); c.lineTo(-0.3, -0.3); c.lineTo(-0.15, -0.12); c.lineTo(0, -0.38); c.lineTo(0.15, -0.12); c.lineTo(0.3, -0.3); c.lineTo(0.28, 0.05); c.closePath(); c.fill(); c.stroke(); c.fillStyle = '#e8362f'; c.beginPath(); c.arc(0, -0.05, 0.05, 0, 7); c.fill(); c.fillStyle = '#2f8fe8'; c.beginPath(); c.arc(-0.16, -0.03, 0.04, 0, 7); c.arc(0.16, -0.03, 0.04, 0, 7); c.fill(); }
+  else if (hat === 'halo') { c.strokeStyle = '#ffd23f'; c.lineWidth = 0.1; c.globalAlpha = 0.9 + Math.sin(t * 4) * 0.1; c.beginPath(); c.ellipse(0, -0.35, 0.36, 0.1, 0, 0, 7); c.stroke(); c.globalAlpha = 1; }
   else if (hat === 'astro') { c.restore(); c.save(); c.translate(0.5, -1.32); c.fillStyle = 'rgba(190,230,255,.28)'; c.strokeStyle = '#dfe6ee'; c.lineWidth = 0.08; c.beginPath(); c.arc(0, 0, 0.5, 0, 7); c.fill(); c.stroke(); c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.ellipse(-0.18, -0.2, 0.12, 0.06, -0.6, 0, 7); c.fill(); c.fillStyle = '#dfe6ee'; c.fillRect(-0.3, 0.4, 0.6, 0.12); }
   c.restore();
 }
@@ -1885,6 +1970,9 @@ FXH = (ev, a, b, c) => {
     case 'space':
       if (!quiet && !S.won) spaceEnding();
       break;
+    case 'cosmic':
+      if (!quiet && !S.cosmic) cosmicEnding();
+      break;
   }
 };
 
@@ -1915,6 +2003,22 @@ function spaceEnding() {
     if (mode !== 'play') return;
     mode = 'ending'; $('hud').hidden = true;
     $('endText').innerHTML = `Nugget did it! After <b>${S.day}</b> day${S.day > 1 ? 's' : ''} of sliding, flying and crashing into snow, one very brave chicken reached space. The whole farm is cheering!`;
+    show('scrEnd');
+  }, 2600);
+}
+let endKind = 'space';
+function cosmicEnding() {
+  endKind = 'cosmic'; F.phase = 'orbit'; F.orbitT = 0; $('pops').innerHTML = ''; setHint(null);
+  input.up = input.down = input.rocket = false;
+  FLASH = 1; sfx.space(); setSong('space'); confetti();
+  banner('NUGGET TOUCHED', 'THE COSMIC EGG!');
+  burst(F.x, F.y, 60, () => ({ t: 'star', x: F.x, y: F.y + F.hs, vx: rnd(-30, 30), vy: rnd(-30, 30), life: rnd(1, 2.5), s: 0.9 * F.hs, rot: rnd(0, 6), vr: rnd(-3, 3), add: true, col: ['#ffe08a', '#fff6b0', '#ffb3de'][Math.random() * 3 | 0] }));
+  setTimeout(() => {
+    if (mode !== 'play') return;
+    mode = 'ending'; $('hud').hidden = true;
+    document.querySelector('#scrEnd h2').textContent = 'THE COSMIC EGG!';
+    $('endText').innerHTML = `65,000 m above the farm, past the Moon, the asteroids, the ringed giant and the nebula, Nugget tapped the Cosmic Egg with her beak. It glowed, and every chicken on the farm looked up. Day <b>${S.day}</b>, egg number <b>${S.lives}</b>.`;
+    document.querySelector('#scrEnd ul').innerHTML = '<li>Unlocked: <b>Cosmic Gold</b> feathers and the <b>Golden Halo</b>.</li><li>+10 bonus golden feathers when you hatch your next egg.</li><li>Hatch new eggs, max your perks and finish the last challenges.</li>';
     show('scrEnd');
   }, 2600);
 }
@@ -1985,7 +2089,7 @@ function endFlight() {
     S.cnt['b_' + k] = Math.max(S.cnt['b_' + k] || 0, v || 0);
   }
   const newBest = { dist: r.dist > S.best.dist + 0.5 && S.runs > 0, alt: r.alt > S.best.alt + 0.5 && S.runs > 0, speed: r.speed > S.best.speed + 0.5 && S.runs > 0 };
-  S.best.dist = Math.max(S.best.dist, r.dist); S.best.alt = Math.max(S.best.alt, r.alt); S.best.speed = Math.max(S.best.speed, r.speed);
+  S.best.dist = Math.max(S.best.dist, r.dist); S.best.alt = Math.max(S.best.alt, r.alt); S.lifeBest = Math.max(S.lifeBest || 0, r.alt); S.best.speed = Math.max(S.best.speed, r.speed);
   const mis = checkMissions(r);
   let total = 0; for (const k in pay) total += pay[k];
   const recPay = recs.reduce((s, q) => s + q.pay, 0), misPay = mis.reduce((s, m) => s + m.pay, 0);
@@ -1999,7 +2103,7 @@ function showResults() {
   const { r, pay, recs, mis, total, day, newBest } = lastRes;
   mode = 'results'; $('hud').hidden = true; setHint(null); show('scrRes'); setSong('menu'); $('pops').innerHTML = '';
   $('resTitle').textContent = 'Day ' + day + ' done!';
-  const faces = r.alt >= SPACE ? 'Space chicken!' : F && F.fail === 'stuck' ? 'Slid back down...' : r.hits > 2 ? 'Feathers everywhere!' : r.bounces > 2 ? 'Bumpy landing!' : r.dist > 1000 ? 'What a flight!' : 'Not bad at all!';
+  const faces = F && F.reentry ? `Parachuted home from ${fmt(r.alt)} m!` : r.alt >= SPACE ? 'Space chicken!' : F && F.fail === 'stuck' ? 'Slid back down...' : r.hits > 2 ? 'Feathers everywhere!' : r.bounces > 2 ? 'Bumpy landing!' : r.dist > 1000 ? 'What a flight!' : 'Not bad at all!';
   $('resFace').textContent = faces;
   const L = [
     ['Distance', fmt(r.dist) + ' m', pay.dist, newBest.dist],
@@ -2036,9 +2140,16 @@ function showResults() {
   missionRows($('resMis'), []);
   if (r.alt >= SPACE && !lastRes.confetti) { lastRes.confetti = true; confetti(); }
 }
+const PERKS = [['coin', 'Golden Touch', '+20% pay from every flight, per level.', 5], ['thrust', 'Strong Legs', '+4% rocket power, per level.', 5], ['fuel', 'Big Belly', '+8% fuel, per level.', 5], ['start', 'Nest Egg', 'Start every new egg with 5,000 coins per level.', 5]];
+const eggGain = () => Math.floor((S.lifeBest || 0) / 2500) + ((S.lifeBest || 0) >= COSMIC ? 10 : 0);
+function hatch() {
+  S.feathers += eggGain(); S.lives++; S.lifeBest = 0; S.coins = 5000 * (S.perks.start || 0);
+  for (const k in S.tier) S.tier[k] = 0; for (const k in S.gad) S.gad[k] = 0; S.eq.glider = -1;
+  save(); sfx.mission(); confetti(); toast(`A new egg hatched! Egg number <b>${S.lives}</b>. Your perks come with you.`); tab = 'gear'; renderShop();
+}
 function cheapestUpgrade() {
   let best = null;
-  for (const c of CATS) { const nx = c.list[S.tier[c.id] + 1]; if (!nx || (nx.post && !S.won)) continue; if (c.id === 'tank' && S.tier.rocket < 1) continue; if (!best || nx.price < best.price) best = { name: nx.name, price: nx.price, cat: c.name }; }
+  for (const c of CATS) { const nx = c.list[S.tier[c.id] + 1]; if (!nx || !unlocked(nx)) continue; if (c.id === 'tank' && S.tier.rocket < 1) continue; if (!best || nx.price < best.price) best = { name: nx.name, price: nx.price, cat: c.name }; }
   return best;
 }
 function tipText(r) {
@@ -2048,7 +2159,10 @@ function tipText(r) {
   const nextLayer = LAYERS.find(l => l.at > S.best.alt);
   if (S.tier.rocket === 0) return `Save up for a <b>rocket</b> (${fmt(ROCKETS[1].price)} coins). Rockets let you blast up high!`;
   if (nextLayer && !S.won) return `Next stop: <b>${nextLayer.name}</b> at ${fmt(nextLayer.at)} m high. Point your nose up while the rocket fires!`;
-  if (S.won) return 'Try the hard challenges, or aim for the Moon at 12,000 m!';
+  if (S.won) { const nl = LAYERS.find(l => l.at > S.best.alt), lk = CATS.map(c => c.list[S.tier[c.id] + 1]).find(x => x && !unlocked(x));
+    if (S.lifeBest >= MOON && S.lives < 3 && Math.random() < 0.3) return 'Open the <b>🥚 Egg</b> tab in the shop: hatch a new egg for golden feathers and permanent perks.';
+    if (nl) return `Next stop: <b>${nl.name}</b> at ${fmt(nl.at)} m high.${lk ? ' New gear unlocks when you get there!' : ''} Rocks in the Asteroid Belt hurt: the Bubble Shield helps.`;
+    return 'You touched the Cosmic Egg! Hatch new eggs for perks, or chase the hard challenges.'; }
   return 'Tip: after the rocket runs out, keep your nose a little bit up to glide far.';
   void r;
 }
@@ -2061,11 +2175,12 @@ function toTitle() {
   const dl = $('dayLine'); dl.innerHTML = '';
   const chips = [`Day ${S.day}`, `Best ${fmt(S.best.dist)} m`, `Highest ${fmt(S.best.alt)} m`];
   for (const c of chips) dl.insertAdjacentHTML('beforeend', `<span class="chip">${c}</span>`);
-  if (S.won) dl.insertAdjacentHTML('beforeend', '<span class="sandbox">SPACE CHICKEN ⭐</span>');
+  if (S.won) dl.insertAdjacentHTML('beforeend', `<span class="sandbox">${S.cosmic ? 'COSMIC CHICKEN 🥚' : 'SPACE CHICKEN ⭐'}</span>`);
+  if (S.lives > 1 || S.feathers) dl.insertAdjacentHTML('beforeend', `<span class="chip">Egg ${S.lives} · 🪶 ${S.feathers}</span>`);
 }
 function pips(list, cur, eqT, clickable) {
   let h = '<div class="pips">';
-  list.forEach((it, i) => { if (it.post && !S.won) return; h += `<button class="pip${i <= cur ? ' own' : ''}${i === eqT ? ' eq' : ''}${it.post ? ' post' : ''}" ${clickable && i <= cur ? `data-eq="${i}"` : 'tabindex="-1" disabled'} aria-label="${it.name}"></button>`; });
+  list.forEach((it, i) => { if (!unlocked(it) && i > cur) return; h += `<button class="pip${i <= cur ? ' own' : ''}${i === eqT ? ' eq' : ''}${it.post ? ' post' : ''}" ${clickable && i <= cur ? `data-eq="${i}"` : 'tabindex="-1" disabled'} aria-label="${it.name}"></button>`; });
   return h + '</div>';
 }
 function iconCanvas(w, h, fn) {
@@ -2083,7 +2198,7 @@ function buy(cost, fn, msg) {
 }
 function renderShop() {
   $('sCoins').textContent = fmt(S.coins);
-  const T = [['gear', 'Gear'], ['gad', 'Gadgets'], ['looks', 'Looks'], ['goals', 'Goals']];
+  const T = [['gear', 'Gear'], ['gad', 'Gadgets'], ['looks', 'Looks'], ['goals', 'Goals']].concat(S.won ? [['egg', '🥚 Egg']] : []);
   const canBuy = cheapestUpgrade(); const dot = canBuy && S.coins >= canBuy.price;
   $('tabs').innerHTML = T.map(([id, n]) => `<button class="tab${tab === id ? ' on' : ''}" data-tab="${id}">${n}${id === 'gear' && dot && tab !== 'gear' ? '<span class="dot"></span>' : ''}</button>`).join('');
   const L = $('list'); L.innerHTML = '';
@@ -2091,7 +2206,7 @@ function renderShop() {
   if (tab === 'gear') {
     for (const c of CATS) {
       const cur = S.tier[c.id], list = c.list, nx = list[cur + 1];
-      const avail = nx && (!nx.post || S.won);
+      const avail = nx && unlocked(nx), lockedNx = nx && !avail;
       const locked = c.id === 'tank' && S.tier.rocket < 1;
       const d = document.createElement('div'); d.className = 'item';
       const showT = avail ? cur + 1 : cur;
@@ -2102,10 +2217,11 @@ function renderShop() {
       d.appendChild(icon);
       const info = document.createElement('div');
       const nowName = c.id === 'glider' ? GLIDERS[gliderTier()].name : list[cur].name;
-      info.innerHTML = `<h3>${c.name}: ${avail ? nx.name : list[cur].name} <small>${avail ? '(now: ' + nowName + ')' : 'MAX'}</small></h3><p>${locked ? 'Buy a rocket first. Fuel is for rockets!' : avail ? nx.desc + ' ' + gearStat(c.id, nx) : list[cur].desc}</p>` + pips(list, cur, c.id === 'glider' ? gliderTier() : -1, c.id === 'glider');
+      info.innerHTML = `<h3>${c.name}: ${avail ? nx.name : list[cur].name} <small>${avail ? '(now: ' + nowName + ')' : lockedNx ? '🔒 next: ' + nx.name : 'MAX'}</small></h3><p>${locked ? 'Buy a rocket first. Fuel is for rockets!' : avail ? nx.desc + ' ' + gearStat(c.id, nx) : lockedNx ? lockText(nx) + '. ' + nx.desc : list[cur].desc}</p>` + pips(list, cur, c.id === 'glider' ? gliderTier() : -1, c.id === 'glider');
       d.appendChild(info);
       const b = document.createElement('button'); b.className = 'btn small buy' + (avail && !locked && S.coins >= nx.price ? ' yel' : '');
-      if (!avail) { b.textContent = 'Maxed!'; b.disabled = true; }
+      if (lockedNx) { b.textContent = '🔒 Locked'; b.disabled = true; }
+      else if (!avail) { b.textContent = 'Maxed!'; b.disabled = true; }
       else if (locked) { b.textContent = 'Locked'; b.disabled = true; }
       else { b.innerHTML = `${fmt(nx.price)} ${coinHTML}`; b.onclick = () => buy(nx.price, () => { S.tier[c.id]++; if (c.id === 'glider') S.eq.glider = -1; }, `New ${c.name.toLowerCase()}: <b>${nx.name}</b>!`); }
       d.appendChild(b); L.appendChild(d);
@@ -2116,11 +2232,13 @@ function renderShop() {
       const lk = Object.assign({}, look, { cone: 0, magnet: 0, boots: 0 }); lk[gd.id] = Math.max(1, Math.min(max, lv + 1));
       const ic = gd.id === 'shield' ? iconCanvas(76, 60, (x) => { x.translate(38, 52); x.scale(18, 18); drawChicken(x, lk, { t: 0.2, shield: true }); }) : chickenIcon(lk, 76, 60, 0.37);
       d.appendChild(ic);
-      const lvTxt = gd.id === 'cone' ? 'less air drag' : gd.id === 'magnet' ? 'pulls coins from farther' : gd.id === 'boots' ? 'softer landings' : 'blocks ' + (lv + 1 > 1 ? 'two hits' : 'one hit') + ' per flight';
+      const nl = gd.lv[Math.min(lv, max - 1)], lvTxt = gd.id === 'cone' ? 'less air drag' : gd.id === 'magnet' ? 'pulls coins from farther' : gd.id === 'boots' ? 'softer landings' : gd.id === 'burner' ? `+${Math.round((nl - 1) * 100)}% rocket power` : gd.id === 'doubler' ? `coins worth x${nl}` : gd.id === 'recycler' ? `${nl} s of fuel back every second in space` : 'blocks ' + (lv + 1) + (lv + 1 > 1 ? ' hits' : ' hit') + ' per flight';
+      const gLock = !unlocked(gd);
       const info = document.createElement('div'); info.innerHTML = `<h3>${gd.name} <small>Level ${lv}/${max}</small></h3><p>${gd.desc}${lv < max ? ' Next level: ' + lvTxt + '.' : ''}</p><div class="pips">${gd.prices.map((_, i) => `<span class="pip${i < lv ? ' own' : ''}"></span>`).join('')}</div>`;
       d.appendChild(info);
       const b = document.createElement('button'); b.className = 'btn small buy' + (lv < max && S.coins >= gd.prices[lv] ? ' yel' : '');
-      if (lv >= max) { b.textContent = 'Maxed!'; b.disabled = true; }
+      if (gLock) { b.textContent = '🔒 ' + (gd.post === 2 ? 'Moon' : 'Space'); b.disabled = true; info.querySelector('p').insertAdjacentHTML('beforeend', ' <b>' + lockText(gd) + '.</b>'); }
+      else if (lv >= max) { b.textContent = 'Maxed!'; b.disabled = true; }
       else { b.innerHTML = `${fmt(gd.prices[lv])} ${coinHTML}`; b.onclick = () => buy(gd.prices[lv], () => { S.gad[gd.id]++; }, `<b>${gd.name}</b> level ${lv + 1}!`); }
       d.appendChild(b); L.appendChild(d);
     }
@@ -2128,6 +2246,7 @@ function renderShop() {
     L.insertAdjacentHTML('beforeend', '<div class="sub">Hats</div>');
     const gh = document.createElement('div'); gh.className = 'grid'; L.appendChild(gh);
     for (const h of HATS) {
+      if (h.need === 'cosmic' && !S.cosmic) continue;
       const own = S.own.hats.includes(h.id), eq = S.hat === h.id;
       const cd = document.createElement('button'); cd.className = 'card' + (eq ? ' eq' : '') + (own ? '' : ' lock');
       cd.appendChild(iconCanvas(96, 76, (x) => { x.translate(28, 126); x.scale(60, 60); drawChicken(x, Object.assign({}, look, { hat: h.id, rocket: 0, glider: 0, sled: 0, magnet: 0, cone: 0 }), { t: 0.2 }); }));
@@ -2138,6 +2257,7 @@ function renderShop() {
     L.insertAdjacentHTML('beforeend', '<div class="sub">Feathers</div>');
     const gs = document.createElement('div'); gs.className = 'grid'; L.appendChild(gs);
     for (const s of SKINS) {
+      if (s.need === 'cosmic' && !S.cosmic) continue; if (s.need === 'moon' && S.best.alt < MOON && !S.own.skins.includes(s.id)) continue;
       const own = S.own.skins.includes(s.id), eq = S.skin === s.id;
       const cd = document.createElement('button'); cd.className = 'card' + (eq ? ' eq' : '') + (own ? '' : ' lock');
       cd.appendChild(iconCanvas(96, 76, (x) => { x.translate(46, 70); x.scale(36, 36); drawChicken(x, Object.assign({}, look, { skin: s.id, rocket: 0, glider: 0, sled: 0, magnet: 0 }), { t: 0.2 }); }));
@@ -2145,6 +2265,22 @@ function renderShop() {
       cd.onclick = () => { if (own) { S.skin = s.id; save(); sfx.click(); pvPop = 1; renderShop(); } else buy(s.price, () => { S.own.skins.push(s.id); S.skin = s.id; S.cnt.looks = (S.cnt.looks || 0) + 1; }, `New feathers: <b>${s.name}</b>!`); };
       gs.appendChild(cd);
     }
+  } else if (tab === 'egg') {
+    const gain = eggGain(), canHatch = S.lifeBest >= MOON;
+    L.insertAdjacentHTML('beforeend', `<div class="tip">You have <b>🪶 ${S.feathers}</b> golden feathers. Egg number <b>${S.lives}</b>. Best height this egg: <b>${fmt(S.lifeBest)} m</b>.</div>`);
+    L.insertAdjacentHTML('beforeend', '<div class="sub">Perks (they stay forever)</div>');
+    for (const [id, name, desc, max] of PERKS) {
+      const lv = S.perks[id] || 0, cost = lv + 1, d = document.createElement('div'); d.className = 'item';
+      d.appendChild(iconCanvas(76, 60, (x) => { x.font = '40px serif'; x.textAlign = 'center'; x.fillText({ coin: '💰', thrust: '🚀', fuel: '⛽', start: '🥚' }[id], 38, 44); }));
+      const info = document.createElement('div'); info.innerHTML = `<h3>${name} <small>Level ${lv}/${max}</small></h3><p>${desc}</p><div class="pips">${Array.from({ length: max }, (_, i) => `<span class="pip${i < lv ? ' own' : ''}"></span>`).join('')}</div>`; d.appendChild(info);
+      const b = document.createElement('button'); b.className = 'btn small buy' + (lv < max && S.feathers >= cost ? ' yel' : '');
+      if (lv >= max) { b.textContent = 'Maxed!'; b.disabled = true; } else { b.textContent = `🪶 ${cost}`; b.onclick = () => { if (S.feathers < cost) { sfx.nope(); toast(`You need <b>${cost - S.feathers}</b> more golden feathers.`); return; } S.feathers -= cost; S.perks[id] = lv + 1; save(); sfx.buy(); toast(`<b>${name}</b> level ${lv + 1}!`); renderShop(); }; }
+      d.appendChild(b); L.appendChild(d);
+    }
+    L.insertAdjacentHTML('beforeend', '<div class="sub">Hatch a new egg</div>');
+    L.insertAdjacentHTML('beforeend', `<div class="tip">Start over with a fresh chicken: coins, gear and gadgets go back to zero, but you keep your looks, records and perks, and you get <b>🪶 ${gain}</b> golden feathers (more the higher you flew). ${canHatch ? '' : '<b>Touch the Moon (12,000 m) with this egg first.</b>'}</div>`);
+    L.insertAdjacentHTML('beforeend', `<div class="row" style="justify-content:flex-start"><button class="btn small${canHatch ? ' yel' : ''}" id="btnHatch" ${canHatch ? '' : 'disabled'}>🥚 Hatch a new egg (+${gain} 🪶)</button></div>`);
+    if (canHatch) $('btnHatch').onclick = () => { if (!confirm(`Hatch a new egg? Coins, gear and gadgets reset. You get ${gain} golden feathers.`)) return; hatch(); };
   } else {
     L.insertAdjacentHTML('beforeend', '<div class="sub">Missions</div>');
     const m = document.createElement('div'); m.className = 'mlist'; L.appendChild(m); missionRows(m, []);
@@ -2199,13 +2335,14 @@ function drawPreview(t) {
 /* ---------- HUD ---------- */
 let hudC = {};
 function setT(id, v) { if (hudC[id] !== v) { hudC[id] = v; $(id).innerHTML = v; } }
-function meterPos(a) { const top = S.won ? MOON : SPACE; return Math.sqrt(clamp(a / top, 0, 1)); }
+const meterTop = () => !S.won ? SPACE : S.best.alt >= MOON * 0.9 ? COSMIC : MOON;
+function meterPos(a) { return Math.sqrt(clamp(a / meterTop(), 0, 1)); }
 function placeY(el, p) { el.style.top = `calc(18px + (100% - 18px) * ${(1 - p).toFixed(4)})`; }
 function buildMeter() {
   const tk = $('mTicks'); tk.innerHTML = '';
-  for (const l of LAYERS) { if (l.at <= 0 || (l.at > SPACE && !S.won)) continue; const d = document.createElement('div'); d.className = 'tick'; placeY(d, meterPos(l.at)); tk.appendChild(d); }
+  for (const l of LAYERS) { if (l.at <= 0 || l.at > meterTop()) continue; const d = document.createElement('div'); d.className = 'tick'; placeY(d, meterPos(l.at)); tk.appendChild(d); }
   placeY($('mBest'), meterPos(S.best.alt)); $('mBest').hidden = S.best.alt < 50;
-  $('mGoal').textContent = S.won ? '🌙' : '⭐';
+  $('mGoal').textContent = meterTop() === COSMIC ? '🥚' : S.won ? '🌙' : '⭐';
 }
 function updateHUD() {
   if (!F || F.demo) return;
@@ -2290,7 +2427,7 @@ function resume() { mode = modeBeforePause; show(null); last = performance.now()
 function syncToggles() { for (const id of ['btnSound', 'pSound']) $(id).textContent = 'Sound: ' + (S.sound ? 'on' : 'off'); for (const id of ['btnMusic', 'pMusic']) $(id).textContent = 'Music: ' + (S.music ? 'on' : 'off'); }
 const on = (id, fn) => $(id).addEventListener('click', e => { e.stopPropagation(); audioOn(); fn(); });
 function play() { audioOn(); if (!S.intro) { S.intro = true; save(); mode = 'how'; show('scrHow'); drawHow(); } else startRun(); }
-function endGo() { S.won = true; S.wonDay = S.day; save(); show(null); endFlight(); }
+function endGo() { if (endKind === 'cosmic') { S.cosmic = true; for (const [k, id] of [['skins', 'cosmic'], ['hats', 'halo']]) if (!S.own[k].includes(id)) S.own[k].push(id); S.skin = 'cosmic'; S.hat = 'halo'; endKind = 'space'; } else { S.won = true; S.wonDay = S.day; } save(); show(null); endFlight(); }
 on('btnPlay', play);
 on('howGo', () => startRun());
 on('btnHow', () => { sfx.click(); mode = 'how'; show('scrHow'); drawHow(); });
