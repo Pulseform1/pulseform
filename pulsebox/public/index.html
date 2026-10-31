@@ -315,6 +315,7 @@
   .topic:hover, .topic.on { transform: translateY(-3px); border-color: var(--c); box-shadow: 0 10px 26px -10px var(--c); }
   .topic .em { font-size: 30px; line-height: 1; filter: drop-shadow(0 3px 6px rgba(0,0,0,.4)); }
   .topic b { font-family: var(--display); font-size: 19px; text-transform: uppercase; letter-spacing: .02em; margin-top: 6px; }
+  .topic.long b { font-size: 15px; white-space: nowrap; }
   .topic small { color: var(--muted); font-weight: 700; font-size: 13px; }
   .topic .n { position: absolute; top: 10px; right: 10px; background: var(--c); color: #0a0c12; font-weight: 800; font-size: 13px; border-radius: 999px; padding: 2px 9px; }
   .daily { display: flex; flex-direction: column; border: 2px solid rgba(255,210,63,.55); border-radius: 18px; overflow: hidden; background: var(--panel); box-shadow: 0 16px 40px -18px rgba(255,210,63,.45); }
@@ -331,7 +332,7 @@
   .topic-head h2 { font-family: var(--display); font-size: clamp(30px, 4vw, 44px); margin: 0; text-transform: uppercase; }
   .topic-head p { margin: 0; color: var(--muted); font-weight: 700; }
   @media (max-width: 980px) { .finder { grid-template-columns: 1fr; } .daily { display: grid; grid-template-columns: 130px 1fr; } .daily .lab { grid-column: 1 / -1; } .daily img { grid-row: span 3; } .daily .go { font-size: 21px; } }
-  @media (max-width: 760px) { .topics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } .topic { min-height: 0; padding: 10px 10px 9px; align-items: center; text-align: center; } .topic .em { font-size: 24px; } .topic b { font-size: 14px; margin-top: 4px; } .topic small { display: none; } .topic .n { top: 6px; right: 6px; font-size: 11px; padding: 1px 7px; } .big-search { padding: 12px 14px; } .big-search input { font-size: 17px; } .finder { margin-top: 10px; } }
+  @media (max-width: 760px) { .topics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } .topic { min-height: 0; padding: 10px 10px 9px; align-items: center; text-align: center; } .topic .em { font-size: 24px; } .topic b { font-size: 14px; margin-top: 4px; } .topic.long b { font-size: 11px; } .topic small { display: none; } .topic .n { top: 6px; right: 6px; font-size: 11px; padding: 1px 7px; } .big-search { padding: 12px 14px; } .big-search input { font-size: 17px; } .finder { margin-top: 10px; } }
   @media (max-width: 700px) { .top .search { display: none; } }
   /* ---------- phone bottom bar ---------- */
   .tabbar { display: none; }
@@ -386,7 +387,7 @@
 
   <!-- ACTIVITY PAGE: cover, video, pictures, and launch controls -->
   <main id="detail" class="detail" hidden>
-    <div class="back-row"><button class="btn" id="dBack">‹ All games</button></div>
+    <div class="back-row"><button class="btn" id="dBack">‹ All experiences</button></div>
     <section class="d-head">
       <div class="d-cover"><img id="dCover" alt=""></div>
       <div class="d-info">
@@ -1260,7 +1261,7 @@ const CATEGORIES = ['Co-op', 'Action', 'Horror', 'Strategy', 'Sports', 'Arcade',
 const TOPICS = {
   'Co-op': ['🤝', '#29e0ff', 'Play with friends'], Action: ['⚔️', '#ff5a3a', 'Fight and survive'], Horror: ['👻', '#a56bff', 'Scary games'],
   Strategy: ['🧠', '#ffd23f', 'Plan and build'], Sports: ['🏈', '#3aff8a', 'Football, soccer, more'], Arcade: ['🕹️', '#ff2e88', 'Quick classics'],
-  Puzzle: ['🧩', '#5ab0ff', 'Think it through'], Racing: ['🏎️', '#ff9f1c', 'Fast cars'], Idle: ['⏳', '#c6ff3d', 'Tap and grow'], All: ['🎮', '#eef1f8', 'Every game, A to Z']
+  Puzzle: ['🧩', '#5ab0ff', 'Think it through'], Racing: ['🏎️', '#ff9f1c', 'Fast cars'], Idle: ['⏳', '#c6ff3d', 'Tap and grow'], All: ['🎮', '#eef1f8', 'Everything, A to Z']
 };
 // what people type, and what we actually call it: "retro bowl" finds the football games, "scary" finds horror
 const SYN = {
@@ -1517,8 +1518,8 @@ function renderFinder() {
     const [em, col, sub] = TOPICS[c], n = c === 'All' ? GAMES.length : GAMES.filter(g => g.category === c).length;
     const b = document.createElement('button'); b.type = 'button'; b.className = 'topic' + (topic === c ? ' on' : ''); b.style.setProperty('--c', col);
     b.innerHTML = '<span class="n"></span><span class="em"></span><b></b><small></small>';
-    b.querySelector('.n').textContent = n; b.querySelector('.em').textContent = em; b.querySelector('b').textContent = c === 'All' ? 'All games' : c; b.querySelector('small').textContent = sub;
-    b.setAttribute('aria-label', (c === 'All' ? 'All games' : c) + ', ' + n + ' games');
+    b.querySelector('.n').textContent = n; b.querySelector('.em').textContent = em; b.querySelector('b').textContent = c === 'All' ? 'All experiences' : c; if (c === 'All') b.classList.add('long'); b.querySelector('small').textContent = sub;
+    b.setAttribute('aria-label', (c === 'All' ? 'All experiences' : c) + ', ' + n + ' games');
     b.addEventListener('click', () => go('#t-' + c.toLowerCase()));
     tp.append(b);
   });
@@ -1535,7 +1536,7 @@ function setQuery(v, scroll) {
 }
 function renderShelves() {
   const box = $('shelves'); box.innerHTML = '';
-  document.querySelectorAll('.topic').forEach(b => b.classList.toggle('on', b.getAttribute('aria-label').startsWith((topic === 'All' ? 'All games' : topic) + ',')));
+  document.querySelectorAll('.topic').forEach(b => b.classList.toggle('on', b.getAttribute('aria-label').startsWith((topic === 'All' ? 'All experiences' : topic) + ',')));
   const q = query.trim();
   if (q) {
     const { list, terms } = searchGames(q), s = shelf('shelf-search', 'Results for "' + q + '"', list, 0);
@@ -1548,7 +1549,7 @@ function renderShelves() {
     const all = topic === 'All', list = all ? GAMES.slice().sort((a, b) => a.title.localeCompare(b.title)) : GAMES.filter(g => g.category === topic).sort((a, b) => pos.get(a.id) - pos.get(b.id));
     const [em, col] = TOPICS[topic], head = document.createElement('div'); head.className = 'topic-head'; head.id = 'shelf-topic';
     head.innerHTML = '<span class="em"></span><div><h2></h2><p></p></div><button class="btn" type="button">‹ All topics</button>';
-    head.querySelector('.em').textContent = em; head.querySelector('h2').textContent = all ? 'All games' : topic; head.querySelector('h2').style.color = col;
+    head.querySelector('.em').textContent = em; head.querySelector('h2').textContent = all ? 'All experiences' : topic; head.querySelector('h2').style.color = col;
     head.querySelector('p').textContent = list.length + ' games' + (all ? ', A to Z' : ', most played first');
     head.querySelector('button').addEventListener('click', () => go(''));
     box.append(head);
