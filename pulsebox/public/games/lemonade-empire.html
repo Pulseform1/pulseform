@@ -72,7 +72,7 @@ const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
 const GAME = {
   id: 'lemonade-empire', title: 'Lemonade Empire', tagline: 'From one lemonade stand to a soda empire.',
   font: 'Fredoka One', accent: '#ffd23f', accent2: '#5fd36a', bg: '#7fd3ff', noHud: true, scoreLabel: 'Golden Lemons',
-  how: ['Tap the big lemon (or press Space) to squeeze it for cash.', 'Buy businesses (keys 1 to 7), tap them to sell, and hire managers to run them for you.', 'Catch golden customers, buy upgrades, win trophies, then franchise for Golden Lemons.'],
+  how: ['Tap the big lemon (or press Space) to squeeze it for cash.', 'Buy businesses (keys 1 to 0), tap them to sell, and hire managers to run them for you. Night time pays +25%.', 'Do the 3 daily quests, catch golden customers, win trophies, then franchise for Golden Lemons and spend them in the Lemon Lab.'],
   skins: [
     { name: 'Sunny', price: 0, c: ['#ffd23f', '#ff6b6b'] }, { name: 'Mint', price: 60, c: ['#7dffb0', '#2ab06a'] }, { name: 'Berry', price: 150, c: ['#ff7ae0', '#a23bff'] },
     { name: 'Ocean', price: 250, c: ['#7cc8ff', '#2a6ad2'] }, { name: 'Sunset', price: 400, c: ['#ffb347', '#ff4d6a'] }, { name: 'Royal', price: 700, c: ['#ffe36e', '#7a2bd6'] },
@@ -88,16 +88,41 @@ const GAME = {
     { n: 'Bottling Plant', cost: 103680, rev: 51840, t: 24 },
     { n: 'Soda Factory', cost: 1244160, rev: 622080, t: 96 },
     { n: 'Global Brand', cost: 14929920, rev: 7464960, t: 384 },
+    { n: 'Lemon Air', cost: 179159040, rev: 89579520, t: 768 },
+    { n: 'Lemonland Park', cost: 2149908480, rev: 1074954240, t: 1536 },
+    { n: 'Moon Base', cost: 25798901760, rev: 12899450880, t: 3072 },
   ];
+  const NB = BIZ.length;
   const MGR = BIZ.map((b, i) => b.cost * (i === 0 ? 250 : 120));
   const MILES = [10, 25, 50, 100, 150, 200, 250, 300, 400, 500, 750, 1000], FAST = [25, 50, 100];
-  const UN = [['Fresh Lemons', 'Crushed Ice', 'Pink Lemonade'], ['Shiny Wheels', 'Turbo Blender', 'Tropical Mix'], ['Neon Sign', 'Frozen Yogurt', 'Secret Recipe'], ['Jingle Horn', 'Turbo Engine', 'Route Planner'], ['Conveyor 2.0', 'Robot Arms', 'Glass Works'], ['Fizz Formula', 'Mega Vats', 'Night Shift'], ['TV Ads', 'Space Billboard', 'Moon Franchise']];
+  const UN = [['Fresh Lemons', 'Crushed Ice', 'Pink Lemonade'], ['Shiny Wheels', 'Turbo Blender', 'Tropical Mix'], ['Neon Sign', 'Frozen Yogurt', 'Secret Recipe'], ['Jingle Horn', 'Turbo Engine', 'Route Planner'], ['Conveyor 2.0', 'Robot Arms', 'Glass Works'], ['Fizz Formula', 'Mega Vats', 'Night Shift'], ['TV Ads', 'Space Billboard', 'Moon Franchise'], ['Jet Fuel', 'First Class', 'Lemon Lounge'], ['Loop Coaster', 'Splash Zone', 'Fireworks Show'], ['Low-G Juicer', 'Crater Farms', 'Galactic Brand']];
   // upgrade ids are their index here and are saved, so only ever append
   const UPG = [];
-  BIZ.forEach((b, i) => UN[i].forEach((n, k) => UPG.push({ n, b: i, x: 3, cost: b.cost * 2500 * Math.pow(1500, k), d: `${b.n} profit ×3` })));
+  BIZ.slice(0, 7).forEach((b, i) => UN[i].forEach((n, k) => UPG.push({ n, b: i, x: 3, cost: b.cost * 2500 * Math.pow(1500, k), d: `${b.n} profit ×3` })));
   [['Lemon Mascot', 2.5e5], ['Viral Jingle', 5e8], ['Lemon Lobby', 1e12], ['Citrus Empire', 5e15]].forEach(([n, c]) => UPG.push({ n, b: -1, x: 3, cost: c, d: 'Every business ×3' }));
   [['Strong Grip', 500, .06], ['Juicer Glove', 5e4, .1], ['Golden Press', 5e6, .2]].forEach(([n, c, p]) => UPG.push({ n, b: -2, tap: p, cost: c, d: `Squeeze +${p * 100}% of income/sec` }));
+  BIZ.slice(7).forEach((b, j) => UN[7 + j].forEach((n, k) => UPG.push({ n, b: 7 + j, x: 3, cost: b.cost * 2500 * Math.pow(1500, k), d: `${b.n} profit ×3` })));
+  [['Lemon Planet', 1e19], ['Citrus Galaxy', 1e24]].forEach(([n, c]) => UPG.push({ n, b: -1, x: 3, cost: c, d: 'Every business ×3' }));
   const own = i => S.own[i], st = k => S.st[k] || 0, mgrs = () => S.mgr.filter(Boolean).length;
+  // Lemon Lab: research bought with Golden Lemons. Lasts forever. Saved by key in S.lab.
+  const LAB = [
+    ['tap', 'Squeeze Science', '✊', l => `Squeezes earn ×${Math.pow(3, l)}`, [1, 4, 15]],
+    ['start', 'Seed Money', '$', l => `Start each franchise with $${fmt([0, 1e3, 1e5, 1e7, 1e9][l])}`, [2, 5, 12, 30]],
+    ['mgr', 'Headhunters', 'M', l => `Managers cost ${100 - Math.round(100 * Math.pow(.5, l))}% less`, [3, 8, 20]],
+    ['speed', 'Fast Lanes', '»', l => `Every business ${l * 15}% faster`, [4, 10, 25, 60, 150]],
+    ['luck', 'Lucky Lemons', '★', l => `Events ${l * 40}% more often, golden customers ×${l + 1}`, [2, 6, 18]],
+    ['away', 'Night Crew', '☾', l => `Away earnings: ${8 + l * 8}h at ${50 + l * 15}% speed`, [3, 9, 27]],
+    ['gold', 'Golden Grove', '%', l => `Each Golden Lemon gives +${10 + l * 2}% profit`, [5, 15, 40, 100, 250]],
+    ['keep', 'Loyal Staff', '∞', l => l ? 'Managers stay when you franchise' : 'Keep your managers when you franchise', [25]],
+  ];
+  const lab = k => (S.lab && S.lab[k]) || 0, labLv = () => LAB.reduce((a, L) => a + lab(L[0]), 0), labMax = LAB.reduce((a, L) => a + L[4].length, 0);
+  const goldPct = () => 10 + lab('gold') * 2, goldMul = () => 1 + S.gold * goldPct() / 100, mgrCost = i => MGR[i] * Math.pow(.5, lab('mgr'));
+  // daily quests: 3 a day, the same 3 for everyone that day
+  const QT = {
+    taps: [n => `Squeeze the lemon ${n} times`, [150, 300, 500]], bought: [n => `Buy ${n} businesses`, [25, 60, 150]], gc: [n => `Catch ${n} golden customer${n > 1 ? 's' : ''}`, [1, 2]],
+    rain: [n => `Catch ${n} falling lemons`, [10, 20]], upg: [n => `Buy ${n} upgrade${n > 1 ? 's' : ''}`, [1, 2, 3]], runs: [n => `Sell by hand ${n} times`, [20, 50, 100]],
+    evs: [n => `Live through ${n} town events`, [2, 3]], life: [n => `Earn $${fmt(n)}`, null], night: [n => `Sell through a night`, [1]],
+  };
   // trophies: [name, description, value, target, coins]. Saved by index, so only append.
   const ACH = [
     ['First Squeeze', 'Squeeze the big lemon', () => st('taps'), 1, 1], ['Squeeze Machine', 'Squeeze 500 times', () => st('taps'), 500, 3], ['Lemon Crusher', 'Squeeze 5,000 times', () => st('taps'), 5000, 6],
@@ -110,6 +135,9 @@ const GAME = {
     ['Gold Rush', 'Catch 10 golden customers', () => st('gc'), 10, 5], ['Heat Seeker', 'Sell through 3 heatwaves', () => st('hw'), 3, 3], ['Star Power', 'Host a celebrity visit', () => st('celeb'), 1, 3],
     ['Lemon Rain', 'Catch 50 falling lemons', () => st('rain'), 50, 3], ['Shopaholic', 'Buy 10 upgrades', () => st('upg'), 10, 4], ['Regular', 'Daily gift 3 days in a row', () => S.streak || 0, 3, 3],
     ['Devoted', 'Daily gift 7 days in a row', () => S.streak || 0, 7, 8],
+    ['Frequent Flyer', 'Open Lemon Air', () => own(7), 1, 6], ['Thrill Seeker', 'Open Lemonland Park', () => own(8), 1, 8], ['One Small Sip', 'Open the Moon Base', () => own(9), 1, 12],
+    ['Lab Rat', 'Buy 5 research levels', labLv, 5, 5], ['Mad Scientist', 'Max out every research', labLv, labMax, 25], ['Quest Starter', 'Finish 3 daily quests', () => st('qd'), 3, 3],
+    ['Quest Master', 'Finish 30 daily quests', () => st('qd'), 30, 12], ['Night Owl', 'Sell through 5 nights', () => st('night'), 5, 3],
   ];
   const TUT = [
     ['Tap the big lemon to squeeze it!', () => S.cash >= costOf(0, 1) || own(0) > 1],
@@ -124,29 +152,31 @@ const GAME = {
     return (Math.floor(n * (n < 10 ? 100 : n < 100 ? 10 : 1)) / (n < 10 ? 100 : n < 100 ? 10 : 1)).toFixed(n < 10 ? 2 : n < 100 ? 1 : 0) + u[i];
   };
   const today = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5);
-  let S, prog, cache, shown, buyN, tab, page, focus, hover, saveT, away, ev, evT, achT, combo, comboT, tapS, hint, frConfirm, banners, pops, bills, peeps, queues, cars, puffs, rainL, clouds, spawnT, lastPop, acc, chingT, juice, lemonRot, celebP, newAch, shift, bump, carT, serveT;
-  const fresh = () => ({ cash: 0, total: 0, own: BIZ.map((_, i) => i === 0 ? 1 : 0), mgr: BIZ.map(() => false), gold: 0, goldEarned: 0, boost: 0, t: Date.now(), runs: 0, upg: [], ach: {}, st: {}, day: 0, streak: 0, tut: 0 });
+  let S, night = 0, wasNight = 0, spg = 0, prog, cache, shown, buyN, tab, page, focus, hover, saveT, away, ev, evT, achT, combo, comboT, tapS, hint, frConfirm, banners, pops, bills, peeps, queues, cars, puffs, rainL, clouds, spawnT, lastPop, acc, chingT, juice, lemonRot, celebP, newAch, shift, bump, carT, serveT;
+  const fresh = () => ({ cash: 0, total: 0, own: BIZ.map((_, i) => i === 0 ? 1 : 0), mgr: BIZ.map(() => false), gold: 0, goldEarned: 0, boost: 0, t: Date.now(), runs: 0, upg: [], ach: {}, st: {}, day: 0, streak: 0, tut: 0, lab: {}, q: null });
   function recalc() {
     const m = BIZ.map(() => 1); let tap = .04;
-    for (const u of S.upg) { const U = UPG[u]; if (!U) continue; if (U.b >= 0) m[U.b] *= U.x; else if (U.b === -1) for (let i = 0; i < 7; i++) m[i] *= U.x; else tap += U.tap; }
+    for (const u of S.upg) { const U = UPG[u]; if (!U) continue; if (U.b >= 0) m[U.b] *= U.x; else if (U.b === -1) for (let i = 0; i < NB; i++) m[i] *= U.x; else tap += U.tap; }
     cache = { m, tap, ach: 1 + Object.keys(S.ach).length * .02 };
   }
-  const mult = i => { let m = cache.m[i]; for (const ms of MILES) if (S.own[i] >= ms) m *= 2; return m * (1 + S.gold * .1) * cache.ach * (S.boost > 0 ? 2 : 1) * (ev && ev.k === 'celeb' ? 3 : 1); };
-  const speed = i => Math.pow(.5, FAST.filter(ms => S.own[i] >= ms).length) * (ev && ev.k === 'heat' ? .5 : 1);
+  const mult = i => { let m = cache.m[i]; for (const ms of MILES) if (S.own[i] >= ms) m *= 2; return m * goldMul() * cache.ach * (S.boost > 0 ? 2 : 1) * (ev && ev.k === 'celeb' ? 3 : 1) * (night > .5 ? 1.25 : 1); };
+  const speed = i => Math.pow(.5, FAST.filter(ms => S.own[i] >= ms).length) * (ev && ev.k === 'heat' ? .5 : 1) / (1 + lab('speed') * .15);
   const cycle = i => BIZ[i].t * speed(i);
   const revenue = i => BIZ[i].rev * S.own[i] * mult(i);
   const costOf = (i, n) => BIZ[i].cost * Math.pow(1.15, S.own[i]) * (Math.pow(1.15, n) - 1) / .15;
   const maxBuy = i => { const c0 = BIZ[i].cost * Math.pow(1.15, S.own[i]); let n = Math.floor(Math.log(S.cash * .15 / c0 + 1) / Math.log(1.15)); n = Math.min(5000, Math.max(0, n)); while (n > 0 && costOf(i, n) > S.cash) n--; return n; };
   const buyCount = i => buyN === 'max' ? Math.max(1, maxBuy(i)) : buyN;
-  const perSec = () => { let s = 0; for (let i = 0; i < 7; i++) if (S.mgr[i] && S.own[i]) s += revenue(i) / cycle(i); return s; };
-  const tapValue = () => Math.max(1, S.own[0] * mult(0) * .5 + perSec() * cache.tap) * (1 + Math.min(combo, 40) / 40);
+  const perSec = () => { let s = 0; for (let i = 0; i < NB; i++) if (S.mgr[i] && S.own[i]) s += revenue(i) / cycle(i); return s; };
+  const tapValue = () => Math.max(1, S.own[0] * mult(0) * .5 + perSec() * cache.tap) * (1 + Math.min(combo, 40) / 40) * Math.pow(3, lab('tap'));
   const goldFor = () => Math.floor(Math.sqrt(S.total / 1e8));
   const unlocked = i => i === 0 || S.own[i] > 0 || S.own[i - 1] > 0;
   const giftReady = () => S.tut >= TUT.length && S.day !== today();
 
   /* ---------- layout ---------- */
   const PX = 724, PANEL = { x: PX, y: 10, w: 544, h: 652 };
-  const TAB = i => ({ x: PX + 8 + i * 133, y: 18, w: 129, h: 46 });
+  const TORD = [0, 1, 4, 2, 3, 5], TLAB = ['Shops', 'Upgrades', 'Trophies', 'Franchise', 'Quests', 'Lab'];
+  const TAB = i => ({ x: PX + 8 + TORD.indexOf(i) * 88, y: 18, w: 84, h: 46 });
+  const LROW = i => ({ x: PX + 10, y: 112 + i * 68, w: 524, h: 62 }), QROW = i => ({ x: PX + 10, y: 116 + i * 118, w: 524, h: 106 }), NPG = Math.ceil(ACH.length / 7);
   const ROW = i => ({ x: PX + 10, y: 116 + i * 77, w: 524, h: 71 });
   const BUYB = r => ({ x: r.x + r.w - 128, y: r.y + 8, w: 120, h: 55 }), MGRB = r => ({ x: r.x + r.w - 226, y: r.y + 8, w: 92, h: 55 });
   const BUYN = { x: PX + 10, y: 74, w: 128, h: 34 }, PGL = { x: PX + 418, y: 74, w: 54, h: 34 }, PGR = { x: PX + 480, y: 74, w: 54, h: 34 };
@@ -155,18 +185,18 @@ const GAME = {
   const CASH = { x: 64, y: 12, w: 380, h: 98 };
   const GOAL = { x: 14, y: 616, w: 372, h: 92 }, GIFT = { x: 394, y: 616, w: 150, h: 92 }, BOOST = { x: 552, y: 616, w: 164, h: 92 };
   const AWAY = { x: 380, y: 200, w: 520, h: 300 };
-  const SHOPX = [110, 292, 470], PLX = 640, FX = 318, HQX = 548, BPOS = [[110, 330], [292, 330], [470, 280], [640, 520], [640, 270], [318, 190], [548, 120]];
+  const SHOPX = [110, 292, 470], PLX = 640, FX = 318, HQX = 548, BPOS = [[110, 330], [292, 330], [470, 280], [640, 520], [640, 270], [318, 190], [548, 120], [600, 150], [460, 230], [474, 96]];
   const GROUND = 455, QY = 470;
   const inB = (b, x, y) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
 
   /* ---------- state ---------- */
   GAME.reset = () => {
     prog = BIZ.map(() => 0); acc = BIZ.map(() => 0); serveT = [0, 0, 0]; lastPop = BIZ.map(() => -9); queues = [[], [], []];
-    buyN = 1; tab = 0; page = 0; focus = -1; hover = null; saveT = 0; away = null; ev = null; achT = 0; combo = 0; comboT = 0; tapS = [1, 1]; hint = 0; frConfirm = 0;
+    buyN = 1; tab = 0; page = 0; spg = 0; focus = -1; hover = null; saveT = 0; away = null; ev = null; achT = 0; combo = 0; comboT = 0; tapS = [1, 1]; hint = 0; frConfirm = 0;
     banners = []; pops = []; bills = []; peeps = []; cars = []; puffs = []; rainL = []; spawnT = 0; chingT = 0; juice = []; lemonRot = 0; celebP = null; newAch = 0; shift = false; bump = 0; carT = 3;
     clouds = Array.from({ length: 6 }, (_, i) => ({ x: i * 150 + K.rand(0, 80), y: K.rand(40, 190), s: K.rand(.6, 1.2), v: K.rand(6, 14) }));
     if (K.bot) {
-      S = fresh(); S.cash = 3e7; S.own = [60, 32, 26, 14, 4, 2, 1]; S.mgr = [true, true, true, true, true, false, false]; S.upg = [0, 3, 21]; S.tut = 9; S.gold = 4;
+      S = fresh(); S.cash = 3e7; S.own = [60, 32, 26, 14, 4, 2, 1, 0, 0, 0]; S.mgr = BIZ.map((_, i) => i < 5); S.upg = [0, 3, 21]; S.tut = 9; S.gold = 4;
       evT = 4; tab = 0;
     } else {
       const old = K.save.ty;
@@ -174,18 +204,18 @@ const GAME = {
       if (old && old.tut === undefined) S.tut = TUT.length;  // players from before the revamp skip the tutorial
       S.own = BIZ.map((_, i) => +S.own[i] || 0); S.mgr = BIZ.map((_, i) => !!S.mgr[i]);
       if (!Array.isArray(S.upg)) S.upg = []; if (!S.ach || typeof S.ach !== 'object') S.ach = {}; S.st = Object.assign({ life: S.total || 0 }, S.st || {});
-      if (!isFinite(S.cash)) S.cash = 0;
+      if (!isFinite(S.cash)) S.cash = 0; if (!S.lab || typeof S.lab !== 'object') S.lab = {};
       evT = S.tut >= TUT.length ? K.rand(25, 45) : 9e9;
     }
     recalc();
     // money made while away (managers only, at half speed, up to 8 hours)
-    if (!K.bot) { const secs = Math.min(8 * 3600, (Date.now() - (S.t || Date.now())) / 1000), earned = perSec() * secs * .5; if (secs > 60 && earned > 0) { earn(earned); away = { secs, earned }; } }
+    if (!K.bot) { const secs = Math.min((8 + lab('away') * 8) * 3600, (Date.now() - (S.t || Date.now())) / 1000), earned = perSec() * secs * (.5 + lab('away') * .15); if (secs > 60 && earned > 0) { earn(earned); away = { secs, earned }; } }
     shown = S.cash;
     for (let i = 0; i < 360; i++) scene(1 / 30, true);  // fill the streets before the first frame
     K.score = S.gold;
   };
-  GAME._dbg = () => ({ S, startEvent, recalc, tab: n => { tab = n; } });
-  GAME.pose = () => { S.cash = 8.4e9; S.own = [120, 60, 50, 30, 12, 6, 3]; recalc(); ev = { k: 'heat', t: 20, d: 30 }; for (let i = 0; i < 300; i++) { K.t += 1 / 30; scene(1 / 30, true); } shown = S.cash; };
+  GAME._dbg = () => ({ S, startEvent, recalc, tab: n => { tab = n; }, genQuests, buyLab, claimQuest, setNight: n => { dayOff = n; }, spg: n => { spg = n; } });
+  GAME.pose = () => { S.cash = 8.4e9; S.own = [120, 60, 50, 30, 12, 6, 3, 2, 1, 0]; recalc(); ev = { k: 'heat', t: 20, d: 30 }; for (let i = 0; i < 300; i++) { K.t += 1 / 30; scene(1 / 30, true); } shown = S.cash; };
   function persist() { if (K.bot) return; S.t = Date.now(); K.save.ty = S; K.save.best = Math.max(K.save.best || 0, S.gold); K.persist(); }
   function earn(v) { S.cash += v; S.total += v; S.st.life = (S.st.life || 0) + v; }
   function bank(n, x, y) { if (K.bot || n <= 0) return; K.coin(n, x, y); K.runCoins -= n; K.save.coins += n; K.persist(); }
@@ -206,7 +236,7 @@ const GAME = {
   function buy(i, n) {
     if (!unlocked(i)) { K.sfx(160, .1, 'square', .05); return; }
     n = n || buyCount(i); const c = costOf(i, n); if (c > S.cash) { K.sfx(160, .1, 'square', .05); return false; }
-    const before = S.own[i]; S.cash -= c; S.own[i] += n;
+    const before = S.own[i]; S.cash -= c; S.own[i] += n; S.st.bought = st('bought') + n;
     K.sfx(660 + Math.min(20, S.own[i] % 25) * 30, .06, 'square', .05); K.sfx(990 + Math.min(20, S.own[i] % 25) * 30, .08, 'square', .04, 0, .05);
     const [bx, by] = BPOS[i]; K.burst(bx, by + 30, ['#ffe36e', '#fff', '#7be37f'], 10, 220, { life: .5 });
     if (before === 0) { banner(`New: ${BIZ[i].n}!`, i < 3 ? 'Customers are lining up' : 'Your town is growing', '#36b24a'); K.chime(523, [0, 4, 7, 12]); bank(2, bx, by); }
@@ -214,8 +244,8 @@ const GAME = {
     persist(); return true;
   }
   function hire(i) {
-    if (S.mgr[i] || !S.own[i]) return; if (S.cash < MGR[i]) { K.sfx(160, .1, 'square', .05); return; }
-    S.cash -= MGR[i]; S.mgr[i] = true; K.chime(660, [0, 4, 7]); banner('Manager hired!', `${BIZ[i].n} now runs itself`, '#a24bff'); bank(2, ...BPOS[i]); persist();
+    if (S.mgr[i] || !S.own[i]) return; if (S.cash < mgrCost(i)) { K.sfx(160, .1, 'square', .05); return; }
+    S.cash -= mgrCost(i); S.mgr[i] = true; K.chime(660, [0, 4, 7]); banner('Manager hired!', `${BIZ[i].n} now runs itself`, '#a24bff'); bank(2, ...BPOS[i]); persist();
   }
   function buyUpg(u) {
     const U = UPG[u]; if (!U || S.upg.includes(u)) return; if (S.cash < U.cost) { K.sfx(160, .1, 'square', .05); return; }
@@ -224,10 +254,10 @@ const GAME = {
   function franchise() {
     const g = goldFor(); if (g < 1) return;
     if (frConfirm <= 0) { frConfirm = 4; K.sfx(440, .1, 'triangle', .07); return; }
-    const keep = { gold: S.gold + g, runs: (S.runs || 0) + 1, ach: S.ach, st: S.st, day: S.day, streak: S.streak, tut: S.tut, boost: S.boost };
-    S = Object.assign(fresh(), keep); recalc(); frConfirm = 0;
+    const keep = { gold: S.gold + g, runs: (S.runs || 0) + 1, ach: S.ach, st: S.st, day: S.day, streak: S.streak, tut: S.tut, boost: S.boost, lab: S.lab, q: S.q, cash: [0, 1e3, 1e5, 1e7, 1e9][lab('start')] };
+    const kept = lab('keep') ? S.mgr : null; S = Object.assign(fresh(), keep); if (kept) S.mgr = kept; recalc(); frConfirm = 0;
     prog = BIZ.map(() => 0); queues = [[], [], []]; peeps.forEach(p => { if (p.st !== 'pass') { p.st = 'leave'; p.dir = K.pick([-1, 1]); } });
-    K.flash('#fff3a0', .9); K.chime(392, [0, 4, 7, 12, 16, 19]); banner(`Franchised! ${S.gold} Golden Lemons`, `+${S.gold * 10}% profit on everything, forever`, '#e0a800'); bank(10, 640, 300); shown = 0; tab = 0; persist();
+    K.flash('#fff3a0', .9); K.chime(392, [0, 4, 7, 12, 16, 19]); banner(`Franchised! ${S.gold} Golden Lemons`, `+${S.gold * goldPct()}% profit on everything. Spend them in the Lab too!`, '#e0a800'); bank(10, 640, 300); shown = 0; tab = 0; spg = 0; persist();
   }
   function claimGift() {
     if (!giftReady()) return; const d = today(); S.streak = S.day === d - 1 ? (S.streak || 0) + 1 : 1; S.day = d;
@@ -238,6 +268,30 @@ const GAME = {
   function buyBoost() {
     if (K.save.coins < 5) { banner('2× boost costs 5 coins', 'Win coins from trophies, milestones and gifts', '#8a8f9a'); K.sfx(160, .1, 'square', .05); return; }
     if (S.boost > 3000) return; K.save.coins -= 5; S.boost = (S.boost || 0) + 300; K.persist(); K.chime(784, [0, 7, 12]); banner('2× profit for 5 minutes!', 'Every business earns double', '#36b24a'); persist();
+  }
+  function buyLab(k) {
+    const L = LAB.find(l => l[0] === k), lv = lab(k); if (!L || lv >= L[4].length) return; const c = L[4][lv];
+    if (S.gold < c) { K.sfx(160, .1, 'square', .05); banner(`Needs ${c} Golden Lemons`, 'Franchise to earn more', '#8a8f9a'); return; }
+    S.gold -= c; S.lab[k] = lv + 1; recalc(); K.chime(587, [0, 4, 7, 12, 16]); K.flash('#e6fff0', .3); banner(`${L[1]} ${'I'.repeat(lv + 1)}!`, L[3](lv + 1), '#2ea86a'); K.score = S.gold; persist();
+  }
+  const qStat = k => k === 'life' ? st('life') : st(k);
+  function genQuests() {
+    const d = today(); let seed = (d * 7919) % 2147483646 + 1; const r = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+    const keys = Object.keys(QT), list = [];
+    while (list.length < 3) { const k = keys[Math.floor(r() * keys.length)]; if (list.some(q => q.k === k)) continue; const arr = QT[k][1];
+      let n = arr ? arr[Math.floor(r() * arr.length)] : Math.max(5e3, perSec() * 1500 + tapValue() * 150); if (!arr) { const e = Math.pow(10, Math.floor(Math.log10(n)) - 1); n = Math.ceil(n / e) * e; }
+      list.push({ k, n, base: qStat(k), got: 0 }); }
+    S.q = { day: d, list, bonus: 0 };
+  }
+  const qProg = q => Math.max(0, qStat(q.k) - q.base), qDone = q => qProg(q) >= q.n;
+  const qReady = () => S.q && S.tut >= TUT.length ? S.q.list.filter(q => !q.got && qDone(q)).length : 0;
+  function claimQuest(i) {
+    const q = S.q && S.q.list[i]; if (!q || q.got || !qDone(q)) return;
+    q.got = 1; S.st.qd = st('qd') + 1; const v = Math.max(100, perSec() * 300 + tapValue() * 50); earn(v); const r = QROW(i);
+    pop(r.x + 260, r.y + 30, '+$' + fmt(v), '#2f9e3a', 30); bank(3 + i, r.x + r.w - 60, r.y + 50); K.chime(659, [0, 4, 7, 12]);
+    if (S.q.list.every(q => q.got) && !S.q.bonus) { S.q.bonus = 1; S.gold++; K.score = S.gold; K.flash('#fff3a0', .5); banner('All quests done: +1 Golden Lemon!', 'New quests tomorrow', '#e0a800'); K.chime(523, [0, 4, 7, 12, 16, 19]); }
+    else banner('Quest complete!', `+$${fmt(v)} and ${3 + i} coins`, '#2f8fe0');
+    persist();
   }
   function checkAch() {
     ACH.forEach((a, i) => {
@@ -263,10 +317,10 @@ const GAME = {
   function endEvent() {
     if (ev.k === 'heat') S.st.hw = st('hw') + 1;
     if (ev.k === 'celeb') { S.st.celeb = st('celeb') + 1; const l = cars.find(c => c.k === 'limo'); if (l) { l.stop = null; l.v = 0; } celebP = null; }
-    ev = null; evT = K.bot ? K.rand(9, 14) : K.rand(70, 130);
+    S.st.evs = st('evs') + 1; ev = null; evT = K.bot ? K.rand(9, 14) : K.rand(70, 130) / (1 + lab('luck') * .4);
   }
   function catchGold(p) {
-    const v = Math.max(50, perSec() * 120, tapValue() * 40); earn(v); S.st.gc = st('gc') + 1; p.gold = false; p.cup = '#ffd23f';
+    const v = Math.max(50, perSec() * 120, tapValue() * 40) * (1 + lab('luck')); earn(v); S.st.gc = st('gc') + 1; p.gold = false; p.cup = '#ffd23f';
     pop(p.x, p.y - 80, '+$' + fmt(v), '#e0a800', 40); K.burst(p.x, p.y - 30, ['#ffe36e', '#fff', '#ffb300'], 26, 340, { life: .8 });
     K.chime(880, [0, 4, 7, 12, 16]); K.flash('#fff3a0', .35); bank(1, p.x, p.y - 40); if (ev && ev.k === 'gold') ev.t = Math.min(ev.t, .5);
   }
@@ -334,17 +388,20 @@ const GAME = {
   function tabDown(x, y) {
     if (tab === 0) {
       if (inB(BUYN, x, y)) { buyN = buyN === 1 ? 10 : buyN === 10 ? 100 : buyN === 100 ? 'max' : 1; K.sfx(600, .04, 'triangle', .05); return; }
-      for (let i = 0; i < 7; i++) { const r = ROW(i); if (!inB(r, x, y)) continue; if (inB(BUYB(r), x, y)) buy(i); else if (inB(MGRB(r), x, y) && S.own[i] && !S.mgr[i]) hire(i); else run(i); focus = i; return; }
+      if (pagesOn() && inB(PGL, x, y)) { spg = 0; K.sfx(600, .04, 'triangle', .05); return; } if (pagesOn() && inB(PGR, x, y)) { spg = 1; K.sfx(600, .04, 'triangle', .05); return; }
+      for (let k = 0; k < 7; k++) { const i = spg * 7 + k; if (i >= NB) break; const r = ROW(k); if (!inB(r, x, y)) continue; if (inB(BUYB(r), x, y)) buy(i); else if (inB(MGRB(r), x, y) && S.own[i] && !S.mgr[i]) hire(i); else run(i); focus = i; return; }
     } else if (tab === 1) { const list = upgList(); for (let k = 0; k < list.length; k++) { const r = ROW(k); if (inB(r, x, y)) { buyUpg(list[k]); focus = k; return; } } }
-    else if (tab === 2) { if (inB(PGL, x, y)) { page = (page + 3) % 4; K.sfx(600, .04, 'triangle', .05); } if (inB(PGR, x, y)) { page = (page + 1) % 4; K.sfx(600, .04, 'triangle', .05); } }
+    else if (tab === 2) { if (inB(PGL, x, y)) { page = (page + NPG - 1) % NPG; K.sfx(600, .04, 'triangle', .05); } if (inB(PGR, x, y)) { page = (page + 1) % NPG; K.sfx(600, .04, 'triangle', .05); } }
     else if (tab === 3) { if (inB(FRB, x, y)) franchise(); }
+    else if (tab === 4) { for (let i = 0; i < 3; i++) if (inB(QROW(i), x, y)) claimQuest(i); }
+    else if (tab === 5) { LAB.forEach((L, i) => { if (inB(LROW(i), x, y)) buyLab(L[0]); }); }
   }
   GAME.down = (x, y) => {
     if (away) { if (inB(AWAY, x, y) || true) { away = null; K.chime(523, [0, 4, 7, 12]); bump = 1; } return; }
     for (const l of rainL) if (!l.got && K.dist(x, y, l.x, l.y) < 46) { catchLemon(l); return; }
     for (const p of peeps) if (p.gold && K.dist(x, y, p.x, p.y - 28) < 50) { catchGold(p); return; }
     if (K.dist(x, y, LEMON.x, LEMON.y) < LEMON.r + 10) { squeeze(x, y); return; }
-    for (let i = 0; i < 4; i++) if (inB(TAB(i), x, y)) { if (tab !== i) { tab = i; focus = -1; page = 0; if (i === 2) newAch = 0; K.sfx(700, .05, 'triangle', .06); } return; }
+    for (let i = 0; i < 6; i++) if (inB(TAB(i), x, y)) { if (tab !== i) { tab = i; focus = -1; page = 0; if (i === 2) newAch = 0; K.sfx(700, .05, 'triangle', .06); } return; }
     if (inB(PANEL, x, y)) return tabDown(x, y);
     if (inB(GIFT, x, y)) return claimGift();
     if (inB(BOOST, x, y)) return buyBoost();
@@ -352,18 +409,18 @@ const GAME = {
     // tapping a shop in the town runs it
     for (let i = 0; i < 3; i++) if (S.own[i] && Math.abs(x - SHOPX[i]) < 70 && y > GROUND - 150 && y < GROUND + 10) { run(i); return; }
   };
-  GAME.move = (x, y) => { hover = null; for (let i = 0; i < 7; i++) if (inB(ROW(i), x, y)) hover = i; if (K.dist(x, y, LEMON.x, LEMON.y) < LEMON.r) hover = 'lemon'; };
+  GAME.move = (x, y) => { hover = null; for (let k = 0; k < 7; k++) if (inB(ROW(k), x, y)) hover = tab === 0 ? spg * 7 + k : k; if (K.dist(x, y, LEMON.x, LEMON.y) < LEMON.r) hover = 'lemon'; };
   GAME.key = (c, d) => {
     if (c === 'ShiftLeft' || c === 'ShiftRight') { shift = d; return; }
     if (!d) return;
     if (away) { if (c === 'Enter' || c === 'Space') GAME.down(640, 360); return; }
     if (c === 'Space') { squeeze(LEMON.x + K.rand(-20, 20), LEMON.y + K.rand(-20, 20)); return; }
-    const n = +c.replace('Digit', '').replace('Numpad', ''); if (n >= 1 && n <= 7) { if (shift) hire(n - 1); else { buy(n - 1); run(n - 1); } return; }
-    if (c === 'ArrowLeft' || c === 'ArrowRight') { tab = (tab + (c === 'ArrowLeft' ? 3 : 1)) % 4; focus = 0; if (tab === 2) newAch = 0; K.sfx(700, .05, 'triangle', .06); return; }
-    const rows = tab === 0 ? 7 : tab === 1 ? upgList().length : 0;
+    const dg = c.match(/^(?:Digit|Numpad)(\d)$/); if (dg) { const i = (+dg[1] + 9) % 10; if (i < NB) { if (shift) hire(i); else { buy(i); run(i); } if (tab === 0) spg = Math.floor(i / 7); } return; }
+    if (c === 'ArrowLeft' || c === 'ArrowRight') { tab = TORD[(TORD.indexOf(tab) + (c === 'ArrowLeft' ? 5 : 1)) % 6]; focus = 0; if (tab === 2) newAch = 0; K.sfx(700, .05, 'triangle', .06); return; }
+    const rows = tab === 0 ? NB : tab === 1 ? upgList().length : tab === 5 ? LAB.length : tab === 4 ? 3 : 0;
     if (c === 'ArrowDown' && rows) focus = (focus + 1) % rows; if (c === 'ArrowUp' && rows) focus = (focus + rows - 1) % rows;
-    if (c === 'ArrowDown' || c === 'ArrowUp') { if (tab === 2) page = (page + (c === 'ArrowDown' ? 1 : 3)) % 4; return; }
-    if (c === 'Enter') { if (tab === 0 && focus >= 0) { if (S.own[focus] && !S.mgr[focus] && S.cash >= MGR[focus]) hire(focus); else buy(focus); run(focus); } else if (tab === 1 && focus >= 0) buyUpg(upgList()[focus]); else if (tab === 3) franchise(); }
+    if (c === 'ArrowDown' || c === 'ArrowUp') { if (tab === 2) page = (page + (c === 'ArrowDown' ? 1 : NPG - 1)) % NPG; if (tab === 0) spg = Math.floor(focus / 7); return; }
+    if (c === 'Enter') { if (tab === 0 && focus >= 0) { if (S.own[focus] && !S.mgr[focus] && S.cash >= mgrCost(focus)) hire(focus); else buy(focus); run(focus); } else if (tab === 1 && focus >= 0) buyUpg(upgList()[focus]); else if (tab === 3) franchise(); else if (tab === 4 && focus >= 0) claimQuest(focus); else if (tab === 5 && focus >= 0) buyLab(LAB[focus][0]); }
     if (c === 'KeyB') buyN = buyN === 1 ? 10 : buyN === 10 ? 100 : buyN === 100 ? 'max' : 1;
     if (c === 'KeyM' && focus >= 0 && tab === 0) hire(focus);
     if (c === 'KeyG') { const p = peeps.find(p => p.gold); if (p) catchGold(p); const l = rainL.find(l => !l.got); if (l) catchLemon(l); }
@@ -376,34 +433,41 @@ const GAME = {
     botTap -= dt; if (botTap <= 0) { botTap = K.rand(.12, .4); if (!away) squeeze(LEMON.x + K.rand(-30, 30), LEMON.y + K.rand(-30, 30)); }
     botT += dt; if (botT < .5) return; botT = 0;
     if (away) { away = null; return; }
-    for (let i = 0; i < 7; i++) if (!S.mgr[i]) run(i);
-    const i = K.irand(0, 6); if (unlocked(i) && costOf(i, 1) < S.cash * .4) buy(i, 1);
-    if (!S.mgr[i] && S.own[i] && S.cash > MGR[i] * 2) hire(i);
+    for (let i = 0; i < NB; i++) if (!S.mgr[i]) run(i);
+    const i = K.irand(0, NB - 1); if (unlocked(i) && costOf(i, 1) < S.cash * .4) buy(i, 1);
+    if (!S.mgr[i] && S.own[i] && S.cash > mgrCost(i) * 2) hire(i);
     const u = upgList()[0]; if (u !== undefined && UPG[u].cost < S.cash * .3) buyUpg(u);
     const gp = peeps.find(p => p.gold); if (gp && gp.x > 80 && gp.x < 640 && Math.random() < .35) catchGold(gp);
     for (const l of rainL) if (!l.got && l.y > 250 && Math.random() < .5) catchLemon(l);
-    if (Math.random() < .04) tab = K.pick([0, 0, 0, 1, 2]);
+    if (Math.random() < .04) tab = K.pick([0, 0, 0, 1, 2, 4, 5]);
   };
 
   /* ---------- update ---------- */
   GAME.update = dt => {
-    scene(dt);
+    dayClock(); scene(dt);
     tapS[0] += (1 - tapS[0]) * Math.min(1, dt * 14); tapS[1] += (1 - tapS[1]) * Math.min(1, dt * 14);
     bump = Math.max(0, bump - dt * 4); chingT -= dt; lemonRot += dt; hint += dt; frConfirm -= dt;
     comboT -= dt; if (comboT <= 0) combo = Math.max(0, combo - dt * 30);
     if (away) return;
     S.boost = Math.max(0, (S.boost || 0) - dt);
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < NB; i++) {
       if (S.mgr[i] && S.own[i] && prog[i] === 0) prog[i] = 1e-4;
       if (prog[i] > 0) { prog[i] += dt / cycle(i); if (prog[i] >= 1) { const laps = Math.floor(prog[i]); complete(i, laps); prog[i] = S.mgr[i] ? prog[i] - laps : 0; } }
     }
     if (ev) { ev.t -= dt; if (ev.t <= 0) endEvent(); } else { evT -= dt; if (evT <= 0) startEvent(); }
-    achT += dt; if (achT > .5) { achT = 0; checkAch(); checkTut(); }
+    achT += dt; if (achT > .5) { achT = 0; checkAch(); checkTut(); if (!K.bot && S.tut >= TUT.length && (!S.q || S.q.day !== today())) genQuests(); }
     saveT += dt; if (saveT > 5) { saveT = 0; persist(); }
     shown += (S.cash - shown) * Math.min(1, dt * 9); if (Math.abs(S.cash - shown) < .01 * Math.max(1, S.cash * .001)) shown = S.cash;
     K.score = S.gold;
     music();
   };
+  // day and night: a full day takes 4 minutes, and night pays +25%
+  let dayOff = 0;
+  function dayClock() {
+    const ph = ((K.t + dayOff) / 240 + .1) % 1, n = .5 - .5 * Math.cos(ph * 6.283); night = K.clamp((n - .55) / .25, 0, 1);
+    if (night > .5 && !wasNight) { wasNight = 1; if (!K.bot && K.state === 'play') banner('Night falls', 'The night crowd pays +25%', '#3a4a9a'); }
+    if (night < .2 && wasNight) { wasNight = 0; if (!K.bot) S.st.night = st('night') + 1; }
+  }
   function complete(i, laps) {
     const v = revenue(i) * laps; earn(v); acc[i] += v;
     if (K.t - lastPop[i] > .45) { const [x, y] = BPOS[i]; pop(x + K.rand(-14, 14), y, '+$' + fmt(acc[i]), '#2f9e3a', 22 + i * 1.5); acc[i] = 0; lastPop[i] = K.t; bill(x, y); ching(); }
@@ -598,6 +662,41 @@ const GAME = {
     rr(gr, -20, -26, 40, 26, [4, 4, 0, 0], '#1a4a6a');
     gr.restore();
   }
+  function plane(gr, x, y, s, dir = 1) {
+    gr.save(); gr.translate(x, y); gr.scale(s * dir, s);
+    gr.fillStyle = '#b8c4d0'; gr.beginPath(); gr.moveTo(-6, -4); gr.lineTo(-26, -30); gr.lineTo(-14, -30); gr.lineTo(16, -4); gr.fill();
+    gr.fillStyle = '#ffcf2e'; gr.beginPath(); gr.moveTo(-56, -8); gr.lineTo(-72, -40); gr.lineTo(-58, -40); gr.lineTo(-38, -8); gr.fill();
+    rr(gr, -70, -14, 140, 28, 14, lin(gr, -14, 14, '#ffffff', '#d4dee8'));
+    gr.fillStyle = '#ffcf2e'; gr.fillRect(-64, 3, 122, 5); gr.fillStyle = '#5a8ab0'; for (let k = 0; k < 9; k++) gr.fillRect(-40 + k * 10, -6, 5, 6);
+    gr.beginPath(); gr.moveTo(56, -9); gr.quadraticCurveTo(68, -6, 69, 0); gr.lineTo(56, 0); gr.fill();
+    gr.fillStyle = '#9aa8b6'; gr.beginPath(); gr.moveTo(-10, 4); gr.lineTo(-34, 34); gr.lineTo(-20, 34); gr.lineTo(18, 4); gr.fill();
+    lemonShape(gr, -62, -26, 7, 0, 0);
+    gr.restore();
+  }
+  function wheel(gr, x, y, s, t, lit) {
+    gr.save(); gr.translate(x, y); gr.scale(s, s); const R = 96, cy = -118, a0 = t * .25;
+    gr.strokeStyle = '#7a5ab8'; gr.lineWidth = 8; gr.lineCap = 'round'; gr.beginPath(); gr.moveTo(-58, 0); gr.lineTo(0, cy); gr.lineTo(58, 0); gr.stroke();
+    gr.strokeStyle = '#e85a9a'; gr.lineWidth = 5; gr.beginPath(); gr.arc(0, cy, R, 0, 7); gr.stroke(); gr.lineWidth = 2; gr.beginPath(); gr.arc(0, cy, R * .6, 0, 7); gr.stroke();
+    for (let k = 0; k < 12; k++) { const a = a0 + k * Math.PI / 6; gr.beginPath(); gr.moveTo(0, cy); gr.lineTo(Math.cos(a) * R, cy + Math.sin(a) * R); gr.stroke(); }
+    for (let k = 0; k < 12; k++) { const a = a0 + k * Math.PI / 6, cx = Math.cos(a) * R, yy = cy + Math.sin(a) * R; gr.strokeStyle = '#555'; gr.lineWidth = 1.5; gr.beginPath(); gr.moveTo(cx, yy); gr.lineTo(cx, yy + 6); gr.stroke(); rr(gr, cx - 9, yy + 5, 18, 14, [3, 3, 7, 7], ['#ff5a5a', '#ffd23f', '#4fa8ff', '#5fd36a'][k % 4]);
+      if (lit) circ(gr, cx, yy, 3, Math.sin(t * 5 + k) > 0 ? '#fff6a0' : '#ff9af0'); }
+    circ(gr, 0, cy, 10, '#ffd23f'); rr(gr, -34, -18, 68, 18, [6, 6, 0, 0], '#7a5ab8'); T(gr, 'LEMONLAND', 0, -9, 11, '#ffe46a', 'center', null);
+    gr.restore();
+  }
+  function moon(gr, x, y, r, base, t) {
+    const g = gr.createRadialGradient(x - r * .3, y - r * .3, 2, x, y, r); g.addColorStop(0, '#fffdf0'); g.addColorStop(1, '#c9c6b8'); circ(gr, x, y, r, g);
+    for (const [a, b, c] of [[-.3, .2, .22], [.35, -.2, .16], [.1, .45, .12]]) circ(gr, x + a * r, y + b * r, c * r, 'rgba(120,115,100,.25)');
+    if (!base) return;
+    gr.fillStyle = 'rgba(190,240,255,.85)'; gr.beginPath(); gr.arc(x + r * .1, y - r * .86, r * .34, Math.PI, 0); gr.fill(); gr.strokeStyle = '#fff'; gr.lineWidth = 1.5; gr.stroke();
+    gr.fillStyle = '#ddd'; gr.fillRect(x - r * .5, y - r * 1.1, 1.5, r * .32); gr.fillStyle = '#ffd23f'; gr.fillRect(x - r * .5, y - r * 1.1, r * .22, r * .14);
+    circ(gr, x + r * .1, y - r * 1.22, 2.2, Math.sin(t * 4) > 0 ? '#ff4a4a' : '#7a2020');
+  }
+  function rocket(gr, x, y, a, s) {
+    gr.save(); gr.translate(x, y); gr.rotate(a); gr.scale(s, s);
+    gr.fillStyle = ['#ffd23f', '#ff8a2a'][Math.floor(K.t * 20) % 2]; gr.beginPath(); gr.moveTo(-6, 14); gr.lineTo(0, 30 + Math.random() * 10); gr.lineTo(6, 14); gr.fill();
+    rr(gr, -7, -16, 14, 30, [7, 7, 2, 2], '#f4f4f4'); gr.fillStyle = '#e8304a'; gr.beginPath(); gr.moveTo(-7, 6); gr.lineTo(-13, 16); gr.lineTo(-7, 14); gr.moveTo(7, 6); gr.lineTo(13, 16); gr.lineTo(7, 14); gr.fill(); circ(gr, 0, -4, 3.5, '#7fd3ff');
+    gr.restore();
+  }
   function forSale(gr, x, y, cost, lbl) {
     gr.save(); gr.globalAlpha = .9; gr.fillStyle = '#8a5a2b'; gr.fillRect(x - 3, y - 54, 6, 54);
     rr(gr, x - 46, y - 82, 92, 38, 6, '#fff8e6'); gr.strokeStyle = '#d0661e'; gr.lineWidth = 2.5; gr.stroke();
@@ -611,19 +710,26 @@ const GAME = {
   /* ---------- draw ---------- */
   function drawScene(gr) {
     const v = K.view, t = K.t, heat = ev && ev.k === 'heat';
-    gr.fillStyle = lin(gr, v.y0, 400, heat ? '#ffb15a' : '#5ec2ff', heat ? '#ffe7a8' : '#d4f3ff'); gr.fillRect(v.x0, v.y0, v.x1 - v.x0, 420 - v.y0);
+    const mix = (a, b, k) => { const p = s => [1, 3, 5].map(j => parseInt(s.slice(j, j + 2), 16)); const A = p(a), B = p(b); return `rgb(${A.map((c, j) => Math.round(c + (B[j] - c) * k)).join(',')})`; };
+    const N = night; gr.fillStyle = lin(gr, v.y0, 400, mix(heat ? '#ffb15a' : '#5ec2ff', '#0a1638', N), mix(heat ? '#ffe7a8' : '#d4f3ff', '#3a3f78', N)); gr.fillRect(v.x0, v.y0, v.x1 - v.x0, 420 - v.y0);
+    if (N > 0) { gr.globalAlpha = N; for (let i = 0; i < 60; i++) { const x = (i * 137) % 740, y = (i * 59) % 300; circ(gr, x, y, (i % 3) * .5 + .8, Math.sin(t * 2 + i) > -.3 ? '#fff' : 'rgba(255,255,255,.4)'); } gr.globalAlpha = 1; }
+    moon(gr, 474, 54, 24, S.own[9] > 0, t);
+    if (S.own[9]) { const rp = (t % 22) / 5; if (rp < 1) { const e = rp * rp, x = K.lerp(700, 482, e), y = K.lerp(420, 64, rp); rocket(gr, x, y, Math.atan2(64 - 420, 482 - 700) + Math.PI / 2, .9); } }
     // sun
+    gr.save(); gr.globalAlpha = 1 - N;
     const sx = 664, sy = 70, sr = heat ? 54 : 40; gr.save(); gr.translate(sx, sy); gr.rotate(t * .15); gr.fillStyle = heat ? 'rgba(255,170,60,.35)' : 'rgba(255,250,190,.45)';
     for (let i = 0; i < 12; i++) { gr.rotate(Math.PI / 6); gr.beginPath(); gr.moveTo(sr * .9, -7); gr.lineTo(sr * 1.9, 0); gr.lineTo(sr * .9, 7); gr.fill(); } gr.restore();
-    const sg = gr.createRadialGradient(sx, sy, 4, sx, sy, sr); sg.addColorStop(0, '#fffbe0'); sg.addColorStop(1, heat ? '#ff9a2a' : '#ffe56a'); circ(gr, sx, sy, sr, sg);
-    for (const c of clouds) { gr.save(); gr.translate(c.x, c.y); gr.scale(c.s, c.s); gr.fillStyle = 'rgba(255,255,255,.9)'; gr.beginPath(); gr.arc(0, 0, 22, 0, 7); gr.arc(24, -10, 28, 0, 7); gr.arc(52, 0, 22, 0, 7); gr.rect(0, 0, 52, 22); gr.fill(); gr.restore(); }
+    const sg = gr.createRadialGradient(sx, sy, 4, sx, sy, sr); sg.addColorStop(0, '#fffbe0'); sg.addColorStop(1, heat ? '#ff9a2a' : '#ffe56a'); circ(gr, sx, sy, sr, sg); gr.restore();
+    for (const c of clouds) { gr.save(); gr.translate(c.x, c.y); gr.scale(c.s, c.s); gr.fillStyle = N > .3 ? 'rgba(150,160,210,.5)' : 'rgba(255,255,255,.9)'; gr.beginPath(); gr.arc(0, 0, 22, 0, 7); gr.arc(24, -10, 28, 0, 7); gr.arc(52, 0, 22, 0, 7); gr.rect(0, 0, 52, 22); gr.fill(); gr.restore(); }
     if (S.own[6]) { const bx = ((t * 22) % 1100) - 200; gr.save(); gr.translate(bx, 160 + Math.sin(t * .8) * 6); ell(gr, 0, 0, 62, 20, '#e8e8f0'); gr.fillStyle = '#ffd23f'; gr.fillRect(-40, -6, 80, 12); T(gr, 'LEMON CO.', 0, 0, 11, '#a06a00', 'center', null); gr.fillStyle = '#c0c0d0'; gr.beginPath(); gr.moveTo(-58, 0); gr.lineTo(-78, -16); gr.lineTo(-74, 0); gr.lineTo(-78, 16); gr.fill(); rr(gr, -12, 18, 24, 9, 4, '#9090a0'); gr.restore(); }
+    if (S.own[7]) { const px = ((t * 70) % 1300) - 200, py = 150 + Math.sin(t * .6) * 10; gr.strokeStyle = 'rgba(255,255,255,.55)'; gr.lineWidth = 3; gr.beginPath(); gr.moveTo(Math.max(-40, px - 300), py + 2); gr.lineTo(px - 70, py + 2); gr.stroke(); plane(gr, px, py, .55); if (N > .3) circ(gr, px + 38, py, 3, Math.sin(t * 6) > 0 ? '#ff4a4a' : '#4aff6a'); }
     // skyline grows with the empire
     const total = S.own.reduce((a, b) => a + b, 0), towers = Math.min(16, Math.floor(total / 12));
     for (let i = 0; i < towers; i++) { const h = 70 + ((i * 73) % 110), x = -30 + ((i * 157) % 760), w = 34 + (i * 31) % 30; gr.fillStyle = `rgba(${130 + i % 3 * 12},${170 + i % 4 * 8},${205},.55)`; gr.fillRect(x, 392 - h - 20, w, h + 20); gr.fillStyle = 'rgba(255,255,255,.25)'; for (let r = 0; r < h / 18; r++) gr.fillRect(x + 6, 392 - h - 10 + r * 18, w - 12, 5); }
     gr.fillStyle = '#9fd88a'; gr.beginPath(); gr.moveTo(v.x0, 396); for (let x = v.x0; x <= 740; x += 40) gr.lineTo(x, 372 + Math.sin(x * .011) * 14 + Math.sin(x * .03) * 6); gr.lineTo(740, 420); gr.lineTo(v.x0, 420); gr.fill();
     // back row: factory, headquarters, bottling plant
     const ghost = (i, f) => { gr.save(); if (!S.own[i]) gr.globalAlpha = .13; f(); gr.restore(); };
+    ghost(8, () => wheel(gr, 460, 400, .82, t, N > .3));
     ghost(5, () => factory(gr, FX, 400, 1, t)); ghost(6, () => hq(gr, HQX, 400, 1, t)); ghost(4, () => plant(gr, PLX, 400, 1, t));
     if (!S.own[4] && unlocked(4)) forSale(gr, PLX, 404, costOf(4, 1));
     for (const p of puffs) { gr.globalAlpha = Math.max(0, .6 - p.t / 3.5 * .6); circ(gr, p.x, p.y, p.r, '#f4f1ea'); } gr.globalAlpha = 1;
@@ -653,6 +759,15 @@ const GAME = {
     for (const c of cars.slice().sort((a, b) => a.y - b.y)) car(gr, c, t);
     gr.fillStyle = '#c9c0b0'; gr.fillRect(v.x0, 600, 740 - v.x0, 14); gr.fillStyle = '#6cc46a'; gr.fillRect(v.x0, 614, 740 - v.x0, v.y1 - 614);
     if (heat) { gr.save(); gr.globalAlpha = .18; gr.strokeStyle = '#fff'; gr.lineWidth = 2; for (let i = 0; i < 10; i++) { const x = (i * 83) % 720, y = 300 + (i * 47) % 200; gr.beginPath(); for (let k = 0; k < 6; k++) gr.lineTo(x + Math.sin(t * 4 + k + i) * 4, y - k * 10); gr.stroke(); } gr.restore(); }
+    // night: darken the town, then light the lamps
+    if (N > 0) {
+      gr.fillStyle = `rgba(8,14,48,${N * .42})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+      gr.save(); gr.globalCompositeOperation = 'lighter';
+      for (const lx of [200, 381, 560]) { const gl = gr.createRadialGradient(lx, 404, 2, lx, 404, 90); gl.addColorStop(0, `rgba(255,220,140,${.55 * N})`); gl.addColorStop(1, 'rgba(255,220,140,0)'); gr.fillStyle = gl; gr.fillRect(lx - 90, 314, 180, 200); }
+      for (let i = 0; i < 3; i++) if (S.own[i]) { const gl = gr.createRadialGradient(SHOPX[i], GROUND - 60, 4, SHOPX[i], GROUND - 60, 110); gl.addColorStop(0, `rgba(255,200,120,${.35 * N})`); gl.addColorStop(1, 'rgba(255,200,120,0)'); gr.fillStyle = gl; gr.fillRect(SHOPX[i] - 110, GROUND - 170, 220, 220); }
+      gr.restore();
+    }
+    for (const lx of [200, 381, 560]) { gr.fillStyle = '#3a4048'; gr.fillRect(lx - 2.5, 404, 5, 104); rr(gr, lx - 9, 396, 18, 10, 4, '#3a4048'); circ(gr, lx, 408, 5, N > .2 ? '#fff3b0' : '#d8d8c8'); }
     // lemon rain
     for (const l of rainL) { if (l.got) { gr.globalAlpha = Math.max(0, 1 - l.got); lemonShape(gr, l.x, l.y - l.got * 60, 16 * (1 + l.got), l.r, 0); gr.globalAlpha = 1; } else { gr.globalAlpha = l.t > 5 ? Math.max(0, (7 - l.t) / 2) : 1; lemonShape(gr, l.x, l.y, 18, l.r, 1); gr.globalAlpha = 1; } }
     // the big lemon
@@ -669,6 +784,7 @@ const GAME = {
     T(gr, `$${fmt(perSec())}/sec`, b.x + 22, b.y + 78, 18, '#4a7a8a', 'left', null);
     const gx = b.x + b.w - 16; gr.font = fnt(18); const gw = Math.max(60, gr.measureText(`${S.gold}`).width + 46);
     rr(gr, gx - gw, b.y + 64, gw, 28, 14, '#fff3c4'); lemonShape(gr, gx - gw + 16, b.y + 78, 10, -.3, 0); T(gr, `${S.gold}`, gx - 12, b.y + 78, 18, '#b07800', 'right', null);
+    if (night > .5) { const nx = gx - gw - 112; rr(gr, nx, b.y + 64, 104, 28, 14, '#3a4a9a'); T(gr, '☾ Night +25%', nx + 52, b.y + 78, 15, '#fff6c0', 'center', null); }
     if (S.boost > 0) { rr(gr, gx - 112, b.y + 12, 112, 28, 14, '#5fd36a'); T(gr, `2× ${Math.floor(S.boost / 60)}:${String(Math.floor(S.boost % 60)).padStart(2, '0')}`, gx - 56, b.y + 26, 16, '#fff', 'center', 'rgba(0,0,0,.2)'); }
     for (const bl of bills) { const k = bl.t, e = k * k, x = K.lerp(bl.x0, bl.x1, e), y = K.lerp(bl.y0, bl.y1, e) - Math.sin(k * Math.PI) * 80; gr.save(); gr.translate(x, y); gr.rotate(bl.a + k * 4); gr.globalAlpha = k > .85 ? (1 - k) / .15 : 1; rr(gr, -12, -7, 24, 14, 2, '#7bd88a'); gr.strokeStyle = '#2f7a3a'; gr.lineWidth = 1.5; gr.stroke(); circ(gr, 0, 0, 4, '#2f9e3a'); gr.restore(); }
   }
@@ -706,31 +822,34 @@ const GAME = {
     gr.restore();
   }
   function bizIcon(gr, i, x, y, r) {
-    const g = gr.createRadialGradient(x - r * .3, y - r * .4, 2, x, y, r); g.addColorStop(0, '#fffbe8'); g.addColorStop(1, ['#ffe9a0', '#ffd2a0', '#ffc8e0', '#cfe6ff', '#f4c8b8', '#efe2b0', '#c8ecff'][i]); circ(gr, x, y, r, g);
+    const g = gr.createRadialGradient(x - r * .3, y - r * .4, 2, x, y, r); g.addColorStop(0, '#fffbe8'); g.addColorStop(1, ['#ffe9a0', '#ffd2a0', '#ffc8e0', '#cfe6ff', '#f4c8b8', '#efe2b0', '#c8ecff', '#d8ecff', '#ffd8f0', '#2a3060'][i]); circ(gr, x, y, r, g);
     gr.save(); gr.beginPath(); gr.arc(x, y, r - 2, 0, 7); gr.clip(); const t = K.t;
     if (i === 0) stand(gr, x - 4, y + r * .62, .3, 0, t); else if (i === 1) cart(gr, x, y + r * .62, .3, 0, t); else if (i === 2) bar(gr, x + 3, y + r * .65, .27, 0, t);
-    else if (i === 3) truck(gr, x + 2, y + r * .45, 1, .42, t); else if (i === 4) plant(gr, x, y + r * .6, .32, t); else if (i === 5) factory(gr, x + 4, y + r * .7, .2, t); else hq(gr, x, y + r * .9 + 40, .2, t);
+    else if (i === 3) truck(gr, x + 2, y + r * .45, 1, .42, t); else if (i === 4) plant(gr, x, y + r * .6, .32, t); else if (i === 5) factory(gr, x + 4, y + r * .7, .2, t); else if (i === 6) hq(gr, x, y + r * .9 + 40, .2, t);
+    else if (i === 7) plane(gr, x + 2, y + 4, .34); else if (i === 8) wheel(gr, x, y + r * .95, .24, t); else moon(gr, x, y + 6, r * .55, true, t);
     gr.restore();
   }
   function drawPanel(gr) {
     const P = PANEL, t = K.t;
     rr(gr, P.x, P.y + 6, P.w, P.h, 24, 'rgba(0,40,60,.25)'); rr(gr, P.x, P.y, P.w, P.h, 24, lin(gr, P.y, P.y + P.h, '#235a7c', '#173d57'));
-    const labels = ['Shops', 'Upgrades', 'Trophies', 'Franchise'];
-    const badge = [0, upgList().filter(u => UPG[u].cost <= S.cash).length, newAch, goldFor() > 0 ? '!' : 0];
-    for (let i = 0; i < 4; i++) {
+    const labels = TLAB, cheapLab = LAB.some(L => lab(L[0]) < L[4].length && L[4][lab(L[0])] <= S.gold);
+    const badge = [0, upgList().filter(u => UPG[u].cost <= S.cash).length, newAch, goldFor() > 0 ? '!' : 0, qReady(), cheapLab ? '!' : 0];
+    for (let i = 0; i < 6; i++) {
       const b = TAB(i), on = tab === i; if (on) btn(gr, b, '#ffe46a', '#ffb92e', true, 14); else rr(gr, b.x, b.y, b.w, b.h - 4, 14, 'rgba(255,255,255,.08)');
-      T(gr, labels[i], b.x + b.w / 2, b.y + 20, 19, on ? '#6a3c00' : '#d7ecf8', 'center', on ? 'rgba(255,255,255,.4)' : null);
+      T(gr, labels[i], b.x + b.w / 2, b.y + 20, 16, on ? '#6a3c00' : '#d7ecf8', 'center', on ? 'rgba(255,255,255,.4)' : null);
       if (badge[i]) { circ(gr, b.x + b.w - 8, b.y + 4, 11, '#ff4a5a'); T(gr, String(badge[i]), b.x + b.w - 8, b.y + 4, 13, '#fff', 'center', null); }
     }
-    if (tab === 0) panelShops(gr, t); else if (tab === 1) panelUpg(gr); else if (tab === 2) panelAch(gr); else panelFr(gr, t);
+    if (tab === 0) panelShops(gr, t); else if (tab === 1) panelUpg(gr); else if (tab === 2) panelAch(gr); else if (tab === 3) panelFr(gr, t); else if (tab === 4) panelQuests(gr, t); else panelLab(gr, t);
   }
   function rowBg(gr, r, i, hl) { rr(gr, r.x, r.y + 3, r.w, r.h, 16, 'rgba(0,0,0,.18)'); rr(gr, r.x, r.y, r.w, r.h, 16, hl ? '#2f7aa2' : '#215574'); gr.save(); gr.globalAlpha = .08; rr(gr, r.x + 4, r.y + 3, r.w - 8, r.h * .4, 12, '#fff'); gr.restore(); if (focus === i) { gr.strokeStyle = '#ffe46a'; gr.lineWidth = 3; rr(gr, r.x, r.y, r.w, r.h, 16); gr.stroke(); } }
   function panelShops(gr, t) {
     btn(gr, BUYN, '#4fb0e0', '#2f7fb8', true, 12); T(gr, `Buy ×${buyN === 'max' ? 'MAX' : buyN}`, BUYN.x + BUYN.w / 2, BUYN.y + 15, 18, '#fff');
-    T(gr, `Managers ${mgrs()}/7  ·  bonus ×${(cache.ach * (1 + S.gold * .1)).toFixed(2)}`, PX + 534, 90, 16, '#a8cfe4', 'right', null);
+    const pg = pagesOn(); T(gr, `Managers ${mgrs()}/${NB}  ·  bonus ×${(cache.ach * goldMul()).toFixed(2)}`, pg ? PGL.x - 10 : PX + 534, 91, 15, '#a8cfe4', 'right', null);
+    if (pg) { btn(gr, PGL, spg ? '#4fb0e0' : '#ffd23f', spg ? '#2f7fb8' : '#e0a000', true, 12); btn(gr, PGR, spg ? '#ffd23f' : '#4fb0e0', spg ? '#e0a000' : '#2f7fb8', true, 12); T(gr, '1-7', PGL.x + 27, PGL.y + 15, 15, '#fff'); T(gr, '8-10', PGR.x + 27, PGR.y + 15, 15, '#fff'); }
     let shownLocked = false;
-    for (let i = 0; i < 7; i++) {
-      const r = ROW(i), owned = S.own[i] > 0;
+    for (let k = 0; k < 7; k++) {
+      const i = spg * 7 + k; if (i >= NB) break;
+      const r = ROW(k), owned = S.own[i] > 0;
       if (!unlocked(i)) { rr(gr, r.x, r.y, r.w, r.h, 16, 'rgba(255,255,255,.05)'); circ(gr, r.x + 38, r.y + 35, 27, 'rgba(255,255,255,.08)'); T(gr, '?', r.x + 38, r.y + 36, 30, 'rgba(255,255,255,.3)', 'center', null); T(gr, BIZ[i].n, r.x + 78, r.y + 24, 19, 'rgba(255,255,255,.45)', 'left', null); T(gr, shownLocked ? 'Locked' : `Open a ${BIZ[i - 1].n} first`, r.x + 78, r.y + 48, 15, 'rgba(255,255,255,.3)', 'left', null); T(gr, '$' + fmt(BIZ[i].cost), r.x + r.w - 24, r.y + r.h / 2, 18, 'rgba(255,255,255,.3)', 'right', null); shownLocked = true; continue; }
       rowBg(gr, r, i, hover === i);
       bizIcon(gr, i, r.x + 38, r.y + 35, 29);
@@ -746,12 +865,49 @@ const GAME = {
       if (owned && !S.mgr[i] && prog[i] === 0) { gr.globalAlpha = .6 + Math.sin(t * 5) * .4; T(gr, '▶ tap', bx + bw - 8, by - 1, 13, '#ffe46a', 'right', null); gr.globalAlpha = 1; }
       else if (owned) { const left = cycle(i) * (1 - prog[i]); T(gr, cycle(i) < .3 ? 'fast!' : left < 60 ? left.toFixed(1) + 's' : `${Math.floor(left / 60)}m ${Math.floor(left % 60)}s`, bx + bw - 6, by - 1, 13, '#9ac8e0', 'right', null); }
       const mb = MGRB(r);
-      if (owned && !S.mgr[i]) { const can = S.cash >= MGR[i]; btn(gr, mb, '#c07bff', '#8a3ee0', can, 12); T(gr, 'Manager', mb.x + mb.w / 2, mb.y + 16, 15, '#fff', 'center', null); T(gr, '$' + fmt(MGR[i]), mb.x + mb.w / 2, mb.y + 36, 16, can ? '#fff' : '#c8d0d8', 'center', null); }
+      if (owned && !S.mgr[i]) { const can = S.cash >= mgrCost(i); btn(gr, mb, '#c07bff', '#8a3ee0', can, 12); T(gr, 'Manager', mb.x + mb.w / 2, mb.y + 16, 15, '#fff', 'center', null); T(gr, '$' + fmt(mgrCost(i)), mb.x + mb.w / 2, mb.y + 36, 16, can ? '#fff' : '#c8d0d8', 'center', null); }
       else if (S.mgr[i]) { const mx = mb.x + mb.w / 2; circ(gr, mx, r.y + 26, 12, '#f1c7a5'); gr.fillStyle = '#3a2410'; gr.beginPath(); gr.arc(mx, r.y + 23, 12.5, Math.PI, 0); gr.fill(); rr(gr, mx - 14, r.y + 38, 28, 16, 6, '#3a4a6a'); gr.fillStyle = '#e8304a'; gr.beginPath(); gr.moveTo(mx - 3, r.y + 38); gr.lineTo(mx + 3, r.y + 38); gr.lineTo(mx, r.y + 50); gr.fill(); T(gr, 'AUTO', mx, r.y + 62, 12, '#9affb0', 'center', null); }
       const n = buyCount(i), c = costOf(i, n), can = c <= S.cash, bb = BUYB(r);
       btn(gr, bb, owned ? '#7be37f' : '#ffd23f', owned ? '#36a845' : '#e0a000', can, 14);
       T(gr, owned ? `Buy ×${n}` : 'Open!', bb.x + bb.w / 2, bb.y + 16, 15, can ? '#fff' : '#c8d0d8', 'center', can ? 'rgba(0,0,0,.25)' : null); T(gr, '$' + fmt(c), bb.x + bb.w / 2, bb.y + 36, 19, can ? '#fff' : '#c8d0d8', 'center', can ? 'rgba(0,0,0,.25)' : null);
     }
+  }
+  const pagesOn = () => S.own[6] > 0 || S.own[7] > 0 || spg > 0;
+  function panelQuests(gr, t) {
+    const cx = PX + 272;
+    if (S.tut < TUT.length || !S.q) { T(gr, 'Daily quests unlock after the tutorial', cx, 300, 20, '#ffe46a'); return; }
+    const left = (today() + 1) * 864e5 + new Date().getTimezoneOffset() * 6e4 - Date.now();
+    T(gr, `Today's quests  ·  new ones in ${Math.floor(left / 36e5)}h ${Math.floor(left % 36e5 / 6e4)}m`, PX + 20, 91, 16, '#a8cfe4', 'left', null);
+    S.q.list.forEach((q, i) => {
+      const r = QROW(i), p = Math.min(1, qProg(q) / q.n), done = p >= 1; rowBg(gr, r, 'q' + i, false);
+      if (focus === i) { gr.strokeStyle = '#ffe46a'; gr.lineWidth = 3; rr(gr, r.x, r.y, r.w, r.h, 16); gr.stroke(); }
+      circ(gr, r.x + 44, r.y + 50, 30, q.got ? '#5fd36a' : done ? '#ffd23f' : '#18465f'); T(gr, q.got ? '✓' : String(i + 1), r.x + 44, r.y + 51, 30, q.got ? '#fff' : done ? '#6a3c00' : '#a8cfe4', 'center', null);
+      T(gr, QT[q.k][0](q.n), r.x + 90, r.y + 28, 20, q.got ? '#9affb0' : '#fff', 'left');
+      const bw = 270; rr(gr, r.x + 90, r.y + 52, bw, 16, 8, '#0f2c3f'); rr(gr, r.x + 90, r.y + 52, Math.max(16, bw * p), 16, 8, done ? '#5fd36a' : '#ffb300');
+      T(gr, q.k === 'life' ? `$${fmt(Math.min(qProg(q), q.n))} / $${fmt(q.n)}` : `${Math.floor(Math.min(qProg(q), q.n))} / ${q.n}`, r.x + 90, r.y + 84, 14, '#a8cfe4', 'left', null);
+      const b = { x: r.x + r.w - 140, y: r.y + 24, w: 128, h: 58 };
+      if (q.got) T(gr, 'DONE', b.x + 64, b.y + 28, 22, '#9affb0', 'center', null);
+      else { btn(gr, b, '#7be37f', '#36a845', done, 14); T(gr, done ? 'Claim!' : 'Reward', b.x + 64, b.y + 18, 16, done ? '#fff' : '#c8d0d8', 'center', null); coinI(gr, b.x + 40, b.y + 38, 9); T(gr, `${3 + i} + cash`, b.x + 54, b.y + 38, 14, done ? '#fff' : '#c8d0d8', 'left', null); if (done) { gr.globalAlpha = .5 + Math.sin(t * 6) * .5; gr.strokeStyle = '#fff36a'; gr.lineWidth = 3; rr(gr, b.x - 3, b.y - 3, b.w + 6, b.h, 16); gr.stroke(); gr.globalAlpha = 1; } }
+    });
+    const by = 480, all = S.q.list.every(q => q.got); rr(gr, PX + 10, by, 524, 80, 18, all ? '#2f7a3a' : '#18465f');
+    lemonShape(gr, PX + 54, by + 40, 24, -.3, all ? 2 : 1); T(gr, all ? 'Bonus won: +1 Golden Lemon!' : 'Finish all 3 for a bonus', PX + 92, by + 28, 20, all ? '#ffe46a' : '#fff', 'left');
+    T(gr, all ? 'Come back tomorrow for new quests' : '+1 Golden Lemon (spend it in the Lab or keep it for +profit)', PX + 92, by + 54, 14, '#a8cfe4', 'left', null);
+    T(gr, `Quests finished: ${st('qd')}`, cx, 600, 15, '#7fa8c0', 'center', null);
+  }
+  function panelLab(gr, t) {
+    T(gr, 'Lemon Lab', PX + 20, 90, 22, '#9affb0', 'left');
+    gr.font = fnt(18); const gw = gr.measureText(String(S.gold)).width + 44; rr(gr, PX + 534 - gw, 76, gw, 30, 15, '#fff3c4'); lemonShape(gr, PX + 534 - gw + 16, 91, 10, -.3, 0); T(gr, String(S.gold), PX + 522, 91, 18, '#b07800', 'right', null);
+    T(gr, 'Lasts forever · spent lemons stop giving +profit', PX + 534 - gw - 10, 91, 13, '#a8cfe4', 'right', null);
+    LAB.forEach((L, i) => {
+      const [k, name, ic, desc, costs] = L, lv = lab(k), max = lv >= costs.length, c = costs[lv], can = !max && S.gold >= c, r = LROW(i);
+      rr(gr, r.x, r.y + 3, r.w, r.h, 14, 'rgba(0,0,0,.18)'); rr(gr, r.x, r.y, r.w, r.h, 14, focus === i && tab === 5 ? '#2f7aa2' : '#1f5070');
+      const g = gr.createRadialGradient(r.x + 30, r.y + 24, 2, r.x + 34, r.y + 31, 24); g.addColorStop(0, '#eafff0'); g.addColorStop(1, max ? '#ffd23f' : '#7be3a0'); circ(gr, r.x + 34, r.y + 31, 23, g); T(gr, ic, r.x + 34, r.y + 32, 22, '#1f5a3a', 'center', null);
+      T(gr, name, r.x + 68, r.y + 18, 18, '#fff', 'left'); T(gr, desc(max ? lv : lv + 1), r.x + 68, r.y + 42, 13, max ? '#9affb0' : '#ffd27a', 'left', null);
+      for (let j = 0; j < costs.length; j++) rr(gr, r.x + 300 + j * 20, r.y + 12, 15, 8, 4, j < lv ? '#5fd36a' : 'rgba(255,255,255,.15)');
+      const b = { x: r.x + r.w - 108, y: r.y + 8, w: 100, h: 48 };
+      if (max) T(gr, 'MAXED', b.x + 50, b.y + 22, 18, '#9affb0', 'center', null);
+      else { btn(gr, b, '#ffe46a', '#e0a000', can, 12); lemonShape(gr, b.x + 30, b.y + 22, 10, -.3, 0); T(gr, String(c), b.x + 46, b.y + 22, 20, can ? '#6a3c00' : '#c8d0d8', 'left', null); }
+    });
   }
   function panelUpg(gr) {
     T(gr, `Upgrades last until you franchise  ·  ${S.upg.length}/${UPG.length} bought`, PX + 20, 91, 16, '#a8cfe4', 'left', null);
@@ -767,7 +923,7 @@ const GAME = {
   function panelAch(gr) {
     const n = Object.keys(S.ach).length; T(gr, `${n}/${ACH.length} trophies  ·  +${n * 2}% profit`, PX + 20, 91, 17, '#ffe46a', 'left', null);
     btn(gr, PGL, '#4fb0e0', '#2f7fb8', true, 12); btn(gr, PGR, '#4fb0e0', '#2f7fb8', true, 12); T(gr, '◀', PGL.x + 27, PGL.y + 15, 18, '#fff'); T(gr, '▶', PGR.x + 27, PGR.y + 15, 18, '#fff');
-    T(gr, `${page + 1}/4`, PGL.x - 12, 91, 16, '#a8cfe4', 'right', null);
+    T(gr, `${page + 1}/${NPG}`, PGL.x - 12, 91, 16, '#a8cfe4', 'right', null);
     const order = ACH.map((a, i) => i).sort((a, b) => (S.ach[a] ? 1 : 0) - (S.ach[b] ? 1 : 0) || Math.min(1, ACH[b][2]() / ACH[b][3]) - Math.min(1, ACH[a][2]() / ACH[a][3]));
     order.slice(page * 7, page * 7 + 7).forEach((ai, k) => {
       const a = ACH[ai], r = ROW(k), got = !!S.ach[ai], p = Math.min(1, a[2]() / a[3]); rowBg(gr, r, 'none', false);
@@ -783,12 +939,12 @@ const GAME = {
     const gl = gr.createRadialGradient(cx, 210, 10, cx, 210, 110); gl.addColorStop(0, 'rgba(255,220,80,.5)'); gl.addColorStop(1, 'rgba(255,220,80,0)'); circ(gr, cx, 210, 110, gl);
     gr.save(); gr.translate(cx, 210); gr.rotate(t * .3); gr.fillStyle = 'rgba(255,240,150,.25)'; for (let i = 0; i < 10; i++) { gr.rotate(Math.PI / 5); gr.beginPath(); gr.moveTo(40, -8); gr.lineTo(100, 0); gr.lineTo(40, 8); gr.fill(); } gr.restore();
     lemonShape(gr, cx, 210 + Math.sin(t * 2) * 4, 54, -.3, 1);
-    T(gr, `You have ${S.gold} Golden Lemon${S.gold === 1 ? '' : 's'}: +${S.gold * 10}% profit`, cx, 302, 19, '#fff');
-    T(gr, 'Start over with $0, but keep your Golden Lemons,', cx, 340, 16, '#a8cfe4', 'center', null); T(gr, 'trophies and daily streak. Each lemon: +10% profit.', cx, 362, 16, '#a8cfe4', 'center', null);
+    T(gr, `You have ${S.gold} Golden Lemon${S.gold === 1 ? '' : 's'}: +${S.gold * goldPct()}% profit`, cx, 302, 19, '#fff');
+    T(gr, 'Start over with $0, but keep your Golden Lemons,', cx, 340, 16, '#a8cfe4', 'center', null); T(gr, `trophies, research and streak. Each lemon: +${goldPct()}% profit.`, cx, 362, 16, '#a8cfe4', 'center', null);
     T(gr, `Earned this run: $${fmt(S.total)}`, cx, 400, 17, '#ffd27a', 'center', null);
     const on = g >= 1; btn(gr, FRB, frConfirm > 0 ? '#ff8a6a' : '#ffe46a', frConfirm > 0 ? '#e04a2a' : '#e0a000', on, 20);
     T(gr, on ? (frConfirm > 0 ? 'Tap again to franchise!' : `Franchise: +${g} Golden Lemon${g > 1 ? 's' : ''}`) : 'Not ready yet', FRB.x + FRB.w / 2, FRB.y + 26, 21, on ? '#fff' : '#c8d0d8');
-    T(gr, on ? `New bonus: +${(S.gold + g) * 10}% profit` : `First lemon at $${fmt(Math.pow(g + 1, 2) * 1e8)} earned`, FRB.x + FRB.w / 2, FRB.y + 52, 15, on ? '#fff' : '#c8d0d8', 'center', null);
+    T(gr, on ? `New bonus: +${(S.gold + g) * goldPct()}% profit` : `First lemon at $${fmt(Math.pow(g + 1, 2) * 1e8)} earned`, FRB.x + FRB.w / 2, FRB.y + 52, 15, on ? '#fff' : '#c8d0d8', 'center', null);
     if (on) T(gr, `Next lemon at $${fmt(Math.pow(g + 1, 2) * 1e8)} earned`, cx, 536, 15, '#a8cfe4', 'center', null);
     T(gr, `Franchises: ${S.runs || 0}   ·   Lifetime: $${fmt(st('life'))}   ·   Squeezes: ${st('taps')}`, cx, 600, 15, '#7fa8c0', 'center', null);
   }
