@@ -185,7 +185,7 @@ const GAME = {
   function stationNear(tile) { const cx = Math.floor(P.x), cy = Math.floor(P.y - 1); for (let x = cx - 5; x <= cx + 5; x++) for (let y = cy - 4; y <= cy + 4; y++) if (at(x, y) === tile) return true; return false; }
   const STN = { bench: T.BENCH, furnace: T.FURNACE, anvil: T.ANVIL };
   const canCraft = r => (!r[3] || stationNear(STN[r[3]])) && Object.entries(r[2]).every(([k, n]) => count(k) >= n);
-  function craft(r) { if (!canCraft(r)) return; for (const [k, n] of Object.entries(r[2])) take(k, n); give(r[0], r[1]); K.sfx(700, .06, 'square', .05); K.sfx(1050, .06, 'square', .05, 0, .06); if (!IT[r[0]].one && !(IT[r[0]].r >= 2)) say(`Crafted ${IT[r[0]].n}${r[1] > 1 ? ' x' + r[1] : ''}`); score += 5; }
+  function craft(r) { if (!canCraft(r)) return; if (!ch.inv.some(s => !s || (s.id === r[0] && !IT[r[0]].one)) && !Object.keys(r[2]).some(k => count(k) === r[2][k])) return say('Your inventory is full.'); for (const [k, n] of Object.entries(r[2])) take(k, n); give(r[0], r[1]); K.sfx(700, .06, 'square', .05); K.sfx(1050, .06, 'square', .05, 0, .06); if (!IT[r[0]].one && !(IT[r[0]].r >= 2)) say(`Crafted ${IT[r[0]].n}${r[1] > 1 ? ' x' + r[1] : ''}`); score += 5; }
   function say(t, d = 2.4, c = '#ffe680') { msg = { t, k: 0, d, c }; }
 
   /* ---------- bodies ---------- */
@@ -225,6 +225,7 @@ const GAME = {
     king: { hp: 1400, w: 5, h: 4, dmg: 26, sc: 800, boss: 1 }, watcher: { hp: 2200, w: 4.4, h: 4.4, dmg: 30, sc: 1500, boss: 1, fly: 1 }, bone: { hp: 4200, w: 5, h: 5, dmg: 40, sc: 2500, boss: 1, fly: 1 }, ember: { hp: 7000, w: 5.4, h: 5.4, dmg: 55, sc: 5000, boss: 1, fly: 1 },
   };
   function spawnEnemy(kind, x, y, o = {}) { const k = KIND[kind]; const E = { id: eid++, kind, x, y, vx: 0, vy: 0, w: k.w, h: k.h, hp: k.hp * (online() ? 1 + others.size * .5 : 1), t: R() * 2, hit: 0, fly: k.fly, ...o }; E.max = E.hp; if (kind === 'slime') E.c = E.c || pick(['#3aa0ff', '#4ac83a', '#c84aff']); ents.push(E); return E; }
+  const CEN = new Set(['eye', 'bat', 'watcher', 'bone', 'ember', 'fb']), top = e => CEN.has(e.kind) ? e.y - e.h / 2 : e.y - e.h, bot = e => CEN.has(e.kind) ? e.y + e.h / 2 : e.y, mid = e => (top(e) + bot(e)) / 2;
   const night = () => { const d = time % 1; return d > .62 && d < .98; };
   const dayLight = () => { const d = time % 1; return d < .55 ? 1 : d < .62 ? 1 - (d - .55) / .07 * .62 : d < .92 ? .38 : .38 + (d - .92) / .08 * .62; };
   const allPlayers = () => [P, ...[...others.values()].filter(o => o.p && o.p.x != null && !o.dead).map(o => o.p)];
@@ -293,7 +294,7 @@ const GAME = {
       if (e.kind === 'bat' && R() < .2) loot.push(['potion', 1]);
       if (e.kind === 'imp') { loot.push(['ember', 1]); if (R() < .04) loot.push(['flame', 1]); }
       if (K_.boss) { const B = BOSSES[e.kind]; loot.push([B.drop[0], 1], [B.drop[1], B.drop[1].endsWith('bar') ? 8 : 1], [B.drop[2], 10], ['potion', 4]); boss = null; downed[e.kind] = 1; bossDown(e.kind); }
-      for (const [id, n] of loot) giveDrop(by, id, n, e.x, e.y - .5);
+      for (const [id, n] of loot) { if (K_.boss && online()) { drops.push({ id, n, x: e.x, y: e.y - .5, vx: rnd(-3, 3), vy: -rnd(4, 8), t: 0 }); for (const [oid] of others) MP.to(oid, { t: 'drop', id, n, x: e.x, y: e.y - .5 }); } else giveDrop(by, id, n, e.x, e.y - .5); }
       if (!online() || by === MP.id) score += K_.sc || 0;
     }
   }
@@ -311,7 +312,7 @@ const GAME = {
     const s = ch.inv[sel], it = s && IT[s.id]; if (!it || dead) return;
     P.face = wx >= P.x ? 1 : -1;
     const aim = () => { const dx = wx - P.x, dy = wy - (P.y - 1.5), d = Math.hypot(dx, dy) || 1; return [dx / d, dy / d]; };
-    if (it.melee || (it.pick && ents.some(e => !KIND[e.kind].proj && Math.hypot(e.x - (P.x + P.face * 1.4), e.y - e.h / 2 - (P.y - 1.4)) < 2.4 && Math.abs(e.x - wx) < 3))) {
+    if (it.melee || (it.pick && ents.some(e => !KIND[e.kind].proj && Math.hypot(e.x - (P.x + P.face * 1.4), mid(e) - (P.y - 1.4)) < 2.4 + e.h / 2 && Math.abs(e.x - wx) < 3))) {
       if (P.swing <= 0 && P.cd <= 0) melee(it, aim()); if (!it.pick) return;
     }
     if (it.bow || it.gun) {
@@ -369,7 +370,7 @@ const GAME = {
   function melee(it, [ax, ay]) {
     const spear = it.reach, cd = spear ? .38 : .34; P.swing = cd; P.cd = cd; K.sfx(500, .06, 'triangle', .05, -200);
     const dmg = it.melee || it.dmg, range = spear || 1.9, cx = P.x + (spear ? ax * range * .6 : P.face * 1.4), cy = P.y - 1.4 + (spear ? ay * range * .6 : 0);
-    for (const e of ents) if (!KIND[e.kind].proj && Math.abs(e.x - cx) < range * (spear ? .7 : 1) + e.w / 2 && Math.abs(e.y - e.h / 2 - cy) < 1.8 + e.h / 2) hitEnemy(e, dmg, P.face * (it.kb || 1), it.fire);
+    for (const e of ents) if (!KIND[e.kind].proj && Math.abs(e.x - cx) < range * (spear ? .7 : 1) + e.w / 2 && Math.abs(mid(e) - cy) < 1.8 + e.h / 2) hitEnemy(e, dmg, P.face * (it.kb || 1), it.fire);
     if (it.beam) shoot('beam', ax, ay, dmg * .7, 0); if (it.stars) for (let i = 0; i < 2; i++) shoot('star', 0, 1, dmg * .5, 0, { sx: P.x + rnd(-8, 8), sy: P.y - 20, tx: P.x + ax * 8 + rnd(-2, 2), ty: P.y - 1.5 + ay * 8 });
   }
   /* ---------- projectiles ---------- */
@@ -382,7 +383,7 @@ const GAME = {
     for (const p of projs) {
       p.life -= dt; if (p.life <= 0) { p.dead = 1; continue; }
       if (p.k === 'arrow' || p.k === 'farrow' || p.k === 'knife') p.vy += 22 * dt; if (p.k === 'gel') p.vy += 30 * dt;
-      if (p.home && p.mine) { const t = ents.filter(e => !KIND[e.kind].proj).reduce((b, e) => { const d = Math.hypot(e.x - p.x, e.y - e.h / 2 - p.y); return d < b.d ? { e, d } : b; }, { e: null, d: 14 }).e; if (t) { const dx = t.x - p.x, dy = t.y - t.h / 2 - p.y, d = Math.hypot(dx, dy) || 1, sp = Math.hypot(p.vx, p.vy); p.vx += (dx / d * sp - p.vx) * dt * 4; p.vy += (dy / d * sp - p.vy) * dt * 4; } }
+      if (p.home && p.mine) { const t = ents.filter(e => !KIND[e.kind].proj).reduce((b, e) => { const d = Math.hypot(e.x - p.x, mid(e) - p.y); return d < b.d ? { e, d } : b; }, { e: null, d: 14 }).e; if (t) { const dx = t.x - p.x, dy = mid(t) - p.y, d = Math.hypot(dx, dy) || 1, sp = Math.hypot(p.vx, p.vy); p.vx += (dx / d * sp - p.vx) * dt * 4; p.vy += (dy / d * sp - p.vy) * dt * 4; } }
       if (p.k === 'boom') { p.t = (p.t || 0) + dt; if (p.t > .5) { const dx = P.x - p.x, dy = P.y - 1.4 - p.y, d = Math.hypot(dx, dy) || 1; p.vx += dx / d * 60 * dt; p.vy += dy / d * 60 * dt; if (d < 1 && p.mine) p.dead = 1; } }
       const nx = p.x + p.vx * dt, ny = p.y + p.vy * dt;
       if (solid(nx, ny) && p.k !== 'star' && p.k !== 'beam') {
@@ -392,7 +393,7 @@ const GAME = {
       }
       p.x = nx; p.y = ny;
       if (!p.mine) continue;
-      for (const e of ents) if (!KIND[e.kind].proj && !p.hit.has(e.id) && Math.abs(e.x - p.x) < e.w / 2 + .4 && p.y > e.y - e.h - .4 && p.y < e.y + .4) { p.hit.add(e.id); hitEnemy(e, p.dmg, Math.sign(p.vx), p.fire); if (!['boom', 'beam', 'star', 'flame'].includes(p.k)) { p.dead = 1; break; } }
+      for (const e of ents) if (!KIND[e.kind].proj && !p.hit.has(e.id) && Math.abs(e.x - p.x) < e.w / 2 + .4 && p.y > top(e) - .4 && p.y < bot(e) + .4) { p.hit.add(e.id); hitEnemy(e, p.dmg, Math.sign(p.vx), p.fire); if (!['boom', 'beam', 'star', 'flame'].includes(p.k)) { p.dead = 1; break; } }
     }
     projs = projs.filter(p => !p.dead);
   }
@@ -555,9 +556,13 @@ const GAME = {
       icon(g, s.id, b.x + b.w / 2, b.y + b.h / 2 - 1, 1.6 * b.w / SLOT); if (s.n > 1) { g.font = `16px ${PXF}`; g.textAlign = 'right'; g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 3; g.strokeText(s.n, b.x + b.w - 4, b.y + b.h - 6); g.fillText(s.n, b.x + b.w - 4, b.y + b.h - 6); } }
   }
   function outlined(g, t, x, y, size, c, al = 'left') { g.font = `${size}px ${PXF}`; g.textAlign = al; g.textBaseline = 'alphabetic'; g.strokeStyle = '#000'; g.lineWidth = 3; g.strokeText(t, x, y); g.fillStyle = c; g.fillText(t, x, y); }
+  // on phones the pause button sits in the top-left corner, so the hotbar and the bag move over a little
+  const OX = () => touch ? Math.max(0, 70 - Math.max(0, -K.view.x0)) : 0;
   function hud(g) {
+    g.save(); g.translate(OX(), 0);
     for (let i = 0; i < 10; i++) { const b = HB(i); slot(g, i === sel && !invOpen ? { x: b.x - 3, y: b.y - 3, w: b.w + 6, h: b.h + 6 } : b, ch.inv[i], i === sel); g.font = `12px ${PXF}`; g.fillStyle = 'rgba(255,255,255,.8)'; g.textAlign = 'left'; g.fillText(String((i + 1) % 10), HB(i).x + 4, HB(i).y + 13); }
     const s = ch.inv[sel]; if (s && !invOpen) { const it = IT[s.id]; outlined(g, it.n + (it.melee ? `  ${it.melee} melee` : it.bow ? `  ${it.bow} ranged` : it.gun ? `  ${it.gun} ranged` : it.magic ? `  ${it.magic} magic · ${it.mp} mana` : it.boom ? `  ${it.boom} thrown` : it.armor ? `  ${it.armor} defense (click to wear)` : it.pick ? `  ${Math.round(it.pick * 35)}% pickaxe power` : ''), 16, 78, 18, RAR[it.r || 0]); }
+    g.restore();
     const hearts = ch.max / 20; for (let i = 0; i < hearts; i++) { const row = Math.floor(i / 10), col = i % 10, x = 1254 - (Math.min(10, hearts) - col) * 26, y = 20 + row * 24, full = clamp((P.hp - i * 20) / 20, 0, 1); heart(g, x, y, '#3a0a0a'); if (full > 0) { g.save(); g.beginPath(); g.rect(x - 12, y - 12, 24 * full, 24); g.clip(); heart(g, x, y, '#e8202a'); g.restore(); } }
     const hy = 20 + Math.ceil(hearts / 10) * 24 + 4; for (let i = 0; i < ch.mana / 20; i++) { const x = 1254, y = hy + i * 20; g.fillStyle = '#0a1a3a'; g.fillRect(x - 8, y - 8, 16, 16); const f = clamp((P.mp - i * 20) / 20, 0, 1); g.fillStyle = '#3a7aff'; g.fillRect(x - 8, y + 8 - 16 * f, 16, 16 * f); g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(x - 6, y - 6, 4, 4); }
     outlined(g, `Life ${Math.ceil(P.hp)}/${ch.max}${def() ? '  ·  Defense ' + def() : ''}`, 1230, hy + 6, 15, '#fff', 'right');
@@ -570,8 +575,9 @@ const GAME = {
     if (touch) touchUI(g);
   }
   function heart(g, x, y, c) { g.fillStyle = c; const r = (a, b, w, h) => g.fillRect(x + a, y + b, w, h); r(-10, -6, 8, 8); r(2, -6, 8, 8); r(-11, -3, 22, 7); r(-8, 4, 16, 3); r(-5, 7, 10, 3); r(-2, 10, 4, 2); if (c !== '#3a0a0a') { g.fillStyle = 'rgba(255,255,255,.5)'; r(-8, -4, 3, 3); } }
-  const TB = { left: { x: 24, y: 590, w: 100, h: 100 }, right: { x: 140, y: 590, w: 100, h: 100 }, jump: { x: 1156, y: 590, w: 100, h: 100 }, inv: { x: 1156, y: 470, w: 100, h: 90 } };
-  function touchUI(g) { for (const [k, b] of Object.entries(TB)) { g.fillStyle = 'rgba(40,60,140,.55)'; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 18); g.fill(); g.strokeStyle = 'rgba(255,255,255,.4)'; g.lineWidth = 2; g.stroke(); g.font = `${k === 'inv' ? 20 : 34}px ${PXF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; g.fillText({ left: '◀', right: '▶', jump: '▲', inv: 'BAG' }[k], b.x + b.w / 2, b.y + b.h / 2); g.textBaseline = 'alphabetic'; } }
+  // phone buttons hug the real screen edges, whatever the screen's shape
+  const TB = () => { const v = K.view; return { left: { x: v.x0 + 24, y: 590, w: 100, h: 100 }, right: { x: v.x0 + 140, y: 590, w: 100, h: 100 }, jump: { x: v.x1 - 124, y: 590, w: 100, h: 100 }, inv: { x: v.x1 - 124, y: 470, w: 100, h: 90 } }; };
+  function touchUI(g) { for (const [k, b] of Object.entries(TB())) { g.fillStyle = 'rgba(40,60,140,.55)'; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 18); g.fill(); g.strokeStyle = 'rgba(255,255,255,.4)'; g.lineWidth = 2; g.stroke(); g.font = `${k === 'inv' ? 20 : 34}px ${PXF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; g.fillText({ left: '◀', right: '▶', jump: '▲', inv: 'BAG' }[k], b.x + b.w / 2, b.y + b.h / 2); g.textBaseline = 'alphabetic'; } }
   const IB = i => ({ x: 14 + (i % 10) * (SLOT + 4), y: 12 + Math.floor(i / 10) * (SLOT + 4), w: SLOT, h: SLOT });
   const ARMB = { x: 14, y: 226, w: SLOT, h: SLOT };
   let cscroll = 0;
@@ -579,8 +585,9 @@ const GAME = {
   function craftList() { return RECIPES.filter(r => !r[3] || stationNear(STN[r[3]])).sort((a, b) => canCraft(b) - canCraft(a)); }
   function inventory(g) {
     g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(K.view.x0, 0, K.view.x1 - K.view.x0, 720);
+    g.save(); g.translate(OX(), 0);
     const panel = (x, y, w, h) => { g.fillStyle = 'rgba(22,30,78,.78)'; g.beginPath(); g.roundRect(x, y, w, h, 12); g.fill(); g.strokeStyle = 'rgba(150,170,255,.35)'; g.lineWidth = 2; g.stroke(); };
-    panel(4, 4, 512, 340); { const n = Math.min(12, craftList().length); panel(526, 30, 388, Math.max(90, 56 + n * 50 + (craftList().length > 12 ? 30 : 0))); } panel(910, 50, 360, 180);
+    panel(4, 4, 512, 340); { const n = Math.min(12, craftList().length); panel(526, 30, 388, Math.max(90, 56 + n * 50 + (craftList().length > 12 ? 30 : 0))); } panel(910, 50, 300, 180);
     for (let i = 0; i < 40; i++) slot(g, IB(i), ch.inv[i], i === sel);
     slot(g, ARMB, ch.armor ? { id: ch.armor, n: 1 } : null, false); outlined(g, ch.armor ? `Armor: ${IT[ch.armor].n} (+${def()})` : 'Armor slot: drop armor here, or double-click it', 70, 254, 15, '#cfd8ff');
     const hv = hoverSlot >= 0 && ch.inv[hoverSlot]; if (hv) { const it = IT[hv.id]; outlined(g, it.n, 14, 300, 18, RAR[it.r || 0]); }
@@ -590,9 +597,10 @@ const GAME = {
       icon(g, r[0], b.x + 24, b.y + 22, 1.5); g.font = `16px ${PXF}`; g.textAlign = 'left'; g.fillStyle = ok ? RAR[IT[r[0]].r || 0] : '#8a8aa0'; g.fillText(IT[r[0]].n + (r[1] > 1 ? ' x' + r[1] : ''), b.x + 48, b.y + 19);
       g.font = `12px ${PXF}`; g.fillStyle = ok ? '#cfd8ff' : '#6a6a80'; g.fillText(Object.entries(r[2]).map(([k, n]) => `${n} ${IT[k].n} (${count(k)})`).join(', '), b.x + 48, b.y + 36); });
     if (list.length > 12) outlined(g, `scroll for more (${cscroll + 1}-${Math.min(list.length, cscroll + 12)} of ${list.length})`, 540, 690, 14, '#cfd8ff');
-    const locked = [...new Set(RECIPES.filter(r => r[3] && !stationNear(STN[r[3]])).map(r => IT[r[3]].n))]; if (locked.length) outlined(g, `More recipes near: ${locked.join(', ')}`, 920, 74, 14, '#cfd8ff');
+    const locked = [...new Set(RECIPES.filter(r => r[3] && !stationNear(STN[r[3]])).map(r => IT[r[3]].n))]; if (locked.length) outlined(g, `More at: ${locked.join(', ')}`, 920, 74, 14, '#cfd8ff');
     Object.entries(BOSSES).forEach(([k, b], i) => outlined(g, (downed[k] ? '✓ ' : '· ') + b.n, 920, 104 + i * 22, 15, downed[k] ? '#7aff7a' : '#ff9aff'));
     outlined(g, 'Click an item to pick it up, click a slot to drop it. E to close.', 14, 330, 15, '#fff');
+    g.restore();
     if (held) icon(g, held.id, mx, my, 1.6);
   }
 
@@ -625,7 +633,7 @@ const GAME = {
   function chooseWorld(i) { wslot = i; if (!worlds()[i]) newWorld(i); lobby(); }
   function lobby() {
     if (typeof MP === 'undefined') return enterWorld();
-    Object.assign(MP.opts, { max: 4, min: 1, bots: 0, solo: 'Play alone', sub: wslot >= 0 ? `World: ${worlds()[wslot].name}. Create a room to host it for friends, or play alone.` : 'Join a friend: enter their room code.', config: () => ({ name: wslot >= 0 && worlds()[wslot] ? worlds()[wslot].name : 'World' }), onStart, onMsg, onLeave, onJoin, onHost: () => {} });
+    Object.assign(MP.opts, { max: 4, min: 1, bots: 0, solo: 'Play alone', sub: wslot >= 0 ? `World: ${worlds()[wslot].name}. Create a room to host it for friends, or play alone.` : 'Join a friend: enter their room code.', config: () => ({ name: wslot >= 0 && worlds()[wslot] ? worlds()[wslot].name : 'World' }), onStart, onMsg, onLeave, onJoin, onHost: id => { if (mode === 'play' && id === MP.id) adopt('The host left. You are hosting the world now.'); } });
     mode = 'lobby'; MP.show();
   }
   function onStart(cfg, roster) {
@@ -639,7 +647,9 @@ const GAME = {
     for (let i = 0; i < n; i++) { const m = { t: 'w', i, n, d: s.slice(i * size, (i + 1) * size) }; if (to) MP.to(to, m); else MP.send(m); }
   }
   function onJoin(id, name) { if (mode !== 'play' || !isHost() || !net) return; const col = MP.colors[(others.size + 1) % 8]; others.set(id, { name, col, p: null }); net.roster.push({ id, name, col, seat: net.roster.length }); MP.to(id, { t: 'mp-start', cfg: { name: worlds()[wslot] ? worlds()[wslot].name : 'World' }, roster: net.roster }); setTimeout(() => streamWorld(id), 300); say(`${name} joined the world!`, 3, '#7aff7a'); }
-  function onLeave(id) { if (id === -1) { say('Disconnected. You are playing alone now.', 4, '#ff9a9a'); net = null; others.clear(); return; } const o = others.get(id); if (o) say(`${o.name} left.`, 3); others.delete(id); }
+  // when the host leaves (or the connection drops) the guest keeps the world, saved into a free slot if there is one
+  function adopt(t) { if (wslot < 0 && worlds().length < 3) { worlds().push({ name: (recv && recv.name) || 'Shared World', made: Date.now(), ...packWorld(), played: Date.now() }); wslot = worlds().length - 1; K.persist(); t += ' It is saved in your world list.'; } say(t, 5, '#9fe8ff'); }
+  function onLeave(id) { if (id === -1) { net = null; others.clear(); if (mode === 'play') adopt('Disconnected. You are playing alone now.'); return; } const o = others.get(id); if (o) say(`${o.name} left.`, 3); others.delete(id); }
   function onMsg(m) {
     const from = m.from ?? m.id;
     if (m.t === 'w' && mode === 'recv') { recv.parts[m.i] = m.d; recv.n = m.n; if (recv.parts.filter(Boolean).length === m.n) { unpackWorld(JSON.parse(recv.parts.join(''))); enterWorld(); say(`Welcome to ${recv.name}!`, 4, '#7aff7a'); } return; }
@@ -683,7 +693,7 @@ const GAME = {
     if (!dead) { if (P.hp < ch.max && P.inv <= 0) P.hp = Math.min(ch.max, P.hp + dt * (Math.abs(P.vx) < .5 ? 2.4 : .9)); P.mp = Math.min(ch.mana, P.mp + dt * 4); }
     if (isHost()) { spawnLoop(dt); for (const e of ents) enemyAI(e, dt); }
     else for (const e of ents) { if (e.tx != null) { e.x += (e.tx - e.x) * Math.min(1, dt * 12); e.y += (e.ty - e.y) * Math.min(1, dt * 12); } e.t += dt; if (e.hit > 0) e.hit -= dt; }
-    for (const e of ents) if (Math.abs(P.x - e.x) < (P.w + e.w) / 2 && P.y - P.h < e.y + (e.fly ? e.h / 2 : 0) && e.y - (e.fly ? e.h / 2 : e.h) < P.y) { hurt(KIND[e.kind].dmg * (e.rage ? 1.25 : 1), e.x); if (KIND[e.kind].proj && isHost()) e.dead = 1; }
+    for (const e of ents) if (Math.abs(P.x - e.x) < (P.w + e.w) / 2 && P.y - P.h < bot(e) && top(e) < P.y) { hurt(KIND[e.kind].dmg * (e.rage ? 1.25 : 1), e.x); if (KIND[e.kind].proj && isHost()) e.dead = 1; }
     ents = ents.filter(e => !e.dead);
     stepProjs(dt);
     for (const d of drops) { d.t += dt; const dx = P.x - d.x, dy = P.y - 1 - d.y, dd = Math.hypot(dx, dy); if (dd < 4 && d.t > .4) { d.x += dx / dd * 14 * dt; d.y += dy / dd * 14 * dt; if (dd < .8 && give(d.id, d.n)) { d.dead = 1; K.sfx(900, .04, 'square', .04); } } else { d.vy += 30 * dt; d.x += d.vx * dt; d.vx *= .95; const ny = d.y + d.vy * dt; if (solid(d.x, ny)) { d.vy = 0; d.y = Math.floor(ny) - .01; } else d.y = ny; } }
@@ -737,9 +747,9 @@ const GAME = {
     if (!posed) hud(g); if (invOpen) inventory(g);
   };
   const inB = (b, x, y) => b && x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
-  let tPtr = {};
-  GAME.down = (x, y) => {
-    K.audio && K.audio(); mx = x; my = y;
+  let tPtr = {}, usePtr = null;
+  GAME.down = (x, y, ev) => {
+    K.audio && K.audio(); const pmx = mx, pmy = my; mx = x; my = y;
     if (mode === 'menu') {
       if (confirmDel != null) { if (inB(MB.del(confirmDel), x, y)) { worlds().splice(confirmDel, 1); K.persist(); } confirmDel = null; return; }
       for (let i = 0; i < 3; i++) { if (worlds()[i] && inB(MB.del(i), x, y)) { confirmDel = i; return; } if (inB(MB.worlds(i), x, y)) return chooseWorld(worlds()[i] ? i : worlds().length); }
@@ -748,22 +758,22 @@ const GAME = {
     }
     if (mode !== 'play') return;
     if (invOpen) {
-      if (inB(ARMB, x, y)) { if (held && IT[held.id].armor) { const old = ch.armor; ch.armor = held.id; held = old ? { id: old, n: 1 } : null; } else if (!held && ch.armor) { held = { id: ch.armor, n: 1 }; ch.armor = null; } return; }
-      for (let i = 0; i < 40; i++) if (inB(IB(i), x, y)) { const s = ch.inv[i]; if (held) { if (s && s.id === held.id && !IT[s.id].one) { s.n += held.n; held = null; } else { ch.inv[i] = held; held = s; } } else if (s) { if (IT[s.id].armor && lastClick.i === i && anim - lastClick.t < .35) { equip(i); return; } held = s; ch.inv[i] = null; } lastClick = { i, t: anim }; return; }
-      const list = craftList(); for (let i = cscroll; i < Math.min(list.length, cscroll + 12); i++) if (inB(CB(i), x, y)) return craft(list[i]);
+      if (inB(ARMB, x - OX(), y)) { if (held && IT[held.id].armor) { const old = ch.armor; ch.armor = held.id; held = old ? { id: old, n: 1 } : null; } else if (!held && ch.armor) { held = { id: ch.armor, n: 1 }; ch.armor = null; } return; }
+      for (let i = 0; i < 40; i++) if (inB(IB(i), x - OX(), y)) { const s = ch.inv[i]; if (held) { if (s && s.id === held.id && !IT[s.id].one) { s.n += held.n; held = null; } else { ch.inv[i] = held; held = s; } } else if (s) { if (IT[s.id].armor && lastClick.i === i && anim - lastClick.t < .35) { equip(i); return; } held = s; ch.inv[i] = null; } lastClick = { i, t: anim }; return; }
+      const list = craftList(); for (let i = cscroll; i < Math.min(list.length, cscroll + 12); i++) if (inB(CB(i), x - OX(), y)) return craft(list[i]);
       return;
     }
-    for (let i = 0; i < 10; i++) if (inB(HB(i), x, y)) { sel = i; return; }
-    if (touch) { for (const [k, b] of Object.entries(TB)) if (inB(b, x, y)) { if (k === 'inv') return toggleInv(); keys[k === 'left' ? 'l' : k === 'right' ? 'r' : 'j'] = true; tPtr[k] = 1; return; } }
-    useHeld = true; firstUse = true;
+    for (let i = 0; i < 10; i++) if (inB(HB(i), x - OX(), y)) { sel = i; return; }
+    if (touch) { for (const [k, b] of Object.entries(TB())) if (inB(b, x, y)) { mx = pmx; my = pmy; if (k === 'inv') return toggleInv(); keys[k === 'left' ? 'l' : k === 'right' ? 'r' : 'j'] = true; tPtr[k] = ev ? ev.pointerId : 1; return; } }
+    useHeld = true; firstUse = true; usePtr = ev ? ev.pointerId : null;
   };
-  GAME.move = (x, y) => {
-    mx = x; my = y; hover = null; hoverSlot = -1;
+  GAME.move = (x, y, ev) => {
+    if (!(touch && ev && Object.values(tPtr).includes(ev.pointerId))) { mx = x; my = y; } hover = null; hoverSlot = -1;
     if (mode === 'menu') { for (let i = 0; i < 3; i++) { if (worlds()[i] && inB(MB.del(i), x, y)) hover = 'd' + i; else if (inB(MB.worlds(i), x, y)) hover = 'w' + i; } if (inB(MB.join, x, y)) hover = 'join'; }
-    if (invOpen) { const list = craftList(); for (let i = cscroll; i < Math.min(list.length, cscroll + 12); i++) if (inB(CB(i), x, y)) hover = 'c' + i; for (let i = 0; i < 40; i++) if (inB(IB(i), x, y)) hoverSlot = i; }
+    if (invOpen) { const list = craftList(); for (let i = cscroll; i < Math.min(list.length, cscroll + 12); i++) if (inB(CB(i), x - OX(), y)) hover = 'c' + i; for (let i = 0; i < 40; i++) if (inB(IB(i), x - OX(), y)) hoverSlot = i; }
     const c = document.getElementById('cv'); if (c) c.style.cursor = hover ? 'pointer' : 'default';
   };
-  GAME.up = () => { if (firstUse) upPending = true; else useHeld = false; if (touch) { for (const k of Object.keys(tPtr)) keys[k === 'left' ? 'l' : k === 'right' ? 'r' : 'j'] = false; tPtr = {}; } };
+  GAME.up = (x, y, ev) => { const id = ev ? ev.pointerId : null; if (id == null || usePtr == null || id === usePtr) { if (firstUse) upPending = true; else useHeld = false; } if (touch) { for (const k of Object.keys(tPtr)) if (id == null || tPtr[k] === id) { keys[k === 'left' ? 'l' : k === 'right' ? 'r' : 'j'] = false; delete tPtr[k]; } } };
   function toggleInv() { invOpen = !invOpen; cscroll = 0; if (!invOpen && held) { give(held.id, held.n); held = null; } K.sfx(invOpen ? 600 : 400, .05, 'square', .04); useHeld = false; }
   GAME.key = (c, d) => {
     if (mode !== 'play') return;
@@ -781,5 +791,5 @@ const GAME = {
     const e = ents.find(e => Math.abs(e.x - P.x) < 12 && !KIND[e.kind].proj); if (e) { sel = 4; mx = sx(e.x); my = sy(e.y - .5); useHeld = true; firstUse = true; return; }
     if (ahead && b.t % 3 < 1.2) { sel = 0; mx = sx(P.x + 1.5); my = sy(P.y - 1.6); useHeld = true; } else useHeld = false;
   };
-  GAME.test = { st: () => ({ mode, P: P && { x: +P.x.toFixed(1), y: +P.y.toFixed(1), hp: P.hp, ground: P.ground }, inv: ch && ch.inv.filter(Boolean).map(s => s.id + 'x' + s.n), ents: ents.map(e => e.kind), time: time && +(time % 1).toFixed(2), worlds: worlds().length }), give: (i, n) => give(i, n), setTime: v => time = v, spawn: k => spawnEnemy(k, P.x + 8, P.y - 6), tp: (x, y) => { P.x = x; P.y = y; }, choose: chooseWorld, sel: i => sel = i, summon: k => summon(k, P.x, P.y), inv: () => invOpen || toggleInv(), solo: () => MP.start(), cave: (d = 30) => { for (let r = 0; r < 200; r++) for (const x of [Math.floor(P.x) + r, Math.floor(P.x) - r]) for (let y = surf[clamp(x, 0, WW - 1)] + d; y < surf[clamp(x, 0, WW - 1)] + d + 30; y++) if (at(x, y) === T.AIR && at(x, y - 1) === T.AIR && at(x, y - 2) === T.AIR && SOLID.has(at(x, y + 1))) { P.x = x + .5; P.y = y + .99; P.vy = 0; cam.x = P.x * TS - 640; cam.y = (P.y - 1.4) * TS - 380; return [x, y]; } return null; } };
+  GAME.test = { st: () => ({ mode, P: P && { x: +P.x.toFixed(1), y: +P.y.toFixed(1), hp: P.hp, ground: P.ground }, inv: ch && ch.inv.filter(Boolean).map(s => s.id + 'x' + s.n), ents: ents.map(e => e.kind), time: time && +(time % 1).toFixed(2), worlds: worlds().length }), give: (i, n) => give(i, n), setTime: v => time = v, spawn: k => spawnEnemy(k, P.x + 8, P.y - 6), tp: (x, y) => { P.x = x; P.y = y; }, choose: chooseWorld, sel: i => sel = i, summon: k => summon(k, P.x, P.y), inv: () => invOpen || toggleInv(), _: () => ({ keys, tPtr, P, ch, ents, drops, projs, downed, chests, tiles, RECIPES, IT, CHEST_LOOT, BOSSES, KIND, DROP, craft, canCraft, at, set, hurt, useItem, use, equip, openChest, stationNear, time, mode, others, saveAll, worlds, boss, won, dead, invOpen, held, sel, surf, HELL, T, icon, hitEnemy, count, give }), solo: () => MP.start(), cave: (d = 30) => { for (let r = 0; r < 200; r++) for (const x of [Math.floor(P.x) + r, Math.floor(P.x) - r]) for (let y = surf[clamp(x, 0, WW - 1)] + d; y < surf[clamp(x, 0, WW - 1)] + d + 30; y++) if (at(x, y) === T.AIR && at(x, y - 1) === T.AIR && at(x, y - 2) === T.AIR && SOLID.has(at(x, y + 1))) { P.x = x + .5; P.y = y + .99; P.vy = 0; cam.x = P.x * TS - 640; cam.y = (P.y - 1.4) * TS - 380; return [x, y]; } return null; } };
 })();
