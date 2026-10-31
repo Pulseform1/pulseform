@@ -599,6 +599,22 @@ const GAMES = [
     how: ["Call PASS or RUN. To throw, drag back and release, or tap a receiver (keys 1, 2, 3).", "With the ball, steer with your finger or the arrow keys. Tap or Space to juke.", "Kicks: stop the moving line in the green.", "Between games, upgrade players with coaching credits."]
   },
   {
+    id: "dead-air",
+    title: "Dead Air",
+    category: "Horror",
+    kind: "Horror · Ghost hunting · Online co-op",
+    tags: ["Ghost hunting", "Co-op with friends", "First person", "Headphones"],
+    badge: 'NEW',
+    file: 'games/dead-air.html',
+    cover: 'media/dead-air-cover.jpg',
+    video: 'media/dead-air-trailer.mp4',
+    shots: ['media/dead-air-shot1.jpg', 'media/dead-air-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Something is in the house. Find out what. Bring friends.",
+    blurb: "First-person ghost hunting for 1 to 4 players. Search a dark house with an EMF reader, thermometer, spirit box, UV light and a ghost writing book. Every ghost leaves three kinds of evidence. Mark them in your journal, name the ghost and get out. There is no music, only faint static and silence, and it almost never shows itself. When the lights flicker it is hunting: hide in a wardrobe or run.",
+    how: ["WASD to move, mouse to look, Shift to run. On phones: left stick to move, drag right to look.", "1-6 pick a tool, click to use it. F flashlight. E for light switches, wardrobes and the front door.", "Find three pieces of evidence, name the ghost in your journal (J), then leave by the front door.", "Create a room and send friends the 4-letter code, or investigate alone."]
+  },
+  {
     id: "strata",
     title: "Strata",
     category: "Co-op",
@@ -1322,6 +1338,8 @@ const GAMES = [
   }
 ];
 /* The order shelves appear in. A shelf with no games shows "Coming soon" covers. */
+// a game shows in its own topic; anything you can play online with friends also shows under Co-op
+const inTopic = (g, c) => g.category === c || (c === 'Co-op' && /co-op|online|friends/i.test(g.kind + ' ' + (g.tags || []).join(' ')));
 const CATEGORIES = ['Co-op', 'Action', 'Horror', 'Strategy', 'Sports', 'Arcade', 'Puzzle', 'Racing', 'Idle'];
 // the big topic tiles at the top of the home page: icon, colour, one-line description
 const TOPICS = {
@@ -1332,7 +1350,7 @@ const TOPICS = {
 // what people type, and what we actually call it: "retro bowl" finds the football games, "scary" finds horror
 const SYN = {
   'retro bowl': ['football', 'sports', 'pocket bowl'], goatlab: ['career', 'legend'], 'goat lab': ['career', 'legend'], career: ['career'], football: ['football', 'touchdown', 'sports'], nfl: ['football'], soccer: ['soccer', 'penalty', 'goal'], basketball: ['basket', 'hoop', 'dunk'],
-  basket: ['basket', 'hoop'], 'basket random': ['basket', 'hoop', 'flop'], sandbox: ['sandbox', 'build', 'craft'], craft: ['craft', 'build'], mine: ['dig', 'build'], mining: ['dig', 'build'], sport: ['sports'], scary: ['horror'], spooky: ['horror'], creepy: ['horror'], ghost: ['horror', 'ghost'], fnaf: ['horror', 'night'], horror: ['horror'],
+  basket: ['basket', 'hoop'], 'basket random': ['basket', 'hoop', 'flop'], sandbox: ['sandbox', 'build', 'craft'], craft: ['craft', 'build'], mine: ['dig', 'build'], mining: ['dig', 'build'], sport: ['sports'], scary: ['horror'], spooky: ['horror'], creepy: ['horror'], ghost: ['horror', 'ghost'], phasmophobia: ['ghost', 'horror', 'co-op'], phasmo: ['ghost', 'horror'], demonology: ['ghost', 'horror', 'co-op'], 'ghost hunting': ['ghost', 'horror'], fnaf: ['horror', 'night'], horror: ['horror'],
   'two player': ['co-op', 'online', 'player', 'versus', 'friends'], '2 player': ['co-op', 'online', 'player', 'versus', 'friends'], multiplayer: ['co-op', 'online', 'friends'],
   friends: ['co-op', 'online', 'friends'], online: ['online', 'co-op'], coop: ['co-op'], car: ['racing', 'car', 'drive'], cars: ['racing', 'car', 'drive'], race: ['racing', 'race'],
   driving: ['racing', 'drive'], shooter: ['shoot', 'action'], shooting: ['shoot', 'action'], gun: ['shoot', 'action'], fight: ['fight', 'brawl', 'action'], fighting: ['fight', 'brawl', 'action'],
@@ -1361,7 +1379,7 @@ let query = '', current = null, topic = '';
    Without it (offline, local preview, too little data yet) the
    hub falls back to the hand-picked order below.
    ============================================================ */
-const CURATED = ['the-hollow', 'strata', 'pocket-bowl', 'flop-hoops', 'legend-maker', 'still-here', 'bumper-brawl', 'doodle-guess', 'turbo-laps', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
+const CURATED = ['the-hollow', 'dead-air', 'strata', 'pocket-bowl', 'flop-hoops', 'legend-maker', 'still-here', 'bumper-brawl', 'doodle-guess', 'turbo-laps', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
 const MIN_WEEK = 20;   // fewer plays than this across the hub in a week = not enough to rank by
 let STATS = null;      // { id: { total, week, today } } once real numbers are in
 let HOT = new Set();   // top 5 by plays this week
@@ -1581,7 +1599,7 @@ function renderFinder() {
   TRY.forEach(t => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.addEventListener('click', () => setQuery(t, true)); tr.append(b); });
   const tp = $('topics'); tp.innerHTML = '';
   [...CATEGORIES, 'All'].forEach(c => {
-    const [em, col, sub] = TOPICS[c], n = c === 'All' ? GAMES.length : GAMES.filter(g => g.category === c).length;
+    const [em, col, sub] = TOPICS[c], n = c === 'All' ? GAMES.length : GAMES.filter(g => inTopic(g, c)).length;
     const b = document.createElement('button'); b.type = 'button'; b.className = 'topic' + (topic === c ? ' on' : ''); b.style.setProperty('--c', col);
     b.innerHTML = '<span class="n"></span><span class="em"></span><b></b><small></small>';
     b.querySelector('.n').textContent = n; b.querySelector('.em').textContent = em; b.querySelector('b').textContent = c === 'All' ? 'All experiences' : c; if (c === 'All') b.classList.add('long'); b.querySelector('small').textContent = sub;
@@ -1612,7 +1630,7 @@ function renderShelves() {
   }
   const order = ranked(), pos = new Map(order.map((g, i) => [g.id, i]));
   if (topic) {
-    const all = topic === 'All', list = all ? GAMES.slice().sort((a, b) => a.title.localeCompare(b.title)) : GAMES.filter(g => g.category === topic).sort((a, b) => pos.get(a.id) - pos.get(b.id));
+    const all = topic === 'All', list = all ? GAMES.slice().sort((a, b) => a.title.localeCompare(b.title)) : GAMES.filter(g => inTopic(g, topic)).sort((a, b) => pos.get(a.id) - pos.get(b.id));
     const [em, col] = TOPICS[topic], head = document.createElement('div'); head.className = 'topic-head'; head.id = 'shelf-topic';
     head.innerHTML = '<span class="em"></span><div><h2></h2><p></p></div><button class="btn" type="button">‹ All topics</button>';
     head.querySelector('.em').textContent = em; head.querySelector('h2').textContent = all ? 'All experiences' : topic; head.querySelector('h2').style.color = col;
@@ -1632,7 +1650,7 @@ function renderShelves() {
   const fresh = GAMES.filter(g => g.badge === 'NEW').slice(0, 12);
   if (fresh.length) box.append(shelf('shelf-new', 'New & updated', fresh, 0, { rail: true, note: 'Just landed' }));
   CATEGORIES.forEach(c => {
-    let list = GAMES.filter(g => g.category === c);
+    let list = GAMES.filter(g => inTopic(g, c));
     if (STATS) list = list.sort((a, b) => pos.get(a.id) - pos.get(b.id));   // most played first
     if (!list.length) return;
     const s = shelf('shelf-' + c.toLowerCase(), TOPICS[c][0] + ' ' + c, list.slice(0, 10), 0, { rail: true, note: list.length > 10 ? 'See all ' + list.length + ' ›' : list.length + ' games' });
