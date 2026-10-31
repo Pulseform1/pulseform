@@ -1710,7 +1710,7 @@ function route() {
   $('hero').hidden = !!tm; document.querySelector('.home-top').hidden = !!tm;
   renderChips(); renderShelves(); heroGo(heroIdx);
   document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.t === (tm ? 'topics' : 'home')));
-  if (tm) { requestAnimationFrame(() => $('shelves').scrollIntoView({ block: 'start' })); return; }
+  if (tm) { requestAnimationFrame(() => window.scrollTo(0, $('shelves').getBoundingClientRect().top + window.scrollY - 100)); return; }
   if (lastShelf && $(lastShelf)) { const s = $(lastShelf); lastShelf = null; requestAnimationFrame(() => s.scrollIntoView({ block: 'start' })); }
   else window.scrollTo(0, 0);
 }
