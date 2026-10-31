@@ -294,6 +294,55 @@
   .modal .stat span { color: var(--muted); }
   .acct-btn .nm { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
   @media (max-width: 560px) { .acct-btn .nm { display: none; } }
+  /* ---------- finder: the first thing on the home page, so people can see everything we have ---------- */
+  .finder { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 22px; margin: 18px 0 30px; }
+  .finder-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .finder h1 { font-family: var(--display); font-size: clamp(28px, 4.4vw, 46px); line-height: 1.05; margin: 0; text-transform: uppercase; }
+  .finder h1 span { color: var(--lime); text-shadow: 0 0 22px rgba(198,255,61,.35); }
+  .finder .sub { margin: -6px 0 0; color: var(--muted); font-weight: 600; font-size: 17px; }
+  .big-search { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 2px solid var(--edge); border-radius: 14px; padding: 14px 18px; cursor: text; }
+  .big-search:focus-within { border-color: var(--lime); box-shadow: 0 0 0 4px rgba(198,255,61,.14); }
+  .big-search svg circle, .big-search svg path { stroke: var(--lime); }
+  .big-search input { border: 0; background: transparent; outline: none; width: 100%; font-size: 20px; font-weight: 700; min-width: 0; }
+  .big-search input::placeholder { color: var(--muted); font-weight: 600; }
+  .try { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-weight: 700; font-size: 14px; }
+  .try button { border: 1px solid var(--edge); background: var(--bg2); border-radius: 999px; padding: 6px 13px; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .try button:hover { border-color: var(--lime); color: var(--lime); }
+  .topics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .topic { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; min-height: 104px; padding: 14px 14px 12px;
+    border: 2px solid color-mix(in srgb, var(--c) 45%, transparent); border-radius: 14px; cursor: pointer;
+    background: linear-gradient(150deg, color-mix(in srgb, var(--c) 30%, var(--panel)) 0%, var(--panel) 70%); transition: transform .15s, border-color .15s, box-shadow .15s; }
+  .topic:hover, .topic.on { transform: translateY(-3px); border-color: var(--c); box-shadow: 0 10px 26px -10px var(--c); }
+  .topic .em { font-size: 30px; line-height: 1; filter: drop-shadow(0 3px 6px rgba(0,0,0,.4)); }
+  .topic b { font-family: var(--display); font-size: 19px; text-transform: uppercase; letter-spacing: .02em; margin-top: 6px; }
+  .topic small { color: var(--muted); font-weight: 700; font-size: 13px; }
+  .topic .n { position: absolute; top: 10px; right: 10px; background: var(--c); color: #0a0c12; font-weight: 800; font-size: 13px; border-radius: 999px; padding: 2px 9px; }
+  .daily { display: flex; flex-direction: column; border: 2px solid rgba(255,210,63,.55); border-radius: 18px; overflow: hidden; background: var(--panel); box-shadow: 0 16px 40px -18px rgba(255,210,63,.45); }
+  .daily .lab { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; font-family: var(--display); font-weight: 700; text-transform: uppercase; color: #ffd23f; letter-spacing: .04em; }
+  .daily img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; cursor: pointer; }
+  .daily .dn { padding: 12px 16px 4px; font-family: var(--display); font-weight: 700; font-size: 22px; text-transform: uppercase; }
+  .daily .dp { padding: 0 16px; color: var(--muted); font-weight: 600; font-size: 15px; min-height: 40px; }
+  .daily .go { margin: 12px 16px 16px; border: 0; border-radius: 12px; background: #ffd23f; color: #141414; font-family: var(--display); font-weight: 700; font-size: 26px; padding: 12px; cursor: pointer; box-shadow: 0 5px 0 #b8901a; }
+  .daily .go:active { transform: translateY(3px); box-shadow: 0 2px 0 #b8901a; }
+  .found-note { color: var(--muted); font-weight: 700; margin: -8px 0 0; }
+  .found-note b { color: var(--lime); }
+  .topic-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+  .topic-head .em { font-size: 44px; }
+  .topic-head h2 { font-family: var(--display); font-size: clamp(30px, 4vw, 44px); margin: 0; text-transform: uppercase; }
+  .topic-head p { margin: 0; color: var(--muted); font-weight: 700; }
+  @media (max-width: 980px) { .finder { grid-template-columns: 1fr; } .daily { display: grid; grid-template-columns: 130px 1fr; } .daily .lab { grid-column: 1 / -1; } .daily img { grid-row: span 3; } .daily .go { font-size: 21px; } }
+  @media (max-width: 760px) { .topics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } .topic { min-height: 0; padding: 10px 10px 9px; align-items: center; text-align: center; } .topic .em { font-size: 24px; } .topic b { font-size: 14px; margin-top: 4px; } .topic small { display: none; } .topic .n { top: 6px; right: 6px; font-size: 11px; padding: 1px 7px; } .big-search { padding: 12px 14px; } .big-search input { font-size: 17px; } .finder { margin-top: 10px; } }
+  @media (max-width: 700px) { .top .search { display: none; } }
+  /* ---------- phone bottom bar ---------- */
+  .tabbar { display: none; }
+  @media (max-width: 700px) {
+    body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)); }
+    .tabbar { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+      background: rgba(10,12,18,.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--edge); }
+    .tabbar button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 2px; font-weight: 800; font-size: 12px; color: var(--muted); padding: 6px 0; cursor: pointer; }
+    .tabbar button .i { font-size: 22px; line-height: 1; }
+    .tabbar button.on { color: var(--lime); }
+  }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 
@@ -310,6 +359,19 @@
 
   <!-- HOME: categories of interactive activities -->
   <main id="home" class="home">
+    <section class="finder" id="finder" aria-label="Find a game">
+      <div class="finder-main">
+        <h1>What do you want to <span>play?</span></h1>
+        <p class="sub" id="finderSub"></p>
+        <label class="big-search" for="q2">
+          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke-width="2.5"/><path d="M15.5 15.5 21 21" stroke-width="2.5" stroke-linecap="round"/></svg>
+          <input id="q2" type="search" placeholder="Try football, scary, 2 player, cars..." autocomplete="off" aria-label="Search games">
+        </label>
+        <div class="try" id="tryRow"></div>
+        <div class="topics" id="topics"></div>
+      </div>
+      <aside class="daily" id="daily" aria-label="Game of the day"></aside>
+    </section>
     <section class="hero" id="hero" aria-roledescription="carousel" aria-label="Featured games"></section>
     <div class="home-top">
       <p class="pulse-line" id="pulseLine" hidden></p>
@@ -371,6 +433,12 @@
   <footer><span><b>PULSEBOX</b> · Interactive activities for timing, strategy, and problem-solving.</span><span>Works on phones, tablets, and computers.</span></footer>
 </div>
 
+<nav class="tabbar" id="tabbar" aria-label="Main">
+  <button type="button" data-t="home" class="on"><span class="i">🏠</span>Home</button>
+  <button type="button" data-t="topics"><span class="i">🗂️</span>Topics</button>
+  <button type="button" data-t="search"><span class="i">🔍</span>Search</button>
+  <button type="button" data-t="saved"><span class="i">❤️</span>Saved</button>
+</nav>
 <div class="lightbox" id="lightbox" hidden><img id="lbImg" alt=""></div>
 
 <script>
@@ -1188,6 +1256,25 @@ const GAMES = [
 ];
 /* The order shelves appear in. A shelf with no games shows "Coming soon" covers. */
 const CATEGORIES = ['Co-op', 'Action', 'Horror', 'Strategy', 'Sports', 'Arcade', 'Puzzle', 'Racing', 'Idle'];
+// the big topic tiles at the top of the home page: icon, colour, one-line description
+const TOPICS = {
+  'Co-op': ['🤝', '#29e0ff', 'Play with friends'], Action: ['⚔️', '#ff5a3a', 'Fight and survive'], Horror: ['👻', '#a56bff', 'Scary games'],
+  Strategy: ['🧠', '#ffd23f', 'Plan and build'], Sports: ['🏈', '#3aff8a', 'Football, soccer, more'], Arcade: ['🕹️', '#ff2e88', 'Quick classics'],
+  Puzzle: ['🧩', '#5ab0ff', 'Think it through'], Racing: ['🏎️', '#ff9f1c', 'Fast cars'], Idle: ['⏳', '#c6ff3d', 'Tap and grow'], All: ['🎮', '#eef1f8', 'Every game, A to Z']
+};
+// what people type, and what we actually call it: "retro bowl" finds the football games, "scary" finds horror
+const SYN = {
+  'retro bowl': ['football', 'sports'], football: ['football', 'touchdown', 'sports'], nfl: ['football'], soccer: ['soccer', 'penalty', 'goal'], basketball: ['basket', 'hoop', 'dunk'],
+  basket: ['basket', 'hoop'], sport: ['sports'], scary: ['horror'], spooky: ['horror'], creepy: ['horror'], ghost: ['horror', 'ghost'], fnaf: ['horror', 'night'], horror: ['horror'],
+  'two player': ['co-op', 'online', 'player', 'versus', 'friends'], '2 player': ['co-op', 'online', 'player', 'versus', 'friends'], multiplayer: ['co-op', 'online', 'friends'],
+  friends: ['co-op', 'online', 'friends'], online: ['online', 'co-op'], coop: ['co-op'], car: ['racing', 'car', 'drive'], cars: ['racing', 'car', 'drive'], race: ['racing', 'race'],
+  driving: ['racing', 'drive'], shooter: ['shoot', 'action'], shooting: ['shoot', 'action'], gun: ['shoot', 'action'], fight: ['fight', 'brawl', 'action'], fighting: ['fight', 'brawl', 'action'],
+  relaxing: ['idle', 'puzzle', 'relax'], chill: ['idle', 'puzzle'], clicker: ['idle', 'clicker'], tycoon: ['idle', 'strategy', 'empire'], money: ['idle', 'empire', 'cash'],
+  minecraft: ['build', 'dig', 'craft'], terraria: ['build', 'dig', 'craft'], build: ['build', 'craft'], snake: ['serpent', 'snake'], tetris: ['blocks', 'puzzle', 'cubes'],
+  blocks: ['block', 'cubes', 'puzzle'], war: ['strategy', 'war', 'tank'], tank: ['tank'], space: ['space', 'orbit', 'colony'], plane: ['plane', 'ace', 'sky'], easy: ['arcade', 'idle', 'puzzle'],
+  quick: ['arcade'], rpg: ['rpg', 'strategy'], drawing: ['draw', 'doodle', 'paint'], draw: ['draw', 'doodle']
+};
+const TRY = ['football', 'scary', '2 player', 'cars', 'puzzle', 'idle'];
 
 /* ============================================================
    SAVED STUFF (this browser only)
@@ -1200,7 +1287,7 @@ let favs = store.get('favs', []);
 let recent = store.get('recent', []);
 const $ = id => document.getElementById(id);
 const byId = id => GAMES.find(g => g.id === id);
-let query = '', current = null;
+let query = '', current = null, topic = '';
 
 /* ============================================================
    PLAY STATS: /api/stats says what people actually play.
@@ -1365,7 +1452,7 @@ function renderChips() {
   if (recent.some(byId)) cats.push(['Keep playing', 'shelf-recent']);
   if (favs.some(byId)) cats.push(['Favorites', 'shelf-favs']);
   cats.push(['New', 'shelf-new']);
-  CATEGORIES.forEach(c => cats.push([c, 'shelf-' + c.toLowerCase()]));
+  CATEGORIES.forEach(c => cats.push([TOPICS[c][0] + ' ' + c, 'shelf-' + c.toLowerCase()]));
   cats.forEach(([label, target, cls]) => {
     const b = document.createElement('button'); b.className = 'chip' + (cls ? ' ' + cls : ''); b.textContent = label; b.type = 'button';
     b.addEventListener('click', () => { if (query) { query = ''; $('q').value = ''; renderShelves(); } const s = $(target); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
@@ -1388,29 +1475,108 @@ function shelf(id, title, games, soon, o = {}) {
   }
   return s;
 }
+// search: every word counts, synonyms widen it, and the title outweighs the description
+function searchGames(raw) {
+  const q = raw.trim().toLowerCase().replace(/\s+/g, ' '); if (!q) return { list: [], terms: [] };
+  let terms = [q], rest = q;
+  for (const k of Object.keys(SYN).sort((a, b) => b.length - a.length)) if (rest.includes(k)) { terms.push(...SYN[k]); rest = rest.replace(k, ' '); }
+  terms.push(...rest.split(' ').filter(w => w.length > 2));
+  terms = [...new Set(terms)];
+  const scored = GAMES.map(g => {
+    const title = g.title.toLowerCase(), meta = (g.kind + ' ' + g.tags.join(' ') + ' ' + g.category).toLowerCase(), text = (g.pitch + ' ' + g.blurb).toLowerCase();
+    let sc = 0; for (const t of terms) { if (title.includes(t)) sc += 6; if (meta.includes(t)) sc += 3; if (text.includes(t)) sc += 1; }
+    return [g, sc];
+  }).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
+  return { list: scored.map(x => x[0]), terms: terms.slice(1) };
+}
+const played = () => new Set(recent);
+// "picked for you": weigh the topics and tags of what you have played and saved, and suggest what you haven't tried
+function recommend(n = 12) {
+  const w = {}, add = (k, v) => w[k] = (w[k] || 0) + v;
+  recent.map(byId).filter(Boolean).forEach((g, i) => { add(g.category, 3 - Math.min(2, i * .2)); g.tags.forEach(t => add(t, 1)); });
+  favs.map(byId).filter(Boolean).forEach(g => { add(g.category, 4); g.tags.forEach(t => add(t, 1.5)); });
+  if (!Object.keys(w).length) return null;
+  const seen = played(), order = ranked(), pos = new Map(order.map((g, i) => [g.id, i]));
+  return GAMES.filter(g => !seen.has(g.id)).map(g => [g, (w[g.category] || 0) * 2 + g.tags.reduce((a, t) => a + (w[t] || 0), 0) - pos.get(g.id) * .05])
+    .sort((a, b) => b[1] - a[1]).slice(0, n).map(x => x[0]);
+}
+// a different handful each day from the games you haven't played yet
+function dayRand(seed) { let x = seed; return () => (x = (x * 16807) % 2147483647) / 2147483647; }
+const dayNo = () => Math.floor(Date.now() / 864e5);
+function untried(n = 12) {
+  const seen = played(), r = dayRand(dayNo() + 7), pool = GAMES.filter(g => !seen.has(g.id)).map(g => [g, r()]);
+  return pool.sort((a, b) => a[1] - b[1]).slice(0, n).map(x => x[0]);
+}
+function dailyGame() { const pool = [...new Set([...CURATED.map(byId), ...ranked().slice(0, 12)])].filter(Boolean); return pool[dayNo() % pool.length]; }
+function renderFinder() {
+  $('finderSub').textContent = GAMES.length + ' free games. No downloads. Pick a topic or just type what you feel like playing.';
+  const tr = $('tryRow'); tr.innerHTML = '<span>Popular:</span>';
+  TRY.forEach(t => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.addEventListener('click', () => setQuery(t, true)); tr.append(b); });
+  const tp = $('topics'); tp.innerHTML = '';
+  [...CATEGORIES, 'All'].forEach(c => {
+    const [em, col, sub] = TOPICS[c], n = c === 'All' ? GAMES.length : GAMES.filter(g => g.category === c).length;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'topic' + (topic === c ? ' on' : ''); b.style.setProperty('--c', col);
+    b.innerHTML = '<span class="n"></span><span class="em"></span><b></b><small></small>';
+    b.querySelector('.n').textContent = n; b.querySelector('.em').textContent = em; b.querySelector('b').textContent = c === 'All' ? 'All games' : c; b.querySelector('small').textContent = sub;
+    b.setAttribute('aria-label', (c === 'All' ? 'All games' : c) + ', ' + n + ' games');
+    b.addEventListener('click', () => go('#t-' + c.toLowerCase()));
+    tp.append(b);
+  });
+  const g = dailyGame(), d = $('daily'); if (!g) { d.hidden = true; return; }
+  d.innerHTML = '<div class="lab"><span>⭐ Game of the day</span><span></span></div><img alt=""><div class="dn"></div><div class="dp"></div><button class="go" type="button">PLAY</button>';
+  d.querySelector('img').src = g.cover; d.querySelector('.dn').textContent = g.title; d.querySelector('.dp').textContent = g.pitch;
+  d.querySelector('.lab span:last-child').textContent = g.category;
+  d.querySelector('img').addEventListener('click', () => go('#' + g.id)); d.querySelector('.go').addEventListener('click', () => go('#play-' + g.id));
+}
+function setQuery(v, scroll) {
+  query = v; $('q').value = v; $('q2').value = v; topic = '';
+  if ($('home').hidden || location.hash) go(''); else renderShelves();
+  if (scroll) requestAnimationFrame(() => $('shelves').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+}
 function renderShelves() {
   const box = $('shelves'); box.innerHTML = '';
-  const q = query.trim().toLowerCase();
+  document.querySelectorAll('.topic').forEach(b => b.classList.toggle('on', b.getAttribute('aria-label').startsWith((topic === 'All' ? 'All games' : topic) + ',')));
+  const q = query.trim();
   if (q) {
-    const found = GAMES.filter(g => (g.title + ' ' + g.kind + ' ' + g.tags.join(' ') + ' ' + g.category).toLowerCase().includes(q));
-    const s = shelf('shelf-search', 'Search results', found, 0);
-    if (!found.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No games match "' + query.trim() + '" yet. Try another word.'; s.querySelector('.icons').append(e); }
+    const { list, terms } = searchGames(q), s = shelf('shelf-search', 'Results for "' + q + '"', list, 0);
+    if (terms.length) { const p = document.createElement('p'); p.className = 'found-note'; p.innerHTML = 'Also looking for: <b></b>'; p.querySelector('b').textContent = terms.slice(0, 5).join(', '); s.querySelector('.shelf-head').after(p); }
+    if (!list.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'Nothing matches "' + q + '" yet. Try a topic above, or one of the popular searches.'; s.querySelector('.icons').append(e); }
     box.append(s); return;
   }
   const order = ranked(), pos = new Map(order.map((g, i) => [g.id, i]));
+  if (topic) {
+    const all = topic === 'All', list = all ? GAMES.slice().sort((a, b) => a.title.localeCompare(b.title)) : GAMES.filter(g => g.category === topic).sort((a, b) => pos.get(a.id) - pos.get(b.id));
+    const [em, col] = TOPICS[topic], head = document.createElement('div'); head.className = 'topic-head'; head.id = 'shelf-topic';
+    head.innerHTML = '<span class="em"></span><div><h2></h2><p></p></div><button class="btn" type="button">‹ All topics</button>';
+    head.querySelector('.em').textContent = em; head.querySelector('h2').textContent = all ? 'All games' : topic; head.querySelector('h2').style.color = col;
+    head.querySelector('p').textContent = list.length + ' games' + (all ? ', A to Z' : ', most played first');
+    head.querySelector('button').addEventListener('click', () => go(''));
+    box.append(head);
+    const grid = document.createElement('div'); grid.className = 'icons'; list.forEach((g, i) => grid.append(appTile(g, i))); box.append(grid);
+    return;
+  }
+  const rec = recommend();
+  box.append(shelf('shelf-foryou', rec ? '✨ Picked for you' : '✨ Start here', rec || ranked().slice(0, 12), 0, { rail: true, note: rec ? 'Based on what you play' : 'Our most loved games' }));
   box.append(shelf('shelf-trending', '🔥 Trending now', order.slice(0, 10), 0, { rail: true, ranks: !!STATS, cls: 'trend', note: STATS ? 'Most played this week' : 'Players love these' }));
   const r = recent.map(byId).filter(Boolean), f = favs.map(byId).filter(Boolean);
   if (r.length) box.append(shelf('shelf-recent', 'Keep playing', r, 0, { rail: true }));
   if (f.length) box.append(shelf('shelf-favs', 'Your favorites', f, 0, { rail: true }));
+  const un = untried(); if (un.length) box.append(shelf('shelf-untried', '🎲 You haven\'t tried these', un, 0, { rail: true, note: 'New picks every day' }));
   const fresh = GAMES.filter(g => g.badge === 'NEW').slice(0, 12);
   if (fresh.length) box.append(shelf('shelf-new', 'New & updated', fresh, 0, { rail: true, note: 'Just landed' }));
   CATEGORIES.forEach(c => {
     let list = GAMES.filter(g => g.category === c);
     if (STATS) list = list.sort((a, b) => pos.get(a.id) - pos.get(b.id));   // most played first
-    box.append(shelf('shelf-' + c.toLowerCase(), c, list, list.length ? 1 : 3));
+    if (!list.length) return;
+    const s = shelf('shelf-' + c.toLowerCase(), TOPICS[c][0] + ' ' + c, list.slice(0, 10), 0, { rail: true, note: list.length > 10 ? 'See all ' + list.length + ' ›' : list.length + ' games' });
+    if (list.length > 10) { const n = s.querySelector('.sh-right > span'); n.style.cursor = 'pointer'; n.style.color = 'var(--lime)'; n.addEventListener('click', () => go('#t-' + c.toLowerCase())); }
+    box.append(s);
   });
+  const all = document.createElement('div'); all.style.cssText = 'display:flex;justify-content:center;margin:34px 0 10px';
+  all.innerHTML = '<button class="play-btn" type="button">🎮 See all ' + GAMES.length + ' games</button>'; all.querySelector('button').addEventListener('click', () => go('#t-all'));
+  box.append(all);
 }
-function renderHome() { renderHero(); renderChips(); renderShelves(); }
+function renderHome() { renderFinder(); renderHero(); renderChips(); renderShelves(); }
 
 /* ============================================================
    GAME PAGE
@@ -1505,7 +1671,12 @@ function route() {
     show('detail'); showDetail(byId(h), prevView === 'playing'); lastShelf = 'shelf-' + byId(h).category.toLowerCase(); window.scrollTo(0, 0); return;
   }
   show('home'); current = null;
+  const tm = h.indexOf('t-') === 0 && [...CATEGORIES, 'All'].find(c => c.toLowerCase() === h.slice(2));
+  topic = tm || ''; if (tm) { query = ''; $('q').value = ''; $('q2').value = ''; }
+  $('hero').hidden = !!tm; document.querySelector('.home-top').hidden = !!tm;
   renderChips(); renderShelves(); heroGo(heroIdx);
+  document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.t === (tm ? 'topics' : 'home')));
+  if (tm) { requestAnimationFrame(() => $('shelves').scrollIntoView({ block: 'start' })); return; }
   if (lastShelf && $(lastShelf)) { const s = $(lastShelf); lastShelf = null; requestAnimationFrame(() => s.scrollIntoView({ block: 'start' })); }
   else window.scrollTo(0, 0);
 }
@@ -1523,8 +1694,17 @@ $('dFav').addEventListener('click', () => {
   favs = favs.includes(current.id) ? favs.filter(x => x !== current.id) : [current.id, ...favs];
   store.set('favs', favs); syncFav();
 });
-$('logo').addEventListener('click', () => { query = ''; $('q').value = ''; lastShelf = null; go(''); });
-$('q').addEventListener('input', e => { query = e.target.value; if ($('home').hidden) go(''); else renderShelves(); });
+$('logo').addEventListener('click', () => { query = ''; $('q').value = ''; $('q2').value = ''; lastShelf = null; go(''); });
+$('q').addEventListener('input', e => setQuery(e.target.value));
+$('q2').addEventListener('input', e => setQuery(e.target.value));
+$('q2').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('q2').blur(); $('shelves').scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+$('tabbar').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return; const t = b.dataset.t;
+  if (t === 'home') { query = ''; $('q').value = ''; $('q2').value = ''; go(''); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  if (t === 'topics') { if (location.hash) go(''); requestAnimationFrame(() => $('topics').scrollIntoView({ behavior: 'smooth', block: 'center' })); }
+  if (t === 'search') { if (location.hash) go(''); requestAnimationFrame(() => { $('finder').scrollIntoView({ block: 'start' }); $('q2').focus(); }); }
+  if (t === 'saved') { if (location.hash) go(''); requestAnimationFrame(() => { const s = $('shelf-favs') || $('shelf-recent'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); else { setQuery(''); alert('Tap the heart on any game to save it here.'); } }); }
+});
 $('pFull').addEventListener('click', () => {
   const st = $('stage'), req = st.requestFullscreen || st.webkitRequestFullscreen;
   const fail = () => { $('pFull').textContent = 'Full screen not available here'; };
@@ -1538,7 +1718,7 @@ window.addEventListener('resize', sizeStage);
 window.addEventListener('popstate', route);
 window.addEventListener('hashchange', route);
 
-renderHero();
+renderFinder(); renderHero();
 route();
 loadStats();
 </script>
