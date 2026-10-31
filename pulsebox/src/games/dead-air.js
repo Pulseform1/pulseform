@@ -219,6 +219,10 @@ const GAME = {
     WT.locker = mk((x, y) => { const n = N.f(x, y), lx = x & 31; let c = mul([70, 96, 140], .8 + (n - .5) * .2); if (lx < 2) c = mul(c, .4); if (y > 10 && y < 30 && lx > 8 && lx < 24 && y % 4 < 2) c = mul(c, .45); if (lx > 24 && lx < 28 && y > 56 && y < 72) c = [170, 170, 170]; if (y > 118) c = mul(c, .4); return c; });
     WT.door = mk((x, y) => { const n = N.f(x, y); let c = mul([78, 44, 30], .8 + (n - .5) * .3 + Math.sin(y * .5 + n * 7) * .04); if (x < 8 || x > 119) c = mul([200, 196, 186], .7 + n * .2); if (y > 66 && y < 116 && ((x > 26 && x < 60) || (x > 68 && x < 102)) && !(y > 70 && y < 112 && ((x > 30 && x < 56) || (x > 72 && x < 98)))) c = mul(c, 1.25); if (y > 14 && y < 54 && x > 30 && x < 98) c = mul(c, .7); if (x > 100 && x < 106 && y > 70 && y < 78) c = [190, 160, 90]; return c; });
     WT.breaker = mk((x, y) => { const c = WT.paperA[y * TX + x], base = [c & 255, (c >> 8) & 255, (c >> 16) & 255]; if (x < 36 || x > 92 || y < 24 || y > 96) return base; if (x < 39 || x > 89 || y < 27 || y > 93) return [40, 40, 44]; const n = N.f(x, y); let k = mul([120, 124, 128], .8 + n * .3); if ((y - 34) % 10 < 5 && y > 32 && y < 86 && (Math.abs(x - 52) < 7 || Math.abs(x - 76) < 7)) k = [30, 30, 32]; if (y > 86 && x > 58 && x < 70) { const g = [255, 60, 40]; g.g = 1; return g; } return k; });
+    WT.vanOut = mk((x, y) => { const n = N.f(x, y); let c = mul([214, 214, 206], .82 + (n - .5) * .12); if (y > 56 && y < 66) c = [36, 84, 64]; if (y > 110) c = mul([40, 40, 42], 1); if ((x & 63) < 1) c = mul(c, .7); return c; });
+    WT.vanIn = mk((x, y) => { const n = N.f(x, y); let c = mul([150, 154, 156], .8 + (n - .5) * .15); if ((y & 31) < 2) c = mul(c, .7); if ((x & 31) === 0) c = mul(c, .8); if (y > 116) c = mul([60, 62, 64], 1); return c; });
+    WT.vanFloor = mk((x, y) => { const n = N.f(x * 2, y * 2); let c = mul([70, 72, 76], .7 + n * .4); if ((x + y) % 12 < 2 || (x - y + 128) % 12 < 2) c = mul(c, 1.25); return c; });
+    WT.rack = [0, 1, 2].map(() => new Uint32Array(TX * TX)); WT.mon = [0, 1, 2].map(() => new Uint32Array(TX * TX)); WT.panel = new Uint32Array(TX * TX);
     const plank = Array.from({ length: 16 }, () => R() * 128);
     WT.wood = mk((x, y) => { const n = N.f(x, y), st = N2.f(x * .7, y * .7), row = y >> 4, ly = y & 15, seam = ((x + plank[row]) & 127) < 2; let c = mul(row & 1 ? [104, 72, 46] : [92, 64, 40], .8 + Math.sin((x + plank[row]) * .3 + n * 9) * .08 + (n - .5) * .3); if (ly < 1 || seam) c = mul(c, .35); if (st > .7) c = mix(c, [40, 30, 20], (st - .7) * 2.5); return c; });
     WT.tileF = mk((x, y) => { const n = N.f(x, y), lx = x & 31, ly = y & 31, chk = ((x >> 5) + (y >> 5)) & 1; let c = mul(chk ? [168, 166, 156] : [52, 52, 58], .84 + (n - .5) * .3); if (lx < 1 || ly < 1) c = mul(c, .6); return c; });
@@ -252,6 +256,12 @@ const GAME = {
     MAT.steps = { f: m64((x, y) => mul([90, 62, 40], .8 + (N3.f(x, y) - .5) * .3 - (y > 56 ? .3 : 0))), t: m64(grain([120, 84, 52])) };
   }
 
+  const texCv = document.createElement('canvas'); texCv.width = texCv.height = 128; const texG = texCv.getContext('2d');
+  function canvasTex(dest, draw, gx0 = 999, gy0 = 999, gx1 = -1, gy1 = -1) {
+    texG.setTransform(1, 0, 0, 1, 0, 0); texG.clearRect(0, 0, 128, 128); draw(texG);
+    const d = texG.getImageData(0, 0, 128, 128).data;
+    for (let i = 0, y = 0; y < 128; y++) for (let x = 0; x < 128; x++, i += 4) dest[y * 128 + x] = (x >= gx0 && x <= gx1 && y >= gy0 && y <= gy1) ? packG(d[i], d[i + 1], d[i + 2]) : pack(d[i], d[i + 1], d[i + 2]);
+  }
   /* ---------- sprites ---------- */
   const SPR = {}, friendTex = [], COLS = ['#5aa0ff', '#ff7a5a', '#6ad08a', '#e8c040'];
   function buildSprites() {
@@ -346,15 +356,15 @@ const GAME = {
   };
 
   /* ---------- the map: one grid, floors side by side ---------- */
-  const MAPS = [{"id":"cottage","n":"Willow Cottage","addr":"9 Willow Lane","lvl":1,"floors":[["FFFFFFFFFFFFFFFFFFFFFFFF","F,,,,,,,,,,,,,,,,,,,,,,F","F,,XXWXXXXWXXXXWXXWXX,,F","F,,X....C#...#......X,,F","F,,W.....#...#......W,,F","F,,X.....#...T......X,,F","F,,X.....#...#.....CX,,F","F,,X##.####.####.###X,,F","F,,X................X,,F","F,,X###.######.###.#X,,F","F,,X.......#.....#..X,,F","F,,W.......#.....B..W,,F","F,,X.......#.....#..X,,F","F,,XWXXDXXXXXXWXXXXXX,,F","F,,,,,,:,,,,,,,,,,,,,,,F","F,,,,,,:,,,,,,,,,,,,,,,F","F,,,,,,:,,,,,,,,,,,,,,,F","F,,,,,,:,,,,,,,,,,,,,,,F","F::::::::::::::::::::::F","F======================F","F======================F","F======================F","F======================F","FFFFFFFFFFFFFFFFFFFFFFFF"]],"rooms":[[{"n":"Bedroom","x":4,"y":3,"w":5,"h":4,"fl":"wood","tile":0},{"n":"Bathroom","x":10,"y":3,"w":3,"h":4,"fl":"tile","tile":1},{"n":"Kid's Room","x":14,"y":3,"w":6,"h":4,"fl":"carpet","tile":0},{"n":"Hallway","x":4,"y":8,"w":16,"h":1,"fl":"wood","tile":0},{"n":"Living Room","x":4,"y":10,"w":7,"h":3,"fl":"carpet","tile":0},{"n":"Kitchen","x":12,"y":10,"w":5,"h":3,"fl":"tile","tile":1},{"n":"Utility Room","x":18,"y":10,"w":2,"h":3,"fl":"lino","tile":0}]],"furn":[[["bed",4.1,3.1,0],["nightstand",6.1,3.1,0],["dresser",4.1,6.1,2],["toilet",12.2,3.1,0],["tub",10.05,5.0,3],["sink",12.4,5.6,1],["kidbed",18.2,3.1,0],["desk",14.1,3.1,0],["toybox",16.2,6.2,2],["bookshelf",19.4,5.2,1],["sofa",4.1,10.1,0],["coffee",5.2,11.3,0],["tv",9.5,10.6,1],["armchair",9.2,12.2,2],["counter",12.05,10.05,0,4],["fridge",16.2,10.05,0],["table",13.6,11.6,0],["washer",18.1,12.2,2],["shelf",19.4,10.1,1],["cabinet",15.5,8.15,0],["rug",5.0,10.9,0,2.6],["rug",4.8,4.6,0,1.6],["rug",15.0,4.2,0,2.0],["lamp",7.1,10.1,0],["plant",10.3,12.4,0],["lamp",14.1,5.9,0],["van",3.0,20.0,0]]],"spawn":[5.5,21.5,-1.57],"van":[4.0,20.0]},{"id":"hollis","n":"Hollis House","addr":"41 Hollis Road","lvl":2,"floors":[["FFFFFFFFFFFFFFFFFFFFFFFFFF","F,,,,,,,,,,,,,,,,,,,,,,,,F","F,,XXWXXWXXXXWXXWXXXXXX,,F","F,,X......#.......#...X,,F","F,,X......#.......#...W,,F","F,,W..................X,,F","F,,X......#.......#...X,,F","F,,X......#.......###BX,,F","F,,X##.######.#####...X,,F","F,,X......#...........W,,F","F,,X......##.#S##.##.#X,,F","F,,W......#....#......X,,F","F,,X..................W,,F","F,,X......#....#......X,,F","F,,X......#....#......X,,F","F,,XXXWXXXXXDXXXXWXXWXX,,F","F,,,,,,,,,,,:,,,,,,,,,,,,F","F,,,,,,,,,,,:,,,,,,,,,,,,F","F,,,,,,,,,,,:,,,,,,,,,,,,F","F,,,,,,,,,,,:,,,,,,,,,,,,F","F::::::::::::::::::::::::F","F========================F","F========================F","F========================F","F========================F","FFFFFFFFFFFFFFFFFFFFFFFFFF"],["                          ","                          ","   XXWXXWXXXXWXXXXWXXXX   ","   X......#....#......X   ","   X......#....#......X   ","   W......#....#......W   ","   X...........#......X   ","   X......#....#......X   ","   X......##.#####.###X   ","   XC######.......####X   ","   X..........S...####X   ","   X......###.#####.#CX   ","   W............#.....X   ","   X......#.....#.....W   ","   X......#.....#.....X   ","   XXXWXXXXXXWXXXXXWXXX   ","                          ","                          ","                          ","                          ","                          ","                          ","                          ","                          ","                          ","                          "]],"rooms":[[{"n":"Entry Hall","x":11,"y":11,"w":4,"h":4,"fl":"wood","tile":0},{"n":"Living Room","x":4,"y":9,"w":6,"h":6,"fl":"carpet","tile":0},{"n":"Dining Room","x":4,"y":3,"w":6,"h":5,"fl":"wood","tile":0},{"n":"Kitchen","x":11,"y":3,"w":7,"h":5,"fl":"tile","tile":1},{"n":"Laundry","x":19,"y":3,"w":3,"h":4,"fl":"lino","tile":0},{"n":"Half Bath","x":19,"y":8,"w":3,"h":3,"fl":"tile","tile":1},{"n":"Den","x":16,"y":11,"w":6,"h":4,"fl":"carpet","tile":0},{"n":"Back Hall","x":11,"y":9,"w":7,"h":1,"fl":"wood","tile":0}],[{"n":"Upstairs Hall","x":11,"y":9,"w":7,"h":2,"fl":"wood","tile":0},{"n":"Master Bedroom","x":4,"y":3,"w":6,"h":6,"fl":"carpet","tile":0},{"n":"Bathroom","x":11,"y":3,"w":4,"h":5,"fl":"tile","tile":1},{"n":"Nursery","x":16,"y":3,"w":6,"h":5,"fl":"carpet","tile":0},{"n":"Girl's Room","x":4,"y":10,"w":6,"h":5,"fl":"carpet","tile":0},{"n":"Study","x":11,"y":12,"w":5,"h":3,"fl":"wood","tile":0},{"n":"Guest Room","x":17,"y":12,"w":5,"h":3,"fl":"carpet","tile":0}]],"furn":[[["table",5.2,4.4,0,2],["chair",5.0,3.6,0],["chair",7.8,3.6,0],["chair",5.0,6.4,2],["chair",7.8,6.4,2],["cabinet",9.4,3.1,1],["counter",11.05,3.05,0,5],["fridge",17.0,3.05,1],["island",13.0,5.4,0],["counter",11.05,7.0,2,2],["washer",19.1,3.1,0],["dryer",20.2,3.1,0],["shelf",21.4,5.0,1],["toilet",21.2,8.2,1],["sink",19.1,8.1,0],["sofa",4.1,12.6,3,2],["coffee",6.0,11.4,0],["tv",8.5,11.0,1],["armchair",5.0,9.2,0],["bookshelf",9.4,13.4,1],["desk",20.1,11.1,0],["chair",20.4,12.0,0],["sofa",16.1,13.6,2],["bookshelf",21.4,13.0,1],["coatrack",11.2,14.4,2],["cabinet",11.1,11.1,0],["rug",11.8,12.4,0,1.6],["rug",5.0,10.5,0,2.2],["rug",5.4,4.0,0,2.6],["lamp",4.2,9.1,0],["plant",9.4,9.1,0],["van",5.0,22.0,0]],[["bed",4.1,3.1,0,2],["nightstand",6.2,3.1,0],["dresser",8.4,3.1,0],["armchair",8.5,7.5,2],["tub",11.05,3.05,0],["toilet",14.0,5.0,1],["sink",12.5,6.9,2],["crib",18.0,3.1,0],["rocker",16.4,6.3,3],["dresser",20.4,6.0,1],["toybox",16.2,3.2,0],["kidbed",4.1,12.6,3],["desk",8.0,14.2,2],["dollhouse",4.4,10.2,0],["desk",11.1,12.1,0],["bookshelf",15.4,12.2,1],["bookshelf",15.4,13.4,1],["bed",19.6,12.1,0],["nightstand",21.3,13.6,1],["rug",5.0,5.4,0,2.6],["rug",17.3,4.2,0,1.8],["rug",5.0,11.5,0,2.0],["lamp",11.2,13.9,0],["plant",17.1,9.1,0]]],"spawn":[7.5,23.5,-1.57],"van":[6.0,22.0]},{"id":"school","n":"Ashgrove Elementary","addr":"Ashgrove Elementary School","lvl":3,"floors":[["FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF","F,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,F","F,,XXWXXWXXWXXWXXWXXWXXWXXWXXWXXWXXXX,,F","F,,X.......#.......#.........#......X,,F","F,,X.......#.......#.........#......X,,F","F,,W.......#.......#.........#......W,,F","F,,X.......#.......#.........#......X,,F","F,,X.......#.......#.........#......X,,F","F,,W.......#.......#.........#......W,,F","F,,X.......#.......#.........#......X,,F","F,,X##L.L#L#L#L.L#L#L#L#.#L#L#L#.#L#X,,F","F,,X................................X,,F","F,,X................................X,,F","F,,X................................X,,F","F,,X#L#L#.#L#L#.###..####L#L#.#L#L##X,,F","F,,X..........#.#......#............X,,F","F,,X..........#.#......#............X,,F","F,,W..........#.#......#............W,,F","F,,X..........#.#...................X,,F","F,,X..........###......#............X,,F","F,,W..........#.#......#............W,,F","F,,X..........#........#............X,,F","F,,X..........#.#......#............X,,F","F,,XXXWXXWXXWXXBXXXDDXXXXXWXXWXXWXXXX,,F","F,,,,,,,,,,,,,,,,,,::,,,,,,,,,,,,,,,,,,F","F,,,,,,,,,,,,,,,,,,::,,,,,,,,,,,,,,,,,,F","F,,,,,,,,,,,,,,,,,,::,,,,,,,,,,,,,,,,,,F","F::::::::::::::::::::::::::::::::::::::F","F======================================F","F======================================F","F======================================F","F======================================F","F======================================F","FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"]],"rooms":[[{"n":"Main Hallway","x":4,"y":11,"w":32,"h":3,"fl":"lino","tile":0},{"n":"Classroom 1","x":4,"y":3,"w":7,"h":7,"fl":"lino","tile":0},{"n":"Classroom 2","x":12,"y":3,"w":7,"h":7,"fl":"lino","tile":0},{"n":"Library","x":20,"y":3,"w":9,"h":7,"fl":"carpet","tile":0},{"n":"Music Room","x":30,"y":3,"w":6,"h":7,"fl":"wood","tile":0},{"n":"Cafeteria","x":4,"y":15,"w":10,"h":8,"fl":"tile","tile":0},{"n":"Entrance","x":17,"y":15,"w":6,"h":8,"fl":"lino","tile":0},{"n":"Gym","x":24,"y":15,"w":12,"h":8,"fl":"wood","tile":0},{"n":"Restroom","x":15,"y":15,"w":1,"h":4,"fl":"tile","tile":1},{"n":"Janitor Closet","x":15,"y":20,"w":1,"h":3,"fl":"lino","tile":0}]],"furn":[[["schooldesk",5.2,5.2,0],["schooldesk",7.0,5.2,0],["schooldesk",8.8,5.2,0],["schooldesk",5.2,6.6,0],["schooldesk",7.0,6.6,0],["schooldesk",8.8,6.6,0],["schooldesk",5.2,8.0,0],["schooldesk",7.0,8.0,0],["schooldesk",8.8,8.0,0],["teacherdesk",6.5,3.2,0],["board",5.0,3.02,0],["schooldesk",13.2,5.2,0],["schooldesk",15.0,5.2,0],["schooldesk",16.8,5.2,0],["schooldesk",13.2,6.6,0],["schooldesk",15.0,6.6,0],["schooldesk",16.8,6.6,0],["schooldesk",13.2,8.0,0],["schooldesk",15.0,8.0,0],["schooldesk",16.8,8.0,0],["teacherdesk",14.5,3.2,0],["board",13.0,3.02,0],["bookshelf",20.3,3.05,0],["bookshelf",22.5,3.05,0],["bookshelf",24.700000000000003,3.05,0],["bookshelf",26.900000000000002,3.05,0],["table",21.0,7.0,0],["table",23.4,7.0,0],["table",25.8,7.0,0],["piano",30.3,3.2,0],["chair",32.5,6.0,0],["chair",34.0,6.0,0],["chair",32.5,7.5,0],["drumkit",34.0,3.4,0],["cafetable",5.0,16.0,0],["cafetable",9.2,16.0,0],["cafetable",5.0,18.4,0],["cafetable",9.2,18.4,0],["cafetable",5.0,20.8,0],["cafetable",9.2,20.8,0],["counter",4.05,21.5,2,4],["bench",24.2,15.1,0,4],["hoop",35.6,18.5,1],["mats",26.0,21.0,0],["cart",33.0,21.4,0],["frontdesk",17.3,16.0,0],["plant",17.2,21.8,0],["plant",22.4,21.8,0],["bench",21.0,18.5,1,2],["toilet",15.1,15.1,0],["shelf",15.2,21.5,2],["van",9.0,29.0,0]]],"spawn":[12.5,30.6,-1.57],"van":[10.0,29.0]}];
-  const WALLV = { '#': 1, 'T': 1, 'C': 3, 'X': 5, 'W': 6, 'F': 7, 'B': 8, 'L': 9, ' ': 10 };
+  const MAPS = [{"id":"cottage","n":"Willow Cottage","addr":"9 Willow Lane","lvl":1,"floors":[["FFFFFFFFFFFFFFFFFFFFFFFF","F,,,,,,,,,,,,,,,,,,,,,,F","F,,XXWXXXXWXXXXWXXWXX,,F","F,,X....C#...#......X,,F","F,,W.....#...#......W,,F","F,,X.....#...T......X,,F","F,,X.....#...#.....CX,,F","F,,X##.####.####.###X,,F","F,,X................X,,F","F,,X###.######.###.#X,,F","F,,X.......#.....#..X,,F","F,,W.......#.....B..W,,F","F,,X.......#.....#..X,,F","F,,XWXXDXXXXXXWXXXXXX,,F","F,,,,,,:,,,,,,,,,,,,,,,F","F,,,,,,:,,,,,,,,,,,,,,,F","F,,,,,,:,,,,,,,,,,,,,,,F","F,,,,,,:,,,,,,,,,,,,,,,F","F::::::::::::::::::::::F","F=VV.VV================F","F=RvvvM================F","F=RvvvM================F","F=VREMV================F","FFFFFFFFFFFFFFFFFFFFFFFF"]],"rooms":[[{"n":"Bedroom","x":4,"y":3,"w":5,"h":4,"fl":"wood","tile":0},{"n":"Bathroom","x":10,"y":3,"w":3,"h":4,"fl":"tile","tile":1},{"n":"Kid's Room","x":14,"y":3,"w":6,"h":4,"fl":"carpet","tile":0},{"n":"Hallway","x":4,"y":8,"w":16,"h":1,"fl":"wood","tile":0},{"n":"Living Room","x":4,"y":10,"w":7,"h":3,"fl":"carpet","tile":0},{"n":"Kitchen","x":12,"y":10,"w":5,"h":3,"fl":"tile","tile":1},{"n":"Utility Room","x":18,"y":10,"w":2,"h":3,"fl":"lino","tile":0}]],"furn":[[["bed",4.1,3.1,0],["nightstand",6.1,3.1,0],["dresser",4.1,6.1,2],["toilet",12.2,3.1,0],["tub",10.05,5.0,3],["sink",12.4,5.6,1],["kidbed",18.2,3.1,0],["desk",14.1,3.1,0],["toybox",16.2,6.2,2],["bookshelf",19.4,5.2,1],["sofa",4.1,10.1,0],["coffee",5.2,11.3,0],["tv",9.5,10.6,1],["armchair",9.2,12.2,2],["counter",12.05,10.05,0,4],["fridge",16.2,10.05,0],["table",13.6,11.6,0],["washer",18.1,12.2,2],["shelf",19.4,10.1,1],["cabinet",15.5,8.15,0],["rug",5.0,10.9,0,2.6],["rug",4.8,4.6,0,1.6],["rug",15.0,4.2,0,2.0],["lamp",7.1,10.1,0],["plant",10.3,12.4,0],["lamp",14.1,5.9,0]]],"spawn":[4.5,21.2,-1.5708]},{"id":"hollis","n":"Hollis House","addr":"41 Hollis Road","lvl":2,"floors":[["FFFFFFFFFFFFFFFFFFFFFFFFFF","F,,,,,,,,,,,,,,,,,,,,,,,,F","F,,XXWXXWXXXXWXXWXXXXXX,,F","F,,X......#.......#...X,,F","F,,X......#.......#...W,,F","F,,W..................X,,F","F,,X......#.......#...X,,F","F,,X......#.......###BX,,F","F,,X##.######.#####...X,,F","F,,X......#...........W,,F","F,,X......##.#S##.##.#X,,F","F,,W......#....#......X,,F","F,,X..................W,,F","F,,X......#....#......X,,F","F,,X......#....#......X,,F","F,,XXXWXXXXXDXXXXWXXWXX,,F","F,,,,,,,,,,,:,,,,,,,,,,,,F","F,,,,,,,,,,,:,,,,,,,,,,,,F","F,,,,,,,,,,,:,,,,,,,,,,,,F","F,,,,,,,,,,,:,,,,,,,,,,,,F","F::::::::::::::::::::::::F","F==VV.VV=================F","F==RvvvM=================F","F==RvvvM=================F","F==VREMV=================F","FFFFFFFFFFFFFFFFFFFFFFFFFF"],["                          ","                          ","   XXWXXWXXXXWXXXXWXXXX   ","   X......#....#......X   ","   X......#....#......X   ","   W......#....#......W   ","   X...........#......X   ","   X......#....#......X   ","   X......##.#####.###X   ","   XC######.......####X   ","   X..........S...####X   ","   X......###.#####.#CX   ","   W............#.....X   ","   X......#.....#.....W   ","   X......#.....#.....X   ","   XXXWXXXXXXWXXXXXWXXX   ","                          ","                          ","                          ","                          ","                          ","                          ","                          ","                          ","                          ","                          "]],"rooms":[[{"n":"Entry Hall","x":11,"y":11,"w":4,"h":4,"fl":"wood","tile":0},{"n":"Living Room","x":4,"y":9,"w":6,"h":6,"fl":"carpet","tile":0},{"n":"Dining Room","x":4,"y":3,"w":6,"h":5,"fl":"wood","tile":0},{"n":"Kitchen","x":11,"y":3,"w":7,"h":5,"fl":"tile","tile":1},{"n":"Laundry","x":19,"y":3,"w":3,"h":4,"fl":"lino","tile":0},{"n":"Half Bath","x":19,"y":8,"w":3,"h":3,"fl":"tile","tile":1},{"n":"Den","x":16,"y":11,"w":6,"h":4,"fl":"carpet","tile":0},{"n":"Back Hall","x":11,"y":9,"w":7,"h":1,"fl":"wood","tile":0}],[{"n":"Upstairs Hall","x":11,"y":9,"w":7,"h":2,"fl":"wood","tile":0},{"n":"Master Bedroom","x":4,"y":3,"w":6,"h":6,"fl":"carpet","tile":0},{"n":"Bathroom","x":11,"y":3,"w":4,"h":5,"fl":"tile","tile":1},{"n":"Nursery","x":16,"y":3,"w":6,"h":5,"fl":"carpet","tile":0},{"n":"Girl's Room","x":4,"y":10,"w":6,"h":5,"fl":"carpet","tile":0},{"n":"Study","x":11,"y":12,"w":5,"h":3,"fl":"wood","tile":0},{"n":"Guest Room","x":17,"y":12,"w":5,"h":3,"fl":"carpet","tile":0}]],"furn":[[["table",5.2,4.4,0,2],["chair",5.0,3.6,0],["chair",7.8,3.6,0],["chair",5.0,6.4,2],["chair",7.8,6.4,2],["cabinet",9.4,3.1,1],["counter",11.05,3.05,0,5],["fridge",17.0,3.05,1],["island",13.0,5.4,0],["counter",11.05,7.0,2,2],["washer",19.1,3.1,0],["dryer",20.2,3.1,0],["shelf",21.4,5.0,1],["toilet",21.2,8.2,1],["sink",19.1,8.1,0],["sofa",4.1,12.6,3,2],["coffee",6.0,11.4,0],["tv",8.5,11.0,1],["armchair",5.0,9.2,0],["bookshelf",9.4,13.4,1],["desk",20.1,11.1,0],["chair",20.4,12.0,0],["sofa",16.1,13.6,2],["bookshelf",21.4,13.0,1],["coatrack",11.2,14.4,2],["cabinet",11.1,11.1,0],["rug",11.8,12.4,0,1.6],["rug",5.0,10.5,0,2.2],["rug",5.4,4.0,0,2.6],["lamp",4.2,9.1,0],["plant",9.4,9.1,0]],[["bed",4.1,3.1,0,2],["nightstand",6.2,3.1,0],["dresser",8.4,3.1,0],["armchair",8.5,7.5,2],["tub",11.05,3.05,0],["toilet",14.0,5.0,1],["sink",12.5,6.9,2],["crib",18.0,3.1,0],["rocker",16.4,6.3,3],["dresser",20.4,6.0,1],["toybox",16.2,3.2,0],["kidbed",4.1,12.6,3],["desk",8.0,14.2,2],["dollhouse",4.4,10.2,0],["desk",11.1,12.1,0],["bookshelf",15.4,12.2,1],["bookshelf",15.4,13.4,1],["bed",19.6,12.1,0],["nightstand",21.3,13.6,1],["rug",5.0,5.4,0,2.6],["rug",17.3,4.2,0,1.8],["rug",5.0,11.5,0,2.0],["lamp",11.2,13.9,0],["plant",17.1,9.1,0]]],"spawn":[5.5,23.2,-1.5708]},{"id":"school","n":"Ashgrove Elementary","addr":"Ashgrove Elementary School","lvl":3,"floors":[["FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF","F,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,F","F,,XXWXXWXXWXXWXXWXXWXXWXXWXXWXXWXXXX,,F","F,,X.......#.......#.........#......X,,F","F,,X.......#.......#.........#......X,,F","F,,W.......#.......#.........#......W,,F","F,,X.......#.......#.........#......X,,F","F,,X.......#.......#.........#......X,,F","F,,W.......#.......#.........#......W,,F","F,,X.......#.......#.........#......X,,F","F,,X##L.L#L#L#L.L#L#L#L#.#L#L#L#.#L#X,,F","F,,X................................X,,F","F,,X................................X,,F","F,,X................................X,,F","F,,X#L#L#.#L#L#.###..####L#L#.#L#L##X,,F","F,,X..........#.#......#............X,,F","F,,X..........#.#......#............X,,F","F,,W..........#.#......#............W,,F","F,,X..........#.#...................X,,F","F,,X..........###......#............X,,F","F,,W..........#.#......#............W,,F","F,,X..........#........#............X,,F","F,,X..........#.#......#............X,,F","F,,XXXWXXWXXWXXBXXXDDXXXXXWXXWXXWXXXX,,F","F,,,,,,,,,,,,,,,,,,::,,,,,,,,,,,,,,,,,,F","F,,,,,,,,,,,,,,,,,,::,,,,,,,,,,,,,,,,,,F","F,,,,,,,,,,,,,,,,,,::,,,,,,,,,,,,,,,,,,F","F::::::::::::::::::::::::::::::::::::::F","F=======VV.VV==========================F","F=======RvvvM==========================F","F=======RvvvM==========================F","F=======VREMV==========================F","F======================================F","FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"]],"rooms":[[{"n":"Main Hallway","x":4,"y":11,"w":32,"h":3,"fl":"lino","tile":0},{"n":"Classroom 1","x":4,"y":3,"w":7,"h":7,"fl":"lino","tile":0},{"n":"Classroom 2","x":12,"y":3,"w":7,"h":7,"fl":"lino","tile":0},{"n":"Library","x":20,"y":3,"w":9,"h":7,"fl":"carpet","tile":0},{"n":"Music Room","x":30,"y":3,"w":6,"h":7,"fl":"wood","tile":0},{"n":"Cafeteria","x":4,"y":15,"w":10,"h":8,"fl":"tile","tile":0},{"n":"Entrance","x":17,"y":15,"w":6,"h":8,"fl":"lino","tile":0},{"n":"Gym","x":24,"y":15,"w":12,"h":8,"fl":"wood","tile":0},{"n":"Restroom","x":15,"y":15,"w":1,"h":4,"fl":"tile","tile":1},{"n":"Janitor Closet","x":15,"y":20,"w":1,"h":3,"fl":"lino","tile":0}]],"furn":[[["schooldesk",5.2,5.2,0],["schooldesk",7.0,5.2,0],["schooldesk",8.8,5.2,0],["schooldesk",5.2,6.6,0],["schooldesk",7.0,6.6,0],["schooldesk",8.8,6.6,0],["schooldesk",5.2,8.0,0],["schooldesk",7.0,8.0,0],["schooldesk",8.8,8.0,0],["teacherdesk",6.5,3.2,0],["board",5.0,3.02,0],["schooldesk",13.2,5.2,0],["schooldesk",15.0,5.2,0],["schooldesk",16.8,5.2,0],["schooldesk",13.2,6.6,0],["schooldesk",15.0,6.6,0],["schooldesk",16.8,6.6,0],["schooldesk",13.2,8.0,0],["schooldesk",15.0,8.0,0],["schooldesk",16.8,8.0,0],["teacherdesk",14.5,3.2,0],["board",13.0,3.02,0],["bookshelf",20.3,3.05,0],["bookshelf",22.5,3.05,0],["bookshelf",24.700000000000003,3.05,0],["bookshelf",26.900000000000002,3.05,0],["table",21.0,7.0,0],["table",23.4,7.0,0],["table",25.8,7.0,0],["piano",30.3,3.2,0],["chair",32.5,6.0,0],["chair",34.0,6.0,0],["chair",32.5,7.5,0],["drumkit",34.0,3.4,0],["cafetable",5.0,16.0,0],["cafetable",9.2,16.0,0],["cafetable",5.0,18.4,0],["cafetable",9.2,18.4,0],["cafetable",5.0,20.8,0],["cafetable",9.2,20.8,0],["counter",4.05,21.5,2,4],["bench",24.2,15.1,0,4],["hoop",35.6,18.5,1],["mats",26.0,21.0,0],["cart",33.0,21.4,0],["frontdesk",17.3,16.0,0],["plant",17.2,21.8,0],["plant",22.4,21.8,0],["bench",21.0,18.5,1,2],["toilet",15.1,15.1,0],["shelf",15.2,21.5,2]]],"spawn":[10.5,30.2,-1.5708]}];
+  const WALLV = { '#': 1, 'T': 1, 'C': 3, 'X': 5, 'W': 6, 'F': 7, 'B': 8, 'L': 9, ' ': 10, 'R': 11, 'M': 12, 'E': 13, 'V': 14 };
   const FLOORT = { wood: 1, tile: 2, carpet: 3, lino: 4 };
   let L = null;
   function buildMap(mi, seed) {
     if (!WT.wood) makeTex(1234);
     const M = MAPS[mi], nf = M.floors.length, H = M.floors[0].length, W = M.floors[0][0].length, n = W * nf, NH = H;
     const grid = new Uint8Array(n * NH), room = new Int16Array(n * NH).fill(-1), flt = new Uint8Array(n * NH), out = new Uint8Array(n * NH), fl = new Uint8Array(n * NH), rooms = [], stairs = [];
-    let door = null;
+    let door = null; const vanCells = [];
     M.floors.forEach((rows, f) => {
       const ox = f * W;
       M.rooms[f].forEach(r => rooms.push({ ...r, x: r.x + ox, f, i: rooms.length }));
@@ -362,6 +372,7 @@ const GAME = {
         const ch = rows[y][x], k = y * n + x + ox; fl[k] = f;
         if (ch in WALLV) { grid[k] = WALLV[ch]; continue; }
         if (ch === ',') { flt[k] = 5; out[k] = 1; } else if (ch === '=') { flt[k] = 6; out[k] = 1; } else if (ch === ':') { flt[k] = 7; out[k] = 1; }
+        else if (ch === 'v') { flt[k] = 8; vanCells.push(k); }
         else { flt[k] = 1; if (ch === 'D' && !door) door = { x: x + ox, y, k }; if (ch === 'D') flt[k] = 7; if (ch === 'S') stairs.push({ x: x + ox, y, f, k }); }
       }
     });
@@ -381,7 +392,9 @@ const GAME = {
       if (block) L2.cbox.push({ x0: bx0, y0: by0, x1: bx1, y1: by1, k: kind });
       return { x: (bx0 + bx1) / 2, y: (by0 + by1) / 2 };
     };
-    M.furn.forEach((list, f) => list.forEach(([kind, x, y, rot, len]) => { const c = addPiece(kind, x, y, rot || 0, len, f); if (kind === 'van') L2.van = c; }));
+    M.furn.forEach((list, f) => list.forEach(([kind, x, y, rot, len]) => { const c = addPiece(kind, x, y, rot || 0, len, f); }));
+    if (vanCells.length) L2.van = { x: vanCells.reduce((s, k) => s + k % n, 0) / vanCells.length + .5, y: vanCells.reduce((s, k) => s + Math.floor(k / n), 0) / vanCells.length + .5 };
+    L2.rackIdx = {}; L2.monIdx = {}; let ri = 0, mi2 = 0; for (let k = 0; k < n * NH; k++) { if (grid[k] === 11) L2.rackIdx[k] = ri++; if (grid[k] === 12) L2.monIdx[k] = mi2++; }
     for (const s of stairs) addPiece(s.f === 0 ? 'stairs' : 'rail', s.x - s.f * W, s.y, 0, 0, s.f);
     for (let i = 0; i < L2.boxes.length; i++) { const b = L2.boxes[i]; for (let y = Math.floor(b.y0); y <= Math.floor(b.y1 - 1e-6); y++) for (let x = Math.floor(b.x0); x <= Math.floor(b.x1 - 1e-6); x++) { const k = y * n + x; (L2.cb[k] || (L2.cb[k] = [])).push(i); } }
     L2.bs = new Uint32Array(L2.boxes.length);
@@ -395,7 +408,7 @@ const GAME = {
     L2.type = Math.floor(R() * GHOSTS.length); L2.home = homes[Math.floor(R() * homes.length)]; L2.home2 = homes[Math.floor(R() * homes.length)];
     L2.hidden = GHOSTS[L2.type].ev[Math.floor(R() * 3)];
     L2.obj = []; const pool = OBJ.map(o => o[0]); while (L2.obj.length < 3) { const o = pool.splice(Math.floor(R() * pool.length), 1)[0]; if (o === 'lights' && false) continue; L2.obj.push(o); }
-    L2.spawn = L2.van ? { x: L2.van.x + 2.3, y: L2.van.y + .2, a: -Math.PI / 2 } : { x: M.spawn[0], y: M.spawn[1], a: M.spawn[2] };
+    L2.spawn = { x: M.spawn[0], y: M.spawn[1], a: M.spawn[2] };
     L2.wm = new Uint8Array(n * NH); for (let y = 1; y < NH - 1; y++) for (let x = 1; x < n - 1; x++) if (!grid[y * n + x]) L2.wm[y * n + x] = (grid[y * n + x - 1] && grid[y * n + x - 1] !== 7 ? 1 : 0) | (grid[y * n + x + 1] && grid[y * n + x + 1] !== 7 ? 2 : 0) | (grid[(y - 1) * n + x] && grid[(y - 1) * n + x] !== 7 ? 4 : 0) | (grid[(y + 1) * n + x] && grid[(y + 1) * n + x] !== 7 ? 8 : 0);
     return L2;
   }
@@ -431,6 +444,7 @@ const GAME = {
   const CT = new Float32Array(257), HX = new Float32Array(32), HT0 = new Float32Array(32), HT1 = new Float32Array(32), HS = new Uint8Array(32), HB = new Int32Array(32);
   let FT = null, SKY = null;
   function wallTex(v, pk, school, wk, side) {
+    if (v >= 11) { if (L.out[pk]) return WT.vanOut; return v === 11 ? WT.rack[L.rackIdx[wk] || 0] : v === 12 ? WT.mon[L.monIdx[wk] || 0] : v === 13 ? WT.panel : WT.vanIn; }
     if (v === 7) return WT.hedge; if (v === 3) return WT.closet; if (v === 9) return WT.locker; if (v === 8) return WT.breaker; if (v === 4) return WT.door;
     const o = L.out[pk];
     if (v === 6) return o ? WT.winOut : WT.winIn;
@@ -444,7 +458,7 @@ const GAME = {
   function render(cam) {
     const dx = Math.cos(cam.a), dy = Math.sin(cam.a), plx = -dy * FOV, ply = dx * FOV, hz = (RH >> 1) + (cam.bob | 0), amb = AMB + (cam.nv ? .05 : 0) + (cam.sanity < 30 ? .006 : 0), school = L.M.id === 'school';
     const lamp = cam.lamp, w = cam.lampW || 1, lc = cam.lc || LAMPC; LR = lc[0]; LG = lc[1]; LB = lc[2];
-    if (!FT) FT = [WT.wood, WT.wood, WT.tileF, WT.carpet, WT.lino, WT.grass, WT.asphalt, WT.path];
+    if (!FT) FT = [WT.wood, WT.wood, WT.tileF, WT.carpet, WT.lino, WT.grass, WT.asphalt, WT.path, WT.vanFloor];
     if (!SKY || SKY.length !== RH) { SKY = new Uint32Array(RH); for (let y = 0; y < RH; y++) { const v = Math.min(1, y / (RH * .5)); SKY[y] = pack(10 + v * 16, 14 + v * 20, 28 + v * 34); } }
     for (let x = 0; x < RW; x++) { const v = (x - RW / 2) / (RW * .3 * w); coneX[x] = v * v; }
     for (let y = 0; y < RH * 2; y++) { const v = (y - RH) / (RH * .55 * w); coneY[y] = v * v; }
@@ -456,7 +470,7 @@ const GAME = {
     others.forEach(o => { if (o.out || !o.f || o.h || cam.of === o) return; if (Math.hypot(o.x - cam.x, o.y - cam.y) < 16) lights.push(o.uv ? { cone: 1, x: o.x, y: o.y, dx: Math.cos(o.a), dy: Math.sin(o.a), r2: 60, cr: .35, cg: .15, cb: .9 } : { cone: 1, x: o.x, y: o.y, dx: Math.cos(o.a), dy: Math.sin(o.a), r2: 100, cr: 1, cg: .94, cb: .8 }); });
     const hf = ghost && !me.posed && (ghost.hunt ? Math.random() < .4 : ghost.man > 0 && Math.random() < .12) ? 0 : 1;
     if (L.power) for (const l of L.lamps) { if (!L.lightsOn[l.r] || L.rooms[l.r].f !== myF || Math.abs(l.x - cam.x) + Math.abs(l.y - cam.y) > 22) continue; lights.push({ x: l.x, y: l.y, i: 1.1 * hf, r2: 70, f: .16, cr: 1, cg: .82, cb: .55, room: l.r }); }
-    if (myF === 0) { for (const s of L.streets) if (Math.abs(s.x - cam.x) + Math.abs(s.y - cam.y) < 20) lights.push({ x: s.x, y: s.y, i: .7, r2: 60, f: .12, cr: 1, cg: .8, cb: .5, outOnly: 1 }); if (L.van) lights.push({ x: L.van.x - 1.6, y: L.van.y, i: .8, r2: 12, f: .5, cr: 1, cg: .9, cb: .7, outOnly: 1 }); }
+    if (myF === 0) { for (const s of L.streets) if (Math.abs(s.x - cam.x) + Math.abs(s.y - cam.y) < 20) lights.push({ x: s.x, y: s.y, i: .7, r2: 60, f: .12, cr: 1, cg: .8, cb: .5, outOnly: 1 }); if (L.van) lights.push({ x: L.van.x, y: L.van.y, i: 1.1, r2: 16, f: .45, cr: 1, cg: .93, cb: .8 }); }
     P32.fill(0xff000000);
     const n = L.n, NH = L.NH, G = L.grid, WM = L.wm, FL = L.flt, OUT = L.out, CEIL = school ? WT.ceilS : WT.ceil, star = cam.a * RW / 1.15;
     // floor and ceiling
@@ -496,7 +510,7 @@ const GAME = {
       const lh = RH / perp, ds = hz - lh / 2;
       if (v !== 10) {
         let wx = side ? cam.x + perp * rx : cam.y + perp * ry; wx -= Math.floor(wx);
-        let tx = (wx * TX) | 0; if ((!side && rx > 0) || (side && ry < 0)) tx = TM - tx;
+        let tx = (wx * TX) | 0; if ((!side && rx < 0) || (side && ry > 0)) tx = TM - tx;
         const tex = wallTex(v, pk, school, my * n + mx, side), pr = cam.uv && L.prints[(my * n + mx) * 2 + side];
         ext(cam.x + perp * rx * .97, cam.y + perp * ry * .97);
         const mi = meI(perp) * (side ? .75 : 1), y0 = Math.max(0, ds | 0), y1 = Math.min(RH - 1, (ds + lh) | 0), sh = side ? .78 : 1;
@@ -691,6 +705,7 @@ const GAME = {
     const slot = net ? [...others.keys(), net.id].sort((a, b) => a - b).indexOf(net.id) : 0;
     me.x = L.spawn.x + [0, .8, -.8, 1.6][slot % 4]; me.y = L.spawn.y; me.a = L.spawn.a; me.sanity = diff.sanity;
     const st = da().inv; me.stock = { ...KIT }; for (const [k] of SHOP) if (st[k]) me.stock[k] = st[k];
+    L.rackKeys = Object.keys(TOOLS).filter(k => me.stock[k]); refreshRack(); drawPanel(); setTimeout(refreshMon, 50);
     const R0 = rng(seed + 3), H = L.rooms[L.home];
     ghost = { x: H.x + .5 + R0() * (H.w - 1), y: H.y + .5 + R0() * (H.h - 1), a: 0, hunt: 0, huntT: 0, coolT: 45 + R0() * 25, actT: 10 + R0() * 8, man: 0, wt: null, repath: 0, stalk: null, flick: 0, grace: 0, home: m.home ?? L.home, moved: 0 };
     ghost.rx = ghost.x; ghost.ry = ghost.y; makeOrbs();
@@ -725,14 +740,32 @@ const GAME = {
     if (!net || ![...others.values()].some(o => !o.out)) { if (net) send({ t: 'end' }); setTimeout(endGame, 1500); }
   }
   function facingTile() { for (const d of [.6, 1, 1.3]) { const x = Math.floor(me.x + Math.cos(me.a) * d), y = Math.floor(me.y + Math.sin(me.a) * d), v = L.grid[y * L.n + x]; if (v) return { x, y, v }; } return null; }
-  const nearVan = () => L.van && floorAt(me.x, me.y) === 0 && Math.hypot(L.van.x - me.x, L.van.y - me.y) < 2.4;
+  // what you are pointing at: the wall cell, and the texture column under the crosshair
+  function pointAt(maxD = 2.6) {
+    const rx = Math.cos(me.a) || 1e-6, ry = Math.sin(me.a) || 1e-6, n = L.n; let mx = Math.floor(me.x), my = Math.floor(me.y);
+    const ddx = Math.abs(1 / rx), ddy = Math.abs(1 / ry), stx = rx < 0 ? -1 : 1, sty = ry < 0 ? -1 : 1;
+    let sdx = rx < 0 ? (me.x - mx) * ddx : (mx + 1 - me.x) * ddx, sdy = ry < 0 ? (me.y - my) * ddy : (my + 1 - me.y) * ddy, side = 0;
+    for (let i = 0; i < 6; i++) {
+      const pk = my * n + mx; if (sdx < sdy) { sdx += ddx; mx += stx; side = 0; } else { sdy += ddy; my += sty; side = 1; }
+      const k = my * n + mx, v = L.grid[k]; if (!v) continue;
+      const d = side ? sdy - ddy : sdx - ddx; if (d > maxD) return null;
+      let wx = side ? me.x + d * rx : me.y + d * ry; wx -= Math.floor(wx); let tx = (wx * TX) | 0; if ((!side && rx < 0) || (side && ry > 0)) tx = TM - tx;
+      return { k, v, tx, d, out: L.out[pk] };
+    }
+    return null;
+  }
+  const rackKey = pa => L.rackKeys[(L.rackIdx[pa.k] || 0) * 4 + Math.min(3, pa.tx >> 5)];
+  const inVan = pa => pa && !pa.out && pa.v >= 11;
   function placedAhead() { let best = null, bd = 1.5; for (const p of L.placed) { const d = Math.hypot(p.x - me.x, p.y - me.y); if (d < bd && angDiff(Math.atan2(p.y - me.y, p.x - me.x), me.a) < .8) { bd = d; best = p; } } return best; }
   function setLight(r, on) { L.lightsOn[r] = on; send({ t: 'lt', r, on: on ? 1 : 0 }); }
   function setPower(on) { L.power = on; send({ t: 'pw', on }); SND.breaker(); if (on) objDone('lights'); }
   function interact() {
     if (me.out || js || mode !== 'play') return;
     if (me.hidden) { me.hidden = null; tone(160, .25, 'square', .04, -40); hiss(.3, .07, 300, 2000); return; }
-    if (nearVan()) { vanUI = { tab: 'kit' }; try { document.exitPointerLock(); } catch (e) {} tone(300, .2, 'triangle', .05); return; }
+    const pa = pointAt();
+    if (inVan(pa) && pa.v === 11) { const key = rackKey(pa); if (!key) return; if (!me.stock[key]) { say(`No ${TOOLS[key].n} left in the van.`, '#ffe680'); return; } const s = me.slots[me.sel] ? me.slots.findIndex(q => !q) : me.sel; if (s < 0) { say('Your hands are full (3 slots). Put something back on the rack first (G).', '#ffe680'); return; } me.slots[s] = { k: key }; me.stock[key]--; me.sel = s; refreshRack(); tone(500, .05, 'triangle', .05); hiss(.08, .05, 1500, 5000); return; }
+    if (inVan(pa) && pa.v === 12) { vanUI = { tab: 'mon' }; try { document.exitPointerLock(); } catch (e) {} tone(300, .2, 'triangle', .05); return; }
+    if (inVan(pa) && pa.v === 13) { if (endArm > 0) { send({ t: 'end' }); endGame(); } else { endArm = 3; say(me.guess >= 0 ? `End the job? You named it a ${GHOSTS[me.guess].n}. Press E again.` : 'You have not named the ghost in the ID book (J). Press E again to end anyway.', '#ffe680'); } return; }
     const f = facingTile();
     if (f && (f.v === 3 || f.v === 9)) { const w = L.wardrobes.find(l => l.x === f.x && l.y === f.y); if (w) { me.hidden = w; me.hideT = 0; me.x = w.fx; me.y = w.fy; me.a = Math.atan2(w.fy - (w.y + .5), w.fx - (w.x + .5)); hiss(.3, .08, 300, 2000); tone(150, .3, 'square', .04, -40); if (isHost()) noteHide(myId()); else send({ t: 'hid' }); } return; }
     if (f && f.v === 8) { setPower(!L.power); say(L.power ? 'The breaker clicks on. Lights work now.' : 'You switched the breaker off.', '#ffe680'); return; }
@@ -745,6 +778,7 @@ const GAME = {
   }
   function placeHeld() {
     const h = held(); if (!h || me.out || me.hidden) return;
+    const pa = pointAt(); if (inVan(pa) && pa.v === 11) { me.stock[h.k] = (me.stock[h.k] || 0) + 1; me.slots[me.sel] = null; refreshRack(); tone(300, .05, 'triangle', .05); say(`${TOOLS[h.k].n} back on the rack.`, '#9fa8b8'); return; }
     const x = me.x + Math.cos(me.a) * .7, y = me.y + Math.sin(me.a) * .7;
     if (!free(x, y, .08) || floorAt(x, y) !== floorAt(me.x, me.y)) { say('No room to put it there.'); return; }
     if (h.k === 'drink' || h.k === 'photo') { say('You keep that in your hands.'); return; }
@@ -823,6 +857,48 @@ const GAME = {
     if (ghost.man > 0 && gd < 12 && angDiff(Math.atan2(ghost.y - me.y, ghost.x - me.x), me.a) < .55 && los(me.x, me.y, ghost.x, ghost.y) && !me.sawGhost) { me.sawGhost = 1; me.sanity -= GHOSTS[L.type].rare ? 22 : 12; staticBoost = 2; objDone('see'); }
     if (ghost.man <= 0) me.sawGhost = 0;
   }
+
+  /* ---------- the van's rack and monitors are drawn into wall textures ---------- */
+  function toolIcon(g, k, x, y) {
+    const R = (c, a, b, w, h) => { g.fillStyle = c; g.fillRect(x + a, y + b, w, h); };
+    if (k === 'emf') { R('#1c1d20', -8, -10, 16, 22); for (let i = 0; i < 5; i++) R(['#3aff6a', '#9aff3a', '#ffe23a', '#ff9a2a', '#ff3a2a'][i], -6 + i * 2.6, -7, 2, 3); }
+    else if (k === 'thermo') { R('#d8d4c8', -6, -11, 12, 22); R('#7a9a7a', -4, -8, 8, 6); }
+    else if (k === 'box') { R('#3a3028', -9, -6, 18, 14); R('#999', 5, -14, 1.5, 9); R('#2a6a3a', -6, -3, 9, 4); }
+    else if (k === 'uv') { R('#3a2450', -3, -12, 6, 22); R('#c070ff', -4, -13, 8, 3); }
+    else if (k === 'book') { R('#5a1a14', -8, -8, 16, 16); R('#e8e0cc', -6, -6, 12, 12); }
+    else if (k === 'video') { R('#18181a', -9, -6, 15, 11); R('#333', 6, -4, 4, 7); R('#ff2020', -7, -4, 2, 2); }
+    else if (k === 'pot') { R('#9a5a3a', -6, 0, 12, 10); R('#3a8a3a', -1, -9, 2, 9); R('#ff5a8a', -5, -12, 4, 4); R('#ffe23a', 1, -13, 4, 4); }
+    else if (k === 'cross') { R('#c8a860', -1.5, -12, 3, 22); R('#c8a860', -6, -6, 12, 3); }
+    else if (k === 'drink') { R('#2a6aff', -4, -10, 8, 20); R('#dfe', -4, -4, 8, 4); }
+    else if (k === 'salt') { R('#2a5ab0', -5, -10, 10, 20); R('#fff', -3, -2, 6, 3); }
+    else if (k === 'photo') { R('#1a1a1a', -9, -6, 18, 12); R('#555', -3, -3, 6, 6); }
+  }
+  const SHORT = { emf: 'EMF', thermo: 'THERMO', box: 'S.BOX', uv: 'UV', book: 'BOOK', video: 'CAMERA', pot: 'FLOWERS', cross: 'CROSS', drink: 'DRINK', salt: 'SALT', photo: 'PHOTO' };
+  function refreshRack() {
+    if (!L.rackKeys) return;
+    for (let r = 0; r < 3; r++) canvasTex(WT.rack[r], g => {
+      g.fillStyle = '#3a3e44'; g.fillRect(0, 0, 128, 128); g.fillStyle = '#2a2d32'; for (const y of [20, 74, 116]) g.fillRect(0, y, 128, 5);
+      for (let j = 0; j < 4; j++) { const k = L.rackKeys[r * 4 + j], x = j * 32; g.fillStyle = '#23262b'; g.fillRect(x, 0, 1, 128); if (!k) continue; const n = me.stock[k] || 0;
+        g.globalAlpha = n ? 1 : .25; toolIcon(g, k, x + 16, 58); g.globalAlpha = 1; g.font = '800 8px Nunito, sans-serif'; g.textAlign = 'center'; g.fillStyle = n ? '#e8f0ea' : '#777'; g.fillText(SHORT[k], x + 16, 90); g.fillStyle = n ? '#7dffb0' : '#a55'; g.fillText('x' + n, x + 16, 102); }
+    });
+  }
+  function refreshMon() {
+    if (!L.mons && !WT.mon) return;
+    const screen = (g, title) => { g.fillStyle = '#1a1c20'; g.fillRect(0, 0, 128, 128); g.fillStyle = '#05120c'; g.fillRect(6, 8, 116, 86); g.fillStyle = '#2a2d32'; g.fillRect(0, 100, 128, 28); g.font = '800 7px Nunito, sans-serif'; g.textAlign = 'left'; g.fillStyle = '#7dffb0'; g.fillText(title, 10, 17); };
+    canvasTex(WT.mon[0], g => { screen(g, 'FLOOR PLAN');
+      if (!L.bb) { let x0 = 1e9, y0 = 1e9, x1 = 0, y1 = 0; for (let k = 0; k < L.grid.length; k++) if (L.room[k] >= 0) { const x = k % L.n, y = (k / L.n) | 0; x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); } L.bb = [x0, y0, x1 + 1, y1 + 1]; }
+      const [bx0, by0, bx1, by1] = L.bb, s = Math.min(108 / (bx1 - bx0), 68 / (by1 - by0)), ox = 10 - bx0 * s + (108 - (bx1 - bx0) * s) / 2, oy = 22 - by0 * s;
+      for (let y = 0; y < L.NH; y++) for (let x = 0; x < L.n; x++) { const k = y * L.n + x; if (!L.grid[k] && !L.out[k] && L.room[k] >= 0) { g.fillStyle = L.power && L.lightsOn[L.room[k]] ? '#3a6a3a' : '#1a3a2a'; g.fillRect(ox + x * s, oy + y * s, s + .3, s + .3); } }
+      const dot = (x, y, c) => { g.fillStyle = c; g.fillRect(ox + x * s - 1.5, oy + y * s - 1.5, 3, 3); }; dot(me.x, me.y, COLS[myId() % 4]); others.forEach(o => { if (!o.out) dot(o.x, o.y, o.col); });
+      for (const p of L.placed) if (p.k === 'video') dot(p.x, p.y, '#ff3030'); }, 6, 8, 121, 93);
+    canvasTex(WT.mon[1], g => { screen(g, 'TEAM SANITY'); const team = [{ n: (net && net.name) || 'You', s: me.sanity, out: me.out, c: COLS[myId() % 4] }, ...[...others.values()].map(o => ({ n: o.name, s: o.san ?? 100, out: o.out, c: o.col }))];
+      team.forEach((t, i) => { const y = 28 + i * 16; g.fillStyle = t.c; g.fillRect(10, y - 6, 3, 8); g.fillStyle = '#cfe3d4'; g.fillText(t.n.slice(0, 9), 16, y); g.fillStyle = '#12301e'; g.fillRect(60, y - 6, 56, 7); g.fillStyle = t.out ? '#555' : t.s < 40 ? '#ff6a5a' : '#7dffb0'; g.fillRect(60, y - 6, 56 * Math.max(0, t.s) / 100, 7); });
+      g.fillStyle = '#7dffb0'; g.fillText('ACTIVITY', 10, 84); g.strokeStyle = '#7dffb0'; g.beginPath(); for (let i = 0; i < 30; i++) g.lineTo(46 + i * 2.4, 90 - Math.min(14, activity[i] * 4)); g.stroke(); }, 6, 8, 121, 93);
+    canvasTex(WT.mon[2], g => { screen(g, 'THE JOB'); g.fillStyle = '#cfe3d4'; g.fillText(L.M.addr.slice(0, 22), 10, 28); g.fillText(`${diff.n} · ${Math.floor(L.el / 60)}:${String(Math.floor(L.el % 60)).padStart(2, '0')}`, 10, 38);
+      L.obj.forEach((o, i) => { g.fillStyle = me.obj[o] ? '#7dffb0' : '#9fb0a8'; const t = OBJ.find(q => q[0] === o)[1]; g.fillText((me.obj[o] ? '✓ ' : '○ ') + (t.length > 24 ? t.slice(0, 23) + '…' : t), 10, 52 + i * 11); });
+      g.fillStyle = '#ffe680'; g.fillText(`Power: ${L.power ? 'ON' : 'OFF (find the breaker)'}`, 10, 88); }, 6, 8, 121, 93);
+  }
+  function drawPanel() { canvasTex(WT.panel, g => { g.fillStyle = '#2a2d32'; g.fillRect(0, 0, 128, 128); g.fillStyle = '#1a1c20'; g.fillRect(24, 30, 80, 60); g.fillStyle = '#c8202a'; g.beginPath(); g.arc(64, 56, 18, 0, 7); g.fill(); g.fillStyle = '#ff6a6a'; g.beginPath(); g.arc(60, 52, 6, 0, 7); g.fill(); g.font = '900 10px Nunito, sans-serif'; g.textAlign = 'center'; g.fillStyle = '#ffd8d8'; g.fillText('END THE JOB', 64, 86); }, 40, 34, 88, 90); }
 
   /* ---------- the ghost (host) ---------- */
   function players() {
@@ -1008,7 +1084,7 @@ const GAME = {
     if (me.demoT > 5 && ghost.man <= 0 && Math.random() < dt * .12) for (let d = 6; d > 2.5; d -= .5) { const gx = me.x + Math.cos(me.a) * d, gy = me.y + Math.sin(me.a) * d; if (!solid(gx, gy) && los(me.x, me.y, gx, gy)) { ghost.x = ghost.rx = gx; ghost.y = ghost.ry = gy; ghost.man = 1.2; break; } }
     if (Math.random() < dt * .15) ghostEvent();
   }
-  let flickT = 0;
+  let flickT = 0, monT = 0;
   const activity = new Float32Array(30); let actT = 0;
   GAME.update = dt => {
     if (!staticG && K.ac && mode !== 'lobby') startStatic();
@@ -1016,8 +1092,10 @@ const GAME = {
     if (fade > 0) fade = Math.max(0, fade - dt * 1.5); if (fade < 0) fade = Math.min(0, fade + dt * 2);
     if (mode === 'lobby') { menuT += dt; me.a += dt * .1; if (staticG && K.ac) staticG.gain.setTargetAtTime(0, K.ac.currentTime, .3); return; }
     if (mode === 'over' || !L) return;
+    if (L.van && Math.hypot(L.van.x - me.x, L.van.y - me.y) < 7 && (monT -= dt) <= 0) { monT = .4; refreshMon(); }
+    endArm = Math.max(0, endArm - dt);
     L.el += dt; if ((actT += dt) > 10) { actT = 0; activity.copyWithin(0, 1); activity[29] = 0; }
-    if (mode === 'between') { between -= dt; if (between <= 0) { mode = 'play'; if (!K.bot) say('Go to the back of the van (E) and pick your 3 tools.', '#cfe3d4'); } }
+    if (mode === 'between') { between -= dt; if (between <= 0) { mode = 'play'; if (!K.bot) say('You are in the van. Point at the rack and press E to take up to 3 tools.', '#cfe3d4'); } }
     if (js) { js.t += dt; if (js.t > 1.3) { js = null; afterCaught(); } }
     if (roomShow && (roomShow.t -= dt) <= 0) roomShow = null;
     for (let i = emfs.length - 1; i >= 0; i--) if ((emfs[i].t -= dt) <= 0) emfs.splice(i, 1);
@@ -1120,8 +1198,8 @@ const GAME = {
   function drawVan(g) {
     const v = K.view; g.fillStyle = '#0d0f12'; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
     VB.length = 0; const btn = (x, y, w, h, label, on, cb, col = '#2a3a34') => { g.fillStyle = on ? '#cfe3d4' : col; g.beginPath(); g.roundRect(x, y, w, h, 10); g.fill(); g.fillStyle = on ? '#000' : '#e8f0ea'; g.font = HF(16); g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label, x + w / 2, y + h / 2); VB.push({ x, y, w, h, cb }); };
-    g.textAlign = 'left'; g.textBaseline = 'middle'; g.font = TF(30); g.fillStyle = '#cfe3d4'; g.fillText('THE VAN', 80, 40); g.font = HF(15); g.fillStyle = '#8a9a90'; g.fillText(`${L.M.addr} · ${diff.n}`, 270, 42);
-    btn(760, 18, 140, 44, 'Equipment', vanUI.tab === 'kit', () => { vanUI.tab = 'kit'; }); btn(910, 18, 120, 44, 'Monitor', vanUI.tab === 'mon', () => { vanUI.tab = 'mon'; }); btn(1040, 18, 120, 44, 'ID Book', false, () => { journal = true; });
+    g.textAlign = 'left'; g.textBaseline = 'middle'; g.font = TF(30); g.fillStyle = '#cfe3d4'; g.fillText('VAN COMPUTER', 80, 40); g.font = HF(15); g.fillStyle = '#8a9a90'; g.fillText(`${L.M.addr} · ${diff.n}`, 270, 42);
+    btn(910, 18, 120, 44, 'Monitor', vanUI.tab === 'mon', () => { vanUI.tab = 'mon'; }); btn(1040, 18, 120, 44, 'ID Book', false, () => { journal = true; });
     btn(1170, 18, 90, 44, 'Close', false, () => { vanUI = null; });
     if (vanUI.tab === 'kit') {
       g.textAlign = 'left'; g.font = HF(15); g.fillStyle = '#8a9a90'; g.fillText('Click a tool to take it. You can carry 3. Click one of your slots to put it back.', 40, 92);
@@ -1172,7 +1250,8 @@ const GAME = {
     for (const p of L.placed) if (p.k === 'thermo' && Math.hypot(p.x - me.x, p.y - me.y) < 3) { const s = project(p.x, p.y); if (s) { g.textAlign = 'center'; g.font = HF(15); g.fillStyle = '#c8ffd0'; g.fillText(`${roomTemp(roomAt(p.x, p.y)).toFixed(1)}°C`, s.x, 380 + 60 / s.d); } }
     g.textAlign = 'center'; g.font = HF(18);
     const f = !me.hidden && !me.out && facingTile(), pa = !me.hidden && !me.out && placedAhead();
-    let prompt = me.hidden ? 'Hiding. Stay still. E to step out.' : nearVan() ? 'E: open the van (equipment, monitor, end the job)' : f && (f.v === 3 || f.v === 9) ? 'E: hide' : f && f.v === 8 ? `E: ${L.power ? 'switch the power off' : 'switch the power on'}` : pa ? `E: pick up the ${TOOLS[pa.k].n}` : '';
+    const pv = !me.hidden && !me.out && pointAt(), rk = inVan(pv) && pv.v === 11 && rackKey(pv);
+    let prompt = me.hidden ? 'Hiding. Stay still. E to step out.' : rk ? `E: take the ${TOOLS[rk].n} (${me.stock[rk] || 0} left)${held() ? '  ·  G: put yours back' : ''}` : inVan(pv) && pv.v === 12 ? 'E: use the computer (cameras, team, ID book)' : inVan(pv) && pv.v === 13 ? (endArm > 0 ? 'Press E again to end the job' : 'E: end the job') : f && (f.v === 3 || f.v === 9) ? 'E: hide' : f && f.v === 8 ? `E: ${L.power ? 'switch the power off' : 'switch the power on'}` : pa ? `E: pick up the ${TOOLS[pa.k].n}` : '';
     if (me.out) prompt = 'You are gone. Click to watch someone else.';
     if (prompt) { g.fillStyle = 'rgba(0,0,0,.5)'; const w = g.measureText(prompt).width + 30; g.fillRect(640 - w / 2, 600, w, 34); g.fillStyle = '#e8e8e8'; g.fillText(prompt, 640, 618); }
     if (tool() === 'video') { g.fillStyle = '#ff3030'; g.font = HF(16); g.textAlign = 'left'; g.fillText(Math.floor(K.t * 2) % 2 ? '● REC' : '  REC', 40, 40); }
