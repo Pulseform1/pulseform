@@ -22,7 +22,7 @@ const GAME = {
   ];
   const PW = { slow: ['#5ff3ff', 'SLOW-MO', 6], ghost: ['#dfe6ff', 'GHOST', 6], magnet: ['#ff5f7a', 'MAGNET', 8], clock: ['#ffd23f', '+5 SECONDS', 0] };
   const DIRS = { ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1], ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0] };
-  let body, dir, queue, stepT, curST = .12, acc, food, gold, coinP, pwr, grow, dead, eaten, lastTail, mode, level, walls, portals, bgC, theme, eff, timeL, lumps, ripples, hAng, deathT, deathK, tongue, chomp, lvEaten, lvGoal, phase, phaseT, phaseMax, inv, pwT, lvName, swX, swY, swOn, motes = [];
+  let combo = 0, lastEat = -9, body, dir, queue, stepT, curST = .12, acc, food, gold, coinP, pwr, grow, dead, eaten, lastTail, mode, level, walls, portals, bgC, theme, eff, timeL, lumps, ripples, hAng, deathT, deathK, tongue, chomp, lvEaten, lvGoal, phase, phaseT, phaseMax, inv, pwT, lvName, swX, swY, swOn, motes = [];
 
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; };
   const rr = (g, x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
@@ -266,11 +266,14 @@ const GAME = {
     const last = queue.length ? queue[queue.length - 1] : dir;
     if ((d[0] === -last[0] && d[1] === -last[1]) || (d[0] === last[0] && d[1] === last[1])) return;
     if (queue.length < 3) queue.push(d);
+    // respond now: if we are past 35% of this step, take the turn on the very next frame instead of waiting for the step to end
+    if (queue.length === 1 && phase === 'play' && !dead && acc >= curST * .35) acc = curST;
+    if (!K.bot && body && phase === 'play') { const [hx, hy] = cc(body[0]); K.burst(hx, hy, ['#fff', segColor(K.skin, 0, body.length)], 5, 140, { gravity: 0, life: .25, size: 3 }); K.sfx(620 + d[0] * 60 + d[1] * 120, .03, 'triangle', .035); }
     if (!K.bot && X) X.tut |= 1;
   }
   GAME.key = (c, down) => { if (down && DIRS[c]) turn(DIRS[c]); };
   GAME.down = (x, y) => { swX = x; swY = y; swOn = 1; };
-  GAME.move = (x, y, e) => { if (swOn && (e.buttons || e.pointerType === 'touch')) { const dx = x - swX, dy = y - swY; if (Math.hypot(dx, dy) > 30) { turn(Math.abs(dx) > Math.abs(dy) ? [Math.sign(dx), 0] : [0, Math.sign(dy)]); swX = x; swY = y; swOn = 2; } } };
+  GAME.move = (x, y, e) => { if (swOn && (e.buttons || e.pointerType === 'touch')) { const dx = x - swX, dy = y - swY; if (Math.hypot(dx, dy) > 22) { turn(Math.abs(dx) > Math.abs(dy) ? [Math.sign(dx), 0] : [0, Math.sign(dy)]); swX = x; swY = y; swOn = 2; } } };
   GAME.up = (x, y) => {
     if (swOn === 1 && body) { const [hx, hy] = cc(body[0]), dx = x - hx, dy = y - hy; turn(dir[0] !== 0 ? [0, Math.sign(dy) || 1] : [Math.sign(dx) || 1, 0]); }
     swOn = 0;
@@ -309,6 +312,8 @@ const GAME = {
   }
   function eat(px, py) {
     eaten++; grow += 1; lumps.push(0); chomp = 1; K.add(1); sEat(eaten); ripple(px, py, K.skin.c[1]); st('eat');
+    // quick eats chain into a combo: more points, a bigger pop and a little shake
+    combo = K.t - lastEat < 3.2 ? combo + 1 : 1; lastEat = K.t; if (combo > 1 && !K.bot) { K.add(combo - 1); K.pop(px, py - 30, `COMBO x${combo}`, combo > 3 ? '#ffd23f' : '#fff', 26 + Math.min(combo, 6) * 3); K.shake(2 + Math.min(combo, 6)); }
     K.burst(px, py, K.skin.c, 10, 220, { gravity: 0, life: .45, size: 6 });
     if (!K.bot && X) X.tut |= 2;
     food = free();
@@ -459,7 +464,7 @@ const GAME = {
     norm(g);
     for (const p of portals) for (const [q, cs] of [[p.a, p.c], [p.b, p.c]]) { const [x, y] = cc(q); add(g); glo(g, cs, x, y, 46, .7); norm(g); g.fillStyle = '#05030c'; g.beginPath(); g.arc(x, y, 15, 0, TAU); g.fill(); g.lineWidth = 3; for (let i = 0; i < 3; i++) { g.strokeStyle = i % 2 ? '#fff' : cs; const a = K.t * (3 + i) * (i % 2 ? -1 : 1) + i; g.beginPath(); g.arc(x, y, 8 + i * 4.5, a, a + 3.6); g.stroke(); } }
     const f = K.clamp(acc / curST, 0, 1);
-    if (food) { const [x, y] = cc(food), r = 10 + Math.sin(K.t * 6) * 1.5; add(g); glo(g, s.c[1], x, y, 34, .8); norm(g); const og = g.createRadialGradient(x - 3, y - 3, 1, x, y, r); og.addColorStop(0, '#fff'); og.addColorStop(.5, s.c[1]); og.addColorStop(1, s.c[1]); g.fillStyle = og; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); add(g); for (let i = 0; i < 2; i++) { const a = K.t * 4 + i * Math.PI; glo(g, '#fff', x + Math.cos(a) * 17, y + Math.sin(a) * 17, 6, .9); } norm(g); }
+    if (food) { const [x, y] = cc(food), r = 13 + Math.sin(K.t * 6) * 2; add(g); glo(g, s.c[1], x, y, 48, .9); norm(g); g.strokeStyle = s.c[1]; g.globalAlpha = .45 + Math.sin(K.t * 6) * .2; g.lineWidth = 2; g.beginPath(); g.arc(x, y, 20 + (K.t * 18) % 14, 0, TAU); g.stroke(); g.globalAlpha = 1; const og = g.createRadialGradient(x - 3, y - 3, 1, x, y, r); og.addColorStop(0, '#fff'); og.addColorStop(.5, s.c[1]); og.addColorStop(1, s.c[1]); g.fillStyle = og; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); add(g); for (let i = 0; i < 2; i++) { const a = K.t * 4 + i * Math.PI; glo(g, '#fff', x + Math.cos(a) * 17, y + Math.sin(a) * 17, 6, .9); } norm(g); }
     if (gold && !(gold.t < 2 && Math.floor(K.t * 8) % 2)) { const [x, y] = cc(gold); add(g); glo(g, '#ffd23f', x, y, 40, .7); norm(g); g.save(); g.translate(x, y); g.rotate(K.t * 2); const sg = g.createRadialGradient(-3, -3, 1, 0, 0, 17); sg.addColorStop(0, '#fffbe0'); sg.addColorStop(1, '#ffb800'); g.fillStyle = sg; star(g, 0, 0, 17, 7.5); g.fill(); g.strokeStyle = '#fff6c0'; g.lineWidth = 1.5; g.stroke(); g.restore(); }
     if (coinP && !(coinP.t < 2 && Math.floor(K.t * 8) % 2)) { const [x, y] = cc(coinP), w = 12 * Math.abs(Math.cos(K.t * 3)) + 2; add(g); glo(g, '#ffcf2e', x, y, 28, .55); norm(g); const cg = g.createLinearGradient(x - w, y - 12, x + w, y + 12); cg.addColorStop(0, '#fff6c4'); cg.addColorStop(.5, '#ffcf2e'); cg.addColorStop(1, '#b07800'); g.fillStyle = cg; g.beginPath(); g.ellipse(x, y, w, 12, 0, 0, TAU); g.fill(); g.strokeStyle = '#8a5a00'; g.lineWidth = 1.5; g.stroke(); }
     if (pwr && !(pwr.t < 2 && Math.floor(K.t * 8) % 2)) { const [x, y] = cc(pwr); pwIcon(g, pwr.k, x, y, 1 + .06 * Math.sin(K.t * 5)); }
