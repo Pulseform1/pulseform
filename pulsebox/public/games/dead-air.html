@@ -1067,7 +1067,7 @@ const GAME = {
   function botThink(dt) {
     me.demoT += dt; if (me.posed) return;
     if (!me.bt || Math.hypot(me.bt.x - me.x, me.bt.y - me.y) < .7 || me.btT <= 0) { const rs = L.rooms.filter(r => !/Hall/.test(r.n) || Math.random() < .3); me.bt = randomSpot(K.pick(rs).i); me.btT = 12; me.field = bfsFrom(L.grid, L.n, Math.floor(me.bt.y) * L.n + Math.floor(me.bt.x)); me.sel = Math.floor(Math.random() * 3); }
-    me.btT -= dt;
+    me.btT -= dt; me.stk = (me.stk || 0) + dt; if (me.stk > 1.2) { if (Math.hypot(me.x - (me.lx || 0), me.y - (me.ly || 0)) < .3) { me.btT = 0; me.a += 2; } me.stk = 0; me.lx = me.x; me.ly = me.y; }
     const x = Math.floor(me.x), y = Math.floor(me.y), here = me.field[y * L.n + x]; let tx = me.bt.x, ty = me.bt.y;
     if (here > 0) for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const v = me.field[(y + b) * L.n + x + a]; if (v >= 0 && v < here) { tx = x + a + .5; ty = y + b + .5; } }
     const want = Math.atan2(ty - me.y, tx - me.x), dd = ((want - me.a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
