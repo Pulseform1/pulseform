@@ -11,6 +11,11 @@
 //                       (week = last 7 UTC days incl. today; cached ~60 s. site.* = { plays, views, players };
 //                        players = different people who started a game. To count them, the Stats object keeps a hash of
 //                        each player's IP made with a random secret that never leaves it, and deletes it after 8 days.)
+// Bug reports: one global Durable Object (Bugs) keeps every report.
+//   POST /api/bug              <- { game, text, steps, contact, info } -> { id }   (same IP: at most 6 reports an hour)
+//   GET  /api/bug/status?ids=1,2  -> { 1: { status, note, updated } }   (what a reporter sees about their own reports)
+//   GET  /api/bugs?status=new  (header x-admin-key) -> { bugs: [...] }  (the admin page, public/bugs.html)
+//   POST /api/bugs/update      (header x-admin-key) <- { id, status, note } -> { ok }
 // Multiplayer rooms: one Durable Object (Rooms) per 4-character room code relays JSON messages between up to 8 players.
 //   GET  /api/room/CODE?n=NAME  (WebSocket) -> { t: 'hello', id, host, players } then every other player's messages
 // THE HOLLOW co-op: /api/hollow (WebSocket) goes to the HollowRooms Durable Object (hollow-rooms.js), which runs the game's own engine.
@@ -59,6 +64,68 @@ async function play(request, env, ids) {
   return stub.fetch('https://stats/play', { method: 'POST', body: JSON.stringify({ id, k, who }) });
 }
 const sha = async s => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)));
+const BUG_STATUS = ['new', 'confirmed', 'fixing', 'fixed', 'wontfix', 'duplicate'];
+async function bugs(request, env, url) {
+  const stub = env.BUGS.get(env.BUGS.idFromName('global'));
+  const admin = () => env.BUG_ADMIN_KEY && request.headers.get('x-admin-key') === env.BUG_ADMIN_KEY;
+  if (url.pathname === '/api/bug') {
+    if (request.method !== 'POST') return json({ error: 'method' }, 405);
+    const body = await request.text();
+    if (body.length > 12000) return json({ error: 'That report is too long.' }, 413);
+    let b; try { b = JSON.parse(body); } catch (e) { return json({ error: 'bad report' }, 400); }
+    const str = (v, n) => typeof v === 'string' ? v.trim().slice(0, n) : '';
+    const r = { game: str(b.game, 40), text: str(b.text, 2000), steps: str(b.steps, 2000), contact: str(b.contact, 120), info: b.info && typeof b.info === 'object' ? JSON.stringify(b.info).slice(0, 6000) : '' };
+    if (r.text.length < 5) return json({ error: 'Please say what went wrong.' }, 400);
+    if (r.game && !/^[a-z0-9-]{2,40}$/.test(r.game)) r.game = '';
+    const who = (await sha('pulsebox-bug|' + (request.headers.get('cf-connecting-ip') || ''))).slice(0, 24);
+    return stub.fetch('https://bugs/add', { method: 'POST', body: JSON.stringify({ ...r, who }) });
+  }
+  if (url.pathname === '/api/bug/status') {
+    const ids = (url.searchParams.get('ids') || '').split(',').map(Number).filter(n => Number.isInteger(n) && n > 0).slice(0, 50);
+    return stub.fetch('https://bugs/status', { method: 'POST', body: JSON.stringify({ ids }) });
+  }
+  if (!admin()) return json({ error: 'wrong key' }, 401);
+  if (url.pathname === '/api/bugs') return stub.fetch('https://bugs/list?' + new URLSearchParams({ status: url.searchParams.get('status') || '' }));
+  if (request.method !== 'POST') return json({ error: 'method' }, 405);
+  let u; try { u = JSON.parse(await request.text()); } catch (e) { return json({ error: 'bad update' }, 400); }
+  if (!BUG_STATUS.includes(u.status)) return json({ error: 'bad status' }, 400);
+  return stub.fetch('https://bugs/update', { method: 'POST', body: JSON.stringify({ id: Number(u.id), status: u.status, note: typeof u.note === 'string' ? u.note.slice(0, 500) : '' }) });
+}
+export class Bugs {
+  constructor(state) {
+    this.sql = state.storage.sql;
+    this.sql.exec('CREATE TABLE IF NOT EXISTS bugs (id INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, game TEXT, text TEXT, steps TEXT, contact TEXT, info TEXT, status TEXT NOT NULL DEFAULT \'new\', note TEXT NOT NULL DEFAULT \'\', updated INTEGER NOT NULL)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS sent (k TEXT NOT NULL, t INTEGER NOT NULL)');
+  }
+  async fetch(request) {
+    const url = new URL(request.url), now = Date.now();
+    if (url.pathname === '/add') {
+      const r = JSON.parse(await request.text());
+      this.sql.exec('DELETE FROM sent WHERE t < ?', now - 3600000);
+      if (this.sql.exec('SELECT COUNT(*) AS n FROM sent WHERE k = ?', r.who).one().n >= 6) return json({ error: 'Thanks! You have sent a lot of reports in the last hour. Please try again later.' }, 429);
+      this.sql.exec('INSERT INTO sent (k, t) VALUES (?, ?)', r.who, now);
+      const id = this.sql.exec('INSERT INTO bugs (t, game, text, steps, contact, info, updated) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id', now, r.game, r.text, r.steps, r.contact, r.info, now).one().id;
+      return json({ id });
+    }
+    if (url.pathname === '/status') {
+      const { ids } = JSON.parse(await request.text()), out = {};
+      for (const id of ids) { const row = this.sql.exec('SELECT status, note, updated FROM bugs WHERE id = ?', id).toArray()[0]; if (row) out[id] = row; }
+      return json(out);
+    }
+    if (url.pathname === '/list') {
+      const st = url.searchParams.get('status');
+      const rows = st ? this.sql.exec('SELECT * FROM bugs WHERE status = ? ORDER BY id DESC LIMIT 300', st).toArray() : this.sql.exec('SELECT * FROM bugs ORDER BY id DESC LIMIT 300').toArray();
+      const counts = {}; for (const r of this.sql.exec('SELECT status, COUNT(*) AS n FROM bugs GROUP BY status')) counts[r.status] = r.n;
+      return json({ bugs: rows, counts });
+    }
+    if (url.pathname === '/update') {
+      const u = JSON.parse(await request.text());
+      this.sql.exec('UPDATE bugs SET status = ?, note = ?, updated = ? WHERE id = ?', u.status, u.note, now, u.id);
+      return json({ ok: true });
+    }
+    return json({ error: 'not found' }, 404);
+  }
+}
 async function live(request, env) {
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
   const who = await sha('pulsebox-person|' + (request.headers.get('cf-connecting-ip') || ''));
@@ -92,6 +159,7 @@ export async function api(request, env, ctx, ids) {
   if (url.pathname === '/api/stats') return stats(request, env, ctx);
   if (url.pathname === '/api/view') return view(request, env);
   if (url.pathname === '/api/live') return live(request, env);
+  if (url.pathname === '/api/bug' || url.pathname === '/api/bug/status' || url.pathname === '/api/bugs' || url.pathname === '/api/bugs/update') return bugs(request, env, url);
   if (url.pathname === '/api/hollow') {
     if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
     return env.HOLLOW.get(env.HOLLOW.idFromName('global')).fetch(request);

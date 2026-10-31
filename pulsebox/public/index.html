@@ -307,6 +307,21 @@
   .modal .err { color: #ff8aa8; font-weight: 700; font-size: 14px; margin-top: 12px; min-height: 1em; }
   .modal .ok { color: var(--lime); }
   .modal .or { text-align: center; color: var(--muted); font-size: 13px; margin: 14px 0 4px; }
+  .modal textarea, .modal select { width: 100%; padding: 11px 13px; border-radius: 10px; border: 1px solid var(--edge); background: var(--bg2); font: inherit; font-size: 16px; color: var(--text); }
+  .modal textarea { min-height: 96px; resize: vertical; }
+  .modal textarea:focus, .modal select:focus { outline: none; border-color: var(--lime); }
+  .modal .box.wide { width: min(520px, 100%); }
+  .modal .check { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; font-size: 14px; color: var(--muted); margin-top: 12px; }
+  .modal .check input { width: auto; margin-top: 3px; }
+  .modal .hint { font-weight: 500; color: var(--muted); font-size: 13px; }
+  .my-bugs { margin-top: 18px; border-top: 1px solid var(--edge); padding-top: 12px; }
+  .my-bugs h3 { margin: 0 0 8px; font-family: var(--display); font-size: 15px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .my-bugs li { list-style: none; display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-top: 1px solid rgba(255,255,255,.05); font-size: 14px; }
+  .my-bugs ul { margin: 0; padding: 0; }
+  .bug-st { font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; background: var(--panel2); color: var(--muted); white-space: nowrap; align-self: flex-start; }
+  .bug-st.fixed { background: var(--lime); color: #0a0c12; } .bug-st.fixing, .bug-st.confirmed { background: var(--cyan); color: #0a0c12; }
+  .bug-btn { display: inline-flex; align-items: center; gap: 6px; }
+  footer .bug-link { background: none; border: 0; color: var(--cyan); font: inherit; font-weight: 700; cursor: pointer; padding: 0; }
   .modal .stat { display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--edge); font-weight: 600; }
   .modal .stat span { color: var(--muted); }
   .acct-btn .nm { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
@@ -445,6 +460,7 @@
     <div class="play-bar">
       <button class="btn" id="pBack">‹ Back</button>
       <h1 class="outline-title" id="pTitle"></h1>
+      <button class="btn bug-btn" id="pBug" type="button" title="Report a bug in this game">🐞 Report a bug</button>
       <button class="btn dark" id="pFull">Full screen</button>
     </div>
     <div class="stage" id="stage"><div class="loading"><span>Loading…</span></div></div>
@@ -454,7 +470,7 @@
     </section>
   </main>
 
-  <footer><span><b>PULSEBOX</b> · Interactive activities for timing, strategy, and problem-solving.</span><span>Works on phones, tablets, and computers.</span></footer>
+  <footer><span><b>PULSEBOX</b> · Interactive activities for timing, strategy, and problem-solving.</span><span>Works on phones, tablets, and computers. Found a problem? <button type="button" class="bug-link" id="footBug">Report a bug</button></span></footer>
 </div>
 
 <nav class="tabbar" id="tabbar" aria-label="Main">
@@ -1799,11 +1815,24 @@ function startGame(g) {
   stopGame();
   const f = document.createElement('iframe');
   f.dataset.id = g.id; f.title = g.title; f.allow = 'fullscreen; autoplay; gamepad' + (g.mic ? '; microphone' : '');
-  f.addEventListener('load', () => { st.classList.add('ready'); try { f.focus(); } catch (e) {} });
+  f.addEventListener('load', () => { st.classList.add('ready'); try { f.focus(); } catch (e) {} watchErrors(f, g.id); });
   f.src = g.file;
   st.prepend(f);
   requestAnimationFrame(sizeStage);
 }
+// the last few errors from the game that's open, so a bug report can include them
+const gameErrors = [];
+function watchErrors(f, id) {
+  gameErrors.length = 0;
+  const push = m => { gameErrors.push(String(m).slice(0, 300)); if (gameErrors.length > 8) gameErrors.shift(); };
+  try {
+    const w = f.contentWindow;
+    w.addEventListener('error', e => push((e.message || 'error') + (e.filename ? ' @ ' + e.filename.split('/').pop() + ':' + e.lineno + ':' + e.colno : '')));
+    w.addEventListener('unhandledrejection', e => push('promise: ' + ((e.reason && (e.reason.stack || e.reason.message)) || e.reason)));
+  } catch (e) {}
+}
+window.pbxGameErrors = () => gameErrors.slice();
+window.pbxCurrentGame = () => current ? current.id : '';
 function stopGame() { const f = $('stage').querySelector('iframe'); if (f) f.remove(); }
 
 /* ============================================================
@@ -1882,9 +1911,73 @@ trackView();
 loadStats();
 </script>
 
+<div class="modal" id="bugModal" hidden role="dialog" aria-modal="true" aria-labelledby="bgTitle">
+  <div class="box wide" id="bgBox"></div>
+</div>
 <div class="modal" id="acctModal" hidden role="dialog" aria-modal="true" aria-labelledby="amTitle">
   <div class="box" id="amBox"></div>
 </div>
+<script>
+/* ============================================================
+   BUG REPORTS: anyone can send one (POST /api/bug). The report
+   remembers the game and, if allowed, the browser, screen size
+   and recent errors. Reporters see their reports' status here;
+   the admin page (/bugs.html) is where they get marked fixed.
+   ============================================================ */
+(() => {
+  const $ = id => document.getElementById(id), esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const KEY = 'pbx-bugs', LABEL = { new: 'Received', confirmed: 'Confirmed', fixing: 'Being fixed', fixed: 'Fixed', wontfix: 'Not a bug', duplicate: 'Already known' };
+  const mine = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } };
+  const save = a => { try { localStorage.setItem(KEY, JSON.stringify(a.slice(-30))); } catch (e) {} };
+  let game = '', sent = null, busy = false, err = '', statuses = {};
+  function open(id) { game = id || ''; sent = null; err = ''; $('bugModal').hidden = false; draw(); refresh(); setTimeout(() => { const t = $('bgText'); if (t) t.focus(); }, 30); }
+  function close() { $('bugModal').hidden = true; }
+  function refresh() {
+    const ids = mine().map(b => b.id); if (!ids.length) return;
+    fetch('/api/bug/status?ids=' + ids.join(',')).then(r => r.ok ? r.json() : null).then(d => { if (d) { statuses = d; if (!$('bugModal').hidden) drawMine(); } }).catch(() => {});
+  }
+  function drawMine() {
+    const el = $('bgMine'); if (!el) return; const list = mine().slice().reverse();
+    if (!list.length) { el.hidden = true; return; }
+    el.hidden = false;
+    el.innerHTML = '<h3>Your reports</h3><ul>' + list.map(b => { const s = statuses[b.id], st = (s && s.status) || 'new';
+      return '<li><span><b>#' + b.id + '</b> ' + esc(b.title) + (s && s.note ? '<br><span class="hint">' + esc(s.note) + '</span>' : '') + '</span><span class="bug-st ' + st + '">' + (LABEL[st] || st) + '</span></li>'; }).join('') + '</ul>';
+  }
+  function draw() {
+    const box = $('bgBox');
+    if (sent) {
+      box.innerHTML = '<button class="x" id="bgX" aria-label="Close">✕</button><h2 id="bgTitle">Thanks!</h2><p>Your report <b>#' + sent + '</b> was sent. We read every report and fix what we can. Come back here to see when it is fixed.</p><button class="go" id="bgDone">Back to the game</button><div class="my-bugs" id="bgMine" hidden></div>';
+      $('bgDone').onclick = close; $('bgX').onclick = close; drawMine(); return;
+    }
+    const games = (typeof GAMES !== 'undefined' ? GAMES : []).slice().sort((a, b) => a.title.localeCompare(b.title));
+    box.innerHTML = '<button class="x" id="bgX" aria-label="Close">✕</button><h2 id="bgTitle">Report a bug</h2><p>Something broken, stuck or weird? Tell us and we will fix it.</p>' +
+      '<label for="bgGame">Where?</label><select id="bgGame"><option value="">The website itself</option>' + games.map(g => '<option value="' + g.id + '"' + (g.id === game ? ' selected' : '') + '>' + esc(g.title) + '</option>').join('') + '</select>' +
+      '<label for="bgText">What went wrong?</label><textarea id="bgText" maxlength="2000" placeholder="e.g. The jump button stopped working after level 3."></textarea>' +
+      '<label for="bgSteps">What were you doing? <span class="hint">(optional)</span></label><textarea id="bgSteps" maxlength="2000" style="min-height:70px" placeholder="Steps to make it happen again, if you know them."></textarea>' +
+      '<label for="bgContact">Name or email <span class="hint">(optional, only if you want a reply)</span></label><input id="bgContact" maxlength="120" autocomplete="email">' +
+      '<label class="check"><input type="checkbox" id="bgInfo" checked> Include technical details (browser, screen size and any error messages from the game)</label>' +
+      '<div class="err" id="bgErr" role="alert">' + esc(err) + '</div><button class="go" id="bgSend"' + (busy ? ' disabled' : '') + '>' + (busy ? 'Sending…' : 'Send report') + '</button><div class="my-bugs" id="bgMine" hidden></div>';
+    $('bgX').onclick = close; $('bgSend').onclick = send; drawMine();
+  }
+  function send() {
+    const text = $('bgText').value.trim(); if (text.length < 5) { $('bgErr').textContent = 'Please say what went wrong.'; return; }
+    const g = $('bgGame').value, withInfo = $('bgInfo').checked;
+    const info = withInfo ? { ua: navigator.userAgent, screen: screen.width + 'x' + screen.height + ' @' + (devicePixelRatio || 1), view: innerWidth + 'x' + innerHeight, touch: navigator.maxTouchPoints || 0, lang: navigator.language, page: location.href, errors: g && g === game ? (window.pbxGameErrors ? window.pbxGameErrors() : []) : [] } : null;
+    busy = true; err = ''; const keep = { text, steps: $('bgSteps').value, contact: $('bgContact').value, g }; draw(); $('bgText').value = keep.text; $('bgSteps').value = keep.steps; $('bgContact').value = keep.contact; $('bgGame').value = keep.g;
+    fetch('/api/bug', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ game: g, text, steps: keep.steps, contact: keep.contact, info }) })
+      .then(r => r.json().then(d => ({ ok: r.ok, d }))).then(({ ok, d }) => {
+        busy = false; if (!ok || !d.id) throw new Error(d.error || 'Could not send the report.');
+        const t = ((typeof GAMES !== 'undefined' ? GAMES : []).find(x => x.id === g) || { title: 'Website' }).title + ': ' + text.slice(0, 50) + (text.length > 50 ? '…' : '');
+        save([...mine(), { id: d.id, title: t, at: Date.now() }]); sent = d.id; statuses[d.id] = { status: 'new' }; draw();
+      }).catch(e => { busy = false; err = e.message || 'Could not send the report. Check your connection and try again.'; draw(); $('bgText').value = keep.text; $('bgSteps').value = keep.steps; $('bgContact').value = keep.contact; $('bgGame').value = keep.g; });
+  }
+  $('bugModal').addEventListener('click', e => { if (e.target.id === 'bugModal') close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('bugModal').hidden) close(); });
+  $('pBug').onclick = () => open(window.pbxCurrentGame ? window.pbxCurrentGame() : '');
+  $('footBug').onclick = () => open(window.pbxCurrentGame ? window.pbxCurrentGame() : '');
+  window.pbxReportBug = open;
+})();
+</script>
 <script>
 /* ============================================================
    ACCOUNT: sign in with a Pulseform account (Firebase Auth) and keep every game's progress in the cloud.

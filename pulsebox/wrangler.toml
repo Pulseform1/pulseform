@@ -48,3 +48,12 @@ class_name = "ArcadeRooms"
 [[migrations]]
 tag = "v5"
 new_sqlite_classes = ["ArcadeRooms"]
+
+# bug reports (api.js): one global Durable Object keeps every report; the admin page is public/bugs.html
+[[durable_objects.bindings]]
+name = "BUGS"
+class_name = "Bugs"
+
+[[migrations]]
+tag = "v6"
+new_sqlite_classes = ["Bugs"]

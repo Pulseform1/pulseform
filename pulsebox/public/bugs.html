@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Pulsebox Bug Reports</title>
+<style>
+  :root { color-scheme: dark; --bg: #0a0c12; --panel: #161a26; --panel2: #1d2231; --edge: #2a3144; --text: #eef1f8; --muted: #8d95ab; --lime: #c6ff3d; --pink: #ff2e88; --cyan: #29e0ff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 20px 16px 60px; }
+  main { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 4px; } h1 a { color: inherit; text-decoration: none; }
+  p.sub { color: var(--muted); margin: 0 0 18px; }
+  .login { background: var(--panel); border: 1px solid var(--edge); border-radius: 16px; padding: 20px; max-width: 420px; }
+  input, select, textarea, button { font: inherit; color: var(--text); }
+  input, select, textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--edge); background: #11141d; }
+  button { cursor: pointer; border-radius: 10px; border: 1px solid var(--edge); background: var(--panel2); padding: 9px 14px; font-weight: 700; }
+  button.go { background: var(--lime); color: #0a0c12; border: 0; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 16px; }
+  .bar button.on { background: var(--lime); color: #0a0c12; border-color: var(--lime); }
+  .bar .sp { flex: 1; }
+  .card { background: var(--panel); border: 1px solid var(--edge); border-radius: 16px; padding: 16px; margin: 0 0 12px; }
+  .card.fixed, .card.wontfix, .card.duplicate { opacity: .65; }
+  .top { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; margin-bottom: 8px; }
+  .id { font-weight: 800; } .game { color: var(--cyan); font-weight: 700; text-decoration: none; } .when { color: var(--muted); font-size: 14px; }
+  .st { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; background: var(--panel2); color: var(--muted); }
+  .st.new { background: var(--pink); color: #fff; } .st.fixed { background: var(--lime); color: #0a0c12; } .st.fixing, .st.confirmed { background: var(--cyan); color: #0a0c12; }
+  .text { white-space: pre-wrap; word-break: break-word; margin: 0 0 8px; }
+  .steps { white-space: pre-wrap; color: #c6cbdb; margin: 0 0 8px; } .lbl { color: var(--muted); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  details { margin: 6px 0 10px; color: var(--muted); font-size: 14px; } details pre { white-space: pre-wrap; word-break: break-all; background: #11141d; padding: 10px; border-radius: 8px; color: #c6cbdb; }
+  .err-line { color: #ff8aa8; }
+  .act { display: grid; grid-template-columns: 170px 1fr auto; gap: 8px; align-items: center; }
+  @media (max-width: 600px) { .act { grid-template-columns: 1fr; } }
+  .msg { color: var(--muted); margin: 8px 0; } .bad { color: #ff8aa8; font-weight: 700; }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { color-scheme: dark; } }
+</style>
+</head>
+<body>
+<main>
+  <h1><a href="/">Pulsebox</a> · Bug reports</h1>
+  <p class="sub">Reports people send from the site. Mark them fixed and the reporter sees it next time they open "Report a bug".</p>
+  <div id="app"></div>
+</main>
+<script>
+const $ = id => document.getElementById(id), esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const ST = ['new', 'confirmed', 'fixing', 'fixed', 'wontfix', 'duplicate'], NAME = { new: 'New', confirmed: 'Confirmed', fixing: 'Being fixed', fixed: 'Fixed', wontfix: "Won't fix", duplicate: 'Duplicate' };
+let key = ''; try { key = localStorage.getItem('pbx-bug-key') || ''; } catch (e) {}
+let filter = 'open', data = { bugs: [], counts: {} }, msg = '';
+const api = (path, body) => fetch(path, { method: body ? 'POST' : 'GET', headers: { 'x-admin-key': key, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }).then(r => r.json().then(d => { if (!r.ok) throw new Error(d.error || r.status); return d; }));
+function login(err) {
+  $('app').innerHTML = '<div class="login"><label for="k" class="lbl">Admin key</label><input id="k" type="password" autocomplete="current-password" style="margin:8px 0 12px"><button class="go" id="kGo">Open reports</button>' + (err ? '<p class="bad">' + esc(err) + '</p>' : '') + '</div>';
+  $('kGo').onclick = () => { key = $('k').value.trim(); try { localStorage.setItem('pbx-bug-key', key); } catch (e) {} load(); };
+  $('k').onkeydown = e => { if (e.key === 'Enter') $('kGo').click(); };
+}
+function load() {
+  if (!key) return login();
+  api('/api/bugs').then(d => { data = d; draw(); }).catch(e => login(e.message === 'wrong key' ? 'That key is not right.' : 'Could not load: ' + e.message));
+}
+function draw() {
+  const c = data.counts || {}, open = (c.new || 0) + (c.confirmed || 0) + (c.fixing || 0);
+  const list = data.bugs.filter(b => filter === 'all' ? true : filter === 'open' ? ['new', 'confirmed', 'fixing'].includes(b.status) : b.status === filter);
+  const tab = (f, label) => '<button data-f="' + f + '" class="' + (filter === f ? 'on' : '') + '">' + label + '</button>';
+  $('app').innerHTML = '<div class="bar">' + tab('open', 'Open (' + open + ')') + tab('new', 'New (' + (c.new || 0) + ')') + tab('fixed', 'Fixed (' + (c.fixed || 0) + ')') + tab('all', 'All') + '<span class="sp"></span><button id="re">Refresh</button><button id="out">Sign out</button></div>' +
+    (msg ? '<p class="msg">' + esc(msg) + '</p>' : '') + (list.length ? list.map(card).join('') : '<p class="msg">Nothing here.</p>');
+  document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filter = b.dataset.f; msg = ''; draw(); });
+  $('re').onclick = () => { msg = ''; load(); };
+  $('out').onclick = () => { key = ''; try { localStorage.removeItem('pbx-bug-key'); } catch (e) {} login(); };
+  document.querySelectorAll('[data-save]').forEach(b => b.onclick = () => {
+    const id = +b.dataset.save, status = $('s' + id).value, note = $('n' + id).value; b.disabled = true;
+    api('/api/bugs/update', { id, status, note }).then(() => { const x = data.bugs.find(q => q.id === id); data.counts[x.status]--; data.counts[status] = (data.counts[status] || 0) + 1; Object.assign(x, { status, note }); msg = 'Saved #' + id + '.'; draw(); }).catch(e => { b.disabled = false; alert('Could not save: ' + e.message); });
+  });
+}
+function card(b) {
+  let info = null; try { info = b.info ? JSON.parse(b.info) : null; } catch (e) {}
+  const errs = info && info.errors && info.errors.length ? info.errors : [];
+  return '<div class="card ' + b.status + '"><div class="top"><span class="id">#' + b.id + '</span><span class="st ' + b.status + '">' + NAME[b.status] + '</span>' +
+    (b.game ? '<a class="game" href="/#play-' + esc(b.game) + '" target="_blank" rel="noopener">' + esc(b.game) + '</a>' : '<span class="game">website</span>') +
+    '<span class="when">' + new Date(b.t).toLocaleString() + '</span>' + (b.contact ? '<span class="when">from ' + esc(b.contact) + '</span>' : '') + '</div>' +
+    '<p class="text">' + esc(b.text) + '</p>' + (b.steps ? '<div class="lbl">Doing</div><p class="steps">' + esc(b.steps) + '</p>' : '') +
+    (errs.length ? '<div class="lbl">Errors from the game</div>' + errs.map(e => '<div class="err-line">' + esc(e) + '</div>').join('') : '') +
+    (info ? '<details><summary>Technical details</summary><pre>' + esc(JSON.stringify(info, null, 1)) + '</pre></details>' : '') +
+    '<div class="act"><select id="s' + b.id + '">' + ST.map(s => '<option value="' + s + '"' + (s === b.status ? ' selected' : '') + '>' + NAME[s] + '</option>').join('') + '</select>' +
+    '<input id="n' + b.id + '" maxlength="500" placeholder="Note the reporter will see (optional)" value="' + esc(b.note) + '"><button class="go" data-save="' + b.id + '">Save</button></div></div>';
+}
+load();
+</script>
+</body>
+</html>
