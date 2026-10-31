@@ -197,7 +197,7 @@ const GAME = {
     }
   }
   function scored(team) {
-    score[team]++; swish(); K.shake(10); flash = { t: 0, team }; K.burst(HOOP[team].x, HOOPY + 20, [COL[team][0], '#fff', '#ffd23f'], 30, 420);
+    score[team]++; netK[team] = 1; swish(); K.shake(10); flash = { t: 0, team }; K.burst(HOOP[team].x, HOOPY + 20, [COL[team][0], '#fff', '#ffd23f'], 30, 420);
     if (team === 0 || !cpu) K.add(10);
     if (score[team] >= 5) { winner = team; mode = 'won'; t = 0; buzzer(); if (team === 0 || !cpu) K.add(50); return; }
     mode = 'scored'; t = 0;
@@ -211,50 +211,91 @@ const GAME = {
   /* ---------- drawing: a bright gym ---------- */
   function rr(g, x, y, w, h, r, f) { g.beginPath(); g.roundRect(x, y, w, h, r); g.fillStyle = f; g.fill(); }
   function tx(g, s, x, y, font, c, al = 'center', st) { g.font = font; g.textAlign = al; g.textBaseline = 'middle'; if (st) { g.lineJoin = 'round'; g.lineWidth = st[1]; g.strokeStyle = st[0]; g.strokeText(s, x, y); } g.fillStyle = c; g.fillText(s, x, y); }
+  const SKIN = ['#f0c8a0', '#c88a5a', '#8a5a3a', '#ffe0c0', '#e0a878', '#6a4028'], CROWD = ['#ff7a1a', '#29a8ff', '#ffd23f', '#e8e8e8', '#ff5fa2', '#7ad86a', '#9a6aff'];
+  let netK = [0, 0];
   function court(g) {
-    const v = K.view, wall = g.createLinearGradient(0, 0, 0, FLOOR); wall.addColorStop(0, '#2a3e6e'); wall.addColorStop(1, '#4a66a8'); g.fillStyle = wall; g.fillRect(v.x0, v.y0, v.x1 - v.x0, FLOOR - v.y0);
-    // stands with a pixel crowd
-    g.fillStyle = '#1e2c52'; g.fillRect(v.x0, 70, v.x1 - v.x0, 140);
-    for (let i = 0; i < 90; i++) { const x = 20 + i * 14.2, y = 92 + (i % 3) * 36, c = ['#ff7a1a', '#29a8ff', '#ffd23f', '#e8e8e8', '#ff5fa2'][i % 5], hop = mode === 'scored' && (i % 2) ? -Math.abs(Math.sin(t * 14 + i)) * 8 : 0; g.fillStyle = '#f0c8a0'; g.fillRect(x, y - 10 + hop, 8, 8); g.fillStyle = c; g.fillRect(x - 1, y - 2 + hop, 10, 12); }
-    g.fillStyle = '#ffd23f'; g.fillRect(v.x0, 210, v.x1 - v.x0, 8);
-    const fl = g.createLinearGradient(0, FLOOR, 0, 720); fl.addColorStop(0, mod && mod.ice ? '#bfe8ff' : '#e0a060'); fl.addColorStop(1, mod && mod.ice ? '#8ac8f0' : '#b87838'); g.fillStyle = fl; g.fillRect(v.x0, FLOOR, v.x1 - v.x0, v.y1 - FLOOR);
-    g.strokeStyle = mod && mod.ice ? 'rgba(255,255,255,.5)' : 'rgba(90,50,20,.35)'; g.lineWidth = 2; for (let x = 0; x < 1280; x += 64) { g.beginPath(); g.moveTo(x, FLOOR); g.lineTo(x - 30, 720); g.stroke(); }
-    g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(v.x0, FLOOR, v.x1 - v.x0, 4); g.fillRect(638, FLOOR, 4, 110);
+    const v = K.view, W = v.x1 - v.x0, ice = mod && mod.ice;
+    const wall = g.createLinearGradient(0, 0, 0, FLOOR); wall.addColorStop(0, '#121a36'); wall.addColorStop(.45, '#1e2c5a'); wall.addColorStop(1, '#30478a'); g.fillStyle = wall; g.fillRect(v.x0, v.y0, W, FLOOR - v.y0);
+    // stands: three tiers of fans, back rows darker
+    for (let row = 0; row < 4; row++) {
+      const y = 96 + row * 34, dk = .55 + row * .15; g.fillStyle = `rgba(10,14,34,${.75 - row * .12})`; g.fillRect(v.x0, y - 22, W, 34);
+      for (let i = -2; i < 96; i++) { const x = i * 14 + (row % 2) * 7, h = (i * 7 + row * 13) % 17, cheer = (mode === 'scored' || mode === 'won') && (h % 2), hop = cheer ? -Math.abs(Math.sin(t * 13 + i)) * 7 : Math.sin(t * 2 + i * 1.7) * .8;
+        g.globalAlpha = dk; g.fillStyle = CROWD[h % 7]; g.beginPath(); g.roundRect(x - 5, y - 4 + hop, 11, 14, [5, 5, 0, 0]); g.fill();
+        g.fillStyle = SKIN[h % 6]; g.beginPath(); g.arc(x, y - 9 + hop, 4.6, 0, 7); g.fill();
+        if (cheer) { g.fillRect(x - 7, y - 16 + hop, 2, 9); g.fillRect(x + 5, y - 16 + hop, 2, 9); } }
+      g.globalAlpha = 1; g.fillStyle = 'rgba(255,255,255,.08)'; g.fillRect(v.x0, y + 11, W, 2);
+    }
+    // the jumbotron rail and hanging team pennants
+    g.fillStyle = '#0a0e20'; g.fillRect(v.x0, 226, W, 14); g.fillStyle = '#ffd23f'; g.fillRect(v.x0, 238, W, 3);
+    for (let i = 0; i < 8; i++) { const x = 90 + i * 160, c = COL[i % 2][0]; g.fillStyle = c; g.beginPath(); g.moveTo(x - 22, 241); g.lineTo(x + 22, 241); g.lineTo(x, 286 + Math.sin(t * 2 + i) * 3); g.fill(); g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(x - 22, 241, 44, 4); }
+    // spotlights
+    g.save(); g.globalCompositeOperation = 'lighter'; for (const [x, a] of [[240, .07], [640, .09], [1040, .07]]) { const gr = g.createLinearGradient(0, 0, 0, FLOOR); gr.addColorStop(0, `rgba(180,210,255,${a * 1.6})`); gr.addColorStop(1, 'rgba(180,210,255,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(x - 30, 0); g.lineTo(x + 30, 0); g.lineTo(x + 230, FLOOR); g.lineTo(x - 230, FLOOR); g.fill(); } g.restore();
+    // LED ad boards along the sideline
+    const adY = FLOOR - 46; g.fillStyle = '#0a0c18'; g.fillRect(v.x0, adY, W, 46);
+    const ads = ['FLOP HOOPS', 'PULSEBOX', 'SLAM CITY', 'BOING', 'HOOP DREAMS'], off = (t * 30) % 260;
+    g.save(); g.beginPath(); g.rect(v.x0, adY + 4, W, 38); g.clip(); for (let i = -1; i < 7; i++) { const x = i * 260 - off + 20; g.fillStyle = i % 2 ? '#14306a' : '#5a1a0a'; g.fillRect(x, adY + 4, 252, 38); tx(g, ads[(i + 10) % 5], x + 126, adY + 24, `24px ${FD}`, i % 2 ? '#7ac8ff' : '#ffb07a'); } g.restore();
+    g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(v.x0, adY + 4, W, 2);
+    // hardwood (or ice) floor with paint and a glossy shine
+    const fl = g.createLinearGradient(0, FLOOR, 0, 720); fl.addColorStop(0, ice ? '#d8f2ff' : '#e8aa66'); fl.addColorStop(1, ice ? '#8ac8f0' : '#b0702e'); g.fillStyle = fl; g.fillRect(v.x0, FLOOR, W, v.y1 - FLOOR);
+    if (!ice) for (let i = -2; i < 44; i++) { const x = i * 32; g.fillStyle = i % 3 === 0 ? 'rgba(120,60,20,.10)' : i % 3 === 1 ? 'rgba(255,220,170,.07)' : 'rgba(0,0,0,0)'; g.beginPath(); g.moveTo(x, FLOOR); g.lineTo(x + 32, FLOOR); g.lineTo(x + 32 - 40, 720); g.lineTo(x - 40, 720); g.fill(); }
+    g.strokeStyle = ice ? 'rgba(255,255,255,.5)' : 'rgba(90,50,20,.28)'; g.lineWidth = 1.5; for (let x = 0; x < 1300; x += 32) { g.beginPath(); g.moveTo(x, FLOOR); g.lineTo(x - 40, 720); g.stroke(); }
+    for (const [team, h] of HOOP.entries()) { const kx = h.x; g.fillStyle = ice ? 'rgba(120,180,230,.25)' : 'rgba(140,50,10,.22)'; g.beginPath(); g.moveTo(kx - 150 * h.dir, FLOOR + 8); g.lineTo(kx + 120 * h.dir, FLOOR + 8); g.lineTo(kx + 150 * h.dir, 712); g.lineTo(kx - 210 * h.dir, 712); g.closePath(); g.fill(); g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 3; g.stroke(); g.fillStyle = COL[1 - team][0]; g.globalAlpha = .5; g.beginPath(); g.ellipse(kx - 15 * h.dir, FLOOR + 40, 40, 10, 0, 0, 7); g.fill(); g.globalAlpha = 1;
+      g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 3; g.beginPath(); g.ellipse(kx, FLOOR + 60, 380, 52, 0, h.dir > 0 ? Math.PI * .5 : -Math.PI * .5, h.dir > 0 ? Math.PI * 1.5 : Math.PI * .5); g.stroke(); }
+    g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 3; g.beginPath(); g.ellipse(640, FLOOR + 56, 120, 36, 0, 0, 7); g.stroke(); g.fillStyle = 'rgba(255,210,63,.35)'; g.beginPath(); g.ellipse(640, FLOOR + 56, 60, 18, 0, 0, 7); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.75)'; g.fillRect(v.x0, FLOOR, W, 4); g.fillRect(638, FLOOR, 4, 110);
+    const sh = g.createLinearGradient(0, FLOOR, 0, FLOOR + 50); sh.addColorStop(0, 'rgba(255,255,255,.22)'); sh.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = sh; g.fillRect(v.x0, FLOOR + 4, W, 50);
     for (const [team, h] of HOOP.entries()) {
-      const back = h.x + h.dir * (RIM + 14), pole = h.x + h.dir * 90;
-      g.fillStyle = '#555c6a'; g.fillRect(pole - 7, HOOPY - 60, 14, FLOOR - HOOPY + 60); g.fillRect(Math.min(pole, back), HOOPY - 52, Math.abs(pole - back), 10);
-      g.fillStyle = '#f4f6fa'; g.fillRect(back - 6, HOOPY - 120, 12, 140); g.fillStyle = COL[1 - team][0]; g.fillRect(back - 6, HOOPY - 60, 12, 40);
+      const back = h.x + h.dir * (RIM + 14), pole = h.x + h.dir * 96;
+      g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(pole, FLOOR + 6, 40, 7, 0, 0, 7); g.fill();
+      g.fillStyle = '#3a4050'; g.fillRect(pole - 9, HOOPY - 60, 18, FLOOR - HOOPY + 60); g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(pole - 6, HOOPY - 60, 4, FLOOR - HOOPY + 60);
+      g.fillStyle = COL[1 - team][0]; g.beginPath(); g.roundRect(pole - 16, FLOOR - 120, 32, 120, 6); g.fill(); g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(pole + (h.dir > 0 ? 6 : -16), FLOOR - 120, 10, 120);
+      g.fillStyle = '#3a4050'; g.fillRect(Math.min(pole, back), HOOPY - 50, Math.abs(pole - back), 10);
+      g.fillStyle = 'rgba(220,240,255,.35)'; g.fillRect(back - 8, HOOPY - 128, 16, 150); g.strokeStyle = '#f4f6fa'; g.lineWidth = 3; g.strokeRect(back - 8, HOOPY - 128, 16, 150);
+      g.fillStyle = COL[1 - team][0]; g.fillRect(back - 5, HOOPY - 56, 10, 40);
     }
   }
   function hoopFront(g) {
     for (const [team, h] of HOOP.entries()) {
-      // the net, then the rim on top
-      g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2;
-      for (let i = 0; i <= 6; i++) { const x0 = h.x - RIM + i * RIM / 3, x1 = h.x - RIM * .55 + i * RIM * .55 / 3; g.beginPath(); g.moveTo(x0, HOOPY); g.lineTo(x1, HOOPY + 54); g.stroke(); }
-      for (let r = 1; r <= 3; r++) { g.beginPath(); g.moveTo(h.x - RIM + r * 5, HOOPY + r * 17); g.lineTo(h.x + RIM - r * 5, HOOPY + r * 17); g.stroke(); }
-      g.fillStyle = '#ff4a1a'; g.fillRect(h.x - RIM - 4, HOOPY - 4, RIM * 2 + 8, 8);
+      const k = netK[team], sway = Math.sin(t * 30) * 6 * k, drop = 10 * k;
+      g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2;
+      for (let i = 0; i <= 6; i++) { const x0 = h.x - RIM + i * RIM / 3, x1 = h.x - RIM * .55 + i * RIM * .55 / 3 + sway; g.beginPath(); g.moveTo(x0, HOOPY); g.quadraticCurveTo((x0 + x1) / 2 + sway * .5, HOOPY + 30, x1, HOOPY + 54 + drop); g.stroke(); }
+      for (let r = 1; r <= 3; r++) { const yy = HOOPY + r * (17 + drop / 3); g.beginPath(); g.moveTo(h.x - RIM + r * 5 + sway * r / 3, yy); g.lineTo(h.x + RIM - r * 5 + sway * r / 3, yy); g.stroke(); }
+      const rg = g.createLinearGradient(0, HOOPY - 5, 0, HOOPY + 5); rg.addColorStop(0, '#ff8a4a'); rg.addColorStop(1, '#c8300a'); g.fillStyle = rg; g.beginPath(); g.roundRect(h.x - RIM - 5, HOOPY - 5, RIM * 2 + 10, 10, 5); g.fill(); g.strokeStyle = '#6a1a0a'; g.lineWidth = 1.5; g.stroke();
     }
   }
-  function drawPlayer(g, p) {
-    const j = joints(p), [c, dark, light] = COL[p.team], s = p.s;
+  function drawPlayer(g, p, refl) {
+    const j = joints(p), [c, dark, light] = COL[p.team], s = p.s, O = '#141420';
     g.lineCap = 'round';
-    // legs
-    g.strokeStyle = '#2a2a2a'; g.lineWidth = 12 * s; const hip = { x: p.x + j.ux * p.L * .32, y: p.y + j.uy * p.L * .32 };
-    for (const k of [-1, 1]) { g.beginPath(); g.moveTo(hip.x, hip.y); g.lineTo(p.x + k * 10 * s + (p.ground ? 0 : k * 6), p.y); g.stroke(); }
-    g.fillStyle = '#f4f4f4'; for (const k of [-1, 1]) { g.beginPath(); g.ellipse(p.x + k * 10 * s + p.face * 4, p.y - 2, 10 * s, 6 * s, 0, 0, 7); g.fill(); }
-    // body: shorts and jersey with a number
-    g.strokeStyle = dark; g.lineWidth = 30 * s; g.beginPath(); g.moveTo(hip.x, hip.y); g.lineTo(p.x + j.ux * p.L * .45, p.y + j.uy * p.L * .45); g.stroke();
-    g.strokeStyle = c; g.lineWidth = 32 * s; g.beginPath(); g.moveTo(p.x + j.ux * p.L * .45, p.y + j.uy * p.L * .45); g.lineTo(j.sh.x, j.sh.y); g.stroke();
-    g.save(); g.translate((p.x + j.ux * p.L * .6 + j.sh.x) / 2, (p.y + j.uy * p.L * .6 + j.sh.y) / 2); g.rotate(p.a); tx(g, String(p.k ? 7 : 23), 0, 0, `${16 * s}px ${FD}`, light); g.restore();
-    // head with a headband and a face
-    g.fillStyle = '#f0b888'; g.beginPath(); g.arc(j.head.x, j.head.y, 16 * s, 0, 7); g.fill();
-    g.fillStyle = light; g.save(); g.translate(j.head.x, j.head.y); g.rotate(p.a); g.fillRect(-16 * s, -9 * s, 32 * s, 6 * s); g.fillStyle = '#1a1a1a'; g.fillRect(p.face * 5 * s - 2, -2 * s, 4 * s, 4 * s); g.fillRect(p.face * 5 * s - 4, 7 * s, 8 * s, 2 * s); g.restore();
-    // the arm
-    g.strokeStyle = '#f0b888'; g.lineWidth = 11 * s; g.beginPath(); g.moveTo(j.sh.x, j.sh.y); g.lineTo(j.hand.x, j.hand.y); g.stroke();
-    g.strokeStyle = c; g.lineWidth = 13 * s; g.beginPath(); g.moveTo(j.sh.x, j.sh.y); g.lineTo(j.sh.x + (j.hand.x - j.sh.x) * .35, j.sh.y + (j.hand.y - j.sh.y) * .35); g.stroke();
+    if (!refl) { const hgt = clamp((FLOOR - p.y) / 300, 0, 1); g.fillStyle = `rgba(0,0,0,${.28 - hgt * .18})`; g.beginPath(); g.ellipse(p.x + j.ux * 20, FLOOR + 5, (34 - hgt * 14) * s, 7, 0, 0, 7); g.fill(); }
+    const hip = { x: p.x + j.ux * p.L * .32, y: p.y + j.uy * p.L * .32 }, mid = { x: p.x + j.ux * p.L * .45, y: p.y + j.uy * p.L * .45 }, feet = [-1, 1].map(k => ({ x: p.x + k * 10 * s + (p.ground ? 0 : k * 6), y: p.y }));
+    const line = (a, b, w, col) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke(); };
+    // outline pass
+    for (const f of feet) line(hip, f, 12 * s + 5, O);
+    line(hip, mid, 30 * s + 5, O); line(mid, j.sh, 32 * s + 5, O); line(j.sh, j.hand, 11 * s + 5, O);
+    g.fillStyle = O; g.beginPath(); g.arc(j.head.x, j.head.y, 16 * s + 2.5, 0, 7); g.fill();
+    for (const f of feet) { g.beginPath(); g.ellipse(f.x + p.face * 4, f.y - 2, 10 * s + 2.5, 6 * s + 2.5, 0, 0, 7); g.fill(); }
+    // legs, socks and team shoes
+    for (const f of feet) { line(hip, f, 12 * s, '#f0b888'); line({ x: f.x + (hip.x - f.x) * .22, y: f.y + (hip.y - f.y) * .22 }, f, 12 * s, '#f4f4f4'); }
+    for (const f of feet) { g.fillStyle = c; g.beginPath(); g.ellipse(f.x + p.face * 4, f.y - 2, 10 * s, 6 * s, 0, 0, 7); g.fill(); g.fillStyle = '#fff'; g.fillRect(f.x + p.face * 4 - 8 * s, f.y + 1, 16 * s, 2); }
+    // shorts, jersey with trim and number
+    line(hip, mid, 30 * s, dark); line(mid, j.sh, 32 * s, c);
+    g.strokeStyle = light; g.lineWidth = 3; g.beginPath(); g.moveTo(mid.x - j.uy * 14 * s, mid.y + j.ux * 14 * s); g.lineTo(mid.x + j.uy * 14 * s, mid.y - j.ux * 14 * s); g.stroke();
+    g.save(); g.translate((p.x + j.ux * p.L * .6 + j.sh.x) / 2, (p.y + j.uy * p.L * .6 + j.sh.y) / 2); g.rotate(p.a); tx(g, String(p.k ? 7 : 23), 0, 0, `${18 * s}px ${FD}`, light, 'center', [dark, 3]); g.restore();
+    // head: skin, hair, headband, face
+    g.fillStyle = p.team ? '#c88a5a' : '#f0c090'; if (p.k) g.fillStyle = p.team ? '#f0c8a0' : '#8a5a3a'; g.beginPath(); g.arc(j.head.x, j.head.y, 16 * s, 0, 7); g.fill();
+    g.save(); g.translate(j.head.x, j.head.y); g.rotate(p.a);
+    g.fillStyle = ['#3a2210', '#1a1a1a', '#e8b84a', '#6a3a1a'][p.team * 2 + p.k]; g.beginPath(); g.arc(0, -3 * s, 16 * s, Math.PI * 1.05, Math.PI * 1.95); g.fill(); if (p.k) { g.beginPath(); g.arc(-p.face * 9 * s, -12 * s, 7 * s, 0, 7); g.fill(); }
+    g.fillStyle = light; g.fillRect(-16 * s, -8 * s, 32 * s, 5 * s);
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(p.face * 6 * s, 0, 3.4 * s, 0, 7); g.fill(); g.fillStyle = '#141420'; g.beginPath(); g.arc(p.face * 7 * s, 0, 1.8 * s, 0, 7); g.fill();
+    g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(p.face * 5 * s - 4, 8 * s, 8 * s, 2 * s); g.fillStyle = 'rgba(255,120,120,.35)'; g.beginPath(); g.arc(p.face * 3 * s, 5 * s, 3 * s, 0, 7); g.fill();
+    g.restore();
+    // the arm with a sleeve and a wristband
+    line(j.sh, j.hand, 11 * s, p.team ? '#c88a5a' : '#f0c090'); line(j.sh, { x: j.sh.x + (j.hand.x - j.sh.x) * .35, y: j.sh.y + (j.hand.y - j.sh.y) * .35 }, 13 * s, c);
+    line({ x: j.sh.x + (j.hand.x - j.sh.x) * .78, y: j.sh.y + (j.hand.y - j.sh.y) * .78 }, { x: j.sh.x + (j.hand.x - j.sh.x) * .86, y: j.sh.y + (j.hand.y - j.sh.y) * .86 }, 12 * s, light);
   }
   function drawBall(g) {
-    const B = ball, beach = mod.id === 'beach', bowl = mod.id === 'bowling';
+    const B = ball, beach = mod.id === 'beach', bowl = mod.id === 'bowling', sp = Math.hypot(B.vx, B.vy);
+    if (sp > 700 && !B.holder) { for (let i = 1; i <= 5; i++) { g.fillStyle = `rgba(255,${beach ? 255 : 160},60,${.16 - i * .025})`; g.beginPath(); g.arc(B.x - B.vx * i * .012, B.y - B.vy * i * .012, B.r * (1 - i * .1), 0, 7); g.fill(); } }
     g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(B.x, FLOOR + 4, B.r * clamp(1 - (FLOOR - B.y) / 900, .3, 1), 5, 0, 0, 7); g.fill();
     g.save(); g.translate(B.x, B.y); g.rotate(B.spin);
     if (beach) { for (let i = 0; i < 6; i++) { g.fillStyle = ['#ff4a4a', '#fff', '#3a8aff', '#fff', '#ffd23f', '#fff'][i]; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, B.r, i * Math.PI / 3, (i + 1) * Math.PI / 3); g.fill(); } }
@@ -265,7 +306,7 @@ const GAME = {
     g.restore();
   }
   function scoreboard(g) {
-    rr(g, 500, 8, 280, 58, 12, '#141420'); rr(g, 510, 16, 110, 42, 8, COL[0][0]); rr(g, 660, 16, 110, 42, 8, COL[1][0]);
+    rr(g, 496, 4, 288, 66, 14, '#0a0c18'); rr(g, 500, 8, 280, 58, 12, '#1a1e34'); rr(g, 510, 16, 110, 42, 8, COL[0][0]); rr(g, 660, 16, 110, 42, 8, COL[1][0]); rr(g, 510, 16, 110, 16, [8, 8, 0, 0], 'rgba(255,255,255,.18)'); rr(g, 660, 16, 110, 16, [8, 8, 0, 0], 'rgba(255,255,255,.18)');
     tx(g, String(score[0]), 565, 38, `34px ${FD}`, '#fff'); tx(g, String(score[1]), 715, 38, `34px ${FD}`, '#fff'); tx(g, 'to 5', 640, 38, `16px ${FD}`, '#9fb0d0');
     tx(g, cpu ? 'YOU' : 'P1  (W)', 420, 38, `22px ${FD}`, COL[0][0], 'right'); tx(g, cpu ? 'CPU' : 'P2  (↑)', 860, 38, `22px ${FD}`, COL[1][0], 'left');
   }
@@ -280,7 +321,7 @@ const GAME = {
   /* ---------- kit hooks ---------- */
   GAME.reset = () => { posed = false; t = 0; hold = [0, 0]; if (K.bot) startMatch(true); else { mode = 'menu'; score = [0, 0]; mod = MODS[0]; } };
   GAME.update = dt => {
-    t += dt; if (mode === 'menu') return;
+    t += dt; netK = netK.map(k => Math.max(0, k - dt * 1.4)); if (mode === 'menu') return;
     dt = Math.min(dt, 1 / 30);
     if (banner && (banner.t += dt) > 2.2) banner = null;
     if (mode === 'scored') { if (t > 1.6) { mode = 'play'; newPoint(); } else { for (const p of P) stepPlayer(p, dt); } return; }
@@ -300,7 +341,9 @@ const GAME = {
   }
   GAME.draw = g => {
     if (mode === 'menu') return menu(g);
-    court(g); for (const p of P) drawPlayer(g, p); drawBall(g); hoopFront(g); scoreboard(g);
+    court(g);
+    g.save(); g.beginPath(); g.rect(K.view.x0, FLOOR + 4, K.view.x1 - K.view.x0, 720); g.clip(); g.translate(0, FLOOR * 2 + 8); g.scale(1, -1); g.globalAlpha = mod.ice ? .3 : .16; for (const p of P) drawPlayer(g, p, true); drawBall(g); g.restore(); g.globalAlpha = 1;
+    for (const p of P) drawPlayer(g, p); drawBall(g); hoopFront(g); scoreboard(g);
     if (banner) { const a = Math.min(1, banner.t * 4, (2.2 - banner.t) * 3); g.globalAlpha = Math.max(0, a); rr(g, 390, 250, 500, 120, 18, 'rgba(10,14,30,.85)'); tx(g, banner.name.toUpperCase(), 640, 296, `48px ${FD}`, '#ffd23f'); tx(g, banner.sub, 640, 340, `800 20px ${FB}`, '#fff'); g.globalAlpha = 1; }
     if (mode === 'scored' || mode === 'won' || mode === 'done') { const tm = flash.team, w = mode !== 'scored'; tx(g, w ? (cpu ? (tm === 0 ? 'YOU WIN!' : 'CPU WINS') : `PLAYER ${tm + 1} WINS!`) : 'BUCKET!', 640, 200, `${w ? 96 : 84}px ${FD}`, COL[tm][0], 'center', ['#141420', 12]); }
     if (wait > 0 && mode === 'play') tx(g, wait > .7 ? 'READY' : 'GO!', 640, 420, `64px ${FD}`, '#fff', 'center', ['#141420', 10]);

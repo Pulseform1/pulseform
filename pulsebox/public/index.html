@@ -599,6 +599,38 @@ const GAMES = [
     how: ["Call PASS or RUN. To throw, drag back and release, or tap a receiver (keys 1, 2, 3).", "With the ball, steer with your finger or the arrow keys. Tap or Space to juke.", "Kicks: stop the moving line in the green.", "Between games, upgrade players with coaching credits."]
   },
   {
+    id: "strata",
+    title: "Strata",
+    category: "Co-op",
+    kind: "Sandbox · Dig, build, fight · Online co-op",
+    tags: ["Sandbox", "Crafting", "Bosses", "Online with friends", "Saved worlds"],
+    badge: 'NEW',
+    file: 'games/strata.html',
+    cover: 'media/strata-cover.jpg',
+    video: 'media/strata-trailer.mp4',
+    shots: ['media/strata-shot1.jpg', 'media/strata-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Dig deep, build, craft and fight bosses. Alone or with friends.",
+    blurb: "A 2D pixel sandbox. Chop trees, dig through dirt and stone into torch-lit caves, and keep going down: copper, iron, silver and gold, shadow ore, a bone catacomb, and a burning underworld. Craft at a workbench, furnace and anvil. There are over thirty weapons (swords, spears, bows, guns, boomerangs, magic staves) plus armor, potions and life crystals. Summon four bosses for rare loot. Keep three saved worlds and host one online for up to three friends.",
+    how: ["A/D to move, Space to jump. Hold click to mine, place blocks, swing or shoot.", "1-0 or the mouse wheel pick a hotbar slot. E opens your inventory and crafting.", "Go deeper for better ore and chests. Craft summon items to fight bosses.", "Pick a world, then create a room to play with friends, or play alone."]
+  },
+  {
+    id: "flop-hoops",
+    title: "Flop Hoops",
+    category: "Sports",
+    kind: "Sports · Basketball · 2 players",
+    tags: ["Basketball", "One button", "2 players on one device", "Physics"],
+    badge: 'NEW',
+    file: 'games/flop-hoops.html',
+    cover: 'media/flop-hoops-cover.jpg',
+    video: 'media/flop-hoops-trailer.mp4',
+    shots: ['media/flop-hoops-shot1.jpg', 'media/flop-hoops-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "One button. Floppy players. Random rules.",
+    blurb: "Two-on-two physics basketball with one button. Your wobbly players jump and swing their arms when you press. Grab the ball, then press again to throw it at the hoop. First to 5 wins. Every point changes the rules: a beach ball, moon gravity, an ice floor, tiny or giant players, a bowling ball. Play the CPU or a friend on the same device.",
+    how: ["Press W, Space or tap: your players jump and swing.", "Touch the ball to grab it. Press again to throw.", "Two players: P1 uses W or the left half, P2 the Up arrow or the right half."]
+  },
+  {
     id: "legend-maker",
     title: "Legend Maker",
     category: "Sports",
@@ -1300,12 +1332,12 @@ const TOPICS = {
 // what people type, and what we actually call it: "retro bowl" finds the football games, "scary" finds horror
 const SYN = {
   'retro bowl': ['football', 'sports', 'pocket bowl'], goatlab: ['career', 'legend'], 'goat lab': ['career', 'legend'], career: ['career'], football: ['football', 'touchdown', 'sports'], nfl: ['football'], soccer: ['soccer', 'penalty', 'goal'], basketball: ['basket', 'hoop', 'dunk'],
-  basket: ['basket', 'hoop'], sport: ['sports'], scary: ['horror'], spooky: ['horror'], creepy: ['horror'], ghost: ['horror', 'ghost'], fnaf: ['horror', 'night'], horror: ['horror'],
+  basket: ['basket', 'hoop'], 'basket random': ['basket', 'hoop', 'flop'], sandbox: ['sandbox', 'build', 'craft'], craft: ['craft', 'build'], mine: ['dig', 'build'], mining: ['dig', 'build'], sport: ['sports'], scary: ['horror'], spooky: ['horror'], creepy: ['horror'], ghost: ['horror', 'ghost'], fnaf: ['horror', 'night'], horror: ['horror'],
   'two player': ['co-op', 'online', 'player', 'versus', 'friends'], '2 player': ['co-op', 'online', 'player', 'versus', 'friends'], multiplayer: ['co-op', 'online', 'friends'],
   friends: ['co-op', 'online', 'friends'], online: ['online', 'co-op'], coop: ['co-op'], car: ['racing', 'car', 'drive'], cars: ['racing', 'car', 'drive'], race: ['racing', 'race'],
   driving: ['racing', 'drive'], shooter: ['shoot', 'action'], shooting: ['shoot', 'action'], gun: ['shoot', 'action'], fight: ['fight', 'brawl', 'action'], fighting: ['fight', 'brawl', 'action'],
   relaxing: ['idle', 'puzzle', 'relax'], chill: ['idle', 'puzzle'], clicker: ['idle', 'clicker'], tycoon: ['idle', 'strategy', 'empire'], money: ['idle', 'empire', 'cash'],
-  minecraft: ['build', 'dig', 'craft'], terraria: ['build', 'dig', 'craft'], build: ['build', 'craft'], snake: ['serpent', 'snake'], tetris: ['blocks', 'puzzle', 'cubes'],
+  minecraft: ['build', 'dig', 'craft'], terraria: ['strata', 'sandbox', 'dig', 'craft'], build: ['build', 'craft'], snake: ['serpent', 'snake'], tetris: ['blocks', 'puzzle', 'cubes'],
   blocks: ['block', 'cubes', 'puzzle'], war: ['strategy', 'war', 'tank'], tank: ['tank'], space: ['space', 'orbit', 'colony'], plane: ['plane', 'ace', 'sky'], easy: ['arcade', 'idle', 'puzzle'],
   quick: ['arcade'], rpg: ['rpg', 'strategy'], drawing: ['draw', 'doodle', 'paint'], draw: ['draw', 'doodle']
 };
@@ -1329,7 +1361,7 @@ let query = '', current = null, topic = '';
    Without it (offline, local preview, too little data yet) the
    hub falls back to the hand-picked order below.
    ============================================================ */
-const CURATED = ['the-hollow', 'pocket-bowl', 'legend-maker', 'still-here', 'bumper-brawl', 'doodle-guess', 'turbo-laps', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
+const CURATED = ['the-hollow', 'strata', 'pocket-bowl', 'flop-hoops', 'legend-maker', 'still-here', 'bumper-brawl', 'doodle-guess', 'turbo-laps', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
 const MIN_WEEK = 20;   // fewer plays than this across the hub in a week = not enough to rank by
 let STATS = null;      // { id: { total, week, today } } once real numbers are in
 let HOT = new Set();   // top 5 by plays this week
