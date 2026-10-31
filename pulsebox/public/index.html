@@ -328,6 +328,7 @@
   .found-note { color: var(--muted); font-weight: 700; margin: -8px 0 0; }
   .found-note b { color: var(--lime); }
   #shelves, .shelf { scroll-margin-top: 96px; }
+  .topic-head { margin-top: 26px; }
   .topic-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
   .topic-head .em { font-size: 44px; }
   .topic-head h2 { font-family: var(--display); font-size: clamp(30px, 4vw, 44px); margin: 0; text-transform: uppercase; }
@@ -1707,10 +1708,10 @@ function route() {
   show('home'); current = null;
   const tm = h.indexOf('t-') === 0 && [...CATEGORIES, 'All'].find(c => c.toLowerCase() === h.slice(2));
   topic = tm || ''; if (tm) { query = ''; $('q').value = ''; $('q2').value = ''; }
-  $('hero').hidden = !!tm; document.querySelector('.home-top').hidden = !!tm;
+  $('hero').hidden = !!tm; document.querySelector('.home-top').hidden = !!tm; $('finder').hidden = !!tm;
   renderChips(); renderShelves(); heroGo(heroIdx);
   document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.t === (tm ? 'topics' : 'home')));
-  if (tm) { requestAnimationFrame(() => window.scrollTo(0, $('shelves').getBoundingClientRect().top + window.scrollY - 100)); return; }
+  if (tm) { window.scrollTo(0, 0); return; }
   if (lastShelf && $(lastShelf)) { const s = $(lastShelf); lastShelf = null; requestAnimationFrame(() => s.scrollIntoView({ block: 'start' })); }
   else window.scrollTo(0, 0);
 }
