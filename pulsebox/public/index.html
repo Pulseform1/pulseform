@@ -581,6 +581,38 @@ const GAMES = [
     how: ["Drag a piece from the tray onto the board.", "Fill a full row or column to clear it. Several at once scores more.", "Clear lines on drops in a row for a combo.", "Keys: 1 2 3 picks a piece, the arrows move it, Space drops it."]
   },
   {
+    id: "pocket-bowl",
+    title: "Pocket Bowl",
+    category: "Sports",
+    kind: "Sports · Football",
+    tags: ["Football", "Season mode", "Team management", "Retro"],
+    badge: 'NEW',
+    file: 'games/pocket-bowl.html',
+    cover: 'media/pocket-bowl-cover.jpg',
+    video: 'media/pocket-bowl-trailer.mp4',
+    shots: ['media/pocket-bowl-shot1.jpg', 'media/pocket-bowl-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Retro football. Run the team, win the Bowl.",
+    blurb: "Pixel-art arcade football where you call the plays and throw the passes. Drag back to aim or just tap a receiver, steer the ball carrier and juke past tacklers, kick field goals on the timing bar, then spend coaching credits to upgrade your roster between games. Ten-game season, playoffs, and the Pocket Bowl. Your team carries over season to season.",
+    how: ["Call PASS or RUN. To throw, drag back and release, or tap a receiver (keys 1, 2, 3).", "With the ball, steer with your finger or the arrow keys. Tap or Space to juke.", "Kicks: stop the moving line in the green.", "Between games, upgrade players with coaching credits."]
+  },
+  {
+    id: "legend-maker",
+    title: "Legend Maker",
+    category: "Sports",
+    kind: "Sports · Career Simulator",
+    tags: ["Basketball, football, soccer", "Career sim", "Daily challenge", "Quests"],
+    badge: 'NEW',
+    file: 'games/legend-maker.html',
+    cover: 'media/legend-maker-cover.jpg',
+    video: 'media/legend-maker-trailer.mp4',
+    shots: ['media/legend-maker-shot1.jpg', 'media/legend-maker-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Spin the pros. Build a legend. Sim the career.",
+    blurb: "Build an athlete out of other players' best skills. Spin the reel of pros, draft one rating from each into your player's six attribute slots, then simulate the whole career season by season: stats, awards, titles, injuries and a Hall of Fame verdict. Hoops, gridiron and soccer, a daily challenge with the same reel for everyone, and daily quests. Every player is made up.",
+    how: ["Pick a sport and press PLAY.", "Each spin lands on a pro. Tap an empty slot to take that pro's rating for it. Two rerolls.", "Sim the career, then see your Hall of Fame verdict. Try the daily challenge too."]
+  },
+  {
     id: "penalty-shootout",
     title: "Penalty Shootout",
     category: "Sports",
@@ -1265,7 +1297,7 @@ const TOPICS = {
 };
 // what people type, and what we actually call it: "retro bowl" finds the football games, "scary" finds horror
 const SYN = {
-  'retro bowl': ['football', 'sports'], football: ['football', 'touchdown', 'sports'], nfl: ['football'], soccer: ['soccer', 'penalty', 'goal'], basketball: ['basket', 'hoop', 'dunk'],
+  'retro bowl': ['football', 'sports', 'pocket bowl'], goatlab: ['career', 'legend'], 'goat lab': ['career', 'legend'], career: ['career'], football: ['football', 'touchdown', 'sports'], nfl: ['football'], soccer: ['soccer', 'penalty', 'goal'], basketball: ['basket', 'hoop', 'dunk'],
   basket: ['basket', 'hoop'], sport: ['sports'], scary: ['horror'], spooky: ['horror'], creepy: ['horror'], ghost: ['horror', 'ghost'], fnaf: ['horror', 'night'], horror: ['horror'],
   'two player': ['co-op', 'online', 'player', 'versus', 'friends'], '2 player': ['co-op', 'online', 'player', 'versus', 'friends'], multiplayer: ['co-op', 'online', 'friends'],
   friends: ['co-op', 'online', 'friends'], online: ['online', 'co-op'], coop: ['co-op'], car: ['racing', 'car', 'drive'], cars: ['racing', 'car', 'drive'], race: ['racing', 'race'],
@@ -1295,7 +1327,7 @@ let query = '', current = null, topic = '';
    Without it (offline, local preview, too little data yet) the
    hub falls back to the hand-picked order below.
    ============================================================ */
-const CURATED = ['the-hollow', 'still-here', 'bumper-brawl', 'doodle-guess', 'turbo-laps', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
+const CURATED = ['the-hollow', 'pocket-bowl', 'legend-maker', 'still-here', 'bumper-brawl', 'doodle-guess', 'turbo-laps', 'afterhours', 'lights-out-motel', 'night-shift', 'deep-signal', 'stick-brawl', 'shopping-cart-derby'];
 const MIN_WEEK = 20;   // fewer plays than this across the hub in a week = not enough to rank by
 let STATS = null;      // { id: { total, week, today } } once real numbers are in
 let HOT = new Set();   // top 5 by plays this week
