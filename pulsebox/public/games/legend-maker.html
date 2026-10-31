@@ -85,6 +85,10 @@ const GAME = {
       stat: ['Pass YDS', 'TD', 'INT'], champ: 'championship ring', league: 'league', mvp: 'MVP', star: 'Pro Bowl', dpoy: 'Offensive Player of the Year' },
     soccer: { name: 'SOCCER', role: 'striker', c: '#29e0ff', at: ['Finishing', 'Pace', 'Dribbling', 'Heading', 'Vision', 'Stamina'], w: [1.4, 1.2, 1.1, .8, 1, .9],
       stat: ['Goals', 'Assists', 'Apps'], champ: 'league title', league: 'top flight', mvp: 'Player of the Year', star: 'Team of the Year', dpoy: 'Golden Boot' },
+    hockey: { name: 'HOCKEY', role: 'center', c: '#7ab8ff', at: ['Shooting', 'Skating', 'Passing', 'Checking', 'Faceoffs', 'Endurance'], w: [1.3, 1.2, 1.1, .9, .8, .9],
+      stat: ['Goals', 'Assists', 'Points'], champ: 'cup', league: 'league', mvp: 'MVP', star: 'All-Star', dpoy: 'Top Scorer' },
+    diamond: { name: 'BASEBALL', role: 'slugger', c: '#ff5f6a', at: ['Contact', 'Power', 'Eye', 'Speed', 'Fielding', 'Durability'], w: [1.25, 1.3, 1, .8, .8, .9],
+      stat: ['AVG', 'HR', 'RBI'], champ: 'world title', league: 'league', mvp: 'MVP', star: 'All-Star', dpoy: 'Gold Glove' },
   };
   const FN = ['Marcus', 'Theo', 'Andre', 'Kofi', 'Luca', 'Mateo', 'Jalen', 'Dmitri', 'Ravi', 'Omar', 'Hugo', 'Keanu', 'Diego', 'Elijah', 'Tariq', 'Sven', 'Ivo', 'Malik', 'Nico', 'Rafe', 'Tobias', 'Xavi', 'Yusuf', 'Zane', 'Bruno', 'Caleb', 'Dante', 'Emil', 'Felix', 'Gio'];
   const LN = ['Okafor', 'Varga', 'Delacroix', 'Hollis', 'Mbeki', 'Santos', 'Lindqvist', 'Brennan', 'Kowalski', 'Achebe', 'Moreau', 'Tanaka', 'Reyes', 'Fairbanks', 'Osei', 'Petrov', 'Castillo', 'Whitfield', 'Nakamura', 'Duval', 'Ferraro', 'Grant', 'Haddad', 'Iverson', 'Jovic', 'Kessler', 'Lombardi', 'Monroe', 'Nwosu', 'Quill'];
@@ -106,26 +110,34 @@ const GAME = {
   }
   function newBuild(sp, dly) {
     sport = sp; daily = dly; rng = dly ? seeded(dayNo() * 31 + Object.keys(SPORTS).indexOf(sp) + 7) : R0;
-    build = { slots: Array(6).fill(null), rerolls: 2, spins: 0, pro: null, name: pick(FN) + ' ' + pick(LN) };
-    mode = 'build'; spin();
+    build = { slots: Array(6).fill(null), rerolls: 2, spins: 0, pro: null, name: pick(FN) + ' ' + pick(LN), vs: null };
+    mode = 'build'; reel = null;
   }
+  const ROW = 58, rarity = p => { const m = Math.max(...p.r); return m >= 99 ? ['LEGEND PULL', '#ffd23f'] : m >= 92 ? ['STAR', '#ff5fa2'] : m >= 85 ? ['GOLD', '#ffb02e'] : m >= 78 ? ['SILVER', '#cfd8e0'] : ['BRONZE', '#c8864a']; };
   function spin() {
-    if (build.slots.every(Boolean)) return;
-    build.pro = null; reel = { t: 0, T: 1.15, names: Array.from({ length: 14 }, () => pick(FN) + ' ' + pick(LN)), pro: makePro(sport) };
-    K.sfx(300, .05, 'square', .04);
+    if (build.slots.every(Boolean) || reel || build.pro) return;
+    const pro = makePro(sport), names = Array.from({ length: 22 }, () => pick(FN) + ' ' + pick(LN)); names.push(pro.name);
+    reel = { t: 0, T: 2.1 + rng() * .5, names, pro, row: -1 }; build.lastSpin = t;
+    K.sfx(300, .08, 'square', .05, 200);
   }
-  function reroll() { if (!build.pro || build.rerolls <= 0) return; build.rerolls--; spin(); }
+  function reroll() { if (!build.pro || build.rerolls <= 0) return; build.rerolls--; build.pro = null; spin(); }
   function place(i) {
     if (!build.pro || build.slots[i]) return;
     build.slots[i] = { v: build.pro.r[i], who: build.pro.name }; build.spins++; build.pro = null;
     K.chime(523 + build.slots[i].v * 3, [0, 7]);
-    if (build.slots.every(Boolean)) { mode = 'ready'; K.sfx(880, .2, 'triangle', .06); } else spin();
+    if (build.vs) cpuPick();
+    if (build.slots.every(Boolean)) { mode = 'ready'; K.sfx(880, .2, 'triangle', .06); }
   }
+  function cpuPick() {
+    const V = build.vs, S = SPORTS[sport], p = makePro(sport), open = V.cpu.map((c, i) => c ? -1 : p.r[i] * S.w[i] + rnd(-8, 8)), i = open.indexOf(Math.max(...open));
+    if (i >= 0) V.cpu[i] = { v: p.r[i], who: p.name };
+  }
+  const cpuOvr = () => { const S = SPORTS[sport], V = build.vs; let a = 0, w = 0; V.cpu.forEach((c, i) => { a += (c ? c.v : 0) * S.w[i]; w += S.w[i]; }); return Math.round(a / w); };
   const ovr = () => { const S = SPORTS[sport]; let a = 0, w = 0; build.slots.forEach((s, i) => { a += (s ? s.v : 0) * S.w[i]; w += S.w[i]; }); return Math.round(a / w); };
 
   /* ---------- the career ---------- */
   function simCareer() {
-    const S = SPORTS[sport], O = ovr(), v = build.slots.map(s => s.v), dur = sport === 'gridiron' ? v[5] : sport === 'soccer' ? v[5] : v[5] * .6 + v[3] * .4;
+    const S = SPORTS[sport], O = ovr(), v = build.slots.map(s => s.v), dur = sport === 'hoops' ? v[5] * .6 + v[3] * .4 : v[5];
     const crng = daily ? seeded(dayNo() * 97 + O) : R0, cr = (a, b) => a + crng() * (b - a);
     const seasons = [], aw = { mvp: 0, star: 0, champ: 0, dpoy: 0 }; let age = 21, legacy = 0, injuries = 0, fit = 1;
     const maxS = Math.round(clamp(8 + (dur - 60) / 5 + cr(-2, 3), 6, 19));
@@ -135,13 +147,15 @@ const GAME = {
       const r = clamp((O + cr(-5, 5)) * curve * (.7 + fit * .3), 30, 104), s = {};
       if (sport === 'hoops') { s.a = (r - 48) * .62 + v[0] * .05; s.b = 3 + v[4] * .07 * (r / 85); s.c = 1.5 + v[2] * .075 * (r / 85); }
       else if (sport === 'gridiron') { s.a = Math.round((r - 45) * 95 + v[0] * 9); s.b = Math.round((r - 50) * .82 + v[2] * .08); s.c = Math.round(clamp(22 - v[4] * .17 - (r - 70) * .12 + cr(-3, 3), 3, 25)); }
+      else if (sport === 'hockey') { s.a = Math.round((r - 50) * .9 + v[0] * .12); s.b = Math.round((r - 52) * 1 + v[2] * .14); s.c = Math.max(0, s.a) + Math.max(0, s.b); }
+      else if (sport === 'diamond') { s.a = clamp(.2 + (v[0] - 50) * .0022 + (r - 70) * .0018 + cr(-.012, .012), .18, .39); s.b = Math.round((r - 55) * .6 + v[1] * .2); s.c = Math.round(Math.max(0, s.b) * 2.4 + (r - 60) * 1.2); }
       else { s.a = Math.round((r - 52) * .72 + v[0] * .1); s.b = Math.round((r - 55) * .4 + v[4] * .08); s.c = Math.round(26 + fit * 12); }
       for (const k of ['a', 'b', 'c']) s[k] = Math.max(0, s[k]);
       const team = clamp((r - 70) / 30 + cr(-.25, .3), 0, 1), A = [], before = legacy;
       if (r > 86 && crng() < (r - 84) * .06) { aw.mvp++; A.push(S.mvp); legacy += 60; }
       if (r > 78 && crng() < (r - 74) * .07) { aw.star++; A.push(S.star); legacy += 14; }
       if (crng() < team * .32) { aw.champ++; A.push(S.champ[0].toUpperCase() + S.champ.slice(1)); legacy += 45; }
-      if (crng() < (sport === 'hoops' ? v[3] - 80 : r - 86) * .025) { aw.dpoy++; A.push(S.dpoy); legacy += 25; }
+      if (crng() < (sport === 'hoops' ? v[3] - 80 : sport === 'diamond' ? v[4] - 80 : r - 86) * .025) { aw.dpoy++; A.push(S.dpoy); legacy += 25; }
       if (fit < .8) A.push('Injury: played hurt');
       legacy += Math.max(0, r - 60) * 1.4;
       seasons.push({ L: legacy - before, age, r: Math.round(r), s, A, club: i < 4 ? build.club || (build.club = pick(CLUBS)) : seasons[i - 1].club });
@@ -152,8 +166,10 @@ const GAME = {
     career = { seasons, aw, injuries, legacy, tier, O, shown: 0, t: 0, done: false };
     mode = 'career';
   }
-  const fmtStat = (s, k) => sport === 'hoops' ? s[k].toFixed(1) : String(s[k]);
+  const fmtStat = (s, k) => sport === 'hoops' ? s[k].toFixed(1) : sport === 'diamond' && k === 'a' ? s[k].toFixed(3).replace(/^0/, '') : String(s[k]);
+  function streak() { const L = SAVE(), st = L.streak || (L.streak = { last: 0, n: 0 }), dn = dayNo(); if (st.last === dn) return; st.n = st.last === dn - 1 ? st.n + 1 : 1; st.last = dn; }
   function finishCareer() {
+    streak();
     const L = SAVE(), c = career, rec = { name: build.name, sport, O: c.O, legacy: c.legacy, tier: c.tier[1], aw: c.aw, daily, day: dayNo() };
     L.builds = (L.builds || 0) + 1; L.hof.push(rec); L.hof.sort((a, b) => b.legacy - a.legacy); L.hof = L.hof.slice(0, 12);
     L.best[sport] = Math.max(L.best[sport] || 0, c.legacy); if (daily) L.daily[sport + dayNo()] = Math.max(L.daily[sport + dayNo()] || 0, c.legacy);
@@ -162,7 +178,7 @@ const GAME = {
     if (c.legacy >= 420) { K.chime(523, [0, 4, 7, 12, 16]); K.burst(640, 260, ['#ffd23f', '#ffb02e', '#fff'], 50, 520); K.shake(10); } else K.chime(440, [0, 4, 7]);
   }
   // three small goals a day, like GoatLab's quests
-  const QUESTS = [['ovr85', 'Build an 85+ overall'], ['champ', 'Win a title'], ['hof', 'Reach the Hall of Fame'], ['daily', 'Play the daily challenge'], ['three', 'Try all three sports']];
+  const QUESTS = [['ovr85', 'Build an 85+ overall'], ['champ', 'Win a title'], ['hof', 'Reach the Hall of Fame'], ['daily', 'Play the daily challenge'], ['three', 'Try three different sports']];
   function quests() { const L = SAVE(); if (L.quests.day !== dayNo()) { const r = seeded(dayNo()); L.quests = { day: dayNo(), list: [...QUESTS].sort(() => r() - .5).slice(0, 3).map(q => q[0]), done: [], sports: [] }; } return L.quests; }
   function questCheck(rec) {
     const Q = quests(), hit = k => { if (Q.list.includes(k) && !Q.done.includes(k)) { Q.done.push(k); K.coin(10); msg = { t: 'Quest done: ' + QUESTS.find(q => q[0] === k)[1] + '  +10 coins', k: 0 }; } };
@@ -194,6 +210,17 @@ const GAME = {
       limb(18, -2, 44, -36, 13, c); limb(44, -36, 40, -62, 11, skin); limb(-18, 2, -34, 26, 13, c);
       g.fillStyle = '#8a4a1e'; g.beginPath(); g.ellipse(42, -70, 14, 9, -.6, 0, 7); g.fill(); g.fillStyle = '#fff'; g.fillRect(36, -72, 12, 2);
       g.fillStyle = c; g.beginPath(); g.arc(0, -30, 19, 0, 7); g.fill(); g.fillStyle = '#ccc'; g.fillRect(6, -32, 16, 4); g.fillRect(6, -24, 16, 4);
+    } else if (sp === 'hockey') {
+      limb(-8, 40, -24, 88, 15, c2); limb(10, 40, 30, 84, 15, c2); limb(-24, 88, -40, 108, 8, '#ccc'); limb(30, 84, 46, 104, 8, '#ccc');
+      g.fillStyle = c; g.beginPath(); g.roundRect(-24, -12, 48, 58, 10); g.fill(); g.fillStyle = '#fff'; g.fillRect(-24, 20, 48, 6);
+      limb(16, 0, 40, 30, 12, c); limb(-16, 0, 10, 34, 12, c); limb(30, 20, 74, 104, 5, '#8a6a3a'); limb(74, 104, 98, 104, 7, '#1a1a1a');
+      g.fillStyle = '#111'; g.beginPath(); g.ellipse(112, 108, 8, 3, 0, 0, 7); g.fill();
+      g.fillStyle = c; g.beginPath(); g.arc(0, -28, 17, Math.PI, 0); g.fill(); g.fillStyle = skin; g.beginPath(); g.arc(0, -24, 13, 0, Math.PI); g.fill(); g.fillStyle = '#ddd'; g.fillRect(-12, -26, 24, 3);
+    } else if (sp === 'diamond') {
+      limb(-8, 42, -28, 88, 14, '#eee'); limb(10, 42, 24, 90, 14, '#eee'); limb(-28, 88, -30, 112, 11, '#1a1a1a'); limb(24, 90, 34, 112, 11, '#1a1a1a');
+      g.fillStyle = '#f2f2f2'; g.beginPath(); g.roundRect(-22, -10, 44, 54, 8); g.fill(); g.fillStyle = c; g.fillRect(-22, -10, 6, 54); g.fillRect(16, -10, 6, 54);
+      limb(-14, 0, -30, -26, 12, '#f2f2f2'); limb(14, 0, -18, -30, 12, '#f2f2f2'); limb(-26, -30, 30, -86, 9, '#b07a42'); limb(18, -76, 34, -92, 12, '#b07a42');
+      g.fillStyle = skin; g.beginPath(); g.arc(0, -22, 13, 0, 7); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(0, -27, 14, Math.PI, 0); g.fill(); g.fillRect(0, -30, 20, 5);
     } else {
       limb(-6, 40, -30, 70, 14, skin); limb(-30, 70, -22, 104, 12, skin); limb(8, 40, 40, 58, 14, skin); limb(40, 58, 64, 46, 12, skin);
       g.fillStyle = '#fff'; g.beginPath(); g.arc(78, 50, 13, 0, 7); g.fill(); g.fillStyle = '#1a1a1a'; g.beginPath(); g.arc(78, 50, 5, 0, 7); g.fill();
@@ -216,20 +243,22 @@ const GAME = {
     tx(g, 'LEGEND', 520, 70, d(86), '#eef1f8'); tx(g, 'MAKER', 770, 70, d(86), '#ffb02e');
     tx(g, 'Spin the pros. Build a legend. Sim the career.', 640, 122, f(20, 700), '#9fb0d0');
     Object.keys(SPORTS).forEach((k, i) => {
-      const S = SPORTS[k], b = { x: 250 + i * 270, y: 150, w: 250, h: 230 }, on = sport === k; B['sp' + k] = b;
+      const S = SPORTS[k], b = { x: 250 + i * 160, y: 150, w: 150, h: 230 }, on = sport === k; B['sp' + k] = b;
       rr(g, b.x, b.y, b.w, b.h, 18, on ? S.c : '#1a2238', on ? '#fff' : (hover === 'sp' + k ? S.c : 'rgba(255,255,255,.12)'), on ? 4 : 2);
-      g.save(); g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h - 52, 18); g.clip(); athlete(g, k, b.x + b.w / 2 - 6, b.y + 92, 1.05, on ? '#1a2440' : S.c); g.restore();
-      rr(g, b.x, b.y + b.h - 52, b.w, 52, [0, 0, 18, 18], on ? '#ffd23f' : '#121a2e'); tx(g, S.name, b.x + b.w / 2, b.y + b.h - 25, d(32), on ? '#141414' : '#eef1f8');
+      g.save(); g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h - 52, 18); g.clip(); athlete(g, k, b.x + b.w / 2 - 6, b.y + 92, .78, on ? '#1a2440' : S.c); g.restore();
+      rr(g, b.x, b.y + b.h - 52, b.w, 52, [0, 0, 18, 18], on ? '#ffd23f' : '#121a2e'); tx(g, S.name, b.x + b.w / 2, b.y + b.h - 25, d(26), on ? '#141414' : '#eef1f8');
     });
     button(g, 'play', { x: 250, y: 400, w: 790, h: 100 }, 'PLAY', '#ffd23f', `Spin real-looking pros. Build a ${SPORTS[sport].role}. Sim the career.`);
-    button(g, 'daily', { x: 250, y: 518, w: 385, h: 84 }, 'DAILY', '#1f2a46', `Same reel for everyone · ${SPORTS[sport].name}`, '#eef1f8');
-    button(g, 'hof', { x: 655, y: 518, w: 385, h: 84 }, 'HALL OF FAME', '#1f2a46', `${L.hof.length} legends saved`, '#eef1f8');
+    button(g, 'daily', { x: 250, y: 518, w: 250, h: 84 }, 'DAILY', '#1f2a46', `Same reel for all`, '#eef1f8');
+    button(g, 'vs', { x: 520, y: 518, w: 250, h: 84 }, '1V1 VS CPU', '#ff5fa2', `${L.vsW || 0} wins · shot clock`, '#141414');
+    button(g, 'hof', { x: 790, y: 518, w: 250, h: 84 }, 'HALL OF FAME', '#1f2a46', `${L.hof.length} legends`, '#eef1f8');
+    const st = L.streak || { n: 0 }; tx(g, st.n ? `🔥 ${st.n} day streak` : 'Play every day to build a streak', 640, 620, f(17, 800), st.n ? '#ffb02e' : '#5a6a8a');
     // quests and best
     rr(g, 1060, 150, 200, 452, 16, '#121a2e', 'rgba(255,255,255,.12)', 2);
     tx(g, 'QUESTS', 1160, 182, d(28), '#ffb02e'); tx(g, `${Q.done.length}/3 today`, 1160, 206, f(14), '#9fb0d0');
     Q.list.forEach((k, i) => { const done = Q.done.includes(k), y = 240 + i * 74; rr(g, 1074, y, 172, 62, 10, done ? '#1f4a34' : '#1a2238'); tx(g, done ? '✓' : '○', 1092, y + 31, f(22, 900), done ? '#3ddc84' : '#9fb0d0'); g.font = f(14); wrap(g, QUESTS.find(q => q[0] === k)[1], 1108, y + 22, 128, 17, done ? '#bff5d6' : '#eef1f8'); });
-    tx(g, 'BEST LEGACY', 1160, 478, d(22), '#ffb02e'); Object.keys(SPORTS).forEach((k, i) => tx(g, `${SPORTS[k].name}  ${L.best[k] || '-'}`, 1160, 510 + i * 26, f(15), '#eef1f8'));
-    tx(g, 'Every player and team here is made up.', 640, 640, f(14, 700), '#5a6a8a');
+    tx(g, 'BEST LEGACY', 1160, 478, d(22), '#ffb02e'); Object.keys(SPORTS).forEach((k, i) => tx(g, `${SPORTS[k].name}  ${L.best[k] || '-'}`, 1160, 504 + i * 20, f(13), '#eef1f8'));
+    tx(g, 'Every player and team here is made up.', 640, 660, f(14, 700), '#5a6a8a');
   }
   function wrap(g, s, x, y, w, lh, c) { g.fillStyle = c; g.textAlign = 'left'; g.textBaseline = 'middle'; let line = '', yy = y; for (const wd of s.split(' ')) { const tt = line ? line + ' ' + wd : wd; if (g.measureText(tt).width > w && line) { g.fillText(line, x, yy); line = wd; yy += lh; } else line = tt; } g.fillText(line, x, yy); return yy; }
   function drawBuild(g) {
@@ -248,15 +277,21 @@ const GAME = {
     const cx0 = 430, cw = 810, cy = 80, ch = 500, px = cx0 + cw / 2;
     rr(g, cx0, cy, cw, ch, 18, '#121a2e', S.c, 3);
     if (reel) {
-      const k = reel.t / reel.T; g.save(); g.beginPath(); g.rect(cx0 + 10, cy + 160, cw - 20, 150); g.clip();
-      const off = (1 - Math.pow(1 - Math.min(1, k), 3)) * reel.names.length * 54;
-      reel.names.forEach((n, j) => { const y = cy + 235 + j * 54 - off; tx(g, n.toUpperCase(), px, y, d(46), '#eef1f8'); });
-      g.restore(); g.strokeStyle = '#ffd23f'; g.lineWidth = 3; g.strokeRect(cx0 + 40, cy + 207, cw - 80, 56);
-      tx(g, 'SPINNING THE REEL...', px, cy + 70, d(36), '#ffd23f');
+      const e = 1 - Math.pow(1 - Math.min(1, reel.t / reel.T), 4), off = e * (reel.names.length - 1) * ROW, yc = cy + 250, landed = reel.t >= reel.T;
+      g.save(); g.beginPath(); g.rect(cx0 + 10, yc - ROW * 2.5, cw - 20, ROW * 5); g.clip();
+      reel.names.forEach((n, j) => { const y = yc + j * ROW - off; if (Math.abs(y - yc) > ROW * 3) return; const a = 1 - Math.min(1, Math.abs(y - yc) / (ROW * 2.6)), last = j === reel.names.length - 1; g.globalAlpha = .25 + a * .75; tx(g, n.toUpperCase(), px, y, d(Math.abs(y - yc) < ROW / 2 ? 52 : 40), last && landed ? '#ffd23f' : '#eef1f8'); });
+      g.globalAlpha = 1; const fade = g.createLinearGradient(0, yc - ROW * 2.5, 0, yc + ROW * 2.5); fade.addColorStop(0, '#121a2e'); fade.addColorStop(.3, 'rgba(18,26,46,0)'); fade.addColorStop(.7, 'rgba(18,26,46,0)'); fade.addColorStop(1, '#121a2e'); g.fillStyle = fade; g.fillRect(cx0 + 10, yc - ROW * 2.5, cw - 20, ROW * 5); g.restore();
+      rr(g, cx0 + 40, yc - ROW / 2, cw - 80, ROW, 12, null, landed ? '#fff' : '#ffd23f', 4);
+      g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(cx0 + 24, yc - 14); g.lineTo(cx0 + 40, yc); g.lineTo(cx0 + 24, yc + 14); g.fill(); g.beginPath(); g.moveTo(cx0 + cw - 24, yc - 14); g.lineTo(cx0 + cw - 40, yc); g.lineTo(cx0 + cw - 24, yc + 14); g.fill();
+      tx(g, landed ? 'LOCKED IN' : 'SPINNING...', px, cy + 70, d(36), '#ffd23f');
+    } else if (!build.pro && mode === 'build') {
+      tx(g, `PICK ${build.spins + 1} OF 6`, px, cy + 70, d(34), '#9fb0d0'); tx(g, 'Spin the reel to land on a pro.', px, cy + 112, f(18, 700), '#cfd8e0');
+      button(g, 'spin', { x: px - 190, y: cy + 180, w: 380, h: 130 }, 'SPIN', '#ffd23f', 'Space / tap');
+      tx(g, 'Then tap one of your empty slots to take that pro\'s rating for it.', px, cy + 380, f(16, 700), '#9fb0d0');
     } else if (build.pro) {
       const p = build.pro, lx = cx0 + 170;
       g.save(); g.beginPath(); g.roundRect(cx0 + 20, cy + 20, 300, ch - 40, 14); g.clip(); g.fillStyle = 'rgba(255,255,255,.04)'; g.fillRect(cx0 + 20, cy + 20, 300, ch - 40); athlete(g, sport, lx, cy + 220, 1.35, S.c); g.restore();
-      tx(g, p.name.toUpperCase(), lx, cy + 400, d(36), '#fff'); tx(g, `${p.club} · ${p.year}`, lx, cy + 432, f(16, 700), '#9fb0d0');
+      const [rn, rc] = rarity(p); rr(g, lx - 80, cy + 30, 160, 34, 17, rc); tx(g, rn, lx, cy + 48, d(24), '#141414'); tx(g, p.name.toUpperCase(), lx, cy + 400, d(36), '#fff'); tx(g, `${p.club} · ${p.year}`, lx, cy + 432, f(16, 700), '#9fb0d0');
       const rx = cx0 + 350; tx(g, 'THIS PRO\'S RATINGS', rx, cy + 44, d(26), '#ffb02e', 'left');
       S.at.forEach((a, i) => { const y = cy + 94 + i * 58, free = !build.slots[i]; tx(g, a, rx, y - 12, f(18, 800), free ? '#eef1f8' : '#5a6a8a', 'left'); rr(g, rx, y + 4, 330, 14, 7, '#1f2a46'); rr(g, rx, y + 4, 330 * p.r[i] / 100, 14, 7, free ? ratingC(p.r[i]) : '#3a4660'); tx(g, free ? String(p.r[i]) : 'taken', rx + 420, y + 2, d(free ? 40 : 22), free ? ratingC(p.r[i]) : '#5a6a8a', 'right'); });
       tx(g, '◀  Tap an empty slot to draft one of these', px + 140, cy + ch - 26, f(16, 800), '#ffd23f');
@@ -268,8 +303,10 @@ const GAME = {
     // overall so far, rerolls
     rr(g, 40, 606, 360, 92, 14, '#121a2e', 'rgba(255,255,255,.1)', 2);
     tx(g, 'OVERALL', 64, 636, d(24), '#9fb0d0', 'left'); const filled = build.slots.filter(Boolean).length;
-    tx(g, filled ? String(ovr()) : '--', 380, 652, d(64), filled ? ratingC(ovr()) : '#5a6a8a', 'right'); tx(g, `${filled}/6 slots`, 64, 670, f(15), '#9fb0d0', 'left');
+    tx(g, filled ? String(ovr()) : '--', 380, 652, d(64), filled ? ratingC(ovr()) : '#5a6a8a', 'right'); tx(g, `${filled}/6 slots${filled ? ` · ${Math.max(0, 99 - ovr())} to the GOAT (99)` : ''}`, 64, 670, f(15), '#9fb0d0', 'left');
+    if (build.vs) { const V = build.vs; rr(g, 1056, 584, 168, 96, 14, '#2a1430', '#ff5fa2', 2); tx(g, 'CPU RIVAL', 1140, 604, d(22), '#ff5fa2'); tx(g, String(cpuOvr()), 1140, 638, d(40), '#fff'); tx(g, `${V.cpu.filter(Boolean).length}/6 · clock ${build.pro && mode === 'build' ? Math.ceil(Math.max(0, V.clock)) : '-'}`, 1140, 666, f(13), '#ffb0d8'); }
     if (mode === 'build') button(g, 'reroll', { x: 625, y: 600, w: 420, h: 84 }, `REROLL  (${build.rerolls} left)`, build.rerolls && build.pro ? '#1f2a46' : '#141a2a', 'Skip this pro, spin again', build.rerolls && build.pro ? '#eef1f8' : '#5a6a8a');
+    else if (build.vs) { const me2 = ovr(), cp = cpuOvr(); button(g, 'vsdone', { x: 625, y: 590, w: 420, h: 104 }, me2 > cp ? 'YOU WIN!' : me2 === cp ? 'TIE' : 'CPU WINS', me2 > cp ? '#3ddc84' : me2 === cp ? '#cfd8e0' : '#ff5f6a', `${me2} vs ${cp} overall · tap to finish`); }
     else button(g, 'sim', { x: 625, y: 590, w: 420, h: 104 }, 'SIM CAREER', '#ffd23f', `${build.name}, ${ovr()} overall`);
   }
   const ratingC = v => v >= 95 ? '#ffd23f' : v >= 88 ? '#ff5fa2' : v >= 80 ? '#3ddc84' : v >= 70 ? '#29e0ff' : v >= 60 ? '#cfd8e0' : '#8a95ab';
@@ -326,7 +363,12 @@ const GAME = {
   GAME.reset = () => { mode = 'home'; build = null; career = null; reel = null; msg = null; posed = false; rng = R0; quests(); if (K.bot) newBuild(pick(Object.keys(SPORTS)), false); };
   GAME.update = dt => {
     t += dt; if (msg && (msg.k += dt) > 3.5) msg = null;
-    if (reel) { const before = Math.floor(reel.t * 12); reel.t += dt; if (Math.floor(reel.t * 12) > before && reel.t < reel.T) K.sfx(900 - reel.t * 300, .03, 'square', .03); if (reel.t >= reel.T) { build.pro = reel.pro; reel = null; K.sfx(660, .1, 'triangle', .07); } }
+    if (reel) {
+      reel.t += dt; const e = 1 - Math.pow(1 - Math.min(1, reel.t / reel.T), 4), row = Math.floor(e * (reel.names.length - 1) + .5);
+      if (row !== reel.row) { reel.row = row; K.sfx(1100 - row * 22, .025, 'square', .035); }
+      if (reel.t >= reel.T + .15) { build.pro = reel.pro; reel = null; const [rn] = rarity(build.pro); K.sfx(660, .12, 'triangle', .08); if (rn === 'LEGEND PULL' || rn === 'STAR') { K.chime(784, [0, 4, 7, 12]); K.burst(835, 260, ['#ffd23f', '#fff', '#ff5fa2'], 30, 420); K.shake(6); } if (build.vs) build.vs.clock = 10; }
+    }
+    if (mode === 'build' && build.vs && build.pro && (build.vs.clock -= dt) <= 0) { const S = SPORTS[sport], open = build.slots.map((s, i) => s ? -1 : build.pro.r[i] * S.w[i]); place(open.indexOf(Math.max(...open))); msg = { t: 'Shot clock! Your pick was made for you.', k: 0 }; }
     if (mode === 'career' && career && !career.done) { career.t += dt; if (career.t > .55) { career.t = 0; career.shown++; const s = career.seasons[career.shown - 1]; if (s && s.A.some(a => !/Injury/.test(a))) K.chime(659, [0, 7]); else K.sfx(420, .05, 'square', .03); if (career.shown >= career.seasons.length) career.done = true; } }
     if (mode === 'verdict') career.vt += dt;
   };
@@ -336,12 +378,15 @@ const GAME = {
     if (mode === 'home') drawHome(g); else if (mode === 'build' || mode === 'ready') drawBuild(g); else if (mode === 'career') drawCareer(g); else if (mode === 'verdict') { drawCareer(g); drawVerdict(g); } else if (mode === 'hof') drawHof(g);
     if (msg) { const a = Math.min(1, msg.k * 4, (3.5 - msg.k) * 2); g.globalAlpha = Math.max(0, a); rr(g, 340, 664, 600, 44, 12, '#1f4a34', '#3ddc84', 2); tx(g, msg.t, 640, 686, f(18), '#bff5d6'); g.globalAlpha = 1; }
   };
-  const live = () => mode === 'home' ? ['play', 'daily', 'hof', ...Object.keys(SPORTS).map(k => 'sp' + k)] : mode === 'build' || mode === 'ready' ? ['reroll', 'sim', 'slot0', 'slot1', 'slot2', 'slot3', 'slot4', 'slot5'] : mode === 'career' ? ['verdict'] : mode === 'verdict' ? (career.vt > 1 ? ['again', 'home'] : []) : mode === 'hof' ? ['home'] : [];
+  const live = () => mode === 'home' ? ['play', 'daily', 'vs', 'hof', ...Object.keys(SPORTS).map(k => 'sp' + k)] : mode === 'build' || mode === 'ready' ? ['spin', 'vsdone', 'reroll', 'sim', 'slot0', 'slot1', 'slot2', 'slot3', 'slot4', 'slot5'] : mode === 'career' ? ['verdict'] : mode === 'verdict' ? (career.vt > 1 ? ['again', 'home'] : []) : mode === 'hof' ? ['home'] : [];
   function click(k) {
     if (!k) return;
     if (k.startsWith('sp')) { sport = k.slice(2); K.sfx(600, .05, 'square', .05); return; }
     if (k === 'play') return newBuild(sport, false);
     if (k === 'daily') return newBuild(sport, true);
+    if (k === 'vs') { newBuild(sport, false); build.vs = { cpu: Array(6).fill(null), clock: 10 }; build.rerolls = 1; return; }
+    if (k === 'spin' && mode === 'build') return spin();
+    if (k === 'vsdone' && mode === 'ready') { const L = SAVE(), w = ovr() > cpuOvr(); if (w) { L.vsW = (L.vsW || 0) + 1; K.coin(5); } streak(); K.persist(); K.add(ovr()); return K.over({ title: w ? 'You win the 1v1!' : ovr() === cpuOvr() ? 'A tie' : 'The CPU wins', text: `${build.name} ${ovr()} overall vs the CPU's ${cpuOvr()}. 1v1 wins: ${L.vsW || 0}.`, delay: 50 }); }
     if (k === 'hof') { mode = 'hof'; return; }
     if (k.startsWith('slot') && mode === 'build') return place(+k.slice(4));
     if (k === 'reroll' && mode === 'build') return reroll();
@@ -356,13 +401,15 @@ const GAME = {
     if (!dn) return; const n = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4, Digit6: 5 }[c];
     if (n != null && mode === 'build') return place(n);
     if (c === 'KeyR' && mode === 'build') return reroll();
+    if ((c === 'Space' || c === 'Enter') && mode === 'build' && !build.pro && !reel) return spin();
     if (c === 'Space' || c === 'Enter') { if (mode === 'home') return click('play'); if (mode === 'ready') return click('sim'); if (mode === 'career' && career.done) return click('verdict'); if (mode === 'verdict' && career.vt > 1) return click('again'); }
-    if (mode === 'home' && (c === 'ArrowLeft' || c === 'ArrowRight')) { const ks = Object.keys(SPORTS); sport = ks[(ks.indexOf(sport) + (c === 'ArrowRight' ? 1 : 2)) % 3]; }
+    if (mode === 'home' && (c === 'ArrowLeft' || c === 'ArrowRight')) { const ks = Object.keys(SPORTS); sport = ks[(ks.indexOf(sport) + (c === 'ArrowRight' ? 1 : ks.length - 1)) % ks.length]; }
   };
   // the demo drafts each pro into whichever open slot gets the most out of them
   GAME.bot = dt => {
     if ((botT -= dt) > 0) return; botT = .6;
     if (mode === 'home') return newBuild(pick(Object.keys(SPORTS)), false);
+    if (mode === 'build' && !build.pro && !reel) return spin();
     if (mode === 'build' && build.pro) { const S = SPORTS[sport], open = build.slots.map((s, i) => s ? -1 : build.pro.r[i] * S.w[i]); const best = open.indexOf(Math.max(...open)); if (build.rerolls && Math.max(...build.pro.r.filter((_, i) => !build.slots[i])) < 70 && R0() < .7) return reroll(); return place(best); }
     if (mode === 'ready') return simCareer();
     if (mode === 'career' && career.done) { botT = 1.5; return finishCareer(); }
