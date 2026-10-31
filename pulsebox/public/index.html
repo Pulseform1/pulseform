@@ -137,6 +137,7 @@
   .ss-tile .k { font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--c); }
   .ss-tile .v { font-family: var(--display); font-weight: 700; font-size: clamp(28px, 4vw, 38px); line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums; }
   .ss-tile .s { font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ss-tile .k .dot { display: inline-block; width: 8px; height: 8px; margin-right: 7px; vertical-align: 1px; border-radius: 50%; background: var(--c); animation: ping 1.8s ease-out infinite; }
   .ss-bars { display: flex; align-items: flex-end; gap: 4px; height: 34px; margin-top: 8px; }
   .ss-bars i { flex: 1; min-height: 3px; border-radius: 3px 3px 1px 1px; background: var(--c); opacity: .35; }
   .ss-bars i.now { opacity: 1; }
@@ -1434,6 +1435,13 @@ function loadStats() {
     if (!$('home').hidden) { renderChips(); renderShelves(); }
   }).catch(() => clearTimeout(timer));
 }
+// while a game is open (and the tab is visible), say so once a minute: that's the live player count
+let beatT = 0;
+function beat() { try { fetch('/api/live', { method: 'POST', keepalive: true }).catch(() => {}); } catch (e) {} }
+function startBeat() {
+  beat(); clearInterval(beatT);
+  beatT = setInterval(() => { if (!$('stage').querySelector('iframe')) { clearInterval(beatT); return; } if (!document.hidden) beat(); }, 60000);
+}
 function trackView() {
   try { fetch('/api/view', { method: 'POST', keepalive: true }).catch(() => {}); } catch (e) {}
 }
@@ -1446,20 +1454,20 @@ function renderSite(site) {
   const tiles = [
     ['Daily plays', today.plays, 'started today', 'plays', 'var(--lime)'],
     ['Weekly plays', week.plays, 'last 7 days', 'plays', 'var(--cyan)'],
-    ['Players', week.players, 'this week · ' + big(today.players) + ' today', 'players', 'var(--pink)'],
+    ['Live players', n(site.live), 'playing now · ' + big(week.players) + ' this week', 'players', 'var(--pink)', 1],
     ['Views', week.views, 'this week · ' + big(today.views) + ' today', 'views', '#ffb23d'],
   ];
   const grid = $('ssGrid'); grid.textContent = '';
-  for (const [label, value, sub, key, color] of tiles) {
+  for (const [label, value, sub, key, color, isLive] of tiles) {
     const t = document.createElement('div'); t.className = 'ss-tile'; t.style.setProperty('--c', color);
     const max = Math.max(1, ...days.map(x => x[key]));
     const bars = days.map((x, i) => '<i' + (i === days.length - 1 ? ' class="now"' : '') + ' style="height:' + Math.max(8, Math.round(x[key] / max * 100)) + '%" title="' + dayName(x.d) + ': ' + x[key].toLocaleString('en-US') + ' ' + key + '"></i>').join('');
     t.innerHTML = '<span class="k"></span><span class="v"></span><span class="s"></span><div class="ss-bars" role="img"></div>';
-    t.querySelector('.k').textContent = label; t.querySelector('.v').textContent = big(value); t.querySelector('.s').textContent = sub;
-    const b = t.querySelector('.ss-bars'); b.innerHTML = bars; b.setAttribute('aria-label', label + ', last 7 days: ' + days.map(x => dayName(x.d) + ' ' + x[key]).join(', '));
+    t.querySelector('.k').textContent = label; if (isLive) t.querySelector('.k').insertAdjacentHTML('afterbegin', '<span class="dot" aria-hidden="true"></span>'); t.querySelector('.v').textContent = big(value); t.querySelector('.s').textContent = sub;
+    const b = t.querySelector('.ss-bars'); b.innerHTML = bars; b.setAttribute('aria-label', (isLive ? 'Players per day' : label) + ', last 7 days: ' + days.map(x => dayName(x.d) + ' ' + x[key]).join(', '));
     grid.appendChild(t);
   }
-  $('ssUpd').textContent = 'Last 7 days';
+  $('ssUpd').textContent = 'Live · last 7 days';
   $('siteStats').hidden = false;
 }
 function renderPulse(today, week) {
@@ -1768,7 +1776,7 @@ function sizeStage() {
 function startGame(g) {
   current = g;
   recent = [g.id, ...recent.filter(x => x !== g.id)].slice(0, 8); store.set('recent', recent);
-  trackPlay(g.id);
+  trackPlay(g.id); startBeat();
   renderNext(g, $('pNextRail'));
   $('pTitle').textContent = g.title;
   const st = $('stage'); st.classList.remove('ready');

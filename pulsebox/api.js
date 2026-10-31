@@ -5,8 +5,9 @@
 //   PUT  /api/save   <- { data }      -> { t }
 // Play stats: one global Durable Object (Stats) counts game starts per day.
 //   POST /api/play   <- { id }        -> { ok, counted }   (same IP + game counts once per 10 minutes; IPs are only kept hashed)
+//   POST /api/live   -> { ok }   (sent once a minute while a game is open; live = people seen in the last 2.5 minutes)
 //   POST /api/view   -> { ok, counted }   (a hub page view; same IP counts once per 10 minutes)
-//   GET  /api/stats  -> { games: { id: { total, week, today } }, site: { today, week, days }, updated }
+//   GET  /api/stats  -> { games: { id: { total, week, today } }, site: { live, today, week, days }, updated }
 //                       (week = last 7 UTC days incl. today; cached ~60 s. site.* = { plays, views, players };
 //                        players = different people who started a game. To count them, the Stats object keeps a hash of
 //                        each player's IP made with a random secret that never leaves it, and deletes it after 8 days.)
@@ -58,6 +59,12 @@ async function play(request, env, ids) {
   return stub.fetch('https://stats/play', { method: 'POST', body: JSON.stringify({ id, k, who }) });
 }
 const sha = async s => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)));
+async function live(request, env) {
+  if (request.method !== 'POST') return json({ error: 'method' }, 405);
+  const who = await sha('pulsebox-person|' + (request.headers.get('cf-connecting-ip') || ''));
+  const stub = env.STATS.get(env.STATS.idFromName('global'));
+  return stub.fetch('https://stats/live', { method: 'POST', body: JSON.stringify({ who }) });
+}
 async function view(request, env) {
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
   const ip = request.headers.get('cf-connecting-ip') || '';
@@ -73,7 +80,7 @@ async function stats(request, env, ctx) {
   if (cache) { const hit = await cache.match(key); if (hit) return hit; }
   const stub = env.STATS.get(env.STATS.idFromName('global'));
   const r = await stub.fetch('https://stats/stats');
-  const res = new Response(await r.text(), { status: r.status, headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=60' } });
+  const res = new Response(await r.text(), { status: r.status, headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=30' } });
   if (cache && r.ok) { const put = cache.put(key, res.clone()); if (ctx && ctx.waitUntil) ctx.waitUntil(put); else await put; }
   return res;
 }
@@ -84,6 +91,7 @@ export async function api(request, env, ctx, ids) {
   if (url.pathname === '/api/play') return play(request, env, ids);
   if (url.pathname === '/api/stats') return stats(request, env, ctx);
   if (url.pathname === '/api/view') return view(request, env);
+  if (url.pathname === '/api/live') return live(request, env);
   if (url.pathname === '/api/hollow') {
     if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
     return env.HOLLOW.get(env.HOLLOW.idFromName('global')).fetch(request);
@@ -126,7 +134,7 @@ export class Saves {
 
 // One global instance (idFromName('global')). SQLite-backed: plays(day, id, n) holds one row per game per UTC day,
 // seen(k, t) holds the hashed IP+game keys counted in the last 10 minutes.
-const REPEAT_MS = 10 * 60 * 1000, MEMO_MS = 60 * 1000;
+const REPEAT_MS = 10 * 60 * 1000, MEMO_MS = 30 * 1000, LIVE_MS = 150 * 1000;
 export class Stats {
   constructor(state) {
     this.state = state; this.sql = state.storage.sql; this.memo = null; this.memoAt = 0;
@@ -136,6 +144,7 @@ export class Stats {
     this.sql.exec('CREATE TABLE IF NOT EXISTS views (day TEXT PRIMARY KEY, n INTEGER NOT NULL)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS people (day TEXT NOT NULL, k TEXT NOT NULL, PRIMARY KEY (day, k))');
     this.sql.exec('CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS live (k TEXT PRIMARY KEY, t INTEGER NOT NULL)');
     const row = this.sql.exec("SELECT v FROM meta WHERE k = 'salt'").toArray()[0];
     if (row) this.salt = row.v;
     else { this.salt = hex(crypto.getRandomValues(new Uint8Array(16))); this.sql.exec("INSERT INTO meta (k, v) VALUES ('salt', ?)", this.salt); }
@@ -153,6 +162,12 @@ export class Stats {
       this.sql.exec('INSERT INTO seen (k, t) VALUES (?, ?)', k, now);
       this.sql.exec('INSERT INTO plays (day, id, n) VALUES (?, ?, 1) ON CONFLICT (day, id) DO UPDATE SET n = n + 1', day(now), id);
       return json({ ok: true, counted: true });
+    }
+    if (path === '/live') {
+      const { who } = JSON.parse(await request.text());
+      if (typeof who === 'string' && who) this.sql.exec('INSERT INTO live (k, t) VALUES (?, ?) ON CONFLICT (k) DO UPDATE SET t = excluded.t', (await sha(this.salt + '|live|' + who)).slice(0, 24), now);
+      this.sql.exec('DELETE FROM live WHERE t < ?', now - LIVE_MS);
+      return json({ ok: true });
     }
     if (path === '/view') {
       const { k } = JSON.parse(await request.text());
@@ -176,7 +191,7 @@ export class Stats {
         for (const r of this.sql.exec('SELECT day, n FROM views WHERE day >= ?', weekStart)) if (at[r.day]) at[r.day].views = r.n;
         for (const r of this.sql.exec('SELECT day, COUNT(*) AS n FROM people WHERE day >= ? GROUP BY day', weekStart)) if (at[r.day]) at[r.day].players = r.n;
         const week = { plays: days.reduce((a, x) => a + x.plays, 0), views: days.reduce((a, x) => a + x.views, 0), players: this.sql.exec('SELECT COUNT(DISTINCT k) AS n FROM people WHERE day >= ?', weekStart).one().n };
-        const t = at[today], site = { today: { plays: t.plays, views: t.views, players: t.players }, week, days };
+        const t = at[today], site = { live: this.sql.exec('SELECT COUNT(*) AS n FROM live WHERE t >= ?', now - LIVE_MS).one().n, today: { plays: t.plays, views: t.views, players: t.players }, week, days };
         this.memo = JSON.stringify({ games, site, updated: now }); this.memoAt = now;
       }
       return new Response(this.memo, { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
