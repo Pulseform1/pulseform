@@ -5,7 +5,11 @@
 //   PUT  /api/save   <- { data }      -> { t }
 // Play stats: one global Durable Object (Stats) counts game starts per day.
 //   POST /api/play   <- { id }        -> { ok, counted }   (same IP + game counts once per 10 minutes; IPs are only kept hashed)
-//   GET  /api/stats  -> { games: { id: { total, week, today } }, updated }   (week = last 7 UTC days incl. today; cached ~60 s)
+//   POST /api/view   -> { ok, counted }   (a hub page view; same IP counts once per 10 minutes)
+//   GET  /api/stats  -> { games: { id: { total, week, today } }, site: { today, week, days }, updated }
+//                       (week = last 7 UTC days incl. today; cached ~60 s. site.* = { plays, views, players };
+//                        players = different people who started a game. To count them, the Stats object keeps a hash of
+//                        each player's IP made with a random secret that never leaves it, and deletes it after 8 days.)
 // Multiplayer rooms: one Durable Object (Rooms) per 4-character room code relays JSON messages between up to 8 players.
 //   GET  /api/room/CODE?n=NAME  (WebSocket) -> { t: 'hello', id, host, players } then every other player's messages
 // THE HOLLOW co-op: /api/hollow (WebSocket) goes to the HollowRooms Durable Object (hollow-rooms.js), which runs the game's own engine.
@@ -49,8 +53,17 @@ async function play(request, env, ids) {
   // the raw IP never leaves this function: the Stats object only sees a salted hash of IP + game + day
   const ip = request.headers.get('cf-connecting-ip') || '';
   const k = hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('pulsebox-play|' + ip + '|' + id + '|' + day()))).slice(0, 24);
+  const who = await sha('pulsebox-person|' + ip);
   const stub = env.STATS.get(env.STATS.idFromName('global'));
-  return stub.fetch('https://stats/play', { method: 'POST', body: JSON.stringify({ id, k }) });
+  return stub.fetch('https://stats/play', { method: 'POST', body: JSON.stringify({ id, k, who }) });
+}
+const sha = async s => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)));
+async function view(request, env) {
+  if (request.method !== 'POST') return json({ error: 'method' }, 405);
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  const k = (await sha('pulsebox-view|' + ip + '|' + day())).slice(0, 24);
+  const stub = env.STATS.get(env.STATS.idFromName('global'));
+  return stub.fetch('https://stats/view', { method: 'POST', body: JSON.stringify({ k }) });
 }
 
 async function stats(request, env, ctx) {
@@ -70,6 +83,7 @@ export async function api(request, env, ctx, ids) {
   const url = new URL(request.url);
   if (url.pathname === '/api/play') return play(request, env, ids);
   if (url.pathname === '/api/stats') return stats(request, env, ctx);
+  if (url.pathname === '/api/view') return view(request, env);
   if (url.pathname === '/api/hollow') {
     if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
     return env.HOLLOW.get(env.HOLLOW.idFromName('global')).fetch(request);
@@ -119,15 +133,33 @@ export class Stats {
     this.sql.exec('CREATE TABLE IF NOT EXISTS plays (day TEXT NOT NULL, id TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, id))');
     this.sql.exec('CREATE TABLE IF NOT EXISTS seen (k TEXT PRIMARY KEY, t INTEGER NOT NULL)');
     this.sql.exec('CREATE INDEX IF NOT EXISTS seen_t ON seen (t)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS views (day TEXT PRIMARY KEY, n INTEGER NOT NULL)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS people (day TEXT NOT NULL, k TEXT NOT NULL, PRIMARY KEY (day, k))');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)');
+    const row = this.sql.exec("SELECT v FROM meta WHERE k = 'salt'").toArray()[0];
+    if (row) this.salt = row.v;
+    else { this.salt = hex(crypto.getRandomValues(new Uint8Array(16))); this.sql.exec("INSERT INTO meta (k, v) VALUES ('salt', ?)", this.salt); }
   }
   async fetch(request) {
     const path = new URL(request.url).pathname, now = Date.now();
     if (path === '/play') {
-      const { id, k } = JSON.parse(await request.text());
+      const { id, k, who } = JSON.parse(await request.text());
       this.sql.exec('DELETE FROM seen WHERE t < ?', now - REPEAT_MS);
+      if (typeof who === 'string' && who) {
+        this.sql.exec('INSERT OR IGNORE INTO people (day, k) VALUES (?, ?)', day(now), (await sha(this.salt + '|' + who)).slice(0, 24));
+        this.sql.exec('DELETE FROM people WHERE day < ?', day(now - 8 * 86400000));
+      }
       if (this.sql.exec('SELECT t FROM seen WHERE k = ?', k).toArray().length) return json({ ok: true, counted: false });
       this.sql.exec('INSERT INTO seen (k, t) VALUES (?, ?)', k, now);
       this.sql.exec('INSERT INTO plays (day, id, n) VALUES (?, ?, 1) ON CONFLICT (day, id) DO UPDATE SET n = n + 1', day(now), id);
+      return json({ ok: true, counted: true });
+    }
+    if (path === '/view') {
+      const { k } = JSON.parse(await request.text());
+      this.sql.exec('DELETE FROM seen WHERE t < ?', now - REPEAT_MS);
+      if (this.sql.exec('SELECT t FROM seen WHERE k = ?', k).toArray().length) return json({ ok: true, counted: false });
+      this.sql.exec('INSERT INTO seen (k, t) VALUES (?, ?)', k, now);
+      this.sql.exec('INSERT INTO views (day, n) VALUES (?, 1) ON CONFLICT (day) DO UPDATE SET n = n + 1', day(now));
       return json({ ok: true, counted: true });
     }
     if (path === '/stats') {
@@ -137,7 +169,15 @@ export class Stats {
           'SELECT id, SUM(n) AS total, SUM(CASE WHEN day >= ? THEN n ELSE 0 END) AS week, SUM(CASE WHEN day = ? THEN n ELSE 0 END) AS today FROM plays GROUP BY id',
           weekStart, today))
           games[r.id] = { total: r.total, week: r.week, today: r.today };
-        this.memo = JSON.stringify({ games, updated: now }); this.memoAt = now;
+        // the whole site, day by day for the last 7 days
+        const days = [], at = {};
+        for (let i = 6; i >= 0; i--) { const d = day(now - i * 86400000); at[d] = { d, plays: 0, views: 0, players: 0 }; days.push(at[d]); }
+        for (const r of this.sql.exec('SELECT day, SUM(n) AS n FROM plays WHERE day >= ? GROUP BY day', weekStart)) if (at[r.day]) at[r.day].plays = r.n;
+        for (const r of this.sql.exec('SELECT day, n FROM views WHERE day >= ?', weekStart)) if (at[r.day]) at[r.day].views = r.n;
+        for (const r of this.sql.exec('SELECT day, COUNT(*) AS n FROM people WHERE day >= ? GROUP BY day', weekStart)) if (at[r.day]) at[r.day].players = r.n;
+        const week = { plays: days.reduce((a, x) => a + x.plays, 0), views: days.reduce((a, x) => a + x.views, 0), players: this.sql.exec('SELECT COUNT(DISTINCT k) AS n FROM people WHERE day >= ?', weekStart).one().n };
+        const t = at[today], site = { today: { plays: t.plays, views: t.views, players: t.players }, week, days };
+        this.memo = JSON.stringify({ games, site, updated: now }); this.memoAt = now;
       }
       return new Response(this.memo, { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
     }

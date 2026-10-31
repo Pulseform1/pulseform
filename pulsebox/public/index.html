@@ -124,6 +124,22 @@
   .pulse-line b { color: var(--text); font-family: var(--display); font-weight: 700; letter-spacing: .02em; font-size: 16px; }
   .pulse-line .live { width: 9px; height: 9px; border-radius: 50%; background: var(--pink); animation: ping 1.8s ease-out infinite; flex: 0 0 auto; }
   .pulse-line .sep { opacity: .5; }
+  /* site stats: daily plays, weekly plays, players and views, with the last 7 days as little bars */
+  .site-stats { margin: 0 0 22px; }
+  .ss-head { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
+  .ss-head h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .ss-head .live { width: 9px; height: 9px; border-radius: 50%; background: var(--pink); animation: ping 1.8s ease-out infinite; flex: 0 0 auto; }
+  .ss-head .ss-upd { margin-left: auto; font-size: 13px; color: var(--muted); }
+  .ss-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 760px) { .ss-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .ss-tile { padding: 12px 12px 10px; } .ss-tile .s { font-size: 13px; } }
+  .ss-tile { position: relative; overflow: hidden; background: var(--panel); border: 1px solid var(--edge); border-radius: var(--r); padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .ss-tile::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--c); }
+  .ss-tile .k { font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--c); }
+  .ss-tile .v { font-family: var(--display); font-weight: 700; font-size: clamp(28px, 4vw, 38px); line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums; }
+  .ss-tile .s { font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ss-bars { display: flex; align-items: flex-end; gap: 4px; height: 34px; margin-top: 8px; }
+  .ss-bars i { flex: 1; min-height: 3px; border-radius: 3px 3px 1px 1px; background: var(--c); opacity: .35; }
+  .ss-bars i.now { opacity: 1; }
   @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(255,46,136,.7); } 70%, 100% { box-shadow: 0 0 0 9px rgba(255,46,136,0); } }
 
   .chips { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -376,6 +392,10 @@
       <aside class="daily" id="daily" aria-label="Game of the day"></aside>
     </section>
     <section class="hero" id="hero" aria-roledescription="carousel" aria-label="Featured games"></section>
+    <section class="site-stats" id="siteStats" aria-labelledby="ssTitle" hidden>
+      <div class="ss-head"><span class="live" aria-hidden="true"></span><h2 id="ssTitle">Pulsebox stats</h2><span class="ss-upd" id="ssUpd"></span></div>
+      <div class="ss-grid" id="ssGrid"></div>
+    </section>
     <div class="home-top">
       <p class="pulse-line" id="pulseLine" hidden></p>
       <nav class="chips" id="chips" aria-label="Jump to a category"></nav>
@@ -1403,6 +1423,7 @@ function loadStats() {
   fetch('/api/stats', ctl ? { signal: ctl.signal } : {}).then(r => r.ok ? r.json() : null).then(d => {
     clearTimeout(timer);
     if (!d || !d.games || typeof d.games !== 'object') return;
+    if (d.site && Array.isArray(d.site.days)) renderSite(d.site);
     const clean = {}; let week = 0, today = 0;
     GAMES.forEach(g => { const x = d.games[g.id]; if (!x) return; const o = { total: Math.max(0, +x.total || 0), week: Math.max(0, +x.week || 0), today: Math.max(0, +x.today || 0) }; clean[g.id] = o; week += o.week; today += o.today; });
     if (week < MIN_WEEK) return;
@@ -1412,6 +1433,34 @@ function loadStats() {
     renderHero();
     if (!$('home').hidden) { renderChips(); renderShelves(); }
   }).catch(() => clearTimeout(timer));
+}
+function trackView() {
+  try { fetch('/api/view', { method: 'POST', keepalive: true }).catch(() => {}); } catch (e) {}
+}
+function renderSite(site) {
+  const n = v => Math.max(0, Math.floor(+v || 0)), days = site.days.slice(-7).map(x => ({ d: String(x.d || ''), plays: n(x.plays), views: n(x.views), players: n(x.players) }));
+  const today = { plays: n(site.today && site.today.plays), views: n(site.today && site.today.views), players: n(site.today && site.today.players) };
+  const week = { plays: n(site.week && site.week.plays), views: n(site.week && site.week.views), players: n(site.week && site.week.players) };
+  const big = v => v < 10000 ? v.toLocaleString('en-US') : fmt(v);
+  const dayName = d => { const t = new Date(d + 'T12:00:00Z'); return isNaN(t) ? d : t.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }); };
+  const tiles = [
+    ['Daily plays', today.plays, 'started today', 'plays', 'var(--lime)'],
+    ['Weekly plays', week.plays, 'last 7 days', 'plays', 'var(--cyan)'],
+    ['Players', week.players, 'this week · ' + big(today.players) + ' today', 'players', 'var(--pink)'],
+    ['Views', week.views, 'this week · ' + big(today.views) + ' today', 'views', '#ffb23d'],
+  ];
+  const grid = $('ssGrid'); grid.textContent = '';
+  for (const [label, value, sub, key, color] of tiles) {
+    const t = document.createElement('div'); t.className = 'ss-tile'; t.style.setProperty('--c', color);
+    const max = Math.max(1, ...days.map(x => x[key]));
+    const bars = days.map((x, i) => '<i' + (i === days.length - 1 ? ' class="now"' : '') + ' style="height:' + Math.max(8, Math.round(x[key] / max * 100)) + '%" title="' + dayName(x.d) + ': ' + x[key].toLocaleString('en-US') + ' ' + key + '"></i>').join('');
+    t.innerHTML = '<span class="k"></span><span class="v"></span><span class="s"></span><div class="ss-bars" role="img"></div>';
+    t.querySelector('.k').textContent = label; t.querySelector('.v').textContent = big(value); t.querySelector('.s').textContent = sub;
+    const b = t.querySelector('.ss-bars'); b.innerHTML = bars; b.setAttribute('aria-label', label + ', last 7 days: ' + days.map(x => dayName(x.d) + ' ' + x[key]).join(', '));
+    grid.appendChild(t);
+  }
+  $('ssUpd').textContent = 'Last 7 days';
+  $('siteStats').hidden = false;
 }
 function renderPulse(today, week) {
   const el = $('pulseLine');
@@ -1805,6 +1854,7 @@ window.addEventListener('hashchange', route);
 
 renderFinder(); renderHero();
 route();
+trackView();
 loadStats();
 </script>
 
