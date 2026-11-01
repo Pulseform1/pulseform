@@ -664,7 +664,20 @@ const GAME = {
     }
     if (mine) { const X = sx(mine.x), Y = sy(mine.y), k = Math.min(1, mine.p); g.strokeStyle = 'rgba(0,0,0,.7)'; g.lineWidth = 2; g.beginPath(); for (let i = 0; i < 3 + k * 6; i++) { const a = i * 2.1; g.moveTo(X + 12, Y + 12); g.lineTo(X + 12 + Math.cos(a) * 11 * k, Y + 12 + Math.sin(a) * 11 * k); } g.stroke(); }
   }
-  function drawHero(g, p, name, armor, held, swing, face, blink, col) {
+  function heldItem(g, id, it, b) {
+    g.rotate(b);
+    const put = (rho, gx, gy) => { g.rotate(Math.PI - rho); const c = Math.cos(rho), sn = Math.sin(rho); icon(g, id, -(gx * c - gy * sn), -(gx * sn + gy * c), 1); };
+    if (it.melee) put(-.78, 0, 6.5);
+    else if (it.pick) put(0, 0, 6);
+    else if (it.reach) put(-.8, 0, 8.5);
+    else if (it.magic) put(-.7, 0, 7.5);
+    else if (it.throw) put(-.78, 0, 3);
+    else if (it.gun) { g.rotate(Math.PI / 2); icon(g, id, 3, -3, 1); }
+    else if (it.bow) { g.rotate(Math.PI / 2); icon(g, id, -4, 0, 1); }
+    else if (it.boom) { g.rotate(Math.PI / 2); icon(g, id, 5, -4, 1); }
+    else icon(g, id, 0, 4, it.tile ? .55 : .75);
+  }
+  function drawHero(g, p, name, armor, held, swing, face, blink, col, aim) {
     const X = sx(p.x), Y = sy(p.y), walk = p.ground && Math.abs(p.vx) > .5 ? Math.sin(anim * 14) : 0;
     if (blink) return; g.save(); g.translate(Math.round(X), Math.round(Y)); g.scale(face * 1.5, 1.5); const r = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
     const shirt = armor ? IT[armor].c : col || '#3a8a3a', dk = 'rgba(0,0,0,.28)', l1 = Math.max(0, walk) * 2, l2 = -Math.min(0, walk) * 2;
@@ -672,12 +685,21 @@ const GAME = {
     r(armor ? shirt : '#4a2a14', -6, -2, 5, 2); r(armor ? shirt : '#4a2a14', 1, -2, 5, 2);
     r(shirt, -5, -21, 10, 12); r(dk, 2, -21, 3, 12); r('rgba(255,255,255,.18)', -5, -21, 2, 12); r('#3a2410', -5, -11, 10, 2); r(armor ? 'rgba(255,255,255,.4)' : '#d8aa2a', -1, -11, 2, 2);
     if (armor) { r('rgba(255,255,255,.3)', -4, -20, 3, 2); r(shirt, -6, -22, 12, 3); r(dk, -6, -20, 12, 1); }
-    const sw = swing > 0 ? (1 - swing / .34) : 0, armA = swing > 0 ? -2.4 + sw * 3.2 : Math.sin(anim * 14) * (walk ? .5 : 0) + .1;
     r('#f0c090', -4, -29, 9, 9); r('#d8a070', -4, -21, 9, 1); r('#fff', 1, -26, 3, 2); r('#2a4a9a', 3, -26, 1, 2); r('#c88a60', 4, -23, 1, 1);
     if (armor) { r(shirt, -5, -32, 11, 5); r(shirt, -5, -29, 2, 5); r('rgba(255,255,255,.35)', -3, -31, 5, 1); }
     else { r('#6a3a18', -5, -32, 11, 4); r('#6a3a18', -5, -29, 3, 6); r('#6a3a18', 2, -30, 3, 2); r('#8a5226', -3, -32, 6, 1); }
+    // the front arm and whatever is in that hand. Arm angle 0 hangs straight down; negative swings it forward.
+    const it = held && IT[held], ranged = it && (it.gun || it.bow || it.magic || it.boom), tool = it && (it.melee || it.pick || it.reach || it.throw);
+    const sw = swing > 0 ? Math.min(1, 1 - swing / (it && it.reach ? .38 : .34)) : 0, ez = 1 - Math.pow(1 - sw, 3);
+    let armA = Math.sin(anim * 14) * (walk ? .45 : 0) - .15, itemA = 0;
+    if (ranged) { const a = aim || [1, 0]; armA = Math.atan2(-a[0] * face, a[1]); }
+    else if (tool && it.reach && swing > 0) { const a = aim || [1, 0]; armA = Math.atan2(-a[0] * face, a[1]); }
+    else if (tool && swing > 0) armA = 2.5 - ez * 3.6;                 // over the shoulder, down in front
+    else if (tool) { armA = -.35 + Math.sin(anim * 14) * (walk ? .2 : 0); itemA = -2.32; }   // resting, blade up and forward
+    else if (it) { armA = -.55 + Math.sin(anim * 14) * (walk ? .25 : 0); }
+    if (tool && swing > 0 && !it.reach) for (const k of [.12, .24]) { const pa = 2.5 - Math.max(0, ez - k) * 3.6; g.save(); g.globalAlpha = .18; g.translate(1, -19); g.rotate(pa); g.translate(1, 8.5); heldItem(g, held, it, 0); g.restore(); }
     g.save(); g.translate(1, -19); g.rotate(armA); r(shirt, -1, 0, 4, 5); r('#f0c090', -1, 5, 4, 5);
-    if (held && swing > 0) { g.translate(1, 11); g.rotate(1.2); g.scale(.95, .95); icon(g, held, 4, -6, 1); }
+    if (it) { g.save(); g.translate(1, 8.5); if (!tool && !ranged) g.rotate(-armA); heldItem(g, held, it, itemA); g.restore(); r('#f0c090', -1, 7, 4, 3); }
     g.restore(); g.restore();
     if (name) { g.font = `14px ${PXF}`; g.textAlign = 'center'; g.fillStyle = '#000'; g.fillText(name, X + 1, Y - 73); g.fillStyle = col || '#fff'; g.fillText(name, X, Y - 74); }
   }
@@ -910,7 +932,7 @@ const GAME = {
     for (const d of drops) { const X = sx(d.x), Y = sy(d.y) - 8 + Math.sin(anim * 4 + d.x) * 2, r = IT[d.id].r || 0; if (r) { const gr = g.createRadialGradient(X, Y, 1, X, Y, 18); gr.addColorStop(0, RAR[r] + '88'); gr.addColorStop(1, RAR[r] + '00'); g.fillStyle = gr; g.fillRect(X - 18, Y - 18, 36, 36); } icon(g, d.id, X, Y, 1.2); }
     for (const e of ents) drawEnemy(g, e);
     for (const [, o] of others) if (o.p && o.p.x != null && !o.dead) drawHero(g, o.p, o.name, o.armor, o.held, o.sw, o.face || 1, false, o.col);
-    if (!dead) { const s = ch.inv[sel]; drawHero(g, P, online() ? MP.name : null, ch.armor, s && s.id, P.swing, P.face, P.inv > 0 && Math.floor(anim * 20) % 2); }
+    if (!dead) { const s = ch.inv[sel]; const hx = sx(P.x), hy = sy(P.y) - 30, dd = Math.hypot(mx - hx, my - hy) || 1; drawHero(g, P, online() ? MP.name : null, ch.armor, s && s.id, P.swing, P.face, P.inv > 0 && Math.floor(anim * 20) % 2, null, [(mx - hx) / dd, (my - hy) / dd]); }
     drawProjs(g); drawLight(g);
     if (!invOpen && !touch && !posed) { const tx = Math.floor((mx + cam.x) / TS), ty = Math.floor((my + cam.y) / TS); if (reach(tx, ty)) { g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2; g.strokeRect(sx(tx) + 1, sy(ty) + 1, TS - 2, TS - 2); } }
     if (dead) { g.fillStyle = 'rgba(60,0,0,.35)'; g.fillRect(K.view.x0, 0, K.view.x1 - K.view.x0, 720); outlined(g, 'You were slain...', 640, 340, 44, '#ff6a6a', 'center'); }
