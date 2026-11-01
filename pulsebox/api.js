@@ -140,6 +140,18 @@ async function view(request, env) {
   return stub.fetch('https://stats/view', { method: 'POST', body: JSON.stringify({ k }) });
 }
 
+// Leaderboards: fastest times per game and course. One row per person per course (keyed by a salted hash of their IP),
+// kept only when it beats their previous time. GET ?g=&k= returns the top 10; POST {g,k,n,t} submits a time in ms.
+const LB = { hyperlane: { keys: ['downtown', 'aurora', 'canyon'], min: 18000, max: 600000 } };
+async function lb(request, env, url) {
+  const stub = env.STATS.get(env.STATS.idFromName('global'));
+  if (request.method === 'GET') return stub.fetch('https://stats/lb?' + new URLSearchParams({ g: url.searchParams.get('g') || '', k: url.searchParams.get('k') || '' }));
+  if (request.method !== 'POST') return json({ error: 'method' }, 405);
+  let b; try { b = JSON.parse(await request.text()); } catch (e) { return json({ error: 'bad json' }, 400); }
+  const who = await sha('pulsebox-lb|' + (request.headers.get('cf-connecting-ip') || ''));
+  return stub.fetch('https://stats/lbadd', { method: 'POST', body: JSON.stringify({ g: b.g, k: b.k, n: b.n, t: b.t, who }) });
+}
+
 async function stats(request, env, ctx) {
   if (request.method !== 'GET' && request.method !== 'HEAD') return json({ error: 'method' }, 405);
   const cache = typeof caches !== 'undefined' ? caches.default : null;
@@ -159,6 +171,7 @@ export async function api(request, env, ctx, ids) {
   if (url.pathname === '/api/stats') return stats(request, env, ctx);
   if (url.pathname === '/api/view') return view(request, env);
   if (url.pathname === '/api/live') return live(request, env);
+  if (url.pathname === '/api/lb') return lb(request, env, url);
   if (url.pathname === '/api/bug' || url.pathname === '/api/bug/status' || url.pathname === '/api/bugs' || url.pathname === '/api/bugs/update') return bugs(request, env, url);
   if (url.pathname === '/api/hollow') {
     if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
@@ -213,6 +226,8 @@ export class Stats {
     this.sql.exec('CREATE TABLE IF NOT EXISTS people (day TEXT NOT NULL, k TEXT NOT NULL, PRIMARY KEY (day, k))');
     this.sql.exec('CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS live (k TEXT PRIMARY KEY, t INTEGER NOT NULL)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS lb (g TEXT NOT NULL, k TEXT NOT NULL, who TEXT NOT NULL, n TEXT NOT NULL, t INTEGER NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (g, k, who))');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS lbrate (who TEXT NOT NULL, t INTEGER NOT NULL)');
     const row = this.sql.exec("SELECT v FROM meta WHERE k = 'salt'").toArray()[0];
     if (row) this.salt = row.v;
     else { this.salt = hex(crypto.getRandomValues(new Uint8Array(16))); this.sql.exec("INSERT INTO meta (k, v) VALUES ('salt', ?)", this.salt); }
@@ -236,6 +251,19 @@ export class Stats {
       if (typeof who === 'string' && who) this.sql.exec('INSERT INTO live (k, t) VALUES (?, ?) ON CONFLICT (k) DO UPDATE SET t = excluded.t', (await sha(this.salt + '|live|' + who)).slice(0, 24), now);
       this.sql.exec('DELETE FROM live WHERE t < ?', now - LIVE_MS);
       return json({ ok: true });
+    }
+    if (path === '/lb' || path === '/lbadd') {
+      const top = (g, k) => this.sql.exec('SELECT n, t FROM lb WHERE g = ? AND k = ? ORDER BY t ASC, at ASC LIMIT 10', g, k).toArray();
+      if (path === '/lb') { const q = new URL(request.url).searchParams, g = q.get('g'), k = q.get('k'); if (!LB[g] || !LB[g].keys.includes(k)) return json({ error: 'unknown board' }, 400); return json({ top: top(g, k) }); }
+      const { g, k, n, t, who } = JSON.parse(await request.text()), B = LB[g];
+      if (!B || !B.keys.includes(k) || !Number.isInteger(t) || t < B.min || t > B.max || typeof who !== 'string') return json({ error: 'rejected' }, 400);
+      const name = String(n || '').replace(/[^\w .'-]/g, '').trim().slice(0, 14) || 'Racer', h = (await sha(this.salt + '|lb|' + who)).slice(0, 24);
+      this.sql.exec('DELETE FROM lbrate WHERE t < ?', now - 3600000);
+      if (this.sql.exec('SELECT COUNT(*) AS n FROM lbrate WHERE who = ?', h).one().n >= 60) return json({ error: 'slow down' }, 429);
+      this.sql.exec('INSERT INTO lbrate (who, t) VALUES (?, ?)', h, now);
+      this.sql.exec('INSERT INTO lb (g, k, who, n, t, at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (g, k, who) DO UPDATE SET n = excluded.n, at = CASE WHEN excluded.t < lb.t THEN excluded.at ELSE lb.at END, t = MIN(lb.t, excluded.t)', g, k, h, name, t, now);
+      const mine = this.sql.exec('SELECT t FROM lb WHERE g = ? AND k = ? AND who = ?', g, k, h).one().t;
+      return json({ rank: this.sql.exec('SELECT COUNT(*) AS n FROM lb WHERE g = ? AND k = ? AND t < ?', g, k, mine).one().n + 1, best: mine, top: top(g, k) });
     }
     if (path === '/view') {
       const { k } = JSON.parse(await request.text());

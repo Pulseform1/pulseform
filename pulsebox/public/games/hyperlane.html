@@ -202,15 +202,15 @@ const GAME = {
     { id: 'downtown', name: 'Neon Downtown', mood: 'Rain-soaked megacity at midnight. A figure-8 that dives under its own overpass.', theme: 'city',
       c1: '#ff2bd6', c2: '#22e6ff', fog: '#1a0b30', fogD: .00095, seed: 11,
       f: t => [470 * Math.sin(t) + 20 * Math.sin(3 * t), 42 + 15 * Math.cos(t) + 4 * Math.sin(3 * t), 280 * Math.sin(2 * t) + 30 * Math.sin(t)],
-      pads: [[.09, -5], [.24, 5], [.4, 0], [.57, -5], [.73, 4], [.88, 0]] },
+      pads: [[.06, 0], [.15, -5], [.24, 5], [.33, -4], [.4, 0], [.49, 5], [.57, -5], [.66, 0], [.73, 4], [.81, -4], [.88, 0], [.95, 5]] },
     { id: 'aurora', name: 'Aurora Peaks', mood: 'An ice valley under a living sky. Fast, flowing and full of climbs and drops.', theme: 'ice',
       c1: '#38ffd2', c2: '#a86bff', fog: '#0a1a36', fogD: .00085, seed: 23,
       f: t => { const r = 400 + 80 * Math.sin(2 * t) + 50 * Math.sin(3 * t + 1) + 34 * Math.sin(5 * t + .4) + 9 * Math.sin(9 * t + 2); return [r * Math.cos(t), 34 + 20 * Math.sin(2 * t + .5) + 8 * Math.sin(3 * t), r * Math.sin(t)]; },
-      pads: [[.12, 4], [.3, -4], [.46, 0], [.63, 5], [.8, -5], [.94, 0]] },
+      pads: [[.06, -4], [.12, 4], [.21, 0], [.3, -4], [.38, 5], [.46, 0], [.55, -5], [.63, 5], [.72, 0], [.8, -5], [.87, 4], [.94, 0]] },
     { id: 'canyon', name: 'Solar Canyon', mood: 'Sunset desert and towering mesas. Tight technical corners: drift or hit the wall.', theme: 'desert',
       c1: '#ffb02e', c2: '#ff3d6e', fog: '#b8584a', fogD: .00068, seed: 37,
       f: t => { const r = 380 + 70 * Math.sin(3 * t + .3) + 46 * Math.sin(5 * t + 1.2) + 14 * Math.sin(7 * t); return [r * Math.cos(t), 18 + 9 * Math.sin(t) + 6 * Math.sin(4 * t + .7), r * Math.sin(t)]; },
-      pads: [[.1, 0], [.26, -5], [.42, 5], [.58, 0], [.74, -4], [.9, 4]] },
+      pads: [[.05, 4], [.1, 0], [.18, -4], [.26, -5], [.34, 4], [.42, 5], [.5, -4], [.58, 0], [.66, 5], [.74, -4], [.82, 0], [.9, 4]] },
   ];
 
   function buildTrack(def) {
@@ -634,9 +634,18 @@ const GAME = {
     // boost pads: scrolling chevrons
     const chev = ctex(128, 256, (x, w, h) => { x.fillStyle = '#000'; x.fillRect(0, 0, w, h); x.strokeStyle = '#fff'; x.lineWidth = 16; x.lineCap = 'round'; for (let y = 0; y < h; y += 64) { x.beginPath(); x.moveTo(18, y + 50); x.lineTo(64, y + 14); x.lineTo(110, y + 50); x.stroke(); } });
     chev.repeat.set(1, 3);
-    out.padMat = new THREE.MeshBasicMaterial({ map: chev, color: hdr(D.c2, 2.2), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false });
+    out.padMat = new THREE.MeshBasicMaterial({ map: chev, color: hdr(D.c2, 3), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false });
     const pg = new THREE.PlaneGeometry(5, 12).rotateX(-Math.PI / 2);
-    for (const p of T.pads) { const m = new THREE.Mesh(pg, out.padMat); m.applyMatrix4(basis(T, p.s + 6, p.d, .07)); g.add(m); }
+    const arrowT = ctex(256, 160, (x, w, h) => { x.fillStyle = '#000'; x.fillRect(0, 0, w, h); x.strokeStyle = '#fff'; x.lineWidth = 18; x.lineCap = 'round'; x.lineJoin = 'round'; for (const y of [58, 108]) { x.beginPath(); x.moveTo(52, y + 26); x.lineTo(128, y - 26); x.lineTo(204, y + 26); x.stroke(); } x.lineWidth = 6; x.strokeRect(6, 6, w - 12, h - 12); }, { clamp: true });
+    out.holoMat = new THREE.MeshBasicMaterial({ map: arrowT, color: hdr(D.c2, 2.6), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false });
+    const backM = new THREE.MeshBasicMaterial({ color: '#05030d', transparent: true, opacity: .5, depthWrite: false });
+    const hg = new THREE.PlaneGeometry(6, 3.75), postG = new THREE.BoxGeometry(.1, 4.6, .1), postM = new THREE.MeshBasicMaterial({ color: hdr(D.c2, 1.6) });
+    for (const p of T.pads) {
+      const m = new THREE.Mesh(pg, out.padMat); m.applyMatrix4(basis(T, p.s + 6, p.d, .07)); g.add(m);
+      const bk = new THREE.Mesh(hg, backM); bk.applyMatrix4(basis(T, p.s - .95, p.d, 5)); g.add(bk);
+      const h = new THREE.Mesh(hg, out.holoMat); h.applyMatrix4(basis(T, p.s - 1, p.d, 5)); g.add(h);
+      for (const sx of [-3.1, 3.1]) { const q = new THREE.Mesh(postG, postM); q.applyMatrix4(basis(T, p.s - 1, p.d + sx, 2.3)); g.add(q); }
+    }
     // start line and gantry with five start lights
     const chk = ctex(256, 32, (x) => { for (let i = 0; i < 16; i++) for (let j = 0; j < 2; j++) { x.fillStyle = (i + j) % 2 ? '#111' : '#fff'; x.fillRect(i * 16, j * 16, 16, 16); } });
     const line0 = new THREE.Mesh(new THREE.PlaneGeometry(HW * 2, 2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: chk, color: new THREE.Color(1.4, 1.4, 1.4) })); line0.applyMatrix4(basis(T, 0, 0, .06)); g.add(line0);
@@ -849,6 +858,23 @@ const GAME = {
   }
 
   /* ---------- race flow ---------- */
+  const MODES = [
+    { id: 'gp', name: 'GRAND PRIX', sub: `${LAPS} laps against the whole field`, laps: LAPS, go: 'vs bots, or online with friends' },
+    { id: 'tt', name: 'TIME TRIAL', sub: 'Solo laps against your own ghost. Medals and a world top 10.', laps: 5, go: 'solo · beat your ghost' },
+    { id: 'ko', name: 'KNOCKOUT', sub: 'Every 20 seconds, last place is blown off the track.', laps: Infinity, go: 'vs bots, or online with friends' },
+  ];
+  const KO_INT = 20;
+  // lap targets per track (platinum, gold, silver, bronze), set from autopilot laps with no rivals to draft
+  const MEDALS = { downtown: [33.3, 34.4, 36.2, 38.8], aurora: [29.2, 30.2, 31.8, 34.2], canyon: [29.5, 30.5, 32.2, 34.6] };
+  const MNAME = ['PLATINUM', 'GOLD', 'SILVER', 'BRONZE'], MCOL = ['#bff4ff', '#ffd23f', '#dfe3ee', '#e8a066'];
+  const medalOf = (id, t) => { const m = MEDALS[id]; for (let i = 0; i < 4; i++) if (t <= m[i]) return i; return -1; };
+  let gmode = 0;
+  // world leaderboard of fastest laps (same site in production; the live site when testing from a file)
+  const LBU = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? '/api/lb' : 'https://box.pulseform.org/api/lb';
+  const LBC = {};
+  const myName = () => { try { return localStorage.getItem('pbx-mp-name') || 'Racer'; } catch (e) { return 'Racer'; } };
+  function lbGet(id) { const e = LBC[id]; if (e && (e.busy || Date.now() - e.at < 30000)) return; LBC[id] = Object.assign(e || {}, { busy: true, at: Date.now() }); fetch(`${LBU}?g=hyperlane&k=${id}`).then(r => r.json()).then(j => { LBC[id] = Object.assign(LBC[id], { top: j.top || [], busy: false, at: Date.now() }); }).catch(() => { LBC[id].busy = false; LBC[id].err = 1; }); }
+  function lbPut(id, sec) { fetch(LBU, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ g: 'hyperlane', k: id, n: myName(), t: Math.round(sec * 1000) }) }).then(r => r.json()).then(j => { if (j.top) { LBC[id] = { top: j.top, at: Date.now(), rank: j.rank }; if (race && race.mode === 'tt') race.rank = j.rank; } }).catch(() => {}); }
   let mode = 'boot', sel = 0, race = null, wantStart = null, posePending = false, posed = false, menuT = 0, demoTrack = 0;
   let touch = false, keys = {}, ptrs = new Map(), say0 = null, toasts = [], rings = [];
   const FONT = '"Russo One", "Arial Black", sans-serif';
@@ -856,29 +882,63 @@ const GAME = {
   const sim = c => race.demo || c.local || (c.bot && MP.isHost());
   function say(t, col = '#fff', d = 1.6) { say0 = { t, col, k: 0, d }; }
   function toast(t, col = '#fff') { toasts.push({ t, col, k: 0 }); if (toasts.length > 3) toasts.shift(); }
-  function startRace(ti, roster, demo) {
-    if (!ready) { wantStart = [ti, roster, demo]; mode = 'wait'; return; }
+  function startRace(ti, roster, demo, md = 'gp') {
+    if (!ready) { wantStart = [ti, roster, demo, md]; mode = 'wait'; return; }
     if (failed) return;
     loadWorld(ti); clearCars();
     const T = TR, cars = roster.map((r, i) => newCar(r, i));
     const me = demo ? -1 : cars.findIndex(c => !c.bot && (!MP.online() || c.id === MP.id));
     cars.forEach((c, i) => { const row = Math.floor(i / 2); c.s = T.L - 18 - row * 12; c.d = (i % 2 ? 4.4 : -4.4) + (row % 2 ? .8 : -.8); c.local = i === me; c.skill = c.bot ? .955 + Math.random() * .04 : 1; c.base = c.skill; carView(c); });
-    race = { cars, me, t: demo ? -1.5 : -4.6, demo: !!demo, ti, order: [], res: null, sendT: 0, rubT: 0, cam: { mode: demo ? 'tv' : 'intro', t: 0, k: 0, focus: 0, s: 0, side: 1, fix: null }, fw: 0, lights: -1, first: 0, prevPos: new Map() };
+    const MD = MODES.find(m => m.id === md) || MODES[0];
+    race = { mode: MD.id, laps: MD.laps, ko: [], koNext: KO_INT, ghost: MD.id === 'tt' ? ((best()[TRACKS[ti].id] || {}).ghost || null) : null, split: null, medal: -1, rank: 0, cars, me, t: demo ? -1.5 : -4.6, demo: !!demo, ti, order: [], res: null, sendT: 0, rubT: 0, cam: { mode: demo ? 'tv' : 'intro', t: 0, k: 0, focus: 0, s: 0, side: 1, fix: null }, fw: 0, lights: -1, first: 0, prevPos: new Map() };
     sel = ti; mode = 'race'; say0 = null; toasts = []; X.lines.mat.opacity = 0; X.fixT = 3;
     // demo races (title screen, trailer) open mid-race, already at full speed
     if (demo) { for (let i = 0; i < 60 * (7 + Math.random() * 16); i++) simulate(1 / 60); clearFX(); }
     X.camPos.set(0, 0, 0); camUpdate(1, true);
     if (!demo) audioStart(ti);
+    if (md === 'tt') lbGet(TRACKS[ti].id);
   }
   // after a silent fast-forward: drop stale sparks and restart the exhaust ribbons where the cars are now
   function clearFX() { for (const P of [X.G, X.S]) P.life.fill(0); for (const v of X.cars.values()) v.trails.forEach(t => t.n = 0); X.chroma = 0; X.fovKick = 0; X.shake = 0; toasts = []; }
   function lapDone(c, now) {
+    const rec = c.rec || []; c.rec = [];
     if (c.lap <= 0) { c.lapStart = Math.max(0, now); return; }
     const lt = now - c.lapStart; c.lapStart = now; c.lapTimes.push(lt); if (!c.best || lt < c.best) c.best = lt;
-    if (c.lap >= LAPS && !c.finish) {
+    if (race.mode === 'tt' && c.local && !c.finish) ttLap(c, lt, rec);
+    if (c.lap >= race.laps && !c.finish) {
       c.finish = Math.max(.01, now); race.order.push(c.seat); if (!race.first) race.first = now; ev('finish', c);
       if (MP.online() && (c.local || (c.bot && MP.isHost()))) MP.send({ t: 'f', i: c.seat, tm: c.finish });
-    } else if (c.local) { if (c.lap === LAPS - 1) say('FINAL LAP', '#ffd23f', 2); else say('LAP ' + (c.lap + 1) + ' / ' + LAPS, '#fff', 1.3); toast('Lap ' + fmt(lt) + (lt <= c.best ? '  best!' : ''), lt <= c.best ? '#5cf28a' : '#cfd8ff'); }
+    } else if (c.local && race.mode !== 'tt') { if (c.lap === race.laps - 1) say('FINAL LAP', '#ffd23f', 2); else say('LAP ' + (c.lap + 1) + (race.mode === 'ko' ? '' : ' / ' + race.laps), '#fff', 1.3); toast('Lap ' + fmt(lt) + (lt <= c.best ? '  best!' : ''), lt <= c.best ? '#5cf28a' : '#cfd8ff'); }
+  }
+  // a time-trial lap: keep the ghost of your best, send it to the world board, award medals
+  function ttLap(c, lt, rec) {
+    const D = TRACKS[race.ti], b = best(); b[D.id] = b[D.id] || {}; const prev = b[D.id].tt;
+    race.last = { t: lt, dlt: prev ? lt - prev : null, k: 0 };
+    if (!prev || lt < prev) { b[D.id].tt = lt; b[D.id].ghost = { t: lt, d: rec }; race.ghost = b[D.id].ghost; if (!b[D.id].lap || lt < b[D.id].lap) b[D.id].lap = lt; K.persist(); say(prev ? 'NEW RECORD' : 'LAP SET', '#5cf28a', 1.8); K.chime(659, [0, 4, 7, 12]); lbPut(D.id, lt); }
+    else say(fmt(lt), '#fff', 1.4);
+    const m = medalOf(D.id, lt); if (m >= 0 && (race.medal < 0 || m < race.medal)) { race.medal = m; toast(MNAME[m] + ' MEDAL', MCOL[m]); const bm = b[D.id].medal; if (bm === undefined || m < bm) { b[D.id].medal = m; K.persist(); } }
+  }
+  // where the ghost was a given time into its lap, and when it reached a given distance
+  function ghostAt(G, lt, o) {
+    const d = G.d, n = d.length / 3, f = lt * 20, i = Math.floor(f); if (i < 0 || i >= n - 1) return null;
+    const a = f - i, q = i * 3; o.s = d[q] + (d[q + 3] - d[q]) * a; o.d = d[q + 1] + (d[q + 4] - d[q + 1]) * a; o.yaw = d[q + 2] + (d[q + 5] - d[q + 2]) * a; return o;
+  }
+  function ghostTime(G, s) {
+    const d = G.d, n = d.length / 3; if (n < 2 || s <= d[0]) return 0; if (s >= d[(n - 1) * 3]) return (n - 1) / 20;
+    let lo = 0, hi = n - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (d[m * 3] < s) lo = m; else hi = m; }
+    return (lo + (s - d[lo * 3]) / Math.max(.001, d[hi * 3] - d[lo * 3])) / 20;
+  }
+  // knockout: blow last place off the track
+  function knock(c) {
+    if (!c || c.out) return;
+    const left = race.cars.filter(q => !q.out && !q.gone).length; c.out = left; race.ko.push(c.seat);
+    const P = pose(c, PZ2);
+    for (let i = 0; i < 90; i++) { const a = Math.random() * TAU, b = Math.random() * Math.PI, sp = 8 + Math.random() * 26; emit(i % 3 ? X.S : X.G, P.p[0], P.p[1] + .6, P.p[2], P.f[0] * c.v * .5 + Math.cos(a) * Math.sin(b) * sp, Math.cos(b) * sp * .7 + 4, P.f[2] * c.v * .5 + Math.sin(a) * Math.sin(b) * sp, i % 2 ? col('#ffb060', 2.6) : col(c.col, 2.6), .6 + Math.random() * .6, i % 3 ? 1 : 1.6, 12, .6); }
+    ring(P.p, P.u, P.f, col('#ff6040', 3), 2, .8);
+    c.gone = true;
+    if (c.local) { say('KNOCKED OUT', '#ff4d6d', 3.5); race.cam.mode = 'tv'; race.cam.k = 0; X.shake = 1.2; X.flash = .5; X.flashC.set('#ff2040'); K.noise(1, .3, 120); K.sfx(90, 1, 'sawtooth', .1, -60); }
+    else { say(c.name.toUpperCase() + ' IS OUT', '#ff8a9a', 1.8); K.noise(.5, .12, 200); }
+    if (MP.online() && MP.isHost()) MP.send({ t: 'ko', i: c.seat });
   }
   const fmt = t => { t = Math.max(0, t); const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(2); };
   const ord = n => n + (n % 10 === 1 && n !== 11 ? 'ST' : n % 10 === 2 && n !== 12 ? 'ND' : n % 10 === 3 && n !== 13 ? 'RD' : 'TH');
@@ -934,6 +994,7 @@ const GAME = {
     if (!race || race.demo || mode !== 'race') return;
     if (m.t === 'c' && m.a) setNet(m.a);
     else if (m.t === 'b' && !MP.isHost() && m.l) m.l.forEach(setNet);
+    else if (m.t === 'ko' && !MP.isHost()) knock(race.cars.find(q => q.seat === m.i));
     else if (m.t === 'f') { const c = race.cars.find(q => q.seat === m.i); if (c && !c.finish) { c.finish = m.tm; c.lap = LAPS; race.order.push(c.seat); if (!race.first) race.first = race.t; } }
   }
   function setNet(a) {
@@ -950,7 +1011,7 @@ const GAME = {
   }
   Object.assign(MP.opts, {
     max: MAXP, min: 1, bots: MAXP, solo: 'Race the bots',
-    config: () => ({ tr: sel }), onStart: (cfg, ros) => startRace(cl(cfg.tr | 0, 0, TRACKS.length - 1), ros, false), onMsg,
+    config: () => ({ tr: sel, md: MODES[gmode].id }), onStart: (cfg, ros) => startRace(cl(cfg.tr | 0, 0, TRACKS.length - 1), ros, false, cfg.md === 'ko' ? 'ko' : 'gp'), onMsg,
     onLeave: id => { if (!race || race.demo) return; for (const c of race.cars) if (!c.bot && !c.local && (id === -1 || c.id === id)) { c.bot = true; c.name += ' (left)'; c.inp = { steer: 0, brake: 0, drift: 0, boost: 0, thr: 1 }; } },
   });
 
@@ -993,6 +1054,14 @@ const GAME = {
       else followNet(c, dt);
     }
     if (go) collide();
+    // time trial: record this lap for the ghost and time the three sectors
+    const me = race.cars[race.me];
+    if (race.mode === 'tt' && me && go && me.lap >= 0 && !me.finish) {
+      if (!me.rec) me.rec = []; const k = Math.floor((race.t - me.lapStart) * 20); while (me.rec.length / 3 <= k) me.rec.push(+me.s.toFixed(1), +me.d.toFixed(2), +me.yaw.toFixed(3));
+      const s0 = me.ps === undefined ? me.s : me.ps;
+      for (let i = 1; i < 3; i++) { const bs = TR.L * i / 3; if (s0 < bs && me.s >= bs) { const el = race.t - me.lapStart; race.split = { i, t: el, dlt: race.ghost ? el - ghostTime(race.ghost, bs) : null, k: 0 }; } }
+    }
+    if (me) me.ps = me.s;
     // keep the bots honest but close: a little help when far behind the humans, a little less when far ahead
     if (host && !race.demo && (race.rubT -= dt) <= 0) {
       race.rubT = 1; const hum = race.cars.filter(c => !c.bot && !c.gone); const hd = hum.length ? Math.max(...hum.map(dist)) : 0;
@@ -1059,6 +1128,11 @@ const GAME = {
 
   /* ---------- per frame: sync the meshes to the cars ---------- */
   const M4 = () => new THREE.Matrix4(); let MB = null;
+  let GV = null; const GQ = { s: 0, d: 0, yaw: 0, seat: 7 };
+  function ghostView() {
+    if (GV) return GV; GV = carModel('#7fe8ff'); const gm = new THREE.MeshBasicMaterial({ color: hdr('#5fd8ff', .45), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false });
+    GV.g.traverse(o => { if (o.isMesh) o.material = gm; }); GV.ug.visible = false; GV.flames.forEach(f => f.visible = false); X.scene.add(GV.g); return GV;
+  }
   function syncCars(dt) {
     if (!MB) MB = { m: M4(), q: new THREE.Quaternion(), a: new THREE.Vector3(), b: new THREE.Vector3(), c: new THREE.Vector3() };
     const G = X.G, D = TRACKS[race.ti];
@@ -1089,6 +1163,11 @@ const GAME = {
       }
     }
     for (const r of rings) { if (r.k >= r.d) { r.m.visible = false; continue; } r.k += dt; const t = r.k / r.d, s = r.size * (1 + t * 9); r.m.scale.set(s, s, s); r.m.material.color.copy(r.col).multiplyScalar(Math.pow(1 - t, 2)); }
+    // the time-trial ghost: your best lap, replayed as a hologram
+    if (race.mode === 'tt' && race.ghost && race.cars[race.me] && race.cars[race.me].lap >= 0 && !race.cars[race.me].finish) {
+      const me = race.cars[race.me], gv = ghostView(), o = ghostAt(race.ghost, race.t - me.lapStart, GQ);
+      gv.g.visible = !!o; if (o) { const P = pose(o, PZ2); MB.m.makeBasis(MB.a.set(P.r[0], P.r[1], P.r[2]), MB.b.set(P.u[0], P.u[1], P.u[2]), MB.c.set(-P.f[0], -P.f[1], -P.f[2])); gv.g.position.set(P.p[0], P.p[1], P.p[2]); gv.g.quaternion.setFromRotationMatrix(MB.m); }
+    } else if (GV) GV.g.visible = false;
     // the local car lights the road around it
     const me = race.cars[race.me];
     if (me && !race.demo) { if (!X.pl) { X.pl = new THREE.PointLight('#ffffff', .9, 11, 2); X.scene.add(X.pl); } const P = pose(me, PZ); X.pl.color.set(me.col); X.pl.position.set(P.p[0] - P.u[0] * .3, P.p[1] - P.u[1] * .3, P.p[2] - P.u[2] * .3); X.pl.visible = true; } else if (X.pl) X.pl.visible = false;
@@ -1096,7 +1175,7 @@ const GAME = {
   function worldTick(dt, speed, focus) {
     const W = X.world, tg = W.tg; X.t += dt;
     for (const f of W.upd) f(X.t);
-    tg.rails.forEach(m => m.uniforms.uTime.value = X.t); tg.padMat.map.offset.y = (tg.padMat.map.offset.y - dt * 2.6 + 1) % 1;
+    tg.rails.forEach(m => m.uniforms.uTime.value = X.t); tg.holoMat.color.copy(col(TRACKS[X.built].c2, Math.round((2.3 + Math.sin(X.t * 6) * .7) * 10) / 10)); tg.padMat.map.offset.y = (tg.padMat.map.offset.y - dt * 2.6 + 1) % 1;
     for (const gt of tg.gates) { if (gt.k > 0) gt.k = Math.max(0, gt.k - dt * 1.6); gt.mat.color.copy(gt.base).multiplyScalar(1 + gt.k * 3); }
     if (race && mode === 'race') {
       const t = race.t, lit = t < 0 ? Math.floor((t + 4) / .7) : 9;
@@ -1212,10 +1291,24 @@ const GAME = {
     BTN.next = { x: L + 66 + nw, y: y + 6, w: 80, h: 90 }; txt(g, '▶', L + 84 + nw, y + 50, 40, hoverB === 'next' ? '#fff' : D.c1, 'left', 12);
     wrap(g, D.mood, L, y + 104, 560, 28, 21, '#d8d6f0');
     const b = best()[D.id] || {};
-    txt(g, `${(T.L / 1000).toFixed(1)} KM  ·  ${LAPS} LAPS  ·  UP TO ${MAXP} RACERS` + (b.lap ? `  ·  BEST LAP ${fmt(b.lap)}` : ''), L, y + 176, 17, D.c2);
+    txt(g, `${(T.L / 1000).toFixed(1)} KM` + (b.lap ? `  ·  YOUR BEST LAP ${fmt(b.lap)}` : '') + (b.medal !== undefined ? `  ·  ${MNAME[b.medal]}` : ''), L, y + 176, 17, b.medal !== undefined ? MCOL[b.medal] : D.c2);
     for (let i = 0; i < TRACKS.length; i++) rr(g, L + i * 30, y + 206, 22, 6, 3, i === sel ? TRACKS[i].c1 : 'rgba(255,255,255,.25)');
-    button(g, 'race', v.x1 - 380, v.y1 - 170, 340, 108, 'RACE', D.c1, 'vs bots, or online with friends');
-    txt(g, touch ? 'Tap the arrows to pick a track' : '◀ ▶ pick a track  ·  Enter to race', v.x1 - 210, v.y1 - 40, 15, '#9aa0c8', 'center');
+    // the mode, above the race button
+    const M = MODES[gmode], rx = v.x1 - 380, my = v.y1 - 300;
+    txt(g, 'MODE', rx, my, 16, D.c2, 'left', 8);
+    BTN.mprev = { x: rx - 14, y: my + 14, w: 60, h: 56 }; BTN.mnext = { x: rx + 300, y: my + 14, w: 60, h: 56 };
+    txt(g, '◀', rx, my + 42, 30, hoverB === 'mprev' ? '#fff' : D.c1, 'left', 10); txt(g, M.name, rx + 170, my + 42, 34, '#fff', 'center', 14); txt(g, '▶', rx + 340, my + 42, 30, hoverB === 'mnext' ? '#fff' : D.c1, 'right', 10);
+    g.font = `15px ${FONT}`; wrap(g, M.sub, rx, my + 86, 340, 20, 15, '#cfd3ef');
+    button(g, 'race', rx, v.y1 - 170, 340, 108, M.id === 'tt' ? 'START' : 'RACE', D.c1, M.go);
+    txt(g, touch ? 'Tap the arrows to pick a track and mode' : '◀ ▶ track  ·  ▲ ▼ mode  ·  Enter to race', v.x1 - 210, v.y1 - 40, 15, '#9aa0c8', 'center');
+    // fastest laps in the world on this track
+    lbGet(D.id); const lbd = LBC[D.id], bx = v.x1 - 380, by = v.y0 + 30;
+    rr(g, bx, by, 340, 268, 18, 'rgba(6,4,18,.6)', 'rgba(255,255,255,.12)', 1);
+    txt(g, 'WORLD BEST LAPS', bx + 20, by + 28, 18, D.c1, 'left', 8);
+    if (!lbd || !lbd.top) txt(g, lbd && lbd.err ? 'Offline' : 'Loading...', bx + 20, by + 70, 15, '#9aa0c8');
+    else if (!lbd.top.length) { txt(g, 'No laps yet. Be the first:', bx + 20, by + 70, 15, '#cfd3ef'); txt(g, 'try Time Trial mode.', bx + 20, by + 94, 15, '#cfd3ef'); }
+    else lbd.top.slice(0, 8).forEach((r, i) => { const yy = by + 64 + i * 25, mine = r.n === myName(); txt(g, `${i + 1}`, bx + 30, yy, 15, i ? '#cfd3ef' : '#ffd23f', 'center'); txt(g, r.n, bx + 52, yy, 15, mine ? '#5cf28a' : '#fff'); txt(g, fmt(r.t / 1000), bx + 318, yy, 15, '#fff', 'right'); });
+    if (M.id === 'tt') { const nm = 'Racing as ' + myName() + '  ✎'; g.font = `15px ${FONT}`; const w = g.measureText(nm).width; BTN.name = { x: bx, y: by + 278, w: w + 20, h: 30 }; txt(g, nm, bx + 10, by + 293, 15, hoverB === 'name' ? '#fff' : '#9aa0c8'); }
   }
   const PV = { v: null };
   function drawHUD(g) {
@@ -1230,14 +1323,25 @@ const GAME = {
       const x = v.x0 + (PV.v.x * .5 + .5) * (v.x1 - v.x0), y = v.y0 + (-PV.v.y * .5 + .5) * (v.y1 - v.y0), a = cl(1.4 - d / 120, 0, 1);
       g.globalAlpha = a; txt(g, c.name, x, y, cl(26 - d * .12, 12, 22), c.col, 'center', 8); g.globalAlpha = 1;
     }
+    if (race.mode === 'tt') return drawTT(g, me, D, L);
     // position and lap
-    const pos = st.indexOf(me) + 1;
+    const pos = me.out || st.indexOf(me) + 1;
     txt(g, String(pos), L, v.y0 + 62, 78, '#fff', 'left', 18); g.font = `78px ${FONT}`; const pw = g.measureText(String(pos)).width;
     txt(g, ord(pos).slice(-2), L + pw + 6, v.y0 + 40, 28, D.c1, 'left', 10); txt(g, '/ ' + race.cars.length, L + pw + 6, v.y0 + 76, 24, '#b8bce0');
-    const lapN = cl(me.lap + 1, 1, LAPS);
-    txt(g, `LAP ${lapN} / ${LAPS}`, L, v.y0 + 124, 26, '#fff');
+    const lapN = Math.max(1, Math.min(me.lap + 1, race.laps));
+    txt(g, race.mode === 'ko' ? `LAP ${lapN}` : `LAP ${lapN} / ${race.laps}`, L, v.y0 + 124, 26, '#fff');
     txt(g, 'TIME ' + fmt(me.finish || Math.max(0, race.t)), L, v.y0 + 156, 18, '#cfd3ef'); txt(g, 'LAP ' + fmt(me.finish ? 0 : me.lap >= 0 ? race.t - me.lapStart : 0), L + 150, v.y0 + 156, 15, '#9aa0c8');
     if (me.best) txt(g, 'BEST ' + fmt(me.best), L, v.y0 + 182, 16, '#5cf28a');
+    // knockout clock, and a warning when you're the one about to go
+    if (race.mode === 'ko' && !race.res) {
+      const left = race.cars.filter(c => !c.out && !c.gone).length, tl = Math.max(0, race.koNext - race.t), last = !me.out && st[st.length - 1] === me && left > 1;
+      txt(g, me.out ? 'SPECTATING' : 'KNOCKOUT IN', 640, v.y0 + 34, 18, '#ff8aa0', 'center', 8);
+      if (!me.out) txt(g, Math.ceil(tl) + 's', 640, v.y0 + 74, 48, tl < 5 ? '#ff4d6d' : '#fff', 'center', 18);
+      txt(g, left + ' LEFT', 640, v.y0 + 110, 16, '#cfd3ef', 'center');
+      if (last && Math.floor(X.t * 4) % 2) { const vg = g.createRadialGradient(640, 360, 300, 640, 360, 820); vg.addColorStop(0, 'rgba(255,0,40,0)'); vg.addColorStop(1, 'rgba(255,0,40,.38)'); g.fillStyle = vg; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
+      if (last) txt(g, 'LAST PLACE · PASS SOMEONE!', 640, v.y0 + 150, 24, '#ff4d6d', 'center', 16);
+      if (me.out) txt(g, 'KNOCKED OUT · ' + ord(me.out), 640, v.y0 + 150, 26, '#ff4d6d', 'center', 16);
+    }
     // standings
     st.slice(0, 6).forEach((c, i) => {
       const y = v.y0 + 222 + i * 28, mine = c === me; rr(g, L - 4, y - 12, 5, 24, 2, c.col);
@@ -1250,17 +1354,8 @@ const GAME = {
     g.lineJoin = 'round'; g.beginPath(); T.map.pts.forEach((p, i) => { const x = ox + p[0] * S, y = oy + p[1] * S; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath();
     g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 8; g.stroke(); g.strokeStyle = D.c2; g.lineWidth = 2.5; g.shadowColor = D.c2; g.shadowBlur = 8; g.stroke(); g.shadowBlur = 0;
     for (const c of [...race.cars].sort((a, b) => (a === me) - (b === me))) { if (c.gone) continue; const f = frame(T, c.s, FB), x = ox + (f.p[0] + f.r[0] * c.d - T.map.x0) * T.map.sc * S, y = oy + (f.p[2] + f.r[2] * c.d - T.map.z0) * T.map.sc * S; g.beginPath(); g.arc(x, y, c === me ? 7 : 5, 0, TAU); g.fillStyle = c.col; g.fill(); if (c === me) { g.strokeStyle = '#fff'; g.lineWidth = 2.5; g.stroke(); } }
-    // speedometer and overdrive
-    const cx = 640, cy = v.y1 - 92, R = 74, kmh = Math.round(me.v * 3.6), fr = cl(me.v / 125, 0, 1), a0 = Math.PI * .8, a1 = Math.PI * 2.2;
-    g.lineCap = 'round'; g.beginPath(); g.arc(cx, cy, R, a0, a1); g.strokeStyle = 'rgba(10,8,24,.7)'; g.lineWidth = 14; g.stroke();
-    const sg = g.createLinearGradient(cx - R, 0, cx + R, 0); sg.addColorStop(0, D.c2); sg.addColorStop(1, D.c1);
-    g.beginPath(); g.arc(cx, cy, R, a0, a0 + (a1 - a0) * fr); g.strokeStyle = me.odT > 0 ? '#ffffff' : sg; g.lineWidth = 10; g.shadowColor = D.c1; g.shadowBlur = 16; g.stroke(); g.shadowBlur = 0;
-    if (me.drift) { const Lv = level(me.charge), cc = Lv ? TCOL[Lv] : '#ffffff'; g.beginPath(); g.arc(cx, cy, R + 14, -Math.PI / 2, -Math.PI / 2 + TAU * cl(me.charge / 2.5, 0, 1)); g.strokeStyle = cc; g.lineWidth = 5; g.shadowColor = cc; g.shadowBlur = 14; g.stroke(); g.shadowBlur = 0; txt(g, 'DRIFT', cx, cy - R - 32, 16, cc, 'center', 10); }
-    txt(g, String(kmh), cx, cy - 4, 50, '#fff', 'center', 12); txt(g, 'KM/H', cx, cy + 32, 14, '#b8bce0', 'center');
-    const ow = 300, ox2 = cx - ow / 2, oy2 = cy + 58, full = me.od >= 1 && me.odT <= 0;
-    for (let i = 0; i < 12; i++) { const on = me.odT > 0 ? i / 12 < me.odT / 3.4 : i / 12 < me.od; rr(g, ox2 + i * (ow / 12), oy2, ow / 12 - 4, 12, 3, on ? (full ? (Math.floor(X.t * 6) % 2 ? '#ffffff' : D.c1) : D.c1) : 'rgba(255,255,255,.14)'); }
-    txt(g, me.odT > 0 ? 'OVERDRIVE!' : full ? (touch ? 'OVERDRIVE READY · TAP BOOST' : 'OVERDRIVE READY · PRESS W / UP / SHIFT') : 'OVERDRIVE', cx, oy2 - 13, 13, full || me.odT > 0 ? '#fff' : '#9aa0c8', 'center', full ? 10 : 0);
-    if (me.draft > .3) txt(g, 'DRAFTING', cx, cy - R - (me.drift ? 54 : 30), 15, '#22e6ff', 'center', 10);
+    drawSpeedo(g, me, D);
+    const cy = v.y1 - 92, R = 74, full = me.od >= 1 && me.odT <= 0;
     // countdown
     if (race.t < 0) { const n = Math.ceil(-race.t); if (n <= 3) { const k = 1 - (-race.t - (n - 1)); txt(g, String(n), 640, 300, 150 + k * 40, '#fff', 'center', 30); } }
     else if (race.t < 1.2) { g.globalAlpha = 1 - race.t / 1.2; txt(g, 'GO!', 640, 300, 170 + race.t * 60, '#3dff7a', 'center', 40); g.globalAlpha = 1; }
@@ -1277,14 +1372,15 @@ const GAME = {
     }
     // results
     if (race.res && race.t - race.res.at > 2.2) {
-      const rows = st, pw2 = 640, ph = 150 + rows.length * 46, px = 640 - pw2 / 2, py = Math.max(v.y0 + 20, 360 - ph / 2), k = Math.min(1, (race.t - race.res.at - 2.2) * 3);
+      const rows = race.mode === 'ko' ? koRows() : st, pw2 = 640, ph = 150 + rows.length * 46, px = 640 - pw2 / 2, py = Math.max(v.y0 + 20, 360 - ph / 2), k = Math.min(1, (race.t - race.res.at - 2.2) * 3);
       g.globalAlpha = k; rr(g, px, py, pw2, ph, 26, 'rgba(6,4,18,.86)', D.c1, 2);
-      txt(g, 'RACE RESULTS', 640, py + 44, 34, '#fff', 'center', 16);
+      txt(g, race.mode === 'ko' ? 'KNOCKOUT RESULTS' : 'RACE RESULTS', 640, py + 44, 34, '#fff', 'center', 16);
       rows.forEach((c, i) => {
         const y = py + 100 + i * 46, mine = c === me; if (mine) rr(g, px + 16, y - 20, pw2 - 32, 40, 12, 'rgba(255,255,255,.08)');
         txt(g, String(i + 1), px + 40, y, 24, i === 0 ? '#ffd23f' : '#fff', 'center'); rr(g, px + 64, y - 12, 6, 24, 3, c.col);
         txt(g, c.name, px + 82, y, 22, mine ? '#fff' : '#d8d6f0');
-        txt(g, c.finish ? fmt(c.finish) : 'racing...', px + pw2 - 150, y, 20, c.finish ? '#fff' : '#9aa0c8', 'right');
+        if (race.mode === 'ko') txt(g, i === 0 ? 'WINNER' : 'OUT ' + ord(i + 1).toLowerCase(), px + pw2 - 150, y, 20, i === 0 ? '#ffd23f' : '#ff8aa0', 'right');
+        else txt(g, c.finish ? fmt(c.finish) : 'racing...', px + pw2 - 150, y, 20, c.finish ? '#fff' : '#9aa0c8', 'right');
         txt(g, c.best ? 'best ' + fmt(c.best) : '', px + pw2 - 30, y, 15, '#5cf28a', 'right');
       });
       if (race.t - race.res.at > 3.5) button(g, 'cont', 640 - 150, py + ph - 70, 300, 56, 'CONTINUE', D.c2); else delete BTN.cont;
@@ -1292,27 +1388,98 @@ const GAME = {
     } else delete BTN.cont;
   }
 
+  function drawSpeedo(g, me, D) {
+    const v = K.view;
+    const cx = 640, cy = v.y1 - 92, R = 74, kmh = Math.round(me.v * 3.6), fr = cl(me.v / 125, 0, 1), a0 = Math.PI * .8, a1 = Math.PI * 2.2;
+    g.lineCap = 'round'; g.beginPath(); g.arc(cx, cy, R, a0, a1); g.strokeStyle = 'rgba(10,8,24,.7)'; g.lineWidth = 14; g.stroke();
+    const sg = g.createLinearGradient(cx - R, 0, cx + R, 0); sg.addColorStop(0, D.c2); sg.addColorStop(1, D.c1);
+    g.beginPath(); g.arc(cx, cy, R, a0, a0 + (a1 - a0) * fr); g.strokeStyle = me.odT > 0 ? '#ffffff' : sg; g.lineWidth = 10; g.shadowColor = D.c1; g.shadowBlur = 16; g.stroke(); g.shadowBlur = 0;
+    if (me.drift) { const Lv = level(me.charge), cc = Lv ? TCOL[Lv] : '#ffffff'; g.beginPath(); g.arc(cx, cy, R + 14, -Math.PI / 2, -Math.PI / 2 + TAU * cl(me.charge / 2.5, 0, 1)); g.strokeStyle = cc; g.lineWidth = 5; g.shadowColor = cc; g.shadowBlur = 14; g.stroke(); g.shadowBlur = 0; txt(g, 'DRIFT', cx, cy - R - 32, 16, cc, 'center', 10); }
+    txt(g, String(kmh), cx, cy - 4, 50, '#fff', 'center', 12); txt(g, 'KM/H', cx, cy + 32, 14, '#b8bce0', 'center');
+    const ow = 300, ox2 = cx - ow / 2, oy2 = cy + 58, full = me.od >= 1 && me.odT <= 0;
+    for (let i = 0; i < 12; i++) { const on = me.odT > 0 ? i / 12 < me.odT / 3.4 : i / 12 < me.od; rr(g, ox2 + i * (ow / 12), oy2, ow / 12 - 4, 12, 3, on ? (full ? (Math.floor(X.t * 6) % 2 ? '#ffffff' : D.c1) : D.c1) : 'rgba(255,255,255,.14)'); }
+    txt(g, me.odT > 0 ? 'OVERDRIVE!' : full ? (touch ? 'OVERDRIVE READY · TAP BOOST' : 'OVERDRIVE READY · PRESS W / UP / SHIFT') : 'OVERDRIVE', cx, oy2 - 13, 13, full || me.odT > 0 ? '#fff' : '#9aa0c8', 'center', full ? 10 : 0);
+    if (me.draft > .3) txt(g, 'DRAFTING', cx, cy - R - (me.drift ? 54 : 30), 15, '#22e6ff', 'center', 10);
+  }
+  function drawTT(g, me, D, L) {
+    const v = K.view, now = me.finish ? 0 : me.lap >= 0 ? race.t - me.lapStart : 0, b = best()[D.id] || {}, M = MEDALS[D.id];
+    txt(g, 'TIME TRIAL', L, v.y0 + 40, 22, D.c1, 'left', 10);
+    txt(g, `LAP ${Math.max(1, Math.min(me.lap + 1, race.laps))} / ${race.laps}`, L, v.y0 + 74, 26, '#fff');
+    if (b.tt) txt(g, 'RECORD ' + fmt(b.tt), L, v.y0 + 106, 17, '#5cf28a');
+    const nm = b.tt ? M.findIndex(t => b.tt <= t) : -1, target = nm === 0 ? -1 : nm < 0 ? 3 : nm - 1;
+    if (target >= 0) txt(g, `NEXT: ${MNAME[target]} ${fmt(M[target])}`, L, v.y0 + 132, 15, MCOL[target]); else txt(g, 'PLATINUM. UNREAL.', L, v.y0 + 132, 15, MCOL[0]);
+    txt(g, 'R  restart', L, v.y0 + 158, 13, '#8a8fb8');
+    // the clock, and how far ahead of or behind your ghost you are right now
+    txt(g, fmt(now), 640, v.y0 + 58, 54, '#fff', 'center', 14);
+    if (race.ghost && me.lap >= 0 && me.s > 60 && !me.finish) { const dl = now - ghostTime(race.ghost, me.s); txt(g, (dl > 0 ? '+' : '−') + Math.abs(dl).toFixed(2), 640, v.y0 + 104, 26, dl > 0 ? '#ff6a86' : '#5cf28a', 'center', 12); }
+    else if (!race.ghost) txt(g, 'SET A LAP TO RACE YOUR GHOST', 640, v.y0 + 104, 15, '#9aa0c8', 'center');
+    if (race.split && race.split.k < 3) { const S = race.split; txt(g, `SECTOR ${S.i}  ${fmt(S.t)}` + (S.dlt !== null ? `  ${S.dlt > 0 ? '+' : '−'}${Math.abs(S.dlt).toFixed(2)}` : ''), 640, v.y0 + 142, 20, S.dlt === null ? '#fff' : S.dlt > 0 ? '#ff6a86' : '#5cf28a', 'center', 10); }
+    if (race.last && race.last.k < 3.5 && race.last.dlt !== null) txt(g, `LAP ${fmt(race.last.t)}  ${race.last.dlt > 0 ? '+' : '−'}${Math.abs(race.last.dlt).toFixed(2)}`, 640, v.y0 + 176, 22, race.last.dlt > 0 ? '#ff6a86' : '#5cf28a', 'center', 12);
+    // results: your laps, the medal, the world board
+    if (race.res && race.t - race.res.at > 1.5) {
+      const pw = 700, ph = 420, px = 640 - pw / 2, py = Math.max(v.y0 + 20, 360 - ph / 2), bl = me.best, m = bl ? medalOf(D.id, bl) : -1, lb = LBC[D.id];
+      rr(g, px, py, pw, ph, 26, 'rgba(6,4,18,.9)', D.c1, 2);
+      txt(g, 'TIME TRIAL RESULTS', 640, py + 42, 30, '#fff', 'center', 14);
+      me.lapTimes.slice(0, race.laps).forEach((t, i) => txt(g, `LAP ${i + 1}   ${fmt(t)}`, px + 40, py + 96 + i * 34, 20, t === bl ? '#5cf28a' : '#d8d6f0'));
+      if (m >= 0) { g.beginPath(); g.arc(px + 210, py + 330, 34, 0, TAU); g.fillStyle = MCOL[m]; g.shadowColor = MCOL[m]; g.shadowBlur = 24; g.fill(); g.shadowBlur = 0; txt(g, MNAME[m], px + 260, py + 330, 26, MCOL[m], 'left', 10); }
+      else txt(g, 'No medal yet: bronze is ' + fmt(MEDALS[D.id][3]), px + 40, py + 330, 18, '#cfd3ef');
+      txt(g, 'WORLD TOP 10', px + 400, py + 96, 18, D.c1, 'left', 8);
+      if (lb && lb.top) lb.top.slice(0, 8).forEach((r, i) => { const yy = py + 128 + i * 26, mine = r.n === myName(); txt(g, `${i + 1}  ${r.n}`, px + 400, yy, 15, mine ? '#5cf28a' : '#fff'); txt(g, fmt(r.t / 1000), px + pw - 36, yy, 15, '#fff', 'right'); });
+      else txt(g, 'Offline', px + 400, py + 128, 15, '#9aa0c8');
+      if (race.rank) txt(g, `You are #${race.rank} in the world`, px + 400, py + 352, 17, '#5cf28a');
+      if (race.t - race.res.at > 2.5) button(g, 'cont', 640 - 150, py + ph - 66, 300, 52, 'CONTINUE', D.c2);
+    }
+    if (touch && !me.finish) {   // touch controls (same as a race) plus restart
+      const held = new Set(ptrs.values()), full = me.od >= 1 && me.odT <= 0;
+      for (const [k, bb] of Object.entries(TB())) { const on = held.has(k), c = k === 'drift' ? (me.drift ? TCOL[level(me.charge)] : D.c2) : k === 'boost' ? (full ? '#ffffff' : 'rgba(255,255,255,.4)') : '#fff'; rr(g, bb.x, bb.y, bb.w, bb.h, k === 'drift' ? 77 : 24, on ? 'rgba(255,255,255,.28)' : 'rgba(10,8,26,.42)', c, on ? 4 : 2); txt(g, { left: '◀', right: '▶', brake: 'BRAKE', boost: 'BOOST', drift: 'DRIFT' }[k], bb.x + bb.w / 2, bb.y + bb.h / 2, k === 'left' || k === 'right' ? 46 : 22, c, 'center', on ? 14 : 0); }
+      button(g, 'restart', L, v.y0 + 176, 130, 44, 'RESTART', '#9aa0c8');
+    }
+    drawSpeedo(g, me, D);
+    if (race.t < 0) { const n = Math.ceil(-race.t); if (n <= 3) txt(g, String(n), 640, 300, 170, '#fff', 'center', 30); } else if (race.t < 1.2) { g.globalAlpha = 1 - race.t / 1.2; txt(g, 'GO!', 640, 300, 170 + race.t * 60, '#3dff7a', 'center', 40); g.globalAlpha = 1; }
+    if (say0 && say0.k < say0.d && say0.t) { const k = say0.k, a = Math.min(1, k * 6, (say0.d - k) * 3); g.globalAlpha = a; txt(g, say0.t, 640, v.y0 + 250, 46, say0.col, 'center', 22); g.globalAlpha = 1; }
+  }
   /* ---------- kit hooks ---------- */
   const BOTN = ['Nova', 'Vex', 'Kite', 'Rook', 'Juno', 'Blitz'];
   const botRoster = () => BOTN.map((n, i) => ({ id: 'b' + i, name: n, col: MP.colors[i], bot: true, seat: i }));
   function click(k) {
     if (mode === 'select') {
       if (k === 'prev' || k === 'next') { sel = (sel + (k === 'next' ? 1 : TRACKS.length - 1)) % TRACKS.length; K.sfx(520, .06, 'square', .05); if (ready) { loadWorld(sel); camUpdate(0, true); } return; }
-      if (k === 'race') { K.sfx(660, .1, 'square', .06); mode = 'lobby'; MP.opts.sub = `${TRACKS[sel].name} · ${LAPS} laps. Race the bots, or play online with up to ${MAXP} friends.`; MP.show(); return; }
+      if (k === 'mprev' || k === 'mnext') { gmode = (gmode + (k === 'mnext' ? 1 : MODES.length - 1)) % MODES.length; K.sfx(600, .06, 'square', .05); return; }
+      if (k === 'name') { const n = (prompt('Your name on the leaderboard', myName()) || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12); if (n) try { localStorage.setItem('pbx-mp-name', n); } catch (e) {} return; }
+      if (k === 'race') {
+        K.sfx(660, .1, 'square', .06); const M = MODES[gmode];
+        if (M.id === 'tt') return startRace(sel, [{ id: 0, name: myName(), col: MP.colors[0], seat: 0 }], false, 'tt');
+        mode = 'lobby'; MP.opts.sub = M.id === 'ko' ? `${TRACKS[sel].name} · Knockout: last place is out every ${KO_INT} seconds. Up to ${MAXP} racers.` : `${TRACKS[sel].name} · ${LAPS} laps. Race the bots, or play online with up to ${MAXP} friends.`; MP.show(); return;
+      }
     }
   }
+  const koRows = () => [...race.cars.filter(c => !c.out && !c.gone), ...race.ko.slice().reverse().map(s => race.cars.find(c => c.seat === s))];
   function finishRace() {
     if (!race || mode !== 'race') return;
-    const st = standings(), me = race.cars[race.me], place = st.indexOf(me) + 1, D = TRACKS[race.ti];
-    K.score = ([1000, 720, 520, 380, 260, 160][place - 1] || 100) + (me.finish ? Math.max(0, Math.round(500 - me.finish * 2)) : 0);
+    const st = standings(), me = race.cars[race.me], D = TRACKS[race.ti];
+    if (race.mode === 'tt') {
+      const bl = me.best || 0, m = bl ? medalOf(D.id, bl) : -1; K.score = bl ? Math.round(60000 / bl) + [600, 400, 250, 120][m] | 0 : 0; if (m < 0 && bl) K.score = Math.round(60000 / bl);
+      mode = 'done'; audioStop(); delete BTN.cont;
+      return K.over({ title: m >= 0 ? MNAME[m][0] + MNAME[m].slice(1).toLowerCase() + ' medal!' : 'Time trial', text: `${D.name}: best lap ${bl ? fmt(bl) : '-'}${race.rank ? ' · world #' + race.rank : ''}. Press R in a time trial to restart instantly.`, delay: 200 });
+    }
+    const place = race.mode === 'ko' ? koRows().indexOf(me) + 1 : st.indexOf(me) + 1;
+    K.score = ([1000, 720, 520, 380, 260, 160][place - 1] || 100) + (race.mode === 'ko' ? Math.round(race.t * 2) : me.finish ? Math.max(0, Math.round(500 - me.finish * 2)) : 0);
     const b = best(); b[D.id] = b[D.id] || {}; if (me.best && (!b[D.id].lap || me.best < b[D.id].lap)) b[D.id].lap = me.best; if (me.finish && (!b[D.id].race || me.finish < b[D.id].race)) b[D.id].race = me.finish; K.persist();
     mode = 'done'; race.cam.mode = 'tv'; race.cam.k = 0; audioStop(); delete BTN.cont;
-    K.over({ title: place === 1 ? 'Victory!' : ord(place).replace(/ST|ND|RD|TH/, m => m.toLowerCase()) + ' place', text: `${D.name}: ${me.finish ? fmt(me.finish) : 'did not finish'}${me.best ? ' · best lap ' + fmt(me.best) : ''}`, delay: 200 });
+    K.over({ title: place === 1 ? (race.mode === 'ko' ? 'Last one standing!' : 'Victory!') : ord(place).replace(/ST|ND|RD|TH/, m => m.toLowerCase()) + ' place', text: race.mode === 'ko' ? `${D.name} knockout: ${place === 1 ? 'you survived everyone' : 'you were knocked out ' + ord(place).toLowerCase()}.` : `${D.name}: ${me.finish ? fmt(me.finish) : 'did not finish'}${me.best ? ' · best lap ' + fmt(me.best) : ''}`, delay: 200 });
   }
   function checkEnd() {
     const me = race.cars[race.me];
     if (race.demo) { if (race.first && race.t > race.first + 8 && !race.res) { race.res = { at: race.t }; K.over(); } return; }
+    if (race.mode === 'ko') {
+      if (race.t >= race.koNext && !race.res) { if (MP.isHost()) { const act = standings(); if (act.length > 1) knock(act[act.length - 1]); } race.koNext += KO_INT; }
+      const act = race.cars.filter(c => !c.out && !c.gone);
+      if (!race.res && act.length <= 1 && race.t > 1) { race.res = { at: race.t }; if (act[0] && act[0].local) { race.fw = 5; say('LAST ONE STANDING!', '#ffd23f', 4); K.chime(523, [0, 4, 7, 12, 16, 19]); race.cam.mode = 'finish'; race.cam.t = 0; } }
+      if (race.res && mode === 'race' && race.t - race.res.at > 14) finishRace();
+      return;
+    }
     if (mode === 'race' && me && me.finish && !race.res) race.res = { at: race.t };
+    if (race.res && mode === 'race' && race.mode === 'tt') { if (race.t - race.res.at > 30) finishRace(); return; }
     if (race.res && mode === 'race') { const done = race.cars.every(c => c.bot || c.gone || c.finish); if (race.t - race.res.at > 30 || (done && race.t - race.res.at > 16)) finishRace(); }
   }
   function whenReady() {
@@ -1346,6 +1513,7 @@ const GAME = {
       netTick(dt); checkEnd(); audioTick();
       syncCars(dt);
     }
+    if (race && race.split) race.split.k += dt; if (race && race.last) race.last.k += dt;
     if (say0) say0.k += dt; for (const t of toasts) t.k += dt; toasts = toasts.filter(t => t.k < 1.6);
     stepFX(dt); camUpdate(dt);
     const me = race && race.cars[race.me], foc = me && mode === 'race' ? pose(me, PZ2).f : null;
@@ -1368,6 +1536,7 @@ const GAME = {
     const hit = Object.keys(BTN).find(k => inB(BTN[k], x, y));
     if (mode === 'select') { if (hit) click(hit); return; }
     if (mode === 'race' && race && race.res && hit === 'cont') return finishRace();
+    if (mode === 'race' && race && hit === 'restart' && race.mode === 'tt') return startRace(race.ti, [{ id: 0, name: myName(), col: MP.colors[0], seat: 0 }], false, 'tt');
     if (mode === 'race' && touch) { const tb = TB(); for (const k in tb) if (inB(tb[k], x, y)) { ptrs.set(id, k); return; } }
   };
   GAME.move = (x, y, e) => {
@@ -1377,8 +1546,9 @@ const GAME = {
   GAME.up = (x, y, e) => { ptrs.delete(e ? e.pointerId : 0); };
   const KM = { ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', Space: 'drift', ShiftLeft: 'boost', ShiftRight: 'boost', KeyW: 'boost', ArrowUp: 'boost', KeyE: 'boost', ArrowDown: 'b', KeyS: 'b' };
   GAME.key = (c, d) => {
-    if (mode === 'select') { if (!d) return; if (c === 'ArrowLeft' || c === 'KeyA') click('prev'); else if (c === 'ArrowRight' || c === 'KeyD') click('next'); else if (c === 'Enter' || c === 'Space') click('race'); return; }
-    if (mode === 'race' && race && race.res && d && (c === 'Enter' || c === 'Space') && race.t - race.res.at > 3.5) return finishRace();
+    if (mode === 'select') { if (!d) return; if (c === 'ArrowLeft' || c === 'KeyA') click('prev'); else if (c === 'ArrowRight' || c === 'KeyD') click('next'); else if (c === 'ArrowUp' || c === 'KeyW') click('mprev'); else if (c === 'ArrowDown' || c === 'KeyS') click('mnext'); else if (c === 'Enter' || c === 'Space') click('race'); return; }
+    if (d && c === 'KeyR' && race && race.mode === 'tt' && mode === 'race') return startRace(race.ti, [{ id: 0, name: myName(), col: MP.colors[0], seat: 0 }], false, 'tt');
+    if (mode === 'race' && race && race.res && d && (c === 'Enter' || c === 'Space') && race.t - race.res.at > (race.mode === 'tt' ? 2.5 : 3.5)) return finishRace();
     if (KM[c]) keys[KM[c]] = d;
   };
   GAME.bot = () => {};
@@ -1386,8 +1556,8 @@ const GAME = {
     st: () => { const me = race && race.cars[race.me]; return { mode, ready, failed, sel, post: !!(X && X.composer), pr: X && X.renderer.getPixelRatio(), bloom: !!(X && X.bloom && X.bloom.enabled), t: race && +race.t.toFixed(2), res: !!(race && race.res),
       me: me && { s: +me.s.toFixed(1), d: +me.d.toFixed(2), v: +me.v.toFixed(1), lap: me.lap, od: +me.od.toFixed(2), fin: me.finish && +me.finish.toFixed(2), best: me.best && +me.best.toFixed(2) }, pos: me ? standings().indexOf(me) + 1 : 0,
       cars: race && race.cars.map(c => [c.name, c.lap, Math.round(c.s), c.finish ? +c.finish.toFixed(1) : 0, c.bot ? 'bot' : c.local ? 'me' : 'net']), fps: X && X.frames.length ? Math.round(X.frames.length / X.frames.reduce((a, b) => a + b, 0)) : 0, len: TR && Math.round(TR.L) }; },
-    click, keys: () => keys, auto: () => { const me = race.cars[race.me]; if (me) { me.auto = true; race.cars.forEach(c => c.base = c.skill = 1); } }, ff: s => { for (let i = 0; i < s * 60; i++) simulate(1 / 60); clearFX(); },
-    solo: () => MP.start(), sel: i => { sel = i; if (ready) loadWorld(i); }, ev: (k, a, b) => ev(k, race.cars[race.me], a, b), race: () => race, X: () => X,
+    click, keys: () => keys, auto: () => { const me = race.cars[race.me]; if (me) { me.auto = true; race.cars.forEach(c => c.base = c.skill = 1); } }, ff: s => { for (let i = 0; i < s * 60; i++) { simulate(1 / 60); if (i % 6 === 0 && mode === "race") checkEnd(); } clearFX(); },
+    solo: () => MP.start(), mode: i => { gmode = i; }, sel: i => { sel = i; if (ready) loadWorld(i); }, ev: (k, a, b) => ev(k, race.cars[race.me], a, b), race: () => race, X: () => X,
   };
 })();
 
