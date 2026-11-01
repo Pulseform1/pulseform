@@ -419,7 +419,7 @@ const GAME = {
 
   /* ---------- lighting ---------- */
   function computeLight() {
-    const vw = Math.ceil(1280 / TS) + 26, vh = Math.ceil(720 / TS) + 26; lx0 = Math.floor(cam.x / TS) - 13; ly0 = Math.floor(cam.y / TS) - 13; lw = vw; lh = vh;
+    const v = K.view, vw = Math.ceil((v.x1 - v.x0) / TS) + 26, vh = Math.ceil((v.y1 - v.y0) / TS) + 26; lx0 = Math.floor((cam.x + v.x0) / TS) - 13; ly0 = Math.floor((cam.y + v.y0) / TS) - 13; lw = vw; lh = vh;
     if (!light || light.length !== vw * vh) light = new Float32Array(vw * vh);
     const sun = dayLight();
     for (let i = 0; i < vw; i++) { const x = lx0 + i; let open = true;
@@ -447,17 +447,17 @@ const GAME = {
     gr.addColorStop(0, top); gr.addColorStop(1, bot); g.fillStyle = gr; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
     const a = ((d < .62 ? d / .62 : (d - .62) / .38)) * Math.PI, bx = 640 - Math.cos(a) * 560, by = 420 - Math.sin(a) * 340;
     if (!night()) { const sg = g.createRadialGradient(bx, by, 10, bx, by, 90); sg.addColorStop(0, 'rgba(255,240,170,.55)'); sg.addColorStop(1, 'rgba(255,240,170,0)'); g.fillStyle = sg; g.fillRect(bx - 90, by - 90, 180, 180); g.fillStyle = '#fff2a0'; g.beginPath(); g.arc(bx, by, 24, 0, 7); g.fill(); g.fillStyle = '#ffd23f'; g.beginPath(); g.arc(bx, by, 19, 0, 7); g.fill(); g.fillStyle = '#fff6c8'; g.fillRect(bx - 9, by - 11, 6, 4); }
-    else { g.fillStyle = '#e8e8f0'; g.fillRect(bx - 18, by - 18, 36, 36); g.fillStyle = '#b8b8c8'; g.fillRect(bx - 8, by - 6, 8, 8); g.fillRect(bx + 4, by + 6, 6, 6); for (let i = 0; i < 60; i++) { g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect((i * 211) % 1280, (i * 97) % 380, 2, 2); } }
-    for (const c of CLOUDS) { const cx = ((c[0] * 1600 - cam.x * .08 + time * 2400 * c[3]) % 1700 + 1700) % 1700 - 210, cy = c[1] - cam.y * .04 + 120, w = c[2]; g.fillStyle = night() ? 'rgba(60,70,110,.55)' : 'rgba(255,255,255,.85)'; g.beginPath(); g.roundRect(cx, cy, w, w * .28, w * .14); g.roundRect(cx + w * .18, cy - w * .14, w * .42, w * .3, w * .15); g.roundRect(cx + w * .45, cy - w * .08, w * .3, w * .24, w * .12); g.fill(); g.fillStyle = night() ? 'rgba(30,36,70,.4)' : 'rgba(200,215,240,.7)'; g.fillRect(cx + w * .1, cy + w * .2, w * .8, w * .08); }
-    for (const [k, c, base, amp] of [[.15, night() ? '#1a2a3a' : '#7aa8c8', 430, 70], [.35, night() ? '#14242a' : '#4a8a5a', 500, 50]]) { g.fillStyle = c; const off = cam.x * k; for (let x = -8; x < 1300; x += 8) { const wx = (x + off) / 90, h = Math.sin(wx) * amp + Math.sin(wx * 2.3) * amp * .4 - (cam.y - 1100) * k * .3; g.fillRect(x, base - h, 8, 720); }
-      if (k === .35) { const sp = 150, off2 = cam.x * .5, fy = 540 - (cam.y - 1100) * .5 * .3; for (let i = Math.floor(off2 / sp) - 1; i < Math.floor(off2 / sp) + 11; i++) { const tx = i * sp - off2 + ((i * 53) % 60), hh = 70 + ((i * 37) % 50); g.fillStyle = night() ? '#0e1c20' : '#2f6e40'; g.fillRect(tx - 5, fy - hh, 10, hh + 200); g.beginPath(); g.arc(tx, fy - hh, 34, 0, 7); g.arc(tx - 22, fy - hh + 18, 24, 0, 7); g.arc(tx + 22, fy - hh + 16, 26, 0, 7); g.fill(); g.fillStyle = night() ? '#122428' : '#3a8048'; g.fillRect(v.x0, fy, v.x1 - v.x0, 720); } } }
+    else { g.fillStyle = '#e8e8f0'; g.fillRect(bx - 18, by - 18, 36, 36); g.fillStyle = '#b8b8c8'; g.fillRect(bx - 8, by - 6, 8, 8); g.fillRect(bx + 4, by + 6, 6, 6); for (let i = 0; i < 60; i++) { g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(v.x0 + (i * 211) % (v.x1 - v.x0), v.y0 + (i * 97) % (380 - v.y0), 2, 2); } }
+    for (const c of CLOUDS) { const CW = v.x1 - v.x0 + 420, cx = ((c[0] * 1600 - cam.x * .08 + time * 2400 * c[3]) % CW + CW) % CW + v.x0 - 210, cy = c[1] - cam.y * .04 + 120, w = c[2]; g.fillStyle = night() ? 'rgba(60,70,110,.55)' : 'rgba(255,255,255,.85)'; g.beginPath(); g.roundRect(cx, cy, w, w * .28, w * .14); g.roundRect(cx + w * .18, cy - w * .14, w * .42, w * .3, w * .15); g.roundRect(cx + w * .45, cy - w * .08, w * .3, w * .24, w * .12); g.fill(); g.fillStyle = night() ? 'rgba(30,36,70,.4)' : 'rgba(200,215,240,.7)'; g.fillRect(cx + w * .1, cy + w * .2, w * .8, w * .08); }
+    for (const [k, c, base, amp] of [[.15, night() ? '#1a2a3a' : '#7aa8c8', 430, 70], [.35, night() ? '#14242a' : '#4a8a5a', 500, 50]]) { g.fillStyle = c; const off = cam.x * k; for (let x = Math.floor(v.x0 / 8) * 8 - 8; x < v.x1 + 8; x += 8) { const wx = (x + off) / 90, h = Math.sin(wx) * amp + Math.sin(wx * 2.3) * amp * .4 - (cam.y - 1100) * k * .3; g.fillRect(x, base - h, 8, v.y1 + 720); }
+      if (k === .35) { const sp = 150, off2 = cam.x * .5, fy = 540 - (cam.y - 1100) * .5 * .3; for (let i = Math.floor((off2 + v.x0) / sp) - 1; i < Math.floor((off2 + v.x1) / sp) + 2; i++) { const tx = i * sp - off2 + ((i * 53) % 60), hh = 70 + ((i * 37) % 50); g.fillStyle = night() ? '#0e1c20' : '#2f6e40'; g.fillRect(tx - 5, fy - hh, 10, hh + 200); g.beginPath(); g.arc(tx, fy - hh, 34, 0, 7); g.arc(tx - 22, fy - hh + 18, 24, 0, 7); g.arc(tx + 22, fy - hh + 16, 26, 0, 7); g.fill(); g.fillStyle = night() ? '#122428' : '#3a8048'; g.fillRect(v.x0, fy, v.x1 - v.x0, v.y1 - fy); } } }
     const surfaceY = surf[clamp(Math.floor((cam.x + 640) / TS), 0, WW - 1)] * TS - cam.y;
-    if (surfaceY < 720) { g.fillStyle = '#20140c'; g.fillRect(v.x0, Math.max(v.y0, surfaceY + 80), v.x1 - v.x0, v.y1); }
+    if (surfaceY < v.y1) { g.fillStyle = '#20140c'; const yy = Math.max(v.y0, surfaceY + 80); g.fillRect(v.x0, yy, v.x1 - v.x0, v.y1 - yy); }
   }
   let torchL = [], glints = [];
   function drawTiles(g) {
     g.imageSmoothingEnabled = false; torchL = []; glints = [];
-    const x0 = Math.floor(cam.x / TS) - 1, y0 = Math.floor(cam.y / TS) - 1, x1 = x0 + Math.ceil(1280 / TS) + 3, y1 = y0 + Math.ceil(720 / TS) + 3, leaves = [], tufts = [];
+    const v = K.view, x0 = Math.floor((cam.x + v.x0) / TS) - 1, y0 = Math.floor((cam.y + v.y0) / TS) - 1, x1 = x0 + Math.ceil((v.x1 - v.x0) / TS) + 3, y1 = y0 + Math.ceil((v.y1 - v.y0) / TS) + 3, leaves = [], tufts = [];
     for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
       if (x < 0 || y < 0 || x >= WW || y >= WH) continue;
       const t = tiles[y * WW + x], wl = walls[y * WW + x], X = Math.round(x * TS - cam.x), Y = Math.round(y * TS - cam.y);
@@ -578,36 +578,88 @@ const GAME = {
       icon(g, s.id, b.x + b.w / 2, b.y + b.h / 2 - 1, 1.6 * b.w / SLOT); if (s.n > 1) { g.font = `16px ${PXF}`; g.textAlign = 'right'; g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 3; g.strokeText(s.n, b.x + b.w - 4, b.y + b.h - 6); g.fillText(s.n, b.x + b.w - 4, b.y + b.h - 6); } }
   }
   function outlined(g, t, x, y, size, c, al = 'left') { g.font = `${size}px ${PXF}`; g.textAlign = al; g.textBaseline = 'alphabetic'; g.strokeStyle = '#000'; g.lineWidth = 3; g.strokeText(t, x, y); g.fillStyle = c; g.fillText(t, x, y); }
-  // on phones the pause button sits in the top-left corner, so the hotbar and the bag move over a little
-  const OX = () => touch ? Math.max(0, 70 - Math.max(0, -K.view.x0)) : 0;
+  // the pause button sits 12-52px from the screen's top-left corner, so the hotbar moves over just enough to clear it
+  const OX = () => { const v = K.view, sc = innerWidth / (v.x1 - v.x0); return Math.max(0, 60 / sc - (14 - v.x0)); };
+  // the HUD hugs the real top of the screen, which sits above y=0 on tall screens (tablets, 4:3 windows)
+  const TOP = () => Math.min(0, K.view.y0);
+  const cover = g => { const v = K.view; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); };
+  // phones held upright get a "turn sideways" card: the world would be a thin strip with tiny buttons
+  const upright = () => touch && innerHeight > innerWidth * 1.05;
   function hud(g) {
-    g.save(); g.translate(OX(), 0);
+    const v = K.view, R = v.x1 - 26;
+    g.save(); g.translate(OX(), TOP());
     for (let i = 0; i < 10; i++) { const b = HB(i); slot(g, i === sel && !invOpen ? { x: b.x - 3, y: b.y - 3, w: b.w + 6, h: b.h + 6 } : b, ch.inv[i], i === sel); g.font = `12px ${PXF}`; g.fillStyle = 'rgba(255,255,255,.8)'; g.textAlign = 'left'; g.fillText(String((i + 1) % 10), HB(i).x + 4, HB(i).y + 13); }
-    const s = ch.inv[sel]; if (s && !invOpen) { const it = IT[s.id]; outlined(g, it.n + (it.melee ? `  ${it.melee} melee` : it.bow ? `  ${it.bow} ranged` : it.gun ? `  ${it.gun} ranged` : it.magic ? `  ${it.magic} magic · ${it.mp} mana` : it.boom ? `  ${it.boom} thrown` : it.armor ? `  ${it.armor} defense (click to wear)` : it.pick ? `  ${Math.round(it.pick * 35)}% pickaxe power` : ''), 16, 78, 18, RAR[it.r || 0]); }
-    g.restore();
-    const hearts = ch.max / 20; for (let i = 0; i < hearts; i++) { const row = Math.floor(i / 10), col = i % 10, x = 1254 - (Math.min(10, hearts) - col) * 26, y = 20 + row * 24, full = clamp((P.hp - i * 20) / 20, 0, 1); heart(g, x, y, '#3a0a0a'); if (full > 0) { g.save(); g.beginPath(); g.rect(x - 12, y - 12, 24 * full, 24); g.clip(); heart(g, x, y, '#e8202a'); g.restore(); } }
-    const hy = 20 + Math.ceil(hearts / 10) * 24 + 4; for (let i = 0; i < ch.mana / 20; i++) { const x = 1254, y = hy + i * 20; g.fillStyle = '#0a1a3a'; g.fillRect(x - 8, y - 8, 16, 16); const f = clamp((P.mp - i * 20) / 20, 0, 1); g.fillStyle = '#3a7aff'; g.fillRect(x - 8, y + 8 - 16 * f, 16, 16 * f); g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(x - 6, y - 6, 4, 4); }
-    outlined(g, `Life ${Math.ceil(P.hp)}/${ch.max}${def() ? '  ·  Defense ' + def() : ''}`, 1230, hy + 6, 15, '#fff', 'right');
-    const d = time % 1, hh = Math.floor((d * 24 + 6) % 24), mm = Math.floor((d * 24 * 60) % 60); outlined(g, `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'AM' : 'PM'}${night() ? ' · night' : ''}  ·  depth ${Math.max(0, Math.round(P.y - surf[clamp(Math.floor(P.x), 0, WW - 1)]))}`, 1230, hy + 26, 14, '#cfd8ff', 'right');
+    const s = ch.inv[sel]; if (s && !invOpen) { const it = IT[s.id]; outlined(g, it.n + (it.melee ? `  ${it.melee} melee` : it.bow ? `  ${it.bow} ranged` : it.gun ? `  ${it.gun} ranged` : it.magic ? `  ${it.magic} magic · ${it.mp} mana` : it.boom ? `  ${it.boom} thrown` : it.armor ? `  ${it.armor} defense (${touch ? 'tap' : 'click'} to wear)` : it.pick ? `  ${Math.round(it.pick * 35)}% pickaxe power` : ''), 16, 78, 18, RAR[it.r || 0]); }
     if (online()) outlined(g, `Online · room ${MP.code} · ${others.size + 1} players`, 16, 104, 15, '#7aff7a');
-    const B = ents.find(e => KIND[e.kind].boss); if (B) { const w = 600; g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(340, 680, w, 22); g.fillStyle = '#c8203a'; g.fillRect(342, 682, (w - 4) * Math.max(0, B.hp / B.max), 18); outlined(g, BOSSES[B.kind].n, 640, 674, 18, '#fff', 'center'); }
-    for (const p of pops) { g.globalAlpha = Math.max(0, 1 - p.t); outlined(g, p.s, sx(p.x), sy(p.y) - p.t * 30, 18, p.c, 'center'); } g.globalAlpha = 1;
+    g.restore();
+    g.save(); g.translate(0, TOP());
+    const hearts = ch.max / 20; for (let i = 0; i < hearts; i++) { const row = Math.floor(i / 10), col = i % 10, x = R - (Math.min(10, hearts) - col) * 26, y = 20 + row * 24, full = clamp((P.hp - i * 20) / 20, 0, 1); heart(g, x, y, '#3a0a0a'); if (full > 0) { g.save(); g.beginPath(); g.rect(x - 12, y - 12, 24 * full, 24); g.clip(); heart(g, x, y, '#e8202a'); g.restore(); } }
+    const hy = 20 + Math.ceil(hearts / 10) * 24 + 4; for (let i = 0; i < ch.mana / 20; i++) { const x = R, y = hy + i * 20; g.fillStyle = '#0a1a3a'; g.fillRect(x - 8, y - 8, 16, 16); const f = clamp((P.mp - i * 20) / 20, 0, 1); g.fillStyle = '#3a7aff'; g.fillRect(x - 8, y + 8 - 16 * f, 16, 16 * f); g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(x - 6, y - 6, 4, 4); }
+    outlined(g, `Life ${Math.ceil(P.hp)}/${ch.max}${def() ? '  ·  Defense ' + def() : ''}`, R - 24, hy + 6, 15, '#fff', 'right');
+    const d = time % 1, hh = Math.floor((d * 24 + 6) % 24), mm = Math.floor((d * 24 * 60) % 60); outlined(g, `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'AM' : 'PM'}${night() ? ' · night' : ''}  ·  depth ${Math.max(0, Math.round(P.y - surf[clamp(Math.floor(P.x), 0, WW - 1)]))}`, R - 24, hy + 26, 14, '#cfd8ff', 'right');
     if (msg && !invOpen) { const a = Math.min(1, msg.k * 5, (msg.d - msg.k) * 2); g.globalAlpha = Math.max(0, a); outlined(g, msg.t, 640, 140, 22, msg.c, 'center'); g.globalAlpha = 1; }
     if (hint && !invOpen) { g.font = `17px ${PXF}`; g.textAlign = 'center'; const w = g.measureText(hint).width + 30; g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(640 - w / 2, 160, w, 28); g.fillStyle = '#fff'; g.fillText(hint, 640, 180); }
-    if (touch) touchUI(g);
+    g.restore();
+    const B = ents.find(e => KIND[e.kind].boss); if (B) { const w = 600, by = Math.max(680, v.y1 - 40); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(340, by, w, 22); g.fillStyle = '#c8203a'; g.fillRect(342, by + 2, (w - 4) * Math.max(0, B.hp / B.max), 18); outlined(g, BOSSES[B.kind].n, 640, by - 6, 18, '#fff', 'center'); }
+    for (const p of pops) { g.globalAlpha = Math.max(0, 1 - p.t); outlined(g, p.s, sx(p.x), sy(p.y) - p.t * 30, 18, p.c, 'center'); } g.globalAlpha = 1;
+    if (touch && !invOpen) touchUI(g);
   }
   function heart(g, x, y, c) { g.fillStyle = c; const r = (a, b, w, h) => g.fillRect(x + a, y + b, w, h); r(-10, -6, 8, 8); r(2, -6, 8, 8); r(-11, -3, 22, 7); r(-8, 4, 16, 3); r(-5, 7, 10, 3); r(-2, 10, 4, 2); if (c !== '#3a0a0a') { g.fillStyle = 'rgba(255,255,255,.5)'; r(-8, -4, 3, 3); } }
   // phone buttons hug the real screen edges, whatever the screen's shape
-  const TB = () => { const v = K.view; return { left: { x: v.x0 + 24, y: 590, w: 100, h: 100 }, right: { x: v.x0 + 140, y: 590, w: 100, h: 100 }, jump: { x: v.x1 - 124, y: 590, w: 100, h: 100 }, inv: { x: v.x1 - 124, y: 470, w: 100, h: 90 } }; };
+  const TB = () => { const v = K.view, y = v.y1 - 130; return { left: { x: v.x0 + 24, y, w: 100, h: 100 }, right: { x: v.x0 + 140, y, w: 100, h: 100 }, jump: { x: v.x1 - 124, y, w: 100, h: 100 }, inv: { x: v.x1 - 124, y: y - 120, w: 100, h: 90 } }; };
   function touchUI(g) { for (const [k, b] of Object.entries(TB())) { g.fillStyle = 'rgba(40,60,140,.55)'; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 18); g.fill(); g.strokeStyle = 'rgba(255,255,255,.4)'; g.lineWidth = 2; g.stroke(); g.font = `${k === 'inv' ? 20 : 34}px ${PXF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; g.fillText({ left: '◀', right: '▶', jump: '▲', inv: 'BAG' }[k], b.x + b.w / 2, b.y + b.h / 2); g.textBaseline = 'alphabetic'; } }
   const IB = i => ({ x: 14 + (i % 10) * (SLOT + 4), y: 12 + Math.floor(i / 10) * (SLOT + 4), w: SLOT, h: SLOT });
   const ARMB = { x: 14, y: 226, w: SLOT, h: SLOT };
-  let cscroll = 0;
+  let cscroll = 0, cpy = 0, drag = null, picked = -1;
   const CB = i => ({ x: 540, y: 74 + (i - cscroll) * 50, w: 360, h: 44 });
   function craftList() { return RECIPES.filter(r => !r[3] || stationNear(STN[r[3]])).sort((a, b) => canCraft(b) - canCraft(a)); }
+  /* touch bag: one full-screen layout with big slots, big craft rows you can drag to scroll, and a close button.
+     Everything is measured from the real screen edges so it fits phones, tablets and odd shapes. */
+  const TS_ = 64, TG = 6, ROW = 84;
+  const TL = () => {
+    const v = K.view, sc = innerWidth / (v.x1 - v.x0), top = v.y0 + 14, left = v.x0 + Math.max(16, 74 / sc), gw = 10 * (TS_ + TG) - TG, cx = left + gw + 22, cw = Math.min(820, v.x1 - 16 - cx), ly = top + 76;
+    return { left, top, gw, cx, cw, slot: i => ({ x: left + (i % 10) * (TS_ + TG), y: top + Math.floor(i / 10) * (TS_ + TG), w: TS_, h: TS_ }), arm: { x: left, y: top + 4 * (TS_ + TG) + 12, w: TS_, h: TS_ },
+      list: { x: cx, y: ly, w: cw - 56, h: v.y1 - 14 - ly }, close: { x: cx + cw - 92, y: top, w: 92, h: 62 }, up: { x: cx + cw - 48, y: ly, w: 48, h: 90 }, dn: { x: cx + cw - 48, y: v.y1 - 90 - 70 / sc, w: 48, h: 90 } };  // kept clear of the sound button in the corner
+  };
+  const cmax = () => { const L = TL(); return Math.max(0, craftList().length * ROW - L.list.h); };
+  const crow = (L, y) => Math.floor((y - L.list.y + cpy) / ROW);
+  function fitText(g, t, w) { if (g.measureText(t).width <= w) return t; while (t.length > 3 && g.measureText(t + '…').width > w) t = t.slice(0, -1); return t + '…'; }
+  function bagTouch(g) {
+    const L = TL(), list = craftList(), v = K.view;
+    g.fillStyle = 'rgba(6,10,30,.78)'; cover(g);
+    const panel = (x, y, w, h) => { g.fillStyle = 'rgba(22,30,78,.92)'; g.beginPath(); g.roundRect(x, y, w, h, 14); g.fill(); g.strokeStyle = 'rgba(150,170,255,.35)'; g.lineWidth = 2; g.stroke(); };
+    panel(L.left - 10, L.top - 8, L.gw + 20, v.y1 - 6 - L.top); panel(L.cx - 8, L.top - 8, L.cw + 16, v.y1 - 6 - L.top);
+    for (let i = 0; i < 40; i++) slot(g, L.slot(i), ch.inv[i], i === picked || (i === sel && picked < 0));
+    g.font = `13px ${PXF}`; g.fillStyle = 'rgba(255,255,255,.75)'; g.textAlign = 'left'; for (let i = 0; i < 10; i++) g.fillText(String((i + 1) % 10), L.slot(i).x + 5, L.slot(i).y + 15);
+    slot(g, L.arm, ch.armor ? { id: ch.armor, n: 1 } : null, false);
+    const ax = L.arm.x + TS_ + 16, show = held || (picked >= 0 && ch.inv[picked]);
+    outlined(g, ch.armor ? `Armor: ${IT[ch.armor].n} (+${def()})` : 'Armor slot', ax, L.arm.y + 26, 20, '#cfd8ff');
+    if (show) { const it = IT[show.id]; outlined(g, fitText(g, (held ? 'Holding ' : '') + it.n + (it.melee ? ` · ${it.melee} melee` : it.bow ? ` · ${it.bow} ranged` : it.gun ? ` · ${it.gun} ranged` : it.magic ? ` · ${it.magic} magic` : it.armor ? ` · ${it.armor} defense` : it.pick ? ` · ${Math.round(it.pick * 35)}% pick` : ''), L.gw - TS_ - 20), ax, L.arm.y + 54, 20, RAR[it.r || 0]); }
+    else outlined(g, 'Tap armor here to wear it', ax, L.arm.y + 54, 17, '#8a96c8');
+    let y = L.arm.y + TS_ + 40; const locked = [...new Set(RECIPES.filter(r => r[3] && !stationNear(STN[r[3]])).map(r => IT[r[3]].n))];
+    if (locked.length) { outlined(g, fitText(g, `More recipes at: ${locked.join(', ')}`, L.gw), L.left, y, 18, '#cfd8ff'); y += 30; }
+    Object.entries(BOSSES).forEach(([k, b], i) => outlined(g, (downed[k] ? '✓ ' : '· ') + b.n, L.left + (i % 2) * (L.gw / 2), y + Math.floor(i / 2) * 28, 18, downed[k] ? '#7aff7a' : '#ff9aff')); y += 64;
+    if (y < v.y1 - 24) outlined(g, held ? 'Tap a slot to put it there.' : 'Tap an item to pick it up, then tap a slot.', L.left, Math.min(v.y1 - 22, y + 10), 17, '#fff');
+    outlined(g, 'Crafting', L.cx + 8, L.top + 42, 30, '#ffe680');
+    const c = L.close; g.fillStyle = 'rgba(200,50,60,.9)'; g.beginPath(); g.roundRect(c.x, c.y, c.w, c.h, 12); g.fill(); outlined(g, '✕', c.x + c.w / 2, c.y + 44, 34, '#fff', 'center');
+    if (cpy > cmax()) cpy = cmax();
+    const b = L.list; g.save(); g.beginPath(); g.rect(b.x - 4, b.y, b.w + 8, b.h); g.clip();
+    if (!list.length) outlined(g, 'Nothing yet. Get wood from trees.', b.x + 8, b.y + 40, 20, '#fff');
+    for (let i = Math.max(0, Math.floor(cpy / ROW)); i < list.length; i++) { const r = list[i], ry = b.y + i * ROW - cpy; if (ry > b.y + b.h) break; const ok = canCraft(r), it = IT[r[0]];
+      g.fillStyle = ok ? (drag && drag.row === i && !drag.moved ? 'rgba(90,130,230,.95)' : 'rgba(40,60,140,.9)') : 'rgba(30,30,50,.8)'; g.beginPath(); g.roundRect(b.x, ry + 3, b.w, ROW - 8, 10); g.fill();
+      icon(g, r[0], b.x + 38, ry + ROW / 2 - 1, 2.2);
+      g.font = `24px ${PXF}`; g.textAlign = 'left'; g.fillStyle = ok ? RAR[it.r || 0] : '#8a8aa0'; g.fillText(fitText(g, it.n + (r[1] > 1 ? ' x' + r[1] : ''), b.w - 180), b.x + 76, ry + 36);
+      g.font = `18px ${PXF}`; g.fillStyle = ok ? '#cfd8ff' : '#6a6a80'; g.fillText(fitText(g, Object.entries(r[2]).map(([k, n]) => `${n} ${IT[k].n} (${count(k)})`).join(', '), b.w - 90), b.x + 76, ry + 62);
+      if (ok) { g.font = `20px ${PXF}`; g.textAlign = 'right'; g.fillStyle = '#ffe680'; g.fillText('MAKE', b.x + b.w - 14, ry + 36); } }
+    g.restore();
+    const mxs = cmax(); if (mxs > 0) { for (const [k, a] of [['up', '▲'], ['dn', '▼']]) { const q = L[k], on = k === 'up' ? cpy > 0 : cpy < mxs; g.fillStyle = on ? 'rgba(60,90,190,.95)' : 'rgba(40,50,90,.6)'; g.beginPath(); g.roundRect(q.x, q.y, q.w, q.h, 10); g.fill(); outlined(g, a, q.x + q.w / 2, q.y + q.h / 2 + 10, 28, on ? '#fff' : '#6a7090', 'center'); }
+      const tr = L.list, tl = L.dn.y - L.up.y - 110, th = Math.max(40, tl * tr.h / (tr.h + mxs)), ty = L.up.y + 100 + (tl - th) * (cpy / mxs); g.fillStyle = 'rgba(150,170,255,.25)'; g.fillRect(L.up.x + 20, L.up.y + 100, 8, tl); g.fillStyle = 'rgba(200,215,255,.8)'; g.fillRect(L.up.x + 18, ty, 12, th); }
+    if (held) icon(g, held.id, mx, my - 40, 2.2);
+  }
   function inventory(g) {
-    g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(K.view.x0, 0, K.view.x1 - K.view.x0, 720);
-    g.save(); g.translate(OX(), 0);
+    if (touch) return bagTouch(g);
+    g.fillStyle = 'rgba(0,0,0,.4)'; cover(g);
+    g.save(); g.translate(OX(), TOP());
     const panel = (x, y, w, h) => { g.fillStyle = 'rgba(22,30,78,.78)'; g.beginPath(); g.roundRect(x, y, w, h, 12); g.fill(); g.strokeStyle = 'rgba(150,170,255,.35)'; g.lineWidth = 2; g.stroke(); };
     panel(4, 4, 512, 340); { const n = Math.min(12, craftList().length); panel(526, 30, 388, Math.max(90, 56 + n * 50 + (craftList().length > 12 ? 30 : 0))); } panel(910, 50, 300, 180);
     for (let i = 0; i < 40; i++) slot(g, IB(i), ch.inv[i], i === sel);
@@ -726,9 +778,9 @@ const GAME = {
       if (isHost() && (eSendT -= dt) <= 0) { eSendT = .12; MP.send({ t: 'e', time, l: ents.slice(0, 40).map(e => [e.id, e.kind, +e.x.toFixed(2), +e.y.toFixed(2), Math.round(e.hp), Math.round(e.max), e.rage ? 1 : 0]) }); }
     }
     const tx = P.x * TS - 640, ty = (P.y - 1.4) * TS - 380; cam.x += (tx - cam.x) * Math.min(1, dt * 10); cam.y += (ty - cam.y) * Math.min(1, dt * 10);
-    cam.x = clamp(cam.x, 0, WW * TS - 1280); cam.y = clamp(cam.y, -200, WH * TS - 720);
+    { const v = K.view; cam.x = clamp(cam.x, -v.x0, WW * TS - v.x1); cam.y = clamp(cam.y, -200 - v.y0, WH * TS - v.y1); }
     computeLight();
-    hint = demo || P.y - surf[clamp(Math.floor(P.x), 0, WW - 1)] > 8 ? null : !count('bench') && !stationNear(T.BENCH) && count('wood') < 10 ? 'Chop a tree: hold click on the trunk. 10 wood makes a workbench (E to craft).' : !stationNear(T.FURNACE) && !count('furnace') && stationNear(T.BENCH) ? 'Next: a furnace (20 stone, 4 wood, 3 torches). Torches need gel from slimes.' : null;
+    hint = demo || P.y - surf[clamp(Math.floor(P.x), 0, WW - 1)] > 8 ? null : !count('bench') && !stationNear(T.BENCH) && count('wood') < 10 ? (touch ? 'Chop a tree: hold your finger on the trunk. 10 wood makes a workbench (tap BAG).' : 'Chop a tree: hold click on the trunk. 10 wood makes a workbench (E to craft).') : !stationNear(T.FURNACE) && !count('furnace') && stationNear(T.BENCH) ? 'Next: a furnace (20 stone, 4 wood, 3 torches). Torches need gel from slimes.' : null;
     if ((saveT += dt) > 20 && !demo) { saveT = 0; saveAll(); }
   }
 
@@ -753,10 +805,10 @@ const GAME = {
     ents = []; spawnEnemy('skeleton', P.x + 4.5, P.y); spawnEnemy('bat', P.x - 4, P.y - 4); spawnEnemy('slime', P.x + 7, P.y);
     projs.push({ k: 'flame', x: P.x + 2.5, y: P.y - 2, vx: 1, vy: 0, life: 9, hit: new Set() }); cam.x = P.x * TS - 640; cam.y = (P.y - 1.4) * TS - 380; computeLight();
   };
-  GAME.update = dt => { if (posed) { anim += dt; computeLight(); return; } update(Math.min(dt, 1 / 30)); };
+  GAME.update = dt => { if (posed) { anim += dt; computeLight(); return; } if (upright() && mode === 'play') { anim += dt; keys = {}; useHeld = false; return; } update(Math.min(dt, 1 / 30)); };
   GAME.draw = g => {
     if (mode === 'menu' || mode === 'lobby') return drawMenu(g);
-    if (mode === 'recv') { g.fillStyle = '#10203a'; g.fillRect(K.view.x0, 0, K.view.x1 - K.view.x0, 720); outlined(g, `Receiving ${recv.name}...`, 640, 330, 32, '#9cdc4a', 'center'); outlined(g, `${recv.parts.filter(Boolean).length} of ${recv.n || '?'} pieces`, 640, 380, 20, '#fff', 'center'); return; }
+    if (mode === 'recv') { g.fillStyle = '#10203a'; cover(g); outlined(g, `Receiving ${recv.name}...`, 640, 330, 32, '#9cdc4a', 'center'); outlined(g, `${recv.parts.filter(Boolean).length} of ${recv.n || '?'} pieces`, 640, 380, 20, '#fff', 'center'); return; }
     sky(g); drawTiles(g);
     for (const d of drops) { const X = sx(d.x), Y = sy(d.y) - 8 + Math.sin(anim * 4 + d.x) * 2, r = IT[d.id].r || 0; if (r) { const gr = g.createRadialGradient(X, Y, 1, X, Y, 18); gr.addColorStop(0, RAR[r] + '88'); gr.addColorStop(1, RAR[r] + '00'); g.fillStyle = gr; g.fillRect(X - 18, Y - 18, 36, 36); } icon(g, d.id, X, Y, 1.2); }
     for (const e of ents) drawEnemy(g, e);
@@ -764,10 +816,16 @@ const GAME = {
     if (!dead) { const s = ch.inv[sel]; const hx = sx(P.x), hy = sy(P.y) - 30, dd = Math.hypot(mx - hx, my - hy) || 1; drawHero(g, P, online() ? MP.name : null, ch.armor, s && s.id, P.swing, P.face, P.inv > 0 && Math.floor(anim * 20) % 2, null, [(mx - hx) / dd, (my - hy) / dd]); }
     drawProjs(g); drawLight(g);
     if (!invOpen && !touch && !posed) { const tx = Math.floor((mx + cam.x) / TS), ty = Math.floor((my + cam.y) / TS); if (reach(tx, ty)) { g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2; g.strokeRect(sx(tx) + 1, sy(ty) + 1, TS - 2, TS - 2); } }
-    if (dead) { g.fillStyle = 'rgba(60,0,0,.35)'; g.fillRect(K.view.x0, 0, K.view.x1 - K.view.x0, 720); outlined(g, 'You were slain...', 640, 340, 44, '#ff6a6a', 'center'); }
+    if (dead) { g.fillStyle = 'rgba(60,0,0,.35)'; cover(g); outlined(g, 'You were slain...', 640, 340, 44, '#ff6a6a', 'center'); }
     if (won && won.t < 6) outlined(g, 'VICTORY', 640, 300, 56, '#ffd23f', 'center');
     if (!posed) hud(g); if (invOpen) inventory(g);
+    if (upright()) turnCard(g);
   };
+  function turnCard(g) {
+    const v = K.view; g.fillStyle = 'rgba(8,12,34,.94)'; cover(g);
+    g.save(); g.translate(640, 330); g.rotate(-Math.PI / 2 * clamp((anim % 2.4) / .8 - .5, 0, 1)); g.strokeStyle = '#9cdc4a'; g.lineWidth = 10; g.beginPath(); g.roundRect(-70, -130, 140, 260, 22); g.stroke(); g.fillStyle = '#9cdc4a'; g.fillRect(-20, 100, 40, 8); g.restore();
+    outlined(g, 'Turn your phone sideways', 640, 560, 64, '#fff', 'center'); outlined(g, 'Strata plays in landscape', 640, 640, 42, '#cfd8ff', 'center');
+  }
   const inB = (b, x, y) => b && x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
   let tPtr = {}, usePtr = null;
   GAME.down = (x, y, ev) => {
@@ -778,25 +836,40 @@ const GAME = {
       if (inB(MB.join, x, y)) { wslot = -1; return lobby(); }
       return;
     }
-    if (mode !== 'play') return;
+    if (mode !== 'play' || upright()) return;
+    if (invOpen && touch) return bagDown(x, y);
     if (invOpen) {
-      if (inB(ARMB, x - OX(), y)) { if (held && IT[held.id].armor) { const old = ch.armor; ch.armor = held.id; held = old ? { id: old, n: 1 } : null; } else if (!held && ch.armor) { held = { id: ch.armor, n: 1 }; ch.armor = null; } return; }
-      for (let i = 0; i < 40; i++) if (inB(IB(i), x - OX(), y)) { const s = ch.inv[i]; if (held) { if (s && s.id === held.id && !IT[s.id].one) { s.n += held.n; held = null; } else { ch.inv[i] = held; held = s; } } else if (s) { if (IT[s.id].armor && lastClick.i === i && anim - lastClick.t < .35) { equip(i); return; } held = s; ch.inv[i] = null; } lastClick = { i, t: anim }; return; }
-      const list = craftList(); for (let i = cscroll; i < Math.min(list.length, cscroll + 12); i++) if (inB(CB(i), x - OX(), y)) return craft(list[i]);
+      if (inB(ARMB, x - OX(), y - TOP())) { if (held && IT[held.id].armor) { const old = ch.armor; ch.armor = held.id; held = old ? { id: old, n: 1 } : null; } else if (!held && ch.armor) { held = { id: ch.armor, n: 1 }; ch.armor = null; } return; }
+      for (let i = 0; i < 40; i++) if (inB(IB(i), x - OX(), y - TOP())) { const s = ch.inv[i]; if (held) { if (s && s.id === held.id && !IT[s.id].one) { s.n += held.n; held = null; } else { ch.inv[i] = held; held = s; } } else if (s) { if (IT[s.id].armor && lastClick.i === i && anim - lastClick.t < .35) { equip(i); return; } held = s; ch.inv[i] = null; } lastClick = { i, t: anim }; return; }
+      const list = craftList(); for (let i = cscroll; i < Math.min(list.length, cscroll + 12); i++) if (inB(CB(i), x - OX(), y - TOP())) return craft(list[i]);
       return;
     }
-    for (let i = 0; i < 10; i++) if (inB(HB(i), x - OX(), y)) { sel = i; return; }
+    for (let i = 0; i < 10; i++) if (inB(HB(i), x - OX(), y - TOP())) { sel = i; return; }
     if (touch) { for (const [k, b] of Object.entries(TB())) if (inB(b, x, y)) { mx = pmx; my = pmy; if (k === 'inv') return toggleInv(); keys[k === 'left' ? 'l' : k === 'right' ? 'r' : 'j'] = true; tPtr[k] = ev ? ev.pointerId : 1; return; } }
     useHeld = true; firstUse = true; usePtr = ev ? ev.pointerId : null;
   };
   GAME.move = (x, y, ev) => {
     if (!(touch && ev && Object.values(tPtr).includes(ev.pointerId))) { mx = x; my = y; } hover = null; hoverSlot = -1;
     if (mode === 'menu') { for (let i = 0; i < 3; i++) { if (worlds()[i] && inB(MB.del(i), x, y)) hover = 'd' + i; else if (inB(MB.worlds(i), x, y)) hover = 'w' + i; } if (inB(MB.join, x, y)) hover = 'join'; }
-    if (invOpen) { const list = craftList(); for (let i = cscroll; i < Math.min(list.length, cscroll + 12); i++) if (inB(CB(i), x - OX(), y)) hover = 'c' + i; for (let i = 0; i < 40; i++) if (inB(IB(i), x - OX(), y)) hoverSlot = i; }
+    if (invOpen && touch && drag) { if (Math.abs(y - drag.y) > 12) drag.moved = true; if (drag.moved) cpy = clamp(drag.c - (y - drag.y), 0, cmax()); }
+    else if (invOpen && !touch) { const list = craftList(); for (let i = cscroll; i < Math.min(list.length, cscroll + 12); i++) if (inB(CB(i), x - OX(), y - TOP())) hover = 'c' + i; for (let i = 0; i < 40; i++) if (inB(IB(i), x - OX(), y - TOP())) hoverSlot = i; }
     const c = document.getElementById('cv'); if (c) c.style.cursor = hover ? 'pointer' : 'default';
   };
-  GAME.up = (x, y, ev) => { const id = ev ? ev.pointerId : null; if (id == null || usePtr == null || id === usePtr) { if (firstUse) upPending = true; else useHeld = false; } if (touch) { for (const k of Object.keys(tPtr)) if (id == null || tPtr[k] === id) { keys[k === 'left' ? 'l' : k === 'right' ? 'r' : 'j'] = false; delete tPtr[k]; } } };
-  function toggleInv() { invOpen = !invOpen; cscroll = 0; if (!invOpen && held) { give(held.id, held.n); held = null; } K.sfx(invOpen ? 600 : 400, .05, 'square', .04); useHeld = false; }
+  GAME.up = (x, y, ev) => {
+    if (drag) { const d = drag; drag = null; if (!d.moved && invOpen) { const L = TL(), list = craftList(); if (inB(L.list, x, y) && crow(L, y) === d.row && list[d.row]) craft(list[d.row]); } } const id = ev ? ev.pointerId : null; if (id == null || usePtr == null || id === usePtr) { if (firstUse) upPending = true; else useHeld = false; } if (touch) { for (const k of Object.keys(tPtr)) if (id == null || tPtr[k] === id) { keys[k === 'left' ? 'l' : k === 'right' ? 'r' : 'j'] = false; delete tPtr[k]; } } };
+  function bagDown(x, y) {
+    const L = TL();
+    if (inB(L.close, x, y)) return toggleInv();
+    if (inB(L.arm, x, y)) { if (held && IT[held.id].armor) { const old = ch.armor; ch.armor = held.id; held = old ? { id: old, n: 1 } : null; } else if (!held && picked >= 0 && ch.inv[picked] && IT[ch.inv[picked].id].armor) { equip(picked); picked = -1; } else if (!held && ch.armor) { held = { id: ch.armor, n: 1 }; ch.armor = null; } K.sfx(500, .04, 'square', .04); return; }
+    for (let i = 0; i < 40; i++) if (inB(L.slot(i), x, y)) { const s = ch.inv[i]; K.sfx(520, .03, 'square', .03);
+      if (held) { if (s && s.id === held.id && !IT[s.id].one) { s.n += held.n; held = null; } else { ch.inv[i] = held; held = s; } picked = held ? -1 : i; }
+      else if (s) { if (picked === i) { held = s; ch.inv[i] = null; picked = -1; } else picked = i; }  // first tap shows the item, second tap picks it up
+      else picked = -1;
+      if (i < 10 && !held) sel = i; return; }
+    const mxs = cmax(); if (mxs > 0) { if (inB(L.up, x, y)) { cpy = clamp(cpy - ROW * 3, 0, mxs); return; } if (inB(L.dn, x, y)) { cpy = clamp(cpy + ROW * 3, 0, mxs); return; } }
+    if (inB(L.list, x, y)) drag = { y, c: cpy, moved: false, row: crow(L, y) };
+  }
+  function toggleInv() { invOpen = !invOpen; cscroll = 0; cpy = 0; drag = null; picked = -1; if (!invOpen && held) { give(held.id, held.n); held = null; } K.sfx(invOpen ? 600 : 400, .05, 'square', .04); useHeld = false; }
   GAME.key = (c, d) => {
     if (mode !== 'play') return;
     if (c === 'KeyA' || c === 'ArrowLeft') keys.l = d; if (c === 'KeyD' || c === 'ArrowRight') keys.r = d; if (c === 'Space' || c === 'KeyW' || c === 'ArrowUp') keys.j = d;
