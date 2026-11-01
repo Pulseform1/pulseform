@@ -10,6 +10,9 @@ const MP = (() => {
   const BOTS = ['Bot Blip', 'Bot Zap', 'Bot Mango', 'Bot Pixel', 'Bot Turbo', 'Bot Noodle', 'Bot Ziggy'];
   const WSHOST = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? location.host : 'box.pulseform.org';
   const opts = {};
+  // ?room=CODE (from the hub's Play with friends): skip the title screen and walk straight into that room
+  const AUTO = (() => { try { const q = new URLSearchParams(location.search).get('room') || ''; return /^[A-Za-z0-9]{4}$/.test(q) ? q.toUpperCase() : ''; } catch (e) { return ''; } })();
+  let autoDone = false;
   let ws = null, me = 0, host = 0, code = '', pending = null, box = null, name = '';
   const players = new Map();
   try { name = localStorage.getItem('pbx-mp-name') || ''; } catch (e) {}
@@ -57,7 +60,7 @@ const MP = (() => {
   }
   function connect(c) {
     saveName(); leave(); K.audio && K.audio(); msg('Connecting...');
-    try { ws = new WebSocket(`wss://${WSHOST}/api/room/${c}?n=${encodeURIComponent(name)}`); } catch (e) { msg('Could not connect.'); return; }
+    try { ws = new WebSocket(`wss://${WSHOST}/api/room/${c}?n=${encodeURIComponent(name)}&g=${encodeURIComponent(GAME.id)}`); } catch (e) { msg('Could not connect.'); return; }
     code = c; const my = ws;
     ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (err) { return; } onNet(m); };
     ws.onclose = () => { if (ws !== my) return; ws = null; me = 0; players.clear(); if (opts.onLeave && K.state === 'play' && box && box.hidden) opts.onLeave(-1); else { refresh(); msg('Disconnected from the room.'); } };
@@ -91,7 +94,9 @@ const MP = (() => {
     build();
     if (pending && online()) { const p = pending; pending = null; return begin(p); }
     box.hidden = false; refresh();
+    if (AUTO && !autoDone && !online()) { autoDone = true; connect(AUTO); }
   }
+  if (AUTO) { const go = () => { const b = document.getElementById('bPlay'); if (b && typeof K !== 'undefined' && K.state === 'title') b.click(); else setTimeout(go, 150); }; setTimeout(go, 250); }
   return {
     opts, show, start, send, leave, online, colors: COLS,
     hide() { if (box) box.hidden = true; },

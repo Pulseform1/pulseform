@@ -17,7 +17,8 @@
 //   GET  /api/bugs?status=new  (header x-admin-key) -> { bugs: [...] }  (the admin page, public/bugs.html)
 //   POST /api/bugs/update      (header x-admin-key) <- { id, status, note } -> { ok }
 // Multiplayer rooms: one Durable Object (Rooms) per 4-character room code relays JSON messages between up to 8 players.
-//   GET  /api/room/CODE?n=NAME  (WebSocket) -> { t: 'hello', id, host, players } then every other player's messages
+//   GET  /api/room/CODE?n=NAME&g=GAME  (WebSocket) -> { t: 'hello', id, host, players } then every other player's messages
+//   GET  /api/room/CODE  (plain) -> { game, players }: which game the room is playing, so the hub can join by code alone
 // THE HOLLOW co-op: /api/hollow (WebSocket) goes to the HollowRooms Durable Object (hollow-rooms.js), which runs the game's own engine.
 // AFTERHOURS co-op: /api/arcade (WebSocket) goes to the ArcadeRooms Durable Object (arcade-rooms.js), which runs the five games' simulations.
 const PROJECT = 'pulseform-d8282';
@@ -184,8 +185,8 @@ export async function api(request, env, ctx, ids) {
   if (url.pathname.startsWith('/api/room/')) {
     const code = url.pathname.slice(10).toUpperCase();
     if (!/^[A-Z0-9]{4}$/.test(code)) return json({ error: 'bad room code' }, 400);
-    if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
-    return env.ROOMS.get(env.ROOMS.idFromName(code)).fetch(request);
+    if (request.headers.get('upgrade') !== 'websocket' && request.method !== 'GET') return json({ error: 'expected a websocket' }, 426);
+    return env.ROOMS.get(env.ROOMS.idFromName(code)).fetch(request);   // a plain GET answers { game, players } for the hub's Join box
   }
   if (url.pathname !== '/api/save') return json({ error: 'not found' }, 404);
   if (request.method !== 'GET' && request.method !== 'PUT') return json({ error: 'method' }, 405);
@@ -301,8 +302,11 @@ export class Stats {
 // The first player in is the host (they run the monsters); if the host leaves, the next player takes over.
 const MAX_PLAYERS = 8, MAX_MSG = 8000;
 export class Rooms {
-  constructor(state) { this.state = state; this.socks = new Map(); this.next = 1; this.host = 0; }
+  constructor(state) { this.state = state; this.socks = new Map(); this.next = 1; this.host = 0; this.game = ''; }
   async fetch(request) {
+    if (request.headers.get('upgrade') !== 'websocket') return new Response(JSON.stringify({ game: this.socks.size ? this.game : '', players: this.socks.size }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+    const g = (new URL(request.url).searchParams.get('g') || '').replace(/[^a-z0-9-]/g, '').slice(0, 40);
+    if (!this.socks.size || !this.game) this.game = g;
     const pair = new WebSocketPair(), [client, sock] = Object.values(pair);
     sock.accept();
     if (this.socks.size >= MAX_PLAYERS) { sock.send(JSON.stringify({ t: 'full' })); sock.close(1000, 'room full'); return new Response(null, { status: 101, webSocket: client }); }
