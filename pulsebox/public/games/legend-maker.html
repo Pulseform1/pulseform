@@ -403,7 +403,7 @@ const GAME = {
   const live = () => mode === 'home' ? ['play', 'daily', 'vs', 'hof', ...Object.keys(SPORTS).map(k => 'sp' + k)] : mode === 'build' || mode === 'ready' ? ['spin', 'vsdone', 'reroll', 'sim', 'slot0', 'slot1', 'slot2', 'slot3', 'slot4', 'slot5'] : mode === 'career' ? ['verdict'] : mode === 'verdict' ? (career.vt > 1 ? ['again', 'home'] : []) : mode === 'hof' ? ['home'] : [];
   function click(k) {
     if (!k) return;
-    if (k.startsWith('sp')) { sport = k.slice(2); K.sfx(600, .05, 'square', .05); return; }
+    if (k.startsWith('sp') && SPORTS[k.slice(2)]) { sport = k.slice(2); K.sfx(600, .05, 'square', .05); return; }
     if (k === 'play') return newBuild(sport, false);
     if (k === 'daily') return newBuild(sport, true);
     if (k === 'vs') { newBuild(sport, false); build.vs = { cpu: Array(6).fill(null), clock: 10 }; build.rerolls = 1; return; }
