@@ -1707,6 +1707,7 @@ function wordDone(w) {
 
 /* ---------- typing ---------- */
 function tapCell(r, c) {
+  if (!G) return;
   const cell = cellAt(r, c);
   if (!cell || G.done) return;
   if (G.cursor.r === r && G.cursor.c === c) {
@@ -1720,7 +1721,7 @@ function tapCell(r, c) {
 }
 
 function typeLetter(letter) {
-  if (G.done) return;
+  if (!G || G.done) return;
   const w = activeWord();
   if (!w) return;
   const cells = wordCells(w);
@@ -2127,7 +2128,7 @@ const ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
 })();
 
 document.addEventListener('keydown', function (e) {
-  if (el('overlay').hidden === false) return;
+  if (!G || el('overlay').hidden === false) return;
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (/^[a-zA-Z]$/.test(e.key)) { typeLetter(e.key.toUpperCase()); e.preventDefault(); }
   else if (e.key === 'Backspace') { backspace(); e.preventDefault(); }
