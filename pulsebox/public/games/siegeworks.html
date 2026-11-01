@@ -197,7 +197,7 @@ const GAME = {
     'BUILD: pick Wood, Steel or Armor and drag from a bolt (or your ground) to add a beam. Triangles are strong; unbraced towers fold and snap. Taller towers let your guns reach further.',
     'OIL pays for everything, including every shot. Put Oil Pumps on bolts at ground level. Generators turn oil into POWER, which the Sniper, Railgun, Laser, Swarm, Deflector and Repair bay need. Generators explode when destroyed, so keep them away from your Core.',
     'WEAPONS: Cannon, Machine gun, Sniper (picks off devices), Railgun (pierces beams), Laser (burns a line), Mortar, Firebomb (sets wood ablaze), Cluster bomb, Rockets, Swarm missiles (home in). Tap UPGRADE, then a device, to level it up to 3.',
-    'FIGHT: tap a weapon and drag to aim; the dotted line shows the shot. It fires on its own every reload while you have oil and power. Drag the sky, use the minimap or pinch to look around.',
+    'REPAIR: press R (or the Repair tool) and tap or drag over damaged beams and devices; it costs oil and also rebuilds broken beams. FIGHT: tap a weapon and drag to aim; the dotted line shows the shot. It fires on its own every reload while you have oil and power. Drag the sky, use the minimap or pinch to look around.',
     'Play the computer, or create a room and battle a friend online.',
   ],
   skins: [{ name: 'Classic', price: 0 }],
@@ -676,7 +676,7 @@ const GAME = {
   /* ---------- input: building, deleting, upgrading, aiming, looking around ---------- */
   const TBL = () => { const v = K.view, w = 84, gap = 6, x0 = 640 - (8 * (w + gap) + 166) / 2, y = v.y1 - 102; return { tabs: TABS.map((_, i) => ({ i, x: x0 - 4 + i * 112, y: y - 48, w: 106, h: 34 })), items: Array.from({ length: 8 }, (_, i) => ({ x: x0 + i * (w + gap), y, w, h: 92 })), act: { x: x0 + 8 * (w + gap) + 6, y, w: 160, h: 92 } }; };
   const inB = (b, x, y) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
-  const tabItems = () => [...TABS[tab][1], ...Array(6 - TABS[tab][1].length).fill(null)].slice(0, 6).concat(['up', 'del']);
+  const tabItems = () => [...TABS[tab][1], ...Array(5 - TABS[tab][1].length).fill(null)].slice(0, 5).concat(['fix', 'up', 'del']);
   const toolCost = k => MAT[k] ? MAT[k].cost : DEV[k] ? DEV[k].cost : 0;
   const myF = () => forts[mySide];
   function beamEnd(F, from, x, y) {
@@ -708,6 +708,19 @@ const GAME = {
     let best = null, bd = 10 / Math.min(1, cam.z); for (const b of F.beams) if (b.alive) { const A = F.nodes[b.a], B = F.nodes[b.b], dd = segDist(x, y, A.x, A.y, B.x, B.y); if (dd < bd) { bd = dd; best = b; } }
     if (best) { const keep = F.lost; breakBeam(F, best, false); F.lost = keep; F.oil += MAT[best.mat].cost * refund; sound('build'); }
   }
+  // repair: heals a damaged beam or device for oil, puts out fires, and rebuilds a broken beam whose bolts still stand
+  let fixing = false, fixSnd = 0;
+  const brokenFixable = F => F.beams.filter(q => !q.alive && !q.fixed && F.nodes[q.a] && F.nodes[q.b] && F.nodes[q.a].alive && F.nodes[q.b].alive && Math.abs(Math.hypot(F.nodes[q.a].x - F.nodes[q.b].x, F.nodes[q.a].y - F.nodes[q.b].y) - q.rest) < 8);
+  function repairAt(F, x, y) {
+    const z = Math.min(1, cam.z), d = devNear(F, x, y, 22);
+    const done = (cx, cy, c) => { F.oil -= c; burst(cx, cy, ['#7dff9a', '#ffffff'], 8, 120, .4, 3, 0); if (performance.now() - fixSnd > 90) { fixSnd = performance.now(); K.sfx(880 + Math.random() * 200, .06, 'triangle', .04, 300); } };
+    if (d && d.hp < maxHp(d) - .5) { const c = Math.max(1, Math.ceil((1 - d.hp / maxHp(d)) * (DEV[d.type].cost || DEV[d.type].up) * .5)); if (F.oil < c) return say(NO.oil, '#ff8a8a', 1); d.hp = maxHp(d); F.ver++; return done(...pivot(F, d), c); }
+    let best = null, bd = 12 / z;
+    for (const b of F.beams) if (b.alive && (b.hp < MAT[b.mat].hp - .5 || b.fire > 0)) { const A = F.nodes[b.a], B = F.nodes[b.b], q = segDist(x, y, A.x, A.y, B.x, B.y); if (q < bd) { bd = q; best = b; } }
+    if (best) { const c = Math.max(1, Math.ceil((1 - best.hp / MAT[best.mat].hp) * MAT[best.mat].cost * .8)); if (F.oil < c) return say(NO.oil, '#ff8a8a', 1); best.hp = MAT[best.mat].hp; best.fire = 0; const A = F.nodes[best.a], B = F.nodes[best.b]; return done((A.x + B.x) / 2, (A.y + B.y) / 2, c); }
+    bd = 12 / z; for (const b of brokenFixable(F)) { const A = F.nodes[b.a], B = F.nodes[b.b], q = segDist(x, y, A.x, A.y, B.x, B.y); if (q < bd) { bd = q; best = b; } }
+    if (best && liveBeams(F) < MAXB) { const c = MAT[best.mat].cost; if (F.oil < c) return say(NO.oil, '#ff8a8a', 1); best.fixed = true; addBeam(F, best.a, best.b, best.mat); const A = F.nodes[best.a], B = F.nodes[best.b]; done((A.x + B.x) / 2, (A.y + B.y) / 2, c); sound('build'); }
+  }
   const aimFrom = (F, d, x, y) => { const [px, py] = pivot(F, d), a = Math.atan2(y - py, x - px), p = cl((Math.hypot(x - px, y - py) * Math.min(1, cam.z) - 30) / 230, 0, 1); return { a, p }; };
   const ptrs = new Map(); let pan = null, pinch = null, mmDrag = false;
   GAME.down = (kx, ky, e) => {
@@ -729,7 +742,8 @@ const GAME = {
         const n = nearNode(F, x, y, SNAP / Math.min(1, cam.z)), z = ZONE[F.side], gy = groundY(x);
         if (n >= 0) { drag = { mat: tool, from: n, x, y }; return; }
         if (x > z.x0 && x < z.x1 && Math.abs(y - gy) < 26) { drag = { mat: tool, from: -1, start: { x, y: gy }, x, y }; return; }
-      } else if (tool === 'del') return deleteAt(F, x, y);
+      } else if (tool === 'fix') { fixing = true; return repairAt(F, x, y); }
+      else if (tool === 'del') return deleteAt(F, x, y);
       else if (tool === 'up') { const d = devNear(F, x, y); if (d) { const why = upgrade(F, d); if (why) { sound('nope'); say(why, '#ff8a8a', 1.2); } else { sound('up'); say(`${DEV[d.type].name} level ${d.lv}!`, '#ffd23f', 1.4); burst(...pivot(F, d), ['#ffd23f', '#fff'], 16, 160, .5, 4); } return; } }
       else if (tool && DEV[tool]) { if (nearNode(F, x, y, 24 / Math.min(1, cam.z)) >= 0) return placeDev(F, tool, x, y); }
       else { let w = null, wd = 30 / Math.min(1, cam.z); for (const d of F.devs) { if (!d.alive || !DEV[d.type].reload) continue; const q = Math.hypot(pivot(F, d)[0] - x, pivot(F, d)[1] - y); if (q < wd) { wd = q; w = d; } } if (w) { aimSel = w; aimPt = { x, y }; return; } if (aimSel) { aimPt = { x, y }; return; } }
@@ -742,10 +756,11 @@ const GAME = {
     if (mmDrag) { const m = MM(); cam.tx = cl((kx - m.x) / m.w, 0, 1) * WW; const o = { x: cam.tx, y: cam.ty, z: cam.tz }; clampCam(o); cam.tx = o.x; return; }
     if (pan) { const o = { x: pan.x - (kx - pan.kx) / cam.z, y: pan.y - (ky - pan.ky) / cam.z, z: cam.z }; clampCam(o); cam.x = cam.tx = o.x; cam.y = cam.ty = o.y; return; }
     const [x, y] = toWorld(kx, ky); if (drag) { drag.x = x; drag.y = y; } if (aimSel && aimPt) aimPt = { x, y };
+    if (fixing && tool === 'fix' && myF() && ptrs.size === 1) repairAt(myF(), x, y);
   };
   GAME.up = (kx, ky, e) => {
     const id = e ? e.pointerId : 0; ptrs.delete(id); if (pinch) { if (ptrs.size < 2) pinch = null; return; }
-    pan = null; mmDrag = false; const F = myF(); if (!F) return; const [x, y] = toWorld(kx, ky);
+    pan = null; mmDrag = false; fixing = false; const F = myF(); if (!F) return; const [x, y] = toWorld(kx, ky);
     if (drag) { drag.x = x; drag.y = y; commitBeam(F, drag); drag = null; }
     if (aimSel && aimPt) { const [px, py] = pivot(F, aimSel); if (Math.hypot(x - px, y - py) * Math.min(1, cam.z) > 34) { aimSel.aim = aimFrom(F, aimSel, x, y); if (aimSel.cd > 1.2 && phase === 'battle') aimSel.cd = 1.2; sound('build'); } aimPt = null; }
   };
@@ -753,6 +768,7 @@ const GAME = {
     if (!d || mode !== 'play' || demo) return;
     const n = /^Digit([1-4])$/.exec(c); if (n) { tab = +n[1] - 1; return; }
     if (c === 'Escape' || c === 'KeyQ') { tool = null; aimSel = null; }
+    else if (c === 'KeyR' && phase !== 'over') { tool = tool === 'fix' ? null : 'fix'; aimSel = null; }
     else if (c === 'Enter' && phase === 'build') { myF().ready = true; say('Ready!', '#5cf28a', 1.4); }
     else if (c === 'ArrowLeft' || c === 'KeyA') { cam.tx -= 200 / cam.z; const o = { x: cam.tx, y: cam.ty, z: cam.tz }; clampCam(o); cam.tx = o.x; }
     else if (c === 'ArrowRight' || c === 'KeyD') { cam.tx += 200 / cam.z; const o = { x: cam.tx, y: cam.ty, z: cam.tz }; clampCam(o); cam.tx = o.x; }
@@ -951,11 +967,61 @@ const GAME = {
     if (D.reload && d.aim && F.side === mySide && phase === 'battle' && !demo) { g.strokeStyle = c; g.lineWidth = 2.5; g.beginPath(); g.arc(px, py, 21, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - Math.max(0, d.cd) / (D.reload * L.rel(d)))); g.stroke(); }
     if (tool === 'up' && F.side === mySide && !demo) { g.font = '11px Bungee, sans-serif'; g.textAlign = 'center'; g.fillStyle = d.lv >= 3 ? '#9a9ab8' : F.oil >= upCost(d.type, d.lv) ? '#5cf28a' : '#ff8a8a'; g.fillText(d.lv >= 3 ? 'MAX' : `⬆ ${upCost(d.type, d.lv)}`, px, py - 40); }
   }
+  // closed cells (triangles, and squares even without a brace) get a solid back wall, so a finished frame reads as a fort
+  function cells(F) {
+    let alive = 0; for (const b of F.beams) if (b.alive) alive++;
+    const key = F.ver + ':' + alive + ':' + F.beams.length + ':' + F.nodes.length; if (F.cellKey === key) return F.cells;
+    const N = F.nodes, adj = new Map(), mat = new Map(), ek = (a, b) => a < b ? a + ',' + b : b + ',' + a, out = [], seen = new Set();
+    const link = (a, b) => { if (!adj.has(a)) adj.set(a, new Set()); adj.get(a).add(b); };
+    for (const b of F.beams) if (b.alive && N[b.a] && N[b.b] && N[b.a].alive && N[b.b].alive) { link(b.a, b.b); link(b.b, b.a); mat.set(ek(b.a, b.b), b.mat); }
+    const add = ids => {
+      const k = [...ids].sort((x, y) => x - y).join(','); if (seen.has(k)) return; seen.add(k);
+      const cnt = { wood: 0, steel: 0, armor: 0 }; ids.forEach((a, i) => { cnt[mat.get(ek(a, ids[(i + 1) % ids.length]))]++; });
+      out.push({ ids, m: cnt.armor >= cnt.steel && cnt.armor >= cnt.wood && cnt.armor ? 'armor' : cnt.steel >= cnt.wood ? 'steel' : 'wood' });
+    };
+    for (const [a, na] of adj) for (const b of na) if (b > a) for (const c of na) if (c > b && adj.get(b).has(c)) add([a, b, c]);
+    const ks = [...adj.keys()];
+    for (const a of ks) for (const c of ks) {
+      if (c <= a || adj.get(a).has(c)) continue; const com = [...adj.get(a)].filter(x => adj.get(c).has(x)); if (com.length < 2) continue;
+      for (let i = 0; i < com.length; i++) for (let j = i + 1; j < com.length; j++) { const b = com[i], d = com[j]; if (segHit(N[a].x, N[a].y, N[c].x, N[c].y, N[b].x, N[b].y, N[d].x, N[d].y) >= 0) add([a, b, c, d]); }
+    }
+    F.cellKey = key; F.cells = out; return out;
+  }
+  const PAT = {};
+  function panelPat(g, k) {
+    if (PAT[k]) return PAT[k];
+    const c = document.createElement('canvas'); c.width = c.height = 64; const q = c.getContext('2d');
+    if (k === 'wood') {
+      const sh = ['#5a3a1e', '#4c3018', '#634224', '#462c16'];
+      for (let i = 0; i < 4; i++) { q.fillStyle = sh[i]; q.fillRect(0, i * 16, 64, 16); q.fillStyle = 'rgba(20,10,4,.6)'; q.fillRect(0, i * 16 + 15, 64, 1.5); q.fillStyle = 'rgba(255,220,170,.08)'; q.fillRect(0, i * 16, 64, 2); const sx = (i * 23) % 64; q.fillStyle = 'rgba(20,10,4,.55)'; q.fillRect(sx, i * 16, 1.5, 16); q.fillStyle = '#2a1c10'; q.fillRect(sx + 4, i * 16 + 6, 2, 2); }
+      q.strokeStyle = 'rgba(30,16,6,.35)'; q.lineWidth = 1; for (let i = 0; i < 9; i++) { const y = 3 + i * 7; q.beginPath(); q.moveTo(0, y); q.bezierCurveTo(20, y - 2, 40, y + 2, 64, y); q.stroke(); }
+    } else if (k === 'steel') {
+      q.fillStyle = '#4a5262'; q.fillRect(0, 0, 64, 64); const gr = q.createLinearGradient(0, 0, 0, 32); gr.addColorStop(0, 'rgba(255,255,255,.1)'); gr.addColorStop(1, 'rgba(0,0,0,.12)'); q.fillStyle = gr; q.fillRect(0, 0, 64, 32); q.fillRect(0, 32, 64, 32);
+      q.strokeStyle = 'rgba(15,18,26,.75)'; q.lineWidth = 2; q.strokeRect(1, 1, 31, 31); q.strokeRect(33, 33, 30, 30); q.strokeRect(33, 1, 30, 31); q.strokeRect(1, 33, 31, 30);
+      q.fillStyle = '#9aa6b8'; for (const [x, y] of [[5, 5], [28, 5], [5, 28], [28, 28], [37, 37], [60, 37], [37, 60], [60, 60], [37, 5], [60, 5], [5, 37], [28, 37]]) { q.beginPath(); q.arc(x, y, 1.4, 0, TAU); q.fill(); }
+    } else {
+      q.fillStyle = '#2c323c'; q.fillRect(0, 0, 64, 64); q.strokeStyle = 'rgba(0,0,0,.45)'; q.lineWidth = 3; for (let i = -64; i < 64; i += 16) { q.beginPath(); q.moveTo(i, 64); q.lineTo(i + 64, 0); q.stroke(); }
+      q.strokeStyle = 'rgba(160,170,190,.18)'; q.lineWidth = 1; for (let i = -62; i < 66; i += 16) { q.beginPath(); q.moveTo(i, 64); q.lineTo(i + 64, 0); q.stroke(); }
+      q.fillStyle = '#7a8496'; for (const [x, y] of [[8, 8], [40, 8], [8, 40], [40, 40], [24, 24], [56, 56], [56, 24], [24, 56]]) { q.beginPath(); q.arc(x, y, 2, 0, TAU); q.fill(); }
+    }
+    return (PAT[k] = g.createPattern(c, 'repeat'));
+  }
+  function drawWalls(g, F) {
+    for (const c of cells(F)) {
+      const P = c.ids.map(i => F.nodes[i]); if (P.some(p => !p || !p.alive)) continue;
+      g.beginPath(); P.forEach((p, i) => i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)); g.closePath();
+      g.fillStyle = panelPat(g, c.m); g.fill();
+      g.save(); g.clip(); g.strokeStyle = 'rgba(8,4,14,.5)'; g.lineWidth = 14; g.stroke(); g.fillStyle = F.side ? 'rgba(40,90,160,.08)' : 'rgba(160,80,20,.08)'; g.fill(); g.restore();
+    }
+  }
   function drawFort(g, F) {
     const mine = F.side === mySide && !demo, building = mine && (tool === 'wood' || tool === 'steel' || tool === 'armor');
     for (const b of F.beams) if (b.alive && F.nodes[b.a] && F.nodes[b.b]) drawBeam(g, F.nodes[b.a], F.nodes[b.b], b, mine, true);
+    drawWalls(g, F);
     for (const n of F.nodes) if (n.alive && n.pin) { metal(g, n.x - 10, n.y - 4, 20, 9, 2, '#6a6478', '#2c2836'); }
+    if (mine && tool === 'fix') for (const b of brokenFixable(F)) { const A = F.nodes[b.a], B = F.nodes[b.b]; g.strokeStyle = 'rgba(125,255,154,.55)'; g.lineWidth = 3; g.setLineDash([6, 5]); g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.stroke(); g.setLineDash([]); }
     for (const b of F.beams) if (b.alive && F.nodes[b.a] && F.nodes[b.b]) drawBeam(g, F.nodes[b.a], F.nodes[b.b], b, mine, false);
+    if (mine && tool === 'fix') { const p = .5 + .5 * Math.sin(t * 6); g.strokeStyle = `rgba(125,255,154,${.35 + .4 * p})`; g.lineWidth = 3; for (const b of F.beams) if (b.alive && (b.hp < MAT[b.mat].hp - .5 || b.fire > 0)) { const A = F.nodes[b.a], B = F.nodes[b.b]; g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.stroke(); } for (const d of F.devs) if (d.alive && d.hp < maxHp(d) - .5) { const [px, py] = pivot(F, d); g.beginPath(); g.arc(px, py, 20, 0, TAU); g.stroke(); } }
     for (const n of F.nodes) if (n.alive) { const r = building ? 5.5 : 3.8, bg = g.createRadialGradient(n.x - r * .35, n.y - r * .35, .5, n.x, n.y, r); bg.addColorStop(0, '#fff6d8'); bg.addColorStop(1, '#a8823a'); g.fillStyle = bg; g.beginPath(); g.arc(n.x, n.y, r, 0, TAU); g.fill(); g.strokeStyle = '#2a1e10'; g.lineWidth = 1.2; g.stroke(); }
     for (const d of F.devs) if (d.alive && F.nodes[d.n]) drawDev(g, F, d);
   }
@@ -1046,7 +1112,7 @@ const GAME = {
       const k = items[i]; if (!k) return; const on = tool === k, cost = toolCost(k), can = me.oil >= cost;
       const gr = g.createLinearGradient(0, b.y, 0, b.y + b.h); gr.addColorStop(0, on ? 'rgba(255,176,46,.45)' : 'rgba(255,255,255,.1)'); gr.addColorStop(1, on ? 'rgba(255,120,40,.2)' : 'rgba(255,255,255,.02)'); g.fillStyle = gr; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 14); g.fill(); g.strokeStyle = on ? SIDEC[mySide] : 'rgba(255,255,255,.16)'; g.lineWidth = on ? 3 : 1.2; g.stroke();
       g.globalAlpha = can ? 1 : .4; icon(g, k, b.x + b.w / 2, b.y + 34); g.globalAlpha = 1;
-      txt(g, k === 'del' ? 'REMOVE' : k === 'up' ? 'UPGRADE' : ((MAT[k] || DEV[k]).short || (MAT[k] || DEV[k]).name).toUpperCase(), b.x + b.w / 2, b.y + 66, 10, '#fff', 'center');
+      txt(g, k === 'del' ? 'REMOVE' : k === 'up' ? 'UPGRADE' : k === 'fix' ? 'REPAIR (R)' : ((MAT[k] || DEV[k]).short || (MAT[k] || DEV[k]).name).toUpperCase(), b.x + b.w / 2, b.y + 66, 10, '#fff', 'center');
       if (cost) { g.font = '11px Bungee, Impact, sans-serif'; const cw = g.measureText('' + cost).width; resIcon(g, 'oil', b.x + b.w / 2 - cw / 2 - 4, b.y + 81, 5.5); txt(g, '' + cost, b.x + b.w / 2 - cw / 2 + 4, b.y + 82, 11, can ? '#ffd23f' : '#ff8a8a'); }
       if (DEV[k] && DEV[k].pw) resIcon(g, 'pw', b.x + b.w - 12, b.y + 13, 6);
     });
@@ -1055,7 +1121,7 @@ const GAME = {
     g.fillStyle = ag; g.beginPath(); g.roundRect(A.x, A.y, A.w, A.h, 16); g.fill();
     txt(g, phase === 'build' ? (rd ? 'READY ✓' : 'READY') : 'AIM', A.x + A.w / 2, A.y + 40, 26, phase === 'build' && !rd ? '#2a1408' : '#fff', 'center');
     txt(g, phase === 'build' ? (rd ? 'waiting...' : 'start the battle') : 'tap a weapon', A.x + A.w / 2, A.y + 68, 11, phase === 'build' && !rd ? '#2a1408' : '#cfc8e0', 'center');
-    const hint = (tool === 'wood' || tool === 'steel' || tool === 'armor') ? 'Drag from a bolt or your ground. Triangles hold; tall towers shoot further.' : tool === 'del' ? 'Tap a beam or device to remove it' + (phase === 'battle' ? ' (half refund)' : '') : tool === 'up' ? 'Tap one of your devices to upgrade it (up to level 3)' : tool === 'pump' ? `Tap a bolt on the ground to place an Oil pump (+${pumpRate({ lv: 1 })} oil/s)` : tool === 'gen' ? `Generators burn ${genBurn({ lv: 1 })} oil/s into ${genOut({ lv: 1 })} power/s. They explode when destroyed!` : tool ? `Tap one of your bolts to place the ${DEV[tool].name}` + (DEV[tool].reload ? ` · each shot: ${DEV[tool].ammo} oil` + (DEV[tool].pw ? ` + ${DEV[tool].pw} power` : '') : '') : aimSel ? 'Drag to aim: direction and power. It fires on its own.' : phase === 'battle' ? 'Tap a weapon, then drag to aim. Drag the sky to look around.' : '';
+    const hint = (tool === 'wood' || tool === 'steel' || tool === 'armor') ? 'Drag from a bolt or your ground. Triangles hold; tall towers shoot further.' : tool === 'fix' ? 'Tap or drag over damaged beams and devices to repair them with oil. Ghost beams can be rebuilt.' : tool === 'del' ? 'Tap a beam or device to remove it' + (phase === 'battle' ? ' (half refund)' : '') : tool === 'up' ? 'Tap one of your devices to upgrade it (up to level 3)' : tool === 'pump' ? `Tap a bolt on the ground to place an Oil pump (+${pumpRate({ lv: 1 })} oil/s)` : tool === 'gen' ? `Generators burn ${genBurn({ lv: 1 })} oil/s into ${genOut({ lv: 1 })} power/s. They explode when destroyed!` : tool ? `Tap one of your bolts to place the ${DEV[tool].name}` + (DEV[tool].reload ? ` · each shot: ${DEV[tool].ammo} oil` + (DEV[tool].pw ? ` + ${DEV[tool].pw} power` : '') : '') : aimSel ? 'Drag to aim: direction and power. It fires on its own.' : phase === 'battle' ? 'Tap a weapon, then drag to aim. Drag the sky to look around.' : '';
     if (hint !== hintS) { hintS = hint; hintT = t; }
     const ha = hint ? cl(1 - (t - hintT - 6), 0, 1) : 0;
     if (ha > 0) { g.globalAlpha = ha; g.font = '13px Bungee, Impact, sans-serif'; const hw = g.measureText(hint).width + 30; glass(g, 640 - hw / 2, tb.act.y - 86, hw, 28, 14); txt(g, hint, 640, tb.act.y - 71, 13, '#fff', 'center'); g.globalAlpha = 1; }
@@ -1080,6 +1146,7 @@ const GAME = {
   function icon(g, k, x, y) {
     g.save(); g.translate(x, y);
     if (MAT[k]) { g.rotate(-.5); drawBeam(g, { x: -24, y: 0 }, { x: 24, y: 0 }, { mat: k, hp: MAT[k].hp, f: 0, hit: 0 }, false); }
+    else if (k === 'fix') { g.rotate(-.7); g.fillStyle = '#7dff9a'; g.strokeStyle = '#1a4a2a'; g.lineWidth = 2; g.beginPath(); g.roundRect(-3.5, -4, 7, 22, 3); g.fill(); g.stroke(); g.beginPath(); g.arc(0, -10, 9, 0, TAU); g.fill(); g.stroke(); g.fillStyle = '#1a1030'; g.beginPath(); g.roundRect(-3.5, -21, 7, 10, 2); g.fill(); }
     else if (k === 'del') { g.strokeStyle = '#ff6a6a'; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.moveTo(-12, -12); g.lineTo(12, 12); g.moveTo(12, -12); g.lineTo(-12, 12); g.stroke(); }
     else if (k === 'up') { g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(0, -16); g.lineTo(14, 2); g.lineTo(5, 2); g.lineTo(5, 14); g.lineTo(-5, 14); g.lineTo(-5, 2); g.lineTo(-14, 2); g.closePath(); g.fill(); g.strokeStyle = '#6a4a10'; g.lineWidth = 2; g.stroke(); }
     else { const F = { side: mySide, nodes: [{ x: 0, y: 13, alive: true }] }, d = { type: k, n: 0, lv: 1, ang: -.6, flash: 0, e: 0, spin: t * 3, hp: DEV[k].hp, alive: true }; g.scale(.85, .85); drawDev(g, F, d); }
@@ -1111,7 +1178,7 @@ const GAME = {
   GAME.bot = () => {};
   GAME.pose = () => { for (let i = 0; i < 60 * 13; i++) step(DT); posed = true; camGo('mine', true); cam.z = cam.tz = .8; cam.x = cam.tx = ISL[0].x1 - 120; cam.y = cam.ty = GY - 260; };
   GAME.test = { st: () => ({ mode, phase, buildT: +buildT.toFixed(1), my: mySide, cam: [Math.round(cam.x), Math.round(cam.y), +cam.z.toFixed(2)], forts: forts.map(F => ({ n: F.nodes.filter(n => n.alive).length, b: liveBeams(F), d: F.devs.filter(d => d.alive).map(d => d.type + (d.lv > 1 ? '*' + d.lv : '') + ':' + Math.round(d.hp)), oil: Math.round(F.oil), en: Math.round(F.en), dead: F.dead, fire: F.beams.filter(b => b.alive && b.fire > 0).length, maxSt: +Math.max(0, ...F.beams.filter(b => b.alive).map(b => Math.abs(b.f || 0) / MAT[b.mat].maxF)).toFixed(2) })), shots: shots.length }),
-    step: n => { for (let i = 0; i < n; i++) step(DT); }, forts: () => forts, shots: () => shots, add: (k, n) => addDev(myF(), k, n), ready: () => { myF().ready = true; }, start: () => MP.start(), cam: w => camGo(w, true), tool: (k, tb) => { tool = k; if (tb !== undefined) tab = tb; },
+    step: n => { for (let i = 0; i < n; i++) step(DT); }, forts: () => forts, shots: () => shots, add: (k, n) => addDev(myF(), k, n), fix: (x, y) => repairAt(myF(), x, y), ready: () => { myF().ready = true; }, start: () => MP.start(), cam: w => camGo(w, true), tool: (k, tb) => { tool = k; if (tb !== undefined) tab = tb; },
     aim: (i, a, p) => { const d = myF().devs.filter(x => x.alive && DEV[x.type].reload)[i]; if (d) d.aim = { a, p }; }, botMe: () => { myF().bot = true; }, give: g2 => { myF().oil += g2; }, toWorld, toKit: (x, y) => [640 + (x - cam.x) * cam.z, 360 + (y - cam.y) * cam.z] };
 })();
 

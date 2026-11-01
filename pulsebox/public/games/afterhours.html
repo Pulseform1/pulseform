@@ -121,7 +121,7 @@ const GAME = {
   font: 'Anton', accent: '#ff2e4d', accent2: '#35e0ff', bg: '#07070f', noSkins: true, noHud: true, scoreLabel: 'Final score',
   how: ['Days: walk the streets of Lanternfall (A/D or arrows, or tap). SPACE or a tap on a building goes inside. Raise 4 stats and deepen 4 bonds before the festival.',
     'Nights: touch the mirror at home to enter the Undertow. Walk with WASD, the arrows or by holding the mouse; strike shadows first with Space or a tap.',
-    'Battles: hit a weakness to knock an enemy DOWN and act again. Knock them all down for an All-Out Attack, or Talk to win their mask.',
+    'Battles: hit a weakness to knock an enemy DOWN and act again. Knock them all down for an All-Out Attack, or Talk to win their mask: read its mood and answer the way it likes. You can carry 8 masks (10 later), and fuse two into a new one at the shrine.',
     'Fuse masks at the shrine. Rescue each missing student before the fog rolls in!'],
   skins: [{ name: 'Default', price: 0, c: ['#ff2e4d'] }],
 };
@@ -2264,7 +2264,7 @@ const GAME = {
     if (m === 'talk') {
       const T_ = B.talk; G.fillStyle = 'rgba(7,7,15,.92)'; slant(30, 300, 760, 110, 24); G.fill(); G.strokeStyle = T_.f.d.c; G.lineWidth = 3; G.stroke();
       drawMask(T_.f.d, 90, 352, 34);
-      txt(T_.f.n, 140, 328, 18, T_.f.d.c, 'left', true); wrap(`"${T_.q[0]}"`, 600, 22).forEach((l, i) => txt(l, 140, 360 + i * 26, 22, WH));
+      txt(T_.f.n, 140, 328, 18, T_.f.d.c, 'left', true); txt({ kind: 'It looks lonely...', honest: 'It hates being flattered.', witty: 'It looks bored. Make it laugh?', bold: 'It respects courage.' }[T_.liked], 770, 328, 15, '#b9b4d6', 'right'); wrap(`"${T_.q[0]}"`, 600, 22).forEach((l, i) => txt(l, 140, 360 + i * 26, 22, WH));
       T_.ans.forEach((a, i) => btn(40 + i * 12, 430 + i * 70, 640, 60, T_.q[1][a], () => answer(a), { body: 1, size: 21 }));
       return;
     }
