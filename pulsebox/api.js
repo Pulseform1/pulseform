@@ -304,7 +304,7 @@ const MAX_PLAYERS = 8, MAX_MSG = 8000;
 export class Rooms {
   constructor(state) { this.state = state; this.socks = new Map(); this.next = 1; this.host = 0; this.game = ''; }
   async fetch(request) {
-    if (request.headers.get('upgrade') !== 'websocket') return new Response(JSON.stringify({ game: this.socks.size ? this.game : '', players: this.socks.size }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+    if (request.headers.get('upgrade') !== 'websocket') return new Response(JSON.stringify({ game: this.socks.size ? this.game : '', players: this.socks.size }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'access-control-allow-origin': '*' } });
     const g = (new URL(request.url).searchParams.get('g') || '').replace(/[^a-z0-9-]/g, '').slice(0, 40);
     if (!this.socks.size || !this.game) this.game = g;
     const pair = new WebSocketPair(), [client, sock] = Object.values(pair);

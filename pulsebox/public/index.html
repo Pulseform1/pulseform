@@ -2029,7 +2029,7 @@ function openFriends(p = 'make', code = '') {
     b.addEventListener('click', () => makeRoom(g)); $('frGrid').append(b);
   });
   $('frModal').hidden = false; frPanel(p);
-  if (p === 'join') { $('frCode').value = code || ''; if (code) joinRoom(code); else setTimeout(() => $('frCode').focus(), 50); }
+  if (p === 'join') { $('frCode').value = code || ''; if (code && mpName()) joinRoom(code); else setTimeout(() => $(code ? 'frName' : 'frCode').focus(), 50); if (code && !mpName()) $('frErr').innerHTML = '<span class="ok">Type your name, then tap Join the room.</span>'; }
 }
 function closeFriends() { $('frModal').hidden = true; }
 const roomLink = c => location.origin + location.pathname + '#join-' + c;
