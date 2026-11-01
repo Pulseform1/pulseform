@@ -116,9 +116,19 @@ const GAME = {
   const ROW = 58, rarity = p => { const m = Math.max(...p.r); return m >= 99 ? ['LEGEND PULL', '#ffd23f'] : m >= 92 ? ['STAR', '#ff5fa2'] : m >= 85 ? ['GOLD', '#ffb02e'] : m >= 78 ? ['SILVER', '#cfd8e0'] : ['BRONZE', '#c8864a']; };
   function spin() {
     if (build.slots.every(Boolean) || reel || build.pro) return;
-    const pro = makePro(sport), names = Array.from({ length: 22 }, () => pick(FN) + ' ' + pick(LN)); names.push(pro.name);
-    reel = { t: 0, T: 2.1 + rng() * .5, names, pro, row: -1 }; build.lastSpin = t;
+    const pro = makePro(sport), W = 22 + Math.floor(R0() * 4), RC = ['#c8864a', '#c8864a', '#cfd8e0', '#cfd8e0', '#ffb02e', '#ff5fa2'];
+    const names = Array.from({ length: W + 4 }, () => ({ n: pick(FN) + ' ' + pick(LN), c: RC[Math.floor(R0() * RC.length)] }));
+    names[W] = { n: pro.name, c: rarity(pro)[1], win: 1 };
+    // speed curve: a quick spin-up, a steady fast spin, then a smooth slow-down that lands exactly on the pro
+    const V = 15, A = .22, Td = 1.35 + R0() * .35, Dd = V * Td / 3, Tc = Math.max(.3, (W - V * A / 2 - Dd) / V), D0 = W - Dd;
+    reel = { t: 0, W, V, A, Tc, Td, Dd, D0, end: A + Tc + Td, T: A + Tc + Td + .35, names, pro, row: -1, tick: 0 }; build.lastSpin = t;
     K.sfx(300, .08, 'square', .05, 200);
+  }
+  function reelPos(r) {
+    const t = r.t; if (t < r.A) return r.V * t * t / (2 * r.A);
+    if (t < r.A + r.Tc) return r.V * r.A / 2 + r.V * (t - r.A);
+    if (t < r.end) { const u = (t - r.A - r.Tc) / r.Td; return r.D0 + r.Dd * (1 - Math.pow(1 - u, 3)); }
+    const k = Math.min(1, (t - r.end) / .3); return r.W + Math.sin(k * Math.PI) * .1 * (1 - k);   // a small settle bounce
   }
   function reroll() { if (!build.pro || build.rerolls <= 0) return; build.rerolls--; build.pro = null; spin(); }
   function place(i) {
@@ -277,13 +287,24 @@ const GAME = {
     const cx0 = 430, cw = 810, cy = 80, ch = 500, px = cx0 + cw / 2;
     rr(g, cx0, cy, cw, ch, 18, '#121a2e', S.c, 3);
     if (reel) {
-      const e = 1 - Math.pow(1 - Math.min(1, reel.t / reel.T), 4), off = e * (reel.names.length - 1) * ROW, yc = cy + 250, landed = reel.t >= reel.T;
-      g.save(); g.beginPath(); g.rect(cx0 + 10, yc - ROW * 2.5, cw - 20, ROW * 5); g.clip();
-      reel.names.forEach((n, j) => { const y = yc + j * ROW - off; if (Math.abs(y - yc) > ROW * 3) return; const a = 1 - Math.min(1, Math.abs(y - yc) / (ROW * 2.6)), last = j === reel.names.length - 1; g.globalAlpha = .25 + a * .75; tx(g, n.toUpperCase(), px, y, d(Math.abs(y - yc) < ROW / 2 ? 52 : 40), last && landed ? '#ffd23f' : '#eef1f8'); });
-      g.globalAlpha = 1; const fade = g.createLinearGradient(0, yc - ROW * 2.5, 0, yc + ROW * 2.5); fade.addColorStop(0, '#121a2e'); fade.addColorStop(.3, 'rgba(18,26,46,0)'); fade.addColorStop(.7, 'rgba(18,26,46,0)'); fade.addColorStop(1, '#121a2e'); g.fillStyle = fade; g.fillRect(cx0 + 10, yc - ROW * 2.5, cw - 20, ROW * 5); g.restore();
-      rr(g, cx0 + 40, yc - ROW / 2, cw - 80, ROW, 12, null, landed ? '#fff' : '#ffd23f', 4);
-      g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(cx0 + 24, yc - 14); g.lineTo(cx0 + 40, yc); g.lineTo(cx0 + 24, yc + 14); g.fill(); g.beginPath(); g.moveTo(cx0 + cw - 24, yc - 14); g.lineTo(cx0 + cw - 40, yc); g.lineTo(cx0 + cw - 24, yc + 14); g.fill();
-      tx(g, landed ? 'LOCKED IN' : 'SPINNING...', px, cy + 70, d(36), '#ffd23f');
+      const RH = 74, pos = reelPos(reel), yc = cy + 262, landed = reel.t >= reel.end, top = yc - RH * 2.5, fast = reel.t > reel.A && reel.t < reel.A + reel.Tc + reel.Td * .3;
+      tx(g, landed ? 'LOCKED IN' : 'SPINNING...', px, cy + 44, d(34), landed ? '#fff' : '#ffd23f');
+      g.save(); g.beginPath(); g.rect(cx0 + 12, top, cw - 24, RH * 5); g.clip();
+      g.fillStyle = 'rgba(255,255,255,.03)'; g.fillRect(cx0 + 12, top, cw - 24, RH * 5);
+      for (let j = Math.max(0, Math.floor(pos) - 3); j <= Math.min(reel.names.length - 1, Math.floor(pos) + 3); j++) {
+        const it = reel.names[j], y = yc + (j - pos) * RH, dist = Math.abs(y - yc) / RH, mid = dist < .5, win = it.win && landed;
+        g.globalAlpha = Math.max(.2, 1 - dist * .32);
+        rr(g, cx0 + 60, y - RH / 2 + 5, cw - 120, RH - 10, 12, win ? 'rgba(255,210,63,.22)' : 'rgba(31,42,70,.85)');
+        g.fillStyle = it.c; g.fillRect(cx0 + 60, y - RH / 2 + 5, 10, RH - 10);
+        if (fast) { g.globalAlpha *= .55; tx(g, it.n.toUpperCase(), px, y - 7, d(mid ? 42 : 34), '#eef1f8'); g.globalAlpha /= .55; }
+        tx(g, it.n.toUpperCase(), px, y, d(mid ? 42 : 34), win ? '#ffd23f' : mid ? '#fff' : '#b8c4dc');
+      }
+      g.globalAlpha = 1;
+      const fade = g.createLinearGradient(0, top, 0, top + RH * 5); fade.addColorStop(0, '#121a2e'); fade.addColorStop(.28, 'rgba(18,26,46,0)'); fade.addColorStop(.72, 'rgba(18,26,46,0)'); fade.addColorStop(1, '#121a2e'); g.fillStyle = fade; g.fillRect(cx0 + 12, top, cw - 24, RH * 5); g.restore();
+      const glow = landed ? 1 - Math.min(1, (reel.t - reel.end) / .5) : 0;
+      rr(g, cx0 + 44, yc - RH / 2, cw - 88, RH, 14, null, landed ? `rgba(255,255,255,${.6 + glow * .4})` : '#ffd23f', 4 + glow * 4);
+      g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(cx0 + 22, yc - 16); g.lineTo(cx0 + 42, yc); g.lineTo(cx0 + 22, yc + 16); g.fill(); g.beginPath(); g.moveTo(cx0 + cw - 22, yc - 16); g.lineTo(cx0 + cw - 42, yc); g.lineTo(cx0 + cw - 22, yc + 16); g.fill();
+      if (!landed) tx(g, 'tap to stop', px, cy + ch - 24, f(15, 700), '#5a6a8a');
     } else if (!build.pro && mode === 'build') {
       tx(g, `PICK ${build.spins + 1} OF 6`, px, cy + 70, d(34), '#9fb0d0'); tx(g, 'Spin the reel to land on a pro.', px, cy + 112, f(18, 700), '#cfd8e0');
       button(g, 'spin', { x: px - 190, y: cy + 180, w: 380, h: 130 }, 'SPIN', '#ffd23f', 'Space / tap');
@@ -364,8 +385,9 @@ const GAME = {
   GAME.update = dt => {
     t += dt; if (msg && (msg.k += dt) > 3.5) msg = null;
     if (reel) {
-      reel.t += dt; const e = 1 - Math.pow(1 - Math.min(1, reel.t / reel.T), 4), row = Math.floor(e * (reel.names.length - 1) + .5);
-      if (row !== reel.row) { reel.row = row; K.sfx(1100 - row * 22, .025, 'square', .035); }
+      const was = reel.t < reel.end; reel.t += dt; reel.tick -= dt; const row = Math.floor(reelPos(reel) + .5);
+      if (row !== reel.row && reel.tick <= 0) { reel.row = row; reel.tick = .045; K.sfx(700 + (row / reel.W) * 500, .025, 'square', .035); }
+      if (was && reel.t >= reel.end) { K.sfx(980, .08, 'square', .06); K.shake(3); }
       if (reel.t >= reel.T + .15) { build.pro = reel.pro; reel = null; const [rn] = rarity(build.pro); K.sfx(660, .12, 'triangle', .08); if (rn === 'LEGEND PULL' || rn === 'STAR') { K.chime(784, [0, 4, 7, 12]); K.burst(835, 260, ['#ffd23f', '#fff', '#ff5fa2'], 30, 420); K.shake(6); } if (build.vs) build.vs.clock = 10; }
     }
     if (mode === 'build' && build.vs && build.pro && (build.vs.clock -= dt) <= 0) { const S = SPORTS[sport], open = build.slots.map((s, i) => s ? -1 : build.pro.r[i] * S.w[i]); place(open.indexOf(Math.max(...open))); msg = { t: 'Shot clock! Your pick was made for you.', k: 0 }; }
@@ -395,12 +417,14 @@ const GAME = {
     if (k === 'again') { const c = career, s = sport; return K.over({ title: c.tier[1], text: `${build.name}, ${c.O} overall: ${c.seasons.length} seasons and a legacy of ${c.legacy}. ${c.legacy >= 420 ? 'Welcome to the Hall of Fame.' : 'Spin again, build better.'}`, delay: 50 }); }
     if (k === 'home') { mode = 'home'; build = null; career = null; return; }
   }
-  GAME.down = (x, y) => { K.audio && K.audio(); click(live().find(k => hitR(B[k], x, y))); };
+  const skip = () => { if (reel && reel.t < reel.end - .5) reel.t = reel.end - .5; };
+  GAME.down = (x, y) => { K.audio && K.audio(); if (reel && mode === 'build') return skip(); click(live().find(k => hitR(B[k], x, y))); };
   GAME.move = (x, y) => { hover = live().find(k => hitR(B[k], x, y)) || null; const c = document.getElementById('cv'); if (c) c.style.cursor = hover ? 'pointer' : 'default'; };
   GAME.key = (c, dn) => {
     if (!dn) return; const n = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4, Digit6: 5 }[c];
     if (n != null && mode === 'build') return place(n);
     if (c === 'KeyR' && mode === 'build') return reroll();
+    if ((c === 'Space' || c === 'Enter') && mode === 'build' && reel) return skip();
     if ((c === 'Space' || c === 'Enter') && mode === 'build' && !build.pro && !reel) return spin();
     if (c === 'Space' || c === 'Enter') { if (mode === 'home') return click('play'); if (mode === 'ready') return click('sim'); if (mode === 'career' && career.done) return click('verdict'); if (mode === 'verdict' && career.vt > 1) return click('again'); }
     if (mode === 'home' && (c === 'ArrowLeft' || c === 'ArrowRight')) { const ks = Object.keys(SPORTS); sport = ks[(ks.indexOf(sport) + (c === 'ArrowRight' ? 1 : ks.length - 1)) % ks.length]; }

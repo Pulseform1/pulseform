@@ -96,7 +96,7 @@ const GAME = {
     const err = (1.25 - star('QB') * .17) * Math.min(d, arm) * .045;
     tx += rnd(-err, err); ty = clamp(ty + rnd(-err, err), .5, FW - .5);
     const dist = Math.hypot(tx - q.x, ty - q.y);
-    P.ball = { x0: q.x, y0: q.y, tx, ty, t: 0, T: .32 + dist / (20 + star('QB') * 2.2) }; P.thrown = true; P.throwFrom = q.x;
+    P.ball = { x0: q.x, y0: q.y, tx, ty, t: 0, T: .32 + dist / (20 + star('QB') * 2.2), rec: near(P.off.slice(1, 4), tx, ty).p }; P.thrown = true; P.throwFrom = q.x;
     K.sfx(500, .08, 'square', .06, 300);
   }
   // tap a receiver: lead them by where they will be when the ball arrives
@@ -225,6 +225,13 @@ const GAME = {
 
   /* ---------- simulation of a live play ---------- */
   function stepTo(p, tx, ty, sp, dt) { const dx = tx - p.x, dy = ty - p.y, d = Math.hypot(dx, dy) || 1, v = Math.min(sp, d / dt); p.vx = dx / d * v; p.vy = dy / d * v; p.x += p.vx * dt; p.y = clamp(p.y + p.vy * dt, .3, FW - .3); }
+  // run toward a spot but turn like a person: heading swings round at a limited rate, so the path curves instead of snapping
+  function chase(p, tx, ty, sp, dt) {
+    const dx = tx - p.x, dy = ty - p.y, d = Math.hypot(dx, dy); if (d < .15) { p.vx *= .8; p.vy *= .8; return; }
+    const want = Math.atan2(dy, dx), cur = Math.hypot(p.vx, p.vy) > .4 ? Math.atan2(p.vy, p.vx) : want; let da = want - cur; da = Math.atan2(Math.sin(da), Math.cos(da));
+    const a = cur + clamp(da, -7 * dt, 7 * dt), v = Math.min(sp, d / dt, d * 4 + 1);
+    p.vx = Math.cos(a) * v; p.vy = Math.sin(a) * v; p.x += p.vx * dt; p.y = clamp(p.y + p.vy * dt, .3, FW - .3);
+  }
   function runRoute(p, dt) {
     const r = p.route; if (!r) return;
     if (p.wi < r.length) { const [ax, ay] = r[p.wi], tx = p.x0 + ax, ty = p.y0 + ay * (p.side || 1); stepTo(p, tx, ty, p.sp, dt); if (Math.hypot(tx - p.x, ty - p.y) < .3) p.wi++; }
@@ -243,8 +250,8 @@ const GAME = {
       if (!P.carrier) {
         if (P.play === 'run' && P.t > .45) { P.carrier = P.off[3]; P.off[3].route = null; }
         stepTo(q, P.L - (P.play === 'run' ? 1.5 : 4.5), q.y, 3.4, dt);
-        for (const p of P.off.slice(1, 4)) if (p !== P.carrier) runRoute(p, dt);
-        if (P.ball) { const b = P.ball; for (const p of P.off.slice(1, 4)) { const dd = Math.hypot(b.tx - p.x, b.ty - p.y); if (dd < 7) stepTo(p, b.tx, b.ty, p.sp * 1.05, dt); } }
+        // once the ball is up, the man it's thrown to (and anyone close) breaks off the route and bends toward where it will come down
+        for (const p of P.off.slice(1, 4)) if (p !== P.carrier) { const b = P.ball; if (b && (p === b.rec || Math.hypot(b.tx - p.x, b.ty - p.y) < 8)) chase(p, b.tx, b.ty, p.sp * (p === b.rec ? 1.06 : .95), dt); else runRoute(p, dt); }
       } else {
         const c = P.carrier, sp = (c.sp || 5.6) * (c.juke > 0 ? 1.35 : 1);
         let ty = c.y; if (keys.up) ty -= 6; if (keys.down) ty += 6; if (ptr && ptr.steer) ty = clamp((ptr.y - FY) / YY, .5, FW - .5);
@@ -312,20 +319,57 @@ const GAME = {
     // goal posts at the back of each end zone
     for (const a of [-10, 110]) { g.fillStyle = '#ffd23f'; g.fillRect(sx(a) - 3, sy(FW / 2 - 3), 6, 3 * 2 * YY); g.fillRect(sx(a) - 6, sy(FW / 2) - 3, 12, 6); }
   }
-  // chunky retro footballers: helmet, facemask, jersey number
+  // 8-bit footballers: real pixel sprites (big helmet, shoulder pads, jersey number, two-frame run), drawn once per
+  // team, number and frame into a little canvas, then blown up with no smoothing so every pixel stays square
+  const HEAD = [
+    '......hhshhh......',
+    '.....hHhshhhhh....',
+    '....hHhhshhhhhh...',
+    '....hhhhshhhhkmm..',
+    '....hhhhhhhhhkkm..',
+    '....hhhhhhhhkkmm..',
+    '.....hhhhhhkkk....',
+    '.......kkkkk......'];
+  const BODYF = [
+    '...jjjjjjjjjjjj...',
+    '..jjjjjjjjjjjjjj..',
+    '..JjjjjjjjjjjjjJ..',
+    '..JjjjjjjjjjjjjJ..',
+    '..kJjjjjjjjjjjJk..',
+    '..k.jjjjjjjjjj.k..',
+    '....jjjjjjjjjj....',
+    '....tttttttttt....'];
+  const DIG = ['111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001', '111100111001111', '111100111101111', '111001001001001', '111101111101111', '111101111001111'];
+  const SKIN = ['#f0c8a0', '#c88a5a', '#8a5a3a', '#e0b080', '#6a4028'];
+  const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16), f = v => Math.max(0, Math.min(255, Math.round(k > 0 ? v + (255 - v) * k : v * (1 + k)))); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; };
+  const sprites = new Map(), SW = 18, SH = 26, PXS = 2.3;
+  function sprite(col, col2, num, frame, skin, face) {
+    const key = col + col2 + num + frame + skin + face; let c = sprites.get(key); if (c) return c;
+    const grid = Array.from({ length: SH }, () => Array(SW).fill(null)), put = (x, y, v) => { if (x >= 0 && x < SW && y >= 0 && y < SH) grid[y][x] = v; };
+    const pal = { h: col, H: shade(col, .55), s: '#f4f4f4', m: '#c8c8c8', k: SKIN[skin], j: col, J: shade(col, -.3), t: shade(col2, .1), p: '#ece6d4', P: '#bdb6a2', w: shade(col, -.15), b: '#161616' };
+    const bob = frame ? 1 : 0, rows = [...HEAD, ...BODYF];
+    rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch !== '.') put(x, y + 1 - bob, pal[ch]); }));
+    // pants, then two legs that scissor when running (frame 1 and 2 are opposite strides)
+    for (let x = 4; x < 14; x++) { put(x, 17 - bob, pal.p); put(x, 18 - bob, x === 8 || x === 9 ? null : pal.p); }
+    const legs = frame === 0 ? [[5, 0], [10, 0]] : frame === 1 ? [[3, -1], [12, 0]] : [[7, 0], [8, -1]];
+    legs.forEach(([lx, lift], k) => { const y0 = 19 - bob + lift; for (let x = lx; x < lx + 3; x++) { put(x, y0, pal.P); put(x, y0 + 1, pal.w); put(x, y0 + 2, pal.w); } for (let x = lx; x < lx + 4; x++) put(x, y0 + 3, pal.b); });
+    if (face < 0) grid.forEach(r => r.reverse());   // facing left: mirror the body, but the number below still reads right
+    // jersey number in a 3x5 pixel font
+    const n = String(num % 100), nx = n.length > 1 ? 5 : 7;
+    [...n].forEach((d, k) => [...DIG[+d]].forEach((b, q) => { if (b === '1') put(nx + k * 4 + (q % 3), 10 + Math.floor(q / 3) - bob, pal.t); }));
+    // a dark outline around everything, the way old cartridge sprites read on grass
+    c = document.createElement('canvas'); c.width = SW; c.height = SH; const x2 = c.getContext('2d');
+    for (let y = 0; y < SH; y++) for (let x = 0; x < SW; x++) if (!grid[y][x] && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => grid[y + b] && grid[y + b][x + a] && grid[y + b][x + a] !== 'o')) grid[y][x] = 'o';
+    for (let y = 0; y < SH; y++) for (let x = 0; x < SW; x++) { const v = grid[y][x]; if (!v) continue; x2.fillStyle = v === 'o' ? '#0c0c12' : v; x2.fillRect(x, y, 1, 1); }
+    sprites.set(key, c); return c;
+  }
   function player(g, p, col, col2, sel) {
-    const x = sx(p.x), y = sy(p.y), run = Math.hypot(p.vx, p.vy) > .5, ph = run ? Math.sin(anim * 18 + p.x) * 3 : 0, face = p.team === 'o' ? 1 : -1;
-    g.save(); g.translate(x, y); g.scale(1.45, 1.45);
-    g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(0, 4, 11, 4, 0, 0, 7); g.fill();
-    if (sel) { g.strokeStyle = '#ffd23f'; g.lineWidth = 2.5; g.beginPath(); g.ellipse(0, 4, 15, 6, 0, 0, 7); g.stroke(); }
-    g.fillStyle = '#e8e8e8'; g.fillRect(-6, -2 + ph * .3, 5, 6 - ph * .4); g.fillRect(1, -2 - ph * .3, 5, 6 + ph * .4);
-    g.fillStyle = '#1a1a1a'; g.fillRect(-6, 3 + ph * .3, 5, 2); g.fillRect(1, 3 - ph * .3, 5, 2);
-    g.fillStyle = col; g.fillRect(-8, -18, 16, 16); g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(4, -18, 4, 16); g.fillStyle = col2; g.fillRect(-8, -6, 16, 4);
-    g.fillRect(-10, -18, 3, 9); g.fillRect(7, -18, 3, 9);
-    g.fillStyle = col2; g.font = `7px ${PX}`; g.textAlign = 'center'; g.textBaseline = 'middle'; if (p.num) g.fillText(String(p.num % 100), 0, -11);
-    g.fillStyle = col; g.fillRect(-7, -30, 14, 12); g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(-5, -29, 4, 3); g.fillStyle = col2; g.fillRect(-1, -30, 2, 12);
-    g.fillStyle = '#d0d0d0'; g.fillRect(face > 0 ? 4 : -8, -26, 4, 6);
-    g.restore();
+    const x = Math.round(sx(p.x)), y = Math.round(sy(p.y)), run = Math.hypot(p.vx, p.vy) > .5, frame = run ? 1 + (Math.floor(anim * 9 + p.x * .7) & 1) : 0;
+    const face = Math.abs(p.vx) > .6 ? Math.sign(p.vx) : p.team === 'o' ? 1 : -1, w = SW * PXS, h = SH * PXS;
+    g.fillStyle = 'rgba(0,0,0,.32)'; for (const [a, b, ww] of [[-9, 2, 18], [-12, 4, 24], [-9, 6, 18]]) g.fillRect(x + a * PXS * .55, y + b * .8, ww * PXS * .55, 2.4);
+    if (sel) { const bl = Math.floor(anim * 6) & 1; g.fillStyle = bl ? '#ffd23f' : '#fff7b0'; for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2; g.fillRect(Math.round(x + Math.cos(a) * 22 - 2), Math.round(y + 4 + Math.sin(a) * 9 - 2), 4, 4); } }
+    const skin = (p.num * 7 + (p.team === 'o' ? 1 : 3)) % SKIN.length;
+    g.save(); g.imageSmoothingEnabled = false; g.translate(x, y + 5); g.drawImage(sprite(col, col2, p.num || 0, frame, skin, face), -w / 2, -h, w, h); g.restore();
   }
   function drawPlay(g) {
     const d = S.d, me = myTeam(), op = oppTeam();
@@ -347,7 +391,8 @@ const GAME = {
       const t = aimTarget(); if (t) { const q = qb(); g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 3; g.setLineDash([6, 8]); g.beginPath(); g.moveTo(sx(q.x), sy(q.y) - 14); g.quadraticCurveTo((sx(q.x) + sx(t.x)) / 2, Math.min(sy(q.y), sy(t.y)) - 80, sx(t.x), sy(t.y)); g.stroke(); g.setLineDash([]); g.strokeStyle = '#ffd23f'; g.lineWidth = 3; g.beginPath(); g.ellipse(sx(t.x), sy(t.y), 18, 8, 0, 0, 7); g.stroke(); }
     }
   }
-  function ballSprite(g, x, y, rot) { g.save(); g.translate(x, y); g.rotate(rot); g.scale(1.3, 1.3); g.fillStyle = '#8a4a1e'; g.beginPath(); g.ellipse(0, 0, 8, 5, 0, 0, 7); g.fill(); g.fillStyle = '#fff'; g.fillRect(-3, -1, 6, 2); g.restore(); }
+  const BALL = ['..oooooo..', '.obbbbbbo.', 'obbwwwwbbo', 'obbbbbbbbo', '.obbbbbbo.', '..oooooo..'];
+  function ballSprite(g, x, y, rot) { g.save(); g.translate(Math.round(x), Math.round(y)); g.rotate(Math.round(rot / (Math.PI / 4)) * Math.PI / 4); const k = 2.6; BALL.forEach((r, j) => [...r].forEach((c, i) => { if (c === '.') return; g.fillStyle = c === 'o' ? '#1a0e06' : c === 'w' ? '#fff' : (j < 2 ? '#a8602a' : '#8a4a1e'); g.fillRect((i - 5) * k, (j - 3) * k, k, k); })); g.restore(); }
   function aimTarget() {
     if (!ptr || !ptr.aim) return null; const q = qb(), dx = ptr.x0 - ptr.x, dy = ptr.y0 - ptr.y, L = Math.hypot(dx, dy);
     if (L < 18) return null; const arm = 22 + star('QB') * 6, dist = Math.min(arm, L * .16 + 4);
