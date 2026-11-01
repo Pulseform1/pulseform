@@ -175,8 +175,11 @@ const MP = (() => {
    Beams glow red near their limit and snap past it; unbraced frames fold; whatever is cut loose topples and falls into
    the clouds. Wood is cheap and burns, steel is strong, armor is heavy and shrugs off bullets.
    The islands sit far apart; the camera pans and zooms (drag, wheel, pinch, minimap). Height matters: a gun high on a
-   tall tower reaches further. Weapons: Cannon, Machine gun, Mortar, Firebomb, Rockets, Railgun. Support: Deflector
-   dome, Flak (shoots down shells), Repair bay, Generator. Every device upgrades to level 3.
+   tall tower reaches further. Economy: Oil Pumps sit on ground bolts and pump oil; oil pays for beams, devices,
+   upgrades and every shot. Generators burn oil into electricity (and blow up when destroyed); electricity powers the
+   Sniper, Railgun, Laser and Swarm, recharges Deflectors and runs Repair bays.
+   Weapons: Cannon, Machine gun, Sniper, Railgun, Laser, Mortar, Firebomb, Cluster bomb, Rockets, Swarm missiles.
+   Support: Oil pump, Generator, Deflector dome, Flak (shoots down shells), Repair bay. Every device upgrades to level 3.
    Online 1v1: each player's device runs the physics of their own fort and streams it to the other; shots are shared
    as launches (with ids so flak kills match), and only a fort's owner decides the damage it takes. Offline: the
    computer builds tall forts from a set of designs, aims with a ballistic solver that tightens as it zeroes in,
@@ -187,8 +190,9 @@ const GAME = {
   how: [
     'Two floating islands far apart, two forts, one goal: destroy the enemy Core before they destroy yours.',
     'BUILD: pick Wood, Steel or Armor and drag from a bolt (or your ground) to add a beam. Triangles are strong; unbraced towers fold and snap. Taller towers let your guns reach further.',
-    'Put devices on bolts: Cannon, Machine gun, Mortar, Firebomb (sets wood ablaze), Rockets, Railgun (pierces beams), Deflector dome, Flak (shoots down shells), Repair bay, Generator. Use UPGRADE on a device to level it up.',
-    'FIGHT: tap a weapon and drag to aim; the dotted arc shows the shot. It fires on its own every reload. Drag the sky, use the minimap or pinch to look around.',
+    'OIL pays for everything, including every shot. Put Oil Pumps on bolts at ground level. Generators turn oil into POWER, which the Sniper, Railgun, Laser, Swarm, Deflector and Repair bay need. Generators explode when destroyed, so keep them away from your Core.',
+    'WEAPONS: Cannon, Machine gun, Sniper (picks off devices), Railgun (pierces beams), Laser (burns a line), Mortar, Firebomb (sets wood ablaze), Cluster bomb, Rockets, Swarm missiles (home in). Tap UPGRADE, then a device, to level it up to 3.',
+    'FIGHT: tap a weapon and drag to aim; the dotted line shows the shot. It fires on its own every reload while you have oil and power. Drag the sky, use the minimap or pinch to look around.',
     'Play the computer, or create a room and battle a friend online.',
   ],
   skins: [{ name: 'Classic', price: 0 }],
@@ -196,7 +200,7 @@ const GAME = {
 (() => {
   'use strict';
   const TAU = Math.PI * 2, cl = (v, a, b) => v < a ? a : v > b ? b : v, lp = (a, b, t) => a + (b - a) * t;
-  const WW = 2800, GY = 620, GRAV = 560, DT = 1 / 60, ITER = 12, MAXLEN = 112, MINLEN = 18, SNAP = 18, BUILD_T = 90, MAXB = 200, START_GOLD = 1100;
+  const WW = 2800, GY = 620, GRAV = 560, DT = 1 / 60, ITER = 12, MAXLEN = 112, MINLEN = 18, SNAP = 18, BUILD_T = 90, MAXB = 200, START_OIL = 1000;
   const ISL = [{ x0: 90, x1: 790 }, { x0: 2010, x1: 2710 }];
   const ZONE = [{ x0: 110, x1: 770, y0: -160 }, { x0: 2030, x1: 2690, y0: -160 }];
   const SIDEC = ['#ffb02e', '#5fd4ff'], SIDEC2 = ['#ff6a3d', '#3d7bff'];
@@ -207,29 +211,44 @@ const GAME = {
     steel: { name: 'Steel', cost: 24, hp: 150, maxF: 26000, comp: 3e-6, kg: 2.3, col: '#8792a3', dark: '#454d5c', res: { bullet: .55, shell: 1, blast: .9, beam: 1 } },
     armor: { name: 'Armor', cost: 42, hp: 300, maxF: 34000, comp: 2e-6, kg: 4.2, col: '#5c6472', dark: '#272c36', res: { bullet: .2, shell: .75, blast: .6, beam: 1 } },
   };
+  // ammo: oil per salvo, pw: power per salvo. beamMul: how hard it hits beams (snipers barely scratch them)
   const DEV = {
     core: { name: 'Core', cost: 0, up: 260, hp: 480, kg: 5, r: 22 },
-    cannon: { name: 'Cannon', cost: 140, hp: 120, kg: 3.5, r: 15, reload: 3.4, speed: [500, 1250], g: 1, dmg: 55, cls: 'shell', spread: .01 },
-    mg: { name: 'Machine gun', short: 'MG', cost: 120, hp: 90, kg: 2.5, r: 13, reload: 2.8, shots: 8, gap: .09, speed: [900, 1550], g: .45, dmg: 8, cls: 'bullet', spread: .035 },
-    mortar: { name: 'Mortar', cost: 190, hp: 110, kg: 4.5, r: 16, reload: 6.5, speed: [450, 1150], g: 1, dmg: 80, blast: 52, lob: true, cls: 'blast', spread: .015 },
-    fire: { name: 'Firebomb', cost: 170, hp: 100, kg: 4, r: 15, reload: 7.5, speed: [450, 1100], g: 1, dmg: 22, blast: 48, lob: true, ignite: true, cls: 'blast', spread: .02 },
-    rockets: { name: 'Rockets', cost: 250, hp: 100, kg: 3.5, r: 15, reload: 8, shots: 3, gap: .15, speed: [600, 1100], g: .55, thrust: true, dmg: 38, blast: 34, cls: 'blast', spread: .05 },
-    rail: { name: 'Railgun', cost: 380, hp: 120, kg: 5, r: 16, reload: 9.5, speed: [2000, 2700], g: .1, dmg: 120, pierce: 4, cls: 'beam', spread: .004 },
+    cannon: { name: 'Cannon', cost: 140, hp: 120, kg: 3.5, r: 15, reload: 3.4, speed: [500, 1250], g: 1, dmg: 55, cls: 'shell', spread: .01, ammo: 8 },
+    mg: { name: 'Machine gun', short: 'MG', cost: 120, hp: 90, kg: 2.5, r: 13, reload: 2.8, shots: 8, gap: .09, speed: [900, 1550], g: .45, dmg: 8, cls: 'bullet', spread: .035, ammo: 6 },
+    sniper: { name: 'Sniper', cost: 180, hp: 80, kg: 2, r: 13, reload: 5, speed: [2600, 3300], g: .04, dmg: 75, cls: 'bullet', beamMul: .25, spread: .0015, ammo: 4, pw: 12 },
+    rail: { name: 'Railgun', cost: 380, hp: 120, kg: 5, r: 16, reload: 9.5, speed: [2000, 2700], g: .1, dmg: 120, pierce: 4, cls: 'beam', spread: .004, ammo: 10, pw: 45 },
+    laser: { name: 'Laser', cost: 420, hp: 110, kg: 4, r: 15, reload: 10, dps: 150, dur: 1.5, range: 2600, cls: 'beam', spread: .002, ammo: 0, pw: 60 },
+    mortar: { name: 'Mortar', cost: 190, hp: 110, kg: 4.5, r: 16, reload: 6.5, speed: [450, 1150], g: 1, dmg: 80, blast: 52, lob: true, cls: 'blast', spread: .015, ammo: 14 },
+    fire: { name: 'Firebomb', cost: 170, hp: 100, kg: 4, r: 15, reload: 7.5, speed: [450, 1100], g: 1, dmg: 22, blast: 48, lob: true, ignite: true, cls: 'blast', spread: .02, ammo: 16 },
+    cluster: { name: 'Cluster bomb', short: 'Cluster', cost: 260, hp: 100, kg: 4.5, r: 16, reload: 9, speed: [450, 1150], g: 1, dmg: 26, blast: 30, lob: true, split: 7, cls: 'blast', spread: .015, ammo: 22 },
+    rockets: { name: 'Rockets', cost: 250, hp: 100, kg: 3.5, r: 15, reload: 8, shots: 3, gap: .15, speed: [600, 1100], g: .55, thrust: true, dmg: 38, blast: 34, cls: 'blast', spread: .05, ammo: 20 },
+    swarm: { name: 'Swarm missiles', short: 'Swarm', cost: 300, hp: 100, kg: 3.5, r: 15, reload: 9, shots: 6, gap: .1, speed: [500, 950], g: .55, thrust: true, home: true, dmg: 20, blast: 22, cls: 'blast', spread: .12, ammo: 18, pw: 14 },
+    pump: { name: 'Oil pump', short: 'Oil pump', cost: 150, hp: 110, kg: 4, r: 15, ground: true },
+    gen: { name: 'Generator', cost: 140, hp: 80, kg: 4.5, r: 15 },
     shield: { name: 'Deflector', cost: 210, hp: 90, kg: 3, r: 14, energy: 260, dome: 84 },
     flak: { name: 'Flak', cost: 200, hp: 100, kg: 3, r: 14, range: 300, rate: .75 },
     repair: { name: 'Repair bay', short: 'Repair', cost: 160, hp: 90, kg: 3, r: 14, range: 150, heal: 7 },
-    gen: { name: 'Generator', cost: 120, hp: 90, kg: 4.5, r: 15, inc: 3 },
   };
-  const WEAP = ['cannon', 'mg', 'mortar', 'fire', 'rockets', 'rail'];
-  const TABS = [['BUILD', ['wood', 'steel', 'armor']], ['WEAPONS', WEAP], ['SUPPORT', ['shield', 'flak', 'repair', 'gen']]];
+  DEV.bomblet = { name: 'Bomblet', g: 1, dmg: 26, blast: 28, cls: 'blast', r: 4 };
+  const WEAP = ['cannon', 'mg', 'sniper', 'rail', 'laser', 'mortar', 'fire', 'cluster', 'rockets', 'swarm'];
+  const TABS = [['BUILD', ['wood', 'steel', 'armor']], ['GUNS', ['cannon', 'mg', 'sniper', 'rail', 'laser']], ['HEAVY', ['mortar', 'fire', 'cluster', 'rockets', 'swarm']], ['SUPPORT', ['pump', 'gen', 'shield', 'flak', 'repair']]];
+  // the economy: oil from the Core and pumps, power from the Core and generators (which burn oil)
+  const pumpRate = d => 6 + 3 * (d.lv - 1), genOut = d => 6 + 3 * (d.lv - 1), genBurn = d => 2 + (d.lv - 1);
+  function econ(F) {   // pump: oil in; burn: oil the generators eat; out: power they make; cap: how much power you can store
+    let pump = 3, burn = 0, out = 0, cap = 120;
+    for (const d of F.devs) { if (!d.alive) continue; if (d.type === 'pump') pump += pumpRate(d); else if (d.type === 'gen') { out += genOut(d); burn += genBurn(d); cap += 150 + 60 * (d.lv - 1); } }
+    return { pump, burn, out, cap };
+  }
   const upCost = (type, lv) => Math.round((DEV[type].up || DEV[type].cost) * .6 * lv);
   // what a level does: more damage, faster reload, tougher, bigger dome, longer reach for flak and repairs
   const L = { dmg: d => 1 + .3 * (d.lv - 1), rel: d => 1 - .15 * (d.lv - 1), hp: d => 1 + .4 * (d.lv - 1) };
+  const NO = { oil: 'Not enough oil', pw: 'Not enough power' };
   const maxHp = d => DEV[d.type].hp * L.hp(d);
   let rnd = Math.random;
 
   /* ---------- forts: bolts, beams and devices ---------- */
-  function newFort(side, name, bot) { return { side, name, bot: !!bot, nodes: [], beams: [], devs: [], gold: START_GOLD, ver: 1, dead: false, ready: false, lost: 0, ai: { t: 1, err: .17, rep: 2, buy: 4 } }; }
+  function newFort(side, name, bot) { return { side, name, bot: !!bot, nodes: [], beams: [], devs: [], oil: START_OIL, en: 60, ver: 1, dead: false, ready: false, lost: 0, ai: { t: 1, err: .17, rep: 2, buy: 4 } }; }
   function addNode(F, x, y) {
     const I = ISL[F.side], gy = groundY(x), pin = Math.abs(y - gy) < 9 && x > I.x0 + 16 && x < I.x1 - 16;
     if (!pin) x += (Math.random() - .5) * .6;   // a hair of imperfection: unbraced columns topple instead of balancing forever
@@ -253,8 +272,8 @@ const GAME = {
   }
   function upgrade(F, d) {
     if (d.lv >= 3) return 'Already at max level';
-    const c = upCost(d.type, d.lv); if (F.gold < c) return 'Not enough gold';
-    F.gold -= c; const k = maxHp(d); d.lv++; d.hp = d.hp / k * maxHp(d); if (d.type === 'shield') d.e = Math.min(d.e + 60, shieldMax(d)); F.ver++; return '';
+    const c = upCost(d.type, d.lv); if (F.oil < c) return NO.oil;
+    F.oil -= c; const k = maxHp(d); d.lv++; d.hp = d.hp / k * maxHp(d); if (d.type === 'shield') d.e = Math.min(d.e + 60, shieldMax(d)); F.ver++; return '';
   }
   const shieldMax = d => DEV.shield.energy * (1 + .4 * (d.lv - 1)), domeR = d => DEV.shield.dome + 8 * (d.lv - 1);
   const devAt = (F, n) => F.devs.find(d => d.alive && d.n === n);
@@ -303,6 +322,7 @@ const GAME = {
     if (!d.alive) return; d.alive = false; F.ver++; F.lost += (DEV[d.type].cost || 300) * d.lv; masses(F);
     const n = F.nodes[d.n]; boom(n.x, n.y, d.type === 'core' ? 110 : 44, SIDEC[F.side], d.type === 'core' ? 2 : 1);
     if (d.type === 'core') { F.dead = true; coreDown(F); }
+    if (d.type === 'gen') { boom(n.x, n.y - 9, 70, '#ffe680', 1); ringFx(n.x, n.y - 9, '#bff4ff', 90); for (let i = 0; i < 10; i++) spark(n.x + (rnd() - .5) * 30, n.y - 10, '#bff4ff'); if (sim(F)) blast(F, n.x, n.y - 9, 70, 70, true); }
   }
 
   /* ---------- shots ---------- */
@@ -311,12 +331,16 @@ const GAME = {
   const sim = F => !MP.online() || demo || F.side === mySide;      // whose physics and damage this device decides
   function launch(side, type, x, y, vx, vy, dmg, net, id) {
     const D = DEV[type]; id = id || (side + 1) * 1e6 + (++shotN);
-    shots.push({ id, side, type, x, y, ox: x, oy: y, vx, vy, t: 0, trail: [], dmg, pierce: D.pierce || 0, hits: new Set() });
+    const s = { id, side, type, x, y, ox: x, oy: y, vx, vy, t: 0, trail: [], dmg, pierce: D.pierce || 0, hits: new Set() };
+    if (type === 'laser') { const k = Math.hypot(vx, vy) || 1; s.dx = vx / k; s.dy = vy / k; s.life = D.dur; s.hx = x + s.dx * D.range; s.hy = y + s.dy * D.range; }
+    shots.push(s);
     if (net && MP.online() && !demo) MP.send({ t: 'f', s: side, w: type, id, d: Math.round(dmg), a: [Math.round(x), Math.round(y), Math.round(vx), Math.round(vy)] });
-    sound(type);
+    if (type !== 'bomblet') sound(type);
   }
   function fireDev(F, d) {
-    const D = DEV[d.type], spd = lp(D.speed[0], D.speed[1], d.aim.p), k = D.shots || 1; d.flash = .18;
+    const D = DEV[d.type];
+    if (D.dps) { const [px, py] = pivot(F, d), a = d.aim.a + (rnd() - .5) * D.spread * 2; d.flash = D.dur; launch(F.side, d.type, px + Math.cos(a) * 30, py + Math.sin(a) * 30, Math.cos(a) * 1000, Math.sin(a) * 1000, D.dps * L.dmg(d), true); return; }
+    const spd = lp(D.speed[0], D.speed[1], d.aim.p), k = D.shots || 1; d.flash = .18;
     for (let i = 0; i < k; i++) pend.push({ t: i * (D.gap || .15), F, d, a: d.aim.a + (D.shots && D.gap > .1 ? (i - (k - 1) / 2) * .045 : 0) + (rnd() - .5) * D.spread * 2, spd: spd * (1 + (rnd() - .5) * .01) });
   }
   function stepPend(dt) {
@@ -325,13 +349,30 @@ const GAME = {
   }
   function moveShot(s, dt) {
     const D = DEV[s.type];
-    if (D.thrust && s.t < .8) { const sp = Math.hypot(s.vx, s.vy) || 1; s.vx += s.vx / sp * 300 * dt; s.vy += s.vy / sp * 300 * dt + GRAV * .2 * dt; }
+    if (D.home && s.t > .45 && s.side !== undefined && forts[1 - s.side]) {   // swarm: steer toward the nearest enemy device
+      const T = forts[1 - s.side]; let best = null, bd = 760;
+      for (const d of T.devs) if (d.alive && T.nodes[d.n]) { const [px, py] = pivot(T, d), q = Math.hypot(px - s.x, py - s.y); if (q < bd) { bd = q; best = [px, py]; } }
+      const sp = Math.max(420, Math.hypot(s.vx, s.vy));
+      if (best) { const a0 = Math.atan2(s.vy, s.vx), a1 = Math.atan2(best[1] - s.y, best[0] - s.x); let da = Math.atan2(Math.sin(a1 - a0), Math.cos(a1 - a0)); da = cl(da, -3.2 * dt, 3.2 * dt); s.vx = Math.cos(a0 + da) * sp; s.vy = Math.sin(a0 + da) * sp; }
+      else s.vy += GRAV * D.g * dt;
+    }
+    else if (D.thrust && s.t < .8) { const sp = Math.hypot(s.vx, s.vy) || 1; s.vx += s.vx / sp * 300 * dt; s.vy += s.vy / sp * 300 * dt + GRAV * .2 * dt; }
     else s.vy += GRAV * D.g * dt;
     s.x += s.vx * dt; s.y += s.vy * dt; s.t += dt;
   }
   function stepShots(dt) {
-    for (const s of shots) { s.ox = s.x; s.oy = s.y; moveShot(s, dt); s.trail.push(s.x, s.y); if (s.trail.length > (s.type === 'rail' ? 40 : 28)) s.trail.splice(0, 2); hitTest(s); }
+    const born = [];
+    for (const s of shots) {
+      if (s.type === 'laser') { laserStep(s, dt); continue; }
+      s.ox = s.x; s.oy = s.y; moveShot(s, dt); s.trail.push(s.x, s.y); if (s.trail.length > (s.type === 'rail' || s.type === 'sniper' ? 40 : s.type === 'swarm' ? 16 : 28)) s.trail.splice(0, 2); hitTest(s);
+      const D = DEV[s.type];
+      if (D.split && !s.dead && s.vy > 40 && s.t > .4) {   // a cluster bomb bursts just past the top of its arc
+        s.dead = true; burst(s.x, s.y, ['#fff3c0', '#ffb347'], 10, 200, .3, 4); sound('pop');
+        for (let i = 0; i < D.split; i++) { const k = i - (D.split - 1) / 2; born.push([s.side, 'bomblet', s.x, s.y, s.vx + k * 48, s.vy * .55 - 30 + (i % 2) * 45, s.dmg, s.id * 10 + i]); }
+      }
+    }
     shots = shots.filter(s => !s.dead);
+    for (const b of born) launch(b[0], b[1], b[2], b[3], b[4], b[5], b[6], false, b[7]);
   }
   function hitTest(s) {
     const T = forts[1 - s.side], D = DEV[s.type];
@@ -345,6 +386,23 @@ const GAME = {
     if (s.y > groundY(s.x)) return impact(s, s.x, groundY(s.x), null, null, null, true);
     if (s.y > 1300 || s.x < -300 || s.x > WW + 300) s.dead = true;
   }
+  function laserStep(s, dt) {
+    const T = forts[1 - s.side], D = DEV.laser, R = D.range, ex = s.x + s.dx * R, ey = s.y + s.dy * R; let tm = R, hit = null;
+    const ray = (cx, cy, r) => { const fx = s.x - cx, fy = s.y - cy, b = fx * s.dx + fy * s.dy, c = fx * fx + fy * fy - r * r, disc = b * b - c; if (disc < 0) return -1; const q = -b - Math.sqrt(disc); return q > 0 ? q : -1; };
+    for (const d of T.devs) { if (!d.alive || !T.nodes[d.n]) continue; const [px, py] = pivot(T, d);
+      if (d.type === 'shield' && d.e > 0) { const q = ray(px, py, domeR(d)); if (q > 0 && q < tm && s.y + s.dy * q < py + 6) { tm = q; hit = { sh: d }; } }
+      const q = ray(px, py, DEV[d.type].r + 2); if (q > 0 && q < tm) { tm = q; hit = { d }; } }
+    for (const b of T.beams) { if (!b.alive) continue; const A = T.nodes[b.a], B = T.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.x, s.y, ex, ey, A.x, A.y, B.x, B.y); if (h >= 0 && h < 1 && h * R < tm) { tm = h * R; hit = { b }; } }
+    for (let q = 30; q < tm; q += 14) { const x = s.x + s.dx * q, y = s.y + s.dy * q; if (y > groundY(x)) { tm = q; hit = null; break; } }
+    s.hx = s.x + s.dx * tm; s.hy = s.y + s.dy * tm; s.life -= dt; s.t += dt; if (s.life <= 0) s.dead = true;
+    const dmg = s.dmg * dt;
+    if (hit && sim(T)) {
+      if (hit.sh) { hit.sh.e = Math.max(0, hit.sh.e - dmg * 1.2); hit.sh.eT = 2.5; hit.sh.hitT = .2; }
+      else if (hit.d) { hit.d.hp -= dmg; hit.d.hitT = .2; if (hit.d.hp <= 0) destroyDev(T, hit.d); }
+      else if (hit.b) { hit.b.hp -= dmg * MAT[hit.b.mat].res.beam; hit.b.hit = .15; if (MAT[hit.b.mat].burn && rnd() < dt * .8) hit.b.fire = 8; if (hit.b.hp <= 0) breakBeam(T, hit.b); }
+    }
+    if (Math.random() < dt * 40) burst(s.hx, s.hy, hit && hit.sh ? [SIDEC[T.side], '#fff'] : ['#ffffff', SIDEC[s.side], '#ffe2a0'], 2, 180, .25, 3);
+  }
   function segHit(ax, ay, bx, by, cx, cy, dx, dy) {   // where the shot's path a-b crosses beam c-d (as a 0..1 fraction), or -1
     const rx = bx - ax, ry = by - ay, sx = dx - cx, sy = dy - cy, den = rx * sy - ry * sx;
     if (Math.abs(den) > 1e-6) { const t2 = ((cx - ax) * sy - (cy - ay) * sx) / den, u = ((cx - ax) * ry - (cy - ay) * rx) / den; if (t2 >= 0 && t2 <= 1 && u >= -.03 && u <= 1.03) return t2; }
@@ -354,12 +412,12 @@ const GAME = {
   function impact(s, x, y, T, beam, dev, ground) {
     const D = DEV[s.type], pierce = s.pierce > 0 && (beam || dev);
     if (T && sim(T)) {
-      if (beam) { beam.hp -= s.dmg * MAT[beam.mat].res[D.cls]; beam.hit = .3; nudge(T, beam.a, s.vx, s.vy, D.cls === 'bullet' ? .2 : 1); nudge(T, beam.b, s.vx, s.vy, D.cls === 'bullet' ? .2 : 1); if (beam.hp <= 0) breakBeam(T, beam); }
-      if (dev) { dev.hp -= s.dmg; dev.hitT = .3; if (dev.hp <= 0) destroyDev(T, dev); }
+      if (beam) { beam.hp -= s.dmg * MAT[beam.mat].res[D.cls] * (D.beamMul || 1); beam.hit = .3; nudge(T, beam.a, s.vx, s.vy, D.cls === 'bullet' ? .2 : 1); nudge(T, beam.b, s.vx, s.vy, D.cls === 'bullet' ? .2 : 1); if (beam.hp <= 0) breakBeam(T, beam); }
+      if (dev) { dev.hp -= s.dmg; dev.hitT = .3; if (dev.type === 'gen') { burst(x, y, ['#bff4ff', '#ffffff'], 8, 220, .3, 3); boom(x, y, 16, '#bff4ff', 0); } if (dev.hp <= 0) destroyDev(T, dev); }
     }
     if (pierce) { s.pierce--; s.dmg *= .72; s.hits.add(beam || dev); burst(x, y, ['#bff4ff', '#ffffff', SIDEC[s.side]], 10, 300, .3, 3); sound('hit'); return; }
     s.dead = true;
-    if (D.blast) { const F2 = T || forts[x < WW / 2 ? 0 : 1]; if (sim(F2)) blast(F2, x, y, D.blast, s.dmg, D.ignite); boom(x, y, D.blast, D.ignite ? '#ff7a1a' : s.type === 'mortar' ? '#ffb347' : '#ff7a3d', 1); if (D.ignite) for (let i = 0; i < 16; i++) flame(x + (rnd() - .5) * D.blast, y - rnd() * 20); }
+    if (D.blast) { const F2 = T || forts[x < WW / 2 ? 0 : 1]; if (sim(F2)) blast(F2, x, y, D.blast, s.dmg, D.ignite); boom(x, y, D.blast, D.ignite ? '#ff7a1a' : s.type === 'mortar' ? '#ffb347' : '#ff7a3d', s.type === 'bomblet' || s.type === 'swarm' ? 0 : 1); if (D.ignite) for (let i = 0; i < 16; i++) flame(x + (rnd() - .5) * D.blast, y - rnd() * 20); }
     else if (D.cls === 'bullet') { burst(x, y, ['#ffe2a0', '#ffffff'], 4, 160, .2, 2); sound('ping'); }
     else { burst(x, y, ['#ffe2a0', '#ffffff', '#ffb347'], 14, 280, .35, 4); K.shake(3); sound('hit'); }
   }
@@ -372,18 +430,18 @@ const GAME = {
   // flak: knocks incoming shells and rockets out of the sky (bullets and rail slugs are too fast)
   function stepFlak(F, dt) {
     for (const d of F.devs) {
-      if (!d.alive || d.type !== 'flak') continue; d.cd -= dt; if (d.cd > 0) continue;
+      if (!d.alive || d.type !== 'flak') continue; d.cd -= dt; if (d.cd > 0 || (sim(F) && F.oil < 2)) continue;
       const [px, py] = pivot(F, d), R = DEV.flak.range + 40 * (d.lv - 1);
-      const tg = shots.find(s => !s.dead && s.side !== F.side && (DEV[s.type].cls === 'blast' || s.type === 'cannon') && Math.hypot(s.x - px, s.y - py) < R && s.vx * (px - s.x) > 0);
+      const tg = shots.find(s => !s.dead && s.side !== F.side && s.type !== 'laser' && (DEV[s.type].cls === 'blast' || s.type === 'cannon') && Math.hypot(s.x - px, s.y - py) < R && s.vx * (px - s.x) > 0);
       if (!tg) continue;
       d.cd = DEV.flak.rate * L.rel(d); d.ang = Math.atan2(tg.y - py, tg.x - px); d.flash = .12; d.zap = { x: tg.x, y: tg.y, t: .12 };
-      if (sim(F)) { tg.dead = true; if (MP.online() && !demo) MP.send({ t: 'x', id: tg.id }); }
+      if (sim(F)) { tg.dead = true; F.oil -= 2; if (MP.online() && !demo) MP.send({ t: 'x', id: tg.id }); }
       boom(tg.x, tg.y, 18, '#ffd890', 0); sound('flak');
     }
   }
   function stepRepair(F, dt) {
     for (const d of F.devs) {
-      if (!d.alive || d.type !== 'repair') continue; d.cd -= dt; if (d.cd > 0) continue; d.cd = 1;
+      if (!d.alive || d.type !== 'repair') continue; d.cd -= dt; if (d.cd > 0) continue; d.cd = 1; if (F.en < 3) { d.starve = 'pw'; continue; } F.en -= 3; d.starve = null;
       const [px, py] = pivot(F, d), R = DEV.repair.range + 30 * (d.lv - 1), heal = DEV.repair.heal + 4 * (d.lv - 1);
       for (const b of F.beams) { if (!b.alive) continue; const A = F.nodes[b.a], B = F.nodes[b.b]; if (segDist(px, py, A.x, A.y, B.x, B.y) > R) continue; if (b.hp < MAT[b.mat].hp) { b.hp = Math.min(MAT[b.mat].hp, b.hp + heal); if (Math.random() < .3) spark((A.x + B.x) / 2, (A.y + B.y) / 2, '#7dff9a'); } if (b.fire > 0 && Math.random() < .35) b.fire = 0; }
       for (const o of F.devs) if (o.alive && o !== d) { const [ox, oy] = pivot(F, o); if (Math.hypot(ox - px, oy - py) < R && o.hp < maxHp(o)) o.hp = Math.min(maxHp(o), o.hp + heal * .6); }
@@ -408,6 +466,11 @@ const GAME = {
       case 'mortar': case 'fire': K.noise(.22, .12, 180); K.sfx(80, .32, 'sine', .2, -40); break;
       case 'rockets': K.noise(.45, .07, 1600); K.sfx(300, .4, 'sawtooth', .03, 500); break;
       case 'rail': K.sfx(1800, .35, 'sawtooth', .06, -1500); K.noise(.3, .1, 3000); break;
+      case 'sniper': K.noise(.12, .2, 2400); K.sfx(900, .18, 'square', .05, -800); break;
+      case 'laser': K.sfx(240, 1.4, 'sawtooth', .05, 60); K.sfx(960, 1.4, 'sine', .04, -200); break;
+      case 'cluster': K.noise(.22, .12, 180); K.sfx(90, .3, 'sine', .2, -40); break;
+      case 'swarm': K.noise(.5, .06, 2200); K.sfx(500, .3, 'sawtooth', .025, 700); break;
+      case 'pop': K.noise(.1, .1, 800); break;
       case 'boom': K.noise(.5, .22, 120); K.sfx(70, .4, 'sine', .2, -40); break;
       case 'bigboom': K.noise(1.3, .3, 70); K.sfx(50, 1.1, 'sine', .3, -30); break;
       case 'hit': K.noise(.12, .14, 900); K.sfx(200, .08, 'square', .05, -120); break;
@@ -435,7 +498,7 @@ const GAME = {
   }
   function starter(F) {   // the free starting fort: a braced two-storey frame holding the Core, and one cannon
     const id = frameGrid(F, [170, 236, 302], [2, 2, 1], (c, l) => l === 0 ? 'steel' : 'wood');
-    addDev(F, 'core', id[1][1]); addDev(F, 'cannon', id[1][2]);
+    addDev(F, 'core', id[1][1]); addDev(F, 'cannon', id[1][2]); addDev(F, 'pump', id[0][0]);
   }
   function botBuild(F) {   // tall towers on a grid, X-braced; steel low, armor on the front face
     const nc = 5 + Math.floor(rnd() * 3), cols = [], u0 = 120 + rnd() * 30, du = 64 + rnd() * 6;
@@ -446,15 +509,18 @@ const GAME = {
     const top = c => id[c][heights[c]], mid = (c, l) => id[c][Math.min(l, heights[c])];
     addDev(F, 'core', id[1][1]);
     const tall = cols.map((_, c) => c).sort((a, b) => heights[b] - heights[a]);
-    const kit = [['cannon', top(tall[0])], ['mortar', top(tall[1])], ['rail', top(tall[2])], ['mg', top(nc - 1)], [rnd() < .5 ? 'rockets' : 'fire', mid(nc - 2, heights[nc - 2])]];
+    const pick = a => a[Math.floor(rnd() * a.length)];
+    const kit = [['cannon', top(tall[0])], [pick(['mortar', 'cluster']), top(tall[1])], [pick(['rail', 'laser', 'sniper']), top(tall[2])], [pick(['mg', 'sniper']), top(nc - 1)], [pick(['rockets', 'fire', 'swarm']), mid(nc - 2, heights[nc - 2])]];
     for (const [type, n] of kit) addDev(F, type, n);
-    addDev(F, 'shield', mid(2, 2)); addDev(F, 'flak', mid(0, 2)); addDev(F, 'repair', id[2][1]); addDev(F, 'gen', id[0][0]); addDev(F, 'gen', id[3][0]);
-    F.gold = 400;
+    addDev(F, 'shield', mid(2, 2)); addDev(F, 'flak', mid(0, 2)); addDev(F, 'repair', id[2][1]);
+    addDev(F, 'pump', id[0][0]); addDev(F, 'pump', id[2][0]); addDev(F, 'pump', id[nc - 2][0]); addDev(F, 'gen', id[0][1]); addDev(F, 'gen', id[nc - 1][0]);
+    F.oil = 400;
   }
   function settle(F, n) { F.grace = n; for (let i = 0; i < n; i++) physics(F, DT); }
 
   /* ---------- the computer: ballistic aim that tightens, repairs, rearms and upgrades ---------- */
   function aimAt(F, d, tg) {
+    if (DEV[d.type].dps) { const [sx, sy] = pivot(F, d), e = F.ai.err; F.ai.err = Math.max(.02, e * .9); d.aim = { a: Math.atan2(tg.y - 9 - sy, tg.x - sx) + (rnd() - .5) * e * .4, p: 1 }; return; }
     const [sx, sy] = pivot(F, d), D = DEV[d.type], dx = tg.x - sx, Y = -(tg.y - 9 - sy), dir = Math.sign(dx) || 1, X = Math.max(20, Math.abs(dx)), g = GRAV * (D.thrust ? .4 : D.g);
     let sol = null;
     for (let i = 0; i <= 30 && !sol; i++) {
@@ -467,7 +533,7 @@ const GAME = {
   }
   function pickTarget(E, type) {
     const c = core(E), others = E.devs.filter(x => x.alive && x.type !== 'core');
-    const pref = type === 'mg' ? others.filter(x => x.type !== 'shield') : others;
+    const pref = type === 'mg' || type === 'sniper' ? others.filter(x => x.type !== 'shield') : others;
     if (c && c.alive && (rnd() < .45 || !pref.length)) return { x: E.nodes[c.n].x, y: E.nodes[c.n].y };
     if (pref.length) { const o = pref[Math.floor(rnd() * pref.length)]; return { x: E.nodes[o.n].x, y: E.nodes[o.n].y }; }
     return { x: E.side ? 2300 : 450, y: GY - 60 };
@@ -478,15 +544,18 @@ const GAME = {
     if ((A.rep -= .5) <= 0) {   // rebuild a broken beam between bolts that still stand
       A.rep = 1.2;
       const b = F.beams.find(q => !q.alive && !q.fixed && F.nodes[q.a].alive && F.nodes[q.b].alive && Math.abs(Math.hypot(F.nodes[q.a].x - F.nodes[q.b].x, F.nodes[q.a].y - F.nodes[q.b].y) - q.rest) < 6);
-      if (b && F.gold >= MAT[b.mat].cost) { b.fixed = true; F.gold -= MAT[b.mat].cost; addBeam(F, b.a, b.b, b.mat); }
+      if (b && F.oil >= MAT[b.mat].cost) { b.fixed = true; F.oil -= MAT[b.mat].cost; addBeam(F, b.a, b.b, b.mat); }
     }
     if ((A.buy -= .5) <= 0) {   // spend: upgrade something, or put a new weapon on a free high bolt
       A.buy = 3 + rnd() * 3;
-      const ups = F.devs.filter(d => d.alive && d.lv < 3 && (WEAP.includes(d.type) || d.type === 'shield' || d.type === 'core'));
-      if (ups.length && rnd() < .55) { const d = ups[Math.floor(rnd() * ups.length)]; if (F.gold >= upCost(d.type, d.lv) + 60) upgrade(F, d); }
+      const ups = F.devs.filter(d => d.alive && d.lv < 3 && (WEAP.includes(d.type) || d.type === 'shield' || d.type === 'core' || d.type === 'pump' || d.type === 'gen'));
+      const has = k => F.devs.filter(d => d.alive && d.type === k).length, ground = F.nodes.map((n, i) => i).filter(i => F.nodes[i].alive && F.nodes[i].pin && !devAt(F, i));
+      if (has('pump') < 3 && ground.length && F.oil >= DEV.pump.cost) { F.oil -= DEV.pump.cost; addDev(F, 'pump', ground[Math.floor(rnd() * ground.length)]); }
+      else if (has('gen') < 2 && ground.length && F.oil >= DEV.gen.cost + 40) { F.oil -= DEV.gen.cost; addDev(F, 'gen', ground[0]); }
+      else if (ups.length && rnd() < .55) { const d = ups[Math.floor(rnd() * ups.length)]; if (F.oil >= upCost(d.type, d.lv) + 60) upgrade(F, d); }
       else {
         const free = F.nodes.map((n, i) => i).filter(i => F.nodes[i].alive && !devAt(F, i) && !F.nodes[i].pin && F.beams.some(b => b.alive && (b.a === i || b.b === i))).sort((a, b) => F.nodes[a].y - F.nodes[b].y);
-        const type = WEAP[Math.floor(rnd() * WEAP.length)]; if (free.length && F.gold >= DEV[type].cost + 80) { F.gold -= DEV[type].cost; addDev(F, type, free[0]); }
+        const opts = WEAP.filter(k => !DEV[k].pw || has('gen')), type = opts[Math.floor(rnd() * opts.length)]; if (free.length && F.oil >= DEV[type].cost + 80) { F.oil -= DEV[type].cost; addDev(F, type, free[0]); }
       }
     }
   }
@@ -522,8 +591,13 @@ const GAME = {
     for (const F of forts) if (sim(F)) physics(F, dt); else followSnap(F, dt);
     if (phase === 'build') { buildT -= dt; const me = forts[mySide], them = forts[1 - mySide]; if ((!MP.online() || MP.isHost()) && (buildT <= 0 || (me.ready && them.ready))) startBattle(); }
     if (phase === 'battle') for (const F of forts) if (sim(F)) {
-      F.gold += (5 + F.devs.filter(d => d.alive && d.type === 'gen').reduce((a, d) => a + DEV.gen.inc + 2 * (d.lv - 1), 0)) * dt;
-      for (const d of F.devs) { if (!d.alive) continue; const D = DEV[d.type]; if (D.reload && d.aim) { d.cd -= dt; if (d.cd <= 0) { d.cd = D.reload * L.rel(d); fireDev(F, d); } } if (d.type === 'shield' && (d.eT -= dt) <= 0) d.e = Math.min(shieldMax(d), d.e + 15 * dt * L.dmg(d)); }
+      const E = econ(F), run = F.oil > 1 && F.en < E.cap; F.running = run;
+      F.oil = Math.max(0, F.oil + (E.pump - (run ? E.burn : 0)) * dt); F.en = Math.min(E.cap, F.en + (1 + (run ? E.out : 0)) * dt);
+      for (const d of F.devs) {
+        if (!d.alive) continue; const D = DEV[d.type];
+        if (D.reload && d.aim) { d.cd -= dt; if (d.cd <= 0) { const ammo = D.ammo || 0, pw = D.pw || 0; if (F.oil < ammo) { d.cd = 0; d.starve = 'oil'; } else if (F.en < pw) { d.cd = 0; d.starve = 'pw'; } else { F.oil -= ammo; F.en -= pw; d.starve = null; d.cd = D.reload * L.rel(d); fireDev(F, d); } } }
+        if (d.type === 'shield' && (d.eT -= dt) <= 0 && d.e < shieldMax(d)) { const add = Math.min(shieldMax(d) - d.e, 15 * dt * L.dmg(d), F.en / .6); d.e += add; F.en -= add * .6; d.starve = add <= 0 ? 'pw' : null; }
+      }
       stepRepair(F, dt); if (F.bot) botThink(F, dt);
     }
     if (phase === 'battle') for (const F of forts) stepFlak(F, dt);
@@ -544,7 +618,7 @@ const GAME = {
   /* ---------- online: my fort streams to you, yours to me ---------- */
   function net(dt) {
     if (!MP.online() || demo || (sendT -= dt) > 0) return; sendT = .1;
-    const F = forts[mySide], m = { t: 's', n: [], h: F.beams.map(b => b.alive ? Math.max(1, Math.round(b.hp)) * (b.fire > 0 ? -1 : 1) : 0), d: F.devs.map(d => [d.n, d.type, d.alive ? Math.max(1, Math.round(d.hp)) : 0, d.aim ? +d.aim.a.toFixed(2) : null, Math.round(d.e), d.flash > .05 ? 1 : 0, d.lv]), g: Math.round(F.gold), r: F.ready ? 1 : 0 };
+    const F = forts[mySide], m = { t: 's', n: [], h: F.beams.map(b => b.alive ? Math.max(1, Math.round(b.hp)) * (b.fire > 0 ? -1 : 1) : 0), d: F.devs.map(d => [d.n, d.type, d.alive ? Math.max(1, Math.round(d.hp)) : 0, d.aim ? +d.aim.a.toFixed(2) : null, Math.round(d.e), d.flash > .05 ? 1 : 0, d.lv]), g: Math.round(F.oil), e: Math.round(F.en), r: F.ready ? 1 : 0 };
     for (const n of F.nodes) m.n.push(n.alive ? Math.round(n.x) : -1, Math.round(n.y));
     if (F.ver !== lastVer || (bsT -= .1) <= 0) { m.b = F.beams.map(b => [b.a, b.b, ['wood', 'steel', 'armor'].indexOf(b.mat)]); lastVer = F.ver; bsT = 2; }
     MP.send(m);
@@ -556,7 +630,7 @@ const GAME = {
     if (m.b) F.beams = m.b.map(([a, b, s], i) => Object.assign(F.beams[i] && F.beams[i].a === a && F.beams[i].b === b ? F.beams[i] : { hit: 0, f: 0, rest: 1 }, { a, b, mat: ['wood', 'steel', 'armor'][s] || 'wood' }));
     m.h.forEach((h0, i) => { const b = F.beams[i]; if (!b) return; const h = Math.abs(h0); if (b.alive && h && b.hp && h < b.hp - .5) b.hit = .3; if (b.alive && !h && F.nodes[b.a] && F.nodes[b.b]) { const A = F.nodes[b.a], B = F.nodes[b.b]; splinters((A.x + B.x) / 2, (A.y + B.y) / 2, MAT[b.mat], Math.atan2(B.y - A.y, B.x - A.x), Math.hypot(B.x - A.x, B.y - A.y)); } b.hp = h; b.alive = h > 0; b.fire = h0 < 0 ? 1 : 0; });
     F.devs = m.d.map(([n, type, hp, a, e, fl, lv], i) => { const o = F.devs[i] && F.devs[i].n === n && F.devs[i].type === type ? F.devs[i] : { ang: F.side ? Math.PI + .6 : -.6, spin: 0, flash: 0, hitT: 0 }; if (o.alive && !hp && F.nodes[n]) boom(F.nodes[n].x, F.nodes[n].y, type === 'core' ? 110 : 44, SIDEC[F.side], 1); return Object.assign(o, { n, type, hp, lv: lv || 1, alive: hp > 0, aim: a === null ? null : { a, p: 1 }, e, flash: fl ? .12 : o.flash }); });
-    F.gold = m.g; F.ready = !!m.r;
+    F.oil = m.g; F.en = m.e || 0; F.ready = !!m.r;
   }
   function followSnap(F, dt) { const k = Math.min(1, dt * 14); for (const n of F.nodes) if (n.alive && n.tx !== undefined) { n.x += (n.tx - n.x) * k; n.y += (n.ty - n.y) * k; } }
   Object.assign(MP.opts, {
@@ -595,7 +669,7 @@ const GAME = {
   const CAMB = () => { const m = MM(); return { mine: { x: m.x - 96, y: m.y + 6, w: 86, h: 34 }, all: { x: m.x + m.w / 2 - 36, y: m.y + m.h + 6, w: 72, h: 28 }, theirs: { x: m.x + m.w + 10, y: m.y + 6, w: 86, h: 34 } }; };
 
   /* ---------- input: building, deleting, upgrading, aiming, looking around ---------- */
-  const TBL = () => { const v = K.view, w = 84, gap = 6, x0 = 640 - (96 + 8 * (w + gap) + 166) / 2, y = v.y1 - 102; return { tabs: TABS.map((_, i) => ({ i, x: x0, y: y + i * 31, w: 90, h: 28 })), items: Array.from({ length: 8 }, (_, i) => ({ x: x0 + 96 + i * (w + gap), y, w, h: 92 })), act: { x: x0 + 96 + 8 * (w + gap) + 6, y, w: 160, h: 92 } }; };
+  const TBL = () => { const v = K.view, w = 84, gap = 6, x0 = 640 - (8 * (w + gap) + 166) / 2, y = v.y1 - 102; return { tabs: TABS.map((_, i) => ({ i, x: x0 - 4 + i * 112, y: y - 48, w: 106, h: 34 })), items: Array.from({ length: 8 }, (_, i) => ({ x: x0 + i * (w + gap), y, w, h: 92 })), act: { x: x0 + 8 * (w + gap) + 6, y, w: 160, h: 92 } }; };
   const inB = (b, x, y) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
   const tabItems = () => [...TABS[tab][1], ...Array(6 - TABS[tab][1].length).fill(null)].slice(0, 6).concat(['up', 'del']);
   const toolCost = k => MAT[k] ? MAT[k].cost : DEV[k] ? DEV[k].cost : 0;
@@ -608,25 +682,26 @@ const GAME = {
   }
   function beamOK(F, d) {
     const A = d.from >= 0 ? F.nodes[d.from] : d.start, e = beamEnd(F, d.from, d.x, d.y), len = Math.hypot(e.x - A.x, e.y - A.y), cost = MAT[d.mat].cost;
-    return { e, len, cost, why: len > MAXLEN ? 'Too long' : len < MINLEN ? 'Too short' : liveBeams(F) >= MAXB ? 'Beam limit reached' : F.gold < cost ? 'Not enough gold' : '' };
+    return { e, len, cost, why: len > MAXLEN ? 'Too long' : len < MINLEN ? 'Too short' : liveBeams(F) >= MAXB ? 'Beam limit reached' : F.oil < cost ? NO.oil : '' };
   }
   function commitBeam(F, d) {
     const r = beamOK(F, d); if (r.why) { sound('nope'); say(r.why, '#ff8a8a', 1.2); return; }
     const a = d.from >= 0 ? d.from : addNode(F, d.start.x, d.start.y), b = r.e.j >= 0 ? r.e.j : addNode(F, r.e.x, r.e.y);
-    if (addBeam(F, a, b, d.mat) >= 0) { F.gold -= r.cost; sound('build'); burst(r.e.x, r.e.y, [MAT[d.mat].col, '#fff'], 6, 80, .3, 3); }
+    if (addBeam(F, a, b, d.mat) >= 0) { F.oil -= r.cost; sound('build'); burst(r.e.x, r.e.y, [MAT[d.mat].col, '#fff'], 6, 80, .3, 3); }
   }
   const devNear = (F, x, y, r = 24) => F.devs.find(q => q.alive && Math.hypot(pivot(F, q)[0] - x, pivot(F, q)[1] - y) < r / Math.min(1, cam.z));
   function placeDev(F, type, x, y) {
     const n = nearNode(F, x, y, 24 / Math.min(1, cam.z)); if (n < 0) { sound('nope'); say('Put it on one of your bolts', '#ff8a8a', 1.4); return; }
     if (devAt(F, n)) { sound('nope'); say('That bolt is taken', '#ff8a8a', 1.2); return; }
-    if (F.gold < DEV[type].cost) { sound('nope'); say('Not enough gold', '#ff8a8a', 1.2); return; }
-    if (addDev(F, type, n) >= 0) { F.gold -= DEV[type].cost; sound('build'); if (DEV[type].reload) { aimSel = F.devs[F.devs.length - 1]; tool = null; say('Now drag to aim it', SIDEC[F.side], 1.6); } }
+    if (DEV[type].ground && !F.nodes[n].pin) { sound('nope'); say('Oil pumps go on bolts on the ground', '#ff8a8a', 1.6); return; }
+    if (F.oil < DEV[type].cost) { sound('nope'); say(NO.oil, '#ff8a8a', 1.2); return; }
+    if (addDev(F, type, n) >= 0) { F.oil -= DEV[type].cost; sound('build'); if (DEV[type].reload) { aimSel = F.devs[F.devs.length - 1]; tool = null; say('Now drag to aim it', SIDEC[F.side], 1.6); } }
   }
   function deleteAt(F, x, y) {
     const refund = phase === 'build' ? 1 : .5, d = devNear(F, x, y, 20);
-    if (d && d.type !== 'core') { d.alive = false; F.ver++; masses(F); F.gold += DEV[d.type].cost * refund; sound('build'); return; }
+    if (d && d.type !== 'core') { d.alive = false; F.ver++; masses(F); F.oil += DEV[d.type].cost * refund; sound('build'); return; }
     let best = null, bd = 10 / Math.min(1, cam.z); for (const b of F.beams) if (b.alive) { const A = F.nodes[b.a], B = F.nodes[b.b], dd = segDist(x, y, A.x, A.y, B.x, B.y); if (dd < bd) { bd = dd; best = b; } }
-    if (best) { const keep = F.lost; breakBeam(F, best, false); F.lost = keep; F.gold += MAT[best.mat].cost * refund; sound('build'); }
+    if (best) { const keep = F.lost; breakBeam(F, best, false); F.lost = keep; F.oil += MAT[best.mat].cost * refund; sound('build'); }
   }
   const aimFrom = (F, d, x, y) => { const [px, py] = pivot(F, d), a = Math.atan2(y - py, x - px), p = cl((Math.hypot(x - px, y - py) * Math.min(1, cam.z) - 30) / 230, 0, 1); return { a, p }; };
   const ptrs = new Map(); let pan = null, pinch = null, mmDrag = false;
@@ -641,7 +716,7 @@ const GAME = {
       const tb2 = tb.tabs.find(b => inB(b, kx, ky)); if (tb2) { tab = tb2.i; sound('build'); return; }
       const it = tb.items.findIndex(b => inB(b, kx, ky)); if (it >= 0) { const k = tabItems()[it]; if (k) { tool = tool === k ? null : k; aimSel = null; sound('build'); } return; }
       if (inB(tb.act, kx, ky)) { if (phase === 'build') { F.ready = !F.ready; sound('build'); if (F.ready) say(MP.online() ? 'Ready! Waiting for your opponent' : 'Ready!', '#5cf28a', 1.6); } else tool = null; return; }
-      if (ky > tb.act.y - 4 && kx > tb.tabs[0].x - 10 && kx < tb.act.x + tb.act.w + 10) return;
+      if (ky > tb.act.y - 12 && kx > tb.items[0].x - 12 && kx < tb.act.x + tb.act.w + 12) return;
     }
     const [x, y] = toWorld(kx, ky);
     if (phase !== 'over') {
@@ -671,7 +746,7 @@ const GAME = {
   };
   GAME.key = (c, d) => {
     if (!d || mode !== 'play' || demo) return;
-    const n = /^Digit([1-3])$/.exec(c); if (n) { tab = +n[1] - 1; return; }
+    const n = /^Digit([1-4])$/.exec(c); if (n) { tab = +n[1] - 1; return; }
     if (c === 'Escape' || c === 'KeyQ') { tool = null; aimSel = null; }
     else if (c === 'Enter' && phase === 'build') { myF().ready = true; say('Ready!', '#5cf28a', 1.4); }
     else if (c === 'ArrowLeft' || c === 'KeyA') { cam.tx -= 200 / cam.z; const o = { x: cam.tx, y: cam.ty, z: cam.tz }; clampCam(o); cam.tx = o.x; }
@@ -813,10 +888,30 @@ const GAME = {
       g.fillStyle = 'rgba(255,255,255,.75)'; g.beginPath(); g.moveTo(0, -14); g.lineTo(4, -3); g.lineTo(0, -1); g.closePath(); g.fill();
     } else if (d.type === 'shield') {
       base(11); g.fillStyle = '#2a2836'; g.fillRect(-2, -12, 4, 12); const dg = g.createRadialGradient(0, -13, 1, 0, -13, 9); dg.addColorStop(0, '#ffffff'); dg.addColorStop(.4, c); dg.addColorStop(1, c2); g.fillStyle = dg; g.beginPath(); g.arc(0, -13, 7, 0, TAU); g.fill();
-    } else if (d.type === 'gen') {
-      metal(g, -14, -10, 28, 19, 4, '#5e5a70', '#262432'); g.fillStyle = '#ffd23f'; g.fillRect(-10, -6, 20, 3); g.fillStyle = '#1a1622'; g.fillRect(-10, -1, 20, 6);
-      g.save(); g.translate(0, -16); g.rotate(d.spin); for (let i = 0; i < 3; i++) { g.rotate(TAU / 3); metal(g, -2.5, -15, 5, 14, 2, '#e4ddf0', '#8a82a0'); } g.fillStyle = '#2a2836'; g.beginPath(); g.arc(0, 0, 3.5, 0, TAU); g.fill(); g.restore();
-      if (Math.sin(t * 13 + d.n) > .6) { g.strokeStyle = '#ffe680'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(-6, 0); g.lineTo(-2, 3); g.lineTo(-4, 6); g.stroke(); }
+    } else if (d.type === 'gen') {   // an oil-burning dynamo: tank, hazard band, two glowing coils, exhaust
+      const on = F.running !== false;
+      g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(0, 9, 17, 3.5, 0, 0, TAU); g.fill();
+      metal(g, -16, -8, 32, 17, 6, '#6a6478', '#24222e');
+      g.save(); g.beginPath(); g.roundRect(-16, -2, 32, 5, 1); g.clip(); for (let x = -20; x < 18; x += 6) { g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(x, -2); g.lineTo(x + 3, -2); g.lineTo(x + 6, 3); g.lineTo(x + 3, 3); g.fill(); g.fillStyle = '#1a1622'; g.beginPath(); g.moveTo(x + 3, -2); g.lineTo(x + 6, -2); g.lineTo(x + 9, 3); g.lineTo(x + 6, 3); g.fill(); } g.restore();
+      metal(g, 10, -20, 5, 13, 2, '#4e4a5e', '#1c1a26');
+      for (const cx of [-8, 2]) { const gl = .5 + .5 * Math.sin(t * 9 + cx + d.n); metal(g, cx - 4, -17, 8, 10, 3, '#3a3848', '#1a1822'); g.fillStyle = on ? `rgba(143,233,255,${.5 + gl * .5})` : '#2a3a48'; for (let j = 0; j < 3; j++) g.fillRect(cx - 4, -15 + j * 3, 8, 1.5); }
+      if (on && Math.sin(t * 17 + d.n * 3) > .2) { g.strokeStyle = '#dffaff'; g.lineWidth = 1.4; g.shadowColor = '#8fe9ff'; g.shadowBlur = 8; g.beginPath(); g.moveTo(-8, -18); g.lineTo(-5, -23 - Math.random() * 3); g.lineTo(-2, -20); g.lineTo(2, -24 - Math.random() * 3); g.lineTo(2, -18); g.stroke(); g.shadowBlur = 0; }
+      if (on && F.devs && Math.random() < .06) parts.push({ x: px + 12, y: py - 22, vx: 6, vy: -30, life: 1, max: 1, size: 4, c: '#6a5a7a', g: -10 });
+    } else if (d.type === 'pump') {   // a nodding pumpjack: frame, walking beam, horsehead, rod into the well
+      const a = Math.sin(t * 2.6 + d.n) * .3;
+      g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(0, 9, 20, 3.5, 0, 0, TAU); g.fill();
+      metal(g, -20, 4, 40, 6, 2, '#5a5868', '#24222e'); metal(g, 15, -1, 7, 10, 2, '#3a3848', '#14121a');
+      g.strokeStyle = '#3a3846'; g.lineWidth = 3; g.beginPath(); g.moveTo(-9, 5); g.lineTo(-1, -17); g.lineTo(7, 5); g.stroke(); g.strokeStyle = c; g.lineWidth = 1.5; g.beginPath(); g.moveTo(-6, -3); g.lineTo(4, -3); g.stroke();
+      g.save(); g.translate(-1, -18); g.rotate(a);
+      metal(g, -20, -2.5, 38, 5, 2, '#7a7690', '#2a2836'); g.fillStyle = c; g.fillRect(-12, -1, 16, 2);
+      g.fillStyle = '#4e4a5e'; g.beginPath(); g.moveTo(16, -5); g.quadraticCurveTo(25, -4, 23, 6); g.lineTo(18, 7); g.closePath(); g.fill(); g.strokeStyle = '#0a0812'; g.lineWidth = 1.2; g.stroke();
+      metal(g, -23, -1, 7, 11, 2, '#5a5868', '#1c1a26'); g.restore();
+      const hx = -1 + Math.cos(a) * 21, hy = -18 + Math.sin(a) * 21 + 6; g.strokeStyle = '#1a1822'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(hx + 2, hy); g.lineTo(18.5, 0); g.stroke();
+      if (phase === 'battle' && F.devs && Math.random() < .02) parts.push({ x: px + 18, y: py - 2, vx: (Math.random() - .5) * 20, vy: -60, life: .6, max: .6, size: 3, c: '#2a2218', g: 400 });
+    } else if (d.type === 'laser') {
+      base(12); g.rotate(d.ang); metal(g, -10, -9, 22, 18, 4, '#5e5a70', '#1e1c28'); metal(g, 10, -5, 18, 10, 2, '#8a8aa6', '#2a2a3a');
+      for (const r of [14, 19, 24]) { g.fillStyle = '#1a1822'; g.fillRect(r, -6, 2, 12); }
+      const lc = F.side ? '#8fe9ff' : '#ff9a7a', on = d.flash > .05; g.fillStyle = on ? '#ffffff' : lc; g.shadowColor = lc; g.shadowBlur = on ? 18 : 6; g.beginPath(); g.arc(29, 0, on ? 5 : 3.5, 0, TAU); g.fill(); g.shadowBlur = 0;
     } else if (d.type === 'repair') {
       base(12); metal(g, -9, -14, 18, 12, 3, '#6e8a7a', '#2a3a32'); g.fillStyle = '#7dff9a'; g.fillRect(-1.6, -12, 3.2, 8); g.fillRect(-4, -9.6, 8, 3.2);
       g.strokeStyle = '#3a3846'; g.lineWidth = 3; g.beginPath(); g.moveTo(6, -14); g.lineTo(14, -24); g.stroke(); g.fillStyle = Math.sin(t * 6) > 0 ? '#7dff9a' : '#2e6a3e'; g.beginPath(); g.arc(14, -25, 2.5, 0, TAU); g.fill();
@@ -827,8 +922,11 @@ const GAME = {
       if (d.flash > 0) { g.globalCompositeOperation = 'lighter'; g.fillStyle = `rgba(255,220,140,${d.flash * 6})`; g.beginPath(); g.arc(26, 0, 9, 0, TAU); g.fill(); g.globalCompositeOperation = 'source-over'; }
     } else {   // aimable weapons: a base and a barrel that swings to its aim
       base(d.type === 'mortar' || d.type === 'fire' ? 14 : 12); g.rotate(d.ang);
-      if (d.type === 'cannon') { metal(g, -5, -5.5, 32, 11, 3, '#6a6680', '#262432'); metal(g, 24, -7, 7, 14, 2, c, c2); g.fillStyle = '#0e0c14'; g.beginPath(); g.arc(31, 0, 3.5, 0, TAU); g.fill(); }
+      if (d.type === 'sniper') { metal(g, -6, -3, 50, 6, 2, '#7a7690', '#262432'); metal(g, 44, -4.5, 6, 9, 2, '#3a3848', '#14121a'); metal(g, 4, -11, 16, 6, 3, '#4e4a5e', '#1c1a26'); g.fillStyle = c; g.beginPath(); g.arc(20, -8, 2.2, 0, TAU); g.fill(); g.strokeStyle = '#2a2836'; g.lineWidth = 2; g.beginPath(); g.moveTo(22, 3); g.lineTo(28, 10); g.stroke(); }
+      else if (d.type === 'cannon') { metal(g, -5, -5.5, 32, 11, 3, '#6a6680', '#262432'); metal(g, 24, -7, 7, 14, 2, c, c2); g.fillStyle = '#0e0c14'; g.beginPath(); g.arc(31, 0, 3.5, 0, TAU); g.fill(); }
       else if (d.type === 'mg') { for (const o of [-3, 3]) metal(g, -2, o - 2, 28, 4, 2, '#7a7690', '#2a2836'); metal(g, -8, -7, 14, 14, 3, '#4e4a5e', '#1c1a26'); g.fillStyle = c; g.fillRect(-6, -2, 10, 4); }
+      else if (d.type === 'cluster') { metal(g, -6, -11, 24, 22, 4, '#6a6680', '#262432'); metal(g, 15, -12, 6, 24, 2, c, c2); g.fillStyle = '#0c0a12'; g.beginPath(); g.arc(21, 0, 7.5, 0, TAU); g.fill(); g.fillStyle = '#ffd23f'; for (const [ox, oy] of [[2, -5], [8, 0], [2, 5]]) { g.beginPath(); g.arc(ox, oy, 2.4, 0, TAU); g.fill(); } }
+      else if (d.type === 'swarm') { metal(g, -10, -13, 32, 26, 4, '#6a6680', '#262432'); for (let i = 0; i < 6; i++) { const ox = 22, oy = -8 + (i % 3) * 8, ox2 = i < 3 ? 0 : -1; g.fillStyle = '#0c0a12'; g.beginPath(); g.arc(ox + ox2, oy, 3, 0, TAU); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(ox + ox2, oy, 1.3, 0, TAU); g.fill(); } g.fillStyle = c; g.fillRect(-6, -10, 3, 20); }
       else if (d.type === 'mortar' || d.type === 'fire') { metal(g, -6, -10, 22, 20, 4, '#6a6680', '#262432'); metal(g, 13, -11, 6, 22, 2, d.type === 'fire' ? '#ff9a3a' : c, d.type === 'fire' ? '#a8381a' : c2); g.fillStyle = '#0c0a12'; g.beginPath(); g.arc(19, 0, 7, 0, TAU); g.fill(); if (d.type === 'fire') { metal(g, -14, -5, 8, 12, 3, '#ff8a2a', '#9a2a12'); } }
       else if (d.type === 'rockets') { metal(g, -8, -12, 32, 24, 4, '#6a6680', '#262432'); for (let i = -1; i <= 1; i++) { g.fillStyle = '#0c0a12'; g.beginPath(); g.arc(24, i * 7.5, 3.6, 0, TAU); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(24, i * 7.5, 1.6, 0, TAU); g.fill(); } }
       else if (d.type === 'rail') { metal(g, -6, -4, 46, 8, 2, '#8a8aa6', '#2a2a3a'); for (let x = 2; x < 36; x += 7) { const gl = .5 + .5 * Math.sin(t * 8 + x); g.fillStyle = `rgba(${F.side ? '95,212,255' : '255,176,46'},${.4 + gl * .6})`; g.fillRect(x, -6, 3, 12); } metal(g, -12, -8, 12, 16, 3, '#4e4a5e', '#1c1a26'); }
@@ -843,9 +941,10 @@ const GAME = {
       g.strokeStyle = c; g.globalAlpha = .35 + .65 * k; g.lineWidth = 2.5; g.beginPath(); g.arc(px, py, R, Math.PI, 0); g.stroke(); g.globalAlpha = 1;
     }
     if (d.lv > 1) { g.fillStyle = '#ffd23f'; g.font = '10px Bungee, sans-serif'; g.textAlign = 'center'; g.fillText('★'.repeat(d.lv - 1), px, py + 24); }
+    if (d.starve && F.side === mySide && !demo && phase === 'battle' && Math.sin(t * 6) > -.3) { g.save(); g.translate(px, py - 42); g.scale(1 / Math.max(.6, cam.z), 1 / Math.max(.6, cam.z)); txt(g, d.starve === 'oil' ? 'NO OIL' : 'NO POWER', 0, 0, 11, d.starve === 'oil' ? '#ffb02e' : '#8fe9ff', 'center'); g.restore(); }
     const hpk = d.hp / maxHp(d); if (hpk < .999 && d.alive) { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(px - 18, py - 34, 36, 5); g.fillStyle = hpk > .5 ? '#5cf28a' : hpk > .25 ? '#ffd23f' : '#ff4d6d'; g.fillRect(px - 18, py - 34, 36 * cl(hpk, 0, 1), 5); }
     if (D.reload && d.aim && F.side === mySide && phase === 'battle' && !demo) { g.strokeStyle = c; g.lineWidth = 2.5; g.beginPath(); g.arc(px, py, 21, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - Math.max(0, d.cd) / (D.reload * L.rel(d)))); g.stroke(); }
-    if (tool === 'up' && F.side === mySide && !demo) { g.font = '11px Bungee, sans-serif'; g.textAlign = 'center'; g.fillStyle = d.lv >= 3 ? '#9a9ab8' : F.gold >= upCost(d.type, d.lv) ? '#5cf28a' : '#ff8a8a'; g.fillText(d.lv >= 3 ? 'MAX' : `⬆ ${upCost(d.type, d.lv)}`, px, py - 40); }
+    if (tool === 'up' && F.side === mySide && !demo) { g.font = '11px Bungee, sans-serif'; g.textAlign = 'center'; g.fillStyle = d.lv >= 3 ? '#9a9ab8' : F.oil >= upCost(d.type, d.lv) ? '#5cf28a' : '#ff8a8a'; g.fillText(d.lv >= 3 ? 'MAX' : `⬆ ${upCost(d.type, d.lv)}`, px, py - 40); }
   }
   function drawFort(g, F) {
     const mine = F.side === mySide && !demo, building = mine && (tool === 'wood' || tool === 'steel' || tool === 'armor');
@@ -856,6 +955,7 @@ const GAME = {
     for (const d of F.devs) if (d.alive && F.nodes[d.n]) drawDev(g, F, d);
   }
   function trajectory(F, d, aim) {
+    if (DEV[d.type].dps) { const [px, py] = pivot(F, d), pts = []; for (let q = 30; q < DEV[d.type].range; q += 34) { const x = px + Math.cos(aim.a) * q, y = py + Math.sin(aim.a) * q; if (y > groundY(x) || x < -200 || x > WW + 200) break; pts.push([x, y]); } return pts; }
     const D = DEV[d.type], [px, py] = pivot(F, d), spd = lp(D.speed[0], D.speed[1], aim.p), s = { type: d.type, x: px + Math.cos(aim.a) * 26, y: py + Math.sin(aim.a) * 26, vx: Math.cos(aim.a) * spd, vy: Math.sin(aim.a) * spd, t: 0 }, pts = [];
     for (let i = 0; i < 420; i++) { moveShot(s, 1 / 60); if (i % 4 === 0) pts.push([s.x, s.y]); if (s.y > groundY(s.x) || s.y > 1100 || s.x < -200 || s.x > WW + 200) break; }
     return pts;
@@ -863,20 +963,26 @@ const GAME = {
   function drawShots(g) {
     g.save(); g.globalCompositeOperation = 'lighter';
     for (const s of shots) {
-      const tr = s.trail, n = tr.length / 2, col = s.type === 'rail' ? (s.side ? '95,212,255' : '255,190,90') : s.type === 'fire' ? '255,140,40' : s.type === 'mg' ? '255,230,160' : '255,200,150';
-      if (s.type === 'rail' || s.type === 'mg') { g.lineCap = 'round'; for (let i = 2; i < tr.length; i += 2) { const k = i / tr.length; g.strokeStyle = `rgba(${col},${k * (s.type === 'rail' ? .9 : .6)})`; g.lineWidth = s.type === 'rail' ? 2 + k * 5 : 1.5 + k; g.beginPath(); g.moveTo(tr[i - 2], tr[i - 1]); g.lineTo(tr[i], tr[i + 1]); g.stroke(); } }
+      if (s.type === 'laser') { const k = Math.min(1, s.life * 3, s.t * 8), lc = s.side ? '95,212,255' : '255,120,90'; g.lineCap = 'round'; for (const [w2, a2, c2] of [[18, .18, lc], [8, .45, lc], [3, .95, '255,255,255']]) { g.strokeStyle = `rgba(${c2},${a2 * k})`; g.lineWidth = w2 * (.85 + Math.random() * .3); g.beginPath(); g.moveTo(s.x, s.y); g.lineTo(s.hx, s.hy); g.stroke(); } const gl = g.createRadialGradient(s.hx, s.hy, 1, s.hx, s.hy, 26); gl.addColorStop(0, `rgba(255,255,255,${k})`); gl.addColorStop(1, `rgba(${lc},0)`); g.fillStyle = gl; g.fillRect(s.hx - 26, s.hy - 26, 52, 52); continue; }
+      const tr = s.trail, n = tr.length / 2, col = s.type === 'sniper' ? '230,245,255' : s.type === 'rail' ? (s.side ? '95,212,255' : '255,190,90') : s.type === 'fire' ? '255,140,40' : s.type === 'mg' ? '255,230,160' : '255,200,150';
+      if (s.type === 'rail' || s.type === 'mg' || s.type === 'sniper') { g.lineCap = 'round'; for (let i = 2; i < tr.length; i += 2) { const k = i / tr.length; g.strokeStyle = `rgba(${col},${k * (s.type === 'mg' ? .6 : .9)})`; g.lineWidth = s.type === 'rail' ? 2 + k * 5 : s.type === 'sniper' ? 1 + k * 2 : 1.5 + k; g.beginPath(); g.moveTo(tr[i - 2], tr[i - 1]); g.lineTo(tr[i], tr[i + 1]); g.stroke(); } }
       else if (s.type === 'cannon') { g.strokeStyle = `rgba(${col},.25)`; g.lineWidth = 3; g.beginPath(); for (let i = 0; i < tr.length; i += 2) i ? g.lineTo(tr[i], tr[i + 1]) : g.moveTo(tr[i], tr[i + 1]); g.stroke(); }
-      if (s.type === 'fire' || s.type === 'rockets') { const gl = g.createRadialGradient(s.x, s.y, 1, s.x, s.y, 18); gl.addColorStop(0, `rgba(${col},.9)`); gl.addColorStop(1, `rgba(${col},0)`); g.fillStyle = gl; g.fillRect(s.x - 18, s.y - 18, 36, 36); }
+      if (s.type === 'fire' || s.type === 'rockets' || s.type === 'swarm' || s.type === 'bomblet') { const gl = g.createRadialGradient(s.x, s.y, 1, s.x, s.y, 18); gl.addColorStop(0, `rgba(${col},.9)`); gl.addColorStop(1, `rgba(${col},0)`); g.fillStyle = gl; g.fillRect(s.x - 18, s.y - 18, 36, 36); }
     }
     g.globalCompositeOperation = 'source-over';
     for (const s of shots) {
-      if (s.type === 'mortar' || s.type === 'fire' || s.type === 'rockets') for (let i = 0; i < s.trail.length; i += 4) { const k = i / s.trail.length; g.fillStyle = `rgba(${s.type === 'fire' ? '90,60,60' : '170,160,185'},${k * .35})`; g.beginPath(); g.arc(s.trail[i], s.trail[i + 1], 2 + (1 - k) * 7, 0, TAU); g.fill(); }
+      if (s.type === 'laser') continue;
+      if (s.type === 'mortar' || s.type === 'fire' || s.type === 'rockets' || s.type === 'cluster' || s.type === 'swarm') for (let i = 0; i < s.trail.length; i += 4) { const k = i / s.trail.length; g.fillStyle = `rgba(${s.type === 'fire' ? '90,60,60' : '170,160,185'},${k * .35})`; g.beginPath(); g.arc(s.trail[i], s.trail[i + 1], 2 + (1 - k) * 7, 0, TAU); g.fill(); }
       g.save(); g.translate(s.x, s.y); g.rotate(Math.atan2(s.vy, s.vx));
       if (s.type === 'cannon') { const bg = g.createRadialGradient(-2, -2, 1, 0, 0, 7); bg.addColorStop(0, '#8a8698'); bg.addColorStop(1, '#14121a'); g.fillStyle = bg; g.beginPath(); g.arc(0, 0, 6.5, 0, TAU); g.fill(); }
       else if (s.type === 'mortar') { metal(g, -9, -6, 18, 12, 5, '#5a566a', '#1a1822'); g.fillStyle = SIDEC[s.side]; g.fillRect(-9, -2, 4, 4); }
       else if (s.type === 'fire') { const bg = g.createRadialGradient(0, 0, 1, 0, 0, 9); bg.addColorStop(0, '#fff2b0'); bg.addColorStop(.5, '#ff8a2a'); bg.addColorStop(1, '#8a2a10'); g.fillStyle = bg; g.beginPath(); g.arc(0, 0, 8, 0, TAU); g.fill(); }
       else if (s.type === 'rockets') { metal(g, -10, -3.5, 18, 7, 3, '#f0ecf6', '#8a86a0'); g.fillStyle = SIDEC[s.side]; g.beginPath(); g.moveTo(8, -3.5); g.lineTo(14, 0); g.lineTo(8, 3.5); g.fill(); if (s.t < .8) { g.fillStyle = '#ffd27a'; g.beginPath(); g.moveTo(-10, -3); g.lineTo(-22 - Math.random() * 10, 0); g.lineTo(-10, 3); g.fill(); } }
       else if (s.type === 'rail') { g.fillStyle = '#ffffff'; g.fillRect(-8, -2, 16, 4); }
+      else if (s.type === 'sniper') { g.fillStyle = '#ffffff'; g.fillRect(-7, -1, 14, 2); }
+      else if (s.type === 'cluster') { metal(g, -10, -7, 20, 14, 6, '#5a566a', '#1a1822'); g.fillStyle = '#ffd23f'; g.fillRect(-4, -7, 3, 14); g.fillRect(3, -7, 3, 14); }
+      else if (s.type === 'bomblet') { g.fillStyle = '#1a1822'; g.beginPath(); g.arc(0, 0, 4.5, 0, TAU); g.fill(); g.fillStyle = '#ffd23f'; g.beginPath(); g.arc(1, -1, 1.6, 0, TAU); g.fill(); }
+      else if (s.type === 'swarm') { metal(g, -6, -2.5, 11, 5, 2, '#f0ecf6', '#8a86a0'); g.fillStyle = SIDEC[s.side]; g.beginPath(); g.moveTo(5, -2.5); g.lineTo(9, 0); g.lineTo(5, 2.5); g.fill(); g.fillStyle = '#ffd27a'; g.beginPath(); g.moveTo(-6, -2); g.lineTo(-13 - Math.random() * 6, 0); g.lineTo(-6, 2); g.fill(); }
       else { g.fillStyle = '#fff2c4'; g.fillRect(-4, -1.2, 8, 2.4); }
       g.restore();
     }
@@ -894,7 +1000,13 @@ const GAME = {
 
   /* ---------- the HUD: glass panels, minimap, tabbed toolbar ---------- */
   function glass(g, x, y, w, h, r, edge) { const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, 'rgba(46,30,82,.82)'); gr.addColorStop(1, 'rgba(16,10,34,.9)'); g.fillStyle = gr; g.beginPath(); g.roundRect(x, y, w, h, r); g.fill(); g.strokeStyle = edge || 'rgba(255,220,180,.22)'; g.lineWidth = 1.5; g.stroke(); g.fillStyle = 'rgba(255,255,255,.06)'; g.beginPath(); g.roundRect(x + 2, y + 2, w - 4, h * .4, r); g.fill(); }
-  function txt(g, s, x, y, size, c, al = 'left', glow = 0) { g.font = `${size}px Bungee, Impact, sans-serif`; g.textAlign = al; g.textBaseline = 'middle'; if (glow) { g.shadowColor = c; g.shadowBlur = glow; } if (!/^#[0-3]/.test(c)) { g.lineWidth = 4; g.strokeStyle = 'rgba(10,6,20,.85)'; g.strokeText(s, x, y); } g.fillStyle = c; g.fillText(s, x, y); g.shadowBlur = 0; }
+  function txt(g, s, x, y, size, c, al = 'left', glow = 0) { g.font = `${size}px Bungee, Impact, sans-serif`; g.textAlign = al; g.textBaseline = 'middle'; if (glow) { g.shadowColor = c; g.shadowBlur = glow; } if (!/^#[0-3]/.test(c)) { g.lineWidth = 4; g.strokeStyle = 'rgba(10,6,20,.85)'; g.strokeText(s, x, y); } g.fillStyle = c; g.fillText(s, x, y); g.shadowBlur = 0; return x + (al === 'left' ? g.measureText(s).width : 0); }
+  function resIcon(g, k, x, y, r) {   // a drop of oil or a bolt of power
+    g.save(); g.translate(x, y);
+    if (k === 'oil') { const gr = g.createLinearGradient(-r, -r, r, r); gr.addColorStop(0, '#6a5a3a'); gr.addColorStop(1, '#0c0a08'); g.fillStyle = gr; g.beginPath(); g.moveTo(0, -r * 1.25); g.bezierCurveTo(r * .2, -r * .6, r, -r * .1, r * .8, r * .4); g.arc(0, r * .3, r * .82, .1, Math.PI - .1); g.bezierCurveTo(-r, -r * .1, -r * .2, -r * .6, 0, -r * 1.25); g.fill(); g.strokeStyle = '#ffd23f'; g.lineWidth = 1.4; g.stroke(); g.fillStyle = 'rgba(255,240,200,.75)'; g.beginPath(); g.ellipse(-r * .3, r * .1, r * .16, r * .32, -.4, 0, TAU); g.fill(); }
+    else { g.fillStyle = '#8fe9ff'; g.strokeStyle = '#0a2a3a'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(r * .3, -r * 1.2); g.lineTo(-r * .7, r * .15); g.lineTo(-r * .05, r * .15); g.lineTo(-r * .35, r * 1.2); g.lineTo(r * .75, -r * .2); g.lineTo(r * .05, -r * .2); g.closePath(); g.fill(); g.stroke(); }
+    g.restore();
+  }
   let hintS = '', hintT = 0;
   function drawHUD(g) {
     const v = K.view, me = forts[mySide], them = forts[1 - mySide];
@@ -904,8 +1016,11 @@ const GAME = {
       txt(g, (F.side === mySide && !demo ? 'YOU · ' : '') + F.name, left ? x + 14 : x + w - 14, v.y0 + 32, 16, SIDEC[F.side], left ? 'left' : 'right');
       g.fillStyle = 'rgba(0,0,0,.5)'; g.beginPath(); g.roundRect(x + 14, v.y0 + 46, w - 28, 14, 7); g.fill();
       const hg = g.createLinearGradient(x + 14, 0, x + w - 14, 0); hg.addColorStop(0, SIDEC2[F.side]); hg.addColorStop(1, SIDEC[F.side]); g.fillStyle = hg; g.beginPath(); g.roundRect(x + 16, v.y0 + 48, (w - 32) * hp, 10, 5); g.fill();
-      if (F.side === mySide || !MP.online()) txt(g, `⛁ ${Math.floor(F.gold)}` + (phase === 'battle' ? `  +${(5 + F.devs.filter(d => d.alive && d.type === 'gen').reduce((a, d) => a + DEV.gen.inc + 2 * (d.lv - 1), 0))}/s` : ''), left ? x + 14 : x + w - 14, v.y0 + 78, 14, '#ffd23f', left ? 'left' : 'right');
-      txt(g, 'CORE', left ? x + w - 14 : x + 14, v.y0 + 78, 11, '#cfc8e0', left ? 'right' : 'left');
+      if (F.side === mySide || !MP.online()) {
+        const E = econ(F), net = E.pump - (F.running !== false ? E.burn : 0); let xx = x + 16;
+        resIcon(g, 'oil', xx + 5, v.y0 + 77, 9); xx = txt(g, '' + Math.floor(F.oil), xx + 15, v.y0 + 78, 15, '#ffd23f'); xx = txt(g, (net >= 0 ? ' +' : ' ') + net + '/s', xx, v.y0 + 79, 10, net >= 0 ? '#ffe9a8' : '#ff8a8a');
+        xx = Math.max(xx + 16, x + 160); resIcon(g, 'pw', xx + 5, v.y0 + 77, 9); xx = txt(g, '' + Math.floor(F.en), xx + 15, v.y0 + 78, 15, '#8fe9ff'); txt(g, '/' + E.cap, xx, v.y0 + 79, 10, '#bfefff');
+      } else txt(g, 'CORE', left ? x + w - 14 : x + 14, v.y0 + 78, 11, '#cfc8e0', left ? 'right' : 'left');
     }
     if (phase === 'build') { txt(g, 'BUILD PHASE', 640, v.y0 + 26, 18, '#ffd890', 'center'); txt(g, Math.max(0, Math.ceil(buildT)) + 's', 640, v.y0 + 62, 36, buildT < 10 ? '#ff6a6a' : '#fff', 'center', 8); if (MP.online()) txt(g, them.ready ? 'Opponent is ready' : 'Opponent is building...', 640, v.y0 + 88, 12, them.ready ? '#5cf28a' : '#cfc8e0', 'center'); }
     else if (phase === 'battle') txt(g, 'SIEGE', 640, v.y0 + 40, 26, '#ff8a5a', 'center', 12);
@@ -920,24 +1035,25 @@ const GAME = {
     if (demo || phase === 'over') return;
     // toolbar: category tabs, the items in the tab, upgrade, remove, and the ready/aim button
     const tb = TBL(), items = tabItems();
-    glass(g, tb.tabs[0].x - 10, tb.act.y - 10, tb.act.x + tb.act.w - tb.tabs[0].x + 20, 112, 18);
-    tb.tabs.forEach((b, i) => { const on = i === tab; g.fillStyle = on ? SIDEC[mySide] : 'rgba(255,255,255,.08)'; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 8); g.fill(); txt(g, TABS[i][0], b.x + b.w / 2, b.y + b.h / 2 + 1, 11, on ? '#1a1030' : '#fff', 'center'); });
+    glass(g, tb.items[0].x - 10, tb.act.y - 10, tb.act.x + tb.act.w - tb.items[0].x + 20, 112, 18);
+    tb.tabs.forEach((b, i) => { const on = i === tab; if (on) { g.fillStyle = SIDEC[mySide]; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 12); g.fill(); } else glass(g, b.x, b.y, b.w, b.h, 12); txt(g, TABS[i][0], b.x + b.w / 2, b.y + b.h / 2 + 1, 13, on ? '#1a1030' : '#fff', 'center'); });
     tb.items.forEach((b, i) => {
-      const k = items[i]; if (!k) return; const on = tool === k, cost = toolCost(k), can = me.gold >= cost;
+      const k = items[i]; if (!k) return; const on = tool === k, cost = toolCost(k), can = me.oil >= cost;
       const gr = g.createLinearGradient(0, b.y, 0, b.y + b.h); gr.addColorStop(0, on ? 'rgba(255,176,46,.45)' : 'rgba(255,255,255,.1)'); gr.addColorStop(1, on ? 'rgba(255,120,40,.2)' : 'rgba(255,255,255,.02)'); g.fillStyle = gr; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 14); g.fill(); g.strokeStyle = on ? SIDEC[mySide] : 'rgba(255,255,255,.16)'; g.lineWidth = on ? 3 : 1.2; g.stroke();
       g.globalAlpha = can ? 1 : .4; icon(g, k, b.x + b.w / 2, b.y + 34); g.globalAlpha = 1;
       txt(g, k === 'del' ? 'REMOVE' : k === 'up' ? 'UPGRADE' : ((MAT[k] || DEV[k]).short || (MAT[k] || DEV[k]).name).toUpperCase(), b.x + b.w / 2, b.y + 66, 10, '#fff', 'center');
-      if (cost) txt(g, '⛁' + cost, b.x + b.w / 2, b.y + 82, 11, can ? '#ffd23f' : '#ff8a8a', 'center');
+      if (cost) { g.font = '11px Bungee, Impact, sans-serif'; const cw = g.measureText('' + cost).width; resIcon(g, 'oil', b.x + b.w / 2 - cw / 2 - 4, b.y + 81, 5.5); txt(g, '' + cost, b.x + b.w / 2 - cw / 2 + 4, b.y + 82, 11, can ? '#ffd23f' : '#ff8a8a'); }
+      if (DEV[k] && DEV[k].pw) resIcon(g, 'pw', b.x + b.w - 12, b.y + 13, 6);
     });
     const A = tb.act, rd = phase === 'build' && me.ready, ag = g.createLinearGradient(0, A.y, 0, A.y + A.h);
     ag.addColorStop(0, phase === 'build' ? (rd ? '#4aa85a' : '#ffc456') : tool === null ? 'rgba(255,255,255,.25)' : 'rgba(255,255,255,.1)'); ag.addColorStop(1, phase === 'build' ? (rd ? '#2a6a3a' : '#e0802a') : 'rgba(255,255,255,.04)');
     g.fillStyle = ag; g.beginPath(); g.roundRect(A.x, A.y, A.w, A.h, 16); g.fill();
     txt(g, phase === 'build' ? (rd ? 'READY ✓' : 'READY') : 'AIM', A.x + A.w / 2, A.y + 40, 26, phase === 'build' && !rd ? '#2a1408' : '#fff', 'center');
     txt(g, phase === 'build' ? (rd ? 'waiting...' : 'start the battle') : 'tap a weapon', A.x + A.w / 2, A.y + 68, 11, phase === 'build' && !rd ? '#2a1408' : '#cfc8e0', 'center');
-    const hint = (tool === 'wood' || tool === 'steel' || tool === 'armor') ? 'Drag from a bolt or your ground. Triangles hold; tall towers shoot further.' : tool === 'del' ? 'Tap a beam or device to remove it' + (phase === 'battle' ? ' (half refund)' : '') : tool === 'up' ? 'Tap one of your devices to upgrade it (up to level 3)' : tool ? `Tap one of your bolts to place the ${DEV[tool].name}` : aimSel ? 'Drag to aim: direction and power. It fires on its own.' : phase === 'battle' ? 'Tap a weapon, then drag to aim. Drag the sky to look around.' : '';
+    const hint = (tool === 'wood' || tool === 'steel' || tool === 'armor') ? 'Drag from a bolt or your ground. Triangles hold; tall towers shoot further.' : tool === 'del' ? 'Tap a beam or device to remove it' + (phase === 'battle' ? ' (half refund)' : '') : tool === 'up' ? 'Tap one of your devices to upgrade it (up to level 3)' : tool === 'pump' ? `Tap a bolt on the ground to place an Oil pump (+${pumpRate({ lv: 1 })} oil/s)` : tool === 'gen' ? `Generators burn ${genBurn({ lv: 1 })} oil/s into ${genOut({ lv: 1 })} power/s. They explode when destroyed!` : tool ? `Tap one of your bolts to place the ${DEV[tool].name}` + (DEV[tool].reload ? ` · each shot: ${DEV[tool].ammo} oil` + (DEV[tool].pw ? ` + ${DEV[tool].pw} power` : '') : '') : aimSel ? 'Drag to aim: direction and power. It fires on its own.' : phase === 'battle' ? 'Tap a weapon, then drag to aim. Drag the sky to look around.' : '';
     if (hint !== hintS) { hintS = hint; hintT = t; }
     const ha = hint ? cl(1 - (t - hintT - 6), 0, 1) : 0;
-    if (ha > 0) { g.globalAlpha = ha; g.font = '13px Bungee, Impact, sans-serif'; const hw = g.measureText(hint).width + 30; glass(g, 640 - hw / 2, tb.act.y - 40, hw, 28, 14); txt(g, hint, 640, tb.act.y - 25, 13, '#fff', 'center'); g.globalAlpha = 1; }
+    if (ha > 0) { g.globalAlpha = ha; g.font = '13px Bungee, Impact, sans-serif'; const hw = g.measureText(hint).width + 30; glass(g, 640 - hw / 2, tb.act.y - 86, hw, 28, 14); txt(g, hint, 640, tb.act.y - 71, 13, '#fff', 'center'); g.globalAlpha = 1; }
     if (msg && msg.k < msg.d) { g.globalAlpha = Math.min(1, (msg.d - msg.k) * 3); txt(g, msg.t, 640, v.y0 + 200, 30, msg.c, 'center', 14); g.globalAlpha = 1; }
   }
   function drawWorldUI(g) {   // things drawn in the world: the beam you're placing, placement rings, the aim arc
@@ -947,9 +1063,9 @@ const GAME = {
       g.globalAlpha = .8; drawBeam(g, A2, r.e, { mat: drag.mat, hp: MAT[drag.mat].hp, f: 0, hit: 0 }, false); g.globalAlpha = 1;
       g.strokeStyle = r.why ? '#ff4d6d' : '#5cf28a'; g.lineWidth = 2 / cam.z; g.setLineDash([6 / cam.z, 5 / cam.z]); g.beginPath(); g.moveTo(A2.x, A2.y); g.lineTo(r.e.x, r.e.y); g.stroke(); g.setLineDash([]);
       g.beginPath(); g.arc(r.e.x, r.e.y, 7, 0, TAU); g.stroke();
-      g.save(); g.translate(r.e.x, r.e.y); g.scale(1 / cam.z, 1 / cam.z); txt(g, r.why || `⛁${r.cost}`, 12, -14, 14, r.why ? '#ff8a8a' : '#ffd23f'); g.restore();
+      g.save(); g.translate(r.e.x, r.e.y); g.scale(1 / cam.z, 1 / cam.z); if (r.why) txt(g, r.why, 12, -14, 14, '#ff8a8a'); else { resIcon(g, 'oil', 18, -14, 6); txt(g, '' + r.cost, 28, -14, 14, '#ffd23f'); } g.restore();
     }
-    if (tool && DEV[tool]) { const [hx, hy] = toWorld(...hoverK), n = nearNode(me, hx, hy, 24 / Math.min(1, cam.z)); if (n >= 0) { g.strokeStyle = devAt(me, n) ? '#ff4d6d' : '#5cf28a'; g.lineWidth = 2.5; g.beginPath(); g.arc(me.nodes[n].x, me.nodes[n].y - 9, 22, 0, TAU); g.stroke(); } }
+    if (tool && DEV[tool]) { const [hx, hy] = toWorld(...hoverK), n = nearNode(me, hx, hy, 24 / Math.min(1, cam.z)); if (n >= 0) { g.strokeStyle = devAt(me, n) || (DEV[tool].ground && !me.nodes[n].pin) ? '#ff4d6d' : '#5cf28a'; g.lineWidth = 2.5; g.beginPath(); g.arc(me.nodes[n].x, me.nodes[n].y - 9, 22, 0, TAU); g.stroke(); } }
     if (aimSel && aimSel.alive) {
       const [px, py] = pivot(me, aimSel); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(px, py, 28, 0, TAU); g.stroke();
       const aim = aimPt ? aimFrom(me, aimSel, aimPt.x, aimPt.y) : aimSel.aim;
@@ -989,9 +1105,9 @@ const GAME = {
   };
   GAME.bot = () => {};
   GAME.pose = () => { for (let i = 0; i < 60 * 13; i++) step(DT); posed = true; camGo('mine', true); cam.z = cam.tz = .8; cam.x = cam.tx = ISL[0].x1 - 120; cam.y = cam.ty = GY - 260; };
-  GAME.test = { st: () => ({ mode, phase, buildT: +buildT.toFixed(1), my: mySide, cam: [Math.round(cam.x), Math.round(cam.y), +cam.z.toFixed(2)], forts: forts.map(F => ({ n: F.nodes.filter(n => n.alive).length, b: liveBeams(F), d: F.devs.filter(d => d.alive).map(d => d.type + (d.lv > 1 ? '*' + d.lv : '') + ':' + Math.round(d.hp)), gold: Math.round(F.gold), dead: F.dead, fire: F.beams.filter(b => b.alive && b.fire > 0).length, maxSt: +Math.max(0, ...F.beams.filter(b => b.alive).map(b => Math.abs(b.f || 0) / MAT[b.mat].maxF)).toFixed(2) })), shots: shots.length }),
-    step: n => { for (let i = 0; i < n; i++) step(DT); }, forts: () => forts, ready: () => { myF().ready = true; }, start: () => MP.start(), cam: w => camGo(w, true), tool: (k, tb) => { tool = k; if (tb !== undefined) tab = tb; },
-    aim: (i, a, p) => { const d = myF().devs.filter(x => x.alive && DEV[x.type].reload)[i]; if (d) d.aim = { a, p }; }, botMe: () => { myF().bot = true; }, give: g2 => { myF().gold += g2; }, toWorld, toKit: (x, y) => [640 + (x - cam.x) * cam.z, 360 + (y - cam.y) * cam.z] };
+  GAME.test = { st: () => ({ mode, phase, buildT: +buildT.toFixed(1), my: mySide, cam: [Math.round(cam.x), Math.round(cam.y), +cam.z.toFixed(2)], forts: forts.map(F => ({ n: F.nodes.filter(n => n.alive).length, b: liveBeams(F), d: F.devs.filter(d => d.alive).map(d => d.type + (d.lv > 1 ? '*' + d.lv : '') + ':' + Math.round(d.hp)), oil: Math.round(F.oil), en: Math.round(F.en), dead: F.dead, fire: F.beams.filter(b => b.alive && b.fire > 0).length, maxSt: +Math.max(0, ...F.beams.filter(b => b.alive).map(b => Math.abs(b.f || 0) / MAT[b.mat].maxF)).toFixed(2) })), shots: shots.length }),
+    step: n => { for (let i = 0; i < n; i++) step(DT); }, forts: () => forts, shots: () => shots, add: (k, n) => addDev(myF(), k, n), ready: () => { myF().ready = true; }, start: () => MP.start(), cam: w => camGo(w, true), tool: (k, tb) => { tool = k; if (tb !== undefined) tab = tb; },
+    aim: (i, a, p) => { const d = myF().devs.filter(x => x.alive && DEV[x.type].reload)[i]; if (d) d.aim = { a, p }; }, botMe: () => { myF().bot = true; }, give: g2 => { myF().oil += g2; }, toWorld, toKit: (x, y) => [640 + (x - cam.x) * cam.z, 360 + (y - cam.y) * cam.z] };
 })();
 
 /* Pulsebox game kit: canvas scaling, input, menus, skins shop, coins, best score, sound and effects.
