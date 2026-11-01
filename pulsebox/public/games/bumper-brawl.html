@@ -82,7 +82,8 @@ const MP = (() => {
   const AUTO = (() => { try { const q = new URLSearchParams(location.search).get('room') || ''; return /^[A-Za-z0-9]{4}$/.test(q) ? q.toUpperCase() : ''; } catch (e) { return ''; } })();
   let autoDone = false;
   let ws = null, me = 0, host = 0, code = '', pending = null, box = null, name = '';
-  const players = new Map();
+  const players = new Map(), skinOf = new Map();
+  const mySkin = () => (typeof K !== 'undefined' && K.save && K.save.skin) || 0;
   try { name = localStorage.getItem('pbx-mp-name') || ''; } catch (e) {}
   const $m = id => document.getElementById('mp-' + id), esc = s => String(s).replace(/[<>&"]/g, '');
   const online = () => !!(ws && ws.readyState === 1 && me);
@@ -139,8 +140,9 @@ const MP = (() => {
       case 'hello':
         me = m.id; host = m.host; players.clear(); m.players.forEach(p => { if (p.id !== me) players.set(p.id, { name: p.name }); });
         if (players.size + 1 > opts.max) { msg(`This game takes up to ${opts.max} players.`); leave(); }
-        msg(''); refresh(); return;
-      case 'join': players.set(m.id, { name: m.name }); refresh(); if (opts.onJoin) opts.onJoin(m.id, m.name); return;
+        msg(''); refresh(); send({ t: 'mp-skin', s: mySkin() }); return;
+      case 'mp-skin': skinOf.set(m.from, m.s | 0); return;
+      case 'join': players.set(m.id, { name: m.name }); send({ t: 'mp-skin', s: mySkin() }); refresh(); if (opts.onJoin) opts.onJoin(m.id, m.name); return;
       case 'leave': players.delete(m.id); refresh(); if (opts.onLeave) opts.onLeave(m.id); return;
       case 'host': host = m.id; refresh(); if (opts.onHost) opts.onHost(m.id); return;
       case 'mp-start': if (K.state !== 'play') pending = m; else begin(m); return;
@@ -150,9 +152,10 @@ const MP = (() => {
   function begin(m) { if (box) box.hidden = true; opts.onStart(m.cfg || {}, m.roster); }
   function start() {
     const ps = online() ? list() : [{ id: 0, name: name || 'You' }];
-    const roster = ps.slice(0, opts.max).map((p, i) => ({ id: p.id, name: p.name, col: COLS[i], seat: i }));
+    const nSk = (GAME.skins || []).length || 1;
+    const roster = ps.slice(0, opts.max).map((p, i) => ({ id: p.id, name: p.name, col: COLS[i], seat: i, skin: p.id === (online() ? me : 0) ? mySkin() : (skinOf.get(p.id) || 0) }));
     const fill = online() ? (opts.bots ? opts.max : 0) : (opts.bots || opts.soloSeats || 1);
-    let b = 0; while (roster.length < fill) roster.push({ id: 'b' + roster.length, name: BOTS[b++ % BOTS.length], col: COLS[roster.length], bot: true, seat: roster.length });
+    let b = 0; while (roster.length < fill) roster.push({ id: 'b' + roster.length, name: BOTS[b++ % BOTS.length], col: COLS[roster.length], bot: true, seat: roster.length, skin: Math.floor(Math.random() * nSk) });
     const m = { t: 'mp-start', cfg: opts.config ? opts.config() : {}, roster };
     send(m); begin(m);
   }
@@ -180,9 +183,9 @@ const MP = (() => {
 // @use mp
 const GAME = {
   id: 'bumper-brawl', title: 'Bumper Brawl', tagline: 'Ram your friends off the shrinking arena!',
-  font: 'Bungee', accent: '#ff4d6d', accent2: '#3ec5ff', bg: '#090616', noSkins: true, noHud: true, scoreLabel: 'Rounds won',
+  font: 'Bungee', accent: '#ff4d6d', accent2: '#3ec5ff', bg: '#090616', noHud: true, scoreLabel: 'Rounds won',
   how: ['Drive with WASD or the arrow keys (or drag on the left of the screen).', 'Space (or tap the right side) to DASH into someone. Dashing hits much harder.', 'The arena shrinks. Last car on the platform wins the round; first to 3 wins.', 'Grab power-ups: MEGA makes you huge and heavy, SHOCK blasts everyone away, ZOOM speeds you up.'],
-  skins: [{ name: 'Default', price: 0, c: ['#fff'] }],
+  skins: [{ name: 'Classic', price: 0, k: 'none' }, { name: 'Racing Stripe', price: 40, k: 'stripe' }, { name: 'Spiked Rim', price: 90, k: 'spikes' }, { name: 'Star Badge', price: 140, k: 'star' }, { name: 'Flame Ring', price: 220, k: 'flame' }, { name: 'Royal Crown', price: 320, k: 'crown' }, { name: 'Galaxy', price: 450, k: 'galaxy' }],
 };
 (() => {
   const CX = 640, CY = 390, R0 = 320, RMIN = 105, SHRINK = 55, WIN = 3, PR = 26;
@@ -200,6 +203,16 @@ const GAME = {
     onLeave: id => { if (mode !== 'play') return; if (id === -1 || id === MP.hostId || !MP.online()) { endMatch('The host left the room.'); return; } const p = P.find(q => q.id === id); if (p) { p.bot = true; p.name += ' (bot)'; } },
     onHost: () => { if (mode === 'play') endMatch('The host left the room.'); },
   });
+  const skinK = r => ((GAME.skins[(r && r.skin) | 0] || GAME.skins[0]).k);
+  function bumperDeco(g, k, rr, col) {   // drawn in the bumper's own frame, facing +x
+    if (k === 'stripe') { g.fillStyle = 'rgba(255,255,255,.75)'; g.fillRect(-rr * .9, -rr * .12, rr * 1.15, rr * .24); }
+    else if (k === 'spikes') { g.fillStyle = '#d8d8e0'; for (let i = 0; i < 10; i++) { const a = i / 10 * 6.283; g.beginPath(); g.moveTo(Math.cos(a - .14) * (rr + 4), Math.sin(a - .14) * (rr + 4)); g.lineTo(Math.cos(a) * (rr + 13), Math.sin(a) * (rr + 13)); g.lineTo(Math.cos(a + .14) * (rr + 4), Math.sin(a + .14) * (rr + 4)); g.fill(); } }
+    else if (k === 'star') { g.fillStyle = '#ffd23f'; g.beginPath(); for (let i = 0; i < 10; i++) { const a = i / 10 * 6.283 - 1.57, q = i % 2 ? rr * .17 : rr * .4; g.lineTo(-rr * .35 + Math.cos(a) * q, Math.sin(a) * q); } g.fill(); }
+    else if (k === 'flame') { for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283 + Date.now() / 300, f = rr + 6 + Math.sin(Date.now() / 90 + i * 2) * 4; g.fillStyle = i % 2 ? '#ff9f43' : '#ffd23f'; g.beginPath(); g.arc(Math.cos(a) * f, Math.sin(a) * f, 4.5, 0, 7); g.fill(); } }
+    else if (k === 'galaxy') { g.save(); g.beginPath(); g.arc(0, 0, rr, 0, 7); g.clip(); g.fillStyle = 'rgba(40,10,80,.55)'; g.fillRect(-rr, -rr, rr * 2, rr * 2); g.fillStyle = '#fff'; for (let i = 0; i < 14; i++) { const a = i * 2.39, d = (i * 37 % 10) / 10 * rr * .9; g.fillRect(Math.cos(a) * d, Math.sin(a) * d, 2, 2); } g.restore(); }
+  }
+  function bumperCrown(g, x, y) { g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(x - 13, y); g.lineTo(x - 13, y - 12); g.lineTo(x - 6, y - 5); g.lineTo(x, y - 15); g.lineTo(x + 6, y - 5); g.lineTo(x + 13, y - 12); g.lineTo(x + 13, y); g.fill(); g.fillStyle = '#ff4d6d'; g.beginPath(); g.arc(x, y - 4, 2.5, 0, 7); g.fill(); }
+  GAME.drawSkin = (g, s, r) => { const rr = r * .75, col = '#3ec5ff'; g.fillStyle = '#e8e8f0'; g.beginPath(); g.arc(0, 0, rr + 5, 0, 7); g.fill(); g.fillStyle = col; g.beginPath(); g.arc(0, 0, rr, 0, 7); g.fill(); bumperDeco(g, s.k, rr, col); g.fillStyle = '#fff'; for (const sy of [-1, 1]) { g.beginPath(); g.arc(rr * .42, sy * rr * .26, rr * .18, 0, 7); g.fill(); } if (s.k === 'crown') bumperCrown(g, 0, -rr - 4); };
   function startMatch(ros) {
     roster = ros; mode = 'play'; round = 0; score = ros.map(() => 0); matchWin = -1; K.score = 0;
     mine = Math.max(0, ros.findIndex(r => r.id === MP.id && !r.bot));
@@ -208,7 +221,7 @@ const GAME = {
   }
   function newRound() {
     round++; R = R0; tRound = 0; phase = 'count'; phaseT = 2.2; winner = -1; items = []; itemT = 6;
-    P = roster.map((r, i) => { const a = i / roster.length * Math.PI * 2 + Math.PI / 4; return { i, id: r.id, name: r.name, col: r.col, bot: !!r.bot, x: CX + Math.cos(a) * 150, y: CY + Math.sin(a) * 150, vx: 0, vy: 0, a: a + Math.PI, alive: true, fall: 0, dcd: 0, dash: 0, mega: 0, zoom: 0, stun: 0, hit: 0 }; });
+    P = roster.map((r, i) => { const a = i / roster.length * Math.PI * 2 + Math.PI / 4; return { i, id: r.id, name: r.name, col: r.col, bot: !!r.bot, sk: skinK(r), x: CX + Math.cos(a) * 150, y: CY + Math.sin(a) * 150, vx: 0, vy: 0, a: a + Math.PI, alive: true, fall: 0, dcd: 0, dash: 0, mega: 0, zoom: 0, stun: 0, hit: 0 }; });
     if (!K.bot) K.sfx(440, .2, 'square', .06);
   }
   function endMatch(why) {
@@ -379,12 +392,13 @@ const GAME = {
       if (p.mega > 0) { g.shadowColor = '#ffd23f'; g.shadowBlur = 30; }
       g.fillStyle = '#e8e8f0'; g.beginPath(); g.arc(0, 0, rr + 5, 0, 7); g.fill(); g.shadowBlur = 0;
       const bodyG = g.createRadialGradient(-rr * .35, -rr * .4, rr * .1, 0, 0, rr); bodyG.addColorStop(0, shade(p.col, .35)); bodyG.addColorStop(.7, p.col); bodyG.addColorStop(1, dark); g.fillStyle = bodyG; g.beginPath(); g.arc(0, 0, rr, 0, 7); g.fill();
-      g.rotate(p.a);
+      g.rotate(p.a); bumperDeco(g, p.sk, rr, p.col);
       g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.ellipse(rr * .35, 0, rr * .32, rr * .5, 0, 0, 7); g.fill();
       for (const s of [-1, 1]) { g.fillStyle = '#fff'; g.beginPath(); g.arc(rr * .42, s * rr * .26, rr * .2, 0, 7); g.fill(); g.fillStyle = '#111'; g.beginPath(); g.arc(rr * .5, s * rr * .26, rr * .1, 0, 7); g.fill(); }
       g.strokeStyle = '#111'; g.lineWidth = 3; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(rr * .28, s * rr * .48); g.lineTo(rr * .62, s * rr * .12); g.stroke(); }
       if (p.stun > 0) { g.rotate(-p.a); g.fillStyle = '#ffd23f'; for (let s = 0; s < 3; s++) { const a = t * 6 + s * 2.1; g.beginPath(); g.arc(Math.cos(a) * rr * .8, -rr - 8 + Math.sin(a) * 6, 4, 0, 7); g.fill(); } }
       g.restore();
+      if (p.sk === 'crown' && k > 0) bumperCrown(g, p.x, p.y + (fallen ? p.fall * 60 : 0) - rr - 6);
       if (p.alive) {
         g.font = '15px Bungee'; g.textAlign = 'center'; g.fillStyle = 'rgba(0,0,0,.5)'; g.fillText(p.name, p.x + 1, p.y - rr - 21); g.fillStyle = p.col; g.fillText(p.name, p.x, p.y - rr - 22);
         if (p.i === mine) { g.fillStyle = '#fff'; g.beginPath(); g.moveTo(p.x - 7, p.y - rr - 42); g.lineTo(p.x + 7, p.y - rr - 42); g.lineTo(p.x, p.y - rr - 33); g.fill(); }

@@ -72,9 +72,9 @@ const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
    season, then the top four play off for the Pocket Bowl. The team and roster carry over from season to season. */
 const GAME = {
   id: 'pocket-bowl', title: 'Pocket Bowl', tagline: 'Retro football. Run the team, win the Bowl.',
-  font: 'Press Start 2P', accent: '#ffd23f', accent2: '#3ddc84', bg: '#0b2a16', noSkins: true, noHud: true, scoreLabel: 'Season score',
+  font: 'Press Start 2P', accent: '#ffd23f', accent2: '#3ddc84', bg: '#0b2a16', noHud: true, scoreLabel: 'Season score',
   how: ['PASS: drag back from anywhere and release to throw, or tap a receiver. Keys 1, 2, 3 throw to WR1, WR2 and the running back.', 'With the ball: steer with your finger, mouse or the up/down arrows. Tap or press Space to juke.', 'Between games, spend coaching credits to upgrade players. Win your division and take the Pocket Bowl.'],
-  skins: [{ name: 'Classic', price: 0 }],
+  skins: [{ name: 'Home Uniform', price: 0 }, { name: 'Throwback', price: 30, u: ['#e0b040', '#5a2a10'] }, { name: 'Chrome', price: 70, u: ['#d8dde4', '#1a1a1a'] }, { name: 'Royal', price: 110, u: ['#7a3aff', '#ffd23f'] }, { name: 'Neon Night', price: 160, u: ['#b6ff3a', '#ff2e88'] }, { name: 'Blackout', price: 220, u: ['#2a2a30', '#e8e8e8'] }],
 };
 (() => {
   const PX = '"Press Start 2P", monospace', BODY = '800 17px Nunito, system-ui, sans-serif';
@@ -116,7 +116,8 @@ const GAME = {
   }
   const star = p => S.F.roster.find(r => r.p === p).st;
   const oppTeam = () => TEAMS[S.oppI];
-  const myTeam = () => TEAMS[S.F.team];
+  const myTeam = () => { const t = TEAMS[S.F.team], u = K.skin && K.skin.u; return u ? Object.assign({}, t, { c: u[0], c2: u[1] }) : t; };   // the uniform you bought in the shop
+  GAME.drawSkin = (g, s, r) => { const c = s.u ? s.u[0] : '#ff6a1a', c2 = s.u ? s.u[1] : '#1a1a2a'; g.fillStyle = c; g.beginPath(); g.arc(0, -r * .1, r * .62, Math.PI * .9, Math.PI * 2.2); g.fill(); g.fillStyle = c2; g.fillRect(-r * .62, -r * .12, r * 1.24, r * .14); g.fillStyle = '#ddd'; g.fillRect(r * .2, r * .05, r * .5, r * .1); g.fillStyle = c; g.beginPath(); g.roundRect(-r * .55, r * .3, r * 1.1, r * .55, 6); g.fill(); g.fillStyle = c2; g.font = `bold ${r * .4 | 0}px sans-serif`; g.textAlign = 'center'; g.fillText('12', 0, r * .72); };
 
   /* ---------- sound ---------- */
   const whistle = () => { K.sfx(2400, .18, 'sine', .07, 120); K.sfx(2600, .12, 'sine', .05, 0, .2); };

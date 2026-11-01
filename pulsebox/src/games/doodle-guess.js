@@ -5,9 +5,9 @@
 // @use mp
 const GAME = {
   id: 'doodle-guess', title: 'Doodle Guess', tagline: 'Draw it. Guess it. Laugh at it.',
-  font: 'Patrick Hand', accent: '#ff7a59', accent2: '#3ec5ff', bg: '#f4efe4', noSkins: true, noHud: true, scoreLabel: 'Points',
+  font: 'Patrick Hand', accent: '#ff7a59', accent2: '#3ec5ff', bg: '#f4efe4', noHud: true, scoreLabel: 'Points',
   how: ['When it is your turn, pick one of three words and draw it. No letters or numbers!', 'Everyone else types guesses in the box. The faster you guess, the more points you get.', 'The artist scores for every player who gets it. Two rounds, everyone draws in each.', 'Practice alone: the bot draws and you guess.'],
-  skins: [{ name: 'Default', price: 0, c: ['#fff'] }],
+  skins: [{ name: 'Classic Colors', price: 0, p: ['#1a1a1a', '#ffffff', '#e8343a', '#ff9f1c', '#ffd23f', '#3ddc84', '#1fa84a', '#3ec5ff', '#2a5bd7', '#c77dff', '#ff7ad9', '#8a5a2b'] }, { name: 'Pastel Pack', price: 40, p: ['#1a1a1a', '#ffffff', '#ffb3b8', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff', '#e4c1a1', '#c8c8c8'] }, { name: 'Neon Pack', price: 90, p: ['#0a0a12', '#ffffff', '#ff073a', '#ff9e00', '#faff00', '#39ff14', '#00ffd0', '#00b3ff', '#7d12ff', '#ff00e6', '#ff4fa0', '#7a7a8a'] }, { name: 'Nature Pack', price: 140, p: ['#1a1a1a', '#ffffff', '#6b3e1f', '#a0703e', '#d9b77a', '#2e5a1c', '#4f8a2b', '#9ac24a', '#3a6a8a', '#7ab8d8', '#c8402a', '#8a8a7a'] }, { name: 'Rainbow Brush', price: 260, p: ['#1a1a1a', '#ffffff', 'rainbow', '#e8343a', '#ff9f1c', '#ffd23f', '#3ddc84', '#3ec5ff', '#2a5bd7', '#c77dff', '#ff7ad9', '#8a5a2b'] }],
 };
 (() => {
   const WORDS = ('apple banana pizza cake cookie donut ice-cream sandwich burger taco carrot pumpkin cheese egg popcorn lollipop cat dog fish bird horse rabbit snake turtle frog lion elephant giraffe monkey penguin octopus shark spider bee butterfly dinosaur unicorn dragon owl duck ' +
@@ -15,6 +15,9 @@ const GAME = {
     'phone laptop camera guitar drum piano clock lamp key lock umbrella glasses hat crown shoe sock backpack scissors pencil book candle balloon gift kite robot ghost alien pirate ninja wizard mermaid zombie vampire superhero ' +
     'football basketball trophy medal rollercoaster swing slide treasure map compass anchor magnet battery lightbulb rocket telescope microscope tooth heart brain eye hand footprint skeleton spaceship planet comet snowflake').split(' ').map(w => w.replace('-', ' '));
   const PAL = ['#1a1a1a', '#ffffff', '#e8343a', '#ff9f1c', '#ffd23f', '#3ddc84', '#1fa84a', '#3ec5ff', '#2a5bd7', '#c77dff', '#ff7ad9', '#8a5a2b'];
+  const pal = () => (K.skin && K.skin.p) || PAL;   // the palette you equipped in the shop
+  const swatch = (g, c, x, y, w, h) => { if (c === 'rainbow') { const gr = g.createLinearGradient(x, y, x + w, y + h); ['#e8343a', '#ff9f1c', '#ffd23f', '#3ddc84', '#3ec5ff', '#c77dff'].forEach((q, i) => gr.addColorStop(i / 5, q)); g.fillStyle = gr; } else g.fillStyle = c; g.fillRect(x, y, w, h); };
+  GAME.drawSkin = (g, s, r) => { const P2 = s.p, n = P2.length, cols = 4, w = r * 1.6 / cols; P2.forEach((c, i) => swatch(g, c, -r * .8 + (i % cols) * w, -r * .6 + Math.floor(i / cols) * w, w - 2, w - 2)); };
   const PX = 270, PY = 112, PW = 760, PH = 500, TURN = 80;
   const paper = document.createElement('canvas'); paper.width = PW; paper.height = PH; const pg = paper.getContext('2d');
   let mode = 'lobby', roster = [], scores = {}, solo = false, turn = null, chat = [], strokes = [], cur = null, outbox = [], sendT = 0, tool = { c: '#1a1a1a', w: 6 }, turnNo = 0, totalTurns = 0, botDraw = null, guessed = new Set(), mine = 0, choice = null, endT = 0, pend = null;
@@ -99,8 +102,10 @@ const GAME = {
     const from = st.p.length; st.p.push(...s.p); drawStroke(st, Math.max(0, from - 2));
   }
   function drawStroke(st, from = 0) {
-    pg.strokeStyle = st.c; pg.fillStyle = st.c; pg.lineWidth = st.w; pg.lineCap = 'round'; pg.lineJoin = 'round';
+    const rb = st.c === 'rainbow', hue = i => `hsl(${(i * 4) % 360},90%,55%)`;   // the rainbow brush shifts hue along the stroke
+    pg.strokeStyle = rb ? hue(from) : st.c; pg.fillStyle = pg.strokeStyle; pg.lineWidth = st.w; pg.lineCap = 'round'; pg.lineJoin = 'round';
     const p = st.p; if (p.length === 2) { pg.beginPath(); pg.arc(p[0], p[1], st.w / 2, 0, 7); pg.fill(); return; }
+    if (rb) { for (let i = Math.max(2, from + 2); i < p.length; i += 2) { pg.strokeStyle = hue(i); pg.beginPath(); pg.moveTo(p[i - 2], p[i - 1]); pg.lineTo(p[i], p[i + 1]); pg.stroke(); } return; }
     pg.beginPath(); pg.moveTo(p[from], p[from + 1]); for (let i = from + 2; i < p.length; i += 2) pg.lineTo(p[i], p[i + 1]); pg.stroke();
   }
   function redraw() { pg.fillStyle = '#fff'; pg.fillRect(0, 0, PW, PH); for (const s of strokes) drawStroke(s); }
@@ -166,7 +171,7 @@ const GAME = {
     say(`You: ${text}`, '#333', me()); MP.to(turn.d, { t: 'g', text });
   }
   /* ---------- input ---------- */
-  const tools = () => { const b = []; PAL.forEach((c, i) => b.push({ x: PX + i * 42, y: PY + PH + 14, w: 36, h: 36, c })); [4, 8, 16, 30].forEach((w, i) => b.push({ x: PX + 520 + i * 42, y: PY + PH + 14, w: 36, h: 36, size: w })); b.push({ x: PX + 690, y: PY + PH + 14, w: 34, h: 36, act: 'undo' }, { x: PX + 728, y: PY + PH + 14, w: 34, h: 36, act: 'clear' }); return b; };
+  const tools = () => { const b = []; pal().forEach((c, i) => b.push({ x: PX + i * 42, y: PY + PH + 14, w: 36, h: 36, c })); [4, 8, 16, 30].forEach((w, i) => b.push({ x: PX + 520 + i * 42, y: PY + PH + 14, w: 36, h: 36, size: w })); b.push({ x: PX + 690, y: PY + PH + 14, w: 34, h: 36, act: 'undo' }, { x: PX + 728, y: PY + PH + 14, w: 34, h: 36, act: 'clear' }); return b; };
   GAME.down = (x, y) => {
     if (mode !== 'play' || !turn) return;
     if (choice) { choice.forEach((w, i) => { if (x > 420 && x < 860 && y > 230 + i * 80 && y < 290 + i * 80) pick(w); }); return; }
@@ -246,7 +251,7 @@ const GAME = {
     // tools for the artist, word choice
     if (isDrawer() && !turn.picking && !turn.over) for (const b of tools()) {
       g.strokeStyle = '#2a2a2a'; g.lineWidth = (b.c && b.c === tool.c) || (b.size && b.size === tool.w) ? 4 : 2;
-      if (b.c) { g.fillStyle = b.c; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 8); g.fill(); g.stroke(); }
+      if (b.c) { g.save(); g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 8); g.clip(); swatch(g, b.c, b.x, b.y, b.w, b.h); g.restore(); g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 8); g.stroke(); }
       else { g.fillStyle = '#fffdf6'; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 8); g.fill(); g.stroke(); g.fillStyle = '#2a2a2a'; if (b.size) { g.beginPath(); g.arc(b.x + 18, b.y + 18, Math.min(14, b.size / 2), 0, 7); g.fill(); } else { g.font = '22px "Patrick Hand"'; g.textAlign = 'center'; g.fillText(b.act === 'undo' ? '↶' : '🗑', b.x + 17, b.y + 19); g.textAlign = 'left'; } }
     }
     if (choice) {

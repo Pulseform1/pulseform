@@ -82,7 +82,8 @@ const MP = (() => {
   const AUTO = (() => { try { const q = new URLSearchParams(location.search).get('room') || ''; return /^[A-Za-z0-9]{4}$/.test(q) ? q.toUpperCase() : ''; } catch (e) { return ''; } })();
   let autoDone = false;
   let ws = null, me = 0, host = 0, code = '', pending = null, box = null, name = '';
-  const players = new Map();
+  const players = new Map(), skinOf = new Map();
+  const mySkin = () => (typeof K !== 'undefined' && K.save && K.save.skin) || 0;
   try { name = localStorage.getItem('pbx-mp-name') || ''; } catch (e) {}
   const $m = id => document.getElementById('mp-' + id), esc = s => String(s).replace(/[<>&"]/g, '');
   const online = () => !!(ws && ws.readyState === 1 && me);
@@ -139,8 +140,9 @@ const MP = (() => {
       case 'hello':
         me = m.id; host = m.host; players.clear(); m.players.forEach(p => { if (p.id !== me) players.set(p.id, { name: p.name }); });
         if (players.size + 1 > opts.max) { msg(`This game takes up to ${opts.max} players.`); leave(); }
-        msg(''); refresh(); return;
-      case 'join': players.set(m.id, { name: m.name }); refresh(); if (opts.onJoin) opts.onJoin(m.id, m.name); return;
+        msg(''); refresh(); send({ t: 'mp-skin', s: mySkin() }); return;
+      case 'mp-skin': skinOf.set(m.from, m.s | 0); return;
+      case 'join': players.set(m.id, { name: m.name }); send({ t: 'mp-skin', s: mySkin() }); refresh(); if (opts.onJoin) opts.onJoin(m.id, m.name); return;
       case 'leave': players.delete(m.id); refresh(); if (opts.onLeave) opts.onLeave(m.id); return;
       case 'host': host = m.id; refresh(); if (opts.onHost) opts.onHost(m.id); return;
       case 'mp-start': if (K.state !== 'play') pending = m; else begin(m); return;
@@ -150,9 +152,10 @@ const MP = (() => {
   function begin(m) { if (box) box.hidden = true; opts.onStart(m.cfg || {}, m.roster); }
   function start() {
     const ps = online() ? list() : [{ id: 0, name: name || 'You' }];
-    const roster = ps.slice(0, opts.max).map((p, i) => ({ id: p.id, name: p.name, col: COLS[i], seat: i }));
+    const nSk = (GAME.skins || []).length || 1;
+    const roster = ps.slice(0, opts.max).map((p, i) => ({ id: p.id, name: p.name, col: COLS[i], seat: i, skin: p.id === (online() ? me : 0) ? mySkin() : (skinOf.get(p.id) || 0) }));
     const fill = online() ? (opts.bots ? opts.max : 0) : (opts.bots || opts.soloSeats || 1);
-    let b = 0; while (roster.length < fill) roster.push({ id: 'b' + roster.length, name: BOTS[b++ % BOTS.length], col: COLS[roster.length], bot: true, seat: roster.length });
+    let b = 0; while (roster.length < fill) roster.push({ id: 'b' + roster.length, name: BOTS[b++ % BOTS.length], col: COLS[roster.length], bot: true, seat: roster.length, skin: Math.floor(Math.random() * nSk) });
     const m = { t: 'mp-start', cfg: opts.config ? opts.config() : {}, roster };
     send(m); begin(m);
   }
@@ -180,9 +183,9 @@ const MP = (() => {
 // @use mp
 const GAME = {
   id: 'sea-battle', title: 'Sea Battle', tagline: 'Hide your fleet. Hunt theirs. Two admirals, one ocean.',
-  font: 'Black Ops One', accent: '#ffd23f', accent2: '#3ec5ff', bg: '#06243d', noSkins: true, noHud: true, scoreLabel: 'Ships sunk',
+  font: 'Black Ops One', accent: '#ffd23f', accent2: '#3ec5ff', bg: '#06243d', noHud: true, scoreLabel: 'Ships sunk',
   how: ['Place your ships: drag one to move it, tap it to turn it, or press Shuffle. Then press Ready.', 'Take turns firing at the enemy grid on the right. Hit a ship and you fire again.', 'A ship sinks when every square of it is hit. Sink all 5 to win.', 'Play the computer, or create a room and send a friend the code.'],
-  skins: [{ name: 'Default', price: 0, c: ['#fff'] }],
+  skins: [{ name: 'Navy Grey', price: 0, h: ['#c6ced8', '#8e98a6', '#5a6472', '#66707e', '#dfe6ee'] }, { name: 'Arctic', price: 30, h: ['#ffffff', '#dfe8f0', '#aab8c6', '#8aa0b4', '#ffffff'] }, { name: 'Jungle Camo', price: 70, h: ['#7a9a5a', '#4e6a3a', '#2e4222', '#3a2e1e', '#a8b878'], camo: 1 }, { name: 'Pirate Wood', price: 120, h: ['#a0703e', '#7a4e26', '#4e2e14', '#2a1a10', '#e8dcc0'] }, { name: 'Stealth', price: 180, h: ['#4a4e58', '#2a2e36', '#14161c', '#0a0a0e', '#3a3e48'] }, { name: 'Gold Fleet', price: 300, h: ['#fff0a0', '#e8b923', '#9a6a10', '#c08a20', '#fff6d0'] }],
 };
 (() => {
   const N = 10, CS = 46, LX = 92, RX = 728, GY = 178, FLEET = [['Carrier', 5], ['Battleship', 4], ['Cruiser', 3], ['Submarine', 3], ['Destroyer', 2]];
@@ -348,15 +351,18 @@ const GAME = {
     for (let i = 0; i < N; i++) { g.fillText('ABCDEFGHIJ'[i], ox + (i + .5) * CS, GY - 14); g.fillText(i + 1, ox - 16, GY + (i + .5) * CS); }
     g.strokeStyle = '#9fd8ff'; g.lineWidth = 3; g.strokeRect(ox, GY, N * CS, N * CS);
   }
-  function ship(g, s, ox, sunk) {
-    const x = ox + s.x * CS + 4, y = GY + s.y * CS + 4, w = (s.v ? 1 : s.len) * CS - 8, h = (s.v ? s.len : 1) * CS - 8;
-    g.save(); g.translate(x + w / 2, y + h / 2); if (s.v) g.rotate(Math.PI / 2); const L = Math.max(w, h), Wd = Math.min(w, h);
+  GAME.drawSkin = (g, s, r) => { g.rotate(-.5); ship(g, { x: 0, y: 0, len: 3, v: 0 }, -1, false, s, r); };
+  function ship(g, s, ox, sunk, skin, rr) {
+    const SKN = skin || null, HC = SKN && SKN.h ? SKN.h : ['#c6ced8', '#8e98a6', '#5a6472', '#66707e', '#dfe6ee'];
+    const prev = ox < 0, x = prev ? -(s.len * CS - 8) / 2 : ox + s.x * CS + 4, y = prev ? -(CS - 8) / 2 : GY + s.y * CS + 4, w = (s.v ? 1 : s.len) * CS - 8, h = (s.v ? s.len : 1) * CS - 8;
+    g.save(); if (prev) g.scale(rr / (s.len * CS * .55), rr / (s.len * CS * .55)); g.translate(x + w / 2, y + h / 2); if (s.v) g.rotate(Math.PI / 2); const L = Math.max(w, h), Wd = Math.min(w, h);
     g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(3, 4, L / 2, Wd / 2, 0, 0, 7); g.fill();
-    const hull = g.createLinearGradient(0, -Wd / 2, 0, Wd / 2); hull.addColorStop(0, sunk ? '#3a2a2a' : '#c6ced8'); hull.addColorStop(.5, sunk ? '#2a1a1a' : '#8e98a6'); hull.addColorStop(1, sunk ? '#1a1010' : '#5a6472');
+    const hull = g.createLinearGradient(0, -Wd / 2, 0, Wd / 2); hull.addColorStop(0, sunk ? '#3a2a2a' : HC[0]); hull.addColorStop(.5, sunk ? '#2a1a1a' : HC[1]); hull.addColorStop(1, sunk ? '#1a1010' : HC[2]);
     g.fillStyle = hull; g.beginPath(); g.moveTo(-L / 2 + 6, -Wd / 2); g.lineTo(L / 2 - 14, -Wd / 2); g.quadraticCurveTo(L / 2 + 4, 0, L / 2 - 14, Wd / 2); g.lineTo(-L / 2 + 6, Wd / 2); g.quadraticCurveTo(-L / 2 - 2, 0, -L / 2 + 6, -Wd / 2); g.fill();
     g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 1.5; g.stroke();
-    g.fillStyle = sunk ? '#2a1a1a' : '#66707e'; for (let k = 0; k < s.len - 1; k++) { const px = -L / 2 + CS * (k + .75); g.beginPath(); g.arc(px, 0, Wd * .22, 0, 7); g.fill(); g.fillRect(px, -2, Wd * .45, 4); }
-    if (s.len >= 4) { g.fillStyle = sunk ? '#3a2020' : '#dfe6ee'; g.fillRect(-6, -Wd * .3, 16, Wd * .6); }
+    if (SKN && SKN.camo && !sunk) { g.save(); g.clip(); g.fillStyle = 'rgba(30,40,20,.5)'; for (let k = 0; k < 7; k++) { g.beginPath(); g.ellipse(-L / 2 + (k * 37 % 100) / 100 * L, ((k * 53 % 10) / 10 - .5) * Wd, 9, 5, k, 0, 7); g.fill(); } g.restore(); }
+    g.fillStyle = sunk ? '#2a1a1a' : HC[3]; for (let k = 0; k < s.len - 1; k++) { const px = -L / 2 + CS * (k + .75); g.beginPath(); g.arc(px, 0, Wd * .22, 0, 7); g.fill(); g.fillRect(px, -2, Wd * .45, 4); }
+    if (s.len >= 4) { g.fillStyle = sunk ? '#3a2020' : HC[4]; g.fillRect(-6, -Wd * .3, 16, Wd * .6); }
     g.restore();
   }
   function marks(g, ox, shots, t) {
@@ -375,7 +381,7 @@ const GAME = {
     water(g, LX, t); water(g, RX, t);
     g.font = '22px "Black Ops One"'; g.fillStyle = '#cfefff'; g.fillText(`${myName.toUpperCase()}'S FLEET`, LX + N * CS / 2, GY - 52); g.fillText(`${oppName.toUpperCase()}'S WATERS`, RX + N * CS / 2, GY - 52);
     if (mode === 'play' || mode === 'over') {
-      for (const s of mine) ship(g, s, LX, s.sunk);
+      for (const s of mine) ship(g, s, LX, s.sunk, K.skin);
       for (const s of enemySunk) { const a = s.cells[0], b = s.cells[s.cells.length - 1]; ship(g, { x: a[0], y: a[1], len: s.cells.length, v: a[0] === b[0] && s.cells.length > 1 }, RX, true); }
       marks(g, LX, shotsThem, t); marks(g, RX, shotsMe, t);
       for (const f of fx) if (f.k === 'ring') { g.strokeStyle = `rgba(220,240,255,${1 - f.t})`; g.lineWidth = 3; g.beginPath(); g.arc(f.x, f.y, 8 + f.t * 40, 0, 7); g.stroke(); }

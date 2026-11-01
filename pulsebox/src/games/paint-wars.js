@@ -4,9 +4,9 @@
 // @use mp
 const GAME = {
   id: 'paint-wars', title: 'Paint Wars', tagline: 'Cover the floor in your color. Splat your friends.',
-  font: 'Lilita One', accent: '#ff4d6d', accent2: '#3ec5ff', bg: '#1a1530', noSkins: true, noHud: true, scoreLabel: 'Tiles painted',
+  font: 'Lilita One', accent: '#ff4d6d', accent2: '#3ec5ff', bg: '#1a1530', noHud: true, scoreLabel: 'Tiles painted',
   how: ['Move with WASD or the arrow keys (or drag on the left side). Everywhere you roll turns your color.', 'Space (or tap the right side) to DASH. Dash into a rival to stun them and splat your paint around them.', 'Pick up BOMB to splash a big circle, ZOOM for speed and BRUSH for a wide roller.', 'Most floor painted after 75 seconds wins.'],
-  skins: [{ name: 'Default', price: 0, c: ['#fff'] }],
+  skins: [{ name: 'No hat', price: 0, k: 'none' }, { name: 'Ball Cap', price: 40, k: 'cap' }, { name: 'Big Bow', price: 80, k: 'bow' }, { name: 'Cool Shades', price: 120, k: 'shades' }, { name: 'Propeller', price: 180, k: 'prop' }, { name: 'Halo', price: 260, k: 'halo' }, { name: 'Gold Crown', price: 380, k: 'crown' }],
 };
 (() => {
   const GW = 40, GH = 21, TS = 30, OX = 40, OY = 72, ROUND = 75;
@@ -30,13 +30,23 @@ const GAME = {
     (x, y) => [[8, 5], [31, 5], [8, 15], [31, 15], [19, 10], [20, 10]].some(([a, b]) => Math.abs(x - a) <= 1 && Math.abs(y - b) <= 1),
     (x, y) => (y === 7 || y === 13) && x > 6 && x < 33 && (x < 17 || x > 22),
   ];
+  const skinK = r => ((GAME.skins[(r && r.skin) | 0] || GAME.skins[0]).k);
+  function hat(g, k, col) {   // on top of a 14px blob, in its squashed frame
+    if (k === 'cap') { g.fillStyle = '#e8343a'; g.beginPath(); g.arc(0, -10, 10, Math.PI, 0); g.fill(); g.fillRect(2, -11, 14, 3); }
+    else if (k === 'bow') { g.fillStyle = '#ff7ad9'; g.beginPath(); g.moveTo(0, -14); g.lineTo(-11, -21); g.lineTo(-11, -8); g.closePath(); g.moveTo(0, -14); g.lineTo(11, -21); g.lineTo(11, -8); g.closePath(); g.fill(); g.beginPath(); g.arc(0, -14, 3, 0, 7); g.fill(); }
+    else if (k === 'shades') { g.fillStyle = '#111'; g.fillRect(-11, -6, 9, 5); g.fillRect(2, -6, 9, 5); g.fillRect(-2, -5, 4, 2); }
+    else if (k === 'prop') { g.fillStyle = '#3ec5ff'; g.beginPath(); g.arc(0, -12, 6, Math.PI, 0); g.fill(); g.fillStyle = '#ffd23f'; const a = Date.now() / 60; g.save(); g.translate(0, -18); g.scale(Math.cos(a), 1); g.fillRect(-11, -1.5, 22, 3); g.restore(); g.fillRect(-1, -19, 2, 4); }
+    else if (k === 'halo') { g.strokeStyle = '#fff6a0'; g.lineWidth = 3; g.beginPath(); g.ellipse(0, -21, 10, 3.5, 0, 0, 7); g.stroke(); }
+    else if (k === 'crown') { g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(-9, -11); g.lineTo(-9, -20); g.lineTo(-4, -15); g.lineTo(0, -22); g.lineTo(4, -15); g.lineTo(9, -20); g.lineTo(9, -11); g.fill(); }
+  }
+  GAME.drawSkin = (g, s, r) => { g.scale(r / 18, r / 18); g.fillStyle = '#fff'; g.beginPath(); g.arc(0, 0, 17, 0, 7); g.fill(); g.fillStyle = '#3ddc84'; g.beginPath(); g.arc(0, 0, 14, 0, 7); g.fill(); for (const sx of [-1, 1]) { g.fillStyle = '#fff'; g.beginPath(); g.arc(sx * 5, -3, 4.5, 0, 7); g.fill(); g.fillStyle = '#111'; g.beginPath(); g.arc(sx * 5, -3, 2.2, 0, 7); g.fill(); } hat(g, s.k); };
   function startMatch(cfg, ros) {
     roster = ros; layout = cfg.layout || 0; mode = 'play'; phase = 'count'; phaseT = 3; tLeft = ROUND; items = []; itemT = 4; changes = []; K.score = 0;
     mine = K.bot ? -1 : Math.max(0, ros.findIndex(r => r.id === MP.id && !r.bot));
     grid.fill(-1); solid.fill(0);
     for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) if (LAYOUTS[layout](x, y)) solid[y * GW + x] = 1;
     const spots = [[3, 3], [GW - 4, GH - 4], [GW - 4, 3], [3, GH - 4]];
-    P = ros.map((r, i) => ({ i, id: r.id, name: r.name, col: r.col, bot: !!r.bot, x: OX + (spots[i][0] + .5) * TS, y: OY + (spots[i][1] + .5) * TS, vx: 0, vy: 0, a: 0, dcd: 0, dash: 0, stun: 0, zoom: 0, brush: 0, score: 0 }));
+    P = ros.map((r, i) => ({ i, id: r.id, name: r.name, col: r.col, sk: skinK(r), bot: !!r.bot, x: OX + (spots[i][0] + .5) * TS, y: OY + (spots[i][1] + .5) * TS, vx: 0, vy: 0, a: 0, dcd: 0, dash: 0, stun: 0, zoom: 0, brush: 0, score: 0 }));
     redraw();
   }
   function endMatch(why) {
@@ -180,6 +190,7 @@ const GAME = {
       const bgr = g.createRadialGradient(-5, -6, 2, 0, 0, 15); bgr.addColorStop(0, '#fff'); bgr.addColorStop(.25, p.col); bgr.addColorStop(1, p.col); g.fillStyle = bgr; g.beginPath(); g.arc(0, 0, 14, 0, 7); g.fill();
       const ex = Math.cos(p.a) * 4, ey = Math.sin(p.a) * 4;
       for (const s of [-1, 1]) { g.fillStyle = '#fff'; g.beginPath(); g.arc(s * 5 + ex * .5, -3 + ey * .5, 4.5, 0, 7); g.fill(); g.fillStyle = '#111'; g.beginPath(); g.arc(s * 5 + ex, -3 + ey, 2.2, 0, 7); g.fill(); }
+      hat(g, p.sk, p.col);
       if (p.stun > 0) { g.fillStyle = '#111'; g.font = '14px "Lilita One"'; g.textAlign = 'center'; g.fillText('@@', 0, -20); }
       g.restore();
       g.font = '14px "Lilita One"'; g.textAlign = 'center'; g.fillStyle = 'rgba(0,0,0,.6)'; g.fillText(p.name, p.x + 1, p.y - 25); g.fillStyle = '#fff'; g.fillText(p.name, p.x, p.y - 26);

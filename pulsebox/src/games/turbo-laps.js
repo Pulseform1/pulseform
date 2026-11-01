@@ -4,9 +4,9 @@
 // @use mp
 const GAME = {
   id: 'turbo-laps', title: 'Turbo Laps', tagline: 'Drift, boost and race your friends. 3 laps, 3 tracks.',
-  font: 'Russo One', accent: '#ffd23f', accent2: '#ff4d6d', bg: '#0e1a10', noSkins: true, noHud: true, scoreLabel: 'Points',
+  font: 'Russo One', accent: '#ffd23f', accent2: '#ff4d6d', bg: '#0e1a10', noHud: true, scoreLabel: 'Points',
   how: ['W or Up to accelerate, S or Down to brake, A and D (or Left and Right) to steer.', 'Hold Space while turning to DRIFT. Drift for a second, then let go for a mini-turbo.', 'Yellow arrows on the track are boost pads. The grass slows you right down.', 'On a phone: the car drives itself forward; hold the left or right side to steer, both to brake.'],
-  skins: [{ name: 'Default', price: 0, c: ['#fff'] }],
+  skins: [{ name: 'Stock', price: 0, k: 'none' }, { name: 'Racing Stripes', price: 40, k: 'stripes' }, { name: 'Checkered Roof', price: 90, k: 'check' }, { name: 'Hot Flames', price: 150, k: 'flames' }, { name: 'Big Spoiler', price: 210, k: 'spoiler' }, { name: 'Neon Underglow', price: 300, k: 'glow' }, { name: 'Gold Plated', price: 450, k: 'gold' }],
 };
 (() => {
   const LAPS = 3, HW = 120, N = 640;
@@ -67,7 +67,7 @@ const GAME = {
     mine = K.bot ? -1 : Math.max(0, ros.findIndex(r => r.id === MP.id && !r.bot));
     C = ros.map((r, i) => {
       const gi = (N - 8 - Math.floor(i / 2) * 9 + N) % N, side = i % 2 ? 1 : -1, x = tr.cx[gi] - tr.ty[gi] * side * 42, y = tr.cy[gi] + tr.tx[gi] * side * 42;
-      return { i, id: r.id, name: r.name, col: r.col, bot: !!r.bot, x, y, a: Math.atan2(tr.ty[gi], tr.tx[gi]), vx: 0, vy: 0, sp: 0, idx: gi, lap: 0, half: false, fin: 0, drift: 0, turbo: 0, boost: 0, skill: .85 + Math.random() * .17, laneOff: (Math.random() - .5) * 60 };
+      return { i, id: r.id, name: r.name, col: skinK(r) === 'gold' ? '#e8b923' : r.col, sk: skinK(r), bot: !!r.bot, x, y, a: Math.atan2(tr.ty[gi], tr.tx[gi]), vx: 0, vy: 0, sp: 0, idx: gi, lap: 0, half: false, fin: 0, drift: 0, turbo: 0, boost: 0, skill: .85 + Math.random() * .17, laneOff: (Math.random() - .5) * 60 };
     });
     const me = C[mine]; if (me) { cam.x = me.x; cam.y = me.y; } else { cam.x = C[0].x; cam.y = C[0].y; }
   }
@@ -156,15 +156,25 @@ const GAME = {
     if (C[mine] && C[mine].i === mine && !K.bot) { const e = C[mine]; e.engT = (e.engT || 0) - dt; if (e.engT <= 0 && phase === 'race') { e.engT = .12; K.sfx(60 + e.sp * .25 + (e.boost > 0 ? 40 : 0), .14, 'sawtooth', .025); } }
   };
   /* ---------- drawing ---------- */
+  const skinK = r => ((GAME.skins[(r && r.skin) | 0] || GAME.skins[0]).k);
+  function carDeco(g, k, under) {   // the car's own frame: x forward, body from -22 to 24
+    if (under) { if (k === 'glow') { const gl = g.createRadialGradient(0, 0, 4, 0, 0, 38); gl.addColorStop(0, 'rgba(120,255,240,.7)'); gl.addColorStop(1, 'rgba(120,255,240,0)'); g.fillStyle = gl; g.fillRect(-40, -40, 80, 80); } return; }
+    if (k === 'stripes') { g.fillStyle = 'rgba(255,255,255,.9)'; g.fillRect(-22, -4.5, 46, 3); g.fillRect(-22, 1.5, 46, 3); }
+    else if (k === 'check') { for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { g.fillStyle = (i + j) % 2 ? '#111' : '#fff'; g.fillRect(-7 + i * 2.25, -8 + j * 4, 2.25, 4); } }
+    else if (k === 'flames') { g.fillStyle = '#ff9f43'; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(24, s * 2); g.lineTo(6, s * 11); g.lineTo(12, s * 6); g.lineTo(-2, s * 10); g.lineTo(8, s * 3); g.fill(); } g.fillStyle = '#ffd23f'; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(24, s * 2); g.lineTo(12, s * 8); g.lineTo(14, s * 4); g.fill(); } }
+    else if (k === 'spoiler') { g.fillStyle = '#222'; g.fillRect(-28, -14, 5, 28); g.fillStyle = '#555'; g.fillRect(-24, -6, 3, 3); g.fillRect(-24, 3, 3, 3); }
+    else if (k === 'gold') { g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(-18, -11, 38, 3); }
+  }
+  GAME.drawSkin = (g, s, r) => { g.scale(r / 26, r / 26); g.rotate(-.5); carDeco(g, s.k, 1); const col = s.k === 'gold' ? '#e8b923' : '#ff4d6d'; g.fillStyle = '#111'; for (const [x, y] of [[-13, -14], [-13, 10], [11, -14], [11, 10]]) g.fillRect(x, y, 12, 5); g.fillStyle = col; g.beginPath(); g.roundRect(-22, -12, 46, 24, 9); g.fill(); carDeco(g, s.k); g.fillStyle = 'rgba(20,30,50,.9)'; g.beginPath(); g.roundRect(2, -9, 11, 18, 4); g.fill(); };
   function car(g, c) {
-    g.save(); g.translate(c.x, c.y); g.rotate(c.a);
+    g.save(); g.translate(c.x, c.y); g.rotate(c.a); carDeco(g, c.sk, 1);
     g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.roundRect(-22, -11, 48, 28, 8); g.fill();
     if (c.boost > 0) { const fl = 14 + Math.random() * 14; const gr = g.createLinearGradient(-24, 0, -24 - fl, 0); gr.addColorStop(0, '#fff6a0'); gr.addColorStop(.5, '#ff9f43'); gr.addColorStop(1, 'rgba(255,60,0,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(-22, -6); g.lineTo(-24 - fl, 0); g.lineTo(-22, 6); g.fill(); }
     g.fillStyle = '#111'; for (const [x, y] of [[-13, -14], [-13, 10], [11, -14], [11, 10]]) { g.save(); g.translate(x + 3, y + 2); if (x > 0) g.rotate((c.steerVis || 0) * .4); g.fillRect(-6, -2, 12, 5); g.restore(); }
     const body = g.createLinearGradient(0, -12, 0, 12); body.addColorStop(0, shade(c.col, .35)); body.addColorStop(.5, c.col); body.addColorStop(1, shade(c.col, -.4));
     g.fillStyle = body; g.beginPath(); g.roundRect(-22, -12, 46, 24, 9); g.fill();
     g.fillStyle = 'rgba(20,30,50,.9)'; g.beginPath(); g.roundRect(2, -9, 11, 18, 4); g.fill(); g.beginPath(); g.roundRect(-14, -8, 7, 16, 3); g.fill();
-    g.fillStyle = shade(c.col, .2); g.fillRect(-7, -8, 9, 16);
+    g.fillStyle = shade(c.col, .2); g.fillRect(-7, -8, 9, 16); carDeco(g, c.sk);
     g.fillStyle = '#222'; g.fillRect(-24, -12, 4, 24);
     g.fillStyle = '#fff8c0'; g.fillRect(21, -10, 3, 5); g.fillRect(21, 5, 3, 5);
     g.fillStyle = 'rgba(255,255,255,.85)'; g.font = '11px "Russo One"'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.save(); g.rotate(Math.PI / 2); g.restore();

@@ -72,9 +72,9 @@ const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
    The daily challenge deals everyone the same reel. Your best legends go in your own Hall of Fame. */
 const GAME = {
   id: 'legend-maker', title: 'Legend Maker', tagline: 'Spin the pros. Build a legend. Sim the career.',
-  font: 'Bebas Neue', accent: '#ffb02e', accent2: '#29e0ff', bg: '#101626', noSkins: true, noHud: true, scoreLabel: 'Legacy',
+  font: 'Bebas Neue', accent: '#ffb02e', accent2: '#29e0ff', bg: '#101626', noHud: true, scoreLabel: 'Legacy',
   how: ['Spin the reel to get a pro, then tap the attribute slot you want their rating in. Each slot only takes one pick.', 'Two rerolls per build if you hate a spin. Big ratings in the right slots matter most.', 'Then sim the whole career and see if you made the Hall of Fame. Daily: same reel for everyone today.'],
-  skins: [{ name: 'Classic', price: 0 }],
+  skins: [{ name: 'No extras', price: 0, k: 'none' }, { name: 'Headband', price: 25, k: 'band' }, { name: 'Shades', price: 60, k: 'shades' }, { name: 'Gold Chain', price: 100, k: 'chain' }, { name: 'Captain Armband', price: 150, k: 'arm' }, { name: 'Champion Crown', price: 240, k: 'crown' }, { name: 'Legend Aura', price: 380, k: 'aura' }],
 };
 (() => {
   const FD = '"Bebas Neue", Impact, sans-serif', FB = 'Nunito, system-ui, sans-serif', f = (px, w = 800) => `${w} ${px}px ${FB}`, d = px => `${px}px ${FD}`;
@@ -205,8 +205,18 @@ const GAME = {
     g.fillStyle = 'rgba(255,255,255,.025)'; for (let x = -40; x < 1320; x += 48) { g.save(); g.translate(x + (t * 6) % 48, 0); g.rotate(.25); g.fillRect(0, -100, 10, 1000); g.restore(); }
   }
   // the athlete: a bold two-tone silhouette in action, one per sport
+  function accessory(g, k, sp) {   // drawn over the athlete; heads sit near (0, -23) in every sport
+    const hy = sp === 'gridiron' ? -30 : -23;
+    if (k === 'band') { g.fillStyle = '#e8343a'; g.fillRect(-15, hy - 8, 30, 5); g.fillRect(12, hy - 8, 8, 12); }
+    else if (k === 'shades') { g.fillStyle = '#111'; g.beginPath(); g.roundRect(-12, hy - 3, 11, 6, 2); g.roundRect(1, hy - 3, 11, 6, 2); g.fill(); g.fillRect(-2, hy - 2, 4, 2); }
+    else if (k === 'chain') { g.strokeStyle = '#ffd23f'; g.lineWidth = 3; g.beginPath(); g.arc(0, hy + 6, 13, .3, Math.PI - .3); g.stroke(); g.fillStyle = '#ffd23f'; g.beginPath(); g.arc(0, hy + 20, 4, 0, 7); g.fill(); }
+    else if (k === 'arm') { g.fillStyle = '#ffd23f'; g.fillRect(-26, -2, 9, 8); g.fillStyle = '#1a2440'; g.font = 'bold 7px sans-serif'; g.fillText('C', -24, 5); }
+    else if (k === 'crown') { g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(-12, hy - 12); g.lineTo(-12, hy - 26); g.lineTo(-5, hy - 18); g.lineTo(0, hy - 30); g.lineTo(5, hy - 18); g.lineTo(12, hy - 26); g.lineTo(12, hy - 12); g.fill(); g.fillStyle = '#e8343a'; g.beginPath(); g.arc(0, hy - 16, 2.5, 0, 7); g.fill(); }
+  }
+  GAME.drawSkin = (g, s, r) => { g.save(); g.scale(r / 55, r / 55); g.translate(0, 18); if (s.k === 'aura') { const gl = g.createRadialGradient(0, -10, 6, 0, -10, 60); gl.addColorStop(0, 'rgba(255,210,63,.7)'); gl.addColorStop(1, 'rgba(255,210,63,0)'); g.fillStyle = gl; g.fillRect(-60, -70, 120, 120); } g.fillStyle = '#3a6aff'; g.beginPath(); g.roundRect(-20, -8, 40, 40, 8); g.fill(); g.fillStyle = '#c88a5a'; g.beginPath(); g.arc(0, -23, 14, 0, 7); g.fill(); g.fillStyle = '#1a1210'; g.beginPath(); g.arc(0, -28, 14, Math.PI, 0); g.fill(); accessory(g, s.k, 'hoops'); g.restore(); };
   function athlete(g, sp, x, y, s, c) {
-    g.save(); g.translate(x, y); g.scale(s, s); const c2 = '#1a2440', skin = '#c88a5a';
+    g.save(); g.translate(x, y); g.scale(s, s); const c2 = '#1a2440', skin = '#c88a5a', acc = (K.skin && K.skin.k) || 'none';
+    if (acc === 'aura') { const gl = g.createRadialGradient(0, 20, 10, 0, 20, 110); gl.addColorStop(0, 'rgba(255,210,63,.55)'); gl.addColorStop(1, 'rgba(255,210,63,0)'); g.fillStyle = gl; g.fillRect(-110, -90, 220, 220); }
     const limb = (x1, y1, x2, y2, w, col) => { g.strokeStyle = col; g.lineWidth = w; g.lineCap = 'round'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); };
     if (sp === 'hoops') {
       limb(-8, 40, -26, 86, 14, skin); limb(10, 40, 28, 80, 14, skin); limb(-26, 86, -30, 112, 12, skin); limb(28, 80, 40, 104, 12, skin);
@@ -238,6 +248,7 @@ const GAME = {
       limb(-16, 0, -44, -22, 11, skin); limb(16, 0, 40, 16, 11, skin);
       g.fillStyle = skin; g.beginPath(); g.arc(0, -22, 14, 0, 7); g.fill(); g.fillStyle = '#3a2210'; g.beginPath(); g.arc(-2, -27, 14, Math.PI * .9, Math.PI * 2.1); g.fill();
     }
+    accessory(g, acc, sp);
     g.restore();
   }
   const B = {};

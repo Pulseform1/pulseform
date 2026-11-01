@@ -82,7 +82,8 @@ const MP = (() => {
   const AUTO = (() => { try { const q = new URLSearchParams(location.search).get('room') || ''; return /^[A-Za-z0-9]{4}$/.test(q) ? q.toUpperCase() : ''; } catch (e) { return ''; } })();
   let autoDone = false;
   let ws = null, me = 0, host = 0, code = '', pending = null, box = null, name = '';
-  const players = new Map();
+  const players = new Map(), skinOf = new Map();
+  const mySkin = () => (typeof K !== 'undefined' && K.save && K.save.skin) || 0;
   try { name = localStorage.getItem('pbx-mp-name') || ''; } catch (e) {}
   const $m = id => document.getElementById('mp-' + id), esc = s => String(s).replace(/[<>&"]/g, '');
   const online = () => !!(ws && ws.readyState === 1 && me);
@@ -139,8 +140,9 @@ const MP = (() => {
       case 'hello':
         me = m.id; host = m.host; players.clear(); m.players.forEach(p => { if (p.id !== me) players.set(p.id, { name: p.name }); });
         if (players.size + 1 > opts.max) { msg(`This game takes up to ${opts.max} players.`); leave(); }
-        msg(''); refresh(); return;
-      case 'join': players.set(m.id, { name: m.name }); refresh(); if (opts.onJoin) opts.onJoin(m.id, m.name); return;
+        msg(''); refresh(); send({ t: 'mp-skin', s: mySkin() }); return;
+      case 'mp-skin': skinOf.set(m.from, m.s | 0); return;
+      case 'join': players.set(m.id, { name: m.name }); send({ t: 'mp-skin', s: mySkin() }); refresh(); if (opts.onJoin) opts.onJoin(m.id, m.name); return;
       case 'leave': players.delete(m.id); refresh(); if (opts.onLeave) opts.onLeave(m.id); return;
       case 'host': host = m.id; refresh(); if (opts.onHost) opts.onHost(m.id); return;
       case 'mp-start': if (K.state !== 'play') pending = m; else begin(m); return;
@@ -150,9 +152,10 @@ const MP = (() => {
   function begin(m) { if (box) box.hidden = true; opts.onStart(m.cfg || {}, m.roster); }
   function start() {
     const ps = online() ? list() : [{ id: 0, name: name || 'You' }];
-    const roster = ps.slice(0, opts.max).map((p, i) => ({ id: p.id, name: p.name, col: COLS[i], seat: i }));
+    const nSk = (GAME.skins || []).length || 1;
+    const roster = ps.slice(0, opts.max).map((p, i) => ({ id: p.id, name: p.name, col: COLS[i], seat: i, skin: p.id === (online() ? me : 0) ? mySkin() : (skinOf.get(p.id) || 0) }));
     const fill = online() ? (opts.bots ? opts.max : 0) : (opts.bots || opts.soloSeats || 1);
-    let b = 0; while (roster.length < fill) roster.push({ id: 'b' + roster.length, name: BOTS[b++ % BOTS.length], col: COLS[roster.length], bot: true, seat: roster.length });
+    let b = 0; while (roster.length < fill) roster.push({ id: 'b' + roster.length, name: BOTS[b++ % BOTS.length], col: COLS[roster.length], bot: true, seat: roster.length, skin: Math.floor(Math.random() * nSk) });
     const m = { t: 'mp-start', cfg: opts.config ? opts.config() : {}, roster };
     send(m); begin(m);
   }
