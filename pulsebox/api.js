@@ -26,7 +26,7 @@ const JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken
 const MAX_BYTES = 400000;
 let keys = null, keysAt = 0;
 
-const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
 const b64url = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), c => c.charCodeAt(0));
 
 async function verify(token) {
@@ -68,7 +68,18 @@ const sha = async s => hex(await crypto.subtle.digest('SHA-256', new TextEncoder
 const BUG_STATUS = ['new', 'confirmed', 'fixing', 'fixed', 'wontfix', 'duplicate'];
 async function bugs(request, env, url) {
   const stub = env.BUGS.get(env.BUGS.idFromName('global'));
-  const admin = () => env.BUG_ADMIN_KEY && request.headers.get('x-admin-key') === env.BUG_ADMIN_KEY;
+  // the admin key: never compared directly (both sides are hashed, then compared in constant time), refused if it is
+  // too short to be safe, and an address that sends 8 wrong keys is locked out for 15 minutes
+  const admin = async () => {
+    const want = env.BUG_ADMIN_KEY || '', given = request.headers.get('x-admin-key') || '';
+    if (want.length < 16) return 'off';
+    const who = (await sha('pulsebox-admin|' + (request.headers.get('cf-connecting-ip') || ''))).slice(0, 24);
+    if ((await stub.fetch('https://bugs/gate', { method: 'POST', body: JSON.stringify({ who }) })).status === 429) return 'locked';
+    const [a, b] = await Promise.all([sha('pbx-admin|' + given), sha('pbx-admin|' + want)]); let d = 0;
+    for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    if (d) { await stub.fetch('https://bugs/fail', { method: 'POST', body: JSON.stringify({ who }) }); return 'wrong'; }
+    return 'ok';
+  };
   if (url.pathname === '/api/bug') {
     if (request.method !== 'POST') return json({ error: 'method' }, 405);
     const body = await request.text();
@@ -82,10 +93,14 @@ async function bugs(request, env, url) {
     return stub.fetch('https://bugs/add', { method: 'POST', body: JSON.stringify({ ...r, who }) });
   }
   if (url.pathname === '/api/bug/status') {
-    const ids = (url.searchParams.get('ids') || '').split(',').map(Number).filter(n => Number.isInteger(n) && n > 0).slice(0, 50);
+    // ids look like 12.TOKEN: the token (given only to whoever sent the report) is needed to read the note on it
+    const ids = (url.searchParams.get('ids') || '').split(',').slice(0, 50).map(s => { const [i, t] = s.split('.'); return { id: Number(i), tok: /^[a-f0-9]{32}$/.test(t || '') ? t : '' }; }).filter(q => Number.isInteger(q.id) && q.id > 0);
     return stub.fetch('https://bugs/status', { method: 'POST', body: JSON.stringify({ ids }) });
   }
-  if (!admin()) return json({ error: 'wrong key' }, 401);
+  const ok = await admin();
+  if (ok === 'off') return json({ error: 'The admin key is not set up yet (BUG_ADMIN_KEY, at least 16 characters).' }, 503);
+  if (ok === 'locked') return json({ error: 'Too many wrong keys from here. Try again in 15 minutes.' }, 429);
+  if (ok !== 'ok') return json({ error: 'wrong key' }, 401);
   if (url.pathname === '/api/bugs') return stub.fetch('https://bugs/list?' + new URLSearchParams({ status: url.searchParams.get('status') || '' }));
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
   let u; try { u = JSON.parse(await request.text()); } catch (e) { return json({ error: 'bad update' }, 400); }
@@ -97,6 +112,8 @@ export class Bugs {
     this.sql = state.storage.sql;
     this.sql.exec('CREATE TABLE IF NOT EXISTS bugs (id INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, game TEXT, text TEXT, steps TEXT, contact TEXT, info TEXT, status TEXT NOT NULL DEFAULT \'new\', note TEXT NOT NULL DEFAULT \'\', updated INTEGER NOT NULL)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS sent (k TEXT NOT NULL, t INTEGER NOT NULL)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS fails (k TEXT NOT NULL, t INTEGER NOT NULL)');
+    try { this.sql.exec("ALTER TABLE bugs ADD COLUMN tok TEXT NOT NULL DEFAULT ''"); } catch (e) {}
   }
   async fetch(request) {
     const url = new URL(request.url), now = Date.now();
@@ -105,17 +122,25 @@ export class Bugs {
       this.sql.exec('DELETE FROM sent WHERE t < ?', now - 3600000);
       if (this.sql.exec('SELECT COUNT(*) AS n FROM sent WHERE k = ?', r.who).one().n >= 6) return json({ error: 'Thanks! You have sent a lot of reports in the last hour. Please try again later.' }, 429);
       this.sql.exec('INSERT INTO sent (k, t) VALUES (?, ?)', r.who, now);
-      const id = this.sql.exec('INSERT INTO bugs (t, game, text, steps, contact, info, updated) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id', now, r.game, r.text, r.steps, r.contact, r.info, now).one().id;
-      return json({ id });
+      const token = hex(crypto.getRandomValues(new Uint8Array(16)));
+      const id = this.sql.exec('INSERT INTO bugs (t, game, text, steps, contact, info, updated, tok) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id', now, r.game, r.text, r.steps, r.contact, r.info, now, await sha('bugtok|' + token)).one().id;
+      return json({ id, token });
     }
     if (url.pathname === '/status') {
       const { ids } = JSON.parse(await request.text()), out = {};
-      for (const id of ids) { const row = this.sql.exec('SELECT status, note, updated FROM bugs WHERE id = ?', id).toArray()[0]; if (row) out[id] = row; }
+      for (const { id, tok } of ids) { const row = this.sql.exec('SELECT status, note, updated, tok FROM bugs WHERE id = ?', id).toArray()[0]; if (!row) continue; const own = tok && row.tok && (await sha('bugtok|' + tok)) === row.tok; out[id] = { status: row.status, note: own ? row.note : '', updated: row.updated }; }
       return json(out);
+    }
+    if (url.pathname === '/gate' || url.pathname === '/fail') {
+      const { who } = JSON.parse(await request.text());
+      this.sql.exec('DELETE FROM fails WHERE t < ?', now - 900000);
+      if (url.pathname === '/fail') { this.sql.exec('INSERT INTO fails (k, t) VALUES (?, ?)', who, now); return json({ ok: true }); }
+      return this.sql.exec('SELECT COUNT(*) AS n FROM fails WHERE k = ?', who).one().n >= 8 ? json({ error: 'locked' }, 429) : json({ ok: true });
     }
     if (url.pathname === '/list') {
       const st = url.searchParams.get('status');
-      const rows = st ? this.sql.exec('SELECT * FROM bugs WHERE status = ? ORDER BY id DESC LIMIT 300', st).toArray() : this.sql.exec('SELECT * FROM bugs ORDER BY id DESC LIMIT 300').toArray();
+      const cols = 'id, t, game, text, steps, contact, info, status, note, updated';
+      const rows = st ? this.sql.exec(`SELECT ${cols} FROM bugs WHERE status = ? ORDER BY id DESC LIMIT 300`, st).toArray() : this.sql.exec(`SELECT ${cols} FROM bugs ORDER BY id DESC LIMIT 300`).toArray();
       const counts = {}; for (const r of this.sql.exec('SELECT status, COUNT(*) AS n FROM bugs GROUP BY status')) counts[r.status] = r.n;
       return json({ bugs: rows, counts });
     }

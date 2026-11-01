@@ -2138,7 +2138,7 @@ loadStats();
   function open(id) { game = id || ''; sent = null; err = ''; $('bugModal').hidden = false; draw(); refresh(); setTimeout(() => { const t = $('bgText'); if (t) t.focus(); }, 30); }
   function close() { $('bugModal').hidden = true; }
   function refresh() {
-    const ids = mine().map(b => b.id); if (!ids.length) return;
+    const ids = mine().map(b => b.id + (b.tok ? '.' + b.tok : '')); if (!ids.length) return;
     fetch('/api/bug/status?ids=' + ids.join(',')).then(r => r.ok ? r.json() : null).then(d => { if (d) { statuses = d; if (!$('bugModal').hidden) drawMine(); } }).catch(() => {});
   }
   function drawMine() {
@@ -2173,7 +2173,7 @@ loadStats();
       .then(r => r.json().then(d => ({ ok: r.ok, d }))).then(({ ok, d }) => {
         busy = false; if (!ok || !d.id) throw new Error(d.error || 'Could not send the report.');
         const t = ((typeof GAMES !== 'undefined' ? GAMES : []).find(x => x.id === g) || { title: 'Website' }).title + ': ' + text.slice(0, 50) + (text.length > 50 ? '…' : '');
-        save([...mine(), { id: d.id, title: t, at: Date.now() }]); sent = d.id; statuses[d.id] = { status: 'new' }; draw();
+        save([...mine(), { id: d.id, tok: d.token || '', title: t, at: Date.now() }]); sent = d.id; statuses[d.id] = { status: 'new' }; draw();
       }).catch(e => { busy = false; err = e.message || 'Could not send the report. Check your connection and try again.'; draw(); $('bgText').value = keep.text; $('bgSteps').value = keep.steps; $('bgContact').value = keep.contact; $('bgGame').value = keep.g; });
   }
   $('bugModal').addEventListener('click', e => { if (e.target.id === 'bugModal') close(); });

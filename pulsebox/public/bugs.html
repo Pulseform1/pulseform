@@ -45,12 +45,12 @@
 <script>
 const $ = id => document.getElementById(id), esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const ST = ['new', 'confirmed', 'fixing', 'fixed', 'wontfix', 'duplicate'], NAME = { new: 'New', confirmed: 'Confirmed', fixing: 'Being fixed', fixed: 'Fixed', wontfix: "Won't fix", duplicate: 'Duplicate' };
-let key = ''; try { key = localStorage.getItem('pbx-bug-key') || ''; } catch (e) {}
+let key = ''; try { localStorage.removeItem('pbx-bug-key'); key = sessionStorage.getItem('pbx-bug-key') || ''; } catch (e) {}   // the key lives only as long as this tab
 let filter = 'open', data = { bugs: [], counts: {} }, msg = '';
 const api = (path, body) => fetch(path, { method: body ? 'POST' : 'GET', headers: { 'x-admin-key': key, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }).then(r => r.json().then(d => { if (!r.ok) throw new Error(d.error || r.status); return d; }));
 function login(err) {
   $('app').innerHTML = '<div class="login"><label for="k" class="lbl">Admin key</label><input id="k" type="password" autocomplete="current-password" style="margin:8px 0 12px"><button class="go" id="kGo">Open reports</button>' + (err ? '<p class="bad">' + esc(err) + '</p>' : '') + '</div>';
-  $('kGo').onclick = () => { key = $('k').value.trim(); try { localStorage.setItem('pbx-bug-key', key); } catch (e) {} load(); };
+  $('kGo').onclick = () => { key = $('k').value.trim(); try { sessionStorage.setItem('pbx-bug-key', key); } catch (e) {} load(); };
   $('k').onkeydown = e => { if (e.key === 'Enter') $('kGo').click(); };
 }
 function load() {
@@ -65,7 +65,7 @@ function draw() {
     (msg ? '<p class="msg">' + esc(msg) + '</p>' : '') + (list.length ? list.map(card).join('') : '<p class="msg">Nothing here.</p>');
   document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filter = b.dataset.f; msg = ''; draw(); });
   $('re').onclick = () => { msg = ''; load(); };
-  $('out').onclick = () => { key = ''; try { localStorage.removeItem('pbx-bug-key'); } catch (e) {} login(); };
+  $('out').onclick = () => { key = ''; try { sessionStorage.removeItem('pbx-bug-key'); } catch (e) {} login(); };
   document.querySelectorAll('[data-save]').forEach(b => b.onclick = () => {
     const id = +b.dataset.save, status = $('s' + id).value, note = $('n' + id).value; b.disabled = true;
     api('/api/bugs/update', { id, status, note }).then(() => { const x = data.bugs.find(q => q.id === id); data.counts[x.status]--; data.counts[status] = (data.counts[status] || 0) + 1; Object.assign(x, { status, note }); msg = 'Saved #' + id + '.'; draw(); }).catch(e => { b.disabled = false; alert('Could not save: ' + e.message); });

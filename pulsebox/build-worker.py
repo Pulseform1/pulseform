@@ -54,7 +54,10 @@ export default {
     }
     const body = FILES[path];
     if (body === undefined) return new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain' } });
-    return new Response(request.method === 'HEAD' ? null : body, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
+    // security headers: no MIME sniffing, HTTPS only, no embedding on other sites (clickjacking), no full URLs leaked
+    return new Response(request.method === 'HEAD' ? null : body, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': path === '/bugs.html' ? 'no-store' : 'no-cache',
+      'x-content-type-options': 'nosniff', 'referrer-policy': 'strict-origin-when-cross-origin', 'strict-transport-security': 'max-age=31536000',
+      'content-security-policy': "frame-ancestors 'self' https://pulseform.org https://*.pulseform.org", 'x-frame-options': 'SAMEORIGIN' } });
   }
 };
 ''' % (json.dumps(game_ids), json.dumps(files, ensure_ascii=False), json.dumps(media), REPO, sha)
