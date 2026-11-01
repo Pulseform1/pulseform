@@ -408,7 +408,7 @@ const GAME = {
   function breakTile(x, y) {
     const t = at(x, y); mine = null; if (!t) return;
     editTile(x, y, T.AIR); score += t === T.GOLD || t === T.SHADOW || t === T.HELLSTONE ? 6 : (t >= T.COPPER && t <= T.GOLD) || t === T.SILVER ? 3 : 1;
-    K.burst(sx(x + .5), sy(y + .5), t === T.GRASS || t === T.LEAF ? ['#4caa2a', '#8a5a32'] : t === T.STONE ? ['#7a7a84', '#94949e'] : ['#8a5a32', '#a06c3e'], 6, 140, { life: .35, size: 4, gravity: 700 });
+    K.burst(scrX(sx(x + .5)), scrY(sy(y + .5)), t === T.GRASS || t === T.LEAF ? ['#4caa2a', '#8a5a32'] : t === T.STONE ? ['#7a7a84', '#94949e'] : ['#8a5a32', '#a06c3e'], 6, 140, { life: .35, size: 4, gravity: 700 });
     K.sfx(SOLID.has(t) && t !== 1 && t !== 2 ? 200 : 120, .08, 'square', .07, -60);
     if (t === T.TRUNK) { let n = 1; for (let yy = y - 1; yy > y - 16; yy--) { if (at(x, yy) === T.TRUNK) { editTile(x, yy, T.AIR); n++; } else break; } for (let dx = -3; dx <= 3; dx++) for (let dy = -18; dy < 0; dy++) if (at(x + dx, y + dy) === T.LEAF) editTile(x + dx, y + dy, T.AIR); dropItem('wood', x + .5, y, n * 2); if (R() < .3) dropItem('gel', x + .5, y - 2, 1); if (R() < .15) dropItem('mush', x + .5, y - 2, 1); return; }
     if (t === T.POT) { const r = R(); dropItem(r < .3 ? 'potion' : r < .6 ? 'torch' : r < .8 ? (y > 100 ? 'shot' : 'arrow') : 'gel', x + .5, y, r < .3 ? 1 : 3 + Math.floor(R() * 8)); K.sfx(900, .08, 'square', .05); return; }
@@ -418,8 +418,14 @@ const GAME = {
   function dropItem(id, x, y, n) { drops.push({ id, n, x, y, vx: rnd(-3, 3), vy: -rnd(4, 8), t: 0 }); }
 
   /* ---------- lighting ---------- */
+  // camera zoom, like Terraria's: the world is drawn bigger around the screen centre; menus and the HUD are not.
+  // 4/3 and 3/2 keep 24px tiles on whole pixels (32 and 36) so the pixel art stays crisp
+  const ZOOM = () => posed ? 1 : touch ? 1.5 : 4 / 3;
+  const WV = () => { const v = K.view, z = ZOOM(); return { x0: 640 + (v.x0 - 640) / z, x1: 640 + (v.x1 - 640) / z, y0: 360 + (v.y0 - 360) / z, y1: 360 + (v.y1 - 360) / z }; };
+  const wmx = () => 640 + (mx - 640) / ZOOM(), wmy = () => 360 + (my - 360) / ZOOM();   // pointer in world-drawing space
+  const scrX = X => 640 + (X - 640) * ZOOM(), scrY = Y => 360 + (Y - 360) * ZOOM();    // world-drawing space to screen
   function computeLight() {
-    const v = K.view, vw = Math.ceil((v.x1 - v.x0) / TS) + 26, vh = Math.ceil((v.y1 - v.y0) / TS) + 26; lx0 = Math.floor((cam.x + v.x0) / TS) - 13; ly0 = Math.floor((cam.y + v.y0) / TS) - 13; lw = vw; lh = vh;
+    const v = WV(), vw = Math.ceil((v.x1 - v.x0) / TS) + 26, vh = Math.ceil((v.y1 - v.y0) / TS) + 26; lx0 = Math.floor((cam.x + v.x0) / TS) - 13; ly0 = Math.floor((cam.y + v.y0) / TS) - 13; lw = vw; lh = vh;
     if (!light || light.length !== vw * vh) light = new Float32Array(vw * vh);
     const sun = dayLight();
     for (let i = 0; i < vw; i++) { const x = lx0 + i; let open = true;
@@ -451,13 +457,13 @@ const GAME = {
     for (const c of CLOUDS) { const CW = v.x1 - v.x0 + 420, cx = ((c[0] * 1600 - cam.x * .08 + time * 2400 * c[3]) % CW + CW) % CW + v.x0 - 210, cy = c[1] - cam.y * .04 + 120, w = c[2]; g.fillStyle = night() ? 'rgba(60,70,110,.55)' : 'rgba(255,255,255,.85)'; g.beginPath(); g.roundRect(cx, cy, w, w * .28, w * .14); g.roundRect(cx + w * .18, cy - w * .14, w * .42, w * .3, w * .15); g.roundRect(cx + w * .45, cy - w * .08, w * .3, w * .24, w * .12); g.fill(); g.fillStyle = night() ? 'rgba(30,36,70,.4)' : 'rgba(200,215,240,.7)'; g.fillRect(cx + w * .1, cy + w * .2, w * .8, w * .08); }
     for (const [k, c, base, amp] of [[.15, night() ? '#1a2a3a' : '#7aa8c8', 430, 70], [.35, night() ? '#14242a' : '#4a8a5a', 500, 50]]) { g.fillStyle = c; const off = cam.x * k; for (let x = Math.floor(v.x0 / 8) * 8 - 8; x < v.x1 + 8; x += 8) { const wx = (x + off) / 90, h = Math.sin(wx) * amp + Math.sin(wx * 2.3) * amp * .4 - (cam.y - 1100) * k * .3; g.fillRect(x, base - h, 8, v.y1 + 720); }
       if (k === .35) { const sp = 150, off2 = cam.x * .5, fy = 540 - (cam.y - 1100) * .5 * .3; for (let i = Math.floor((off2 + v.x0) / sp) - 1; i < Math.floor((off2 + v.x1) / sp) + 2; i++) { const tx = i * sp - off2 + ((i * 53) % 60), hh = 70 + ((i * 37) % 50); g.fillStyle = night() ? '#0e1c20' : '#2f6e40'; g.fillRect(tx - 5, fy - hh, 10, hh + 200); g.beginPath(); g.arc(tx, fy - hh, 34, 0, 7); g.arc(tx - 22, fy - hh + 18, 24, 0, 7); g.arc(tx + 22, fy - hh + 16, 26, 0, 7); g.fill(); g.fillStyle = night() ? '#122428' : '#3a8048'; g.fillRect(v.x0, fy, v.x1 - v.x0, v.y1 - fy); } } }
-    const surfaceY = surf[clamp(Math.floor((cam.x + 640) / TS), 0, WW - 1)] * TS - cam.y;
-    if (surfaceY < v.y1) { g.fillStyle = '#20140c'; const yy = Math.max(v.y0, surfaceY + 80); g.fillRect(v.x0, yy, v.x1 - v.x0, v.y1 - yy); }
+    const surfaceY = scrY(surf[clamp(Math.floor((cam.x + 640) / TS), 0, WW - 1)] * TS - cam.y);
+    if (surfaceY < v.y1) { g.fillStyle = '#20140c'; const yy = Math.max(v.y0, surfaceY + 80 * ZOOM()); g.fillRect(v.x0, yy, v.x1 - v.x0, v.y1 - yy); }
   }
   let torchL = [], glints = [];
   function drawTiles(g) {
     g.imageSmoothingEnabled = false; torchL = []; glints = [];
-    const v = K.view, x0 = Math.floor((cam.x + v.x0) / TS) - 1, y0 = Math.floor((cam.y + v.y0) / TS) - 1, x1 = x0 + Math.ceil((v.x1 - v.x0) / TS) + 3, y1 = y0 + Math.ceil((v.y1 - v.y0) / TS) + 3, leaves = [], tufts = [];
+    const v = WV(), x0 = Math.floor((cam.x + v.x0) / TS) - 1, y0 = Math.floor((cam.y + v.y0) / TS) - 1, x1 = x0 + Math.ceil((v.x1 - v.x0) / TS) + 3, y1 = y0 + Math.ceil((v.y1 - v.y0) / TS) + 3, leaves = [], tufts = [];
     for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
       if (x < 0 || y < 0 || x >= WW || y >= WH) continue;
       const t = tiles[y * WW + x], wl = walls[y * WW + x], X = Math.round(x * TS - cam.x), Y = Math.round(y * TS - cam.y);
@@ -579,7 +585,7 @@ const GAME = {
   }
   function outlined(g, t, x, y, size, c, al = 'left') { g.font = `${size}px ${PXF}`; g.textAlign = al; g.textBaseline = 'alphabetic'; g.strokeStyle = '#000'; g.lineWidth = 3; g.strokeText(t, x, y); g.fillStyle = c; g.fillText(t, x, y); }
   // the pause button sits 12-52px from the screen's top-left corner, so the hotbar moves over just enough to clear it
-  const OX = () => { const v = K.view, sc = innerWidth / (v.x1 - v.x0); return Math.max(0, 60 / sc - (14 - v.x0)); };
+  const OX = () => { const v = K.view, sc = innerWidth / (v.x1 - v.x0); return Math.max(0, (touch ? 108 : 60) / sc - (14 - v.x0)); };
   // the HUD hugs the real top of the screen, which sits above y=0 on tall screens (tablets, 4:3 windows)
   const TOP = () => Math.min(0, K.view.y0);
   const cover = g => { const v = K.view; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); };
@@ -601,7 +607,7 @@ const GAME = {
     if (hint && !invOpen) { g.font = `17px ${PXF}`; g.textAlign = 'center'; const w = g.measureText(hint).width + 30; g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(640 - w / 2, 160, w, 28); g.fillStyle = '#fff'; g.fillText(hint, 640, 180); }
     g.restore();
     const B = ents.find(e => KIND[e.kind].boss); if (B) { const w = 600, by = Math.max(680, v.y1 - 40); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(340, by, w, 22); g.fillStyle = '#c8203a'; g.fillRect(342, by + 2, (w - 4) * Math.max(0, B.hp / B.max), 18); outlined(g, BOSSES[B.kind].n, 640, by - 6, 18, '#fff', 'center'); }
-    for (const p of pops) { g.globalAlpha = Math.max(0, 1 - p.t); outlined(g, p.s, sx(p.x), sy(p.y) - p.t * 30, 18, p.c, 'center'); } g.globalAlpha = 1;
+    for (const p of pops) { g.globalAlpha = Math.max(0, 1 - p.t); outlined(g, p.s, scrX(sx(p.x)), scrY(sy(p.y)) - p.t * 30, 18, p.c, 'center'); } g.globalAlpha = 1;
     if (touch && !invOpen) touchUI(g);
   }
   function heart(g, x, y, c) { g.fillStyle = c; const r = (a, b, w, h) => g.fillRect(x + a, y + b, w, h); r(-10, -6, 8, 8); r(2, -6, 8, 8); r(-11, -3, 22, 7); r(-8, 4, 16, 3); r(-5, 7, 10, 3); r(-2, 10, 4, 2); if (c !== '#3a0a0a') { g.fillStyle = 'rgba(255,255,255,.5)'; r(-8, -4, 3, 3); } }
@@ -617,7 +623,7 @@ const GAME = {
      Everything is measured from the real screen edges so it fits phones, tablets and odd shapes. */
   const TS_ = 64, TG = 6, ROW = 84;
   const TL = () => {
-    const v = K.view, sc = innerWidth / (v.x1 - v.x0), top = v.y0 + 14, left = v.x0 + Math.max(16, 74 / sc), gw = 10 * (TS_ + TG) - TG, cx = left + gw + 22, cw = Math.min(820, v.x1 - 16 - cx), ly = top + 76;
+    const v = K.view, sc = innerWidth / (v.x1 - v.x0), top = v.y0 + 14, left = v.x0 + Math.max(16, 112 / sc), gw = 10 * (TS_ + TG) - TG, cx = left + gw + 22, cw = Math.min(820, v.x1 - 16 - cx), ly = top + 76;
     return { left, top, gw, cx, cw, slot: i => ({ x: left + (i % 10) * (TS_ + TG), y: top + Math.floor(i / 10) * (TS_ + TG), w: TS_, h: TS_ }), arm: { x: left, y: top + 4 * (TS_ + TG) + 12, w: TS_, h: TS_ },
       list: { x: cx, y: ly, w: cw - 56, h: v.y1 - 14 - ly }, close: { x: cx + cw - 92, y: top, w: 92, h: 62 }, up: { x: cx + cw - 48, y: ly, w: 48, h: 90 }, dn: { x: cx + cw - 48, y: v.y1 - 90 - 70 / sc, w: 48, h: 90 } };  // kept clear of the sound button in the corner
   };
@@ -761,7 +767,7 @@ const GAME = {
       if (!keys.j && P.vy < -6) P.vy *= Math.pow(.02, dt);
       const vy0 = P.vy; moveBody(P, dt); if (P.ground && vy0 > 25) hurt(Math.round((vy0 - 25) * 6), P.x);
       if (P.y > HELL + 1 && !ch.armor && R() < dt * .3) hurt(4, P.x);
-      if (useHeld) { const wx = (mx + cam.x) / TS, wy = (my + cam.y) / TS; use(Math.floor(wx), Math.floor(wy), wx, wy, dt, firstUse ? true : 'hold'); firstUse = false; if (upPending) { upPending = false; useHeld = false; } } else mine = null;
+      if (useHeld) { const wx = (wmx() + cam.x) / TS, wy = (wmy() + cam.y) / TS; use(Math.floor(wx), Math.floor(wy), wx, wy, dt, firstUse ? true : 'hold'); firstUse = false; if (upPending) { upPending = false; useHeld = false; } } else mine = null;
     }
     if (P.inv > 0) P.inv -= dt; if (P.swing > 0) P.swing -= dt; if (P.cd > 0) P.cd -= dt; if (P.potCd > 0) P.potCd -= dt;
     if (!dead) { if (P.hp < ch.max && P.inv <= 0) P.hp = Math.min(ch.max, P.hp + dt * (Math.abs(P.vx) < .5 ? 2.4 : .9)); P.mp = Math.min(ch.mana, P.mp + dt * 4); }
@@ -778,7 +784,7 @@ const GAME = {
       if (isHost() && (eSendT -= dt) <= 0) { eSendT = .12; MP.send({ t: 'e', time, l: ents.slice(0, 40).map(e => [e.id, e.kind, +e.x.toFixed(2), +e.y.toFixed(2), Math.round(e.hp), Math.round(e.max), e.rage ? 1 : 0]) }); }
     }
     const tx = P.x * TS - 640, ty = (P.y - 1.4) * TS - 380; cam.x += (tx - cam.x) * Math.min(1, dt * 10); cam.y += (ty - cam.y) * Math.min(1, dt * 10);
-    { const v = K.view; cam.x = clamp(cam.x, -v.x0, WW * TS - v.x1); cam.y = clamp(cam.y, -200 - v.y0, WH * TS - v.y1); }
+    { const v = WV(); cam.x = clamp(cam.x, -v.x0, WW * TS - v.x1); cam.y = clamp(cam.y, -200 - v.y0, WH * TS - v.y1); }
     computeLight();
     hint = demo || P.y - surf[clamp(Math.floor(P.x), 0, WW - 1)] > 8 ? null : !count('bench') && !stationNear(T.BENCH) && count('wood') < 10 ? (touch ? 'Chop a tree: hold your finger on the trunk. 10 wood makes a workbench (tap BAG).' : 'Chop a tree: hold click on the trunk. 10 wood makes a workbench (E to craft).') : !stationNear(T.FURNACE) && !count('furnace') && stationNear(T.BENCH) ? 'Next: a furnace (20 stone, 4 wood, 3 torches). Torches need gel from slimes.' : null;
     if ((saveT += dt) > 20 && !demo) { saveT = 0; saveAll(); }
@@ -788,6 +794,8 @@ const GAME = {
   GAME.reset = () => {
     demo = !!K.bot; keys = {}; held = null; useHeld = false; others = new Map(); net = null;
     touch = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+    // on phones the sound button would sit right on top of the jump button, so it moves up beside pause
+    { const m = document.getElementById('bMute'); if (m && touch) Object.assign(m.style, { top: '10px', left: '60px', right: 'auto', bottom: 'auto', width: '40px', height: '40px' }); }
     if (!Object.keys(tex).length) makeTex();
     ch = demo ? newChar() : (K.save.sc && K.save.sc.inv ? K.save.sc : newChar());
     sel = 0; score = 0;
@@ -809,13 +817,15 @@ const GAME = {
   GAME.draw = g => {
     if (mode === 'menu' || mode === 'lobby') return drawMenu(g);
     if (mode === 'recv') { g.fillStyle = '#10203a'; cover(g); outlined(g, `Receiving ${recv.name}...`, 640, 330, 32, '#9cdc4a', 'center'); outlined(g, `${recv.parts.filter(Boolean).length} of ${recv.n || '?'} pieces`, 640, 380, 20, '#fff', 'center'); return; }
-    sky(g); drawTiles(g);
+    sky(g);
+    g.save(); { const z = ZOOM(); g.translate(640 * (1 - z), 360 * (1 - z)); g.scale(z, z); } drawTiles(g);
     for (const d of drops) { const X = sx(d.x), Y = sy(d.y) - 8 + Math.sin(anim * 4 + d.x) * 2, r = IT[d.id].r || 0; if (r) { const gr = g.createRadialGradient(X, Y, 1, X, Y, 18); gr.addColorStop(0, RAR[r] + '88'); gr.addColorStop(1, RAR[r] + '00'); g.fillStyle = gr; g.fillRect(X - 18, Y - 18, 36, 36); } icon(g, d.id, X, Y, 1.2); }
     for (const e of ents) drawEnemy(g, e);
     for (const [, o] of others) if (o.p && o.p.x != null && !o.dead) drawHero(g, o.p, o.name, o.armor, o.held, o.sw, o.face || 1, false, o.col);
-    if (!dead) { const s = ch.inv[sel]; const hx = sx(P.x), hy = sy(P.y) - 30, dd = Math.hypot(mx - hx, my - hy) || 1; drawHero(g, P, online() ? MP.name : null, ch.armor, s && s.id, P.swing, P.face, P.inv > 0 && Math.floor(anim * 20) % 2, null, [(mx - hx) / dd, (my - hy) / dd]); }
+    if (!dead) { const s = ch.inv[sel]; const hx = sx(P.x), hy = sy(P.y) - 30, dd = Math.hypot(wmx() - hx, wmy() - hy) || 1; drawHero(g, P, online() ? MP.name : null, ch.armor, s && s.id, P.swing, P.face, P.inv > 0 && Math.floor(anim * 20) % 2, null, [(wmx() - hx) / dd, (wmy() - hy) / dd]); }
     drawProjs(g); drawLight(g);
-    if (!invOpen && !touch && !posed) { const tx = Math.floor((mx + cam.x) / TS), ty = Math.floor((my + cam.y) / TS); if (reach(tx, ty)) { g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2; g.strokeRect(sx(tx) + 1, sy(ty) + 1, TS - 2, TS - 2); } }
+    if (!invOpen && !touch && !posed) { const tx = Math.floor((wmx() + cam.x) / TS), ty = Math.floor((wmy() + cam.y) / TS); if (reach(tx, ty)) { g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2; g.strokeRect(sx(tx) + 1, sy(ty) + 1, TS - 2, TS - 2); } }
+    g.restore();
     if (dead) { g.fillStyle = 'rgba(60,0,0,.35)'; cover(g); outlined(g, 'You were slain...', 640, 340, 44, '#ff6a6a', 'center'); }
     if (won && won.t < 6) outlined(g, 'VICTORY', 640, 300, 56, '#ffd23f', 'center');
     if (!posed) hud(g); if (invOpen) inventory(g);
@@ -883,8 +893,8 @@ const GAME = {
   GAME.bot = dt => {
     const b = botS; b.t += dt; keys.r = true; keys.l = false;
     const ahead = solid(P.x + 1, P.y - 1.5) || solid(P.x + 1, P.y - 2.5); keys.j = ahead && P.ground;
-    const e = ents.find(e => Math.abs(e.x - P.x) < 12 && !KIND[e.kind].proj); if (e) { sel = 4; mx = sx(e.x); my = sy(e.y - .5); useHeld = true; firstUse = true; return; }
-    if (ahead && b.t % 3 < 1.2) { sel = 0; mx = sx(P.x + 1.5); my = sy(P.y - 1.6); useHeld = true; } else useHeld = false;
+    const e = ents.find(e => Math.abs(e.x - P.x) < 12 && !KIND[e.kind].proj); if (e) { sel = 4; mx = scrX(sx(e.x)); my = scrY(sy(e.y - .5)); useHeld = true; firstUse = true; return; }
+    if (ahead && b.t % 3 < 1.2) { sel = 0; mx = scrX(sx(P.x + 1.5)); my = scrY(sy(P.y - 1.6)); useHeld = true; } else useHeld = false;
   };
-  GAME.test = { st: () => ({ mode, P: P && { x: +P.x.toFixed(1), y: +P.y.toFixed(1), hp: P.hp, ground: P.ground }, inv: ch && ch.inv.filter(Boolean).map(s => s.id + 'x' + s.n), ents: ents.map(e => e.kind), time: time && +(time % 1).toFixed(2), worlds: worlds().length }), give: (i, n) => give(i, n), setTime: v => time = v, spawn: k => spawnEnemy(k, P.x + 8, P.y - 6), tp: (x, y) => { P.x = x; P.y = y; }, choose: chooseWorld, sel: i => sel = i, summon: k => summon(k, P.x, P.y), inv: () => invOpen || toggleInv(), _: () => ({ keys, tPtr, P, ch, ents, drops, projs, downed, chests, tiles, RECIPES, IT, CHEST_LOOT, BOSSES, KIND, DROP, craft, canCraft, at, set, hurt, useItem, use, equip, openChest, stationNear, time, mode, others, saveAll, worlds, boss, won, dead, invOpen, held, sel, surf, HELL, T, icon, hitEnemy, count, give }), solo: () => MP.start(), cave: (d = 30) => { for (let r = 0; r < 200; r++) for (const x of [Math.floor(P.x) + r, Math.floor(P.x) - r]) for (let y = surf[clamp(x, 0, WW - 1)] + d; y < surf[clamp(x, 0, WW - 1)] + d + 30; y++) if (at(x, y) === T.AIR && at(x, y - 1) === T.AIR && at(x, y - 2) === T.AIR && SOLID.has(at(x, y + 1))) { P.x = x + .5; P.y = y + .99; P.vy = 0; cam.x = P.x * TS - 640; cam.y = (P.y - 1.4) * TS - 380; return [x, y]; } return null; } };
+  GAME.test = { st: () => ({ mode, P: P && { x: +P.x.toFixed(1), y: +P.y.toFixed(1), hp: P.hp, ground: P.ground }, inv: ch && ch.inv.filter(Boolean).map(s => s.id + 'x' + s.n), ents: ents.map(e => e.kind), time: time && +(time % 1).toFixed(2), worlds: worlds().length }), give: (i, n) => give(i, n), setTime: v => time = v, spawn: k => spawnEnemy(k, P.x + 8, P.y - 6), tp: (x, y) => { P.x = x; P.y = y; }, choose: chooseWorld, sel: i => sel = i, summon: k => summon(k, P.x, P.y), inv: () => invOpen || toggleInv(), _: () => ({ cam, keys, tPtr, P, ch, ents, drops, projs, downed, chests, tiles, RECIPES, IT, CHEST_LOOT, BOSSES, KIND, DROP, craft, canCraft, at, set, hurt, useItem, use, equip, openChest, stationNear, time, mode, others, saveAll, worlds, boss, won, dead, invOpen, held, sel, surf, HELL, T, icon, hitEnemy, count, give }), solo: () => MP.start(), cave: (d = 30) => { for (let r = 0; r < 200; r++) for (const x of [Math.floor(P.x) + r, Math.floor(P.x) - r]) for (let y = surf[clamp(x, 0, WW - 1)] + d; y < surf[clamp(x, 0, WW - 1)] + d + 30; y++) if (at(x, y) === T.AIR && at(x, y - 1) === T.AIR && at(x, y - 2) === T.AIR && SOLID.has(at(x, y + 1))) { P.x = x + .5; P.y = y + .99; P.vy = 0; cam.x = P.x * TS - 640; cam.y = (P.y - 1.4) * TS - 380; return [x, y]; } return null; } };
 })();

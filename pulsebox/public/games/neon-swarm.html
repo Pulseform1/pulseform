@@ -180,6 +180,10 @@
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
   .item { position: relative; border: 1px solid var(--edge); background: #0d1018; border-radius: 14px; padding: 12px; text-align: left; display: flex; flex-direction: column; gap: 6px; }
   .item:hover { border-color: var(--cyan); }
+  .item.late { border-color: rgba(255,210,63,.45); background: linear-gradient(160deg, #1a1608, #0d1018 60%); }
+  .item.late .nm { color: var(--gold); }
+  .late-head { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 12px; margin: 14px 0 2px; color: var(--muted); font-weight: 700; }
+  .late-head b { color: var(--gold); font-size: 20px; letter-spacing: .08em; }
   .item .nm { font-family: var(--display); font-weight: 700; font-size: 16px; letter-spacing: .05em; text-transform: uppercase; }
   .item .ds { font-size: 14px; color: var(--muted); line-height: 1.3; }
   .item canvas.big { width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; display: block; background: #0a0c14; }
@@ -448,7 +452,13 @@ const PASSIVES = [
   { id: 'amp', name: 'Amplifier', desc: '+10% attack size', col: '#ffb52e' },
   { id: 'multi', name: 'Multicore', desc: '+1 projectile (levels 1, 3, 5)', col: '#fff36b' },
   { id: 'duration', name: 'Battery', desc: '+12% effect duration and speed', col: '#3dffc6' },
-  { id: 'regen', name: 'Nanobots', desc: 'Heal 0.4 health per second', col: '#7dff4a' }
+  { id: 'regen', name: 'Nanobots', desc: 'Heal 0.4 health per second', col: '#7dff4a' },
+  { id: 'lens', name: 'Targeting Lens', desc: '+5% critical hit chance, crits hit harder', col: '#ff9a3d' },
+  { id: 'spikes', name: 'Spike Plating', desc: 'Getting hit blasts nearby enemies', col: '#e0e6ff' },
+  { id: 'leech', name: 'Leech Module', desc: 'Every kill repairs 0.3 health', col: '#ff4a7a' },
+  { id: 'siphon', name: 'Chip Siphon', desc: '+15% chips this run', col: '#ffd23f' },
+  { id: 'cache', name: 'Data Cache', desc: '+10% experience', col: '#6bb8ff' },
+  { id: 'charm', name: 'Lucky Charm', desc: '+10% luck: crits, chests and rare drops', col: '#7dffb0' }
 ];
 const passiveById = id => PASSIVES.find(p => p.id === id);
 
@@ -476,7 +486,10 @@ const ROBOTS = [
   { id: 'sparky', name: 'Sparky', price: 2600, weapon: 'chain', perk: '-10% cooldowns.', hp: 110, spd: 1.05, cd: 0.1, shape: 'bolt' },
   { id: 'minerva', name: 'Minerva', price: 3400, weapon: 'mines', perk: '+25% pickup range.', hp: 115, spd: 1, magnet: 0.25, shape: 'round' },
   { id: 'titan', name: 'Titan', price: 4800, weapon: 'aura', perk: '+50% max health, but slow.', hp: 180, spd: 0.85, shape: 'box' },
-  { id: 'glitch', name: 'Glitch', price: 7000, weapon: 'random', perk: 'Random weapon each run. +20% luck and +20% chips.', hp: 115, spd: 1.05, luck: 0.2, greed: 0.2, shape: 'glitch' }
+  { id: 'glitch', name: 'Glitch', price: 7000, weapon: 'random', perk: 'Random weapon each run. +20% luck and +20% chips.', hp: 115, spd: 1.05, luck: 0.2, greed: 0.2, shape: 'glitch' },
+  { id: 'seraph', name: 'Seraph', price: 15000, weapon: 'drone', perk: '+40% max health and heals 1 health per second.', hp: 170, spd: 1.05, regen: 1, shape: 'halo' },
+  { id: 'overlord', name: 'Overlord', price: 25000, weapon: 'meteor', perk: '+25% damage and 15% less damage taken.', hp: 150, spd: 0.95, dmg: 0.25, armor: 0.15, shape: 'crown' },
+  { id: 'omega', name: 'Omega', price: 50000, weapon: 'random', weapon2: 'random', perk: 'Starts with TWO random weapons. +15% damage, size, luck and chips.', hp: 140, spd: 1.1, dmg: 0.15, amp: 0.15, luck: 0.15, greed: 0.15, shape: 'omega' }
 ];
 const robotById = id => ROBOTS.find(r => r.id === id) || ROBOTS[0];
 
@@ -495,7 +508,17 @@ const PERMS = [
   { id: 'luck', name: 'Luck', desc: 'Better cards and more chests', max: 5, base: 190 },
   { id: 'revive', name: 'Revival', desc: 'Come back once with half health', max: 2, base: 900 },
   { id: 'reroll', name: 'Reroll', desc: '+1 card reroll per run', max: 5, base: 250 },
-  { id: 'banish', name: 'Banish', desc: '+1 banish per run (remove a card for good)', max: 3, base: 300 }
+  { id: 'banish', name: 'Banish', desc: '+1 banish per run (remove a card for good)', max: 3, base: 300 },
+  // late game: big chip sinks, most need the basic version maxed first
+  { id: 'crit', name: 'Precision', desc: '+3% critical chance and harder crits per level', max: 5, base: 600 },
+  { id: 'might2', name: 'Overcharge', desc: '+8% damage per level', max: 5, base: 2500, req: 'might', late: 1 },
+  { id: 'hp2', name: 'Titan Frame', desc: '+25 health per level', max: 5, base: 2200, req: 'hp', late: 1 },
+  { id: 'area2', name: 'Wide Field', desc: '+6% attack size per level', max: 5, base: 2400, req: 'area', late: 1 },
+  { id: 'cd2', name: 'Quantum Core', desc: '-4% cooldowns per level', max: 3, base: 4000, req: 'cd', late: 1 },
+  { id: 'greed2', name: 'Chip Printer', desc: '+20% chips per level', max: 5, base: 3000, req: 'greed', late: 1 },
+  { id: 'barrier', name: 'Barrier Core', desc: 'Start every run with a shield that blocks 1 hit per level', max: 3, base: 3500, late: 1 },
+  { id: 'headstart', name: 'Fast Boot', desc: 'Start every run 2 levels higher per level', max: 2, base: 5000, late: 1 },
+  { id: 'barrel', name: 'Extra Barrel', desc: '+1 projectile on every weapon, per level', max: 2, base: 9000, req: 'luck', late: 1 }
 ];
 const permCost = (p, lvl) => Math.round(p.base * Math.pow(1.75, lvl) / 10) * 10;
 const WEAPON_PRICES = { chain: 700, mines: 950, disc: 1300, scatter: 1700, drone: 2300, meteor: 3100 };
@@ -509,7 +532,10 @@ const PAINTS = [
   { id: 'chrome', name: 'Chrome', price: 1200, a: '#e8ecf5', b: '#5a6070' },
   { id: 'void', name: 'Void', price: 1800, a: '#b45cff', b: '#12061f' },
   { id: 'gold', name: 'Solid Gold', price: 3000, a: '#ffd23f', b: '#6a4a00' },
-  { id: 'rainbow', name: 'Rainbow', price: 5000, a: 'rainbow', b: '#1a1a2a' }
+  { id: 'rainbow', name: 'Rainbow', price: 5000, a: 'rainbow', b: '#1a1a2a' },
+  { id: 'obsidian', name: 'Crimson Obsidian', price: 8000, a: '#ff3b5c', b: '#08060a' },
+  { id: 'aurora', name: 'Aurora', price: 12000, a: '#7dffd4', b: '#1a0a3a' },
+  { id: 'diamond', name: 'Diamond', price: 20000, a: '#ffffff', b: '#2a7aa8' }
 ];
 const FX = [
   { id: 'default', name: 'Default Colors', price: 0, desc: 'Every weapon keeps its own color.' },
@@ -517,14 +543,19 @@ const FX = [
   { id: 'ice', name: 'Ice FX', price: 700, desc: 'All your attacks glow icy blue.' },
   { id: 'toxic', name: 'Toxic FX', price: 900, desc: 'All your attacks drip green.' },
   { id: 'gold', name: 'Gold FX', price: 2000, desc: 'All your attacks shine gold.' },
-  { id: 'rainbow', name: 'Rainbow FX', price: 3500, desc: 'Every shot is a different color.' }
+  { id: 'rainbow', name: 'Rainbow FX', price: 3500, desc: 'Every shot is a different color.' },
+  { id: 'void', name: 'Void FX', price: 7500, desc: 'Deep purple shots with a dark core.' },
+  { id: 'plasma', name: 'Plasma FX', price: 12000, desc: 'Hot pink and electric cyan, flickering.' }
 ];
 const BOOSTERS = [
   { id: 'head', name: 'Head Start', price: 150, desc: 'Start the run at level 3.' },
   { id: 'shield', name: 'Shield Orb', price: 120, desc: 'Blocks the first 3 hits you take.' },
   { id: 'double', name: 'Chip Doubler', price: 250, desc: 'Double chips from this run.' },
   { id: 'life', name: 'Extra Life', price: 300, desc: 'One more revive this run.' },
-  { id: 'magnet', name: 'Mega Magnet', price: 100, desc: 'Start with a huge pickup range for 60 seconds.' }
+  { id: 'magnet', name: 'Mega Magnet', price: 100, desc: 'Start with a huge pickup range for 60 seconds.' },
+  { id: 'overdrive', name: 'Overdrive', price: 1500, desc: '+25% damage and -10% cooldowns this run.' },
+  { id: 'fortress', name: 'Fortress', price: 1200, desc: '+100 max health this run.' },
+  { id: 'jackpot', name: 'Jackpot', price: 3000, desc: 'Triple chips from this run.' }
 ];
 
 /* ---------- challenges ---------- */
@@ -681,12 +712,16 @@ function drawRobot(g, x, y, r, rob, paint, face, t, hurt) {
     case 'fin': g.moveTo(0, -r * 1.2); g.lineTo(r * 0.9, r * 0.4); g.lineTo(r * 0.5, r); g.lineTo(-r * 0.5, r); g.lineTo(-r * 0.9, r * 0.4); g.closePath(); break;
     case 'bolt': g.arc(0, 0, r, 0, TAU); break;
     case 'glitch': g.rect(-r, -r, r * 2, r * 2); break;
+    case 'crown': g.moveTo(-r, r * 0.9); g.lineTo(-r * 1.05, -r * 0.6); g.lineTo(-r * 0.5, -r * 0.15); g.lineTo(0, -r * 1.05); g.lineTo(r * 0.5, -r * 0.15); g.lineTo(r * 1.05, -r * 0.6); g.lineTo(r, r * 0.9); g.closePath(); break;
+    case 'omega': for (let i = 0; i < 6; i++) { const an = i / 6 * TAU + TAU / 12; g.lineTo(Math.cos(an) * r * 1.1, Math.sin(an) * r * 1.1); } g.closePath(); break;
     default: g.arc(0, 0, r, 0, TAU);
   }
   const fill = g.createLinearGradient(0, -r, 0, r); fill.addColorStop(0, shade(b, 0.25)); fill.addColorStop(1, b);
   g.fillStyle = fill; g.fill();
   g.lineWidth = r * 0.14; g.strokeStyle = hurt ? '#ffffff' : a; g.stroke();
   if (rob.shape === 'bolt') { g.fillStyle = a; g.beginPath(); g.moveTo(-r * 0.1, -r * 0.8); g.lineTo(r * 0.35, -r * 0.1); g.lineTo(0, -r * 0.1); g.lineTo(r * 0.1, r * 0.8); g.lineTo(-r * 0.35, r * 0.05); g.lineTo(0, r * 0.05); g.closePath(); g.globalAlpha = 0.35; g.fill(); g.globalAlpha = 1; }
+  if (rob.shape === 'halo') { g.strokeStyle = '#fff6c0'; g.lineWidth = r * 0.1; g.shadowColor = '#ffd23f'; g.shadowBlur = 12; g.beginPath(); g.ellipse(0, -r * 1.55, r * 0.6, r * 0.18, 0, 0, TAU); g.stroke(); g.shadowBlur = 0; }
+  if (rob.shape === 'omega') { g.strokeStyle = hexA('#ffffff', 0.7); g.lineWidth = r * 0.06; g.beginPath(); g.arc(0, 0, r * 1.45, t * 2, t * 2 + 2); g.stroke(); g.beginPath(); g.arc(0, 0, r * 1.45, t * 2 + Math.PI, t * 2 + Math.PI + 2); g.stroke(); }
   if (rob.shape === 'glitch') { g.fillStyle = hexA('#ff2e88', 0.5); g.fillRect(-r + Math.sin(t * 20) * 3, -r * 0.3, r * 2, r * 0.25); g.fillStyle = hexA('#29e0ff', 0.5); g.fillRect(-r - Math.sin(t * 17) * 3, r * 0.2, r * 2, r * 0.2); }
   // visor with eyes that look where you move
   const fx = Math.cos(face) * r * 0.22, fy = Math.sin(face) * r * 0.15;
@@ -770,6 +805,13 @@ function drawIcon(g, id, col, S2) {
     case 'multi': for (let i = 0; i < 4; i++) g.fillRect(-r + (i % 2) * r * 1.1, -r + Math.floor(i / 2) * r * 1.1, r * 0.8, r * 0.8); break;
     case 'duration': g.strokeRect(-r * 0.8, -r * 0.5, r * 1.5, r); g.fillRect(-r * 0.65, -r * 0.35, r * 0.9, r * 0.7); g.fillRect(r * 0.7, -r * 0.2, r * 0.2, r * 0.4); break;
     case 'regen': g.fillRect(-r * 0.2, -r * 0.8, r * 0.4, r * 1.6); g.fillRect(-r * 0.8, -r * 0.2, r * 1.6, r * 0.4); break;
+    case 'lens': g.beginPath(); g.arc(0, 0, r * 0.75, 0, TAU); g.stroke(); line(-r, 0, -r * 0.35, 0); line(r * 0.35, 0, r, 0); line(0, -r, 0, -r * 0.35); line(0, r * 0.35, 0, r); g.beginPath(); g.arc(0, 0, r * 0.12, 0, TAU); g.fill(); break;
+    case 'spikes': for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; g.beginPath(); g.moveTo(Math.cos(a) * r, Math.sin(a) * r); g.lineTo(Math.cos(a + 0.3) * r * 0.45, Math.sin(a + 0.3) * r * 0.45); g.lineTo(Math.cos(a - 0.3) * r * 0.45, Math.sin(a - 0.3) * r * 0.45); g.closePath(); g.fill(); } break;
+    case 'leech': g.beginPath(); g.moveTo(0, -r); g.quadraticCurveTo(r * 0.9, r * 0.1, 0, r * 0.9); g.quadraticCurveTo(-r * 0.9, r * 0.1, 0, -r); g.fill(); g.fillStyle = '#0d1018'; g.fillRect(-r * 0.12, -r * 0.1, r * 0.24, r * 0.6); break;
+    case 'siphon': g.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; g.lineTo(Math.cos(a) * r * 0.55, Math.sin(a) * r * 0.55 + r * 0.25); } g.closePath(); g.stroke(); line(0, -r, 0, -r * 0.1); line(-r * 0.3, -r * 0.4, 0, -r * 0.1); line(r * 0.3, -r * 0.4, 0, -r * 0.1); break;
+    case 'cache': for (let i = 0; i < 3; i++) { g.beginPath(); g.ellipse(0, -r * 0.6 + i * r * 0.55, r * 0.75, r * 0.25, 0, 0, TAU); g.stroke(); } break;
+    case 'charm': for (let i = 0; i < 4; i++) { const a = i / 4 * TAU; g.beginPath(); g.arc(Math.cos(a) * r * 0.42, Math.sin(a) * r * 0.42, r * 0.36, 0, TAU); g.fill(); } break;
+    case 'crown': g.beginPath(); g.moveTo(-r, r * 0.5); g.lineTo(-r, -r * 0.4); g.lineTo(-r * 0.5, 0); g.lineTo(0, -r * 0.7); g.lineTo(r * 0.5, 0); g.lineTo(r, -r * 0.4); g.lineTo(r, r * 0.5); g.closePath(); g.fill(); break;
     case 'heal': g.fillRect(-r * 0.2, -r * 0.8, r * 0.4, r * 1.6); g.fillRect(-r * 0.8, -r * 0.2, r * 1.6, r * 0.4); break;
     case 'chips': g.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; g.lineTo(Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.8); } g.closePath(); g.stroke(); g.font = 'bold ' + Math.round(r) + 'px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('$', 0, r * 0.05); break;
   }
@@ -915,22 +957,24 @@ const stick = { on: false, x: 0, y: 0, sx: 0, sy: 0, dx: 0, dy: 0, id: null };
 
 /* ---------- starting a run ---------- */
 function runStats(rob) {
-  const P = S.perm, pas = R ? R.passives : {};
+  const P = S.perm, pas = R ? R.passives : {}, B = R && R.boosts || {};
   const pl = id => pas[id] || 0;
   const st = {
-    dmg: (1 + 0.05 * P.might) * (1 + 0.1 * pl('power')),
-    cd: (1 - 0.03 * P.cd) * Math.pow(0.92, pl('overclock')) * (1 - (rob.cd || 0)),
-    area: (1 + 0.05 * P.area) * (1 + 0.1 * pl('amp')) * (1 + (rob.amp || 0)),
+    dmg: (1 + 0.05 * P.might) * (1 + 0.08 * P.might2) * (1 + 0.1 * pl('power')) * (1 + (rob.dmg || 0)) * (B.overdrive ? 1.25 : 1),
+    cd: (1 - 0.03 * P.cd) * (1 - 0.04 * P.cd2) * Math.pow(0.92, pl('overclock')) * (1 - (rob.cd || 0)) * (B.overdrive ? 0.9 : 1),
+    area: (1 + 0.05 * P.area) * (1 + 0.06 * P.area2) * (1 + 0.1 * pl('amp')) * (1 + (rob.amp || 0)),
     spd: 190 * (rob.spd || 1) * (1 + 0.04 * P.speed) * (1 + 0.1 * pl('thrusters')),
     armor: 1 - clamp(0.04 * P.armor + 0.08 * pl('armor') + (rob.armor || 0), 0, 0.7),
-    maxHp: (rob.hp || 100) + 10 * P.hp + 20 * pl('core'),
+    maxHp: (rob.hp || 100) + 10 * P.hp + 25 * P.hp2 + 20 * pl('core') + (B.fortress ? 100 : 0),
     magnet: 70 * (1 + 0.15 * P.magnet) * (1 + 0.3 * pl('magnet')) * (1 + (rob.magnet || 0)),
-    amount: (pl('multi') >= 1 ? 1 : 0) + (pl('multi') >= 3 ? 1 : 0) + (pl('multi') >= 5 ? 1 : 0),
+    amount: (pl('multi') >= 1 ? 1 : 0) + (pl('multi') >= 3 ? 1 : 0) + (pl('multi') >= 5 ? 1 : 0) + P.barrel,
     dur: 1 + 0.12 * pl('duration'),
-    regen: 0.5 + 0.15 * P.regen + 0.4 * pl('regen'),
-    luck: 1 + 0.08 * P.luck + (rob.luck || 0),
-    greed: (1 + 0.1 * P.greed + (rob.greed || 0)) * (S.boost.double ? 2 : 1),
-    growth: 1 + 0.05 * P.growth
+    regen: 0.5 + 0.15 * P.regen + 0.4 * pl('regen') + (rob.regen || 0),
+    luck: 1 + 0.08 * P.luck + 0.1 * pl('charm') + (rob.luck || 0),
+    greed: (1 + 0.1 * P.greed + 0.2 * P.greed2 + 0.15 * pl('siphon') + (rob.greed || 0)) * (B.double ? 2 : 1) * (B.jackpot ? 3 : 1),
+    growth: (1 + 0.05 * P.growth) * (1 + 0.1 * pl('cache')),
+    crit: 0.05 + 0.03 * P.crit + 0.05 * pl('lens'), critX: 2 + 0.15 * pl('lens') + 0.1 * P.crit,
+    leech: 0.3 * pl('leech'), spikes: pl('spikes')
   };
   return st;
 }
@@ -940,7 +984,7 @@ function startRun(levelId, endless) {
   const boosts = Object.assign({}, S.boost); S.boost = {}; save();
   R = {
     L, world: L.world, endless: !!endless, t: 0, rob, boosts,
-    p: { x: 0, y: 0, vx: 0, vy: 0, r: 16, hp: 100, face: 0, inv: 0, hurt: 0, shield: boosts.shield ? 3 : 0 },
+    p: { x: 0, y: 0, vx: 0, vy: 0, r: 16, hp: 100, face: 0, inv: 0, hurt: 0, shield: (boosts.shield ? 3 : 0) + S.perm.barrier },
     weapons: [], passives: {}, evolved: {},
     enemies: [], shots: [], eshots: [], gems: [], drops: [], fx: [], parts: [], texts: [], mines: [], timers: [],
     xp: 0, lvl: 1, xpNext: 4, pending: 0, kills: 0, chips: 0, chests: 0, bossKills: 0,
@@ -952,7 +996,8 @@ function startRun(levelId, endless) {
   R.p.hp = R.st.maxHp;
   let w0 = rob.weapon === 'random' ? pick(S.own.weapons) : rob.weapon;
   addWeapon(w0);
-  if (boosts.head) { R.lvl = 3; R.pending = 2; }
+  if (rob.weapon2) { const w2 = rob.weapon2 === 'random' ? pick(S.own.weapons.filter(w => w !== w0)) : rob.weapon2; if (w2) addWeapon(w2); }
+  { const lv = (boosts.head ? 2 : 0) + 2 * S.perm.headstart; if (lv) { R.lvl = 1 + lv; R.pending = lv; } }
   for (let i = 0; i < 10; i++) { const an = i / 10 * TAU; spawnEnemy('chaser', Math.cos(an) * 380, Math.sin(an) * 300); }
   mode = 'play';
   S.runs++; save();
@@ -969,6 +1014,8 @@ function fxCol(base) {
     case 'toxic': return Math.random() < 0.5 ? '#7dff4a' : '#c6ff3d';
     case 'gold': return Math.random() < 0.5 ? '#ffd23f' : '#fff0a0';
     case 'rainbow': return ['#ff3b5c', '#ffb52e', '#fff36b', '#7dff4a', '#29e0ff', '#b45cff'][Math.floor(Math.random() * 6)];
+    case 'void': return Math.random() < 0.5 ? '#b45cff' : '#6a2aff';
+    case 'plasma': return Math.random() < 0.5 ? '#ff2e88' : '#29e0ff';
   }
   return base;
 }
@@ -1328,7 +1375,7 @@ function enemyBoom(e) {
 function hurtEnemy(e, dmg, kx, ky, col, quiet) {
   if (e.dead) return;
   let crit = false;
-  if (Math.random() < 0.05 * R.st.luck) { dmg *= 2; crit = true; }
+  if (Math.random() < R.st.crit * R.st.luck) { dmg *= R.st.critX; crit = true; }
   e.hp -= dmg; e.flash = 0.08;
   if (!e.boss) { e.kx += kx * (e.elite ? 3 : 10); e.ky += ky * (e.elite ? 3 : 10); }
   if (!quiet || crit) if (R.texts.length < 70) R.texts.push({ x: e.x + rnd(-8, 8), y: e.y - e.r, v: Math.round(dmg), t: 0, crit });
@@ -1337,6 +1384,7 @@ function hurtEnemy(e, dmg, kx, ky, col, quiet) {
 }
 function killEnemy(e) {
   e.dead = true; R.kills++;
+  if (R.st.leech && R.p.hp > 0) R.p.hp = Math.min(R.st.maxHp, R.p.hp + R.st.leech);
   const n = e.boss ? 60 : e.elite ? 24 : 7;
   const col = e.col.startsWith('#') ? e.col : R.world.col;
   for (let i = 0; i < n; i++) { const a = rnd(0, TAU), s = rnd(60, e.boss ? 420 : 240); R.parts.push({ x: e.x, y: e.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: rnd(0.3, 0.7), max: 0.7, r: rnd(2, 4), col }); }
@@ -1374,6 +1422,7 @@ function hurtPlayer(dmg, src) {
   p.inv = 0.8;
   if (p.shield > 0) { p.shield--; sfx.shield(); R.fx.push({ kind: 'ring', x: p.x, y: p.y, r: 10, max: 60, t: 0, dur: 0.25, col: '#29e0ff', dmg: 0, knock: 0, hit: new Set() }); return; }
   const d = dmg * R.st.armor;
+  if (R.st.spikes) { const rad = (90 + 20 * R.st.spikes) * R.st.area; R.fx.push({ kind: 'blast', x: p.x, y: p.y, r: rad, t: 0, dur: 0.3, col: '#e0e6ff' }); for (const e of R.enemies) if (!e.dead && Math.hypot(e.x - p.x, e.y - p.y) < rad + e.r) hurtEnemy(e, 22 * R.st.spikes * R.st.dmg, Math.sign(e.x - p.x), Math.sign(e.y - p.y), '#fff', true); }
   p.hp -= d; p.hurt = 0.2; R.shake = Math.max(R.shake, 6); sfx.hurt();
   R.minHpFrac = Math.min(R.minHpFrac, p.hp / R.st.maxHp);
   if (p.hp <= 0) {
@@ -1598,7 +1647,7 @@ function draw(t) {
   ctx.drawImage(VIG, 0, 0);
 }
 let VIG = null;
-function fxColStatic(c) { return S.fx === 'fire' ? '#ff7a1a' : S.fx === 'ice' ? '#9fe8ff' : S.fx === 'toxic' ? '#7dff4a' : S.fx === 'gold' ? '#ffd23f' : S.fx === 'rainbow' ? 'hsl(' + ((performance.now() / 8) % 360) + ',100%,60%)' : c; }
+function fxColStatic(c) { return S.fx === 'fire' ? '#ff7a1a' : S.fx === 'ice' ? '#9fe8ff' : S.fx === 'toxic' ? '#7dff4a' : S.fx === 'gold' ? '#ffd23f' : S.fx === 'void' ? '#b45cff' : S.fx === 'plasma' ? ((performance.now() / 120 | 0) % 2 ? '#ff2e88' : '#29e0ff') : S.fx === 'rainbow' ? 'hsl(' + ((performance.now() / 8) % 360) + ',100%,60%)' : c; }
 function drawBeam(x, y, a, len, wd, col, alpha) {
   const c = col.startsWith('#') ? col : '#ffffff';
   ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.globalAlpha = alpha;
@@ -2000,22 +2049,24 @@ function renderShop() {
   const grid = document.createElement('div'); grid.className = 'grid'; body.append(grid);
   const item = () => { const b = document.createElement('button'); b.className = 'item'; grid.append(b); return b; };
   if (shopTab === 'perm') {
-    const icons = { might: 'power', hp: 'core', armor: 'armor', regen: 'regen', cd: 'overclock', area: 'amp', speed: 'thrusters', magnet: 'magnet', growth: 'multi', greed: 'chips', luck: 'duration', revive: 'heal', reroll: 'overclock', banish: 'armor' };
+    const icons = { might: 'power', hp: 'core', armor: 'armor', regen: 'regen', cd: 'overclock', area: 'amp', speed: 'thrusters', magnet: 'magnet', growth: 'multi', greed: 'chips', luck: 'duration', revive: 'heal', reroll: 'overclock', banish: 'armor', crit: 'lens', might2: 'power', hp2: 'core', area2: 'amp', cd2: 'overclock', greed2: 'siphon', barrier: 'armor', headstart: 'cache', barrel: 'multi' };
+    let lateHead = false;
     for (const p of PERMS) {
-      const lv = S.perm[p.id], max = lv >= p.max, cost = permCost(p, lv);
-      const b = item();
-      b.innerHTML = '<div class="row" style="flex-wrap:nowrap"><span class="ic"></span><div><div class="nm"></div><div class="ds"></div></div></div><div class="pips"></div>' + (max ? '<span class="tagp eq">MAXED</span>' : '<span class="tagp' + (S.chips < cost ? ' cant' : '') + '"><i class="chip-i"></i>' + fmt(cost) + '</span>');
-      b.querySelector('.ic').append(iconCanvas(icons[p.id], '#29e0ff', 38));
+      const lv = S.perm[p.id], max = lv >= p.max, cost = permCost(p, lv), rq = p.req && PERMS.find(q => q.id === p.req), locked = rq && S.perm[rq.id] < rq.max;
+      if (p.late && !lateHead) { lateHead = true; const h = document.createElement('div'); h.className = 'late-head'; h.innerHTML = '<b class="disp">Late game</b><span>Expensive upgrades for when the basics are maxed</span>'; grid.append(h); }
+      const b = item(); if (p.late) b.classList.add('late');
+      b.innerHTML = '<div class="row" style="flex-wrap:nowrap"><span class="ic"></span><div><div class="nm"></div><div class="ds"></div></div></div><div class="pips"></div>' + (max ? '<span class="tagp eq">MAXED</span>' : locked ? '<span class="tagp cant">MAX ' + rq.name.toUpperCase() + ' FIRST</span>' : '<span class="tagp' + (S.chips < cost ? ' cant' : '') + '"><i class="chip-i"></i>' + fmt(cost) + '</span>');
+      b.querySelector('.ic').append(iconCanvas(icons[p.id], p.late ? '#ffd23f' : '#29e0ff', 38)); if (locked) b.style.opacity = '.55';
       b.querySelector('.nm').textContent = p.name; b.querySelector('.ds').textContent = p.desc;
       const pips = b.querySelector('.pips'); for (let i = 0; i < p.max; i++) { const e = document.createElement('i'); if (i < lv) e.className = 'on'; pips.append(e); }
-      b.addEventListener('click', () => { if (max) return; buy(cost, () => { S.perm[p.id]++; }, p.name + ' upgraded to level ' + (lv + 1) + '!'); });
+      b.addEventListener('click', () => { if (max) return; if (locked) { sfx.nope(); toast('Max out ' + rq.name + ' first.'); return; } buy(cost, () => { S.perm[p.id]++; }, p.name + ' upgraded to level ' + (lv + 1) + '!'); });
     }
   } else if (shopTab === 'robots') {
     for (const r of ROBOTS) {
       const own = S.own.robots.includes(r.id), eq = S.robot === r.id;
       const b = item(); b.innerHTML = '<canvas class="big" width="320" height="180"></canvas><div class="nm"></div><div class="ds"></div>' + tagHtml(own, eq, r.price);
       const g = b.querySelector('canvas').getContext('2d'); g.drawImage(worldTile(WORLDS[ROBOTS.indexOf(r) % 6]), 0, 0, 320, 180, 0, 0, 320, 180); drawRobot(g, 160, 92, 40, r, S.paint, 0.2, 1, false);
-      b.querySelector('.nm').textContent = r.name; b.querySelector('.ds').textContent = 'Starts with ' + (r.weapon === 'random' ? 'a random weapon' : weaponById(r.weapon).name) + '. ' + r.perk;
+      b.querySelector('.nm').textContent = r.name; b.querySelector('.ds').textContent = (r.weapon2 ? '' : 'Starts with ' + (r.weapon === 'random' ? 'a random weapon' : weaponById(r.weapon).name) + '. ') + r.perk;
       b.addEventListener('click', () => { if (own) { S.robot = r.id; save(); sfx.click(); renderShop(); return; } buy(r.price, () => { S.own.robots.push(r.id); S.robot = r.id; if (r.weapon !== 'random' && !S.own.weapons.includes(r.weapon)) S.own.weapons.push(r.weapon); }, r.name + ' joined your team!'); });
     }
   } else if (shopTab === 'weapons') {
@@ -2039,7 +2090,7 @@ function renderShop() {
       const own = S.own.fx.includes(f.id), eq = S.fx === f.id;
       const b = item(); b.innerHTML = '<canvas class="big" width="320" height="180"></canvas><div class="nm"></div><div class="ds"></div>' + tagHtml(own, eq, f.price);
       const g = b.querySelector('canvas').getContext('2d'); g.fillStyle = '#0a0c14'; g.fillRect(0, 0, 320, 180);
-      const cols = { default: ['#29e0ff', '#c6ff3d', '#ff2e88', '#ffb52e'], fire: ['#ff7a1a', '#ff3b1f'], ice: ['#9fe8ff', '#e8fbff'], toxic: ['#7dff4a', '#c6ff3d'], gold: ['#ffd23f', '#fff0a0'], rainbow: ['#ff3b5c', '#ffb52e', '#fff36b', '#7dff4a', '#29e0ff', '#b45cff'] }[f.id];
+      const cols = { void: ['#b45cff', '#6a2aff'], plasma: ['#ff2e88', '#29e0ff'], default: ['#29e0ff', '#c6ff3d', '#ff2e88', '#ffb52e'], fire: ['#ff7a1a', '#ff3b1f'], ice: ['#9fe8ff', '#e8fbff'], toxic: ['#7dff4a', '#c6ff3d'], gold: ['#ffd23f', '#fff0a0'], rainbow: ['#ff3b5c', '#ffb52e', '#fff36b', '#7dff4a', '#29e0ff', '#b45cff'] }[f.id];
       g.globalCompositeOperation = 'lighter';
       for (let i = 0; i < 14; i++) { const c = cols[i % cols.length], x = 30 + i * 20, y = 90 + Math.sin(i * 0.8) * 40; g.drawImage(glow(c, 32), x - 20, y - 20, 40, 40); g.fillStyle = '#fff'; g.beginPath(); g.arc(x, y, 3, 0, TAU); g.fill(); }
       g.strokeStyle = cols[0]; g.lineWidth = 4; g.beginPath(); g.arc(160, 90, 60, 0, TAU); g.stroke();
