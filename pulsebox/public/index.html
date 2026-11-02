@@ -1974,9 +1974,9 @@ function renderHome() { renderFinder(); renderHero(); renderActions(); renderChi
    DISCOVERY: moods, the spotlight carousel, Surprise me and the swipe feed
    ============================================================ */
 const MOODS = {
-  quick: ['⚡', 'Quick games', 'Done in a few minutes', g => ['Arcade', 'Sports', 'Puzzle', 'Racing'].includes(g.category) && !/co-op|career|season|campaign/i.test(g.kind)],
+  quick: ['⚡', 'Quick', 'Done in a few minutes', g => ['Arcade', 'Sports', 'Puzzle', 'Racing'].includes(g.category) && !/co-op|career|season|campaign/i.test(g.kind)],
   friends: ['👥', 'Play with friends', 'Online with your crew', g => inTopic(g, 'Co-op')],
-  scary: ['👻', 'Scary games', 'Lights off, sound on', g => g.category === 'Horror' || /horror|scary/i.test(g.kind)],
+  scary: ['👻', 'Scary', 'Lights off, sound on', g => g.category === 'Horror' || /horror|scary/i.test(g.kind)],
   brainy: ['🧠', 'Brainy', 'Plan, think, outsmart', g => ['Puzzle', 'Strategy'].includes(g.category)],
   long: ['🛋️', 'Long sessions', 'Settle in for a while', g => ['Strategy', 'Idle', 'Horror'].includes(g.category) || /campaign|career|season|nights|waves|survival|craft/i.test(g.kind + ' ' + g.tags.join(' '))],
   chill: ['🌙', 'Chill', 'Low stress, just vibes', g => g.category === 'Idle' || /relax|cozy|calm|idle|aquarium|chill/i.test(g.kind + ' ' + g.tags.join(' '))],
