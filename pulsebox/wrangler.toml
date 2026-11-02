@@ -4,6 +4,21 @@ account_id = "5bc70055125c3d8b33c79d12be0f1505"
 compatibility_date = "2026-10-01"
 routes = [{ pattern = "box.pulseform.org", custom_domain = true }]
 
+# Pages, games and media are static assets (built into dist/ by build-worker.py). Cloudflare serves them without
+# running the Worker, so they're free, unlimited and can't use up the daily Workers request limit. Only /api/ runs worker.js.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"
+
+# Per-visitor limit on /api/ (worker.js): 300 requests a minute per IP address, then a 429 before any Durable Object runs.
+[[ratelimits]]
+name = "API_LIMIT"
+namespace_id = "1001"
+simple = { limit = 300, period = 60 }
+
 # cloud saves (api.js): one Durable Object per signed-in account
 [[durable_objects.bindings]]
 name = "SAVES"
