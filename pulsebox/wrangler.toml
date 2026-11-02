@@ -4,6 +4,13 @@ account_id = "5bc70055125c3d8b33c79d12be0f1505"
 compatibility_date = "2026-10-01"
 routes = [{ pattern = "box.pulseform.org", custom_domain = true }]
 
+# Workers Logs: every request that runs the Worker is logged for 3 days (free plan: up to 200k log lines a day).
+# Rate-limited visitors are logged with their IP, country, network (ASN) and browser, so a flood can be traced.
+# See them in the dashboard: Workers & Pages > pulsebox > Logs.
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 # Pages, games and media are static assets (built into dist/ by build-worker.py). Cloudflare serves them without
 # running the Worker, so they're free, unlimited and can't use up the daily Workers request limit. Only /api/ runs worker.js.
 [assets]

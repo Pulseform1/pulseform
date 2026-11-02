@@ -85,7 +85,7 @@ export default {
     if (env.API_LIMIT) {
       const ip = request.headers.get('cf-connecting-ip') || 'unknown';
       const { success } = await env.API_LIMIT.limit({ key: ip });
-      if (!success) return new Response(JSON.stringify({ error: 'slow down' }), { status: 429, headers: { 'content-type': 'application/json', 'retry-after': '60', 'x-content-type-options': 'nosniff' } });
+      if (!success) { console.log(JSON.stringify({ rateLimited: ip, path, country: request.cf && request.cf.country, asn: request.cf && request.cf.asn, ua: (request.headers.get('user-agent') || '').slice(0, 120) })); return new Response(JSON.stringify({ error: 'slow down' }), { status: 429, headers: { 'content-type': 'application/json', 'retry-after': '60', 'x-content-type-options': 'nosniff' } }); }
     }
     return api(request, env, ctx, GAME_IDS);
   }
@@ -118,7 +118,8 @@ export default {
   async fetch(request, env, ctx) {
     if (new URL(request.url).pathname.startsWith('/api/')) {
       if (env.API_LIMIT) {
-        const { success } = await env.API_LIMIT.limit({ key: request.headers.get('cf-connecting-ip') || 'unknown' });
+        const ip = request.headers.get('cf-connecting-ip') || 'unknown', { success } = await env.API_LIMIT.limit({ key: ip });
+        if (!success) console.log(JSON.stringify({ rateLimited: ip, path: new URL(request.url).pathname, country: request.cf && request.cf.country, asn: request.cf && request.cf.asn, ua: (request.headers.get('user-agent') || '').slice(0, 120) }));
         if (!success) return new Response(JSON.stringify({ error: 'slow down' }), { status: 429, headers: { 'content-type': 'application/json', 'retry-after': '60' } });
       }
       return api(request, env, ctx, GAME_IDS);
