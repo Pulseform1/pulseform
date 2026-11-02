@@ -16,7 +16,7 @@
 //   GET  /api/bug/status?ids=1,2  -> { 1: { status, note, updated } }   (what a reporter sees about their own reports)
 //   GET  /api/bugs?status=new  (header x-admin-key) -> { bugs: [...] }  (the admin page, public/bugs.html)
 //   POST /api/bugs/update      (header x-admin-key) <- { id, status, note } -> { ok }
-// Multiplayer rooms: one Durable Object (Rooms) per 4-character room code relays JSON messages between up to 8 players.
+// Multiplayer rooms: one Durable Object (Rooms) per 4-character room code relays JSON messages between up to 8 players (14 for the Odd Crowd party game).
 //   GET  /api/room/CODE?n=NAME&g=GAME  (WebSocket) -> { t: 'hello', id, host, players } then every other player's messages
 //   GET  /api/room/CODE  (plain) -> { game, players }: which game the room is playing, so the hub can join by code alone
 // THE HOLLOW co-op: /api/hollow (WebSocket) goes to the HollowRooms Durable Object (hollow-rooms.js), which runs the game's own engine.
@@ -325,7 +325,7 @@ export class Stats {
 // One instance per room code. Players stay connected only while the game is open; nothing is stored.
 // A message { to: id } goes to that player only; anything else goes to everyone else in the room.
 // The first player in is the host (they run the monsters); if the host leaves, the next player takes over.
-const MAX_PLAYERS = 8, MAX_MSG = 8000;
+const MAX_PLAYERS = 8, MAX_MSG = 16000, BIG_ROOMS = { 'odd-crowd': 14 };   // party games seat more people (Odd Crowd: 10 players + a host screen + reconnects)
 export class Rooms {
   constructor(state) { this.state = state; this.socks = new Map(); this.next = 1; this.host = 0; this.game = ''; }
   async fetch(request) {
@@ -334,7 +334,7 @@ export class Rooms {
     if (!this.socks.size || !this.game) this.game = g;
     const pair = new WebSocketPair(), [client, sock] = Object.values(pair);
     sock.accept();
-    if (this.socks.size >= MAX_PLAYERS) { sock.send(JSON.stringify({ t: 'full' })); sock.close(1000, 'room full'); return new Response(null, { status: 101, webSocket: client }); }
+    if (this.socks.size >= (BIG_ROOMS[this.game] || MAX_PLAYERS)) { sock.send(JSON.stringify({ t: 'full' })); sock.close(1000, 'room full'); return new Response(null, { status: 101, webSocket: client }); }
     const id = this.next++, name = (new URL(request.url).searchParams.get('n') || 'Player').replace(/[^\w .'-]/g, '').slice(0, 12) || 'Player';
     if (!this.host) this.host = id;
     this.socks.set(id, { sock, name });

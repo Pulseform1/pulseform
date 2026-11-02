@@ -781,6 +781,22 @@ const GAMES = [
     how: ["Create a room and send friends the 4-letter code (2 to 8 players).", "On your turn pick a word and draw it. No letters!", "Everyone else types guesses in the box at the bottom.", "Faster guesses score more. Most points after two rounds wins."]
   },
   {
+    id: "odd-crowd",
+    title: "Odd Crowd",
+    category: "Co-op",
+    kind: "Co-op · Party · Write & vote · Online 3-10 players",
+    tags: ["Party game", "Online 3-10 players", "Pass & play", "144 prompts"],
+    badge: 'NEW',
+    file: 'games/odd-crowd.html',
+    cover: 'media/odd-crowd-cover.jpg',
+    video: 'media/odd-crowd-trailer.mp4',
+    shots: ['media/odd-crowd-shot1.jpg', 'media/odd-crowd-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "Good company. Questionable answers.",
+    blurb: "A party game for wonderfully strange people. Everyone gets secret prompts like \"Name a shop that sells things people only need at 2 a.m.\" Write the most unexpected answer you can, then vote on everyone else's, anonymously, until the reveal shows who wrote what. Three rounds: Warm-up, Plot Twist and Last Word, with bigger points each round, a sweep bonus when everyone picks your answer, and one Bold vote per round that pays out if you call the winner. Host a room and friends join with a 4-letter code on their own phones, or pass one device around the room. Short on people? Add house guests who write (badly) and vote too.",
+    how: ["Host a room (add your name to play too) and send friends the 4-letter code. They join from Play with friends, or the Join button in the game.", "Write an answer to each secret prompt before the timer runs out. Nobody sees who wrote what until the reveal.", "Vote for your favorite answer. Make one Bold vote per round: if your pick wins outright you get +200.", "No phones handy? Pass & play lets 3-10 people share one device. Need more players? Add house guests in the lobby."]
+  },
+  {
     id: "sea-battle",
     title: "Sea Battle",
     category: "Co-op",
@@ -2225,8 +2241,8 @@ $('q2').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDef
    so a code alone is enough to join. The game gets ?room=CODE
    and walks straight into the room's lobby (src/lib/mp.js).
    ============================================================ */
-const FRIEND_GAMES = ['lantern-keep', 'siegeworks', 'hyperlane', 'strata', 'bumper-brawl', 'paint-wars', 'turbo-laps', 'sea-battle', 'doodle-guess'];
-const FRIEND_PLAYERS = { 'lantern-keep': '1-4 players · co-op', siegeworks: '1v1', hyperlane: '2-6 players', strata: '2-4 players · co-op', 'bumper-brawl': '2-4 players', 'paint-wars': '2-4 players', 'turbo-laps': '2-6 players', 'sea-battle': '1v1', 'doodle-guess': '2-8 players' };
+const FRIEND_GAMES = ['odd-crowd', 'lantern-keep', 'siegeworks', 'hyperlane', 'strata', 'bumper-brawl', 'paint-wars', 'turbo-laps', 'sea-battle', 'doodle-guess'];
+const FRIEND_PLAYERS = { 'odd-crowd': '3-10 players · party', 'lantern-keep': '1-4 players · co-op', siegeworks: '1v1', hyperlane: '2-6 players', strata: '2-4 players · co-op', 'bumper-brawl': '2-4 players', 'paint-wars': '2-4 players', 'turbo-laps': '2-6 players', 'sea-battle': '1v1', 'doodle-guess': '2-8 players' };
 const API_ORIGIN = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? '' : 'https://box.pulseform.org';
 let roomJoin = null, frPick = null;
 const frGames = () => FRIEND_GAMES.map(byId).filter(Boolean);
