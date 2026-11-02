@@ -365,6 +365,21 @@
 
   /* ---------- discovery: action bar, spotlight carousel, new-to-you ribbon, surprise me, swipe feed ---------- */
   .home-top { margin-top: 0 !important; }
+  /* jump chips: big, colourful, each with its own glow, an emoji bubble and a game count */
+  .chips-lab { font-family: var(--display); text-transform: uppercase; letter-spacing: .14em; font-size: 13px; color: var(--muted); margin: 0 0 -4px 2px; }
+  .chips { gap: 10px !important; }
+  .chip.jc { --c: #c6ff3d; display: inline-flex; align-items: center; gap: 9px; padding: 7px 16px 7px 7px; font-size: 16px; font-weight: 800; color: #fff; border: 2px solid color-mix(in srgb, var(--c) 70%, transparent);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--c) 32%, #161a26), color-mix(in srgb, var(--c) 10%, #10131c)); box-shadow: 0 0 16px color-mix(in srgb, var(--c) 28%, transparent), inset 0 1px 0 rgba(255,255,255,.12); transition: transform .12s ease, box-shadow .2s ease; }
+  .chip.jc:hover { color: #fff; border-color: var(--c); transform: translateY(-2px) scale(1.03); box-shadow: 0 6px 24px color-mix(in srgb, var(--c) 55%, transparent), inset 0 1px 0 rgba(255,255,255,.18); }
+  .chip.jc .je { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; background: color-mix(in srgb, var(--c) 45%, #0a0c12); box-shadow: 0 0 12px color-mix(in srgb, var(--c) 60%, transparent); }
+  .chip.jc .jn { font-size: 12px; font-weight: 800; padding: 2px 7px; border-radius: 999px; background: rgba(0,0,0,.35); color: color-mix(in srgb, var(--c) 70%, #fff); }
+  .chip.jc.hot { animation: chipPulse 2.2s ease-in-out infinite; }
+  @keyframes chipPulse { 50% { box-shadow: 0 0 28px color-mix(in srgb, var(--c) 65%, transparent), inset 0 1px 0 rgba(255,255,255,.12); } }
+  @media (max-width: 760px) {
+    .chip.jc { font-size: 14px; padding: 5px 12px 5px 5px; gap: 7px; } .chip.jc .je { width: 26px; height: 26px; font-size: 14px; } .chip.jc .jn { font-size: 11px; padding: 1px 6px; }
+    .chips { display: grid !important; grid-auto-flow: column; grid-template-rows: repeat(2, auto); justify-content: start; padding-block: 6px !important;
+      -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  }
   .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .act { position: relative; overflow: hidden; display: flex; align-items: center; gap: 14px; text-align: left; padding: 16px 18px; border-radius: 18px; border: 1px solid rgba(255,255,255,.14); cursor: pointer; color: #fff; transition: transform .12s ease, box-shadow .2s ease; }
   .act:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,.35); }
@@ -1814,13 +1829,17 @@ function heroGo(i) {
    ============================================================ */
 function renderChips() {
   const box = $('chips'); box.innerHTML = '';
-  const cats = [['🔥 Trending', 'shelf-trending', 'hot'], ['🎯 Not played yet', 'shelf-spot']];
-  if (recent.some(byId)) cats.push(['Keep playing', 'shelf-recent']);
-  if (favs.some(byId)) cats.push(['Favorites', 'shelf-favs']);
-  MOOD_ORDER.forEach(k => cats.push([MOODS[k][0] + ' ' + MOODS[k][1], 'shelf-mood-' + k]));
-  cats.push(['✨ New', 'shelf-new'], ['🗂️ All topics', 'finder']);
-  cats.forEach(([label, target, cls]) => {
-    const b = document.createElement('button'); b.className = 'chip' + (cls ? ' ' + cls : ''); b.textContent = label; b.type = 'button';
+  // [emoji, label, shelf to jump to, colour, how many games, extra class]
+  const unp = GAMES.filter(g => !recent.includes(g.id)).length, MC = { quick: '#ffd23f', friends: '#29e0ff', scary: '#a56bff', brainy: '#ff8ad8', long: '#5cf28a', chill: '#7a9cff' };
+  const cats = [['🔥', 'Trending', 'shelf-trending', '#ff4d3a', 0, 'hot'], ['🎯', recent.length ? 'Not played yet' : 'Start here', 'shelf-spot', '#c6ff3d', recent.length ? unp : 0]];
+  if (recent.some(byId)) cats.push(['▶️', 'Keep playing', 'shelf-recent', '#ff9f43', recent.filter(byId).length]);
+  if (favs.some(byId)) cats.push(['❤️', 'Favorites', 'shelf-favs', '#ff2e88', favs.filter(byId).length]);
+  MOOD_ORDER.forEach(k => cats.push([MOODS[k][0], MOODS[k][1], 'shelf-mood-' + k, MC[k], moodList(k).length]));
+  cats.push(['✨', 'New', 'shelf-new', '#ffffff', GAMES.filter(g => g.badge === 'NEW').length], ['🗂️', 'All topics', 'finder', '#8d95ab', 0]);
+  if (!$('chipsLab')) { const l = document.createElement('p'); l.className = 'chips-lab'; l.id = 'chipsLab'; l.textContent = 'Jump to'; box.before(l); }
+  cats.forEach(([em, label, target, col, n, cls]) => {
+    const b = document.createElement('button'); b.className = 'chip jc' + (cls ? ' ' + cls : ''); b.type = 'button'; b.style.setProperty('--c', col);
+    b.innerHTML = '<span class="je"></span><span class="jl"></span>' + (n ? '<span class="jn"></span>' : ''); b.querySelector('.je').textContent = em; b.querySelector('.jl').textContent = label; if (n) b.querySelector('.jn').textContent = n;
     b.addEventListener('click', () => { if (query) { query = ''; $('q').value = ''; renderShelves(); } const s = $(target); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
     box.append(b);
   });
