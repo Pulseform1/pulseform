@@ -534,7 +534,8 @@
 
   <!-- HOME: categories of interactive activities -->
   <main id="home" class="home">
-    <section class="hero" id="hero" aria-roledescription="carousel" aria-label="Featured games"></section>
+    <section class="hero" id="hero" aria-roledescription="carousel" aria-label="Games of the day"></section>
+    <div id="trendTop"></div>
     <section class="actions" id="actions" aria-label="Find a game fast"></section>
     <div class="home-top">
       <p class="pulse-line" id="pulseLine" hidden></p>
@@ -1801,7 +1802,25 @@ function soonTile() {
    HOME: hero carousel
    ============================================================ */
 let heroIdx = 0, heroKey = '';
+// Games of the Day: chosen by hand in public/featured.json (build-worker.py bakes it in here). A date key beats 'default'.
+const FEATURED = /*@featured*/null, ADDED = /*@added*/null;
+function todaysPicks() {
+  if (!FEATURED) return []; const d = new Date(), k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const ids = Array.isArray(FEATURED[k]) ? FEATURED[k] : Array.isArray(FEATURED.default) ? FEATURED.default : [];
+  return [...new Set(ids)].map(byId).filter(Boolean).slice(0, 6);
+}
+// newest games first: by the date each was first added, falling back to the NEW badge
+function justAdded(n = 8) {
+  const idx = new Map(GAMES.map((g, i) => [g.id, i])), when = g => (ADDED && ADDED[g.id]) || '';
+  return GAMES.slice().sort((a, b) => when(b).localeCompare(when(a)) || (b.badge === 'NEW') - (a.badge === 'NEW') || idx.get(b.id) - idx.get(a.id)).slice(0, n);
+}
+function addedLabel(g) {
+  const w = ADDED && ADDED[g.id]; if (!w) return 'New';
+  const days = Math.floor((Date.now() - new Date(w)) / 864e5);
+  return days < 1 ? 'Added today' : days < 2 ? 'Added yesterday' : days < 7 ? 'Added ' + days + ' days ago' : 'Added ' + new Date(w).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
 function heroGames() {
+  const picks = todaysPicks(); if (picks.length) return picks;
   let list = CURATED.map(byId).filter(Boolean);
   if (STATS) { const top = ranked().filter(g => st(g.id).week > 0).slice(0, 8); if (top.length >= 3) list = [...top, ...list.filter(g => !top.includes(g))]; }
   return unplayedFirst(list).slice(0, 6);   // games you haven't played lead the carousel
@@ -1820,7 +1839,7 @@ function renderHero() {
       '<div class="hero-body"><span class="pill' + (hot ? ' hot' : '') + '"><i></i></span><h1></h1><p></p><div class="hero-meta"></div>' +
       '<div class="hero-actions"><button class="play-btn" type="button"><span class="tri"></span>Play now</button><button class="btn" type="button">See the game</button></div></div>';
     const v = s.querySelector('video'); v.poster = g.shots[0]; v.dataset.src = g.video;
-    s.querySelector('.pill').append(hot ? '#' + r + ' trending' : g.badge === 'NEW' ? 'New drop' : 'Featured');
+    s.querySelector('.pill').append(todaysPicks().includes(g) ? '⭐ Game of the day' : hot ? '#' + r + ' trending' : g.badge === 'NEW' ? 'New drop' : 'Featured');
     s.querySelector('h1').textContent = g.title;
     s.querySelector('p').textContent = g.pitch;
     const meta = s.querySelector('.hero-meta');
@@ -1878,7 +1897,7 @@ function renderChips() {
   if (recent.some(byId)) cats.push(['▶️', 'Keep playing', 'shelf-recent', '#ff9f43', recent.filter(byId).length]);
   if (favs.some(byId)) cats.push(['❤️', 'Favorites', 'shelf-favs', '#ff2e88', favs.filter(byId).length]);
   MOOD_ORDER.forEach(k => cats.push([MOODS[k][0], MOODS[k][1], 'shelf-mood-' + k, MC[k], moodList(k).length]));
-  cats.push(['✨', 'New', 'shelf-new', '#ffffff', GAMES.filter(g => g.badge === 'NEW').length], ['🗂️', 'All topics', 'finder', '#8d95ab', 0]);
+  cats.push(['🆕', 'Just added', 'shelf-new', '#ffffff', 0], ['🗂️', 'All topics', 'finder', '#8d95ab', 0]);
   if (!$('chipsLab')) { const l = document.createElement('p'); l.className = 'chips-lab'; l.id = 'chipsLab'; l.textContent = 'Jump to'; box.before(l); }
   cats.forEach(([em, label, target, col, n, cls]) => {
     const b = document.createElement('button'); b.className = 'chip jc' + (cls ? ' ' + cls : ''); b.type = 'button'; b.style.setProperty('--c', col);
@@ -1962,7 +1981,7 @@ function setQuery(v, scroll) {
   if (scroll) requestAnimationFrame(() => $('shelves').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 }
 function renderShelves() {
-  const box = $('shelves'); box.innerHTML = '';
+  const box = $('shelves'); box.innerHTML = ''; $('trendTop').replaceChildren();
   document.querySelectorAll('.topic').forEach(b => b.classList.toggle('on', b.getAttribute('aria-label').startsWith((topic === 'All' ? 'All experiences' : topic) + ',')));
   const q = query.trim();
   if (q) {
@@ -1991,9 +2010,11 @@ function renderShelves() {
     const grid = document.createElement('div'); grid.className = 'icons'; list.forEach((g, i) => grid.append(appTile(g, i))); box.append(grid);
     return;
   }
-  // trending stays on top; then the games you haven't played, big; then short rails by mood, each with See all
-  box.append(shelf('shelf-trending', '🔥 Trending now', order.slice(0, 10), 0, { rail: true, ranks: !!STATS, cls: 'trend', note: STATS ? 'Most played this week' : 'Players love these' }));
-  const fresh0 = untriedSpot(); if (fresh0.length) box.append(spotlight('shelf-spot', recent.length ? '🎯 You haven\'t played these yet' : '🎯 Start with these', fresh0));
+  // Games of the Day (the hero) is followed straight away by Trending; then the newest games get their own big carousel
+  $('trendTop').replaceChildren(shelf('shelf-trending', '🔥 Trending now', order.slice(0, 10), 0, { rail: true, ranks: !!STATS, cls: 'trend', note: STATS ? 'Most played this week' : 'Players love these' }));
+  const picks = todaysPicks(), fresh = justAdded(8 + picks.length).filter(g => !picks.includes(g)).slice(0, 8);   // today's picks are already up top
+  box.append(spotlight('shelf-new', '🆕 Just added', fresh, { pill: addedLabel }));
+  const fresh0 = untriedSpot().filter(g => !fresh.includes(g) && !picks.includes(g));
   const last = byId(recent[0]);
   if (last) { const b = unplayedFirst(similar(last, 14)).filter(g => g.id !== last.id).slice(0, 10); box.append(shelf('shelf-because', 'Because you played ' + last.title, b, 0, { rail: true, note: 'More like it' })); }
   const r = recent.map(byId).filter(Boolean), f = favs.map(byId).filter(Boolean);
@@ -2005,7 +2026,7 @@ function renderShelves() {
     const sh = shelf('shelf-mood-' + k, MOODS[k][0] + ' ' + MOODS[k][1], list.slice(0, 8), 0, { rail: true, note: 'See all ' + list.length + ' ›' });
     const lab = sh.querySelector('.sh-right > span'); lab.classList.add('see-all'); lab.addEventListener('click', () => go('#m-' + k));
     box.append(sh);
-    if (n === 2) { const fr = GAMES.filter(g => g.badge === 'NEW'); if (fr.length) box.append(shelf('shelf-new', '✨ New & updated', unplayedFirst(fr).slice(0, 10), 0, { rail: true, note: 'Just landed' })); }
+    if (n === 1 && fresh0.length >= 3) box.append(spotlight('shelf-spot', recent.length ? '🎯 You haven\'t played these yet' : '🎯 Start with these', fresh0));
   });
   const all = document.createElement('div'); all.style.cssText = 'display:flex;justify-content:center;margin:34px 0 10px';
   all.innerHTML = '<button class="play-btn" type="button">🎮 See all ' + GAMES.length + ' games</button>'; all.querySelector('button').addEventListener('click', () => go('#t-all'));
@@ -2032,14 +2053,15 @@ function untriedSpot(n = 8) {
   const seen = new Set(recent), r = dayRand(dayNo() + 3), order = ranked();
   return order.filter(g => !seen.has(g.id)).map((g, i) => [g, i * .6 + r() * 10]).sort((a, b) => a[1] - b[1]).slice(0, n).map(x => x[0]);
 }
-function spotlight(id, title, list) {
+function spotlight(id, title, list, o = {}) {
   const s = document.createElement('section'); s.className = 'shelf spot-shelf'; s.id = id;
   s.innerHTML = '<div class="shelf-head"><h2 class="outline-title"></h2><div class="sh-right"><span>Swipe or use the arrows</span><div class="rail-nav"><button type="button" aria-label="Previous">‹</button><button type="button" aria-label="Next">›</button></div></div></div><div class="spot"></div>';
   s.querySelector('h2').textContent = title;
   const row = s.querySelector('.spot');
   list.forEach(g => {
     const c = document.createElement('article'); c.className = 'spot-card';
-    c.innerHTML = '<div class="sc-media"><img alt="" loading="lazy" decoding="async"><video muted loop playsinline preload="none"></video></div><div class="sc-body"><span class="pill hot"><i></i>' + (recent.length ? 'New to you' : 'Start here') + '</span><h3></h3><p></p><div class="sc-tags"></div><div class="sc-actions"><button class="play-btn" type="button"><span class="tri"></span>Play</button><button class="btn" type="button">See the game</button></div></div>';
+    c.innerHTML = '<div class="sc-media"><img alt="" loading="lazy" decoding="async"><video muted loop playsinline preload="none"></video></div><div class="sc-body"><span class="pill hot"><i></i></span><h3></h3><p></p><div class="sc-tags"></div><div class="sc-actions"><button class="play-btn" type="button"><span class="tri"></span>Play</button><button class="btn" type="button">See the game</button></div></div>';
+    c.querySelector('.pill').append(o.pill ? o.pill(g) : recent.length ? 'New to you' : 'Start here');
     c.querySelector('img').src = g.shots[0]; c.querySelector('video').dataset.src = g.video;
     c.querySelector('h3').textContent = g.title; c.querySelector('p').textContent = g.pitch;
     g.tags.slice(0, 3).forEach(t => { const x = document.createElement('span'); x.textContent = t; c.querySelector('.sc-tags').append(x); });

@@ -38,6 +38,19 @@ pages['index.html'] = re.sub(r'(media/([\w.-]+\.(?:jpg|png|webp|mp4)))', version
 for k in pages: pages[k] = re.sub(r'(media/((?:arcade|encore)\.html))\?', lambda m: version(m) + '&', pages[k])
 # link games by their clean URL (games/x), which static assets serve directly; games/x.html would cost a redirect
 pages['index.html'] = re.sub(r"file: '(games/[a-z0-9-]+)\.html'", r"file: '\1'", pages['index.html'])
+# Games of the Day (public/featured.json, edited by hand) and when each game was first added (for the Just added carousel).
+# The added dates come from git history; they're also kept in public/games-added.json so builds without history still know them.
+featured = json.load(open(os.path.join(PUB, 'featured.json'))) if os.path.exists(os.path.join(PUB, 'featured.json')) else {}
+added_file = os.path.join(PUB, 'games-added.json')
+added = json.load(open(added_file)) if os.path.exists(added_file) else {}
+for f in sorted(glob.glob(os.path.join(PUB, 'games', '*.html'))):
+    gid = os.path.basename(f)[:-5]
+    try:
+        d = subprocess.run(['git', 'log', '--diff-filter=A', '--format=%cI', '--', os.path.relpath(f, HERE)], cwd=HERE, capture_output=True, text=True).stdout.split()
+        if d: added[gid] = d[-1][:19]
+    except Exception: pass
+if added: open(added_file, 'w').write(json.dumps(dict(sorted(added.items())), indent=1) + '\n')
+pages['index.html'] = pages['index.html'].replace('/*@featured*/null', json.dumps({k: v for k, v in featured.items() if not k.startswith('_')})).replace('/*@added*/null', json.dumps(added))
 # the game ids from the hub's GAMES list, so /api/play only counts real games
 games_src = pages['index.html'].split('const GAMES = [', 1)[1].split('const CATEGORIES', 1)[0]
 game_ids = sorted(set(re.findall(r'''\n\s*id:\s*['"]([a-z0-9-]+)['"]''', games_src)))
