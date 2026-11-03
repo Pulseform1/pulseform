@@ -52,6 +52,9 @@
   #tBrake { width: 58px; height: 58px; left: 50%; margin-left: -120px; font-size: 11px; }
   .tb.on { background: rgba(124,240,255,.3); }
   .touchmode .hint { bottom: calc(130px + env(safe-area-inset-bottom)); }
+  /* short screens (phones held sideways): the car sits mid-screen, so tips go up top where they can't hide it */
+  @media (max-height: 560px) { .hint, .touchmode .hint { bottom: auto; top: calc(108px + env(safe-area-inset-top)); font-size: 13px; padding: 7px 12px; } }
+  .hint { pointer-events: none; }
   .touchmode .bars { bottom: auto; top: calc(62px + env(safe-area-inset-top)); }
   .touchmode .powers { top: calc(110px + env(safe-area-inset-top)); }
   .steer { position: absolute; bottom: 42%; font-family: var(--display); font-size: 40px; color: rgba(255,255,255,.25); pointer-events: none; }
