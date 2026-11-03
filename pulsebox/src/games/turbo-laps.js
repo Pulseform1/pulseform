@@ -5,7 +5,7 @@
 const GAME = {
   id: 'turbo-laps', title: 'Turbo Laps', tagline: 'Drift, boost and race your friends. 3 laps, 3 tracks.',
   font: 'Russo One', accent: '#ffd23f', accent2: '#ff4d6d', bg: '#0e1a10', noHud: true, scoreLabel: 'Points',
-  how: ['W or Up to accelerate, S or Down to brake, A and D (or Left and Right) to steer.', 'Hold Space while turning to DRIFT. Drift for a second, then let go for a mini-turbo.', 'Yellow arrows on the track are boost pads. The grass slows you right down.', 'On a phone: the car drives itself forward; hold the left or right side to steer, both to brake.'],
+  how: ['W or Up to accelerate, S or Down to brake, A and D (or Left and Right) to steer.', 'Hold Space while turning to DRIFT. The sparks go blue, then orange, then purple: let go for a bigger turbo each time.', 'Hit the gas just before GO for a rocket start. Tuck in right behind another car to charge a slipstream boost.', 'Yellow arrows on the track are boost pads. The grass slows you right down.', 'On a phone: the car drives itself forward; hold the left or right side to steer, both to brake.'],
   skins: [{ name: 'Stock', price: 0, k: 'none' }, { name: 'Racing Stripes', price: 40, k: 'stripes' }, { name: 'Checkered Roof', price: 90, k: 'check' }, { name: 'Hot Flames', price: 150, k: 'flames' }, { name: 'Big Spoiler', price: 210, k: 'spoiler' }, { name: 'Neon Underglow', price: 300, k: 'glow' }, { name: 'Gold Plated', price: 450, k: 'gold' }],
 };
 (() => {
@@ -15,7 +15,7 @@ const GAME = {
     { n: 'Twisty Pines', grass: ['#2f6f3a', '#367a40'], pts: [[400, 420], [900, 300], [1300, 520], [1700, 300], [2200, 450], [2320, 900], [1900, 1100], [2220, 1450], [1700, 1680], [1200, 1420], [800, 1680], [340, 1420], [520, 900]] },
     { n: 'Harbor Run', grass: ['#c9b27a', '#d4bd84'], pts: [[350, 350], [1300, 300], [2300, 360], [2380, 640], [1500, 760], [900, 760], [820, 1060], [1500, 1100], [2300, 1130], [2360, 1560], [1300, 1660], [420, 1640], [280, 1000]] },
   ];
-  let mode = 'lobby', roster = [], C = [], tr = null, mine = 0, cam = { x: 0, y: 0 }, clock = 0, goT = 0, phase = 'count', skids = [], decor = [], sendT = 0, botT = 0, endT = 0, results = null, touch = { l: false, r: false, on: false }, keys = {};
+  let mode = 'lobby', roster = [], C = [], tr = null, mine = 0, cam = { x: 0, y: 0 }, clock = 0, goT = 0, phase = 'count', skids = [], decor = [], sendT = 0, botT = 0, endT = 0, results = null, touch = { l: false, r: false, on: false }, keys = {}, fx = [], zoom = 1, lines = [], banner = null, lastPos = 0;
   const host = () => MP.isHost();
   Object.assign(MP.opts, {
     max: 6, min: 1, bots: 6, solo: 'Race 5 bots', sub: '2 to 6 racers. Bots fill the empty grid slots.',
@@ -61,13 +61,20 @@ const GAME = {
       decor.push({ x, y, k: tr.k === 2 ? (R() < .5 ? 'crate' : 'palm') : R() < .85 ? 'tree' : 'rock', s: .7 + R() * .6 });
     }
   }
+  /* ---------- effects: world-space sparks and smoke ---------- */
+  function spark(x, y, c, n, sp, life = .4, size = 4, o = {}) {
+    for (let i = 0; i < n && fx.length < 700; i++) { const a = o.dir !== undefined ? o.dir + (Math.random() - .5) * (o.spread || 1) : Math.random() * 6.28, v = sp * (.35 + Math.random() * .65);
+      fx.push({ x, y, vx: Math.cos(a) * v + (o.vx || 0), vy: Math.sin(a) * v + (o.vy || 0), life: 0, max: life * (.6 + Math.random() * .7), c: Array.isArray(c) ? c[i % c.length] : c, s: size * (.7 + Math.random() * .6), smoke: !!o.smoke }); }
+  }
+  const tierCol = d => d > 2.6 ? ['#d18cff', '#fff', '#a64dff'] : d > 1.6 ? ['#ff9f43', '#ffd23f', '#fff'] : ['#3ec5ff', '#bff0ff', '#fff'];
+  function say(text, col = '#ffd23f', big = 1) { banner = { text, col, t: 0, big }; }
   /* ---------- race ---------- */
   function startRace(cfg, ros) {
-    roster = ros; tr = buildTrack(cfg.track || 0); makeDecor(); mode = 'play'; phase = 'count'; goT = 3.2; clock = 0; skids = []; results = null; endT = 0; K.score = 0;
+    roster = ros; tr = buildTrack(cfg.track || 0); makeDecor(); mode = 'play'; phase = 'count'; goT = 3.2; clock = 0; skids = []; fx = []; lines = []; banner = null; zoom = 1; lastPos = 0; results = null; endT = 0; K.score = 0;
     mine = K.bot ? -1 : Math.max(0, ros.findIndex(r => r.id === MP.id && !r.bot));
     C = ros.map((r, i) => {
       const gi = (N - 8 - Math.floor(i / 2) * 9 + N) % N, side = i % 2 ? 1 : -1, x = tr.cx[gi] - tr.ty[gi] * side * 42, y = tr.cy[gi] + tr.tx[gi] * side * 42;
-      return { i, id: r.id, name: r.name, col: skinK(r) === 'gold' ? '#e8b923' : r.col, sk: skinK(r), bot: !!r.bot, x, y, a: Math.atan2(tr.ty[gi], tr.tx[gi]), vx: 0, vy: 0, sp: 0, idx: gi, lap: 0, half: false, fin: 0, drift: 0, turbo: 0, boost: 0, skill: .85 + Math.random() * .17, laneOff: (Math.random() - .5) * 60 };
+      return { i, id: r.id, name: r.name, col: skinK(r) === 'gold' ? '#e8b923' : r.col, sk: skinK(r), bot: !!r.bot, x, y, a: Math.atan2(tr.ty[gi], tr.tx[gi]), vx: 0, vy: 0, sp: 0, idx: gi, lap: 0, half: false, fin: 0, drift: 0, turbo: 0, boost: 0, skill: .88 + Math.random() * .12, laneOff: (Math.random() - .5) * 60, stuckT: 0, rev: 0, plan: 0, rb: 1, draft: 0, lapT: 0, best: 0, stall: 0, rocket: !!r.bot && Math.random() < .45 };
     });
     const me = C[mine]; if (me) { cam.x = me.x; cam.y = me.y; } else { cam.x = C[0].x; cam.y = C[0].y; }
   }
@@ -79,7 +86,8 @@ const GAME = {
     if (c.fin) { thr = 0; brk = .3; }
     const fx = Math.cos(c.a), fy = Math.sin(c.a);
     let fwd = c.vx * fx + c.vy * fy;
-    const maxS = (c.boost > 0 ? 800 : 560) * (grass ? .5 : 1);
+    if (c.stall > 0) { c.stall -= dt; thr = 0; c.vx *= Math.pow(.05, dt); c.vy *= Math.pow(.05, dt); if (Math.random() < .5) spark(c.x - Math.cos(c.a) * 24, c.y - Math.sin(c.a) * 24, ['#888', '#aaa'], 1, 40, .7, 10, { smoke: true }); }
+    const maxS = (c.boost > 0 ? 820 : 560) * (c.rb || 1) * (grass ? .5 : 1);
     if (thr) fwd += 560 * dt * (c.boost > 0 ? 1.6 : 1); if (brk) fwd = fwd > 0 ? Math.max(0, fwd - 900 * brk * dt) : inp.down && !c.fin ? fwd - 260 * dt : fwd; if (!thr && !brk) fwd *= Math.pow(.6, dt);
     fwd = Math.max(-180, Math.min(maxS, fwd)); if (fwd > maxS) fwd = maxS;
     const turn = steer * Math.min(1, Math.abs(fwd) / 160) * (inp.drift ? 3.4 : 2.6) * Math.sign(fwd || 1);
@@ -90,33 +98,57 @@ const GAME = {
     c.vx += (tvx - c.vx) * Math.min(1, grip * dt); c.vy += (tvy - c.vy) * Math.min(1, grip * dt);
     if (grass) { c.vx *= Math.pow(.35, dt); c.vy *= Math.pow(.35, dt); }
     c.x += c.vx * dt; c.y += c.vy * dt;
-    if (wall) { const nx = tr.cx[off.i] - c.x, ny = tr.cy[off.i] - c.y, l = Math.hypot(nx, ny); c.x += nx / l * 30; c.y += ny / l * 30; c.vx *= .3; c.vy *= .3; if (c.i === mine) { K.shake(8); K.sfx(90, .2, 'square', .1, -30); } }
+    if (wall) { // bounce off the barrier: back inside it, outward speed reflected, some speed lost, sparks
+      const nx = -tr.ty[off.i] * Math.sign(off.lat), ny = tr.tx[off.i] * Math.sign(off.lat), lim = HW + 150, over = Math.abs(off.lat) - lim;
+      c.x -= nx * (over + 2); c.y -= ny * (over + 2); const vn = c.vx * nx + c.vy * ny;
+      if (vn > 0) { c.vx -= nx * vn * 1.4; c.vy -= ny * vn * 1.4; c.vx *= .72; c.vy *= .72;
+        if (vn > 120) { spark(c.x + nx * 14, c.y + ny * 14, ['#ffd23f', '#fff', '#ff9f43'], 10, 260, .35, 3); if (c.i === mine) { K.shake(Math.min(10, vn / 40)); K.sfx(90, .2, 'square', .1, -30); } } } }
     c.sp = Math.hypot(c.vx, c.vy);
     const slip = Math.abs(Math.atan2(c.vy, c.vx) - c.a) % (Math.PI * 2);
     const sliding = c.sp > 220 && Math.min(slip, Math.PI * 2 - slip) > .22;
-    if (inp.drift && sliding && Math.abs(steer) > .3) c.drift += dt; else { if (c.drift > .9) { c.boost = Math.max(c.boost, c.drift > 1.8 ? 1.3 : .8); if (c.i === mine) { K.sfx(500, .3, 'sawtooth', .07, 600); K.burst(c.x, c.y, ['#3ec5ff', '#fff'], 12, 200, { life: .4, gravity: 0 }); } } c.drift = 0; }
-    c.boost = Math.max(0, c.boost - dt);
+    if (inp.drift && sliding && Math.abs(steer) > .3) { const was = c.drift; c.drift += dt;
+      if (c.drift > .8) { c.sparkT = (c.sparkT || 0) - dt; if (c.sparkT <= 0) { c.sparkT = .03; for (const s2 of [-1, 1]) spark(c.x - Math.cos(c.a) * 18 - Math.sin(c.a) * s2 * 12, c.y - Math.sin(c.a) * 18 + Math.cos(c.a) * s2 * 12, tierCol(c.drift), 2, 120, .25, 3, { dir: c.a + Math.PI, spread: 1.4 }); } }
+      if (c.i === mine) for (const lv of [.8, 1.6, 2.6]) if (was < lv && c.drift >= lv) K.sfx(600 + lv * 300, .08, 'square', .05); }
+    else { if (c.drift > .8) { const lv = c.drift > 2.6 ? 3 : c.drift > 1.6 ? 2 : 1; c.boost = Math.max(c.boost, [0, .7, 1.1, 1.6][lv]);
+        spark(c.x - Math.cos(c.a) * 24, c.y - Math.sin(c.a) * 24, tierCol(c.drift), 10 + lv * 6, 260, .45, 4, { dir: c.a + Math.PI, spread: 1.2 });
+        if (c.i === mine) { K.sfx(420 + lv * 120, .3, 'sawtooth', .07, 700); K.shake(2 + lv); if (lv === 3) say('ULTRA TURBO!', '#d18cff', 0); else if (lv === 2) say('SUPER TURBO!', '#ff9f43', 0); } } c.drift = 0; }
+    // slipstream: tuck in right behind another car to charge a free boost
+    if (c.sp > 300 && !c.fin) { let near = false; for (const o of C) { if (o === c || o.gone || o.x === undefined) continue; const dx = o.x - c.x, dy = o.y - c.y, ahead = dx * Math.cos(c.a) + dy * Math.sin(c.a), side = Math.abs(-dx * Math.sin(c.a) + dy * Math.cos(c.a)); if (ahead > 40 && ahead < 190 && side < 34) near = true; }
+      if (near) { c.draft += dt; if (c.i === mine && Math.random() < .3) lines.push({ x: c.x + (Math.random() - .5) * 40, y: c.y + (Math.random() - .5) * 40, a: c.a, t: 0 }); if (c.draft > 1.1) { c.draft = 0; c.boost = Math.max(c.boost, .9); if (c.i === mine) { say('SLIPSTREAM!', '#7df9ff', 0); K.sfx(650, .25, 'sawtooth', .06, 500); } } } else c.draft = Math.max(0, c.draft - dt * 2); }
+    c.boost = Math.max(0, c.boost - dt); if (c.ghost > 0) c.ghost -= dt;
     if (sliding || grass && c.sp > 100) { c.skidT = (c.skidT || 0) - dt; if (c.skidT <= 0) { c.skidT = .03; for (const s of [-1, 1]) skids.push([c.x - Math.cos(c.a) * 16 - Math.sin(c.a) * s * 10, c.y - Math.sin(c.a) * 16 + Math.cos(c.a) * s * 10, grass ? 1 : 0]); if (skids.length > 1400) skids.splice(0, 2); } }
-    for (const p of tr.pads) { const d = (p - c.idx + N) % N; if ((d < 4 || d > N - 3) && Math.abs(off.lat) < 60) { if (c.boost < .9 && c.i === mine) { K.sfx(700, .25, 'square', .06, 500); } c.boost = Math.max(c.boost, 1.1); } }
+    for (const p of tr.pads) { const d = (p - c.idx + N) % N; if ((d < 4 || d > N - 3) && Math.abs(off.lat) < 60) { if (c.boost < .9) { spark(c.x, c.y, ['#ffd23f', '#ff9f43', '#fff'], 14, 240, .35, 4, { dir: c.a + Math.PI, spread: 1.6 }); if (c.i === mine) { K.sfx(700, .25, 'square', .06, 500); K.shake(3); } } c.boost = Math.max(c.boost, 1.1); } }
     // laps
     if (c.idx > N * .45 && c.idx < N * .55) c.half = true;
-    if (c.prev !== undefined && c.prev > N * .85 && c.idx < N * .15 && c.half) { c.lap++; c.half = false; if (c.lap >= LAPS && !c.fin) { c.fin = clock; if (c.i === mine) { K.chime(523, [0, 4, 7, 12, 16]); } } else if (c.i === mine) K.chime(660, c.lap === LAPS - 1 ? [0, 4, 7, 12, 7, 12] : [0, 7]); }
+    if (c.prev !== undefined && c.prev > N * .85 && c.idx < N * .15 && c.half) { c.lap++; c.half = false; const lt = clock - c.lapT; c.lapT = clock; const pb = !c.best || lt < c.best; if (pb) c.best = lt;
+      if (c.lap >= LAPS && !c.fin) { c.fin = clock; if (c.i === mine) { K.chime(523, [0, 4, 7, 12, 16]); spark(c.x, c.y, ['#ffd23f', '#ff4d6d', '#3ec5ff', '#fff'], 60, 420, .9, 5); } }
+      else if (c.i === mine) { K.chime(660, c.lap === LAPS - 1 ? [0, 4, 7, 12, 7, 12] : [0, 7]); say(`LAP ${c.lap + 1}/${LAPS} · ${lt.toFixed(2)}s${pb && c.lap > 1 ? '  BEST!' : ''}`, c.lap === LAPS - 1 ? '#ff4d6d' : '#fff', 0); } }
     c.prev = c.idx;
   }
-  function botInput(c) {
-    const look = (c.idx + 14 + Math.floor(c.sp / 60)) % N, lx = tr.cx[look] - tr.ty[look] * c.laneOff, ly = tr.cy[look] + tr.tx[look] * c.laneOff;
+  function botInput(c, dt) {
+    let avoid = 0; for (const o of C) { if (o === c || o.gone || o.x === undefined || o.ghost > 0) continue; const dx = o.x - c.x, dy = o.y - c.y, ahead = dx * Math.cos(c.a) + dy * Math.sin(c.a), side = -dx * Math.sin(c.a) + dy * Math.cos(c.a); if (ahead > 0 && ahead < 110 && Math.abs(side) < 40) avoid = side > 0 ? -55 : 55; }
+    const look = (c.idx + 12 + Math.floor(c.sp / 70)) % N, lane = Math.max(-HW + 25, Math.min(HW - 25, c.laneOff * (1 - Math.min(1, tr.curv[look] * 2)) + avoid)), lx = tr.cx[look] - tr.ty[look] * lane, ly = tr.cy[look] + tr.tx[look] * lane;
     const want = Math.atan2(ly - c.y, lx - c.x), da = ((want - c.a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-    const bend = tr.curv[(c.idx + 10) % N] + tr.curv[(c.idx + 22) % N], tooFast = c.sp > (560 - bend * 520) * c.skill;
-    return { up: !tooFast, down: tooFast && c.sp > 260, steer: Math.max(-1, Math.min(1, da * 2.4)), drift: bend > .45 && c.sp > 330 && Math.random() < .5 };
+    // stuck (spun into a barrier, wedged against another car): back out for a moment, then carry on
+    if (phase === 'race' && !c.fin && c.sp < 45 && !c.stall) c.stuckT += dt; else c.stuckT = Math.max(0, c.stuckT - dt * 2);
+    if (c.stuckT > .9) { c.stuckT = 0; if (C.some(o => o !== c && !o.gone && o.x !== undefined && Math.hypot(o.x - c.x, o.y - c.y) < 50)) c.ghost = 1.6; else c.rev = .8; }
+    if (c.rev > 0) { c.rev -= dt; return { up: false, down: true, steer: -Math.sign(da || 1), drift: false }; }
+    const bend = Math.max(tr.curv[(c.idx + 8) % N], tr.curv[(c.idx + 16) % N], tr.curv[(c.idx + 26) % N]);
+    const target = Math.max(210, 560 - bend * 430) * c.skill * (c.rb || 1), steerAmt = Math.max(-1, Math.min(1, da * 2.6));
+    if (bend > .5 && c.sp > 330) c.plan = 1; else if (bend < .2) c.plan = 0;
+    return { up: c.sp < target, down: c.sp > target + 70, steer: steerAmt, drift: c.plan === 1 && Math.abs(steerAmt) > .35 };
   }
-  function bump(c) { for (const o of C) { if (o === c || o.gone) continue; const dx = c.x - o.x, dy = c.y - o.y, d = Math.hypot(dx, dy); if (d < 34 && d > 0) { const ov = 34 - d; c.x += dx / d * ov * .6; c.y += dy / d * ov * .6; c.vx *= .96; c.vy *= .96; if (c.i === mine && ov > 4) K.sfx(140, .08, 'square', .06); } } }
+  // bots a long way behind get a little more pace, runaway leaders a little less: races stay close
+  function rubberBand() { const ref = C[mine] || order()[0]; if (!ref) return; const rp = ref.lap * N + ref.idx;
+    for (const c of C) if (c.bot) { const gap = (rp - (c.lap * N + c.idx)) / N; c.rb = c.fin ? 1 : Math.max(.94, Math.min(1.07, 1 + gap * .25)); } }
+  function bump(c) { if (c.ghost > 0) return; for (const o of C) { if (o === c || o.gone || o.ghost > 0) continue; const dx = c.x - o.x, dy = c.y - o.y, d = Math.hypot(dx, dy); if (d < 34 && d > 0) { const ov = 34 - d; c.x += dx / d * ov * .6; c.y += dy / d * ov * .6; c.vx += dx / d * ov * 6; c.vy += dy / d * ov * 6; c.vx *= .97; c.vy *= .97; if (ov > 5) { c.bumpT = (c.bumpT || 0) - 1; if (c.bumpT < -6) { c.bumpT = 0; spark((c.x + o.x) / 2, (c.y + o.y) / 2, ['#ffd23f', '#fff'], 6, 200, .25, 3); } if (c.i === mine) { K.sfx(140, .08, 'square', .06); K.shake(2); } } } } }
   function remote(c, d) { c.tx = d[0]; c.ty = d[1]; c.a = d[2]; c.sp = d[3]; c.lap = d[4]; c.idx = d[5]; c.fin = d[6]; c.boost = d[7] ? 1 : 0; c.drift = d[8] ? 1 : 0; if (c.x === undefined || Math.hypot(c.tx - c.x, c.ty - c.y) > 300) { c.x = c.tx; c.y = c.ty; } }
   const pack = c => [Math.round(c.x), Math.round(c.y), +c.a.toFixed(2), Math.round(c.sp), c.lap, c.idx, +(c.fin || 0).toFixed(2), c.boost > 0 ? 1 : 0, c.drift > .3 ? 1 : 0];
   const order = () => C.slice().sort((a, b) => (b.fin ? 1e6 - b.fin : 0) - (a.fin ? 1e6 - a.fin : 0) || (b.lap * N + b.idx) - (a.lap * N + a.idx));
   function finish() {
     if (mode !== 'play') return; mode = 'over';
     const o = order(), pos = o.findIndex(c => c.i === mine) + 1;
-    K.score = mine >= 0 ? Math.max(0, (C.length - pos + 1) * 10) : 0; if (pos === 1) K.coin(10);
+    K.score = mine >= 0 ? Math.max(0, (C.length - pos + 1) * 10) : 0; if (mine >= 0 && pos <= 3) K.coin([10, 6, 3][pos - 1]);
     K.over({ title: pos === 1 ? 'You win!' : `You finished ${ord(pos)}`, text: `${tr.n}: ` + o.slice(0, 6).map((c, k) => `${k + 1}. ${c.name}${c.fin ? ' ' + c.fin.toFixed(1) + 's' : ''}`).join('  '), delay: 200 });
   }
   const ord = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
@@ -134,21 +166,34 @@ const GAME = {
   };
   GAME.update = dt => {
     if (mode !== 'play') { if (tr) { cam.x = tr.cx[Math.floor(K.t * 20) % N]; cam.y = tr.cy[Math.floor(K.t * 20) % N]; } return; }
-    if (phase === 'count') { goT -= dt; if (goT <= 0) { phase = 'race'; if (!K.bot) K.sfx(880, .4, 'square', .1); } else if (Math.ceil(goT) !== Math.ceil(goT + dt) && !K.bot) K.sfx(440, .15, 'square', .08); }
+    if (phase === 'count') {
+      // rocket start: be on the gas in the last moment before GO. Floor it too early and you bog down.
+      const me0 = C[mine]; if (me0 && myInput().up && me0.revAt === undefined) me0.revAt = goT;
+      goT -= dt;
+      if (goT <= 0) { phase = 'race'; if (!K.bot) K.sfx(880, .4, 'square', .1);
+        for (const c of C) { const good = c.bot ? c.rocket : c.i === mine && c.revAt !== undefined && c.revAt <= .65, bad = c.i === mine && c.revAt !== undefined && c.revAt > 1.7;
+          if (good) { c.boost = 1.1; spark(c.x - Math.cos(c.a) * 24, c.y - Math.sin(c.a) * 24, ['#ffd23f', '#ff9f43', '#fff'], 18, 220, .45, 4, { dir: c.a + Math.PI, spread: 1 }); if (c.i === mine) { say('ROCKET START!', '#3dff7a'); K.shake(4); } }
+          else if (bad) { c.stall = .8; say('Too early! Bogged down', '#ff9f43', 0); } } }
+      else if (Math.ceil(goT) !== Math.ceil(goT + dt) && !K.bot) K.sfx(440, .15, 'square', .08); }
     else clock += dt;
     for (const c of C) {
       if (c.gone) continue;
       if (c.i === mine) { drive(c, myInput(), dt); bump(c); }
-      else if (c.bot && host()) { drive(c, botInput(c), dt); bump(c); }
+      else if (c.bot && host()) { drive(c, botInput(c, dt), dt); bump(c); }
       else if (c.tx !== undefined) { c.x += (c.tx + Math.cos(c.a) * c.sp * .06 - c.x) * Math.min(1, dt * 10); c.y += (c.ty + Math.sin(c.a) * c.sp * .06 - c.y) * Math.min(1, dt * 10); }
     }
+    for (const f of fx) { f.life += dt; f.x += f.vx * dt; f.y += f.vy * dt; const k = Math.pow(f.smoke ? .3 : .08, dt); f.vx *= k; f.vy *= k; if (f.smoke) f.s += dt * 30; }
+    fx = fx.filter(f => f.life < f.max); for (const l of lines) l.t += dt; lines = lines.filter(l => l.t < .35);
+    if (banner) { banner.t += dt; if (banner.t > 1.6) banner = null; }
+    if (host() && phase === 'race') rubberBand();
+    if (C[mine] && phase === 'race' && !C[mine].fin && !K.bot) { const pos = order().indexOf(C[mine]) + 1; if (lastPos && pos !== lastPos && clock > 2) { if (pos < lastPos) { K.sfx(880, .12, 'square', .06, 300); if (!banner || banner.t > .8) say(`${ord(pos)}!`, '#3dff7a', 0); } } lastPos = pos; }
     if (MP.online()) {
       sendT -= dt; botT -= dt;
       if (sendT <= 0 && C[mine]) { sendT = 1 / 15; MP.send({ t: 'c', c: pack(C[mine]) }); }
       if (host() && botT <= 0) { botT = 1 / 12; const b = C.filter(c => c.bot).map(c => [c.id, ...pack(c)]); if (b.length) MP.send({ t: 'b', b }); }
     }
     const me = C[mine] || order()[0];
-    if (me) { const la = .5; cam.x += (me.x + me.vx * la - cam.x) * Math.min(1, dt * 4); cam.y += (me.y + me.vy * la - cam.y) * Math.min(1, dt * 4); }
+    if (me) { const la = .5; cam.x += (me.x + me.vx * la - cam.x) * Math.min(1, dt * 4); cam.y += (me.y + me.vy * la - cam.y) * Math.min(1, dt * 4); const zt = 1 - Math.min(.2, me.sp / 820 * .14 + (me.boost > 0 ? .06 : 0)); zoom += (zt - zoom) * Math.min(1, dt * 2.5); }
     // the race ends when you have finished and the other humans have too (or 20 s after you did)
     const humans = C.filter(c => !c.bot && !c.gone), done = humans.every(c => c.fin);
     if (K.bot) { if (C.some(c => c.fin) && (endT += dt) > 3) finish(); }
@@ -167,7 +212,8 @@ const GAME = {
   }
   GAME.drawSkin = (g, s, r) => { g.scale(r / 26, r / 26); g.rotate(-.5); carDeco(g, s.k, 1); const col = s.k === 'gold' ? '#e8b923' : '#ff4d6d'; g.fillStyle = '#111'; for (const [x, y] of [[-13, -14], [-13, 10], [11, -14], [11, 10]]) g.fillRect(x, y, 12, 5); g.fillStyle = col; g.beginPath(); g.roundRect(-22, -12, 46, 24, 9); g.fill(); carDeco(g, s.k); g.fillStyle = 'rgba(20,30,50,.9)'; g.beginPath(); g.roundRect(2, -9, 11, 18, 4); g.fill(); };
   function car(g, c) {
-    g.save(); g.translate(c.x, c.y); g.rotate(c.a); carDeco(g, c.sk, 1);
+    g.save(); if (c.ghost > 0) g.globalAlpha = .45; g.translate(c.x, c.y); g.rotate(c.a); carDeco(g, c.sk, 1);
+    if (c.drift > .8) { const col = c.drift > 2.6 ? '209,140,255' : c.drift > 1.6 ? '255,159,67' : '62,197,255'; const gl = g.createRadialGradient(-16, 0, 2, -16, 0, 34); gl.addColorStop(0, `rgba(${col},.75)`); gl.addColorStop(1, `rgba(${col},0)`); g.fillStyle = gl; g.fillRect(-52, -36, 72, 72); }
     g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.roundRect(-22, -11, 48, 28, 8); g.fill();
     if (c.boost > 0) { const fl = 14 + Math.random() * 14; const gr = g.createLinearGradient(-24, 0, -24 - fl, 0); gr.addColorStop(0, '#fff6a0'); gr.addColorStop(.5, '#ff9f43'); gr.addColorStop(1, 'rgba(255,60,0,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(-22, -6); g.lineTo(-24 - fl, 0); g.lineTo(-22, 6); g.fill(); }
     g.fillStyle = '#111'; for (const [x, y] of [[-13, -14], [-13, 10], [11, -14], [11, 10]]) { g.save(); g.translate(x + 3, y + 2); if (x > 0) g.rotate((c.steerVis || 0) * .4); g.fillRect(-6, -2, 12, 5); g.restore(); }
@@ -186,9 +232,9 @@ const GAME = {
     const v = K.view, t = K.t;
     if (!tr) { g.fillStyle = '#000'; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); return; }
     g.fillStyle = tr.grass[0]; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
-    g.save(); if (posed) { g.translate(640, 380); g.scale(2.5, 2.5); g.translate(-640, -380); } g.translate(640 - cam.x, 380 - cam.y);
-    const x0 = cam.x - 700, y0 = cam.y - 420;
-    g.fillStyle = tr.grass[1]; for (let gx = Math.floor(x0 / 160) * 160; gx < x0 + 1500; gx += 160) for (let gy = Math.floor(y0 / 160) * 160; gy < y0 + 900; gy += 160) if (((gx + gy) / 160) % 2 === 0) g.fillRect(gx, gy, 160, 160);
+    g.save(); if (posed) { g.translate(640, 380); g.scale(2.5, 2.5); g.translate(-640, -380); } else if (zoom !== 1) { g.translate(640, 380); g.scale(zoom, zoom); g.translate(-640, -380); } g.translate(640 - cam.x, 380 - cam.y);
+    const zr = 1 / (posed ? 1 : zoom), x0 = cam.x - 700 * zr, y0 = cam.y - 420 * zr;
+    g.fillStyle = tr.grass[1]; for (let gx = Math.floor(x0 / 160) * 160; gx < x0 + 1500 * zr; gx += 160) for (let gy = Math.floor(y0 / 160) * 160; gy < y0 + 900 * zr; gy += 160) if (((gx + gy) / 160) % 2 === 0) g.fillRect(gx, gy, 160, 160);
     // track: run-off, curbs, asphalt, centre line
     g.lineJoin = 'round'; g.lineCap = 'round';
     g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = HW * 2 + 70; g.stroke(tr.path);
@@ -202,11 +248,13 @@ const GAME = {
     // boost pads
     for (const p of tr.pads) { g.save(); g.translate(tr.cx[p], tr.cy[p]); g.rotate(Math.atan2(tr.ty[p], tr.tx[p])); g.fillStyle = 'rgba(255,210,63,.25)'; g.fillRect(-36, -40, 72, 80); g.fillStyle = Math.sin(t * 10) > 0 ? '#ffd23f' : '#ff9f43'; for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(-26 + k * 20, -24); g.lineTo(-10 + k * 20, 0); g.lineTo(-26 + k * 20, 24); g.lineTo(-18 + k * 20, 24); g.lineTo(-2 + k * 20, 0); g.lineTo(-18 + k * 20, -24); g.fill(); } g.restore(); }
     // skid marks
-    g.fillStyle = 'rgba(20,20,22,.35)'; for (const s of skids) if (Math.abs(s[0] - cam.x) < 720 && Math.abs(s[1] - cam.y) < 440) { g.fillStyle = s[2] ? 'rgba(60,40,20,.35)' : 'rgba(18,18,20,.4)'; g.fillRect(s[0] - 3, s[1] - 3, 6, 6); }
+    g.fillStyle = 'rgba(20,20,22,.35)'; for (const s of skids) if (Math.abs(s[0] - cam.x) < 720 * zr && Math.abs(s[1] - cam.y) < 440 * zr) { g.fillStyle = s[2] ? 'rgba(60,40,20,.35)' : 'rgba(18,18,20,.4)'; g.fillRect(s[0] - 3, s[1] - 3, 6, 6); }
     // decor below cars
-    for (const d of decor) { if (Math.abs(d.x - cam.x) > 760 || Math.abs(d.y - cam.y) > 480) continue; if (d.k === 'rock') { g.fillStyle = '#7a7a80'; g.beginPath(); g.ellipse(d.x, d.y, 18 * d.s, 13 * d.s, .3, 0, 7); g.fill(); } if (d.k === 'crate') { g.fillStyle = '#9a6a3a'; g.fillRect(d.x - 16 * d.s, d.y - 16 * d.s, 32 * d.s, 32 * d.s); g.strokeStyle = '#6a4220'; g.lineWidth = 3; g.strokeRect(d.x - 16 * d.s, d.y - 16 * d.s, 32 * d.s, 32 * d.s); } }
+    for (const d of decor) { if (Math.abs(d.x - cam.x) > 760 * zr || Math.abs(d.y - cam.y) > 480 * zr) continue; if (d.k === 'rock') { g.fillStyle = '#7a7a80'; g.beginPath(); g.ellipse(d.x, d.y, 18 * d.s, 13 * d.s, .3, 0, 7); g.fill(); } if (d.k === 'crate') { g.fillStyle = '#9a6a3a'; g.fillRect(d.x - 16 * d.s, d.y - 16 * d.s, 32 * d.s, 32 * d.s); g.strokeStyle = '#6a4220'; g.lineWidth = 3; g.strokeRect(d.x - 16 * d.s, d.y - 16 * d.s, 32 * d.s, 32 * d.s); } }
+    for (const l of lines) { g.strokeStyle = `rgba(200,250,255,${.5 * (1 - l.t / .35)})`; g.lineWidth = 2; g.beginPath(); g.moveTo(l.x, l.y); g.lineTo(l.x - Math.cos(l.a) * 60, l.y - Math.sin(l.a) * 60); g.stroke(); }
     for (const c of C) if (!c.gone && c.x !== undefined) car(g, c);
-    for (const d of decor) { if (Math.abs(d.x - cam.x) > 760 || Math.abs(d.y - cam.y) > 480 || (d.k !== 'tree' && d.k !== 'palm')) continue; g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.arc(d.x + 10, d.y + 12, 34 * d.s, 0, 7); g.fill(); if (d.k === 'tree') { g.fillStyle = '#1f5a2a'; g.beginPath(); g.arc(d.x, d.y, 34 * d.s, 0, 7); g.fill(); g.fillStyle = '#2d7a3a'; g.beginPath(); g.arc(d.x - 8 * d.s, d.y - 8 * d.s, 22 * d.s, 0, 7); g.fill(); } else { g.strokeStyle = '#2d8a3a'; g.lineWidth = 9 * d.s; for (let k = 0; k < 6; k++) { const a = k / 6 * 6.28 + d.s; g.beginPath(); g.moveTo(d.x, d.y); g.lineTo(d.x + Math.cos(a) * 36 * d.s, d.y + Math.sin(a) * 36 * d.s); g.stroke(); } g.fillStyle = '#6a4a20'; g.beginPath(); g.arc(d.x, d.y, 7 * d.s, 0, 7); g.fill(); } }
+    for (const f of fx) { const k = 1 - f.life / f.max; g.globalAlpha = f.smoke ? k * .35 : k; g.fillStyle = f.c; if (f.smoke) { g.beginPath(); g.arc(f.x, f.y, f.s, 0, 7); g.fill(); } else g.fillRect(f.x - f.s / 2, f.y - f.s / 2, f.s, f.s); } g.globalAlpha = 1;
+    for (const d of decor) { if (Math.abs(d.x - cam.x) > 760 * zr || Math.abs(d.y - cam.y) > 480 * zr || (d.k !== 'tree' && d.k !== 'palm')) continue; g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.arc(d.x + 10, d.y + 12, 34 * d.s, 0, 7); g.fill(); if (d.k === 'tree') { g.fillStyle = '#1f5a2a'; g.beginPath(); g.arc(d.x, d.y, 34 * d.s, 0, 7); g.fill(); g.fillStyle = '#2d7a3a'; g.beginPath(); g.arc(d.x - 8 * d.s, d.y - 8 * d.s, 22 * d.s, 0, 7); g.fill(); } else { g.strokeStyle = '#2d8a3a'; g.lineWidth = 9 * d.s; for (let k = 0; k < 6; k++) { const a = k / 6 * 6.28 + d.s; g.beginPath(); g.moveTo(d.x, d.y); g.lineTo(d.x + Math.cos(a) * 36 * d.s, d.y + Math.sin(a) * 36 * d.s); g.stroke(); } g.fillStyle = '#6a4a20'; g.beginPath(); g.arc(d.x, d.y, 7 * d.s, 0, 7); g.fill(); } }
     g.restore();
     if (mode !== 'play' || posed) return;
     // HUD
@@ -220,7 +268,9 @@ const GAME = {
       g.font = '20px "Russo One"'; g.fillStyle = '#cfe'; g.fillText(me.fin ? 'FINISHED' : `LAP ${Math.min(LAPS, me.lap + 1)}/${LAPS}`, 36, 96);
       g.fillStyle = 'rgba(0,0,0,.5)'; g.beginPath(); g.roundRect(1060, 620, 200, 84, 16); g.fill();
       g.font = '40px "Russo One"'; g.textAlign = 'right'; g.fillStyle = me.boost > 0 ? '#ffd23f' : '#fff'; g.fillText(Math.round(me.sp * .32), 1200, 660); g.font = '15px "Russo One"'; g.fillStyle = '#aaa'; g.fillText('KM/H', 1246, 668);
-      g.fillStyle = me.drift > .9 ? (me.drift > 1.8 ? '#ff9f43' : '#3ec5ff') : 'rgba(255,255,255,.25)'; g.fillRect(1080, 690, Math.min(1, me.drift / 1.8) * 160, 6);
+      g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(1080, 690, 160, 6); g.fillStyle = me.drift > 2.6 ? '#d18cff' : me.drift > 1.6 ? '#ff9f43' : me.drift > .8 ? '#3ec5ff' : 'rgba(255,255,255,.4)'; g.fillRect(1080, 690, Math.min(1, me.drift / 2.6) * 160, 6); g.fillStyle = 'rgba(0,0,0,.6)'; for (const lv of [.8, 1.6]) g.fillRect(1080 + lv / 2.6 * 160 - 1, 688, 2, 10);
+      if (me.best) { g.font = '15px "Russo One"'; g.textAlign = 'right'; g.fillStyle = '#cfe'; g.fillText(`BEST LAP ${me.best.toFixed(2)}s`, 1250, 60); }
+      if (me.boost > 0) { g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 2; for (let k = 0; k < 14; k++) { const a = (k * 2.4 + t * 3) % 6.28, r0 = 380 + ((k * 97 + t * 900) % 240); g.beginPath(); g.moveTo(640 + Math.cos(a) * r0, 360 + Math.sin(a) * r0 * .6); g.lineTo(640 + Math.cos(a) * (r0 + 90), 360 + Math.sin(a) * (r0 + 90) * .6); g.stroke(); } }
       if (me.lap === LAPS - 1 && !me.fin && phase === 'race') { g.font = '22px "Russo One"'; g.textAlign = 'center'; g.fillStyle = Math.sin(t * 6) > 0 ? '#ff4d6d' : '#fff'; g.fillText('FINAL LAP', 640, 40); }
     }
     g.font = '20px "Russo One"'; g.textAlign = 'right'; g.fillStyle = '#fff'; g.fillText(`${clock.toFixed(1)}s`, 1250, 36);
@@ -237,6 +287,8 @@ const GAME = {
       for (let k = 0; k < 3; k++) { g.fillStyle = 3 - k >= n && n > 0 ? '#ff3b3b' : n <= 0 ? '#3dff7a' : '#333'; g.beginPath(); g.arc(560 + k * 80, 230, 30, 0, 7); g.fill(); }
       g.font = '28px "Russo One"'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText(tr.n.toUpperCase(), 640, 320);
     }
+    if (banner) { const k = banner.t, a = k < .15 ? k / .15 : k > 1.2 ? Math.max(0, 1 - (k - 1.2) / .4) : 1, sc = k < .15 ? .6 + k / .15 * .4 : 1; g.save(); g.globalAlpha = a; g.translate(640, banner.big ? 230 : 200); g.scale(sc, sc); g.font = (banner.big ? 64 : 40) + 'px "Russo One"'; g.textAlign = 'center'; g.lineWidth = 8; g.strokeStyle = '#000'; g.strokeText(banner.text, 0, 0); g.fillStyle = banner.col; g.fillText(banner.text, 0, 0); g.restore(); }
+    if (phase === 'count' && me && !K.bot) { g.font = '18px "Russo One"'; g.textAlign = 'center'; g.fillStyle = 'rgba(255,255,255,.85)'; g.fillText('Hit the gas just before GO for a ROCKET START', 640, 360); }
     if (phase === 'race' && clock < .8) { g.font = '90px "Russo One"'; g.textAlign = 'center'; g.lineWidth = 10; g.strokeStyle = '#000'; g.strokeText('GO!', 640, 300); g.fillStyle = '#3dff7a'; g.fillText('GO!', 640, 300); }
     if (me && me.fin) { g.font = '64px "Russo One"'; g.textAlign = 'center'; g.lineWidth = 10; g.strokeStyle = '#000'; const txt = `${ord(o.indexOf(me) + 1)} PLACE!`; g.strokeText(txt, 640, 300); g.fillStyle = '#ffd23f'; g.fillText(txt, 640, 300); g.font = '20px "Russo One"'; g.fillStyle = '#fff'; if (!C.filter(c => !c.bot && !c.gone).every(c => c.fin)) g.fillText('Waiting for the others to finish...', 640, 350); }
   };
@@ -249,5 +301,5 @@ const GAME = {
       for (let b = 1; b < 40; b++) { const j = (i - b + N) % N; for (const sd of [-1, 1]) skids.push([tr.cx[j] - tr.ty[j] * (lat + sd * 10 + b * .8), tr.cy[j] + tr.tx[j] * (lat + sd * 10 + b * .8), 0]); } });
     cam.x = (C[0].x + C[2].x) / 2; cam.y = (C[0].y + C[2].y) / 2 + 70;
   };
-  if (/[?&]test/.test(location.search)) window.TL = { get C() { return C; }, get mode() { return mode; }, get phase() { return phase; } };
+  if (/[?&]test/.test(location.search)) window.TL = { get C() { return C; }, get mode() { return mode; }, get phase() { return phase; }, get tr() { return tr; }, nearest: c => nearest(c), cam };
 })();
