@@ -429,10 +429,10 @@
   .d-keys kbd { display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 7px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); font: 800 12px var(--display, sans-serif); color: #fff; }
   @media (hover: none) { .d-keys { display: none; } }
   .d-shade { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,.88), rgba(0,0,0,0) 48%), linear-gradient(180deg, rgba(0,0,0,.5), transparent 20%); pointer-events: none; }
-  .d-info { position: absolute; left: 0; right: 84px; bottom: 0; padding: 22px 20px calc(26px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
-  .d-info h2 { margin: 0; font-family: var(--display); text-transform: uppercase; font-size: clamp(32px, 6vw, 56px); line-height: .95; text-shadow: 0 4px 20px rgba(0,0,0,.6); }
-  .d-info p { margin: 0; font-size: 17px; font-weight: 600; color: #e6e9f2; line-height: 1.4; }
-  .d-info .play-btn { align-self: flex-start; font-size: 20px; }
+  .d-slide .d-info { position: absolute; left: 0; right: 84px; bottom: 0; padding: 22px 20px calc(26px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
+  .d-slide .d-info h2 { margin: 0; font-family: var(--display); text-transform: uppercase; font-size: clamp(32px, 6vw, 56px); line-height: .95; text-shadow: 0 4px 20px rgba(0,0,0,.6); }
+  .d-slide .d-info p { margin: 0; font-size: 17px; font-weight: 600; color: #e6e9f2; line-height: 1.4; }
+  .d-slide .d-info .play-btn { align-self: flex-start; font-size: 20px; }
   .d-side { position: absolute; right: 12px; bottom: calc(110px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px; }
   .d-side button { width: 58px; height: 58px; border-radius: 50%; border: 0; background: rgba(255,255,255,.14); backdrop-filter: blur(6px); color: #fff; font-size: 22px; cursor: pointer; display: grid; place-items: center; line-height: 1; }
   .d-side button small { display: block; font-size: 10px; font-weight: 800; margin-top: 2px; } .d-side .on { background: var(--pink); }

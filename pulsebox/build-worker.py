@@ -152,7 +152,9 @@ export default {
     const type = MEDIA[path];
     if (type) {
       const range = request.headers.get('range');
-      const upstream = await fetch(CDN + path, { headers: range ? { range } : {}, cf: { cacheEverything: true, cacheTtl: 2592000 } });
+      // only successful media is cached for 30 days: a CDN hiccup (403/5xx) must not stick, so it is retried once and never cached
+      const get = () => fetch(CDN + path, { headers: range ? { range } : {}, cf: { cacheEverything: true, cacheTtlByStatus: { '200-299': 2592000, '300-599': 0 } } });
+      let upstream = await get(); if (!upstream.ok && upstream.status !== 416) upstream = await get();
       if (!upstream.ok) return new Response('Media unavailable, try again shortly.', { status: 502 });
       const headers = { 'content-type': type, 'cache-control': 'public, max-age=604800', 'accept-ranges': 'bytes' };
       for (const h of ['content-length', 'content-range']) if (upstream.headers.has(h)) headers[h] = upstream.headers.get(h);
