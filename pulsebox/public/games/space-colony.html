@@ -73,7 +73,7 @@ const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
 const GAME = {
   id: 'space-colony', title: 'Space Colony', tagline: 'Build a Mars base. Keep everyone breathing.',
   font: 'Orbitron', accent: '#ff8a4a', accent2: '#7cf2ff', bg: '#1a0a06', noHud: true, scoreLabel: 'Colonists',
-  how: ['Pick a building on the left (keys 1 to 0), then tap the ground to build. Arrow keys + Space work too.', 'Power runs everything. Colonists need oxygen, food and water. Tap a building to upgrade it.', 'Research in the lab, follow missions, and get ready for dust storms and meteors!'],
+  how: ['Pick a building on the left (keys 1 to 0), then tap the ground to build. Arrow keys + Space work too.', 'Power runs everything. Colonists need oxygen, food and water. Tap a building to upgrade it.', 'Research in the lab, follow missions, and get ready for dust storms, meteors and marsquakes!', 'Late game: research Terraforming and turn Mars green. Reach 100% for a big reward.'],
   skins: [
     { name: 'Mars', price: 0, c: ['#c2552a', '#7a2e14'] }, { name: 'Moon', price: 60, c: ['#9a9aa2', '#4a4a52'] }, { name: 'Ice world', price: 150, c: ['#bfe6f2', '#5a8aa2'] },
     { name: 'Venus', price: 250, c: ['#d8b24a', '#7a5a1a'] }, { name: 'Alien', price: 400, c: ['#6ad28a', '#1a5a3a'] }, { name: 'Void', price: 700, c: ['#3a2a5a', '#120a22'] },
@@ -87,6 +87,8 @@ const GAME = {
     hab: { n: 'Habitat', cost: 30, pw: -1, house: 5, c: '#e6e0d0' }, mine: { n: 'Metal mine', cost: 25, pw: -2, metal: 3, c: '#b0a090' },
     shield: { n: 'Meteor shield', cost: 80, pw: -4, c: '#c79bff' }, reactor: { n: 'Reactor', cost: 150, pw: 30, c: '#ffd23f' },
     lab: { n: 'Research lab', cost: 60, pw: -3, sci: 2, c: '#ff8adf' }, port: { n: 'Spaceport', cost: 300, pw: -6, c: '#ff8a4a', need: 'port' },
+    park: { n: 'Dome park', cost: 90, pw: -2, c: '#4ad27a' }, battery: { n: 'Battery bank', cost: 50, pw: 0, c: '#9aff6a', need: 'battery' },
+    medbay: { n: 'Medbay', cost: 70, pw: -3, c: '#ff6a7a', need: 'medic' }, terra: { n: 'Terraformer', cost: 400, pw: -10, o2: 2, water: 2, c: '#5ae0c0', need: 'terra' },
   };
   const KEYS = Object.keys(B), GX = 12, GY = 7, TW = 84, TD = 62, OX = 250, OY = 158, SOL = 24, LVM = [0, 1, 1.7, 2.5];
   const RES = [
@@ -94,6 +96,7 @@ const GAME = {
     { k: 'dust', n: 'Dust wipers', d: 'Storms hurt solar less', c: 30, x: 0, y: 1, req: 'solar2' }, { k: 'drill', n: 'Deep drills', d: 'Ice drills and mines +30%', c: 30, x: 1, y: 1, req: 'electro' }, { k: 'recyc', n: 'Recycling', d: 'Colonists use 20% less', c: 35, x: 2, y: 1, req: 'hydro' },
     { k: 'fusion', n: 'Fusion', d: 'Reactors +50%', c: 50, x: 0, y: 2, req: 'dust' }, { k: 'rover', n: 'Rovers', d: 'Rovers clear rocks and haul metal', c: 45, x: 1, y: 2, req: 'drill' }, { k: 'habs', n: 'Big habitats', d: 'Habitats +3 beds', c: 50, x: 2, y: 2, req: 'recyc' },
     { k: 'grid', n: 'Smart grid', d: 'Buildings use 20% less power', c: 80, x: 0, y: 3, req: 'fusion' }, { k: 'port', n: 'Spaceport', d: 'Unlocks the Spaceport', c: 80, x: 1, y: 3, req: 'rover' }, { k: 'shield2', n: 'Strong shields', d: 'Shields stop every meteor', c: 70, x: 2, y: 3, req: 'habs' },
+    { k: 'battery', n: 'Batteries', d: 'Battery banks for night & storms', c: 60, x: 0, y: 4, req: 'grid' }, { k: 'medic', n: 'Medicine', d: 'Medbays: colonists stay longer', c: 60, x: 1, y: 4, req: 'port' }, { k: 'terra', n: 'Terraforming', d: 'Terraformers turn Mars green', c: 120, x: 2, y: 4, req: 'shield2' },
   ];
   const cnt = k => S.grid.filter(g => g === k).length, has = k => !!S.res[k], lvls = n => S.grid.filter((g, i) => g && S.lv[i] >= n).length, st = k => S.st[k] || 0;
   // missions: [text, value, target, metal reward, science reward, coins]
@@ -104,7 +107,8 @@ const GAME = {
     ['Reach 15 colonists', () => S.pop, 15, 100, 10, 2], ['Build a reactor', () => cnt('reactor'), 1, 100, 10, 2], ['Survive 3 dust storms', () => st('storms'), 3, 150, 15, 3],
     ['Research Rovers', () => has('rover') ? 1 : 0, 1, 150, 0, 2], ['Build a spaceport', () => cnt('port'), 1, 200, 20, 3], ['Reach 25 colonists', () => S.pop, 25, 250, 20, 4],
     ['Have 5 level 3 buildings', () => lvls(3), 5, 300, 20, 3], ['Research every technology', () => Object.keys(S.res).length, RES.length, 400, 0, 5], ['Reach 40 colonists', () => S.pop, 40, 400, 30, 5],
-    ['Survive 10 dust storms', () => st('storms'), 10, 500, 30, 5], ['Reach 60 colonists', () => S.pop, 60, 600, 40, 6], ['Reach 100 colonists', () => S.pop, 100, 1000, 50, 10],
+    ['Build a dome park', () => cnt('park'), 1, 150, 10, 2], ['Build a battery bank', () => cnt('battery'), 1, 200, 15, 2], ['Build a medbay', () => cnt('medbay'), 1, 200, 15, 2],
+    ['Survive 10 dust storms', () => st('storms'), 10, 500, 30, 5], ['Build a terraformer', () => cnt('terra'), 1, 400, 30, 4], ['Terraform Mars to 25%', () => Math.floor(S.terra || 0), 25, 500, 30, 5], ['Reach 60 colonists', () => S.pop, 60, 600, 40, 6], ['Reach 100 colonists', () => S.pop, 100, 1000, 50, 10], ['Terraform Mars to 100%', () => Math.floor(S.terra || 0), 100, 2000, 80, 20],
   ];
   const TUT = ['Colonists need oxygen, food and water. Power runs every building.', 'Pick the Solar panel here', 'Now tap an empty spot to build it'];
   let S, sel, hover, cur, tip, tipT, evt, evtT, nextK, meteors, saveT, rocket, stars, gameOver, info, panel, banners, walkers, rovers, puffs, drop, broke, alarmT, misT, earned, cloud;
@@ -118,7 +122,7 @@ const GAME = {
     const old = K.save.col;
     S = K.bot ? fresh() : (old && !old.over ? old : fresh());
     if (!Array.isArray(S.lv) || S.lv.length !== GX * GY) S.lv = Array(GX * GY).fill(1);
-    if (!S.res) S.res = {}; if (!S.st) S.st = {}; if (S.sci === undefined) S.sci = 0; if (S.mis === undefined) S.mis = 0;
+    if (!S.res) S.res = {}; if (!S.st) S.st = {}; if (S.sci === undefined) S.sci = 0; if (S.terra === undefined) S.terra = 0; if (S.terraM === undefined) S.terraM = 0; if (S.mis === undefined) S.mis = 0;
     if (S.tut === undefined) S.tut = old && !old.over ? 3 : 0;
     S.grid = S.grid.map(g => B[g] ? g : null);
     if (K.bot) {
@@ -138,6 +142,7 @@ const GAME = {
     const storm = evt && evt.k === 'storm' ? (has('dust') ? .65 : .35) : 1, flare = evt && evt.k === 'flare';
     let pw = 0, use = 0;
     S.grid.forEach((g, i) => { if (!g || i === broke) return; const b = B[g], m = LVM[S.lv[i]]; if (b.pw > 0) pw += b.pw * m * (g === 'solar' ? storm * (has('solar2') ? 1.3 : 1) : has('fusion') ? 1.5 : 1); else use += powerUse(b) * (1 + (S.lv[i] - 1) * .4); });
+    const night = Math.cos((S.t / SOL) * 6.283) < 0; if (storm < 1 || night) S.grid.forEach((g, i) => { if (g === 'battery' && i !== broke) pw += 8 * LVM[S.lv[i]]; });
     const eff = use ? Math.min(1, pw / use) : 1, r = { pw, use, eff, o2: 0, food: 0, water: 0, metal: 0, house: 0, sci: 0 };
     S.grid.forEach((g, i) => {
       if (!g || i === broke) return; const b = B[g], m = LVM[S.lv[i]];
@@ -145,7 +150,7 @@ const GAME = {
       if (b.house) r.house += (b.house + (has('habs') ? 3 : 0)) * (1 + (S.lv[i] - 1) * .6) | 0;
     });
     if (has('rover')) r.metal += Math.min(4, cnt('mine')) * .5;
-    const use2 = has('recyc') ? .8 : 1; r.o2 -= S.pop * use2; r.food -= S.pop * .8 * use2; r.water -= S.pop * .6 * use2; return r;
+    const use2 = has('recyc') ? .8 : 1; r.o2 -= S.pop * use2 * (1 - Math.min(.3, (S.terra || 0) / 330)); r.food -= S.pop * .8 * use2; r.water -= S.pop * .6 * use2; return r;
   }
   function persist() { if (K.bot) return; K.save.col = S; K.save.best = Math.max(K.save.best || 0, S.best); K.persist(); }
   function bank(n, x, y) { if (K.bot || n <= 0) return; K.coin(n, x, y); K.runCoins -= n; K.save.coins += n; earned += n; K.persist(); }
@@ -155,10 +160,10 @@ const GAME = {
   const upCost = i => Math.round(B[S.grid[i]].cost * S.lv[i] * 1.5);
 
   /* ---------- input ---------- */
-  const card = i => ({ x: 10, y: 94 + i * 47, w: 228, h: 43 });
+  const card = i => ({ x: 10 + (i % 2) * 116, y: 94 + Math.floor(i / 2) * 64, w: 112, h: 60 });
   const RB = { x: 10, y: 614, w: 228, h: 94 }, MB = { x: 250, y: 612, w: 560, h: 96 }, IB = { x: 820, y: 612, w: 396, h: 96 };
   const PANEL = { x: 250, y: 96, w: 780, h: 506 }, CLOSE = { x: PANEL.x + PANEL.w - 62, y: PANEL.y + 12, w: 50, h: 50 };
-  const rNode = r => ({ x: PANEL.x + 40 + r.x * 245, y: PANEL.y + 84 + r.y * 102, w: 220, h: 82 });
+  const rNode = r => ({ x: PANEL.x + 40 + r.x * 245, y: PANEL.y + 78 + r.y * 84, w: 220, h: 72 });
   const inB = (b, x, y) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
   const tileAt = (x, y) => { const gx = Math.floor((x - OX) / TW), gy = Math.floor((y - OY) / TD); return gx >= 0 && gy >= 0 && gx < GX && gy < GY ? gy * GX + gx : -1; };
   const infoBox = () => { const [x, y] = tileXY(info); return { x: K.clamp(x - 150, OX, 1270 - 300), y: K.clamp(y - 230, 92, 600 - 190), w: 300, h: 172 }; };
@@ -242,7 +247,7 @@ const GAME = {
     // newcomers arrive by rocket when there's room and supplies
     const port = cnt('port');
     GAME._arrive = (GAME._arrive || 0) + dt;
-    if (GAME._arrive > (port ? 6 : 9) && S.pop < r.house && r.o2 > 0 && r.food > 0 && S.o2 > 20 && S.food > 20 && !rocket) { GAME._arrive = 0; const pi = S.grid.indexOf('port'); rocket = { i: pi, x: pi >= 0 ? tileXY(pi)[0] : 1180, gy: pi >= 0 ? tileXY(pi)[1] - 10 : 132, y: -120, t: 0, n: Math.min(r.house - S.pop, K.irand(1, port ? 5 : 3)) }; K.sfx(90, 3, 'sawtooth', .05, 120); }
+    if (GAME._arrive > (port ? 6 : 9) / (1 + cnt('park') * .2) && S.pop < r.house && r.o2 > 0 && r.food > 0 && S.o2 > 20 && S.food > 20 && !rocket) { GAME._arrive = 0; const pi = S.grid.indexOf('port'); rocket = { i: pi, x: pi >= 0 ? tileXY(pi)[0] : 1180, gy: pi >= 0 ? tileXY(pi)[1] - 10 : 132, y: -120, t: 0, n: Math.min(r.house - S.pop, K.irand(1, port ? 5 : 3)) }; K.sfx(90, 3, 'sawtooth', .05, 120); }
     if (rocket) {
       const R = rocket; R.t += dt; R.y = R.t < 2.4 ? K.lerp(-120, R.gy, 1 - Math.pow(1 - R.t / 2.4, 2)) : R.t < 3.4 ? R.gy : R.gy - Math.pow(R.t - 3.4, 2) * 300;
       if (R.t < 2.4 || R.t > 3.4) puffs.push({ x: R.x + K.rand(-10, 10), y: R.y + 40, r: 8, t: 0 });
@@ -252,7 +257,7 @@ const GAME = {
       if (R.t > 5.5) rocket = null;
     }
     // people leave when supplies run out
-    if ((S.o2 < 3 || S.food < 3) && S.pop > 0 && Math.random() < dt * .4) { S.pop--; walkers.pop(); tipMsg(S.o2 < 3 ? 'A colonist left: no oxygen!' : 'A colonist left: no food!'); K.sfx(220, .4, 'sawtooth', .06, -100); }
+    if ((S.o2 < 3 || S.food < 3) && S.pop > 0 && Math.random() < dt * .4 / (1 + cnt('medbay'))) { S.pop--; walkers.pop(); tipMsg(S.o2 < 3 ? 'A colonist left: no oxygen!' : 'A colonist left: no food!'); K.sfx(220, .4, 'sawtooth', .06, -100); }
     alarmT -= dt; const low = S.o2 < 25 && r.o2 < 0 || S.food < 25 && r.food < 0 || S.water < 15 && r.water < 0 || r.eff < .7;
     if (low && alarmT <= 0) { alarmT = 4; K.sfx(880, .12, 'square', .04); K.sfx(660, .14, 'square', .04, 0, .14); }
     if (S.pop <= 0 || S.o2 <= 0 && S.food <= 0) {
@@ -260,6 +265,9 @@ const GAME = {
       if (K.bot) K.over(); else { K.save.coins -= earned; K.runCoins = earned; K.over({ title: 'Colony evacuated', text: `The last colonists left on sol ${S.sol}. Best population: ${S.best}. Next time, watch your oxygen and food!` }); }
       return;
     }
+    const tf = S.grid.reduce((n, g, i) => n + (g === 'terra' && i !== broke ? S.lv[i] : 0), 0);
+    if (tf && S.terra < 100) { S.terra = Math.min(100, S.terra + tf * dt * .06 * Math.max(.2, r.eff)); const m = Math.floor(S.terra / 25);
+      if (m > S.terraM) { S.terraM = m; const msg = ['', 'Lichen is spreading across the rocks', 'Thin clouds and the first rain', 'Grass in the craters, blue in the sky', 'MARS IS ALIVE! The air is breathable'][m]; banner(`Mars ${m * 25}% terraformed`, msg, '#5ae0c0'); K.chime(523, [0, 4, 7, 12, 16]); bank(m === 4 ? 20 : 5, 640, 300); } }
     events(dt);
     for (const b of banners) b.t += dt; banners = banners.filter(b => b.t < 3.4); if (banners.length > 1 && banners[0].t < 3 && banners[1].t > 0) banners[1].t = 0;
     tipT -= dt; misT += dt; if (misT > .5) { misT = 0; checkMis(); }
@@ -270,12 +278,17 @@ const GAME = {
   function events(dt) {
     evtT -= dt;
     if (!evt && evtT <= 0) {
-      const k = nextK; nextK = K.pick(['storm', 'meteor', 'supply', 'flare', 'break', 'comet', 'storm', 'meteor']); evtT = K.bot ? K.rand(10, 16) : K.rand(45, 75);
+      const k = nextK; nextK = K.pick(['storm', 'meteor', 'supply', 'flare', 'break', 'comet', 'storm', 'meteor', 'signal', 'cargo', 'quake', 'boom', 'aurora']); evtT = K.bot ? K.rand(10, 16) : K.rand(45, 75);
       if (k === 'storm') { evt = { k, t: 25, d: 25 }; banner('DUST STORM!', has('dust') ? 'Dust wipers keep solar at 65%' : 'Solar panels drop to 35%: save power', '#e07a3a'); K.noise(1.2, .08, 300); }
       if (k === 'meteor') { evt = { k, t: 8, d: 8 }; banner('METEOR SHOWER!', cnt('shield') ? 'Shields are up' : 'No shields! Buildings may be hit', '#ff5a3a'); }
       if (k === 'flare') { evt = { k, t: 15, d: 15 }; banner('Solar flare!', 'Oxygen makers run at half speed', '#ffd23f'); }
       if (k === 'supply') { const free = S.grid.map((g, i) => !g && !S.rocks[i] ? i : -1).filter(i => i >= 0); if (free.length) { drop = { i: K.pick(free), y: -60, land: false, t: 0 }; banner('Supply drop incoming!', 'Tap the crate when it lands', '#36b36a'); } }
       if (k === 'break') { const bs = S.grid.map((g, i) => g && g !== 'hab' ? i : -1).filter(i => i >= 0); if (bs.length) { broke = K.pick(bs); banner(`${B[S.grid[broke]].n} broke down!`, 'Tap it to repair (5 metal)', '#e05a5a'); K.sfx(140, .4, 'sawtooth', .07, -60); } }
+      if (k === 'signal') { S.sci += 15; banner('Alien signal decoded!', 'Strange radio pulses from the ice caps: +15 science', '#ff8adf'); }
+      if (k === 'cargo') { S.metal += 80; S.food = Math.min(200, S.food + 20); banner('Cargo rocket from Earth!', '+80 metal and fresh food', '#36b36a'); }
+      if (k === 'quake') { const bs = S.grid.map((g, i) => g && g !== 'hab' ? i : -1).filter(i => i >= 0); K.shake(14); K.noise(.8, .2, 90); if (bs.length && broke < 0) { broke = K.pick(bs); banner('MARSQUAKE!', `The ${B[S.grid[broke]].n.toLowerCase()} cracked: tap it to repair`, '#e05a5a'); } else banner('MARSQUAKE!', 'The ground shook, but everything held', '#e07a3a'); }
+      if (k === 'boom') { if (S.pop > 0 && S.pop < rates().house) { S.pop++; if (S.pop > S.best) { S.best = S.pop; K.score = S.best; } banner('A baby was born on Mars!', 'The first true Martian: +1 colonist', '#ffd8ec'); } else { S.sci += 8; banner('Colony festival!', 'Everyone feels inspired: +8 science', '#ffd8ec'); } }
+      if (k === 'aurora') { evt = { k, t: 14, d: 14 }; S.sci += 10; banner('Aurora over the base', 'Scientists are thrilled: +10 science', '#7dffb0'); }
       if (k === 'comet') { S.water = Math.min(200, S.water + 50); banner('Ice comet!', 'Fresh ice: +50 water', '#7cf2ff'); evt = { k, t: 3, d: 3 }; }
       if (!K.bot) K.sfx(520, .15, 'triangle', .07);
     }
@@ -356,6 +369,23 @@ const GAME = {
       ell(gr, x, y - 4, 40, 14, '#5a5a64'); ell(gr, x, y - 6, 34, 11, '#7a7a84'); gr.strokeStyle = '#ffd23f'; gr.lineWidth = 2; gr.beginPath(); gr.ellipse(x, y - 6, 24, 8, 0, 0, 7); gr.stroke(); Tx(gr, 'H', x, y - 6, 12, '#ffd23f', 'center', true, null);
       for (let q = 0; q < 6; q++) { const a = q / 6 * 6.28; circ(gr, x + Math.cos(a) * 36, y - 6 + Math.sin(a) * 12, 2.5, Math.sin(t * 5 - q) > .3 ? '#ff8a4a' : '#5a3a2a'); }
       box(gr, x + 34, y + 2, 12, 46, 6, '#c8c8d0', '#8a8a94');
+    } else if (k === 'park') {
+      ell(gr, x, y - 2, 38, 11, '#4a3a2a'); ell(gr, x, y - 4, 32, 8, '#3a8a3a');
+      for (const [px, h] of [[-14, 18], [2, 26], [16, 16]]) { gr.fillStyle = '#6a4a2a'; gr.fillRect(x + px - 2, y - 4 - h * .5, 4, h * .5); circ(gr, x + px, y - 6 - h * .6, 8 + lv, '#2e9a4a'); circ(gr, x + px - 3, y - 9 - h * .6, 4, '#5ad27a'); }
+      circ(gr, x - 6, y - 4, 2.5, '#ff6aa0'); circ(gr, x + 9, y - 3, 2.5, '#ffd23f');
+      dome(gr, x, y - 2, 36 + lv * 2, 40 + lv * 3, 'rgba(220,255,255,.35)', 'rgba(120,200,220,.15)', true); gr.strokeStyle = 'rgba(200,240,255,.5)'; gr.lineWidth = 1.5; gr.beginPath(); gr.ellipse(x, y - 2, 36 + lv * 2, 40 + lv * 3, 0, Math.PI, 0); gr.stroke();
+    } else if (k === 'battery') {
+      box(gr, x, y, 50, 22, 10, '#5a6a5a', '#3a4a3a'); const charge = .55 + Math.sin(t * 1.3 + x) * .25 + (evt && evt.k === 'storm' ? -.25 : 0);
+      for (let q = -1; q <= 1; q++) { cyl(gr, x + q * 15, y - 22, 6, 22 + lv * 2, '#e8f0e8', '#a8b8a8', '#788878'); const hgt = (18 + lv * 2) * Math.max(.1, charge); rr(gr, x + q * 15 - 3, y - 24 - hgt, 6, hgt, 2, charge > .4 ? '#9aff6a' : '#ffb84a'); }
+      circ(gr, x + 20, y - 8, 2.5, Math.sin(t * 4) > 0 ? '#9aff6a' : '#2a4a2a');
+    } else if (k === 'medbay') {
+      box(gr, x, y, 54, 28 + lv * 3, 12, '#f4f4f8', '#c8c8d4'); dome(gr, x - 8, y - 30 - lv * 3, 16, 14, '#ffffff', '#c8d8e8', false);
+      gr.fillStyle = '#ff4a5a'; gr.fillRect(x + 6, y - 22, 16, 5); gr.fillRect(x + 11.5, y - 27.5, 5, 16);
+      circ(gr, x - 18, y - 12, 3, Math.sin(t * 3) > 0 ? '#ff4a5a' : '#ffd0d4'); circ(gr, x + 22, y - 36 - lv * 3, 3, Math.sin(t * 2) > 0 ? '#7cf2ff' : '#2a5a6a');
+    } else if (k === 'terra') {
+      box(gr, x, y, 46, 14, 10, '#7a8a8a', '#4a5a5a'); gr.fillStyle = lin(gr, x - 8, 0, x + 8, 0, ['#9ab8b0', '#e8fff8', '#7a9890']); gr.fillRect(x - 8, y - 80 - lv * 6, 16, 66 + lv * 6);
+      for (let q = 0; q < 3; q++) { const yy = y - 30 - q * 18 - lv * 2, s2 = Math.sin(t * 2 + q * 2); gr.strokeStyle = `rgba(90,224,192,${.5 + s2 * .3})`; gr.lineWidth = 3; gr.beginPath(); gr.ellipse(x, yy, 18 + q * 2, 5, 0, 0, 7); gr.stroke(); }
+      circ(gr, x, y - 84 - lv * 6, 7, '#5ae0c0'); circ(gr, x, y - 84 - lv * 6, 3, '#fff'); if (Math.random() < .08) puffs.push({ x: x + K.rand(-6, 6), y: y - 90 - lv * 6, r: 6, t: 0, c: 1 });
     }
     if (lv > 1 && !ghost) { for (let q = 0; q < lv - 1; q++) { gr.fillStyle = '#ffd23f'; gr.beginPath(); const sx = x - 30 + q * 11, sy = y - 4; for (let j = 0; j < 10; j++) { const a = j * Math.PI / 5 - Math.PI / 2, r2 = j % 2 ? 2.2 : 5; gr.lineTo(sx + Math.cos(a) * r2, sy + Math.sin(a) * r2); } gr.fill(); } }
     gr.restore();
@@ -372,9 +402,10 @@ const GAME = {
   GAME.drawSkin = (gr, s) => { const g = gr.createRadialGradient(-12, -12, 4, 0, 0, 42); g.addColorStop(0, s.c[0]); g.addColorStop(1, s.c[1]); gr.fillStyle = g; gr.beginPath(); gr.arc(0, 0, 40, 0, 7); gr.fill(); gr.fillStyle = 'rgba(0,0,0,.18)'; gr.beginPath(); gr.arc(-10, -8, 9, 0, 7); gr.arc(14, 14, 7, 0, 7); gr.arc(16, -16, 4, 0, 7); gr.fill(); };
 
   /* ---------- draw ---------- */
+  const mixC = (a, b, f) => { const p = h => [1, 3, 5].map(j => parseInt(h.slice(j, j + 2), 16)), A = p(a), Bc = p(b); return '#' + A.map((v, j) => Math.round(v + (Bc[j] - v) * f).toString(16).padStart(2, '0')).join(''); };
   function drawWorld(gr) {
-    const v = K.view, sk = K.skin, t = K.t, storm = evt && evt.k === 'storm', day = Math.cos((S.t / SOL) * 6.283) * .5 + .5;
-    gr.fillStyle = lin(gr, 0, v.y0, 0, 160, [day > .5 ? '#2a1830' : '#08040e', day > .5 ? '#a8603a' : '#3a1a20']); gr.fillRect(v.x0, v.y0, v.x1 - v.x0, 170 - v.y0);
+    const v = K.view, tf = Math.min(1, (S.terra || 0) / 100) * .6, sk = tf ? { c: [mixC(K.skin.c[0], '#5aa05a', tf), mixC(K.skin.c[1], '#2a6a3a', tf)] } : K.skin, t = K.t, storm = evt && evt.k === 'storm', day = Math.cos((S.t / SOL) * 6.283) * .5 + .5;
+    gr.fillStyle = lin(gr, 0, v.y0, 0, 160, [day > .5 ? mixC('#2a1830', '#2a5ab0', tf) : '#08040e', day > .5 ? mixC('#a8603a', '#8ac8ff', tf) : '#3a1a20']); gr.fillRect(v.x0, v.y0, v.x1 - v.x0, 170 - v.y0);
     for (const s of stars) { gr.globalAlpha = (1 - day * .8) * (.5 + Math.sin(t * 2 + s.p) * .3); gr.fillStyle = '#fff'; gr.fillRect(s.x, s.y, s.r * 2, s.r * 2); } gr.globalAlpha = 1;
     const sunx = 200 + (S.t / SOL) * 900, suny = 140 - Math.sin((S.t / SOL) * Math.PI) * 40; const sg = gr.createRadialGradient(sunx, suny, 2, sunx, suny, 40); sg.addColorStop(0, 'rgba(255,250,230,.95)'); sg.addColorStop(.3, 'rgba(255,220,180,.4)'); sg.addColorStop(1, 'rgba(255,200,150,0)'); circ(gr, sunx, suny, 40, sg);
     circ(gr, 1000, 112, 6, '#8a7a70'); circ(gr, 1080, 124, 3.5, '#9a8a7a'); circ(gr, 160, 120, 2.5, '#6aa8ff');
@@ -408,6 +439,7 @@ const GAME = {
     // night and weather
     if (day < .5) { gr.fillStyle = `rgba(10,10,40,${(.5 - day) * .55})`; gr.fillRect(v.x0, 146, v.x1 - v.x0, v.y1 - 146); }
     if (storm) { gr.fillStyle = 'rgba(200,120,70,.32)'; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); gr.strokeStyle = 'rgba(255,200,150,.25)'; gr.lineWidth = 2; for (let i = 0; i < 70; i++) { const x = (i * 97 + t * 700) % 1600 - 160, y = (i * 53) % 720; gr.beginPath(); gr.moveTo(x, y); gr.lineTo(x - 70, y + 8); gr.stroke(); } }
+    if (evt && evt.k === 'aurora') { for (let q = 0; q < 3; q++) { const g = gr.createLinearGradient(0, 20, 0, 150); g.addColorStop(0, 'rgba(120,255,180,0)'); g.addColorStop(.5, `rgba(120,255,180,${.16 + Math.sin(t * 2 + q) * .06})`); g.addColorStop(1, 'rgba(120,255,180,0)'); gr.fillStyle = g; gr.beginPath(); gr.moveTo(v.x0, 60 + q * 20); for (let x = v.x0; x <= v.x1; x += 40) gr.lineTo(x, 50 + q * 22 + Math.sin(x * .01 + t + q) * 18); gr.lineTo(v.x1, 150); gr.lineTo(v.x0, 150); gr.fill(); } }
     if (evt && evt.k === 'flare') { gr.fillStyle = `rgba(255,230,120,${.08 + Math.sin(t * 5) * .04})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
   }
   function drawUI(gr) {
@@ -424,14 +456,16 @@ const GAME = {
     });
     Tx(gr, `SOL ${S.sol}`, 1270, 22, 15, '#ffb38a', 'right', true, null); Tx(gr, `BEST ${S.best}`, 1270, 46, 13, '#ffb38a', 'right', false, null);
     const day = Math.cos((S.t / SOL) * 6.283) * .5 + .5; Tx(gr, day > .5 ? '☀ day' : '☾ night', 1270, 70, 13, '#ffd8b0', 'right', false, null);
+    if ((S.terra || 0) > 0 || cnt('terra')) { rr(gr, 1080, 94, 190, 30, 15, 'rgba(12,6,22,.88)'); rr(gr, 1090, 114, 170 * (S.terra || 0) / 100, 5, 3, '#5ae0c0'); Tx(gr, `TERRAFORMED ${Math.floor(S.terra || 0)}%`, 1175, 105, 11, '#5ae0c0', 'center', true, null); }
     // build menu
     KEYS.concat(['remove']).forEach((k, i) => {
       const b = card(i), on = sel === k, info0 = B[k], lock = info0 && info0.need && !has(info0.need), can = !info0 || S.metal >= info0.cost;
       rr(gr, b.x, b.y, b.w, b.h, 10, on ? 'rgba(80,50,110,.95)' : 'rgba(22,12,32,.88)'); if (on) { gr.strokeStyle = '#ff8a4a'; gr.lineWidth = 3; rr(gr, b.x, b.y, b.w, b.h, 10); gr.stroke(); }
-      if (k === 'remove') { Tx(gr, '✕ Bulldoze  (X)', b.x + b.w / 2, b.y + b.h / 2, 15, '#ff7a6a', 'center', true, null); return; }
-      gr.save(); gr.beginPath(); gr.rect(b.x + 2, b.y + 1, 52, b.h - 2); gr.clip(); gr.translate(b.x + 28, b.y + b.h - 6); gr.scale(.5, .5); if (lock) gr.globalAlpha = .35; bld(gr, k, 0, 0, 1, t, false); gr.restore();
-      Tx(gr, `${(i + 1) % 10} ${info0.n}`, b.x + 58, b.y + 14, 13, lock ? '#888' : '#fff', 'left', true, null);
-      Tx(gr, lock ? 'research first' : `${info0.cost} metal`, b.x + 58, b.y + 32, 13, lock ? '#888' : can ? '#e8d0b0' : '#ff7a6a', 'left', false, null);
+      if (k === 'remove') { Tx(gr, '✕ Bulldoze', b.x + b.w / 2, b.y + 24, 13, '#ff7a6a', 'center', true, null); Tx(gr, 'key X', b.x + b.w / 2, b.y + 44, 10, '#c88', 'center', false, null); return; }
+      gr.save(); gr.beginPath(); gr.rect(b.x + 2, b.y + 1, b.w - 4, 34); gr.clip(); gr.translate(b.x + b.w / 2, b.y + 33); gr.scale(.42, .42); if (lock) gr.globalAlpha = .35; bld(gr, k, 0, 0, 1, t, false); gr.restore();
+      if (i < 10) Tx(gr, String((i + 1) % 10), b.x + 9, b.y + 10, 10, '#ffb38a', 'center', true, null);
+      Tx(gr, info0.n, b.x + b.w / 2, b.y + 41, 10, lock ? '#888' : '#fff', 'center', true, null);
+      Tx(gr, lock ? 'research first' : `${info0.cost} metal`, b.x + b.w / 2, b.y + 53, 10, lock ? '#888' : can ? '#e8d0b0' : '#ff7a6a', 'center', false, null);
     });
     // research button
     const avail = RES.filter(x => !has(x.k) && (!x.req || has(x.req)) && S.sci >= x.c).length;
@@ -447,7 +481,7 @@ const GAME = {
     if (evtT < 9 && !evt && (nextK === 'storm' || nextK === 'meteor') && S.tut >= 3) alerts.unshift(`${nextK === 'storm' ? 'Dust storm' : 'Meteor shower'} in ${Math.ceil(evtT)}s!`);
     if (alerts.length) { gr.fillStyle = `rgba(255,60,60,${.18 + Math.sin(t * 6) * .1})`; rr(gr, IB.x, IB.y, IB.w, IB.h, 14, gr.fillStyle); Tx(gr, '⚠ WARNING', IB.x + 18, IB.y + 20, 14, '#ff7a6a', 'left', true, null); alerts.slice(0, 2).forEach((a, j) => Tx(gr, a, IB.x + 18, IB.y + 48 + j * 26, 14, '#fff', 'left', false, null)); }
     else if (sel === 'remove') { Tx(gr, 'BULLDOZER', IB.x + 18, IB.y + 22, 14, '#ff7a6a', 'left', true, null); Tx(gr, 'Tap a building to remove it', IB.x + 18, IB.y + 50, 14, '#fff', 'left', false, null); Tx(gr, 'You get half its metal back', IB.x + 18, IB.y + 74, 14, '#bbb', 'left', false, null); }
-    else { const b = B[sel]; Tx(gr, b.n.toUpperCase(), IB.x + 18, IB.y + 22, 14, '#ff8a4a', 'left', true, null); const eff = [b.pw > 0 ? `+${b.pw} power` : `${b.pw} power`, b.o2 ? `+${b.o2} O₂` : '', b.food ? `+${b.food} food` : '', b.water > 0 ? `+${b.water} water` : b.water ? `${b.water} water` : '', b.house ? `+${b.house} beds` : '', b.metal ? `+${b.metal} metal` : '', b.sci ? `+${b.sci} science` : '', sel === 'shield' ? 'blocks meteors' : '', sel === 'port' ? 'more, bigger rockets' : ''].filter(Boolean).join('  ·  '); Tx(gr, eff, IB.x + 18, IB.y + 50, 14, '#fff', 'left', false, null); Tx(gr, `Cost ${b.cost} metal · tap a building to upgrade`, IB.x + 18, IB.y + 76, 13, '#bbb', 'left', false, null); }
+    else { const b = B[sel]; Tx(gr, b.n.toUpperCase(), IB.x + 18, IB.y + 22, 14, '#ff8a4a', 'left', true, null); const eff = [b.pw > 0 ? `+${b.pw} power` : `${b.pw} power`, b.o2 ? `+${b.o2} O₂` : '', b.food ? `+${b.food} food` : '', b.water > 0 ? `+${b.water} water` : b.water ? `${b.water} water` : '', b.house ? `+${b.house} beds` : '', b.metal ? `+${b.metal} metal` : '', b.sci ? `+${b.sci} science` : '', sel === 'shield' ? 'blocks meteors' : '', sel === 'port' ? 'more, bigger rockets' : '', sel === 'park' ? 'colonists arrive faster' : '', sel === 'battery' ? '+8 power at night & in storms' : '', sel === 'medbay' ? 'colonists stay longer' : '', sel === 'terra' ? 'turns Mars green' : ''].filter(Boolean).join('  ·  '); Tx(gr, eff, IB.x + 18, IB.y + 50, 14, '#fff', 'left', false, null); Tx(gr, `Cost ${b.cost} metal · tap a building to upgrade`, IB.x + 18, IB.y + 76, 13, '#bbb', 'left', false, null); }
     if (tipT > 0 && tip) { gr.font = fnt(18, true); const w = gr.measureText(tip).width + 40; rr(gr, 754 - w / 2, 560, w, 40, 20, 'rgba(0,0,0,.8)'); Tx(gr, tip, 754, 580, 18, '#ffd8b0', 'center', true, null); }
     if (info >= 0 && S.grid[info]) {
       const b = infoBox(), k = S.grid[info], lv = S.lv[info]; rr(gr, b.x, b.y + 5, b.w, b.h, 16, 'rgba(0,0,0,.4)'); rr(gr, b.x, b.y, b.w, b.h, 16, 'rgba(26,14,40,.97)'); gr.strokeStyle = '#7cf2ff'; gr.lineWidth = 2; rr(gr, b.x, b.y, b.w, b.h, 16); gr.stroke();
@@ -460,7 +494,7 @@ const GAME = {
     }
     if (panel) drawResearch(gr);
     const bn = banners[0]; if (bn && bn.t > 0) { const k = bn.t < .25 ? bn.t / .25 : bn.t > 3 ? (3.4 - bn.t) / .4 : 1; gr.save(); gr.globalAlpha = Math.max(0, Math.min(1, k)); gr.font = fnt(24, true); const w = Math.max(gr.measureText(bn.s).width, (gr.font = fnt(15), gr.measureText(bn.sub).width)) + 60, y = 100 - (1 - Math.min(1, k)) * 20; rr(gr, 754 - w / 2, y, w, 66, 18, 'rgba(12,6,22,.92)'); gr.strokeStyle = bn.c; gr.lineWidth = 3; rr(gr, 754 - w / 2, y, w, 66, 18); gr.stroke(); Tx(gr, bn.s, 754, y + 24, 24, bn.c, 'center', true); Tx(gr, bn.sub, 754, y + 50, 15, '#fff', 'center', false, null); gr.restore(); }
-    else if (evt && evt.d) { const c = { storm: '#e07a3a', meteor: '#ff5a3a', flare: '#ffd23f', comet: '#7cf2ff' }[evt.k], s = { storm: 'DUST STORM', meteor: 'METEOR SHOWER', flare: 'SOLAR FLARE', comet: 'ICE COMET' }[evt.k]; rr(gr, 654, 96, 200, 34, 17, 'rgba(12,6,22,.9)'); rr(gr, 664, 122, 180 * Math.max(0, evt.t / evt.d), 4, 2, c); Tx(gr, s, 754, 111, 14, c, 'center', true, null); }
+    else if (evt && evt.d) { const c = { storm: '#e07a3a', meteor: '#ff5a3a', flare: '#ffd23f', comet: '#7cf2ff', aurora: '#7dffb0' }[evt.k], s = { storm: 'DUST STORM', meteor: 'METEOR SHOWER', flare: 'SOLAR FLARE', comet: 'ICE COMET', aurora: 'AURORA' }[evt.k]; rr(gr, 654, 96, 200, 34, 17, 'rgba(12,6,22,.9)'); rr(gr, 664, 122, 180 * Math.max(0, evt.t / evt.d), 4, 2, c); Tx(gr, s, 754, 111, 14, c, 'center', true, null); }
     if (S.tut < 3 && !K.bot) drawTut(gr);
   }
   function drawResearch(gr) {
@@ -472,8 +506,8 @@ const GAME = {
     for (const r of RES) {
       const b = rNode(r), done = has(r.k), open = !r.req || has(r.req), can = open && !done && S.sci >= r.c;
       rr(gr, b.x, b.y, b.w, b.h, 14, done ? '#3a6a4a' : can ? '#5a2a7a' : open ? '#2e1e40' : '#1e1628'); if (can) { gr.strokeStyle = '#ff8adf'; gr.lineWidth = 2; rr(gr, b.x, b.y, b.w, b.h, 14); gr.stroke(); }
-      Tx(gr, r.n, b.x + 14, b.y + 20, 15, open ? '#fff' : '#777', 'left', true, null); Tx(gr, r.d, b.x + 14, b.y + 44, 11, open ? '#ddd' : '#666', 'left', false, null);
-      Tx(gr, done ? '✓ DONE' : `${r.c} science`, b.x + 14, b.y + 66, 13, done ? '#9aff9a' : can ? '#ff8adf' : '#999', 'left', true, null);
+      Tx(gr, r.n, b.x + 14, b.y + 20, 15, open ? '#fff' : '#777', 'left', true, null); Tx(gr, r.d, b.x + 14, b.y + 40, 11, open ? '#ddd' : '#666', 'left', false, null);
+      Tx(gr, done ? '✓ DONE' : `${r.c} science`, b.x + 14, b.y + 60, 13, done ? '#9aff9a' : can ? '#ff8adf' : '#999', 'left', true, null);
     }
   }
   function drawTut(gr) {
