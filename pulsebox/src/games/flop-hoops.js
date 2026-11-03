@@ -117,12 +117,20 @@ const GAME = {
       const bb = segHit(B.x, B.y, back + h.dir * 10, HOOPY - 110, back + h.dir * 10, HOOPY + 20); bounceOff(bb.cx, bb.cy, bb.d, B.r + 5);
       if (B.vy > 0 && Math.abs(B.x - h.x) < RIM - B.r * .4 && B.y > HOOPY - 6 && B.y - B.vy * dt <= HOOPY - 6) return scored(team);
     }
+    // a loose ball is easy to pick back up: slow balls drift toward the nearest hand, low balls get scooped by the body,
+    // and a ball left rolling on the floor pops up as a jump ball
+    const spd = Math.hypot(B.vx, B.vy), low = B.y > FLOOR - B.r - 60;
+    if (B.cd <= 0 && spd < 380 && B.y > FLOOR - 190 && B.last !== -2) { let best = null, bd = 170; for (const p of P) { const j = joints(p), d = Math.hypot(B.x - j.hand.x, B.y - j.hand.y); if (d < bd) { bd = d; best = j.hand; } }
+      if (best) { const k = (1 - bd / 170) * 1500 * dt; B.vx += (best.x - B.x) / bd * k; B.vy += (best.y - B.y) / bd * k; } }
+    B.idle = low && spd < 260 ? (B.idle || 0) + dt : 0;
+    if (B.idle > 1.6) { B.idle = 0; B.vy = -720; B.vx = (640 - B.x) * .6; K.sfx(520, .12, 'triangle', .07, 300); K.burst(B.x, B.y, ['#fff', '#ffd23f'], 12, 200); }
     // players: bodies push, hands grab
     for (const p of P) {
       const j = joints(p), body = segHit(B.x, B.y, p.x, p.y - 10, j.sh.x, j.sh.y);
       bounceOff(body.cx, body.cy, body.d, B.r + 13 * p.s, p.vx, p.vy, .5);
       bounceOff(j.head.x, j.head.y, Math.hypot(B.x - j.head.x, B.y - j.head.y), B.r + 14 * p.s, p.vx, p.vy, .6);
-      if (B.cd <= 0 && Math.hypot(B.x - j.hand.x, B.y - j.hand.y) < B.r + 16 * p.s) {
+      const scoop = low && spd < 420 && (body.d < B.r + 26 * p.s || Math.hypot(B.x - p.x, B.y - (p.y - 20)) < B.r + 34 * p.s);
+      if (B.cd <= 0 && (Math.hypot(B.x - j.hand.x, B.y - j.hand.y) < B.r + 26 * p.s || scoop)) {
         if (B.holder && B.holder !== p) continue;
         B.holder = p; p.hold = true; B.cd = .2; B.last = p.team; K.sfx(260, .06, 'triangle', .08); break;
       }
