@@ -16,6 +16,8 @@
 //   GET  /api/bug/status?ids=1,2  -> { 1: { status, note, updated } }   (what a reporter sees about their own reports)
 //   GET  /api/bugs?status=new  (header x-admin-key) -> { bugs: [...] }  (the admin page, public/bugs.html)
 //   POST /api/bugs/update      (header x-admin-key) <- { id, status, note } -> { ok }
+//   GET  /api/featured  -> { default: [ids], days: { 'YYYY-MM-DD': [ids] } }  (Games of the Day, read by the hub)
+//   GET/POST /api/featured/admin  (header x-admin-key) -> read / save them  (the admin page, public/picks.html)
 // Multiplayer rooms: one Durable Object (Rooms) per 4-character room code relays JSON messages between up to 8 players (14 for the Odd Crowd party game).
 //   GET  /api/room/CODE?n=NAME&g=GAME  (WebSocket) -> { t: 'hello', id, host, players } then every other player's messages
 //   GET  /api/room/CODE  (plain) -> { game, players }: which game the room is playing, so the hub can join by code alone
@@ -66,7 +68,7 @@ async function play(request, env, ids) {
 }
 const sha = async s => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)));
 const BUG_STATUS = ['new', 'confirmed', 'fixing', 'fixed', 'wontfix', 'duplicate'];
-async function bugs(request, env, url) {
+async function bugs(request, env, url, ids = []) {
   const stub = env.BUGS.get(env.BUGS.idFromName('global'));
   // the admin key: never compared directly (both sides are hashed, then compared in constant time), refused if it is
   // too short to be safe, and an address that sends 8 wrong keys is locked out for 15 minutes
@@ -92,6 +94,10 @@ async function bugs(request, env, url) {
     const who = (await sha('pulsebox-bug|' + (request.headers.get('cf-connecting-ip') || ''))).slice(0, 24);
     return stub.fetch('https://bugs/add', { method: 'POST', body: JSON.stringify({ ...r, who }) });
   }
+  // Games of the Day (the top carousel on the hub): anyone can read them; changing them needs the admin key (picks.html)
+  if (url.pathname === '/api/featured' && request.method === 'GET') {
+    const r = await stub.fetch('https://bugs/featured'); return new Response(r.body, { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=30', 'access-control-allow-origin': '*', 'x-content-type-options': 'nosniff' } });
+  }
   if (url.pathname === '/api/bug/status') {
     // ids look like 12.TOKEN: the token (given only to whoever sent the report) is needed to read the note on it
     const ids = (url.searchParams.get('ids') || '').split(',').slice(0, 50).map(s => { const [i, t] = s.split('.'); return { id: Number(i), tok: /^[a-f0-9]{32}$/.test(t || '') ? t : '' }; }).filter(q => Number.isInteger(q.id) && q.id > 0);
@@ -101,6 +107,16 @@ async function bugs(request, env, url) {
   if (ok === 'off') return json({ error: 'The admin key is not set up yet (BUG_ADMIN_KEY, at least 16 characters).' }, 503);
   if (ok === 'locked') return json({ error: 'Too many wrong keys from here. Try again in 15 minutes.' }, 429);
   if (ok !== 'ok') return json({ error: 'wrong key' }, 401);
+  if (url.pathname === '/api/featured/admin') {
+    if (request.method === 'GET') return stub.fetch('https://bugs/featured');
+    if (request.method !== 'POST') return json({ error: 'method' }, 405);
+    const body = await request.text(); if (body.length > 8000) return json({ error: 'too big' }, 413);
+    let f; try { f = JSON.parse(body); } catch (e) { return json({ error: 'bad picks' }, 400); }
+    const known = new Set(ids), clean = list => Array.isArray(list) ? [...new Set(list.filter(x => typeof x === 'string' && known.has(x)))].slice(0, 6) : [];
+    const out = { default: clean(f.default), days: {} };
+    if (f.days && typeof f.days === 'object') for (const [d, list] of Object.entries(f.days).slice(0, 90)) if (/^\d{4}-\d{2}-\d{2}$/.test(d) && clean(list).length) out.days[d] = clean(list);
+    return stub.fetch('https://bugs/featured/set', { method: 'POST', body: JSON.stringify(out) });
+  }
   if (url.pathname === '/api/bugs') return stub.fetch('https://bugs/list?' + new URLSearchParams({ status: url.searchParams.get('status') || '' }));
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
   let u; try { u = JSON.parse(await request.text()); } catch (e) { return json({ error: 'bad update' }, 400); }
@@ -113,6 +129,7 @@ export class Bugs {
     this.sql.exec('CREATE TABLE IF NOT EXISTS bugs (id INTEGER PRIMARY KEY AUTOINCREMENT, t INTEGER NOT NULL, game TEXT, text TEXT, steps TEXT, contact TEXT, info TEXT, status TEXT NOT NULL DEFAULT \'new\', note TEXT NOT NULL DEFAULT \'\', updated INTEGER NOT NULL)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS sent (k TEXT NOT NULL, t INTEGER NOT NULL)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS fails (k TEXT NOT NULL, t INTEGER NOT NULL)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL)');
     try { this.sql.exec("ALTER TABLE bugs ADD COLUMN tok TEXT NOT NULL DEFAULT ''"); } catch (e) {}
   }
   async fetch(request) {
@@ -137,6 +154,8 @@ export class Bugs {
       if (url.pathname === '/fail') { this.sql.exec('INSERT INTO fails (k, t) VALUES (?, ?)', who, now); return json({ ok: true }); }
       return this.sql.exec('SELECT COUNT(*) AS n FROM fails WHERE k = ?', who).one().n >= 8 ? json({ error: 'locked' }, 429) : json({ ok: true });
     }
+    if (url.pathname === '/featured') { const r = this.sql.exec("SELECT v FROM kv WHERE k = 'featured'").toArray()[0]; return json(r ? JSON.parse(r.v) : { default: [], days: {} }); }
+    if (url.pathname === '/featured/set') { const v = await request.text(); this.sql.exec("INSERT INTO kv (k, v) VALUES ('featured', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v", v); return json({ ok: true, saved: JSON.parse(v) }); }
     if (url.pathname === '/list') {
       const st = url.searchParams.get('status');
       const cols = 'id, t, game, text, steps, contact, info, status, note, updated';
@@ -198,7 +217,7 @@ export async function api(request, env, ctx, ids) {
   if (url.pathname === '/api/view') return view(request, env);
   if (url.pathname === '/api/live') return live(request, env);
   if (url.pathname === '/api/lb') return lb(request, env, url);
-  if (url.pathname === '/api/bug' || url.pathname === '/api/bug/status' || url.pathname === '/api/bugs' || url.pathname === '/api/bugs/update') return bugs(request, env, url);
+  if (url.pathname === '/api/bug' || url.pathname === '/api/bug/status' || url.pathname === '/api/bugs' || url.pathname === '/api/bugs/update' || url.pathname === '/api/featured' || url.pathname === '/api/featured/admin') return bugs(request, env, url, ids);
   if (url.pathname === '/api/hollow') {
     if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
     return env.HOLLOW.get(env.HOLLOW.idFromName('global')).fetch(request);

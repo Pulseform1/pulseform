@@ -30,7 +30,7 @@ assert not too_big, 'static assets must be under 25 MiB: %s' % too_big
 version = lambda m: m.group(1) + '?v=' + media_version.get(m.group(2), '0')
 
 pages = {}
-for path in ['index.html', 'bugs.html'] + sorted(os.path.relpath(p, PUB) for p in glob.glob(os.path.join(PUB, 'games', '*.html'))):
+for path in ['index.html', 'bugs.html', 'picks.html'] + sorted(os.path.relpath(p, PUB) for p in glob.glob(os.path.join(PUB, 'games', '*.html'))):
     pages[path] = open(os.path.join(PUB, path), encoding='utf-8').read()
 # version the media links in the hub page, so browsers fetch new covers and trailers after each media change
 pages['index.html'] = re.sub(r'(media/([\w.-]+\.(?:jpg|png|webp|mp4)))', version, pages['index.html'])
@@ -55,6 +55,13 @@ pages['index.html'] = pages['index.html'].replace('/*@featured*/null', json.dump
 games_src = pages['index.html'].split('const GAMES = [', 1)[1].split('const CATEGORIES', 1)[0]
 game_ids = sorted(set(re.findall(r'''\n\s*id:\s*['"]([a-z0-9-]+)['"]''', games_src)))
 assert game_ids, 'no game ids found in index.html'
+# the Games of the Day admin page (picks.html) gets the game list: id, title, cover
+glist = []
+for m in re.finditer(r'''\n\s*id:\s*['"]([a-z0-9-]+)['"]''', games_src):
+    chunk = games_src[m.end():m.end() + 900]
+    t, c = re.search(r'''title:\s*(['"])(.*?)\1''', chunk), re.search(r'''cover:\s*['"]([^'"]+)['"]''', chunk)
+    if t and c: glist.append({'id': m.group(1), 'title': t.group(2).replace("\\'", "'"), 'cover': c.group(1)})
+pages['picks.html'] = pages['picks.html'].replace('/*@games*/null', json.dumps(sorted(glist, key=lambda g: g['title'].lower()), ensure_ascii=False))
 
 shutil.rmtree(DIST, ignore_errors=True)
 os.makedirs(os.path.join(DIST, 'games'))
@@ -77,6 +84,8 @@ open(os.path.join(DIST, '_headers'), 'w').write('''/*
 /
   Cache-Control: no-cache
 /bugs.html
+  Cache-Control: no-store
+/picks.html
   Cache-Control: no-store
 /media/*
   Cache-Control: public, max-age=604800
@@ -152,7 +161,7 @@ export default {
     const body = FILES[path];
     if (body === undefined) return new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain' } });
     // security headers: no MIME sniffing, HTTPS only, no embedding on other sites (clickjacking), no full URLs leaked
-    return new Response(request.method === 'HEAD' ? null : body, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': path === '/bugs.html' ? 'no-store' : 'no-cache',
+    return new Response(request.method === 'HEAD' ? null : body, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': path === '/bugs.html' || path === '/picks.html' ? 'no-store' : 'no-cache',
       'x-content-type-options': 'nosniff', 'referrer-policy': 'strict-origin-when-cross-origin', 'strict-transport-security': 'max-age=31536000',
       'content-security-policy': "frame-ancestors 'self' https://pulseform.org https://*.pulseform.org", 'x-frame-options': 'SAMEORIGIN' } });
   }

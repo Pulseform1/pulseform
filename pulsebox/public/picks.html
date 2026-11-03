@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Pulsebox Games of the Day</title>
+<style>
+  :root { color-scheme: dark; --bg: #0a0c12; --panel: #161a26; --panel2: #1d2231; --edge: #2a3144; --text: #eef1f8; --muted: #8d95ab; --lime: #c6ff3d; --pink: #ff2e88; --cyan: #29e0ff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 20px 16px 80px; }
+  main { max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 4px; } h1 a { color: inherit; text-decoration: none; }
+  h2 { font-size: 18px; margin: 0 0 10px; }
+  p.sub { color: var(--muted); margin: 0 0 18px; }
+  .panel { background: var(--panel); border: 1px solid var(--edge); border-radius: 16px; padding: 18px; margin: 0 0 16px; }
+  .login { max-width: 420px; }
+  input, button { font: inherit; color: var(--text); }
+  input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--edge); background: #11141d; }
+  button { cursor: pointer; border-radius: 10px; border: 1px solid var(--edge); background: var(--panel2); padding: 9px 14px; font-weight: 700; }
+  button.go { background: var(--lime); color: #0a0c12; border: 0; }
+  button:disabled { opacity: .45; cursor: default; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 14px; }
+  .tabs button.on { background: var(--lime); color: #0a0c12; border-color: var(--lime); }
+  .tabs input[type=date] { width: auto; padding: 7px 10px; }
+  .slots { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  @media (max-width: 760px) { .slots { grid-template-columns: repeat(3, 1fr); } }
+  .slot { position: relative; aspect-ratio: 1; border-radius: 16px; border: 2px dashed var(--edge); display: grid; place-items: center; color: var(--muted); font-weight: 800; overflow: hidden; background: #11141d; }
+  .slot.full { border: 2px solid var(--lime); }
+  .slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .slot .n { position: absolute; left: 6px; top: 6px; z-index: 1; background: var(--lime); color: #0a0c12; border-radius: 6px; padding: 0 7px; font-size: 13px; }
+  .slot .tools { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; display: flex; gap: 4px; justify-content: center; padding: 6px; background: linear-gradient(transparent, rgba(0,0,0,.85)); }
+  .slot .tools button { padding: 3px 8px; font-size: 13px; background: rgba(20,24,36,.92); }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+  .sp { flex: 1; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; margin-top: 12px; }
+  .g { text-align: left; padding: 0; overflow: hidden; border-radius: 14px; background: var(--panel2); }
+  .g img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+  .g span { display: block; padding: 6px 8px; font-size: 13px; line-height: 1.25; }
+  .g.picked { outline: 3px solid var(--lime); }
+  .g.picked span::before { content: '✓ '; color: var(--lime); }
+  .days { display: flex; flex-direction: column; gap: 6px; }
+  .day { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #11141d; border: 1px solid var(--edge); border-radius: 10px; padding: 8px 10px; }
+  .day b { min-width: 110px; } .day .names { color: var(--muted); flex: 1; font-size: 14px; }
+  .msg { color: var(--muted); margin: 8px 0 0; min-height: 1.4em; } .ok { color: var(--lime); font-weight: 700; } .bad { color: #ff8aa8; font-weight: 700; }
+</style>
+</head>
+<body>
+<main>
+  <h1><a href="/">Pulsebox</a> · Games of the Day <a href="/bugs.html" style="font-size:15px;color:var(--cyan);margin-left:10px">Bug reports ›</a></h1>
+  <p class="sub">Choose the games in the big carousel at the very top of the homepage. Trending comes right under it.</p>
+  <div id="app"></div>
+</main>
+<script>
+// The game list is baked in by build-worker.py: [{ id, title, cover }]
+const GAMES = /*@games*/null || [];
+const $ = id => document.getElementById(id), esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const byId = id => GAMES.find(g => g.id === id);
+const MAX = 6;
+let key = ''; try { key = sessionStorage.getItem('pbx-bug-key') || ''; } catch (e) {}   // shared with the bug page, kept only for this tab
+let data = { default: [], days: {} }, which = 'default', dirty = false, filter = '';
+const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+
+async function api(method, body) {
+  const r = await fetch('/api/featured/admin', { method, headers: { 'x-admin-key': key, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ('error ' + r.status));
+  return j;
+}
+function login(msg) {
+  $('app').innerHTML = '<div class="panel login"><label for="k"><b>Admin code</b> (the same one as the bug reports page)</label><input id="k" type="password" autocomplete="current-password" style="margin:8px 0 12px"><button class="go" id="kGo">Unlock</button><p class="msg" id="lm"></p></div>';
+  if (msg) $('lm').innerHTML = '<span class="bad">' + esc(msg) + '</span>';
+  $('kGo').onclick = () => { key = $('k').value.trim(); try { sessionStorage.setItem('pbx-bug-key', key); } catch (e) {} load(); };
+  $('k').onkeydown = e => { if (e.key === 'Enter') $('kGo').click(); };
+  setTimeout(() => $('k').focus(), 30);
+}
+async function load() {
+  if (!key) return login();
+  $('app').innerHTML = '<p class="msg">Loading…</p>';
+  try { data = await api('GET'); if (!data.days) data.days = {}; if (!data.default) data.default = []; dirty = false; draw(); }
+  catch (e) { key = ''; try { sessionStorage.removeItem('pbx-bug-key'); } catch (er) {} login(e.message === 'wrong key' ? 'That code is not right.' : e.message); }
+}
+const list = () => which === 'default' ? data.default : (data.days[which] || (data.days[which] = []));
+function draw() {
+  const L = list(), dates = Object.keys(data.days).filter(d => data.days[d].length).sort();
+  $('app').innerHTML = `
+    <div class="panel">
+      <div class="tabs">
+        <button id="tDef" class="${which === 'default' ? 'on' : ''}">Every day</button>
+        <span style="color:var(--muted)">or plan a date:</span>
+        <input type="date" id="tDate" value="${which === 'default' ? '' : which}" min="${today()}">
+        <span class="sp"></span><button id="out">Lock</button>
+      </div>
+      <h2>${which === 'default' ? 'Shown every day' : 'Shown on ' + new Date(which + 'T12:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })} <span style="color:var(--muted);font-weight:500">(${L.length} of ${MAX}, first one shows first)</span></h2>
+      <div class="slots" id="slots"></div>
+      <div class="row">
+        <button class="go" id="save" ${dirty ? '' : 'disabled'}>${dirty ? 'Save changes' : 'Saved'}</button>
+        <button id="clear" ${L.length ? '' : 'disabled'}>Clear this list</button>
+        <span class="sp"></span><a href="/" target="_blank" style="color:var(--cyan)">Open the homepage ↗</a>
+      </div>
+      <p class="msg" id="msg">${which !== 'default' && !L.length ? 'Nothing planned for this date yet: it shows the Every day list.' : !data.default.length && which === 'default' ? 'Empty: the homepage falls back to the built-in picks (featured.json).' : ''}</p>
+    </div>
+    ${dates.length ? '<div class="panel"><h2>Planned dates</h2><div class="days">' + dates.map(d => `<div class="day"><b>${esc(d)}</b><span class="names">${data.days[d].map(id => esc((byId(id) || { title: id }).title)).join(', ')}</span><button data-edit="${esc(d)}">Edit</button><button data-del="${esc(d)}">Remove</button></div>`).join('') + '</div></div>' : ''}
+    <div class="panel">
+      <div class="tabs"><h2 style="margin:0">Pick games</h2><span class="sp"></span><input id="q" placeholder="Search games" value="${esc(filter)}" style="max-width:260px"></div>
+      <div class="grid" id="grid"></div>
+    </div>`;
+  const S = $('slots');
+  for (let i = 0; i < MAX; i++) {
+    const g = byId(L[i]), d = document.createElement('div'); d.className = 'slot' + (g ? ' full' : '');
+    if (g) {
+      d.innerHTML = `<span class="n">${i + 1}</span><img alt=""><div class="tools"><button data-m="-1" aria-label="Move earlier">◀</button><button data-x aria-label="Remove">✕</button><button data-m="1" aria-label="Move later">▶</button></div>`;
+      d.querySelector('img').src = '/' + g.cover; d.title = g.title;
+      d.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { const j = i + +b.dataset.m; if (j < 0 || j >= L.length) return; [L[i], L[j]] = [L[j], L[i]]; dirty = true; draw(); });
+      d.querySelector('[data-x]').onclick = () => { L.splice(i, 1); dirty = true; draw(); };
+    } else d.textContent = i === L.length ? 'Pick below' : '';
+    S.append(d);
+  }
+  const G = $('grid'), q = filter.toLowerCase();
+  for (const g of GAMES) {
+    if (q && !g.title.toLowerCase().includes(q) && !g.id.includes(q)) continue;
+    const b = document.createElement('button'); b.className = 'g' + (L.includes(g.id) ? ' picked' : '');
+    b.innerHTML = '<img alt="" loading="lazy"><span></span>'; b.querySelector('img').src = '/' + g.cover; b.querySelector('span').textContent = g.title;
+    b.onclick = () => { const k = L.indexOf(g.id); if (k >= 0) L.splice(k, 1); else if (L.length < MAX) L.push(g.id); else { $('msg').innerHTML = '<span class="bad">That is 6 already. Remove one first.</span>'; return; } dirty = true; draw(); };
+    G.append(b);
+  }
+  $('q').oninput = e => { filter = e.target.value; const pos = e.target.selectionStart; draw(); $('q').focus(); $('q').setSelectionRange(pos, pos); };
+  $('tDef').onclick = () => { which = 'default'; draw(); };
+  $('tDate').onchange = e => { if (e.target.value) { which = e.target.value; draw(); } };
+  $('clear').onclick = () => { L.length = 0; dirty = true; draw(); };
+  $('out').onclick = () => { key = ''; try { sessionStorage.removeItem('pbx-bug-key'); } catch (e) {} login(); };
+  document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { which = b.dataset.edit; draw(); });
+  document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { delete data.days[b.dataset.del]; if (which === b.dataset.del) which = 'default'; dirty = true; draw(); });
+  $('save').onclick = async () => {
+    $('save').disabled = true; $('save').textContent = 'Saving…';
+    try { const r = await api('POST', data); data = r.saved || data; if (!data.days) data.days = {}; dirty = false; draw(); $('msg').innerHTML = '<span class="ok">Saved. The homepage shows it within a minute.</span>'; }
+    catch (e) { $('save').disabled = false; $('save').textContent = 'Save changes'; $('msg').innerHTML = '<span class="bad">' + esc(e.message === 'wrong key' ? 'The code stopped working. Lock and unlock again.' : e.message) + '</span>'; }
+  };
+}
+addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+load();
+</script>
+</body>
+</html>

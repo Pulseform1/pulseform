@@ -1803,9 +1803,19 @@ function soonTile() {
    ============================================================ */
 let heroIdx = 0, heroKey = '';
 // Games of the Day: chosen by hand in public/featured.json (build-worker.py bakes it in here). A date key beats 'default'.
-const FEATURED = /*@featured*/null, ADDED = /*@added*/null;
+const FEATURED = /*@featured*/null, ADDED = /*@added*/null; window.FEATURED_BUILT = FEATURED;
+// picks saved on the admin page (box.pulseform.org/picks.html) override the built-in ones as soon as they load
+let LIVE_PICKS = null;
+function loadLivePicks() {
+  const origin = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? '' : 'https://box.pulseform.org';
+  fetch(origin + '/api/featured').then(r => r.ok ? r.json() : null).then(d => {
+    if (!d || !((d.default && d.default.length) || (d.days && Object.keys(d.days).length))) return;
+    LIVE_PICKS = Object.assign({}, d.days || {}, { default: d.default && d.default.length ? d.default : (FEATURED && FEATURED.default) || [] });
+    heroKey = ''; renderHero(); if (!$('home').hidden && !topic && !query) renderShelves();
+  }).catch(() => {});
+}
 function todaysPicks() {
-  if (!FEATURED) return []; const d = new Date(), k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const FEATURED = LIVE_PICKS || window.FEATURED_BUILT; if (!FEATURED) return []; const d = new Date(), k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   const ids = Array.isArray(FEATURED[k]) ? FEATURED[k] : Array.isArray(FEATURED.default) ? FEATURED.default : [];
   return [...new Set(ids)].map(byId).filter(Boolean).slice(0, 6);
 }
@@ -2392,7 +2402,7 @@ window.addEventListener('resize', sizeStage);
 window.addEventListener('popstate', route);
 window.addEventListener('hashchange', route);
 
-renderFinder(); renderHero(); renderActions();
+renderFinder(); renderHero(); renderActions(); loadLivePicks();
 route();
 trackView();
 loadStats();
