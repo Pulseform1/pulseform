@@ -425,6 +425,7 @@
   @media (max-aspect-ratio: 1/1) { .d-slide video { width: 100vw; top: 38%; border-radius: 0; box-shadow: 0 20px 60px rgba(0,0,0,.6); } }
   .disc-feed { cursor: grab; } .disc-feed.dragging { cursor: grabbing; user-select: none; }
   .d-keys { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 3; display: flex; gap: 10px; align-items: center; font-weight: 800; font-size: 13px; color: rgba(255,255,255,.8); pointer-events: none; }
+  .d-keys kbd + kbd { margin-left: -6px; }
   .d-keys kbd { display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 7px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); font: 800 12px var(--display, sans-serif); color: #fff; }
   @media (hover: none) { .d-keys { display: none; } }
   .d-shade { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,.88), rgba(0,0,0,0) 48%), linear-gradient(180deg, rgba(0,0,0,.5), transparent 20%); pointer-events: none; }
@@ -443,6 +444,7 @@
   @keyframes bob2 { 50% { transform: translate(-50%, -6px); } }
   .d-nav { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 3; }
   .d-nav button { width: 56px; height: 56px; border-radius: 50%; border: 0; background: rgba(255,255,255,.16); color: #fff; font-size: 22px; cursor: pointer; transition: background .15s, transform .15s; }
+  .d-nav button { display: grid; place-items: center; align-content: center; line-height: 1; gap: 2px; } .d-nav button small { font: 800 10px var(--display, sans-serif); opacity: .75; }
   .d-nav button:hover { background: var(--pink); transform: scale(1.08); }
   @media (hover: none) { .d-nav { display: none; } }
   .modal .check { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; font-size: 14px; color: var(--muted); margin-top: 12px; }
@@ -645,7 +647,7 @@
   </div>
 </div>
 <div class="ov surprise" id="surprise" hidden role="dialog" aria-modal="true" aria-labelledby="spTitle"><div class="sp-box"><button class="x" id="spX" type="button" aria-label="Close" style="position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:1px solid var(--edge);background:transparent;cursor:pointer">✕</button><h2 id="spTitle">🎲 Surprise me</h2><p style="color:var(--muted);margin:0">A game you haven't played yet</p><div class="sp-reel" id="spReel"><img alt=""></div><div class="sp-name" id="spName"></div><div class="sp-pitch" id="spPitch"></div><div class="sp-acts" id="spActs" hidden><button class="play-btn" id="spPlay" type="button"><span class="tri"></span>Play</button><button class="btn" id="spAgain" type="button">🎲 Spin again</button><button class="btn" id="spMore" type="button">Details</button></div></div></div>
-<div class="ov disc" id="disc" hidden role="dialog" aria-modal="true" aria-label="Discover games"><div class="disc-feed" id="discFeed"></div><div class="d-top"><button class="d-x" id="discX" type="button" aria-label="Close">✕</button><b>Discover</b><span style="width:44px"></span></div><div class="d-keys"><kbd>A</kbd> previous · <kbd>D</kbd> next · or scroll / drag</div><div class="d-nav"><button type="button" data-d="-1" aria-label="Previous game">▲</button><button type="button" data-d="1" aria-label="Next game">▼</button></div></div>
+<div class="ov disc" id="disc" hidden role="dialog" aria-modal="true" aria-label="Discover games"><div class="disc-feed" id="discFeed"></div><div class="d-top"><button class="d-x" id="discX" type="button" aria-label="Close">✕</button><b>Discover</b><span style="width:44px"></span></div><div class="d-keys"><kbd>W</kbd><kbd>↑</kbd> previous · <kbd>S</kbd><kbd>↓</kbd> next · or scroll / drag</div><div class="d-nav"><button type="button" data-d="-1" aria-label="Previous game (W or up arrow)" title="Previous (W / ↑)">▲<small>W</small></button><button type="button" data-d="1" aria-label="Next game (S or down arrow)" title="Next (S / ↓)">▼<small>S</small></button></div></div>
 <div class="lightbox" id="lightbox" hidden><img id="lbImg" alt=""></div>
 
 <script>
