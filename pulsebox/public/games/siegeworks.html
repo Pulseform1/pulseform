@@ -197,7 +197,8 @@ const GAME = {
   font: 'Bungee', accent: '#ffb02e', accent2: '#5fd4ff', bg: '#1a1030', noSkins: true, noHud: true, scoreLabel: 'Siege score',
   how: [
     'Two floating islands far apart, two forts, one goal: destroy the enemy Core before they destroy yours.',
-    'BUILD: pick Wood, Steel or Armor and drag from a bolt (or your ground) to add a beam. Triangles are strong; unbraced towers fold and snap. Taller towers let your guns reach further.',
+    'BUILD: pick Wood, Steel, Armor or Door and drag from a bolt (or your ground) to add a beam. Triangles are strong; unbraced towers fold and snap. Taller towers let your guns reach further.',
+    'GUNS stand on floors: tap a flat beam to place one inside a room or on a roof. Your own walls stop your own shots, so leave a gap or build a Door: it swings open whenever a gun right behind it fires, and shuts again to keep enemy shots out.',
     'OIL pays for everything, including every shot. Put Oil Pumps on bolts at ground level. Generators turn oil into POWER, which the Sniper, Railgun, Laser, Swarm, Deflector and Repair bay need. Generators explode when destroyed, so keep them away from your Core.',
     'WEAPONS: Cannon, Machine gun, Sniper (picks off devices), Railgun (pierces beams), Laser (burns a line), Mortar, Firebomb (sets wood ablaze), Cluster bomb, Rockets, Swarm missiles (home in). Tap UPGRADE, then a device, to level it up to 3.',
     'REPAIR: press R (or the Repair tool) and tap or drag over damaged beams and devices; it costs oil and also rebuilds broken beams. FIGHT: tap a weapon and drag to aim; the dotted line shows the shot. It fires on its own every reload while you have oil and power. Drag the sky, use the minimap or pinch to look around.',
@@ -218,8 +219,10 @@ const GAME = {
   const MAT = {
     wood: { name: 'Wood', cost: 8, hp: 55, maxF: 9000, comp: 1.2e-5, kg: 1, col: '#9a6532', dark: '#5e3a1c', burn: true, res: { bullet: 1, shell: 1, blast: 1, beam: 1 } },
     steel: { name: 'Steel', cost: 24, hp: 150, maxF: 26000, comp: 3e-6, kg: 2.3, col: '#8792a3', dark: '#454d5c', res: { bullet: .55, shell: 1, blast: .9, beam: 1 } },
+    door: { name: 'Door', cost: 30, hp: 160, maxF: 22000, comp: 3e-6, kg: 2.6, col: '#3f7fa8', dark: '#173248', door: true, res: { bullet: .45, shell: .9, blast: .85, beam: 1 } },
     armor: { name: 'Armor', cost: 42, hp: 300, maxF: 34000, comp: 2e-6, kg: 4.2, col: '#5c6472', dark: '#272c36', res: { bullet: .2, shell: .75, blast: .6, beam: 1 } },
   };
+  const MATS = ['wood', 'steel', 'armor', 'door'];
   // ammo: oil per salvo, pw: power per salvo. beamMul: how hard it hits beams (snipers barely scratch them)
   const DEV = {
     core: { name: 'Core', cost: 0, up: 260, hp: 480, kg: 5, r: 22 },
@@ -241,7 +244,7 @@ const GAME = {
   };
   DEV.bomblet = { name: 'Bomblet', g: 1, dmg: 26, blast: 28, cls: 'blast', r: 4 };
   const WEAP = ['cannon', 'mg', 'sniper', 'rail', 'laser', 'mortar', 'fire', 'cluster', 'rockets', 'swarm'];
-  const TABS = [['BUILD', ['wood', 'steel', 'armor']], ['GUNS', ['cannon', 'mg', 'sniper', 'rail', 'laser']], ['HEAVY', ['mortar', 'fire', 'cluster', 'rockets', 'swarm']], ['SUPPORT', ['pump', 'gen', 'shield', 'flak', 'repair']]];
+  const TABS = [['BUILD', ['wood', 'steel', 'armor', 'door']], ['GUNS', ['cannon', 'mg', 'sniper', 'rail', 'laser']], ['HEAVY', ['mortar', 'fire', 'cluster', 'rockets', 'swarm']], ['SUPPORT', ['pump', 'gen', 'shield', 'flak', 'repair']]];
   // the economy: oil from the Core and pumps, power from the Core and generators (which burn oil)
   const pumpRate = d => 6 + 3 * (d.lv - 1), genOut = d => 6 + 3 * (d.lv - 1), genBurn = d => 2 + (d.lv - 1);
   function econ(F) {   // pump: oil in; burn: oil the generators eat; out: power they make; cap: how much power you can store
@@ -272,12 +275,16 @@ const GAME = {
   function masses(F) {
     for (const n of F.nodes) n.m = 1;
     for (const b of F.beams) if (b.alive) { const k = MAT[b.mat].kg * b.rest / 60; F.nodes[b.a].m += k / 2; F.nodes[b.b].m += k / 2; }
-    for (const d of F.devs) if (d.alive) F.nodes[d.n].m += DEV[d.type].kg;
+    for (const d of F.devs) if (d.alive) { const b = d.bm != null ? F.beams[d.bm] : null; if (b && b.alive) { F.nodes[b.a].m += DEV[d.type].kg * (1 - d.u); F.nodes[b.b].m += DEV[d.type].kg * d.u; } else F.nodes[d.n].m += DEV[d.type].kg; }
   }
   function addDev(F, type, n) {
     if (n < 0 || !F.nodes[n] || !F.nodes[n].alive || F.devs.some(d => d.alive && d.n === n)) return -1;
     const D = DEV[type]; F.devs.push({ type, n, lv: 1, hp: D.hp, alive: true, cd: D.reload ? 1.2 + Math.random() : 0, aim: null, ang: F.side ? Math.PI + .6 : -.6, e: D.energy || 0, eT: 0, flash: 0, spin: 0, hitT: 0, zap: null });
     F.ver++; masses(F); return F.devs.length - 1;
+  }
+  function addDevFree(F, type, n) {
+    const D = DEV[type]; F.devs.push({ type, n, lv: 1, hp: D.hp, alive: true, cd: D.reload ? 1.2 + Math.random() : 0, aim: null, ang: F.side ? Math.PI + .6 : -.6, e: D.energy || 0, eT: 0, flash: 0, spin: 0, hitT: 0, zap: null });
+    F.ver++; return F.devs.length - 1;
   }
   function upgrade(F, d) {
     if (d.lv >= 3) return 'Already at max level';
@@ -285,9 +292,25 @@ const GAME = {
     F.oil -= c; const k = maxHp(d); d.lv++; d.hp = d.hp / k * maxHp(d); if (d.type === 'shield') d.e = Math.min(d.e + 60, shieldMax(d)); F.ver++; return '';
   }
   const shieldMax = d => DEV.shield.energy * (1 + .4 * (d.lv - 1)), domeR = d => DEV.shield.dome + 8 * (d.lv - 1);
-  const devAt = (F, n) => F.devs.find(d => d.alive && d.n === n);
+  const devAt = (F, n) => F.devs.find(d => d.alive && d.n === n && d.bm == null);
   const core = F => F.devs.find(d => d.type === 'core');
-  const pivot = (F, d) => { const n = F.nodes[d.n]; return [n.x, n.y - 9]; };
+  const mountBeam = (F, d) => { const b = d.bm != null ? F.beams[d.bm] : null; return b && b.alive && F.nodes[b.a] && F.nodes[b.b] ? b : null; };
+  const pivot = (F, d) => { const b = mountBeam(F, d); if (b) { const A = F.nodes[b.a], B = F.nodes[b.b]; return [A.x + (B.x - A.x) * d.u, A.y + (B.y - A.y) * d.u - 9]; } const n = F.nodes[d.n]; return [n.x, n.y - 9]; };
+  const isFloor = (F, b) => { const A = F.nodes[b.a], B = F.nodes[b.b]; return A && B && Math.abs(B.x - A.x) > 24 && Math.abs(B.y - A.y) < Math.abs(B.x - A.x) * .45; };
+  // put a device on a floor beam: away from the joints, not too close to another device on the same floor
+  function mount(F, di, bi, u) {
+    const d = F.devs[di], b = F.beams[bi], len = b.rest; u = len < 52 ? .5 : cl(u, 22 / len, 1 - 22 / len);
+    for (const q of F.devs) if (q !== d && q.alive && q.bm === bi && Math.abs(q.u - u) * len < 30) return false;
+    d.bm = bi; d.u = u; d.n = u < .5 ? b.a : b.b; F.ver++; masses(F); return true;
+  }
+  // the bot's devices: shift each one from its bolt onto a floor beam beside it
+  function onFloor(F, di) {
+    const d = F.devs[di]; if (!d) return; const opts = F.beams.map((b, i) => [b, i]).filter(([b]) => b.alive && (b.a === d.n || b.b === d.n) && isFloor(F, b));
+    for (const [b, i] of opts) if (mount(F, di, i, b.a === d.n ? .3 : .7)) return;
+    // no floor beside that bolt: use the highest floor that still has room
+    const all = F.beams.map((b, i) => [b, i]).filter(([b]) => b.alive && isFloor(F, b) && !F.nodes[b.a].pin).sort((p, q) => Math.min(F.nodes[p[0].a].y, F.nodes[p[0].b].y) - Math.min(F.nodes[q[0].a].y, F.nodes[q[0].b].y));
+    for (const [, i] of all) for (const u of [.5, .25, .75]) if (mount(F, di, i, u)) return;
+  }
 
   /* ---------- physics: XPBD beams that report their force; fire eats wood ---------- */
   function physics(F, dt) {
@@ -318,6 +341,7 @@ const GAME = {
   }
   function breakBeam(F, b, strain) {
     if (!b.alive) return; b.alive = false; b.fire = 0; F.ver++; F.lost += MAT[b.mat].cost;
+    const bi = F.beams.indexOf(b); for (const d of F.devs) if (d.bm === bi) d.bm = null;
     const A = F.nodes[b.a], B = F.nodes[b.b];
     splinters((A.x + B.x) / 2, (A.y + B.y) / 2, MAT[b.mat], Math.atan2(B.y - A.y, B.x - A.x), b.rest);
     if (strain) sound('crack'); masses(F);
@@ -326,7 +350,7 @@ const GAME = {
   function killNode(F, n) {
     const i = F.nodes.indexOf(n); n.alive = false; F.ver++;
     for (const b of F.beams) if (b.alive && (b.a === i || b.b === i)) { b.alive = false; F.lost += MAT[b.mat].cost; }
-    const d = devAt(F, i); if (d) destroyDev(F, d); masses(F);
+    for (const d of F.devs) if (d.alive && d.n === i && !mountBeam(F, d)) destroyDev(F, d); masses(F);
   }
   function destroyDev(F, d) {
     if (!d.alive) return; d.alive = false; F.ver++; F.lost += (DEV[d.type].cost || 300) * d.lv; masses(F);
@@ -342,6 +366,9 @@ const GAME = {
   function launch(side, type, x, y, vx, vy, dmg, net, id) {
     const D = DEV[type]; id = id || (side + 1) * 1e6 + (++shotN);
     const s = { id, side, type, x, y, ox: x, oy: y, vx, vy, t: 0, trail: [], dmg, pierce: D.pierce || 0, hits: new Set() };
+    // the gun's own floor never stops its shot, and doors near the gun swing open as it fires
+    const O = forts[side], k0 = Math.hypot(vx, vy) || 1, gx = x - vx / k0 * (type === 'laser' ? 30 : 26), gy = y - vy / k0 * (type === 'laser' ? 30 : 26);
+    if (O && type !== 'bomblet') O.beams.forEach(b => { if (!b.alive) return; const A = O.nodes[b.a], B = O.nodes[b.b]; if (!A || !B) return; const q = segDist(gx, gy + 9, A.x, A.y, B.x, B.y); if (q < 6) s.hits.add(b); if (MAT[b.mat].door && segDist(gx, gy, A.x, A.y, B.x, B.y) < 120) b.open = 1.4; });
     if (type === 'laser') { const k = Math.hypot(vx, vy) || 1; s.dx = vx / k; s.dy = vy / k; s.life = D.dur; s.hx = x + s.dx * D.range; s.hy = y + s.dy * D.range; }
     shots.push(s);
     if (net && MP.online() && !demo) MP.send({ t: 'f', s: side, w: type, id, d: Math.round(dmg), a: [Math.round(x), Math.round(y), Math.round(vx), Math.round(vy)] });
@@ -390,9 +417,12 @@ const GAME = {
       const [px, py] = pivot(T, d); if (Math.hypot(s.x - px, s.y - py) < domeR(d) && s.y < py + 6) { if (sim(T)) { d.e = Math.max(0, d.e - s.dmg * (D.blast ? 1.3 : D.cls === 'bullet' ? .7 : 1)); d.eT = 2.5; } d.hitT = .35; ringFx(s.x, s.y, SIDEC[T.side], 30); burst(s.x, s.y, [SIDEC[T.side], '#ffffff'], 10, 220, .3, 4); sound('zap'); s.dead = true; return; }
     }
     for (const d of T.devs) if (d.alive && !s.hits.has(d)) { const [px, py] = pivot(T, d); if (Math.hypot(s.x - px, s.y - py) < DEV[d.type].r + 4) { impact(s, s.x, s.y, T, null, d); if (s.dead) return; } }
-    let best = null, bt = 2;
-    for (const b of T.beams) { if (!b.alive || s.hits.has(b)) continue; const A = T.nodes[b.a], B = T.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.ox, s.oy, s.x, s.y, A.x, A.y, B.x, B.y); if (h >= 0 && h < bt) { bt = h; best = b; } }
-    if (best) { impact(s, lp(s.ox, s.x, bt), lp(s.oy, s.y, bt), T, best, null); if (s.dead) return; }
+    let best = null, bt = 2, bF = T;
+    for (const b of T.beams) { if (!b.alive || s.hits.has(b) || b.open > 0) continue; const A = T.nodes[b.a], B = T.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.ox, s.oy, s.x, s.y, A.x, A.y, B.x, B.y); if (h >= 0 && h < bt) { bt = h; best = b; } }
+    // your own walls are solid too: fire out through a gap, over the top, or through a door
+    const O = forts[s.side];
+    if (O && s.type !== 'bomblet') for (const b of O.beams) { if (!b.alive || s.hits.has(b) || MAT[b.mat].door) continue; const A = O.nodes[b.a], B = O.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.ox, s.oy, s.x, s.y, A.x, A.y, B.x, B.y); if (h >= 0 && h < bt) { bt = h; best = b; bF = O; } }
+    if (best) { impact(s, lp(s.ox, s.x, bt), lp(s.oy, s.y, bt), bF, best, null); if (s.dead) return; }
     if (s.y > groundY(s.x)) return impact(s, s.x, groundY(s.x), null, null, null, true);
     if (s.y > 1300 || s.x < -300 || s.x > WW + 300) s.dead = true;
   }
@@ -402,11 +432,14 @@ const GAME = {
     for (const d of T.devs) { if (!d.alive || !T.nodes[d.n]) continue; const [px, py] = pivot(T, d);
       if (d.type === 'shield' && d.e > 0) { const q = ray(px, py, domeR(d)); if (q > 0 && q < tm && s.y + s.dy * q < py + 6) { tm = q; hit = { sh: d }; } }
       const q = ray(px, py, DEV[d.type].r + 2); if (q > 0 && q < tm) { tm = q; hit = { d }; } }
-    for (const b of T.beams) { if (!b.alive) continue; const A = T.nodes[b.a], B = T.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.x, s.y, ex, ey, A.x, A.y, B.x, B.y); if (h >= 0 && h < 1 && h * R < tm) { tm = h * R; hit = { b }; } }
+    for (const b of T.beams) { if (!b.alive || b.open > 0) continue; const A = T.nodes[b.a], B = T.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.x, s.y, ex, ey, A.x, A.y, B.x, B.y); if (h >= 0 && h < 1 && h * R < tm) { tm = h * R; hit = { b }; } }
+    const O = forts[s.side]; let own = null;
+    for (const b of O.beams) { if (!b.alive || s.hits.has(b) || MAT[b.mat].door) continue; const A = O.nodes[b.a], B = O.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.x, s.y, ex, ey, A.x, A.y, B.x, B.y); if (h >= 0 && h < 1 && h * R < tm) { tm = h * R; hit = { b }; own = O; } }
     for (let q = 30; q < tm; q += 14) { const x = s.x + s.dx * q, y = s.y + s.dy * q; if (y > groundY(x)) { tm = q; hit = null; break; } }
     s.hx = s.x + s.dx * tm; s.hy = s.y + s.dy * tm; s.life -= dt; s.t += dt; if (s.life <= 0) s.dead = true;
     const dmg = s.dmg * dt;
-    if (hit && sim(T)) {
+    if (hit && own) { if (sim(own)) { hit.b.hp -= dmg * MAT[hit.b.mat].res.beam; hit.b.hit = .15; if (hit.b.hp <= 0) breakBeam(own, hit.b); } }
+    else if (hit && sim(T)) {
       if (hit.sh) { hit.sh.e = Math.max(0, hit.sh.e - dmg * 1.2); hit.sh.eT = 2.5; hit.sh.hitT = .2; }
       else if (hit.d) { hit.d.hp -= dmg; hit.d.hitT = .2; if (hit.d.hp <= 0) destroyDev(T, hit.d); }
       else if (hit.b) { hit.b.hp -= dmg * MAT[hit.b.mat].res.beam; hit.b.hit = .15; if (MAT[hit.b.mat].burn && rnd() < dt * .8) hit.b.fire = 8; if (hit.b.hp <= 0) breakBeam(T, hit.b); }
@@ -508,7 +541,7 @@ const GAME = {
   }
   function starter(F) {   // the free starting fort: a braced two-storey frame holding the Core, and one cannon
     const id = frameGrid(F, [170, 236, 302], [2, 2, 1], (c, l) => l === 0 ? 'steel' : 'wood');
-    addDev(F, 'core', id[1][1]); addDev(F, 'cannon', id[1][2]); addDev(F, 'pump', id[0][0]);
+    onFloor(F, addDev(F, 'core', id[1][1])); onFloor(F, addDev(F, 'cannon', id[1][2])); addDev(F, 'pump', id[0][0]);
   }
   function botBuild(F) {   // tall towers on a grid, X-braced; steel low, armor on the front face
     const nc = 5 + Math.floor(rnd() * 3), cols = [], u0 = 120 + rnd() * 30, du = 64 + rnd() * 6;
@@ -517,27 +550,35 @@ const GAME = {
     const heights = cols.map((_, c) => style === 0 ? (c === 1 || c === 2 ? peak : peak - 2) : style === 1 ? Math.min(peak, 2 + Math.floor(c / 1.5)) : Math.max(2, peak - Math.abs(c - (nc >> 1))));
     const id = frameGrid(F, cols, heights, (c, l, k) => c === nc - 1 && k === 'v' ? 'armor' : l <= 1 || (l <= 2 && k !== 'd') ? 'steel' : 'wood');
     const top = c => id[c][heights[c]], mid = (c, l) => id[c][Math.min(l, heights[c])];
-    addDev(F, 'core', id[1][1]);
+    onFloor(F, addDev(F, 'core', id[1][1]));
     const tall = cols.map((_, c) => c).sort((a, b) => heights[b] - heights[a]);
     const pick = a => a[Math.floor(rnd() * a.length)];
     const kit = [['cannon', top(tall[0])], [pick(['mortar', 'cluster']), top(tall[1])], [pick(['rail', 'laser', 'sniper']), top(tall[2])], [pick(['mg', 'sniper']), top(nc - 1)], [pick(['rockets', 'fire', 'swarm']), mid(nc - 2, heights[nc - 2])]];
-    for (const [type, n] of kit) addDev(F, type, n);
-    addDev(F, 'shield', mid(2, 2)); addDev(F, 'flak', mid(0, 2)); addDev(F, 'repair', id[2][1]);
+    for (const [type, n] of kit) onFloor(F, addDev(F, type, n));
+    onFloor(F, addDev(F, 'shield', mid(2, 2))); onFloor(F, addDev(F, 'flak', mid(0, 2))); onFloor(F, addDev(F, 'repair', id[2][1]));
     addDev(F, 'pump', id[0][0]); addDev(F, 'pump', id[2][0]); addDev(F, 'pump', id[nc - 2][0]); addDev(F, 'gen', id[0][1]); addDev(F, 'gen', id[nc - 1][0]);
     F.oil = 400;
   }
   function settle(F, n) { F.grace = n; for (let i = 0; i < n; i++) physics(F, DT); }
 
   /* ---------- the computer: ballistic aim that tightens, repairs, rearms and upgrades ---------- */
+  // would this aim run into our own walls? (doors open for us, and the floor under the gun doesn't count)
+  function ownBlocked(F, d, aim) {
+    const pts = trajectory(F, d, aim), mb = mountBeam(F, d), I = ISL[F.side];
+    for (let i = 1; i < pts.length; i++) { const [ax, ay] = pts[i - 1], [bx, by] = pts[i]; if (bx < I.x0 - 40 || bx > I.x1 + 40) break;
+      for (const b of F.beams) { if (!b.alive || b === mb || MAT[b.mat].door) continue; const A = F.nodes[b.a], B = F.nodes[b.b]; if (segHit(ax, ay, bx, by, A.x, A.y, B.x, B.y) >= 0) return true; } }
+    return false;
+  }
   function aimAt(F, d, tg) {
     if (DEV[d.type].dps) { const [sx, sy] = pivot(F, d), e = F.ai.err; F.ai.err = Math.max(.02, e * .9); d.aim = { a: Math.atan2(tg.y - 9 - sy, tg.x - sx) + (rnd() - .5) * e * .4, p: 1 }; return; }
     const [sx, sy] = pivot(F, d), D = DEV[d.type], dx = tg.x - sx, Y = -(tg.y - 9 - sy), dir = Math.sign(dx) || 1, X = Math.max(20, Math.abs(dx)), g = GRAV * (D.thrust ? .4 : D.g);
-    let sol = null;
-    for (let i = 0; i <= 30 && !sol; i++) {
+    let sol = null; const sols = [];
+    for (const hi of D.lob ? [1, -1] : [-1, 1]) for (let i = 0; i <= 30; i++) {   // every arc that lands on target, flat shots first
       const v = lp(D.speed[0], D.speed[1], i / 30) * (D.thrust ? 1.25 : 1), disc = v ** 4 - g * (g * X * X + 2 * Y * v * v); if (disc < 0) continue;
-      const th = Math.atan((v * v + (D.lob ? 1 : -1) * Math.sqrt(disc)) / (g * X)); if (D.lob ? th > .7 && th < 1.4 : th > -.35 && th < 1) sol = { th, p: i / 30 };
+      const th = Math.atan((v * v + hi * Math.sqrt(disc)) / (g * X)); if (th > -.35 && th < 1.45) sols.push({ th, p: i / 30 });
     }
-    if (!sol) sol = { th: D.lob ? 1.0 : .7, p: 1 };
+    for (const c of sols) { const a = dir > 0 ? -c.th : Math.PI + c.th; if (!ownBlocked(F, d, { a, p: c.p })) { sol = c; break; } }
+    if (!sol) sol = sols[0] || { th: D.lob ? 1.0 : .7, p: 1 };
     const e = F.ai.err; F.ai.err = Math.max(.02, e * .9);
     d.aim = { a: dir > 0 ? -(sol.th + (rnd() - .5) * e * 2) : Math.PI + sol.th + (rnd() - .5) * e * 2, p: cl(sol.p + (rnd() - .5) * e * 1.5, 0, 1) };
   }
@@ -565,7 +606,7 @@ const GAME = {
       else if (ups.length && rnd() < .55) { const d = ups[Math.floor(rnd() * ups.length)]; if (F.oil >= upCost(d.type, d.lv) + 60) upgrade(F, d); }
       else {
         const free = F.nodes.map((n, i) => i).filter(i => F.nodes[i].alive && !devAt(F, i) && !F.nodes[i].pin && F.beams.some(b => b.alive && (b.a === i || b.b === i))).sort((a, b) => F.nodes[a].y - F.nodes[b].y);
-        const opts = WEAP.filter(k => !DEV[k].pw || has('gen')), type = opts[Math.floor(rnd() * opts.length)]; if (free.length && F.oil >= DEV[type].cost + 80) { F.oil -= DEV[type].cost; addDev(F, type, free[0]); }
+        const opts = WEAP.filter(k => !DEV[k].pw || has('gen')), type = opts[Math.floor(rnd() * opts.length)]; if (free.length && F.oil >= DEV[type].cost + 80) { F.oil -= DEV[type].cost; onFloor(F, addDev(F, type, free[0])); }
       }
     }
   }
@@ -598,6 +639,7 @@ const GAME = {
   }
   function step(dt) {
     t += dt;
+    for (const F of forts) for (const b of F.beams) if (b.open > 0) b.open -= dt;
     for (const F of forts) if (sim(F)) physics(F, dt); else followSnap(F, dt);
     if (phase === 'build') { buildT -= dt; const me = forts[mySide], them = forts[1 - mySide]; if ((!MP.online() || MP.isHost()) && (buildT <= 0 || (me.ready && them.ready))) startBattle(); }
     if (phase === 'battle') for (const F of forts) if (sim(F)) {
@@ -628,18 +670,18 @@ const GAME = {
   /* ---------- online: my fort streams to you, yours to me ---------- */
   function net(dt) {
     if (!MP.online() || demo || (sendT -= dt) > 0) return; sendT = .1;
-    const F = forts[mySide], m = { t: 's', n: [], h: F.beams.map(b => b.alive ? Math.max(1, Math.round(b.hp)) * (b.fire > 0 ? -1 : 1) : 0), d: F.devs.map(d => [d.n, d.type, d.alive ? Math.max(1, Math.round(d.hp)) : 0, d.aim ? +d.aim.a.toFixed(2) : null, Math.round(d.e), d.flash > .05 ? 1 : 0, d.lv]), g: Math.round(F.oil), e: Math.round(F.en), r: F.ready ? 1 : 0 };
+    const F = forts[mySide], m = { t: 's', n: [], h: F.beams.map(b => b.alive ? Math.max(1, Math.round(b.hp)) * (b.fire > 0 ? -1 : 1) : 0), d: F.devs.map(d => [d.n, d.type, d.alive ? Math.max(1, Math.round(d.hp)) : 0, d.aim ? +d.aim.a.toFixed(2) : null, Math.round(d.e), d.flash > .05 ? 1 : 0, d.lv, d.bm == null ? -1 : d.bm, d.u == null ? 0 : +d.u.toFixed(3)]), g: Math.round(F.oil), e: Math.round(F.en), r: F.ready ? 1 : 0 };
     for (const n of F.nodes) m.n.push(n.alive ? Math.round(n.x) : -1, Math.round(n.y));
-    if (F.ver !== lastVer || (bsT -= .1) <= 0) { m.b = F.beams.map(b => [b.a, b.b, ['wood', 'steel', 'armor'].indexOf(b.mat)]); lastVer = F.ver; bsT = 2; }
+    if (F.ver !== lastVer || (bsT -= .1) <= 0) { m.b = F.beams.map(b => [b.a, b.b, MATS.indexOf(b.mat)]); lastVer = F.ver; bsT = 2; }
     MP.send(m);
   }
   function onSnap(m) {
     const F = forts[1 - mySide];
     for (let i = 0; i < m.n.length / 2; i++) { const x = m.n[i * 2], y = m.n[i * 2 + 1]; let n = F.nodes[i]; if (!n) n = F.nodes[i] = { x, y, px: x, py: y, pin: false, m: 1, alive: true }; n.alive = x !== -1; if (n.alive) { n.tx = x; n.ty = y; if (!n.seen) { n.x = x; n.y = y; n.seen = 1; } } }
     F.nodes.length = m.n.length / 2;
-    if (m.b) F.beams = m.b.map(([a, b, s], i) => Object.assign(F.beams[i] && F.beams[i].a === a && F.beams[i].b === b ? F.beams[i] : { hit: 0, f: 0, rest: 1 }, { a, b, mat: ['wood', 'steel', 'armor'][s] || 'wood' }));
+    if (m.b) F.beams = m.b.map(([a, b, s], i) => Object.assign(F.beams[i] && F.beams[i].a === a && F.beams[i].b === b ? F.beams[i] : { hit: 0, f: 0, rest: 1 }, { a, b, mat: MATS[s] || 'wood' }));
     m.h.forEach((h0, i) => { const b = F.beams[i]; if (!b) return; const h = Math.abs(h0); if (b.alive && h && b.hp && h < b.hp - .5) b.hit = .3; if (b.alive && !h && F.nodes[b.a] && F.nodes[b.b]) { const A = F.nodes[b.a], B = F.nodes[b.b]; splinters((A.x + B.x) / 2, (A.y + B.y) / 2, MAT[b.mat], Math.atan2(B.y - A.y, B.x - A.x), Math.hypot(B.x - A.x, B.y - A.y)); } b.hp = h; b.alive = h > 0; b.fire = h0 < 0 ? 1 : 0; });
-    F.devs = m.d.map(([n, type, hp, a, e, fl, lv], i) => { const o = F.devs[i] && F.devs[i].n === n && F.devs[i].type === type ? F.devs[i] : { ang: F.side ? Math.PI + .6 : -.6, spin: 0, flash: 0, hitT: 0 }; if (o.alive && !hp && F.nodes[n]) boom(F.nodes[n].x, F.nodes[n].y, type === 'core' ? 110 : 44, SIDEC[F.side], 1); return Object.assign(o, { n, type, hp, lv: lv || 1, alive: hp > 0, aim: a === null ? null : { a, p: 1 }, e, flash: fl ? .12 : o.flash }); });
+    F.devs = m.d.map(([n, type, hp, a, e, fl, lv, bm, u], i) => { const o = F.devs[i] && F.devs[i].n === n && F.devs[i].type === type ? F.devs[i] : { ang: F.side ? Math.PI + .6 : -.6, spin: 0, flash: 0, hitT: 0 }; if (o.alive && !hp && F.nodes[n]) boom(F.nodes[n].x, F.nodes[n].y, type === 'core' ? 110 : 44, SIDEC[F.side], 1); return Object.assign(o, { n, type, bm: bm == null || bm < 0 ? null : bm, u: u || 0, hp, lv: lv || 1, alive: hp > 0, aim: a === null ? null : { a, p: 1 }, e, flash: fl ? .12 : o.flash }); });
     F.oil = m.g; F.en = m.e || 0; F.ready = !!m.r;
   }
   function followSnap(F, dt) { const k = Math.min(1, dt * 14); for (const n of F.nodes) if (n.alive && n.tx !== undefined) { n.x += (n.tx - n.x) * k; n.y += (n.ty - n.y) * k; } }
@@ -702,11 +744,20 @@ const GAME = {
   }
   const devNear = (F, x, y, r = 24) => F.devs.find(q => q.alive && Math.hypot(pivot(F, q)[0] - x, pivot(F, q)[1] - y) < r / Math.min(1, cam.z));
   function placeDev(F, type, x, y) {
-    const n = nearNode(F, x, y, 24 / Math.min(1, cam.z)); if (n < 0) { sound('nope'); say('Put it on one of your bolts', '#ff8a8a', 1.4); return; }
-    if (devAt(F, n)) { sound('nope'); say('That bolt is taken', '#ff8a8a', 1.2); return; }
-    if (DEV[type].ground && !F.nodes[n].pin) { sound('nope'); say('Oil pumps go on bolts on the ground', '#ff8a8a', 1.6); return; }
+    const z = Math.min(1, cam.z);
     if (F.oil < DEV[type].cost) { sound('nope'); say(NO.oil, '#ff8a8a', 1.2); return; }
-    if (addDev(F, type, n) >= 0) { F.oil -= DEV[type].cost; sound('build'); if (DEV[type].reload) { aimSel = F.devs[F.devs.length - 1]; tool = null; say('Now drag to aim it', SIDEC[F.side], 1.6); } }
+    if (DEV[type].ground) {   // pumps sit in the ground, on a ground bolt
+      const n = nearNode(F, x, y, 24 / z); if (n < 0 || !F.nodes[n].pin) { sound('nope'); say('Oil pumps go on bolts on the ground', '#ff8a8a', 1.6); return; }
+      if (devAt(F, n)) { sound('nope'); say('That bolt is taken', '#ff8a8a', 1.2); return; }
+      if (addDev(F, type, n) >= 0) { F.oil -= DEV[type].cost; sound('build'); } return;
+    }
+    // everything else stands on a floor: tap a flat beam, inside a room or on a roof
+    let best = -1, bd = 22 / z, bu = .5;
+    F.beams.forEach((b, i) => { if (!b.alive || !isFloor(F, b)) return; const A = F.nodes[b.a], B = F.nodes[b.b], dx = B.x - A.x, dy = B.y - A.y, u = cl(((x - A.x) * dx + (y + 10 - A.y) * dy) / (dx * dx + dy * dy), 0, 1), q = Math.hypot(A.x + dx * u - x, A.y + dy * u - 9 - y); if (q < bd) { bd = q; best = i; bu = u; } });
+    if (best < 0) { sound('nope'); say('Put it on a floor: tap a flat beam', '#ff8a8a', 1.6); return; }
+    const b = F.beams[best], di = addDevFree(F, type, bu < .5 ? b.a : b.b);
+    if (!mount(F, di, best, bu)) { F.devs.pop(); F.ver++; masses(F); sound('nope'); say('Too close to another device', '#ff8a8a', 1.3); return; }
+    if (di >= 0) { F.oil -= DEV[type].cost; sound('build'); if (DEV[type].reload) { aimSel = F.devs[F.devs.length - 1]; tool = null; say('Now drag to aim it', SIDEC[F.side], 1.6); } }
   }
   function deleteAt(F, x, y) {
     const refund = phase === 'build' ? 1 : .5, d = devNear(F, x, y, 20);
@@ -746,14 +797,14 @@ const GAME = {
     }
     const [x, y] = toWorld(kx, ky);
     if (phase !== 'over') {
-      if (tool === 'wood' || tool === 'steel' || tool === 'armor') {
+      if (!!MAT[tool]) {
         const n = nearNode(F, x, y, SNAP / Math.min(1, cam.z)), z = ZONE[F.side], gy = groundY(x);
         if (n >= 0) { drag = { mat: tool, from: n, x, y }; return; }
         if (x > z.x0 && x < z.x1 && Math.abs(y - gy) < 26) { drag = { mat: tool, from: -1, start: { x, y: gy }, x, y }; return; }
       } else if (tool === 'fix') { fixing = true; return repairAt(F, x, y); }
       else if (tool === 'del') return deleteAt(F, x, y);
       else if (tool === 'up') { const d = devNear(F, x, y); if (d) { const why = upgrade(F, d); if (why) { sound('nope'); say(why, '#ff8a8a', 1.2); } else { sound('up'); say(`${DEV[d.type].name} level ${d.lv}!`, '#ffd23f', 1.4); burst(...pivot(F, d), ['#ffd23f', '#fff'], 16, 160, .5, 4); } return; } }
-      else if (tool && DEV[tool]) { if (nearNode(F, x, y, 24 / Math.min(1, cam.z)) >= 0) return placeDev(F, tool, x, y); }
+      else if (tool && DEV[tool]) return placeDev(F, tool, x, y);
       else { let w = null, wd = 30 / Math.min(1, cam.z); for (const d of F.devs) { if (!d.alive || !DEV[d.type].reload) continue; const q = Math.hypot(pivot(F, d)[0] - x, pivot(F, d)[1] - y); if (q < wd) { wd = q; w = d; } } if (w) { aimSel = w; aimPt = { x, y }; return; } if (aimSel) { aimPt = { x, y }; return; } }
     }
     pan = { kx, ky, x: cam.x, y: cam.y };   // nothing to touch here: look around
@@ -881,7 +932,7 @@ const GAME = {
   function drawBeam(g, A, B, b, mine, shadow) {
     const M = MAT[b.mat], dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy); if (len < 1) return;
     g.save(); g.translate(A.x, A.y); g.rotate(Math.atan2(dy, dx));
-    const th = b.mat === 'armor' ? 13 : b.mat === 'steel' ? 10 : 9, h2 = th / 2;
+    const th = b.mat === 'armor' ? 13 : b.mat === 'steel' || b.mat === 'door' ? 10 : 9, h2 = th / 2;
     if (shadow) { g.fillStyle = 'rgba(10,4,20,.28)'; g.fillRect(-1, -h2 + 4, len + 2, th); g.restore(); return; }
     g.fillStyle = M.dark; g.fillRect(-2, -h2 - 1, len + 4, th + 2);
     if (b.mat === 'wood') {
@@ -891,6 +942,13 @@ const GAME = {
     } else if (b.mat === 'steel') {
       g.fillStyle = '#5c6676'; g.fillRect(0, -h2, len, th); g.fillStyle = '#aab4c4'; g.fillRect(0, -h2, len, 2.5); g.fillRect(0, h2 - 3, len, 2); g.fillStyle = '#7e8898'; g.fillRect(0, -1.5, len, 3);
       g.fillStyle = '#d6dde8'; for (let x = 7; x < len - 4; x += 14) { g.beginPath(); g.arc(x, -h2 + 1.3, .9, 0, TAU); g.arc(x, h2 - 1.3, .9, 0, TAU); g.fill(); }
+    } else if (b.mat === 'door') {
+      const op = b.open > 0 ? Math.min(1, b.open * 4, (1.4 - b.open) * 8 + .2) : 0;
+      if (op > 0) { g.globalAlpha = 1 - op * .75; }
+      g.fillStyle = '#2c5c80'; g.fillRect(0, -h2, len, th); g.fillStyle = '#5fa8d8'; g.fillRect(0, -h2, len, 2.5);
+      g.fillStyle = '#173248'; for (let x = len * .25; x < len; x += len * .25) g.fillRect(x - .75, -h2, 1.5, th);
+      g.fillStyle = '#ffd23f'; g.fillRect(len / 2 - 3, -1.5, 6, 3);
+      g.globalAlpha = 1; if (op > 0) { g.strokeStyle = 'rgba(95,212,255,.8)'; g.lineWidth = 1.5; g.setLineDash([4, 4]); g.strokeRect(0, -h2, len, th); g.setLineDash([]); }
     } else {
       const gr = g.createLinearGradient(0, -h2, 0, h2); gr.addColorStop(0, '#8a93a3'); gr.addColorStop(.25, '#5c6472'); gr.addColorStop(1, '#2c323d'); g.fillStyle = gr; g.fillRect(0, -h2, len, th);
       g.strokeStyle = 'rgba(15,18,24,.7)'; g.lineWidth = 1.2; for (let x = 18; x < len - 6; x += 22) { g.beginPath(); g.moveTo(x, -h2); g.lineTo(x, h2); g.stroke(); }
@@ -1023,7 +1081,7 @@ const GAME = {
     }
   }
   function drawFort(g, F) {
-    const mine = F.side === mySide && !demo, building = mine && (tool === 'wood' || tool === 'steel' || tool === 'armor');
+    const mine = F.side === mySide && !demo, building = mine && (!!MAT[tool]);
     for (const b of F.beams) if (b.alive && F.nodes[b.a] && F.nodes[b.b]) drawBeam(g, F.nodes[b.a], F.nodes[b.b], b, mine, true);
     drawWalls(g, F);
     for (const n of F.nodes) if (n.alive && n.pin) { metal(g, n.x - 10, n.y - 4, 20, 9, 2, '#6a6478', '#2c2836'); }
@@ -1132,7 +1190,7 @@ const GAME = {
     g.fillStyle = ag; g.beginPath(); g.roundRect(A.x, A.y, A.w, A.h, 16); g.fill();
     txt(g, phase === 'build' ? (rd ? 'READY ✓' : 'READY') : 'AIM', A.x + A.w / 2, A.y + 40, 26, phase === 'build' && !rd ? '#2a1408' : '#fff', 'center');
     txt(g, phase === 'build' ? (rd ? 'waiting...' : 'start the battle') : 'tap a weapon', A.x + A.w / 2, A.y + 68, 11, phase === 'build' && !rd ? '#2a1408' : '#cfc8e0', 'center');
-    const hint = (tool === 'wood' || tool === 'steel' || tool === 'armor') ? 'Drag from a bolt or your ground. New beams hang still for a moment, then gravity kicks in: brace them!' : tool === 'fix' ? 'Tap or drag over damaged beams and devices to repair them with oil (one every half second; the Core cannot be repaired). Ghost beams can be rebuilt.' : tool === 'del' ? 'Tap a beam or device to remove it' + (phase === 'battle' ? ' (half refund)' : '') : tool === 'up' ? 'Tap one of your devices to upgrade it (up to level 3)' : tool === 'pump' ? `Tap a bolt on the ground to place an Oil pump (+${pumpRate({ lv: 1 })} oil/s)` : tool === 'gen' ? `Generators burn ${genBurn({ lv: 1 })} oil/s into ${genOut({ lv: 1 })} power/s. They explode when destroyed!` : tool ? `Tap one of your bolts to place the ${DEV[tool].name}` + (DEV[tool].reload ? ` · each shot: ${DEV[tool].ammo} oil` + (DEV[tool].pw ? ` + ${DEV[tool].pw} power` : '') : '') : aimSel ? 'Drag to aim: direction and power. It fires on its own.' : phase === 'battle' ? 'Tap a weapon, then drag to aim. Drag the sky to look around.' : '';
+    const hint = (!!MAT[tool]) ? 'Drag from a bolt or your ground. New beams hang still for a moment, then gravity kicks in: brace them!' : tool === 'fix' ? 'Tap or drag over damaged beams and devices to repair them with oil (one every half second; the Core cannot be repaired). Ghost beams can be rebuilt.' : tool === 'del' ? 'Tap a beam or device to remove it' + (phase === 'battle' ? ' (half refund)' : '') : tool === 'up' ? 'Tap one of your devices to upgrade it (up to level 3)' : tool === 'pump' ? `Tap a bolt on the ground to place an Oil pump (+${pumpRate({ lv: 1 })} oil/s)` : tool === 'gen' ? `Generators burn ${genBurn({ lv: 1 })} oil/s into ${genOut({ lv: 1 })} power/s. They explode when destroyed!` : tool ? `Tap a flat beam (a floor or roof) to place the ${DEV[tool].name}. Your own walls block your shots: leave a gap or use a Door` + (DEV[tool].reload ? ` · each shot: ${DEV[tool].ammo} oil` + (DEV[tool].pw ? ` + ${DEV[tool].pw} power` : '') : '') : aimSel ? 'Drag to aim: direction and power. It fires on its own.' : phase === 'battle' ? 'Tap a weapon, then drag to aim. Drag the sky to look around.' : '';
     if (hint !== hintS) { hintS = hint; hintT = t; }
     const ha = hint ? cl(1 - (t - hintT - 6), 0, 1) : 0;
     if (ha > 0) { g.globalAlpha = ha; g.font = '13px Bungee, Impact, sans-serif'; const hw = g.measureText(hint).width + 30; glass(g, 640 - hw / 2, tb.act.y - 86, hw, 28, 14); txt(g, hint, 640, tb.act.y - 71, 13, '#fff', 'center'); g.globalAlpha = 1; }
