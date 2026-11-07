@@ -7,8 +7,10 @@
 //   POST /api/play   <- { id }        -> { ok, counted }   (same IP + game counts once per 10 minutes; IPs are only kept hashed)
 //   POST /api/live   -> { ok }   (sent once a minute while a game is open; live = people seen in the last 2.5 minutes)
 //   POST /api/view   -> { ok, counted }   (a hub page view; same IP counts once per 10 minutes)
-//   GET  /api/stats  -> { games: { id: { total, week, today } }, site: { live, today, week, days }, updated }
-//                       (week = last 7 UTC days incl. today; cached ~60 s. site.* = { plays, views, players };
+//   GET  /api/stats  -> { games: { id: { total, week, today, recent } }, site: { live, today, week, weekStart, days }, updated }
+//                       (week = this calendar week, which resets every Monday 00:00 UTC; days = Monday..Sunday of it, with
+//                        future: true on days still to come; recent = the last 7 UTC days, rolling, which the hub ranks
+//                        Trending by so it isn't empty right after the reset; cached ~60 s. site.* = { plays, views, players };
 //                        players = different people who started a game. To count them, the Stats object keeps a hash of
 //                        each player's IP made with a random secret that never leaves it, and deletes it after 8 days.)
 // Bug reports: one global Durable Object (Bugs) keeps every report.
@@ -50,6 +52,8 @@ async function verify(token) {
 
 const ID_RE = /^[a-z0-9-]{2,40}$/;
 const day = (t = Date.now()) => new Date(t).toISOString().slice(0, 10);
+// Monday 00:00 UTC of the week holding t: the weekly counts start again from zero there
+const mondayOf = (t = Date.now()) => { const d = new Date(t); d.setUTCHours(0, 0, 0, 0); return d.getTime() - ((d.getUTCDay() + 6) % 7) * 86400000; };
 const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
 
 async function play(request, env, ids) {
@@ -320,19 +324,19 @@ export class Stats {
     }
     if (path === '/stats') {
       if (!this.memo || now - this.memoAt > MEMO_MS) {
-        const today = day(now), weekStart = day(now - 6 * 86400000), games = {};
+        const today = day(now), mon = mondayOf(now), weekStart = day(mon), recentStart = day(now - 6 * 86400000), games = {};
         for (const r of this.sql.exec(
-          'SELECT id, SUM(n) AS total, SUM(CASE WHEN day >= ? THEN n ELSE 0 END) AS week, SUM(CASE WHEN day = ? THEN n ELSE 0 END) AS today FROM plays GROUP BY id',
-          weekStart, today))
-          games[r.id] = { total: r.total, week: r.week, today: r.today };
-        // the whole site, day by day for the last 7 days
+          'SELECT id, SUM(n) AS total, SUM(CASE WHEN day >= ? THEN n ELSE 0 END) AS week, SUM(CASE WHEN day >= ? THEN n ELSE 0 END) AS recent, SUM(CASE WHEN day = ? THEN n ELSE 0 END) AS today FROM plays GROUP BY id',
+          weekStart, recentStart, today))
+          games[r.id] = { total: r.total, week: r.week, today: r.today, recent: r.recent };
+        // the whole site, day by day for this week (Monday to Sunday; days still to come are zero and marked future)
         const days = [], at = {};
-        for (let i = 6; i >= 0; i--) { const d = day(now - i * 86400000); at[d] = { d, plays: 0, views: 0, players: 0 }; days.push(at[d]); }
+        for (let i = 0; i < 7; i++) { const d = day(mon + i * 86400000); at[d] = { d, plays: 0, views: 0, players: 0 }; if (d > today) at[d].future = true; days.push(at[d]); }
         for (const r of this.sql.exec('SELECT day, SUM(n) AS n FROM plays WHERE day >= ? GROUP BY day', weekStart)) if (at[r.day]) at[r.day].plays = r.n;
         for (const r of this.sql.exec('SELECT day, n FROM views WHERE day >= ?', weekStart)) if (at[r.day]) at[r.day].views = r.n;
         for (const r of this.sql.exec('SELECT day, COUNT(*) AS n FROM people WHERE day >= ? GROUP BY day', weekStart)) if (at[r.day]) at[r.day].players = r.n;
         const week = { plays: days.reduce((a, x) => a + x.plays, 0), views: days.reduce((a, x) => a + x.views, 0), players: this.sql.exec('SELECT COUNT(DISTINCT k) AS n FROM people WHERE day >= ?', weekStart).one().n };
-        const t = at[today], site = { live: this.sql.exec('SELECT COUNT(*) AS n FROM live WHERE t >= ?', now - LIVE_MS).one().n, today: { plays: t.plays, views: t.views, players: t.players }, week, days };
+        const t = at[today], site = { live: this.sql.exec('SELECT COUNT(*) AS n FROM live WHERE t >= ?', now - LIVE_MS).one().n, today: { plays: t.plays, views: t.views, players: t.players }, week, weekStart, days };
         this.memo = JSON.stringify({ games, site, updated: now }); this.memoAt = now;
       }
       return new Response(this.memo, { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
