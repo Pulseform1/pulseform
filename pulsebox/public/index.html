@@ -1959,7 +1959,7 @@ function renderSite(site) {
     const b = t.querySelector('.ss-bars'); b.innerHTML = bars; b.setAttribute('aria-label', (isLive ? 'Players per day' : label) + ', this week: ' + days.filter(x => !x.future).map(x => dayName(x.d) + ' ' + x[key]).join(', '));
     grid.appendChild(t);
   }
-  $('ssUpd').textContent = 'Live · this week · resets Monday';
+  $('ssUpd').textContent = 'Live · this week · resets Monday 12 AM ET';
   $('siteStats').hidden = false;
 }
 function renderPulse(today, week) {
