@@ -66,18 +66,20 @@ body.demo .hud-pause, body.demo .mute { display: none; }
 <canvas id="cv"></canvas>
 <script>
 const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
-/* Orbit Hop: circle a planet, tap to launch straight off it, and get caught by the next planet's orbit. */
+/* Orbit Hop: circle a planet, tap to launch straight off it, and get caught by the next planet's orbit.
+   Tap again in flight to fire a THRUSTER: it bends your path toward the nearest planet ahead. Thrusters are limited;
+   stars refill them. Land without using one for a clean-hop streak bonus. */
 const GAME = {
   id: 'orbit-hop', title: 'Orbit Hop', tagline: 'Tap to launch. Catch the next orbit. Don\'t drift into space!',
   font: 'Russo One', accent: '#7cf2ff', accent2: '#ff7ae0', bg: '#070a1f',
-  how: ['Your comet circles a planet on its own.', 'Tap, click or press Space to fly off in a straight line.', 'Hit the next planet\'s ring to land. Grab stars for coins!'],
+  how: ['Your comet circles a planet on its own. Tap, click or press Space to fly off in a straight line.', 'Tap again mid-flight to fire a THRUSTER and bend toward the next planet. You get 3; every 3 stars refill one.', 'Hit the next planet\'s ring to land. Clean hops with no thruster build a streak bonus!'],
   skins: [
     { name: 'Comet', price: 0, c: ['#7cf2ff', '#2a7bff'] }, { name: 'Ember', price: 60, c: ['#ffb347', '#ff3d3d'] }, { name: 'Mint', price: 150, c: ['#9dffb0', '#18b86a'] },
     { name: 'Pixie', price: 250, c: ['#ff9cf0', '#a23bff'] }, { name: 'Sun', price: 400, c: ['#fff6a8', '#ffb800'] }, { name: 'Void', price: 700, c: ['#ffffff', '#5a3bff'], ring: true },
   ],
 };
 (() => {
-  let planets, me, cam, dead, trail, stars, coins, flyT, reached, hue0;
+  let planets, me, cam, dead, trail, stars, coins, flyT, reached, hue0, fuel, starN, clean, burnT;
   const R = p => p.r + 38;
   GAME.drawSkin = (gr, s, z) => {
     const gd = gr.createLinearGradient(-z, 0, z * .3, 0); gd.addColorStop(0, 'rgba(0,0,0,0)'); gd.addColorStop(1, s.c[1]);
@@ -100,20 +102,31 @@ const GAME = {
   GAME.reset = () => {
     hue0 = K.irand(0, 360); planets = [{ x: W / 2, y: 520, bx: W / 2, r: 70, spin: 1.6, hue: hue0, move: 0, ph: 0 }]; stars = []; coins = 0;
     for (let i = 0; i < 6; i++) addPlanet();
-    me = { p: 0, a: -Math.PI / 2, x: 0, y: 0, vx: 0, vy: 0 }; cam = 0; dead = false; trail = []; flyT = 0; reached = 0;
+    me = { p: 0, a: -Math.PI / 2, x: 0, y: 0, vx: 0, vy: 0 }; fuel = 3; starN = 0; clean = 0; burnT = 0; cam = 0; dead = false; trail = []; flyT = 0; reached = 0;
     bg = Array.from({ length: 140 }, () => ({ x: Math.random() * W, y: Math.random() * H, z: Math.random() * .8 + .2 }));
   };
   let bg = [];
+  // in flight, the same tap fires a thruster: swing hard toward the nearest planet ahead and speed up a little
+  function thrust() {
+    if (dead || me.p >= 0 || me.used || fuel <= 0) return;
+    // aim for the nearest planet in front of you, or failing that the next one up the chain
+    let best = planets[me.from + 1] || null, bd = 1e9; planets.forEach((p, i) => { if (i === me.from) return; const dx = p.x - me.x, dy = p.y - me.y, d = Math.hypot(dx, dy); if (dx * me.vx + dy * me.vy > 0 && d < bd) { bd = d; best = p; } });
+    if (!best) return;
+    const cur = Math.atan2(me.vy, me.vx), want = Math.atan2(best.y - me.y, best.x - me.x); let da = Math.atan2(Math.sin(want - cur), Math.cos(want - cur)); da = K.clamp(da, -2.4, 2.4);
+    const sp = Math.hypot(me.vx, me.vy) * 1.12, a = cur + da; me.vx = Math.cos(a) * sp; me.vy = Math.sin(a) * sp; me.used = true; fuel--; flyT = Math.min(flyT, 1); burnT = .35;
+    K.sfx(180, .25, 'sawtooth', .07, 260); K.burst(me.x, me.y, ['#ffb347', '#fff', K.skin.c[0]], 16, 260, { gravity: 0, life: .4 }); K.shake(3);
+  }
   function launch() {
-    if (dead || me.p < 0) return;
+    if (dead) return; if (me.p < 0) return thrust();
     const p = planets[me.p], dir = Math.sign(p.spin), sp = 760;
-    me.vx = -Math.sin(me.a) * dir * sp; me.vy = Math.cos(me.a) * dir * sp; me.p = -1; flyT = 0; me.from = planets.indexOf(p);
+    me.vx = -Math.sin(me.a) * dir * sp; me.vy = Math.cos(me.a) * dir * sp; me.p = -1; flyT = 0; me.from = planets.indexOf(p); me.used = false;
     K.sfx(300, .18, 'sine', .14, 500);
   }
   GAME.down = launch;
   GAME.key = (c, d) => { if (d && (c === 'Space' || c === 'Enter' || c === 'ArrowUp')) launch(); };
   GAME.bot = () => {
-    if (dead || me.p < 0) return;
+    if (dead) return;
+    if (me.p < 0) { if (flyT > .35 && !me.used && fuel > 0) { const q = planets[me.from + 1]; if (q) { const d = Math.hypot(q.x - me.x, q.y - me.y), vx = me.vx / 760, vy = me.vy / 760, miss = Math.abs((q.x - me.x) * vy - (q.y - me.y) * vx); if (miss > R(q) + 20 && d < 420 && Math.random() < .5) thrust(); } } return; }
     const p = planets[me.p], q = planets[me.p + 1]; if (!q) return;
     const dir = Math.sign(p.spin), vx = -Math.sin(me.a) * dir, vy = Math.cos(me.a) * dir;
     const dx = q.x - me.x, dy = q.y - me.y, along = dx * vx + dy * vy; if (along < 0) return;
@@ -136,6 +149,7 @@ const GAME = {
           if (K.dist(me.x, me.y, p.x, p.y) <= R(p) + 10) {
             me.p = i; me.a = Math.atan2(me.y - p.y, me.x - p.x);
             if (i > reached) {
+              if (me.used) clean = 0; else if (++clean % 5 === 0) { K.coin(2, p.x, p.y); K.pop(p.x, p.y - p.r - 130, `${clean} CLEAN HOPS!`, '#7cf2ff', 28); }
               const gain = i - reached; reached = i; K.add(gain, p.x, p.y - p.r - 50, gain > 1 ? '#ffe36e' : '#fff');
               if (gain > 1) { K.coin(gain, p.x, p.y); K.pop(p.x, p.y - p.r - 90, 'Skip!', '#ffe36e', 30); }
               if (reached % 10 === 0) { K.toast(`${reached} planets!`); K.coin(3, p.x, p.y); }
@@ -147,7 +161,8 @@ const GAME = {
         const v = K.view;
         if (flyT > 2.2 || me.x < v.x0 - 60 || me.x > v.x1 + 60 || me.y - cam < v.y0 - 140 || me.y - cam > v.y1 + 60) die();
       }
-      for (const s of stars) if (!s.got && K.dist(me.x, me.y, s.x, s.y) < 34) { s.got = true; K.coin(1, s.x, s.y); }
+      for (const s of stars) if (!s.got && K.dist(me.x, me.y, s.x, s.y) < 34) { s.got = true; K.coin(1, s.x, s.y); if (++starN % 3 === 0 && fuel < 5) { fuel++; K.pop(s.x, s.y - 40, '+1 THRUSTER', '#ffb347', 22); K.sfx(900, .1, 'triangle', .06); } }
+      if (burnT > 0) burnT -= dt;
       trail.push([me.x, me.y]); if (trail.length > 22) trail.shift();
     }
     const focus = me.p >= 0 ? planets[me.p].y : me.y;
@@ -178,6 +193,7 @@ const GAME = {
     const s = K.skin;
     if (!dead) {
       for (let i = 0; i < trail.length; i++) { const k = i / trail.length; gr.globalAlpha = k * .8; gr.fillStyle = s.c[1]; gr.beginPath(); gr.arc(trail[i][0], trail[i][1], 13 * k, 0, 7); gr.fill(); }
+      if (burnT > 0) { const a = Math.atan2(me.vy, me.vx), L = 30 + burnT * 80; gr.fillStyle = `rgba(255,179,71,${burnT * 2.4})`; gr.beginPath(); gr.moveTo(me.x - Math.cos(a) * L, me.y - Math.sin(a) * L); gr.lineTo(me.x + Math.cos(a + 1.7) * 12, me.y + Math.sin(a + 1.7) * 12); gr.lineTo(me.x + Math.cos(a - 1.7) * 12, me.y + Math.sin(a - 1.7) * 12); gr.fill(); }
       gr.globalAlpha = 1; gr.shadowColor = s.c[0]; gr.shadowBlur = 22; gr.fillStyle = s.c[0]; gr.beginPath(); gr.arc(me.x, me.y, 15, 0, 7); gr.fill(); gr.shadowBlur = 0;
       gr.fillStyle = '#fff'; gr.beginPath(); gr.arc(me.x - 4, me.y - 4, 5, 0, 7); gr.fill();
       if (s.ring) { gr.strokeStyle = '#fff'; gr.lineWidth = 2.5; gr.beginPath(); gr.ellipse(me.x, me.y, 25, 8, K.t * 2, 0, 7); gr.stroke(); }
@@ -187,9 +203,13 @@ const GAME = {
       }
     }
     gr.restore();
+    // thrusters left, and a hint the first time you are in the air
+    if (!dead) {
+      for (let i = 0; i < Math.max(3, fuel); i++) { const x = W / 2 - (Math.max(3, fuel) - 1) * 18 + i * 36, y = v.y1 - 42, on = i < fuel; gr.fillStyle = on ? '#ffb347' : 'rgba(255,255,255,.15)'; gr.beginPath(); gr.moveTo(x, y - 13); gr.lineTo(x + 9, y + 9); gr.lineTo(x, y + 4); gr.lineTo(x - 9, y + 9); gr.fill(); }
+      if (me.p < 0 && !me.used && fuel > 0 && reached < 3 && !K.bot) { gr.font = '20px "Russo One", sans-serif'; gr.textAlign = 'center'; gr.fillStyle = 'rgba(255,255,255,.8)'; gr.fillText('Tap again to fire a thruster!', W / 2, v.y1 - 78); }
+    }
   };
 })();
-
 /* Pulsebox game kit: canvas scaling, input, menus, skins shop, coins, best score, sound and effects.
    A game defines GAME before this runs: { id, title, tagline, how:[], bg, skins:[{name,price,c:[]}],
    reset(), update(dt), draw(g), down(x,y), move(x,y), up(x,y), key(code,isDown), bot(dt), drawSkin(g,skin,size) }.

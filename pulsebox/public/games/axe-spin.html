@@ -66,11 +66,13 @@ body.demo .hud-pause, body.demo .mute { display: none; }
 <canvas id="cv"></canvas>
 <script>
 const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
-/* Axe Spin: throw axes into a spinning log. Hit an axe that's already there and it's over. Clear the log for the next stage. */
+/* Axe Spin: throw axes into a spinning log. Hit an axe that's already there and it's over. Clear the log for the next stage.
+   Tap to throw. Hold to FOCUS: the log slows down while the focus meter drains, and letting go throws. Sticks and apples refill
+   focus. Landing an axe right next to another one is a CLOSE CALL, worth a bonus. */
 const GAME = {
   id: 'axe-spin', title: 'Axe Spin', tagline: 'Throw. Stick. Don\'t hit another axe!',
   font: 'Bowlby One', accent: '#ffb547', accent2: '#ff5d5d', bg: '#1d1430',
-  how: ['Tap, click or press Space to throw an axe at the spinning log.', 'Use up every axe to break the log and reach the next stage.', 'Hit an axe already in the log and it\'s over. Slice apples for coins!'],
+  how: ['Tap, click or press Space to throw an axe at the spinning log. Hit an axe already in the log and it\'s over.', 'HOLD to focus: the log slows down while the blue meter drains. Let go to throw.', 'Squeeze an axe in right next to another for a CLOSE CALL bonus. Slice apples for coins and focus!'],
   skins: [
     { name: 'Woodsman', price: 0, c: ['#d9dde6', '#8a5a2b'] }, { name: 'Viking', price: 60, c: ['#e8c06a', '#5a3a1e'] }, { name: 'Frost', price: 150, c: ['#bff3ff', '#3a6a9e'] },
     { name: 'Ruby', price: 250, c: ['#ff6b81', '#2b2b2b'] }, { name: 'Jade', price: 400, c: ['#7dffb0', '#1e5a3a'] }, { name: 'Royal', price: 700, c: ['#ffe36e', '#7a2bd6'], glow: true },
@@ -78,7 +80,7 @@ const GAME = {
 };
 (() => {
   const CX = W / 2, CY = 250, LR = 118, AX_Y = 620, SPEED = 2600, HALF = .17;
-  let rot, stuck, apples, left, stage, flying, dead, fallen, clearT, pattern, omega, chunks, bounce, tt;
+  let rot, stuck, apples, left, stage, flying, dead, fallen, clearT, pattern, omega, chunks, bounce, tt, focus, holdT, slow, closeN;
   function axe(gr, s, scale = 1) {
     gr.save(); gr.scale(scale, scale);
     if (s.glow) { gr.shadowColor = s.c[0]; gr.shadowBlur = 16; }
@@ -102,10 +104,12 @@ const GAME = {
   }
   const angDiff = (a, b) => { let d = (a - b) % 6.283; if (d > 3.1416) d -= 6.283; if (d < -3.1416) d += 6.283; return d; };
   function spin(t) { return pattern === 0 ? omega : pattern === 1 ? omega * 1.4 * Math.sin(t * 1.3) : pattern === 2 ? omega * (Math.floor(t / 2.2) % 2 ? -1 : 1) * Math.min(1, (t % 2.2) * 2) : omega * (1 + .85 * Math.sin(t * 2.2)); }
-  GAME.reset = () => { rot = 0; stage = 1; flying = null; dead = false; fallen = null; clearT = 0; chunks = []; bounce = null; setupStage(); };
+  GAME.reset = () => { focus = 1; holdT = -1; slow = 1; closeN = 0; rot = 0; stage = 1; flying = null; dead = false; fallen = null; clearT = 0; chunks = []; bounce = null; setupStage(); };
   function throwAxe() { if (dead || flying || clearT > 0 || left <= 0) return; flying = { y: AX_Y }; left--; K.sfx(500, .08, 'triangle', .08, 300); }
-  GAME.down = throwAxe;
-  GAME.key = (c, d) => { if (d && (c === 'Space' || c === 'Enter' || c === 'ArrowUp')) throwAxe(); };
+  // press starts a hold; a short tap just throws, a longer hold slows the log down until you let go
+  const press = () => { if (holdT < 0 && !dead) holdT = 0; }, release = () => { if (holdT < 0) return; holdT = -1; throwAxe(); };
+  GAME.down = press; GAME.up = release;
+  GAME.key = (c, d) => { if (c === 'Space' || c === 'Enter' || c === 'ArrowUp') d ? press() : release(); };
   let margin = 0;
   GAME.bot = dt => {
     if (dead || flying || clearT > 0) return;
@@ -115,7 +119,11 @@ const GAME = {
     if (stuck.every(b => Math.abs(angDiff(local, b.a)) > margin) && Math.random() < .2) { throwAxe(); margin = 0; }
   };
   GAME.update = dt => {
-    tt += dt; rot += spin(tt) * dt;
+    const focusing = holdT >= .14 && focus > 0 && !dead && clearT <= 0;
+    if (holdT >= 0) holdT += dt;
+    if (focusing) { focus = Math.max(0, focus - dt * .55); if (focus === 0) K.sfx(220, .1, 'sine', .05); }
+    slow += ((focusing ? .3 : 1) - slow) * Math.min(1, dt * 12);
+    tt += dt * slow; rot += spin(tt) * dt * slow;
     if (flying) {
       flying.y -= SPEED * dt;
       if (flying.y <= CY + LR) {
@@ -124,10 +132,12 @@ const GAME = {
           dead = true; bounce = { x: CX, y: CY + LR + 40, vx: K.rand(-300, 300), vy: 600, r: 0 }; flying = null;
           K.shake(16); K.noise(.25, .3, 2000); K.sfx(1200, .15, 'square', .1, -900); K.flash('#ff4d4d', .35); K.over(); return;
         }
-        stuck.push({ a: local, t: K.t }); flying = null; K.add(1); K.shake(5); K.noise(.08, .2, 400); K.sfx(140, .12, 'square', .12);
+        const gap = Math.min(9, ...stuck.map(b => Math.abs(angDiff(local, b.a))));
+        stuck.push({ a: local, t: K.t }); flying = null; K.add(1); focus = Math.min(1, focus + .12);
+        if (gap < HALF + .1) { closeN++; K.add(1, CX + 90, CY + LR, '#7cf2ff'); K.pop(CX, CY + LR + 70, closeN > 1 ? `CLOSE CALL x${closeN}!` : 'CLOSE CALL!', '#7cf2ff', 26); K.sfx(1400, .06, 'square', .05); if (closeN % 3 === 0) K.coin(1, CX, CY + LR); } K.shake(5); K.noise(.08, .2, 400); K.sfx(140, .12, 'square', .12);
         K.burst(CX, CY + LR, ['#c98a4a', '#8a5a2b', '#ffd9a0'], 8, 240, { life: .4, square: true });
         for (const ap of apples.slice()) if (Math.abs(angDiff(local, ap.a)) < .3) {
-          apples.splice(apples.indexOf(ap), 1); K.coin(ap.gold ? 3 : 1, CX, CY + LR); K.burst(CX, CY + LR, ap.gold ? ['#ffe36e', '#fff'] : ['#ff4d5e', '#fff3cf'], 14, 300);
+          apples.splice(apples.indexOf(ap), 1); focus = Math.min(1, focus + .4); K.coin(ap.gold ? 3 : 1, CX, CY + LR); K.burst(CX, CY + LR, ap.gold ? ['#ffe36e', '#fff'] : ['#ff4d5e', '#fff3cf'], 14, 300);
         }
         if (left === 0) {
           clearT = 1.2; const boss = stage % 5 === 0; K.add(boss ? 5 : 2, CX, CY - 60, '#ffe36e'); if (boss) K.coin(5, CX, CY);
@@ -172,6 +182,12 @@ const GAME = {
     if (flying) { gr.save(); gr.translate(CX, flying.y); axe(gr, s); gr.restore(); }
     else if (!dead && left > 0 && clearT <= 0) { gr.save(); gr.translate(CX, AX_Y + Math.sin(K.t * 5) * 3); axe(gr, s); gr.restore(); }
     if (bounce) { gr.save(); gr.translate(bounce.x, bounce.y); gr.rotate(bounce.r); axe(gr, s); gr.restore(); }
+    // focus: a cool vignette while the log is slowed, and the meter on the right
+    if (slow < .95) { gr.fillStyle = `rgba(60,170,255,${(1 - slow) * .16})`; gr.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); gr.strokeStyle = `rgba(124,242,255,${(1 - slow) * .8})`; gr.lineWidth = 4; gr.beginPath(); gr.arc(CX, CY, LR + 40 + Math.sin(K.t * 8) * 4, 0, 7); gr.stroke(); }
+    const mx = W - 50, my0 = H - 120, mh = 220; gr.fillStyle = 'rgba(255,255,255,.1)'; gr.beginPath(); gr.roundRect(mx - 10, my0 - mh, 20, mh, 10); gr.fill();
+    gr.fillStyle = focus > .05 ? '#7cf2ff' : '#ff6b6b'; gr.beginPath(); gr.roundRect(mx - 10, my0 - mh * focus, 20, mh * focus, 10); gr.fill();
+    gr.font = '14px "Bowlby One", Arial Black'; gr.fillStyle = '#bfefff'; gr.textAlign = 'center'; gr.fillText('FOCUS', mx, my0 + 22);
+    if (stage === 1 && stuck.length < 2 && !K.bot) { gr.font = '18px "Bowlby One", Arial Black'; gr.fillStyle = 'rgba(255,255,255,.7)'; gr.fillText('TAP to throw · HOLD to slow the log', CX, H - 40); }
     for (let i = 0; i < left; i++) { gr.save(); gr.translate(60, H - 50 - i * 34); gr.rotate(-Math.PI / 2); axe(gr, s, .32); gr.restore(); }
   };
 })();
