@@ -41,10 +41,10 @@ const GAME = {
   const groundY = x => { for (let s = 0; s < 2; s++) { const I = ISL[s]; if (x >= I.x0 && x <= I.x1) { const u = (x - I.x0) / (I.x1 - I.x0); return GY + Math.sin(u * 11 + s * 2) * 5 + Math.sin(u * 29 + s) * 2 + (u < .06 ? Math.pow(1 - u / .06, 2) * 44 : u > .94 ? Math.pow((u - .94) / .06, 2) * 44 : 0); } } return Infinity; };
   // how much each kind of hit hurts each material
   const MAT = {
-    wood: { name: 'Wood', cost: 8, hp: 55, maxF: 9000, comp: 1.2e-5, kg: 1, col: '#9a6532', dark: '#5e3a1c', burn: true, res: { bullet: 1, shell: 1, blast: 1, beam: 1 } },
-    steel: { name: 'Steel', cost: 24, hp: 150, maxF: 26000, comp: 3e-6, kg: 2.3, col: '#8792a3', dark: '#454d5c', res: { bullet: .55, shell: 1, blast: .9, beam: 1 } },
-    door: { name: 'Door', cost: 30, hp: 160, maxF: 22000, comp: 3e-6, kg: 2.6, col: '#3f7fa8', dark: '#173248', door: true, res: { bullet: .45, shell: .9, blast: .85, beam: 1 } },
-    armor: { name: 'Armor', cost: 42, hp: 300, maxF: 34000, comp: 2e-6, kg: 4.2, col: '#5c6472', dark: '#272c36', res: { bullet: .2, shell: .75, blast: .6, beam: 1 } },
+    wood: { name: 'Wood', cost: 8, hp: 55, maxF: 12600, comp: 1.2e-5, kg: 1, col: '#9a6532', dark: '#5e3a1c', burn: true, res: { bullet: 1, shell: 1, blast: 1, beam: 1 } },
+    steel: { name: 'Steel', cost: 24, hp: 150, maxF: 36400, comp: 3e-6, kg: 2.3, col: '#8792a3', dark: '#454d5c', res: { bullet: .55, shell: 1, blast: .9, beam: 1 } },
+    door: { name: 'Door', cost: 30, hp: 160, maxF: 30799, comp: 3e-6, kg: 2.6, col: '#3f7fa8', dark: '#173248', door: true, res: { bullet: .45, shell: .9, blast: .85, beam: 1 } },
+    armor: { name: 'Armor', cost: 42, hp: 300, maxF: 47600, comp: 2e-6, kg: 4.2, col: '#5c6472', dark: '#272c36', res: { bullet: .2, shell: .75, blast: .6, beam: 1 } },
   };
   const MATS = ['wood', 'steel', 'armor', 'door'];
   // ammo: oil per salvo, pw: power per salvo. beamMul: how hard it hits beams (snipers barely scratch them)
@@ -182,9 +182,27 @@ const GAME = {
     }
     if (F.grace) F.grace--;
     for (const n of N) if (n.alive && n.y > 1200) killNode(F, n);
+    if (F.loose && phase === 'battle') { F.loose = false; detach(F, dt); }
+  }
+  // find every bolt still joined (through beams) to a bolt in the ground; whatever isn't is no longer part of the fort
+  function detach(F, dt) {
+    const N = F.nodes, on = new Uint8Array(N.length), q = [];
+    N.forEach((n, i) => { if (n.alive && (n.pin || n.hold > 0)) { on[i] = 1; q.push(i); } });
+    const adj = N.map(() => []); for (const b of F.beams) if (b.alive) { adj[b.a].push(b.b); adj[b.b].push(b.a); }
+    while (q.length) { const i = q.pop(); for (const j of adj[i]) if (!on[j] && N[j].alive) { on[j] = 1; q.push(j); } }
+    let cut = 0;
+    for (const b of F.beams) if (b.alive && !on[b.a] && !on[b.b]) {
+      const A = N[b.a], B = N[b.b], vx = (A.x - A.px + B.x - B.px) / 2 / dt, vy = (A.y - A.py + B.y - B.py) / 2 / dt, M = MAT[b.mat];
+      debris.push({ x: (A.x + B.x) / 2, y: (A.y + B.y) / 2, vx: vx * .5, vy: Math.max(-40, vy * .4), a: Math.atan2(B.y - A.y, B.x - A.x), va: (rnd() - .5) * 1.6, l: Math.hypot(B.x - A.x, B.y - A.y), c: M.col, d: M.dark, slow: 1, t: 0 });
+      b.alive = false; b.fire = 0; F.lost += M.cost; cut++;
+    }
+    if (!cut) return;
+    for (const d of F.devs) if (d.alive && !on[d.n]) { const [px, py] = pivot(F, d); debris.push({ x: px, y: py, vx: 0, vy: 10, a: 0, va: (rnd() - .5) * 2, l: 22, c: '#4e4a5e', d: '#1c1a26', slow: 1, t: 0, dev: d.type }); destroyDev(F, d); }
+    N.forEach((n, i) => { if (n.alive && !on[i]) n.alive = false; });
+    F.ver++; masses(F); sound('crack');
   }
   function breakBeam(F, b, strain) {
-    if (!b.alive) return; b.alive = false; b.fire = 0; F.ver++; F.lost += MAT[b.mat].cost;
+    if (!b.alive) return; b.alive = false; b.fire = 0; F.ver++; F.lost += MAT[b.mat].cost; F.loose = true;
     const bi = F.beams.indexOf(b); for (const d of F.devs) if (d.bm === bi) d.bm = null;
     const A = F.nodes[b.a], B = F.nodes[b.b];
     splinters((A.x + B.x) / 2, (A.y + B.y) / 2, MAT[b.mat], Math.atan2(B.y - A.y, B.x - A.x), b.rest);
@@ -194,7 +212,7 @@ const GAME = {
   function killNode(F, n) {
     const i = F.nodes.indexOf(n); n.alive = false; F.ver++;
     for (const b of F.beams) if (b.alive && (b.a === i || b.b === i)) { b.alive = false; F.lost += MAT[b.mat].cost; }
-    for (const d of F.devs) if (d.alive && d.n === i && !mountBeam(F, d)) destroyDev(F, d); masses(F);
+    for (const d of F.devs) if (d.alive && d.n === i && !mountBeam(F, d)) destroyDev(F, d); masses(F); F.loose = true;
   }
   function destroyDev(F, d) {
     if (!d.alive) return; d.alive = false; F.ver++; F.lost += (DEV[d.type].cost || 300) * d.lv; masses(F);
@@ -531,7 +549,8 @@ const GAME = {
     }
     if (phase === 'battle') for (const F of forts) stepFlak(F, dt);
     stepPend(dt); stepShots(dt);
-    for (const p of debris) { p.vy += GRAV * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.a += p.va * dt; p.t += dt; } debris = debris.filter(p => p.y < 1300 && p.t < 6);
+    for (const p of debris) { p.vy += GRAV * (p.slow ? .22 : 1) * dt; if (p.slow) { p.vy = Math.min(p.vy, 160); p.vx *= 1 - dt * .8; if (Math.random() < dt * 3) parts.push({ x: p.x, y: p.y, vx: 0, vy: -12, life: 1.1, max: 1.1, size: 5, c: '#6a5a7a', g: -10 }); } p.x += p.vx * dt; p.y += p.vy * dt; p.a += p.va * dt; p.t += dt; }
+    debris = debris.filter(p => p.y < 1300 && p.t < (p.slow ? 2.6 : 6));
     for (const p of parts) { p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .98; p.life -= dt; } parts = parts.filter(p => p.life > 0);
     for (const r of rings) r.t += dt; rings = rings.filter(r => r.t < .5);
     for (const F of forts) for (const d of F.devs) { if (d.emp > 0) { d.emp -= dt; if (d.emp <= 0 && d.starve === 'emp') d.starve = null; if (Math.random() < dt * 8 && d.alive) { const [px, py] = pivot(F, d); spark(px + (Math.random() - .5) * 30, py - Math.random() * 20, '#bff4ff'); } } if (d.aim && d.type !== 'flak') { let da = d.aim.a - d.ang; da = Math.atan2(Math.sin(da), Math.cos(da)); d.ang += da * Math.min(1, dt * 8); } d.flash = Math.max(0, d.flash - dt); d.hitT = Math.max(0, d.hitT - dt); d.spin += dt * 9; if (d.zap && (d.zap.t -= dt) <= 0) d.zap = null; }
@@ -854,11 +873,119 @@ const GAME = {
     const hp = b.hp / M.hp;
     if (hp < .99) { g.strokeStyle = `rgba(15,6,6,${.75 * (1 - hp)})`; g.lineWidth = 1.5; g.beginPath(); for (let k = 0; k < 3; k++) { const x = len * (.22 + k * .28); g.moveTo(x - 3, -h2); g.lineTo(x + 2, 0); g.lineTo(x - 2, h2); } g.stroke(); }
     if (b.fire > 0) { g.fillStyle = `rgba(255,${120 + Math.random() * 60},40,${.35 + Math.random() * .2})`; g.fillRect(0, -h2 - 1, len, th + 2); }
-    const st = Math.abs(b.f || 0) / M.maxF; if (st > .45 && mine) { g.fillStyle = `rgba(255,40,40,${cl((st - .45) * 1.4, 0, .75)})`; g.fillRect(0, -h2, len, th); }
+    const st = Math.abs(b.f || 0) / M.maxF;   // a stress gauge on your own beams: yellow when it's working hard, red when it's close to snapping
+    if (mine && st > .35) { g.fillStyle = st < .65 ? `rgba(255,214,60,${cl((st - .35) * 1.6, 0, .45)})` : `rgba(255,40,40,${cl(.45 + (st - .65) * 1.6, 0, .8)})`; g.fillRect(0, -h2, len, th); if (st > .8 && Math.sin(t * 14) > 0) { g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.strokeRect(0, -h2, len, th); } }
     if (b.hit > 0) { g.fillStyle = `rgba(255,255,255,${b.hit * 2})`; g.fillRect(0, -h2, len, th); }
     g.restore();
   }
   function metal(g, x, y, w, h, r, c0, c1) { const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, c0); gr.addColorStop(1, c1); g.fillStyle = gr; g.beginPath(); g.roundRect(x, y, w, h, r); g.fill(); g.strokeStyle = 'rgba(8,6,14,.85)'; g.lineWidth = 1.5; g.stroke(); }
+  /* ---------- weapon art: each gun has its own look, and every upgrade level adds visible parts ----------
+     drawn along +x (the aim); returns where the muzzle is so the flash lands on it */
+  function gun(g, F, d, c, c2) {
+    const lv = d.lv || 1, k = d.type, rc = d.flash > 0 ? -d.flash * 22 : 0, gold = '#ffd23f', gold2 = '#a8780a';
+    const plate = (x, y, w, h, r = 3, a = '#6a6680', b = '#262432') => metal(g, x, y, w, h, r, a, b);
+    const rivets = (x0, x1, y, step = 6) => { g.fillStyle = 'rgba(255,255,255,.5)'; for (let x = x0; x <= x1; x += step) { g.beginPath(); g.arc(x, y, .9, 0, TAU); g.fill(); } };
+    const band = (x, y, h, col = c) => { g.fillStyle = col; g.fillRect(x, y, 2.5, h); };
+    const hole = (x, y, r) => { g.fillStyle = '#0a0812'; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
+    const glow = (x, y, r, col, a = 1) => { g.save(); g.globalCompositeOperation = 'lighter'; const gl = g.createRadialGradient(x, y, 0, x, y, r); gl.addColorStop(0, col); gl.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = a; g.fillStyle = gl; g.fillRect(x - r, y - r, r * 2, r * 2); g.restore(); };
+    // the mount: a turntable that grows armor at level 2 and gold trim at level 3
+    const w2 = k === 'mortar' || k === 'fire' || k === 'cluster' ? 15 : 13;
+    g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(0, 9, w2 + 3, 3.5, 0, 0, TAU); g.fill();
+    plate(-w2, 1, w2 * 2, 8, 3, '#5a5868', '#22202c'); g.fillStyle = lv >= 3 ? gold : c; g.fillRect(-w2 + 2, 4, w2 * 2 - 4, 2);
+    if (lv >= 2) { plate(-w2 - 3, -2, 5, 11, 2, '#7a7690', '#2a2836'); plate(w2 - 2, -2, 5, 11, 2, '#7a7690', '#2a2836'); rivets(-w2 + 3, w2 - 3, 7.5, 5); }
+    const dg = g.createRadialGradient(-3, -4, 1, 0, 0, w2 - 2); dg.addColorStop(0, lv >= 3 ? '#9a96b0' : '#77738a'); dg.addColorStop(1, '#2c2a38'); g.fillStyle = dg; g.beginPath(); g.arc(0, 2, w2 - 2, Math.PI, 0); g.fill();
+    if (lv >= 3) { g.strokeStyle = gold; g.lineWidth = 1.5; g.beginPath(); g.arc(0, 2, w2 - 2, Math.PI, 0); g.stroke(); }
+    // the gun itself pivots; keep its top side up when it faces left
+    g.rotate(d.ang); if (Math.cos(d.ang) < 0) g.scale(1, -1);
+    let tip = 34;
+    if (k === 'cannon') {
+      // 1: a stubby gun. 2: a long reinforced barrel and recoil springs. 3: twin barrels (it fires two)
+      plate(-11, -8, 17, 16, 4, '#6a6680', '#24222e'); rivets(-8, 4, -6, 4);
+      const L = lv >= 2 ? 38 : 30, ys = lv >= 3 ? [-4.5, 4.5] : [0], bh = lv >= 3 ? 7 : 10;
+      for (const y of ys) { plate(2 + rc, y - bh / 2, L, bh, 3, '#7a7690', '#262432'); plate(L - 4 + rc, y - bh / 2 - 1.5, 7, bh + 3, 2, lv >= 3 ? gold : c, lv >= 3 ? gold2 : c2); hole(L + 3 + rc, y, bh / 2 - 1.2); if (lv >= 2) { band(12 + rc, y - bh / 2, bh, '#3a3848'); band(22 + rc, y - bh / 2, bh, '#3a3848'); } }
+      if (lv >= 2) { g.strokeStyle = '#9a96b0'; g.lineWidth = 1.2; g.beginPath(); for (let x = -2; x < 8; x += 2) { g.moveTo(x, -9); g.lineTo(x + 1, -6); } g.stroke(); }
+      tip = L + 6;
+    } else if (k === 'mg') {
+      // 1: twin barrels and an ammo box. 2: cooling jackets with vents. 3: a spinning six-barrel gatling
+      plate(-10, -7, 16, 14, 3, '#4e4a5e', '#1c1a26'); plate(-9, 6, 12, 7, 2, '#5a6a3a', '#2a3418'); g.fillStyle = gold; for (let i = 0; i < 4; i++) g.fillRect(-7 + i * 3, 13, 1.6, 3);
+      if (lv >= 3) { plate(4, -6, 10, 12, 3, '#6a6680', '#262432'); const sp = d.spin * (d.flash > 0 ? 3 : 1); for (let i = 0; i < 6; i++) { const a = sp + i / 6 * TAU, y = Math.sin(a) * 4.2, sh = .55 + .45 * Math.cos(a); g.fillStyle = `rgb(${110 * sh + 40},${108 * sh + 40},${130 * sh + 40})`; g.fillRect(12, y - 1.3, 26, 2.6); } plate(36, -6, 4, 12, 2, gold, gold2); tip = 42; }
+      else { for (const o of [-3.2, 3.2]) { plate(4 + rc * .5, o - 2, 28, 4, 2, '#8a86a0', '#2a2836'); if (lv >= 2) { plate(8 + rc * .5, o - 3, 14, 6, 2, '#5a5868', '#22202c'); g.fillStyle = '#0a0812'; for (let x = 10; x < 21; x += 3) g.fillRect(x + rc * .5, o - 1, 1.5, 2); } } tip = 34; }
+      g.fillStyle = c; g.fillRect(-8, -2, 10, 4);
+    } else if (k === 'sniper') {
+      // 1: a long rifle and scope. 2: AP rounds: muzzle brake, bigger scope, bipod. 3: suppressor and a laser sight
+      const L = lv >= 3 ? 60 : lv >= 2 ? 56 : 52;
+      plate(-12, -5, 20, 10, 3, '#5a5868', '#22202c'); plate(-18, -3, 8, 8, 2, '#4e3a2a', '#2a1a10');
+      plate(4 + rc, -2.2, L - 4, 4.4, 2, '#8a86a0', '#262432');
+      plate(6, -12, lv >= 2 ? 22 : 16, lv >= 2 ? 7 : 6, 3, '#3a3848', '#14121a'); g.fillStyle = lv >= 2 ? '#ff5a6a' : c; g.beginPath(); g.arc(lv >= 2 ? 28 : 22, -8.5, 2.4, 0, TAU); g.fill(); glow(lv >= 2 ? 28 : 22, -8.5, 6, lv >= 2 ? 'rgba(255,90,106,.7)' : 'rgba(255,255,255,.3)');
+      if (lv >= 2) { plate(L - 6 + rc, -4, 8, 8, 2, '#5a5868', '#1c1a26'); g.fillStyle = '#0a0812'; g.fillRect(L - 4 + rc, -4, 1.5, 8); g.fillRect(L - 1 + rc, -4, 1.5, 8); g.strokeStyle = '#2a2836'; g.lineWidth = 2; g.beginPath(); g.moveTo(26, 2); g.lineTo(20, 12); g.moveTo(26, 2); g.lineTo(32, 12); g.stroke(); }
+      if (lv >= 3) { plate(L + 1 + rc, -3.5, 10, 7, 3, '#2a2836', '#0a0812'); band(L + 2 + rc, -3.5, 7, gold); const lg = g.createLinearGradient(L, 0, L + 110, 0); lg.addColorStop(0, 'rgba(255,60,80,.45)'); lg.addColorStop(1, 'rgba(255,60,80,0)'); g.strokeStyle = lg; g.lineWidth = 1; g.beginPath(); g.moveTo(L + 10, 0); g.lineTo(L + 110, 0); g.stroke(); }
+      tip = L + (lv >= 3 ? 11 : 2);
+    } else if (k === 'rail') {
+      // 1: twin rails with glowing coils. 2: more coils and a capacitor bank. 3: triple rails crackling with arcs
+      const col = F.side ? '95,212,255' : '255,176,46', rails = lv >= 3 ? [-6, 0, 6] : [-4.5, 4.5], L = lv >= 2 ? 50 : 44;
+      plate(-14, -9, 16, 18, 3, '#4e4a5e', '#1c1a26'); if (lv >= 2) { for (let i = 0; i < 3; i++) plate(-12 + i * 5, -15, 4, 6, 1, '#3a5a6a', '#14242c'); }
+      for (const y of rails) plate(0 + rc * .3, y - 1.6, L, 3.2, 1.5, '#a8a8c4', '#2a2a3a');
+      for (let x = 4; x < L - 6; x += lv >= 2 ? 6 : 8) { const gl = .5 + .5 * Math.sin(t * 8 + x); g.fillStyle = `rgba(${col},${.4 + gl * .6})`; g.fillRect(x, -9, 2.6, 18); }
+      if (lv >= 3 && Math.sin(t * 23) > .2) { g.strokeStyle = `rgba(${col},.9)`; g.lineWidth = 1.2; g.beginPath(); let x = 6; g.moveTo(x, -6); while (x < L) { x += 5; g.lineTo(x, (Math.random() - .5) * 12); } g.stroke(); }
+      glow(L, 0, 10, `rgba(${col},.8)`, .6 + .4 * Math.sin(t * 6)); tip = L + 2;
+    } else if (k === 'laser') {
+      // 1: an emitter tube and crystal. 2: cooling fins. 3: a focusing dish around a bright core
+      const col = F.side ? '95,212,255' : '255,120,90';
+      plate(-12, -8, 18, 16, 4, '#4e4a5e', '#1c1a26'); plate(4, -5, 30, 10, 4, '#7a7690', '#262432');
+      if (lv >= 2) for (let x = 8; x < 30; x += 4) plate(x, -9, 2.4, 18, 1, '#9a96b0', '#3a3848');
+      const cx = 36; g.fillStyle = `rgb(${col})`; g.beginPath(); g.moveTo(cx - 4, -5); g.lineTo(cx + 5, 0); g.lineTo(cx - 4, 5); g.closePath(); g.fill(); glow(cx, 0, lv >= 3 ? 18 : 11, `rgba(${col},.9)`, .5 + .5 * Math.sin(t * 5));
+      if (lv >= 3) { g.strokeStyle = gold; g.lineWidth = 2.5; g.beginPath(); g.arc(cx - 6, 0, 11, -1.1, 1.1); g.stroke(); }
+      tip = cx + 6;
+    } else if (k === 'mortar' || k === 'fire') {
+      // mortar 1: a squat tube. 2: banded and braced. 3: the Heavy mortar, a fat tube on hydraulic legs
+      // firebomb: a tube fed by fuel tanks (one, then two) and at 3 a pilot flame at the mouth
+      const fire = k === 'fire', heavy = !fire && lv >= 3, W = heavy ? 15 : 11, L = heavy ? 30 : 24;
+      plate(-8, -11, 18, 22, 4, '#6a6680', '#24222e');
+      plate(6 + rc * .4, -W, L, W * 2, 4, fire ? '#8a5a3a' : '#7a7690', fire ? '#3a1a0a' : '#262432'); plate(L + 2 + rc * .4, -W - 1.5, 6, W * 2 + 3, 2, fire ? '#ff9a3a' : lv >= 3 ? gold : c, fire ? '#a8381a' : lv >= 3 ? gold2 : c2); hole(L + 5 + rc * .4, 0, W - 3);
+      if (lv >= 2) { band(14 + rc * .4, -W, W * 2, '#3a3848'); band(22 + rc * .4, -W, W * 2, '#3a3848'); }
+      if (heavy) { g.strokeStyle = '#3a3846'; g.lineWidth = 3; g.beginPath(); g.moveTo(8, W); g.lineTo(-2, W + 9); g.moveTo(20, W); g.lineTo(26, W + 9); g.stroke(); g.fillStyle = '#9a96b0'; g.fillRect(2, W + 1, 2, 6); }
+      if (fire) { for (let i = 0; i < Math.min(2, lv); i++) { plate(-16, -10 + i * 11, 9, 9, 4, '#ff8a2a', '#9a2a12'); g.fillStyle = '#ffd23f'; g.fillRect(-14, -7 + i * 11, 5, 1.5); } if (lv >= 3) { const f = .7 + .3 * Math.sin(t * 20); g.fillStyle = `rgba(255,${150 + 60 * f},60,.9)`; g.beginPath(); g.ellipse(L + 9, 0, 4 + f * 2, 3, 0, 0, TAU); g.fill(); glow(L + 9, 0, 10, 'rgba(255,140,40,.8)'); } }
+      tip = L + 8;
+    } else if (k === 'cluster') {
+      // a rotary drum of bomblets: more chambers per level, and gold-capped at 3
+      plate(-10, -12, 22, 24, 5, '#6a6680', '#24222e'); plate(10 + rc * .4, -12, 8, 24, 2, lv >= 3 ? gold : c, lv >= 3 ? gold2 : c2);
+      hole(22 + rc * .4, 0, 8); const n = 3 + lv; for (let i = 0; i < n; i++) { const a = i / n * TAU + d.spin * .2; g.fillStyle = '#ffd23f'; g.beginPath(); g.arc(1 + Math.cos(a) * 6, Math.sin(a) * 6, 2.2, 0, TAU); g.fill(); }
+      if (lv >= 2) rivets(-8, 8, -10, 4);
+      tip = 26;
+    } else if (k === 'rockets') {
+      // a launch pod: three tubes, then four, then six behind armor
+      // tube mouths in a neat grid on the front face
+      const grid = lv >= 3 ? [[-8, -4.5], [0, -4.5], [8, -4.5], [-8, 4.5], [0, 4.5], [8, 4.5]].map(([y, x]) => [x, y]) : lv >= 2 ? [[0, -9], [0, -3], [0, 3], [0, 9]] : [[0, -7.5], [0, 0], [0, 7.5]];
+      const H = lv >= 3 ? 30 : 26; plate(-10, -H / 2, 36, H, 4, '#6a6680', '#24222e');
+      if (lv >= 3) { for (const [x, y] of grid) { hole(22 + x * .55, y * 1.15, 3.2); g.fillStyle = c; g.beginPath(); g.arc(22 + x * .55, y * 1.15, 1.4, 0, TAU); g.fill(); } }
+      else for (const [, y] of grid) { hole(26, y, 3.3); g.fillStyle = c; g.beginPath(); g.arc(26, y, 1.5, 0, TAU); g.fill(); }
+      if (lv >= 2) plate(-12, -H / 2 - 3, 30, 4, 2, '#8a86a0', '#2a2836');
+      if (lv >= 3) plate(-12, H / 2 - 1, 30, 4, 2, gold, gold2);
+      tip = 30;
+    } else if (k === 'swarm') {
+      // a box of homing missiles: 6, then 8, then 12 cells with a turning radar dish
+      const n = lv >= 3 ? 12 : lv >= 2 ? 8 : 6, cols = lv >= 3 ? 4 : n / 2, rows = n / cols, H = 10 + rows * 7;
+      plate(-12, -H / 2, 36, H, 4, '#6a6680', '#24222e');
+      for (let i = 0; i < n; i++) { const x = 6 + (i % cols) * 5, y = -H / 2 + 6 + Math.floor(i / cols) * 7; hole(x + 12, y, 2.6); g.fillStyle = c; g.beginPath(); g.arc(x + 12, y, 1.1, 0, TAU); g.fill(); }
+      g.fillStyle = lv >= 3 ? gold : c; g.fillRect(-9, -H / 2 + 3, 3, H - 6);
+      if (lv >= 3) { g.save(); g.translate(-4, -H / 2 - 4); g.scale(Math.cos(t * 3), 1); g.fillStyle = '#9a96b0'; g.beginPath(); g.ellipse(0, 0, 7, 3, 0, 0, TAU); g.fill(); g.restore(); g.strokeStyle = '#3a3848'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(-4, -H / 2 - 4); g.lineTo(-4, -H / 2); g.stroke(); }
+      tip = 32;
+    } else if (k === 'emp') {
+      // coils around a charge sphere; another coil at 2; at 3 a tesla crown with live sparks
+      plate(-12, -7, 18, 14, 4, '#4e5a6e', '#1c2230'); plate(4, -4, 18, 8, 3, '#7a8496', '#262c3a');
+      const nc = lv >= 2 ? 4 : 3; for (let i = 0; i < nc; i++) { g.strokeStyle = `rgba(143,233,255,${.5 + .5 * Math.sin(t * 9 + i)})`; g.lineWidth = 2.2; g.beginPath(); g.arc(4 + i * 5, 0, 7, -1.2, 1.2); g.stroke(); }
+      const R2 = lv >= 3 ? 7 : 5.5; g.fillStyle = '#bff4ff'; g.beginPath(); g.arc(28, 0, R2, 0, TAU); g.fill(); glow(28, 0, 14, 'rgba(143,233,255,.9)', .6 + .4 * Math.sin(t * 7));
+      if (lv >= 3) { g.strokeStyle = gold; g.lineWidth = 1.5; g.beginPath(); g.arc(28, 0, R2 + 3, 0, TAU); g.stroke(); if (Math.random() < .5) { g.strokeStyle = '#dffaff'; g.lineWidth = 1; g.beginPath(); g.moveTo(28, 0); for (let j = 0; j < 3; j++) g.lineTo(28 + (Math.random() - .5) * 26, (Math.random() - .5) * 26); g.stroke(); } }
+      tip = 28 + R2;
+    } else if (k === 'flak') {
+      // 1: twin flak barrels. 2: four. 3: the Shotgun, a wide bell-mouthed quad
+      plate(-10, -8, 14, 16, 3, '#4e4a5e', '#1c1a26'); const ys = lv >= 2 ? [-6, -2, 2, 6] : [-3.5, 3.5], L = 26;
+      for (const y of ys) plate(2 + rc * .3, y - 1.8, L, 3.6, 1.5, '#8a86a0', '#262432');
+      if (lv >= 3) { g.fillStyle = gold; g.beginPath(); g.moveTo(L - 2, -8); g.lineTo(L + 8, -11); g.lineTo(L + 8, 11); g.lineTo(L - 2, 8); g.closePath(); g.fill(); g.fillStyle = '#0a0812'; g.fillRect(L + 6, -9, 2, 18); }
+      g.fillStyle = c; g.fillRect(-7, -6, 5, 12); tip = L + (lv >= 3 ? 9 : 2);
+    }
+    return tip;
+  }
   function drawDev(g, F, d, ghost) {
     const [px, py] = pivot(F, d), D = DEV[d.type], c = SIDEC[F.side], c2 = SIDEC2[F.side];
     g.save(); g.translate(px, py);
@@ -892,18 +1019,12 @@ const GAME = {
       metal(g, -23, -1, 7, 11, 2, '#5a5868', '#1c1a26'); g.restore();
       const hx = -1 + Math.cos(a) * 21, hy = -18 + Math.sin(a) * 21 + 6; g.strokeStyle = '#1a1822'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(hx + 2, hy); g.lineTo(18.5, 0); g.stroke();
       if (phase === 'battle' && F.devs && Math.random() < .02) parts.push({ x: px + 18, y: py - 2, vx: (Math.random() - .5) * 20, vy: -60, life: .6, max: .6, size: 3, c: '#2a2218', g: 400 });
-    } else if (d.type === 'laser') {
-      base(12); g.rotate(d.ang); metal(g, -10, -9, 22, 18, 4, '#5e5a70', '#1e1c28'); metal(g, 10, -5, 18, 10, 2, '#8a8aa6', '#2a2a3a');
-      for (const r of [14, 19, 24]) { g.fillStyle = '#1a1822'; g.fillRect(r, -6, 2, 12); }
-      const lc = F.side ? '#8fe9ff' : '#ff9a7a', on = d.flash > .05; g.fillStyle = on ? '#ffffff' : lc; g.shadowColor = lc; g.shadowBlur = on ? 18 : 6; g.beginPath(); g.arc(29, 0, on ? 5 : 3.5, 0, TAU); g.fill(); g.shadowBlur = 0;
     } else if (d.type === 'repair') {
       base(12); metal(g, -9, -14, 18, 12, 3, '#6e8a7a', '#2a3a32'); g.fillStyle = '#7dff9a'; g.fillRect(-1.6, -12, 3.2, 8); g.fillRect(-4, -9.6, 8, 3.2);
       g.strokeStyle = '#3a3846'; g.lineWidth = 3; g.beginPath(); g.moveTo(6, -14); g.lineTo(14, -24); g.stroke(); g.fillStyle = Math.sin(t * 6) > 0 ? '#7dff9a' : '#2e6a3e'; g.beginPath(); g.arc(14, -25, 2.5, 0, TAU); g.fill();
     } else if (d.type === 'flak') {
-      base(12); g.rotate(d.ang);
-      for (const o of [-3.5, 3.5]) metal(g, -2, o - 2.5, 24, 5, 2, '#6a6680', '#262432');
-      g.fillStyle = c; g.fillRect(-4, -6, 6, 12);
-      if (d.flash > 0) { g.globalCompositeOperation = 'lighter'; g.fillStyle = `rgba(255,220,140,${d.flash * 6})`; g.beginPath(); g.arc(26, 0, 9, 0, TAU); g.fill(); g.globalCompositeOperation = 'source-over'; }
+      const tip = gun(g, F, d, c, c2);
+      if (d.flash > 0) { g.globalCompositeOperation = 'lighter'; g.fillStyle = `rgba(255,220,140,${d.flash * 6})`; g.beginPath(); g.arc(tip, 0, 10, 0, TAU); g.fill(); g.globalCompositeOperation = 'source-over'; }
     } else if (d.type === 'workshop') {   // a timber workshop with a turning cog
       g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(0, 9, 24, 4, 0, 0, TAU); g.fill();
       metal(g, -22, -18, 44, 27, 3, '#9a6532', '#4e2e14'); g.fillStyle = '#5e3a1c'; g.beginPath(); g.moveTo(-26, -17); g.lineTo(0, -32); g.lineTo(26, -17); g.closePath(); g.fill();
@@ -926,17 +1047,8 @@ const GAME = {
       g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(0, 9, 18, 3.5, 0, 0, TAU); g.fill();
       for (const [x2, y2] of [[-9, 2], [3, 2], [-3, -7], [9, -7], [3, -16]]) { const bg = g.createLinearGradient(0, y2 - 5, 0, y2 + 5); bg.addColorStop(0, '#d8c08a'); bg.addColorStop(1, '#8a7240'); g.fillStyle = bg; g.beginPath(); g.ellipse(x2 - 3, y2 + 3, 9, 5, 0, 0, TAU); g.fill(); g.strokeStyle = '#5a4a2a'; g.lineWidth = 1; g.stroke(); }
     } else {   // aimable weapons: a base and a barrel that swings to its aim
-      base(d.type === 'mortar' || d.type === 'fire' ? 14 : 12); g.rotate(d.ang);
-      if (d.type === 'sniper') { metal(g, -6, -3, 50, 6, 2, '#7a7690', '#262432'); metal(g, 44, -4.5, 6, 9, 2, '#3a3848', '#14121a'); metal(g, 4, -11, 16, 6, 3, '#4e4a5e', '#1c1a26'); g.fillStyle = c; g.beginPath(); g.arc(20, -8, 2.2, 0, TAU); g.fill(); g.strokeStyle = '#2a2836'; g.lineWidth = 2; g.beginPath(); g.moveTo(22, 3); g.lineTo(28, 10); g.stroke(); }
-      else if (d.type === 'cannon') { metal(g, -5, -5.5, 32, 11, 3, '#6a6680', '#262432'); metal(g, 24, -7, 7, 14, 2, c, c2); g.fillStyle = '#0e0c14'; g.beginPath(); g.arc(31, 0, 3.5, 0, TAU); g.fill(); }
-      else if (d.type === 'mg') { for (const o of [-3, 3]) metal(g, -2, o - 2, 28, 4, 2, '#7a7690', '#2a2836'); metal(g, -8, -7, 14, 14, 3, '#4e4a5e', '#1c1a26'); g.fillStyle = c; g.fillRect(-6, -2, 10, 4); }
-      else if (d.type === 'cluster') { metal(g, -6, -11, 24, 22, 4, '#6a6680', '#262432'); metal(g, 15, -12, 6, 24, 2, c, c2); g.fillStyle = '#0c0a12'; g.beginPath(); g.arc(21, 0, 7.5, 0, TAU); g.fill(); g.fillStyle = '#ffd23f'; for (const [ox, oy] of [[2, -5], [8, 0], [2, 5]]) { g.beginPath(); g.arc(ox, oy, 2.4, 0, TAU); g.fill(); } }
-      else if (d.type === 'swarm') { metal(g, -10, -13, 32, 26, 4, '#6a6680', '#262432'); for (let i = 0; i < 6; i++) { const ox = 22, oy = -8 + (i % 3) * 8, ox2 = i < 3 ? 0 : -1; g.fillStyle = '#0c0a12'; g.beginPath(); g.arc(ox + ox2, oy, 3, 0, TAU); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(ox + ox2, oy, 1.3, 0, TAU); g.fill(); } g.fillStyle = c; g.fillRect(-6, -10, 3, 20); }
-      else if (d.type === 'mortar' || d.type === 'fire') { metal(g, -6, -10, 22, 20, 4, '#6a6680', '#262432'); metal(g, 13, -11, 6, 22, 2, d.type === 'fire' ? '#ff9a3a' : c, d.type === 'fire' ? '#a8381a' : c2); g.fillStyle = '#0c0a12'; g.beginPath(); g.arc(19, 0, 7, 0, TAU); g.fill(); if (d.type === 'fire') { metal(g, -14, -5, 8, 12, 3, '#ff8a2a', '#9a2a12'); } }
-      else if (d.type === 'rockets') { metal(g, -8, -12, 32, 24, 4, '#6a6680', '#262432'); for (let i = -1; i <= 1; i++) { g.fillStyle = '#0c0a12'; g.beginPath(); g.arc(24, i * 7.5, 3.6, 0, TAU); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(24, i * 7.5, 1.6, 0, TAU); g.fill(); } }
-      else if (d.type === 'emp') { metal(g, -6, -6, 22, 12, 3, '#5a6478', '#1c2230'); for (let i = 0; i < 3; i++) { g.strokeStyle = `rgba(143,233,255,${.5 + .5 * Math.sin(t * 9 + i)})`; g.lineWidth = 2; g.beginPath(); g.arc(4 + i * 6, 0, 6, -1.2, 1.2); g.stroke(); } g.fillStyle = '#8fe9ff'; g.beginPath(); g.arc(24, 0, 5, 0, TAU); g.fill(); }
-      else if (d.type === 'rail') { metal(g, -6, -4, 46, 8, 2, '#8a8aa6', '#2a2a3a'); for (let x = 2; x < 36; x += 7) { const gl = .5 + .5 * Math.sin(t * 8 + x); g.fillStyle = `rgba(${F.side ? '95,212,255' : '255,176,46'},${.4 + gl * .6})`; g.fillRect(x, -6, 3, 12); } metal(g, -12, -8, 12, 16, 3, '#4e4a5e', '#1c1a26'); }
-      if (d.flash > 0) { g.globalCompositeOperation = 'lighter'; const mf = g.createRadialGradient(36, 0, 1, 36, 0, 18); mf.addColorStop(0, `rgba(255,240,200,${d.flash * 5})`); mf.addColorStop(1, 'rgba(255,140,60,0)'); g.fillStyle = mf; g.beginPath(); g.arc(36, 0, 18, 0, TAU); g.fill(); g.globalCompositeOperation = 'source-over'; }
+      const tip = gun(g, F, d, c, c2);
+      if (d.flash > 0) { g.globalCompositeOperation = 'lighter'; const mf = g.createRadialGradient(tip, 0, 1, tip, 0, 20); mf.addColorStop(0, `rgba(255,240,200,${d.flash * 5})`); mf.addColorStop(1, 'rgba(255,140,60,0)'); g.fillStyle = mf; g.beginPath(); g.arc(tip, 0, 20, 0, TAU); g.fill(); g.globalCompositeOperation = 'source-over'; }
     }
     g.restore();
     if (d.type === 'flak' && d.zap) { g.strokeStyle = `rgba(255,230,160,${d.zap.t * 6})`; g.lineWidth = 2; g.beginPath(); g.moveTo(px, py); g.lineTo(d.zap.x, d.zap.y); g.stroke(); }
@@ -1051,7 +1163,8 @@ const GAME = {
     g.restore();
   }
   function drawParts(g) {
-    for (const p of debris) { g.save(); g.translate(p.x, p.y); g.rotate(p.a); g.fillStyle = p.d; g.fillRect(-p.l / 2 - 1, -3.5, p.l + 2, 7); g.fillStyle = p.c; g.fillRect(-p.l / 2, -2.5, p.l, 4); g.restore(); }
+    for (const p of debris) { g.save(); g.translate(p.x, p.y); g.rotate(p.a); if (p.slow) g.globalAlpha = Math.max(0, Math.min(1, (2.6 - p.t) / 1.4)) * (p.t < 1.2 ? 1 : .85); const th = p.slow && !p.dev ? 9 : 7; g.fillStyle = p.d; g.fillRect(-p.l / 2 - 1, -th / 2, p.l + 2, th); g.fillStyle = p.c; g.fillRect(-p.l / 2, -th / 2 + 1, p.l, th - 2); g.restore(); }
+    g.globalAlpha = 1;
     g.save(); g.globalCompositeOperation = 'lighter';
     for (const p of parts) { const k = p.life / p.max; if (p.c[0] === '#' && (p.fl || p.c === '#fff3c0' || p.c === '#ffb347' || p.c === '#ff5a2a' || p.c === '#ff7a1a')) { g.globalAlpha = k; const gl = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * (1.5 - k * .5)); gl.addColorStop(0, p.c); gl.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gl; g.fillRect(p.x - p.size * 1.5, p.y - p.size * 1.5, p.size * 3, p.size * 3); } }
     g.globalCompositeOperation = 'source-over';
@@ -1178,5 +1291,5 @@ const GAME = {
   GAME.pose = () => { for (let i = 0; i < 60 * 13; i++) step(DT); posed = true; camGo('mine', true); cam.z = cam.tz = .8; cam.x = cam.tx = ISL[0].x1 - 120; cam.y = cam.ty = GY - 260; };
   GAME.test = { st: () => ({ mode, phase, buildT: +buildT.toFixed(1), my: mySide, cam: [Math.round(cam.x), Math.round(cam.y), +cam.z.toFixed(2)], forts: forts.map(F => ({ n: F.nodes.filter(n => n.alive).length, b: liveBeams(F), d: F.devs.filter(d => d.alive).map(d => d.type + (d.lv > 1 ? '*' + d.lv : '') + ':' + Math.round(d.hp)), oil: Math.round(F.oil), en: Math.round(F.en), dead: F.dead, fire: F.beams.filter(b => b.alive && b.fire > 0).length, maxSt: +Math.max(0, ...F.beams.filter(b => b.alive).map(b => Math.abs(b.f || 0) / MAT[b.mat].maxF)).toFixed(2) })), shots: shots.length }),
     step: n => { for (let i = 0; i < n; i++) step(DT); }, beam: (from, x, y, mat = 'wood') => commitBeam(myF(), { mat, from, x, y }), clock: () => t, forts: () => forts, shots: () => shots, add: (k, n) => addDev(myF(), k, n), fix: (x, y) => repairAt(myF(), x, y), ready: () => { myF().ready = true; }, start: () => MP.start(), cam: w => camGo(w, true), tool: (k, tb) => { tool = k; if (tb !== undefined) tab = tb; },
-    aim: (i, a, p) => { const d = myF().devs.filter(x => x.alive && DEV[x.type].reload)[i]; if (d) d.aim = { a, p }; }, botMe: () => { myF().bot = true; }, give: g2 => { myF().oil += g2; }, toWorld, toKit: (x, y) => [640 + (x - cam.x) * cam.z, 360 + (y - cam.y) * cam.z] };
+    aim: (i, a, p) => { const d = myF().devs.filter(x => x.alive && DEV[x.type].reload)[i]; if (d) d.aim = { a, p }; }, botMe: () => { myF().bot = true; }, give: g2 => { myF().oil += g2; }, toWorld, art: (g, type, lv, side, ang) => { const F = { side, nodes: [{ x: 0, y: 0, alive: true }], devs: [] }; drawDev(g, F, { type, n: 0, lv, ang, flash: 0, e: 0, spin: t * 3, hp: DEV[type].hp, alive: true }); }, toKit: (x, y) => [640 + (x - cam.x) * cam.z, 360 + (y - cam.y) * cam.z] };
 })();
