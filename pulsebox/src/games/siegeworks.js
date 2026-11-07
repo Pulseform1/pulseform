@@ -18,12 +18,12 @@ const GAME = {
   font: 'Bungee', accent: '#ffb02e', accent2: '#5fd4ff', bg: '#1a1030', noSkins: true, noHud: true, scoreLabel: 'Siege score',
   how: [
     'Two floating islands far apart, two forts, one goal: destroy the enemy Core before they destroy yours.',
-    'BUILD: pick Wood, Steel, Armor or Door and drag from a bolt (or your ground) to add a beam. Triangles are strong; unbraced towers fold and snap. Taller towers let your guns reach further.',
+    'BUILD: pick Wood, Steel, Armor, Door or Rope (cheap and light, only pulls, and shots fly through it) and drag from a bolt (or your ground) to add a beam. Triangles are strong; unbraced towers fold and snap. Taller towers let your guns reach further.',
     'TECH: a Workshop unlocks Mortars, Firebombs and Rockets; an Armoury unlocks Snipers, Flak, Deflectors, EMP and the Factory; a Factory unlocks Cluster bombs, Swarm missiles, the Railgun and the Laser. Lose a tech building and you can\'t build more of its weapons, so protect them.',
     'EMP knocks out every enemy device it lands near for a few seconds: guns, Deflectors, Flak, generators. SANDBAGS soak up bullets. BATTERIES store power. Upgrades add perks: AP sniper rounds, the Heavy mortar, a Shotgun flak, a double-shot cannon.',
     'COMMANDERS: pick one before the battle for a passive bonus and an ability (tap it or press E): Mason heals your fort, Blaze overdrives your guns, Volt surges your power, Bastion locks your beams down. If your Core\'s supports are shot out and it crashes down, it takes damage.',
     'GUNS stand on floors: tap a flat beam to place one inside a room or on a roof. Your own walls stop your own shots, so leave a gap or build a Door: it swings open whenever a gun right behind it fires, and shuts again to keep enemy shots out.',
-    'OIL pays for everything, including every shot. Put Oil Pumps on bolts at ground level. Generators turn oil into POWER, which the Sniper, Railgun, Laser, Swarm, Deflector and Repair bay need. Generators explode when destroyed, so keep them away from your Core.',
+    'OIL pays for everything, including every shot. Put Oil Pumps on bolts at ground level (up to 4 per fort, so upgrade them for more). Generators turn oil into POWER, which the Sniper, Railgun, Laser, Swarm, Deflector and Repair bay need. Generators explode when destroyed, so keep them away from your Core.',
     'WEAPONS: Cannon, Machine gun, Sniper (picks off devices), Railgun (pierces beams), Laser (burns a line), Mortar, Firebomb (sets wood ablaze), Cluster bomb, Rockets, Swarm missiles (home in). Tap UPGRADE, then a device, to level it up to 3.',
     'REPAIR: press R (or the Repair tool) and tap or drag over damaged beams and devices; it costs oil and also rebuilds broken beams. FIGHT: tap a weapon and drag to aim; the dotted line shows the shot. It fires on its own every reload while you have oil and power. Drag the sky, use the minimap or pinch to look around.',
     'Play the computer, or create a room and battle a friend online.',
@@ -44,9 +44,10 @@ const GAME = {
     wood: { name: 'Wood', cost: 8, hp: 55, maxF: 12600, comp: 1.2e-5, kg: 1, col: '#9a6532', dark: '#5e3a1c', burn: true, res: { bullet: 1, shell: 1, blast: 1, beam: 1 } },
     steel: { name: 'Steel', cost: 24, hp: 150, maxF: 36400, comp: 3e-6, kg: 2.3, col: '#8792a3', dark: '#454d5c', res: { bullet: .55, shell: 1, blast: .9, beam: 1 } },
     door: { name: 'Door', cost: 30, hp: 160, maxF: 30799, comp: 3e-6, kg: 2.6, col: '#3f7fa8', dark: '#173248', door: true, res: { bullet: .45, shell: .9, blast: .85, beam: 1 } },
+    rope: { name: 'Rope', cost: 4, hp: 35, maxF: 11000, comp: 1.5e-5, kg: .25, col: '#c8a46a', dark: '#6a5030', rope: true, burn: true, res: { bullet: .3, shell: .6, blast: 1, beam: 1 } },
     armor: { name: 'Armor', cost: 42, hp: 300, maxF: 47600, comp: 2e-6, kg: 4.2, col: '#5c6472', dark: '#272c36', res: { bullet: .2, shell: .75, blast: .6, beam: 1 } },
   };
-  const MATS = ['wood', 'steel', 'armor', 'door'];
+  const MATS = ['wood', 'steel', 'armor', 'door', 'rope'], MAXPUMP = 4;
   // ammo: oil per salvo, pw: power per salvo. beamMul: how hard it hits beams (snipers barely scratch them)
   const DEV = {
     core: { name: 'Core', cost: 0, up: 260, hp: 480, kg: 5, r: 22 },
@@ -87,7 +88,7 @@ const GAME = {
   };
   const CMDK = Object.keys(CMDS);
   const WEAP = ['cannon', 'mg', 'sniper', 'rail', 'laser', 'mortar', 'fire', 'cluster', 'rockets', 'swarm', 'emp'];
-  const TABS = [['BUILD', ['wood', 'steel', 'armor', 'door', 'sand']], ['TECH', ['workshop', 'armoury', 'factory', 'flak', 'emp']], ['GUNS', ['mg', 'cannon', 'sniper', 'rail', 'laser']], ['HEAVY', ['mortar', 'fire', 'cluster', 'rockets', 'swarm']], ['SUPPORT', ['pump', 'gen', 'battery', 'shield', 'repair']]];
+  const TABS = [['BUILD', ['wood', 'steel', 'armor', 'door', 'rope', 'sand']], ['TECH', ['workshop', 'armoury', 'factory', 'flak', 'emp']], ['GUNS', ['mg', 'cannon', 'sniper', 'rail', 'laser']], ['HEAVY', ['mortar', 'fire', 'cluster', 'rockets', 'swarm']], ['SUPPORT', ['pump', 'gen', 'battery', 'shield', 'repair']]];
   // the economy: oil from the Core and pumps, power from the Core and generators (which burn oil)
   const pumpRate = d => 6 + 3 * (d.lv - 1), genOut = d => 6 + 3 * (d.lv - 1), genBurn = d => 2 + (d.lv - 1);
   function econ(F) {   // pump: oil in; burn: oil the generators eat; out: power they make; cap: how much power you can store
@@ -140,7 +141,7 @@ const GAME = {
   const core = F => F.devs.find(d => d.type === 'core');
   const mountBeam = (F, d) => { const b = d.bm != null ? F.beams[d.bm] : null; return b && b.alive && F.nodes[b.a] && F.nodes[b.b] ? b : null; };
   const pivot = (F, d) => { const b = mountBeam(F, d); if (b) { const A = F.nodes[b.a], B = F.nodes[b.b]; return [A.x + (B.x - A.x) * d.u, A.y + (B.y - A.y) * d.u - 9]; } const n = F.nodes[d.n]; return [n.x, n.y - 9]; };
-  const isFloor = (F, b) => { const A = F.nodes[b.a], B = F.nodes[b.b]; return A && B && Math.abs(B.x - A.x) > 24 && Math.abs(B.y - A.y) < Math.abs(B.x - A.x) * .45; };
+  const isFloor = (F, b) => { const A = F.nodes[b.a], B = F.nodes[b.b]; return b.mat !== 'rope' && A && B && Math.abs(B.x - A.x) > 24 && Math.abs(B.y - A.y) < Math.abs(B.x - A.x) * .45; };
   // put a device on a floor beam: away from the joints, not too close to another device on the same floor
   function mount(F, di, bi, u) {
     const d = F.devs[di], b = F.beams[bi], len = b.rest; u = len < 52 ? .5 : cl(u, 22 / len, 1 - 22 / len);
@@ -163,7 +164,8 @@ const GAME = {
     for (const b of F.beams) b.lam = 0;
     for (let it = 0; it < ITER; it++) {
       for (const b of F.beams) {
-        if (!b.alive) continue; const A = N[b.a], B = N[b.b], wa = A.pin || A.hold > 0 ? 0 : 1 / A.m, wb = B.pin || B.hold > 0 ? 0 : 1 / B.m, w = wa + wb; if (!w) continue;
+        if (!b.alive) continue; if (b.mat === 'rope') { const A = N[b.a], B = N[b.b]; if (Math.hypot(B.x - A.x, B.y - A.y) < b.rest) continue; }
+        const A = N[b.a], B = N[b.b], wa = A.pin || A.hold > 0 ? 0 : 1 / A.m, wb = B.pin || B.hold > 0 ? 0 : 1 / B.m, w = wa + wb; if (!w) continue;
         const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy) || .001, at = MAT[b.mat].comp / h2, dl = (b.rest - d - at * b.lam) / (w + at);
         b.lam += dl; const nx = dx / d * dl, ny = dy / d * dl;
         A.x -= nx * wa; A.y -= ny * wa; B.x += nx * wb; B.y += ny * wb;
@@ -282,10 +284,10 @@ const GAME = {
     }
     for (const d of T.devs) if (d.alive && !s.hits.has(d)) { const [px, py] = pivot(T, d); if (Math.hypot(s.x - px, s.y - py) < DEV[d.type].r + 4) { impact(s, s.x, s.y, T, null, d); if (s.dead) return; } }
     let best = null, bt = 2, bF = T;
-    for (const b of T.beams) { if (!b.alive || s.hits.has(b) || b.open > 0) continue; const A = T.nodes[b.a], B = T.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.ox, s.oy, s.x, s.y, A.x, A.y, B.x, B.y); if (h >= 0 && h < bt) { bt = h; best = b; } }
+    for (const b of T.beams) { if (!b.alive || s.hits.has(b) || b.open > 0 || b.mat === 'rope') continue; const A = T.nodes[b.a], B = T.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.ox, s.oy, s.x, s.y, A.x, A.y, B.x, B.y); if (h >= 0 && h < bt) { bt = h; best = b; } }
     // your own walls are solid too: fire out through a gap, over the top, or through a door
     const O = forts[s.side];
-    if (O && s.type !== 'bomblet') for (const b of O.beams) { if (!b.alive || s.hits.has(b) || MAT[b.mat].door) continue; const A = O.nodes[b.a], B = O.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.ox, s.oy, s.x, s.y, A.x, A.y, B.x, B.y); if (h >= 0 && h < bt) { bt = h; best = b; bF = O; } }
+    if (O && s.type !== 'bomblet') for (const b of O.beams) { if (!b.alive || s.hits.has(b) || MAT[b.mat].door || b.mat === 'rope') continue; const A = O.nodes[b.a], B = O.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.ox, s.oy, s.x, s.y, A.x, A.y, B.x, B.y); if (h >= 0 && h < bt) { bt = h; best = b; bF = O; } }
     if (best) { impact(s, lp(s.ox, s.x, bt), lp(s.oy, s.y, bt), bF, best, null); if (s.dead) return; }
     if (s.y > groundY(s.x)) return impact(s, s.x, groundY(s.x), null, null, null, true);
     if (s.y > 1300 || s.x < -300 || s.x > WW + 300) s.dead = true;
@@ -296,9 +298,9 @@ const GAME = {
     for (const d of T.devs) { if (!d.alive || !T.nodes[d.n]) continue; const [px, py] = pivot(T, d);
       if (d.type === 'shield' && d.e > 0) { const q = ray(px, py, domeR(d)); if (q > 0 && q < tm && s.y + s.dy * q < py + 6) { tm = q; hit = { sh: d }; } }
       const q = ray(px, py, DEV[d.type].r + 2); if (q > 0 && q < tm) { tm = q; hit = { d }; } }
-    for (const b of T.beams) { if (!b.alive || b.open > 0) continue; const A = T.nodes[b.a], B = T.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.x, s.y, ex, ey, A.x, A.y, B.x, B.y); if (h >= 0 && h < 1 && h * R < tm) { tm = h * R; hit = { b }; } }
+    for (const b of T.beams) { if (!b.alive || b.open > 0 || b.mat === 'rope') continue; const A = T.nodes[b.a], B = T.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.x, s.y, ex, ey, A.x, A.y, B.x, B.y); if (h >= 0 && h < 1 && h * R < tm) { tm = h * R; hit = { b }; } }
     const O = forts[s.side]; let own = null;
-    for (const b of O.beams) { if (!b.alive || s.hits.has(b) || MAT[b.mat].door) continue; const A = O.nodes[b.a], B = O.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.x, s.y, ex, ey, A.x, A.y, B.x, B.y); if (h >= 0 && h < 1 && h * R < tm) { tm = h * R; hit = { b }; own = O; } }
+    for (const b of O.beams) { if (!b.alive || s.hits.has(b) || MAT[b.mat].door || b.mat === 'rope') continue; const A = O.nodes[b.a], B = O.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.x, s.y, ex, ey, A.x, A.y, B.x, B.y); if (h >= 0 && h < 1 && h * R < tm) { tm = h * R; hit = { b }; own = O; } }
     for (let q = 30; q < tm; q += 14) { const x = s.x + s.dx * q, y = s.y + s.dy * q; if (y > groundY(x)) { tm = q; hit = null; break; } }
     s.hx = s.x + s.dx * tm; s.hy = s.y + s.dy * tm; s.life -= dt; s.t += dt; if (s.life <= 0) s.dead = true;
     const dmg = s.dmg * dt;
@@ -456,7 +458,7 @@ const GAME = {
   function ownBlocked(F, d, aim) {
     const pts = trajectory(F, d, aim), mb = mountBeam(F, d), I = ISL[F.side];
     for (let i = 1; i < pts.length; i++) { const [ax, ay] = pts[i - 1], [bx, by] = pts[i]; if (bx < I.x0 - 40 || bx > I.x1 + 40) break;
-      for (const b of F.beams) { if (!b.alive || b === mb || MAT[b.mat].door) continue; const A = F.nodes[b.a], B = F.nodes[b.b]; if (segHit(ax, ay, bx, by, A.x, A.y, B.x, B.y) >= 0) return true; } }
+      for (const b of F.beams) { if (!b.alive || b === mb || MAT[b.mat].door || b.mat === 'rope') continue; const A = F.nodes[b.a], B = F.nodes[b.b]; if (segHit(ax, ay, bx, by, A.x, A.y, B.x, B.y) >= 0) return true; } }
     return false;
   }
   function aimAt(F, d, tg) {
@@ -618,7 +620,7 @@ const GAME = {
   const CAMB = () => { const m = MM(); return { mine: { x: m.x - 96, y: m.y + 6, w: 86, h: 34 }, all: { x: m.x + m.w / 2 - 36, y: m.y + m.h + 6, w: 72, h: 28 }, theirs: { x: m.x + m.w + 10, y: m.y + 6, w: 86, h: 34 } }; };
 
   /* ---------- input: building, deleting, upgrading, aiming, looking around ---------- */
-  const TBL = () => { const v = K.view, w = 84, gap = 6, x0 = 640 - (8 * (w + gap) + 166) / 2, y = v.y1 - 102; return { tabs: TABS.map((_, i) => ({ i, x: x0 - 4 + i * 112, y: y - 48, w: 106, h: 34 })), items: Array.from({ length: 8 }, (_, i) => ({ x: x0 + i * (w + gap), y, w, h: 92 })), act: { x: x0 + 8 * (w + gap) + 6, y, w: 160, h: 92 } }; };
+  const TBL = () => { const v = K.view, w = 84, gap = 6, x0 = 640 - (9 * (w + gap) + 166) / 2, y = v.y1 - 102; return { tabs: TABS.map((_, i) => ({ i, x: x0 - 4 + i * 112, y: y - 48, w: 106, h: 34 })), items: Array.from({ length: 9 }, (_, i) => ({ x: x0 + i * (w + gap), y, w, h: 92 })), act: { x: x0 + 9 * (w + gap) + 6, y, w: 160, h: 92 } }; };
   const ABB = () => { const A = TBL().act; return { x: A.x, y: A.y - 60, w: A.w, h: 48 }; };
   const pickOpen = () => { const F = myF(); return F && !demo && mode === 'play' && phase === 'build' && (!F.cmd || pickShow); };
   let pickShow = false;
@@ -634,7 +636,7 @@ const GAME = {
   }
   function wrap(g, s, x, y, w, size, c) { g.font = `${size}px Bungee, Impact, sans-serif`; const words = s.split(' '); let line = '', yy = y; for (const wd of words) { const tl = line ? line + ' ' + wd : wd; if (g.measureText(tl).width > w && line) { txt(g, line, x, yy, size, c, 'center'); line = wd; yy += size + 5; } else line = tl; } if (line) txt(g, line, x, yy, size, c, 'center'); }
   const inB = (b, x, y) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
-  const tabItems = () => [...TABS[tab][1], ...Array(5 - TABS[tab][1].length).fill(null)].slice(0, 5).concat(['fix', 'up', 'del']);
+  const tabItems = () => [...TABS[tab][1], ...Array(6 - TABS[tab][1].length).fill(null)].slice(0, 6).concat(['fix', 'up', 'del']);
   const matCost = (F, k) => Math.round(MAT[k].cost * (F && F.cmd === 'mason' ? .75 : 1) * (F && F.cmd === 'bastion' && (k === 'armor' || k === 'door') ? .7 : 1));
   const toolCost = k => MAT[k] ? matCost(myF(), k) : DEV[k] ? DEV[k].cost : 0;
   const myF = () => forts[mySide];
@@ -659,6 +661,7 @@ const GAME = {
     const z = Math.min(1, cam.z);
     if (!techOK(F, type)) { sound('nope'); say(`Build a ${DEV[NEEDS[type]].name} first`, '#ff8a8a', 1.6); return; }
     if (F.oil < DEV[type].cost) { sound('nope'); say(NO.oil, '#ff8a8a', 1.2); return; }
+    if (type === 'pump' && F.devs.filter(q => q.alive && q.type === 'pump').length >= MAXPUMP) { sound('nope'); say(`Oil pump limit: ${MAXPUMP} per fort. Upgrade the ones you have instead`, '#ff8a8a', 2); return; }
     if (DEV[type].ground) {   // pumps sit in the ground, on a ground bolt
       const n = nearNode(F, x, y, 24 / z); if (n < 0 || !F.nodes[n].pin) { sound('nope'); say('Oil pumps go on bolts on the ground', '#ff8a8a', 1.6); return; }
       if (devAt(F, n)) { sound('nope'); say('That bolt is taken', '#ff8a8a', 1.2); return; }
@@ -847,6 +850,14 @@ const GAME = {
   // beams: bevelled with a drop shadow; planks for wood, an I-beam for steel, plated slabs for armor
   function drawBeam(g, A, B, b, mine, shadow) {
     const M = MAT[b.mat], dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy); if (len < 1) return;
+    if (b.mat === 'rope') {
+      const slack = Math.max(0, (b.rest || len) - len), sag = Math.min(40, Math.sqrt(slack * (b.rest || len)) * .6), mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2 + sag;
+      if (shadow) { g.strokeStyle = 'rgba(10,4,20,.25)'; g.lineWidth = 4; g.beginPath(); g.moveTo(A.x, A.y + 4); g.quadraticCurveTo(mx, my + 4, B.x, B.y + 4); g.stroke(); return; }
+      const st = Math.abs(b.f || 0) / M.maxF;
+      g.lineCap = 'round'; g.strokeStyle = M.dark; g.lineWidth = 5; g.beginPath(); g.moveTo(A.x, A.y); g.quadraticCurveTo(mx, my, B.x, B.y); g.stroke();
+      g.strokeStyle = b.fire > 0 ? '#ff8a3a' : b.hit > 0 ? '#ffffff' : mine && st > .65 ? '#ff5a4a' : mine && st > .35 ? '#ffd23f' : M.col; g.lineWidth = 3; g.setLineDash([4, 3]); g.beginPath(); g.moveTo(A.x, A.y); g.quadraticCurveTo(mx, my, B.x, B.y); g.stroke(); g.setLineDash([]);
+      return;
+    }
     g.save(); g.translate(A.x, A.y); g.rotate(Math.atan2(dy, dx));
     const th = b.mat === 'armor' ? 13 : b.mat === 'steel' || b.mat === 'door' ? 10 : 9, h2 = th / 2;
     if (shadow) { g.fillStyle = 'rgba(10,4,20,.28)'; g.fillRect(-1, -h2 + 4, len + 2, th); g.restore(); return; }
@@ -1222,6 +1233,7 @@ const GAME = {
       txt(g, k === 'del' ? 'REMOVE' : k === 'up' ? 'UPGRADE' : k === 'fix' ? 'REPAIR (R)' : ((MAT[k] || DEV[k]).short || (MAT[k] || DEV[k]).name).toUpperCase(), b.x + b.w / 2, b.y + 66, 10, '#fff', 'center');
       if (cost) { g.font = '11px Bungee, Impact, sans-serif'; const cw = g.measureText('' + cost).width; resIcon(g, 'oil', b.x + b.w / 2 - cw / 2 - 4, b.y + 81, 5.5); txt(g, '' + cost, b.x + b.w / 2 - cw / 2 + 4, b.y + 82, 11, can ? '#ffd23f' : '#ff8a8a'); }
       if (DEV[k] && DEV[k].pw) resIcon(g, 'pw', b.x + b.w - 12, b.y + 13, 6);
+      if (k === 'pump') { const n = me.devs.filter(q => q.alive && q.type === 'pump').length; txt(g, `${n}/${MAXPUMP}`, b.x + b.w - 8, b.y + 12, 10, n >= MAXPUMP ? '#ff8a8a' : '#ffe9a8', 'right'); }
     });
     const A = tb.act, rd = phase === 'build' && me.ready, ag = g.createLinearGradient(0, A.y, 0, A.y + A.h);
     ag.addColorStop(0, phase === 'build' ? (rd ? '#4aa85a' : '#ffc456') : tool === null ? 'rgba(255,255,255,.25)' : 'rgba(255,255,255,.1)'); ag.addColorStop(1, phase === 'build' ? (rd ? '#2a6a3a' : '#e0802a') : 'rgba(255,255,255,.04)');
