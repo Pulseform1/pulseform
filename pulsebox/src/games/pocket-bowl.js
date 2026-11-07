@@ -1,11 +1,11 @@
 /* Pocket Bowl: retro arcade football with a team to run between games. On the field you only play offense: call PASS or
-   RUN, then drag back to aim a throw (or just tap a receiver), steer whoever has the ball and tap to juke. The other
+   RUN, then drag back to aim a throw (or just tap a receiver), steer whoever has the ball, and one move button does what the moment needs (pump fake, spin out, leap, juke, spin, dive). The other
    team's drives are simulated against your defense. Between games, spend coaching credits on your roster. Ten-game
    season, then the top four play off for the Pocket Bowl. The team and roster carry over from season to season. */
 const GAME = {
   id: 'pocket-bowl', title: 'Pocket Bowl', tagline: 'Retro football. Run the team, win the Bowl.',
   font: 'Press Start 2P', accent: '#ffd23f', accent2: '#3ddc84', bg: '#0b2a16', noHud: true, scoreLabel: 'Season score',
-  how: ['PASS: drag back from anywhere and release to throw, or tap a receiver. Keys 1, 2, 3 throw to WR1, WR2 and the running back.', 'With the ball: steer with your finger, mouse or the up/down arrows. Tap or press Space to juke.', 'Between games, spend coaching credits to upgrade players. Win your division and take the Pocket Bowl.'],
+  how: ['PASS: drag back from anywhere and release to throw, or tap a receiver. Keys 1, 2, 3 throw to WR1, WR2 and the running back.', 'Space (or the JUKE button) does what the moment needs: pump fake or spin out of a sack in the pocket, LEAP when the ball is in the air, juke or spin with the ball, DIVE at the goal line. Juke a defender right in your face to break his ankles and chain another.', 'Between games, spend coaching credits to upgrade players. Win your division and take the Pocket Bowl.'],
   skins: [{ name: 'Home Uniform', price: 0 }, { name: 'Throwback', price: 30, u: ['#e0b040', '#5a2a10'] }, { name: 'Chrome', price: 70, u: ['#d8dde4', '#1a1a1a'] }, { name: 'Royal', price: 110, u: ['#7a3aff', '#ffd23f'] }, { name: 'Neon Night', price: 160, u: ['#b6ff3a', '#ff2e88'] }, { name: 'Blackout', price: 220, u: ['#2a2a30', '#e8e8e8'] }],
 };
 (() => {
@@ -59,7 +59,7 @@ const GAME = {
   /* ---------- a game ---------- */
   function startGame() {
     const F = S.F; S.oppI = F.playoff ? S.oppI : F.sched[F.week];
-    S.g = { us: 0, them: 0, poss: 0, maxPoss: 8, ot: false, stats: { pass: 0, rush: 0, td: 0, int: 0 } };
+    S.g = { us: 0, them: 0, poss: 0, maxPoss: 8, ot: false, stats: { pass: 0, rush: 0, td: 0, int: 0, ankles: 0, moves: 0 } };
     mode = 'field'; msg = null; kick = null; oppAnim = null; endCard = null;
     driveStart(25); crowd(1.2, .05);
   }
@@ -108,12 +108,13 @@ const GAME = {
   const near = (list, x, y) => list.reduce((b, p) => { const d = Math.hypot(p.x - x, p.y - y); return d < b.d ? { p, d } : b; }, { p: null, d: 1e9 });
   function land() {
     const b = P.ball, rec = near(P.off.slice(1, 4), b.tx, b.ty), df = near(P.def, b.tx, b.ty), hands = rec.p ? star(rec.p.role === 'RB' ? 'RB' : rec.p.role) : 1;
-    P.ball = null;
-    if (df.d < 1 && (!rec.p || df.d < rec.d - .3) && R() < .4) { S.g.stats.int++; return endPlay('INTERCEPTED!', 'int'); }
-    if (rec.p && rec.d < 1.6 + hands * .16) {
-      if (df.d < .9 && R() < .26 - hands * .04) return endPlay('BROKEN UP', 'inc');
+    P.ball = null; const lp = rec.p && rec.p.leap > 0 ? 1 : 0;   // a receiver who went up for it reaches further and wins the fight for it
+    if (df.d < 1 && (!rec.p || df.d < rec.d - .3 - lp * .6) && R() < .4 - lp * .25) { S.g.stats.int++; return endPlay('INTERCEPTED!', 'int'); }
+    if (rec.p && rec.d < 1.6 + hands * .16 + lp * .9) {
+      if (df.d < .9 && R() < (.26 - hands * .04) * (lp ? .35 : 1)) return endPlay('BROKEN UP', 'inc');
+      if (lp) { say(rec.d > 1.6 ? 'SKYED FOR IT!' : 'HIGH-POINTED IT!', 1.1, '#9cff3a'); crowd(1.2, .06); K.add(10, sx(b.tx), sy(b.ty) - 40, '#9cff3a'); }
       rec.p.x = b.tx; rec.p.y = b.ty; P.carrier = rec.p; P.caught = true; K.sfx(880, .07, 'square', .06); K.sfx(1320, .07, 'square', .05, 0, .07);
-      say(pick(['CAUGHT!', 'GOT IT!', 'NICE GRAB!']), 1); return;
+      if (!lp) say(pick(['CAUGHT!', 'GOT IT!', 'NICE GRAB!']), 1); return;
     }
     endPlay('INCOMPLETE', 'inc');
   }
@@ -245,19 +246,26 @@ const GAME = {
     if (mode !== 'field' || !P) return;
     P.t += dt;
     const q = qb(), mid = FW / 2;
+    for (const p of P.off) { if (p.leap > 0) p.leap -= dt; if (p.pump > 0) p.pump -= dt; }
     if (P.phase === 'over') { if (P.t > 1.7) afterPlay(); return; }
     if (P.phase === 'live') {
       // offense
       if (!P.carrier) {
         if (P.play === 'run' && P.t > .45) { P.carrier = P.off[3]; P.off[3].route = null; }
-        stepTo(q, P.L - (P.play === 'run' ? 1.5 : 4.5), q.y, 3.4, dt);
+        if (q.spin > 0) { q.spin -= dt; stepTo(q, q.x - .4, q.jy, 7, dt); } else stepTo(q, P.L - (P.play === 'run' ? 1.5 : 4.5), q.y, 3.4, dt);
         // once the ball is up, the man it's thrown to (and anyone close) breaks off the route and bends toward where it will come down
         for (const p of P.off.slice(1, 4)) if (p !== P.carrier) { const b = P.ball; if (b && (p === b.rec || Math.hypot(b.tx - p.x, b.ty - p.y) < 8)) chase(p, b.tx, b.ty, p.sp * (p === b.rec ? 1.06 : .95), dt); else runRoute(p, dt); }
       } else {
-        const c = P.carrier, sp = (c.sp || 5.6) * (c.juke > 0 ? 1.35 : 1);
+        const c = P.carrier, sp = (c.sp || 5.6) * (c.juke > 0 ? (c.spin > 0 ? 1.12 : 1.35) : 1);
+        if (c.spin > 0) c.spin -= dt;
+        if (c.dive) {   // a lunge for the line: nobody can stop it mid-air, and the play ends where it lands
+          const D = c.dive; D.t += dt; c.x = D.x0 + (D.x1 - D.x0) * Math.min(1, D.t / D.T); c.vx = 8; c.vy = 0;
+          if (c.x >= 100) { c.x = 100.5; c.dive = null; return endPlay('TOUCHDOWN!', 'td'); }
+          if (D.t >= D.T) { c.dive = null; return endPlay(`${S.d.first < 100 && c.x >= S.d.first ? 'STRETCHED IT' : 'DIVE'}  ${fmtGain(c.x - S.d.ball)}`, 'tackle'); }
+        } else {
         let ty = c.y; if (keys.up) ty -= 6; if (keys.down) ty += 6; if (ptr && ptr.steer) ty = clamp((ptr.y - FY) / YY, .5, FW - .5);
         if (c.juke > 0) { c.juke -= dt; ty = c.jy; }
-        stepTo(c, c.x + sp, ty, sp, dt); if (c.jcd > 0) c.jcd -= dt;
+        stepTo(c, c.x + sp, ty, sp, dt); if (c.jcd > 0) c.jcd -= dt; }
         for (const p of P.off) if (p !== c && p.role !== 'QB') { const tg = near(P.def, p.x, p.y); if (tg.p && tg.d < 6) stepTo(p, tg.p.x, tg.p.y, 5.5, dt); else stepTo(p, c.x + 2, p.y, 5, dt); }
       }
       // line play: blockers hold the rush, then it gets home
@@ -267,7 +275,8 @@ const GAME = {
       // defense
       const tgt = P.carrier || (P.ball ? null : q);
       for (const d of P.def) {
-        if (d.stun > 0) { d.stun -= dt; continue; }
+        if (d.stun > 0) { d.stun -= dt; if (d.stun <= 0) d.fell = false; continue; }
+        if (d.bite > 0) { d.bite -= dt; stepTo(d, d.x - 2, d.y + (qb().y - d.y) * .1, d.sp * .7, dt); continue; }   // bit on the pump fake: crashing toward the line
         if (P.t < P.react && d.role !== 'DL') continue;
         if (P.carrier) { const c = P.carrier, lead = Math.min(1, Math.hypot(c.x - d.x, c.y - d.y) / 10); stepTo(d, c.x + c.vx * lead * .4, c.y + c.vy * lead * .4, d.sp * .96, dt); }
         else if (P.ball && d.role !== 'DL') { const b = P.ball, dd = Math.hypot(b.tx - d.x, b.ty - d.y); if (dd < 9) stepTo(d, b.tx, b.ty, d.sp * .95, dt); else stepTo(d, d.x + .5, d.y, d.sp * .5, dt); }
@@ -278,12 +287,13 @@ const GAME = {
       // the ball in the air
       if (P.ball) { P.ball.t += dt; if (P.ball.t >= P.ball.T) land(); }
       // sacks, tackles, touchdowns, sidelines
-      if (!P.carrier && !P.thrown && P.play === 'pass') { for (const d of P.def) if (d.role === 'DL' && Math.hypot(d.x - q.x, d.y - q.y) < .9) { P.carrier = null; return endPlay('SACKED!', 'sack'); } }
-      if (P.carrier) {
+      if (!P.carrier && !P.thrown && P.play === 'pass') { for (const d of P.def) if (d.role === 'DL' && !(d.stun > 0) && Math.hypot(d.x - q.x, d.y - q.y) < .9) { P.carrier = null; return endPlay('SACKED!', 'sack'); } }
+      if (P.carrier && P.phase === 'live') {
         const c = P.carrier;
         if (c.x >= 100) { c.x = 100.5; return endPlay('TOUCHDOWN!', 'td'); }
         if (c.y <= .35 || c.y >= FW - .35) return endPlay(`OUT OF BOUNDS  ${fmtGain(c.x - S.d.ball)}`, 'out');
         for (const d of P.def) {
+          if (c.dive) break;
           if (d.stun > 0 || Math.hypot(d.x - c.x, d.y - c.y) > .78) continue;
           if (c.juke > 0) { d.stun = .5; continue; }
           const brk = .2 + star(c.role === 'RB' ? 'RB' : c.role) * .05 - (S.F.opp[S.oppI] || 2) * .025;
@@ -295,11 +305,48 @@ const GAME = {
     }
   }
   const fmtGain = g => (g >= 0 ? '+' : '') + Math.round(g) + ' YDS';
-  function juke() {
-    const c = P && P.carrier; if (!c || P.phase !== 'live' || c.jcd > 0) return;
-    const tg = near(P.def, c.x, c.y), away = tg.p ? (c.y < tg.p.y ? -1 : 1) : 1;
-    c.juke = .38; c.jcd = 1.3; c.jy = clamp(c.y + away * 3.2, .6, FW - .6); K.sfx(700, .07, 'square', .05, -300);
+  // one button, and what it does depends on the moment:
+  //   QB in the pocket: PUMP FAKE (coverage bites and crashes down) or, with a rusher on him, SPIN OUT of the sack. Once a play.
+  //   ball in the air: LEAP. The receiver goes up for it: longer reach, wins contested balls.
+  //   ball carrier: JUKE sideways, SPIN through a man right in front, or DIVE for the goal line or the sticks.
+  //   juke with a defender right on you and it's an ANKLE BREAKER: he falls, and the cooldown resets so you can chain them.
+  function jukeKind() {
+    if (!P || P.phase !== 'live' || mode !== 'field') return null;
+    const c = P.carrier;
+    if (c) {
+      if (c.jcd > 0 || c.dive) return null;
+      const tg = near(P.def.filter(d => !(d.stun > 0)), c.x, c.y);
+      if (tg.p && tg.d < 2.8 && (c.x + 2.8 >= 100 || (S.d.first < 100 && c.x < S.d.first && c.x + 2.8 >= S.d.first))) return 'DIVE';
+      if (tg.p && tg.p.x > c.x && tg.p.x - c.x < 2.6 && Math.abs(tg.p.y - c.y) < .9) return 'SPIN';
+      return 'JUKE';
+    }
+    if (P.ball) return P.ball.t / P.ball.T > .3 && P.ball.rec && !(P.ball.rec.leap > 0) && !P.leapt ? 'LEAP' : null;
+    if (P.play === 'pass' && !P.thrown && !P.qbMove) { const q = qb(), r = near(P.def.filter(d => d.role === 'DL' && !(d.stun > 0)), q.x, q.y); return r.p && r.d < 2.3 ? 'SPIN OUT' : 'PUMP FAKE'; }
+    return null;
   }
+  function juke() {
+    const k = jukeKind(); if (!k) return;
+    const q = qb(), c = P.carrier, G = S.g.stats; G.moves++;
+    if (k === 'PUMP FAKE') {
+      P.qbMove = 1; for (const d of P.def) if (d.role !== 'DL') d.bite = .55 + R() * .2 - (S.F.opp[S.oppI] || 2) * .04;
+      q.pump = .3; say('PUMP FAKE!', .9, '#ffd23f'); K.sfx(420, .06, 'square', .05, 200); return;
+    }
+    if (k === 'SPIN OUT') {
+      const r = near(P.def.filter(d => d.role === 'DL'), q.x, q.y).p; r.stun = 1.1; r.fell = true; P.qbMove = 1; P.hold = Math.max(P.hold, P.t + .9);
+      q.spin = .4; q.jy = clamp(q.y + (q.y < r.y ? -2.4 : 2.4), .8, FW - .8); say('SPUN OUT OF THE SACK!', 1.1, '#9cff3a'); K.sfx(760, .1, 'square', .05, -400); crowd(1, .05); return;
+    }
+    if (k === 'LEAP') { P.leapt = 1; P.ball.rec.leap = P.ball.T - P.ball.t + .25; K.sfx(520, .12, 'square', .05, 500); return; }
+    if (k === 'DIVE') { c.dive = { t: 0, T: .34, x0: c.x, x1: Math.min(c.x + 2.8, 101) }; c.jcd = 9; say('DIVE!', .8, '#ffd23f'); K.sfx(300, .2, 'triangle', .07, 300); return; }
+    const tg = near(P.def.filter(d => !(d.stun > 0)), c.x, c.y), away = tg.p ? (c.y < tg.p.y ? -1 : 1) : 1;
+    if (k === 'SPIN') { c.juke = .45; c.spin = .45; c.jy = c.y; c.jcd = 1.1; K.sfx(820, .1, 'square', .05, -500); }
+    else { c.juke = .38; c.jcd = 1.3; c.jy = clamp(c.y + away * 3.2, .6, FW - .6); K.sfx(700, .07, 'square', .05, -300); }
+    if (tg.p && tg.d < 1.5) {   // right in his face: he bites and goes down, and you can go again right away
+      tg.p.stun = 1.6; tg.p.fell = true; P.ankles = (P.ankles || 0) + 1; G.ankles++; c.jcd = .3;
+      say(P.ankles > 1 ? `ANKLE BREAKER x${P.ankles}!` : k === 'SPIN' ? 'SPUN HIM AROUND!' : 'ANKLE BREAKER!', 1.1, '#9cff3a');
+      K.add(10 * P.ankles, sx(c.x), sy(c.y) - 60, '#9cff3a'); K.shake(4); crowd(1.3, .07); K.sfx(1040, .08, 'square', .05, 0, .06);
+    }
+  }
+
 
   /* ---------- drawing ---------- */
   function rr(g, x, y, w, h, r, f, s) { g.beginPath(); g.roundRect(x, y, w, h, r); if (f) { g.fillStyle = f; g.fill(); } if (s) { g.strokeStyle = s; g.lineWidth = 3; g.stroke(); } }
@@ -366,11 +413,17 @@ const GAME = {
   }
   function player(g, p, col, col2, sel) {
     const x = Math.round(sx(p.x)), y = Math.round(sy(p.y)), run = Math.hypot(p.vx, p.vy) > .5, frame = run ? 1 + (Math.floor(anim * 9 + p.x * .7) & 1) : 0;
-    const face = Math.abs(p.vx) > .6 ? Math.sign(p.vx) : p.team === 'o' ? 1 : -1, w = SW * PXS, h = SH * PXS;
+    let face = Math.abs(p.vx) > .6 ? Math.sign(p.vx) : p.team === 'o' ? 1 : -1; const w = SW * PXS, h = SH * PXS;
+    if (p.spin > 0) face = Math.floor(anim * 18) & 1 ? 1 : -1;   // a spin move: the sprite whips round
     g.fillStyle = 'rgba(0,0,0,.32)'; for (const [a, b, ww] of [[-9, 2, 18], [-12, 4, 24], [-9, 6, 18]]) g.fillRect(x + a * PXS * .55, y + b * .8, ww * PXS * .55, 2.4);
     if (sel) { const bl = Math.floor(anim * 6) & 1; g.fillStyle = bl ? '#ffd23f' : '#fff7b0'; for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2; g.fillRect(Math.round(x + Math.cos(a) * 22 - 2), Math.round(y + 4 + Math.sin(a) * 9 - 2), 4, 4); } }
     const skin = (p.num * 7 + (p.team === 'o' ? 1 : 3)) % SKIN.length;
-    g.save(); g.imageSmoothingEnabled = false; g.translate(x, y + 5); g.drawImage(sprite(col, col2, p.num || 0, frame, skin, face), -w / 2, -h, w, h); g.restore();
+    g.save(); g.imageSmoothingEnabled = false; g.translate(x, y + 5);
+    if (p.fell && p.stun > 0) { g.rotate(-face * 1.45); g.globalAlpha = .9; }   // on the turf after an ankle breaker or a spin-out
+    else if (p.dive) g.rotate(face * 1.2);
+    else if (p.leap > 0) { g.translate(0, -Math.min(1, p.leap * 3) * 22); }
+    else if (p.pump > 0) g.translate(-face * 3, -2);
+    g.drawImage(sprite(col, col2, p.num || 0, frame, skin, face), -w / 2, -h, w, h); g.restore();
   }
   function drawPlay(g) {
     const d = S.d, me = myTeam(), op = oppTeam();
@@ -408,7 +461,7 @@ const GAME = {
     txt(g, `${quarter()}  ${dn} & ${togo}`, 640, 21, `12px ${PX}`, '#ffd23f'); txt(g, `BALL ON ${d.ball <= 50 ? 'OWN ' + Math.round(d.ball) : 'OPP ' + Math.round(100 - d.ball)}`, 640, 36, `9px ${PX}`, '#cfd8e0');
   }
   const BTN = { pass: { x: 380, y: 640, w: 250, h: 66 }, run: { x: 650, y: 640, w: 250, h: 66 }, punt: { x: 250, y: 640, w: 240, h: 66 }, fg: { x: 520, y: 640, w: 240, h: 66 }, go: { x: 790, y: 640, w: 240, h: 66 },
-    play: { x: 812, y: 560, w: 420, h: 104 }, cont: { x: 490, y: 600, w: 300, h: 70 }, prev: { x: 812, y: 104, w: 52, h: 52 }, next: { x: 1180, y: 104, w: 52, h: 52 } };
+    play: { x: 812, y: 560, w: 420, h: 104 }, juke: { x: 1000, y: 640, w: 210, h: 62 }, cont: { x: 490, y: 600, w: 300, h: 70 }, prev: { x: 812, y: 104, w: 52, h: 52 }, next: { x: 1180, y: 104, w: 52, h: 52 } };
   const hit = (b, x, y) => b && x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
   function btn(g, b, label, c, c2 = '#141414', sub) {
     const hv = hover === b; g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.roundRect(b.x, b.y + 6, b.w, b.h, 12); g.fill();
@@ -421,8 +474,11 @@ const GAME = {
       else { btn(g, BTN.pass, 'PASS', '#ffd23f'); btn(g, BTN.run, 'RUN', '#3ddc84'); }
       txt(g, S.d.down === 4 && !P.go4 ? '4th down: kick it or go for it?' : 'Call the play. The yellow lines are your receivers\' routes.', 640, 616, BODY, '#fff');
     } else if (P.phase === 'live') {
-      const t = P.carrier ? 'Steer with your finger or the arrow keys. Tap or press Space to juke!' : P.play === 'pass' && !P.thrown ? 'Drag back and release to throw, or tap a receiver (keys 1, 2, 3)' : '';
-      txt(g, t, 640, 664, BODY, '#fff');
+      const jk = jukeKind(), c = P.carrier;
+      const t = c ? (jk === 'DIVE' ? 'Close to the line: hit DIVE to lunge for it!' : 'Steer with your finger or the arrows. Space or the button: juke, spin through a man in front.') : P.play === 'pass' && !P.thrown ? 'Drag back to throw, or tap a receiver (1, 2, 3). Space: pump fake, or spin out of a sack.' : P.ball ? 'Ball in the air: hit LEAP so your receiver goes up and gets it!' : '';
+      txt(g, t, 590, 664, BODY, '#fff');
+      if (jk) { const hot = jk === 'SPIN OUT' || jk === 'LEAP' || jk === 'DIVE'; btn(g, BTN.juke, jk, hot ? (Math.floor(anim * 6) & 1 ? '#9cff3a' : '#ffd23f') : '#ffd23f', '#141414', 'SPACE'); }
+      else if (c && c.jcd > 0 && !c.dive) { const b = BTN.juke; rr(g, b.x, b.y, b.w, b.h, 12, 'rgba(255,255,255,.12)'); rr(g, b.x, b.y, b.w * (1 - Math.min(1, c.jcd / 1.3)), b.h, 12, 'rgba(255,210,63,.35)'); txt(g, 'JUKE', b.x + b.w / 2, b.y + b.h / 2, `18px ${PX}`, 'rgba(255,255,255,.5)'); }
     }
     if (P.phase === 'over' && P.result) { const r = P.result, big = r.kind === 'td'; rr(g, 340, 290, 600, big ? 120 : 80, 14, 'rgba(8,8,12,.86)', big ? '#ffd23f' : 'rgba(255,255,255,.25)'); txt(g, r.text, 640, big ? 350 : 330, `${big ? 34 : 18}px ${PX}`, big ? '#ffd23f' : r.kind === 'int' ? '#ff6a6a' : '#fff'); }
   }
@@ -495,7 +551,7 @@ const GAME = {
     rr(g, 290, 110, 700, 470, 18, '#14141c', c.win ? '#3ddc84' : '#ff6a6a');
     txt(g, c.win ? 'VICTORY!' : 'DEFEAT', 640, 168, `40px ${PX}`, c.win ? '#3ddc84' : '#ff6a6a');
     txt(g, `${me.ab}  ${c.us}  -  ${c.them}  ${op.ab}`, 640, 236, `28px ${PX}`, '#fff');
-    const s = c.stats; [['Passing yards', s.pass], ['Rushing yards', s.rush], ['Touchdowns', s.td], ['Interceptions thrown', s.int]].forEach(([k, n], i) => { txt(g, k, 440, 300 + i * 38, '700 20px Nunito, system-ui', '#cfd8e0', 'left'); txt(g, String(n), 840, 300 + i * 38, `16px ${PX}`, '#fff', 'right'); });
+    const s = c.stats; [['Passing yards', s.pass], ['Rushing yards', s.rush], ['Touchdowns', s.td], ['Interceptions thrown', s.int], ['Ankles broken', s.ankles || 0]].forEach(([k, n], i) => { txt(g, k, 440, 290 + i * 34, '700 20px Nunito, system-ui', '#cfd8e0', 'left'); txt(g, String(n), 840, 290 + i * 34, `16px ${PX}`, '#fff', 'right'); });
     txt(g, `+${c.earn} coaching credits`, 640, 470, `16px ${PX}`, '#ffd23f');
     btn(g, BTN.cont, 'CONTINUE', '#ffd23f');
   }
@@ -532,6 +588,7 @@ const GAME = {
       if (hit(BTN.pass, x, y)) return snap('pass'); if (hit(BTN.run, x, y)) return snap('run'); return;
     }
     if (P.phase !== 'live') return;
+    if (hit(BTN.juke, x, y) && jukeKind()) return juke();
     if (P.carrier) { ptr = { x, y, x0: x, y0: y, t: 0, steer: true, at: anim }; return; }
     if (P.play === 'pass' && !P.thrown) ptr = { x, y, x0: x, y0: y, aim: true, at: anim, tap: playerAt(x, y) };
   };
@@ -569,6 +626,8 @@ const GAME = {
     if (mode !== 'field' || !P) return;
     if (P.phase === 'call') { if (S.d.down === 4 && !P.go4) { if (fgRange()) fourth('fg'); else if (S.d.ball < 50) fourth('punt'); else fourthGo(); return; } snap(R() < .65 ? 'pass' : 'run'); return; }
     if (P.phase !== 'live') return;
+    const jk = jukeKind();
+    if (jk === 'SPIN OUT' || jk === 'LEAP' || jk === 'DIVE' || (jk === 'PUMP FAKE' && P.t > .7 && R() < .15)) return juke();
     if (P.play === 'pass' && !P.thrown && P.t > 1.1 + R() * .8) { const best = P.off.slice(1, 4).map(p => [p, near(P.def, p.x, p.y).d + (p.x - P.L) * .08]).sort((a, b) => b[1] - a[1])[0][0]; throwTo(best); return; }
     if (P.carrier) { const c = P.carrier, n = near(P.def, c.x + 2, c.y); keys.up = n.p && n.p.y > c.y && n.d < 7; keys.down = n.p && n.p.y <= c.y && n.d < 7; if (n.d < 2.4) juke(); }
   };
@@ -578,5 +637,5 @@ const GAME = {
     const w = P.off[1]; w.x = 96; w.y = 18; w.vx = 6; P.off[2].x = 92; P.off[2].y = 40; P.off[3].x = 80; P.def[0].x = 97.5; P.def[0].y = 20; P.def[2].x = 94; P.def[2].y = 24; P.def[1].x = 93; P.def[1].y = 38;
     P.ball = { x0: 74, y0: 26, tx: 97, ty: 18, t: .8, T: 1 }; cam = 70;
   };
-  GAME.test = { res: () => P && P.result && P.result.text, sim: (n, dt = 1 / 30) => { for (let i = 0; i < n; i++) { GAME.bot(dt); GAME.update(dt); } }, st: () => ({ mode, phase: P && P.phase, d: S.d, g: S.g, F: { week: S.F.week, credits: S.F.credits, rec: S.F.rec[S.F.team] } }), start: startGame, snap, throwTo: i => throwTo(P.off[i]), juke, fourth, fourthGo, kickNow };
+  GAME.test = { res: () => P && P.result && P.result.text, sim: (n, dt = 1 / 30) => { for (let i = 0; i < n; i++) { GAME.bot(dt); GAME.update(dt); } }, st: () => ({ mode, phase: P && P.phase, d: S.d, g: S.g, F: { week: S.F.week, credits: S.F.credits, rec: S.F.rec[S.F.team] } }), start: startGame, snap, throwTo: i => throwTo(P.off[i]), juke, jukeKind, P: () => P, fourth, fourthGo, kickNow };
 })();
