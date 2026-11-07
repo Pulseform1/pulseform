@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Small cases. Big contradictions. Is the evidence actually convincing?">
+<title>Pocket Jury</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+:root { color-scheme: dark; --bg: #0e1118; --panel: #171b26; --line: #2c3242; --text: #f4f1e9; --muted: #a3a9bb; --accent: #d4fa82; font-family: Nunito, system-ui, -apple-system, 'Segoe UI', sans-serif; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; -webkit-tap-highlight-color: transparent; }
+body { background: radial-gradient(1200px 600px at 50% -10%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%), var(--bg); }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; border: 1px solid var(--line); color: var(--text); background: #232838; border-radius: 10px; padding: 9px 14px; font-weight: 800; min-height: 40px; transition: transform .08s, background .15s, border-color .15s; box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+button:hover { background: #2f3549; border-color: #444c63; }
+button:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.35); }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: .45; cursor: default; }
+.primary { background: var(--accent); color: #141a10; border-color: transparent; }
+.primary:hover { background: color-mix(in srgb, var(--accent) 80%, #fff); }
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 8px 12px; min-height: 54px; }
+.brand { font-weight: 900; letter-spacing: 2px; font-size: 15px; }
+.brand span { color: var(--accent); }
+body.framed .brand { display: none; }
+.titles { line-height: 1.05; }
+.genre { text-transform: uppercase; letter-spacing: 2.5px; font-size: 10px; font-weight: 900; color: var(--accent); }
+.name { font-size: 20px; font-weight: 900; letter-spacing: -.3px; }
+.metric { background: #1d2230; border: 1px solid var(--line); padding: 6px 12px; border-radius: 999px; font-weight: 900; font-size: 15px; white-space: nowrap; }
+.metric.bump { animation: bump .35s ease; }
+@keyframes bump { 40% { transform: scale(1.15); border-color: var(--accent); color: var(--accent); } }
+.spacer { flex: 1; }
+.tools { display: flex; gap: 6px; }
+.tools button { width: 40px; padding: 0; font-size: 16px; }
+.stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; padding: 0 10px; }
+canvas { display: block; touch-action: none; outline: none; border-radius: 14px; box-shadow: 0 18px 50px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06); background: #161923; }
+.status { position: absolute; left: 50%; bottom: 14px; transform: translate(-50%, 8px); max-width: min(720px, 92%); background: rgba(14,17,24,.88); border: 1px solid var(--line); border-left: 3px solid var(--accent); padding: 8px 14px; border-radius: 10px; font-size: 14px; font-weight: 700; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; text-align: center; }
+.status.show { opacity: 1; transform: translate(-50%, 0); }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding: 10px 12px 12px; min-height: 62px; align-items: center; }
+.controls:empty { display: none; }
+.controls button { font-size: 14px; }
+.controls label { font-size: 13px; color: var(--muted); }
+.controls input { width: 80px; background: #10121a; color: var(--text); border: 1px solid var(--line); padding: 9px; border-radius: 8px; }
+.overlay { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(9,11,17,.72); backdrop-filter: blur(3px); z-index: 5; padding: 16px; }
+.overlay[hidden] { display: none; }
+.card { background: linear-gradient(180deg, #1c2130, #141824); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 18px; padding: 24px 28px; max-width: 560px; width: 100%; box-shadow: 0 24px 60px rgba(0,0,0,.5); max-height: 100%; overflow: auto; animation: rise .3s ease; }
+.card.small { max-width: 320px; text-align: center; }
+@keyframes rise { from { transform: translateY(14px); opacity: 0; } }
+.card h1 { margin: 6px 0 6px; font-size: 34px; letter-spacing: -.8px; font-weight: 900; }
+.card .desc { color: var(--muted); font-size: 16px; margin: 0 0 14px; }
+.how { margin: 0 0 12px; padding-left: 20px; line-height: 1.55; font-size: 15px; }
+.how li { margin: 4px 0; }
+.goal { color: #dfe3ec; font-size: 14px; margin: 0 0 18px; }
+.row { display: flex; align-items: center; gap: 16px; }
+.big { font-size: 18px; padding: 12px 34px; min-height: 50px; }
+.best { color: var(--muted); font-weight: 800; }
+.best b { color: var(--accent); font-size: 18px; }
+@media (max-width: 640px) {
+  .topbar { gap: 8px; padding: 6px 8px; min-height: 46px; }
+  .name { font-size: 16px; } .genre { font-size: 9px; letter-spacing: 1.5px; }
+  .metric { font-size: 13px; padding: 4px 9px; }
+  .tools button { width: 34px; min-height: 34px; font-size: 14px; }
+  .brand { display: none; }
+  .controls { gap: 6px; padding: 8px; }
+  .controls button { padding: 7px 10px; font-size: 12px; min-height: 36px; }
+  .card { padding: 18px; } .card h1 { font-size: 26px; } .how { font-size: 14px; }
+}
+@media (max-height: 520px) {
+  .topbar { min-height: 40px; padding: 4px 8px; } .titles .genre { display: none; }
+  .controls { padding: 4px 8px 6px; min-height: 0; } .controls button { min-height: 32px; padding: 5px 10px; }
+  .card { padding: 14px 18px; } .how { font-size: 13px; } .card h1 { font-size: 24px; }
+}
+
+</style>
+</head>
+<body data-game="pocket-jury" style="--accent:#e3ad8c">
+<div id="app">
+  <div class="topbar">
+    <a class="brand" href="/">PULSE<span>BOX</span></a>
+    <div class="titles"><div class="genre">Courtroom deduction</div><div class="name">Pocket Jury</div></div>
+    <div class="metric" id="metric">Ready</div>
+    <div class="spacer"></div>
+    <div class="tools">
+      <button id="help" title="How to play">?</button>
+      <button id="sound" title="Sound">🔊</button>
+      <button id="pause" title="Pause">❚❚</button>
+      <button id="restart" title="Restart">↻</button>
+      <button id="fullscreen" title="Full screen">⛶</button>
+    </div>
+  </div>
+  <div class="stage">
+    <canvas id="game" width="960" height="600" tabindex="0" aria-label="Pocket Jury game board"></canvas>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    <div class="overlay" id="start">
+      <div class="card">
+        <div class="genre" id="s-genre"></div>
+        <h1 id="s-title"></h1>
+        <p class="desc" id="s-desc"></p>
+        <ul class="how" id="s-how"></ul>
+        <p class="goal"><b>Goal:</b> <span id="s-goal"></span></p>
+        <div class="row"><button class="primary big" id="play">Play</button><div class="best">Best <b id="best">0</b></div></div>
+      </div>
+    </div>
+    <div class="overlay" id="pause-overlay" hidden><div class="card small"><div class="genre">Take your time</div><h1>Paused</h1><button class="primary big" id="resume">Resume</button></div></div>
+  </div>
+  <div class="controls" id="controls" role="group" aria-label="Game controls"></div>
+</div>
+<script>
+window.CATALOG=[
+{id:'baggage-panic',title:'Baggage Panic',genre:'Packing puzzle',color:'#f6b765',desc:'A suitcase, six strange belongings, and absolutely no spare room.',how:['Select a belonging, then tap a suitcase square to place it.','Rotate with R or the Rotate button. Tap a packed item to take it out.','Pack every item without overlaps. Red items are forbidden: leave them behind.'],goal:'Pack all permitted belongings.'},
+{id:'switchyard',title:'Switchyard',genre:'Train dispatch',color:'#b7df94',desc:'Three junctions. Two destinations. Keep the whole railway moving.',how:['Tap a numbered junction to switch its upper or lower exit. Keys 1–3 work too.','Match each train to the station with its color. Follow the track from left to right.','Wrong deliveries and rear-end collisions cost lives. Survive a three-minute shift.'],goal:'Deliver as many trains as possible.'},
+{id:'potion-protocol',title:'Potion Protocol',genre:'Deduction lab',color:'#c6a7ff',desc:'Decode a secret recipe, one carefully measured experiment at a time.',how:['Tap three different ingredients in order, then test your recipe.','A solid dot means an ingredient is in the right slot. A hollow dot means it belongs elsewhere.','Crack the recipe in eight tests. Daily mode uses the same recipe all day.'],goal:'Discover the secret three-ingredient recipe.'},
+{id:'safecracker',title:'Safecracker',genre:'Mechanical puzzle',color:'#edcb78',desc:'Listen to the dial. Read the clues. Open what nobody else could.',how:['Turn the dial with the arrows, buttons, or by dragging around its edge.','Read the clue for each tumbler; the little signal bars peak at its correct number.','Press Set tumbler when ready. Three correct tumblers open a vault; three mistakes lock it.'],goal:'Open five progressively tougher vaults.'},
+{id:'magnet-rescue',title:'Magnet Rescue',genre:'Physics skill',color:'#64d6dd',desc:'Swing an industrial magnet. Bring every little robot back in one piece.',how:['Move the crane with A/D, arrows, or drag across the scene. W/S changes cable length.','Tap Magnet to attach a nearby robot. Swing it over the striped rescue bay, then release.','Avoid the red hazard. Damaged robots cost a life. Rescue five robots per shift.'],goal:'Deliver all five robots to the rescue bay.'},
+{id:'pocket-jury',title:'Pocket Jury',genre:'Courtroom deduction',color:'#e3ad8c',desc:'Small cases. Big contradictions. Is the evidence actually convincing?',how:['Read the case brief, then open each evidence card.','Select the piece that settles the case, then return a verdict.','A correct verdict earns points; choosing the decisive evidence earns a bonus.'],goal:'Resolve eight unusual neighborhood cases.'},
+{id:'cloudwash',title:'Cloudwash',genre:'Satisfying cleaning',color:'#8bd6f0',desc:'Wash away the grime. Find the little world hiding underneath.',how:['Hold and drag to spray. Release to refill your water tank.','Choose a wide fan for coverage or a narrow jet to conserve water.','Reveal at least 96% of the artwork to finish, then move to the next mural.'],goal:'Restore five hand-drawn murals.'},
+{id:'circuit-courier',title:'Circuit Courier',genre:'Robot programming',color:'#8ce6b5',desc:'Write a tiny program. Let a very literal robot do the delivery.',how:['Add Forward, Turn left, and Turn right commands. The robot begins facing right.','Use Repeat to run the whole program 1–6 times; the delivery can finish mid-loop.','Press Run. Reach the parcel first, then the green destination. Avoid blocked tiles.'],goal:'Solve eight delivery routes with short programs.'},
+{id:'bid-bandits',title:'Bid Bandits',genre:'Auction strategy',color:'#e8b273',desc:'Peek into storage lockers. Read your rivals. Know when to walk away.',how:['Inspect the visible clues and appraisal range before bidding.','Bid against three computer rivals or pass to let them settle it.','Win lockers, sell the contents, and finish six auctions with the highest net worth.'],goal:'Beat three rival bidders over six auctions.'},
+{id:'foldscape',title:'Foldscape',genre:'Paper-folding puzzle',color:'#e4bbf5',desc:'Fold a little paper world until its scattered paths finally meet.',how:['Tap the marked crease buttons to fold an outer row or column inward.','Folded paper overlays the adjacent strip; paths and bridges move with it.','Connect the fox to its home using the printed paths. Reset freely if a fold hides a needed path.'],goal:'Solve eight paper maps.'}
+];
+
+'use strict';
+/* Pulsebox Originals engine: a 960x600 canvas game in a page that fills the screen (or the hub's frame).
+   Each game defines GAMES[id] = { init(), ui(), update(dt), draw(), pointer(type,p), key(k), action(name) } and uses the
+   helpers below. The engine adds the start card, pause, sound, a crisp high-DPI canvas, button hover, and the juice:
+   particles, pop-up text, ripples, screen shake and a celebration when a game is finished. */
+const C = document.getElementById('game'), ctx = C.getContext('2d'), W = 960, H = 600;
+const ID = document.body.dataset.game, META = CATALOG.find(x => x.id === ID);
+const FONT = 'Nunito, system-ui, -apple-system, "Segoe UI", sans-serif';
+let state, paused = true, started = false, last = 0, totalTime = 0, keys = {}, pointer = { x: 0, y: 0, down: false }, audioCtx = null, soundOn = true, buttons = [], uiKey = '', hover = null;
+try { soundOn = localStorage.getItem('pbx-pack-sound') !== '0'; } catch (e) {}
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), lerp = (a, b, t) => a + (b - a) * t, dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function dailySeed() { return Math.floor(Date.now() / 86400000); }
+
+/* ---------- drawing helpers ---------- */
+function rr(x, y, w, h, r, fill, stroke) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); } }
+function rect(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
+function circle(x, y, r, c, stroke) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); if (c) { ctx.fillStyle = c; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); } }
+function line(x, y, xx, yy, c, width = 3) { ctx.strokeStyle = c; ctx.lineWidth = width; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(xx, yy); ctx.stroke(); }
+function text(s, x, y, size = 18, c = '#f5f0e4', align = 'left', weight = 600) { ctx.font = `${Math.min(900, Math.round(weight / 100) * 100)} ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.fillStyle = c; ctx.fillText(String(s), x, y); }
+function wrap(s, x, y, max, size = 18, c = '#f5f0e4', lh = 27) {
+  ctx.font = `600 ${size}px ${FONT}`; let row = '', yy = y;
+  for (const w of s.split(' ')) { if (ctx.measureText(row + w).width > max && row) { text(row, x, yy, size, c, 'left', 600); row = ''; yy += lh; } row += w + ' '; }
+  text(row, x, yy, size, c, 'left', 600); return yy + lh;
+}
+function pill(s, x, y, c = '#d4fa82') { ctx.font = `700 12px ${FONT}`; rr(x, y, ctx.measureText(s).width + 24, 28, 14, '#25303a'); text(s, x + 12, y + 14, 12, c, 'left', 700); }
+function board(bg = '#19242b') {
+  rect(0, 0, W, H, bg);
+  const g = ctx.createRadialGradient(W / 2, H * .35, 60, W / 2, H / 2, W * .75); g.addColorStop(0, 'rgba(255,255,255,.05)'); g.addColorStop(1, 'rgba(0,0,0,.28)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  for (let x = 20; x < W; x += 32) for (let y = 20; y < H; y += 32) circle(x, y, 1, '#ffffff0a');
+}
+function heading(a, b, c = META.color) { text(a, 34, 37, 15, c, 'left', 900); text(b, 926, 37, 13, '#aeb7c5', 'right', 700); line(32, 65, 928, 65, '#ffffff15', 1); }
+// a button drawn on the canvas: it lifts and brightens under the pointer and dips when pressed
+function btn(label, x, y, w, h, fn, color = '#303b46') {
+  const on = hover && hover.x === x && hover.y === y && hover.w === w, dn = on && pointer.down, oy = dn ? 2 : on ? -1 : 0;
+  rr(x, y + 3, w, h, 9, 'rgba(0,0,0,.28)'); rr(x, y + oy, w, h, 9, color); if (on) rr(x, y + oy, w, h, 9, 'rgba(255,255,255,.1)');
+  rr(x + 1, y + oy + 1, w - 2, h * .45, 8, 'rgba(255,255,255,.06)');
+  text(label, x + w / 2, y + h / 2 + oy, 15, '#f6f4ed', 'center', 800); buttons.push({ x, y, w, h, fn });
+}
+// the end of a game: a card with a replay button, and a celebration (once per game)
+let doneFor = null;
+function done(title, sub) {
+  if (doneFor !== state) { doneFor = state; celebrate(!/interrupt|locked|lost|fail|over|bust|out of/i.test(title)); }
+  rect(0, 0, W, H, 'rgba(8,10,16,.45)');
+  rr(180, 182, 600, 232, 20, '#111921f5', META.color + '88'); rr(180, 182, 600, 6, 3, META.color);
+  text(title, 480, 240, 36, META.color, 'center', 900); wrap(sub, 225, 290, 510, 18, '#dae0e4');
+  btn('Play again', 365, 352, 230, 46, () => reset(), shade(META.color, -.45));
+}
+function shade(hex, k) { const n = parseInt(hex.slice(1), 16), f = v => Math.round(clamp(k < 0 ? v * (1 + k) : v + (255 - v) * k, 0, 255)); return `rgb(${f(n >> 16)},${f(n >> 8 & 255)},${f(n & 255)})`; }
+
+/* ---------- juice: particles, pop-up text, ripples, shake ---------- */
+const FX = { parts: [], pops: [], rings: [], shake: 0 };
+function burst(x, y, cols = [META.color, '#ffffff'], n = 16, sp = 240) { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = sp * (.3 + Math.random() * .7); FX.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - sp * .3, life: .7 + Math.random() * .5, max: 1.2, c: cols[i % cols.length], s: 3 + Math.random() * 4, g: 520, rot: Math.random() * 6, conf: false }); } }
+function confetti() { const cols = [META.color, '#ffffff', '#ffd23f', '#ff7ad9', '#5fe08a', '#7cc8ff']; for (let i = 0; i < 110; i++) FX.parts.push({ x: Math.random() * W, y: -20 - Math.random() * 200, vx: (Math.random() - .5) * 120, vy: 80 + Math.random() * 160, life: 3 + Math.random(), max: 4, c: cols[i % cols.length], s: 5 + Math.random() * 5, g: 140, rot: Math.random() * 6, conf: true }); }
+function popText(x, y, s, c = META.color) { FX.pops.push({ x, y, s, c, t: 0 }); }
+function ripple(x, y, c = '#ffffff') { FX.rings.push({ x, y, c, t: 0 }); }
+function shake(a = 6) { FX.shake = Math.max(FX.shake, a); }
+function stepFX(dt) {
+  for (const p of FX.parts) { p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += dt * 6; p.life -= dt; if (p.conf) p.vx += Math.sin(p.y * .03) * 20 * dt; }
+  FX.parts = FX.parts.filter(p => p.life > 0 && p.y < H + 40);
+  for (const q of FX.pops) q.t += dt; FX.pops = FX.pops.filter(q => q.t < 1.1);
+  for (const r of FX.rings) r.t += dt; FX.rings = FX.rings.filter(r => r.t < .45);
+  FX.shake = Math.max(0, FX.shake - dt * 30);
+}
+function drawFX() {
+  for (const r of FX.rings) { ctx.globalAlpha = 1 - r.t / .45; ctx.strokeStyle = r.c; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(r.x, r.y, 6 + r.t * 70, 0, Math.PI * 2); ctx.stroke(); }
+  for (const p of FX.parts) { ctx.globalAlpha = Math.min(1, p.life / .4); ctx.fillStyle = p.c; if (p.conf) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore(); } else { ctx.beginPath(); ctx.arc(p.x, p.y, p.s * Math.min(1, p.life), 0, Math.PI * 2); ctx.fill(); } }
+  for (const q of FX.pops) { const k = q.t / 1.1; ctx.globalAlpha = 1 - k * k; ctx.font = `900 ${26 + 6 * Math.min(1, q.t * 8)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(10,12,18,.7)'; ctx.strokeText(q.s, q.x, q.y - k * 50); ctx.fillStyle = q.c; ctx.fillText(q.s, q.x, q.y - k * 50); }
+  ctx.globalAlpha = 1;
+}
+function celebrate(win) {
+  if (win) { confetti(); chord([523, 659, 784, 1047]); shake(8); }
+  else { tone(330, .25, 'triangle', .05); tone(247, .4, 'triangle', .05, .18); }
+}
+
+/* ---------- sound: small synthesized tones (on by default; the toggle remembers your choice) ---------- */
+function ac() { if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); return audioCtx; }
+function tone(freq, dur = .1, type = 'triangle', vol = .05, delay = 0) {
+  if (!soundOn || !started) return; const a = ac(); if (!a) return;
+  try { const t0 = a.currentTime + delay, o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain(); o.type = type; o2.type = 'sine'; o.frequency.value = freq; o2.frequency.value = freq * 2;
+    const g2 = a.createGain(); g2.gain.value = .25; o.connect(g); o2.connect(g2); g2.connect(g); g.connect(a.destination);
+    g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .012); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur + .05);
+    o.start(t0); o2.start(t0); o.stop(t0 + dur + .08); o2.stop(t0 + dur + .08); } catch (e) {}
+}
+const chord = (fs, gap = .07) => fs.forEach((f, i) => tone(f, .18, 'triangle', .045, i * gap));
+function beep(freq = 440, duration = .08) {
+  tone(freq, duration, freq < 260 ? 'sawtooth' : 'triangle', freq < 260 ? .035 : .05);
+  // the games beep high when something goes right and low when it goes wrong: give each a little feedback
+  if (!started) return; if (freq >= 780) { burst(pointer.x, pointer.y, [META.color, '#ffffff', '#ffd23f'], 12, 200); tone(freq * 1.5, .1, 'triangle', .03, .06); } else if (freq < 260) shake(7);
+}
+
+/* ---------- the page around the canvas ---------- */
+function status(s) { const el = document.getElementById('status'); if (el.textContent === s) return; el.textContent = s; el.classList.remove('show'); void el.offsetWidth; if (s) { el.classList.add('show'); clearTimeout(status.t); status.t = setTimeout(() => el.classList.remove('show'), 3600); } }
+let lastMetric = null;
+function metric(s) {
+  const el = document.getElementById('metric'); if (el.textContent === s) return; el.textContent = s;
+  // a number going up (that isn't a percentage or money) is worth a little celebration
+  const m = /^[^\d-]*(-?\d+)/.exec(s), n = m ? +m[1] : null;
+  if (started && lastMetric != null && n != null && n > lastMetric && !/%|\$|test|fold/i.test(s)) { popText(clamp(pointer.x, 80, W - 80), clamp(pointer.y - 30, 90, H - 40), '+' + (n - lastMetric)); burst(pointer.x, pointer.y, [META.color, '#ffffff', '#ffd23f'], 14, 220); chord([660, 880], .06); }
+  lastMetric = n; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+}
+function controls(html) { if (uiKey !== html) { document.getElementById('controls').innerHTML = html; uiKey = html; } }
+function action(label, name, primary = false) { return `<button ${primary ? 'class="primary"' : ''} data-action="${name}">${label}</button>`; }
+function saveBest(value) { try { const key = 'pbx-pack-' + ID; const old = Number(localStorage.getItem(key) || 0); if (value > old) localStorage.setItem(key, value); document.getElementById('best').textContent = Math.max(value, old); } catch (e) {} }
+function reset() {
+  state = GAMES[ID].init(); doneFor = null; lastMetric = null; keys = {}; pointer.down = false; uiKey = ''; FX.parts = []; FX.pops = [];
+  if (started) setPaused(false);
+  GAMES[ID].ui?.(); render();
+}
+
+/* ---------- loop, input, fitting ---------- */
+let dpr = 1;
+function fit() {
+  const st = document.querySelector('.stage').getBoundingClientRect(); let w = st.width, h = w * H / W; if (h > st.height) { h = st.height; w = h * W / H; }
+  C.style.width = Math.floor(w) + 'px'; C.style.height = Math.floor(h) + 'px';
+  dpr = Math.min(2.5, (window.devicePixelRatio || 1) * w / W); const bw = Math.round(W * dpr), bh = Math.round(H * dpr);
+  if (C.width !== bw || C.height !== bh) { C.width = bw; C.height = bh; } render();
+}
+function render() {
+  if (!state) return; buttons = []; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - .5) * FX.shake, (Math.random() - .5) * FX.shake);
+  GAMES[ID].draw(); ctx.restore(); drawFX();
+}
+function frame(t) {
+  const dt = Math.min((t - last) / 1000 || 0, .04); last = t;
+  if (!paused) { totalTime += dt; GAMES[ID].update?.(dt); }
+  stepFX(dt); render(); requestAnimationFrame(frame);
+}
+function point(e) { const r = C.getBoundingClientRect(); return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height }; }
+const hitBtn = p => buttons.findLast(b => p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h);
+C.addEventListener('pointerdown', e => {
+  if (paused) return; e.preventDefault(); C.focus(); ac(); pointer = { ...point(e), down: true }; C.setPointerCapture?.(e.pointerId);
+  ripple(pointer.x, pointer.y, META.color);
+  const b = hitBtn(pointer); if (b) { tone(520, .05, 'triangle', .035); b.fn(); pointer.down = false; } else GAMES[ID].pointer?.('down', pointer);
+  render();
+});
+C.addEventListener('pointermove', e => { Object.assign(pointer, point(e)); hover = hitBtn(pointer) || null; C.style.cursor = hover ? 'pointer' : ''; if (!paused) GAMES[ID].pointer?.('move', pointer); });
+for (const ev of ['pointerup', 'pointercancel']) C.addEventListener(ev, e => { pointer.down = false; if (!paused) GAMES[ID].pointer?.('up', point(e)); });
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) e.preventDefault();
+  if (!started && (e.key === 'Enter' || e.key === ' ')) return start();
+  if (e.key === 'Escape' || e.key.toLowerCase() === 'p') { if (started) setPaused(!paused); return; }
+  keys[e.key.toLowerCase()] = true; if (!paused && !e.repeat) GAMES[ID].key?.(e.key.toLowerCase()); render();
+});
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+window.addEventListener('blur', () => { keys = {}; pointer.down = false; if (started && !paused) setPaused(true); });
+document.getElementById('controls').addEventListener('click', e => { const b = e.target.closest('[data-action]'); if (b && !paused) { ac(); tone(560, .05, 'triangle', .035); GAMES[ID].action?.(b.dataset.action); render(); } });
+
+/* ---------- start card, pause, sound, help ---------- */
+const $ = id => document.getElementById(id);
+function setPaused(p) { paused = p; keys = {}; pointer.down = false; $('pause-overlay').hidden = !p || !started || !$('start').hidden; $('pause').textContent = p ? '▶' : '❚❚'; $('pause').title = p ? 'Resume' : 'Pause'; }
+function start() { ac(); started = true; $('start').hidden = true; setPaused(false); tone(660, .08); tone(990, .1, 'triangle', .04, .07); C.focus(); }
+function syncSound() { $('sound').textContent = soundOn ? '🔊' : '🔇'; $('sound').title = soundOn ? 'Sound on' : 'Sound off'; try { localStorage.setItem('pbx-pack-sound', soundOn ? '1' : '0'); } catch (e) {} }
+$('restart').onclick = () => { reset(); tone(440, .06); };
+$('pause').onclick = () => { if (started) setPaused(!paused); };
+$('resume').onclick = () => setPaused(false);
+$('sound').onclick = () => { soundOn = !soundOn; syncSound(); tone(660, .08); };
+$('help').onclick = () => { if (started) setPaused(true); $('pause-overlay').hidden = true; $('start').hidden = false; $('play').textContent = started ? 'Back to the game' : 'Play'; };
+$('play').onclick = () => { if (started) { $('start').hidden = true; setPaused(false); } else start(); };
+$('fullscreen').onclick = () => { const el = document.documentElement; if (document.fullscreenElement) document.exitFullscreen?.(); else el.requestFullscreen?.().catch(() => status('Full screen is unavailable here.')); };
+// the start card is filled from the catalog
+$('s-genre').textContent = META.genre; $('s-title').textContent = META.title; $('s-desc').textContent = META.desc; $('s-goal').textContent = META.goal;
+$('s-how').innerHTML = META.how.map(h => `<li>${h}</li>`).join('');
+if (window.top !== window) document.body.classList.add('framed');
+syncSound(); new ResizeObserver(fit).observe(document.querySelector('.stage')); window.addEventListener('resize', fit);
+
+const GAMES = {};
+// 6. Pocket Jury: authored cases with a decisive evidence choice.
+const juryCases=[
+{title:'The Case of the Missing Tart',brief:'Baker Bea accuses Milo of taking the last peach tart at 2:15 PM. Milo says he was returning a library book across town.',cards:[['The accusation','Bea saw someone wearing Milo’s red scarf leave through the bakery’s back door.'],['Library receipt','The library issued Milo a return receipt at 2:14 PM. It is a 25-minute walk from the bakery.'],['The scarf','Milo lent his scarf to his cousin that morning. No one has asked the cousin where they went.']],guilty:false,decisive:1,explain:'The timestamp places Milo across town one minute before the theft. A borrowed scarf cannot outweigh that alibi.'},
+{title:'The Disappearing Garden Gnome',brief:'Ari is accused of stealing a garden gnome at 9 PM. Ari says they were asleep at home all evening.',cards:[['Doorbell recording','The 9:02 PM video clearly shows Ari’s face as they lift the gnome and put it in their bag.'],['A sleepy text','At 8:30 PM Ari texted a friend, “Going to bed early.”'],['Muddy shoes','Ari’s shoes have dirt on them. Ari also grows tomatoes.']],guilty:true,decisive:0,explain:'The clear video directly identifies Ari taking the gnome. A text about going to bed does not establish an alibi.'},
+{title:'The Counterfeit Raffle Ticket',brief:'The fair organizer accuses Nell of altering a raffle ticket. Nell says it is exactly as the booth sold it.',cards:[['Winning number','Nell’s ticket reads 104. The winning ticket is 104.'],['Ink analysis','The final digit on Nell’s ticket uses a second ink, but every ticket at that booth was corrected from a misprinted batch.'],['Vendor log','The vendor recorded selling corrected ticket 104 to Nell at noon, before the 4 PM drawing.']],guilty:false,decisive:2,explain:'The vendor’s record confirms that Nell bought ticket 104 before the drawing. The correction was made at the booth.'},
+{title:'The Midnight Trombone',brief:'Theo denies playing loud music at midnight. They claim the sound came from a radio in another apartment.',cards:[['Instrument case','Theo owns a trombone. Ownership alone does not show when it was played.'],['Hallway recording','A continuous midnight recording shows Theo playing the trombone through their open doorway.'],['The neighbor','A neighbor dislikes jazz and has complained about daytime practice before.']],guilty:true,decisive:1,explain:'The continuous recording shows the actual performance at the reported time. It directly contradicts the radio explanation.'},
+{title:'The Soggy Science Project',brief:'Sam is accused of deliberately pouring water over Jo’s science project. Sam says a leaking pipe soaked it overnight.',cards:[['The ceiling','A plumber’s dated inspection finds a ruptured pipe directly above the project and water staining the ceiling.'],['The argument','Sam and Jo argued about a board game last week.'],['The empty cup','An empty paper cup sits in a bin on the opposite side of the room.']],guilty:false,decisive:0,explain:'The ruptured pipe explains the water damage. An unrelated argument and an empty cup do not establish deliberate damage.'},
+{title:'The Great Coupon Caper',brief:'Rae is accused of using a copied one-use coupon twice. Rae claims the cashier scanned the same purchase twice by mistake.',cards:[['First purchase','The first receipt lists one sandwich at 11:05 AM, paid with Rae’s card.'],['The coupon rules','The printed coupon clearly says “one redemption per person.”'],['Second transaction','A second receipt and clear shop video show Rae buying a separate sandwich at 3:40 PM with the same coupon.']],guilty:true,decisive:2,explain:'The separate afternoon purchase disproves the accidental double-scan claim. Rae knowingly redeemed the coupon twice.'},
+{title:'The Scratched Telescope',brief:'Kit is accused of scratching a borrowed telescope lens. Kit says the scratch was present when it was handed over.',cards:[['Return inspection','A scratch is visible when Kit returns the telescope.'],['Checkout photograph','A sharp, timestamped photograph from before checkout shows the identical curved scratch on the lens.'],['The cleaning cloth','Kit used an approved soft lens cloth during the loan.']],guilty:false,decisive:1,explain:'The checkout photograph proves the same scratch existed before Kit borrowed the telescope.'},
+{title:'The Vanishing Trophy',brief:'Fin denies taking the chess-club trophy. Fin says the trophy found in their locker is a cheap replica.',cards:[['Hidden engraving','The trophy in Fin’s locker has the original’s unique serial engraving underneath its base.'],['A shiny finish','Both replicas and original trophies can have a shiny gold finish.'],['Club record','Fin lost the final match, but disappointment alone proves nothing.']],guilty:true,decisive:0,explain:'The unique serial engraving identifies the original trophy. Appearance and motive are weaker evidence.'}
+];
+GAMES['pocket-jury']={init(){return {case:0,selected:0,read:new Set([0]),evidence:null,verdict:null,score:0,resolved:false,over:false,msg:'Review the brief and all three evidence cards.'}},ui(){controls(action('Mark as decisive','mark')+action('Not responsible','clear',true)+action('Responsible','guilty')+action('Next case','next'));status(state.msg);metric(state.score+' points')},action(a){const c=juryCases[state.case];if(a==='next'){if(!state.resolved){state.msg='Return a verdict before moving to the next case.'}else if(state.case===juryCases.length-1){state.over=true;saveBest(state.score)}else{state.case++;state.selected=0;state.read=new Set([0]);state.evidence=null;state.resolved=false;state.msg='Review the new case and evidence.'}this.ui();return}if(state.resolved||state.over)return;if(a==='mark'){state.evidence=state.selected;state.msg='Marked: '+c.cards[state.selected][0]+'.'}if(a==='clear'||a==='guilty'){if(state.read.size<3||state.evidence===null){state.msg='Read all three cards and mark the decisive evidence first.'}else{state.verdict=a==='guilty';const correct=state.verdict===c.guilty,bonus=state.evidence===c.decisive;state.score+=(correct?100:0)+(correct&&bonus?50:0);state.resolved=true;state.msg=(correct?'Correct verdict. ':'Verdict overturned. ')+c.explain;saveBest(state.score);beep(correct?820:200)}}this.ui()},draw(){board('#302929');const c=juryCases[state.case];heading('NEIGHBORHOOD COURT / CASE '+(state.case+1),'EVIDENCE BEFORE ASSUMPTIONS','#e3ad8c');rr(36,90,888,116,12,'#e4d6bd');text(c.title,60,118,25,'#43352f','left',850);wrap(c.brief,60,154,832,17,'#665247',24);for(let n=0;n<3;n++){let y=232+n*87;rr(37,y,273,73,9,state.selected===n?'#765b4a':'#443a35',state.evidence===n?'#e4c48c':null);text('EXHIBIT '+String.fromCharCode(65+n)+(state.read.has(n)?'  • READ':''),54,y+19,11,'#d4b79b');text(c.cards[n][0],54,y+44,16,'#f1e0c7');buttons.push({x:37,y,w:273,h:73,fn:()=>{state.selected=n;state.read.add(n);beep(400+n*50)}})}rr(332,232,591,248,12,'#ece1cc');text('EXHIBIT '+String.fromCharCode(65+state.selected),357,262,13,'#987151');wrap(c.cards[state.selected][1],357,305,535,22,'#4d4035',33);text(state.evidence===state.selected?'★ MARKED AS DECISIVE':'Read carefully. What does this actually prove?',357,451,13,'#90734c');if(state.resolved){rr(36,507,888,64,9,'#4b5142');wrap((state.verdict===c.guilty?'VERDICT UPHELD. ':'VERDICT OVERTURNED. ')+c.explain,53,528,850,15,'#e3dfbe',22)}else{text('Read every exhibit → Mark decisive evidence → Return a verdict',480,539,16,'#c6ae97','center')}if(state.over)done('Court adjourned',state.score+' / 1200 points. Careful evidence makes a better verdict.')}};
+
+reset(); saveBest(0); fit(); requestAnimationFrame(frame);
+
+</script>
+</body>
+</html>
