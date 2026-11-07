@@ -140,6 +140,9 @@
   .bk canvas { width: 100%; height: 100%; display: block; }
   .bk.new::after { content: ''; position: absolute; inset: 0; border-radius: 10px; box-shadow: inset 0 0 0 2px var(--gold); }
   .bkrow { display: flex; align-items: center; gap: 6px; margin: 10px 0 4px; font-family: var(--display); font-size: 15px; }
+  .bkrow .fprize { font-family: var(--body); font-size: 11px; color: var(--muted); margin-left: 4px; }
+  .bkrow .fdone { font-family: var(--body); font-size: 12px; color: #8aff7a; }
+  .bkrow .fclaim { min-height: 30px; padding: 3px 10px; font-size: 14px; }
   .bkrow .rar { font-family: var(--body); font-size: 11px; padding: 1px 7px; border-radius: 8px; color: #1a1030; font-weight: 900; }
   .info { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; justify-content: center; }
   .info canvas { width: 170px; height: 170px; }
@@ -314,7 +317,7 @@
 
 <div class="screen dim" id="scrMap" hidden><div class="panel">
   <div class="head"><h2>Adventure</h2><button class="x" data-close aria-label="Close">✕</button></div>
-  <div class="tabs"><button class="tab" data-mtab="story" aria-selected="true">Story</button><button class="tab" data-mtab="tower" aria-selected="false">Boss Tower</button><button class="tab" data-mtab="daily" aria-selected="false">Daily Battle</button></div>
+  <div class="tabs"><button class="tab" data-mtab="story" aria-selected="true">Story</button><button class="tab" data-mtab="tower" aria-selected="false">Boss Tower</button><button class="tab" data-mtab="daily" aria-selected="false">Daily Battle</button><button class="tab" data-mtab="arena" aria-selected="false">Arena</button></div>
   <div id="mapList"></div>
 </div></div>
 
@@ -462,6 +465,27 @@ const FAM = [
     names: ['Nyxi', 'Nyxwing', 'Duskdrake', 'Eclipsaur', 'Voidragon'],
     lore: ['A baby dragon that hatched during an eclipse.', 'Its wings are too small, but it tries so hard.', 'Breathes purple fire that sparkles like stars.', 'When it spreads its wings, the day turns to night.', 'A legend of the night sky. Galaxies swirl in its wings.'] }
 ];
+// newer families: appended so old saves keep their indexes. 'from' is the first story stage they show up as enemies
+FAM.push(
+  { id: 'frog', el: 'leaf', rar: 0, hp: 70, atk: 13, spd: 11, ab: 'poison', abName: 'Toxic Tongue', abDesc: 'Slurps the front enemy with a sticky tongue and poisons it for three turns.', from: 14,
+    names: ['Tadlet', 'Croaklet', 'Bogleap', 'Swamprince', 'Lilyking'],
+    lore: ['A wiggly tadpole that cannot wait to grow legs.', 'Its first croak was so loud it surprised itself.', 'Can jump over a whole pond in one leap.', 'Wears a lily pad like a cape. Very proud of it.', 'Rules every swamp. The fireflies light its way home.'] },
+  { id: 'bat', el: 'shadow', rar: 0, hp: 58, atk: 14, spd: 16, ab: 'screech', abName: 'Sonic Screech', abDesc: 'Screeches at every enemy, hurting them and making them weaker.', from: 22,
+    names: ['Squeaky', 'Flitter', 'Nightwing', 'Echofang', 'Duskmonarch'],
+    lore: ['A tiny bat that sleeps upside down in your sock drawer.', 'Squeaks to find its way. Never bumps into anything.', 'Its wings are as dark and soft as velvet.', 'Its echo can be heard three valleys away.', 'Ruler of every cave. A thousand bats follow its call.'] },
+  { id: 'penguin', el: 'water', rar: 1, hp: 96, atk: 12, spd: 10, ab: 'freeze', abName: 'Ice Slide', abDesc: 'Belly-slides into the front enemy and freezes it for a turn.', from: 20,
+    names: ['Pebble', 'Waddlo', 'Frostflip', 'Glacierbeak', 'Emperoar'],
+    lore: ['A round little chick that waddles everywhere.', 'Slides on its belly any chance it gets.', 'Its flippers leave frost on everything they touch.', 'Ice crystals grow on its head like a crown.', 'The emperor of the frozen sea. Blizzards bow to it.'] },
+  { id: 'owl', el: 'spark', rar: 1, hp: 74, atk: 15, spd: 13, ab: 'focus', abName: 'Owl Eye', abDesc: 'Spots the weakest enemy and strikes it with a huge lightning bolt.', from: 20,
+    names: ['Hootsy', 'Voltowl', 'Sparkplume', 'Thunderhoot', 'Stormsage'],
+    lore: ['A fluffy owlet that stays up way past bedtime.', 'Its eyes glow like little light bulbs at night.', 'Its feathers buzz with static when it ruffles them.', 'Each hoot is followed by a clap of thunder.', 'The wisest of all monsters. It reads the storm like a book.'] },
+  { id: 'fox', el: 'fire', rar: 2, hp: 80, atk: 17, spd: 15, ab: 'foxfire', abName: 'Foxfire', abDesc: 'Flings four fox flames at random enemies and sets them on fire.', from: 45,
+    names: ['Kindle', 'Cindertail', 'Twintail', 'Blazekit', 'Infernotail'],
+    lore: ['A sleepy fox kit that curls up by the fireplace.', 'The tip of its tail glows like a coal.', 'One morning it woke up with a second tail!', 'Its tails swirl like a campfire in the wind.', 'An ancient fox spirit. Each tail burns a different color.'] },
+  { id: 'phoenix', el: 'fire', rar: 3, hp: 104, atk: 21, spd: 14, ab: 'rebirth', abName: 'Rebirth Flame', abDesc: 'Rains fire on every enemy and heals the whole team.', from: 75,
+    names: ['Ashling', 'Embird', 'Flarewing', 'Pyrehawk', 'Sunphoenix'],
+    lore: ['A little bird born from a warm pile of ash.', 'Its feathers flicker like candle light.', 'Leaves a trail of sparks across the sky.', 'Its cry can melt snow on mountain tops.', 'Never truly gone. It rises again with the morning sun.'] }
+);
 const FAM_BY = {}; FAM.forEach((f, i) => { f.i = i; FAM_BY[f.id] = f; });
 const MAX_STAGE = 5, MAX_STARS = 5;
 const STAGE_M = 2.2, STAR_M = 1.5;
@@ -493,7 +517,7 @@ function visualOf(mult) { // which evolution an enemy of this strength looks lik
 function squadCount(n) { return n <= 2 ? 2 : n <= 5 ? 3 : n <= 9 ? 4 : 5; }
 const COUNT_ADJ = { 1: 1.6, 2: 1, 3: 0.82, 4: 0.7, 5: 0.62 };
 function famsFor(n, r) { // families enemies can be: the world's element first, then anything seen by then
-  const w = WORLDS[worldOf(n)], avail = FAM.filter(f => f.rar <= (n < 20 ? 0 : n < 45 ? 1 : n < 75 ? 2 : 3));
+  const w = WORLDS[worldOf(n)], avail = FAM.filter(f => f.rar <= (n < 20 ? 0 : n < 45 ? 1 : n < 75 ? 2 : 3) && (f.from || 0) <= n);
   const theme = avail.filter(f => f.el === w.el), other = avail.filter(f => f.el !== w.el);
   return () => (r() < 0.6 && theme.length ? theme : other)[Math.floor(r() * (r() < 0.6 && theme.length ? theme.length : other.length))] || avail[0];
 }
@@ -501,7 +525,7 @@ function makeEnemy(f, mult, extra) { const v = visualOf(mult); return Object.ass
 function stageSquad(n) {
   const r = mulberry(n * 7919 + 13), pickF = famsFor(n, r), M = eMult(n), out = [];
   if (isBoss(n)) {
-    const w = WORLDS[worldOf(n)], bf = FAM.filter(f => f.el === w.el && f.rar <= Math.min(3, 1 + Math.floor(n / 40)));
+    const w = WORLDS[worldOf(n)], bf = FAM.filter(f => f.el === w.el && f.rar <= Math.min(3, 1 + Math.floor(n / 40)) && (f.from || 0) <= n);
     const bfam = bf[Math.floor(n / 10) % bf.length] || bf[0];
     const minions = n < 20 ? 1 : n < 50 ? 2 : 4;
     for (let i = 0; i < minions; i++) out.push(makeEnemy(pickF(), M * 0.55));
@@ -536,6 +560,21 @@ function towerSquad(fl) {
 }
 const towerGems = fl => 5 + Math.floor(fl / 3) * 2;
 const towerCoins = fl => stageCoins(12 + fl * 3) * 2;
+/* monster arena: endless waves, a champion every 5th. Strength starts around half your story progress and climbs */
+const arenaN = w => Math.min(380, Math.max(3, Math.round(S.stage * 0.55)) + w * 2);
+function arenaSquad(w) {
+  const n = arenaN(w), r = mulberry(hashStr('arena' + (S.arena.seed || 0) + ':' + w)), pickF = famsFor(Math.max(n, 20), r), M = eMult(n), out = [];
+  if (w % 5 === 0) {
+    for (let i = 0; i < 2; i++) out.push(makeEnemy(pickF(), M * 0.55));
+    const pool = FAM.filter(f => (f.from || 0) <= Math.max(n, 20) && f.rar <= 1 + Math.floor(w / 10));
+    out.splice(1, 0, makeEnemy(pool[Math.floor(r() * pool.length)], M * 1.2, { boss: 1, name: 'Arena Champion ' + (w / 5) }));
+    return out;
+  }
+  const c = w < 3 ? 4 : 5; for (let i = 0; i < c; i++) out.push(makeEnemy(pickF(), M * COUNT_ADJ[c] * (0.9 + r() * 0.2)));
+  return out;
+}
+const arenaCoins = w => Math.round(stageCoins(arenaN(w)) * 0.6);
+const arenaGems = w => w % 5 === 0 ? 4 + w / 5 * 2 : 0;
 /* daily challenge: a themed squad a bit stronger than your best stage */
 function dailySquad(day, best) {
   const r = mulberry(hashStr('daily' + day)), el = EL_ORDER[Math.floor(r() * 5)], n = Math.max(4, best + 3), M = eMult(n);
@@ -603,6 +642,12 @@ function runBattle(team, foes, S, seed) {
           case 'bloom': mates.forEach(t => { const v = Math.round(Math.min(t.max - t.hp, u.atk * 1.3)); t.hp += v; E.hits.push({ s: t.side, i: t.i, h: v }); }); break;
           case 'pounce': { const t = foes2[foes2.length - 1], h = hit(u, t, 2.6); E.hits.push(h); if (t.alive) { t.stun = 1; h.stun = 1; } break; }
           case 'void': foes2.forEach(t => { const h = hit(u, t, 1.25); E.hits.push(h); if (t.alive) { t.weak = 2; h.weak = 1; } }); break;
+          case 'poison': { const t = foes2[0], h = hit(u, t, 1.3); E.hits.push(h); if (t.alive) { t.burn = u.atk * 0.45; t.burnT = 3; h.burn = 1; } break; }
+          case 'screech': foes2.forEach(t => { const h = hit(u, t, 0.65); E.hits.push(h); if (t.alive) { t.weak = 2; h.weak = 1; } }); break;
+          case 'freeze': { const t = foes2[0], h = hit(u, t, 1.6); E.hits.push(h); if (t.alive) { t.stun = 1; h.stun = 1; } break; }
+          case 'focus': { const t = foes2.slice().sort((a, b) => a.hp - b.hp)[0]; E.hits.push(hit(u, t, 2.4)); break; }
+          case 'foxfire': for (let k = 0; k < 4; k++) { const live = foes2.filter(t => t.alive); if (!live.length) break; const t = live[Math.floor(r() * live.length)], h = hit(u, t, 0.8); E.hits.push(h); if (t.alive) { t.burn = u.atk * 0.25; t.burnT = 2; h.burn = 1; } } break;
+          case 'rebirth': { foes2.forEach(t => E.hits.push(hit(u, t, 1.1))); mates.forEach(t => { if (!t.alive) return; const v = Math.round(Math.min(t.max - t.hp, u.atk * 1.2)); t.hp += v; E.hits.push({ s: t.side, i: t.i, h: v }); }); break; }
         }
         if (u.ab === 'heal' || u.ab === 'bloom') { /* healer turns also hit so fights end */ }
       } else {
@@ -632,7 +677,7 @@ const GEM_EGGS = [
 const EGG_BY = {}; EGGS.concat(GEM_EGGS).forEach(e => EGG_BY[e.id] = e);
 const eggPrice = (S, e) => Math.round(e.base * Math.pow(e.grow, S.eggsBought[e.id] || 0));
 const eggOpen = (S, e) => S.stage >= e.unlock;
-const COMMON_UNLOCK = { pup: 0, fish: 0, sprout: 2, chick: 5, ghost: 8 }; // stage needed before basic eggs can hatch it
+const COMMON_UNLOCK = { pup: 0, fish: 0, sprout: 2, chick: 5, ghost: 8, frog: 14, bat: 22 }; // stage needed before basic eggs can hatch it
 function commonPool(S) { return FAM.filter(f => f.rar === 0 && S.stage >= COMMON_UNLOCK[f.id]); }
 function eggFamily(S, eg, r) {
   r = r || Math.random;
@@ -714,6 +759,12 @@ const ACH = [];
   .forEach(([n, nm]) => ACH.push({ id: 'tw' + n, name: nm, desc: `Beat Boss Tower floor ${n}.`, gems: 10 + n, ok: S => S.tower >= n }));
 [[10, 'Shiny Stars'], [50, 'Star Collector'], [120, 'Perfect Player']]
   .forEach(([n, nm]) => ACH.push({ id: 'ts' + n, name: nm, desc: `Get 3 stars on ${n} stages.`, gems: 10 + Math.round(n / 3), ok: S => Object.values(S.stars).filter(v => v >= 3).length >= n }));
+[[65, 'Monster Scholar'], [80, 'Complete Book']]
+  .forEach(([n, nm]) => ACH.push({ id: 'seen' + n, name: nm, desc: `Discover ${n} monsters.`, gems: n >= 80 ? 120 : 70, ok: S => S.seen.length >= n }));
+[[5, 'Arena Rookie'], [15, 'Gladiator'], [30, 'Arena Champion'], [50, 'Arena Legend']]
+  .forEach(([n, nm]) => ACH.push({ id: 'ar' + n, name: nm, desc: `Clear wave ${n} in the Monster Arena.`, gems: 10 + n, ok: S => (S.arena && S.arena.best || 0) >= n }));
+[[1, 'Family Photo'], [5, 'Family Reunion'], [16, 'Whole Zoo']]
+  .forEach(([n, nm]) => ACH.push({ id: 'fam' + n, name: nm, desc: `Find all 5 stages of ${n} monster famil${n > 1 ? 'ies' : 'y'}.`, gems: n >= 16 ? 100 : 10 + n * 4, ok: S => FAM.filter(f => [1, 2, 3, 4, 5].every(k => S.seen.includes(monKey(f.i, k)))).length >= n }));
 ACH.push({ id: 'daily1', name: 'Daily Hero', desc: 'Beat a daily challenge.', gems: 10, ok: S => S.stats.dailyWins >= 1 });
 ACH.push({ id: 'daily7', name: 'Challenge Champ', desc: 'Beat 7 daily challenges.', gems: 30, ok: S => S.stats.dailyWins >= 7 });
 ACH.push({ id: 'streak7', name: 'Week Streak', desc: 'Play 7 days in a row.', gems: 25, ok: S => S.login.best >= 7 });
@@ -729,7 +780,7 @@ function freshState() {
   return {
     v: 1, coins: 30, gems: 10, board, team: [null, null, null, null, null], cells: START_CELLS,
     stage: 0, stars: {}, tower: 0, up: {}, eggsBought: {}, seen: [monKey(0, 1)], nestT: 12, helper: false,
-    login: { day: '', streak: 0, best: 0 }, quests: null, dailyWon: '', ach: [],
+    login: { day: '', streak: 0, best: 0 }, quests: null, dailyWon: '', ach: [], arena: { best: 0, cur: 0, seed: 0 }, famDone: [],
     stats: { merges: 0, hatched: 0, wins: 0, losses: 0, specials: 0, coins: 0, chests: 0, maxStars: 0, dailyWins: 0, battles: 0 },
     sound: true, music: true, seenHow: false, tut: 0, started: false, last: Date.now(), speed: 1
   };
@@ -740,7 +791,7 @@ function loadState() {
   const f = freshState();
   if (!s || typeof s !== 'object') return f;
   for (const k in f) if (s[k] === undefined) s[k] = f[k];
-  s.stats = Object.assign(f.stats, s.stats); s.login = Object.assign(f.login, s.login);
+  s.stats = Object.assign(f.stats, s.stats); s.login = Object.assign(f.login, s.login); s.arena = Object.assign(f.arena, s.arena);
   if (!Array.isArray(s.board) || s.board.length !== MAX_CELLS) s.board = f.board;
   if (!Array.isArray(s.team) || s.team.length !== 5) s.team = f.team;
   return s;
@@ -810,7 +861,13 @@ const PAL = {
   turtle: [['#9ae6b0', '#6ab4e8', '#fff4d0'], ['#7ad69a', '#4a9ae0', '#fff0c4'], ['#5ec486', '#3a7ed0', '#ffe0a8'], ['#4aae76', '#2a60b8', '#ff8ab0'], ['#3a9a6a', '#1e4aa0', '#ffd23f']],
   bunny: [['#b8e89a', '#f2ffe4', '#6ac458'], ['#9ad880', '#ecffd8', '#4aaa3e'], ['#86cc6e', '#e6fbd0', '#ff9ad0'], ['#6cbc5a', '#e0f8c8', '#ffd0f0'], ['#5aa84e', '#e8ffd8', '#ffe68a']],
   cat: [['#fff4b0', '#ffffff', '#ffc83a'], ['#ffe27a', '#fff8d8', '#3a6ae8'], ['#ffd04a', '#fff2c0', '#2a50c8'], ['#ffb62a', '#fff0b8', '#1e3aa8'], ['#ff9f1a', '#fff0b8', '#7a4cff']],
-  dragon: [['#c6a8ff', '#f0e6ff', '#7a4cff'], ['#a888ff', '#ecdcff', '#6a3ad8'], ['#8a66f0', '#e0ccff', '#ff6ad0'], ['#6c48d8', '#d8c0ff', '#4ae0ff'], ['#4e2cb8', '#d0b8ff', '#ffd23f']]
+  dragon: [['#c6a8ff', '#f0e6ff', '#7a4cff'], ['#a888ff', '#ecdcff', '#6a3ad8'], ['#8a66f0', '#e0ccff', '#ff6ad0'], ['#6c48d8', '#d8c0ff', '#4ae0ff'], ['#4e2cb8', '#d0b8ff', '#ffd23f']],
+  frog: [['#7a6a4a', '#c8b88a', '#5a4a30'], ['#8adc5a', '#eaffc8', '#3a9a2a'], ['#6cc84a', '#e0f8b0', '#ff8ab6'], ['#4ab43e', '#d8f2a0', '#2a7a2a'], ['#3a9a3a', '#e6f8b0', '#ffd23f']],
+  bat: [['#8a7aa8', '#d8cce8', '#6a5a8a'], ['#7a62a8', '#d0c0ec', '#4a3a7a'], ['#6a4aa8', '#c8b4ec', '#3a2470'], ['#5a3a9a', '#c0a8ec', '#ff5a8a'], ['#46288a', '#b8a0ec', '#ffd23f']],
+  penguin: [['#5a6a8a', '#ffffff', '#9ad8ff'], ['#3a4a78', '#ffffff', '#4fb4ff'], ['#2a3a6a', '#f4fbff', '#ff5a6a'], ['#22305e', '#eef8ff', '#bff2ff'], ['#1a2450', '#eaf6ff', '#ffd23f']],
+  owl: [['#d8c08a', '#fff4d8', '#ffd23a'], ['#c8a868', '#fff0c8', '#ffc21a'], ['#b08a4a', '#ffe8b0', '#4ab0ff'], ['#8a6a3a', '#ffe0a0', '#ffd23a'], ['#6a4a2a', '#ffe8b0', '#7a4cff']],
+  fox: [['#ffa86a', '#fff2e0', '#ff6a2a'], ['#ff8a4a', '#fff0dc', '#ff4a1a'], ['#ff7a3a', '#ffecd4', '#ffd23a'], ['#f2602a', '#ffe8c8', '#ff3a6a'], ['#e04a1a', '#fff0d0', '#ffd23f']],
+  phoenix: [['#c8a8a0', '#f0e0d8', '#ff8a4a'], ['#ff9a4a', '#ffe0a8', '#ff4a2a'], ['#ff7a2a', '#ffd88a', '#ffd23a'], ['#ff5a1a', '#ffd070', '#ffe98a'], ['#ff3a2a', '#ffe070', '#ffd23f']]
 };
 
 /* ---------- one draw function per family. coords: about -50..50, feet near y=40 ---------- */
@@ -980,6 +1037,108 @@ const DRAW = {
     x.strokeStyle = 'rgba(80,40,160,.35)'; x.lineWidth = 2; for (let i = 0; i < 3; i++) { x.beginPath(); x.moveTo(-R * 0.3, 16 + i * 6); x.lineTo(R * 0.4, 16 + i * 6); x.stroke(); }
     face(x, 2, 4, 0.95, o);
     if (s >= 5) crown(x, 0, -R * 0.82, 9, '#ffd23f');
+  },
+  frog(x, s, o, P) {
+    const R = 21 + s * 2.4;
+    if (s === 1) {   // a tadpole with a wiggly tail
+      x.beginPath(); x.moveTo(-R * 0.7, 4); x.quadraticCurveTo(-R * 1.6, -10, -R * 2.1, 6); x.quadraticCurveTo(-R * 1.5, 14, -R * 0.7, 20); x.closePath(); fo(x, P[2]);
+      ell(x, 0, 12, R * 0.95, R * 0.85); fo(x, rg(x, 0, 12, R, P[0])); ell(x, 4, 20, R * 0.55, R * 0.38); x.fillStyle = P[1]; x.fill();
+      face(x, 4, 8, 0.85, o); return;
+    }
+    for (const d of [-1, 1]) { ell(x, d * R * 0.95, 30, R * 0.5, R * 0.26); fo(x, P[0]); }
+    ell(x, 0, 14, R * 1.15, R * 0.85); fo(x, rg(x, 0, 14, R, P[0]));
+    ell(x, 0, 24, R * 0.78, R * 0.46); x.fillStyle = P[1]; x.fill();
+    if (s >= 3) for (let i = 0; i < s; i++) { circ(x, -R * 0.85 + i * R * 0.42, 6 + (i % 2) * 9, 2.2 + s * 0.4); x.fillStyle = P[2]; x.fill(); }
+    for (const d of [-1, 1]) { circ(x, d * R * 0.5, -R * 0.42, R * 0.4); fo(x, rg(x, d * R * 0.5, -R * 0.42, R * 0.4, P[0])); }
+    for (const d of [-1, 1]) { ell(x, d * R * 0.42, 37, 9, 4.5); fo(x, P[0]); }
+    face(x, 0, -R * 0.4, R * 0.5 / 11, o);
+    if (s >= 4) { ell(x, 0, -R * 0.9, R * 0.75, R * 0.2, 0); fo(x, '#3aa83a'); circ(x, R * 0.35, -R * 1.02, 5); fo(x, '#ff8ac0', 1.5); circ(x, R * 0.35, -R * 1.02, 2); x.fillStyle = '#ffe98a'; x.fill(); }
+    if (s === 5) crown(x, -2, -R * 1.02, 9, '#ffd23f');
+  },
+  bat(x, s, o, P) {
+    const R = 19 + s * 2.1, Wg = R * (0.85 + s * 0.2);
+    for (const d of [-1, 1]) {
+      x.save(); x.scale(d, 1); x.beginPath(); x.moveTo(R * 0.6, -2);
+      x.quadraticCurveTo(R * 0.6 + Wg * 0.5, -R * 1.05 - s * 2, R * 0.6 + Wg, -R * 0.35);
+      x.quadraticCurveTo(R * 0.6 + Wg * 0.82, -R * 0.05, R * 0.6 + Wg * 0.74, R * 0.25);
+      x.quadraticCurveTo(R * 0.6 + Wg * 0.52, R * 0.02, R * 0.6 + Wg * 0.42, R * 0.45);
+      x.quadraticCurveTo(R * 0.6 + Wg * 0.22, R * 0.2, R * 0.55, R * 0.5); x.closePath(); fo(x, s >= 4 ? mix(P[0], '#000000', 0.3) : P[2]);
+      x.strokeStyle = 'rgba(255,255,255,.18)'; x.lineWidth = 2; x.beginPath(); x.moveTo(R * 0.7, 0); x.lineTo(R * 0.6 + Wg * 0.9, -R * 0.3); x.moveTo(R * 0.7, 4); x.lineTo(R * 0.6 + Wg * 0.5, R * 0.2); x.stroke();
+      x.restore();
+    }
+    for (const d of [-1, 1]) { x.save(); x.translate(d * R * 0.5, -R * 0.7); x.rotate(d * 0.3); poly(x, [[-8, 6], [0, -14 - s * 2.5], [8, 6]]); fo(x, P[0]); poly(x, [[-4, 4], [0, -7 - s], [4, 4]]); x.fillStyle = '#ff9ac8'; x.fill(); x.restore(); }
+    ell(x, 0, 8, R * 0.95, R * 1.0); fo(x, rg(x, 0, 8, R, P[0]));
+    ell(x, 0, 18, R * 0.58, R * 0.55); x.fillStyle = P[1]; x.fill();
+    for (const d of [-1, 1]) { ell(x, d * R * 0.35, 38, 6, 3.5); fo(x, P[0]); }
+    face(x, 0, -2, 0.95, o);
+    x.fillStyle = '#fff'; poly(x, [[-5, 7], [-3, 13], [-1, 7]]); x.fill(); poly(x, [[1, 7], [3, 13], [5, 7]]); x.fill();
+    if (s >= 4) { x.save(); x.translate(0, 24); x.beginPath(); x.arc(0, 0, 7, 0.6, Math.PI * 2 - 0.6); x.arc(4, 0, 5.5, Math.PI * 2 - 0.9, 0.9, true); x.closePath(); fo(x, P[2], 1.5); x.restore(); }
+    if (s === 5) crown(x, 0, -R * 0.95, 9, '#ffd23f');
+  },
+  penguin(x, s, o, P) {
+    const R = 20 + s * 2.3;
+    for (const d of [-1, 1]) { ell(x, d * R * 0.38, 40, 9, 4); fo(x, '#ffaa3a'); }
+    for (const d of [-1, 1]) { x.save(); x.translate(d * R * 0.88, 10); x.rotate(d * 0.45); ell(x, 0, 0, 6 + s, R * 0.58); fo(x, P[0]); x.restore(); }
+    ell(x, 0, 6, R * 0.95, R * 1.2); fo(x, rg(x, 0, 6, R, P[0]));
+    ell(x, 0, 14, R * 0.66, R * 0.92); x.fillStyle = P[1]; x.fill();
+    if (s >= 4) for (let i = -1; i <= 1; i++) { spike(x, i * R * 0.38, -R * 0.95 + Math.abs(i) * 5, -Math.PI / 2 + i * 0.4, 12 + s * 2, 5); fo(x, '#d8f6ff', 2); }
+    face(x, 0, -R * 0.38, 0.95, o);
+    poly(x, [[-6, -R * 0.38 + 7], [6, -R * 0.38 + 7], [0, -R * 0.38 + 15]]); fo(x, '#ffaa3a', 2);
+    if (s >= 3) { rr(x, -R * 0.8, -R * 0.02, R * 1.6, 9, 4); fo(x, P[2], 2); rr(x, R * 0.25, 2, 9, 18, 3); fo(x, P[2], 2); }
+    if (s === 5) crown(x, 0, -R * 1.1, 10, '#ffd23f');
+  },
+  owl(x, s, o, P) {
+    const R = 21 + s * 2.2;
+    for (const d of [-1, 1]) { x.save(); x.translate(d * R * 0.55, -R * 0.75); x.rotate(d * 0.5); poly(x, [[-6, 6], [d * 3, -12 - s * 2], [6, 6]]); fo(x, P[0]); x.restore(); }
+    for (const d of [-1, 1]) { x.save(); x.translate(d * R * 0.85, 12); x.rotate(-d * 0.25); ell(x, 0, 0, R * 0.32, R * 0.7); fo(x, mix(P[0], '#000000', 0.15)); x.restore(); }
+    ell(x, 0, 8, R * 1.0, R * 1.08); fo(x, rg(x, 0, 8, R, P[0]));
+    ell(x, 0, 18, R * 0.6, R * 0.62); x.fillStyle = P[1]; x.fill();
+    x.strokeStyle = mix(P[0], '#000000', 0.25); x.lineWidth = 2; for (let i = 0; i < 2 + Math.min(3, s); i++) { const yy = 12 + i * 6, xx = -R * 0.3 + (i % 2) * 8; x.beginPath(); x.moveTo(xx - 3, yy - 2); x.lineTo(xx, yy + 1); x.lineTo(xx + 3, yy - 2); x.stroke(); }
+    for (const d of [-1, 1]) { circ(x, d * 11, -R * 0.3, 12 + s * 0.6); fo(x, mix(P[1], P[2], 0.25), 2); }
+    face(x, 0, -R * 0.3, 1, o);
+    poly(x, [[-4, -R * 0.3 + 8], [4, -R * 0.3 + 8], [0, -R * 0.3 + 15]]); fo(x, '#ffb03a', 2);
+    for (const d of [-1, 1]) { ell(x, d * R * 0.32, 39, 7, 3.5); fo(x, '#ffb03a'); }
+    if (s >= 3) bolt(x, R * 0.62, 20, 0.6 + s * 0.08, P[2], 0.3);
+    if (s >= 4) bolt(x, -R * 0.62, 20, 0.6 + s * 0.08, P[2], -0.3);
+    if (s === 5) crown(x, 0, -R * 1.05, 9, '#ffd23f');
+  },
+  fox(x, s, o, P) {
+    const R = 21 + s * 2.1, tails = Math.max(1, Math.min(4, s - 1));
+    for (let i = 0; i < tails; i++) {
+      x.save(); x.translate(-R * 0.75, 16); x.rotate(-0.7 - (i - (tails - 1) / 2) * 0.5);
+      ell(x, -R * 0.6, 0, R * 0.72, R * 0.3); fo(x, P[0]); ell(x, -R * 1.1, 0, R * 0.26, R * 0.22); x.fillStyle = P[1]; x.fill();
+      if (s >= 3) flame(x, -R * 1.35, 0, 0.45 + s * 0.08, P[2], '#ffe27a', -1.57);
+      x.restore();
+    }
+    for (const lx of [-R * 0.45, R * 0.42]) { rr(x, lx - 5, 24, 10, 15, 5); fo(x, P[0]); rr(x, lx - 5, 33, 10, 6, 3); x.fillStyle = '#4a2a1a'; x.fill(); }
+    ell(x, 0, 14, R * 0.95, R * 0.75); fo(x, rg(x, 0, 14, R, P[0]));
+    ell(x, 4, 21, R * 0.52, R * 0.4); x.fillStyle = P[1]; x.fill();
+    const hy = -6 - s, hr = R * 0.8;
+    for (const d of [-1, 1]) { x.save(); x.translate(d * hr * 0.6, hy - hr * 0.55); x.rotate(d * 0.28); poly(x, [[-9, 7], [0, -16 - s * 2], [9, 7]]); fo(x, P[0]); poly(x, [[-4, 5], [0, -8 - s], [4, 5]]); x.fillStyle = '#4a2a1a'; x.fill(); x.restore(); }
+    ell(x, 0, hy, hr * 1.05, hr * 0.88); fo(x, rg(x, 0, hy, hr, P[0]));
+    poly(x, [[-hr * 0.75, hy + hr * 0.2], [0, hy + hr * 0.85], [hr * 0.75, hy + hr * 0.2], [0, hy + hr * 0.35]]); x.fillStyle = P[1]; x.fill();
+    circ(x, 0, hy + hr * 0.62, 3.2); x.fillStyle = OUT; x.fill();
+    face(x, 0, hy - 2, 0.9 + s * 0.03, o);
+    if (s >= 4) { circ(x, 0, hy - hr * 0.95, 5); fo(x, P[2], 1.5); }
+    if (s === 5) crown(x, 0, hy - hr * 0.95, 10, '#ffd23f');
+  },
+  phoenix(x, s, o, P) {
+    const R = 19 + s * 2.2;
+    if (s >= 2) for (let i = -1; i <= 1; i++) flame(x, i * 7, 34, 0.5 + s * 0.12, P[2], '#ffe98a', Math.PI + i * 0.35);
+    for (const d of [-1, 1]) {
+      x.save(); x.scale(d, 1);
+      if (s === 1) { ell(x, R * 0.9, 8, R * 0.32, R * 0.5, 0.4); fo(x, P[0]); }
+      else for (let i = 0; i < Math.min(4, s); i++) flame(x, R * 0.75 + i * 6, 2 - i * 5, 0.6 + s * 0.14 - i * 0.05, i % 2 ? P[2] : P[0], '#ffe98a', 1.0 + i * 0.25);
+      x.restore();
+    }
+    ell(x, 0, 10, R * 0.92, R * 1.02); fo(x, rg(x, 0, 10, R, P[0]));
+    ell(x, 0, 18, R * 0.56, R * 0.6); x.fillStyle = P[1]; x.fill();
+    if (s >= 2) for (let i = -1; i <= 1; i++) flame(x, i * 7, -R * 0.82, 0.35 + s * 0.08, P[2], '#ffe98a', i * 0.35);
+    face(x, 0, -R * 0.15, 0.95, o);
+    poly(x, [[-5, -R * 0.15 + 8], [5, -R * 0.15 + 8], [0, -R * 0.15 + 15]]); fo(x, '#ffd23a', 2);
+    for (const d of [-1, 1]) { ell(x, d * R * 0.3, 40, 6, 3); fo(x, '#ffb03a'); }
+    if (s === 1) { x.fillStyle = 'rgba(80,60,60,.35)'; circ(x, -8, 22, 3); x.fill(); circ(x, 7, 26, 2.5); x.fill(); }
+    if (s === 5) crown(x, 0, -R * 1.2, 10, '#ffd23f');
   }
 };
 
@@ -1616,6 +1775,7 @@ function startBattle(kind, n) {
   let foes, reward = {};
   if (kind === 'stage') { foes = stageSquad(n); }
   else if (kind === 'tower') { foes = towerSquad(n); }
+  else if (kind === 'arena') { foes = arenaSquad(n); }
   else { const d = dailySquad(dayKey(), S.stage); foes = d.squad; }
   const seed = (Math.random() * 1e9) | 0, res = runBattle(team, foes, S, seed);
   const mk = (list, side, enemy) => { const units = []; const bi = list.findIndex(m => m && m.boss); list.forEach((m, i) => { if (!m) return; const u = mkUnit(m, side, i, S, enemy); const p = btPos(side, units.length, list.filter(Boolean).length, side === 1 ? bi : -1); units.push(Object.assign(u, { vx: p.x, vy: p.y, vs: p.s * (m.boss ? 1.4 : 1), dx: 0, dy: 0, fl: 0, sq: 0, sqv: 0, dead: 0, idx: i, pi: units.length, bi })); }); return units; };
@@ -1668,7 +1828,7 @@ function playEvent(E) {
   q(t0 + 0.1, () => {
     dmgHits.forEach((h, k) => {
       const t = btUnit(h.s, h.i); if (!t) return;
-      const a = uc(u), b = uc(t), dur = (el === 'spark' ? 0.14 : 0.32 + Math.hypot(b.x - a.x, b.y - a.y) / 2400) + k * (E.ab === 'chain' ? 0.12 : 0.04);
+      const a = uc(u), b = uc(t), dur = (el === 'spark' ? 0.14 : 0.32 + Math.hypot(b.x - a.x, b.y - a.y) / 2400) + k * (E.ab === 'chain' || E.ab === 'foxfire' ? 0.12 : 0.04);
       maxDur = Math.max(maxDur, dur);
       bt.proj.push({ el, spec, a, b, t: 0, dur, linger: el === 'spark' ? 0.12 : 0, seed: Math.random() * 100, onHit: () => applyHits([h], el) });
     });
@@ -1715,9 +1875,10 @@ function drawProj(x, p) {
 }
 function drawBattle(x, t) {
   const bt = RT.bt;
-  const wi = bt.kind === 'stage' ? worldOf(bt.n) : bt.kind === 'tower' ? 4 : EL_ORDER.indexOf(dailySquad(dayKey(), S.stage).el) % 5;
+  const wi = bt.kind === 'stage' ? worldOf(bt.n) : bt.kind === 'arena' ? (bt.n * 2) % 5 : bt.kind === 'tower' ? 4 : EL_ORDER.indexOf(dailySquad(dayKey(), S.stage).el) % 5;
   drawWorldBg(x, bt.kind === 'daily' ? [2, 0, 4, 3, 1][wi] : wi, W, H, t);
   if (bt.kind === 'tower') { x.fillStyle = 'rgba(80,20,40,.25)'; x.fillRect(0, 0, W, H); }
+  if (bt.kind === 'arena') { x.fillStyle = 'rgba(255,200,80,.08)'; x.fillRect(0, 0, W, H); }
   const units = Object.values(bt.A).concat(bt.B).sort((a, b) => a.vy - b.vy);
   for (const u of units) {
     if (u.dead >= 1) continue;
@@ -1942,7 +2103,9 @@ document.querySelectorAll('[data-stab]').forEach(b => b.addEventListener('click'
 function renderBook() {
   const list = $('bookList'); list.innerHTML = ''; setT($('bookCount'), S.seen.length + ' / ' + TOTAL_MONS + ' found');
   FAM.forEach(f => {
-    list.insertAdjacentHTML('beforeend', `<div class="bkrow"><canvas width="44" height="44" style="width:22px;height:22px" data-el="${f.el}"></canvas>${f.names[1]} family <span class="rar" style="background:${RARITY[f.rar].col}">${RARITY[f.rar].name}</span></div>`);
+    const all = [1, 2, 3, 4, 5].every(k => S.seen.includes(monKey(f.i, k))), got = (S.famDone || []).includes(f.id), prize = famPrize(f);
+    const tag = got ? '<span class="fdone">✓ Complete</span>' : all ? `<button class="btn green fclaim" data-claim="${f.id}">Claim ${GEM}${prize}</button>` : `<span class="fprize">Find all 5: ${GEM}${prize}</span>`;
+    list.insertAdjacentHTML('beforeend', `<div class="bkrow"><canvas width="44" height="44" style="width:22px;height:22px" data-el="${f.el}"></canvas>${f.names[1]} family <span class="rar" style="background:${RARITY[f.rar].col}">${RARITY[f.rar].name}</span>${(f.from || 0) > 0 && f.rar === 0 && S.stage < COMMON_UNLOCK[f.id] ? `<span class="fprize">Hatches after stage ${stageLabel(COMMON_UNLOCK[f.id])}</span>` : ''}<span style="flex:1"></span>${tag}</div>`);
     const row = document.createElement('div'); row.className = 'book';
     for (let s = 1; s <= 5; s++) {
       const seen = S.seen.includes(monKey(f.i, s)), b = document.createElement('button'); b.className = 'bk'; b.dataset.f = f.i; b.dataset.s = s; b.setAttribute('aria-label', seen ? f.names[s - 1] : 'Unknown monster');
@@ -1954,7 +2117,8 @@ function renderBook() {
   });
   list.querySelectorAll('[data-el]').forEach(c => { const x = c.getContext('2d'); drawElIcon(x, c.dataset.el, 22, 22, 19); });
 }
-$('bookList').addEventListener('click', e => { const b = e.target.closest('.bk'); if (!b) return; audioOn(); const f = +b.dataset.f, s = +b.dataset.s; if (!S.seen.includes(monKey(f, s))) { sfx.nope(); UI.toast('Not found yet', 'Merge or hatch it to fill in this page.'); return; } sfx.click(); openInfo({ f, s, k: 0 }, 'scrBook'); });
+const famPrize = f => [15, 25, 40, 60][f.rar];
+$('bookList').addEventListener('click', e => { const cb = e.target.closest('[data-claim]'); if (cb) { const f = FAM_BY[cb.dataset.claim]; if (!f || (S.famDone || []).includes(f.id)) return; audioOn(); (S.famDone = S.famDone || []).push(f.id); S.gems += famPrize(f); sfx.chest && sfx.chest(); UI.toast(f.names[4] + ' family complete!', '+' + famPrize(f) + ' gems'); checkAch(); save(); renderBook(); return; } const b = e.target.closest('.bk'); if (!b) return; audioOn(); const f = +b.dataset.f, s = +b.dataset.s; if (!S.seen.includes(monKey(f, s))) { sfx.nope(); UI.toast('Not found yet', 'Merge or hatch it to fill in this page.'); return; } sfx.click(); openInfo({ f, s, k: 0 }, 'scrBook'); });
 function openInfo(m, back) {
   const f = FAM[m.f], st = statsOf(m, S); UI.infoBack = back;
   $('infoName').textContent = monName(m);
@@ -2024,6 +2188,13 @@ function renderMap() {
     list.innerHTML = `<div class="mode"><canvas width="140" height="140" style="width:70px;height:70px" id="towerIc"></canvas><div class="mid"><b>Boss Tower</b><span>${open ? done ? 'You beat every floor. Legend!' : 'Every floor is a boss fight. Floor ' + fl + ' of ' + TOWER_FLOORS + '.' : 'Opens after you beat stage 1-10.'}</span><div class="rw" style="font-size:14px;margin-top:4px">Reward: ${GEM}${towerGems(fl)} ${COIN}${big(towerCoins(fl))}</div></div>${open && !done ? `<button class="btn go" id="towerGo">Fight</button>` : ''}</div>`;
     const x = $('towerIc').getContext('2d'); x.scale(2, 2); drawMon(x, towerSquad(fl).find(m => m.boss), 35, 38, 56, { angry: 1, flip: 1 }); crown(x, 35, 16, 8, '#ff5a7a');
     if (open && !done) $('towerGo').onclick = () => { sfx.click(); openPre('tower', fl); };
+  } else if (UI.mtab === 'arena') {
+    const open = S.stage >= 6, A = S.arena, nx = A.cur + 1;
+    list.innerHTML = `<div class="mode"><canvas width="140" height="140" style="width:70px;height:70px" id="arenaIc"></canvas><div class="mid"><b>Monster Arena</b><span>${open ? `Endless waves that keep getting tougher. Every 5th wave is a champion, every 10th drops an egg. Lose once and the run is over. Best: wave ${A.best}.` : 'Opens after you beat stage 1-6.'}</span>${open ? `<div class="rw" style="font-size:14px;margin-top:4px">Wave ${nx}: ${arenaGems(nx) ? GEM + arenaGems(nx) + ' ' : ''}${COIN}${big(arenaCoins(nx))}</div>` : ''}</div>${open ? `<button class="btn go" id="arenaGo">${A.cur ? 'Wave ' + nx : 'Start'}</button>` : ''}</div>`
+      + (open && A.cur ? `<div class="mode"><div class="mid"><b>Run in progress</b><span>You cleared wave ${A.cur}. Merge and swap your team between waves, then keep going. Or start over from wave 1.</span></div><button class="btn red" id="arenaNew">Restart</button></div>` : '')
+      + (open ? `<div class="mode"><div class="mid"><b>Arena milestones</b><span>${[5, 15, 30, 50].map(w => (A.best >= w ? '✓ ' : '○ ') + 'Wave ' + w).join(' · ')}</span></div></div>` : '');
+    const x = $('arenaIc').getContext('2d'); x.scale(2, 2); const champ = arenaSquad(Math.ceil(nx / 5) * 5).find(m => m.boss); drawMon(x, champ, 35, 38, 56, { angry: 1, flip: 1 }); crown(x, 35, 16, 8, '#ffd23f');
+    if (open) { $('arenaGo').onclick = () => { sfx.click(); openPre('arena', nx); }; const rb = $('arenaNew'); if (rb) rb.onclick = () => { sfx.click(); S.arena.cur = 0; S.arena.seed = (S.arena.seed || 0) + 1; save(); renderMap(); }; }
   } else {
     const d = dailySquad(dayKey(), S.stage), open = S.stage >= 3, won = S.dailyWon === dayKey();
     list.innerHTML = `<div class="mode"><canvas width="140" height="140" style="width:70px;height:70px" id="dailyIc"></canvas><div class="mid"><b>Daily Battle: ${EL[d.el].name} Squad</b><span>${open ? won ? 'You won today! Come back tomorrow for a new squad.' : 'A tough squad of ' + EL[d.el].name + ' monsters. Bring a ' + EL[beatenBy(d.el)].name + ' team!' : 'Opens after stage 1-3.'}</span><div class="rw" style="font-size:14px;margin-top:4px">Reward: ${GEM}25 ${COIN}${big(stageCoins(Math.max(1, S.stage)) * 4)}</div></div>${open && !won ? `<button class="btn go" id="dailyGo">Fight</button>` : ''}</div>`;
@@ -2041,9 +2212,9 @@ document.querySelectorAll('[data-mtab]').forEach(b => b.addEventListener('click'
 /* ---------- pre-battle ---------- */
 function openPre(kind, n) {
   if (kind === 'stage' && n > NUM_STAGES) { UI.toast('You beat every stage!', 'Try the Boss Tower and Daily Battle.'); return; }
-  const foes = kind === 'stage' ? stageSquad(n) : kind === 'tower' ? towerSquad(n) : dailySquad(dayKey(), S.stage).squad;
+  const foes = kind === 'stage' ? stageSquad(n) : kind === 'tower' ? towerSquad(n) : kind === 'arena' ? arenaSquad(n) : dailySquad(dayKey(), S.stage).squad;
   UI.pre = { kind, n };
-  $('preTitle').textContent = kind === 'stage' ? (isBoss(n) ? 'Boss: ' + bossName(n) : 'Stage ' + stageLabel(n) + ' · ' + stageName(n)) : kind === 'tower' ? 'Boss Tower · Floor ' + n : 'Daily Battle';
+  $('preTitle').textContent = kind === 'stage' ? (isBoss(n) ? 'Boss: ' + bossName(n) : 'Stage ' + stageLabel(n) + ' · ' + stageName(n)) : kind === 'tower' ? 'Boss Tower · Floor ' + n : kind === 'arena' ? 'Monster Arena · Wave ' + n + (n % 5 === 0 ? ' (Champion)' : '') : 'Daily Battle';
   const fill = (el, list, enemy) => { el.innerHTML = ''; list.forEach(m => { if (!m) return; const [c, x] = mkCv(50); drawMon(x, m, 25, 24, m.boss ? 46 : 40, { angry: enemy, flip: enemy }); if (m.boss) crown(x, 25, 6, 5, '#ff5a7a'); el.appendChild(c); }); if (!el.children.length) el.innerHTML = '<div class="muted" style="font-size:13px;padding:10px">Empty! Drag monsters into your team.</div>'; };
   fill($('preA'), S.team, false); fill($('preB'), foes, true);
   const pa = teamPower(S.team, S), pb = teamPower(foes, S, true);
@@ -2060,14 +2231,14 @@ $('preGo').addEventListener('click', () => { audioOn(); const p = UI.pre; if (!p
 /* ---------- battle flow ---------- */
 UI.enterBattle = () => {
   setMode('battle'); show(null);
-  const bt = RT.bt; $('bTitle').textContent = bt.kind === 'stage' ? (isBoss(bt.n) ? 'BOSS · ' : 'Stage ') + stageLabel(bt.n) : bt.kind === 'tower' ? 'Tower Floor ' + bt.n : 'Daily Battle';
+  const bt = RT.bt; $('bTitle').textContent = bt.kind === 'stage' ? (isBoss(bt.n) ? 'BOSS · ' : 'Stage ') + stageLabel(bt.n) : bt.kind === 'tower' ? 'Tower Floor ' + bt.n : bt.kind === 'arena' ? 'Arena Wave ' + bt.n : 'Daily Battle';
   $('bSpeed').textContent = 'x' + [1, 2, 3][(S.speed || 1) - 1];
   $('toasts').style.cssText = 'top:auto;bottom:calc(env(safe-area-inset-bottom) + 14px)';
   const boss = bt.B.find(u => u.m.boss); $('bossBar').hidden = !boss; if (boss) $('bossNm').textContent = boss.m.name;
 };
 UI.battleOver = () => {
   const bt = RT.bt, res = bt.res;
-  if (!res.win) { S.stats.losses++; sfx.lose(); UI.loseTip(bt); show('scrLose'); return; }
+  if (!res.win) { S.stats.losses++; sfx.lose(); if (bt.kind === 'arena') { S.arena.cur = 0; S.arena.seed = (S.arena.seed || 0) + 1; save(); } UI.loseTip(bt); show('scrLose'); return; }
   S.stats.wins++; quest('win'); if (res.stars === 3) quest('star3'); sfx.win();
   const rw = { coins: 0, gems: 0, egg: null, first: false, stars: res.stars, note: '' };
   if (bt.kind === 'stage') {
@@ -2076,11 +2247,17 @@ UI.battleOver = () => {
     if (first) { S.stage = bt.n; if (isBoss(bt.n)) { rw.gems += 15; rw.egg = bt.n >= 30 ? 'mythic' : 'rare'; } if (S.tut === 3) S.tut = 4; }
     const old = S.stars[bt.n] || 0; if (res.stars > old) { S.stars[bt.n] = res.stars; if (res.stars === 3) rw.gems += 2; }
     const ne = EGGS.find(e => e.unlock === S.stage && e.unlock > 0); if (first && ne) { rw.note = ne.name + 's unlocked! Your Egg button now buys them.'; S.eggSel = ne.id; }
-    const cu = FAM.find(f => f.rar === 0 && COMMON_UNLOCK[f.id] === S.stage && first); if (cu) rw.note = (rw.note ? rw.note + ' ' : '') + 'New monsters can hatch from eggs now!';
+    const cu = FAM.find(f => f.rar === 0 && COMMON_UNLOCK[f.id] === S.stage && first); if (cu) rw.note = (rw.note ? rw.note + ' ' : '') + `New monster unlocked: ${cu.names[0]} can hatch from eggs now!`;
+    if (first && S.stage === 6) rw.note = (rw.note ? rw.note + ' ' : '') + 'The Monster Arena is open! Find it in Adventure.';
   } else if (bt.kind === 'tower') { if (bt.n > S.tower) S.tower = bt.n; rw.coins = Math.round(towerCoins(bt.n) * battleCoinMult(S)); rw.gems += towerGems(bt.n); }
+  else if (bt.kind === 'arena') {
+    const nb = bt.n > S.arena.best; S.arena.best = Math.max(S.arena.best, bt.n); S.arena.cur = bt.n;
+    rw.coins = Math.round(arenaCoins(bt.n) * battleCoinMult(S)); rw.gems += arenaGems(bt.n); if (bt.n % 10 === 0) rw.egg = bt.n >= 30 ? 'mythic' : 'rare';
+    rw.note = `Wave ${bt.n} cleared!${nb && bt.n > 1 ? ' New best!' : ''} ${(bt.n + 1) % 5 === 0 ? 'A champion waits next...' : 'Every 5th wave is a champion with big rewards.'}`;
+  }
   else { S.dailyWon = dayKey(); S.stats.dailyWins++; rw.coins = stageCoins(Math.max(1, S.stage)) * 4; rw.gems += 25; }
   UI.rw = rw; UI.chest = { t: 0, open: 0, shake: 0, taps: 0, parts: [], gold: !!(rw.gems >= 15 || rw.egg) };
-  $('chestT').textContent = bt.kind === 'daily' ? 'DAILY WIN!' : isBoss(bt.n) && bt.kind === 'stage' ? 'BOSS DEFEATED!' : 'VICTORY!';
+  $('chestT').textContent = bt.kind === 'daily' ? 'DAILY WIN!' : bt.kind === 'arena' ? `WAVE ${bt.n} CLEARED!` : isBoss(bt.n) && bt.kind === 'stage' ? 'BOSS DEFEATED!' : 'VICTORY!';
   $('chestTap').hidden = false; show('scrChest'); checkAch(); save();
 };
 function tapChest() {
@@ -2109,8 +2286,8 @@ function finishChest() {
   document.querySelectorAll('#winStars i').forEach((s, i) => { s.className = ''; void s.offsetWidth; s.className = i < rw.stars ? 'on' : ''; });
   $('winStars').hidden = RT.bt.kind !== 'stage';
   $('winNote').textContent = rw.note || (RT.bt.kind === 'stage' && rw.stars < 3 ? 'Win without losing a monster to get 3 stars.' : '');
-  const bt = RT.bt, canNext = bt.kind === 'stage' ? S.stage < NUM_STAGES : bt.kind === 'tower' ? S.tower < TOWER_FLOORS : false;
-  $('winNext').hidden = !canNext; $('winNext').textContent = bt.kind === 'tower' ? 'Next floor' : 'Next stage';
+  const bt = RT.bt, canNext = bt.kind === 'stage' ? S.stage < NUM_STAGES : bt.kind === 'tower' ? S.tower < TOWER_FLOORS : bt.kind === 'arena';
+  $('winNext').hidden = !canNext; $('winNext').textContent = bt.kind === 'tower' ? 'Next floor' : bt.kind === 'arena' ? 'Next wave' : 'Next stage';
   $('winT').textContent = bt.kind === 'stage' && !rw.first ? 'Win!' : 'Victory!';
   show('scrWin'); checkAch(); save();
 }
@@ -2122,13 +2299,14 @@ UI.loseTip = bt => {
   if (S.coins >= upCost(S, UP_BY.train)) tips.push('You can buy Power Training in the Shop right now!');
   else tips.push('Merge twins to evolve them, and buy Power Training in the Shop.');
   if (bt.kind === 'stage' && S.stage > 0) tips.push('Replay an old stage in Adventure to earn more coins.');
+  if (bt.kind === 'arena') tips.unshift(`Arena run over at wave ${bt.n}. Your best is wave ${S.arena.best}. Retry starts a fresh run.`);
   $('loseTip').innerHTML = tips.map(t => '• ' + esc(t)).join('<br>');
 };
 function backToBoard() { RT.bt = null; setMode('board'); show(null); setMusic('calm'); resize(); UI.tutor(); UI.nextReveal(); }
 $('winBoard').addEventListener('click', () => { sfx.click(); backToBoard(); });
 $('loseBoard').addEventListener('click', () => { sfx.click(); backToBoard(); });
-$('winNext').addEventListener('click', () => { sfx.click(); const bt = RT.bt; backToBoard(); openPre(bt.kind, bt.kind === 'stage' ? S.stage + 1 : S.tower + 1); });
-$('loseRetry').addEventListener('click', () => { sfx.click(); const bt = RT.bt; backToBoard(); openPre(bt.kind, bt.n); });
+$('winNext').addEventListener('click', () => { sfx.click(); const bt = RT.bt; backToBoard(); openPre(bt.kind, bt.kind === 'stage' ? S.stage + 1 : bt.kind === 'arena' ? bt.n + 1 : S.tower + 1); });
+$('loseRetry').addEventListener('click', () => { sfx.click(); const bt = RT.bt; backToBoard(); openPre(bt.kind, bt.kind === 'arena' ? 1 : bt.n); });
 $('bSpeed').addEventListener('click', () => { audioOn(); S.speed = (S.speed || 1) % 3 + 1; $('bSpeed').textContent = 'x' + [1, 2, 3][S.speed - 1]; sfx.click(); });
 $('bSkip').addEventListener('click', () => { audioOn(); sfx.click(); skipBattle(); });
 
