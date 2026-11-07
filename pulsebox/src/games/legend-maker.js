@@ -1,0 +1,584 @@
+/* Legend Maker: build an athlete out of other people's best bits, then live the career. Pick a sport, spin the reel of
+   (fictional) pros, and draft one of each pro's ratings into an empty attribute slot. Six slots, two rerolls. Then you steer
+   the career: an offseason move before every season, a clutch timing moment in every finals, and you choose when to retire.
+   Afterwards, take your legend up the Legends Ladder: clutch duels against ten all-time greats. Daily: same reel for all. */
+const GAME = {
+  id: 'legend-maker', title: 'Legend Maker', tagline: 'Spin the pros. Build a legend. Sim the career.',
+  font: 'Bebas Neue', accent: '#ffb02e', accent2: '#29e0ff', bg: '#101626', noHud: true, scoreLabel: 'Legacy',
+  how: ['Spin the reel to get a pro, then tap the attribute slot you want their rating in. Two rerolls per build.', 'Then live the career: pick an offseason move each year (1-3 keys), and stop the bar in the zone (Space) to win the finals.', 'Retire when you choose. Then take your legend up the Legends Ladder: beat 10 all-time greats in clutch duels to be crowned the GOAT.'],
+  skins: [{ name: 'No extras', price: 0, k: 'none' }, { name: 'Headband', price: 25, k: 'band' }, { name: 'Shades', price: 60, k: 'shades' }, { name: 'Gold Chain', price: 100, k: 'chain' }, { name: 'Captain Armband', price: 150, k: 'arm' }, { name: 'Champion Crown', price: 240, k: 'crown' }, { name: 'Legend Aura', price: 380, k: 'aura' }],
+};
+(() => {
+  const FD = '"Bebas Neue", Impact, sans-serif', FB = 'Nunito, system-ui, sans-serif', f = (px, w = 800) => `${w} ${px}px ${FB}`, d = px => `${px}px ${FD}`;
+  const SPORTS = {
+    hoops: { name: 'HOOPS', role: 'hooper', c: '#ff8a2e', at: ['Shooting', 'Finishing', 'Passing', 'Defense', 'Rebounding', 'Athleticism'], w: [1.3, 1.1, 1, 1, .9, 1.2],
+      stat: ['PPG', 'RPG', 'APG'], champ: 'title', league: 'pro league', mvp: 'MVP', star: 'All-Star', dpoy: 'Defensive Player of the Year' },
+    gridiron: { name: 'GRIDIRON', role: 'quarterback', c: '#3ddc84', at: ['Arm', 'Accuracy', 'Vision', 'Mobility', 'Poise', 'Durability'], w: [1.2, 1.3, 1.2, .9, 1.1, .8],
+      stat: ['Pass YDS', 'TD', 'INT'], champ: 'championship ring', league: 'league', mvp: 'MVP', star: 'Pro Bowl', dpoy: 'Offensive Player of the Year' },
+    soccer: { name: 'SOCCER', role: 'striker', c: '#29e0ff', at: ['Finishing', 'Pace', 'Dribbling', 'Heading', 'Vision', 'Stamina'], w: [1.4, 1.2, 1.1, .8, 1, .9],
+      stat: ['Goals', 'Assists', 'Apps'], champ: 'league title', league: 'top flight', mvp: 'Player of the Year', star: 'Team of the Year', dpoy: 'Golden Boot' },
+    hockey: { name: 'HOCKEY', role: 'center', c: '#7ab8ff', at: ['Shooting', 'Skating', 'Passing', 'Checking', 'Faceoffs', 'Endurance'], w: [1.3, 1.2, 1.1, .9, .8, .9],
+      stat: ['Goals', 'Assists', 'Points'], champ: 'cup', league: 'league', mvp: 'MVP', star: 'All-Star', dpoy: 'Top Scorer' },
+    diamond: { name: 'BASEBALL', role: 'slugger', c: '#ff5f6a', at: ['Contact', 'Power', 'Eye', 'Speed', 'Fielding', 'Durability'], w: [1.25, 1.3, 1, .8, .8, .9],
+      stat: ['AVG', 'HR', 'RBI'], champ: 'world title', league: 'league', mvp: 'MVP', star: 'All-Star', dpoy: 'Gold Glove' },
+  };
+  const FN = ['Marcus', 'Theo', 'Andre', 'Kofi', 'Luca', 'Mateo', 'Jalen', 'Dmitri', 'Ravi', 'Omar', 'Hugo', 'Keanu', 'Diego', 'Elijah', 'Tariq', 'Sven', 'Ivo', 'Malik', 'Nico', 'Rafe', 'Tobias', 'Xavi', 'Yusuf', 'Zane', 'Bruno', 'Caleb', 'Dante', 'Emil', 'Felix', 'Gio'];
+  const LN = ['Okafor', 'Varga', 'Delacroix', 'Hollis', 'Mbeki', 'Santos', 'Lindqvist', 'Brennan', 'Kowalski', 'Achebe', 'Moreau', 'Tanaka', 'Reyes', 'Fairbanks', 'Osei', 'Petrov', 'Castillo', 'Whitfield', 'Nakamura', 'Duval', 'Ferraro', 'Grant', 'Haddad', 'Iverson', 'Jovic', 'Kessler', 'Lombardi', 'Monroe', 'Nwosu', 'Quill'];
+  const CLUBS = ['Harbor City', 'Silver Lake', 'Ironwood', 'Port Royal', 'Granite Bay', 'Sun Valley', 'North Ridge', 'Bayside', 'Redwood', 'Capital', 'Lakeshore', 'Summit'];
+  const TIERS = [[0, 'Journeyman', '#8a95ab'], [140, 'Solid Starter', '#cfd8e0'], [260, 'All-Star', '#29e0ff'], [420, 'Hall of Famer', '#ffb02e'], [620, 'Legend', '#ff5fa2'], [820, 'THE GOAT', '#ffd23f']];
+  const R0 = Math.random;
+  let mode = 'home', sport = 'hoops', daily = false, rng = R0, build = null, reel = null, career = null, hover = null, msg = null, t = 0, posed = false, botT = 0, hof = 'view';
+  const rnd = (a, b) => a + rng() * (b - a), pick = a => a[Math.floor(rng() * a.length)], clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const seeded = s => () => (s = s * 16807 % 2147483647) / 2147483647;
+  const dayNo = () => Math.floor(Date.now() / 864e5);
+  const SAVE = () => K.save.lm || (K.save.lm = { hof: [], best: {}, daily: {}, quests: { day: 0, done: [] }, builds: 0 });
+
+  /* ---------- the pros on the reel: made-up players with one or two things they are great at ---------- */
+  function makePro(sp) {
+    const S = SPORTS[sp], peak = [pick([0, 1, 2, 3, 4, 5])]; if (rng() < .55) peak.push(pick([0, 1, 2, 3, 4, 5]));
+    const base = rnd(52, 74), r = S.at.map((_, i) => Math.round(clamp(base + rnd(-14, 12) + (peak.includes(i) ? rnd(14, 28) : 0), 35, 99)));
+    if (rng() < .06) r[pick([0, 1, 2, 3, 4, 5])] = 99;
+    return { name: pick(FN) + ' ' + pick(LN), club: pick(CLUBS), year: 1975 + Math.floor(rng() * 50), r };
+  }
+  function newBuild(sp, dly) {
+    sport = sp; daily = dly; rng = dly ? seeded(dayNo() * 31 + Object.keys(SPORTS).indexOf(sp) + 7) : R0;
+    build = { slots: Array(6).fill(null), rerolls: 2, spins: 0, pro: null, name: pick(FN) + ' ' + pick(LN), vs: null };
+    mode = 'build'; reel = null;
+  }
+  const ROW = 58, rarity = p => { const m = Math.max(...p.r); return m >= 99 ? ['LEGEND PULL', '#ffd23f'] : m >= 92 ? ['STAR', '#ff5fa2'] : m >= 85 ? ['GOLD', '#ffb02e'] : m >= 78 ? ['SILVER', '#cfd8e0'] : ['BRONZE', '#c8864a']; };
+  function spin() {
+    if (build.slots.every(Boolean) || reel || build.pro) return;
+    const pro = makePro(sport), W = 22 + Math.floor(R0() * 4), RC = ['#c8864a', '#c8864a', '#cfd8e0', '#cfd8e0', '#ffb02e', '#ff5fa2'];
+    const names = Array.from({ length: W + 4 }, () => ({ n: pick(FN) + ' ' + pick(LN), c: RC[Math.floor(R0() * RC.length)] }));
+    names[W] = { n: pro.name, c: rarity(pro)[1], win: 1 };
+    // speed curve: a quick spin-up, a steady fast spin, then a smooth slow-down that lands exactly on the pro
+    const V = 15, A = .22, Td = 1.35 + R0() * .35, Dd = V * Td / 3, Tc = Math.max(.3, (W - V * A / 2 - Dd) / V), D0 = W - Dd;
+    reel = { t: 0, W, V, A, Tc, Td, Dd, D0, end: A + Tc + Td, T: A + Tc + Td + .35, names, pro, row: -1, tick: 0 }; build.lastSpin = t;
+    K.sfx(300, .08, 'square', .05, 200);
+  }
+  function reelPos(r) {
+    const t = r.t; if (t < r.A) return r.V * t * t / (2 * r.A);
+    if (t < r.A + r.Tc) return r.V * r.A / 2 + r.V * (t - r.A);
+    if (t < r.end) { const u = (t - r.A - r.Tc) / r.Td; return r.D0 + r.Dd * (1 - Math.pow(1 - u, 3)); }
+    const k = Math.min(1, (t - r.end) / .3); return r.W + Math.sin(k * Math.PI) * .1 * (1 - k);   // a small settle bounce
+  }
+  function reroll() { if (!build.pro || build.rerolls <= 0) return; build.rerolls--; build.pro = null; spin(); }
+  function place(i) {
+    if (!build.pro || build.slots[i]) return;
+    build.slots[i] = { v: build.pro.r[i], who: build.pro.name }; build.spins++; build.pro = null;
+    K.chime(523 + build.slots[i].v * 3, [0, 7]);
+    if (build.vs) cpuPick();
+    if (build.slots.every(Boolean)) { mode = 'ready'; K.sfx(880, .2, 'triangle', .06); }
+  }
+  function cpuPick() {
+    const V = build.vs, S = SPORTS[sport], p = makePro(sport), open = V.cpu.map((c, i) => c ? -1 : p.r[i] * S.w[i] + rnd(-8, 8)), i = open.indexOf(Math.max(...open));
+    if (i >= 0) V.cpu[i] = { v: p.r[i], who: p.name };
+  }
+  const cpuOvr = () => { const S = SPORTS[sport], V = build.vs; let a = 0, w = 0; V.cpu.forEach((c, i) => { a += (c ? c.v : 0) * S.w[i]; w += S.w[i]; }); return Math.round(a / w); };
+  const ovr = () => { const S = SPORTS[sport]; let a = 0, w = 0; build.slots.forEach((s, i) => { a += (s ? s.v : 0) * S.w[i]; w += S.w[i]; }); return Math.round(a / w); };
+
+  /* ---------- the career: you steer it. An offseason decision before every season, and the finals come down to
+     a clutch moment you play yourself. Old enough, and you decide when to retire. ---------- */
+  const CHOICES = [
+    { k: 'train', n: 'TRAIN LIKE CRAZY', d: '+4 to your weakest skill. A bit more injury risk this year.', ok: () => true },
+    { k: 'film', n: 'STUDY FILM', d: '+2 to your two most important skills.', ok: () => true },
+    { k: 'contender', n: 'JOIN A CONTENDER', d: 'Move to a title team: much better ring odds. Some fans call you a ring chaser (-10 legacy).', ok: c => c.team < .7 && c.seasons.length > 0 },
+    { k: 'loyal', n: 'STAY LOYAL', d: 'Re-sign with your club: +6 legacy for every year you have been there.', ok: c => c.yrs >= 2 },
+    { k: 'rest', n: 'REST AND RECOVER', d: 'Fully healed and no injuries this year, but a little rusty (-3 this season).', ok: c => c.fit < .95 },
+    { k: 'brand', n: 'SHOOT A SNEAKER AD', d: '+15 legacy and +3 coins, but a distracted season (-2).', ok: c => c.seasons.length >= 2 },
+    { k: 'camp', n: 'SUMMER LEAGUE GRIND', d: '+3 to a random skill and a hot start to your rookie year.', ok: c => c.seasons.length === 0 },
+    { k: 'mentor', n: 'MENTOR A ROOKIE', d: '+15 legacy, and you age more slowly this year.', ok: c => c.age >= 30 },
+  ];
+  const durOf = v => sport === 'hoops' ? v[5] * .6 + v[3] * .4 : v[5];
+  const liveO = v => { const S = SPORTS[sport]; let a = 0, w = 0; v.forEach((x, i) => { a += x * S.w[i]; w += S.w[i]; }); return Math.round(a / w); };
+  function simCareer() {   // starts the career; the seasons are played one decision at a time
+    const v = build.slots.map(s => s.v), O = ovr(), crng = daily ? seeded(dayNo() * 97 + O) : R0;
+    career = { v, O, O0: O, peak: O, crng, cr: (a, b) => a + crng() * (b - a), seasons: [], aw: { mvp: 0, star: 0, champ: 0, dpoy: 0, fmvp: 0 }, injuries: 0, legacy: 0, age: 21, fit: 1,
+      team: .3 + crng() * .3, club: pick(CLUBS), yrs: 0, extra: 0, phase: 'choice', opts: [], t: 0, shown: 0, done: false, cl: null, row: null };
+    career.maxS = Math.round(clamp(8 + (durOf(v) - 60) / 5 + career.cr(-2, 3), 6, 18));
+    offer(); mode = 'career';
+  }
+  function offer() {
+    const c = career; c.phase = 'choice'; c.t = 0;
+    if (c.seasons.length >= c.maxS) {
+      c.opts = [{ k: 'retire', n: 'RETIRE A LEGEND', d: 'Hang it up on your own terms and hear the Hall of Fame verdict.' }];
+      if (c.extra < 3) c.opts.push({ k: 'more', n: 'ONE MORE YEAR', d: `You are ${c.age}. Expect a decline, and an injury could end it badly.` });
+      return;
+    }
+    const pool = CHOICES.filter(x => x.ok(c)), out = []; while (out.length < 3 && pool.length) out.push(pool.splice(Math.floor(R0() * pool.length), 1)[0]); c.opts = out;
+  }
+  function choose(i) {
+    const c = career, o = c && c.opts[i]; if (!o || c.phase !== 'choice') return;
+    K.sfx(660, .06, 'triangle', .06);
+    if (o.k === 'retire') { c.phase = 'retired'; c.done = true; K.chime(440, [0, 4, 7]); return; }
+    if (o.k === 'more') { c.extra++; c.maxS++; }
+    playSeason(o.k);
+  }
+  function statsFor(r, v, cr) {
+    const s = {};
+    if (sport === 'hoops') { s.a = (r - 48) * .62 + v[0] * .05; s.b = 3 + v[4] * .07 * (r / 85); s.c = 1.5 + v[2] * .075 * (r / 85); }
+    else if (sport === 'gridiron') { s.a = Math.round((r - 45) * 95 + v[0] * 9); s.b = Math.round((r - 50) * .82 + v[2] * .08); s.c = Math.round(clamp(22 - v[4] * .17 - (r - 70) * .12 + cr(-3, 3), 3, 25)); }
+    else if (sport === 'hockey') { s.a = Math.round((r - 50) * .9 + v[0] * .12); s.b = Math.round((r - 52) * 1 + v[2] * .14); s.c = Math.max(0, s.a) + Math.max(0, s.b); }
+    else if (sport === 'diamond') { s.a = clamp(.2 + (v[0] - 50) * .0022 + (r - 70) * .0018 + cr(-.012, .012), .18, .39); s.b = Math.round((r - 55) * .6 + v[1] * .2); s.c = Math.round(Math.max(0, s.b) * 2.4 + (r - 60) * 1.2); }
+    else { s.a = Math.round((r - 52) * .72 + v[0] * .1); s.b = Math.round((r - 55) * .4 + v[4] * .08); s.c = Math.round(26 + Math.min(1, r / 90) * 12); }
+    for (const k of ['a', 'b', 'c']) s[k] = Math.max(0, s[k]);
+    return s;
+  }
+  function playSeason(k) {
+    const c = career, S = SPORTS[sport], cr = c.cr, v = c.v; let mod = 0, inj = .1, slow = false, note = '', bonus = 0;
+    const W = S.w.map((w, i) => [w, i]).sort((a, b) => b[0] - a[0]);
+    if (k === 'train') { const i = v.indexOf(Math.min(...v)); v[i] = Math.min(99, v[i] + 4); inj += .08; note = `+4 ${S.at[i]}`; }
+    if (k === 'film') { for (const [, i] of W.slice(0, 2)) v[i] = Math.min(99, v[i] + 2); note = `+2 ${S.at[W[0][1]]} & ${S.at[W[1][1]]}`; }
+    if (k === 'contender') { c.team = Math.min(.95, c.team + .35); c.club = pick(CLUBS.filter(x => x !== c.club)); c.yrs = 0; bonus -= 10; note = 'Joined ' + c.club; }
+    if (k === 'loyal') { bonus += 6 * c.yrs; note = `Loyal +${6 * c.yrs}`; }
+    if (k === 'rest') { c.fit = 1; inj = 0; mod -= 3; note = 'Rested up'; }
+    if (k === 'brand') { bonus += 15; mod -= 2; K.coin(3); note = 'Sneaker ad +15'; }
+    if (k === 'camp') { const i = Math.floor(c.crng() * 6); v[i] = Math.min(99, v[i] + 3); mod += 2; note = `+3 ${S.at[i]}`; }
+    if (k === 'mentor') { bonus += 15; slow = true; note = 'Mentor +15'; }
+    if (k === 'more') note = 'One more year';
+    c.O = liveO(v); c.peak = Math.max(c.peak, c.O);
+    const age = c.age, dur = durOf(v);
+    const curve = age < 27 ? .82 + (age - 21) * .03 : age <= 30 ? 1 : 1 - (age - 30) * (slow ? .022 : .045) - (k === 'more' ? .03 : 0);
+    if (inj && c.crng() < inj + (99 - dur) * .003) { c.injuries++; c.fit = cr(.35, .75); } else c.fit = Math.min(1, c.fit + .3);
+    const r = clamp((c.O + cr(-5, 5) + mod) * curve * (.7 + c.fit * .3), 30, 104), A = [];
+    let L = bonus;
+    if (r > 86 && c.crng() < (r - 84) * .06) { c.aw.mvp++; A.push(S.mvp); L += 60; }
+    if (r > 78 && c.crng() < (r - 74) * .07) { c.aw.star++; A.push(S.star); L += 14; }
+    if (c.crng() < (sport === 'hoops' ? v[3] - 80 : sport === 'diamond' ? v[4] - 80 : r - 86) * .025) { c.aw.dpoy++; A.push(S.dpoy); L += 25; }
+    if (c.fit < .8) A.push('Injury: played hurt');
+    L += Math.max(0, r - 60) * 1.4;
+    const row = { L, age, r: Math.round(r), s: statsFor(r, v, cr), A, club: c.club, note }, team = clamp(c.team + cr(-.2, .2) + (r - 80) * .006, 0, 1);
+    c.yrs++; c.age++;
+    if (c.crng() < team * .55) {   // made the finals: the title comes down to one clutch moment
+      c.phase = 'clutch'; c.row = row; c.cl = { t: 0, pos: 0, zc: .25 + R0() * .5, zw: clamp(.1 + (r - 75) * .004, .065, .21), speed: 2.4 + R0() * .8, res: null, rt: 0 };
+      K.sfx(220, .3, 'sawtooth', .05, 200); return;
+    }
+    if (team > .55 && c.crng() < .5) A.push('Lost in the playoffs');
+    pushSeason(row);
+  }
+  function pushSeason(row) {
+    const c = career; c.seasons.push(row); c.legacy += row.L; c.shown = c.seasons.length; c.phase = 'show'; c.t = 0;
+    if (row.A.some(a => !/Injury|Lost|Runner/.test(a))) K.chime(659, [0, 7]); else K.sfx(420, .05, 'square', .03);
+  }
+  // one tap: stop the bar in the zone. Dead centre is a Finals MVP.
+  function clutchTap(C, onWin, onLose) {
+    if (!C || C.res) return; const off = Math.abs(C.pos - C.zc);
+    C.res = off <= C.zw / 6 ? 'perfect' : off <= C.zw / 2 ? 'hit' : 'miss'; C.rt = 0;
+    if (C.res === 'miss') { K.sfx(180, .5, 'sawtooth', .06, -80); onLose && onLose(); }
+    else { K.chime(523, [0, 4, 7, 12]); K.burst(640, 330, ['#ffd23f', '#fff', SPORTS[sport].c], C.res === 'perfect' ? 60 : 30, 480); K.shake(C.res === 'perfect' ? 8 : 4); onWin && onWin(C.res === 'perfect'); }
+  }
+  function finalsTap() {
+    const c = career, S = SPORTS[sport];
+    clutchTap(c.cl, perfect => { c.aw.champ++; c.row.A.push(S.champ[0].toUpperCase() + S.champ.slice(1)); c.row.L += 45; if (perfect) { c.aw.fmvp++; c.row.A.push('Finals MVP'); c.row.L += 25; } },
+      () => { c.row.A.push('Runner-up'); c.row.L += 8; });
+  }
+
+  /* ---------- after the career: the Legends Ladder. Take a Hall of Famer up against ten all-time greats ---------- */
+  const NICK = ['The Wall', 'Ice Cold', 'The Professor', 'Air Mail', 'Big Ticket', 'The Machine', 'Sky Walker', 'Mr. Clutch', 'The Last Dynasty', 'THE G.O.A.T.'];
+  const LOVR = [72, 75, 78, 81, 84, 87, 90, 93, 96, 99];
+  function ladderOpps(sp) { const r = seeded(Object.keys(SPORTS).indexOf(sp) * 991 + 7); return NICK.map((n, i) => ({ nick: n, name: FN[Math.floor(r() * FN.length)] + ' ' + LN[Math.floor(r() * LN.length)], O: LOVR[i], club: CLUBS[Math.floor(r() * CLUBS.length)] })); }
+  let ladder = null, hofSel = -1, hofPick = false, lastRec = null;
+  function startLadder(rec) { if (!rec) return; sport = rec.sport; ladder = { rec, opps: ladderOpps(rec.sport), rung: 0, over: false, duel: null, best: rec.ladder || 0 }; mode = 'ladder'; K.sfx(600, .06, 'triangle', .06); }
+  function newDuelRound() { const D = ladder.duel, o = ladder.opps[ladder.rung], O = ladder.rec.O; D.cl = { t: 0, pos: 0, zc: .22 + R0() * .56, zw: clamp(.17 + (O - o.O) * .007, .045, .32), speed: 2 + ladder.rung * .22 + R0() * .3, res: null, rt: 0 }; }
+  function startDuel() { if (!ladder || ladder.over) return; ladder.duel = { w: 0, l: 0, round: 1, cl: null, end: 0 }; newDuelRound(); mode = 'duel'; }
+  function duelTap() { const D = ladder.duel; clutchTap(D.cl, () => { D.w++; }, () => { D.l++; }); }
+  function duelDone() {
+    const L = ladder, D = L.duel, won = D.w >= 2, rec = L.rec;
+    if (won) {
+      L.rung++;
+      if (L.rung > (rec.ladder || 0)) { rec.ladder = L.rung; K.coin(L.rung >= 10 ? 25 : 2 + L.rung); }
+      if (L.rung >= 10) { rec.goat = true; L.over = 'goat'; msg = { t: `${rec.name} beat every all-time great!  +25 coins`, k: 0 }; K.chime(523, [0, 4, 7, 12, 16]); K.burst(640, 260, ['#ffd23f', '#fff', '#ff5fa2'], 80, 560); K.shake(10); }
+    } else L.over = 'lost';
+    L.best = Math.max(L.best, rec.ladder || 0); K.persist(); L.duel = null; mode = 'ladder';
+  }
+  const fmtStat = (s, k) => sport === 'hoops' ? s[k].toFixed(1) : sport === 'diamond' && k === 'a' ? s[k].toFixed(3).replace(/^0/, '') : String(s[k]);
+  function streak() { const L = SAVE(), st = L.streak || (L.streak = { last: 0, n: 0 }), dn = dayNo(); if (st.last === dn) return; st.n = st.last === dn - 1 ? st.n + 1 : 1; st.last = dn; }
+  function finishCareer() {
+    streak();
+    const L = SAVE(), c = career; c.legacy = Math.round(c.legacy + c.O0 * 2); c.final = true; c.tier = TIERS.filter(x => c.legacy >= x[0]).pop();
+    const rec = { id: Date.now().toString(36) + Math.floor(R0() * 1e4), name: build.name, sport, O: c.peak, legacy: c.legacy, tier: c.tier[1], aw: c.aw, daily, day: dayNo(), seasons: c.seasons.length, ladder: 0 }; lastRec = rec;
+    L.builds = (L.builds || 0) + 1; L.hof.push(rec); L.hof.sort((a, b) => b.legacy - a.legacy); L.hof = L.hof.slice(0, 12);
+    L.best[sport] = Math.max(L.best[sport] || 0, c.legacy); if (daily) L.daily[sport + dayNo()] = Math.max(L.daily[sport + dayNo()] || 0, c.legacy);
+    questCheck(rec); K.add(c.legacy); K.coin(Math.round(c.legacy / 80)); K.persist();
+    mode = 'verdict'; career.vt = 0;
+    if (c.legacy >= 420) { K.chime(523, [0, 4, 7, 12, 16]); K.burst(640, 260, ['#ffd23f', '#ffb02e', '#fff'], 50, 520); K.shake(10); } else K.chime(440, [0, 4, 7]);
+  }
+  // three small goals a day, like GoatLab's quests
+  const QUESTS = [['ovr85', 'Build an 85+ overall'], ['champ', 'Win a title'], ['hof', 'Reach the Hall of Fame'], ['daily', 'Play the daily challenge'], ['three', 'Try three different sports']];
+  function quests() { const L = SAVE(); if (L.quests.day !== dayNo()) { const r = seeded(dayNo()); L.quests = { day: dayNo(), list: [...QUESTS].sort(() => r() - .5).slice(0, 3).map(q => q[0]), done: [], sports: [] }; } return L.quests; }
+  function questCheck(rec) {
+    const Q = quests(), hit = k => { if (Q.list.includes(k) && !Q.done.includes(k)) { Q.done.push(k); K.coin(10); msg = { t: 'Quest done: ' + QUESTS.find(q => q[0] === k)[1] + '  +10 coins', k: 0 }; } };
+    Q.sports = [...new Set([...(Q.sports || []), rec.sport])];
+    if (rec.O >= 85) hit('ovr85'); if (rec.aw.champ) hit('champ'); if (rec.legacy >= 420) hit('hof'); if (rec.daily) hit('daily'); if (Q.sports.length >= 3) hit('three');
+  }
+
+  /* ---------- drawing ---------- */
+  const hitR = (b, x, y) => b && x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
+  function rr(g, x, y, w, h, r, fill, stroke, lw = 3) { g.beginPath(); g.roundRect(x, y, w, h, r); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.stroke(); } }
+  function tx(g, s, x, y, font, c, al = 'center') { g.font = font; g.fillStyle = c; g.textAlign = al; g.textBaseline = 'middle'; g.fillText(s, x, y); }
+  function bg(g) {
+    const v = K.view, gr = g.createLinearGradient(0, 0, 0, 720); gr.addColorStop(0, '#16203a'); gr.addColorStop(1, '#0a0e1a'); g.fillStyle = gr; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    g.fillStyle = 'rgba(255,255,255,.025)'; for (let x = -40; x < 1320; x += 48) { g.save(); g.translate(x + (t * 6) % 48, 0); g.rotate(.25); g.fillRect(0, -100, 10, 1000); g.restore(); }
+  }
+  // the athlete: a bold two-tone silhouette in action, one per sport
+  function accessory(g, k, sp) {   // drawn over the athlete; heads sit near (0, -23) in every sport
+    const hy = sp === 'gridiron' ? -30 : -23;
+    if (k === 'band') { g.fillStyle = '#e8343a'; g.fillRect(-15, hy - 8, 30, 5); g.fillRect(12, hy - 8, 8, 12); }
+    else if (k === 'shades') { g.fillStyle = '#111'; g.beginPath(); g.roundRect(-12, hy - 3, 11, 6, 2); g.roundRect(1, hy - 3, 11, 6, 2); g.fill(); g.fillRect(-2, hy - 2, 4, 2); }
+    else if (k === 'chain') { g.strokeStyle = '#ffd23f'; g.lineWidth = 3; g.beginPath(); g.arc(0, hy + 6, 13, .3, Math.PI - .3); g.stroke(); g.fillStyle = '#ffd23f'; g.beginPath(); g.arc(0, hy + 20, 4, 0, 7); g.fill(); }
+    else if (k === 'arm') { g.fillStyle = '#ffd23f'; g.fillRect(-26, -2, 9, 8); g.fillStyle = '#1a2440'; g.font = 'bold 7px sans-serif'; g.fillText('C', -24, 5); }
+    else if (k === 'crown') { g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(-12, hy - 12); g.lineTo(-12, hy - 26); g.lineTo(-5, hy - 18); g.lineTo(0, hy - 30); g.lineTo(5, hy - 18); g.lineTo(12, hy - 26); g.lineTo(12, hy - 12); g.fill(); g.fillStyle = '#e8343a'; g.beginPath(); g.arc(0, hy - 16, 2.5, 0, 7); g.fill(); }
+  }
+  GAME.drawSkin = (g, s, r) => { g.save(); g.scale(r / 55, r / 55); g.translate(0, 18); if (s.k === 'aura') { const gl = g.createRadialGradient(0, -10, 6, 0, -10, 60); gl.addColorStop(0, 'rgba(255,210,63,.7)'); gl.addColorStop(1, 'rgba(255,210,63,0)'); g.fillStyle = gl; g.fillRect(-60, -70, 120, 120); } g.fillStyle = '#3a6aff'; g.beginPath(); g.roundRect(-20, -8, 40, 40, 8); g.fill(); g.fillStyle = '#c88a5a'; g.beginPath(); g.arc(0, -23, 14, 0, 7); g.fill(); g.fillStyle = '#1a1210'; g.beginPath(); g.arc(0, -28, 14, Math.PI, 0); g.fill(); accessory(g, s.k, 'hoops'); g.restore(); };
+  function athlete(g, sp, x, y, s, c) {
+    g.save(); g.translate(x, y); g.scale(s, s); const c2 = '#1a2440', skin = '#c88a5a', acc = (K.skin && K.skin.k) || 'none';
+    if (acc === 'aura') { const gl = g.createRadialGradient(0, 20, 10, 0, 20, 110); gl.addColorStop(0, 'rgba(255,210,63,.55)'); gl.addColorStop(1, 'rgba(255,210,63,0)'); g.fillStyle = gl; g.fillRect(-110, -90, 220, 220); }
+    const limb = (x1, y1, x2, y2, w, col) => { g.strokeStyle = col; g.lineWidth = w; g.lineCap = 'round'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); };
+    if (sp === 'hoops') {
+      limb(-8, 40, -26, 86, 14, skin); limb(10, 40, 28, 80, 14, skin); limb(-26, 86, -30, 112, 12, skin); limb(28, 80, 40, 104, 12, skin);
+      g.fillStyle = c; g.beginPath(); g.roundRect(-20, -10, 40, 54, 8); g.fill(); g.fillStyle = c2; g.fillRect(-20, 30, 40, 16);
+      limb(-16, -4, -34, -46, 12, skin); limb(16, -4, 30, -50, 12, skin);
+      g.fillStyle = '#e8701a'; g.beginPath(); g.arc(34, -64, 15, 0, 7); g.fill(); g.strokeStyle = '#7a3a0a'; g.lineWidth = 2; g.beginPath(); g.moveTo(19, -64); g.lineTo(49, -64); g.moveTo(34, -79); g.lineTo(34, -49); g.stroke();
+      g.fillStyle = skin; g.beginPath(); g.arc(0, -24, 14, 0, 7); g.fill(); g.fillStyle = '#1a1210'; g.beginPath(); g.arc(0, -29, 14, Math.PI, 0); g.fill();
+    } else if (sp === 'gridiron') {
+      limb(-8, 44, -22, 92, 16, '#e8e8e8'); limb(10, 44, 26, 88, 16, '#e8e8e8'); limb(-22, 92, -26, 116, 12, '#1a1a1a'); limb(26, 88, 38, 110, 12, '#1a1a1a');
+      g.fillStyle = c; g.beginPath(); g.roundRect(-26, -12, 52, 58, 12); g.fill(); g.fillStyle = '#fff'; g.font = d(30); g.textAlign = 'center'; g.fillText('12', 0, 24);
+      limb(18, -2, 44, -36, 13, c); limb(44, -36, 40, -62, 11, skin); limb(-18, 2, -34, 26, 13, c);
+      g.fillStyle = '#8a4a1e'; g.beginPath(); g.ellipse(42, -70, 14, 9, -.6, 0, 7); g.fill(); g.fillStyle = '#fff'; g.fillRect(36, -72, 12, 2);
+      g.fillStyle = c; g.beginPath(); g.arc(0, -30, 19, 0, 7); g.fill(); g.fillStyle = '#ccc'; g.fillRect(6, -32, 16, 4); g.fillRect(6, -24, 16, 4);
+    } else if (sp === 'hockey') {
+      limb(-8, 40, -24, 88, 15, c2); limb(10, 40, 30, 84, 15, c2); limb(-24, 88, -40, 108, 8, '#ccc'); limb(30, 84, 46, 104, 8, '#ccc');
+      g.fillStyle = c; g.beginPath(); g.roundRect(-24, -12, 48, 58, 10); g.fill(); g.fillStyle = '#fff'; g.fillRect(-24, 20, 48, 6);
+      limb(16, 0, 40, 30, 12, c); limb(-16, 0, 10, 34, 12, c); limb(30, 20, 74, 104, 5, '#8a6a3a'); limb(74, 104, 98, 104, 7, '#1a1a1a');
+      g.fillStyle = '#111'; g.beginPath(); g.ellipse(112, 108, 8, 3, 0, 0, 7); g.fill();
+      g.fillStyle = c; g.beginPath(); g.arc(0, -28, 17, Math.PI, 0); g.fill(); g.fillStyle = skin; g.beginPath(); g.arc(0, -24, 13, 0, Math.PI); g.fill(); g.fillStyle = '#ddd'; g.fillRect(-12, -26, 24, 3);
+    } else if (sp === 'diamond') {
+      limb(-8, 42, -28, 88, 14, '#eee'); limb(10, 42, 24, 90, 14, '#eee'); limb(-28, 88, -30, 112, 11, '#1a1a1a'); limb(24, 90, 34, 112, 11, '#1a1a1a');
+      g.fillStyle = '#f2f2f2'; g.beginPath(); g.roundRect(-22, -10, 44, 54, 8); g.fill(); g.fillStyle = c; g.fillRect(-22, -10, 6, 54); g.fillRect(16, -10, 6, 54);
+      limb(-14, 0, -30, -26, 12, '#f2f2f2'); limb(14, 0, -18, -30, 12, '#f2f2f2'); limb(-26, -30, 30, -86, 9, '#b07a42'); limb(18, -76, 34, -92, 12, '#b07a42');
+      g.fillStyle = skin; g.beginPath(); g.arc(0, -22, 13, 0, 7); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(0, -27, 14, Math.PI, 0); g.fill(); g.fillRect(0, -30, 20, 5);
+    } else {
+      limb(-6, 40, -30, 70, 14, skin); limb(-30, 70, -22, 104, 12, skin); limb(8, 40, 40, 58, 14, skin); limb(40, 58, 64, 46, 12, skin);
+      g.fillStyle = '#fff'; g.beginPath(); g.arc(78, 50, 13, 0, 7); g.fill(); g.fillStyle = '#1a1a1a'; g.beginPath(); g.arc(78, 50, 5, 0, 7); g.fill();
+      g.fillStyle = c; g.beginPath(); g.roundRect(-20, -8, 40, 50, 8); g.fill(); g.fillStyle = c2; g.fillRect(-20, 30, 40, 14);
+      limb(-16, 0, -44, -22, 11, skin); limb(16, 0, 40, 16, 11, skin);
+      g.fillStyle = skin; g.beginPath(); g.arc(0, -22, 14, 0, 7); g.fill(); g.fillStyle = '#3a2210'; g.beginPath(); g.arc(-2, -27, 14, Math.PI * .9, Math.PI * 2.1); g.fill();
+    }
+    accessory(g, acc, sp);
+    g.restore();
+  }
+  const B = {};
+  function button(g, k, b, label, c, sub, tc = '#141414') {
+    B[k] = b; const hv = hover === k;
+    g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.roundRect(b.x, b.y + 6, b.w, b.h, 14); g.fill();
+    rr(g, b.x, b.y + (hv ? 2 : 0), b.w, b.h, 14, c);
+    tx(g, label, b.x + b.w / 2, b.y + b.h / 2 + (sub ? -10 : 2) + (hv ? 2 : 0), d(b.h > 80 ? 54 : 30), tc);
+    if (sub) tx(g, sub, b.x + b.w / 2, b.y + b.h / 2 + 22 + (hv ? 2 : 0), f(16), tc);
+  }
+  function drawHome(g) {
+    const L = SAVE(), Q = quests();
+    tx(g, 'LEGEND', 520, 70, d(86), '#eef1f8'); tx(g, 'MAKER', 770, 70, d(86), '#ffb02e');
+    tx(g, 'Spin the pros. Build a legend. Sim the career.', 640, 122, f(20, 700), '#9fb0d0');
+    Object.keys(SPORTS).forEach((k, i) => {
+      const S = SPORTS[k], b = { x: 250 + i * 160, y: 150, w: 150, h: 230 }, on = sport === k; B['sp' + k] = b;
+      rr(g, b.x, b.y, b.w, b.h, 18, on ? S.c : '#1a2238', on ? '#fff' : (hover === 'sp' + k ? S.c : 'rgba(255,255,255,.12)'), on ? 4 : 2);
+      g.save(); g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h - 52, 18); g.clip(); athlete(g, k, b.x + b.w / 2 - 6, b.y + 92, .78, on ? '#1a2440' : S.c); g.restore();
+      rr(g, b.x, b.y + b.h - 52, b.w, 52, [0, 0, 18, 18], on ? '#ffd23f' : '#121a2e'); tx(g, S.name, b.x + b.w / 2, b.y + b.h - 25, d(26), on ? '#141414' : '#eef1f8');
+    });
+    button(g, 'play', { x: 250, y: 400, w: 790, h: 100 }, 'PLAY', '#ffd23f', `Spin real-looking pros. Build a ${SPORTS[sport].role}. Sim the career.`);
+    const gt = L.hof.filter(r => r.goat).length, top = L.hof.reduce((m, r) => Math.max(m, r.ladder || 0), 0);
+    button(g, 'daily', { x: 250, y: 518, w: 184, h: 78 }, 'DAILY', '#1f2a46', `Same reel for all`, '#eef1f8');
+    button(g, 'vs', { x: 452, y: 518, w: 184, h: 78 }, '1V1 VS CPU', '#ff5fa2', `${L.vsW || 0} wins`, '#141414');
+    button(g, 'ladder', { x: 654, y: 518, w: 184, h: 78 }, 'LADDER', '#29e0ff', gt ? `${gt} GOAT${gt > 1 ? 's' : ''} crowned` : `Best rung ${top}/10`, '#141414');
+    button(g, 'hof', { x: 856, y: 518, w: 184, h: 78 }, 'HALL OF FAME', '#1f2a46', `${L.hof.length} legends`, '#eef1f8');
+    const st = L.streak || { n: 0 }; tx(g, st.n ? `🔥 ${st.n} day streak` : 'Play every day to build a streak', 640, 620, f(17, 800), st.n ? '#ffb02e' : '#5a6a8a');
+    // quests and best
+    rr(g, 1060, 150, 200, 452, 16, '#121a2e', 'rgba(255,255,255,.12)', 2);
+    tx(g, 'QUESTS', 1160, 182, d(28), '#ffb02e'); tx(g, `${Q.done.length}/3 today`, 1160, 206, f(14), '#9fb0d0');
+    Q.list.forEach((k, i) => { const done = Q.done.includes(k), y = 240 + i * 74; rr(g, 1074, y, 172, 62, 10, done ? '#1f4a34' : '#1a2238'); tx(g, done ? '✓' : '○', 1092, y + 31, f(22, 900), done ? '#3ddc84' : '#9fb0d0'); g.font = f(14); wrap(g, QUESTS.find(q => q[0] === k)[1], 1108, y + 22, 128, 17, done ? '#bff5d6' : '#eef1f8'); });
+    tx(g, 'BEST LEGACY', 1160, 478, d(22), '#ffb02e'); Object.keys(SPORTS).forEach((k, i) => tx(g, `${SPORTS[k].name}  ${L.best[k] || '-'}`, 1160, 504 + i * 20, f(13), '#eef1f8'));
+    tx(g, 'Every player and team here is made up.', 640, 660, f(14, 700), '#5a6a8a');
+  }
+  function wrap(g, s, x, y, w, lh, c) { g.fillStyle = c; g.textAlign = 'left'; g.textBaseline = 'middle'; let line = '', yy = y; for (const wd of s.split(' ')) { const tt = line ? line + ' ' + wd : wd; if (g.measureText(tt).width > w && line) { g.fillText(line, x, yy); line = wd; yy += lh; } else line = tt; } g.fillText(line, x, yy); return yy; }
+  function drawBuild(g) {
+    const S = SPORTS[sport];
+    tx(g, `${daily ? 'DAILY · ' : ''}BUILD YOUR ${S.role.toUpperCase()}`, 640, 40, d(40), S.c);
+    // the slots
+    S.at.forEach((a, i) => {
+      const s = build.slots[i], b = { x: 40, y: 80 + i * 86, w: 360, h: 74 }, can = build.pro && !s; B['slot' + i] = b;
+      rr(g, b.x, b.y, b.w, b.h, 14, s ? '#1f2a46' : can ? (hover === 'slot' + i ? '#3a4a20' : '#26301e') : '#161e34', can ? (hover === 'slot' + i ? '#ffd23f' : 'rgba(255,210,63,.5)') : 'rgba(255,255,255,.1)', 2);
+      tx(g, a.toUpperCase(), b.x + 20, b.y + 26, d(26), '#eef1f8', 'left');
+      if (s) { tx(g, 'from ' + s.who, b.x + 20, b.y + 52, f(14, 700), '#9fb0d0', 'left'); tx(g, String(s.v), b.x + b.w - 24, b.y + 38, d(46), ratingC(s.v), 'right'); }
+      else if (can) { tx(g, `tap to take ${build.pro.r[i]}`, b.x + 20, b.y + 52, f(14, 800), '#ffd23f', 'left'); tx(g, String(build.pro.r[i]), b.x + b.w - 24, b.y + 38, d(46), 'rgba(255,255,255,.35)', 'right'); }
+      else tx(g, 'empty', b.x + 20, b.y + 52, f(14, 700), '#5a6a8a', 'left');
+    });
+    // the reel / the pro card: one wide card to the right of the slots
+    const cx0 = 430, cw = 810, cy = 80, ch = 500, px = cx0 + cw / 2;
+    rr(g, cx0, cy, cw, ch, 18, '#121a2e', S.c, 3);
+    if (reel) {
+      const RH = 74, pos = reelPos(reel), yc = cy + 262, landed = reel.t >= reel.end, top = yc - RH * 2.5, fast = reel.t > reel.A && reel.t < reel.A + reel.Tc + reel.Td * .3;
+      tx(g, landed ? 'LOCKED IN' : 'SPINNING...', px, cy + 44, d(34), landed ? '#fff' : '#ffd23f');
+      g.save(); g.beginPath(); g.rect(cx0 + 12, top, cw - 24, RH * 5); g.clip();
+      g.fillStyle = 'rgba(255,255,255,.03)'; g.fillRect(cx0 + 12, top, cw - 24, RH * 5);
+      for (let j = Math.max(0, Math.floor(pos) - 3); j <= Math.min(reel.names.length - 1, Math.floor(pos) + 3); j++) {
+        const it = reel.names[j], y = yc + (j - pos) * RH, dist = Math.abs(y - yc) / RH, mid = dist < .5, win = it.win && landed;
+        g.globalAlpha = Math.max(.2, 1 - dist * .32);
+        rr(g, cx0 + 60, y - RH / 2 + 5, cw - 120, RH - 10, 12, win ? 'rgba(255,210,63,.22)' : 'rgba(31,42,70,.85)');
+        g.fillStyle = it.c; g.fillRect(cx0 + 60, y - RH / 2 + 5, 10, RH - 10);
+        if (fast) { g.globalAlpha *= .55; tx(g, it.n.toUpperCase(), px, y - 7, d(mid ? 42 : 34), '#eef1f8'); g.globalAlpha /= .55; }
+        tx(g, it.n.toUpperCase(), px, y, d(mid ? 42 : 34), win ? '#ffd23f' : mid ? '#fff' : '#b8c4dc');
+      }
+      g.globalAlpha = 1;
+      const fade = g.createLinearGradient(0, top, 0, top + RH * 5); fade.addColorStop(0, '#121a2e'); fade.addColorStop(.28, 'rgba(18,26,46,0)'); fade.addColorStop(.72, 'rgba(18,26,46,0)'); fade.addColorStop(1, '#121a2e'); g.fillStyle = fade; g.fillRect(cx0 + 12, top, cw - 24, RH * 5); g.restore();
+      const glow = landed ? 1 - Math.min(1, (reel.t - reel.end) / .5) : 0;
+      rr(g, cx0 + 44, yc - RH / 2, cw - 88, RH, 14, null, landed ? `rgba(255,255,255,${.6 + glow * .4})` : '#ffd23f', 4 + glow * 4);
+      g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(cx0 + 22, yc - 16); g.lineTo(cx0 + 42, yc); g.lineTo(cx0 + 22, yc + 16); g.fill(); g.beginPath(); g.moveTo(cx0 + cw - 22, yc - 16); g.lineTo(cx0 + cw - 42, yc); g.lineTo(cx0 + cw - 22, yc + 16); g.fill();
+      if (!landed) tx(g, 'tap to stop', px, cy + ch - 24, f(15, 700), '#5a6a8a');
+    } else if (!build.pro && mode === 'build') {
+      tx(g, `PICK ${build.spins + 1} OF 6`, px, cy + 70, d(34), '#9fb0d0'); tx(g, 'Spin the reel to land on a pro.', px, cy + 112, f(18, 700), '#cfd8e0');
+      button(g, 'spin', { x: px - 190, y: cy + 180, w: 380, h: 130 }, 'SPIN', '#ffd23f', 'Space / tap');
+      tx(g, 'Then tap one of your empty slots to take that pro\'s rating for it.', px, cy + 380, f(16, 700), '#9fb0d0');
+    } else if (build.pro) {
+      const p = build.pro, lx = cx0 + 170;
+      g.save(); g.beginPath(); g.roundRect(cx0 + 20, cy + 20, 300, ch - 40, 14); g.clip(); g.fillStyle = 'rgba(255,255,255,.04)'; g.fillRect(cx0 + 20, cy + 20, 300, ch - 40); athlete(g, sport, lx, cy + 220, 1.35, S.c); g.restore();
+      const [rn, rc] = rarity(p); rr(g, lx - 80, cy + 30, 160, 34, 17, rc); tx(g, rn, lx, cy + 48, d(24), '#141414'); tx(g, p.name.toUpperCase(), lx, cy + 400, d(36), '#fff'); tx(g, `${p.club} · ${p.year}`, lx, cy + 432, f(16, 700), '#9fb0d0');
+      const rx = cx0 + 350; tx(g, 'THIS PRO\'S RATINGS', rx, cy + 44, d(26), '#ffb02e', 'left');
+      S.at.forEach((a, i) => { const y = cy + 94 + i * 58, free = !build.slots[i]; tx(g, a, rx, y - 12, f(18, 800), free ? '#eef1f8' : '#5a6a8a', 'left'); rr(g, rx, y + 4, 330, 14, 7, '#1f2a46'); rr(g, rx, y + 4, 330 * p.r[i] / 100, 14, 7, free ? ratingC(p.r[i]) : '#3a4660'); tx(g, free ? String(p.r[i]) : 'taken', rx + 420, y + 2, d(free ? 40 : 22), free ? ratingC(p.r[i]) : '#5a6a8a', 'right'); });
+      tx(g, '◀  Tap an empty slot to draft one of these', px + 140, cy + ch - 26, f(16, 800), '#ffd23f');
+    } else if (mode === 'ready') {
+      g.save(); g.beginPath(); g.roundRect(cx0 + 20, cy + 20, cw - 40, ch - 40, 14); g.clip(); athlete(g, sport, px - 200, cy + 230, 1.6, S.c); g.restore();
+      tx(g, 'READY', px + 150, cy + 150, d(40), '#9fb0d0'); tx(g, build.name.toUpperCase(), px + 150, cy + 210, d(54), '#fff');
+      tx(g, String(ovr()), px + 150, cy + 300, d(130), ratingC(ovr())); tx(g, 'OVERALL', px + 150, cy + 380, d(30), '#9fb0d0');
+    }
+    // overall so far, rerolls
+    rr(g, 40, 606, 360, 92, 14, '#121a2e', 'rgba(255,255,255,.1)', 2);
+    tx(g, 'OVERALL', 64, 636, d(24), '#9fb0d0', 'left'); const filled = build.slots.filter(Boolean).length;
+    tx(g, filled ? String(ovr()) : '--', 380, 652, d(64), filled ? ratingC(ovr()) : '#5a6a8a', 'right'); tx(g, `${filled}/6 slots${filled ? ` · ${Math.max(0, 99 - ovr())} to the GOAT (99)` : ''}`, 64, 670, f(15), '#9fb0d0', 'left');
+    if (build.vs) { const V = build.vs; rr(g, 1056, 584, 168, 96, 14, '#2a1430', '#ff5fa2', 2); tx(g, 'CPU RIVAL', 1140, 604, d(22), '#ff5fa2'); tx(g, String(cpuOvr()), 1140, 638, d(40), '#fff'); tx(g, `${V.cpu.filter(Boolean).length}/6 · clock ${build.pro && mode === 'build' ? Math.ceil(Math.max(0, V.clock)) : '-'}`, 1140, 666, f(13), '#ffb0d8'); }
+    if (mode === 'build') button(g, 'reroll', { x: 625, y: 600, w: 420, h: 84 }, `REROLL  (${build.rerolls} left)`, build.rerolls && build.pro ? '#1f2a46' : '#141a2a', 'Skip this pro, spin again', build.rerolls && build.pro ? '#eef1f8' : '#5a6a8a');
+    else if (build.vs) { const me2 = ovr(), cp = cpuOvr(); button(g, 'vsdone', { x: 625, y: 590, w: 420, h: 104 }, me2 > cp ? 'YOU WIN!' : me2 === cp ? 'TIE' : 'CPU WINS', me2 > cp ? '#3ddc84' : me2 === cp ? '#cfd8e0' : '#ff5f6a', `${me2} vs ${cp} overall · tap to finish`); }
+    else button(g, 'sim', { x: 625, y: 590, w: 420, h: 104 }, 'SIM CAREER', '#ffd23f', `${build.name}, ${ovr()} overall`);
+  }
+  const ratingC = v => v >= 95 ? '#ffd23f' : v >= 88 ? '#ff5fa2' : v >= 80 ? '#3ddc84' : v >= 70 ? '#29e0ff' : v >= 60 ? '#cfd8e0' : '#8a95ab';
+  function drawCareer(g) {
+    const S = SPORTS[sport], c = career;
+    tx(g, build.name.toUpperCase(), 640, 34, d(44), '#fff');
+    tx(g, `${S.role} · age ${c.age} · ${c.O} overall${c.O !== c.O0 ? ` (built ${c.O0})` : ''} · ${c.club}`, 640, 68, f(17, 700), '#9fb0d0');
+    const x0 = 40, w = 790, y0 = 92; rr(g, x0, y0, w, 524, 14, '#121a2e', 'rgba(255,255,255,.1)', 2);
+    const cols = ['YR', 'AGE', 'CLUB', ...S.stat, 'SEASON'], cx = [70, 116, 168, 350, 432, 512, 576];
+    cols.forEach((h, i) => tx(g, h, cx[i], y0 + 22, d(20), '#ffb02e', i === 2 || i === 6 ? 'left' : 'center'));
+    const n = c.seasons.length, list = c.seasons.slice(Math.max(0, n - 13), n);
+    if (!n) tx(g, 'Your rookie season is next. Make your first big decision.', x0 + w / 2, y0 + 250, f(19, 700), '#5a6a8a');
+    list.forEach((s, j) => {
+      const i = Math.max(0, n - 13) + j, y = y0 + 54 + j * 36, fresh = i === n - 1 && c.phase === 'show';
+      if (fresh) rr(g, x0 + 6, y - 16, w - 12, 32, 6, 'rgba(255,210,63,.16)');
+      tx(g, String(i + 1), cx[0], y, f(16), '#eef1f8'); tx(g, String(s.age), cx[1], y, f(16), '#9fb0d0'); tx(g, s.club, cx[2], y, f(14, 700), '#cfd8e0', 'left');
+      ['a', 'b', 'c'].forEach((k, q) => tx(g, fmtStat(s.s, k), cx[3 + q], y, f(16), '#eef1f8'));
+      const good = s.A.filter(a => !/Injury|Lost|Runner/.test(a)), txt = good.length ? good.join(' · ') : s.A.length ? s.A.join(' · ') : s.note || '-';
+      tx(g, txt.length > 32 ? txt.slice(0, 31) + '…' : txt, cx[6], y, f(14, 800), good.length ? '#ffd23f' : s.A.length ? '#ff8a8a' : '#7a8aa8', 'left');
+    });
+    // trophy case
+    rr(g, 850, 92, 390, 524, 14, '#121a2e', 'rgba(255,255,255,.1)', 2);
+    tx(g, 'TROPHY CASE', 1045, 122, d(30), '#ffb02e');
+    [[S.mvp, '🏆', c.aw.mvp], [S.champ, '💍', c.aw.champ], ['Finals MVP', '🎖️', c.aw.fmvp], [S.star, '⭐', c.aw.star], [S.dpoy, '🥇', c.aw.dpoy]].forEach(([k, em, v], i) => {
+      const y = 170 + i * 66; tx(g, em, 892, y, '36px system-ui', '#fff'); tx(g, k[0].toUpperCase() + k.slice(1), 930, y - 10, f(17), '#eef1f8', 'left'); tx(g, `× ${v}`, 930, y + 15, d(26), v ? '#ffd23f' : '#5a6a8a', 'left');
+    });
+    tx(g, 'LEGACY', 1045, 520, d(22), '#9fb0d0'); tx(g, String(Math.round(c.legacy + (c.final ? 0 : c.O0 * 2))), 1045, 562, d(54), '#ffd23f');
+    tx(g, `${c.seasons.length} season${c.seasons.length === 1 ? '' : 's'}${c.injuries ? ` · ${c.injuries} injur${c.injuries === 1 ? 'y' : 'ies'}` : ''}`, 1045, 598, f(14, 700), '#9fb0d0');
+    if (c.done && mode !== 'verdict') button(g, 'verdict', { x: 360, y: 630, w: 560, h: 76 }, 'HALL OF FAME VERDICT', '#ffd23f');
+    else if (c.phase === 'show') tx(g, 'Season over...', 440, 664, d(30), '#9fb0d0');
+    if (c.phase === 'choice') drawChoices(g);
+    if (c.phase === 'clutch') drawClutch(g, c.cl, 'FINALS · GAME 7', `Stop the bar in the zone to win the ${S.champ}. Dead centre is Finals MVP.`, { perfect: 'FINALS MVP!', hit: 'CHAMPIONS!', miss: 'SO CLOSE. RUNNER-UP.' });
+  }
+  function dim(g, a = .62) { const v = K.view; g.fillStyle = `rgba(4,8,18,${a})`; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
+  function drawChoices(g) {
+    const c = career, S = SPORTS[sport], last = c.seasons.length >= c.maxS, k = Math.min(1, c.t * 5);
+    dim(g, .86 * k); g.globalAlpha = k;
+    tx(g, last ? 'DECISION TIME' : c.seasons.length ? `OFFSEASON · AGE ${c.age}` : 'ROOKIE YEAR', 640, 160, d(58), last ? '#ff5fa2' : '#ffd23f');
+    tx(g, last ? `${c.seasons.length} seasons in. Your body is telling you something.` : 'Pick one. It shapes the season ahead.', 640, 204, f(19, 700), '#cfd8e0');
+    const n = c.opts.length, cw = 360, gap = 30, x0 = 640 - (n * cw + (n - 1) * gap) / 2;
+    c.opts.forEach((o, i) => {
+      const b = { x: x0 + i * (cw + gap), y: 250, w: cw, h: 250 }, hv = hover === 'ch' + i; B['ch' + i] = b;
+      g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.roundRect(b.x, b.y + 8, b.w, b.h, 18); g.fill();
+      rr(g, b.x, b.y - (hv ? 4 : 0), b.w, b.h, 18, hv ? '#24315a' : '#1a2440', o.k === 'retire' ? '#ff5fa2' : hv ? '#ffd23f' : S.c, hv ? 4 : 3);
+      const y = b.y - (hv ? 4 : 0);
+      tx(g, String(i + 1), b.x + 26, y + 30, d(28), 'rgba(255,255,255,.35)');
+      tx(g, o.n, b.x + b.w / 2, y + 64, d(o.n.length > 16 ? 32 : 36), '#fff');
+      g.font = f(18, 700); wrap(g, o.d, b.x + 26, y + 116, b.w - 52, 26, '#cfd8e0');
+      tx(g, 'TAP TO CHOOSE', b.x + b.w / 2, y + b.h - 26, f(14, 900), hv ? '#ffd23f' : '#7a8aa8');
+    });
+    g.globalAlpha = 1;
+  }
+  function drawClutch(g, C, title, sub, words) {
+    if (!C) return; dim(g, .88); B.clutch = { x: K.view.x0, y: 0, w: K.view.x1 - K.view.x0, h: 720 };
+    tx(g, title, 640, 190, d(62), '#ffd23f'); tx(g, sub, 640, 240, f(19, 700), '#cfd8e0');
+    const x0 = 290, w = 700, y = 330, h = 60;
+    rr(g, x0, y, w, h, 30, '#121a2e', 'rgba(255,255,255,.25)', 3);
+    const zx = x0 + (C.zc - C.zw / 2) * w, zw = C.zw * w; rr(g, zx, y + 6, zw, h - 12, 22, '#3ddc84'); rr(g, x0 + (C.zc - C.zw / 6) * w, y + 6, C.zw / 3 * w, h - 12, 18, '#ffd23f');
+    const nx = x0 + C.pos * w; g.fillStyle = '#fff'; g.fillRect(nx - 4, y - 14, 8, h + 28); g.beginPath(); g.moveTo(nx - 12, y - 22); g.lineTo(nx + 12, y - 22); g.lineTo(nx, y - 8); g.fill();
+    if (C.res) { const cc = C.res === 'miss' ? '#ff8a8a' : C.res === 'perfect' ? '#ffd23f' : '#3ddc84', s = 1 + Math.max(0, .3 - C.rt) * 1.5; g.save(); g.translate(640, 480); g.scale(s, s); tx(g, words[C.res], 0, 0, d(70), cc); g.restore(); }
+    else tx(g, 'TAP · CLICK · SPACE', 640, 470, f(20, 900), `rgba(255,255,255,${.5 + Math.sin(t * 6) * .3})`);
+  }
+  function drawVerdict(g) {
+    const c = career, [, name, col] = c.tier, k = Math.min(1, c.vt / .8), S = SPORTS[sport];
+    dim(g, .66);
+    g.save(); g.translate(640, 290); g.scale(.6 + k * .4, .6 + k * .4); g.globalAlpha = k;
+    rr(g, -420, -240, 840, 470, 22, '#121a2e', col, 5);
+    athlete(g, sport, -280, 0, 1.2, S.c);
+    if (c.legacy >= 420) tx(g, '🎉 INDUCTED INTO THE HALL OF FAME', 90, -206, f(18, 900), col); else tx(g, 'THE VERDICT', 90, -206, d(30), '#9fb0d0');
+    tx(g, name.toUpperCase(), 90, -148, d(name.length > 12 ? 60 : 76), col);
+    tx(g, build.name, 90, -88, f(24), '#fff'); tx(g, `${c.peak} peak OVR · ${c.seasons.length} seasons · legacy ${c.legacy}`, 90, -56, f(18, 700), '#9fb0d0');
+    // the trophy cabinet: one shelf, every award they won
+    rr(g, -110, -26, 400, 120, 14, '#0c1222', 'rgba(255,255,255,.12)', 2); tx(g, 'TROPHY CABINET', 90, -8, f(13, 900), '#7a8aa8');
+    const items = [['🏆', c.aw.mvp, S.mvp], ['💍', c.aw.champ, 'Rings'], ['🎖️', c.aw.fmvp, 'Finals MVP'], ['⭐', c.aw.star, S.star], ['🥇', c.aw.dpoy, 'Award']];
+    items.forEach(([em, v, lab], i) => { const x = -70 + i * 80; g.globalAlpha = k * (v ? 1 : .3); tx(g, em, x, 34, '34px system-ui', '#fff'); tx(g, `×${v}`, x, 72, d(24), v ? '#ffd23f' : '#5a6a8a'); });
+    g.globalAlpha = k;
+    const nxt = TIERS.find(x => x[0] > c.legacy); tx(g, nxt ? `${nxt[0] - c.legacy} legacy short of ${nxt[1]}` : 'Nobody has ever done better.', 90, 128, f(16, 700), '#ffb02e');
+    tx(g, 'Take them up the Legends Ladder: ten all-time greats, clutch duels, coins every rung.', 90, 168, f(14, 700), '#9fb0d0');
+    g.restore(); g.globalAlpha = 1;
+    if (c.vt > 1) {
+      button(g, 'again', { x: 190, y: 570, w: 290, h: 80 }, 'BUILD ANOTHER', '#ffd23f');
+      button(g, 'ladgo', { x: 495, y: 570, w: 290, h: 80 }, 'CLIMB THE LADDER', '#ff5fa2', 'Duel the all-time greats');
+      button(g, 'home', { x: 800, y: 570, w: 290, h: 80 }, 'MENU', '#1f2a46', null, '#eef1f8');
+    }
+  }
+  // the Hall of Fame: your legends as cards; pick one to take up the ladder
+  function legendCard(g, r, b, sel, hv) {
+    const T = TIERS.find(x => x[1] === r.tier) || TIERS[0], S = SPORTS[r.sport];
+    g.fillStyle = 'rgba(0,0,0,.4)'; g.beginPath(); g.roundRect(b.x, b.y + 6, b.w, b.h, 16); g.fill();
+    rr(g, b.x, b.y, b.w, b.h, 16, sel ? '#26345e' : hv ? '#1f2a4c' : '#162038', sel ? '#ffd23f' : T[2], sel ? 4 : 3);
+    g.save(); g.beginPath(); g.roundRect(b.x, b.y, 96, b.h, [16, 0, 0, 16]); g.clip(); g.fillStyle = S.c + '33'; g.fillRect(b.x, b.y, 96, b.h); athlete(g, r.sport, b.x + 46, b.y + 62, .48, S.c); g.restore();
+    tx(g, r.name.length > 15 ? r.name.split(' ')[1] || r.name : r.name, b.x + 106, b.y + 22, f(17, 900), '#fff', 'left');
+    tx(g, S.name + (r.daily ? ' · DAILY' : ''), b.x + 106, b.y + 44, f(12, 900), S.c, 'left');
+    tx(g, r.tier.toUpperCase(), b.x + 106, b.y + 68, d(22), T[2], 'left');
+    tx(g, `${r.O} OVR · ${r.legacy}`, b.x + 106, b.y + 92, f(14, 800), '#cfd8e0', 'left');
+    tx(g, `💍${r.aw.champ || 0}  🏆${r.aw.mvp || 0}`, b.x + 106, b.y + 116, f(14, 800), '#ffd23f', 'left');
+    if (r.goat) tx(g, '👑', b.x + b.w - 24, b.y + 24, '26px system-ui', '#fff'); else if (r.ladder) tx(g, `▲${r.ladder}/10`, b.x + b.w - 14, b.y + 22, f(13, 900), '#ff5fa2', 'right');
+  }
+  function drawHof(g) {
+    const L = SAVE();
+    tx(g, hofPick ? 'PICK A LEGEND' : 'YOUR HALL OF FAME', 640, 46, d(56), '#ffb02e');
+    tx(g, hofPick ? 'Who takes on the all-time greats?' : 'Your best legends. Tap one, then take them up the Legends Ladder.', 640, 84, f(18, 700), '#9fb0d0');
+    if (!L.hof.length) { tx(g, 'Nobody yet. Go build someone.', 640, 330, f(24), '#9fb0d0'); }
+    L.hof.slice(0, 12).forEach((r, i) => { const b = { x: 60 + (i % 4) * 295, y: 112 + Math.floor(i / 4) * 160, w: 275, h: 140 }; B['card' + i] = b; legendCard(g, r, b, hofSel === i, hover === 'card' + i); });
+    const sel = L.hof[hofSel];
+    button(g, 'ladgo', { x: 330, y: 610, w: 380, h: 80 }, sel ? `LADDER WITH ${sel.name.split(' ')[1] || sel.name}`.toUpperCase() : 'PICK A LEGEND FIRST', sel ? '#ff5fa2' : '#2a2a3e', sel ? `Best: ${sel.goat ? 'beat them all 👑' : (sel.ladder || 0) + '/10 rungs'}` : 'Tap a card above', sel ? '#141414' : '#7a8aa8');
+    button(g, 'home', { x: 730, y: 610, w: 220, h: 80 }, 'BACK', '#1f2a46', null, '#eef1f8');
+  }
+  function drawLadder(g) {
+    const L = ladder, r = L.rec, S = SPORTS[r.sport];
+    tx(g, 'LEGENDS LADDER', 640, 46, d(56), '#ff5fa2'); tx(g, `${S.name} · beat all ten all-time greats in clutch duels`, 640, 84, f(18, 700), '#9fb0d0');
+    legendCard(g, r, { x: 60, y: 130, w: 300, h: 140 }, false, false);
+    rr(g, 60, 290, 300, 300, 16, '#121a2e', 'rgba(255,255,255,.1)', 2);
+    tx(g, 'HOW IT WORKS', 210, 318, d(24), '#ffb02e');
+    g.font = f(15, 700); wrap(g, 'Each duel is best of three clutch moments: stop the bar in the zone. The better your legend is than the opponent, the bigger the zone. Lose a duel and the climb is over. Coins for every new rung; beat rung 10 for the crown.', 82, 350, 256, 22, '#cfd8e0');
+    // the ladder itself, top rung first
+    L.opps.slice().reverse().forEach((o, j) => {
+      const i = 9 - j, y = 112 + j * 49, cur = i === L.rung && !L.over, beat = i < L.rung, b = { x: 400, y, w: 820, h: 42 };
+      rr(g, b.x, b.y, b.w, b.h, 10, cur ? '#3a2240' : beat ? '#1f3a2e' : '#141c30', cur ? '#ff5fa2' : beat ? '#3ddc84' : 'rgba(255,255,255,.08)', cur ? 3 : 2);
+      tx(g, String(i + 1), b.x + 26, y + 21, d(26), cur ? '#ff5fa2' : '#7a8aa8'); tx(g, `"${o.nick}"`, b.x + 60, y + 21, d(24), i === 9 ? '#ffd23f' : '#fff', 'left'); tx(g, o.name, b.x + 330, y + 21, f(15, 700), '#cfd8e0', 'left');
+      tx(g, `${o.O} OVR`, b.x + 640, y + 21, d(24), ratingC(o.O)); tx(g, beat ? '✓ BEATEN' : cur ? 'NEXT' : '', b.x + b.w - 20, y + 21, f(14, 900), beat ? '#3ddc84' : '#ff5fa2', 'right');
+    });
+    if (L.over === 'goat') { tx(g, '👑 THE GREATEST OF ALL TIME 👑', 810, 630, d(40), '#ffd23f'); button(g, 'home', { x: 980, y: 606, w: 240, h: 70 }, 'MENU', '#1f2a46', null, '#eef1f8'); return; }
+    if (L.over === 'lost') { tx(g, `Run over at rung ${L.rung + 1}. Best ever: ${L.best}/10.`, 640, 628, f(20, 900), '#ff8a8a'); button(g, 'ladretry', { x: 400, y: 652, w: 360, h: 60 }, 'CLIMB AGAIN', '#ff5fa2'); button(g, 'hof', { x: 780, y: 652, w: 220, h: 60 }, 'OTHER LEGEND', '#1f2a46', null, '#eef1f8'); button(g, 'home', { x: 1020, y: 652, w: 200, h: 60 }, 'MENU', '#1f2a46', null, '#eef1f8'); return; }
+    const o = L.opps[L.rung];
+    button(g, 'duel', { x: 400, y: 616, w: 560, h: 84 }, `FACE "${o.nick.toUpperCase()}"`, '#ffd23f', `Rung ${L.rung + 1} of 10 · ${o.O} OVR vs your ${r.O}`);
+    button(g, 'home', { x: 980, y: 616, w: 240, h: 84 }, 'MENU', '#1f2a46', null, '#eef1f8');
+  }
+  function drawDuel(g) {
+    const L = ladder, D = L.duel, o = L.opps[L.rung], r = L.rec, S = SPORTS[r.sport];
+    tx(g, `RUNG ${L.rung + 1} · ROUND ${Math.min(3, D.w + D.l + (D.cl && D.cl.res ? 0 : 1))}`, 640, 46, d(40), '#ffd23f');
+    athlete(g, r.sport, 220, 330, 1.25, S.c); athlete(g, r.sport, 1060, 330, 1.25, '#8a95ab');
+    tx(g, r.name.toUpperCase(), 220, 520, d(34), '#fff'); tx(g, `${r.O} OVR`, 220, 556, d(28), ratingC(r.O));
+    tx(g, `"${o.nick.toUpperCase()}"`, 1060, 520, d(34), '#fff'); tx(g, `${o.name} · ${o.O} OVR`, 1060, 556, f(16, 800), '#cfd8e0');
+    for (let i = 0; i < 2; i++) { g.fillStyle = i < D.w ? '#3ddc84' : 'rgba(255,255,255,.15)'; g.beginPath(); g.arc(190 + i * 60, 600, 16, 0, 7); g.fill(); g.fillStyle = i < D.l ? '#ff5f6a' : 'rgba(255,255,255,.15)'; g.beginPath(); g.arc(1030 + i * 60, 600, 16, 0, 7); g.fill(); }
+    if (D.end) { const won = D.w >= 2; dim(g, .5); tx(g, won ? 'DUEL WON!' : 'DUEL LOST', 640, 340, d(90), won ? '#3ddc84' : '#ff8a8a'); return; }
+    drawClutch(g, D.cl, 'CLUTCH MOMENT', `Win 2 of 3. Your zone is ${D.cl.zw >= .17 ? 'wide: you are better' : D.cl.zw >= .1 ? 'tight' : 'tiny: they are much better'}.`, { perfect: 'PERFECT!', hit: 'YOURS!', miss: 'THEIRS!' });
+  }
+  /* ---------- kit hooks ---------- */
+  GAME.reset = () => { mode = 'home'; build = null; career = null; reel = null; msg = null; posed = false; rng = R0; ladder = null; hofSel = -1; hofPick = false; quests(); if (K.bot) newBuild(pick(Object.keys(SPORTS)), false); };
+  GAME.update = dt => {
+    t += dt; if (msg && (msg.k += dt) > 3.5) msg = null;
+    if (reel) {
+      const was = reel.t < reel.end; reel.t += dt; reel.tick -= dt; const row = Math.floor(reelPos(reel) + .5);
+      if (row !== reel.row && reel.tick <= 0) { reel.row = row; reel.tick = .045; K.sfx(700 + (row / reel.W) * 500, .025, 'square', .035); }
+      if (was && reel.t >= reel.end) { K.sfx(980, .08, 'square', .06); K.shake(3); }
+      if (reel.t >= reel.T + .15) { build.pro = reel.pro; reel = null; const [rn] = rarity(build.pro); K.sfx(660, .12, 'triangle', .08); if (rn === 'LEGEND PULL' || rn === 'STAR') { K.chime(784, [0, 4, 7, 12]); K.burst(835, 260, ['#ffd23f', '#fff', '#ff5fa2'], 30, 420); K.shake(6); } if (build.vs) build.vs.clock = 10; }
+    }
+    if (mode === 'build' && build.vs && build.pro && (build.vs.clock -= dt) <= 0) { const S = SPORTS[sport], open = build.slots.map((s, i) => s ? -1 : build.pro.r[i] * S.w[i]); place(open.indexOf(Math.max(...open))); msg = { t: 'Shot clock! Your pick was made for you.', k: 0 }; }
+    const bar = C => { if (!C) return false; if (!C.res) { C.t += dt; C.pos = (1 - Math.cos(C.t * C.speed)) / 2; return false; } C.rt += dt; return C.rt > 1.3; };
+    if (mode === 'career' && career) {
+      const c = career; c.t += dt;
+      if (c.phase === 'clutch' && bar(c.cl)) { c.cl = null; const row = c.row; c.row = null; pushSeason(row); }
+      if (c.phase === 'show' && c.t > .9) offer();
+    }
+    if (mode === 'duel' && ladder && ladder.duel) {
+      const D = ladder.duel;
+      if (D.end) { if ((D.end += dt) > 1.6) duelDone(); }
+      else if (bar(D.cl)) { if (D.w >= 2 || D.l >= 2) D.end = .001; else newDuelRound(); }
+    }
+    if (mode === 'verdict') career.vt += dt;
+  };
+  GAME.draw = g => {
+    for (const k in B) delete B[k];   // only what is on screen this frame can be clicked
+    bg(g);
+    if (mode === 'home') drawHome(g); else if (mode === 'build' || mode === 'ready') drawBuild(g); else if (mode === 'career') drawCareer(g); else if (mode === 'verdict') { drawCareer(g); drawVerdict(g); }
+    else if (mode === 'hof') drawHof(g); else if (mode === 'ladder') drawLadder(g); else if (mode === 'duel') drawDuel(g);
+    if (msg) { const a = Math.min(1, msg.k * 4, (3.5 - msg.k) * 2); g.globalAlpha = Math.max(0, a); rr(g, 340, 8, 600, 44, 12, '#1f4a34', '#3ddc84', 2); tx(g, msg.t, 640, 30, f(18), '#bff5d6'); g.globalAlpha = 1; }
+  };
+  const live = () => mode === 'home' ? ['play', 'daily', 'vs', 'ladder', 'hof', ...Object.keys(SPORTS).map(k => 'sp' + k)] : mode === 'build' || mode === 'ready' ? ['spin', 'vsdone', 'reroll', 'sim', 'slot0', 'slot1', 'slot2', 'slot3', 'slot4', 'slot5']
+    : mode === 'career' ? (career.phase === 'choice' ? ['ch0', 'ch1', 'ch2'] : career.phase === 'clutch' ? ['clutch'] : ['verdict']) : mode === 'verdict' ? (career.vt > 1 ? ['again', 'ladgo', 'home'] : [])
+    : mode === 'hof' ? ['ladgo', 'home', ...Array.from({ length: 12 }, (_, i) => 'card' + i)] : mode === 'ladder' ? ['duel', 'ladretry', 'hof', 'home'] : mode === 'duel' ? ['clutch'] : [];
+  function click(k) {
+    if (!k) return;
+    if (k.startsWith('sp') && SPORTS[k.slice(2)]) { sport = k.slice(2); K.sfx(600, .05, 'square', .05); return; }
+    if (k === 'play') return newBuild(sport, false);
+    if (k === 'daily') return newBuild(sport, true);
+    if (k === 'vs') { newBuild(sport, false); build.vs = { cpu: Array(6).fill(null), clock: 10 }; build.rerolls = 1; return; }
+    if (k === 'spin' && mode === 'build') return spin();
+    if (k === 'vsdone' && mode === 'ready') { const L = SAVE(), w = ovr() > cpuOvr(); if (w) { L.vsW = (L.vsW || 0) + 1; K.coin(5); } streak(); K.persist(); K.add(ovr()); return K.over({ title: w ? 'You win the 1v1!' : ovr() === cpuOvr() ? 'A tie' : 'The CPU wins', text: `${build.name} ${ovr()} overall vs the CPU's ${cpuOvr()}. 1v1 wins: ${L.vsW || 0}.`, delay: 50 }); }
+    if (k === 'hof' || k === 'ladder') { const L = SAVE(); hofPick = k === 'ladder'; hofSel = L.hof.length ? (hofSel >= 0 && hofSel < L.hof.length ? hofSel : 0) : -1; mode = 'hof'; if (k === 'ladder' && !L.hof.length) msg = { t: 'Build a legend first, then take them up the ladder.', k: 0 }; return; }
+    if (k.startsWith('card')) { hofSel = +k.slice(4); K.sfx(700, .04, 'triangle', .05); return; }
+    if (k === 'ladgo') { const rec = mode === 'verdict' ? lastRec : SAVE().hof[hofSel]; if (rec) startLadder(rec); return; }
+    if (k === 'duel') return startDuel();
+    if (k === 'ladretry') { ladder.rung = 0; ladder.over = false; return startDuel(); }
+    if (k === 'clutch') { if (mode === 'duel') return duelTap(); if (mode === 'career') return finalsTap(); }
+    if (k.startsWith('ch') && mode === 'career') return choose(+k.slice(2));
+    if (k.startsWith('slot') && mode === 'build') return place(+k.slice(4));
+    if (k === 'reroll' && mode === 'build') return reroll();
+    if (k === 'sim' && mode === 'ready') return simCareer();
+    if (k === 'verdict' && career.done) return finishCareer();
+    if (k === 'again') { const c = career; return K.over({ title: c.tier[1], text: `${build.name}, ${c.peak} overall: ${c.seasons.length} seasons and a legacy of ${c.legacy}. ${c.legacy >= 420 ? 'Welcome to the Hall of Fame.' : 'Spin again, build better.'}`, delay: 50 }); }
+    if (k === 'home') { mode = 'home'; build = null; career = null; ladder = null; hofPick = false; return; }
+  }
+  const skip = () => { if (reel && reel.t < reel.end - .5) reel.t = reel.end - .5; };
+  GAME.down = (x, y) => { K.audio && K.audio(); if (reel && mode === 'build') return skip(); click(live().find(k => hitR(B[k], x, y))); };
+  GAME.move = (x, y) => { hover = live().find(k => hitR(B[k], x, y)) || null; const c = document.getElementById('cv'); if (c) c.style.cursor = hover ? 'pointer' : 'default'; };
+  GAME.key = (c, dn) => {
+    if (!dn) return; const n = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4, Digit6: 5 }[c];
+    if (mode === 'career' && career.phase === 'choice' && n != null && n < 3) return choose(n);
+    if ((c === 'Space' || c === 'Enter') && (mode === 'duel' || (mode === 'career' && career.phase === 'clutch'))) return click('clutch');
+    if (n != null && mode === 'build') return place(n);
+    if (c === 'KeyR' && mode === 'build') return reroll();
+    if ((c === 'Space' || c === 'Enter') && mode === 'build' && reel) return skip();
+    if ((c === 'Space' || c === 'Enter') && mode === 'build' && !build.pro && !reel) return spin();
+    if (c === 'Space' || c === 'Enter') { if (mode === 'home') return click('play'); if (mode === 'ready') return click('sim'); if (mode === 'career' && career.done) return click('verdict'); if (mode === 'verdict' && career.vt > 1) return click('again'); if (mode === 'ladder' && !ladder.over) return click('duel'); }
+    if (mode === 'home' && (c === 'ArrowLeft' || c === 'ArrowRight')) { const ks = Object.keys(SPORTS); sport = ks[(ks.indexOf(sport) + (c === 'ArrowRight' ? 1 : ks.length - 1)) % ks.length]; }
+  };
+  // the demo drafts each pro into whichever open slot gets the most out of them, then plays the career out
+  GAME.bot = dt => {
+    if ((botT -= dt) > 0) return; botT = .6;
+    if (mode === 'home') return newBuild(pick(Object.keys(SPORTS)), false);
+    if (mode === 'build' && !build.pro && !reel) return spin();
+    if (mode === 'build' && build.pro) { const S = SPORTS[sport], open = build.slots.map((s, i) => s ? -1 : build.pro.r[i] * S.w[i]); const best = open.indexOf(Math.max(...open)); if (build.rerolls && Math.max(...build.pro.r.filter((_, i) => !build.slots[i])) < 70 && R0() < .7) return reroll(); return place(best); }
+    if (mode === 'ready') return simCareer();
+    if (mode === 'career' && career.phase === 'choice' && career.t > .8) return choose(Math.floor(R0() * career.opts.length));
+    if (mode === 'career' && career.phase === 'clutch' && career.cl && !career.cl.res) { botT = .05; if (Math.abs(career.cl.pos - career.cl.zc) < career.cl.zw / 3) finalsTap(); return; }
+    if (mode === 'career' && career.done) { botT = 1.5; return finishCareer(); }
+    if (mode === 'verdict' && career.vt > 2.5) { mode = 'home'; build = null; career = null; }
+  };
+  GAME.pose = () => { posed = true; newBuild('hoops', false); reel = null; build.pro = { name: 'Marcus Okafor', club: 'Harbor City', year: 1996, r: [97, 88, 74, 81, 69, 92] }; build.slots[0] = { v: 99, who: 'Theo Varga' }; build.slots[5] = { v: 94, who: 'Kofi Santos' }; };
+  GAME.test = { st: () => ({ mode, sport, slots: build && build.slots.map(s => s && s.v), pro: build && build.pro && build.pro.r, ovr: build && ovr(), career: career && { n: career.seasons.length, phase: career.phase, opts: career.opts.map(o => o.k), legacy: career.legacy, tier: career.tier && career.tier[1], aw: career.aw, age: career.age, O: career.O }, ladder: ladder && { rung: ladder.rung, over: ladder.over, duel: ladder.duel && { w: ladder.duel.w, l: ladder.duel.l } } }),
+    click, place, newBuild, choose, finalsTap, duelTap, startLadder, save: SAVE, clutch: () => (mode === 'duel' ? ladder.duel.cl : career && career.cl),
+    ff: () => { if (reel) { build.pro = reel.pro; reel = null; } } };
+})();

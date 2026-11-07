@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="{{DESC}}">
+<title>{{TITLE}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+{{CSS}}
+</style>
+</head>
+<body data-game="{{ID}}" style="--accent:{{COLOR}}">
+<div id="app">
+  <div class="topbar">
+    <a class="brand" href="/">PULSE<span>BOX</span></a>
+    <div class="titles"><div class="genre">{{GENRE}}</div><div class="name">{{TITLE}}</div></div>
+    <div class="metric" id="metric">Ready</div>
+    <div class="spacer"></div>
+    <div class="tools">
+      <button id="help" title="How to play">?</button>
+      <button id="sound" title="Sound">🔊</button>
+      <button id="pause" title="Pause">❚❚</button>
+      <button id="restart" title="Restart">↻</button>
+      <button id="fullscreen" title="Full screen">⛶</button>
+    </div>
+  </div>
+  <div class="stage">
+    <canvas id="game" width="960" height="600" tabindex="0" aria-label="{{TITLE}} game board"></canvas>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    <div class="overlay" id="start">
+      <div class="card">
+        <div class="genre" id="s-genre"></div>
+        <h1 id="s-title"></h1>
+        <p class="desc" id="s-desc"></p>
+        <ul class="how" id="s-how"></ul>
+        <p class="goal"><b>Goal:</b> <span id="s-goal"></span></p>
+        <div class="row"><button class="primary big" id="play">Play</button><div class="best">Best <b id="best">0</b></div></div>
+      </div>
+    </div>
+    <div class="overlay" id="pause-overlay" hidden><div class="card small"><div class="genre">Take your time</div><h1>Paused</h1><button class="primary big" id="resume">Resume</button></div></div>
+  </div>
+  <div class="controls" id="controls" role="group" aria-label="Game controls"></div>
+</div>
+<script>
+{{JS}}
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+name = "pulsebox"
+main = "worker.js"
+account_id = "5bc70055125c3d8b33c79d12be0f1505"
+compatibility_date = "2026-10-01"
+routes = [{ pattern = "box.pulseform.org", custom_domain = true }]
+
+# Workers Logs: every request that runs the Worker is logged for 3 days (free plan: up to 200k log lines a day).
+# Rate-limited visitors are logged with their IP, country, network (ASN) and browser, so a flood can be traced.
+# See them in the dashboard: Workers & Pages > pulsebox > Logs.
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+# Pages, games and media are static assets (built into dist/ by build-worker.py). Cloudflare serves them without
+# running the Worker, so they're free, unlimited and can't use up the daily Workers request limit. Only /api/ runs worker.js.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"
+
+# Per-visitor limit on /api/ (worker.js): 300 requests a minute per IP address, then a 429 before any Durable Object runs.
+[[ratelimits]]
+name = "API_LIMIT"
+namespace_id = "1001"
+simple = { limit = 300, period = 60 }
+
+# cloud saves (api.js): one Durable Object per signed-in account
+[[durable_objects.bindings]]
+name = "SAVES"
+class_name = "Saves"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Saves"]
+
+# play stats (api.js): one global Durable Object counts plays per game per day
+[[durable_objects.bindings]]
+name = "STATS"
+class_name = "Stats"
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Stats"]
+
+# multiplayer rooms (api.js): one Durable Object per room code relays messages between players
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Rooms"
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["Rooms"]
+
+# THE HOLLOW co-op (hollow-rooms.js): one Durable Object runs every room with the game's own engine
+[[durable_objects.bindings]]
+name = "HOLLOW"
+class_name = "HollowRooms"
+
+[[migrations]]
+tag = "v4"
+new_sqlite_classes = ["HollowRooms"]
+
+# AFTERHOURS co-op (arcade-rooms.js): one Durable Object runs every room of the five arcade games
+[[durable_objects.bindings]]
+name = "ARCADE"
+class_name = "ArcadeRooms"
+
+[[migrations]]
+tag = "v5"
+new_sqlite_classes = ["ArcadeRooms"]
+
+# bug reports (api.js): one global Durable Object keeps every report; the admin page is public/bugs.html
+[[durable_objects.bindings]]
+name = "BUGS"
+class_name = "Bugs"
+
+[[migrations]]
+tag = "v6"
+new_sqlite_classes = ["Bugs"]
