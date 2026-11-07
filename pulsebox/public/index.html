@@ -195,6 +195,7 @@
   .app .name { font-family: var(--display); font-weight: 700; font-size: 19px; line-height: 1.1; text-transform: uppercase; letter-spacing: .01em; }
   .app .kind { font-size: 14px; font-weight: 600; color: var(--muted); margin-top: -6px; }
   .app .plays { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; letter-spacing: .02em; color: #ff8dbd; margin-top: -6px; }
+  .app .added { display: block; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--lime); margin-top: -6px; }
   .app .plays::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 8px var(--pink); }
   .rank { position: absolute; left: 10px; bottom: 0; z-index: 2; font-family: var(--display); font-weight: 700; font-size: clamp(46px, 5vw, 64px); line-height: 1; color: rgba(10,12,18,.6); -webkit-text-stroke: 2px var(--lime); text-shadow: 0 0 22px rgba(198,255,61,.45); pointer-events: none; }
   .qp-wrap { position: absolute; left: 0; top: 0; width: 100%; aspect-ratio: 1; pointer-events: none; display: flex; align-items: flex-end; justify-content: flex-end; padding: 10px; z-index: 3; transition: transform .2s ease; }
@@ -1973,13 +1974,13 @@ function renderPulse(today, week) {
    COVERS
    ============================================================ */
 const canHover = !!(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches);
-function appTile(g, i, rank) {
+function appTile(g, i, rank, showAdded) {
   const d = document.createElement('div');
   d.className = 'app'; d.style.setProperty('--i', Math.min(i || 0, 10));
   const b = badgeOf(g), n = st(g.id).total;
   d.innerHTML = '<button class="open" type="button"><span class="cover">' +
     (rank ? '<span class="rank" aria-hidden="true">' + rank + '</span>' : '') + '<img alt="" loading="lazy" decoding="async"></span>' +
-    '<span class="name"></span><span class="kind"></span>' + (STATS && n >= 10 ? '<span class="plays">' + fmt(n) + ' plays</span>' : '') + '</button>' +
+    '<span class="name"></span><span class="kind"></span>' + (showAdded ? '<span class="added"></span>' : STATS && n >= 10 ? '<span class="plays">' + fmt(n) + ' plays</span>' : '') + '</button>' +
     '<span class="qp-wrap"><button class="qp" type="button"><span class="tri"></span></button></span>';
   d.querySelector('img').src = g.cover;
   d.querySelector('.name').textContent = g.title;
@@ -1987,6 +1988,7 @@ function appTile(g, i, rank) {
   if (b) { const x = document.createElement('span'); x.className = 'badge ' + b.toLowerCase(); x.textContent = b; d.querySelector('.name').append(x); }
   if (recent.length && !recent.includes(g.id)) { const x = document.createElement('span'); x.className = 'fresh'; x.textContent = 'New to you'; d.querySelector('.kind').prepend(x); }
   d.querySelector('.kind').textContent = g.kind;
+  if (showAdded) d.querySelector('.added').textContent = addedLabel(g);
   d.querySelector('.open').setAttribute('aria-label', g.title + (rank ? ', number ' + rank + ' trending' : ''));
   d.querySelector('.qp').setAttribute('aria-label', 'Play ' + g.title + ' now');
   d.querySelector('.open').addEventListener('click', () => go('#' + g.id));
@@ -2033,6 +2035,11 @@ function todaysPicks() {
 function justAdded(n = 8) {
   const idx = new Map(GAMES.map((g, i) => [g.id, i])), when = g => (ADDED && ADDED[g.id]) || '';
   return GAMES.slice().sort((a, b) => when(b).localeCompare(when(a)) || (b.badge === 'NEW') - (a.badge === 'NEW') || idx.get(b.id) - idx.get(a.id)).slice(0, n);
+}
+// Newly added: every game added in the last `days` days, newest first (at least `min`, topped up with the newest)
+function newlyAdded(days = 7, min = 6) {
+  const cut = Date.now() - days * 864e5, all = justAdded(GAMES.length), recentOnes = all.filter(g => ADDED && ADDED[g.id] && new Date(ADDED[g.id]) >= cut);
+  return recentOnes.length >= min ? recentOnes : all.slice(0, min);
 }
 function addedLabel(g) {
   const w = ADDED && ADDED[g.id]; if (!w) return 'New';
@@ -2117,7 +2124,7 @@ function renderChips() {
   if (recent.some(byId)) cats.push(['▶️', 'Keep playing', 'shelf-recent', '#ff9f43', recent.filter(byId).length]);
   if (favs.some(byId)) cats.push(['❤️', 'Favorites', 'shelf-favs', '#ff2e88', favs.filter(byId).length]);
   MOOD_ORDER.forEach(k => cats.push([MOODS[k][0], MOODS[k][1], 'shelf-mood-' + k, MC[k], moodList(k).length]));
-  cats.push(['🆕', 'Just added', 'shelf-new', '#ffffff', 0], ['🗂️', 'All topics', 'finder', '#8d95ab', 0]);
+  cats.push(['🆕', 'Newly added', 'shelf-newly', '#c6ff3d', newlyAdded().length], ['🗂️', 'All topics', 'finder', '#8d95ab', 0]);
   if (!$('chipsLab')) { const l = document.createElement('p'); l.className = 'chips-lab'; l.id = 'chipsLab'; l.textContent = 'Jump to'; box.before(l); }
   cats.forEach(([em, label, target, col, n, cls]) => {
     const b = document.createElement('button'); b.className = 'chip jc' + (cls ? ' ' + cls : ''); b.type = 'button'; b.style.setProperty('--c', col);
@@ -2132,7 +2139,7 @@ function shelf(id, title, games, soon, o = {}) {
   s.querySelector('h2').textContent = title;
   s.querySelector('.sh-right span').textContent = o.note != null ? o.note : games.length ? games.length + (games.length === 1 ? ' game' : ' games') : 'Coming soon';
   const grid = s.querySelector(o.rail ? '.rail' : '.icons');
-  games.forEach((g, i) => grid.append(appTile(g, i, o.ranks && i < 5 ? i + 1 : 0)));
+  games.forEach((g, i) => grid.append(appTile(g, i, o.ranks && i < 5 ? i + 1 : 0, o.added)));
   for (let i = 0; i < soon; i++) grid.append(soonTile());
   if (o.rail && games.length > 2) {
     const nav = document.createElement('div'); nav.className = 'rail-nav';
@@ -2211,6 +2218,14 @@ function renderShelves() {
     box.append(s); return;
   }
   const order = ranked(), pos = new Map(order.map((g, i) => [g.id, i]));
+  if (topic === 'new') {
+    const list = newlyAdded(), head = document.createElement('div'); head.className = 'topic-head'; head.id = 'shelf-topic';
+    head.innerHTML = '<span class="em">🆕</span><div><h2>Newly added</h2><p></p></div><button class="btn" type="button">‹ Home</button>';
+    head.querySelector('p').textContent = list.length + ' games · the newest first';
+    head.querySelector('button').addEventListener('click', () => go('')); box.append(head);
+    const grid = document.createElement('div'); grid.className = 'icons'; list.forEach((g, i) => grid.append(appTile(g, i, 0, true))); box.append(grid);
+    return;
+  }
   if (topic && topic.indexOf('mood:') === 0) {
     const k = topic.slice(5), [em, title, sub] = MOODS[k], list = moodList(k), head = document.createElement('div'); head.className = 'topic-head'; head.id = 'shelf-topic';
     head.innerHTML = '<span class="em"></span><div><h2></h2><p></p></div><button class="btn" type="button">‹ Home</button>';
@@ -2231,9 +2246,11 @@ function renderShelves() {
     return;
   }
   // Games of the Day (the hero) is followed straight away by Trending; then the newest games get their own big carousel
-  $('trendTop').replaceChildren(shelf('shelf-trending', '🔥 Trending now', order.slice(0, 10), 0, { rail: true, ranks: !!STATS, cls: 'trend', note: STATS ? 'Most played this week' : 'Players love these' }));
+  const newly = newlyAdded(), nsh = shelf('shelf-newly', '🆕 Newly added', newly.slice(0, 12), 0, { rail: true, added: true, note: 'See all ' + newly.length + ' ›' });
+  const nlab = nsh.querySelector('.sh-right > span'); nlab.classList.add('see-all'); nlab.addEventListener('click', () => go('#new'));
+  $('trendTop').replaceChildren(shelf('shelf-trending', '🔥 Trending now', order.slice(0, 10), 0, { rail: true, ranks: !!STATS, cls: 'trend', note: STATS ? 'Most played this week' : 'Players love these' }), nsh);
   const picks = todaysPicks(), fresh = justAdded(8 + picks.length).filter(g => !picks.includes(g)).slice(0, 8);   // today's picks are already up top
-  box.append(spotlight('shelf-new', '🆕 Just added', fresh, { pill: addedLabel }));
+  box.append(spotlight('shelf-new', '🎬 New game trailers', fresh, { pill: addedLabel }));
   const fresh0 = untriedSpot().filter(g => !fresh.includes(g) && !picks.includes(g));
   const last = byId(recent[0]);
   if (last) { const b = unplayedFirst(similar(last, 14)).filter(g => g.id !== last.id).slice(0, 10); box.append(shelf('shelf-because', 'Because you played ' + last.title, b, 0, { rail: true, note: 'More like it' })); }
@@ -2491,7 +2508,7 @@ function route() {
     show('detail'); showDetail(byId(h), prevView === 'playing'); lastShelf = 'shelf-' + byId(h).category.toLowerCase(); window.scrollTo(0, 0); return;
   }
   show('home'); current = null;
-  const tm0 = h.indexOf('t-') === 0 && [...CATEGORIES, 'All'].find(c => c.toLowerCase() === h.slice(2)), mm = h.indexOf('m-') === 0 && MOODS[h.slice(2)] ? h.slice(2) : '', tm = tm0 || (mm ? 'mood:' + mm : '');
+  const tm0 = h.indexOf('t-') === 0 && [...CATEGORIES, 'All'].find(c => c.toLowerCase() === h.slice(2)), mm = h.indexOf('m-') === 0 && MOODS[h.slice(2)] ? h.slice(2) : '', tm = tm0 || (mm ? 'mood:' + mm : '') || (h === 'new' ? 'new' : '');
   topic = tm || ''; if (tm) { query = ''; $('q').value = ''; $('q2').value = ''; }
   $('hero').hidden = !!tm; document.querySelector('.home-top').hidden = !!tm; $('finder').hidden = !!tm; $('friendsBand').hidden = !!tm; $('actions').hidden = !!tm;
   renderChips(); renderShelves(); heroGo(heroIdx);
