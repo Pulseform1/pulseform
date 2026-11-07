@@ -200,7 +200,7 @@ const GAME = {
     'BUILD: pick Wood, Steel, Armor, Door or Rope (cheap and light, only pulls, and shots fly through it) and drag from a bolt (or your ground) to add a beam. Triangles are strong; unbraced towers fold and snap. Taller towers let your guns reach further.',
     'TECH: a Workshop unlocks Mortars, Firebombs and Rockets; an Armoury unlocks Snipers, Flak, Deflectors, EMP and the Factory; a Factory unlocks Cluster bombs, Swarm missiles, the Railgun and the Laser. Lose a tech building and you can\'t build more of its weapons, so protect them.',
     'EMP knocks out every enemy device it lands near for a few seconds: guns, Deflectors, Flak, generators. SANDBAGS soak up bullets. BATTERIES store power. Upgrades add perks: AP sniper rounds, the Heavy mortar, a Shotgun flak, a double-shot cannon.',
-    'FOG OF WAR: you cannot see inside the enemy fort. Your hits light up where they land for a few seconds, and an enemy gun gives its position away when it fires. Glowing ? marks are reactor signatures: one is their Core, the rest are decoys.',
+    'BACKING: rooms in your fort get a see-through backing so you can always see inside. The enemy sees that backing as solid: guns and devices tucked inside a room are hidden from them (they only catch a glimpse when one fires or gets hit), so a Core or weapon on an open roof is easy to spot, and one indoors is not.',
     'MORE KIT: the Howitzer lobs huge shells a long way; the Buzzsaw flings a blade that slices through beam after beam; Smoke blinds Flak and swallows lasers; the Magnet pushes enemy shells away; Decoy cores draw missiles and fool the enemy; Wind turbines make free power if the air around their blades is clear (they show a %).',
     'COMMANDERS: pick one before the battle for a passive bonus and an ability (tap it or press E): Mason heals your fort, Blaze overdrives your guns, Volt surges your power, Bastion locks your beams down. If your Core\'s supports are shot out and it crashes down, it takes damage.',
     'GUNS stand on floors: tap a flat beam to place one inside a room or on a roof. Your own walls stop your own shots, so leave a gap or build a Door: it swings open whenever a gun right behind it fires, and shuts again to keep enemy shots out.',
@@ -1426,30 +1426,21 @@ const GAME = {
     }
     return (PAT[k] = g.createPattern(c, 'repeat'));
   }
-  function drawWalls(g, F) {
+  // hidden: this fort belongs to the other player, so its rooms are solid and cover what's inside
+  const hiddenFort = F => !demo && phase !== 'over' && forts.length > 1 && F.side !== mySide;
+  function drawWalls(g, F, cover) {
+    const own = !hiddenFort(F);
     for (const c of cells(F)) {
       const P = c.ids.map(i => F.nodes[i]); if (P.some(p => !p || !p.alive)) continue;
       g.beginPath(); P.forEach((p, i) => i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)); g.closePath();
+      if (own && !demo) {   // your own backing: faint, with the bracing showing through
+        g.save(); g.globalAlpha = .38; g.fillStyle = panelPat(g, c.m); g.fill(); g.restore();
+        g.save(); g.clip(); g.strokeStyle = F.side ? 'rgba(95,212,255,.18)' : 'rgba(255,176,46,.18)'; g.lineWidth = 2; g.stroke(); g.restore(); continue;
+      }
       g.fillStyle = panelPat(g, c.m); g.fill();
+      if (cover) { g.fillStyle = 'rgba(20,12,34,.25)'; g.fill(); }
       g.save(); g.clip(); g.strokeStyle = 'rgba(8,4,14,.5)'; g.lineWidth = 14; g.stroke(); g.fillStyle = F.side ? 'rgba(40,90,160,.08)' : 'rgba(160,80,20,.08)'; g.fill(); g.restore();
     }
-  }
-  let fogCv = null;
-  function drawFog(g) {
-    if (demo || phase === 'over' || !forts.length) return;
-    const E = forts[1 - mySide], I = ISL[E.side], x0 = I.x0 - 90, x1 = I.x1 + 90, y0 = GY - 820, y1 = GY + 40, S = .25, w = Math.ceil((x1 - x0) * S), h = Math.ceil((y1 - y0) * S);
-    if (!fogCv || fogCv.width !== w) { fogCv = document.createElement('canvas'); fogCv.width = w; fogCv.height = h; }
-    const f = fogCv.getContext('2d'); f.globalCompositeOperation = 'source-over'; f.clearRect(0, 0, w, h);
-    const bg = f.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, 'rgba(34,22,70,.93)'); bg.addColorStop(1, 'rgba(18,10,40,.97)'); f.fillStyle = bg; f.fillRect(0, 0, w, h);
-    for (let i = 0; i < 10; i++) { const cx = ((i * 53 + t * 6 * (1 + i % 3)) % (w + 60)) - 30, cy = (i * 37) % h, gr = f.createRadialGradient(cx, cy, 2, cx, cy, 28); gr.addColorStop(0, 'rgba(120,100,180,.25)'); gr.addColorStop(1, 'rgba(120,100,180,0)'); f.fillStyle = gr; f.fillRect(cx - 28, cy - 28, 56, 56); }
-    f.globalCompositeOperation = 'destination-out';
-    for (const r of reveals) { if (inSmoke(r.x, r.y)) continue; const a = Math.min(1, (r.life - r.t) / 1.5), cx = (r.x - x0) * S, cy = (r.y - y0) * S, rr = r.r * S, gr = f.createRadialGradient(cx, cy, rr * .3, cx, cy, rr); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); f.fillStyle = gr; f.fillRect(cx - rr, cy - rr, rr * 2, rr * 2); }
-    f.globalCompositeOperation = 'destination-in';   // soft edges
-    const hz = f.createLinearGradient(0, 0, w, 0); hz.addColorStop(0, 'rgba(0,0,0,0)'); hz.addColorStop(.12, '#000'); hz.addColorStop(.88, '#000'); hz.addColorStop(1, 'rgba(0,0,0,0)'); f.fillStyle = hz; f.fillRect(0, 0, w, h);
-    const vt = f.createLinearGradient(0, 0, 0, h); vt.addColorStop(0, 'rgba(0,0,0,0)'); vt.addColorStop(.15, '#000'); vt.addColorStop(.8, '#000'); vt.addColorStop(1, 'rgba(0,0,0,0)'); f.fillStyle = vt; f.fillRect(0, 0, w, h);
-    g.save(); g.imageSmoothingEnabled = true; g.drawImage(fogCv, x0, y0, x1 - x0, y1 - y0); g.restore();
-    // reactor signatures show through the fog: the real Core and every decoy look the same
-    for (const d of E.devs) if (d.alive && (d.type === 'core' || d.type === 'decoy') && phase === 'battle') { const [px, py] = pivot(E, d); if (revealed(px, py)) continue; const k = .5 + .5 * Math.sin(t * 3 + d.n), gl = g.createRadialGradient(px, py, 2, px, py, 34); gl.addColorStop(0, `rgba(95,212,255,${.35 + .25 * k})`); gl.addColorStop(1, 'rgba(95,212,255,0)'); g.fillStyle = gl; g.fillRect(px - 34, py - 34, 68, 68); txt(g, '?', px, py, 14, '#bfefff', 'center'); }
   }
   function drawClouds(g) {
     for (const c of clouds) { const a = Math.min(1, (c.life - c.t) / 2) * .82; for (let i = 0; i < 9; i++) { const ang = i / 9 * TAU + c.t * .15, rr = c.r * (.35 + (i % 3) * .2), x = c.x + Math.cos(ang) * rr, y = c.y + Math.sin(ang) * rr * .6; const gr = g.createRadialGradient(x, y, 4, x, y, c.r * .6); gr.addColorStop(0, `rgba(170,168,184,${a})`); gr.addColorStop(1, 'rgba(170,168,184,0)'); g.fillStyle = gr; g.fillRect(x - c.r * .6, y - c.r * .6, c.r * 1.2, c.r * 1.2); } }
@@ -1477,6 +1468,11 @@ const GAME = {
     for (const n of F.nodes) if (n.alive) { const r = building ? 5.5 : 3.8, bg = g.createRadialGradient(n.x - r * .35, n.y - r * .35, .5, n.x, n.y, r); bg.addColorStop(0, '#fff6d8'); bg.addColorStop(1, '#a8823a'); g.fillStyle = bg; g.beginPath(); g.arc(n.x, n.y, r, 0, TAU); g.fill(); g.strokeStyle = '#2a1e10'; g.lineWidth = 1.2; g.stroke(); }
     if (F.lock > 0) { g.save(); g.strokeStyle = `rgba(200,225,255,${.35 + .25 * Math.sin(t * 10)})`; g.lineWidth = 14; g.lineCap = 'round'; g.beginPath(); for (const b of F.beams) if (b.alive) { const A = F.nodes[b.a], B = F.nodes[b.b]; g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); } g.stroke(); g.restore(); }
     for (const d of F.devs) if (d.alive && F.nodes[d.n]) drawDev(g, F, d);
+    if (hiddenFort(F)) {   // the other side's rooms cover their devices; the beams stay visible on top, and a firing or hit device shows through for a moment
+      drawWalls(g, F, true);
+      for (const b of F.beams) if (b.alive && F.nodes[b.a] && F.nodes[b.b]) drawBeam(g, F.nodes[b.a], F.nodes[b.b], b, false, false);
+      for (const d of F.devs) if (d.alive && F.nodes[d.n] && (d.flash > 0 || d.hitT > 0)) { g.save(); g.globalAlpha = Math.min(1, Math.max(d.flash, d.hitT) * 5); drawDev(g, F, d); g.restore(); }
+    }
   }
   function trajectory(F, d, aim) {
     if (DEV[d.type].dps) { const [px, py] = pivot(F, d), pts = []; for (let q = 30; q < DEV[d.type].range; q += 34) { const x = px + Math.cos(aim.a) * q, y = py + Math.sin(aim.a) * q; if (y > groundY(x) || x < -200 || x > WW + 200) break; pts.push([x, y]); } return pts; }
@@ -1558,7 +1554,7 @@ const GAME = {
     const m = MM(); glass(g, m.x, m.y, m.w, m.h, 10);
     const mx = x => m.x + x / WW * m.w, my = y => m.y + 6 + (y + 200) / 1000 * (m.h - 12);
     for (const I of ISL) { g.fillStyle = '#6b4a50'; g.fillRect(mx(I.x0), my(GY), mx(I.x1) - mx(I.x0), 6); }
-    for (const F of forts) { const hid = !demo && phase !== 'over' && F.side !== mySide; g.fillStyle = SIDEC[F.side]; for (const n of F.nodes) if (n.alive && (!hid || revealed(n.x, n.y))) g.fillRect(mx(n.x) - 1, my(n.y) - 1, 2, 2); }
+    for (const F of forts) { g.fillStyle = SIDEC[F.side]; for (const n of F.nodes) if (n.alive) g.fillRect(mx(n.x) - 1, my(n.y) - 1, 2, 2); }
     g.fillStyle = '#fff'; for (const s of shots) g.fillRect(mx(s.x) - 1, my(s.y) - 1, 2, 2);
     const hw = (v.x1 - v.x0) / 2 / cam.z, hh = (v.y1 - v.y0) / 2 / cam.z; g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.strokeRect(mx(cam.x - hw), Math.max(m.y + 1, my(cam.y - hh)), (mx(cam.x + hw) - mx(cam.x - hw)), Math.min(m.h - 2, my(cam.y + hh) - my(cam.y - hh)));
     const cb = CAMB(); for (const [k, lab] of [['mine', '◀ MINE'], ['all', 'ALL'], ['theirs', 'ENEMY ▶']]) { const b = cb[k]; glass(g, b.x, b.y, b.w, b.h, 9); txt(g, lab, b.x + b.w / 2, b.y + b.h / 2 + 1, 12, '#fff', 'center'); }
@@ -1635,7 +1631,7 @@ const GAME = {
     drawSky(g);
     g.save(); g.translate(640, 360); g.scale(cam.z, cam.z); g.translate(-cam.x, -cam.y);
     drawWorldBack(g);
-    if (mode === 'play') { drawOil(g); for (const F of forts) drawFort(g, F); drawFog(g); drawShots(g); drawClouds(g); drawParts(g); drawWorldUI(g); }
+    if (mode === 'play') { drawOil(g); for (const F of forts) drawFort(g, F); drawShots(g); drawClouds(g); drawParts(g); drawWorldUI(g); }
     drawSea(g);
     g.restore();
     const v = K.view, vg = g.createRadialGradient(640, 360, 300, 640, 360, 900); vg.addColorStop(0, 'rgba(20,6,30,0)'); vg.addColorStop(1, 'rgba(20,6,30,.45)'); g.fillStyle = vg; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
