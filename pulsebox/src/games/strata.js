@@ -238,8 +238,9 @@ const GAME = {
   const inArena = p => temple && temple.arena && p.x > temple.arena.x0 && p.x < temple.arena.x1 && p.y > temple.arena.y0 && p.y < temple.arena.y1 + 1;
   const inJungle = x => jungle && x >= jungle.x0 && x < jungle.x1, inTemple = p => temple && p.x > temple.x0 && p.x < temple.x1 && p.y > temple.y0 && p.y < temple.y1 + 1;
   function findTraps() { traps = []; if (!temple) return; for (let x = temple.x0; x <= temple.x1; x++) for (let y = temple.y0; y <= temple.y1; y++) if (at(x, y) === T.DTRAP) traps.push({ x, y, d: at(x + 1, y) === T.AIR ? 1 : -1, cd: R() }); }
-  function gen() {
-    tiles = new Uint8Array(WW * WH); walls = new Uint8Array(WW * WH); surf = new Int16Array(WW); chests = {}; hard = 0; radiant = null; npcs = []; npcGone = {}; npcT = 0; explored = new Uint8Array(WW * WH); const isDes = new Uint8Array(WW);
+  function gen() { gen0(); if (blight) for (let x = Math.max(1, blight.x0 - 14); x < Math.min(WW - 1, blight.x1 + 14); x++) { let y = surf[x]; { let c = 0; while (c < 3 && SOLID.has(at(x, y + c))) c++; if (c && c <= 2 && at(x, y + c) === T.AIR && at(x, y + c + 1) === T.AIR && at(x, y + c + 2) === T.AIR && at(x, y + c + 3) === T.AIR) for (let k = 0; k < c; k++) set(x, y + k, T.AIR); } if (SOLID.has(at(x, y)) || !(at(x, y + 1) === T.AIR && at(x, y + 2) === T.AIR)) continue; while (y < HELL - 2 && !SOLID.has(at(x, y))) y++; for (let yy = surf[x]; yy < y; yy++) if (!PW(walls[yy * WW + x])) walls[yy * WW + x] = 0; surf[x] = y; } }
+  function gen0() {
+    tiles = new Uint8Array(WW * WH); walls = new Uint8Array(WW * WH); surf = new Int16Array(WW); chests = {}; hard = 0; radiant = null; brokenDeco = new Set(); npcs = []; npcGone = {}; npcT = 0; explored = new Uint8Array(WW * WH); const isDes = new Uint8Array(WW);
     const n1 = noise1(), n2 = noise1(), n3 = noise1();
     for (let x = 0; x < WW; x++) surf[x] = Math.round(58 + (n1(x / 34) - .5) * 22 + (n2(x / 11) - .5) * 7 + (n3(x / 90) - .5) * 26);
     { const n4 = noise1(), far = x => Math.min(1, Math.max(0, (Math.abs(x - WW / 2) - 30) / 40)), F = new Float32Array(WW);
@@ -345,7 +346,7 @@ const GAME = {
         for (let x = a; x < b; x++) for (let y = surf[x]; y < Math.min(HELL - 30, surf[x] + 60); y++) { const t = at(x, y); if (t === T.GRASS) set(x, y, T.BGRASS); else if ((t === T.STONE || t === T.SSTONE) || (t === T.DIRT && y > surf[x] + 5)) set(x, y, T.BSTONE); else if (t === T.SAND) set(x, y, T.BSTONE); wall0(x, y, 21); if (y < surf[x] && at(x, y) === T.LEAF) set(x, y, T.AIR); }
         for (let x = a; x < b; x++) for (let y = 0; y < surf[x]; y++) if (at(x, y) === T.TRUNK || at(x, y) === T.MUSH) set(x, y, T.AIR);
         const nc = Math.max(2, Math.round((b - a) / 14)); for (let c = 0; c < nc; c++) { let x = a + (c + .5) * (b - a) / nc; const deep = surf[Math.floor(x)] + 34 + Math.floor(R() * 20); let y = surf[Math.floor(x)] - 2;
-          for (; y < deep; y++) { x += Math.sin(y * .25 + c) * .35; const w = 1.5 + Math.sin(y * .4) * .5; for (let dx = -3; dx <= 3; dx++) { const tx = Math.floor(x + dx); if (Math.abs(dx) <= w) { set(tx, y, T.AIR); } else if (Math.abs(dx) <= w + 1.5 && SOLID.has(at(tx, y))) set(tx, y, T.BSTONE); wall0(tx, y, 21); } }
+          const y0c = y, drift = R() < .5 ? -1 : 1; for (; y < deep; y++) { const dd = y - y0c; x += Math.sin(dd * .13 + c * 2) * .55 + drift * .18 * (dd % 9 < 4 ? 1 : -.4); const w = Math.max(1.6, 6.5 - dd * .22) + Math.sin(dd * .5 + c) * .9 + (dd % 11 === 6 ? 1.6 : 0); for (let dx = -12; dx <= 12; dx++) { const tx = Math.floor(x + dx), jag = ((tx * 7 + y * 13) % 5) * .2; if (Math.abs(dx) <= w + jag - .5) { set(tx, y, T.AIR); } else if (Math.abs(dx) <= w + 2 && SOLID.has(at(tx, y))) set(tx, y, T.BSTONE); if (y > surf[clamp(tx, 0, WW - 1)] + 1) wall0(tx, y, 21); } }
           for (let dx = -6; dx <= 6; dx++) for (let dy = -4; dy <= 3; dy++) if (dx * dx / 36 + dy * dy / 16 <= 1) { const tx = Math.floor(x + dx), ty = y + dy; set(tx, ty, T.AIR); walls[ty * WW + tx] = 21; }
           for (let dx = -8; dx <= 8; dx++) for (let dy = -6; dy <= 6; dy++) { const tx = Math.floor(x + dx), ty = y + dy; if (at(tx, ty) === T.STONE || at(tx, ty) === T.DIRT) set(tx, ty, T.BSTONE); if (at(tx, ty) === T.BSTONE && R() < .14) set(tx, ty, T.SHADOW); }
           set(Math.floor(x), y + 3, T.BSTONE); set(Math.floor(x), y + 2, T.BHEART); } }
@@ -817,6 +818,7 @@ const GAME = {
     const M = modStats(s); curCrit = M.c;
     P.face = wx >= P.x ? 1 : -1;
     const aim = () => { const dx = wx - P.x, dy = wy - (P.y - 1.5), d = Math.hypot(dx, dy) || 1; return [dx / d, dy / d]; };
+    if ((it.pick || it.axe || it.hammer) && !it.melee && reach(tx, ty) && decoFind(tx, ty) && !brokenDeco.has(decoFind(tx, ty).k)) { if (P.swing <= 0) { P.swing = .3; hitDeco(tx, ty); } return; }
     if (it.melee || ((it.pick || it.axe || it.hammer) && ents.some(e => !KIND[e.kind].proj && Math.hypot(e.x - (P.x + P.face * 1.4), mid(e) - (P.y - 1.4)) < 2.4 + e.h / 2 && Math.abs(e.x - wx) < 3))) {
       if (P.swing <= 0 && P.cd <= 0) melee(it, aim(), M); if (!it.pick && !it.axe && !it.hammer) return;
     }
@@ -877,7 +879,7 @@ const GAME = {
       if (tiles[i0] === T.AIR && ![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => walls[(ty + b) * WW + tx + a] || at(tx + a, ty + b) !== T.AIR)) return;
       editWall(tx, ty, it.wall); spendOne(s); K.sfx(180, .04, 'square', .04); P.swing = .2; score += 1; return;
     }
-    if (it.tile && first !== 'hold' && reach(tx, ty)) {
+    if (it.tile && (first !== 'hold' || (anim - (P.placeT || 0) > .06 && it.tile !== T.DOOR && !it.spawn && ![T.STARFORGE, T.RUNEANVIL, T.BENCH, T.FURNACE, T.ANVIL, T.CHEST, T.GCHEST, T.MUSH, T.TABLE, T.CHAIR, T.CAMPFIRE, T.BED, T.BOOKS].includes(it.tile) && at(tx, ty) === T.AIR)) && reach(tx, ty)) {
       if (at(tx, ty) === T.CHEST || at(tx, ty) === T.GCHEST) return openChest(tx, ty);
       if (at(tx, ty) !== T.AIR && at(tx, ty) !== T.WATER) return;
       if (it.tile === T.DOOR) return placeDoor(tx, ty, s);
@@ -885,7 +887,7 @@ const GAME = {
       if (!support) return;
       if ([T.STARFORGE, T.RUNEANVIL, T.BENCH, T.FURNACE, T.ANVIL, T.CHEST, T.MUSH, T.TABLE, T.CHAIR, T.CAMPFIRE, T.BED, T.BOOKS].includes(it.tile)) { if (!SOLID.has(at(tx, ty + 1))) return; }
       else if (it.tile !== T.TORCH && it.tile !== T.LANTERN && it.tile !== T.PLAT && Math.abs(tx + .5 - P.x) < .9 && ty >= Math.floor(P.y - P.h) && ty <= Math.floor(P.y - .01)) return;
-      editTile(tx, ty, it.tile); spendOne(s); if (it.spawn) { P.spawn = { x: tx + .5, y: ty + .99 }; say('Spawn point set.', 2.4, '#7aff7a'); } K.sfx(200, .05, 'square', .06); P.swing = .25; score += 1;
+      editTile(tx, ty, it.tile); spendOne(s); P.placeT = anim; if (it.spawn) { P.spawn = { x: tx + .5, y: ty + .99 }; say('Spawn point set.', 2.4, '#7aff7a'); } K.sfx(200, .05, 'square', .06); P.swing = .25; score += 1;
       return;
     }
     if (first !== true) return;
@@ -896,8 +898,8 @@ const GAME = {
   function equip(i) { const s = ch.inv[i]; if (s && IT[s.id].acc) return equipAcc(i); if (!s || !IT[s.id].armor) return; ch.gear = ch.gear || {}; const k = IT[s.id].slot || 'body', old = ch.gear[k]; ch.gear[k] = s.id; ch.inv[i] = old ? { id: old, n: 1 } : null; K.sfx(500, .1, 'square', .05, 200); const st = setOf(); say(`Equipped ${IT[s.id].n} (+${IT[s.id].armor} defense)` + (st && IT[s.id].set === st && bonusText(SETS[st].bon) ? ` · ${SETS[st].n} set bonus: ${bonusText(SETS[st].bon)}` : ''), 2.6, RAR[IT[s.id].r || 0]); }
   function useItem(it, s) {
     const u = it.use, spend = () => spendOne(s);
-    if (u === 'heal') { if (P.potCd > 0) return say('Potion sickness: wait a moment.'); P.hp = Math.min(ch.max, P.hp + 100); P.potCd = 30; spend(); K.sfx(700, .2, 'sine', .07, 300); pops.push({ x: P.x, y: P.y - 3, t: 0, s: '+100', c: '#5aff7a' }); }
-    if (u === 'lheal') { if (P.potCd > 0) return say('Potion sickness: wait a moment.'); P.hp = Math.min(ch.max, P.hp + 50); P.potCd = 20; spend(); K.sfx(700, .2, 'sine', .07, 300); pops.push({ x: P.x, y: P.y - 3, t: 0, s: '+50', c: '#5aff7a' }); }
+    if (u === 'heal') { if (P.potCd > 0) return; P.hp = Math.min(ch.max, P.hp + 100); P.potCd = 30; spend(); K.sfx(700, .2, 'sine', .07, 300); pops.push({ x: P.x, y: P.y - 3, t: 0, s: '+100', c: '#5aff7a' }); }
+    if (u === 'lheal') { if (P.potCd > 0) return; P.hp = Math.min(ch.max, P.hp + 50); P.potCd = 30; spend(); K.sfx(700, .2, 'sine', .07, 300); pops.push({ x: P.x, y: P.y - 3, t: 0, s: '+50', c: '#5aff7a' }); }
     if (u === 'mpot') { if (P.mp >= maxMana()) return say('Your mana is already full.'); P.mp = Math.min(maxMana(), P.mp + 100); spend(); K.sfx(900, .2, 'sine', .07, 300); pops.push({ x: P.x, y: P.y - 3, t: 0, s: '+100 mana', c: '#7ab0ff' }); }
     if (u === 'home') { if (P.homeCd > 0) return say(`The Lodestar is recharging (${Math.ceil(P.homeCd)}s).`); P.homeCd = 5; P.x = P.spawn.x; P.y = P.spawn.y; P.vx = P.vy = 0; K.chime(587, [0, 7, 12, 19]); say('The Lodestar carries you home.', 2, '#7affee'); return; }
     if (u === 'recall') { spend(); P.x = P.spawn.x; P.y = P.spawn.y; P.vx = P.vy = 0; K.chime(523, [0, 7, 12]); say('Back home.', 2, '#7affee'); }
@@ -924,6 +926,7 @@ const GAME = {
     const spear = it.reach, cd = (spear ? .38 : .34) / (1 + B().mspd) / (1 + M.s); P.swing = cd; P.cd = cd; K.sfx(500, .06, 'triangle', .05, -200);
     const dmg = (it.melee || it.dmg) * dm('melee') * (1 + M.d), range = spear || 1.9, cx = P.x + (spear ? ax * range * .6 : P.face * 1.4), cy = P.y - 1.4 + (spear ? ay * range * .6 : 0);
     for (const e of ents) if (!KIND[e.kind].proj && Math.abs(e.x - cx) < range * (spear ? .7 : 1) + e.w / 2 && Math.abs(mid(e) - cy) < 1.8 + e.h / 2 && (clearLine(P.x, P.y - 1.4, e.x, mid(e)) || clearLine(P.x, P.y - .5, e.x, bot(e) - .3) || clearLine(P.x, P.y - 1.8, e.x, top(e) + .3))) hitEnemy(e, dmg, P.face * (it.kb || 1), it.fire, M.c);
+    for (let x = Math.floor(cx - range); x <= Math.floor(cx + range); x++) for (let y = Math.floor(cy - 1.8); y <= Math.floor(cy + 1.8); y++) if (reach(x, y)) hitDeco(x, y, true);
     if (it.beam) shoot('beam', ax, ay, dmg * .7, 0); if (it.stars) for (let i = 0; i < 2; i++) shoot('star', 0, 1, dmg * .5, 0, { sx: P.x + rnd(-8, 8), sy: P.y - 20, tx: P.x + ax * 8 + rnd(-2, 2), ty: P.y - 1.5 + ay * 8 });
   }
   function equipAcc(i) { const s = ch.inv[i]; if (!s) return; ch.acc = ch.acc || [null, null, null];
@@ -1190,7 +1193,15 @@ const GAME = {
   const NPCS = {
     guide: { n: 'Wayfinder', always: 1, look: [0, 0, 0, 1, 0, 4, 10, 9, 0, 0, 0, 2, 1], names: ['Orrin', 'Tamsin', 'Bram', 'Lisle', 'Corwin', 'Neve', 'Hollis', 'Wren', 'Ansel', 'Mira'],
       chat: ["Lost? Everyone is, the first night. Torches help more than you'd think.", 'Slimes are harmless alone. In a crowd they are less harmless.', 'Build a proper house and travelers will hear of it and come.', "Dig straight down if you like. Just don't dig straight down into lava."],
-      say: n => { const p = (cslot >= 0 && chars()[cslot] && chars()[cslot].name) || 'friend', L = [];
+      say: n => { const p = (cslot >= 0 && chars()[cslot] && chars()[cslot].name) || 'friend', L = [], hasT = t => stationNear(t) || count(Object.keys(IT).find(k => IT[k].tile === t) || '_');
+        { const tip = !hasT(T.BENCH) && count('wood') < 10 ? `First things first, ${p}: chop a tree with your axe. Hold click on the trunk. Ten wood makes a workbench, and ${keyName(KB().inv)} opens your crafting.`
+            : !hasT(T.BENCH) ? `You've got the wood! Open your inventory with ${keyName(KB().inv)} and make a workbench. Everything starts there.`
+            : !hasT(T.FURNACE) ? 'A furnace is next: 20 stone, 4 wood and 3 torches. Torches need gel, and slimes are full of the stuff.'
+            : !hasT(T.ANVIL) ? 'Smelt some ore in your furnace, then turn the bars into an anvil. That opens up real armor and better tools.'
+            : ch.max <= 100 ? 'Dig deep and keep an eye out for red crystal hearts. Smash one and you will feel sturdier right away.'
+            : !Object.keys(downed).some(k => downed[k]) ? 'Feeling strong? Craft a Gel Crown and use it to call the Gel Sovereign. Bring potions.' : null;
+          if (tip && R() < .7) return tip; }
+        L.push("Tip: hold Left Shift and your torch jumps into your hand, wherever it is in your bag.", "Tip: right-click townsfolk to talk to them. A plain click works too when your hands are empty.", "Tip: press M for the map. It fills in as you explore.");
         if (night()) L.push("It's getting dark. Stick close, okay? I'll keep my bow ready, but those zombies never take a hint.", "Nights out here are long. Light a torch or two. Or ten. I won't judge.");
         if (P && P.hp < ch.max * .4) L.push(`Whoa, ${p}, you look rough. Sit down a second. Drink something red.`);
         if (!n.house) L.push("I'd love a real roof over my head when you have the time. Walls, a door, a light, a table and a chair. That's all I ask.");
@@ -1613,20 +1624,22 @@ const GAME = {
     jungle: ['#123e1e', '#1a5a2a', '#267638', '#3a9446', '#5eb858'], frost: ['#1a4a3e', '#22604c', '#2e7a5e', '#4a9a78', '#e8f4ff'] };
   function canopySpr(kind, v, wT, hT) {
     return spr('can|' + kind + '|' + v + '|' + wT + '|' + hT, wT * 16, hT * 16, P => {
-      const rnd = srng(v * 7919 + wT * 31 + hT * 7 + kind.length), W = wT * 16, H = hT * 16, pal = LEAFP[kind], lobes = [], n = Math.round(wT * hT / 4) + 4;
-      lobes.push([W / 2, H * .5, Math.min(18, Math.min(W, H) * .32)]); for (let i = 0, tries = 0; i < n && tries < n * 30; tries++) { const a = rnd() * Math.PI * 2, d = .15 + .85 * Math.sqrt(rnd()), L = [W / 2 + Math.cos(a) * d * (W / 2 - 14), H * .5 + Math.sin(a) * d * (H / 2 - 12), 10 + rnd() * 4]; if (!lobes.some(o => Math.hypot(o[0] - L[0], o[1] - L[1]) < (o[2] + L[2]) * .7)) continue; lobes.push(L); i++; }
+      const rnd = srng(v * 7919 + wT * 31 + hT * 7 + kind.length), W = wT * 16, H = hT * 16, pal = LEAFP[kind], lobes = [], big = wT >= 14, n = Math.round(wT * hT / (big ? 2 : 4)) + 4;
+      const hangX = x => { x = Math.floor(x); for (let y = H - 1; y >= 0; y--) if (P.get(x, y)) return y + 1; return -1; };   // where something can hang from: the canopy's lowest leaf in that column
+      if (big) { for (let i = 0; i < 7; i++) lobes.push([W * (.2 + i * .1), H * (.44 + Math.abs(i - 3) * .04), Math.min(W, H) * .24]); for (let i = 0, tries = 0; i < n && tries < n * 30; tries++) { const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()), L = [W / 2 + Math.cos(a) * d * (W / 2 - 22), H * .44 + Math.sin(a) * d * (H * .38 - 16), 14 + rnd() * 9]; if (!lobes.some(o => Math.hypot(o[0] - L[0], o[1] - L[1]) < (o[2] + L[2]) * .7)) continue; lobes.push(L); i++; } }
+      else lobes.push([W / 2, H * .5, Math.min(18, Math.min(W, H) * .32)]); if (!big) for (let i = 0, tries = 0; i < n && tries < n * 30; tries++) { const a = rnd() * Math.PI * 2, d = .15 + .85 * Math.sqrt(rnd()), L = [W / 2 + Math.cos(a) * d * (W / 2 - 14), H * .5 + Math.sin(a) * d * (H / 2 - 12), 10 + rnd() * 4]; if (!lobes.some(o => Math.hypot(o[0] - L[0], o[1] - L[1]) < (o[2] + L[2]) * .7)) continue; lobes.push(L); i++; }
       lobes.sort((a, b) => a[1] - b[1]);
       for (const [x, y, r] of lobes) P.ell(x + 1, y + 3, r + 1.5, r * .82 + 1.5, pal[0]);
       for (const [x, y, r] of lobes) { P.ell(x, y, r, r * .82, pal[2]); P.ell(x - r * .2, y - r * .28, r * .66, r * .5, pal[3]); P.ell(x - r * .38, y - r * .44, r * .26, r * .2, pal[4]); }
       for (let i = 0; i < W * H / 22; i++) { const x = Math.floor(rnd() * W), y = Math.floor(rnd() * H), c = P.get(x, y); if (!c || c[0] === '~') continue; const lt = c === pal[3] || c === pal[4];
         if (P.get(x + 1, y + 1) && P.get(x + 2, y + 2)) { P.px(x, y, lt ? pal[2] : pal[1]); P.px(x + 1, y + 1, lt ? pal[2] : pal[1]); P.px(x + 1, y, lt ? pal[4] : pal[3]); } }
       if (kind === 'frost') for (let x = 0; x < W; x++) { let y = 0; while (y < H && !P.get(x, y)) y++; if (y < H) { P.px(x, y, '~#f4f8ff'); P.px(x, y + 1, '~#dde8f8'); if (rnd() < .4) P.px(x, y + 2, '~#c8d8ec'); } }
-      if (kind === 'blight') { for (let i = 0; i < wT * 2; i++) { const x = 6 + rnd() * (W - 12); let y = H * .5; while (y < H - 1 && P.get(x, y)) y++; const L = 4 + rnd() * 10; P.line(x, y - 1, x + rnd() * 2 - 1, y + L, pal[1]); P.px(x, y + L, '~#e05aff'); }
+      if (kind === 'blight') { for (let i = 0; i < wT * 2; i++) { const x = Math.floor(6 + rnd() * (W - 12)), y = hangX(x); if (y < 0) continue; const L = 4 + rnd() * 10; P.line(x, y - 1, x + rnd() * 2 - 1, y + L, pal[1]); P.px(x, y + L, '~#e05aff'); }
         for (let i = 0; i < wT; i++) { const x = rnd() * W, y = rnd() * H; if (P.get(x, y)) P.ell(x, y, 1.5, 1.5, '~#e070ff'); } }
       if (kind === 'radiant') for (let i = 0; i < wT * 2; i++) { const x = rnd() * W, y = rnd() * H; if (P.get(x, y + 2)) P.tri(x - 1.5, y + 2, x + 1.5, y + 2, x, y - 3, '~#e8ffff'); }
       if (kind === 'forest' && v % 3 === 0) for (let i = 0; i < wT; i++) { const x = rnd() * W, y = rnd() * H; if (P.get(x, y) && P.get(x, y + 2)) { P.rect(x, y, 2, 2, '~#d83a3a'); P.px(x, y, '~#ff8a7a'); } }
       if (kind === 'forest' && v % 3 === 1) for (let i = 0; i < wT * 1.5; i++) { const x = rnd() * W, y = rnd() * H; if (P.get(x, y)) { P.px(x, y, '~#fff0f8'); P.px(x + 1, y, '~#ffc8e0'); } }
-      if (kind === 'jungle') { for (let i = 0; i < wT * 1.6; i++) { const x = 4 + rnd() * (W - 8); let y = H * .5; while (y < H - 1 && P.get(x, y)) y++; const L = 6 + rnd() * 24; for (let k = 0; k < L; k++) P.px(x + Math.round(Math.sin(k * .5) * .8), y + k, k % 4 === 3 ? pal[3] : pal[1]); }
+      if (kind === 'jungle') { for (let i = 0; i < wT * (big ? 2.4 : 1.6); i++) { const x = Math.floor(4 + rnd() * (W - 8)), y = hangX(x); if (y < 0) continue; const L = 6 + rnd() * (big ? 34 : 24); for (let k = 0; k < L; k++) P.px(x + Math.round(Math.sin(k * .5) * .8), y + k, k % 4 === 3 ? pal[3] : pal[1]); }
         for (let i = 0; i < wT; i++) { const x = rnd() * W, y = rnd() * H; if (P.get(x, y)) { P.ell(x, y, 1.8, 1.8, '~#ff5aa0'); P.px(x, y, '~#ffe680'); } } }
     }, { hi: 1.12, lo: .7 }); }
   function pineSpr(h, v) { const rows = h - 1, wmax = Math.floor(Math.max(0, h - 3) / 2.4) + 1, W = (wmax * 2 + 1) * 16 + 8, H = rows * 16;
@@ -1640,7 +1653,7 @@ const GAME = {
   const branchSpr = (kind, s) => spr('br|' + kind + '|' + s, 22, 14, P => { const pal = LEAFP[kind] || LEAFP.forest; P.line(0, 10, 12, 6, '#6a4424', 2); P.ell(15, 6, 6, 5, pal[2]); P.ell(13, 4, 3.5, 3, pal[3]); P.px(12, 3, pal[4]); if (kind === 'frost') { P.rect(11, 1, 7, 1, '~#f4f8ff'); } });
   // find the trees around the screen; their leaf tiles are then drawn as one canopy
   function scanTrees(x0, x1, y0, y1) { const L = [], cov = new Set(); const C = (x, y) => cov.add(y * WW + x);
-    for (let x = Math.max(1, x0 - 8); x < Math.min(WW - 1, x1 + 8); x++) for (let y = Math.max(1, y0 - 14); y < Math.min(WH - 1, y1 + 16); y++) { const t = tiles[y * WW + x]; if (t !== T.TRUNK && t !== T.LWOOD) continue; if (t === T.TRUNK && y < y0 - 3) continue; const up = tiles[(y - 1) * WW + x];
+    for (let x = Math.max(1, x0 - 8); x < Math.min(WW - 1, x1 + 8); x++) for (let y = Math.max(1, y0 - 14); y < Math.min(WH - 1, y1 + 16); y++) { const t = tiles[y * WW + x]; if (t !== T.TRUNK && t !== T.LWOOD) continue; const up = tiles[(y - 1) * WW + x];
       if (t === T.TRUNK && (up === T.LEAF || up === T.SLEAF)) { let b = y; while (b < WH - 1 && tiles[(b + 1) * WW + x] === T.TRUNK) b++; const gt = tiles[(b + 1) * WW + x], h = b - y + 1, hs = (Math.imul(x, 2654435761) >>> 0);
         if (up === T.SLEAF && (at(x + 1, y + 2) === T.SLEAF || at(x - 1, y + 2) === T.SLEAF)) { const wmax = Math.floor(Math.max(0, h - 3) / 2.4) + 1; for (let dy = -1; dy <= h - 2; dy++) for (let dx = -wmax - 1; dx <= wmax + 1; dx++) if (at(x + dx, y + dy) === T.SLEAF) C(x + dx, y + dy); L.push({ k: 'pine', x, y, h, b, v: hs % 3, kind: 'frost' }); continue; }
         const kind = up === T.SLEAF ? 'frost' : gt === T.BGRASS ? 'blight' : gt === T.RGRASS ? 'radiant' : gt === T.JGRASS || gt === T.MUD ? 'jungle' : 'forest';
@@ -1651,7 +1664,7 @@ const GAME = {
     return { L, cov }; }
   function drawTrees(g, TR) { for (const t of TR.L) { const X = (t.x + .5) * TS - cam.x;
       if (t.k === 'pine') { drawSpr(g, pineSpr(t.h, t.v), X, (t.y + t.h - 1.6) * TS - cam.y, 1.5); continue; }
-      if (t.k === 'giant') { const wT = t.r * 2 + 4, hT = Math.ceil(t.r * 1.5) + 3; drawSpr(g, canopySpr('jungle', t.v, wT, hT), X, (t.y - 1 + Math.ceil(t.r / 2) + 2) * TS - cam.y, 1.5); continue; }
+      if (t.k === 'giant') { const wT = t.r * 2 + 10, hT = Math.ceil(t.r * 1.2) + 7; drawSpr(g, canopySpr('jungle', t.v, wT, hT), X, (t.y - 1 + Math.ceil(t.r / 2) + 3) * TS - cam.y, 1.5); continue; }
       drawSpr(g, canopySpr(t.kind, t.v, t.w, t.hh), X, (t.y + 1.9) * TS - cam.y, 1.5); } }
   function drawTrunkBits(g, TR) { for (const t of TR.L) { if (t.k !== 'tree' && t.k !== 'pine') continue; const X = (t.x + .5) * TS - cam.x;
       if (SOLID.has(at(t.x, t.b + 1))) drawSpr(g, rootSpr(t.kind), X, (t.b + 1) * TS - cam.y + 2, 1.5);
@@ -1833,6 +1846,18 @@ const GAME = {
     if (bd && GTH[bd]) { const [D, B, L, A] = GTH[bd].map(c => c.replace('~', '')); r(L, -7, -22, 3, 3); r(L, 5, -22, 3, 3); r(A, -1, -18, 2, 2); r(D, -5, -14, 10, 1);
       if (bd === 'molten') { r('#ffc04a', -3, -19, 1, 2); r('#ffc04a', 2, -16, 1, 2); } if (bd === 'shadow' || bd === 'gloom' || bd === 'overlord') { r(D, -8, -24, 2, 2); r(D, 7, -24, 2, 2); } if (bd === 'starmetal') r('#ffffff', -1, -18, 2, 2); }
     if (lg && GTH[lg]) { const L = GTH[lg][2]; r(L, -5, -6, 4, 1); r(L, 1, -6, 4, 1); } }
+  // plants can be knocked down; they drop nothing. Grass, flowers, ferns and vines go in one hit, the sturdier ones take a few
+  let brokenDeco = new Set(); const decoHits = new Map(), DECO1 = new Set(['grass', 'rgrass', 'snowgrass', 'drygrass', 'flower', 'pastel', 'frostflower', 'fern', 'jtall', 'jflower', 'thornweed', 'glowshroom', 'pebble', 'vine']);
+  const DECOC = { cactus: ['#3a8a3a', '#5aaa4a'], bush: ['#2a6c20', '#3a8a2a'], snowbush: ['#22604c', '#f4f8ff'], rock: ['#84848e', '#6e6e78'], bones: ['#e8e0c8', '#c0b8a0'], eyestalk: ['#552068', '#f0e8d0'], deadtwig: ['#4a3a3a', '#6a5a4a'], crystal: ['#c8f8ff', '#ffc8f0'], stalag: ['#6a6a74', '#84848e'], stalac: ['#6a6a74', '#84848e'], icicle: ['#d8f4ff', '#ffffff'], snowgrass: ['#c8e0ec', '#8ab8c8'], drygrass: ['#d0b068', '#a8884a'], thornweed: ['#6e2e86', '#b070d0'], glowshroom: ['#7af0ff', '#c8e8f0'], pebble: ['#7a7a84', '#8a8a94'], jflower: ['#ff5aa0', '#267638'], flower: ['#ff5a7a', '#3a8a1e'], pastel: ['#ffb0e0', '#7ac8b0'], frostflower: ['#bff4ff', '#6a9ab8'] };
+  function decoFind(tx, ty) { if (tx < 0 || ty < 1 || tx >= WW || ty >= WH - 1 || at(tx, ty) !== T.AIR) return null;
+    { const b = at(tx, ty + 1); if (SOLID.has(b)) { const d = decoPick(b, tx, ty + 1); if (d) return { n: d[0], k: 'u' + ((ty + 1) * WW + tx) }; } }
+    for (let k = 1; k <= 6; k++) { const a = at(tx, ty - k); if (a === T.AIR) continue; if (!SOLID.has(a)) return null; const d = decoHang(a, tx, ty - k); if (d && (k === 1 || (d[0] === 'vine' && k <= d[1]))) return { n: d[0], k: 'h' + ((ty - k) * WW + tx) }; return null; }
+    return null; }
+  function hitDeco(tx, ty, sweep) { const D = decoFind(tx, ty); if (!D || brokenDeco.has(D.k)) return false; const need = DECO1.has(D.n) ? 1 : 3, h = (decoHits.get(D.k) || 0) + 1, C = DECOC[D.n] || ['#4cb02a', '#6ad03c'];
+    K.burst(scrX(sx(tx + .5)), scrY(sy(ty + .6)), C, h >= need ? 7 : 3, h >= need ? 110 : 60, { life: .4, size: 3, gravity: 500 });
+    if (h >= need) { brokenDeco.add(D.k); decoHits.delete(D.k); K.sfx(DECO1.has(D.n) ? 520 : 240, .05, 'triangle', .04, -200); if (online()) MP.send({ t: 'bd', k: D.k }); }
+    else { decoHits.set(D.k, h); K.sfx(300, .04, 'square', .03, -60); }
+    return true; }
   let torchL = [], glints = [], glowL = [];
   function glassPane(g, X, Y, x, y, blk) { const same = blk ? (a, b) => at(a, b) === T.GLASS : (a, b) => a >= 0 && b >= 0 && a < WW && b < WH && walls[b * WW + a] === 13;
     g.fillStyle = blk ? 'rgba(200,230,255,.2)' : 'rgba(190,225,255,.1)'; g.fillRect(X, Y, TS, TS); g.fillStyle = blk ? 'rgba(235,248,255,.75)' : 'rgba(220,240,255,.35)';
@@ -1858,7 +1883,7 @@ const GAME = {
       if (SOLID.has(t)) {
         const o = s => !SOLID.has(s), u = o(at(x, y - 1)), d = o(at(x, y + 1)), l = o(at(x - 1, y)), r = o(at(x + 1, y));
         g.drawImage(edgeTex(t, ((Math.imul(x, 374761393) ^ Math.imul(y, 668265263)) >>> 0) % 3, (u ? 1 : 0) | (d ? 2 : 0) | (l ? 4 : 0) | (r ? 8 : 0)), X, Y, TS, TS);
-        if (u && at(x, y - 1) === T.AIR) { const dp = decoPick(t, x, y); if (dp) DC.push(dp[0], dp[1], X, Y, x); } if (d && at(x, y + 1) === T.AIR) { const dh = decoHang(t, x, y); if (dh) DC.push(dh[0], dh[1], X, Y + TS, x); }
+        if (u && at(x, y - 1) === T.AIR) { const dp = decoPick(t, x, y); if (dp && !brokenDeco.has('u' + (y * WW + x))) DC.push(dp[0], dp[1], X, Y, x); } if (d && at(x, y + 1) === T.AIR) { const dh = decoHang(t, x, y); if (dh && !brokenDeco.has('h' + (y * WW + x))) DC.push(dh[0], dh[1], X, Y + TS, x); }
       } else {
         g.drawImage(tex[t], X, Y, TS, TS);
         if (t === T.TORCH) { const f = Math.sin(anim * 18 + x) > 0; g.fillStyle = f ? '#fff6c0' : '#ff8a1a'; g.fillRect(X + 10, Y + (f ? 0 : 1), 4, 3); }
@@ -1918,10 +1943,10 @@ const GAME = {
     let armA = Math.sin(anim * 14) * (walk ? .45 : 0) - .15, itemA = 0;
     if (ranged) { const a = aim || [1, 0]; armA = Math.atan2(-a[0] * face, a[1]); }
     else if (tool && it.reach && swing > 0) { const a = aim || [1, 0]; armA = Math.atan2(-a[0] * face, a[1]); }
-    else if (tool && swing > 0) armA = 2.5 - ez * 3.6;                 // over the shoulder, down in front
+    else if (tool && swing > 0) armA = 2 + ez * 3.25;                 // over the shoulder, down in front
     else if (tool) { armA = -.35 + Math.sin(anim * 14) * (walk ? .2 : 0); itemA = -2.32; }   // resting, blade up and forward
     else if (it) { armA = -.55 + Math.sin(anim * 14) * (walk ? .25 : 0); }
-    if (tool && swing > 0 && !it.reach) for (const k of [.12, .24]) { const pa = 2.5 - Math.max(0, ez - k) * 3.6; g.save(); g.globalAlpha = .18; g.translate(1, -19); g.rotate(pa); g.translate(1, 8.5); heldItem(g, held, it, 0); g.restore(); }
+    if (tool && swing > 0 && !it.reach) for (const k of [.12, .24]) { const pa = 2 + Math.max(0, ez - k) * 3.25; g.save(); g.globalAlpha = .18; g.translate(1, -19); g.rotate(pa); g.translate(1, 8.5); heldItem(g, held, it, 0); g.restore(); }
     g.save(); g.translate(1, -19); g.rotate(armA); r(sleeve, -1, 0, 4, 5); r(shade(sleeve, .8), -1, 4, 4, 1); r(L.sk, -1, 5, 4, 5); r(L.sk2, 2, 5, 1, 5);
     if (it) { g.save(); g.translate(1, 8.5); if (!tool && !ranged) g.rotate(-armA); heldItem(g, held, it, itemA); g.restore(); r(L.sk, -1, 7, 4, 3); }
     g.restore(); g.restore();
@@ -2036,6 +2061,7 @@ const GAME = {
     const v = K.view, R = v.x1 - 26;
     g.save(); g.translate(OX(), TOP());
     for (let i = 0; i < 10; i++) { const b = HB(i); slot(g, i === sel && !invOpen ? { x: b.x - 3, y: b.y - 3, w: b.w + 6, h: b.h + 6 } : b, ch.inv[i], i === sel); g.font = `12px ${PXF}`; g.fillStyle = 'rgba(255,255,255,.8)'; g.textAlign = 'left'; g.fillText(String((i + 1) % 10), HB(i).x + 4, HB(i).y + 13); }
+    if (P.potCd > 0) { const py = invOpen ? 372 : 108; g.fillStyle = 'rgba(10,14,40,.65)'; g.beginPath(); g.roundRect(10, py - 22, 84, 40, 10); g.fill(); g.save(); g.globalAlpha = .55; icon(g, 'potion', 32, py - 2, 1.5); g.restore(); outlined(g, Math.ceil(P.potCd) + 's', 52, py + 5, 18, '#ffb0b8'); }
     const s = ch.inv[sel]; if (s && !invOpen) { const it = IT[s.id]; outlined(g, nameOf(s) + ((it.bow || it.gun) && !it.free ? ` · ${ch.inv.reduce((a, q) => a + (q && IT[q.id].ammo === (it.bow ? 'arrow' : 'shot') ? q.n : 0), 0)} ${it.bow ? 'arrows' : 'shots'}` : it.rod ? ` · ${ch.inv.reduce((a, q) => a + (q && IT[q.id].bait ? q.n : 0), 0)} bait` : ''), 16, 78, 18, RAR[it.r || 0]); }
     g.restore();
     g.save(); g.translate(0, TOP());
@@ -2303,8 +2329,8 @@ const GAME = {
   const unrle = (b, n) => { const a = new Uint8Array(n); let k = 0; for (let i = 0; i < b.length; i += 2) { a.fill(b[i + 1], k, k + b[i]); k += b[i]; } return a; };
   const b64 = a => { let s = ''; for (let i = 0; i < a.length; i += 8192) s += String.fromCharCode.apply(null, a.subarray(i, i + 8192)); return btoa(s); };
   const unb64 = s => { const b = atob(s), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; };
-  function packWorld() { return { lq: liq ? b64(rle(liq)) : null, lk: lqk ? b64(rle(lqk)) : null, ex: explored ? b64(rle(explored)) : null, ww: WW, t: b64(rle(tiles)), w: b64(rle(walls)), s: Array.from(surf), c: chests, np: npcs.map(n => ({ k: n.k, nm: n.nm, x: +n.x.toFixed(2), y: +n.y.toFixed(2), hp: Math.round(n.hp), h: n.house })), ng: npcGone, time, downed, jg: jungle, tp: temple, hm: hard, df: dfc, ra: radiant, hb: hearts, fr: frost, bl: blight, gl: glowc, sk: isles }; }
-  function unpackWorld(W) { WW = W.ww || 520; tiles = unrle(unb64(W.t), WW * WH); walls = unrle(unb64(W.w), WW * WH); surf = Int16Array.from(W.s); chests = W.c || {}; npcs = (W.np || []).filter(o => NPCS[o.k]).map(o => newNpc(o.k, o.nm, o.x, o.y, o.h || null, o.hp)); npcGone = W.ng || {}; npcT = 0; time = W.time || .05; downed = W.downed || {}; jungle = W.jg || null; temple = W.tp || null; hard = W.hm || 0; dfc = W.df == null ? 1 : W.df | 0; radiant = W.ra || null; hearts = W.hb || 0; frost = W.fr || null; blight = W.bl || null; glowc = W.gl || []; isles = W.sk || []; explored = W.ex ? unrle(unb64(W.ex), WW * WH) : new Uint8Array(WW * WH);
+  function packWorld() { return { lq: liq ? b64(rle(liq)) : null, lk: lqk ? b64(rle(lqk)) : null, ex: explored ? b64(rle(explored)) : null, ww: WW, t: b64(rle(tiles)), w: b64(rle(walls)), s: Array.from(surf), c: chests, np: npcs.map(n => ({ k: n.k, nm: n.nm, x: +n.x.toFixed(2), y: +n.y.toFixed(2), hp: Math.round(n.hp), h: n.house })), ng: npcGone, time, downed, jg: jungle, tp: temple, hm: hard, df: dfc, bd: [...brokenDeco], ra: radiant, hb: hearts, fr: frost, bl: blight, gl: glowc, sk: isles }; }
+  function unpackWorld(W) { WW = W.ww || 520; tiles = unrle(unb64(W.t), WW * WH); walls = unrle(unb64(W.w), WW * WH); surf = Int16Array.from(W.s); chests = W.c || {}; npcs = (W.np || []).filter(o => NPCS[o.k]).map(o => newNpc(o.k, o.nm, o.x, o.y, o.h || null, o.hp)); npcGone = W.ng || {}; npcT = 0; time = W.time || .05; downed = W.downed || {}; jungle = W.jg || null; temple = W.tp || null; hard = W.hm || 0; brokenDeco = new Set(W.bd || []); dfc = W.df == null ? 1 : W.df | 0; radiant = W.ra || null; hearts = W.hb || 0; frost = W.fr || null; blight = W.bl || null; glowc = W.gl || []; isles = W.sk || []; explored = W.ex ? unrle(unb64(W.ex), WW * WH) : new Uint8Array(WW * WH);
     if (W.lq && W.lk) { liq = unrle(unb64(W.lq), WW * WH); lqk = unrle(unb64(W.lk), WW * WH); } else { liq = new Uint8Array(WW * WH); lqk = new Uint8Array(WW * WH); }
     for (let i = 0; i < tiles.length; i++) if (tiles[i] === T.WATER) { tiles[i] = T.AIR; liq[i] = 8; lqk[i] = 1; }   // worlds from before liquids flowed
   }
@@ -2601,7 +2627,7 @@ const GAME = {
   function adopt(t) { if (wslot < 0 && worlds().length < 3) { worlds().push({ name: (recv && recv.name) || 'Shared World', made: Date.now(), ...packWorld(), played: Date.now() }); wslot = worlds().length - 1; K.persist(); t += ' It is saved in your world list.'; } say(t, 5, '#9fe8ff'); }
   function onLeave(id) { if (id === -1) { net = null; others.clear(); if (mode === 'play') adopt('Disconnected. You are playing alone now.'); return; } waiting.delete(id); const o = others.get(id); if (o) feedAdd(`${o.name} left the world`, '#ffb07a'); others.delete(id); }
   function onMsg(m) {
-    const from = m.from ?? m.id; if (m.t === 'dm') { feedAdd(String(m.s || '').slice(0, 90), '#ff8a8a'); return; }
+    const from = m.from ?? m.id; if (m.t === 'bd' && typeof m.k === 'string') { brokenDeco.add(m.k); return; } if (m.t === 'dm') { feedAdd(String(m.s || '').slice(0, 90), '#ff8a8a'); return; }
     if (m.t === 'lq' && liq && mode === 'play') { for (const [i, a, k] of m.c || []) if (i >= 0 && i < liq.length) { liq[i] = a; lqk[i] = a ? k : 0; } return; }
     if (m.t === 'w' && mode === 'recv') { recv.parts[m.i] = m.d; recv.n = m.n; if (recv.parts.filter(Boolean).length === m.n) { unpackWorld(JSON.parse(recv.parts.join(''))); enterWorld(); say(`Welcome to ${recv.name}!`, 4, '#7aff7a'); } return; }
     if (mode !== 'play') return;
@@ -2626,7 +2652,7 @@ const GAME = {
       ents = ents.filter(e => seen.has(e.id));
     }
   }
-  function enterWorld() { closeBook(); closeSettings(); minions = []; mapOpen = false; mapC = null; setTimeout(findTraps, 0); mode = 'play'; talk = null; shopK = null; rfOpen = false; rfItem = null; ents = []; drops = []; projs = []; pops = []; mine = null; invOpen = false; boss = null; won = null; dead = null; if (wslot >= 0 && isHost() && worlds()[wslot]) unpackWorld(worlds()[wslot]); newPlayer(); cam.x = P.x * TS - 640; cam.y = (P.y - 1.4) * TS - 380; computeLight(); say(online() ? 'Online! Your friends share this world.' : 'Chop trees, dig down, and light your way with torches.', 4); }
+  function enterWorld() { closeBook(); closeSettings(); minions = []; mapOpen = false; mapC = null; setTimeout(findTraps, 0); mode = 'play'; talk = null; shopK = null; rfOpen = false; rfItem = null; ents = []; drops = []; projs = []; pops = []; mine = null; invOpen = false; boss = null; won = null; dead = null; if (wslot >= 0 && isHost() && worlds()[wslot]) unpackWorld(worlds()[wslot]); newPlayer(); cam.x = P.x * TS - 640; cam.y = (P.y - 1.4) * TS - 380; computeLight(); if (online()) say('Online! Your friends share this world.', 4); }
 
   /* ---------- the loop ---------- */
   let openCh = null, hoverChest = -1, autoDoors = [], rfOpen = false, rfItem = null;   // the chest you have open, and doors that opened as you walked into them
@@ -2694,7 +2720,7 @@ const GAME = {
     const tx = P.x * TS - 640, ty = (P.y - 1.4) * TS - 380; cam.x += (tx - cam.x) * Math.min(1, dt * 10); cam.y += (ty - cam.y) * Math.min(1, dt * 10);
     { const v = WV(); cam.x = clamp(cam.x, -v.x0, WW * TS - v.x1); cam.y = clamp(cam.y, -200 - v.y0, WH * TS - v.y1); }
     computeLight();
-    hint = demo || talk || K.save.noHints || P.y - surf[clamp(Math.floor(P.x), 0, WW - 1)] > 8 ? null : !count('bench') && !stationNear(T.BENCH) && count('wood') < 10 ? (touch ? 'Chop a tree with your axe: hold your finger on the trunk. 10 wood makes a workbench.' : `Chop a tree with your axe (2): hold click on the trunk. 10 wood makes a workbench (${keyName(KB().inv)}).`) : !stationNear(T.FURNACE) && !count('furnace') && stationNear(T.BENCH) ? 'Next: a furnace (20 stone, 4 wood, 3 torches). Torches need gel from slimes.' : null;
+    hint = null;
     if ((saveT += dt) > 20 && !demo) { saveT = 0; saveAll(); }
   }
 
