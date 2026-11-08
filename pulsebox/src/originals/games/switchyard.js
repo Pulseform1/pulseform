@@ -7,6 +7,20 @@ const SY_SHIFTS=[
   {name:'AFTERNOON',sub:'Express trains: fast, worth 2.',time:180,spawn:[4.6,2.3],speed:54,express:.28,freight:0,bg:'#2b2a22'},
   {name:'NIGHT',sub:'Freight trains: long, slow, worth 3.',time:210,spawn:[4.3,2.1],speed:57,express:.25,freight:.22,bg:'#141b24'},
   {name:'ENDLESS',sub:'Three lives. How long can you last?',time:Infinity,spawn:[4.2,1.7],speed:56,express:.25,freight:.2,bg:'#221a2b'}];
+// scenery and rolling stock
+function syTree(x,y,s,night){rect(x-3*s,y,6*s,14*s,night?'#2a2018':'#5a3e26');circle(x,y-6*s,14*s,night?'#1d3a2c':'#3f7a4a');circle(x-9*s,y+1*s,10*s,night?'#18301f':'#356a3f');circle(x+9*s,y,11*s,night?'#204234':'#4a8a55')}
+function syTrack(x,y,a,b,night){const len=Math.hypot(a-x,b-y),ux=(a-x)/len,uy=(b-y)/len,nx=-uy,ny=ux;ctx.strokeStyle=night?'#2a2420':'#5a4030';ctx.lineWidth=4;ctx.lineCap='butt';ctx.beginPath();for(let d=6;d<len;d+=13){const px=x+ux*d,py=y+uy*d;ctx.moveTo(px+nx*9,py+ny*9);ctx.lineTo(px-nx*9,py-ny*9)}ctx.stroke();
+  for(const k of [-5,5]){line(x+nx*k,y+ny*k,a+nx*k,b+ny*k,'#1a1a1a',4);line(x+nx*k,y+ny*k-.8,a+nx*k,b+ny*k-.8,night?'#8a96a6':'#b9c2c8',1.6)}}
+function syTrain(t,c,night){const x=t.x,y=t.y;
+  if(t.kind==='freight'){rr(x-80,y-14,48,26,4,'#6f6a5e','#2a2a2a');for(let k=0;k<4;k++)line(x-74+k*12,y-10,x-74+k*12,y+8,'#58544a',2);circle(x-70,y+15,5,'#222');circle(x-42,y+15,5,'#222');line(x-32,y+4,x-26,y+4,'#222',3)}
+  if(night){const g=ctx.createRadialGradient(x+34,y,2,x+40,y,80);g.addColorStop(0,'rgba(255,240,180,.45)');g.addColorStop(1,'rgba(255,240,180,0)');ctx.fillStyle=g;ctx.fillRect(x+20,y-60,110,120)}
+  for(let k=0;k<4;k++){const ph=(totalTime*1.6+k/4+t.id*.37)%1;ctx.globalAlpha=(1-ph)*.55;circle(x+14-ph*46,y-26-ph*30,5+ph*11,night?'#8890a0':'#e8e8e8');ctx.globalAlpha=1}
+  rr(x-27,y-12,40,26,5,c,'#2a2a2a');rr(x-30,y-22,20,36,4,shadeHex(c,-.2),'#2a2a2a');rr(x-26,y-17,12,10,2,'#cfe8f0');
+  rr(x+8,y-9,22,20,8,shadeHex(c,-.1),'#2a2a2a');rr(x+12,y-22,8,13,2,'#3a3a3a');circle(x+31,y+1,4,'#fff6c0');
+  if(t.kind==='express'){line(x-26,y+5,x+28,y+5,'#ffffff',3);line(x-26,y+9,x+28,y+9,'#ffffff88',2)}
+  for(const wx of [-20,-4,14]){circle(x+wx,y+15,6,'#2a2a2a');circle(x+wx,y+15,2.5,'#9a9a9a')}line(x-20,y+15,x+14,y+15,'#8a8a8a',2);
+  text(t.id,x-7,y+1,10,'#1b2a2c','center',900)}
+const shadeHex=(h,k)=>shade(h,k);
 const sySave=loadSave({unlocked:1,stars:[0,0,0],best:0});
 GAMES.switchyard={
   init(){const again=state&&state.mode==='play'&&state.shift!==undefined;   // Play again replays the same shift
@@ -57,14 +71,11 @@ GAMES.switchyard={
       if(open)btn(i<3&&sySave.stars[i]?'Play again':'Start',x+32,y+236,131,42,()=>this.begin(i),'#3e5644');else text('🔒 Finish the shift before',x+97,y+256,12,'#6b7a70','center')})},
   draw(){if(state.mode==='menu')return this.drawMenu();const S=SY_SHIFTS[state.shift],night=state.shift===2;board(S.bg);
     heading('WESTFIELD RAIL / '+S.name+' SHIFT',(S.time===Infinity?Math.floor(state.clock)+'s':Math.ceil(Math.max(0,S.time-state.clock))+'s LEFT')+'  •  '+state.lives+' SIGNAL LIVES','#b7df94');
-    for(let x=60;x<900;x+=120){circle(x,112,12,night?'#1d2633':'#344638');circle(x+32,530,19,night?'#1d2633':'#344638')}
-    const track=(x,y,a,b)=>{line(x,y,a,b,'#111e1a',15);line(x,y,a,b,night?'#5d6a7a':'#7c8d7d',4)};track(0,302,710,302);track(245,302,355,195);track(355,195,900,195);track(490,302,600,195);track(710,302,820,195);track(710,302,820,410);track(820,410,900,410);
+    for(let x=60;x<900;x+=120){syTree(x,104,.9,night);syTree(x+40,540,1.15,night)}
+    const track=(x,y,a,b)=>syTrack(x,y,a,b,night);track(0,302,710,302);track(245,302,355,195);track(355,195,900,195);track(490,302,600,195);track(710,302,820,195);track(710,302,820,410);track(820,410,900,410);
     [245,490,710].forEach((x,i)=>{circle(x,302,19,'#d2cfaa');line(x-10,302,x+12,state.switches[i]===0?292:312,'#293c32',5);btn(String(i+1)+' '+(state.switches[i]===0?'UP':'DOWN'),x-51,350,102,37,()=>this.action(String(i)),'#3e5644')});
-    syStations.forEach(s=>{rr(841,s.y-48,104,35,6,s.c);text(s.name,893,s.y-31,11,'#1b302c','center',850);rr(894,s.y-9,54,18,3,'#bdb69b')});
-    state.trains.forEach(t=>{const c=syStations[t.target].c;if(night){const g=ctx.createRadialGradient(t.x+34,t.y,2,t.x+34,t.y,70);g.addColorStop(0,'rgba(255,240,180,.35)');g.addColorStop(1,'rgba(255,240,180,0)');ctx.fillStyle=g;ctx.fillRect(t.x,t.y-70,110,140)}
-      if(t.kind==='freight'){rr(t.x-74,t.y-13,44,26,4,'#6f6a5e','#c9c1a8');line(t.x-30,t.y,t.x-24,t.y,'#222',3)}
-      rr(t.x-27,t.y-15,55,30,6,c,t.kind==='express'?'#ffffff':'#f3e7cb');if(t.kind==='express'){line(t.x-24,t.y+6,t.x+24,t.y+6,'#ffffff',3);text('»',t.x-30,t.y-1,16,'#ffffff','center',900)}
-      rr(t.x+10,t.y-10,10,11,2,'#263f44');circle(t.x-14,t.y+16,4,'#111');circle(t.x+15,t.y+16,4,'#111');text(t.id,t.x-9,t.y,11,'#263b37','center')});
+    syStations.forEach(s=>{rr(846,s.y-62,96,44,4,'#e8dcc4','#5a4a3a');ctx.fillStyle=shade(s.c,-.25);ctx.beginPath();ctx.moveTo(838,s.y-60);ctx.lineTo(894,s.y-84);ctx.lineTo(950,s.y-60);ctx.fill();rr(852,s.y-52,84,18,4,s.c);text(s.name,894,s.y-43,11,'#1b302c','center',900);rr(872,s.y-32,12,14,2,night?'#ffd27a':'#6a8aa0');rr(904,s.y-32,12,14,2,night?'#ffd27a':'#6a8aa0');rr(894,s.y-11,54,20,3,'#bdb69b')});
+    state.trains.forEach(t=>syTrain(t,syStations[t.target].c,night));
     text('MAIN LINE',52,269,12,'#8da996');state.trains.forEach(t=>{if(t.waiting)circle(t.x+30,t.y-24,6,'#ff5a4a')});[600,820].forEach(mx=>circle(mx-60,180,5,state.trains.some(t=>t.waiting&&Math.abs(t.x-(mx-70))<4)?'#ff5a4a':'#5fe08a'));text('Upper exit → ORCHARD     Lower exit → next junction',480,480,15,'#b4c3b3','center');text(state.shift===0?'At junction 3, the lower exit leads to HARBOR.':'» express = 2 points   •   long freight = 3 points',480,512,14,'#8da996','center');
     if(state.over){const win=state.lives>0;done(win?(S.name[0]+S.name.slice(1).toLowerCase()+' shift complete'):'Shift interrupted',state.points+' points from '+state.delivered+' trains. '+(win?(state.shift<2?'The next shift is unlocked.':state.shift===2?'Endless mode is unlocked.':''):'Plan your switches one train ahead.'))}}
 };

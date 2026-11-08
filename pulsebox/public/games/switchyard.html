@@ -138,36 +138,72 @@ function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let
 function dailySeed() { return Math.floor(Date.now() / 86400000); }
 
 /* ---------- drawing helpers ---------- */
-function rr(x, y, w, h, r, fill, stroke) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); } }
+// rounded panels get depth for free: a soft top-to-bottom gradient, a thin top highlight, and a drop shadow when big
+const isHex = c => typeof c === 'string' && c.length === 7 && c[0] === '#';
+function rr(x, y, w, h, r, fill, stroke) {
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, r);
+  if (fill) {
+    if (isHex(fill) && w > 14 && h > 12) {
+      const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, shade(fill, .12)); g.addColorStop(.55, fill); g.addColorStop(1, shade(fill, -.16)); ctx.fillStyle = g;
+      if (w * h > 30000) { ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.38)'; ctx.shadowBlur = 22; ctx.shadowOffsetY = 8; ctx.fill(); ctx.restore(); }
+      else if (w * h > 1500) { ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.28)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2; ctx.fill(); ctx.restore(); }
+      else ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.13)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x + Math.min(r, w / 2), y + 1); ctx.lineTo(x + w - Math.min(r, w / 2), y + 1); ctx.stroke();
+      ctx.beginPath(); ctx.roundRect(x, y, w, h, r);
+    } else { ctx.fillStyle = fill; ctx.fill(); }
+  }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
+}
 function rect(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
-function circle(x, y, r, c, stroke) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); if (c) { ctx.fillStyle = c; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); } }
+// discs and balls get a soft shine from the top left
+function circle(x, y, r, c, stroke) {
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  if (c) { if (isHex(c) && r >= 7) { const g = ctx.createRadialGradient(x - r * .35, y - r * .4, r * .1, x, y, r); g.addColorStop(0, shade(c, .28)); g.addColorStop(.65, c); g.addColorStop(1, shade(c, -.18)); ctx.fillStyle = g; } else ctx.fillStyle = c; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
+}
 function line(x, y, xx, yy, c, width = 3) { ctx.strokeStyle = c; ctx.lineWidth = width; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(xx, yy); ctx.stroke(); }
-function text(s, x, y, size = 18, c = '#f5f0e4', align = 'left', weight = 600) { ctx.font = `${Math.min(900, Math.round(weight / 100) * 100)} ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.fillStyle = c; ctx.fillText(String(s), x, y); }
+function text(s, x, y, size = 18, c = '#f5f0e4', align = 'left', weight = 600) {
+  ctx.font = `${Math.min(900, Math.round(weight / 100) * 100)} ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.fillStyle = c;
+  if (size >= 22) { ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = size / 5; ctx.shadowOffsetY = size / 14; ctx.fillText(String(s), x, y); ctx.restore(); } else ctx.fillText(String(s), x, y);
+}
 function wrap(s, x, y, max, size = 18, c = '#f5f0e4', lh = 27) {
   ctx.font = `600 ${size}px ${FONT}`; let row = '', yy = y;
   for (const w of s.split(' ')) { if (ctx.measureText(row + w).width > max && row) { text(row, x, yy, size, c, 'left', 600); row = ''; yy += lh; } row += w + ' '; }
   text(row, x, yy, size, c, 'left', 600); return yy + lh;
 }
 function pill(s, x, y, c = '#d4fa82') { ctx.font = `700 12px ${FONT}`; rr(x, y, ctx.measureText(s).width + 24, 28, 14, '#25303a'); text(s, x + 12, y + 14, 12, c, 'left', 700); }
+// the backdrop: base color, a pool of light in the game's accent color, fine grain, and a vignette
+let grain = null;
 function board(bg = '#19242b') {
   rect(0, 0, W, H, bg);
-  const g = ctx.createRadialGradient(W / 2, H * .35, 60, W / 2, H / 2, W * .75); g.addColorStop(0, 'rgba(255,255,255,.05)'); g.addColorStop(1, 'rgba(0,0,0,.28)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  for (let x = 20; x < W; x += 32) for (let y = 20; y < H; y += 32) circle(x, y, 1, '#ffffff0a');
+  if (!grain) { const c = document.createElement('canvas'); c.width = c.height = 160; const g = c.getContext('2d'), r = rng(3); for (let i = 0; i < 2600; i++) { g.fillStyle = r() < .5 ? `rgba(255,255,255,${r() * .05})` : `rgba(0,0,0,${r() * .09})`; g.fillRect(r() * 160, r() * 160, 1 + r() * 1.5, 1 + r() * 1.5); } grain = ctx.createPattern(c, 'repeat'); }
+  const glow = ctx.createRadialGradient(W * .5, -60, 40, W * .5, 40, W * .8); glow.addColorStop(0, META.color + '2a'); glow.addColorStop(1, META.color + '00'); ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = grain; ctx.fillRect(0, 0, W, H);
+  const g = ctx.createRadialGradient(W / 2, H * .42, 120, W / 2, H / 2, W * .72); g.addColorStop(0, 'rgba(255,255,255,.04)'); g.addColorStop(1, 'rgba(0,0,0,.42)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 }
-function heading(a, b, c = META.color) { text(a, 34, 37, 15, c, 'left', 900); text(b, 926, 37, 13, '#aeb7c5', 'right', 700); line(32, 65, 928, 65, '#ffffff15', 1); }
+function heading(a, b, c = META.color) {
+  ctx.save(); ctx.shadowColor = c; ctx.shadowBlur = 10; circle(40, 37, 4, c); ctx.restore();
+  text(a, 52, 37, 15, c, 'left', 900); text(b, 926, 37, 13, '#aeb7c5', 'right', 700);
+  const g = ctx.createLinearGradient(32, 0, 928, 0); g.addColorStop(0, c + '66'); g.addColorStop(.5, '#ffffff1a'); g.addColorStop(1, '#ffffff05'); ctx.strokeStyle = g; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(32, 65); ctx.lineTo(928, 65); ctx.stroke();
+}
 // a button drawn on the canvas: it lifts and brightens under the pointer and dips when pressed
 function btn(label, x, y, w, h, fn, color = '#303b46') {
   const on = hover && hover.x === x && hover.y === y && hover.w === w, dn = on && pointer.down, oy = dn ? 2 : on ? -1 : 0;
-  rr(x, y + 3, w, h, 9, 'rgba(0,0,0,.28)'); rr(x, y + oy, w, h, 9, color); if (on) rr(x, y + oy, w, h, 9, 'rgba(255,255,255,.1)');
-  rr(x + 1, y + oy + 1, w - 2, h * .45, 8, 'rgba(255,255,255,.06)');
+  rr(x, y + 4, w, h, 10, 'rgba(0,0,0,.35)');
+  if (on) { ctx.save(); ctx.shadowColor = META.color; ctx.shadowBlur = 14; rr(x, y + oy, w, h, 10, color); ctx.restore(); }
+  const c = isHex(color) ? color : '#303b46', g = ctx.createLinearGradient(0, y + oy, 0, y + oy + h); g.addColorStop(0, shade(c, on ? .3 : .2)); g.addColorStop(1, shade(c, -.12));
+  ctx.beginPath(); ctx.roundRect(x, y + oy, w, h, 10); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = on ? META.color + 'cc' : 'rgba(255,255,255,.14)'; ctx.lineWidth = 1.2; ctx.stroke();
+  rr(x + 2, y + oy + 2, w - 4, h * .42, 8, 'rgba(255,255,255,.08)');
   text(label, x + w / 2, y + h / 2 + oy, 15, '#f6f4ed', 'center', 800); buttons.push({ x, y, w, h, fn });
 }
 // the end of a game: a card with a replay button, and a celebration (once per game)
 let doneFor = null;
 function done(title, sub) {
   if (doneFor !== state) { doneFor = state; celebrate(!/interrupt|locked|lost|fail|over|bust|out of/i.test(title)); }
-  rect(0, 0, W, H, 'rgba(8,10,16,.45)');
-  rr(180, 182, 600, 232, 20, '#111921f5', META.color + '88'); rr(180, 182, 600, 6, 3, META.color);
+  rect(0, 0, W, H, 'rgba(8,10,16,.55)');
+  ctx.save(); ctx.shadowColor = META.color; ctx.shadowBlur = 40; rr(180, 182, 600, 232, 22, '#111921'); ctx.restore();
+  const cg = ctx.createLinearGradient(0, 182, 0, 414); cg.addColorStop(0, '#1d2733'); cg.addColorStop(1, '#0f151c'); ctx.beginPath(); ctx.roundRect(180, 182, 600, 232, 22); ctx.fillStyle = cg; ctx.fill(); ctx.strokeStyle = META.color + 'aa'; ctx.lineWidth = 2; ctx.stroke();
+  rr(180, 182, 600, 6, 3, META.color);
   text(title, 480, 240, 36, META.color, 'center', 900); wrap(sub, 225, 290, 510, 18, '#dae0e4');
   btn('Play again', 365, 352, 230, 46, () => reset(), shade(META.color, -.45));
 }
@@ -306,6 +342,20 @@ const SY_SHIFTS=[
   {name:'AFTERNOON',sub:'Express trains: fast, worth 2.',time:180,spawn:[4.6,2.3],speed:54,express:.28,freight:0,bg:'#2b2a22'},
   {name:'NIGHT',sub:'Freight trains: long, slow, worth 3.',time:210,spawn:[4.3,2.1],speed:57,express:.25,freight:.22,bg:'#141b24'},
   {name:'ENDLESS',sub:'Three lives. How long can you last?',time:Infinity,spawn:[4.2,1.7],speed:56,express:.25,freight:.2,bg:'#221a2b'}];
+// scenery and rolling stock
+function syTree(x,y,s,night){rect(x-3*s,y,6*s,14*s,night?'#2a2018':'#5a3e26');circle(x,y-6*s,14*s,night?'#1d3a2c':'#3f7a4a');circle(x-9*s,y+1*s,10*s,night?'#18301f':'#356a3f');circle(x+9*s,y,11*s,night?'#204234':'#4a8a55')}
+function syTrack(x,y,a,b,night){const len=Math.hypot(a-x,b-y),ux=(a-x)/len,uy=(b-y)/len,nx=-uy,ny=ux;ctx.strokeStyle=night?'#2a2420':'#5a4030';ctx.lineWidth=4;ctx.lineCap='butt';ctx.beginPath();for(let d=6;d<len;d+=13){const px=x+ux*d,py=y+uy*d;ctx.moveTo(px+nx*9,py+ny*9);ctx.lineTo(px-nx*9,py-ny*9)}ctx.stroke();
+  for(const k of [-5,5]){line(x+nx*k,y+ny*k,a+nx*k,b+ny*k,'#1a1a1a',4);line(x+nx*k,y+ny*k-.8,a+nx*k,b+ny*k-.8,night?'#8a96a6':'#b9c2c8',1.6)}}
+function syTrain(t,c,night){const x=t.x,y=t.y;
+  if(t.kind==='freight'){rr(x-80,y-14,48,26,4,'#6f6a5e','#2a2a2a');for(let k=0;k<4;k++)line(x-74+k*12,y-10,x-74+k*12,y+8,'#58544a',2);circle(x-70,y+15,5,'#222');circle(x-42,y+15,5,'#222');line(x-32,y+4,x-26,y+4,'#222',3)}
+  if(night){const g=ctx.createRadialGradient(x+34,y,2,x+40,y,80);g.addColorStop(0,'rgba(255,240,180,.45)');g.addColorStop(1,'rgba(255,240,180,0)');ctx.fillStyle=g;ctx.fillRect(x+20,y-60,110,120)}
+  for(let k=0;k<4;k++){const ph=(totalTime*1.6+k/4+t.id*.37)%1;ctx.globalAlpha=(1-ph)*.55;circle(x+14-ph*46,y-26-ph*30,5+ph*11,night?'#8890a0':'#e8e8e8');ctx.globalAlpha=1}
+  rr(x-27,y-12,40,26,5,c,'#2a2a2a');rr(x-30,y-22,20,36,4,shadeHex(c,-.2),'#2a2a2a');rr(x-26,y-17,12,10,2,'#cfe8f0');
+  rr(x+8,y-9,22,20,8,shadeHex(c,-.1),'#2a2a2a');rr(x+12,y-22,8,13,2,'#3a3a3a');circle(x+31,y+1,4,'#fff6c0');
+  if(t.kind==='express'){line(x-26,y+5,x+28,y+5,'#ffffff',3);line(x-26,y+9,x+28,y+9,'#ffffff88',2)}
+  for(const wx of [-20,-4,14]){circle(x+wx,y+15,6,'#2a2a2a');circle(x+wx,y+15,2.5,'#9a9a9a')}line(x-20,y+15,x+14,y+15,'#8a8a8a',2);
+  text(t.id,x-7,y+1,10,'#1b2a2c','center',900)}
+const shadeHex=(h,k)=>shade(h,k);
 const sySave=loadSave({unlocked:1,stars:[0,0,0],best:0});
 GAMES.switchyard={
   init(){const again=state&&state.mode==='play'&&state.shift!==undefined;   // Play again replays the same shift
@@ -356,14 +406,11 @@ GAMES.switchyard={
       if(open)btn(i<3&&sySave.stars[i]?'Play again':'Start',x+32,y+236,131,42,()=>this.begin(i),'#3e5644');else text('🔒 Finish the shift before',x+97,y+256,12,'#6b7a70','center')})},
   draw(){if(state.mode==='menu')return this.drawMenu();const S=SY_SHIFTS[state.shift],night=state.shift===2;board(S.bg);
     heading('WESTFIELD RAIL / '+S.name+' SHIFT',(S.time===Infinity?Math.floor(state.clock)+'s':Math.ceil(Math.max(0,S.time-state.clock))+'s LEFT')+'  •  '+state.lives+' SIGNAL LIVES','#b7df94');
-    for(let x=60;x<900;x+=120){circle(x,112,12,night?'#1d2633':'#344638');circle(x+32,530,19,night?'#1d2633':'#344638')}
-    const track=(x,y,a,b)=>{line(x,y,a,b,'#111e1a',15);line(x,y,a,b,night?'#5d6a7a':'#7c8d7d',4)};track(0,302,710,302);track(245,302,355,195);track(355,195,900,195);track(490,302,600,195);track(710,302,820,195);track(710,302,820,410);track(820,410,900,410);
+    for(let x=60;x<900;x+=120){syTree(x,104,.9,night);syTree(x+40,540,1.15,night)}
+    const track=(x,y,a,b)=>syTrack(x,y,a,b,night);track(0,302,710,302);track(245,302,355,195);track(355,195,900,195);track(490,302,600,195);track(710,302,820,195);track(710,302,820,410);track(820,410,900,410);
     [245,490,710].forEach((x,i)=>{circle(x,302,19,'#d2cfaa');line(x-10,302,x+12,state.switches[i]===0?292:312,'#293c32',5);btn(String(i+1)+' '+(state.switches[i]===0?'UP':'DOWN'),x-51,350,102,37,()=>this.action(String(i)),'#3e5644')});
-    syStations.forEach(s=>{rr(841,s.y-48,104,35,6,s.c);text(s.name,893,s.y-31,11,'#1b302c','center',850);rr(894,s.y-9,54,18,3,'#bdb69b')});
-    state.trains.forEach(t=>{const c=syStations[t.target].c;if(night){const g=ctx.createRadialGradient(t.x+34,t.y,2,t.x+34,t.y,70);g.addColorStop(0,'rgba(255,240,180,.35)');g.addColorStop(1,'rgba(255,240,180,0)');ctx.fillStyle=g;ctx.fillRect(t.x,t.y-70,110,140)}
-      if(t.kind==='freight'){rr(t.x-74,t.y-13,44,26,4,'#6f6a5e','#c9c1a8');line(t.x-30,t.y,t.x-24,t.y,'#222',3)}
-      rr(t.x-27,t.y-15,55,30,6,c,t.kind==='express'?'#ffffff':'#f3e7cb');if(t.kind==='express'){line(t.x-24,t.y+6,t.x+24,t.y+6,'#ffffff',3);text('»',t.x-30,t.y-1,16,'#ffffff','center',900)}
-      rr(t.x+10,t.y-10,10,11,2,'#263f44');circle(t.x-14,t.y+16,4,'#111');circle(t.x+15,t.y+16,4,'#111');text(t.id,t.x-9,t.y,11,'#263b37','center')});
+    syStations.forEach(s=>{rr(846,s.y-62,96,44,4,'#e8dcc4','#5a4a3a');ctx.fillStyle=shade(s.c,-.25);ctx.beginPath();ctx.moveTo(838,s.y-60);ctx.lineTo(894,s.y-84);ctx.lineTo(950,s.y-60);ctx.fill();rr(852,s.y-52,84,18,4,s.c);text(s.name,894,s.y-43,11,'#1b302c','center',900);rr(872,s.y-32,12,14,2,night?'#ffd27a':'#6a8aa0');rr(904,s.y-32,12,14,2,night?'#ffd27a':'#6a8aa0');rr(894,s.y-11,54,20,3,'#bdb69b')});
+    state.trains.forEach(t=>syTrain(t,syStations[t.target].c,night));
     text('MAIN LINE',52,269,12,'#8da996');state.trains.forEach(t=>{if(t.waiting)circle(t.x+30,t.y-24,6,'#ff5a4a')});[600,820].forEach(mx=>circle(mx-60,180,5,state.trains.some(t=>t.waiting&&Math.abs(t.x-(mx-70))<4)?'#ff5a4a':'#5fe08a'));text('Upper exit → ORCHARD     Lower exit → next junction',480,480,15,'#b4c3b3','center');text(state.shift===0?'At junction 3, the lower exit leads to HARBOR.':'» express = 2 points   •   long freight = 3 points',480,512,14,'#8da996','center');
     if(state.over){const win=state.lives>0;done(win?(S.name[0]+S.name.slice(1).toLowerCase()+' shift complete'):'Shift interrupted',state.points+' points from '+state.delivered+' trains. '+(win?(state.shift<2?'The next shift is unlocked.':state.shift===2?'Endless mode is unlocked.':''):'Plan your switches one train ahead.'))}}
 };
