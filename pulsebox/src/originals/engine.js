@@ -104,7 +104,7 @@ function action(label, name, primary = false) { return `<button ${primary ? 'cla
 function saveBest(value) { try { const key = 'pbx-pack-' + ID; const old = Number(localStorage.getItem(key) || 0); if (value > old) localStorage.setItem(key, value); document.getElementById('best').textContent = Math.max(value, old); } catch (e) {} }
 function reset() {
   state = GAMES[ID].init(); doneFor = null; lastMetric = null; keys = {}; pointer.down = false; uiKey = ''; FX.parts = []; FX.pops = [];
-  if (started) setPaused(false);
+  if (started && document.getElementById('start').hidden) setPaused(false);   // not behind the help card
   GAMES[ID].ui?.(); render();
 }
 
@@ -140,12 +140,14 @@ window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) e.preventDefault();
   if (!started && (e.key === 'Enter' || e.key === ' ')) return start();
+  // Enter/Space on a focused button presses that button; it must not also reach the game
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('button')) return;
   if (e.key === 'Escape' || e.key.toLowerCase() === 'p') { if (started) setPaused(!paused); return; }
   keys[e.key.toLowerCase()] = true; if (!paused && !e.repeat) GAMES[ID].key?.(e.key.toLowerCase()); render();
 });
 window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 window.addEventListener('blur', () => { keys = {}; pointer.down = false; if (started && !paused) setPaused(true); });
-document.getElementById('controls').addEventListener('click', e => { const b = e.target.closest('[data-action]'); if (b && !paused) { ac(); tone(560, .05, 'triangle', .035); GAMES[ID].action?.(b.dataset.action); render(); } });
+document.getElementById('controls').addEventListener('click', e => { const b = e.target.closest('[data-action]'); if (b && !paused) { ac(); tone(560, .05, 'triangle', .035); GAMES[ID].action?.(b.dataset.action); render(); if (e.detail) { b.blur(); C.focus({ preventScroll: true }); } } });   // after a click, keys go back to the game
 
 /* ---------- start card, pause, sound, help ---------- */
 const $ = id => document.getElementById(id);
