@@ -9,12 +9,18 @@ only = set(sys.argv[1:])
 # Pages kept exactly as they are live: Strata and Siegeworks were updated and deployed by another session with their own
 # copies of the kit and the multiplayer library (a volume setting, no-shake option, crash guard, Strata's pixel-style
 # screens and join-a-match fix). Rebuilding them from src/ with this kit would undo that, so they are never rebuilt here.
-# src/games/strata.js and siegeworks.js hold their current game code; edit the page in public/games/ to change them.
+# Their game code still comes from src/games/strata.js and siegeworks.js: only that part of the page is refreshed.
 FROZEN = {'strata', 'siegeworks'}
 for path in sorted(glob.glob(os.path.join(HERE, 'src', 'games', '*.js'))):
     gid = os.path.splitext(os.path.basename(path))[0]
     if only and gid not in only: continue
-    if gid in FROZEN: print(gid, 'kept as is (frozen, see FROZEN)'); continue
+    if gid in FROZEN:   # keep the page's own kit and multiplayer copies; refresh only the game's code from src/
+        out = os.path.join(HERE, 'public', 'games', gid + '.html'); page = open(out, encoding='utf-8').read()
+        a, b = page.index('// @use mp\n'), page.index('/* Pulsebox game kit')
+        seg = page[a:b]; game = open(path, encoding='utf-8').read().rstrip('\n') + '\n' * max(1, len(seg) - len(seg.rstrip('\n')))   # keep the spacing as it was
+        new = page[:a] + game + page[b:]
+        if new != page: open(out, 'w', encoding='utf-8').write(new)
+        print(gid, 'frozen page, game code', 'updated' if new != page else 'unchanged'); continue
     js = open(path, encoding='utf-8').read()
     # shared code a game asks for with a line like  // @use person  (from src/lib/person.js)
     for lib in re.findall(r'^// @use (\w+)', js, re.M): js = src('lib', lib + '.js') + '\n' + js
