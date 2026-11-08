@@ -19,11 +19,15 @@ const GAME = {
   how: [
     'Two islands, two forts, one goal: destroy the enemy Core before they destroy yours.',
     'BUILD: pick Wood, Steel or Armor and drag from a bolt or your ground. Triangles are strong; unbraced towers fold and snap. BOX pulls out braced boxes. G snaps to a grid, Z undoes and Y redoes. UPGRADE also turns a beam into the next material.',
-    'RESOURCES: METAL pays for building and every shot (Metal drills on your ground; Storage silos raise the limit). ENERGY from Generators runs advanced weapons, Deflectors, Repair bays and Research labs. RESEARCH from labs unlocks the TECH tree (T): Structural, Energy, Industrial and Defensive.',
+    'RESOURCES: METAL pays for building and every shot (Metal drills go on the four dark ore deposits on your island; Storage silos raise the limit). ENERGY from Generators runs advanced weapons, Deflectors, Repair bays and Research labs. RESEARCH from labs unlocks the TECH tree (T): Structural, Energy, Industrial and Defensive.',
     'INSPECT (I) shows the health, load and support of any piece; the STRESS view (V) colours every beam by the force it carries. Wind, low gravity and lightning depend on the map.',
     'REPAIR: press R to fix everything damaged near the cursor, once every 2s. FIGHT: click a weapon, point at the target and click to fire: the shot is aimed to land where you point. Shift+click groups weapons, F picks the next one, right-click puts it down. Each weapon has a firing arc, and only the start of each shot path is shown. Devices go inside your boxes; drills go on the ground.',
     'NEW KIT: Rope is cheap and light, only pulls, and shots fly through it. In the SPECIAL tab, the Howitzer lobs huge shells a long way, the Buzzsaw flings a blade that slices through beam after beam, Smoke blinds Flak and swallows lasers, and the Magnet pushes enemy shells away (it uses energy). Sandbags soak up bullets, Decoy cores pull missiles and fool the computer, and Wind turbines make free energy if their blades have open air above them (more on windy maps).',
     'BACKING: your boxes are see-through to you but solid to the enemy, so guns and devices inside them are hidden until they fire or get hit. If your Core\'s supports are shot out and it crashes down, it takes damage.',
+    'DOORS: a shot leaves the box its gun sits in, but your other walls stop it (and it hurts them). Put a Door where your shots need to get out: tap a beam with the Door tool to turn it into one. Doors swing open for your own shots and stay shut to the enemy\'s.',
+    'WORKS: the Workshop unlocks Mortars, Firebombs, Rockets, the Buzzsaw and Smoke; the Armoury unlocks Snipers, Flak, EMP, Deflectors, the Magnet and the Factory; the Factory unlocks Cluster bombs, Swarm missiles, the Railgun, the Laser and the Howitzer.',
+    'EMP knocks out every enemy device it lands near for a few seconds: guns, Deflectors, Flak, drills and generators. BATTERIES store energy. Upgrades add perks: AP sniper rounds (level 2), the Heavy mortar, Shotgun flak, a longer EMP and a double-shot cannon (level 3).',
+    'ABILITY (E): each commander has one, with a cooldown. Architect: LOCKDOWN, your beams take no damage for 6s. Industrialist: OVERDRIVE, weapons reload 2.5x faster and shots cost no metal for 8s. Engineer: QUICK FIX heals everything 40%. Innovator: SURGE fills your energy, recharges Deflectors and clears EMP.',
     'Pick a commander, a map and a mode: Duel, Survival, Engineering challenges or Sandbox. Earn XP, ranks, achievements and fort colours.',
   ],
   skins: [{ name: 'Classic', price: 0 }],
@@ -36,13 +40,14 @@ const GAME = {
   const ISL = [{ x0: 90, x1: 790 }, { x0: 2010, x1: 2710 }];
   const ZONE = [{ x0: 110, x1: 770, y0: -160 }, { x0: 2030, x1: 2690, y0: -160 }];
   const SIDEC = ['#ffb02e', '#5fd4ff'], SIDEC2 = ['#ff6a3d', '#3d7bff'];
-  const groundY = x => { for (let s = 0; s < 2; s++) { const I = ISL[s]; if (x >= I.x0 && x <= I.x1) { const u = (x - I.x0) / (I.x1 - I.x0); return GY - Math.pow(Math.sin(u * Math.PI), 2) * ENV.hill + (Math.sin(u * 11 + s * 2) * 5 + Math.sin(u * 29 + s) * 2) * ENV.rough + (u < .06 ? Math.pow(1 - u / .06, 2) * 44 : u > .94 ? Math.pow((u - .94) / .06, 2) * 44 : 0); } } return Infinity; };
+  const groundY = x => { for (let s = 0; s < 2; s++) { const I = ISL[s]; if (x >= I.x0 && x <= I.x1) { const u = (x - I.x0) / (I.x1 - I.x0); return GY + (ENV.prof ? ENV.prof(s ? 1 - u : u) : 0) - Math.pow(Math.sin(u * Math.PI), 2) * ENV.hill + (Math.sin(u * 11 + s * 2) * 5 + Math.sin(u * 29 + s) * 2) * ENV.rough + (u < .06 ? Math.pow(1 - u / .06, 2) * 44 : u > .94 ? Math.pow((u - .94) / .06, 2) * 44 : 0); } } return Infinity; };
   // how much each kind of hit hurts each material
   const MAT = {
     wood: { name: 'Wood', cost: 8, hp: 55, maxF: 9000, comp: 1.2e-5, kg: 1, col: '#9a6532', dark: '#5e3a1c', burn: true, res: { bullet: 1, shell: 1, blast: 1, beam: 1 } },
     steel: { name: 'Steel', cost: 36, hp: 150, maxF: 26000, comp: 3e-6, kg: 2.3, col: '#8792a3', dark: '#454d5c', res: { bullet: .55, shell: 1, blast: .9, beam: 1 } },
     armor: { name: 'Armor', cost: 70, hp: 300, maxF: 34000, comp: 2e-6, kg: 4.2, col: '#5c6472', dark: '#272c36', res: { bullet: .2, shell: .75, blast: .6, beam: 1 } },
     rope: { name: 'Rope', cost: 4, hp: 35, maxF: 9000, comp: 1.5e-5, kg: .25, col: '#c8a46a', dark: '#6a5030', rope: true, burn: true, res: { bullet: .3, shell: .6, blast: 1, beam: 1 } },   // only pulls; shots fly through it
+    door: { name: 'Door', cost: 40, hp: 160, maxF: 30000, comp: 3e-6, kg: 2.6, col: '#3f7fa8', dark: '#173248', door: true, res: { bullet: .45, shell: .9, blast: .85, beam: 1 } },   // your own shots pass through it
   };
   // ammo: oil per salvo, pw: power per salvo. beamMul: how hard it hits beams (snipers barely scratch them)
   const DEV = {
@@ -73,20 +78,33 @@ const GAME = {
   DEV.decoy = { name: 'Decoy core', short: 'Decoy', cost: 60, hp: 70, kg: 2, r: 16 };
   DEV.wind = { name: 'Wind turbine', short: 'Turbine', cost: 120, hp: 70, kg: 3, r: 16 };
   DEV.sand = { name: 'Sandbags', cost: 25, hp: 240, kg: 6, r: 15, res: { bullet: .25, shell: .7, blast: .6, beam: .8 } };
+  const MATK = ['wood', 'steel', 'armor', 'rope', 'door'];
   const devRes = (d, cls) => { const r = DEV[d.type].res; return r && r[cls] !== undefined ? r[cls] : 1; };   // sandbags shrug off bullets
+  DEV.emp = { name: 'EMP launcher', short: 'EMP', cost: 220, hp: 100, kg: 3.5, r: 15, reload: 11, speed: [550, 1150], g: .8, dmg: 10, blast: 110, emp: 7, cls: 'blast', spread: .015, ammo: 12, pw: 20 };
+  DEV.battery = { name: 'Battery', cost: 110, hp: 80, kg: 4, r: 14 };
+  DEV.workshop = { name: 'Workshop', cost: 150, hp: 150, kg: 5, r: 20 };
+  DEV.armoury = { name: 'Armoury', cost: 200, hp: 160, kg: 5, r: 20 };
+  DEV.factory = { name: 'Factory', cost: 300, hp: 170, kg: 6, r: 22 };
+  // what each tech building unlocks (it has to stand somewhere in your fort while you build)
+  const NEEDS = { mortar: 'workshop', fire: 'workshop', rockets: 'workshop', saw: 'workshop', smoke: 'workshop', sniper: 'armoury', flak: 'armoury', emp: 'armoury', shield: 'armoury', magnet: 'armoury', factory: 'armoury', cluster: 'factory', swarm: 'factory', rail: 'factory', laser: 'factory', howitzer: 'factory' };
+  const techOK = (F, k) => !NEEDS[k] || (F && F.inf) || F.devs.some(d => d.alive && d.type === NEEDS[k]);
+  const needFor = (F, k) => { for (let i = 0; i < 3 && !techOK(F, k); i++) k = NEEDS[k]; return k; };   // what the computer has to build first
+  // what upgrading a weapon adds besides damage and reload
+  const PERK = { sniper: { 2: 'AP rounds: pierces one beam' }, mortar: { 3: 'Heavy mortar: a 60% bigger blast' }, flak: { 3: 'Shotgun: knocks down two shots at once' }, emp: { 3: 'Long blackout: lasts 50% longer' }, cannon: { 3: 'Double shot' } };
+  const perkAt = (k, lv) => (PERK[k] || {})[lv] || '';
   DEV.weight = { name: 'Test weight', cost: 0, hp: 5000, kg: 12, r: 14 };
   DEV.meteor = { name: 'Meteor', g: 1, dmg: 80, blast: 58, cls: 'blast', ignite: true, r: 6, nowind: true };
   for (const k in MAT) MAT[k].hp *= 2;   // sturdier forts: beams take twice the punishment, devices half again (the Core is unchanged)
   for (const k in DEV) if (k !== 'core' && DEV[k].hp) DEV[k].hp = Math.round(DEV[k].hp * 1.5);
-  const WEAP = ['cannon', 'mg', 'sniper', 'rail', 'laser', 'mortar', 'fire', 'cluster', 'rockets', 'swarm', 'howitzer', 'saw', 'smoke'];
+  const WEAP = ['cannon', 'mg', 'sniper', 'rail', 'laser', 'mortar', 'fire', 'cluster', 'rockets', 'swarm', 'howitzer', 'saw', 'smoke', 'emp'];
   const hitR = t => DEV[t].r * (WEAP.includes(t) ? 1.7 : 1);   // weapons are bigger targets
-  const TABS = [['BUILD', ['wood', 'steel', 'armor', 'box', 'sel']], ['GUNS', ['cannon', 'mg', 'sniper', 'rail', 'laser']], ['HEAVY', ['mortar', 'fire', 'cluster', 'rockets', 'swarm']], ['ECONOMY', ['pump', 'gen', 'silo', 'lab', 'wind']], ['DEFENSE', ['shield', 'flak', 'repair', 'sand', 'decoy']], ['SPECIAL', ['howitzer', 'saw', 'smoke', 'magnet', 'rope']]];
+  const TABS = [['BUILD', ['wood', 'steel', 'armor', 'box', 'sel']], ['FORT', ['door', 'rope', 'sand', 'decoy', 'battery']], ['GUNS', ['cannon', 'mg', 'sniper', 'rail', 'laser']], ['HEAVY', ['mortar', 'fire', 'cluster', 'rockets', 'swarm']], ['SPECIAL', ['howitzer', 'saw', 'smoke', 'emp', 'magnet']], ['ECONOMY', ['pump', 'gen', 'silo', 'lab', 'wind']], ['DEFENSE', ['shield', 'flak', 'repair']], ['WORKS', ['workshop', 'armoury', 'factory']]];
   // the economy: oil from the Core and pumps, power from the Core and generators (which burn oil)
   const pumpRate = d => 6 + 3 * (d.lv - 1), genOut = d => 6 + 3 * (d.lv - 1), genBurn = d => 0;
   const labRate = d => 1 + .6 * (d.lv - 1), labUse = d => 2 + (d.lv - 1);
   function econ(F) {   // pump: metal in; out: energy made; cap: energy storage; mcap: metal storage; rp: research per second (if the energy is there)
     const M = MD(F); let pump = F.noInc ? 0 : 3 + M.passive + (F.bonusInc || 0), burn = 0, out = 0, cap = 120 + M.enCap, mcap = 1500 + M.metalCap, rp = 0, use = 0;
-    for (const d of F.devs) { if (!d.alive) continue; if (d.type === 'pump') pump += F.noInc ? 0 : pumpRate(d) * M.mine; else if (d.type === 'gen') { out += genOut(d) * M.genOut; cap += 150 + 60 * (d.lv - 1); } else if (d.type === 'wind') out += windOut(F, d) * M.genOut; else if (d.type === 'silo') { mcap += 600 * (1 + .5 * (d.lv - 1)); cap += 80 * d.lv; } else if (d.type === 'lab') { rp += labRate(d) * M.research; use += labUse(d) * M.enUse; } }
+    for (const d of F.devs) { if (!d.alive) continue; const off = d.emp > 0; if (d.type === 'pump') pump += F.noInc || off ? 0 : pumpRate(d) * M.mine; else if (d.type === 'gen') { if (!off) out += genOut(d) * M.genOut; cap += 150 + 60 * (d.lv - 1); } else if (d.type === 'wind') { if (!off) out += windOut(F, d) * M.genOut; } else if (d.type === 'battery') cap += 250 + 100 * (d.lv - 1); else if (d.type === 'silo') { mcap += 600 * (1 + .5 * (d.lv - 1)); cap += 80 * d.lv; } else if (d.type === 'lab' && !off) { rp += labRate(d) * M.research; use += labUse(d) * M.enUse; } }
     return { pump, burn, out, cap, mcap, rp, use };
   }
   // a wind turbine wants open air above its blades: each beam over it, past the box it sits in, costs a third of its output
@@ -104,7 +122,7 @@ const GAME = {
   let rnd = Math.random;
 
   /* ---------- what research and commanders change: one set of numbers per fort, read wherever the rule applies ---------- */
-  function mkMods() { return { beamHp: { wood: 1, steel: 1, armor: 1, rope: 1 }, beamF: { wood: 1, steel: 1, armor: 1, rope: 1 }, armorRes: 1, beamCost: 1, beamKg: 1, holdT: 0, devCost: 1, mine: 1, passive: 0, metalCap: 0, enCap: 0, genOut: 1, coreEn: 0, enUse: 1, shield: 1, shRate: 1, domeR: 0, flakRate: 1, flakRange: 0, fixCD: FIX_CD, fixR: 0, fixCost: 1, heal: 1, dmg: 1, research: 1, resTime: 1, refund: .5, windK: 1, hazard: 1, burn: 1, spread: 1, ignite: 1, weatherproof: false }; }
+  function mkMods() { return { beamHp: { wood: 1, steel: 1, armor: 1, rope: 1, door: 1 }, beamF: { wood: 1, steel: 1, armor: 1, rope: 1, door: 1 }, armorRes: 1, beamCost: 1, beamKg: 1, holdT: 0, devCost: 1, mine: 1, passive: 0, metalCap: 0, enCap: 0, genOut: 1, coreEn: 0, enUse: 1, shield: 1, shRate: 1, domeR: 0, flakRate: 1, flakRange: 0, fixCD: FIX_CD, fixR: 0, fixCost: 1, heal: 1, dmg: 1, research: 1, resTime: 1, refund: .5, windK: 1, hazard: 1, burn: 1, spread: 1, ignite: 1, weatherproof: false }; }
   const BASEM = mkMods(), MD = F => (F && F.mods) || BASEM;
   const mc = (F, k) => Math.max(1, Math.round(MAT[k].cost * MD(F).beamCost));   // what a beam of this material costs this fort
   const bMax = b => b.max || MAT[b.mat].hp, bF = b => b.maxF || MAT[b.mat].maxF;   // a beam's full health and breaking force
@@ -144,6 +162,24 @@ const GAME = {
     engineer: { name: 'Engineer', desc: 'Repairs recharge 30% sooner and cost 30% less; Repair bays heal 40% more.', minus: 'Weapons deal 8% less damage.', perks: ['Area repair reaches 15 wider', 'Repairs cost another 15% less'], fx: (m, lv) => { m.fixCD *= .7; m.fixCost *= .7; m.heal *= 1.4; m.dmg *= .92; if (lv >= 3) m.fixR += 15; if (lv >= 5) m.fixCost *= .85; } },
     innovator: { name: 'Innovator', desc: 'Labs make 50% more research and every tech finishes 25% sooner.', minus: 'Drills dig 15% less.', perks: ['Labs use 20% less energy', 'Start each match with 60 research'], fx: (m, lv) => { m.research *= 1.5; m.resTime *= .75; m.mine *= .85; if (lv >= 3) m.enUse *= .8; } },
   };
+  // each commander's ability: used with E (or its button), then it recharges
+  const ABIL = {
+    architect: { name: 'LOCKDOWN', desc: 'For 6 seconds your beams take no damage at all.', cd: 60, col: '#ffd890' },
+    industrialist: { name: 'OVERDRIVE', desc: 'For 8 seconds your weapons reload 2.5x faster and shots cost no metal.', cd: 55, col: '#ff8a5a' },
+    engineer: { name: 'QUICK FIX', desc: 'Heals every beam and device (not the Core) by 40% and puts out fires.', cd: 50, col: '#7dff9a' },
+    innovator: { name: 'SURGE', desc: 'Fills your energy, recharges every Deflector and clears EMP.', cd: 50, col: '#8fe9ff' },
+  };
+  function useAbil(F) {
+    const A = ABIL[F.cmdr]; if (!A || phase !== 'battle' || MODE.k === 'challenge') return 'No ability here'; if (F.actCd > 0) return A.name + ' ready in ' + Math.ceil(F.actCd) + 's';
+    F.actCd = A.cd;
+    if (F.cmdr === 'architect') F.lock = 6;
+    else if (F.cmdr === 'industrialist') F.od = 8;
+    else if (F.cmdr === 'engineer') { for (const b of F.beams) if (b.alive) { b.hp = Math.min(bMax(b), b.hp + bMax(b) * .4); b.fire = 0; } for (const d of F.devs) if (d.alive && d.type !== 'core') d.hp = Math.min(maxHp(d), d.hp + maxHp(d) * .4); }
+    else if (F.cmdr === 'innovator') { F.en = econ(F).cap; for (const d of F.devs) { d.emp = 0; if (d.type === 'shield' && d.alive) d.e = shieldMax(d); } }
+    F.ver++; for (const d of F.devs) if (d.alive && F.nodes[d.n] && rnd() < .6) { const [px, py] = pivot(F, d); ringFx(px, py, A.col, 40); }
+    if (F.side === mySide && !demo) { say(A.name + '!', A.col, 1.6); K.shake(4); sound('up'); }
+    return '';
+  }
   const CMD_LV = [0, 250, 700, 1500, 3000], cmdLevel = xp => { let i = 0; while (i + 1 < CMD_LV.length && (xp || 0) >= CMD_LV[i + 1]) i++; return i + 1; };
   const techDone = (F, id) => !!(F.tech && F.tech.done.includes(id));
   function computeMods(F) {
@@ -171,6 +207,7 @@ const GAME = {
   }
 
   /* ---------- maps: island size and shape, gravity, wind and weather ---------- */
+  const sm = v => { v = cl(v, 0, 1); return v * v * (3 - 2 * v); };   // smoothstep, for map ground shapes
   const MAPS = {
     twin: { name: 'Twin Isles', desc: 'Calm skies and two wide islands. The classic duel.', isl: [90, 790], grav: 560, wind: 0, gust: 0, temp: 18 },
     gale: { name: 'Gale Rift', desc: 'A strong crosswind that gusts: heavy shots drift and tall towers sway.', isl: [90, 790], grav: 560, wind: 70, gust: 45, temp: 9 },
@@ -179,8 +216,11 @@ const GAME = {
     peaks: { name: 'Narrow Peaks', desc: 'Small hilly islands: little room, so build up. A higher build ceiling.', isl: [210, 650], grav: 560, wind: 25, gust: 15, hill: 34, top: -300, temp: 4 },
     frost: { name: 'Frostbite Shelf', desc: 'Minus 25 degrees: steel and armor are 25% more brittle and fires sputter. A cold wind from the east.', isl: [90, 790], grav: 560, wind: -35, gust: 20, hill: 10, temp: -25 },
     ash: { name: 'Ashfall Caldera', desc: '46 degrees: wood burns fast, generators overheat, and burning rocks fall. A red marker shows where each lands 3s early.', isl: [120, 760], grav: 560, wind: 0, gust: 10, rough: 1.4, temp: 46, meteors: true },
+    high: { name: 'High Ground', desc: 'A raised plateau at the back of each island: build on it and your guns shoot down on the enemy.', isl: [90, 790], grav: 560, wind: 15, gust: 10, temp: 14, prof: u => -100 * (1 - sm((u - .25) / .3)) + Math.sin(u * 17) * 3 },
+    narrows: { name: 'The Narrows', desc: 'The islands sit close together: every weapon reaches and shots land fast. Keep your walls thick.', isl: [280, 940], grav: 560, wind: 0, gust: 20, temp: 20, prof: u => Math.sin(u * 7 + 1) * 12 + Math.sin(u * 23) * 2 },
+    terraces: { name: 'Terraces', desc: 'The ground rises in two steps, so each level of your fort needs its own footing.', isl: [90, 790], grav: 560, wind: -20, gust: 15, temp: 16, prof: u => -40 * (1 - sm((u - .3) / .08)) - 40 * (1 - sm((u - .6) / .08)) + Math.sin(u * 31) * 2 },
   };
-  const ENV = { map: 'twin', wind: 0, base: 0, gust: 0, storm: false, hill: 0, rough: 1, temp: 18, meteors: false, metT: 8, marks: [], boltT: 10, bolt: null, over: null, start: 1000 };
+  const ENV = { prof: null, map: 'twin', wind: 0, base: 0, gust: 0, storm: false, hill: 0, rough: 1, temp: 18, meteors: false, metT: 8, marks: [], boltT: 10, bolt: null, over: null, start: 1000 };
   // a custom map from the map editor: every number is clamped, so a map shared online can't break the game
   const num = (v, a, b, d) => { v = +v; return Number.isFinite(v) ? cl(v, a, b) : d; };
   function cleanMap(c) {
@@ -191,7 +231,7 @@ const GAME = {
   const WINDK = .6;   // how hard the wind pushes a bolt (per unit of wind, more higher up)
   function setMap(k, ext, def) {
     const M = def || mapDef(k) || MAPS.twin; ENV.map = def || mapDef(k) ? k : 'twin'; ENV.name = M.name; GRAV = M.grav; ENV.base = ENV.wind = M.wind; ENV.gust = M.gust; ENV.storm = !!M.storm; ENV.hill = M.hill || 0; ENV.rough = M.rough || 1; ENV.over = null; ENV.boltT = 10; ENV.bolt = null;
-    ENV.temp = M.temp === undefined ? 18 : M.temp; ENV.meteors = !!M.meteors; ENV.metT = 9; ENV.marks = []; ENV.start = M.start || START_OIL;
+    ENV.prof = M.prof || null; ENV.temp = M.temp === undefined ? 18 : M.temp; ENV.meteors = !!M.meteors; ENV.metT = 9; ENV.marks = []; ENV.start = M.start || START_OIL;
     ISL[0].x0 = M.isl[0]; ISL[0].x1 = M.isl[1]; ISL[1].x0 = WW - M.isl[1]; ISL[1].x1 = WW - M.isl[0];
     for (let s = 0; s < 2; s++) { ZONE[s].x0 = ISL[s].x0 + 20; ZONE[s].x1 = ISL[s].x1 - 20; ZONE[s].y0 = M.top || -160; }
     if (ext) ZONE[0].x1 += ext;   // a challenge that builds out past the cliff
@@ -337,7 +377,7 @@ const GAME = {
     for (const b of F.beams) {
       if (!b.alive) continue; b.f = (b.f || 0) * .75 + (b.lam / h2) * .25; if (b.hit > 0) b.hit -= dt;
       if (b.fire > 0) {   // burning: damage, spread to wooden neighbours, burn out
-        if (b.fire > 8) b.fire = 8; b.fire -= dt; if (b.fire <= 0) b.burnt = t; b.hp -= 7 * dt * MD(F).burn; if (Math.random() < dt * 9) { const A = N[b.a], B = N[b.b], k = Math.random(); flame(lp(A.x, B.x, k), lp(A.y, B.y, k)); }
+        if (b.fire > 8) b.fire = 8; b.fire -= dt; if (b.fire <= 0) b.burnt = t; if (!(F.lock > 0)) b.hp -= 7 * dt * MD(F).burn; if (Math.random() < dt * 9) { const A = N[b.a], B = N[b.b], k = Math.random(); flame(lp(A.x, B.x, k), lp(A.y, B.y, k)); }
         if (Math.random() < dt * .35 * MD(F).spread) for (const q of F.beams) if (q.alive && q !== b && MAT[q.mat].burn && q.fire <= 0 && !(q.burnt > t - 10) && (q.a === b.a || q.a === b.b || q.b === b.a || q.b === b.b) && Math.random() < .5) q.fire = b.fire;   // spreading flames keep the same clock, so the whole fire is out 8s after it started
         if (b.hp <= 0) { breakBeam(F, b); continue; }
       }
@@ -368,23 +408,37 @@ const GAME = {
   /* ---------- shots ---------- */
   let forts = [], shots = [], debris = [], rings = [], pend = [], parts = [], phase = 'build', buildT = BUILD_T, mySide = 0, demo = false, mode = 'lobby', shotN = 0;
   let tool = 'wood', tab = 0, drag = null, aimSel = null, aimPt = null, overT = 0, winner = -1, flashT = 0, msg = null, acc = 0, t = 0, sendT = 0, lastVer = -1, bsT = 0, ended = false, sndT = {}, posed = false;
-  const sim = F => !MP.online() || demo || (MODE.k === 'coop' ? MP.isHost() : F.side === mySide);      // whose physics and damage this device decides
-  function launch(side, type, x, y, vx, vy, dmg, net, id) {
+  const sim = F => !MP.online() || demo || (MODE.k === 'coop' ? MP.isHost() : F.side === mySide);
+  let firing = null;   // [fort, device] while a device's shot is being launched
+  // the beams a gun's shot never hits: the box the gun sits in, and its own struts
+  function gunFree(F, d) {
+    if (d.freeV === F.ver && d.free) return d.free; const n = F.nodes[d.n], set = new Set(); d.freeV = F.ver; d.free = set; if (!n) return set;
+    const c = boxCellAt(F, n.x, n.y), ids = new Set(c || []); ids.add(d.n);
+    for (const b of F.beams) if (b.alive && (b.a === d.n || b.b === d.n || (ids.has(b.a) && ids.has(b.b)))) set.add(b);
+    return set;
+  }
+  const blocks = (s, b) => b.alive && b.mat !== 'rope' && b.mat !== 'door' && !s.free.has(b) && !s.hits.has(b);      // whose physics and damage this device decides
+  function launch(side, type, x, y, vx, vy, dmg, net, id, lvl) {
     const D = DEV[type]; id = id || (side + 1) * 1e6 + (++shotN);
-    const s = { id, side, type, x, y, ox: x, oy: y, vx, vy, t: 0, trail: [], dmg, pierce: D.pierce || 0, hits: new Set() };
+    const s = { id, side, type, x, y, ox: x, oy: y, vx, vy, t: 0, trail: [], dmg, pierce: D.pierce || 0, hits: new Set(), lvl: firing ? firing[1].lv || 1 : lvl || 1 };
+    if (s.lvl >= 2 && type === 'sniper') s.pierce++;   // AP rounds
+    if (s.lvl >= 3 && type === 'mortar') s.bb = 1.6;   // the Heavy mortar
+    if (firing) { const [F0, d0] = firing, [gx, gy] = pivot(F0, d0); s.free = gunFree(F0, d0); if (type !== 'laser') { s.ox = gx; s.oy = gy; } }   // its first stretch is checked from the gun itself
+    if (WEAP.includes(type) && forts[side]) { const O = forts[side]; for (const b of O.beams) if (b.alive && b.mat === 'door' && O.nodes[b.a] && O.nodes[b.b] && segDist(x, y, O.nodes[b.a].x, O.nodes[b.a].y, O.nodes[b.b].x, O.nodes[b.b].y) < 150) b.open = 1.4; }   // doors swing open for their own shots
     if (type === 'laser') { const k = Math.hypot(vx, vy) || 1; s.dx = vx / k; s.dy = vy / k; s.life = D.dur; s.hx = x + s.dx * D.range; s.hy = y + s.dy * D.range; }
     shots.push(s);
-    if (net && MP.online() && !demo) MP.send({ t: 'f', s: side, w: type, id, d: Math.round(dmg), a: [Math.round(x), Math.round(y), Math.round(vx), Math.round(vy)] });
+    if (net && MP.online() && !demo) MP.send({ t: 'f', s: side, w: type, id, d: Math.round(dmg), a: [Math.round(x), Math.round(y), Math.round(vx), Math.round(vy)], l: s.lvl });
     if (type !== 'bomblet') sound(type);
+    return s;
   }
   function fireDev(F, d) {
     const D = DEV[d.type]; if (F.side === mySide && !demo) MS.shots++;
-    if (D.dps) { const [px, py] = pivot(F, d), a = d.aim.a + (rnd() - .5) * D.spread * 2; d.flash = D.dur; launch(F.side, d.type, px + Math.cos(a) * 30, py + Math.sin(a) * 30, Math.cos(a) * 1000, Math.sin(a) * 1000, D.dps * L.dmg(d) * MD(F).dmg, true); return; }
-    const spd = lp(D.speed[0], D.speed[1], d.aim.p), k = F.bot && !F.ai.eager && D.shots ? Math.max(1, Math.ceil(D.shots / 2)) : D.shots || 1; d.flash = .18;   // the computer fires half-size salvos
-    for (let i = 0; i < k; i++) pend.push({ t: i * (D.gap || .15), F, d, a: d.aim.a + (D.shots && D.gap > .1 ? (i - (k - 1) / 2) * .045 : 0) + (rnd() - .5) * D.spread * 2, spd: spd * (1 + (rnd() - .5) * .01) });
+    if (D.dps) { const [px, py] = pivot(F, d), a = d.aim.a + (rnd() - .5) * D.spread * 2; d.flash = D.dur; firing = [F, d]; launch(F.side, d.type, px + Math.cos(a) * 30, py + Math.sin(a) * 30, Math.cos(a) * 1000, Math.sin(a) * 1000, D.dps * L.dmg(d) * MD(F).dmg, true); firing = null; return; }
+    const spd = lp(D.speed[0], D.speed[1], d.aim.p), k = F.bot && !F.ai.eager && D.shots ? Math.max(1, Math.ceil(D.shots / 2)) : D.shots || (d.type === 'cannon' && d.lv >= 3 ? 2 : 1); d.flash = .18;   // the computer fires half-size salvos
+    for (let i = 0; i < k; i++) pend.push({ t: i * (D.gap || .15), F, d, a: d.aim.a + (D.shots && D.gap > .1 ? (i - (k - 1) / 2) * .045 : !D.shots && k > 1 ? (i - (k - 1) / 2) * .02 : 0) + (rnd() - .5) * D.spread * 2, spd: spd * (1 + (rnd() - .5) * .01) });
   }
   function stepPend(dt) {
-    for (const q of pend) { q.t -= dt; if (q.t <= 0 && q.d.alive) { const [px, py] = pivot(q.F, q.d), D = DEV[q.d.type]; q.d.flash = .1; launch(q.F.side, q.d.type, px + Math.cos(q.a) * 26, py + Math.sin(q.a) * 26, Math.cos(q.a) * q.spd, Math.sin(q.a) * q.spd, D.dmg * L.dmg(q.d) * MD(q.F).dmg, true); } }
+    for (const q of pend) { q.t -= dt; if (q.t <= 0 && q.d.alive) { const [px, py] = pivot(q.F, q.d), D = DEV[q.d.type]; q.d.flash = .1; firing = [q.F, q.d]; launch(q.F.side, q.d.type, px + Math.cos(q.a) * 26, py + Math.sin(q.a) * 26, Math.cos(q.a) * q.spd, Math.sin(q.a) * q.spd, D.dmg * L.dmg(q.d) * MD(q.F).dmg, true); firing = null; } }
     pend = pend.filter(q => q.t > 0 && q.d.alive);
   }
   function moveShot(s, dt) {
@@ -409,7 +463,7 @@ const GAME = {
   // magnets push enemy shells, bullets and bombs away from the fort they guard, for energy
   function stepMagnets(dt) {
     for (const F of forts) for (const d of F.devs) {
-      if (!d.alive || d.type !== 'magnet') continue; if (d.mag > 0) d.mag -= dt;
+      if (!d.alive || d.type !== 'magnet' || d.emp > 0) continue; if (d.mag > 0) d.mag -= dt;
       const [px, py] = pivot(F, d), R = DEV.magnet.range + 40 * (d.lv - 1); let on = false;
       for (const s of shots) { if (s.dead || s.side === F.side || s.type === 'laser' || s.type === 'meteor' || DEV[s.type].cls === 'beam') continue; const dx = s.x - px, dy = s.y - py, q = Math.hypot(dx, dy); if (q > R || q < 1) continue; if (sim(F) && F.en < 1) break; const k = 2600 * (1 - q / R) * dt * (1 + .3 * (d.lv - 1)); s.vx += dx / q * k; s.vy += dy / q * k; on = true; }
       if (on) { d.mag = .2; if (sim(F)) F.en = Math.max(0, F.en - 6 * dt); }
@@ -430,10 +484,22 @@ const GAME = {
     shots = shots.filter(s => !s.dead);
     for (const b of born) launch(b[0], b[1], b[2], b[3], b[4], b[5], b[6], false, b[7]);
   }
+  let blockT = -9;
+  function ownHit(s, O, b, k) {   // a shot ran into its own fort's wall: it hits it like any other
+    impact(s, lp(s.ox, s.x, k), lp(s.oy, s.y, k), O, b, null);
+    if (s.dead && sim(O)) { if (MP.online() && !demo) MP.send({ t: 'x', id: s.id }); if (O.side === mySide && !demo && t - blockT > 4) { blockT = t; say('Your own wall blocked that shot: turn it into a DOOR (FORT tab)', '#ffd890', 2.4); } }
+  }
   function hitTest(s) {
+    if (s.free && s.t < 2.5) {   // your other walls are solid to your own shots
+      const O = forts[s.side], ob = O && O.bb;
+      if (ob && !(Math.max(s.x, s.ox) < ob[0] - 20 || Math.min(s.x, s.ox) > ob[2] + 20 || Math.max(s.y, s.oy) < ob[1] - 20 || Math.min(s.y, s.oy) > ob[3] + 20)) {
+        let best = null, bt = 2; for (const b of O.beams) { if (!blocks(s, b)) continue; const A = O.nodes[b.a], B = O.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.ox, s.oy, s.x, s.y, A.x, A.y, B.x, B.y); if (h >= 0 && h < bt) { bt = h; best = b; } }
+        if (best) { ownHit(s, O, best, bt); if (s.dead) return; }
+      }
+    }
     const T = forts[1 - s.side], D = DEV[s.type], bb = T.bb, far = bb && (Math.max(s.x, s.ox) < bb[0] - 140 || Math.min(s.x, s.ox) > bb[2] + 140 || Math.max(s.y, s.oy) < bb[1] - 140 || Math.min(s.y, s.oy) > bb[3] + 60);   // nowhere near that fort: skip its pieces
     if (!far) {
-    if (D.cls !== 'beam') for (const d of T.devs) if (d.alive && d.type === 'shield' && d.e > 0) {
+    if (D.cls !== 'beam') for (const d of T.devs) if (d.alive && d.type === 'shield' && d.e > 0 && !(d.emp > 0)) {
       const [px, py] = pivot(T, d); if (Math.hypot(s.x - px, s.y - py) < domeR(d)) { if (sim(T)) { d.e = Math.max(0, d.e - s.dmg * (D.blast ? 1.3 : D.cls === 'bullet' ? .7 : 1)); d.eT = 2.5; } d.hitT = .35; ringFx(s.x, s.y, SIDEC[T.side], 30); burst(s.x, s.y, [SIDEC[T.side], '#ffffff'], 10, 220, .3, 4); sound('zap'); s.dead = true; return; }
     }
     for (const d of T.devs) if (d.alive && !s.hits.has(d)) { const [px, py] = pivot(T, d); if (Math.hypot(s.x - px, s.y - py) < hitR(d.type) + 4) { impact(s, s.x, s.y, T, null, d); if (s.dead) return; } }
@@ -448,16 +514,18 @@ const GAME = {
     const T = forts[1 - s.side], D = DEV.laser, R = D.range, ex = s.x + s.dx * R, ey = s.y + s.dy * R; let tm = R, hit = null;
     const ray = (cx, cy, r) => { const fx = s.x - cx, fy = s.y - cy, b = fx * s.dx + fy * s.dy, c = fx * fx + fy * fy - r * r, disc = b * b - c; if (disc < 0) return -1; const q = -b - Math.sqrt(disc); return q > 0 ? q : -1; };
     for (const d of T.devs) { if (!d.alive || !T.nodes[d.n]) continue; const [px, py] = pivot(T, d);
-      if (d.type === 'shield' && d.e > 0) { const q = ray(px, py, domeR(d)); if (q > 0 && q < tm) { tm = q; hit = { sh: d }; } }
+      if (d.type === 'shield' && d.e > 0 && !(d.emp > 0)) { const q = ray(px, py, domeR(d)); if (q > 0 && q < tm) { tm = q; hit = { sh: d }; } }
       const q = ray(px, py, hitR(d.type) + 2); if (q > 0 && q < tm) { tm = q; hit = { d }; } }
     for (const b of T.beams) { if (!b.alive || b.mat === 'rope') continue; const A = T.nodes[b.a], B = T.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.x, s.y, ex, ey, A.x, A.y, B.x, B.y); if (h >= 0 && h < 1 && h * R < tm) { tm = h * R; hit = { b }; } }
+    const O = forts[s.side]; if (s.free && O) for (const b of O.beams) { if (!blocks(s, b)) continue; const A = O.nodes[b.a], B = O.nodes[b.b]; if (!A || !B) continue; const h = segHit(s.x - s.dx * 30, s.y - s.dy * 30, ex, ey, A.x, A.y, B.x, B.y); if (h >= 0 && h < 1) { const q = h * (R + 30) - 30; if (q < tm) { tm = Math.max(0, q); hit = { b, own: O }; } } }   // your own walls stop it too
     for (let q = 30; q < tm; q += 14) { const x = s.x + s.dx * q, y = s.y + s.dy * q; if (y > groundY(x)) { tm = q; hit = null; break; } if (q > 60 && inSmoke(x, y)) { tm = q + 30; hit = null; break; } }   // smoke swallows the beam
     s.hx = s.x + s.dx * tm; s.hy = s.y + s.dy * tm; s.life -= dt; s.t += dt; if (s.life <= 0) s.dead = true;
     const dmg = s.dmg * dt;
-    if (hit && sim(T)) {
-      if (hit.sh) { hit.sh.e = Math.max(0, hit.sh.e - dmg * 1.2); hit.sh.eT = 2.5; hit.sh.hitT = .2; }
+    if (hit && sim(hit.own || T)) {
+      if (hit.own) { const b = hit.b; if (!(hit.own.lock > 0)) { b.hp -= dmg * (b.rk || 1); b.hit = .15; if (b.hp <= 0) breakBeam(hit.own, b); } }
+      else if (hit.sh) { hit.sh.e = Math.max(0, hit.sh.e - dmg * 1.2); hit.sh.eT = 2.5; hit.sh.hitT = .2; }
       else if (hit.d) { hit.d.hp -= dmg * devRes(hit.d, 'beam'); hit.d.hitT = .2; if (hit.d.hp <= 0) destroyDev(T, hit.d); }
-      else if (hit.b) { hit.b.hp -= dmg * MAT[hit.b.mat].res.beam * (hit.b.rk || 1); hit.b.hit = .15; if (MAT[hit.b.mat].burn && rnd() < dt * .8 * MD(T).ignite) hit.b.fire = 8; if (hit.b.hp <= 0) breakBeam(T, hit.b); }
+      else if (hit.b && !(T.lock > 0)) { hit.b.hp -= dmg * MAT[hit.b.mat].res.beam * (hit.b.rk || 1); hit.b.hit = .15; if (MAT[hit.b.mat].burn && rnd() < dt * .8 * MD(T).ignite) hit.b.fire = 8; if (hit.b.hp <= 0) breakBeam(T, hit.b); }
     }
     if (Math.random() < dt * 40) burst(s.hx, s.hy, hit && hit.sh ? [SIDEC[T.side], '#fff'] : ['#ffffff', SIDEC[s.side], '#ffe2a0'], 2, 180, .25, 3);
   }
@@ -470,7 +538,7 @@ const GAME = {
   function impact(s, x, y, T, beam, dev, ground) {
     const D = DEV[s.type], pierce = s.pierce > 0 && (beam || dev), hz = s.type === 'meteor' ? MD(T || forts[x < WW / 2 ? 0 : 1]).hazard : 1;
     if (T && sim(T)) {
-      if (beam) { beam.hp -= s.dmg * hz * MAT[beam.mat].res[D.cls] * (D.beamMul || 1) * (beam.rk || 1); beam.hit = .3; nudge(T, beam.a, s.vx, s.vy, D.cls === 'bullet' ? .2 : 1); nudge(T, beam.b, s.vx, s.vy, D.cls === 'bullet' ? .2 : 1); if (beam.hp <= 0) breakBeam(T, beam); }
+      if (beam && !(T.lock > 0)) { beam.hp -= s.dmg * hz * MAT[beam.mat].res[D.cls] * (D.beamMul || 1) * (beam.rk || 1); beam.hit = .3; nudge(T, beam.a, s.vx, s.vy, D.cls === 'bullet' ? .2 : 1); nudge(T, beam.b, s.vx, s.vy, D.cls === 'bullet' ? .2 : 1); if (beam.hp <= 0) breakBeam(T, beam); }
       if (dev) { dev.hp -= s.dmg * hz * devRes(dev, D.cls); dev.hitT = .3; if (dev.type === 'gen') { burst(x, y, ['#bff4ff', '#ffffff'], 8, 220, .3, 3); boom(x, y, 16, '#bff4ff', 0); } if (dev.hp <= 0) destroyDev(T, dev); }
     }
     if (pierce) { s.pierce--; if (s.type !== 'saw') s.dmg *= .72; s.hits.add(beam || dev); burst(x, y, ['#bff4ff', '#ffffff', SIDEC[s.side]], 10, 300, .3, 3); sound('hit'); return; }
@@ -480,32 +548,36 @@ const GAME = {
       sound('smoke'); return;
     }
     s.dead = true;
-    if (D.blast) { const F2 = T || forts[x < WW / 2 ? 0 : 1]; if (sim(F2)) blast(F2, x, y, D.blast, s.dmg * hz, D.ignite); boom(x, y, D.blast, D.ignite ? '#ff7a1a' : s.type === 'mortar' ? '#ffb347' : '#ff7a3d', s.type === 'bomblet' || s.type === 'swarm' ? 0 : 1); if (D.ignite) for (let i = 0; i < 16; i++) flame(x + (rnd() - .5) * D.blast, y - rnd() * 20); }
+    if (D.emp) {   // EMP: every enemy device near the burst shuts down for a few seconds, and Deflectors drop
+      const F2 = T || forts[x < WW / 2 ? 0 : 1], R2 = D.blast;
+      if (F2 && F2.side !== s.side && sim(F2)) for (const d of F2.devs) { if (!d.alive || d.type === 'core' || !F2.nodes[d.n]) continue; const [px, py] = pivot(F2, d); if (Math.hypot(px - x, py - y) < R2 + DEV[d.type].r) { d.emp = D.emp * (s.lvl >= 3 ? 1.5 : 1); if (d.type === 'shield') d.e = 0; } }
+      ringFx(x, y, '#8fe9ff', R2); ringFx(x, y, '#ffffff', R2 * .6); for (let i = 0; i < 18; i++) spark(x + (rnd() - .5) * R2 * 1.4, y + (rnd() - .5) * R2, '#bff4ff'); sound('zap'); sound('boom'); K.shake(4); return;
+    }
+    if (D.blast) { const F2 = T || forts[x < WW / 2 ? 0 : 1], br = D.blast * (s.bb || 1); if (sim(F2)) blast(F2, x, y, br, s.dmg * hz, D.ignite); boom(x, y, br, D.ignite ? '#ff7a1a' : s.type === 'mortar' ? '#ffb347' : '#ff7a3d', s.type === 'bomblet' || s.type === 'swarm' ? 0 : 1); if (D.ignite) for (let i = 0; i < 16; i++) flame(x + (rnd() - .5) * D.blast, y - rnd() * 20); }
     else if (D.cls === 'bullet') { burst(x, y, ['#ffe2a0', '#ffffff'], 4, 160, .2, 2); sound('ping'); }
     else { burst(x, y, ['#ffe2a0', '#ffffff', '#ffb347'], 14, 280, .35, 4); K.shake(3); sound('hit'); }
   }
   function nudge(F, i, vx, vy, k) { const n = F.nodes[i]; if (!n || !n.alive || n.pin || n.hold > 0) return; n.px -= vx * .003 * k / n.m; n.py -= vy * .003 * k / n.m; }
   function blast(F, x, y, r, dmg, ignite) {
-    for (const b of F.beams) { if (!b.alive) continue; const A = F.nodes[b.a], B = F.nodes[b.b], d = segDist(x, y, A.x, A.y, B.x, B.y); if (d < r) { b.hp -= dmg * (1 - d / r * .7) * MAT[b.mat].res.blast * (b.rk || 1); b.hit = .3; if (MAT[b.mat].burn && (ignite || Math.random() < .12 * MD(F).ignite)) b.fire = 12 + Math.random() * 6; if (b.hp <= 0) breakBeam(F, b); } }
+    for (const b of F.beams) { if (!b.alive || F.lock > 0) continue; const A = F.nodes[b.a], B = F.nodes[b.b], d = segDist(x, y, A.x, A.y, B.x, B.y); if (d < r) { b.hp -= dmg * (1 - d / r * .7) * MAT[b.mat].res.blast * (b.rk || 1); b.hit = .3; if (MAT[b.mat].burn && (ignite || Math.random() < .12 * MD(F).ignite)) b.fire = 12 + Math.random() * 6; if (b.hp <= 0) breakBeam(F, b); } }
     for (const dv of F.devs) { if (!dv.alive) continue; const [px, py] = pivot(F, dv), d = Math.hypot(px - x, py - y); if (d < r + hitR(dv.type)) { dv.hp -= dmg * (1 - d / (r + 22) * .6) * devRes(dv, 'blast'); dv.hitT = .3; if (dv.hp <= 0) destroyDev(F, dv); } }
     for (const n of F.nodes) { if (!n.alive || n.pin) continue; const dx = n.x - x, dy = n.y - y, d = Math.hypot(dx, dy); if (d < r * 1.4 && d > .1) { const k = (1 - d / (r * 1.4)) * 4.5 / Math.sqrt(n.m); n.px -= dx / d * k; n.py -= dy / d * k; } }
   }
   // flak: knocks incoming shells and rockets out of the sky (bullets and rail slugs are too fast)
   function stepFlak(F, dt) {
     for (const d of F.devs) {
-      if (!d.alive || d.type !== 'flak') continue; d.cd -= dt; if (d.cd > 0 || (sim(F) && F.oil < 2)) continue;
+      if (!d.alive || d.type !== 'flak' || d.emp > 0) continue; d.cd -= dt; if (d.cd > 0 || (sim(F) && F.oil < 2)) continue;
       const [px, py] = pivot(F, d), R = DEV.flak.range + 40 * (d.lv - 1) + MD(F).flakRange;
       if (inSmoke(px, py)) continue;   // blinded by smoke
-      const tg = shots.find(s => !s.dead && s.side !== F.side && s.type !== 'laser' && !DEV[s.type].smoke && (DEV[s.type].cls === 'blast' || s.type === 'cannon') && Math.hypot(s.x - px, s.y - py) < R && s.vx * (px - s.x) > 0 && !inSmoke(s.x, s.y));
+      const tgs = shots.filter(s => !s.dead && s.side !== F.side && s.type !== 'laser' && !DEV[s.type].smoke && (DEV[s.type].cls === 'blast' || s.type === 'cannon') && Math.hypot(s.x - px, s.y - py) < R && s.vx * (px - s.x) > 0 && !inSmoke(s.x, s.y)).slice(0, d.lv >= 3 ? 2 : 1), tg = tgs[0];   // the Shotgun takes two
       if (!tg) continue;
       d.cd = DEV.flak.rate * L.rel(d) * MD(F).flakRate; d.ang = Math.atan2(tg.y - py, tg.x - px); d.flash = .12; d.zap = { x: tg.x, y: tg.y, t: .12 };
-      if (sim(F)) { tg.dead = true; F.oil -= 2; if (MP.online() && !demo) MP.send({ t: 'x', id: tg.id }); }
-      boom(tg.x, tg.y, 18, '#ffd890', 0); sound('flak');
+      for (const q of tgs) { if (sim(F)) { q.dead = true; if (MP.online() && !demo) MP.send({ t: 'x', id: q.id }); } boom(q.x, q.y, 18, '#ffd890', 0); } if (sim(F)) F.oil -= 2; sound('flak');
     }
   }
   function stepRepair(F, dt) {
     for (const d of F.devs) {
-      if (!d.alive || d.type !== 'repair') continue; d.cd -= dt; if (d.cd > 0) continue; d.cd = 1; const eu = 3 * MD(F).enUse; if (F.en < eu) { d.starve = 'pw'; continue; } F.en -= eu; d.starve = null;
+      if (!d.alive || d.type !== 'repair' || d.emp > 0) continue; d.cd -= dt; if (d.cd > 0) continue; d.cd = 1; const eu = 3 * MD(F).enUse; if (F.en < eu) { d.starve = 'pw'; continue; } F.en -= eu; d.starve = null;
       const [px, py] = pivot(F, d), R = DEV.repair.range + 30 * (d.lv - 1), heal = (DEV.repair.heal + 4 * (d.lv - 1)) * MD(F).heal;
       for (const b of F.beams) { if (!b.alive) continue; const A = F.nodes[b.a], B = F.nodes[b.b]; if (segDist(px, py, A.x, A.y, B.x, B.y) > R) continue; if (b.hp < bMax(b)) { b.hp = Math.min(bMax(b), b.hp + heal); if (Math.random() < .3) spark((A.x + B.x) / 2, (A.y + B.y) / 2, '#7dff9a'); } if (b.fire > 0 && Math.random() < .35) b.fire = 0; }
       for (const o of F.devs) if (o.alive && o !== d && o.type !== 'core') { const [ox, oy] = pivot(F, o); if (Math.hypot(ox - px, oy - py) < R && o.hp < maxHp(o)) o.hp = Math.min(maxHp(o), o.hp + heal * .6); }
@@ -537,6 +609,7 @@ const GAME = {
       case 'howitzer': K.noise(.4, .2, 120); K.sfx(55, .5, 'sine', .25, -25); break;
       case 'saw': K.sfx(700, .35, 'sawtooth', .04, 400); K.noise(.2, .05, 2600); break;
       case 'smoke': K.noise(.5, .1, 400); break;
+      case 'emp': K.sfx(300, .35, 'sine', .1, 500); K.noise(.2, .06, 2400); break;
       case 'meteor': K.noise(.9, .07, 500); K.sfx(160, .9, 'sawtooth', .03, -100); break;
       case 'creak': K.sfx(80 + Math.random() * 50, .45, 'sawtooth', .03, -25); K.noise(.2, .03, 300); break;
       case 'tick': K.sfx(1500, .04, 'triangle', .018); break;
@@ -556,6 +629,18 @@ const GAME = {
   function say(t2, c = '#fff', d = 2) { if (remote) { MP.to(remote, { t: 'say', s: String(t2).slice(0, 90), c, d }); return; } msg = { t: t2, c, k: 0, d }; }
 
   /* ---------- fort builders: positions measured in from the island's outer edge ---------- */
+  // ore deposits: four on each island (measured in from its outer edge); a Metal drill has to sit on one
+  const DEPO = [.15, .37, .59, .81];
+  const depX = (side, k) => { const I = ISL[side], w = I.x1 - I.x0; return side ? I.x1 - DEPO[k] * w : I.x0 + DEPO[k] * w; };
+  const drillOn = (F, k) => F.devs.some(d => d.alive && d.type === 'pump' && F.nodes[d.n] && Math.abs(F.nodes[d.n].x - depX(F.side, k)) < 24);
+  const freeDeposit = F => [1, 0, 2, 3].find(k => !drillOn(F, k)) ?? -1;
+  function drillAt(F, k) {   // put a drill on deposit k (on a ground bolt already there, or a new one)
+    if (k < 0 || drillOn(F, k)) return -1; const x = depX(F.side, k);
+    let n = F.nodes.findIndex((q, i) => q.alive && q.pin && Math.abs(q.x - x) < 6 && !devAt(F, i));
+    if (n < 0) { n = addNode(F, x, groundY(x)); if (!F.nodes[n].pin) { F.nodes[n].alive = false; return -1; } }
+    return addDev(F, 'pump', n);
+  }
+  const botDrill = F => drillAt(F, freeDeposit(F));
   const LOC = (F, u, h) => { const x = F.side ? ISL[1].x1 - u : ISL[0].x0 + u; return [x, groundY(x) - h]; };
   function frameGrid(F, cols, heights, matFn) {
     const id = cols.map((u, c) => { const out = []; for (let l = 0; l <= heights[c]; l++) { const [x, y] = LOC(F, u, l * 66); out.push(addNode(F, x, y)); } return out; });
@@ -568,7 +653,7 @@ const GAME = {
   }
   function starter(F) {   // the free starting fort: a braced two-storey frame holding the Core, and one cannon
     const id = frameGrid(F, [170, 236, 302], [2, 2, 1], (c, l) => l === 0 ? 'steel' : 'wood');
-    addDev(F, 'core', id[1][1]); addDev(F, 'cannon', id[1][2]); addDev(F, 'pump', id[0][0]);
+    addDev(F, 'core', id[1][1]); addDev(F, 'cannon', id[1][2]); drillAt(F, 1);
   }
   function botBuild(F) {   // tall towers on a grid, X-braced; steel low, armor on the front face
     const nc = Math.min(5 + Math.floor(rnd() * 3), Math.floor((ISL[F.side].x1 - ISL[F.side].x0 - 170) / 70) + 1), cols = [], u0 = 120 + rnd() * 30, du = 64 + rnd() * 6;
@@ -583,7 +668,9 @@ const GAME = {
     const kit = [['cannon', top(tall[0])], [pick(['mortar', 'cluster']), top(tall[1])], [pick(['rail', 'laser', 'sniper']), top(tall[2])], [pick(['mg', 'sniper']), top(nc - 1)], [pick(['rockets', 'fire', 'swarm']), mid(nc - 2, heights[nc - 2])]];
     for (const [type, n] of kit) addDev(F, type, n);
     addDev(F, 'shield', mid(2, 2)); addDev(F, 'flak', mid(0, 2)); addDev(F, 'repair', id[2][1]);
-    addDev(F, 'pump', id[0][0]); addDev(F, 'pump', id[2][0]); addDev(F, 'pump', id[nc - 2][0]); addDev(F, 'gen', id[0][1]); addDev(F, 'gen', id[nc - 1][0]);
+    botDrill(F); botDrill(F); botDrill(F); addDev(F, 'gen', id[0][1]); addDev(F, 'gen', id[nc - 1][0]);
+    const spots = id.flatMap((col, c) => col.slice(1, heights[c])), put = k => spots.some(n => addDev(F, k, n) >= 0);   // the tech buildings, an EMP and a battery inside
+    put('workshop'); put('armoury'); put('factory'); if (rnd() < .5) put('emp'); if (rnd() < .6) put('battery');
     F.oil = 400;
   }
   function settle(F, n) { F.grace = n; for (let i = 0; i < n; i++) physics(F, DT); }
@@ -628,12 +715,14 @@ const GAME = {
     if (A.wave === undefined) { A.wave = demo ? 1 : 0; A.wT = demo ? 1e9 : 45; }
     if (!A.ctl && (A.wT -= .5) <= 0) { A.wave = A.wave ? 0 : 1; A.wT = A.wave ? 10 + rnd() * 5 : 25 + rnd() * 10; if (!A.wave) for (const d of F.devs) if (WEAP.includes(d.type)) { d.aim = null; d.req = false; } }
     if (A.wave) for (const d of F.devs) if (d.alive && WEAP.includes(d.type) && (!d.aim || (d.re = (d.re || 0) - .5) <= 0)) { aimAt(F, d, pickTarget(E, d.type)); d.re = 5 + rnd() * 5; }
-    if (A.wave) for (const d of F.devs) if (d.alive && WEAP.includes(d.type) && d.aim && !d.req && d.cd <= 0 && rnd() < (A.eager ? .6 : .35)) d.req = true;   // the computer has to ask for every shot too
+    if (A.wave) for (const d of F.devs) if (d.alive && WEAP.includes(d.type) && d.aim && !d.req && d.cd <= 0 && !(d.emp > 0) && rnd() < (A.eager ? .6 : .35) && clearPath(F, d)) d.req = true;   // the computer has to ask for every shot too
     if ((A.rep -= .5) <= 0) {   // rebuild a broken beam between bolts that still stand
       A.rep = FIX_CD;
       const b = F.beams.find(q => !q.alive && !q.fixed && F.nodes[q.a].alive && F.nodes[q.b].alive && Math.abs(Math.hypot(F.nodes[q.a].x - F.nodes[q.b].x, F.nodes[q.a].y - F.nodes[q.b].y) - q.rest) < 6);
       if (b && F.oil >= MAT[b.mat].cost) { b.fixed = true; F.oil -= MAT[b.mat].cost; addBeam(F, b.a, b.b, b.mat); }
     }
+    if (F.cmdr && !(F.actCd > 0) && A.wave && rnd() < .06) { const c = core(F), hurt = F.beams.filter(b => b.alive && b.hp < bMax(b) * .6).length;
+      if (F.cmdr === 'industrialist' || (F.cmdr === 'architect' && (hurt > 4 || (c && c.hp < maxHp(c) * .6))) || (F.cmdr === 'engineer' && hurt > 6) || (F.cmdr === 'innovator' && (F.en < econ(F).cap * .25 || F.devs.some(d => d.emp > 0)))) useAbil(F); }
     if (!A.noGrow || !A.noBuy) botBrace(F);
     if (!A.noGrow && (A.grow = (A.grow === undefined ? 2 : A.grow) - .5) <= 0) { A.grow = 3 + rnd() * 3; botGrow(F); }   // grow the fort a box at a time, like a player
     if (!A.noBuy && (A.buy -= .5) <= 0) {   // spend: upgrade something, or put a new weapon on a free high bolt
@@ -641,14 +730,14 @@ const GAME = {
       const ups = F.devs.filter(d => d.alive && d.lv < 3 && (WEAP.includes(d.type) || d.type === 'shield' || d.type === 'core' || d.type === 'pump' || d.type === 'gen'));
       const has = k => F.devs.filter(d => d.alive && d.type === k).length, ground = F.nodes.map((n, i) => i).filter(i => F.nodes[i].alive && F.nodes[i].pin && !devAt(F, i));
       const guns = F.devs.filter(d => d.alive && WEAP.includes(d.type)).length;
-      if (has('pump') < (guns ? 3 : 2) && ground.length && F.oil >= DEV.pump.cost) { F.oil -= DEV.pump.cost; addDev(F, 'pump', ground[Math.floor(rnd() * ground.length)]); }
+      if (has('pump') < (guns ? 3 : 2) + (A.fast ? 1 : 0) && freeDeposit(F) >= 0 && F.oil >= DEV.pump.cost) { if (botDrill(F) >= 0) F.oil -= DEV.pump.cost; }
       else if (!guns && F.oil >= devPrice(F, 'cannon') + 10) botBox(F, 'cannon', true);
       else if (has('gen') < 2 && F.oil >= DEV.gen.cost + 40) botBox(F, 'gen', false);
       else if (has('lab') < 1 && has('gen') && F.oil >= DEV.lab.cost + 150) botBox(F, 'lab', false);
       else if (ups.length && rnd() < .55) { const d = ups[Math.floor(rnd() * ups.length)]; if (F.oil >= upCost(d.type, d.lv) + 60) upgrade(F, d); }
-      else if (rnd() < .15) { const k = ['sand', 'decoy', 'magnet', 'wind'][Math.floor(rnd() * 4)]; if (has(k) < 2 && F.oil >= devPrice(F, k) + 80 && (k !== 'magnet' || has('gen'))) botBox(F, k, k === 'wind'); }
+      else if (rnd() < .15) { const k = ['sand', 'decoy', 'magnet', 'wind', 'battery'][Math.floor(rnd() * 5)]; if (has(k) < 2 && F.oil >= devPrice(F, k) + 80 && (k !== 'magnet' || has('gen'))) botBox(F, needFor(F, k), k === 'wind'); }
       else {
-        const opts = WEAP.filter(k => !DEV[k].pw || has('gen')), type = opts[Math.floor(rnd() * opts.length)]; if (guns < 12 && F.oil >= devPrice(F, type) + 80) botBox(F, type, true);   // a dozen guns is plenty
+        const opts = WEAP.filter(k => !DEV[k].pw || has('gen')), type = opts[Math.floor(rnd() * opts.length)]; if (guns < 12 && F.oil >= devPrice(F, type) + 80) { const t2 = needFor(F, type); botBox(F, t2, t2 === type); }   // a dozen guns is plenty
       }
     }
   }
@@ -696,6 +785,19 @@ const GAME = {
       const p = boxPlan(F, d); if (p.why || F.oil < p.cost + 80) continue;
       commitBox(F, d); return;
     }
+  }
+  // where a weapon's shot would first hit its own fort (the gun's own box, doors and rope don't count)
+  function ownBlock(F, d, pts) {
+    const free = gunFree(F, d), ob = F.bb; if (!ob) return null; const [px, py] = pivot(F, d); let prev = [px, py];
+    for (let i = 0; i < pts.length; i++) { const p = pts[i]; if (p[0] < ob[0] - 30 || p[0] > ob[2] + 30 || p[1] < ob[1] - 30) break; let best = null, bt = 2;
+      for (const b of F.beams) { if (!b.alive || b.mat === 'rope' || b.mat === 'door' || free.has(b)) continue; const A = F.nodes[b.a], B = F.nodes[b.b]; if (!A || !B) continue; const h = segHit(prev[0], prev[1], p[0], p[1], A.x, A.y, B.x, B.y); if (h >= 0 && h < bt) { bt = h; best = b; } }
+      if (best) return { b: best, x: lp(prev[0], p[0], bt), y: lp(prev[1], p[1], bt), i }; prev = p; }
+    return null;
+  }
+  function clearPath(F, d) {   // before it fires, the computer opens a door in any wall of its own that's in the way
+    const pts = aimPath(F, d, d.aim);
+    for (let i = 0; i < 4; i++) { const hit = ownBlock(F, d, pts); if (!hit) return true; if (toDoor(F, hit.b)) return false; }
+    return false;
   }
   // the computer keeps an eye on its own frame: a beam close to breaking under load gets upgraded to a stronger material
   function botBrace(F) {
@@ -782,20 +884,23 @@ const GAME = {
       F.labDry = F.labOn ? Math.max(0, (F.labDry || 0) - dt) : 1;   // short of energy, even on and off frame to frame: keep showing it for a moment
       for (const d of F.devs) if (d.alive && d.type === 'lab') d.starve = F.labDry > 0 ? 'pw' : null;
       if (F.inf) { F.oil = E.mcap; F.en = E.cap; } if (F.infRP) F.rp = Math.max(F.rp || 0, 9999);
-      stepTech(F, dt);
+      stepTech(F, dt); if (F.actCd > 0) F.actCd -= dt; if (F.lock > 0) F.lock -= dt; if (F.od > 0) F.od -= dt;
       for (const d of F.devs) {
         if (!d.alive) continue; const D = DEV[d.type];
-        if (D.reload) { if (d.cd > 0) d.cd -= dt; if (d.req && d.aim && d.cd <= 0) { if (d.aim.tx !== undefined && !F.bot) d.aim = aimFrom(F, d, d.aim.tx, d.aim.ty); const ammo = D.ammo || 0, pw = D.pw || 0, mine = F.side === mySide && !demo; d.req = false; if (F.oil < ammo) { d.cd = 0; d.starve = 'oil'; if (mine) say(NO.oil, '#ff8a8a', 1); } else if (F.en < pw) { d.cd = 0; d.starve = 'pw'; if (mine) say(NO.pw, '#ff8a8a', 1); } else { F.oil -= ammo; F.en -= pw; d.starve = null; d.cd = D.reload * L.rel(d); fireDev(F, d); } } }   // one shot per request, never on its own
+        if (d.emp > 0) { d.starve = 'emp'; continue; } else if (d.starve === 'emp') d.starve = null;   // knocked out by an EMP
+        if (D.reload) { if (d.cd > 0) d.cd -= dt; if (d.req && d.aim && d.cd <= 0) { if (d.aim.tx !== undefined && !F.bot) d.aim = aimFrom(F, d, d.aim.tx, d.aim.ty); const ammo = F.od > 0 ? 0 : D.ammo || 0, pw = D.pw || 0, mine = F.side === mySide && !demo; d.req = false; if (F.oil < ammo) { d.cd = 0; d.starve = 'oil'; if (mine) say(NO.oil, '#ff8a8a', 1); } else if (F.en < pw) { d.cd = 0; d.starve = 'pw'; if (mine) say(NO.pw, '#ff8a8a', 1); } else { F.oil -= ammo; F.en -= pw; d.starve = null; d.cd = D.reload * L.rel(d) * (F.od > 0 ? .4 : 1); fireDev(F, d); } } }   // one shot per request, never on its own
         if (d.type === 'shield' && (d.eT -= dt) <= 0 && d.e < shieldMax(d)) { const want = Math.min(shieldMax(d) - d.e, 8 * dt * L.dmg(d) * MD(F).shRate), add = Math.min(want, F.en / .6); d.e += add; F.en -= add * .6; d.dry = add < want * .5 ? 1 : Math.max(0, (d.dry || 0) - dt); d.starve = d.dry > 0 ? 'pw' : null; }
       }
       stepRepair(F, dt); if (F.bot) botThink(F, dt);
     }
     if (phase === 'battle') for (const F of forts) stepFlak(F, dt);
     stepPend(dt); stepShots(dt);
-    for (const p of debris) { p.vy += GRAV * dt; p.vx += ENV.wind * .5 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.a += p.va * dt; p.t += dt; const gy = groundY(p.x); if (p.vy > 0 && p.y > gy && p.y - p.vy * dt <= gy + 3) { p.y = gy; if (p.vy > 150 && !p.bn) burst(p.x, gy, ['#8a7a6a', '#c8b8a0'], 3, 60, .4, 3); p.bn = 1; p.vy *= -.25; p.vx *= .5; p.va *= .4; } }   // debris lands on the islands and bounces debris = debris.filter(p => p.y < 1300 && p.t < 6);
+    for (const p of debris) { p.vy += GRAV * dt; p.vx += ENV.wind * .5 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.a += p.va * dt; p.t += dt; const gy = groundY(p.x); if (p.vy > 0 && p.y > gy && p.y - p.vy * dt <= gy + 3) { p.y = gy; if (p.vy > 150 && !p.bn) burst(p.x, gy, ['#8a7a6a', '#c8b8a0'], 3, 60, .4, 3); p.bn = 1; p.vy *= -.25; p.vx *= .5; p.va *= .4; } }   // debris lands on the islands and bounces
+    debris = debris.filter(p => p.y < 1300 && p.t < 6);
     for (const p of parts) { p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .98; p.life -= dt; } parts = parts.filter(p => p.life > 0); if (K.save.fxLow && parts.length > 260) parts.splice(0, parts.length - 260);
     for (const r of rings) r.t += dt; rings = rings.filter(r => r.t < .5);
-    for (const F of forts) for (const d of F.devs) { if (d.aim && d.type !== 'flak') { let da = d.aim.a - d.ang; da = Math.atan2(Math.sin(da), Math.cos(da)); d.ang += da * Math.min(1, dt * 8); } d.flash = Math.max(0, d.flash - dt); d.hitT = Math.max(0, d.hitT - dt); d.spin += dt * 9; if (d.zap && (d.zap.t -= dt) <= 0) d.zap = null; }
+    for (const F of forts) for (const b of F.beams) if (b.open > 0) b.open -= dt;
+    for (const F of forts) for (const d of F.devs) { if (d.emp > 0) { d.emp -= dt; if (d.alive && F.nodes[d.n] && Math.random() < dt * 8) { const [px, py] = pivot(F, d); spark(px + (Math.random() - .5) * 30, py - Math.random() * 20, '#bff4ff'); } } if (d.aim && d.type !== 'flak') { let da = d.aim.a - d.ang; da = Math.atan2(Math.sin(da), Math.cos(da)); d.ang += da * Math.min(1, dt * 8); } d.flash = Math.max(0, d.flash - dt); d.hitT = Math.max(0, d.hitT - dt); d.spin += dt * 9; if (d.zap && (d.zap.t -= dt) <= 0) d.zap = null; }
     if (phase === 'over') {
       overT += dt; const Lf = forts[1 - winner];
       if (overT < 2.4 && Math.random() < dt * 6) { const n = Lf.nodes.filter(q => q.alive); if (n.length) { const q = n[Math.floor(Math.random() * n.length)]; boom(q.x + (Math.random() - .5) * 30, q.y, 44, SIDEC[Lf.side], 1); if (sim(Lf)) blast(Lf, q.x, q.y, 50, 90); } }
@@ -970,7 +1075,7 @@ const GAME = {
     try {
       if (u.up) { const m0 = F.oil, why = upgrade(F, u.up); if (why) say(why, '#ff8a8a', 1.2); else { pushU({ F, up: u.up, cost: m0 - F.oil }); sound('up'); } return; }
       if (u.group) { const g2 = []; for (const q of u.group) { if (!q.mat.alive || q.mat.mat !== q.from) continue; const m0 = F.oil; if (!upgradeBeam(F, q.mat)) g2.push({ mat: q.mat, from: q.from, cost: m0 - F.oil }); } if (g2.length) { pushU({ F, group: g2 }); sound('up'); } return; }
-      if (u.mat) { if (u.mat.mat !== u.from) return; const m0 = F.oil, why = upgradeBeam(F, u.mat); if (why) say(why, '#ff8a8a', 1.2); else { pushU({ F, mat: u.mat, from: u.from, cost: m0 - F.oil }); sound('up'); } return; }
+      if (u.mat) { if (u.mat.mat !== u.from) return; const m0 = F.oil, why = u.to === 'door' ? toDoor(F, u.mat) : upgradeBeam(F, u.mat); if (why) say(why, '#ff8a8a', 1.2); else { pushU({ F, mat: u.mat, from: u.from, to: u.to, cost: m0 - F.oil }); sound('up'); } return; }
       act(F, u.redo);
     } finally { redoing = false; }
   }
@@ -979,10 +1084,17 @@ const GAME = {
   const NEXTM = { wood: 'steel', steel: 'armor' };
   const beamUpCost = (F, b) => Math.max(2, mc(F, NEXTM[b.mat]) - mc(F, b.mat));
   function upgradeBeam(F, b) {   // swap the beam for the next material on the same bolts: heavier, stronger, tougher
-    const nx = NEXTM[b.mat]; if (!nx) return b.mat === 'rope' ? 'Rope stays rope' : 'Armor is the strongest material';
+    const nx = NEXTM[b.mat]; if (!nx) return b.mat === 'rope' ? 'Rope stays rope' : b.mat === 'door' ? 'Doors stay doors' : 'Armor is the strongest material';
     const c = beamUpCost(F, b); if (F.oil < c) return NO.oil;
     F.oil -= c; b.mat = nx; b.fire = 0; fitBeam(F, b); masses(F); F.ver++; return '';
   }
+  // the Door tool: turn one of your beams into a door on the same bolts
+  function toDoor(F, b) {
+    if (!b || !b.alive) return 'Tap one of your beams'; if (b.mat === 'door') return 'That is already a door'; if (b.mat === 'rope') return 'Rope can\'t hold a door';
+    const c = mc(F, 'door'); if (!F.inf && F.oil < c) return NO.oil;
+    if (!F.inf) F.oil -= c; b.mat = 'door'; b.fire = 0; fitBeam(F, b); masses(F); F.ver++; return '';
+  }
+  function doorBeam(F, b) { const m0 = F.oil, from = b.mat, why = toDoor(F, b); if (!why) pushU({ F, mat: b, from, to: 'door', cost: m0 - F.oil }); return why; }
   function upDev(F, d) { const m0 = F.oil, why = upgrade(F, d); if (!why) pushU({ F, up: d, cost: m0 - F.oil }); return why; }
   function upBeam(F, b) { const m0 = F.oil, from = b.mat, why = upgradeBeam(F, b); if (!why) pushU({ F, mat: b, from, cost: m0 - F.oil }); return why; }
   const needsFix = o => o.b ? o.b.alive && (o.b.hp < bMax(o.b) - .5 || o.b.fire > 0) : o.d.alive && o.d.type !== 'core' && o.d.type !== 'weight' && o.d.hp < maxHp(o.d) - .5;
@@ -1007,9 +1119,9 @@ const GAME = {
 
   /* ---------- online: my fort streams to you, yours to me ---------- */
   function snapOf(F, k) {   // a fort as the other game sees it
-    const m = { t: 's', fi: F.side, n: [], h: F.beams.map(b => b.alive ? Math.max(1, Math.round(b.hp)) * (b.fire > 0 ? -1 : 1) : 0), d: F.devs.map(d => [d.n, d.type, d.alive ? Math.max(1, Math.round(d.hp)) : 0, d.aim ? +d.aim.a.toFixed(2) : null, Math.round(d.e), d.flash > .05 ? 1 : 0, d.lv]), g: Math.round(F.oil), e: Math.round(F.en), r: F.ready ? 1 : 0 };
+    const m = { t: 's', fi: F.side, n: [], h: F.beams.map(b => b.alive ? Math.max(1, Math.round(b.hp)) * (b.fire > 0 ? -1 : 1) : 0), d: F.devs.map(d => [d.n, d.type, d.alive ? Math.max(1, Math.round(d.hp)) : 0, d.aim ? +d.aim.a.toFixed(2) : null, Math.round(d.e), d.flash > .05 ? 1 : 0, d.lv, d.emp > 0 ? +d.emp.toFixed(1) : 0]), L: F.lock > 0 ? +F.lock.toFixed(1) : 0, g: Math.round(F.oil), e: Math.round(F.en), r: F.ready ? 1 : 0 };
     for (const n of F.nodes) m.n.push(n.alive ? Math.round(n.x) : -1, Math.round(n.y));
-    if (F.ver !== lastV[k] || (bsA[k] -= .1) <= 0) { m.b = F.beams.map(b => [b.a, b.b, ['wood', 'steel', 'armor'].indexOf(b.mat)]); lastV[k] = F.ver; bsA[k] = 2; }
+    if (F.ver !== lastV[k] || (bsA[k] -= .1) <= 0) { m.b = F.beams.map(b => [b.a, b.b, MATK.indexOf(b.mat)]); lastV[k] = F.ver; bsA[k] = 2; }
     if (MODE.k === 'coop') {   // teamwork: the host also shares research, commander, repair timer, beam loads and the wave clock
       m.rp = Math.floor(F.rp || 0); m.td = F.tech ? F.tech.done : []; m.tc = F.tech && F.tech.cur ? [F.tech.cur.id, +F.tech.cur.left.toFixed(1), F.tech.cur.all] : null; m.cm = F.cmdr; m.cl = F.cmdLv || 1; m.fx = +(F.fixCD || 0).toFixed(1);
       m.st = F.beams.map(b => b.alive ? Math.min(99, Math.round(Math.abs(b.f || 0) / bF(b) * 100)) : 0); if (F.side === 0) m.sv = [MODE.s.wave, MODE.s.on ? 1 : 0, +MODE.s.t.toFixed(1)];
@@ -1025,10 +1137,10 @@ const GAME = {
     const F = MODE.k === 'coop' && m.fi !== undefined ? forts[m.fi] : forts[1 - mySide]; if (!F || !Array.isArray(m.n) || !Array.isArray(m.d) || !Array.isArray(m.h)) return;
     for (let i = 0; i < m.n.length / 2; i++) { const x = m.n[i * 2], y = m.n[i * 2 + 1]; let n = F.nodes[i]; if (!n) n = F.nodes[i] = { x, y, px: x, py: y, pin: false, m: 1, alive: true }; n.alive = x !== -1; if (n.alive) { n.tx = x; n.ty = y; if (!n.seen) { n.x = x; n.y = y; n.seen = 1; } } }
     F.nodes.length = m.n.length / 2;
-    if (m.b) F.beams = m.b.map(([a, b, s], i) => Object.assign(F.beams[i] && F.beams[i].a === a && F.beams[i].b === b ? F.beams[i] : { hit: 0, f: 0, rest: 1 }, { a, b, mat: ['wood', 'steel', 'armor'][s] || 'wood' }));
+    if (m.b) F.beams = m.b.map(([a, b, s], i) => Object.assign(F.beams[i] && F.beams[i].a === a && F.beams[i].b === b ? F.beams[i] : { hit: 0, f: 0, rest: 1 }, { a, b, mat: MATK[s] || 'wood' }));
     m.h.forEach((h0, i) => { const b = F.beams[i]; if (!b) return; const h = Math.abs(h0); if (b.alive && h && b.hp && h < b.hp - .5) b.hit = .3; if (b.alive && !h && F.nodes[b.a] && F.nodes[b.b]) { const A = F.nodes[b.a], B = F.nodes[b.b]; splinters((A.x + B.x) / 2, (A.y + B.y) / 2, MAT[b.mat], Math.atan2(B.y - A.y, B.x - A.x), Math.hypot(B.x - A.x, B.y - A.y)); } b.hp = h; b.alive = h > 0; b.fire = h0 < 0 ? 1 : 0; });
-    F.devs = m.d.filter(q => Array.isArray(q) && DEV[q[1]]).map(([n, type, hp, a, e, fl, lv], i) => { const o = F.devs[i] && F.devs[i].n === n && F.devs[i].type === type ? F.devs[i] : { ang: F.side ? Math.PI + .6 : -.6, spin: 0, flash: 0, hitT: 0 }; if (o.alive && !hp && F.nodes[n]) boom(F.nodes[n].x, F.nodes[n].y, type === 'core' ? 110 : 44, SIDEC[F.side], 1); return Object.assign(o, { n, type, hp, lv: lv || 1, alive: hp > 0, aim: a === null ? null : { a, p: 1 }, e, flash: fl ? .12 : o.flash }); });
-    F.oil = m.g; F.en = m.e || 0; F.ready = !!m.r;
+    F.devs = m.d.filter(q => Array.isArray(q) && DEV[q[1]]).map(([n, type, hp, a, e, fl, lv, em], i) => { const o = F.devs[i] && F.devs[i].n === n && F.devs[i].type === type ? F.devs[i] : { ang: F.side ? Math.PI + .6 : -.6, spin: 0, flash: 0, hitT: 0 }; if (o.alive && !hp && F.nodes[n]) boom(F.nodes[n].x, F.nodes[n].y, type === 'core' ? 110 : 44, SIDEC[F.side], 1); return Object.assign(o, { n, type, hp, emp: num(em, 0, 20, 0), lv: lv || 1, alive: hp > 0, aim: a === null ? null : { a, p: 1 }, e, flash: fl ? .12 : o.flash }); });
+    F.oil = m.g; F.en = m.e || 0; F.ready = !!m.r; F.lock = num(m.L, 0, 10, 0);
     if (MODE.k === 'coop') coopSnap(F, m);
   }
   function followSnap(F, dt) { const k = Math.min(1, dt * 14); for (const n of F.nodes) if (n.alive && n.tx !== undefined) { n.x += (n.tx - n.x) * k; n.y += (n.ty - n.y) * k; } }
@@ -1038,7 +1150,7 @@ const GAME = {
     onMsg: m => {
       if (mode !== 'play' || demo) return;
       if (m.t === 's') onSnap(m);
-      else if (m.t === 'f' && m.a) { if (MODE.k === 'coop' ? m.from !== MP.hostId : !validShot(m)) return; const [x, y, vx, vy] = m.a; launch(m.s, m.w, x, y, vx, vy, m.d || DEV[m.w].dmg, false, m.id); }
+      else if (m.t === 'f' && m.a) { if (MODE.k === 'coop' ? m.from !== MP.hostId : !validShot(m)) return; const [x, y, vx, vy] = m.a; launch(m.s, m.w, x, y, vx, vy, m.d || DEV[m.w].dmg, false, m.id, num(m.l, 1, 3, 1)); }
       else if (m.t === 'cmd' && MODE.k === 'coop' && MP.isHost()) runCmd(m);
       else if (m.t === 'say' && m.from === MP.hostId) say(String(m.s || '').slice(0, 90), typeof m.c === 'string' && /^#[0-9a-f]{3,8}$/i.test(m.c) ? m.c : '#ffffff', num(m.d, .5, 4, 1.4));
       else if (m.t === 'end' && MODE.k === 'coop' && m.from === MP.hostId) { if (phase !== 'over') { phase = 'over'; winner = m.w === 0 ? 0 : 1; MODE.why = String(m.why || '').slice(0, 120); overT = 1.2; } }
@@ -1073,7 +1185,7 @@ const GAME = {
   const CAMB = () => { const m = MM(); return { mine: { x: m.x - 96, y: m.y + 6, w: 86, h: 34 }, all: { x: m.x + m.w / 2 - 36, y: m.y + m.h + 6, w: 72, h: 28 }, theirs: { x: m.x + m.w + 10, y: m.y + 6, w: 86, h: 34 } }; };
 
   /* ---------- input: building, deleting, upgrading, aiming, looking around ---------- */
-  const TBL = () => { const v = K.view, w = 84, gap = 6, x0 = 640 - (8 * (w + gap) + 166) / 2, y = v.y1 - 102; return { tabs: TABS.map((_, i) => ({ i, x: x0 - 4 + i * 112, y: y - 48, w: 106, h: 34 })), items: Array.from({ length: 8 }, (_, i) => ({ x: x0 + i * (w + gap), y, w, h: 92 })), act: { x: x0 + 8 * (w + gap) + 6, y, w: 160, h: 92 } }; };
+  const TBL = () => { const v = K.view, w = 84, gap = 6, x0 = 640 - (8 * (w + gap) + 166) / 2, y = v.y1 - 102; return { tabs: TABS.map((_, i) => ({ i, x: x0 - 4 + i * 86, y: y - 48, w: 82, h: 34 })), items: Array.from({ length: 8 }, (_, i) => ({ x: x0 + i * (w + gap), y, w, h: 92 })), act: { x: x0 + 8 * (w + gap) + 6, y, w: 160, h: 92 } }; };
   const inB = (b, x, y) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
   const tabItems = () => [...TABS[tab][1], ...Array(5 - TABS[tab][1].length).fill(null)].slice(0, 5).concat(['fix', 'up', 'del']);
   let boxMat = 'wood';
@@ -1178,14 +1290,15 @@ const GAME = {
   // Metal drills go on your ground. Devices never snap onto the fort's bolts.
   function placeSpot(F, type, x, y) {
     const Z = ZONE[F.side], I = ISL[F.side]; let s = null;
-    if (DEV[type].ground) { const gy = groundY(x); if (x > I.x0 + 17 && x < I.x1 - 17 && x > Z.x0 && x < Z.x1 && Math.abs(y - gy) < 26) s = { ground: true, x, y: gy, pin: true, why: '' }; }
+    if (DEV[type].ground) { let k = -1, bd = 34 / Math.min(1, cam.z); for (let q = 0; q < DEPO.length; q++) { const dx = Math.abs(depX(F.side, q) - x); if (dx < bd) { bd = dx; k = q; } } if (k >= 0 && Math.abs(y - groundY(depX(F.side, k))) < 34 / Math.min(1, cam.z)) { const dx = depX(F.side, k); s = { ground: true, x: dx, y: groundY(dx), pin: true, why: drillOn(F, k) ? 'That deposit already has a drill' : '' }; } }
     else { const c = boxCellAt(F, x, y); if (c) {
       const P = c.map(i => F.nodes[i]), dist = k => Math.hypot(P[k].x - x, P[k].y - y), ord = [0, 1, 2, 3].sort((a, b) => dist(a) - dist(b)), A = P[ord[0]]; let j = ord[1];
       for (const k of ord.slice(1)) { const B = P[k]; if (Math.abs((A.x - x) * (B.y - y) - (A.y - y) * (B.x - x)) / (dist(ord[0]) * dist(k) || 1) > .4) { j = k; break; } }
       s = { struts: [c[ord[0]], c[j]], x, y, pin: false, why: '' };
     } }
     if (!s) return null;
-    if (F.devs.some(d => d.alive && F.nodes[d.n] && Math.hypot(F.nodes[d.n].x - s.x, F.nodes[d.n].y - s.y) < 26)) s.why = 'Too close to another device';
+    if (!s.why && F.devs.some(d => d.alive && F.nodes[d.n] && Math.hypot(F.nodes[d.n].x - s.x, F.nodes[d.n].y - s.y) < 26)) s.why = 'Too close to another device';
+    if (!s.why && !techOK(F, type)) s.why = 'Needs a ' + DEV[NEEDS[type]].name + ' first (WORKS tab)';
     s.cost = devPrice(F, type) + (s.struts ? 2 * mc(F, 'wood') : 0);
     if (!s.why && s.struts && liveBeams(F) + 2 > MAXB) s.why = 'Beam limit reached';
     return s;
@@ -1195,9 +1308,18 @@ const GAME = {
     if (n === undefined) { n = addNode(F, s.x, s.y); if (s.ground && !F.nodes[n].pin) { F.nodes[n].alive = false; return -1; } if (s.struts) for (const k of s.struts) addBeam(F, n, k, 'wood'); }
     const i = addDev(F, type, n); if (i >= 0) F.oil -= s.cost; return i;
   }
+  // how many of its own beams a gun in this box would have to shoot through (toward the enemy, flat and lobbed)
+  function wallsAhead(F, q) {
+    const ids = new Set(q.c), dir = F.side ? -1 : 1; let n = 0;
+    for (const a of [-.35, -.9]) { const ex = q.x + Math.cos(a) * 260 * dir, ey = q.y + Math.sin(a) * 260;
+      for (const b of F.beams) { if (!b.alive || b.mat === 'rope' || b.mat === 'door' || (ids.has(b.a) && ids.has(b.b))) continue; const A = F.nodes[b.a], B = F.nodes[b.b]; if (A && B && segHit(q.x, q.y, ex, ey, A.x, A.y, B.x, B.y) >= 0) n++; } }
+    return n;
+  }
   function botBox(F, type, high) {   // the computer puts its devices inside its boxes too: high ones for weapons, low ones for the rest
     for (const b of F.beams) if (b.alive && Math.abs(b.f || 0) / bF(b) > .7) return false;   // not while its frame is working hard
-    const cs = boxCells(F).map(c => { const P = c.map(i => F.nodes[i]); return { x: (P[0].x + P[1].x + P[2].x + P[3].x) / 4, y: (P[0].y + P[1].y + P[2].y + P[3].y) / 4 }; }).sort((a, b) => high ? a.y - b.y : b.y - a.y);
+    const cs = boxCells(F).map(c => { const P = c.map(i => F.nodes[i]); return { c, x: (P[0].x + P[1].x + P[2].x + P[3].x) / 4, y: (P[0].y + P[1].y + P[2].y + P[3].y) / 4 }; });
+    if (high) for (const q of cs) q.blk = wallsAhead(F, q);   // weapons go where their own walls won't stop them, then as high as they can
+    cs.sort((a, b) => high ? (a.blk - b.blk) * 400 + a.y - b.y : b.y - a.y);
     for (const q of cs.slice(0, 8)) { const s = placeSpot(F, type, q.x, q.y); if (s && !s.why && F.oil >= s.cost && buildAt(F, type, s) >= 0) return true; }
     return false;
   }
@@ -1214,7 +1336,7 @@ const GAME = {
   function showFix(x, y) { const F = myF(); if (F) fixFx = { x, y, r: (FIX_R + MD(F).fixR) / Math.min(1, cam.z), ok: F.fixCD <= 0, t0: performance.now() }; }
   function placeDev(F, type, x, y) {
     const s = placeSpot(F, type, x, y);
-    if (!s) { sound('nope'); say(DEV[type].ground ? 'Metal drills go on your ground' : 'Put it inside one of your boxes', '#ff8a8a', 1.6); return; }
+    if (!s) { sound('nope'); say(DEV[type].ground ? 'Metal drills go on the dark ore deposits (4 per island)' : 'Put it inside one of your boxes', '#ff8a8a', 1.6); return; }
     if (s.why) { sound('nope'); say(s.why, '#ff8a8a', 1.4); return; }
     if (F.oil < s.cost) { sound('nope'); say(NO.oil, '#ff8a8a', 1.2); return; }
     if (buildAt(F, type, s) < 0) { sound('nope'); say(s.ground ? 'Too close to the edge' : "It can't go there", '#ff8a8a', 1.2); return; }
@@ -1323,7 +1445,7 @@ const GAME = {
     if (inB(m, kx, ky)) { mmDrag = true; cam.tx = cl((kx - m.x) / m.w, 0, 1) * WW; const o = { x: cam.tx, y: cam.ty, z: cam.tz }; clampCam(o); cam.tx = o.x; return; }
     if (phase !== 'over') {
       const tb2 = tb.tabs.find(b => inB(b, kx, ky)); if (tb2) { tab = tb2.i; sound('build'); return; }
-      const it = tb.items.findIndex(b => inB(b, kx, ky)); if (it >= 0) { const k = tabItems()[it]; if (k) { tool = tool === k ? null : k; if (MAT[k] && k !== 'rope') boxMat = k; aimSel = null; sound('build'); } return; }
+      const it = tb.items.findIndex(b => inB(b, kx, ky)); if (it >= 0) { const k = tabItems()[it]; if (k) { tool = tool === k ? null : k; if (MAT[k] && k !== 'rope' && k !== 'door') boxMat = k; aimSel = null; sound('build'); } return; }
       if (inB(tb.act, kx, ky)) { if (phase === 'construct') startTest(); else if (phase === 'build') { F.ready = !F.ready; sound('build'); if (F.ready) say(MP.online() ? 'Ready! Waiting for your opponent' : 'Ready!', '#5cf28a', 1.6); } else if (aimSel && aimSel.alive) for (const d of aimAll()) fireGo(F, d); else tool = null; return; }
       if (ky > tb.act.y - 12 && kx > tb.items[0].x - 12 && kx < tb.act.x + tb.act.w + 12) return;
     }
@@ -1334,18 +1456,22 @@ const GAME = {
     }
     if (phase !== 'over') {
       if (tool === 'box') { const c = boxCellAt(F, x, y); if (c) { drag = boxFromCell(c, x, y, boxMat); return; } const b = boxEdge(F, x, y); if (b) { drag = boxStart(F, b, x, y); return; } }
-      else if (tool === 'wood' || tool === 'steel' || tool === 'armor' || tool === 'rope') {
+      else if (tool === 'wood' || tool === 'steel' || tool === 'armor' || tool === 'rope' || tool === 'door') {
         const n = nearNode(F, x, y, SNAP / Math.min(1, cam.z)), z = ZONE[F.side], gy = groundY(x);
         if (n >= 0) { drag = { mat: tool, from: n, x, y }; return; }
+        if (tool === 'door') {   // tap a beam to turn it into a door
+          let bb = null, bd = 11 / Math.min(1, cam.z); for (const b of F.beams) if (b.alive && F.nodes[b.a] && F.nodes[b.b]) { const q = segDist(x, y, F.nodes[b.a].x, F.nodes[b.a].y, F.nodes[b.b].x, F.nodes[b.b].y); if (q < bd) { bd = q; bb = b; } }
+          if (bb) { if (coopGuest()) return cmd('door', F.beams.indexOf(bb)); const why = doorBeam(F, bb); if (why) { sound('nope'); say(why, '#ff8a8a', 1.2); } else { sound('up'); const A = F.nodes[bb.a], B = F.nodes[bb.b]; burst((A.x + B.x) / 2, (A.y + B.y) / 2, ['#5fd4ff', '#fff'], 10, 100, .35, 3); } return; }
+        }
         if (x > z.x0 && x < z.x1 && Math.abs(y - gy) < 26) { const sx = gridOn ? cl(Math.round(x / GRID) * GRID, z.x0, z.x1) : x; drag = { mat: tool, from: -1, start: { x: sx, y: groundY(sx) }, x, y }; return; }
         const c = boxCellAt(F, x, y); if (c) { drag = boxFromCell(c, x, y, tool); return; }
       } else if (tool === 'fix') { tool = null; showFix(x, y); return coopGuest() ? cmd('fixa', [x, y]) : repairArea(F, x, y); }
       else if (tool === 'del') return coopGuest() ? cmd('del', [x, y]) : deleteAt(F, x, y);
-      else if (tool === 'up') { const d = devNear(F, x, y), ub = d ? null : pickPiece(x, y); if (ub && ub.F === F && ub.b) { if (coopGuest()) return cmd('upb', F.beams.indexOf(ub.b)); const why = upBeam(F, ub.b); if (why) { sound('nope'); say(why, '#ff8a8a', 1.2); } else { sound('up'); say(MAT[ub.b.mat].name + ' beam!', '#ffd23f', 1.2); } return; } if (d) { if (coopGuest()) return cmd('upd', F.devs.indexOf(d)); const why = upDev(F, d); if (why) { sound('nope'); say(why, '#ff8a8a', 1.2); } else { sound('up'); say(`${DEV[d.type].name} level ${d.lv}!`, '#ffd23f', 1.4); burst(...pivot(F, d), ['#ffd23f', '#fff'], 16, 160, .5, 4); } return; } }
+      else if (tool === 'up') { const d = devNear(F, x, y), ub = d ? null : pickPiece(x, y); if (ub && ub.F === F && ub.b) { if (coopGuest()) return cmd('upb', F.beams.indexOf(ub.b)); const why = upBeam(F, ub.b); if (why) { sound('nope'); say(why, '#ff8a8a', 1.2); } else { sound('up'); say(MAT[ub.b.mat].name + ' beam!', '#ffd23f', 1.2); } return; } if (d) { if (coopGuest()) return cmd('upd', F.devs.indexOf(d)); const why = upDev(F, d); if (why) { sound('nope'); say(why, '#ff8a8a', 1.2); } else { sound('up'); say(`${DEV[d.type].name} level ${d.lv}!` + (perkAt(d.type, d.lv) ? ' ' + perkAt(d.type, d.lv).split(':')[0].toUpperCase() + '!' : ''), '#ffd23f', 1.8); burst(...pivot(F, d), ['#ffd23f', '#fff'], 16, 160, .5, 4); } return; } }
       else if (tool === 'sel') { const pk = pickPiece(x, y); selBox = { x0: x, y0: y, x1: x, y1: y, add: keyMod.shift, pk: pk && pk.F === F ? pk : null, kx, ky }; return; }
       else if (tool === 'paste') { if (clip) { const c = clip, T = Object.assign({}, pasteT); if (coopGuest()) cmd('paste', { c, x, y, T }); else act(F, () => commitPaste(F, c, x, y, T)); } return; }
       else if (tool === 'inspect') { inspSel = pickPiece(x, y); if (inspSel) { sound('build'); return; } }
-      else if (tool && DEV[tool]) { const tl = tool; if (placeSpot(F, tl, x, y)) return coopGuest() ? cmd('dev', { k: tl, x, y }) : act(F, () => placeDev(F, tl, x, y)); const Z = ZONE[F.side]; if (x > Z.x0 && x < Z.x1) { sound('nope'); say(DEV[tl].ground ? 'Metal drills go on your ground' : 'Put it inside one of your boxes', '#ff8a8a', 1.4); return; } }
+      else if (tool && DEV[tool]) { const tl = tool; if (placeSpot(F, tl, x, y)) return coopGuest() ? cmd('dev', { k: tl, x, y }) : act(F, () => placeDev(F, tl, x, y)); const Z = ZONE[F.side]; if (x > Z.x0 && x < Z.x1) { sound('nope'); say(DEV[tl].ground ? 'Metal drills go on the dark ore deposits (4 per island)' : 'Put it inside one of your boxes', '#ff8a8a', 1.4); return; } }
       else { let w = null, wd = 30 / Math.min(1, cam.z); for (const d of F.devs) { if (!d.alive || !DEV[d.type].reload) continue; const q = Math.hypot(pivot(F, d)[0] - x, pivot(F, d)[1] - y); if (q < wd) { wd = q; w = d; } } if (w) { if (keyMod.shift && aimSel && aimSel.alive && w !== aimSel) { if (aimGroup.has(w)) aimGroup.delete(w); else aimGroup.add(w); sound('build'); return; } if (w !== aimSel) aimGroup.clear(); selTap = w !== aimSel; aimSel = w; aimPt = { x, y }; return; } if (aimSel) { selTap = false; aimPt = { x, y }; return; } const c = boxCellAt(F, x, y); if (c) { drag = boxFromCell(c, x, y, boxMat); return; } }
     }
     pan = { kx, ky, x: cam.x, y: cam.y };   // nothing to touch here: look around
@@ -1368,13 +1494,14 @@ const GAME = {
   };
   GAME.key = (c, d) => {
     if (!d || mode !== 'play' || demo) return;
-    const n = /^Digit([1-5])$/.exec(c); if (n) { tab = +n[1] - 1; return; }
+    const n = /^Digit([1-8])$/.exec(c); if (n) { tab = +n[1] - 1; return; }
     if (c === 'Escape' || c === 'KeyQ') { tool = null; aimSel = null; aimGroup.clear(); techOpen = false; bpOpen = false; inspSel = null; clearSel(); selBox = null; }
     else if (c === 'KeyF' && phase !== 'over' && myF()) { const F = myF(), Wp = F.devs.filter(d => d.alive && DEV[d.type].reload).sort((a, b) => F.nodes[a.n].x - F.nodes[b.n].x); if (Wp.length) { aimSel = Wp[(Wp.indexOf(aimSel) + 1) % Wp.length]; aimGroup.clear(); tool = null; sound('build'); } }   // F: the next weapon
     else if (keyMod.ctrl && c === 'KeyC') { const cc = copySel(myF()); if (cc) { clearSel(); startPaste(cc); } }
     else if (keyMod.ctrl && c === 'KeyV') { if (clip) startPaste(clip); }
     else if (keyMod.ctrl && (c === 'KeyY' || (c === 'KeyZ' && keyMod.shift))) rbPress('redo');
     else if (c === 'KeyE' && tool === 'paste') pasteT.rot += Math.PI / 12;
+    else if (c === 'KeyE' && phase !== 'over') rbPress('abil');
     else if (c === 'KeyM' && tool === 'paste') pasteT.mir = !pasteT.mir;
     else if ((c === 'Delete' || c === 'Backspace') && selCount()) abPress('delsel');
     else if (c === 'KeyB') rbPress('bp');
@@ -1477,6 +1604,11 @@ const GAME = {
       g.fillStyle = 'rgba(255,255,255,.55)'; for (let k = 0; k < 12; k++) { const y = top + ((t * 190 + k * 43) % 500); g.fillRect(x - 8 + (k % 4) * 4 + (y - top) * .02 * ((k % 2) * 2 - 1), y, 2.5, 18); }
     }
     for (const I of ART.isl) g.drawImage(I.c, I.ox, I.oy);
+    for (let s2 = 0; s2 < 2; s2++) for (let k = 0; k < DEPO.length; k++) {   // the ore deposits drills sit on
+      const x = depX(s2, k), y = groundY(x) + 3; g.fillStyle = '#20161f'; g.beginPath(); g.ellipse(x, y, 24, 7, 0, 0, TAU); g.fill(); g.fillStyle = '#3a2c3c'; g.beginPath(); g.ellipse(x, y - 1, 18, 4.5, 0, 0, TAU); g.fill();
+      for (let i = 0; i < 5; i++) { const gx = x - 14 + i * 7, tw = .5 + .5 * Math.sin(t * 3 + i * 1.7 + k * 2 + s2); g.fillStyle = `rgba(200,214,236,${.35 + tw * .5})`; g.fillRect(gx, y - 3 + (i % 2) * 3, 2.5, 2); }
+      const me = mode === 'play' && forts[mySide]; if (me && s2 === mySide && tool === 'pump' && !drillOn(me, k)) { g.strokeStyle = `rgba(92,242,138,${.5 + .4 * Math.sin(t * 6)})`; g.lineWidth = 2.5; g.beginPath(); g.ellipse(x, y, 32, 11, 0, 0, TAU); g.stroke(); }
+    }
   }
   function drawSea(g) {   // the cloud sea the debris falls into
     for (let k = 0; k < 16; k++) { const c = ART.sea[k % 3], x = ((k * 360 + t * (10 + (k % 4) * 6)) % (WW + 1400)) - 700, y = GY + 260 + (k % 3) * 70; g.globalAlpha = .75 + (k % 2) * .2; g.drawImage(c, x, y, c.width * 1.2, c.height * 1.2); }
@@ -1486,7 +1618,7 @@ const GAME = {
   function drawBeam(g, A, B, b, mine, shadow) {
     const M = MAT[b.mat], dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy); if (len < 1) return;
     g.save(); g.translate(A.x, A.y); g.rotate(Math.atan2(dy, dx));
-    const th = b.mat === 'armor' ? 13 : b.mat === 'steel' ? 10 : 9, h2 = th / 2;
+    const th = b.mat === 'armor' ? 13 : b.mat === 'steel' || b.mat === 'door' ? 10 : 9, h2 = th / 2;
     if (b.mat === 'rope') {   // a twisted rope: thin, and it sags a little when slack
       const sag = Math.max(0, ((b.rest || len) - len) * .5);
       if (shadow) { g.strokeStyle = 'rgba(10,4,20,.25)'; g.lineWidth = 4; g.beginPath(); g.moveTo(0, 3); g.quadraticCurveTo(len / 2, 3 + sag, len, 3); g.stroke(); g.restore(); return; }
@@ -1504,6 +1636,12 @@ const GAME = {
     } else if (b.mat === 'steel') {
       g.fillStyle = '#5c6676'; g.fillRect(0, -h2, len, th); g.fillStyle = '#aab4c4'; g.fillRect(0, -h2, len, 2.5); g.fillRect(0, h2 - 3, len, 2); g.fillStyle = '#7e8898'; g.fillRect(0, -1.5, len, 3);
       g.fillStyle = '#d6dde8'; for (let x = 7; x < len - 4; x += 14) { g.beginPath(); g.arc(x, -h2 + 1.3, .9, 0, TAU); g.arc(x, h2 - 1.3, .9, 0, TAU); g.fill(); }
+    } else if (b.mat === 'door') {   // a blue steel door with a yellow latch; it swings open (fades) for its own fort's shots
+      const op = b.open > 0 ? Math.min(1, b.open * 4, (1.4 - b.open) * 8 + .2) : 0; if (op > 0) g.globalAlpha *= 1 - op * .75;
+      g.fillStyle = '#2c5c80'; g.fillRect(0, -h2, len, th); g.fillStyle = '#5fa8d8'; g.fillRect(0, -h2, len, 2.5);
+      g.fillStyle = '#173248'; for (let x = len * .25; x < len - 1; x += len * .25) g.fillRect(x - .75, -h2, 1.5, th);
+      g.fillStyle = '#ffd23f'; g.fillRect(len / 2 - 3, -1.5, 6, 3);
+      if (op > 0) { g.globalAlpha /= 1 - op * .75; g.strokeStyle = 'rgba(95,212,255,.8)'; g.lineWidth = 1.5; g.setLineDash([4, 4]); g.strokeRect(0, -h2, len, th); g.setLineDash([]); }
     } else {
       const gr = g.createLinearGradient(0, -h2, 0, h2); gr.addColorStop(0, '#8a93a3'); gr.addColorStop(.25, '#5c6472'); gr.addColorStop(1, '#2c323d'); g.fillStyle = gr; g.fillRect(0, -h2, len, th);
       g.strokeStyle = 'rgba(15,18,24,.7)'; g.lineWidth = 1.2; for (let x = 18; x < len - 6; x += 22) { g.beginPath(); g.moveTo(x, -h2); g.lineTo(x, h2); g.stroke(); }
@@ -1518,12 +1656,139 @@ const GAME = {
     g.restore();
   }
   function metal(g, x, y, w, h, r, c0, c1) { const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, c0); gr.addColorStop(1, c1); g.fillStyle = gr; g.beginPath(); g.roundRect(x, y, w, h, r); g.fill(); g.strokeStyle = 'rgba(8,6,14,.85)'; g.lineWidth = 1.5; g.stroke(); }
+  function gun(g, F, d, c, c2) {
+    const lv = d.lv || 1, k = d.type, rc = d.flash > 0 ? -d.flash * 22 : 0, gold = '#ffd23f', gold2 = '#a8780a';
+    const plate = (x, y, w, h, r = 3, a = '#6a6680', b = '#262432') => metal(g, x, y, w, h, r, a, b);
+    const rivets = (x0, x1, y, step = 6) => { g.fillStyle = 'rgba(255,255,255,.5)'; for (let x = x0; x <= x1; x += step) { g.beginPath(); g.arc(x, y, .9, 0, TAU); g.fill(); } };
+    const band = (x, y, h, col = c) => { g.fillStyle = col; g.fillRect(x, y, 2.5, h); };
+    const hole = (x, y, r) => { g.fillStyle = '#0a0812'; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
+    const glow = (x, y, r, col, a = 1) => { g.save(); g.globalCompositeOperation = 'lighter'; const gl = g.createRadialGradient(x, y, 0, x, y, r); gl.addColorStop(0, col); gl.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = a; g.fillStyle = gl; g.fillRect(x - r, y - r, r * 2, r * 2); g.restore(); };
+    // the mount: a turntable that grows armor at level 2 and gold trim at level 3
+    const w2 = k === 'mortar' || k === 'fire' || k === 'cluster' ? 15 : 13;
+    g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(0, 9, w2 + 3, 3.5, 0, 0, TAU); g.fill();
+    plate(-w2, 1, w2 * 2, 8, 3, '#5a5868', '#22202c'); g.fillStyle = lv >= 3 ? gold : c; g.fillRect(-w2 + 2, 4, w2 * 2 - 4, 2);
+    if (lv >= 2) { plate(-w2 - 3, -2, 5, 11, 2, '#7a7690', '#2a2836'); plate(w2 - 2, -2, 5, 11, 2, '#7a7690', '#2a2836'); rivets(-w2 + 3, w2 - 3, 7.5, 5); }
+    const dg = g.createRadialGradient(-3, -4, 1, 0, 0, w2 - 2); dg.addColorStop(0, lv >= 3 ? '#9a96b0' : '#77738a'); dg.addColorStop(1, '#2c2a38'); g.fillStyle = dg; g.beginPath(); g.arc(0, 2, w2 - 2, Math.PI, 0); g.fill();
+    if (lv >= 3) { g.strokeStyle = gold; g.lineWidth = 1.5; g.beginPath(); g.arc(0, 2, w2 - 2, Math.PI, 0); g.stroke(); }
+    // the gun itself pivots; keep its top side up when it faces left
+    g.rotate(d.ang); if (Math.cos(d.ang) < 0) g.scale(1, -1);
+    let tip = 34;
+    if (k === 'cannon') {
+      // 1: a stubby gun. 2: a long reinforced barrel and recoil springs. 3: twin barrels (it fires two)
+      plate(-11, -8, 17, 16, 4, '#6a6680', '#24222e'); rivets(-8, 4, -6, 4);
+      const L = lv >= 2 ? 38 : 30, ys = lv >= 3 ? [-4.5, 4.5] : [0], bh = lv >= 3 ? 7 : 10;
+      for (const y of ys) { plate(2 + rc, y - bh / 2, L, bh, 3, '#7a7690', '#262432'); plate(L - 4 + rc, y - bh / 2 - 1.5, 7, bh + 3, 2, lv >= 3 ? gold : c, lv >= 3 ? gold2 : c2); hole(L + 3 + rc, y, bh / 2 - 1.2); if (lv >= 2) { band(12 + rc, y - bh / 2, bh, '#3a3848'); band(22 + rc, y - bh / 2, bh, '#3a3848'); } }
+      if (lv >= 2) { g.strokeStyle = '#9a96b0'; g.lineWidth = 1.2; g.beginPath(); for (let x = -2; x < 8; x += 2) { g.moveTo(x, -9); g.lineTo(x + 1, -6); } g.stroke(); }
+      tip = L + 6;
+    } else if (k === 'mg') {
+      // 1: twin barrels and an ammo box. 2: cooling jackets with vents. 3: a spinning six-barrel gatling
+      plate(-10, -7, 16, 14, 3, '#4e4a5e', '#1c1a26'); plate(-9, 6, 12, 7, 2, '#5a6a3a', '#2a3418'); g.fillStyle = gold; for (let i = 0; i < 4; i++) g.fillRect(-7 + i * 3, 13, 1.6, 3);
+      if (lv >= 3) { plate(4, -6, 10, 12, 3, '#6a6680', '#262432'); const sp = d.spin * (d.flash > 0 ? 3 : 1); for (let i = 0; i < 6; i++) { const a = sp + i / 6 * TAU, y = Math.sin(a) * 4.2, sh = .55 + .45 * Math.cos(a); g.fillStyle = `rgb(${110 * sh + 40},${108 * sh + 40},${130 * sh + 40})`; g.fillRect(12, y - 1.3, 26, 2.6); } plate(36, -6, 4, 12, 2, gold, gold2); tip = 42; }
+      else { for (const o of [-3.2, 3.2]) { plate(4 + rc * .5, o - 2, 28, 4, 2, '#8a86a0', '#2a2836'); if (lv >= 2) { plate(8 + rc * .5, o - 3, 14, 6, 2, '#5a5868', '#22202c'); g.fillStyle = '#0a0812'; for (let x = 10; x < 21; x += 3) g.fillRect(x + rc * .5, o - 1, 1.5, 2); } } tip = 34; }
+      g.fillStyle = c; g.fillRect(-8, -2, 10, 4);
+    } else if (k === 'sniper') {
+      // 1: a long rifle and scope. 2: AP rounds: muzzle brake, bigger scope, bipod. 3: suppressor and a laser sight
+      const L = lv >= 3 ? 60 : lv >= 2 ? 56 : 52;
+      plate(-12, -5, 20, 10, 3, '#5a5868', '#22202c'); plate(-18, -3, 8, 8, 2, '#4e3a2a', '#2a1a10');
+      plate(4 + rc, -2.2, L - 4, 4.4, 2, '#8a86a0', '#262432');
+      plate(6, -12, lv >= 2 ? 22 : 16, lv >= 2 ? 7 : 6, 3, '#3a3848', '#14121a'); g.fillStyle = lv >= 2 ? '#ff5a6a' : c; g.beginPath(); g.arc(lv >= 2 ? 28 : 22, -8.5, 2.4, 0, TAU); g.fill(); glow(lv >= 2 ? 28 : 22, -8.5, 6, lv >= 2 ? 'rgba(255,90,106,.7)' : 'rgba(255,255,255,.3)');
+      if (lv >= 2) { plate(L - 6 + rc, -4, 8, 8, 2, '#5a5868', '#1c1a26'); g.fillStyle = '#0a0812'; g.fillRect(L - 4 + rc, -4, 1.5, 8); g.fillRect(L - 1 + rc, -4, 1.5, 8); g.strokeStyle = '#2a2836'; g.lineWidth = 2; g.beginPath(); g.moveTo(26, 2); g.lineTo(20, 12); g.moveTo(26, 2); g.lineTo(32, 12); g.stroke(); }
+      if (lv >= 3) { plate(L + 1 + rc, -3.5, 10, 7, 3, '#2a2836', '#0a0812'); band(L + 2 + rc, -3.5, 7, gold); const lg = g.createLinearGradient(L, 0, L + 110, 0); lg.addColorStop(0, 'rgba(255,60,80,.45)'); lg.addColorStop(1, 'rgba(255,60,80,0)'); g.strokeStyle = lg; g.lineWidth = 1; g.beginPath(); g.moveTo(L + 10, 0); g.lineTo(L + 110, 0); g.stroke(); }
+      tip = L + (lv >= 3 ? 11 : 2);
+    } else if (k === 'rail') {
+      // 1: twin rails with glowing coils. 2: more coils and a capacitor bank. 3: triple rails crackling with arcs
+      const col = F.side ? '95,212,255' : '255,176,46', rails = lv >= 3 ? [-6, 0, 6] : [-4.5, 4.5], L = lv >= 2 ? 50 : 44;
+      plate(-14, -9, 16, 18, 3, '#4e4a5e', '#1c1a26'); if (lv >= 2) { for (let i = 0; i < 3; i++) plate(-12 + i * 5, -15, 4, 6, 1, '#3a5a6a', '#14242c'); }
+      for (const y of rails) plate(0 + rc * .3, y - 1.6, L, 3.2, 1.5, '#a8a8c4', '#2a2a3a');
+      for (let x = 4; x < L - 6; x += lv >= 2 ? 6 : 8) { const gl = .5 + .5 * Math.sin(t * 8 + x); g.fillStyle = `rgba(${col},${.4 + gl * .6})`; g.fillRect(x, -9, 2.6, 18); }
+      if (lv >= 3 && Math.sin(t * 23) > .2) { g.strokeStyle = `rgba(${col},.9)`; g.lineWidth = 1.2; g.beginPath(); let x = 6; g.moveTo(x, -6); while (x < L) { x += 5; g.lineTo(x, (Math.random() - .5) * 12); } g.stroke(); }
+      glow(L, 0, 10, `rgba(${col},.8)`, .6 + .4 * Math.sin(t * 6)); tip = L + 2;
+    } else if (k === 'laser') {
+      // 1: an emitter tube and crystal. 2: cooling fins. 3: a focusing dish around a bright core
+      const col = F.side ? '95,212,255' : '255,120,90';
+      plate(-12, -8, 18, 16, 4, '#4e4a5e', '#1c1a26'); plate(4, -5, 30, 10, 4, '#7a7690', '#262432');
+      if (lv >= 2) for (let x = 8; x < 30; x += 4) plate(x, -9, 2.4, 18, 1, '#9a96b0', '#3a3848');
+      const cx = 36; g.fillStyle = `rgb(${col})`; g.beginPath(); g.moveTo(cx - 4, -5); g.lineTo(cx + 5, 0); g.lineTo(cx - 4, 5); g.closePath(); g.fill(); glow(cx, 0, lv >= 3 ? 18 : 11, `rgba(${col},.9)`, .5 + .5 * Math.sin(t * 5));
+      if (lv >= 3) { g.strokeStyle = gold; g.lineWidth = 2.5; g.beginPath(); g.arc(cx - 6, 0, 11, -1.1, 1.1); g.stroke(); }
+      tip = cx + 6;
+    } else if (k === 'mortar' || k === 'fire') {
+      // mortar 1: a squat tube. 2: banded and braced. 3: the Heavy mortar, a fat tube on hydraulic legs
+      // firebomb: a tube fed by fuel tanks (one, then two) and at 3 a pilot flame at the mouth
+      const fire = k === 'fire', heavy = !fire && lv >= 3, W = heavy ? 15 : 11, L = heavy ? 30 : 24;
+      plate(-8, -11, 18, 22, 4, '#6a6680', '#24222e');
+      plate(6 + rc * .4, -W, L, W * 2, 4, fire ? '#8a5a3a' : '#7a7690', fire ? '#3a1a0a' : '#262432'); plate(L + 2 + rc * .4, -W - 1.5, 6, W * 2 + 3, 2, fire ? '#ff9a3a' : lv >= 3 ? gold : c, fire ? '#a8381a' : lv >= 3 ? gold2 : c2); hole(L + 5 + rc * .4, 0, W - 3);
+      if (lv >= 2) { band(14 + rc * .4, -W, W * 2, '#3a3848'); band(22 + rc * .4, -W, W * 2, '#3a3848'); }
+      if (heavy) { g.strokeStyle = '#3a3846'; g.lineWidth = 3; g.beginPath(); g.moveTo(8, W); g.lineTo(-2, W + 9); g.moveTo(20, W); g.lineTo(26, W + 9); g.stroke(); g.fillStyle = '#9a96b0'; g.fillRect(2, W + 1, 2, 6); }
+      if (fire) { for (let i = 0; i < Math.min(2, lv); i++) { plate(-16, -10 + i * 11, 9, 9, 4, '#ff8a2a', '#9a2a12'); g.fillStyle = '#ffd23f'; g.fillRect(-14, -7 + i * 11, 5, 1.5); } if (lv >= 3) { const f = .7 + .3 * Math.sin(t * 20); g.fillStyle = `rgba(255,${150 + 60 * f},60,.9)`; g.beginPath(); g.ellipse(L + 9, 0, 4 + f * 2, 3, 0, 0, TAU); g.fill(); glow(L + 9, 0, 10, 'rgba(255,140,40,.8)'); } }
+      tip = L + 8;
+    } else if (k === 'cluster') {
+      // a rotary drum of bomblets: more chambers per level, and gold-capped at 3
+      plate(-10, -12, 22, 24, 5, '#6a6680', '#24222e'); plate(10 + rc * .4, -12, 8, 24, 2, lv >= 3 ? gold : c, lv >= 3 ? gold2 : c2);
+      hole(22 + rc * .4, 0, 8); const n = 3 + lv; for (let i = 0; i < n; i++) { const a = i / n * TAU + d.spin * .2; g.fillStyle = '#ffd23f'; g.beginPath(); g.arc(1 + Math.cos(a) * 6, Math.sin(a) * 6, 2.2, 0, TAU); g.fill(); }
+      if (lv >= 2) rivets(-8, 8, -10, 4);
+      tip = 26;
+    } else if (k === 'rockets') {
+      // a launch pod: three tubes, then four, then six behind armor
+      // tube mouths in a neat grid on the front face
+      const grid = lv >= 3 ? [[-8, -4.5], [0, -4.5], [8, -4.5], [-8, 4.5], [0, 4.5], [8, 4.5]].map(([y, x]) => [x, y]) : lv >= 2 ? [[0, -9], [0, -3], [0, 3], [0, 9]] : [[0, -7.5], [0, 0], [0, 7.5]];
+      const H = lv >= 3 ? 30 : 26; plate(-10, -H / 2, 36, H, 4, '#6a6680', '#24222e');
+      if (lv >= 3) { for (const [x, y] of grid) { hole(22 + x * .55, y * 1.15, 3.2); g.fillStyle = c; g.beginPath(); g.arc(22 + x * .55, y * 1.15, 1.4, 0, TAU); g.fill(); } }
+      else for (const [, y] of grid) { hole(26, y, 3.3); g.fillStyle = c; g.beginPath(); g.arc(26, y, 1.5, 0, TAU); g.fill(); }
+      if (lv >= 2) plate(-12, -H / 2 - 3, 30, 4, 2, '#8a86a0', '#2a2836');
+      if (lv >= 3) plate(-12, H / 2 - 1, 30, 4, 2, gold, gold2);
+      tip = 30;
+    } else if (k === 'swarm') {
+      // a box of homing missiles: 6, then 8, then 12 cells with a turning radar dish
+      const n = lv >= 3 ? 12 : lv >= 2 ? 8 : 6, cols = lv >= 3 ? 4 : n / 2, rows = n / cols, H = 10 + rows * 7;
+      plate(-12, -H / 2, 36, H, 4, '#6a6680', '#24222e');
+      for (let i = 0; i < n; i++) { const x = 6 + (i % cols) * 5, y = -H / 2 + 6 + Math.floor(i / cols) * 7; hole(x + 12, y, 2.6); g.fillStyle = c; g.beginPath(); g.arc(x + 12, y, 1.1, 0, TAU); g.fill(); }
+      g.fillStyle = lv >= 3 ? gold : c; g.fillRect(-9, -H / 2 + 3, 3, H - 6);
+      if (lv >= 3) { g.save(); g.translate(-4, -H / 2 - 4); g.scale(Math.cos(t * 3), 1); g.fillStyle = '#9a96b0'; g.beginPath(); g.ellipse(0, 0, 7, 3, 0, 0, TAU); g.fill(); g.restore(); g.strokeStyle = '#3a3848'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(-4, -H / 2 - 4); g.lineTo(-4, -H / 2); g.stroke(); }
+      tip = 32;
+    } else if (k === 'emp') {
+      // coils around a charge sphere; another coil at 2; at 3 a tesla crown with live sparks
+      plate(-12, -7, 18, 14, 4, '#4e5a6e', '#1c2230'); plate(4, -4, 18, 8, 3, '#7a8496', '#262c3a');
+      const nc = lv >= 2 ? 4 : 3; for (let i = 0; i < nc; i++) { g.strokeStyle = `rgba(143,233,255,${.5 + .5 * Math.sin(t * 9 + i)})`; g.lineWidth = 2.2; g.beginPath(); g.arc(4 + i * 5, 0, 7, -1.2, 1.2); g.stroke(); }
+      const R2 = lv >= 3 ? 7 : 5.5; g.fillStyle = '#bff4ff'; g.beginPath(); g.arc(28, 0, R2, 0, TAU); g.fill(); glow(28, 0, 14, 'rgba(143,233,255,.9)', .6 + .4 * Math.sin(t * 7));
+      if (lv >= 3) { g.strokeStyle = gold; g.lineWidth = 1.5; g.beginPath(); g.arc(28, 0, R2 + 3, 0, TAU); g.stroke(); if (Math.random() < .5) { g.strokeStyle = '#dffaff'; g.lineWidth = 1; g.beginPath(); g.moveTo(28, 0); for (let j = 0; j < 3; j++) g.lineTo(28 + (Math.random() - .5) * 26, (Math.random() - .5) * 26); g.stroke(); } }
+      tip = 28 + R2;
+    } else if (k === 'howitzer') {
+      // a long heavy gun on a cradle: 2 adds a muzzle brake, 3 a gold-banded double-thick barrel
+      plate(-16, -10, 24, 20, 4, '#5a5868', '#1c1a26'); rivets(-12, 4, -7, 5); const L = 54, W = lv >= 3 ? 7 : 5.5;
+      plate(4 + rc, -W, L, W * 2, 3, '#7a7690', '#262432'); band(18 + rc, -W, W * 2, '#3a3848'); band(34 + rc, -W, W * 2, lv >= 3 ? gold : '#3a3848');
+      if (lv >= 2) { plate(L + 2 + rc, -W - 3, 10, W * 2 + 6, 2, '#4e4a5e', '#14121a'); g.fillStyle = '#0a0812'; g.fillRect(L + 5 + rc, -W - 3, 2, W * 2 + 6); }
+      hole(L + (lv >= 2 ? 12 : 4) + rc, 0, W - 1.5); g.strokeStyle = '#3a3846'; g.lineWidth = 3; g.beginPath(); g.moveTo(-6, 10); g.lineTo(-14, 16); g.moveTo(4, 10); g.lineTo(12, 16); g.stroke();
+      tip = L + (lv >= 2 ? 14 : 6);
+    } else if (k === 'saw') {
+      // a launcher arm holding a spinning blade: more teeth and a guard as it levels up
+      plate(-10, -6, 20, 12, 3, '#5a5868', '#1c1a26'); plate(6, -3, 16, 6, 2, '#8a86a0', '#262432');
+      g.save(); g.translate(28, 0); g.rotate(d.spin * 2); const R2 = 10 + lv, teeth = 8 + lv * 2; g.fillStyle = '#c8d0dc'; g.beginPath(); for (let i = 0; i < teeth * 2; i++) { const a = i / (teeth * 2) * TAU, r = i % 2 ? R2 : R2 + 3.5; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); } g.closePath(); g.fill(); g.strokeStyle = '#4e4a5e'; g.lineWidth = 1; g.stroke(); g.fillStyle = lv >= 3 ? gold : c; g.beginPath(); g.arc(0, 0, 3.5, 0, TAU); g.fill(); g.restore();
+      if (lv >= 2) { g.strokeStyle = '#4e4a5e'; g.lineWidth = 3; g.beginPath(); g.arc(28, 0, 16 + lv, Math.PI * .6, Math.PI * 1.4); g.stroke(); }
+      tip = 40;
+    } else if (k === 'smoke') {
+      // a fat launcher tube with grey canisters racked on the side
+      plate(-8, -9, 18, 18, 4, '#5a5868', '#22202c'); plate(8 + rc * .4, -8, 22, 16, 4, '#6a7078', '#2a2e34'); hole(32 + rc * .4, 0, 6);
+      for (let i = 0; i < 1 + lv; i++) plate(-14 + i * 6, 8, 5, 9, 2, '#9aa0a8', '#4e5458');
+      if (lv >= 3) band(18 + rc * .4, -8, 16, gold);
+      tip = 34;
+    } else if (k === 'flak') {
+      // 1: twin flak barrels. 2: four. 3: the Shotgun, a wide bell-mouthed quad
+      plate(-10, -8, 14, 16, 3, '#4e4a5e', '#1c1a26'); const ys = lv >= 2 ? [-6, -2, 2, 6] : [-3.5, 3.5], L = 26;
+      for (const y of ys) plate(2 + rc * .3, y - 1.8, L, 3.6, 1.5, '#8a86a0', '#262432');
+      if (lv >= 3) { g.fillStyle = gold; g.beginPath(); g.moveTo(L - 2, -8); g.lineTo(L + 8, -11); g.lineTo(L + 8, 11); g.lineTo(L - 2, 8); g.closePath(); g.fill(); g.fillStyle = '#0a0812'; g.fillRect(L + 6, -9, 2, 18); }
+      g.fillStyle = c; g.fillRect(-7, -6, 5, 12); tip = L + (lv >= 3 ? 9 : 2);
+    }
+    return tip;
+  }
   function drawDev(g, F, d, ghost) {
     const [px, py] = pivot(F, d), D = DEV[d.type], c = SIDEC[F.side], c2 = SIDEC2[F.side];
     g.save(); g.translate(px, py);
     // shared turret base for weapons and machines
     const base = (w2 = 13) => { g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(0, 9, w2 + 2, 3.5, 0, 0, TAU); g.fill(); metal(g, -w2, 0, w2 * 2, 8, 3, '#5a5868', '#24222e'); const dg = g.createRadialGradient(-3, -4, 1, 0, 0, w2 - 2); dg.addColorStop(0, '#77738a'); dg.addColorStop(1, '#2c2a38'); g.fillStyle = dg; g.beginPath(); g.arc(0, 1, w2 - 2, Math.PI, 0); g.fill(); g.fillStyle = c; g.fillRect(-w2 + 2, 4, w2 * 2 - 4, 2); };
-    if (d.type === 'core') {
+    if (WEAP.includes(d.type) || d.type === 'flak') {   // every weapon: its own mount and barrel, growing with each level
+      const tip = gun(g, F, d, c, c2);
+      if (d.flash > 0 && d.type !== 'laser') { g.globalCompositeOperation = 'lighter'; const mf = g.createRadialGradient(tip, 0, 1, tip, 0, 20); mf.addColorStop(0, `rgba(255,240,200,${Math.min(1, d.flash * 5)})`); mf.addColorStop(1, 'rgba(255,140,60,0)'); g.fillStyle = mf; g.beginPath(); g.arc(tip, 0, 20, 0, TAU); g.fill(); g.globalCompositeOperation = 'source-over'; }
+    } else if (d.type === 'core') {
       const pulse = .7 + .3 * Math.sin(t * 4 + F.side), gl = g.createRadialGradient(0, 0, 4, 0, 0, 58); gl.addColorStop(0, c); gl.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = .6 * pulse; g.fillStyle = gl; g.fillRect(-58, -58, 116, 116); g.globalAlpha = 1;
       metal(g, -22, 10, 44, 10, 3, '#5a5868', '#22202c');
       g.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + Math.PI / 6; g.lineTo(Math.cos(a) * 23, Math.sin(a) * 23); } g.closePath(); const fr = g.createLinearGradient(0, -23, 0, 23); fr.addColorStop(0, '#6a6680'); fr.addColorStop(1, '#1e1c28'); g.fillStyle = fr; g.fill(); g.strokeStyle = '#0a0812'; g.lineWidth = 2.5; g.stroke();
@@ -1561,10 +1826,6 @@ const GAME = {
       g.fillStyle = on ? `rgba(201,166,255,${.6 + gl * .4})` : '#4a3a5a'; g.beginPath(); g.moveTo(-3, -14); g.lineTo(3, -14); g.lineTo(3, -10); g.lineTo(7, -3); g.lineTo(-7, -3); g.lineTo(-3, -10); g.closePath(); g.fill();
     } else if (d.type === 'weight') {   // the challenge's test load
       metal(g, -14, -13, 28, 22, 3, '#8a8698', '#3a3848'); g.fillStyle = '#ffd23f'; g.fillRect(-14, -13, 28, 4); txt(g, '5T', 0, 1, 10, '#1a1822', 'center');
-    } else if (d.type === 'laser') {
-      base(12); g.rotate(d.ang); metal(g, -10, -9, 22, 18, 4, '#5e5a70', '#1e1c28'); metal(g, 10, -5, 18, 10, 2, '#8a8aa6', '#2a2a3a');
-      for (const r of [14, 19, 24]) { g.fillStyle = '#1a1822'; g.fillRect(r, -6, 2, 12); }
-      const lc = F.side ? '#8fe9ff' : '#ff9a7a', on = d.flash > .05; g.fillStyle = on ? '#ffffff' : lc; g.shadowColor = lc; g.shadowBlur = on ? 18 : 6; g.beginPath(); g.arc(29, 0, on ? 5 : 3.5, 0, TAU); g.fill(); g.shadowBlur = 0;
     } else if (d.type === 'magnet') {   // a big horseshoe magnet on a coil
       base(12); metal(g, -9, -10, 18, 9, 3, '#8a6a40', '#3a2a14'); g.strokeStyle = '#c8a050'; g.lineWidth = 1; for (let i = -7; i <= 7; i += 3) { g.beginPath(); g.moveTo(i, -10); g.lineTo(i, -1); g.stroke(); }
       g.lineCap = 'butt'; g.strokeStyle = '#1a1018'; g.lineWidth = 10; g.beginPath(); g.arc(0, -22, 9, Math.PI, 0); g.lineTo(9, -12); g.moveTo(-9, -22); g.lineTo(-9, -12); g.stroke();
@@ -1583,26 +1844,25 @@ const GAME = {
     } else if (d.type === 'repair') {
       base(12); metal(g, -9, -14, 18, 12, 3, '#6e8a7a', '#2a3a32'); g.fillStyle = '#7dff9a'; g.fillRect(-1.6, -12, 3.2, 8); g.fillRect(-4, -9.6, 8, 3.2);
       g.strokeStyle = '#3a3846'; g.lineWidth = 3; g.beginPath(); g.moveTo(6, -14); g.lineTo(14, -24); g.stroke(); g.fillStyle = Math.sin(t * 6) > 0 ? '#7dff9a' : '#2e6a3e'; g.beginPath(); g.arc(14, -25, 2.5, 0, TAU); g.fill();
-    } else if (d.type === 'flak') {
-      base(12); g.rotate(d.ang);
-      for (const o of [-3.5, 3.5]) metal(g, -2, o - 2.5, 24, 5, 2, '#6a6680', '#262432');
-      g.fillStyle = c; g.fillRect(-4, -6, 6, 12);
-      if (d.flash > 0) { g.globalCompositeOperation = 'lighter'; g.fillStyle = `rgba(255,220,140,${d.flash * 6})`; g.beginPath(); g.arc(26, 0, 9, 0, TAU); g.fill(); g.globalCompositeOperation = 'source-over'; }
-    } else {   // aimable weapons: a base and a barrel that swings to its aim
-      base(d.type === 'mortar' || d.type === 'fire' ? 14 : d.type === 'howitzer' ? 16 : 12); g.rotate(d.ang);
-      if (d.type === 'howitzer') { metal(g, -10, -10, 24, 20, 4, '#6a6680', '#262432'); metal(g, 10, -6.5, 40, 13, 3, '#7a7690', '#2a2836'); metal(g, 46, -9, 9, 18, 2, c, c2); g.fillStyle = '#0c0a12'; g.beginPath(); g.arc(55, 0, 4.5, 0, TAU); g.fill(); g.fillStyle = c; g.fillRect(-6, -12, 12, 3); }
-      else if (d.type === 'saw') { metal(g, -8, -6, 24, 12, 3, '#6a6680', '#262432'); g.save(); g.translate(24, 0); g.rotate(t * (d.flash > 0 ? 40 : 6)); g.fillStyle = '#d8dde8'; g.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, r = i % 2 ? 8 : 11; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); } g.closePath(); g.fill(); g.strokeStyle = '#4e4a5e'; g.lineWidth = 1; g.stroke(); g.fillStyle = c; g.beginPath(); g.arc(0, 0, 3, 0, TAU); g.fill(); g.restore(); }
-      else if (d.type === 'smoke') { for (const o of [-6, 6]) metal(g, -4, o - 4, 24, 8, 3, '#9aa0a8', '#4e5458'); g.fillStyle = c; g.fillRect(-6, -9, 4, 18); g.fillStyle = 'rgba(200,200,210,.5)'; g.beginPath(); g.arc(24 + Math.sin(t * 3) * 2, -6, 3, 0, TAU); g.fill(); }
-      if (d.type === 'sniper') { metal(g, -6, -3, 50, 6, 2, '#7a7690', '#262432'); metal(g, 44, -4.5, 6, 9, 2, '#3a3848', '#14121a'); metal(g, 4, -11, 16, 6, 3, '#4e4a5e', '#1c1a26'); g.fillStyle = c; g.beginPath(); g.arc(20, -8, 2.2, 0, TAU); g.fill(); g.strokeStyle = '#2a2836'; g.lineWidth = 2; g.beginPath(); g.moveTo(22, 3); g.lineTo(28, 10); g.stroke(); }
-      else if (d.type === 'cannon') { metal(g, -5, -5.5, 32, 11, 3, '#6a6680', '#262432'); metal(g, 24, -7, 7, 14, 2, c, c2); g.fillStyle = '#0e0c14'; g.beginPath(); g.arc(31, 0, 3.5, 0, TAU); g.fill(); }
-      else if (d.type === 'mg') { for (const o of [-3, 3]) metal(g, -2, o - 2, 28, 4, 2, '#7a7690', '#2a2836'); metal(g, -8, -7, 14, 14, 3, '#4e4a5e', '#1c1a26'); g.fillStyle = c; g.fillRect(-6, -2, 10, 4); }
-      else if (d.type === 'cluster') { metal(g, -6, -11, 24, 22, 4, '#6a6680', '#262432'); metal(g, 15, -12, 6, 24, 2, c, c2); g.fillStyle = '#0c0a12'; g.beginPath(); g.arc(21, 0, 7.5, 0, TAU); g.fill(); g.fillStyle = '#ffd23f'; for (const [ox, oy] of [[2, -5], [8, 0], [2, 5]]) { g.beginPath(); g.arc(ox, oy, 2.4, 0, TAU); g.fill(); } }
-      else if (d.type === 'swarm') { metal(g, -10, -13, 32, 26, 4, '#6a6680', '#262432'); for (let i = 0; i < 6; i++) { const ox = 22, oy = -8 + (i % 3) * 8, ox2 = i < 3 ? 0 : -1; g.fillStyle = '#0c0a12'; g.beginPath(); g.arc(ox + ox2, oy, 3, 0, TAU); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(ox + ox2, oy, 1.3, 0, TAU); g.fill(); } g.fillStyle = c; g.fillRect(-6, -10, 3, 20); }
-      else if (d.type === 'mortar' || d.type === 'fire') { metal(g, -6, -10, 22, 20, 4, '#6a6680', '#262432'); metal(g, 13, -11, 6, 22, 2, d.type === 'fire' ? '#ff9a3a' : c, d.type === 'fire' ? '#a8381a' : c2); g.fillStyle = '#0c0a12'; g.beginPath(); g.arc(19, 0, 7, 0, TAU); g.fill(); if (d.type === 'fire') { metal(g, -14, -5, 8, 12, 3, '#ff8a2a', '#9a2a12'); } }
-      else if (d.type === 'rockets') { metal(g, -8, -12, 32, 24, 4, '#6a6680', '#262432'); for (let i = -1; i <= 1; i++) { g.fillStyle = '#0c0a12'; g.beginPath(); g.arc(24, i * 7.5, 3.6, 0, TAU); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(24, i * 7.5, 1.6, 0, TAU); g.fill(); } }
-      else if (d.type === 'rail') { metal(g, -6, -4, 46, 8, 2, '#8a8aa6', '#2a2a3a'); for (let x = 2; x < 36; x += 7) { const gl = .5 + .5 * Math.sin(t * 8 + x); g.fillStyle = `rgba(${F.side ? '95,212,255' : '255,176,46'},${.4 + gl * .6})`; g.fillRect(x, -6, 3, 12); } metal(g, -12, -8, 12, 16, 3, '#4e4a5e', '#1c1a26'); }
-      if (d.flash > 0) { g.globalCompositeOperation = 'lighter'; const mf = g.createRadialGradient(36, 0, 1, 36, 0, 18); mf.addColorStop(0, `rgba(255,240,200,${d.flash * 5})`); mf.addColorStop(1, 'rgba(255,140,60,0)'); g.fillStyle = mf; g.beginPath(); g.arc(36, 0, 18, 0, TAU); g.fill(); g.globalCompositeOperation = 'source-over'; }
-    }
+    } else if (d.type === 'workshop') {   // a timber workshop with a turning cog
+      g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(0, 9, 24, 4, 0, 0, TAU); g.fill();
+      metal(g, -22, -18, 44, 27, 3, '#9a6532', '#4e2e14'); g.fillStyle = '#5e3a1c'; g.beginPath(); g.moveTo(-26, -17); g.lineTo(0, -32); g.lineTo(26, -17); g.closePath(); g.fill();
+      g.fillStyle = '#2a1a10'; g.fillRect(-6, -6, 12, 15); g.save(); g.translate(12, -8); g.rotate(d.spin * .5); g.fillStyle = c; for (let i = 0; i < 8; i++) { g.rotate(TAU / 8); g.fillRect(-1.6, -8, 3.2, 4); } g.beginPath(); g.arc(0, 0, 5, 0, TAU); g.fill(); g.fillStyle = '#2a1a10'; g.beginPath(); g.arc(0, 0, 2, 0, TAU); g.fill(); g.restore();
+    } else if (d.type === 'armoury') {   // a squat steel bunker with shells racked out front
+      g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(0, 9, 24, 4, 0, 0, TAU); g.fill();
+      metal(g, -22, -16, 44, 25, 6, '#7a8496', '#2c323d'); g.fillStyle = c; g.fillRect(-22, -8, 44, 4);
+      for (let i = 0; i < 4; i++) { metal(g, -16 + i * 9, -2, 6, 10, 3, '#d8b04a', '#7a5a1a'); }
+      g.fillStyle = '#1a1822'; g.fillRect(-12, -14, 24, 4);
+    } else if (d.type === 'factory') {   // a factory with a smoking chimney
+      g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(0, 9, 26, 4, 0, 0, TAU); g.fill();
+      metal(g, -24, -14, 48, 23, 3, '#6a6478', '#24222e'); metal(g, 10, -34, 9, 22, 2, '#5a5468', '#1c1a26');
+      g.fillStyle = '#4e4a5e'; g.beginPath(); g.moveTo(-24, -14); g.lineTo(-16, -22); g.lineTo(-8, -14); g.lineTo(0, -22); g.lineTo(8, -14); g.closePath(); g.fill();
+      g.fillStyle = `rgba(255,${200 + Math.sin(t * 5) * 40},120,.9)`; for (let i = 0; i < 3; i++) g.fillRect(-19 + i * 10, -6, 6, 6);
+      if (F.devs && Math.random() < .08) parts.push({ x: px + 14, y: py - 44, vx: 8, vy: -30, life: 1.4, max: 1.4, size: 5, c: '#6a5a7a', g: -10 });
+    } else if (d.type === 'battery') {   // a cell with a charge gauge
+      base(11); metal(g, -9, -22, 18, 22, 4, '#3a4a5a', '#141c24'); g.fillStyle = '#8a94a8'; g.fillRect(-4, -25, 8, 3);
+      const E = econ(F.devs ? F : { devs: [] }), k = F.devs && E.cap ? cl(F.en / E.cap, 0, 1) : .6; g.fillStyle = '#8fe9ff'; g.fillRect(-6, -3 - 16 * k, 12, 16 * k);
+    } else base(12);
     g.restore();
     if (d.type === 'flak' && d.zap) { g.strokeStyle = `rgba(255,230,160,${d.zap.t * 6})`; g.lineWidth = 2; g.beginPath(); g.moveTo(px, py); g.lineTo(d.zap.x, d.zap.y); g.stroke(); }
     if (d.type === 'shield' && d.e > 0) {
@@ -1612,7 +1872,8 @@ const GAME = {
       g.strokeStyle = c; g.globalAlpha = .35 + .65 * k; g.lineWidth = 2.5; g.beginPath(); g.arc(px, py, R, 0, TAU); g.stroke(); g.globalAlpha = 1;
     }
     if (d.lv > 1) { g.fillStyle = '#ffd23f'; g.font = '10px Bungee, sans-serif'; g.textAlign = 'center'; g.fillText('★'.repeat(d.lv - 1), px, py + 24); }
-    if (d.starve && F.side === mySide && !demo && phase === 'battle') { g.save(); g.translate(px, py - 42); g.scale(1 / Math.max(.6, cam.z), 1 / Math.max(.6, cam.z)); txt(g, d.starve === 'oil' ? 'NO METAL' : 'NO ENERGY', 0, 0, 11, d.starve === 'oil' ? '#ffb02e' : '#8fe9ff', 'center'); g.restore(); }
+    if (d.emp > 0) { g.strokeStyle = `rgba(143,233,255,${.5 + .5 * Math.sin(t * 20)})`; g.lineWidth = 2; g.beginPath(); for (let i = 0; i <= 12; i++) { const a = i / 12 * TAU, r = D.r + 6 + (i % 2 ? 5 : 0) * Math.random(); g.lineTo(px + Math.cos(a) * r, py + Math.sin(a) * r); } g.stroke(); }
+    const stv = d.emp > 0 ? 'emp' : d.starve; if (stv && (F.side === mySide || stv === 'emp') && !demo && phase === 'battle') { g.save(); g.translate(px, py - 42); g.scale(1 / Math.max(.6, cam.z), 1 / Math.max(.6, cam.z)); txt(g, stv === 'oil' ? 'NO METAL' : stv === 'emp' ? 'EMP' : 'NO ENERGY', 0, 0, 11, stv === 'oil' ? '#ffb02e' : '#8fe9ff', 'center'); g.restore(); }
     const hpk = d.hp / maxHp(d); if (hpk < .999 && d.alive && F.side === mySide && !demo) { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(px - 18, py - 34, 36, 5); g.fillStyle = hpk > .5 ? '#5cf28a' : hpk > .25 ? '#ffd23f' : '#ff4d6d'; g.fillRect(px - 18, py - 34, 36 * cl(hpk, 0, 1), 5); }
     if (D.reload && d.aim && F.side === mySide && phase === 'battle' && !demo) { g.strokeStyle = c; g.lineWidth = 2.5; g.beginPath(); g.arc(px, py, 21, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - Math.max(0, d.cd) / (D.reload * L.rel(d)))); g.stroke(); }
     if (tool === 'up' && F.side === mySide && !demo) { g.font = '11px Bungee, sans-serif'; g.textAlign = 'center'; g.fillStyle = d.lv >= 3 ? '#9a9ab8' : F.oil >= upCost(d.type, d.lv) ? '#5cf28a' : '#ff8a8a'; g.fillText(d.lv >= 3 ? 'MAX' : `⬆ ${upCost(d.type, d.lv)}`, px, py - 40); }
@@ -1699,7 +1960,7 @@ const GAME = {
     g.globalAlpha = 1;
   }
   function drawFort(g, F) {
-    const mine = F.side === mySide && !demo, building = mine && (tool === 'wood' || tool === 'steel' || tool === 'armor' || tool === 'rope' || tool === 'box');
+    const mine = F.side === mySide && !demo, building = mine && (tool === 'wood' || tool === 'steel' || tool === 'armor' || tool === 'rope' || tool === 'door' || tool === 'box');
     for (const b of F.beams) if (b.alive && F.nodes[b.a] && F.nodes[b.b]) drawBeam(g, F.nodes[b.a], F.nodes[b.b], b, mine, true);
     const hide = hiddenFort(F), peek = d => d.flash > 0 || d.hitT > 0;   // a device in the enemy's box shows only while it fires or gets hit
     if (hide) for (const d of F.devs) if (d.alive && F.nodes[d.n] && !peek(d) && inWall(F, ...pivot(F, d))) drawDev(g, F, d);
@@ -1707,6 +1968,7 @@ const GAME = {
     for (const n of F.nodes) if (n.alive && n.pin) { metal(g, n.x - 10, n.y - 4, 20, 9, 2, '#6a6478', '#2c2836'); }
     if (mine && tool === 'fix') for (const b of brokenFixable(F)) { const A = F.nodes[b.a], B = F.nodes[b.b]; g.strokeStyle = 'rgba(125,255,154,.55)'; g.lineWidth = 3; g.setLineDash([6, 5]); g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.stroke(); g.setLineDash([]); }
     for (const b of F.beams) if (b.alive && F.nodes[b.a] && F.nodes[b.b]) drawBeam(g, F.nodes[b.a], F.nodes[b.b], b, mine, false);
+    if (F.lock > 0) { g.strokeStyle = `rgba(255,216,144,${(.35 + .25 * Math.sin(t * 12)) * Math.min(1, F.lock)})`; g.lineWidth = 15; g.lineCap = 'round'; g.beginPath(); for (const b of F.beams) if (b.alive && F.nodes[b.a] && F.nodes[b.b]) { g.moveTo(F.nodes[b.a].x, F.nodes[b.a].y); g.lineTo(F.nodes[b.b].x, F.nodes[b.b].y); } g.stroke(); }   // LOCKDOWN
     if (mine && tool === 'fix') { const p = .5 + .5 * Math.sin(t * 6); g.strokeStyle = `rgba(125,255,154,${.35 + .4 * p})`; g.lineWidth = 3; for (const b of F.beams) if (b.alive && (b.hp < bMax(b) - .5 || b.fire > 0)) { const A = F.nodes[b.a], B = F.nodes[b.b]; g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.stroke(); } for (const d of F.devs) if (d.alive && d.type !== 'core' && d.hp < maxHp(d) - .5) { const [px, py] = pivot(F, d); g.beginPath(); g.arc(px, py, 20, 0, TAU); g.stroke(); } }
     for (const n of F.nodes) if (n.alive) { const r = building ? 5.5 : 3.8, bg = g.createRadialGradient(n.x - r * .35, n.y - r * .35, .5, n.x, n.y, r); bg.addColorStop(0, '#fff6d8'); bg.addColorStop(1, '#a8823a'); g.fillStyle = bg; g.beginPath(); g.arc(n.x, n.y, r, 0, TAU); g.fill(); g.strokeStyle = '#2a1e10'; g.lineWidth = 1.2; g.stroke(); }
     if (mine && stressOn) {   // stress view: every beam coloured by the force it carries; rings on bolts with no braced path down
@@ -1786,6 +2048,7 @@ const GAME = {
       else if (s.type === 'howitzer') { const bg = g.createRadialGradient(-2, -2, 1, 0, 0, 9); bg.addColorStop(0, '#9a96b0'); bg.addColorStop(1, '#14121a'); g.fillStyle = bg; g.beginPath(); g.ellipse(0, 0, 11, 7, 0, 0, TAU); g.fill(); g.fillStyle = '#ffd23f'; g.fillRect(-3, -7, 2, 14); }
       else if (s.type === 'saw') { g.rotate(s.t * 40); g.fillStyle = '#d8dde8'; g.beginPath(); for (let i = 0; i < 20; i++) { const a = i / 20 * TAU, r = i % 2 ? 9 : 12.5; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); } g.closePath(); g.fill(); g.fillStyle = '#4e4a5e'; g.beginPath(); g.arc(0, 0, 3, 0, TAU); g.fill(); }
       else if (s.type === 'smoke') { metal(g, -8, -5, 16, 10, 4, '#9aa0a8', '#4e5458'); g.fillStyle = '#ffd23f'; g.fillRect(-2, -5, 2, 10); }
+      else if (s.type === 'emp') { const k = .6 + .4 * Math.sin(t * 30); g.fillStyle = `rgba(143,233,255,${k})`; g.beginPath(); g.arc(0, 0, 10, 0, TAU); g.fill(); g.fillStyle = '#ffffff'; g.beginPath(); g.arc(0, 0, 4.5, 0, TAU); g.fill(); g.strokeStyle = '#bff4ff'; g.lineWidth = 1.5; g.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + t * 9; g.moveTo(Math.cos(a) * 5, Math.sin(a) * 5); g.lineTo(Math.cos(a) * 14, Math.sin(a) * 14); } g.stroke(); }
       else if (s.type === 'sniper') { g.fillStyle = '#ffffff'; g.fillRect(-7, -1, 14, 2); }
       else if (s.type === 'cluster') { metal(g, -10, -7, 20, 14, 6, '#5a566a', '#1a1822'); g.fillStyle = '#ffd23f'; g.fillRect(-4, -7, 3, 14); g.fillRect(3, -7, 3, 14); }
       else if (s.type === 'bomblet') { g.fillStyle = '#1a1822'; g.beginPath(); g.arc(0, 0, 4.5, 0, TAU); g.fill(); g.fillStyle = '#ffd23f'; g.beginPath(); g.arc(1, -1, 1.6, 0, TAU); g.fill(); }
@@ -1848,7 +2111,7 @@ const GAME = {
     // toolbar: category tabs, the items in the tab, upgrade, remove, and the ready/aim button
     const tb = TBL(), items = tabItems();
     glass(g, tb.items[0].x - 10, tb.act.y - 10, tb.act.x + tb.act.w - tb.items[0].x + 20, 112, 18);
-    tb.tabs.forEach((b, i) => { const on = i === tab; if (on) { g.fillStyle = SIDEC[mySide]; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 12); g.fill(); } else glass(g, b.x, b.y, b.w, b.h, 12); txt(g, TABS[i][0], b.x + b.w / 2, b.y + b.h / 2 + 1, 13, on ? '#1a1030' : '#fff', 'center'); });
+    tb.tabs.forEach((b, i) => { const on = i === tab; if (on) { g.fillStyle = SIDEC[mySide]; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 12); g.fill(); } else glass(g, b.x, b.y, b.w, b.h, 12); txt(g, TABS[i][0], b.x + b.w / 2, b.y + b.h / 2 + 1, 12, on ? '#1a1030' : '#fff', 'center'); });
     tb.items.forEach((b, i) => {
       const k = items[i]; if (!k) return; const on = tool === k, cost = toolCost(k), can = me.oil >= cost;
       const gr = g.createLinearGradient(0, b.y, 0, b.y + b.h); gr.addColorStop(0, on ? 'rgba(255,176,46,.45)' : 'rgba(255,255,255,.1)'); gr.addColorStop(1, on ? 'rgba(255,120,40,.2)' : 'rgba(255,255,255,.02)'); g.fillStyle = gr; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 14); g.fill(); g.strokeStyle = on ? SIDEC[mySide] : 'rgba(255,255,255,.16)'; g.lineWidth = on ? 3 : 1.2; g.stroke();
@@ -1857,13 +2120,15 @@ const GAME = {
       txt(g, k === 'del' ? 'REMOVE' : k === 'up' ? 'UPGRADE' : k === 'fix' ? 'REPAIR (R)' : k === 'sel' ? 'SELECT' : k === 'box' ? 'BOX: ' + MAT[boxMat].name.toUpperCase() : ((MAT[k] || DEV[k]).short || (MAT[k] || DEV[k]).name).toUpperCase(), b.x + b.w / 2, b.y + 66, 10, '#fff', 'center');
       if (cost) { g.font = '11px Bungee, Impact, sans-serif'; const cw = g.measureText('' + cost).width; resIcon(g, 'oil', b.x + b.w / 2 - cw / 2 - 4, b.y + 81, 5.5); txt(g, '' + cost, b.x + b.w / 2 - cw / 2 + 4, b.y + 82, 11, can ? '#ffd23f' : '#ff8a8a'); }
       if (DEV[k] && DEV[k].pw) resIcon(g, 'pw', b.x + b.w - 12, b.y + 13, 6);
+      if (k === 'pump') note(g, me.devs.filter(d => d.alive && d.type === 'pump').length + '/4', b.x + 9, b.y + 13, 11, '#cfc8e0');
+      if (DEV[k] && !techOK(me, k)) { g.fillStyle = 'rgba(10,6,20,.62)'; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 14); g.fill(); g.fillStyle = '#cfc8e0'; g.beginPath(); g.roundRect(b.x + b.w / 2 - 7, b.y + 22, 14, 11, 3); g.fill(); g.strokeStyle = '#cfc8e0'; g.lineWidth = 2.5; g.beginPath(); g.arc(b.x + b.w / 2, b.y + 22, 5, Math.PI, 0); g.stroke(); txt(g, 'NEEDS', b.x + b.w / 2, b.y + 46, 9, '#ffd890', 'center'); txt(g, (DEV[NEEDS[k]].short || DEV[NEEDS[k]].name).toUpperCase(), b.x + b.w / 2, b.y + 58, 9, '#ffd890', 'center'); }
     });
     const A = tb.act, rd = phase === 'build' && me.ready, cons = phase === 'construct', ag = g.createLinearGradient(0, A.y, 0, A.y + A.h);
     ag.addColorStop(0, cons ? '#ffc456' : phase === 'build' ? (rd ? '#4aa85a' : '#ffc456') : tool === null ? 'rgba(255,255,255,.25)' : 'rgba(255,255,255,.1)'); ag.addColorStop(1, cons ? '#e0802a' : phase === 'build' ? (rd ? '#2a6a3a' : '#e0802a') : 'rgba(255,255,255,.04)');
     g.fillStyle = ag; g.beginPath(); g.roundRect(A.x, A.y, A.w, A.h, 16); g.fill();
     txt(g, cons ? 'START TEST' : phase === 'build' ? (rd ? 'READY ✓' : 'READY') : aimSel && aimSel.alive ? 'FIRE' : 'AIM', A.x + A.w / 2, A.y + 40, cons ? 18 : 26, cons || (phase === 'build' && !rd) ? '#2a1408' : '#fff', 'center');
     txt(g, cons ? 'run it (Enter)' : phase === 'build' ? (rd ? 'waiting...' : 'start the battle') : aimSel && aimSel.alive ? 'one shot (Space)' : 'tap a weapon', A.x + A.w / 2, A.y + 68, 11, cons || (phase === 'build' && !rd) ? '#2a1408' : '#cfc8e0', 'center');
-    const f1 = q => +q.toFixed(1), hint = tool === 'fix' ? 'Tap once to repair everything damaged inside the circle (not the Core). R repairs at the cursor without picking this tool.' : tool === 'sel' ? 'Drag a box around your pieces to select them (Shift adds more). Tap one piece to add or drop it.' : tool === 'paste' ? 'Click to build the copy. E rotates, M mirrors, G snaps to the grid. Green can be built; red says why not.' : (tool === 'wood' || tool === 'steel' || tool === 'armor' || tool === 'rope') ? 'Drag from a bolt or your ground. Triangles hold; tall towers shoot further. G snaps to a grid, Z undoes. Unbraced bolts hang for 6s, then break off.' : tool === 'box' ? `Press inside a box and drag outward for a braced ${MAT[boxMat].name} box the same size. Drag further for a custom size; let go to build.` : tool === 'fix' ? 'Tap (or press R) to repair everything damaged inside the circle, ghost beams too (not the Core).' : tool === 'del' ? 'Tap a beam or device to remove it (' + Math.round(refundK(me) * 100) + '% refund)' : tool === 'up' ? 'Tap a device to level it up (to 3), or a beam to upgrade it: Wood to Steel to Armor' : tool === 'inspect' ? 'Tap any beam or device to inspect it: health, load, support' : tool === 'pump' ? `Tap your ground to place a Metal drill (+${f1(pumpRate({ lv: 1 }) * MD(me).mine)} metal/s)` : tool === 'gen' ? `Generators make ${f1(genOut({ lv: 1 }) * MD(me).genOut)} energy/s and store 150 more. They explode when destroyed!` : tool === 'silo' ? 'Storage silos hold 600 more metal and 80 more energy' : tool === 'lab' ? `Labs turn ${labUse({ lv: 1 })} energy/s into ${f1(labRate({ lv: 1 }) * MD(me).research)} research/s. Spend it in the TECH tree (T).` : tool ? `Tap inside one of your boxes to place the ${DEV[tool].name}` + (DEV[tool].reload ? ` · each shot: ${DEV[tool].ammo} metal` + (DEV[tool].pw ? ` + ${DEV[tool].pw} energy` : '') : '') : aimSel ? 'Point at the target and click: the shot is aimed to land under the cursor. Shift+click more weapons to fire together. F: next weapon. Right-click: put it down.' : phase === 'construct' ? 'Build within your budget, then press START TEST.' : phase === 'battle' ? 'Tap a weapon, then drag to aim. Drag the sky to look around.' : '';
+    const f1 = q => +q.toFixed(1), hint = tool === 'door' ? 'Tap one of your beams to turn it into a Door: your own shots pass through it, the enemy\'s don\'t. Or drag a new one from a bolt.' : tool === 'fix' ? 'Tap once to repair everything damaged inside the circle (not the Core). R repairs at the cursor without picking this tool.' : tool === 'sel' ? 'Drag a box around your pieces to select them (Shift adds more). Tap one piece to add or drop it.' : tool === 'paste' ? 'Click to build the copy. E rotates, M mirrors, G snaps to the grid. Green can be built; red says why not.' : (tool === 'wood' || tool === 'steel' || tool === 'armor' || tool === 'rope' || tool === 'door') ? 'Drag from a bolt or your ground. Triangles hold; tall towers shoot further. G snaps to a grid, Z undoes. Unbraced bolts hang for 6s, then break off.' : tool === 'box' ? `Press inside a box and drag outward for a braced ${MAT[boxMat].name} box the same size. Drag further for a custom size; let go to build.` : tool === 'fix' ? 'Tap (or press R) to repair everything damaged inside the circle, ghost beams too (not the Core).' : tool === 'del' ? 'Tap a beam or device to remove it (' + Math.round(refundK(me) * 100) + '% refund)' : tool === 'up' ? 'Tap a device to level it up (to 3), or a beam to upgrade it: Wood to Steel to Armor' : tool === 'inspect' ? 'Tap any beam or device to inspect it: health, load, support' : tool === 'pump' ? `Tap a dark ore deposit on your ground for a Metal drill (4 per island) (+${f1(pumpRate({ lv: 1 }) * MD(me).mine)} metal/s)` : tool === 'gen' ? `Generators make ${f1(genOut({ lv: 1 }) * MD(me).genOut)} energy/s and store 150 more. They explode when destroyed!` : tool === 'silo' ? 'Storage silos hold 600 more metal and 80 more energy' : tool === 'lab' ? `Labs turn ${labUse({ lv: 1 })} energy/s into ${f1(labRate({ lv: 1 }) * MD(me).research)} research/s. Spend it in the TECH tree (T).` : tool ? `Tap inside one of your boxes to place the ${DEV[tool].name}` + (DEV[tool].reload ? ` · each shot: ${DEV[tool].ammo} metal` + (DEV[tool].pw ? ` + ${DEV[tool].pw} energy` : '') : '') : aimSel ? 'Point at the target and click: the shot is aimed to land under the cursor. Shift+click more weapons to fire together. F: next weapon. Right-click: put it down.' : phase === 'construct' ? 'Build within your budget, then press START TEST.' : phase === 'battle' ? 'Tap a weapon, then drag to aim. Drag the sky to look around.' : '';
     if (hint !== hintS) { hintS = hint; hintT = t; }
     const ha = hint ? cl(1 - (t - hintT - 6), 0, 1) : 0;
     if (ha > 0) { g.globalAlpha = ha; g.font = '13px Bungee, Impact, sans-serif'; const hw = g.measureText(hint).width + 30; glass(g, 640 - hw / 2, tb.act.y - 86, hw, 28, 14); txt(g, hint, 640, tb.act.y - 71, 13, '#fff', 'center'); g.globalAlpha = 1; }
@@ -1872,7 +2137,7 @@ const GAME = {
   }
   function drawWorldUI(g) {   // things drawn in the world: the beam you're placing, placement rings, the aim arc
     const me = forts[mySide]; if (!me || demo) return;
-    if (gridOn && (tool === 'wood' || tool === 'steel' || tool === 'armor' || tool === 'rope')) { const z = ZONE[me.side], r = 1.6 / Math.min(1, cam.z); g.fillStyle = 'rgba(255,220,160,.4)'; for (let x = Math.ceil(z.x0 / GRID) * GRID; x <= z.x1; x += GRID) { const gy = groundY(x); for (let y = gy - GRID; y >= z.y0; y -= GRID) g.fillRect(x - r, y - r, r * 2, r * 2); } }
+    if (gridOn && (tool === 'wood' || tool === 'steel' || tool === 'armor' || tool === 'rope' || tool === 'door')) { const z = ZONE[me.side], r = 1.6 / Math.min(1, cam.z); g.fillStyle = 'rgba(255,220,160,.4)'; for (let x = Math.ceil(z.x0 / GRID) * GRID; x <= z.x1; x += GRID) { const gy = groundY(x); for (let y = gy - GRID; y >= z.y0; y -= GRID) g.fillRect(x - r, y - r, r * 2, r * 2); } }
     if (tool === 'sel' || selCount()) drawSelection(g, me);
     if (tool === 'paste') drawPasteGhost(g, me);
     if (inspSel && forts.includes(inspSel.F)) { const o = inspSel, F = o.F; g.strokeStyle = 'rgba(255,176,46,.9)'; g.lineWidth = 3 / Math.min(1, cam.z); g.setLineDash([7, 5]); g.beginPath(); if (o.b && o.b.alive) { const A = F.nodes[o.b.a], B = F.nodes[o.b.b]; g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); } else if (o.d && o.d.alive && F.nodes[o.d.n]) { const [px, py] = pivot(F, o.d); g.arc(px, py, 26, 0, TAU); } g.stroke(); g.setLineDash([]); }
@@ -1893,7 +2158,8 @@ const GAME = {
       for (const d of aimAll()) { const [qx, qy] = pivot(me, d); g.strokeStyle = d === aimSel ? '#ffffff' : 'rgba(255,255,255,.6)'; g.lineWidth = 2; g.beginPath(); g.arc(qx, qy, 28, 0, TAU); g.stroke(); }
       const aim = aimPt ? aimFrom(me, aimSel, aimPt.x, aimPt.y) : aimSel.aim;
       if (aim) {
-        const pts = aimPath(me, aimSel, aim), bad = aim.out || aim.far, col = bad ? '#ff6a6a' : SIDEC[mySide], gap = 18 / cam.z, rr = 3.5 / Math.min(1, cam.z * 1.4);
+        const pts = aimPath(me, aimSel, aim), blk = ownBlock(me, aimSel, pts), bad = aim.out || aim.far || !!blk, col = bad ? '#ff6a6a' : SIDEC[mySide], gap = 18 / cam.z, rr = 3.5 / Math.min(1, cam.z * 1.4);
+        if (blk) { pts.length = Math.max(1, blk.i); pts.push([blk.x, blk.y]); const A = me.nodes[blk.b.a], B = me.nodes[blk.b.b]; g.strokeStyle = `rgba(255,80,80,${.6 + .4 * Math.sin(t * 10)})`; g.lineWidth = 5; g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.stroke(); }   // the beam in the way
         let total = 0; for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
         g.fillStyle = col; let walked = 0, next = 0;   // dots spaced evenly along the whole flight
         for (let i = 1; i < pts.length; i++) { const [ax, ay] = pts[i - 1], [bx, by] = pts[i], seg = Math.hypot(bx - ax, by - ay);
@@ -1904,7 +2170,7 @@ const GAME = {
         g.globalAlpha = 1;
         const [hx, hy] = aimPt ? [aimPt.x, aimPt.y] : toWorld(...hoverK), u = 1 / cam.z;
         g.strokeStyle = aim.out || aim.far ? '#ff6a6a' : 'rgba(255,255,255,.85)'; g.lineWidth = 1.5 * u; g.beginPath(); g.arc(hx, hy, 10 * u, 0, TAU); g.moveTo(hx - 16 * u, hy); g.lineTo(hx - 5 * u, hy); g.moveTo(hx + 5 * u, hy); g.lineTo(hx + 16 * u, hy); g.moveTo(hx, hy - 16 * u); g.lineTo(hx, hy - 5 * u); g.moveTo(hx, hy + 5 * u); g.lineTo(hx, hy + 16 * u); g.stroke();
-        g.save(); g.translate(px, py - 44); g.scale(u, u); txt(g, aim.out ? 'OUTSIDE ITS FIRING ARC' : aim.far ? 'OUT OF RANGE' : 'ON TARGET' + (aimAll().length > 1 ? ' · ' + aimAll().length + ' weapons' : ''), 0, 0, 13, aim.out || aim.far ? '#ff8a8a' : '#ffffff', 'center'); g.restore();
+        g.save(); g.translate(px, py - 44); g.scale(u, u); txt(g, blk ? 'YOUR WALL IS IN THE WAY: MAKE IT A DOOR' : aim.out ? 'OUTSIDE ITS FIRING ARC' : aim.far ? 'OUT OF RANGE' : 'ON TARGET' + (aimAll().length > 1 ? ' · ' + aimAll().length + ' weapons' : ''), 0, 0, 13, aim.out || aim.far ? '#ff8a8a' : '#ffffff', 'center'); g.restore();
       }
     }
   }
@@ -1927,14 +2193,15 @@ const GAME = {
   function note(g, s, x, y, size, c, al = 'left') { g.font = `800 ${size}px Nunito, system-ui, sans-serif`; g.textAlign = al; g.textBaseline = 'middle'; g.fillStyle = c; g.fillText(s, x, y); }
   function wrap(g, s, w, size) { g.font = `800 ${size}px Nunito, system-ui, sans-serif`; const out = []; let line = ''; for (const word of s.split(' ')) { const tr = line ? line + ' ' + word : word; if (g.measureText(tr).width > w && line) { out.push(line); line = word; } else line = tr; } if (line) out.push(line); return out; }
   function xBtn(g, b) { g.fillStyle = 'rgba(255,255,255,.06)'; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 6); g.fill(); g.strokeStyle = '#ff8a7a'; g.lineWidth = 3; g.beginPath(); g.moveTo(b.x + 12, b.y + 10); g.lineTo(b.x + b.w - 12, b.y + b.h - 10); g.moveTo(b.x + b.w - 12, b.y + 10); g.lineTo(b.x + 12, b.y + b.h - 10); g.stroke(); }
-  const RB = () => { const v = K.view, x = v.x1 - 132; return [['tech', 'TECH', 'T'], ['bp', 'BLUEPRINTS', 'B'], ['inspect', 'INSPECT', 'I'], ['stress', 'STRESS', 'V'], ['grid', 'GRID', 'G'], ['undo', 'UNDO', 'Z'], ['redo', 'REDO', 'Y']].map(([k, l, key], i) => ({ k, l, key, x, y: v.y0 + 162 + i * 40, w: 120, h: 34 })); };
-  const rbOn = k => k === 'bp' ? bpOpen : k === 'tech' ? techOpen : k === 'inspect' ? tool === 'inspect' : k === 'stress' ? stressOn : k === 'grid' ? gridOn : false;
-  const rbLive = k => k === 'undo' ? UNDO.length > 0 : k === 'redo' ? REDO.length > 0 : true;
+  const RB = () => { const v = K.view, x = v.x1 - 132, F = myF(), ab = F && ABIL[F.cmdr] && MODE.k !== 'challenge' && !demo; return [...(ab ? [['abil', ABIL[F.cmdr].name, 'E']] : []), ['tech', 'TECH', 'T'], ['bp', 'BLUEPRINTS', 'B'], ['inspect', 'INSPECT', 'I'], ['stress', 'STRESS', 'V'], ['grid', 'GRID', 'G'], ['undo', 'UNDO', 'Z'], ['redo', 'REDO', 'Y']].map(([k, l, key], i) => ({ k, l, key, x, y: v.y0 + 162 + i * 40, w: 120, h: 34 })); };
+  const rbOn = k => k === 'abil' ? !!(myF() && (myF().lock > 0 || myF().od > 0)) : k === 'bp' ? bpOpen : k === 'tech' ? techOpen : k === 'inspect' ? tool === 'inspect' : k === 'stress' ? stressOn : k === 'grid' ? gridOn : false;
+  const rbLive = k => k === 'abil' ? phase === 'battle' && !(myF() && myF().actCd > 0) : k === 'undo' ? UNDO.length > 0 : k === 'redo' ? REDO.length > 0 : true;
   function rbPress(k) {
     sound('build');
     if (k === 'tech') { techOpen = !techOpen; bpOpen = false; panelT = performance.now(); }
     else if (k === 'bp') { bpOpen = !bpOpen; techOpen = false; panelT = performance.now(); }
     else if (k === 'inspect') { tool = tool === 'inspect' ? null : 'inspect'; aimSel = null; if (tool !== 'inspect') inspSel = null; }
+    else if (k === 'abil') { const F = myF(); if (!F) return; if (coopGuest()) { cmd('abil', 0); return; } const why = useAbil(F); if (why) say(why, '#ff8a8a', 1.2); }
     else if (k === 'stress') stressOn = !stressOn;
     else if (k === 'grid') gridOn = !gridOn;
     else if (k === 'undo' || k === 'redo') { if (coopGuest()) say('In Teamwork, undo is for the host', '#ffd890', 1.4); else if (k === 'undo') undo(); else redo(); }
@@ -1942,7 +2209,7 @@ const GAME = {
   function drawRB(g) {
     for (const b of RB()) { const on = rbOn(b.k), live = rbLive(b.k);
       g.fillStyle = on ? 'rgba(255,176,46,.9)' : 'rgba(26,27,31,.88)'; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 6); g.fill(); g.strokeStyle = on ? '#ffd890' : '#46464c'; g.lineWidth = 1.5; g.stroke();
-      g.globalAlpha = live ? 1 : .4; txt(g, b.l, b.x + 12, b.y + b.h / 2 + 1, 12, on ? '#1a1006' : '#f0e8d8'); note(g, b.key, b.x + b.w - 12, b.y + b.h / 2 + 1, 12, on ? '#3a2408' : '#9a958c', 'right'); g.globalAlpha = 1; }
+      g.globalAlpha = live ? 1 : .4; if (b.k === 'abil' && live && !on) { g.strokeStyle = ABIL[myF().cmdr].col; g.lineWidth = 2; g.beginPath(); g.roundRect(b.x, b.y, b.w, b.h, 6); g.stroke(); } txt(g, b.l, b.x + 12, b.y + b.h / 2 + 1, b.k === 'abil' ? 11 : 12, on ? '#1a1006' : b.k === 'abil' ? ABIL[myF().cmdr].col : '#f0e8d8'); note(g, b.k === 'abil' && myF().actCd > 0 ? Math.ceil(myF().actCd) + 's' : b.key, b.x + b.w - 12, b.y + b.h / 2 + 1, 12, on ? '#3a2408' : '#9a958c', 'right'); g.globalAlpha = 1; }
     if (stressOn) { const R7 = RB(), b = R7[R7.length - 1], y = b.y + 46, x = b.x; plate(g, x, y, b.w, 104); note(g, 'BEAM LOAD', x + 10, y + 16, 11, '#cfc6b6'); [['#5cf28a', 'under 25%'], ['#ffe650', '25 to 50%'], ['#ff9628', '50 to 75%'], ['#ff3232', 'near breaking']].forEach(([c, s], i) => { g.fillStyle = c; g.fillRect(x + 10, y + 30 + i * 15, 14, 6); note(g, s, x + 30, y + 33 + i * 15, 10, '#e9e4da'); }); g.strokeStyle = '#ff4d6d'; g.lineWidth = 2; g.beginPath(); g.arc(x + 17, y + 95, 5, 0, TAU); g.stroke(); note(g, 'unsupported', x + 30, y + 95, 10, '#e9e4da'); }
   }
   // the tech tree
@@ -2009,8 +2276,11 @@ const GAME = {
     else if (d.type === 'magnet') lines.push(['PUSHES', 'Enemy shells within ' + (DEV.magnet.range + 40 * (d.lv - 1)) + ', 6 energy/s while it pushes']);
     else if (d.type === 'sand') lines.push(['SOAKS', 'Takes a quarter of the damage from bullets']);
     else if (d.type === 'decoy') lines.push(['ROLE', 'Missiles chase it; the computer may shoot it instead of your Core']);
+    else if (d.type === 'battery') lines.push(['STORES', (250 + 100 * (d.lv - 1)) + ' energy']);
+    else if (d.type === 'workshop' || d.type === 'armoury' || d.type === 'factory') lines.push(['UNLOCKS', unlocks(d.type)]);
     else if (D.reload) { lines.push(['DAMAGE', Math.round((D.dmg || D.dps) * L.dmg(d) * m.dmg) + (D.dps ? '/s beam' : D.shots ? ' x ' + D.shots : '') + ',  reload ' + f1(D.reload * L.rel(d)) + 's']); lines.push(['PER SHOT', (D.ammo || 0) + ' metal' + (D.pw ? ' + ' + D.pw + ' energy' : '')]); }
-    const st = d.starve === 'oil' ? ['Out of metal', '#ffb02e'] : d.starve === 'pw' ? ['Out of energy', '#8fe9ff'] : D.reload ? (d.cd > 0 ? ['Reloading ' + d.cd.toFixed(1) + 's', '#ffd23f'] : d.aim ? ['Ready to fire', '#5cf28a'] : ['Ready: drag to aim it', '#cfc6b6']) : ['Working', '#5cf28a'];
+    if (PERK[d.type]) lines.push(['PERKS', Object.entries(PERK[d.type]).map(([lv, p]) => 'LV ' + lv + ' ' + p.split(':')[0] + (d.lv >= +lv ? ' ✓' : '')).join(', '), Object.keys(PERK[d.type]).some(lv => d.lv >= +lv) ? '#ffd23f' : '#9a958c']);
+    const st = d.starve === 'emp' ? ['Knocked out by EMP', '#8fe9ff'] : d.starve === 'oil' ? ['Out of metal', '#ffb02e'] : d.starve === 'pw' ? ['Out of energy', '#8fe9ff'] : D.reload ? (d.cd > 0 ? ['Reloading ' + d.cd.toFixed(1) + 's', '#ffd23f'] : d.aim ? ['Ready to fire', '#5cf28a'] : ['Ready: drag to aim it', '#cfc6b6']) : ['Working', '#5cf28a'];
     lines.push(['STATUS', st[0], st[1]]);
     const btns = [];
     if (d.type !== 'core' && d.type !== 'weight') { btns.push({ k: 'fix', l: 'REPAIR ' + (needsFix(o) ? fixCost(F, o) : ''), on: needsFix(o) && F.fixCD <= 0 && F.oil >= fixCost(F, o) }); if (d.lv < 3) btns.push({ k: 'upd', l: 'UPGRADE ' + upCost(d.type, d.lv), on: F.oil >= upCost(d.type, d.lv) }); btns.push({ k: 'del', l: 'REMOVE +' + Math.round(DEV[d.type].cost * refundK(F)), on: true }); }
@@ -2170,7 +2440,7 @@ const GAME = {
     const d = setupUI(), w = SV(), P = w.prefs, R = rankOf(w.xp), kpi = R.next ? (w.xp - R.at) / (R.next - R.at) : 1;
     const card = (k, v, title, sub, on, off, extra) => `<button class="sw-card${on ? ' on' : ''}${off ? ' off' : ''}" data-k="${k}:${v}"><b>${esc2(title)}</b><small>${esc2(sub)}</small>${extra || ''}</button>`;
     const mapCards = () => allMaps().map(k => { const M = mapDef(k); return card('map', k, (M.custom ? '✎ ' : '') + M.name, M.desc, P.map === k); }).join('');
-    const cmdCards = () => Object.entries(CMDR).map(([k, C]) => { const xp = w.cmdXP[k] || 0, lv = cmdLevel(xp); return card('cmdr', k, C.name + '  ·  LEVEL ' + lv, C.desc, P.cmdr === k, false, `<span class="sw-minus">${esc2(C.minus)}</span><span class="sw-perk${lv >= 3 ? ' on' : ''}">${lv >= 3 ? '✓' : '🔒'} Level 3: ${esc2(C.perks[0])}</span><span class="sw-perk${lv >= 5 ? ' on' : ''}">${lv >= 5 ? '✓' : '🔒'} Level 5: ${esc2(C.perks[1])}</span><span class="sw-perk">${xp} XP with this commander${lv < 5 ? ', next level at ' + CMD_LV[lv] : ''}</span>`); }).join('');
+    const cmdCards = () => Object.entries(CMDR).map(([k, C]) => { const xp = w.cmdXP[k] || 0, lv = cmdLevel(xp); return card('cmdr', k, C.name + '  ·  LEVEL ' + lv, C.desc, P.cmdr === k, false, `<span class="sw-perk on">ABILITY (E): ${esc2(ABIL[k].name)}. ${esc2(ABIL[k].desc)}</span><span class="sw-minus">${esc2(C.minus)}</span><span class="sw-perk${lv >= 3 ? ' on' : ''}">${lv >= 3 ? '✓' : '🔒'} Level 3: ${esc2(C.perks[0])}</span><span class="sw-perk${lv >= 5 ? ' on' : ''}">${lv >= 5 ? '✓' : '🔒'} Level 5: ${esc2(C.perks[1])}</span><span class="sw-perk">${xp} XP with this commander${lv < 5 ? ', next level at ' + CMD_LV[lv] : ''}</span>`); }).join('');
     let main = '';
     if (deploying) main = `<div class="sw-load">DEPLOYING<small>Raising the islands and settling both forts...</small></div>`;
     else if (setupTab === 'home') {
@@ -2245,15 +2515,16 @@ const GAME = {
     }
   }
   // the building panel's numbers: what the selected material or device really does
+  const unlocks = k => Object.keys(NEEDS).filter(x => NEEDS[x] === k).map(x => DEV[x].short || DEV[x].name).join(', ');
   function specLine(k) {
     const F = myF(), m = MD(F);
-    if (MAT[k]) { const M = MAT[k], r = M.res; return M.name.toUpperCase() + ' · ' + mc(F, k) + ' metal · health ' + Math.round(M.hp * m.beamHp[k]) + ' · breaks at ' + Math.round(M.maxF * m.beamF[k] / 1000) + 'k force · weight x' + +(M.kg * m.beamKg).toFixed(2) + ' · bullets ' + Math.round(r.bullet * 100) + '%' + (M.burn ? ' · burns' : ''); }
+    if (MAT[k]) { const M = MAT[k], r = M.res; return M.name.toUpperCase() + ' · ' + mc(F, k) + ' metal · health ' + Math.round(M.hp * m.beamHp[k]) + ' · breaks at ' + Math.round(M.maxF * m.beamF[k] / 1000) + 'k force · weight x' + +(M.kg * m.beamKg).toFixed(2) + ' · bullets ' + Math.round(r.bullet * 100) + '%' + (M.burn ? ' · burns' : '') + (M.door ? ' · your own shots pass through, or tap a beam to turn it into one' : ''); }
     if (k === 'box') return 'BOX · 5 ' + MAT[boxMat].name.toLowerCase() + ' beams per box (' + mc(F, boxMat) * 5 + ' metal) · pick the material first';
     if (k === 'sel') return 'SELECT · drag a box around pieces, Shift adds more · then copy, upgrade, delete or save a blueprint';
     const D = DEV[k]; if (!D) return '';
-    const base = D.name.toUpperCase() + ' · ' + devPrice(F, k) + ' metal · health ' + D.hp;
+    const base = D.name.toUpperCase() + (NEEDS[k] && !techOK(F, k) ? ' · NEEDS A ' + DEV[NEEDS[k]].name.toUpperCase() : '') + ' · ' + devPrice(F, k) + ' metal · health ' + D.hp + (perkAt(k, 2) || perkAt(k, 3) ? ' · perk: ' + (perkAt(k, 2) || perkAt(k, 3)).split(':')[0] : '');
     if (D.reload) return base + ' · damage ' + Math.round((D.dmg || D.dps) * m.dmg) + (D.dps ? '/s' : D.shots ? ' x' + D.shots : '') + ' · reload ' + D.reload + 's · ' + (D.ammo || 0) + ' metal' + (D.pw ? ' + ' + D.pw + ' energy' : '') + ' a shot';
-    return base + ' · weight ' + D.kg + (k === 'pump' ? ' · ground only' : k === 'wind' ? ' · free energy with open air above it' : k === 'magnet' ? ' · pushes enemy shells away, uses energy' : k === 'sand' ? ' · bullets do 25%' : k === 'decoy' ? ' · draws missiles and fools the computer' : '');
+    return base + ' · weight ' + D.kg + (k === 'pump' ? ' · on a dark ore deposit, 4 per island' : k === 'battery' ? ' · stores 250 energy' : DEV[k] && unlocks(k) ? ' · unlocks ' + unlocks(k) : k === 'wind' ? ' · free energy with open air above it' : k === 'magnet' ? ' · pushes enemy shells away, uses energy' : k === 'sand' ? ' · bullets do 25%' : k === 'decoy' ? ' · draws missiles and fools the computer' : '');
   }
   let roomUsed = false;
   function drawSpec(g, tb) {
@@ -2434,6 +2705,8 @@ const GAME = {
         case 'paste': { const c = cleanClip(a && a.c); if (c) act(F, () => commitPaste(F, c, num(a.x, -2000, 5000, 0), num(a.y, -2000, 5000, 0), { rot: num(a.T && a.T.rot, -100, 100, 0), mir: !!(a.T && a.T.mir) })); break; }
         case 'upb': { const b = B(a); if (b && b.alive) why = upBeam(F, b); break; }
         case 'upd': { const d = Dv(a); if (d && d.alive) why = upDev(F, d); break; }
+        case 'door': { const b = B(a); if (b && b.alive) why = doorBeam(F, b); break; }
+        case 'abil': why = useAbil(F); break;
         case 'fix1': { const o = a && a[0] === 'b' ? { b: B(a[1]) } : { d: Dv(a && a[1]) }; if (o.b || o.d) why = repairOne(F, o); break; }
         case 'rm1': { const o = a && a[0] === 'b' ? { b: B(a[1]) } : { d: Dv(a && a[1]) }; if ((o.b && o.b.alive) || (o.d && o.d.alive)) why = removeOne(F, o); break; }
         case 'fixa': repairArea(F, num(a && a[0], -2000, 5000, 0), num(a && a[1], -2000, 5000, 0)); break;
@@ -2513,6 +2786,6 @@ const GAME = {
   GAME.bot = () => {};
   GAME.pose = () => { for (let i = 0; i < 60 * 13; i++) step(DT); posed = true; camGo('mine', true); cam.z = cam.tz = .8; cam.x = cam.tx = ISL[0].x1 - 120; cam.y = cam.ty = GY - 260; };
   GAME.test = { st: () => ({ mode, phase, buildT: +buildT.toFixed(1), my: mySide, cam: [Math.round(cam.x), Math.round(cam.y), +cam.z.toFixed(2)], forts: forts.map(F => ({ n: F.nodes.filter(n => n.alive).length, b: liveBeams(F), d: F.devs.filter(d => d.alive).map(d => d.type + (d.lv > 1 ? '*' + d.lv : '') + ':' + Math.round(d.hp)), oil: Math.round(F.oil), en: Math.round(F.en), dead: F.dead, fire: F.beams.filter(b => b.alive && b.fire > 0).length, maxSt: +Math.max(0, ...F.beams.filter(b => b.alive).map(b => Math.abs(b.f || 0) / bF(b))).toFixed(2) })), shots: shots.length }),
-    step: n => { for (let i = 0; i < n; i++) step(DT); }, forts: () => forts, shots: () => shots, clouds: () => clouds, add: (k, n) => addDev(myF(), k, n), fix: (x, y) => repairAt(myF(), x, y), ready: () => { myF().ready = true; }, start: () => MP.start(), cam: w => camGo(w, true), tool: (k, tb) => { tool = k; if (tb !== undefined) tab = tb; },
+    step: n => { for (let i = 0; i < n; i++) step(DT); }, forts: () => forts, shots: () => shots, clouds: () => clouds, x2: () => ({ depX, toDoor, useAbil, ownBlock, aimPath, gunFree, techOK, groundY, drillAt, freeDeposit, PERK, ABIL }), add: (k, n) => addDev(myF(), k, n), fix: (x, y) => repairAt(myF(), x, y), ready: () => { myF().ready = true; }, start: () => MP.start(), cam: w => camGo(w, true), tool: (k, tb) => { tool = k; if (tb !== undefined) tab = tb; },
     aim: (i, a, p) => { const d = myF().devs.filter(x => x.alive && DEV[x.type].reload)[i]; if (d) d.aim = { a, p }; }, botMe: () => { myF().bot = true; }, mode2: () => MODE, env: () => ENV, tech: id => startTech(myF(), id), undo: () => undo(), redo: () => redo(), rb: k => rbPress(k), econ: () => econ(myF()), startTest: () => startTest(), pick: (x, y) => { inspSel = pickPiece(x, y); return inspSel && (inspSel.b ? 'beam:' + inspSel.b.mat : 'dev:' + inspSel.d.type); }, insp: () => inspSel && inspInfo(inspSel), upBeam: i => upBeam(myF(), myF().beams[i]), sv: () => SV(), go: cfg => start(null, cfg), beam: (from, x, y, mat, sx, sy) => act(myF(), () => commitBeam(myF(), { mat: mat || 'wood', from, start: from < 0 ? { x: sx, y: sy } : null, x, y })), near: (x, y) => nearNode(myF(), x, y, 6), gy: x => groundY(x), place: (k, x, y) => act(myF(), () => placeDev(myF(), k, x, y)), spire: () => spireH(myF()), reach: () => reachNow(myF()), techOpen: () => techOpen, spot: (k, x, y) => placeSpot(myF(), k, x, y), selAll: () => selectRect(myF(), -1e4, -1e4, 1e4, 1e4), selRect: (a, b, c, d) => selectRect(myF(), a, b, c, d), selN: () => selCount(), copy: () => { clip = copySel(myF()); return clip && clip.beams.length; }, paste: (x, y, rot, mir) => act(myF(), () => commitPaste(myF(), clip, x, y, { rot: rot || 0, mir: !!mir })), plan: (x, y, rot, mir) => { const p = planPaste(myF(), clip, x, y, { rot: rot || 0, mir: !!mir }); return { why: p.why, cost: p.cost, n: p.beams.length }; }, saveBp: () => saveBlueprint(clip), upSel: () => upgradeSel(myF()), big: (nc, h) => { const F = myF(); frameGrid(F, Array.from({ length: nc }, (_, c) => 120 + c * 64), Array(nc).fill(h), () => 'steel'); masses(F); }, obj: () => MODE.obj, marks: () => ENV.marks.length, ab: k => abPress(k), mods: () => myF().mods, path: (d, aim) => aimPath(myF(), d, aim), dbg: (d, x, y) => { const r = solveAim(myF(), d, x, y); return { a: +r.a.toFixed(3), p: +r.p.toFixed(2), far: r.far, out: r.out, e: crossErr(myF(), d, r.a, r.p, x, y) }; }, setZoom: z => { cam.z = cam.tz = z; }, aimTo: (d, x, y) => { d.aim = aimFrom(myF(), d, x, y); return d.aim; }, flags: () => ({ stressOn, gridOn, tool, undo: UNDO.length, redo: REDO.length, aim: !!aimSel, group: aimGroup.size }), give: g2 => { myF().oil += g2; }, toWorld, toKit: (x, y) => [640 + (x - cam.x) * cam.z, 360 + (y - cam.y) * cam.z] };
 })();
