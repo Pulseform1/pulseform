@@ -6,9 +6,15 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 src = lambda *p: open(os.path.join(HERE, 'src', *p), encoding='utf-8').read()
 kit_js, kit_css = src('kit.js'), src('kit.css')
 only = set(sys.argv[1:])
+# Pages kept exactly as they are live: Strata and Siegeworks were updated and deployed by another session with their own
+# copies of the kit and the multiplayer library (a volume setting, no-shake option, crash guard, Strata's pixel-style
+# screens and join-a-match fix). Rebuilding them from src/ with this kit would undo that, so they are never rebuilt here.
+# src/games/strata.js and siegeworks.js hold their current game code; edit the page in public/games/ to change them.
+FROZEN = {'strata', 'siegeworks'}
 for path in sorted(glob.glob(os.path.join(HERE, 'src', 'games', '*.js'))):
     gid = os.path.splitext(os.path.basename(path))[0]
     if only and gid not in only: continue
+    if gid in FROZEN: print(gid, 'kept as is (frozen, see FROZEN)'); continue
     js = open(path, encoding='utf-8').read()
     # shared code a game asks for with a line like  // @use person  (from src/lib/person.js)
     for lib in re.findall(r'^// @use (\w+)', js, re.M): js = src('lib', lib + '.js') + '\n' + js
