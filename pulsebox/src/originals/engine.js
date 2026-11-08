@@ -101,6 +101,10 @@ function metric(s) {
 }
 function controls(html) { if (uiKey !== html) { document.getElementById('controls').innerHTML = html; uiKey = html; } }
 function action(label, name, primary = false) { return `<button ${primary ? 'class="primary"' : ''} data-action="${name}">${label}</button>`; }
+// progress that survives a reload (levels unlocked, stars, seasons): one small JSON object per game
+function loadSave(def) { try { return Object.assign(def, JSON.parse(localStorage.getItem('pbx-pack-save-' + ID) || '{}')); } catch (e) { return def; } }
+function storeSave(v) { try { localStorage.setItem('pbx-pack-save-' + ID, JSON.stringify(v)); } catch (e) {} }
+function stars(n, x, y, size = 22, max = 3) { for (let i = 0; i < max; i++) text('★', x + (i - (max - 1) / 2) * size * 1.15, y, size, i < n ? '#ffd23f' : '#ffffff30', 'center', 900); }
 function saveBest(value) { try { const key = 'pbx-pack-' + ID; const old = Number(localStorage.getItem(key) || 0); if (value > old) localStorage.setItem(key, value); document.getElementById('best').textContent = Math.max(value, old); } catch (e) {} }
 function reset() {
   state = GAMES[ID].init(); doneFor = null; lastMetric = null; keys = {}; pointer.down = false; uiKey = ''; FX.parts = []; FX.pops = [];
