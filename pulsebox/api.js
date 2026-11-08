@@ -7,7 +7,7 @@
 //   POST /api/play   <- { id }        -> { ok, counted }   (same IP + game counts once per 10 minutes; IPs are only kept hashed)
 //   POST /api/live   -> { ok }   (sent once a minute while a game is open; live = people seen in the last 2.5 minutes)
 //   POST /api/view   -> { ok, counted }   (a hub page view; same IP counts once per 10 minutes)
-//   GET  /api/stats  -> { games: { id: { total, week, today, recent } }, site: { live, today, week, weekStart, days }, updated }
+//   GET  /api/stats  -> { games: { id: { total, week, today, recent, up?, down? } }, site: { live, today, week, weekStart, days }, updated }
 //                       (days are US Eastern days; week = this calendar week, which resets every Monday at midnight Eastern;
 //                        days = Monday..Sunday of it, with future: true on days still to come; recent = the last 7 days, rolling, which the hub ranks
 //                        Trending by so it isn't empty right after the reset; cached ~60 s. site.* = { plays, views, players };
@@ -192,16 +192,45 @@ async function view(request, env) {
   return stub.fetch('https://stats/view', { method: 'POST', body: JSON.stringify({ k }) });
 }
 
-// Leaderboards: fastest times per game and course. One row per person per course (keyed by a salted hash of their IP),
-// kept only when it beats their previous time. GET ?g=&k= returns the top 10; POST {g,k,n,t} submits a time in ms.
+// Leaderboards. Hyperlane keeps its fastest-time boards per course (LB, lowest wins). Every other game in the hub has
+// score boards (highest wins): 'best' for all time and 'dYYYYMMDD' for one US Eastern day (only today or yesterday may
+// be posted to; the daily challenge uses it). One row per person per board, kept only when it improves. A signed-in
+// player is ranked by their account; anyone else by a salted hash of their IP.
+//   GET  /api/lb?g=&k=   -> { top: [{n,t}] x10, count, me?: {t, rank} }
+//   POST /api/lb  <- {g,k,n,t}  -> { rank, best, top }
+//   GET  /api/lb/mine    -> { boards: [{g, t, rank}] }   (your all-time spots, for the profile's badges)
 const LB = { hyperlane: { keys: ['downtown', 'aurora', 'canyon'], min: 18000, max: 600000 } };
-async function lb(request, env, url) {
+function board(g, k, ids) {
+  if (LB[g]) return LB[g].keys.includes(k) ? { asc: true, min: LB[g].min, max: LB[g].max } : null;
+  if (!ID_RE.test(g || '') || (ids && ids.length && !ids.includes(g))) return null;
+  const today = day().replace(/-/g, ''), yest = addDays(day(), -1).replace(/-/g, '');
+  return k === 'best' || k === 'd' + today || k === 'd' + yest ? { asc: false, min: 1, max: 1e9 } : null;
+}
+async function whoOf(request, prefix) {
+  const a = request.headers.get('authorization') || '';
+  if (a.startsWith('Bearer ')) { try { const uid = await verify(a.slice(7)); if (uid) return 'uid:' + uid; } catch (e) {} }
+  return sha(prefix + (request.headers.get('cf-connecting-ip') || ''));
+}
+async function lb(request, env, url, ids) {
   const stub = env.STATS.get(env.STATS.idFromName('global'));
-  if (request.method === 'GET') return stub.fetch('https://stats/lb?' + new URLSearchParams({ g: url.searchParams.get('g') || '', k: url.searchParams.get('k') || '' }));
+  if (url.pathname === '/api/lb/mine') return stub.fetch('https://stats/lbmine', { method: 'POST', body: JSON.stringify({ who: await whoOf(request, 'pulsebox-lb|') }) });
+  if (request.method === 'GET') {
+    const g = url.searchParams.get('g') || '', k = url.searchParams.get('k') || '', B = board(g, k, ids);
+    if (!B) return json({ error: 'unknown board' }, 400);
+    return stub.fetch('https://stats/lb?' + new URLSearchParams({ g, k, asc: B.asc ? '1' : '0', who: await whoOf(request, 'pulsebox-lb|') }));
+  }
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
   let b; try { b = JSON.parse(await request.text()); } catch (e) { return json({ error: 'bad json' }, 400); }
-  const who = await sha('pulsebox-lb|' + (request.headers.get('cf-connecting-ip') || ''));
-  return stub.fetch('https://stats/lbadd', { method: 'POST', body: JSON.stringify({ g: b.g, k: b.k, n: b.n, t: b.t, who }) });
+  const B = board(b.g, b.k, ids); if (!B) return json({ error: 'unknown board' }, 400);
+  return stub.fetch('https://stats/lbadd', { method: 'POST', body: JSON.stringify({ g: b.g, k: b.k, n: b.n, t: b.t, who: await whoOf(request, 'pulsebox-lb|'), asc: B.asc, min: B.min, max: B.max }) });
+}
+// Ratings: a thumbs up or down per person per game (v = 1, -1, or 0 to take it back). Totals come back in /api/stats.
+async function rate(request, env, ids) {
+  if (request.method !== 'POST') return json({ error: 'method' }, 405);
+  let b; try { b = JSON.parse(await request.text()); } catch (e) { return json({ error: 'bad json' }, 400); }
+  if (!ID_RE.test(b.id || '') || (ids && ids.length && !ids.includes(b.id)) || ![1, -1, 0].includes(b.v)) return json({ error: 'rejected' }, 400);
+  const stub = env.STATS.get(env.STATS.idFromName('global'));
+  return stub.fetch('https://stats/rate', { method: 'POST', body: JSON.stringify({ id: b.id, v: b.v, who: await whoOf(request, 'pulsebox-rate|') }) });
 }
 
 async function stats(request, env, ctx) {
@@ -223,7 +252,8 @@ export async function api(request, env, ctx, ids) {
   if (url.pathname === '/api/stats') return stats(request, env, ctx);
   if (url.pathname === '/api/view') return view(request, env);
   if (url.pathname === '/api/live') return live(request, env);
-  if (url.pathname === '/api/lb') return lb(request, env, url);
+  if (url.pathname === '/api/lb' || url.pathname === '/api/lb/mine') return lb(request, env, url, ids);
+  if (url.pathname === '/api/rate') return rate(request, env, ids);
   if (url.pathname === '/api/bug' || url.pathname === '/api/bug/status' || url.pathname === '/api/bugs' || url.pathname === '/api/bugs/update' || url.pathname === '/api/featured' || url.pathname === '/api/featured/admin') return bugs(request, env, url, ids);
   if (url.pathname === '/api/hollow') {
     if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
@@ -280,6 +310,7 @@ export class Stats {
     this.sql.exec('CREATE TABLE IF NOT EXISTS live (k TEXT PRIMARY KEY, t INTEGER NOT NULL)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS lb (g TEXT NOT NULL, k TEXT NOT NULL, who TEXT NOT NULL, n TEXT NOT NULL, t INTEGER NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (g, k, who))');
     this.sql.exec('CREATE TABLE IF NOT EXISTS lbrate (who TEXT NOT NULL, t INTEGER NOT NULL)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS rates (who TEXT NOT NULL, id TEXT NOT NULL, v INTEGER NOT NULL, PRIMARY KEY (who, id))');
     const row = this.sql.exec("SELECT v FROM meta WHERE k = 'salt'").toArray()[0];
     if (row) this.salt = row.v;
     else { this.salt = hex(crypto.getRandomValues(new Uint8Array(16))); this.sql.exec("INSERT INTO meta (k, v) VALUES ('salt', ?)", this.salt); }
@@ -304,18 +335,38 @@ export class Stats {
       this.sql.exec('DELETE FROM live WHERE t < ?', now - LIVE_MS);
       return json({ ok: true });
     }
-    if (path === '/lb' || path === '/lbadd') {
-      const top = (g, k) => this.sql.exec('SELECT n, t FROM lb WHERE g = ? AND k = ? ORDER BY t ASC, at ASC LIMIT 10', g, k).toArray();
-      if (path === '/lb') { const q = new URL(request.url).searchParams, g = q.get('g'), k = q.get('k'); if (!LB[g] || !LB[g].keys.includes(k)) return json({ error: 'unknown board' }, 400); return json({ top: top(g, k) }); }
-      const { g, k, n, t, who } = JSON.parse(await request.text()), B = LB[g];
-      if (!B || !B.keys.includes(k) || !Number.isInteger(t) || t < B.min || t > B.max || typeof who !== 'string') return json({ error: 'rejected' }, 400);
-      const name = String(n || '').replace(/[^\w .'-]/g, '').trim().slice(0, 14) || 'Racer', h = (await sha(this.salt + '|lb|' + who)).slice(0, 24);
+    if (path === '/lb' || path === '/lbadd' || path === '/lbmine') {
+      const top = (g, k, asc) => this.sql.exec(`SELECT n, t FROM lb WHERE g = ? AND k = ? ORDER BY t ${asc ? 'ASC' : 'DESC'}, at ASC LIMIT 10`, g, k).toArray();
+      const rankOf = (g, k, asc, t) => this.sql.exec(`SELECT COUNT(*) AS n FROM lb WHERE g = ? AND k = ? AND t ${asc ? '<' : '>'} ?`, g, k, t).one().n + 1;
+      const hashWho = async w => (await sha(this.salt + '|lb|' + w)).slice(0, 24);
+      if (path === '/lb') {
+        const q = new URL(request.url).searchParams, g = q.get('g'), k = q.get('k'), asc = q.get('asc') === '1', w = q.get('who');
+        const out = { top: top(g, k, asc), count: this.sql.exec('SELECT COUNT(*) AS n FROM lb WHERE g = ? AND k = ?', g, k).one().n };
+        if (w) { const r = this.sql.exec('SELECT t FROM lb WHERE g = ? AND k = ? AND who = ?', g, k, await hashWho(w)).toArray()[0]; if (r) out.me = { t: r.t, rank: rankOf(g, k, asc, r.t) }; }
+        return json(out);
+      }
+      if (path === '/lbmine') {
+        const { who } = JSON.parse(await request.text()), h = await hashWho(who);
+        return json({ boards: this.sql.exec("SELECT g, t FROM lb WHERE who = ? AND k = 'best'", h).toArray().map(r => ({ g: r.g, t: r.t, rank: rankOf(r.g, 'best', false, r.t) })) });
+      }
+      const { g, k, n, t, who, asc, min, max } = JSON.parse(await request.text());
+      if (!Number.isInteger(t) || t < min || t > max || typeof who !== 'string') return json({ error: 'rejected' }, 400);
+      const name = String(n || '').replace(/[^\w .'-]/g, '').trim().slice(0, 14) || 'Player', h = await hashWho(who);
       this.sql.exec('DELETE FROM lbrate WHERE t < ?', now - 3600000);
       if (this.sql.exec('SELECT COUNT(*) AS n FROM lbrate WHERE who = ?', h).one().n >= 60) return json({ error: 'slow down' }, 429);
       this.sql.exec('INSERT INTO lbrate (who, t) VALUES (?, ?)', h, now);
-      this.sql.exec('INSERT INTO lb (g, k, who, n, t, at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (g, k, who) DO UPDATE SET n = excluded.n, at = CASE WHEN excluded.t < lb.t THEN excluded.at ELSE lb.at END, t = MIN(lb.t, excluded.t)', g, k, h, name, t, now);
+      const better = asc ? 'excluded.t < lb.t' : 'excluded.t > lb.t';
+      this.sql.exec(`INSERT INTO lb (g, k, who, n, t, at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (g, k, who) DO UPDATE SET n = excluded.n, at = CASE WHEN ${better} THEN excluded.at ELSE lb.at END, t = ${asc ? 'MIN' : 'MAX'}(lb.t, excluded.t)`, g, k, h, name, t, now);
       const mine = this.sql.exec('SELECT t FROM lb WHERE g = ? AND k = ? AND who = ?', g, k, h).one().t;
-      return json({ rank: this.sql.exec('SELECT COUNT(*) AS n FROM lb WHERE g = ? AND k = ? AND t < ?', g, k, mine).one().n + 1, best: mine, top: top(g, k) });
+      return json({ rank: rankOf(g, k, asc, mine), best: mine, top: top(g, k, asc) });
+    }
+    if (path === '/rate') {
+      const { id, v, who } = JSON.parse(await request.text()), h = (await sha(this.salt + '|rate|' + who)).slice(0, 24);
+      if (v === 0) this.sql.exec('DELETE FROM rates WHERE who = ? AND id = ?', h, id);
+      else this.sql.exec('INSERT INTO rates (who, id, v) VALUES (?, ?, ?) ON CONFLICT (who, id) DO UPDATE SET v = excluded.v', h, id, v);
+      this.memo = null;
+      const r = this.sql.exec('SELECT SUM(CASE WHEN v > 0 THEN 1 ELSE 0 END) AS up, SUM(CASE WHEN v < 0 THEN 1 ELSE 0 END) AS down FROM rates WHERE id = ?', id).one();
+      return json({ ok: true, up: r.up || 0, down: r.down || 0 });
     }
     if (path === '/view') {
       const { k } = JSON.parse(await request.text());
@@ -332,6 +383,8 @@ export class Stats {
           'SELECT id, SUM(n) AS total, SUM(CASE WHEN day >= ? THEN n ELSE 0 END) AS week, SUM(CASE WHEN day >= ? THEN n ELSE 0 END) AS recent, SUM(CASE WHEN day = ? THEN n ELSE 0 END) AS today FROM plays GROUP BY id',
           weekStart, recentStart, today))
           games[r.id] = { total: r.total, week: r.week, today: r.today, recent: r.recent };
+        for (const r of this.sql.exec('SELECT id, SUM(CASE WHEN v > 0 THEN 1 ELSE 0 END) AS up, SUM(CASE WHEN v < 0 THEN 1 ELSE 0 END) AS down FROM rates GROUP BY id'))
+          Object.assign(games[r.id] || (games[r.id] = { total: 0, week: 0, today: 0, recent: 0 }), { up: r.up, down: r.down });
         // the whole site, day by day for this week (Monday to Sunday; days still to come are zero and marked future)
         const days = [], at = {};
         for (let i = 0; i < 7; i++) { const d = addDays(weekStart, i); at[d] = { d, plays: 0, views: 0, players: 0 }; if (d > today) at[d].future = true; days.push(at[d]); }

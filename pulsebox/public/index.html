@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="en">
 <meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23c6ff3d'/%3E%3Cpath transform='translate(4 4)' d='M7 7h10v4h-4v2h4v4H7v-4h2v-2H7z' fill='%230a0c12'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="media/pulsebox-icon.png">
+<meta name="theme-color" content="#0a0c12">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pulsebox | Interactive Learning & Skill Practice</title>
 <meta name="description" content="Pulsebox is a collection of interactive activities that invite practice with timing, strategy, pattern recognition, and problem-solving. Explore activities on desktop, tablet, or phone.">
@@ -519,6 +522,73 @@
     .tabbar button[data-t="friends"] .i { width: 46px; height: 32px; margin-top: -2px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: linear-gradient(100deg, #ff2e88, #8a4bff 55%, #29e0ff); background-size: 200% 100%; animation: frShift 4s ease-in-out infinite, frGlow 2.4s ease-in-out infinite; }
   }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  /* ---------- player: level chip, profile, badges, leaderboards, ratings, daily challenge, toasts, loading ---------- */
+  .lvl-btn { display: flex; align-items: center; gap: 8px; padding: 5px 10px 5px 5px; border-radius: 12px; border: 1px solid var(--edge); background: var(--panel); cursor: pointer; white-space: nowrap; }
+  .lvl-btn:hover { border-color: var(--lime); }
+  .lvl-btn .lv { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: linear-gradient(135deg, var(--lime), #5fe08a); color: #0a0c12; font-family: var(--display); font-weight: 800; font-size: 16px; box-shadow: 0 0 14px rgba(198,255,61,.35); }
+  .lvl-btn .lvb { display: grid; gap: 3px; } .lvl-btn .lvb small { font-size: 10px; letter-spacing: .14em; color: var(--muted); font-weight: 800; }
+  .lvl-btn .bar { display: block; width: 64px; height: 6px; border-radius: 3px; background: #ffffff18; overflow: hidden; } .lvl-btn .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--lime), var(--cyan)); border-radius: 3px; transition: width .5s ease; }
+  .lvl-btn .bd { font-size: 13px; font-weight: 800; color: #ffd23f; } .lvl-btn .bd:empty { display: none; }
+  @media (max-width: 700px) { .lvl-btn .lvb, .lvl-btn .bd { display: none; } .lvl-btn { padding: 4px; } }
+  .prof-box { width: min(640px, 100%) !important; }
+  .pf-head { display: flex; gap: 18px; align-items: center; margin: 4px 0 16px; }
+  .pf-ring { --p: 0; width: 92px; height: 92px; flex: none; border-radius: 50%; display: grid; place-content: center; text-align: center; background: radial-gradient(closest-side, var(--panel) 78%, transparent 80%), conic-gradient(var(--lime) calc(var(--p) * 1turn), #ffffff15 0); }
+  .pf-ring b { font-family: var(--display); font-size: 34px; line-height: 1; } .pf-ring small { font-size: 10px; letter-spacing: .16em; color: var(--muted); font-weight: 800; }
+  .pf-id { flex: 1; min-width: 0; } .pf-id label { margin-top: 0 !important; } .pf-id small { color: var(--muted); font-size: 12px; }
+  .pf-bar { height: 8px; border-radius: 4px; background: #ffffff15; margin: 10px 0 6px; overflow: hidden; } .pf-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--lime), var(--cyan)); }
+  .pf-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+  .pf-stats span { background: var(--bg2); border: 1px solid var(--edge); border-radius: 12px; padding: 10px; text-align: center; font-size: 12px; color: var(--muted); } .pf-stats b { display: block; font-family: var(--display); font-size: 22px; color: var(--text); }
+  .prof-box h3 { font-family: var(--display); text-transform: uppercase; letter-spacing: .06em; font-size: 16px; margin: 16px 0 8px; } .prof-box h3 small { color: var(--muted); font-size: 13px; }
+  .pf-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 8px; }
+  .bdg { border: 1px solid var(--edge); border-radius: 12px; padding: 10px 8px; text-align: center; background: var(--bg2); opacity: .45; filter: grayscale(1); }
+  .bdg.got { opacity: 1; filter: none; border-color: #ffd23f66; background: linear-gradient(180deg, #ffd23f14, transparent); }
+  .bdg span { font-size: 26px; display: block; } .bdg b { display: block; font-size: 12px; margin-top: 4px; } .bdg small { display: block; font-size: 10.5px; color: var(--muted); line-height: 1.3; margin-top: 2px; }
+  .pf-ranks { display: grid; gap: 6px; } .pf-ranks button { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--edge); background: var(--bg2); cursor: pointer; text-align: left; font-weight: 700; }
+  .pf-ranks .r { font-family: var(--display); color: var(--lime); min-width: 44px; } .pf-ranks small { margin-left: auto; color: var(--muted); font-weight: 600; }
+  .pf-note { margin-top: 14px !important; font-size: 13px; }
+  @media (max-width: 520px) { .pf-stats { grid-template-columns: repeat(2, 1fr); } .pf-ring { width: 72px; height: 72px; } .pf-ring b { font-size: 26px; } }
+  .pbx-rate { display: inline-flex; align-items: center; gap: 6px; }
+  .pbx-rate button { display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--edge); background: var(--panel); cursor: pointer; font-size: 16px; transition: transform .1s, border-color .15s; }
+  .pbx-rate button:hover { border-color: var(--lime); } .pbx-rate button:active { transform: scale(.94); }
+  .pbx-rate button.on { border-color: var(--lime); background: #c6ff3d22; } .pbx-rate button[data-v="-1"].on { border-color: var(--pink); background: #ff2e8822; }
+  .pbx-rate .c { font-size: 13px; font-weight: 800; color: var(--muted); } .pbx-rate .c:empty { display: none; }
+  .pbx-rate .pct { font-size: 13px; font-weight: 800; color: var(--muted); margin-left: 4px; }
+  #pRate { margin-left: 12px; } @media (max-width: 640px) { #pRate .pct { display: none; } #pRate button { padding: 5px 9px; } }
+  .d-board { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; margin: 18px 0 6px; }
+  .d-board:empty { display: none; }
+  .db-rate, .db-lb { background: var(--panel); border: 1px solid var(--edge); border-radius: 16px; padding: 16px 18px; }
+  .db-rate { display: flex; flex-direction: column; gap: 10px; justify-content: center; } .db-rate > span { font-family: var(--display); text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+  .db-tabs { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; } .db-tabs b { font-family: var(--display); text-transform: uppercase; letter-spacing: .06em; margin-right: auto; }
+  .db-tabs button { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--edge); background: transparent; cursor: pointer; font-weight: 700; font-size: 13px; } .db-tabs button.on { background: var(--lime); color: #0a0c12; border-color: var(--lime); }
+  .db-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .db-list li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; background: var(--bg2); font-weight: 700; } .db-list li.me { outline: 1.5px solid var(--lime); }
+  .db-list .rk { width: 26px; text-align: center; font-family: var(--display); } .db-list .sc { margin-left: auto; font-family: var(--display); color: var(--lime); } .db-list .dim, .daily-card .dim { color: var(--muted); font-weight: 600; background: none; }
+  .db-me { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  @media (max-width: 760px) { .d-board { grid-template-columns: 1fr; } }
+  .daily-card { display: grid; grid-template-columns: 170px minmax(0, 1fr) 260px; gap: 22px; align-items: center; margin: 28px 0 8px; padding: 18px; border-radius: 22px; border: 1px solid #ffd23f55; background: radial-gradient(600px 200px at 0% 0%, #ffd23f22, transparent 70%), linear-gradient(135deg, #1d1a2e, #141826); box-shadow: 0 12px 40px rgba(0,0,0,.35); }
+  .daily-card .dc-art { width: 170px; height: 170px; border-radius: 22%; object-fit: cover; cursor: pointer; box-shadow: 0 10px 26px rgba(0,0,0,.5); }
+  .dc-lab { font-family: var(--display); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 13px; color: #ffd23f; }
+  .daily-card h2 { font-family: var(--display); font-size: clamp(26px, 4vw, 40px); text-transform: uppercase; margin: 4px 0 6px; line-height: 1; } .daily-card p { margin: 0 0 14px; color: var(--muted); }
+  .dc-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; } .dc-streak { font-weight: 800; color: #ffb36e; }
+  .dc-board { background: #0000002a; border-radius: 14px; padding: 12px 14px; align-self: stretch; } .dc-board b { font-family: var(--display); text-transform: uppercase; letter-spacing: .06em; font-size: 13px; }
+  .dc-board ol { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; } .dc-board li { display: flex; gap: 8px; align-items: center; font-weight: 700; font-size: 14px; } .dc-board li .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .dc-board li b { font-family: var(--display); color: var(--lime); letter-spacing: 0; }
+  @media (max-width: 900px) { .daily-card { grid-template-columns: 110px minmax(0, 1fr); } .daily-card .dc-art { width: 110px; height: 110px; } .dc-board { grid-column: 1 / -1; } }
+  @media (max-width: 520px) { .daily-card { grid-template-columns: 1fr; text-align: left; } .daily-card .dc-art { width: 84px; height: 84px; } }
+  #pbxToasts { position: fixed; top: 76px; right: 16px; z-index: 80; display: grid; gap: 8px; pointer-events: none; }
+  .pbx-toast { display: flex; gap: 12px; align-items: center; min-width: 230px; max-width: 320px; padding: 12px 16px; border-radius: 14px; background: #161a26f2; border: 1px solid var(--edge); box-shadow: 0 10px 30px rgba(0,0,0,.45); animation: tIn .35s cubic-bezier(.2,.8,.2,1.2); transition: opacity .4s, transform .4s; }
+  .pbx-toast.out { opacity: 0; transform: translateX(24px); } .pbx-toast .ti { font-size: 26px; } .pbx-toast b { display: block; } .pbx-toast small { display: block; color: var(--muted); font-size: 12.5px; }
+  .pbx-toast.tb { border-color: #ffd23f88; } .pbx-toast.lvl { border-color: var(--lime); box-shadow: 0 0 24px #c6ff3d55; } .pbx-toast.xp b { color: var(--lime); }
+  @keyframes tIn { from { opacity: 0; transform: translateX(30px) scale(.96); } }
+  @media (min-width: 900px) { #pbxToasts { top: auto; bottom: 22px; } }
+  /* room for the level chip in the header on smaller desktops */
+  @media (max-width: 1440px) { header.top .nav-count { display: none; } header.top .bug-top .t { display: none; } }
+  .stage .loading .ld-bg { position: absolute; inset: 0; background: center / cover; filter: blur(26px) brightness(.45) saturate(1.2); transform: scale(1.15); }
+  .stage .loading .ld-card { position: relative; display: grid; justify-items: center; gap: 12px; max-width: min(460px, 86%); text-align: center; letter-spacing: 0; color: var(--text); font-family: inherit; }
+  .stage .loading .ld-card img { width: min(150px, 28vw); aspect-ratio: 1; border-radius: 22%; object-fit: cover; box-shadow: 0 14px 40px rgba(0,0,0,.6); animation: ldPulse 1.6s ease-in-out infinite; }
+  .stage .loading .ld-card b { font-family: var(--display); font-size: clamp(20px, 3vw, 30px); text-transform: uppercase; letter-spacing: .04em; }
+  .stage .loading .ld-bar { width: 200px; height: 5px; border-radius: 3px; background: #ffffff22; overflow: hidden; } .stage .loading .ld-bar i { display: block; width: 40%; height: 100%; background: var(--lime); border-radius: 3px; animation: ldBar 1.1s ease-in-out infinite; }
+  .stage .loading .ld-tip { min-height: 2.8em; margin: 0; font-size: 15px; font-weight: 600; color: #dfe4ee; opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .3s; } .stage .loading .ld-tip.in { opacity: 1; transform: none; }
+  @keyframes ldBar { 0% { transform: translateX(-110%); } 100% { transform: translateX(260%); } } @keyframes ldPulse { 50% { transform: scale(1.04); } }
 </style>
 
 <div class="wrap">
@@ -2713,6 +2783,8 @@ loadStats();
   const CFG = { apiKey: 'AIzaSyBrAUF7jmH7gBKxBfJ6Un9bZRySC-jTTVU', authDomain: 'pulseform-d8282.firebaseapp.com', projectId: 'pulseform-d8282', appId: '1:653074377253:web:802ea5afbd1523319dedcc' };
   const SYNC_KEY = 'pbx-sync';  // { t: cloud time of the last sync, uid }
   const A = { user: null, mode: 'in', busy: false, err: '', state: 'ok', auth: null };
+  window.pbxToken = async () => { try { return A.user ? await A.user.getIdToken() : null; } catch (e) { return null; } };
+  window.pbxUserName = () => A.user ? (A.user.displayName || (A.user.email || '').split('@')[0] || 'Player') : '';
   const $ = id => document.getElementById(id), esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const ls = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
 
@@ -2846,5 +2918,263 @@ loadStats();
   }
   // load sign-in in the background: it remembers who was signed in on this device
   setTimeout(() => ready().catch(() => {}), 800);
+})();
+</script>
+<script>
+/* ============================================================
+   PLAYER: a profile with XP, levels and badges; world leaderboards; the daily challenge; ratings; loading tips.
+   Games tell the hub their score with postMessage({ pbx: 'score', score }) (the kit at the end of a run, the
+   Originals when they save a best). The hub decides which game it came from, so a game can't post for another.
+   The profile lives in localStorage ('pbx-profile'), so the account sync carries it to every device.
+   ============================================================ */
+(() => {
+  // games with a score worth ranking, and what the number means
+  const SCORE = {
+    'afterhours': 'Final score', 'axe-spin': 'Score', 'brick-blitz': 'Score', 'bumper-brawl': 'Rounds won', 'combo-cubes': 'Score', 'dead-air': 'Pay', 'deep-signal': 'Score', 'doodle-guess': 'Points',
+    'flip-frenzy': 'Score', 'flop-hoops': 'Points', 'fruit-frenzy': 'Score', 'horde-breaker': 'Seconds survived', 'hue-hop': 'Score', 'lantern-keep': 'Keeper score', 'legend-maker': 'Legacy',
+    'lights-out-motel': 'Guests handled right', 'neon-serpent': 'Score', 'night-shift': 'Shift score', 'orbit-hop': 'Score', 'paint-wars': 'Tiles painted', 'penalty-shootout': 'Score', 'pocket-bowl': 'Season score',
+    'rooftop-rush': 'Meters', 'sea-battle': 'Ships sunk', 'siegeworks': 'Siege score', 'sky-ace': 'Score', 'sky-stack': 'Score', 'space-colony': 'Colonists', 'spin-rally': 'Points', 'still-here': 'Score',
+    'strata': 'Score', 'tank-trouble': 'Rounds won', 'tiny-tee': 'Points', 'turbo-laps': 'Points',
+    'baggage-panic': 'Suitcase reached', 'switchyard': 'Points', 'potion-protocol': 'Recipes cracked', 'safecracker': 'Points', 'magnet-rescue': 'Rescues', 'pocket-jury': 'Docket points',
+    'cloudwash': 'Stars', 'circuit-courier': 'Stars', 'bid-bandits': 'Season money', 'foldscape': 'Stars',
+  };
+  // quick solo games where a bigger number is plainly better: one of these is the daily challenge
+  const DAILY_POOL = ['flop-hoops', 'neon-serpent', 'brick-blitz', 'sky-stack', 'axe-spin', 'orbit-hop', 'hue-hop', 'fruit-frenzy', 'flip-frenzy', 'penalty-shootout', 'rooftop-rush', 'sky-ace', 'combo-cubes', 'tiny-tee', 'spin-rally', 'horde-breaker', 'safecracker'];
+  const ORIGINALS = ['baggage-panic', 'switchyard', 'potion-protocol', 'safecracker', 'magnet-rescue', 'pocket-jury', 'cloudwash', 'circuit-courier', 'bid-bandits', 'foldscape'];
+  const $ = id => document.getElementById(id), esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const num = n => Number(n || 0).toLocaleString('en-US');
+  const byIdP = id => (typeof byId === 'function' ? byId(id) : null);
+  const API = /^https?:/.test(location.protocol) ? '' : 'https://box.pulseform.org';
+
+  /* ---------- days (US Eastern, like the server's daily boards) ---------- */
+  const dayFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const today = () => dayFmt.format(new Date());
+  const addDays = (d, n) => new Date(Date.parse(d + 'T12:00:00Z') + n * 864e5).toISOString().slice(0, 10);
+  const dailyGame = (d = today()) => { const n = Math.floor(Date.parse(d + 'T12:00:00Z') / 864e5); let h = n * 2654435761 % 4294967296; h = (h ^ (h >>> 13)) >>> 0; return DAILY_POOL[h % DAILY_POOL.length]; };
+  const dailyKey = (d = today()) => 'd' + d.replace(/-/g, '');
+
+  /* ---------- the profile ---------- */
+  const KEY = 'pbx-profile';
+  const fresh = () => ({ v: 1, name: '', xp: 0, plays: 0, games: {}, days: {}, daily: {}, streak: 0, bestStreak: 0, lastDaily: '', rated: {}, badges: {}, ranks: {} });
+  let P = fresh();
+  const load = () => { try { P = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { P = fresh(); } if (!P.name) { P.name = 'Player' + Math.floor(1000 + Math.random() * 9000); save(); } };
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} };
+  // XP to go from level L to L+1 grows gently: 100, 140, 180, ...
+  const need = L => 100 + 40 * (L - 1);
+  const levelOf = xp => { let L = 1, left = xp; while (left >= need(L)) { left -= need(L); L++; } return { L, into: left, need: need(L) }; };
+  const tried = () => Object.keys(P.games).filter(id => byIdP(id));
+
+  const BADGES = [
+    ['first', '🎮', 'First Game', 'Play any game', p => tried().length >= 1],
+    ['explore10', '🧭', 'Explorer', 'Try 10 different games', p => tried().length >= 10],
+    ['explore25', '🗺️', 'Globetrotter', 'Try 25 different games', p => tried().length >= 25],
+    ['explore50', '🌍', 'World Tour', 'Try 50 different games', p => tried().length >= 50],
+    ['allcats', '🌈', 'Variety Pack', 'Try a game in every category', p => { const cats = new Set(GAMES.map(g => g.category)), mine = new Set(tried().map(id => byIdP(id).category)); return [...cats].every(c => mine.has(c)); }],
+    ['originals', '⭐', 'Original Fan', 'Try all 10 Pulsebox Originals', p => ORIGINALS.every(id => P.games[id])],
+    ['horror', '👻', 'Brave Soul', 'Try 5 horror games', p => tried().filter(id => byIdP(id).category === 'Horror').length >= 5],
+    ['coop', '👥', 'Better Together', 'Try 5 co-op games', p => tried().filter(id => byIdP(id).category === 'Co-op').length >= 5],
+    ['plays50', '🔁', 'Regular', 'Play 50 sessions', p => P.plays >= 50],
+    ['plays200', '🏅', 'Devoted', 'Play 200 sessions', p => P.plays >= 200],
+    ['pb10', '📈', 'Climbing', 'Set personal bests in 10 games', p => Object.values(P.games).filter(x => x.best > 0).length >= 10],
+    ['daily1', '📅', 'Challenger', 'Finish a daily challenge', p => Object.keys(P.daily).length >= 1],
+    ['streak3', '🔥', 'On Fire', 'A 3-day daily streak', p => P.bestStreak >= 3],
+    ['streak7', '🔥', 'Week Warrior', 'A 7-day daily streak', p => P.bestStreak >= 7],
+    ['streak30', '🌋', 'Unstoppable', 'A 30-day daily streak', p => P.bestStreak >= 30],
+    ['dailies10', '🗓️', 'Daily Grinder', 'Finish 10 daily challenges', p => Object.keys(P.daily).length >= 10],
+    ['board', '🏁', 'On the Board', 'Post a world leaderboard score', p => Object.keys(P.ranks).length >= 1],
+    ['top10', '🥉', 'Top Ten', 'Reach the top 10 of a world board', p => Object.values(P.ranks).some(r => r <= 10)],
+    ['top1', '🥇', 'Number One', 'Hold #1 on a world board', p => Object.values(P.ranks).some(r => r === 1)],
+    ['critic', '👍', 'Critic', 'Rate 10 games', p => Object.keys(P.rated).length >= 10],
+    ['owl', '🦉', 'Night Owl', 'Play between midnight and 4 AM', p => !!P.owl],
+    ['bird', '🐦', 'Early Bird', 'Play between 5 and 7 AM', p => !!P.bird],
+    ['level10', '💎', 'Level 10', 'Reach level 10', p => levelOf(P.xp).L >= 10],
+    ['level25', '👑', 'Level 25', 'Reach level 25', p => levelOf(P.xp).L >= 25],
+  ];
+
+  /* ---------- toasts ---------- */
+  function toast(icon, title, sub = '', kind = '') {
+    let box = $('pbxToasts'); if (!box) { box = document.createElement('div'); box.id = 'pbxToasts'; box.setAttribute('aria-live', 'polite'); document.body.append(box); }
+    const t = document.createElement('div'); t.className = 'pbx-toast ' + kind; t.innerHTML = `<span class="ti">${icon}</span><span><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span>`;
+    box.append(t); setTimeout(() => t.classList.add('out'), 3800); setTimeout(() => t.remove(), 4300);
+    while (box.children.length > 4) box.firstChild.remove();
+  }
+
+  /* ---------- XP and badges ---------- */
+  function gain(xp, why) {
+    const before = levelOf(P.xp).L; P.xp += xp; save();
+    if (why) toast('✨', '+' + xp + ' XP', why, 'xp');
+    const after = levelOf(P.xp).L; if (after > before) toast('⬆️', 'Level ' + after + '!', 'You leveled up. Keep playing to climb.', 'lvl');
+    checkBadges(); chip();
+  }
+  function checkBadges() {
+    let added = false;
+    for (const [id, icon, name, desc, test] of BADGES) if (!P.badges[id]) { let ok = false; try { ok = test(P); } catch (e) {} if (ok) { P.badges[id] = Date.now(); added = true; toast(icon, 'Badge: ' + name, desc, 'tb'); P.xp += 50; } }
+    if (added) { save(); chip(); }
+  }
+
+  /* ---------- events from the hub and the games ---------- */
+  function onStart(g) {
+    const d = today(), h = new Date().getHours(), e = P.games[g.id] || (P.games[g.id] = { n: 0, best: 0, first: d });
+    e.n++; P.plays++; P.days[d] = (P.days[d] || 0) + 1;
+    const ks = Object.keys(P.days).sort(); while (ks.length > 60) delete P.days[ks.shift()];
+    if (h < 4) P.owl = 1; if (h >= 5 && h < 7) P.bird = 1;
+    const day = P.xpDay && P.xpDay.d === d ? P.xpDay : (P.xpDay = { d, g: {} }); day.g[g.id] = (day.g[g.id] || 0) + 1;
+    if (e.n === 1) gain(50, 'New game: ' + g.title); else if (day.g[g.id] <= 5) gain(10); else { save(); checkBadges(); }
+  }
+  async function onScore(id, score) {
+    const g = byIdP(id); if (!g || !SCORE[id] || !(score > 0)) return;
+    const e = P.games[id] || (P.games[id] = { n: 1, best: 0, first: today() }), prev = e.best || 0;
+    if (score > prev) { e.best = score; save(); gain(prev ? 25 : 15, (prev ? 'New personal best: ' : 'First score: ') + num(score)); post(id, 'best', score); }
+    // the daily challenge: any score on today's game counts, and better ones climb today's board
+    const d = today();
+    if (id === dailyGame(d)) {
+      const first = !(d in P.daily);
+      if (first || score > P.daily[d]) { P.daily[d] = Math.max(P.daily[d] || 0, score); post(id, dailyKey(d), score); }
+      if (first) {
+        P.streak = P.lastDaily === addDays(d, -1) ? P.streak + 1 : 1; P.lastDaily = d; P.bestStreak = Math.max(P.bestStreak, P.streak); save();
+        gain(150 + Math.min(P.streak - 1, 6) * 25, 'Daily challenge done · 🔥 ' + P.streak + '-day streak');
+        renderDaily();
+      } else save();
+    }
+  }
+  window.addEventListener('message', e => {
+    if (!e.data || e.data.pbx !== 'score' || e.origin !== location.origin) return;
+    const f = $('stage') && $('stage').querySelector('iframe'); if (!f || e.source !== f.contentWindow) return;
+    onScore(f.dataset.id, Math.floor(+e.data.score));
+  });
+
+  /* ---------- server calls ---------- */
+  async function auth() { try { const t = window.pbxToken && await window.pbxToken(); return t ? { authorization: 'Bearer ' + t } : {}; } catch (e) { return {}; } }
+  async function post(g, k, t) {
+    try {
+      const r = await fetch(API + '/api/lb', { method: 'POST', headers: { 'content-type': 'application/json', ...(await auth()) }, body: JSON.stringify({ g, k, n: P.name, t }) });
+      if (!r.ok) return; const j = await r.json();
+      if (k === 'best') { P.ranks[g] = j.rank; save(); checkBadges(); if (j.rank <= 10) toast(j.rank === 1 ? '🥇' : '🏆', 'World #' + j.rank + ' in ' + (byIdP(g) || {}).title, 'Your best: ' + num(j.best)); }
+      if (current && current.id === g && !$('detail').hidden) renderBoard(g);
+    } catch (e) {}
+  }
+  async function getBoard(g, k) { try { const r = await fetch(API + `/api/lb?g=${encodeURIComponent(g)}&k=${k}`, { headers: await auth() }); return r.ok ? r.json() : null; } catch (e) { return null; } }
+  async function refreshRanks() { try { const r = await fetch(API + '/api/lb/mine', { headers: await auth() }); if (!r.ok) return; const j = await r.json(); for (const b of j.boards || []) P.ranks[b.g] = b.rank; save(); checkBadges(); } catch (e) {} }
+
+  /* ---------- ratings ---------- */
+  const RATES = {};
+  async function rate(id, v) {
+    const old = P.rated[id] || 0, nv = old === v ? 0 : v;
+    if (nv) P.rated[id] = nv; else delete P.rated[id]; save();
+    if (!old && nv) gain(5, 'Thanks for rating!');
+    paintRate(id);
+    try { const r = await fetch(API + '/api/rate', { method: 'POST', headers: { 'content-type': 'application/json', ...(await auth()) }, body: JSON.stringify({ id, v: nv }) }); if (r.ok) { const j = await r.json(); RATES[id] = { up: j.up, down: j.down }; paintRate(id); } } catch (e) {}
+  }
+  const rateOf = id => RATES[id] || (STATS && STATS[id] && STATS[id].up != null ? STATS[id] : null) || rawStats[id] || null;
+  let rawStats = {};
+  fetch(API + '/api/stats').then(r => r.ok ? r.json() : null).then(d => { if (d && d.games) { rawStats = d.games; document.querySelectorAll('[data-rate-for]').forEach(el => paintRate(el.dataset.rateFor)); } }).catch(() => {});
+  function rateHTML(id) { return `<div class="pbx-rate" data-rate-for="${id}"><button type="button" data-v="1" aria-label="I like this game">👍<span class="c"></span></button><button type="button" data-v="-1" aria-label="Not for me">👎<span class="c"></span></button><span class="pct"></span></div>`; }
+  function paintRate(id) {
+    document.querySelectorAll(`[data-rate-for="${id}"]`).forEach(el => {
+      const s = rateOf(id) || {}, up = s.up || 0, down = s.down || 0, mine = P.rated[id] || 0;
+      el.querySelector('[data-v="1"]').classList.toggle('on', mine === 1); el.querySelector('[data-v="-1"]').classList.toggle('on', mine === -1);
+      el.querySelector('[data-v="1"] .c').textContent = up ? num(up) : ''; el.querySelector('[data-v="-1"] .c').textContent = down ? num(down) : '';
+      el.querySelector('.pct').textContent = up + down >= 3 ? Math.round(up / (up + down) * 100) + '% liked' : 'Rate it';
+    });
+  }
+  document.addEventListener('click', e => { const b = e.target.closest('.pbx-rate button'); if (b) rate(b.closest('.pbx-rate').dataset.rateFor, +b.dataset.v); });
+
+  /* ---------- the header chip and the profile ---------- */
+  function chip() {
+    const b = $('lvlBtn'); if (!b) return; const l = levelOf(P.xp);
+    b.querySelector('b').textContent = l.L; b.querySelector('i').style.width = Math.round(l.into / l.need * 100) + '%';
+    b.title = `Level ${l.L} · ${num(l.into)} / ${num(l.need)} XP to level ${l.L + 1}`;
+    const n = Object.keys(P.badges).length; b.querySelector('.bd').textContent = n ? '🏅' + n : '';
+  }
+  function openProfile() {
+    refreshRanks().then(() => { if (!$('profModal').hidden) drawProfile(); });
+    $('profModal').hidden = false; drawProfile();
+  }
+  function drawProfile() {
+    const l = levelOf(P.xp), box = $('profBox'), signed = !!(window.pbxToken && window.pbxUserName && window.pbxUserName());
+    const ranks = Object.entries(P.ranks).filter(([g]) => byIdP(g)).sort((a, b) => a[1] - b[1]).slice(0, 6);
+    box.innerHTML = `<button class="x" data-a="close" aria-label="Close">✕</button>
+      <div class="pf-head"><div class="pf-ring" style="--p:${l.into / l.need}"><b>${l.L}</b><small>LEVEL</small></div>
+        <div class="pf-id"><label for="pfName">Name on leaderboards</label><input id="pfName" maxlength="14" value="${esc(P.name)}">
+        <div class="pf-bar"><i style="width:${Math.round(l.into / l.need * 100)}%"></i></div><small>${num(l.into)} / ${num(l.need)} XP to level ${l.L + 1} · ${num(P.xp)} XP total</small></div></div>
+      <div class="pf-stats"><span><b>${tried().length}</b>games tried</span><span><b>${num(P.plays)}</b>sessions</span><span><b>🔥 ${P.streak && P.lastDaily >= addDays(today(), -1) ? P.streak : 0}</b>daily streak</span><span><b>${Object.keys(P.daily).length}</b>dailies done</span></div>
+      <h3>Badges <small>${Object.keys(P.badges).length} / ${BADGES.length}</small></h3>
+      <div class="pf-badges">${BADGES.map(([id, icon, name, desc]) => `<div class="bdg ${P.badges[id] ? 'got' : ''}" title="${esc(desc)}"><span>${icon}</span><b>${esc(name)}</b><small>${esc(desc)}</small></div>`).join('')}</div>
+      <h3>Your world rankings</h3>
+      ${ranks.length ? `<div class="pf-ranks">${ranks.map(([g, r]) => `<button data-g="${g}"><span class="r">#${r}</span>${esc(byIdP(g).title)}<small>${esc(SCORE[g] || 'Score')}: ${num((P.games[g] || {}).best)}</small></button>`).join('')}</div>` : '<p>Play any game with a score to land on its world board.</p>'}
+      ${signed ? '' : '<p class="pf-note">Sign in to keep your level, badges and rankings on every device.</p>'}`;
+    const inp = $('pfName'); inp.onchange = () => { const v = inp.value.replace(/[^\w .'-]/g, '').trim().slice(0, 14); if (v) { P.name = v; save(); } inp.value = P.name; };
+    box.querySelectorAll('.pf-ranks button').forEach(b => b.onclick = () => { $('profModal').hidden = true; go('#' + b.dataset.g); });
+    box.querySelector('[data-a="close"]').onclick = () => { $('profModal').hidden = true; };
+  }
+
+  /* ---------- the game page: rating and leaderboards ---------- */
+  let boardTab = 'best';
+  async function renderBoard(id) {
+    const host = $('dBoard'); if (!host) return;
+    const g = byIdP(id), scored = !!SCORE[id], isDaily = id === dailyGame();
+    host.innerHTML = `<div class="db-rate"><span>Did you enjoy it?</span>${rateHTML(id)}</div>` + (scored ? `<div class="db-lb"><div class="db-tabs"><b>World leaderboard</b>${isDaily ? `<button data-k="best" class="${boardTab === 'best' ? 'on' : ''}">All time</button><button data-k="day" class="${boardTab === 'day' ? 'on' : ''}">Today ⚡</button>` : ''}</div><ol class="db-list"><li class="dim">Loading…</li></ol><div class="db-me"></div></div>` : '');
+    paintRate(id); if (!scored) return;
+    host.querySelectorAll('.db-tabs button').forEach(b => b.onclick = () => { boardTab = b.dataset.k; renderBoard(id); });
+    const k = isDaily && boardTab === 'day' ? dailyKey() : 'best', j = await getBoard(id, k);
+    if (!current || current.id !== id) return;
+    const list = host.querySelector('.db-list'), me = host.querySelector('.db-me'), label = SCORE[id];
+    if (!j) { list.innerHTML = '<li class="dim">Leaderboard unavailable right now.</li>'; return; }
+    list.innerHTML = j.top.length ? j.top.map((r, i) => `<li class="${j.me && j.me.rank === i + 1 ? 'me' : ''}"><span class="rk">${['🥇', '🥈', '🥉'][i] || i + 1}</span><span class="nm">${esc(r.n)}</span><span class="sc">${num(r.t)}</span></li>`).join('') : `<li class="dim">No scores yet${k === 'best' ? '' : ' today'}. Be the first!</li>`;
+    me.innerHTML = j.me ? `You: <b>#${j.me.rank}</b> of ${num(j.count)} · ${esc(label)} ${num(j.me.t)}` : `${esc(label)}. Play to post your score${j.count ? ` (${num(j.count)} players so far)` : ''}.`;
+    if (j.me && k === 'best') { P.ranks[id] = j.me.rank; save(); }
+  }
+
+  /* ---------- the daily challenge card on the home page ---------- */
+  async function renderDaily() {
+    const top = $('trendTop'); if (!top || !top.children.length) return;
+    let card = $('dailyCard'); if (!card) { card = document.createElement('section'); card.id = 'dailyCard'; card.className = 'daily-card'; }
+    top.prepend(card);
+    const d = today(), id = dailyGame(d), g = byIdP(id); if (!g) { card.remove(); return; }
+    const done = d in P.daily, streak = P.lastDaily >= addDays(d, -1) ? P.streak : 0;
+    const date = new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' });
+    card.innerHTML = `<img class="dc-art" alt="" src="${g.cover}"><div class="dc-body"><span class="dc-lab">⚡ Daily challenge · ${date}</span><h2>${esc(g.title)}</h2>
+      <p>${done ? `Done! Your best today: <b>${num(P.daily[d])}</b>. Keep climbing today's board.` : `Post any score on today's board for <b>+150 XP</b>${streak ? ` and keep your <b>🔥 ${streak}-day streak</b>` : ''}.`}</p>
+      <div class="dc-row"><button class="play-btn dc-go" type="button">${done ? 'Play again' : '▶ Play the challenge'}</button><span class="dc-streak">${streak ? '🔥 ' + streak + '-day streak' : 'Start a streak today'}</span></div></div>
+      <div class="dc-board"><b>Today's top players</b><ol><li class="dim">Loading…</li></ol></div>`;
+    card.querySelector('.dc-go').onclick = () => go('#play-' + id);
+    card.querySelector('.dc-art').onclick = () => go('#' + id);
+    const j = await getBoard(id, dailyKey(d)), ol = card.querySelector('ol'); if (!ol) return;
+    ol.innerHTML = j && j.top.length ? j.top.slice(0, 5).map((r, i) => `<li><span>${['🥇', '🥈', '🥉'][i] || i + 1}</span><span class="nm">${esc(r.n)}</span><b>${num(r.t)}</b></li>`).join('') : '<li class="dim">Nobody yet today. Be first!</li>';
+  }
+
+  /* ---------- the loading screen: the game's art, its title and rotating tips ---------- */
+  const TIPS = ['Press P or Esc to pause most games.', 'Sign in to keep your progress, level and badges on every device.', 'Every game you try for the first time is worth +50 XP.', 'New personal bests earn XP and post to the world leaderboard.', 'Rate games with 👍 or 👎 so the best ones rise to the top.', 'Tap ⛶ for full screen.', 'Play with friends: make a room and send the code.'];
+  let tipT = 0;
+  function loadingScreen(g) {
+    const st = $('stage'), box = st.querySelector('.loading'); if (!box) return;
+    const tips = [...(g.how || []), ...TIPS.filter(t => !/Press P/.test(t) || !/pause/i.test((g.how || []).join(' ')))];
+    const d = dailyGame(); if (d === g.id) tips.unshift('This is today\'s daily challenge: post any score for +150 XP!');
+    box.innerHTML = `<div class="ld-bg" style="background-image:url('${g.cover}')"></div><div class="ld-card"><img src="${g.cover}" alt=""><b>${esc(g.title)}</b><div class="ld-bar"><i></i></div><p class="ld-tip"></p></div>`;
+    let i = 0; const tipEl = box.querySelector('.ld-tip'); const next = () => { tipEl.classList.remove('in'); setTimeout(() => { tipEl.textContent = '💡 ' + tips[i++ % tips.length]; tipEl.classList.add('in'); }, 160); };
+    next(); clearInterval(tipT); tipT = setInterval(() => { if (st.classList.contains('ready')) clearInterval(tipT); else next(); }, 2600);
+  }
+
+  /* ---------- wiring into the hub ---------- */
+  load(); checkBadges();
+  const head = document.querySelector('header.top'), acct = $('acctBtn');
+  const lb = document.createElement('button'); lb.className = 'lvl-btn'; lb.id = 'lvlBtn'; lb.type = 'button'; lb.setAttribute('aria-label', 'Your profile, level and badges');
+  lb.innerHTML = '<span class="lv"><b>1</b></span><span class="lvb"><small>LEVEL</small><span class="bar"><i></i></span></span><span class="bd"></span>';
+  head.insertBefore(lb, acct); lb.onclick = openProfile; chip();
+  const pm = document.createElement('div'); pm.className = 'modal'; pm.id = 'profModal'; pm.hidden = true; pm.setAttribute('role', 'dialog'); pm.setAttribute('aria-modal', 'true');
+  pm.innerHTML = '<div class="box prof-box" id="profBox"></div>'; document.body.append(pm);
+  pm.addEventListener('click', e => { if (e.target === pm) pm.hidden = true; });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pm.hidden) pm.hidden = true; });
+  // game page: a panel for ratings and the leaderboard, under the header
+  const dHead = document.querySelector('#detail .d-head');
+  if (dHead) { const s = document.createElement('section'); s.className = 'd-board'; s.id = 'dBoard'; dHead.after(s); }
+  const sd0 = showDetail; showDetail = function (g) { sd0.apply(this, arguments); boardTab = g.id === dailyGame() ? 'day' : 'best'; renderBoard(g.id); };
+  // playing: rate from the title bar, earn XP for starting, and show a proper loading screen
+  const pTitle = $('pTitle'), pr = document.createElement('span'); pr.id = 'pRate'; pTitle.after(pr);
+  const sg0 = startGame; startGame = function (g) { sg0.apply(this, arguments); onStart(g); loadingScreen(g); pr.innerHTML = rateHTML(g.id); paintRate(g.id); };
+  const rs0 = renderShelves; renderShelves = function () { rs0.apply(this, arguments); renderDaily(); };
+  try { renderDaily(); } catch (e) {}
+  // debugging and tests
+  window.pbxPlayer = { get profile() { return P; }, today, dailyGame, onScore, levelOf, BADGES, SCORE };
 })();
 </script>

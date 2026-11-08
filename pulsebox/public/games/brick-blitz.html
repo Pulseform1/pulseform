@@ -949,6 +949,8 @@ K.over = (o = {}) => {
   if (GAME.noSkins) $('oHint').textContent = '';
   setTimeout(() => { if (K.state === 'over') { showScr('sOver'); $('hud').hidden = true; } }, o.delay ?? 650);
   if (best && K.score > 0) setTimeout(() => K.chime(523, [0, 4, 7, 12, 16]), 700);
+  // tell the Pulsebox hub (when it hosts this game) about the score: profiles, leaderboards and the daily challenge
+  try { if (K.score > 0 && window.parent !== window) window.parent.postMessage({ pbx: 'score', score: Math.floor(K.score) }, location.origin); } catch (e) {}
 };
 function pause() { if (K.state !== 'play') return; K.state = 'paused'; showScr('sPause'); }
 function resume() { K.state = 'play'; showScr(null); last = performance.now(); }
