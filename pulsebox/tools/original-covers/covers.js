@@ -143,23 +143,5 @@ G['circuit-courier'] = {
   ${sparkle(84, 470, 14, '#7cf2ff')}${sparkle(540, 420, 10, '#7cf2ff')}${dots(30, 11, '#bfe8ff', 2, 200, 300)}`
 };
 
-G['bid-bandits'] = {
-  t: 'BID<br>BANDITS', f: 'Bowlby One', size: 104, fill: ['#ffffff', '#b8ff6a'], stroke: '#0a2010', ext: '#2a8a3a', rot: -4,
-  svg: `<defs>${sh()}<radialGradient id="glow" cx=".5" cy=".55" r=".6"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".6" stop-color="#ffb347"/><stop offset="1" stop-color="#8a4a12"/></radialGradient>
-  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3a5a"/><stop offset="1" stop-color="#121a2a"/></linearGradient></defs>
-  <rect width="600" height="600" fill="url(#bg)"/>
-  <g filter="url(#ds)"><rect x="70" y="200" width="460" height="380" rx="8" fill="#5a6a80"/>
-    <rect x="96" y="330" width="408" height="250" fill="url(#glow)"/>
-    <g transform="translate(300 470)"><rect x="-150" y="20" width="110" height="90" rx="6" fill="#8a5a2a"/><rect x="-140" y="30" width="90" height="10" fill="#a87a4a"/>
-      <path d="M-20 110 L-10 0 Q40 -40 70 0 L90 110Z" fill="#e0302a"/><circle cx="34" cy="-20" r="26" fill="#2a2a3a"/><circle cx="34" cy="-20" r="10" fill="#9aa6b8"/>
-      <rect x="100" y="-10" width="56" height="120" rx="20" fill="#ffd23f"/><rect x="116" y="-50" width="24" height="46" fill="#c49a2a"/></g>
-    <g>${Array.from({ length: 6 }, (_, i) => `<rect x="96" y="${226 + i * 18}" width="408" height="14" fill="${i % 2 ? '#8a9ab0' : '#a8b8cc'}"/>`).join('')}</g>
-    <rect x="96" y="330" width="408" height="16" fill="#3a4a60"/><rect x="270" y="334" width="60" height="22" rx="6" fill="#ffd23f"/>
-  </g>
-  <g filter="url(#ds)" transform="translate(110 210) rotate(-16)"><rect x="-56" y="-30" width="112" height="60" rx="8" fill="#4ac46a"/><rect x="-48" y="-22" width="96" height="44" rx="4" fill="none" stroke="#2a8a3a" stroke-width="4"/><text y="12" text-anchor="middle" font-family="Bowlby One" font-size="30" fill="#e8ffd8">$</text></g>
-  <g filter="url(#ds)" transform="translate(500 230) rotate(14)"><circle r="40" fill="#fff"/><circle r="32" fill="#e0302a"/><text y="12" text-anchor="middle" font-family="Bowlby One" font-size="32" fill="#fff">7</text><rect x="-8" y="38" width="16" height="70" rx="6" fill="#8a5a2a"/></g>
-  <text x="300" y="312" text-anchor="middle" font-family="Bowlby One" font-size="28" fill="#ffd23f" opacity=".9">LOT 04</text>
-  ${sparkle(240, 400, 14, '#fff6c8')}${sparkle(380, 380, 10, '#fff6c8')}${sparkle(320, 430, 7)}`
-};
 
 if (typeof module !== 'undefined') module.exports = G;

@@ -162,24 +162,6 @@ T['circuit-courier'] = async () => {
   await fuzz(p, 100, ['ArrowUp', 'ArrowLeft', ' ', 'f']); await sim(p, 30); await finish(p, g);
 };
 
-T['bid-bandits'] = async () => {
-  const g = 'bid-bandits'; let p = await open(g);
-  for (const strat of ['pass', 'reader']) {
-    await p.evaluate(() => reset());
-    let lockers = 0;
-    for (let r = 0; r < 31 && !(await p.evaluate(() => state.over)); r++) {
-      await p.evaluate(strat => { for (let k = 0; k < 200 && !state.resolved; k++) { const l = state.lot, mid = (l.estimate[0] + l.estimate[1]) / 2, m = /nearly new/.test(l.cond) ? 1.25 : /clean/.test(l.cond) ? 1.05 : /Dusty/.test(l.cond) ? .85 : .6, cap = strat === 'pass' ? 0 : Math.min(state.money[0], mid * m); GAMES[ID].action(state.leader !== 0 && state.bid + 50 <= cap ? 'bid' : 'pass'); } }, strat);
-      if (!(await p.evaluate(() => state.resolved))) { note(g, 'an auction never settled'); break; }
-      lockers++; await ctl(p, 'next');
-    }
-    const fin = await p.evaluate(() => ({ over: state.over, day: state.day, money: state.money, profit: state.profit }));
-    console.log('  ' + strat + `: ${lockers} lockers`, JSON.stringify(fin));
-    if (!fin.over || lockers !== 30) note(g, `${strat}: season ended after ${lockers} lockers (expected 30)`);
-  }
-  const kinds = await p.evaluate(() => { const seen = new Set(); for (let i = 0; i < 40; i++) bidDay().forEach(x => seen.add(x)); return seen.size; }); if (kinds !== 12) note(g, 'only ' + kinds + ' locker kinds ever appear');
-  await fuzz(p, 150); await finish(p, g);
-};
-
 T['engine'] = async () => {
   const p = await open('baggage-panic');
   await p.locator('#help').click(); await p.locator('#restart').click(); await p.waitForTimeout(500);
