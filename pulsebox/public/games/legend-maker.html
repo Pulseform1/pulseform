@@ -624,7 +624,7 @@ const GAME = {
     rr(g, 40, 146, 482, 470, 18, '#121a2e', TEAM[L.c1], 3);
     g.save(); g.beginPath(); g.roundRect(40, 146, 482, 470, 18); g.clip(); g.fillStyle = TEAM[L.c1] + '33'; g.beginPath(); g.arc(281, 360, 190, 0, TAU); g.fill(); athlete(g, sport, 275, 370, 2.15, L); g.restore();
     tx(g, (build.name || 'NO NAME').toUpperCase(), 281, 590, d(34), '#fff');
-    tx(g, 'NAME', 560, 80, f(14, 900), '#9fb0d0', 'left'); B.dice = { x: 1012, y: 96, w: 60, h: 50 }; rr(g, 1012, 96, 60, 50, 10, '#1f2a46', hover === 'dice' ? '#ffd23f' : 'rgba(255,255,255,.15)', 2); tx(g, '🎲', 1042, 122, '26px system-ui', '#fff');
+    tx(g, 'NAME', 560, 80, f(14, 900), '#9fb0d0', 'left'); if (!nameEl) { rr(g, 560, 96, 440, 50, 10, '#0e1428', '#ffb02e', 2); tx(g, (build.name || '').toUpperCase(), 780, 122, d(34), '#fff'); } B.dice = { x: 1012, y: 96, w: 60, h: 50 }; rr(g, 1012, 96, 60, 50, 10, '#1f2a46', hover === 'dice' ? '#ffd23f' : 'rgba(255,255,255,.15)', 2); tx(g, '🎲', 1042, 122, '26px system-ui', '#fff');
     const row = (label, y) => tx(g, label, 560, y, f(14, 900), '#9fb0d0', 'left');
     row('SKIN', 178); SKIN.forEach((c, i) => swatch(g, 'skin' + i, 660 + i * 50, 178, c, L.skin === i));
     row('HAIR', 236); HAIRS.forEach((n, i) => { const b = { x: 640 + (i % 4) * 106, y: 214 + Math.floor(i / 4) * 44, w: 98, h: 36 }; B['hair' + i] = b; rr(g, b.x, b.y, b.w, b.h, 9, L.hair === i ? '#ffb02e' : '#1a2238', hover === 'hair' + i ? '#ffd23f' : 'rgba(255,255,255,.12)', 2); tx(g, n, b.x + b.w / 2, b.y + 19, d(20), L.hair === i ? '#141414' : '#eef1f8'); });
@@ -963,7 +963,7 @@ const GAME = {
   }
 
   /* ---------- kit hooks ---------- */
-  GAME.reset = () => { mode = 'home'; build = null; career = null; reel = null; msg = null; posed = false; rng = R0; ladder = null; arena = null; hofSel = -1; hofPick = false; nameInput(false); quests(); if (K.bot) { newBuild(pick(Object.keys(SPORTS)), false); build.step = 'draft'; } };
+  GAME.reset = () => { mode = 'home'; build = null; career = null; reel = null; msg = null; posed = false; rng = R0; ladder = null; arena = null; hofSel = -1; hofPick = false; nameInput(false); quests(); if (K.bot) { newBuild(pick(Object.keys(SPORTS)), false); build.name = pick(FN) + ' ' + pick(LN); build.demo = 0; } };
   GAME.update = dt => {
     t += dt; if (msg && (msg.k += dt) > 3.5) msg = null;
     if (reel) {
@@ -1072,13 +1072,18 @@ const GAME = {
   // the attract demo: drafts, picks a trait, then plays the career (fast)
   GAME.bot = dt => {
     const M = anyMG(); if (M) return mgBot(M, .75);
-    if ((botT -= dt) > 0) return; botT = .5;
-    if (mode === 'home') { newBuild(pick(Object.keys(SPORTS)), false); build.step = 'draft'; return; }
-    if (mode === 'create' && build.step === 'look') { build.step = 'draft'; return; }
+    if (reel && reel.t < reel.end - .5) return skip();
+    if ((botT -= dt) > 0) return; botT = .35;
+    if (mode === 'home') { newBuild(pick(Object.keys(SPORTS)), false); build.name = pick(FN) + ' ' + pick(LN); build.demo = 0; return; }
+    if (mode === 'create' && build.step === 'look') {   // the demo tries on a few looks first
+      const L = build.look, k = (build.demo = (build.demo || 0) + 1) % 5; botT = .3;
+      if (k === 0) L.hair = Math.floor(R0() * 8); else if (k === 1) L.c1 = Math.floor(R0() * 12); else if (k === 2) L.skin = Math.floor(R0() * 6); else if (k === 3) L.hc = Math.floor(R0() * 6); else L.num = Math.floor(R0() * 100);
+      if (build.demo > 9) build.step = 'draft'; return;
+    }
     if (mode === 'create' && build.step === 'draft' && !build.pro && !reel) return spin();
     if (mode === 'create' && build.pro) { const S = SPORTS[sport], open = build.slots.map((s, i) => s ? -1 : build.pro.r[i] * S.w[i]); const best = open.indexOf(Math.max(...open)); if (build.rerolls && Math.max(...build.pro.r.filter((_, i) => !build.slots[i])) < 70 && R0() < .7) return reroll(); return place(best); }
     if (mode === 'create' && build.step === 'trait') { build.trait = pick(TRAITS).k; build.step = 'card'; build.revealT = t; return; }
-    if (mode === 'create' && build.step === 'card') { botT = 1.5; return startCareer(); }
+    if (mode === 'create' && build.step === 'card') { if (t - build.revealT < 1.6) return; return startCareer(); }
     if (mode === 'career' && career.phase === 'camp' && !career.mg && career.t > .6) { const S = SPORTS[sport], v = career.v; let bi = 0; v.forEach((x, i) => { if ((99 - x) * S.w[i] > (99 - v[bi]) * S.w[bi]) bi = i; }); return campPick(bi); }
     if (mode === 'career' && career.phase === 'retire') return retireChoice(R0() < .3);
     if (mode === 'career' && career.done) { botT = 1.5; return finishCareer(); }
