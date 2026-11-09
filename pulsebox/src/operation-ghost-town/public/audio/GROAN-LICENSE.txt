@@ -1,0 +1,7 @@
+Human strain recordings by qubodup.
+Source: https://opengameart.org/content/15-vocal-male-strainhurtpainjump-sounds
+Original archive: https://opengameart.org/sites/default/files/slightscreams.7z
+The creator states: "Available under CC0 starting 2024-08-30."
+License: CC0 1.0 Universal — https://creativecommons.org/publicdomain/zero/1.0/
+Files slightscream-06, -09, -10 and -11 were converted to mono 24 kHz Ogg/WAV, lightly filtered, time-stretched without changing pitch and faded.
+These are human recordings, not synthesized voices. No endorsement is implied.

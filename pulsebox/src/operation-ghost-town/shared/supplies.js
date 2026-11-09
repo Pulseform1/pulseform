@@ -1,0 +1,5 @@
+import {wallHit} from './physics.js';
+import {magazineSize} from './weapons.js';
+export const SUPPLIES=[{id:'south-med',kind:'medical',x:-7,y:.1,z:38},{id:'west-ammo',kind:'ammo',x:-33,y:.1,z:0},{id:'east-med',kind:'medical',x:33,y:.1,z:10},{id:'market-ammo',kind:'ammo',x:7,y:.1,z:7},{id:'north-med',kind:'medical',x:0,y:.1,z:-40},{id:'signal-ammo',kind:'ammo',x:22,y:.1,z:4.5}];
+export function nearbySupply(p,stations,time){return stations.find(s=>s.readyAt<=time&&Math.abs(p.y-s.y)<1.5&&Math.hypot(p.x-s.x,p.z-s.z)<2.4&&(()=>{const dx=s.x-p.x,dz=s.z-p.z,d=Math.hypot(dx,dz);return d<.01||wallHit({x:p.x,y:p.y+1,z:p.z},{x:dx/d,y:0,z:dz/d},d)>=d-.05})())}
+export function useSupply(p,s,time){if(!p.alive||s.readyAt>time)return false;if(s.kind==='medical'){if(p.health>=p.maxHealth)return false;p.health=Math.min(p.maxHealth,p.health+60)}else{let changed=false;for(const i of new Set(p.loadout)){const cap=magazineSize(p,i)*8,next=Math.min(cap,p.reserve[i]+magazineSize(p,i)*3);if(next>p.reserve[i]){p.reserve[i]=next;changed=true}}if(!changed)return false}s.readyAt=time+60;return true}
