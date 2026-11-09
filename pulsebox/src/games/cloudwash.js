@@ -136,7 +136,7 @@ const GAME = {
   GAME.reset = () => {
     const S = SV(); cash = S.cash; earned = S.earned || 0; rep = S.rep || 0; own = { ...S.own }; psi = S.psi || 0; biz = { ...(S.biz || {}) }; done = { ...(S.done || {}) }; mode = 'board'; J = null; msgs = []; noz = 1;
     sel = Math.max(0, JOBS.findIndex((j, i) => !done[i] && rep >= j.rep)); if (sel < 0) sel = 0;
-    if (K.bot) { own = { n40: 1, n25: 1, n15: 1, turbo: 1, n0: 1, soap: 1 }; psi = 2; startJob([0, 1, 4, 5, 8][Math.floor(R() * 5)]); }
+    if (K.bot) { own = { n40: 1, n25: 1, n15: 1, turbo: 1, n0: 1, soap: 1 }; psi = 2; startJob([8, 4, 5, 11, 10][Math.floor(R() * 5)]); }
   };
   GAME.update = dt => {
     t += dt; for (const m of msgs) m.t += dt; msgs = msgs.filter(m => m.t < 2.6);
@@ -161,7 +161,7 @@ const GAME = {
   };
   // the attract demo: picks a sensible nozzle for whatever is in front of it and sweeps the dirt
   GAME.bot = dt => {
-    if (mode === 'result') { if ((botT -= dt) <= 0) startJob([0, 1, 4, 5, 8][Math.floor(R() * 5)]); return; }
+    if (mode === 'result') { if ((botT -= dt) <= 0) startJob([8, 4, 5, 11, 10][Math.floor(R() * 5)]); return; }
     if (mode !== 'job') return;
     if ((botT -= dt) <= 0) {
       botT = .5; let best = -1, bv = 0;

@@ -249,7 +249,7 @@ const GAME = {
   GAME.reset = () => {
     const S = SV(); cash = S.cash || 0; up = { ...(S.up || {}) }; stars = { ...(S.stars || {}) }; done = { ...(S.done || {}) }; take = 0; mode = 'board'; job = null; L = null; msgs = []; hold = false;
     sel = Math.min(JOBS.length - 1, JOBS.findIndex((j, i) => !done[i]) < 0 ? JOBS.length - 1 : JOBS.findIndex((j, i) => !done[i]));
-    if (K.bot) { cash = 0; up = {}; done = {}; startJob(rint(0, 5)); }
+    if (K.bot) { cash = 0; up = {}; done = {}; startJob(rint(3, 7)); }
   };
   GAME.update = dt => {
     t += dt; for (const m of msgs) m.t += dt; msgs = msgs.filter(m => m.t < 2.4);
@@ -264,7 +264,7 @@ const GAME = {
   };
   // the attract demo: a decent safecracker at work
   GAME.bot = dt => {
-    if (mode === 'result') { if ((botT -= dt) <= 0) { startJob(rint(0, 6)); } return; }
+    if (mode === 'result') { if ((botT -= dt) <= 0) { startJob(rint(3, 9)); } return; }
     if (mode !== 'job' || stun > 0) return;
     if ((botT -= dt) > 0) return; botT = .05;
     if (L.k === 'dial') { const tgt = L.nums[L.at], n = Math.round(L.pos) % 100, d = ((tgt - n) % 100 + 100) % 100; if (d === 0) { botT = .5; dialSet(); } else dialTurn(d > 50 ? -1 : 1); }
