@@ -103,18 +103,6 @@ T['pocket-jury'] = async () => {
   await fuzz(p, 120); await finish(p, g);
 };
 
-T['cloudwash'] = async () => {
-  const g = 'cloudwash'; let p = await open(g);
-  const times = [];
-  for (let lv = 0; lv < 11; lv++) {
-    const t = await p.evaluate(() => { pointer.down = true; for (let pass = 0; pass < 80 && !state.won; pass++) { if (state.level >= 3) state.nozzle = pass % 2 ? 'jet' : 'fan'; for (let y = 110; y < 550 && !state.won; y += (state.nozzle === 'jet' ? 24 : 40)) for (let x = 40; x < 926 && !state.won; x += 12) { if (state.water <= 0) { pointer.down = false; for (let s = 0; s < 3.7; s += .05) GAMES[ID].update(.05); pointer.down = true; } pointer.x = x; pointer.y = pass % 2 ? 650 - y : y; GAMES[ID].update(.05); } } pointer.down = false; return state.won ? Math.round(state.time) + 's/' + state.starsWon + '★' : -1; });
-    times.push(t); if (t === -1) { note(g, `mural ${lv + 1} could not be finished`); break; }
-    await ctl(p, 'next');
-  }
-  console.log('  per mural (sweep bot):', times.join(', '), '→ now on', await p.evaluate(() => state.level));
-  await fuzz(p, 100); await finish(p, g);
-};
-
 T['circuit-courier'] = async () => {
   const g = 'circuit-courier'; let p = await open(g);
   for (let lv = 0; lv < 16; lv++) {

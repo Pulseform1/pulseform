@@ -83,27 +83,6 @@ G['pocket-jury'] = {
   ${sparkle(76, 470, 14)}${sparkle(530, 200, 12)}${sparkle(560, 470, 9)}`
 };
 
-G['cloudwash'] = {
-  t: 'CLOUD<br>WASH', f: 'Titan One', size: 112, fill: ['#ffffff', '#9fe8ff'], stroke: '#0a2a4a', ext: '#2a7fd6', rot: -3,
-  svg: `<defs>${sh()}<clipPath id="wall"><rect x="40" y="190" width="520" height="380" rx="18"/></clipPath>
-  <filter id="grime"><feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="4" seed="3"/><feColorMatrix values="0 0 0 0 .38  0 0 0 0 .29  0 0 0 0 .17  3.4 0 0 0 -.75"/></filter>
-  <mask id="clean"><rect width="600" height="600" fill="#fff"/><path d="M120 600 C150 470 240 400 330 380 C430 360 470 300 560 250 L600 600Z" fill="#000"/><circle cx="360" cy="380" r="90" fill="#000"/></mask></defs>
-  <rect width="600" height="600" fill="#bdeeff"/>${rays(300, 300, 16, '#fff', .3)}
-  <g filter="url(#ds)"><rect x="40" y="190" width="520" height="380" rx="18" fill="#7fd0ff"/></g>
-  <g clip-path="url(#wall)">
-    <rect x="40" y="190" width="520" height="380" fill="#7fd0ff"/><circle cx="470" cy="260" r="44" fill="#fff6b0"/>
-    <ellipse cx="160" cy="250" rx="70" ry="22" fill="#fff"/><ellipse cx="380" cy="300" rx="60" ry="18" fill="#fff"/>
-    <path d="M40 470 Q200 420 340 460 T600 440 V600 H40Z" fill="#5bc06a"/><path d="M40 520 Q240 490 600 520 V600 H40Z" fill="#3a9fd6"/>
-    <g transform="translate(250 430)"><rect x="-70" y="-70" width="140" height="100" fill="#ffb36e"/><path d="M-90 -66 L0 -140 L90 -66Z" fill="#e0482a"/><rect x="-20" y="-30" width="40" height="60" fill="#8a4b2a"/><rect x="-56" y="-50" width="30" height="28" fill="#bff0ff"/><rect x="26" y="-50" width="30" height="28" fill="#bff0ff"/></g>
-    <g transform="translate(470 470)"><rect x="-8" y="-20" width="16" height="50" fill="#8a4b2a"/><circle cy="-40" r="38" fill="#2f9f4e"/></g>
-    <rect x="40" y="190" width="520" height="380" filter="url(#grime)" mask="url(#clean)"/>
-  </g>
-  <g filter="url(#ds)" transform="translate(520 180) rotate(30)"><rect x="-14" y="0" width="28" height="80" rx="8" fill="#ffd23f"/><rect x="-22" y="70" width="44" height="60" rx="10" fill="#ff7a1a"/><rect x="-6" y="-40" width="12" height="44" fill="#9aa6b8"/></g>
-  <path d="M500 150 L380 330 L420 350Z" fill="#e6fbff" opacity=".85"/>
-  ${Array.from({ length: 16 }, (_, i) => `<circle cx="${380 + (i * 37) % 120 - 30}" cy="${330 + (i * 53) % 90}" r="${3 + i % 4}" fill="#fff" opacity=".9"/>`).join('')}
-  ${sparkle(250, 330, 18)}${sparkle(160, 470, 12)}${sparkle(330, 520, 10)}`
-};
-
 G['circuit-courier'] = {
   t: 'CIRCUIT<br>COURIER', f: 'Bungee', size: 92, fill: ['#ffffff', '#7cf2ff'], stroke: '#0a1a30', ext: '#1aa0d6', rot: -3,
   svg: `<defs>${sh()}<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a5fd6"/><stop offset="1" stop-color="#14205a"/></linearGradient></defs>
