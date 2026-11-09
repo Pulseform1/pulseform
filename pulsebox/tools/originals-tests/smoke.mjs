@@ -1,5 +1,5 @@
 import { B, open, fuzz } from './lib.mjs';
-const ids = ['baggage-panic', 'switchyard', 'potion-protocol', 'safecracker', 'pocket-jury', 'cloudwash', 'circuit-courier'];
+const ids = ['baggage-panic', 'switchyard', 'potion-protocol', 'pocket-jury', 'cloudwash', 'circuit-courier'];
 const sizes = { desk: { viewport: { width: 1280, height: 800 } }, phoneP: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }, phoneL: { viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true } };
 let bad = 0;
 for (const id of ids) for (const [n, o] of Object.entries(sizes)) {

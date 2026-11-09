@@ -71,25 +71,6 @@ G['potion-protocol'] = {
   ${sparkle(70, 300, 14, '#ffe9a8')}${sparkle(540, 260, 16, '#ffe9a8')}${sparkle(520, 470, 9)}`
 };
 
-G['safecracker'] = {
-  t: 'SAFE<br>CRACKER', f: 'Black Ops One', size: 104, fill: ['#fff7d6', '#ffc93c'], stroke: '#1a1408', ext: '#8a5a12', rot: -3,
-  svg: `<defs>${sh(0, 14, 18, 'rgba(0,0,0,.55)')}<radialGradient id="bg" cx=".5" cy=".62" r=".75"><stop offset="0" stop-color="#2f6f7a"/><stop offset=".7" stop-color="#14323c"/><stop offset="1" stop-color="#0a161c"/></radialGradient>
-  <radialGradient id="dial" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#fff2c4"/><stop offset=".5" stop-color="#e2b04a"/><stop offset="1" stop-color="#8a5a12"/></radialGradient>
-  <linearGradient id="door" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9fb4c0"/><stop offset="1" stop-color="#4a5e6a"/></linearGradient></defs>
-  <rect width="600" height="600" fill="url(#bg)"/><path d="M200 0 L120 600 H480 L400 0Z" fill="#fff6c8" opacity=".07"/>
-  <g filter="url(#ds)">
-    <rect x="80" y="210" width="440" height="380" rx="30" fill="url(#door)"/><rect x="100" y="230" width="400" height="340" rx="22" fill="none" stroke="#2a3a44" stroke-width="6"/>
-    ${[[118, 248], [482, 248], [118, 552], [482, 552]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="11" fill="#2a3a44"/><circle cx="${x - 3}" cy="${y - 3}" r="5" fill="#c8d6de"/>`).join('')}
-    <g transform="translate(300 400)"><circle r="138" fill="#1a262e"/><circle r="126" fill="url(#dial)"/>
-      ${Array.from({ length: 60 }, (_, i) => { const a = i / 60 * Math.PI * 2, r0 = i % 5 ? 108 : 98; return `<line x1="${Math.sin(a) * r0}" y1="${-Math.cos(a) * r0}" x2="${Math.sin(a) * 120}" y2="${-Math.cos(a) * 120}" stroke="#4a2e08" stroke-width="${i % 5 ? 2 : 4}"/>`; }).join('')}
-      <circle r="78" fill="#2a1a06"/><circle r="70" fill="#d9a23a"/><rect x="-14" y="-62" width="28" height="124" rx="12" fill="#8a5a12"/><circle r="16" fill="#fff2c4"/></g>
-    <path d="M300 238 l-16 -26 h32Z" fill="#ff3d3d"/>
-    <rect x="452" y="330" width="40" height="140" rx="16" fill="#2a3a44"/><rect x="460" y="338" width="24" height="124" rx="10" fill="#c8d6de"/>
-  </g>
-  <g transform="translate(64 380)">${[0, 1, 2, 3, 4].map(i => `<rect x="${i * 14}" y="${40 - i * 12}" width="10" height="${20 + i * 12}" rx="3" fill="${i < 4 ? '#39ff88' : '#2a3a44'}"/>`).join('')}</g>
-  ${sparkle(470, 228, 16, '#fff2c4')}${sparkle(196, 300, 10, '#fff2c4')}`
-};
-
 G['pocket-jury'] = {
   t: 'POCKET<br>JURY', f: 'Chewy', size: 112, fill: ['#ffffff', '#ffd9a8'], stroke: '#3a1a08', ext: '#c4532a', rot: -4,
   svg: `<defs>${sh()}<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcf7a"/><stop offset=".6" stop-color="#f08a4a"/><stop offset="1" stop-color="#8a3a2a"/></linearGradient></defs>

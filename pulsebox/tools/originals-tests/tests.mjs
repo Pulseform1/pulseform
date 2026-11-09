@@ -81,28 +81,6 @@ T['potion-protocol'] = async () => {
   await fuzz(p, 120, ['1', '5', '8', 'Enter', 'Backspace']); await finish(p, g);
 };
 
-T['safecracker'] = async () => {
-  const g = 'safecracker'; let p = await open(g);
-  const bad = await p.evaluate(() => { const r = rng(5), out = []; for (let i = 0; i < 3000; i++) { const c = makeClue(r); if (!(c.n >= 0 && c.n <= 99) || /undefined|NaN/.test(c.clue)) out.push(JSON.stringify(c)); } return out.slice(0, 5); });
-  if (bad.length) note(g, 'bad endless clues: ' + bad.join(' '));
-  const sample = await p.evaluate(() => { const r = rng(11); return Array.from({ length: 6 }, () => { const c = makeClue(r); return c.clue + ' = ' + c.n; }); }); console.log('  sample clues:', sample.join(' | '));
-  for (let v = 0; v < 10; v++) {
-    for (let s = 0; s < 3; s++) {
-      const want = await p.evaluate(() => GAMES[ID].target().n), have = await p.evaluate(() => state.dial);
-      let d = (want - have + 100) % 100; const key = d <= 50 ? 'ArrowRight' : 'ArrowLeft'; d = d <= 50 ? d : 100 - d;
-      for (let i = 0; i < d % 10; i++) await p.keyboard.press(key); for (let i = 0; i < Math.floor(d / 10); i++) await p.keyboard.press(key === 'ArrowRight' ? 'ArrowUp' : 'ArrowDown');
-      await p.keyboard.press('Enter');
-    }
-    if (!(await p.evaluate(() => state.won))) { note(g, `vault ${v + 1} did not open`); break; }
-    await ctl(p, v < 9 ? 'next' : 'endless');
-  }
-  for (let v = 0; v < 4; v++) { await p.evaluate(() => { for (let s = 0; s < 3; s++) { state.dial = GAMES[ID].target().n; GAMES[ID].action('set'); } }); if (!(await p.evaluate(() => state.won))) note(g, 'endless vault did not open'); await ctl(p, 'next'); }
-  const fin = await p.evaluate(() => ({ mode: state.mode, vault: state.vault, score: state.score, best: safeSave.endless })); console.log('  ', JSON.stringify(fin));
-  await p.evaluate(() => reset()); await ctl(p, 'set'); await p.keyboard.press('Enter');
-  if ((await p.evaluate(() => state.mistakes)) !== 2) note(g, 'Set tumbler click + Enter did not count exactly twice');
-  await fuzz(p, 120, ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'Enter']); await finish(p, g);
-};
-
 T['pocket-jury'] = async () => {
   const g = 'pocket-jury'; let p = await open(g);
   for (let docket = 0; docket < 2; docket++) {
