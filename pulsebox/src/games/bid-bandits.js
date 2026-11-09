@@ -185,7 +185,7 @@ const GAME = {
       else if (c.st === 'browse') { mv(c, .38, c.side * .82, .2, .7); if (Math.abs(c.lx - c.side * .82) < .02 && (c.bt -= dt) <= 0) { c.st = 'line'; S.q.push(c); } }
       else if (c.st === 'line') {
         const i = S.q.indexOf(c), tz = i === 0 ? .94 : .66 - (i - 1) * .08, tl = i === 0 ? 0 : (i % 2 ? .38 : -.38); mv(c, tz, tl, .32, .7);
-        if (i === 0 && c.z > .9 && !c.bub) c.bub = (c.fan ? 'I NEED this ' + c.it.n.toLowerCase() + '! ' : '') + pick(['I\'ll give you ', 'How about ', 'Would you take ']) + money(c.offer) + '?';
+        if (i === 0 && c.z > .9 && !c.bub) c.bub = (c.fan ? 'I NEED this ' + c.it.n.toLowerCase() + '! ' : '') + (R() < .33 ? 'I\'ll give you ' + money(c.offer) + '.' : pick(['How about ', 'Would you take ']) + money(c.offer) + '?');
         if (i > 0) { c.wq = (c.wq || 0) + dt; if (c.wq > 18) leave(c, 'Too slow!', -1); }
       }
     }
@@ -423,17 +423,42 @@ const GAME = {
   }
   function drawShop(g) {
     const v = K.view, poly = (pts, c) => { g.fillStyle = c; g.beginPath(); pts.forEach(([a, b], i) => i ? g.lineTo(a, b) : g.moveTo(a, b)); g.closePath(); g.fill(); };
+    // ceiling, walls with wallpaper and wood panelling, a plank floor and a rug
     poly([[v.x0, v.y0], [v.x1, v.y0], [v.x1, 40], [SBX1, SBT], [SBX0, SBT], [v.x0, 40]], '#3a2a22');
-    poly([[v.x0, 40], [SBX0, SBT], [SBX0, SBB], [v.x0, 620]], '#8a6446'); poly([[v.x1, 40], [SBX1, SBT], [SBX1, SBB], [v.x1, 620]], '#82603f');
-    g.fillStyle = '#9a7454'; g.fillRect(SBX0, SBT, SBX1 - SBX0, SBB - SBT);
-    poly([[SBX0, SBB], [SBX1, SBB], [v.x1, 620], [v.x1, v.y1], [v.x0, v.y1], [v.x0, 620]], '#6a4e38');
-    g.strokeStyle = 'rgba(0,0,0,.12)'; g.lineWidth = 2; for (let k = -6; k <= 6; k++) { g.beginPath(); g.moveTo(640 + k * 35, SBB); g.lineTo(640 + k * 150, 720); g.stroke(); }
-    // the door at the back, the sign in the window
-    rr(g, 595, 230, 90, 170, 4, '#2a4a6a', '#3a2a1e', 6); g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(605, 240, 30, 150);
-    rr(g, 470, 200, 100, 80, 4, '#2a4a6a', '#3a2a1e', 5); rr(g, 710, 200, 100, 80, 4, '#2a4a6a', '#3a2a1e', 5);
-    tx(g, 'OPEN', 520, 240, D(20), lv('sign') ? (Math.sin(t * 3) > -.3 ? '#ff5aa0' : '#7a3a5a') : '#ffd23f');
-    // ceiling lamps
-    for (const lx of [500, 780]) { g.fillStyle = '#ffe8a0'; g.beginPath(); g.ellipse(lx, 70, 34, 8, 0, 0, TAU); g.fill(); if (lv('lights')) { const gl = g.createRadialGradient(lx, 80, 10, lx, 80, 260); gl.addColorStop(0, 'rgba(255,240,180,.16)'); gl.addColorStop(1, 'rgba(255,240,180,0)'); g.fillStyle = gl; g.fillRect(lx - 260, 70, 520, 400); } }
+    g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = 3; for (let k = 1; k < 5; k++) { const f = k / 5; g.beginPath(); g.moveTo(lp(v.x0, SBX0, f), lp(40, SBT, f)); g.lineTo(lp(v.x1, SBX1, f), lp(40, SBT, f)); g.stroke(); }
+    const wall = (x0, x1, top0, top1, bot0, bot1, c1, c2) => {
+      poly([[x0, top0], [x1, top1], [x1, bot1], [x0, bot0]], c1);
+      g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = 6; for (let k = 0; k <= 12; k++) { const x = lp(x0, x1, k / 12); g.beginPath(); g.moveTo(x, lp(top0, top1, k / 12)); g.lineTo(x, lp(lp(top0, bot0, .55), lp(top1, bot1, .55), k / 12)); g.stroke(); }
+      poly([[x0, lp(top0, bot0, .62)], [x1, lp(top1, bot1, .62)], [x1, bot1], [x0, bot0]], c2);
+      g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = 2; for (let k = 0; k <= 8; k++) { const x = lp(x0, x1, k / 8); g.beginPath(); g.moveTo(x, lp(lp(top0, bot0, .62), lp(top1, bot1, .62), k / 8)); g.lineTo(x, lp(bot0, bot1, k / 8)); g.stroke(); }
+      g.fillStyle = '#5a3a24'; g.beginPath(); g.moveTo(x0, lp(top0, bot0, .62)); g.lineTo(x1, lp(top1, bot1, .62)); g.lineTo(x1, lp(top1, bot1, .62) + 5); g.lineTo(x0, lp(top0, bot0, .62) + 7); g.fill();
+    };
+    wall(v.x0, SBX0, 40, SBT, 620, SBB, '#2e5a52', '#6a4630'); wall(v.x1, SBX1, 40, SBT, 620, SBB, '#2a544c', '#664230');
+    // the back wall: wallpaper, the shop sign, two windows on the street, the door
+    g.fillStyle = '#2f5c54'; g.fillRect(SBX0, SBT, SBX1 - SBX0, SBB - SBT); g.fillStyle = 'rgba(255,255,255,.05)'; for (let x = SBX0; x < SBX1; x += 16) g.fillRect(x, SBT, 7, (SBB - SBT) * .6); g.fillStyle = '#6a4630'; g.fillRect(SBX0, SBT + (SBB - SBT) * .62, SBX1 - SBX0, (SBB - SBT) * .38);
+    rr(g, 520, 160, 240, 34, 6, '#1a1210', '#c8a050', 3); tx(g, 'BANDIT\'S PAWN & RESALE', 640, 177, D(15), '#ffd890');
+    const street = (x, y, w, h) => { g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip(); const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, '#8ac8ff'); gr.addColorStop(1, '#ffe2b8'); g.fillStyle = gr; g.fillRect(x, y, w, h); g.fillStyle = '#7a8aa8'; for (let k = 0; k < 4; k++) g.fillRect(x + k * 30 - 6, y + h * .35 - (k % 2) * 14, 26, h); g.fillStyle = '#5a6278'; g.fillRect(x, y + h * .78, w, h); const cx = x - 60 + ((t * 40) % (w + 140)); g.fillStyle = '#e85a5a'; g.fillRect(cx, y + h * .66, 46, 14); g.fillStyle = '#1a1a1a'; g.fillRect(cx + 6, y + h * .66 + 12, 8, 6); g.fillRect(cx + 32, y + h * .66 + 12, 8, 6);
+      if (lv('truck') && x < 600) { g.fillStyle = '#f2f2f2'; g.fillRect(x + 8, y + h * .5, 54, 28); g.fillStyle = '#ffb347'; g.fillRect(x + 8, y + h * .5 + 10, 54, 5); } g.restore(); };
+    for (const wx of [455, 715]) { street(wx, 205, 110, 85); g.strokeStyle = '#3a2a1e'; g.lineWidth = 7; g.strokeRect(wx, 205, 110, 85); g.lineWidth = 3; g.beginPath(); g.moveTo(wx + 55, 205); g.lineTo(wx + 55, 290); g.moveTo(wx, 248); g.lineTo(wx + 110, 248); g.stroke(); g.fillStyle = '#4a3020'; g.fillRect(wx - 6, 290, 122, 8); }
+    street(595, 232, 90, 168); rr(g, 595, 232, 90, 168, 4, null, '#3a2a1e', 7); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(603, 240, 26, 150); g.fillStyle = '#c8a050'; g.beginPath(); g.arc(673, 320, 5, 0, TAU); g.fill();
+    g.fillStyle = '#c8a050'; g.beginPath(); g.arc(640, 226, 6, 0, TAU); g.fill();   // the bell
+    const sign = lv('sign'); rr(g, 470, 214, 80, 30, 6, 'rgba(0,0,0,.35)', sign ? (Math.sin(t * 3) > -.4 ? '#ff5aa0' : '#5a2a3a') : '#ffd23f', 3); tx(g, 'OPEN', 510, 229, D(18), sign ? (Math.sin(t * 3) > -.4 ? '#ff7ab8' : '#7a3a5a') : '#ffd23f');
+    // a clock running with the shop day, and posters
+    const cxk = 800, cyk = 330, frac = store ? store.t / STORE_T : 0; g.fillStyle = '#f2ead8'; g.beginPath(); g.arc(cxk, cyk, 18, 0, TAU); g.fill(); g.strokeStyle = '#3a2a1e'; g.lineWidth = 3; g.stroke(); g.beginPath(); g.moveTo(cxk, cyk); g.lineTo(cxk + Math.sin(frac * TAU * 8) * 13, cyk - Math.cos(frac * TAU * 8) * 13); g.moveTo(cxk, cyk); g.lineTo(cxk + Math.sin(frac * TAU) * 8, cyk - Math.cos(frac * TAU) * 8); g.stroke();
+    rr(g, 455, 312, 56, 70, 3, '#f2e8c8', '#3a2a1e', 3); tx(g, 'WE', 483, 330, D(12), '#c8483a'); tx(g, 'BUY', 483, 346, D(12), '#c8483a'); tx(g, '& SELL', 483, 362, D(10), '#3a2a1e');
+    if (lv('charm')) { rr(g, 720, 312, 52, 66, 3, '#2a2a3a', '#c8a050', 3); tx(g, '★', 746, 334, D(18), '#ffd23f'); tx(g, 'EMPLOYEE', 746, 352, F(7), '#fff'); tx(g, 'OF THE MONTH', 746, 362, F(6), '#fff'); }
+    // the floor: planks and a rug
+    poly([[SBX0, SBB], [SBX1, SBB], [v.x1, 620], [v.x1, v.y1], [v.x0, v.y1], [v.x0, 620]], '#7a5636');
+    g.strokeStyle = 'rgba(0,0,0,.14)'; g.lineWidth = 2; for (let k = -8; k <= 8; k++) { g.beginPath(); g.moveTo(640 + k * 28, SBB); g.lineTo(640 + k * 150, 720); g.stroke(); } for (const f of [.15, .35, .6]) { const y = lp(SBB, 720, f); g.beginPath(); g.moveTo(lp(SBX0, v.x0, f), y); g.lineTo(lp(SBX1, v.x1, f), y); g.stroke(); }
+    poly([[560, 430], [720, 430], [880, 560], [400, 560]], '#8a2a2a'); poly([[575, 438], [705, 438], [855, 552], [425, 552]], '#a83a32'); g.strokeStyle = '#e8c070'; g.lineWidth = 3; g.beginPath(); g.moveTo(590, 446); g.lineTo(690, 446); g.lineTo(830, 544); g.lineTo(450, 544); g.closePath(); g.stroke();
+    // potted plants in the corners, an appraiser's desk, display cases
+    for (const [px, py, sc] of [[470, 392, .7], [810, 392, .7]]) { g.save(); g.translate(px, py); g.scale(sc, sc); g.fillStyle = '#b85a3a'; g.fillRect(-14, -18, 28, 22); g.fillStyle = '#3a8a3a'; for (let k = 0; k < 6; k++) { g.beginPath(); g.ellipse(Math.cos(k) * 10, -30 - Math.sin(k * 2) * 6, 7, 16, k - 2.5, 0, TAU); g.fill(); } g.restore(); }
+    if (lv('appr')) { poly([[95, 470], [250, 452], [250, 476], [95, 500]], '#5a3a24'); g.fillStyle = '#2a2a2a'; g.fillRect(150, 420, 4, 36); g.fillStyle = '#ffe8a0'; g.beginPath(); g.ellipse(160, 418, 16, 8, 0, 0, TAU); g.fill(); tx(g, '🔍', 210, 452, '22px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif', '#fff'); }
+    for (const side of [-1, 1]) { const bx = 640 + side * 330, by = 470; poly([[bx - 50, by], [bx + 50, by], [bx + 56, by + 50], [bx - 56, by + 50]], '#5a3a24'); g.fillStyle = 'rgba(190,230,255,.25)'; g.fillRect(bx - 48, by - 46, 96, 46); g.strokeStyle = 'rgba(220,240,255,.6)'; g.lineWidth = 2; g.strokeRect(bx - 48, by - 46, 96, 46); const top = shelf.length ? [...shelf].sort((a, b) => b.v - a.v)[side < 0 ? 0 : 1] : null; if (top) itemIcon(g, { ...top, boxed: false }, bx, by - 22, .55); }
+    // ceiling: a slow fan and the lamps
+    g.save(); g.translate(640, 96); g.fillStyle = '#2a1e18'; g.fillRect(-3, -40, 6, 30); g.rotate(t * 2.2); g.fillStyle = 'rgba(90,64,44,.85)'; for (let k = 0; k < 4; k++) { g.rotate(Math.PI / 2); g.beginPath(); g.ellipse(46, 0, 44, 7, 0, 0, TAU); g.fill(); } g.restore(); g.fillStyle = '#c8a050'; g.beginPath(); g.arc(640, 96, 9, 0, TAU); g.fill();
+    for (const lx of [480, 800, ...(lv('lights') >= 2 ? [300, 980] : [])]) { g.strokeStyle = '#222'; g.lineWidth = 2; g.beginPath(); g.moveTo(lx, 40); g.lineTo(lx, 70); g.stroke(); g.fillStyle = '#2a2a2a'; g.beginPath(); g.moveTo(lx - 20, 82); g.lineTo(lx - 10, 68); g.lineTo(lx + 10, 68); g.lineTo(lx + 20, 82); g.fill(); g.fillStyle = '#ffe8a0'; g.beginPath(); g.ellipse(lx, 82, 18, 5, 0, 0, TAU); g.fill();
+      const gl = g.createRadialGradient(lx, 90, 10, lx, 90, 280 + lv('lights') * 60); gl.addColorStop(0, `rgba(255,236,170,${.1 + lv('lights') * .05})`); gl.addColorStop(1, 'rgba(255,236,170,0)'); g.fillStyle = gl; g.fillRect(lx - 340, 70, 680, 560); }
     // shelves on the side walls, with what you stocked
     for (const left of [true, false]) for (const f of [.3, .58]) { const xa = left ? SBX0 : SBX1, xb = left ? 40 : 1240, ya = lp(SBT, SBB, f) + 26, yb = lp(40, 600, f) + 46; g.strokeStyle = '#4a3020'; g.lineWidth = 9; g.beginPath(); g.moveTo(xa, ya); g.lineTo(xb, yb); g.stroke(); }
     for (let i = 0; i < slots(); i++) { const sp = shelfSpot(i), it = shelf[i]; if (it) { itemIcon(g, { ...it, boxed: false }, sp.x, sp.y, sp.sc * (it.big ? .55 : .8)); rr(g, sp.x - 26 * sp.sc, sp.y + 26 * sp.sc, 52 * sp.sc, 16 * sp.sc, 4, '#f2e8c8'); tx(g, (lv('appr') ? '' : '~') + money(it.v), sp.x, sp.y + 34 * sp.sc, F(Math.max(8, Math.round(11 * sp.sc))), '#3a2a1e'); } }
