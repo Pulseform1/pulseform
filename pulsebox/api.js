@@ -224,6 +224,34 @@ async function lb(request, env, url, ids) {
   const B = board(b.g, b.k, ids); if (!B) return json({ error: 'unknown board' }, 400);
   return stub.fetch('https://stats/lbadd', { method: 'POST', body: JSON.stringify({ g: b.g, k: b.k, n: b.n, t: b.t, who: await whoOf(request, 'pulsebox-lb|'), asc: B.asc, min: B.min, max: B.max }) });
 }
+// LEGEND MAKER ARENA: players publish the legends they built, and face other real players' legends. Each legend keeps an
+// arena rating (Elo, starts at 1000) and a win/loss record, which also moves when someone else challenges it.
+//   POST /api/arena/publish <- { card }            -> { id, rating, w, l }   (a person keeps up to 6 legends published)
+//   GET  /api/arena/match?sport=&id=               -> { opp: card+{rating,w,l} | null }   (someone else's legend, near your rating)
+//   POST /api/arena/result  <- { me, opp, won }    -> { rating, delta, opp: { rating } }
+//   GET  /api/arena/top?sport=                     -> { top: [card+{rating,w,l}] x10 }
+//   GET  /api/arena/mine                           -> { mine: [card+{rating,w,l}] }
+async function arena(request, env, url) {
+  const stub = env.STATS.get(env.STATS.idFromName('global')), who = await whoOf(request, 'pulsebox-arena|'), q = url.searchParams;
+  const sub = url.pathname.slice('/api/arena/'.length);
+  if (request.method === 'GET' && (sub === 'match' || sub === 'top' || sub === 'mine')) return stub.fetch('https://stats/arena/' + sub + '?' + new URLSearchParams({ sport: q.get('sport') || '', id: q.get('id') || '', who }));
+  if (request.method !== 'POST' || (sub !== 'publish' && sub !== 'result')) return json({ error: 'not found' }, 404);
+  const body = await request.text(); if (body.length > 4000) return json({ error: 'too big' }, 413);
+  let b; try { b = JSON.parse(body); } catch (e) { return json({ error: 'bad json' }, 400); }
+  return stub.fetch('https://stats/arena/' + sub, { method: 'POST', body: JSON.stringify({ b, who }) });
+}
+// a published legend, cleaned up: only the fields the game draws, in range
+const SPORTS_LM = ['hoops', 'gridiron', 'soccer', 'hockey', 'diamond'], BAD_NAME = /(fuck|shit|cunt|nigg|fag|bitch|whore|rape|nazi|hitler|kys)/i;
+function cleanCard(c) {
+  if (!c || typeof c !== 'object' || !/^[a-z0-9]{6,24}$/.test(c.id || '') || !SPORTS_LM.includes(c.sport)) return null;
+  const int = (v, a, b, d) => Number.isFinite(+v) ? Math.max(a, Math.min(b, Math.round(+v))) : d;
+  let name = String(c.name || '').replace(/[^A-Za-z0-9 .'-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 18); if (!name || BAD_NAME.test(name.replace(/[^a-z]/gi, ''))) name = 'Unnamed Legend';
+  if (!Array.isArray(c.r) || c.r.length !== 6) return null;
+  const L = c.look && typeof c.look === 'object' ? c.look : {}, aw = c.aw && typeof c.aw === 'object' ? c.aw : {};
+  const look = { skin: int(L.skin, 0, 7, 2), hair: int(L.hair, 0, 7, 0), hc: int(L.hc, 0, 7, 0), c1: int(L.c1, 0, 11, 0), c2: int(L.c2, 0, 11, 1), build: int(L.build, 0, 2, 1), acc: int(L.acc, 0, 7, 0), num: int(L.num, 0, 99, 23) };
+  return { id: c.id, name, sport: c.sport, look, r: c.r.map(v => int(v, 30, 99, 50)), O: int(c.O, 30, 99, 50), legacy: int(c.legacy, 0, 5000, 0), tier: String(c.tier || '').replace(/[^A-Za-z ]/g, '').slice(0, 16),
+    trait: String(c.trait || '').replace(/[^a-z]/g, '').slice(0, 12), seasons: int(c.seasons, 0, 30, 0), aw: { mvp: int(aw.mvp, 0, 30, 0), champ: int(aw.champ, 0, 30, 0), fmvp: int(aw.fmvp, 0, 30, 0), star: int(aw.star, 0, 30, 0), dpoy: int(aw.dpoy, 0, 30, 0) } };
+}
 // Ratings: a thumbs up or down per person per game (v = 1, -1, or 0 to take it back). Totals come back in /api/stats.
 async function rate(request, env, ids) {
   if (request.method !== 'POST') return json({ error: 'method' }, 405);
@@ -254,6 +282,7 @@ export async function api(request, env, ctx, ids) {
   if (url.pathname === '/api/live') return live(request, env);
   if (url.pathname === '/api/lb' || url.pathname === '/api/lb/mine') return lb(request, env, url, ids);
   if (url.pathname === '/api/rate') return rate(request, env, ids);
+  if (url.pathname.startsWith('/api/arena/')) return arena(request, env, url);
   if (url.pathname === '/api/bug' || url.pathname === '/api/bug/status' || url.pathname === '/api/bugs' || url.pathname === '/api/bugs/update' || url.pathname === '/api/featured' || url.pathname === '/api/featured/admin') return bugs(request, env, url, ids);
   if (url.pathname === '/api/hollow') {
     if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
@@ -311,6 +340,9 @@ export class Stats {
     this.sql.exec('CREATE TABLE IF NOT EXISTS lb (g TEXT NOT NULL, k TEXT NOT NULL, who TEXT NOT NULL, n TEXT NOT NULL, t INTEGER NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (g, k, who))');
     this.sql.exec('CREATE TABLE IF NOT EXISTS lbrate (who TEXT NOT NULL, t INTEGER NOT NULL)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS rates (who TEXT NOT NULL, id TEXT NOT NULL, v INTEGER NOT NULL, PRIMARY KEY (who, id))');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS arena (id TEXT PRIMARY KEY, who TEXT NOT NULL, sport TEXT NOT NULL, card TEXT NOT NULL, ovr INTEGER NOT NULL, rating INTEGER NOT NULL, w INTEGER NOT NULL, l INTEGER NOT NULL, at INTEGER NOT NULL, upd INTEGER NOT NULL)');
+    this.sql.exec('CREATE INDEX IF NOT EXISTS arena_sport ON arena (sport, rating)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS arenalog (who TEXT NOT NULL, k TEXT NOT NULL, t INTEGER NOT NULL)');
     const row = this.sql.exec("SELECT v FROM meta WHERE k = 'salt'").toArray()[0];
     if (row) this.salt = row.v;
     else { this.salt = hex(crypto.getRandomValues(new Uint8Array(16))); this.sql.exec("INSERT INTO meta (k, v) VALUES ('salt', ?)", this.salt); }
@@ -360,6 +392,7 @@ export class Stats {
       const mine = this.sql.exec('SELECT t FROM lb WHERE g = ? AND k = ? AND who = ?', g, k, h).one().t;
       return json({ rank: rankOf(g, k, asc, mine), best: mine, top: top(g, k, asc) });
     }
+    if (path.startsWith('/arena/')) return this.arena(path.slice(7), request, now);
     if (path === '/rate') {
       const { id, v, who } = JSON.parse(await request.text()), h = (await sha(this.salt + '|rate|' + who)).slice(0, 24);
       if (v === 0) this.sql.exec('DELETE FROM rates WHERE who = ? AND id = ?', h, id);
@@ -396,6 +429,49 @@ export class Stats {
         this.memo = JSON.stringify({ games, site, updated: now }); this.memoAt = now;
       }
       return new Response(this.memo, { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+    }
+    return json({ error: 'not found' }, 404);
+  }
+  async arena(sub, request, now) {
+    const row = r => r && Object.assign(JSON.parse(r.card), { rating: r.rating, w: r.w, l: r.l }), hw = async w => (await sha(this.salt + '|arena|' + w)).slice(0, 24);
+    const limit = async (h, k, n) => { this.sql.exec('DELETE FROM arenalog WHERE t < ?', now - 3600000); if (this.sql.exec('SELECT COUNT(*) AS n FROM arenalog WHERE who = ? AND k = ?', h, k).one().n >= n) return true; this.sql.exec('INSERT INTO arenalog (who, k, t) VALUES (?, ?, ?)', h, k, now); return false; };
+    if (request.method === 'GET') {
+      const q = new URL(request.url).searchParams, sport = SPORTS_LM.includes(q.get('sport')) ? q.get('sport') : '', h = await hw(q.get('who') || '');
+      if (sub === 'top') return json({ top: this.sql.exec(`SELECT * FROM arena ${sport ? 'WHERE sport = ?' : ''} ORDER BY rating DESC, w DESC LIMIT 10`, ...(sport ? [sport] : [])).toArray().map(row) });
+      if (sub === 'mine') return json({ mine: this.sql.exec('SELECT * FROM arena WHERE who = ? ORDER BY upd DESC', h).toArray().map(row) });
+      // match: someone else's legend near your rating, same sport if there is one; a little randomness so it isn't always the same face
+      const me = this.sql.exec('SELECT rating FROM arena WHERE id = ?', q.get('id') || '').toArray()[0], rt = me ? me.rating : 1000;
+      for (const [cond, args] of [['sport = ? AND ABS(rating - ?) <= 250', [sport, rt]], ['sport = ?', [sport]], ['1 = 1', []]]) {
+        if (!sport && cond !== '1 = 1') continue;
+        const pool = this.sql.exec(`SELECT * FROM arena WHERE who != ? AND ${cond} ORDER BY upd DESC LIMIT 40`, h, ...args).toArray();
+        if (pool.length) return json({ opp: row(pool[Math.floor(Math.random() * pool.length)]) });
+      }
+      return json({ opp: null });
+    }
+    const { b, who } = JSON.parse(await request.text()), h = await hw(who);
+    if (sub === 'publish') {
+      const c = cleanCard(b && b.card); if (!c) return json({ error: 'bad card' }, 400);
+      if (await limit(h, 'pub', 30)) return json({ error: 'slow down' }, 429);
+      const old = this.sql.exec('SELECT who, rating, w, l, at FROM arena WHERE id = ?', c.id).toArray()[0];
+      if (old && old.who !== h) return json({ error: 'not yours' }, 403);
+      if (old) this.sql.exec('UPDATE arena SET card = ?, ovr = ?, upd = ? WHERE id = ?', JSON.stringify(c), c.O, now, c.id);
+      else {
+        this.sql.exec('INSERT INTO arena (id, who, sport, card, ovr, rating, w, l, at, upd) VALUES (?, ?, ?, ?, ?, 1000, 0, 0, ?, ?)', c.id, h, c.sport, JSON.stringify(c), c.O, now, now);
+        const mine = this.sql.exec('SELECT id FROM arena WHERE who = ? ORDER BY rating DESC, upd DESC', h).toArray();
+        for (const r of mine.slice(6)) this.sql.exec('DELETE FROM arena WHERE id = ?', r.id);   // keep a person's best six
+      }
+      const r = this.sql.exec('SELECT rating, w, l FROM arena WHERE id = ?', c.id).toArray()[0];
+      return json(r ? { id: c.id, rating: r.rating, w: r.w, l: r.l } : { error: 'not kept' }, r ? 200 : 409);
+    }
+    if (sub === 'result') {
+      const me = this.sql.exec('SELECT * FROM arena WHERE id = ?', String(b && b.me || '')).toArray()[0], op = this.sql.exec('SELECT * FROM arena WHERE id = ?', String(b && b.opp || '')).toArray()[0];
+      if (!me || !op || me.who !== h || op.who === h) return json({ error: 'rejected' }, 400);
+      if (await limit(h, 'res', 60)) return json({ error: 'slow down' }, 429);
+      const won = !!b.won, ex = 1 / (1 + Math.pow(10, (op.rating - me.rating) / 400)), d = Math.round(32 * ((won ? 1 : 0) - ex));
+      this.sql.exec('UPDATE arena SET rating = MAX(100, rating + ?), w = w + ?, l = l + ? WHERE id = ?', d, won ? 1 : 0, won ? 0 : 1, me.id);
+      this.sql.exec('UPDATE arena SET rating = MAX(100, rating - ?), w = w + ?, l = l + ? WHERE id = ?', d, won ? 0 : 1, won ? 1 : 0, op.id);
+      const a = this.sql.exec('SELECT rating FROM arena WHERE id = ?', me.id).one().rating, o = this.sql.exec('SELECT rating FROM arena WHERE id = ?', op.id).one().rating;
+      return json({ rating: a, delta: d, opp: { rating: o } });
     }
     return json({ error: 'not found' }, 404);
   }
