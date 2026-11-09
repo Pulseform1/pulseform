@@ -90,25 +90,6 @@ G['safecracker'] = {
   ${sparkle(470, 228, 16, '#fff2c4')}${sparkle(196, 300, 10, '#fff2c4')}`
 };
 
-G['magnet-rescue'] = {
-  t: 'MAGNET<br>RESCUE', f: 'Russo One', size: 100, fill: ['#ffffff', '#ffd23f'], stroke: '#14243a', ext: '#e0302a', rot: -4, italic: 1,
-  svg: `<defs>${sh()}<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb36e"/><stop offset=".55" stop-color="#ff7a8a"/><stop offset="1" stop-color="#5a3fa8"/></linearGradient></defs>
-  <rect width="600" height="600" fill="url(#bg)"/>${rays(300, 640, 14, '#fff', .08)}
-  <rect x="0" y="520" width="600" height="80" fill="#2a2f45"/><rect x="0" y="512" width="600" height="12" fill="#4a5070"/>
-  <g>${Array.from({ length: 7 }, (_, i) => `<rect x="${404 + i * 26}" y="500" width="14" height="22" fill="${i % 2 ? '#14243a' : '#ffd23f'}"/>`).join('')}</g>
-  <rect x="0" y="228" width="600" height="26" fill="#ffd23f"/><path transform="translate(0 50)" d="M0 178 L30 204 L60 178 L90 204 L120 178 L150 204 L180 178 L210 204 L240 178 L270 204 L300 178 L330 204 L360 178 L390 204 L420 178 L450 204 L480 178 L510 204 L540 178 L570 204 L600 178" stroke="#c48a10" stroke-width="5" fill="none"/>
-  <g filter="url(#ds)"><rect x="206" y="216" width="96" height="50" rx="10" fill="#14243a"/><circle cx="230" cy="241" r="10" fill="#ffd23f"/><circle cx="278" cy="241" r="10" fill="#ffd23f"/></g>
-  <path d="M254 266 Q262 300 300 330" stroke="#2a2a3a" stroke-width="7" fill="none"/>
-  <g filter="url(#ds)" transform="translate(308 350) rotate(-12) scale(1.3)">
-    <path d="M-56 -14 a56 56 0 0 1 112 0 v40 h-34 v-40 a22 22 0 0 0 -44 0 v40 h-34Z" fill="#ff3d3d"/><rect x="-56" y="20" width="34" height="20" fill="#e8eef4"/><rect x="22" y="20" width="34" height="20" fill="#e8eef4"/>
-    <path d="M-80 -30 l-14 -10 M80 -30 l14 -10 M-84 0 h-18 M84 0 h18" stroke="#fff6b0" stroke-width="5" stroke-linecap="round"/>
-    <g transform="translate(0 92) rotate(10)"><rect x="-38" y="-36" width="76" height="62" rx="16" fill="#7cc8ff"/><rect x="-28" y="-26" width="56" height="34" rx="10" fill="#14243a"/><circle cx="-12" cy="-9" r="7" fill="#39ff88"/><circle cx="12" cy="-9" r="7" fill="#39ff88"/><rect x="-6" y="-56" width="12" height="20" fill="#7cc8ff"/><circle cy="-60" r="8" fill="#ffd23f"/><rect x="-30" y="26" width="18" height="24" rx="6" fill="#4a90d6"/><rect x="12" y="26" width="18" height="24" rx="6" fill="#4a90d6"/></g>
-  </g>
-  <g filter="url(#ds)" transform="translate(110 476) scale(1.5)"><rect x="-28" y="-26" width="56" height="48" rx="12" fill="#ffd23f"/><rect x="-20" y="-18" width="40" height="24" rx="8" fill="#14243a"/><circle cx="-8" cy="-6" r="5" fill="#39ff88"/><circle cx="8" cy="-6" r="5" fill="#39ff88"/></g>
-  <g filter="url(#ds)" transform="translate(500 470) scale(1.4)"><rect x="-26" y="-24" width="52" height="46" rx="12" fill="#a066ff"/><rect x="-18" y="-16" width="36" height="22" rx="8" fill="#14243a"/><circle cx="-7" cy="-5" r="5" fill="#39ff88"/><circle cx="7" cy="-5" r="5" fill="#39ff88"/></g>
-  ${sparkle(90, 290, 14)}${sparkle(520, 280, 11)}`
-};
-
 G['pocket-jury'] = {
   t: 'POCKET<br>JURY', f: 'Chewy', size: 112, fill: ['#ffffff', '#ffd9a8'], stroke: '#3a1a08', ext: '#c4532a', rot: -4,
   svg: `<defs>${sh()}<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcf7a"/><stop offset=".6" stop-color="#f08a4a"/><stop offset="1" stop-color="#8a3a2a"/></linearGradient></defs>
@@ -181,30 +162,4 @@ G['bid-bandits'] = {
   ${sparkle(240, 400, 14, '#fff6c8')}${sparkle(380, 380, 10, '#fff6c8')}${sparkle(320, 430, 7)}`
 };
 
-G['foldscape'] = {
-  t: 'FOLD<br>SCAPE', f: 'Fredoka', w: 700, size: 116, fill: ['#ffffff', '#ffd9b0'], stroke: '#3a1a08', ext: '#e0642a', rot: -3,
-  svg: `<defs>${sh()}<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd0e8"/><stop offset="1" stop-color="#a8b8ff"/></linearGradient>
-  <pattern id="pp" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#fff6e4"/><path d="M0 0 H40 V40" fill="none" stroke="#ead8b8" stroke-width="1.5"/></pattern></defs>
-  <rect width="600" height="600" fill="url(#bg)"/>${dots(40, 5, '#fff', 3)}
-  <g filter="url(#ds)">
-    <path d="M60 240 L300 210 L300 580 L60 560Z" fill="url(#pp)"/><path d="M300 210 L540 240 L540 560 L300 580Z" fill="#f4e6c8"/>
-    <path d="M300 210 L420 160 L540 240 L300 210Z" fill="#fff6e4"/><path d="M300 210 L420 160 L420 200Z" fill="#e8d4ae"/>
-    <line x1="300" y1="210" x2="300" y2="580" stroke="#d8c09a" stroke-width="3"/>
-  </g>
-  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M110 520 Q110 420 190 420 T300 330" stroke="#c49a6a" stroke-width="26"/><path d="M300 330 Q380 300 420 380 T500 300" stroke="#c49a6a" stroke-width="26"/>
-    <path d="M110 520 Q110 420 190 420 T300 330 Q380 300 420 380 T500 300" stroke="#ffe0a8" stroke-width="8" stroke-dasharray="4 14"/>
-  </g>
-  <g transform="translate(120 300)"><circle r="30" fill="#5bc06a"/><circle cx="34" cy="10" r="22" fill="#4aa85a"/></g><g transform="translate(460 470)"><circle r="28" fill="#5bc06a"/><circle cx="-30" cy="10" r="20" fill="#4aa85a"/></g>
-  <path d="M340 470 q20 -30 50 -10 q30 20 60 0" stroke="#7cc8ff" stroke-width="16" fill="none" stroke-linecap="round"/>
-  <g filter="url(#ds)" transform="translate(500 286)"><path d="M-40 10 Q0 -50 40 10Z" fill="#8a4b2a"/><ellipse cy="10" rx="44" ry="10" fill="#6a3418"/><path d="M-14 10 Q0 -12 14 10Z" fill="#2a1a08"/></g>
-  <g filter="url(#ds)" transform="translate(112 500)">
-    <path d="M-34 10 Q-40 -20 -10 -24 L20 -24 Q40 -20 36 10 Q30 24 0 24 Q-28 24 -34 10Z" fill="#ff7a1a"/>
-    <path d="M14 -24 L22 -48 L32 -22Z M-8 -24 L-2 -48 L8 -24Z" fill="#ff7a1a"/><path d="M18 -30 l5 -12 4 10Z M-4 -30 l2 -12 5 12Z" fill="#2a1a08"/>
-    <path d="M-34 6 Q-62 -6 -58 -30 Q-46 -10 -30 -6Z" fill="#ff7a1a"/><path d="M-58 -30 Q-56 -20 -48 -16 L-54 -26Z" fill="#fff"/>
-    <ellipse cx="18" cy="2" rx="14" ry="10" fill="#fff"/><circle cx="6" cy="-10" r="4" fill="#2a1a08"/><circle cx="24" cy="-10" r="4" fill="#2a1a08"/><circle cx="30" cy="0" r="4" fill="#2a1a08"/>
-  </g>
-  <path d="M420 160 L470 120" stroke="#fff" stroke-width="4" stroke-dasharray="6 8" opacity=".9"/><path d="M462 112 l14 6 -10 12Z" fill="#fff"/>
-  ${sparkle(560, 200, 14)}${sparkle(60, 200, 10)}${sparkle(300, 600 - 40, 8)}`
-};
 if (typeof module !== 'undefined') module.exports = G;

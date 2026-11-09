@@ -103,30 +103,6 @@ T['safecracker'] = async () => {
   await fuzz(p, 120, ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'Enter']); await finish(p, g);
 };
 
-T['magnet-rescue'] = async () => {
-  const g = 'magnet-rescue'; let p = await open(g);
-  for (let d = 0; d < 6; d++) {
-    await p.evaluate(d => { magSave.unlocked = 6; state = GAMES[ID].dock(d); GAMES[ID].ui(); }, d);
-    const res = await p.evaluate(() => {
-      const D = DOCKS[state.dock], step = t => { for (let s = 0; s < t; s += 1 / 60) GAMES[ID].update(1 / 60); };
-      const settle = (x, max = 10) => { state.target = x; for (let s = 0; s < max; s += 1 / 60) { GAMES[ID].update(1 / 60); if (Math.abs(state.crane - x) < 3 && Math.abs(state.omega) < .06 && Math.abs(state.angle - Math.asin(clamp(state.gust * .55 / (800 / state.length), -1, 1))) < .08) break; } };
-      const bay = (D.bay[0] + D.bay[1]) / 2;
-      for (let k = 0; k < 12 && !state.won && !state.over; k++) {
-        const i = state.robots.findIndex(r => !r.saved && !r.lost); if (i < 0) break; const r = state.robots[i];
-        state.length = 150; step(.8); settle(r.x); state.length = clamp(r.y - 32 - 83, 100, 383); settle(r.x, 3); if (!state.magnet) GAMES[ID].action('magnet'); step(.6);
-        if (state.held !== i) { if (state.magnet) GAMES[ID].action('magnet'); continue; }
-        state.length = 150; step(1.2);
-        for (const h of state.hazards) if (h.move) { for (let w = 0; w < 8; w++) { const hx = h.x; if ((D.bay[0] > r.x) === (hx > r.x)) break; step(.2); } }
-        settle(bay, 12); state.length = 330; settle(bay, 4); GAMES[ID].action('magnet'); step(2.5);
-      }
-      return { dock: state.dock + 1, rescued: state.rescued, lives: state.lives, won: state.won };
-    });
-    console.log('  dock', JSON.stringify(res));
-    if (!res.won) note(g, `dock ${d + 1}: scripted careful play rescued ${res.rescued}/5 (lives ${res.lives})`);
-  }
-  await fuzz(p, 120, ['a', 'd', 'w', 's', ' ', '1', '2']); await finish(p, g);
-};
-
 T['pocket-jury'] = async () => {
   const g = 'pocket-jury'; let p = await open(g);
   for (let docket = 0; docket < 2; docket++) {
@@ -202,24 +178,6 @@ T['bid-bandits'] = async () => {
   }
   const kinds = await p.evaluate(() => { const seen = new Set(); for (let i = 0; i < 40; i++) bidDay().forEach(x => seen.add(x)); return seen.size; }); if (kinds !== 12) note(g, 'only ' + kinds + ' locker kinds ever appear');
   await fuzz(p, 150); await finish(p, g);
-};
-
-T['foldscape'] = async () => {
-  const g = 'foldscape'; let p = await open(g);
-  const gen = await p.evaluate(() => { const out = []; for (let lv = 0; lv < FOLD_MAPS; lv++) { const t0 = performance.now(), s = foldNew(lv); out.push({ lv, ms: Math.round(performance.now() - t0), sol: s.solution.join(''), size: s.cells[0].length + 'x' + s.cells.length, fallback: s.cells.length === 3 }); } return out; });
-  console.log('  ' + gen.map(x => `#${x.lv + 1} ${x.size} ${x.ms}ms ${x.sol}${x.fallback ? ' FALLBACK' : ''}`).join(' | '));
-  for (const x of gen) { if (x.fallback) note(g, `map ${x.lv + 1} fell back to the built-in map`); if (x.ms > 500) note(g, `map ${x.lv + 1} takes ${x.ms} ms to generate`); }
-  for (let lv = 0; lv < 16; lv++) {
-    const sol = await p.evaluate(() => state.solution);
-    for (const d of sol) await ctl(p, d);
-    const st = await p.evaluate(() => ({ won: state.won, stars: state.starsWon }));
-    if (!st.won) { note(g, `map ${lv + 1}: following the solution did not connect`); break; }
-    if (st.stars !== 3) note(g, `map ${lv + 1}: the best solution earned ${st.stars} stars`);
-    await ctl(p, 'next');
-  }
-  const ht = await p.evaluate(() => { const t0 = performance.now(); GAMES[ID].action('hint'); return Math.round(performance.now() - t0); }); console.log('  hint on the last map takes', ht, 'ms');
-  if (ht > 300) note(g, `Hint freezes the page for ${ht} ms`);
-  await fuzz(p, 120); await finish(p, g);
 };
 
 T['engine'] = async () => {

@@ -749,22 +749,6 @@ const GAMES = [
     how: ["Computer: WASD to move, mouse to look, left click to fire, right click to aim. Shift sprint, Ctrl crouch, Space jump, R reload, E use.", "1 to 4 switch guns, G grenade, T trap, V knife, M map, N night vision, Esc pause.", "iPad and tablets: left thumb moves (push far forward to sprint), drag on the right to look, buttons for fire, aim, jump, reload and the rest.", "Multiplayer: create a room and share the four-letter code. The host's device runs the match."]
   },
   {
-    id: "void-rift",
-    title: "Void Rift",
-    category: "Arcade",
-    kind: "Arcade · Twin-stick survival",
-    tags: ["Endless sectors", "9 upgrades", "Dreadnought bosses", "iPad touch controls"],
-    badge: 'NEW',
-    file: 'games/void-rift.html',
-    cover: 'media/void-rift-cover.jpg',
-    video: 'media/void-rift-trailer.mp4',
-    shots: ['media/void-rift-shot1.jpg', 'media/void-rift-shot2.jpg'],
-    aspect: 16 / 9,
-    pitch: "One pilot. An endless swarm.",
-    blurb: "Fly a lone fighter around a floating orbital arena while waves of neon raiders pour in from the dark. Hold fire to cut them down, chain kills to build a score multiplier up to five times, and dash through danger. Every kill charges the Rift Nova, a blast that wipes out enemy fire and damages everything on screen. Clear a sector to pick one of three upgrades from nine: faster fire, split shots, piercing rounds, thrusters, a bigger hull, a salvage magnet and more. Splitters break into darts, gunships fire back, and a Dreadnought arrives every fifth sector. How far into the rift can you get?",
-    how: ["Computer: WASD or arrows to move, mouse to aim, hold left click to fire.", "Space or Shift dashes. E fires the Rift Nova when it is charged. Esc or P pauses.", "iPad and phones: the stick moves you, your ship aims and fires by itself, tap DASH and the Nova button.", "Pick one upgrade after every sector. Grab the green crosses to repair your hull."]
-  },
-  {
     id: "night-market",
     title: "Night Market",
     category: "Tycoon",
@@ -877,22 +861,6 @@ const GAMES = [
     how: ["Turn the dial with the arrows (↑/↓ move by 10), the buttons, or by dragging its edge.", "Each clue hides a number. The signal bars peak when you reach it.", "Set three tumblers to open the vault. Three mistakes lock it."]
   },
   {
-    id: "magnet-rescue",
-    title: "Magnet Rescue",
-    category: "Arcade",
-    kind: "Arcade \u00b7 Physics crane",
-    tags: ["Swinging physics", "Six docks", "Crane controls", "Rescue robots"],
-    badge: 'NEW',
-    file: 'games/magnet-rescue.html',
-    cover: 'media/magnet-rescue-cover.jpg',
-    video: 'media/magnet-rescue-trailer.mp4',
-    shots: ['media/magnet-rescue-shot1.jpg', 'media/magnet-rescue-shot2.jpg'],
-    aspect: 16 / 10,
-    pitch: "Swing an industrial magnet. Bring every little robot back in one piece.",
-    blurb: "Five little robots are stranded on the dock floor and you are at the controls of a crane with a magnet on a long, swinging cable. Slide the crane, lower the line, switch on the magnet to grab a robot and carry it to the striped rescue bay. The load swings like a pendulum, so ease off at the end of every move. Six docks bring twin presses, crate stacks that knock cargo loose, a sliding press, crosswinds and a dock where everything runs backwards.",
-    how: ["Move the crane with A and D, the arrows or the buttons. W and S change the cable length.", "Lower the magnet next to a robot and switch it on to grab it.", "Carry it over the striped rescue bay and release. Avoid red presses and crates."]
-  },
-  {
     id: "pocket-jury",
     title: "Pocket Jury",
     category: "Strategy",
@@ -955,22 +923,6 @@ const GAMES = [
     pitch: "Peek into storage lockers. Read your rivals. Know when to walk away.",
     blurb: "Abandoned storage lockers go up for auction, and you get one peek through the door. Read the visible clue, check the condition, and bid against three computer rivals who only go by the appraisal. Win a locker and its contents are sold, for profit or for a painful loss. A season is five days of six lockers, drawn from twelve kinds, and your money carries over. Finish with more than every rival to be season champion.",
     how: ["Read the clue and the condition before you bid. Rivals can’t see the condition.", "Bid against three rivals, or pass and let them settle it.", "Your money carries across five days. Finish the season richest."]
-  },
-  {
-    id: "foldscape",
-    title: "Foldscape",
-    category: "Puzzle",
-    kind: "Puzzle \u00b7 Paper folding",
-    tags: ["Folding", "Mirror paths", "Sixteen maps", "Thinky"],
-    badge: 'NEW',
-    file: 'games/foldscape.html',
-    cover: 'media/foldscape-cover.jpg',
-    video: 'media/foldscape-trailer.mp4',
-    shots: ['media/foldscape-shot1.jpg', 'media/foldscape-shot2.jpg'],
-    aspect: 16 / 10,
-    pitch: "Fold a little paper world until its scattered paths finally meet.",
-    blurb: "A fox is lost on a paper map, its den across a maze of printed roads that never quite join up. Fold an outer strip of the paper over its neighbor and the roads printed on it land on top, mirrored, so new paths appear and others are covered. Find the sequence of folds that connects the fox to home. Sixteen maps, with bigger sheets from map nine; match the fewest folds for three stars. Undo and hints are free.",
-    how: ["Tap a fold button to fold an outer row or column inward.", "The folded strip covers its neighbor, and its roads come along, mirrored.", "Connect the fox to its home in the fewest folds for three stars."]
   },
   {
     id: "tiny-tee",
@@ -3015,12 +2967,12 @@ loadStats();
     'lights-out-motel': 'Guests handled right', 'neon-serpent': 'Score', 'night-shift': 'Shift score', 'orbit-hop': 'Score', 'paint-wars': 'Tiles painted', 'penalty-shootout': 'Score', 'pocket-bowl': 'Season score',
     'rooftop-rush': 'Meters', 'sea-battle': 'Ships sunk', 'siegeworks': 'Siege score', 'sky-ace': 'Score', 'sky-stack': 'Score', 'space-colony': 'Colonists', 'spin-rally': 'Points', 'still-here': 'Score',
     'strata': 'Score', 'tank-trouble': 'Rounds won', 'tiny-tee': 'Points', 'turbo-laps': 'Points',
-    'baggage-panic': 'Suitcase reached', 'switchyard': 'Points', 'potion-protocol': 'Recipes cracked', 'safecracker': 'Points', 'magnet-rescue': 'Rescues', 'pocket-jury': 'Docket points',
-    'cloudwash': 'Stars', 'circuit-courier': 'Stars', 'bid-bandits': 'Season money', 'foldscape': 'Stars',
+    'baggage-panic': 'Suitcase reached', 'switchyard': 'Points', 'potion-protocol': 'Recipes cracked', 'safecracker': 'Points', 'pocket-jury': 'Docket points',
+    'cloudwash': 'Stars', 'circuit-courier': 'Stars', 'bid-bandits': 'Season money',
   };
   // quick solo games where a bigger number is plainly better: one of these is the daily challenge
   const DAILY_POOL = ['flop-hoops', 'neon-serpent', 'brick-blitz', 'sky-stack', 'axe-spin', 'orbit-hop', 'hue-hop', 'fruit-frenzy', 'flip-frenzy', 'penalty-shootout', 'rooftop-rush', 'sky-ace', 'combo-cubes', 'tiny-tee', 'spin-rally', 'horde-breaker', 'safecracker'];
-  const ORIGINALS = ['baggage-panic', 'switchyard', 'potion-protocol', 'safecracker', 'magnet-rescue', 'pocket-jury', 'cloudwash', 'circuit-courier', 'bid-bandits', 'foldscape'];
+  const ORIGINALS = ['baggage-panic', 'switchyard', 'potion-protocol', 'safecracker', 'pocket-jury', 'cloudwash', 'circuit-courier', 'bid-bandits'];
   const $ = id => document.getElementById(id), esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const num = n => Number(n || 0).toLocaleString('en-US');
   const byIdP = id => (typeof byId === 'function' ? byId(id) : null);
