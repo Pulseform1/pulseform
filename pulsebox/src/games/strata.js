@@ -14,7 +14,9 @@ const GAME = {
   skins: [{ name: 'Classic', price: 0 }],
 };
 (() => {
-  let WW = 520; const TS = 24, WH = 210, PXF = '"Tiny5", "Pixelify Sans", "Courier New", monospace', HELL = 186;
+  let WW = 520; const TS = 24, PXF = '"Tiny5", "Pixelify Sans", "Courier New", monospace'; let WH = 210, HELL = 186, DK = 1;
+  const DY = y => Math.round(58 + (y - 58) * DK);   // a depth from the old 210-row worlds, stretched to this world's depth
+  function setDepth(wh) { WH = wh; HELL = wh === 210 ? 186 : wh - 36; DK = (HELL - 58) / 128; }
   const T = { AIR: 0, DIRT: 1, GRASS: 2, STONE: 3, COPPER: 4, IRON: 5, GOLD: 6, TRUNK: 7, LEAF: 8, PLANK: 9, TORCH: 10, BENCH: 11, FURNACE: 12, ANVIL: 13, SAND: 14, CRYSTAL: 15, SILVER: 16, SHADOW: 17, ASH: 18, HELLSTONE: 19, CHEST: 20, GCHEST: 21, MUSH: 22, BONE: 23, BRICK: 24, POT: 25, TABLE: 26, CHAIR: 27, LANTERN: 28, CAMPFIRE: 29, BED: 30, SBRICK: 31, CBRICK: 32, GBRICK: 33, GLASS: 34, BOOKS: 35, MUD: 36, JGRASS: 37, LWOOD: 38, TBRICK: 39, DTRAP: 40, SPIKE: 41, WATER: 42, COBWEB: 43, SSTONE: 44, OBSID: 45, DOOR: 46, DOORO: 47, PLAT: 48, SNOW: 49, ICE: 50, SLEAF: 51, BGRASS: 52, BSTONE: 53, BHEART: 54, GMOSS: 55, GLOWCAP: 56, CAPBLK: 57, STALK: 58, CLOUD: 59, AZURITE: 60, VIRIDIUM: 61, STARMETAL: 62, STARFORGE: 63, RUNEANVIL: 64, RGRASS: 65, LSTONE: 66 };
   const SOLID = new Set([1, 2, 3, 4, 5, 6, 9, 14, 16, 17, 18, 19, 23, 24, 31, 32, 33, 34, 36, 37, 38, 39, 40, 44, 45, 46, 49, 50, 52, 53, 55, 57, 59, 60, 61, 62, 65, 66]);
   const HARD = { 1: 1, 2: 1, 14: .9, 3: 2.4, 4: 3, 5: 4, 16: 4.6, 6: 6, 17: 8, 18: 2, 19: 10, 7: 1.6, 8: .3, 9: 1.4, 10: .2, 11: 1, 12: 2, 13: 2.5, 15: 2, 20: 1.5, 21: 2, 22: .2, 23: 3, 24: 5, 25: .3, 26: 1, 27: 1, 28: .4, 29: 1, 30: 1, 31: 2.6, 32: 2.8, 33: 3, 34: 1, 35: 1, 36: 1, 37: 1, 38: 3.2, 39: 9, 40: 9, 41: 6, 43: .2, 44: 2, 45: 5, 46: 1.2, 47: 1.2, 48: .5, 49: .8, 50: 1.4, 51: .3, 52: 1.2, 53: 2.6, 54: 1.5, 55: 1, 56: .2, 57: .8, 58: 1.2, 59: .4, 60: 7, 61: 8, 62: 9, 63: 2.5, 64: 3, 65: 1.2, 66: 3 };
@@ -238,7 +240,7 @@ const GAME = {
   const inArena = p => temple && temple.arena && p.x > temple.arena.x0 && p.x < temple.arena.x1 && p.y > temple.arena.y0 && p.y < temple.arena.y1 + 1;
   const inJungle = x => jungle && x >= jungle.x0 && x < jungle.x1, inTemple = p => temple && p.x > temple.x0 && p.x < temple.x1 && p.y > temple.y0 && p.y < temple.y1 + 1;
   function findTraps() { traps = []; if (!temple) return; for (let x = temple.x0; x <= temple.x1; x++) for (let y = temple.y0; y <= temple.y1; y++) if (at(x, y) === T.DTRAP) traps.push({ x, y, d: at(x + 1, y) === T.AIR ? 1 : -1, cd: R() }); }
-  function gen() { gen0(); if (blight) for (let x = Math.max(1, blight.x0 - 14); x < Math.min(WW - 1, blight.x1 + 14); x++) { let y = surf[x]; { let c = 0; while (c < 3 && SOLID.has(at(x, y + c))) c++; if (c && c <= 2 && at(x, y + c) === T.AIR && at(x, y + c + 1) === T.AIR && at(x, y + c + 2) === T.AIR && at(x, y + c + 3) === T.AIR) for (let k = 0; k < c; k++) set(x, y + k, T.AIR); } if (SOLID.has(at(x, y)) || !(at(x, y + 1) === T.AIR && at(x, y + 2) === T.AIR)) continue; while (y < HELL - 2 && !SOLID.has(at(x, y))) y++; for (let yy = surf[x]; yy < y; yy++) if (!PW(walls[yy * WW + x])) walls[yy * WW + x] = 0; surf[x] = y; } }
+  function gen() { setDepth(315); gen0(); if (blight) for (let x = Math.max(1, blight.x0 - 14); x < Math.min(WW - 1, blight.x1 + 14); x++) { let y = surf[x]; { let c = 0; while (c < 3 && SOLID.has(at(x, y + c))) c++; if (c && c <= 2 && at(x, y + c) === T.AIR && at(x, y + c + 1) === T.AIR && at(x, y + c + 2) === T.AIR && at(x, y + c + 3) === T.AIR) for (let k = 0; k < c; k++) set(x, y + k, T.AIR); } if (SOLID.has(at(x, y)) || !(at(x, y + 1) === T.AIR && at(x, y + 2) === T.AIR)) continue; while (y < HELL - 2 && !SOLID.has(at(x, y))) y++; for (let yy = surf[x]; yy < y; yy++) if (!PW(walls[yy * WW + x])) walls[yy * WW + x] = 0; surf[x] = y; } }
   function gen0() {
     tiles = new Uint8Array(WW * WH); walls = new Uint8Array(WW * WH); surf = new Int16Array(WW); chests = {}; hard = 0; radiant = null; brokenDeco = new Set(); npcs = []; npcGone = {}; npcT = 0; explored = new Uint8Array(WW * WH); const isDes = new Uint8Array(WW);
     const n1 = noise1(), n2 = noise1(), n3 = noise1();
@@ -255,12 +257,12 @@ const GAME = {
       const top = surf[x], dd = 6 + Math.round(n2(x / 7) * 7), desert = DES[x]; isDes[x] = desert ? 1 : 0;
       for (let y = top; y < WH; y++) {
         let v = y < top + dd ? (desert ? T.SAND : T.DIRT) : T.STONE; if (y === top && v === T.DIRT) v = T.GRASS;
-        if (y > top + dd && y < 120 && R() < .025) v = T.DIRT;
+        if (y > top + dd && y < DY(120) && R() < .025) v = T.DIRT;
         if (y >= HELL - 2 + Math.round(n1(x / 9) * 4)) v = T.ASH;
         tiles[y * WW + x] = v; if (y > top + 1) walls[y * WW + x] = y < top + dd + 3 ? 1 : y >= HELL ? 3 : 2;
       }
     }
-    for (let i = 0; i < Math.round(60 * WW / 520); i++) {
+    for (let i = 0; i < Math.round(60 * WW / 520 * DK); i++) {
       let x = rnd(10, WW - 10), y = rnd(surf[Math.floor(x)] + 8, HELL - 8), a = rnd(0, 6.28); const len = rnd(40, 170);
       for (let k = 0; k < len; k++) { a += rnd(-.35, .35); x += Math.cos(a); y += Math.sin(a) * .6 + .08; const r = 1.2 + (y / WH) * 2.6 + Math.sin(k * .2) * .6; for (let dx = -3; dx <= 3; dx++) for (let dy = -3; dy <= 3; dy++) if (dx * dx + dy * dy <= r * r) { const tx = Math.floor(x + dx), ty = Math.floor(y + dy); if (ty > surf[clamp(tx, 0, WW - 1)] + 4 && ty < HELL - 1) set(tx, ty, T.AIR); } }
     }
@@ -269,10 +271,10 @@ const GAME = {
       const L = 55 + rnd(0, 50); for (let k = 0; k < L; k++) { a += rnd(-.45, .45); a = clamp(a, .35, Math.PI - .35); if (k % 17 === 9) a = R() < .5 ? .3 : Math.PI - .3;   // every so often it turns sideways for a while
         x += Math.cos(a) * .9; y += Math.sin(a) * .8; r += rnd(-.25, .25); r = clamp(r, 1.2, 2.8); const pocket = k % 23 === 15 ? 3.8 : 0, rr = Math.max(r, pocket);
         for (let dx = -4; dx <= 4; dx++) for (let dy = -4; dy <= 4; dy++) if (dx * dx + dy * dy * 1.3 <= rr * rr) { const tx = Math.floor(x + dx), ty = Math.floor(y + dy); if (ty < HELL - 4) set(tx, ty, T.AIR); } } }
-    for (let i = 0; i < Math.round(14 * WW / 520); i++) { const cx = rnd(20, WW - 20), cy = rnd(surf[Math.floor(cx)] + 25, HELL - 20), W0 = rnd(6, 14), H0 = rnd(4, 8);   // open caverns with lumpy walls
+    for (let i = 0; i < Math.round(14 * WW / 520 * DK); i++) { const cx = rnd(20, WW - 20), cy = rnd(surf[Math.floor(cx)] + 25, HELL - 20), W0 = rnd(6, 14), H0 = rnd(4, 8);   // open caverns with lumpy walls
       for (let k = 0; k < 9; k++) { const ox = cx + rnd(-W0, W0), oy = cy + rnd(-H0, H0) * .7, rx = rnd(3, W0 * .7), ry = rnd(2, H0 * .7);
         for (let x = Math.floor(ox - rx); x <= ox + rx; x++) for (let y = Math.floor(oy - ry); y <= oy + ry; y++) { const t = ((x - ox) / rx) ** 2 + ((y - oy) / ry) ** 2; if (t <= 1 && y > surf[clamp(x, 0, WW - 1)] + 8 && y < HELL - 3) set(x, y, T.AIR); } } }
-    const blob = (t, n, dmin, dmax, r, onto = [T.STONE, T.DIRT]) => { for (let i = 0; i < n * WW / 520; i++) { const x = Math.floor(rnd(2, WW - 2)), y = Math.floor(rnd(Math.max(surf[x] + dmin, 0), dmax)); for (let k = 0; k < r * 3; k++) { const tx = x + Math.round(rnd(-r, r)), ty = y + Math.round(rnd(-r, r)); if (onto.includes(at(tx, ty))) set(tx, ty, t); } } };
+    const blob = (t, n, dmin, dmax, r, onto = [T.STONE, T.DIRT]) => { for (let i = 0; i < n * WW / 520 * DK; i++) { const x = Math.floor(rnd(2, WW - 2)), y = Math.floor(rnd(Math.max(surf[x] + dmin, 0), dmax)); for (let k = 0; k < r * 3; k++) { const tx = x + Math.round(rnd(-r, r)), ty = y + Math.round(rnd(-r, r)); if (onto.includes(at(tx, ty))) set(tx, ty, t); } } };
     // oceans: the world dips into deep water at both edges, with sandy beaches and a sandy sea floor
     const OW = Math.max(30, Math.round(WW * .06)); ocean = OW;
     for (const sd of [-1, 1]) { const shore = sd < 0 ? OW : WW - 1 - OW, sea = surf[shore] + 2;
@@ -326,8 +328,8 @@ const GAME = {
             for (let dx = -5; dx <= 5; dx++) for (let dy = -3; dy <= 3; dy++) if ((dx / rw) ** 2 + (dy / rh) ** 2 <= 1) { const tx = Math.floor(cx + dx), ty = Math.floor(cy + dy); if (ty > surf[tx] + 4 && at(tx, ty) === T.SSTONE) { set(tx, ty, T.AIR); walls[ty * WW + tx] = 6; } } } }
         for (let xx = x; xx < e; xx++) for (let y = surf[xx] + 4; y < surf[xx] + 62; y++) if (at(xx, y) === T.AIR && at(xx, y + 1) === T.SSTONE) set(xx, y + 1, T.SAND);
         x = e; } }
-    blob(T.COPPER, 128, 6, 120, 2); blob(T.IRON, 96, 20, 150, 2); blob(T.SILVER, 72, 34, 165, 2); blob(T.GOLD, 56, 50, 180, 1.6); blob(T.SHADOW, 48, 85, HELL - 2, 1.6); blob(T.HELLSTONE, 112, HELL - 60, WH - 2, 2, [T.ASH]);
-    { let cx = Math.floor(rnd(80, WW - 80)); for (let k = 0; k < 50 && jungle && cx > jungle.x0 - 25 && cx < jungle.x1 + 25; k++) cx = Math.floor(rnd(80, WW - 80)); const cy = Math.floor(rnd(140, 160)); for (let x = cx - 18; x <= cx + 18; x++) for (let y = cy - 7; y <= cy + 7; y++) { const edge = Math.abs(x - cx) > 16 || Math.abs(y - cy) > 5; set(x, y, edge ? T.BRICK : T.AIR); walls[y * WW + x] = 4; }
+    blob(T.COPPER, 128, 6, DY(120), 2); blob(T.IRON, 96, 20, DY(150), 2); blob(T.SILVER, 72, Math.round(34 * DK), DY(165), 2); blob(T.GOLD, 56, Math.round(50 * DK), DY(180), 1.6); blob(T.SHADOW, 48, Math.round(85 * DK), HELL - 2, 1.6); blob(T.HELLSTONE, 112, HELL - 60, WH - 2, 2, [T.ASH]);
+    { let cx = Math.floor(rnd(80, WW - 80)); for (let k = 0; k < 50 && jungle && cx > jungle.x0 - 25 && cx < jungle.x1 + 25; k++) cx = Math.floor(rnd(80, WW - 80)); const cy = Math.floor(rnd(DY(140), DY(160))); for (let x = cx - 18; x <= cx + 18; x++) for (let y = cy - 7; y <= cy + 7; y++) { const edge = Math.abs(x - cx) > 16 || Math.abs(y - cy) > 5; set(x, y, edge ? T.BRICK : T.AIR); walls[y * WW + x] = 4; }
       for (let x = cx - 14; x <= cx + 14; x += 3) set(x, cy + 5, T.BONE); for (const ex of [cx - 17, cx + 17]) { set(ex, cy + 3, T.AIR); set(ex, cy + 4, T.AIR); } placeChest(cx, cy + 6, 1); }
     // ---- new biomes
     { const OWb = ocean, J = jungle || { x0: -99, x1: -99 }, free = (a, b, taken) => a > OWb + 16 && b < WW - OWb - 16 && b < WW / 2 - 40 || a > OWb + 16 && b < WW - OWb - 16 && a > WW / 2 + 40 ? !taken.some(([c, d]) => a < d + 12 && b > c - 12) : false;
@@ -351,7 +353,7 @@ const GAME = {
           for (let dx = -8; dx <= 8; dx++) for (let dy = -6; dy <= 6; dy++) { const tx = Math.floor(x + dx), ty = y + dy; if (at(tx, ty) === T.STONE || at(tx, ty) === T.DIRT) set(tx, ty, T.BSTONE); if (at(tx, ty) === T.BSTONE && R() < .14) set(tx, ty, T.SHADOW); }
           set(Math.floor(x), y + 3, T.BSTONE); set(Math.floor(x), y + 2, T.BHEART); } }
       // Glowcap Caverns: big glowing-mushroom caves deep in the cavern layer
-      glowc = []; for (let c = 0, tries = 0; c < Math.max(2, Math.round(WW / 520 * 2)) && tries < 200; tries++) { const cx = Math.floor(rnd(OWb + 30, WW - OWb - 30)), cy = Math.floor(rnd(95, Math.min(150, HELL - 34))); if (cx > J.x0 - 30 && cx < J.x1 + 30) continue; if (glowc.some(q => Math.abs(q.x - cx) < 60)) continue; if (temple && cx > temple.x0 - 40 && cx < temple.x1 + 40) continue; glowc.push({ x: cx, y: cy }); c++;
+      glowc = []; for (let c = 0, tries = 0; c < Math.max(2, Math.round(WW / 520 * 2)) && tries < 200; tries++) { const cx = Math.floor(rnd(OWb + 30, WW - OWb - 30)), cy = Math.floor(rnd(DY(95), Math.min(DY(150), HELL - 34))); if (cx > J.x0 - 30 && cx < J.x1 + 30) continue; if (glowc.some(q => Math.abs(q.x - cx) < 60)) continue; if (temple && cx > temple.x0 - 40 && cx < temple.x1 + 40) continue; glowc.push({ x: cx, y: cy }); c++;
         const rx = 18 + Math.floor(R() * 8), ry = 8 + Math.floor(R() * 3);
         for (let dx = -rx - 4; dx <= rx + 4; dx++) for (let dy = -ry - 4; dy <= ry + 4; dy++) { const tx = cx + dx, ty = cy + dy, q = dx * dx / (rx * rx) + dy * dy / (ry * ry) + Math.sin(dx * .4) * .08; if (tx < 2 || tx >= WW - 2 || ty < 2 || ty >= HELL) continue; if (q <= 1) set(tx, ty, T.AIR); else if (q <= 1.6 && SOLID.has(at(tx, ty))) set(tx, ty, T.MUD); if (q <= 1.6) walls[ty * WW + tx] = 22; }
         for (let dx = -rx - 4; dx <= rx + 4; dx++) for (let dy = -ry - 4; dy <= ry + 4; dy++) { const tx = cx + dx, ty = cy + dy; if (at(tx, ty) === T.MUD && (at(tx, ty - 1) === T.AIR || at(tx, ty + 1) === T.AIR)) set(tx, ty, T.GMOSS); }
@@ -363,9 +365,9 @@ const GAME = {
         const rx = 13 + Math.floor(R() * 5); for (let dx = -rx; dx <= rx; dx++) { const d = Math.round(Math.sqrt(1 - (dx / rx) ** 2) * 6), x = cx + dx; for (let dy = 0; dy <= d; dy++) set(x, cy + dy, dy < 2 && Math.abs(dx) < rx - 2 ? (dy === 0 ? T.GRASS : T.DIRT) : T.CLOUD); }
         for (let dx = -4; dx <= 4; dx++) { set(cx + dx, cy - 6, T.GBRICK); for (let dy = 1; dy <= 5; dy++) walls[(cy - dy) * WW + cx + dx] = 12; } for (let dy = 2; dy <= 5; dy++) { set(cx - 4, cy - dy, T.GBRICK); set(cx + 4, cy - dy, T.GBRICK); } for (let dx = -2; dx <= 2; dx++) set(cx + dx, cy - 7, T.GBRICK);
         set(cx, cy - 1, T.GCHEST); chests[cx + ',' + (cy - 1)] = [[pick(['sunfeather', 'gustjar', 'starstaff', 'falcon', 'eboom']), 1], ['gbar', 2 + Math.floor(R() * 3)], ['scoin', 10 + Math.floor(R() * 20)], ['star', 2]]; set(cx - 2, cy - 4, T.TORCH); set(cx + 2, cy - 4, T.TORCH); } }
-    for (let i = 0, n = 0; i < 6000 && n < Math.round(18 * WW / 520); i++) { const x = Math.floor(rnd(5, WW - 5)), y = Math.floor(rnd(surf[x] + 30, HELL - 4)); if (at(x, y) === T.AIR && SOLID.has(at(x, y + 1))) { set(x, y, T.CRYSTAL); n++; } }
-    for (let i = 0, n = 0; i < 8000 && n < Math.round(34 * WW / 520); i++) { const x = Math.floor(rnd(5, WW - 5)), y = Math.floor(rnd(surf[x] + 12, HELL - 4)); if (at(x, y) === T.AIR && SOLID.has(at(x, y + 1))) { placeChest(x, y + 1, y > 110 && R() < .55 ? 1 : 0); n++; } }
-    for (let i = 0, n = 0; i < 8000 && n < Math.round(80 * WW / 520); i++) { const x = Math.floor(rnd(5, WW - 5)), y = Math.floor(rnd(surf[x] + 8, WH - 4)); if (at(x, y) === T.AIR && SOLID.has(at(x, y + 1))) { set(x, y, T.POT); n++; } }
+    for (let i = 0, n = 0; i < 6000 && n < Math.round(5 * WW / 520 * DK); i++) { const x = Math.floor(rnd(5, WW - 5)), y = Math.floor(rnd(surf[x] + 30, HELL - 4)); if (at(x, y) === T.AIR && SOLID.has(at(x, y + 1))) { set(x, y, T.CRYSTAL); n++; } }
+    for (let i = 0, n = 0; i < 8000 && n < Math.round(34 * WW / 520 * DK); i++) { const x = Math.floor(rnd(5, WW - 5)), y = Math.floor(rnd(surf[x] + 12, HELL - 4)); if (at(x, y) === T.AIR && SOLID.has(at(x, y + 1))) { placeChest(x, y + 1, y > DY(110) && R() < .55 * (.35 + .65 * clamp((y - surf[x]) / Math.max(1, HELL - surf[x]), 0, 1)) ? 1 : 0); n++; } }
+    for (let i = 0, n = 0; i < 8000 && n < Math.round(80 * WW / 520 * DK); i++) { const x = Math.floor(rnd(5, WW - 5)), y = Math.floor(rnd(surf[x] + 8, WH - 4)); if (at(x, y) === T.AIR && SOLID.has(at(x, y + 1))) { set(x, y, T.POT); n++; } }
     for (let x = 4; x < WW - 4; x++) if (at(x, surf[x]) === T.GRASS && at(x, surf[x] - 1) === T.AIR && R() < .05) set(x, surf[x] - 1, T.MUSH);
     for (let x = 4; x < WW - 4; x += 4 + Math.floor(R() * 9)) {
       if (at(x, surf[x]) !== T.GRASS || Math.abs(x - WW / 2) < 4) continue; const h = 5 + Math.floor(R() * 7), top = surf[x] - h;
@@ -376,7 +378,11 @@ const GAME = {
   }
   function placeChest(x, y, gold) {
     if (!SOLID.has(at(x, y))) return; set(x, y - 1, gold ? T.GCHEST : T.CHEST);
-    const L = CHEST_LOOT[gold], items = [[pick(L.slice(0, 5)), 1]]; if (gold && R() < .25) items.push(['falcon', 1]); if (R() < (gold ? .3 : .18)) items.push(['homeshard', 1 + (R() < .3 ? 1 : 0)]); if (R() < (gold ? .07 : .02)) items.push(['lodestar', 1]); items.push(['scoin', 1 + Math.floor(R() * (gold ? 30 : 8))]); for (let i = 0; i < 2 + Math.floor(R() * 3); i++) { const id = pick(L.slice(5)); items.push([id, IT[id].one ? 1 : ['torch', 'arrow', 'shot', 'farrow'].includes(id) ? 10 + Math.floor(R() * 30) : 1 + Math.floor(R() * 4)]); }
+    const df = clamp((y - surf[clamp(x, 0, WW - 1)]) / Math.max(1, HELL - surf[clamp(x, 0, WW - 1)]), 0, 1);   // 0 at the surface, 1 at the underworld
+    const L = CHEST_LOOT[gold]; let main = pick(L.slice(0, 5));
+    if (gold) { if (main === 'esword' && R() > df * df) main = pick(['eboom', 'missile', 'water', 'trident']); if (R() > .2 + .8 * Math.pow(df, 1.4)) main = null; }   // Enchanted Swords mostly deep down
+    else if (['gustjar', 'hook', 'spark'].includes(main) && R() > .25 + .75 * df) main = pick(['boom', 'potion']);
+    const items = main ? [[main, 1]] : [[pick(['gbar', 'potion', 'lpotion']), 2 + Math.floor(R() * 3)]]; if (gold && R() < .25) items.push(['falcon', 1]); if (R() < (gold ? .3 : .18)) items.push(['homeshard', 1 + (R() < .3 ? 1 : 0)]); if (R() < (gold ? .07 : .02)) items.push(['lodestar', 1]); items.push(['scoin', 1 + Math.floor(R() * (gold ? 30 : 8))]); for (let i = 0; i < 2 + Math.floor(R() * 3); i++) { const id = pick(L.slice(5)); items.push([id, IT[id].one ? 1 : ['torch', 'arrow', 'shot', 'farrow'].includes(id) ? 10 + Math.floor(R() * 30) : 1 + Math.floor(R() * 4)]); }
     chests[x + ',' + (y - 1)] = items;
   }
   // spawn standing on the surface: the closest column to the middle whose surface tile is solid with open air above it
@@ -695,7 +701,7 @@ const GAME = {
     if (e.kind === 'slime') { if (e.ground) { e.vx *= .8; if (e.t > 1.4) { e.t = 0; e.vy = -rnd(13, 17); e.vx = dir * rnd(5, 8); } } moveBody(e, dt); }
     else if (e.kind === 'zombie' || e.kind === 'skeleton') { const sp = e.kind === 'skeleton' ? 5.4 : 4.2; e.vx += (dir * sp - e.vx) * Math.min(1, dt * 3); if (e.ground && e.bump && e.t > .6) { e.vy = -15; e.t = 0; } e.bump = 0; moveBody(e, dt); }
     else if (e.kind === 'eye' || e.kind === 'bat') { const sp = e.kind === 'bat' ? 11 : 9, ty = tp.y - 2.2 + Math.sin(e.t * (e.kind === 'bat' ? 6 : 2)) * 2; e.vx += (dir * sp - e.vx) * dt * 1.2; e.vy += (Math.sign(ty - e.y) * sp * .8 - e.vy) * dt * 1.2; e.x += e.vx * dt; e.y += e.vy * dt; if (solid(e.x, e.y)) { e.vx *= -.6; e.vy *= -.6; e.x += e.vx * dt * 2; e.y += e.vy * dt * 2; } }
-    else if (e.kind === 'imp') { const tx = tp.x - dir * 8, ty = tp.y - 4; e.vx += ((tx - e.x) * 1.2 - e.vx) * dt; e.vy += ((ty - e.y) * 1.2 - e.vy) * dt; e.x += e.vx * dt; e.y += e.vy * dt; if (e.t > 2.2) { e.t = 0; const d = Math.hypot(dx, tp.y - 1.4 - e.y) || 1; spawnEnemy('fb', e.x, e.y - .8, { vx: dx / d * 12, vy: (tp.y - 1.4 - e.y) / d * 12, life: 4 }); } }
+    else if (e.kind === 'imp') { const tx = tp.x - dir * 8, ty = Math.max(HELL + 2, tp.y - 4); e.vx += ((tx - e.x) * 1.2 - e.vx) * dt; e.vy += ((ty - e.y) * 1.2 - e.vy) * dt; e.x += e.vx * dt; e.y += e.vy * dt; if (e.y < HELL + 1.5) { e.y = HELL + 1.5; if (e.vy < 0) e.vy = 0; } if (e.t > 2.2 && tp.y > HELL - 6) { e.t = 0; const d = Math.hypot(dx, tp.y - 1.4 - e.y) || 1; spawnEnemy('fb', e.x, e.y - .8, { vx: dx / d * 12, vy: (tp.y - 1.4 - e.y) / d * 12, life: 4 }); } }
     else if (e.kind === 'stalker' || e.kind === 'guardian') { const sp = e.kind === 'stalker' ? 7 : 4.6; e.vx += (dir * sp - e.vx) * Math.min(1, dt * 3); if (e.ground && (e.bump || (e.kind === 'stalker' && Math.abs(dx) < 6 && e.t > 1.6)) && e.t > .5) { e.vy = e.kind === 'stalker' ? -18 : -14; e.t = 0; } e.bump = 0; moveBody(e, dt); }
     else if (e.kind === 'thorn') { const ty = tp.y - 2 + Math.sin(e.t * 5) * 2; e.vx += (dir * 13 - e.vx) * dt * 1.4; e.vy += (Math.sign(ty - e.y) * 10 - e.vy) * dt * 1.4; e.x += e.vx * dt; e.y += e.vy * dt; if (solid(e.x, e.y)) { e.vx *= -.6; e.vy *= -.6; e.x += e.vx * dt * 2; e.y += e.vy * dt * 2; } }
     else if (e.kind === 'sunspirit') { const tx = tp.x - dir * 7, ty = tp.y - 4; e.vx += ((tx - e.x) * 1.4 - e.vx) * dt; e.vy += ((ty - e.y) * 1.4 - e.vy) * dt; e.x += e.vx * dt; e.y += e.vy * dt; if (e.t > 1.6) { e.t = 0; const d = Math.hypot(dx, tp.y - 1.4 - e.y) || 1; for (const a of [-.15, .15]) spawnEnemy('fb', e.x, e.y - .5, { vx: (dx / d * Math.cos(a) - (tp.y - 1.4 - e.y) / d * Math.sin(a)) * 14, vy: ((tp.y - 1.4 - e.y) / d * Math.cos(a) + dx / d * Math.sin(a)) * 14, life: 4 }); } }
@@ -916,7 +922,7 @@ const GAME = {
       if (k === 'sentinel' && !hard) return say('The key does not turn. The world is not hard enough yet.');
       if (k === 'sentinel' && !zone.radiant) return say('The key only turns in the Radiance.');
       if (k === 'tyrant' && (!hard || !night())) return say(hard ? 'The sigil only answers at night.' : 'The sigil is silent. The world is not hard enough yet.');
-      if (k === 'bone' && P.y < 100) return say('The totem only stirs deep underground.');
+      if (k === 'bone' && P.y < DY(100)) return say('The totem only stirs deep underground.');
       if (k === 'ember' && P.y < HELL) return say('The horn wants the heat of the underworld.');
       spend(); summon(k, P.x, P.y); if (online() && !isHost()) MP.send({ t: 'sum', k, x: P.x, y: P.y });
     }
@@ -954,8 +960,9 @@ const GAME = {
       if (tg && !M.shoot) for (const e of ents) if (!KIND[e.kind].proj && !e.dead && !m.hits[e.id] && Math.abs(e.x - m.x) < e.w / 2 + .7 && Math.abs(mid(e) - m.y) < e.h / 2 + .7) { m.hits[e.id] = .45; hitEnemy(e, dmg, Math.sign(m.vx) || 1); m.vx *= -.6; m.vy = -6; }
     });
   }
-  function drawMinions(g) {
-    for (const m of minions) { const M = MINI[m.k], X = sx(m.x), Y = sy(m.y), f = m.vx < 0 ? -1 : 1, fl = Math.sin(m.t * 18) > 0, r = (c, a, b, w, h) => { g.fillStyle = c; g.fillRect(X + a * f - (f < 0 ? w : 0), Y + b, w, h); };
+  function drawMinions(g) { drawMinionList(g, minions); for (const [, o] of others) if (o.mins && o.mins.length && o.p && !o.dead) { for (const m of o.mins) { m.x += (m.tx - m.x) * .25; m.y += (m.ty - m.y) * .25; m.t += 1 / 60; if (m.k === 'wyrm') { m.tr.unshift([m.x, m.y]); if (m.tr.length > 14) m.tr.length = 14; } } drawMinionList(g, o.mins); } }
+  function drawMinionList(g, list) {
+    for (const m of list) { const M = MINI[m.k], X = sx(m.x), Y = sy(m.y), f = m.vx < 0 ? -1 : 1, fl = Math.sin(m.t * 18) > 0, r = (c, a, b, w, h) => { g.fillStyle = c; g.fillRect(X + a * f - (f < 0 ? w : 0), Y + b, w, h); };
       if (m.k === 'wyrm') { for (let j = m.tr.length - 1; j >= 0; j -= 2) { const [tx, ty] = m.tr[j]; g.fillStyle = j ? (j % 4 ? '#c8a830' : '#ffe680') : '#fff2a0'; g.beginPath(); g.arc(sx(tx), sy(ty), j ? 8 - j * .3 : 10, 0, 7); g.fill(); } r('#2a1a40', 3, -4, 3, 3); continue; }
       const glow = g.createRadialGradient(X, Y, 1, X, Y, 18); glow.addColorStop(0, M.c + '55'); glow.addColorStop(1, M.c + '00'); g.fillStyle = glow; g.fillRect(X - 18, Y - 18, 36, 36);
       if (m.k === 'spider') { g.strokeStyle = '#2a1a30'; g.lineWidth = 1.5; for (const s of [-1, 1]) for (let i = 0; i < 4; i++) { g.beginPath(); g.moveTo(X + s * i, Y); g.lineTo(X + s * (5 + i), Y - 5 + (fl ? 1 : -1) * (i % 2)); g.lineTo(X + s * (8 + i), Y + 3); g.stroke(); } g.fillStyle = '#5a2a78'; g.beginPath(); g.ellipse(X, Y, 6, 4, 0, 0, 7); g.fill(); r('#c89a30', -1, -3, 2, 5); r('#ff6a3a', 4, -1, 1, 1); }
@@ -1396,9 +1403,9 @@ const GAME = {
     K.sfx(SOLID.has(t) && t !== 1 && t !== 2 ? 200 : 120, .08, 'square', .07, -60);
     if (t === T.TRUNK) { let n = 1; for (let yy = y - 1; yy > y - 16; yy--) { if (at(x, yy) === T.TRUNK) { editTile(x, yy, T.AIR); n++; } else break; } for (let dx = -3; dx <= 3; dx++) for (let dy = -18; dy < 0; dy++) if (at(x + dx, y + dy) === T.LEAF || at(x + dx, y + dy) === T.SLEAF) editTile(x + dx, y + dy, T.AIR); dropItem('wood', x + .5, y, n * (axeCut ? 3 : 2)); if (R() < .3) dropItem('gel', x + .5, y - 2, 1); if (R() < .15) dropItem('mush', x + .5, y - 2, 1); return; }
     if (t === T.BHEART) { dropItem(pick(['gloomstaff', 'rotbow', 'gloomscale']), x + .5, y, 1); dropItem('scoin', x + .5, y, 3 + Math.floor(R() * 5)); if (isHost()) for (let k = 0; k < 3; k++) spawnEnemy('crawler', x + .5 + rnd(-4, 4), y); say('The Blight stirs...', 3, '#c87aff'); K.sfx(90, .5, 'sawtooth', .08, -40); K.shake(6); hearts++; if (hearts % 3 === 0 && isHost() && !ents.some(q => KIND[q.kind].boss)) setTimeout(() => summon('gloom', x - 14, y + 6), 1200); else if (hearts % 3 === 2) setTimeout(() => say('Something deep in the Blight is getting angry...', 4, '#c87aff'), 3200); return; }
-    if (t === T.POT && R() < .4) dropItem('ccoin', x + .5, y, Math.floor(rnd(15, 70) * (y > 100 ? 2.5 : 1)));
+    if (t === T.POT && R() < .4) dropItem('ccoin', x + .5, y, Math.floor(rnd(15, 70) * (y > DY(100) ? 2.5 : 1)));
     if (t === T.POT && R() < .03) { dropItem(R() < .12 ? 'lodestar' : 'homeshard', x + .5, y, 1); K.chime(660, [0, 7, 12]); return; }
-    if (t === T.POT) { const r = R(); dropItem(r < .3 ? 'potion' : r < .6 ? 'torch' : r < .8 ? (y > 100 ? 'shot' : 'arrow') : 'gel', x + .5, y, r < .3 ? 1 : 3 + Math.floor(R() * 8)); K.sfx(900, .08, 'square', .05); return; }
+    if (t === T.POT) { const r = R(); dropItem(r < .3 ? 'potion' : r < .6 ? 'torch' : r < .8 ? (y > DY(100) ? 'shot' : 'arrow') : 'gel', x + .5, y, r < .3 ? 1 : 3 + Math.floor(R() * 8)); K.sfx(900, .08, 'square', .05); return; }
     if ((t === T.DIRT || t === T.GRASS) && R() < .035) dropItem('worm', x + .5, y, 1); if ((t === T.GLOWCAP || t === T.GMOSS) && R() < .2) dropItem('glowgrub', x + .5, y, 1);
     if (DROP[t]) dropItem(DROP[t], x + .5, y + .3, 1);
     const up = at(x, y - 1); if ([T.TABLE, T.CHAIR, T.LANTERN, T.CAMPFIRE, T.BED, T.BOOKS, T.TORCH, T.BENCH, T.FURNACE, T.ANVIL, T.CRYSTAL, T.CHEST, T.GCHEST, T.MUSH, T.POT, T.DOOR, T.DOORO, T.GLOWCAP, T.BHEART, T.STARFORGE, T.RUNEANVIL].includes(up)) breakTile(x, y - 1);
@@ -2208,7 +2215,7 @@ const GAME = {
     const ox = A.x + A.w / 2 - mapC[0] * s, oy = A.y + A.h / 2 - mapC[1] * s, X = tx => ox + tx * s, Y = ty => oy + ty * s;
     g.save(); g.beginPath(); g.rect(A.x, A.y, A.w, A.h); g.clip(); g.imageSmoothingEnabled = false; g.drawImage(mapCv, ox, oy, WW * s, WH * s);
     // the layers, faintly marked down the left edge
-    for (const [ty, nm] of [[0, 'SKY'], [surf[clamp(Math.floor(mapC[0]), 0, WW - 1)] + 6, 'UNDERGROUND'], [110, 'CAVERNS'], [HELL, 'UNDERWORLD']]) { const yy = Y(ty); if (yy > A.y - 4 && yy < A.y + A.h - 10) { g.fillStyle = 'rgba(255,176,46,.25)'; g.fillRect(A.x, yy, A.w, 1); mtxt(g, nm, A.x + 8, yy + 10, 10, 'rgba(255,214,140,.8)'); } }
+    for (const [ty, nm] of [[0, 'SKY'], [surf[clamp(Math.floor(mapC[0]), 0, WW - 1)] + 6, 'UNDERGROUND'], [DY(110), 'CAVERNS'], [HELL, 'UNDERWORLD']]) { const yy = Y(ty); if (yy > A.y - 4 && yy < A.y + A.h - 10) { g.fillStyle = 'rgba(255,176,46,.25)'; g.fillRect(A.x, yy, A.w, 1); mtxt(g, nm, A.x + 8, yy + 10, 10, 'rgba(255,214,140,.8)'); } }
     // spawn point, other players, you
     const sp = P.spawn; if (sp) { const x = X(sp.x), y = Y(sp.y); g.fillStyle = '#5cf28a'; g.beginPath(); g.moveTo(x - 7, y - 4); g.lineTo(x, y - 11); g.lineTo(x + 7, y - 4); g.fill(); g.fillRect(x - 5, y - 4, 10, 7); g.strokeStyle = '#0a0614'; g.lineWidth = 1.5; g.strokeRect(x - 5, y - 4, 10, 7); }
     for (const [, o] of others) if (o.p && o.p.x != null) { const x = X(o.p.x), y = Y(o.p.y - 1.4); g.fillStyle = o.col || '#3ec5ff'; g.strokeStyle = '#0a0614'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, 6, 0, 7); g.fill(); g.stroke(); mtxt(g, o.name || 'Player', x, y - 14, 11, o.col || '#3ec5ff', 'center'); }
@@ -2329,8 +2336,8 @@ const GAME = {
   const unrle = (b, n) => { const a = new Uint8Array(n); let k = 0; for (let i = 0; i < b.length; i += 2) { a.fill(b[i + 1], k, k + b[i]); k += b[i]; } return a; };
   const b64 = a => { let s = ''; for (let i = 0; i < a.length; i += 8192) s += String.fromCharCode.apply(null, a.subarray(i, i + 8192)); return btoa(s); };
   const unb64 = s => { const b = atob(s), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; };
-  function packWorld() { return { lq: liq ? b64(rle(liq)) : null, lk: lqk ? b64(rle(lqk)) : null, ex: explored ? b64(rle(explored)) : null, ww: WW, t: b64(rle(tiles)), w: b64(rle(walls)), s: Array.from(surf), c: chests, np: npcs.map(n => ({ k: n.k, nm: n.nm, x: +n.x.toFixed(2), y: +n.y.toFixed(2), hp: Math.round(n.hp), h: n.house })), ng: npcGone, time, downed, jg: jungle, tp: temple, hm: hard, df: dfc, bd: [...brokenDeco], ra: radiant, hb: hearts, fr: frost, bl: blight, gl: glowc, sk: isles }; }
-  function unpackWorld(W) { WW = W.ww || 520; tiles = unrle(unb64(W.t), WW * WH); walls = unrle(unb64(W.w), WW * WH); surf = Int16Array.from(W.s); chests = W.c || {}; npcs = (W.np || []).filter(o => NPCS[o.k]).map(o => newNpc(o.k, o.nm, o.x, o.y, o.h || null, o.hp)); npcGone = W.ng || {}; npcT = 0; time = W.time || .05; downed = W.downed || {}; jungle = W.jg || null; temple = W.tp || null; hard = W.hm || 0; brokenDeco = new Set(W.bd || []); dfc = W.df == null ? 1 : W.df | 0; radiant = W.ra || null; hearts = W.hb || 0; frost = W.fr || null; blight = W.bl || null; glowc = W.gl || []; isles = W.sk || []; explored = W.ex ? unrle(unb64(W.ex), WW * WH) : new Uint8Array(WW * WH);
+  function packWorld() { return { lq: liq ? b64(rle(liq)) : null, lk: lqk ? b64(rle(lqk)) : null, ex: explored ? b64(rle(explored)) : null, ww: WW, wh: WH, t: b64(rle(tiles)), w: b64(rle(walls)), s: Array.from(surf), c: chests, np: npcs.map(n => ({ k: n.k, nm: n.nm, x: +n.x.toFixed(2), y: +n.y.toFixed(2), hp: Math.round(n.hp), h: n.house })), ng: npcGone, time, downed, jg: jungle, tp: temple, hm: hard, df: dfc, bd: [...brokenDeco], ra: radiant, hb: hearts, fr: frost, bl: blight, gl: glowc, sk: isles }; }
+  function unpackWorld(W) { WW = W.ww || 520; setDepth(W.wh || 210); tiles = unrle(unb64(W.t), WW * WH); walls = unrle(unb64(W.w), WW * WH); surf = Int16Array.from(W.s); chests = W.c || {}; npcs = (W.np || []).filter(o => NPCS[o.k]).map(o => newNpc(o.k, o.nm, o.x, o.y, o.h || null, o.hp)); npcGone = W.ng || {}; npcT = 0; time = W.time || .05; downed = W.downed || {}; jungle = W.jg || null; temple = W.tp || null; hard = W.hm || 0; brokenDeco = new Set(W.bd || []); dfc = W.df == null ? 1 : W.df | 0; radiant = W.ra || null; hearts = W.hb || 0; frost = W.fr || null; blight = W.bl || null; glowc = W.gl || []; isles = W.sk || []; explored = W.ex ? unrle(unb64(W.ex), WW * WH) : new Uint8Array(WW * WH);
     if (W.lq && W.lk) { liq = unrle(unb64(W.lq), WW * WH); lqk = unrle(unb64(W.lk), WW * WH); } else { liq = new Uint8Array(WW * WH); lqk = new Uint8Array(WW * WH); }
     for (let i = 0; i < tiles.length; i++) if (tiles[i] === T.WATER) { tiles[i] = T.AIR; liq[i] = 8; lqk[i] = 1; }   // worlds from before liquids flowed
   }
@@ -2632,7 +2639,7 @@ const GAME = {
     if (m.t === 'w' && mode === 'recv') { recv.parts[m.i] = m.d; recv.n = m.n; if (recv.parts.filter(Boolean).length === m.n) { unpackWorld(JSON.parse(recv.parts.join(''))); enterWorld(); say(`Welcome to ${recv.name}!`, 4, '#7aff7a'); } return; }
     if (mode !== 'play') return;
     const o = others.get(from);
-    if (m.t === 'p' && o) { if (m.lk) o.look = m.lk; o.p = o.p || { w: .8, h: 1.9 }; if (o.p.x == null) { o.p.x = m.x; o.p.y = m.y; } Object.assign(o.p, { tx: m.x, ty: m.y, vx: m.vx, vy: m.vy, ground: m.g }); o.face = m.f; o.sw = m.s; o.held = m.h; o.armor = m.a; o.dead = m.d; }
+    if (m.t === 'p' && o) { { const L = Array.isArray(m.mn) ? m.mn.filter(q => Array.isArray(q) && MINI[q[0]]) : []; o.mins = L.map((q, i) => { const prev = o.mins && o.mins[i] && o.mins[i].k === q[0] ? o.mins[i] : { k: q[0], x: q[1], y: q[2], t: Math.random() * 6, tr: [] }; prev.tx = q[1]; prev.ty = q[2]; prev.vx = q[3]; return prev; }); } if (m.lk) o.look = m.lk; o.p = o.p || { w: .8, h: 1.9 }; if (o.p.x == null) { o.p.x = m.x; o.p.y = m.y; } Object.assign(o.p, { tx: m.x, ty: m.y, vx: m.vx, vy: m.vy, ground: m.g }); o.face = m.f; o.sw = m.s; o.held = m.h; o.armor = m.a; o.dead = m.d; }
     else if (m.t === 'tl') set(m.x, m.y, m.v);
     else if (m.t === 'chest') chests[m.key] = [];
     else if (m.t === 'cs') chests[m.key] = m.c || [];
@@ -2714,7 +2721,7 @@ const GAME = {
     drops = drops.filter(d => !d.dead && d.t < 300);
     for (const [, o] of others) if (o.p && o.p.tx != null) { o.p.x += (o.p.tx - o.p.x) * Math.min(1, dt * 12); o.p.y += (o.p.ty - o.p.y) * Math.min(1, dt * 12); }
     if (online()) {
-      if ((sendT -= dt) <= 0) { sendT = .1; const s = cur(); MP.send({ t: 'p', lk: look, x: +P.x.toFixed(2), y: +P.y.toFixed(2), vx: +P.vx.toFixed(1), vy: +P.vy.toFixed(1), g: P.ground, f: P.face, s: P.swing > 0 ? +P.swing.toFixed(2) : 0, h: s && s.id, a: gear(), d: !!dead }); }
+      if ((sendT -= dt) <= 0) { sendT = .1; const s = cur(); MP.send({ t: 'p', lk: look, x: +P.x.toFixed(2), y: +P.y.toFixed(2), vx: +P.vx.toFixed(1), vy: +P.vy.toFixed(1), g: P.ground, f: P.face, s: P.swing > 0 ? +P.swing.toFixed(2) : 0, h: s && s.id, a: gear(), d: !!dead, mn: minions.length ? minions.map(m => [m.k, +m.x.toFixed(1), +m.y.toFixed(1), m.vx < 0 ? -1 : 1]) : 0 }); }
       if (isHost() && (eSendT -= dt) <= 0) { eSendT = .12; if (npcs.length) MP.send({ t: 'np', l: npcs.map(n => [n.id, n.k, n.nm, +n.x.toFixed(2), +n.y.toFixed(2), n.face, Math.round(n.hp), n.max]) }); MP.send({ t: 'e', time, l: ents.slice(0, 40).map(e => [e.id, e.kind, +e.x.toFixed(2), +e.y.toFixed(2), Math.round(e.hp), Math.round(e.max), e.rage ? 1 : 0]) }); }
     }
     const tx = P.x * TS - 640, ty = (P.y - 1.4) * TS - 380; cam.x += (tx - cam.x) * Math.min(1, dt * 10); cam.y += (ty - cam.y) * Math.min(1, dt * 10);
