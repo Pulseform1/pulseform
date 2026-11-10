@@ -8,7 +8,7 @@ const GAME = {
   how: [
     'Drag from anywhere to aim (direction and distance set the angle and power), let go to fire. Keyboard: arrows aim, Space fires, 1 2 3 pick a shell.',
     'Each building hides a glowing core. Break or melt 90% of it to clear the level. Fewer shells means more stars and coins.',
-    'Every shell has a soft copper jacket around a hard rod: the jacket melts away first, then the rod bores in a few pixels and the wall bends around it. Keep hitting the same spot to break through. In the Workshop, a heavy casing and a hard nose reach deeper, delay fuses go off inside, thermite melts, a liner fires a jet.',
+    'Every shell has a soft copper jacket around a hard rod: the jacket shreds first, then the rod bores in, chipping away until it shatters, and the wall bends around it. Keep hitting the same spot to break through. In the Workshop, a heavy casing and a hard nose reach deeper, delay fuses go off inside, thermite melts, a liner fires a jet.',
     'Unsupported floors fall, and a falling building crushes what is below it. Knock out the base and let gravity do the work.',
   ],
   skins: [{ name: 'Range', price: 0 }],
@@ -98,7 +98,7 @@ const GAME = {
     const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L; const px = -dy, py = dx; let last = -1, gone = 0;
     for (let s = 0; s < len && budget > 0; s += .5) {
       const cx = x + dx * s, cy = y + dy * s, i = idx(Math.floor(cx), Math.floor(cy)); if (!inb(Math.floor(cx), Math.floor(cy))) break;
-      if (i !== last) { last = i; const m = mat[i]; if (m && m !== BED) { const c = Math.pow(Math.min(hp[i], 60), .72) * .55; if (budget < c) { hurt(i, budget * 1.8); heat[i] += 400; break; } budget -= c; destroy(i, dx * 90, dy * 90); gone++; for (const sd of [-1, 1]) { const j = idx(Math.floor(cx + px * sd), Math.floor(cy + py * sd)); if (inb(Math.floor(cx + px * sd), Math.floor(cy + py * sd)) && mat[j] && mat[j] !== BED) { heat[j] += 380; if (R() < .45 && budget > 1) { budget -= .4; destroy(j, dx * 60 + px * sd * 20, dy * 60 + py * sd * 20); } } } if (R() < .4) debris(cx, cy, dx * 50 + (R() - .5) * 30, dy * 50 + (R() - .5) * 30, rgb(255, 170, 80), 1, 800); } }
+      if (i !== last) { last = i; const m = mat[i]; if (m && m !== BED) { const c = Math.pow(Math.min(hp[i], 60), .72) * .55; if (budget < c) { hurt(i, budget * 1.8); heat[i] = Math.min(heat[i] + 400, (M[mat[i]].melt || 900) * .9); break; } budget -= c; destroy(i, dx * 90, dy * 90); gone++; for (const sd of [-1, 1]) { const j = idx(Math.floor(cx + px * sd), Math.floor(cy + py * sd)); if (inb(Math.floor(cx + px * sd), Math.floor(cy + py * sd)) && mat[j] && mat[j] !== BED) { heat[j] = Math.min(heat[j] + 380, (M[mat[j]].melt || 900) * .9); if (R() < .45 && budget > 1) { budget -= .4; destroy(j, dx * 60 + px * sd * 20, dy * 60 + py * sd * 20); } } } if (R() < .4) debris(cx, cy, dx * 50 + (R() - .5) * 30, dy * 50 + (R() - .5) * 30, rgb(220, 130, 60), 0); } }
       if (s % 3 < .5) spark(cx, cy, 1, 40, '#ffe0a0');
     }
     fx.push({ k: 'j', x, y, x2: x + dx * Math.min(len, 40 + gone), y2: y + dy * Math.min(len, 40 + gone), t: 0, l: .22 });
@@ -159,7 +159,7 @@ const GAME = {
     { n: 'Corner Office', hint: 'Concrete floors. Hit the floor the core sits on.', par: 3, reward: 240 },
     { n: 'Timber Fort', hint: 'Wood splinters and chars. Blast it apart.', par: 4, reward: 300 },
     { n: 'Water Tower', hint: 'Knock out a leg and it all comes down.', par: 3, reward: 360 },
-    { n: 'Glass Tower', hint: 'Take out the base and let gravity work.', par: 4, reward: 420 },
+    { n: 'Glass Tower', hint: 'Take out the base and let gravity work.', par: 5, reward: 420 },
     { n: 'Hill Bunker', hint: 'Thick concrete: a pointed nose and a delay fuse.', par: 3, reward: 500 },
     { n: 'Container Stack', hint: 'Steel boxes. Find the one with the glow.', par: 4, reward: 580 },
     { n: 'Steel Vault', hint: 'Steel shrugs off blasts. Melt it or jet it.', par: 4, reward: 660 },
@@ -217,7 +217,7 @@ const GAME = {
       () => { ground(); house(184, 62, 5, 17, CONC, CONC, { cols: 2, furn: 1 }); rect(184, GY - 88, 62, 3, CONC); rect(200, GY - 96, 10, 8, STEEL); core(222, floorY(2, 17) - 6, 5); },
       () => { ground(); rect(170, GY - 38, 6, 38, WOOD); rect(266, GY - 38, 6, 38, WOOD); for (const x of [170, 266]) { rect(x, GY - 43, 2, 5, WOOD); rect(x + 4, GY - 43, 2, 5, WOOD); } rect(170, GY - 26, 102, 3, WOOD); house(196, 46, 1, 24, WOOD, WOOD, { t: 4, win: false }); roof(193, GY - 25, 52, WOOD); core(219, floorY(0) - 6.5, 6); house(276, 18, 3, 16, WOOD, WOOD, { t: 3, win: false }); },
       () => { ground(); for (const x of [200, 238]) rect(x, GY - 60, 4, 60, STEEL); for (let k = 0; k < 3; k++) { const y = GY - 18 - k * 18; for (let s = 0; s < 38; s++) set(200 + s, y + Math.round(s * .45) % 18, STEEL); rect(200, y, 42, 2, STEEL); } rect(194, GY - 64, 54, 4, STEEL); rect(196, GY - 96, 50, 32, STEEL); rect(200, GY - 92, 42, 26, E); roof(194, GY - 97, 54, STEEL); core(221, GY - 72, 6); rect(212, GY - 66, 18, 2, STEEL); },
-      () => { ground(); const top = house(198, 46, 9, 13, CONC, CONC, { t: 2, slab: 2, furn: 1 }); rect(198, top - 3, 46, 3, CONC); core(221, floorY(8, 13) - 6, 5); rect(202, GY - 11, 38, 9, E); for (const x of [202, 214, 226, 238]) rect(x, GY - 11, 2, 11, CONC); },
+      () => { ground(); const top = house(198, 46, 9, 13, CONC, CONC, { t: 2, slab: 2, furn: 1 }); rect(198, top - 3, 46, 3, CONC); core(207, floorY(8, 13) - 6, 5); rect(202, GY - 11, 38, 9, E); for (const x of [202, 214, 226, 238]) rect(x, GY - 11, 2, 11, CONC); },
       () => { ground(x => x > 168 && x < 284 ? Math.round(GY - 18 * Math.sin((x - 168) / 116 * Math.PI)) : GY); halfDisc(226, GY - 4, 28, CONC, 19); rect(204, GY - 4, 44, 3, CONC); core(226, GY - 11, 6); },
       () => { ground(); const box = (x, y, w, h, c) => { rect(x, y, w, h, STEEL); rect(x + 2, y + 2, w - 4, h - 4, E); if (c) core(x + w / 2, y + h - 2 - 5.5, 5); }; box(184, GY - 16, 40, 16); box(226, GY - 16, 40, 16); box(268, GY - 16, 40, 16); box(196, GY - 32, 40, 16); box(240, GY - 32, 40, 16, 1); box(218, GY - 48, 40, 16); box(204, GY - 64, 30, 16); },
       () => { ground(); rect(184, GY - 8, 80, 8, CONC); rect(192, GY - 50, 64, 42, STEEL); rect(197, GY - 45, 54, 32, E); core(224, GY - 21, 7); rect(186, GY - 53, 76, 3, STEEL); rect(214, GY - 14, 20, 6, STEEL); },
@@ -236,7 +236,7 @@ const GAME = {
       () => { ground(x => x > 160 && x < 300 ? Math.round(GY - 22 * Math.sin((x - 160) / 140 * Math.PI)) : GY); rect(204, GY - 2, 48, 5, CONC); rect(206, GY + 6, 44, 5, CONC); rect(210, GY + 11, 36, 12, E); core(228, GY + 17, 5.5); },
       () => { ground(x => x > 170 && x < 290 ? Math.round(GY - 14 * Math.sin((x - 170) / 120 * Math.PI)) : GY); rect(198, GY - 34, 60, 34, CONC); rect(204, GY - 28, 48, 24, LEAD); rect(210, GY - 23, 36, 16, E); core(228, GY - 15, 6); },
       () => { ground(); house(176, 128, 4, 18, STEEL, STEEL, { t: 3, cols: 4 }); rect(176, GY - 75, 128, 3, STEEL); core(192, floorY(0) - 6, 4.5); core(240, floorY(2, 18) - 6, 4.5); core(288, floorY(1, 18) - 6, 4.5); for (const x of [200, 260]) { rect(x, GY - 14, 10, 14, BRICK); rect(x + 2, GY - 12, 6, 10, E); } },
-      () => { ground(x => x > 170 ? GY - 10 : GY); const b = GY - 10; rect(172, b, 140, 10, STONE); house(198, 16, 4, 14, BRICK, CONC); house(290, 16, 4, 14, BRICK, CONC); rect(220, b - 42, 60, 42, STONE); rect(226, b - 38, 48, 34, E); rect(220, b - 42, 60, 4, CONC); rect(228, b - 104, 44, 62, STEEL); rect(232, b - 100, 36, 54, E); disc(250, b - 72, 14, LEAD, 10); rect(232, b - 73, 36, 3, STEEL); core(250, b - 72, 6.5); rect(224, b - 108, 52, 4, STONE); roof(228, b - 109, 44, BRICK); for (let k = 0; k < 2; k++) rect(240 + k * 14, b - 46, 3, 8, STEEL); },
+      () => { ground(x => x > 170 ? GY - 10 : GY); const b = GY - 10; rect(172, b, 140, 10, STONE); house(198, 16, 4, 14, BRICK, CONC); house(290, 16, 4, 14, BRICK, CONC); rect(220, b - 42, 60, 42, STONE); rect(226, b - 38, 48, 34, E); rect(220, b - 42, 60, 4, CONC); rect(228, b - 104, 44, 62, STEEL); rect(230, b - 100, 40, 54, E); disc(250, b - 72, 13, LEAD, 11); rect(230, b - 60, 40, 3, STEEL); core(250, b - 72, 6.5); rect(224, b - 108, 52, 4, STONE); roof(228, b - 109, 44, BRICK); for (let k = 0; k < 2; k++) rect(240 + k * 14, b - 46, 3, 8, STEEL); },
     ];
     B[n]();
     support(); bodies.length = 0;   // tidy any stray piece the builder left floating
@@ -323,7 +323,7 @@ const GAME = {
             if (heat[i] > mm.melt) {
               if (mm.burns) { const [r, gg, b] = unpack(col[i]); heat[i] = 0; if (r + gg + b < 150) continue; const k = .5; col[i] = rgb(r * k | 0, gg * k * .9 | 0, b * k * .8 | 0); hp[i] = Math.max(.6, hp[i] * .6); if (R() < .5 && fx.length < 600) fx.push({ k: 'f', x: x + .5, y: y + .5, vx: (R() - .5) * 4, vy: -8 - R() * 6, t: 0, l: .5 + R() * .7 }); if (R() < .3) smoke(x, y, 1, .7); continue; }
               mat[i] = m === CORE ? CMOLT : MOLT; hp[i] = 1; heat[i] = Math.max(heat[i], m === CORE ? 470 : 600); dirty = true; if (m === CORE && R() < .2) spark(x + .5, y + .5, 2, 25, '#ff6a8a');
-            } else { if (!mm.burns && heat[i] > mm.melt * .8 && y < GH - 1 && !mat[i + GW] && R() < .006) debris(x + .5, y + 1, (R() - .5) * 4, 2, rgb(255, 170, 60), 1, heat[i] * .9); heat[i] = Math.max(0, heat[i] - (mm.burns ? 14 : heat[i] > mm.melt * .7 ? 70 : 26) * dt); if (mm.burns && heat[i] > mm.melt * .55 && R() < .04 && fx.length < 600) fx.push({ k: 'f', x: x + .5, y: y + .5, vx: 0, vy: -6, t: 0, l: .4 }); }
+            } else { heat[i] = Math.max(0, heat[i] - (mm.burns ? 14 : heat[i] > mm.melt * .7 ? 70 : 26) * dt); if (mm.burns && heat[i] > mm.melt * .55 && R() < .04 && fx.length < 600) fx.push({ k: 'f', x: x + .5, y: y + .5, vx: 0, vy: -6, t: 0, l: .4 }); }
           }
         }
         // loose stuff falls and slides; liquids also run sideways
@@ -367,7 +367,7 @@ const GAME = {
     K.sfx(90, .35, 'sawtooth', .12, -50); K.noise(.3, .3, 400); smoke(mx, my, 8, 1.1, 'rgba(200,190,170,'); spark(mx, my, 10, 60); K.shake(6);
   }
   function detonate(s, x, y) {
-    s.live = false; const S = s.S, f = S.f, q = S.q, dx = s.vx, dy = s.vy, sp = Math.hypot(dx, dy) || 1;
+    s.live = false; const S = s.S, f = S.f, q = S.q, slow = Math.hypot(s.vx, s.vy) < 4, dx = slow && s.ux != null ? s.ux * 60 : s.vx, dy = slow && s.uy != null ? s.uy * 60 : s.vy, sp = Math.hypot(dx, dy) || 1;
     if (s.small) { blast(x, y, 4.2 * q, 5 * q); return; }
     if (S.jet > 0) jet(x - dx / sp * 2, y - dy / sp * 2, dx, dy, 34 + 34 * S.jet, 26 * S.jet);
     if (f.blast > 0) blast(x, y, (3 + 4 * f.blast) * Math.sqrt(q) * S.n.splash, 10 * f.blast * q * S.n.splash, { heat: f.heat ? 500 : 0 });
@@ -377,12 +377,12 @@ const GAME = {
     if (!f.blast && !S.jet) { spark(x, y, 12, 50); K.noise(.15, .2, 900); dirty = true; }
   }
   const cam = { shk: 0, freeze: 0, on: false, x: 160, y: 90, z: 1, tz: 1, ts: 1, tts: 1, s: null, rel: 0, layers: [], hx: 0, hy: 0 };
-  function camStart(s, hx, hy) { Object.assign(cam, { on: true, s, rel: 0, layers: [], tz: 3.4, tts: .14, hx, hy, note: '', noteT: 0 }); }
+  function camStart(s, hx, hy) { Object.assign(cam, { on: true, s, rel: 0, layers: [], tz: 3.4, tts: .26, hx, hy, note: '', noteT: 0 }); }
   function camEnd() { cam.on = false; cam.s = null; cam.tz = 1; cam.tts = 1; }
   function stepCam(dt) {
     if (cam.on) {
       if (cam.s && cam.s.live) { cam.hx = lp(cam.hx, cam.s.x, 1 - Math.exp(-dt * 6)); cam.hy = lp(cam.hy, cam.s.y, 1 - Math.exp(-dt * 6)); }
-      else { cam.rel += dt; cam.tts = .45; if (cam.rel > 1.1) camEnd(); }
+      else { cam.rel += dt; cam.tts = .5; if (cam.rel > .75) camEnd(); }
     }
     cam.shk = Math.max(0, cam.shk - dt * 30); if (cam.noteT > 0) cam.noteT -= dt;
     cam.z = lp(cam.z, cam.tz, 1 - Math.exp(-dt * (cam.tz > cam.z ? 7 : 4))); cam.ts = lp(cam.ts, cam.tts, 1 - Math.exp(-dt * 10));
@@ -394,7 +394,7 @@ const GAME = {
     const ax = Math.abs(vx) >= Math.abs(vy) ? Math.sign(vx) : 0, ay = ax ? 0 : Math.sign(vy) || 1;
     dents.push({ x: Math.floor(x), y: Math.floor(y), ax, ay, r: Math.round(3 + str * 2), str, k: 0, f: 0 });
   }
-  function moveCell(a, b) { mat[b] = mat[a]; col[b] = col[a]; hp[b] = hp[a]; heat[b] = heat[a] + 40; mat[a] = E; col[a] = 0; hp[a] = 0; heat[a] = 0; }
+  function moveCell(a, b) { mat[b] = mat[a]; col[b] = col[a]; hp[b] = hp[a]; heat[b] = Math.min(heat[a] + 40, (M[mat[a]].melt || 900) * .9); mat[a] = E; col[a] = 0; hp[a] = 0; heat[a] = 0; }
   function stepDents() {
     for (let n = dents.length - 1; n >= 0; n--) {
       const d = dents[n]; if (d.f++ % 2) continue; d.k++; if (d.k > Math.ceil(d.str)) { dents.splice(n, 1); continue; }
@@ -411,12 +411,18 @@ const GAME = {
   }
   function jacketGone(s) {
     if (s.jkDone) return; s.jkDone = true; s.jk = 0; s.Ejk = Math.max(.5, s.E); s.rod = 1;
-    for (let q = 0; q < 26; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 2.6, v = 18 + R() * 50; debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v - 8, rgb(240, 140 + rint(0, 60), 60), 1, 600); }
-    streak(s.x, s.y, 46, 0, TAU, 110); K.sfx(520, .25, 'triangle', .05, -240);
-    if (cam.s === s) { cam.note = `COPPER JACKET STRIPPED · ${{ steel: 'STEEL CORE', alu: 'ALLOY CORE', tung: 'TUNGSTEN ROD' }[s.d.casing]} EXPOSED`; cam.noteT = 2.2; cam.freeze = .04; }
+    for (let q = 0; q < 22; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 2.6, v = 18 + R() * 50; debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v - 8, rgb(200 + rint(0, 40), 110 + rint(0, 30), 50), 0); }
+    streak(s.x, s.y, 40, 0, TAU, 110); K.sfx(520, .2, 'square', .04, -240); K.noise(.12, .1, 2600);
+    if (cam.s === s) { cam.note = `COPPER JACKET SHREDDED · ${{ steel: 'STEEL CORE', alu: 'ALLOY CORE', tung: 'TUNGSTEN ROD' }[s.d.casing]} EXPOSED`; cam.noteT = 2; }
   }
   // a shell that can go no further stays stuck in the wall a moment: the rest of its jacket melts off, then any charge goes off
-  function stall(s) { if (s.stuck != null) return; s.stuck = 1.15; if (s.jk == null) s.jk = 1; s.stuckFire = s.S.f.blast > 0 || s.S.jet > 0; }
+  function stall(s) {   // the shell can go no further: it shatters into fragments and sparks, then any charge goes off
+    if (!s.live) return; const rc = { steel: [154, 166, 180], alu: [208, 214, 222], tung: [92, 98, 110] }[s.d.casing], ux = s.ux ?? 1, uy = s.uy ?? 0, fwd = Math.atan2(uy, ux);
+    for (let q = 0; q < 14; q++) { const aa = fwd + Math.PI + (R() - .5) * 2.8, v = 20 + R() * 60; debris(s.x - ux, s.y - uy, Math.cos(aa) * v, Math.sin(aa) * v - 10, rgb(rc[0] + rint(-15, 35), rc[1] + rint(-15, 35), rc[2] + rint(-15, 35)), 0); }
+    if (!s.jkDone) for (let q = 0; q < 10; q++) { const aa = fwd + Math.PI + (R() - .5) * 3, v = 16 + R() * 50; debris(s.x - ux, s.y - uy, Math.cos(aa) * v, Math.sin(aa) * v - 10, rgb(200 + rint(0, 40), 110 + rint(0, 30), 50), 0); }
+    streak(s.x, s.y, 34, fwd + Math.PI, 3.2, 120); fx.push({ k: 'w', x: s.x, y: s.y, r: 0, t: 0, l: .35 }); K.noise(.18, .16, 2200); K.sfx(1400, .08, 'square', .03, -900); if (cam.s === s) cam.shk = 3;
+    if (s.S.f.blast > 0 || s.S.jet > 0) detonate(s, s.x - ux, s.y - uy); else s.live = false;
+  }
   function stepShells(dt) {
     for (let k = shells.length - 1; k >= 0; k--) {
       const s = shells[k];
@@ -446,7 +452,7 @@ const GAME = {
         if (S.u.air && !s.small) { const sp = Math.hypot(s.vx, s.vy); for (let a = 2; a <= 6; a += 2) { const ax = Math.floor(s.x + s.vx / sp * a), ay = Math.floor(s.y + s.vy / sp * a); if (inb(ax, ay) && isStatic(mat[idx(ax, ay)])) { detonate(s, s.x, s.y); break; } } if (!s.live) break; }
         if (!s.small && !s.cammed) { const sp = Math.hypot(s.vx, s.vy) || 1; for (let a = 0; a <= 16; a += 1) { const ax = Math.floor(s.x + s.vx / sp * a), ay = Math.floor(s.y + s.vy / sp * a); if (inb(ax, ay) && isStatic(mat[idx(ax, ay)])) { s.cammed = true; if (!cam.on) camStart(s, s.x + s.vx / sp * a * .6, s.y + s.vy / sp * a * .6); break; } } }
         const i = idx(x, y), m = mat[i];
-        if ((!m || isLiquid(m)) && s.inside && !s.small) { s.inside = false; const sp = Math.hypot(s.vx, s.vy) || 1, base = s.lastM || STEEL; for (let q = 0; q < 16; q++) { const aa = Math.atan2(s.vy, s.vx) + (R() - .5) * .9, v = sp * (.2 + R() * .35); if (R() < .6) debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v, rgb(255, 160 + rint(0, 60), 60), 1, 540); else debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v, tone(base, x, y), 0); } streak(s.x, s.y, 18, Math.atan2(s.vy, s.vx), 1.3, 90); if (cam.s === s) cam.shk = 2; K.noise(.1, .08, 1400); }
+        if ((!m || isLiquid(m)) && s.inside && !s.small) { s.inside = false; const sp = Math.hypot(s.vx, s.vy) || 1, base = s.lastM || STEEL; for (let q = 0; q < 16; q++) { const aa = Math.atan2(s.vy, s.vx) + (R() - .5) * .9, v = sp * (.2 + R() * .35); debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v, tone(base, x, y), 0); } streak(s.x, s.y, 18, Math.atan2(s.vy, s.vx), 1.3, 90); if (cam.s === s) cam.shk = 2; K.noise(.1, .08, 1400); }
         if (!m || isLiquid(m)) continue;
         if (s.small) { detonate(s, ox, oy); break; }
         const fuse = S.u, delay = fuse.delay || 0;
@@ -459,17 +465,15 @@ const GAME = {
           { const c0 = col[i], mm = m; mat[i] = E; hp[i] = 0; heat[i] = 0; col[i] = 0; dirty = true;
             if (mm === GLASS) debris(x + .5, y + .5, (R() - .5) * 30, -R() * 20, c0, 2);
             else if (M[mm].burns) { debris(x + .5, y + .5, -s.vx * .08 + (R() - .5) * 40, -s.vy * .08 - R() * 26, c0, 0); if (R() < .5) debris(x + .5, y + .5, (R() - .5) * 50, -R() * 30, c0, 0); }
-            else if (R() < .7) { const hot = mm === CORE ? 3 : 1; debris(x + .5, y + .5, -s.vx * .06 + (R() - .5) * 26, -s.vy * .06 - R() * 14, mm === CORE ? rgb(255, 90, 120) : rgb(255, 150 + rint(0, 70), 50), hot, 380 + R() * 130); }
-            else debris(x + .5, y + .5, -s.vx * .1 + (R() - .5) * 40, -s.vy * .1 - R() * 30, c0, 0); }
-          if (s.jkDone) {   // the bare rod melts from the tip as it pushes on
+            else debris(x + .5, y + .5, -s.vx * .1 + (R() - .5) * 40, -s.vy * .1 - R() * 30, c0, 0); if (R() < .6) debris(x + .5, y + .5, (R() - .5) * 46, -R() * 34, c0, 0); }
+          if (s.jkDone) {   // the bare rod chips away at the tip as it pushes on
             s.rod = cl(Math.min(s.rod, .18 + .82 * s.E / s.Ejk), .18, 1); const rc = { steel: [154, 166, 180], alu: [208, 214, 222], tung: [92, 98, 110] }[s.d.casing];
-            for (let q = 0; q < 2; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 2.2, v = 12 + R() * 34; debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v - 6, rgb(255, 200 + rint(0, 40), 140), 1, 640); }
-            if (R() < .5) debris(s.x, s.y, (R() - .5) * 20, 4, rgb(rc[0] + 60, rc[1] + 40, rc[2] + 20), 1, 560);
+            for (let q = 0; q < 2; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 2.2, v = 14 + R() * 40; debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v - 6, rgb(rc[0] + rint(-10, 30), rc[1] + rint(-10, 30), rc[2] + rint(-10, 30)), 0); }
           }
           if (s.jk > 0) {
             s.jk -= Math.min(M[m].hp, 40) / s.jkHP * .09 + .004; s.jk = Math.min(s.jk, 1 - (s.E0 - s.E) / (s.E0 * .85));
-            for (let q = 0; q < 2; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 1.8, v = 14 + R() * 34; debris(s.x - s.vx * .004, s.y - s.vy * .004, Math.cos(aa) * v, Math.sin(aa) * v - 6, rgb(235, 130 + rint(0, 40), 60), 1, 560); }
-            if (s.jk <= 0) { jacketGone(s); } if (false) { for (let q = 0; q < 26; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 2.6, v = 18 + R() * 50; debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v - 8, rgb(240, 140 + rint(0, 60), 60), 1, 600); } streak(s.x, s.y, 46, 0, TAU, 110); spark(s.x, s.y, 10, 60, '#ffb070'); K.sfx(520, .25, 'triangle', .05, -240); if (cam.s === s) { cam.note = `COPPER JACKET STRIPPED · ${{ steel: 'STEEL CORE', alu: 'ALLOY CORE', tung: 'TUNGSTEN ROD' }[s.d.casing]} EXPOSED`; cam.noteT = 2.2; cam.freeze = .04; } }
+            for (let q = 0; q < 2; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 1.8, v = 14 + R() * 34; debris(s.x - s.vx * .004, s.y - s.vy * .004, Math.cos(aa) * v, Math.sin(aa) * v - 6, rgb(200 + rint(0, 40), 110 + rint(0, 30), 50), 0); }
+            if (s.jk <= 0) jacketGone(s);
           }
           { const hk = Math.min(1.3, .35 + M[m].hp / 10); for (let yy = -3; yy <= 3; yy++) for (let xx = -3; xx <= 3; xx++) { const d = Math.hypot(xx, yy); if (d > 3.2) continue; const nx = x + xx, ny = y + yy; if (inb(nx, ny)) { const j = idx(nx, ny); if (mat[j] && !isLiquid(mat[j]) && mat[j] !== BED) heat[j] = Math.min(heat[j] + 330 * hk * (1 - d / 3.6), Math.max(heat[j], (M[mat[j]].melt || 900) * .92)); } } }
           if (R() < .55) { const cc = { steel: rgb(150, 160, 175), alu: rgb(205, 212, 220), tung: rgb(90, 94, 106) }[s.d.casing]; debris(s.x, s.y, -s.vx * .08 + (R() - .5) * 40, -s.vy * .08 - 10 - R() * 25, cc, 0); }
@@ -477,7 +481,7 @@ const GAME = {
           const first = s.pen === 1, solidL = m !== RUB && m !== SLAG, newLayer = solidL && s.lastM !== m; if (solidL) s.lastM = m; s.inside = true;
           if (cam.on && cam.s === s && newLayer) { cam.layers.push(m); if (cam.layers.length > 6) cam.layers.shift(); }
           if (newLayer) queueDent(x, y, s.vx, s.vy, cl(s.E / (M[m].hp * .22 + 1.5), 1.2, 5));
-          if (newLayer && cam.s === s) { cam.freeze = first ? .03 : 0; cam.shk = first ? 2.5 : 1.5; if (first) fx.push({ k: 'w', x: s.x, y: s.y, r: 0, t: 0, l: .45 }); }
+          if (newLayer && cam.s === s) { cam.shk = first ? 2.5 : 1.5; if (first) fx.push({ k: 'w', x: s.x, y: s.y, r: 0, t: 0, l: .45 }); }
           { const mc = unpack(tone(m, x, y)), cc = `rgb(${mc[0]},${mc[1]},${mc[2]})`; for (let q = 0; q < 7 && fx.length < 1200; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 1.6, sp = 15 + R() * 55; fx.push({ k: 'c', x: s.x, y: s.y, vx: Math.cos(aa) * sp, vy: Math.sin(aa) * sp - 10, t: 0, l: .5 + R() * .6, c: cc }); } }
           if (t - (s.snd || 0) > .05) { s.snd = t; const hd = M[m].hp; if (hd >= 10) { K.sfx(900 + R() * 500, .06, 'square', .035, -300); K.noise(.05, .06, 2500); } else if (m === GLASS) K.sfx(2400 + R() * 800, .05, 'triangle', .04); else K.noise(.08, .09, 300 + hd * 60); }
           const sp = Math.hypot(s.vx, s.vy), nv = Math.sqrt(Math.max(0, s.E) / (S.mass * 22)) * 100, k = sp > 0 ? nv / sp : 0; s.vx *= k; s.vy *= k;
@@ -655,7 +659,7 @@ const GAME = {
       let c = col[i];
       if (isLiquid(m)) { const [r, gg, b] = hotCol(heat[i], m === CMOLT); c = rgb(r, gg | 0, b | 0); }
       else if (heat[i] > 50 && M[m].burns) { const k = cl(heat[i] / M[m].melt, 0, 1), [r, gg, b] = unpack(c), e = (i * 7 + (t * 8 | 0)) % 5 === 0 ? k : k * .35; c = rgb(lp(r, 255, e) | 0, lp(gg, 110, e) | 0, lp(b, 30, e) | 0, 255); }
-      else if (heat[i] > 50) { const k = cl((heat[i] - 50) / 650, 0, 1), [r, gg, b] = unpack(c), hc = k < .35 ? [lp(150, 210, k / .35), lp(60, 70, k / .35), lp(190, 170, k / .35)] : k < .7 ? [lp(210, 255, (k - .35) / .35), lp(70, 140, (k - .35) / .35), lp(170, 40, (k - .35) / .35)] : [255, lp(140, 240, (k - .7) / .3), lp(40, 190, (k - .7) / .3)], a = cl(.35 + k * .9, 0, 1); c = rgb(lp(r, hc[0], a) | 0, lp(gg, hc[1], a) | 0, lp(b, hc[2], a) | 0, 255); }
+      else if (heat[i] > 50) { const k = cl((heat[i] - 50) / 650, 0, .66), [r, gg, b] = unpack(c), hc = k < .35 ? [lp(150, 210, k / .35), lp(60, 70, k / .35), lp(190, 170, k / .35)] : k < .7 ? [lp(210, 255, (k - .35) / .35), lp(70, 140, (k - .35) / .35), lp(170, 40, (k - .35) / .35)] : [255, lp(140, 240, (k - .7) / .3), lp(40, 190, (k - .7) / .3)], a = cl(.35 + k * .9, 0, 1); c = rgb(lp(r, hc[0], a) | 0, lp(gg, hc[1], a) | 0, lp(b, hc[2], a) | 0, 255); }
       else if (m === CORE) { const [r, gg, b] = unpack(c); c = rgb(r, cl(gg * pulse + 20 * (1 - pulse), 0, 255) | 0, b); }
       d32[i] = c;
       const glow = isLiquid(m) ? .62 : m === CORE ? .55 * pulse : heat[i] > 160 ? cl((heat[i] - 160) / 900, 0, .6) : 0;
@@ -758,14 +762,13 @@ const GAME = {
       g.fillStyle = `rgba(216,122,58,${(.28 + .12 * jk).toFixed(2)})`; g.beginPath(); g.moveTo(tail, -jh); g.lineTo(front, -jh); g.lineTo(front, jh); g.lineTo(tail, jh); g.closePath(); g.fill();
       g.strokeStyle = 'rgba(240,150,80,.95)'; g.lineWidth = 1.1; g.beginPath(); g.moveTo(tail, -jh); g.lineTo(front, -jh); g.moveTo(tail, jh); g.lineTo(front, jh); g.stroke();
       g.strokeStyle = 'rgba(255,255,255,.25)'; g.lineWidth = .6; for (let x = tail + 4; x < front - 2; x += 5) { g.beginPath(); g.moveTo(x, -jh); g.lineTo(x + 3, -jh + 2); g.stroke(); }
-      if (s.pen > 0) {   // the molten lip where the jacket is melting
-        g.save(); g.globalCompositeOperation = 'lighter';
-        for (let y = -jh; y <= jh; y += 1.2) { const j = Math.sin(y * 3.1 + t * 40) * 1.4 + (R() - .5) * 1.2; g.fillStyle = `rgba(255,${(170 + R() * 80) | 0},${(70 + R() * 60) | 0},.9)`; g.fillRect(front - 2 + j, y - .6, 2.4, 1.2); }
-        const lg = g.createRadialGradient(front, 0, 0, front, 0, jh * 1.8); lg.addColorStop(0, 'rgba(255,220,140,.55)'); lg.addColorStop(1, 'rgba(255,120,40,0)'); g.fillStyle = lg; g.fillRect(front - jh * 2, -jh * 2, jh * 4, jh * 4); g.restore();
+      if (s.pen > 0) {   // the torn front edge of the jacket, peeling back
+        for (let y = -jh; y <= jh; y += 1.2) { const j = ((Math.floor(y * 3.7) * 7919) % 5 + 5) % 5 * .6; g.fillStyle = (Math.floor(y * 2) % 2) ? '#f0a060' : '#c8682e'; g.fillRect(front - 2 - j, y - .6, 2 + j, 1.2); }
+        g.fillStyle = '#e8904a'; g.save(); g.translate(front - 1, -jh); g.rotate(-.7); g.fillRect(0, -1.2, 4, 1.2); g.restore(); g.save(); g.translate(front - 1, jh); g.rotate(.7); g.fillRect(0, 0, 4, 1.2); g.restore();
       }
       g.fillStyle = '#b8642c'; g.fillRect(tail + 2, -jh - .6, 3, jh * 2 + 1.2);   // driving band
     }
-    if (s.jkDone) { const mr = 2.6 + (1 - rodK) * 3.2; g.fillStyle = 'rgb(255,190,110)'; g.beginPath(); g.ellipse(tip - 1, 0, mr * .7, mr, 0, 0, TAU); g.fill(); g.fillStyle = 'rgb(255,245,215)'; g.beginPath(); g.ellipse(tip - .6, 0, mr * .4, mr * .6, 0, 0, TAU); g.fill(); for (let q = 0; q < 3; q++) { g.fillStyle = `rgba(255,${(150 + R() * 80) | 0},70,.9)`; g.fillRect(tip - 3 - R() * 6, mr * .6 + R() * 3, 1.2, 1.2 + R() * 2.5); } }
+    if (s.jkDone && rodK < .98) { g.fillStyle = '#ffffff'; for (let q = 0; q < 4; q++) g.fillRect(tip - 2 - q % 2, -rh + 1 + q * 1.6, 1.2, 1.2); }
     if (s.pen > 0) { g.save(); g.globalCompositeOperation = 'lighter'; const tg = g.createRadialGradient(tip, 0, 0, tip, 0, 12); tg.addColorStop(0, 'rgba(255,250,230,.95)'); tg.addColorStop(.35, 'rgba(255,170,60,.55)'); tg.addColorStop(1, 'rgba(255,80,0,0)'); g.fillStyle = tg; g.fillRect(tip - 12, -12, 24, 24); g.restore(); }
     g.restore();
   }
@@ -874,7 +877,7 @@ const GAME = {
         const jk = sh.jk == null ? 1 : sh.jk, rod = { steel: 'STEEL CORE', alu: 'ALLOY CORE', tung: 'TUNGSTEN ROD' }[sh.d.casing];
         tx(g, jk > 0 ? `COPPER JACKET ${Math.round(jk * 100)}%` : 'JACKET GONE', px + 14, py + ph - 34, D(13), jk > 0 ? '#e8904a' : '#ff8a6a', 'left');
         rr(g, px + 14, py + ph - 22, 150, 8, 4, 'rgba(255,255,255,.12)'); rr(g, px + 14, py + ph - 22, Math.max(0, 150 * jk), 8, 4, '#d87a3a');
-        tx(g, rod + (sh.pen > 0 ? (jk > 0 ? ' · behind the jacket' : ` ${Math.round((sh.rod ?? 1) * 100)}% · melting through`) : ''), px + pw - 14, py + ph - 26, D(12), jk > 0 ? '#b8c4d4' : '#fff', 'right');
+        tx(g, rod + (sh.pen > 0 ? (jk > 0 ? ' · behind the jacket' : ` ${Math.round((sh.rod ?? 1) * 100)}% · breaking through`) : ''), px + pw - 14, py + ph - 26, D(12), jk > 0 ? '#b8c4d4' : '#fff', 'right');
         g.restore();
       }
       if (cam.noteT > 0 && cam.note) { g.globalAlpha = a * Math.min(1, cam.noteT); rr(g, 340, 84, 600, 34, 12, 'rgba(200,104,46,.92)'); tx(g, cam.note, 640, 101, D(15), '#fff'); g.globalAlpha = a; }
