@@ -478,7 +478,7 @@ const GAME = {
     }
   }
   function jacketGone(s) {
-    if (s.jkDone) return; s.jkDone = true; s.jk = 0;
+    if (s.jkDone) return; s.jkDone = true; s.jk = 0; s.Ejk = Math.max(.5, s.E); s.rod = 1;
     for (let q = 0; q < 26; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 2.6, v = 18 + R() * 50; debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v - 8, rgb(240, 140 + rint(0, 60), 60), 1, 600); }
     streak(s.x, s.y, 46, 0, TAU, 110); K.sfx(520, .25, 'triangle', .05, -240);
     if (cam.s === s) { cam.note = `COPPER JACKET STRIPPED · ${{ steel: 'STEEL CORE', alu: 'ALLOY CORE', tung: 'TUNGSTEN ROD' }[s.d.casing]} EXPOSED`; cam.noteT = 2.2; cam.freeze = .04; }
@@ -490,15 +490,23 @@ const GAME = {
       const s = shells[k];
       if (!s.live) { shells.splice(k, 1); continue; }
       if (s.stuck != null) {
-        s.stuck -= dt; const back = Math.atan2(-s.vy, -s.vx), sp = Math.hypot(s.vx, s.vy) || 1, nx = s.x + s.vx / sp * 1.2, ny = s.y + s.vy / sp * 1.2;
-        if (s.jk > 0) { s.jk = Math.max(0, s.jk - dt * 1.6); if (R() < .7) debris(s.x - s.vx / sp, s.y - s.vy / sp, Math.cos(back) * (8 + R() * 18) + (R() - .5) * 10, -4 - R() * 10, rgb(235, 130 + rint(0, 50), 55), 1, 520); if (s.jk <= 0) jacketGone(s); }
-        if (R() < .6) streak(nx, ny, 2, back, 2.4, 60); { const cx = Math.floor(nx), cy = Math.floor(ny); for (let yy = -1; yy <= 1; yy++) for (let xx = -1; xx <= 1; xx++) if (inb(cx + xx, cy + yy) && mat[idx(cx + xx, cy + yy)]) heat[idx(cx + xx, cy + yy)] += 300 * dt; }
+        s.stuck -= dt; const ux = s.ux ?? 1, uy = s.uy ?? 0, back = Math.atan2(-uy, -ux), nx = s.x + ux * 1.2, ny = s.y + uy * 1.2; s.vx = ux * 3; s.vy = uy * 3;
+        if (s.jkDone) { s.rod = Math.max(.18, s.rod - dt * .3); if (R() < .5) debris(s.x, s.y, (R() - .5) * 16, 3, rgb(255, 190, 120), 1, 600);
+          // the molten tip eats into the pixel ahead and the rod creeps forward, spending itself as it goes
+          s.creep = (s.creep || 0) + dt;
+          if (s.creep > .14 && s.rod > .24) { s.creep = 0; const cx = Math.floor(nx), cy = Math.floor(ny);
+            if (inb(cx, cy)) { const j = idx(cx, cy), mj = mat[j];
+              if (!mj || isLiquid(mj)) { s.x += ux; s.y += uy; if (mj) { s.pen++; s.rod -= .08; } s.stuck = Math.max(s.stuck, .5); }
+              else if (mj !== BED) { const bite = s.S.pen * 6 * s.rod; if (hurt(j, bite)) { const c0 = col[j]; mat[j] = E; col[j] = 0; hp[j] = 0; heat[j] = 0; dirty = true; debris(cx + .5, cy + .5, Math.cos(back) * 20 + (R() - .5) * 20, -10 - R() * 10, M[mj].burns ? c0 : rgb(255, 160 + rint(0, 60), 60), M[mj].burns ? 0 : 1, 560); s.x += ux; s.y += uy; s.pen++; s.rod -= .13 + Math.min(M[mj].hp, 40) / 250; s.stuck = Math.max(s.stuck, .6); if (s.lastM !== mj && mj !== RUB && mj !== SLAG) { s.lastM = mj; if (cam.s === s) { cam.layers.push(mj); if (cam.layers.length > 6) cam.layers.shift(); } } } else heat[j] += 220; streak(nx, ny, 5, back, 2.2, 70); }
+            } } }
+        if (s.jk > 0) { s.jk = Math.max(0, s.jk - dt * 1.6); if (R() < .7) debris(s.x - ux, s.y - uy, Math.cos(back) * (8 + R() * 18) + (R() - .5) * 10, -4 - R() * 10, rgb(235, 130 + rint(0, 50), 55), 1, 520); if (s.jk <= 0) jacketGone(s); }
+        if (R() < .6) streak(nx, ny, 2, back, 2.4, 60); { const cx = Math.floor(nx), cy = Math.floor(ny); for (let yy = -1; yy <= 1; yy++) for (let xx = -1; xx <= 1; xx++) if (inb(cx + xx, cy + yy) && mat[idx(cx + xx, cy + yy)]) heat[idx(cx + xx, cy + yy)] += 120 * dt; }
         if (s.stuck <= 0) { if (s.stuckFire) detonate(s, s.x, s.y); else { s.live = false; spark(s.x, s.y, 8, 30); } }
         continue;
       }
       const sub = Math.max(1, Math.ceil(Math.hypot(s.vx, s.vy) * dt / .45));
       for (let n = 0; n < sub && s.live; n++) {
-        const h = dt / sub; s.vy += G * h; const ox = s.x, oy = s.y; s.x += s.vx * h; s.y += s.vy * h;
+        const h = dt / sub; s.vy += G * h; const ox = s.x, oy = s.y; s.x += s.vx * h; s.y += s.vy * h; { const q = Math.hypot(s.vx, s.vy); if (q > 2) { s.ux = s.vx / q; s.uy = s.vy / q; } }
         const x = Math.floor(s.x), y = Math.floor(s.y);
         if (x < -4 || x > GW + 4 || y > GH) { s.live = false; if (!s.small) say('Missed!', '#ffb36a'); break; }
         if (y < 0 || x < 0 || x >= GW) continue;
@@ -521,6 +529,11 @@ const GAME = {
             else if (M[mm].burns) { debris(x + .5, y + .5, -s.vx * .08 + (R() - .5) * 40, -s.vy * .08 - R() * 26, c0, 0); if (R() < .5) debris(x + .5, y + .5, (R() - .5) * 50, -R() * 30, c0, 0); }
             else if (R() < .7) { const hot = mm === CORE ? 3 : 1; debris(x + .5, y + .5, -s.vx * .06 + (R() - .5) * 26, -s.vy * .06 - R() * 14, mm === CORE ? rgb(255, 90, 120) : rgb(255, 150 + rint(0, 70), 50), hot, 380 + R() * 130); }
             else debris(x + .5, y + .5, -s.vx * .1 + (R() - .5) * 40, -s.vy * .1 - R() * 30, c0, 0); }
+          if (s.jkDone) {   // the bare rod melts from the tip as it pushes on
+            s.rod = cl(Math.min(s.rod, .18 + .82 * s.E / s.Ejk), .18, 1); const rc = { steel: [154, 166, 180], alu: [208, 214, 222], tung: [92, 98, 110] }[s.d.casing];
+            for (let q = 0; q < 2; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 2.2, v = 12 + R() * 34; debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v - 6, rgb(255, 200 + rint(0, 40), 140), 1, 640); }
+            if (R() < .5) debris(s.x, s.y, (R() - .5) * 20, 4, rgb(rc[0] + 60, rc[1] + 40, rc[2] + 20), 1, 560);
+          }
           if (s.jk > 0) {
             s.jk -= Math.min(M[m].hp, 40) / s.jkHP * .09 + .004; s.jk = Math.min(s.jk, 1 - (s.E0 - s.E) / (s.E0 * .85));
             for (let q = 0; q < 2; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 1.8, v = 14 + R() * 34; debris(s.x - s.vx * .004, s.y - s.vy * .004, Math.cos(aa) * v, Math.sin(aa) * v - 6, rgb(235, 130 + rint(0, 40), 60), 1, 560); }
@@ -798,7 +811,7 @@ const GAME = {
   // the impact cam sees through the shell: a translucent copper jacket around the hard rod, stripping away in real time
   function drawXray(g, s, ox, oy, a, sc = 1.3) {
     const jk = s.jk == null ? 1 : s.jk, rodC = { steel: [154, 166, 180], alu: [208, 214, 222], tung: [92, 98, 110] }[s.d.casing], wear = cl(s.E / (s.E0 || 1), .55, 1);
-    const L = 46, tail = -24, tip = tail + L * (.8 + .2 * wear), rh = 3.6, hot = s.pen > 0 ? cl(s.pen / 10, .25, 1) : 0;
+    const rodK = s.jkDone ? s.rod : 1, L = 46, tail = -24, tip = tail + L * (.8 + .2 * wear) * (.35 + .65 * rodK), rh = 3.6, hot = s.pen > 0 ? cl(s.pen / 10, .25, 1) : 0;
     g.save(); g.translate(ox, oy); g.rotate(a); g.scale(sc, sc);
     // the rod, heating from the tip back
     const gr = g.createLinearGradient(tip, 0, tail, 0); gr.addColorStop(0, hot ? 'rgb(255,250,225)' : `rgb(${rodC})`); gr.addColorStop(.12 + .2 * hot, hot ? 'rgb(255,170,60)' : `rgb(${rodC})`); gr.addColorStop(.25 + .35 * hot, hot ? 'rgb(190,70,40)' : `rgb(${rodC})`); gr.addColorStop(.6 + .3 * hot, `rgb(${rodC})`); gr.addColorStop(1, `rgb(${rodC.map(v => v * .7 | 0)})`);
@@ -820,6 +833,7 @@ const GAME = {
       }
       g.fillStyle = '#b8642c'; g.fillRect(tail + 2, -jh - .6, 3, jh * 2 + 1.2);   // driving band
     }
+    if (s.jkDone) { const mr = 2.6 + (1 - rodK) * 3.2; g.fillStyle = 'rgb(255,190,110)'; g.beginPath(); g.ellipse(tip - 1, 0, mr * .7, mr, 0, 0, TAU); g.fill(); g.fillStyle = 'rgb(255,245,215)'; g.beginPath(); g.ellipse(tip - .6, 0, mr * .4, mr * .6, 0, 0, TAU); g.fill(); for (let q = 0; q < 3; q++) { g.fillStyle = `rgba(255,${(150 + R() * 80) | 0},70,.9)`; g.fillRect(tip - 3 - R() * 6, mr * .6 + R() * 3, 1.2, 1.2 + R() * 2.5); } }
     if (s.pen > 0) { g.save(); g.globalCompositeOperation = 'lighter'; const tg = g.createRadialGradient(tip, 0, 0, tip, 0, 12); tg.addColorStop(0, 'rgba(255,250,230,.95)'); tg.addColorStop(.35, 'rgba(255,170,60,.55)'); tg.addColorStop(1, 'rgba(255,80,0,0)'); g.fillStyle = tg; g.fillRect(tip - 12, -12, 24, 24); g.restore(); }
     g.restore();
   }
@@ -916,7 +930,7 @@ const GAME = {
         g.save(); g.globalAlpha = a; rr(g, px, py, pw, ph, 14, 'rgba(8,10,18,.86)', 'rgba(90,216,255,.55)', 2);
         g.beginPath(); g.roundRect(px, py, pw, ph, 14); g.clip();
         g.strokeStyle = 'rgba(90,216,255,.08)'; g.lineWidth = 1; for (let x = px; x < px + pw; x += 16) { g.beginPath(); g.moveTo(x, py); g.lineTo(x, py + ph); g.stroke(); } for (let y = py; y < py + ph; y += 16) { g.beginPath(); g.moveTo(px, y); g.lineTo(px + pw, y); g.stroke(); }
-        const tipX = cx + (-24 + 46 * (.8 + .2 * cl(sh.E / (sh.E0 || 1), .55, 1))) * 5;
+        const tipX = cx + (-24 + 46 * (.8 + .2 * cl(sh.E / (sh.E0 || 1), .55, 1)) * (.35 + .65 * (sh.jkDone ? sh.rod : 1))) * 5;
         if (sh.pen > 0 && sh.live) {   // the wall it is biting into, and sparks off the tip
           g.fillStyle = 'rgba(120,130,145,.35)'; g.fillRect(tipX - 6, py, pw, ph); g.fillStyle = 'rgba(255,170,60,.25)'; g.fillRect(tipX - 6, cy - 26, 30, 52);
           g.save(); g.globalCompositeOperation = 'lighter'; for (let q = 0; q < 26; q++) { const aa = Math.PI + (R() - .5) * 2.4, l = 10 + R() * 60, h = R(); g.strokeStyle = `rgba(255,${(200 + h * 55) | 0},${(120 + h * 120) | 0},${(.4 + h * .6).toFixed(2)})`; g.lineWidth = .8 + h; g.beginPath(); g.moveTo(tipX - 4, cy + (R() - .5) * 14); g.lineTo(tipX - 4 + Math.cos(aa) * l, cy + (R() - .5) * 14 + Math.sin(aa) * l); g.stroke(); } g.restore();
@@ -928,7 +942,7 @@ const GAME = {
         const jk = sh.jk == null ? 1 : sh.jk, rod = { steel: 'STEEL CORE', alu: 'ALLOY CORE', tung: 'TUNGSTEN ROD' }[sh.d.casing];
         tx(g, jk > 0 ? `COPPER JACKET ${Math.round(jk * 100)}%` : 'JACKET GONE', px + 14, py + ph - 34, D(13), jk > 0 ? '#e8904a' : '#ff8a6a', 'left');
         rr(g, px + 14, py + ph - 22, 150, 8, 4, 'rgba(255,255,255,.12)'); rr(g, px + 14, py + ph - 22, Math.max(0, 150 * jk), 8, 4, '#d87a3a');
-        tx(g, rod + (sh.pen > 0 ? (jk > 0 ? ' · behind the jacket' : ' · piercing') : ''), px + pw - 14, py + ph - 26, D(12), jk > 0 ? '#b8c4d4' : '#fff', 'right');
+        tx(g, rod + (sh.pen > 0 ? (jk > 0 ? ' · behind the jacket' : ` ${Math.round((sh.rod ?? 1) * 100)}% · melting through`) : ''), px + pw - 14, py + ph - 26, D(12), jk > 0 ? '#b8c4d4' : '#fff', 'right');
         g.restore();
       }
       if (cam.noteT > 0 && cam.note) { g.globalAlpha = a * Math.min(1, cam.noteT); rr(g, 340, 84, 600, 34, 12, 'rgba(200,104,46,.92)'); tx(g, cam.note, 640, 101, D(15), '#fff'); g.globalAlpha = a; }
@@ -951,6 +965,7 @@ const GAME = {
     start: n => startLevel(n), press, fire: (a, p, s = slot) => { ang = a; pow = p; slot = s; fire(); }, solve: s => solve(design(s ?? slot)),
     setCoins: v => { coins = v; save(); }, design: (i, d) => { slots[i] = { ...slots[i], ...d }; for (const c of PK) own[c + ':' + slots[i][c]] = true; }, upg: (k, l) => { up[k] = l; },
     loose: () => { support(); const r = bodies.map(b => [b.x, b.y, b.w, b.h, b.n, M[b.cells[0].m].n]); bodies.length = 0; return r; },
+    shellsDbg: () => shells.map(s => ({ x: +s.x.toFixed(2), y: +s.y.toFixed(2), ux: s.ux, uy: s.uy, stuck: s.stuck, rod: s.rod, jk: s.jk, jkDone: s.jkDone, pen: s.pen, creep: s.creep, ahead: (() => { const nx = Math.floor(s.x + (s.ux ?? 1) * 1.2), ny = Math.floor(s.y + (s.uy ?? 0) * 1.2); return inb(nx, ny) ? (M[mat[idx(nx, ny)]].n || 'air') : 'oob'; })() })),
     count: m => { let n = 0; for (let i = 0; i < N; i++) if (mat[i] === m) n++; return n; },
   };
 })();
