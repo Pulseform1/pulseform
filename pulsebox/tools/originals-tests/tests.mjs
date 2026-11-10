@@ -29,58 +29,6 @@ T['baggage-panic'] = async () => {
   await fuzz(p, 120, ['r', 'z']); await finish(p, g);
 };
 
-T['switchyard'] = async () => {
-  const g = 'switchyard'; let p = await open(g);
-  for (let sh = 0; sh < 4; sh++) {
-    await p.evaluate(sh => { sySave.unlocked = 4; GAMES[ID].begin(sh); }, sh);
-    const res = await p.evaluate(sh => {
-      let collisions = 0; const st0 = status; status = s => { if (/Collision/.test(s)) collisions++; st0(s); };
-      for (let s = 0; s < (sh === 3 ? 400 : 230) && !state.over; s += 1 / 60) {
-        for (const [j, x0] of [[0, 245], [1, 490], [2, 710]]) {
-          const next = state.trains.filter(t => t.x < x0 && (j === 0 ? t.route === null : j === 1 ? (t.route === 2 || t.route === null) : (t.route === 3 || t.route === 2 || t.route === null))).sort((a, b) => b.x - a.x)[0];
-          if (next) state.switches[j] = next.target === 0 ? 0 : 1;
-        }
-        GAMES[ID].update(1 / 60);
-      }
-      status = st0; return { points: state.points, delivered: state.delivered, lives: state.lives, over: state.over, clock: Math.round(state.clock), collisions };
-    }, sh);
-    console.log('  shift', sh + 1, JSON.stringify(res));
-    if (sh < 3 && res.lives < 3) note(g, `shift ${sh + 1}: careful switching still lost ${3 - res.lives} lives (${res.collisions} merge crashes)`);
-    if (sh < 3 && !res.over) note(g, `shift ${sh + 1} did not end`);
-  }
-  // menu taps start a shift; Play again replays it
-  await p.evaluate(() => { sySave.unlocked = 1; state = GAMES[ID].init(); state.mode = 'menu'; GAMES[ID].ui(); });
-  await tap(p, 60 + 97, 200 + 257); if ((await p.evaluate(() => state.mode)) !== 'play') note(g, 'tapping Start on the menu did not start the shift');
-  await p.evaluate(() => { state.shift = 1; reset(); }); if ((await p.evaluate(() => state.mode + state.shift)) !== 'play1') note(g, 'Play again did not replay the same shift');
-  await fuzz(p, 100, ['1', '2', '3']); await finish(p, g);
-};
-
-T['potion-protocol'] = async () => {
-  const g = 'potion-protocol'; let p = await open(g);
-  const r = await p.evaluate(() => {
-    const out = [];
-    for (let rank = 0; rank < 3; rank++) {
-      const R = RANKS[rank], all = [];
-      const rec = (cur) => { if (cur.length === R.slots) { all.push(cur); return; } for (let i = 0; i < R.kinds; i++) if (R.repeat || !cur.includes(i)) rec([...cur, i]); }; rec([]);
-      let worst = 0, fails = 0, tries = 0; const sample = all.length > 400 ? all.filter((_, i) => i % Math.ceil(all.length / 400) === 0) : all;
-      for (const secret of sample) {
-        state = potionNew(false, rank); state.secret = secret.slice(); let cand = all.slice();
-        while (!state.over) { const gs = cand[Math.floor(cand.length / 2)]; gs.forEach(i => GAMES[ID].action('pick' + i)); GAMES[ID].action('test'); const h = state.history.at(-1); cand = cand.filter(c => { const f = potionScore(gs, c); return f.exact === h.exact && f.near === h.near; }); }
-        tries++; if (!state.won) fails++; worst = Math.max(worst, state.history.length);
-      }
-      out.push({ rank: R.name, secrets: tries, worst, fails });
-    }
-    return out;
-  });
-  console.log('  solver:', JSON.stringify(r));
-  for (const x of r) if (x.fails / x.secrets > .03) note(g, `${x.rank}: a sensible solver fails ${x.fails}/${x.secrets} recipes`);
-  await p.evaluate(() => { state = potionNew(false, 0); GAMES[ID].ui(); });
-  for (const n of [0, 1, 2]) await tap(p, 602 + n * 104 + 45, 126 + 47);
-  await tap(p, 750, 470); if ((await p.evaluate(() => state.history.length)) !== 1) note(g, 'canvas picks + TEST RECIPE did not run a test');
-  await ctl(p, 'rank'); await ctl(p, 'rank'); const rk = await p.evaluate(() => [state.rank, state.secret.length, new Set(state.secret).size]); console.log('  archmage secret', rk);
-  await fuzz(p, 120, ['1', '5', '8', 'Enter', 'Backspace']); await finish(p, g);
-};
-
 T['pocket-jury'] = async () => {
   const g = 'pocket-jury'; let p = await open(g);
   for (let docket = 0; docket < 2; docket++) {
@@ -101,31 +49,6 @@ T['pocket-jury'] = async () => {
   console.log('  cases', over.n, 'guilty', over.guilty, 'decisive', over.dec);
   if (over.out.length) note(g, 'text overflows: ' + over.out.join('; '));
   await fuzz(p, 120); await finish(p, g);
-};
-
-T['circuit-courier'] = async () => {
-  const g = 'circuit-courier'; let p = await open(g);
-  for (let lv = 0; lv < 16; lv++) {
-    const prog = await p.evaluate(() => {
-      const m = state.map, bfs = (a, b) => { const q = [[a, []]], seen = new Set([a.join()]); while (q.length) { const [[x, y], path] = q.shift(); if (x === b[0] && y === b[1]) return path; for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= 7 || ny >= 5 || m[ny][nx] === '#' || seen.has(nx + ',' + ny)) continue; seen.add(nx + ',' + ny); q.push([[nx, ny], [...path, [dx, dy]]]); } } return null; };
-      const find = ch => { const i = m.join('').indexOf(ch); return [i % 7, Math.floor(i / 7)]; };
-      const a = bfs(find('S'), find('P')), b = bfs(find('P'), find('G')); if (!a || !b) return null;
-      let dir = 0, out = []; const D = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-      for (const [dx, dy] of [...a, ...b]) { const want = D.findIndex(d => d[0] === dx && d[1] === dy); const turn = (want - dir + 4) % 4; if (turn === 1) out.push('R'); if (turn === 3) out.push('L'); if (turn === 2) out.push('R', 'R'); dir = want; out.push('F'); }
-      return out;
-    });
-    const par = await p.evaluate(() => state.par);
-    if (!prog) { note(g, `route ${lv + 1} has no path`); break; }
-    if (prog.length > 32) note(g, `route ${lv + 1} needs ${prog.length} commands without loops (max 32)`);
-    await ctl(p, 'clear'); for (const c of prog.slice(0, 32)) await ctl(p, c);
-    await ctl(p, 'run'); await sim(p, prog.length * .4 + 2);
-    const st = await p.evaluate(() => ({ won: state.won, msg: state.msg, stars: state.starsWon }));
-    console.log(`  route ${lv + 1}: par ${par}, program ${prog.length}, ${st.won ? st.stars + '★' : 'FAILED'}`);
-    if (!st.won) { note(g, `route ${lv + 1}: correct program did not deliver (${st.msg})`); break; }
-    if (prog.length < par) note(g, `route ${lv + 1}: par ${par} is above a ${prog.length}-command solution`);
-    await ctl(p, 'next');
-  }
-  await fuzz(p, 100, ['ArrowUp', 'ArrowLeft', ' ', 'f']); await sim(p, 30); await finish(p, g);
 };
 
 T['engine'] = async () => {
