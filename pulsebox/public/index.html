@@ -528,8 +528,17 @@
   .lvl-btn .lv { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: linear-gradient(135deg, var(--lime), #5fe08a); color: #0a0c12; font-family: var(--display); font-weight: 800; font-size: 16px; box-shadow: 0 0 14px rgba(198,255,61,.35); }
   .lvl-btn .lvb { display: grid; gap: 3px; } .lvl-btn .lvb small { font-size: 10px; letter-spacing: .14em; color: var(--muted); font-weight: 800; }
   .lvl-btn .bar { display: block; width: 64px; height: 6px; border-radius: 3px; background: #ffffff18; overflow: hidden; } .lvl-btn .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--lime), var(--cyan)); border-radius: 3px; transition: width .5s ease; }
+  .lvl-btn .nm { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 800; color: var(--text); max-width: 120px; overflow: hidden; text-overflow: ellipsis; letter-spacing: .02em; }
+  .lvl-btn .nm em { font-style: normal; color: var(--lime); font-size: 12px; }
+  .lvl-btn .lv { position: relative; } .lvl-btn .pen { display: none; position: absolute; right: -5px; bottom: -5px; width: 17px; height: 17px; border-radius: 50%; background: var(--lime); color: #0a0c12; font-size: 10px; line-height: 17px; text-align: center; box-shadow: 0 0 0 2px var(--bg); }
+  .lvl-btn.unnamed { border-color: var(--lime); animation: nmPulse 1.6s ease-in-out infinite; } .lvl-btn.unnamed .nm { color: var(--lime); }
+  @keyframes nmPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(198,255,61,0); } 50% { box-shadow: 0 0 0 5px rgba(198,255,61,.22); } }
+  .pf-name { display: flex; gap: 8px; align-items: stretch; margin: 4px 0 2px; } .pf-name input { flex: 1; min-width: 0; margin: 0 !important; font-size: 18px; font-weight: 800; }
+  .pf-name button { flex: none; padding: 0 14px; border-radius: 10px; border: 0; background: var(--lime); color: #0a0c12; font-weight: 900; cursor: pointer; font-size: 14px; } .pf-name button:disabled { opacity: .45; cursor: default; }
+  .pf-id .pf-where { display: block; margin: 2px 0 4px; } .pf-id .pf-ok { color: var(--lime); font-weight: 800; }
+  .pf-nudge { background: linear-gradient(90deg, rgba(198,255,61,.14), transparent); border: 1px solid rgba(198,255,61,.4); border-radius: 12px; padding: 9px 12px; font-size: 13px; margin: 0 0 12px; }
   .lvl-btn .bd { font-size: 13px; font-weight: 800; color: #ffd23f; } .lvl-btn .bd:empty { display: none; }
-  @media (max-width: 700px) { .lvl-btn .lvb, .lvl-btn .bd { display: none; } .lvl-btn { padding: 4px; } }
+  @media (max-width: 700px) { .lvl-btn .lvb, .lvl-btn .bd { display: none; } .lvl-btn { padding: 4px; } .lvl-btn .pen { display: block; } }
   .prof-box { width: min(640px, 100%) !important; }
   .pf-head { display: flex; gap: 18px; align-items: center; margin: 4px 0 16px; }
   .pf-ring { --p: 0; width: 92px; height: 92px; flex: none; border-radius: 50%; display: grid; place-content: center; text-align: center; background: radial-gradient(closest-side, var(--panel) 78%, transparent 80%), conic-gradient(var(--lime) calc(var(--p) * 1turn), #ffffff15 0); }
@@ -705,7 +714,7 @@
     <button class="x" id="frX" type="button" aria-label="Close">✕</button>
     <h2 id="frTitle">Play with friends</h2>
     <p>Pick a game, make a room, and send your friends the code. Up to 8 players, depending on the game.</p>
-    <label for="frName">Your name</label><input id="frName" maxlength="12" placeholder="Your name" autocomplete="nickname">
+    <label for="frName">Your name <small style="font-weight:600;color:var(--muted)">· the same name shows on leaderboards</small></label><input id="frName" maxlength="12" placeholder="Type your name" autocomplete="nickname">
     <div class="fr-tabs" role="tablist"><button type="button" data-p="make" class="on">Start a room</button><button type="button" data-p="join">Join a friend</button></div>
     <div id="frMake"><div class="fr-grid" id="frGrid"></div></div>
     <div id="frJoin" hidden><label for="frCode">Room code</label><input id="frCode" class="fr-in" maxlength="4" placeholder="ABCD" autocomplete="off" spellcheck="false"><button class="go" id="frGo" type="button">Join the room</button></div>
@@ -2664,8 +2673,8 @@ const FRIEND_PLAYERS = { 'odd-crowd': '3-10 players · party', 'lantern-keep': '
 const API_ORIGIN = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? '' : 'https://box.pulseform.org';
 let roomJoin = null, frPick = null;
 const frGames = () => FRIEND_GAMES.map(byId).filter(Boolean);
-const mpName = () => { try { return localStorage.getItem('pbx-mp-name') || ''; } catch (e) { return ''; } };
-function saveMpName() { const n = ($('frName').value || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12); if (n) try { localStorage.setItem('pbx-mp-name', n); } catch (e) {} return n; }
+const mpName = () => { try { const n = localStorage.getItem('pbx-mp-name'); if (n) return n; const pp = window.pbxPlayer; return pp && !pp.isDefaultName() ? pp.profile.name : ''; } catch (e) { return ''; } };
+function saveMpName() { const n = ($('frName').value || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12); if (n) { if (window.pbxPlayer) window.pbxPlayer.setName(n); else try { localStorage.setItem('pbx-mp-name', n); } catch (e) {} } return n; }
 function frPanel(p) {
   $('frMake').hidden = p !== 'make'; $('frJoin').hidden = p !== 'join'; $('frReady').hidden = p !== 'ready';
   document.querySelectorAll('.fr-tabs button').forEach(b => b.classList.toggle('on', b.dataset.p === p || (p === 'ready' && b.dataset.p === 'make')));
@@ -3007,6 +3016,9 @@ loadStats();
   let P = fresh();
   const load = () => { try { P = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { P = fresh(); } if (!P.name) { P.name = 'Player' + Math.floor(1000 + Math.random() * 9000); save(); } };
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} };
+  // one player name: leaderboards, online rooms and the Arena all use it
+  const isDefaultName = () => /^Player\d{4}$/.test(P.name || '');
+  function setName(v) { v = String(v || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12); if (!v) return false; P.name = v; save(); try { localStorage.setItem('pbx-mp-name', v); } catch (e) {} if (typeof chip === 'function') chip(); return true; }
   // XP to go from level L to L+1 grows gently: 100, 140, 180, ...
   const need = L => 100 + 40 * (L - 1);
   const levelOf = xp => { let L = 1, left = xp; while (left >= need(L)) { left -= need(L); L++; } return { L, into: left, need: need(L) }; };
@@ -3133,25 +3145,34 @@ loadStats();
     b.querySelector('b').textContent = l.L; b.querySelector('i').style.width = Math.round(l.into / l.need * 100) + '%';
     b.title = `Level ${l.L} · ${num(l.into)} / ${num(l.need)} XP to level ${l.L + 1}`;
     const n = Object.keys(P.badges).length; b.querySelector('.bd').textContent = n ? '🏅' + n : '';
+    const un = isDefaultName(); b.classList.toggle('unnamed', un);
+    b.querySelector('.nm').innerHTML = un ? 'Set your name <em>✎</em>' : `${esc(P.name)} <em>✎</em>`;
+    b.title = (un ? 'Pick a player name · ' : `${P.name} · tap to change your name · `) + b.title;
   }
-  function openProfile() {
-    refreshRanks().then(() => { if (!$('profModal').hidden) drawProfile(); });
+  function openProfile(focusName) {
+    refreshRanks().then(() => { if (!$('profModal').hidden && document.activeElement !== $('pfName')) drawProfile(); });
     $('profModal').hidden = false; drawProfile();
+    if (focusName || isDefaultName()) setTimeout(() => { const i = $('pfName'); if (i) { i.focus(); i.select(); } }, 60);
   }
   function drawProfile() {
     const l = levelOf(P.xp), box = $('profBox'), signed = !!(window.pbxToken && window.pbxUserName && window.pbxUserName());
     const ranks = Object.entries(P.ranks).filter(([g]) => byIdP(g)).sort((a, b) => a[1] - b[1]).slice(0, 6);
     box.innerHTML = `<button class="x" data-a="close" aria-label="Close">✕</button>
       <div class="pf-head"><div class="pf-ring" style="--p:${l.into / l.need}"><b>${l.L}</b><small>LEVEL</small></div>
-        <div class="pf-id"><label for="pfName">Name on leaderboards</label><input id="pfName" maxlength="14" value="${esc(P.name)}">
+        <div class="pf-id"><label for="pfName">✎ Your player name</label><div class="pf-name"><input id="pfName" maxlength="12" value="${esc(P.name)}" autocomplete="nickname" spellcheck="false"><button id="pfSave" type="button" disabled>Save</button></div><small class="pf-where" id="pfWhere">Shown on world leaderboards and in online rooms with friends. Tap the box to change it.</small>
         <div class="pf-bar"><i style="width:${Math.round(l.into / l.need * 100)}%"></i></div><small>${num(l.into)} / ${num(l.need)} XP to level ${l.L + 1} · ${num(P.xp)} XP total</small></div></div>
+      ${isDefaultName() ? '<div class="pf-nudge">👋 You\'re still <b>' + esc(P.name) + '</b>. Type a name above and press <b>Save</b> so friends can spot you on the leaderboards.</div>' : ''}
       <div class="pf-stats"><span><b>${tried().length}</b>games tried</span><span><b>${num(P.plays)}</b>sessions</span><span><b>🔥 ${P.streak && P.lastDaily >= addDays(today(), -1) ? P.streak : 0}</b>daily streak</span><span><b>${Object.keys(P.daily).length}</b>dailies done</span></div>
       <h3>Badges <small>${Object.keys(P.badges).length} / ${BADGES.length}</small></h3>
       <div class="pf-badges">${BADGES.map(([id, icon, name, desc]) => `<div class="bdg ${P.badges[id] ? 'got' : ''}" title="${esc(desc)}"><span>${icon}</span><b>${esc(name)}</b><small>${esc(desc)}</small></div>`).join('')}</div>
       <h3>Your world rankings</h3>
       ${ranks.length ? `<div class="pf-ranks">${ranks.map(([g, r]) => `<button data-g="${g}"><span class="r">#${r}</span>${esc(byIdP(g).title)}<small>${esc(SCORE[g] || 'Score')}: ${num((P.games[g] || {}).best)}</small></button>`).join('')}</div>` : '<p>Play any game with a score to land on its world board.</p>'}
       ${signed ? '' : '<p class="pf-note">Sign in to keep your level, badges and rankings on every device.</p>'}`;
-    const inp = $('pfName'); inp.onchange = () => { const v = inp.value.replace(/[^\w .'-]/g, '').trim().slice(0, 14); if (v) { P.name = v; save(); } inp.value = P.name; };
+    const inp = $('pfName'), sv = $('pfSave'), where = $('pfWhere');
+    const commit = () => { const old = P.name; if (setName(inp.value)) { inp.value = P.name; sv.disabled = true; if (P.name !== old) { where.innerHTML = '<span class="pf-ok">✓ Saved. You\'re now ' + esc(P.name) + ' everywhere on Pulsebox.</span>'; const nd = box.querySelector('.pf-nudge'); if (nd) nd.remove(); } } else inp.value = P.name; };
+    inp.oninput = () => { sv.disabled = !inp.value.trim() || inp.value.trim() === P.name; };
+    inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); commit(); inp.blur(); } };
+    inp.onchange = commit; sv.onclick = commit;
     box.querySelectorAll('.pf-ranks button').forEach(b => b.onclick = () => { $('profModal').hidden = true; go('#' + b.dataset.g); });
     box.querySelector('[data-a="close"]').onclick = () => { $('profModal').hidden = true; };
   }
@@ -3206,9 +3227,9 @@ loadStats();
   /* ---------- wiring into the hub ---------- */
   load(); checkBadges();
   const head = document.querySelector('header.top'), acct = $('acctBtn');
-  const lb = document.createElement('button'); lb.className = 'lvl-btn'; lb.id = 'lvlBtn'; lb.type = 'button'; lb.setAttribute('aria-label', 'Your profile, level and badges');
-  lb.innerHTML = '<span class="lv"><b>1</b></span><span class="lvb"><small>LEVEL</small><span class="bar"><i></i></span></span><span class="bd"></span>';
-  head.insertBefore(lb, acct); lb.onclick = openProfile; chip();
+  const lb = document.createElement('button'); lb.className = 'lvl-btn'; lb.id = 'lvlBtn'; lb.type = 'button'; lb.setAttribute('aria-label', 'Your player name, profile, level and badges');
+  lb.innerHTML = '<span class="lv"><b>1</b><span class="pen">✎</span></span><span class="lvb"><span class="nm"></span><span class="bar"><i></i></span></span><span class="bd"></span>';
+  head.insertBefore(lb, acct); lb.onclick = () => openProfile(); chip();
   const pm = document.createElement('div'); pm.className = 'modal'; pm.id = 'profModal'; pm.hidden = true; pm.setAttribute('role', 'dialog'); pm.setAttribute('aria-modal', 'true');
   pm.innerHTML = '<div class="box prof-box" id="profBox"></div>'; document.body.append(pm);
   pm.addEventListener('click', e => { if (e.target === pm) pm.hidden = true; });
@@ -3223,6 +3244,6 @@ loadStats();
   const rs0 = renderShelves; renderShelves = function () { rs0.apply(this, arguments); renderDaily(); };
   try { renderDaily(); } catch (e) {}
   // debugging and tests
-  window.pbxPlayer = { get profile() { return P; }, today, dailyGame, onScore, levelOf, BADGES, SCORE };
+  window.pbxPlayer = { get profile() { return P; }, setName, isDefaultName, openProfile, today, dailyGame, onScore, levelOf, BADGES, SCORE };
 })();
 </script>

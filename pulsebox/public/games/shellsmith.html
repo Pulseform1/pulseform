@@ -572,6 +572,16 @@ const GAME = {
   function button(g, k, x, y, w, h, label, colr, sub, tc = '#1a1420') { btn[k] = { x, y, w, h }; g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.roundRect(x, y + 5, w, h, 12); g.fill(); rr(g, x, y, w, h, 12, colr); tx(g, label, x + w / 2, y + h / 2 + (sub ? -8 : 2), D(h > 64 ? 24 : 18), tc); if (sub) tx(g, sub, x + w / 2, y + h / 2 + 15, F(12), tc); }
   const wc = document.createElement('canvas'); wc.width = GW; wc.height = GH; const wx = wc.getContext('2d'), img = wx.createImageData(GW, GH), d32 = new Uint32Array(img.data.buffer);
   const gc = document.createElement('canvas'); gc.width = GW / 2; gc.height = GH / 2; const gx = gc.getContext('2d'), gimg = gx.createImageData(GW / 2, GH / 2), gacc = new Float32Array(GW / 2 * GH / 2 * 3);
+  // draw anything through a low-res buffer so it comes out as crisp pixel art (ps = screen px per art pixel)
+  const pool = {};
+  function pix(g, x0, y0, w, h, ps, fn) {
+    const cw = Math.max(1, Math.ceil(w / ps)), ch = Math.max(1, Math.ceil(h / ps)), key = cw + 'x' + ch;
+    let c = pool[key]; if (!c) { c = document.createElement('canvas'); c.width = cw; c.height = ch; c.x = c.getContext('2d', { willReadFrequently: true }); pool[key] = c; }
+    const x = c.x; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cw, ch); x.setTransform(1 / ps, 0, 0, 1 / ps, -x0 / ps, -y0 / ps); fn(x);
+    const im = x.getImageData(0, 0, cw, ch), d = im.data; for (let i = 3; i < d.length; i += 4) d[i] = d[i] > 100 ? 255 : 0; x.putImageData(im, 0, 0);
+    g.save(); g.imageSmoothingEnabled = false; g.drawImage(c, x0, y0, cw * ps, ch * ps); g.restore();
+  }
+  const pixIcon = (g, d, x, y, L, Hh, o = {}, ps = 3) => pix(g, Math.floor((x - ps * 2) / ps) * ps, Math.floor((y - Hh) / ps) * ps, L + ps * 6, Hh * 2 + ps * 2, ps, c => shellIcon(c, d, x, y, L, Hh, o));
   function hotCol(T, core) { const k = cl((T - 200) / 900, 0, .78); return core ? [255, 50 + k * 150, 90 + k * 120] : [255, 70 + k * 170, 20 + k * 150]; }
   function sky(g) {
     const v = K.view, gr = g.createLinearGradient(0, v.y0, 0, 640); gr.addColorStop(0, '#2a2348'); gr.addColorStop(.55, '#a8507a'); gr.addColorStop(1, '#ffb070'); g.fillStyle = gr; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
@@ -635,7 +645,8 @@ const GAME = {
     g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = Math.max(1.5, L * .006); g.beginPath(); g.moveTo(0, -h * .92); g.lineTo(body, -h); g.lineTo(body, h); g.lineTo(0, h * .92); g.closePath(); g.stroke();
     g.restore();
   }
-  function drawGun(g) {
+  function drawGun(g) { pix(g, (GUN.x - 10) * CS, (GUN.y - 18) * CS, 30 * CS, 20 * CS, CS, gunArt); }
+  function gunArt(g) {
     const px = GUN.x * CS, py = GUN.y * CS, a = ang, rk = recoil * 10;
     g.save(); g.translate(px, py - 16);
     g.save(); g.rotate(-a); g.fillStyle = '#3a3f48'; g.fillRect(-14 - rk, -7, 52, 14); g.fillStyle = '#5a6270'; g.fillRect(-14 - rk, -7, 52, 4); g.fillStyle = '#2a2e34'; g.fillRect(34 - rk, -9, 8, 18); g.restore();
@@ -653,21 +664,23 @@ const GAME = {
   }
   function drawShells(g) {
     for (const s of shells) {
-      g.strokeStyle = 'rgba(255,230,180,.5)'; g.lineWidth = 2; g.beginPath(); s.trail.forEach(([x, y], i) => i ? g.lineTo(x * CS, y * CS) : g.moveTo(x * CS, y * CS)); g.stroke();
-      g.save(); g.translate(s.x * CS, s.y * CS); g.rotate(Math.atan2(s.vy, s.vx)); if (s.small) { g.fillStyle = '#5ad8ff'; g.beginPath(); g.arc(0, 0, 4, 0, TAU); g.fill(); } else shellIcon(g, s.d, -14, 0, 28, 10); g.restore();
+      s.trail.forEach(([x, y], i) => { g.fillStyle = `rgba(255,226,170,${(i / s.trail.length * .55).toFixed(2)})`; g.fillRect(Math.floor(x) * CS, Math.floor(y) * CS, CS, CS); });
+      const gx = Math.floor(s.x), gy = Math.floor(s.y);
+      if (s.small) { g.fillStyle = '#1a3a4a'; g.fillRect((gx - 1) * CS, (gy - 1) * CS, CS * 2, CS * 2); g.fillStyle = '#5ad8ff'; g.fillRect((gx - 1) * CS, (gy - 1) * CS, CS, CS); continue; }
+      const a = Math.atan2(s.vy, s.vx); pix(g, (gx - 8) * CS, (gy - 8) * CS, 16 * CS, 16 * CS, CS, c => { c.translate((gx + .5) * CS, (gy + .5) * CS); c.rotate(a); shellIcon(c, s.d, -20, 0, 40, 14); });
     }
   }
   function hud(g) {
     const L = LEVELS[lvl]; rr(g, 70, 14, 1140, 56, 16, 'rgba(10,8,16,.62)');
     tx(g, `${lvl + 1}. ${L.n}`, 94, 42, D(22), '#ffd890', 'left');
     const k = coreN ? coreLeft / coreN : 0; tx(g, 'CORE', 470, 42, D(16), '#ff7a9a', 'right'); rr(g, 480, 32, 260, 20, 10, 'rgba(255,255,255,.12)'); rr(g, 480, 32, Math.max(0, 260 * k), 20, 10, k > .5 ? '#ff3050' : k > .25 ? '#ff7a2a' : '#ffd23f'); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.moveTo(480 + 26, 28); g.lineTo(480 + 26, 56); g.stroke(); tx(g, Math.round(k * 100) + '%', 610, 42, D(14), '#fff', 'center', 3);
-    tx(g, 'SHELLS', 800, 42, D(16), '#cfc6d8', 'left'); for (let i = 0; i < shots; i++) { g.save(); g.translate(890 + i * 30, 42); g.rotate(-Math.PI / 2); shellIcon(g, design(slot), -12, 0, 24, 9); g.restore(); }
+    tx(g, 'SHELLS', 800, 42, D(16), '#cfc6d8', 'left'); for (let i = 0; i < shots; i++) pix(g, 878 + i * 30, 26, 24, 34, 2, c => { c.translate(890 + i * 30, 42); c.rotate(-Math.PI / 2); shellIcon(c, design(slot), -13, 0, 26, 10); });
     tx(g, `par ${L.par}`, 1190, 42, F(15), '#cfc6d8', 'right');
     // shell slots
     for (let i = 0; i < 3; i++) {
       const d = design(i), x = 30 + i * 230, y = 648, on = i === slot; btn['slot' + i] = { x, y, w: 216, h: 60 };
       rr(g, x, y, 216, 60, 14, on ? 'rgba(255,122,42,.85)' : 'rgba(10,8,16,.7)', on ? '#ffd23f' : 'rgba(255,255,255,.2)', 2);
-      shellIcon(g, d, x + 14, y + 30, 70, 22, { cut: true });
+      pixIcon(g, d, x + 12, y + 30, 72, 24, { cut: true }, 3);
       tx(g, `${i + 1}  ${part('fill', d.fill).n.split(' ')[0]}`, x + 94, y + 21, D(15), on ? '#1a1420' : '#fff', 'left');
       tx(g, `${part('nose', d.nose).n} · ${part('fuse', d.fuse).n}${d.liner !== 'none' ? ' · jet' : ''}`, x + 94, y + 42, F(11), on ? '#1a1420' : '#cfc6d8', 'left');
     }
@@ -703,7 +716,7 @@ const GAME = {
     // the big cut-away blueprint
     const d = slots[wsSlot], S = stats(d), X = 250, Y = 175, Lh = 660;
     rr(g, 60, 78, 1160, 196, 18, 'rgba(90,216,255,.05)', 'rgba(90,216,255,.25)', 2);
-    shellIcon(g, d, X, Y, Lh, 118, { cut: true });
+    pixIcon(g, d, X, Y, Lh, 118, { cut: true }, 8);
     const lab = (s, ax, ay, lx, ly) => { g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(ax, ay); g.lineTo(lx, ly); g.stroke(); g.fillStyle = '#fff'; g.beginPath(); g.arc(ax, ay, 3, 0, TAU); g.fill(); tx(g, s, lx + (lx < ax ? -6 : 6), ly, D(14), '#e8f4ff', lx < ax ? 'right' : 'left'); };
     lab('FUSE: ' + S.u.n, X + 14, Y, X - 30, Y + 70); lab('CASING: ' + S.c.n, X + 120, Y - 60, X + 60, Y - 88); lab('FILL: ' + S.f.n, X + 260, Y + 10, X + 300, Y + 84);
     if (d.liner !== 'none') lab('LINER: ' + S.l.n, X + Lh * .68 - 40, Y - 30, X + Lh * .68 - 10, Y - 88); lab('NOSE: ' + S.n.n, X + Lh * .85, Y - 20, X + Lh * .92, Y - 80);
