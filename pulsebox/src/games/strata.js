@@ -712,15 +712,20 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
     if (m === 1) { const v = Math.floor(money() / 2); if (v > 0) { setMoney(money() - v); const L = []; coinLoot(v, L); for (const [id, n] of L) dropItem(id, P.x, P.y - 1, n); say(coinText(v) + ' dropped where you fell!', 4, '#ffd36a'); } }
     if (m === 2) { ch.fallen = 1; dead.perm = 1; }
     saveAll(); }
-  function spawnEnemy(kind, x, y, o = {}) { const k = KIND[kind]; const E = { id: eid++, kind, x, y, vx: 0, vy: 0, w: k.w, h: k.h, hp: k.hp * (online() ? 1 + others.size * .5 : 1) * (hard && !k.boss && !k.proj ? 2 : 1) * (k.proj ? 1 : k.boss ? DFX().boss : DFX().hp), t: R() * 2, hit: 0, fly: k.fly, ...o }; E.max = E.hp; if (kind === 'slime') E.c = E.c || pick(['#3aa0ff', '#4ac83a', '#c84aff']); ents.push(E); return E; }
+  function spawnEnemy(kind, x, y, o = {}) { const C_ = spawnCtx; if (C_ && KIND[kind] && !KIND[kind].boss && !KIND[kind].proj) { if (kind === 'slime' && C_.left > 0 && R() < .87) { C_.left--; return { kind, x, y, w: 1, h: 1, hp: 1, max: 1, dead: 1, t: 0, vx: 0, vy: 0 }; } if (C_.left <= 0 || C_.at.some(q => Math.abs(q[0] - x) < 8 && Math.abs(q[1] - y) < 8) || ents.some(e => natural(e) && Math.abs(e.x - x) < 6 && Math.abs(e.y - y) < 6)) return { kind, x, y, w: 1, h: 1, hp: 1, max: 1, dead: 1, t: 0, vx: 0, vy: 0 }; C_.at.push([x, y]); C_.left--; } const k = KIND[kind]; const E = { id: eid++, kind, x, y, vx: 0, vy: 0, w: k.w, h: k.h, hp: k.hp * (online() ? 1 + others.size * .5 : 1) * (hard && !k.boss && !k.proj ? 2 : 1) * (k.proj ? 1 : k.boss ? DFX().boss : DFX().hp), t: R() * 2, hit: 0, fly: k.fly, ...o }; E.max = E.hp; if (kind === 'slime') E.c = E.c || pick(['#3aa0ff', '#4ac83a', '#c84aff']); ents.push(E); return E; }
   const CEN = new Set(['gloom', 'sentinel', 'tyrant', 'shard', 'gspit', 'pshot', 'vshot', 'wraith', 'prism', 'frostbat', 'gnawer', 'sporebat', 'galewisp', 'eye', 'bat', 'watcher', 'bone', 'ember', 'fb', 'dart', 'thorn', 'sunspirit', 'weaver', 'web']), top = e => CEN.has(e.kind) ? e.y - e.h / 2 : e.y - e.h, bot = e => CEN.has(e.kind) ? e.y + e.h / 2 : e.y, mid = e => (top(e) + bot(e)) / 2;
   const night = () => { const d = time % 1; return d > .62; };
   const dayLight = () => { const d = time % 1; return d < .07 ? .38 + d / .07 * .62 : d < .55 ? 1 : d < .62 ? 1 - (d - .55) / .07 * .62 : .38; };
   const allPlayers = () => [P, ...[...others.values()].filter(o => o.p && o.p.x != null && !o.dead).map(o => o.p)];
   function nearestP(x, y) { let b = P, d = 1e9; for (const p of allPlayers()) { const dd = Math.hypot(p.x - x, p.y - y); if (dd < d) { d = dd; b = p; } } return b; }
-  function spawnLoop(dt) {
+  let spawnCtx = null, farT = 0; const natural = e => { const k = KIND[e.kind]; return !!k && !k.boss && !k.proj; };
+  function spawnLoop(dt) { try { spawnLoop1(dt); } finally { spawnCtx = null; } }
+  function spawnLoop1(dt) {
     for (const pl of allPlayers()) {
-      if (ents.filter(e => !KIND[e.kind].boss && !KIND[e.kind].proj).length >= Math.round((5 + others.size * 3) * DFX().spawn) || R() > dt * .13 * DFX().spawn) continue;
+      const W_ = pl.wave || (pl.wave = { left: 0, at: [], tries: 0 }); spawnCtx = null;
+      if (!W_.left) { if (ents.some(e => natural(e) && Math.abs(e.x - pl.x) < 70 && Math.abs(e.y - pl.y) < 50) || R() > dt * .13 * DFX().spawn) continue;
+        W_.left = Math.max(1, Math.round((1 + Math.floor(R() * 3) + (night() ? 1 : 0)) * Math.min(1.5, DFX().spawn))); W_.at = []; W_.tries = 0; }
+      if (++W_.tries > 240) { W_.left = 0; continue; } spawnCtx = W_;
       const hw = (() => { const v = WV(); return (v.x1 - v.x0) / TS / 2 + 3; })(), side = R() < .5 ? -1 : 1, x = Math.floor(pl.x + side * rnd(Math.max(28, hw), Math.max(40, hw + 12))); if (x < 2 || x >= WW - 2) continue;
       const depth = pl.y - surf[clamp(Math.floor(pl.x), 0, WW - 1)];
       if (inTemple(pl)) { const cy = Math.floor(pl.y + rnd(-6, 6)), cx = Math.floor(pl.x + side * rnd(hw, hw + 8)); if (at(cx, cy) !== T.AIR || at(cx, cy - 1) !== T.AIR || !inTemple({ x: cx, y: cy })) continue; if (R() < .45) spawnEnemy('sunspirit', cx + .5, cy); else if (SOLID.has(at(cx, cy + 1))) spawnEnemy('guardian', cx + .5, cy + .99); continue; }
@@ -734,7 +739,7 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
       if (inJungle(pl.x) && depth < 10) { let y = 0; while (y < WH - 1 && !SOLID.has(at(x, y))) y++; if (Math.abs(y - pl.y) > 25) continue; if (R() < .55) spawnEnemy('stalker', x + .5, y - .01); else spawnEnemy('thorn', x + .5, pl.y - rnd(8, 14)); continue; }
       if (depth < 8) {
         let y = 0; while (y < WH - 1 && !SOLID.has(at(x, y))) y++; if (Math.abs(y - pl.y) > 25 || PW(walls[(y - 1) * WW + x])) continue;
-        if (night()) { if (R() < .55) spawnEnemy('zombie', x + .5, y - .01); else spawnEnemy('eye', x + .5, pl.y - rnd(10, 16)); if (R() < .35) drops.push({ id: 'star', n: 1, x: pl.x + rnd(-20, 20), y: pl.y - 22, vx: rnd(-2, 2), vy: 8, t: 0 }); }
+        if (night()) { if (R() < .55) spawnEnemy('zombie', x + .5, y - .01); else spawnEnemy('eye', x + .5, pl.y - rnd(10, 16)); if (R() < .35) addDrop({ id: 'star', n: 1, x: pl.x + rnd(-20, 20), y: pl.y - 22, vx: rnd(-2, 2), vy: 8, t: 0 }); }
         else if (at(x, y) === T.SAND && R() < .18) spawnEnemy('buzzard', x + .5, y - .01);
         else if (R() < .6) spawnEnemy('slime', x + .5, y - .01);
       } else {
@@ -878,7 +883,7 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
       if (!online() || by === MP.id) { score += K_.sc || 0; if (!K_.proj) { ch.best = ch.best || {}; ch.best[e.kind] = (ch.best[e.kind] || 0) + 1; } }
     }
   }
-  function giveDrop(to, id, n, x, y) { if (!online() || to === MP.id) drops.push({ id, n, x, y, vx: rnd(-3, 3), vy: -rnd(4, 8), t: 0 }); else MP.to(to, { t: 'drop', id, n, x, y }); }
+  function giveDrop(to, id, n, x, y) { addDrop({ id, n, x, y, vx: rnd(-3, 3), vy: -rnd(4, 8), t: 0 }); }
   function bossDown(k) {
     say(`${BOSSES[k].n.toUpperCase()} HAS BEEN DEFEATED!`, 5, '#ff7aff'); K.chime(523, [0, 4, 7, 12, 16, 19]); K.shake(18);
     if (online() && isHost()) MP.send({ t: 'boss', k });
@@ -1515,7 +1520,7 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
   function drawPlat(g, X, Y, x, y) { const v = PVA()[y * WW + x], k = v & 15, sh = (v >> 4) & 3, tx = (k && tex.platV[k]) || tex[T.PLAT], u = TS / 16;
     if (!sh) { g.drawImage(tx, X, Y, TS, TS); return; } for (let i = 0; i < 16; i++) { const off = sh === 1 ? 15 - i : i; g.drawImage(tx, i, 0, 1, 5, X + i * u, Y + off * u, u + .4, 5 * u); g.drawImage(tx, i, 0, 1, 5, X + i * u, Y + (off + 2) * u, u + .4, 5 * u); if (i % 6 === 2) { g.fillStyle = 'rgba(40,24,10,.9)'; g.fillRect(X + i * u, Y + (off + 6) * u, 2 * u, 3 * u); } } }
   const roomFor = id => { const it = IT[id]; if (!it) return false; if (it.coin) return true; if (it.ammo && amS().some(s => s && s.id === id)) return true; return ch.inv.some(s => !s || (s.id === id && !it.one && !moddable(id))); };
-  function throwHeld() { if (!held) { say('Pick up an item in your inventory first, then press Drop.', 2.2); return; } if (!P || dead) return; const h = held; held = null; drops.push({ id: h.id, n: h.n, x: P.x + P.face * .7, y: P.y - 1.3, vx: (P.face || 1) * 8, vy: -6, t: -1.6, m: h.m }); K.sfx(260, .06, 'square', .04); }
+  function throwHeld() { if (!held) { say('Pick up an item in your inventory first, then press Drop.', 2.2); return; } if (!P || dead) return; const h = held; held = null; addDrop({ id: h.id, n: h.n, x: P.x + P.face * .7, y: P.y - 1.3, vx: (P.face || 1) * 8, vy: -6, t: -1.6, m: h.m }); K.sfx(260, .06, 'square', .04); }
   function editTile(x, y, v) { set(x, y, v); if (online()) MP.send({ t: 'tl', x, y, v }); }
   let axeCut = false;   // a tree felled with an axe gives half as much wood again
   function breakTile(x, y) {
@@ -1551,7 +1556,17 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
   let picks = [];
   function pickTxt(id, n) { const o = picks.find(p => p.id === id && p.t < 1.4); if (o) { o.n += n; o.t = 0; return; } picks.push({ id, n, t: 0 }); if (picks.length > 6) picks.shift(); }
   function drawPicks(g, dt) { if (!P) return; picks = picks.filter(p => (p.t += dt) < 2.4); picks.forEach((p, i) => { const k = picks.length - 1 - i, a = p.t > 1.8 ? 1 - (p.t - 1.8) / .6 : 1; g.globalAlpha = Math.max(0, a); outlined(g, IT[p.id].n + (p.n > 1 ? ' (' + p.n + ')' : ''), sx(P.x), sy(P.y - 3.3) - k * 21 - Math.min(p.t, .4) * 20, 18, IT[p.id].r ? RAR[IT[p.id].r] : '#ffffff', 'center'); }); g.globalAlpha = 1; }
-  function dropItem(id, x, y, n) { drops.push({ id, n, x, y, vx: rnd(-3, 3), vy: -rnd(4, 8), t: 0 }); }
+  let dropSeq = 0;
+  // a drop everyone in the world sees (u: its id across the room)
+  function addDrop(d) { if (online()) { d.u = d.u || (MP.id * 1e6 + (++dropSeq)); MP.send({ t: 'dr', u: d.u, k: d.id, n: d.n, x: +d.x.toFixed(2), y: +d.y.toFixed(2), vx: +(d.vx || 0).toFixed(1), vy: +(d.vy || 0).toFixed(1), dt: d.t || 0, m: d.m || null }); } drops.push(d); }
+  // picking up a shared drop: the host takes it at once; a guest asks the host, who answers with who got it
+  function takeDrop(d) { if (!d.u || !online()) return give(d.id, d.n, d.m); if (isHost()) { if (!give(d.id, d.n, d.m)) return false; MP.send({ t: 'dp', u: d.u, w: MP.id }); return true; }
+    if (!d.req || anim - d.req > 1.5) { d.req = anim; MP.to(MP.hostId, { t: 'dq', u: d.u }); } return false; }
+  function dropMsg(m, from) { if (m.t === 'dr') { if (typeof m.k !== 'string' || !IT[m.k] || !(m.n > 0) || drops.some(q => q.u === m.u)) return true; drops.push({ u: m.u, id: m.k, n: m.n | 0, x: +m.x, y: +m.y, vx: +m.vx || 0, vy: +m.vy || 0, t: Math.min(+m.dt || 0, .4), m: m.m || undefined }); return true; }
+    if (m.t === 'dq') { if (!isHost()) return true; const d = drops.find(q => q.u === m.u && !q.dead); if (d) { d.dead = 1; MP.send({ t: 'dp', u: d.u, w: from, k: d.id, n: d.n, m: d.m || null }); } return true; }
+    if (m.t === 'dp') { const d = drops.find(q => q.u === m.u); if (d) d.dead = 1; if (m.w === MP.id && from !== MP.id && m.k && IT[m.k]) { if (give(m.k, m.n, m.m || undefined)) { pickTxt(m.k, m.n); K.sfx(900, .04, 'square', .04); } else addDrop({ id: m.k, n: m.n, x: P.x, y: P.y - 1, vx: 0, vy: -3, t: 0, m: m.m || undefined }); } return true; }
+    return false; }
+  function dropItem(id, x, y, n) { addDrop({ id, n, x, y, vx: rnd(-3, 3), vy: -rnd(4, 8), t: 0 }); }
 
   /* ---------- lighting ---------- */
   // camera zoom, like Terraria's: the world is drawn bigger around the screen centre; menus and the HUD are not.
@@ -1560,11 +1575,15 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
   const WV = () => { const v = K.view, z = ZOOM(); return { x0: 640 + (v.x0 - 640) / z, x1: 640 + (v.x1 - 640) / z, y0: 360 + (v.y0 - 360) / z, y1: 360 + (v.y1 - 360) / z }; };
   const wmx = () => 640 + (mx - 640) / ZOOM(), wmy = () => 360 + (my - 360) / ZOOM();   // pointer in world-drawing space
   const scrX = X => 640 + (X - 640) * ZOOM(), scrY = Y => 360 + (Y - 360) * ZOOM();    // world-drawing space to screen
-  function computeLight() {
+  const NATG = new Set([T.DIRT, T.GRASS, T.STONE, T.SAND, T.SNOW, T.ICE, T.MUD, T.JGRASS, T.BGRASS, T.RGRASS, T.SSTONE, T.ASH, T.BSTONE, T.LSTONE, T.COPPER, T.IRON, T.GOLD, T.SILVER, T.GMOSS, T.HELLSTONE, T.SHADOW]);
+  let bgCache = new Map(), bgTiles = null;
+  // the top of the natural ground in a column: the deeper of the generated surface and the first natural block from there
+  function bgTop(x) { x = clamp(x, 0, WW - 1); let v = bgCache.get(x); if (v !== undefined) return v; const s0 = surf[x]; let y = Math.max(0, s0 - 40); while (y < WH && !NATG.has(tiles[y * WW + x])) y++; v = Math.max(s0, Math.min(y, WH)); bgCache.set(x, v); return v; }
+  function computeLight() { bgCache.clear();
     const v = WV(), vw = Math.ceil((v.x1 - v.x0) / TS) + 26, vh = Math.ceil((v.y1 - v.y0) / TS) + 26; lx0 = Math.floor((cam.x + v.x0) / TS) - 13; ly0 = Math.floor((cam.y + v.y0) / TS) - 13; lw = vw; lh = vh;
     if (!light || light.length !== vw * vh) light = new Float32Array(vw * vh);
     const sun = dayLight();
-    for (let i = 0; i < vw; i++) { const x = lx0 + i, sfx = surf[clamp(x, 0, WW - 1)]; let open = true, gap = 0;
+    for (let i = 0; i < vw; i++) { const x = lx0 + i, sfx = bgTop(x); let open = true, gap = 0;
       for (let j = 0; j < vh; j++) { const y = ly0 + j, t = at(x, y), k = j * vw + i, wl = x >= 0 && x < WW && y >= 0 && y < WH ? walls[y * WW + x] : 0; if (open && y >= 0) { if ((SOLID.has(t) && t !== T.GLASS) || (wl && wl !== 13 && y > sfx + 2)) { open = false; gap = 0; } }
         else if (!open && y < sfx - 1) { if (!SOLID.has(t) && !wl) { if (++gap >= 5) open = true; } else gap = 0; }
         let L = y < 0 || open ? sun : 0;
@@ -2265,7 +2284,7 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
     g.imageSmoothingEnabled = false; torchL = []; glints = []; glowL = [];
     const v = WV(), x0 = Math.floor((cam.x + v.x0) / TS) - 1, y0 = Math.floor((cam.y + v.y0) / TS) - 1, x1 = x0 + Math.ceil((v.x1 - v.x0) / TS) + 3, y1 = y0 + Math.ceil((v.y1 - v.y0) / TS) + 3, leaves = [], tufts = [];
     // the underground backdrop, column by column under each column's own surface, so it never cuts across the sky
-    g.fillStyle = caveBack(g); for (let x = Math.max(0, x0); x < Math.min(WW, x1); x++) { const Y = Math.round((surf[x] + 3) * TS - cam.y), B = Math.round(y1 * TS - cam.y); if (Y < B) g.fillRect(Math.round(x * TS - cam.x), Y, TS, B - Y); }
+    g.fillStyle = caveBack(g); for (let x = Math.max(0, x0); x < Math.min(WW, x1); x++) { const Y = Math.round((bgTop(x) + 3) * TS - cam.y), B = Math.round(y1 * TS - cam.y); if (Y < B) g.fillRect(Math.round(x * TS - cam.x), Y, TS, B - Y); }
     const TR = scanTrees(x0, x1, y0, y1), DC = [];
     for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
       if (x < 0 || y < 0 || x >= WW || y >= WH) continue;
@@ -3068,7 +3087,7 @@ function unpackWorld0(W) { WW = W.ww || 520; setDepth(W.wh || 210); tiles = unrl
     const o = others.get(from);
     if (m.t === 'bl' && typeof m.s === 'string') { say(m.s.slice(0, 80), 5, '#ff9aff'); return; }
     if (m.t === 'p' && o) { if (m.d && !o.dead) markBossDeath(from); o.hk = Array.isArray(m.hk) && m.hk.length === 3 && m.hk.every(Number.isFinite) ? m.hk : null; o.petK = typeof m.pt === 'string' && PETA[m.pt] ? m.pt : null; { const L = Array.isArray(m.mn) ? m.mn.filter(q => Array.isArray(q) && MINI[q[0]]) : []; o.mins = L.map((q, i) => { const prev = o.mins && o.mins[i] && o.mins[i].k === q[0] ? o.mins[i] : { k: q[0], x: q[1], y: q[2], t: Math.random() * 6, tr: [] }; prev.tx = q[1]; prev.ty = q[2]; prev.vx = q[3]; return prev; }); } if (m.lk) o.look = m.lk; o.p = o.p || { w: .8, h: 1.9 }; if (o.p.x == null) { o.p.x = m.x; o.p.y = m.y; } Object.assign(o.p, { tx: m.x, ty: m.y, vx: m.vx, vy: m.vy, ground: m.g }); o.face = m.f; o.sw = m.s; o.held = m.h; o.armor = m.a; o.dead = m.d; }
-    else if (m.t === 'tl') set(m.x, m.y, m.v); else if (m.t === 'pv' && m.x >= 0 && m.y >= 0 && m.x < WW && m.y < WH) PVA()[m.y * WW + m.x] = m.v & 63;
+    else if (m.t === 'tl') set(m.x, m.y, m.v); else if (dropMsg(m, from)) {} else if (m.t === 'pv' && m.x >= 0 && m.y >= 0 && m.x < WW && m.y < WH) PVA()[m.y * WW + m.x] = m.v & 63;
     else if (m.t === 'chest') chests[m.key] = [];
     else if (m.t === 'cs') chests[m.key] = m.c || [];
     else if (m.t === 'wl') { if (walls && m.x >= 0 && m.x < WW && m.y >= 0 && m.y < WH) walls[m.y * WW + m.x] = m.v; }
@@ -3139,6 +3158,7 @@ function unpackWorld0(W) { WW = W.ww || 520; setDepth(W.wh || 210); tiles = unrl
     for (const [, o] of others) { if (o.petK && PETA[o.petK] && o.p && o.p.x != null && !o.dead) { if (!o.pet || o.pet.k !== o.petK) o.pet = newPet(o.petK, o.p.x, o.p.y - 1); stepPet(o.pet, o.p, o.face || 1, dt); } else o.pet = null; } if (tHold && (invOpen || dead)) torchOff();
     if (!dead) { if (P.hp < ch.max && P.inv <= 0) P.hp = Math.min(ch.max, P.hp + dt * (Math.abs(P.vx) < .5 ? 2.4 : .9) * (1 + B().regen)); P.mp = Math.min(maxMana(), P.mp + dt * 4); }
     if (P.buffs) for (const k in P.buffs) if ((P.buffs[k] -= dt) <= 0) { delete P.buffs[k]; say((BUFFS[k] ? BUFFS[k].n : 'A potion') + ' wore off.', 2, '#cfd8ff'); }
+    if (isHost() && (farT = (farT || 0) + dt) > 2) { farT = 0; const pls = allPlayers(); for (const e of ents) if (natural(e) && !pls.some(p => Math.abs(p.x - e.x) < 110 && Math.abs(p.y - e.y) < 80)) e.dead = 1; }
     if (isHost()) { spawnLoop(dt); for (const e of ents) { enemyAI(e, dt); if (!KIND[e.kind].proj && !KIND[e.kind].boss && lqAt(e.x, e.y - .3) === 2 && ((e.lavaT = (e.lavaT || 0) - dt) <= 0)) { e.lavaT = .5; hitEnemy(e, 20, 0, 1); } } }
     else for (const e of ents) { if (e.tx != null) { e.x += (e.tx - e.x) * Math.min(1, dt * 12); e.y += (e.ty - e.y) * Math.min(1, dt * 12); } e.t += dt; if (e.hit > 0) e.hit -= dt; }
     stepNpcs(dt);
@@ -3147,7 +3167,7 @@ function unpackWorld0(W) { WW = W.ww || 520; setDepth(W.wh || 210); tiles = unrl
     stepProjs(dt); stepMinions(dt);
     lqAcc += dt; let lqn = 0; while (lqAcc >= .05 && lqn < 3) { lqAcc -= .05; lqn++; stepLiquids(); }
     for (const d of drops) if (lqAt(d.x, d.y) === 2 && d.id !== 'obsidian') { d.dead = 1; K.sfx(200, .1, 'sawtooth', .03, -100); }
-    for (const d of drops) { d.t += dt; const dx = P.x - d.x, dy = P.y - 1 - d.y, dd = Math.hypot(dx, dy); if (dd < 4 && d.t > .4 && !dead && roomFor(d.id)) { d.x += dx / dd * 14 * dt; d.y += dy / dd * 14 * dt; if (dd < .8 && give(d.id, d.n)) { d.dead = 1; pickTxt(d.id, d.n); K.sfx(900, .04, 'square', .04); } } else { d.vy += 30 * dt; { const nx = d.x + d.vx * dt; if (solid(nx, d.y - .15)) d.vx = 0; else d.x = nx; } d.vx *= .95; const ny = d.y + d.vy * dt; if (solid(d.x, ny)) { if (d.vy > 0) d.y = Math.floor(ny) - .01; d.vy = 0; } else d.y = ny; } }
+    for (const d of drops) { d.t += dt; const dx = P.x - d.x, dy = P.y - 1 - d.y, dd = Math.hypot(dx, dy); if (dd < 4 && d.t > .4 && !dead && roomFor(d.id)) { d.x += dx / dd * 14 * dt; d.y += dy / dd * 14 * dt; if (dd < .8 && takeDrop(d)) { d.dead = 1; pickTxt(d.id, d.n); K.sfx(900, .04, 'square', .04); } } else { d.vy += 30 * dt; { const nx = d.x + d.vx * dt; if (solid(nx, d.y - .15)) d.vx = 0; else d.x = nx; } d.vx *= .95; const ny = d.y + d.vy * dt; if (solid(d.x, ny)) { if (d.vy > 0) d.y = Math.floor(ny) - .01; d.vy = 0; } else d.y = ny; } }
     drops = drops.filter(d => !d.dead && d.t < 300);
     for (const [, o] of others) if (o.p && o.p.tx != null) { o.p.x += (o.p.tx - o.p.x) * Math.min(1, dt * 12); o.p.y += (o.p.ty - o.p.y) * Math.min(1, dt * 12); }
     if (online()) {
