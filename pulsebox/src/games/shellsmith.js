@@ -157,7 +157,7 @@ const GAME = {
   const LEVELS = [
     { n: 'Brick Cottage', hint: 'High explosive tears brick apart.', par: 2, reward: 150 },
     { n: 'Corner Office', hint: 'Concrete floors. Hit the floor the core sits on.', par: 3, reward: 240 },
-    { n: 'Timber Fort', hint: 'Wood burns. Blast it and watch.', par: 2, reward: 300 },
+    { n: 'Timber Fort', hint: 'Wood splinters and chars. Blast it apart.', par: 2, reward: 300 },
     { n: 'Water Tower', hint: 'Knock out a leg and it all comes down.', par: 3, reward: 360 },
     { n: 'Glass Tower', hint: 'Take out the base and let gravity work.', par: 4, reward: 420 },
     { n: 'Hill Bunker', hint: 'Thick concrete: a pointed nose and a delay fuse.', par: 3, reward: 500 },
@@ -321,9 +321,9 @@ const GAME = {
           } else {
             const mm = M[m];
             if (heat[i] > mm.melt) {
-              if (mm.burns) { mat[i] = E; col[i] = 0; hp[i] = 0; const T = heat[i]; heat[i] = 0; dirty = true; if (fx.length < 600) fx.push({ k: 'f', x: x + .5, y: y + .5, vx: (R() - .5) * 4, vy: -8 - R() * 6, t: 0, l: .5 + R() * .7 }); if (R() < .3) smoke(x, y, 1, .7); for (const j of [i - GW, i - GW - 1, i - GW + 1, i - 1, i + 1, i + GW]) if (j >= 0 && j < N && mat[j]) heat[j] += T * .3 + 40; continue; }
+              if (mm.burns) { const [r, gg, b] = unpack(col[i]); heat[i] = 0; if (r + gg + b < 150) continue; const k = .5; col[i] = rgb(r * k | 0, gg * k * .9 | 0, b * k * .8 | 0); hp[i] = Math.max(.6, hp[i] * .6); if (R() < .5 && fx.length < 600) fx.push({ k: 'f', x: x + .5, y: y + .5, vx: (R() - .5) * 4, vy: -8 - R() * 6, t: 0, l: .5 + R() * .7 }); if (R() < .3) smoke(x, y, 1, .7); continue; }
               mat[i] = m === CORE ? CMOLT : MOLT; hp[i] = 1; heat[i] = Math.max(heat[i], m === CORE ? 470 : 600); dirty = true; if (m === CORE && R() < .2) spark(x + .5, y + .5, 2, 25, '#ff6a8a');
-            } else { if (heat[i] > mm.melt * .8 && y < GH - 1 && !mat[i + GW] && R() < .006) debris(x + .5, y + 1, (R() - .5) * 4, 2, rgb(255, 170, 60), 1, heat[i] * .9); heat[i] = Math.max(0, heat[i] - (mm.burns ? 14 : heat[i] > mm.melt * .7 ? 70 : 26) * dt); if (mm.burns && heat[i] > mm.melt * .55 && R() < .04 && fx.length < 600) fx.push({ k: 'f', x: x + .5, y: y + .5, vx: 0, vy: -6, t: 0, l: .4 }); }
+            } else { if (!mm.burns && heat[i] > mm.melt * .8 && y < GH - 1 && !mat[i + GW] && R() < .006) debris(x + .5, y + 1, (R() - .5) * 4, 2, rgb(255, 170, 60), 1, heat[i] * .9); heat[i] = Math.max(0, heat[i] - (mm.burns ? 14 : heat[i] > mm.melt * .7 ? 70 : 26) * dt); if (mm.burns && heat[i] > mm.melt * .55 && R() < .04 && fx.length < 600) fx.push({ k: 'f', x: x + .5, y: y + .5, vx: 0, vy: -6, t: 0, l: .4 }); }
           }
         }
         // loose stuff falls and slides; liquids also run sideways
@@ -450,6 +450,7 @@ const GAME = {
           s.E -= cost; s.pen++;
           { const c0 = col[i], mm = m; mat[i] = E; hp[i] = 0; heat[i] = 0; col[i] = 0; dirty = true;
             if (mm === GLASS) debris(x + .5, y + .5, (R() - .5) * 30, -R() * 20, c0, 2);
+            else if (M[mm].burns) { debris(x + .5, y + .5, -s.vx * .08 + (R() - .5) * 40, -s.vy * .08 - R() * 26, c0, 0); if (R() < .5) debris(x + .5, y + .5, (R() - .5) * 50, -R() * 30, c0, 0); }
             else if (R() < .7) { const hot = mm === CORE ? 3 : 1; debris(x + .5, y + .5, -s.vx * .06 + (R() - .5) * 26, -s.vy * .06 - R() * 14, mm === CORE ? rgb(255, 90, 120) : rgb(255, 150 + rint(0, 70), 50), hot, 380 + R() * 130); }
             else debris(x + .5, y + .5, -s.vx * .1 + (R() - .5) * 40, -s.vy * .1 - R() * 30, c0, 0); }
           if (s.jk > 0) {
@@ -640,6 +641,7 @@ const GAME = {
       const m = mat[i]; if (!m) { d32[i] = 0; continue; }
       let c = col[i];
       if (isLiquid(m)) { const [r, gg, b] = hotCol(heat[i], m === CMOLT); c = rgb(r, gg | 0, b | 0); }
+      else if (heat[i] > 50 && M[m].burns) { const k = cl(heat[i] / M[m].melt, 0, 1), [r, gg, b] = unpack(c), e = (i * 7 + (t * 8 | 0)) % 5 === 0 ? k : k * .35; c = rgb(lp(r, 255, e) | 0, lp(gg, 110, e) | 0, lp(b, 30, e) | 0, 255); }
       else if (heat[i] > 50) { const k = cl((heat[i] - 50) / 650, 0, 1), [r, gg, b] = unpack(c), hc = k < .35 ? [lp(150, 210, k / .35), lp(60, 70, k / .35), lp(190, 170, k / .35)] : k < .7 ? [lp(210, 255, (k - .35) / .35), lp(70, 140, (k - .35) / .35), lp(170, 40, (k - .35) / .35)] : [255, lp(140, 240, (k - .7) / .3), lp(40, 190, (k - .7) / .3)], a = cl(.35 + k * .9, 0, 1); c = rgb(lp(r, hc[0], a) | 0, lp(gg, hc[1], a) | 0, lp(b, hc[2], a) | 0, 255); }
       else if (m === CORE) { const [r, gg, b] = unpack(c); c = rgb(r, cl(gg * pulse + 20 * (1 - pulse), 0, 255) | 0, b); }
       d32[i] = c;
