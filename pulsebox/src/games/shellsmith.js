@@ -8,7 +8,7 @@ const GAME = {
   how: [
     'Drag from anywhere to aim (direction and distance set the angle and power), let go to fire. Keyboard: arrows aim, Space fires, 1 2 3 pick a shell.',
     'Each building hides a glowing core. Break or melt 90% of it to clear the level. Fewer shells means more stars and coins.',
-    'Every shell has a soft copper jacket around a hard rod: the jacket melts away first, then the rod keeps melting its way through. In the Workshop, a heavy casing and a hard nose reach deeper, delay fuses go off inside, thermite melts, a liner fires a jet.',
+    'Every shell has a soft copper jacket around a hard rod: the jacket melts away first, then the rod bores in a few pixels and the wall bends around it. Keep hitting the same spot to break through. In the Workshop, a heavy casing and a hard nose reach deeper, delay fuses go off inside, thermite melts, a liner fires a jet.',
     'Unsupported floors fall, and a falling building crushes what is below it. Knock out the base and let gravity do the work.',
   ],
   skins: [{ name: 'Range', price: 0 }],
@@ -109,6 +109,7 @@ const GAME = {
       if (fx.length < 700) fx.push({ k: 'r', x, y, x2: x + dx * len * .6, y2: y + dy * len * .6, t: 0, l: .12 }); }
   }
   /* ---------- shells ---------- */
+  const PIERCE = 3.2;   // how hard pixels are to pierce: a shell only bores a few pixels into a wall
   const PARTS = {
     casing: [
       { k: 'steel', n: 'Steel', cost: 0, mass: 1, pen: 1, spd: 1, d: 'Balanced. Does a bit of everything.' },
@@ -143,7 +144,7 @@ const GAME = {
   const part = (cat, k) => PARTS[cat].find(p => p.k === k) || PARTS[cat][0];
   const UPG = [
     { k: 'barrel', n: 'Longer barrel', max: 4, cost: l => [250, 650, 1400, 2800][l], d: l => `+${(l + 1) * 6}% muzzle speed` },
-    { k: 'rack', n: 'Ammo rack', max: 3, cost: l => [500, 1500, 3500][l], d: l => `${5 + l + 1} shells per level` },
+    { k: 'rack', n: 'Ammo rack', max: 3, cost: l => [500, 1500, 3500][l], d: l => `${8 + l + 1} shells per level` },
     { k: 'fillq', n: 'Better filler', max: 4, cost: l => [300, 800, 1800, 3600][l], d: l => `+${(l + 1) * 15}% blast, heat and jet` },
     { k: 'range', n: 'Rangefinder', max: 3, cost: l => [200, 600, 1500][l], d: l => 'Longer aiming line' },
   ];
@@ -155,29 +156,29 @@ const GAME = {
   /* ---------- levels ---------- */
   const LEVELS = [
     { n: 'Brick Cottage', hint: 'High explosive tears brick apart.', par: 2, reward: 150 },
-    { n: 'Corner Office', hint: 'Concrete floors. Hit the floor the core sits on.', par: 2, reward: 240 },
+    { n: 'Corner Office', hint: 'Concrete floors. Hit the floor the core sits on.', par: 3, reward: 240 },
     { n: 'Timber Fort', hint: 'Wood burns. Blast it and watch.', par: 2, reward: 300 },
-    { n: 'Water Tower', hint: 'Knock out a leg and it all comes down.', par: 2, reward: 360 },
-    { n: 'Glass Tower', hint: 'Take out the base and let gravity work.', par: 2, reward: 420 },
+    { n: 'Water Tower', hint: 'Knock out a leg and it all comes down.', par: 3, reward: 360 },
+    { n: 'Glass Tower', hint: 'Take out the base and let gravity work.', par: 4, reward: 420 },
     { n: 'Hill Bunker', hint: 'Thick concrete: a pointed nose and a delay fuse.', par: 3, reward: 500 },
-    { n: 'Container Stack', hint: 'Steel boxes. Find the one with the glow.', par: 3, reward: 580 },
-    { n: 'Steel Vault', hint: 'Steel shrugs off blasts. Melt it or jet it.', par: 3, reward: 660 },
-    { n: 'Lighthouse', hint: 'Tall and thin. The core is the lamp.', par: 2, reward: 740 },
-    { n: 'Twin Towers', hint: 'Two cores. Topple one into the other?', par: 3, reward: 820 },
-    { n: 'Parking Garage', hint: 'Bring down the pillars and the decks pancake.', par: 3, reward: 900 },
-    { n: 'Castle Keep', hint: 'Stone walls, a keep on a hill.', par: 3, reward: 1000 },
-    { n: 'Bell Tower', hint: 'Brick spire, core in the belfry.', par: 3, reward: 1100 },
-    { n: 'Missile Silo', hint: 'The core is buried. Dig with long delays.', par: 3, reward: 1200 },
-    { n: 'Bank Vault', hint: 'Stone bank above, steel vault below ground.', par: 3, reward: 1320 },
-    { n: 'Pyramid', hint: 'Solid stone. The chamber is in the middle.', par: 4, reward: 1450 },
-    { n: 'Reactor', hint: 'Concrete, then lead, then steel. Bring heat.', par: 3, reward: 1600 },
-    { n: 'Dam', hint: 'A wall of concrete. The core hides behind it.', par: 4, reward: 1750 },
-    { n: 'Skyscraper', hint: 'Forty storeys of steel and glass.', par: 3, reward: 1900 },
-    { n: 'Fortress Line', hint: 'Walls in front, armour behind.', par: 4, reward: 2050 },
-    { n: 'Deep Bunker', hint: 'Two slabs of concrete under the hill.', par: 4, reward: 2200 },
-    { n: 'Lead Tomb', hint: 'Lead soaks up blasts. Jets and thermite do not care.', par: 4, reward: 2400 },
-    { n: 'The Foundry', hint: 'Three cores in a steel hall.', par: 4, reward: 2600 },
-    { n: 'The Citadel', hint: 'Everything at once.', par: 5, reward: 3000 },
+    { n: 'Container Stack', hint: 'Steel boxes. Find the one with the glow.', par: 4, reward: 580 },
+    { n: 'Steel Vault', hint: 'Steel shrugs off blasts. Melt it or jet it.', par: 4, reward: 660 },
+    { n: 'Lighthouse', hint: 'Tall and thin. The core is the lamp.', par: 4, reward: 740 },
+    { n: 'Twin Towers', hint: 'Two cores. Topple one into the other?', par: 5, reward: 820 },
+    { n: 'Parking Garage', hint: 'Bring down the pillars and the decks pancake.', par: 4, reward: 900 },
+    { n: 'Castle Keep', hint: 'Stone walls, a keep on a hill.', par: 5, reward: 1000 },
+    { n: 'Bell Tower', hint: 'Brick spire, core in the belfry.', par: 4, reward: 1100 },
+    { n: 'Missile Silo', hint: 'The core is buried. Dig with long delays.', par: 5, reward: 1200 },
+    { n: 'Bank Vault', hint: 'Stone bank above, steel vault below ground.', par: 5, reward: 1320 },
+    { n: 'Pyramid', hint: 'Solid stone. The chamber is in the middle.', par: 6, reward: 1450 },
+    { n: 'Reactor', hint: 'Concrete, then lead, then steel. Bring heat.', par: 5, reward: 1600 },
+    { n: 'Dam', hint: 'A wall of concrete. The core hides behind it.', par: 6, reward: 1750 },
+    { n: 'Skyscraper', hint: 'Forty storeys of steel and glass.', par: 5, reward: 1900 },
+    { n: 'Fortress Line', hint: 'Walls in front, armour behind.', par: 6, reward: 2050 },
+    { n: 'Deep Bunker', hint: 'Two slabs of concrete under the hill.', par: 6, reward: 2200 },
+    { n: 'Lead Tomb', hint: 'Lead soaks up blasts. Jets and thermite do not care.', par: 6, reward: 2400 },
+    { n: 'The Foundry', hint: 'Three cores in a steel hall.', par: 6, reward: 2600 },
+    { n: 'The Citadel', hint: 'Everything at once.', par: 7, reward: 3000 },
   ];
   let GY = 158;
   const rect = (x, y, w, h, m) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, m); };
@@ -388,6 +389,26 @@ const GAME = {
     cam.x = lp(cam.x, cam.on ? cam.hx : cam.x, 1 - Math.exp(-dt * 8)); cam.y = lp(cam.y, cam.on ? cam.hy : cam.y, 1 - Math.exp(-dt * 8));
     if (!cam.on && cam.z < 1.01) { cam.z = 1; cam.ts = 1; }
   }
+  const dents = [];
+  function queueDent(x, y, vx, vy, str) {
+    const ax = Math.abs(vx) >= Math.abs(vy) ? Math.sign(vx) : 0, ay = ax ? 0 : Math.sign(vy) || 1;
+    dents.push({ x: Math.floor(x), y: Math.floor(y), ax, ay, r: Math.round(2 + str * 1.6), str, k: 0 });
+  }
+  function moveCell(a, b) { mat[b] = mat[a]; col[b] = col[a]; hp[b] = hp[a]; heat[b] = heat[a] + 40; mat[a] = E; col[a] = 0; hp[a] = 0; heat[a] = 0; }
+  function stepDents() {
+    for (let n = dents.length - 1; n >= 0; n--) {
+      const d = dents[n]; d.k++; if (d.k > Math.ceil(d.str)) { dents.splice(n, 1); continue; }
+      for (let o = -d.r; o <= d.r; o++) {
+        const want = d.str * Math.pow(1 - Math.abs(o) / (d.r + 1), 1.4); if (d.k > want + .5) continue;
+        const px = d.ax ? d.x - d.ax * 3 : d.x + o, py = d.ax ? d.y + o : d.y - d.ay * 3;
+        let f = -1, b = -1;
+        for (let s2 = 0; s2 < 26; s2++) { const cx = px + d.ax * s2, cy = py + d.ay * s2; if (!inb(cx, cy)) break; const m = mat[idx(cx, cy)]; if (f < 0) { if (isStatic(m)) { if (m === BED) break; f = s2; } } else if (!m || isLiquid(m)) { b = s2; break; } else if (m === BED) break; }
+        if (f < 0 || b < 0 || b - f > 18) continue;
+        for (let s2 = b; s2 > f; s2--) moveCell(idx(px + d.ax * (s2 - 1), py + d.ay * (s2 - 1)), idx(px + d.ax * s2, py + d.ay * s2));
+      }
+      dirty = true;
+    }
+  }
   function stepShells(dt) {
     for (let k = shells.length - 1; k >= 0; k--) {
       const s = shells[k];
@@ -409,7 +430,7 @@ const GAME = {
         // punch through: the cell costs energy according to how hard it is and how sharp the shell is
         // the soft copper jacket bites first and melts away; then the hard rod inside does the real piercing
         if (s.jk == null) { s.jk = 1; s.jkHP = 12 + 10 * S.mass; }
-        const cost = Math.min(hp[i], 80) / (S.pen * (s.jk > 0 ? .75 : 1.55));
+        const cost = Math.min(hp[i], 80) / (S.pen * (s.jk > 0 ? .75 : 1.55)) * PIERCE;
         if (m !== BED && s.E > cost) {
           s.E -= cost; s.pen++;
           { const c0 = col[i], mm = m; mat[i] = E; hp[i] = 0; heat[i] = 0; col[i] = 0; dirty = true;
@@ -426,6 +447,7 @@ const GAME = {
           { const back = Math.atan2(-s.vy, -s.vx), hard = M[m].hp; streak(s.x, s.y, hard >= 10 ? 11 : hard > 3 ? 6 : 3, back, 2.2, 70 + hard * 3); if (hard >= 10) streak(s.x, s.y, 3, back + Math.PI, .8, 50); }
           const first = s.pen === 1, solidL = m !== RUB && m !== SLAG, newLayer = solidL && s.lastM !== m; if (solidL) s.lastM = m; s.inside = true;
           if (cam.on && cam.s === s && newLayer) { cam.layers.push(m); if (cam.layers.length > 6) cam.layers.shift(); }
+          if (newLayer) queueDent(x, y, s.vx, s.vy, cl(s.E / (M[m].hp * .35 + 3), .6, 3.2));
           if (newLayer && cam.s === s) { cam.freeze = first ? .03 : 0; cam.shk = first ? 2.5 : 1.5; if (first) fx.push({ k: 'w', x: s.x, y: s.y, r: 0, t: 0, l: .45 }); }
           { const mc = unpack(tone(m, x, y)), cc = `rgb(${mc[0]},${mc[1]},${mc[2]})`; for (let q = 0; q < 7 && fx.length < 1200; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 1.6, sp = 15 + R() * 55; fx.push({ k: 'c', x: s.x, y: s.y, vx: Math.cos(aa) * sp, vy: Math.sin(aa) * sp - 10, t: 0, l: .5 + R() * .6, c: cc }); } }
           if (t - (s.snd || 0) > .05) { s.snd = t; const hd = M[m].hp; if (hd >= 10) { K.sfx(900 + R() * 500, .06, 'square', .035, -300); K.noise(.05, .06, 2500); } else if (m === GLASS) K.sfx(2400 + R() * 800, .05, 'triangle', .04); else K.noise(.08, .09, 300 + hd * 60); }
@@ -433,7 +455,7 @@ const GAME = {
           if (M[m].hp > 3) spark(s.x, s.y, 2, 30);
           if (delay && s.pen >= delay && S.f.blast > 0) { detonate(s, s.x, s.y); break; }
           if (nv < 6) { if (S.f.blast > 0 || S.jet > 0) detonate(s, s.x, s.y); else { s.live = false; spark(s.x, s.y, 8, 30); } break; }
-        } else { if (S.f.blast > 0) detonate(s, ox, oy); else { s.live = false; hurt(i, s.E * S.pen); spark(ox, oy, 10, 40); K.noise(.12, .2, 1200); } break; }
+        } else { if (m !== BED) { if (hurt(i, s.E * S.pen / PIERCE * 1.4)) destroy(i, s.vx * .1, s.vy * .1); else heat[i] += 260; } queueDent(x, y, s.vx, s.vy, cl(s.E / 4, .6, 2)); if (S.f.blast > 0) detonate(s, ox, oy); else { s.live = false; streak(ox, oy, 14, Math.atan2(-s.vy, -s.vx), 2, 80); K.noise(.12, .2, 1200); } break; }
       }
       s.trail.push([s.x, s.y]); if (s.trail.length > 14) s.trail.shift();
     }
@@ -450,8 +472,8 @@ const GAME = {
     camEnd(); cam.z = 1; cam.ts = 1;
     lvl = n; build(n); GUN.y = (() => { for (let y = 0; y < GH; y++) if (mat[idx(GUN.x, y)]) return y; return GY; })();
     for (let x = GUN.x - 6; x <= GUN.x + 6; x++) for (let y = GUN.y - 14; y < GUN.y; y++) set(x, y, E);
-    parts.length = 0; fx.length = 0; shells.length = 0; bodies.length = 0; blasts.length = 0;
-    shots = 5 + lv('rack'); used = 0; end = null; endT = 0; settle = 0; mode = 'play'; msgs = []; coreT = 0;
+    parts.length = 0; fx.length = 0; shells.length = 0; bodies.length = 0; blasts.length = 0; dents.length = 0;
+    shots = 8 + lv('rack'); used = 0; end = null; endT = 0; settle = 0; mode = 'play'; msgs = []; coreT = 0;
     ang = .5; pow = .7; say(LEVELS[n].hint, '#ffd890');
   }
   function finish(win) {
@@ -509,7 +531,7 @@ const GAME = {
     acc = Math.min(acc + sdt, .1);
     while (acc >= 1 / 60) {
       const h = 1 / 60; acc -= h;
-      stepShells(h); stepParts(h); stepBodies(h); stepCells(h);
+      stepShells(h); stepDents(); stepParts(h); stepBodies(h); stepCells(h);
       for (const b of blasts) b.t += h; while (blasts.length && blasts[0].t > 1) blasts.shift();
       if (dirty && (frame % 6 === 0)) { dirty = false; support(); }
     }
