@@ -445,7 +445,7 @@ const GAME = {
     if (!f.blast && !S.jet) { spark(x, y, 12, 50); K.noise(.15, .2, 900); dirty = true; }
   }
   const cam = { shk: 0, freeze: 0, on: false, x: 160, y: 90, z: 1, tz: 1, ts: 1, tts: 1, s: null, rel: 0, layers: [], hx: 0, hy: 0 };
-  function camStart(s, hx, hy) { Object.assign(cam, { on: true, s, rel: 0, layers: [], tz: 3.4, tts: .3, hx, hy, note: '', noteT: 0 }); }
+  function camStart(s, hx, hy) { Object.assign(cam, { on: true, s, rel: 0, layers: [], tz: 3.4, tts: .14, hx, hy, note: '', noteT: 0 }); }
   function camEnd() { cam.on = false; cam.s = null; cam.tz = 1; cam.tts = 1; }
   function stepCam(dt) {
     if (cam.on) {
@@ -460,12 +460,12 @@ const GAME = {
   const dents = [];
   function queueDent(x, y, vx, vy, str) {
     const ax = Math.abs(vx) >= Math.abs(vy) ? Math.sign(vx) : 0, ay = ax ? 0 : Math.sign(vy) || 1;
-    dents.push({ x: Math.floor(x), y: Math.floor(y), ax, ay, r: Math.round(2 + str * 1.6), str, k: 0 });
+    dents.push({ x: Math.floor(x), y: Math.floor(y), ax, ay, r: Math.round(3 + str * 2), str, k: 0, f: 0 });
   }
   function moveCell(a, b) { mat[b] = mat[a]; col[b] = col[a]; hp[b] = hp[a]; heat[b] = heat[a] + 40; mat[a] = E; col[a] = 0; hp[a] = 0; heat[a] = 0; }
   function stepDents() {
     for (let n = dents.length - 1; n >= 0; n--) {
-      const d = dents[n]; d.k++; if (d.k > Math.ceil(d.str)) { dents.splice(n, 1); continue; }
+      const d = dents[n]; if (d.f++ % 2) continue; d.k++; if (d.k > Math.ceil(d.str)) { dents.splice(n, 1); continue; }
       for (let o = -d.r; o <= d.r; o++) {
         const want = d.str * Math.pow(1 - Math.abs(o) / (d.r + 1), 1.4); if (d.k > want + .5) continue;
         const px = d.ax ? d.x - d.ax * 3 : d.x + o, py = d.ax ? d.y + o : d.y - d.ay * 3;
@@ -477,10 +477,25 @@ const GAME = {
       dirty = true;
     }
   }
+  function jacketGone(s) {
+    if (s.jkDone) return; s.jkDone = true; s.jk = 0;
+    for (let q = 0; q < 26; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 2.6, v = 18 + R() * 50; debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v - 8, rgb(240, 140 + rint(0, 60), 60), 1, 600); }
+    streak(s.x, s.y, 46, 0, TAU, 110); K.sfx(520, .25, 'triangle', .05, -240);
+    if (cam.s === s) { cam.note = `COPPER JACKET STRIPPED · ${{ steel: 'STEEL CORE', alu: 'ALLOY CORE', tung: 'TUNGSTEN ROD' }[s.d.casing]} EXPOSED`; cam.noteT = 2.2; cam.freeze = .04; }
+  }
+  // a shell that can go no further stays stuck in the wall a moment: the rest of its jacket melts off, then any charge goes off
+  function stall(s) { if (s.stuck != null) return; s.stuck = 1.15; if (s.jk == null) s.jk = 1; s.stuckFire = s.S.f.blast > 0 || s.S.jet > 0; }
   function stepShells(dt) {
     for (let k = shells.length - 1; k >= 0; k--) {
       const s = shells[k];
       if (!s.live) { shells.splice(k, 1); continue; }
+      if (s.stuck != null) {
+        s.stuck -= dt; const back = Math.atan2(-s.vy, -s.vx), sp = Math.hypot(s.vx, s.vy) || 1, nx = s.x + s.vx / sp * 1.2, ny = s.y + s.vy / sp * 1.2;
+        if (s.jk > 0) { s.jk = Math.max(0, s.jk - dt * 1.6); if (R() < .7) debris(s.x - s.vx / sp, s.y - s.vy / sp, Math.cos(back) * (8 + R() * 18) + (R() - .5) * 10, -4 - R() * 10, rgb(235, 130 + rint(0, 50), 55), 1, 520); if (s.jk <= 0) jacketGone(s); }
+        if (R() < .6) streak(nx, ny, 2, back, 2.4, 60); { const cx = Math.floor(nx), cy = Math.floor(ny); for (let yy = -1; yy <= 1; yy++) for (let xx = -1; xx <= 1; xx++) if (inb(cx + xx, cy + yy) && mat[idx(cx + xx, cy + yy)]) heat[idx(cx + xx, cy + yy)] += 300 * dt; }
+        if (s.stuck <= 0) { if (s.stuckFire) detonate(s, s.x, s.y); else { s.live = false; spark(s.x, s.y, 8, 30); } }
+        continue;
+      }
       const sub = Math.max(1, Math.ceil(Math.hypot(s.vx, s.vy) * dt / .45));
       for (let n = 0; n < sub && s.live; n++) {
         const h = dt / sub; s.vy += G * h; const ox = s.x, oy = s.y; s.x += s.vx * h; s.y += s.vy * h;
@@ -506,24 +521,24 @@ const GAME = {
             else if (R() < .7) { const hot = mm === CORE ? 3 : 1; debris(x + .5, y + .5, -s.vx * .06 + (R() - .5) * 26, -s.vy * .06 - R() * 14, mm === CORE ? rgb(255, 90, 120) : rgb(255, 150 + rint(0, 70), 50), hot, 380 + R() * 130); }
             else debris(x + .5, y + .5, -s.vx * .1 + (R() - .5) * 40, -s.vy * .1 - R() * 30, c0, 0); }
           if (s.jk > 0) {
-            s.jk -= Math.min(M[m].hp, 40) / s.jkHP * .17 + .006;
+            s.jk -= Math.min(M[m].hp, 40) / s.jkHP * .09 + .004; s.jk = Math.min(s.jk, 1 - (s.E0 - s.E) / (s.E0 * .85));
             for (let q = 0; q < 2; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 1.8, v = 14 + R() * 34; debris(s.x - s.vx * .004, s.y - s.vy * .004, Math.cos(aa) * v, Math.sin(aa) * v - 6, rgb(235, 130 + rint(0, 40), 60), 1, 560); }
-            if (s.jk <= 0) { s.jk = 0; for (let q = 0; q < 26; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 2.6, v = 18 + R() * 50; debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v - 8, rgb(240, 140 + rint(0, 60), 60), 1, 600); } streak(s.x, s.y, 46, 0, TAU, 110); spark(s.x, s.y, 10, 60, '#ffb070'); K.sfx(520, .25, 'triangle', .05, -240); if (cam.s === s) { cam.note = `COPPER JACKET STRIPPED · ${{ steel: 'STEEL CORE', alu: 'ALLOY CORE', tung: 'TUNGSTEN ROD' }[s.d.casing]} EXPOSED`; cam.noteT = 2.2; cam.freeze = .04; } }
+            if (s.jk <= 0) { jacketGone(s); } if (false) { for (let q = 0; q < 26; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 2.6, v = 18 + R() * 50; debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v - 8, rgb(240, 140 + rint(0, 60), 60), 1, 600); } streak(s.x, s.y, 46, 0, TAU, 110); spark(s.x, s.y, 10, 60, '#ffb070'); K.sfx(520, .25, 'triangle', .05, -240); if (cam.s === s) { cam.note = `COPPER JACKET STRIPPED · ${{ steel: 'STEEL CORE', alu: 'ALLOY CORE', tung: 'TUNGSTEN ROD' }[s.d.casing]} EXPOSED`; cam.noteT = 2.2; cam.freeze = .04; } }
           }
           { const hk = Math.min(1.3, .35 + M[m].hp / 10); for (let yy = -3; yy <= 3; yy++) for (let xx = -3; xx <= 3; xx++) { const d = Math.hypot(xx, yy); if (d > 3.2) continue; const nx = x + xx, ny = y + yy; if (inb(nx, ny)) { const j = idx(nx, ny); if (mat[j] && !isLiquid(mat[j]) && mat[j] !== BED) heat[j] = Math.min(heat[j] + 330 * hk * (1 - d / 3.6), Math.max(heat[j], (M[mat[j]].melt || 900) * .92)); } } }
           if (R() < .55) { const cc = { steel: rgb(150, 160, 175), alu: rgb(205, 212, 220), tung: rgb(90, 94, 106) }[s.d.casing]; debris(s.x, s.y, -s.vx * .08 + (R() - .5) * 40, -s.vy * .08 - 10 - R() * 25, cc, 0); }
           { const back = Math.atan2(-s.vy, -s.vx), hard = M[m].hp; streak(s.x, s.y, hard >= 10 ? 11 : hard > 3 ? 6 : 3, back, 2.2, 70 + hard * 3); if (hard >= 10) streak(s.x, s.y, 3, back + Math.PI, .8, 50); }
           const first = s.pen === 1, solidL = m !== RUB && m !== SLAG, newLayer = solidL && s.lastM !== m; if (solidL) s.lastM = m; s.inside = true;
           if (cam.on && cam.s === s && newLayer) { cam.layers.push(m); if (cam.layers.length > 6) cam.layers.shift(); }
-          if (newLayer) queueDent(x, y, s.vx, s.vy, cl(s.E / (M[m].hp * .35 + 3), .6, 3.2));
+          if (newLayer) queueDent(x, y, s.vx, s.vy, cl(s.E / (M[m].hp * .22 + 1.5), 1.2, 5));
           if (newLayer && cam.s === s) { cam.freeze = first ? .03 : 0; cam.shk = first ? 2.5 : 1.5; if (first) fx.push({ k: 'w', x: s.x, y: s.y, r: 0, t: 0, l: .45 }); }
           { const mc = unpack(tone(m, x, y)), cc = `rgb(${mc[0]},${mc[1]},${mc[2]})`; for (let q = 0; q < 7 && fx.length < 1200; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 1.6, sp = 15 + R() * 55; fx.push({ k: 'c', x: s.x, y: s.y, vx: Math.cos(aa) * sp, vy: Math.sin(aa) * sp - 10, t: 0, l: .5 + R() * .6, c: cc }); } }
           if (t - (s.snd || 0) > .05) { s.snd = t; const hd = M[m].hp; if (hd >= 10) { K.sfx(900 + R() * 500, .06, 'square', .035, -300); K.noise(.05, .06, 2500); } else if (m === GLASS) K.sfx(2400 + R() * 800, .05, 'triangle', .04); else K.noise(.08, .09, 300 + hd * 60); }
           const sp = Math.hypot(s.vx, s.vy), nv = Math.sqrt(Math.max(0, s.E) / (S.mass * 22)) * 100, k = sp > 0 ? nv / sp : 0; s.vx *= k; s.vy *= k;
           if (M[m].hp > 3) spark(s.x, s.y, 2, 30);
           if (delay && s.pen >= delay && S.f.blast > 0) { detonate(s, s.x, s.y); break; }
-          if (nv < 6) { if (S.f.blast > 0 || S.jet > 0) detonate(s, s.x, s.y); else { s.live = false; spark(s.x, s.y, 8, 30); } break; }
-        } else { if (m !== BED) { if (hurt(i, s.E * S.pen / PIERCE * 1.4)) destroy(i, s.vx * .1, s.vy * .1); else heat[i] += 260; } queueDent(x, y, s.vx, s.vy, cl(s.E / 4, .6, 2)); if (S.f.blast > 0) detonate(s, ox, oy); else { s.live = false; streak(ox, oy, 14, Math.atan2(-s.vy, -s.vx), 2, 80); K.noise(.12, .2, 1200); } break; }
+          if (nv < 6) { stall(s); break; }
+        } else { if (m !== BED) { if (hurt(i, s.E * S.pen / PIERCE * 1.4)) destroy(i, s.vx * .1, s.vy * .1); else heat[i] += 260; } queueDent(x, y, s.vx, s.vy, cl(s.E / 2.5, 1, 3.5)); stall(s); streak(ox, oy, 14, Math.atan2(-s.vy, -s.vx), 2, 80); K.noise(.12, .2, 1200); break; }
       }
       s.trail.push([s.x, s.y]); if (s.trail.length > 14) s.trail.shift();
     }
