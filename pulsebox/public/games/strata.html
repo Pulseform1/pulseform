@@ -273,6 +273,9 @@ const GAME = {
     sbrick: { n: 'Stone Brick', tile: 31 }, cbrick: { n: 'Copper Brick', tile: 32 }, gbrick: { n: 'Gold Brick', tile: 33, r: 1 }, glass: { n: 'Glass', tile: 34 }, books: { n: 'Bookcase', tile: 35 },
     wsword: { n: 'Wooden Sword', melee: 7, c: '#b07a42' }, bsword: { n: 'Bone Sword', melee: 20, c: '#e8e0c8', r: 1 }, gspear: { n: 'Gold Spear', melee: 22, reach: 3.6, c: '#ffd23f', r: 1 },
     cbow: { n: 'Copper Bow', bow: 7, cd: .52, c: '#d8864a' }, sbow: { n: 'Silver Bow', bow: 11, cd: .48, c: '#e0e8f0' }, musket: { n: 'Musket', gun: 26, cd: .9, c: '#6a5a4a', r: 1 },
+    revolver: { n: 'Silver Revolver', gun: 15, cd: .3, c: '#e0e8f0', r: 1 }, blunder: { n: 'Blunderbuss', gun: 8, cd: 1, shots: 5, c: '#b8c0c8', r: 1 }, handcannon: { n: 'Golden Handcannon', gun: 34, cd: .75, c: '#ffd23f', r: 2 },
+    repeater: { n: 'Shadow Repeater', gun: 14, cd: .13, c: '#8a5ad8', r: 2 }, scattergun: { n: 'Hellfire Scattergun', gun: 13, cd: .72, shots: 4, fire: 1, c: '#ff6a2a', r: 3 }, longrifle: { n: 'Azurite Longrifle', gun: 64, cd: 1.15, c: '#4a8aff', r: 3 },
+    burstgun: { n: 'Viridium Burstgun', gun: 24, cd: .22, shots: 2, c: '#3ad87a', r: 3 }, railgun: { n: 'Starmetal Railgun', gun: 96, cd: 1.05, c: '#ffe8a0', r: 4 },
     iboom: { n: 'Iron Boomerang', boom: 14, c: '#b8c0c8' }, rod: { n: 'Spark Rod', magic: 11, mp: 3, proj: 'spark', c: '#ffb04a' }, bpick: { n: 'Bone Pickaxe', pick: 2, dmg: 7, c: '#e8e0c8', r: 1 },
     shuriken: { n: 'Shuriken', throw: 'knife', dmg: 9 }, bknife: { n: 'Bone Knife', throw: 'knife', dmg: 14 }, barrow: { n: 'Bone Arrow', ammo: 'arrow', dmg: 6 }, sshot: { n: 'Silver Shot', ammo: 'shot', dmg: 10 },
     warmor: { n: 'Wood Armor', armor: 1, c: '#b07a42', bon: { speed: .05 } }, barmor: { n: 'Bone Armor', armor: 9, c: '#e8e0c8', r: 1, bon: { ranged: .12, ammo: .15 } },
@@ -375,7 +378,7 @@ const WOODY = new Set([T.PPLANK, T.MPLANK, T.GPLANK, T.RPLANK, T.LWOOD, T.TRUNK,
     R_('table', 1, { wood: 8 }, 'bench'), R_('chair', 1, { wood: 4 }, 'bench'), R_('bed', 1, { wood: 15, gel: 5 }, 'bench'), R_('books', 1, { wood: 20 }, 'bench'), R_('campfire', 1, { wood: 10, torch: 5 }),
     R_('lantern', 1, { ibar: 1, torch: 1 }, 'anvil'), R_('sbrick', 1, { stone: 2 }, 'furnace'), R_('cbrick', 1, { stone: 1, copper: 1 }, 'furnace'), R_('gbrick', 1, { stone: 1, gold: 1 }, 'furnace'), R_('glass', 1, { sand: 2 }, 'furnace'),
     R_('wsword', 1, { wood: 7 }, 'bench'), R_('warmor', 1, { wood: 30 }, 'bench'), R_('barrow', 5, { arrow: 5, bone: 1 }, 'bench'), R_('lpotion', 3, { gel: 2 }, 'bench'), R_('mpotion', 2, { gel: 2, star: 1 }, 'bench'), R_('recall', 1, { mush: 1, gel: 1, bone: 1 }, 'bench'),
-    R_('cbow', 1, { cbar: 7 }, 'anvil'), R_('sbow', 1, { sbar: 7 }, 'anvil'), R_('gspear', 1, { gbar: 10, wood: 4 }, 'anvil'), R_('iboom', 1, { ibar: 8 }, 'anvil'), R_('musket', 1, { ibar: 18, wood: 8 }, 'anvil'),
+    R_('cbow', 1, { cbar: 7 }, 'anvil'), R_('sbow', 1, { sbar: 7 }, 'anvil'), R_('gspear', 1, { gbar: 10, wood: 4 }, 'anvil'), R_('iboom', 1, { ibar: 8 }, 'anvil'), R_('musket', 1, { ibar: 18, wood: 8 }, 'anvil'), R_('revolver', 1, { sbar: 10, ibar: 4 }, 'anvil'), R_('blunder', 1, { ibar: 14, cbar: 6, wood: 10 }, 'anvil'), R_('handcannon', 1, { gbar: 14, wood: 4 }, 'anvil'), R_('repeater', 1, { shbar: 14, lens: 4 }, 'anvil'), R_('scattergun', 1, { hbar: 16, ember: 4 }, 'anvil'), R_('longrifle', 1, { azbar: 14, lens: 2 }, 'anvil'), R_('burstgun', 1, { vibar: 14 }, 'runeanvil'), R_('railgun', 1, { smbar: 14, lumenshard: 4 }, 'runeanvil'),
     R_('rod', 1, { cbar: 10, gel: 5 }, 'anvil'), R_('shuriken', 25, { ibar: 1 }, 'anvil'), R_('sshot', 50, { sbar: 1 }, 'anvil'), R_('bsword', 1, { bone: 30 }, 'anvil'), R_('bpick', 1, { bone: 25 }, 'anvil'), R_('barmor', 1, { bone: 40 }, 'anvil'), R_('bknife', 15, { bone: 1 }, 'anvil'),
     R_('band', 1, { cbar: 6, gel: 3 }, 'anvil'), R_('gaunt', 1, { ibar: 8, bone: 5 }, 'anvil'), R_('wemb', 1, { shbar: 8, bone: 10 }, 'anvil'),
     R_('quiver', 1, { wood: 10, bone: 10, arrow: 50 }, 'bench'), R_('scope', 1, { ibar: 6, lens: 2 }, 'anvil'), R_('remb', 1, { shbar: 8, lens: 4 }, 'anvil'),
@@ -2145,6 +2148,7 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
     azpick: 'azurite', azax: 'azurite', azsword: 'azurite', azbow: 'azurite', azstaff: 'azurite', azhelm: 'azurite', azarmor: 'azurite', azlegs: 'azurite',
     vipick: 'viridium', viax: 'viridium', visword: 'viridium', vibow: 'viridium', vistaff: 'viridium', vihelm: 'viridium', viarmor: 'viridium', vilegs: 'viridium',
     smpick: 'starmetal', smax: 'starmetal', smsword: 'starmetal', smbow: 'starmetal', smstaff: 'starmetal', smhelm: 'starmetal', smarmor: 'starmetal', smlegs: 'starmetal',
+    handcannon: 'gold', repeater: 'shadow', scattergun: 'molten', longrifle: 'azurite', burstgun: 'viridium', railgun: 'starmetal',
     bsword: 'bone', bpick: 'bone', bhelm: 'bone', barmor: 'bone', blegs: 'bone', skull: 'bone', skstaff: 'bone', saber: 'slime', slimegun: 'slime', slstaff: 'slime', esword: 'enchanted', eboom: 'enchanted',
     starfall: 'star', starstaff: 'star', wyrm: 'star', prismblade: 'prism', tyrantblade: 'eclipse', eclipse: 'eclipse', voidbow: 'void', reefblade: 'reef', trident: 'reef', frostblade: 'frost', froststaff: 'frost', avalanche: 'frost', wispwand: 'frost',
     gloomstaff: 'gloom', gloomfang: 'gloom', blightscythe: 'gloom', rotbow: 'gloom', broodstaff: 'gloom', sunblade: 'sun', sunstaff: 'sun', vinebow: 'vine', thorns: 'vine', shroompike: 'spore', gaze: 'eye',
@@ -2408,8 +2412,8 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
       for (let y = 0; y <= 11; y++) { const hx = 2 + (15 - y) * 8 / 12, k = Math.sin(Math.PI * (y + .5) / 12), ex = 11.5 + 3.8 * k - (y < 2 ? 1.5 : 0); if (ex <= hx + .5) continue;
         for (let x = Math.ceil(hx + .6); x <= ex; x++) P.px(x, y, x >= ex - .9 ? '~' + l : x >= ex - 2 ? m : x <= hx + 1.6 ? d : shadeC(m, .9)); }
       P.px(Math.round(11.5 + 3.8) - 1, 5, W); P.px(Math.round(11.5 + 3.8) - 1, 6, W); P.rect(9, 3, 2, 5, d); P.px(9, 4, '~' + l); };
-    if (it.gun) return (it.cd || .5) >= .7 ? P => {   // a long rifle
-      P.rect(4, 5, 12, 2, m); P.rect(4, 5, 12, 1, '~' + l); P.px(15, 4, d); P.rect(13, 5, 1, 2, d);
+    if (it.gun) return (it.cd || .5) >= .7 || it.shots > 1 ? P => {   // a long gun
+      P.rect(4, 5, 12, 2, m); if (it.shots > 1) { P.rect(14, 3, 2, 6, m); P.px(15, 3, '~' + l); } P.rect(4, 5, 12, 1, '~' + l); P.px(15, 4, d); P.rect(13, 5, 1, 2, d);
       P.rect(0, 7, 6, 4, WOODP[1]); P.rect(5, 7, 9, 2, WOODP[1]); P.rect(0, 7, 13, 1, '~' + WOODP[2]); P.rect(0, 10, 6, 1, '~' + WOODP[0]); P.rect(0, 8, 1, 4, '#3a2410');
       P.rect(5, 6, 3, 2, d); P.rect(5, 4, 2, 2, d); P.px(5, 4, '~' + l); P.line(7, 9, 9, 9, d); P.px(9, 8, d); P.px(8, 8, '~' + WOODP[0]); P.px(10, 5, W); } : P => {   // a pistol
       P.rect(6, 4, 9, 3, m); P.rect(6, 4, 9, 1, '~' + l); P.rect(6, 6, 9, 1, d); P.rect(14, 3, 1, 1, d); P.rect(15, 4, 1, 3, d);
