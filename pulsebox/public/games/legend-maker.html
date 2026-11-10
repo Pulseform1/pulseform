@@ -135,8 +135,9 @@ const GAME = {
   /* ---------- the pros on the reel: made-up players with one or two things they are great at ---------- */
   function makePro(sp) {
     const S = SPORTS[sp], peak = [pick([0, 1, 2, 3, 4, 5])]; if (rng() < .55) peak.push(pick([0, 1, 2, 3, 4, 5]));
-    const base = rnd(52, 74), r = S.at.map((_, i) => Math.round(clamp(base + rnd(-14, 12) + (peak.includes(i) ? rnd(14, 28) : 0), 35, 99)));
-    if (rng() < .06) r[pick([0, 1, 2, 3, 4, 5])] = 99;
+    // ratings above 90 are squeezed, so a normal pull tops out at 97; a 98 (about 1 in 35) or a 99 (about 1 in 125) is a special pull
+    const soft = v => v <= 90 ? v : 90 + (v - 90) * .32, base = rnd(52, 74), r = S.at.map((_, i) => Math.round(clamp(soft(base + rnd(-14, 12) + (peak.includes(i) ? rnd(14, 28) : 0)), 35, 97)));
+    const luck = rng(); if (luck < .008) r[pick([0, 1, 2, 3, 4, 5])] = 99; else if (luck < .036) r[pick([0, 1, 2, 3, 4, 5])] = 98;
     return { name: pick(FN) + ' ' + pick(LN), club: pick(CLUBS), year: 1975 + Math.floor(rng() * 50), r };
   }
   function newBuild(sp, dly) {
@@ -145,7 +146,7 @@ const GAME = {
     build = { slots: Array(6).fill(null), rerolls: 2, spins: 0, pro: null, name: L.lastName || pick(FN) + ' ' + pick(LN), vs: null, look: { ...L.look }, trait: null, step: 'look' };
     mode = 'create'; reel = null;
   }
-  const ROW = 58, rarity = p => { const m = Math.max(...p.r); return m >= 99 ? ['LEGEND PULL', '#ffd23f'] : m >= 92 ? ['STAR', '#ff5fa2'] : m >= 85 ? ['GOLD', '#ffb02e'] : m >= 78 ? ['SILVER', '#cfd8e0'] : ['BRONZE', '#c8864a']; };
+  const ROW = 58, rarity = p => { const m = Math.max(...p.r); return m >= 99 ? ['GOAT PULL', '#ffffff'] : m >= 98 ? ['ICON PULL', '#ffd23f'] : m >= 93 ? ['STAR', '#ff5fa2'] : m >= 86 ? ['GOLD', '#ffb02e'] : m >= 78 ? ['SILVER', '#cfd8e0'] : ['BRONZE', '#c8864a']; };
   function spin() {
     if (build.slots.every(Boolean) || reel || build.pro) return;
     const pro = makePro(sport), W = 22 + Math.floor(R0() * 4), RC = ['#c8864a', '#c8864a', '#cfd8e0', '#cfd8e0', '#ffb02e', '#ff5fa2'];
@@ -181,7 +182,7 @@ const GAME = {
     if (b === 0) { S.lean.forEach(i => v[i] += 3); S.power.forEach(i => v[i] -= 2); }
     if (b === 2) { S.power.forEach(i => v[i] += 3); S.lean.forEach(i => v[i] -= 2); }
     if (b === 1) { v[S.lean[0]] += 1; v[S.power[0]] += 1; }
-    return v.map(x => clamp(x, 30, 99));
+    return v.map((x, i) => clamp(x, 30, Math.max(97, build.slots[i] ? build.slots[i].v : 0)));
   }
   const ovr = () => wavg(build.slots.every(Boolean) && build.step !== 'draft' ? finalRatings() : build.slots.map(s => s ? s.v : 0));
 
@@ -284,7 +285,9 @@ const GAME = {
   function campDone() {
     const c = career, M = c.mg, i = c.campI, old = c.age >= 31 ? .5 : c.age >= 28 ? .8 : 1;
     const gain = Math.round(M.score / 5 * 4.2 * (c.trait === 'gym' ? 1.6 : 1) * old);
-    c.v[i] = Math.min(99, c.v[i] + gain); c.campGain = { i, gain }; c.mg = null;
+    const cap = c.v[i] >= 98 ? 99 : 97, pre = c.v[i]; c.v[i] = Math.min(cap, c.v[i] + gain);
+    if (c.v[i] === 97 && pre + gain > 97 && M.score >= 4.5 && R0() < .1) { c.v[i] = 98; K.chime(784, [0, 4, 7, 12, 16, 19]); K.burst(640, 300, ['#ffd23f', '#fff'], 70, 600); K.shake(6); }
+    c.campGain = { i, gain: c.v[i] - pre }; c.mg = null;
     c.O = wavg(c.v); c.peak = Math.max(c.peak, c.O);
     msg = { t: gain ? `+${gain} ${SPORTS[sport].at[i]}  (${c.v[i]})` : 'A rough camp. No gains this year.', k: 0 };
     startMoments();
@@ -544,23 +547,50 @@ const GAME = {
     g.restore();
   }
   // the trading card: the thing you made, to be proud of
+  // card finishes by overall: bronze, silver, gold, star, and a moving rainbow ICON finish for 95+
+  const QUAL = { bronze: ['#6a3a1a', '#c8864a', '#f4c898', 'BRONZE'], silver: ['#5a6470', '#cfd8e0', '#ffffff', 'SILVER'], gold: ['#8a6208', '#ffd23f', '#fff4b0', 'GOLD'], star: ['#8a2058', '#ff5fa2', '#ffd0e8', 'STAR'], icon: ['#3a1a6a', '#ffffff', '#ffffff', 'ICON'] };
+  const qualOf = O => O >= 95 ? 'icon' : O >= 89 ? 'star' : O >= 82 ? 'gold' : O >= 72 ? 'silver' : 'bronze';
+  function frameGrad(g, q, w, h, ph = 0) {
+    const Q = QUAL[q], gr = g.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2);
+    if (q === 'icon') { for (let k = 0; k <= 6; k++) gr.addColorStop(k / 6, `hsl(${(t * 90 + ph * 60 + k * 60) % 360},95%,${k % 2 ? 72 : 58}%)`); }
+    else { gr.addColorStop(0, Q[2]); gr.addColorStop(.3, Q[1]); gr.addColorStop(.55, Q[0]); gr.addColorStop(.8, Q[1]); gr.addColorStop(1, Q[2]); }
+    return gr;
+  }
   function card(g, rec, x, y, sc = 1, opt = {}) {
-    const S = SPORTS[rec.sport], T = TIERS.find(q => q[1] === rec.tier) || (opt.tierC ? [0, '', opt.tierC] : TIERS[2]), col = T[2], w = 280, h = 400, L = lookOf(rec.look, S.c);
+    const S = SPORTS[rec.sport], q = opt.q || qualOf(rec.O), Q = QUAL[q], w = 280, h = 400, L = lookOf(rec.look, S.c), tc = TEAM[L.c1 ?? 6], tc2 = TEAM[L.c2 ?? 10] || '#ffffff';
     g.save(); g.translate(x, y); g.scale(sc, sc);
-    g.fillStyle = 'rgba(0,0,0,.5)'; g.beginPath(); g.roundRect(-w / 2 + 6, -h / 2 + 10, w, h, 20); g.fill();
-    const gr = g.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2); gr.addColorStop(0, '#1a2440'); gr.addColorStop(.5, '#0e1428'); gr.addColorStop(1, TEAM[L.c1 ?? 6] + '66');
-    rr(g, -w / 2, -h / 2, w, h, 20, gr, col, 5);
-    // foil sweep
-    g.save(); g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, 20); g.clip(); const sw = ((t * .35 + (opt.ph || 0)) % 1.6) - .3, fg = g.createLinearGradient(-w / 2 + sw * w * 1.6 - 60, -h / 2, -w / 2 + sw * w * 1.6 + 60, h / 2); fg.addColorStop(0, 'rgba(255,255,255,0)'); fg.addColorStop(.5, 'rgba(255,255,255,.13)'); fg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = fg; g.fillRect(-w / 2, -h / 2, w, h);
-    g.fillStyle = TEAM[L.c1 ?? 6] + '40'; g.beginPath(); g.arc(0, -60, 120, 0, TAU); g.fill();
-    athlete(g, rec.sport, -6, -58, 1.05, L, { acc: accKey(rec) }); g.restore();
-    tx(g, String(rec.O), -w / 2 + 40, -h / 2 + 38, d(54), ratingC(rec.O)); tx(g, S.name, -w / 2 + 40, -h / 2 + 72, d(18), S.c);
-    if (L.num != null) tx(g, '#' + L.num, w / 2 - 34, -h / 2 + 34, d(30), '#fff');
-    const tr = traitOf(rec.trait); if (tr) tx(g, tr.ic, w / 2 - 34, -h / 2 + 72, '24px system-ui', '#fff');
-    rr(g, -w / 2 + 12, 46, w - 24, 34, 8, 'rgba(0,0,0,.45)'); tx(g, rec.name.toUpperCase(), 0, 64, d(rec.name.length > 15 ? 26 : 32), '#fff');
+    if (opt.glow) { g.shadowColor = opt.glow; g.shadowBlur = 40; }
+    g.fillStyle = 'rgba(0,0,0,.55)'; g.beginPath(); g.roundRect(-w / 2 + 8, -h / 2 + 12, w, h, 22); g.fill(); g.shadowBlur = 0;
+    // metallic frame, then the dark face
+    g.fillStyle = frameGrad(g, q, w, h, opt.ph || 0); g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, 22); g.fill();
+    const face = g.createLinearGradient(0, -h / 2, 0, h / 2); face.addColorStop(0, '#16203a'); face.addColorStop(.6, '#0c1226'); face.addColorStop(1, '#070b18');
+    g.fillStyle = face; g.beginPath(); g.roundRect(-w / 2 + 9, -h / 2 + 9, w - 18, h - 18, 15); g.fill();
+    g.save(); g.beginPath(); g.roundRect(-w / 2 + 9, -h / 2 + 9, w - 18, h - 18, 15); g.clip();
+    // team stripes and light rays behind the player
+    g.globalAlpha = .22; g.fillStyle = tc; for (let k = -6; k < 8; k++) { g.beginPath(); g.moveTo(-w / 2 + k * 46, -h / 2); g.lineTo(-w / 2 + k * 46 + 22, -h / 2); g.lineTo(-w / 2 + k * 46 + 22 - 160, h / 2); g.lineTo(-w / 2 + k * 46 - 160, h / 2); g.fill(); } g.globalAlpha = 1;
+    if (q === 'star' || q === 'icon' || q === 'gold') { g.save(); g.translate(0, -70); g.rotate(t * .25); for (let k = 0; k < 14; k++) { g.rotate(TAU / 14); g.fillStyle = q === 'icon' ? `hsla(${(t * 90 + k * 26) % 360},100%,70%,.16)` : Q[1] + '22'; g.beginPath(); g.moveTo(0, 0); g.lineTo(-14, -260); g.lineTo(14, -260); g.fill(); } g.restore(); }
+    const halo = g.createRadialGradient(0, -70, 10, 0, -70, 150); halo.addColorStop(0, tc + 'aa'); halo.addColorStop(1, tc + '00'); g.fillStyle = halo; g.fillRect(-w / 2, -h / 2, w, h);
+    athlete(g, rec.sport, 12, -54, 1.05, L, { acc: accKey(rec) });
+    // the foil sweep, stronger on rarer cards
+    const sw = ((t * .35 + (opt.ph || 0)) % 1.6) - .3, fg = g.createLinearGradient(-w / 2 + sw * w * 1.6 - 70, -h / 2, -w / 2 + sw * w * 1.6 + 70, h / 2), fa = q === 'icon' ? .32 : q === 'star' ? .24 : q === 'gold' ? .18 : .12;
+    fg.addColorStop(0, 'rgba(255,255,255,0)'); fg.addColorStop(.5, `rgba(255,255,255,${fa})`); fg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = fg; g.fillRect(-w / 2, -h / 2, w, h);
+    if (q === 'icon' || q === 'star') for (let k = 0; k < 10; k++) { const a = (t * .6 + k * .37) % 1, sx = Math.sin(k * 91.7) * 110, sy = -150 + ((k * 53) % 240) - a * 30; g.globalAlpha = Math.sin(a * Math.PI); g.fillStyle = '#fff'; g.fillRect(sx - 1, sy - 4, 2, 8); g.fillRect(sx - 4, sy - 1, 8, 2); g.globalAlpha = 1; }
+    g.restore();
+    // overall badge: a shield in the card's metal
+    g.fillStyle = frameGrad(g, q, 80, 90, (opt.ph || 0) + .5); g.beginPath(); g.moveTo(-w / 2 + 14, -h / 2 + 14); g.lineTo(-w / 2 + 94, -h / 2 + 14); g.lineTo(-w / 2 + 94, -h / 2 + 82); g.lineTo(-w / 2 + 54, -h / 2 + 104); g.lineTo(-w / 2 + 14, -h / 2 + 82); g.closePath(); g.fill();
+    g.fillStyle = '#0c1226'; g.beginPath(); g.moveTo(-w / 2 + 19, -h / 2 + 19); g.lineTo(-w / 2 + 89, -h / 2 + 19); g.lineTo(-w / 2 + 89, -h / 2 + 79); g.lineTo(-w / 2 + 54, -h / 2 + 98); g.lineTo(-w / 2 + 19, -h / 2 + 79); g.closePath(); g.fill();
+    tx(g, String(rec.O), -w / 2 + 54, -h / 2 + 50, d(46), ratingC(rec.O)); tx(g, S.name.slice(0, 7).toUpperCase(), -w / 2 + 54, -h / 2 + 82, d(13), S.c);
+    if (L.num != null) tx(g, '#' + L.num, w / 2 - 36, -h / 2 + 34, d(30), '#fff');
+    const tr = traitOf(rec.trait); if (tr) tx(g, tr.ic, w / 2 - 36, -h / 2 + 72, '24px system-ui', '#fff');
+    // name plate in the team's colours, then the stats with bars
+    const np = g.createLinearGradient(-w / 2, 0, w / 2, 0); np.addColorStop(0, tc); np.addColorStop(1, tc2); g.fillStyle = np; g.beginPath(); g.roundRect(-w / 2 + 12, 40, w - 24, 38, 9); g.fill();
+    g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.roundRect(-w / 2 + 15, 43, w - 30, 32, 7); g.fill(); tx(g, rec.name.toUpperCase(), 0, 60, d(rec.name.length > 15 ? 24 : 30), '#fff');
     const r = rec.r || Array(6).fill(rec.O);
-    S.at.forEach((a, i) => { const cx = -w / 2 + 24 + (i % 2) * 132, cy = 100 + Math.floor(i / 2) * 26; tx(g, a.slice(0, 9).toUpperCase(), cx, cy, f(12, 900), '#9fb0d0', 'left'); tx(g, String(r[i]), cx + 116, cy, d(24), ratingC(r[i]), 'right'); });
-    if (rec.tier) { rr(g, -70, h / 2 - 34, 140, 26, 13, col); tx(g, rec.tier.toUpperCase(), 0, h / 2 - 20, d(20), '#141414'); }
+    S.at.forEach((a, i) => { const cx = -w / 2 + 20 + (i % 2) * 126, cy = 96 + Math.floor(i / 2) * 30, v = r[i];
+      tx(g, a.slice(0, 9).toUpperCase(), cx, cy, f(11, 900), '#9fb0d0', 'left'); tx(g, (v >= 98 ? '★' : '') + v, cx + 110, cy, d(22), ratingC(v), 'right');
+      g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(cx, cy + 11, 110, 3); g.fillStyle = ratingC(v); g.fillRect(cx, cy + 11, 110 * clamp((v - 30) / 69, 0, 1), 3); });
+    const lab = rec.tier ? rec.tier.toUpperCase() : Q[3]; g.fillStyle = frameGrad(g, q, 150, 26, (opt.ph || 0) + 1); g.beginPath(); g.roundRect(-78, h / 2 - 32, 156, 26, 13); g.fill(); tx(g, lab, 0, h / 2 - 18, d(18), '#141414');
+    if (opt.crack) { g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 3; g.beginPath(); g.moveTo(-40, -h / 2 + 20); g.lineTo(-10, -60); g.lineTo(-34, -10); g.lineTo(12, 40); g.lineTo(-6, 90); g.moveTo(-10, -60); g.lineTo(40, -90); g.moveTo(-34, -10); g.lineTo(-90, 10); g.stroke(); }
     g.restore();
   }
   const accKey = rec => ((GAME.skins[(rec && rec.acc != null ? rec.acc : rec && rec.look && rec.look.acc) || 0] || {}).k) || 'none';
@@ -573,7 +603,7 @@ const GAME = {
     if (sub) tx(g, sub, b.x + b.w / 2, b.y + b.h / 2 + 22 + (hv ? 2 : 0), f(15), tc);
   }
   function wrap(g, s, x, y, w, lh, c, al = 'left') { g.fillStyle = c; g.textAlign = al; g.textBaseline = 'middle'; let line = '', yy = y; for (const wd of s.split(' ')) { const tt = line ? line + ' ' + wd : wd; if (g.measureText(tt).width > w && line) { g.fillText(line, x, yy); line = wd; yy += lh; } else line = tt; } g.fillText(line, x, yy); return yy; }
-  const ratingC = v => v >= 95 ? '#ffd23f' : v >= 88 ? '#ff5fa2' : v >= 80 ? '#3ddc84' : v >= 70 ? '#29e0ff' : v >= 60 ? '#cfd8e0' : '#8a95ab';
+  const ratingC = v => v >= 99 ? `hsl(${(t * 220) % 360},100%,68%)` : v >= 98 ? (Math.floor(t * 6) % 2 ? '#fff6c0' : '#ffd23f') : v >= 95 ? '#ffd23f' : v >= 88 ? '#ff5fa2' : v >= 80 ? '#3ddc84' : v >= 70 ? '#29e0ff' : v >= 60 ? '#cfd8e0' : '#8a95ab';
   function dim(g, a = .62) { const v = K.view; g.fillStyle = `rgba(4,8,18,${a})`; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
 
   function drawHome(g) {
@@ -706,19 +736,42 @@ const GAME = {
     });
     button(g, 'card', { x: 440, y: 560, w: 400, h: 90 }, build.trait ? 'REVEAL YOUR CARD ▶' : 'PICK A TRAIT FIRST', build.trait ? '#ffd23f' : '#2a2a3e', null, build.trait ? '#141414' : '#7a8aa8');
   }
+  // a 98 or a 99 off the reel: the whole screen celebrates
+  function drawPullFx(g) {
+    const P = build.pullFx, e = t - P.t0, a = e < .15 ? e / .15 : e > 2 ? Math.max(0, (2.6 - e) / .6) : 1, v = K.view, hue = h => `hsl(${(t * 200 + h) % 360},100%,68%)`;
+    if (e < .3) { g.fillStyle = `rgba(255,255,255,${((.3 - e) / .3 * .9).toFixed(2)})`; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
+    g.save(); g.globalAlpha = a * .92; g.fillStyle = 'rgba(8,10,24,.8)'; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    g.translate(640, 330); g.rotate(t * .5); for (let i = 0; i < 24; i++) { g.rotate(TAU / 24); g.fillStyle = P.goat ? hue(i * 15) : (i % 2 ? '#ffd23f' : '#fff4b0'); g.globalAlpha = a * .22; g.beginPath(); g.moveTo(0, 0); g.lineTo(-26, -900); g.lineTo(26, -900); g.fill(); } g.restore();
+    g.save(); g.globalAlpha = a; const sc = 1 + Math.max(0, .5 - e) * 1.6; g.translate(640, 300); g.scale(sc, sc);
+    tx(g, P.goat ? 'GOAT PULL' : 'ICON PULL', 0, 0, d(110), P.goat ? hue(0) : '#ffd23f', 'center', 10); tx(g, P.goat ? '99 · ONCE IN A LIFETIME' : '98 · ONE IN THIRTY-FIVE', 0, 84, d(34), '#fff', 'center', 6); g.restore();
+  }
   function drawCardReveal(g) {
-    const k = Math.min(1, (t - (build.revealT || 0)) / .7), rec = { name: build.name, sport, look: build.look, r: finalRatings(), O: ovr(), trait: build.trait, tier: '', acc: K.save.skin || 0 };
-    tx(g, 'MEET YOUR LEGEND', 640, 46, d(52), '#ffb02e');
-    g.save(); g.translate(400, 370); g.rotate((1 - k) * .4); g.scale(.4 + k * .6, .4 + k * .6); card(g, rec, 0, 0, 1.15, { tierC: '#ffd23f' }); g.restore();
+    const e = t - (build.revealT || 0), rec = { name: build.name, sport, look: build.look, r: finalRatings(), O: ovr(), trait: build.trait, tier: '', acc: K.save.skin || 0 }, q = qualOf(rec.O), Q = QUAL[q], flip = 1.1, k = e >= flip + .9 ? 1 : 0;
+    tx(g, e < flip ? 'OPENING YOUR CARD...' : 'MEET YOUR LEGEND', 640, 46, d(52), q === 'icon' ? `hsl(${(t * 120) % 360},100%,70%)` : Q[1]);
+    // light rays behind the card, growing as it spins
+    g.save(); g.translate(400, 370); g.rotate(t * .4); const ra = Math.min(1, e / flip); for (let i = 0; i < 18; i++) { g.rotate(TAU / 18); g.fillStyle = q === 'icon' ? `hsla(${(t * 90 + i * 20) % 360},100%,70%,${(.1 + .12 * ra).toFixed(2)})` : Q[1] + (ra > .5 ? '33' : '1a'); g.beginPath(); g.moveTo(0, 0); g.lineTo(-30, -600); g.lineTo(30, -600); g.fill(); } g.restore();
+    if (e < flip) {   // face down, spinning faster and glowing hotter
+      const sp = e * e * 9, sx = Math.cos(sp), s0 = .55 + .45 * (e / flip); g.save(); g.translate(400, 370); g.scale(Math.abs(sx) * s0 * 1.15, s0 * 1.15);
+      g.shadowColor = Q[1] === '#ffffff' ? '#ff5fa2' : Q[1]; g.shadowBlur = 20 + 50 * (e / flip); g.fillStyle = frameGrad(g, q, 280, 400); g.beginPath(); g.roundRect(-140, -200, 280, 400, 22); g.fill(); g.shadowBlur = 0;
+      g.fillStyle = '#0c1226'; g.beginPath(); g.roundRect(-131, -191, 262, 382, 15); g.fill(); tx(g, 'L', 0, -10, d(160), Q[1]); tx(g, 'LEGEND MAKER', 0, 120, d(22), Q[1]); g.restore();
+    } else {
+      const fe = Math.min(1, (e - flip) / .25); g.save(); g.translate(400, 370); g.scale((.6 + .4 * fe) * 1.15, 1.15); card(g, rec, 0, 0, 1, { glow: q === 'icon' ? '#ff5fa2' : Q[1] }); g.restore();
+      if (e < flip + .35) { g.fillStyle = `rgba(255,255,255,${(1 - (e - flip) / .35).toFixed(2)})`; g.fillRect(K.view.x0, K.view.y0, K.view.x1 - K.view.x0, K.view.y1 - K.view.y0); }
+    }
+    if (e >= flip) {   // the overall counts up, then the tier slams down
+      const cnt = Math.round(lp(40, rec.O, Math.min(1, (e - flip) / .8))), sl = clamp((e - flip - .9) / .18, 0, 1);
+      tx(g, String(cnt), 870, 312, d(130), ratingC(cnt)); tx(g, 'OVERALL', 870, 386, d(28), '#9fb0d0');
+      if (sl > 0) { g.save(); g.translate(870, 112); g.scale(2.2 - 1.2 * sl, 2.2 - 1.2 * sl); g.globalAlpha = sl; g.fillStyle = frameGrad(g, q, 300, 50); g.beginPath(); g.roundRect(-150, -26, 300, 52, 26); g.fill(); tx(g, Q[3] + ' CARD', 0, 2, d(30), '#141414'); g.restore(); }
+    }
     if (k >= 1) {
-      tx(g, build.name.toUpperCase(), 870, 150, d(64), '#fff'); tx(g, `${SPORTS[sport].role} · #${build.look.num} · ${BUILDS[build.look.build].toLowerCase()} build`, 870, 196, f(19, 800), '#9fb0d0');
-      tx(g, String(rec.O), 870, 290, d(140), ratingC(rec.O)); tx(g, 'OVERALL', 870, 370, d(30), '#9fb0d0');
-      const tr = traitOf(build.trait); tx(g, `${tr.ic} ${tr.n}`, 870, 420, d(32), '#ffd23f');
+      tx(g, build.name.toUpperCase(), 870, 172, d(build.name.length > 14 ? 40 : 50), '#fff'); tx(g, `${SPORTS[sport].role} · #${build.look.num} · ${BUILDS[build.look.build].toLowerCase()} build`, 870, 206, f(17, 800), '#9fb0d0');
+      const tr = traitOf(build.trait); tx(g, `${tr.ic} ${tr.n}`, 870, 428, d(30), '#ffd23f');
       button(g, 'sim', { x: 690, y: 470, w: 360, h: 100 }, 'START CAREER ▶', '#ffd23f', 'Rookie year, age 21');
       button(g, 'relook', { x: 690, y: 590, w: 172, h: 60 }, 'EDIT LOOK', '#1f2a46', null, '#eef1f8');
       button(g, 'home', { x: 878, y: 590, w: 172, h: 60 }, 'MENU', '#1f2a46', null, '#eef1f8');
     }
   }
+
 
   /* ---------- the career screen ---------- */
   function drawCareer(g) {
@@ -953,24 +1006,38 @@ const GAME = {
     button(g, 'find', { x: 470, y: 500, w: 360, h: 84 }, 'NEXT OPPONENT', '#ff5fa2');
   }
   function drawBattle(g) {
-    const A = arena, B2 = A.battle, r = A.rec, o = A.opp;
-    tx(g, `${r.name.toUpperCase()} vs ${o.name.toUpperCase()}`, 640, 46, d(40), '#ff5fa2');
-    athlete(g, r.sport, 220, 330, 1.25, r.look, { acc: accKey(r) }); athlete(g, o.sport, 1060, 330, 1.25, o.look, { acc: accKey(o) });
-    tx(g, 'YOU', 220, 520, d(34), '#fff'); tx(g, o.name.toUpperCase(), 1060, 520, d(34), '#fff');
-    for (let i = 0; i < 2; i++) { g.fillStyle = i < B2.me ? '#3ddc84' : 'rgba(255,255,255,.15)'; g.beginPath(); g.arc(190 + i * 60, 580, 16, 0, 7); g.fill(); g.fillStyle = i < B2.them ? '#ff5f6a' : 'rgba(255,255,255,.15)'; g.beginPath(); g.arc(1030 + i * 60, 580, 16, 0, 7); g.fill(); }
+    const A = arena, B2 = A.battle, r = A.rec, o = A.opp, L2 = B2.log[B2.log.length - 1], since = B2.show != null ? B2.show : 9, ent = clamp((t - (B2.t0 ?? (B2.t0 = t))) / .6, 0, 1), over = B2.me >= 2 || B2.them >= 2;
+    tx(g, `${r.name.toUpperCase()}  vs  ${o.name.toUpperCase()}`, 640, 40, d(36), '#ff5fa2');
+    const hitMe = L2 && !L2.won && since < .5, hitThem = L2 && L2.won && since < .5, sh = k => k ? (R0() - .5) * 16 * (.5 - since) : 0;
+    const winBig = (me) => over && (me ? B2.me >= 2 : B2.them >= 2) ? 1.12 + Math.sin(t * 3) * .02 : 1;
+    card(g, { ...r, tier: '' }, lp(-200, 250, ent) + sh(hitMe), 330 + sh(hitMe), .92 * winBig(true), { ph: 0, glow: L2 && L2.won && since < 1.2 ? '#3ddc84' : null, crack: B2.them >= 2 });
+    card(g, { ...o, tier: '' }, lp(1480, 1030, ent) + sh(hitThem), 330 + sh(hitThem), .92 * winBig(false), { ph: .7, glow: L2 && !L2.won && since < 1.2 ? '#ff5f6a' : null, crack: B2.me >= 2 });
+    for (let i = 0; i < 2; i++) { g.fillStyle = i < B2.me ? '#3ddc84' : 'rgba(255,255,255,.15)'; g.beginPath(); g.arc(220 + i * 60, 620, 16, 0, 7); g.fill(); g.fillStyle = i < B2.them ? '#ff5f6a' : 'rgba(255,255,255,.15)'; g.beginPath(); g.arc(1000 + i * 60, 620, 16, 0, 7); g.fill(); }
+    // the stat being fought over, with a lightning VS between the cards
+    if (B2.mine != null && !over) { const i = B2.idx[B2.round] ?? B2.idx[B2.idx.length - 1], nm = SPORTS[r.sport].at[i] || '';
+      tx(g, nm.toUpperCase(), 640, 150, d(30), '#9fb0d0'); tx(g, String(B2.mine), 560, 220, d(70), ratingC(B2.mine)); tx(g, String(B2.theirs), 720, 220, d(70), ratingC(B2.theirs));
+      g.strokeStyle = `rgba(255,${(200 + Math.sin(t * 20) * 55) | 0},80,.9)`; g.lineWidth = 4; g.beginPath(); g.moveTo(640, 170); for (let k = 1; k <= 6; k++) g.lineTo(640 + (k % 2 ? 10 : -10) + (R0() - .5) * 6, 170 + k * 18); g.stroke(); tx(g, 'VS', 640, 300, d(54), '#ffd23f', 'center', 6); }
     if (B2.mg) return drawMG(g, B2.mg);
-    const L2 = B2.log[B2.log.length - 1]; if (L2) { dim(g, .6); tx(g, `YOU: ${L2.my.toUpperCase()}`, 640, 280, d(48), L2.my === 'miss' ? '#ff8a8a' : '#3ddc84'); tx(g, `THEM: ${L2.their.toUpperCase()}`, 640, 340, d(48), L2.their === 'miss' ? '#7a8aa8' : '#ff8a8a'); tx(g, L2.won ? 'ROUND TO YOU!' : 'ROUND TO THEM', 640, 420, d(64), L2.won ? '#ffd23f' : '#ff5f6a'); }
+    if (L2 && !over) { dim(g, .35); tx(g, `YOU: ${L2.my.toUpperCase()}`, 640, 330, d(40), L2.my === 'miss' ? '#ff8a8a' : '#3ddc84'); tx(g, `THEM: ${L2.their.toUpperCase()}`, 640, 380, d(40), L2.their === 'miss' ? '#7a8aa8' : '#ff8a8a'); const s2 = 1 + Math.max(0, .3 - since) * 2; g.save(); g.translate(640, 460); g.scale(s2, s2); tx(g, L2.won ? 'ROUND TO YOU!' : 'ROUND TO THEM', 0, 0, d(60), L2.won ? '#ffd23f' : '#ff5f6a', 'center', 6); g.restore(); }
+    if (over) { const s2 = 1 + Math.max(0, .3 - since) * 2; g.save(); g.translate(640, 220); g.scale(s2, s2); tx(g, B2.me >= 2 ? 'YOUR CARD WINS!' : 'THEIR CARD WINS', 0, 0, d(64), B2.me >= 2 ? '#ffd23f' : '#ff5f6a', 'center', 8); g.restore(); }
   }
+
 
   /* ---------- kit hooks ---------- */
   GAME.reset = () => { mode = 'home'; build = null; career = null; reel = null; msg = null; posed = false; rng = R0; ladder = null; arena = null; hofSel = -1; hofPick = false; nameInput(false); quests(); if (K.bot) { newBuild(pick(Object.keys(SPORTS)), false); build.name = pick(FN) + ' ' + pick(LN); build.demo = 0; } };
   GAME.update = dt => {
     t += dt; if (msg && (msg.k += dt) > 3.5) msg = null;
+    if (mode === 'create' && build && build.step === 'card' && build.revealT != null && build.revealT > 0) {
+      const e = t - build.revealT, O = ovr(), q = qualOf(O), Q = QUAL[q];
+      if (e < 1.1 && (build.revTick = (build.revTick || 0) - dt) <= 0) { build.revTick = .2 - e * .14; K.sfx(300 + e * 500, .04, 'square', .03); }
+      if (e >= 1.1 && !build.revFlip) { build.revFlip = true; K.shake(q === 'icon' ? 12 : q === 'star' ? 8 : 5); K.noise(.3, .2, 1800); K.burst(400, 370, q === 'icon' ? ['#ff5fa2', '#29e0ff', '#3ddc84', '#ffd23f', '#fff'] : [Q[1], '#fff', SPORTS[sport].c], q === 'icon' ? 140 : q === 'star' ? 90 : 50, 700); }
+      if (e >= 2 && !build.revSlam) { build.revSlam = true; K.shake(q === 'icon' ? 10 : 6); K.sfx(110, .3, 'sawtooth', .07, -40); K.chime(q === 'icon' ? 659 : q === 'star' ? 587 : 523, q === 'icon' || q === 'star' ? [0, 4, 7, 12, 16, 19] : [0, 4, 7, 12]); K.burst(870, 112, [Q[1], '#fff'], 40, 400); }
+    }
     if (reel) {
       const was = reel.t < reel.end; reel.t += dt; reel.tick -= dt; const row = Math.floor(reelPos(reel) + .5);
       if (row !== reel.row && reel.tick <= 0) { reel.row = row; reel.tick = .045; K.sfx(700 + (row / reel.W) * 500, .025, 'square', .035); }
       if (was && reel.t >= reel.end) { K.sfx(980, .08, 'square', .06); K.shake(3); }
-      if (reel.t >= reel.T + .15) { build.pro = reel.pro; reel = null; const [rn] = rarity(build.pro); K.sfx(660, .12, 'triangle', .08); if (rn === 'LEGEND PULL' || rn === 'STAR') { K.chime(784, [0, 4, 7, 12]); K.burst(835, 260, ['#ffd23f', '#fff', '#ff5fa2'], 30, 420); K.shake(6); } if (build.vs) build.vs.clock = 10; }
+      if (reel.t >= reel.T + .15) { build.pro = reel.pro; reel = null; const [rn] = rarity(build.pro); K.sfx(660, .12, 'triangle', .08); if (rn === 'GOAT PULL' || rn === 'ICON PULL') { const goat = rn === 'GOAT PULL'; build.pullFx = { t0: t, goat }; K.chime(goat ? 659 : 587, [0, 4, 7, 12, 16, 19, 24]); K.sfx(220, .9, 'sawtooth', .05, 900); K.burst(640, 360, goat ? ['#ff5fa2', '#29e0ff', '#3ddc84', '#ffd23f', '#fff'] : ['#ffd23f', '#fff', '#ffb02e'], goat ? 160 : 110, 900); K.shake(goat ? 14 : 10); setTimeout(() => K.burst(640, 360, ['#ffd23f', '#fff'], 80, 700), 350); } else if (rn === 'STAR') { K.chime(784, [0, 4, 7, 12]); K.burst(835, 260, ['#ffd23f', '#fff', '#ff5fa2'], 30, 420); K.shake(6); } if (build.vs) build.vs.clock = 10; }
     }
     nameInput(mode === 'create' && build && build.step === 'look' && !K.bot && !posed);
     if (mode === 'create' && build.vs && build.pro && (build.vs.clock -= dt) <= 0) { const S = SPORTS[sport], open = build.slots.map((s, i) => s ? -1 : build.pro.r[i] * S.w[i]); place(open.indexOf(Math.max(...open))); msg = { t: 'Shot clock! Your pick was made for you.', k: 0 }; }
@@ -987,7 +1054,7 @@ const GAME = {
     if (mode === 'battle' && arena && arena.battle) {
       const B2 = arena.battle;
       if (B2.mg) { if (mgUpdate(B2.mg, dt)) battleRoundDone(); }
-      else if ((B2.show += dt) > 1.6) { if (B2.me >= 2 || B2.them >= 2) battleOver(); else { B2.round++; battleRound(); } }
+      else if ((B2.show += dt) > (B2.me >= 2 || B2.them >= 2 ? 2.6 : 1.6)) { if (B2.me >= 2 || B2.them >= 2) battleOver(); else { B2.round++; battleRound(); } }
     }
     if (mode === 'arena' && arena && arena.status === 'tape') arena.tt += dt;
     if (mode === 'verdict') career.vt += dt;
@@ -996,7 +1063,7 @@ const GAME = {
     for (const k in B) delete B[k];
     bg(g);
     if (mode === 'home') drawHome(g);
-    else if (mode === 'create' || mode === 'ready') { if (build.step === 'look' && mode === 'create') drawLook(g); else if (build.step === 'trait') drawTrait(g); else if (build.step === 'card') drawCardReveal(g); else drawDraft(g); }
+    else if (mode === 'create' || mode === 'ready') { if (build.step === 'look' && mode === 'create') drawLook(g); else if (build.step === 'trait') drawTrait(g); else if (build.step === 'card') drawCardReveal(g); else drawDraft(g); if (build.pullFx && t - build.pullFx.t0 < 2.6) drawPullFx(g); }
     else if (mode === 'career') drawCareer(g); else if (mode === 'verdict') { drawCareer(g); drawVerdict(g); }
     else if (mode === 'hof') drawHof(g); else if (mode === 'ladder') drawLadder(g); else if (mode === 'duel') drawDuel(g); else if (mode === 'arena') drawArena(g); else if (mode === 'battle') drawBattle(g);
     if (msg) { const a = Math.min(1, msg.k * 4, (3.5 - msg.k) * 2); g.globalAlpha = Math.max(0, a); rr(g, 340, 8, 600, 44, 12, '#1f4a34', '#3ddc84', 2); tx(g, msg.t, 640, 30, f(18), '#bff5d6'); g.globalAlpha = 1; }
@@ -1021,7 +1088,7 @@ const GAME = {
       K.sfx(560 + Math.random() * 200, .04, 'triangle', .04); return;
     }
     if (k.startsWith('tr') && build && build.step === 'trait') { build.trait = TRAITS[+k.slice(2)].k; K.sfx(700, .06, 'triangle', .06); return; }
-    if (k === 'card' && build && build.trait) { build.step = 'card'; build.revealT = t; K.chime(523, [0, 4, 7, 12]); K.burst(400, 370, ['#ffd23f', '#fff', SPORTS[sport].c], 50, 500); K.shake(5); return; }
+    if (k === 'card' && build && build.trait) { build.step = 'card'; build.revealT = t; build.revFlip = build.revSlam = false; K.sfx(200, .5, 'sawtooth', .04, 600); return; }
     if (k === 'relook') { build.step = 'look'; return; }
     if (k === 'spin' && mode === 'create') return spin();
     if (k === 'vsdone' && mode === 'ready') { const w = ovr() > cpuOvr(); if (w) { L.vsW = (L.vsW || 0) + 1; K.coin(5); } streak(); K.persist(); K.add(ovr()); return K.over({ title: w ? 'You win the draft!' : ovr() === cpuOvr() ? 'A tie' : 'The CPU wins', text: `${build.name} ${ovr()} overall vs the CPU's ${cpuOvr()}. Draft wins: ${L.vsW || 0}.`, delay: 50 }); }
@@ -1083,7 +1150,7 @@ const GAME = {
     if (mode === 'create' && build.step === 'draft' && !build.pro && !reel) return spin();
     if (mode === 'create' && build.pro) { const S = SPORTS[sport], open = build.slots.map((s, i) => s ? -1 : build.pro.r[i] * S.w[i]); const best = open.indexOf(Math.max(...open)); if (build.rerolls && Math.max(...build.pro.r.filter((_, i) => !build.slots[i])) < 70 && R0() < .7) return reroll(); return place(best); }
     if (mode === 'create' && build.step === 'trait') { build.trait = pick(TRAITS).k; build.step = 'card'; build.revealT = t; return; }
-    if (mode === 'create' && build.step === 'card') { if (t - build.revealT < 1.6) return; return startCareer(); }
+    if (mode === 'create' && build.step === 'card') { if (t - build.revealT < 2.8) return; return startCareer(); }
     if (mode === 'career' && career.phase === 'camp' && !career.mg && career.t > .6) { const S = SPORTS[sport], v = career.v; let bi = 0; v.forEach((x, i) => { if ((99 - x) * S.w[i] > (99 - v[bi]) * S.w[bi]) bi = i; }); return campPick(bi); }
     if (mode === 'career' && career.phase === 'retire') return retireChoice(R0() < .3);
     if (mode === 'career' && career.done) { botT = 1.5; return finishCareer(); }
@@ -1095,6 +1162,9 @@ const GAME = {
       career: career && { n: career.seasons.length, phase: career.phase, legacy: career.legacy, tier: career.tier && career.tier[1], aw: career.aw, age: career.age, O: career.O, v: career.v, mg: career.mg && { type: career.mg.type, res: career.mg.res }, hl: career.hl.length, fast: career.fast },
       ladder: ladder && { rung: ladder.rung, over: ladder.over, duel: ladder.duel && { w: ladder.duel.w, l: ladder.duel.l } },
       arena: arena && { status: arena.status, opp: arena.opp && arena.opp.name, rating: arena.rec.rating, battle: arena.battle && { me: arena.battle.me, them: arena.battle.them, round: arena.battle.round }, delta: arena.delta, top: arena.top && arena.top.length } }),
+    battleTest: (me, opp) => { arena = { rec: me, opp, status: 'tape', top: null, away: null, err: null }; startBattle(); },
+    reveal: () => { build.revealT = t; build.revFlip = build.revSlam = false; }, pull: goat => { build.pullFx = { t0: t, goat }; },
+    cardSheet: () => { const c = document.createElement('canvas'); c.width = 1500; c.height = 440; const g = c.getContext('2d'); g.fillStyle = '#0a0e1c'; g.fillRect(0, 0, 1500, 440); [64, 76, 85, 91, 97].forEach((O, i) => card(g, { name: ['Dale Rook', 'Ivo Brandt', 'Marcus Okafor', 'Teo Vance', 'Ajax Moreau'][i], sport: 'hoops', look: { skin: i % 4, hair: i, hc: i % 3, c1: 2 + i * 2, c2: 9 - i, build: 1, num: 7 + i * 11 }, r: [O - 6, O + 2, Math.min(99, O + 4), O - 3, O === 97 ? 99 : O, O - 8], O, trait: 'clutch', tier: '' }, 150 + i * 300, 220, 1, { ph: i * .3 })); return c.toDataURL(); },
     click, place, newBuild, save: SAVE, mg: anyMG, mgBot, mgTap, mgKey, mgRelease, ff: () => { if (reel) { build.pro = reel.pro; reel = null; } }, B: () => Object.keys(B), startCareer, openArena, career: () => career,
   };
 })();
