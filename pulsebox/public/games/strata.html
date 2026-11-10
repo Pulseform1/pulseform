@@ -100,6 +100,7 @@ const MP = (() => {
   const AUTO = (() => { try { const q = new URLSearchParams(location.search).get('room') || ''; return /^[A-Za-z0-9]{4}$/.test(q) ? q.toUpperCase() : ''; } catch (e) { return ''; } })();
   let autoDone = false;
   let ws = null, me = 0, host = 0, code = '', pending = null, box = null, name = '';
+  let rj = null, grace = null, graceId = 0;   // rj: reconnecting to the room after a drop; grace: waiting for the world owner to come back
   const players = new Map(), skinOf = new Map();
   const mySkin = () => (typeof K !== 'undefined' && K.save && K.save.skin) || 0;
   try { name = localStorage.getItem('pbx-mp-name') || ''; } catch (e) {}
@@ -150,20 +151,36 @@ const MP = (() => {
     try { ws = new WebSocket(`wss://${WSHOST}/api/room/${c}?n=${encodeURIComponent(name)}&g=${encodeURIComponent(GAME.id)}`); } catch (e) { msg('Could not connect.'); return; }
     code = c; const my = ws;
     ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (err) { return; } onNet(m); };
-    ws.onclose = () => { if (ws !== my) return; ws = null; me = 0; players.clear(); if (opts.onLeave && K.state === 'play' && box && box.hidden) opts.onLeave(-1); else { refresh(); msg('Disconnected from the room.'); } };
+    ws.onclose = dropped(my);
   }
+  const inGame = () => opts.inWorld ? !!opts.inWorld() : !!(box && box.hidden && K.state === 'play');
+  const dropped = my => () => { if (ws !== my) return; const wasHost = me && host === me; ws = null; me = 0; players.clear();
+    if (opts.rejoin && (rj || inGame())) { if (!rj) rj = { code, n: 0, owner: !!(opts.owner && opts.owner()), wasHost }; rj.n++; if (rj.n > 14) { rj = null; endGrace(); if (opts.onLeave) opts.onLeave(-1); return; } setTimeout(rejoin, rj.n === 1 ? 300 : Math.min(800 * rj.n, 4000)); return; }
+    if (opts.onLeave && K.state === 'play' && box && box.hidden) opts.onLeave(-1); else { refresh(); msg('Disconnected from the room.'); } };
+  function rejoin() { if (!rj) return; let w; try { w = new WebSocket(`wss://${WSHOST}/api/room/${rj.code}?n=${encodeURIComponent(name)}&g=${encodeURIComponent(GAME.id)}`); } catch (e) { w = null; }
+    if (!w) { rj.n++; setTimeout(rejoin, 3000); return; } ws = w; const my = w;
+    w.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (err) { return; } onNet(m); }; w.onclose = dropped(my); }
+  function endGrace() { if (grace) clearTimeout(grace); grace = null; }
+  // the world owner dropped out: give them 30 s to come back before ending the game
+  function startGrace(oldId) { endGrace(); graceId = oldId; grace = setTimeout(() => { grace = null; if (!online()) return; if (oldId > 0 && opts.onLeave) opts.onLeave(oldId); host = me; refresh(); if (opts.onHost) opts.onHost(me); }, 30000); }
+  const owns = () => !!(opts.owner && opts.owner());
   function onNet(m) {
     switch (m.t) {
       case 'full': msg('That room is full.'); leave(); refresh(); return;
       case 'hello':
         me = m.id; host = m.host; players.clear(); m.players.forEach(p => { if (p.id !== me) players.set(p.id, { name: p.name }); });
+        if (rj) { const r = rj; rj = null; msg(''); send({ t: 'mp-skin', s: mySkin() });
+          if (r.owner || (r.wasHost && !opts.owner)) { host = me; endGrace(); send({ t: 'mp-re', o: 1 }); if (opts.onResume) opts.onResume(true); }
+          else { if (opts.owner) { host = -1; startGrace(0); } if (opts.onResume) opts.onResume(false); }
+          return; }
         if (players.size + 1 > opts.max) { msg(`This game takes up to ${opts.max} players.`); leave(); }
         msg(''); refresh(); send({ t: 'mp-skin', s: mySkin() }); return;
       case 'mp-skin': skinOf.set(m.from, m.s | 0); return;
-      case 'join': players.set(m.id, { name: m.name }); send({ t: 'mp-skin', s: mySkin() }); refresh(); if (opts.onJoin) opts.onJoin(m.id, m.name); return;
-      case 'leave': players.delete(m.id); refresh(); if (opts.onLeave) opts.onLeave(m.id); return;
-      case 'host': host = m.id; refresh(); if (opts.onHost) opts.onHost(m.id); return;
+      case 'join': players.set(m.id, { name: m.name }); send({ t: 'mp-skin', s: mySkin() }); refresh(); if (owns() && host === me) send({ t: 'mp-re', o: 1, to: m.id }); if (opts.onJoin) opts.onJoin(m.id, m.name); return;
+      case 'leave': players.delete(m.id); refresh(); if (opts.owner && inGame() && m.id === host && host !== me && !owns()) { startGrace(m.id); return; } if (opts.onLeave) opts.onLeave(m.id); return;
+      case 'host': if (opts.owner && inGame()) return; host = m.id; refresh(); if (opts.onHost) opts.onHost(m.id); return;
       case 'mp-start': pending = m; wake(); return;
+      case 'mp-re': if (m.o && !owns()) { const back = grace; endGrace(); host = m.from; if (back && graceId > 0 && opts.onOwnerBack) opts.onOwnerBack(graceId, m.from); refresh(); } return;
     }
     if (opts.onMsg) opts.onMsg(m);
   }
@@ -184,7 +201,7 @@ const MP = (() => {
     send(m); begin(m);
   }
   function send(m) { if (online()) ws.send(JSON.stringify(m)); }
-  function leave() { const w = ws; ws = null; me = 0; host = 0; players.clear(); if (w) try { w.close(); } catch (e) {} }
+  function leave() { rj = null; endGrace(); const w = ws; ws = null; me = 0; host = 0; players.clear(); if (w) try { w.close(); } catch (e) {} }
   function show() {
     build();
     if (pending && online()) { const p = pending; pending = null; return begin(p); }
@@ -197,6 +214,7 @@ const MP = (() => {
     hide() { if (box) box.hidden = true; },
     to(id, m) { m.to = id; send(m); },
     isHost: () => !online() || host === me,
+    rejoining: () => !!rj, waitingForOwner: () => !!grace, roster: () => list(),
     get id() { return online() ? me : 0; }, get hostId() { return online() ? host : 0; }, get code() { return code; }, get name() { return name || 'You'; },
   };
 })();
@@ -393,7 +411,7 @@ const GAME = {
   const set = (x, y, v) => { if (x >= 0 && y >= 0 && x < WW && y < WH) tiles[y * WW + x] = v; };
   const solid = (x, y) => SOLID.has(at(Math.floor(x), Math.floor(y)));
   const online = () => !demo && typeof MP !== 'undefined' && MP.online() && !!net;
-  const isHost = () => !online() || MP.isHost();
+  const isHost = () => online() ? MP.isHost() : !(net && wslot < 0 && typeof MP !== 'undefined' && MP.rejoining && (MP.rejoining() || MP.waitingForOwner()));
 
   /* ---------- the world ---------- */
   function noise1() { const p = Array.from({ length: 64 }, () => R()); return x => { const i = Math.floor(x), f = x - i, a = p[(i % 64 + 64) % 64], b = p[((i + 1) % 64 + 64) % 64], s = f * f * (3 - 2 * f); return a + (b - a) * s; }; }
@@ -681,6 +699,7 @@ const GAME = {
     if (it.tile === 46) { g.drawImage(tex.doorIcon, x - 8 * s, y - 8 * s, 16 * s, 16 * s); return; }
     if (it.tile) { g.drawImage(tex[it.tile], x - 8 * s, y - 8 * s, 16 * s, 16 * s); return; }
     { const gi = gearIcon(id); if (gi) { g.drawImage(gi, x - 9 * s, y - 9 * s, 18 * s, 18 * s); return; } }
+    { const xi = xIcon(id); if (xi) { g.drawImage(xi, x - 9 * s, y - 9 * s, 18 * s, 18 * s); return; } }
     g.save(); g.translate(x, y); g.scale(s, s);
     const r = (c, a, b, w, h) => { g.fillStyle = c; g.fillRect(a, b, w, h); };
     if (it.rod) { g.strokeStyle = '#6a4424'; g.lineWidth = 2; g.beginPath(); g.moveTo(-7, 7); g.lineTo(6, -7); g.stroke(); g.strokeStyle = it.c; g.lineWidth = 1; g.beginPath(); g.moveTo(-5, 5); g.lineTo(4, -5); g.stroke(); g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = .6; g.beginPath(); g.moveTo(6, -7); g.lineTo(7, 4); g.stroke(); r('#ff3a3a', 6, 3, 3, 2); r('#ffffff', 6, 5, 3, 1); }
@@ -2122,6 +2141,46 @@ const GAME = {
     if (pt.k === 'glowmoth' || pt.k === 'emberkit' || pt.k === 'frostling') { const gs = glowSprite(pt.k === 'emberkit' ? '255,150,60' : '120,230,255'); g.drawImage(gs, X - 30, Y - (D.fly ? 30 : 38), 60, 60); }
     drawSpr(g, c, X, Y, 1.5, pt.face < 0, D.fly); }
   let myPet = null;
+  /* ---------- item icons that had none: shards, summon items, movement gear, bait, fish, crates, drops ---------- */
+  const fishPaint = (b, belly, fin, mark) => P => {
+    P.tri(1, 4, 1, 12, 5, 8, fin); P.ell(9, 8, 6, 3.6, b); P.ell(9.5, 9.6, 4.5, 1.6, belly); P.tri(7, 4.6, 11, 4.6, 8, 2, fin); P.tri(8, 11.4, 10, 11.4, 8, 13, fin);
+    if (mark) mark(P); P.px(13, 7, '~#141018'); P.px(12, 7, '~#ffffff'); P.px(14, 9, shadeC(b, .6)); };
+  const crateP = (wood, band, gem) => P => { P.rect(1, 3, 14, 12, wood); for (const y of [6, 10]) P.rect(1, y, 14, 1, shadeC(wood, .7)); P.rect(1, 3, 2, 12, band); P.rect(13, 3, 2, 12, band); P.rect(1, 3, 14, 2, band); P.rect(1, 13, 14, 2, band);
+    P.rect(6, 7, 4, 4, band); P.rect(7, 8, 2, 2, gem); P.px(2, 4, '~#ffffffa0'); P.px(14, 4, '~#ffffffa0'); };
+  const shardP = (c, core) => P => { P.tri(8, 0, 13, 7, 8, 15, c); P.tri(8, 0, 3, 8, 8, 15, shadeC(c, .82)); P.tri(4, 9, 1, 13, 6, 14, shadeC(c, .9)); P.line(8, 2, 8, 12, core); P.px(6, 5, '~#ffffff'); P.px(10, 9, '~#ffffffc0'); };
+  const wingP = c => P => { for (const s of [-1, 1]) { const x0 = 8 + s; P.tri(x0, 6, x0 + s * 7, 1, x0 + s * 7, 8, c); P.tri(x0, 7, x0 + s * 6, 8, x0 + s * 4, 13, shadeC(c, .82)); P.line(x0, 6, x0 + s * 6, 2, '~' + shadeC(c, 1.35)); P.px(x0 + s * 5, 4, '~#ffffffc0'); }
+    P.rect(7, 5, 2, 7, '#3a3048'); };
+  const XICON = {
+    lumenshard: shardP('#8aeaff', '~#ffffff'), gloomshard: shardP('#7a3ac8', '~#ff9aff'),
+    idol: P => { P.rect(4, 12, 8, 3, '#7aa8c8'); P.rect(5, 6, 6, 6, '#a8dcf0'); P.ell(8, 4.5, 3.2, 3, '#c8f0ff'); P.px(7, 4, '~#1a3a5a'); P.px(9, 4, '~#1a3a5a'); P.rect(7, 6, 2, 1, '~#5a8ab0'); P.rect(3, 7, 2, 4, '#a8dcf0'); P.rect(11, 7, 2, 4, '#a8dcf0'); P.px(6, 2, '~#ffffff'); P.px(12, 13, '~#e8fbff'); P.px(3, 12, '~#e8fbff'); },
+    offering: P => { P.ell(8, 11, 6.5, 3.5, '#7a5230'); P.rect(2, 8, 13, 2, '#8a6038'); P.ell(8, 7.5, 4.5, 2.5, '#6a8a2a'); P.ell(6, 6.5, 1.6, 1.2, '#8aaa3a'); P.px(10, 6, '~#c8e05a'); P.px(3, 3, '~#2a2a2a'); P.px(12, 2, '~#2a2a2a'); P.px(9, 1, '~#2a2a2a'); P.px(11, 12, '#5a3a1a'); },
+    prismkey: P => { P.ell(4.5, 4.5, 3.6, 3.6, '#e8e8f0'); P.ell(4.5, 4.5, 1.5, 1.5, '~#2a2a40'); P.line(7, 7, 14, 14, '#d8d8e4', 2); P.rect(10, 12, 2, 3, '#d8d8e4'); P.rect(12, 10, 3, 2, '#d8d8e4'); P.px(2, 2, '~#ff7aff'); P.px(6, 2, '~#7affff'); P.px(2, 6, '~#ffe67a'); P.px(6, 6, '~#7aff9a'); },
+    eclsigil: P => { P.ell(8, 8, 7, 7, '~#ff8a2a'); P.ell(8, 8, 6, 6, '~#ffd23f'); P.ell(9, 7.5, 5.2, 5.2, '#1a1028'); P.px(3, 12, '~#fff2a0'); P.px(12, 2, '~#ffd23f'); P.ell(7, 6, 1, 1, '~#3a2a50'); },
+    gustjar: P => { P.rect(6, 1, 4, 2, '#8a5a2e'); P.rect(5, 3, 6, 1, '#cfeeff'); P.ell(8, 9.5, 5.5, 5.5, '#cfeeffb0'); P.line(5, 9, 8, 7, '~#ffffff'); P.line(8, 7, 11, 9, '~#ffffff'); P.line(6, 12, 10, 11, '~#ffffffc0'); P.px(5, 6, '~#ffffff'); },
+    emberboots: P => { for (const [x, d] of [[1, 0], [8, 1]]) { P.rect(x, 3 + d, 5, 8, '#c8502a'); P.rect(x, 10 + d, 7, 3, '#8a3018'); P.rect(x, 3 + d, 5, 1, '#ffd23f'); P.px(x - 1, 12 + d, '~#ffd23f'); P.px(x - 1, 11 + d, '~#ff8a2a'); } P.px(0, 14, '~#ff8a2a'); },
+    windstep: P => { P.ell(8, 9, 5.5, 3.2, '#bfe6ff'); P.ell(8, 9, 3.6, 1.6, null); for (let y = 8; y <= 10; y++) for (let x = 5; x <= 11; x++) P.del(x, y); P.ell(8, 12, 1.4, 1.4, '~#7affee');
+      P.line(12, 8, 15, 2, '#f0f8ff'); P.line(13, 7, 15, 4, '#cfe8ff'); P.px(15, 1, '~#ffffff'); },
+    prismwings: wingP('#ff9aff'), gloomwings: wingP('#9a5ae8'),
+    hook: P => { P.rect(7, 6, 2, 9, '#7a7a84'); for (const y of [9, 12]) P.px(6, y, '#5a5a64'); P.line(8, 6, 3, 1, '#b0b0bc', 2); P.line(8, 6, 13, 1, '#b0b0bc', 2); P.line(8, 6, 8, 0, '#b0b0bc', 2); P.px(2, 2, '#d8d8e0'); P.px(13, 2, '#d8d8e0'); },
+    worm: P => { const pts = [[2, 12], [4, 9], [7, 10], [9, 7], [12, 8], [14, 5]]; for (let i = 0; i < pts.length - 1; i++) P.line(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], '#e88a9a', 2); P.px(14, 4, '~#2a1018'); P.px(7, 9, '~#c86a7a'); },
+    glowgrub: P => { for (let i = 0; i < 4; i++) P.ell(3.5 + i * 3, 9 - (i % 2), 2.6, 2.4, i === 3 ? '#e8ffc0' : '#b8f070'); P.px(13, 7, '~#1a2a10'); P.px(4, 7, '~#ffffff'); P.px(7, 6, '~#f0ffd0'); },
+    lure: P => { P.ell(7, 6, 3.5, 5, '#d8dce8'); P.ell(6, 5, 1.4, 2.4, '~#ffffff'); P.rect(6, 0, 2, 2, '#8a8a94'); P.ell(7, 12, 1.4, 1.4, '~#ff3a4a'); P.line(8, 12, 11, 13, '#9a9aa4'); P.line(11, 13, 12, 10, '#9a9aa4'); },
+    minnow: P => fishPaint('#9aa8b4', '#d8e0e8', '#7a8894')(P),
+    trout: fishPaint('#8a9a4a', '#e8d8b8', '#6a7a3a', P => { P.line(4, 8, 14, 8, '~#e88a8a'); P.px(7, 6, '~#3a3a20'); P.px(10, 6, '~#3a3a20'); P.px(12, 10, '~#3a3a20'); }),
+    perch: fishPaint('#e8c83a', '#fff0b0', '#e8822a', P => { for (const x of [6, 9, 12]) P.rect(x, 5, 1, 5, '#7a6a1a'); }),
+    snapper: fishPaint('#e04a3a', '#ffb0a0', '#b02a2a'),
+    frostfin: fishPaint('#8ad8f0', '#e8fbff', '~#ffffff', P => P.px(9, 6, '~#ffffff')),
+    gloomeel: P => { for (let i = 0; i < 14; i++) P.ell(1.5 + i, 8 + Math.sin(i * .7) * 2.2, 1.8, 1.8, '#6a3aa8'); P.line(2, 9, 13, 8, '~#c87aff'); P.px(14, 5 + Math.round(Math.sin(13 * .7) * 2.2) + 2, '~#ffd23f'); },
+    glowgill: fishPaint('#3ab8a8', '#a8f0e0', '#2a8a7a', P => { P.rect(10, 6, 1, 4, '~#a8fff0'); P.rect(11, 6, 1, 4, '~#7affe8'); }),
+    prismkoi: fishPaint('#f4f4f8', '#ffffff', '#ffb0e8', P => { P.ell(7, 6.5, 2, 1.5, '~#ff7a5a'); P.ell(11, 9, 1.6, 1.2, '~#7ad8ff'); P.px(9, 6, '~#ffe67a'); }),
+    honeyfin: fishPaint('#e8a828', '#ffe08a', '#c87a18', P => { P.px(7, 7, '~#fff2b0'); P.px(10, 8, '~#fff2b0'); }),
+    cookedfish: P => { P.ell(8, 12, 7.5, 2.6, '#e8e8f0'); fishPaint('#a86a32', '#d8a060', '#7a4a22', P => { for (const x of [6, 9, 12]) P.line(x, 5, x - 2, 10, '~#5a3418'); })(P); P.px(4, 1, '~#ffffff80'); P.px(5, 0, '~#ffffff60'); },
+    woodcrate: crateP('#a8743a', '#7a4e26', '~#d8a050'), ironcrate: crateP('#a8743a', '#8a8a96', '~#d8d8e8'), goldcrate: crateP('#b8843a', '#e8b828', '~#fff2a0'),
+    glowcap: P => { P.rect(7, 8, 3, 7, '#e8e0c8'); P.ell(8.5, 7, 6.5, 4, '#3a8ae8'); P.rect(2, 7, 14, 2, '#3a8ae8'); P.px(5, 5, '~#a8e8ff'); P.px(10, 4, '~#a8e8ff'); P.px(12, 6, '~#a8e8ff'); P.px(7, 5, '~#ffffff'); },
+    gloomscale: P => { P.ell(8, 9, 6, 6, '#5a2a8a'); P.tri(2, 8, 14, 8, 8, 1, '#5a2a8a'); P.line(5, 12, 8, 6, '~#8a5ac8'); P.line(11, 12, 8, 6, '~#8a5ac8'); P.px(6, 5, '~#c89aff'); },
+    silk: P => { P.ell(8, 9, 6, 5, '#f0f0f6'); P.line(3, 7, 13, 11, '~#c8c8d4'); P.line(3, 10, 13, 6, '~#c8c8d4'); P.line(13, 4, 15, 0, '#e8e8f0'); P.px(6, 7, '~#ffffff'); },
+  };
+  const xIcon = id => XICON[id] ? spr('xi|' + id, 16, 16, XICON[id], { hi: 1.18, lo: .78 }) : null;
   let caveBg = null;
   function caveBack(g) { if (!caveBg) { const c = spr('caveback', 96, 96, P => { const r = srng(77); P.rect(0, 0, 96, 96, '~#0e0a08'); for (let i = 0; i < 26; i++) { const x = r() * 96, y = r() * 96, w = 6 + r() * 14, h = 4 + r() * 9; P.ell(x, y, w / 2, h / 2, '~#151009'); P.ell(x - w * .15, y - h * .2, w * .3, h * .25, '~#1a140d'); } for (let i = 0; i < 40; i++) P.px(r() * 96, r() * 96, '~#070504'); }, { outline: false });
       caveBg = g.createPattern(c, 'repeat'); }
@@ -2628,7 +2687,7 @@ const GAME = {
   const $id = id => document.getElementById(id);
   const cleanName = (s, max) => String(s || '').replace(/[^\w .'-]/g, '').trim().slice(0, max);
   function netOpts() {
-    Object.assign(MP.opts, { max: 4, min: 1, bots: 0, solo: false, config: () => ({ name: wslot >= 0 && worlds()[wslot] ? worlds()[wslot].name : 'World' }), onStart, onMsg, onLeave, onJoin, onHost: id => { if (mode === 'play' && id === MP.id && wslot < 0) kicked('The world host left, so the game ended.'); else if (mode === 'play' && id === MP.id) adopt('The world owner left. You are hosting the world now.'); } });
+    Object.assign(MP.opts, { max: 4, min: 1, bots: 0, solo: false, config: () => ({ name: wslot >= 0 && worlds()[wslot] ? worlds()[wslot].name : 'World' }), onStart, onMsg, onLeave, onJoin, rejoin: true, inWorld: () => (mode === 'play' || mode === 'recv') && !!net, owner: () => (mode === 'play' || mode === 'recv') && !!net && wslot >= 0, onResume, onOwnerBack, onHost: id => { if ((mode === 'play' || mode === 'recv') && id === MP.id && wslot < 0) kicked('The world host left, so the game ended.'); else if (mode === 'play' && id === MP.id) adopt('The world owner left. You are hosting the world now.'); } });
   }
   function netReady() {
     if (typeof MP === 'undefined' || demo) return;
@@ -2879,22 +2938,30 @@ const GAME = {
     net = MP.online() ? { roster } : null; others = new Map();
     if (net) for (const r of roster) if (r.id !== MP.id) others.set(r.id, { name: r.name, col: r.col, p: null });
     if (isHost()) { if (wslot < 0) wslot = worlds().length < 3 ? newWorld(worlds().length) : 0; enterWorld(); if (net) streamWorld(); }
-    else { mode = 'recv'; recv = { parts: [], n: 0, name: cfg.name }; }
+    else { const keep = (mode === 'play' || mode === 'recv') && P ? (recv && recv.keep) || { x: P.x, y: P.y, hp: P.hp, mp: P.mp } : null; mode = 'recv'; recv = { parts: [], n: 0, name: cfg.name, keep }; }
   }
+  function onResume(own) {
+    if (!net) return; if (!own) { say('Reconnected. Waiting for the world host...', 4, '#9fe8ff'); return; }
+    if (mode !== 'play') return; const ps = MP.roster(); others = new Map(); net.roster = ps.map((p, i) => ({ id: p.id, name: p.name, col: MP.colors[i % 8], seat: i }));
+    for (const r of net.roster) if (r.id !== MP.id) { others.set(r.id, { name: r.name, col: r.col, p: null }); MP.to(r.id, { t: 'mp-start', cfg: { name: worlds()[wslot] ? worlds()[wslot].name : 'World', resync: 1 }, roster: net.roster }); }
+    if (others.size) setTimeout(() => streamWorld(), 300); say('Reconnected.', 3, '#7aff7a');
+  }
+  // the owner came back under a new id: move their player over so they do not blink out
+  function onOwnerBack(oldId, newId) { const o = others.get(oldId); if (o) { others.delete(oldId); others.set(newId, o); } }
   function streamWorld(to) {
     const s = JSON.stringify(packWorld()), size = 7000, n = Math.ceil(s.length / size);
     for (let i = 0; i < n; i++) { const m = { t: 'w', i, n, d: s.slice(i * size, (i + 1) * size) }; if (to) MP.to(to, m); else MP.send(m); }
   }
-  function onJoin(id, name) { if (mode === 'play' && net && !isHost()) { others.set(id, { name, col: MP.colors[(others.size + 1) % 8], p: null }); feedAdd(name + ' joined the world', '#7aff7a'); return; } if (mode === 'hostcode' && inRoom() && MP.isHost()) { waiting.set(id, name); return; }   // the owner has not entered yet
+  function onJoin(id, name) { if (mode === 'play' && net && !isHost()) { others.set(id, { name, col: MP.colors[(others.size + 1) % 8], p: null }); if (!(MP.waitingForOwner && MP.waitingForOwner())) feedAdd(name + ' joined the world', '#7aff7a'); return; } if (mode === 'hostcode' && inRoom() && MP.isHost()) { waiting.set(id, name); return; }   // the owner has not entered yet
     if (mode !== 'play' || !isHost() || !net) return; const col = MP.colors[(others.size + 1) % 8]; others.set(id, { name, col, p: null }); net.roster.push({ id, name, col, seat: net.roster.length }); MP.to(id, { t: 'mp-start', cfg: { name: worlds()[wslot] ? worlds()[wslot].name : 'World' }, roster: net.roster }); setTimeout(() => streamWorld(id), 300); feedAdd(`${name} joined the world`, '#7aff7a'); }
   // when the host leaves (or the connection drops) the guest keeps the world, saved into a free slot if there is one
   function adopt(t) { if (wslot < 0 && worlds().length < 3) { worlds().push({ name: (recv && recv.name) || 'Shared World', made: Date.now(), ...packWorld(), played: Date.now() }); wslot = worlds().length - 1; K.persist(); t += ' It is saved in your world list.'; } say(t, 5, '#9fe8ff'); }
   function kicked(t) { saveAll(); net = null; others.clear(); closeChat(); if (inRoom()) MP.leave(); backToMenu(); menuNote = t; menuNoteUntil = performance.now() + 8000; }
-  function onLeave(id) { if (id === -1) { if (mode === 'play' && wslot < 0) { kicked('Lost the connection to the world host.'); return; } net = null; others.clear(); if (mode === 'play') adopt('Disconnected. You are playing alone now.'); return; } waiting.delete(id); const o = others.get(id); if (o) feedAdd(`${o.name} left the world`, '#ffb07a'); others.delete(id); }
+  function onLeave(id) { if (id === -1) { if (mode === 'play' && wslot < 0) { kicked('Lost the connection to the world host.'); return; } net = null; others.clear(); if (mode === 'play') adopt('Disconnected. You are playing alone now.'); return; } waiting.delete(id); if (net && net.roster) net.roster = net.roster.filter(r => r.id !== id); const o = others.get(id); if (o) feedAdd(`${o.name} left the world`, '#ffb07a'); others.delete(id); }
   function onMsg(m) {
     const from = m.from ?? m.id; if (m.t === 'chat' && typeof m.s === 'string') { const o = others.get(from); feedAdd(String((o && o.name) || m.n || 'Someone').slice(0, 16) + ': ' + m.s.slice(0, 120), '#ffffff', 1); return; } if (m.t === 'bd' && typeof m.k === 'string') { brokenDeco.add(m.k); return; } if (m.t === 'dm') { feedAdd(String(m.s || '').slice(0, 90), '#ff8a8a'); return; }
     if (m.t === 'lq' && liq && mode === 'play') { for (const [i, a, k] of m.c || []) if (i >= 0 && i < liq.length) { liq[i] = a; lqk[i] = a ? k : 0; } return; }
-    if (m.t === 'w' && mode === 'recv') { recv.parts[m.i] = m.d; recv.n = m.n; if (recv.parts.filter(Boolean).length === m.n) { unpackWorld(JSON.parse(recv.parts.join(''))); enterWorld(); say(`Welcome to ${recv.name}!`, 4, '#7aff7a'); } return; }
+    if (m.t === 'w' && mode === 'recv') { recv.parts[m.i] = m.d; recv.n = m.n; if (recv.parts.filter(Boolean).length === m.n) { unpackWorld(JSON.parse(recv.parts.join(''))); enterWorld(); if (recv.keep) { Object.assign(P, recv.keep); cam.x = P.x * TS - 640; cam.y = (P.y - 1.4) * TS - 380; say('Back in the world.', 3, '#7aff7a'); } else say(`Welcome to ${recv.name}!`, 4, '#7aff7a'); } return; }
     if (mode !== 'play') return;
     const o = others.get(from);
     if (m.t === 'p' && o) { o.petK = typeof m.pt === 'string' && PETA[m.pt] ? m.pt : null; { const L = Array.isArray(m.mn) ? m.mn.filter(q => Array.isArray(q) && MINI[q[0]]) : []; o.mins = L.map((q, i) => { const prev = o.mins && o.mins[i] && o.mins[i].k === q[0] ? o.mins[i] : { k: q[0], x: q[1], y: q[2], t: Math.random() * 6, tr: [] }; prev.tx = q[1]; prev.ty = q[2]; prev.vx = q[3]; return prev; }); } if (m.lk) o.look = m.lk; o.p = o.p || { w: .8, h: 1.9 }; if (o.p.x == null) { o.p.x = m.x; o.p.y = m.y; } Object.assign(o.p, { tx: m.x, ty: m.y, vx: m.vx, vy: m.vy, ground: m.g }); o.face = m.f; o.sw = m.s; o.held = m.h; o.armor = m.a; o.dead = m.d; }
@@ -3128,7 +3195,7 @@ const GAME = {
     tHold = { i, sel }; if (i !== 9) { const a = ch.inv[i]; ch.inv[i] = ch.inv[9]; ch.inv[9] = a; } sel = 9; }
   function torchOff() { if (!tHold) return; const { i } = tHold; if (i !== 9) { const a = ch.inv[i]; ch.inv[i] = ch.inv[9]; ch.inv[9] = a; } sel = tHold.sel; tHold = null; }
   addEventListener('blur', () => torchOff());
-  GAME.keepRunning = () => mode === 'play' && online();
+  GAME.keepRunning = () => (mode === 'play' || mode === 'recv') && (online() || !!(net && typeof MP !== 'undefined' && MP.rejoining && MP.rejoining()));
   GAME.blurred = () => { keys = {}; useHeld = false; };
   GAME.key = (c, d) => {
     if (chatOn) return;
