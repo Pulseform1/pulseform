@@ -512,6 +512,7 @@ const WOODY = new Set([T.PPLANK, T.MPLANK, T.GPLANK, T.RPLANK, T.LWOOD, T.TRUNK,
     if (it.tile === 48 && it.pv) { g.drawImage(tex.platV[it.pv], x - 8 * s, y - 8 * s, 16 * s, 16 * s); return; }
     if (it.tile === 46) { g.drawImage(tex.doorIcon, x - 8 * s, y - 8 * s, 16 * s, 16 * s); return; }
     if (it.tile) { g.drawImage(tex[it.tile], x - 8 * s, y - 8 * s, 16 * s, 16 * s); return; }
+    { const ti = toolIcon(id); if (ti) { g.drawImage(ti, x - 9 * s, y - 9 * s, 18 * s, 18 * s); return; } }
     { const gi = gearIcon(id); if (gi) { g.drawImage(gi, x - 9 * s, y - 9 * s, 18 * s, 18 * s); return; } }
     { const xi = xIcon(id); if (xi) { g.drawImage(xi, x - 9 * s, y - 9 * s, 18 * s, 18 * s); return; } }
     { const ni = nIcon(id); if (ni) { g.drawImage(ni, x - 9 * s, y - 9 * s, 18 * s, 18 * s); return; } }
@@ -2167,6 +2168,43 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
     woodrod: rodP(MPAL.wd), ironrod: rodP(MPAL.fe), glowrod: rodP(['#1a6a7a', '#3ad8e8', '#c8fbff'], '#3ad8e8'), starrod: rodP(MPAL.sm, '#ffd23f'),
     bucket: bucketP(null), wbucket: bucketP('#3a7ae8'), lbucket: bucketP('#ff6a1a'), hbucket: bucketP('#e8a828'),
   };
+  /* ---------- pickaxes, axes, swords and guns: one careful renderer for every metal ---------- */
+  const WOODP = ['#4a2a10', '#8a5a2a', '#c08a52'];
+  const strip = c => c && c[0] === '~' ? c.slice(1) : c;
+  function toolArt(id, it, pal, accent) {
+    const [d, m, l] = pal, ac = strip(accent) || '#c8303a', W = '~#ffffff';
+    const wood = (P, x0, y0, x1, y1) => { P.line(x0, y0, x1, y1, WOODP[1], 2); P.line(x0, y0 - 1, x1 - 1, y1, '~' + WOODP[2]); P.line(x0 + 1, y0, x1, y1 + 1, '~' + WOODP[0]); };
+    if (it.pick) return P => {   // a curved, tapered head across the top of a diagonal handle
+      wood(P, 2, 14, 10, 6); P.rect(1, 14, 2, 2, '#3a2410');
+      const A = [4.4, 1.6], C = [13.6, 2.4], B = [14.4, 11.6], bz = (t, k) => (1 - t) * (1 - t) * A[k] + 2 * (1 - t) * t * C[k] + t * t * B[k];
+      for (let t = 0; t <= 1.001; t += .02) { const x = bz(t, 0), y = bz(t, 1), r = .55 + 1.15 * Math.sin(Math.PI * Math.min(1, t * 1.05)); P.ell(x, y, r, r, m); }
+      for (let t = .04; t <= .96; t += .02) { const x = bz(t, 0), y = bz(t, 1), dx = 2 * (1 - t) * (C[0] - A[0]) + 2 * t * (B[0] - C[0]), dy = 2 * (1 - t) * (C[1] - A[1]) + 2 * t * (B[1] - C[1]), n = Math.hypot(dx, dy), nx = dy / n, ny = -dx / n, r = .55 + 1.15 * Math.sin(Math.PI * t);
+        P.px(x + nx * (r - .2), y + ny * (r - .2), '~' + l); P.px(x - nx * (r - .1), y - ny * (r - .1), '~' + d); }
+      P.px(7, 2, W); P.px(13, 6, W); P.rect(9, 5, 3, 3, d); P.px(10, 6, '~' + l); P.px(4, 1, '~' + d); P.px(14, 12, '~' + d); };
+    if (it.axe) return P => {   // a broad crescent blade with a bright cutting edge
+      wood(P, 2, 15, 10, 3); P.line(10, 3, 11, 1, WOODP[1], 2);
+      for (let y = 0; y <= 11; y++) { const hx = 2 + (15 - y) * 8 / 12, k = Math.sin(Math.PI * (y + .5) / 12), ex = 11.5 + 3.8 * k - (y < 2 ? 1.5 : 0); if (ex <= hx + .5) continue;
+        for (let x = Math.ceil(hx + .6); x <= ex; x++) P.px(x, y, x >= ex - .9 ? '~' + l : x >= ex - 2 ? m : x <= hx + 1.6 ? d : shadeC(m, .9)); }
+      P.px(Math.round(11.5 + 3.8) - 1, 5, W); P.px(Math.round(11.5 + 3.8) - 1, 6, W); P.rect(9, 3, 2, 5, d); P.px(9, 4, '~' + l); };
+    if (it.gun) return (it.cd || .5) >= .7 ? P => {   // a long rifle
+      P.rect(4, 5, 12, 2, m); P.rect(4, 5, 12, 1, '~' + l); P.px(15, 4, d); P.rect(13, 5, 1, 2, d);
+      P.rect(0, 7, 6, 4, WOODP[1]); P.rect(5, 7, 9, 2, WOODP[1]); P.rect(0, 7, 13, 1, '~' + WOODP[2]); P.rect(0, 10, 6, 1, '~' + WOODP[0]); P.rect(0, 8, 1, 4, '#3a2410');
+      P.rect(5, 6, 3, 2, d); P.rect(5, 4, 2, 2, d); P.px(5, 4, '~' + l); P.line(7, 9, 9, 9, d); P.px(9, 8, d); P.px(8, 8, '~' + WOODP[0]); P.px(10, 5, W); } : P => {   // a pistol
+      P.rect(6, 4, 9, 3, m); P.rect(6, 4, 9, 1, '~' + l); P.rect(6, 6, 9, 1, d); P.rect(14, 3, 1, 1, d); P.rect(15, 4, 1, 3, d);
+      P.rect(3, 4, 5, 5, shadeC(m, .75)); P.px(4, 5, '~' + l); P.rect(2, 2, 2, 3, d); P.px(2, 2, '~' + l);
+      P.tri(3, 8, 8, 8, 4, 15, WOODP[1]); P.tri(3, 8, 4, 15, 0, 14, WOODP[1]); P.line(3, 9, 1, 13, '~' + WOODP[2]); P.rect(0, 13, 4, 2, d);
+      P.line(6, 9, 9, 9, d); P.px(9, 8, d); P.px(7, 8, '~' + shadeC(m, .6)); P.px(10, 5, W); P.px(4, 7, '~' + ac); };
+    if (it.melee && !it.reach) return P => {   // a broad blade with a bright edge, a ridge, a crossguard with a gem, a wrapped grip
+      P.line(6, 9, 13, 2, m, 3); P.line(5, 9, 12, 2, '~' + l); P.line(7, 10, 14, 3, '~' + d); P.line(7, 8, 12, 3, '~' + shadeC(l, 1.1));
+      P.px(14, 1, '~' + l); P.px(15, 0, '~' + l); P.px(13, 1, '~' + l); P.px(14, 2, m); P.px(9, 5, W); P.px(10, 4, W);
+      const gc = it.c === '#b07a42' ? WOODP[1] : '#c8a040'; P.line(2, 8, 7, 13, gc, 2); P.line(2, 8, 6, 12, '~' + shadeC(gc, 1.3)); P.px(5, 10, '~' + ac); P.px(4, 10, '~' + shadeC(ac, 1.4));
+      P.line(1, 14, 3, 12, '#5a3616', 2); P.px(2, 13, '~#8a5a2a'); P.px(3, 12, '~#3a2410'); P.rect(0, 14, 2, 2, gc); P.px(0, 14, '~' + shadeC(gc, 1.4)); };
+    return null;
+  }
+  const BASEPAL = { '#d8864a': MPAL.cu, '#b8c0c8': MPAL.fe, '#e0e8f0': MPAL.ag, '#b07a42': MPAL.wd, '#7a7a84': MPAL.fe, '#6a5a4a': MPAL.fe };
+  const toolIcon = id => { const it = IT[id]; if (!it || !(it.pick || it.axe || it.gun || (it.melee && !it.reach))) return null; const th = GID[id] && GTH[GID[id]];
+    const pal = th ? [th[0], th[1], th[2]] : BASEPAL[it.c] || [shadeC(it.c || '#b8c0c8', .55), it.c || '#b8c0c8', shadeC(it.c || '#b8c0c8', 1.35)], acc = th ? th[3] : it.c === '#e0e8f0' ? '#3a8ae8' : '#c8303a';
+    const art = toolArt(id, it, pal, acc); return art ? spr('tool|' + id, 16, 16, art, { flat: true }) : null; };
   const nIcon = id => NICON[id] ? spr('ni|' + id, 16, 16, NICON[id], { hi: 1.18, lo: .78 }) : null;
   // the Watcher, redrawn: a great veined eye in a dark plated shell, trailing nerve-tendrils that ripple
   const watcherPaint = (P, f) => {
