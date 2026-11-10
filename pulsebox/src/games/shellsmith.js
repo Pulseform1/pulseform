@@ -157,7 +157,7 @@ const GAME = {
   const LEVELS = [
     { n: 'Brick Cottage', hint: 'High explosive tears brick apart.', par: 2, reward: 150 },
     { n: 'Corner Office', hint: 'Concrete floors. Hit the floor the core sits on.', par: 3, reward: 240 },
-    { n: 'Timber Fort', hint: 'Wood splinters and chars. Blast it apart.', par: 2, reward: 300 },
+    { n: 'Timber Fort', hint: 'Wood splinters and chars. Blast it apart.', par: 4, reward: 300 },
     { n: 'Water Tower', hint: 'Knock out a leg and it all comes down.', par: 3, reward: 360 },
     { n: 'Glass Tower', hint: 'Take out the base and let gravity work.', par: 4, reward: 420 },
     { n: 'Hill Bunker', hint: 'Thick concrete: a pointed nose and a delay fuse.', par: 3, reward: 500 },
