@@ -364,6 +364,9 @@ const GAME = {
     R_('crown', 1, { gel: 30, cbar: 5 }, 'bench'), R_('eye', 1, { lens: 6 }, 'bench'), R_('totem', 1, { bone: 25, sbar: 4 }, 'anvil'), R_('horn', 1, { hbar: 10, ember: 5 }, 'anvil'),
   ];
   for (let i = RECIPES.length - 1; i >= 0; i--) { const r = RECIPES[i], it = IT[r[0]]; if (it && it.slot === 'body') { const S = SETS[it.set], sc = f => Object.fromEntries(Object.entries(r[2]).map(([k, n]) => [k, Math.max(1, Math.round(n * f))])); RECIPES.splice(i + 1, 0, R_(S.pieces[0], 1, sc(.6), r[3]), R_(S.pieces[2], 1, sc(.8), r[3])); } }
+  const PET_IT = { mosspup: { n: 'Moss Pup', pet: 'mosspup', one: 1, r: 2, c: '#4caa2a' }, pebbler: { n: 'Pebbler', pet: 'pebbler', one: 1, r: 2, c: '#8a8a94' }, wobble: { n: 'Wobble', pet: 'wobble', one: 1, r: 3, c: '#5ad8a0' },
+    emberkit: { n: 'Ember Kit', pet: 'emberkit', one: 1, r: 3, c: '#e8702a' }, glowmoth: { n: 'Glowmoth', pet: 'glowmoth', one: 1, r: 2, c: '#7af0ff' }, frostling: { n: 'Frostling', pet: 'frostling', one: 1, r: 2, c: '#bff4ff' } };
+  Object.assign(IT, PET_IT);
   const CHEST_LOOT = [['gustjar', 'boom', 'spark', 'potion', 'hook', 'flint', 'knife', 'bucket', 'farrow', 'mana', 'torch', 'ibar', 'shot', 'arrow'], ['eboom', 'missile', 'water', 'trident', 'esword', 'gbar', 'potion', 'life', 'shot', 'farrow']];
   const BOSSES = { colossus: { n: 'The Rime Colossus', drop: ['avalanche', 'frostheart', 'ice'] }, gloom: { n: 'The Gloom Mother', drop: ['blightscythe', 'mawcharm', 'gloomscale'] }, sentinel: { n: 'The Prismatic Sentinel', drop: ['prismblade', 'lightcharm', 'lumenshard'] }, tyrant: { n: 'The Eclipse Tyrant', drop: ['tyrantblade', 'voidbow', 'smbar'] }, weaver: { n: 'The Weaver Queen', drop: ['broodstaff', 'weaverfang', 'silk'] }, king: { n: 'The Gel Sovereign', drop: ['saber', 'slimegun', 'gel'] }, watcher: { n: 'The Watcher', drop: ['gaze', 'shbar', 'lens'] }, bone: { n: 'Bone Lord', drop: ['skull', 'shbar', 'bone'] }, ember: { n: 'Ember Lord', drop: ['starfall', 'eclipse', 'hbar'] } };
 
@@ -543,7 +546,7 @@ const GAME = {
       if (sn) { const [a, b] = sn;
         for (let x = a; x < b; x++) { for (let y = 0; y < surf[x]; y++) if (at(x, y) === T.LEAF) set(x, y, T.SLEAF); for (let y = surf[x]; y < Math.min(HELL - 30, surf[x] + 75); y++) { const t = at(x, y); if (t === T.GRASS || t === T.DIRT || t === T.SAND || t === T.SSTONE || t === T.MUD) set(x, y, y < surf[x] + 8 || R() < .25 ? T.SNOW : T.ICE); else if (t === T.STONE) set(x, y, R() < .8 ? T.ICE : T.SNOW); wall0(x, y, 20); } }
         for (let c = 0; c < Math.max(3, Math.round((b - a) / 14)); c++) { let x = rnd(a + 4, b - 4), y = surf[Math.floor(x)] + rnd(14, 55), ang = rnd(0, 6.28); for (let s = 0; s < 80; s++) { ang += rnd(-.3, .3); x = clamp(x + Math.cos(ang), a + 2, b - 3); y = clamp(y + Math.sin(ang) * .5, surf[Math.floor(x)] + 10, HELL - 34); for (let dx = -3; dx <= 3; dx++) for (let dy = -2; dy <= 2; dy++) if (dx * dx / 9 + dy * dy / 4 <= 1) { const tx = Math.floor(x + dx), ty = Math.floor(y + dy); if (at(tx, ty) === T.ICE || at(tx, ty) === T.SNOW) set(tx, ty, T.AIR); } } }
-        let nch = 0; for (let k = 0; k < 600 && nch < Math.max(2, Math.round((b - a) / 25)); k++) { const x = Math.floor(rnd(a + 2, b - 2)), y = Math.floor(rnd(surf[x] + 12, Math.min(HELL - 30, surf[x] + 70))); if (at(x, y) === T.AIR && at(x + 1, y) === T.AIR && SOLID.has(at(x, y + 1))) { set(x, y, T.CHEST); chests[x + ',' + y] = [[pick(['frostblade', 'froststaff', 'frostgrip']), 1], ['potion', 2], ['scoin', 3 + Math.floor(R() * 8)], [pick(['torch', 'arrow', 'shot']), 15 + Math.floor(R() * 20)]]; nch++; } }
+        let nch = 0; for (let k = 0; k < 600 && nch < Math.max(2, Math.round((b - a) / 25)); k++) { const x = Math.floor(rnd(a + 2, b - 2)), y = Math.floor(rnd(surf[x] + 12, Math.min(HELL - 30, surf[x] + 70))); if (at(x, y) === T.AIR && at(x + 1, y) === T.AIR && SOLID.has(at(x, y + 1))) { set(x, y, T.CHEST); chests[x + ',' + y] = [[pick(['frostblade', 'froststaff', 'frostgrip']), 1], ['potion', 2], ['scoin', 3 + Math.floor(R() * 8)], [pick(['torch', 'arrow', 'shot']), 15 + Math.floor(R() * 20)]]; if (R() < .15) chests[x + ',' + y].push(['frostling', 1]); nch++; } }
         for (let x = a + 3; x < b - 3; x += 6 + Math.floor(R() * 6)) { const base = surf[x]; if (at(x, base) !== T.SNOW || at(x, base - 1) !== T.AIR) continue; const h = 7 + Math.floor(R() * 6); for (let y = base - 1; y >= base - h; y--) set(x, y, T.TRUNK); for (let dy = 0; dy < h - 2; dy++) { const w = Math.floor(dy / 2.4) + 1, yy = base - h - 1 + dy; for (let dx = -w; dx <= w; dx++) if (dx && at(x + dx, yy) === T.AIR) set(x + dx, yy, T.SLEAF); } set(x, base - h - 1, T.SLEAF); } }
       // the Blight: purple grass over blightstone, with chasms dropping to Blight Hearts and shadow ore
       const bl = region(Math.max(40, Math.round(WW * .08))); blight = bl ? { x0: bl[0], x1: bl[1] } : null;
@@ -585,7 +588,7 @@ const GAME = {
     const L = CHEST_LOOT[gold]; let main = pick(L.slice(0, 5));
     if (gold) { if (main === 'esword' && R() > df * df) main = pick(['eboom', 'missile', 'water', 'trident']); if (R() > .2 + .8 * Math.pow(df, 1.4)) main = null; }   // Enchanted Swords mostly deep down
     else if (['gustjar', 'hook', 'spark'].includes(main) && R() > .25 + .75 * df) main = pick(['boom', 'potion']);
-    const items = main ? [[main, 1]] : [[pick(['gbar', 'potion', 'lpotion']), 2 + Math.floor(R() * 3)]]; if (gold && R() < .25) items.push(['falcon', 1]); if (R() < (gold ? .3 : .18)) items.push(['homeshard', 1 + (R() < .3 ? 1 : 0)]); if (R() < (gold ? .07 : .02)) items.push(['lodestar', 1]); items.push(['scoin', 1 + Math.floor(R() * (gold ? 30 : 8))]); for (let i = 0; i < 2 + Math.floor(R() * 3); i++) { const id = pick(L.slice(5)); items.push([id, IT[id].one ? 1 : ['torch', 'arrow', 'shot', 'farrow'].includes(id) ? 10 + Math.floor(R() * 30) : 1 + Math.floor(R() * 4)]); }
+    const items = main ? [[main, 1]] : [[pick(['gbar', 'potion', 'lpotion']), 2 + Math.floor(R() * 3)]]; if (R() < .04) items.push([gold ? 'glowmoth' : 'mosspup', 1]); if (gold && R() < .25) items.push(['falcon', 1]); if (R() < (gold ? .3 : .18)) items.push(['homeshard', 1 + (R() < .3 ? 1 : 0)]); if (R() < (gold ? .07 : .02)) items.push(['lodestar', 1]); items.push(['scoin', 1 + Math.floor(R() * (gold ? 30 : 8))]); for (let i = 0; i < 2 + Math.floor(R() * 3); i++) { const id = pick(L.slice(5)); items.push([id, IT[id].one ? 1 : ['torch', 'arrow', 'shot', 'farrow'].includes(id) ? 10 + Math.floor(R() * 30) : 1 + Math.floor(R() * 4)]); }
     chests[x + ',' + (y - 1)] = items;
   }
   // spawn standing on the surface: the closest column to the middle whose surface tile is solid with open air above it
@@ -670,6 +673,7 @@ const GAME = {
   }
   function icon(g, id, x, y, s) {
     const it = IT[id]; if (!it) return; g.imageSmoothingEnabled = false;
+    if (it.pet && PETA[it.pet]) { const c = petSpr(it.pet, 0), k = 16 * s / Math.max(c.width, c.height); g.imageSmoothingEnabled = false; g.drawImage(c, x - c.width * k / 2, y - c.height * k / 2, c.width * k, c.height * k); return; }
     if (it.coin) { const c = { 1: ['#e0955a', '#9a5428'], 100: ['#eef0f6', '#8e94a4'], 10000: ['#ffd23f', '#a8820e'], 1000000: ['#d4f0ff', '#6e9ec0'] }[it.coin];
       for (const [ox, oy] of [[2, 3], [0, 0]]) { g.fillStyle = c[1]; g.beginPath(); g.ellipse(x + ox * s, y + (oy + 1) * s, 5 * s, 3.2 * s, 0, 0, 7); g.fill(); g.fillStyle = c[0]; g.beginPath(); g.ellipse(x + ox * s, y + oy * s, 5 * s, 3.2 * s, 0, 0, 7); g.fill(); }
       g.fillStyle = 'rgba(255,255,255,.65)'; g.fillRect(x - 2 * s, y - 2 * s, 3 * s, s); return; }
@@ -755,7 +759,7 @@ const GAME = {
   function pay(c) { const m = money(); if (m < c) return false; const keep = ch.inv.slice(); if (!setMoney(m - c)) { ch.inv = keep; return false; } return true; }
   function coinLoot(v, loot) { for (const id of COINS) { const n = Math.floor(v / IT[id].coin); v -= n * IT[id].coin; if (n) loot.push([id, n]); } }
   // what things are worth, in copper; traders buy for a fifth of that
-  const VAL = { woodrod: 800, ironrod: 4000, glowrod: 9000, starrod: 40000, worm: 20, glowgrub: 60, lure: 300, minnow: 60, trout: 80, perch: 80, snapper: 150, frostfin: 300, gloomeel: 350, glowgill: 350, prismkoi: 1500, honeyfin: 300, cookedfish: 150, woodcrate: 500, ironcrate: 2000, goldcrate: 8000, hook: 3000, torch: 50, arrow: 5, lpotion: 300, potion: 1200, mpotion: 500, recall: 800, bucket: 2000, cpick: 1000, cax: 800, whammer: 500, chest: 500, platform: 10, lantern: 1000, knife: 50, shot: 7, sshot: 18, flint: 5000, musket: 15000, scope: 30000,
+  const VAL = { mosspup: 20000, glowmoth: 30000, emberkit: 30000, frostling: 30000, pebbler: 50000, wobble: 40000, woodrod: 800, ironrod: 4000, glowrod: 9000, starrod: 40000, worm: 20, glowgrub: 60, lure: 300, minnow: 60, trout: 80, perch: 80, snapper: 150, frostfin: 300, gloomeel: 350, glowgill: 350, prismkoi: 1500, honeyfin: 300, cookedfish: 150, woodcrate: 500, ironcrate: 2000, goldcrate: 8000, hook: 3000, torch: 50, arrow: 5, lpotion: 300, potion: 1200, mpotion: 500, recall: 800, bucket: 2000, cpick: 1000, cax: 800, whammer: 500, chest: 500, platform: 10, lantern: 1000, knife: 50, shot: 7, sshot: 18, flint: 5000, musket: 15000, scope: 30000,
     mightp: 1500, eaglep: 1500, arcanep: 1500, edgep: 1500, hastep: 1000, stonep: 1500, vigorp: 1500, pactp: 2000, copper: 25, iron: 50, silver: 75, gold: 150, shadow: 300, hellstone: 500, cbar: 120, ibar: 200, sbar: 300, gbar: 600, shbar: 1200, hbar: 2000,
     gel: 5, lens: 30, bone: 20, star: 500, ember: 800, silk: 400, essence: 3000, life: 10000, mana: 6000, obsidian: 50, wood: 2, mush: 25 };
   function value(id) { const it = IT[id]; if (!it || it.coin) return 0; if (VAL[id]) return VAL[id]; const r = it.r || 0; if (it.one) return 2000 * (r + 1) * (r + 1); if (it.tile || it.wall) return it.tile && !SOLID.has(it.tile) ? 300 : 0; return 20 * (r + 1) * (r + 1); }
@@ -997,7 +1001,7 @@ const GAME = {
       if (e.kind === 'slime' && R() < .03) loot.push(['slstaff', 1]);
       if (e.kind === 'skeleton') { loot.push(['bone', 1 + Math.floor(R() * 3)]); if (R() < .04) loot.push(['skstaff', 1]); if (R() < .05) loot.push([pick(['flint', 'trident', 'water']), 1]); }
       if (e.kind === 'bat' && R() < .2) loot.push(['potion', 1]);
-      if (e.kind === 'imp') { loot.push(['ember', 1]); if (R() < .04) loot.push(['flame', 1]); }
+      if (e.kind === 'sporebat' && R() < .04) loot.push(['glowmoth', 1]); if (e.kind === 'king' && R() < .33) loot.push(['wobble', 1]); if (e.kind === 'imp') { if (R() < .03) loot.push(['emberkit', 1]); loot.push(['ember', 1]); if (R() < .04) loot.push(['flame', 1]); }
       if (K_.boss) { const B = BOSSES[e.kind]; loot.push([B.drop[0], 1], [B.drop[1], B.drop[1].endsWith('bar') ? 8 : 1], [B.drop[2], 10], ['potion', 4], ['essence', 3 + Math.floor(R() * 3)]); if (e.kind === 'ember' && R() < .2) loot.push(['wyrm', 1]); boss = null; downed[e.kind] = 1; bossDown(e.kind); }
       for (const [id, n] of loot) { if (K_.boss && online()) { drops.push({ id, n, x: e.x, y: e.y - .5, vx: rnd(-3, 3), vy: -rnd(4, 8), t: 0 }); for (const [oid] of others) MP.to(oid, { t: 'drop', id, n, x: e.x, y: e.y - .5 }); } else giveDrop(by, id, n, e.x, e.y - .5); }
       if (!online() || by === MP.id) { score += K_.sc || 0; if (!K_.proj) { ch.best = ch.best || {}; ch.best[e.kind] = (ch.best[e.kind] || 0) + 1; } }
@@ -1423,7 +1427,7 @@ const GAME = {
           `You know, ${p}, it's nice having company around here. It gets quiet.`, "Slimes look cute until there are twelve of them. Then they just look like a problem.");
         return pick(L); } },
     peddler: { n: 'Peddler', when: () => money() >= 2000, look: [5, 5, 4, 7, 6, 1, 3, 10, 0, 6, 2, 2, 3], names: ['Gilby', 'Marta', 'Osk', 'Pell', 'Dorran', 'Fenna', 'Tobin', 'Ysolde'],
-      shop: [['torch', 5], ['arrow', 25], ['lpotion', 1], ['bucket', 1], ['cpick', 1], ['cax', 1], ['whammer', 1], ['chest', 1], ['platform', 20], ['lantern', 1], ['knife', 10], ['woodrod', 1], ['worm', 5], ['lure', 1]],
+      shop: [['torch', 5], ['arrow', 25], ['lpotion', 1], ['bucket', 1], ['cpick', 1], ['cax', 1], ['whammer', 1], ['chest', 1], ['platform', 20], ['lantern', 1], ['knife', 10], ['woodrod', 1], ['worm', 5], ['lure', 1], ['pebbler', 1]],
       chat: ["Coins, coins! Bring me coins and I'll bring you torches.", 'Everything I sell is nearly new. Mostly.', "I'd sell you a map of the caves, but the caves keep moving.", 'A bucket is the best friend money can buy.'] },
     mender: { n: 'Mender', heal: 1, when: () => ch.max > 100, look: [1, 1, 3, 1, 1, 6, 7, 7, 2, 2, 1, 2, 0], names: ['Elspeth', 'Rowan', 'Celia', 'Bryn', 'Ilse', 'Juno', 'Maren', 'Saffi'],
       chat: ['Hold still. This only stings for a second.', "Life crystals will make you sturdier. I'd still rather you didn't need me.", 'If you are going to fight a boss, at least eat something first.', 'My rates are fair. Cheaper than the alternative, anyway.'] },
@@ -1614,9 +1618,16 @@ const GAME = {
     const up = at(x, y - 1); if ([T.TABLE, T.CHAIR, T.LANTERN, T.CAMPFIRE, T.BED, T.BOOKS, T.TORCH, T.BENCH, T.FURNACE, T.ANVIL, T.CRYSTAL, T.CHEST, T.GCHEST, T.MUSH, T.POT, T.DOOR, T.DOORO, T.GLOWCAP, T.BHEART, T.STARFORGE, T.RUNEANVIL].includes(up)) breakTile(x, y - 1);
   }
   let feed = [];
-  function feedAdd(s, c) { if (!online()) return; const d = new Date(); feed.push({ s, c: c || '#ffffff', t: 0, at: d.getHours() % 12 + (d.getHours() % 12 ? 0 : 12) + ':' + String(d.getMinutes()).padStart(2, '0') }); if (feed.length > 8) feed.shift(); }
-  function drawFeed(g, dt) { if (!online()) { feed.length = 0; return; } feed = feed.filter(f => (f.t += dt) < 14); if (!feed.length) return; const v = K.view, base = invOpen ? 584 : v.y1 - (touch && !kbd ? 230 : 22);
-    g.font = `15px ${PXF}`; feed.slice(-6).reverse().forEach((f, i) => { const y = base - i * 24, s = '[' + f.at + '] ' + f.s, w = g.measureText(s).width + 16; g.globalAlpha = f.t > 11 ? Math.max(0, (14 - f.t) / 3) : 1; g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(v.x0 + 10, y - 17, w, 22); outlined(g, s, v.x0 + 18, y, 15, f.c); }); g.globalAlpha = 1; }
+  let chatOn = false;
+  function chatBox() { let el = document.getElementById('chatIn'); if (el) return el; el = document.createElement('input'); el.id = 'chatIn'; el.maxLength = 120; el.autocomplete = 'off'; el.placeholder = 'Say something... (Enter to send, Esc to close)';
+    el.style.cssText = 'position:fixed;left:12px;bottom:12px;width:min(520px,calc(100vw - 24px));padding:9px 12px;border-radius:10px;border:2px solid rgba(255,255,255,.35);background:rgba(8,10,24,.82);color:#fff;font:16px "Pixelify Sans",monospace;z-index:30;display:none;user-select:text';
+    el.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') { const s = el.value.replace(/\s+/g, ' ').trim().slice(0, 120); if (s && online()) { MP.send({ t: 'chat', s, n: MP.name }); feedAdd((MP.name || 'You') + ': ' + s, '#ffffff', 1); } closeChat(); } else if (e.key === 'Escape') closeChat(); };
+    el.onkeyup = e => e.stopPropagation(); el.onblur = () => setTimeout(closeChat, 0); document.body.appendChild(el); return el; }
+  function openChat() { if (!online() || chatOn) return; chatOn = true; keys = {}; useHeld = false; const el = chatBox(); el.value = ''; el.style.display = 'block'; setTimeout(() => el.focus(), 0); }
+  function closeChat() { if (!chatOn) return; chatOn = false; const el = document.getElementById('chatIn'); if (el) { el.style.display = 'none'; el.blur(); } }
+  function feedAdd(s, c, chat) { if (!online()) return; const d = new Date(); feed.push({ s, chat: !!chat, c: c || '#ffffff', t: 0, at: d.getHours() % 12 + (d.getHours() % 12 ? 0 : 12) + ':' + String(d.getMinutes()).padStart(2, '0') }); if (feed.length > 8) feed.shift(); }
+  function drawFeed(g, dt) { if (!online()) { feed.length = 0; return; } feed = feed.filter(f => (f.t += dt) < (f.chat ? 24 : 14) || chatOn); if (!feed.length) return; if (chatOn) feed.forEach(f => f.t = Math.min(f.t, 3)); const v = K.view, base = (invOpen ? 584 : v.y1 - (touch && !kbd ? 230 : 22)) - (chatOn ? 58 : 0);
+    g.font = `15px ${PXF}`; feed.slice(chatOn ? -10 : -6).reverse().forEach((f, i) => { const y = base - i * 24, s = '[' + f.at + '] ' + f.s, w = g.measureText(s).width + 16; { const L = f.chat ? 24 : 14; g.globalAlpha = f.t > L - 3 ? Math.max(0, (L - f.t) / 3) : 1; } g.fillStyle = 'rgba(0,0,0,.45)'; g.fillRect(v.x0 + 10, y - 17, w, 22); outlined(g, s, v.x0 + 18, y, 15, f.c); }); g.globalAlpha = 1; }
   let picks = [];
   function pickTxt(id, n) { const o = picks.find(p => p.id === id && p.t < 1.4); if (o) { o.n += n; o.t = 0; return; } picks.push({ id, n, t: 0 }); if (picks.length > 6) picks.shift(); }
   function drawPicks(g, dt) { if (!P) return; picks = picks.filter(p => (p.t += dt) < 2.4); picks.forEach((p, i) => { const k = picks.length - 1 - i, a = p.t > 1.8 ? 1 - (p.t - 1.8) / .6 : 1; g.globalAlpha = Math.max(0, a); outlined(g, IT[p.id].n + (p.n > 1 ? ' (' + p.n + ')' : ''), sx(P.x), sy(P.y - 3.3) - k * 21 - Math.min(p.t, .4) * 20, 18, IT[p.id].r ? RAR[IT[p.id].r] : '#ffffff', 'center'); }); g.globalAlpha = 1; }
@@ -1639,6 +1650,8 @@ const GAME = {
         if (t === T.TORCH || t === T.LANTERN) L = 1.15; else if (t === T.CAMPFIRE) L = Math.max(L, 1); else if (t === T.FURNACE) L = Math.max(L, .9); else if (t === T.CRYSTAL || t === T.GCHEST) L = Math.max(L, .5); else if (t === T.HELLSTONE) L = Math.max(L, .55); else if (t === T.GLOWCAP || t === T.BHEART || t === T.STARFORGE) L = Math.max(L, .7); else if (t === T.GMOSS || t === T.CAPBLK) L = Math.max(L, .4); else if (y >= HELL && t === T.AIR) L = Math.max(L, .45);
         if (liq && x >= 0 && y >= 0 && x < WW && y < WH && liq[y * WW + x] && lqk[y * WW + x] === 2) L = Math.max(L, .85); light[k] = L; } }
     for (const p of allPlayers()) { const pi = Math.floor(p.x) - lx0, pj = Math.floor(p.y - 1.4) - ly0; if (pi >= 0 && pi < vw && pj >= 0 && pj < vh) light[pj * vw + pi] = Math.max(light[pj * vw + pi], .62); }
+    { const lamp = id => id && IT[id] && (IT[id].tile === T.TORCH || IT[id].tile === T.LANTERN), glowAt = p => { const pi = Math.floor(p.x) - lx0, pj = Math.floor(p.y - 1.6) - ly0; for (const [a, b, v] of [[0, 0, 1.15], [0, -1, 1.1], [0, 1, 1.1], [1, 0, 1.1], [-1, 0, 1.1]]) { const i = pi + a, j = pj + b; if (i >= 0 && i < vw && j >= 0 && j < vh) light[j * vw + i] = Math.max(light[j * vw + i], v); } };
+      if (P && !dead && lamp(cur() && cur().id)) glowAt(P); for (const [, o] of others) if (o.p && o.p.x != null && !o.dead && lamp(o.held)) glowAt(o.p); }
     for (const p of projs) if (['farrow', 'spark', 'flame', 'missile', 'star', 'beam', 'skull'].includes(p.k)) { const pi = Math.floor(p.x) - lx0, pj = Math.floor(p.y) - ly0; if (pi >= 0 && pi < vw && pj >= 0 && pj < vh) light[pj * vw + pi] = 1; }
     const dec = (i, j) => { const t = at(lx0 + i, ly0 + j); return SOLID.has(t) && t !== T.GLASS ? .14 : .075; };
     for (let pass = 0; pass < 2; pass++) {
@@ -2073,11 +2086,51 @@ const GAME = {
     g.fillStyle = blk ? 'rgba(200,230,255,.2)' : 'rgba(190,225,255,.1)'; g.fillRect(X, Y, TS, TS); g.fillStyle = blk ? 'rgba(235,248,255,.75)' : 'rgba(220,240,255,.35)';
     if (!same(x, y - 1)) g.fillRect(X, Y, TS, 2); if (!same(x, y + 1)) g.fillRect(X, Y + TS - 2, TS, 2); if (!same(x - 1, y)) g.fillRect(X, Y, 2, TS); if (!same(x + 1, y)) g.fillRect(X + TS - 2, Y, 2, TS);
     if ((x * 3 + y * 5) % 4 === 0) { g.fillStyle = blk ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.3)'; for (let k = 0; k < 4; k++) g.fillRect(X + 6 + k * 3, Y + 15 - k * 3, 3, 3); } }
+  /* ---------- pets: little companions that follow you around (purely for company) ---------- */
+  const PETA = {
+    mosspup: { w: 18, h: 13, fly: 0, paint(P, f) { const b = '#8a6a3a', sw = [0, 1, 0, -1][f];
+        P.rect(3 + sw, 9, 2, 4, shadeC(b, .8)); P.rect(11 - sw, 9, 2, 4, shadeC(b, .8)); P.rect(5 - sw, 9, 2, 4, b); P.rect(13 + sw, 9, 2, 4, b);
+        P.ell(9, 7, 6.5, 3.5, b); P.ell(8, 4.5, 4.5, 1.8, '#4caa2a'); P.px(6, 3, '#78c850'); P.px(10, 3, '#78c850'); P.line(2, 7, 0, 3 + (f % 2), b);
+        P.ell(14.5, 5, 3.2, 3, b); P.tri(13, 3, 15, 3, 13.5, 0, shadeC(b, .7)); P.rect(16, 6, 2, 1.5, shadeC(b, .7)); P.px(15, 4, '~#141018'); P.px(17, 6, '~#2a1a12'); } },
+    pebbler: { w: 14, h: 14, fly: 0, paint(P, f) { const st = '#8a8a94', sw = [0, 1, 0, -1][f];
+        P.rect(3 + sw, 10, 3, 4, shadeC(st, .75)); P.rect(8 - sw, 10, 3, 4, shadeC(st, .75)); P.ell(7, 7, 6, 5.5, st); P.ell(5, 4, 2, 1.5, '#a8a8b0'); P.px(10, 9, '#6a6a74'); P.px(4, 9, '#6a6a74');
+        P.rect(2, 2, 4, 2, '#4caa2a'); P.rect(8, 6, 2, 2, '~#ffb03a'); P.rect(11, 6, 1, 2, '~#ffb03a'); } },
+    wobble: { w: 14, h: 13, fly: 0, paint(P, f) { const c = '#5ad8a0', sq = [0, 1, 2, 1][f], ry = 4.5 - sq * .6, cy = 12 - ry;
+        P.ell(7, cy, 6 + sq * .4, ry, c + 'e0'); P.ell(7, cy + ry * .45, 5, ry * .45, shadeC(c, .75) + 'e8'); P.ell(5, cy - ry * .45, 1.6, .9, '~#ffffffb0');
+        P.px(5, cy - .5, '~#141420'); P.px(9, cy - .5, '~#141420'); P.px(7, cy + 1.5, '~#141420');
+        const t = cy - ry - 1; P.rect(4, t, 6, 2, '#ffd23f'); P.px(4, t - 1, '#ffd23f'); P.px(7, t - 1, '#ffd23f'); P.px(9, t - 1, '#ffd23f'); P.px(7, t, '~#ff3a5a'); } },
+    emberkit: { w: 18, h: 13, fly: 0, paint(P, f) { const b = '#e8702a', sw = [0, 1, 0, -1][f];
+        P.rect(4 + sw, 9, 2, 4, shadeC(b, .8)); P.rect(12 - sw, 9, 2, 4, shadeC(b, .8)); P.ell(9, 7.5, 5.5, 3, b); P.ell(9, 9, 3.5, 1.4, '#ffe0c0');
+        for (let i = 0; i < 4; i++) P.rect(3 - i, 6 - i + (f % 2), 2, 2, i < 2 ? '#ff8a2a' : '~#ffd23f'); P.px(0, 2 + (f % 2), '~#fff2a0');
+        P.ell(14.5, 5, 3, 2.6, b); P.tri(12.5, 3.5, 14.5, 3.5, 13, 0, b); P.tri(15, 3.5, 17, 3.5, 16.5, 0, b); P.px(13, 1, '~#2a1a12'); P.rect(16.5, 5.5, 1.5, 1.5, '#fff0e0'); P.px(15, 4, '~#141018'); } },
+    glowmoth: { w: 16, h: 12, fly: 1, paint(P, f) { const wy = [-2, 0, 2, 0][f];
+        for (const s of [-1, 1]) { P.ell(8 + s * 4, 4 + wy * .5, 3.5, 3, '~#7af0ffd0'); P.ell(8 + s * 3.5, 8 - wy * .3, 2.5, 2, '~#4ab8e0c0'); P.px(8 + s * 4, 4 + wy * .5, '~#ffffff'); }
+        P.ell(8, 6, 1.6, 4, '#3a3048'); P.line(7, 2, 5, 0, '#3a3048'); P.line(9, 2, 11, 0, '#3a3048'); P.px(7, 3, '~#e8ffff'); P.px(9, 3, '~#e8ffff'); } },
+    frostling: { w: 12, h: 14, fly: 1, paint(P, f) { const bob = [0, 1, 0, -1][f];
+        for (let i = 0; i < 6; i++) { const a = i * 1.047 + f * .2; P.line(6, 6 + bob, 6 + Math.cos(a) * 5.5, 6 + bob + Math.sin(a) * 5.5, '~#bff4ff'); }
+        P.ell(6, 6 + bob, 3.6, 3.6, '#e8fbff'); P.px(5, 5 + bob, '~#2a5a8a'); P.px(7, 5 + bob, '~#2a5a8a'); P.px(6, 7 + bob, '~#7ab0d8'); P.tri(4, 11 + bob, 8, 11 + bob, 6, 14, '~#bff4ffa0'); } },
+  };
+  const petSpr = (k, f) => { const D = PETA[k]; return spr('pet|' + k + '|' + f, D.w, D.h, P => D.paint(P, f), { hi: 1.15, lo: .78 }); };
+  function newPet(k, x, y) { return { k, x, y, vx: 0, vy: 0, w: .7, h: .6, ground: false, t: R() * 5, face: 1, stuck: 0 }; }
+  function stepPet(pt, owner, face, dt) { const D = PETA[pt.k]; if (!D || !owner) return; pt.t += dt; const tx = owner.x - face * 1.8, d = Math.hypot(owner.x - pt.x, owner.y - pt.y);
+    if (d > 22 || !isFinite(d)) { pt.x = owner.x - face * 1.5; pt.y = owner.y - (D.fly ? 2.5 : .2); pt.vx = pt.vy = 0; }
+    if (D.fly) { const ty = owner.y - 2.6 + Math.sin(pt.t * 2.2) * .4; pt.x += (tx - pt.x) * Math.min(1, dt * 3.5); pt.y += (ty - pt.y) * Math.min(1, dt * 3.5); pt.face = owner.x >= pt.x ? 1 : -1; pt.moving = 1; return; }
+    const dx = tx - pt.x; pt.vx = Math.abs(dx) > .7 ? clamp(dx * 4, -11, 11) : pt.vx * .7; pt.bump = 0; moveBody(pt, dt);
+    if (pt.ground && (pt.bump || owner.y < pt.y - 2.5 && Math.abs(owner.x - pt.x) < 6)) pt.vy = -14;
+    pt.face = Math.abs(pt.vx) > .3 ? Math.sign(pt.vx) : owner.x >= pt.x ? 1 : -1; pt.moving = Math.abs(pt.vx) > .3 || !pt.ground; }
+  function drawPet(g, pt) { const D = PETA[pt.k]; if (!D) return; const f = pt.moving ? Math.floor(pt.t * (D.fly ? 10 : 9)) % 4 : 0, c = petSpr(pt.k, f), X = sx(pt.x), Y = sy(pt.y);
+    if (pt.k === 'glowmoth' || pt.k === 'emberkit' || pt.k === 'frostling') { const gs = glowSprite(pt.k === 'emberkit' ? '255,150,60' : '120,230,255'); g.drawImage(gs, X - 30, Y - (D.fly ? 30 : 38), 60, 60); }
+    drawSpr(g, c, X, Y, 1.5, pt.face < 0, D.fly); }
+  let myPet = null;
+  let caveBg = null;
+  function caveBack(g) { if (!caveBg) { const c = spr('caveback', 96, 96, P => { const r = srng(77); P.rect(0, 0, 96, 96, '~#0e0a08'); for (let i = 0; i < 26; i++) { const x = r() * 96, y = r() * 96, w = 6 + r() * 14, h = 4 + r() * 9; P.ell(x, y, w / 2, h / 2, '~#151009'); P.ell(x - w * .15, y - h * .2, w * .3, h * .25, '~#1a140d'); } for (let i = 0; i < 40; i++) P.px(r() * 96, r() * 96, '~#070504'); }, { outline: false });
+      caveBg = g.createPattern(c, 'repeat'); }
+    try { caveBg.setTransform(new DOMMatrix([1.5, 0, 0, 1.5, Math.round(-cam.x * .55), Math.round(-cam.y * .55)])); } catch (e) {} return caveBg; }
   function drawTiles(g) {
     g.imageSmoothingEnabled = false; torchL = []; glints = []; glowL = [];
     const v = WV(), x0 = Math.floor((cam.x + v.x0) / TS) - 1, y0 = Math.floor((cam.y + v.y0) / TS) - 1, x1 = x0 + Math.ceil((v.x1 - v.x0) / TS) + 3, y1 = y0 + Math.ceil((v.y1 - v.y0) / TS) + 3, leaves = [], tufts = [];
     // the underground backdrop, column by column under each column's own surface, so it never cuts across the sky
-    g.fillStyle = '#20140c'; for (let x = Math.max(0, x0); x < Math.min(WW, x1); x++) { const Y = Math.round((surf[x] + 3) * TS - cam.y), B = Math.round(y1 * TS - cam.y); if (Y < B) g.fillRect(Math.round(x * TS - cam.x), Y, TS, B - Y); }
+    g.fillStyle = caveBack(g); for (let x = Math.max(0, x0); x < Math.min(WW, x1); x++) { const Y = Math.round((surf[x] + 3) * TS - cam.y), B = Math.round(y1 * TS - cam.y); if (Y < B) g.fillRect(Math.round(x * TS - cam.x), Y, TS, B - Y); }
     const TR = scanTrees(x0, x1, y0, y1), DC = [];
     for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
       if (x < 0 || y < 0 || x >= WW || y >= WH) continue;
@@ -2117,7 +2170,7 @@ const GAME = {
   function heldItem(g, id, it, b) {
     g.rotate(b);
     const put = (rho, gx, gy) => { g.rotate(Math.PI - rho); const c = Math.cos(rho), sn = Math.sin(rho); icon(g, id, -(gx * c - gy * sn), -(gx * sn + gy * c), 1); };
-    if (GID[id] && GTH[GID[id]] && (it.melee || it.pick || it.axe || it.hammer || it.reach || it.magic)) put(-.78, 0, 7.5);
+    if (GID[id] && GTH[GID[id]] && (it.melee || it.pick || it.axe || it.hammer || it.reach || it.magic)) put(.78, 0, 7.5);
     else if (it.melee) put(-.78, 0, 6.5);
     else if (it.pick || it.axe || it.hammer) put(0, 0, 6);
     else if (it.reach) put(-.8, 0, 8.5);
@@ -2126,7 +2179,7 @@ const GAME = {
     else if (it.gun) { g.rotate(Math.PI / 2); icon(g, id, 3, -3, 1); }
     else if (it.bow) { g.rotate(Math.PI / 2); icon(g, id, -4, 0, 1); }
     else if (it.boom) { g.rotate(Math.PI / 2); icon(g, id, 5, -4, 1); }
-    else icon(g, id, 0, 4, it.tile ? .55 : .75);
+    else icon(g, id, 1.5, -3.5, it.tile ? .55 : .75);
   }
   function drawHero(g, p, name, armor, held, swing, face, blink, col, aim, lk) {
     const X = sx(p.x), Y = sy(p.y), walk = p.ground && Math.abs(p.vx) > .5 ? Math.sin(anim * 14) : 0;
@@ -2298,7 +2351,7 @@ const GAME = {
   let cscroll = 0, cpy = 0, drag = null, picked = -1;
   const CY = 352, CN = () => clamp(Math.floor((K.view.y1 - TOP() - CY - 92) / 50), 3, 12);   // crafting sits on the left, under the bag, with as many rows as fit
   const CB = i => ({ x: 18, y: CY + 44 + (i - cscroll) * 50, w: 360, h: 44 });
-  function craftList() { return RECIPES.filter(r => !r[3] || stationNear(STN[r[3]])).sort((a, b) => canCraft(b) - canCraft(a)); }
+  function craftList() { return RECIPES.filter(r => (!r[3] || stationNear(STN[r[3]])) && canCraft(r)); }
   /* touch bag: one full-screen layout with big slots, big craft rows you can drag to scroll, and a close button.
      Everything is measured from the real screen edges so it fits phones, tablets and odd shapes. */
   const TS_ = 64, TG = 6, ROW = 84;
@@ -2515,7 +2568,7 @@ const GAME = {
   const statLine = it => [it.melee && `${it.melee} melee damage`, (it.pick || it.axe || it.hammer) && it.dmg && `${it.dmg} melee damage`, it.pick && `${Math.round(it.pick * 35)}% mining power`, it.axe && `${Math.round(it.axe * 17.5)}% chopping power (wood)`, it.hammer && `${Math.round(it.hammer * 35)}% hammer power · knocks down walls`, it.wall && 'background wall · hammers take it down', it.tile === 46 && 'opens with a click or when you walk into it', it.coin && 'money · traders take it', it === IT.frostgrip && 'no slipping on ice', it === IT.gustjar && 'jump again in the air', it === IT.emberboots && 'press jump in the air, then hold it, to fly up for a moment', it === IT.windstep && 'tap left or right twice to dash', it.acc === 'wings' && 'press jump in the air and hold it to fly, then glide', it.hook && 'shoots a hook at blocks and pulls you to them · jump to let go', it.rod && `${it.rod} fishing power · click water to cast, click again when it bites · needs bait`, it.bait && `${it.bait} bait power`, it.fish && 'a fish · traders buy it, some cook at a campfire', it.use && it.use.startsWith('crate:') && 'click to open', it === IT.sunfeather && 'hold jump while falling to glide', it.tile === 48 && `stand on it · ${keyName(KB().down).toUpperCase()} drops through`,
     it.reach && 'long reach', it.bow && `${it.bow} ranged damage`, it.gun && `${it.gun} ranged damage`, it.shots && `${it.shots} shots at once`, it.magic && `${it.magic} magic damage`, it.mp && `${it.mp} mana per cast`, it.boom && `${it.boom} thrown damage`,
     it.throw && `${it.dmg} thrown damage`, it.ammo && `${it.dmg} damage ammo`, it.fire && 'sets enemies on fire', it.armor && `${it.armor} defense (${it.slot || 'body'})`, it.set && bonusText(SETS[it.set].bon) && `full ${SETS[it.set].n} set: ${bonusText(SETS[it.set].bon)}`, it.use === 'heal' && 'heals 100 life', it.use === 'lheal' && 'heals 50 life', it.use === 'mpot' && 'restores 100 mana', it.use === 'recall' && 'takes you back to your spawn point', it.use === 'home' && 'takes you back to your spawn point, as often as you like (5s recharge)', it.spawn && 'sets your spawn point', (it.tile === 28 || it.tile === 29) && 'gives light', it.use === 'life' && '+20 max life', it.use === 'mana' && '+20 max mana',
-    it.use && it.use.startsWith('boss:') && 'summons a boss', it.use && it.use.startsWith('buff:') && `${BUFFS[it.use.slice(5)].n}, 3 min: ${bonusText(BUFFS[it.use.slice(5)].bon)}`, it.acc && 'accessory', it.bon && bonusText(it.bon), it.bucket === 'empty' && 'scoops up a full cell of water, lava or honey', it.bucket > 0 && `pours ${LQ[it.bucket].n.toLowerCase()} · empties back into a bucket`, it.summon && `summons a ${MINI[it.summon].n} · ${MINI[it.summon].dmg} summon damage · ${it.mp} mana`, it.tile && 'can be placed'].filter(Boolean).join(' · ');
+    it.use && it.use.startsWith('boss:') && 'summons a boss', it.use && it.use.startsWith('buff:') && `${BUFFS[it.use.slice(5)].n}, 3 min: ${bonusText(BUFFS[it.use.slice(5)].bon)}`, it.pet && 'pet · goes in the pet slot next to your accessories', it.acc && 'accessory', it.bon && bonusText(it.bon), it.bucket === 'empty' && 'scoops up a full cell of water, lava or honey', it.bucket > 0 && `pours ${LQ[it.bucket].n.toLowerCase()} · empties back into a bucket`, it.summon && `summons a ${MINI[it.summon].n} · ${MINI[it.summon].dmg} summon damage · ${it.mp} mana`, it.tile && 'can be placed'].filter(Boolean).join(' · ');
   function inventory(g) {
     if (bag()) return bagTouch(g);
     g.save(); g.translate(OX(), TOP());
@@ -2524,7 +2577,8 @@ const GAME = {
     for (let i = 0; i < 40; i++) slot(g, IB(i), ch.inv[i], i === sel);
     SLOTS.forEach((k, i) => { const id = gear()[k]; slot(g, ARMS(i), id ? { id, n: 1 } : null, false); if (!id) outlined(g, ['Head', 'Body', 'Legs'][i], ARMS(i).x + 23, ARMS(i).y + 28, 11, '#8a96c8', 'center'); });
     for (let i = 0; i < 3; i++) slot(g, ACCB(i), ch.acc && ch.acc[i] ? { id: ch.acc[i], n: 1 } : null, false);
-    { const b = B(), cl = classLine(b); const st = setOf(); const sb = st && bonusText(SETS[st].bon); outlined(g, (st && bonusText(SETS[st].bon) ? 'Def ' : 'Defense ') + def() + (st && bonusText(SETS[st].bon) ? ` · ${SETS[st].n} set` : ''), 178, 302, 14, sb ? '#7aff7a' : '#cfd8ff'); g.font = `13px ${PXF}`; outlined(g, fitText(g, cl || 'No bonuses yet', 214), 178, 324, 13, cl ? '#ffe680' : '#8a96c8'); }
+    slot(g, ACCB(3), ch.pet ? { id: ch.pet, n: 1 } : null, false); if (!ch.pet) outlined(g, 'Pet', ACCB(3).x + 23, ACCB(3).y + 28, 11, '#8a96c8', 'center');
+    { const b = B(), cl = classLine(b); const st = setOf(); const sb = st && bonusText(SETS[st].bon); outlined(g, (st && bonusText(SETS[st].bon) ? 'Def ' : 'Defense ') + def() + (st && bonusText(SETS[st].bon) ? ` · ${SETS[st].n} set` : ''), 222, 302, 14, sb ? '#7aff7a' : '#cfd8ff'); g.font = `13px ${PXF}`; outlined(g, fitText(g, cl || 'No bonuses yet', 170), 222, 324, 13, cl ? '#ffe680' : '#8a96c8'); }
     const hv = (rfOpen && rfItem && inB(RF_SLOT, mx - OX(), my - TOP()) && rfItem) || (openCh && hoverChest >= 0 && cget(hoverChest)) || (shopK && hoverChest >= 0 && shopItem(hoverChest)) || (hoverSlot >= 0 && ch.inv[hoverSlot]) || (hoverCoin >= 0 && cslots()[hoverCoin] && { id: CIDS[hoverCoin], n: cslots()[hoverCoin] }) || (hoverGear && { id: hoverGear }) || held || ch.inv[sel]; if (hv) { const it = IT[hv.id], mm = modOf(hv); outlined(g, nameOf(hv), 14, 240, 18, RAR[it.r || 0]); const st = [modLine(hv), statLine(it)].filter(Boolean).join(' · '); if (st) outlined(g, fitText(g, st, 490), 14, 264, 14, mm && mm.n ? (mm.bad ? '#ff9a8a' : '#7aff7a') : '#cfd8ff'); }
     drawChest(g, panel); drawShop(g, panel); drawReforge(g, panel); { const cs = cslots(); outlined(g, 'Coins', 568, 280, 11, '#ffe680', 'right'); for (let k = 0; k < 4; k++) { slot(g, CSB(k), cs[k] ? { id: CIDS[k], n: cs[k] } : null, false); if (!cs[k]) { g.globalAlpha = .25; icon(g, CIDS[k], CSB(k).x + 20, CSB(k).y + 20, .8); g.globalAlpha = 1; } } }
     if (shopK) { const si = hoverChest >= 0 && shopItem(hoverChest), hs = hoverSlot >= 0 && ch.inv[hoverSlot]; const sv = si ? 'Buy for ' + coinText(si.p) : hs ? (sellPrice(hs) ? 'Sells for ' + coinText(sellPrice(hs)) : "Can't be sold") : ''; if (sv) outlined(g, sv, 570, 240, 15, '#ffe680', 'right'); }
@@ -2574,7 +2628,7 @@ const GAME = {
   const $id = id => document.getElementById(id);
   const cleanName = (s, max) => String(s || '').replace(/[^\w .'-]/g, '').trim().slice(0, max);
   function netOpts() {
-    Object.assign(MP.opts, { max: 4, min: 1, bots: 0, solo: false, config: () => ({ name: wslot >= 0 && worlds()[wslot] ? worlds()[wslot].name : 'World' }), onStart, onMsg, onLeave, onJoin, onHost: id => { if (mode === 'play' && id === MP.id) adopt('The world owner left. You are hosting the world now.'); } });
+    Object.assign(MP.opts, { max: 4, min: 1, bots: 0, solo: false, config: () => ({ name: wslot >= 0 && worlds()[wslot] ? worlds()[wslot].name : 'World' }), onStart, onMsg, onLeave, onJoin, onHost: id => { if (mode === 'play' && id === MP.id && wslot < 0) kicked('The world host left, so the game ended.'); else if (mode === 'play' && id === MP.id) adopt('The world owner left. You are hosting the world now.'); } });
   }
   function netReady() {
     if (typeof MP === 'undefined' || demo) return;
@@ -2835,14 +2889,15 @@ const GAME = {
     if (mode !== 'play' || !isHost() || !net) return; const col = MP.colors[(others.size + 1) % 8]; others.set(id, { name, col, p: null }); net.roster.push({ id, name, col, seat: net.roster.length }); MP.to(id, { t: 'mp-start', cfg: { name: worlds()[wslot] ? worlds()[wslot].name : 'World' }, roster: net.roster }); setTimeout(() => streamWorld(id), 300); feedAdd(`${name} joined the world`, '#7aff7a'); }
   // when the host leaves (or the connection drops) the guest keeps the world, saved into a free slot if there is one
   function adopt(t) { if (wslot < 0 && worlds().length < 3) { worlds().push({ name: (recv && recv.name) || 'Shared World', made: Date.now(), ...packWorld(), played: Date.now() }); wslot = worlds().length - 1; K.persist(); t += ' It is saved in your world list.'; } say(t, 5, '#9fe8ff'); }
-  function onLeave(id) { if (id === -1) { net = null; others.clear(); if (mode === 'play') adopt('Disconnected. You are playing alone now.'); return; } waiting.delete(id); const o = others.get(id); if (o) feedAdd(`${o.name} left the world`, '#ffb07a'); others.delete(id); }
+  function kicked(t) { saveAll(); net = null; others.clear(); closeChat(); if (inRoom()) MP.leave(); backToMenu(); menuNote = t; menuNoteUntil = performance.now() + 8000; }
+  function onLeave(id) { if (id === -1) { if (mode === 'play' && wslot < 0) { kicked('Lost the connection to the world host.'); return; } net = null; others.clear(); if (mode === 'play') adopt('Disconnected. You are playing alone now.'); return; } waiting.delete(id); const o = others.get(id); if (o) feedAdd(`${o.name} left the world`, '#ffb07a'); others.delete(id); }
   function onMsg(m) {
-    const from = m.from ?? m.id; if (m.t === 'bd' && typeof m.k === 'string') { brokenDeco.add(m.k); return; } if (m.t === 'dm') { feedAdd(String(m.s || '').slice(0, 90), '#ff8a8a'); return; }
+    const from = m.from ?? m.id; if (m.t === 'chat' && typeof m.s === 'string') { const o = others.get(from); feedAdd(String((o && o.name) || m.n || 'Someone').slice(0, 16) + ': ' + m.s.slice(0, 120), '#ffffff', 1); return; } if (m.t === 'bd' && typeof m.k === 'string') { brokenDeco.add(m.k); return; } if (m.t === 'dm') { feedAdd(String(m.s || '').slice(0, 90), '#ff8a8a'); return; }
     if (m.t === 'lq' && liq && mode === 'play') { for (const [i, a, k] of m.c || []) if (i >= 0 && i < liq.length) { liq[i] = a; lqk[i] = a ? k : 0; } return; }
     if (m.t === 'w' && mode === 'recv') { recv.parts[m.i] = m.d; recv.n = m.n; if (recv.parts.filter(Boolean).length === m.n) { unpackWorld(JSON.parse(recv.parts.join(''))); enterWorld(); say(`Welcome to ${recv.name}!`, 4, '#7aff7a'); } return; }
     if (mode !== 'play') return;
     const o = others.get(from);
-    if (m.t === 'p' && o) { { const L = Array.isArray(m.mn) ? m.mn.filter(q => Array.isArray(q) && MINI[q[0]]) : []; o.mins = L.map((q, i) => { const prev = o.mins && o.mins[i] && o.mins[i].k === q[0] ? o.mins[i] : { k: q[0], x: q[1], y: q[2], t: Math.random() * 6, tr: [] }; prev.tx = q[1]; prev.ty = q[2]; prev.vx = q[3]; return prev; }); } if (m.lk) o.look = m.lk; o.p = o.p || { w: .8, h: 1.9 }; if (o.p.x == null) { o.p.x = m.x; o.p.y = m.y; } Object.assign(o.p, { tx: m.x, ty: m.y, vx: m.vx, vy: m.vy, ground: m.g }); o.face = m.f; o.sw = m.s; o.held = m.h; o.armor = m.a; o.dead = m.d; }
+    if (m.t === 'p' && o) { o.petK = typeof m.pt === 'string' && PETA[m.pt] ? m.pt : null; { const L = Array.isArray(m.mn) ? m.mn.filter(q => Array.isArray(q) && MINI[q[0]]) : []; o.mins = L.map((q, i) => { const prev = o.mins && o.mins[i] && o.mins[i].k === q[0] ? o.mins[i] : { k: q[0], x: q[1], y: q[2], t: Math.random() * 6, tr: [] }; prev.tx = q[1]; prev.ty = q[2]; prev.vx = q[3]; return prev; }); } if (m.lk) o.look = m.lk; o.p = o.p || { w: .8, h: 1.9 }; if (o.p.x == null) { o.p.x = m.x; o.p.y = m.y; } Object.assign(o.p, { tx: m.x, ty: m.y, vx: m.vx, vy: m.vy, ground: m.g }); o.face = m.f; o.sw = m.s; o.held = m.h; o.armor = m.a; o.dead = m.d; }
     else if (m.t === 'tl') set(m.x, m.y, m.v);
     else if (m.t === 'chest') chests[m.key] = [];
     else if (m.t === 'cs') chests[m.key] = m.c || [];
@@ -2909,7 +2964,9 @@ const GAME = {
     if (temple && isHost()) for (const tr of traps) { if ((tr.cd -= dt) > 0) continue; if (at(tr.x, tr.y) !== T.DTRAP) { tr.cd = 99; continue; } for (const pl of allPlayers()) { const ddx = pl.x - (tr.x + .5); if (Math.sign(ddx) === tr.d && Math.abs(ddx) < 16 && Math.abs(pl.y - 1.2 - (tr.y + .5)) < 1.6) { spawnEnemy('dart', tr.x + .5 + tr.d * .9, tr.y + .5, { vx: tr.d * 22, vy: 0, life: 1.6 }); tr.cd = 1.8; K.sfx(700, .05, 'square', .05, -300); break; } } }
     if ((revT -= dt) <= 0) { revT = .2; reveal(P.x, P.y - 1.4, 17); }
     if (P.inv > 0) P.inv -= dt; if (P.swing > 0) P.swing -= dt; if (P.cd > 0) P.cd -= dt; if (P.potCd > 0) P.potCd -= dt; if (P.homeCd > 0) P.homeCd -= dt;
-    if (!held || !IT[held.id].coin) foldCoins(); if (tHold && (invOpen || dead)) torchOff();
+    if (!held || !IT[held.id].coin) foldCoins();
+    if (ch.pet && PETA[IT[ch.pet] && IT[ch.pet].pet] && !dead) { if (!myPet || myPet.k !== IT[ch.pet].pet) myPet = newPet(IT[ch.pet].pet, P.x - P.face * 1.5, P.y - 1); stepPet(myPet, P, P.face, dt); } else myPet = null;
+    for (const [, o] of others) { if (o.petK && PETA[o.petK] && o.p && o.p.x != null && !o.dead) { if (!o.pet || o.pet.k !== o.petK) o.pet = newPet(o.petK, o.p.x, o.p.y - 1); stepPet(o.pet, o.p, o.face || 1, dt); } else o.pet = null; } if (tHold && (invOpen || dead)) torchOff();
     if (!dead) { if (P.hp < ch.max && P.inv <= 0) P.hp = Math.min(ch.max, P.hp + dt * (Math.abs(P.vx) < .5 ? 2.4 : .9) * (1 + B().regen)); P.mp = Math.min(maxMana(), P.mp + dt * 4); }
     if (P.buffs) for (const k in P.buffs) if ((P.buffs[k] -= dt) <= 0) { delete P.buffs[k]; say((BUFFS[k] ? BUFFS[k].n : 'A potion') + ' wore off.', 2, '#cfd8ff'); }
     if (isHost()) { spawnLoop(dt); for (const e of ents) { enemyAI(e, dt); if (!KIND[e.kind].proj && !KIND[e.kind].boss && lqAt(e.x, e.y - .3) === 2 && ((e.lavaT = (e.lavaT || 0) - dt) <= 0)) { e.lavaT = .5; hitEnemy(e, 20, 0, 1); } } }
@@ -2924,7 +2981,7 @@ const GAME = {
     drops = drops.filter(d => !d.dead && d.t < 300);
     for (const [, o] of others) if (o.p && o.p.tx != null) { o.p.x += (o.p.tx - o.p.x) * Math.min(1, dt * 12); o.p.y += (o.p.ty - o.p.y) * Math.min(1, dt * 12); }
     if (online()) {
-      if ((sendT -= dt) <= 0) { sendT = .1; const s = cur(); MP.send({ t: 'p', lk: look, x: +P.x.toFixed(2), y: +P.y.toFixed(2), vx: +P.vx.toFixed(1), vy: +P.vy.toFixed(1), g: P.ground, f: P.face, s: P.swing > 0 ? +P.swing.toFixed(2) : 0, h: s && s.id, a: gear(), d: !!dead, mn: minions.length ? minions.map(m => [m.k, +m.x.toFixed(1), +m.y.toFixed(1), m.vx < 0 ? -1 : 1]) : 0 }); }
+      if ((sendT -= dt) <= 0) { sendT = .1; const s = cur(); MP.send({ t: 'p', lk: look, x: +P.x.toFixed(2), y: +P.y.toFixed(2), vx: +P.vx.toFixed(1), vy: +P.vy.toFixed(1), g: P.ground, f: P.face, s: P.swing > 0 ? +P.swing.toFixed(2) : 0, h: s && s.id, a: gear(), d: !!dead, pt: ch.pet && IT[ch.pet] ? IT[ch.pet].pet : 0, mn: minions.length ? minions.map(m => [m.k, +m.x.toFixed(1), +m.y.toFixed(1), m.vx < 0 ? -1 : 1]) : 0 }); }
       if (isHost() && (eSendT -= dt) <= 0) { eSendT = .12; if (npcs.length) MP.send({ t: 'np', l: npcs.map(n => [n.id, n.k, n.nm, +n.x.toFixed(2), +n.y.toFixed(2), n.face, Math.round(n.hp), n.max]) }); MP.send({ t: 'e', time, l: ents.slice(0, 40).map(e => [e.id, e.kind, +e.x.toFixed(2), +e.y.toFixed(2), Math.round(e.hp), Math.round(e.max), e.rage ? 1 : 0]) }); }
     }
     const tx = P.x * TS - 640, ty = (P.y - 1.4) * TS - 380; cam.x += (tx - cam.x) * Math.min(1, dt * 10); cam.y += (ty - cam.y) * Math.min(1, dt * 10);
@@ -2971,7 +3028,7 @@ const GAME = {
     g.save(); { const z = ZOOM(); g.translate(640 * (1 - z), 360 * (1 - z)); g.scale(z, z); } drawTiles(g);
     for (const d of drops) { const X = sx(d.x), Y = sy(d.y) - 8 + Math.sin(anim * 4 + d.x) * 2, r = IT[d.id].r || 0; if (r) { const gr = g.createRadialGradient(X, Y, 1, X, Y, 18); gr.addColorStop(0, RAR[r] + '88'); gr.addColorStop(1, RAR[r] + '00'); g.fillStyle = gr; g.fillRect(X - 18, Y - 18, 36, 36); } icon(g, d.id, X, Y, 1.2); }
     for (const e of ents) drawEnemy(g, e);
-    drawMinions(g); drawNpcs(g);
+    drawMinions(g); drawNpcs(g); for (const [, o] of others) if (o.pet) drawPet(g, o.pet); if (myPet && !dead) drawPet(g, myPet);
     for (const [, o] of others) if (o.p && o.p.x != null && !o.dead) drawHero(g, o.p, o.name, o.armor, o.held, o.sw, o.face || 1, false, o.col, null, o.look);
     if (!dead) { const s = cur(); const hx = sx(P.x), hy = sy(P.y) - 30, dd = Math.hypot(wmx() - hx, wmy() - hy) || 1; drawHero(g, P, online() ? MP.name : null, gear(), s && s.id, P.swing, P.face, P.inv > 0 && Math.floor(anim * 20) % 2, null, [(wmx() - hx) / dd, (wmy() - hy) / dd], look); }
     if (P && P.hook && !dead) { const H = P.hook, X0 = sx(P.x), Y0 = sy(P.y - 1.2), X1 = sx(H.x), Y1 = sy(H.y); g.strokeStyle = '#5a5a64'; g.lineWidth = 2; g.setLineDash([4, 3]); g.beginPath(); g.moveTo(X0, Y0); g.lineTo(X1, Y1); g.stroke(); g.setLineDash([]); g.fillStyle = '#c8c8d0'; g.beginPath(); g.arc(X1, Y1, 4, 0, 7); g.fill(); }
@@ -3014,6 +3071,7 @@ const GAME = {
     if (talk && talkDown(x, y)) return;
     if (invOpen && bag()) return bagDown(x, y);
     if (invOpen) {
+      if (inB(ACCB(3), x - OX(), y - TOP())) { const cur0 = ch.pet || null; if (held && IT[held.id].pet) { ch.pet = held.id; held = cur0 ? { id: cur0, n: 1 } : null; myPet = null; K.chime(660, [0, 4, 7]); } else if (!held && cur0) { held = { id: cur0, n: 1 }; ch.pet = null; myPet = null; } else if (held) say('Only pets go there.'); return; }
       for (let k = 0; k < 4; k++) if (inB(CSB(k), x - OX(), y - TOP())) { const cs = cslots(); if (held && IT[held.id].coin) { setMoney(money() + held.n * IT[held.id].coin); held = null; K.sfx(900, .04, 'square', .04); } else if (!held && cs[k]) { held = { id: CIDS[k], n: cs[k] }; cs[k] = 0; } return; }
       for (let i = 0; i < 3; i++) if (inB(ARMS(i), x - OX(), y - TOP())) { ch.gear = ch.gear || {}; const k = SLOTS[i], cur = ch.gear[k];
         if (held && IT[held.id].armor) { const hs = IT[held.id].slot || 'body'; if (hs !== k) return say(`That goes in the ${{ head: 'head', body: 'body', legs: 'legs' }[hs]} slot.`); ch.gear[k] = held.id; held = cur ? { id: cur, n: 1 } : null; K.sfx(500, .04, 'square', .04); }
@@ -3038,7 +3096,7 @@ const GAME = {
   GAME.move = (x, y, ev) => {
     if (!(touch && ev && Object.values(tPtr).includes(ev.pointerId))) { mx = x; my = y; } hover = null; hoverSlot = -1; hoverGear = null; hoverChest = -1; if (talk) for (const b of dlgBtns) if (inB(b, x, y)) hover = 'dl' + b.k; if (rfOpen && inB(RF_GO, x - OX(), y - TOP())) hover = 'rfgo';
     if (mapOpen) { if (mapDrag) { const s = mapS(mapArea()); mapC = [mapDrag.c[0] - (x - mapDrag.x) / s, mapDrag.c[1] - (y - mapDrag.y) / s]; mapClamp(); } return; }
-    if (invOpen && !bag()) { for (let i = 0; i < 3; i++) if (inB(ARMS(i), x - OX(), y - TOP())) hoverGear = gear()[SLOTS[i]]; for (let i = 0; i < 3; i++) if (inB(ACCB(i), x - OX(), y - TOP())) hoverGear = ch.acc && ch.acc[i]; }
+    if (invOpen && !bag()) { for (let i = 0; i < 3; i++) if (inB(ARMS(i), x - OX(), y - TOP())) hoverGear = gear()[SLOTS[i]]; for (let i = 0; i < 3; i++) if (inB(ACCB(i), x - OX(), y - TOP())) hoverGear = ch.acc && ch.acc[i]; if (inB(ACCB(3), x - OX(), y - TOP())) hoverGear = ch.pet || null; }
     if (mode === 'pick' || mode === 'chars' || mode === 'edit' || mode === 'hostcode') hover = hoverKey(x, y);
     if (mode === 'menu') { for (let i = 0; i < 3; i++) { if (worlds()[i] && inB(MB.del(i), x, y)) hover = 'd' + i; else if (inB(MB.worlds(i), x, y)) hover = 'w' + i; } if (inB(MB.join, x, y)) hover = 'join'; }
     if (invOpen && bag() && drag) { if (Math.abs(y - drag.y) > 12) drag.moved = true; if (drag.moved) cpy = clamp(drag.c - (y - drag.y), 0, cmax()); }
@@ -3070,7 +3128,11 @@ const GAME = {
     tHold = { i, sel }; if (i !== 9) { const a = ch.inv[i]; ch.inv[i] = ch.inv[9]; ch.inv[9] = a; } sel = 9; }
   function torchOff() { if (!tHold) return; const { i } = tHold; if (i !== 9) { const a = ch.inv[i]; ch.inv[i] = ch.inv[9]; ch.inv[9] = a; } sel = tHold.sel; tHold = null; }
   addEventListener('blur', () => torchOff());
+  GAME.keepRunning = () => mode === 'play' && online();
+  GAME.blurred = () => { keys = {}; useHeld = false; };
   GAME.key = (c, d) => {
+    if (chatOn) return;
+    if (c === 'Enter' && d && mode === 'play' && online() && !invOpen && !mapOpen) { openChat(); return; }
     if (c === 'ShiftLeft') { if (d) torchOn(); else torchOff(); }
     if (mode !== 'play') return;
     const kb = KB(); if (setOpen) return; const wasL = keys.l, wasR = keys.r; if (c === kb.left || c === 'ArrowLeft') keys.l = d; if (c === kb.right || c === 'ArrowRight') keys.r = d; if (d && keys.l && !wasL) tapDash(-1); if (d && keys.r && !wasR) tapDash(1); if (c === kb.jump || c === 'ArrowUp' || (c === 'KeyW' && !Object.values(kb).includes('KeyW'))) keys.j = d; if (c === kb.down || c === 'ArrowDown') keys.d = d;
@@ -3132,6 +3194,7 @@ function resize() {
   K.view = { x0: -ox / sc, y0: -oy / sc, x1: W + ox / sc, y1: H + oy / sc };
 }
 addEventListener('resize', resize); resize();
+addEventListener('resize', () => { if (K.state === 'play' && GAME.keepRunning && GAME.keepRunning() && !document.hasFocus()) setTimeout(() => { try { window.focus(); } catch (e) {} }, 60); });
 
 /* ---------- sound ---------- */
 let ac = null;
@@ -3297,8 +3360,10 @@ $('bSkins2').onclick = () => { skinsFrom = 'sOver'; buildSkins(); refresh(); sho
 $('bBack').onclick = () => { if (skinsFrom === 'sOver') toMenu(); else showScr('sTitle'); };
 $('hPause').onclick = pause;
 $('bMute').onclick = () => { save.mute = !save.mute; persist(); refresh(); audio(); };
-addEventListener('blur', pause);
-document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+const keepGoing = () => !!(GAME.keepRunning && GAME.keepRunning());
+addEventListener('blur', () => { if (!keepGoing()) pause(); else if (GAME.blurred) GAME.blurred(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && !keepGoing()) pause(); });
+setInterval(() => { if (!document.hidden || K.state !== 'play' || !keepGoing()) return; const now = performance.now(); let dt = Math.min(2, (now - last) / 1000); last = now; try { while (dt > 0) { const s = Math.min(1 / 30, dt); GAME.update(s); dt -= s; } } catch (err) { K.oops(err); } }, 250);
 
 /* ---------- input ---------- */
 const toW = e => [(e.clientX - ox) / sc, (e.clientY - oy) / sc];
