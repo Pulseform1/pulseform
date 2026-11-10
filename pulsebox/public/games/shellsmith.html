@@ -487,6 +487,7 @@ const GAME = {
   function stall(s) {   // the shell can go no further: it shatters into fragments and sparks, then any charge goes off
     if (!s.live) return; const rc = { steel: [154, 166, 180], alu: [208, 214, 222], tung: [92, 98, 110] }[s.d.casing], ux = s.ux ?? 1, uy = s.uy ?? 0, fwd = Math.atan2(uy, ux);
     for (let q = 0; q < 14; q++) { const aa = fwd + Math.PI + (R() - .5) * 2.8, v = 20 + R() * 60; debris(s.x - ux, s.y - uy, Math.cos(aa) * v, Math.sin(aa) * v - 10, rgb(rc[0] + rint(-15, 35), rc[1] + rint(-15, 35), rc[2] + rint(-15, 35)), 0); }
+    for (let q = 0; q < 8; q++) { const aa = fwd + Math.PI + (R() - .5) * 2.4, v = 14 + R() * 40; debris(s.x - ux, s.y - uy, Math.cos(aa) * v, Math.sin(aa) * v - 8, rgb(255, 170 + rint(0, 60), 90), 1, 540); }
     if (!s.jkDone) for (let q = 0; q < 10; q++) { const aa = fwd + Math.PI + (R() - .5) * 3, v = 16 + R() * 50; debris(s.x - ux, s.y - uy, Math.cos(aa) * v, Math.sin(aa) * v - 10, rgb(200 + rint(0, 40), 110 + rint(0, 30), 50), 0); }
     streak(s.x, s.y, 34, fwd + Math.PI, 3.2, 120); fx.push({ k: 'w', x: s.x, y: s.y, r: 0, t: 0, l: .35 }); K.noise(.18, .16, 2200); K.sfx(1400, .08, 'square', .03, -900); if (cam.s === s) cam.shk = 3;
     if (s.S.f.blast > 0 || s.S.jet > 0) detonate(s, s.x - ux, s.y - uy); else s.live = false;
@@ -530,11 +531,15 @@ const GAME = {
         const cost = Math.min(hp[i], 80) / (S.pen * (s.jk > 0 ? .75 : 1.55)) * PIERCE;
         if (m !== BED && s.E > cost) {
           s.E -= cost; s.pen++;
-          { const c0 = col[i], mm = m; mat[i] = E; hp[i] = 0; heat[i] = 0; col[i] = 0; dirty = true;
+          { const c0 = col[i], mm = m, ux = s.ux ?? 1, uy = s.uy ?? 0, px = Math.round(x + ux * 2), py = Math.round(y + uy * 2);
+            if (mm !== GLASS && R() < .35 && inb(px, py) && !mat[idx(px, py)]) { moveCell(i, idx(px, py)); dirty = true; }   // shoved ahead into the gap
+            else {
+            mat[i] = E; hp[i] = 0; heat[i] = 0; col[i] = 0; dirty = true;
             if (mm === GLASS) debris(x + .5, y + .5, (R() - .5) * 30, -R() * 20, c0, 2);
             else if (M[mm].burns) { debris(x + .5, y + .5, -s.vx * .08 + (R() - .5) * 40, -s.vy * .08 - R() * 26, c0, 0); if (R() < .5) debris(x + .5, y + .5, (R() - .5) * 50, -R() * 30, c0, 0); }
-            else debris(x + .5, y + .5, -s.vx * .1 + (R() - .5) * 40, -s.vy * .1 - R() * 30, c0, 0); if (R() < .6) debris(x + .5, y + .5, (R() - .5) * 46, -R() * 34, c0, 0); }
-          if (s.jkDone) {   // the bare rod chips away at the tip as it pushes on
+            else debris(x + .5, y + .5, -s.vx * .1 + (R() - .5) * 40, -s.vy * .1 - R() * 30, c0, 0); if (R() < .6) debris(x + .5, y + .5, (R() - .5) * 46, -R() * 34, c0, 0); } }
+          if (s.jkDone) {   // the bare rod chips away and melts at the tip as it pushes on
+            if (R() < .55) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 1.6, v = 8 + R() * 22; debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v - 4, rgb(255, 170 + rint(0, 60), 90), 1, 520); }
             s.rod = cl(Math.min(s.rod, .18 + .82 * s.E / s.Ejk), .18, 1); const rc = { steel: [154, 166, 180], alu: [208, 214, 222], tung: [92, 98, 110] }[s.d.casing];
             for (let q = 0; q < 2; q++) { const aa = Math.atan2(-s.vy, -s.vx) + (R() - .5) * 2.2, v = 14 + R() * 40; debris(s.x, s.y, Math.cos(aa) * v, Math.sin(aa) * v - 6, rgb(rc[0] + rint(-10, 30), rc[1] + rint(-10, 30), rc[2] + rint(-10, 30)), 0); }
           }
@@ -666,11 +671,11 @@ const GAME = {
   const gc = document.createElement('canvas'); gc.width = GW / 2; gc.height = GH / 2; const gx = gc.getContext('2d'), gimg = gx.createImageData(GW / 2, GH / 2), gacc = new Float32Array(GW / 2 * GH / 2 * 3);
   // draw anything through a low-res buffer so it comes out as crisp pixel art (ps = screen px per art pixel)
   const pool = {};
-  function pix(g, x0, y0, w, h, ps, fn) {
+  function pix(g, x0, y0, w, h, ps, fn, soft) {
     const cw = Math.max(1, Math.ceil(w / ps)), ch = Math.max(1, Math.ceil(h / ps)), key = cw + 'x' + ch;
     let c = pool[key]; if (!c) { c = document.createElement('canvas'); c.width = cw; c.height = ch; c.x = c.getContext('2d', { willReadFrequently: true }); pool[key] = c; }
     const x = c.x; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cw, ch); x.setTransform(1 / ps, 0, 0, 1 / ps, -x0 / ps, -y0 / ps); fn(x);
-    const im = x.getImageData(0, 0, cw, ch), d = im.data; for (let i = 3; i < d.length; i += 4) d[i] = d[i] > 100 ? 255 : 0; x.putImageData(im, 0, 0);
+    const im = x.getImageData(0, 0, cw, ch), d = im.data; for (let i = 3; i < d.length; i += 4) d[i] = soft ? (d[i] < 24 ? 0 : Math.min(255, Math.round(d[i] / 64) * 64 + 40)) : d[i] > 100 ? 255 : 0; x.putImageData(im, 0, 0);
     g.save(); g.imageSmoothingEnabled = false; g.drawImage(c, x0, y0, cw * ps, ch * ps); g.restore();
   }
   const pixIcon = (g, d, x, y, L, Hh, o = {}, ps = 3) => pix(g, Math.floor((x - ps * 2) / ps) * ps, Math.floor((y - Hh) / ps) * ps, L + ps * 6, Hh * 2 + ps * 2, ps, c => shellIcon(c, d, x, y, L, Hh, o));
@@ -802,7 +807,7 @@ const GAME = {
       const gx = Math.floor(s.x), gy = Math.floor(s.y);
       if (s.small) { g.fillStyle = '#1a3a4a'; g.fillRect((gx - 1) * CS, (gy - 1) * CS, CS * 2, CS * 2); g.fillStyle = '#5ad8ff'; g.fillRect((gx - 1) * CS, (gy - 1) * CS, CS, CS); continue; }
       const a = Math.atan2(s.vy, s.vx); const w = cl(s.E / (s.E0 || 1), .45, 1); const fine = cam.z > 2.1, ps = fine ? 1.6 : CS, ox = fine ? s.x * CS : (gx + .5) * CS, oy = fine ? s.y * CS : (gy + .5) * CS;
-      if (fine) { drawXray(g, s, ox, oy, a); continue; }
+      if (fine) { pix(g, Math.floor((ox - 50) / 1.2) * 1.2, Math.floor((oy - 50) / 1.2) * 1.2, 100, 100, 1.2, c => drawXray(c, s, ox, oy, a), true); continue; }
       pix(g, Math.floor((ox - 32) / ps) * ps, Math.floor((oy - 32) / ps) * ps, 64, 64, ps, c => { c.translate(ox, oy); c.rotate(a);
         if (s.jk == null) { shellIcon(c, s.d, -20 * w, 0, 40 * w, 14); return; }
         const rodC = { steel: '#9aa6b4', alu: '#d0d6de', tung: '#50545e' }[s.d.casing], L = 40 * w, tail = -20;
@@ -836,7 +841,7 @@ const GAME = {
       }
       g.fillStyle = '#b8642c'; g.fillRect(tail + 2, -jh - .6, 3, jh * 2 + 1.2);   // driving band
     }
-    if (s.jkDone && rodK < .98) { g.fillStyle = '#ffffff'; for (let q = 0; q < 4; q++) g.fillRect(tip - 2 - q % 2, -rh + 1 + q * 1.6, 1.2, 1.2); }
+    if (s.jkDone && s.pen > 0) { g.fillStyle = 'rgb(255,190,110)'; g.fillRect(tip - 4, -rh, 4, rh * 2); g.fillStyle = 'rgb(255,245,215)'; g.fillRect(tip - 2.5, -rh + 1, 2.5, rh * 2 - 2); g.fillStyle = 'rgb(255,150,70)'; for (let q = 0; q < 3; q++) g.fillRect(tip - 3 - q * 1.5, rh + .3 + (q % 2), 1.2, 1.4 + q * .6); }
     if (s.pen > 0) { g.save(); g.globalCompositeOperation = 'lighter'; const tg = g.createRadialGradient(tip, 0, 0, tip, 0, 12); tg.addColorStop(0, 'rgba(255,250,230,.95)'); tg.addColorStop(.35, 'rgba(255,170,60,.55)'); tg.addColorStop(1, 'rgba(255,80,0,0)'); g.fillStyle = tg; g.fillRect(tip - 12, -12, 24, 24); g.restore(); }
     g.restore();
   }
@@ -938,14 +943,14 @@ const GAME = {
           g.fillStyle = 'rgba(120,130,145,.35)'; g.fillRect(tipX - 6, py, pw, ph); g.fillStyle = 'rgba(255,170,60,.25)'; g.fillRect(tipX - 6, cy - 26, 30, 52);
           g.save(); g.globalCompositeOperation = 'lighter'; for (let q = 0; q < 26; q++) { const aa = Math.PI + (R() - .5) * 2.4, l = 10 + R() * 60, h = R(); g.strokeStyle = `rgba(255,${(200 + h * 55) | 0},${(120 + h * 120) | 0},${(.4 + h * .6).toFixed(2)})`; g.lineWidth = .8 + h; g.beginPath(); g.moveTo(tipX - 4, cy + (R() - .5) * 14); g.lineTo(tipX - 4 + Math.cos(aa) * l, cy + (R() - .5) * 14 + Math.sin(aa) * l); g.stroke(); } g.restore();
         }
-        drawXray(g, sh, cx, cy, 0, 5);
+        pix(g, cx - 160, cy - 60, 320, 120, 4, c => drawXray(c, sh, cx, cy, 0, 5), true);
         if (sh.jk > 0 && sh.pen > 0) for (let q = 0; q < 5; q++) { const fx0 = cx + (-24 + 40 * (.18 + .82 * sh.jk)) * 5; g.fillStyle = `rgba(255,${(140 + R() * 90) | 0},60,.9)`; g.fillRect(fx0 - R() * 20, cy + 22 + R() * 40, 3, 3 + R() * 4); }
         g.restore(); g.save(); g.globalAlpha = a;
         tx(g, 'X-RAY', px + 14, py + 18, D(14), '#5ad8ff', 'left');
         const jk = sh.jk == null ? 1 : sh.jk, rod = { steel: 'STEEL CORE', alu: 'ALLOY CORE', tung: 'TUNGSTEN ROD' }[sh.d.casing];
         tx(g, jk > 0 ? `COPPER JACKET ${Math.round(jk * 100)}%` : 'JACKET GONE', px + 14, py + ph - 34, D(13), jk > 0 ? '#e8904a' : '#ff8a6a', 'left');
         rr(g, px + 14, py + ph - 22, 150, 8, 4, 'rgba(255,255,255,.12)'); rr(g, px + 14, py + ph - 22, Math.max(0, 150 * jk), 8, 4, '#d87a3a');
-        tx(g, rod + (sh.pen > 0 ? (jk > 0 ? ' · behind the jacket' : ` ${Math.round((sh.rod ?? 1) * 100)}% · breaking through`) : ''), px + pw - 14, py + ph - 26, D(12), jk > 0 ? '#b8c4d4' : '#fff', 'right');
+        tx(g, rod + (sh.pen > 0 ? (jk > 0 ? ' · behind the jacket' : ` ${Math.round((sh.rod ?? 1) * 100)}%`) : ''), px + pw - 14, py + ph - 26, D(12), jk > 0 ? '#b8c4d4' : '#fff', 'right');
         g.restore();
       }
       if (cam.noteT > 0 && cam.note) { g.globalAlpha = a * Math.min(1, cam.noteT); rr(g, 340, 84, 600, 34, 12, 'rgba(200,104,46,.92)'); tx(g, cam.note, 640, 101, D(15), '#fff'); g.globalAlpha = a; }
