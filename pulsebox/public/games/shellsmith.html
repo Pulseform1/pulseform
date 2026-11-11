@@ -76,7 +76,7 @@ const GAME = {
   font: 'Russo One', accent: '#ff8a1e', accent2: '#4fe0c8', bg: '#0b1422', noHud: true, noSkins: true, scoreLabel: 'Coins earned',
   how: [
     'Drag from anywhere to aim (direction and distance set the angle and power), let go to fire. Keyboard: arrows aim, Space fires, 1 2 3 pick a shell.',
-    'The camera rides along with the shell. It buries its nose in whatever it hits, the metal around it glows and crumbles, then the charge goes off. Skip jumps to the impact, Finish jumps to the end.',
+    'The camera rides along with the shell. On the first hit its softer outer casing splits and falls away; only the hard core inside carries on, with much less momentum, digging a short way in until it stops. The metal around it glows and crumbles, then the charge goes off. Skip jumps to the impact, Finish jumps to the end.',
     'Each yard hides a glowing core. Break or melt 90% of it to clear the level. Fewer shells means more stars and coins.',
     'Heat travels through steel: keep hitting the same spot and it softens, glows white and falls away. In the Workshop, a heavy casing and a hard nose reach deeper, delay fuses go off inside, thermite cooks, a liner fires a jet.',
   ],
@@ -259,6 +259,8 @@ const GAME = {
     { k: 'salvage', n: 'Salvage crew', max: 5, cost: l => [300, 700, 1500, 3000, 6000][l], d: l => `+${(l + 1) * 10}% coins from every yard` },
     { k: 'mull', n: 'Spotter', max: 1, cost: l => 900, d: l => 'One shell that hits nothing comes back' },
   ];
+  // when the casing breaks away on the first hit, the hard core inside keeps this share of the energy and bites this much harder
+  const CORE_K = { steel: [.4, 1], alu: [.32, .9], ti: [.44, 1.1], tung: [.52, 1.15], heavy: [.58, 1.2] };
   function stats(d) {
     const c = part('casing', d.casing), n = part('nose', d.nose), f = part('fill', d.fill), l = part('liner', d.liner), u = part('fuse', d.fuse), cal = part('cal', d.cal), q = 1 + lv('fillq') * .15;
     return { c, n, f, l, u, cal, q, w: cal.w, mass: c.mass * cal.mass, pen: c.pen * n.pen * cal.pen * (1 + lv('harden') * .08), spd: c.spd * cal.spd * (1 + lv('barrel') * .06), bl: f.blast * cal.blast, jet: f.jetOk ? l.jet * q : 0, jetOk: !!f.jetOk };
@@ -524,6 +526,8 @@ const GAME = {
     const d = design(slot), S = stats(d), [vx, vy] = vel(d), [mx, my] = muzzle(), ux = Math.cos(ang), uy = -Math.sin(ang);
     const E0 = S.mass * Math.pow(Math.hypot(vx, vy) / 100, 2) * 22;
     shells.push({ x: mx, y: my, vx, vy, ux, uy, S, d, pen: 0, live: true, E: E0, E0, small: false, t: 0, out: 0, travel: 0, hit: false, near: false, cut: 0, crush: 0, inside: false, gap: 0, lodged: false, snd: 0 });
+    const sh = shells[shells.length - 1];
+    if (S.w === 3) { Object.assign(sh, { broke: true, cw: 3, cpen: 1.25, cmass: S.mass * .75, E: E0 * .8, Eb: E0 * .8, dug: 0, sabot: true, petals: .07 }); }
     shots--; used++; recoil = 1; focus[0] = mx; focus[1] = my;
     flash(mx + ux * 2, my + uy * 2, 5, .16); sparks(mx, my, 16, Math.atan2(uy, ux), 1.1, 150); arcs(mx + ux * 4, my + uy * 4, 7, 16, '90,200,255'); smoke(mx, my, 5, 1); glow(mx + ux * 3, my + uy * 3, 5, .5, ux * 6, uy * 6);
     K.sfx(90, .35, 'sawtooth', .12, -50); K.noise(.3, .3, 400); K.shake(7);
@@ -534,6 +538,28 @@ const GAME = {
     s.hit = true; s.near = true; if (hitT < 0) { hitT = 0; focus[0] = s.x; focus[1] = s.y; slowT = 1.2; word = pick(['Smashing!', 'Direct hit!', 'Crunch!', 'Dug in!']); }
     const back = Math.atan2(-s.uy, -s.ux); flash(s.x, s.y, 4.5, .2); sparks(s.x, s.y, 30, back, 2.8, 130); arcs(s.x, s.y, 5, 18); K.shake(5); K.noise(.16, .22, 1500); K.sfx(220, .12, 'square', .06, -120);
     if (s.S.f.tandem && !s.pre) { s.pre = 1; blast(s.x + s.ux * 2.5, s.y + s.uy * 2.5, 5.5 * Math.sqrt(s.S.q), 8 * s.S.q, { heat: 350, back }); }   // the precursor charge
+  }
+  // two halves of a casing (or a sabot's petals) peeling away and tumbling
+  function husk(s, x, y, spread, back, spin) {
+    const a = Math.atan2(s.uy, s.ux), nx = -s.uy, ny = s.ux;
+    for (const side of [-1, 1]) fx.push({ k: 'h', d: s.d, x: x + nx * side * .6, y: y + ny * side * .6, a, side, vx: s.ux * back + nx * side * spread * (.7 + R() * .6), vy: s.uy * back + ny * side * spread * (.7 + R() * .6) - 10, w: side * spin * (.7 + R() * .6), t: 0, l: 1.6 });
+  }
+  function breakJacket(s) {   // the softer outer casing splits on the face; only the hard core inside carries on, with what is left of the energy
+    const S = s.S, [keep, cpen] = CORE_K[s.d.casing] || CORE_K.steel, lost = s.E * (1 - keep), back = Math.atan2(-s.uy, -s.ux), rc = casC(s.d);
+    Object.assign(s, { broke: true, cw: S.w === 7 ? 5 : 3, cpen, cmass: S.mass * keep, E: s.E * keep, Eb: s.E * keep, dug: 0, crush: 0 });
+    // the blunt blow of the casing: a shallow dent in the face, and the face heats up around it
+    const ox = s.x + s.ux * .6, oy = s.y + s.uy * .6, R0 = S.w / 2 + 1; let budget = lost * .3;
+    for (let yy = -5; yy <= 5; yy++) for (let xx = -5; xx <= 5; xx++) {
+      const d = Math.hypot(xx, yy), fwd = xx * s.ux + yy * s.uy; if (d > R0 + 2.5 || fwd < -1) continue;
+      const px = Math.floor(ox + xx), py = Math.floor(oy + yy); if (!inb(px, py)) continue; const i = idx(px, py), m = mat[i]; if (!m || m === BED) continue;
+      if (d <= R0 && fwd < 1.6 && budget > 0) { const c = Math.min(hp[i], 80) * soft(i) / S.pen * KP * 1.6; if (budget >= c) { budget -= c; carve(s, i, px, py, m); continue; } }
+      warm(i, 300 * (1 - d / (R0 + 3)), Math.min(M[m].melt * 1.1, 640));
+    }
+    husk(s, s.x - s.ux * 1.5, s.y - s.uy * 1.5, 13, -(14 + R() * 8), 3.2);
+    for (let q = 0; q < 30; q++) { const a = back + (R() - .5) * 2.8, v = 20 + R() * 62; debris(s.x - s.ux * 2, s.y - s.uy * 2, Math.cos(a) * v, Math.sin(a) * v - 10, rgb(cl(rc[0] + rint(-20, 35), 0, 255), cl(rc[1] + rint(-20, 35), 0, 255), cl(rc[2] + rint(-20, 35), 0, 255)), 0); }
+    for (let q = 0; q < 10; q++) { const a = back + (R() - .5) * 3, v = 16 + R() * 44; debris(s.x - s.ux * 3, s.y - s.uy * 3, Math.cos(a) * v, Math.sin(a) * v - 14, rgb(217 + rint(-20, 20), 138 + rint(-20, 20), 58), 0); }   // the copper band
+    flash(s.x, s.y, 6.5, .24); sparks(s.x, s.y, 44, back, 3.1, 150); arcs(s.x, s.y, 6, 20); glow(s.x - s.ux * 2, s.y - s.uy * 2, 6, .9, -s.ux * 4, -s.uy * 4);
+    K.shake(7); K.sfx(140, .22, 'square', .07, -60); K.noise(.22, .26, 1800);
   }
   function carve(s, i, cx, cy, m) {
     const c0 = col[i], back = Math.atan2(-s.uy, -s.ux), a = back + (R() - .5) * 2.4, v = 14 + R() * 44;
@@ -557,7 +583,7 @@ const GAME = {
     sparks(s.x, s.y, 26, back, 3.2, 110); embers(s.x, s.y, 4, 20); K.noise(.18, .16, 2200); s.live = false;
   }
   function detonate(s) {
-    s.live = false; const S = s.S, f = S.f, q = S.q, ux = s.ux, uy = s.uy, off = s.small ? 0 : 3.5, x = s.x - ux * off, y = s.y - uy * off, back = Math.atan2(-uy, -ux);
+    s.live = false; const S = s.S, f = S.f, q = S.q, ux = s.ux, uy = s.uy, off = s.small ? 0 : s.broke ? 1.5 : 3.5, x = s.x - ux * off, y = s.y - uy * off, back = Math.atan2(-uy, -ux);
     if (s.small) { blast(x, y, 5.2 * q, 5 * q, { heat: 300, back }); hots.push({ x, y, r: 4, P: 500, l: 1.6, t: 0, maxT: 640 }); return; }
     if (hitT < 0) { hitT = 0; focus[0] = x; focus[1] = y; word = 'Airburst!'; }
     const rc = casC(s.d); for (let k = 0; k < 14; k++) { const a = back + (R() - .5) * 3.6, v = 24 + R() * 60; debris(x, y, Math.cos(a) * v, Math.sin(a) * v - 10, rgb(rc[0] + rint(-15, 30), rc[1] + rint(-15, 30), rc[2] + rint(-15, 30)), 0); }
@@ -586,6 +612,7 @@ const GAME = {
         continue;
       }
       if (s.near && s.cut < 1) s.cut = Math.min(1, s.cut + h * 3.5);
+      if (s.petals > 0 && (s.petals -= h) <= 0) { husk(s, s.x - s.ux * 4, s.y - s.uy * 4, 22, Math.hypot(s.vx, s.vy) * .45, 4.5); K.noise(.06, .08, 3000); }
       const S = s.S, back = Math.atan2(-s.uy, -s.ux);
       if (s.lodged) {   // stuck fast: the metal around the nose cooks while the fuse runs down
         s.fuse -= h; const cx = Math.floor(s.x), cy = Math.floor(s.y);
@@ -597,27 +624,28 @@ const GAME = {
       const sp0 = Math.hypot(s.vx, s.vy), sub = Math.max(1, Math.ceil((s.inside ? Math.min(sp0, 30) : sp0) * h / .5));
       for (let n = 0; n < sub && s.live && !s.lodged; n++) {
         const hh = h / sub; s.vy += G * hh * (s.inside ? .25 : 1); const sp = Math.hypot(s.vx, s.vy); if (sp > 2 && !s.inside) { s.ux = s.vx / sp; s.uy = s.vy / sp; }
-        const mv = s.inside ? Math.min(sp, 30) : sp; s.x += s.ux * mv * hh; s.y += s.uy * mv * hh; s.out += mv * hh; if (s.hit) s.travel += mv * hh;
+        const mv = s.inside ? (s.broke ? Math.min(sp, 6 + 22 * cl(s.E / s.Eb, 0, 1)) : Math.min(sp, 30)) : sp; s.x += s.ux * mv * hh; s.y += s.uy * mv * hh; s.out += mv * hh; if (s.hit) s.travel += mv * hh;
         if (s.x < -24 || s.x > GW + 24 || s.y > GH + 6) { s.live = false; if (!s.hit && lv('mull') && !mullUsed) { mullUsed = true; shots++; used--; say('Missed! The spotter hands you the shell back', '#7ce8d8'); } else if (!s.hit) say('Missed!', '#ffb36a'); break; }
         if (!s.near || S.u.air) { for (let a = 2; a <= 46; a += 2) { const ax = Math.floor(s.x + s.ux * a), ay = Math.floor(s.y + s.uy * a); if (inb(ax, ay) && isStatic(mat[idx(ax, ay)])) { s.near = true; if (S.u.air && a <= 6 && explosive(s)) detonate(s); break; } } if (!s.live) break; }
-        let any = 0, blocked = false, hard = 0, lastM = 0;
-        for (const [o, lag] of XSW[S.w]) {
+        let any = 0, blocked = false, hard = 0, lastM = 0, split = false; const pen = S.pen * (s.broke ? s.cpen : 1);
+        for (const [o, lag] of XSW[s.broke ? s.cw : S.w]) {
           const cx = Math.floor(s.x - s.ux * lag - s.uy * o), cy = Math.floor(s.y - s.uy * lag + s.ux * o); if (!inb(cx, cy)) continue; const i = idx(cx, cy), m = mat[i]; if (!m) continue;
           if (m === BED) { blocked = true; break; }
-          any++; lastM = m; hard = Math.max(hard, M[m].hp); const cost = Math.min(hp[i], 80) * soft(i) / S.pen * KP * (M[m].loose ? .3 : 1);
+          if (!s.broke && M[m].hp >= 2 && !M[m].loose) { if (!s.hit) firstHit(s); breakJacket(s); split = true; break; }
+          any++; lastM = m; hard = Math.max(hard, M[m].hp); const cost = Math.min(hp[i], 80) * soft(i) / pen * KP * (M[m].loose ? .3 : 1);
           if (s.E >= cost) { s.E -= cost; carve(s, i, cx, cy, m); }
-          else { if (hurt(i, s.E * S.pen / KP)) carve(s, i, cx, cy, m); else warm(i, 300, Math.min(M[m].melt * 1.2, 640)); s.E = 0; blocked = true; break; }
+          else { if (hurt(i, s.E * pen / KP)) carve(s, i, cx, cy, m); else warm(i, 300, Math.min(M[m].melt * 1.2, 640)); s.E = 0; blocked = true; break; }
         }
+        if (split) { s.inside = true; s.gap = 0; const nv = Math.sqrt(Math.max(0, s.E) / (s.cmass * 22)) * 100; s.vx = s.ux * nv; s.vy = s.uy * nv; continue; }
         if (any || blocked) {
           if (!s.hit) firstHit(s);
-          s.inside = true; s.gap = 0; s.pen += any / S.w;
+          s.inside = true; s.gap = 0; s.pen += any / (s.broke ? s.cw : S.w); if (s.broke) s.dug += any / s.cw;
           sparks(s.x, s.y, hard >= 10 ? 4 : hard > 3 ? 2 : 1, back, 2.5, 80 + hard * 3); if (hard >= 10 && R() < .25) arcs(s.x, s.y, 1, 12);
           if (t - s.snd > .05) { s.snd = t; if (hard >= 10) { K.sfx(900 + R() * 500, .06, 'square', .035, -300); K.noise(.05, .06, 2500); } else if (lastM === GLASS) K.sfx(2400 + R() * 800, .05, 'triangle', .04); else K.noise(.08, .09, 300 + hard * 60); }
-          const nv = Math.sqrt(Math.max(0, s.E) / (S.mass * 22)) * 100; s.vx = s.ux * nv; s.vy = s.uy * nv;
-          s.crush = cl((1 - s.E / s.E0) * 3.5, s.crush, 4);
-          if (blocked || nv < 12) { lodge(s); break; }
+          const nv = Math.sqrt(Math.max(0, s.E) / ((s.broke ? s.cmass : S.mass) * 22)) * 100; s.vx = s.ux * nv; s.vy = s.uy * nv;
+          if (blocked || nv < 12 || (s.broke && s.dug >= 5 + 4 * Math.sqrt(pen))) { lodge(s); break; }   // the core can only dig so far
         } else if (s.inside) { s.gap += mv * hh; if (s.gap > 3.5) { s.inside = false; sparks(s.x, s.y, 14, Math.atan2(s.uy, s.ux), 1.3, 90); K.noise(.1, .08, 1400); } }
-        if (s.hit && S.u.delay && s.travel >= S.u.delay && explosive(s)) { if (s.inside && any) lodge(s); else detonate(s); break; }   // the fuse runs out: buried, it cooks a moment first; in the open it just goes off
+        if (s.hit && S.u.delay && s.travel >= S.u.delay && explosive(s)) { if (s.inside) lodge(s); else detonate(s); break; }   // the fuse runs out: buried, it cooks a moment first; in the open it just goes off
       }
     }
   }
@@ -721,6 +749,7 @@ const GAME = {
       if (f.k === 's') { f.x += f.vx * dt; f.y += f.vy * dt; f.vy *= .98; f.r += dt * 3; }
       else if (f.k === 'f') { f.x += f.vx * dt; f.y += f.vy * dt; }
       else if (f.k === 'g') { f.x += f.vx * dt; f.y += f.vy * dt; f.vx *= .97; f.vy *= .97; }
+      else if (f.k === 'h') { f.vy += G * .85 * dt; f.vx *= .992; const nx = f.x + f.vx * dt, ny = f.y + f.vy * dt, cx = Math.floor(nx), cy = Math.floor(ny); if (inb(cx, cy) && isStatic(mat[idx(cx, cy)])) { f.vy *= -.3; f.vx *= .5; f.w *= .5; } else { f.x = nx; f.y = ny; } f.a += f.w * dt; }
       else if (f.k === 'e') { f.vy += G * .12 * dt; f.vx *= .975; f.vy *= .975; f.x += f.vx * dt; f.y += f.vy * dt; }
       else if (f.k === 'k') { f.vy += G * .6 * dt; f.vx *= .985; const nx = f.x + f.vx * dt, ny = f.y + f.vy * dt, cx = Math.floor(nx), cy = Math.floor(ny); if (inb(cx, cy) && isStatic(mat[idx(cx, cy)])) { f.vy *= -.35; f.vx *= .6; } else { f.x = nx; f.y = ny; } }
       if (f.t > f.l) fx.splice(k, 1);
@@ -892,6 +921,7 @@ const GAME = {
       else if (f.k === 'v') { const x = f.x * CS, y = f.y * CS, r = f.r * CS; g.save(); g.globalCompositeOperation = 'lighter'; g.translate(x, y); g.rotate(f.a); const gr = g.createLinearGradient(0, 0, r, 0); gr.addColorStop(0, `rgba(255,214,140,${(.5 * (1 - k)).toFixed(3)})`); gr.addColorStop(1, 'rgba(255,150,60,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(0, -4); g.lineTo(r, -r * .34); g.lineTo(r, r * .34); g.lineTo(0, 4); g.closePath(); g.fill(); g.restore(); }
       else if (f.k === 'e') { const a = Math.min(1, (1 - k) * 2.5) * .9, x = f.x * CS, y = f.y * CS, r = f.r * CS; g.globalAlpha = a; g.fillStyle = k < .6 ? '#a8582a' : '#7a3c1c'; g.beginPath(); g.ellipse(x, y, r * .75, r * 1.05, .3, 0, TAU); g.fill(); g.fillStyle = k < .4 ? '#f0b070' : k < .7 ? '#d08444' : '#a8582a'; g.beginPath(); g.ellipse(x - r * .12, y - r * .2, r * .38, r * .55, .3, 0, TAU); g.fill(); g.globalAlpha = 1; }
       else if (f.k === 'f') { g.fillStyle = `rgba(255,${(190 - k * 120) | 0},50,${(1 - k).toFixed(2)})`; const s = 3 + k * 4; g.fillRect(Math.floor(f.x * CS / 2) * 2 - s / 2, Math.floor(f.y * CS / 2) * 2 - s / 2, s, s); }
+      else if (f.k === 'h') { const X = f.x * CS, Y = f.y * CS; g.globalAlpha = cl((1 - k) * 4, 0, 1); pix(g, X - 64, Y - 64, 128, 128, 1.5, c => { c.translate(X, Y); c.rotate(f.a); c.beginPath(); c.rect(-110, f.side < 0 ? -30 : 0, 120, 30); c.clip(); shellArt(c, f.d, { crush: f.d.cal === 'sabot' ? 0 : 3.2, hollow: 1 }); }); g.globalAlpha = 1; }
       else if (f.k === 'j' || f.k === 'r') { g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = f.k === 'j' ? `rgba(255,232,170,${1 - k})` : `rgba(255,200,120,${.6 * (1 - k)})`; g.lineWidth = f.k === 'j' ? 7 * (1 - k) + 2 : 1.2; g.beginPath(); g.moveTo(f.x * CS, f.y * CS); g.lineTo(f.x2 * CS, f.y2 * CS); g.stroke(); g.restore(); }
     }
   }
@@ -913,10 +943,11 @@ const GAME = {
         if (pt.stripe) { g.fillStyle = '#1c1c20'; for (let x = x0 - 2 * r; x < x1; x += 12) { g.beginPath(); g.moveTo(x, r); g.lineTo(x + 6, r); g.lineTo(x + 6 + r * 1.5, -r); g.lineTo(x + r * 1.5, -r); g.closePath(); g.fill(); } }
         g.fillStyle = 'rgba(255,255,255,.26)'; g.fillRect(x0, -r, x1 - x0, 4.2 * kr); g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(x0, r - 4.6 * kr, x1 - x0, 4.6 * kr); g.restore(); }
     }
+    if (o.hollow) { g.fillStyle = '#0e141e'; g.fillRect(-L + 2.6, -r + 2.8 * kr, L, 2 * r - 5.6 * kr); }   // a split, empty casing
     if (d.nose === 'ap') { g.fillStyle = '#3d4654'; g.fillRect(-nl * .62, -r, nl, 2 * r); g.fillStyle = '#5a6676'; g.fillRect(-nl * .62, -r, nl, 3.5 * kr); g.fillStyle = '#e8b23a'; g.fillRect(-nl * .62 - 2.5, -r, 2.5, 2 * r); }
     if (d.nose === 'drill') { g.fillStyle = '#3d4654'; g.fillRect(-nl, -r, nl, 2 * r); g.strokeStyle = '#93a2b4'; g.lineWidth = 1.4; for (let x = -nl + 2; x < 0; x += 6) { g.beginPath(); g.moveTo(x, -r); g.lineTo(x + 6, r); g.stroke(); } g.fillStyle = '#e8b23a'; g.fillRect(-nl - 2.5, -r, 2.5, 2 * r); }
     if (d.nose === 'flat') { g.fillStyle = '#3d4654'; g.fillRect(-3.2, -r, 3.2, 2 * r); g.fillStyle = '#c8553a'; g.fillRect(-nl - 2, -r, 2, 2 * r); }
-    if (cut > 0) {   // the cut-away: filler, liner and fuse
+    if (cut > 0 && !o.hollow) {   // the cut-away: filler, liner and fuse
       g.globalAlpha = cut; const x0 = -L + 25, x1 = -nl * .55, hh = Math.max(3, r - 3.4 * kr);
       if (x1 - x0 > 6) {
         g.fillStyle = '#121a26'; g.beginPath(); g.roundRect(x0, -hh, x1 - x0, hh * 2, 4 * kr); g.fill();
@@ -936,17 +967,31 @@ const GAME = {
     if (o.hot > 0) { const gr = g.createLinearGradient(0, 0, -22, 0); gr.addColorStop(0, `rgba(255,252,236,${o.hot})`); gr.addColorStop(.35, `rgba(255,190,80,${o.hot * .85})`); gr.addColorStop(.7, `rgba(255,110,40,${o.hot * .5})`); gr.addColorStop(1, 'rgba(255,90,30,0)'); g.fillStyle = gr; g.fillRect(-22, -r, 22, 2 * r); }
     g.restore();
   }
+  // the hard core that carries on once the casing has broken away (or a sabot's bare dart); nose at (0,0), pointing right
+  const coreDims = s => s.sabot ? [56, 4.6] : [40, s.cw * CS / 2];
+  function coreArt(g, s, hot) {
+    const [cr, cg, cb] = casC(s.d), [L, r] = coreDims(s), n = Math.max(7, r * 2.3);
+    const mid = `rgb(${cr * .78 | 0},${cg * .82 | 0},${cb * .88 | 0})`, lite = `rgb(${Math.min(255, cr + 46)},${Math.min(255, cg + 46)},${Math.min(255, cb + 46)})`, dark = `rgb(${cr * .5 | 0},${cg * .54 | 0},${cb * .6 | 0})`;
+    const path = () => { g.beginPath(); g.moveTo(-L, -r); g.lineTo(-n, -r); g.quadraticCurveTo(-n * .3, -r * .85, 0, 0); g.quadraticCurveTo(-n * .3, r * .85, -n, r); g.lineTo(-L, r); g.closePath(); };
+    path(); g.fillStyle = mid; g.fill(); g.save(); path(); g.clip();
+    g.fillStyle = lite; g.fillRect(-L, -r, L, r * .62); g.fillStyle = dark; g.fillRect(-L, r * .42, L, r);
+    if (!s.sabot) { g.fillStyle = '#121a26'; g.fillRect(-L * .84, -r * .56, L * .44, r * 1.12); g.fillStyle = FILLC[s.d.fill] || '#56606e'; g.fillRect(-L * .82, -r * .42, L * .4, r * .84); }   // the charge it carries
+    else { g.fillStyle = dark; for (let x = -L + 3; x < -L + 15; x += 5) g.fillRect(x, -r, 2, 2 * r); }   // the dart's fins
+    g.fillStyle = '#2a323c'; g.fillRect(-L, -r, 2, 2 * r);
+    if (hot > 0) { const gr = g.createLinearGradient(0, 0, -n - 8, 0); gr.addColorStop(0, `rgba(255,252,236,${hot})`); gr.addColorStop(.4, `rgba(255,190,80,${hot * .85})`); gr.addColorStop(1, 'rgba(255,90,30,0)'); g.fillStyle = gr; g.fillRect(-n - 8, -r, n + 8, 2 * r); }
+    g.restore();
+  }
   const shellIcon = (g, d, x, y, sc, o = {}, ps = 3) => pix(g, x - 4, y - 15 * sc, 90 * sc + 8, 30 * sc, ps, c => { c.translate(x + (shellL(d) + 1) * sc, y); c.scale(sc, sc); shellArt(c, d, o); });
   function drawShells(g) {
     for (const s of shells) {
       if (s.small) { const x = Math.floor(s.x * CS / 2) * 2, y = Math.floor(s.y * CS / 2) * 2; g.fillStyle = '#12303c'; g.fillRect(x - 4, y - 4, 8, 8); g.fillStyle = '#4fd0e8'; g.fillRect(x - 4, y - 4, 4, 4); continue; }
-      const a = Math.atan2(s.uy, s.ux), X = s.x * CS, Y = s.y * CS, L = shellL(s.d), tr = part('paint', s.d.paint).tr;
+      const a = Math.atan2(s.uy, s.ux), X = s.x * CS, Y = s.y * CS, L = s.broke && !(s.petals > 0) ? coreDims(s)[0] : shellL(s.d), tr = part('paint', s.d.paint).tr;
       if (!s.hit && s.out > 4) {   // tracer
         const len = Math.min(s.out * CS - 60, 230); if (len > 4) { const x0 = X - s.ux * (L - 2), y0 = Y - s.uy * (L - 2), gr = g.createLinearGradient(x0, y0, x0 - s.ux * len, y0 - s.uy * len); gr.addColorStop(0, 'rgba(255,244,220,.95)'); gr.addColorStop(.3, `rgba(${tr},.65)`); gr.addColorStop(1, `rgba(${tr},0)`); g.strokeStyle = gr; g.lineWidth = 1.6; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0 - s.ux * len, y0 - s.uy * len); g.stroke();
           if (s.t < .5) { g.fillStyle = `rgba(150,220,255,${(1 - s.t * 2).toFixed(2)})`; for (let q = 0; q < 9; q++) { const d = (q * 37 + (t * 60 | 0) * 13) % len; g.fillRect(x0 - s.ux * d - 1.5, y0 - s.uy * d - 1 + ((q % 3) - 1) * 1.5, 4, 1.6); } } }
       }
       const hot = s.hit ? cl(.35 + s.pen / 6, 0, 1) : 0;
-      pix(g, X - s.ux * L / 2 - 60, Y - s.uy * L / 2 - 60, 120, 120, 1.5, c => { c.translate(X, Y); c.rotate(a); if (s.out < 22) { c.beginPath(); c.rect(-s.out * CS, -24, s.out * CS + 4, 48); c.clip(); } shellArt(c, s.d, { cut: s.cut, crush: s.crush, hot }); });
+      pix(g, X - s.ux * L / 2 - 60, Y - s.uy * L / 2 - 60, 120, 120, 1.5, c => { c.translate(X, Y); c.rotate(a); if (s.out < 22) { c.beginPath(); c.rect(-s.out * CS, -24, s.out * CS + 4, 48); c.clip(); } if (s.broke && !(s.petals > 0)) coreArt(c, s, hot); else shellArt(c, s.d, { cut: s.cut, crush: s.crush, hot }); });
       if (s.hit) { const r = 20 + (s.lodged ? 8 * Math.sin(t * 30) + 10 : 0), gr = g.createRadialGradient(X, Y, 0, X, Y, r); gr.addColorStop(0, 'rgba(255,246,214,.85)'); gr.addColorStop(.4, 'rgba(255,150,50,.45)'); gr.addColorStop(1, 'rgba(255,80,10,0)'); g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = gr; g.fillRect(X - r, Y - r, r * 2, r * 2); g.restore(); }
     }
   }
