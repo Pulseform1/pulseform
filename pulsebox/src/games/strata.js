@@ -115,15 +115,26 @@ const GAME = {
     ['warlord', 'Warlord', '#c8303a', 4, [10, 14, 10], { melee: .2, mspd: .15, crit: .08 }, 'wararmor'], ['deadeye', 'Deadeye', '#3a9a5a', 4, [8, 12, 9], { ranged: .2, crit: .12, ammo: .25 }, 'dearmor'],
     ['archmage', 'Archmage', '#4a6aff', 4, [6, 10, 7], { magic: .22, mana: 80, mcost: .2 }, 'amarmor'], ['phantom', 'Phantom', '#5a5a7a', 4, [7, 11, 8], { throw: .25, ammo: .3, speed: .15 }, 'pharmor'],
     ['overlord', 'Overlord', '#8a2ad8', 4, [6, 9, 7], { minions: 3, summon: .25 }, 'ovarmor'],
+    ['tidesteel', 'Tidesteel', '#3ad8c8', 1, [4, 5, 4], { mspd: .1, speed: .06 }, 'tsarmor'], ['marauder', 'Marauder', '#b8303a', 1, [3, 5, 3], { ranged: .1, crit: .06 }, 'mrarmor'], ['umbrite', 'Umbrite', '#8a4aff', 4, [12, 16, 12], { melee: .1, ranged: .1, magic: .1, throw: .1, summon: .1, crit: .05 }, 'umarmor'],
     ['azurite', 'Azurite', '#4a8aff', 3, [6, 9, 7], {}, 'azarmor'], ['viridium', 'Viridium', '#3ad87a', 3, [8, 11, 8], {}, 'viarmor'], ['starmetal', 'Starmetal', '#ffe8a0', 4, [10, 14, 10], {}, 'smarmor']]) {
     SETS[set] = { n: nm, bon, pieces: [body.replace('armor', 'helm'), body, body.replace('armor', 'legs')] };
     SLOTS.forEach((slot, i) => { IT[SETS[set].pieces[i]] = { n: nm + [' Helmet', ' Chestplate', ' Greaves'][i], armor: d[i], slot, set, c, ...(r ? { r } : {}) }; });
   }
+  Object.assign(IT, { warbanner: { n: 'Tattered War Banner', use: 'raid', r: 1 }, cleaver: { n: "Marauder's Cleaver", melee: 24, c: '#a8a8b4', r: 1 }, raidmark: { n: "Marauder's Mark", acc: 'emblem', c: '#c8303a', r: 2, bon: { melee: .06, ranged: .06, crit: .04 } } });
+  Object.assign(IT, { tidesteel: { n: 'Tidesteel Ore', tile: 72, r: 1 }, umbrite: { n: 'Umbrite Ore', tile: 73, r: 3 }, tsbar: { n: 'Tidesteel Bar', r: 1 }, umbar: { n: 'Umbrite Bar', r: 4 }, raidscrap: { n: 'Marauder Scrap', r: 1 },
+    tspick: { n: 'Tidesteel Pickaxe', pick: 3.3, dmg: 10, c: '#3ad8c8', r: 1 }, tssword: { n: 'Tidesteel Cutlass', melee: 27, c: '#3ad8c8', r: 1 }, tsbow: { n: 'Tidesteel Bow', bow: 16, cd: .42, c: '#3ad8c8', r: 1 },
+    umpick: { n: 'Umbrite Pickaxe', pick: 8, dmg: 36, c: '#8a4aff', r: 4 }, umsword: { n: 'Umbrite Edge', melee: 98, c: '#8a4aff', r: 4 }, umbow: { n: 'Umbrite Warbow', bow: 64, cd: .22, shots: 2, c: '#8a4aff', r: 4 } });
+  // accessories forged together at an anvil: one slot, the bonuses and powers of every part
+  const COMBO = [['stormstride', 'Stormstrider Boots', 'boots', '#bfe6ff', 2, ['boots', 'windstep']], ['glacierstride', 'Glacier Striders', 'boots', '#9ae8ff', 3, ['stormstride', 'frostgrip']], ['cinderstride', 'Cinder Striders', 'boots', '#ff8a4a', 4, ['glacierstride', 'emberboots']],
+    ['zephyrjar', 'Zephyr Jar', 'charm', '#cfeeff', 3, ['gustjar', 'sunfeather']], ['duelcrest', "Duelist's Crest", 'glove', '#e89a5a', 2, ['band', 'gaunt']], ['sharpkit', "Sharpshooter's Kit", 'scope', '#7a9a5a', 2, ['quiver', 'scope']],
+    ['arclocket', "Arcanist's Locket", 'crystal', '#7a8aff', 2, ['mcharm', 'focus']], ['vigilward', 'Vigil Bulwark', 'shield', '#9ad8a0', 2, ['ishield', 'vband']], ['champsigil', "Champion's Sigil", 'emblem', '#ffe680', 4, ['wemb', 'remb', 'semb', 'temb']]];
+  for (const [id, n, acc, c, r, parts] of COMBO) { const has = [], bon = {}; for (const p of parts) { for (const q of IT[p].has || [p]) has.push(q); for (const k in IT[p].bon || {}) bon[k] = +((bon[k] || 0) + IT[p].bon[k]).toFixed(3); } IT[id] = { n, acc, c, r, has, bon }; }
   for (const k in IT) IT[k].one = !!(IT[k].uniq || IT[k].summon || IT[k].acc || IT[k].pick || IT[k].axe || IT[k].hammer || IT[k].melee || IT[k].bow || IT[k].gun || IT[k].boom || IT[k].magic || IT[k].armor);
   const DROP = { 1: 'dirt', 2: 'dirt', 3: 'stone', 4: 'copper', 5: 'iron', 6: 'gold', 7: 'wood', 9: 'wood', 10: 'torch', 11: 'bench', 12: 'furnace', 13: 'anvil', 14: 'sand', 15: 'life', 16: 'silver', 17: 'shadow', 18: 'ash', 19: 'hellstone', 20: 'chest', 21: 'chest', 22: 'mush', 23: 'bone', 24: 'brick', 26: 'table', 27: 'chair', 28: 'lantern', 29: 'campfire', 30: 'bed', 31: 'sbrick', 32: 'cbrick', 33: 'gbrick', 34: 'glass', 35: 'books', 36: 'mud', 37: 'mud', 38: 'lwood', 39: 'tbrick', 44: 'sstone', 45: 'obsidian', 46: 'door', 47: 'door', 48: 'platform', 49: 'snow', 50: 'ice', 52: 'dirt', 53: 'bstone', 55: 'mud', 56: 'glowcap', 57: 'capblock', 58: 'capblock', 59: 'cloud', 60: 'azurite', 61: 'viridium', 62: 'starmetal', 63: 'starforge', 64: 'runeanvil', 65: 'dirt', 66: 'lstone' };
   const PW = w => w >= 8 && w < 20;   // walls players built (8-19); natural walls are 1-7 and 20+
   const WALLIT = { 8: 'woodwall', 9: 'stonewall', 10: 'sbwall', 11: 'cbwall', 12: 'gbwall', 13: 'glasswall' };   // walls players build; the natural ones (1-7) drop nothing
-  Object.assign(T, { PPLANK: 67, MPLANK: 68, GPLANK: 69, RPLANK: 70, SAPLING: 71 }); DROP[71] = 'acorn'; for (const k of [67, 68, 69, 70]) SOLID.add(k);
+  Object.assign(T, { TIDESTEEL: 72, UMBRITE: 73 }); SOLID.add(72); SOLID.add(73); Object.assign(DROP, { 72: 'tidesteel', 73: 'umbrite' }); Object.assign(HARD, { 72: 7, 73: 14 }); Object.assign(NEED, { 72: 2.4, 73: 7 });
+Object.assign(T, { PPLANK: 67, MPLANK: 68, GPLANK: 69, RPLANK: 70, SAPLING: 71 }); DROP[71] = 'acorn'; for (const k of [67, 68, 69, 70]) SOLID.add(k);
 Object.assign(DROP, { 67: 'pinewood', 68: 'mosswood', 69: 'gloomwood', 70: 'glimwood' });
 Object.assign(WALLIT, { 14: 'lwwall', 15: 'pwwall', 16: 'mwwall', 17: 'gwwall', 18: 'rwwall' });
 // wood kinds: platform look index (pv) and wall id; platforms are one tile type, their look lives in pv[] (low 4 bits) with the stair shape (bits 4-5)
@@ -172,7 +183,9 @@ const WOODY = new Set([T.PPLANK, T.MPLANK, T.GPLANK, T.RPLANK, T.LWOOD, T.TRUNK,
     R_('pactp', 5, { silk: 2, gel: 2 }, 'bench'),
     R_('bucket', 1, { ibar: 3 }, 'anvil'),
     R_('mana', 1, { star: 5 }), R_('starstaff', 1, { star: 8, gbar: 6 }, 'anvil'),
-    R_('crown', 1, { gel: 30, cbar: 5 }, 'bench'), R_('eye', 1, { lens: 6, sbar: 5 }, 'anvil'), R_('totem', 1, { bone: 25, sbar: 4 }, 'anvil'), R_('horn', 1, { hbar: 10, ember: 5 }, 'anvil'),
+    R_('crown', 1, { gel: 30, cbar: 5 }, 'bench'), R_('eye', 1, { lens: 6, sbar: 5 }, 'anvil'), R_('tsbar', 1, { tidesteel: 3 }, 'furnace'), R_('tspick', 1, { tsbar: 12, wood: 3 }, 'anvil'), R_('tssword', 1, { tsbar: 9 }, 'anvil'), R_('tsbow', 1, { tsbar: 8 }, 'anvil'), R_('tsarmor', 1, { tsbar: 20 }, 'anvil'),
+    R_('mrarmor', 1, { raidscrap: 16, ibar: 6 }, 'anvil'), R_('umbar', 1, { umbrite: 5 }, 'starforge'), R_('umpick', 1, { umbar: 16 }, 'runeanvil'), R_('umsword', 1, { umbar: 14 }, 'runeanvil'), R_('umbow', 1, { umbar: 12 }, 'runeanvil'), R_('umarmor', 1, { umbar: 24 }, 'runeanvil'),
+    ...COMBO.map(c => R_(c[0], 1, Object.fromEntries(c[5].map(p => [p, 1])), 'anvil')), R_('warbanner', 1, { wood: 10, gel: 10, lens: 2 }, 'bench'), R_('totem', 1, { bone: 25, sbar: 4 }, 'anvil'), R_('horn', 1, { hbar: 10, ember: 5 }, 'anvil'),
   ];
   for (let i = RECIPES.length - 1; i >= 0; i--) { const r = RECIPES[i], it = IT[r[0]]; if (it && it.slot === 'body') { const S = SETS[it.set], sc = f => Object.fromEntries(Object.entries(r[2]).map(([k, n]) => [k, Math.max(1, Math.round(n * f))])); RECIPES.splice(i + 1, 0, R_(S.pieces[0], 1, sc(.6), r[3]), R_(S.pieces[2], 1, sc(.8), r[3])); } }
   const PET_IT = { mosspup: { n: 'Moss Pup', pet: 'mosspup', one: 1, r: 2, c: '#4caa2a' }, pebbler: { n: 'Pebbler', pet: 'pebbler', one: 1, r: 2, c: '#8a8a94' }, wobble: { n: 'Wobble', pet: 'wobble', one: 1, r: 3, c: '#5ad8a0' },
@@ -257,7 +270,7 @@ const WOODY = new Set([T.PPLANK, T.MPLANK, T.GPLANK, T.RPLANK, T.LWOOD, T.TRUNK,
   const inArena = p => temple && temple.arena && p.x > temple.arena.x0 && p.x < temple.arena.x1 && p.y > temple.arena.y0 && p.y < temple.arena.y1 + 1;
   const inJungle = x => jungle && x >= jungle.x0 && x < jungle.x1, inTemple = p => temple && p.x > temple.x0 && p.x < temple.x1 && p.y > temple.y0 && p.y < temple.y1 + 1;
   function findTraps() { traps = []; if (!temple) return; for (let x = temple.x0; x <= temple.x1; x++) for (let y = temple.y0; y <= temple.y1; y++) if (at(x, y) === T.DTRAP) traps.push({ x, y, d: at(x + 1, y) === T.AIR ? 1 : -1, cd: R() }); }
-  function gen() { setDepth(315); gen0(); if (blight) for (let x = Math.max(1, blight.x0 - 14); x < Math.min(WW - 1, blight.x1 + 14); x++) { let y = surf[x]; { let c = 0; while (c < 3 && SOLID.has(at(x, y + c))) c++; if (c && c <= 2 && at(x, y + c) === T.AIR && at(x, y + c + 1) === T.AIR && at(x, y + c + 2) === T.AIR && at(x, y + c + 3) === T.AIR) for (let k = 0; k < c; k++) set(x, y + k, T.AIR); } if (SOLID.has(at(x, y)) || !(at(x, y + 1) === T.AIR && at(x, y + 2) === T.AIR)) continue; while (y < HELL - 2 && !SOLID.has(at(x, y))) y++; for (let yy = surf[x]; yy < y; yy++) if (!PW(walls[yy * WW + x])) walls[yy * WW + x] = 0; surf[x] = y; } }
+  function gen() { setDepth(315); gen0(); oreV = 1; if (blight) for (let x = Math.max(1, blight.x0 - 14); x < Math.min(WW - 1, blight.x1 + 14); x++) { let y = surf[x]; { let c = 0; while (c < 3 && SOLID.has(at(x, y + c))) c++; if (c && c <= 2 && at(x, y + c) === T.AIR && at(x, y + c + 1) === T.AIR && at(x, y + c + 2) === T.AIR && at(x, y + c + 3) === T.AIR) for (let k = 0; k < c; k++) set(x, y + k, T.AIR); } if (SOLID.has(at(x, y)) || !(at(x, y + 1) === T.AIR && at(x, y + 2) === T.AIR)) continue; while (y < HELL - 2 && !SOLID.has(at(x, y))) y++; for (let yy = surf[x]; yy < y; yy++) if (!PW(walls[yy * WW + x])) walls[yy * WW + x] = 0; surf[x] = y; } }
   function gen0() {
     tiles = new Uint8Array(WW * WH); walls = new Uint8Array(WW * WH); surf = new Int16Array(WW); chests = {}; hard = 0; radiant = null; brokenDeco = new Set(); npcs = []; npcGone = {}; npcT = 0; explored = new Uint8Array(WW * WH); const isDes = new Uint8Array(WW);
     const n1 = noise1(), n2 = noise1(), n3 = noise1();
@@ -345,7 +358,7 @@ const WOODY = new Set([T.PPLANK, T.MPLANK, T.GPLANK, T.RPLANK, T.LWOOD, T.TRUNK,
             for (let dx = -5; dx <= 5; dx++) for (let dy = -3; dy <= 3; dy++) if ((dx / rw) ** 2 + (dy / rh) ** 2 <= 1) { const tx = Math.floor(cx + dx), ty = Math.floor(cy + dy); if (ty > surf[tx] + 4 && at(tx, ty) === T.SSTONE) { set(tx, ty, T.AIR); walls[ty * WW + tx] = 6; } } } }
         for (let xx = x; xx < e; xx++) for (let y = surf[xx] + 4; y < surf[xx] + 62; y++) if (at(xx, y) === T.AIR && at(xx, y + 1) === T.SSTONE) set(xx, y + 1, T.SAND);
         x = e; } }
-    blob(T.COPPER, 128, 6, DY(120), 2); blob(T.IRON, 96, 20, DY(150), 2); blob(T.SILVER, 72, Math.round(34 * DK), DY(165), 2); blob(T.GOLD, 56, Math.round(50 * DK), DY(180), 1.6); blob(T.SHADOW, 48, Math.round(85 * DK), HELL - 2, 1.6); blob(T.HELLSTONE, 112, HELL - 60, WH - 2, 2, [T.ASH]);
+    blob(T.COPPER, 128, 6, DY(120), 2); blob(T.IRON, 96, 20, DY(150), 2); blob(T.SILVER, 72, Math.round(34 * DK), DY(165), 2); blob(T.GOLD, 56, Math.round(50 * DK), DY(180), 1.6); blob(T.SHADOW, 48, Math.round(85 * DK), HELL - 2, 1.6); blob(T.TIDESTEEL, 44, Math.round(60 * DK), DY(175), 1.6); blob(T.HELLSTONE, 112, HELL - 60, WH - 2, 2, [T.ASH]);
     { let cx = Math.floor(rnd(80, WW - 80)); for (let k = 0; k < 50 && jungle && cx > jungle.x0 - 25 && cx < jungle.x1 + 25; k++) cx = Math.floor(rnd(80, WW - 80)); const cy = Math.floor(rnd(DY(140), DY(160))); for (let x = cx - 18; x <= cx + 18; x++) for (let y = cy - 7; y <= cy + 7; y++) { const edge = Math.abs(x - cx) > 16 || Math.abs(y - cy) > 5; set(x, y, edge ? T.BRICK : T.AIR); walls[y * WW + x] = 4; }
       for (let x = cx - 14; x <= cx + 14; x += 3) set(x, cy + 5, T.BONE); for (const ex of [cx - 17, cx + 17]) { set(ex, cy + 3, T.AIR); set(ex, cy + 4, T.AIR); } placeChest(cx, cy + 6, 1); }
     // ---- new biomes
@@ -548,7 +561,7 @@ const WOODY = new Set([T.PPLANK, T.MPLANK, T.GPLANK, T.RPLANK, T.LWOOD, T.TRUNK,
     else if (id === 'bone') { r('#e8e0c8', -6, -1, 12, 3); r('#e8e0c8', -7, -3, 3, 3); r('#e8e0c8', 4, 1, 3, 3); }
     else if (id === 'star') { g.fillStyle = '#ffe680'; g.beginPath(); for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, rr = i % 2 ? 3 : 7; g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } g.fill(); }
     else if (id === 'ember') { r('#ff6a2a', -4, -4, 8, 8); r('#ffd23f', -2, -2, 4, 4); }
-    else if (/bar$/.test(id)) { const c = { cbar: '#d8864a', ibar: '#c8c8d0', sbar: '#f0f4ff', gbar: '#ffd23f', shbar: '#9a6ae8', hbar: '#ff6a2a', azbar: '#3a8ae8', vibar: '#3ad86a', smbar: '#ffe680' }[id] || '#c8c8d0'; r(c, -6, -2, 12, 5); r('rgba(255,255,255,.45)', -5, -2, 10, 1); r('rgba(0,0,0,.25)', -6, 2, 12, 1); }
+    else if (/bar$/.test(id)) { const c = { cbar: '#d8864a', ibar: '#c8c8d0', sbar: '#f0f4ff', gbar: '#ffd23f', shbar: '#9a6ae8', hbar: '#ff6a2a', azbar: '#3a8ae8', vibar: '#3ad86a', smbar: '#ffe680', tsbar: '#3ad8c8', umbar: '#8a4aff' }[id] || '#c8c8d0'; r(c, -6, -2, 12, 5); r('rgba(255,255,255,.45)', -5, -2, 10, 1); r('rgba(0,0,0,.25)', -6, 2, 12, 1); }
     else if (id === 'life') { r('#c8203a', -4, -6, 8, 12); r('#ff6a7a', -2, -4, 2, 5); }
     else if (id === 'mana') { r('#2a5ad8', -4, -6, 8, 12); r('#7ab0ff', -2, -4, 2, 5); }
     else if (it.acc) { const k = it.acc, c = it.c;
@@ -651,8 +664,9 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
   function fixGear(c) { if (!c) return; c.gear = c.gear || {}; if (c.armor) { if (IT[c.armor]) c.gear[IT[c.armor].slot || 'body'] = c.armor; delete c.armor; } }   // saves from before armor had three pieces
   const BKEYS = ['summon', 'minions', 'melee', 'ranged', 'magic', 'throw', 'crit', 'mana', 'mcost', 'speed', 'mspd', 'def', 'ammo', 'regen'];
   // every bonus you have right now: armor + up to three accessories + active potions
+  const accAll = () => { const o = []; for (const a of (ch && ch.acc) || []) if (a && IT[a]) { o.push(a); if (IT[a].has) for (const q of IT[a].has) o.push(q); } return o; };
   function B() { const b = {}; for (const k of BKEYS) b[k] = 0; const add = o => { if (o) for (const k in o) b[k] += o[k]; };
-    { const st = ch && setOf(); if (st) add(SETS[st].bon); } if (ch && ch.acc) for (const a of ch.acc) if (a && IT[a]) add(IT[a].bon); if (P && P.buffs) for (const k in P.buffs) if (P.buffs[k] > 0 && BUFFS[k]) add(BUFFS[k].bon); return b; }
+    { const st = ch && setOf(); if (st) add(SETS[st].bon); } if (ch && ch.acc) { const seen = new Set(); for (const a of ch.acc.slice().sort((x, y) => ((IT[y] && IT[y].has) || []).length - ((IT[x] && IT[x].has) || []).length)) if (a && IT[a]) { const ps = IT[a].has || [a]; if (ps.some(q => seen.has(q))) continue; for (const q of ps) seen.add(q); add(IT[a].bon); } } if (P && P.buffs) for (const k in P.buffs) if (P.buffs[k] > 0 && BUFFS[k]) add(BUFFS[k].bon); return b; }
   const dm = k => 1 + B()[k], maxMana = () => ch.mana + B().mana;
   const pct = v => Math.round(v * 100);
   function bonusText(b) { const o = []; for (const [k, l] of [['melee', 'melee'], ['ranged', 'ranged'], ['magic', 'magic'], ['throw', 'thrown'], ['summon', 'summon']]) if (b[k]) o.push(`+${pct(b[k])}% ${l} damage`); if (b.minions) o.push(`+${b.minions} max minion${b.minions > 1 ? 's' : ''}`);
@@ -685,6 +699,12 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
     galewisp: { hp: 60, w: 1.3, h: 1, dmg: 20, sc: 50, fly: 1, ai: 'thorn', tint: [0, 0, 1.9], loot: [['sunfeather', .03], ['star', .2], ['cloud', .5, 4]] },
     wraith: { hp: 160, w: 1.2, h: 1.2, dmg: 34, sc: 120, fly: 1, ai: 'eye', tint: [260, .4, .6], loot: [['gloomshard', .3]] },
     brute: { hp: 260, w: 1.1, h: 2.6, dmg: 40, sc: 160, ai: 'skeleton', tint: [0, .15, .9], loot: [['azurite', .5, 4], ['viridium', .2, 3]] },
+    mirefrog: { hp: 30, w: 1.3, h: .9, dmg: 10, sc: 15, ai: 'slime', loot: [['worm', .6, 2], ['gel', .3, 2]] },
+    dustdevil: { hp: 55, w: 1.2, h: 1.7, dmg: 16, sc: 30, fly: 1, ai: 'eye', loot: [['sand', .6, 4], ['gustjar', .02]] },
+    sleetwisp: { hp: 40, w: 1.1, h: 1, dmg: 15, sc: 30, fly: 1, ai: 'bat', loot: [['ice', .5, 3], ['frostgrip', .02]] },
+    marauder: { hp: 70, w: .9, h: 2.5, dmg: 18, sc: 40, ai: 'zombie', raid: 1, loot: [['cleaver', .03], ['potion', .08], ['raidscrap', .5]] },
+    ravager: { hp: 170, w: 1.2, h: 2.8, dmg: 26, sc: 90, ai: 'skeleton', raid: 1, loot: [['raidmark', .04], ['ibar', .3, 3], ['raidscrap', 1, 2]] },
+    raidkite: { hp: 45, w: 1.4, h: 1.1, dmg: 16, sc: 35, fly: 1, ai: 'eye', raid: 1, loot: [['arrow', .4, 10]] },
     buzzard: { hp: 46, w: 1.3, h: 1.2, dmg: 17, sc: 30, loot: [['potion', .04]] },
     prism: { hp: 140, w: 1.3, h: 1, dmg: 32, sc: 130, fly: 1, ai: 'thorn', tint: [300, 1.6, 1.3], loot: [['lumenshard', .5]] },
     lumenslime: { hp: 120, w: 1.5, h: 1.1, dmg: 30, sc: 100, ai: 'slime', c: '#ff9aff', loot: [['lumenshard', .3], ['gel', 1, 3]] },
@@ -714,23 +734,37 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
     saveAll(); }
   function spawnEnemy(kind, x, y, o = {}) { const C_ = spawnCtx; if (C_ && KIND[kind] && !KIND[kind].boss && !KIND[kind].proj) { if (kind === 'slime' && C_.left > 0 && R() < .87) { C_.left--; return { kind, x, y, w: 1, h: 1, hp: 1, max: 1, dead: 1, t: 0, vx: 0, vy: 0 }; } if (C_.left <= 0 || C_.at.some(q => Math.abs(q[0] - x) < 8 && Math.abs(q[1] - y) < 8) || ents.some(e => natural(e) && Math.abs(e.x - x) < 6 && Math.abs(e.y - y) < 6)) return { kind, x, y, w: 1, h: 1, hp: 1, max: 1, dead: 1, t: 0, vx: 0, vy: 0 }; C_.at.push([x, y]); C_.left--; } const k = KIND[kind]; const E = { id: eid++, kind, x, y, vx: 0, vy: 0, w: k.w, h: k.h, hp: k.hp * (online() ? 1 + others.size * .5 : 1) * (hard && !k.boss && !k.proj ? 2 : 1) * (k.proj ? 1 : k.boss ? DFX().boss : DFX().hp), t: R() * 2, hit: 0, fly: k.fly, ...o }; E.max = E.hp; if (kind === 'slime') E.c = E.c || pick(['#3aa0ff', '#4ac83a', '#c84aff']); ents.push(E); return E; }
   const CEN = new Set(['gloom', 'sentinel', 'tyrant', 'shard', 'gspit', 'pshot', 'vshot', 'wraith', 'prism', 'frostbat', 'gnawer', 'sporebat', 'galewisp', 'eye', 'bat', 'watcher', 'bone', 'ember', 'fb', 'dart', 'thorn', 'sunspirit', 'weaver', 'web']), top = e => CEN.has(e.kind) ? e.y - e.h / 2 : e.y - e.h, bot = e => CEN.has(e.kind) ? e.y + e.h / 2 : e.y, mid = e => (top(e) + bot(e)) / 2;
-  const night = () => { const d = time % 1; return d > .62; };
-  const dayLight = () => { const d = time % 1; return d < .07 ? .38 + d / .07 * .62 : d < .55 ? 1 : d < .62 ? 1 - (d - .55) / .07 * .62 : .38; };
+  let wx = 0, wxT = 200, wxLocal = null, wxScan = 0, wxWas = null, raid = null, flashT = 0;
+const night = () => { const d = time % 1; return d > .62; };
+  const dayLight = () => { const d = time % 1; return (d < .07 ? .38 + d / .07 * .62 : d < .55 ? 1 : d < .62 ? 1 - (d - .55) / .07 * .62 : .38) * (wx ? .8 : 1); };
   const allPlayers = () => [P, ...[...others.values()].filter(o => o.p && o.p.x != null && !o.dead).map(o => o.p)];
   function nearestP(x, y) { let b = P, d = 1e9; for (const p of allPlayers()) { const dd = Math.hypot(p.x - x, p.y - y); if (dd < d) { d = dd; b = p; } } return b; }
   let spawnCtx = null, farT = 0; const natural = e => { const k = KIND[e.kind]; return !!k && !k.boss && !k.proj; };
+  // the weather over a spot: 'snow' in the cold, 'sand' over desert, 'rain' elsewhere; null underground or in clear skies
+  function wxAt(p) { if (!wx || !p) return null; const x = clamp(Math.floor(p.x), 0, WW - 1); if (p.y - surf[x] > 14 || p.y > HELL - 40) return null; let sn = 0, sa = 0;
+    for (let d = -10; d <= 10; d += 5) { const xx = clamp(x + d, 0, WW - 1); let y = Math.max(0, surf[xx] - 3); while (y < WH && !SOLID.has(tiles[y * WW + xx])) y++; const t = tiles[y * WW + xx]; if (t === T.SNOW || t === T.ICE) sn++; else if (t === T.SAND) sa++; }
+    return sn >= 3 ? 'snow' : sa >= 3 ? 'sand' : 'rain'; }
+  function startRaid() { if (raid) return; raid = { done: 0, need: Math.round((16 + others.size * 8) * Math.min(1.5, DFX().spawn)) }; const s = 'A marauder raid rides in from the dark!'; say(s, 5, '#ff8a6a'); K.sfx(80, 1, 'sawtooth', .1, 30); K.shake(8); if (online()) MP.send({ t: 'bl', s }); }
+  function endRaid(won) { if (!raid) return; raid = null; const s = won ? 'The marauders are beaten! They leave their plunder behind.' : 'The marauders slip away with the dawn.'; say(s, 5, won ? '#7aff7a' : '#ffb07a'); if (online()) MP.send({ t: 'bl', s });
+    if (won) { K.chime(523, [0, 4, 7, 12]); for (const pl of allPlayers()) { addDrop({ id: 'gcoin', n: hard ? 6 : 2, x: pl.x, y: pl.y - 3, vx: rnd(-2, 2), vy: -6, t: 0 }); addDrop({ id: 'potion', n: 2, x: pl.x + 1, y: pl.y - 3, vx: rnd(-2, 2), vy: -6, t: 0 }); } if (R() < .5) addDrop({ id: 'raidmark', n: 1, x: P.x, y: P.y - 3, vx: 0, vy: -7, t: 0 }); } }
+  // host: weather comes and goes; a raid may ride in at dusk once a boss has fallen; raids end at dawn
+  function eventTick(dt, t0) { if ((wxT -= dt) <= 0) { if (wx) { wx = 0; wxT = 240 + R() * 420; } else if (R() < .55) { wx = 1; wxT = 70 + R() * 90; } else wxT = 120 + R() * 200; }
+    const d0 = t0 % 1, d1 = time % 1; if (d0 <= .62 && d1 > .62 && !raid && !boss && Object.keys(downed).length && R() < .14) startRaid(); if (raid && !night()) endRaid(false); if (raid && raid.done >= raid.need) endRaid(true); }
   function spawnLoop(dt) { try { spawnLoop1(dt); } finally { spawnCtx = null; } }
   function spawnLoop1(dt) {
     for (const pl of allPlayers()) {
       const W_ = pl.wave || (pl.wave = { left: 0, at: [], tries: 0 }); spawnCtx = null;
-      if (!W_.left) { if (ents.some(e => natural(e) && Math.abs(e.x - pl.x) < 70 && Math.abs(e.y - pl.y) < 50) || R() > dt * .13 * DFX().spawn) continue;
-        W_.left = Math.max(1, Math.round((1 + Math.floor(R() * 3) + (night() ? 1 : 0)) * Math.min(1.5, DFX().spawn))); W_.at = []; W_.tries = 0; }
+      if (!W_.left) { if (ents.filter(e => natural(e) && Math.abs(e.x - pl.x) < 70 && Math.abs(e.y - pl.y) < 50).length > (raid ? 1 : 0) || R() > dt * (raid ? .6 : .13) * DFX().spawn) continue;
+        W_.left = Math.max(1, Math.round((1 + Math.floor(R() * 3) + (night() ? 1 : 0) + (raid ? 2 : 0)) * Math.min(1.5, DFX().spawn))); W_.at = []; W_.tries = 0; }
       if (++W_.tries > 240) { W_.left = 0; continue; } spawnCtx = W_;
       const hw = (() => { const v = WV(); return (v.x1 - v.x0) / TS / 2 + 3; })(), side = R() < .5 ? -1 : 1, x = Math.floor(pl.x + side * rnd(Math.max(28, hw), Math.max(40, hw + 12))); if (x < 2 || x >= WW - 2) continue;
       const depth = pl.y - surf[clamp(Math.floor(pl.x), 0, WW - 1)];
       if (inTemple(pl)) { const cy = Math.floor(pl.y + rnd(-6, 6)), cx = Math.floor(pl.x + side * rnd(hw, hw + 8)); if (at(cx, cy) !== T.AIR || at(cx, cy - 1) !== T.AIR || !inTemple({ x: cx, y: cy })) continue; if (R() < .45) spawnEnemy('sunspirit', cx + .5, cy); else if (SOLID.has(at(cx, cy + 1))) spawnEnemy('guardian', cx + .5, cy + .99); continue; }
       const Z = zoneAt(pl);
       if (Z.sky) { spawnEnemy('galewisp', x + .5, pl.y - rnd(4, 10)); continue; }
+      { const wk = wxAt(pl); if (depth < 10 && (raid || (wk && R() < .6))) { let gy = 0; while (gy < WH - 1 && !SOLID.has(at(x, gy))) gy++; if (Math.abs(gy - pl.y) > 25 || PW(walls[(gy - 1) * WW + x])) continue;
+          if (raid) { const r = R(); if (r < .55) spawnEnemy('marauder', x + .5, gy - .01); else if (r < .78) spawnEnemy('ravager', x + .5, gy - .01); else spawnEnemy('raidkite', x + .5, pl.y - rnd(8, 13)); }
+          else if (wk === 'rain') spawnEnemy('mirefrog', x + .5, gy - .01); else if (wk === 'sand') spawnEnemy('dustdevil', x + .5, pl.y - rnd(3, 8)); else spawnEnemy('sleetwisp', x + .5, pl.y - rnd(5, 10)); continue; } }
       if (hard && (Z.radiant || (Z.blight && R() < .5) || (night() && depth < 8 && R() < .35))) { let gy = 0; while (gy < WH - 1 && !SOLID.has(at(x, gy))) gy++; const onGround = depth < 10 && Math.abs(gy - pl.y) < 25 && !PW(walls[(gy - 1) * WW + x]);
         if (Z.radiant) { if (onGround && R() < .45) spawnEnemy('lumenslime', x + .5, gy - .01); else spawnEnemy('prism', x + .5, pl.y - rnd(4, 10)); }
         else if (Z.blight) { if (onGround) spawnEnemy('maw', x + .5, gy - .01); else spawnEnemy('gnawer', x + .5, pl.y - rnd(4, 10)); } else spawnEnemy('wraith', x + .5, pl.y - rnd(8, 14)); continue; }
@@ -867,13 +901,13 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
   function applyHit(e, d, kx, by) { if (e.phT > 0) return;
     e.hp -= d; e.hit = .15; if (!KIND[e.kind].boss) { e.vx += kx * 9; if (!e.fly) e.vy = -7; }
     if (e.hp <= 0 && !e.dead) {
-      e.dead = 1; const K_ = KIND[e.kind], loot = []; if (K_.loot) for (const [lid, lp, ln] of K_.loot) if (R() < lp) loot.push([lid, ln ? 1 + Math.floor(R() * ln) : 1]); if (K_.loot && R() < DFX().loot) for (const [lid, lp, ln] of K_.loot) if (R() < lp) loot.push([lid, ln ? 1 + Math.floor(R() * ln) : 1]); if (!K_.proj) coinLoot(Math.round((K_.sc || 5) * rnd(2.5, 4) * (K_.boss ? 2 : 1) * (hard ? (K_.boss ? 1.5 : 2.5) : 1) * DFX().coin), loot);
+      e.dead = 1; if (raid && KIND[e.kind].raid) raid.done++; const K_ = KIND[e.kind], loot = []; if (K_.loot) for (const [lid, lp, ln] of K_.loot) if (R() < lp) loot.push([lid, ln ? 1 + Math.floor(R() * ln) : 1]); if (K_.loot && R() < DFX().loot) for (const [lid, lp, ln] of K_.loot) if (R() < lp) loot.push([lid, ln ? 1 + Math.floor(R() * ln) : 1]); if (!K_.proj) coinLoot(Math.round((K_.sc || 5) * rnd(2.5, 4) * (K_.boss ? 2 : 1) * (hard ? (K_.boss ? 1.5 : 2.5) : 1) * DFX().coin), loot);
       if (e.kind === 'slime') loot.push(['gel', 1 + Math.floor(R() * 2)]);
       if (e.kind === 'eye' && R() < .6) loot.push(['lens', 1]);
       if (e.kind === 'stalker' || e.kind === 'thorn') { if (R() < .3) loot.push(['potion', 1]); if (R() < .04) loot.push([pick(['vinebow', 'thorns']), 1]); }
       if (e.kind === 'guardian' || e.kind === 'sunspirit') { loot.push(['gbar', 1 + Math.floor(R() * 2)]); if (R() < .05) loot.push([pick(['sunblade', 'sunstaff', 'wemb', 'remb', 'semb', 'temb', 'cemb']), 1]); }
       if (e.kind === 'zombie' && R() < .06) loot.push([pick(['isword', 'potion', 'knife']), 1]);
-      if (e.kind === 'zombie' || KIND[e.kind].ai === 'zombie') { const h = mobHash(e); if ((h >>> 5) % 4 === 0) loot.push([ZHOLD[(h >>> 9) % ZHOLD.length], 1]); }
+      if (e.kind === 'zombie' || (KIND[e.kind].ai === 'zombie' && !KIND[e.kind].raid)) { const h = mobHash(e); if ((h >>> 5) % 4 === 0) loot.push([ZHOLD[(h >>> 9) % ZHOLD.length], 1]); }
       if (e.kind === 'slime' && R() < .005) loot.push(['slstaff', 1]);
       if (e.kind === 'skeleton') { loot.push(['bone', 1 + Math.floor(R() * 3)]); if (R() < .04) loot.push(['skstaff', 1]); if (R() < .05) loot.push([pick(['flint', 'trident', 'water']), 1]); }
       if (e.kind === 'bat' && R() < .2) loot.push(['potion', 1]);
@@ -998,6 +1032,7 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
     if (u === 'life') { if (ch.max >= 400) return say('You cannot get any healthier.'); ch.max += 20; P.hp += 20; spend(); K.chime(659, [0, 4, 7, 12]); say('Max life +20!', 2.4, '#ff6a7a'); }
     if (u === 'mana') { if (ch.mana >= 200) return say('Your mana is maxed.'); ch.mana += 20; P.mp += 20; spend(); K.chime(784, [0, 4, 7, 12]); say('Max mana +20!', 2.4, '#7ab0ff'); }
     if (u.startsWith('crate:')) { const got = CRATES[u.slice(6)](); spend(); for (const [id, n] of got) if (!give(id, n)) dropItem(id, P.x, P.y - 1, n); K.chime(587, [0, 4, 7, 12]); return say('Opened: ' + got.map(([id, n]) => IT[id].n + (n > 1 ? ' x' + n : '')).join(', '), 4, '#ffe680'); }
+    if (u === 'raid') { if (!night()) return say('The marauders only ride at night.'); if (raid) return say('A raid is already under way.'); if (P.y - surf[clamp(Math.floor(P.x), 0, WW - 1)] > 12) return say('Raise the banner above ground.'); spend(); if (isHost()) startRaid(); else MP.send({ t: 'raid' }); return; }
     if (u.startsWith('boss:')) {
       const k = u.slice(5);
       if (ents.some(e => KIND[e.kind].boss)) return say('A boss is already here.');
@@ -1087,7 +1122,7 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
   function startHardmode(seed) {
     if (hard) return; hard = 1; let s = seed >>> 0; const rr = () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };   // the same on every player's game
     const host = [T.STONE, T.BSTONE, T.ICE, T.SSTONE, T.MUD, T.SNOW], vein = (tile, n, y0, y1, len) => { for (let i = 0; i < n * WW / 520; i++) { let x = Math.floor(4 + rr() * (WW - 8)), y = Math.floor(y0 + rr() * (y1 - y0)); for (let k = 0; k < len; k++) { x += Math.round(rr() * 2 - 1); y += Math.round(rr() * 2 - 1); if (host.includes(at(x, y))) set(x, y, tile); } } };
-    vein(T.AZURITE, 70, 60, HELL - 10, 12); vein(T.VIRIDIUM, 52, 90, HELL - 6, 11); vein(T.STARMETAL, 36, 118, HELL - 4, 10);
+    vein(T.AZURITE, 70, 60, HELL - 10, 12); vein(T.VIRIDIUM, 52, 90, HELL - 6, 11); vein(T.STARMETAL, 36, 118, HELL - 4, 10); vein(T.UMBRITE, 26, HELL - 80, HELL - 4, 9);
     // the Radiance: a slanted band of shining grass and lumenstone, from the surface down to the underworld
     const w = Math.max(28, Math.round(WW * .05)), dir = rr() < .5 ? -1 : 1, bad = x => (jungle && x > jungle.x0 - 10 && x < jungle.x1 + 10) || (frost && x > frost.x0 - 6 && x < frost.x1 + 6) || (blight && x > blight.x0 - 6 && x < blight.x1 + 6) || Math.abs(x - WW / 2) < 40 || x < ocean + 20 || x > WW - ocean - 20;
     let x0 = -1; for (let k = 0; k < 120; k++) { const c = Math.floor(ocean + 20 + rr() * (WW - 2 * ocean - 40 - w)); if (!bad(c) && !bad(c + w)) { x0 = c; break; } } if (x0 < 0) x0 = Math.floor(WW * .3);
@@ -1149,7 +1184,7 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
     g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1; g.beginPath(); g.moveTo(X0, Y0); g.quadraticCurveTo((X0 + X1) / 2, Math.max(Y0, Y1) + 10, X1, Y1); g.stroke(); g.fillStyle = '#ff3a3a'; g.beginPath(); g.arc(X1, Y1 - 2, 3.5, Math.PI, 0); g.fill(); g.fillStyle = '#ffffff'; g.beginPath(); g.arc(X1, Y1 - 2, 3.5, 0, Math.PI); g.fill(); }
   /* ---------- bestiary: every creature you have defeated and every fish you have caught ---------- */
   const BNAME = { slime: 'Slime', zombie: 'Zombie', eye: 'Night Eye', bat: 'Cave Bat', skeleton: 'Skeleton', imp: 'Ember Imp', spiderling: 'Spiderling', stalker: 'Jungle Stalker', thorn: 'Thornball', guardian: 'Temple Guardian', sunspirit: 'Sun Spirit',
-    rime: 'Rime Slime', revenant: 'Frost Revenant', frostbat: 'Frost Bat', buzzard: 'Dune Buzzard', gnawer: 'Gloom Gnawer', crawler: 'Blight Crawler', sporebat: 'Spore Bat', shambler: 'Shroom Shambler', galewisp: 'Gale Wisp', wraith: 'Dusk Wraith', brute: 'Stone Brute', prism: 'Prism Wisp', lumenslime: 'Lumen Slime', maw: 'Blight Maw' };
+    rime: 'Rime Slime', revenant: 'Frost Revenant', frostbat: 'Frost Bat', buzzard: 'Dune Buzzard', mirefrog: 'Mire Frog', dustdevil: 'Dust Devil', sleetwisp: 'Sleet Wisp', marauder: 'Marauder', ravager: 'Marauder Ravager', raidkite: 'Carrion Kite', gnawer: 'Gloom Gnawer', crawler: 'Blight Crawler', sporebat: 'Spore Bat', shambler: 'Shroom Shambler', galewisp: 'Gale Wisp', wraith: 'Dusk Wraith', brute: 'Stone Brute', prism: 'Prism Wisp', lumenslime: 'Lumen Slime', maw: 'Blight Maw' };
   const BDROPS = { slime: ['gel', 'slstaff'], zombie: ['isword', 'potion', 'knife'], eye: ['lens'], bat: ['potion'], skeleton: ['bone', 'skstaff', 'flint', 'trident', 'water'], imp: ['ember', 'flame'], stalker: ['potion', 'vinebow', 'thorns'], thorn: ['potion', 'vinebow', 'thorns'], guardian: ['gbar', 'sunblade', 'sunstaff'], sunspirit: ['gbar', 'sunblade', 'sunstaff'] };
   const bName = k => BNAME[k] || (BOSSES[k] && BOSSES[k].n) || k, bKinds = () => Object.keys(KIND).filter(k => !KIND[k].proj);
   const portraits = {};
@@ -1216,7 +1251,7 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
     const o = (t, op, k, sp = STONE) => variants(t, v => ore(sp, op, k * 37 + v), darkC(sp[0]));
     o(T.COPPER, ['#8a4a22', '#e8904a', '#ffc08a'], 1); o(T.IRON, ['#6a5a4a', '#c8b8a8', '#f0e4d8'], 2); o(T.SILVER, ['#7a8294', '#d8e0ee', '#ffffff'], 3); o(T.GOLD, ['#a8780e', '#ffd040', '#fff0a0'], 4);
     o(T.SHADOW, ['#5a2aa8', '#b07aff', '#e8d0ff'], 5, ['#1e1a28', '#2e2840', '#3e3656', '#544a70']); o(T.HELLSTONE, ['#c84a1a', '#ff7a2a', '#ffd23f'], 6, ['#2a120e', '#4a2018', '#6a3022', '#8a402c']);
-    o(T.AZURITE, ['#2a4ab0', '#4a8aff', '#c0e0ff'], 7); o(T.VIRIDIUM, ['#1a8a4a', '#3ad87a', '#c0ffd8'], 8); o(T.STARMETAL, ['#b0905a', '#ffe8a0', '#ffffff'], 9, ['#242030', '#38324a', '#4a4460', '#5e5878']);
+    o(T.TIDESTEEL, ['#1a8a88', '#3ad8c8', '#c8fff4'], 10); o(T.UMBRITE, ['#3a1a6a', '#8a4aff', '#e0c8ff'], 11, ['#18141e', '#262034', '#342c48', '#443a5c']); o(T.AZURITE, ['#2a4ab0', '#4a8aff', '#c0e0ff'], 7); o(T.VIRIDIUM, ['#1a8a4a', '#3ad87a', '#c0ffd8'], 8); o(T.STARMETAL, ['#b0905a', '#ffe8a0', '#ffffff'], 9, ['#242030', '#38324a', '#4a4460', '#5e5878']);
     const b = (t, pal, k) => variants(t, v => brick(pal, k * 41 + v), darkC(pal[0]));
     b(T.BRICK, ['#1a2234', '#2e3a56', '#3e4e72', '#5a6c94'], 1); b(T.SBRICK, ['#34343c', '#5e5e68', '#80808a', '#a4a4ae'], 2); b(T.CBRICK, ['#4a2610', '#8a4a22', '#c87a42', '#eaa070'], 3); b(T.GBRICK, ['#6a4a08', '#b08a1a', '#e8c040', '#fff0a0'], 4); b(T.TBRICK, ['#3a2408', '#7a5420', '#a07a30', '#c8a050'], 5);
     variants(T.PLANK, v => plank(['#3a2410', '#7a5028', '#a06c3e', '#c48a52'], 50 + v), '#1e1208'); variants(T.LWOOD, v => plank(['#2a1a0a', '#5a3a1a', '#6a4a24', '#8a6434'], 60 + v), '#160e06');
@@ -1656,6 +1691,30 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
   const ZHOLD = ['csword', 'cpick', 'cax', 'torch', 'wood', 'gel', 'potion', 'whammer', 'knife', 'lens'];
   const ESKIN = [['#f0ece8', '~#d84a4a', '#a01a2a', '#8a1a2a', '#c8402a'], ['#eef2e4', '~#5aa04a', '#3a7a2a', '#1f6a2a', '#3aa04a'], ['#f0eaf4', '~#a04ad8', '#6a2a8a', '#4a1a7a', '#8a4ad8'], ['#f0e8c0', '~#e03a3a', '#8a1020', '#8a6a10', '#d8b020']];
   const MOBA = {
+    /* weather creatures and the marauder raid (original designs) */
+    mirefrog: { w: 22, h: 15, n: 4, paint(P, f) { const b = '#5a8a3a', d = '#3a6226', up = [0, 2, 3, 1][f];
+        P.ell(5, 12 - up * .3, 4, 2.4, d); P.ell(17, 12 - up * .3, 4, 2.4, d); P.ell(11, 9 - up, 8, 5, b); P.ell(11, 11 - up, 6, 2.6, '#c8d8a0');
+        P.ell(6, 4 - up, 2.6, 2.6, b); P.ell(16, 4 - up, 2.6, 2.6, b); P.px(6, 4 - up, '~#141018'); P.px(16, 4 - up, '~#141018'); P.px(5, 3 - up, '~#ffffff'); P.px(15, 3 - up, '~#ffffff');
+        P.rect(8, 9 - up, 6, 1, '~#2a4a1a'); for (const [x, y] of [[4, 8], [13, 6], [17, 9]]) P.px(x, y - up, '~#8ac05a'); } },
+    dustdevil: { w: 22, h: 30, n: 4, mid: 1, paint(P, f) { const c = ['#d8b878', '#c0a060', '#e8d098'];
+        for (let i = 0; i < 9; i++) { const y = 2 + i * 3, w = 10 - i * .9, o = Math.sin(i * .9 + f * 1.57) * 2.2; P.ell(11 + o, y, w, 1.8, c[(i + f) % 3] + 'd8'); }
+        P.px(8, 6, '~#3a2a14'); P.px(13, 6, '~#3a2a14'); P.px(8, 5, '~#fff2c0'); P.px(13, 5, '~#fff2c0'); for (const [x, y] of [[2, 12], [19, 8], [4, 22], [17, 18]]) P.px(x + (f % 2), y, '~#f0e0b0'); } },
+    sleetwisp: { w: 20, h: 18, n: 4, mid: 1, paint(P, f) { const bob = [0, 1, 0, -1][f];
+        P.tri(4, 10 + bob, 16, 10 + bob, 10, 18, '~#bfe8ffa0'); P.ell(10, 8 + bob, 6, 6, '#d8f4ff'); P.ell(8, 6 + bob, 3, 2.5, '~#ffffff'); P.px(8, 8 + bob, '~#2a5a8a'); P.px(12, 8 + bob, '~#2a5a8a');
+        for (let i = 0; i < 5; i++) { const a = i * 1.257 + f * .5; P.line(10 + Math.cos(a) * 7, 8 + bob + Math.sin(a) * 7, 10 + Math.cos(a) * 9.5, 8 + bob + Math.sin(a) * 9.5, '~#9adcff'); } } },
+    marauder: { w: 22, h: 41, n: 4, paint(P, f) { const st = [0, 2, 0, -2][f], lea = '#6a4a2e', dk = '#3e2a1a', sc = '#b8303a';
+        P.rect(6 + st, 30, 4, 10, dk); P.rect(12 - st, 30, 4, 10, dk); P.rect(5 + st, 38, 6, 3, '#2a1a10'); P.rect(11 - st, 38, 6, 3, '#2a1a10');
+        P.rect(5, 16, 12, 15, lea); P.rect(5, 27, 12, 2, '#2a1a10'); P.rect(10, 27, 2, 2, '~#d8b040'); P.rect(6, 18, 3, 6, shadeC(lea, 1.2));
+        P.rect(2, 17, 3, 11, lea); P.rect(17, 17 + (f % 2), 3, 9, lea); P.rect(18, 8 + (f % 2), 2, 12, '#a8a8b4'); P.rect(17, 6 + (f % 2), 4, 4, '#c8c8d4');
+        P.rect(4, 13, 14, 4, sc); P.rect(15, 16, 3, 6, shadeC(sc, .8)); P.ell(11, 8, 6, 6, '#4a3a4a'); P.rect(7, 7, 8, 4, '#1a1218'); P.px(9, 9, '~#ffb03a'); P.px(13, 9, '~#ffb03a'); P.tri(6, 3, 16, 3, 11, 0, '#4a3a4a'); } },
+    ravager: { w: 30, h: 46, n: 4, paint(P, f) { const st = [0, 2, 0, -2][f], ir = '#6a6a78', dk = '#3a3a46', sc = '#b8303a';
+        P.rect(8 + st, 34, 5, 11, dk); P.rect(16 - st, 34, 5, 11, dk); P.rect(7 + st, 43, 7, 3, '#1e1e26'); P.rect(15 - st, 43, 7, 3, '#1e1e26');
+        P.rect(6, 16, 18, 19, ir); P.rect(8, 18, 6, 7, shadeC(ir, 1.25)); P.rect(6, 31, 18, 2, '#1e1e26'); P.rect(4, 12, 22, 5, sc);
+        P.ell(15, 8, 7, 7, ir); P.rect(10, 7, 10, 3, '#14141a'); P.px(12, 8, '~#ff5a3a'); P.px(17, 8, '~#ff5a3a'); P.tri(8, 4, 11, 4, 6, -1, '#d8d0c0'); P.tri(19, 4, 22, 4, 24, -1, '#d8d0c0');
+        P.ell(4, 26, 5, 9, '#5a3a22'); P.ell(4, 26, 3, 6, '#7a5230'); P.px(4, 26, '~#d8b040'); P.rect(25, 10 + (f % 2), 3, 22, '#7a5230'); P.rect(22, 6 + (f % 2), 8, 7, '#8a8a98'); P.rect(23, 7 + (f % 2), 3, 2, '~#d8d8e4'); } },
+    raidkite: { w: 34, h: 24, n: 4, mid: 1, paint(P, f) { const wy = [-7, -2, 4, -2][f], b = '#2e2430', w = '#4a3a50';
+        P.tri(12, 11, 1, 11 + wy, 14, 14, w); P.tri(21, 11, 33, 11 + wy, 19, 14, w); for (const s of [-1, 1]) for (let i = 0; i < 4; i++) P.px(17 + s * (15 - i * 3), 12 + wy * (1 - i * .22) + 2, '~#1a1220');
+        P.ell(16, 13, 6, 4, b); P.tri(10, 13, 4, 18, 11, 16, b); P.ell(23, 10, 3, 2.6, b); P.tri(25, 9, 30, 11, 25, 12, '#d8c060'); P.px(23, 9, '~#ff3a2a'); P.rect(13, 16, 2, 3, '#b8303a'); P.rect(17, 16, 2, 4, '#b8303a'); } },
     buzzard: { w: 32, h: 24, n: 4, key: e => e.rage ? 'f' : 'p', paint(P, f, v) { const fe = '#5a3a26', dk = '#3e271a', hd = '#d8826a';
         if (v === 'p') { P.rect(12, 20, 1, 4, '#c8a050'); P.rect(16, 20, 1, 4, '#c8a050'); P.ell(14, 14, 7, 6.5, fe); P.tri(6, 11, 2, 20, 10, 18, dk); P.ell(13, 15, 5, 4.5, shadeC(fe, .85)); P.ell(19, 9, 3.6, 2, '~#ece4d8'); P.ell(22, 6, 2.6, 2.4, hd); P.tri(24, 5, 27, 6.5, 24, 8, '#e8d0a0'); P.px(26, 8, '#e8d0a0'); P.px(22, 5, '~#141018'); return; }
         const wy = [-7, -2, 4, -2][f]; P.tri(10, 11, 1, 11 + wy, 13, 13, dk); P.tri(18, 11, 31, 11 + wy, 17, 13, dk); P.tri(10, 11, 3, 11 + wy * .8, 12, 12, fe); P.tri(18, 11, 29, 11 + wy * .8, 18, 12, fe);
@@ -2109,6 +2168,8 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
     gloomscale: P => { P.ell(8, 9, 6, 6, '#5a2a8a'); P.tri(2, 8, 14, 8, 8, 1, '#5a2a8a'); P.line(5, 12, 8, 6, '~#8a5ac8'); P.line(11, 12, 8, 6, '~#8a5ac8'); P.px(6, 5, '~#c89aff'); },
     silk: P => { P.ell(8, 9, 6, 5, '#f0f0f6'); P.line(3, 7, 13, 11, '~#c8c8d4'); P.line(3, 10, 13, 6, '~#c8c8d4'); P.line(13, 4, 15, 0, '#e8e8f0'); P.px(6, 7, '~#ffffff'); },
   };
+  XICON.warbanner = P => { P.rect(3, 1, 2, 15, '#7a5230'); P.rect(5, 2, 9, 8, '#b8303a'); P.tri(5, 10, 14, 10, 9.5, 14, '#b8303a'); P.tri(7, 10, 12, 10, 9.5, 12, null); P.rect(8, 4, 3, 3, '~#1a1218'); P.px(9, 5, '~#ffb03a'); P.px(13, 3, '~#8a2028'); P.px(6, 8, '~#8a2028'); P.px(3, 0, '~#d8b040'); };
+  XICON.raidscrap = P => { P.tri(2, 12, 9, 2, 13, 13, '#8a8a98'); P.tri(4, 11, 9, 4, 9, 12, '#b0b0bc'); P.rect(3, 12, 11, 2, '#5a3a22'); P.rect(6, 7, 5, 2, '#b8303a'); P.px(9, 4, '~#e8e8f0'); P.px(12, 11, '~#5a5a66'); };
   const xIcon = id => XICON[id] ? spr('xi|' + id, 16, 16, XICON[id], { hi: 1.18, lo: .78 }) : null;
 
   /* ---------- everyday items redrawn as detailed pixel icons: potions, gel, materials, bars, basic tools, armor, accessories ---------- */
@@ -2404,6 +2465,14 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
     pshot(g, e) { g.fillStyle = `hsl(${(e.t * 400 + e.id * 40) % 360},95%,72%)`; g.beginPath(); g.arc(0, 0, 8, 0, 7); g.fill(); g.fillStyle = '#ffffff'; g.beginPath(); g.arc(0, 0, 3.5, 0, 7); g.fill(); },
     vshot(g, e) { g.fillStyle = '#1a0a24'; g.beginPath(); g.arc(0, 0, 11, 0, 7); g.fill(); g.strokeStyle = '#ff8a2a'; g.lineWidth = 3; g.stroke(); g.fillStyle = '#ffb04a'; g.beginPath(); g.arc(0, 0, 3, 0, 7); g.fill(); },
   };
+  function wxDraw(g) { const k = wxLocal; if (!k || mapOpen) return; const v = K.view, W = v.x1 - v.x0, H = v.y1 - v.y0; let roof = false; for (let y = Math.floor(P.y - 3); y > P.y - 16 && y >= 0; y--) if (SOLID.has(at(Math.floor(P.x), y))) { roof = true; break; }
+    g.save(); g.globalAlpha = roof ? .3 : 1;
+    if (k === 'rain') { g.strokeStyle = 'rgba(170,205,255,.55)'; g.lineWidth = 2; g.beginPath(); for (let i = 0; i < 90; i++) { const x = v.x0 + ((i * 173.3 - anim * 260 - cam.x * .6) % W + W) % W, y = v.y0 + ((i * 97.7 + anim * (900 + i % 5 * 60) - cam.y * .6) % H + H) % H; g.moveTo(x, y); g.lineTo(x - 5, y + 18); } g.stroke();
+      if (!roof && flashT <= 0 && R() < .0016) { flashT = .22; K.sfx(60, .7, 'sawtooth', .07, -20); } if (flashT > 0) { flashT -= 1 / 60; g.fillStyle = `rgba(235,240,255,${(flashT * 1.6).toFixed(2)})`; g.fillRect(v.x0, v.y0, W, H); } }
+    else if (k === 'sand') { g.fillStyle = 'rgba(214,176,110,.2)'; g.fillRect(v.x0, v.y0, W, H); g.fillStyle = 'rgba(240,214,160,.6)'; for (let i = 0; i < 80; i++) { const x = v.x0 + ((i * 151.7 + anim * (700 + i % 7 * 70) - cam.x * .6) % W + W) % W, y = v.y0 + ((i * 89.3 + Math.sin(anim * 2 + i) * 30 - cam.y * .6) % H + H) % H; g.fillRect(x, y, 9 + i % 4 * 3, 2); } }
+    else { g.fillStyle = 'rgba(225,240,255,.14)'; g.fillRect(v.x0, v.y0, W, H); g.fillStyle = 'rgba(255,255,255,.85)'; for (let i = 0; i < 90; i++) { const x = v.x0 + ((i * 167.9 - anim * (330 + i % 6 * 40) - cam.x * .6) % W + W) % W, y = v.y0 + ((i * 101.3 + anim * (240 + i % 4 * 50) - cam.y * .6) % H + H) % H, s = 2 + i % 3; g.fillRect(x, y, s, s); } }
+    g.restore(); }
+  function raidHud(g) { if (!raid || mapOpen) return; const w = 360, x = 640 - w / 2, y = Math.max(K.view.y0 + 96, 96), k = clamp(raid.done / Math.max(1, raid.need), 0, 1); g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(x, y, w, 18); g.fillStyle = '#b8303a'; g.fillRect(x + 2, y + 2, (w - 4) * k, 14); outlined(g, `Marauder Raid  ${raid.done} / ${raid.need}`, 640, y - 6, 18, '#ffb07a', 'center'); }
   let furyC = null;
   function drawEnemy(g, e) { if (KIND[e.kind] && KIND[e.kind].boss && e.rage) { if (!furyC) { furyC = document.createElement('canvas'); furyC.width = furyC.height = 128; const fg = furyC.getContext('2d'), gr = fg.createRadialGradient(64, 64, 4, 64, 64, 64); gr.addColorStop(0, 'rgba(255,40,20,.6)'); gr.addColorStop(.45, 'rgba(255,40,20,.28)'); gr.addColorStop(1, 'rgba(255,40,20,0)'); fg.fillStyle = gr; fg.fillRect(0, 0, 128, 128); } const r = 34 + e.w * TS + Math.sin(anim * 6) * 12, cy = sy(e.y) - e.h * TS / 2; g.drawImage(furyC, sx(e.x) - r, cy - r, r * 2, r * 2); } if ((!(KIND[e.kind] && KIND[e.kind].draw) || BOSSA[e.kind]) && drawMob(g, e)) return; const D = KIND[e.kind]; if (D && D.draw) { const tp = nearestP(e.x, e.y); g.save(); g.translate(Math.round(sx(e.x)), Math.round(sy(e.y))); if (e.hit > 0) g.globalCompositeOperation = 'lighter'; try { BDRAW[D.draw](g, e, Math.sign(tp.x - e.x) || 1); } finally { g.restore(); } return; }
     if (!D || !D.ai) return drawEnemy0(g, e); const k = e.kind, c = e.c; e.kind = D.ai; if (D.c) e.c = D.c;
@@ -2608,7 +2677,7 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
   let mapOpen = false, mapCv = null, mapT = 0, mapZ = 1, mapC = null, mapDrag = null;
   const MAPC = { 1: '#8a5a32', 2: '#4caa2a', 3: '#7a7a84', 4: '#e8904a', 5: '#d8c8b8', 6: '#ffe050', 7: '#7a4e26', 8: '#3a8a2a', 9: '#b07a42', 10: '#ffd23f', 11: '#9a6a3a', 12: '#6a6a74', 13: '#5a6068', 14: '#d8c070', 15: '#ff3a5a',
     16: '#f0f4ff', 17: '#8a5ad8', 18: '#4a4246', 19: '#ff6a2a', 20: '#c89a4a', 21: '#ffd23f', 22: '#c8302a', 23: '#e8e0c8', 24: '#3a4a6a', 25: '#9a5a3a', 26: '#a06c3e', 27: '#a06c3e', 28: '#ffd23f', 29: '#ff8a1a', 30: '#c8303a',
-    31: '#80808a', 32: '#c87a42', 33: '#e8c040', 34: '#bfe6ff', 35: '#7a4e26', 36: '#4a3a2a', 37: '#3ac84a', 38: '#6a4a24', 39: '#a07a30', 40: '#ff6a2a', 41: '#c8c8d0', 42: '#2a5ad8', 43: '#e8e8f0', 44: '#c8a060', 45: '#2a1a3a', 46: '#9a6a3a', 47: '#9a6a3a', 48: '#a06c3e', 49: '#f0f6ff', 50: '#8ed0f0', 51: '#2a5e42', 52: '#7a3a9a', 53: '#5a4470', 54: '#e05aff', 55: '#2a9ac8', 56: '#7ae8ff', 57: '#2a9ac8', 58: '#c8e0e8', 59: '#ffffff', 60: '#4a8aff', 61: '#3ad87a', 62: '#ffe8a0', 63: '#4ab0ff', 64: '#5ab0c8', 65: '#5ae0e8', 66: '#c8b8e0' };
+    31: '#80808a', 32: '#c87a42', 33: '#e8c040', 34: '#bfe6ff', 35: '#7a4e26', 36: '#4a3a2a', 37: '#3ac84a', 38: '#6a4a24', 39: '#a07a30', 40: '#ff6a2a', 41: '#c8c8d0', 42: '#2a5ad8', 43: '#e8e8f0', 44: '#c8a060', 45: '#2a1a3a', 46: '#9a6a3a', 47: '#9a6a3a', 48: '#a06c3e', 49: '#f0f6ff', 50: '#8ed0f0', 51: '#2a5e42', 52: '#7a3a9a', 53: '#5a4470', 54: '#e05aff', 55: '#2a9ac8', 56: '#7ae8ff', 57: '#2a9ac8', 58: '#c8e0e8', 59: '#ffffff', 60: '#4a8aff', 61: '#3ad87a', 62: '#ffe8a0', 72: '#3ad8c8', 73: '#8a4aff', 63: '#4ab0ff', 64: '#5ab0c8', 65: '#5ae0e8', 66: '#c8b8e0' };
   const MAPW = { 1: '#3a2616', 2: '#26262c', 3: '#3a1410', 4: '#1a2236', 5: '#4a3418', 6: '#5a4a2a', 7: '#1e2e18', 8: '#5a3a1e', 9: '#4a4a52', 10: '#52525c', 11: '#7a4a2a', 12: '#9a7a24', 13: '#5a8aa8', 20: '#2a4660', 21: '#2e2238', 22: '#1c2a40', 23: '#4e4266' };
   // the whole world as one pixel per tile, redrawn when the map opens and twice a second while it is open
   function buildMap() {
@@ -2745,7 +2814,7 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
   const statLine = it => [it.melee && `${it.melee} melee damage`, (it.pick || it.axe || it.hammer) && it.dmg && `${it.dmg} melee damage`, it.pick && `${Math.round(it.pick * 35)}% mining power`, it.axe && `${Math.round(it.axe * 17.5)}% chopping power (wood)`, it.hammer && `${Math.round(it.hammer * 35)}% hammer power · knocks down walls`, it.wall && 'background wall · hammers take it down', it.tile === 46 && 'opens with a click or when you walk into it', it.coin && 'money · traders take it', it === IT.frostgrip && 'no slipping on ice', it === IT.gustjar && 'jump again in the air', it === IT.emberboots && 'press jump in the air, then hold it, to fly up for a moment', it === IT.windstep && 'tap left or right twice to dash', it.acc === 'wings' && 'press jump in the air and hold it to fly, then glide', it.hook && 'shoots a hook at blocks and pulls you to them · jump to let go', it.rod && `${it.rod} fishing power · click water to cast, click again when it bites · needs bait`, it.bait && `${it.bait} bait power`, it.fish && 'a fish · traders buy it, some cook at a campfire', it.use && it.use.startsWith('crate:') && 'click to open', it === IT.sunfeather && 'hold jump while falling to glide', it.tile === 48 && `stand on it · ${keyName(KB().down).toUpperCase()} drops through`,
     it.reach && 'long reach', it.bow && `${it.bow} ranged damage`, it.gun && `${it.gun} ranged damage`, it.shots && `${it.shots} shots at once`, it.magic && `${it.magic} magic damage`, it.mp && `${it.mp} mana per cast`, it.boom && `${it.boom} thrown damage`,
     it.throw && `${it.dmg} thrown damage`, it.ammo && `${it.dmg} damage ammo`, it.fire && 'sets enemies on fire', it.armor && `${it.armor} defense (${it.slot || 'body'})`, it.set && bonusText(SETS[it.set].bon) && `full ${SETS[it.set].n} set: ${bonusText(SETS[it.set].bon)}`, it.use === 'heal' && 'heals 100 life', it.use === 'lheal' && 'heals 50 life', it.use === 'mpot' && 'restores 100 mana', it.use === 'recall' && 'takes you back to your spawn point', it.use === 'home' && 'takes you back to your spawn point, as often as you like (5s recharge)', it.spawn && 'sets your spawn point', (it.tile === 28 || it.tile === 29) && 'gives light', it.use === 'life' && '+20 max life', it.use === 'mana' && '+20 max mana',
-    it.use && it.use.startsWith('boss:') && 'summons a boss', it.use && it.use.startsWith('buff:') && `${BUFFS[it.use.slice(5)].n}, 3 min: ${bonusText(BUFFS[it.use.slice(5)].bon)}`, it.pet && 'pet · goes in the pet slot next to your accessories', it.acc && 'accessory', it.bon && bonusText(it.bon), it.bucket === 'empty' && 'scoops up a full cell of water, lava or honey', it.bucket > 0 && `pours ${LQ[it.bucket].n.toLowerCase()} · empties back into a bucket`, it.summon && `summons a ${MINI[it.summon].n} · ${MINI[it.summon].dmg} summon damage · ${it.mp} mana`, it.tile && 'can be placed'].filter(Boolean).join(' · ');
+    it.use && it.use.startsWith('boss:') && 'summons a boss', it.use && it.use.startsWith('buff:') && `${BUFFS[it.use.slice(5)].n}, 3 min: ${bonusText(BUFFS[it.use.slice(5)].bon)}`, it.pet && 'pet · goes in the pet slot next to your accessories', it.acc && 'accessory', it.has && 'forged from ' + it.has.map(q => IT[q].n).join(' + ') + ' (parts worn alongside add nothing)', it.bon && bonusText(it.bon), it.bucket === 'empty' && 'scoops up a full cell of water, lava or honey', it.bucket > 0 && `pours ${LQ[it.bucket].n.toLowerCase()} · empties back into a bucket`, it.summon && `summons a ${MINI[it.summon].n} · ${MINI[it.summon].dmg} summon damage · ${it.mp} mana`, it.tile && 'can be placed'].filter(Boolean).join(' · ');
   function inventory(g) {
     if (bag()) return bagTouch(g);
     g.save(); g.translate(OX(), TOP());
@@ -2771,9 +2840,12 @@ const amS = () => { if (!ch.am || ch.am.length !== 4) ch.am = [null, null, null,
   const unrle = (b, n) => { const a = new Uint8Array(n); let k = 0; for (let i = 0; i < b.length; i += 2) { a.fill(b[i + 1], k, k + b[i]); k += b[i]; } return a; };
   const b64 = a => { let s = ''; for (let i = 0; i < a.length; i += 8192) s += String.fromCharCode.apply(null, a.subarray(i, i + 8192)); return btoa(s); };
   const unb64 = s => { const b = atob(s), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; };
-  function packWorld() { return { pv: b64(rle(PVA())), lq: liq ? b64(rle(liq)) : null, lk: lqk ? b64(rle(lqk)) : null, ex: explored ? b64(rle(explored)) : null, ww: WW, wh: WH, t: b64(rle(tiles)), w: b64(rle(walls)), s: Array.from(surf), c: chests, np: npcs.map(n => ({ k: n.k, nm: n.nm, x: +n.x.toFixed(2), y: +n.y.toFixed(2), hp: Math.round(n.hp), h: n.house })), ng: npcGone, time, downed, jg: jungle, tp: temple, hm: hard, df: dfc, bd: [...brokenDeco], ra: radiant, hb: hearts, fr: frost, bl: blight, gl: glowc, sk: isles }; }
-  let pv = null, pvT = null; const PVA = () => { if (!pv || pvT !== tiles || pv.length !== WW * WH) { pv = new Uint8Array(WW * WH); pvT = tiles; } return pv; };
-function unpackWorld(W) { unpackWorld0(W); pv = W.pv ? unrle(unb64(W.pv), WW * WH) : new Uint8Array(WW * WH); pvT = tiles; }
+  function packWorld() { return { ov: oreV, pv: b64(rle(PVA())), lq: liq ? b64(rle(liq)) : null, lk: lqk ? b64(rle(lqk)) : null, ex: explored ? b64(rle(explored)) : null, ww: WW, wh: WH, t: b64(rle(tiles)), w: b64(rle(walls)), s: Array.from(surf), c: chests, np: npcs.map(n => ({ k: n.k, nm: n.nm, x: +n.x.toFixed(2), y: +n.y.toFixed(2), hp: Math.round(n.hp), h: n.house })), ng: npcGone, time, downed, jg: jungle, tp: temple, hm: hard, df: dfc, bd: [...brokenDeco], ra: radiant, hb: hearts, fr: frost, bl: blight, gl: glowc, sk: isles }; }
+  let oreV = 1;
+function oreUpgrade() { const put = (t, n, lo, hi, r) => { for (let i = 0; i < n * WW / 520 * DK; i++) { const x = Math.floor(rnd(4, WW - 4)), y = Math.floor(rnd(lo(x), hi)); for (let k = 0; k < r * 3; k++) { const tx = x + Math.round(rnd(-r, r)), ty = y + Math.round(rnd(-r, r)), j = ty * WW + tx; if (tx > 1 && ty > 1 && tx < WW - 1 && ty < WH - 1 && tiles[j] === T.STONE && !(explored && explored[j])) tiles[j] = t; } } };
+  put(T.TIDESTEEL, 44, x => surf[x] + Math.round(60 * DK), DY(175), 1.6); if (hard) put(T.UMBRITE, 60, () => HELL - 80, HELL - 4, 1.6); oreV = 1; }
+let pv = null, pvT = null; const PVA = () => { if (!pv || pvT !== tiles || pv.length !== WW * WH) { pv = new Uint8Array(WW * WH); pvT = tiles; } return pv; };
+function unpackWorld(W) { unpackWorld0(W); oreV = W.ov | 0; if (oreV < 1) oreUpgrade(); pv = W.pv ? unrle(unb64(W.pv), WW * WH) : new Uint8Array(WW * WH); pvT = tiles; }
 function unpackWorld0(W) { WW = W.ww || 520; setDepth(W.wh || 210); tiles = unrle(unb64(W.t), WW * WH); walls = unrle(unb64(W.w), WW * WH); surf = Int16Array.from(W.s); chests = W.c || {}; npcs = (W.np || []).filter(o => NPCS[o.k]).map(o => newNpc(o.k, o.nm, o.x, o.y, o.h || null, o.hp)); npcGone = W.ng || {}; npcT = 0; time = W.time || .05; downed = W.downed || {}; jungle = W.jg || null; temple = W.tp || null; hard = W.hm || 0; brokenDeco = new Set(W.bd || []); dfc = W.df == null ? 1 : W.df | 0; radiant = W.ra || null; hearts = W.hb || 0; frost = W.fr || null; blight = W.bl || null; glowc = W.gl || []; isles = W.sk || []; explored = W.ex ? unrle(unb64(W.ex), WW * WH) : new Uint8Array(WW * WH);
     if (W.lq && W.lk) { liq = unrle(unb64(W.lq), WW * WH); lqk = unrle(unb64(W.lk), WW * WH); } else { liq = new Uint8Array(WW * WH); lqk = new Uint8Array(WW * WH); }
     for (let i = 0; i < tiles.length; i++) if (tiles[i] === T.WATER) { tiles[i] = T.AIR; liq[i] = 8; lqk[i] = 1; }   // worlds from before liquids flowed
@@ -3087,7 +3159,7 @@ function unpackWorld0(W) { WW = W.ww || 520; setDepth(W.wh || 210); tiles = unrl
     const o = others.get(from);
     if (m.t === 'bl' && typeof m.s === 'string') { say(m.s.slice(0, 80), 5, '#ff9aff'); return; }
     if (m.t === 'p' && o) { if (m.d && !o.dead) markBossDeath(from); o.hk = Array.isArray(m.hk) && m.hk.length === 3 && m.hk.every(Number.isFinite) ? m.hk : null; o.petK = typeof m.pt === 'string' && PETA[m.pt] ? m.pt : null; { const L = Array.isArray(m.mn) ? m.mn.filter(q => Array.isArray(q) && MINI[q[0]]) : []; o.mins = L.map((q, i) => { const prev = o.mins && o.mins[i] && o.mins[i].k === q[0] ? o.mins[i] : { k: q[0], x: q[1], y: q[2], t: Math.random() * 6, tr: [] }; prev.tx = q[1]; prev.ty = q[2]; prev.vx = q[3]; return prev; }); } if (m.lk) o.look = m.lk; o.p = o.p || { w: .8, h: 1.9 }; if (o.p.x == null) { o.p.x = m.x; o.p.y = m.y; } Object.assign(o.p, { tx: m.x, ty: m.y, vx: m.vx, vy: m.vy, ground: m.g }); o.face = m.f; o.sw = m.s; o.held = m.h; o.armor = m.a; o.dead = m.d; }
-    else if (m.t === 'tl') set(m.x, m.y, m.v); else if (dropMsg(m, from)) {} else if (m.t === 'pv' && m.x >= 0 && m.y >= 0 && m.x < WW && m.y < WH) PVA()[m.y * WW + m.x] = m.v & 63;
+    else if (m.t === 'tl') set(m.x, m.y, m.v); else if (m.t === 'raid') { if (isHost() && night()) startRaid(); } else if (dropMsg(m, from)) {} else if (m.t === 'pv' && m.x >= 0 && m.y >= 0 && m.x < WW && m.y < WH) PVA()[m.y * WW + m.x] = m.v & 63;
     else if (m.t === 'chest') chests[m.key] = [];
     else if (m.t === 'cs') chests[m.key] = m.c || [];
     else if (m.t === 'wl') { if (walls && m.x >= 0 && m.x < WW && m.y >= 0 && m.y < WH) walls[m.y * WW + m.x] = m.v; }
@@ -3101,12 +3173,12 @@ function unpackWorld0(W) { WW = W.ww || 520; setDepth(W.wh || 210); tiles = unrl
     else if (m.t === 'hm') startHardmode(m.sd);
     else if (m.t === 'npt' && isHost()) { const n = npcs.find(n => n.id === m.id); if (n) n.talk = 4; }
     else if (m.t === 'e' && !isHost()) {
-      time = m.time; const seen = new Set();
+      time = m.time; wx = m.wx ? 1 : 0; raid = Array.isArray(m.rd) ? { done: m.rd[0] | 0, need: m.rd[1] | 0 } : null; const seen = new Set();
       for (const [id, kind, x, y, hp, max, rage] of m.l) { seen.add(id); let e = ents.find(e => e.id === id); if (!e) { e = { id, kind, x, y, vx: 0, vy: 0, w: KIND[kind].w, h: KIND[kind].h, t: 0, hit: 0, c: '#3aa0ff', fly: KIND[kind].fly }; ents.push(e); } e.tx = x; e.ty = y; e.hp = hp; e.max = max; e.rage = rage; }
       ents = ents.filter(e => seen.has(e.id));
     }
   }
-  function enterWorld() { closeBook(); closeSettings(); minions = []; mapOpen = false; mapC = null; setTimeout(findTraps, 0); mode = 'play'; talk = null; shopK = null; rfOpen = false; rfItem = null; ents = []; drops = []; projs = []; pops = []; mine = null; invOpen = false; boss = null; won = null; dead = null; if (wslot >= 0 && isHost() && worlds()[wslot]) unpackWorld(worlds()[wslot]); newPlayer(); cam.x = P.x * TS - 640; cam.y = (P.y - 1.4) * TS - 380; computeLight(); if (online()) say('Online! Your friends share this world.', 4); }
+  function enterWorld() { wx = 0; wxT = 150 + R() * 250; wxLocal = wxWas = null; raid = null; closeBook(); closeSettings(); minions = []; mapOpen = false; mapC = null; setTimeout(findTraps, 0); mode = 'play'; talk = null; shopK = null; rfOpen = false; rfItem = null; ents = []; drops = []; projs = []; pops = []; mine = null; invOpen = false; boss = null; won = null; dead = null; if (wslot >= 0 && isHost() && worlds()[wslot]) unpackWorld(worlds()[wslot]); newPlayer(); cam.x = P.x * TS - 640; cam.y = (P.y - 1.4) * TS - 380; computeLight(); if (online()) say('Online! Your friends share this world.', 4); }
 
   /* ---------- the loop ---------- */
   let openCh = null, hoverChest = -1, autoDoors = [], rfOpen = false, rfItem = null;   // the chest you have open, and doors that opened as you walked into them
@@ -3114,15 +3186,16 @@ function unpackWorld0(W) { WW = W.ww || 520; setDepth(W.wh || 210); tiles = unrl
   function update(dt) {
     anim += dt; if (msg && (msg.k += dt) > msg.d) msg = null; for (const p of pops) p.t += dt; pops = pops.filter(p => p.t < 1);
     if (mode !== 'play') return;
-    if (isHost()) time += dt / 600;
+    if (isHost()) { const t0 = time; time += dt / 600; eventTick(dt, t0); }
+    if ((wxScan -= dt) <= 0) { wxScan = 1; wxLocal = wxAt(P); if (wxLocal !== wxWas) { if (wxLocal) say({ rain: 'Rain begins to fall.', sand: 'A sandstorm blows in.', snow: 'A blizzard sweeps down.' }[wxLocal], 3, '#9fd8ff'); else if (wxWas && !wx) say('The weather clears.', 3, '#9fd8ff'); wxWas = wxLocal; } }
     if (won) { won.t += dt; if (won.t > 6 && !won.over) { won.over = 1; saveAll(); K.over({ title: 'The Ember Lord is defeated!', text: `You conquered all four bosses. Score ${score}. Your world and character are saved: keep playing any time.`, delay: 100 }); } }
     if (dead) { dead.t += dt; if (dead.perm) { if (dead.t > 5) { dead = null; saveAll(); backToMenu(); menuNote = 'That Ironheart character has fallen.'; menuNoteUntil = performance.now() + 6000; return; } } else if (dead.t > DFX().resp) { dead = null; P.hp = ch.max; P.x = P.spawn.x; P.y = P.spawn.y; P.vx = P.vy = 0; unstick(P); } }
     else {
-      const ice = P.ground && at(Math.floor(P.x), Math.floor(P.y + .05)) === T.ICE && !(ch.acc || []).includes('frostgrip'), acc = P.ground ? (ice ? 20 : 60) : 30, mxs = 9.5 * (1 + B().speed) * (P.webbed > 0 ? .4 : 1), dir = (keys.r ? 1 : 0) - (keys.l ? 1 : 0);
+      const ice = P.ground && at(Math.floor(P.x), Math.floor(P.y + .05)) === T.ICE && !accAll().includes('frostgrip'), acc = P.ground ? (ice ? 20 : 60) : 30, mxs = 9.5 * (1 + B().speed) * (P.webbed > 0 ? .4 : 1), dir = (keys.r ? 1 : 0) - (keys.l ? 1 : 0);
       if (dir) { P.vx += dir * acc * dt; P.face = dir; } else P.vx *= P.ground ? Math.pow(ice ? .4 : .0001, dt) : Math.pow(.3, dt);
       if (!(P.dashT > 0)) P.vx = clamp(P.vx, -mxs, mxs);
       const gr0 = P.ground; if (keys.j && P.ground) { P.vy = -20.5; P.ground = false; K.sfx(240, .05, 'square', .04, 120); }
-      { const A = ch.acc || [], wings = A.includes('prismwings') || A.includes('gloomwings'), jp = keys.j && !P.jPrev; P.jPrev = keys.j;
+      { const A = accAll(), wings = A.includes('prismwings') || A.includes('gloomwings'), jp = keys.j && !P.jPrev; P.jPrev = keys.j;
         if (gr0) { P.fuel = wings ? 2.4 : 1.2; P.dj = 0; P.fly = 0; }
         else if (jp) { if (A.includes('gustjar') && !P.dj) { P.dj = 1; P.vy = -18; K.sfx(520, .08, 'sine', .05, 300); K.burst(scrX(sx(P.x)), scrY(sy(P.y)), ['#ffffff', '#cfeeff'], 8, 120, { life: .4, size: 4, gravity: 0 }); } P.fly = 1; }
         if (!P.ground && P.fly && keys.j && (wings || A.includes('emberboots')) && P.fuel > 0 && !jp) { P.fuel -= dt; P.vy = Math.max(P.vy - (wings ? 100 : 80) * dt, wings ? -11 : -9); if (R() < dt * 30) K.burst(scrX(sx(P.x)), scrY(sy(P.y - .4)), wings ? (A.includes('prismwings') ? ['#ff9aff', '#9af4ff', '#ffffff'] : ['#9a5ae8', '#3a1a4a']) : ['#ffb04a', '#ff6a2a'], 2, 90, { life: .35, size: 3, gravity: 200 }); }
@@ -3136,7 +3209,7 @@ function unpackWorld0(W) { WW = W.ww || 520; setDepth(W.wh || 210); tiles = unrl
       if (P.burn > 0) { P.burn -= dt; if ((P.burnT = (P.burnT || 0) - dt) <= 0) { P.burnT = .5; P.hp -= 3; pops.push({ x: P.x, y: P.y - 3, t: 0, s: '-3', c: '#ff9a3a' }); if (P.hp <= 0) { P.hp = 1; P.inv = 0; hurt(9999, P.x, 'burn'); } } }
       if (at(Math.floor(P.x), Math.floor(P.y - 1)) === T.COBWEB || at(Math.floor(P.x), Math.floor(P.y - 1.6)) === T.COBWEB) { P.webbed = Math.max(P.webbed || 0, .3); P.vy = Math.min(P.vy, 3); }
       if (P.webbed > 0) P.webbed -= dt;
-      if (keys.j && P.vy > 3 && (ch.acc || []).includes('sunfeather')) P.vy = 3;   // gliding
+      if (keys.j && P.vy > 3 && accAll().includes('sunfeather')) P.vy = 3;   // gliding
       if (P.hook) { const H = P.hook; if (H.st === 'fly') { for (let k = 0; k < 4 && H.st === 'fly'; k++) { H.x += H.vx * dt / 4; H.y += H.vy * dt / 4; if (solid(H.x, H.y)) { H.st = 'hold'; K.sfx(260, .05, 'square', .05); } } if (H.st === 'fly' && Math.hypot(H.x - P.x, H.y - P.y + 1.2) > 14) P.hook = null; }
         else if (!solid(H.x, H.y) || (keys.j && !P.hookJ)) { if (keys.j) P.vy = Math.min(P.vy, -12); P.hook = null; }
         else { const dx = H.x - P.x, dy = H.y - (P.y - 1), d = Math.hypot(dx, dy); if (d > 1.1) { P.vx = dx / d * 24; P.vy = dy / d * 24; } else { P.vx = 0; P.vy = -48 * dt; } P.dj = 0; P.fly = 0; P.fuel = Math.max(P.fuel || 0, .6); } }
@@ -3172,7 +3245,7 @@ function unpackWorld0(W) { WW = W.ww || 520; setDepth(W.wh || 210); tiles = unrl
     for (const [, o] of others) if (o.p && o.p.tx != null) { o.p.x += (o.p.tx - o.p.x) * Math.min(1, dt * 12); o.p.y += (o.p.ty - o.p.y) * Math.min(1, dt * 12); }
     if (online()) {
       if ((sendT -= dt) <= 0) { sendT = .1; const s = cur(); MP.send({ t: 'p', lk: look, x: +P.x.toFixed(2), y: +P.y.toFixed(2), vx: +P.vx.toFixed(1), vy: +P.vy.toFixed(1), g: P.ground, f: P.face, s: P.swing > 0 ? +P.swing.toFixed(2) : 0, h: s && s.id, a: gear(), d: !!dead, pt: ch.pet && IT[ch.pet] ? IT[ch.pet].pet : 0, hk: P.hook ? [+P.hook.x.toFixed(2), +P.hook.y.toFixed(2), P.hook.st === 'hold' ? 1 : 0] : 0, mn: minions.length ? minions.map(m => [m.k, +m.x.toFixed(1), +m.y.toFixed(1), m.vx < 0 ? -1 : 1]) : 0 }); }
-      if (isHost() && (eSendT -= dt) <= 0) { eSendT = .12; if (npcs.length) MP.send({ t: 'np', l: npcs.map(n => [n.id, n.k, n.nm, +n.x.toFixed(2), +n.y.toFixed(2), n.face, Math.round(n.hp), n.max]) }); MP.send({ t: 'e', time, l: ents.slice(0, 40).map(e => [e.id, e.kind, +e.x.toFixed(2), +e.y.toFixed(2), Math.round(e.hp), Math.round(e.max), e.rage ? 1 : 0]) }); }
+      if (isHost() && (eSendT -= dt) <= 0) { eSendT = .12; if (npcs.length) MP.send({ t: 'np', l: npcs.map(n => [n.id, n.k, n.nm, +n.x.toFixed(2), +n.y.toFixed(2), n.face, Math.round(n.hp), n.max]) }); MP.send({ t: 'e', time, wx, rd: raid ? [raid.done, raid.need] : 0, l: ents.slice(0, 40).map(e => [e.id, e.kind, +e.x.toFixed(2), +e.y.toFixed(2), Math.round(e.hp), Math.round(e.max), e.rage ? 1 : 0]) }); }
     }
     const tx = P.x * TS - 640, ty = (P.y - 1.4) * TS - 380; cam.x += (tx - cam.x) * Math.min(1, dt * 10); cam.y += (ty - cam.y) * Math.min(1, dt * 10);
     { const v = WV(); cam.x = clamp(cam.x, -v.x0, WW * TS - v.x1); cam.y = clamp(cam.y, -200 - v.y0, WH * TS - v.y1); }
@@ -3233,6 +3306,7 @@ function unpackWorld0(W) { WW = W.ww || 520; setDepth(W.wh || 210); tiles = unrl
     g.restore();
     if (dead) { g.fillStyle = 'rgba(60,0,0,.35)'; cover(g); { const m = dead.msg || 'You were slain.'; g.font = `40px ${PXF}`; const sz = Math.min(40, Math.floor(40 * 1100 / Math.max(1, g.measureText(m).width))); outlined(g, m, 640, 340, sz, '#ff6a6a', 'center'); } outlined(g, dead.perm ? 'Their tale ends here.' : 'Back in ' + Math.max(1, Math.ceil(DFX().resp - dead.t)) + '...', 640, 384, 22, '#ffd0d0', 'center'); }
     if (won && won.t < 6) outlined(g, 'VICTORY', 640, 300, 56, '#ffd23f', 'center');
+    if (!posed && mode === 'play') { wxDraw(g); raidHud(g); }
     if (!posed) hud(g); drawFeed(g, 1 / 60); if (invOpen) inventory(g); if (talk && !mapOpen) drawTalk(g); if (mobOn()) mobUI(g);
     if (mapOpen) drawMap(g);
     if (upright()) turnCard(g);
@@ -3331,7 +3405,7 @@ function unpackWorld0(W) { WW = W.ww || 520; setDepth(W.wh || 210); tiles = unrl
     if (inB(L.list, x, y)) drag = { y, c: cpy, moved: false, row: crow(L, y) };
   }
   let lastTap = { d: 0, t: -9 };
-  function tapDash(d) { if (P && (ch.acc || []).includes('windstep') && lastTap.d === d && anim - lastTap.t < .28 && !(P.dashCd > 0) && !dead) { P.vx = d * 25; P.dashT = .22; P.dashCd = .9; K.sfx(300, .1, 'sine', .05, 400); K.burst(scrX(sx(P.x)), scrY(sy(P.y - .5)), ['#ffffff', '#bfe6ff'], 6, 100, { life: .3, size: 3, gravity: 0 }); lastTap.t = -9; return; } lastTap = { d, t: anim }; }
+  function tapDash(d) { if (P && accAll().includes('windstep') && lastTap.d === d && anim - lastTap.t < .28 && !(P.dashCd > 0) && !dead) { P.vx = d * 25; P.dashT = .22; P.dashCd = .9; K.sfx(300, .1, 'sine', .05, 400); K.burst(scrX(sx(P.x)), scrY(sy(P.y - .5)), ['#ffffff', '#bfe6ff'], 6, 100, { life: .3, size: 3, gravity: 0 }); lastTap.t = -9; return; } lastTap = { d, t: anim }; }
   function toggleInv() { if (hbOpen) closeBook(); if (bestOpen) closeBest(); invOpen = !invOpen; if (!invOpen) { openCh = null; shopK = null; rfClose(); } cscroll = 0; cpy = 0; drag = null; picked = -1; if (!invOpen && held) { give(held.id, held.n); held = null; } K.sfx(invOpen ? 600 : 400, .05, 'square', .04); useHeld = false; }
   let tHold = null;
   const isLight = s => s && IT[s.id] && (IT[s.id].tile === T.TORCH || IT[s.id].tile === T.LANTERN);
