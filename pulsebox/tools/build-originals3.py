@@ -1,4 +1,4 @@
-"""Builds the three stand-alone originals (Tetherpost Express, Nibbleborough, Bricktide Salvage):
+"""Builds the stand-alone originals (Tetherpost Express, Nibbleborough):
 src/originals3/<id>.html + fit.css + fit.js -> public/games/<id>.html.
 The source pages are complete games on their own; this step fits them to the Pulsebox frame (no page scrolling,
 the side panel as a drawer on small screens, touch buttons on the game) and drops the link back to their own index.
@@ -8,7 +8,7 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(HERE, 'src', 'originals3')
 rd = lambda n: open(os.path.join(SRC, n), encoding='utf-8').read()
 css, js = rd('fit.css'), rd('fit.js')
-DOCK = {'tetherpost-express': [], 'nibbleborough': ['pulse'], 'bricktide-salvage': ['ready', 'fire']}
+DOCK = {'tetherpost-express': [], 'nibbleborough': ['pulse']}   # Bricktide Salvage was rebuilt as a kit game: src/games/bricktide-salvage.js
 for gid, dock in DOCK.items():
     h = rd(gid + '.html')
     back = '<a class="back" href="../index.html">← All three games</a>'
