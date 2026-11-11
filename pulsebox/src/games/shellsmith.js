@@ -8,7 +8,7 @@ const GAME = {
   font: 'Russo One', accent: '#ff8a1e', accent2: '#4fe0c8', bg: '#0b1422', noHud: true, noSkins: true, scoreLabel: 'Coins earned',
   how: [
     'Drag from anywhere to aim (direction and distance set the angle and power), let go to fire. Keyboard: arrows aim, Space fires, 1 2 3 pick a shell.',
-    'The camera rides along with the shell. On the first hit its softer outer casing splits and falls away; only the hard core inside carries on, with much less momentum, digging a short way in until it stops. The metal around it glows and crumbles, then the charge goes off. Skip jumps to the impact, Finish jumps to the end.',
+    'The camera rides along with the shell. On the first hit its softer outer casing starts to melt, running off in glowing drops from the nose back while the shell creeps on; once it is gone only the hard core carries on, with much less momentum, digging a short way in until it stops. The metal around it glows and crumbles, then the charge goes off. Skip jumps to the impact, Finish jumps to the end.',
     'Each yard hides a glowing core. Break or melt 90% of it to clear the level. Fewer shells means more stars and coins.',
     'Heat travels through steel: keep hitting the same spot and it softens, glows white and falls away. In the Workshop, a heavy casing and a hard nose reach deeper, delay fuses go off inside, thermite cooks, a liner fires a jet.',
   ],
@@ -160,9 +160,9 @@ const GAME = {
       { k: 'tri', n: 'Triple cone', cost: 3600, jet: 1.05, fan: 3, d: 'Three jets in a fan.' },
     ],
     fuse: [
-      { k: 'impact', n: 'Impact', cost: 0, delay: 5, d: 'Goes off as soon as the nose has dug in.' },
-      { k: 'short', n: 'Short delay', cost: 250, delay: 13, d: 'Goes off a short way past the first thing it hits.' },
-      { k: 'long', n: 'Long delay', cost: 700, delay: 30, d: 'Goes off deep inside, or in the room behind the wall.' },
+      { k: 'impact', n: 'Impact', cost: 0, delay: 3, d: 'Goes off as soon as the nose has dug in.' },
+      { k: 'short', n: 'Short delay', cost: 250, delay: 9, d: 'Goes off a short way past the first thing it hits.' },
+      { k: 'long', n: 'Long delay', cost: 700, delay: 24, d: 'Goes off deep inside, or in the room behind the wall.' },
       { k: 'stop', n: 'On stop', cost: 400, delay: 0, d: 'Digs in as far as it can go, and goes off when it stops.' },
       { k: 'air', n: 'Proximity', cost: 600, air: 1, d: 'Goes off just before it touches anything.' },
     ],
@@ -235,6 +235,18 @@ const GAME = {
     { n: 'The Onion', hint: 'Five rings. Peel them.', par: 6, reward: 6000 },
     { n: 'Stronghold', hint: 'A bunker inside the hill. A flat shot fits down the tunnel.', par: 4, reward: 6500 },
     { n: 'The Monolith', hint: 'A solid block: stone, concrete, lead, steel.', par: 8, reward: 7000 },
+    { n: 'Oil Rig', hint: 'A control room on stilts, next to the derrick.', par: 5, reward: 7500 },
+    { n: 'Windmill', hint: 'The core sits in the cap. Mind the sails.', par: 4, reward: 8000 },
+    { n: 'Cargo Ship', hint: 'The core is on the bridge at the stern.', par: 4, reward: 8500 },
+    { n: 'Stone Arch', hint: 'The core hangs under the keystone.', par: 3, reward: 9000 },
+    { n: 'Water Works', hint: 'Three tanks. The big one is lined with lead.', par: 4, reward: 9500 },
+    { n: 'Clock Tower', hint: 'Behind the clock, up in the tower.', par: 5, reward: 10000 },
+    { n: 'Hangar', hint: 'A steel shell with a door. Find the way in.', par: 5, reward: 10500 },
+    { n: 'The Stack', hint: 'Three bunkers on top of each other. It is in the middle one.', par: 6, reward: 11000 },
+    { n: 'The Maze', hint: 'Five walls of five materials. The core is at the end.', par: 6, reward: 11500 },
+    { n: 'Radar Station', hint: 'The receiver under the dish.', par: 2, reward: 12000 },
+    { n: 'Twin Vaults', hint: 'Two vaults, two cores, lead inside both.', par: 7, reward: 12500 },
+    { n: 'The Bastion', hint: 'Stone, steel and lead. The last yard.', par: 6, reward: 13500 },
   ];
   let GY = 176;
   const rect = (x, y, w, h, m) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, m); };
@@ -243,6 +255,7 @@ const GAME = {
   const halfDisc = (cx, cy, r, m, r0 = -1) => { for (let y = Math.floor(cy - r); y < cy; y++) for (let x = Math.floor(cx - r); x <= cx + r; x++) { const d = Math.hypot(x + .5 - cx, y + .5 - cy); if (d <= r && d > r0) set(x, y, m); } };
   const roof = (x, y, w, m) => { for (let j = 0; j < w / 2; j++) for (let i = j; i < w - j; i++) set(x + i, y - j, m); };
   // a leaning beam, w pixels wide, from (xt,yt) at the top to (xb,yb) at the bottom
+  const line = (x0, y0, x1, y1, w, m) => { const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0)); for (let k = 0; k <= n; k++) rect(Math.round(lp(x0, x1, k / n) - w / 2), Math.round(lp(y0, y1, k / n) - w / 2), w, w, m); };
   const leg = (xt, yt, xb, yb, w, m) => { for (let y = yt; y < yb; y++) { const xc = lp(xt, xb, (y - yt) / (yb - yt)); for (let i = 0; i < w; i++) set(Math.round(xc - w / 2) + i, y, m); } };
   function core(cx, cy, r, stand = true) {   // the core, on a little steel stand that reaches down to whatever is below it
     disc(cx, cy, r, CORE);
@@ -291,6 +304,33 @@ const GAME = {
       () => { ground(); rect(226, g - 8, 128, 8, CONC); const cx = 290, cy = g - 62; disc(cx, cy, 54, STONE, 45); disc(cx, cy, 45, LEAD, 39); disc(cx, cy, 39, CONC, 31); disc(cx, cy, 31, STEEL, 25); disc(cx, cy, 25, BRICK, 19); core(cx, cy + 8, 9); rect(cx - 12, cy + 17, 24, 3, STEEL); },
       () => { ground(x => x > 190 ? Math.max(g - 50, Math.round(g - (x - 190) * .9)) : g); box(262, g - 42, 70, 40, 6, CONC); rect(268, g - 36, 58, 28, E); core(300, g - 14.5, 6.5, false); rect(208, g - 31, 60, 13, E); box(284, g - 100, 30, 50, 6, STONE); for (const x of [284, 296, 308]) rect(x, g - 105, 6, 5, STONE); },
       () => { ground(); rect(236, g - 112, 110, 112, STONE); rect(250, g - 98, 82, 84, CONC); rect(262, g - 86, 58, 60, LEAD); rect(272, g - 76, 38, 40, STEEL); rect(279, g - 69, 24, 26, E); core(291, g - 50, 7, false); },
+      () => { ground(); for (const [xt, xb] of [[222, 214], [338, 346]]) leg(xt, g - 71, xb, g, 6, STEEL); for (const x of [262, 300]) rect(x, g - 71, 5, 71, STEEL); line(222, g - 66, 300, g - 8, 3, STEEL); line(338, g - 66, 262, g - 8, 3, STEEL); rect(210, g - 76, 140, 6, CONC);
+        leg(236, g - 130, 226, g - 76, 3, STEEL); leg(240, g - 130, 250, g - 76, 3, STEEL); rect(228, g - 132, 16, 3, STEEL); for (const y of [92, 108]) rect(229, g - y, 20, 2, STEEL);
+        rect(266, g - 80, 44, 4, STEEL); box(266, g - 102, 44, 26, 4, BRICK); rect(266, g - 97, 4, 12, GLASS); rect(306, g - 97, 4, 12, GLASS); core(288, g - 80 - 6.5, 6); roof(264, g - 103, 48, STEEL); },
+      () => { ground(); const cx = 300; for (let j = 0; j < 96; j++) { const hw = Math.round(22 - j * .1), y = g - 1 - j; rect(cx - hw, y, 2 * hw, 1, STONE); if (j > 3 && j < 92) rect(cx - hw + 5, y, 2 * hw - 10, 1, E); }
+        for (const j of [30, 60]) { const hw = Math.round(22 - j * .1) - 5; rect(cx - hw, g - 1 - j, 2 * hw, 2, WOOD); } core(cx, g - 61 - 7.5, 7); roof(cx - 24, g - 97, 48, BRICK);
+        rect(262, g - 82, 26, 4, STEEL); disc(262, g - 80, 4.5, STEEL); for (const a of [.8, 2.37, 3.94, 5.5]) { line(262, g - 80, 262 + Math.cos(a) * 36, g - 80 + Math.sin(a) * 36, 3, WOOD); line(262 + Math.cos(a) * 12, g - 80 + Math.sin(a) * 12, 262 + Math.cos(a + .35) * 32, g - 80 + Math.sin(a + .35) * 32, 2, WOOD); } },
+      () => { ground(); for (let y = g - 34; y < g; y++) { const x0 = Math.round(200 + (y - (g - 34)) * .9); rect(x0, y, 368 - x0, 1, STEEL); if (y >= g - 30 && y < g - 4) rect(x0 + 4, y, 360 - x0, 1, E); }
+        rect(204, g - 34, 164, 4, STEEL); for (const [x, y] of [[214, 50], [246, 50], [278, 50], [230, 66]]) box(x, g - y, 30, 16, 3, STEEL); rect(240, g - 26, 50, 8, WOOD);
+        box(322, g - 80, 40, 46, 3, STEEL); rect(322, g - 74, 3, 12, GLASS); rect(322, g - 56, 4, 10, GLASS); core(342, g - 38 - 6.5, 6); rect(338, g - 92, 3, 12, STEEL); },
+      () => { ground(); halfDisc(290, g, 70, STONE, 56); rect(212, g - 76, 156, 6, CONC); for (const x of [212, 360]) rect(x, g - 70, 8, 70, STONE); for (let x = 228; x < 356; x += 16) rect(x, g - 82, 4, 6, STONE);
+        rect(289, g - 57, 3, 16, STEEL); core(290.5, g - 35.5, 6, false); },
+      () => { ground(); for (const [cx, r, r0, lead] of [[238, 20, 15, 0], [300, 28, 22, 1], [358, 17, 13, 0]]) { rect(cx - 10, g - 4, 20, 4, CONC); disc(cx, g - r - 2.5, r, CONC, r0); if (lead) disc(cx, g - r - 2.5, r0, LEAD, r0 - 3); }
+        rect(256, g - 30, 18, 4, STEEL); rect(326, g - 24, 18, 4, STEEL); core(300, g - 30.5 + 19 - 6.5 - 2, 6); },
+      () => { ground(); box(270, g - 140, 44, 140, 6, BRICK); for (const y of [46, 92]) rect(276, g - y, 32, 3, WOOD); disc(262, g - 112, 10, STEEL, 7); line(262, g - 112, 262, g - 119, 2, STEEL); line(262, g - 112, 267, g - 110, 2, STEEL); rect(270, g - 120, 6, 16, GLASS); rect(278, g - 128, 4, 36, STEEL); rect(276, g - 46 - 3, 32, 3, WOOD);
+        core(294, g - 92 - 6.5, 6); roof(266, g - 141, 52, STEEL); rect(291, g - 168, 2, 10, STEEL); box(212, g - 36, 40, 36, 4, BRICK); roof(210, g - 37, 44, WOOD); },
+      () => { ground(); halfDisc(296, g, 62, STEEL, 56); rect(234, g - 30, 14, 30, E); rect(338, g - 12, 12, 12, E); rect(258, g - 40, 6, 40, CONC); rect(264, g - 40, 4, 40, STEEL); for (let x = 244; x < 350; x += 12) rect(x, g - 2, 2, 2, STEEL);
+        core(300, g - 10.5, 6); rect(270, g - 14, 16, 14, WOOD); rect(318, g - 20, 14, 20, WOOD); line(262, g - 28, 284, g - 30, 3, STEEL); },
+      () => { ground(); box(256, g - 40, 64, 40, 6, CONC); rect(256, g - 46, 64, 6, STEEL); box(262, g - 86, 52, 40, 6, CONC); rect(262, g - 92, 52, 6, STEEL); box(268, g - 132, 40, 40, 6, CONC);
+        core(288, g - 52 - 6.5, 6); rect(272, g - 18, 14, 12, WOOD); rect(280, g - 112, 16, 14, WOOD); },
+      () => { ground(); const W = [[220, BRICK, 1], [250, CONC, 0], [280, STEEL, 1], [310, STONE, 0], [340, LEAD, 1]]; rect(214, g - 66, 156, 6, CONC);
+        for (const [x, m, top] of W) { if (top) rect(x, g - 60, 6, 46, m); else rect(x, g - 46, 6, 46, m); } rect(364, g - 60, 6, 60, STEEL); core(354, g - 6.5, 6); },
+      () => { ground(); leg(296, g - 90, 280, g, 4, STEEL); leg(304, g - 90, 320, g, 4, STEEL); for (const y of [24, 48, 72]) rect(284, g - y, 32, 2, STEEL); line(284, g - 4, 314, g - 70, 2, STEEL);
+        rect(284, g - 94, 32, 4, STEEL); box(286, g - 114, 28, 20, 4, STEEL); box(290, g - 110, 20, 13, 2, LEAD); core(300, g - 97 - 5.5, 4.5); for (let a = 1.9; a <= 3.3; a += .02) rect(Math.round(300 + Math.cos(a) * 34) - 1, Math.round(g - 150 + Math.sin(a) * 34) - 1, 3, 3, STEEL);
+        line(300, g - 113, 281, g - 123, 3, STEEL); line(285, g - 136, 262, g - 128, 2, STEEL); },
+      () => { ground(); for (const [x, outer] of [[220, STEEL], [304, CONC]]) { rect(x - 6, g - 10, 60, 10, STONE); box(x, g - 46, 48, 36, 4, outer); box(x + 4, g - 42, 40, 28, 3, LEAD); core(x + 24, g - 17 - 5.5, 5); rect(x - 4, g - 50, 56, 4, outer); } },
+      () => { ground(); rect(220, g - 80, 140, 80, STONE); for (let j = 0; j < 30; j++) { rect(208 + Math.floor(j * .4), g - 1 - j, 12, 1, STONE); rect(360 - Math.floor(j * .4) - 0, g - 1 - j, 12, 1, STONE); }
+        for (let x = 220; x < 360; x += 12) rect(x, g - 86, 7, 6, STONE); rect(232, g - 70, 116, 60, STEEL); rect(238, g - 64, 104, 48, LEAD); rect(242, g - 60, 96, 40, E); for (let x = 220; x < 232; x++) for (let y = g - 70; y < g - 10; y++) set(x, y, BRICK); core(290, g - 20 - 6.5, 6); },
     ];
     B[n]();
     support(true); bodies.length = 0;   // tidy any stray piece the builder left floating
@@ -432,11 +472,12 @@ const GAME = {
       const x = Math.floor(p.x), y = Math.floor(p.y);
       if (x < -30 || x >= GW + 30 || y >= GH || p.t > 9) { parts.splice(k, 1); continue; }
       if (p.k === 1 && p.h - p.t * 230 < 150) { p.k = 0; p.c = rgb(70, 62, 66); }   // a drop that has gone cold
+      if (p.k === 4 && p.h - p.t * 260 < 220) { p.k = 0; p.c = rgb(132, 74, 44); }   // a drop of casing that has gone cold
       if (y < 0 || x < 0 || x >= GW) continue;
       const i = idx(x, y);
       if (mat[i]) {
         if (!p.b && R() < .55) { p.b = 1; p.x = ox; p.y = oy; p.vy = -Math.abs(p.vy) * .28; p.vx *= .5; continue; }
-        if (p.k === 1) warm(i, (p.h - p.t * 230) * .3, 1500);
+        if (p.k === 1 || p.k === 4) warm(i, (p.h - p.t * 230) * .3, 1500);
         else if (p.k === 0 && R() < .45) { const px = Math.floor(ox), py = Math.floor(oy); if (inb(px, py) && !mat[idx(px, py)]) { const j = idx(px, py); mat[j] = RUB; col[j] = p.c; hp[j] = M[RUB].hp; heat[j] = 0; } }
         parts.splice(k, 1);
       }
@@ -476,22 +517,27 @@ const GAME = {
     const a = Math.atan2(s.uy, s.ux), nx = -s.uy, ny = s.ux;
     for (const side of [-1, 1]) fx.push({ k: 'h', d: s.d, x: x + nx * side * .6, y: y + ny * side * .6, a, side, vx: s.ux * back + nx * side * spread * (.7 + R() * .6), vy: s.uy * back + ny * side * spread * (.7 + R() * .6) - 10, w: side * spin * (.7 + R() * .6), t: 0, l: 1.6 });
   }
-  function breakJacket(s) {   // the softer outer casing splits on the face; only the hard core inside carries on, with what is left of the energy
-    const S = s.S, [keep, cpen] = CORE_K[s.d.casing] || CORE_K.steel, lost = s.E * (1 - keep), back = Math.atan2(-s.uy, -s.ux), rc = casC(s.d);
-    Object.assign(s, { broke: true, cw: S.w === 7 ? 5 : 3, cpen, cmass: S.mass * keep, E: s.E * keep, Eb: s.E * keep, dug: 0, crush: 0 });
-    // the blunt blow of the casing: a shallow dent in the face, and the face heats up around it
-    const ox = s.x + s.ux * .6, oy = s.y + s.uy * .6, R0 = S.w / 2 + 1; let budget = lost * .3;
-    for (let yy = -5; yy <= 5; yy++) for (let xx = -5; xx <= 5; xx++) {
-      const d = Math.hypot(xx, yy), fwd = xx * s.ux + yy * s.uy; if (d > R0 + 2.5 || fwd < -1) continue;
-      const px = Math.floor(ox + xx), py = Math.floor(oy + yy); if (!inb(px, py)) continue; const i = idx(px, py), m = mat[i]; if (!m || m === BED) continue;
-      if (d <= R0 && fwd < 1.6 && budget > 0) { const c = Math.min(hp[i], 80) * soft(i) / S.pen * KP * 1.6; if (budget >= c) { budget -= c; carve(s, i, px, py, m); continue; } }
-      warm(i, 300 * (1 - d / (R0 + 3)), Math.min(M[m].melt * 1.1, 640));
-    }
-    husk(s, s.x - s.ux * 1.5, s.y - s.uy * 1.5, 13, -(14 + R() * 8), 3.2);
-    for (let q = 0; q < 30; q++) { const a = back + (R() - .5) * 2.8, v = 20 + R() * 62; debris(s.x - s.ux * 2, s.y - s.uy * 2, Math.cos(a) * v, Math.sin(a) * v - 10, rgb(cl(rc[0] + rint(-20, 35), 0, 255), cl(rc[1] + rint(-20, 35), 0, 255), cl(rc[2] + rint(-20, 35), 0, 255)), 0); }
-    for (let q = 0; q < 10; q++) { const a = back + (R() - .5) * 3, v = 16 + R() * 44; debris(s.x - s.ux * 3, s.y - s.uy * 3, Math.cos(a) * v, Math.sin(a) * v - 14, rgb(217 + rint(-20, 20), 138 + rint(-20, 20), 58), 0); }   // the copper band
-    flash(s.x, s.y, 6.5, .24); sparks(s.x, s.y, 44, back, 3.1, 150); arcs(s.x, s.y, 6, 20); glow(s.x - s.ux * 2, s.y - s.uy * 2, 6, .9, -s.ux * 4, -s.uy * 4);
-    K.shake(7); K.sfx(140, .22, 'square', .07, -60); K.noise(.22, .26, 1800);
+  // the softer outer casing does not break: it melts away from the nose back while the shell creeps on, baring the hard core
+  function startMelt(s) {
+    const S = s.S; Object.assign(s, { melting: true, jk: 1, Ehit: s.E, meltT: .5 + .2 * S.c.mass, cw: S.w === 7 ? 5 : 3, dripT: 0 });
+    sparks(s.x, s.y, 24, Math.atan2(-s.uy, -s.ux), 2.6, 120); glow(s.x - s.ux, s.y - s.uy, 5, .9); K.sfx(180, .5, 'sawtooth', .04, -80); K.noise(.5, .1, 2600);
+  }
+  // where the melting edge of the casing is, in pixels behind the nose
+  const meltFront = s => (1 - s.jk) * (shellL(s.d) * .78 / CS);
+  function stepMelt(s, h) {
+    const S = s.S; s.jk -= h / s.meltT; slowT = Math.max(slowT, .2);
+    const f = meltFront(s), fx0 = s.x - s.ux * f, fy0 = s.y - s.uy * f, r = shellR(s.d) / CS, nx = -s.uy, ny = s.ux;
+    // drops of molten casing run off the edge and fall
+    for (s.dripT += h * 46; s.dripT >= 1; s.dripT--) { const side = R() < .5 ? -1 : 1, o = side * r * (.6 + R() * .45); debris(fx0 + nx * o - s.ux * .5, fy0 + ny * o - s.uy * .5, -s.ux * (6 + R() * 16) + nx * side * (4 + R() * 10), -s.uy * (6 + R() * 16) + ny * side * (4 + R() * 10) - 4, 0, 4, 720 + R() * 260); }
+    if (R() < .3) sparks(fx0, fy0, 1, Math.atan2(-s.uy, -s.ux), 2.4, 60);
+    const cx = Math.floor(fx0), cy = Math.floor(fy0); for (let yy = -3; yy <= 3; yy++) for (let xx = -3; xx <= 3; xx++) { const d = Math.hypot(xx, yy); if (d > 3.4 || !inb(cx + xx, cy + yy)) continue; const j = idx(cx + xx, cy + yy), n = mat[j]; if (n && n !== BED) warm(j, 380 * h * (1 - d / 4), Math.min(M[n].melt * 1.15, 640)); }
+    if (s.jk <= 0) finishMelt(s);
+  }
+  function finishMelt(s) {   // the last of the casing runs off: only the hard core is left, with what is left of the energy
+    const S = s.S, [keep, cpen] = CORE_K[s.d.casing] || CORE_K.steel, E = Math.min(s.E, s.Ehit * keep);
+    Object.assign(s, { melting: false, jk: 0, broke: true, cpen, cmass: S.mass * keep, E, Eb: Math.max(E, .01), dug: 0, crush: 0 });
+    const f = shellL(s.d) * .78 / CS; for (let q = 0; q < 12; q++) debris(s.x - s.ux * f + (R() - .5) * 3, s.y - s.uy * f + (R() - .5) * 3, (R() - .5) * 18, -R() * 10, 0, 4, 700 + R() * 200);
+    K.sfx(420, .18, 'triangle', .05, -200);
   }
   function carve(s, i, cx, cy, m) {
     const c0 = col[i], back = Math.atan2(-s.uy, -s.ux), a = back + (R() - .5) * 2.4, v = 14 + R() * 44;
@@ -546,36 +592,37 @@ const GAME = {
       if (s.near && s.cut < 1) s.cut = Math.min(1, s.cut + h * 3.5);
       if (s.petals > 0 && (s.petals -= h) <= 0) { husk(s, s.x - s.ux * 4, s.y - s.uy * 4, 22, Math.hypot(s.vx, s.vy) * .45, 4.5); K.noise(.06, .08, 3000); }
       const S = s.S, back = Math.atan2(-s.uy, -s.ux);
+      if (s.melting) stepMelt(s, h);
       if (s.lodged) {   // stuck fast: the metal around the nose cooks while the fuse runs down
         s.fuse -= h; const cx = Math.floor(s.x), cy = Math.floor(s.y);
         const hotT = S.f.maxT || 640; for (let yy = -6; yy <= 6; yy++) for (let xx = -6; xx <= 6; xx++) { const nx = cx + xx, ny = cy + yy, d = Math.hypot(xx, yy); if (inb(nx, ny) && d < 6.4) { const j = idx(nx, ny), n = mat[j]; if (n && n !== BED) warm(j, 1500 * h * (1 - d / 7) * (.3 + .7 * M[n].cond), Math.min(M[n].melt * 1.3, hotT)); } }
         if (R() < .5) sparks(s.x, s.y, 2, back, 2.6, 80); if (R() < .2) debris(s.x - s.ux, s.y - s.uy, Math.cos(back) * 12 + (R() - .5) * 14, -6 - R() * 8, 0, 1, 800);
-        if (s.fuse <= 0) { if (explosive(s)) detonate(s); else shatter(s); }
+        if (s.fuse <= 0 && !s.melting) { if (explosive(s)) detonate(s); else shatter(s); }
         continue;
       }
       const sp0 = Math.hypot(s.vx, s.vy), sub = Math.max(1, Math.ceil((s.inside ? Math.min(sp0, 30) : sp0) * h / .5));
       for (let n = 0; n < sub && s.live && !s.lodged; n++) {
         const hh = h / sub; s.vy += G * hh * (s.inside ? .25 : 1); const sp = Math.hypot(s.vx, s.vy); if (sp > 2 && !s.inside) { s.ux = s.vx / sp; s.uy = s.vy / sp; }
-        const mv = s.inside ? (s.broke ? Math.min(sp, 6 + 22 * cl(s.E / s.Eb, 0, 1)) : Math.min(sp, 30)) : sp; s.x += s.ux * mv * hh; s.y += s.uy * mv * hh; s.out += mv * hh; if (s.hit) s.travel += mv * hh;
+        const mv = s.inside ? (s.broke ? Math.min(sp, 6 + 22 * cl(s.E / s.Eb, 0, 1)) : s.melting ? Math.min(sp, 5.5) : Math.min(sp, 30)) : sp; s.x += s.ux * mv * hh; s.y += s.uy * mv * hh; s.out += mv * hh; if (s.hit && !s.melting) s.travel += mv * hh;   // fuses count from when the core is bare
         if (s.x < -24 || s.x > GW + 24 || s.y > GH + 6) { s.live = false; if (!s.hit && lv('mull') && !mullUsed) { mullUsed = true; shots++; used--; say('Missed! The spotter hands you the shell back', '#7ce8d8'); } else if (!s.hit) say('Missed!', '#ffb36a'); break; }
         if (!s.near || S.u.air) { for (let a = 2; a <= 46; a += 2) { const ax = Math.floor(s.x + s.ux * a), ay = Math.floor(s.y + s.uy * a); if (inb(ax, ay) && isStatic(mat[idx(ax, ay)])) { s.near = true; if (S.u.air && a <= 6 && explosive(s)) detonate(s); break; } } if (!s.live) break; }
-        let any = 0, blocked = false, hard = 0, lastM = 0, split = false; const pen = S.pen * (s.broke ? s.cpen : 1);
-        for (const [o, lag] of XSW[s.broke ? s.cw : S.w]) {
+        let any = 0, blocked = false, hard = 0, lastM = 0, split = false; const pen = S.pen * (s.broke ? s.cpen : 1), wNow = s.broke || s.melting ? s.cw : S.w, mk = s.melting ? 1 : 1;
+        for (const [o, lag] of XSW[wNow]) {
           const cx = Math.floor(s.x - s.ux * lag - s.uy * o), cy = Math.floor(s.y - s.uy * lag + s.ux * o); if (!inb(cx, cy)) continue; const i = idx(cx, cy), m = mat[i]; if (!m) continue;
           if (m === BED) { blocked = true; break; }
-          if (!s.broke && M[m].hp >= 2 && !M[m].loose) { if (!s.hit) firstHit(s); breakJacket(s); split = true; break; }
-          any++; lastM = m; hard = Math.max(hard, M[m].hp); const cost = Math.min(hp[i], 80) * soft(i) / pen * KP * (M[m].loose ? .3 : 1);
+          if (!s.broke && !s.melting && M[m].hp >= 2 && !M[m].loose) { if (!s.hit) firstHit(s); startMelt(s); }
+          any++; lastM = m; hard = Math.max(hard, M[m].hp); const cost = Math.min(hp[i], 80) * soft(i) / pen * KP * (M[m].loose ? .3 : 1) * mk;
           if (s.E >= cost) { s.E -= cost; carve(s, i, cx, cy, m); }
           else { if (hurt(i, s.E * pen / KP)) carve(s, i, cx, cy, m); else warm(i, 300, Math.min(M[m].melt * 1.2, 640)); s.E = 0; blocked = true; break; }
         }
         if (split) { s.inside = true; s.gap = 0; const nv = Math.sqrt(Math.max(0, s.E) / (s.cmass * 22)) * 100; s.vx = s.ux * nv; s.vy = s.uy * nv; continue; }
         if (any || blocked) {
           if (!s.hit) firstHit(s);
-          s.inside = true; s.gap = 0; s.pen += any / (s.broke ? s.cw : S.w); if (s.broke) s.dug += any / s.cw;
+          s.inside = true; s.gap = 0; s.pen += any / wNow; if (s.broke) s.dug += any / s.cw;
           sparks(s.x, s.y, hard >= 10 ? 4 : hard > 3 ? 2 : 1, back, 2.5, 80 + hard * 3); if (hard >= 10 && R() < .25) arcs(s.x, s.y, 1, 12);
           if (t - s.snd > .05) { s.snd = t; if (hard >= 10) { K.sfx(900 + R() * 500, .06, 'square', .035, -300); K.noise(.05, .06, 2500); } else if (lastM === GLASS) K.sfx(2400 + R() * 800, .05, 'triangle', .04); else K.noise(.08, .09, 300 + hard * 60); }
           const nv = Math.sqrt(Math.max(0, s.E) / ((s.broke ? s.cmass : S.mass) * 22)) * 100; s.vx = s.ux * nv; s.vy = s.uy * nv;
-          if (blocked || nv < 12 || (s.broke && s.dug >= 5 + 4 * Math.sqrt(pen))) { lodge(s); break; }   // the core can only dig so far
+          if (blocked || nv < 12 || (s.broke && s.dug >= 3 + 3 * Math.sqrt(pen))) { lodge(s); break; }   // the core can only dig so far
         } else if (s.inside) { s.gap += mv * hh; if (s.gap > 3.5) { s.inside = false; sparks(s.x, s.y, 14, Math.atan2(s.uy, s.ux), 1.3, 90); K.noise(.1, .08, 1400); } }
         if (s.hit && S.u.delay && s.travel >= S.u.delay && explosive(s)) { if (s.inside) lodge(s); else detonate(s); break; }   // the fuse runs out: buried, it cooks a moment first; in the open it just goes off
       }
@@ -635,7 +682,7 @@ const GAME = {
   function press(k) {
     if (k.startsWith('lvl')) { const n = +k.slice(3); sel = n; mapPage = Math.floor(n / 18); if (!unlocked(n)) { say('Clear the level before it first', '#ff8a8a'); return; } return startLevel(n); }
     if (k === 'shop') { mode = 'shop'; shopSel = null; return; }
-    if (k === 'pg0' || k === 'pg1') { mapPage = +k.slice(2); return; }
+    if (/^pg\d$/.test(k)) { mapPage = +k.slice(2); return; }
     if (k === 'back' || k === 'map' || k === 'menu') { mode = 'map'; return; }
     if (k === 'next') { if (unlocked(lvl + 1)) startLevel(lvl + 1); else mode = 'map'; return; }
     if (k === 'retry' || k === 'reset') return startLevel(lvl);
@@ -825,7 +872,7 @@ const GAME = {
         if (T > 130 || q.m === CORE) { const j = ((gy >> 1) * GW2 + (gxx >> 1)) * 3, gl = q.m === CORE ? .4 : cl((T - 130) / 600, 0, .75); gacc[j] += gl * .5; gacc[j + 1] += gl * .2; gacc[j + 2] += gl * (q.m === CORE ? .25 : .05); }
       }
     }
-    for (const p of parts) { if (p.k !== 1 && p.k !== 3) continue; const x = Math.floor(p.x) >> 1, y = Math.floor(p.y) >> 1; if (x < 0 || y < 0 || x >= GW2 || y >= GH2) continue; const j = (y * GW2 + x) * 3; gacc[j] += .34; gacc[j + 1] += p.k === 3 ? .08 : .17; gacc[j + 2] += p.k === 3 ? .16 : .04; }
+    for (const p of parts) { if (p.k !== 1 && p.k !== 3 && p.k !== 4) continue; const x = Math.floor(p.x) >> 1, y = Math.floor(p.y) >> 1; if (x < 0 || y < 0 || x >= GW2 || y >= GH2) continue; const j = (y * GW2 + x) * 3; gacc[j] += .34; gacc[j + 1] += p.k === 3 ? .08 : .17; gacc[j + 2] += p.k === 3 ? .16 : .04; }
     // the ground runs on past the edges of the range
     const eL = (() => { for (let y = 0; y < GH; y++) if (mat[idx(0, y)]) return y; return GH; })(), eR = (() => { for (let y = 0; y < GH; y++) if (mat[idx(GW - 1, y)]) return y; return GH; })();
     g.fillStyle = '#1a2634'; g.fillRect(-3000, eL * CS, 3000, 3000); g.fillRect(WW, eR * CS, 3000, 3000); g.fillRect(0, WH - 1, WW, 3000); g.fillStyle = '#3c586c'; g.fillRect(-3000, eL * CS, 3000, CS); g.fillRect(WW, eR * CS, 3000, CS); g.fillStyle = '#26384a'; g.fillRect(-3000, eL * CS + CS, 3000, CS); g.fillRect(WW, eR * CS + CS, 3000, CS);
@@ -838,6 +885,7 @@ const GAME = {
     for (const p of parts) {
       const x = Math.floor(p.x * CS / q) * q, y = Math.floor(p.y * CS / q) * q;
       if (p.k === 1) { const T = p.h - p.t * 230; g.fillStyle = T > 760 ? '#fffbe8' : T > 520 ? '#ffd84a' : T > 330 ? '#ff9a2a' : '#d8521e'; g.fillRect(x, y, 3, 3); }
+      else if (p.k === 4) { const T = p.h - p.t * 260; g.fillStyle = T > 820 ? '#fff2c8' : T > 620 ? '#ffc65a' : T > 440 ? '#f08a36' : '#c4602c'; g.fillRect(x, y, 3, 3); }
       else if (p.k === 3) { g.fillStyle = '#ff7896'; g.fillRect(x, y, 3, 3); }
       else { const c = p.c; g.fillStyle = `rgb(${c & 255},${(c >> 8) & 255},${(c >> 16) & 255})`; g.fillRect(x, y, p.k === 2 ? 2 : 3, p.k === 2 ? 2 : 3); }
     }
@@ -900,7 +948,7 @@ const GAME = {
     g.restore();
   }
   // the hard core that carries on once the casing has broken away (or a sabot's bare dart); nose at (0,0), pointing right
-  const coreDims = s => s.sabot ? [56, 4.6] : [40, s.cw * CS / 2];
+  const coreDims = s => s.sabot ? [56, 4.6] : [shellL(s.d) * .8, s.cw * CS / 2];
   function coreArt(g, s, hot) {
     const [cr, cg, cb] = casC(s.d), [L, r] = coreDims(s), n = Math.max(7, r * 2.3);
     const mid = `rgb(${cr * .78 | 0},${cg * .82 | 0},${cb * .88 | 0})`, lite = `rgb(${Math.min(255, cr + 46)},${Math.min(255, cg + 46)},${Math.min(255, cb + 46)})`, dark = `rgb(${cr * .5 | 0},${cg * .54 | 0},${cb * .6 | 0})`;
@@ -913,6 +961,16 @@ const GAME = {
     if (hot > 0) { const gr = g.createLinearGradient(0, 0, -n - 8, 0); gr.addColorStop(0, `rgba(255,252,236,${hot})`); gr.addColorStop(.4, `rgba(255,190,80,${hot * .85})`); gr.addColorStop(1, 'rgba(255,90,30,0)'); g.fillStyle = gr; g.fillRect(-n - 8, -r, n + 8, 2 * r); }
     g.restore();
   }
+  function meltArt(g, s, hot) {
+    const f = meltFront(s) * CS, r = shellR(s.d), Lc = shellL(s.d);
+    coreArt(g, s, Math.max(hot, .6));
+    g.save(); g.beginPath(); g.rect(-Lc - 4, -r - 4, Lc + 4 - f, 2 * r + 8); g.clip(); shellArt(g, s.d, { cut: s.cut }); g.restore();
+    // the melting edge: white hot at the lip, orange behind it, ragged, with beads hanging off it
+    const gr = g.createLinearGradient(-f, 0, -f - 18, 0); gr.addColorStop(0, 'rgba(255,214,120,.95)'); gr.addColorStop(.45, 'rgba(240,120,50,.7)'); gr.addColorStop(1, 'rgba(200,80,40,0)');
+    g.fillStyle = gr; g.fillRect(-f - 18, -r, 18, 2 * r);
+    for (let y = -r; y < r; y += 2) { const j = 1.5 + 2.5 * Math.abs(Math.sin(y * 1.7 + t * 9)); g.fillStyle = Math.abs(y) > r - 3 ? '#ffd27a' : '#fff1c8'; g.fillRect(-f - j, y, j + 1.5, 2); }
+    for (const side of [-1, 1]) for (let k = 0; k < 3; k++) { const bx = -f - 3 - k * 6, len = 3 + ((Math.sin(t * 6 + k * 2 + side) + 1) * 3); g.fillStyle = k ? '#e8803a' : '#ffc65a'; g.fillRect(bx, side > 0 ? r - 1 : -r - len + 1, 2.5, len); }
+  }
   const shellIcon = (g, d, x, y, sc, o = {}, ps = 3) => pix(g, x - 4, y - 15 * sc, 90 * sc + 8, 30 * sc, ps, c => { c.translate(x + (shellL(d) + 1) * sc, y); c.scale(sc, sc); shellArt(c, d, o); });
   function drawShells(g) {
     for (const s of shells) {
@@ -923,7 +981,7 @@ const GAME = {
           if (s.t < .5) { g.fillStyle = `rgba(150,220,255,${(1 - s.t * 2).toFixed(2)})`; for (let q = 0; q < 9; q++) { const d = (q * 37 + (t * 60 | 0) * 13) % len; g.fillRect(x0 - s.ux * d - 1.5, y0 - s.uy * d - 1 + ((q % 3) - 1) * 1.5, 4, 1.6); } } }
       }
       const hot = s.hit ? cl(.35 + s.pen / 6, 0, 1) : 0;
-      pix(g, X - s.ux * L / 2 - 60, Y - s.uy * L / 2 - 60, 120, 120, 1.5, c => { c.translate(X, Y); c.rotate(a); if (s.out < 22) { c.beginPath(); c.rect(-s.out * CS, -24, s.out * CS + 4, 48); c.clip(); } if (s.broke && !(s.petals > 0)) coreArt(c, s, hot); else shellArt(c, s.d, { cut: s.cut, crush: s.crush, hot }); });
+      pix(g, X - s.ux * L / 2 - 60, Y - s.uy * L / 2 - 60, 120, 120, 1.5, c => { c.translate(X, Y); c.rotate(a); if (s.out < 22) { c.beginPath(); c.rect(-s.out * CS, -24, s.out * CS + 4, 48); c.clip(); } if (s.broke && !(s.petals > 0)) coreArt(c, s, hot); else if (s.melting) meltArt(c, s, hot); else shellArt(c, s.d, { cut: s.cut, crush: s.crush, hot }); });
       if (s.hit) { const r = 20 + (s.lodged ? 8 * Math.sin(t * 30) + 10 : 0), gr = g.createRadialGradient(X, Y, 0, X, Y, r); gr.addColorStop(0, 'rgba(255,246,214,.85)'); gr.addColorStop(.4, 'rgba(255,150,50,.45)'); gr.addColorStop(1, 'rgba(255,80,10,0)'); g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = gr; g.fillRect(X - r, Y - r, r * 2, r * 2); g.restore(); }
     }
   }
@@ -1011,7 +1069,7 @@ const GAME = {
       tx(g, '★'.repeat(st) + '☆'.repeat(3 - st), cx + 14, cy + 92, D(20), st ? GOLD : '#3a4a62', 'left');
       tx(g, `◉ ${L.reward}`, cx + 180, cy + 92, D(14), GOLD, 'right');
     });
-    for (let pg = 0; pg < Math.ceil(LEVELS.length / 18); pg++) hbtn(g, 'pg' + pg, 640 - 150 + pg * 154, 516, 146, 38, `Yards ${pg * 18 + 1}–${Math.min(LEVELS.length, pg * 18 + 18)}`, { hot: pg === mapPage, px: 14 });
+    const npg = Math.ceil(LEVELS.length / 18); for (let pg = 0; pg < npg; pg++) hbtn(g, 'pg' + pg, 640 - (npg * 154 - 8) / 2 + pg * 154, 516, 146, 38, `Yards ${pg * 18 + 1}–${Math.min(LEVELS.length, pg * 18 + 18)}`, { hot: pg === mapPage, px: 14 });
     if (unlocked(sel)) tx(g, LEVELS[sel].hint, 640, 586, F(15), '#cfe0f0');
     hbtn(g, 'shop', 380, 626, 300, 70, 'Workshop', { hot: true, sub: 'Design and upgrade your shells (W)', px: 20 });
     hbtn(g, 'cash', 700, 626, 200, 70, 'Cash out', { sub: `${total.toLocaleString('en-US')} coins earned`, px: 18 });
@@ -1083,6 +1141,7 @@ const GAME = {
     steps: n => { if (phase === 'shot' && charge > 0) { charge = 0; launch(); } for (let k = 0; k < n; k++) simStep(); stepFx(n / 60); },
     setCoins: v => { coins = v; save(); }, design: (i, d) => { slots[i] = { ...slots[i], ...d }; for (const c of PK) own[c + ':' + slots[i][c]] = true; }, upg: (k, l) => { up[k] = l; },
     loose: () => { support(); const r = bodies.map(b => [b.x | 0, b.y | 0, b.mw, b.mh, b.n, M[b.cells[0].m].n]); bodies.length = 0; return r; },
+    cell: (x, y) => mat[idx(x, y)],
     bods: () => bodies.map(b => [b.x, b.y, b.vx, b.vy, b.w, b.rest, b.age].map(v => +v.toFixed(2)).concat(b.n, contacts(b).n)), view: (x, y, z) => { cam.x = x; cam.y = y; cam.z = z; }, count: m => { let n = 0; for (let i = 0; i < N; i++) if (mat[i] === m) n++; return n; },
     shell: () => shells.map(s => ({ x: +s.x.toFixed(1), y: +s.y.toFixed(1), E: +(s.E || 0).toFixed(1), E0: +(s.E0 || 0).toFixed(1), pen: s.pen, lodged: s.lodged, hit: s.hit, travel: s.travel })),
   };
