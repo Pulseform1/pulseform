@@ -83,6 +83,7 @@ const GAME = {
     'CREATE: pick a sport, name your legend and choose the look. Spin the reel and draft each pro\'s rating into an empty slot, then pick a signature trait.',
     'CAREER: choose what to drill at camp, then play the big moments: stop the bar, aim the shot, nail the combo, win the battle. The finals come down to one clutch moment.',
     'ARENA: publish your legend and duel other real players\' legends, stat against stat. Climb the Legends Ladder, and fill your Hall of Fame.',
+    'EVERY DAY: open your free pack, keep the streak going, level up the Legend Pass for Golden Spins and card frames, and collect all 40 Legend cards that turn up on the reel.',
   ],
   skins: [{ name: 'No extras', price: 0, k: 'none' }, { name: 'Headband', price: 25, k: 'band' }, { name: 'Shades', price: 60, k: 'shades' }, { name: 'Gold Chain', price: 100, k: 'chain' }, { name: 'Captain Armband', price: 150, k: 'arm' }, { name: 'Champion Crown', price: 240, k: 'crown' }, { name: 'Legend Aura', price: 380, k: 'aura' }],
 };
@@ -146,10 +147,13 @@ const GAME = {
     build = { slots: Array(6).fill(null), rerolls: 2, spins: 0, pro: null, name: L.lastName || pick(FN) + ' ' + pick(LN), vs: null, look: { ...L.look }, trait: null, step: 'look' };
     mode = 'create'; reel = null;
   }
-  const ROW = 58, rarity = p => { const m = Math.max(...p.r); return m >= 99 ? ['GOAT PULL', '#ffffff'] : m >= 98 ? ['ICON PULL', '#ffd23f'] : m >= 93 ? ['STAR', '#ff5fa2'] : m >= 86 ? ['GOLD', '#ffb02e'] : m >= 78 ? ['SILVER', '#cfd8e0'] : ['BRONZE', '#c8864a']; };
+  const ROW = 58, rarity = p => { const m = Math.max(...p.r); if (p.legend) return ['LEGEND CARD', '#c58cff']; return m >= 99 ? ['GOAT PULL', '#ffffff'] : m >= 98 ? ['ICON PULL', '#ffd23f'] : m >= 93 ? ['STAR', '#ff5fa2'] : m >= 86 ? ['GOLD', '#ffb02e'] : m >= 78 ? ['SILVER', '#cfd8e0'] : ['BRONZE', '#c8864a']; };
   function spin() {
     if (build.slots.every(Boolean) || reel || build.pro) return;
-    const pro = makePro(sport), W = 22 + Math.floor(R0() * 4), RC = ['#c8864a', '#c8864a', '#cfd8e0', '#cfd8e0', '#ffb02e', '#ff5fa2'];
+    let pro = legendRoll();
+    if (!pro) { pro = makePro(sport); for (let k = 0; build.gold && k < 60 && Math.max(...pro.r) < 86; k++) pro = makePro(sport); }   // a Golden Spin always lands GOLD or better
+    build.gold = false;
+    const W = 22 + Math.floor(R0() * 4), RC = ['#c8864a', '#c8864a', '#cfd8e0', '#cfd8e0', '#ffb02e', '#ff5fa2'];
     const names = Array.from({ length: W + 4 }, () => ({ n: pick(FN) + ' ' + pick(LN), c: RC[Math.floor(R0() * RC.length)] }));
     names[W] = { n: pro.name, c: rarity(pro)[1], win: 1 };
     const V = 15, A = .22, Td = 1.35 + R0() * .35, Dd = V * Td / 3, Tc = Math.max(.3, (W - V * A / 2 - Dd) / V), D0 = W - Dd;
@@ -284,7 +288,7 @@ const GAME = {
   }
   function campDone() {
     const c = career, M = c.mg, i = c.campI, old = c.age >= 31 ? .5 : c.age >= 28 ? .8 : 1;
-    const gain = Math.round(M.score / 5 * 4.2 * (c.trait === 'gym' ? 1.6 : 1) * old);
+    const gain = Math.round(M.score / 5 * 4.2 * (c.trait === 'gym' ? 1.6 : 1) * old * (c.boost ? 1.5 : 1)); c.boost = false;
     const cap = c.v[i] >= 98 ? 99 : 97, pre = c.v[i]; c.v[i] = Math.min(cap, c.v[i] + gain);
     if (c.v[i] === 97 && pre + gain > 97 && M.score >= 4.5 && R0() < .1) { c.v[i] = 98; K.chime(784, [0, 4, 7, 12, 16, 19]); K.burst(640, 300, ['#ffd23f', '#fff'], 70, 600); K.shake(6); }
     c.campGain = { i, gain: c.v[i] - pre }; c.mg = null;
@@ -340,7 +344,7 @@ const GAME = {
     pushSeason(c.row);
   }
   function pushSeason(row) {
-    const c = career; c.seasons.push(row); c.legacy += row.L; c.phase = 'show'; c.t = 0; c.row = null;
+    const c = career; c.seasons.push(row); c.legacy += row.L; c.phase = 'show'; c.t = 0; c.row = null; c.news = seasonNews(row);
     if (row.A.some(a => !/Injury|Lost|Runner/.test(a))) K.chime(659, [0, 7]); else K.sfx(420, .05, 'square', .03);
   }
   // between seasons, now and then, something happens that you play through
@@ -394,7 +398,7 @@ const GAME = {
     const L = ladder, D = L.duel, won = D.w >= 2, rec = L.rec;
     if (won) {
       L.rung++;
-      if (L.rung > (rec.ladder || 0)) { rec.ladder = L.rung; K.coin(L.rung >= 10 ? 25 : 2 + L.rung); }
+      if (L.rung > (rec.ladder || 0)) { rec.ladder = L.rung; K.coin(L.rung >= 10 ? 25 : 2 + L.rung); gainXP(10 + L.rung * 4, 'Ladder'); }
       if (L.rung >= 10) { rec.goat = true; L.over = 'goat'; msg = { t: `${rec.name} beat every all-time great!  +25 coins`, k: 0 }; K.chime(523, [0, 4, 7, 12, 16]); K.burst(640, 260, ['#ffd23f', '#fff', '#ff5fa2'], 80, 560); K.shake(10); }
     } else L.over = 'lost';
     L.best = Math.max(L.best, rec.ladder || 0); K.persist(); L.duel = null; mode = 'ladder';
@@ -448,7 +452,7 @@ const GAME = {
   async function battleOver() {
     const A = arena, B = A.battle, won = B.me >= 2; B.done = true; A.status = 'result'; A.won = won; A.delta = null; mode = 'arena'; if (won) questHit('arena');
     if (won) { K.coin(4); K.chime(523, [0, 4, 7, 12]); K.burst(640, 260, ['#ffd23f', '#fff', '#3ddc84'], 60, 500); }
-    const L = SAVE(); L.arenaW = (L.arenaW || 0) + (won ? 1 : 0); L.arenaL = (L.arenaL || 0) + (won ? 0 : 1); streak(); K.persist();
+    const L = SAVE(); L.arenaW = (L.arenaW || 0) + (won ? 1 : 0); L.arenaL = (L.arenaL || 0) + (won ? 0 : 1); streak(); gainXP(won ? 40 : 10, 'Arena'); K.persist();
     try { const j = await api('result', { me: A.rec.arenaId, opp: A.opp.id, won }); A.delta = j.delta; A.rec.rating = j.rating; A.rec.w = (A.rec.w || 0) + (won ? 1 : 0); A.rec.l = (A.rec.l || 0) + (won ? 0 : 1); K.persist(); } catch (e) { A.delta = 'x'; }
   }
 
@@ -461,17 +465,107 @@ const GAME = {
       look: { ...c.look }, r: c.v.slice(), trait: c.trait, acc: K.save.skin || 0 }; lastRec = rec;
     L.builds = (L.builds || 0) + 1; L.hof.push(rec); L.hof.sort((a, b) => b.legacy - a.legacy); L.hof = L.hof.slice(0, 20);
     L.best[sport] = Math.max(L.best[sport] || 0, c.legacy); if (daily) L.daily[sport + dayNo()] = Math.max(L.daily[sport + dayNo()] || 0, c.legacy);
-    questCheck(rec); K.add(c.legacy); K.coin(Math.round(c.legacy / 80)); K.persist();
+    rec.fr = META().frame; questCheck(rec); K.add(c.legacy); K.coin(Math.round(c.legacy / 80)); gainXP(50 + c.legacy / 3, 'Career'); K.persist();
+    if (c.legacy >= 420 && !K.bot) { K.noise(2.2, .08, 500); K.sfx(392, .5, 'triangle', .06, 0, 2.2); K.sfx(523, .7, 'triangle', .06, 0, 2.45); }
     mode = 'verdict'; career.vt = 0;
     if (c.legacy >= 420) { K.chime(523, [0, 4, 7, 12, 16]); K.burst(640, 260, ['#ffd23f', '#ffb02e', '#fff'], 50, 520); K.shake(10); } else K.chime(440, [0, 4, 7]);
   }
   const QUESTS = [['ovr85', 'Build an 85+ overall'], ['champ', 'Win a title'], ['hof', 'Reach the Hall of Fame'], ['daily', 'Play the daily challenge'], ['three', 'Try three different sports'], ['arena', 'Win an Arena duel'], ['perfect', 'Hit 5 perfect moments in one career']];
   function quests() { const L = SAVE(); if (L.quests.day !== dayNo()) { const r = seeded(dayNo()); L.quests = { day: dayNo(), list: [...QUESTS].sort(() => r() - .5).slice(0, 3).map(q => q[0]), done: [], sports: [] }; } return L.quests; }
-  function questHit(k) { const Q = quests(); if (Q.list.includes(k) && !Q.done.includes(k)) { Q.done.push(k); K.coin(10); msg = { t: 'Quest done: ' + QUESTS.find(q => q[0] === k)[1] + '  +10 coins', k: 0 }; K.persist(); } }
+  function questHit(k) { const Q = quests(); if (Q.list.includes(k) && !Q.done.includes(k)) { Q.done.push(k); K.coin(10); msg = { t: 'Quest done: ' + QUESTS.find(q => q[0] === k)[1] + '  +10 coins', k: 0 }; gainXP(60, 'Quest'); K.persist(); } }
   function questCheck(rec) {
     const Q = quests(); Q.sports = [...new Set([...(Q.sports || []), rec.sport])];
     if (rec.O >= 85) questHit('ovr85'); if (rec.aw.champ) questHit('champ'); if (rec.legacy >= 420) questHit('hof'); if (rec.daily) questHit('daily'); if (Q.sports.length >= 3) questHit('three'); if (career && career.hl.length >= 5) questHit('perfect');
   }
+
+  /* ---------- the long game: Legend Pass levels and tokens, a free daily pack, the Legends Album, the weekly spotlight ---------- */
+  const META = () => { const L = SAVE(); if (!L.pass) L.pass = { lvl: 1, xp: 0, tok: { gold: 1, reroll: 1, camp: 1 }, album: {}, pack: 0, frame: null, frames: [] }; return L.pass; };
+  const needXP = lv => 160 + lv * 45;
+  const TITLES = ['ROOKIE', 'PROSPECT', 'STARTER', 'PRO', 'ALL-STAR', 'FRANCHISE', 'SUPERSTAR', 'HALL OF FAMER', 'IMMORTAL', 'THE GOAT'];
+  const passTitle = () => TITLES[Math.min(TITLES.length - 1, Math.floor(META().lvl / 5))];
+  // card frames you unlock with levels (and one for finishing an album), worn by every legend you make after
+  const FRAMES = { ember: [10, ['#ffd23f', '#ff6a1a', '#8a1a0a']], glacier: [20, ['#e8fbff', '#29e0ff', '#1a4a8a']], neon: [30, ['#ff5fa2', '#3ddc84', '#29e0ff']], inferno: [40, ['#ffb02e', '#ff2a2a', '#2a0a0a']], cosmic: [50, ['#ffffff', '#8a4aff', '#1a0a3a']], album: [0, ['#f0d0ff', '#c58cff', '#4a1a7a']] };
+  const spotlight = () => Object.keys(SPORTS)[Math.floor(dayNo() / 7) % 5];
+  let toasts = [], xpPop = null, pack = null, albumSp = null;
+  function gainXP(n, why) {
+    if (K.bot || posed) return; const M = META(); n = Math.round(n * (sport === spotlight() ? 1.5 : 1)); M.xp += n; xpPop = { n, why, t: 0 };
+    while (M.xp >= needXP(M.lvl)) { M.xp -= needXP(M.lvl); M.lvl++; levelReward(M.lvl); }
+    K.persist();
+  }
+  function levelReward(lv) {
+    const M = META(), items = [], coins = 6 + lv; K.coin(coins); items.push(`+${coins} coins`);
+    const k = lv % 4; if (k === 1) { M.tok.gold++; items.push('Golden Spin'); } else if (k === 2) { M.tok.reroll++; items.push('Extra Reroll'); } else if (k === 3) { M.tok.camp++; items.push('Camp Boost'); } else { M.tok.gold++; M.tok.reroll++; items.push('Golden Spin + Reroll'); }
+    if (lv % 5 === 0) items.push(`New title: ${TITLES[Math.min(TITLES.length - 1, lv / 5)]}`);
+    for (const [key, [at]] of Object.entries(FRAMES)) if (at === lv && !M.frames.includes(key)) { M.frames.push(key); M.frame = key; items.push(`${key.toUpperCase()} card frame`); }
+    toasts.push({ t: 0, title: `LEGEND LEVEL ${lv}`, items }); K.chime(523, [0, 4, 7, 12, 16]);
+  }
+  // the Legends Album: eight made-up all-time greats per sport, the same for every player. They turn up on the reel now and then.
+  const LGN = { hoops: ['The Comet', 'Big Smooth', 'Silk', 'The Glove', 'Sky Hook', 'Downtown', 'The Mailman', 'Air Raid'], gridiron: ['Cannon', 'The Surgeon', 'Ice Veins', 'The Bus', 'Sweetness', 'Prime Time', 'The Fridge', 'Joe Cool'],
+    soccer: ['El Mago', 'The Kaiser', 'Pistol', 'The Phantom', 'Little Bird', 'The Wall', 'Golden Boot', 'O Rei'], hockey: ['The Rocket', 'Mr. Hockey', 'Super Mario', 'The Hammer', 'Iceman', 'The Flash', 'Big Bird', 'The Great One'],
+    diamond: ['The Splendid', 'Mr. October', 'The Kid', 'Hammerin\' Hank', 'Big Hurt', 'The Iron Horse', 'Say Hey', 'The Bambino'] };
+  const LEG = {};
+  function legendsOf(sp) {
+    if (LEG[sp]) return LEG[sp];
+    const r = seeded(4243 + Object.keys(SPORTS).indexOf(sp) * 7919), S = SPORTS[sp], P = a => a[Math.floor(r() * a.length)];
+    return LEG[sp] = LGN[sp].map((nick, i) => {
+      const a = Math.floor(r() * 6), b = (a + 1 + Math.floor(r() * 5)) % 6, rt = S.at.map(() => Math.round(78 + r() * 11)); rt[a] = 99; rt[b] = 96 + Math.floor(r() * 3);
+      return { id: sp + i, nick, name: P(FN) + ' ' + P(LN), club: P(CLUBS), year: 1950 + Math.floor(r() * 55), r: rt, look: { skin: Math.floor(r() * 6), hair: Math.floor(r() * 8), hc: Math.floor(r() * 6), c1: Math.floor(r() * 12), c2: Math.floor(r() * 12), build: Math.floor(r() * 3), num: Math.floor(r() * 99) } };
+    });
+  }
+  const albumN = sp => legendsOf(sp).filter(l => META().album[l.id]).length;
+  const albumAll = () => Object.keys(SPORTS).reduce((a, k) => a + albumN(k), 0);
+  function legendRoll() {
+    if (daily || build.vs) return null;   // the daily reel stays the same for everyone, and the CPU draft stays fair
+    const M = META(), p = .022 * (build.gold ? 5 : 1) * (sport === spotlight() ? 2 : 1); if (R0() >= p) return null;
+    const all = legendsOf(sport), fresh = all.filter(l => !M.album[l.id]), L = fresh.length && R0() < .65 ? fresh[Math.floor(R0() * fresh.length)] : all[Math.floor(R0() * all.length)];
+    return { name: L.name, club: L.club, year: L.year, r: L.r.slice(), legend: L.id, nick: L.nick };
+  }
+  function gotLegend(p) {
+    const M = META(), first = !M.album[p.legend]; M.album[p.legend] = (M.album[p.legend] || 0) + 1;
+    gainXP(first ? 60 : 20, 'Legend card');
+    if (first && albumN(sport) === 8) { K.coin(150); if (!M.frames.includes('album')) M.frames.push('album'); toasts.push({ t: 0, title: `${SPORTS[sport].name} ALBUM COMPLETE`, items: ['+150 coins', 'ALBUM card frame'] }); }
+    K.persist(); return first;
+  }
+  // the free daily pack: open it once a day. It keeps your streak going, and every seventh day of a streak it holds a Legend card.
+  const packReady = () => !K.bot && META().pack !== dayNo();
+  function openPack() {
+    if (!packReady()) return; const M = META(); M.pack = dayNo(); streak(); const st = (SAVE().streak || { n: 1 }).n, mult = 1 + Math.min(6, st - 1) * .15;
+    const tk = pick([['gold', 'GOLDEN SPIN', '#ffd23f', 'Your next spin lands GOLD or better, with five times the Legend odds'], ['reroll', 'EXTRA REROLL', '#29e0ff', 'One more reroll in your next draft'], ['camp', 'CAMP BOOST', '#3ddc84', 'One training camp with 1.5x gains']]);
+    const cards = [{ k: 'tok', tok: tk[0], name: tk[1], c: tk[2], sub: tk[3] }, { k: 'coins', n: Math.round(rnd(8, 18) * mult), name: 'COINS', c: '#ffb02e' }];
+    if (st % 7 === 0) { const sp = pick(Object.keys(SPORTS)), all = legendsOf(sp), fresh = all.filter(l => !M.album[l.id]), L = (fresh.length ? fresh : all)[Math.floor(R0() * (fresh.length || all.length))]; cards.push({ k: 'legend', L, sp, name: 'LEGEND CARD', c: '#c58cff' }); }
+    else cards.push({ k: 'xp', n: Math.round(rnd(40, 80) * mult), name: 'LEGEND XP', c: '#ff5fa2' });
+    pack = { t: 0, cards, open: [false, false, false], st }; mode = 'pack'; K.sfx(200, .4, 'sawtooth', .04, 500); K.persist();
+  }
+  function flipPack(i) {
+    if (!pack || pack.open[i]) return; pack.open[i] = true; const c = pack.cards[i], M = META();
+    K.shake(c.k === 'legend' ? 10 : 4); K.burst(330 + i * 310, 330, [c.c, '#fff'], c.k === 'legend' ? 90 : 36, c.k === 'legend' ? 600 : 360); K.chime(c.k === 'legend' ? 659 : 523 + i * 60, c.k === 'legend' ? [0, 4, 7, 12, 16, 19] : [0, 7]);
+    if (c.k === 'tok') M.tok[c.tok]++; else if (c.k === 'coins') K.coin(c.n); else if (c.k === 'xp') gainXP(c.n, 'Daily pack'); else if (c.k === 'legend') { const sp0 = sport; sport = c.sp; c.first = gotLegend({ legend: c.L.id }); sport = sp0; }
+    K.persist();
+  }
+  // a few words from the press and the fans after every season
+  const HANDLES = ['@courtsidecarl', '@benchmob', '@statsnerd', '@ultras_77', '@dadjokesfan', '@the_real_scout', '@hotdogvendor', '@lifer_since_day1', '@blogboy', '@grandma_watches'];
+  function seasonNews(row) {
+    const c = career, S = SPORTS[sport], last = c.name.split(' ').slice(-1)[0].toUpperCase(), A = row.A, has = k => A.some(a => a.toLowerCase().includes(k.toLowerCase()));
+    let head, mood;
+    if (has('Finals MVP')) { head = `${last} OWNS THE FINALS`; mood = 2; }
+    else if (A.some(a => a.toLowerCase() === S.champ.toLowerCase())) { head = `${c.club.toUpperCase()} ARE CHAMPIONS!`; mood = 2; }
+    else if (has(S.mvp)) { head = `${last} NAMED ${S.mvp.toUpperCase()}`; mood = 2; }
+    else if (row.hurt) { head = `${last} GOES DOWN HURT`; mood = -1; }
+    else if (has('Runner-up')) { head = `HEARTBREAK FOR ${last} IN THE FINAL`; mood = 0; }
+    else if (row.r >= 88) { head = `NOBODY CAN STOP ${last}`; mood = 1; }
+    else if (c.seasons.length === 1) { head = row.r >= 76 ? `ROOKIE ${last} TURNS HEADS` : `ROOKIE ${last} SETTLES IN`; mood = row.r >= 76 ? 1 : 0; }
+    else if (row.r < 70) { head = `IS ${last} WASHED?`; mood = -1; }
+    else if (c.age >= 33) { head = `${last} STILL GOT IT AT ${c.age}`; mood = 1; }
+    else { head = `${last} PUTS IN ANOTHER SOLID YEAR`; mood = 0; }
+    const POS = ['Best I\'ve ever seen. Not close.', 'Frame this season and hang it in the Louvre.', `${c.club} should build a statue. Today.`, 'My son wants the jersey. So do I.', 'Cooking every single night 🔥', 'Generational. Tell your grandkids.'];
+    const MID = ['Solid. We need more in the big games though.', 'Good year, now go get a ring.', 'Respect the grind 💪', 'Fine. Next.'];
+    const NEG = ['Get well soon, we need you 🙏', 'Trade \'em. (Kidding. Mostly.)', 'This is a slump. Slumps end.', 'Still my favourite player. Always.'];
+    const pool = mood >= 1 ? POS : mood === 0 ? MID : NEG, posts = [];
+    for (let i = 0; i < 3; i++) posts.push({ h: HANDLES[Math.floor(R0() * HANDLES.length)], t: pool[Math.floor(R0() * pool.length)], likes: Math.round((c.fans || 1) * rnd(.4, 3)) });
+    const gain = Math.max(20, Math.round((row.L + (mood > 1 ? 120 : 0)) * rnd(30, 60))); c.fans = (c.fans || 3) + gain / 10;
+    return { head, mood, posts, gain, t: 0 };
+  }
+  const fansTxt = n => n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'M' : Math.round(n) + 'K';
 
   /* ---------- drawing ---------- */
   const hitR = (b, x, y) => b && x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
@@ -552,12 +646,13 @@ const GAME = {
   const qualOf = O => O >= 95 ? 'icon' : O >= 89 ? 'star' : O >= 82 ? 'gold' : O >= 72 ? 'silver' : 'bronze';
   function frameGrad(g, q, w, h, ph = 0) {
     const Q = QUAL[q], gr = g.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2);
+    if (FRAMES[q]) { const C = FRAMES[q][1], s0 = (t * .25 + ph * .2) % 1; [0, .25, .5, .75, 1].forEach((k, i) => gr.addColorStop(k, C[(i + Math.floor(s0 * 3)) % 3])); return gr; }
     if (q === 'icon') { for (let k = 0; k <= 6; k++) gr.addColorStop(k / 6, `hsl(${(t * 90 + ph * 60 + k * 60) % 360},95%,${k % 2 ? 72 : 58}%)`); }
     else { gr.addColorStop(0, Q[2]); gr.addColorStop(.3, Q[1]); gr.addColorStop(.55, Q[0]); gr.addColorStop(.8, Q[1]); gr.addColorStop(1, Q[2]); }
     return gr;
   }
   function card(g, rec, x, y, sc = 1, opt = {}) {
-    const S = SPORTS[rec.sport], q = opt.q || qualOf(rec.O), Q = QUAL[q], w = 280, h = 400, L = lookOf(rec.look, S.c), tc = TEAM[L.c1 ?? 6], tc2 = TEAM[L.c2 ?? 10] || '#ffffff';
+    const S = SPORTS[rec.sport], q0 = opt.q || qualOf(rec.O), q = rec.fr && FRAMES[rec.fr] ? rec.fr : q0, Q = QUAL[q] || QUAL[q0], w = 280, h = 400, L = lookOf(rec.look, S.c), tc = TEAM[L.c1 ?? 6], tc2 = TEAM[L.c2 ?? 10] || '#ffffff';
     g.save(); g.translate(x, y); g.scale(sc, sc);
     if (opt.glow) { g.shadowColor = opt.glow; g.shadowBlur = 40; }
     g.fillStyle = 'rgba(0,0,0,.55)'; g.beginPath(); g.roundRect(-w / 2 + 8, -h / 2 + 12, w, h, 22); g.fill(); g.shadowBlur = 0;
@@ -568,13 +663,13 @@ const GAME = {
     g.save(); g.beginPath(); g.roundRect(-w / 2 + 9, -h / 2 + 9, w - 18, h - 18, 15); g.clip();
     // team stripes and light rays behind the player
     g.globalAlpha = .22; g.fillStyle = tc; for (let k = -6; k < 8; k++) { g.beginPath(); g.moveTo(-w / 2 + k * 46, -h / 2); g.lineTo(-w / 2 + k * 46 + 22, -h / 2); g.lineTo(-w / 2 + k * 46 + 22 - 160, h / 2); g.lineTo(-w / 2 + k * 46 - 160, h / 2); g.fill(); } g.globalAlpha = 1;
-    if (q === 'star' || q === 'icon' || q === 'gold') { g.save(); g.translate(0, -70); g.rotate(t * .25); for (let k = 0; k < 14; k++) { g.rotate(TAU / 14); g.fillStyle = q === 'icon' ? `hsla(${(t * 90 + k * 26) % 360},100%,70%,.16)` : Q[1] + '22'; g.beginPath(); g.moveTo(0, 0); g.lineTo(-14, -260); g.lineTo(14, -260); g.fill(); } g.restore(); }
+    if (q0 === 'star' || q0 === 'icon' || q0 === 'gold' || q !== q0) { g.save(); g.translate(0, -70); g.rotate(t * .25); for (let k = 0; k < 14; k++) { g.rotate(TAU / 14); g.fillStyle = q === 'icon' ? `hsla(${(t * 90 + k * 26) % 360},100%,70%,.16)` : Q[1] + '22'; g.beginPath(); g.moveTo(0, 0); g.lineTo(-14, -260); g.lineTo(14, -260); g.fill(); } g.restore(); }
     const halo = g.createRadialGradient(0, -70, 10, 0, -70, 150); halo.addColorStop(0, tc + 'aa'); halo.addColorStop(1, tc + '00'); g.fillStyle = halo; g.fillRect(-w / 2, -h / 2, w, h);
     athlete(g, rec.sport, 12, -54, 1.05, L, { acc: accKey(rec) });
     // the foil sweep, stronger on rarer cards
-    const sw = ((t * .35 + (opt.ph || 0)) % 1.6) - .3, fg = g.createLinearGradient(-w / 2 + sw * w * 1.6 - 70, -h / 2, -w / 2 + sw * w * 1.6 + 70, h / 2), fa = q === 'icon' ? .32 : q === 'star' ? .24 : q === 'gold' ? .18 : .12;
+    const sw = ((t * .35 + (opt.ph || 0)) % 1.6) - .3, fg = g.createLinearGradient(-w / 2 + sw * w * 1.6 - 70, -h / 2, -w / 2 + sw * w * 1.6 + 70, h / 2), fa = q0 === 'icon' || q !== q0 ? .32 : q0 === 'star' ? .24 : q0 === 'gold' ? .18 : .12;
     fg.addColorStop(0, 'rgba(255,255,255,0)'); fg.addColorStop(.5, `rgba(255,255,255,${fa})`); fg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = fg; g.fillRect(-w / 2, -h / 2, w, h);
-    if (q === 'icon' || q === 'star') for (let k = 0; k < 10; k++) { const a = (t * .6 + k * .37) % 1, sx = Math.sin(k * 91.7) * 110, sy = -150 + ((k * 53) % 240) - a * 30; g.globalAlpha = Math.sin(a * Math.PI); g.fillStyle = '#fff'; g.fillRect(sx - 1, sy - 4, 2, 8); g.fillRect(sx - 4, sy - 1, 8, 2); g.globalAlpha = 1; }
+    if (q0 === 'icon' || q0 === 'star' || q !== q0) for (let k = 0; k < 10; k++) { const a = (t * .6 + k * .37) % 1, sx = Math.sin(k * 91.7) * 110, sy = -150 + ((k * 53) % 240) - a * 30; g.globalAlpha = Math.sin(a * Math.PI); g.fillStyle = '#fff'; g.fillRect(sx - 1, sy - 4, 2, 8); g.fillRect(sx - 4, sy - 1, 8, 2); g.globalAlpha = 1; }
     g.restore();
     // overall badge: a shield in the card's metal
     g.fillStyle = frameGrad(g, q, 80, 90, (opt.ph || 0) + .5); g.beginPath(); g.moveTo(-w / 2 + 14, -h / 2 + 14); g.lineTo(-w / 2 + 94, -h / 2 + 14); g.lineTo(-w / 2 + 94, -h / 2 + 82); g.lineTo(-w / 2 + 54, -h / 2 + 104); g.lineTo(-w / 2 + 14, -h / 2 + 82); g.closePath(); g.fill();
@@ -621,13 +716,26 @@ const GAME = {
     button(g, 'hof', { x: 806, y: 400, w: 194, h: 78 }, 'HALL OF FAME', '#1f2a46', `${L.hof.length} legends`, '#eef1f8');
     // sport picker for the quick modes
     Object.keys(SPORTS).forEach((k, i) => { const S = SPORTS[k], b = { x: 400 + i * 121, y: 494, w: 111, h: 46 }, on = sport === k; B['sp' + k] = b; rr(g, b.x, b.y, b.w, b.h, 12, on ? S.c : '#1a2238', on ? '#fff' : hover === 'sp' + k ? S.c : 'rgba(255,255,255,.12)', 2); tx(g, S.name, b.x + b.w / 2, b.y + b.h / 2 + 1, d(22), on ? '#141414' : '#eef1f8'); });
-    const st = L.streak || { n: 0 }; tx(g, st.n ? `🔥 ${st.n} day streak` : 'Play every day to build a streak', 700, 572, f(16, 800), st.n ? '#ffb02e' : '#5a6a8a');
-    if (L.arenaW || L.arenaL) tx(g, `Arena record ${L.arenaW || 0}-${L.arenaL || 0}`, 700, 598, f(15, 800), '#ff8ac8');
+    const st = L.streak || { n: 0 }; tx(g, st.n ? `🔥 ${st.n} day streak` : 'Play every day to build a streak', (L.arenaW || L.arenaL) ? 560 : 700, 626, f(16, 800), st.n ? '#ffb02e' : '#5a6a8a');
+    if (L.arenaW || L.arenaL) tx(g, `Arena record ${L.arenaW || 0}-${L.arenaL || 0}`, 860, 626, f(15, 800), '#ff8ac8');
+    // the Legend Pass: your level across every legend you make
+    const M = META(), need = needXP(M.lvl), pb = { x: 400, y: 554, w: 600, h: 50 }; B.pass = pb; const hvP = hover === 'pass';
+    rr(g, pb.x, pb.y - (hvP ? 2 : 0), pb.w, pb.h, 14, hvP ? '#24315a' : '#1a2440', '#ff5fa2', 2);
+    tx(g, `LV ${M.lvl}`, pb.x + 46, pb.y + 25, d(30), '#ff5fa2'); tx(g, passTitle(), pb.x + 90, pb.y + 17, f(12, 900), '#ffd0e8', 'left');
+    rr(g, pb.x + 90, pb.y + 28, 380, 12, 6, '#0c1222'); rr(g, pb.x + 90, pb.y + 28, Math.max(12, 380 * M.xp / need), 12, 6, '#ff5fa2');
+    tx(g, `${M.xp}/${need} XP`, pb.x + 470, pb.y + 17, f(12, 900), '#cfd8e0', 'right'); tx(g, 'LEGEND PASS ▶', pb.x + pb.w - 16, pb.y + 25, d(20), '#ffd0e8', 'right');
+    // the free daily pack and the album
+    const ready = packReady(), kb = { x: 94, y: 556, w: 252, h: 62 }; B.pack = kb;
+    if (ready) { g.save(); g.shadowColor = '#ffd23f'; g.shadowBlur = 20 + Math.sin(t * 5) * 12; }
+    rr(g, kb.x, kb.y - (hover === 'pack' ? 2 : 0), kb.w, kb.h, 14, ready ? '#ffd23f' : '#161e34', ready ? '#fff' : 'rgba(255,255,255,.12)', 2); if (ready) g.restore();
+    tx(g, ready ? '🎁 DAILY PACK' : '🎁 PACK OPENED', kb.x + kb.w / 2, kb.y + 24, d(28), ready ? '#141414' : '#5a6a8a'); tx(g, ready ? 'Free! Tap to open' : 'Come back tomorrow', kb.x + kb.w / 2, kb.y + 47, f(13, 800), ready ? '#3a2a00' : '#5a6a8a');
+    const ab = { x: 94, y: 626, w: 252, h: 50 }; B.album = ab; rr(g, ab.x, ab.y - (hover === 'album' ? 2 : 0), ab.w, ab.h, 14, '#1f1430', '#c58cff', 2); tx(g, `📖 LEGENDS ALBUM  ${albumAll()}/40`, ab.x + ab.w / 2, ab.y + 26, d(24), '#e6c8ff');
+    const spS = SPORTS[spotlight()]; rr(g, 1030, 96, 220, 44, 12, spS.c + '33', spS.c, 2); tx(g, `★ ${spS.name} WEEK`, 1140, 111, d(22), spS.c); tx(g, '1.5× XP · 2× Legend odds', 1140, 130, f(11, 800), '#cfd8e0');
     rr(g, 1030, 150, 220, 452, 16, '#121a2e', 'rgba(255,255,255,.12)', 2);
     tx(g, 'QUESTS', 1140, 182, d(28), '#ffb02e'); tx(g, `${Q.done.length}/3 today`, 1140, 206, f(14), '#9fb0d0');
     Q.list.forEach((k, i) => { const done = Q.done.includes(k), y = 230 + i * 74; rr(g, 1044, y, 192, 62, 10, done ? '#1f4a34' : '#1a2238'); tx(g, done ? '✓' : '○', 1062, y + 31, f(22, 900), done ? '#3ddc84' : '#9fb0d0'); g.font = f(14); wrap(g, (QUESTS.find(q => q[0] === k) || ['', ''])[1], 1078, y + 22, 148, 17, done ? '#bff5d6' : '#eef1f8'); });
     tx(g, 'BEST LEGACY', 1140, 478, d(22), '#ffb02e'); Object.keys(SPORTS).forEach((k, i) => tx(g, `${SPORTS[k].name}  ${L.best[k] || '-'}`, 1140, 504 + i * 20, f(13), '#eef1f8'));
-    tx(g, 'Every player and team here is made up. Arena legends are made by real players.', 640, 660, f(14, 700), '#5a6a8a');
+    tx(g, 'Every player and team here is made up. Arena legends are made by real players.', 680, 692, f(13, 700), '#5a6a8a');
   }
 
   /* ---------- the creator ---------- */
@@ -722,6 +830,9 @@ const GAME = {
     tx(g, 'OVERALL', 64, 636, d(24), '#9fb0d0', 'left'); const filled = build.slots.filter(Boolean).length;
     tx(g, filled ? String(ovr()) : '--', 380, 652, d(64), filled ? ratingC(ovr()) : '#5a6a8a', 'right'); tx(g, `${filled}/6 slots${filled ? ` · ${Math.max(0, 99 - ovr())} to the GOAT (99)` : ''}`, 64, 670, f(15), '#9fb0d0', 'left');
     if (build.vs) { const V = build.vs; rr(g, 1056, 584, 168, 96, 14, '#2a1430', '#ff5fa2', 2); tx(g, 'CPU RIVAL', 1140, 604, d(22), '#ff5fa2'); tx(g, String(cpuOvr()), 1140, 638, d(40), '#fff'); tx(g, `${V.cpu.filter(Boolean).length}/6 · clock ${build.pro && mode === 'create' ? Math.ceil(Math.max(0, V.clock)) : '-'}`, 1140, 666, f(13), '#ffb0d8'); }
+    if (mode === 'create' && !build.vs && !daily) { const M = META(), canG = M.tok.gold > 0 && !build.pro && !reel && !build.gold && !build.slots.every(Boolean);
+      button(g, 'tokgold', { x: 1060, y: 592, w: 180, h: 48 }, build.gold ? 'GOLDEN SPIN ON' : `GOLDEN SPIN ×${M.tok.gold}`, build.gold ? '#ffd23f' : canG ? '#3a3010' : '#141a2a', null, build.gold ? '#141414' : canG ? '#ffd23f' : '#5a6a8a');
+      button(g, 'tokreroll', { x: 1060, y: 646, w: 180, h: 48 }, `+1 REROLL ×${M.tok.reroll}`, M.tok.reroll > 0 ? '#10303a' : '#141a2a', null, M.tok.reroll > 0 ? '#29e0ff' : '#5a6a8a'); }
     if (mode === 'create') button(g, 'reroll', { x: 625, y: 600, w: 420, h: 84 }, `REROLL  (${build.rerolls} left)`, build.rerolls && build.pro ? '#1f2a46' : '#141a2a', 'Skip this pro, spin again', build.rerolls && build.pro ? '#eef1f8' : '#5a6a8a');
     else if (build.vs) { const me2 = ovr(), cp = cpuOvr(); button(g, 'vsdone', { x: 625, y: 590, w: 420, h: 104 }, me2 > cp ? 'YOU WIN!' : me2 === cp ? 'TIE' : 'CPU WINS', me2 > cp ? '#3ddc84' : me2 === cp ? '#cfd8e0' : '#ff5f6a', `${me2} vs ${cp} overall · tap to finish`); }
   }
@@ -741,9 +852,11 @@ const GAME = {
     const P = build.pullFx, e = t - P.t0, a = e < .15 ? e / .15 : e > 2 ? Math.max(0, (2.6 - e) / .6) : 1, v = K.view, hue = h => `hsl(${(t * 200 + h) % 360},100%,68%)`;
     if (e < .3) { g.fillStyle = `rgba(255,255,255,${((.3 - e) / .3 * .9).toFixed(2)})`; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
     g.save(); g.globalAlpha = a * .92; g.fillStyle = 'rgba(8,10,24,.8)'; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
-    g.translate(640, 330); g.rotate(t * .5); for (let i = 0; i < 24; i++) { g.rotate(TAU / 24); g.fillStyle = P.goat ? hue(i * 15) : (i % 2 ? '#ffd23f' : '#fff4b0'); g.globalAlpha = a * .22; g.beginPath(); g.moveTo(0, 0); g.lineTo(-26, -900); g.lineTo(26, -900); g.fill(); } g.restore();
+    g.translate(640, 330); g.rotate(t * .5); for (let i = 0; i < 24; i++) { g.rotate(TAU / 24); g.fillStyle = P.legend ? (i % 2 ? '#c58cff' : '#f0d0ff') : P.goat ? hue(i * 15) : (i % 2 ? '#ffd23f' : '#fff4b0'); g.globalAlpha = a * .22; g.beginPath(); g.moveTo(0, 0); g.lineTo(-26, -900); g.lineTo(26, -900); g.fill(); } g.restore();
     g.save(); g.globalAlpha = a; const sc = 1 + Math.max(0, .5 - e) * 1.6; g.translate(640, 300); g.scale(sc, sc);
-    tx(g, P.goat ? 'GOAT PULL' : 'ICON PULL', 0, 0, d(110), P.goat ? hue(0) : '#ffd23f', 'center', 10); tx(g, P.goat ? '99 · ONCE IN A LIFETIME' : '98 · ONE IN THIRTY-FIVE', 0, 84, d(34), '#fff', 'center', 6); g.restore();
+    if (P.legend) { tx(g, 'LEGEND CARD', 0, -10, d(104), '#c58cff', 'center', 10); tx(g, `"${P.legend.nick.toUpperCase()}"  ${P.legend.name.toUpperCase()}`, 0, 70, d(40), '#fff', 'center', 6); tx(g, P.first ? 'NEW! ADDED TO YOUR LEGENDS ALBUM' : 'DUPLICATE · +20 XP', 0, 116, f(22, 900), P.first ? '#ffd23f' : '#cfd8e0', 'center'); }
+    else { tx(g, P.goat ? 'GOAT PULL' : 'ICON PULL', 0, 0, d(110), P.goat ? hue(0) : '#ffd23f', 'center', 10); tx(g, P.goat ? '99 · ONCE IN A LIFETIME' : '98 · ONE IN THIRTY-FIVE', 0, 84, d(34), '#fff', 'center', 6); }
+    g.restore();
   }
   function drawCardReveal(g) {
     const e = t - (build.revealT || 0), rec = { name: build.name, sport, look: build.look, r: finalRatings(), O: ovr(), trait: build.trait, tier: '', acc: K.save.skin || 0 }, q = qualOf(rec.O), Q = QUAL[q], flip = 1.1, k = e >= flip + .9 ? 1 : 0;
@@ -795,13 +908,14 @@ const GAME = {
     rr(g, 850, 92, 390, 524, 14, '#121a2e', 'rgba(255,255,255,.1)', 2);
     g.save(); g.beginPath(); g.roundRect(850, 92, 390, 200, 14); g.clip(); g.fillStyle = TEAM[c.look.c1] + '30'; g.fillRect(850, 92, 390, 200); athlete(g, sport, 960, 200, .95, c.look); g.restore();
     tx(g, 'LEGACY', 1150, 130, d(22), '#9fb0d0'); tx(g, String(Math.round(c.legacy + (c.final ? 0 : c.O0 * 2))), 1150, 170, d(50), '#ffd23f');
-    tx(g, `${c.seasons.length} season${c.seasons.length === 1 ? '' : 's'}`, 1150, 210, f(14, 700), '#9fb0d0'); if (c.hl.length) tx(g, `★ ${c.hl.length} highlight${c.hl.length > 1 ? 's' : ''}`, 1150, 234, f(14, 800), '#ffd23f');
+    tx(g, `${c.seasons.length} season${c.seasons.length === 1 ? '' : 's'}`, 1150, 210, f(14, 700), '#9fb0d0'); tx(g, `👥 ${fansTxt(c.fans || 3)}`, 1150, 258, f(15, 900), '#bff5d6'); if (c.hl.length) tx(g, `★ ${c.hl.length} highlight${c.hl.length > 1 ? 's' : ''}`, 1150, 234, f(14, 800), '#ffd23f');
     [[S.mvp, '🏆', c.aw.mvp], [S.champ, '💍', c.aw.champ], ['Finals MVP', '🎖️', c.aw.fmvp], [S.star, '⭐', c.aw.star], [S.dpoy, '🥇', c.aw.dpoy]].forEach(([k, em, v], i) => {
       const y = 320 + i * 56; tx(g, em, 892, y, '30px system-ui', '#fff'); tx(g, k[0].toUpperCase() + k.slice(1), 930, y - 9, f(16), '#eef1f8', 'left'); tx(g, `× ${v}`, 930, y + 14, d(24), v ? '#ffd23f' : '#5a6a8a', 'left');
     });
     if (c.done && mode !== 'verdict') button(g, 'verdict', { x: 360, y: 630, w: 560, h: 76 }, 'HALL OF FAME VERDICT', '#ffd23f');
     else if (!c.done && !c.fast && (c.phase === 'camp' || c.phase === 'show')) button(g, 'fast', { x: 1000, y: 636, w: 240, h: 60 }, 'SIM THE REST', '#1f2a46', null, '#9fb0d0');
     if (c.phase === 'show') tx(g, `Season ${c.seasons.length} done`, 440, 664, d(30), '#9fb0d0');
+    if (c.phase === 'show' && !c.fast) drawNews(g);
     if (c.phase === 'camp' && !c.mg) drawCampPick(g);
     if (c.phase === 'retire') drawRetire(g);
     if (c.mg) drawMG(g, c.mg);
@@ -817,7 +931,8 @@ const GAME = {
       tx(g, a.toUpperCase(), b.x + b.w / 2, b.y + 46, d(34), '#fff'); tx(g, String(c.v[i]), b.x + b.w / 2, b.y + 98, d(54), ratingC(c.v[i]));
       tx(g, wt >= 1.2 ? 'key skill' : wt >= 1 ? 'important' : 'nice to have', b.x + b.w / 2, b.y + 132, f(13, 800), wt >= 1.2 ? '#ffd23f' : '#7a8aa8');
     });
-    tx(g, c.age >= 31 ? 'Veteran: gains are smaller now.' : c.trait === 'gym' ? 'Gym rat: bigger gains.' : '', 640, 590, f(16, 800), '#ffb02e');
+    tx(g, c.age >= 31 ? 'Veteran: gains are smaller now.' : c.trait === 'gym' ? 'Gym rat: bigger gains.' : '', 640, 580, f(16, 800), '#ffb02e');
+    const M = META(); if (!daily && (M.tok.camp > 0 || c.boost)) button(g, 'boost', { x: 490, y: 600, w: 300, h: 56 }, c.boost ? 'CAMP BOOST ON · 1.5×' : `USE CAMP BOOST (×${M.tok.camp})`, c.boost ? '#3ddc84' : '#123a26', null, c.boost ? '#141414' : '#3ddc84');
     g.globalAlpha = 1;
   }
   function drawRetire(g) {
@@ -889,7 +1004,8 @@ const GAME = {
     else if (M.type === 'bar' || M.type === 'power' || M.type === 'aim') tx(g, 'TAP · CLICK · SPACE', 640, M.type === 'aim' ? 580 : 470, f(20, 900), `rgba(255,255,255,${.5 + Math.sin(t * 6) * .3})`);
   }
   function drawVerdict(g) {
-    const c = career, [, name, col] = c.tier, k = Math.min(1, c.vt / .8), S = SPORTS[sport];
+    const c0 = career, cl = cerLen(); if (c0.vt < cl) return drawCeremony(g, c0.vt);
+    const c = career, [, name, col] = c.tier, vt = c.vt - cl, k = Math.min(1, vt / .8), S = SPORTS[sport];
     dim(g, .7);
     g.save(); g.globalAlpha = k;
     card(g, lastRec, 250 + (1 - k) * -200, 330, .95);
@@ -904,12 +1020,125 @@ const GAME = {
     const nxt = TIERS.find(x => x[0] > c.legacy); tx(g, nxt ? `${nxt[0] - c.legacy} legacy short of ${nxt[1]}` : 'Nobody has ever done better.', 845, 446, f(16, 700), '#ffb02e');
     tx(g, `${c.hl.length} perfect big moment${c.hl.length === 1 ? '' : 's'} · put ${c.name.split(' ')[0]} in the Arena against real players`, 845, 480, f(14, 700), '#9fb0d0');
     g.restore(); g.globalAlpha = 1;
-    if (c.vt > 1) {
+    if (vt > 1) {
       button(g, 'arenago', { x: 450, y: 560, w: 260, h: 90 }, 'ARENA', '#ff5fa2', 'Real players\' legends');
       button(g, 'ladgo', { x: 724, y: 560, w: 250, h: 90 }, 'LADDER', '#29e0ff', 'All-time greats');
       button(g, 'again', { x: 988, y: 560, w: 252, h: 90 }, 'NEW LEGEND', '#ffd23f', 'Create another');
       button(g, 'home', { x: 60, y: 600, w: 180, h: 60 }, 'MENU', '#1f2a46', null, '#eef1f8');
     }
+  }
+  // the daily pack: three cards face down, tap each to flip it
+  function drawPack(g) {
+    const P = pack; dim(g, .82);
+    tx(g, 'DAILY PACK', 640, 70, d(72), '#ffd23f'); tx(g, P.st > 1 ? `🔥 ${P.st} day streak: bigger rewards${P.st % 7 === 0 ? ' and a LEGEND CARD inside!' : ` · Legend card on day ${Math.ceil(P.st / 7) * 7}`}` : 'Open one every day. Day 7 of a streak holds a Legend card.', 640, 122, f(19, 800), '#cfd8e0');
+    P.cards.forEach((c, i) => {
+      const x = 330 + i * 310, y = 360, open = P.open[i], b = { x: x - 125, y: y - 175, w: 250, h: 350 }; B['pk' + i] = b;
+      const bob = open ? 0 : Math.sin(t * 3 + i) * 6, hv = hover === 'pk' + i && !open;
+      g.save(); g.translate(x, y + bob - (hv ? 6 : 0));
+      if (!open) {
+        const gr = g.createLinearGradient(-125, -175, 125, 175); gr.addColorStop(0, '#2a1a4a'); gr.addColorStop(.5, '#ff5fa2'); gr.addColorStop(1, '#ffd23f'); g.fillStyle = gr; g.beginPath(); g.roundRect(-125, -175, 250, 350, 22); g.fill();
+        g.fillStyle = '#0c1226'; g.beginPath(); g.roundRect(-115, -165, 230, 330, 16); g.fill(); tx(g, '?', 0, -10, d(150), '#ffd23f'); tx(g, 'TAP TO FLIP', 0, 120, d(24), '#9fb0d0');
+      } else {
+        g.shadowColor = c.c; g.shadowBlur = 30; g.fillStyle = c.c; g.beginPath(); g.roundRect(-125, -175, 250, 350, 22); g.fill(); g.shadowBlur = 0;
+        g.fillStyle = '#0c1226'; g.beginPath(); g.roundRect(-115, -165, 230, 330, 16); g.fill();
+        tx(g, c.name, 0, -132, d(34), c.c);
+        if (c.k === 'legend') { g.save(); g.beginPath(); g.roundRect(-105, -110, 210, 170, 12); g.clip(); g.fillStyle = '#c58cff33'; g.fillRect(-105, -110, 210, 170); athlete(g, c.sp, 0, 20, .7, lookOf(c.L.look, SPORTS[c.sp].c)); g.restore(); tx(g, `"${c.L.nick}"`, 0, 84, d(30), '#fff'); tx(g, c.L.name, 0, 112, f(15, 800), '#cfd8e0'); tx(g, c.first ? 'NEW FOR YOUR ALBUM!' : 'DUPLICATE · +20 XP', 0, 140, f(14, 900), c.first ? '#ffd23f' : '#9fb0d0'); }
+        else { tx(g, c.k === 'tok' ? (c.tok === 'gold' ? '✨' : c.tok === 'reroll' ? '🔄' : '💪') : c.k === 'coins' ? '🪙' : '⚡', 0, -30, '86px system-ui', '#fff'); tx(g, c.k === 'tok' ? '+1' : '+' + c.n, 0, 60, d(52), '#fff'); if (c.sub) { g.font = f(14, 700); wrap(g, c.sub, 0, 104, 200, 18, '#cfd8e0', 'center'); } }
+      }
+      g.restore();
+    });
+    if (P.open.every(Boolean)) button(g, 'packdone', { x: 490, y: 590, w: 300, h: 80 }, 'COLLECT', '#ffd23f');
+    else tx(g, 'Tap the cards', 640, 620, f(18, 800), '#9fb0d0');
+  }
+  // the Legends Album: forty made-up all-time greats to collect
+  function drawAlbum(g) {
+    const M = META();
+    tx(g, 'LEGENDS ALBUM', 640, 46, d(56), '#c58cff'); tx(g, `${albumAll()} of 40 collected. Legend cards turn up on the reel now and then (more often with a Golden Spin, and in the sport of the week). Finish a sport for 150 coins and a frame.`, 640, 88, f(15, 700), '#cfd8e0');
+    Object.keys(SPORTS).forEach((sp, row) => {
+      const S = SPORTS[sp], y = 116 + row * 104, n = albumN(sp);
+      rr(g, 30, y, 150, 92, 12, S.c + '22', S.c, 2); tx(g, S.name, 105, y + 34, d(28), S.c); tx(g, `${n}/8`, 105, y + 66, d(26), n === 8 ? '#ffd23f' : '#fff');
+      legendsOf(sp).forEach((L, i) => {
+        const x = 194 + i * 132, got = M.album[L.id], b = { x, y, w: 124, h: 92 }; B['al' + sp + i] = b;
+        rr(g, x, y, 124, 92, 12, got ? '#1f1430' : '#10141f', got ? '#c58cff' : 'rgba(255,255,255,.08)', 2);
+        if (got) { g.save(); g.beginPath(); g.roundRect(x, y, 124, 92, 12); g.clip(); athlete(g, sp, x + 30, y + 64, .34, lookOf(L.look, S.c)); g.restore(); tx(g, L.nick.length > 11 ? L.nick.slice(0, 10) + '…' : L.nick, x + 82, y + 22, f(12, 900), '#fff'); tx(g, String(Math.max(...L.r)), x + 82, y + 50, d(30), '#ffd23f'); tx(g, got > 1 ? `×${got}` : 'NEW', x + 82, y + 76, f(11, 900), '#c58cff'); }
+        else { tx(g, '?', x + 62, y + 44, d(54), 'rgba(255,255,255,.12)'); tx(g, '???', x + 62, y + 78, f(11, 900), '#3a4660'); }
+      });
+    });
+    button(g, 'home', { x: 540, y: 640, w: 200, h: 62 }, 'BACK', '#1f2a46', null, '#eef1f8');
+  }
+  // the Legend Pass: level, tokens, what's coming and the frames to wear
+  function drawPass(g) {
+    const M = META(), need = needXP(M.lvl);
+    tx(g, 'LEGEND PASS', 640, 46, d(60), '#ff5fa2'); tx(g, 'Every career, quest, Arena win, Ladder rung and Legend card earns XP. Levels pay out tokens, coins, titles and card frames.', 640, 88, f(16, 700), '#cfd8e0');
+    rr(g, 60, 116, 1160, 100, 16, '#1a2440', '#ff5fa2', 2); tx(g, `LEVEL ${M.lvl}`, 170, 152, d(48), '#ff5fa2'); tx(g, passTitle(), 170, 190, d(24), '#ffd0e8');
+    rr(g, 290, 150, 700, 22, 11, '#0c1222'); rr(g, 290, 150, Math.max(22, 700 * M.xp / need), 22, 11, '#ff5fa2'); tx(g, `${M.xp} / ${need} XP to level ${M.lvl + 1}`, 640, 192, f(15, 800), '#cfd8e0');
+    tx(g, `★ ${SPORTS[spotlight()].name} WEEK: 1.5× XP`, 1110, 166, d(22), SPORTS[spotlight()].c);
+    // tokens
+    [['gold', '✨', 'GOLDEN SPIN', 'Next spin lands GOLD+ with 5× Legend odds'], ['reroll', '🔄', 'EXTRA REROLL', 'One more reroll in a draft'], ['camp', '💪', 'CAMP BOOST', '1.5× gains at one training camp']].forEach(([k, em, n, dsc], i) => {
+      const x = 60 + i * 390; rr(g, x, 236, 370, 86, 14, '#121a2e', 'rgba(255,255,255,.12)', 2); tx(g, em, x + 44, 279, '38px system-ui', '#fff'); tx(g, `${n}  ×${M.tok[k]}`, x + 84, 266, d(28), '#fff', 'left'); tx(g, dsc, x + 84, 296, f(13, 700), '#9fb0d0', 'left'); });
+    // the road ahead
+    tx(g, 'COMING UP', 60, 350, d(26), '#ffb02e', 'left');
+    for (let i = 1; i <= 6; i++) {
+      const lv = M.lvl + i, k = lv % 4, x = 60 + (i - 1) * 196, fr = Object.entries(FRAMES).find(([, [at]]) => at === lv);
+      rr(g, x, 366, 182, 104, 12, fr ? '#2a1a3a' : '#121a2e', fr ? '#c58cff' : lv % 5 === 0 ? '#ffd23f' : 'rgba(255,255,255,.1)', 2);
+      tx(g, `LV ${lv}`, x + 91, 388, d(24), '#ff5fa2'); tx(g, k === 1 ? 'Golden Spin' : k === 2 ? 'Extra Reroll' : k === 3 ? 'Camp Boost' : 'Spin + Reroll', x + 91, 414, f(14, 800), '#eef1f8'); tx(g, `+${6 + lv} coins`, x + 91, 434, f(13, 700), '#ffb02e');
+      if (fr) tx(g, `${fr[0].toUpperCase()} FRAME`, x + 91, 456, f(12, 900), '#e6c8ff'); else if (lv % 5 === 0) tx(g, `Title: ${TITLES[Math.min(9, lv / 5)]}`, x + 91, 456, f(12, 900), '#ffd23f');
+    }
+    // frames
+    tx(g, 'CARD FRAMES', 60, 500, d(26), '#ffb02e', 'left'); tx(g, 'Your next legends wear the frame you pick.', 230, 500, f(14, 700), '#9fb0d0', 'left');
+    const keys = ['none', ...Object.keys(FRAMES)];
+    keys.forEach((k, i) => {
+      const x = 60 + i * 166, b = { x, y: 516, w: 154, h: 104 }, own = k === 'none' || M.frames.includes(k), on = (M.frame || 'none') === k; B['fr' + k] = b;
+      rr(g, x, 516, 154, 104, 12, on ? '#26345e' : '#121a2e', on ? '#ffd23f' : 'rgba(255,255,255,.12)', on ? 4 : 2);
+      if (k !== 'none') { g.save(); g.translate(x + 77, 552); const gr = frameGrad(g, k, 120, 40); g.fillStyle = own ? gr : '#2a2a3a'; g.beginPath(); g.roundRect(-58, -18, 116, 36, 10); g.fill(); g.restore(); }
+      else tx(g, 'BY RATING', x + 77, 552, d(22), '#9fb0d0');
+      tx(g, k === 'none' ? 'Standard' : k[0].toUpperCase() + k.slice(1), x + 77, 586, f(14, 900), own ? '#fff' : '#5a6a8a'); tx(g, own ? (on ? 'EQUIPPED' : 'tap to wear') : k === 'album' ? 'Finish an album' : `Level ${FRAMES[k][0]}`, x + 77, 606, f(12, 800), on ? '#ffd23f' : own ? '#9fb0d0' : '#5a6a8a');
+    });
+    button(g, 'home', { x: 540, y: 640, w: 200, h: 62 }, 'BACK', '#1f2a46', null, '#eef1f8');
+  }
+  // headlines and the fan feed after a season
+  function drawNews(g) {
+    const c = career, N = c.news; if (!N || c.phase !== 'show') return; const k = Math.min(1, c.t * 5);
+    g.save(); g.globalAlpha = k; g.translate(0, (1 - k) * 30);
+    rr(g, 70, 120, 730, 470, 16, '#f2ece0', '#141414', 3);
+    tx(g, 'THE DAILY BOX SCORE', 435, 150, d(26), '#3a3a3a'); g.fillStyle = '#141414'; g.fillRect(96, 166, 678, 3); g.fillRect(96, 172, 678, 1);
+    tx(g, `SEASON ${c.seasons.length} · ${c.club.toUpperCase()}`, 435, 188, f(12, 900), '#6a6a6a');
+    g.font = d(N.head.length > 26 ? 44 : 54); wrap(g, N.head, 435, 236, 660, 50, N.mood > 0 ? '#141414' : N.mood < 0 ? '#8a1a1a' : '#2a2a2a', 'center');
+    g.save(); g.beginPath(); g.roundRect(100, 300, 220, 160, 8); g.clip(); g.fillStyle = TEAM[c.look.c1] + '55'; g.fillRect(100, 300, 220, 160); athlete(g, sport, 210, 420, .62, c.look); g.restore(); g.strokeStyle = '#141414'; g.lineWidth = 2; g.strokeRect(100, 300, 220, 160);
+    tx(g, `+${fansTxt(N.gain / 10)} followers`, 210, 482, f(14, 900), '#1f6a3a');
+    N.posts.forEach((p, i) => { const y = 312 + i * 72; rr(g, 340, y, 440, 62, 10, '#ffffff', '#d8d0c0', 1); tx(g, p.h, 354, y + 16, f(13, 900), '#2a6aff', 'left'); g.font = f(14, 700); wrap(g, p.t, 354, y + 38, 330, 16, '#141414'); tx(g, `♥ ${fansTxt(p.likes)}`, 768, y + 16, f(12, 900), '#e8343a', 'right'); });
+    tx(g, 'tap to continue', 435, 566, f(13, 800), '#8a8a8a');
+    g.restore(); B.news = { x: 70, y: 120, w: 730, h: 470 };
+  }
+  // a Hall of Famer gets the number raised to the rafters before the verdict
+  const cerLen = () => career && career.legacy >= 420 && !K.bot ? 3.6 : 0;
+  function drawCeremony(g, e) {
+    const c = career, v = K.view, tc = TEAM[c.look.c1 ?? 6], tc2 = TEAM[c.look.c2 ?? 10] || '#fff';
+    g.fillStyle = '#04060d'; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    g.strokeStyle = 'rgba(120,140,190,.16)'; g.lineWidth = 3; for (let x = -60; x < 1340; x += 140) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 70, 70); g.lineTo(x + 140, 0); g.stroke(); }
+    // older retired numbers already up there
+    [[180, '#e8343a', 7], [330, '#2a6aff', 33], [950, '#3ddc84', 12], [1100, '#ffd23f', 4]].forEach(([x, col, n]) => { g.fillStyle = col + '55'; g.fillRect(x - 40, 40, 80, 110); tx(g, String(n), x, 95, d(46), 'rgba(255,255,255,.35)'); });
+    // spotlights onto the banner
+    const k = 1 - Math.pow(1 - Math.min(1, e / 2.2), 3), by = 640 - k * 450;
+    g.globalCompositeOperation = 'lighter'; for (const sx0 of [v.x0 + 40, v.x1 - 40]) { const gr = g.createLinearGradient(sx0, 0, 640, by); gr.addColorStop(0, 'rgba(255,248,220,.22)'); gr.addColorStop(1, 'rgba(255,248,220,.05)'); g.fillStyle = gr; g.beginPath(); g.moveTo(sx0 - 30, 0); g.lineTo(sx0 + 30, 0); g.lineTo(640 + 170, by + 160); g.lineTo(640 - 170, by + 160); g.fill(); } g.globalCompositeOperation = 'source-over';
+    // the banner and its ropes
+    g.strokeStyle = '#8a8a8a'; g.lineWidth = 2; g.beginPath(); g.moveTo(560, 0); g.lineTo(560, by - 150); g.moveTo(720, 0); g.lineTo(720, by - 150); g.stroke();
+    g.fillStyle = tc; g.fillRect(530, by - 150, 220, 290); g.fillStyle = tc2; g.fillRect(530, by - 150, 220, 14); g.fillRect(530, by + 126, 220, 14);
+    g.beginPath(); g.moveTo(530, by + 140); g.lineTo(640, by + 190); g.lineTo(750, by + 140); g.fill();
+    tx(g, String(c.look.num ?? 23), 640, by - 20, d(150), tc2); tx(g, c.name.toUpperCase(), 640, by + 84, d(c.name.length > 14 ? 26 : 32), tc2); tx(g, `${c.club.toUpperCase()} · ${c.seasons.length} SEASONS`, 640, by + 112, f(12, 900), tc2);
+    // the crowd with phone lights
+    for (let i = 0; i < 170; i++) { const x = (i * 7.9) % 1360 - 40, y = 590 + (i * 37 % 5) * 24; g.fillStyle = '#0b0f1c'; g.beginPath(); g.arc(x, y, 10, 0, TAU); g.fill(); g.fillRect(x - 12, y + 9, 24, 40); if ((i * 7 + Math.floor(t * 4)) % 9 === 0) { g.fillStyle = 'rgba(255,255,235,.9)'; g.fillRect(x - 3, y - 22, 6, 8); } }
+    if ((Math.floor(t * 9) % 4) === 0) { g.fillStyle = 'rgba(255,255,255,.08)'; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
+    const a = Math.min(1, e * 2); g.globalAlpha = a; tx(g, 'JERSEY RETIREMENT NIGHT', 640, 34, d(40), '#ffd23f'); if (e > 2.2) { g.globalAlpha = Math.min(1, (e - 2.2) * 2); tx(g, 'NOBODY WILL EVER WEAR IT AGAIN', 640, 560, d(34), '#fff'); } g.globalAlpha = 1;
+    B.cer = { x: v.x0, y: 0, w: v.x1 - v.x0, h: 720 };
+  }
+  // level-ups, unlocks and XP, over everything
+  function drawOverlay(g) {
+    if (mode === 'verdict' && career && career.vt < cerLen()) return;
+    if (xpPop && xpPop.t < 2.4) { const a = Math.min(1, xpPop.t * 5, (2.4 - xpPop.t) * 2); g.globalAlpha = a; rr(g, 1040, 8, 220, 40, 12, '#2a1430', '#ff5fa2', 2); tx(g, `+${xpPop.n} XP · ${xpPop.why}`, 1150, 28, f(15, 900), '#ffd0e8'); g.globalAlpha = 1; }
+    const T = toasts[0]; if (!T) return; const a = Math.min(1, T.t * 4, (3.4 - T.t) * 2.5), y = 60 + (1 - Math.min(1, T.t * 4)) * -40;
+    g.globalAlpha = Math.max(0, a); g.save(); g.shadowColor = '#ff5fa2'; g.shadowBlur = 30; rr(g, 380, y, 520, 120, 18, '#1a0e2a', '#ff5fa2', 3); g.restore();
+    tx(g, T.title, 640, y + 34, d(40), '#ff5fa2'); tx(g, T.items.join('  ·  '), 640, y + 80, f(16, 900), '#fff'); g.globalAlpha = 1;
   }
   function legendCard(g, r, b, sel, hv) {
     const T = TIERS.find(x => x[1] === r.tier) || TIERS[0], S = SPORTS[r.sport];
@@ -1027,6 +1256,7 @@ const GAME = {
   GAME.reset = () => { mode = 'home'; build = null; career = null; reel = null; msg = null; posed = false; rng = R0; ladder = null; arena = null; hofSel = -1; hofPick = false; nameInput(false); quests(); if (K.bot) { newBuild(pick(Object.keys(SPORTS)), false); build.name = pick(FN) + ' ' + pick(LN); build.demo = 0; } };
   GAME.update = dt => {
     t += dt; if (msg && (msg.k += dt) > 3.5) msg = null;
+    const cer = mode === 'verdict' && career && career.vt < cerLen(); if (xpPop && !cer) xpPop.t += dt; if (toasts[0] && !cer && (toasts[0].t += dt) > 3.4) toasts.shift();
     if (mode === 'create' && build && build.step === 'card' && build.revealT != null && build.revealT > 0) {
       const e = t - build.revealT, O = ovr(), q = qualOf(O), Q = QUAL[q];
       if (e < 1.1 && (build.revTick = (build.revTick || 0) - dt) <= 0) { build.revTick = .2 - e * .14; K.sfx(300 + e * 500, .04, 'square', .03); }
@@ -1037,14 +1267,14 @@ const GAME = {
       const was = reel.t < reel.end; reel.t += dt; reel.tick -= dt; const row = Math.floor(reelPos(reel) + .5);
       if (row !== reel.row && reel.tick <= 0) { reel.row = row; reel.tick = .045; K.sfx(700 + (row / reel.W) * 500, .025, 'square', .035); }
       if (was && reel.t >= reel.end) { K.sfx(980, .08, 'square', .06); K.shake(3); }
-      if (reel.t >= reel.T + .15) { build.pro = reel.pro; reel = null; const [rn] = rarity(build.pro); K.sfx(660, .12, 'triangle', .08); if (rn === 'GOAT PULL' || rn === 'ICON PULL') { const goat = rn === 'GOAT PULL'; build.pullFx = { t0: t, goat }; K.chime(goat ? 659 : 587, [0, 4, 7, 12, 16, 19, 24]); K.sfx(220, .9, 'sawtooth', .05, 900); K.burst(640, 360, goat ? ['#ff5fa2', '#29e0ff', '#3ddc84', '#ffd23f', '#fff'] : ['#ffd23f', '#fff', '#ffb02e'], goat ? 160 : 110, 900); K.shake(goat ? 14 : 10); setTimeout(() => K.burst(640, 360, ['#ffd23f', '#fff'], 80, 700), 350); } else if (rn === 'STAR') { K.chime(784, [0, 4, 7, 12]); K.burst(835, 260, ['#ffd23f', '#fff', '#ff5fa2'], 30, 420); K.shake(6); } if (build.vs) build.vs.clock = 10; }
+      if (reel.t >= reel.T + .15) { build.pro = reel.pro; reel = null; const [rn] = rarity(build.pro); K.sfx(660, .12, 'triangle', .08); if (build.pro.legend) { const first = gotLegend(build.pro); build.pullFx = { t0: t, legend: build.pro, first }; K.chime(659, [0, 4, 7, 12, 16, 19, 24]); K.shake(10); K.burst(640, 300, ['#c58cff', '#fff', '#ffd23f'], 120, 700); } else if (rn === 'GOAT PULL' || rn === 'ICON PULL') { const goat = rn === 'GOAT PULL'; build.pullFx = { t0: t, goat }; K.chime(goat ? 659 : 587, [0, 4, 7, 12, 16, 19, 24]); K.sfx(220, .9, 'sawtooth', .05, 900); K.burst(640, 360, goat ? ['#ff5fa2', '#29e0ff', '#3ddc84', '#ffd23f', '#fff'] : ['#ffd23f', '#fff', '#ffb02e'], goat ? 160 : 110, 900); K.shake(goat ? 14 : 10); setTimeout(() => K.burst(640, 360, ['#ffd23f', '#fff'], 80, 700), 350); } else if (rn === 'STAR') { K.chime(784, [0, 4, 7, 12]); K.burst(835, 260, ['#ffd23f', '#fff', '#ff5fa2'], 30, 420); K.shake(6); } if (build.vs) build.vs.clock = 10; }
     }
     nameInput(mode === 'create' && build && build.step === 'look' && !K.bot && !posed);
     if (mode === 'create' && build.vs && build.pro && (build.vs.clock -= dt) <= 0) { const S = SPORTS[sport], open = build.slots.map((s, i) => s ? -1 : build.pro.r[i] * S.w[i]); place(open.indexOf(Math.max(...open))); msg = { t: 'Shot clock! Your pick was made for you.', k: 0 }; }
     if (mode === 'career' && career) {
       const c = career; c.t += dt; fastStep();
       if (c.mg && mgUpdate(c.mg, dt)) { if (c.phase === 'camp') campDone(); else if (c.phase === 'moment') momentDone(); else if (c.phase === 'finals') finalsDone(); else if (c.phase === 'event') eventDone(); }
-      if (c.phase === 'show' && c.t > (c.fast ? .25 : 1.1)) afterShow();
+      if (c.phase === 'show' && c.t > (c.fast || K.bot ? .25 : 4.2)) afterShow();
     }
     if (mode === 'duel' && ladder && ladder.duel) {
       const D = ladder.duel;
@@ -1065,8 +1295,10 @@ const GAME = {
     if (mode === 'home') drawHome(g);
     else if (mode === 'create' || mode === 'ready') { if (build.step === 'look' && mode === 'create') drawLook(g); else if (build.step === 'trait') drawTrait(g); else if (build.step === 'card') drawCardReveal(g); else drawDraft(g); if (build.pullFx && t - build.pullFx.t0 < 2.6) drawPullFx(g); }
     else if (mode === 'career') drawCareer(g); else if (mode === 'verdict') { drawCareer(g); drawVerdict(g); }
+    else if (mode === 'pack') { drawHome(g); for (const k in B) delete B[k]; drawPack(g); } else if (mode === 'album') drawAlbum(g); else if (mode === 'pass') drawPass(g);
     else if (mode === 'hof') drawHof(g); else if (mode === 'ladder') drawLadder(g); else if (mode === 'duel') drawDuel(g); else if (mode === 'arena') drawArena(g); else if (mode === 'battle') drawBattle(g);
     if (msg) { const a = Math.min(1, msg.k * 4, (3.5 - msg.k) * 2); g.globalAlpha = Math.max(0, a); rr(g, 340, 8, 600, 44, 12, '#1f4a34', '#3ddc84', 2); tx(g, msg.t, 640, 30, f(18), '#bff5d6'); g.globalAlpha = 1; }
+    drawOverlay(g);
   };
   const anyMG = () => (mode === 'career' && career && career.mg) || (mode === 'duel' && ladder && ladder.duel && ladder.duel.mg) || (mode === 'battle' && arena && arena.battle && arena.battle.mg) || null;
   function click(k, x, y) {
@@ -1074,6 +1306,17 @@ const GAME = {
     const L = SAVE();
     if (k.startsWith('sp') && SPORTS[k.slice(2)]) { sport = k.slice(2); K.sfx(600, .05, 'square', .05); return; }
     if (k === 'play') { newBuild(sport, false); return; }
+    if (k === 'pack') { if (packReady()) openPack(); else msg = { t: 'Today\'s pack is open. A new one tomorrow!', k: 0 }; return; }
+    if (k.startsWith('pk') && mode === 'pack') return flipPack(+k.slice(2));
+    if (k === 'packdone') { mode = 'home'; pack = null; return; }
+    if (k === 'album') { mode = 'album'; return; }
+    if (k === 'pass') { mode = 'pass'; return; }
+    if (k.startsWith('fr') && mode === 'pass') { const fk = k.slice(2), M = META(); if (fk === 'none') M.frame = null; else if (M.frames.includes(fk)) M.frame = fk; else return; K.sfx(700, .06, 'triangle', .06); K.persist(); return; }
+    if (k === 'tokgold' && build && !build.gold) { const M = META(); if (M.tok.gold > 0 && !build.pro && !reel) { M.tok.gold--; build.gold = true; K.chime(659, [0, 7, 12]); K.persist(); } return; }
+    if (k === 'tokreroll' && build) { const M = META(); if (M.tok.reroll > 0) { M.tok.reroll--; build.rerolls++; K.sfx(800, .08, 'triangle', .06); K.persist(); } return; }
+    if (k === 'boost' && career) { const M = META(), c = career; if (!c.boost && M.tok.camp > 0) { M.tok.camp--; c.boost = true; K.chime(523, [0, 7]); K.persist(); } return; }
+    if (k === 'news' && career && career.phase === 'show') { career.t = 99; return; }
+    if (k === 'cer' && career && mode === 'verdict') { career.vt = Math.max(career.vt, cerLen()); return; }
     if (k === 'daily') { newBuild(sport, true); return; }
     if (k === 'vs') { newBuild(sport, false); build.step = 'draft'; build.vs = { cpu: Array(6).fill(null), clock: 10 }; build.rerolls = 1; return; }
     // the creator
@@ -1091,7 +1334,7 @@ const GAME = {
     if (k === 'card' && build && build.trait) { build.step = 'card'; build.revealT = t; build.revFlip = build.revSlam = false; K.sfx(200, .5, 'sawtooth', .04, 600); return; }
     if (k === 'relook') { build.step = 'look'; return; }
     if (k === 'spin' && mode === 'create') return spin();
-    if (k === 'vsdone' && mode === 'ready') { const w = ovr() > cpuOvr(); if (w) { L.vsW = (L.vsW || 0) + 1; K.coin(5); } streak(); K.persist(); K.add(ovr()); return K.over({ title: w ? 'You win the draft!' : ovr() === cpuOvr() ? 'A tie' : 'The CPU wins', text: `${build.name} ${ovr()} overall vs the CPU's ${cpuOvr()}. Draft wins: ${L.vsW || 0}.`, delay: 50 }); }
+    if (k === 'vsdone' && mode === 'ready') { const w = ovr() > cpuOvr(); if (w) { L.vsW = (L.vsW || 0) + 1; K.coin(5); gainXP(25, 'Draft win'); } streak(); K.persist(); K.add(ovr()); return K.over({ title: w ? 'You win the draft!' : ovr() === cpuOvr() ? 'A tie' : 'The CPU wins', text: `${build.name} ${ovr()} overall vs the CPU's ${cpuOvr()}. Draft wins: ${L.vsW || 0}.`, delay: 50 }); }
     if (k === 'hof' || k === 'ladder' || k === 'arena' || k === 'hofa') { hofPick = k === 'ladder' ? true : k === 'arena' || k === 'hofa' ? 'arena' : false; hofSel = L.hof.length ? (hofSel >= 0 && hofSel < L.hof.length ? hofSel : 0) : -1; mode = 'hof'; arena = null; if (!L.hof.length && k !== 'hof') msg = { t: 'Create and retire a legend first.', k: 0 }; return; }
     if (k.startsWith('card') && mode === 'hof') { hofSel = +k.slice(4); K.sfx(700, .04, 'triangle', .05); return; }
     if (k === 'ladgo') { const rec = mode === 'verdict' ? lastRec : L.hof[hofSel]; if (rec) startLadder(rec); return; }
@@ -1134,7 +1377,8 @@ const GAME = {
     if (c === 'KeyR' && mode === 'create') return reroll();
     if ((c === 'Space' || c === 'Enter') && mode === 'create' && build.step === 'draft' && reel) return skip();
     if ((c === 'Space' || c === 'Enter') && mode === 'create' && build.step === 'draft' && !build.pro && !reel) return spin();
-    if (c === 'Space' || c === 'Enter') { if (mode === 'home') return click('play'); if (mode === 'create' && build.step === 'card') return click('sim'); if (mode === 'create' && build.step === 'trait') return click('card'); if (mode === 'career' && career.done) return click('verdict'); if (mode === 'verdict' && career.vt > 1) return click('again'); if (mode === 'ladder' && !ladder.over) return click('duel'); }
+    if ((c === 'Space' || c === 'Enter') && mode === 'pack' && pack) { const i = pack.open.indexOf(false); return i >= 0 ? flipPack(i) : click('packdone'); }
+    if (c === 'Space' || c === 'Enter') { if (mode === 'home') return click('play'); if (mode === 'create' && build.step === 'card') return click('sim'); if (mode === 'create' && build.step === 'trait') return click('card'); if (mode === 'career' && career.done) return click('verdict'); if (mode === 'verdict' && career.vt > 1 + cerLen()) return click('again'); if (mode === 'ladder' && !ladder.over) return click('duel'); }
   };
   // the attract demo: drafts, picks a trait, then plays the career (fast)
   GAME.bot = dt => {
