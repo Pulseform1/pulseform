@@ -489,7 +489,9 @@ const GAME = {
     X.chargePL = new THREE.PointLight('#ff4655', 0, 6); X.chargePL.position.y = .6; X.charge.add(X.chargePL); X.charge.visible = false; scene.add(X.charge);
     X.muzzle = new THREE.PointLight('#ffcf8a', 0, 9); scene.add(X.muzzle);
     X.flashL = new THREE.PointLight('#ffffff', 0, 30); scene.add(X.flashL);
-    X.view = new THREE.Group(); X.camera.add(X.view); X.viewGun = null; X.viewKey = '';
+    X.vscene = new THREE.Scene(); X.vroot = new THREE.Group(); X.vscene.add(X.vroot); X.vscene.add(new THREE.HemisphereLight('#dcecff', '#6b5a48', .75)); { const vs = new THREE.DirectionalLight('#fff1d6', 1.3); vs.position.set(.5, 1, .3); X.vscene.add(vs); }
+    X.vmuzzle = new THREE.PointLight('#ffcf8a', 0, 2); X.vmuzzle.position.set(.1, -.05, -.8); X.vroot.add(X.vmuzzle);
+    X.view = new THREE.Group(); X.vroot.add(X.view); X.viewGun = null; X.viewKey = '';
     X.mflash = new THREE.Mesh(new THREE.PlaneGeometry(.22, .22), new THREE.MeshBasicMaterial({ map: canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 2, 32, 32, 30); gr.addColorStop(0, 'rgba(255,255,230,1)'); gr.addColorStop(.4, 'rgba(255,190,90,.8)'); gr.addColorStop(1, 'rgba(255,120,40,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
   }
   // a fighter: helmet with a glowing visor in the operative's colour, a vest, two arms holding the gun, legs that walk
@@ -702,6 +704,7 @@ const GAME = {
     while (X.sparkObjs.length < Math.min(60, X.sparks.length)) { const m = new THREE.Mesh(new THREE.BoxGeometry(.04, .04, .04), X.sparkMat); X.scene.add(m); X.sparkObjs.push(m); }
     X.sparkObjs.forEach((m, i) => { const s = X.sparks[i]; m.visible = !!s; if (s) { m.position.set(...s.p); m.material = s.blood ? X.bloodMat : X.sparkMat; } });
     X.renderer.render(X.scene, cam);
+    if (X.view.visible) { X.vroot.position.copy(cam.position); X.vroot.quaternion.copy(cam.quaternion); X.vmuzzle.intensity = X.flashT > 0 ? 3 : 0; const ac = X.renderer.autoClear; X.renderer.autoClear = false; X.renderer.clearDepth(); X.renderer.render(X.vscene, cam); X.renderer.autoClear = ac; }
   }
 
   /* ---------- input ---------- */
