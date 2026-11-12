@@ -9,9 +9,9 @@ const GAME = {
   id: 'duelpoint', title: 'Duelpoint', tagline: 'One map. One rival. Every round counts.',
   font: 'Chakra Petch', accent: '#ff4655', accent2: '#3ee6c1', bg: '#0b0f17', noSkins: true, noHud: true, scoreLabel: 'Rounds won',
   how: [
-    'Click to grab the mouse. WASD moves, mouse aims, left click shoots. Right click aims down sights (SMGs, rifles, machine gun), scopes a sniper (twice on the Longbow for 5x) or fires the Pip\'s burst. Shift walks, Ctrl or C crouches, Space jumps, R reloads, 1 and 2 swap weapons, Y inspects.',
+    'Click to grab the mouse. WASD moves, mouse aims, left click shoots. Right click aims down sights (SMGs, rifles, machine gun), scopes a sniper (twice on the Longbow for 5x) or fires the Pip\'s burst. Shift walks, Ctrl or C crouches, Space jumps, R reloads, 1 and 2 swap guns, 3 (or the wheel) takes out your knife, G throws a smoke, Y inspects.',
     'Gunplay is precise: standing still, your first shot lands exactly on the crosshair. Moving throws shots off, so stop before you shoot. Tap the opposite direction to counter-strafe and stop dead. Sprays climb then sway, so tap or burst at range. Head hits hardest, legs least. The crosshair opens to show your real error.',
-    'Money: win a round +3000, lose +1900 rising to 2900, +200 a kill, +300 for a plant. Rounds 1 and 5 are pistol rounds. B opens the armory in the buy phase; click something you bought this round to sell it back.',
+    'Money: win a round +3000, lose +1900 rising to 2900, +200 a kill, +300 for a plant. Rounds 1 and 5 are pistol rounds. B opens the armory in the buy phase; click something you bought this round to sell it back. Smoke grenades cost 200 (carry two); they bounce off walls and block sight for 15 seconds. Your knife slashes for 50 and stabs (right click) for 75, or 150 in the back.',
     'Q and E are your operative\'s abilities. Attacking: carry the charge to the red site and hold F to plant. Defending: stop them or hold F on the charge to defuse. First to 5 rounds; sides swap after round 4.',
   ],
   skins: [{ name: 'Default', price: 0 }],
@@ -96,6 +96,7 @@ const GAME = {
     lancer: GUN('lancer', 'Lancer', 'Rifle', 1, 2900, '#ff4655', { mag: 25, res: 50, rpm: 585, rel: 2.5, auto: true, ads: 1.25, equip: 1, dmg: [[99, 160, 40, 34]], acc: { fs: .25, walk: 2.6, run: 6, jump: 10, inc: .4, max: 4, free: 2, recov: .36 }, pat: { vk: .45, vmax: 3.4, hs0: 6, hk: 1.2 }, desc: 'Rifle. One headshot kills at any range. Kicks harder.' }),
     kite: GUN('kite', 'Kite', 'Sniper', 1, 950, '#9fb6ff', { mag: 5, res: 10, rpm: 90, rel: 2.5, scope: [2.5], equip: 1, dmg: [[99, 202, 101, 85]], acc: { fs: 2.5, sfs: 0, walk: 3, run: 8, jump: 12, inc: 0, max: 0, free: 1, recov: .3 }, punch: 3, desc: 'Light sniper. Cheap. A headshot kills, two body shots do.' }),
     longbow: GUN('longbow', 'Longbow', 'Sniper', 1, 4700, '#c58cff', { mag: 5, res: 10, rpm: 36, rel: 3.7, scope: [2.5, 5], spd: .92, equip: 1.25, dmg: [[99, 255, 150, 127]], acc: { fs: 5, sfs: 0, walk: 5, run: 10, jump: 14, inc: 0, max: 0, free: 1, recov: .3 }, punch: 4, desc: 'Heavy sniper. One body shot kills. Right click twice for 5x.' }),
+    knife: GUN('knife', 'Knife', 'Melee', 3, 0, '#ff4655', { melee: 1, auto: true, mag: 0, res: 0, rpm: 140, rel: 0, spd: 1.18, equip: .4, dmg: [[2.4, 75, 50, 50]], acc: { fs: 0, walk: 0, run: 0, jump: 0, inc: 0, max: 0, free: 1, recov: .3 }, desc: 'Always with you. Left click slashes, right click stabs: 150 from behind. You run faster with it out.' }),
     torrent: GUN('torrent', 'Torrent', 'Heavy', 1, 3200, '#e8e8e8', { mag: 100, res: 200, rpm: 720, spin: .3, rel: 5, auto: true, ads: 1.25, spd: .9, equip: 1.25, dmg: [[30, 95, 38, 32], [99, 77, 31, 26]], acc: { fs: .8, walk: 2, run: 4, jump: 8, inc: .15, max: 3.5, free: 1, recov: .45 }, pat: { vk: .12, vmax: 1.6, hs0: 10, hk: .7 }, desc: 'Machine gun. 100 rounds that fire faster the longer you hold.' }),
   };
   const dmgAt = (G, dist, part) => { const row = G.dmg.find(r => dist <= r[0]) || G.dmg[G.dmg.length - 1]; return row[part]; };
@@ -114,7 +115,7 @@ const GAME = {
   let M = null;   // the match: { fs: [me, foe], round, wins, phase, t, planted, smokes, walls, flashes, feed, diff, online, ... }
   let mode = 'menu', keys = {}, mouse = { l: false, r: false }, menuT = 0, selOp = 'vex', selDiff = 1, posed = false;
   function fighter(o) {
-    return Object.assign({ x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, crouch: 0, hp: 100, sh: 0, alive: true, guns: { 1: null, 2: 'pip' }, slot: 2, ammo: {}, fireT: 0, reloadT: 0,
+    return Object.assign({ x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, crouch: 0, hp: 100, sh: 0, alive: true, guns: { 1: null, 2: 'pip', 3: 'knife' }, slot: 2, ammo: {}, smokes: 0, fireT: 0, reloadT: 0,
       recoil: 0, kick: 0, spray: 0, sseed: 0, burst: null, spent: {}, credits: 800, ab: { q: 1, e: 1 }, flash: 0, reveal: 0, heal: null, dash: null, footT: 0, step: 0, ground: true, scoped: false, plant: 0, defuse: 0, lossRun: 0, kills: 0, deaths: 0, walkT: 0, carrying: false }, o);
   }
   const me = () => M.fs[0], foe = () => M.fs[1];
@@ -190,6 +191,7 @@ const GAME = {
   // pull the trigger: one shot, or start a burst (the Pip's alt fire, the Mako aimed down sights)
   function fire(f, alt) {
     const G = gun(f), A = f.ammo[G.k]; if (!f.alive || f.fireT > 0 || f.reloadT > 0 || f.burst || M.phase === 'buy' || f.plant > 0 || f.defuse > 0) return false;
+    if (G.melee) return melee(f, alt === 'heavy');
     if (!A || A.mag <= 0) { if (A && A.res > 0) reload(f); else if (f === me()) snd('dry', f); return false; }
     if (alt === 'burst3' || (G.alt === 'burst4' && f.scoped)) { const three = alt === 'burst3'; f.burst = { n: Math.min(A.mag, three ? 3 : 4), gap: three ? 60 / 1100 : 60 / 900, t: 0, err: three ? 2.2 : 0 }; f.fireT = three ? .5 : .36; stepBurst(f, 0); return true; }
     shootOne(f, 0, false); return true;
@@ -214,6 +216,20 @@ const GAME = {
     snd('shot', f, G.k);
     if (A.mag === 0 && A.res > 0) setTimeout(() => { if (M && f.alive && f.ammo[G.k] && f.ammo[G.k].mag === 0 && !f.burst) reload(f); }, 260);
   }
+  // the knife: a light slash (50, 75 to the head) or a heavy stab (75, 150 in the back). A few rays in a small fan, so a
+  // swing that is nearly on target still connects; it reaches 2.4 m (2 m for the stab).
+  function melee(f, heavy) {
+    f.fireT = heavy ? 1 : .42; f.swingSide = -(f.swingSide || 1); f.swing = { t: 0, heavy, side: f.swingSide }; snd(heavy ? 'stab' : 'slash', f);
+    const e = other(f), range = heavy ? 2 : 2.4; let S = null;
+    for (const [dy, dp] of [[0, 0], [.08, 0], [-.08, 0], [0, .07], [0, -.09], [.16, 0], [-.16, 0], [0, -.18]]) { const s2 = castShot(f, viewDir(f.yaw + dy, f.pitch + dp)); if (s2.hit && s2.dist <= range) { S = s2; break; } }
+    if (S && (f.local || f.bot)) {
+      const back = Math.abs(angDiff(e.yaw, f.yaw)) < 1.05, dmg = heavy ? (back ? 150 : 75) : (S.hit.head ? 75 : 50);
+      if (X) for (let i = 0; i < 9; i++) X.sparks.push({ p: [...S.end], v: [rnd(-1.5, 1.5), rnd(-.5, 2), rnd(-1.5, 1.5)], t: .35, blood: 1 });
+      damage(e, dmg, f, S.hit.head || (heavy && back), 'knife');
+    }
+    net({ t: 'kn', i: M.fs.indexOf(f), h: heavy ? 1 : 0 });
+    return true;
+  }
   function reload(f) { const G = gun(f), A = f.ammo[G.k]; if (!A || f.reloadT > 0 || A.mag >= G.mag || A.res <= 0) return; f.reloadT = G.rel; f.scoped = false; f.burst = null; snd('reload', f); }
   function stepGun(f, dt) {
     const G = gun(f);
@@ -227,6 +243,7 @@ const GAME = {
   // the alternate fire button: scope a sniper (twice for the Longbow's 5x), aim down sights, or the Pip's burst
   function altAction(f) {
     const G = gun(f); if (!f.alive || f.reloadT > 0) return;
+    if (G.melee) { fire(f, 'heavy'); return; }
     if (G.scope) { f.scoped = (+f.scoped + 1) % (G.scope.length + 1); snd('swap', f); }
     else if (G.ads) f.scoped = f.scoped ? 0 : 1;
     else if (G.alt === 'burst3') fire(f, 'burst3');
@@ -269,6 +286,28 @@ const GAME = {
     if (kind === 'smoke') M.smokes.push({ x, z, r: 0, R: 3.8, t: 12 });
     if (kind === 'flash') M.flares.push({ x, y, z, t: .55, by: f });
     snd(kind === 'smoke' ? 'smoke' : 'throw', f);
+  }
+  // a smoke grenade: thrown from the eyes along the view with a little lift, bounces off walls and crates, pops after 1.6 s
+  // or when it comes to rest. Both sides simulate the same throw, so online needs only the start.
+  function throwNade(f) {
+    if (!f.alive || M.phase !== 'live' || !(f.smokes > 0) || f.plant > 0 || f.defuse > 0 || f.throwT > 0) return false;
+    f.smokes--; f.throwT = .5; const d = viewDir(f.yaw, f.pitch), e = eyeY(f), n = { x: f.x + d[0] * .4, y: e - .1 + d[1] * .4, z: f.z + d[2] * .4, vx: d[0] * 13 + f.vx * .5, vy: d[1] * 13 + 2.6, vz: d[2] * 13 + f.vz * .5 };
+    if (f.local || f.bot) net({ t: 'nd', x: +n.x.toFixed(2), y: +n.y.toFixed(2), z: +n.z.toFixed(2), vx: +n.vx.toFixed(2), vy: +n.vy.toFixed(2), vz: +n.vz.toFixed(2) });
+    addNade(n); snd('throw', f); if (f === me() && X) X.throwT = .45; return true;
+  }
+  function addNade(n) { (M.nades = M.nades || []).push(Object.assign({ t: 0, rest: 0, spin: rnd(6, 12) }, n)); }
+  function stepNades(dt) {
+    if (!M.nades || !M.nades.length) return;
+    for (const n of M.nades) {
+      for (let k = 0; k < 4; k++) { const h = dt / 4; n.vy -= 14 * h; const nx = n.x + n.vx * h, ny = n.y + n.vy * h, nz = n.z + n.vz * h;
+        if (hAt(nx, n.z) > n.y || nx < .2 || nx > MW - .2) { n.vx *= -.45; n.vz *= .8; } else n.x = nx;
+        if (hAt(n.x, nz) > n.y || nz < .2 || nz > MH - .2) { n.vz *= -.45; n.vx *= .8; } else n.z = nz;
+        const g = hAt(n.x, n.z); if (ny < g + .06) { n.y = g + .06; if (n.vy < 0) n.vy *= -.3; n.vx *= .62; n.vz *= .62; } else n.y = ny;
+        for (const w of M.walls) if (n.x > w.x0 && n.x < w.x1 && n.z > w.z0 && n.z < w.z1 && n.y < 3) { n.vx *= -.45; n.vz *= -.45; n.x += n.vx * h * 2; n.z += n.vz * h * 2; } }
+      n.t += dt; if (Math.hypot(n.vx, n.vy, n.vz) < .6) n.rest += dt;
+      if (n.t > 1.6 || n.rest > .25) { n.done = true; M.smokes.push({ x: n.x, z: n.z, y: hAt(n.x, n.z), r: 0, R: 4.2, t: 15, T: 15, grey: 1 }); snd('smoke'); }
+    }
+    M.nades = M.nades.filter(n => !n.done);
   }
   function placeWall(cx, cz, alongX, f) {
     const w = alongX ? { x0: cx - .3, x1: cx + .3, z0: cz - 2.6, z1: cz + 2.6 } : { x0: cx - 2.6, x1: cx + 2.6, z0: cz - .3, z1: cz + .3 };
@@ -322,10 +361,10 @@ const GAME = {
     snd(wi === 0 ? 'win' : 'lose'); if (M.planted && why === 'Charge detonated') M.boom = 1;
   }
   function startRound(n) {
-    M.round = n; M.phase = 'buy'; M.t = BUY_T; M.planted = null; M.defused = false; M.smokes = []; M.walls = []; M.flares = []; M.feed = []; M.boom = 0; M.say = null; M.deathCam = null;
+    M.round = n; M.phase = 'buy'; M.t = BUY_T; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.boom = 0; M.say = null; M.deathCam = null;
     M.fs.forEach((f, i) => {
       const side = sideOf(f), sp = spawns[side === 'att' ? 'A' : 'D'], p = sp[(i + n) % sp.length];
-      if (!f.alive || n === 1 || n === 5 || (n === 9)) { f.guns = { 1: null, 2: 'pip' }; f.sh = 0; f.ammo = {}; }
+      if (!f.alive || n === 1 || n === 5 || (n === 9)) { f.guns = { 1: null, 2: 'pip', 3: 'knife' }; f.sh = 0; f.ammo = {}; f.smokes = 0; }
       if (n === 5 || n === 9) f.credits = 800;
       f.x = p[0] + rnd(-.3, .3); f.z = p[1] + rnd(-.3, .3); f.y = 0; f.vx = f.vz = f.vy = 0; f.hp = 100; f.alive = true; f.ab = { q: 1, e: 1 }; f.flash = f.reveal = 0; f.heal = f.dash = null; f.plant = f.defuse = 0; f.scoped = false; f.reloadT = 0; f.fireT = 0; f.spray = 0; f.burst = null; f.spent = {};
       for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
@@ -343,6 +382,10 @@ const GAME = {
       if (f.guns[s] === k) { if (prev && prev.k === k) { f.credits += G.cost; f.guns[s] = prev.was; if (prev.was) giveAmmo(f, prev.was); delete sp[s]; f.slot = f.guns[1] ? 1 : 2; snd('buy', f); net({ t: 'by', g: f.guns }); return true; } return false; }
       const refund = prev ? GUNS[prev.k].cost : 0; if (f.credits + refund < G.cost) return false;
       f.credits += refund - G.cost; sp[s] = { k, was: prev ? prev.was : f.guns[s] }; f.guns[s] = k; giveAmmo(f, k); f.slot = s; f.scoped = false; snd('buy', f); net({ t: 'by', g: f.guns }); return true;
+    }
+    if (k === 'smoke') {
+      if ((f.smokes || 0) >= 2) { if (sp.smoke > 0) { sp.smoke--; f.smokes--; f.credits += 200; snd('buy', f); return true; } return false; }
+      if (f.credits < 200) return false; f.credits -= 200; f.smokes = (f.smokes || 0) + 1; sp.smoke = (sp.smoke || 0) + 1; snd('buy', f); return true;
     }
     if (A) {
       if (f.sh >= A.sh) { if (sp.sh && sp.sh.k === A.k) { f.credits += A.cost; f.sh = sp.sh.was; delete sp.sh; snd('buy', f); return true; } return false; }
@@ -366,7 +409,8 @@ const GAME = {
     const c = walkCells.filter(q => { const d = Math.hypot(q[0] - nearX, q[1] - nearZ); return d >= rMin && d <= rMax && los(q[0], 1.5, q[1], lookX, 1, lookZ, false) >= Math.hypot(q[0] - lookX, q[1] - lookZ) - 1; });
     return c.length ? pick(c) : [nearX, nearZ];
   }
-  function botBuy(f) {
+  function botBuy(f) { botBuyGuns(f); if (f.credits >= 200 && R() < .65) buy(f, 'smoke'); if (f.credits >= 1400 && R() < .45) buy(f, 'smoke'); }
+  function botBuyGuns(f) {
     const c = f.credits, D = DIFF[f.bot.diff], pistol = M.round === 1 || M.round === 5 || M.round === 9, has = f.guns[1];
     if (pistol) { const r = R(); if (r < .35) buy(f, 'hammer'); else if (r < .55) { buy(f, 'quill'); } else if (r < .75) { buy(f, 'light'); buy(f, 'stub'); } else { buy(f, 'wasp'); buy(f, 'stub'); } return; }
     if (has && GUNS[has].cost >= 2050) { if (f.sh < 50 && f.credits >= 1000) buy(f, 'heavy'); else if (f.sh < 25) buy(f, 'light'); return; }
@@ -407,12 +451,20 @@ const GAME = {
     // shoot when the crosshair is close enough
     if (engaged) {
       const G = gun(f), off = Math.abs(angDiff(tYaw - B.err[0], f.yaw)) + Math.abs(tPitch - B.err[1] - f.pitch), err = spreadOf(f), tgt = Math.atan2(.32, dE);
+      if (G.melee) { if (dE < 2.2 && off < .4) I.fire = true; } else {
       if (G.scope && !f.scoped && off < .2) f.scoped = 1;
       const steady = err < Math.max(.006, tgt * (1.8 - D.spray * .7)) || dE < (G.pel ? 9 : 6);
-      if (off < tgt * 1.6 + .01 + (G.pel ? .05 : 0) && steady && (!G.scope || f.scoped) && !(G.auto && dE > 16 && f.spray > 2 + D.spray * 4)) I.fire = true;
+      if (off < tgt * 1.6 + .01 + (G.pel ? .05 : 0) && steady && (!G.scope || f.scoped) && !(G.auto && dE > 16 && f.spray > 2 + D.spray * 4)) I.fire = true; }
     }
     if (f.slot === 2 && f.guns[1]) switchTo(f, 1);
+    const dry = [1, 2].every(s => !f.guns[s] || !f.ammo[f.guns[s]] || f.ammo[f.guns[s]].mag + f.ammo[f.guns[s]].res <= 0); if (dry && f.slot !== 3) switchTo(f, 3);
+    if (B.nadeT > 0) B.nadeT -= dt;
     // abilities
+    if (M.phase === 'live' && f.smokes > 0 && !(B.nadeT > 0) && !sees) {
+      // smokes: attackers cover the site before they step in; defenders smoke the lane they just heard someone in
+      if (side === 'att' && P.k === 'push' && P.path && P.path.length < 6 && P.path.length > 1) { const t2 = holdSpot(siteC[0], siteC[1], 0, 7, f.x, f.z), dd = Math.hypot(t2[0] - f.x, t2[1] - f.z); f.yaw = Math.atan2(-(t2[0] - f.x), -(t2[1] - f.z)); f.pitch = cl(.05 + dd * .012, .04, .45); if (throwNade(f)) B.nadeT = 4; }
+      else if (side === 'def' && B.last && B.last.t - M.t < 2 && R() < dt * .6) { const dd = Math.hypot(B.last.x - f.x, B.last.z - f.z); if (dd > 7 && dd < 22) { f.yaw = Math.atan2(-(B.last.x - f.x), -(B.last.z - f.z)); f.pitch = cl(.05 + dd * .012, .04, .45); if (throwNade(f)) B.nadeT = 6; } }
+    }
     if (M.phase === 'live') {
       if (f.op === 'vex' && f.ab.e && side === 'att' && P.k === 'push' && P.path && P.path.length < 7 && P.smoke) { const s0 = holdSpot(siteC[0], siteC[1], 0, 6, f.x, f.z); f.yaw = Math.atan2(-(s0[0] - f.x), -(s0[1] - f.z)); f.pitch = -.05; ability(f, 'e'); }
       if (f.op === 'vex' && f.ab.q && engaged && f.hp < 45) ability(f, 'q');
@@ -430,6 +482,7 @@ const GAME = {
       const lv = Math.cos(f.yaw) * f.vx - Math.sin(f.yaw) * f.vz;
       if (B.mv) I.mx = B.str; else I.mx = B.diff > 0 && Math.abs(lv) > 1.2 ? -Math.sign(lv) : 0;
       if (B.diff > 0 && R() < dt * .35) B.crouchT = .8; }
+    if (engaged && gun(f).melee) goal = [e.x, e.z];
     if (B.crouchT > 0) { B.crouchT -= dt; I.crouch = true; }
     if (goal) { const want = Math.atan2(-(goal[0] - f.x), -(goal[1] - f.z)), da = angDiff(want, f.yaw); I.mz = Math.cos(da); I.mx = -Math.sin(da); if (sees === false && P.k === 'hold' && !P.path.length) I.walk = true; }
     // the objective
@@ -450,6 +503,8 @@ const GAME = {
   function onMsg(m) {
     if (!M || !M.online) return; const F = foe();
     if (m.t === 's') { F.tgt = m; F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.step = m.st ? .3 : 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.scoped = !!m.sc; if (!m.al && F.alive && M.phase === 'live') { F.alive = false; } if (m.al && !F.alive && M.phase === 'buy') F.alive = true; }
+    if (m.t === 'kn') { F.swing = { t: 0, heavy: !!m.h, side: 1 }; snd(m.h ? 'stab' : 'slash', F); }
+    if (m.t === 'nd') { addNade({ x: m.x, y: m.y, z: m.z, vx: m.vx, vy: m.vy, vz: m.vz }); snd('throw', F); }
     if (m.t === 'sh') { const S = castShot(F, viewDir(F.yaw, F.pitch)); fxShot(F, S, true); snd('shot', F, gun(F).k); }
     if (m.t === 'hit') applyDamage(me(), m.d, F, !!m.h, m.w);
     if (m.t === 'dead') { if (F.alive) { F.alive = false; F.deaths++; me().kills++; me().credits = Math.min(9000, me().credits + 200); M.feed.unshift({ a: me().name, b: F.name, w: GUNS[m.w] ? GUNS[m.w].n : m.w, head: !!m.hs, t: 0, mine: true }); M.killFx = 1; snd('die', F); } if (M.host) judge(); }
@@ -500,7 +555,8 @@ const GAME = {
       if (I.fire && M.phase === 'live') { const G = gun(f); if (G.auto || !f.semiHeld) fire(f); }
       f.semiHeld = !!I.fire;
     }
-    for (const s of M.smokes) { s.t -= dt; s.r = s.t > 11.4 ? lp(0, s.R, (12 - s.t) / .6) : s.t < 1 ? s.R * s.t : s.R; } M.smokes = M.smokes.filter(s => s.t > 0);
+    for (const s of M.smokes) { const T = s.T || 12; s.t -= dt; s.r = s.t > T - .6 ? lp(0, s.R, (T - s.t) / .6) : s.t < 1 ? s.R * s.t : s.R; } M.smokes = M.smokes.filter(s => s.t > 0);
+    stepNades(dt); for (const f of M.fs) { if (f.throwT > 0) f.throwT -= dt; if (f.swing) { f.swing.t += dt; if (f.swing.t > .7) f.swing = null; } }
     for (const w of M.walls) { w.t -= dt; w.grow = Math.min(1, w.grow + dt * 4); } M.walls = M.walls.filter(w => w.t > 0);
     for (const fl of M.flares) { fl.t -= dt; if (fl.t <= 0) popFlare(fl); } M.flares = M.flares.filter(fl => fl.t > 0);
     for (const k of M.feed) k.t += dt; M.feed = M.feed.filter(k => k.t < 6).slice(0, 4);
@@ -818,6 +874,14 @@ const GAME = {
       T = parts.bolt = group(0, 0, 0); box(.012, .014, .03, m.steel, -.034, .03, -.02);
       T = parts.mag = group(0, -.1, -.1); box(.06, .1, .12, m.poly, 0, 0, 0); box(.062, .012, .122, m.acc, 0, .03, 0); box(.008, .05, .012, m.brass, -.026, .07, 0);
       T = G;
+    } else if (k === 'knife') { // combat knife: tanto blade with a dark fuller and a red edge line, guard, ribbed grip, pommel
+      len = .24; port = null;
+      prof([[-.02, .022], [-.19, .022], [-.235, .008], [-.212, -.008], [-.02, -.012]], .0065, m.steel, 0, .0015);
+      box(.0072, .006, .14, m.dark, 0, .012, -.1); box(.007, .0018, .15, m.glow, 0, -.006, -.11);
+      box(.03, .05, .012, m.acc, 0, .005, -.014);
+      prof([[-.008, .016], [.09, .016], [.1, .008], [.1, -.012], [.09, -.018], [-.008, -.014]], .022, m.poly);
+      for (let i = 0; i < 4; i++) box(.0235, .036, .004, m.dark, 0, .001, .012 + i * .021);
+      box(.027, .03, .016, m.metal, 0, 0, .105); decal('DP', 'BLADE', .05, .0125, .0038, .008, -.1);
     } else if (k === 'hornet') { // SMG: camo upper, long knurled suppressor, flashlight, straight mag, wire stock, holo sight
       len = .5; port = [.023, .03, -.03];
       prof([[-.2, .05], [.06, .05], [.07, .04], [.07, -.01], [-.2, -.01]], .044, m.fin);
@@ -894,7 +958,16 @@ const GAME = {
       T = G;
     }
     if (k === 'hornet') sight = .091; if (k === 'breaker') sight = .068; if (k === 'lancer') sight = .099;
-    if (opts.hands) { // gloves wrapped round the grip and the support, sleeves in the operative's colour
+    if (opts.hands && k === 'knife') {
+      const op = OPS[opts.op] || OPS.vex, band = new THREE.MeshStandardMaterial({ color: op.col, roughness: .5 });
+      T = group(0, 0, .045);
+      box(.012, .046, .072, m.glove, .019, -.002, 0); box(.012, .036, .07, m.glove, -.018, -.006, 0); for (let i = 0; i < 4; i++) box(.04, .016, .016, m.glove, 0, -.024, -.027 + i * .018);
+      box(.011, .012, .04, m.glove, -.011, .02, -.022); box(.006, .022, .04, band, .026, -.004, .01);
+      const arm = new THREE.Group(); arm.position.set(.006, -.02, .04); arm.rotation.set(1.1, -.3, 0); T.add(arm);
+      const sl = new THREE.Mesh(new THREE.CylinderGeometry(.04, .047, .42, 14), m.sleeve); sl.rotation.x = Math.PI / 2; sl.position.z = .23; arm.add(sl);
+      const bd = new THREE.Mesh(new THREE.CylinderGeometry(.0435, .0435, .03, 14), band); bd.rotation.x = Math.PI / 2; bd.position.z = .035; arm.add(bd);
+      T = G;
+    } else if (opts.hands) { // gloves wrapped round the grip and the support, sleeves in the operative's colour
       const op = OPS[opts.op] || OPS.vex, band = new THREE.MeshStandardMaterial({ color: op.col, roughness: .5 });
       const arm = (par, x, y, z, rx, ry, l) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(rx, ry, 0); par.add(g);
         const s = new THREE.Mesh(new THREE.CylinderGeometry(.04, .047, l, 14), m.sleeve); s.rotation.x = Math.PI / 2; s.position.z = l / 2 + .02; g.add(s);
@@ -935,7 +1008,7 @@ const GAME = {
   }
   // spent brass flying out of the ejection port (first person only)
   const CASE = { pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] }, CASEGEO = {};
-  const VOS = { pip: [.17, -.17, -.3], wasp: [.17, -.17, -.3], quill: [.17, -.17, -.3], stub: [.17, -.18, -.3], hammer: [.17, -.17, -.3], gnat: [.2, -.19, -.3], hornet: [.2, -.19, -.3], breaker: [.2, -.2, -.27], thresher: [.2, -.2, -.28], mako: [.2, -.2, -.28], paladin: [.21, -.21, -.27], vesper: [.2, -.2, -.28], lancer: [.2, -.2, -.28], kite: [.22, -.22, -.26], longbow: [.23, -.23, -.25], torrent: [.21, -.21, -.27] };
+  const VOS = { knife: [.15, -.15, -.31], pip: [.17, -.17, -.3], wasp: [.17, -.17, -.3], quill: [.17, -.17, -.3], stub: [.17, -.18, -.3], hammer: [.17, -.17, -.3], gnat: [.2, -.19, -.3], hornet: [.2, -.19, -.3], breaker: [.2, -.2, -.27], thresher: [.2, -.2, -.28], mako: [.2, -.2, -.28], paladin: [.21, -.21, -.27], vesper: [.2, -.2, -.28], lancer: [.2, -.2, -.28], kite: [.22, -.22, -.26], longbow: [.23, -.23, -.25], torrent: [.21, -.21, -.27] };
   function viewAnim(P, G, dt) {
     const U = X.viewGun.userData, pp = U.parts, A = P.ammo[G.k] || { mag: 0 }, sm = x => x * x * (3 - 2 * x);
     const st = P.fireT > 0 ? 60 / G.rpm - P.fireT : 9, shotT = st >= 0 ? st : 9, r = P.reloadT > 0 ? 1 - P.reloadT / G.rel : -1, win = (a, b) => cl((r - a) / (b - a), 0, 1);
@@ -994,7 +1067,9 @@ const GAME = {
     else if (k === 'flare') K.noise(.3, .25 * v, 3000); else if (k === 'smoke') K.noise(.6, .12 * v, 400);
     else if (k === 'blink') K.sfx(600, .15, 'sine', .06 * v, 900); else if (k === 'ping') K.sfx(1200, .3, 'sine', .06, -600);
     else if (k === 'wall') K.sfx(90, .3, 'sawtooth', .06 * v, 80); else if (k === 'heal') K.chime(660, [0, 7]);
-    else if (k === 'dry') K.sfx(300, .03, 'square', .03); else if (k === 'swap') K.sfx(700, .03, 'square', .03);
+    else if (k === 'dry') K.sfx(300, .03, 'square', .03);
+    else if (k === 'slash') { K.noise(.08, .12 * v, 3200); K.sfx(900, .06, 'sine', .03 * v, -500); } else if (k === 'stab') { K.noise(.13, .16 * v, 1800); K.sfx(500, .1, 'sine', .04 * v, -300); }
+    else if (k === 'throw') { K.noise(.09, .08 * v, 1400); K.sfx(1500, .03, 'square', .03 * v, 0, .02); } else if (k === 'swap') K.sfx(700, .03, 'square', .03);
     else if (k === 'plantStart' || k === 'defuseStart') K.sfx(600, .1, 'square', .05 * v);
     else if (k === 'jump') { if (!mine) K.noise(.05, .06 * v, 1500); }
   }
@@ -1013,13 +1088,21 @@ const GAME = {
     cam.rotation.set(0, 0, 0); cam.rotation.order = 'YXZ'; cam.rotation.y = yaw; cam.rotation.x = pitch;
     const fov = 2 * Math.atan(Math.tan(39 * D2R) / zoomOf(P)) / D2R; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
     // viewmodel
-    if (X.viewKey !== G.k + P.op) { if (X.viewGun) X.view.remove(X.viewGun); X.viewGun = viewGun(G.k, P.op); X.view.add(X.viewGun); X.viewKey = G.k + P.op; X.viewGun.add(X.mflash); X.drawT = .3; }
+    if (X.viewKey !== G.k + P.op) { if (X.viewGun) X.view.remove(X.viewGun); X.viewGun = viewGun(G.k, P.op); if (G.melee) X.viewGun.scale.setScalar(1.35); X.view.add(X.viewGun); X.viewKey = G.k + P.op; X.viewGun.add(X.mflash); X.drawT = .3; }
     X.drawT = Math.max(0, (X.drawT || 0) - dt); const dr = X.drawT / .3, sway = Math.sin(X.t * 1.3) * .004;
     const v = Math.hypot(P.vx, P.vz), bob = Math.sin(P.walkT * 1.9) * .012 * Math.min(1, v / 4), rel = P.reloadT > 0 ? Math.sin(Math.min(1, 1 - P.reloadT / G.rel) * Math.PI) : 0;
     X.view.visible = P.alive && !(P.scoped && G.scope); const VO = VOS[G.k] || [.2, -.2, -.28];
     X.view.position.set(VO[0] + bob - rel * .05, VO[1] + Math.abs(bob) * .6 + sway + rel * .1 - P.kick * .2 - dr * dr * .25, VO[2] + P.kick * .8);
     X.view.rotation.set(P.kick * 1.4 + rel * .12 - dr * .6, .02 + rel * .3, -rel * .55 + dr * .3); X.mflash.position.set(0, .025, -(X.viewGun.userData.len || .5) - .03); X.mflash.visible = X.flashT > 0; X.mflash.rotation.z = R() * 3; X.mflash.scale.setScalar(G.k === 'breaker' || G.k === 'longbow' ? 1.5 : G.k === 'pip' ? .8 : 1);
     viewAnim(P, G, dt);
+    if (G.melee) { X.view.rotation.x += .28; X.view.rotation.y += .5; X.view.rotation.z -= .2; }
+    if (P.swing) { const d = P.swing.heavy ? .55 : .32, q = Math.min(1, P.swing.t / d), e = Math.sin(q * Math.PI);
+      if (P.swing.heavy) { const wind = q < .35 ? q / .35 : 1, th = q < .35 ? 0 : Math.sin((q - .35) / .65 * Math.PI); X.view.position.z += wind * .06 * (1 - th) - th * .16; X.view.position.y += .03 * wind; X.view.position.x -= .06 * th; X.view.rotation.x += .25 * wind - .35 * th; }
+      else { // wind up to one side, then sweep across the screen and come back
+        const sd = P.swing.side, a = q < .22 ? q / .22 : 1, sw = q < .22 ? 0 : Math.sin(Math.min(1, (q - .22) / .5) * Math.PI / 2), k = a * (q > .72 ? 1 - (q - .72) / .28 : 1);
+        X.view.position.x += k * (sd > 0 ? lp(.06, -.22, sw) : lp(-.2, .08, sw)); X.view.position.y += k * (.05 - .07 * sw); X.view.position.z -= k * .04;
+        X.view.rotation.y += sd * k * lp(-.5, .8, sw); X.view.rotation.z += sd * k * lp(.7, -.6, sw); X.view.rotation.x -= k * .15; } }
+    if (X.throwT > 0) { X.throwT -= dt; const e = Math.sin(Math.min(1, 1 - X.throwT / .45) * Math.PI); X.view.position.y -= e * .16; X.view.rotation.x -= e * .5; X.view.rotation.z += e * .3; }
     if (X.inspT > 0) { if (P.reloadT > 0 || P.fireT > 0 && 60 / G.rpm - P.fireT < .1) X.inspT = 0; else X.inspT -= dt; }
     if (X.inspT > 0) { const q = 1 - X.inspT / 2.6, e = (x => x * x * (3 - 2 * x))(cl(Math.sin(q * Math.PI) * 1.6, 0, 1)), tw = Math.sin(q * Math.PI * 2) * e; X.view.position.x -= e * .03; X.view.position.y += e * .035; X.view.position.z -= e * .1; X.view.rotation.y += e * .85; X.view.rotation.z += e * .3 + tw * .25; X.view.rotation.x += tw * .15; }
     X.adsK = lp(X.adsK || 0, P.scoped && !G.scope && P.alive ? 1 : 0, Math.min(1, dt * 16));
@@ -1032,12 +1115,15 @@ const GAME = {
       if (U.flash) { U.flash.visible = f.mflash > 0 && f.alive; if (f.mflash > 0) { f.mflash -= dt; U.flash.material.rotation = R() * 6; } } A.position.set(f.x, f.y, f.z); A.rotation.y = f.yaw;
       const sw = Math.sin(f.walkT * 1.8) * Math.min(1, Math.hypot(f.vx, f.vz) / 3) * .7; U.legL.rotation.x = sw; U.legR.rotation.x = -sw;
       U.hip.position.y = .92 - f.crouch * .42; U.legL.rotation.x += f.crouch * -.9; U.legR.rotation.x += f.crouch * -.9; U.torso.rotation.x = f.crouch * .25;
-      U.arms.rotation.x = f.pitch * .8; U.head.rotation.x = f.pitch * .5;
+      U.arms.rotation.x = f.pitch * .8 - (f.swing ? Math.sin(Math.min(1, f.swing.t / .4) * Math.PI) * .9 : 0) + (f.throwT > 0 ? Math.sin(f.throwT / .5 * Math.PI) * 1.2 : 0); U.arms.rotation.y = f.swing && !f.swing.heavy ? (f.swing.t / .4 - .5) * 1.2 * (f.swing.side || 1) : 0; U.head.rotation.x = f.pitch * .5;
       if (!f.alive) { A.rotation.z = lp(A.rotation.z, 1.45, Math.min(1, dt * 6)); A.position.y = f.y - .1; } else A.rotation.z = 0;
     }
     // smokes, walls, the charge, tracers, sparks
-    while (X.smokes.length < M.smokes.length) { const g = new THREE.Group(); for (let i = 0; i < 4; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), X.smokeMat); m.position.set(rnd(-.3, .3), rnd(-.2, .3), rnd(-.3, .3)); m.scale.setScalar(.85 + i * .05); g.add(m); } X.scene.add(g); X.smokes.push(g); }
-    X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { g.position.set(s.x, 1.4, s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .1; } });
+    if (!X.nadeObjs) { X.nadeObjs = []; X.nadeGeo = new THREE.CylinderGeometry(.045, .045, .13, 12); X.nadeMat = new THREE.MeshStandardMaterial({ color: '#8a9099', metalness: .6, roughness: .4 }); X.smokeMat2 = new THREE.MeshLambertMaterial({ color: '#c3c7cf', transparent: true, opacity: .95, depthWrite: false }); }
+    const NS = M.nades || []; while (X.nadeObjs.length < NS.length) { const m = new THREE.Mesh(X.nadeGeo, X.nadeMat); const cap = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .03, 10), new THREE.MeshBasicMaterial({ color: '#ff4655' })); cap.position.y = .08; m.add(cap); m.castShadow = true; X.scene.add(m); X.nadeObjs.push(m); }
+    X.nadeObjs.forEach((m, i) => { const n = NS[i]; m.visible = !!n; if (n) { m.position.set(n.x, n.y, n.z); m.rotation.set(n.t * n.spin, 0, n.t * n.spin * .6); } });
+    while (X.smokes.length < M.smokes.length) { const g = new THREE.Group(); for (let i = 0; i < 6; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), X.smokeMat); m.position.set(rnd(-.32, .32), rnd(-.2, .3), rnd(-.32, .32)); m.scale.setScalar(.78 + i * .045); g.add(m); } X.scene.add(g); X.smokes.push(g); }
+    X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { g.position.set(s.x, 1.4 + (s.y || 0), s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .1; for (const c of g.children) c.material = s.grey ? X.smokeMat2 : X.smokeMat; } });
     while (X.walls.length < M.walls.length) { const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), X.wallMat); m.castShadow = true; X.scene.add(m); X.walls.push(m); }
     X.walls.forEach((m, i) => { const w = M.walls[i]; m.visible = !!w; if (w) { m.scale.set(w.x1 - w.x0, 3 * w.grow, w.z1 - w.z0); m.position.set((w.x0 + w.x1) / 2, 1.5 * w.grow, (w.z0 + w.z1) / 2); } });
     X.charge.visible = !!M.planted; if (M.planted) { X.charge.position.set(M.planted.x, 0, M.planted.z); const on = M.planted.beep > Math.max(.06, cl(M.planted.t / 12, .12, 1) - .08); X.chargeLight.material.color.set(on ? '#ff4655' : '#401018'); X.chargePL.intensity = on ? 2.5 : 0; }
@@ -1062,6 +1148,7 @@ const GAME = {
   document.addEventListener('mousemove', e => { if (!locked() || !M || mode !== 'play') return; const P = me(), s = sens / zoomOf(P); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
   document.addEventListener('mousedown', e => { if (!locked() || !M || mode !== 'play') return; if (e.button === 0) mouse.l = true; if (e.button === 2) altAction(me()); });
   document.addEventListener('mouseup', e => { if (e.button === 0) mouse.l = false; });
+  document.addEventListener('wheel', e => { if (!locked() || !M || mode !== 'play') return; const P = me(), order = [1, 2, 3].filter(s => P.guns[s]), i = order.indexOf(P.slot); switchTo(P, order[(i + (e.deltaY > 0 ? 1 : order.length - 1)) % order.length]); }, { passive: true });
   document.addEventListener('contextmenu', e => { if (mode === 'play') e.preventDefault(); });
   const TS = { stick: null, look: null, fire: null, btn: new Map() };   // touch state
   function localInput() {
@@ -1075,7 +1162,7 @@ const GAME = {
     if (KM[c]) keys[KM[c]] = d;
     if (!d || !M || mode !== 'play') { if (d && mode === 'menu' && (c === 'Enter' || c === 'Space')) click('play'); if (d && mode === 'over' && c === 'Enter') click('again'); return; }
     const P = me();
-    if (c === 'KeyR') reload(P); if (c === 'Digit1') switchTo(P, 1); if (c === 'Digit2' || c === 'Digit3') switchTo(P, 2);
+    if (c === 'KeyR') reload(P); if (c === 'Digit1') switchTo(P, 1); if (c === 'Digit2') switchTo(P, 2); if (c === 'Digit3') switchTo(P, 3); if (c === 'KeyG' || c === 'Digit4') throwNade(P);
     if (c === 'KeyQ') ability(P, 'q'); if (c === 'KeyE') ability(P, 'e'); if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) X.inspT = 2.6;
     if (c === 'KeyB' && M.phase === 'buy') { M.buyMenu = !M.buyMenu; if (M.buyMenu) unlockMouse(); else lockMouse(); }
   };
@@ -1116,9 +1203,10 @@ const GAME = {
     // bottom left: health and shield; bottom right: ammo and abilities
     rr(g, 30, 640, 260, 54, 6, 'rgba(11,15,23,.75)'); tx(g, String(Math.ceil(P.hp)), 80, 667, DF(40), P.hp > 30 ? PAPER : RED); tx(g, 'HP', 116, 676, DF(12), '#9aa4b4', 'left');
     rr(g, 150, 660, 120, 8, 4, 'rgba(255,255,255,.15)'); rr(g, 150, 660, 120 * P.hp / 100, 8, 4, P.hp > 30 ? PAPER : RED); if (P.sh) { rr(g, 150, 674, 120 * P.sh / 50, 6, 3, '#7fc8ff'); tx(g, `⛨ ${P.sh}`, 278, 677, BF(13), '#7fc8ff', 'left'); }
-    const A = P.ammo[G.k] || { mag: 0, res: 0 }; rr(g, 990, 640, 260, 54, 6, 'rgba(11,15,23,.75)'); tx(g, String(A.mag), 1090, 667, DF(40), A.mag ? PAPER : RED, 'right'); tx(g, `/ ${A.res}`, 1098, 674, DF(18), '#9aa4b4', 'left'); tx(g, G.n.toUpperCase(), 1238, 667, DF(16), G.col, 'right');
+    const A = P.ammo[G.k] || { mag: 0, res: 0 }; rr(g, 990, 640, 260, 54, 6, 'rgba(11,15,23,.75)'); if (G.melee) tx(g, '∞', 1080, 667, DF(36), PAPER); else { tx(g, String(A.mag), 1090, 667, DF(40), A.mag ? PAPER : RED, 'right'); tx(g, `/ ${A.res}`, 1098, 674, DF(18), '#9aa4b4', 'left'); } tx(g, G.n.toUpperCase(), 1238, 667, DF(16), G.col, 'right');
     if (P.reloadT > 0) tx(g, 'RELOADING', 640, 420, DF(16), '#ffd23f', 'center', 2);
     const op = OPS[P.op]; [['Q', 'q'], ['E', 'e']].forEach(([key, k], i) => { const x = 330 + i * 92, on = P.ab[k]; rr(g, x, 640, 80, 54, 6, on ? 'rgba(11,15,23,.78)' : 'rgba(11,15,23,.4)', on ? op.col : 'rgba(255,255,255,.12)'); tx(g, op[k].n.toUpperCase(), x + 40, 660, DF(14), on ? '#fff' : '#5a6070'); tx(g, key, x + 40, 682, DF(14), on ? op.col : '#5a6070'); });
+    { const n = P.smokes || 0, x = 514; rr(g, x, 640, 80, 54, 6, n ? 'rgba(11,15,23,.78)' : 'rgba(11,15,23,.4)', n ? '#c3c7cf' : 'rgba(255,255,255,.12)'); tx(g, `SMOKE ×${n}`, x + 40, 660, DF(13), n ? '#fff' : '#5a6070'); tx(g, 'G', x + 40, 682, DF(14), n ? '#c3c7cf' : '#5a6070'); }
     if (ph === 'buy') tx(g, `◈ ${P.credits}`, 990, 620, DF(22), '#ffd23f', 'left');
     // the objective
     const onS = onSite(P.x, P.z);
@@ -1141,7 +1229,7 @@ const GAME = {
     if (touch() && mode === 'play') drawTouch(g);
   }
   // the armory: weapons in columns by type, shields on the right, and the full numbers for whatever you point at
-  const BUYCOLS = [[['SIDEARMS', ['pip', 'stub', 'wasp', 'quill', 'hammer']]], [['SMGS', ['gnat', 'hornet']], ['SHOTGUNS', ['breaker', 'thresher']]], [['RIFLES', ['mako', 'paladin', 'vesper', 'lancer']]], [['SNIPERS', ['kite', 'longbow']], ['HEAVY', ['torrent']]], [['SHIELDS', ['light', 'heavy']]]];
+  const BUYCOLS = [[['SIDEARMS', ['pip', 'stub', 'wasp', 'quill', 'hammer']]], [['SMGS', ['gnat', 'hornet']], ['SHOTGUNS', ['breaker', 'thresher']]], [['RIFLES', ['mako', 'paladin', 'vesper', 'lancer']]], [['SNIPERS', ['kite', 'longbow']], ['HEAVY', ['torrent']], ['UTILITY', ['smoke']]], [['SHIELDS', ['light', 'heavy']]]];
   let buyFocus = 'lancer';
   function drawBuy(g) {
     const P = me(); rr(g, 24, 64, 1232, 600, 10, 'rgba(11,15,23,.95)', 'rgba(236,232,225,.3)');
@@ -1152,14 +1240,15 @@ const GAME = {
       for (const [title, keys] of col) {
         tx(g, title, x + 2, y + 8, DF(14), '#9aa4b4', 'left'); y += 20;
         for (const key of keys) {
-          const G = GUNS[key], A = ARMOR.find(a => a.k === key), it = G || { n: A.n, cost: A.cost, col: '#7fc8ff' };
-          const owned = A ? P.sh >= A.sh : P.guns[G.slot] === key, sold = A ? P.spent && P.spent.sh && P.spent.sh.k === key : P.spent && P.spent[G.slot] && P.spent[G.slot].k === key;
+          const G = GUNS[key], A = ARMOR.find(a => a.k === key), SM = key === 'smoke', it = G || (SM ? { n: 'Smoke', cost: 200, col: '#c3c7cf' } : { n: A.n, cost: A.cost, col: '#7fc8ff' });
+          const owned = SM ? (P.smokes || 0) >= 2 : A ? P.sh >= A.sh : P.guns[G.slot] === key, sold = SM ? P.spent && P.spent.smoke > 0 : A ? P.spent && P.spent.sh && P.spent.sh.k === key : P.spent && P.spent[G.slot] && P.spent[G.slot].k === key;
           const can = !owned && P.credits + (G && P.spent && P.spent[G.slot] ? GUNS[P.spent[G.slot].k].cost : 0) >= it.cost, b = { x, y, w: W, h: H }; BTN['buy:' + key] = b; const hv = hover === 'buy:' + key; if (hv) buyFocus = key;
           rr(g, x, y, W, H, 7, owned ? 'rgba(62,230,193,.13)' : hv && can ? 'rgba(255,70,85,.16)' : 'rgba(255,255,255,.035)', owned ? TEAL : hv ? 'rgba(236,232,225,.6)' : can ? 'rgba(236,232,225,.22)' : 'rgba(255,255,255,.07)');
           tx(g, it.n.toUpperCase(), x + 12, y + 18, DF(17), can || owned ? it.col : '#5a6070', 'left');
-          tx(g, owned ? (sold ? 'SELL' : 'OWNED') : it.cost ? `◈ ${it.cost}` : 'FREE', x + W - 10, y + 18, DF(14), owned ? TEAL : can ? '#ffd23f' : '#5a6070', 'right');
+          tx(g, SM ? `${owned ? (sold ? 'SELL' : 'MAX') : '◈ 200'}  ${P.smokes || 0}/2` : owned ? (sold ? 'SELL' : 'OWNED') : it.cost ? `◈ ${it.cost}` : 'FREE', x + W - 10, y + 18, DF(14), owned ? TEAL : can ? '#ffd23f' : '#5a6070', 'right');
           g.save(); g.globalAlpha = can || owned ? 1 : .38;
           if (G) { const ic = gunIcon(key); if (ic) { const gl = g.createRadialGradient(x + W / 2, y + 56, 4, x + W / 2, y + 56, 110); gl.addColorStop(0, it.col + '30'); gl.addColorStop(1, it.col + '00'); g.fillStyle = gl; g.fillRect(x + 2, y + 28, W - 4, H - 30); const iw = W - 24, ih = iw * 150 / 480; g.drawImage(ic, x + 12, y + 30 + (H - 34 - ih) / 2, iw, ih); } }
+          else if (SM) { const cx = x + W / 2, cy = y + 58; g.fillStyle = '#8a9099'; g.beginPath(); g.roundRect ? g.roundRect(cx - 16, cy - 22, 32, 46, 8) : g.rect(cx - 16, cy - 22, 32, 46); g.fill(); g.fillStyle = '#5a606b'; g.fillRect(cx - 16, cy - 6, 32, 6); g.fillRect(cx - 16, cy + 8, 32, 4); g.fillStyle = '#ff4655'; g.fillRect(cx - 9, cy - 30, 18, 8); g.strokeStyle = '#c3c7cf'; g.lineWidth = 3; g.beginPath(); g.arc(cx + 18, cy - 28, 7, 0, TAU); g.stroke(); g.fillStyle = 'rgba(195,199,207,.35)'; for (const [a, b, r] of [[-60, -6, 16], [-44, -16, 12], [52, -4, 15], [66, -14, 11]]) { g.beginPath(); g.arc(cx + a, cy + b, r, 0, TAU); g.fill(); } }
           else { const cx = x + W / 2, cy = y + 56, sc = A.sh === 50 ? .8 : .65; g.fillStyle = it.col + '33'; g.strokeStyle = it.col; g.lineWidth = 3; g.beginPath(); g.moveTo(cx, cy - 32 * sc); g.lineTo(cx + 26 * sc, cy - 22 * sc); g.lineTo(cx + 22 * sc, cy + 12 * sc); g.lineTo(cx, cy + 32 * sc); g.lineTo(cx - 22 * sc, cy + 12 * sc); g.lineTo(cx - 26 * sc, cy - 22 * sc); g.closePath(); g.fill(); g.stroke(); tx(g, '+' + A.sh, cx, cy, DF(16), '#fff'); }
           g.restore(); y += H + 8;
         }
@@ -1181,10 +1270,10 @@ const GAME = {
     }
     button(g, 'closeBuy', fx, 612, W, 40, 'DONE  (B)', { size: 17 });
   }
-  const TB = () => ({ fire: [1150, 540, 70], jump: [1210, 420, 40], crouch: [1050, 640, 36], reload: [1215, 650, 32], q: [1010, 470, 36], e: [1080, 420, 36], use: [930, 580, 42], swap: [1225, 330, 30], scope: [1110, 330, 32], buy: [640, 230, 40] });
+  const TB = () => ({ fire: [1150, 540, 70], jump: [1210, 420, 40], crouch: [1050, 640, 36], reload: [1215, 650, 32], q: [1010, 470, 36], e: [1080, 420, 36], use: [930, 580, 42], swap: [1225, 330, 30], scope: [1110, 330, 32], buy: [640, 230, 40], nade: [935, 465, 28] });
   function drawTouch(g) {
-    const P = me(), T = TB(), lab = { fire: 'FIRE', jump: 'JUMP', crouch: 'DUCK', reload: 'R', q: OPS[P.op].q.n, e: OPS[P.op].e.n, use: 'F', swap: '1/2', scope: '◎', buy: 'BUY' };
-    for (const k in T) { if (k === 'buy' && M.phase !== 'buy') continue; if (k === 'scope' && !(gun(P).scope || gun(P).ads || gun(P).alt)) continue; if (k === 'use' && !(onSite(P.x, P.z) || M.planted)) continue; const [x, y, r] = T[k], held = [...TS.btn.values()].includes(k) || (k === 'fire' && TS.fire); g.fillStyle = held ? 'rgba(255,70,85,.55)' : 'rgba(11,15,23,.45)'; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); g.strokeStyle = 'rgba(236,232,225,.5)'; g.lineWidth = 2; g.stroke(); tx(g, lab[k], x, y, DF(k === 'fire' ? 20 : 12), '#fff'); }
+    const P = me(), T = TB(), lab = { fire: 'FIRE', jump: 'JUMP', crouch: 'DUCK', reload: 'R', q: OPS[P.op].q.n, e: OPS[P.op].e.n, use: 'F', swap: '1/2/3', scope: '◎', buy: 'BUY', nade: 'SMK' };
+    for (const k in T) { if (k === 'buy' && M.phase !== 'buy') continue; if (k === 'scope' && !(gun(P).scope || gun(P).ads || gun(P).alt || gun(P).melee)) continue; if (k === 'nade' && !(P.smokes > 0 && M.phase === 'live')) continue; if (k === 'use' && !(onSite(P.x, P.z) || M.planted)) continue; const [x, y, r] = T[k], held = [...TS.btn.values()].includes(k) || (k === 'fire' && TS.fire); g.fillStyle = held ? 'rgba(255,70,85,.55)' : 'rgba(11,15,23,.45)'; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); g.strokeStyle = 'rgba(236,232,225,.5)'; g.lineWidth = 2; g.stroke(); tx(g, lab[k], x, y, DF(k === 'fire' ? 20 : 12), '#fff'); }
     if (TS.stick) { g.strokeStyle = 'rgba(236,232,225,.4)'; g.lineWidth = 3; g.beginPath(); g.arc(TS.stick.x0, TS.stick.y0, 60, 0, TAU); g.stroke(); g.fillStyle = 'rgba(236,232,225,.5)'; const dx = TS.stick.x - TS.stick.x0, dy = TS.stick.y - TS.stick.y0, L = Math.min(60, Math.hypot(dx, dy)), a = Math.atan2(dy, dx); g.beginPath(); g.arc(TS.stick.x0 + Math.cos(a) * L, TS.stick.y0 + Math.sin(a) * L, 26, 0, TAU); g.fill(); }
   }
   function drawMenu(g) {
@@ -1250,7 +1339,7 @@ const GAME = {
     if (!touch()) { if (!locked()) lockMouse(); return; }
     const id = e ? e.pointerId : 0, T = TB();
     for (const k in T) { const [bx, by, r] = T[k]; if (Math.hypot(x - bx, y - by) < r + 8) { const P = me();
-      if (k === 'fire') { TS.fire = id; return; } if (k === 'reload') return reload(P); if (k === 'q' || k === 'e') return ability(P, k); if (k === 'swap') return switchTo(P, P.slot === 1 ? 2 : 1);
+      if (k === 'fire') { TS.fire = id; return; } if (k === 'reload') return reload(P); if (k === 'q' || k === 'e') return ability(P, k); if (k === 'swap') { const order = [1, 2, 3].filter(s => P.guns[s]); return switchTo(P, order[(order.indexOf(P.slot) + 1) % order.length]); } if (k === 'nade') return throwNade(P);
       if (k === 'scope') { altAction(P); return; } if (k === 'buy' && M.phase === 'buy') { M.buyMenu = true; return; } TS.btn.set(id, k); return; } }
     if (x < 560) TS.stick = { id, x0: x, y0: y, x, y }; else TS.look = { id, x, y };
   };
