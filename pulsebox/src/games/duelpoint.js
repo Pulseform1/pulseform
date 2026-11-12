@@ -9,11 +9,10 @@ const GAME = {
   id: 'duelpoint', title: 'Duelpoint', tagline: 'One map. One rival. Every round counts.',
   font: 'Chakra Petch', accent: '#ff4655', accent2: '#3ee6c1', bg: '#0b0f17', noSkins: true, noHud: true, scoreLabel: 'Rounds won',
   how: [
-    'Click to grab the mouse. WASD to move, mouse to aim, left click to shoot, right click to scope the Longbow. Shift walks quietly, Ctrl or C crouches, Space jumps, R reloads, 1 2 3 switch weapons, Y inspects your weapon.',
-    'Q and E are your operative\'s two abilities (one charge each per round). B opens the buy menu during the buy phase.',
-    'Attacking: carry the charge to the red site and hold F to plant it. Defending: stop them, or hold F on the charge to defuse it. Killing your rival also wins the round, unless the charge is already ticking.',
-    'Standing still and crouching makes you accurate. Running makes you loud and your shots wild. Headshots hit hardest.',
-    'First to 5 rounds. Sides swap after round 4. On a phone: left thumb moves, right thumb looks, buttons fire and use abilities.',
+    'Click to grab the mouse. WASD moves, mouse aims, left click shoots. Right click aims down sights (SMGs, rifles, machine gun), scopes a sniper (twice on the Longbow for 5x) or fires the Pip\'s burst. Shift walks, Ctrl or C crouches, Space jumps, R reloads, 1 and 2 swap weapons, Y inspects.',
+    'Gunplay is precise: standing still, your first shot lands exactly on the crosshair. Moving throws shots off, so stop before you shoot. Tap the opposite direction to counter-strafe and stop dead. Sprays climb then sway, so tap or burst at range. Head hits hardest, legs least. The crosshair opens to show your real error.',
+    'Money: win a round +3000, lose +1900 rising to 2900, +200 a kill, +300 for a plant. Rounds 1 and 5 are pistol rounds. B opens the armory in the buy phase; click something you bought this round to sell it back.',
+    'Q and E are your operative\'s abilities. Attacking: carry the charge to the red site and hold F to plant. Defending: stop them or hold F on the charge to defuse. First to 5 rounds; sides swap after round 4.',
   ],
   skins: [{ name: 'Default', price: 0 }],
 };
@@ -71,13 +70,36 @@ const GAME = {
   function rayBox(o, d, mn, mx) { let t0 = 0, t1 = 1e9; for (let a = 0; a < 3; a++) { const inv = 1 / (d[a] || 1e-9); let ta = (mn[a] - o[a]) * inv, tb = (mx[a] - o[a]) * inv; if (ta > tb) [ta, tb] = [tb, ta]; t0 = Math.max(t0, ta); t1 = Math.min(t1, tb); if (t0 > t1) return -1; } return t0; }
 
   /* ---------- weapons, armour, operatives ---------- */
+  /* ---------- weapons ----------
+     Handling follows tactical-shooter rules. The first shot goes exactly where you aim while you stand still. Moving adds
+     error, none below about a quarter of run speed, so stopping (or tapping the opposite key to counter-strafe, which brakes
+     hard) brings accuracy straight back. Each shot of a spray after the first 'free' ones adds error and climbs, then the
+     spray sways side to side; let go and it settles in 'recov' seconds. Damage depends on what you hit (head, body, legs)
+     and how far away it is; shields soak damage until they run out.
+     acc, in degrees: fs first shot (sfs scoped), walk / run / jump movement error, inc and max spray error.
+     pat: vk climb per shot up to vmax, hk sideways sway after hs0 shots. dmg rows: [up to metres, head, body, legs]. */
+  const D2R = Math.PI / 180;
+  const GUN = (k, n, cat, slot, cost, col, o) => Object.assign({ k, n, cat, slot, cost, col, spd: 1, equip: .75, punch: .5, auto: false }, o);
   const GUNS = {
-    pip: { n: 'Pip', k: 'pip', slot: 2, cost: 0, mag: 12, res: 36, dmg: 26, hs: 3, rpm: 380, spr: .006, mv: .045, rec: .012, rel: 1.4, auto: false, fall: .85, col: '#9aa4b0', desc: 'Sidearm. Free, accurate if you take your time.' },
-    hornet: { n: 'Hornet', k: 'hornet', slot: 1, cost: 1000, mag: 25, res: 75, dmg: 22, hs: 2.5, rpm: 780, spr: .02, mv: .04, rec: .009, rel: 2.2, auto: true, fall: .75, col: '#3ee6c1', desc: 'SMG. Sprays fast and stays accurate on the move.' },
-    breaker: { n: 'Breaker', k: 'breaker', slot: 1, cost: 900, mag: 6, res: 18, dmg: 12, pel: 9, hs: 2, rpm: 90, spr: .07, mv: .08, rec: .05, rel: 2.6, auto: false, fall: .45, col: '#ffb347', desc: 'Shotgun. Deadly up close, useless far away.' },
-    lancer: { n: 'Lancer', k: 'lancer', slot: 1, cost: 2900, mag: 25, res: 75, dmg: 39, hs: 4, rpm: 600, spr: .004, mv: .07, rec: .016, rel: 2.4, auto: true, fall: 1, col: '#ff4655', desc: 'Rifle. A headshot kills an armoured rival.' },
-    longbow: { n: 'Longbow', k: 'longbow', slot: 1, cost: 3500, mag: 5, res: 15, dmg: 150, hs: 1.7, rpm: 42, spr: .001, mv: .12, rec: .08, rel: 3, auto: false, scope: 1, fall: 1, col: '#c58cff', desc: 'Sniper. Scope with right click. One shot to the body kills.' },
+    pip: GUN('pip', 'Pip', 'Sidearm', 2, 0, '#9aa4b0', { mag: 12, res: 36, rpm: 405, rel: 1.75, alt: 'burst3', dmg: [[30, 78, 26, 22], [99, 66, 22, 18]], acc: { fs: .4, walk: 1.1, run: 2.2, jump: 5, inc: .6, max: 3, free: 1, recov: .35 }, pat: { vk: .6, vmax: 2.2, hs0: 4, hk: .5 }, desc: 'Free sidearm. Right click fires a three-round burst.' }),
+    stub: GUN('stub', 'Stub', 'Sidearm', 2, 300, '#d9a066', { mag: 2, res: 6, rpm: 198, rel: 1.75, pel: 15, pspr: 4, dmg: [[7, 36, 12, 10], [15, 24, 8, 6], [99, 9, 3, 2]], acc: { fs: .3, walk: .5, run: 1, jump: 3, inc: 0, max: 0, free: 1, recov: .3 }, punch: 2.5, desc: 'Two-shot sawn-off. Brutal inside 7 m, harmless past 15.' }),
+    wasp: GUN('wasp', 'Wasp', 'Sidearm', 2, 450, '#ffd23f', { mag: 13, res: 39, rpm: 600, rel: 1.5, auto: true, dmg: [[20, 78, 26, 22], [99, 63, 21, 17]], acc: { fs: .45, walk: 1, run: 2, jump: 5, inc: .8, max: 4.5, free: 1, recov: .35 }, pat: { vk: .35, vmax: 2, hs0: 4, hk: .9 }, desc: 'Machine pistol. Sprays fast, wild after a few shots.' }),
+    quill: GUN('quill', 'Quill', 'Sidearm', 2, 500, '#8fe3ff', { mag: 15, res: 45, rpm: 405, rel: 1.5, sil: 1, dmg: [[30, 105, 30, 25], [99, 88, 25, 21]], acc: { fs: .3, walk: .9, run: 1.9, jump: 5, inc: .5, max: 2.6, free: 1, recov: .3 }, pat: { vk: .5, vmax: 2, hs0: 5, hk: .4 }, desc: 'Suppressed pistol. Quiet and precise; one headshot on bare health.' }),
+    hammer: GUN('hammer', 'Hammer', 'Sidearm', 2, 800, '#d4a24c', { mag: 6, res: 24, rpm: 240, rel: 2.25, dmg: [[30, 159, 55, 46], [99, 145, 50, 43]], acc: { fs: .25, walk: 1.4, run: 2.8, jump: 6, inc: 2.2, max: 5, free: 1, recov: .45 }, pat: { vk: 1.6, vmax: 4, hs0: 3, hk: .5 }, punch: 2.2, desc: 'Revolver. A headshot kills anyone at any range.' }),
+    gnat: GUN('gnat', 'Gnat', 'SMG', 1, 950, '#a6f04d', { mag: 20, res: 60, rpm: 960, rel: 2.25, auto: true, ads: 1.15, dmg: [[15, 67, 27, 23], [99, 62, 25, 21]], acc: { fs: .65, walk: 1.2, run: 2.6, jump: 5, inc: .5, max: 4.5, free: 1, recov: .35 }, pat: { vk: .3, vmax: 2.2, hs0: 6, hk: 1 }, desc: 'Cheap SMG. Shreds up close, then the spray runs away.' }),
+    hornet: GUN('hornet', 'Hornet', 'SMG', 1, 1600, '#3ee6c1', { mag: 30, res: 90, rpm: 800, rel: 2.25, auto: true, ads: 1.15, sil: 1, dmg: [[20, 78, 26, 22], [99, 66, 22, 18]], acc: { fs: .4, walk: .7, run: 1.4, jump: 4, inc: .35, max: 3, free: 2, recov: .3 }, pat: { vk: .28, vmax: 1.8, hs0: 7, hk: .8 }, desc: 'Suppressed SMG. Accurate on the move: the gun for eco rounds.' }),
+    breaker: GUN('breaker', 'Breaker', 'Shotgun', 1, 850, '#ffb347', { mag: 5, res: 10, rpm: 66, rel: 2.5, pel: 15, pspr: 2.6, equip: 1, dmg: [[8, 40, 20, 17], [12, 34, 17, 14], [99, 26, 13, 11]], acc: { fs: .2, walk: .4, run: 1, jump: 3, inc: 0, max: 0, free: 1, recov: .3 }, punch: 3, desc: 'Pump shotgun. One shot up close, slow to cycle.' }),
+    thresher: GUN('thresher', 'Thresher', 'Shotgun', 1, 1850, '#ff6a3d', { mag: 7, res: 21, rpm: 210, rel: 2.2, auto: true, pel: 12, pspr: 2.25, equip: 1, dmg: [[10, 34, 17, 14], [15, 26, 13, 11], [99, 20, 10, 9]], acc: { fs: .2, walk: .4, run: .9, jump: 3, inc: .4, max: 2, free: 1, recov: .4 }, punch: 2, desc: 'Auto shotgun. Hold a corner and nothing walks past.' }),
+    mako: GUN('mako', 'Mako', 'Rifle', 1, 2050, '#4f7dff', { mag: 24, res: 72, rpm: 594, rel: 2.5, auto: true, ads: 1.25, alt: 'burst4', equip: 1, dmg: [[99, 115, 35, 29]], acc: { fs: .3, walk: 2.5, run: 5.5, jump: 9, inc: .45, max: 4, free: 2, recov: .36 }, pat: { vk: .4, vmax: 3, hs0: 6, hk: 1.1 }, desc: 'Budget rifle. Aim down sights (right click) to fire 4-round bursts.' }),
+    paladin: GUN('paladin', 'Paladin', 'Rifle', 1, 2250, '#e6d3a3', { mag: 12, res: 36, rpm: 285, rel: 2.5, ads: 1.5, equip: 1, dmg: [[99, 195, 65, 48]], acc: { fs: .1, walk: 3, run: 6, jump: 10, inc: 1.2, max: 3, free: 1, recov: .3 }, pat: { vk: 1, vmax: 3, hs0: 4, hk: .4 }, punch: 1.6, desc: 'Marksman rifle. One headshot kills. Tap, do not spray.' }),
+    vesper: GUN('vesper', 'Vesper', 'Rifle', 1, 2900, '#ff5fb0', { mag: 30, res: 60, rpm: 660, rel: 2.5, auto: true, ads: 1.25, sil: 1, equip: 1, dmg: [[15, 156, 39, 33], [30, 140, 35, 30], [99, 124, 31, 26]], acc: { fs: .2, walk: 2.5, run: 6, jump: 10, inc: .3, max: 3.5, free: 2, recov: .33 }, pat: { vk: .38, vmax: 2.8, hs0: 6, hk: 1 }, desc: 'Suppressed rifle. Fast and controllable; loses damage at range.' }),
+    lancer: GUN('lancer', 'Lancer', 'Rifle', 1, 2900, '#ff4655', { mag: 25, res: 50, rpm: 585, rel: 2.5, auto: true, ads: 1.25, equip: 1, dmg: [[99, 160, 40, 34]], acc: { fs: .25, walk: 2.6, run: 6, jump: 10, inc: .4, max: 4, free: 2, recov: .36 }, pat: { vk: .45, vmax: 3.4, hs0: 6, hk: 1.2 }, desc: 'Rifle. One headshot kills at any range. Kicks harder.' }),
+    kite: GUN('kite', 'Kite', 'Sniper', 1, 950, '#9fb6ff', { mag: 5, res: 10, rpm: 90, rel: 2.5, scope: [2.5], equip: 1, dmg: [[99, 202, 101, 85]], acc: { fs: 2.5, sfs: 0, walk: 3, run: 8, jump: 12, inc: 0, max: 0, free: 1, recov: .3 }, punch: 3, desc: 'Light sniper. Cheap. A headshot kills, two body shots do.' }),
+    longbow: GUN('longbow', 'Longbow', 'Sniper', 1, 4700, '#c58cff', { mag: 5, res: 10, rpm: 36, rel: 3.7, scope: [2.5, 5], spd: .92, equip: 1.25, dmg: [[99, 255, 150, 127]], acc: { fs: 5, sfs: 0, walk: 5, run: 10, jump: 14, inc: 0, max: 0, free: 1, recov: .3 }, punch: 4, desc: 'Heavy sniper. One body shot kills. Right click twice for 5x.' }),
+    torrent: GUN('torrent', 'Torrent', 'Heavy', 1, 3200, '#e8e8e8', { mag: 100, res: 200, rpm: 720, spin: .3, rel: 5, auto: true, ads: 1.25, spd: .9, equip: 1.25, dmg: [[30, 95, 38, 32], [99, 77, 31, 26]], acc: { fs: .8, walk: 2, run: 4, jump: 8, inc: .15, max: 3.5, free: 1, recov: .45 }, pat: { vk: .12, vmax: 1.6, hs0: 10, hk: .7 }, desc: 'Machine gun. 100 rounds that fire faster the longer you hold.' }),
   };
+  const dmgAt = (G, dist, part) => { const row = G.dmg.find(r => dist <= r[0]) || G.dmg[G.dmg.length - 1]; return row[part]; };
+  const zoomOf = f => { const G = GUNS[f.guns[f.slot]] || GUNS.pip; return !f.scoped ? 1 : G.scope ? G.scope[Math.min(G.scope.length, +f.scoped) - 1] : G.ads || 1; };
   const ARMOR = [{ k: 'light', n: 'Light shield', cost: 400, sh: 25 }, { k: 'heavy', n: 'Heavy shield', cost: 1000, sh: 50 }];
   const OPS = {
     vex: { n: 'VEX', role: 'Shade', col: '#7a5cff', q: { n: 'Blink', d: 'Dash 6 m the way you are moving.' }, e: { n: 'Veil', d: 'Throw a smoke cloud that blocks sight for 12 s.' } },
@@ -85,7 +107,7 @@ const GAME = {
     bastion: { n: 'BASTION', role: 'Warden', col: '#ffb347', q: { n: 'Rampart', d: 'Raise a wall in front of you for 12 s.' }, e: { n: 'Patch', d: 'Heal 60 health over 3 s.' } },
   };
   const DIFF = [{ n: 'Recruit', react: .55, err: .09, spray: .5, hs: .15 }, { n: 'Veteran', react: .34, err: .05, spray: .8, hs: .3 }, { n: 'Elite', react: .2, err: .028, spray: 1, hs: .5 }];
-  const ROUNDS_TO_WIN = 5, BUY_T = 14, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5;
+  const ROUNDS_TO_WIN = 5, BUY_T = 20, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5;
   const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.2;
 
   /* ---------- the fighters and the match ---------- */
@@ -93,7 +115,7 @@ const GAME = {
   let mode = 'menu', keys = {}, mouse = { l: false, r: false }, menuT = 0, selOp = 'vex', selDiff = 1, posed = false;
   function fighter(o) {
     return Object.assign({ x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, crouch: 0, hp: 100, sh: 0, alive: true, guns: { 1: null, 2: 'pip' }, slot: 2, ammo: {}, fireT: 0, reloadT: 0,
-      recoil: 0, kick: 0, credits: 800, ab: { q: 1, e: 1 }, flash: 0, reveal: 0, heal: null, dash: null, footT: 0, step: 0, ground: true, scoped: false, plant: 0, defuse: 0, lossRun: 0, kills: 0, deaths: 0, walkT: 0, carrying: false }, o);
+      recoil: 0, kick: 0, spray: 0, sseed: 0, burst: null, spent: {}, credits: 800, ab: { q: 1, e: 1 }, flash: 0, reveal: 0, heal: null, dash: null, footT: 0, step: 0, ground: true, scoped: false, plant: 0, defuse: 0, lossRun: 0, kills: 0, deaths: 0, walkT: 0, carrying: false }, o);
   }
   const me = () => M.fs[0], foe = () => M.fs[1];
   const other = f => M.fs[0] === f ? M.fs[1] : M.fs[0];
@@ -118,10 +140,12 @@ const GAME = {
     if (!f.alive) return;
     const frozen = M.phase === 'buy' || M.phase === 'end' || f.plant > 0 || f.defuse > 0;
     f.crouch = cl(f.crouch + (I.crouch ? 1 : -1) * dt * 8, 0, 1);
-    let sp = I.walk ? WALK : SPD; if (f.crouch > .5) sp = CSPD; if (f.scoped) sp *= .55; if (gun(f).k === 'longbow' || gun(f).k === 'lancer') sp *= .95;
+    let sp = I.walk ? WALK : SPD; if (f.crouch > .5) sp = CSPD; const G0 = gun(f); if (f.scoped) sp *= G0.scope ? .55 : .76; sp *= G0.spd;
     const s = Math.sin(f.yaw), c = Math.cos(f.yaw); let wx = -s * I.mz + c * I.mx, wz = -c * I.mz - s * I.mx; const L = Math.hypot(wx, wz); if (L > 1) { wx /= L; wz /= L; }
     if (frozen) wx = wz = 0;
-    const acc = f.ground ? 14 : 3; f.vx += (wx * sp - f.vx) * Math.min(1, dt * acc); f.vz += (wz * sp - f.vz) * Math.min(1, dt * acc);
+    const tx = wx * sp, tz = wz * sp, ddx = tx - f.vx, ddz = tz - f.vz, dl = Math.hypot(ddx, ddz);
+    const rate = !f.ground ? 6 : Math.hypot(tx, tz) < .01 ? 26 : tx * f.vx + tz * f.vz < 0 ? 80 : 44;
+    if (dl > 0) { const stp = Math.min(dl, rate * dt); f.vx += ddx / dl * stp; f.vz += ddz / dl * stp; }
     if (f.dash) { f.dash.t -= dt; f.vx = f.dash.dx * 36; f.vz = f.dash.dz * 36; if (f.dash.t <= 0) { f.dash = null; f.vx *= .2; f.vz *= .2; } }
     if (I.jump && f.ground && !frozen && f.crouch < .5) { f.vy = JUMP; f.ground = false; snd('jump', f); }
     f.vy -= GRAV * dt; f.y += f.vy * dt;
@@ -135,44 +159,79 @@ const GAME = {
   }
 
   /* ---------- shooting ---------- */
+  // movement error: nothing below ~28% of run speed (standing, or the instant a counter-strafe stops you), walking error
+  // at walk speed, running error at full speed, and the jump error in the air
+  function moveErr(f, G) {
+    const A = G.acc, fr = Math.hypot(f.vx, f.vz) / SPD;
+    let e = fr <= .28 ? 0 : fr <= .5 ? lp(0, A.walk, (fr - .28) / .22) : lp(A.walk, A.run, Math.min(1, (fr - .5) / .5));
+    if (!f.ground) e = Math.max(e, A.jump); return e;
+  }
+  // the half-angle of the cone a bullet can leave in, in radians
   function spreadOf(f) {
-    const G = gun(f), v = Math.hypot(f.vx, f.vz) / SPD; let s = G.spr + G.mv * Math.min(1, v * 1.2) + (f.ground ? 0 : .12) + f.recoil * .6;
-    if (f.crouch > .5) s *= .7; if (G.scope && !f.scoped) s += .06; if (G.scope && f.scoped) s = G.spr + G.mv * v * 2 + (f.ground ? 0 : .2);
-    return s;
+    const G = gun(f), A = G.acc, sc = G.scope && f.scoped, ad = !G.scope && G.ads && f.scoped;
+    let e = (sc ? A.sfs : A.fs) * (ad ? .8 : 1) + Math.min(A.max, A.inc * Math.max(0, f.spray - A.free)) * (ad ? .85 : 1) + moveErr(f, G);
+    if (f.crouch > .5 && f.ground) e *= .85;
+    return e * D2R;
+  }
+  // where the spray has pushed the next bullet: up first, then side to side
+  function patOf(f, G) {
+    const P = G.pat; if (!P) return [0, 0]; const n = Math.max(0, f.spray - G.acc.free);
+    return [n > P.hs0 ? P.hk * Math.sin((n - P.hs0) * .85 + (f.sseed || 0)) * D2R : 0, Math.min(P.vmax, P.vk * n) * D2R];
   }
   function viewDir(yaw, pitch) { const cp = Math.cos(pitch); return [-Math.sin(yaw) * cp, Math.sin(pitch), -Math.cos(yaw) * cp]; }
-  // where a fighter can be hit: a head sphere and a body box
-  function hitboxes(f) { const e = eyeY(f); return { head: [f.x, e - .02, f.z], hr: .2, mn: [f.x - .3, f.y, f.z - .3], mx: [f.x + .3, e - .2, f.z + .3] }; }
+  // where a fighter can be hit: a head sphere, and a body box whose lower part is the legs
+  function hitboxes(f) { const e = eyeY(f); return { head: [f.x, e - .02, f.z], hr: .2, mn: [f.x - .3, f.y, f.z - .3], mx: [f.x + .3, e - .2, f.z + .3], leg: f.y + (e - .2 - f.y) * .45 }; }
   function castShot(f, d) {
     const o = [f.x, eyeY(f), f.z]; let dist = rayGrid(o[0], o[1], o[2], d[0], d[1], d[2], 120), hit = null;
     for (const w of M.walls) { const t = rayBox(o, d, [w.x0, 0, w.z0], [w.x1, 3, w.z1]); if (t > 0 && t < dist) dist = t; }
-    const t2 = other(f); if (t2.alive) { const hb = hitboxes(t2), th = raySphere(o, d, hb.head, hb.hr), tb = rayBox(o, d, hb.mn, hb.mx); if (th > 0 && th < dist) { dist = th; hit = { f: t2, head: true }; } else if (tb > 0 && tb < dist) { dist = tb; hit = { f: t2, head: false }; } }
+    const t2 = other(f); if (t2.alive) { const hb = hitboxes(t2), th = raySphere(o, d, hb.head, hb.hr), tb = rayBox(o, d, hb.mn, hb.mx); if (th > 0 && th < dist) { dist = th; hit = { f: t2, head: true }; } else if (tb > 0 && tb < dist) { dist = tb; hit = { f: t2, head: false, leg: o[1] + d[1] * tb < hb.leg }; } }
     return { o, d, dist, hit, end: [o[0] + d[0] * dist, o[1] + d[1] * dist, o[2] + d[2] * dist] };
   }
-  function fire(f) {
-    const G = gun(f), A = f.ammo[G.k]; if (!f.alive || f.fireT > 0 || f.reloadT > 0 || M.phase === 'buy' || f.plant > 0 || f.defuse > 0) return false;
+  // pull the trigger: one shot, or start a burst (the Pip's alt fire, the Mako aimed down sights)
+  function fire(f, alt) {
+    const G = gun(f), A = f.ammo[G.k]; if (!f.alive || f.fireT > 0 || f.reloadT > 0 || f.burst || M.phase === 'buy' || f.plant > 0 || f.defuse > 0) return false;
     if (!A || A.mag <= 0) { if (A && A.res > 0) reload(f); else if (f === me()) snd('dry', f); return false; }
-    A.mag--; f.fireT = 60 / G.rpm; const base = spreadOf(f);
+    if (alt === 'burst3' || (G.alt === 'burst4' && f.scoped)) { const three = alt === 'burst3'; f.burst = { n: Math.min(A.mag, three ? 3 : 4), gap: three ? 60 / 1100 : 60 / 900, t: 0, err: three ? 2.2 : 0 }; f.fireT = three ? .5 : .36; stepBurst(f, 0); return true; }
+    shootOne(f, 0, false); return true;
+  }
+  function stepBurst(f, dt) {
+    if (!f.burst) return; f.burst.t -= dt;
+    while (f.burst && f.burst.t <= 0) { const A = f.ammo[gun(f).k]; if (!f.alive || !A || A.mag <= 0) { f.burst = null; break; } shootOne(f, f.burst.err, true); f.burst.t += f.burst.gap; if (--f.burst.n <= 0) f.burst = null; }
+  }
+  function shootOne(f, extra, inBurst) {
+    const G = gun(f), A = f.ammo[G.k]; A.mag--;
+    if (!inBurst) f.fireT = 60 / (G.rpm * (G.spin ? 1 + G.spin * Math.min(1, f.spray / 14) : 1));
+    if (f.spray < .5) f.sseed = R() * TAU;
+    const base = spreadOf(f) + extra * D2R, [ph, pv] = patOf(f, G), a = R() * TAU, r = Math.sqrt(R()) * base, ps = (G.pspr || 0) * D2R;
     for (let p = 0; p < (G.pel || 1); p++) {
-      const a = R() * TAU, r = Math.sqrt(R()) * base, yaw = f.yaw + Math.cos(a) * r, pitch = f.pitch + Math.sin(a) * r + f.recoil * .5;
+      const a2 = R() * TAU, r2 = Math.sqrt(R()) * ps, yaw = f.yaw + ph + Math.cos(a) * r + Math.cos(a2) * r2, pitch = f.pitch + pv + Math.sin(a) * r + Math.sin(a2) * r2;
       const S = castShot(f, viewDir(yaw, pitch));
       fxShot(f, S, p === 0);
-      if (S.hit && (f.local || f.bot)) { const fall = lp(1, G.fall, cl((S.dist - 14) / 26, 0, 1)); damage(S.hit.f, Math.round(G.dmg * fall * (S.hit.head ? G.hs : 1)), f, S.hit.head, G.k); }
+      if (S.hit && (f.local || f.bot)) damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k);
     }
-    f.recoil = Math.min(.12, f.recoil + G.rec); f.kick = .08; if (f === me()) M.camKick += G.rec * (G.scope ? .4 : 1);
-    if (G.scope && f.scoped) f.scoped = false;
+    f.spray += 1; f.kick = .08; if (f === me()) M.camKick += G.punch * D2R * (f.scoped && G.scope ? .4 : 1);
     net({ t: 'sh', i: M.fs.indexOf(f) });
     snd('shot', f, G.k);
-    if (A.mag === 0 && A.res > 0) setTimeout(() => { if (M && f.alive && f.ammo[G.k] && f.ammo[G.k].mag === 0) reload(f); }, 260);
-    return true;
+    if (A.mag === 0 && A.res > 0) setTimeout(() => { if (M && f.alive && f.ammo[G.k] && f.ammo[G.k].mag === 0 && !f.burst) reload(f); }, 260);
   }
-  function reload(f) { const G = gun(f), A = f.ammo[G.k]; if (!A || f.reloadT > 0 || A.mag >= G.mag || A.res <= 0) return; f.reloadT = G.rel; f.scoped = false; snd('reload', f); }
+  function reload(f) { const G = gun(f), A = f.ammo[G.k]; if (!A || f.reloadT > 0 || A.mag >= G.mag || A.res <= 0) return; f.reloadT = G.rel; f.scoped = false; f.burst = null; snd('reload', f); }
   function stepGun(f, dt) {
+    const G = gun(f);
     if (f.fireT > 0) f.fireT -= dt;
-    if (f.reloadT > 0) { f.reloadT -= dt; if (f.reloadT <= 0) { const G = gun(f), A = f.ammo[G.k], n = Math.min(G.mag - A.mag, A.res); A.mag += n; A.res -= n; } }
+    stepBurst(f, dt);
+    // the spray settles while the trigger rests: from its worst to nothing in 'recov' seconds
+    if (f.fireT <= 0 && !f.burst && f.spray > 0) f.spray = Math.max(0, f.spray - dt * (G.acc.free + 1 + (G.acc.inc ? G.acc.max / G.acc.inc : 4)) / G.acc.recov);
+    if (f.reloadT > 0) { f.reloadT -= dt; if (f.reloadT <= 0) { const A = f.ammo[G.k], n = Math.min(G.mag - A.mag, A.res); A.mag += n; A.res -= n; f.spray = 0; } }
   }
-  function switchTo(f, slot) { if (!f.guns[slot] || f.slot === slot) return; f.slot = slot; f.reloadT = 0; f.scoped = false; f.fireT = Math.max(f.fireT, .35); snd('swap', f); }
-  // damage lands on the victim's own device online (the shooter's word is final); shields soak two thirds while they last
+  function switchTo(f, slot) { if (!f.guns[slot] || f.slot === slot) return; f.slot = slot; f.reloadT = 0; f.scoped = false; f.burst = null; f.spray = 0; f.fireT = Math.max(f.fireT, GUNS[f.guns[slot]].equip * .7); snd('swap', f); }
+  // the alternate fire button: scope a sniper (twice for the Longbow's 5x), aim down sights, or the Pip's burst
+  function altAction(f) {
+    const G = gun(f); if (!f.alive || f.reloadT > 0) return;
+    if (G.scope) { f.scoped = (+f.scoped + 1) % (G.scope.length + 1); snd('swap', f); }
+    else if (G.ads) f.scoped = f.scoped ? 0 : 1;
+    else if (G.alt === 'burst3') fire(f, 'burst3');
+  }
+  // damage lands on the victim's own device online (the shooter's word is final); shields soak it until they run out
   function damage(v, dmg, by, head, wk) {
     if (!v.alive) return;
     if (v.net) { net({ t: 'hit', d: dmg, h: head ? 1 : 0, w: wk }); fxHitMarker(head, by); return; }
@@ -180,7 +239,7 @@ const GAME = {
   }
   function applyDamage(v, dmg, by, head, wk) {
     if (!v.alive || M.phase === 'end' && !M.planted) return;
-    const soak = Math.min(v.sh, Math.round(dmg * .66)); v.sh -= soak; v.hp -= dmg - soak; v.lastHit = { by, head };
+    const soak = Math.min(v.sh, dmg); v.sh -= soak; v.hp -= dmg - soak; v.lastHit = { by, head };
     if (by === me() || v === me()) fxHitMarker(head, by, v);
     if (v === me()) { M.hurt = 1; M.hurtDir = Math.atan2(by.x - v.x, by.z - v.z); }
     if (v.hp <= 0) { v.hp = 0; die(v, by, head, wk); }
@@ -259,7 +318,7 @@ const GAME = {
   function endRound(wi, why, remote) {
     if (M.phase === 'end') return; M.phase = 'end'; M.t = END_T; M.wins[wi]++; M.last = { wi, why };
     if (!remote) net({ t: 'end', wi, why });
-    M.fs.forEach((f, i) => { const won = i === wi; f.lossRun = won ? 0 : f.lossRun + 1; f.credits = Math.min(9000, f.credits + (won ? 2600 : Math.min(2900, 1900 + (f.lossRun - 1) * 500))); });
+    M.fs.forEach((f, i) => { const won = i === wi; f.lossRun = won ? 0 : f.lossRun + 1; f.credits = Math.min(9000, f.credits + (won ? 3000 : Math.min(2900, 1900 + (f.lossRun - 1) * 500))); });
     snd(wi === 0 ? 'win' : 'lose'); if (M.planted && why === 'Charge detonated') M.boom = 1;
   }
   function startRound(n) {
@@ -268,7 +327,7 @@ const GAME = {
       const side = sideOf(f), sp = spawns[side === 'att' ? 'A' : 'D'], p = sp[(i + n) % sp.length];
       if (!f.alive || n === 1 || n === 5 || (n === 9)) { f.guns = { 1: null, 2: 'pip' }; f.sh = 0; f.ammo = {}; }
       if (n === 5 || n === 9) f.credits = 800;
-      f.x = p[0] + rnd(-.3, .3); f.z = p[1] + rnd(-.3, .3); f.y = 0; f.vx = f.vz = f.vy = 0; f.hp = 100; f.alive = true; f.ab = { q: 1, e: 1 }; f.flash = f.reveal = 0; f.heal = f.dash = null; f.plant = f.defuse = 0; f.scoped = false; f.reloadT = 0; f.fireT = 0;
+      f.x = p[0] + rnd(-.3, .3); f.z = p[1] + rnd(-.3, .3); f.y = 0; f.vx = f.vz = f.vy = 0; f.hp = 100; f.alive = true; f.ab = { q: 1, e: 1 }; f.flash = f.reveal = 0; f.heal = f.dash = null; f.plant = f.defuse = 0; f.scoped = false; f.reloadT = 0; f.fireT = 0; f.spray = 0; f.burst = null; f.spent = {};
       for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
       f.yaw = Math.atan2(-(siteC[0] - f.x), -(siteC[1] - f.z)); f.pitch = 0; f.carrying = side === 'att';
       if (f.bot) f.bot.plan = null;
@@ -278,9 +337,18 @@ const GAME = {
   }
   function buy(f, k) {
     if (M.phase !== 'buy') return false;
-    const G = GUNS[k], A = ARMOR.find(a => a.k === k);
-    if (G) { if (f.credits < G.cost || f.guns[G.slot] === k) return false; f.credits -= G.cost; f.guns[G.slot] = k; giveAmmo(f, k); f.slot = G.slot; snd('buy', f); net({ t: 'by', g: f.guns }); return true; }
-    if (A) { if (f.credits < A.cost || f.sh >= A.sh) return false; f.credits -= A.cost; f.sh = A.sh; snd('buy', f); return true; }
+    const G = GUNS[k], A = ARMOR.find(a => a.k === k), sp = f.spent || (f.spent = {});
+    if (G) {
+      const s = G.slot, prev = sp[s];
+      if (f.guns[s] === k) { if (prev && prev.k === k) { f.credits += G.cost; f.guns[s] = prev.was; if (prev.was) giveAmmo(f, prev.was); delete sp[s]; f.slot = f.guns[1] ? 1 : 2; snd('buy', f); net({ t: 'by', g: f.guns }); return true; } return false; }
+      const refund = prev ? GUNS[prev.k].cost : 0; if (f.credits + refund < G.cost) return false;
+      f.credits += refund - G.cost; sp[s] = { k, was: prev ? prev.was : f.guns[s] }; f.guns[s] = k; giveAmmo(f, k); f.slot = s; f.scoped = false; snd('buy', f); net({ t: 'by', g: f.guns }); return true;
+    }
+    if (A) {
+      if (f.sh >= A.sh) { if (sp.sh && sp.sh.k === A.k) { f.credits += A.cost; f.sh = sp.sh.was; delete sp.sh; snd('buy', f); return true; } return false; }
+      const refund = sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0; if (f.credits + refund < A.cost) return false;
+      f.credits += refund - A.cost; sp.sh = { k: A.k, was: sp.sh ? sp.sh.was : f.sh }; f.sh = A.sh; snd('buy', f); return true;
+    }
     return false;
   }
 
@@ -299,12 +367,15 @@ const GAME = {
     return c.length ? pick(c) : [nearX, nearZ];
   }
   function botBuy(f) {
-    const c = f.credits, B = f.bot, D = DIFF[B.diff];
-    if (c >= 3900) { buy(f, R() < .2 * D.spray + .1 && c >= 4500 ? 'longbow' : 'lancer'); buy(f, 'heavy'); }
-    else if (c >= 3000 && R() < .5) buy(f, 'lancer');
-    else if (c >= 1900) { buy(f, R() < .6 ? 'hornet' : 'breaker'); buy(f, 'light'); }
-    else if (c >= 400 && M.round !== 1 && M.round !== 5) buy(f, 'light');
-    else if (c >= 400 && R() < .5) buy(f, 'light');
+    const c = f.credits, D = DIFF[f.bot.diff], pistol = M.round === 1 || M.round === 5 || M.round === 9, has = f.guns[1];
+    if (pistol) { const r = R(); if (r < .35) buy(f, 'hammer'); else if (r < .55) { buy(f, 'quill'); } else if (r < .75) { buy(f, 'light'); buy(f, 'stub'); } else { buy(f, 'wasp'); buy(f, 'stub'); } return; }
+    if (has && GUNS[has].cost >= 2050) { if (f.sh < 50 && f.credits >= 1000) buy(f, 'heavy'); else if (f.sh < 25) buy(f, 'light'); return; }
+    if (c >= 3900) { buy(f, R() < .1 + .08 * f.bot.diff && c >= 5700 ? 'longbow' : R() < .1 ? 'torrent' : R() < .5 ? 'lancer' : 'vesper'); buy(f, 'heavy'); }
+    else if (c >= 3300) { buy(f, R() < .5 ? 'lancer' : 'vesper'); buy(f, 'light'); }
+    else if (c >= 2450 && R() < .6) { buy(f, R() < .55 ? 'mako' : 'paladin'); buy(f, 'light'); }
+    else if (c >= 1950 && R() < .55) { buy(f, pick(['hornet', 'thresher', 'hornet'])); buy(f, 'light'); }
+    else if (c >= 1350 && R() < .4) { buy(f, pick(['gnat', 'breaker', 'kite'])); buy(f, 'light'); }
+    else if (R() < .5) buy(f, pick(['quill', 'hammer', 'stub']));
   }
   function botThink(f, dt) {
     const B = f.bot, D = DIFF[B.diff], e = other(f), side = sideOf(f), I = { mx: 0, mz: 0, walk: false, crouch: false, jump: false, use: false, fire: false };
@@ -328,14 +399,19 @@ const GAME = {
     if (sees && inFov && B.seen > D.react * (B.diff === 2 ? 1 : 1.2)) {
       engaged = true; if (!B.aimHead || B.newTgt) { B.aimHead = R() < D.hs; B.newTgt = false; B.err = [rnd(-1, 1) * D.err * 2.2, rnd(-1, 1) * D.err * 2.2]; }
       B.err[0] *= Math.pow(.25, dt); B.err[1] *= Math.pow(.25, dt);
-      const ty = B.aimHead ? eyeY(e) - .02 : e.y + 1.05, ey = eyeY(f); tYaw = toE + B.err[0]; tPitch = Math.atan2(ty - ey, dE) + B.err[1];
+      const ty = B.aimHead ? eyeY(e) - .02 : e.y + 1.05, ey = eyeY(f), pt = patOf(f, gun(f)); tYaw = toE + B.err[0] - pt[0] * D.spray; tPitch = Math.atan2(ty - ey, dE) + B.err[1] - pt[1] * D.spray;
     } else { if (!sees) B.newTgt = true;
       const lookAt = B.last && M.t - B.last.t > -6 && B.last.t - M.t < 6 ? [B.last.x, B.last.z] : P.look || (P.path && P.path[0]) || [e.x, e.z];
       tYaw = Math.atan2(-(lookAt[0] - f.x), -(lookAt[1] - f.z)); }
     const rate = (3.5 + B.diff * 2.2) * dt; f.yaw += cl(angDiff(tYaw, f.yaw), -rate, rate); f.pitch += cl(tPitch - f.pitch, -rate * .6, rate * .6);
     // shoot when the crosshair is close enough
-    if (engaged) { const off = Math.abs(angDiff(tYaw - B.err[0], f.yaw)) + Math.abs(tPitch - B.err[1] - f.pitch); const G = gun(f); if (off < spreadOf(f) * 2 + .04 + (G.pel ? .05 : 0) && (!G.scope || R() < .5)) { I.fire = true; if (G.scope) f.scoped = true; } }
-    if (gun(f).k === 'pip' && f.guns[1]) switchTo(f, 1);
+    if (engaged) {
+      const G = gun(f), off = Math.abs(angDiff(tYaw - B.err[0], f.yaw)) + Math.abs(tPitch - B.err[1] - f.pitch), err = spreadOf(f), tgt = Math.atan2(.32, dE);
+      if (G.scope && !f.scoped && off < .2) f.scoped = 1;
+      const steady = err < Math.max(.006, tgt * (1.8 - D.spray * .7)) || dE < (G.pel ? 9 : 6);
+      if (off < tgt * 1.6 + .01 + (G.pel ? .05 : 0) && steady && (!G.scope || f.scoped) && !(G.auto && dE > 16 && f.spray > 2 + D.spray * 4)) I.fire = true;
+    }
+    if (f.slot === 2 && f.guns[1]) switchTo(f, 1);
     // abilities
     if (M.phase === 'live') {
       if (f.op === 'vex' && f.ab.e && side === 'att' && P.k === 'push' && P.path && P.path.length < 7 && P.smoke) { const s0 = holdSpot(siteC[0], siteC[1], 0, 6, f.x, f.z); f.yaw = Math.atan2(-(s0[0] - f.x), -(s0[1] - f.z)); f.pitch = -.05; ability(f, 'e'); }
@@ -349,7 +425,11 @@ const GAME = {
     let goal = null;
     if (P.path && P.path.length) { goal = P.path[0]; if (Math.hypot(goal[0] - f.x, goal[1] - f.z) < .7) P.path.shift(); }
     else if (P.k === 'push' && !P.path2) { P.path2 = true; P.path = pathTo(f, P.goal[0], P.goal[1]); }
-    if (engaged) { goal = null; const G = gun(f); if (G.auto && G.k !== 'lancer') { B.str = (B.str || 1) * (R() < dt * 1.5 ? -1 : 1); I.mx = B.str * .7; } if (B.diff > 0 && R() < dt * .5) B.crouchT = 1.2; }
+    if (engaged) { goal = null; const G = gun(f); B.pk = (B.pk || 0) - dt;
+      if (B.pk <= 0) { B.mv = !B.mv; B.pk = B.mv ? rnd(.22, .5) * (G.cat === 'SMG' || G.pel ? 1.6 : 1) : rnd(.45, 1.1); B.str = R() < .5 ? -1 : 1; }
+      const lv = Math.cos(f.yaw) * f.vx - Math.sin(f.yaw) * f.vz;
+      if (B.mv) I.mx = B.str; else I.mx = B.diff > 0 && Math.abs(lv) > 1.2 ? -Math.sign(lv) : 0;
+      if (B.diff > 0 && R() < dt * .35) B.crouchT = .8; }
     if (B.crouchT > 0) { B.crouchT -= dt; I.crouch = true; }
     if (goal) { const want = Math.atan2(-(goal[0] - f.x), -(goal[1] - f.z)), da = angDiff(want, f.yaw); I.mz = Math.cos(da); I.mx = -Math.sin(da); if (sees === false && P.k === 'hold' && !P.path.length) I.walk = true; }
     // the objective
@@ -553,7 +633,9 @@ const GAME = {
       breaker: std({ color: '#ffffff', map: T.wood, roughness: .45, metalness: 0 }, .45),
       lancer: std({ color: '#d4323e', map: T.cera, roughness: .42, metalness: .3 }),
       longbow: std({ color: '#9468dc', map: T.carbon, roughness: .3, metalness: .45 }, 1.1),
-    }[k];
+      stub: std({ color: '#ffffff', map: T.wood, roughness: .45 }, .45), hammer: std({ color: '#ffd9a8', map: T.wood, roughness: .4 }, .5),
+      vesper: std({ color: '#d0509a', map: T.carbon, roughness: .3, metalness: .45 }, 1.1),
+    }[k] || std({ color: W.col, map: T.cera, roughness: .45, metalness: .3 });
     return GMAT[k] = {
       fin,
       metal: std({ color: '#3b4049', map: T.brushed, metalness: .85, roughness: .32 }),
@@ -574,7 +656,7 @@ const GAME = {
   }
   function gunModel(k, opts = {}) {
     const W = GUNS[k], m = gmats(k), G = new THREE.Group(), cast = !!opts.cast, parts = {};
-    let T = G, len = .5, port = [.02, .03, 0];
+    let T = G, len = .5, port = [.02, .03, 0], sight = .09;
     const add = (geo, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); o.castShadow = cast; T.add(o); return o; };
     const box = (w, h, d, mat, x, y, z, rx = 0, ry = 0, rz = 0) => add(new THREE.BoxGeometry(w, h, d), mat, x, y, z, rx, ry, rz);
     // a cylinder along z from z0 (front) to z1 (back); rB is the back radius when it differs
@@ -604,28 +686,137 @@ const GAME = {
       add(new THREE.TorusGeometry(.0045, .0007, 6, 20), m.red, 0, y + .029, z - .016); add(new THREE.SphereGeometry(.0009, 6, 6), m.red, 0, y + .029, z - .016);
       box(.008, .007, .012, m.poly, .0195, y + .03, z + .012); box(.008, .007, .012, m.poly, .0195, y + .02, z + .012);
     };
-    const counter = (y, z) => { // a little screen facing you that shows the rounds left
-      box(.034, .026, .014, m.dark, 0, y, z); const c = document.createElement('canvas'); c.width = 64; c.height = 44; const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
-      add(new THREE.PlaneGeometry(.028, .019), new THREE.MeshBasicMaterial({ map: t, toneMapped: false }), 0, y + .001, z + .0072, -.25); parts.counter = { c, t, last: -1 };
+    const counter = (y, z, hw) => { // a little screen on the left of the receiver (the side you see) showing the rounds left
+      box(.008, .026, .036, m.dark, -hw - .004, y, z); const c = document.createElement('canvas'); c.width = 64; c.height = 44; const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
+      add(new THREE.PlaneGeometry(.03, .02), new THREE.MeshBasicMaterial({ map: t, toneMapped: false }), -hw - .0085, y, z, 0, -Math.PI / 2, 0); parts.counter = { c, t, last: -1 };
     };
+    const reticle = (y, z) => { add(new THREE.SphereGeometry(.0011, 8, 6), m.red, 0, y, z); for (const [w, h, dx, dy] of [[.006, .0008, -.006, 0], [.006, .0008, .006, 0], [.0008, .006, 0, -.006]]) box(w, h, .0005, m.red, dx, y + dy, z); };
     const group = (x, y, z, rx = 0) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.x = rx; g.userData.p0 = g.position.clone(); G.add(g); return g; };
-    if (k === 'pip') { // compact sidearm: cerakote frame, moving slide with tritium sights, under-barrel light
-      len = .207; port = [.012, .05, -.045];
+    const PGRIP = [[-.01, -.004], [.03, -.004], [.062, -.11], [.058, -.118], [.02, -.118], [-.012, -.06], [-.026, -.02]];
+    const RGRIP = [[-.008, -.03], [.024, -.03], [.054, -.12], [.046, -.13], [.01, -.13], [-.016, -.06]];
+    const RLOWER = [[-.18, -.008], [.12, -.008], [.12, -.03], [0, -.035], [-.06, -.035], [-.07, -.06], [-.155, -.06], [-.17, -.035], [-.18, -.03]];
+    const curvedMag = (step, mat = m.poly) => { let py = 0, pz = 0; for (let i = 0; i < 4; i++) { const a = .1 + i * step, dy = -Math.cos(a) * .042, dz = -Math.sin(a) * .042; box(.03, .044, .034, mat, 0, py + dy / 2, pz + dz / 2, a); box(.031, .004, .035, m.dark, 0, py + dy, pz + dz, a); py += dy; pz += dz; } box(.034, .012, .04, m.acc, 0, py - .004, pz - .003, .4); };
+    const chHandle = () => { T = parts.bolt = group(0, 0, 0); box(.034, .008, .02, m.dark, 0, .06, .12); box(.054, .008, .009, m.dark, 0, .06, .128); T = G; };
+    if (k === 'pip' || k === 'wasp' || k === 'quill') { // pistols: a frame and a moving slide with tritium sights; the Wasp adds a compensator, mini red dot and long mag, the Quill a suppressor
+      const o = { pip: { light: 1, name: 'PIP', sub: 'DP-9 · 12 RD' }, wasp: { comp: 1, ext: 1, rdot: 1, name: 'WASP', sub: 'AUTO · 13 RD' }, quill: { supp: 1, name: 'QUILL', sub: 'SUPPRESSED · 15' } }[k];
+      len = o.supp ? .362 : o.comp ? .238 : .207; port = [.012, .05, -.045]; sight = o.rdot ? .066 : .056;
       prof([[-.17, .014], [-.17, -.004], [-.06, -.004], [-.04, -.012], [-.012, -.01], [.005, -.002], [.02, .014]], .026, m.fin);
-      prof([[-.01, -.004], [.03, -.004], [.062, -.11], [.058, -.118], [.02, -.118], [-.012, -.06], [-.026, -.02]], .028, m.poly);
-      rail(-.165, -.075, -.012, .02); box(.024, .022, .05, m.poly, 0, -.027, -.14); lensF(.0085, 0, -.027, -.1655, m.lamp); ring(.0095, .0018, -.1655, m.steel, -.027);
+      prof(PGRIP, .028, m.poly); rail(-.165, -.075, -.012, .02);
+      if (o.light) { box(.024, .022, .05, m.poly, 0, -.027, -.14); lensF(.0085, 0, -.027, -.1655, m.lamp); ring(.0095, .0018, -.1655, m.steel, -.027); }
       box(.004, .006, .026, m.steel, -.0145, .02, -.008); screw(-.0136, .003, -.03); screw(-.0136, .003, .006); box(.008, .016, .01, m.metal, 0, .043, .046, -.4);
       guard(-.035, -.006); tube(.0092, -.207, -.19, m.steel, .03);
+      if (o.supp) { tube(.017, -.362, -.205, m.dark, .03); knurl(.0175, -.35, -.31, 4, m.metal, .03); lensF(.006, 0, .03, -.3626, m.rubber); ring(.0172, .002, -.215, m.glow, .03); }
       T = parts.slide = group(0, 0, 0);
       prof([[-.2, .05], [.035, .05], [.04, .04], [.04, .012], [-.2, .012], [-.205, .03]], .03, m.metal);
       for (let i = 0; i < 6; i++) box(.031, .026, .0028, m.dark, 0, .032, .03 - i * .007);
       for (let i = 0; i < 4; i++) box(.031, .02, .0028, m.dark, 0, .035, -.155 - i * .007);
       box(.013, .003, .034, m.rubber, .004, .0505, -.045);
       box(.006, .009, .007, m.dark, 0, .056, -.19); add(new THREE.SphereGeometry(.0018, 6, 6), m.tritium, 0, .058, -.1862);
-      box(.02, .009, .007, m.dark, 0, .056, .03); for (const sx of [-.0055, .0055]) add(new THREE.SphereGeometry(.0018, 6, 6), m.tritium, sx, .057, .0338);
-      decal('PIP', 'DP-9 · 17 RD', .07, .0175, .0155, .029, -.1);
+      if (o.rdot) { box(.022, .008, .034, m.dark, 0, .054, -.01); for (const sx of [-.0105, .0105]) box(.003, .018, .026, m.dark, sx, .066, -.01); box(.024, .004, .03, m.dark, 0, .076, -.012); box(.018, .016, .0012, m.glass, 0, .066, -.022); add(new THREE.SphereGeometry(.0009, 6, 6), m.red, 0, .066, -.021); }
+      else { box(.02, .009, .007, m.dark, 0, .056, .03); for (const sx of [-.0055, .0055]) add(new THREE.SphereGeometry(.0018, 6, 6), m.tritium, sx, .057, .0338); }
+      if (o.comp) { box(.03, .036, .032, m.dark, 0, .031, -.221); for (let i = 0; i < 3; i++) box(.012, .004, .006, m.rubber, 0, .0495, -.212 - i * .009); }
+      decal(o.name, o.sub, .07, .0175, .0155, .029, -.1);
       T = parts.mag = group(0, -.06, .025, -.25);
-      box(.02, .1, .032, m.dark, 0, 0, 0); box(.03, .012, .042, m.fin, 0, -.057, .003);
+      box(.02, o.ext ? .15 : .1, .032, m.dark, 0, o.ext ? -.025 : 0, 0); box(.03, .012, .042, o.ext ? m.acc : m.fin, 0, o.ext ? -.106 : -.057, .003);
+      T = G;
+    } else if (k === 'stub') { // sawn-off double: two short barrels that break open to reload, wooden forend and grip, twin hammers
+      len = .36; port = null; sight = .058;
+      prof([[-.06, .05], [.04, .05], [.05, .02], [.04, -.004], [-.06, -.004]], .058, m.metal);
+      prof([[-.065, .016], [-.23, .016], [-.24, .004], [-.225, -.016], [-.065, -.02]], .05, m.fin);
+      prof(PGRIP, .03, m.fin); guard(-.035, -.006); for (const sx of [-.01, .01]) box(.006, .016, .012, m.steel, sx, .056, .042, -.5);
+      decal('STUB', '12 GA · 2 RD', .07, .0175, .0292, .028, -.005);
+      T = parts.brk = group(0, .02, -.06);
+      for (const sx of [-.0145, .0145]) { tube(.0145, -.3, 0, m.steel, .012, sx); lensF(.0095, sx, .012, -.3005, m.rubber); }
+      box(.058, .01, .02, m.dark, 0, .012, -.285); box(.004, .006, .26, m.metal, 0, .029, -.14); add(new THREE.SphereGeometry(.0035, 8, 6), m.brass, 0, .034, -.29);
+      T = G;
+    } else if (k === 'hammer') { // revolver: ribbed heavy barrel, a six-shot cylinder that turns with each shot, wooden grip, hammer spur
+      len = .27; port = null; sight = .062;
+      prof([[-.065, .05], [.05, .05], [.062, .035], [.055, -.004], [-.065, -.004]], .032, m.steel);
+      tube(.0115, -.27, -.06, m.steel, .034); box(.013, .012, .21, m.metal, 0, .05, -.165); box(.02, .024, .2, m.steel, 0, .017, -.165); lensF(.006, 0, .034, -.2705, m.rubber);
+      box(.004, .012, .01, m.dark, 0, .061, -.262); add(new THREE.SphereGeometry(.002, 6, 6), m.acc, 0, .066, -.26); box(.014, .006, .012, m.dark, 0, .058, .045);
+      prof([[.03, .004], [.062, 0], [.092, -.095], [.077, -.112], [.042, -.108], [.02, -.03]], .036, m.fin); box(.008, .02, .012, m.metal, 0, .058, .062, -.6);
+      guard(-.005, -.006); decal('HAMMER', '.44 · 6 RD', .085, .021, .0162, .02, .012);
+      T = parts.cyl = group(0, .022, -.02);
+      add(new THREE.CylinderGeometry(.026, .026, .052, 12), m.metal, 0, 0, 0, Math.PI / 2); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; box(.006, .006, .046, m.dark, Math.cos(a) * .025, Math.sin(a) * .025, 0); }
+      T = G;
+    } else if (k === 'gnat') { // compact SMG: lime polymer, short shroud, vertical foregrip, collapsed wire stock, mini holo
+      len = .3; port = [.021, .03, -.02]; sight = .086;
+      prof([[-.17, .045], [.08, .045], [.09, .03], [.09, -.012], [-.17, -.012]], .04, m.fin);
+      prof([[-.06, -.01], [.07, -.01], [.075, -.03], [-.06, -.03]], .034, m.poly); prof(RGRIP, .03, m.poly); guard(-.035, -.03);
+      tube(.016, -.27, -.17, m.dark, .018); for (let i = 0; i < 4; i++) box(.034, .004, .012, m.rubber, 0, .018, -.19 - i * .02); tube(.01, -.3, -.27, m.steel, .018); lensF(.006, 0, .018, -.3005, m.rubber);
+      rail(-.15, .06, .05); holo(-.05, .057); vtube(.012, -.08, -.012, m.poly, 0, -.2, .014); vtube(.0135, -.088, -.078, m.acc, 0, -.2);
+      for (const sx of [-.014, .014]) box(.005, .005, .1, m.steel, sx, .005, .14); box(.036, .05, .012, m.rubber, 0, -.005, .195);
+      box(.0015, .012, .036, m.rubber, .0205, .028, -.02); decal('GNAT', 'SMG · 20 RD', .085, .021, .0205, .016, -.06);
+      T = parts.bolt = group(0, 0, 0); box(.01, .01, .024, m.steel, -.024, .03, .02);
+      T = parts.mag = group(0, -.085, -.1, .05); box(.026, .12, .03, m.poly, 0, 0, 0); box(.03, .01, .034, m.acc, 0, -.062, 0);
+      T = G;
+    } else if (k === 'thresher') { // auto shotgun: orange receiver, drum magazine, ported muzzle, ghost ring sight
+      len = .66; port = [.026, .03, -.05]; sight = .084;
+      prof([[-.2, .055], [.12, .055], [.13, .03], [.12, -.03], [-.2, -.03]], .05, m.fin);
+      prof([[-.2, .015], [-.42, .015], [-.43, -.005], [-.42, -.045], [-.2, -.045]], .052, m.poly); for (let i = 0; i < 5; i++) box(.054, .01, .02, m.dark, 0, -.015, -.24 - i * .036);
+      tube(.018, -.62, -.2, m.steel, .032); box(.03, .012, .18, m.heat, 0, .055, -.52); box(.044, .036, .05, m.dark, 0, .032, -.64); for (let i = 0; i < 3; i++) box(.046, .022, .006, m.rubber, 0, .034, -.625 - i * .013);
+      rail(-.18, .1, .06); for (const sx of [-.009, .009]) box(.004, .018, .006, m.dark, sx, .074, .085); ring(.008, .0022, .085, m.dark, .084); add(new THREE.SphereGeometry(.004, 8, 6), m.glow, 0, .056, -.655);
+      prof([[.12, .05], [.12, -.03], [.2, -.06], [.38, -.08], [.4, -.08], [.4, .05]], .046, m.poly); prof([[.4, -.085], [.43, -.085], [.43, .055], [.4, .055]], .05, m.rubber);
+      prof(RGRIP, .03, m.poly); guard(-.035, -.03); box(.0015, .02, .05, m.rubber, .0255, .028, -.05); decal('THRESHER', '12 GA · AUTO', .12, .03, .0255, .02, -.07);
+      T = parts.mag = group(0, -.1, -.11);
+      add(new THREE.CylinderGeometry(.062, .062, .046, 24), m.poly, 0, -.02, 0, 0, 0, Math.PI / 2); add(new THREE.TorusGeometry(.056, .004, 6, 24), m.acc, .024, -.02, 0, 0, Math.PI / 2, 0); add(new THREE.CylinderGeometry(.016, .016, .05, 12), m.dark, 0, -.02, 0, 0, 0, Math.PI / 2); box(.03, .05, .04, m.poly, 0, .04, 0);
+      T = G;
+    } else if (k === 'mako') { // burst rifle: blue lower, round ported handguard, compact 2x optic, solid stock
+      len = .7; port = [.023, .025, 0]; sight = .1;
+      prof([[-.18, .055], [.13, .055], [.135, .03], [.13, -.01], [-.18, -.01]], .046, m.metal); prof(RLOWER, .044, m.fin); prof(RGRIP, .03, m.poly); guard(-.035, -.035);
+      tube(.029, -.48, -.18, m.fin, .022, 0, 18); for (let i = 0; i < 5; i++) for (const sx of [-1, 1]) box(.004, .01, .03, m.rubber, sx * .028, .022, -.22 - i * .05);
+      tube(.012, -.66, -.48, m.steel, .022); tube(.017, -.7, -.66, m.dark, .022, 0, 6); lensF(.007, 0, .022, -.7005, m.rubber);
+      rail(-.17, .1, .062); for (const z of [-.025, .025]) box(.022, .016, .016, m.dark, 0, .073, z);
+      for (const sx of [-.017, .017]) box(.005, .036, .07, m.dark, sx, .1, 0); box(.039, .006, .07, m.dark, 0, .121, 0); box(.039, .008, .07, m.dark, 0, .079, 0); box(.03, .03, .0012, m.glass, 0, .1, -.034); box(.03, .03, .0012, m.glass, 0, .1, .034); reticle(.1, -.03); box(.008, .012, .016, m.acc, .021, .1, .01);
+      prof([[.13, .05], [.13, -.02], [.24, -.06], [.36, -.07], [.38, -.07], [.38, .055]], .046, m.poly); prof([[.38, -.075], [.405, -.075], [.405, .06], [.38, .06]], .05, m.rubber);
+      box(.0015, .016, .05, m.rubber, .0232, .025, 0); decal('MAKO', 'BURST · 24 RD', .1, .025, .0232, .034, -.08);
+      chHandle(); T = parts.mag = group(0, -.055, -.112); curvedMag(.07); T = G;
+    } else if (k === 'paladin') { // marksman rifle: sand furniture, thumbhole stock, long free-floated barrel, 1.5x scope
+      len = .9; port = [.023, .025, 0]; sight = .098;
+      prof([[-.2, .05], [.12, .05], [.13, .03], [.12, -.01], [-.2, -.01]], .044, m.metal); prof([[-.2, -.008], [.12, -.008], [.12, -.03], [-.2, -.03]], .044, m.fin);
+      prof([[-.2, .04], [-.55, .04], [-.565, .02], [-.565, -.03], [-.55, -.04], [-.2, -.04]], .05, m.fin); for (let i = 0; i < 6; i++) box(.052, .016, .018, m.dark, 0, .0, -.24 - i * .05);
+      prof([[.12, .04], [.12, -.03], [.18, -.09], [.24, -.09], [.26, -.02], [.4, -.075], [.43, -.085], [.43, .05], [.22, .05], [.18, .02], [.15, .04]], .046, m.fin); prof([[.43, -.09], [.455, -.09], [.455, .055], [.43, .055]], .05, m.rubber);
+      prof(RGRIP, .03, m.poly); guard(-.035, -.03);
+      tube(.011, -.86, -.565, m.steel, .02); tube(.015, -.9, -.86, m.dark, .02, 0, 8); for (let i = 0; i < 2; i++) box(.032, .02, .006, m.rubber, 0, .02, -.875 - i * .012); lensF(.007, 0, .02, -.9005, m.rubber);
+      rail(-.18, .1, .052); for (const z of [-.04, .02]) box(.02, .016, .016, m.dark, 0, .066, z);
+      for (const sx of [-.019, .019]) box(.005, .04, .1, m.dark, sx, .098, -.01); box(.043, .006, .1, m.dark, 0, .121, -.01); box(.043, .008, .1, m.dark, 0, .077, -.01); for (const z of [-.06, .04]) box(.03, .034, .0012, m.glass, 0, .098, z); reticle(.098, -.055); box(.01, .014, .02, m.acc, .024, .1, 0); box(.03, .01, .02, m.acc, 0, .127, -.01);
+      box(.0015, .016, .05, m.rubber, .0222, .025, 0); decal('PALADIN', 'DMR · 12 RD', .12, .03, .0252, 0, -.38);
+      chHandle(); T = parts.mag = group(0, -.065, -.11); box(.03, .075, .05, m.poly, 0, 0, 0); box(.034, .012, .054, m.acc, 0, -.042, 0); T = G;
+    } else if (k === 'vesper') { // suppressed rifle: carbon-magenta furniture, slotted handguard, long can, angled grip, skeleton stock, holo, counter
+      len = .84; port = [.023, .025, 0]; sight = .099;
+      prof([[-.2, .056], [.13, .056], [.135, .03], [.13, -.01], [-.2, -.01]], .046, m.metal); prof(RLOWER, .044, m.fin); prof(RGRIP, .03, m.poly); guard(-.035, -.035);
+      prof([[-.2, .055], [-.5, .055], [-.51, .04], [-.51, -.025], [-.5, -.032], [-.2, -.032]], .05, m.fin); for (let i = 0; i < 5; i++) for (const y of [.012, -.012]) box(.052, .008, .022, m.rubber, 0, y, -.24 - i * .05);
+      tube(.023, -.84, -.53, m.dark, .02, 0, 20); knurl(.0235, -.83, -.79, 5, m.metal, .02); ring(.0235, .0025, -.55, m.glow, .02); lensF(.007, 0, .02, -.8405, m.rubber); tube(.013, -.53, -.51, m.steel, .02);
+      prof([[-.36, -.032], [-.44, -.032], [-.42, -.068], [-.39, -.068]], .03, m.poly);
+      tube(.015, .13, .3, m.metal, .03); box(.02, .012, .17, m.poly, 0, .055, .33); box(.02, .012, .18, m.poly, 0, -.05, .33, -.05); box(.02, .12, .016, m.poly, 0, 0, .25); prof([[.41, -.08], [.435, -.08], [.435, .07], [.41, .07]], .046, m.rubber);
+      rail(-.5, .125, .062); holo(-.06, .07); box(.026, .012, .03, m.dark, 0, .078, .07); counter(.03, .07, .023);
+      box(.0015, .016, .05, m.rubber, .0232, .025, 0); decal('VESPER', 'SUPPRESSED · 30', .12, .03, .0252, .03, -.35);
+      chHandle(); T = parts.mag = group(0, -.055, -.112); curvedMag(.09); T = G;
+    } else if (k === 'kite') { // light bolt sniper: one-piece stock, slim barrel, 2.5x scope, working bolt
+      len = .95; port = [.028, .04, .03];
+      tube(.02, -.22, .1, m.metal, .03);
+      prof([[-.5, .012], [-.5, -.03], [.06, -.03], [.06, -.11], [.1, -.11], [.14, -.06], [.2, -.045], [.4, -.09], [.44, -.09], [.44, .03], [.42, .042], [.16, .042], [.12, .02], [.1, .012]], .05, m.fin);
+      prof([[.44, -.095], [.465, -.095], [.465, .045], [.44, .045]], .052, m.rubber); guard(.03, -.03);
+      tube(.012, -.95, -.22, m.steel, .03, 0, 14, .016); tube(.016, -.95, -.92, m.dark, .03, 0, 8); lensF(.007, 0, .03, -.9505, m.rubber);
+      for (const z of [-.13, .03]) { box(.022, .03, .016, m.dark, 0, .07, z); ring(.0195, .003, z, m.dark, .1); }
+      tube(.019, -.17, .06, m.metal, .1, 0, 20); tube(.027, -.24, -.17, m.metal, .1, 0, 20, .019); tube(.019, .06, .1, m.metal, .1, 0, 20, .024); lensF(.025, 0, .1, -.2405, m.lens); add(new THREE.CircleGeometry(.021, 16), m.lens, 0, .1, .1005);
+      vtube(.01, .118, .132, m.acc, 0, -.05); ring(.0195, .003, -.17, m.glow, .1); decal('KITE', '.308 · BOLT', .1, .025, .0252, -.01, -.3);
+      T = parts.boltL = group(0, .03, .06); parts.boltL.userData.z0 = .06; tube(.013, 0, .045, m.steel, 0); add(new THREE.CylinderGeometry(.0045, .0045, .05, 8), m.steel, .028, 0, .035, 0, 0, Math.PI / 2); add(new THREE.SphereGeometry(.01, 10, 8), m.dark, .054, 0, .035);
+      T = parts.mag = group(0, -.045, -.06); box(.03, .03, .06, m.poly, 0, 0, 0); box(.034, .008, .064, m.acc, 0, -.018, 0);
+      T = G;
+    } else if (k === 'torrent') { // machine gun: white receiver, feed cover, slotted shroud, carry handle, folded bipod, box magazine with a belt
+      len = .95; port = [.032, .02, -.05]; sight = .119;
+      prof([[-.25, .06], [.14, .06], [.15, .03], [.14, -.035], [-.25, -.035]], .062, m.fin); prof([[-.22, .08], [.08, .08], [.1, .062], [-.22, .062]], .058, m.metal);
+      tube(.032, -.62, -.25, m.dark, .022, 0, 18); for (let i = 0; i < 6; i++) for (const sx of [-1, 1]) box(.004, .012, .028, m.rubber, sx * .031, .022, -.29 - i * .055);
+      tube(.014, -.92, -.62, m.steel, .022); tube(.021, -.95, -.9, m.dark, .022, 0, 8); lensF(.008, 0, .022, -.9505, m.rubber);
+      box(.016, .012, .16, m.dark, 0, .068, -.44); for (const z of [-.37, -.51]) box(.012, .022, .012, m.dark, 0, .058, z);
+      for (const sx of [-.012, .012]) box(.008, .008, .2, m.poly, sx, -.02, -.74); box(.026, .014, .02, m.dark, 0, -.012, -.63);
+      prof([[.14, .05], [.14, -.035], [.22, -.06], [.4, -.075], [.42, -.075], [.42, .06]], .05, m.poly); prof([[.42, -.08], [.445, -.08], [.445, .065], [.42, .065]], .054, m.rubber);
+      prof(RGRIP, .03, m.poly); guard(-.035, -.035);
+      rail(-.2, .06, .082); holo(-.06, .09); counter(.025, .06, .031);
+      box(.0015, .022, .05, m.rubber, .0315, .02, -.05); decal('TORRENT', 'LMG · 100 RD', .13, .033, .0315, .02, -.12);
+      T = parts.bolt = group(0, 0, 0); box(.012, .014, .03, m.steel, -.034, .03, -.02);
+      T = parts.mag = group(0, -.1, -.1); box(.06, .1, .12, m.poly, 0, 0, 0); box(.062, .012, .122, m.acc, 0, .03, 0); box(.008, .05, .012, m.brass, -.026, .07, 0);
       T = G;
     } else if (k === 'hornet') { // SMG: camo upper, long knurled suppressor, flashlight, straight mag, wire stock, holo sight
       len = .5; port = [.023, .03, -.03];
@@ -637,7 +828,7 @@ const GAME = {
       for (const sx of [-.0257, .0257]) box(.0015, .006, .14, m.glow, sx, .022, -.37);
       tube(.011, -.2, -.15, m.poly, 0, -.033); lensF(.009, -.033, 0, -.2006, m.lamp); box(.012, .01, .03, m.dark, -.025, 0, -.175);
       for (const sx of [-.016, .016]) box(.006, .006, .2, m.steel, sx, 0, .17); box(.036, .016, .02, m.metal, 0, 0, .075); box(.042, .065, .014, m.rubber, 0, -.01, .275);
-      rail(-.18, .05, .055); holo(-.04, .062); box(.0015, .012, .04, m.rubber, .0225, .03, -.03); counter(.068, .06);
+      rail(-.18, .05, .055); holo(-.04, .062); box(.0015, .012, .04, m.rubber, .0225, .03, -.03); counter(.03, .04, .022);
       T = parts.bolt = group(0, 0, 0); box(.01, .012, .03, m.steel, -.027, .032, 0); box(.014, .01, .008, m.fin, -.035, .032, -.012);
       T = parts.mag = group(0, -.1, -.11, .05);
       box(.03, .14, .036, m.poly, 0, 0, 0); for (let i = 0; i < 4; i++) box(.032, .004, .038, m.dark, 0, .04 - i * .025, 0); box(.034, .012, .042, m.acc, 0, -.072, -.002);
@@ -671,7 +862,7 @@ const GAME = {
       tube(.012, -.7, -.535, m.steel, .02); tube(.019, -.79, -.7, m.dark, .02, 0, 8); for (let i = 0; i < 3; i++) box(.042, .006, .01, m.rubber, 0, .02, -.722 - i * .022); lensF(.008, 0, .02, -.7905, m.rubber);
       tube(.016, .13, .3, m.metal, .03); prof([[.22, .07], [.22, -.02], [.3, -.075], [.4, -.085], [.42, -.085], [.42, .07]], .046, m.poly);
       box(.04, .02, .12, m.fin, 0, .08, .33); prof([[.42, -.09], [.446, -.09], [.446, .075], [.42, .075]], .05, m.rubber);
-      rail(-.52, .125, .062); holo(-.06, .07); box(.026, .012, .03, m.dark, 0, .078, .07); box(.02, .012, .025, m.dark, 0, .078, -.5); counter(.087, .105);
+      rail(-.52, .125, .062); holo(-.06, .07); box(.026, .012, .03, m.dark, 0, .078, .07); box(.02, .012, .025, m.dark, 0, .078, -.5); counter(.03, .07, .023);
       box(.0015, .016, .05, m.rubber, .0232, .025, 0); box(.012, .014, .02, m.metal, .028, .035, .06); screw(-.0225, -.02, .0); screw(-.0225, -.02, .03);
       vtube(.016, -.11, -.035, m.poly, 0, -.42, .018); vtube(.019, -.118, -.108, m.acc, 0, -.42);
       box(.02, .022, .05, m.poly, -.04, 0, -.45); box(.02, .01, .02, m.dark, -.031, 0, -.45); lensF(.007, -.04, .004, -.4755, m.red); lensF(.005, -.04, -.005, -.4755, m.lamp);
@@ -702,24 +893,25 @@ const GAME = {
       box(.036, .07, .08, m.poly, 0, 0, 0); box(.04, .012, .084, m.acc, 0, -.04, 0);
       T = G;
     }
+    if (k === 'hornet') sight = .091; if (k === 'breaker') sight = .068; if (k === 'lancer') sight = .099;
     if (opts.hands) { // gloves wrapped round the grip and the support, sleeves in the operative's colour
       const op = OPS[opts.op] || OPS.vex, band = new THREE.MeshStandardMaterial({ color: op.col, roughness: .5 });
       const arm = (par, x, y, z, rx, ry, l) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(rx, ry, 0); par.add(g);
         const s = new THREE.Mesh(new THREE.CylinderGeometry(.04, .047, l, 14), m.sleeve); s.rotation.x = Math.PI / 2; s.position.z = l / 2 + .02; g.add(s);
         const b = new THREE.Mesh(new THREE.CylinderGeometry(.0435, .0435, .03, 14), band); b.rotation.x = Math.PI / 2; b.position.z = .035; g.add(b);
         const c = new THREE.Mesh(new THREE.CylinderGeometry(.036, .04, .04, 14), m.glove); c.rotation.x = Math.PI / 2; c.position.z = .0; g.add(c); };
-      const hy = k === 'pip' ? -.055 : -.072, hz = k === 'pip' ? .022 : .024;
-      T = group(0, hy, hz, -.25);
+      const PIS = GUNS[k].cat === 'Sidearm', HG = { hammer: [-.052, .05, -.38], kite: [-.072, .088, -.32] }[k] || (PIS ? [-.055, .022, -.25] : [-.072, .024, -.25]);
+      T = group(0, HG[0], HG[1], HG[2]);
       box(.012, .07, .052, m.glove, .021, 0, 0); box(.046, .07, .016, m.glove, .002, 0, .029); for (let i = 0; i < 4; i++) box(.05, .0145, .017, m.glove, -.002, .026 - i * .0175, -.029);
       box(.013, .017, .05, m.glove, -.021, .031, -.012); box(.006, .026, .03, band, .028, .005, .006);
       arm(T, .01, -.035, .03, .7, -.2, .42);
-      const L = { pip: [-.016, -.1, .03, .3], hornet: [0, -.04, -.165, 0], breaker: [0, -.068, -.35, 0], lancer: [0, -.088, -.42, 0], longbow: [0, -.07, -.42, 0] }[k];
+      const L = PIS ? [-.016, HG[0] - .045, HG[1] + .008, .3] : { gnat: [0, -.065, -.2, 0], hornet: [0, -.04, -.165, 0], breaker: [0, -.068, -.35, 0], thresher: [0, -.07, -.33, 0], mako: [0, -.02, -.36, 0], paladin: [0, -.06, -.42, 0], vesper: [0, -.07, -.4, 0], lancer: [0, -.088, -.42, 0], kite: [0, -.05, -.36, 0], longbow: [0, -.07, -.42, 0], torrent: [0, -.035, -.42, 0] }[k];
       T = parts.lhand = group(L[0], L[1], L[2], L[3]);
       box(.052, .016, .075, m.glove, 0, 0, 0); box(.012, .042, .066, m.glove, -.031, .022, 0); for (let i = 0; i < 3; i++) box(.004, .03, .016, m.glove, -.038, .03, -.022 + i * .022); box(.012, .028, .045, m.glove, .031, .016, .004);
-      arm(T, -.02, -.01, .03, .5, .55, k === 'pip' ? .38 : .55);
+      arm(T, -.02, -.01, .03, .5, .55, PIS ? .38 : .55);
       T = G;
     }
-    G.userData.len = len; G.userData.port = port; G.userData.parts = parts; G.userData.k = k;
+    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k;
     if (opts.flash) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.starT, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); sp.scale.setScalar(.4); sp.position.set(0, .025, -len - .06); sp.visible = false; G.add(sp); G.userData.flash = sp; }
     return G;
   }
@@ -742,17 +934,20 @@ const GAME = {
     } catch (e) { console.error(e); return ICON[k] = false; }
   }
   // spent brass flying out of the ejection port (first person only)
-  const CASE = { pip: [.0045, .019], hornet: [.0045, .019], lancer: [.005, .03], longbow: [.0065, .045], breaker: [.0095, .05] }, CASEGEO = {};
+  const CASE = { pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] }, CASEGEO = {};
+  const VOS = { pip: [.17, -.17, -.3], wasp: [.17, -.17, -.3], quill: [.17, -.17, -.3], stub: [.17, -.18, -.3], hammer: [.17, -.17, -.3], gnat: [.2, -.19, -.3], hornet: [.2, -.19, -.3], breaker: [.2, -.2, -.27], thresher: [.2, -.2, -.28], mako: [.2, -.2, -.28], paladin: [.21, -.21, -.27], vesper: [.2, -.2, -.28], lancer: [.2, -.2, -.28], kite: [.22, -.22, -.26], longbow: [.23, -.23, -.25], torrent: [.21, -.21, -.27] };
   function viewAnim(P, G, dt) {
     const U = X.viewGun.userData, pp = U.parts, A = P.ammo[G.k] || { mag: 0 }, sm = x => x * x * (3 - 2 * x);
     const st = P.fireT > 0 ? 60 / G.rpm - P.fireT : 9, shotT = st >= 0 ? st : 9, r = P.reloadT > 0 ? 1 - P.reloadT / G.rel : -1, win = (a, b) => cl((r - a) / (b - a), 0, 1);
     if (pp.slide) pp.slide.position.z = Math.max(shotT < .08 ? (1 - shotT / .08) * .03 : 0, A.mag === 0 && r < 0 ? .03 : 0);
     if (pp.bolt) pp.bolt.position.z = (shotT < .05 ? (1 - shotT / .05) * .012 : 0) + (r > .82 ? Math.sin(win(.82, .97) * Math.PI) * .05 : 0);
     if (pp.pump) { const s = cl((shotT - .16) / .36, 0, 1); pp.pump.position.z = Math.sin(s * Math.PI) * .085 + (r > .85 ? Math.sin(win(.85, 1) * Math.PI) * .085 : 0); }
-    if (pp.boltL) { const s = cl((shotT - .28) / .8, 0, 1), s2 = r > .8 ? win(.8, 1) : 0, q = Math.max(s, s2), lift = q <= 0 || q >= 1 ? 0 : q < .2 ? q / .2 : q > .8 ? (1 - q) / .2 : 1, back = q < .2 || q > .8 ? 0 : Math.sin((q - .2) / .6 * Math.PI); pp.boltL.rotation.z = sm(cl(lift, 0, 1)) * 1.1; pp.boltL.position.z = pp.boltL.userData.z0 + back * .075; }
+    if (pp.boltL) { const s = cl((shotT - (G.k === 'kite' ? .12 : .28)) / (G.k === 'kite' ? .45 : .8), 0, 1), s2 = r > .8 ? win(.8, 1) : 0, q = Math.max(s, s2), lift = q <= 0 || q >= 1 ? 0 : q < .2 ? q / .2 : q > .8 ? (1 - q) / .2 : 1, back = q < .2 || q > .8 ? 0 : Math.sin((q - .2) / .6 * Math.PI); pp.boltL.rotation.z = sm(cl(lift, 0, 1)) * 1.1; pp.boltL.position.z = pp.boltL.userData.z0 + back * .075; }
+    if (pp.cyl) { const want = (G.mag - A.mag) * TAU / 6; pp.cyl.rotation.z += (want - pp.cyl.rotation.z) * Math.min(1, dt * 22); }
+    if (pp.brk) pp.brk.rotation.x = -(r < 0 ? 0 : sm(win(.05, .25)) * (1 - sm(win(.8, .95)))) * .75;
     let magOut = 0;
-    if (pp.mag) { magOut = r < 0 ? 0 : r < .3 ? sm(win(.1, .3)) : r < .55 ? 1 : 1 - sm(win(.55, .8)); pp.mag.position.y = pp.mag.userData.p0.y - magOut * .34; pp.mag.position.z = pp.mag.userData.p0.z + magOut * .05; pp.mag.rotation.x = (G.k === 'pip' ? -.25 : G.k === 'hornet' ? .05 : 0) + magOut * .5; }
-    if (pp.lhand && G.k !== 'pip') {
+    if (pp.mag) { magOut = r < 0 ? 0 : r < .3 ? sm(win(.1, .3)) : r < .55 ? 1 : 1 - sm(win(.55, .8)); pp.mag.position.y = pp.mag.userData.p0.y - magOut * .34; pp.mag.position.z = pp.mag.userData.p0.z + magOut * .05; pp.mag.rotation.x = (G.cat === 'Sidearm' ? -.25 : G.k === 'hornet' || G.k === 'gnat' ? .05 : 0) + magOut * .5; }
+    if (pp.lhand && G.cat !== 'Sidearm') {
       const p0 = pp.lhand.userData.p0; let h = 0, tx = p0.x, ty = p0.y, tz = p0.z;
       if (G.k === 'breaker') { h = r < 0 ? 0 : sm(win(.05, .2)) * (1 - sm(win(.85, 1))); tx = -.005; ty = -.06 + Math.sin(r * Math.PI * 10) * .018; tz = -.06; }
       else if (pp.mag) { h = r < 0 ? 0 : sm(win(.38, .55)) * (1 - sm(win(.78, .9))); const mp = pp.mag.position; tx = mp.x - .01; ty = mp.y - .06; tz = mp.z; }
@@ -765,9 +960,9 @@ const GAME = {
     X.vroot.updateMatrixWorld(true);
     for (const e of X.ejects) e.t -= dt;
     for (const e of X.ejects.filter(e => e.t <= 0)) {
-      if (!X.viewGun || X.viewGun.userData.k !== e.k) continue; const [rr, ll] = CASE[e.k], key = e.k;
+      if (!X.viewGun || X.viewGun.userData.k !== e.k || !CASE[e.k] || !X.viewGun.userData.port) continue; const [rr, ll] = CASE[e.k], key = e.k;
       if (!CASEGEO[key]) CASEGEO[key] = new THREE.CylinderGeometry(rr, rr, ll, 10);
-      const mm = new THREE.Mesh(CASEGEO[key], e.k === 'breaker' ? gmats(e.k).shell : gmats(e.k).brass), v = new THREE.Vector3(...X.viewGun.userData.port); X.viewGun.localToWorld(v); X.vroot.worldToLocal(v);
+      const mm = new THREE.Mesh(CASEGEO[key], e.k === 'breaker' || e.k === 'thresher' ? gmats(e.k).shell : gmats(e.k).brass), v = new THREE.Vector3(...X.viewGun.userData.port); X.viewGun.localToWorld(v); X.vroot.worldToLocal(v);
       mm.position.copy(v); mm.rotation.set(R() * 3, R() * 3, R() * 3); X.vroot.add(mm); X.casings.push({ m: mm, v: [1.3 + R() * .6, 1.1 + R() * .6, .35 + R() * .3], s: [rnd(-20, 20), rnd(-20, 20), rnd(-20, 20)], t: .7 });
     }
     X.ejects = X.ejects.filter(e => e.t > 0);
@@ -778,7 +973,7 @@ const GAME = {
     if (!X) return;
     const isMe = f === me(), from = isMe ? null : [f.x - Math.sin(f.yaw) * .5, eyeY(f) - .25, f.z - Math.cos(f.yaw) * .5];
     X.tracers.push({ a: from || [S.o[0], S.o[1] - .15, S.o[2]], b: S.end, t: .06, me: isMe });
-    if (main) { X.muzzle.position.set(...(from || S.o)); X.muzzle.intensity = 4; if (isMe) { X.flashT = .05; const k = gun(f).k; (X.ejects = X.ejects || []).push({ k, t: k === 'breaker' ? .3 : k === 'longbow' ? .6 : .01 }); } else f.mflash = .06; }
+    if (main) { X.muzzle.position.set(...(from || S.o)); X.muzzle.intensity = 4; if (isMe) { X.flashT = .05; const k = gun(f).k; (X.ejects = X.ejects || []).push({ k, t: k === 'breaker' ? .3 : k === 'longbow' || k === 'kite' ? .6 : .01 }); } else f.mflash = .06; }
     if (!S.hit) for (let i = 0; i < 4; i++) X.sparks.push({ p: [...S.end], v: [rnd(-2, 2), rnd(0, 3), rnd(-2, 2)], t: .25 });
     else for (let i = 0; i < 6; i++) X.sparks.push({ p: [...S.end], v: [rnd(-1.5, 1.5), rnd(-1, 2), rnd(-1.5, 1.5)], t: .3, blood: 1 });
   }
@@ -786,7 +981,7 @@ const GAME = {
   // sound: little synth hits through the kit, quieter with distance
   function snd(k, f, g) {
     if (!M && k !== 'buy') return; const d = f && M ? Math.hypot(f.x - me().x, f.z - me().z) : 0, v = cl(1 - d / 45, .08, 1), mine = !f || f === me();
-    if (k === 'shot') { const big = g === 'longbow' || g === 'breaker'; K.noise(big ? .22 : .09, (big ? .32 : .2) * v, big ? 300 : 900); K.sfx(big ? 70 : 130, .09, 'square', .07 * v, -60); }
+    if (k === 'shot') { const W = GUNS[g] || GUNS.pip, big = W.cat === 'Sniper' || W.cat === 'Shotgun' || g === 'hammer' || g === 'paladin' || g === 'stub'; if (W.sil) { K.noise(.06, .1 * v, 2400); K.sfx(220, .04, 'square', .03 * v, -80); } else { K.noise(big ? .22 : .09, (big ? .32 : .2) * v, big ? 300 : 900); K.sfx(big ? 70 : 130, .09, 'square', .07 * v, -60); } }
     else if (k === 'step') { if (!mine) K.noise(.04, .09 * v, 2200); }
     else if (k === 'reload') K.sfx(520, .05, 'square', .04 * v, 0, .1), K.sfx(380, .05, 'square', .04 * v, 0, .6);
     else if (k === 'hit') K.sfx(1600, .04, 'square', .05); else if (k === 'headshot') { K.sfx(2200, .05, 'square', .06); K.sfx(2900, .05, 'square', .05, 0, .05); }
@@ -816,17 +1011,19 @@ const GAME = {
     let yaw = P.yaw, pitch = P.pitch + M.camKick;
     if (!P.alive && M.deathCam) { const b = M.deathCam.by, k = Math.min(1, M.deathCam.t * 2); cam.position.y = lp(eyeY(P), .5, k); yaw = lp(yaw, Math.atan2(-(b.x - P.x), -(b.z - P.z)), k); pitch = 0; }
     cam.rotation.set(0, 0, 0); cam.rotation.order = 'YXZ'; cam.rotation.y = yaw; cam.rotation.x = pitch;
-    const fov = P.scoped ? 26 : 78; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
+    const fov = 2 * Math.atan(Math.tan(39 * D2R) / zoomOf(P)) / D2R; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
     // viewmodel
     if (X.viewKey !== G.k + P.op) { if (X.viewGun) X.view.remove(X.viewGun); X.viewGun = viewGun(G.k, P.op); X.view.add(X.viewGun); X.viewKey = G.k + P.op; X.viewGun.add(X.mflash); X.drawT = .3; }
     X.drawT = Math.max(0, (X.drawT || 0) - dt); const dr = X.drawT / .3, sway = Math.sin(X.t * 1.3) * .004;
     const v = Math.hypot(P.vx, P.vz), bob = Math.sin(P.walkT * 1.9) * .012 * Math.min(1, v / 4), rel = P.reloadT > 0 ? Math.sin(Math.min(1, 1 - P.reloadT / G.rel) * Math.PI) : 0;
-    X.view.visible = P.alive && !P.scoped; const VO = { pip: [.17, -.17, -.3], hornet: [.2, -.19, -.3], breaker: [.2, -.2, -.27], lancer: [.2, -.2, -.28], longbow: [.23, -.23, -.25] }[G.k];
+    X.view.visible = P.alive && !(P.scoped && G.scope); const VO = VOS[G.k] || [.2, -.2, -.28];
     X.view.position.set(VO[0] + bob - rel * .05, VO[1] + Math.abs(bob) * .6 + sway + rel * .1 - P.kick * .2 - dr * dr * .25, VO[2] + P.kick * .8);
     X.view.rotation.set(P.kick * 1.4 + rel * .12 - dr * .6, .02 + rel * .3, -rel * .55 + dr * .3); X.mflash.position.set(0, .025, -(X.viewGun.userData.len || .5) - .03); X.mflash.visible = X.flashT > 0; X.mflash.rotation.z = R() * 3; X.mflash.scale.setScalar(G.k === 'breaker' || G.k === 'longbow' ? 1.5 : G.k === 'pip' ? .8 : 1);
     viewAnim(P, G, dt);
     if (X.inspT > 0) { if (P.reloadT > 0 || P.fireT > 0 && 60 / G.rpm - P.fireT < .1) X.inspT = 0; else X.inspT -= dt; }
     if (X.inspT > 0) { const q = 1 - X.inspT / 2.6, e = (x => x * x * (3 - 2 * x))(cl(Math.sin(q * Math.PI) * 1.6, 0, 1)), tw = Math.sin(q * Math.PI * 2) * e; X.view.position.x -= e * .03; X.view.position.y += e * .035; X.view.position.z -= e * .1; X.view.rotation.y += e * .85; X.view.rotation.z += e * .3 + tw * .25; X.view.rotation.x += tw * .15; }
+    X.adsK = lp(X.adsK || 0, P.scoped && !G.scope && P.alive ? 1 : 0, Math.min(1, dt * 16));
+    if (X.adsK > .001) { const a = X.adsK, sy = X.viewGun.userData.sight || .09; X.view.position.x = lp(X.view.position.x, 0, a); X.view.position.y = lp(X.view.position.y, -sy - P.kick * .05, a); X.view.position.z = lp(X.view.position.z, VO[2] - .03 + P.kick * .5, a); X.view.rotation.y = lp(X.view.rotation.y, 0, a); X.view.rotation.z = lp(X.view.rotation.z, 0, a); X.view.rotation.x = lp(X.view.rotation.x, P.kick * .5, a); }
     if (X.flashT > 0) X.flashT -= dt; X.muzzle.intensity = Math.max(0, X.muzzle.intensity - dt * 60);
     // the rival
     for (const f of M.fs) {
@@ -862,8 +1059,8 @@ const GAME = {
   const locked = () => document.pointerLockElement === document.getElementById('cv');
   function lockMouse() { if (touch() || K.bot) return; const c = document.getElementById('cv'); try { c && c.requestPointerLock && c.requestPointerLock(); } catch (e) {} }
   function unlockMouse() { try { if (document.pointerLockElement) document.exitPointerLock(); } catch (e) {} }
-  document.addEventListener('mousemove', e => { if (!locked() || !M || mode !== 'play') return; const P = me(), s = sens * (P.scoped ? .33 : 1); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
-  document.addEventListener('mousedown', e => { if (!locked() || !M || mode !== 'play') return; if (e.button === 0) mouse.l = true; if (e.button === 2) { const P = me(); if (gun(P).scope && P.alive && P.reloadT <= 0) { P.scoped = !P.scoped; snd('swap', P); } } });
+  document.addEventListener('mousemove', e => { if (!locked() || !M || mode !== 'play') return; const P = me(), s = sens / zoomOf(P); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
+  document.addEventListener('mousedown', e => { if (!locked() || !M || mode !== 'play') return; if (e.button === 0) mouse.l = true; if (e.button === 2) altAction(me()); });
   document.addEventListener('mouseup', e => { if (e.button === 0) mouse.l = false; });
   document.addEventListener('contextmenu', e => { if (mode === 'play') e.preventDefault(); });
   const TS = { stick: null, look: null, fire: null, btn: new Map() };   // touch state
@@ -899,12 +1096,12 @@ const GAME = {
   function drawHUD(g) {
     const P = me(), F = foe(), G = gun(P), V = K.view, side = sideOf(P);
     // scope overlay
-    if (P.scoped && P.alive) { g.fillStyle = '#000'; g.beginPath(); g.rect(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0); g.arc(640, 360, 300, 0, TAU, true); g.fill(); g.strokeStyle = 'rgba(0,0,0,.9)'; g.lineWidth = 2; g.beginPath(); g.moveTo(340, 360); g.lineTo(940, 360); g.moveTo(640, 60); g.lineTo(640, 660); g.stroke(); }
+    if (P.scoped && G.scope && P.alive) { g.fillStyle = '#000'; g.beginPath(); g.rect(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0); g.arc(640, 360, 300, 0, TAU, true); g.fill(); g.strokeStyle = 'rgba(0,0,0,.9)'; g.lineWidth = 2; g.beginPath(); g.moveTo(340, 360); g.lineTo(940, 360); g.moveTo(640, 60); g.lineTo(640, 660); g.stroke(); }
     // the rival revealed by a Ping, and the charge when it is planted
     if (F.alive && F.reveal > 0 && X) { const s = toScreen(F.x, F.y + 1.2, F.z); if (s) { g.strokeStyle = RED; g.lineWidth = 3; g.beginPath(); g.moveTo(s[0], s[1] - 26); g.lineTo(s[0] + 18, s[1]); g.lineTo(s[0], s[1] + 26); g.lineTo(s[0] - 18, s[1]); g.closePath(); g.stroke(); tx(g, F.name, s[0], s[1] - 40, BF(14), RED); } }
     if (M.planted && X) { const s = toScreen(M.planted.x, .5, M.planted.z); if (s) { const p = 1 + Math.sin(X.t * 10) * .1; g.fillStyle = 'rgba(255,70,85,.9)'; g.beginPath(); g.arc(s[0], s[1], 9 * p, 0, TAU); g.fill(); } }
     // crosshair: a gap that opens with spread
-    if (P.alive && !P.scoped) { const gap = 5 + spreadOf(P) * 260, c = '#3ee6c1'; g.fillStyle = 'rgba(0,0,0,.6)'; for (const [a, b, w, h] of [[-gap - 9, -1.5, 9, 3], [gap, -1.5, 9, 3], [-1.5, -gap - 9, 3, 9], [-1.5, gap, 3, 9]]) g.fillRect(640 + a - 1, 360 + b - 1, w + 2, h + 2); g.fillStyle = c; for (const [a, b, w, h] of [[-gap - 9, -1.5, 9, 3], [gap, -1.5, 9, 3], [-1.5, -gap - 9, 3, 9], [-1.5, gap, 3, 9]]) g.fillRect(640 + a, 360 + b, w, h); g.fillRect(639, 359, 2, 2); }
+    if (P.alive && !(P.scoped && G.scope)) { const gap = 3 + Math.tan(spreadOf(P)) / Math.tan((X ? X.camera.fov : 78) * D2R / 2) * 360, c = '#3ee6c1'; g.fillStyle = 'rgba(0,0,0,.6)'; for (const [a, b, w, h] of [[-gap - 9, -1.5, 9, 3], [gap, -1.5, 9, 3], [-1.5, -gap - 9, 3, 9], [-1.5, gap, 3, 9]]) g.fillRect(640 + a - 1, 360 + b - 1, w + 2, h + 2); g.fillStyle = c; for (const [a, b, w, h] of [[-gap - 9, -1.5, 9, 3], [gap, -1.5, 9, 3], [-1.5, -gap - 9, 3, 9], [-1.5, gap, 3, 9]]) g.fillRect(640 + a, 360 + b, w, h); g.fillRect(639, 359, 2, 2); }
     if (M.hitMark && (M.hitMark.t -= 1 / 60) > 0) { const c = M.hitMark.kill ? RED : M.hitMark.head ? '#ffd23f' : '#fff'; g.strokeStyle = c; g.lineWidth = 3; g.beginPath(); for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { g.moveTo(640 + a * 8, 360 + b * 8); g.lineTo(640 + a * 16, 360 + b * 16); } g.stroke(); }
     // top: the score and the clock
     const ph = M.phase, t = Math.max(0, Math.ceil(M.t)), clock = M.planted && ph === 'live' ? '' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
@@ -943,27 +1140,51 @@ const GAME = {
     if (!touch() && !locked() && !M.buyMenu && mode === 'play' && !K.bot) { rr(g, 440, 400, 400, 60, 8, 'rgba(11,15,23,.85)', TEAL); tx(g, 'CLICK TO FIGHT', 640, 430, DF(24), TEAL); }
     if (touch() && mode === 'play') drawTouch(g);
   }
+  // the armory: weapons in columns by type, shields on the right, and the full numbers for whatever you point at
+  const BUYCOLS = [[['SIDEARMS', ['pip', 'stub', 'wasp', 'quill', 'hammer']]], [['SMGS', ['gnat', 'hornet']], ['SHOTGUNS', ['breaker', 'thresher']]], [['RIFLES', ['mako', 'paladin', 'vesper', 'lancer']]], [['SNIPERS', ['kite', 'longbow']], ['HEAVY', ['torrent']]], [['SHIELDS', ['light', 'heavy']]]];
+  let buyFocus = 'lancer';
   function drawBuy(g) {
-    const P = me(); rr(g, 190, 104, 900, 512, 10, 'rgba(11,15,23,.95)', 'rgba(236,232,225,.3)');
-    tx(g, 'ARMORY', 220, 134, DF(28), PAPER, 'left'); tx(g, `◈ ${P.credits} credits`, 1060, 134, DF(22), '#ffd23f', 'right'); tx(g, `Round starts in ${Math.ceil(M.t)}`, 640, 134, BF(15), '#9aa4b4');
-    const items = [...Object.values(GUNS).filter(G => G.k !== 'pip'), ...ARMOR.map(a => ({ k: a.k, n: a.n, cost: a.cost, desc: `+${a.sh} shield`, col: '#7fc8ff', armor: a }))];
-    items.forEach((it, i) => {
-      const x = 220 + (i % 3) * 285, y = 156 + Math.floor(i / 3) * 190, owned = it.armor ? P.sh >= it.armor.sh : P.guns[GUNS[it.k].slot] === it.k, can = !owned && P.credits >= it.cost, b = { x, y, w: 265, h: 176 }; BTN['buy:' + it.k] = b; const hv = hover === 'buy:' + it.k;
-      rr(g, x, y, 265, 176, 8, owned ? 'rgba(62,230,193,.14)' : hv && can ? 'rgba(255,70,85,.18)' : 'rgba(255,255,255,.04)', owned ? TEAL : can ? 'rgba(236,232,225,.35)' : 'rgba(255,255,255,.08)');
-      tx(g, it.n.toUpperCase(), x + 16, y + 24, DF(22), can || owned ? it.col : '#5a6070', 'left'); tx(g, owned ? 'OWNED' : `◈ ${it.cost}`, x + 250, y + 24, DF(17), owned ? TEAL : can ? '#ffd23f' : '#5a6070', 'right');
-      g.save(); g.globalAlpha = can || owned ? 1 : .4;
-      if (!it.armor) { const ic = gunIcon(it.k); if (ic) { const gl = g.createRadialGradient(x + 132, y + 76, 4, x + 132, y + 76, 120); gl.addColorStop(0, it.col + '33'); gl.addColorStop(1, it.col + '00'); g.fillStyle = gl; g.fillRect(x + 4, y + 36, 257, 82); g.drawImage(ic, x + 10, y + 38, 245, 76); } }
-      else { const cx = x + 132, cy = y + 76, s = it.armor.sh === 50 ? 1.15 : .9; g.fillStyle = it.col + '33'; g.strokeStyle = it.col; g.lineWidth = 3; g.beginPath(); g.moveTo(cx, cy - 32 * s); g.lineTo(cx + 26 * s, cy - 22 * s); g.lineTo(cx + 22 * s, cy + 12 * s); g.lineTo(cx, cy + 32 * s); g.lineTo(cx - 22 * s, cy + 12 * s); g.lineTo(cx - 26 * s, cy - 22 * s); g.closePath(); g.fill(); g.stroke(); tx(g, '+' + it.armor.sh, cx, cy, DF(20), '#fff'); }
-      g.restore();
-      g.font = BF(13, 700); g.fillStyle = can || owned ? '#cfd6e2' : '#5a6070'; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; let line = '', yy = y + 134; for (const w of it.desc.split(' ')) { const tt = line ? line + ' ' + w : w; if (g.measureText(tt).width > 236) { g.fillText(line, x + 16, yy); line = w; yy += 16; } else line = tt; } g.fillText(line, x + 16, yy);
-      if (!it.armor) { const G = GUNS[it.k]; tx(g, `DMG ${G.dmg}${G.pel ? '×' + G.pel : ''} · MAG ${G.mag} · ${G.auto ? 'AUTO' : 'SEMI'}`, x + 16, y + 165, BF(11), '#8a94a4', 'left'); }
+    const P = me(); rr(g, 24, 64, 1232, 600, 10, 'rgba(11,15,23,.95)', 'rgba(236,232,225,.3)');
+    tx(g, 'ARMORY', 48, 92, DF(28), PAPER, 'left'); tx(g, `◈ ${P.credits}`, 1232, 92, DF(26), '#ffd23f', 'right'); tx(g, `Round starts in ${Math.ceil(M.t)}  ·  click an item you bought this round to sell it`, 640, 92, BF(14), '#9aa4b4');
+    const W = 232, GAP = 9, H = 88;
+    BUYCOLS.forEach((col, ci) => {
+      const x = 40 + ci * (W + GAP); let y = 112;
+      for (const [title, keys] of col) {
+        tx(g, title, x + 2, y + 8, DF(14), '#9aa4b4', 'left'); y += 20;
+        for (const key of keys) {
+          const G = GUNS[key], A = ARMOR.find(a => a.k === key), it = G || { n: A.n, cost: A.cost, col: '#7fc8ff' };
+          const owned = A ? P.sh >= A.sh : P.guns[G.slot] === key, sold = A ? P.spent && P.spent.sh && P.spent.sh.k === key : P.spent && P.spent[G.slot] && P.spent[G.slot].k === key;
+          const can = !owned && P.credits + (G && P.spent && P.spent[G.slot] ? GUNS[P.spent[G.slot].k].cost : 0) >= it.cost, b = { x, y, w: W, h: H }; BTN['buy:' + key] = b; const hv = hover === 'buy:' + key; if (hv) buyFocus = key;
+          rr(g, x, y, W, H, 7, owned ? 'rgba(62,230,193,.13)' : hv && can ? 'rgba(255,70,85,.16)' : 'rgba(255,255,255,.035)', owned ? TEAL : hv ? 'rgba(236,232,225,.6)' : can ? 'rgba(236,232,225,.22)' : 'rgba(255,255,255,.07)');
+          tx(g, it.n.toUpperCase(), x + 12, y + 18, DF(17), can || owned ? it.col : '#5a6070', 'left');
+          tx(g, owned ? (sold ? 'SELL' : 'OWNED') : it.cost ? `◈ ${it.cost}` : 'FREE', x + W - 10, y + 18, DF(14), owned ? TEAL : can ? '#ffd23f' : '#5a6070', 'right');
+          g.save(); g.globalAlpha = can || owned ? 1 : .38;
+          if (G) { const ic = gunIcon(key); if (ic) { const gl = g.createRadialGradient(x + W / 2, y + 56, 4, x + W / 2, y + 56, 110); gl.addColorStop(0, it.col + '30'); gl.addColorStop(1, it.col + '00'); g.fillStyle = gl; g.fillRect(x + 2, y + 28, W - 4, H - 30); const iw = W - 24, ih = iw * 150 / 480; g.drawImage(ic, x + 12, y + 30 + (H - 34 - ih) / 2, iw, ih); } }
+          else { const cx = x + W / 2, cy = y + 56, sc = A.sh === 50 ? .8 : .65; g.fillStyle = it.col + '33'; g.strokeStyle = it.col; g.lineWidth = 3; g.beginPath(); g.moveTo(cx, cy - 32 * sc); g.lineTo(cx + 26 * sc, cy - 22 * sc); g.lineTo(cx + 22 * sc, cy + 12 * sc); g.lineTo(cx, cy + 32 * sc); g.lineTo(cx - 22 * sc, cy + 12 * sc); g.lineTo(cx - 26 * sc, cy - 22 * sc); g.closePath(); g.fill(); g.stroke(); tx(g, '+' + A.sh, cx, cy, DF(16), '#fff'); }
+          g.restore(); y += H + 8;
+        }
+        y += 6;
+      }
     });
-    button(g, 'closeBuy', 540, 560, 200, 44, 'DONE  (B)', { size: 18 });
+    // the detail strip: what you are pointing at
+    const F = GUNS[buyFocus], fx = 40 + 4 * (W + GAP), fy = 112 + 20 + 2 * (H + 8) + 10;
+    rr(g, fx, fy, W, 664 - fy - 64, 7, 'rgba(255,255,255,.03)', 'rgba(236,232,225,.14)');
+    if (F) {
+      tx(g, F.n.toUpperCase(), fx + 12, fy + 20, DF(20), F.col, 'left'); tx(g, F.cat.toUpperCase(), fx + W - 10, fy + 20, DF(12), '#9aa4b4', 'right');
+      g.font = BF(12, 700); g.fillStyle = '#cfd6e2'; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; let line = '', yy = fy + 44; for (const w of F.desc.split(' ')) { const tt = line ? line + ' ' + w : w; if (g.measureText(tt).width > W - 24) { g.fillText(line, fx + 12, yy); line = w; yy += 15; } else line = tt; } g.fillText(line, fx + 12, yy); yy += 22;
+      const row = (a, b) => { tx(g, a, fx + 12, yy, BF(12, 700), '#8a94a4', 'left'); tx(g, b, fx + W - 10, yy, BF(12, 700), '#ecebe6', 'right'); yy += 17; };
+      const d0 = F.dmg[0], dL = F.dmg[F.dmg.length - 1];
+      row('HEAD / BODY / LEG', `${d0[1]} / ${d0[2]} / ${d0[3]}${F.pel ? ' ×' + F.pel : ''}`);
+      if (F.dmg.length > 1) row(`PAST ${F.dmg[F.dmg.length - 2][0]} M`, `${dL[1]} / ${dL[2]} / ${dL[3]}`);
+      row('FIRE RATE', `${(F.rpm / 60).toFixed(F.rpm % 60 ? 2 : 0)} /s ${F.auto ? 'AUTO' : 'SEMI'}`); row('MAGAZINE', `${F.mag}  ·  RELOAD ${F.rel}s`);
+      row('FIRST SHOT', F.scope ? `${F.acc.sfs}° SCOPED` : `${F.acc.fs}°`); row('WALK / RUN', `${F.acc.walk}° / ${F.acc.run}°`);
+    }
+    button(g, 'closeBuy', fx, 612, W, 40, 'DONE  (B)', { size: 17 });
   }
   const TB = () => ({ fire: [1150, 540, 70], jump: [1210, 420, 40], crouch: [1050, 640, 36], reload: [1215, 650, 32], q: [1010, 470, 36], e: [1080, 420, 36], use: [930, 580, 42], swap: [1225, 330, 30], scope: [1110, 330, 32], buy: [640, 230, 40] });
   function drawTouch(g) {
     const P = me(), T = TB(), lab = { fire: 'FIRE', jump: 'JUMP', crouch: 'DUCK', reload: 'R', q: OPS[P.op].q.n, e: OPS[P.op].e.n, use: 'F', swap: '1/2', scope: '◎', buy: 'BUY' };
-    for (const k in T) { if (k === 'buy' && M.phase !== 'buy') continue; if (k === 'scope' && !gun(P).scope) continue; if (k === 'use' && !(onSite(P.x, P.z) || M.planted)) continue; const [x, y, r] = T[k], held = [...TS.btn.values()].includes(k) || (k === 'fire' && TS.fire); g.fillStyle = held ? 'rgba(255,70,85,.55)' : 'rgba(11,15,23,.45)'; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); g.strokeStyle = 'rgba(236,232,225,.5)'; g.lineWidth = 2; g.stroke(); tx(g, lab[k], x, y, DF(k === 'fire' ? 20 : 12), '#fff'); }
+    for (const k in T) { if (k === 'buy' && M.phase !== 'buy') continue; if (k === 'scope' && !(gun(P).scope || gun(P).ads || gun(P).alt)) continue; if (k === 'use' && !(onSite(P.x, P.z) || M.planted)) continue; const [x, y, r] = T[k], held = [...TS.btn.values()].includes(k) || (k === 'fire' && TS.fire); g.fillStyle = held ? 'rgba(255,70,85,.55)' : 'rgba(11,15,23,.45)'; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); g.strokeStyle = 'rgba(236,232,225,.5)'; g.lineWidth = 2; g.stroke(); tx(g, lab[k], x, y, DF(k === 'fire' ? 20 : 12), '#fff'); }
     if (TS.stick) { g.strokeStyle = 'rgba(236,232,225,.4)'; g.lineWidth = 3; g.beginPath(); g.arc(TS.stick.x0, TS.stick.y0, 60, 0, TAU); g.stroke(); g.fillStyle = 'rgba(236,232,225,.5)'; const dx = TS.stick.x - TS.stick.x0, dy = TS.stick.y - TS.stick.y0, L = Math.min(60, Math.hypot(dx, dy)), a = Math.atan2(dy, dx); g.beginPath(); g.arc(TS.stick.x0 + Math.cos(a) * L, TS.stick.y0 + Math.sin(a) * L, 26, 0, TAU); g.fill(); }
   }
   function drawMenu(g) {
@@ -1030,14 +1251,14 @@ const GAME = {
     const id = e ? e.pointerId : 0, T = TB();
     for (const k in T) { const [bx, by, r] = T[k]; if (Math.hypot(x - bx, y - by) < r + 8) { const P = me();
       if (k === 'fire') { TS.fire = id; return; } if (k === 'reload') return reload(P); if (k === 'q' || k === 'e') return ability(P, k); if (k === 'swap') return switchTo(P, P.slot === 1 ? 2 : 1);
-      if (k === 'scope') { if (gun(P).scope) P.scoped = !P.scoped; return; } if (k === 'buy' && M.phase === 'buy') { M.buyMenu = true; return; } TS.btn.set(id, k); return; } }
+      if (k === 'scope') { altAction(P); return; } if (k === 'buy' && M.phase === 'buy') { M.buyMenu = true; return; } TS.btn.set(id, k); return; } }
     if (x < 560) TS.stick = { id, x0: x, y0: y, x, y }; else TS.look = { id, x, y };
   };
   GAME.move = (x, y, e) => {
     hover = Object.keys(BTN).find(k => inB(BTN[k], x, y)) || null; const c = document.getElementById('cv'); if (c && !locked()) c.style.cursor = hover ? 'pointer' : 'default';
     const id = e ? e.pointerId : 0;
     if (TS.stick && TS.stick.id === id) { TS.stick.x = x; TS.stick.y = y; }
-    if (TS.look && TS.look.id === id && M) { const P = me(), s = .0055 * (P.scoped ? .35 : 1); P.yaw -= (x - TS.look.x) * s; P.pitch = cl(P.pitch - (y - TS.look.y) * s, -1.4, 1.4); TS.look.x = x; TS.look.y = y; }
+    if (TS.look && TS.look.id === id && M) { const P = me(), s = .0055 / zoomOf(P); P.yaw -= (x - TS.look.x) * s; P.pitch = cl(P.pitch - (y - TS.look.y) * s, -1.4, 1.4); TS.look.x = x; TS.look.y = y; }
   };
   GAME.up = (x, y, e) => { const id = e ? e.pointerId : 0; if (TS.stick && TS.stick.id === id) TS.stick = null; if (TS.look && TS.look.id === id) TS.look = null; if (TS.fire === id) TS.fire = null; TS.btn.delete(id); };
   GAME.bot = () => {};
@@ -1053,5 +1274,6 @@ const GAME = {
     menu: () => { mode = 'menu'; }, solo: () => startMatch(null), demo: () => startDemo(), M: () => M, tick: (s, h = 1 / 60) => { for (let i = 0; i < s / h; i++) tick(h); return GAME.test.st(); }, keys: () => keys, mouse,
     botMe: d => { me().bot = { diff: d }; me().local = false; }, buy: k => buy(me(), k), ability: k => ability(me(), k), fire: () => fire(me()), click, ready: () => ready, X: () => X,
     grid: () => MAP.map(r => r).join('\n'),
+    err: () => spreadOf(me()) / D2R, GUNS: () => GUNS, alt: () => altAction(me()),
   };
 })();
