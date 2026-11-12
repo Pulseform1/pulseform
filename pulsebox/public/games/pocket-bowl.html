@@ -1177,7 +1177,7 @@ const GAME = {
     S = { F: K.bot ? tempF() : franchise() }; posed = false; ptr = null; keys = {}; msg = null; kick = null; oppAnim = null; endCard = null;
     if (S.F.playoff) S.oppI = standings().filter(x => x.t.i !== S.F.team)[S.F.playoff === 2 ? 0 : 2].t.i; else S.oppI = S.F.sched[S.F.week];
     mode = 'hub';
-    if (K.bot) { startGame(); S.g.wx = pick(['night', 'night', 'snow', 'clear', 'rain', 'sunset']); }
+    if (K.bot) { startGame(); S.g.wx = pick(['night', 'night', 'snow', 'clear', 'rain', 'sunset']); const q = location.search; if (/def/.test(q) || (!/off/.test(q) && R() < .5)) startDefense(Math.round(rnd(20, 35))); }
   };
   // a defender planted to dive at the ball carrier (the moment to juke)
   const danger = () => !!(P && P.carrier && P.phase === 'live' && !P.carrier.dive && P.def.some(d => d.tk && !(d.stun > 0) && Math.hypot(d.x - P.carrier.x, d.y - P.carrier.y) < 3.6) && !(P.carrier.jcd > 0));
