@@ -246,7 +246,19 @@ const GAME = {
     { n: 'The Maze', hint: 'Five walls of five materials. The core is at the end.', par: 6, reward: 11500 },
     { n: 'Radar Station', hint: 'The receiver under the dish.', par: 2, reward: 12000 },
     { n: 'Twin Vaults', hint: 'Two vaults, two cores, lead inside both.', par: 7, reward: 12500 },
-    { n: 'The Bastion', hint: 'Stone, steel and lead. The last yard.', par: 6, reward: 13500 },
+    { n: 'The Bastion', hint: 'Stone, steel and lead.', par: 6, reward: 13500 },
+    { n: 'Lighthouse', hint: 'The core is up in the lamp room.', par: 3, reward: 14000 },
+    { n: 'Bridge Pylons', hint: 'A steel box hangs under the deck, over the river.', par: 3, reward: 14500 },
+    { n: 'Mine Shaft', hint: 'Down the shaft, under the plug. Dig, or drop one in.', par: 5, reward: 15000 },
+    { n: 'Gas Holder', hint: 'A steel dome with lead inside it.', par: 4, reward: 15500 },
+    { n: 'Castle Gate', hint: 'The core is in the far tower, behind the gate.', par: 5, reward: 16000 },
+    { n: 'Ice Station', hint: 'Glass dome on top, a concrete box below.', par: 4, reward: 16500 },
+    { n: 'Pagoda', hint: 'Wooden floors, stone eaves. The core is in the top room.', par: 4, reward: 17000 },
+    { n: 'Factory Chimney', hint: 'The core sits at the bottom of the chimney. It is open at the top.', par: 3, reward: 17500 },
+    { n: 'Shipwreck', hint: 'A steel hull on the beach. The core is in a lead locker in the hold.', par: 4, reward: 18000 },
+    { n: 'Hill Fort', hint: 'Walls on the hill, a concrete bunker inside it.', par: 5, reward: 18500 },
+    { n: 'Triple Dome', hint: 'Concrete, then steel, then lead.', par: 5, reward: 19000 },
+    { n: 'The Last Gate', hint: 'Two keeps, two cores. The steel one has a wooden door.', par: 7, reward: 20000 },
   ];
   let GY = 176;
   const rect = (x, y, w, h, m) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, m); };
@@ -331,6 +343,27 @@ const GAME = {
       () => { ground(); for (const [x, outer] of [[220, STEEL], [304, CONC]]) { rect(x - 6, g - 10, 60, 10, STONE); box(x, g - 46, 48, 36, 4, outer); box(x + 4, g - 42, 40, 28, 3, LEAD); core(x + 24, g - 17 - 5.5, 5); rect(x - 4, g - 50, 56, 4, outer); } },
       () => { ground(); rect(220, g - 80, 140, 80, STONE); for (let j = 0; j < 30; j++) { rect(208 + Math.floor(j * .4), g - 1 - j, 12, 1, STONE); rect(360 - Math.floor(j * .4) - 0, g - 1 - j, 12, 1, STONE); }
         for (let x = 220; x < 360; x += 12) rect(x, g - 86, 7, 6, STONE); rect(232, g - 70, 116, 60, STEEL); rect(238, g - 64, 104, 48, LEAD); rect(242, g - 60, 96, 40, E); for (let x = 220; x < 232; x++) for (let y = g - 70; y < g - 10; y++) set(x, y, BRICK); core(290, g - 20 - 6.5, 6); },
+      () => { ground(); rect(278, g - 8, 44, 8, STONE); for (let j = 0; j < 120; j++) { const hw = Math.round(18 - j * .05); rect(300 - hw, g - 9 - j, 2 * hw, 1, j % 24 < 12 ? STONE : BRICK); if (j > 4 && j < 116) rect(300 - hw + 5, g - 9 - j, 2 * hw - 10, 1, E); }
+        for (const j of [40, 80]) rect(288, g - 9 - j, 24, 3, WOOD); rect(284, g - 132, 32, 4, STEEL); box(286, g - 156, 28, 24, 3, STEEL); rect(286, g - 150, 3, 12, GLASS); rect(311, g - 150, 3, 12, GLASS); core(300, g - 141.5, 6); roof(284, g - 157, 32, STEEL); },
+      () => { ground(x => x > 238 && x < 342 ? g + 18 : g); for (const x of [230, 342]) rect(x - 8, g - 90, 16, 108, CONC); rect(214, g - 96, 156, 6, STEEL); rect(214, g - 90, 156, 4, CONC);
+        for (const x of [260, 285, 310]) rect(x, g - 86, 3, 26, STEEL); box(254, g - 60, 66, 22, 3, STEEL); core(287, g - 46.5, 5); rect(250, g - 102, 6, 6, STEEL); rect(320, g - 102, 6, 6, STEEL); },
+      () => { const t = g - 40; ground(x => x > 200 ? t : g); rect(282, t, 16, 30, E); rect(266, g - 22, 48, 14, E); core(290, g - 14.5, 6); rect(282, t + 12, 16, 5, CONC); rect(280, t - 3, 20, 3, STEEL);
+        leg(282, t - 60, 276, t, 3, STEEL); leg(298, t - 60, 304, t, 3, STEEL); rect(276, t - 64, 28, 4, STEEL); disc(290, t - 67, 5, STEEL, 3); rect(226, t - 20, 24, 20, WOOD); },
+      () => { ground(); rect(236, g - 6, 112, 6, CONC); halfDisc(292, g - 6, 52, STEEL, 47); halfDisc(292, g - 6, 47, LEAD, 43); core(292, g - 12.5, 6); for (const x of [234, 346]) rect(x, g - 70, 5, 64, STEEL); rect(234, g - 74, 117, 4, STEEL); },
+      () => { ground(); for (const x of [214, 330]) { rect(x, g - 110, 34, 110, STONE); for (let k = 0; k < 3; k++) rect(x + k * 13, g - 118, 8, 8, STONE); } rect(248, g - 90, 82, 26, STONE); for (let k = 0; k < 6; k++) rect(250 + k * 14, g - 98, 8, 8, STONE);
+        for (let x = 256; x < 324; x += 8) rect(x, g - 64, 3, 52, STEEL); rect(334, g - 46, 26, 42, E); rect(330, g - 30, 4, 14, WOOD); core(347, g - 10.5, 6); for (const y of [56, 84]) rect(220, g - y, 22, 3, WOOD); },
+      () => { ground(); box(240, g - 40, 100, 40, 7, CONC); halfDisc(290, g - 40, 50, GLASS, 47); rect(262, g - 60, 4, 20, STEEL); disc(264, g - 64, 5, STEEL); core(290, g - 13.5, 6); rect(330, g - 120, 3, 80, STEEL); rect(318, g - 52, 12, 12, WOOD); },
+      () => { ground(); box(255, g - 26, 70, 26, 3, WOOD); rect(247, g - 30, 86, 4, STONE); box(261, g - 54, 58, 24, 3, WOOD); rect(253, g - 58, 74, 4, STONE); box(267, g - 80, 46, 22, 3, WOOD); rect(259, g - 84, 62, 4, STONE);
+        box(273, g - 104, 34, 20, 3, WOOD); roof(269, g - 104, 42, STONE); core(290, g - 92.5, 5); rect(276, g - 14, 10, 11, WOOD); rect(300, g - 44, 10, 10, WOOD); },
+      () => { ground(); box(212, g - 50, 80, 50, 5, BRICK); rect(208, g - 54, 88, 4, STEEL); for (const x of [224, 250, 274]) rect(x, g - 40, 10, 12, GLASS); box(310, g - 160, 30, 160, 6, BRICK); rect(316, g - 160, 18, 6, E);
+        for (const y of [40, 80, 120]) rect(307, g - y, 36, 3, STEEL); core(325, g - 12.5, 6); },
+      () => { ground(); for (let x = 226; x <= 360; x++) { const top = Math.round(g - 30 - (x - 226) * 20 / 134); rect(x, top, 1, g - top, STEEL); if (x > 232 && x < 354) rect(x, top + 4, 1, g - top - 8, E); }
+        box(300, g - 30, 30, 26, 3, LEAD); core(315, g - 13.5, 6); line(260, g - 36, 250, g - 110, 3, WOOD); line(250, g - 96, 280, g - 92, 2, WOOD); rect(244, g - 24, 18, 20, WOOD); },
+      () => { ground(x => x > 220 && x < 380 ? Math.round(g - 50 * Math.sin((x - 220) / 160 * Math.PI)) : g); rect(268, g - 70, 8, 32, STONE); rect(326, g - 70, 8, 32, STONE); for (const x of [266, 324]) rect(x, g - 76, 12, 6, STONE);
+        box(276, g - 34, 48, 30, 4, CONC); core(300, g - 14.5, 6); rect(299, g - 80, 2, 30, STEEL); rect(301, g - 80, 12, 7, BRICK); },
+      () => { ground(); halfDisc(292, g, 60, CONC, 52); halfDisc(292, g, 44, STEEL, 38); halfDisc(292, g, 30, LEAD, 26); core(292, g - 6.5, 6); for (const x of [210, 368]) rect(x - 6, g - 24, 12, 24, WOOD); },
+      () => { ground(); rect(206, g - 20, 176, 20, STONE); box(214, g - 90, 60, 70, 8, CONC); box(222, g - 82, 44, 54, 6, LEAD); core(244, g - 40.5, 6);
+        box(300, g - 120, 70, 100, 6, STEEL); box(306, g - 114, 58, 88, 5, BRICK); core(335, g - 37.5, 6); rect(300, g - 62, 11, 26, WOOD); rect(300, g - 120, 70, 6, STEEL); for (let k = 0; k < 5; k++) rect(300 + k * 15, g - 128, 8, 8, STONE); for (let k = 0; k < 4; k++) rect(214 + k * 16, g - 98, 8, 8, CONC); },
     ];
     B[n]();
     support(true); bodies.length = 0;   // tidy any stray piece the builder left floating
