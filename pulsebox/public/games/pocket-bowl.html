@@ -73,7 +73,7 @@ const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
 const GAME = {
   id: 'pocket-bowl', title: 'Pocket Bowl', tagline: 'Retro football. Run the team, win the Bowl.',
   font: 'Press Start 2P', accent: '#ffd23f', accent2: '#3ddc84', bg: '#0b2a16', noHud: true, scoreLabel: 'Season score',
-  how: ['PASS: drag back from anywhere and release to throw, or tap a receiver. Keys 1, 2, 3 throw to WR1, WR2 and the running back. RUN: the back follows his blocking to the hole (the white arrow), then he is yours.', 'With the ball, defenders hunt you down. When one plants his feet and a red ! pops over his head, he is about to dive at you: JUKE (Space or the button) right then and he eats turf. Juke too early and he just adjusts. Hold left (or drag behind your runner) to slow down and let blockers lead.', 'Space also does what the moment needs: pump fake or spin out of a sack in the pocket, LEAP when the ball is in the air, DIVE at the goal line. Every week brings new weather: rain makes the ball slick, snow slows everyone down.', 'DEFENSE: when they get the ball, play it or sim it. Pick BLITZ, COVER or RUN STOP, then steer the ringed defender (arrows or drag). Space dives at the runner or the quarterback, or jumps the throw; E switches to the man nearest the ball. Their runner can juke your dive too.', 'Four quarters of 3:00 on the clock. It runs during plays and after tackles in bounds; it stops for incompletions, the sideline and scores. Tied at the end: sudden-death overtime. A pass caught behind the back line of the end zone is incomplete.', 'Between games: upgrade players, build facilities (Training Center, Weight Room, Film Room, Fan Zone), run one practice drill a week for credits, and chase the weekly goal. Win your division and take the Pocket Bowl.'],
+  how: ['PASS: drag back from anywhere and release to throw, or tap a receiver. Keys 1, 2, 3 throw to WR1, WR2 and the running back. RUN: the back follows his blocking to the hole (the white arrow), then he is yours.', 'With the ball, defenders hunt you down. When one plants his feet and a red ! pops over his head, he is about to dive at you: JUKE (Space or the button) right then and he eats turf. Juke too early and he just adjusts. Hold left (or drag behind your runner) to slow down and let blockers lead.', 'Space also does what the moment needs: pump fake or spin out of a sack in the pocket, LEAP when the ball is in the air, DIVE at the goal line. Every week brings new weather: rain makes the ball slick, snow slows everyone down.', 'DEFENSE: when they get the ball, play it or sim it. Pick BLITZ, COVER or RUN STOP, then steer the ringed defender (arrows or drag). Space dives at the runner or the quarterback, or jumps the throw; E switches to the man nearest the ball. Their runner can juke your dive too.', 'Four quarters of 3:00 on the clock. It runs during plays and after tackles in bounds; it stops for incompletions, the sideline and scores. Tied at the end: sudden-death overtime. A pass caught behind the back line of the end zone is incomplete.', 'Between games: open recruit packs (one free every week) and sign new players, upgrade players, build facilities (Training Center, Weight Room, Film Room, Fan Zone), run one practice drill a week for credits, and chase the weekly goal. Win your division and take the Pocket Bowl.'],
   skins: [{ name: 'Home Uniform', price: 0 }, { name: 'Throwback', price: 30, u: ['#e0b040', '#5a2a10'] }, { name: 'Chrome', price: 70, u: ['#d8dde4', '#1a1a1a'] }, { name: 'Royal', price: 110, u: ['#7a3aff', '#ffd23f'] }, { name: 'Neon Night', price: 160, u: ['#b6ff3a', '#ff2e88'] }, { name: 'Blackout', price: 220, u: ['#2a2a30', '#e8e8e8'] }],
 };
 (() => {
@@ -118,7 +118,7 @@ const GAME = {
     if (!F || !F.roster) { F = K.save.pb = { team: 0, roster: newRoster(), credits: 3, season: 0, picked: false, titles: 0 }; newSeason(F); }
     return F;
   }
-  const star = p => S.F.roster.find(r => r.p === p).st;
+  const star = p => { const r = S.F.roster.find(x => x.p === p); return r.st + (r.perk ? .5 : 0); };
   /* ---------- between games: facilities, a weekly team goal, one practice a week ---------- */
   const FAC = [
     { k: 'train', n: 'Training Center', d: l => `Everyone runs ${3 * l}% faster` },
@@ -1190,13 +1190,13 @@ const GAME = {
     txt(g, `🪙 ${F.credits}`, 1230, 48, `20px ${PX}`, '#ffd23f', 'right'); txt(g, 'COACHING CREDITS', 1230, 74, `9px ${PX}`, '#cfd8e0', 'right');
     // tabs: the roster, the facilities, and this week's practice
     if (!F.goal) F.goal = pick(GOALS)[0];
-    [['roster', 'ROSTER'], ['fac', 'FACILITIES'], ['practice', 'PRACTICE']].forEach(([k, n], i) => { const b = { x: 30 + i * 200, y: 98, w: 190, h: 36 }, on = hubTab === k; BTN['tab' + k] = b; rr(g, b.x, b.y, b.w, b.h, 8, on ? '#ffd23f' : hover === b ? '#2a4a34' : '#1a3322', on ? null : 'rgba(255,255,255,.12)'); txt(g, n, b.x + b.w / 2, b.y + 19, `11px ${PX}`, on ? '#141414' : '#cfd8e0'); if (k === 'practice' && F.practiced !== weekKey() && !on) { g.fillStyle = '#ff5a4a'; g.beginPath(); g.arc(b.x + b.w - 12, b.y + 10, 6, 0, 7); g.fill(); } });
+    [['roster', 'ROSTER'], ['recruit', 'RECRUIT'], ['fac', 'FACILITIES'], ['practice', 'PRACTICE']].forEach(([k, n], i) => { const b = { x: 30 + i * 188, y: 98, w: 180, h: 36 }, on = hubTab === k; BTN['tab' + k] = b; rr(g, b.x, b.y, b.w, b.h, 8, on ? '#ffd23f' : hover === b ? '#2a4a34' : '#1a3322', on ? null : 'rgba(255,255,255,.12)'); txt(g, n, b.x + b.w / 2, b.y + 19, `11px ${PX}`, on ? '#141414' : '#cfd8e0'); if (((k === 'practice' && F.practiced !== weekKey()) || (k === 'recruit' && F.freePack !== weekKey())) && !on) { g.fillStyle = '#ff5a4a'; g.beginPath(); g.arc(b.x + b.w - 12, b.y + 10, 6, 0, 7); g.fill(); } });
     for (let i = 0; i < 7; i++) BTN['up' + i] = null; for (let i = 0; i < 4; i++) BTN['fac' + i] = null; BTN.prKick = BTN.prJuke = null;
     if (hubTab === 'roster') F.roster.forEach((p, i) => {
       const y = 144 + i * 64, b = { x: 600, y: y + 7, w: 150, h: 44 }; BTN['up' + i] = b;
       rr(g, 30, y, 740, 58, 10, i % 2 ? '#14261a' : '#172c1e');
       rr(g, 40, y + 9, 70, 40, 8, me.c); txt(g, p.p, 75, y + 30, `13px ${PX}`, me.c2);
-      txt(g, p.name, 124, y + 22, '800 20px Nunito, system-ui', '#fff', 'left'); txt(g, POS[i][1], 124, y + 44, '700 15px Nunito, system-ui', '#9aa8a0', 'left');
+      txt(g, p.name, 124, y + 22, '800 20px Nunito, system-ui', '#fff', 'left'); txt(g, p.perk ? '✦ ' + p.perk + ' (+½★)' : POS[i][1], 124, y + 44, '700 15px Nunito, system-ui', '#9aa8a0', 'left');
       txt(g, '★'.repeat(p.st) + '☆'.repeat(5 - p.st), 470, y + 30, '26px system-ui', '#ffd23f');
       const max = p.st >= 5, can = !max && F.credits >= p.st + 1;
       rr(g, b.x, b.y + (hover === b ? 2 : 0), b.w, b.h, 8, max ? '#2a3a2e' : can ? '#3ddc84' : '#3a4a3e'); txt(g, max ? 'MAXED' : `+1 ★  for ${p.st + 1} 🪙`, b.x + b.w / 2, b.y + 23 + (hover === b ? 2 : 0), '900 16px Nunito, system-ui', can ? '#0b2a16' : '#9aa8a0');
@@ -1208,6 +1208,8 @@ const GAME = {
       for (let k = 0; k < 3; k++) rr(g, 470 + k * 34, y + 36, 26, 18, 4, k < l ? '#ffd23f' : '#2a3a2e');
       const can = l < 3 && F.credits >= facCost(l); rr(g, b.x, b.y + (hover === b ? 2 : 0), b.w, b.h, 8, l >= 3 ? '#2a3a2e' : can ? '#3ddc84' : '#3a4a3e'); txt(g, l >= 3 ? 'BUILT' : `Build for ${facCost(l)} 🪙`, b.x + b.w / 2, b.y + 25 + (hover === b ? 2 : 0), '900 16px Nunito, system-ui', can ? '#0b2a16' : '#9aa8a0');
     }); }
+    for (let i = 0; i < 3; i++) BTN['pk' + i] = null; for (let i = 0; i < 6; i++) { BTN['ls' + i] = null; BTN['lr' + i] = null; }
+    if (hubTab === 'recruit') drawRecruitTab(g);
     if (hubTab === 'practice') {
       const done = F.practiced === weekKey(); txt(g, done ? 'You have practised this week. Play the game!' : 'One practice a week. Earn credits, and a good one fires the team up (+3% speed next game).', 40, 160, BODY, done ? '#9cff3a' : '#9aa8a0', 'left');
       [['prKick', '🦶 KICKING DRILL', 'Three field goals: 30, 40 and 50 yards. A credit for every one that goes through.'], ['prJuke', '💨 JUKE DRILL', 'Three runs from your own 20 against the full defense. A credit for every 25 yards.']].forEach(([k, n, dsc], i) => {
@@ -1249,6 +1251,92 @@ const GAME = {
     btn(g, BTN.cont, 'CONTINUE', '#ffd23f');
   }
 
+  /* ---------- recruiting: open packs, sign new players ---------- */
+  const RPOS = ['QB', 'RB', 'WR', 'WR', 'OL', 'DEF', 'K'];
+  const PERKS = { QB: ['Cannon Arm', 'Pocket Poise'], RB: ['Bulldozer', 'Jet Feet'], WR: ['Sure Hands', 'Burner'], OL: ['Brick Wall', 'Mauler'], DEF: ['Ballhawk', 'Heat Seeker'], K: ['Ice Veins', 'Big Leg'] };
+  const RAR = st => st >= 5 ? ['LEGEND', '#c58cff'] : st >= 4 ? ['GOLD', '#ffd23f'] : st >= 3 ? ['SILVER', '#cfd8e0'] : ['BRONZE', '#d0905a'];
+  const PACKS = [
+    { k: 'free', n: 'WEEKLY PACK', cost: 0, odds: [.5, .32, .14, .04], sub: 'Free once a week' },
+    { k: 'std', n: 'RECRUIT PACK', cost: 4, odds: [.45, .35, .16, .04], sub: '2★ to 5★' },
+    { k: 'elite', n: 'ELITE PACK', cost: 9, odds: [0, .55, .35, .10], sub: '3★ or better' },
+  ];
+  let pack = null;   // { r, t, kind }
+  function rollRecruit(P0) {
+    let x = R(), st = 2; for (let i = 0; i < 4; i++) { if (x < P0.odds[i]) { st = 2 + i; break; } x -= P0.odds[i]; }
+    const pos = pick(RPOS), perk = st >= 4 || R() < .45 ? pick(PERKS[pos]) : null;
+    return { p: pos, name: pname(), st, perk, num: 1 + Math.floor(R() * 98) };
+  }
+  function openPack(i) {
+    const F = S.F, P0 = PACKS[i]; F.locker = F.locker || [];
+    if (P0.k === 'free' && F.freePack === weekKey()) return say('Your weekly pack is open. Next one after the game!', 1.6, '#ff8a8a');
+    if (F.credits < P0.cost) { K.sfx(160, .15, 'square', .06); return say(`Need ${P0.cost} credits`, 1.2, '#ff8a8a'); }
+    F.credits -= P0.cost; if (P0.k === 'free') F.freePack = weekKey();
+    pack = { r: rollRecruit(P0), t: 0, kind: P0.k }; mode = 'pack'; K.persist(); K.sfx(200, .5, 'sawtooth', .04, 500);
+  }
+  // where a recruit would go: his position (the weaker of the two receivers)
+  function slotFor(r) { const F = S.F; if (r.p === 'WR') { const a = F.roster[2], b = F.roster[3]; return a.st + (a.perk ? .5 : 0) <= b.st + (b.perk ? .5 : 0) ? 2 : 3; } return POS.findIndex(x => x[0] === r.p); }
+  function signRecruit(r) {
+    const F = S.F, i = slotFor(r), old = F.roster[i]; F.roster[i] = { p: POS[i][0], name: r.name, st: r.st, perk: r.perk, num: r.num };
+    F.locker = (F.locker || []).filter(x => x !== r); K.chime(659, [0, 4, 7, 12]); K.persist(); say(`${r.name} signs! ${old.name} heads out.`, 2, '#9cff3a');
+  }
+  function packAction(k) {
+    const r = pack.r, F = S.F;
+    if (k === 'sign') signRecruit(r);
+    else if (k === 'keep') { F.locker = F.locker || []; if (F.locker.length >= 6) return say('Locker full: sign or release someone first', 1.6, '#ff8a8a'); F.locker.push(r); say(`${r.name} waits in the locker room`, 1.6, '#cfd8e0'); }
+    else { F.credits += 1; say(`Released ${r.name}: +1 credit`, 1.4, '#ffd23f'); }
+    pack = null; mode = 'hub'; hubTab = 'recruit'; K.persist();
+  }
+  function recruitCard(g, r, x, y, sc = 1, glow = 0) {
+    const [rn, rc] = RAR(r.st), me = myTeam(), w = 230, h = 320;
+    g.save(); g.translate(x, y); g.scale(sc, sc);
+    if (glow) { g.shadowColor = rc; g.shadowBlur = 40 * glow; }
+    const fr = r.st >= 5 ? `hsl(${(anim * 120) % 360},90%,70%)` : rc; rr(g, -w / 2, -h / 2, w, h, 16, fr); g.shadowBlur = 0;
+    rr(g, -w / 2 + 8, -h / 2 + 8, w - 16, h - 16, 12, '#10141c');
+    g.fillStyle = me.c + '44'; g.fillRect(-w / 2 + 8, -h / 2 + 40, w - 16, 150);
+    g.save(); g.imageSmoothingEnabled = false; g.drawImage(sprite(me.c, me.c2, r.num, 0, r.num % 5, 1, r.st >= 4 ? 'up' : ''), -SW * 3, -h / 2 + 52, SW * 6, SH * 6 * .85); g.restore();
+    txt(g, rn, 0, -h / 2 + 24, `12px ${PX}`, rc); rr(g, -w / 2 + 14, -h / 2 + 14, 44, 22, 5, rc); txt(g, r.p, -w / 2 + 36, -h / 2 + 26, `9px ${PX}`, '#141414');
+    txt(g, '#' + r.num, w / 2 - 30, -h / 2 + 26, `10px ${PX}`, '#fff');
+    txt(g, r.name, 0, 40, '900 20px Nunito, system-ui', '#fff'); txt(g, '★'.repeat(r.st) + '☆'.repeat(5 - r.st), 0, 70, '24px system-ui', '#ffd23f');
+    txt(g, r.perk ? `✦ ${r.perk}: +½★` : 'No perk', 0, 104, '800 15px Nunito, system-ui', r.perk ? '#9cff3a' : '#6a7a70');
+    g.restore();
+  }
+  function drawPackOpen(g) {
+    const v = K.view, P0 = pack, e = P0.t, r = P0.r, [rn, rc] = RAR(r.st), flip = 1.1;
+    g.fillStyle = 'rgba(0,0,0,.82)'; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    g.save(); g.translate(640, 330); g.rotate(anim * .4); for (let i = 0; i < 18; i++) { g.rotate(Math.PI * 2 / 18); g.fillStyle = e > flip ? rc + '22' : 'rgba(255,255,255,.04)'; g.beginPath(); g.moveTo(0, 0); g.lineTo(-30, -700); g.lineTo(30, -700); g.fill(); } g.restore();
+    if (e < flip) {   // the sealed pack shakes, harder for rarer players
+      const sh = Math.sin(e * 40) * e * (2 + r.st); g.save(); g.translate(640 + sh, 330); g.rotate(sh * .01);
+      rr(g, -115, -160, 230, 320, 16, P0.kind === 'elite' ? '#ffd23f' : P0.kind === 'free' ? '#3ddc84' : '#29a8ff'); rr(g, -105, -150, 210, 300, 12, '#14141c');
+      txt(g, 'POCKET', 0, -40, `22px ${PX}`, '#ffd23f'); txt(g, 'BOWL', 0, -6, `22px ${PX}`, '#ffd23f'); txt(g, PACKS.find(p => p.k === P0.kind).n, 0, 60, `11px ${PX}`, '#cfd8e0'); txt(g, 'tap to open', 0, 120, '700 15px Nunito, system-ui', '#7a8aa0');
+      g.restore(); txt(g, 'RECRUITING', 640, 90, `24px ${PX}`, '#fff'); return;
+    }
+    const k = Math.min(1, (e - flip) / .25); if (e - flip < .15) { g.fillStyle = `rgba(255,255,255,${.8 - (e - flip) * 5})`; g.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0); }
+    recruitCard(g, r, 640, 330, .6 + .4 * k, 1);
+    txt(g, r.st >= 5 ? 'LEGEND SIGNING!' : r.st >= 4 ? 'GOLD PROSPECT!' : 'NEW RECRUIT', 640, 90, `24px ${PX}`, rc);
+    const F = S.F, cur = F.roster[slotFor(r)], better = r.st + (r.perk ? .5 : 0) > cur.st + (cur.perk ? .5 : 0);
+    txt(g, `Your ${POS[slotFor(r)][0]}: ${cur.name} ${'★'.repeat(cur.st)}${cur.perk ? ' ✦' : ''}  ${better ? '→ an upgrade!' : '→ not an upgrade'}`, 640, 520, '800 17px Nunito, system-ui', better ? '#9cff3a' : '#9aa8a0');
+    if (e > flip + .3) { BTN.psign = { x: 330, y: 560, w: 200, h: 62 }; BTN.pkeep = { x: 545, y: 560, w: 190, h: 62 }; BTN.prel = { x: 750, y: 560, w: 200, h: 62 };
+      btn(g, BTN.psign, 'SIGN', better ? '#3ddc84' : '#ffd23f', '#141414', `Replaces ${cur.name.split(' ')[1]}`); btn(g, BTN.pkeep, 'KEEP', '#cfd8e0', '#141414', 'To the locker'); btn(g, BTN.prel, 'RELEASE', '#3a3a48', '#cfd8e0', '+1 credit'); }
+  }
+  function drawRecruitTab(g) {
+    const F = S.F; F.locker = F.locker || [];
+    txt(g, 'Open packs for new players: sign them, keep them, or release for a credit.', 40, 158, BODY, '#9aa8a0', 'left');
+    PACKS.forEach((P0, i) => {
+      const b = { x: 40 + i * 245, y: 176, w: 230, h: 150 }, open = P0.k === 'free' && F.freePack === weekKey(), can = !open && F.credits >= P0.cost; BTN['pk' + i] = b; const hv = hover === b;
+      const col = P0.k === 'elite' ? '#ffd23f' : P0.k === 'free' ? '#3ddc84' : '#29a8ff';
+      rr(g, b.x, b.y - (hv ? 3 : 0), b.w, b.h, 14, can ? (hv ? '#24442e' : '#1a3322') : '#141e18', can ? col : 'rgba(255,255,255,.1)');
+      txt(g, P0.n, b.x + b.w / 2, b.y + 34, `12px ${PX}`, can ? col : '#5a6a5e'); txt(g, P0.sub, b.x + b.w / 2, b.y + 66, '700 15px Nunito, system-ui', can ? '#e8f0e8' : '#5a6a5e');
+      txt(g, open ? 'OPENED THIS WEEK' : P0.cost ? `${P0.cost} 🪙` : 'FREE', b.x + b.w / 2, b.y + 112, `${open ? 10 : 16}px ${PX}`, can ? '#ffd23f' : '#5a6a5e');
+    });
+    txt(g, `LOCKER ROOM  ${F.locker.length}/6`, 40, 352, `11px ${PX}`, '#ffd23f', 'left');
+    if (!F.locker.length) txt(g, 'Recruits you keep wait here until you sign them.', 40, 384, BODY, '#5a6a5e', 'left');
+    F.locker.forEach((r, i) => {
+      const x = 40 + (i % 3) * 245, y = 370 + Math.floor(i / 3) * 112, [rn, rc] = RAR(r.st);
+      rr(g, x, y, 230, 102, 10, '#14261a', rc); txt(g, `${r.p} · ${r.name}`, x + 12, y + 22, '900 16px Nunito, system-ui', '#fff', 'left'); txt(g, '★'.repeat(r.st) + (r.perk ? '  ✦ ' + r.perk : ''), x + 12, y + 46, '700 14px Nunito, system-ui', '#ffd23f', 'left');
+      const bs = { x: x + 10, y: y + 62, w: 100, h: 32 }, br = { x: x + 120, y: y + 62, w: 100, h: 32 }; BTN['ls' + i] = bs; BTN['lr' + i] = br;
+      rr(g, bs.x, bs.y, bs.w, bs.h, 7, hover === bs ? '#5aeaa0' : '#3ddc84'); txt(g, 'SIGN', bs.x + 50, bs.y + 17, `10px ${PX}`, '#0b2a16'); rr(g, br.x, br.y, br.w, br.h, 7, hover === br ? '#4a4a58' : '#3a3a48'); txt(g, 'RELEASE', br.x + 50, br.y + 17, `9px ${PX}`, '#cfd8e0');
+    });
+  }
   /* ---------- kit hooks ---------- */
   GAME.reset = () => {
     S = { F: K.bot ? tempF() : franchise() }; posed = false; ptr = null; keys = {}; msg = null; kick = null; oppAnim = null; endCard = null;
@@ -1259,6 +1347,7 @@ const GAME = {
   // a defender planted to dive at the ball carrier (the moment to juke)
   const danger = () => !!(P && P.carrier && P.phase === 'live' && !P.carrier.dive && P.def.some(d => d.tk && !(d.stun > 0) && Math.hypot(d.x - P.carrier.x, d.y - P.carrier.y) < 3.6) && !(P.carrier.jcd > 0));
   GAME.update = dt => {
+    if (mode === 'pack' && pack) { const was = pack.t; pack.t += dt; if (was < 1.1 && pack.t >= 1.1) { const st = pack.r.st; K.shake(st >= 4 ? 8 : 3); K.burst(640, 330, [RAR(st)[1], '#fff', myTeam().c], st >= 4 ? 90 : 40, st >= 4 ? 560 : 360); K.chime(st >= 5 ? 659 : st >= 4 ? 587 : 523, st >= 4 ? [0, 4, 7, 12, 16, 19] : [0, 4, 7]); } }
     anim += dt; let k = 1;
     if (slow) { k = slow.k; if ((slow.t -= dt) <= 0) slow = null; }
     else if (mode === 'field' && danger()) k = .6;   // time slows a touch while he winds up, so you can read it
@@ -1271,6 +1360,7 @@ const GAME = {
   const chain = { a: 25, b: 35 };
   GAME.draw = g => {
     if (mode === 'hub') return drawHub(g);
+    if (mode === 'pack' && pack) { drawHub(g); return drawPackOpen(g); }
     drawField(g); if (mode === 'def' && Q) drawDef(g); else if (P) drawPlay(g); if (S.g) drawWeather(g); if (slow) { g.fillStyle = `rgba(0,0,0,${.18 * Math.min(1, slow.t * 4)})`; g.fillRect(K.view.x0, 0, K.view.x1 - K.view.x0, 720); }
     scoreboard(g); drawTicker(g); if (mode === 'field' && P) fieldUI(g); if (mode === 'def' && Q) defUI(g);
     if (mode === 'kick') drawKick(g); if (mode === 'opp') drawOpp(g); if (mode === 'result') drawResult(g);
@@ -1284,13 +1374,16 @@ const GAME = {
       const F = S.F;
       if (hit(BTN.play, x, y)) { F.picked = true; K.persist(); return startGame(); }
       if (!F.picked && F.week === 0 && F.season === 1 && (hit(BTN.prev, x, y) || hit(BTN.next, x, y))) { F.team = (F.team + (hit(BTN.next, x, y) ? 1 : 7)) % 8; newSeason(F); F.season = 1; S.oppI = F.sched[0]; K.sfx(600, .06, 'square', .05); return; }
-      for (const k of ['roster', 'fac', 'practice']) if (hit(BTN['tab' + k], x, y)) { hubTab = k; K.sfx(600, .05, 'square', .04); return; }
+      for (const k of ['roster', 'recruit', 'fac', 'practice']) if (hit(BTN['tab' + k], x, y)) { hubTab = k; K.sfx(600, .05, 'square', .04); return; }
+      for (let i = 0; i < 3; i++) if (hit(BTN['pk' + i], x, y)) return openPack(i);
+      for (let i = 0; i < 6; i++) { const r = (F.locker || [])[i]; if (!r) continue; if (hit(BTN['ls' + i], x, y)) return signRecruit(r); if (hit(BTN['lr' + i], x, y)) { F.locker.splice(i, 1); F.credits++; K.persist(); return say(`Released ${r.name}: +1 credit`, 1.4, '#ffd23f'); } }
       for (let i = 0; i < 7; i++) if (hit(BTN['up' + i], x, y)) return upgrade(i);
       for (let i = 0; i < 4; i++) if (hit(BTN['fac' + i], x, y)) return facBuy(i);
       if (hit(BTN.prKick, x, y)) return startPractice('kick'); if (hit(BTN.prJuke, x, y)) return startPractice('juke');
       return;
     }
     if (mode === 'result') { if (hit(BTN.cont, x, y)) fromResult(); return; }
+    if (mode === 'pack' && pack) { if (pack.t < 1.1) { pack.t = 1.1 - 1e-3; return; } if (pack.t < 1.4) return; if (hit(BTN.psign, x, y)) return packAction('sign'); if (hit(BTN.pkeep, x, y)) return packAction('keep'); if (hit(BTN.prel, x, y)) return packAction('rel'); return; }
     if (mode === 'kick') return kickNow();
     if (mode === 'opp' && oppAnim && oppAnim.choice) { if (hit(BTN.defplay, x, y)) return oppChoose(true); if (hit(BTN.defsim, x, y)) return oppChoose(false); return; }
     if (mode === 'def' && Q) {
@@ -1315,10 +1408,11 @@ const GAME = {
   GAME.move = (x, y) => {
     if (ptr) { ptr.x = x; ptr.y = y; }
     hover = null;
-    if (mode === 'hub') { for (const k of ['play', 'prev', 'next', 'up0', 'up1', 'up2', 'up3', 'up4', 'up5', 'up6', 'tabroster', 'tabfac', 'tabpractice', 'fac0', 'fac1', 'fac2', 'fac3', 'prKick', 'prJuke']) if (BTN[k] && hit(BTN[k], x, y)) hover = BTN[k]; }
+    if (mode === 'hub') { for (const k of ['play', 'prev', 'next', 'up0', 'up1', 'up2', 'up3', 'up4', 'up5', 'up6', 'tabroster', 'tabrecruit', 'tabfac', 'tabpractice', 'pk0', 'pk1', 'pk2', 'ls0', 'ls1', 'ls2', 'ls3', 'ls4', 'ls5', 'lr0', 'lr1', 'lr2', 'lr3', 'lr4', 'lr5', 'fac0', 'fac1', 'fac2', 'fac3', 'prKick', 'prJuke']) if (BTN[k] && hit(BTN[k], x, y)) hover = BTN[k]; }
     else if (mode === 'opp' && oppAnim && oppAnim.choice) { for (const k of ['defplay', 'defsim']) if (hit(BTN[k], x, y)) hover = BTN[k]; }
     else if (mode === 'def' && Q) { for (const k of Q.phase === 'call' ? ['dblitz', 'dcover', 'dstop'] : ['dswap', 'juke']) if (BTN[k] && hit(BTN[k], x, y)) hover = BTN[k]; }
     else if (mode === 'result') { if (hit(BTN.cont, x, y)) hover = BTN.cont; }
+    else if (mode === 'pack') { for (const k of ['psign', 'pkeep', 'prel']) if (BTN[k] && hit(BTN[k], x, y)) hover = BTN[k]; }
     else if (P && P.phase === 'call') { for (const k of S.d.down === 4 && !P.go4 ? ['punt', 'fg', 'go'] : ['pass', 'run']) if (hit(BTN[k], x, y)) hover = BTN[k]; }
     else if (P && P.phase === 'live' && !P.thrown) hover = playerAt(x, y) || null;
     const c = document.getElementById('cv'); if (c) c.style.cursor = hover ? 'pointer' : 'default';
@@ -1339,6 +1433,7 @@ const GAME = {
     }
     if (mode === 'kick' && (c === 'Space' || c === 'Enter')) return kickNow();
     if (mode === 'result' && (c === 'Space' || c === 'Enter')) return fromResult();
+    if (mode === 'pack' && pack && (c === 'Space' || c === 'Enter')) { if (pack.t < 1.1) pack.t = 1.1 - 1e-3; return; }
     if (mode === 'hub' && (c === 'Space' || c === 'Enter')) { S.F.picked = true; return startGame(); }
     if (mode !== 'field' || !P) return;
     if (P.phase === 'call') { if (S.d.down === 4 && !P.go4) { if (c === 'KeyP') fourth('punt'); if (c === 'KeyF' && fgRange()) fourth('fg'); if (c === 'KeyG') fourthGo(); return; } if (c === 'Space' || c === 'Enter' || c === 'KeyQ') snap('pass'); if (c === 'KeyE') snap('run'); return; }
@@ -1365,7 +1460,7 @@ const GAME = {
     const w = P.off[1]; w.x = 96; w.y = 18; w.vx = 6; P.off[2].x = 92; P.off[2].y = 40; P.off[3].x = 80; P.def[0].x = 97.5; P.def[0].y = 20; P.def[2].x = 94; P.def[2].y = 24; P.def[1].x = 93; P.def[1].y = 38;
     P.ball = { x0: 74, y0: 26, tx: 97, ty: 18, t: .8, T: 1 }; cam = 70;
   };
-  GAME.test = { def: () => ({ mode, DF, phase: Q && Q.phase, kind: Q && Q.kind, res: Q && Q.result && Q.result.text, them: S.g && S.g.them, us: S.g && S.g.us, ds: S.g && S.g.dstats }), defStart: st => startDefense(st), defSnap: k => defSnap(k), defAction: () => defAction(), switchMan: () => switchMan(), Q: () => Q, oppChoose: p => oppChoose(p), driveOver: (h, sp) => driveOver(h, sp), keys: () => keys, wx: w => { S.g.wx = w; }, danger: () => danger(), res: () => P && P.result && P.result.text, sim: (n, dt = 1 / 30) => { for (let i = 0; i < n; i++) { GAME.bot(dt); GAME.update(dt); } }, st: () => ({ mode, phase: P && P.phase, d: S.d, g: S.g, F: { week: S.F.week, credits: S.F.credits, rec: S.F.rec[S.F.team] } }), start: startGame, snap, throwTo: i => throwTo(P.off[i]), juke, jukeKind, P: () => P, fourth, fourthGo, kickNow };
+  GAME.test = { openPack: i => openPack(i), pack: () => pack, packAction: k => packAction(k), F: () => S.F, hub: t => { hubTab = t; }, def: () => ({ mode, DF, phase: Q && Q.phase, kind: Q && Q.kind, res: Q && Q.result && Q.result.text, them: S.g && S.g.them, us: S.g && S.g.us, ds: S.g && S.g.dstats }), defStart: st => startDefense(st), defSnap: k => defSnap(k), defAction: () => defAction(), switchMan: () => switchMan(), Q: () => Q, oppChoose: p => oppChoose(p), driveOver: (h, sp) => driveOver(h, sp), keys: () => keys, wx: w => { S.g.wx = w; }, danger: () => danger(), res: () => P && P.result && P.result.text, sim: (n, dt = 1 / 30) => { for (let i = 0; i < n; i++) { GAME.bot(dt); GAME.update(dt); } }, st: () => ({ mode, phase: P && P.phase, d: S.d, g: S.g, F: { week: S.F.week, credits: S.F.credits, rec: S.F.rec[S.F.team] } }), start: startGame, snap, throwTo: i => throwTo(P.off[i]), juke, jukeKind, P: () => P, fourth, fourthGo, kickNow };
 })();
 
 /* Pulsebox game kit: canvas scaling, input, menus, skins shop, coins, best score, sound and effects.
