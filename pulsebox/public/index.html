@@ -1014,6 +1014,22 @@ const GAMES = [
     how: ["Your car accelerates by itself. Steer with A / D or the arrows, S brakes.", "Hold Space while turning to drift. Let go for a boost: blue, then orange, then purple.", "Drift, draft and fly through light gates to fill Overdrive, then press W, Up or Shift.", "Phones: arrows bottom-left to steer, DRIFT and BOOST bottom-right. Create a room to race friends online."]
   },
   {
+    id: "duelpoint",
+    title: "Duelpoint",
+    category: "Action",
+    kind: "Action · 3D tactical shooter · Online 1v1",
+    tags: ["3D shooter", "1v1 online", "3 operatives", "Buy rounds"],
+    badge: 'NEW',
+    file: 'games/duelpoint.html',
+    cover: 'media/duelpoint-cover.jpg',
+    video: 'media/duelpoint-trailer.mp4',
+    shots: ['media/duelpoint-shot1.jpg', 'media/duelpoint-shot2.jpg'],
+    aspect: 16 / 9,
+    pitch: "One map. One rival. Every round counts.",
+    blurb: "A first-person tactical duel. Attack and you carry the charge to the site and plant it; defend and you hold the angles or defuse it in time. Earn credits every round and spend them in the armory on an SMG, shotgun, rifle or one-shot sniper plus shields. Pick one of three operatives: Vex blinks and throws smoke, Iris pings through walls and flashes, Bastion raises walls and heals. Headshots hit hardest, moving makes you loud and wild, and first to five rounds wins. Duel a bot on three difficulties, or create a room and send a friend the code.",
+    how: ["Click to grab the mouse. WASD moves, mouse aims, left click shoots, right click scopes the Longbow.", "Q and E are your operative's abilities. B opens the armory during the buy phase.", "Attack: hold F on the red site to plant. Defend: hold F on the charge to defuse it.", "Phones: left thumb moves, right thumb looks, buttons fire. First to 5 rounds."]
+  },
+  {
     id: "lantern-keep",
     title: "Lantern Keep",
     category: "Strategy",
@@ -2668,8 +2684,8 @@ $('q2').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDef
    so a code alone is enough to join. The game gets ?room=CODE
    and walks straight into the room's lobby (src/lib/mp.js).
    ============================================================ */
-const FRIEND_GAMES = ['odd-crowd', 'lantern-keep', 'siegeworks', 'hyperlane', 'strata', 'bumper-brawl', 'paint-wars', 'turbo-laps', 'sea-battle', 'doodle-guess'];
-const FRIEND_PLAYERS = { 'odd-crowd': '3-10 players · party', 'lantern-keep': '1-4 players · co-op', siegeworks: '1v1', hyperlane: '2-6 players', strata: '2-4 players · co-op', 'bumper-brawl': '2-4 players', 'paint-wars': '2-4 players', 'turbo-laps': '2-6 players', 'sea-battle': '1v1', 'doodle-guess': '2-8 players' };
+const FRIEND_GAMES = ['duelpoint', 'odd-crowd', 'lantern-keep', 'siegeworks', 'hyperlane', 'strata', 'bumper-brawl', 'paint-wars', 'turbo-laps', 'sea-battle', 'doodle-guess'];
+const FRIEND_PLAYERS = { duelpoint: '1v1 duel', 'odd-crowd': '3-10 players · party', 'lantern-keep': '1-4 players · co-op', siegeworks: '1v1', hyperlane: '2-6 players', strata: '2-4 players · co-op', 'bumper-brawl': '2-4 players', 'paint-wars': '2-4 players', 'turbo-laps': '2-6 players', 'sea-battle': '1v1', 'doodle-guess': '2-8 players' };
 const API_ORIGIN = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? '' : 'https://box.pulseform.org';
 let roomJoin = null, frPick = null;
 const frGames = () => FRIEND_GAMES.map(byId).filter(Boolean);
@@ -2989,7 +3005,7 @@ loadStats();
   const SCORE = {
     'afterhours': 'Final score', 'axe-spin': 'Score', 'brick-blitz': 'Score', 'bumper-brawl': 'Rounds won', 'combo-cubes': 'Score', 'dead-air': 'Pay', 'deep-signal': 'Score', 'doodle-guess': 'Points',
     'flip-frenzy': 'Score', 'flop-hoops': 'Points', 'fruit-frenzy': 'Score', 'horde-breaker': 'Seconds survived', 'hue-hop': 'Score', 'lantern-keep': 'Keeper score', 'legend-maker': 'Legacy',
-    'lights-out-motel': 'Guests handled right', 'neon-serpent': 'Score', 'night-shift': 'Shift score', 'orbit-hop': 'Score', 'paint-wars': 'Tiles painted', 'penalty-shootout': 'Score', 'pocket-bowl': 'Season score',
+    'lights-out-motel': 'Guests handled right', 'neon-serpent': 'Score', 'night-shift': 'Shift score', 'orbit-hop': 'Score', 'paint-wars': 'Tiles painted', 'penalty-shootout': 'Score', 'pocket-bowl': 'Season score', 'duelpoint': 'Rounds won',
     'rooftop-rush': 'Meters', 'sea-battle': 'Ships sunk', 'siegeworks': 'Siege score', 'sky-ace': 'Score', 'sky-stack': 'Score', 'space-colony': 'Colonists', 'spin-rally': 'Points', 'still-here': 'Score',
     'strata': 'Score', 'tank-trouble': 'Rounds won', 'tiny-tee': 'Points', 'turbo-laps': 'Points',
     'baggage-panic': 'Suitcase reached', 'safecracker': 'Total take', 'shellsmith': 'Coins earned', 'tetherpost-express': 'Stars', 'nibbleborough': 'District score', 'bricktide-salvage': 'Salvage score',
