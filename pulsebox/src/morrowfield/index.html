@@ -65,6 +65,7 @@
     </div>
     <div class="top-actions">
       <span id="saveStatus" class="save-status"><span class="status-dot"></span>All yours to shape</span>
+      <button id="goalsToggle" class="soft-button projects-toggle surface goals-toggle" title="Town goals" aria-label="Town goals"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.8z"/></svg><span>Goals <b id="goalsCount">0</b></span></button>
       <button id="projectToggle" class="soft-button projects-toggle surface" title="Open my projects" aria-label="My projects"><svg><use href="#i-folder"/></svg><span>My projects</span></button>
       <div class="history-group surface"><button id="undo" class="icon-button" title="Undo (⌘/Ctrl Z)" aria-label="Undo"><svg><use href="#i-undo"/></svg></button><button id="redo" class="icon-button" title="Redo (⌘/Ctrl Shift Z)" aria-label="Redo"><svg><use href="#i-redo"/></svg></button></div>
       <button id="save" class="primary-button save-button" aria-label="Save world" title="Save world (⌘/Ctrl S)"><svg><use href="#i-save"/></svg><span>Save world</span></button>
@@ -139,6 +140,10 @@
     <button id="backToRegion" class="primary-button back-to-region"><svg class="reverse-icon"><use href="#i-arrow"/></svg><span>Back to my region</span></button>
   </section>
 
+  <section id="goalsPanel" class="goals-panel surface" role="dialog" aria-labelledby="goalsTitle" hidden>
+    <div class="goals-head"><div><span class="eyebrow">YOUR TOWN CHARTER</span><h2 id="goalsTitle">Goals<span>.</span></h2><p id="goalsSummary"></p></div><button id="goalsClose" class="icon-button" title="Close goals" aria-label="Close goals"><svg><use href="#i-close"/></svg></button></div>
+    <div id="goalsList" class="goals-list"></div>
+  </section>
   <section id="projectsPanel" class="projects-panel surface" role="dialog" aria-labelledby="projectsTitle" hidden>
     <div class="projects-heading"><div><span class="eyebrow">LITTLE WORLDS, BIG IDEAS</span><h2 id="projectsTitle">My projects<span>.</span></h2></div><button id="projectsClose" class="icon-button" title="Close projects" aria-label="Close projects"><svg><use href="#i-close"/></svg></button></div>
     <div class="project-account"><span class="account-symbol"><svg><use href="#i-leaf"/></svg></span><div><strong id="accountName">On this device</strong><p id="projectStatus" role="status">Your saved projects live here.</p></div><a id="signInLink" class="soft-button" href="/signin-with-chatgpt?return_to=%2F" target="_top" hidden>Sign in</a></div>
