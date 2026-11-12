@@ -5,7 +5,7 @@
 const GAME = {
   id: 'pocket-bowl', title: 'Pocket Bowl', tagline: 'Retro football. Run the team, win the Bowl.',
   font: 'Press Start 2P', accent: '#ffd23f', accent2: '#3ddc84', bg: '#0b2a16', noHud: true, scoreLabel: 'Season score',
-  how: ['PASS: drag back from anywhere and release to throw, or tap a receiver. Keys 1, 2, 3 throw to WR1, WR2 and the running back. RUN: the back follows his blocking to the hole (the white arrow), then he is yours.', 'With the ball, defenders hunt you down. When one plants his feet and a red ! pops over his head, he is about to dive at you: JUKE (Space or the button) right then and he eats turf. Juke too early and he just adjusts. Hold left (or drag behind your runner) to slow down and let blockers lead.', 'Space also does what the moment needs: pump fake or spin out of a sack in the pocket, LEAP when the ball is in the air, DIVE at the goal line. Every week brings new weather: rain makes the ball slick, snow slows everyone down.', 'DEFENSE: when they get the ball, play it or sim it. Pick BLITZ, COVER or RUN STOP, then steer the ringed defender (arrows or drag). Space dives at the runner or the quarterback, or jumps the throw; E switches to the man nearest the ball. Their runner can juke your dive too.', 'Between games, spend coaching credits to upgrade players. Win your division and take the Pocket Bowl.'],
+  how: ['PASS: drag back from anywhere and release to throw, or tap a receiver. Keys 1, 2, 3 throw to WR1, WR2 and the running back. RUN: the back follows his blocking to the hole (the white arrow), then he is yours.', 'With the ball, defenders hunt you down. When one plants his feet and a red ! pops over his head, he is about to dive at you: JUKE (Space or the button) right then and he eats turf. Juke too early and he just adjusts. Hold left (or drag behind your runner) to slow down and let blockers lead.', 'Space also does what the moment needs: pump fake or spin out of a sack in the pocket, LEAP when the ball is in the air, DIVE at the goal line. Every week brings new weather: rain makes the ball slick, snow slows everyone down.', 'DEFENSE: when they get the ball, play it or sim it. Pick BLITZ, COVER or RUN STOP, then steer the ringed defender (arrows or drag). Space dives at the runner or the quarterback, or jumps the throw; E switches to the man nearest the ball. Their runner can juke your dive too.', 'Four quarters of 3:00 on the clock. It runs during plays and after tackles in bounds; it stops for incompletions, the sideline and scores. Tied at the end: sudden-death overtime. A pass caught behind the back line of the end zone is incomplete.', 'Between games: upgrade players, build facilities (Training Center, Weight Room, Film Room, Fan Zone), run one practice drill a week for credits, and chase the weekly goal. Win your division and take the Pocket Bowl.'],
   skins: [{ name: 'Home Uniform', price: 0 }, { name: 'Throwback', price: 30, u: ['#e0b040', '#5a2a10'] }, { name: 'Chrome', price: 70, u: ['#d8dde4', '#1a1a1a'] }, { name: 'Royal', price: 110, u: ['#7a3aff', '#ffd23f'] }, { name: 'Neon Night', price: 160, u: ['#b6ff3a', '#ff2e88'] }, { name: 'Blackout', price: 220, u: ['#2a2a30', '#e8e8e8'] }],
 };
 (() => {
@@ -27,7 +27,7 @@ const GAME = {
   const RBR = { flat: [[1, 6], [9, 12]], swing: [[-2, 5], [6, 12]], wheel: [[1, 6], [7, 9], [26, 10]] };
   let S, cam = 0, P, mode, ptr = null, keys = {}, msg = null, kick = null, anim = 0, hover = null, botT = 0, posed = false, oppAnim = null, endCard = null;
   // the broadcast: slow motion on big moments, turf and dust, crowd excitement, the play-by-play line and the crowd's roar
-  let slow = null, parts = [], hype = 0, tick = null, amb = null;
+  let slow = null, parts = [], hype = 0, tick = null, amb = null, hubTab = 'roster';
   const WXN = { clear: '☀ Clear skies', sunset: '🌇 Sunset kickoff', night: '🌙 Under the lights', rain: '🌧 Rain: slick ball', snow: '❄ Snow: slow going' };
   const wxPick = w => w < 1 ? 'clear' : pick(['clear', 'clear', 'sunset', 'night', 'night', 'rain', 'snow']);
   const R = Math.random, rnd = (a, b) => a + R() * (b - a), pick = a => a[Math.floor(R() * a.length)], clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -41,7 +41,7 @@ const GAME = {
     F.opp = TEAMS.map((t, i) => i === F.team ? 0 : clamp(1.6 + ((i * 7 + F.season * 3) % 8) * .38 + F.season * .15, 1.5, 5));
     const others = TEAMS.map(t => t.i).filter(i => i !== F.team); F.sched = [];
     for (let w = 0; w < 10; w++) F.sched.push(others[(w + F.season) % others.length]);
-    F.news = pick(NEWS); F.wx = Array.from({ length: 10 }, (_, w) => wxPick(w));
+    F.news = pick(NEWS); F.wx = Array.from({ length: 10 }, (_, w) => wxPick(w)); F.goal = F.goal || pick(GOALS)[0];
   }
   // the demo behind the title screen and the cover pose play with a throwaway team, never the player's saved one
   function tempF() { const F = { team: 0, roster: newRoster(), credits: 3, season: 0, picked: true, titles: 0 }; newSeason(F); return F; }
@@ -51,6 +51,37 @@ const GAME = {
     return F;
   }
   const star = p => S.F.roster.find(r => r.p === p).st;
+  /* ---------- between games: facilities, a weekly team goal, one practice a week ---------- */
+  const FAC = [
+    { k: 'train', n: 'Training Center', d: l => `Everyone runs ${3 * l}% faster` },
+    { k: 'weight', n: 'Weight Room', d: l => `Break more tackles, and make them stick on defense` },
+    { k: 'film', n: 'Film Room', d: l => `Their defense reads you slower; yours reads them faster` },
+    { k: 'fans', n: 'Fan Zone', d: l => `+${l} credit${l === 1 ? '' : 's'} for every win` },
+  ];
+  const facCost = l => [3, 5, 8][l] || 0;
+  const fac = k => ((S && S.F && S.F.fac) || {})[k] || 0;
+  const GOALS = [['margin', 'Win by 14 or more'], ['tds', 'Score 3 touchdowns'], ['sack', 'Sack their QB on defense'], ['int', 'Pick off a pass on defense'], ['ankles', 'Break 3 ankles'], ['hold', 'Hold them to 7 points or fewer'], ['pass', 'Throw for 150 yards'], ['rush', 'Run for 80 yards'], ['tk', 'Make 3 tackles on defense']];
+  function goalMet(k, g) { const s = g.stats, d = g.dstats || {}; return k === 'margin' ? g.us - g.them >= 14 : k === 'tds' ? s.td >= 3 : k === 'sack' ? d.sack > 0 : k === 'int' ? d.int > 0 : k === 'ankles' ? s.ankles >= 3 : k === 'hold' ? g.them <= 7 : k === 'pass' ? s.pass >= 150 : k === 'rush' ? s.rush >= 80 : k === 'tk' ? (d.tk || 0) >= 3 : false; }
+  const weekKey = () => `${S.F.season}-${S.F.week}-${S.F.playoff}`;
+  function facBuy(i) {
+    const F = S.F, f = FAC[i]; F.fac = F.fac || {}; const l = F.fac[f.k] || 0;
+    if (l >= 3) return say('Fully built', 1.2); if (F.credits < facCost(l)) { K.sfx(160, .15, 'square', .06); return say(`Need ${facCost(l)} credits`, 1.2, '#ff8a8a'); }
+    F.credits -= facCost(l); F.fac[f.k] = l + 1; K.chime(587, [0, 4, 7, 12]); K.persist(); say(`${f.n} level ${l + 1}!`, 1.4, '#ffd23f');
+  }
+  function startPractice(kind) {
+    const F = S.F; if (F.practiced === weekKey()) return say('Already practised this week', 1.2, '#ff8a8a');
+    startGame(); S.g.practice = { kind, n: 0, good: 0, yds: 0 }; ambience(false);
+    if (kind === 'kick') { startKick('fg', 30); cast('Kicking drill: three field goals, 30, 40 and 50 yards.'); }
+    else { S.d.ball = 20; driveStart(20); cast('Juke drill: three runs from your own 20 against the full defense.'); }
+  }
+  function practiceAfter(r) {
+    const pr = S.g.practice; pr.n++; pr.yds += r.kind === 'td' ? 100 - P.L : Math.max(0, r.kind === 'inc' || r.kind === 'int' ? 0 : P.gain || 0);
+    if (pr.n < 3) { driveStart(20); return; } endPractice(Math.min(4, Math.floor(pr.yds / 25)), `${Math.round(pr.yds)} yards in three runs`);
+  }
+  function endPractice(cr, what) {
+    const F = S.F; F.practiced = weekKey(); F.credits += cr; F.boost = cr >= 2 ? weekKey() : F.boost; S.g = null; mode = 'hub'; K.persist(); hubTab = 'practice';
+    say(`Practice: ${what}. +${cr} credit${cr === 1 ? '' : 's'}${cr >= 2 ? ' · team fired up for the game!' : ''}`, 3, '#9cff3a');
+  }
   const wxNow = () => S.F.playoff ? 'night' : (S.F.wx && S.F.wx[S.F.week]) || 'clear';
   const nm = p => { const r = S.F.roster.find(x => x.p === p); return r ? r.name.split(' ')[1] : p; };
   const who = p => p.role === 'RB' ? nm('RB') : p.role === 'WR1' ? nm('WR1') : p.role === 'WR2' ? nm('WR2') : p.role === 'QB' ? nm('QB') : 'the ' + ({ CB: 'corner', S: 'safety', LB: 'linebacker', DL: 'end' }[p.role] || 'lineman');
@@ -67,24 +98,42 @@ const GAME = {
   /* ---------- a game ---------- */
   function startGame() {
     const F = S.F; S.oppI = F.playoff ? S.oppI : F.sched[F.week];
-    S.g = { us: 0, them: 0, poss: 0, maxPoss: 8, ot: false, wx: wxNow(), best: null, stats: { pass: 0, rush: 0, td: 0, int: 0, ankles: 0, moves: 0, whiffs: 0 } };
+    S.g = { us: 0, them: 0, poss: 0, maxPoss: 999, ot: false, q: 1, clock: QLEN, over: false, wx: wxNow(), best: null, stats: { pass: 0, rush: 0, td: 0, int: 0, ankles: 0, moves: 0, whiffs: 0 } };
     mode = 'field'; msg = null; kick = null; oppAnim = null; endCard = null; parts = []; slow = null; hype = .6;
     driveStart(25); crowd(1.2, .05); ambience(true); cast(`Kickoff: ${myTeam().nick} vs ${oppTeam().nick}. ${WXN[S.g.wx]}.`);
   }
   function driveStart(at) { S.d = { ball: at, down: 1, togo: 10, first: Math.min(100, at + 10) }; presnap(); chain.a = at; chain.b = S.d.first; }
-  function quarter() { const g = S.g; return g.ot ? 'OT' : 'Q' + Math.min(4, 1 + Math.floor(g.poss / 2)); }
+  function quarter() { const g = S.g; return g.ot ? 'OT' : 'Q' + Math.min(4, g.q || 1); }
+  const QLEN = 180, clockTxt = () => { const c = Math.max(0, Math.ceil(S.g.clock)); return `${Math.floor(c / 60)}:${String(c % 60).padStart(2, '0')}`; };
+  // the clock runs during plays (sped up) and between them on a tackle in bounds; it stops for incompletions, the sideline and scores
+  function tickClock(sec) {
+    const g = S.g; if (!g || g.practice || g.over) return; g.clock -= sec;
+    if (g.clock <= 0) {
+      if (g.ot) { g.clock = 0; g.over = true; return; }
+      if (g.q < 4) { g.q++; g.clock = QLEN; say(g.q === 3 ? 'HALFTIME' : `END OF Q${g.q - 1}`, 1.4, '#ffd23f'); cast(g.q === 3 ? 'Halftime. The band takes the field.' : `End of the ${['first', 'second', 'third'][g.q - 2]} quarter.`); }
+      else { g.clock = 0; g.over = true; }
+    } else if (g.q === 4 && !g.ot && g.clock < 120 && g.clock + sec >= 120) { say('TWO-MINUTE WARNING', 1.4, '#ffd23f'); }
+  }
+  // after any play or drive: is the game over? Tied at the end of regulation means sudden-death overtime
+  function gameDone() {
+    const g = S.g; if (!g || g.practice) return false;
+    if (g.ot && g.us !== g.them) { finishGame(); return true; }
+    if (!g.over) return false;
+    if (g.us !== g.them) { finishGame(); return true; }
+    g.ot = true; g.over = false; g.clock = 150; say('OVERTIME! Next score wins.', 1.8, '#ffd23f'); cast('Tied at the end of regulation. Sudden death!'); return false;
+  }
   function mk(team, role, x, y, o = {}) { return { team, role, x, y, vx: 0, vy: 0, ...o }; }
   function presnap() {
     mode = 'field'; const d = S.d, L = d.ball, mid = FW / 2;
     const combos = [['go', 'slant'], ['post', 'curl'], ['out', 'go'], ['slant', 'corner'], ['curl', 'drag'], ['corner', 'post'], ['drag', 'go']], cmb = pick(combos);
-    const ws1 = 6.3 + star('WR1') * .45, ws2 = 6.2 + star('WR2') * .45, def = S.F.opp[S.oppI] || 2;
+    const fit = (1 + fac('train') * .03) * (S.F.boost === weekKey() && !S.g.practice ? 1.03 : 1), ws1 = (6.3 + star('WR1') * .45) * fit, ws2 = (6.2 + star('WR2') * .45) * fit, def = S.F.opp[S.oppI] || 2;
     P = {
       phase: 'call', t: 0, L, ball: null, carrier: null, thrown: false, play: null, gain: 0, result: null,
       off: [mk('o', 'QB', L - 1.5, mid), mk('o', 'WR1', L - .5, mid - 19, { route: ROUTES[cmb[0]], rname: cmb[0], sp: ws1, side: -1 }), mk('o', 'WR2', L - .5, mid + 19, { route: ROUTES[cmb[1]], rname: cmb[1], sp: ws2, side: 1 }),
-        mk('o', 'RB', L - 6, mid + 1.5, { route: RBR[pick(Object.keys(RBR))], sp: 5.6 + star('RB') * .45, side: 1 }), mk('o', 'OL', L - .4, mid - 2.4), mk('o', 'OL', L - .4, mid), mk('o', 'OL', L - .4, mid + 2.4)],
+        mk('o', 'RB', L - 6, mid + 1.5, { route: RBR[pick(Object.keys(RBR))], sp: (5.6 + star('RB') * .45) * fit, side: 1 }), mk('o', 'OL', L - .4, mid - 2.4), mk('o', 'OL', L - .4, mid), mk('o', 'OL', L - .4, mid + 2.4)],
       def: [mk('d', 'CB', L + 6, mid - 19, { cover: 1 }), mk('d', 'CB', L + 6, mid + 19, { cover: 2 }), mk('d', 'S', L + 15, mid, {}), mk('d', 'LB', L + 5, mid + 3, { cover: 3 }),
         mk('d', 'DL', L + .6, mid - 1.6), mk('d', 'DL', L + .6, mid + 1.6)],
-      hold: 2.3 + star('OL') * .5 - def * .2, dsp: (5.1 + def * .33) * (S.g && S.g.wx === 'snow' ? .93 : 1), react: .7 - def * .06,
+      hold: 2.3 + star('OL') * .5 - def * .2, dsp: (5.1 + def * .33) * (S.g && S.g.wx === 'snow' ? .93 : 1), react: .7 - def * .06 + fac('film') * .05,
       lane: 0, laneY: mid, ref: { x: L - 7, y: FW - 2.6, sig: null },
     };
     P.lane = pick([-1, 0, 1]); P.laneY = clamp(mid + P.lane * 4.6, 3, FW - 3);
@@ -120,6 +169,7 @@ const GAME = {
   }
   const near = (list, x, y) => list.reduce((b, p) => { const d = Math.hypot(p.x - x, p.y - y); return d < b.d ? { p, d } : b; }, { p: null, d: 1e9 });
   function land() {
+    if (P.ball.tx > 109.6) { P.ball = null; cast('Caught... but out of the back of the end zone. Incomplete.'); return endPlay('OUT OF THE END ZONE', 'inc'); }
     const b = P.ball, rec = near(P.off.slice(1, 4), b.tx, b.ty), df = near(P.def, b.tx, b.ty), hands = rec.p ? star(rec.p.role === 'RB' ? 'RB' : rec.p.role) : 1;
     P.ball = null; const lp = rec.p && rec.p.leap > 0 ? 1 : 0;   // a receiver who went up for it reaches further and wins the fight for it
     if (df.d < 1 && (!rec.p || df.d < rec.d - .3 - lp * .6) && R() < .4 - lp * .25) { S.g.stats.int++; return endPlay('INTERCEPTED!', 'int'); }
@@ -141,6 +191,7 @@ const GAME = {
     if (kind === 'td') { banner('TOUCHDOWN!', myTeam().c, myTeam().c2); confetti(140); S.g.stats.td++; K.add(70, 640, 300, '#ffd23f'); K.coin(2); K.chime(523, [0, 4, 7, 12, 16]); crowd(2.4, .1); K.shake(10); K.burst(sx(100), sy(FW / 2), ['#ffd23f', '#fff', myTeam().c], 40, 520); }
     else if (kind === 'int') { K.sfx(140, .5, 'sawtooth', .08, -60); K.shake(6); banner('PICKED OFF', oppTeam().c, oppTeam().c2); }
     else if (kind === 'tackle' || kind === 'sack' || kind === 'out') { const g = Math.round(spot - d.ball); P.gain = g; if (P.caught || P.play === 'run') S.g.stats[P.play === 'run' && !P.caught ? 'rush' : 'pass'] += g; thud(); }
+    if (kind === 'tackle' || kind === 'sack') tickClock(rnd(12, 22));
     if (kind === 'tackle' || kind === 'out' || kind === 'sack') {
       d.ball = clamp(spot, 1, 99); d.togo = d.first - d.ball;
       if (d.ball >= d.first) { P.result.text += '  ·  FIRST DOWN!'; P.result.first = true; P.ref.sig = 'first'; }
@@ -159,6 +210,8 @@ const GAME = {
   // after the result card: next down, a kick, or the end of the drive
   function afterPlay() {
     const d = S.d, r = P.result;
+    if (S.g.practice) return practiceAfter(r);
+    if (r.kind !== 'td' && gameDone()) return;
     if (r.kind === 'td') return startKick('xp', 2);
     if (r.kind === 'int') return driveOver('int', d.ball);
     if (r.first) { d.down = 1; d.first = Math.min(100, d.ball + 10); d.togo = d.first - d.ball; return presnap(); }
@@ -183,12 +236,15 @@ const GAME = {
   }
   function kickDone() {
     const k = kick; kick = null;
+    if (S.g.practice) { const pr = S.g.practice; pr.n++; if (k.good) pr.good++; if (pr.n < 3) return startKick('fg', 30 + pr.n * 10); return endPractice(pr.good, `${pr.good} of 3 field goals`); }
+    if (S.g.ot && k.kind !== 'xp' && k.good) { S.g.us += 3; return finishGame(); }
     if (k.kind === 'xp') { S.g.us += 6 + (k.good ? 1 : 0); return driveOver('score', 0); }
     if (k.good) { S.g.us += 3; K.add(30); return driveOver('score', 0); }
     driveOver('fgmiss', S.d.ball);
   }
   // their drive, simulated against your defense; where it starts depends on how yours ended
   function driveOver(how, spot) {
+    if (gameDone()) return;
     const g = S.g; g.poss++;
     const def = star('DEF'), opp = S.F.opp[S.oppI] || 2, give = how === 'int' || how === 'downs' ? clamp((100 - spot) / 100, .1, .9) : how === 'punt' ? .15 : how === 'fgmiss' ? .3 : 0;
     const pTD = clamp(.24 + (opp - def) * .07 + give * .3, .05, .8), pFG = .2;
@@ -204,18 +260,15 @@ const GAME = {
   }
   function oppDone() {
     const a = oppAnim; oppAnim = null; S.g.them += a.pts;
-    const g = S.g;
-    if (g.poss >= g.maxPoss) {
-      if (g.us === g.them) { g.ot = true; g.maxPoss += 2; say('OVERTIME!', 1.6, '#ffd23f'); }
-      else return finishGame();
-    }
+    const g = S.g; tickClock(rnd(70, 150)); if (gameDone()) return;
     driveStart(a.res === 'td' || a.res === 'fg' ? 25 : a.after);
   }
   function finishGame() {
-    const F = S.F, g = S.g, win = g.us > g.them, earn = (win ? 2 : 1) + Math.min(3, g.stats.td); hype = win ? 1 : 0;
+    const F = S.F, g = S.g, win = g.us > g.them, goal = F.goal && goalMet(F.goal, g), earn = (win ? 2 + fac('fans') : 1) + Math.min(3, g.stats.td) + (goal ? 2 : 0); hype = win ? 1 : 0;
+    const goalT = F.goal && (GOALS.find(x => x[0] === F.goal) || [])[1]; F.goal = pick(GOALS.filter(x => x[0] !== F.goal))[0];
     F.credits += earn; K.coin(win ? 4 : 1);
     if (win) { K.add(200, 640, 300, '#3ddc84'); K.chime(523, [0, 4, 7, 12]); } else K.sfx(200, .6, 'triangle', .08, -100);
-    endCard = { win, earn, us: g.us, them: g.them, opp: S.oppI, stats: g.stats, playoff: F.playoff, best: g.best, dstats: g.dstats };
+    endCard = { win, earn, us: g.us, them: g.them, opp: S.oppI, stats: g.stats, playoff: F.playoff, best: g.best, dstats: g.dstats, goal, goalT };
     if (!F.playoff) {
       F.rec[F.team][win ? 'w' : 'l']++; F.rec[S.oppI][win ? 'l' : 'w']++;
       // the rest of the league plays too
@@ -265,8 +318,8 @@ const GAME = {
   }
   function runRoute(p, dt) {
     const r = p.route; if (!r) return;
-    if (p.wi < r.length) { const [ax, ay] = r[p.wi], tx = p.x0 + ax, ty = p.y0 + ay * (p.side || 1); stepTo(p, tx, ty, p.sp, dt); if (Math.hypot(tx - p.x, ty - p.y) < .3) p.wi++; }
-    else stepTo(p, p.x + (p.vx || p.sp), p.y + (p.vy || 0) * .2, p.sp, dt);
+    if (p.wi < r.length) { const [ax, ay] = r[p.wi], tx = Math.min(108.5, p.x0 + ax), ty = p.y0 + ay * (p.side || 1); stepTo(p, tx, ty, p.sp, dt); if (Math.hypot(tx - p.x, ty - p.y) < .3) p.wi++; }
+    else if (p.x < 108) stepTo(p, Math.min(108.5, p.x + (p.vx || p.sp)), p.y + (p.vy || 0) * .2, p.sp, dt); else stepTo(p, 108.5, p.y + (FW / 2 - p.y) * .3, p.sp * .5, dt);
   }
   function update(dt) {
     if (msg && (msg.k += dt) > msg.d) msg = null;
@@ -279,6 +332,7 @@ const GAME = {
     for (const p of [...P.off, ...P.def]) { if (p.leap > 0) p.leap -= dt; if (p.pump > 0) p.pump -= dt; if (p.throwT > 0) p.throwT -= dt; if (p.armsUp > 0) p.armsUp -= dt; }
     if (P.phase === 'over') { overStep(dt); if (P.t > (P.result && P.result.kind === 'td' ? 2.9 : 1.8)) afterPlay(); return; }
     if (P.phase === 'live') {
+      tickClock(dt * 2.5);
       const wxs = S.g.wx === 'snow' ? .93 : S.g.wx === 'rain' ? .97 : 1, ol = P.off.slice(4), dls = P.def.filter(p => p.role === 'DL');
       // the line holds for a while; on a run it also drives the ends away from the hole
       const holdOn = P.t < P.hold + (P.play === 'run' ? .5 : 0) && (!P.carrier || (P.play === 'run' && !P.caught));
@@ -338,7 +392,7 @@ const GAME = {
           if (dist > (lunge ? 1 : .78)) continue;
           if (c.juke > 0 || c.spin > 0) { if (lunge || dist < .6) whiff(d, c); continue; }
           // a diving tackle almost always brings you down; running into a man upright is an arm tackle you can bounce off
-          const brk = (.2 + star(c.role === 'RB' ? 'RB' : c.role) * .05 - (S.F.opp[S.oppI] || 2) * .025) * (lunge ? .45 : 1.3);
+          const brk = (.2 + star(c.role === 'RB' ? 'RB' : c.role) * .05 + fac('weight') * .04 - (S.F.opp[S.oppI] || 2) * .025) * (lunge ? .45 : 1.3);
           if (!d.tried && R() < brk) { d.tried = 1; d.stun = .8; d.tk = null; say('BROKE A TACKLE!', .9, '#9cff3a'); cast(`${who(c)} bounces off ${who(d)}!`); K.sfx(300, .08, 'square', .06); hype = Math.max(hype, .6); continue; }
           c.fell = true; c.stun = 9; d.fell = true; d.stun = 9; d.tk = null; puff(c.x, c.y, lunge ? 14 : 9);
           if (lunge) { K.shake(7); K.sfx(70, .25, 'triangle', .22, -30); K.noise && K.noise(.12, .12, 500); pow(c.x, c.y); } 
@@ -489,7 +543,7 @@ const GAME = {
   }
   function defPresnap() {
     const L = DF.ball, mid = FW / 2, os = oppStar(), cmb = pick([['go', 'slant'], ['post', 'curl'], ['out', 'go'], ['slant', 'corner'], ['curl', 'drag'], ['corner', 'post']]);
-    const osp = (5.9 + os * .32) * (S.g.wx === 'snow' ? .93 : 1), dsp = (5.5 + star('DEF') * .32) * (S.g.wx === 'snow' ? .93 : 1);
+    const osp = (5.9 + os * .32) * (S.g.wx === 'snow' ? .93 : 1), dsp = (5.5 + star('DEF') * .32) * (S.g.wx === 'snow' ? .93 : 1) * (1 + fac('train') * .03);
     const O = (role, x, y, o = {}) => mk('d', role, x, y, o), D = (role, x, y, o = {}) => mk('o', role, x, y, o);
     Q = { phase: 'call', t: 0, L, call: null, kind: null, ball: null, carrier: null, thrown: false, result: null, caught: false,
       off: [O('QB', L + 1.5, mid), O('WR1', L + .5, mid - 19, { route: ROUTES[cmb[0]], side: -1, sp: osp }), O('WR2', L + .5, mid + 19, { route: ROUTES[cmb[1]], side: 1, sp: osp }), O('RB', L + 6, mid - 1.5, { sp: osp * .97, route: RBR[pick(Object.keys(RBR))], side: -1 }), O('OL', L + .4, mid - 2.4), O('OL', L + .4, mid), O('OL', L + .4, mid + 2.4)],
@@ -503,8 +557,8 @@ const GAME = {
   // their routes run toward your end zone (the mirror of yours)
   function runRouteL(p, dt) {
     const r = p.route; if (!r) return;
-    if (p.wi < r.length) { const [ax, ay] = r[p.wi], tx = p.x0 - ax, ty = p.y0 + ay * (p.side || 1); stepTo(p, tx, ty, p.sp, dt); if (Math.hypot(tx - p.x, ty - p.y) < .3) p.wi++; }
-    else stepTo(p, p.x + (p.vx || -p.sp), p.y + (p.vy || 0) * .2, p.sp, dt);
+    if (p.wi < r.length) { const [ax, ay] = r[p.wi], tx = Math.max(-8.5, p.x0 - ax), ty = p.y0 + ay * (p.side || 1); stepTo(p, tx, ty, p.sp, dt); if (Math.hypot(tx - p.x, ty - p.y) < .3) p.wi++; }
+    else if (p.x > -8) stepTo(p, Math.max(-8.5, p.x + (p.vx || -p.sp)), p.y + (p.vy || 0) * .2, p.sp, dt); else stepTo(p, -8.5, p.y + (FW / 2 - p.y) * .3, p.sp * .5, dt);
   }
   function defSnap(call) {
     if (!Q || Q.phase !== 'call') return;
@@ -528,6 +582,7 @@ const GAME = {
     K.sfx(500, .08, 'square', .06, 300); cast(`They throw it ${dist > 20 ? 'deep ' : ''}to the ${rec.role === 'RB' ? 'back' : 'receiver'}...`);
   }
   function defLand() {
+    if (Q.ball.tx < -9.6) { Q.ball = null; cast('Out of the back of the end zone. Incomplete!'); return defEnd('OUT OF THE END ZONE', 'inc', Q.L); }
     const b = Q.ball, rec = near(Q.off.slice(1, 4), b.tx, b.ty), df = near(Q.def.filter(d => !(d.stun > 0)), b.tx, b.ty), os = oppStar(), slick = S.g.wx === 'rain' ? .3 : 0;
     Q.ball = null; const lp = !!(df.p && df.p.leap > 0), mine = df.p === Q.me;
     // your man got there first: pick it or knock it down
@@ -574,6 +629,7 @@ const GAME = {
     for (const p of [...Q.off, ...Q.def]) { if (p.leap > 0) p.leap -= dt; if (p.throwT > 0) p.throwT -= dt; if (p.armsUp > 0) p.armsUp -= dt; }
     if (Q.phase === 'over') { defOverStep(dt); if (Q.t > (Q.result && Q.result.kind === 'td' ? 2.7 : 1.9)) defAfter(); return; }
     if (Q.phase !== 'live') return;
+    tickClock(dt * 2.5);
     const holdOn = Q.t < Q.hold && (!Q.carrier || (Q.kind === 'run' && !Q.caught && Q.carrier.x > Q.L - 2));
     // their offence
     if (!Q.carrier) {
@@ -604,7 +660,7 @@ const GAME = {
       if (d.blkCD > 0) d.blkCD -= dt;
       if (d === Q.me && !K.bot) { meMove(d, dt); continue; }
       if (d.held) continue;
-      const react = .3 - star('DEF') * .035;
+      const react = .3 - star('DEF') * .035 - fac('film') * .04;
       if (Q.carrier) { const c = Q.carrier, lead = Math.min(1, Math.hypot(c.x - d.x, c.y - d.y) / 10); chase(d, c.x + c.vx * lead * .4, c.y + c.vy * lead * .4, d.sp * .97, dt, 5); botDive(d); continue; }
       if (Q.ball) { if (Q.t - Q.ball.at < react) continue; const b = Q.ball; if (Math.hypot(b.tx - d.x, b.ty - d.y) < 10) stepTo(d, b.tx, b.ty, d.sp, dt); continue; }
       if (d.role === 'DL' || d.rush) { if (Q.t > (d.role === 'DL' ? Q.hold : .25)) stepTo(d, q.x, q.y, d.sp * (d.rush ? 1.02 : 1), dt); botDive(d); continue; }
@@ -625,7 +681,7 @@ const GAME = {
         if (d.stun > 0 || d.blk) continue; const dist = Math.hypot(d.x - c.x, d.y - c.y), dive = !!d.dv;
         if (dist > (dive ? 1.05 : .8)) continue;
         if (c.juke > 0) { if (dive) { d.dv = null; d.stun = 1.2; d.fell = true; say(d === Q.me ? 'HE JUKED YOU!' : 'JUKED!', .9, '#ff8a8a'); cast(`${d === Q.me ? 'You get' : 'Your ' + d.role + ' gets'} juked out of his shoes.`); } continue; }
-        const brk = (.1 + os * .04) * (dive ? (d === Q.me ? .35 : .6) : 1.3);
+        const brk = (.1 + os * .04) * (dive ? (d === Q.me ? .35 : .6) : 1.3) * (1 - fac('weight') * .12);
         if (!d.tried && R() < brk) { d.tried = 1; d.stun = .7; d.dv = null; say('BROKE A TACKLE!', .8, '#ff8a8a'); cast('He bounces off!'); continue; }
         c.fell = true; c.stun = 9; d.fell = true; d.stun = 9; d.dv = null; puff(c.x, c.y, dive ? 14 : 9);
         if (dive) { K.shake(7); K.sfx(70, .25, 'triangle', .22, -30); pow(c.x, c.y); hype = Math.max(hype, .7); }
@@ -658,7 +714,7 @@ const GAME = {
     if (kind === 'int') { DF.end = { kind: 'int', spot }; hype = 1; K.shake(6); crowd(2.2, .1); banner('INTERCEPTION!', myTeam().c, myTeam().c2); confetti(80); return; }
     if (kind === 'sack') { hype = Math.max(hype, .9); crowd(1.6, .08); banner('SACK!', myTeam().c, myTeam().c2); }
     if (kind === 'inc') { DF.down++; return; }
-    thud(); const x = clamp(spot, 1, 99); DF.ball = x;
+    thud(); const x = clamp(spot, 1, 99); DF.ball = x; if (kind !== 'out') tickClock(rnd(12, 22));
     if (x <= DF.first) { DF.down = 1; DF.first = Math.max(0, x - 10); Q.result.text += '  ·  THEIR FIRST DOWN'; Q.ref.sig = 'first'; } else DF.down++;
     if (Q.L - x <= 0) { hype = Math.max(hype, .6); crowd(1.2, .06); }
   }
@@ -670,6 +726,7 @@ const GAME = {
   }
   function defAfter() {
     const r = Q.result;
+    if (r.kind !== 'td' && r.kind !== 'int' && gameDone()) return;
     if (r.kind === 'td') return defDone(7, 25, 'td');
     if (DF.end && DF.end.kind === 'int') return defDone(0, clamp(DF.end.spot, 5, 95), 'int');
     if (DF.down > 4) return defDone(0, clamp(DF.ball, 5, 95), 'downs');
@@ -690,7 +747,7 @@ const GAME = {
   }
   function defDone(pts, next, how, fgd) {
     const g = S.g; g.them += pts; Q = null; DF = null; wipeTo(myTeam().c);
-    if (g.poss >= g.maxPoss) { if (g.us === g.them) { g.ot = true; g.maxPoss += 2; say('OVERTIME!', 1.6, '#ffd23f'); } else return finishGame(); }
+    if (gameDone()) return;
     mode = 'field'; driveStart(next);
     cast(how === 'int' ? 'Your defense picked it off. Offense, go!' : how === 'downs' ? 'Stopped on downs! Your ball.' : how === 'punt' ? 'Defense holds! They punt it away.' : how === 'fg' ? `They kick a ${Math.round(fgd)}-yard field goal.` : how === 'fgmiss' ? `Their ${Math.round(fgd)}-yarder sails wide! Your ball.` : pts === 7 ? 'They scored. Answer back!' : 'Your ball.');
   }
@@ -985,8 +1042,8 @@ const GAME = {
     const box = (x, c, c2, ab, n, f) => { g.save(); g.translate(x + 75, 26); const s2 = 1 + f * .25; g.scale(s2, s2); rr(g, -75, -16, 150, 32, 6, c); if (f > 0) rr(g, -75, -16, 150, 32, 6, `rgba(255,255,255,${f * .7})`); txt(g, ab, -39, 1, `14px ${PX}`, c2); txt(g, String(n), 43, 1, `16px ${PX}`, c2); g.restore(); };
     box(344, me.c, me.c2, me.ab, S.g.us, sbFlash.us); box(786, op.c, op.c2, op.ab, S.g.them, sbFlash.them);
     if (dd) { rr(g, 499, 2, 60, 14, 4, '#ff5a4a'); txt(g, 'DEF', 529, 9, `8px ${PX}`, '#fff'); }
-    const dn = ['1ST', '2ND', '3RD', '4TH'][Math.min(4, d.down) - 1], togo = dd ? (DF.first === 0 ? 'GOAL' : Math.max(1, Math.round(DF.ball - DF.first))) : d.first >= 100 ? 'GOAL' : Math.max(1, Math.round(d.togo));
-    txt(g, `${quarter()}  ${dn} & ${togo}`, 640, 21, `12px ${PX}`, '#ffd23f'); if (S.g) txt(g, WXN[S.g.wx].split(':')[0], 1160, 27, '800 14px Nunito, system-ui', '#cfd8e0'); txt(g, dd ? `BALL ON ${yl(d.ball).toUpperCase()}` : `BALL ON ${d.ball <= 50 ? 'OWN ' + Math.round(d.ball) : 'OPP ' + Math.round(100 - d.ball)}`, 640, 36, `9px ${PX}`, '#cfd8e0');
+    const ck = S.g.practice ? 'PRACTICE' : `${quarter()} ${clockTxt()}`, dn = ['1ST', '2ND', '3RD', '4TH'][Math.min(4, d.down) - 1], togo = dd ? (DF.first === 0 ? 'GOAL' : Math.max(1, Math.round(DF.ball - DF.first))) : d.first >= 100 ? 'GOAL' : Math.max(1, Math.round(d.togo));
+    txt(g, `${ck}  ${dn} & ${togo}`, 640, 21, `12px ${PX}`, S.g.q === 4 && S.g.clock < 30 && !S.g.ot ? (Math.floor(anim * 4) & 1 ? '#ff6a6a' : '#ffd23f') : '#ffd23f'); if (S.g) txt(g, WXN[S.g.wx].split(':')[0], 1160, 27, '800 14px Nunito, system-ui', '#cfd8e0'); txt(g, dd ? `BALL ON ${yl(d.ball).toUpperCase()}` : `BALL ON ${d.ball <= 50 ? 'OWN ' + Math.round(d.ball) : 'OPP ' + Math.round(100 - d.ball)}`, 640, 36, `9px ${PX}`, '#cfd8e0');
   }
   const BTN = { pass: { x: 380, y: 640, w: 250, h: 66 }, run: { x: 650, y: 640, w: 250, h: 66 }, punt: { x: 250, y: 640, w: 240, h: 66 }, fg: { x: 520, y: 640, w: 240, h: 66 }, go: { x: 790, y: 640, w: 240, h: 66 },
     play: { x: 812, y: 560, w: 420, h: 104 }, juke: { x: 1000, y: 640, w: 210, h: 62 }, cont: { x: 490, y: 600, w: 300, h: 70 }, prev: { x: 812, y: 104, w: 52, h: 52 }, next: { x: 1180, y: 104, w: 52, h: 52 } };
@@ -1063,17 +1120,36 @@ const GAME = {
     txt(g, `${me.city.toUpperCase()} ${me.nick.toUpperCase()}`, 110, 48, `20px ${PX}`, me.c, 'left');
     const r = F.rec[F.team]; txt(g, F.playoff ? (F.playoff === 1 ? 'PLAYOFFS: SEMIFINAL' : 'THE POCKET BOWL') : `SEASON ${F.season}  ·  WEEK ${F.week + 1} OF 10  ·  ${r.w}-${r.l}`, 110, 74, `11px ${PX}`, '#cfd8e0', 'left');
     txt(g, `🪙 ${F.credits}`, 1230, 48, `20px ${PX}`, '#ffd23f', 'right'); txt(g, 'COACHING CREDITS', 1230, 74, `9px ${PX}`, '#cfd8e0', 'right');
-    // roster
-    txt(g, 'YOUR ROSTER', 40, 118, `13px ${PX}`, '#ffd23f', 'left'); txt(g, 'Upgrade players with credits. You earn them by winning and scoring.', 250, 118, BODY, '#9aa8a0', 'left');
-    F.roster.forEach((p, i) => {
-      const y = 140 + i * 66, b = { x: 600, y: y + 8, w: 150, h: 46 }; BTN['up' + i] = b;
+    // tabs: the roster, the facilities, and this week's practice
+    if (!F.goal) F.goal = pick(GOALS)[0];
+    [['roster', 'ROSTER'], ['fac', 'FACILITIES'], ['practice', 'PRACTICE']].forEach(([k, n], i) => { const b = { x: 30 + i * 200, y: 98, w: 190, h: 36 }, on = hubTab === k; BTN['tab' + k] = b; rr(g, b.x, b.y, b.w, b.h, 8, on ? '#ffd23f' : hover === b ? '#2a4a34' : '#1a3322', on ? null : 'rgba(255,255,255,.12)'); txt(g, n, b.x + b.w / 2, b.y + 19, `11px ${PX}`, on ? '#141414' : '#cfd8e0'); if (k === 'practice' && F.practiced !== weekKey() && !on) { g.fillStyle = '#ff5a4a'; g.beginPath(); g.arc(b.x + b.w - 12, b.y + 10, 6, 0, 7); g.fill(); } });
+    for (let i = 0; i < 7; i++) BTN['up' + i] = null; for (let i = 0; i < 4; i++) BTN['fac' + i] = null; BTN.prKick = BTN.prJuke = null;
+    if (hubTab === 'roster') F.roster.forEach((p, i) => {
+      const y = 144 + i * 64, b = { x: 600, y: y + 7, w: 150, h: 44 }; BTN['up' + i] = b;
       rr(g, 30, y, 740, 58, 10, i % 2 ? '#14261a' : '#172c1e');
       rr(g, 40, y + 9, 70, 40, 8, me.c); txt(g, p.p, 75, y + 30, `13px ${PX}`, me.c2);
       txt(g, p.name, 124, y + 22, '800 20px Nunito, system-ui', '#fff', 'left'); txt(g, POS[i][1], 124, y + 44, '700 15px Nunito, system-ui', '#9aa8a0', 'left');
       txt(g, '★'.repeat(p.st) + '☆'.repeat(5 - p.st), 470, y + 30, '26px system-ui', '#ffd23f');
       const max = p.st >= 5, can = !max && F.credits >= p.st + 1;
-      rr(g, b.x, b.y + (hover === b ? 2 : 0), b.w, b.h, 8, max ? '#2a3a2e' : can ? '#3ddc84' : '#3a4a3e'); txt(g, max ? 'MAXED' : `+1 ★  for ${p.st + 1} 🪙`, b.x + b.w / 2, b.y + 24 + (hover === b ? 2 : 0), '900 16px Nunito, system-ui', can ? '#0b2a16' : '#9aa8a0');
+      rr(g, b.x, b.y + (hover === b ? 2 : 0), b.w, b.h, 8, max ? '#2a3a2e' : can ? '#3ddc84' : '#3a4a3e'); txt(g, max ? 'MAXED' : `+1 ★  for ${p.st + 1} 🪙`, b.x + b.w / 2, b.y + 23 + (hover === b ? 2 : 0), '900 16px Nunito, system-ui', can ? '#0b2a16' : '#9aa8a0');
     });
+    if (hubTab === 'fac') { txt(g, 'Team-wide upgrades. They help every player, every game.', 40, 160, BODY, '#9aa8a0', 'left'); FAC.forEach((f, i) => {
+      const y = 186 + i * 100, l = ((F.fac || {})[f.k]) || 0, b = { x: 600, y: y + 22, w: 150, h: 48 }; BTN['fac' + i] = b;
+      rr(g, 30, y, 740, 90, 12, i % 2 ? '#14261a' : '#172c1e'); txt(g, ['🏃', '🏋', '🎬', '🎉'][i], 70, y + 45, '34px system-ui', '#fff');
+      txt(g, f.n, 110, y + 30, '900 22px Nunito, system-ui', '#fff', 'left'); txt(g, l ? f.d(l) : f.d(1), 110, y + 60, '700 15px Nunito, system-ui', l ? '#9cff3a' : '#9aa8a0', 'left');
+      for (let k = 0; k < 3; k++) rr(g, 470 + k * 34, y + 36, 26, 18, 4, k < l ? '#ffd23f' : '#2a3a2e');
+      const can = l < 3 && F.credits >= facCost(l); rr(g, b.x, b.y + (hover === b ? 2 : 0), b.w, b.h, 8, l >= 3 ? '#2a3a2e' : can ? '#3ddc84' : '#3a4a3e'); txt(g, l >= 3 ? 'BUILT' : `Build for ${facCost(l)} 🪙`, b.x + b.w / 2, b.y + 25 + (hover === b ? 2 : 0), '900 16px Nunito, system-ui', can ? '#0b2a16' : '#9aa8a0');
+    }); }
+    if (hubTab === 'practice') {
+      const done = F.practiced === weekKey(); txt(g, done ? 'You have practised this week. Play the game!' : 'One practice a week. Earn credits, and a good one fires the team up (+3% speed next game).', 40, 160, BODY, done ? '#9cff3a' : '#9aa8a0', 'left');
+      [['prKick', '🦶 KICKING DRILL', 'Three field goals: 30, 40 and 50 yards. A credit for every one that goes through.'], ['prJuke', '💨 JUKE DRILL', 'Three runs from your own 20 against the full defense. A credit for every 25 yards.']].forEach(([k, n, dsc], i) => {
+        const b = { x: 40 + i * 370, y: 190, w: 350, h: 300 }; BTN[k] = done ? null : b; const hv = hover === b;
+        rr(g, b.x, b.y + (hv ? -3 : 0), b.w, b.h, 16, done ? '#14261a' : hv ? '#24442e' : '#1a3322', done ? 'rgba(255,255,255,.1)' : '#ffd23f');
+        txt(g, n, b.x + b.w / 2, b.y + 60, `14px ${PX}`, done ? '#5a6a5e' : '#ffd23f'); g.font = '700 17px Nunito, system-ui'; g.fillStyle = done ? '#5a6a5e' : '#e8f0e8'; g.textAlign = 'center';
+        let line = '', yy = b.y + 120; for (const w of dsc.split(' ')) { const tt = line ? line + ' ' + w : w; if (g.measureText(tt).width > 300) { g.fillText(line, b.x + b.w / 2, yy); line = w; yy += 24; } else line = tt; } g.fillText(line, b.x + b.w / 2, yy);
+        if (!done) { rr(g, b.x + 75, b.y + 220, 200, 50, 10, '#ffd23f'); txt(g, 'START', b.x + 175, b.y + 246, `14px ${PX}`, '#141414'); }
+      });
+    }
     // next game
     const op = oppTeam(), opr = F.opp[S.oppI] || 2;
     rr(g, 800, 104, 450, 440, 14, '#14141c', 'rgba(255,255,255,.12)');
@@ -1084,8 +1160,8 @@ const GAME = {
     rr(g, 1045, 180, 160, 160, 16, op.c); txt(g, op.ab, 1125, 260, `30px ${PX}`, op.c2);
     txt(g, `${op.city} ${op.nick}`, 1125, 362, '800 18px Nunito, system-ui', '#fff'); txt(g, '★'.repeat(Math.round(opr)) + '☆'.repeat(5 - Math.round(opr)), 1125, 388, '20px system-ui', op.c);
     txt(g, `${me.city} ${me.nick}`, 925, 362, '800 18px Nunito, system-ui', '#fff');
-    const rr2 = F.rec[S.oppI]; if (!F.playoff) txt(g, `Their record: ${rr2.w}-${rr2.l}`, 1025, 420, BODY, '#9aa8a0');
-    txt(g, '📰 ' + F.news, 1025, 456, '700 15px Nunito, system-ui', '#cfd8e0'); txt(g, 'Forecast: ' + WXN[wxNow()], 1025, 486, '800 15px Nunito, system-ui', '#ffd23f');
+    const rr2 = F.rec[S.oppI]; if (!F.playoff) txt(g, `Their record: ${rr2.w}-${rr2.l}`, 1025, 410, BODY, '#9aa8a0');
+    txt(g, '🎯 Weekly goal: ' + ((GOALS.find(x => x[0] === F.goal) || [, ''])[1]) + '  (+2 🪙)', 1025, 436, '800 15px Nunito, system-ui', '#9cff3a'); txt(g, '📰 ' + F.news, 1025, 462, '700 15px Nunito, system-ui', '#cfd8e0'); txt(g, 'Forecast: ' + WXN[wxNow()], 1025, 490, '800 15px Nunito, system-ui', '#ffd23f');
     btn(g, BTN.play, 'PLAY', '#ffd23f', '#141414', 'Kick off');
     // standings
     if (!F.playoff) { const sd = standings().slice(0, 8); txt(g, 'STANDINGS', 40, 618, `11px ${PX}`, '#ffd23f', 'left'); sd.forEach((x, i) => { const cx = 40 + (i % 4) * 190, cy = 646 + Math.floor(i / 4) * 30; txt(g, `${i + 1}. ${x.t.ab} ${x.w}-${x.l}`, cx, cy, `11px ${PX}`, x.t.i === F.team ? '#ffd23f' : i < 4 ? '#e8e8e8' : '#7a8a80', 'left'); }); txt(g, 'Top 4 make the playoffs', 800, 690, '700 14px Nunito, system-ui', '#7a8a80', 'left'); }
@@ -1100,6 +1176,7 @@ const GAME = {
     const s = c.stats; [['Passing yards', s.pass], ['Rushing yards', s.rush], ['Touchdowns', s.td], ['Interceptions thrown', s.int], ['Ankles broken', s.ankles || 0], ['Missed tackles forced', s.whiffs || 0]].forEach(([k, n], i) => { txt(g, k, 440, 276 + i * 28, '700 19px Nunito, system-ui', '#cfd8e0', 'left'); txt(g, String(n), 840, 276 + i * 28, `15px ${PX}`, '#fff', 'right'); });
     const ds = c.dstats; if (ds && (ds.tk || ds.sack || ds.int || ds.pbu)) txt(g, `YOUR DEFENSE: ${ds.tk} tackles · ${ds.sack} sacks · ${ds.int} picks · ${ds.pbu} pass breakups`, 640, 440, '800 15px Nunito, system-ui', '#29e0ff');
     if (c.best) { txt(g, 'PLAY OF THE GAME', 640, 462, `10px ${PX}`, '#9cff3a'); txt(g, c.best.text, 640, 484, '800 18px Nunito, system-ui', '#fff'); }
+    if (c.goalT) txt(g, `Weekly goal: ${c.goalT}  ${c.goal ? '✓ +2' : '✗'}`, 640, 418, '800 15px Nunito, system-ui', c.goal ? '#9cff3a' : '#9aa8a0');
     txt(g, `+${c.earn} coaching credits`, 640, 506, `14px ${PX}`, '#ffd23f');
     btn(g, BTN.cont, 'CONTINUE', '#ffd23f');
   }
@@ -1139,7 +1216,10 @@ const GAME = {
       const F = S.F;
       if (hit(BTN.play, x, y)) { F.picked = true; K.persist(); return startGame(); }
       if (!F.picked && F.week === 0 && F.season === 1 && (hit(BTN.prev, x, y) || hit(BTN.next, x, y))) { F.team = (F.team + (hit(BTN.next, x, y) ? 1 : 7)) % 8; newSeason(F); F.season = 1; S.oppI = F.sched[0]; K.sfx(600, .06, 'square', .05); return; }
+      for (const k of ['roster', 'fac', 'practice']) if (hit(BTN['tab' + k], x, y)) { hubTab = k; K.sfx(600, .05, 'square', .04); return; }
       for (let i = 0; i < 7; i++) if (hit(BTN['up' + i], x, y)) return upgrade(i);
+      for (let i = 0; i < 4; i++) if (hit(BTN['fac' + i], x, y)) return facBuy(i);
+      if (hit(BTN.prKick, x, y)) return startPractice('kick'); if (hit(BTN.prJuke, x, y)) return startPractice('juke');
       return;
     }
     if (mode === 'result') { if (hit(BTN.cont, x, y)) fromResult(); return; }
@@ -1167,7 +1247,7 @@ const GAME = {
   GAME.move = (x, y) => {
     if (ptr) { ptr.x = x; ptr.y = y; }
     hover = null;
-    if (mode === 'hub') { for (const k of ['play', 'prev', 'next', 'up0', 'up1', 'up2', 'up3', 'up4', 'up5', 'up6']) if (hit(BTN[k], x, y)) hover = BTN[k]; }
+    if (mode === 'hub') { for (const k of ['play', 'prev', 'next', 'up0', 'up1', 'up2', 'up3', 'up4', 'up5', 'up6', 'tabroster', 'tabfac', 'tabpractice', 'fac0', 'fac1', 'fac2', 'fac3', 'prKick', 'prJuke']) if (BTN[k] && hit(BTN[k], x, y)) hover = BTN[k]; }
     else if (mode === 'opp' && oppAnim && oppAnim.choice) { for (const k of ['defplay', 'defsim']) if (hit(BTN[k], x, y)) hover = BTN[k]; }
     else if (mode === 'def' && Q) { for (const k of Q.phase === 'call' ? ['dblitz', 'dcover', 'dstop'] : ['dswap', 'juke']) if (BTN[k] && hit(BTN[k], x, y)) hover = BTN[k]; }
     else if (mode === 'result') { if (hit(BTN.cont, x, y)) hover = BTN.cont; }
