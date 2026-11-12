@@ -693,6 +693,7 @@ const GAME = {
     if (sub) txt(g, sub, b.x + b.w / 2, b.y + b.h / 2 + 18 + (hv ? 2 : 0), BODY, c2);
   }
   function fieldUI(g) {
+    if (posed) return;   // the cover shot: just the field
     if (P.phase === 'call') {
       if (S.d.down === 4 && !P.go4) { btn(g, BTN.punt, 'PUNT', '#e8e8e8'); btn(g, BTN.fg, 'FIELD GOAL', fgRange() ? '#3ddc84' : '#555', fgRange() ? '#141414' : '#999'); btn(g, BTN.go, 'GO FOR IT', '#ffd23f'); }
       else { btn(g, BTN.pass, 'PASS', '#ffd23f'); btn(g, BTN.run, 'RUN', '#3ddc84'); }
