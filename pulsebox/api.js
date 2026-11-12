@@ -192,14 +192,14 @@ async function view(request, env) {
   return stub.fetch('https://stats/view', { method: 'POST', body: JSON.stringify({ k }) });
 }
 
-// Leaderboards. Hyperlane and Kerbline keep fastest-time boards per course (LB, lowest wins). Every other game in the hub has
+// Leaderboards. Hyperlane keeps its fastest-time boards per course (LB, lowest wins). Every other game in the hub has
 // score boards (highest wins): 'best' for all time and 'dYYYYMMDD' for one US Eastern day (only today or yesterday may
 // be posted to; the daily challenge uses it). One row per person per board, kept only when it improves. A signed-in
 // player is ranked by their account; anyone else by a salted hash of their IP.
 //   GET  /api/lb?g=&k=   -> { top: [{n,t}] x10, count, me?: {t, rank} }
 //   POST /api/lb  <- {g,k,n,t}  -> { rank, best, top }
 //   GET  /api/lb/mine    -> { boards: [{g, t, rank}] }   (your all-time spots, for the profile's badges)
-const LB = { hyperlane: { keys: ['downtown', 'aurora', 'canyon'], min: 18000, max: 600000 }, kerbline: { keys: ['warmup', 'hilltop', 'hop', 'zigzag', 'skyway', 'figure', 'canyon', 'stairs', 'slalom', 'leap', 'spiral', 'grand'], min: 5000, max: 900000 } };
+const LB = { hyperlane: { keys: ['downtown', 'aurora', 'canyon'], min: 18000, max: 600000 } };
 function board(g, k, ids) {
   if (LB[g]) return LB[g].keys.includes(k) ? { asc: true, min: LB[g].min, max: LB[g].max } : null;
   if (!ID_RE.test(g || '') || (ids && ids.length && !ids.includes(g))) return null;

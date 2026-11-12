@@ -29,16 +29,4 @@ G['baggage-panic'] = {
   ${sparkle(90, 470, 16)}${sparkle(540, 180, 12)}${sparkle(60, 350, 9)}`
 };
 
-G['pocket-jury'] = {
-  t: 'POCKET<br>JURY', f: 'Chewy', size: 112, fill: ['#ffffff', '#ffd9a8'], stroke: '#3a1a08', ext: '#c4532a', rot: -4,
-  svg: `<defs>${sh()}<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcf7a"/><stop offset=".6" stop-color="#f08a4a"/><stop offset="1" stop-color="#8a3a2a"/></linearGradient></defs>
-  <rect width="600" height="600" fill="url(#bg)"/>${rays(300, 380, 16, '#fff', .1)}
-  <rect x="40" y="430" width="520" height="170" rx="10" fill="#6a3418"/><rect x="40" y="420" width="520" height="26" rx="8" fill="#8a4b2a"/>
-  <g filter="url(#ds)" transform="translate(150 330) rotate(-8)"><rect x="-80" y="-100" width="160" height="200" rx="12" fill="#fff8ea"/><rect x="-60" y="-78" width="120" height="14" rx="6" fill="#c4532a"/><path d="M-60 -44 h120 M-60 -22 h120 M-60 0 h90 M-60 22 h120 M-60 44 h70" stroke="#c8b49a" stroke-width="8" stroke-linecap="round"/><circle cx="46" cy="66" r="22" fill="none" stroke="#e0302a" stroke-width="6"/></g>
-  <g filter="url(#ds)" transform="translate(420 350) rotate(9)"><rect x="-74" y="-90" width="148" height="180" rx="12" fill="#fff8ea"/><circle cy="-20" r="46" fill="#ffd9a8"/><path d="M-46 -20 a46 46 0 0 0 92 0Z" fill="#e8a86a"/><path d="M-40 -28 q40 -30 80 0" stroke="#c4532a" stroke-width="10" fill="none" stroke-linecap="round"/><rect x="-54" y="44" width="108" height="12" rx="6" fill="#c8b49a"/><text x="0" y="-62" text-anchor="middle" font-family="Chewy" font-size="22" fill="#8a3a2a">EXHIBIT A</text></g>
-  <g filter="url(#ds)" transform="translate(300 300) rotate(-30)"><rect x="-90" y="-12" width="180" height="24" rx="10" fill="#8a4b2a"/><rect x="70" y="-46" width="56" height="92" rx="16" fill="#a0663a"/><rect x="74" y="-46" width="48" height="16" rx="6" fill="#c48a5a"/><rect x="74" y="30" width="48" height="16" rx="6" fill="#c48a5a"/></g>
-  <g filter="url(#ds)" transform="translate(300 488)"><ellipse rx="72" ry="16" fill="#8a4b2a"/><rect x="-60" y="-30" width="120" height="30" rx="10" fill="#a0663a"/></g>
-  ${sparkle(76, 470, 14)}${sparkle(530, 200, 12)}${sparkle(560, 470, 9)}`
-};
-
 if (typeof module !== 'undefined') module.exports = G;

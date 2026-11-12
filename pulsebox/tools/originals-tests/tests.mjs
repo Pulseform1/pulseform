@@ -29,28 +29,6 @@ T['baggage-panic'] = async () => {
   await fuzz(p, 120, ['r', 'z']); await finish(p, g);
 };
 
-T['pocket-jury'] = async () => {
-  const g = 'pocket-jury'; let p = await open(g);
-  for (let docket = 0; docket < 2; docket++) {
-    for (let c = 0; c < 8; c++) {
-      for (const n of [0, 1, 2]) await tap(p, 170, 232 + n * 87 + 36);
-      const dec = await p.evaluate(() => juryCases[state.case].decisive); await tap(p, 170, 232 + dec * 87 + 36); await ctl(p, 'mark');
-      await ctl(p, (await p.evaluate(() => juryCases[state.case].guilty)) ? 'guilty' : 'clear');
-      if (!(await p.evaluate(() => state.resolved))) { note(g, `docket ${docket + 1} case ${c + 1}: verdict did not register`); break; }
-      await ctl(p, 'next');
-    }
-    const fin = await p.evaluate(() => ({ docket: state.docket, score: state.score, over: state.over })); console.log('  docket', JSON.stringify(fin));
-    if (fin.score !== 1200 || !fin.over) note(g, `docket ${docket + 1}: perfect run did not reach 1200 and the end card`);
-    if (docket === 0) { await tap(p, 480, 375); if ((await p.evaluate(() => state.case)) !== 8) { note(g, 'the Docket 2 button did not open case 9'); break; } }
-  }
-  const over = await p.evaluate(() => { const out = [], fit = (s, font, w) => { ctx.font = font; let rows = 1, row = ''; for (const x of s.split(' ')) { if (ctx.measureText(row + x).width > w && row) { rows++; row = ''; } row += x + ' '; } return rows; };
-    for (const c of juryCases) { for (const [t, body] of c.cards) { if (fit(body, `600 22px ${FONT}`, 535) > 5) out.push(c.title + ' / ' + t); ctx.font = `600 16px ${FONT}`; if (ctx.measureText(t).width > 240) out.push('label: ' + t); } if (fit(c.brief, `600 17px ${FONT}`, 832) > 2) out.push(c.title + ' brief'); if (fit('VERDICT OVERTURNED. ' + c.explain, `600 15px ${FONT}`, 850) > 2) out.push(c.title + ' explanation'); ctx.font = `850 25px ${FONT}`; if (ctx.measureText(c.title).width > 840) out.push('title ' + c.title); }
-    return { out, n: juryCases.length, guilty: juryCases.filter(c => c.guilty).length, dec: juryCases.map(c => c.decisive).join('') }; });
-  console.log('  cases', over.n, 'guilty', over.guilty, 'decisive', over.dec);
-  if (over.out.length) note(g, 'text overflows: ' + over.out.join('; '));
-  await fuzz(p, 120); await finish(p, g);
-};
-
 T['engine'] = async () => {
   const p = await open('baggage-panic');
   await p.locator('#help').click(); await p.locator('#restart').click(); await p.waitForTimeout(500);
