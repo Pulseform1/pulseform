@@ -1,4 +1,4 @@
-"""Builds the kit-based games: src/games/<id>.js + src/kit.js + src/kit.css -> public/games/<id>.html (one file each).
+"""Builds the kit-based games: src/games/<id>.js (or the parts in src/games/<id>/) + src/kit.js + src/kit.css -> public/games/<id>.html (one file each).
 Run from anywhere: python3 tools/build-games.py [game-id ...]  (no ids builds every game)"""
 import glob, os, re, sys, urllib.parse
 
@@ -11,7 +11,9 @@ only = set(sys.argv[1:])
 # screens and join-a-match fix). Rebuilding them from src/ with this kit would undo that, so they are never rebuilt here.
 # Their game code still comes from src/games/strata.js and siegeworks.js: only that part of the page is refreshed.
 FROZEN = {'strata', 'siegeworks'}
-for path in sorted(glob.glob(os.path.join(HERE, 'src', 'games', '*.js'))):
+# a game is one file, src/games/<id>.js, or a folder, src/games/<id>/, whose .js parts are joined in name order
+games = glob.glob(os.path.join(HERE, 'src', 'games', '*.js')) + [d for d in glob.glob(os.path.join(HERE, 'src', 'games', '*')) if os.path.isdir(d)]
+for path in sorted(games, key=lambda q: os.path.splitext(os.path.basename(q))[0]):
     gid = os.path.splitext(os.path.basename(path))[0]
     if only and gid not in only: continue
     if gid in FROZEN:   # keep the page's own kit and multiplayer copies; refresh only the game's code from src/
@@ -21,7 +23,7 @@ for path in sorted(glob.glob(os.path.join(HERE, 'src', 'games', '*.js'))):
         new = page[:a] + game + page[b:]
         if new != page: open(out, 'w', encoding='utf-8').write(new)
         print(gid, 'frozen page, game code', 'updated' if new != page else 'unchanged'); continue
-    js = open(path, encoding='utf-8').read()
+    js = ''.join(open(q, encoding='utf-8').read().rstrip('\n') + '\n' for q in sorted(glob.glob(os.path.join(path, '*.js')))) if os.path.isdir(path) else open(path, encoding='utf-8').read()
     # shared code a game asks for with a line like  // @use person  (from src/lib/person.js)
     for lib in re.findall(r'^// @use (\w+)', js, re.M): js = src('lib', lib + '.js') + '\n' + js
     title = re.search(r"title: '([^']+)'", js).group(1)
