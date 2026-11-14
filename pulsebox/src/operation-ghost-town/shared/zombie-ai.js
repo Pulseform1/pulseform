@@ -1,0 +1,16 @@
+import {freshPlayer,movePlayer,visible,overlaps} from './physics.js';
+import {findPath} from './ai.js';
+import {CITY_TOWERS} from './city.js';
+import {COLLIDERS} from './world.js';
+export function createZombie(id,point,day=1){const type=['crawler','runner','leaper'][id%3],z=freshPlayer('zombie-'+id,type==='crawler'?'Crawler':type==='runner'?'Runner':'Leaper','bravo',point);Object.assign(z,{bot:true,role:'zombie',zombieType:type,weapon:9,height:type==='crawler'?.7:1.72,health:(type==='crawler'?65:90)+(day-1)*5,maxHealth:(type==='crawler'?65:90)+(day-1)*5,attackAt:0,leapAt:0,brain:{path:[],repath:0,tower:null,stair:0}});return z}
+export function updateZombieAI(z,humans,sim,dt){if(!z.alive)return;const target=humans.filter(p=>p.alive&&!p.deploying).sort((a,b)=>Math.hypot(a.x-z.x,a.z-z.z)-Math.hypot(b.x-z.x,b.z-z.z))[0];if(!target)return;const brain=z.brain,dx=target.x-z.x,dz=target.z-z.z,range=Math.hypot(dx,dz);z.yaw=Math.atan2(-dx,-dz);z.pitch=0;let goal=target;
+ const tower=target.y>2?CITY_TOWERS.find(b=>Math.abs(target.x-b.x)<8&&Math.abs(target.z-b.z)<8):null;
+ if(tower&&z.y<Math.min(tower.h-.1,target.y+.2)){if(brain.tower!==tower.name){brain.tower=tower.name;brain.stair=0;brain.path=[]}const first=tower.stairs[0];if(brain.stair===0&&Math.hypot(z.x-first.x,z.z-first.z)>1.2&&z.y<.5)goal=first;else{while(brain.stair<tower.stairs.length-1&&Math.hypot(z.x-tower.stairs[brain.stair].x,z.z-tower.stairs[brain.stair].z)<.55&&z.y>=tower.stairs[brain.stair].y-.35)brain.stair++;goal=tower.stairs[brain.stair];brain.path=[]}}
+ else if(z.y>target.y+2){const nearest=CITY_TOWERS.find(b=>Math.abs(z.x-b.x)<9&&Math.abs(z.z-b.z)<9);if(nearest){let index=0,best=Infinity;nearest.stairs.forEach((p,i)=>{const d=Math.hypot(p.x-z.x,p.z-z.z)+(Math.abs(p.y-z.y)*2);if(d<best){best=d;index=i}});goal=nearest.stairs[Math.max(0,index-1)];brain.path=[]}}
+ if(tower&&z.y>=tower.h-.1&&Math.abs(z.z-tower.z)>4.8){const last=tower.stairs.at(-1);goal={x:last.x,y:tower.h,z:tower.z+4.5};brain.path=[]}
+ const onStairs=goal!==target&&goal.y!==undefined&&Math.hypot(z.x-goal.x,z.z-goal.z)<2;
+ if(!onStairs&&z.y<1){brain.repath-=dt;if(brain.repath<=0){brain.path=findPath(z,goal);brain.repath=1.1+sim.random()*.5}while(brain.path.length&&Math.hypot(z.x-brain.path[0].x,z.z-brain.path[0].z)<.55)brain.path.shift();goal=brain.path[0]||goal}
+ const gx=goal.x-z.x,gz=goal.z-z.z,len=Math.hypot(gx,gz)||1,slow=z.zombieType==='crawler'?.38:.88;const wx=gx/len*slow,wz=gz/len*slow;const leap=z.zombieType==='leaper'&&range>2&&range<6&&Math.abs(target.y-z.y)<1.5&&z.grounded&&sim.time>=z.leapAt&&visible(z,target);if(leap){z.leapAt=sim.time+4;sim.events.push({kind:'zombieLeap',id:z.id,point:{x:z.x,y:z.y,z:z.z}})}movePlayer(z,{x:Math.cos(z.yaw)*wx-Math.sin(z.yaw)*wz,z:Math.sin(z.yaw)*wx+Math.cos(z.yaw)*wz,yaw:z.yaw,pitch:0,jump:leap},dt);if(z.zombieType==='crawler')z.height=.7;
+ if(range<1.65&&Math.abs(target.y-z.y)<1.6&&sim.time>=z.attackAt&&visible({...z,y:z.y+(z.zombieType==='crawler'?-.5:0)},target)){z.attackAt=sim.time+1.1;sim.damage(target,z,z.zombieType==='leaper'?19:14);sim.events.push({kind:'zombieStrike',id:z.id,point:{x:z.x,y:z.y,z:z.z}})}
+}
+export function zombieSpawnClear(p){return !COLLIDERS.some(b=>overlaps({...p,y:.1,height:1.72},b))}

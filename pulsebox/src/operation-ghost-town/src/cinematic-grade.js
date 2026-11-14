@@ -1,0 +1,10 @@
+import * as T from 'three';
+export class CinematicGrade{
+constructor(){this.enabled=true;this.target=new T.WebGLRenderTarget(1,1,{type:T.HalfFloatType,depthBuffer:true});this.scene=new T.Scene();this.camera=new T.OrthographicCamera(-1,1,1,-1,0,1);this.material=new T.ShaderMaterial({depthTest:false,depthWrite:false,uniforms:{source:{value:this.target.texture},time:{value:0},pixel:{value:new T.Vector2(1,1)},nvg:{value:0}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:`uniform sampler2D source;uniform float time;uniform vec2 pixel;uniform float nvg;varying vec2 vUv;
+vec3 film(vec3 x){return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
+void main(){vec3 c=texture2D(source,vUv).rgb;vec3 glow=vec3(0.);for(int i=0;i<12;i++){float a=float(i)*.5236,r=i<6?3.:8.;vec2 d=vec2(cos(a),sin(a))*r;glow+=max(texture2D(source,vUv+d*pixel).rgb-vec3(.78),vec3(0.))*(i<6?1.:.6);}c+=glow*.07;float lum=dot(c,vec3(.2126,.7152,.0722));vec3 graded=mix(vec3(lum),c,.88);graded+=vec3(-.012,.008,.018)*(1.-clamp(lum,0.,1.));graded*=vec3(1.025,1.005,.98);graded=film(graded*1.05);c=mix(graded,c,nvg);float edge=1.-.20*smoothstep(.25,.78,length(vUv-.5));float grain=(fract(sin(dot(vUv+time*.001,vec2(12.9898,78.233)))*43758.5453)-.5)*.009;c=max(c*edge+grain,vec3(0.));gl_FragColor=vec4(c,1.);
+#include <colorspace_fragment>
+}`});this.quad=new T.Mesh(new T.PlaneGeometry(2,2),this.material);this.scene.add(this.quad)}
+render(renderer,draw,nightVision=false){const previous=renderer.getRenderTarget(),size=renderer.getDrawingBufferSize(new T.Vector2());if(this.target.width!==size.x||this.target.height!==size.y)this.target.setSize(size.x,size.y);this.material.uniforms.pixel.value.set(1/size.x,1/size.y);this.material.uniforms.time.value=performance.now()/1000;this.material.uniforms.nvg.value=nightVision?1:0;try{renderer.setRenderTarget(this.target);draw();renderer.setRenderTarget(previous);renderer.render(this.scene,this.camera)}finally{renderer.setRenderTarget(previous)}}
+dispose(){this.target.dispose();this.material.dispose();this.quad.geometry.dispose()}
+}

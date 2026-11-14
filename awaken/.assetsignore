@@ -1,0 +1,13 @@
+README.md
+wrangler.jsonc
+.assetsignore
+.gitignore
+.wrangler
+server
+android
+node_modules
+package.json
+package-lock.json
+capacitor.config.json
+share/card.html
+tools

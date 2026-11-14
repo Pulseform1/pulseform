@@ -1,0 +1,678 @@
+<!doctype html>
+<!-- ODD CROWD, adapted for Pulsebox (online rooms run on the Pulsebox relay; house guests; motion polish).
+MIT License
+
+Copyright (c) 2026 ODD CROWD contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Third-party dependencies and separately licensed assets remain subject to
+and available under their respective license terms.
+-->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f3f1e7"><meta name="description" content="An original party game for wonderfully strange people. Write surprising answers, vote for your favorites, and find your odd crowd."><title>ODD CROWD · Good company. Questionable answers.</title><style>:root{--paper:#f3f1e7;--ink:#1b2723;--muted:#68706a;--lime:#caeb76;--purple:#bca7df;--orange:#edba83;--pink:#e9b3c4;--line:#1b272332;--mono:ui-monospace,SFMono-Regular,Consolas,monospace;--sans:Arial,Helvetica,sans-serif;color-scheme:light}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-tap-highlight-color:transparent}button,input,textarea,select{font:inherit}button{cursor:pointer;border-radius:0;color:inherit}button:hover:not(:disabled){filter:brightness(.97)}button:disabled{cursor:default;opacity:.48}button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid #8270bc;outline-offset:4px}[hidden]{display:none!important}.page-noise{position:fixed;inset:0;pointer-events:none;z-index:10;opacity:.025;background-image:repeating-linear-gradient(0deg,#1b272320 0,transparent 1px,transparent 4px)}.site-header{max-width:1500px;margin:auto;padding:32px 5.2%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.wordmark{background:none;border:0;padding:0;font-weight:900;font-size:22px;letter-spacing:-1.4px;display:flex;gap:5px;align-items:center}.logo-eye{display:inline-grid;place-items:center;width:23px;height:14px;border:2px solid var(--ink);border-radius:50%;font-size:10px;letter-spacing:0;transform:rotate(-13deg);margin:0 2px}.registered{font:9px var(--mono);align-self:flex-start;letter-spacing:0;margin-left:3px}.header-tools{display:flex;gap:28px}.text-button{background:none;border:0;padding:7px 0;font:9px var(--mono);letter-spacing:.8px;color:var(--muted)}main{max-width:1500px;margin:auto;padding:0 5.2%}.home-screen{display:grid;grid-template-columns:1.02fr 1fr;gap:2%;min-height:700px;align-items:center;padding:55px 0 45px}.eyebrow{font:9px/1.7 var(--mono);letter-spacing:1.6px;font-weight:500}.eyebrow i{display:inline-block;width:6px;height:6px;background:var(--ink);border-radius:50%;margin-right:10px}.home-copy h1{font-weight:900;font-size:clamp(65px,7.1vw,110px);line-height:.97;letter-spacing:-7px;margin:27px 0}.odd-word{position:relative;display:inline-block}.odd-word svg{position:absolute;inset:-15px -16px;width:calc(100% + 33px);height:calc(100% + 29px);overflow:visible;z-index:-1}.odd-word svg path{fill:none;stroke:var(--purple);stroke-width:13;stroke-linecap:round}.home-intro{font-size:23px;line-height:1.4;letter-spacing:-.5px;margin:29px 0 15px}.home-description{font-size:13px;color:var(--muted);line-height:1.8}.home-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:28px;max-width:500px}.button{display:block;border:1px solid var(--ink);padding:16px 19px;min-height:49px;font:10px var(--mono);letter-spacing:.8px;text-align:left;font-weight:600}.button span{float:right;margin-left:18px;font-size:16px;line-height:11px}.ink-button{background:var(--ink);color:var(--paper)}.outline-button{background:transparent;color:var(--ink)}.lime-button{background:var(--lime);color:var(--ink)}.home-actions .button{min-width:194px}.home-actions .lime-button{min-width:154px}.home-meta{display:flex;gap:11px;align-items:center;margin-top:30px;font:7px var(--mono);letter-spacing:.5px;color:var(--muted)}.home-meta b{font-size:12px;color:var(--ink);font-weight:400}.home-art{position:relative;min-width:0;align-self:stretch;display:flex;align-items:center}.party-illustration{width:100%;max-height:660px;overflow:visible}.art-label{position:absolute;right:9%;top:3%;font:8px/1.7 var(--mono);letter-spacing:1px;transform:rotate(5deg)}.art-sticker{position:absolute;bottom:5%;right:4%;border:2px solid var(--ink);border-radius:50%;width:90px;height:90px;background:var(--paper);display:grid;place-content:center;text-align:center;font-size:27px;line-height:1;transform:rotate(-13deg);box-shadow:5px 4px 0 var(--ink)}.art-sticker span{font:8px var(--mono);margin-top:6px}.site-footer{max-width:1500px;margin:auto;padding:25px 5.2%;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:15px;font:7px var(--mono);letter-spacing:.8px;color:var(--muted)}.footer-flower{font-size:21px;color:var(--ink)}.resume-link{display:block;border:0;border-bottom:1px solid var(--ink);background:none;font:9px var(--mono);padding:0 0 4px;margin-top:16px}.setup-screen{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:9%;padding:70px 5% 100px;min-height:650px;align-items:start}.section-heading{padding-top:10px}.section-heading h2,.handoff-screen h2{font-size:clamp(44px,5vw,76px);font-weight:800;line-height:1;letter-spacing:-3px;margin:24px 0}.section-heading p{font-size:15px;line-height:1.8;color:var(--muted);max-width:380px}.setup-card{border:1px solid var(--ink);box-shadow:7px 7px 0 var(--ink);padding:30px;background:#fbf9f0}.card-index{font:8px var(--mono);letter-spacing:1.5px;color:var(--muted)}.setup-card h3{font-size:25px;letter-spacing:-.7px;margin:24px 0}.setup-card>label{display:block;font:9px var(--mono);letter-spacing:1px;margin:25px 0 12px}.setup-card>label span{float:right;color:var(--muted)}input[type=range]{width:100%;accent-color:var(--ink)}.small-note{font:10px/1.8 var(--mono);color:var(--muted);margin:22px 0}.setup-card>.button{width:100%;margin-top:25px}.large-input{display:block;width:100%;padding:14px 12px;border:1px solid var(--ink);background:var(--paper);font-size:20px;min-height:52px;border-radius:0}.large-input::placeholder{color:#8b8f87}#joinCode{letter-spacing:6px;text-transform:uppercase}.back-link{position:absolute;bottom:45px;left:5%;border:0;background:none;padding:0;font:9px var(--mono);letter-spacing:1px}.inline-error{font:11px/1.6 var(--mono);color:#a63c35;margin:16px 0 0}.local-name-row{display:flex;align-items:center;gap:9px;margin:10px 0}.local-name-row>span{font:9px var(--mono);color:var(--muted);min-width:18px}.local-name-row input{width:100%;background:var(--paper);border:1px solid var(--line);padding:11px;font-size:14px;border-radius:0}.local-name-row button{background:none;border:0;font-size:20px;padding:5px;color:var(--muted)}.add-player{background:none;border:1px dashed var(--ink);padding:12px;width:100%;font:9px var(--mono);margin-top:10px}.modal{position:fixed;inset:0;z-index:20;background:#1b272355;backdrop-filter:blur(7px);display:grid;place-items:center;padding:20px;overflow-y:auto}.help-panel{position:relative;background:var(--paper);border:1px solid var(--ink);box-shadow:8px 8px 0 var(--ink);width:min(670px,100%);padding:38px;max-height:calc(100dvh - 40px);overflow-y:auto}.modal-close{position:absolute;top:10px;right:15px;border:0;background:none;font-size:28px;padding:0 5px}.help-panel h2{font-size:38px;letter-spacing:-1.5px;line-height:1.05;margin:23px 0}.help-panel ol{padding-left:18px}.help-panel li{padding-left:7px;margin:20px 0;font:10px var(--mono)}.help-panel li b{letter-spacing:.4px}.help-panel li p{font:12px/1.8 var(--sans);color:var(--muted);margin:7px 0}.help-panel>.button{width:100%;margin-top:25px}.compact-panel{max-width:430px}.compact-panel p{color:var(--muted);font-size:13px;line-height:1.8}.confirm-actions{display:flex;gap:9px;margin-top:25px}.confirm-actions .button{flex:1;font-size:9px}.handoff-screen{min-height:680px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:55px 15px}.handoff-eye{display:flex;gap:22px;padding:35px;background:var(--purple);border:2px solid var(--ink);border-radius:47%;transform:rotate(-7deg);margin:40px 0 17px;box-shadow:5px 5px 0 var(--ink)}.handoff-eye>span{width:30px;height:44px;border:2px solid var(--ink);background:var(--paper);border-radius:50%;position:relative}.handoff-eye>span:after{content:'';position:absolute;bottom:5px;left:14px;width:9px;height:16px;background:var(--ink);border-radius:50%}.handoff-screen>p{font-size:16px;margin:20px 0 0;color:var(--muted)}.handoff-screen h2{margin:12px 0 20px;overflow-wrap:anywhere;max-width:90%}.handoff-screen>.button{min-width:280px;margin:30px 0 17px}.muted-copy{font:11px/1.8 var(--mono);color:var(--muted);max-width:400px}.room-toolbar{display:flex;justify-content:space-between;align-items:center;margin:24px 0 18px;font:9px var(--mono);letter-spacing:.5px}.room-toolbar>div{display:flex;align-items:center;gap:20px}.room-label{font-weight:700}.copy-invite{font:8px var(--mono);color:var(--muted);border:0;border-bottom:1px solid var(--line);background:none;padding:4px 0}.room-toolbar-right{gap:16px!important}#connectionStatus{font-size:8px;color:var(--muted)}.round-bar{display:flex;justify-content:space-between;align-items:center;background:var(--ink);color:var(--paper);padding:13px 18px;font:9px var(--mono);letter-spacing:1px}.round-bar #timer{font-size:17px;min-width:55px;text-align:right;font-weight:700}.round-bar #timer.urgent{color:var(--lime)}.stage{padding:42px 0 60px;min-height:550px}.stage-heading{text-align:center;max-width:900px;margin:0 auto 30px}.stage-heading .eyebrow{color:var(--muted)}.stage-heading h2{font-size:clamp(32px,4.2vw,65px);font-weight:800;letter-spacing:-2px;line-height:1.08;margin:16px 0}.stage-heading p{font-size:13px;color:var(--muted);line-height:1.8;margin:12px auto;max-width:550px}.lobby-layout{display:grid;grid-template-columns:1fr 1fr;gap:7%;align-items:start;max-width:1100px;margin:auto}.join-billboard{background:var(--lime);border:1px solid var(--ink);padding:35px;box-shadow:7px 7px 0 var(--ink)}.join-billboard h2{font-size:48px;font-weight:800;letter-spacing:-2px;line-height:1.02;margin:16px 0 25px}.big-code{font:clamp(35px,4vw,57px) var(--mono);letter-spacing:5px;font-weight:700;background:var(--paper);border:1px solid var(--ink);padding:18px 12px;text-align:center;display:block;width:100%}.join-billboard p{font-size:12px;line-height:1.8;color:#445435}.lobby-seats h3{font-size:23px;letter-spacing:-.7px;margin:10px 0 20px}.seat-list{display:flex;gap:9px;flex-wrap:wrap;min-height:130px;align-content:flex-start}.player-chip{display:flex;align-items:center;gap:9px;border:1px solid var(--ink);padding:11px 13px;font:12px var(--sans);background:#fbf9f0}.player-chip:nth-child(4n+2){background:#e7ddf3}.player-chip:nth-child(4n+3){background:#e2edc9}.player-chip:nth-child(4n+4){background:#f2d9bd}.player-chip .chip-dot{width:8px;height:8px;border-radius:50%;background:var(--ink)}.player-chip.offline{opacity:.5}.lobby-seats>.button{width:100%;margin-top:25px}.lobby-tip{font:10px/1.8 var(--mono);color:var(--muted);margin-top:18px}.writing-layout{display:grid;grid-template-columns:1.1fr 1fr;gap:5%;max-width:1100px;margin:auto}.prompt-card{border:1px solid var(--ink);background:var(--purple);padding:32px;box-shadow:6px 6px 0 var(--ink);position:relative}.prompt-card .card-index{color:#504560}.prompt-card h2{font-size:clamp(27px,3vw,43px);line-height:1.15;letter-spacing:-1px;margin:27px 0 55px;overflow-wrap:anywhere}.prompt-card:after{content:'✳';font-size:40px;position:absolute;right:25px;bottom:15px;transform:rotate(12deg)}.answer-form{padding:5px 0}.answer-form label{display:flex;justify-content:space-between;font:9px var(--mono);letter-spacing:.8px;margin-bottom:13px}.answer-form textarea{display:block;resize:vertical;width:100%;min-height:165px;border:1px solid var(--ink);background:#fbf9f0;padding:18px;font:19px/1.5 var(--sans);border-radius:0}.answer-form textarea::placeholder{color:#92978a}.answer-form>.button{width:100%;margin-top:12px}.answer-form .small-note{margin-top:14px}.answered-info{font:9px var(--mono);color:var(--muted);padding-top:15px}.answer-form .inline-error{min-height:15px}.waiting-art{display:flex;align-items:center;justify-content:center;height:180px;gap:12px}.waiting-orb{border:2px solid var(--ink);width:75px;height:85px;border-radius:48%;background:var(--lime);position:relative;transform:rotate(-13deg)}.waiting-orb:nth-child(2){background:var(--purple);transform:rotate(13deg);height:100px}.waiting-orb:nth-child(3){background:var(--orange);height:65px;transform:rotate(4deg)}.waiting-orb:before,.waiting-orb:after{content:'';position:absolute;top:25px;width:7px;height:12px;border-radius:50%;background:var(--ink)}.waiting-orb:before{left:22px}.waiting-orb:after{right:22px}.progress-players{max-width:800px;display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin:25px auto}.progress-player{border:1px solid var(--line);padding:15px;background:#fbf9f0;font-size:13px;display:flex;justify-content:space-between;gap:12px}.progress-player span{font:9px var(--mono);color:var(--muted)}.progress-player.done{background:#e5edcf;border-color:#8b9b69}.vote-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:1050px;margin:auto}.vote-answer{position:relative;display:flex;align-items:center;justify-content:center;min-height:180px;padding:35px 28px;text-align:center;border:1px solid var(--ink);box-shadow:5px 5px 0 var(--ink);background:#faf8ef;font-size:clamp(21px,2.5vw,35px);letter-spacing:-.5px;line-height:1.3;overflow-wrap:anywhere}.vote-answer:nth-child(2n){background:var(--purple)}.vote-answer:nth-child(3n){background:var(--lime)}.vote-answer:hover:not(:disabled){transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ink)}.vote-answer:before{content:attr(data-number);position:absolute;top:13px;left:16px;font:9px var(--mono);letter-spacing:1px;color:#5a6057}.vote-answer:disabled{opacity:.65}.bold-control{display:flex;align-items:center;justify-content:center;gap:13px;margin:28px auto 0;font:10px var(--mono)}.bold-toggle{border:1px solid var(--ink);background:var(--paper);color:var(--ink);padding:11px 17px;font:9px var(--mono);letter-spacing:.7px}.bold-toggle[aria-pressed=true]{background:var(--ink);color:var(--lime)}.bold-note{text-align:center;font:9px/1.8 var(--mono);color:var(--muted);max-width:600px;margin:12px auto}.reveal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:1080px;margin:auto}.reveal-answer{border:1px solid var(--ink);background:#faf8ef;position:relative;padding:27px;min-width:0}.reveal-answer.winner{background:var(--lime);box-shadow:5px 5px 0 var(--ink)}.reveal-answer h3{font-size:clamp(23px,3vw,36px);letter-spacing:-.5px;line-height:1.25;margin:25px 0;min-height:70px;overflow-wrap:anywhere}.answer-author{font:10px var(--mono);letter-spacing:.4px}.answer-result{display:flex;justify-content:space-between;gap:15px;border-top:1px solid #1b272344;padding-top:14px;font:10px var(--mono)}.answer-result b{font-size:19px;font-weight:600}.winner-stamp{font:8px var(--mono);background:var(--ink);color:var(--lime);padding:6px 8px;display:inline-block;position:absolute;right:13px;top:13px;transform:rotate(4deg)}.stage-actions{display:flex;justify-content:center;gap:10px;margin:32px 0 0}.stage-actions .button{min-width:220px}.host-note{text-align:center;font:10px/1.8 var(--mono);color:var(--muted);margin:22px auto}.scoreboard{max-width:800px;margin:auto;border-top:1px solid var(--ink)}.score-row{display:grid;grid-template-columns:55px 1fr auto;align-items:center;gap:15px;border:1px solid var(--ink);border-top:0;padding:20px 24px;background:#fbf9f0}.score-row:first-child{background:var(--lime)}.score-row .rank{font:12px var(--mono);color:var(--muted)}.score-row .score-name{font-size:23px;font-weight:600;letter-spacing:-.5px;overflow-wrap:anywhere}.score-row .score-number{font:22px var(--mono);font-weight:600}.finale-heading h2{font-size:clamp(40px,6vw,85px)}.finale-heading .winner-name{display:inline-block;background:var(--purple);padding:2px 12px;transform:rotate(-2deg);margin-top:12px;overflow-wrap:anywhere;max-width:100%}.room-notice{text-align:center;font:11px/1.8 var(--mono);color:#96433a;margin:0 auto 25px;max-width:750px}.little-pill{display:inline-block;font:8px var(--mono);letter-spacing:1px;border:1px solid var(--ink);padding:6px 9px;margin:0 0 15px}.private-pill{background:var(--purple)}.no-scroll{overflow:hidden}.reduced-motion *{animation:none!important;transition:none!important;scroll-behavior:auto!important}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+@media(min-width:1800px){.home-screen{min-height:800px}}
+@media(max-width:1050px){.site-header{padding-top:25px;padding-bottom:25px}.home-screen{min-height:650px}.home-copy h1{font-size:80px;letter-spacing:-5px}.home-actions .button{min-width:170px;font-size:9px;padding:15px}.home-intro{font-size:20px}.home-description{font-size:12px}.home-meta{font-size:6px;gap:7px}.header-tools{gap:18px}.art-label{font-size:7px}.setup-screen{gap:7%;padding-left:0;padding-right:0}.back-link{left:0}.join-billboard h2{font-size:39px}.writing-layout{gap:4%}.hud-hide{display:none}}
+@media(max-width:760px){.site-header{padding:21px 5%}.wordmark{font-size:19px}.logo-eye{width:20px;height:13px}.header-tools{gap:14px}.header-tools .text-button{font-size:7px;letter-spacing:.4px}#motionToggle{display:none}main{padding:0 5%}.home-screen{grid-template-columns:1fr;gap:0;padding-top:40px}.home-copy h1{font-size:clamp(69px,12vw,88px);letter-spacing:-4.5px;margin:23px 0}.home-intro{font-size:20px}.home-description{font-size:12px;line-height:1.7}.home-actions{max-width:none}.home-actions .button{flex:1;min-width:150px}.home-actions .lime-button{min-width:135px}.home-art{max-width:480px;width:100%;margin:35px auto 0;min-height:420px}.party-illustration{max-height:490px}.art-label{top:0;font-size:7px}.art-sticker{width:72px;height:72px;font-size:23px;bottom:5%}.art-sticker span{font-size:6px}.home-meta{font-size:6px;gap:9px;flex-wrap:wrap;margin-top:22px}.site-footer{font-size:6px;line-height:1.8;gap:12px;padding-top:20px;padding-bottom:20px}.site-footer>span:nth-child(2){max-width:38%;text-align:right}.footer-flower{display:none}.setup-screen{grid-template-columns:1fr;gap:28px;padding:36px 0 75px;min-height:650px}.section-heading h2{font-size:52px;letter-spacing:-2px;margin:18px 0}.section-heading p{font-size:13px;max-width:95%}.setup-card{padding:25px;box-shadow:5px 5px 0 var(--ink);max-width:500px;width:calc(100% - 6px)}.back-link{bottom:28px}.help-panel{padding:30px 23px;box-shadow:5px 5px 0 var(--ink)}.help-panel h2{font-size:32px}.modal{padding:14px}.help-panel{max-height:calc(100dvh - 28px)}.handoff-screen{min-height:calc(100dvh - 175px);padding:35px 0}.handoff-screen h2{font-size:52px;letter-spacing:-2px}.handoff-eye{margin:28px 0 12px;padding:27px}.handoff-screen>.button{width:100%;min-width:0}.room-toolbar{font-size:8px;gap:15px;margin-top:18px}.room-toolbar>div{gap:10px}.room-toolbar-right{gap:10px!important}.copy-invite{font-size:7px}#connectionStatus{font-size:7px}.room-toolbar .text-button{font-size:7px}.round-bar{padding:12px;font-size:8px;letter-spacing:.4px}.round-bar #timer{font-size:16px;min-width:40px}.stage{padding:30px 0 45px;min-height:480px}.stage-heading h2{font-size:34px;letter-spacing:-1px;line-height:1.12}.stage-heading p{font-size:12px}.lobby-layout{grid-template-columns:1fr;gap:30px}.join-billboard{padding:25px;box-shadow:5px 5px 0 var(--ink)}.join-billboard h2{font-size:38px;margin:14px 0 22px}.big-code{font-size:42px;letter-spacing:4px;padding:16px 8px}.lobby-seats h3{font-size:21px}.seat-list{min-height:60px}.lobby-seats>.button{margin-top:20px}.writing-layout{grid-template-columns:1fr;gap:25px}.prompt-card{padding:25px;box-shadow:4px 4px 0 var(--ink)}.prompt-card h2{font-size:29px;margin:20px 0 35px}.prompt-card:after{font-size:30px;right:18px;bottom:12px}.answer-form textarea{min-height:150px;font-size:18px;padding:15px}.answer-form label{font-size:8px}.vote-grid,.reveal-grid{grid-template-columns:1fr;gap:16px}.vote-answer{min-height:125px;font-size:25px;padding:30px 22px;box-shadow:4px 4px 0 var(--ink)}.bold-control{gap:8px;font-size:8px;flex-wrap:wrap}.bold-note{font-size:8px}.reveal-answer{padding:23px}.reveal-answer h3{font-size:28px;min-height:0;margin:25px 0}.stage-actions{flex-direction:column;gap:10px}.stage-actions .button{width:100%;min-width:0}.score-row{grid-template-columns:30px 1fr auto;gap:10px;padding:17px 15px}.score-row .rank{font-size:10px}.score-row .score-name{font-size:20px}.score-row .score-number{font-size:18px}.finale-heading h2{font-size:43px}.progress-players{grid-template-columns:1fr 1fr;gap:8px}.progress-player{padding:12px;font-size:12px}.progress-player span{font-size:8px}.confirm-actions{flex-direction:column}.confirm-actions .button{width:100%}}
+@media(max-width:380px){.header-tools{gap:11px}.wordmark{font-size:17px}.home-copy h1{font-size:65px}.home-actions .button{min-width:135px;font-size:8px}.home-meta{font-size:5.5px}.round-bar{font-size:7px}.home-art{min-height:350px}.party-illustration{max-height:420px}.big-code{font-size:35px}.progress-players{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+.reduced-motion .vote-answer:hover:not(:disabled){transform:none}
+@media(prefers-reduced-motion:reduce){.vote-answer:hover:not(:disabled){transform:none}}
+/* ---- Pulsebox polish: lobby extras ---- */
+.code-note{font:10px var(--mono);letter-spacing:1px;background:var(--lime);border:1px solid var(--ink);padding:10px 12px;margin:14px 0 4px;display:inline-block;transform:rotate(-1deg)}
+.setup-card label span{float:right;color:var(--muted);font-size:9px}
+.guest-add{margin-top:12px}.guest-add:disabled{opacity:.4}
+.player-chip small{font:8px var(--mono);letter-spacing:.8px;color:var(--muted);margin-left:2px}
+.player-chip.host{box-shadow:3px 3px 0 var(--ink)}
+.player-chip.guest{border-style:dashed;background:#fbf9f0;color:var(--ink);cursor:default}
+button.player-chip.guest{cursor:pointer}button.player-chip.guest:hover{background:#f6d6d0}
+.round-bar #timer.urgent{animation:oc-pulse .9s ease-in-out infinite}
+/* ---- motion: everything arrives instead of appearing ---- */
+@keyframes oc-rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes oc-pop{0%{opacity:0;transform:scale(.82) rotate(-2.5deg)}65%{opacity:1;transform:scale(1.03) rotate(.6deg)}100%{opacity:1;transform:none}}
+@keyframes oc-flip{0%{opacity:0;transform:perspective(900px) rotateX(-70deg) translateY(-20px)}70%{opacity:1;transform:perspective(900px) rotateX(8deg)}100%{opacity:1;transform:none}}
+@keyframes oc-stamp{0%{opacity:0;scale:2.6;rotate:-12deg}65%{opacity:1;scale:.9;rotate:4deg}100%{opacity:1;scale:1;rotate:0deg}}
+@keyframes oc-fade{from{opacity:0}to{opacity:1}}
+@keyframes oc-bob{0%,100%{translate:0 0}50%{translate:0 -16px}}
+@keyframes oc-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+@keyframes oc-wobble{0%,100%{rotate:0deg}25%{rotate:-3deg}75%{rotate:3deg}}
+@keyframes oc-glow{0%,100%{box-shadow:5px 5px 0 var(--ink)}50%{box-shadow:9px 9px 0 var(--ink)}}
+.stage>*{animation:oc-rise .55s cubic-bezier(.2,.8,.2,1) backwards}
+.stage>*:nth-child(2){animation-delay:.07s}.stage>*:nth-child(3){animation-delay:.14s}.stage>*:nth-child(4){animation-delay:.21s}.stage>*:nth-child(5){animation-delay:.28s}
+.stage-heading h2{animation:oc-rise .6s .05s cubic-bezier(.2,.8,.2,1) backwards}
+.prompt-card{animation:oc-pop .55s cubic-bezier(.2,.9,.3,1.2) backwards}
+.vote-answer{animation:oc-pop .5s cubic-bezier(.2,.9,.3,1.25) backwards;transition:transform .15s,box-shadow .15s,background .15s}
+.vote-answer:nth-child(2){animation-delay:.12s}.vote-answer:nth-child(3){animation-delay:.24s}.vote-answer:nth-child(4){animation-delay:.36s}.vote-answer:nth-child(n+5){animation-delay:.48s}
+.vote-answer:active:not(:disabled){transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.reveal-answer{animation:oc-flip .6s cubic-bezier(.2,.8,.2,1.1) backwards;transform-origin:50% 0}
+.reveal-answer:nth-child(2){animation-delay:.18s}.reveal-answer:nth-child(3){animation-delay:.36s}.reveal-answer:nth-child(4){animation-delay:.54s}.reveal-answer:nth-child(n+5){animation-delay:.7s}
+.reveal-answer .answer-author,.reveal-answer .answer-result{animation:oc-fade .45s .9s backwards}
+.reveal-answer.winner{animation:oc-flip .6s cubic-bezier(.2,.8,.2,1.1) backwards,oc-glow 1.6s 1.4s ease-in-out 2}
+.winner-stamp{animation:oc-stamp .5s 1.15s cubic-bezier(.2,.9,.3,1.3) backwards}
+.score-row{animation:oc-rise .45s cubic-bezier(.2,.8,.2,1) backwards}
+.score-row:nth-child(2){animation-delay:.08s}.score-row:nth-child(3){animation-delay:.16s}.score-row:nth-child(4){animation-delay:.24s}.score-row:nth-child(5){animation-delay:.32s}.score-row:nth-child(n+6){animation-delay:.4s}
+.finale-heading .winner-name{animation:oc-stamp .6s .5s cubic-bezier(.2,.9,.3,1.3) backwards}
+.waiting-orb{animation:oc-bob 1.6s ease-in-out infinite}.waiting-orb:nth-child(2){animation-delay:.2s}.waiting-orb:nth-child(3){animation-delay:.4s}
+.player-chip{animation:oc-pop .35s cubic-bezier(.2,.9,.3,1.3) backwards}
+.big-code{transition:transform .15s}.big-code:hover{transform:rotate(-1deg) scale(1.02)}
+.handoff-eye span{animation:oc-wobble 2.4s ease-in-out infinite}
+.home-art .party-illustration{animation:oc-rise .8s cubic-bezier(.2,.8,.2,1) backwards}
+.art-sticker{animation:oc-stamp .6s .7s cubic-bezier(.2,.9,.3,1.3) backwards}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:40}
+.reduced-motion *,.reduced-motion *:before,.reduced-motion *:after{animation:none!important}
+</style></head>
+<body>
+<div class="page-noise" aria-hidden="true"></div>
+<header class="site-header"><button id="homeLogo" class="wordmark" aria-label="Odd Crowd home">ODD<span class="logo-eye" aria-hidden="true">●</span>CROWD</button><div class="header-tools"><button id="soundToggle" class="text-button" aria-pressed="false">SOUND ON ♫</button><button id="motionToggle" class="text-button" aria-pressed="false">MOTION ON</button><button id="helpOpen" class="text-button">THE RULES ↗</button></div></header>
+<main>
+<section id="homeScreen" class="home-screen">
+ <div class="home-copy"><div class="eyebrow"><i></i> A LITTLE WEIRD. A LOT OF FUN.</div><h1>Find your<br><span class="odd-word">odd<svg viewBox="0 0 420 130" aria-hidden="true"><path d="M12 81C66 5 328-7 402 53S290 154 56 111C-13 98-8 77 35 44"/></svg></span> crowd.</h1><p class="home-intro">Good company.<br>Questionable answers.</p><p class="home-description">Write something unexpected. Vote for your favorite.<br>Three rounds later, someone gets bragging rights.</p><div class="home-actions"><button id="hostOpen" class="button ink-button">HOST A ROOM <span>↗</span></button><button id="joinOpen" class="button outline-button">JOIN YOUR PEOPLE <span>＋</span></button><button id="localOpen" class="button lime-button">PASS & PLAY <span>↻</span></button></div><button id="resumeRoom" class="resume-link" hidden>REJOIN YOUR ROOM ↗</button><div class="home-meta"><span>3–10 HUMANS</span><b>✳</b><span>ONLINE OR ONE DEVICE</span><b>✳</b><span>HOUSE GUESTS FILL IN</span></div></div>
+ <div class="home-art" aria-label="Playful illustrated characters sharing unexpected answers"><div class="art-label">THE BEST ANSWER<br>IS RARELY THE SENSIBLE ONE.</div><svg class="party-illustration" viewBox="0 0 600 650" role="img" aria-label="A purple smiling creature, an orange character, and a stack of silly answer cards"><defs><pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.1" fill="#1b272333"/></pattern></defs><path d="M56 551C-7 429 42 162 196 77C333-3 557 46 584 227C612 420 525 570 350 598Z" fill="#c8eb75"/><path d="M65 545L546 586M89 561L527 600" stroke="#1b2723" stroke-width="3" stroke-linecap="round"/><path d="M66 76L88 82L87 106M80 62L107 73M495 92L516 78L521 98M524 67L531 49" stroke="#1b2723" stroke-width="3" fill="none" stroke-linecap="round"/><g transform="rotate(-11 230 320)"><rect x="78" y="200" width="300" height="227" rx="3" fill="#1b2723"/><rect x="65" y="186" width="300" height="227" rx="3" fill="#faf8ef" stroke="#1b2723" stroke-width="3"/><path d="M88 224H338M88 346H240M88 365H292" stroke="#1b2723" stroke-width="2"/><text x="87" y="211" font-family="monospace" font-size="9" letter-spacing="2" fill="#1b2723">FRESH FROM THE GROUP CHAT</text><text x="88" y="267" font-family="Arial,sans-serif" font-size="24" font-weight="700" fill="#1b2723">A terrible name for</text><text x="88" y="297" font-family="Arial,sans-serif" font-size="24" font-weight="700" fill="#1b2723">a very fancy hotel?</text><rect x="285" y="351" width="49" height="35" fill="#bcabe8" stroke="#1b2723" stroke-width="2"/><path d="M300 369L310 375L322 361" stroke="#1b2723" stroke-width="3" fill="none"/></g><g transform="rotate(12 434 352)"><path d="M358 237C344 160 437 129 479 184C525 245 498 276 486 309L467 443L376 430L360 306Z" fill="#bca5e0" stroke="#1b2723" stroke-width="3"/><ellipse cx="407" cy="231" rx="18" ry="27" fill="#faf8ef" stroke="#1b2723" stroke-width="2"/><ellipse cx="448" cy="226" rx="18" ry="27" fill="#faf8ef" stroke="#1b2723" stroke-width="2"/><ellipse cx="412" cy="239" rx="5" ry="9" fill="#1b2723"/><ellipse cx="452" cy="234" rx="5" ry="9" fill="#1b2723"/><path d="M409 278Q434 304 457 274" stroke="#1b2723" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M378 426L359 488L327 495M450 440L477 488L512 486M373 327L328 311L304 325M490 321L536 296L549 264" stroke="#1b2723" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M338 490L328 506L365 505M494 489L520 503L531 493" stroke="#1b2723" stroke-width="5" fill="none" stroke-linecap="round"/></g><g transform="rotate(8 160 510)"><path d="M89 493Q74 421 140 430Q208 414 225 474L236 547L103 557Z" fill="#e9ae72" stroke="#1b2723" stroke-width="3"/><circle cx="139" cy="475" r="16" fill="#faf8ef" stroke="#1b2723" stroke-width="2"/><circle cx="181" cy="470" r="16" fill="#faf8ef" stroke="#1b2723" stroke-width="2"/><circle cx="143" cy="477" r="5" fill="#1b2723"/><circle cx="184" cy="472" r="5" fill="#1b2723"/><path d="M145 515Q166 498 185 513M119 553L114 583M211 551L226 578" stroke="#1b2723" stroke-width="4" fill="none" stroke-linecap="round"/></g><g transform="rotate(6 318 517)"><rect x="227" y="469" width="289" height="77" fill="#faf8ef" stroke="#1b2723" stroke-width="3"/><text x="245" y="497" font-family="monospace" font-size="10" letter-spacing="1" fill="#1b2723">ONE EXCELLENTLY BAD ANSWER:</text><text x="244" y="526" font-family="Arial,sans-serif" font-size="23" font-weight="700" fill="#1b2723">THE SUSPICIOUS FORK</text></g><path d="M143 113L150 91L158 112L181 117L160 125L153 146L145 126L125 121Z" fill="#1b2723"/><path d="M511 414L521 395L530 413L550 421L531 429L525 451L514 431L493 426Z" fill="#f6f1e5" stroke="#1b2723" stroke-width="2"/><circle cx="285" cy="104" r="24" fill="url(#dots)"/><path d="M258 126L279 139M267 145L280 158" stroke="#1b2723" stroke-width="3" stroke-linecap="round"/></svg><div class="art-sticker">100%<br><span>UNSERIOUS</span></div></div>
+</section>
+<section id="hostScreen" class="setup-screen" hidden><div class="section-heading"><div class="eyebrow">MAKE ROOM FOR YOUR PEOPLE</div><h2>Your screen.<br>Their bad ideas.</h2><p>Friends join from their own phones or computers with a four-letter code, in the same room or over a call. Add your name to play too, or leave it blank to run a shared big screen.</p></div><form id="hostForm" class="setup-card"><span class="card-index">01 / THE SETUP</span><div id="hostCodeNote" class="code-note" hidden></div><h3>Set the pace.</h3><label for="hostName">YOUR NAME <span>BLANK = HOST ONLY</span></label><input id="hostName" class="large-input" placeholder="Your excellent name" maxlength="20" autocomplete="nickname"><label for="writeSeconds">Time to write <span id="writeValue">90 SEC</span></label><input id="writeSeconds" type="range" min="45" max="180" step="15" value="90"><label for="voteSeconds">Time to vote <span id="voteValue">25 SEC</span></label><input id="voteSeconds" type="range" min="15" max="60" step="5" value="25"><div class="small-note">Short on people? Add house guests in the lobby. They write and vote, badly.</div><button class="button ink-button" type="submit">MAKE A ROOM <span>↗</span></button><p id="hostError" class="inline-error" role="alert"></p></form><button class="back-link" data-home>← BACK TO THE CROWD</button></section>
+<section id="joinScreen" class="setup-screen" hidden><div class="section-heading"><div class="eyebrow">YOUR PEOPLE ARE WAITING</div><h2>Pull up<br>a chair.</h2><p>Grab the four-letter code from your host.<br>Bring a name your friends will recognize.</p></div><form id="joinForm" class="setup-card"><span class="card-index">02 / YOU’RE INVITED</span><label for="joinCode">ROOM CODE</label><input id="joinCode" class="large-input" placeholder="ABCD" maxlength="4" pattern="[A-Za-z0-9]{4}" required autocomplete="off" autocapitalize="characters" spellcheck="false"><label for="playerName">YOUR NAME</label><input id="playerName" class="large-input" placeholder="Your excellent name" maxlength="20" minlength="1" required autocomplete="nickname"><button class="button ink-button" type="submit">COUNT ME IN <span>↗</span></button><p id="joinError" class="inline-error" role="alert"></p></form><button class="back-link" data-home>← BACK TO THE CROWD</button></section>
+<section id="localScreen" class="setup-screen" hidden><div class="section-heading"><div class="eyebrow">ONE DEVICE. ALL YOUR PEOPLE.</div><h2>Pass it.<br>Don’t peek.</h2><p>No server needed. Take turns writing and voting on this device. We’ll hide the screen between players.</p></div><form id="localForm" class="setup-card"><span class="card-index">03 / THE IN-PERSON EDITION</span><h3>Who’s in?</h3><div id="localNames"></div><button id="addLocalPlayer" class="add-player" type="button">＋ ADD ANOTHER HUMAN</button><button class="button ink-button" type="submit">LET’S GET ODD <span>↗</span></button><p id="localError" class="inline-error" role="alert"></p></form><button class="back-link" data-home>← BACK TO THE CROWD</button></section>
+<section id="handoffScreen" class="handoff-screen" hidden><div class="eyebrow">NO PEEKING. WE MEAN IT.</div><div class="handoff-eye" aria-hidden="true"><span></span><span></span></div><p>Pass the device to</p><h2 id="handoffName"></h2><div id="handoffTask" class="muted-copy"></div><button id="handoffReady" class="button ink-button">THAT’S ME. LET’S GO. <span>↗</span></button><button id="handoffHome" class="text-button">LEAVE THIS GAME</button></section>
+<section id="roomScreen" hidden><div class="room-toolbar"><div><span id="roomLabel" class="room-label"></span><button id="copyInvite" class="copy-invite">COPY INVITE ↗</button></div><div class="room-toolbar-right"><span id="connectionStatus"></span><button id="leaveRoom" class="text-button">LEAVE ROOM</button></div></div><div id="roundBar" class="round-bar"><span id="roundLabel"></span><span id="phaseLabel" aria-live="polite"></span><span id="timer" role="timer" aria-live="off"></span></div><div id="stage" class="stage"></div><div id="roomNotice" class="room-notice" role="status"></div></section>
+</main>
+<footer class="site-footer"><span>GOOD COMPANY. QUESTIONABLE ANSWERS.</span><span id="footerMode">ORIGINAL PARTY GAME / MADE FOR REAL PEOPLE</span><span class="footer-flower">✳</span></footer>
+<div id="helpModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="helpTitle"><section class="help-panel"><button id="helpClose" class="modal-close" aria-label="Close rules">×</button><div class="eyebrow">A QUICK TOUR OF THE NONSENSE</div><h2 id="helpTitle">Easy to learn.<br>Hard to explain later.</h2><ol><li><b>WRITE SOMETHING UNEXPECTED.</b><p>You get original prompts. Find your own angle. You don’t need to be a comedian.</p></li><li><b>PICK YOUR FAVORITE.</b><p>Answers stay anonymous until the vote is in. You can’t vote for your own answer.</p></li><li><b>MAKE ONE BOLD CALL.</b><p>Each round gives you one bold vote. Predict the sole winning answer for a +200 bonus. Ties earn no bold bonus.</p></li><li><b>THREE ROUNDS. ONE ODD CROWD.</b><p>Warm-up, Plot Twist, and Last Word. Each vote earns 500 points in Warm-up, 750 in Plot Twist, and 1,000 in Last Word. A +300 sweep bonus rewards an answer chosen by every eligible other voter. The host moves the shared screen through reveals and the scoreboard.</p></li></ol><div class="small-note">Online: the host makes a room and 3–10 players join with the four-letter code on their phones or computers. The host can play too, and house guests can fill empty seats. Pass & play: 3–10 people share one device, with private handoff screens between turns. Your names and answers are visible to the room during play.</div><button id="helpDone" class="button ink-button">SOUNDS QUESTIONABLE. I’M IN. <span>↗</span></button></section></div>
+<div id="confirmModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="confirmTitle"><section class="help-panel compact-panel"><h2 id="confirmTitle">Leave the crowd?</h2><p>Your current local game won’t be saved.</p><div class="confirm-actions"><button id="confirmLeave" class="button ink-button">LEAVE GAME</button><button id="confirmStay" class="button outline-button">KEEP PLAYING</button></div></section></div>
+<script>(()=>{'use strict';
+// Written for ODD CROWD. Constraints invite creativity; they are not syntax checks.
+const pack=(prefix,rows)=>rows.map(([tag,text],i)=>({id:`${prefix}${String(i+1).padStart(2,'0')}`,text,tag}));
+const PROMPTS={
+ warmup:pack('w',[
+  ['TINY PROBLEMS','Name the championship event your missing sock has been training for.'],
+  ['BAD IDEAS','What feature would make a smart fridge immediately too powerful?'],
+  ['OFFICE CHAOS','The new office plant has called a meeting. What is on its agenda?'],
+  ['HIDDEN TALENTS','What impressive skill is a spoon keeping off its résumé?'],
+  ['LOCAL NEWS','Write the headline when your neighborhood ducks form a committee.'],
+  ['GRAND OPENING','Name a shop that sells things people only need at 2 a.m.'],
+  ['SMALL TALK','What does an elevator say when it finally gets a day off?'],
+  ['FAMILY BUSINESS','What suspicious service does a family of raccoons advertise?'],
+  ['UPGRADES','Your front door gets one new button. What does it do?'],
+  ['FOOD COURT','Name the dessert served at an extremely dramatic cafeteria.'],
+  ['TOO MUCH','What is the least useful item to have in a deluxe version?'],
+  ['WEEKEND PLANS','Invent a hobby that requires a helmet but absolutely no courage.'],
+  ['FUTURE TECH','What ridiculous achievement will phones congratulate us for next?'],
+  ['NEIGHBORHOOD WATCH','What is the real reason the garden gnome faces your window?'],
+  ['TOP SECRET','Give the code name for a mission to recover the last biscuit.'],
+  ['DREAM JOB','What job would a very confident cloud apply for?'],
+  ['CELEBRATION','What tiny achievement deserves its own parade?'],
+  ['WRONG TURN','What would you find in the gift shop at a museum of wrong answers?'],
+  ['PET PROJECT','Your pet has designed a room for you. What is its main feature?'],
+  ['STAGE FRIGHT','What is a magician embarrassed to pull out of a hat?'],
+  ['MORNING ROUTINE','What would make getting out of bed qualify as an extreme sport?'],
+  ['FRESH PAINT','Invent the name of a paint color that sounds personally offended.'],
+  ['CUSTOMER SERVICE','Why is the moon asking to speak to the manager?'],
+  ['BIG REVEAL','What is hidden behind the tiny door in a vending machine?'],
+  ['TRAVEL DESK','Give a terrible selling point for a holiday inside a cupboard.'],
+  ['WEATHER REPORT','Invent a weather warning that only applies to people carrying soup.'],
+  ['MUSIC LESSON','Name a musical instrument invented by someone who hates quiet snacks.'],
+  ['HOME SWEET HOME','What luxury feature would a snail add to its shell?'],
+  ['FIELD TRIP','Name the dullest place that could still have an exciting gift shop.'],
+  ['AFTER HOURS','What do traffic cones talk about when the road is empty?'],
+  ['GOOD INTENTIONS','What unhelpful advice would a motivational printer give?'],
+  ['BOOK CLUB','Give the title of a detective novel written by a suspicious hamster.'],
+  ['SAFETY FIRST','What everyday activity needs a completely unnecessary safety video?'],
+  ['BIG MONEY','What would a billionaire pigeon buy first?'],
+  ['NEW RULES','Invent a rule for a swimming pool filled with custard.'],
+  ['GAME NIGHT','Name a board game that grandparents would take far too seriously.'],
+  ['FIRST CONTACT','What ordinary object would aliens mistakenly crown as our leader?'],
+  ['SIDE QUEST','What task would earn you a medal at the supermarket?'],
+  ['SECRET SOCIETY','What does the secret society of shopping baskets want?'],
+  ['DRESS CODE','Invent a formal dress code for a trampoline restaurant.'],
+  ['SPACE PROBLEMS','What complaint would appear in a one-star review of Saturn?'],
+  ['SCHOOL SPIRIT','What would be the mascot of a school for overly polite dragons?'],
+  ['LITTLE LIES','What excuse does a bookmark give for losing your page?'],
+  ['TEAM BUILDING','What activity finally makes a team of statues bond?'],
+  ['TIME TRAVEL','What tiny modern inconvenience would confuse a time traveler most?'],
+  ['HANDY GADGET','Name a machine that turns awkward pauses into something useful.'],
+  ['BRIGHT IDEAS','What would be the first law in a country run by lamps?'],
+  ['WELCOME HOME','What message would your sofa leave on your answering machine?'],
+  ['ROYAL DUTIES','What emergency requires the immediate attention of the king of sandwiches?'],
+  ['LOST AND FOUND','What surprising item is always left behind at a wizard conference?'],
+  ['SPORTS DESK','Name the signature move of a professional competitive tidier.'],
+  ['IN THE WILD','What phrase would a nature documentary use to describe your morning?'],
+  ['FEEDBACK FORM','What improvement does a snowman request for next winter?'],
+  ['DINNER PARTY','What is the most awkward thing a talking chair could announce?'],
+  ['FIVE STARS','What service earns a hotel five stars from a house spider?'],
+  ['PROBLEM SOLVED','Invent a product that fixes a problem nobody has ever noticed.'],
+  ['SUPER POWERS','What superhero ability would be useful only in a queue?'],
+  ['NICE TRY','What impressive-sounding qualification could you earn in ten minutes?'],
+  ['MESSAGE RECEIVED','What text does a mountain send when it wants some personal space?'],
+  ['FINAL TOUCH','What decoration instantly makes a waiting room feel suspiciously important?']
+ ]),
+ twist:pack('t',[
+  ['OFFICIAL BUSINESS','Write a royal decree about crumbs. Include a deeply unnecessary deadline.'],
+  ['BAD REVIEWS','Review a pillow as if it were an adventure holiday. Give it a dramatic subtitle.'],
+  ['SOUND CHECK','Invent a superhero whose power makes a household sound. Put that sound in their name.'],
+  ['TINY DRAMA','Write an apology from a stolen garden hose. Blame the weather.'],
+  ['BIG PROMISES','Advertise a luxury cardboard box. Mention a feature involving absolutely nothing.'],
+  ['OFFICE CHAOS','Write a work email from a haunted stapler. Keep it painfully professional.'],
+  ['MIXED MESSAGES','Give a pep talk to a nervous potato. Include a completely unrelated sport.'],
+  ['NEW FLAVOR','Name a fancy ice cream flavor inspired by a minor inconvenience. Make it sound delicious.'],
+  ['JOB INTERVIEW','A dragon applies to be a librarian. Give its strongest qualification without mentioning fire.'],
+  ['LOCAL NEWS','Write a headline about an escaped pancake. Include a quotation from a witness.'],
+  ['FOOD CRITIC','Describe a sandwich as a mysterious creature. Do not use any food words.'],
+  ['AFTER HOURS','Write a nightclub name for tired accountants. Include a number that sounds unimpressive.'],
+  ['VERY SORRY','A robot ate your homework. Write its apology using the language of a weather forecast.'],
+  ['SPACE TRAVEL','Name a spaceship designed only for quick errands. Add a boast it cannot possibly live up to.'],
+  ['FINE PRINT','Write the warning label on a pocket-sized thunderstorm. Include one oddly specific person.'],
+  ['ROYAL WEDDING','Write a wedding vow to a toaster. End with a kitchen sound.'],
+  ['TOUR GUIDE','Describe your bedroom as a historic monument. Mention an imaginary battle.'],
+  ['GRAND OPENING','Name a bakery operated by ghosts. Its slogan must reassure living customers.'],
+  ['FASHION WEEK','Describe an outfit made of office supplies. Give it an absurdly elegant name.'],
+  ['FAMILY CHAT','Write a message from a cactus to the family group chat. Ask for a favor very politely.'],
+  ['TROUBLESHOOTING','Write the first instruction for fixing a moody spaceship. Require a very ordinary snack.'],
+  ['GOOD ADVICE','Give advice about a squeaky shoe in the tone of an ancient prophecy.'],
+  ['SERVICE DESK','A cloud wants a refund. Explain its complaint without using the word rain.'],
+  ['NO PRESSURE','Invent a relaxation exercise that sounds intensely competitive. Give it a score to beat.'],
+  ['PET PROJECT','Write the title of a self-help book for goldfish. Include a reason to start over.'],
+  ['FAKE AWARDS','Invent an award for looking busy. Make its name rhyme.'],
+  ['PUBLIC NOTICE','Write a sign for a park where benches are in charge. Include a polite threat involving sitting.'],
+  ['DREAM JOB','Write a job title for someone who tests puddles. Make it sound like a senior executive role.'],
+  ['CHEF SPECIAL','Name a soup served on the moon. Explain its appeal in exactly the spirit of a sports commentator.'],
+  ['TECH SUPPORT','Your kettle gained consciousness. Write its first password hint without revealing any numbers.'],
+  ['BREAKING NEWS','A tiny hat has been elected mayor. Give its victory speech in one enthusiastic sentence.'],
+  ['HIGH SOCIETY','Invent a posh title for a garden slug. Include an unimpressive place it owns.'],
+  ['LOST PROPERTY','Write an announcement for a lost invisible umbrella. Describe a detail nobody can see.'],
+  ['CURIOUS CUSTOMER','Ask a ridiculous question at a mattress shop. Begin as though this is a serious emergency.'],
+  ['TIME TRAVEL','Name a travel agency for visiting last Tuesday. Promise something embarrassingly small.'],
+  ['TEAM SPIRIT','Give a battle cry for a team of shy teaspoons. Keep the volume emotionally low.'],
+  ['MOVING DAY','Advertise a house inside a shoebox. Admit one flaw as though it were a benefit.'],
+  ['SCHOOL REPORT','Write a teacher comment about a young volcano. Praise its enthusiasm before raising a concern.'],
+  ['HIDDEN TALENTS','A doorbell enters a talent contest. Describe its act as an extremely impressed judge.'],
+  ['BEYOND BELIEF','Write an alien explanation of birthday candles. Get the purpose confidently wrong.'],
+  ['CALL WAITING','Invent hold music lyrics for a cheese helpline. Include a reassuring rhyme.'],
+  ['NEW LAWS','Propose a law written by a sleepy cat. Give it a grand official title.'],
+  ['MUSEUM PIECE','Write a museum label for an ordinary shopping receipt. Claim it changed history.'],
+  ['SPORTS DESK','Name a sport played entirely in slippers. Describe one forbidden move.'],
+  ['SMALL TALK','Write an icebreaker question for a gathering of mountains. Avoid asking about their height.'],
+  ['VERY IMPORTANT','Write a calendar reminder for a garden worm. Make it sound urgent and confidential.'],
+  ['COSTUME PARTY','Describe a costume that represents bad Wi-Fi. Include one accessory people can recognize.'],
+  ['NIGHT SCHOOL','Invent a class for nervous monsters. Its lesson title should sound surprisingly comforting.'],
+  ['HOME SECURITY','Advertise a security system powered by ducks. Include a technical-sounding feature.'],
+  ['LITTLE LIES','Give an excuse for arriving late to a cloud meeting. Make it sound scientifically plausible.'],
+  ['FIVE STARS','Review a public bench as if it were a romantic restaurant. Mention the service.'],
+  ['BRIGHT IDEAS','Pitch a vending machine for emotions. Describe the least popular button.'],
+  ['BAD MAPS','Name a country drawn by someone who only owns a ruler. Describe its national holiday.'],
+  ['SENT WITH LOVE','Write a postcard from the bottom of a laundry basket. Sound optimistic despite the conditions.'],
+  ['SILLY SCIENCE','Invent a research finding about toast. Include an official-sounding measurement.'],
+  ['BIG REVEAL','Name a magic trick performed by a vacuum cleaner. Make its finale disappointingly practical.'],
+  ['PUBLIC RELATIONS','Write a rebranding slogan for Mondays. Admit something without sounding negative.'],
+  ['TRAVEL RULES','Write a tip for tourists visiting a giant teacup. Mention local etiquette.'],
+  ['SUPER POWERS','Invent a supervillain who causes mild inconvenience. Give them a harmless dramatic catchphrase.'],
+  ['CLOSING TIME','Write the final announcement at a library for pirates. Include a surprisingly sensible request.']
+ ]),
+ finale:pack('f',[
+  ['LAST WORD','Give this gathering a title that belongs on a very serious documentary.'],
+  ['GROUP PROJECT','Invent the warning label that should come with this group of people.'],
+  ['BIG FINISH','What should humanity put on a trophy for surviving an ordinary Tuesday?'],
+  ['OFFICIAL MOTTO','Write the motto of a club for people who have slightly misunderstood the assignment.'],
+  ['TINY TRIUMPH','Name the grand prize for finally remembering why you entered a room.'],
+  ['FUTURE HISTORY','What will future historians call the age of constantly charging things?'],
+  ['FINAL BOSS','Name the final boss of an extremely ordinary day.'],
+  ['CLOSING ARGUMENT','Give one convincing reason the moon should take a holiday.'],
+  ['GRAND DESIGN','Name the most unnecessary button on the control panel of the universe.'],
+  ['ALL TOGETHER','Write the message on a cake celebrating a beautifully average performance.'],
+  ['DREAM TEAM','Give a team name to three raccoons inside a very respectable coat.'],
+  ['FRESH START','What is the first line in a user manual for being a person?'],
+  ['CROWD WISDOM','Finish this fortune-cookie prediction: Your next great achievement involves...'],
+  ['ONE MORE THING','Invent a tiny luxury that would make everyone in a queue applaud.'],
+  ['DEPARTURE LOUNGE','What does the announcement say when the last train goes to Somewhere Mildly Better?'],
+  ['ROYAL HONOR','Give a royal title to the person who always brings extra napkins.'],
+  ['FAMILY LEGEND','What harmless event deserves to become an outrageously exaggerated family legend?'],
+  ['FIVE-YEAR PLAN','What is the long-term ambition of the item at the back of your junk drawer?'],
+  ['WORTH A TRY','Pitch a sport everyone in this room could confidently invent the rules for.'],
+  ['FINAL TOUCH','What tiny detail would make a statue of you instantly recognizable?'],
+  ['GREAT ESCAPE','Name the escape room designed by someone who really wants you to have a nice afternoon.'],
+  ['THE BIG QUESTION','What question should replace small talk about the weather?'],
+  ['APPLAUSE PLEASE','Write the announcement that would get a standing ovation at a meeting of office chairs.'],
+  ['THANK YOU GOODNIGHT','Give the exit line of a magician whose only trick is leaving slightly early.']
+ ])
+};
+
+
+const ROUND_NAMES=['Warm-up','Plot Twist','Last Word'];
+const VOTE_POINTS=[500,750,1000];
+const FALLBACKS=[
+ 'A raccoon wearing the manager badge.',
+ 'Emergency confetti. Extremely non-refundable.',
+ 'A tiny committee of disappointed pigeons.',
+ 'The Wi-Fi password, but sung dramatically.',
+ 'Three suspicious ducks in a trench coat.',
+ 'A motivational speech from a broken toaster.',
+ 'A coupon for one deeply awkward silence.',
+ 'The moon called. It wants its casserole back.',
+ 'An emotional support traffic cone.',
+ 'A completely unlicensed wizard.',
+];
+const success=()=>({ok:true});
+const failure=error=>({ok:false,error});
+const own=(object,key)=>Object.hasOwn(object,key);
+const connected=g=>g.playerOrder.filter(id=>g.players[id]?.connected);
+const bump=g=>{g.revision++;};
+const ms=(now,fallback)=>Number.isFinite(now)?now:fallback;
+function rng(g){g.rng=(Math.imul(g.rng,1664525)+1013904223)>>>0;return g.rng/4294967296;}
+function shuffle(g,values){const a=[...values];for(let i=a.length-1;i>0;i--){const j=Math.floor(rng(g)*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function token(g,prefix){return prefix+(++g.sequence).toString(36)+'-'+Math.floor(rng(g)*0xffffffff).toString(36);}
+function usableName(name){return typeof name==='string'?name.replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim():'';}
+function settings(input){return {writeSeconds:Math.min(900,Math.max(5,Number(input.writeSeconds)||90)),voteSeconds:Math.min(900,Math.max(5,Number(input.voteSeconds)||25)),revealSeconds:7,minPlayers:3,maxPlayers:10};}
+
+function createGame({code='LOCAL',hostId='host',seed=1,now=Date.now(),writeSeconds=90,voteSeconds=25}={}){
+ return {code:String(code),hostId:String(hostId),hostConnected:true,seed:Number(seed)||1,rng:(Number(seed)||1)>>>0,sequence:0,phase:'lobby',round:1,deadline:null,revision:0,players:{},playerOrder:[],roster:[],tasks:[],current:0,votes:{},boldUsed:{},usedPrompts:[],roundPoints:{},summary:null,history:[],createdAt:ms(now,Date.now()),settings:settings({writeSeconds,voteSeconds})};
+}
+
+function addPlayer(g,{id,name}={},now=Date.now()){
+ if(typeof id!=='string'||!id||id.length>100||(id in Object.prototype||id==='prototype'))return failure('Invalid player identity.');
+ const normalized=usableName(name);if(!normalized||Array.from(normalized).length>20)return failure('Choose a name from 1 to 20 characters.');
+ if(own(g.players,id))return failure('That player has already joined. Reconnect instead.');
+ if(g.phase!=='lobby')return failure('The game has started. Join the next game.');
+ if(g.playerOrder.length>=10)return failure('This room already has ten players.');
+ if(g.playerOrder.some(pid=>g.players[pid].name.toLocaleLowerCase()===normalized.toLocaleLowerCase()))return failure('That name is already taken.');
+ g.players[id]={id,name:normalized,score:0,connected:true,joinedAt:ms(now,g.createdAt)};g.playerOrder.push(id);
+ if(!g.hostConnected){g.hostId=id;g.hostConnected=true;}bump(g);return success();
+}
+
+function migrateHost(g){const next=connected(g).find(id=>id!==g.hostId);if(next){g.hostId=next;g.hostConnected=true;}else g.hostConnected=false;}
+function setConnected(g,id,value,now=Date.now()){
+ const player=g.players[id],isHost=id===g.hostId;if(!player&&!isHost)return failure('Unknown player.');
+ const active=!!value;if(player&&player.connected!==active){player.connected=active;bump(g);}
+ if(isHost){g.hostConnected=active;if(!active)migrateHost(g);bump(g);}
+ if(!active&&g.phase==='writing'&&player){fillMissing(g,id);bump(g);}
+ if(active&&!g.hostConnected){g.hostId=id;g.hostConnected=true;bump(g);}
+ advance(g,now);return success();
+}
+
+function drawPrompts(g,count){const key=['warmup','twist','finale'][g.round-1],pool=PROMPTS[key]||[];if(!pool.length)throw Error('The prompt deck is empty.');let available=pool.filter(p=>!g.usedPrompts.includes(p.id));if(available.length<count){available=[...available,...pool.filter(p=>g.usedPrompts.includes(p.id))];}const chosen=shuffle(g,available).slice(0,count);while(chosen.length<count)chosen.push(pool[chosen.length%pool.length]);for(const p of chosen)if(!g.usedPrompts.includes(p.id))g.usedPrompts.push(p.id);return chosen;}
+function beginRound(g,round,now){
+ g.round=round;g.phase='writing';g.deadline=now+g.settings.writeSeconds*1000;g.current=0;g.votes={};g.boldUsed={};g.roundPoints=Object.fromEntries(g.playerOrder.map(id=>[id,0]));g.summary=null;
+ const count=round===3?1:g.roster.length,prompts=drawPrompts(g,count);
+ g.tasks=prompts.map((p,i)=>({id:token(g,'p'),sourceId:p.id,text:p.text,tag:p.tag||ROUND_NAMES[round-1],authors:round===3?[...g.roster]:[g.roster[i],g.roster[(i+1)%g.roster.length]],answers:{},order:[],scored:false,reveal:null}));
+ for(const id of g.roster)if(!g.players[id]?.connected)fillMissing(g,id);bump(g);
+}
+function makeAnswer(g,task,id,text,fallback=false){task.answers[id]={id:token(g,'a'),text,authorId:id,fallback};}
+function fillMissing(g,onlyId){for(const t of g.tasks)for(const id of t.authors)if((!onlyId||onlyId===id)&&!own(t.answers,id)){const index=(g.sequence+Math.floor(rng(g)*FALLBACKS.length))%FALLBACKS.length;makeAnswer(g,t,id,'House answer: '+FALLBACKS[index],true);}}
+function allAnswered(g){return g.tasks.every(t=>t.authors.every(id=>own(t.answers,id)));}
+function currentTask(g){return g.tasks[g.current]||null;}
+function beginVoting(g,now){fillMissing(g);g.current=0;for(const t of g.tasks)t.order=shuffle(g,Object.values(t.answers).map(a=>a.id));openBallot(g,now);}
+function openBallot(g,now){g.phase='voting';g.deadline=now+g.settings.voteSeconds*1000;const t=currentTask(g);g.votes[t.id]={};bump(g);}
+function eligibleIds(g,task){if(!task)return [];const votes=g.votes[task.id]||{};return g.roster.filter(id=>g.players[id]&&(g.players[id].connected||own(votes,id))&&(g.round===3||!task.authors.includes(id)));}
+function eligible(g,id,task){return !!g.players[id]?.connected&&eligibleIds(g,task).includes(id);}
+function points(g,id,n){if(!g.players[id])return;g.players[id].score+=n;g.roundPoints[id]=(g.roundPoints[id]||0)+n;}
+function reveal(g,now){
+ const t=currentTask(g);if(!t)return;if(t.scored){g.phase='reveal';return;}
+ const votes=g.votes[t.id]||{},answers=Object.values(t.answers),counts=Object.fromEntries(answers.map(a=>[a.id,0]));for(const v of Object.values(votes))if(own(counts,v.answerId))counts[v.answerId]++;
+ const total=Object.values(counts).reduce((a,b)=>a+b,0),highest=Math.max(0,...Object.values(counts)),winnerIds=highest>0?answers.filter(a=>counts[a.id]===highest).map(a=>a.id):[];
+ const sole=winnerIds.length===1,winner=sole?answers.find(a=>a.id===winnerIds[0]):null,sweepVoters=winner?eligibleIds(g,t).filter(id=>g.round!==3||id!==winner.authorId):[];
+ const unanimous=sole&&sweepVoters.length>0&&sweepVoters.every(id=>votes[id]?.answerId===winnerIds[0]);
+ const results=t.order.map(id=>{const a=answers.find(a=>a.id===id),value=a.fallback?0:counts[id]*VOTE_POINTS[g.round-1]+(unanimous&&winnerIds[0]===id?300:0);points(g,a.authorId,value);return {id:a.id,text:a.text,authorId:a.fallback?null:a.authorId,votes:counts[id],points:value,house:!!a.fallback};});
+ const boldBonuses=[];for(const [id,v]of Object.entries(votes))if(v.bold&&sole&&v.answerId===winnerIds[0]){points(g,id,200);boldBonuses.push({playerId:id,points:200});}
+ t.scored=true;t.reveal={promptId:t.id,text:t.text,tag:t.tag,answers:results,winnerIds,tie:!sole,totalVotes:total,boldBonuses,sweep:unanimous};g.phase='reveal';g.deadline=now+7000;bump(g);
+}
+function endRound(g){const reveals=g.tasks.map(t=>t.reveal).filter(Boolean),totalVotes=reveals.reduce((n,r)=>n+r.totalVotes,0);g.summary={round:g.round,roundName:ROUND_NAMES[g.round-1],totalVotes,pointsAwarded:Object.values(g.roundPoints).reduce((a,b)=>a+b,0),roundScores:g.playerOrder.map(id=>({id,name:g.players[id].name,points:g.roundPoints[id]||0})).sort((a,b)=>b.points-a.points),ballots:reveals.length};g.history.push(structuredClone(g.summary));g.phase='scoreboard';g.deadline=null;bump(g);}
+function nextReveal(g,now){if(g.current+1<g.tasks.length){g.current++;openBallot(g,now);}else endRound(g);}
+
+function advance(g,now=Date.now()){
+ now=ms(now,g.createdAt);let changed=true,guard=0;
+ while(changed&&guard++<30){changed=false;
+  if(g.phase==='writing'&&(allAnswered(g)||now>=g.deadline)){beginVoting(g,now);changed=true;}
+  else if(g.phase==='voting'){const t=currentTask(g),ids=eligibleIds(g,t),votes=g.votes[t.id]||{};if(ids.every(id=>own(votes,id))||now>=g.deadline){reveal(g,now);changed=true;}}
+  else if(g.phase==='reveal'&&now>=g.deadline){nextReveal(g,now);changed=true;}
+ }
+ return g;
+}
+
+function dispatch(g,actorId,action={},now=Date.now()){
+ now=ms(now,g.createdAt);const beforePhase=g.phase,beforeDeadline=g.deadline;advance(g,now);if(!action||typeof action!=='object')return failure('Choose an action.');const host=actorId===g.hostId&&g.hostConnected,player=g.players[actorId];
+ if(['start','next','restart'].includes(action.type)){
+  if(!host)return failure('Only the host can do that.');
+  if(action.type==='start'){if(g.phase!=='lobby')return failure('The game has already started.');if(connected(g).length<3)return failure('At least three connected players are needed.');g.roster=shuffle(g,connected(g));beginRound(g,1,now);advance(g,now);return success();}
+  if(action.type==='restart'){if(g.phase!=='finished')return failure('Finish this game before restarting.');g.phase='lobby';g.round=1;g.deadline=null;g.roster=[];g.tasks=[];g.votes={};g.boldUsed={};g.usedPrompts=[];g.history=[];g.summary=null;for(const p of Object.values(g.players))p.score=0;bump(g);return success();}
+  if(['writing','voting','reveal'].includes(beforePhase)&&beforeDeadline!==null&&now>=beforeDeadline)return success();
+  if(g.phase==='reveal'){nextReveal(g,now);advance(g,now);return success();}
+  if(g.phase==='scoreboard'){if(g.round===3){g.phase='finished';g.deadline=null;bump(g);}else{beginRound(g,g.round+1,now);advance(g,now);}return success();}
+  if(g.phase==='writing'||g.phase==='voting')return failure('The timer must finish before skipping this phase.');return failure('There is nothing to advance yet.');
+ }
+ if(!player||!player.connected)return failure('Reconnect before playing.');if(!g.roster.includes(actorId))return failure('You are watching this game. Join the next one.');
+ if(action.type==='answer'){
+  if(g.phase!=='writing')return failure('Answers are closed for this round.');const task=g.tasks.find(t=>t.id===action.promptId);if(!task||!task.authors.includes(actorId))return failure('That prompt is not assigned to you.');if(own(task.answers,actorId))return failure('Your answer is locked.');if(typeof action.text!=='string')return failure('Write an answer first.');const text=action.text.replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim(),limit=g.round===3?80:100;if(!text)return failure('Write an answer first.');if(Array.from(text).length>limit)return failure(`Keep your answer to ${limit} characters.`);makeAnswer(g,task,actorId,text);bump(g);advance(g,now);return success();
+ }
+ if(action.type==='vote'){
+  if(g.phase!=='voting')return failure('Voting is closed.');const task=currentTask(g);if(!eligible(g,actorId,task))return failure('You cannot vote on your own matchup.');const votes=g.votes[task.id];if(own(votes,actorId))return failure('Your vote is locked.');const answer=Object.values(task.answers).find(a=>a.id===action.answerId);if(!answer)return failure('Choose an answer on this ballot.');if(answer.authorId===actorId)return failure('You cannot vote for yourself.');if(action.bold&&g.boldUsed[actorId])return failure('Your BOLD prediction has already been used this round.');votes[actorId]={answerId:answer.id,bold:action.bold===true};if(action.bold===true)g.boldUsed[actorId]=true;bump(g);advance(g,now);return success();
+ }
+ return failure('Unknown action.');
+}
+
+function viewFor(g,viewerId){
+ const task=currentTask(g),player=g.players[viewerId],voteMap=task?g.votes[task.id]||{}:{},isWriting=g.phase==='writing',assignments=g.tasks.filter(t=>t.authors.includes(viewerId)).map(t=>({id:t.id,text:t.text,tag:t.tag,answered:own(t.answers,viewerId),ownText:t.answers[viewerId]?.text||''}));
+ const leaderboard=g.playerOrder.map(id=>({id,name:g.players[id].name,score:g.players[id].score,connected:g.players[id].connected})).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));for(let i=0;i<leaderboard.length;i++)leaderboard[i].rank=i&&leaderboard[i-1].score===leaderboard[i].score?leaderboard[i-1].rank:i+1;
+ // Construct this projection explicitly: private task authors, answer maps, vote
+ // maps, RNG and the chosen future deck must never cross the transport boundary.
+ const view={code:g.code,hostId:g.hostId,phase:g.phase,round:g.round,roundName:ROUND_NAMES[g.round-1],revision:g.revision,ballotIndex:g.tasks.length?g.current+1:0,ballotCount:g.tasks.length,players:g.playerOrder.map(id=>({id,name:g.players[id].name,score:g.players[id].score,connected:g.players[id].connected,answered:g.tasks.filter(t=>t.authors.includes(id)&&own(t.answers,id)).length,totalAssignments:g.tasks.filter(t=>t.authors.includes(id)).length,voted:g.phase==='voting'?own(voteMap,id):false,boldAvailable:!g.boldUsed[id]})),deadline:g.deadline,assignments,ballot:null,reveal:null,leaderboard,summary:g.summary?structuredClone(g.summary):null,canStart:g.phase==='lobby'&&connected(g).length>=3,settings:{...g.settings},voted:g.phase==='voting'&&own(voteMap,viewerId)};
+ if(g.phase==='voting'&&task){view.ballot={promptId:task.id,text:task.text,tag:task.tag,answers:task.order.map(id=>Object.values(task.answers).find(a=>a.id===id)).filter(a=>g.round!==3||a.authorId!==viewerId).map(a=>({id:a.id,text:a.text})),eligible:eligible(g,viewerId,task)};}
+ if(g.phase==='reveal'&&task?.reveal)view.reveal=structuredClone(task.reveal);
+ return view;
+}
+
+const $=id=>document.getElementById(id);
+const primaryScreens=['homeScreen','hostScreen','joinScreen','localScreen','handoffScreen','roomScreen'];
+let mode=null,game=null,state=null,identity=null,ws=null,connectionGeneration=0,reconnectAttempt=0,reconnectTimer=null;
+let visibleScreen='homeScreen';
+let activeActor=null,handoffId=null,localPlayers=[],localNow=0,lastClock=performance.now(),flowKey='',stageKey='',boldArmed=false,pending=false,lastPhase='',noticeTimer=null;
+let audio=null,master=null,soundOn=true,motionOn=!matchMedia('(prefers-reduced-motion:reduce)').matches;
+try{const pref=JSON.parse(localStorage.getItem('odd-crowd-preferences')||'null');if(pref){soundOn=pref.sound!==false;motionOn=pref.motion!==false}}catch{}
+function node(tag,className='',text=''){const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=text;return n}
+function button(text,className,handler){const b=node('button',className,text);b.type='button';b.onclick=handler;return b}
+function showScreen(id){if(visibleScreen===id)return;visibleScreen=id;for(const screen of primaryScreens)$(screen).hidden=screen!==id;window.scrollTo({top:0,behavior:'auto'})}
+function setPreferences(){document.body.classList.toggle('reduced-motion',!motionOn);$('soundToggle').textContent=soundOn?'SOUND ON ♫':'SOUND OFF';$('soundToggle').setAttribute('aria-pressed',String(!soundOn));$('motionToggle').textContent=motionOn?'MOTION ON':'MOTION OFF';$('motionToggle').setAttribute('aria-pressed',String(!motionOn));try{localStorage.setItem('odd-crowd-preferences',JSON.stringify({sound:soundOn,motion:motionOn}))}catch{}if(master&&audio)master.gain.setTargetAtTime(soundOn?.22:0,audio.currentTime,.04)}
+setPreferences();
+$('soundToggle').onclick=()=>{initAudio();soundOn=!soundOn;setPreferences()};$('motionToggle').onclick=()=>{motionOn=!motionOn;setPreferences()};
+function initAudio(){if(audio){audio.resume();return}try{audio=new(window.AudioContext||window.webkitAudioContext)();master=audio.createGain();master.gain.value=soundOn?.22:0;const limiter=audio.createDynamicsCompressor();limiter.threshold.value=-16;limiter.ratio.value=10;master.connect(limiter).connect(audio.destination)}catch{}}
+function tone(frequency,duration=.12,volume=.1,delay=0){if(!audio||!soundOn)return;const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime+delay;o.type='triangle';o.frequency.setValueAtTime(frequency,t);g.gain.setValueAtTime(.001,t);g.gain.linearRampToValueAtTime(volume,t+.008);g.gain.exponentialRampToValueAtTime(.001,t+duration);o.connect(g).connect(master);o.start(t);o.stop(t+duration);o.onended=()=>{o.disconnect();g.disconnect()}}
+function cue(kind){if(kind==='submit'){tone(360);tone(540,.15,.07,.06)}else if(kind==='reveal'){tone(260,.22,.09);tone(390,.25,.08,.1);tone(520,.4,.07,.2)}else if(kind==='finished'){tone(330,.25,.09);tone(440,.3,.08,.15);tone(660,.6,.07,.3)}else tone(240,.08,.07)}
+function openHelp(){$('helpModal').hidden=false;document.body.classList.add('no-scroll');$('helpClose').focus()}
+function closeHelp(){$('helpModal').hidden=true;document.body.classList.remove('no-scroll')}
+$('helpOpen').onclick=openHelp;$('helpClose').onclick=closeHelp;$('helpDone').onclick=closeHelp;$('helpModal').onclick=e=>{if(e.target===$('helpModal'))closeHelp()};
+function storedRoom(){try{return JSON.parse(sessionStorage.getItem('odd-crowd-room')||'null')}catch{return null}}
+function refreshResume(){$('resumeRoom').hidden=!storedRoom()}
+refreshResume();
+function rememberRoom(){if(!identity?.token)return;try{sessionStorage.setItem('odd-crowd-room',JSON.stringify({...identity,code:state?.code||identity.code}))}catch{}refreshResume()}
+function forgetRoom(){try{sessionStorage.removeItem('odd-crowd-room')}catch{}refreshResume()}
+function clearOnline(){if(srv){stopService(true);forgetRoom()}hostPeer=null;clearTimeout(joinTimer);connectionGeneration++;clearTimeout(reconnectTimer);reconnectTimer=null;if(ws){ws.onclose=null;ws.close();ws=null}reconnectAttempt=0}
+function leaveGame(){clearOnline();mode=null;game=null;state=null;identity=null;activeActor=null;handoffId=null;flowKey='';stageKey='';pending=false;lastPhase='';$('roomNotice').textContent='';refreshResume();$('confirmModal').hidden=true;document.body.classList.remove('no-scroll');$('footerMode').textContent='ORIGINAL PARTY GAME / MADE FOR REAL PEOPLE';showScreen('homeScreen')}
+function requestHome(){if(mode&&state&&state.phase!=='finished'){$('confirmModal').hidden=false;$('confirmModal').querySelector('p').textContent=mode==='local'?'Your current local game won’t be saved.':srv?'You’re the host. Leaving closes the room for everyone.':'Your friends can keep playing. You can rejoin from the title screen.';document.body.classList.add('no-scroll')}else leaveGame()}
+$('homeLogo').onclick=requestHome;$('leaveRoom').onclick=requestHome;$('handoffHome').onclick=requestHome;$('confirmLeave').onclick=leaveGame;$('confirmStay').onclick=()=>{$('confirmModal').hidden=true;document.body.classList.remove('no-scroll')};
+for(const b of document.querySelectorAll('[data-home]'))b.onclick=()=>showScreen('homeScreen');
+$('hostOpen').onclick=()=>{$('hostError').textContent='';showScreen('hostScreen')};$('joinOpen').onclick=()=>{$('joinError').textContent='';showScreen('joinScreen');$('joinCode').focus()};$('localOpen').onclick=()=>{if(!$('localNames').children.length)for(let i=0;i<3;i++)addNameRow();showScreen('localScreen')};
+for(const [range,output]of [['writeSeconds','writeValue'],['voteSeconds','voteValue']])$(range).oninput=()=>$(output).textContent=$(range).value+' SEC';
+function addNameRow(value=''){if($('localNames').children.length>=10)return;const row=node('div','local-name-row'),number=node('span'),input=node('input');input.type='text';input.maxLength=20;input.required=true;input.autocomplete='off';input.value=value;const remove=button('×','',()=>{if($('localNames').children.length>3){row.remove();numberRows()}});remove.setAttribute('aria-label','Remove player');row.append(number,input,remove);$('localNames').append(row);numberRows()}
+function numberRows(){const rows=[...$('localNames').children];rows.forEach((row,i)=>{row.children[0].textContent=String(i+1).padStart(2,'0');row.children[1].placeholder='Player '+(i+1);row.children[1].setAttribute('aria-label','Player '+(i+1)+' name');row.children[2].disabled=rows.length<=3});$('addLocalPlayer').disabled=rows.length>=10}
+$('addLocalPlayer').onclick=()=>{addNameRow();$('localNames').lastElementChild?.querySelector('input').focus()};
+$('localForm').onsubmit=e=>{e.preventDefault();initAudio();const names=[...$('localNames').querySelectorAll('input')].map(n=>n.value.trim());if(names.length<3){$('localError').textContent='Bring at least three people to the crowd.';return}
+ clearOnline();localNow=Date.now();game=createGame({code:'LOCAL',hostId:'local-host',seed:Math.floor(Math.random()*0x7fffffff),now:localNow,writeSeconds:600,voteSeconds:600});localPlayers=[];
+ for(const [i,name]of names.entries()){const id='local-'+(i+1),result=addPlayer(game,{id,name},localNow);if(!result.ok){$('localError').textContent=result.error;game=null;return}localPlayers.push(id)}
+ const result=dispatch(game,'local-host',{type:'start'},localNow);if(!result.ok){$('localError').textContent=result.error;return}mode='local';identity={id:'local-host',role:'host',code:'LOCAL'};activeActor=null;handoffId=null;flowKey='';stageKey='';lastPhase='';pending=false;lastClock=performance.now();renderLocal();cue('start');
+};
+function localHostView(){return viewFor(game,'local-host')}
+function localCandidate(global){if(global.phase==='writing')return localPlayers.find(id=>viewFor(game,id).assignments.some(a=>!a.answered));if(global.phase==='voting')return localPlayers.find(id=>{const view=viewFor(game,id);return view.ballot?.eligible&&!view.voted});return null}
+function renderLocal(){if(!game)return;const global=localHostView(),flow=`${global.phase}:${global.round}:${global.ballot?.promptId||global.reveal?.promptId||''}`;if(flow!==flowKey){activeActor=null;handoffId=null;flowKey=flow;stageKey='';boldArmed=false;pending=false}
+ if(global.phase==='writing'||global.phase==='voting'){
+  if(activeActor){const personal=viewFor(game,activeActor),done=global.phase==='writing'?!personal.assignments.some(a=>!a.answered):personal.voted||!personal.ballot?.eligible;if(done)activeActor=null}
+  if(!activeActor){handoffId=localCandidate(global);if(handoffId){state=global;const player=global.players.find(p=>p.id===handoffId);$('handoffName').textContent=player?.name||'your next player';$('handoffTask').textContent=global.phase==='writing'?'Your prompts are private. Everyone else, look away.':'Your vote is private. Pick the answer that deserves the room.';showScreen('handoffScreen');$('footerMode').textContent='PASS & PLAY / PRIVATE HANDOFF';updateClock();return}}
+ }
+ state=activeActor?viewFor(game,activeActor):global;showScreen('roomScreen');renderRoom();
+}
+$('handoffReady').onclick=()=>{if(!handoffId)return;activeActor=handoffId;handoffId=null;stageKey='';renderLocal();const field=$('answerText');if(field)field.focus()};
+function renderOnline(){if(!state||!identity)return;showScreen('roomScreen');renderRoom()}
+function viewerId(){return mode==='local'?(activeActor||'local-host'):identity?.id}
+function isHost(){return mode==='local'||state?.hostId===identity?.id}
+function isPlayer(){return state?.players.some(p=>p.id===viewerId())}
+function action(a,host=false){initAudio();if(mode==='local'){const result=dispatch(game,host?'local-host':activeActor,a,localNow);if(!result.ok){pending=false;roomNotice(result.error);const b=$('answerSubmit');if(b)b.disabled=false;return}if(a.type==='restart')dispatch(game,'local-host',{type:'start'},localNow);cue(a.type==='answer'||a.type==='vote'?'submit':'start');pending=false;renderLocal()}else if(srv){pending=true;if(a.type==='answer'||a.type==='vote')cue('submit');handleRequest('self',{type:'action',action:a})}else if(online()){pending=true;relaySend({t:'oc',to:hostPeer,msg:{type:'action',action:a}});if(a.type==='answer'||a.type==='vote')cue('submit')}else{pending=false;roomNotice('Your connection is down. Reconnecting…')}}
+function roomNotice(message){$('roomNotice').textContent=message;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>$('roomNotice').textContent='',7000)}
+function publicName(id){return state?.players.find(p=>p.id===id)?.name||(id===null?'THE HOUSE':'A PLAYER')}
+function heading(kicker,title,description=''){const wrap=node('div','stage-heading');if(kicker)wrap.append(node('div','eyebrow',kicker));wrap.append(node('h2','',title));if(description)wrap.append(node('p','',description));return wrap}
+function waitingDoodle(){const wrap=node('div','waiting-art');wrap.setAttribute('aria-hidden','true');for(let i=0;i<3;i++)wrap.append(node('div','waiting-orb'));return wrap}
+function hostActions(label='NEXT ↗',type='next'){const wrap=node('div','stage-actions');if(isHost())wrap.append(button(label,'button ink-button',()=>action({type},true)));else wrap.append(node('div','host-note','Your host will take it from here.'));return wrap}
+function renderRoom(){if(!state)return;const phase=state.phase,player=state.players.find(p=>p.id===viewerId()),assignment=state.assignments.find(a=>!a.answered),ballot=state.ballot;
+ const key=[phase,state.round,viewerId(),assignment?.id||'',ballot?.promptId||state.reveal?.promptId||'',state.voted?'voted':'',ballot?.eligible?'eligible':'',isHost()?'host':'',isPlayer()?'player':''].join('|');
+ $('roomLabel').textContent=mode==='local'?`PASS & PLAY · ${activeActor?publicName(activeActor):'EVERYONE LOOK'}`:`ROOM ${state.code}${player?' · '+player.name:' · HOST SCREEN'}`;$('copyInvite').hidden=mode==='local';$('connectionStatus').textContent=mode==='local'?'OFFLINE & TOGETHER':online()?(srv?'YOU’RE HOSTING':'CONNECTED'):'RECONNECTING…';$('footerMode').textContent=mode==='local'?'PASS & PLAY / THIS DEVICE ONLY':'ONLINE ROOM / '+state.code;
+ $('roundLabel').textContent=phase==='lobby'?'THE CROWD IS GATHERING':`ROUND ${state.round} / 3 · ${state.roundName.toUpperCase()}`;$('phaseLabel').textContent={lobby:'WELCOME IN',writing:'PUT IT INTO WORDS',voting:`VOTE ${state.ballotIndex}/${state.ballotCount}`,reveal:'THE CROWD HAS SPOKEN',scoreboard:'CURRENT BRAGGING RIGHTS',finished:'THE FINAL WORD'}[phase]||'';
+ if(phase!==lastPhase){if(phase==='reveal'){cue('reveal');if(state.reveal?.sweep)confetti(70)}if(phase==='finished'){cue('finished');confetti(220)}lastPhase=phase}
+ if(key!==stageKey){stageKey=key;boldArmed=false;pending=false;$('stage').replaceChildren();if(phase==='lobby')renderLobby();else if(phase==='writing')renderWriting(assignment);else if(phase==='voting')renderVoting();else if(phase==='reveal')renderReveal();else if(phase==='scoreboard')renderScoreboard();else if(phase==='finished')renderFinished()}
+ updateDynamic();updateClock();
+}
+function renderLobby(){const layout=node('div','lobby-layout'),billboard=node('section','join-billboard'),seats=node('section','lobby-seats');billboard.append(node('div','eyebrow','THE MORE THE ODDER'),node('h2','','Your kind of\ncrowd.'));const codeButton=button(state.code,'big-code',copyInvite);codeButton.setAttribute('aria-label','Copy room invite');billboard.append(codeButton,node('p','','Friends open Pulsebox, tap Play with friends, then Join, and type this code. Or tap the code to copy an invite link. Three to ten players make a crowd.'));
+ seats.append(node('h3','',`${state.players.length} / 10 people have arrived.`));const list=node('div','seat-list');list.id='seatList';seats.append(list);if(isHost()){const start=button('EVERYONE HERE? LET’S GO ↗','button ink-button',()=>action({type:'start'},true));start.id='startGame';const guest=button('＋ ADD A HOUSE GUEST','add-player guest-add',addGuest);guest.id='addGuest';seats.append(start,guest)}else seats.append(node('p','lobby-tip','You’re in. Keep this page open. Your host will start when the crowd is ready.'));seats.append(node('p','lobby-tip',isHost()?(isPlayer()?'You’re hosting and playing. Short on people? House guests write and vote too. Tap one to send it home.':'This screen hosts the game. Put it where everyone can see it. Short on people? Add house guests.'):'Your prompts and votes appear here when the game begins.'));layout.append(billboard,seats);$('stage').append(layout)}
+function renderWriting(assignment){if(assignment&&isPlayer()){
+ const layout=node('div','writing-layout'),prompt=node('section','prompt-card'),form=node('form','answer-form');prompt.append(node('div','card-index',`${assignment.tag.toUpperCase()} / FOR YOUR EYES ONLY`),node('h2','',assignment.text));
+ const label=node('label');label.htmlFor='answerText';label.append(node('span','','YOUR ANSWER'));const counter=node('span','','0 / '+(state.round===3?80:100));counter.id='characterCount';label.append(counter);const field=node('textarea');field.id='answerText';field.maxLength=state.round===3?80:100;field.required=true;field.placeholder='Go on. Make it unexpected.';field.autocomplete='off';field.spellcheck=true;const submit=button('LOCK IT IN ↗','button ink-button',null);submit.type='submit';submit.id='answerSubmit';const info=node('div','answered-info');info.id='answeredInfo';form.append(label,field,submit,info,node('div','small-note','Once submitted, your answer is locked. Your name stays hidden until the reveal.'));form.onsubmit=e=>{e.preventDefault();const text=field.value.trim();if(!text||pending)return;submit.disabled=true;action({type:'answer',promptId:assignment.id,text})};field.oninput=()=>counter.textContent=Array.from(field.value).length+' / '+field.maxLength;layout.append(prompt,form);$('stage').append(layout);setTimeout(()=>field.focus(),0);
+ }else{
+ $('stage').append(heading('THE GOOD IDEAS ARE BREWING',isPlayer()?'Your answers are in.':'A little creative chaos.',isPlayer()?'Take a breath. The rest of your crowd is finding the words.':'Everyone has private prompts on their own device. The answers stay under wraps until voting.'),waitingDoodle());const progress=node('div','progress-players');progress.id='progressPlayers';$('stage').append(progress);
+ }}
+function renderVoting(){const b=state.ballot;if(!b)return;$('stage').append(heading(b.tag,b.text,!isPlayer()?'Players: vote on your own devices. Answers are anonymous until the reveal.':!b.eligible?'This is your matchup. Sit back and let your crowd decide.':state.voted?'Your vote is locked. Let’s see where the crowd lands.':'Which answer deserves the room? Tap your favorite.'));
+ if(state.voted){$('stage').append(waitingDoodle());return}
+ const answers=node('div','vote-grid');for(const [i,a]of b.answers.entries()){const option=button(a.text,'vote-answer',()=>{if(pending)return;for(const n of answers.querySelectorAll('button'))n.disabled=true;action({type:'vote',answerId:a.id,bold:boldArmed})});option.dataset.number=String(i+1).padStart(2,'0');option.disabled=!b.eligible||!isPlayer();answers.append(option)}$('stage').append(answers);
+ if(b.eligible&&isPlayer()){const self=state.players.find(p=>p.id===viewerId());if(self?.boldAvailable){const wrap=node('div','bold-control'),bold=button('MAKE IT A BOLD VOTE','bold-toggle',()=>{boldArmed=!boldArmed;bold.setAttribute('aria-pressed',String(boldArmed));bold.textContent=boldArmed?'BOLD VOTE ARMED ✓':'MAKE IT A BOLD VOTE'});bold.setAttribute('aria-pressed','false');wrap.append(bold,node('span','','ONE PER ROUND'));$('stage').append(wrap,node('p','bold-note','A correct bold prediction earns a bonus if your pick is the sole winner. No bonus on a tie.'))}else $('stage').append(node('p','bold-note','You’ve already used your bold prediction this round.'))}
+ else if(!isPlayer())$('stage').append(node('p','host-note','The timer or the last eligible vote reveals the authors.'));
+}
+function renderReveal(){const reveal=state.reveal;if(!reveal)return;$('stage').append(heading(reveal.tie?'GREAT MINDS. DIFFERENT FAVORITES.':reveal.sweep?'A CLEAN SWEEP.':'THE CROWD HAS SPOKEN.',reveal.text,mode==='local'?'Everyone can look now. These are your beautifully questionable answers.':''));const cards=node('div','reveal-grid');for(const answer of reveal.answers){const winner=reveal.winnerIds.includes(answer.id),card=node('article','reveal-answer'+(winner?' winner':''));if(winner)card.append(node('span','winner-stamp',reveal.tie?'TIED FAVORITE':'CROWD FAVORITE'));card.append(node('div','answer-author',answer.house||answer.authorId===null?'THE HOUSE':publicName(answer.authorId)),node('h3','',answer.text));const result=node('div','answer-result');result.append(node('span','',`${answer.votes} ${answer.votes===1?'VOTE':'VOTES'}`),node('b','',`+${answer.points.toLocaleString()}`));card.append(result);cards.append(card)}$('stage').append(cards);if(reveal.boldBonuses?.length){$('stage').append(node('p','host-note','BOLD BONUS: '+reveal.boldBonuses.map(b=>`${publicName(b.playerId)} +${b.points}`).join(' · ')))}$('stage').append(hostActions(state.ballotIndex>=state.ballotCount?'SEE THE SCORES ↗':'NEXT MATCHUP ↗'));}
+function scoreboard(){const board=node('div','scoreboard');for(const [i,p]of state.leaderboard.entries()){const row=node('div','score-row');row.append(node('span','rank',String(p.rank||i+1).padStart(2,'0')),node('span','score-name',p.name),node('span','score-number',p.score.toLocaleString()));board.append(row)}return board}
+function renderScoreboard(){const summary=state.summary;$('stage').append(heading('A MOMENT FOR THE BRAGGING RIGHTS',state.round===3?'One last look at the scores.':'The plot thickens.',`${summary?.totalVotes||0} votes cast this round. ${summary?.pointsAwarded?.toLocaleString()||0} points found a home.`),scoreboard(),hostActions(state.round===3?'MEET YOUR ODD CHAMPION ↗':`ON TO ROUND ${state.round+1} ↗`));}
+function renderFinished(){const top=state.leaderboard[0]?.score||0,winners=state.leaderboard.filter(p=>p.score===top),head=heading('THREE ROUNDS. EXCELLENTLY QUESTIONABLE COMPANY.',winners.length>1?'A gloriously odd tie.':'Your crowd has a champion.');head.classList.add('finale-heading');const names=node('span','winner-name',winners.map(p=>p.name).join(' + '));head.querySelector('h2').append(document.createElement('br'),names);head.append(node('p','',`${top.toLocaleString()} points. Absolutely no sensible explanations required.`));$('stage').append(head,scoreboard());const actions=hostActions('SAME CROWD. NEW NONSENSE. ↻','restart');actions.append(button('BACK TO THE CROWD','button outline-button',leaveGame));$('stage').append(actions)}
+function updateDynamic(){if(!state)return;const list=$('seatList');if(list){const key=state.players.map(p=>p.id+p.name+p.connected).join('|');if(list.dataset.key!==key){list.dataset.key=key;list.replaceChildren();for(const p of state.players){const guest=p.id.startsWith('bot-'),chip=node(guest&&srv?'button':'div','player-chip'+(!p.connected?' offline':'')+(guest?' guest':'')+(p.id===state.hostId?' host':''));chip.append(node('span','chip-dot'),node('span','',p.name+(!p.connected?' · reconnecting':'')));if(guest)chip.append(node('small','',srv?'HOUSE GUEST ×':'HOUSE GUEST'));else if(p.id===state.hostId)chip.append(node('small','','HOST'));if(guest&&srv){chip.type='button';chip.title='Send this house guest home';chip.onclick=()=>removeGuest(p.id)}list.append(chip)}const h=list.parentElement.querySelector('h3');if(h)h.textContent=`${state.players.length} / 10 people have arrived.`}}
+ const start=$('startGame');if(start){start.disabled=!state.canStart;start.textContent=state.canStart?'EVERYONE HERE? LET’S GO ↗':'WAITING FOR AT LEAST 3 PLAYERS'}const guestAdd=$('addGuest');if(guestAdd)guestAdd.disabled=state.players.length>=10
+ const progress=$('progressPlayers');if(progress){const key=state.players.map(p=>p.id+p.answered+p.totalAssignments).join('|');if(progress.dataset.key!==key){progress.dataset.key=key;progress.replaceChildren();for(const p of state.players){const done=p.answered>=p.totalAssignments,row=node('div','progress-player'+(done?' done':''));row.append(node('b','',p.name),node('span','',done?'ALL SET ✓':`${p.answered}/${p.totalAssignments}`));progress.append(row)}}}
+ const info=$('answeredInfo');if(info){const p=state.players.find(p=>p.id===viewerId());info.textContent=`${p?.answered||0} / ${p?.totalAssignments||0} answers submitted`}
+ const submit=$('answerSubmit');if(submit)submit.disabled=pending;
+ for(const option of $('stage').querySelectorAll('.vote-answer'))option.disabled=!(state.ballot?.eligible&&isPlayer()&&!pending&&!state.voted&&(mode==='local'||online()));
+}
+function updateClock(){if(!state)return;const now=mode==='local'?localNow:Date.now()+clockOffset,seconds=state.deadline?Math.max(0,Math.ceil((state.deadline-now)/1000)):null;let value=seconds===null?'':`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;if(mode==='local'&&state.phase==='reveal')value='EVERYONE LOOK';if(mode==='local'&&$('handoffScreen').hidden===false)value='PRIVATE TURN';$('timer').textContent=value;$('timer').classList.toggle('urgent',seconds!==null&&seconds<=10)}
+function copyInvite(){const code=state?.code||identity?.code||'',text=(API_ORIGIN?'https://box.pulseform.org/':location.origin+'/')+'#join-'+code;try{navigator.clipboard.writeText(text).then(()=>roomNotice('Invite link copied. Send it to your people: room '+code+'.'),()=>roomNotice('Room code: '+(state?.code||identity?.code)))}catch{roomNotice('Room code: '+(state?.code||identity?.code))}}
+$('copyInvite').onclick=copyInvite;
+setInterval(()=>{const now=performance.now(),dt=Math.min(1000,Math.max(0,now-lastClock));lastClock=now;if(mode==='local'&&game){const phase=game.phase;if(activeActor&&$('handoffScreen').hidden&&$('helpModal').hidden&&$('confirmModal').hidden&&!document.hidden&&['writing','voting'].includes(phase)){
+  localNow+=dt;const revision=game.revision;advance(game,localNow);if(game.revision!==revision)renderLocal();else if(state)state.deadline=game.deadline;
+ }}updateClock()},100);
+window.addEventListener('keydown',e=>{if(e.code==='Escape'){if(!$('helpModal').hidden)closeHelp();else if(!$('confirmModal').hidden){$('confirmModal').hidden=true;document.body.classList.remove('no-scroll')}}});
+
+/* ODD CROWD on Pulsebox: online rooms without a game server.
+   The original game ran its room service in Node (server.mjs). Here the host's browser runs that same service
+   on top of the Pulsebox Rooms relay (/api/room/CODE, a Durable Object that forwards JSON between the people in a room):
+   - the host creates the game, keeps each member's seat token, applies every join, resume and action with the shared
+     rules engine (game.mjs), and sends each person only their own view (viewFor), addressed { to: peer }.
+   - players broadcast their join or resume once; the host answers them directly, and after that they talk only to the host.
+   - if the host's tab drops and comes back (REJOIN YOUR ROOM), it announces itself and every player re-sends their seat token.
+   House guests are small bots the host can add in the lobby so two people (or one) can still play. */
+const WSHOST=/^https?:/.test(location.protocol)&&!/^(localhost|127\.)/.test(location.hostname)?location.host:'box.pulseform.org';
+const API_ORIGIN=/^https?:/.test(location.protocol)&&!/^(localhost|127\.)/.test(location.hostname)?'':'https://box.pulseform.org';
+const CODE_LETTERS='ABCDEFGHJKLMNPQRSTUVWXYZ';
+let srv=null,hostPeer=null,clockOffset=0,presetCode='',joinTimer=null;
+const randomBytes=n=>{const a=new Uint8Array(n);crypto.getRandomValues(a);return a};
+const newId=()=>Array.from(randomBytes(12),b=>b.toString(16).padStart(2,'0')).join('');
+const newToken=()=>btoa(String.fromCharCode(...randomBytes(24))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const newCode=()=>Array.from(randomBytes(4),n=>CODE_LETTERS[n%CODE_LETTERS.length]).join('');
+const cleanCode=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
+const savedName=()=>{try{return localStorage.getItem('pbx-mp-name')||''}catch{return ''}};
+function saveName(n){const short=n.replace(/[^\w .'-]/g,'').trim().slice(0,12);if(short)try{localStorage.setItem('pbx-mp-name',short)}catch{}}
+async function roomInfo(code){try{return await(await fetch(API_ORIGIN+'/api/room/'+code,{cache:'no-store'})).json()}catch{return null}}
+function relaySend(m){if(ws?.readyState===1&&ws.bufferedAmount<512000)ws.send(JSON.stringify(m))}
+function online(){return srv?true:ws?.readyState===1&&!!hostPeer}
+
+/* ---------- one relay connection, shared by hosts and players ---------- */
+function connectRelay(code,errorId,onHello){
+ const generation=connectionGeneration;let socket;
+ try{socket=new WebSocket(`wss://${WSHOST}/api/room/${code}?n=oc&g=odd-crowd`)}catch(e){$(errorId).textContent='Couldn’t reach the rooms server. Try again, or choose Pass & play.';return}
+ ws=socket;$('connectionStatus').textContent=reconnectAttempt?'RECONNECTING…':'CONNECTING…';
+ const timeout=setTimeout(()=>{if(socket===ws&&socket.readyState!==1){$(errorId).textContent='Couldn’t reach the rooms server. Try again, or choose Pass & play.';socket.close()}},10000);
+ socket.onmessage=e=>{if(generation!==connectionGeneration||socket!==ws)return;let m;try{m=JSON.parse(e.data)}catch{return}if(!m||typeof m!=='object')return;
+  if(m.t==='hello'){clearTimeout(timeout);reconnectAttempt=0;$('connectionStatus').textContent='CONNECTED';onHello(m);return}
+  if(m.t==='full'){$(errorId).textContent='That room is full.';return}
+  if(srv)hostMessage(m);else playerMessage(m,errorId);
+ };
+ socket.onclose=()=>{clearTimeout(timeout);if(generation!==connectionGeneration||socket!==ws)return;ws=null;pending=false;$('connectionStatus').textContent='CONNECTION LOST';
+  if((srv||identity?.token)&&reconnectAttempt<8){reconnectAttempt++;reconnectTimer=setTimeout(()=>{if(generation===connectionGeneration)reconnect(errorId)},500+reconnectAttempt*900)}
+  else if(state)roomNotice('Connection lost. Use REJOIN YOUR ROOM from the title screen when you’re online again.');
+  if(state)renderRoom();
+ };
+}
+function reconnect(errorId){
+ if(srv)connectRelay(srv.code,errorId,()=>relaySend({t:'oc-host'}));
+ else if(identity?.token)connectRelay(identity.code,errorId,()=>relaySend({t:'oc',msg:{type:'resume',code:identity.code,token:identity.token}}));
+}
+
+/* ---------- player side ---------- */
+function joinRoom(message,errorId){
+ clearOnline();mode='online';hostPeer=null;$(errorId).textContent='';
+ const code=cleanCode(message.code);if(code.length!==4){$(errorId).textContent='Enter the four-letter room code.';mode=null;return}
+ connectRelay(code,errorId,hello=>{
+  if(hello.players.length<2){fail('Room '+code+' isn’t open. Check the code on the host’s screen.');return}
+  relaySend({t:'oc',msg:message});
+  clearTimeout(joinTimer);joinTimer=setTimeout(()=>{if(!identity)fail('Room '+code+' didn’t answer. Check the code, or ask your host to reopen the room.')},6000);
+ });
+ function fail(text){clearTimeout(joinTimer);if(message.type==='resume')forgetRoom();clearOnline();mode=null;identity=null;state=null;stageKey='';$(errorId).textContent=text;showScreen('joinScreen')}
+}
+function playerMessage(m,errorId){
+ if(m.t==='oc-host'){if(identity?.token){hostPeer=m.from;relaySend({t:'oc',to:m.from,msg:{type:'resume',code:identity.code,token:identity.token}})}return}
+ if(m.t==='oc-closed'&&m.from===hostPeer){forgetRoom();hostPeer=null;roomNotice('The host closed this room. Thanks for playing!');$('connectionStatus').textContent='ROOM CLOSED';return}
+ if(m.t==='leave'&&m.id===hostPeer){$('connectionStatus').textContent='HOST RECONNECTING…';roomNotice('The host dropped out. Hang tight: the game carries on if they come back.');return}
+ if(m.t!=='oc'||!m.msg||typeof m.msg!=='object')return;const d=m.msg;
+ if(d.type==='welcome'){if(hostPeer&&m.from!==hostPeer&&identity)return;hostPeer=m.from;clearTimeout(joinTimer)}
+ else if(m.from!==hostPeer)return;
+ deliver(d,errorId);
+}
+// What the room service tells this screen (from the relay, or straight from this tab when it is the host)
+function deliver(d,errorId='joinError'){
+ if(d.type==='welcome'){identity={id:d.id,token:d.token,code:d.code,role:d.role};rememberRoom();$('connectionStatus').textContent='CONNECTED';return}
+ if(d.type==='state'&&d.state&&typeof d.state==='object'){if(Number.isFinite(d.now))clockOffset=d.now-Date.now();state=d.state;rememberRoom();pending=false;renderOnline();return}
+ if(d.type==='error'){pending=false;const text=String(d.message||'Something went wrong.').slice(0,200);if(!identity){clearTimeout(joinTimer);clearOnline();mode=null;state=null;stageKey='';$(errorId).textContent=text;showScreen(errorId==='hostError'?'hostScreen':'joinScreen');return}roomNotice(text);const submit=$('answerSubmit');if(submit)submit.disabled=false;renderOnline()}
+}
+
+/* ---------- host side: the room service ---------- */
+async function hostRoom(){
+ const errorId='hostError',name=$('hostName').value.trim();$(errorId).textContent='';
+ if(name&&[...name].length>20){$(errorId).textContent='Choose a name between 1 and 20 characters.';return}
+ const submit=$('hostForm').querySelector('button[type=submit]');submit.disabled=true;$(errorId).textContent='Finding you a room…';
+ let code=presetCode;presetCode='';
+ if(code){const info=await roomInfo(code);if(info&&info.players)code=''}
+ for(let tries=0;!code&&tries<6;tries++){const c=newCode(),info=await roomInfo(c);if(!info){submit.disabled=false;$(errorId).textContent='Couldn’t reach the rooms server. Check your connection, or choose Pass & play.';return}if(!info.players)code=c}
+ submit.disabled=false;if(!code){$(errorId).textContent='Every table is busy. Try again in a moment.';return}
+ clearOnline();mode='online';const now=Date.now(),hostId=newId(),token=newToken();
+ const game=createGame({code,hostId,seed:new Uint32Array(randomBytes(4).buffer)[0],now,writeSeconds:Number($('writeSeconds').value),voteSeconds:Number($('voteSeconds').value)});
+ if(name){const r=addPlayer(game,{id:hostId,name},now);if(!r.ok){$(errorId).textContent=r.error;mode=null;return}saveName(name)}
+ srv={code,game,members:new Map([[hostId,{id:hostId,token,role:'host',peer:'self'}]]),sent:-1,bots:{},lines:[],rate:new Map(),loop:null};
+ $(errorId).textContent='';startService();
+ deliver({type:'welcome',id:hostId,token,code,role:'host'});broadcast();
+ connectRelay(code,errorId,()=>relaySend({t:'oc-host'}));
+}
+function resumeHost(saved){
+ let data;try{data=JSON.parse(sessionStorage.getItem('odd-crowd-host')||'null')}catch{}
+ if(!data||data.code!==saved.code||!data.game){forgetRoom();return false}
+ clearOnline();mode='online';const now=Date.now();
+ srv={code:data.code,game:data.game,members:new Map(),sent:-1,bots:{},lines:data.lines||[],rate:new Map(),loop:null};
+ for(const m of data.members||[])srv.members.set(m.id,{id:m.id,token:m.token,role:m.role,peer:m.role==='host'?'self':null,gone:now+6000});
+ startService();deliver({type:'welcome',id:saved.id,token:saved.token,code:saved.code,role:'host'});broadcast();
+ connectRelay(srv.code,'joinError',()=>relaySend({t:'oc-host'}));return true;
+}
+function startService(){clearInterval(srv.loop);srv.loop=setInterval(serviceTick,200)}
+function stopService(sayGoodbye){if(!srv)return;clearInterval(srv.loop);if(sayGoodbye)relaySend({t:'oc-closed'});try{sessionStorage.removeItem('odd-crowd-host')}catch{}srv=null}
+function sendTo(peer,data){if(peer==='self')deliver(data,'hostError');else if(peer)relaySend({t:'oc',to:peer,msg:data})}
+function broadcast(){if(!srv)return;const g=srv.game,now=Date.now();for(const m of srv.members.values())if(m.peer)sendTo(m.peer,{type:'state',state:viewFor(g,m.id),now});srv.sent=g.revision;saveHost()}
+function saveHost(){try{sessionStorage.setItem('odd-crowd-host',JSON.stringify({code:srv.code,game:srv.game,lines:srv.lines,members:[...srv.members.values()].map(m=>({id:m.id,token:m.token,role:m.role}))}))}catch{}}
+function memberByPeer(peer){for(const m of srv.members.values())if(m.peer===peer)return m;return null}
+function serviceTick(){
+ if(!srv)return;const g=srv.game,now=Date.now();
+ // a player whose connection dropped keeps their seat for a few seconds before the house writes for them
+ for(const m of srv.members.values())if(!m.peer&&m.gone&&now>=m.gone){m.gone=0;if(g.players[m.id]?.connected)setConnected(g,m.id,false,now)}
+ botTick(now);advance(g,now);if(srv.sent!==g.revision)broadcast();
+}
+function hostMessage(m){
+ if(m.t==='leave'){const member=memberByPeer(m.id);if(member){member.peer=null;member.gone=Date.now()+6000}return}
+ if(m.t!=='oc'||!m.msg||typeof m.msg!=='object'||Array.isArray(m.msg)||!m.from)return;
+ handleRequest(m.from,m.msg);
+}
+function handleRequest(peer,message){
+ const g=srv.game,at=Date.now(),error=text=>sendTo(peer,{type:'error',message:text});
+ let rate=srv.rate.get(peer);if(!rate||at-rate.window>10000)srv.rate.set(peer,rate={window:at,count:0});if(++rate.count>100)return error('Too many requests. Please slow down.');
+ if(message.type==='action'){
+  const member=memberByPeer(peer);if(!member)return error('Join a room first.');
+  if(!message.action||typeof message.action!=='object'||Array.isArray(message.action))return error('Invalid game action.');
+  const before=g.revision;advance(g,at);const result=dispatch(g,member.id,message.action,at);
+  if(!result?.ok)error(result?.error||'That action is unavailable.');
+  if(message.action.type==='restart'&&result?.ok){srv.bots={};srv.lines=[]}
+  if(g.revision!==before||!result?.ok)broadcast();return;
+ }
+ if(message.type!=='join'&&message.type!=='resume')return;
+ if(cleanCode(message.code)!==srv.code)return;   // meant for some other room service; stay quiet
+ if(message.type==='resume'||message.token){
+  const token=typeof message.token==='string'&&message.token.length<100?message.token:'';
+  const seat=token?[...srv.members.values()].find(m=>m.role!=='host'&&m.token===token):null;
+  if(!seat)return error('This saved seat has expired. Join again from the lobby.');
+  const old=seat.peer;seat.peer=peer;seat.gone=0;
+  if(old&&old!==peer&&old!=='self')relaySend({t:'oc',to:old,msg:{type:'error',message:'Your seat opened in another tab.'}});
+  setConnected(g,seat.id,true,at);
+  sendTo(peer,{type:'welcome',id:seat.id,token:seat.token,code:srv.code,role:seat.role});broadcast();return;
+ }
+ if(memberByPeer(peer))return error('You are already in this room.');
+ if(g.phase!=='lobby')return error('This game is already in progress. Wait for the next one, or reconnect from your original tab.');
+ const name=typeof message.name==='string'?message.name.replace(/[\u0000-\u001f\u007f]/g,'').trim().replace(/\s+/g,' '):'';
+ if(!name||[...name].length>20)return error('Choose a name between 1 and 20 characters.');
+ if(Object.values(g.players).some(p=>p.name.toLocaleLowerCase()===name.toLocaleLowerCase()))return error('That name is taken at this table. Try another.');
+ const id=newId(),token=newToken(),result=addPlayer(g,{id,name},at);
+ if(!result?.ok)return error(result?.error||'This room cannot accept more players.');
+ srv.members.set(id,{id,token,role:'player',peer});
+ sendTo(peer,{type:'welcome',id,token,code:srv.code,role:'player'});broadcast();
+}
+
+/* ---------- house guests ---------- */
+const GUEST_NAMES=['Gary From Accounts','A Haunted Lamp','Professor Waffles','Big Linda','The Neighbor’s Cat','Mysterious Steve','Grandma Turbo','A Polite Ghost','Captain Noodle','Doug (Probably)','Sir Reginald','The Intern'];
+const GUEST_LINES=['A raccoon with a clipboard and a dream.','Seventeen ducks and a strongly worded letter.','My uncle’s secret soup recipe.','Absolutely nothing, and that’s the scary part.','A trampoline made of lasagna.','Interpretive dance, but competitive.','The world’s most confident pigeon.','A suspiciously warm doorknob.','An apology written in glitter.','Three goats in a business suit.','A candle that smells like Tuesday.','The loudest whisper ever recorded.','Free samples of regret.','A haunted fanny pack.','Mild disappointment, gift-wrapped.','A sandwich with a five-year plan.','Bees. Just a lot of bees.','A motivational speech from a damp sock.','The emergency backup llama.','One extremely dramatic potato.','A spreadsheet that cries at night.','Tiny hats for very serious frogs.','The vibe of an empty bowling alley.','A sword, but it’s mostly a spoon.','Crocs with spurs.','A podcast hosted by two pigeons.','An unsupervised leaf blower.','Grandma’s forbidden casserole.','A wizard who only does taxes.','The forbidden snack drawer.','A haircut that knows too much.','A smoothie with a criminal record.','Soup. Always soup.','A golden retriever running for mayor.','Four raccoons in one big coat.','The sound a fridge makes at 3 a.m.','A treasure map to the nearest gas station.','Extremely loud jazz.','A cursed rubber duck.','A pamphlet titled “So You’ve Angered a Swan”.'];
+function addGuest(){
+ if(!srv||srv.game.phase!=='lobby')return;const g=srv.game;if(g.playerOrder.length>=10)return roomNotice('The room is full.');
+ const taken=new Set(Object.values(g.players).map(p=>p.name.toLocaleLowerCase())),name=GUEST_NAMES.find(n=>!taken.has(n.toLocaleLowerCase()));if(!name)return;
+ const result=addPlayer(g,{id:'bot-'+newId().slice(0,8),name},Date.now());if(!result.ok)return roomNotice(result.error);cue('start');broadcast();
+}
+function removeGuest(id){
+ if(!srv||srv.game.phase!=='lobby'||!id.startsWith('bot-'))return;const g=srv.game;if(!g.players[id])return;
+ delete g.players[id];g.playerOrder=g.playerOrder.filter(p=>p!==id);g.revision++;broadcast();
+}
+function guestLine(){const free=GUEST_LINES.filter(l=>!srv.lines.includes(l)),pick=(free.length?free:GUEST_LINES)[Math.floor(Math.random()*(free.length||GUEST_LINES.length))];srv.lines.push(pick);if(srv.lines.length>=GUEST_LINES.length)srv.lines=[];return pick}
+function botTick(now){
+ const g=srv.game;if(g.phase!=='writing'&&g.phase!=='voting')return;
+ for(const id of g.playerOrder){if(!id.startsWith('bot-'))continue;const plan=srv.bots[id]||(srv.bots[id]={}),view=viewFor(g,id),left=Math.max(0,(g.deadline||now)-now);
+  if(g.phase==='writing'){const task=view.assignments.find(a=>!a.answered);if(!task)continue;const key='w'+task.id;
+   if(!plan[key])plan[key]=now+3000+Math.random()*Math.max(1000,Math.min(30000,left*.5));else if(now>=plan[key])dispatch(g,id,{type:'answer',promptId:task.id,text:guestLine()},now)}
+  else if(view.ballot?.eligible&&!view.voted&&view.ballot.answers.length){const key='v'+view.ballot.promptId;
+   if(!plan[key])plan[key]=now+2500+Math.random()*Math.max(500,Math.min(7000,left*.5));
+   else if(now>=plan[key]){const pick=view.ballot.answers[Math.floor(Math.random()*view.ballot.answers.length)],me=view.players.find(p=>p.id===id);dispatch(g,id,{type:'vote',answerId:pick.id,bold:!!me?.boldAvailable&&Math.random()<.2},now)}}
+ }
+}
+
+/* ---------- wire it into the screens ---------- */
+$('hostForm').onsubmit=e=>{e.preventDefault();initAudio();hostRoom()};
+$('joinForm').onsubmit=e=>{e.preventDefault();initAudio();const name=$('playerName').value.trim();saveName(name);joinRoom({type:'join',code:$('joinCode').value,name},'joinError')};
+$('resumeRoom').onclick=()=>{const saved=storedRoom();if(!saved)return;initAudio();if(saved.role==='host'){if(!resumeHost(saved)){showScreen('hostScreen');$('hostError').textContent='That room has closed. Make a new one.'}return}showScreen('joinScreen');$('joinCode').value=saved.code;joinRoom({type:'resume',code:saved.code,token:saved.token},'joinError')};
+$('joinCode').addEventListener('input',e=>{e.target.value=cleanCode(e.target.value)});
+$('hostName').value=savedName();$('playerName').value=savedName();
+// ?room=CODE from Pulsebox's Play with friends: an empty room means you're opening it, otherwise you're joining it
+try{const query=new URLSearchParams(location.search),code=cleanCode(query.get('room')||query.get('code'));
+ const saved=storedRoom();
+ if(code.length===4&&saved?.code===code){$('resumeRoom').click()}   // a refresh inside the hub keeps ?room=: take your own seat back
+ else if(code.length===4){$('joinCode').value=code;roomInfo(code).then(info=>{
+  if(info&&!info.players){presetCode=code;$('hostCodeNote').textContent='ROOM '+code+' IS READY FOR YOU';$('hostCodeNote').hidden=false;showScreen('hostScreen')}
+  else{showScreen('joinScreen');if($('playerName').value.trim())$('joinForm').requestSubmit();else $('playerName').focus()}
+ })}}catch{}
+
+/* ---------- a little celebration ---------- */
+function confetti(count){
+ if(!motionOn)return;let c=$('confetti');if(!c){c=document.createElement('canvas');c.id='confetti';document.body.append(c)}
+ const ctx=c.getContext('2d'),dpr=Math.min(2,devicePixelRatio||1),W=innerWidth,H=innerHeight;c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);
+ const colors=['#caeb76','#bca7df','#edba83','#e9b3c4','#1b2723','#faf8ef'],bits=[];
+ for(let i=0;i<count;i++){const left=i%2===0;bits.push({x:left?-10:W+10,y:H*(.35+Math.random()*.4),vx:(left?1:-1)*(4+Math.random()*9),vy:-(7+Math.random()*10),r:Math.random()*6.3,vr:(Math.random()-.5)*.4,w:6+Math.random()*7,h:4+Math.random()*5,c:colors[i%colors.length],shape:i%5})}
+ let last=performance.now(),life=0;cancelAnimationFrame(confetti.raf);
+ (function frame(t){const dt=Math.min(40,t-last)/16.7;last=t;life+=dt;ctx.clearRect(0,0,W,H);let alive=0;
+  for(const b of bits){b.vy+=.32*dt;b.vx*=Math.pow(.985,dt);b.x+=b.vx*dt;b.y+=b.vy*dt;b.r+=b.vr*dt;if(b.y>H+20)continue;alive++;
+   ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.r);ctx.fillStyle=b.c;ctx.strokeStyle='#1b2723';ctx.lineWidth=1;
+   if(b.shape===0){ctx.beginPath();ctx.arc(0,0,b.h*.7,0,7);ctx.fill();ctx.stroke()}else{ctx.scale(1,Math.cos(life*.15+b.r));ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h);ctx.strokeRect(-b.w/2,-b.h/2,b.w,b.h)}ctx.restore()}
+  if(alive&&life<400)confetti.raf=requestAnimationFrame(frame);else ctx.clearRect(0,0,W,H)})(last);
+}
+
+})();</script>
+</body></html>

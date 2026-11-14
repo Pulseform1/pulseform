@@ -1,0 +1,7 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {CinematicGrade} from '../src/cinematic-grade.js';
+import {MISSIONS} from '../shared/missions.js';
+import {ALL_MISSION_IDS} from '../shared/arenas.js';
+test('cinematic grade resizes, preserves night vision and restores render target on failure',()=>{const grade=new CinematicGrade(),previous={},renderer={getRenderTarget:()=>previous,getDrawingBufferSize:v=>v.set(1280,720),setRenderTarget(v){this.target=v},render(){this.rendered=true}};grade.render(renderer,()=>{},true);assert.equal(grade.target.width,1280);assert.equal(grade.target.height,720);assert.equal(grade.material.uniforms.nvg.value,1);assert.equal(renderer.target,previous);assert.ok(renderer.rendered);assert.throws(()=>grade.render(renderer,()=>{throw Error('draw failed')}));assert.equal(renderer.target,previous);grade.dispose()});
+test('eight new operations are unique, registered for progression and have complete three-stage objectives',()=>{const extra=MISSIONS.filter(m=>m.id.endsWith('-spearhead'));assert.equal(MISSIONS.length,25);assert.equal(extra.length,8);assert.equal(new Set(extra.map(m=>m.arenaId)).size,8);assert.equal(new Set(MISSIONS.map(m=>m.title)).size,25);for(const m of extra){assert.ok(ALL_MISSION_IDS.includes(m.id));assert.equal(m.steps.length,3);assert.ok(['escort','evacuate'].includes(m.steps[2].kind));if(m.steps[2].kind==='escort')assert.ok(m.steps.some(s=>s.kind==='rescue'))}});
