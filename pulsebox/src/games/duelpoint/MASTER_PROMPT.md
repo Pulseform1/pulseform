@@ -114,6 +114,9 @@ Drawn on the kit's 2D canvas over the 3D view, laid out from anchors with a scal
   matter (damage to head, body, legs; fire rate; magazine). Tap to buy; tap again to sell back this round.
 - **Menu:** choose an operative; play a bot (three difficulties), play online, or the range; settings for look
   sensitivity, aim assist, auto-fire and picture quality.
+- **Crosshair** (asked for during the build): the player designs their own. Shape (cross, dot, circle, tee),
+  colour, arm length, gap, thickness, centre dot, outline, and whether it opens with error or stays fixed, with a
+  live preview and a few presets. Saved with the other settings.
 - **Match end:** result, score, and the match in numbers (kills, headshots, damage).
 
 ## Bots

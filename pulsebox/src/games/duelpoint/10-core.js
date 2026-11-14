@@ -23,8 +23,11 @@
   const INK = '#0c1016', BONE = '#efe9dc', YOU = '#35e0c8', FOE = '#ff8a3d', GOLD = '#ffd23f', DIM = '#8d97a6', WARN = '#ff5a4d';
 
   // settings and lifetime stats live in the kit's save for this game
-  const CFG = { sens: 1, tsens: 1, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 1 };
+  // xh is the crosshair: shape (cross, dot, circle, tee), colour, arm length, centre gap, thickness, a centre dot,
+  // a dark outline, and whether it opens with your error (dyn) or stays fixed
+  const CFG = { sens: 1, tsens: 1, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 1,
+    xh: { shape: 'cross', col: '#35e0c8', len: 9, gap: 3, thick: 3, dot: true, outline: true, dyn: true } };
   const STATS = { matches: 0, wins: 0, kills: 0, heads: 0 };
   // (the kit, and so K.save, only exists once the page has finished loading: 99-main calls this on the first reset)
-  const loadSave = () => { try { if (K.save.dp) { Object.assign(CFG, K.save.dp.cfg || {}); Object.assign(STATS, K.save.dp.stats || {}); } } catch (e) {} };
+  const loadSave = () => { try { if (K.save.dp) { { const c = K.save.dp.cfg || {}, xh = Object.assign({}, CFG.xh, c.xh || {}); Object.assign(CFG, c); CFG.xh = xh; } Object.assign(STATS, K.save.dp.stats || {}); } } catch (e) {} };
   const saveAll = () => { try { K.save.dp = { cfg: CFG, stats: STATS }; K.persist(); } catch (e) {} };
