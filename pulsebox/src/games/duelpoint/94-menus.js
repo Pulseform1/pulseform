@@ -46,7 +46,8 @@
     if (UI.panel === 'settings') return drawSettings(g, V, W, u);
     if (UI.panel === 'crosshair') return drawXhair(g, V, W, u);
     g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'One map. One rival. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
-    if (STATS.matches) tx(g, `${STATS.wins} wins in ${STATS.matches} matches · ${STATS.kills} kills`, V.x1 - m, V.y0 + 40 * u, 14 * u, DIM, 'right');
+    coinTag(g, V.x1 - m, V.y0 + 44 * u, 20 * u, STATS.coins);
+    if (STATS.matches) tx(g, `${STATS.wins} wins in ${STATS.matches} matches · ${STATS.kills} kills`, V.x1 - m, V.y0 + 78 * u, 14 * u, DIM, 'right');
     // operatives
     const rw = cl(W * .27, 300, 420), top = V.y0 + 132 * u, cw = (W - rw - m * 3 - 44 / pxPer() - 28) / 3, chh = Math.min(V.y1 - top - m, 330 * u);
     tx(g, 'CHOOSE YOUR OPERATIVE', x0, top - 14 * u, 13 * u, DIM, 'left');
@@ -61,11 +62,11 @@
     });
     // what to play
     const rx = V.x1 - m - rw; let y = top;
-    btn(g, rx, y, rw, 78 * u, 'PLAY', menuPlay, { on: true, fill: FOE, px: 32 * u, sub: 'against a ' + DIFF[CFG.diff].n + ' bot' }); y += 88 * u;
-    choice(g, rx, y, rw, tapH(44), DIFF.map((d, i) => [i, d.n.toUpperCase()]), CFG.diff, v => { CFG.diff = v; }); y += tapH(44) + 16 * u;
+    btn(g, rx, y, rw, 78 * u, 'PLAY', menuPlay, { on: true, fill: FOE, px: 32 * u, sub: CFG.diff === 'auto' ? `bot matched to you: ${rankName(STATS.rating)} · rating ${STATS.rating}` : 'against a ' + DIFF[CFG.diff].n + ' bot' }); y += 88 * u;
+    choice(g, rx, y, rw, tapH(44), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(44) + 16 * u;
     btn(g, rx, y, rw, tapH(52), 'PLAY A FRIEND ONLINE', () => MP.show(), { px: 18 * u }); y += tapH(52) + 8 * u;
     btn(g, rx, y, rw, tapH(52), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 18 * u }); y += tapH(52) + 8 * u;
-    if (!touch) { const ty = top + chh + 26 * u; tx(g, 'HOW IT PLAYS', x0, ty, 13 * u, DIM, 'left'); ['Stand still to shoot straight. Tap the opposite key to stop dead.', 'Tap or burst at range: sprays climb, then sway. Heads take the most.', 'B opens the armory. Right click aims or scopes. F plants and defuses.'].forEach((t, i) => tx(g, t, x0, ty + 26 * u + i * 24 * u, 14 * u, '#b9c0cc', 'left', 600)); }
+    if (!touch) { const ty = top + chh + 26 * u; tx(g, 'HOW IT PLAYS', x0, ty, 13 * u, DIM, 'left'); ['Stand still to shoot straight. Tap the opposite key to stop dead.', 'Tap or burst at range: sprays climb, then sway. Heads take the most.', 'Shift sprints; crouch mid-sprint to slide; Space jumps (even out of a slide).', 'B opens the armory. Right click aims or scopes. F plants and defuses.'].forEach((t, i) => tx(g, t, x0, ty + 26 * u + i * 24 * u, 14 * u, '#b9c0cc', 'left', 600)); }
     btn(g, rx, y, (rw - 8) / 2, tapH(48), 'SETTINGS', () => { UI.panel = 'settings'; }, { px: 15 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(48), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 15 * u });
   }
   function drawSettings(g, V, W, u) {
@@ -151,6 +152,12 @@
     btn(g, dx, by + bh - rh, cw, rh, M.mode === 'range' ? 'CLOSE' : 'READY', () => openArmory(false), { on: true, fill: YOU, px: rh * .4, sub: isTouch() ? '' : 'or press B' });
   }
 
+  // a coin count: a little gold disc and the number, right-aligned at x
+  function coinTag(g, x, y, px, n) {
+    const s = String(n); g.font = `800 ${px}px ${FONT}`; const w = g.measureText(s).width;
+    tx(g, s, x, y, px, COIN, 'right', 800);
+    const cx = x - w - px * .75; g.fillStyle = COIN; g.beginPath(); g.arc(cx, y, px * .48, 0, TAU); g.fill(); g.strokeStyle = '#8a6210'; g.lineWidth = px * .1; g.beginPath(); g.arc(cx, y, px * .3, 0, TAU); g.stroke();
+  }
   function drawOver(g) {
     const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale(), P = me(), F = foe(), won = M.over.won;
     g.fillStyle = 'rgba(12,16,22,.78)'; g.fillRect(V.x0, V.y0, W, H);
@@ -160,7 +167,13 @@
     rr(g, 640 - tw / 2, ty, tw, (rows.length + 1) * 40 * u + 14 * u, 10, GLASS);
     tx(g, P.name.toUpperCase(), 640 - 70 * u, ty + 26 * u, 15 * u, YOU, 'right'); tx(g, F.name.toUpperCase(), 640 + 70 * u, ty + 26 * u, 15 * u, FOE, 'left');
     rows.forEach(([label, fn], i) => { const y = ty + (i + 1) * 40 * u + 26 * u; tx(g, label, 640, y, 13 * u, DIM); tx(g, String(fn(P)), 640 - 110 * u, y, 22 * u, BONE, 'right'); tx(g, String(fn(F)), 640 + 110 * u, y, 22 * u, BONE, 'left'); });
-    const by = Math.min(V.y1 - 80 * u, ty + (rows.length + 1) * 40 * u + 40 * u);
+    // what the match paid, and where the adaptive bot goes next
+    const cy = ty + (rows.length + 1) * 40 * u + 44 * u;
+    if (M.earned != null) {
+      const r = M.rated, rt = r ? `   ·   rating ${r.after} (${r.after >= r.before ? '+' : ''}${r.after - r.before})   ·   next bot: ${rankName(r.after)}` : '';
+      tx(g, `+${M.earned} COINS`, 640 - 8 * u, cy, 24 * u, COIN, 'right', 800); tx(g, `${STATS.coins} total${rt}`, 640 + 8 * u, cy, 14 * u, DIM, 'left');
+    }
+    const by = Math.min(V.y1 - 80 * u, cy + 40 * u);
     btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); MP.show(); } else play({ mode: M.mode, diff: CFG.diff }); }, { on: true, fill: FOE, px: 19 * u });
     btn(g, 640 + 10 * u, by, 240 * u, tapH(56), 'MENU', toMenu, { px: 19 * u });
   }

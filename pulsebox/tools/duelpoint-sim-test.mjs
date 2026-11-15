@@ -13,7 +13,7 @@ const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n
 const K = { save: {}, persist() {}, bot: false, state: 'play' };
 const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name: 'Tester', id: 0 };
 const T = new Function('K', 'MP', code + `
-  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY,
+  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, coinsFor, STATS,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
     get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
@@ -93,12 +93,32 @@ function gunplayChecks() {
   ok(T.buy(P, 'quill') && P.credits === 300 && P.guns[2] === 'quill', 'buying another in the same slot refunds the first');
   ok(T.buy(P, 'quill') && P.credits === 800 && P.guns[2] === 'pip', 'choosing it again sells it back');
   ok(!T.buy(P, 'lancer') && P.credits === 800, 'you cannot buy what you cannot afford');
-  M.phase = 'live'; T.endRound(0, 'elim_def'); ok(P.credits === 3800 && F.credits === 2700, 'win +3000, first loss +1900');
-  M.phase = 'live'; T.endRound(0, 'elim_def'); M.phase = 'live'; T.endRound(0, 'elim_def'); ok(F.credits === 2700 + 2400 + 2900, 'losses pay 1900, 2400, then 2900');
-  ok(P.credits === 9000, 'money stops at 9000', P.credits);
+  M.phase = 'live'; T.endRound(0, 'elim_def'); ok(P.credits === 3400 && F.credits === 2400, 'win +2600, first loss +1600');
+  M.phase = 'live'; T.endRound(0, 'elim_def'); M.phase = 'live'; T.endRound(0, 'elim_def'); ok(F.credits === 2400 + 2000 + 2400, 'losses pay 1600, 2000, then 2400');
+  ok(P.credits === 8600, 'three wins pay 2600 each', P.credits);
 }
 
 // whole matches, bot against bot, watching for errors, fighters that stop moving, and rounds that never end
+function moveChecks() {
+  section('sprint, slide, adaptive bots, coins');
+  let I = idle(); T.setInput(() => I);
+  let [M, P] = lab(); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1 }; run(.8); const runV = Math.hypot(P.vx, P.vz);
+  [M, P] = lab(); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1, sprint: true }; run(.8); const sprV = Math.hypot(P.vx, P.vz);
+  ok(P.sprinting && sprV > runV * 1.25, 'sprinting is faster than running', `${runV.toFixed(1)} → ${sprV.toFixed(1)} m/s`);
+  I = { ...idle(), mz: 1, sprint: true, crouch: true }; T.tick(DT); T.tick(DT); const slV = Math.hypot(P.vx, P.vz);
+  ok(P.slide && slV > sprV, 'crouching mid-sprint starts a slide that is faster still', slV.toFixed(1) + ' m/s');
+  run(.4); ok(P.slide && Math.hypot(P.vx, P.vz) < slV, 'the slide bleeds off speed', Math.hypot(P.vx, P.vz).toFixed(1) + ' m/s');
+  run(1); ok(!P.slide && P.crouch > .5, 'it ends in a crouch if you keep holding crouch');
+  [M, P] = lab(); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1, sprint: true }; run(.6); I = { ...idle(), mz: 1, sprint: true, crouch: true }; run(.15);
+  I = { ...idle(), mz: 1, jump: true }; T.tick(DT); ok(!P.slide && P.vy > 0, 'you can jump out of a slide');
+  [M, P] = lab(); P.yaw = -Math.PI / 2; I = { ...idle(), mz: 1, sprint: true, fire: true }; run(.3); ok(!P.sprinting, 'shooting stops a sprint');
+  [M, P] = lab('lancer'); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1, sprint: true }; run(.5); ok(T.spreadOf(P) / T.D2R > 5, 'and you cannot shoot straight while sprinting', (T.spreadOf(P) / T.D2R).toFixed(1) + '°');
+  const lv = [600, 900, 1100, 1400, 1700].map(r => T.diffFor(r)), keys = ['react', 'err', 'flick'];
+  ok(lv.every((L, i) => !i || keys.every(k => L.D[k] <= lv[i - 1].D[k]) && L.D.turn >= lv[i - 1].D.turn), 'the bot gets sharper at every step up in rating', lv.map(L => L.D.n).join(' → '));
+  T.STATS.rating = 1500; T.seed(3); T.startMatch({ mode: 'bot', diff: 'auto' }); ok(T.foe().bot.D && T.foe().bot.diff >= 2, 'an AUTO match builds its bot from your rating', T.foe().bot.D.n);
+  const c1 = T.coinsFor({ won: true, rounds: 5, kills: 7, heads: 2, lvl: 1 }), c0 = T.coinsFor({ won: false, rounds: 2, kills: 3, heads: 0, lvl: 1 }), cL = T.coinsFor({ won: true, rounds: 5, kills: 7, heads: 2, lvl: 4 });
+  ok(c1 < 120 && c0 < c1 / 2 && cL > c1, 'coins come slowly, more for wins and tougher bots', `win ${c1}, loss ${c0}, win vs Legend ${cL}`);
+}
 function matchChecks(count) {
   section(`${count} bot matches`);
   const why = {}, post = {}; let rounds = 0, plants = 0, secs = 0, stuck = 0, bad = 0, unfinished = 0, kills = 0, heads = 0; const errors = [];
@@ -144,6 +164,6 @@ function printMap() {
 const arg = process.argv[2];
 if (arg === 'map') { printMap(); process.exit(0); }
 if (arg === 'matches') matchChecks(+process.argv[3] || 20);
-else { mapChecks(); gunplayChecks(); matchChecks(20); }
+else { mapChecks(); gunplayChecks(); moveChecks(); matchChecks(20); }
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

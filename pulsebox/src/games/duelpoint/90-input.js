@@ -18,7 +18,7 @@
 
   /* ---------- keyboard and mouse ---------- */
   let keys = {}; const mouse = { l: false };
-  const KM = { KeyW: 'w', ArrowUp: 'w', KeyS: 's', ArrowDown: 's', KeyA: 'a', ArrowLeft: 'a', KeyD: 'd', ArrowRight: 'd', ShiftLeft: 'walk', ShiftRight: 'walk', ControlLeft: 'crouch', ControlRight: 'crouch', KeyC: 'crouch', Space: 'jump', KeyF: 'use' };
+  const KM = { KeyW: 'w', ArrowUp: 'w', KeyS: 's', ArrowDown: 's', KeyA: 'a', ArrowLeft: 'a', KeyD: 'd', ArrowRight: 'd', ShiftLeft: 'sprint', ShiftRight: 'sprint', KeyZ: 'walk', ControlLeft: 'crouch', ControlRight: 'crouch', KeyC: 'crouch', Space: 'jump', KeyF: 'use' };
   const cvEl = () => document.getElementById('cv');
   const locked = () => document.pointerLockElement === cvEl();
   // lock the mouse with raw input (no system acceleration) where the browser offers it; in full screen also lock the
@@ -36,7 +36,8 @@
     if (open) releaseMouse(); else { grabMouse(); setReady(me()); }
   }
   function keyEvent(c, d) {
-    if (KM[c] === 'crouch' && d && !keys.crouch && CFG.crouch === 'toggle') keys.crouchT = !keys.crouchT;   // toggle crouch flips on each fresh press
+    // crouch while sprinting is a slide (a short press, so toggle-crouch doesn't leave you ducked after it); otherwise toggle crouch flips on each fresh press
+    if (KM[c] === 'crouch' && d && !keys.crouch) { if (M && me().sprinting) keys.slideAt = performance.now(); else if (CFG.crouch === 'toggle') keys.crouchT = !keys.crouchT; }
     if (KM[c]) keys[KM[c]] = d;
     if (!d) return;
     if (screen === 'menu') { if (c === 'Enter' && UI.panel === 'home') menuPlay(); return; }
@@ -61,7 +62,7 @@
   }
 
   /* ---------- touch ---------- */
-  const TS = { stick: null, look: null, fire: null, held: new Map(), crouch: false, slow: 1, onT: 0 };
+  const TS = { stick: null, look: null, fire: null, held: new Map(), crouch: false, slow: 1, onT: 0, slideAt: 0, sprint: false };
   // the buttons round the right thumb, in the HUD's units; `show` says whether each is offered right now
   function touchButtons() {
     const V = K.view, u = uiScale(), R = V.x1, B = V.y1, P = me(), G = gun(P), fx = R - 150 * u, fy = B - 150 * u, live = M.phase === 'live', op = OPS[P.op];
@@ -70,7 +71,7 @@
       { k: 'fire', x: fx, y: fy, r: 62 * u, t: G.melee ? 'SLASH' : 'FIRE', show: P.alive },
       { k: 'alt', x: fx - 22 * u, y: fy - 116 * u, r: 38 * u, t: G.melee ? 'STAB' : G.scope ? 'SCOPE' : G.ads ? 'AIM' : 'BURST', show: P.alive && !!(G.melee || G.scope || G.ads || G.alt), on: !!P.scoped },
       { k: 'jump', x: fx + 104 * u, y: fy - 44 * u, r: 38 * u, t: 'JUMP', show: P.alive },
-      { k: 'crouch', x: fx + 100 * u, y: fy + 66 * u, r: 36 * u, t: 'DUCK', show: P.alive, on: TS.crouch },
+      { k: 'crouch', x: fx + 100 * u, y: fy + 66 * u, r: 36 * u, t: P.sprinting ? 'SLIDE' : 'DUCK', show: P.alive, on: TS.crouch || !!P.slide },
       { k: 'reload', x: fx - 110 * u, y: fy + 56 * u, r: 36 * u, t: 'LOAD', show: P.alive && !G.melee },
       { k: 'swap', x: fx + 72 * u, y: fy - 128 * u, r: 36 * u, t: 'SWAP', show: P.alive },
       { k: 'q', x: fx - 118 * u, y: fy - 46 * u, r: 38 * u, t: op.q.n.toUpperCase(), show: P.alive && live, off: !P.ab.q, col: op.col },
@@ -82,7 +83,7 @@
     for (const b of touchButtons()) if (Math.hypot(x - b.x, y - b.y) < b.r + 8 * uiScale()) {
       const P = me(); click();
       if (b.k === 'fire') { TS.fire = id; TS.look = { id, x, y }; }   // the fire thumb keeps aiming while it holds
-      else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') TS.crouch = !TS.crouch;
+      else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') { if (me().sprinting) TS.slideAt = performance.now(); else TS.crouch = !TS.crouch; }
       else if (b.k === 'q' || b.k === 'e') ability(P, b.k); else TS.held.set(id, b.k);
       return;
     }
@@ -117,12 +118,16 @@
 
   /* ---------- the local fighter's intent, once a tick ---------- */
   readInput = f => {
-    const I = { mx: (keys.d ? 1 : 0) - (keys.a ? 1 : 0), mz: (keys.w ? 1 : 0) - (keys.s ? 1 : 0), walk: !!keys.walk, crouch: (CFG.crouch === 'toggle' ? !!keys.crouchT : !!keys.crouch) || TS.crouch, jump: !!keys.jump, use: !!keys.use, fire: mouse.l, rapid: false };
+    const now = performance.now(), sliding = now - (keys.slideAt || 0) < 260 || now - TS.slideAt < 260;
+    if (sliding) { keys.crouchT = false; TS.crouch = false; }
+    const I = { mx: (keys.d ? 1 : 0) - (keys.a ? 1 : 0), mz: (keys.w ? 1 : 0) - (keys.s ? 1 : 0), walk: !!keys.walk, sprint: !!keys.sprint, crouch: sliding || (CFG.crouch === 'toggle' ? !!keys.crouchT : !!keys.crouch) || TS.crouch, jump: !!keys.jump, use: !!keys.use, fire: mouse.l, rapid: false };
     for (const k of TS.held.values()) { if (k === 'jump') I.jump = true; if (k === 'use') I.use = true; }
     if (TS.stick) {   // how far the thumb has pushed is how fast you go
       const u = uiScale(), dx = TS.stick.x - TS.stick.x0, dy = TS.stick.y - TS.stick.y0, L = Math.hypot(dx, dy), m = cl((L - 9 * u) / (56 * u), 0, 1);
       if (m > 0) { I.mx = dx / L * m; I.mz = -dy / L * m; }
-    }
+      // push the thumb out past the ring, mostly forward, and you sprint
+      TS.sprint = L > 84 * u && -dy > Math.abs(dx) * .8; if (TS.sprint) I.sprint = true;
+    } else TS.sprint = false;
     if (TS.fire != null) { I.fire = true; I.rapid = true; }
     if (isTouch() && f.alive && M.phase === 'live') assist(f, I);
     if (UI.armory) I.fire = false;

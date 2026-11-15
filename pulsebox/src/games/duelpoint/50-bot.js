@@ -43,7 +43,7 @@
   const hasAmmo = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return !!A && A.mag + A.res > 0; };
 
   function botThink(f, dt) {
-    const B = f.bot, D = DIFF[B.diff], e = other(f), I = { mx: 0, mz: 0, walk: false, crouch: false, jump: false, use: false, fire: false };
+    const B = f.bot, D = B.D || DIFF[B.diff], e = other(f), I = { mx: 0, mz: 0, walk: false, crouch: false, jump: false, use: false, fire: false };
     if (B.dummy) {   // the range's target: pace about, face the player, never shoot
       const h = B.home || [f.x, f.z]; f.yaw = yawTo(f.x, f.z, e.x, e.z); I.mx = Math.hypot(f.x - h[0], f.z - h[1]) > 2.5 ? Math.sign(Math.cos(f.yaw) * (h[0] - f.x) - Math.sin(f.yaw) * (h[1] - f.z)) : Math.sin(M.time * 1.1 + h[0]) > 0 ? 1 : -1;
       I.walk = Math.sin(M.time * .37 + h[1]) > .3; I.crouch = Math.sin(M.time * .23 + h[0]) > .8; return I;
@@ -172,6 +172,10 @@
     if (goal) {
       const da = angDiff(yawTo(f.x, f.z, goal[0], goal[1]), f.yaw); I.mz = Math.cos(da); I.mx = -Math.sin(da);
       I.walk = M.t > 30 && !fresh && ((P.k === 'hold') || (P.k === 'push' && B.diff > 0 && Math.hypot(siteC[0] - f.x, siteC[1] - f.z) < 15));
+      // sprint the long, quiet stretches (rotations, retakes, the early push); now and then a good bot slides into a fight it heard
+      const far = P.dest ? Math.hypot(P.dest[0] - f.x, P.dest[1] - f.z) : 0;
+      I.sprint = !I.walk && !sees && !engaged && Math.abs(da) < .45 && M.time - (B.engT || -9) > 2 && far > 5 && (B.diff > 0 || M.t > ROUND_T - 15);
+      if (f.sprinting && B.diff > 1 && fresh && far < 9 && !B.slid) { B.slid = true; I.crouch = true; }
     }
     // stuck against something: hop, then find the way again
     B.sT = (B.sT || 0) + dt;

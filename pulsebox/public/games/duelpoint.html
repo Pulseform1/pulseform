@@ -217,19 +217,20 @@ const GAME = {
   const emit = (name, a, b, c, d) => { const l = BUS[name]; if (l) for (let i = 0; i < l.length; i++) l[i](a, b, c, d); };
 
   // colours used by every drawing part
-  const INK = '#0c1016', BONE = '#efe9dc', YOU = '#35e0c8', FOE = '#ff8a3d', GOLD = '#ffd23f', DIM = '#8d97a6', WARN = '#ff5a4d';
+  const INK = '#0c1016', BONE = '#efe9dc', YOU = '#35e0c8', FOE = '#ff8a3d', GOLD = '#ffd23f', DIM = '#8d97a6', WARN = '#ff5a4d', COIN = '#ffc94a';
 
   // settings and lifetime stats live in the kit's save for this game
   // xh is the crosshair: shape (cross, dot, circle, tee), colour, arm length, centre gap, thickness, a centre dot,
   // a dark outline, and whether it opens with your error (dyn) or stays fixed
   // sens: mouse turn speed; zsens: multiplier while aiming down sights or scoped; crouch: 'hold' or 'toggle'; full: go full
   // screen when you click in to play, which lets the game keep Ctrl shortcuts (Ctrl+W) from the browser
-  const CFG = { v: 2, sens: .45, zsens: 1, tsens: 1, crouch: 'hold', full: true, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 1,
+  const CFG = { v: 3, sens: .45, zsens: 1, tsens: 1, crouch: 'hold', full: true, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 'auto',
     xh: { shape: 'cross', col: '#35e0c8', len: 9, gap: 3, thick: 3, dot: true, outline: true, dyn: true } };
   let tickA = 1;   // how far the screen is between the last simulation tick and the next (99-main sets it), so motion is smooth at any refresh rate
-  const STATS = { matches: 0, wins: 0, kills: 0, heads: 0 };
+  // coins: Duelpoint Coins earned every match and kept; rating: your skill, which sets the adaptive bot; owned: guns bought with coins
+  const STATS = { matches: 0, wins: 0, kills: 0, heads: 0, coins: 0, rating: 1000, owned: [] };
   // (the kit, and so K.save, only exists once the page has finished loading: 99-main calls this on the first reset)
-  const loadSave = () => { try { if (K.save.dp) { { const c = Object.assign({}, K.save.dp.cfg || {}), xh = Object.assign({}, CFG.xh, c.xh || {}); if (!(c.v >= 2)) { delete c.sens; c.v = 2; } Object.assign(CFG, c); CFG.xh = xh; } Object.assign(STATS, K.save.dp.stats || {}); } } catch (e) {} };
+  const loadSave = () => { try { if (K.save.dp) { { const c = Object.assign({}, K.save.dp.cfg || {}), xh = Object.assign({}, CFG.xh, c.xh || {}); if (!(c.v >= 2)) { delete c.sens; } if (!(c.v >= 3)) { c.diff = 'auto'; c.v = 3; } Object.assign(CFG, c); CFG.xh = xh; } Object.assign(STATS, K.save.dp.stats || {}); } } catch (e) {} };
   const saveAll = () => { try { K.save.dp = { cfg: CFG, stats: STATS }; K.persist(); } catch (e) {} };
   /* ---------- 20 data: guns, shields, operatives, difficulty, timings, money ----------
      Handling follows tactical-shooter rules. The first shot goes exactly where you aim while you stand still. Moving adds
@@ -278,11 +279,30 @@ const GAME = {
     { n: 'Recruit', react: .8, lag: .28, err: .14, flick: .6, jit: .03, turn: 3, spray: .25, hs: .06, hear: 14 },
     { n: 'Veteran', react: .52, lag: .2, err: .095, flick: .45, jit: .02, turn: 4.4, spray: .5, hs: .15, hear: 20 },
     { n: 'Elite', react: .36, lag: .14, err: .065, flick: .32, jit: .013, turn: 6, spray: .72, hs: .28, hear: 26 },
+    { n: 'Legend', react: .27, lag: .11, err: .045, flick: .26, jit: .01, turn: 7.2, spray: .84, hs: .36, hear: 30 },
   ];
   const WIN_ROUNDS = 5, BUY_T = 15, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5;
-  const CASH = { start: 800, win: 3000, loss: [1900, 2400, 2900], kill: 200, plant: 300, cap: 9000, decider: 5000 };
+  // round credits are tight: a win doesn't always buy a rifle and shields, a loss rarely does
+  const CASH = { start: 800, win: 2600, loss: [1600, 2000, 2400], kill: 150, plant: 250, cap: 9000, decider: 4500 };
+  // the adaptive bot: your skill rating picks its level, between these ratings it blends from one to the next
+  const RATING_AT = [700, 1000, 1300, 1600];
+  function diffFor(r) {
+    r = cl(r || 1000, 600, 1750); let i = 0; while (i < DIFF.length - 2 && r > RATING_AT[i + 1]) i++;
+    const t = cl((r - RATING_AT[i]) / (RATING_AT[i + 1] - RATING_AT[i]), 0, 1), a = DIFF[i], b = DIFF[i + 1], D = {};
+    for (const k of Object.keys(a)) D[k] = typeof a[k] === 'number' ? lp(a[k], b[k], t) : a[k];
+    const idx = t > .5 ? i + 1 : i; D.n = DIFF[idx].n; return { D, i: idx };
+  }
+  const rankName = r => { const { i } = diffFor(r); return DIFF[i].n; };
+  // Duelpoint Coins for a finished match: kept small on purpose, so unlocks take a few evenings, not one match
+  const COIN_LVL = [.8, 1, 1.25, 1.5, 1.8];
+  function coinsFor({ won, rounds, kills, heads, lvl, online }) {
+    const base = (won ? 40 : 12) + 4 * rounds + 3 * kills + 2 * heads;
+    return Math.max(5, Math.round(base * (COIN_LVL[lvl] || 1) * (online ? 1.2 : 1)));
+  }
   // the body: eye heights standing and crouched, radius, speeds (m/s), gravity, jump speed, the step you climb without jumping
-  const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.2, STEP = .42;
+  const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.6, STEP = .42;
+  // sprinting (hold Shift, or push the stick all the way) and sliding (crouch while sprinting)
+  const SPRINT = 7.4, SLIDE_V = 10.8, SLIDE_T = .75, SLIDE_CD = .9;
   /* ---------- 30 map: Saltworks ----------
      A grid of 2 m cells, 32 by 22. x runs east with the columns, z runs south with the rows; the sea is to the north.
        #  wall (6 m)          X  container (3 m, nothing sees over it)     c  crate (1.1 m: crouch behind, jump onto)
@@ -451,7 +471,7 @@ const GAME = {
      A fighter is driven by one of three things: local input, a bot (50-bot), or the network (60-net).
      Modes: 'bot' (you against a bot), 'online', 'range' (practice: endless money, a target that comes back), 'demo'. */
   let M = null;
-  let readInput = () => ({ mx: 0, mz: 0, walk: false, crouch: false, jump: false, use: false, fire: false, rapid: false });   // 90-input replaces this
+  let readInput = () => ({ mx: 0, mz: 0, walk: false, sprint: false, crouch: false, jump: false, use: false, fire: false, rapid: false });   // 90-input replaces this
   const BOT_NAMES = ['Rook', 'Kestrel', 'Mercer', 'Talon', 'Nyx', 'Sable', 'Quill', 'Ember', 'Wren', 'Onyx'];
   const WHY = { elim_att: 'Attacker eliminated', elim_def: 'Defender eliminated', time: 'Time ran out', boom: 'Charge detonated', defuse: 'Charge defused', left: 'Rival left the match' };
 
@@ -462,7 +482,7 @@ const GAME = {
       hp: 100, sh: 0, alive: true, guns: { 1: null, 2: 'pip', 3: 'knife' }, slot: 2, ammo: {},
       fireT: 0, reloadT: 0, spray: 0, sseed: 0, burst: null, scoped: 0, kick: 0, swing: null, semiHeld: false,
       credits: CASH.start, spent: {}, lossRun: 0, ready: false, ab: { q: 1, e: 1 }, abT: 0,
-      flash: 0, reveal: 0, heal: null, dash: null, plant: 0, defuse: 0, footT: 0, step: 0, walkT: 0,
+      flash: 0, reveal: 0, heal: null, dash: null, plant: 0, defuse: 0, footT: 0, step: 0, walkT: 0, sprinting: false, slide: null, slideCD: 0, crouchHeld: false,
       stat: { k: 0, d: 0, hs: 0, dmg: 0, shots: 0, hits: 0 },
     }, o);
   }
@@ -500,22 +520,35 @@ const GAME = {
   function stepBody(f, I, dt) {
     if (!f.alive) return;
     const G = gun(f), frozen = (M.phase === 'buy' && M.mode !== 'range') || f.plant > 0 || f.defuse > 0;
-    f.crouch = cl(f.crouch + (I.crouch ? 1 : -1) * dt * 8, 0, 1);
-    let sp = (f.crouch > .5 ? CSPD : I.walk ? WALK : SPD) * G.spd; if (f.scoped) sp *= G.scope ? .55 : .76;
+    // sprint: forward, standing, not aiming, reloading or just after a shot; slide: crouch while sprinting fast on the ground
+    const hv = Math.hypot(f.vx, f.vz), crouchTap = I.crouch && !f.crouchHeld; f.crouchHeld = !!I.crouch;
+    if (f.slideCD > 0) f.slideCD -= dt;
+    if (crouchTap && !f.slide && f.ground && !frozen && f.slideCD <= 0 && (f.sprinting || hv > SPD + .8)) {
+      const k = SLIDE_V / Math.max(hv, .1); f.vx *= k; f.vz *= k; f.slide = { t: SLIDE_T }; f.sprinting = false; emit('slide', f);
+    }
+    f.sprinting = !f.slide && !frozen && !!I.sprint && I.mz > .3 && f.crouch < .5 && !f.scoped && f.reloadT <= 0 && f.fireT < -.12 && !f.plant && !f.defuse;
+    f.crouch = cl(f.crouch + (I.crouch || f.slide ? 1 : -1) * dt * 8, 0, 1);
+    let sp = (f.sprinting ? SPRINT : f.crouch > .5 ? CSPD : I.walk ? WALK : SPD) * G.spd; if (f.scoped) sp *= G.scope ? .55 : .76;
     const s = Math.sin(f.yaw), c = Math.cos(f.yaw); let wx = -s * I.mz + c * I.mx, wz = -c * I.mz - s * I.mx; const L = Math.hypot(wx, wz); if (L > 1) { wx /= L; wz /= L; }
     if (frozen) wx = wz = 0;
-    // head for the wanted velocity at a fixed rate: quickest when braking against your motion (the counter-strafe), slowest in the air
-    const tx = wx * sp, tz = wz * sp, ddx = tx - f.vx, ddz = tz - f.vz, dl = Math.hypot(ddx, ddz);
-    const rate = !f.ground ? 6 : Math.hypot(tx, tz) < .01 ? 26 : tx * f.vx + tz * f.vz < 0 ? 80 : 44;
-    if (dl > 0) { const stp = Math.min(dl, rate * dt); f.vx += ddx / dl * stp; f.vz += ddz / dl * stp; }
+    if (f.slide) {   // a slide carries its speed and bleeds it off; you can steer it a little, and jump out of it
+      f.slide.t -= dt; const dec = Math.exp(-1.25 * dt); f.vx *= dec; f.vz *= dec;
+      const v2 = Math.hypot(f.vx, f.vz); if (v2 > .1 && (wx || wz)) { const a = Math.atan2(f.vx, f.vz), b = Math.atan2(wx, wz), turn = cl(angDiff(b, a), -1.6 * dt, 1.6 * dt); f.vx = Math.sin(a + turn) * v2; f.vz = Math.cos(a + turn) * v2; }
+      if (f.slide.t <= 0 || v2 < 2.4 || !f.ground && f.vy > 0) { f.slide = null; f.slideCD = SLIDE_CD; }
+    } else {
+      // head for the wanted velocity at a fixed rate: quickest when braking against your motion (the counter-strafe), slowest in the air
+      const tx = wx * sp, tz = wz * sp, ddx = tx - f.vx, ddz = tz - f.vz, dl = Math.hypot(ddx, ddz);
+      const rate = !f.ground ? 6 : Math.hypot(tx, tz) < .01 ? 26 : tx * f.vx + tz * f.vz < 0 ? 80 : f.sprinting ? 30 : 44;
+      if (dl > 0) { const stp = Math.min(dl, rate * dt); f.vx += ddx / dl * stp; f.vz += ddz / dl * stp; }
+    }
     if (f.dash) { f.dash.t -= dt; f.vx = f.dash.dx * 36; f.vz = f.dash.dz * 36; if (f.dash.t <= 0) { f.dash = null; f.vx *= .2; f.vz *= .2; } }
-    if (I.jump && !f.jumpHeld && f.ground && !frozen && f.crouch < .5) { f.vy = JUMP; f.ground = false; emit('jump', f); }
+    if (I.jump && !f.jumpHeld && f.ground && !frozen && (f.crouch < .5 || f.slide)) { f.vy = JUMP; f.ground = false; if (f.slide) { f.slide = null; f.slideCD = SLIDE_CD; } emit('jump', f); }
     f.jumpHeld = !!I.jump;
     f.vy -= GRAV * dt; f.y += f.vy * dt;
     moveF(f, f.vx * dt, f.vz * dt);
     const v = Math.hypot(f.vx, f.vz); f.walkT += v * dt;
     // running is loud: a footstep every stride, which bots hear and the other player's speakers play
-    if (f.ground && v > 3.6 && f.crouch < .5) { f.footT -= dt; if (f.footT <= 0) { f.footT = .36; f.step = .5; emit('step', f); } }
+    if (f.ground && v > 3.6 && f.crouch < .5) { f.footT -= dt; if (f.footT <= 0) { f.footT = f.sprinting ? .29 : .36; f.step = f.sprinting ? .7 : .5; emit('step', f); } }
     if (f.step > 0) f.step -= dt;
     if (f.heal) { f.heal.t -= dt; f.hp = Math.min(100, f.hp + 20 * dt); if (f.heal.t <= 0) { f.heal = null; f.hp = Math.round(f.hp); } }
     for (const k of ['flash', 'reveal', 'kick']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
@@ -724,6 +757,7 @@ const GAME = {
   function endRound(wi, why) {
     if (M.phase === 'end') return;
     M.phase = 'end'; M.t = END_T; M.wins[wi]++; M.last = { wi, why };
+    if (M.auto) M.adj += wi === 0 ? 18 : -12;   // the adaptive bot sharpens a little each round you take, and eases off when you lose one
     M.fs.forEach((f, i) => { if (f.net) return; const won = i === wi; f.lossRun = won ? 0 : f.lossRun + 1; f.credits = Math.min(CASH.cap, f.credits + (won ? CASH.win : CASH.loss[Math.min(2, f.lossRun - 1)])); });
     if (why === 'boom') emit('boom', M.planted.x, M.planted.z);
     emit('end', wi, why);
@@ -739,7 +773,7 @@ const GAME = {
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
       f.ab = { q: 1, e: 1 }; for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
       f.yaw = yawTo(f.x, f.z, side === 'att' ? f.x + 10 : f.x - 10, f.z);
-      if (f.bot) f.bot = { diff: f.bot.diff, dummy: f.bot.dummy };
+      if (f.bot) { if (M.auto && !f.bot.dummy) { const L = diffFor(M.rating + M.adj); f.bot = { diff: L.i, D: L.D }; } else f.bot = { diff: f.bot.diff, D: f.bot.D, dummy: f.bot.dummy }; }
     });
     if (n === 5) say('SIDES SWAPPED'); else if (decider) say('DECIDER');
     emit('round', n);
@@ -768,9 +802,10 @@ const GAME = {
   function startMatch(o) {
     const mode = o.mode, online = mode === 'online', host = !online || MP.isHost(), ops = Object.keys(OPS);
     const A = fighter(mode === 'demo' ? { name: 'Rook', op: pick(ops), bot: { diff: 1 } } : { name: online ? MP.name : 'You', op: CFG.op, local: true });
-    const B = fighter(online ? { name: (o.rival && o.rival.name) || 'Rival', op: 'vex', net: true } : { name: pick(BOT_NAMES.filter(n => n !== A.name)), op: pick(ops), bot: { diff: o.diff == null ? 1 : o.diff, dummy: mode === 'range' } });
+    const auto = mode === 'bot' && (o.diff === 'auto' || o.diff == null), L = auto ? diffFor(STATS.rating) : null;
+    const B = fighter(online ? { name: (o.rival && o.rival.name) || 'Rival', op: 'vex', net: true } : { name: pick(BOT_NAMES.filter(n => n !== A.name)), op: pick(ops), bot: auto ? { diff: L.i, D: L.D } : { diff: typeof o.diff === 'number' ? o.diff : 1, dummy: mode === 'range' } });
     const hostAtt = o.hostAtt == null ? (R() < .5 ? 1 : 0) : o.hostAtt, decHostAtt = o.decHostAtt == null ? (R() < .5 ? 1 : 0) : o.decHostAtt;
-    M = { mode, online, host, fs: [A, B], wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? host : !host) ? 0 : 1, decAtt: (decHostAtt ? host : !host) ? 0 : 1,
+    M = { mode, online, host, auto, rating: STATS.rating, adj: 0, fs: [A, B], wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? host : !host) ? 0 : 1, decAtt: (decHostAtt ? host : !host) ? 0 : 1,
       planted: null, defused: false, smokes: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0 };
     startRound(1);
     if (mode === 'range') { M.phase = 'live'; M.t = 0; A.credits = CASH.cap; Object.assign(A, { x: 9, z: 5, yaw: yawTo(9, 5, 30, 5) }); placeDummy(B); }
@@ -806,6 +841,7 @@ const GAME = {
       if (f.net) { netFollow(f, dt); continue; }
       const I = !f.alive ? NEUTRAL : f.bot ? botThink(f, dt) : readInput(f);
       stepBody(f, I, dt); stepGun(f, dt); stepObjective(f, I, dt);
+      if (I.fire && f.sprinting) { f.sprinting = false; f.fireT = Math.max(f.fireT, .1); }
       if (I.fire && f.alive && (M.phase !== 'buy' || M.mode === 'range')) { const G = gun(f); if (G.auto || !f.semiHeld || (I.rapid && f.fireT < -.07)) fire(f); }
       f.semiHeld = !!I.fire;
       if (M.mode === 'range') { if (f.abT > 0 && (f.abT -= dt) <= 0) f.ab = { q: 1, e: 1 }; if (!f.alive && f.bot && (f.respawn -= dt) <= 0) placeDummy(f); }
@@ -864,7 +900,7 @@ const GAME = {
   const hasAmmo = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return !!A && A.mag + A.res > 0; };
 
   function botThink(f, dt) {
-    const B = f.bot, D = DIFF[B.diff], e = other(f), I = { mx: 0, mz: 0, walk: false, crouch: false, jump: false, use: false, fire: false };
+    const B = f.bot, D = B.D || DIFF[B.diff], e = other(f), I = { mx: 0, mz: 0, walk: false, crouch: false, jump: false, use: false, fire: false };
     if (B.dummy) {   // the range's target: pace about, face the player, never shoot
       const h = B.home || [f.x, f.z]; f.yaw = yawTo(f.x, f.z, e.x, e.z); I.mx = Math.hypot(f.x - h[0], f.z - h[1]) > 2.5 ? Math.sign(Math.cos(f.yaw) * (h[0] - f.x) - Math.sin(f.yaw) * (h[1] - f.z)) : Math.sin(M.time * 1.1 + h[0]) > 0 ? 1 : -1;
       I.walk = Math.sin(M.time * .37 + h[1]) > .3; I.crouch = Math.sin(M.time * .23 + h[0]) > .8; return I;
@@ -993,6 +1029,10 @@ const GAME = {
     if (goal) {
       const da = angDiff(yawTo(f.x, f.z, goal[0], goal[1]), f.yaw); I.mz = Math.cos(da); I.mx = -Math.sin(da);
       I.walk = M.t > 30 && !fresh && ((P.k === 'hold') || (P.k === 'push' && B.diff > 0 && Math.hypot(siteC[0] - f.x, siteC[1] - f.z) < 15));
+      // sprint the long, quiet stretches (rotations, retakes, the early push); now and then a good bot slides into a fight it heard
+      const far = P.dest ? Math.hypot(P.dest[0] - f.x, P.dest[1] - f.z) : 0;
+      I.sprint = !I.walk && !sees && !engaged && Math.abs(da) < .45 && M.time - (B.engT || -9) > 2 && far > 5 && (B.diff > 0 || M.t > ROUND_T - 15);
+      if (f.sprinting && B.diff > 1 && fresh && far < 9 && !B.slid) { B.slid = true; I.crouch = true; }
     }
     // stuck against something: hop, then find the way again
     B.sT = (B.sT || 0) + dt;
@@ -1012,14 +1052,14 @@ const GAME = {
   function netTick(dt) {
     if (!M.online) return; M.netT -= dt; if (M.netT > 0) return; M.netT = .05; const f = me();
     net({ t: 's', x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
-      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, op: f.op, rd: f.ready ? 1 : 0 });
+      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, op: f.op, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0 });
   }
   function netMsg(m) {
     if (!M || !M.online || M.over) return; const F = foe(), P = me();
     switch (m.t) {
       case 's':
         (F.snaps || (F.snaps = [])).push({ at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }); if (F.snaps.length > 12) F.snaps.shift();
-        F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd;
+        F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy') F.alive = true;
         break;
@@ -1376,15 +1416,19 @@ const GAME = {
     const U = A.userData, fk = gun(f).k;
     if (U.gk !== fk) { while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]); const gm = gunModel(fk, { cast: !X.low, flash: true }); gm.scale.setScalar(1.08); U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
     A.visible = true; A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;
-    const sp = Math.hypot(f.vx, f.vz), amp = Math.min(1, sp / 3.5) * .8, ph = f.walkT * 1.9, cr = f.crouch;
+    const sp = Math.hypot(f.vx, f.vz), sl = f.slide ? 1 : 0, amp = Math.min(1, sp / 3.5) * (f.sprinting ? 1.15 : .8) * (1 - sl), ph = f.walkT * 1.9, cr = f.crouch * (1 - sl);
+    U.sl = lp(U.sl || 0, sl, Math.min(1, dt * 12)); U.spr = lp(U.spr || 0, f.sprinting ? 1 : 0, Math.min(1, dt * 8)); const sk = U.sl;
     // legs: swing with the stride, the trailing knee bends; a crouch folds both
     for (const [lg, o] of [[U.L, 0], [U.Rg, Math.PI]]) { const s = Math.sin(ph + o); lg.th.rotation.x = s * amp + cr * 1.1; lg.sn.rotation.x = -Math.max(0, -Math.cos(ph + o)) * amp * 1.2 - cr * 1.9; }
-    U.hip.position.y = .95 - cr * .4 + Math.abs(Math.sin(ph)) * amp * .03;
-    U.torso.rotation.x = -cr * .3 - amp * .1 - f.pitch * .1; U.torso.rotation.y = Math.sin(ph) * amp * .09; U.torso.position.y = Math.sin(X.t * 1.7 + f.x) * .004;
+    // a slide: the lead leg out straight, the other tucked, leaning back low; a sprint: leaning into it
+    if (sk > .01) { U.L.th.rotation.x = lp(U.L.th.rotation.x, -1.35, sk); U.L.sn.rotation.x = lp(U.L.sn.rotation.x, 0, sk); U.Rg.th.rotation.x = lp(U.Rg.th.rotation.x, -.4, sk); U.Rg.sn.rotation.x = lp(U.Rg.sn.rotation.x, -2.1, sk); }
+    U.hip.position.y = .95 - cr * .4 - sk * .55 + Math.abs(Math.sin(ph)) * amp * .03;
+    U.torso.rotation.x = -cr * .3 - amp * .1 - f.pitch * .1 - U.spr * .22 + sk * .5; U.torso.rotation.y = Math.sin(ph) * amp * .09; U.torso.position.y = Math.sin(X.t * 1.7 + f.x) * .004;
     U.tails.rotation.x = .1 + amp * .55 + Math.sin(ph * 2) * amp * .08 + cr * .5;
     const sw = f.swing ? Math.sin(Math.min(1, f.swing.t / .4) * Math.PI) : 0;
     U.arms.rotation.x = f.pitch * .9 + f.kick * 1.2 - (f.swing && f.swing.heavy ? 0 : sw * .7) + Math.sin(ph * 2) * amp * .03; U.arms.rotation.y = f.swing && !f.swing.heavy ? (f.swing.t / .4 - .5) * 1.3 * (f.swing.side || 1) * (sw > 0 ? 1 : 0) : 0; U.arms.position.z = f.swing && f.swing.heavy ? -sw * .25 : 0;
-    U.head.rotation.x = f.pitch * .6;
+    U.arms.rotation.x -= U.spr * .5;   // gun down while sprinting
+    U.head.rotation.x = f.pitch * .6 - sk * .3;
     if (U.flash) { U.flash.visible = f.kick > .05 && f.alive && !gun(f).melee; if (U.flash.visible) U.flash.material.rotation = Math.random() * 6; }
     // the rival's gun works too: slide, bolt, pump, magazine; and the arms tip it over to reload
     { const gm = U.gunHold.children[0], G = gun(f); if (gm && gm.userData.parts) animParts(gm, f, G, dt, false);
@@ -2010,10 +2054,12 @@ const GAME = {
     // the camera: your eyes (gliding over steps and crouches), kicked by recoil; when you die it sinks and turns to who did it
     const ey = ipos(P, 'y') + lp(EYE, CEYE, P.crouch); X.camY = Math.abs(ey - X.camY) > 1.2 ? ey : X.camY + (ey - X.camY) * Math.min(1, dt * 22);
     X.dip = Math.max(0, (X.dip || 0) - dt * .5); X.shake = Math.max(0, X.shake - dt);
+    X.roll = lp(X.roll || 0, P.slide ? .075 : 0, Math.min(1, dt * 9));   // a slide tips the view a little
     let yaw = P.yaw, pitch = P.pitch + M.camKick, y = X.camY - X.dip;
     if (!P.alive && M.deathInfo) { const k = Math.min(1, M.deathInfo.t * 2); y = lp(y, P.y + .5, k); yaw += angDiff(M.deathInfo.yaw, yaw) * k; pitch = lp(pitch, .1, k); }
-    cam.position.set(ipos(P, 'x') + (Math.random() - .5) * X.shake * .3, y + (Math.random() - .5) * X.shake * .3, ipos(P, 'z')); cam.rotation.set(pitch, yaw, 0);
-    const fov = 2 * Math.atan(Math.tan(BASE_FOV * D2R / 2) / zoomOf(P)) / D2R; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
+    cam.position.set(ipos(P, 'x') + (Math.random() - .5) * X.shake * .3, y + (Math.random() - .5) * X.shake * .3, ipos(P, 'z')); cam.rotation.set(pitch, yaw, X.roll);
+    X.fovK = lp(X.fovK || 0, P.slide ? 1 : P.sprinting ? .6 : 0, Math.min(1, dt * 7));   // speed widens the view a touch
+    const fov = 2 * Math.atan(Math.tan(BASE_FOV * (1 + X.fovK * .09) * D2R / 2) / zoomOf(P)) / D2R; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
 
     // your gun
     if (X.viewKey !== G.k + P.op) { if (X.viewGun) X.view.remove(X.viewGun); X.viewGun = viewGun(G.k, P.op); if (G.melee) X.viewGun.scale.setScalar(1.35); X.view.add(X.viewGun); X.viewKey = G.k + P.op; X.viewGun.add(X.mflash); X.drawD = Math.max(.35, (G.equip || .75) * .7); X.drawT = X.drawD; X.recP = X.recV = 0; }
@@ -2023,7 +2069,7 @@ const GAME = {
     for (let n = Math.ceil(dt / .008), i = 0; i < n; i++) { const h = dt / n; X.recV = (X.recV || 0) + (-420 * (X.recP || 0) - 30 * X.recV) * h; X.recP = (X.recP || 0) + X.recV * h; }
     X.recP = cl(X.recP, -.08, .22); const rk = X.recP;
     const v = Math.hypot(P.vx, P.vz), mv = Math.min(1, v / 4), sway = Math.sin(X.t * 1.3) * .004, swayX = Math.sin(X.t * .65) * .003, VO = VOS[G.k] || [.2, -.2, -.28];
-    X.runK = lp(X.runK || 0, v > 3.6 && P.fireT < -.2 && P.reloadT <= 0 && !P.scoped && P.ground ? 1 : 0, Math.min(1, dt * 6));   // running: the gun drops and turns in
+    X.runK = lp(X.runK || 0, P.sprinting ? 1.25 : P.slide ? .5 : v > 3.6 && P.fireT < -.2 && P.reloadT <= 0 && !P.scoped && P.ground ? .55 : 0, Math.min(1, dt * 7));   // running: the gun drops and turns in
     X.air = lp(X.air || 0, P.ground ? 0 : cl(-P.vy * .006, -.03, .03), Math.min(1, dt * 10));   // jumping: it lags up, then down
     X.dryT = Math.max(0, (X.dryT || 0) - dt); const dry = Math.sin(X.dryT / .16 * Math.PI) * (X.dryT > 0 ? 1 : 0);
     const bob = Math.sin(P.walkT * 1.9) * .012 * mv * (1 + X.runK * .6), bobX = Math.cos(P.walkT * .95) * .008 * mv;
@@ -2127,6 +2173,9 @@ const GAME = {
   cue('reload', f => { const o = outFor(f, f === me() ? .7 : 1); tone(o, 520, .04, 'square', .06, 0, .15); hiss(o, .05, .1, 'highpass', 2500, .15); tone(o, 380, .05, 'square', .07, 0, gun(f).rel * .62); hiss(o, .06, .12, 'highpass', 2000, gun(f).rel * .88); });
   cue('swap', f => { const o = outFor(f, f === me() ? .6 : .8); hiss(o, .05, .1, 'highpass', 3000); tone(o, 700, .03, 'square', .03); });
   cue('melee', (f, heavy, S) => { const o = outFor(f); hiss(o, heavy ? .14 : .09, .16, 'bandpass', heavy ? 1500 : 2800, 0, 1.2); if (S) { tone(o, 180, .09, 'sine', .25, -90, .02); hiss(o, .05, .2, 'lowpass', 900, .02); } });
+  // a slide: a gritty scrape that fades as it slows; a jump: a soft push-off
+  cue('slide', f => { const o = outFor(f === me() ? null : f, f === me() ? .8 : 1); hiss(o, .55, .16, 'bandpass', 900, 0, .6); hiss(o, .4, .1, 'lowpass', 300, .05); });
+  cue('jump', f => { const o = outFor(f === me() ? null : f); hiss(o, .07, f === me() ? .05 : .2, 'lowpass', 600); });
   cue('step', f => { if (f === me()) hiss(outFor(null), .04, .035, 'lowpass', 500); else { const o = outFor(f); hiss(o, .06, .32, 'lowpass', 420); tone(o, 95, .05, 'sine', .14, -30); } });
   cue('jump', f => { if (f !== me()) hiss(outFor(f), .06, .12, 'lowpass', 700); });
   cue('land', f => { const o = outFor(f, f === me() ? .5 : 1); hiss(o, .09, .3, 'lowpass', 360); tone(o, 70, .08, 'sine', .25, -20); });
@@ -2173,7 +2222,7 @@ const GAME = {
 
   /* ---------- keyboard and mouse ---------- */
   let keys = {}; const mouse = { l: false };
-  const KM = { KeyW: 'w', ArrowUp: 'w', KeyS: 's', ArrowDown: 's', KeyA: 'a', ArrowLeft: 'a', KeyD: 'd', ArrowRight: 'd', ShiftLeft: 'walk', ShiftRight: 'walk', ControlLeft: 'crouch', ControlRight: 'crouch', KeyC: 'crouch', Space: 'jump', KeyF: 'use' };
+  const KM = { KeyW: 'w', ArrowUp: 'w', KeyS: 's', ArrowDown: 's', KeyA: 'a', ArrowLeft: 'a', KeyD: 'd', ArrowRight: 'd', ShiftLeft: 'sprint', ShiftRight: 'sprint', KeyZ: 'walk', ControlLeft: 'crouch', ControlRight: 'crouch', KeyC: 'crouch', Space: 'jump', KeyF: 'use' };
   const cvEl = () => document.getElementById('cv');
   const locked = () => document.pointerLockElement === cvEl();
   // lock the mouse with raw input (no system acceleration) where the browser offers it; in full screen also lock the
@@ -2191,7 +2240,8 @@ const GAME = {
     if (open) releaseMouse(); else { grabMouse(); setReady(me()); }
   }
   function keyEvent(c, d) {
-    if (KM[c] === 'crouch' && d && !keys.crouch && CFG.crouch === 'toggle') keys.crouchT = !keys.crouchT;   // toggle crouch flips on each fresh press
+    // crouch while sprinting is a slide (a short press, so toggle-crouch doesn't leave you ducked after it); otherwise toggle crouch flips on each fresh press
+    if (KM[c] === 'crouch' && d && !keys.crouch) { if (M && me().sprinting) keys.slideAt = performance.now(); else if (CFG.crouch === 'toggle') keys.crouchT = !keys.crouchT; }
     if (KM[c]) keys[KM[c]] = d;
     if (!d) return;
     if (screen === 'menu') { if (c === 'Enter' && UI.panel === 'home') menuPlay(); return; }
@@ -2216,7 +2266,7 @@ const GAME = {
   }
 
   /* ---------- touch ---------- */
-  const TS = { stick: null, look: null, fire: null, held: new Map(), crouch: false, slow: 1, onT: 0 };
+  const TS = { stick: null, look: null, fire: null, held: new Map(), crouch: false, slow: 1, onT: 0, slideAt: 0, sprint: false };
   // the buttons round the right thumb, in the HUD's units; `show` says whether each is offered right now
   function touchButtons() {
     const V = K.view, u = uiScale(), R = V.x1, B = V.y1, P = me(), G = gun(P), fx = R - 150 * u, fy = B - 150 * u, live = M.phase === 'live', op = OPS[P.op];
@@ -2225,7 +2275,7 @@ const GAME = {
       { k: 'fire', x: fx, y: fy, r: 62 * u, t: G.melee ? 'SLASH' : 'FIRE', show: P.alive },
       { k: 'alt', x: fx - 22 * u, y: fy - 116 * u, r: 38 * u, t: G.melee ? 'STAB' : G.scope ? 'SCOPE' : G.ads ? 'AIM' : 'BURST', show: P.alive && !!(G.melee || G.scope || G.ads || G.alt), on: !!P.scoped },
       { k: 'jump', x: fx + 104 * u, y: fy - 44 * u, r: 38 * u, t: 'JUMP', show: P.alive },
-      { k: 'crouch', x: fx + 100 * u, y: fy + 66 * u, r: 36 * u, t: 'DUCK', show: P.alive, on: TS.crouch },
+      { k: 'crouch', x: fx + 100 * u, y: fy + 66 * u, r: 36 * u, t: P.sprinting ? 'SLIDE' : 'DUCK', show: P.alive, on: TS.crouch || !!P.slide },
       { k: 'reload', x: fx - 110 * u, y: fy + 56 * u, r: 36 * u, t: 'LOAD', show: P.alive && !G.melee },
       { k: 'swap', x: fx + 72 * u, y: fy - 128 * u, r: 36 * u, t: 'SWAP', show: P.alive },
       { k: 'q', x: fx - 118 * u, y: fy - 46 * u, r: 38 * u, t: op.q.n.toUpperCase(), show: P.alive && live, off: !P.ab.q, col: op.col },
@@ -2237,7 +2287,7 @@ const GAME = {
     for (const b of touchButtons()) if (Math.hypot(x - b.x, y - b.y) < b.r + 8 * uiScale()) {
       const P = me(); click();
       if (b.k === 'fire') { TS.fire = id; TS.look = { id, x, y }; }   // the fire thumb keeps aiming while it holds
-      else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') TS.crouch = !TS.crouch;
+      else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') { if (me().sprinting) TS.slideAt = performance.now(); else TS.crouch = !TS.crouch; }
       else if (b.k === 'q' || b.k === 'e') ability(P, b.k); else TS.held.set(id, b.k);
       return;
     }
@@ -2272,12 +2322,16 @@ const GAME = {
 
   /* ---------- the local fighter's intent, once a tick ---------- */
   readInput = f => {
-    const I = { mx: (keys.d ? 1 : 0) - (keys.a ? 1 : 0), mz: (keys.w ? 1 : 0) - (keys.s ? 1 : 0), walk: !!keys.walk, crouch: (CFG.crouch === 'toggle' ? !!keys.crouchT : !!keys.crouch) || TS.crouch, jump: !!keys.jump, use: !!keys.use, fire: mouse.l, rapid: false };
+    const now = performance.now(), sliding = now - (keys.slideAt || 0) < 260 || now - TS.slideAt < 260;
+    if (sliding) { keys.crouchT = false; TS.crouch = false; }
+    const I = { mx: (keys.d ? 1 : 0) - (keys.a ? 1 : 0), mz: (keys.w ? 1 : 0) - (keys.s ? 1 : 0), walk: !!keys.walk, sprint: !!keys.sprint, crouch: sliding || (CFG.crouch === 'toggle' ? !!keys.crouchT : !!keys.crouch) || TS.crouch, jump: !!keys.jump, use: !!keys.use, fire: mouse.l, rapid: false };
     for (const k of TS.held.values()) { if (k === 'jump') I.jump = true; if (k === 'use') I.use = true; }
     if (TS.stick) {   // how far the thumb has pushed is how fast you go
       const u = uiScale(), dx = TS.stick.x - TS.stick.x0, dy = TS.stick.y - TS.stick.y0, L = Math.hypot(dx, dy), m = cl((L - 9 * u) / (56 * u), 0, 1);
       if (m > 0) { I.mx = dx / L * m; I.mz = -dy / L * m; }
-    }
+      // push the thumb out past the ring, mostly forward, and you sprint
+      TS.sprint = L > 84 * u && -dy > Math.abs(dx) * .8; if (TS.sprint) I.sprint = true;
+    } else TS.sprint = false;
     if (TS.fire != null) { I.fire = true; I.rapid = true; }
     if (isTouch() && f.alive && M.phase === 'live') assist(f, I);
     if (UI.armory) I.fire = false;
@@ -2453,7 +2507,14 @@ const GAME = {
       g.strokeStyle = b.off ? 'rgba(255,255,255,.18)' : b.k === 'fire' ? FOE : c; g.globalAlpha = b.off ? 1 : .8; g.lineWidth = 2.5 * u; g.stroke(); g.globalAlpha = 1;
       tx(g, b.t, b.x, b.y, (b.k === 'fire' || b.k === 'use' ? 17 : b.t.length > 5 ? 10.5 : 12.5) * u, b.off ? '#5a6272' : BONE);
     }
-    if (TS.stick) { const s = TS.stick, dx = s.x - s.x0, dy = s.y - s.y0, L = Math.min(65 * u, Math.hypot(dx, dy)), a = Math.atan2(dy, dx); g.strokeStyle = 'rgba(239,233,220,.4)'; g.lineWidth = 3 * u; g.beginPath(); g.arc(s.x0, s.y0, 65 * u, 0, TAU); g.stroke(); g.fillStyle = 'rgba(239,233,220,.5)'; g.beginPath(); g.arc(s.x0 + Math.cos(a) * L, s.y0 + Math.sin(a) * L, 27 * u, 0, TAU); g.fill(); }
+    if (TS.stick) {
+      const s = TS.stick, dx = s.x - s.x0, dy = s.y - s.y0, L = Math.min(96 * u, Math.hypot(dx, dy)), a = Math.atan2(dy, dx);
+      g.strokeStyle = 'rgba(239,233,220,.4)'; g.lineWidth = 3 * u; g.beginPath(); g.arc(s.x0, s.y0, 65 * u, 0, TAU); g.stroke();
+      // the sprint zone: a short arc beyond the ring, straight ahead, that lights up while you're in it
+      g.strokeStyle = TS.sprint ? 'rgba(255,214,102,.95)' : 'rgba(239,233,220,.22)'; g.lineWidth = (TS.sprint ? 6 : 3) * u; g.beginPath(); g.arc(s.x0, s.y0, 92 * u, -Math.PI / 2 - .6, -Math.PI / 2 + .6); g.stroke();
+      g.fillStyle = TS.sprint ? 'rgba(255,214,102,.95)' : 'rgba(239,233,220,.4)'; g.font = `800 ${12 * u}px system-ui`; g.textAlign = 'center'; g.fillText('SPRINT', s.x0, s.y0 - 104 * u);
+      g.fillStyle = TS.sprint ? 'rgba(255,214,102,.75)' : 'rgba(239,233,220,.5)'; g.beginPath(); g.arc(s.x0 + Math.cos(a) * L, s.y0 + Math.sin(a) * L, 27 * u, 0, TAU); g.fill();
+    }
     else if (me().alive) { const x = V.x0 + 170 * u, y = V.y1 - 150 * u; g.setLineDash([6 * u, 8 * u]); g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 2 * u; g.beginPath(); g.arc(x, y, 62 * u, 0, TAU); g.stroke(); g.setLineDash([]); tx(g, 'MOVE', x, y, 13 * u, 'rgba(239,233,220,.45)'); }
   }
   /* ---------- 94 menus: the main menu, settings, the crosshair designer, the armory, the match-end screen ----------
@@ -2504,7 +2565,8 @@ const GAME = {
     if (UI.panel === 'settings') return drawSettings(g, V, W, u);
     if (UI.panel === 'crosshair') return drawXhair(g, V, W, u);
     g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'One map. One rival. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
-    if (STATS.matches) tx(g, `${STATS.wins} wins in ${STATS.matches} matches · ${STATS.kills} kills`, V.x1 - m, V.y0 + 40 * u, 14 * u, DIM, 'right');
+    coinTag(g, V.x1 - m, V.y0 + 44 * u, 20 * u, STATS.coins);
+    if (STATS.matches) tx(g, `${STATS.wins} wins in ${STATS.matches} matches · ${STATS.kills} kills`, V.x1 - m, V.y0 + 78 * u, 14 * u, DIM, 'right');
     // operatives
     const rw = cl(W * .27, 300, 420), top = V.y0 + 132 * u, cw = (W - rw - m * 3 - 44 / pxPer() - 28) / 3, chh = Math.min(V.y1 - top - m, 330 * u);
     tx(g, 'CHOOSE YOUR OPERATIVE', x0, top - 14 * u, 13 * u, DIM, 'left');
@@ -2519,11 +2581,11 @@ const GAME = {
     });
     // what to play
     const rx = V.x1 - m - rw; let y = top;
-    btn(g, rx, y, rw, 78 * u, 'PLAY', menuPlay, { on: true, fill: FOE, px: 32 * u, sub: 'against a ' + DIFF[CFG.diff].n + ' bot' }); y += 88 * u;
-    choice(g, rx, y, rw, tapH(44), DIFF.map((d, i) => [i, d.n.toUpperCase()]), CFG.diff, v => { CFG.diff = v; }); y += tapH(44) + 16 * u;
+    btn(g, rx, y, rw, 78 * u, 'PLAY', menuPlay, { on: true, fill: FOE, px: 32 * u, sub: CFG.diff === 'auto' ? `bot matched to you: ${rankName(STATS.rating)} · rating ${STATS.rating}` : 'against a ' + DIFF[CFG.diff].n + ' bot' }); y += 88 * u;
+    choice(g, rx, y, rw, tapH(44), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(44) + 16 * u;
     btn(g, rx, y, rw, tapH(52), 'PLAY A FRIEND ONLINE', () => MP.show(), { px: 18 * u }); y += tapH(52) + 8 * u;
     btn(g, rx, y, rw, tapH(52), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 18 * u }); y += tapH(52) + 8 * u;
-    if (!touch) { const ty = top + chh + 26 * u; tx(g, 'HOW IT PLAYS', x0, ty, 13 * u, DIM, 'left'); ['Stand still to shoot straight. Tap the opposite key to stop dead.', 'Tap or burst at range: sprays climb, then sway. Heads take the most.', 'B opens the armory. Right click aims or scopes. F plants and defuses.'].forEach((t, i) => tx(g, t, x0, ty + 26 * u + i * 24 * u, 14 * u, '#b9c0cc', 'left', 600)); }
+    if (!touch) { const ty = top + chh + 26 * u; tx(g, 'HOW IT PLAYS', x0, ty, 13 * u, DIM, 'left'); ['Stand still to shoot straight. Tap the opposite key to stop dead.', 'Tap or burst at range: sprays climb, then sway. Heads take the most.', 'Shift sprints; crouch mid-sprint to slide; Space jumps (even out of a slide).', 'B opens the armory. Right click aims or scopes. F plants and defuses.'].forEach((t, i) => tx(g, t, x0, ty + 26 * u + i * 24 * u, 14 * u, '#b9c0cc', 'left', 600)); }
     btn(g, rx, y, (rw - 8) / 2, tapH(48), 'SETTINGS', () => { UI.panel = 'settings'; }, { px: 15 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(48), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 15 * u });
   }
   function drawSettings(g, V, W, u) {
@@ -2609,6 +2671,12 @@ const GAME = {
     btn(g, dx, by + bh - rh, cw, rh, M.mode === 'range' ? 'CLOSE' : 'READY', () => openArmory(false), { on: true, fill: YOU, px: rh * .4, sub: isTouch() ? '' : 'or press B' });
   }
 
+  // a coin count: a little gold disc and the number, right-aligned at x
+  function coinTag(g, x, y, px, n) {
+    const s = String(n); g.font = `800 ${px}px ${FONT}`; const w = g.measureText(s).width;
+    tx(g, s, x, y, px, COIN, 'right', 800);
+    const cx = x - w - px * .75; g.fillStyle = COIN; g.beginPath(); g.arc(cx, y, px * .48, 0, TAU); g.fill(); g.strokeStyle = '#8a6210'; g.lineWidth = px * .1; g.beginPath(); g.arc(cx, y, px * .3, 0, TAU); g.stroke();
+  }
   function drawOver(g) {
     const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale(), P = me(), F = foe(), won = M.over.won;
     g.fillStyle = 'rgba(12,16,22,.78)'; g.fillRect(V.x0, V.y0, W, H);
@@ -2618,7 +2686,13 @@ const GAME = {
     rr(g, 640 - tw / 2, ty, tw, (rows.length + 1) * 40 * u + 14 * u, 10, GLASS);
     tx(g, P.name.toUpperCase(), 640 - 70 * u, ty + 26 * u, 15 * u, YOU, 'right'); tx(g, F.name.toUpperCase(), 640 + 70 * u, ty + 26 * u, 15 * u, FOE, 'left');
     rows.forEach(([label, fn], i) => { const y = ty + (i + 1) * 40 * u + 26 * u; tx(g, label, 640, y, 13 * u, DIM); tx(g, String(fn(P)), 640 - 110 * u, y, 22 * u, BONE, 'right'); tx(g, String(fn(F)), 640 + 110 * u, y, 22 * u, BONE, 'left'); });
-    const by = Math.min(V.y1 - 80 * u, ty + (rows.length + 1) * 40 * u + 40 * u);
+    // what the match paid, and where the adaptive bot goes next
+    const cy = ty + (rows.length + 1) * 40 * u + 44 * u;
+    if (M.earned != null) {
+      const r = M.rated, rt = r ? `   ·   rating ${r.after} (${r.after >= r.before ? '+' : ''}${r.after - r.before})   ·   next bot: ${rankName(r.after)}` : '';
+      tx(g, `+${M.earned} COINS`, 640 - 8 * u, cy, 24 * u, COIN, 'right', 800); tx(g, `${STATS.coins} total${rt}`, 640 + 8 * u, cy, 14 * u, DIM, 'left');
+    }
+    const by = Math.min(V.y1 - 80 * u, cy + 40 * u);
     btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); MP.show(); } else play({ mode: M.mode, diff: CFG.diff }); }, { on: true, fill: FOE, px: 19 * u });
     btn(g, 640 + 10 * u, by, 240 * u, tapH(56), 'MENU', toMenu, { px: 19 * u });
   }
@@ -2633,7 +2707,13 @@ const GAME = {
   on('over', won => {
     if (M.mode === 'demo') return; screen = 'over'; UI.armory = false; releaseMouse(); resetInput();
     if (M.mode === 'range') return; const P = me();
-    STATS.matches++; if (won) STATS.wins++; STATS.kills += P.stat.k; STATS.heads += P.stat.hs; saveAll(); K.score = M.wins[0];
+    STATS.matches++; if (won) STATS.wins++; STATS.kills += P.stat.k; STATS.heads += P.stat.hs;
+    // coins: a little for showing up, more for rounds, kills and heads, scaled by how tough the opposition was; saved the moment the match ends
+    const lvl = M.online ? 2 : M.fs[1].bot.diff, earned = coinsFor({ won, rounds: M.wins[0], kills: P.stat.k, heads: P.stat.hs, lvl, online: M.online });
+    STATS.coins += earned; M.earned = earned;
+    // the adaptive bot follows a rating: beat it and the next one is sharper, lose and it eases off
+    if (M.auto) { const before = STATS.rating, d = won ? 22 + 4 * (M.wins[0] - M.wins[1]) : -(20 - 3 * M.wins[0]); STATS.rating = Math.round(cl(before + d, 600, 1800)); M.rated = { before, after: STATS.rating }; }
+    saveAll(); K.score = M.wins[0];
     // tell the hub (when it hosts the game) so profiles and the daily challenge count the match
     try { if (!M.online && window.parent !== window) window.parent.postMessage({ pbx: 'score', score: M.wins[0] * 10 + (won ? 50 : 0) + M.fs[1].bot.diff * 10 }, location.origin); } catch (e) {}
   });
@@ -2685,7 +2765,7 @@ const GAME = {
     get M() { return M; }, get X() { return X; }, get screen() { return screen; }, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
     play, toMenu, menuPlay, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
-    botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed,
+    botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
   };
 })();
 

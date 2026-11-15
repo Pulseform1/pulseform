@@ -45,8 +45,27 @@
     { n: 'Recruit', react: .8, lag: .28, err: .14, flick: .6, jit: .03, turn: 3, spray: .25, hs: .06, hear: 14 },
     { n: 'Veteran', react: .52, lag: .2, err: .095, flick: .45, jit: .02, turn: 4.4, spray: .5, hs: .15, hear: 20 },
     { n: 'Elite', react: .36, lag: .14, err: .065, flick: .32, jit: .013, turn: 6, spray: .72, hs: .28, hear: 26 },
+    { n: 'Legend', react: .27, lag: .11, err: .045, flick: .26, jit: .01, turn: 7.2, spray: .84, hs: .36, hear: 30 },
   ];
   const WIN_ROUNDS = 5, BUY_T = 15, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5;
-  const CASH = { start: 800, win: 3000, loss: [1900, 2400, 2900], kill: 200, plant: 300, cap: 9000, decider: 5000 };
+  // round credits are tight: a win doesn't always buy a rifle and shields, a loss rarely does
+  const CASH = { start: 800, win: 2600, loss: [1600, 2000, 2400], kill: 150, plant: 250, cap: 9000, decider: 4500 };
+  // the adaptive bot: your skill rating picks its level, between these ratings it blends from one to the next
+  const RATING_AT = [700, 1000, 1300, 1600];
+  function diffFor(r) {
+    r = cl(r || 1000, 600, 1750); let i = 0; while (i < DIFF.length - 2 && r > RATING_AT[i + 1]) i++;
+    const t = cl((r - RATING_AT[i]) / (RATING_AT[i + 1] - RATING_AT[i]), 0, 1), a = DIFF[i], b = DIFF[i + 1], D = {};
+    for (const k of Object.keys(a)) D[k] = typeof a[k] === 'number' ? lp(a[k], b[k], t) : a[k];
+    const idx = t > .5 ? i + 1 : i; D.n = DIFF[idx].n; return { D, i: idx };
+  }
+  const rankName = r => { const { i } = diffFor(r); return DIFF[i].n; };
+  // Duelpoint Coins for a finished match: kept small on purpose, so unlocks take a few evenings, not one match
+  const COIN_LVL = [.8, 1, 1.25, 1.5, 1.8];
+  function coinsFor({ won, rounds, kills, heads, lvl, online }) {
+    const base = (won ? 40 : 12) + 4 * rounds + 3 * kills + 2 * heads;
+    return Math.max(5, Math.round(base * (COIN_LVL[lvl] || 1) * (online ? 1.2 : 1)));
+  }
   // the body: eye heights standing and crouched, radius, speeds (m/s), gravity, jump speed, the step you climb without jumping
-  const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.2, STEP = .42;
+  const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.6, STEP = .42;
+  // sprinting (hold Shift, or push the stick all the way) and sliding (crouch while sprinting)
+  const SPRINT = 7.4, SLIDE_V = 10.8, SLIDE_T = .75, SLIDE_CD = .9;

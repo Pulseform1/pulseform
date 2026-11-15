@@ -42,6 +42,9 @@
   cue('reload', f => { const o = outFor(f, f === me() ? .7 : 1); tone(o, 520, .04, 'square', .06, 0, .15); hiss(o, .05, .1, 'highpass', 2500, .15); tone(o, 380, .05, 'square', .07, 0, gun(f).rel * .62); hiss(o, .06, .12, 'highpass', 2000, gun(f).rel * .88); });
   cue('swap', f => { const o = outFor(f, f === me() ? .6 : .8); hiss(o, .05, .1, 'highpass', 3000); tone(o, 700, .03, 'square', .03); });
   cue('melee', (f, heavy, S) => { const o = outFor(f); hiss(o, heavy ? .14 : .09, .16, 'bandpass', heavy ? 1500 : 2800, 0, 1.2); if (S) { tone(o, 180, .09, 'sine', .25, -90, .02); hiss(o, .05, .2, 'lowpass', 900, .02); } });
+  // a slide: a gritty scrape that fades as it slows; a jump: a soft push-off
+  cue('slide', f => { const o = outFor(f === me() ? null : f, f === me() ? .8 : 1); hiss(o, .55, .16, 'bandpass', 900, 0, .6); hiss(o, .4, .1, 'lowpass', 300, .05); });
+  cue('jump', f => { const o = outFor(f === me() ? null : f); hiss(o, .07, f === me() ? .05 : .2, 'lowpass', 600); });
   cue('step', f => { if (f === me()) hiss(outFor(null), .04, .035, 'lowpass', 500); else { const o = outFor(f); hiss(o, .06, .32, 'lowpass', 420); tone(o, 95, .05, 'sine', .14, -30); } });
   cue('jump', f => { if (f !== me()) hiss(outFor(f), .06, .12, 'lowpass', 700); });
   cue('land', f => { const o = outFor(f, f === me() ? .5 : 1); hiss(o, .09, .3, 'lowpass', 360); tone(o, 70, .08, 'sine', .25, -20); });

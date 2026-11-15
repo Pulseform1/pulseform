@@ -3,7 +3,7 @@
      A fighter is driven by one of three things: local input, a bot (50-bot), or the network (60-net).
      Modes: 'bot' (you against a bot), 'online', 'range' (practice: endless money, a target that comes back), 'demo'. */
   let M = null;
-  let readInput = () => ({ mx: 0, mz: 0, walk: false, crouch: false, jump: false, use: false, fire: false, rapid: false });   // 90-input replaces this
+  let readInput = () => ({ mx: 0, mz: 0, walk: false, sprint: false, crouch: false, jump: false, use: false, fire: false, rapid: false });   // 90-input replaces this
   const BOT_NAMES = ['Rook', 'Kestrel', 'Mercer', 'Talon', 'Nyx', 'Sable', 'Quill', 'Ember', 'Wren', 'Onyx'];
   const WHY = { elim_att: 'Attacker eliminated', elim_def: 'Defender eliminated', time: 'Time ran out', boom: 'Charge detonated', defuse: 'Charge defused', left: 'Rival left the match' };
 
@@ -14,7 +14,7 @@
       hp: 100, sh: 0, alive: true, guns: { 1: null, 2: 'pip', 3: 'knife' }, slot: 2, ammo: {},
       fireT: 0, reloadT: 0, spray: 0, sseed: 0, burst: null, scoped: 0, kick: 0, swing: null, semiHeld: false,
       credits: CASH.start, spent: {}, lossRun: 0, ready: false, ab: { q: 1, e: 1 }, abT: 0,
-      flash: 0, reveal: 0, heal: null, dash: null, plant: 0, defuse: 0, footT: 0, step: 0, walkT: 0,
+      flash: 0, reveal: 0, heal: null, dash: null, plant: 0, defuse: 0, footT: 0, step: 0, walkT: 0, sprinting: false, slide: null, slideCD: 0, crouchHeld: false,
       stat: { k: 0, d: 0, hs: 0, dmg: 0, shots: 0, hits: 0 },
     }, o);
   }
@@ -52,22 +52,35 @@
   function stepBody(f, I, dt) {
     if (!f.alive) return;
     const G = gun(f), frozen = (M.phase === 'buy' && M.mode !== 'range') || f.plant > 0 || f.defuse > 0;
-    f.crouch = cl(f.crouch + (I.crouch ? 1 : -1) * dt * 8, 0, 1);
-    let sp = (f.crouch > .5 ? CSPD : I.walk ? WALK : SPD) * G.spd; if (f.scoped) sp *= G.scope ? .55 : .76;
+    // sprint: forward, standing, not aiming, reloading or just after a shot; slide: crouch while sprinting fast on the ground
+    const hv = Math.hypot(f.vx, f.vz), crouchTap = I.crouch && !f.crouchHeld; f.crouchHeld = !!I.crouch;
+    if (f.slideCD > 0) f.slideCD -= dt;
+    if (crouchTap && !f.slide && f.ground && !frozen && f.slideCD <= 0 && (f.sprinting || hv > SPD + .8)) {
+      const k = SLIDE_V / Math.max(hv, .1); f.vx *= k; f.vz *= k; f.slide = { t: SLIDE_T }; f.sprinting = false; emit('slide', f);
+    }
+    f.sprinting = !f.slide && !frozen && !!I.sprint && I.mz > .3 && f.crouch < .5 && !f.scoped && f.reloadT <= 0 && f.fireT < -.12 && !f.plant && !f.defuse;
+    f.crouch = cl(f.crouch + (I.crouch || f.slide ? 1 : -1) * dt * 8, 0, 1);
+    let sp = (f.sprinting ? SPRINT : f.crouch > .5 ? CSPD : I.walk ? WALK : SPD) * G.spd; if (f.scoped) sp *= G.scope ? .55 : .76;
     const s = Math.sin(f.yaw), c = Math.cos(f.yaw); let wx = -s * I.mz + c * I.mx, wz = -c * I.mz - s * I.mx; const L = Math.hypot(wx, wz); if (L > 1) { wx /= L; wz /= L; }
     if (frozen) wx = wz = 0;
-    // head for the wanted velocity at a fixed rate: quickest when braking against your motion (the counter-strafe), slowest in the air
-    const tx = wx * sp, tz = wz * sp, ddx = tx - f.vx, ddz = tz - f.vz, dl = Math.hypot(ddx, ddz);
-    const rate = !f.ground ? 6 : Math.hypot(tx, tz) < .01 ? 26 : tx * f.vx + tz * f.vz < 0 ? 80 : 44;
-    if (dl > 0) { const stp = Math.min(dl, rate * dt); f.vx += ddx / dl * stp; f.vz += ddz / dl * stp; }
+    if (f.slide) {   // a slide carries its speed and bleeds it off; you can steer it a little, and jump out of it
+      f.slide.t -= dt; const dec = Math.exp(-1.25 * dt); f.vx *= dec; f.vz *= dec;
+      const v2 = Math.hypot(f.vx, f.vz); if (v2 > .1 && (wx || wz)) { const a = Math.atan2(f.vx, f.vz), b = Math.atan2(wx, wz), turn = cl(angDiff(b, a), -1.6 * dt, 1.6 * dt); f.vx = Math.sin(a + turn) * v2; f.vz = Math.cos(a + turn) * v2; }
+      if (f.slide.t <= 0 || v2 < 2.4 || !f.ground && f.vy > 0) { f.slide = null; f.slideCD = SLIDE_CD; }
+    } else {
+      // head for the wanted velocity at a fixed rate: quickest when braking against your motion (the counter-strafe), slowest in the air
+      const tx = wx * sp, tz = wz * sp, ddx = tx - f.vx, ddz = tz - f.vz, dl = Math.hypot(ddx, ddz);
+      const rate = !f.ground ? 6 : Math.hypot(tx, tz) < .01 ? 26 : tx * f.vx + tz * f.vz < 0 ? 80 : f.sprinting ? 30 : 44;
+      if (dl > 0) { const stp = Math.min(dl, rate * dt); f.vx += ddx / dl * stp; f.vz += ddz / dl * stp; }
+    }
     if (f.dash) { f.dash.t -= dt; f.vx = f.dash.dx * 36; f.vz = f.dash.dz * 36; if (f.dash.t <= 0) { f.dash = null; f.vx *= .2; f.vz *= .2; } }
-    if (I.jump && !f.jumpHeld && f.ground && !frozen && f.crouch < .5) { f.vy = JUMP; f.ground = false; emit('jump', f); }
+    if (I.jump && !f.jumpHeld && f.ground && !frozen && (f.crouch < .5 || f.slide)) { f.vy = JUMP; f.ground = false; if (f.slide) { f.slide = null; f.slideCD = SLIDE_CD; } emit('jump', f); }
     f.jumpHeld = !!I.jump;
     f.vy -= GRAV * dt; f.y += f.vy * dt;
     moveF(f, f.vx * dt, f.vz * dt);
     const v = Math.hypot(f.vx, f.vz); f.walkT += v * dt;
     // running is loud: a footstep every stride, which bots hear and the other player's speakers play
-    if (f.ground && v > 3.6 && f.crouch < .5) { f.footT -= dt; if (f.footT <= 0) { f.footT = .36; f.step = .5; emit('step', f); } }
+    if (f.ground && v > 3.6 && f.crouch < .5) { f.footT -= dt; if (f.footT <= 0) { f.footT = f.sprinting ? .29 : .36; f.step = f.sprinting ? .7 : .5; emit('step', f); } }
     if (f.step > 0) f.step -= dt;
     if (f.heal) { f.heal.t -= dt; f.hp = Math.min(100, f.hp + 20 * dt); if (f.heal.t <= 0) { f.heal = null; f.hp = Math.round(f.hp); } }
     for (const k of ['flash', 'reveal', 'kick']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
@@ -276,6 +289,7 @@
   function endRound(wi, why) {
     if (M.phase === 'end') return;
     M.phase = 'end'; M.t = END_T; M.wins[wi]++; M.last = { wi, why };
+    if (M.auto) M.adj += wi === 0 ? 18 : -12;   // the adaptive bot sharpens a little each round you take, and eases off when you lose one
     M.fs.forEach((f, i) => { if (f.net) return; const won = i === wi; f.lossRun = won ? 0 : f.lossRun + 1; f.credits = Math.min(CASH.cap, f.credits + (won ? CASH.win : CASH.loss[Math.min(2, f.lossRun - 1)])); });
     if (why === 'boom') emit('boom', M.planted.x, M.planted.z);
     emit('end', wi, why);
@@ -291,7 +305,7 @@
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
       f.ab = { q: 1, e: 1 }; for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
       f.yaw = yawTo(f.x, f.z, side === 'att' ? f.x + 10 : f.x - 10, f.z);
-      if (f.bot) f.bot = { diff: f.bot.diff, dummy: f.bot.dummy };
+      if (f.bot) { if (M.auto && !f.bot.dummy) { const L = diffFor(M.rating + M.adj); f.bot = { diff: L.i, D: L.D }; } else f.bot = { diff: f.bot.diff, D: f.bot.D, dummy: f.bot.dummy }; }
     });
     if (n === 5) say('SIDES SWAPPED'); else if (decider) say('DECIDER');
     emit('round', n);
@@ -320,9 +334,10 @@
   function startMatch(o) {
     const mode = o.mode, online = mode === 'online', host = !online || MP.isHost(), ops = Object.keys(OPS);
     const A = fighter(mode === 'demo' ? { name: 'Rook', op: pick(ops), bot: { diff: 1 } } : { name: online ? MP.name : 'You', op: CFG.op, local: true });
-    const B = fighter(online ? { name: (o.rival && o.rival.name) || 'Rival', op: 'vex', net: true } : { name: pick(BOT_NAMES.filter(n => n !== A.name)), op: pick(ops), bot: { diff: o.diff == null ? 1 : o.diff, dummy: mode === 'range' } });
+    const auto = mode === 'bot' && (o.diff === 'auto' || o.diff == null), L = auto ? diffFor(STATS.rating) : null;
+    const B = fighter(online ? { name: (o.rival && o.rival.name) || 'Rival', op: 'vex', net: true } : { name: pick(BOT_NAMES.filter(n => n !== A.name)), op: pick(ops), bot: auto ? { diff: L.i, D: L.D } : { diff: typeof o.diff === 'number' ? o.diff : 1, dummy: mode === 'range' } });
     const hostAtt = o.hostAtt == null ? (R() < .5 ? 1 : 0) : o.hostAtt, decHostAtt = o.decHostAtt == null ? (R() < .5 ? 1 : 0) : o.decHostAtt;
-    M = { mode, online, host, fs: [A, B], wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? host : !host) ? 0 : 1, decAtt: (decHostAtt ? host : !host) ? 0 : 1,
+    M = { mode, online, host, auto, rating: STATS.rating, adj: 0, fs: [A, B], wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? host : !host) ? 0 : 1, decAtt: (decHostAtt ? host : !host) ? 0 : 1,
       planted: null, defused: false, smokes: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0 };
     startRound(1);
     if (mode === 'range') { M.phase = 'live'; M.t = 0; A.credits = CASH.cap; Object.assign(A, { x: 9, z: 5, yaw: yawTo(9, 5, 30, 5) }); placeDummy(B); }
@@ -358,6 +373,7 @@
       if (f.net) { netFollow(f, dt); continue; }
       const I = !f.alive ? NEUTRAL : f.bot ? botThink(f, dt) : readInput(f);
       stepBody(f, I, dt); stepGun(f, dt); stepObjective(f, I, dt);
+      if (I.fire && f.sprinting) { f.sprinting = false; f.fireT = Math.max(f.fireT, .1); }
       if (I.fire && f.alive && (M.phase !== 'buy' || M.mode === 'range')) { const G = gun(f); if (G.auto || !f.semiHeld || (I.rapid && f.fireT < -.07)) fire(f); }
       f.semiHeld = !!I.fire;
       if (M.mode === 'range') { if (f.abT > 0 && (f.abT -= dt) <= 0) f.ab = { q: 1, e: 1 }; if (!f.alive && f.bot && (f.respawn -= dt) <= 0) placeDummy(f); }

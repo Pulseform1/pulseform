@@ -78,10 +78,12 @@
     // the camera: your eyes (gliding over steps and crouches), kicked by recoil; when you die it sinks and turns to who did it
     const ey = ipos(P, 'y') + lp(EYE, CEYE, P.crouch); X.camY = Math.abs(ey - X.camY) > 1.2 ? ey : X.camY + (ey - X.camY) * Math.min(1, dt * 22);
     X.dip = Math.max(0, (X.dip || 0) - dt * .5); X.shake = Math.max(0, X.shake - dt);
+    X.roll = lp(X.roll || 0, P.slide ? .075 : 0, Math.min(1, dt * 9));   // a slide tips the view a little
     let yaw = P.yaw, pitch = P.pitch + M.camKick, y = X.camY - X.dip;
     if (!P.alive && M.deathInfo) { const k = Math.min(1, M.deathInfo.t * 2); y = lp(y, P.y + .5, k); yaw += angDiff(M.deathInfo.yaw, yaw) * k; pitch = lp(pitch, .1, k); }
-    cam.position.set(ipos(P, 'x') + (Math.random() - .5) * X.shake * .3, y + (Math.random() - .5) * X.shake * .3, ipos(P, 'z')); cam.rotation.set(pitch, yaw, 0);
-    const fov = 2 * Math.atan(Math.tan(BASE_FOV * D2R / 2) / zoomOf(P)) / D2R; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
+    cam.position.set(ipos(P, 'x') + (Math.random() - .5) * X.shake * .3, y + (Math.random() - .5) * X.shake * .3, ipos(P, 'z')); cam.rotation.set(pitch, yaw, X.roll);
+    X.fovK = lp(X.fovK || 0, P.slide ? 1 : P.sprinting ? .6 : 0, Math.min(1, dt * 7));   // speed widens the view a touch
+    const fov = 2 * Math.atan(Math.tan(BASE_FOV * (1 + X.fovK * .09) * D2R / 2) / zoomOf(P)) / D2R; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
 
     // your gun
     if (X.viewKey !== G.k + P.op) { if (X.viewGun) X.view.remove(X.viewGun); X.viewGun = viewGun(G.k, P.op); if (G.melee) X.viewGun.scale.setScalar(1.35); X.view.add(X.viewGun); X.viewKey = G.k + P.op; X.viewGun.add(X.mflash); X.drawD = Math.max(.35, (G.equip || .75) * .7); X.drawT = X.drawD; X.recP = X.recV = 0; }
@@ -91,7 +93,7 @@
     for (let n = Math.ceil(dt / .008), i = 0; i < n; i++) { const h = dt / n; X.recV = (X.recV || 0) + (-420 * (X.recP || 0) - 30 * X.recV) * h; X.recP = (X.recP || 0) + X.recV * h; }
     X.recP = cl(X.recP, -.08, .22); const rk = X.recP;
     const v = Math.hypot(P.vx, P.vz), mv = Math.min(1, v / 4), sway = Math.sin(X.t * 1.3) * .004, swayX = Math.sin(X.t * .65) * .003, VO = VOS[G.k] || [.2, -.2, -.28];
-    X.runK = lp(X.runK || 0, v > 3.6 && P.fireT < -.2 && P.reloadT <= 0 && !P.scoped && P.ground ? 1 : 0, Math.min(1, dt * 6));   // running: the gun drops and turns in
+    X.runK = lp(X.runK || 0, P.sprinting ? 1.25 : P.slide ? .5 : v > 3.6 && P.fireT < -.2 && P.reloadT <= 0 && !P.scoped && P.ground ? .55 : 0, Math.min(1, dt * 7));   // running: the gun drops and turns in
     X.air = lp(X.air || 0, P.ground ? 0 : cl(-P.vy * .006, -.03, .03), Math.min(1, dt * 10));   // jumping: it lags up, then down
     X.dryT = Math.max(0, (X.dryT || 0) - dt); const dry = Math.sin(X.dryT / .16 * Math.PI) * (X.dryT > 0 ? 1 : 0);
     const bob = Math.sin(P.walkT * 1.9) * .012 * mv * (1 + X.runK * .6), bobX = Math.cos(P.walkT * .95) * .008 * mv;
