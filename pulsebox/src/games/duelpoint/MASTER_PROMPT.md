@@ -180,3 +180,4 @@ damage tables, the economy, the knife, and whole bot matches for errors, stuck b
 - **Vented shrouds scale their hole pattern to their length,** decals sit forward of the ejection port and the round counter, so nothing overlaps.
 - **Phones play full-screen inside the hub.** On a touch device the hub drops its 16:9 strip and gives the game the whole screen, turned sideways if the phone is upright, with a close button top right.
 - **Gate opening moved two rows** so neither spawn can see the other or the site at the start of a round.
+- **Each gun has its own finish,** drawn as seamless 512-pixel textures with a matching relief/shine map: cerakote (Pip, Wasp, Quill, Lancer, Kite), anodised aluminium (Gnat, Mako), digital camo (Hornet), walnut (Stub, Hammer, Breaker), clear-coated carbon twill (Vesper, Longbow) and battle-worn paint chipped to bare metal (Thresher, Paladin, Torrent). Steel is brushed and scratched, polymer stippled, rubber knurled.

@@ -1353,54 +1353,115 @@ const GAME = {
      reflection map. The kit and the guns are in gunModel below; viewAnim moves the working parts in first person. */
   let GTX = null;
   const DECAL = {}, GMAT = {}, ICON = {};
+  /* Finishes. Every texture tiles seamlessly and is drawn once from the seeded random stream. Colour maps carry the look;
+     a second "data" canvas per finish carries relief in red (read as a bump map), roughness in green and metalness in blue,
+     so wear, smudges and scratches catch the light differently from the paint around them. */
   function gunTex() {
     if (GTX) return GTX;
-    const T = (w, h, fn, rep) => canvasTex(w, h, fn, rep);
+    const T = (w, h, fn, rep) => canvasTex(w, h, fn, rep), D = (w, h, fn, rep) => { const t = canvasTex(w, h, fn, rep); t.encoding = THREE.LinearEncoding; return t; };
+    const wrap = (w, h, x, y, fn) => { for (const dx of [-w, 0, w]) for (const dy of [-h, 0, h]) fn(x + dx, y + dy); };   // draw across the seams
+    const blots = (g, w, h, n, r0, r1, rgb, a) => { for (let i = 0; i < n; i++) { const x = R() * w, y = R() * h, r = r0 + R() * (r1 - r0), al = a * (.4 + R() * .6);
+      wrap(w, h, x, y, (px, py) => { if (px < -r || py < -r || px > w + r || py > h + r) return; const gr = g.createRadialGradient(px, py, 0, px, py, r); gr.addColorStop(0, `rgba(${rgb},${al})`); gr.addColorStop(1, `rgba(${rgb},0)`); g.fillStyle = gr; g.fillRect(px - r, py - r, r * 2, r * 2); }); } };
+    const specks = (g, w, h, n, rgbA, rgbB, a, s = 1) => { for (let i = 0; i < n; i++) { g.fillStyle = `rgba(${R() < .5 ? rgbA : rgbB},${a * R()})`; g.fillRect(Math.floor(R() * w), Math.floor(R() * h), s, s); } };
+    const scratches = (g, w, h, n, rgb, a, l0, l1, ang) => { g.lineCap = 'round'; for (let i = 0; i < n; i++) { const x = R() * w, y = R() * h, l = l0 + R() * (l1 - l0), t = ang == null ? R() * Math.PI : ang + (R() - .5) * .5, bend = (R() - .5) * l * .3;
+      g.strokeStyle = `rgba(${rgb},${a * (.5 + R() * .5)})`; g.lineWidth = .6 + R() * .9; wrap(w, h, x, y, (px, py) => { g.beginPath(); g.moveTo(px, py); g.quadraticCurveTo(px + Math.cos(t) * l / 2 - Math.sin(t) * bend, py + Math.sin(t) * l / 2 + Math.cos(t) * bend, px + Math.cos(t) * l, py + Math.sin(t) * l); g.stroke(); }); } };
+    const S = 512;
     GTX = {
-      brushed: T(256, 256, (g, w, h) => { g.fillStyle = '#8c8c8c'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1100; i++) { g.fillStyle = R() < .5 ? `rgba(0,0,0,${.04 + R() * .09})` : `rgba(255,255,255,${.04 + R() * .08})`; g.fillRect(R() * w - 40, R() * h, 30 + R() * 170, 1); } }, [6, 6]),
-      stipple: T(128, 128, (g, w, h) => { g.fillStyle = '#7c7c7c'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1600; i++) { g.fillStyle = R() < .5 ? 'rgba(0,0,0,.28)' : 'rgba(255,255,255,.13)'; g.beginPath(); g.arc(R() * w, R() * h, .6 + R() * 1.3, 0, 7); g.fill(); } }, [12, 12]),
-      cera: T(128, 128, (g, w, h) => { g.fillStyle = '#d0d0d0'; g.fillRect(0, 0, w, h); for (let i = 0; i < 2600; i++) { g.fillStyle = R() < .5 ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.08)'; g.fillRect(R() * w, R() * h, 1 + R() * 2, 1 + R() * 2); } }, [10, 10]),
-      wood: T(256, 256, (g, w, h) => { g.fillStyle = '#80502a'; g.fillRect(0, 0, w, h); for (let i = 0; i < 80; i++) { const y = R() * h; g.strokeStyle = `rgba(${R() < .55 ? '45,22,8' : '170,110,60'},${.14 + R() * .26})`; g.lineWidth = .5 + R() * 2.5; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= w; x += 12) g.lineTo(x, y + Math.sin(x * .03 + i) * 4 + Math.sin(x * .12 + i * 2) * 1.4); g.stroke(); } }, [5, 5]),
-      carbon: T(64, 64, (g) => { for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const on = (i + j) % 2, gr = on ? g.createLinearGradient(i * 16, 0, i * 16 + 16, 0) : g.createLinearGradient(0, j * 16, 0, j * 16 + 16); gr.addColorStop(0, '#3a3a40'); gr.addColorStop(.5, '#77777f'); gr.addColorStop(1, '#3a3a40'); g.fillStyle = gr; g.fillRect(i * 16, j * 16, 16, 16); } }, [36, 36]),
-      camo: T(128, 128, (g, w, h) => { g.fillStyle = '#2a8a75'; g.fillRect(0, 0, w, h); const cs = ['#3ee6c1', '#1b5248', '#1f2a33', '#30b496']; for (let i = 0; i < 170; i++) { g.fillStyle = cs[i % 4]; g.fillRect(Math.floor(R() * 16) * 8, Math.floor(R() * 16) * 8, 8 * (1 + Math.floor(R() * 3)), 8 * (1 + Math.floor(R() * 2))); } }, [8, 8]),
-      holes: T(64, 64, (g, w, h) => { g.fillStyle = '#5a5e66'; g.fillRect(0, 0, w, h); g.fillStyle = '#0a0b0d'; for (const [x, y] of [[16, 16], [48, 16], [16, 48], [48, 48]]) { g.beginPath(); g.arc(x, y, 9, 0, 7); g.fill(); } }, [1, 10]),
+      // machined steel: long brushing marks, faint soft patches, a few fine scratches
+      brushed: T(S, S, (g, w, h) => { g.fillStyle = '#8a8a8a'; g.fillRect(0, 0, w, h);
+        for (let i = 0; i < 3200; i++) { const y = Math.floor(R() * h), x = R() * w, l = 30 + R() * 340; g.fillStyle = R() < .5 ? `rgba(0,0,0,${.03 + R() * .08})` : `rgba(255,255,255,${.03 + R() * .07})`; g.fillRect(x, y, l, 1); g.fillRect(x - w, y, l, 1); }
+        blots(g, w, h, 16, 50, 150, '255,255,255', .05); blots(g, w, h, 16, 50, 150, '0,0,0', .06); scratches(g, w, h, 34, '230,230,230', .35, 8, 60); }, [3, 3]),
+      // its data: shinier along fresh scratches, duller where hands have smudged it
+      metalD: D(S, S, (g, w, h) => { g.fillStyle = 'rgb(128,200,255)'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1400; i++) { const y = Math.floor(R() * h); g.fillStyle = `rgba(128,${170 + R() * 60 | 0},255,.5)`; g.fillRect(R() * w, y, 40 + R() * 300, 1); }
+        blots(g, w, h, 22, 30, 110, '128,255,255', .45); scratches(g, w, h, 34, '100,90,255', .9, 8, 60); }, [3, 3]),
+      // stippled polymer: raised dots, used for colour and relief
+      stipple: T(256, 256, (g, w, h) => { g.fillStyle = '#7a7a7a'; g.fillRect(0, 0, w, h); for (let i = 0; i < 3400; i++) { const x = R() * w, y = R() * h, r = .7 + R() * 1.6, c = R() < .55 ? 'rgba(20,20,20,.32)' : 'rgba(255,255,255,.2)'; g.fillStyle = c; wrap(w, h, x, y, (px, py) => { if (px < -3 || py < -3 || px > w + 3 || py > h + 3) return; g.beginPath(); g.arc(px, py, r, 0, 7); g.fill(); }); }
+        blots(g, w, h, 10, 30, 90, '0,0,0', .08); }, [14, 14]),
+      // diamond knurling for rubber and grip panels
+      knurl: T(128, 128, (g, w, h) => { g.fillStyle = '#8a8a8a'; g.fillRect(0, 0, w, h); g.lineWidth = 3.2; g.strokeStyle = 'rgba(0,0,0,.6)'; for (let i = -8; i <= 8; i++) { g.beginPath(); g.moveTo(i * 16, 0); g.lineTo(i * 16 + h, h); g.stroke(); g.beginPath(); g.moveTo(i * 16, h); g.lineTo(i * 16 + h, 0); g.stroke(); }
+        g.lineWidth = 1; g.strokeStyle = 'rgba(255,255,255,.18)'; for (let i = -8; i <= 8; i++) { g.beginPath(); g.moveTo(i * 16 + 2, 0); g.lineTo(i * 16 + 2 + h, h); g.stroke(); } specks(g, w, h, 900, '0,0,0', '255,255,255', .15); }, [60, 60]),
+      // cerakote: a sprayed ceramic paint, matte, softly mottled, with hairline scuffs
+      cera: T(S, S, (g, w, h) => { g.fillStyle = '#d6d6d6'; g.fillRect(0, 0, w, h); blots(g, w, h, 40, 30, 140, '0,0,0', .05); blots(g, w, h, 30, 30, 120, '255,255,255', .06);
+        specks(g, w, h, 16000, '0,0,0', '255,255,255', .09); scratches(g, w, h, 30, '255,255,255', .32, 6, 40); }, [4, 4]),
+      ceraD: D(S, S, (g, w, h) => { g.fillStyle = 'rgb(140,215,255)'; g.fillRect(0, 0, w, h); specks(g, w, h, 12000, '110,230,255', '170,200,255', .5); blots(g, w, h, 30, 40, 140, '140,170,255', .35); scratches(g, w, h, 30, '110,140,255', .9, 6, 40); }, [4, 4]),
+      // anodised aluminium: smooth, faint machining lines, a fine sparkle
+      anod: T(256, 256, (g, w, h) => { g.fillStyle = '#d2d2d2'; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 2) { g.fillStyle = `rgba(${R() < .5 ? '0,0,0' : '255,255,255'},${.015 + R() * .03})`; g.fillRect(0, y, w, 1); }
+        specks(g, w, h, 5000, '0,0,0', '255,255,255', .07); blots(g, w, h, 10, 30, 100, '255,255,255', .05); }, [6, 6]),
+      anodD: D(256, 256, (g, w, h) => { g.fillStyle = 'rgb(128,120,255)'; g.fillRect(0, 0, w, h); specks(g, w, h, 4000, '128,80,255', '128,160,255', .6); blots(g, w, h, 12, 30, 90, '128,175,255', .4); }, [6, 6]),
+      // walnut: wavy grain with darker late-wood lines, ray flecks and open pores; also its own relief
+      wood: T(S, S, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#8a5630'); gr.addColorStop(.5, '#7a4826'); gr.addColorStop(1, '#8a5630'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+        const k1 = 2 * Math.PI / w; for (let i = 0; i < 170; i++) { const y = R() * h, a1 = 2 + R() * 7, a2 = R() * 2.5, p1 = R() * 7, p2 = R() * 7, f1 = 1 + Math.floor(R() * 2), f2 = 3 + Math.floor(R() * 4), dark = R() < .62;
+          g.strokeStyle = dark ? `rgba(48,22,8,${.12 + R() * .3})` : `rgba(190,128,70,${.08 + R() * .2})`; g.lineWidth = .6 + R() * (dark ? 3 : 2);
+          for (const dy of [-h, 0, h]) { g.beginPath(); for (let x = 0; x <= w; x += 8) { const yy = y + dy + Math.sin(x * k1 * f1 + p1) * a1 + Math.sin(x * k1 * f2 + p2) * a2; x ? g.lineTo(x, yy) : g.moveTo(x, yy); } g.stroke(); } }
+        for (let i = 0; i < 4000; i++) { g.fillStyle = `rgba(30,12,4,${.15 + R() * .3})`; g.fillRect(R() * w, R() * h, 2 + R() * 6, 1); }
+        for (let i = 0; i < 260; i++) { g.fillStyle = `rgba(220,160,100,${.06 + R() * .1})`; g.fillRect(R() * w, R() * h, 4 + R() * 10, 2 + R() * 2); }
+        blots(g, w, h, 14, 60, 200, '40,16,4', .12); blots(g, w, h, 10, 60, 160, '255,200,140', .06); }, [2.5, 2.5]),
+      // carbon fibre, 2/2 twill: each tow shaded round its width with fine filaments along it
+      carbon: T(256, 256, (g) => { const c = 16; for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) { const hz = (i + j) % 4 < 2, x = i * c, y = j * c, gr = hz ? g.createLinearGradient(0, y, 0, y + c) : g.createLinearGradient(x, 0, x + c, 0);
+          gr.addColorStop(0, '#2a2a2f'); gr.addColorStop(.4, '#55555d'); gr.addColorStop(.55, '#606068'); gr.addColorStop(1, '#2e2e33'); g.fillStyle = gr; g.fillRect(x, y, c, c);
+          g.fillStyle = 'rgba(0,0,0,.18)'; for (let f = 1; f < c; f += 2) hz ? g.fillRect(x, y + f, c, .5) : g.fillRect(x + f, y, .5, c); } }, [14, 14]),
+      // digital camouflage over a teal base, lightly worn
+      camo: T(256, 256, (g, w, h) => { g.fillStyle = '#2a8a75'; g.fillRect(0, 0, w, h); const cs = ['#3ee6c1', '#1b5248', '#1f2a33', '#30b496'];
+        for (const [n, s] of [[90, 24], [160, 16], [260, 8]]) for (let i = 0; i < n; i++) { g.fillStyle = cs[Math.floor(R() * 4)]; const x = Math.floor(R() * w / 8) * 8, y = Math.floor(R() * h / 8) * 8, bw = s * (1 + Math.floor(R() * 2)), bh = s; wrap(w, h, x, y, (px, py) => g.fillRect(px, py, bw, bh)); }
+        specks(g, w, h, 6000, '0,0,0', '255,255,255', .12); scratches(g, w, h, 18, '210,240,235', .35, 6, 30); }, [7, 7]),
+      // vent holes: chamfered, with a lit lower lip
+      holes: T(128, 128, (g, w, h) => { g.fillStyle = '#50545c'; g.fillRect(0, 0, w, h); specks(g, w, h, 1500, '0,0,0', '255,255,255', .1);
+        for (const [x, y] of [[32, 32], [96, 32], [32, 96], [96, 96]]) { const gr = g.createRadialGradient(x, y + 2, 10, x, y, 22); gr.addColorStop(0, '#08090b'); gr.addColorStop(.7, '#08090b'); gr.addColorStop(.82, '#9aa0aa'); gr.addColorStop(1, 'rgba(80,84,92,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, 22, 0, 7); g.fill(); } }, [1, 10]),
     };
     return GTX;
   }
+  // battle-worn paint in a gun's own colour: chipped through to bare metal on corners and high spots, with scuffs
+  const WORN = {};
+  function wornTex(col) {
+    if (WORN[col]) return WORN[col];
+    const S = 512, chips = [], c = new THREE.Color(col);
+    for (let i = 0; i < 46; i++) { const cx = R() * S, cy = R() * S, n = 3 + Math.floor(R() * 8); for (let j = 0; j < n; j++) { const x = cx + (R() - .5) * 46, y = cy + (R() - .5) * 20, r = .8 + R() * (R() < .1 ? 6 : 2.6), k = 6 + Math.floor(R() * 4), pts = []; for (let q = 0; q < k; q++) { const a = q / k * TAU, rr = r * (.5 + R() * .7); pts.push([x + Math.cos(a) * rr * 1.5, y + Math.sin(a) * rr]); } chips.push(pts); } }
+    const scuffs = []; for (let i = 0; i < 46; i++) scuffs.push([R() * S, R() * S, 8 + R() * 50, (R() - .5) * .6]);
+    const draw = (g, paint, metal, scuff, rim) => { g.fillStyle = paint; g.fillRect(0, 0, S, S); for (const [x, y, l, t] of scuffs) for (const dx of [-S, 0, S]) for (const dy of [-S, 0, S]) { g.strokeStyle = scuff; g.lineWidth = 1; g.beginPath(); g.moveTo(x + dx, y + dy); g.lineTo(x + dx + Math.cos(t) * l, y + dy + Math.sin(t) * l); g.stroke(); }
+      for (const pts of chips) for (const dx of [-S, 0, S]) for (const dy of [-S, 0, S]) { g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x + dx, y + dy) : g.moveTo(x + dx, y + dy)); g.closePath(); if (rim) { g.strokeStyle = rim; g.lineWidth = 1.6; g.stroke(); } g.fillStyle = metal; g.fill(); } };
+    const hex = '#' + c.getHexString(), map = canvasTex(S, S, (g, w, h) => { draw(g, hex, '#9a9ea6', 'rgba(255,255,255,.3)', 'rgba(0,0,0,.35)');
+      g.globalCompositeOperation = 'multiply'; const n = canvasTex.noise || (canvasTex.noise = (() => { const cv = document.createElement('canvas'); cv.width = cv.height = 256; const q = cv.getContext('2d'); q.fillStyle = '#fff'; q.fillRect(0, 0, 256, 256); for (let i = 0; i < 9000; i++) { const v = 205 + R() * 50 | 0; q.fillStyle = `rgb(${v},${v},${v})`; q.fillRect(R() * 256 | 0, R() * 256 | 0, 1, 1); } return cv; })());
+      for (const x of [0, 256]) for (const y of [0, 256]) g.drawImage(n, x, y); g.globalCompositeOperation = 'source-over'; }, [3, 3]);
+    const data = canvasTex(S, S, g => draw(g, 'rgb(200,225,50)', 'rgb(90,110,170)', 'rgba(170,150,120,.8)', 'rgb(150,230,50)'), [3, 3]); data.encoding = THREE.LinearEncoding;
+    return WORN[col] = { map, data };
+  }
+  const FINISH = { knife: 'cera', pip: 'cera', stub: 'wood', wasp: 'cera', quill: 'cera', hammer: 'wood', gnat: 'anod', hornet: 'camo', breaker: 'wood', thresher: 'worn', mako: 'anod', paladin: 'worn', vesper: 'carbon', lancer: 'cera', kite: 'cera', longbow: 'carbon', torrent: 'worn' };
+  const BUMP = .0007;   // relief strength; small, because a gun is small
   function gmats(k) {
     if (GMAT[k]) return GMAT[k];
     const W = GUNS[k], T = gunTex();
-    const std = (o, ei = 1) => { const m = new THREE.MeshStandardMaterial(o); if (X && X.env) { m.envMap = X.env; m.envMapIntensity = ei; } return m; };
+    const env = (m, ei) => { if (X && X.env) { m.envMap = X.env; m.envMapIntensity = ei; } return m; };
+    const std = (o, ei = 1) => env(new THREE.MeshStandardMaterial(o), ei);
     const basic = c => new THREE.MeshBasicMaterial({ color: c, toneMapped: false });
-    const fin = {
-      pip: std({ color: '#8f99a6', map: T.cera, roughness: .5, metalness: .35 }),
-      hornet: std({ color: '#ffffff', map: T.camo, roughness: .62, metalness: .1 }, .5),
-      breaker: std({ color: '#ffffff', map: T.wood, roughness: .45, metalness: 0 }, .45),
-      lancer: std({ color: '#d4323e', map: T.cera, roughness: .42, metalness: .3 }),
-      longbow: std({ color: '#9468dc', map: T.carbon, roughness: .3, metalness: .45 }, 1.1),
-      stub: std({ color: '#ffffff', map: T.wood, roughness: .45 }, .45), hammer: std({ color: '#ffd9a8', map: T.wood, roughness: .4 }, .5),
-      vesper: std({ color: '#d0509a', map: T.carbon, roughness: .3, metalness: .45 }, 1.1),
-    }[k] || std({ color: W.col, map: T.cera, roughness: .45, metalness: .3 });
+    const col = { pip: '#8f99a6', lancer: '#d4323e', longbow: '#9468dc', vesper: '#d0509a', hammer: '#ffd9a8', stub: '#ffffff', breaker: '#ffffff' }[k] || W.col, fk = FINISH[k] || 'cera';
+    let fin;
+    if (fk === 'wood') fin = std({ color: col, map: T.wood, bumpMap: T.wood, bumpScale: BUMP * 1.4, roughness: .42, metalness: 0 }, .5);
+    else if (fk === 'carbon') fin = env(new THREE.MeshPhysicalMaterial({ color: col, map: T.carbon, bumpMap: T.carbon, bumpScale: BUMP * .8, roughness: .4, metalness: .3, clearcoat: 1, clearcoatRoughness: .07 }), .9);
+    else if (fk === 'camo') fin = std({ color: '#ffffff', map: T.camo, roughnessMap: T.ceraD, bumpMap: T.ceraD, bumpScale: BUMP * .5, roughness: .75, metalness: .08 }, .5);
+    else if (fk === 'anod') fin = std({ color: col, map: T.anod, roughnessMap: T.anodD, roughness: .55, metalness: .55 }, .9);
+    else if (fk === 'worn') { const wt = wornTex(col); fin = std({ color: '#ffffff', map: wt.map, roughnessMap: wt.data, metalnessMap: wt.data, bumpMap: wt.data, bumpScale: BUMP * 1.2, roughness: 1, metalness: 1 }, .7); }
+    else fin = std({ color: col, map: T.cera, roughnessMap: T.ceraD, bumpMap: T.ceraD, bumpScale: BUMP * .5, roughness: .62, metalness: .25 }, .6);
+    const metalish = (c, r, mt, ei) => std({ color: c, map: T.brushed, roughnessMap: T.metalD, bumpMap: T.metalD, bumpScale: BUMP * .4, metalness: mt, roughness: r }, ei);
     const M2 = GMAT[k] = {
       fin,
-      metal: std({ color: '#3b4049', map: T.brushed, metalness: .85, roughness: .32 }),
-      dark: std({ color: '#1d2026', map: T.brushed, metalness: .7, roughness: .42 }),
-      steel: std({ color: '#a2a9b3', map: T.brushed, metalness: .95, roughness: .2 }, 1.2),
-      poly: std({ color: '#2b2e35', map: T.stipple, roughness: .86, metalness: .05 }, .4),
-      rubber: std({ color: '#121316', roughness: .95 }, .2),
-      heat: std({ color: '#ffffff', map: T.holes, metalness: .7, roughness: .4 }),
-      acc: std({ color: W.col, roughness: .4, metalness: .3 }),
-      brass: std({ color: '#d9a441', metalness: 1, roughness: .26 }, 1.3),
+      metal: metalish('#3b4049', .42, .85, 1),
+      dark: metalish('#1d2026', .52, .7, 1),
+      steel: metalish('#a2a9b3', .26, .95, 1.2),
+      poly: std({ color: '#2b2e35', map: T.stipple, bumpMap: T.stipple, bumpScale: BUMP, roughness: .86, metalness: .05 }, .4),
+      rubber: std({ color: '#1b1c20', map: T.knurl, bumpMap: T.knurl, bumpScale: BUMP * 1.2, roughness: .95 }, .2),
+      heat: std({ color: '#ffffff', map: T.holes, bumpMap: T.holes, bumpScale: BUMP * 2, metalness: .7, roughness: .4 }),
+      acc: std({ color: W.col, map: T.anod, roughnessMap: T.anodD, roughness: .5, metalness: .4 }, .8),
+      brass: std({ color: '#d9a441', map: T.brushed, metalness: 1, roughness: .26 }, 1.3),
       shell: std({ color: '#b8262a', roughness: .5 }, .5),
       lens: std({ color: '#0d2633', metalness: 1, roughness: .02, emissive: k === 'longbow' ? '#3a1866' : '#0b3550', emissiveIntensity: .8 }, 2),
       glass: std({ color: '#9fdcff', transparent: true, opacity: .2, metalness: 1, roughness: 0, depthWrite: false }, 2),
       glow: basic(W.col), tritium: basic('#7dff9a'), red: basic('#ff2a3a'), lamp: basic('#fff4d6'),
-      glove: std({ color: '#24272e', map: T.stipple, roughness: .9 }, .3),
-      sleeve: std({ color: '#323a4a', roughness: .8 }, .3),
+      glove: std({ color: '#24272e', map: T.stipple, bumpMap: T.stipple, bumpScale: BUMP * .7, roughness: .9 }, .3),
+      sleeve: std({ color: '#323a4a', map: T.knurl, roughness: .8 }, .3),
     };
     // plain colours are read as linear light, which washes strong colours out: convert the ones meant to be seen as picked
     for (const q of ['fin', 'acc', 'glow', 'tritium', 'red', 'lamp', 'sleeve', 'glove', 'shell', 'brass']) M2[q].color.convertSRGBToLinear();
-    M2.fin.envMapIntensity = Math.min(M2.fin.envMapIntensity, .6);
+    M2.fin.envMapIntensity = Math.min(M2.fin.envMapIntensity, fk === 'carbon' ? .9 : .6);
     return M2;
   }
   // merge the plain meshes under a group into one mesh per material, so a gun is a handful of draw calls, not hundreds
@@ -1462,7 +1523,7 @@ const GAME = {
       for (const s of [1, -1]) add(new THREE.PlaneGeometry(w, h), mat, sx * s, y, z, 0, s * Math.PI / 2, 0);
     };
     // vented shroud: holes kept round by scaling the pattern to the tube (8 rows round it, one every 2.4 cm along it)
-    const vent = L => { const key = 'vent' + Math.round(L * 1000); if (!GMAT[key]) { const t = gunTex().holes.clone(); t.needsUpdate = true; t.repeat.set(4, Math.max(2, Math.round(L / .024))); GMAT[key] = new THREE.MeshStandardMaterial({ color: '#ffffff', map: t, metalness: .7, roughness: .4, envMap: X && X.env, envMapIntensity: .8 }); } return GMAT[key]; };
+    const vent = L => { const key = 'vent' + Math.round(L * 1000); if (!GMAT[key]) { const t = gunTex().holes.clone(); t.needsUpdate = true; t.repeat.set(4, Math.max(2, Math.round(L / .024))); GMAT[key] = new THREE.MeshStandardMaterial({ color: '#ffffff', map: t, bumpMap: t, bumpScale: BUMP * 2, metalness: .7, roughness: .4, envMap: X && X.env, envMapIntensity: .8 }); } return GMAT[key]; };
     const group = (x, y, z, rx = 0) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.x = rx; g.userData.p0 = g.position.clone(); G.add(g); return g; };
     // sights and gadgets
     const holo = (z, y) => {   // a window sight: hooded frame, glass, a ring reticle
