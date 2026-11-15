@@ -4,7 +4,7 @@
      by touch, the left of the screen is a movement stick and the right is look, with buttons laid out round the thumb.
      Touch has two helpers a mouse never gets: aim assist (the look slows near the rival and leans toward them) and
      auto-fire (shoots when the crosshair is on them and you are steady). Both can be switched off. */
-  const UI = { armory: false, tab: 'Sidearm', panel: 'home', pick: null };
+  const UI = { armory: false, panel: 'home', pick: null };
   const zones = []; let ptr = { x: 640, y: 360 }, dragZ = null;
   const inside = (z, x, y) => x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h;
   // register a press target for this frame; returns whether the mouse is over it
@@ -26,7 +26,7 @@
   const playing = () => M && screen === 'play' && K.state === 'play' && !M.over;
   function openArmory(open) {
     if (!M || open === UI.armory) return; UI.armory = open;
-    if (open) { releaseMouse(); const G = gun(me()); UI.tab = me().guns[1] ? GUNS[me().guns[1]].cat : pistolRound(M.round) ? 'Sidearm' : G.cat === 'Melee' ? 'Rifle' : 'Rifle'; } else { grabMouse(); setReady(me()); }
+    if (open) releaseMouse(); else { grabMouse(); setReady(me()); }
   }
   function keyEvent(c, d) {
     if (KM[c]) keys[KM[c]] = d;

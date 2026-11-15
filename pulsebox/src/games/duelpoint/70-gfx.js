@@ -6,6 +6,8 @@
   const isTouch = () => matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
   const BASE_FOV = 70.5;   // vertical, which is 103 degrees across on a 16:9 screen
   const SUN = [-.46, .7, -.55];   // towards the sun: over the sea, north-west, mid afternoon
+  // a colour as you picked it: Three.js reads plain colours as linear light, which turns strong colours pale
+  const LC = hex => new THREE.Color(hex).convertSRGBToLinear();
   const loadScript = u => new Promise((res, rej) => { const s = document.createElement('script'); s.src = u; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
   function canvasTex(w, h, fn, rep = [1, 1]) {
     const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h);
@@ -35,8 +37,8 @@
       for (const [x, y, z, sz] of [[6, 10, 4, 7], [-9, 6, -5, 5], [2, 3, 12, 4]]) { const pl = new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), new THREE.MeshBasicMaterial({ color: '#ffffff', side: THREE.DoubleSide })); pl.position.set(x, y, z); pl.lookAt(0, 0, 0); es.add(pl); }
       X.env = pm.fromScene(es, .02).texture; pm.dispose(); }
     // the first-person scene: your gun and hands, lit like the world
-    X.vscene = new THREE.Scene(); X.vroot = new THREE.Group(); X.vscene.add(X.vroot); X.vscene.add(new THREE.HemisphereLight('#e2f0ff', '#8a7a66', .6));
-    { const vs = new THREE.DirectionalLight('#fff0d8', 1.5); vs.position.set(SUN[0] * 50, SUN[1] * 50, SUN[2] * 50); X.vscene.add(vs); const rim = new THREE.DirectionalLight('#9fd8ff', .8); rim.position.set(-1, .6, -1.5); X.vroot.add(rim, rim.target); }
+    X.vscene = new THREE.Scene(); X.vroot = new THREE.Group(); X.vscene.add(X.vroot); X.vscene.add(new THREE.HemisphereLight('#e2f0ff', '#8a7a66', .5));
+    { const vs = new THREE.DirectionalLight('#fff0d8', 1.25); vs.position.set(SUN[0] * 50, SUN[1] * 50, SUN[2] * 50); X.vscene.add(vs); const rim = new THREE.DirectionalLight('#9fd8ff', .8); rim.position.set(-1, .6, -1.5); X.vroot.add(rim, rim.target); }
     X.vmuzzle = new THREE.PointLight('#ffcf8a', 0, 2); X.vmuzzle.position.set(.1, -.05, -.8); X.vroot.add(X.vmuzzle);
     X.view = new THREE.Group(); X.vroot.add(X.view); X.viewGun = null; X.viewKey = '';
     addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });

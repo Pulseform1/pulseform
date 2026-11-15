@@ -68,7 +68,7 @@
       }
     }
     // the Tunnel's roof: the underside you see, a top, and beams with lamps
-    const lampM = new THREE.MeshBasicMaterial({ color: '#ffe2a8' }), beamM = new THREE.MeshLambertMaterial({ color: '#4a3b2c' });
+    const lampM = new THREE.MeshBasicMaterial({ color: '#ffe2a8' }), beamM = new THREE.MeshLambertMaterial({ color: LC('#4a3b2c') });
     for (const rf of ROOFS) {
       const x0 = rf.r[0] * CS, z0 = rf.r[1] * CS, x1 = (rf.r[2] + 1) * CS, z1 = (rf.r[3] + 1) * CS;
       flat('roof', x0, z0, x1, z1, rf.h, -1, 2, [.8, .8, .8, .8]); flat('roof', x0, z0 - CS, x1, z1 + CS, rf.h + .3, 1, 2, [1, 1, 1, 1]);
@@ -149,7 +149,7 @@
       const p = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .65), m); p.position.set(s.x, 3.35, s.z); p.rotation.y = s.ry; X.scene.add(p);
     }
     // beyond the sea wall: water, a jetty with a boat, a lighthouse; and two cranes over the east wall
-    const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o)), box = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); X.scene.add(o); return o; };
+    const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o)), box = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); X.scene.add(o); return o; };
     const seaT = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#1d7f88'; g.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { g.fillStyle = `rgba(190,240,240,${.08 + Math.random() * .2})`; g.fillRect(Math.random() * w, Math.random() * h, 10 + Math.random() * 40, 1.5); } }, [70, 40]);
     const sea = new THREE.Mesh(new THREE.PlaneGeometry(1400, 800), lam('#ffffff', { map: seaT })); sea.rotation.x = -Math.PI / 2; sea.position.set(MW / 2, -1.4, -398); X.scene.add(sea); X.seaT = seaT;
     const wood = lam('#8a6a48'), dark = lam('#3a3f48');

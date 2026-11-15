@@ -44,8 +44,10 @@ salt yard), its own operatives, its own sixteen guns and its own look. Do not us
   scores, pause, sound switch and room invites keep working. Three.js r128 from cdnjs, loaded at run time, one
   script, no other dependencies.
 - Weapon numbers carry over from the first version. They were tuned to the request and tested: 16 guns in
-  sidearm, SMG, shotgun, rifle, sniper and heavy classes, plus the knife. The detailed gun models carry over too
-  (they were rebuilt twice to the owner's taste). Everything else is written new.
+  sidearm, SMG, shotgun, rifle, sniper and heavy classes, plus the knife. Everything else is written new,
+  including (asked for during the build) the gun models and the player models: guns are assembled from one kit of
+  turned barrels, bevelled receivers, shaped grips, stocks, magazines and sights so the arsenal reads as one
+  family; each operative has their own silhouette and their hands reach the gun they hold.
 - There are no bought smoke grenades; the owner said they are not needed. Vex's Veil ability, which is a smoke,
   stays, because operatives were not part of that remark.
 - The knife is always carried: slash 50 (75 to the head), stab 75, or 150 into the back; faster running with it out.
@@ -110,8 +112,9 @@ Drawn on the kit's 2D canvas over the 3D view, laid out from anchors with a scal
   bottom centre; weapon, ammo and the three slots bottom right; crosshair that opens with error; hit marks;
   damage direction; plant and defuse progress; banners for round start, plant, defuse and round end; after a death,
   who killed you with what and how much health they had left.
-- **Armory:** tabs by weapon class, large cards with a rendered picture of each gun, price, and the numbers that
-  matter (damage to head, body, legs; fire rate; magazine). Tap to buy; tap again to sell back this round.
+- **Armory** (the owner asked for the layout players of the genre already know): every weapon on one screen in
+  columns by class (sidearms; SMGs and shotguns; rifles; snipers and heavy; shields), each a card with a rendered
+  picture and price, and a panel with the numbers for the one you point at. Press to buy; press again to sell back.
 - **Menu:** choose an operative; play a bot (three difficulties), play online, or the range; settings for look
   sensitivity, aim assist, auto-fire and picture quality.
 - **Crosshair** (asked for during the build): the player designs their own. Shape (cross, dot, circle, tee),
@@ -144,7 +147,7 @@ head and repositions. Paths are smoothed so bots do not walk the grid.
 | `70-gfx.js` | Three.js setup, textures, sky and light, picture quality |
 | `72-world.js` | The world mesh and props generated from the map |
 | `74-agents.js` | Fighter models and their animation |
-| `76-guns.js` | Gun models, first-person hands, casings (carried over) |
+| `76-guns.js` | The gun kit and the sixteen guns built from it, first-person hands, moving parts, casings |
 | `78-fx.js` | View model motion, tracers, impacts, marks, smoke, walls, the charge, the frame render |
 | `80-audio.js` | Synthesised guns, steps and cues, placed in stereo by direction and distance |
 | `90-input.js` | Keyboard and mouse, touch, aim assist, auto-fire |

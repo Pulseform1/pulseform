@@ -72,37 +72,49 @@
     if (c.shape !== 'dot') toggle(g, x, y, lw, 'Opens with error', c.dyn, v => set('dyn', v), isTouch() ? '' : 'shows how accurate you are');
   }
 
-  // the armory: a tab for each class of weapon, large cards, tap to buy and tap again to sell back
+  // The armory, laid out the way players of the genre expect: every weapon on one screen, a column per class,
+  // shields on the right with the numbers for whatever you are pointing at. Press to buy; press again to sell back.
+  const ARMORY_COLS = [[['SIDEARMS', 'Sidearm']], [['SMGS', 'SMG'], ['SHOTGUNS', 'Shotgun']], [['RIFLES', 'Rifle']], [['SNIPERS', 'Sniper'], ['HEAVY', 'Heavy']], [['SHIELDS', 'Shield']]];
   function drawArmory(g) {
-    const V = K.view, W = V.x1 - V.x0, u = uiScale(), P = me(), x = V.x0 + 26 * u, w = W - 52 * u, y0 = V.y0 + 58 * Math.min(u, 1.2), h = V.y1 - y0 - 14 * u;
+    const V = K.view, W = V.x1 - V.x0, u = uiScale(), P = me(), sp = P.spent, x = V.x0 + 20 * u, w = W - 40 * u, y0 = V.y0 + 56 * Math.min(u, 1.15), h = V.y1 - y0 - 10 * u, gap = 7 * Math.min(u, 1.2);
     rr(g, x, y0, w, h, 12, 'rgba(12,16,22,.95)', 'rgba(239,233,220,.25)');
-    tx(g, 'ARMORY', x + 22 * u, y0 + 30 * u, 26 * u, BONE, 'left'); tx(g, `◈ ${P.credits}`, x + w - 22 * u, y0 + 30 * u, 24 * u, GOLD, 'right');
-    tx(g, M.mode === 'range' ? 'Everything is free on the range' : `Round starts in ${Math.max(0, Math.ceil(M.t))}`, x + w / 2, y0 + 30 * u, 14 * u, DIM);
-    // tabs
-    const ty = y0 + 56 * u, th = tapH(42, 40), tw = (w - 44 * u - 6 * 6) / 7;
-    CLASSES.forEach(([cat, label], i) => btn(g, x + 22 * u + i * (tw + 6), ty, tw, th, label.toUpperCase(), () => { UI.tab = cat; UI.pick = null; }, { on: UI.tab === cat, fill: BONE, px: Math.min(15 * u, tw * .15) }));
-    // cards
-    const items = UI.tab === 'Shield' ? ARMOR.map(a => ({ k: a.k, n: a.n, cost: a.cost, col: '#7fc8ff', armor: a })) : Object.values(GUNS).filter(q => q.cat === UI.tab);
-    const cy = ty + th + 14 * u, fh = Math.max(84 * u, tapH(54) + 24 * u), ch = y0 + h - cy - fh - 14 * u, n = items.length, cw = Math.min((w - 44 * u - (n - 1) * 10) / n, 330 * u), sx = x + (w - n * cw - (n - 1) * 10) / 2;
-    let focus = null;
-    items.forEach((it, i) => {
-      const cx = sx + i * (cw + 10), A = it.armor, G = A ? null : it, sp = P.spent;
-      const owned = A ? P.sh >= A.sh : P.guns[G.slot] === it.k, mineNow = A ? sp.sh && sp.sh.k === it.k : sp[G.slot] && sp[G.slot].k === it.k, refund = A ? (sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0) : (sp[G.slot] ? GUNS[sp[G.slot].k].cost : 0);
-      const can = !owned && P.credits + refund >= it.cost, live = can || (owned && mineNow);
-      const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; buy(P, it.k); }); if (hot || UI.pick === it.k) focus = it;
-      rr(g, cx, cy, cw, ch, 9, owned ? 'rgba(53,224,200,.13)' : hot && can ? 'rgba(255,138,61,.16)' : 'rgba(255,255,255,.04)', owned ? YOU : hot || UI.pick === it.k ? 'rgba(239,233,220,.6)' : can ? 'rgba(239,233,220,.22)' : 'rgba(255,255,255,.07)');
-      tx(g, it.n.toUpperCase(), cx + 14 * u, cy + 24 * u, Math.min(21 * u, cw * .1), can || owned ? it.col : '#5a6272', 'left');
-      tx(g, owned ? (mineNow ? 'SELL BACK' : 'OWNED') : it.cost ? `◈ ${it.cost}` : 'FREE', cx + cw - 12 * u, cy + 24 * u, Math.min(16 * u, cw * .075), owned ? YOU : can ? GOLD : '#5a6272', 'right');
-      g.save(); g.globalAlpha = can || owned ? 1 : .35; const iy = cy + 44 * u, ih = ch - 44 * u - (G ? 58 * u : 10 * u);
-      if (G) { const ic = gunIcon(it.k); if (ic) { const gl = g.createRadialGradient(cx + cw / 2, iy + ih / 2, 4, cx + cw / 2, iy + ih / 2, cw * .5); gl.addColorStop(0, it.col + '33'); gl.addColorStop(1, it.col + '00'); g.fillStyle = gl; g.fillRect(cx + 2, iy, cw - 4, ih); const dw = Math.min((cw - 20 * u) * (G.cat === 'Sidearm' ? 1.7 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.2 : 1), ih * 3.2), dh = dw * 150 / 480; g.save(); g.beginPath(); g.rect(cx + 2, iy, cw - 4, ih); g.clip(); g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); g.restore(); } }
-      else { const mx = cx + cw / 2, my = iy + ih / 2, s = Math.min(ih, cw) / 90 * (A.sh === 50 ? 1.1 : .85); g.fillStyle = it.col + '33'; g.strokeStyle = it.col; g.lineWidth = 3 * u; g.beginPath(); g.moveTo(mx, my - 32 * s); g.lineTo(mx + 26 * s, my - 22 * s); g.lineTo(mx + 22 * s, my + 12 * s); g.lineTo(mx, my + 32 * s); g.lineTo(mx - 22 * s, my + 12 * s); g.lineTo(mx - 26 * s, my - 22 * s); g.closePath(); g.fill(); g.stroke(); tx(g, '+' + A.sh, mx, my, 22 * s, BONE); }
-      if (G) { const d = G.dmg[0]; tx(g, `HEAD ${d[1]} · BODY ${d[2]} · LEGS ${d[3]}${G.pel ? '  ×' + G.pel : ''}`, cx + cw / 2, cy + ch - 40 * u, Math.min(12.5 * u, cw * .058), '#cfd6e2'); tx(g, `${Math.round(G.rpm)} A MINUTE · ${G.mag} ROUNDS · ${G.auto ? 'AUTO' : 'SEMI'}`, cx + cw / 2, cy + ch - 18 * u, Math.min(11.5 * u, cw * .053), DIM); }
+    tx(g, 'ARMORY', x + 18 * u, y0 + 24 * u, 24 * u, BONE, 'left'); tx(g, `◈ ${P.credits}`, x + w - 18 * u, y0 + 24 * u, 23 * u, GOLD, 'right');
+    tx(g, M.mode === 'range' ? 'Everything is free on the range' : `Round starts in ${Math.max(0, Math.ceil(M.t))}`, x + w / 2, y0 + 24 * u, 14 * u, DIM);
+    const by = y0 + 46 * u, bh = y0 + h - by - 12 * u, hh = fitPx(g, 12 * u) * 1.7, cw = (w - 28 * u - 4 * gap) / 5, ch = (bh - hh - 4 * gap) / 5; let focus = null;
+    const card = (it, cx, cy) => {
+      const A = it.armor, G = A ? null : it, owned = A ? P.sh >= A.sh : P.guns[G.slot] === it.k, mineNow = A ? sp.sh && sp.sh.k === it.k : sp[G.slot] && sp[G.slot].k === it.k;
+      const refund = A ? (sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0) : (sp[G.slot] ? GUNS[sp[G.slot].k].cost : 0), can = !owned && P.credits + refund >= it.cost;
+      const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; buy(P, it.k); }); if (hot || (!focus && UI.pick === it.k)) focus = it;
+      rr(g, cx, cy, cw, ch, 8, owned ? 'rgba(53,224,200,.14)' : hot && can ? 'rgba(255,138,61,.18)' : 'rgba(255,255,255,.045)', owned ? YOU : hot || UI.pick === it.k ? 'rgba(239,233,220,.6)' : can ? 'rgba(239,233,220,.2)' : 'rgba(255,255,255,.06)');
+      const tp = Math.min(15 * u, ch * .2), ty = cy + tp * .95;
+      tx(g, it.n.toUpperCase(), cx + 9 * u, ty, tp, can || owned ? it.col : '#5a6272', 'left'); tx(g, owned ? (mineNow ? 'SELL' : 'OWNED') : it.cost ? `◈ ${it.cost}` : 'FREE', cx + cw - 8 * u, ty, tp * .85, owned ? YOU : can ? GOLD : '#5a6272', 'right');
+      g.save(); g.globalAlpha = can || owned ? 1 : .35; g.beginPath(); g.rect(cx + 2, cy + 2, cw - 4, ch - 4); g.clip(); const iy = cy + tp * 1.7, ih = ch - tp * 1.7 - 3;
+      if (G) { const ic = gunIcon(it.k); if (ic) { const dh = Math.min(ih * (G.cat === 'Sidearm' ? 1.12 : 1.05), (cw - 12 * u) * 150 / 480 * (G.cat === 'Sidearm' ? 1.5 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.2 : 1)), dw = dh * 480 / 150; g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); } }
+      else { const mx = cx + cw / 2, my = iy + ih / 2, s = ih / 80 * (A.sh === 50 ? 1.05 : .85); g.fillStyle = it.col + '33'; g.strokeStyle = it.col; g.lineWidth = 2.5 * u; g.beginPath(); g.moveTo(mx, my - 32 * s); g.lineTo(mx + 26 * s, my - 22 * s); g.lineTo(mx + 22 * s, my + 12 * s); g.lineTo(mx, my + 32 * s); g.lineTo(mx - 22 * s, my + 12 * s); g.lineTo(mx - 26 * s, my - 22 * s); g.closePath(); g.fill(); g.stroke(); tx(g, '+' + A.sh, mx, my, 20 * s, BONE); }
       g.restore();
+    };
+    let endY = by;
+    ARMORY_COLS.forEach((col, ci) => {
+      const cx = x + 14 * u + ci * (cw + gap); let y = by;
+      for (const [label, cat] of col) {
+        tx(g, label, cx + 2, y + hh / 2, 12 * u, DIM, 'left'); y += hh;
+        for (const it of cat === 'Shield' ? ARMOR.map(a => ({ k: a.k, n: a.n, cost: a.cost, col: '#7fc8ff', armor: a })) : Object.values(GUNS).filter(q => q.cat === cat)) { card(it, cx, y); y += ch + gap; }
+      }
+      if (ci === 4) endY = y;
     });
-    // what you are pointing at, and the way out
-    const fy = y0 + h - fh; if (focus) { tx(g, focus.n.toUpperCase(), x + 22 * u, fy + 20 * u, 17 * u, focus.col, 'left'); para(g, focus.armor ? `Soaks the next ${focus.armor.sh} damage you take. Lasts until it is used up or you die.` : focus.desc, x + 22 * u, fy + 46 * u, w - 300 * u, 13.5 * u, '#cfd6e2'); }
-    else tx(g, 'Tap a weapon to buy it. Tap something you bought this round to sell it back.', x + 22 * u, fy + 34 * u, 14 * u, DIM, 'left');
-    btn(g, x + w - 222 * u, fy + 12 * u, 200 * u, tapH(54), M.mode === 'range' ? 'CLOSE' : 'READY', () => openArmory(false), { on: true, fill: YOU, px: 22 * u, sub: isTouch() ? '' : 'or press B' });
+    // the right column, under the shields: what you are pointing at, and the way out
+    const dx = x + 14 * u + 4 * (cw + gap), rh = tapH(50), dh = by + bh - endY - rh - gap;
+    rr(g, dx, endY, cw, dh, 8, 'rgba(255,255,255,.03)', 'rgba(239,233,220,.12)');
+    if (focus) {
+      const F = focus, G = F.armor ? null : F, fp = Math.min(13 * u, cw * .062); let y = endY + fp * 1.3;
+      tx(g, F.n.toUpperCase(), dx + 9 * u, y, fp * 1.25, F.col, 'left'); if (G) tx(g, G.cat.toUpperCase(), dx + cw - 8 * u, y, fp * .85, DIM, 'right'); y += fp * 1.9;
+      g.save(); g.beginPath(); g.rect(dx, endY, cw, dh); g.clip();
+      y = para(g, F.armor ? `Soaks the next ${F.armor.sh} damage. Lasts until used up.` : F.desc, dx + 9 * u, y, cw - 18 * u, fp, '#cfd6e2', 1.25) + fp * .3;
+      if (G) { const d = G.dmg[0], row = (a, b2) => { tx(g, a, dx + 9 * u, y, fp * .9, DIM, 'left'); tx(g, b2, dx + cw - 8 * u, y, fp * .9, BONE, 'right'); y += fp * 1.45; };
+        row('HEAD · BODY · LEGS', `${d[1]} · ${d[2]} · ${d[3]}${G.pel ? ' ×' + G.pel : ''}`); row('FIRE RATE', `${(G.rpm / 60).toFixed(1)}/s ${G.auto ? 'AUTO' : 'SEMI'}`); row('MAGAZINE', `${G.mag} · ${G.rel}s RELOAD`); row('ERROR STILL · RUN', `${G.scope ? G.acc.sfs : G.acc.fs}° · ${G.acc.run}°`); }
+      g.restore();
+    } else para(g, 'Press a weapon to buy it. Press something you bought this round to sell it back.', dx + 9 * u, endY + 22 * u, cw - 18 * u, Math.min(13 * u, cw * .062), DIM);
+    btn(g, dx, by + bh - rh, cw, rh, M.mode === 'range' ? 'CLOSE' : 'READY', () => openArmory(false), { on: true, fill: YOU, px: rh * .4, sub: isTouch() ? '' : 'or press B' });
   }
 
   function drawOver(g) {
