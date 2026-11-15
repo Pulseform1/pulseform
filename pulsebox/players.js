@@ -6,7 +6,7 @@
 //
 //   GET  /api/players/top         -> { top: [{ rank, name, level, score, streak, beaten }] x<=50, total, me? }
 //   GET  /api/players/me          -> { name }                     (your username, or null if you haven't picked one)
-//   POST /api/players/name        <- { name } -> { name } | { error: 'taken' | 'set' | 'short' | 'long' | 'chars' | 'rude' }   (once per account; no two players share a name)
+//   POST /api/players/name        <- { name } -> { name } | { error: 'taken' | 'set' | 'short' | 'long' | 'chars' | 'rude' }   (once per account; no two players share a name: 3-20 characters, symbols allowed)
 //   POST /api/players/stats       <- { xp, streak, bestStreak, lastDaily, dailies, beaten, tried, badges, top10, firsts, sessions, lastPlay }
 //                                 -> { score, rank }
 
@@ -48,7 +48,7 @@ function badName(v) {
   const wholes = [unleet(v), unleet(v, 'l')].map(x => x.replace(/[^a-z]/g, '')), whole = wholes[0];
   if (wholes.some(x => STRONG.some(w => x.includes(w) || (dedupe(w).length >= 4 && dedupe(x).includes(dedupe(w)))))) return true;
   // the words of the name: split at spaces, _ . - and digits that aren't look-alikes, and at camelCase (BigDick -> big, dick)
-  const parts = v.replace(/([a-z])([A-Z])/g, '$1 $2').split(/[\s_.-]+/);
+  const parts = v.replace(/([a-z])([A-Z])/g, '$1 $2').split(/[^A-Za-z0-9$@!|+]+/);
   const words = [...parts.map(w => unleet(w).replace(/[^a-z]/g, '')), ...parts.flatMap(w => w.toLowerCase().split(/[^a-z]+/))].filter(Boolean);   // with look-alikes undone, and split at numbers
   const forms = w => [w, w + 's', w + 'y', w + 'ie', w + 'er', w + 'ing', w + 'z'];
   if (words.concat([whole]).some(t => MILD.some(w => forms(w).includes(t) || forms(w).includes(dedupe(t))))) return true;
@@ -61,13 +61,17 @@ const day = (t = Date.now()) => dayFmt.format(new Date(t));
 const daysBetween = (a, b) => Math.round((Date.parse(b + 'T12:00:00Z') - Date.parse(a + 'T12:00:00Z')) / 86400000);
 // the same level curve as the hub: 100 XP for level 2, then 40 more each level
 const levelOf = xp => { let L = 1, left = xp; while (left >= 100 + 40 * (L - 1) && L < 999) { left -= 100 + 40 * (L - 1); L++; } return L; };
-// a username: 3 to 15 letters, numbers, spaces, _ . - (starting and ending with a letter or number), nothing rude
+// a username: 3 to 20 characters: letters, numbers, spaces and symbols ($ ! @ # % & * + = ? ~ and friends), with at
+// least two letters or numbers in it; nothing rude. (No < > " \ / ` so a name can never look like code or a link.)
+export const NAME_RE = /^[A-Za-z0-9!@#$%^&*()_+=.,?~:;'[\]{}| -]{3,20}$/;
+const norm = n => String(n || '').replace(/\s+/g, ' ').trim();
+export const nameKey = n => norm(n).toLowerCase().replace(/[^a-z0-9]/g, '');   // what "the same name" means: same letters and numbers
 export function cleanName(n) {
-  const v = String(n || '').replace(/\s+/g, ' ').trim();
-  if (!/^[A-Za-z0-9][A-Za-z0-9 _.-]{1,13}[A-Za-z0-9]$/.test(v)) return null;
+  const v = norm(n);
+  if (!NAME_RE.test(v) || nameKey(v).length < 2) return null;
   return badName(v) ? null : v;
 }
-export const nameProblem = n => { const v = String(n || '').replace(/\s+/g, ' ').trim(); return v.length < 3 ? 'short' : v.length > 15 ? 'long' : !/^[A-Za-z0-9][A-Za-z0-9 _.-]*[A-Za-z0-9]$/.test(v) ? 'chars' : badName(v) ? 'rude' : null; };
+export const nameProblem = n => { const v = norm(n); return v.length < 3 ? 'short' : v.length > 20 ? 'long' : !NAME_RE.test(v) || nameKey(v).length < 2 ? 'chars' : badName(v) ? 'rude' : null; };
 export function pulseScore(s, prev, hours) {
   const n = (k, v) => Math.max(0, Math.min(CAP[k] || 1e9, Math.floor(+v || 0)));
   const today = day(), alive = /^\d{4}-\d\d-\d\d$/.test(s.lastDaily || '') && daysBetween(s.lastDaily, today) <= 1;
@@ -127,7 +131,7 @@ export class Players {
     if (p === '/me') { const r = this.one('SELECT name FROM names WHERE uid = ?', b.uid); return json({ name: r ? r.name : null }); }
     if (p === '/name') {
       if (this.one('SELECT 1 FROM names WHERE uid = ?', b.uid)) return json({ error: 'set' }, 409);   // picked once, for good
-      try { this.sql.exec('INSERT INTO names (uid, name, k, at) VALUES (?, ?, ?, ?)', b.uid, b.name, b.name.toLowerCase().replace(/[ _.-]/g, ''), now); }
+      try { this.sql.exec('INSERT INTO names (uid, name, k, at) VALUES (?, ?, ?, ?)', b.uid, b.name, nameKey(b.name), now); }
       catch (e) { return json({ error: 'taken' }, 409); }
       this.cache = null; return json({ name: b.name });
     }

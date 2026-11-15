@@ -864,6 +864,28 @@
   .un-box .go { width: 100%; margin-top: 12px; border: 0; border-radius: 12px; padding: 14px; font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: .06em; text-transform: uppercase; background: var(--lime); color: #0a0c12; cursor: pointer; }
   .un-box .go[disabled] { opacity: .5; cursor: default; }
   .un-box .later { display: block; margin: 10px auto 0; border: 0; background: none; color: var(--muted); font-weight: 700; cursor: pointer; text-decoration: underline; }
+
+  /* ============ THE ACCOUNT WALL: Pulsebox is for signed-in players ============ */
+  .gate { position: fixed; inset: 0; z-index: 48; display: grid; place-items: center; padding: 18px; overflow-y: auto; background: radial-gradient(60% 50% at 50% 30%, rgba(198,255,61,.12), transparent 70%), rgba(6,7,12,.78); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); }
+  body.gated { overflow: hidden; }
+  .gate-card { position: relative; width: min(520px, 100%); padding: clamp(22px, 4vw, 36px); border-radius: 26px; text-align: center; background: linear-gradient(160deg, rgba(29,34,49,.96), rgba(14,16,24,.97)); box-shadow: 0 0 0 1px rgba(198,255,61,.25) inset, 0 30px 90px rgba(0,0,0,.6), 0 0 60px rgba(198,255,61,.08); animation: gateIn .45s cubic-bezier(.2,.9,.3,1.2); }
+  @keyframes gateIn { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+  .gate-logo { display: inline-flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 700; font-size: 30px; letter-spacing: .02em; }
+  .gate-logo .mark { width: 46px; height: 46px; border-radius: 13px; background: var(--lime); display: grid; place-items: center; box-shadow: 0 0 26px rgba(198,255,61,.55); }
+  .gate-logo b { color: var(--lime); }
+  .gate h2 { margin: 18px 0 8px; font-family: var(--display); font-size: clamp(26px, 5vw, 36px); line-height: 1.05; text-transform: uppercase; letter-spacing: .02em; }
+  .gate h2 em { font-style: normal; color: var(--lime); }
+  .gate .sub { margin: 0 auto 18px; max-width: 38ch; color: #c3c9d8; font-size: 17px; line-height: 1.45; }
+  .gate-perks { display: grid; gap: 8px; margin: 0 0 20px; text-align: left; }
+  .gate-perks div { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: rgba(255,255,255,.04); box-shadow: 0 0 0 1px rgba(255,255,255,.07) inset; font-weight: 700; color: #dfe4ef; }
+  .gate-perks span { font-size: 22px; width: 30px; text-align: center; }
+  .gate .go { width: 100%; border: 0; border-radius: 14px; padding: 16px; font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: .06em; text-transform: uppercase; background: var(--lime); color: #0a0c12; cursor: pointer; box-shadow: 0 0 28px rgba(198,255,61,.4); }
+  .gate .go:hover { box-shadow: 0 0 40px rgba(198,255,61,.6); }
+  .gate .alt { width: 100%; margin-top: 10px; border: 1px solid var(--edge); border-radius: 14px; padding: 13px; background: rgba(0,0,0,.25); color: var(--text); font-weight: 800; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .gate .alt:hover { border-color: var(--lime); }
+  .gate .fine { margin: 14px 0 0; font-size: 13px; color: var(--muted); }
+  .gate .spin { width: 40px; height: 40px; margin: 22px auto 6px; border-radius: 50%; border: 4px solid rgba(198,255,61,.2); border-top-color: var(--lime); animation: gateSpin .8s linear infinite; }
+  @keyframes gateSpin { to { transform: rotate(1turn); } }
 </style>
 
 <div class="wrap">
@@ -987,7 +1009,7 @@
     <button class="x" id="frX" type="button" aria-label="Close">✕</button>
     <h2 id="frTitle">Play with friends</h2>
     <p>Pick a game, make a room, and send your friends the code. Up to 8 players, depending on the game.</p>
-    <label for="frName">Your name <small style="font-weight:600;color:var(--muted)">· the same name shows on leaderboards</small></label><input id="frName" maxlength="15" placeholder="Type your name" autocomplete="nickname">
+    <label for="frName">Your name <small style="font-weight:600;color:var(--muted)">· the same name shows on leaderboards</small></label><input id="frName" maxlength="20" placeholder="Type your name" autocomplete="nickname">
     <div class="fr-tabs" role="tablist"><button type="button" data-p="make" class="on">Start a room</button><button type="button" data-p="join">Join a friend</button></div>
     <div id="frMake"><div class="fr-grid" id="frGrid"></div></div>
     <div id="frJoin" hidden><label for="frCode">Room code</label><input id="frCode" class="fr-in" maxlength="4" placeholder="ABCD" autocomplete="off" spellcheck="false"><button class="go" id="frGo" type="button">Join the room</button></div>
@@ -2939,7 +2961,10 @@ function route() {
   if (h.indexOf('play-') === 0 && byId(h.slice(5))) {
     const g = byId(h.slice(5)), f = $('stage').querySelector('iframe');
     if (!$('playing').hidden && f && f.dataset.id === g.id) return;
-    show('playing'); startGame(g); window.scrollTo(0, 0); return;
+    show('playing'); window.scrollTo(0, 0);
+    // you play signed in: until the account check says so, the game waits (the account script starts it)
+    if (!(window.pbxUser && window.pbxUser())) { window.pbxWaitingGame = g; $('pTitle').textContent = g.title; return; }
+    startGame(g); return;
   }
   if (byId(h)) {
     show('detail'); showDetail(byId(h), prevView === 'playing'); lastShelf = 'shelf-' + byId(h).category.toLowerCase(); window.scrollTo(0, 0); return;
@@ -2984,7 +3009,7 @@ const API_ORIGIN = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.t
 let roomJoin = null, frPick = null;
 const frGames = () => FRIEND_GAMES.map(byId).filter(Boolean);
 const mpName = () => { try { const n = localStorage.getItem('pbx-mp-name'); if (n) return n; const pp = window.pbxPlayer; return pp && !pp.isDefaultName() ? pp.profile.name : ''; } catch (e) { return ''; } };
-function saveMpName() { const n = ($('frName').value || '').replace(/[^\w .'-]/g, '').trim().slice(0, 15); if (n) { if (window.pbxPlayer) window.pbxPlayer.setName(n); else try { localStorage.setItem('pbx-mp-name', n); } catch (e) {} } return n; }
+function saveMpName() { const n = ($('frName').value || '').replace(/[^A-Za-z0-9!@#$%^&*()_+=.,?~:;'[\]{}| -]/g, '').trim().slice(0, 20); if (n) { if (window.pbxPlayer) window.pbxPlayer.setName(n); else try { localStorage.setItem('pbx-mp-name', n); } catch (e) {} } return n; }
 function frPanel(p) {
   $('frMake').hidden = p !== 'make'; $('frJoin').hidden = p !== 'join'; $('frReady').hidden = p !== 'ready';
   document.querySelectorAll('.fr-tabs button').forEach(b => b.classList.toggle('on', b.dataset.p === p || (p === 'ready' && b.dataset.p === 'make')));
@@ -3161,6 +3186,37 @@ loadStats();
   const ls = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} }, del: k => { try { localStorage.removeItem(k); } catch (e) {} } };
   const linkHref = location.href;   // a sign-in link lands here with its one-time code in the address
 
+  /* ---------- the account wall: you play Pulsebox signed in. Until sign-in has loaded it shows a short "checking"
+     card, so signed-in players never see the wall flash; signed out, it asks for a free account. (Checking only in the
+     page: game pages opened directly by their address are not behind it.) ---------- */
+  const gateEl = document.createElement('div'); gateEl.className = 'gate'; gateEl.id = 'gate'; gateEl.setAttribute('role', 'dialog'); gateEl.setAttribute('aria-modal', 'true'); gateEl.setAttribute('aria-labelledby', 'gateTitle');
+  document.body.appendChild(gateEl); document.body.classList.add('gated');
+  const LOGO = '<div class="gate-logo"><span class="mark"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M7 7h10v4h-4v2h4v4H7v-4h2v-2H7z" fill="#0a0c12"/></svg></span><span>Pulse<b>box</b></span></div>';
+  function gate(state) {
+    if (state === 'in') { gateEl.hidden = true; document.body.classList.remove('gated'); return; }
+    gateEl.hidden = false; document.body.classList.add('gated');
+    if (state === 'check') { gateEl.innerHTML = `<div class="gate-card">${LOGO}<div class="spin" aria-label="Checking your account"></div><p class="fine">Signing you in…</p></div>`; return; }
+    if (state === 'fail') { gateEl.innerHTML = `<div class="gate-card">${LOGO}<h2 id="gateTitle">Can't reach sign-in</h2><p class="sub">Check your internet connection, then try again.</p><button class="go" type="button" data-g="retry">Try again</button></div>`; return; }
+    const invited = (() => { try { return !!localStorage.getItem('pbxref'); } catch (e) { return false; } })();
+    gateEl.innerHTML = `<div class="gate-card">${LOGO}
+      <h2 id="gateTitle">${invited ? 'Your friend invited you!' : 'Make your free account <em>to play</em>'}</h2>
+      <p class="sub">${invited ? 'Make a free account with your email to start playing.' : 'Pulsebox is for players with an account. It only takes your email.'}</p>
+      <div class="gate-perks"><div><span>💾</span>Your progress saved on every device</div><div><span>🏆</span>Your name and level on the leaderboard</div><div><span>👑</span>Invite friends to unlock Elite games</div></div>
+      <button class="go" type="button" data-g="up">Create free account</button>
+      <button class="alt" type="button" data-g="in">I already have an account</button>
+      <button class="alt" type="button" data-g="google">${G_ICON} Continue with Google</button>
+      <p class="fine">Free. No credit card. Your email is never shown to other players.</p></div>`;
+  }
+  gate('check');
+  // a game asked for before the player is signed in (a shared game link) waits behind the wall (see route), then starts
+  window.addEventListener('pbx-auth', e => { const g = window.pbxWaitingGame; if (e.detail && g && !$('playing').hidden) { window.pbxWaitingGame = null; setTimeout(() => startGame(g), 300); } });
+  gateEl.addEventListener('click', e => {
+    const b = e.target.closest('[data-g]'); if (!b) return; const k = b.dataset.g;
+    if (k === 'retry') { gate('check'); readyP = null; ready().catch(() => gate('fail')); return; }
+    if (k === 'google') { google(); return; }
+    A.mode = k === 'up' ? (LINK ? 'link' : 'up') : (LINK ? 'link' : 'in'); A.reason = ''; open();
+  });
+
   function load() {
     if (window.firebase && firebase.auth) return Promise.resolve();
     const one = src => new Promise((ok, bad) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = bad; document.head.appendChild(s); });
@@ -3311,7 +3367,8 @@ loadStats();
     try {
       await ready();
       if (A.mode === 'reset') { await A.auth.sendPasswordResetEmail(email); A.busy = false; A.ok = true; A.err = 'Check your email for the link.'; A.mode = 'in'; return draw(); }
-      await (A.mode === 'up' ? A.auth.createUserWithEmailAndPassword(email, pw) : A.auth.signInWithEmailAndPassword(email, pw));
+      if (A.mode === 'up') { const c = await A.auth.createUserWithEmailAndPassword(email, pw); try { await c.user.sendEmailVerification(); } catch (e) {} }
+      else await A.auth.signInWithEmailAndPassword(email, pw);
       A.busy = false; close();
     } catch (e) { fail(e); }
   }
@@ -3341,7 +3398,7 @@ loadStats();
     const u = { uid: devUser.uid, email: devUser.email, displayName: devUser.email.split('@')[0], getIdToken: async () => 'dev.' + devUser.uid + '.' + btoa(devUser.email) + '.' + (devUser.verified === false ? 0 : 1) + '.' + (devUser.created || Date.now()) };
     readyP = Promise.resolve();
     A.auth = { signOut: async () => { localStorage.removeItem('pbx-dev-user'); }, isSignInWithEmailLink: () => false };
-    setTimeout(() => { A.user = u; btn(); window.dispatchEvent(new CustomEvent('pbx-auth', { detail: { uid: u.uid } })); }, 50);
+    setTimeout(() => { A.user = u; btn(); gate('in'); window.dispatchEvent(new CustomEvent('pbx-auth', { detail: { uid: u.uid } })); }, 50);
   }
   function ready() {
     return readyP || (readyP = load().then(() => {
@@ -3350,13 +3407,14 @@ loadStats();
       A.auth.onAuthStateChanged(u => { A.user = u; btn(); if (u) sync(); else lastPushed = '';
         // redraw only when someone signed in, so a half-typed sign-in form isn't wiped
         if (u && !$('acctModal').hidden) draw();
+        gate(u ? 'in' : 'out');
         window.dispatchEvent(new CustomEvent('pbx-auth', { detail: u ? { uid: u.uid } : null })); });
       // arriving from a sign-in link: finish it (asking for the email if the link was opened on another device)
       if (A.auth.isSignInWithEmailLink(linkHref)) { const em = ls.get('pbx-signin-email'); if (em) finishLink(em); else { A.mode = 'confirm'; A.email = ''; open(); } }
     }).catch(e => { readyP = null; throw e; }));
   }
   // load sign-in in the background: it remembers who was signed in on this device (Firebase keeps the session and renews it)
-  setTimeout(() => ready().catch(() => {}), /[?&](oobCode|signin)=/.test(location.search) ? 0 : 800);
+  if (!devUser) setTimeout(() => ready().catch(() => gate('fail')), 0);
   // after "Switch account", open the sign-in box again
   try { if (sessionStorage.getItem('pbx-after-out') === 'signin') setTimeout(() => { A.mode = firstMode(); open(); }, 300); sessionStorage.removeItem('pbx-after-out'); } catch (e) {}
 })();
@@ -3635,7 +3693,7 @@ loadStats();
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} };
   // one player name: leaderboards, online rooms and the Arena all use it
   const isDefaultName = () => /^Player\d{4}$/.test(P.name || '');
-  function setName(v) { v = String(v || '').replace(/[^\w .'-]/g, '').trim().slice(0, 15); if (!v) return false; P.name = v; save(); try { localStorage.setItem('pbx-mp-name', v); } catch (e) {} if (typeof chip === 'function') chip(); return true; }
+  function setName(v) { v = String(v || '').replace(/[^A-Za-z0-9!@#$%^&*()_+=.,?~:;'[\]{}| -]/g, '').replace(/\s+/g, ' ').trim().slice(0, 20); if (!v) return false; P.name = v; save(); try { localStorage.setItem('pbx-mp-name', v); } catch (e) {} if (typeof chip === 'function') chip(); return true; }
   // XP to go from level L to L+1 grows gently: 100, 140, 180, ...
   const need = L => 100 + 40 * (L - 1);
   const levelOf = xp => { let L = 1, left = xp; while (left >= need(L)) { left -= need(L); L++; } return { L, into: left, need: need(L) }; };
@@ -3776,7 +3834,7 @@ loadStats();
     const ranks = Object.entries(P.ranks).filter(([g]) => byIdP(g)).sort((a, b) => a[1] - b[1]).slice(0, 6);
     box.innerHTML = `<button class="x" data-a="close" aria-label="Close">✕</button>
       <div class="pf-head"><div class="pf-ring" style="--p:${l.into / l.need}"><b>${l.L}</b><small>LEVEL</small></div>
-        <div class="pf-id"><label for="pfName">✎ Your player name</label><div class="pf-name"><input id="pfName" maxlength="15" value="${esc(P.name)}" autocomplete="nickname" spellcheck="false"><button id="pfSave" type="button" disabled>Save</button></div><small class="pf-where" id="pfWhere">Shown on world leaderboards and in online rooms with friends. Tap the box to change it.</small>
+        <div class="pf-id"><label for="pfName">✎ Your player name</label><div class="pf-name"><input id="pfName" maxlength="20" value="${esc(P.name)}" autocomplete="nickname" spellcheck="false"><button id="pfSave" type="button" disabled>Save</button></div><small class="pf-where" id="pfWhere">Shown on world leaderboards and in online rooms with friends. Tap the box to change it.</small>
         <div class="pf-bar"><i style="width:${Math.round(l.into / l.need * 100)}%"></i></div><small>${num(l.into)} / ${num(l.need)} XP to level ${l.L + 1} · ${num(P.xp)} XP total</small></div></div>
       ${isDefaultName() ? '<div class="pf-nudge">👋 You\'re still <b>' + esc(P.name) + '</b>. Type a name above and press <b>Save</b> so friends can spot you on the leaderboards.</div>' : ''}
       <div class="pf-stats"><span><b>${tried().length}</b>games tried</span><span><b>${num(P.plays)}</b>sessions</span><span><b>🔥 ${P.streak && P.lastDaily >= addDays(today(), -1) ? P.streak : 0}</b>daily streak</span><span><b>${Object.keys(P.daily).length}</b>dailies done</span></div>
@@ -3893,21 +3951,21 @@ loadStats();
   });
 
   // ---- the one-time username
-  const NAME_RE = /^[A-Za-z0-9][A-Za-z0-9 _.-]{1,13}[A-Za-z0-9]$/;
-  const NAME_MSG = { taken: 'Someone already has that name. Try another one.', rude: 'That name isn\'t allowed on Pulsebox. Pick something friendly.', short: 'Use at least 3 characters.', long: 'Use 15 characters or fewer.',
-    chars: 'Use letters, numbers, spaces, _ . or - (and start and end with a letter or number).', set: 'This account already has a username.', bad: 'That name won\'t work. Try another.' };
+  const NAME_RE = /^[A-Za-z0-9!@#$%^&*()_+=.,?~:;'[\]{}| -]{3,20}$/, nameKey = v => v.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const NAME_MSG = { taken: 'Someone already has that name. Try another one.', rude: 'That name isn\'t allowed on Pulsebox. Pick something friendly.', short: 'Use at least 3 characters.', long: 'Use 20 characters or fewer.',
+    chars: 'Letters, numbers, spaces and symbols like $ ! @ # % & * + = ? ~ only (no < > / or quotes), with at least 2 letters or numbers.', set: 'This account already has a username.', bad: 'That name won\'t work. Try another.' };
   function askName(why) {
     if (!signedIn() || U.name) return;
     const m = document.createElement('div'); m.className = 'modal'; m.id = 'unModal'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-labelledby', 'unTitle');
-    const start = isDefaultName() ? '' : (P.name || '').slice(0, 15);
+    const start = isDefaultName() ? '' : (P.name || '').slice(0, 20);
     m.innerHTML = `<div class="box un-box"><h2 id="unTitle">Pick your username</h2>
       <p>${esc(why || 'This is your name on the Pulsebox leaderboard, right next to your level. You only pick it once, and it\'s yours: nobody else can have the same name.')}</p>
-      <form id="unForm"><div class="un-row"><input id="unIn" maxlength="15" autocomplete="nickname" spellcheck="false" placeholder="Your username" value="${esc(start)}" aria-describedby="unRules"><span class="cnt" id="unCnt">0/15</span></div>
-      <p class="rules" id="unRules">3–15 letters or numbers (spaces, _ . - are fine). Keep it friendly: rude names are blocked.</p><div class="msg" id="unMsg" role="status"></div>
+      <form id="unForm"><div class="un-row"><input id="unIn" maxlength="20" autocomplete="nickname" spellcheck="false" placeholder="Your username" value="${esc(start)}" aria-describedby="unRules"><span class="cnt" id="unCnt">0/20</span></div>
+      <p class="rules" id="unRules">3–20 characters: letters, numbers, spaces and symbols like $ ! @ # % & * + = ? ~ are all fine. Keep it friendly: rude names are blocked.</p><div class="msg" id="unMsg" role="status"></div>
       <button class="go" type="submit" id="unGo">Save my username</button></form><button class="later" type="button" id="unLater">Not now</button></div>`;
     document.body.append(m);
     const inp = $('unIn'), cnt = $('unCnt'), msg = $('unMsg'), go = $('unGo');
-    const check = () => { const v = inp.value.replace(/\s+/g, ' ').trim(); cnt.textContent = v.length + '/15'; const ok = NAME_RE.test(v); go.disabled = !ok; msg.className = 'msg'; msg.textContent = !v ? '' : v.length < 3 ? NAME_MSG.short : ok ? '' : NAME_MSG.chars; };
+    const check = () => { const v = inp.value.replace(/\s+/g, ' ').trim(); cnt.textContent = v.length + '/20'; const ok = NAME_RE.test(v) && nameKey(v).length >= 2; go.disabled = !ok; msg.className = 'msg'; msg.textContent = !v ? '' : v.length < 3 ? NAME_MSG.short : ok ? '' : NAME_MSG.chars; };
     inp.oninput = check; check(); setTimeout(() => inp.focus(), 50);
     $('unLater').onclick = () => m.remove();
     $('unForm').onsubmit = async e => {

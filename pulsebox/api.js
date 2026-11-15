@@ -391,7 +391,7 @@ export class Stats {
       }
       const { g, k, n, t, who, asc, min, max } = JSON.parse(await request.text());
       if (!Number.isInteger(t) || t < min || t > max || typeof who !== 'string') return json({ error: 'rejected' }, 400);
-      const name = String(n || '').replace(/[^\w .'-]/g, '').trim().slice(0, 15) || 'Player', h = await hashWho(who);
+      const name = String(n || '').replace(/[^A-Za-z0-9!@#$%^&*()_+=.,?~:;'[\]{}| -]/g, '').trim().slice(0, 20) || 'Player', h = await hashWho(who);
       this.sql.exec('DELETE FROM lbrate WHERE t < ?', now - 3600000);
       if (this.sql.exec('SELECT COUNT(*) AS n FROM lbrate WHERE who = ?', h).one().n >= 60) return json({ error: 'slow down' }, 429);
       this.sql.exec('INSERT INTO lbrate (who, t) VALUES (?, ?)', h, now);
@@ -498,7 +498,7 @@ export class Rooms {
     const pair = new WebSocketPair(), [client, sock] = Object.values(pair);
     sock.accept();
     if (this.socks.size >= (BIG_ROOMS[this.game] || MAX_PLAYERS)) { sock.send(JSON.stringify({ t: 'full' })); sock.close(1000, 'room full'); return new Response(null, { status: 101, webSocket: client }); }
-    const id = this.next++, name = (new URL(request.url).searchParams.get('n') || 'Player').replace(/[^\w .'-]/g, '').slice(0, 12) || 'Player';
+    const id = this.next++, name = (new URL(request.url).searchParams.get('n') || 'Player').replace(/[^A-Za-z0-9!@#$%^&*()_+=.,?~:;'[\]{}| -]/g, '').slice(0, 20) || 'Player';
     if (!this.host) this.host = id;
     this.socks.set(id, { sock, name });
     sock.send(JSON.stringify({ t: 'hello', id, host: this.host, players: [...this.socks].map(([i, p]) => ({ id: i, name: p.name })) }));
