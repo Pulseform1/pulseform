@@ -1720,16 +1720,41 @@ const GAME = {
       for (const sx of [-.0148, .0148]) { lathe([[-.3, .0098], [-.3, .0152], [-.29, .0158], [-.02, .0158], [0, .0145], [0, .008]], m.steel, .012, sx, 16); disc(.0098, sx, .012, -.3005, m.hole); }
       rbox(.06, .012, .022, m.dark, 0, .012, -.283, .004); rbox(.005, .007, .262, m.metal, 0, .0295, -.14, .002); add(new THREE.SphereGeometry(.0036, 8, 6), m.brass, 0, .0355, -.29);
       T = G; sup = [-.016, -.1, .03];
-    } else if (k === 'hammer') {   // revolver: under-lugged heavy barrel with a vented rib, a fluted cylinder that turns, wooden grip
-      len = .27; port = null; sight = .066; pistolHold = true;
-      side([[-.066, .052], [.046, .052], ['q', .066, .044, .06, .016], [.056, -.004], [.01, -.008], [-.004, -.03], [-.05, -.03], [-.066, -.006]], .032, m.steel, 0, .007);
-      side([[-.272, .012], ['q', -.272, .05, -.26, .05], [-.066, .05], [-.066, -.006], [-.25, -.006], ['q', -.272, -.004, -.272, .012]], .026, m.steel, 0, .007);
-      rbox(.012, .008, .2, m.metal, 0, .055, -.165, .002); for (let i = 0; i < 5; i++) rbox(.014, .004, .02, m.hole, 0, .0555, -.1 - i * .034, .001);
-      disc(.0062, 0, .034, -.2725, m.hole); ring(.009, .002, -.27, m.metal, .034); side([[-.264, .058], [-.25, .07], [-.24, .058]], .005, m.dark, 0, .001); add(new THREE.SphereGeometry(.002, 6, 6), m.acc, 0, .067, -.25); rbox(.016, .008, .012, m.dark, 0, .058, .04, .002);
-      side([[.018, .0], [.06, .004], ['q', .1, -.026, .096, -.092], ['q', .092, -.122, .064, -.116], ['q', .036, -.11, .034, -.07], [.02, -.03]], .038, m.fin, 0, .012); add(new THREE.CylinderGeometry(.0045, .0045, .04, 8), m.brass, 0, -.06, .066, 0, 0, Math.PI / 2);
-      side([[.044, .05], [.062, .074], [.072, .068], [.058, .048]], .009, m.metal, 0, .002); guardLoop(-.012, -.03); decal('HAMMER', '.44 · 6 RD', .085, .021, .0165, .02, -.16);
-      T = parts.cyl = group(0, .022, -.02);
-      add(new THREE.CylinderGeometry(.0265, .0265, .054, 24), m.metal, 0, 0, 0, Math.PI / 2); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; add(new THREE.CylinderGeometry(.008, .008, .034, 8), m.dark, Math.cos(a) * .0255, Math.sin(a) * .0255, -.011, Math.PI / 2); }
+    } else if (k === 'hammer') {   // double-action revolver: stainless frame with a cylinder window, full under-lug barrel, vented rib, fluted cylinder, finger-groove grip
+      len = .274; port = null; sight = .066; pistolHold = true;
+      const BY = .036, CY = .02, CZ = -.016;
+      // frame: top strap, recoil shield and grip tang, with the window the cylinder turns in
+      side([[-.072, .058], [.02, .058], ['q', .034, .058, .04, .046], [.044, .022], [.05, .004], [.03, -.012], [-.04, -.012], ['q', -.06, -.012, -.066, -.004], [-.072, .006]], .034, m.steel, 0, .005,
+        [[[-.049, .051], [.013, .051], [.013, -.005], [-.049, -.005]]]);
+      side([[-.034, -.01], [-.034, -.03], ['q', -.034, -.054, -.008, -.054], [.012, -.054], ['q', .03, -.054, .03, -.034], [.03, -.01]], .012, m.steel, 0, .003,
+        [[[-.028, -.012], [-.028, -.03], ['q', -.028, -.048, -.008, -.048], [.012, -.048], ['q', .024, -.048, .024, -.034], [.024, -.012]]]);   // trigger guard
+      for (const [y, z] of [[.03, .024], [-.002, .02], [.004, -.058]]) pin(y, z, .035, .0026, m.dark);   // side-plate screws
+      rbox(.004, .01, .016, m.dark, -.019, .03, .024, .002); rbox(.002, .004, .01, m.metal, -.0215, .03, .024, .001);   // cylinder release
+      // barrel: round tube on a full-length under-lug, a vented rib, crowned muzzle, ported near the end
+      lathe([[-.072, .011], [-.262, .0105], [-.27, .0095], [-.274, .0082], [-.274, .005]], m.steel, BY, 0, 24); disc(.0048, 0, BY, -.2742, m.hole);
+      side([[-.072, BY], [-.266, BY], ['q', -.274, BY, -.274, BY - .008], [-.274, .016], ['q', -.274, .01, -.266, .01], [-.072, .01]], .023, m.steel, 0, .004);
+      rbox(.011, .008, .19, m.steel, 0, BY + .0135, -.167, .002); for (let i = 0; i < 7; i++) rbox(.0115, .005, .012, m.hole, 0, BY + .0122, -.088 - i * .025, .001);
+      for (const z of [-.248, -.236]) rbox(.004, .003, .009, m.hole, 0, BY + .0105, z, .001);
+      side([[-.262, BY + .017], [-.246, BY + .017], [-.25, BY + .03], [-.258, BY + .03]], .004, m.steel, 0, .0008); rbox(.0042, .005, .004, m.glow, 0, BY + .026, -.252, .0008);   // front sight with a coloured insert
+      for (const sx of [-.0045, .0045]) rbox(.004, .009, .008, m.dark, sx, .0625, .014, .001); rbox(.016, .004, .016, m.dark, 0, .06, .016, .001);   // adjustable rear sight
+      decal('HAMMER', '.44 · 6 RD', .085, .02, .0123, .023, -.17);
+      // grip: rubber, finger grooves down the front strap, a medallion
+      side([[.03, .004], [.058, .01], ['q', .078, -.004, .084, -.04], ['q', .09, -.08, .082, -.104], ['q', .076, -.116, .06, -.114], [.048, -.112], ['q', .038, -.108, .038, -.098], ['q', .04, -.088, .034, -.082], ['q', .029, -.075, .033, -.066], ['q', .037, -.058, .031, -.052], ['q', .025, -.045, .028, -.036], [.026, -.016]], .034, m.fin, 0, .009);
+      add(new THREE.CylinderGeometry(.0055, .0055, .0355, 16), m.acc, 0, -.042, .062, 0, 0, Math.PI / 2);
+      // hammer (cocks back and falls each shot) and trigger (pulled each shot)
+      T = parts.ham = group(0, .044, .034);
+      side([[-.006, -.006], [.006, -.006], [.01, .012], ['q', .014, .026, .028, .03], [.031, .025], ['q', .02, .02, .008, .014], [-.004, .006]], .011, m.steel, 0, .002);
+      for (let i = 0; i < 3; i++) box(.0115, .0012, .002, m.dark, 0, .025 + i * .0015, .016 + i * .004, -.5);
+      T = parts.trig = group(0, -.012, -.006);
+      side([[-.003, .002], [.004, .002], ['q', .006, -.018, .014, -.03], [.008, -.032], ['q', -.002, -.018, -.004, .002]], .007, m.steel, 0, .0015);
+      // cylinder: fluted, chamber mouths in front, brass rims behind; the ejector rod rides with it when it swings out
+      T = parts.cyl = group(0, CY, CZ);
+      lathe([[-.028, .004], [-.028, .022], [-.026, .0272], [.026, .0272], [.028, .023], [.028, .004]], m.steel, 0, 0, 30);
+      for (let i = 0; i < 6; i++) { const a = Math.PI / 2 + TAU / 12 + i * TAU / 6; box(.0062, .0035, .034, m.dark, Math.cos(a) * .0262, Math.sin(a) * .0262, -.004, 0, 0, a + Math.PI / 2); }
+      for (let i = 0; i < 6; i++) { const a = Math.PI / 2 + i * TAU / 6; disc(.0056, Math.cos(a) * .016, Math.sin(a) * .016, -.0283, m.hole); }
+      tube(.0034, -.1, -.028, m.steel, 0); lathe([[-.106, .002], [-.106, .0048], [-.1, .0048], [-.1, .002]], m.steel, 0);
+      { const rims = parts.rims = new THREE.Group(); T.add(rims); T = rims;
+        for (let i = 0; i < 6; i++) { const a = Math.PI / 2 + i * TAU / 6, x = Math.cos(a) * .016, y = Math.sin(a) * .016; add(new THREE.CylinderGeometry(.0064, .0064, .0016, 14), m.brass, x, y, .0288, Math.PI / 2); disc(.0018, x, y, .0297, m.steel, true); } }
       T = G; sup = [-.016, -.1, .04];
     }
     else if (k === 'gnat') { carbine({ len: .32, rf: -.16, hz: -.26, hg: 'shroud', br: .0105, tip: 'flash', stock: 'wire', short: 1, mag: 'stick', magL: .13, sight: 'holo', sightY: .099, fore: 'vgrip', backup: false, sideHandle: 1, glow: false }); decal('GNAT', 'SMG · 20 RD', .085, .021, .0236, .03, -.105); }
@@ -1813,6 +1838,14 @@ const GAME = {
       const o = r < 0 ? 0 : sm(win(.04, .16)) * (1 - sm(win(.84, .95))), want = (G.mag - A.mag) * TAU / 6 + (r > 0 ? sm(win(.25, .8)) * TAU * 2 : 0) + (dq > 0 ? sm(dq) * TAU : 0) + (iq > 0 ? sm(cl((iq - .3) / .5, 0, 1)) * TAU * 3 : 0);
       pp.cyl.rotation.z += (want - pp.cyl.rotation.z) * Math.min(1, dt * 22); pp.cyl.position.x = pp.cyl.userData.p0.x - o * .036; pp.cyl.position.y = pp.cyl.userData.p0.y - o * .012; pp.cyl.rotation.y = -o * .25; }
     if (pp.brk) pp.brk.rotation.x = -Math.max(r < 0 ? 0 : sm(win(.05, .25)) * (1 - sm(win(.8, .95))), dq < 0 ? 0 : (1 - sm(cl(dq * 1.6, 0, 1))) * .8, ib * .5) * .75;
+    if (pp.ham) {   // double action: the pull cocks the hammer and it falls; drawing thumbs it back too
+      const cock = shotT < .05 ? sm(shotT / .05) : shotT < .08 ? 1 - (shotT - .05) / .03 : 0;
+      pp.ham.rotation.x = Math.max(cock, rack, r > .9 ? Math.sin(win(.9, 1) * Math.PI) * .6 : 0) * .62;
+      if (pp.trig) pp.trig.rotation.x = -(shotT < .08 ? 1 : shotT < .14 ? 1 - (shotT - .08) / .06 : 0) * .38;
+    }
+    if (pp.rims) {   // spent brass is punched out, fresh rounds go in
+      const out = r >= .2 && r < .45; if (fp && out && !P._droppedR) { P._droppedR = 1; dropMag(pp.rims); } if (r < .18) P._droppedR = 0; pp.rims.visible = !out;
+    }
     let gone = false;
     if (pp.mag) {   // out a little, gone (dropped), a fresh one rises from below and is pushed home
       const y0 = pp.mag.userData.p0.y, z0 = pp.mag.userData.p0.z, tilt0 = G.cat === 'Sidearm' ? -.25 : G.k === 'hornet' || G.k === 'gnat' ? .05 : 0;
