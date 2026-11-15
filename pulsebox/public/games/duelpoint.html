@@ -1344,6 +1344,9 @@ const GAME = {
     U.arms.rotation.x = f.pitch * .9 + f.kick * 1.2 - (f.swing && f.swing.heavy ? 0 : sw * .7) + Math.sin(ph * 2) * amp * .03; U.arms.rotation.y = f.swing && !f.swing.heavy ? (f.swing.t / .4 - .5) * 1.3 * (f.swing.side || 1) * (sw > 0 ? 1 : 0) : 0; U.arms.position.z = f.swing && f.swing.heavy ? -sw * .25 : 0;
     U.head.rotation.x = f.pitch * .6;
     if (U.flash) { U.flash.visible = f.kick > .05 && f.alive && !gun(f).melee; if (U.flash.visible) U.flash.material.rotation = Math.random() * 6; }
+    // the rival's gun works too: slide, bolt, pump, magazine; and the arms tip it over to reload
+    { const gm = U.gunHold.children[0], G = gun(f); if (gm && gm.userData.parts) animParts(gm, f, G, dt, false);
+      const rt = f.reloadT > 0 ? 1 - f.reloadT / G.rel : -1, tl = rt < 0 ? 0 : sm(cl(rt / .14, 0, 1)) * (1 - sm(cl((rt - .88) / .12, 0, 1))); U.arms.rotation.z = -tl * .45; U.arms.rotation.x -= tl * .35; }
     // a dead fighter falls back and stays down
     U.dead = f.alive ? 0 : Math.min(1, U.dead + dt * 2.6); const d = smooth(U.dead);
     A.rotation.x = d * 1.5; A.position.y = f.y + d * .14;
@@ -1742,6 +1745,7 @@ const GAME = {
         T = parts.lhand = group(sup[0], sup[1], sup[2], pistolHold ? .3 : 0);
         rbox(.056, .018, .08, m.glove, 0, 0, 0, .007); rbox(.014, .044, .07, m.glove, -.032, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, m.glove, -.034, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, m.glove, .032, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002);
         arm(T, -.02, -.012, .034, .5, .55, pistolHold ? .38 : .55);
+        if (k === 'breaker') { const sh = vtube(.0095, -.021, .021, m.shell, 0, 0); sh.rotation.x = Math.PI / 2; sh.position.set(-.012, .03, 0); sh.userData.live = true; sh.visible = false; parts.hshell = sh; }
       }
       T = G;
     }
@@ -1772,24 +1776,51 @@ const GAME = {
   // spent brass flying out of the ejection port (first person only)
   const CASE = { pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] }, CASEGEO = {};
   const VOS = { knife: [.15, -.15, -.31], pip: [.17, -.17, -.3], wasp: [.17, -.17, -.3], quill: [.17, -.17, -.3], stub: [.17, -.18, -.3], hammer: [.17, -.17, -.3], gnat: [.2, -.19, -.3], hornet: [.2, -.19, -.3], breaker: [.2, -.2, -.27], thresher: [.2, -.2, -.28], mako: [.2, -.2, -.28], paladin: [.21, -.21, -.27], vesper: [.2, -.2, -.28], lancer: [.2, -.2, -.28], kite: [.22, -.22, -.26], longbow: [.23, -.23, -.25], torrent: [.21, -.21, -.27] };
-  function viewAnim(P, G, dt) {
-    const U = X.viewGun.userData, pp = U.parts, A = P.ammo[G.k] || { mag: 0 }, sm = x => x * x * (3 - 2 * x);
+  /* The moving parts of a gun, for your own view (fp) and your rival's model alike. `ex` carries first-person extras:
+     draw (0..1 through the chambering at the end of a draw) and insp (0..1 through an inspect). A reload runs as phases of
+     r (0..1): magazine out and dropped, hand away for a fresh one, fresh one in and slapped home, then the bolt or slide. */
+  const sm = x => x * x * (3 - 2 * x);
+  function animParts(Gm, P, G, dt, fp, ex = {}) {
+    const U = Gm.userData, pp = U.parts, A = P.ammo[G.k] || { mag: 0 };
     const st = P.fireT > 0 ? 60 / G.rpm - P.fireT : 9, shotT = st >= 0 ? st : 9, r = P.reloadT > 0 ? 1 - P.reloadT / G.rel : -1, win = (a, b) => cl((r - a) / (b - a), 0, 1);
-    if (pp.slide) pp.slide.position.z = Math.max(shotT < .08 ? (1 - shotT / .08) * .03 : 0, A.mag === 0 && r < 0 ? .03 : 0);
-    if (pp.bolt) pp.bolt.position.z = (shotT < .05 ? (1 - shotT / .05) * .012 : 0) + (r > .82 ? Math.sin(win(.82, .97) * Math.PI) * .05 : 0);
-    if (pp.pump) { const s = cl((shotT - .16) / .36, 0, 1); pp.pump.position.z = Math.sin(s * Math.PI) * .085 + (r > .85 ? Math.sin(win(.85, 1) * Math.PI) * .085 : 0); }
-    if (pp.boltL) { const s = cl((shotT - (G.k === 'kite' ? .12 : .28)) / (G.k === 'kite' ? .45 : .8), 0, 1), s2 = r > .8 ? win(.8, 1) : 0, q = Math.max(s, s2), lift = q <= 0 || q >= 1 ? 0 : q < .2 ? q / .2 : q > .8 ? (1 - q) / .2 : 1, back = q < .2 || q > .8 ? 0 : Math.sin((q - .2) / .6 * Math.PI); pp.boltL.rotation.z = sm(cl(lift, 0, 1)) * 1.1; pp.boltL.position.z = pp.boltL.userData.z0 + back * .075; }
-    if (pp.cyl) { const want = (G.mag - A.mag) * TAU / 6; pp.cyl.rotation.z += (want - pp.cyl.rotation.z) * Math.min(1, dt * 22); }
-    if (pp.brk) pp.brk.rotation.x = -(r < 0 ? 0 : sm(win(.05, .25)) * (1 - sm(win(.8, .95)))) * .75;
-    let magOut = 0;
-    if (pp.mag) { magOut = r < 0 ? 0 : r < .3 ? sm(win(.1, .3)) : r < .55 ? 1 : 1 - sm(win(.55, .8)); pp.mag.position.y = pp.mag.userData.p0.y - magOut * .34; pp.mag.position.z = pp.mag.userData.p0.z + magOut * .05; pp.mag.rotation.x = (G.cat === 'Sidearm' ? -.25 : G.k === 'hornet' || G.k === 'gnat' ? .05 : 0) + magOut * .5; }
+    const dq = ex.draw == null ? -1 : ex.draw, rack = dq < 0 ? 0 : Math.sin(sm(dq) * Math.PI), iq = ex.insp == null ? -1 : ex.insp, ib = iq < 0 ? 0 : sm(cl(Math.sin(cl((iq - .3) / .45, 0, 1) * Math.PI) * 1.4, 0, 1));
+    if (pp.slide) pp.slide.position.z = Math.max(shotT < .08 ? (1 - shotT / .08) * .03 : 0, A.mag === 0 && r < 0 ? .03 : 0, rack * .032, ib * .012, r > .86 ? Math.sin(win(.86, .97) * Math.PI) * .03 : 0);
+    if (pp.bolt) pp.bolt.position.z = (shotT < .05 ? (1 - shotT / .05) * .012 : 0) + (r > .82 ? Math.sin(win(.82, .97) * Math.PI) * .05 : 0) + rack * .05;
+    if (pp.pump) { const s = cl((shotT - .16) / .36, 0, 1); pp.pump.position.z = Math.max(Math.sin(s * Math.PI) * .085, r > .85 ? Math.sin(win(.85, 1) * Math.PI) * .085 : 0, rack * .085, ib * .04); }
+    if (pp.boltL) { const s = cl((shotT - (G.k === 'kite' ? .12 : .28)) / (G.k === 'kite' ? .45 : .8), 0, 1), s2 = r > .8 ? win(.8, 1) : 0, s3 = dq < 0 ? 0 : cl(dq, 0, .999), q = Math.max(s, s2, s3), lift = q <= 0 || q >= 1 ? 0 : q < .2 ? q / .2 : q > .8 ? (1 - q) / .2 : 1, back = q < .2 || q > .8 ? 0 : Math.sin((q - .2) / .6 * Math.PI);
+      pp.boltL.rotation.z = Math.max(sm(cl(lift, 0, 1)), ib) * 1.1; pp.boltL.position.z = pp.boltL.userData.z0 + back * .075; }
+    if (pp.cyl) { // swings out to the left to load, spins shut; turns a chamber each shot
+      const o = r < 0 ? 0 : sm(win(.04, .16)) * (1 - sm(win(.84, .95))), want = (G.mag - A.mag) * TAU / 6 + (r > 0 ? sm(win(.25, .8)) * TAU * 2 : 0) + (dq > 0 ? sm(dq) * TAU : 0) + (iq > 0 ? sm(cl((iq - .3) / .5, 0, 1)) * TAU * 3 : 0);
+      pp.cyl.rotation.z += (want - pp.cyl.rotation.z) * Math.min(1, dt * 22); pp.cyl.position.x = pp.cyl.userData.p0.x - o * .036; pp.cyl.position.y = pp.cyl.userData.p0.y - o * .012; pp.cyl.rotation.y = -o * .25; }
+    if (pp.brk) pp.brk.rotation.x = -Math.max(r < 0 ? 0 : sm(win(.05, .25)) * (1 - sm(win(.8, .95))), dq < 0 ? 0 : (1 - sm(cl(dq * 1.6, 0, 1))) * .8, ib * .5) * .75;
+    let gone = false;
+    if (pp.mag) {   // out a little, gone (dropped), a fresh one rises from below and is pushed home
+      const y0 = pp.mag.userData.p0.y, z0 = pp.mag.userData.p0.z, tilt0 = G.cat === 'Sidearm' ? -.25 : G.k === 'hornet' || G.k === 'gnat' ? .05 : 0;
+      let out = 0; if (r >= 0) out = r < .22 ? sm(win(0, .22)) * .09 : r < .42 ? .36 : r < .78 ? lp(.36, 0, sm(win(.42, .78))) : 0;
+      out = Math.max(out, ib * .05); gone = r >= .22 && r < .42;
+      if (fp && gone && !P._dropped) { P._dropped = 1; dropMag(pp.mag); } if (r < .2) P._dropped = 0;
+      pp.mag.visible = !gone; pp.mag.position.y = y0 - out; pp.mag.position.z = z0 + Math.min(out, .09) * .4; pp.mag.rotation.x = tilt0 + Math.min(out, .09) * 3;
+    }
     if (pp.lhand && G.cat !== 'Sidearm') {
       const p0 = pp.lhand.userData.p0; let h = 0, tx = p0.x, ty = p0.y, tz = p0.z;
-      if (G.k === 'breaker') { h = r < 0 ? 0 : sm(win(.05, .2)) * (1 - sm(win(.85, 1))); tx = -.005; ty = -.06 + Math.sin(r * Math.PI * 10) * .018; tz = -.06; }
-      else if (pp.mag) { h = r < 0 ? 0 : sm(win(.38, .55)) * (1 - sm(win(.78, .9))); const mp = pp.mag.position; tx = mp.x - .01; ty = mp.y - .06; tz = mp.z; }
-      pp.lhand.position.set(lp(p0.x, tx, h), lp(p0.y, ty, h), lp(p0.z, tz, h));
+      if (G.k === 'breaker') { h = r < 0 ? 0 : sm(win(.05, .2)) * (1 - sm(win(.85, 1))); const ph = (r * 5) % 1; tx = -.005; ty = -.075 + Math.sin(ph * Math.PI) * .03; tz = -.06 - ph * .02; if (pp.hshell) pp.hshell.visible = h > .5 && ph < .55; }
+      else if (pp.mag && r >= 0) { h = sm(win(.12, .22)) * (1 - sm(win(.82, .92))); const mp = pp.mag.position; tx = mp.x - .01; ty = mp.y - .06 + (r > .76 && r < .84 ? Math.sin(win(.76, .84) * Math.PI) * .03 : 0); tz = mp.z; }
+      else if (pp.pump) tz = p0.z + pp.pump.position.z;   // the support hand works the pump
+      if (pp.hshell && G.k !== 'breaker') pp.hshell.visible = false; else if (pp.hshell && r < 0) pp.hshell.visible = false;
+      pp.lhand.position.set(lp(p0.x, tx, h), lp(p0.y, ty, h), h > 0 ? lp(p0.z, tz, h) : tz);
     }
     if (pp.counter && pp.counter.last !== A.mag) { const { c, t } = pp.counter, g = c.getContext('2d'); pp.counter.last = A.mag; g.fillStyle = '#05080c'; g.fillRect(0, 0, 64, 44); const low = A.mag <= G.mag * .25; g.fillStyle = low ? WARN : GUNS[G.k].col; g.font = '700 30px "Chakra Petch", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(A.mag).padStart(2, '0'), 32, 20); g.fillRect(6, 38, 52 * A.mag / G.mag, 3); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(6 + 52 * A.mag / G.mag, 38, 52 * (1 - A.mag / G.mag), 3); t.needsUpdate = true; }
+  }
+  function viewAnim(P, G, dt, ex) { animParts(X.viewGun, P, G, dt, true, ex); }
+  // the spent magazine: a copy falls away and tumbles out of view
+  function dropMag(mag) {
+    if (!X.drops) X.drops = []; X.vroot.updateMatrixWorld(true);
+    const m = mag.clone(), inv = new THREE.Matrix4().copy(X.vroot.matrixWorld).invert(), mw = new THREE.Matrix4().multiplyMatrices(inv, mag.matrixWorld);
+    mw.decompose(m.position, m.quaternion, m.scale); m.visible = true; X.vroot.add(m); X.drops.push({ m, t: .9, v: [-.15 + R() * .1, -.4, .15], s: [rnd(-4, 4), rnd(-2, 2), rnd(-5, 5)] });
+  }
+  function updateDrops(dt) {
+    if (!X.drops) return;
+    X.drops = X.drops.filter(d => { d.t -= dt; d.v[1] -= 6 * dt; d.m.position.x += d.v[0] * dt; d.m.position.y += d.v[1] * dt; d.m.position.z += d.v[2] * dt; d.m.rotation.x += d.s[0] * dt; d.m.rotation.y += d.s[1] * dt; d.m.rotation.z += d.s[2] * dt; if (d.t <= 0) { X.vroot.remove(d.m); return false; } return true; });
   }
   function updateCasings(dt) {
     if (!X.casings) X.casings = []; if (!X.ejects) X.ejects = [];
@@ -1819,8 +1850,11 @@ const GAME = {
     for (const rz of [0, Math.PI / 2]) { const pl = new THREE.Mesh(new THREE.PlaneGeometry(.3, .1), fm({ map: sideT })); pl.rotation.y = Math.PI / 2; pl.position.z = -.13; const hold = new THREE.Group(); hold.rotation.z = rz; hold.add(pl); X.mflash.add(hold); }
     X.muzzle = add(new THREE.PointLight('#ffcf8a', 0, 10)); X.flashL = add(new THREE.PointLight('#ffffff', 0, 34));
     // pools
-    const trG = new THREE.BoxGeometry(.014, .014, 1); trG.translate(0, 0, .5);
-    X.tracers = Array.from({ length: 14 }, () => { const m = add(new THREE.Mesh(trG, fm({ color: '#ffe9b0' }))); m.visible = false; m.userData.t = 0; return m; }); X.trN = 0;
+    // tracers: a short streak, bright at its head and fading to nothing behind, that flies down the shot's path in a few hundredths of a second
+    const trT = canvasTex(4, 64, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,200,120,0)'); gr.addColorStop(.7, 'rgba(255,214,150,.45)'); gr.addColorStop(1, 'rgba(255,240,210,1)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+    trT.wrapS = trT.wrapT = THREE.ClampToEdgeWrapping;
+    const trG = new THREE.PlaneGeometry(1, 1); trG.rotateX(-Math.PI / 2); trG.translate(0, 0, -.5); const trG2 = trG.clone(); trG2.rotateZ(Math.PI / 2);
+    X.tracers = Array.from({ length: 24 }, () => { const mat = fm({ map: trT, color: '#ffffff', opacity: .3 }), g = new THREE.Group(); g.add(new THREE.Mesh(trG, mat), new THREE.Mesh(trG2, mat)); g.visible = false; g.userData = { mat, a: [0, 0, 0], d: [0, 0, 1], L: 0, age: 0, s0: 0, len: 1, op: .3 }; return add(g); }); X.trN = 0;
     const spG = new THREE.BoxGeometry(.035, .035, .035);
     X.sparks = Array.from({ length: 70 }, () => { const m = add(new THREE.Mesh(spG, new THREE.MeshBasicMaterial({ color: '#ffd28a' }))); m.visible = false; m.userData = { t: 0, v: [0, 0, 0] }; return m; }); X.spN = 0;
     const markT = canvasTex(64, 64, g => { const rg = g.createRadialGradient(32, 32, 2, 32, 32, 30); rg.addColorStop(0, 'rgba(10,10,10,.95)'); rg.addColorStop(.25, 'rgba(20,18,16,.8)'); rg.addColorStop(.5, 'rgba(60,54,48,.35)'); rg.addColorStop(1, 'rgba(60,54,48,0)'); g.fillStyle = rg; g.fillRect(0, 0, 64, 64); });
@@ -1848,8 +1882,12 @@ const GAME = {
   }
   on('shot', (f, S, first) => {
     if (!X || !ready) return; const mine = f === me(), mz = muzzleOf(f), G = gun(f);
-    const tr = X.tracers[X.trN++ % X.tracers.length], L = Math.hypot(S.end[0] - mz[0], S.end[1] - mz[1], S.end[2] - mz[2]);
-    tr.position.set(mz[0], mz[1], mz[2]); tr.lookAt(S.end[0], S.end[1], S.end[2]); tr.scale.set(1, 1, Math.max(.1, L)); tr.visible = L > 1.5; tr.userData.t = .07; tr.material.opacity = mine ? .5 : .85;
+    // your own streaks start a few metres out and are faint; your rival's are a little clearer so you can tell where fire comes from. Shotguns show a few pellets, not all
+    const L = Math.hypot(S.end[0] - mz[0], S.end[1] - mz[1], S.end[2] - mz[2]), s0 = mine ? 3.5 : .6;
+    if (L > s0 + 1 && !(G.pel > 1 && Math.random() > .3)) { const tr = X.tracers[X.trN++ % X.tracers.length], u = tr.userData;
+      u.a = [mz[0], mz[1], mz[2]]; u.d = [(S.end[0] - mz[0]) / L, (S.end[1] - mz[1]) / L, (S.end[2] - mz[2]) / L]; u.L = L; u.age = 0; u.s0 = s0; u.len = mine ? 1.4 : 2.2; u.w = mine ? .005 : .008; u.op = mine ? (G.sil ? .08 : .14) : (G.sil ? .16 : .3);
+      tr.position.set(mz[0], mz[1], mz[2]); tr.lookAt(S.end[0], S.end[1], S.end[2]); tr.visible = false; tr.userData.live = true; }
+    if (first && mine) X.recV = (X.recV || 0) + 2.2 * (VKICK[G.cat] || 1) * (f.scoped ? .55 : 1);
     if (first) { X.muzzle.position.set(mz[0], mz[1], mz[2]); X.muzzle.intensity = G.sil ? 1.2 : 4; if (mine) { X.flashT = G.sil ? .025 : .05; X.ejects.push({ k: G.k, t: G.k === 'breaker' ? .3 : G.k === 'longbow' || G.k === 'kite' ? .6 : .01 }); } }
     if (S.hit) { const c = (OPS[S.hit.f.op] || OPS.vex).col; for (let i = 0; i < 5; i++) spark(S.end, [rnd(-1.5, 1.5), rnd(-.5, 2), rnd(-1.5, 1.5)], S.hit.head ? '#fff3c4' : c, .28); }
     else if (S.dist < 139) {
@@ -1862,6 +1900,8 @@ const GAME = {
   on('boom', (x, z) => { if (X && ready) { X.boom.position.set(x, .5, z); X.boom.visible = true; X.boomT = .7; X.shake = .5; X.flashL.position.set(x, 2, z); X.flashL.intensity = 30; } });
   on('round', () => { if (X && ready) for (const m of X.marks) m.visible = false; });
   on('land', f => { if (X && M && f === me()) X.dip = .09; });
+  on('dry', f => { if (X && M && f === me()) X.dryT = .16; });
+  const VKICK = { Sidearm: 1.25, SMG: .7, Rifle: 1, Sniper: 2.2, Shotgun: 1.9, Heavy: .8 };   // how hard each class kicks in your hands
 
   function renderFrame(dt) {
     if (!X || !ready) return; const cam = X.camera; X.t += dt; tunePixels(dt); X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016;
@@ -1881,15 +1921,29 @@ const GAME = {
     const fov = 2 * Math.atan(Math.tan(BASE_FOV * D2R / 2) / zoomOf(P)) / D2R; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
 
     // your gun
-    if (X.viewKey !== G.k + P.op) { if (X.viewGun) X.view.remove(X.viewGun); X.viewGun = viewGun(G.k, P.op); if (G.melee) X.viewGun.scale.setScalar(1.35); X.view.add(X.viewGun); X.viewKey = G.k + P.op; X.viewGun.add(X.mflash); X.drawT = .3; }
-    X.drawT = Math.max(0, (X.drawT || 0) - dt); const dr = X.drawT / .3, sway = Math.sin(X.t * 1.3) * .004;
-    const v = Math.hypot(P.vx, P.vz), bob = Math.sin(P.walkT * 1.9) * .012 * Math.min(1, v / 4), rel = P.reloadT > 0 ? Math.sin(Math.min(1, 1 - P.reloadT / G.rel) * Math.PI) : 0, VO = VOS[G.k] || [.2, -.2, -.28];
+    if (X.viewKey !== G.k + P.op) { if (X.viewGun) X.view.remove(X.viewGun); X.viewGun = viewGun(G.k, P.op); if (G.melee) X.viewGun.scale.setScalar(1.35); X.view.add(X.viewGun); X.viewKey = G.k + P.op; X.viewGun.add(X.mflash); X.drawD = Math.max(.35, (G.equip || .75) * .7); X.drawT = X.drawD; X.recP = X.recV = 0; }
+    // drawing: the gun comes up from below, then the class's chambering action (slide, charging handle, pump, bolt, cylinder; the knife flips)
+    X.drawT = Math.max(0, (X.drawT || 0) - dt); const dq = 1 - X.drawT / (X.drawD || .35), raise = X.drawT > 0 ? 1 - sm(cl(dq / .5, 0, 1)) : 0, chamber = X.drawT > 0 && dq > .42 ? cl((dq - .42) / .52, 0, 1) : -1;
+    // recoil on a spring: each shot kicks it, it settles by itself (sub-stepped so a slow frame cannot blow it up)
+    for (let n = Math.ceil(dt / .008), i = 0; i < n; i++) { const h = dt / n; X.recV = (X.recV || 0) + (-420 * (X.recP || 0) - 30 * X.recV) * h; X.recP = (X.recP || 0) + X.recV * h; }
+    X.recP = cl(X.recP, -.08, .22); const rk = X.recP;
+    const v = Math.hypot(P.vx, P.vz), mv = Math.min(1, v / 4), sway = Math.sin(X.t * 1.3) * .004, swayX = Math.sin(X.t * .65) * .003, VO = VOS[G.k] || [.2, -.2, -.28];
+    X.runK = lp(X.runK || 0, v > 3.6 && P.fireT < -.2 && P.reloadT <= 0 && !P.scoped && P.ground ? 1 : 0, Math.min(1, dt * 6));   // running: the gun drops and turns in
+    X.air = lp(X.air || 0, P.ground ? 0 : cl(-P.vy * .006, -.03, .03), Math.min(1, dt * 10));   // jumping: it lags up, then down
+    X.dryT = Math.max(0, (X.dryT || 0) - dt); const dry = Math.sin(X.dryT / .16 * Math.PI) * (X.dryT > 0 ? 1 : 0);
+    const bob = Math.sin(P.walkT * 1.9) * .012 * mv * (1 + X.runK * .6), bobX = Math.cos(P.walkT * .95) * .008 * mv;
+    // reloading: tip the gun to show the work, a jolt when the fresh magazine seats
+    const rt = P.reloadT > 0 ? 1 - P.reloadT / G.rel : -1, tilt = rt < 0 ? 0 : sm(cl(rt / .14, 0, 1)) * (1 - sm(cl((rt - .88) / .12, 0, 1))), seat = rt > .76 && rt < .84 ? Math.sin((rt - .76) / .08 * Math.PI) : 0;
+    // how each kind is held to reload: [left, up, roll, turn]. Magazine guns come up and in so the swap happens on screen
+    const RH = G.k === 'breaker' ? [.045, .07, -.75, .3] : G.cat === 'Sidearm' ? [.04, .06, -.4, .3] : G.cat === 'Sniper' ? [.07, .09, .35, .2] : [.1, .13, -.62, .34];
     const turn = cl(angDiff(P.yaw, X.lastYaw == null ? P.yaw : X.lastYaw) / Math.max(dt, .001) * .006, -.05, .05); X.lastYaw = P.yaw; X.lag = lp(X.lag || 0, turn, Math.min(1, dt * 10));   // the gun trails a turn slightly
     X.view.visible = P.alive && !(P.scoped && G.scope);
-    X.view.position.set(VO[0] + bob - rel * .05 + X.lag * .5, VO[1] + Math.abs(bob) * .6 + sway + rel * .1 - P.kick * .2 - dr * dr * .25 - X.dip * .5, VO[2] + P.kick * .8);
-    X.view.rotation.set(P.kick * 1.4 + rel * .12 - dr * .6, .02 + rel * .3 + X.lag, -rel * .55 + dr * .3 + X.lag * .6);
+    X.view.position.set(VO[0] + bobX + swayX + X.lag * .5 - tilt * RH[0] - X.runK * .03, VO[1] + Math.abs(bob) * .6 + sway + tilt * RH[1] + seat * .012 - rk * .22 - raise * raise * .3 - X.dip * .5 - X.runK * .035 + X.air, VO[2] + rk * .9 + raise * .05 + X.runK * .02);
+    X.view.rotation.set(rk * 1.6 + tilt * .12 + seat * .05 - raise * .7 - X.runK * .14 - dry * .035, .02 + tilt * RH[3] + X.lag + X.runK * .38, tilt * RH[2] + raise * .35 + X.lag * .6 + X.runK * .26);
     X.mflash.position.set(0, .025, -(X.viewGun.userData.len || .5) - .03); X.mflash.visible = X.flashT > 0 && !G.melee; X.mflash.rotation.z = Math.random() * 3; X.mflash.scale.setScalar(G.cat === 'Sniper' || G.cat === 'Shotgun' ? 1.5 : G.cat === 'Sidearm' ? .8 : 1);
-    viewAnim(P, G, dt);
+    viewAnim(P, G, dt, { draw: chamber, insp: X.inspT > 0 ? 1 - X.inspT / 2.6 : -1 });
+    { const pb = X.viewGun.userData.parts.boltL; if (pb) { X.view.rotation.z += pb.rotation.z * .14; X.view.position.y -= pb.rotation.z * .012; } }   // working a bolt rolls the rifle
+    X.viewGun.rotation.z = G.melee && X.drawT > 0 ? (1 - sm(cl(dq, 0, 1))) * TAU : 0;   // the knife flips into the hand
     if (G.melee) { X.view.rotation.x += .28; X.view.rotation.y += .5; X.view.rotation.z -= .2; }
     if (P.swing) {
       const d = P.swing.heavy ? .55 : .32, q = Math.min(1, P.swing.t / d);
@@ -1900,7 +1954,7 @@ const GAME = {
     if (X.inspT > 0) { if (P.reloadT > 0 || P.kick > 0) X.inspT = 0; else X.inspT -= dt; }
     if (X.inspT > 0) { const q = 1 - X.inspT / 2.6, e = smooth(cl(Math.sin(q * Math.PI) * 1.6, 0, 1)), tw = Math.sin(q * TAU) * e; X.view.position.x -= e * .03; X.view.position.y += e * .035; X.view.position.z -= e * .1; X.view.rotation.y += e * .85; X.view.rotation.z += e * .3 + tw * .25; X.view.rotation.x += tw * .15; }
     X.adsK = lp(X.adsK || 0, P.scoped && !G.scope && P.alive ? 1 : 0, Math.min(1, dt * 16));
-    if (X.adsK > .001) { const a = X.adsK, sy = X.viewGun.userData.sight || .09; X.view.position.x = lp(X.view.position.x, 0, a); X.view.position.y = lp(X.view.position.y, -sy - P.kick * .05, a); X.view.position.z = lp(X.view.position.z, VO[2] - .03 + P.kick * .5, a); X.view.rotation.y = lp(X.view.rotation.y, 0, a); X.view.rotation.z = lp(X.view.rotation.z, 0, a); X.view.rotation.x = lp(X.view.rotation.x, P.kick * .5, a); }
+    if (X.adsK > .001) { const a = X.adsK, sy = X.viewGun.userData.sight || .09; X.view.position.x = lp(X.view.position.x, 0, a); X.view.position.y = lp(X.view.position.y, -sy - rk * .05, a); X.view.position.z = lp(X.view.position.z, VO[2] - .03 + rk * .5, a); X.view.rotation.y = lp(X.view.rotation.y, 0, a); X.view.rotation.z = lp(X.view.rotation.z, 0, a); X.view.rotation.x = lp(X.view.rotation.x, rk * .5, a); }
     if (X.flashT > 0) X.flashT -= dt;
 
     // the rival
@@ -1915,14 +1969,17 @@ const GAME = {
     if (M.planted) { const C = M.planted, lit = !M.defused && C.beep > Math.max(.06, cl(C.t / 12, .12, 1) - .08); X.charge.position.set(C.x, C.y, C.z); X.chargeLamp.material.color.set(M.defused ? YOU : lit ? WARN : '#401018'); X.chargePL.intensity = lit ? 2.4 : 0; }
     const fl = M.flares[0]; X.flareBall.visible = !!fl; if (fl) X.flareBall.position.set(fl.x, fl.y, fl.z);
     // tracers, sparks, lights fading
-    for (const t of X.tracers) if (t.visible && (t.userData.t -= dt) <= 0) t.visible = false;
+    for (const t of X.tracers) { const u = t.userData; if (!u.live) continue; u.age += dt;
+      const head = Math.min(u.L, u.s0 + 620 * u.age), tail = Math.max(u.s0, head - u.len);
+      if (head - tail < .05 || u.age > .25) { u.live = false; t.visible = false; continue; }
+      t.visible = true; t.position.set(u.a[0] + u.d[0] * head, u.a[1] + u.d[1] * head, u.a[2] + u.d[2] * head); t.scale.set(u.w, u.w, head - tail); u.mat.opacity = u.op * (head >= u.L ? .5 : 1); }
     for (const s of X.sparks) if (s.visible) { const u = s.userData; if ((u.t -= dt) <= 0) { s.visible = false; continue; } u.v[1] -= 9 * dt; s.position.x += u.v[0] * dt; s.position.y += u.v[1] * dt; s.position.z += u.v[2] * dt; }
     X.muzzle.intensity = Math.max(0, X.muzzle.intensity - dt * 60); X.flashL.intensity = Math.max(0, X.flashL.intensity - dt * 50);
     if (X.boomT > 0) { X.boomT -= dt; const k = 1 - X.boomT / .7; X.boom.scale.setScalar(1 + k * 15); X.boom.material.opacity = .8 * (1 - k); X.boom.visible = X.boomT > 0; }
 
     X.renderer.render(X.scene, cam);
     if (X.view.visible) {   // your gun, over the world, with its own depth
-      X.vroot.position.copy(cam.position); X.vroot.quaternion.copy(cam.quaternion); updateCasings(dt); X.vmuzzle.intensity = X.flashT > 0 ? 3 : 0;
+      X.vroot.position.copy(cam.position); X.vroot.quaternion.copy(cam.quaternion); updateCasings(dt); updateDrops(dt); X.vmuzzle.intensity = X.flashT > 0 ? 3 : 0;
       const ac = X.renderer.autoClear; X.renderer.autoClear = false; X.renderer.clearDepth(); X.renderer.render(X.vscene, cam); X.renderer.autoClear = ac;
     }
   }

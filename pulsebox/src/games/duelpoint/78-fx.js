@@ -13,8 +13,11 @@
     for (const rz of [0, Math.PI / 2]) { const pl = new THREE.Mesh(new THREE.PlaneGeometry(.3, .1), fm({ map: sideT })); pl.rotation.y = Math.PI / 2; pl.position.z = -.13; const hold = new THREE.Group(); hold.rotation.z = rz; hold.add(pl); X.mflash.add(hold); }
     X.muzzle = add(new THREE.PointLight('#ffcf8a', 0, 10)); X.flashL = add(new THREE.PointLight('#ffffff', 0, 34));
     // pools
-    const trG = new THREE.BoxGeometry(.014, .014, 1); trG.translate(0, 0, .5);
-    X.tracers = Array.from({ length: 14 }, () => { const m = add(new THREE.Mesh(trG, fm({ color: '#ffe9b0' }))); m.visible = false; m.userData.t = 0; return m; }); X.trN = 0;
+    // tracers: a short streak, bright at its head and fading to nothing behind, that flies down the shot's path in a few hundredths of a second
+    const trT = canvasTex(4, 64, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,200,120,0)'); gr.addColorStop(.7, 'rgba(255,214,150,.45)'); gr.addColorStop(1, 'rgba(255,240,210,1)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+    trT.wrapS = trT.wrapT = THREE.ClampToEdgeWrapping;
+    const trG = new THREE.PlaneGeometry(1, 1); trG.rotateX(-Math.PI / 2); trG.translate(0, 0, -.5); const trG2 = trG.clone(); trG2.rotateZ(Math.PI / 2);
+    X.tracers = Array.from({ length: 24 }, () => { const mat = fm({ map: trT, color: '#ffffff', opacity: .3 }), g = new THREE.Group(); g.add(new THREE.Mesh(trG, mat), new THREE.Mesh(trG2, mat)); g.visible = false; g.userData = { mat, a: [0, 0, 0], d: [0, 0, 1], L: 0, age: 0, s0: 0, len: 1, op: .3 }; return add(g); }); X.trN = 0;
     const spG = new THREE.BoxGeometry(.035, .035, .035);
     X.sparks = Array.from({ length: 70 }, () => { const m = add(new THREE.Mesh(spG, new THREE.MeshBasicMaterial({ color: '#ffd28a' }))); m.visible = false; m.userData = { t: 0, v: [0, 0, 0] }; return m; }); X.spN = 0;
     const markT = canvasTex(64, 64, g => { const rg = g.createRadialGradient(32, 32, 2, 32, 32, 30); rg.addColorStop(0, 'rgba(10,10,10,.95)'); rg.addColorStop(.25, 'rgba(20,18,16,.8)'); rg.addColorStop(.5, 'rgba(60,54,48,.35)'); rg.addColorStop(1, 'rgba(60,54,48,0)'); g.fillStyle = rg; g.fillRect(0, 0, 64, 64); });
@@ -42,8 +45,12 @@
   }
   on('shot', (f, S, first) => {
     if (!X || !ready) return; const mine = f === me(), mz = muzzleOf(f), G = gun(f);
-    const tr = X.tracers[X.trN++ % X.tracers.length], L = Math.hypot(S.end[0] - mz[0], S.end[1] - mz[1], S.end[2] - mz[2]);
-    tr.position.set(mz[0], mz[1], mz[2]); tr.lookAt(S.end[0], S.end[1], S.end[2]); tr.scale.set(1, 1, Math.max(.1, L)); tr.visible = L > 1.5; tr.userData.t = .07; tr.material.opacity = mine ? .5 : .85;
+    // your own streaks start a few metres out and are faint; your rival's are a little clearer so you can tell where fire comes from. Shotguns show a few pellets, not all
+    const L = Math.hypot(S.end[0] - mz[0], S.end[1] - mz[1], S.end[2] - mz[2]), s0 = mine ? 3.5 : .6;
+    if (L > s0 + 1 && !(G.pel > 1 && Math.random() > .3)) { const tr = X.tracers[X.trN++ % X.tracers.length], u = tr.userData;
+      u.a = [mz[0], mz[1], mz[2]]; u.d = [(S.end[0] - mz[0]) / L, (S.end[1] - mz[1]) / L, (S.end[2] - mz[2]) / L]; u.L = L; u.age = 0; u.s0 = s0; u.len = mine ? 1.4 : 2.2; u.w = mine ? .005 : .008; u.op = mine ? (G.sil ? .08 : .14) : (G.sil ? .16 : .3);
+      tr.position.set(mz[0], mz[1], mz[2]); tr.lookAt(S.end[0], S.end[1], S.end[2]); tr.visible = false; tr.userData.live = true; }
+    if (first && mine) X.recV = (X.recV || 0) + 2.2 * (VKICK[G.cat] || 1) * (f.scoped ? .55 : 1);
     if (first) { X.muzzle.position.set(mz[0], mz[1], mz[2]); X.muzzle.intensity = G.sil ? 1.2 : 4; if (mine) { X.flashT = G.sil ? .025 : .05; X.ejects.push({ k: G.k, t: G.k === 'breaker' ? .3 : G.k === 'longbow' || G.k === 'kite' ? .6 : .01 }); } }
     if (S.hit) { const c = (OPS[S.hit.f.op] || OPS.vex).col; for (let i = 0; i < 5; i++) spark(S.end, [rnd(-1.5, 1.5), rnd(-.5, 2), rnd(-1.5, 1.5)], S.hit.head ? '#fff3c4' : c, .28); }
     else if (S.dist < 139) {
@@ -56,6 +63,8 @@
   on('boom', (x, z) => { if (X && ready) { X.boom.position.set(x, .5, z); X.boom.visible = true; X.boomT = .7; X.shake = .5; X.flashL.position.set(x, 2, z); X.flashL.intensity = 30; } });
   on('round', () => { if (X && ready) for (const m of X.marks) m.visible = false; });
   on('land', f => { if (X && M && f === me()) X.dip = .09; });
+  on('dry', f => { if (X && M && f === me()) X.dryT = .16; });
+  const VKICK = { Sidearm: 1.25, SMG: .7, Rifle: 1, Sniper: 2.2, Shotgun: 1.9, Heavy: .8 };   // how hard each class kicks in your hands
 
   function renderFrame(dt) {
     if (!X || !ready) return; const cam = X.camera; X.t += dt; tunePixels(dt); X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016;
@@ -75,15 +84,29 @@
     const fov = 2 * Math.atan(Math.tan(BASE_FOV * D2R / 2) / zoomOf(P)) / D2R; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
 
     // your gun
-    if (X.viewKey !== G.k + P.op) { if (X.viewGun) X.view.remove(X.viewGun); X.viewGun = viewGun(G.k, P.op); if (G.melee) X.viewGun.scale.setScalar(1.35); X.view.add(X.viewGun); X.viewKey = G.k + P.op; X.viewGun.add(X.mflash); X.drawT = .3; }
-    X.drawT = Math.max(0, (X.drawT || 0) - dt); const dr = X.drawT / .3, sway = Math.sin(X.t * 1.3) * .004;
-    const v = Math.hypot(P.vx, P.vz), bob = Math.sin(P.walkT * 1.9) * .012 * Math.min(1, v / 4), rel = P.reloadT > 0 ? Math.sin(Math.min(1, 1 - P.reloadT / G.rel) * Math.PI) : 0, VO = VOS[G.k] || [.2, -.2, -.28];
+    if (X.viewKey !== G.k + P.op) { if (X.viewGun) X.view.remove(X.viewGun); X.viewGun = viewGun(G.k, P.op); if (G.melee) X.viewGun.scale.setScalar(1.35); X.view.add(X.viewGun); X.viewKey = G.k + P.op; X.viewGun.add(X.mflash); X.drawD = Math.max(.35, (G.equip || .75) * .7); X.drawT = X.drawD; X.recP = X.recV = 0; }
+    // drawing: the gun comes up from below, then the class's chambering action (slide, charging handle, pump, bolt, cylinder; the knife flips)
+    X.drawT = Math.max(0, (X.drawT || 0) - dt); const dq = 1 - X.drawT / (X.drawD || .35), raise = X.drawT > 0 ? 1 - sm(cl(dq / .5, 0, 1)) : 0, chamber = X.drawT > 0 && dq > .42 ? cl((dq - .42) / .52, 0, 1) : -1;
+    // recoil on a spring: each shot kicks it, it settles by itself (sub-stepped so a slow frame cannot blow it up)
+    for (let n = Math.ceil(dt / .008), i = 0; i < n; i++) { const h = dt / n; X.recV = (X.recV || 0) + (-420 * (X.recP || 0) - 30 * X.recV) * h; X.recP = (X.recP || 0) + X.recV * h; }
+    X.recP = cl(X.recP, -.08, .22); const rk = X.recP;
+    const v = Math.hypot(P.vx, P.vz), mv = Math.min(1, v / 4), sway = Math.sin(X.t * 1.3) * .004, swayX = Math.sin(X.t * .65) * .003, VO = VOS[G.k] || [.2, -.2, -.28];
+    X.runK = lp(X.runK || 0, v > 3.6 && P.fireT < -.2 && P.reloadT <= 0 && !P.scoped && P.ground ? 1 : 0, Math.min(1, dt * 6));   // running: the gun drops and turns in
+    X.air = lp(X.air || 0, P.ground ? 0 : cl(-P.vy * .006, -.03, .03), Math.min(1, dt * 10));   // jumping: it lags up, then down
+    X.dryT = Math.max(0, (X.dryT || 0) - dt); const dry = Math.sin(X.dryT / .16 * Math.PI) * (X.dryT > 0 ? 1 : 0);
+    const bob = Math.sin(P.walkT * 1.9) * .012 * mv * (1 + X.runK * .6), bobX = Math.cos(P.walkT * .95) * .008 * mv;
+    // reloading: tip the gun to show the work, a jolt when the fresh magazine seats
+    const rt = P.reloadT > 0 ? 1 - P.reloadT / G.rel : -1, tilt = rt < 0 ? 0 : sm(cl(rt / .14, 0, 1)) * (1 - sm(cl((rt - .88) / .12, 0, 1))), seat = rt > .76 && rt < .84 ? Math.sin((rt - .76) / .08 * Math.PI) : 0;
+    // how each kind is held to reload: [left, up, roll, turn]. Magazine guns come up and in so the swap happens on screen
+    const RH = G.k === 'breaker' ? [.045, .07, -.75, .3] : G.cat === 'Sidearm' ? [.04, .06, -.4, .3] : G.cat === 'Sniper' ? [.07, .09, .35, .2] : [.1, .13, -.62, .34];
     const turn = cl(angDiff(P.yaw, X.lastYaw == null ? P.yaw : X.lastYaw) / Math.max(dt, .001) * .006, -.05, .05); X.lastYaw = P.yaw; X.lag = lp(X.lag || 0, turn, Math.min(1, dt * 10));   // the gun trails a turn slightly
     X.view.visible = P.alive && !(P.scoped && G.scope);
-    X.view.position.set(VO[0] + bob - rel * .05 + X.lag * .5, VO[1] + Math.abs(bob) * .6 + sway + rel * .1 - P.kick * .2 - dr * dr * .25 - X.dip * .5, VO[2] + P.kick * .8);
-    X.view.rotation.set(P.kick * 1.4 + rel * .12 - dr * .6, .02 + rel * .3 + X.lag, -rel * .55 + dr * .3 + X.lag * .6);
+    X.view.position.set(VO[0] + bobX + swayX + X.lag * .5 - tilt * RH[0] - X.runK * .03, VO[1] + Math.abs(bob) * .6 + sway + tilt * RH[1] + seat * .012 - rk * .22 - raise * raise * .3 - X.dip * .5 - X.runK * .035 + X.air, VO[2] + rk * .9 + raise * .05 + X.runK * .02);
+    X.view.rotation.set(rk * 1.6 + tilt * .12 + seat * .05 - raise * .7 - X.runK * .14 - dry * .035, .02 + tilt * RH[3] + X.lag + X.runK * .38, tilt * RH[2] + raise * .35 + X.lag * .6 + X.runK * .26);
     X.mflash.position.set(0, .025, -(X.viewGun.userData.len || .5) - .03); X.mflash.visible = X.flashT > 0 && !G.melee; X.mflash.rotation.z = Math.random() * 3; X.mflash.scale.setScalar(G.cat === 'Sniper' || G.cat === 'Shotgun' ? 1.5 : G.cat === 'Sidearm' ? .8 : 1);
-    viewAnim(P, G, dt);
+    viewAnim(P, G, dt, { draw: chamber, insp: X.inspT > 0 ? 1 - X.inspT / 2.6 : -1 });
+    { const pb = X.viewGun.userData.parts.boltL; if (pb) { X.view.rotation.z += pb.rotation.z * .14; X.view.position.y -= pb.rotation.z * .012; } }   // working a bolt rolls the rifle
+    X.viewGun.rotation.z = G.melee && X.drawT > 0 ? (1 - sm(cl(dq, 0, 1))) * TAU : 0;   // the knife flips into the hand
     if (G.melee) { X.view.rotation.x += .28; X.view.rotation.y += .5; X.view.rotation.z -= .2; }
     if (P.swing) {
       const d = P.swing.heavy ? .55 : .32, q = Math.min(1, P.swing.t / d);
@@ -94,7 +117,7 @@
     if (X.inspT > 0) { if (P.reloadT > 0 || P.kick > 0) X.inspT = 0; else X.inspT -= dt; }
     if (X.inspT > 0) { const q = 1 - X.inspT / 2.6, e = smooth(cl(Math.sin(q * Math.PI) * 1.6, 0, 1)), tw = Math.sin(q * TAU) * e; X.view.position.x -= e * .03; X.view.position.y += e * .035; X.view.position.z -= e * .1; X.view.rotation.y += e * .85; X.view.rotation.z += e * .3 + tw * .25; X.view.rotation.x += tw * .15; }
     X.adsK = lp(X.adsK || 0, P.scoped && !G.scope && P.alive ? 1 : 0, Math.min(1, dt * 16));
-    if (X.adsK > .001) { const a = X.adsK, sy = X.viewGun.userData.sight || .09; X.view.position.x = lp(X.view.position.x, 0, a); X.view.position.y = lp(X.view.position.y, -sy - P.kick * .05, a); X.view.position.z = lp(X.view.position.z, VO[2] - .03 + P.kick * .5, a); X.view.rotation.y = lp(X.view.rotation.y, 0, a); X.view.rotation.z = lp(X.view.rotation.z, 0, a); X.view.rotation.x = lp(X.view.rotation.x, P.kick * .5, a); }
+    if (X.adsK > .001) { const a = X.adsK, sy = X.viewGun.userData.sight || .09; X.view.position.x = lp(X.view.position.x, 0, a); X.view.position.y = lp(X.view.position.y, -sy - rk * .05, a); X.view.position.z = lp(X.view.position.z, VO[2] - .03 + rk * .5, a); X.view.rotation.y = lp(X.view.rotation.y, 0, a); X.view.rotation.z = lp(X.view.rotation.z, 0, a); X.view.rotation.x = lp(X.view.rotation.x, rk * .5, a); }
     if (X.flashT > 0) X.flashT -= dt;
 
     // the rival
@@ -109,14 +132,17 @@
     if (M.planted) { const C = M.planted, lit = !M.defused && C.beep > Math.max(.06, cl(C.t / 12, .12, 1) - .08); X.charge.position.set(C.x, C.y, C.z); X.chargeLamp.material.color.set(M.defused ? YOU : lit ? WARN : '#401018'); X.chargePL.intensity = lit ? 2.4 : 0; }
     const fl = M.flares[0]; X.flareBall.visible = !!fl; if (fl) X.flareBall.position.set(fl.x, fl.y, fl.z);
     // tracers, sparks, lights fading
-    for (const t of X.tracers) if (t.visible && (t.userData.t -= dt) <= 0) t.visible = false;
+    for (const t of X.tracers) { const u = t.userData; if (!u.live) continue; u.age += dt;
+      const head = Math.min(u.L, u.s0 + 620 * u.age), tail = Math.max(u.s0, head - u.len);
+      if (head - tail < .05 || u.age > .25) { u.live = false; t.visible = false; continue; }
+      t.visible = true; t.position.set(u.a[0] + u.d[0] * head, u.a[1] + u.d[1] * head, u.a[2] + u.d[2] * head); t.scale.set(u.w, u.w, head - tail); u.mat.opacity = u.op * (head >= u.L ? .5 : 1); }
     for (const s of X.sparks) if (s.visible) { const u = s.userData; if ((u.t -= dt) <= 0) { s.visible = false; continue; } u.v[1] -= 9 * dt; s.position.x += u.v[0] * dt; s.position.y += u.v[1] * dt; s.position.z += u.v[2] * dt; }
     X.muzzle.intensity = Math.max(0, X.muzzle.intensity - dt * 60); X.flashL.intensity = Math.max(0, X.flashL.intensity - dt * 50);
     if (X.boomT > 0) { X.boomT -= dt; const k = 1 - X.boomT / .7; X.boom.scale.setScalar(1 + k * 15); X.boom.material.opacity = .8 * (1 - k); X.boom.visible = X.boomT > 0; }
 
     X.renderer.render(X.scene, cam);
     if (X.view.visible) {   // your gun, over the world, with its own depth
-      X.vroot.position.copy(cam.position); X.vroot.quaternion.copy(cam.quaternion); updateCasings(dt); X.vmuzzle.intensity = X.flashT > 0 ? 3 : 0;
+      X.vroot.position.copy(cam.position); X.vroot.quaternion.copy(cam.quaternion); updateCasings(dt); updateDrops(dt); X.vmuzzle.intensity = X.flashT > 0 ? 3 : 0;
       const ac = X.renderer.autoClear; X.renderer.autoClear = false; X.renderer.clearDepth(); X.renderer.render(X.vscene, cam); X.renderer.autoClear = ac;
     }
   }

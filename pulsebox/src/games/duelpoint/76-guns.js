@@ -392,6 +392,7 @@
         T = parts.lhand = group(sup[0], sup[1], sup[2], pistolHold ? .3 : 0);
         rbox(.056, .018, .08, m.glove, 0, 0, 0, .007); rbox(.014, .044, .07, m.glove, -.032, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, m.glove, -.034, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, m.glove, .032, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002);
         arm(T, -.02, -.012, .034, .5, .55, pistolHold ? .38 : .55);
+        if (k === 'breaker') { const sh = vtube(.0095, -.021, .021, m.shell, 0, 0); sh.rotation.x = Math.PI / 2; sh.position.set(-.012, .03, 0); sh.userData.live = true; sh.visible = false; parts.hshell = sh; }
       }
       T = G;
     }
@@ -422,24 +423,51 @@
   // spent brass flying out of the ejection port (first person only)
   const CASE = { pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] }, CASEGEO = {};
   const VOS = { knife: [.15, -.15, -.31], pip: [.17, -.17, -.3], wasp: [.17, -.17, -.3], quill: [.17, -.17, -.3], stub: [.17, -.18, -.3], hammer: [.17, -.17, -.3], gnat: [.2, -.19, -.3], hornet: [.2, -.19, -.3], breaker: [.2, -.2, -.27], thresher: [.2, -.2, -.28], mako: [.2, -.2, -.28], paladin: [.21, -.21, -.27], vesper: [.2, -.2, -.28], lancer: [.2, -.2, -.28], kite: [.22, -.22, -.26], longbow: [.23, -.23, -.25], torrent: [.21, -.21, -.27] };
-  function viewAnim(P, G, dt) {
-    const U = X.viewGun.userData, pp = U.parts, A = P.ammo[G.k] || { mag: 0 }, sm = x => x * x * (3 - 2 * x);
+  /* The moving parts of a gun, for your own view (fp) and your rival's model alike. `ex` carries first-person extras:
+     draw (0..1 through the chambering at the end of a draw) and insp (0..1 through an inspect). A reload runs as phases of
+     r (0..1): magazine out and dropped, hand away for a fresh one, fresh one in and slapped home, then the bolt or slide. */
+  const sm = x => x * x * (3 - 2 * x);
+  function animParts(Gm, P, G, dt, fp, ex = {}) {
+    const U = Gm.userData, pp = U.parts, A = P.ammo[G.k] || { mag: 0 };
     const st = P.fireT > 0 ? 60 / G.rpm - P.fireT : 9, shotT = st >= 0 ? st : 9, r = P.reloadT > 0 ? 1 - P.reloadT / G.rel : -1, win = (a, b) => cl((r - a) / (b - a), 0, 1);
-    if (pp.slide) pp.slide.position.z = Math.max(shotT < .08 ? (1 - shotT / .08) * .03 : 0, A.mag === 0 && r < 0 ? .03 : 0);
-    if (pp.bolt) pp.bolt.position.z = (shotT < .05 ? (1 - shotT / .05) * .012 : 0) + (r > .82 ? Math.sin(win(.82, .97) * Math.PI) * .05 : 0);
-    if (pp.pump) { const s = cl((shotT - .16) / .36, 0, 1); pp.pump.position.z = Math.sin(s * Math.PI) * .085 + (r > .85 ? Math.sin(win(.85, 1) * Math.PI) * .085 : 0); }
-    if (pp.boltL) { const s = cl((shotT - (G.k === 'kite' ? .12 : .28)) / (G.k === 'kite' ? .45 : .8), 0, 1), s2 = r > .8 ? win(.8, 1) : 0, q = Math.max(s, s2), lift = q <= 0 || q >= 1 ? 0 : q < .2 ? q / .2 : q > .8 ? (1 - q) / .2 : 1, back = q < .2 || q > .8 ? 0 : Math.sin((q - .2) / .6 * Math.PI); pp.boltL.rotation.z = sm(cl(lift, 0, 1)) * 1.1; pp.boltL.position.z = pp.boltL.userData.z0 + back * .075; }
-    if (pp.cyl) { const want = (G.mag - A.mag) * TAU / 6; pp.cyl.rotation.z += (want - pp.cyl.rotation.z) * Math.min(1, dt * 22); }
-    if (pp.brk) pp.brk.rotation.x = -(r < 0 ? 0 : sm(win(.05, .25)) * (1 - sm(win(.8, .95)))) * .75;
-    let magOut = 0;
-    if (pp.mag) { magOut = r < 0 ? 0 : r < .3 ? sm(win(.1, .3)) : r < .55 ? 1 : 1 - sm(win(.55, .8)); pp.mag.position.y = pp.mag.userData.p0.y - magOut * .34; pp.mag.position.z = pp.mag.userData.p0.z + magOut * .05; pp.mag.rotation.x = (G.cat === 'Sidearm' ? -.25 : G.k === 'hornet' || G.k === 'gnat' ? .05 : 0) + magOut * .5; }
+    const dq = ex.draw == null ? -1 : ex.draw, rack = dq < 0 ? 0 : Math.sin(sm(dq) * Math.PI), iq = ex.insp == null ? -1 : ex.insp, ib = iq < 0 ? 0 : sm(cl(Math.sin(cl((iq - .3) / .45, 0, 1) * Math.PI) * 1.4, 0, 1));
+    if (pp.slide) pp.slide.position.z = Math.max(shotT < .08 ? (1 - shotT / .08) * .03 : 0, A.mag === 0 && r < 0 ? .03 : 0, rack * .032, ib * .012, r > .86 ? Math.sin(win(.86, .97) * Math.PI) * .03 : 0);
+    if (pp.bolt) pp.bolt.position.z = (shotT < .05 ? (1 - shotT / .05) * .012 : 0) + (r > .82 ? Math.sin(win(.82, .97) * Math.PI) * .05 : 0) + rack * .05;
+    if (pp.pump) { const s = cl((shotT - .16) / .36, 0, 1); pp.pump.position.z = Math.max(Math.sin(s * Math.PI) * .085, r > .85 ? Math.sin(win(.85, 1) * Math.PI) * .085 : 0, rack * .085, ib * .04); }
+    if (pp.boltL) { const s = cl((shotT - (G.k === 'kite' ? .12 : .28)) / (G.k === 'kite' ? .45 : .8), 0, 1), s2 = r > .8 ? win(.8, 1) : 0, s3 = dq < 0 ? 0 : cl(dq, 0, .999), q = Math.max(s, s2, s3), lift = q <= 0 || q >= 1 ? 0 : q < .2 ? q / .2 : q > .8 ? (1 - q) / .2 : 1, back = q < .2 || q > .8 ? 0 : Math.sin((q - .2) / .6 * Math.PI);
+      pp.boltL.rotation.z = Math.max(sm(cl(lift, 0, 1)), ib) * 1.1; pp.boltL.position.z = pp.boltL.userData.z0 + back * .075; }
+    if (pp.cyl) { // swings out to the left to load, spins shut; turns a chamber each shot
+      const o = r < 0 ? 0 : sm(win(.04, .16)) * (1 - sm(win(.84, .95))), want = (G.mag - A.mag) * TAU / 6 + (r > 0 ? sm(win(.25, .8)) * TAU * 2 : 0) + (dq > 0 ? sm(dq) * TAU : 0) + (iq > 0 ? sm(cl((iq - .3) / .5, 0, 1)) * TAU * 3 : 0);
+      pp.cyl.rotation.z += (want - pp.cyl.rotation.z) * Math.min(1, dt * 22); pp.cyl.position.x = pp.cyl.userData.p0.x - o * .036; pp.cyl.position.y = pp.cyl.userData.p0.y - o * .012; pp.cyl.rotation.y = -o * .25; }
+    if (pp.brk) pp.brk.rotation.x = -Math.max(r < 0 ? 0 : sm(win(.05, .25)) * (1 - sm(win(.8, .95))), dq < 0 ? 0 : (1 - sm(cl(dq * 1.6, 0, 1))) * .8, ib * .5) * .75;
+    let gone = false;
+    if (pp.mag) {   // out a little, gone (dropped), a fresh one rises from below and is pushed home
+      const y0 = pp.mag.userData.p0.y, z0 = pp.mag.userData.p0.z, tilt0 = G.cat === 'Sidearm' ? -.25 : G.k === 'hornet' || G.k === 'gnat' ? .05 : 0;
+      let out = 0; if (r >= 0) out = r < .22 ? sm(win(0, .22)) * .09 : r < .42 ? .36 : r < .78 ? lp(.36, 0, sm(win(.42, .78))) : 0;
+      out = Math.max(out, ib * .05); gone = r >= .22 && r < .42;
+      if (fp && gone && !P._dropped) { P._dropped = 1; dropMag(pp.mag); } if (r < .2) P._dropped = 0;
+      pp.mag.visible = !gone; pp.mag.position.y = y0 - out; pp.mag.position.z = z0 + Math.min(out, .09) * .4; pp.mag.rotation.x = tilt0 + Math.min(out, .09) * 3;
+    }
     if (pp.lhand && G.cat !== 'Sidearm') {
       const p0 = pp.lhand.userData.p0; let h = 0, tx = p0.x, ty = p0.y, tz = p0.z;
-      if (G.k === 'breaker') { h = r < 0 ? 0 : sm(win(.05, .2)) * (1 - sm(win(.85, 1))); tx = -.005; ty = -.06 + Math.sin(r * Math.PI * 10) * .018; tz = -.06; }
-      else if (pp.mag) { h = r < 0 ? 0 : sm(win(.38, .55)) * (1 - sm(win(.78, .9))); const mp = pp.mag.position; tx = mp.x - .01; ty = mp.y - .06; tz = mp.z; }
-      pp.lhand.position.set(lp(p0.x, tx, h), lp(p0.y, ty, h), lp(p0.z, tz, h));
+      if (G.k === 'breaker') { h = r < 0 ? 0 : sm(win(.05, .2)) * (1 - sm(win(.85, 1))); const ph = (r * 5) % 1; tx = -.005; ty = -.075 + Math.sin(ph * Math.PI) * .03; tz = -.06 - ph * .02; if (pp.hshell) pp.hshell.visible = h > .5 && ph < .55; }
+      else if (pp.mag && r >= 0) { h = sm(win(.12, .22)) * (1 - sm(win(.82, .92))); const mp = pp.mag.position; tx = mp.x - .01; ty = mp.y - .06 + (r > .76 && r < .84 ? Math.sin(win(.76, .84) * Math.PI) * .03 : 0); tz = mp.z; }
+      else if (pp.pump) tz = p0.z + pp.pump.position.z;   // the support hand works the pump
+      if (pp.hshell && G.k !== 'breaker') pp.hshell.visible = false; else if (pp.hshell && r < 0) pp.hshell.visible = false;
+      pp.lhand.position.set(lp(p0.x, tx, h), lp(p0.y, ty, h), h > 0 ? lp(p0.z, tz, h) : tz);
     }
     if (pp.counter && pp.counter.last !== A.mag) { const { c, t } = pp.counter, g = c.getContext('2d'); pp.counter.last = A.mag; g.fillStyle = '#05080c'; g.fillRect(0, 0, 64, 44); const low = A.mag <= G.mag * .25; g.fillStyle = low ? WARN : GUNS[G.k].col; g.font = '700 30px "Chakra Petch", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(A.mag).padStart(2, '0'), 32, 20); g.fillRect(6, 38, 52 * A.mag / G.mag, 3); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(6 + 52 * A.mag / G.mag, 38, 52 * (1 - A.mag / G.mag), 3); t.needsUpdate = true; }
+  }
+  function viewAnim(P, G, dt, ex) { animParts(X.viewGun, P, G, dt, true, ex); }
+  // the spent magazine: a copy falls away and tumbles out of view
+  function dropMag(mag) {
+    if (!X.drops) X.drops = []; X.vroot.updateMatrixWorld(true);
+    const m = mag.clone(), inv = new THREE.Matrix4().copy(X.vroot.matrixWorld).invert(), mw = new THREE.Matrix4().multiplyMatrices(inv, mag.matrixWorld);
+    mw.decompose(m.position, m.quaternion, m.scale); m.visible = true; X.vroot.add(m); X.drops.push({ m, t: .9, v: [-.15 + R() * .1, -.4, .15], s: [rnd(-4, 4), rnd(-2, 2), rnd(-5, 5)] });
+  }
+  function updateDrops(dt) {
+    if (!X.drops) return;
+    X.drops = X.drops.filter(d => { d.t -= dt; d.v[1] -= 6 * dt; d.m.position.x += d.v[0] * dt; d.m.position.y += d.v[1] * dt; d.m.position.z += d.v[2] * dt; d.m.rotation.x += d.s[0] * dt; d.m.rotation.y += d.s[1] * dt; d.m.rotation.z += d.s[2] * dt; if (d.t <= 0) { X.vroot.remove(d.m); return false; } return true; });
   }
   function updateCasings(dt) {
     if (!X.casings) X.casings = []; if (!X.ejects) X.ejects = [];
