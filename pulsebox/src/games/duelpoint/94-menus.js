@@ -12,7 +12,7 @@
     const u = uiScale(), h = tapH(44, 38); tx(g, label, x, y + h / 2, 17 * u, BONE, 'left'); if (note) tx(g, note, x + w * .42, y + h / 2, 12 * u, DIM, 'left');
     btn(g, x + w - 96 * u, y + 3 * u, 96 * u, h - 6 * u, on ? 'ON' : 'OFF', () => { set(!on); saveAll(); }, { on, fill: YOU, px: 16 * u });
   }
-  const choice = (g, x, y, w, h, opts, cur, set) => opts.forEach(([v, label], i) => { const bw = (w - (opts.length - 1) * 8) / opts.length; btn(g, x + i * (bw + 8), y, bw, h, label, () => { set(v); saveAll(); }, { on: cur === v, fill: YOU, px: h * .36 }); });
+  const choice = (g, x, y, w, h, opts, cur, set) => opts.forEach(([v, label], i) => { const bw = (w - (opts.length - 1) * 8) / opts.length; btn(g, x + i * (bw + 8), y, bw, h, label, () => { set(v); saveAll(); }, { on: cur === v, fill: YOU, px: Math.min(h * .36, bw * 1.5 / Math.max(5, label.length)) }); });
 
   function drawMenu(g) {
     const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale(), m = 36 * Math.min(u, 1.3), x0 = V.x0 + m + 44 / pxPer(), touch = isTouch();
@@ -28,7 +28,7 @@
       const x = x0 + i * (cw + 14), on = CFG.op === k, hot = zone(x, top, cw, chh, () => { CFG.op = k; saveAll(); click(); });
       rr(g, x, top, cw, chh, 10, on ? 'rgba(20,26,36,.95)' : 'rgba(20,26,36,.7)', on ? o.col : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.16)', on ? 3 : 2);
       g.fillStyle = o.col; g.fillRect(x, top, cw, 6 * u);
-      tx(g, o.n, x + 18 * u, top + 40 * u, 30 * u, on ? o.col : BONE, 'left'); tx(g, o.role.toUpperCase(), x + cw - 16 * u, top + 40 * u, 12 * u, DIM, 'right');
+      tx(g, o.n, x + 18 * u, top + 40 * u, Math.min(30 * u, cw * .13), on ? o.col : BONE, 'left'); if (cw > 250 * u) tx(g, o.role.toUpperCase(), x + cw - 16 * u, top + 40 * u, 12 * u, DIM, 'right');
       let y = top + 84 * u;
       for (const [key, a] of [['Q', o.q], ['E', o.e]]) { rr(g, x + 18 * u, y - 15 * u, 30 * u, 30 * u, 5, null, o.col); tx(g, key, x + 33 * u, y, 15 * u, o.col); tx(g, a.n.toUpperCase(), x + 60 * u, y, 17 * u, BONE, 'left'); y = para(g, a.d, x + 18 * u, y + 32 * u, cw - 36 * u, 13.5 * u, '#b9c0cc') + 18 * u; }
       if (on) tx(g, 'SELECTED', x + cw / 2, top + chh - 20 * u, 12 * u, o.col);
@@ -78,7 +78,7 @@
   function drawArmory(g) {
     const V = K.view, W = V.x1 - V.x0, u = uiScale(), P = me(), sp = P.spent, x = V.x0 + 20 * u, w = W - 40 * u, y0 = V.y0 + 56 * Math.min(u, 1.15), h = V.y1 - y0 - 10 * u, gap = 7 * Math.min(u, 1.2);
     rr(g, x, y0, w, h, 12, 'rgba(12,16,22,.95)', 'rgba(239,233,220,.25)');
-    tx(g, 'ARMORY', x + 18 * u, y0 + 24 * u, 24 * u, BONE, 'left'); tx(g, `◈ ${P.credits}`, x + w - 18 * u, y0 + 24 * u, 23 * u, GOLD, 'right');
+    const pad = isTouch() ? 46 / pxPer() : 0; tx(g, 'ARMORY', x + 18 * u + pad, y0 + 24 * u, 24 * u, BONE, 'left'); tx(g, `◈ ${P.credits}`, x + w - 18 * u - pad, y0 + 24 * u, 23 * u, GOLD, 'right');
     tx(g, M.mode === 'range' ? 'Everything is free on the range' : `Round starts in ${Math.max(0, Math.ceil(M.t))}`, x + w / 2, y0 + 24 * u, 14 * u, DIM);
     const by = y0 + 46 * u, bh = y0 + h - by - 12 * u, hh = fitPx(g, 12 * u) * 1.7, cw = (w - 28 * u - 4 * gap) / 5, ch = (bh - hh - 4 * gap) / 5; let focus = null;
     const card = (it, cx, cy) => {

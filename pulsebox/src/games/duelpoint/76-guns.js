@@ -111,6 +111,8 @@
         mat = DECAL[key] = new THREE.MeshStandardMaterial({ map: t, transparent: true, roughness: .6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }); }
       for (const s of [1, -1]) add(new THREE.PlaneGeometry(w, h), mat, sx * s, y, z, 0, s * Math.PI / 2, 0);
     };
+    // vented shroud: holes kept round by scaling the pattern to the tube (8 rows round it, one every 2.4 cm along it)
+    const vent = L => { const key = 'vent' + Math.round(L * 1000); if (!GMAT[key]) { const t = gunTex().holes.clone(); t.needsUpdate = true; t.repeat.set(4, Math.max(2, Math.round(L / .024))); GMAT[key] = new THREE.MeshStandardMaterial({ color: '#ffffff', map: t, metalness: .7, roughness: .4, envMap: X && X.env, envMapIntensity: .8 }); } return GMAT[key]; };
     const group = (x, y, z, rx = 0) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.x = rx; g.userData.p0 = g.position.clone(); G.add(g); return g; };
     // sights and gadgets
     const holo = (z, y) => {   // a window sight: hooded frame, glass, a ring reticle
@@ -181,10 +183,10 @@
       pin(-.012, .07, hw * 2); pin(-.012, -.07, hw * 2); pin(-.02, .0, hw * 2, .003); rbox(.004, .007, .022, m.steel, -hw + .001, -.013, .034, .002, -.4); add(new THREE.CylinderGeometry(.005, .005, .004, 10), m.steel, hw - .001, -.016, -.058, 0, 0, Math.PI / 2);
       pistolGrip();
       // handguard
-      const hb = o.hg === 'oct' ? BY - .033 : o.hg === 'round' ? BY - .03 : -.032;
+      const hb = o.hg === 'oct' ? BY - .033 : o.hg === 'round' || o.hg === 'shroud' ? BY - .031 : -.032;
       if (o.hg === 'oct') { hull(oct(.05, .064, BY - .001, .015), hz, rf, o.hgMat || m.fin); for (let z = hz + .03; z < rf - .03; z += .045) for (const sx of [-1, 1]) { rbox(.004, .012, .028, m.rubber, sx * .0245, BY - .001, z, .002); rbox(.004, .01, .026, m.rubber, sx * .019, BY - .0275, z, .002, 0, sx * .78); } }
       else if (o.hg === 'round') { tube(.03, hz, rf, o.hgMat || m.fin, BY, 0, 20); ring(.03, .003, hz + .004, m.dark, BY); ring(.03, .003, rf - .004, m.dark, BY); for (let z = hz + .03; z < rf - .02; z += .042) for (let a = 0; a < 6; a++) { const t = a / 6 * TAU + .52; add(new THREE.CylinderGeometry(.006, .006, .004, 8), m.rubber, Math.cos(t) * .0295, BY + Math.sin(t) * .0295, z, 0, 0, t - Math.PI / 2); } }
-      else if (o.hg === 'shroud') { tube(.031, hz, rf, m.heat, BY, 0, 18); ring(.031, .0035, hz + .004, m.dark, BY); ring(.031, .0035, rf - .004, m.dark, BY); }
+      else if (o.hg === 'shroud') { tube(.031, hz, rf, vent(rf - hz), BY, 0, 18); ring(.031, .0035, hz + .004, m.dark, BY); ring(.031, .0035, rf - .004, m.dark, BY); }
       else { side([[rf, top - .004], [hz + .024, top - .004], [hz, top - .024], [hz, -.016], [hz + .02, -.032], [rf, -.032]], .052, o.hgMat || m.fin, 0, .008); for (let z = hz + .04; z < rf - .03; z += .048) for (const sx of [-1, 1]) rbox(.004, .012, .03, m.rubber, sx * .0258, .012, z, .002); }
       if (o.glow !== false) for (const sx of [-1, 1]) rbox(.0025, .005, (rf - hz) * .7, m.glow, sx * (o.hg === 'slab' ? .0262 : o.hg === 'oct' ? .0252 : .0302), o.hg === 'oct' ? BY - .016 : o.hg === 'slab' ? -.014 : BY, (hz + rf) / 2, .001);
       rail(o.hg === 'round' || o.hg === 'shroud' ? rf : hz + .012, rb - .016, top + .0035, hw > .03 ? .03 : .028);
@@ -194,7 +196,7 @@
       muzzle(o.tip, mz, BY, br, o.sl);
       // stock
       const sb = rb;
-      if (o.stock === 'ar') { tube(.0145, sb, sb + .2, m.metal, .026); side([[sb + .07, .052], [sb + .28, .056], [sb + .295, .05], [sb + .3, -.066], [sb + .286, -.078], [sb + .22, -.05], ['q', sb + .13, -.014, sb + .07, .0]], .04, m.poly, 0, .009, [[[sb + .19, .012], [sb + .25, -.03], [sb + .268, -.022], [sb + .268, .02]]]); rbox(.043, .13, .016, m.rubber, 0, -.01, sb + .303, .006); rbox(.03, .014, .1, o.cheek || m.fin, 0, .063, sb + .19, .005); }
+      if (o.stock === 'ar') { tube(.0145, sb, sb + .2, m.metal, .026); side([[sb + .07, .052], [sb + .28, .056], [sb + .295, .05], [sb + .3, -.066], [sb + .286, -.078], [sb + .22, -.05], ['q', sb + .13, -.014, sb + .07, .0]], .04, m.poly, 0, .009, [[[sb + .19, .012], [sb + .25, -.03], [sb + .268, -.022], [sb + .268, .02]]]); rbox(.043, .13, .016, m.rubber, 0, -.01, sb + .303, .006); rbox(.03, .014, .1, o.cheek || m.fin, 0, .061, sb + .19, .005); }
       else if (o.stock === 'skel') { tube(.012, sb, sb + .27, m.metal, .034); side([[sb + .02, -.012], [sb + .27, -.062], [sb + .27, -.048], [sb + .02, .002]], .014, m.metal, 0, .004); rbox(.03, .135, .02, m.rubber, 0, -.008, sb + .28, .007); rbox(.026, .016, .12, o.cheek || m.fin, 0, .05, sb + .17, .006); }
       else if (o.stock === 'wire') { for (const sx of [-.016, .016]) tube(.0034, sb - .04, sb + (o.short ? .1 : .18), m.steel, .006, sx, 8); rbox(.04, .02, .024, m.metal, 0, .006, sb + .008, .005); rbox(.042, .07, .014, m.rubber, 0, -.008, sb + (o.short ? .104 : .184), .006); }
       else if (o.stock === 'fixed') { side([[sb, .05], [sb + .25, .058], [sb + .27, .05], [sb + .27, -.068], [sb + .25, -.076], [sb + .13, -.05], ['q', sb + .05, -.03, sb, -.02]], .042, m.poly, 0, .009, [[[sb + .06, .03], [sb + .06, -.008], [sb + .19, -.042], [sb + .23, -.03], [sb + .23, .034]]]); rbox(.046, .13, .016, m.rubber, 0, -.008, sb + .277, .006); }
@@ -296,13 +298,13 @@
       add(new THREE.CylinderGeometry(.0265, .0265, .054, 24), m.metal, 0, 0, 0, Math.PI / 2); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; add(new THREE.CylinderGeometry(.008, .008, .034, 8), m.dark, Math.cos(a) * .0255, Math.sin(a) * .0255, -.011, Math.PI / 2); }
       T = G; sup = [-.016, -.1, .04];
     }
-    else if (k === 'gnat') { carbine({ len: .32, rf: -.16, hz: -.26, hg: 'shroud', br: .0105, tip: 'flash', stock: 'wire', short: 1, mag: 'stick', magL: .13, sight: 'holo', sightY: .099, fore: 'vgrip', backup: false, sideHandle: 1, glow: false }); decal('GNAT', 'SMG · 20 RD', .085, .021, .0236, .02, .05); }
-    else if (k === 'hornet') { carbine({ len: .52, rf: -.18, hz: -.27, hg: 'slab', hgMat: m.poly, upper: m.fin, lower: m.poly, br: .0115, tip: 'supp', sl: .25, stock: 'wire', mag: 'stick', magL: .17, sight: 'holo', sightY: .099, counter: 1, backup: false, sideHandle: 1 }); decal('HORNET', 'SMG · 30 RD', .1, .025, .0236, .028, .06); }
-    else if (k === 'mako') { carbine({ len: .7, hz: -.47, hg: 'round', br: .0115, tip: 'flash', stock: 'fixed', mag: 'curve', curve: .02, sight: 'prism', sightY: .1 }); decal('MAKO', 'BURST · 24 RD', .1, .025, .0236, .028, .06); }
-    else if (k === 'paladin') { carbine({ len: .9, hz: -.56, hg: 'oct', br: .0105, tip: 'brake', stock: 'thumb', mag: 'short', sight: 'dmr', sightY: .1, backup: false }); decal('PALADIN', 'DMR · 12 RD', .12, .03, .0236, .028, .06); }
-    else if (k === 'vesper') { carbine({ len: .84, hz: -.5, hg: 'oct', br: .012, tip: 'supp', sl: .32, stock: 'skel', mag: 'curve', curve: .034, sight: 'holo', sightY: .099, fore: 'angled', counter: 1 }); decal('VESPER', 'SUPPRESSED · 30', .12, .03, .0236, .028, .06); }
-    else if (k === 'lancer') { carbine({ len: .79, hz: -.53, hg: 'slab', br: .012, tip: 'brake', stock: 'ar', mag: 'curve', curve: .028, sight: 'holo', sightY: .099, fore: 'vgrip', counter: 1, laser: 1 }); decal('LANCER', 'DP-ARMS · 5.7', .12, .03, .0236, .028, .06); }
-    else if (k === 'torrent') { carbine({ len: .95, rf: -.25, hz: -.62, hg: 'shroud', wide: 1, br: .014, tip: 'brake', stock: 'heavy', mag: 'box', sight: 'holo', sightY: .099, counter: 1, sideHandle: 1, glow: false, upper: m.fin, lower: m.metal }); rbox(.016, .012, .16, m.dark, 0, .078, -.44, .004); for (const z of [-.37, -.51]) rbox(.012, .022, .012, m.dark, 0, .068, z, .003); for (const sx of [-.014, .014]) tube(.0045, -.84, -.64, m.poly, -.014, sx, 8); decal('TORRENT', 'LMG · 100 RD', .13, .033, .0316, .028, .06); sup = [0, -.02, -.42]; }
+    else if (k === 'gnat') { carbine({ len: .32, rf: -.16, hz: -.26, hg: 'shroud', br: .0105, tip: 'flash', stock: 'wire', short: 1, mag: 'stick', magL: .13, sight: 'holo', sightY: .099, fore: 'vgrip', backup: false, sideHandle: 1, glow: false }); decal('GNAT', 'SMG · 20 RD', .085, .021, .0236, .03, -.105); }
+    else if (k === 'hornet') { carbine({ len: .52, rf: -.18, hz: -.27, hg: 'slab', hgMat: m.poly, upper: m.fin, lower: m.poly, br: .0115, tip: 'supp', sl: .25, stock: 'wire', mag: 'stick', magL: .17, sight: 'holo', sightY: .099, counter: 1, backup: false, sideHandle: 1 }); decal('HORNET', 'SMG · 30 RD', .085, .021, .0236, .03, -.1); }
+    else if (k === 'mako') { carbine({ len: .7, hz: -.47, hg: 'round', br: .0115, tip: 'flash', stock: 'fixed', mag: 'curve', curve: .02, sight: 'prism', sightY: .1 }); decal('MAKO', 'BURST · 24 RD', .1, .025, .0236, .03, -.125); }
+    else if (k === 'paladin') { carbine({ len: .9, hz: -.56, hg: 'oct', br: .0105, tip: 'brake', stock: 'thumb', mag: 'short', sight: 'dmr', sightY: .1, backup: false }); decal('PALADIN', 'DMR · 12 RD', .12, .03, .0236, .03, -.125); }
+    else if (k === 'vesper') { carbine({ len: .84, hz: -.5, hg: 'oct', br: .012, tip: 'supp', sl: .32, stock: 'skel', mag: 'curve', curve: .034, sight: 'holo', sightY: .099, fore: 'angled', counter: 1 }); decal('VESPER', 'SUPPRESSED · 30', .12, .03, .0236, .03, -.125); }
+    else if (k === 'lancer') { carbine({ len: .79, hz: -.53, hg: 'slab', br: .012, tip: 'brake', stock: 'ar', mag: 'curve', curve: .028, sight: 'holo', sightY: .099, fore: 'vgrip', counter: 1, laser: 1 }); decal('LANCER', 'DP-ARMS · 5.7', .12, .03, .0236, .03, -.125); }
+    else if (k === 'torrent') { carbine({ len: .95, rf: -.25, hz: -.62, hg: 'shroud', wide: 1, br: .014, tip: 'brake', stock: 'heavy', mag: 'box', sight: 'holo', sightY: .099, counter: 1, sideHandle: 1, glow: false, upper: m.fin, lower: m.metal }); rbox(.016, .012, .16, m.dark, 0, .078, -.44, .004); for (const z of [-.37, -.51]) rbox(.012, .022, .012, m.dark, 0, .068, z, .003); for (const sx of [-.014, .014]) tube(.0045, -.84, -.64, m.poly, -.014, sx, 8); decal('TORRENT', 'LMG · 100 RD', .13, .033, .0316, .03, -.13); sup = [0, -.02, -.42]; }
     else if (k === 'breaker') shotgun({ len: .79 });
     else if (k === 'thresher') shotgun({ len: .66, auto: 1 });
     else if (k === 'kite') boltgun({ len: .95 });

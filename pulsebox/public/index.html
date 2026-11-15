@@ -280,6 +280,11 @@
   .stage { position: relative; width: 100%; background: #000; border: 1px solid var(--edge); border-radius: var(--r); overflow: hidden; box-shadow: 0 0 60px rgba(41,224,255,.08); }
   .stage iframe { display: block; width: 100%; height: 100%; border: 0; background: #000; }
   .stage:fullscreen { border: 0; border-radius: 0; }
+  .stage .imm-x { display: none; }
+  .stage.immersive { position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh; height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+  .stage.immersive.turned { left: 100vw; width: 100vh; width: 100dvh; height: 100vw; transform-origin: top left; transform: rotate(90deg); }
+  .stage.immersive .imm-x { display: grid; place-items: center; position: absolute; z-index: 3; top: 8px; right: 8px; width: 40px; height: 40px; border-radius: 12px; border: 0; background: rgba(0,0,0,.35); color: #fff; font: 700 20px/1 system-ui, sans-serif; }
+  body.imm { overflow: hidden; }
   .stage .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--lime); pointer-events: none; font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: .3em; transition: opacity .3s ease; }
   .stage .loading span { animation: blink 1s ease-in-out infinite; }
   .stage.ready .loading { opacity: 0; }
@@ -692,7 +697,7 @@
       <button class="btn bug-btn" id="pBug" type="button" title="Report a bug in this game">🐞 Report a bug</button>
       <button class="btn dark" id="pFull">Full screen</button>
     </div>
-    <div class="stage" id="stage"><div class="loading"><span>Loading…</span></div></div>
+    <div class="stage" id="stage"><div class="loading"><span>Loading…</span></div><button class="imm-x" id="immX" aria-label="Leave full screen">✕</button></div>
     <section class="next" id="pNext">
       <h2 class="outline-title section-label">Up next</h2>
       <div class="rail" id="pNextRail"></div>
@@ -1017,17 +1022,18 @@ const GAMES = [
     id: "duelpoint",
     title: "Duelpoint",
     category: "Action",
-    kind: "Action · 3D tactical shooter · Online 1v1",
-    tags: ["3D shooter", "1v1 online", "16 guns", "Knife & smokes"],
+    kind: "Action · 3D tactical shooter · Online 1v1 · Phone and desktop",
+    tags: ["3D shooter", "1v1 online", "16 guns", "Plays on phones"],
     badge: 'NEW',
     file: 'games/duelpoint.html',
     cover: 'media/duelpoint-cover.jpg',
     video: 'media/duelpoint-trailer.mp4',
     shots: ['media/duelpoint-shot1.jpg', 'media/duelpoint-shot2.jpg'],
     aspect: 16 / 9,
+    immersive: true,
     pitch: "One map. One rival. Every round counts.",
-    blurb: "A first-person tactical duel with precise gunplay. Your first bullet lands exactly where you aim when you stand still, moving throws you off, and a quick counter-strafe stops you dead for the shot. Sprays climb and sway, head hits hardest, damage drops with range. Sixteen guns across pistol rounds, eco rounds and full buys: sidearms, SMGs, shotguns, rifles, snipers and a machine gun, each with its own model, sights and moving parts. Carry a knife for silent backstabs and buy smoke grenades that bounce off walls and wall off a lane. Attack and plant the charge or defend the site, buy smart with your credits, pick from three operatives with two abilities each, and win five rounds against a bot or a friend online.",
-    how: ["Click to grab the mouse. WASD moves, mouse aims, left click shoots, right click aims down sights or scopes. 3 is your knife, G throws a smoke.", "Stand still for a perfect first shot. Tap the opposite direction to counter-strafe and stop instantly.", "B opens the armory: pistols on round 1, cheap guns when money is short, rifles on a full buy.", "Attack: hold F on the site to plant. Defend: hold F on the charge to defuse. First to 5 rounds."]
+    blurb: "A first-person tactical duel, rebuilt from the ground up. Attack and plant the charge on the ring, or defend it and defuse. The gunplay is exact: your first bullet lands on the crosshair when you stand still, moving throws it off, and a counter-strafe stops you dead for the shot. Sprays climb then sway, heads take the most, some guns fade with range. Sixteen guns across pistol rounds, cheap rounds and full buys, a knife, shields, and three operatives with two abilities each. Saltworks is a sea-side yard with three ways in: the long Pier, the Yard doorway and the roofed Tunnel. Play a bot on three difficulties, a friend online, or the practice range. On a phone it takes the whole screen with two-thumb controls, aim assist and auto-fire, and you can design your own crosshair.",
+    how: ["Mouse and keys: WASD, mouse to aim, click to shoot, right click to aim or scope, B for the armory, F to plant or defuse.", "Phone: left thumb moves, right thumb looks; auto-fire shoots when you are on target. Turn the phone sideways.", "Stand still to shoot straight. Tap the opposite direction to stop instantly. Burst at range.", "First to 5 rounds. Sides swap after round 4. Design your crosshair in the menu."]
   },
   {
     id: "lantern-keep",
@@ -2588,9 +2594,20 @@ function playQuietly(v) { try { const p = v.play(); if (p && p.catch) p.catch(()
 /* ============================================================
    PLAYING
    ============================================================ */
+// Games that need two thumbs and the whole screen (immersive: true) take over the viewport on a touch device. Phones
+// cannot always go truly full screen (iPhones cannot), so the stage is pinned over the page instead, and when the phone
+// is held upright it is turned a quarter turn: the player turns the phone and gets the full landscape screen either way.
+function immersiveOn() { return $('stage').classList.contains('immersive'); }
+function setImmersive(on) {
+  const st = $('stage'); st.classList.toggle('immersive', on); document.body.classList.toggle('imm', on); if (!on) st.classList.remove('turned');
+  if (on) { st.style.height = ''; fitImmersive(); try { const p = (st.requestFullscreen || st.webkitRequestFullscreen || (() => {})).call(st); if (p && p.then) p.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }).catch(() => {}); } catch (e) {} }
+  else { try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {} sizeStage(); }
+}
+function fitImmersive() { if (immersiveOn()) $('stage').classList.toggle('turned', window.innerHeight > window.innerWidth); }
 function sizeStage() {
   if (!current || $('playing').hidden) return;
   const st = $('stage');
+  if (immersiveOn()) { st.style.height = ''; fitImmersive(); return; }
   if (document.fullscreenElement === st) { st.style.height = ''; return; }
   const maxH = Math.max(320, window.innerHeight - 130);
   st.style.height = Math.round(Math.min(st.clientWidth / current.aspect, maxH)) + 'px';
@@ -2610,6 +2627,7 @@ function startGame(g) {
   f.src = g.file + (room ? '?room=' + room : '');
   $('pRoom').hidden = !room; if (room) { $('pRoom').textContent = `Room ${room} · copy invite`; $('pRoom').dataset.code = room; }
   st.prepend(f);
+  setImmersive(!!g.immersive && window.matchMedia('(pointer: coarse)').matches);
   requestAnimationFrame(sizeStage);
 }
 // the last few errors from the game that's open, so a bug report can include them
@@ -2625,7 +2643,7 @@ function watchErrors(f, id) {
 }
 window.pbxGameErrors = () => gameErrors.slice();
 window.pbxCurrentGame = () => current ? current.id : '';
-function stopGame() { const f = $('stage').querySelector('iframe'); if (f) f.remove(); }
+function stopGame() { const f = $('stage').querySelector('iframe'); if (f) f.remove(); if (immersiveOn()) setImmersive(false); }
 
 /* ============================================================
    PAGES: #game-id shows the game page, #play-game-id plays it
@@ -2765,6 +2783,7 @@ $('pFull').addEventListener('click', () => {
   if (!req) return fail();
   try { const p = req.call(st); if (p && p.catch) p.catch(fail); } catch (e) { fail(); }
 });
+$('immX').addEventListener('click', () => setImmersive(false));
 $('lightbox').addEventListener('click', () => { $('lightbox').hidden = true; });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') $('lightbox').hidden = true; });
 document.addEventListener('fullscreenchange', () => setTimeout(sizeStage, 50));

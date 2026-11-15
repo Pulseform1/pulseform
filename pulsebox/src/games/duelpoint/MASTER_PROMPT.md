@@ -172,4 +172,11 @@ damage tables, the economy, the knife, and whole bot matches for errors, stuck b
 
 ## Decisions made while building
 
-(Added as the work goes.)
+- **Smoke grenades stay out of the armory.** The only smoke is Vex's Veil ability; it is part of that operative's kit, not something either side buys.
+- **First-shot error is a fraction of a degree, not zero.** Standing still, a tapped first shot lands inside the crosshair's centre at any range a duel happens over; moving adds error, and counter-strafing removes it in about 50 ms instead of 150 ms.
+- **Fire rate is exact.** Leftover time between shots carries over, so a 600 rpm gun fires 600 rounds a minute at any frame rate; spray only recovers once the trigger has been released for 50 ms.
+- **The armory shows every weapon at once,** in class columns (sidearms; SMGs and shotguns; rifles; snipers and heavy; shields), with a detail panel for the one you point at.
+- **Guns and players were rebuilt from one kit each** rather than carried over. Guns share a silhouette/lathe/hull kit; players share one rig with per-operative heads and gear. Colours meant to be seen as picked are converted to linear light.
+- **Vented shrouds scale their hole pattern to their length,** decals sit forward of the ejection port and the round counter, so nothing overlaps.
+- **Phones play full-screen inside the hub.** On a touch device the hub drops its 16:9 strip and gives the game the whole screen, turned sideways if the phone is upright, with a close button top right.
+- **Gate opening moved two rows** so neither spawn can see the other or the site at the start of a round.
