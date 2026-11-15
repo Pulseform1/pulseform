@@ -16,7 +16,7 @@ head_sampling_rate = 1
 [assets]
 directory = "./dist"
 binding = "ASSETS"
-run_worker_first = ["/api/*"]
+run_worker_first = ["/api/*", "/elite/*"]
 not_found_handling = "404-page"
 html_handling = "auto-trailing-slash"
 
@@ -79,3 +79,12 @@ class_name = "Bugs"
 [[migrations]]
 tag = "v6"
 new_sqlite_classes = ["Bugs"]
+
+# PULSEBOX ELITE (elite.js): one global Durable Object keeps referral codes, referrals and Elite unlocks
+[[durable_objects.bindings]]
+name = "ELITE"
+class_name = "Elite"
+
+[[migrations]]
+tag = "v7"
+new_sqlite_classes = ["Elite"]

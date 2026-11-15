@@ -25,6 +25,8 @@
 //   GET  /api/room/CODE  (plain) -> { game, players }: which game the room is playing, so the hub can join by code alone
 // THE HOLLOW co-op: /api/hollow (WebSocket) goes to the HollowRooms Durable Object (hollow-rooms.js), which runs the game's own engine.
 // AFTERHOURS co-op: /api/arcade (WebSocket) goes to the ArcadeRooms Durable Object (arcade-rooms.js), which runs the five games' simulations.
+// PULSEBOX ELITE: /api/elite/* (elite.js) — referral codes, verified referrals and permanent Elite access, in the Elite Durable Object.
+import { elite } from './elite.js';
 const PROJECT = 'pulseform-d8282';
 const JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 const MAX_BYTES = 400000;
@@ -33,7 +35,8 @@ let keys = null, keysAt = 0;
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
 const b64url = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), c => c.charCodeAt(0));
 
-async function verify(token) {
+// the account behind a Firebase ID token: its claims (sub, email, email_verified, ...) if the token is genuine and current
+export async function verifyClaims(token) {
   const [h, p, s] = (token || '').split('.');
   if (!s) return null;
   const head = JSON.parse(new TextDecoder().decode(b64url(h))), claims = JSON.parse(new TextDecoder().decode(b64url(p)));
@@ -45,10 +48,11 @@ async function verify(token) {
   const ok = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, b64url(s), new TextEncoder().encode(h + '.' + p));
   const now = Date.now() / 1000;
   if (!ok || claims.aud !== PROJECT || claims.iss !== 'https://securetoken.google.com/' + PROJECT || !claims.sub || claims.exp < now || claims.iat > now + 300) return null;
-  // guest (anonymous) sign-ins can't keep a save
+  // guest (anonymous) sign-ins can't keep a save or join Elite
   if (claims.firebase && claims.firebase.sign_in_provider === 'anonymous') return null;
-  return claims.sub;
+  return claims;
 }
+async function verify(token) { const c = await verifyClaims(token); return c ? c.sub : null; }
 
 const ID_RE = /^[a-z0-9-]{2,40}$/;
 // Stats days run on US Eastern time (midnight to midnight in New York, daylight saving included): 'YYYY-MM-DD'
@@ -274,9 +278,10 @@ async function stats(request, env, ctx) {
 }
 
 // ids: the game ids the worker embeds from the hub's GAMES list (optional; without it only the id pattern is checked)
-export async function api(request, env, ctx, ids) {
+export async function api(request, env, ctx, ids, eliteCfg = { live: false }) {
   const url = new URL(request.url);
   if (url.pathname === '/api/play') return play(request, env, ids);
+  if (url.pathname.startsWith('/api/elite/') && env.ELITE) return elite(request, env, url, verifyClaims, eliteCfg);
   if (url.pathname === '/api/stats') return stats(request, env, ctx);
   if (url.pathname === '/api/view') return view(request, env);
   if (url.pathname === '/api/live') return live(request, env);

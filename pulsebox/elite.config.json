@@ -1,0 +1,5 @@
+{
+  "_help": "PULSEBOX ELITE switches. live: false shows 'Elite games coming soon' and keeps referrals off; true releases invites, referral counting and the Elite page. emailLink: true makes 'email me a sign-in link' the main way to sign in (turn on Email link sign-in in the Firebase console first). Elite games are the hub entries with elite: true in public/index.html.",
+  "live": false,
+  "emailLink": false
+}
