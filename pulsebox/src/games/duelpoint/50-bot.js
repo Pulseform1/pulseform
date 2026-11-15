@@ -9,6 +9,14 @@
     return c.length ? pick(c) : [x, z];
   }
   const goTo = (P, f, x, z) => { P.dest = [x, z]; P.path = findPath(f.x, f.z, x, z); };
+  function coverFrom(f, ex, ez, ey) {
+    let best = null, bd = 1e9;
+    for (const q of navCells) { const d = Math.hypot(q[0] - f.x, q[1] - f.z); if (d < 1.5 || d > 9 || d >= bd) continue;
+      const de = Math.hypot(q[0] - ex, q[1] - ez); if (de < 4) continue;
+      if (los(ex, ey, ez, q[0], hAt(q[0], q[1]) + 1.4, q[1], true) >= Math.hypot(de, ey - hAt(q[0], q[1]) - 1.4) - .3) continue;   // still seen there
+      if (!walkLine(f.x, f.z, q[0], q[1]) && d > 4) continue; best = q; bd = d; }
+    return best;
+  }
   function planAttack(f) {
     const lane = pick(['pier', 'split', 'mid', 'mid', 'tunnel', 'tunnel']);
     return { k: 'push', lane: lane === 'split' ? 'pier' : lane, pts: ROUTES[lane].map(p => [p[0], p[1]]), site: pick(SITE), path: [] };
@@ -43,12 +51,17 @@
     if (M.phase === 'buy') { if (!B.bought) { B.bought = true; botBuy(f); f.ready = true; } return I; }
     if (M.phase === 'end') return I;
     const side = sideOf(f), dE = Math.hypot(e.x - f.x, e.z - f.z), toE = yawTo(f.x, f.z, e.x, e.z);
-    if (B.ph == null) { B.ph = R() * 9; B.hp0 = f.hp; }
+    if (B.ph == null) { B.ph = R() * 9; B.hp0 = f.hp; B.rx = D.react; }
 
     // --- what it knows
     const sees = e.alive && (Math.abs(angDiff(toE, f.yaw)) < 1.1 || dE < 4) && canSee(f, e);
     if (sees) { B.seen = (B.seen || 0) + dt; B.last = { x: e.x, z: e.z, t: M.time }; B.lostT = 0; } else { B.seen = 0; B.lostT = (B.lostT || 0) + dt; }
     if (e.alive && !sees && ((e.step > 0 && dE < D.hear) || (e.kick > 0 && dE < 45) || e.reveal > 0)) B.last = { x: e.x, z: e.z, t: M.time, heard: true };
+    if (B.hitBy && M.time - B.hitBy.t < .05) { if (!sees) { B.last = { x: B.hitBy.x, z: B.hitBy.z, t: M.time, heard: true }; B.alarm = M.time; } if (B.err) { B.err[0] += rnd(-1, 1) * .035; B.err[1] += rnd(-.2, 1) * .03; } }   // shot: turn to it, and the hit throws the aim
+    // what it believes about where you are is a moment old: it aims at that, so moving makes it miss
+    B.hist = B.hist || []; if (sees) B.hist.push({ t: M.time, x: e.x, z: e.z, y: e.y, cr: e.crouch }); else B.hist.length = 0;
+    while (B.hist.length > 1 && B.hist[1].t <= M.time - D.lag) B.hist.shift();
+    const seen = B.hist[0] || { x: e.x, z: e.z, y: e.y, cr: e.crouch };
     const fresh = B.last && M.time - B.last.t < 4;
 
     // --- the plan
@@ -63,6 +76,15 @@
     if (P.k === 'push' && M.t < 28 && P.pts.length) P.pts.length = 0;   // out of time: straight to the site
     if (P.k === 'post' && e.alive && e.defuse > 0 && !P.rush) { P.rush = true; goTo(P, f, M.planted.x, M.planted.z); }
 
+    // --- out of bullets or losing badly: get out of sight first, reload there, then pick the fight up again
+    { const A0 = f.ammo[gun(f).k], low = f.hp + f.sh < 45 && e.hp + e.sh > f.hp + f.sh + 35, dry = A0 && A0.mag === 0 && A0.res > 0;
+      if (P.k !== 'cover' && B.diff > 0 && (sees || M.time - (B.engT || -9) < 1.5) && (dry || (low && !B.fled)) && !(side === 'def' && M.planted) && !gun(f).melee) {
+        const c = coverFrom(f, B.last ? B.last.x : e.x, B.last ? B.last.z : e.z, eyeY(e));
+        if (c) { B.fled = low; P = B.plan = { k: 'cover', back: P, t: M.time }; goTo(P, f, c[0], c[1]); }
+      }
+      if (P.k === 'cover' && ((!P.path || !P.path.length) && (!A0 || A0.mag >= gun(f).mag * .6 || A0.res === 0) || M.time - P.t > 6)) { const b = P.back; P = B.plan = b && b.k !== 'cover' ? b : planHold(f, null); if (P.dest) goTo(P, f, P.dest[0], P.dest[1]); }
+      if (P.k === 'cover' && A0 && !sees && A0.mag < gun(f).mag) reload(f);
+    }
     // --- which weapon
     if (f.slot !== 1 && hasAmmo(f, 1) && !(magOf(f, 1) === 0 && sees)) switchTo(f, 1);
     else if (f.slot === 1 && magOf(f, 1) === 0 && sees && magOf(f, 2) > 0 && B.diff > 0) switchTo(f, 2);
@@ -71,33 +93,43 @@
     const G = gun(f), A = f.ammo[G.k];
     if (A && !sees && B.lostT > 1.2 && A.mag < G.mag * .45 && A.res > 0) reload(f);
 
-    // --- aim: at the rival once it has reacted, else where the rival was, the way it is walking, or the angle it holds
-    let tYaw = f.yaw, tPitch = 0, engaged = false, goal = null;
-    if (sees && B.seen > D.react) {
+    // --- aim. Once it has reacted it swings toward where it believes you are (a moment old), starting off by a first-sight
+    // error it corrects over a flick, with a wobble that never quite settles, at a capped turn speed. Moving, being hit and
+    // a long spray all make it worse. Not seeing you, it holds its crosshair at head height on the angle it expects you from.
+    let tYaw = f.yaw, tPitch = f.pitch, engaged = false, goal = null;
+    if (sees && B.seen > B.rx) {
       engaged = true; B.engT = M.time;
-      if (!B.locked) { B.locked = true; B.head = R() < D.hs; B.err = [rnd(-1, 1) * D.err * 2.2, rnd(-1, 1) * D.err * 1.5]; }
-      const k = Math.pow(.2, dt); B.err[0] *= k; B.err[1] *= k;
-      const ty = B.head && dE > 3 ? eyeY(e) - .02 : e.y + lp(1.05, .7, e.crouch), aimP = Math.atan2(ty - eyeY(f), dE), pt = patOf(f, G), wob = D.err * .3;
-      tYaw = toE + B.err[0] + Math.sin(M.time * 5.1 + B.ph) * wob - pt[0] * D.spray; tPitch = aimP + B.err[1] + Math.cos(M.time * 4.3 + B.ph) * wob * .6 - pt[1] * D.spray;
-      const off = Math.hypot(angDiff(toE - pt[0] * D.spray, f.yaw), aimP - pt[1] * D.spray - f.pitch), size = Math.atan2(.34, dE);
+      if (!B.locked) { B.locked = true; B.head = R() < D.hs; const a = R() * TAU, m = D.err * (.6 + R() * .8); B.err = [Math.cos(a) * m, Math.sin(a) * m * .6]; B.mt = rnd(.5, 1.2); }
+      const k = Math.pow(.05, dt / D.flick); B.err[0] *= k; B.err[1] *= k;
+      if ((B.mt -= dt) <= 0) { B.mt = rnd(.5, 1.3); B.err[0] += rnd(-1, 1) * D.jit * 1.5; B.err[1] += rnd(-1, 1) * D.jit; }   // a little re-adjust now and then
+      const dS = Math.hypot(seen.x - f.x, seen.z - f.z), toS = yawTo(f.x, f.z, seen.x, seen.z), mv = Math.hypot(f.vx, f.vz);
+      const ty = B.head && dS > 3 ? seen.y + lp(EYE, CEYE, seen.cr) - .03 : seen.y + lp(1.1, .75, seen.cr), aimP = Math.atan2(ty - eyeY(f), dS), pt = patOf(f, G);
+      const wob = D.jit * (1 + mv * .25 + Math.min(2, f.spray * .15));
+      tYaw = toS + B.err[0] + Math.sin(M.time * 3.1 + B.ph) * wob - pt[0] * D.spray; tPitch = aimP + B.err[1] + Math.cos(M.time * 2.7 + B.ph) * wob * .7 - pt[1] * D.spray;
+      const off = Math.hypot(angDiff(toS - pt[0] * D.spray, f.yaw), aimP - pt[1] * D.spray - f.pitch), size = Math.atan2(.3, dS);
       if (B.rest > 0) B.rest -= dt;
       if (G.melee) I.fire = dE < 2.2 && off < .5;
       else {
         if (G.scope && !f.scoped && off < .3) f.scoped = 1;
-        const steady = spreadOf(f) < Math.max(.01, size * (2 - D.spray)) || dE < (G.pel ? 9 : 6);
-        if (G.auto && dE > 14 && f.spray > 3 + D.spray * 5) B.rest = .22;   // let a long spray settle
-        if (off < size * 1.3 + D.err * .6 && steady && !(B.rest > 0) && (!G.scope || f.scoped)) {
-          if (G.auto) I.fire = true; else { B.semi = (B.semi || 0) - dt; if (B.semi <= 0) { I.fire = true; B.semi = 60 / G.rpm + .08 + .25 * (1 - D.spray); } }
+        const steady = spreadOf(f) < Math.max(.012, size * (2.2 - D.spray)) || dE < (G.pel ? 9 : 5);
+        if (G.auto && dE > 12 && f.spray > 2 + D.spray * 6) B.rest = .2 + (1 - D.spray) * .25;   // let a long spray settle
+        if (off < size * 1.2 + D.jit && steady && !(B.rest > 0) && (!G.scope || f.scoped)) {
+          if (G.auto) I.fire = true; else { B.semi = (B.semi || 0) - dt; if (B.semi <= 0) { I.fire = true; B.semi = 60 / G.rpm + .12 + .3 * (1 - D.spray); } }
         }
       }
     } else {
-      if (!sees) B.locked = false;
+      if (!sees) { B.locked = false; B.rx = D.react * rnd(.85, 1.25) + (B.alarm && M.time - B.alarm < 1 ? .1 : 0); }
       const node = P.path && P.path.length ? P.path[Math.min(1, P.path.length - 1)] : null;
-      const lk = sees ? [e.x, e.z] : fresh && (P.k !== 'push' || B.lostT < 2.5) ? [B.last.x, B.last.z] : node && Math.hypot(node[0] - f.x, node[1] - f.z) > .8 ? node : P.look;
-      if (lk) { tYaw = yawTo(f.x, f.z, lk[0], lk[1]); tPitch = Math.atan2(hAt(lk[0], lk[1]) - f.y, Math.max(2, Math.hypot(lk[0] - f.x, lk[1] - f.z))) * .7; }
+      // clearing a site on the way in: look at the corners someone could hold, nearest first, rather than at the floor ahead
+      if (P.k === 'push' && !fresh && Math.hypot(siteC[0] - f.x, siteC[1] - f.z) < 20 && !(B.chk && B.chkT > M.time)) {
+        const vis = HOLDS.filter(h => { const d = Math.hypot(h.p[0] - f.x, h.p[1] - f.z); return d > 3 && d < 22 && los(f.x, eyeY(f), f.z, h.p[0], hAt(h.p[0], h.p[1]) + 1.5, h.p[1], true) >= d - .5; });
+        B.chk = vis.length ? pick(vis).p : null; B.chkT = M.time + rnd(.9, 1.6);
+      }
+      const lk = sees ? [e.x, e.z] : fresh && (P.k !== 'push' || B.lostT < 2.5) ? [B.last.x, B.last.z] : P.k === 'push' && B.chk ? B.chk : node && Math.hypot(node[0] - f.x, node[1] - f.z) > .8 ? node : P.look;
+      if (lk) { const d = Math.max(1.5, Math.hypot(lk[0] - f.x, lk[1] - f.z)); tYaw = yawTo(f.x, f.z, lk[0], lk[1]); tPitch = Math.atan2(hAt(lk[0], lk[1]) + 1.5 - eyeY(f), d); }
       if (G.scope && f.scoped) f.scoped = 0;
     }
-    const rate = (engaged ? 7 + B.diff * 4 : 3.5 + B.diff * 2) * dt;
+    const rate = (engaged ? D.turn : B.alarm && M.time - B.alarm < .6 ? D.turn * .8 : 2.2 + B.diff * .8) * dt;
     f.yaw += cl(angDiff(tYaw, f.yaw), -rate, rate); f.pitch += cl(tPitch - f.pitch, -rate * .7, rate * .7);
 
     // --- abilities, each with a reason
@@ -117,9 +149,10 @@
     if (arrived) {
       if (P.k === 'push') { if (P.pts.length) { const q = P.pts.shift(); goTo(P, f, q[0], q[1]); } else if (!P.toSite) { P.toSite = true; goTo(P, f, P.site[0], P.site[1]); } }
       if (P.k === 'hunt') B.plan = planHold(f, null);
+      if (P.k === 'cover' && !engaged) I.crouch = B.diff > 1;
       if ((P.k === 'hold' || P.k === 'post') && P.crouch && !engaged) I.crouch = true;
     }
-    if (engaged) {   // stop to shoot; step out between bursts; better bots brake with a counter-strafe
+    if (engaged && P.k !== 'cover') {   // stop to shoot; step out between bursts; better bots brake with a counter-strafe
       goal = null; B.pk = (B.pk || 0) - dt;
       if (B.pk <= 0) { B.mv = !B.mv; B.pk = B.mv ? rnd(.2, .45) * (G.cat === 'SMG' || G.pel ? 1.6 : 1) : rnd(.5, 1.2); B.str = R() < .5 ? -1 : 1; }
       const lv = Math.cos(f.yaw) * f.vx - Math.sin(f.yaw) * f.vz;
@@ -127,7 +160,7 @@
       else I.mx = B.diff > 0 && Math.abs(lv) > 1.2 ? -Math.sign(lv) : 0;
       if (G.melee) goal = [e.x, e.z];
       if (B.diff > 0 && G.auto && dE < 12 && f.spray > 4) I.crouch = true;
-    } else if (M.time - (B.engT || -9) < .8 && P.k !== 'retake') goal = null;   // just lost a rival it was fighting: hold the angle a moment
+    } else if (M.time - (B.engT || -9) < .8 && P.k !== 'retake' && P.k !== 'cover') goal = null;   // just lost a rival it was fighting: hold the angle a moment
     // the charge
     if (side === 'att' && !M.planted && P.k === 'push' && P.toSite && onSite(f.x, f.z) && (arrived || Math.hypot(P.site[0] - f.x, P.site[1] - f.z) < 1.4) && !sees && M.time - (B.engT || -9) > 1) { I.use = true; goal = null; }
     if (side === 'def' && M.planted && Math.hypot(f.x - M.planted.x, f.z - M.planted.z) < 1.5) {

@@ -21,6 +21,8 @@
   const me = () => M.fs[0], foe = () => M.fs[1], other = f => M.fs[0] === f ? M.fs[1] : M.fs[0];
   const gun = f => GUNS[f.guns[f.slot]] || GUNS.knife;
   const eyeY = f => f.y + lp(EYE, CEYE, f.crouch);
+  // a fighter's position for drawing: between the last two ticks, unless it jumped (a respawn, a Blink)
+  const ipos = (f, k) => { const p = f['p' + k]; return p == null || Math.abs(f[k] - p) > 1.5 ? f[k] : lp(p, f[k], tickA); };
   // who attacks: one side for rounds 1 to 4, the other for 5 to 8, and a side fixed at the start for a decider
   const attIdx = () => M.mode === 'range' ? 0 : M.round <= 4 ? M.att0 : M.round <= 8 ? 1 - M.att0 : M.decAtt;
   const sideOf = f => M.fs.indexOf(f) === attIdx() ? 'att' : 'def';
@@ -132,7 +134,7 @@
       if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k); }
     }
     if (landed) f.stat.hits++;
-    f.spray += 1; f.kick = .08; if (f === me()) M.camKick += G.punch * D2R * (f.scoped && G.scope ? .4 : 1);
+    f.spray += 1; f.kick = .08; if (f === me()) M.camKick = Math.min(M.camKick + G.punch * .3 * D2R * (f.scoped && G.scope ? .4 : 1), 1.2 * D2R);
     if (!f.net) net({ t: 'sh', a: r3(y0), b: r3(p0) });
     if (A.mag === 0 && A.res > 0) f.autoReload = .26;
   }
@@ -178,6 +180,7 @@
     if (!v.alive || M.phase === 'end') return;
     const real = Math.min(dmg, v.hp + v.sh), soak = Math.min(v.sh, dmg); v.sh -= soak; v.hp -= dmg - soak; if (!by.net) by.stat.dmg += real;
     if (v === me()) { M.hurt = 1; M.hurtDir = Math.atan2(by.x - v.x, by.z - v.z); }
+    if (v.bot) v.bot.hitBy = { x: by.x, z: by.z, t: M.time };
     emit('hurt', v, by, dmg, head);
     if (v.hp <= 0) { v.hp = 0; die(v, by, head, wk); }
   }

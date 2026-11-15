@@ -45,7 +45,7 @@
   }
 
   let hitMark = null, heard = null, mmCanvas = null;
-  on('hurt', (v, by, dmg, head) => { if (M && by === me()) hitMark = { t: .28, head, dmg, kill: v.hp <= 0 && !v.net, x: rnd(-14, 14) }; });
+  on('hurt', (v, by, dmg, head) => { if (M && by === me()) hitMark = { t: head ? .5 : .28, head, dmg, kill: v.hp <= 0 && !v.net, x: rnd(-14, 14) }; });
   on('kill', (v, by) => { if (M && by === me() && hitMark) hitMark.kill = true; });
   // a running step or a shot from the rival marks the minimap for a moment (only if a bot could have heard it too)
   const note = f => { if (M && f === foe() && Math.hypot(f.x - me().x, f.z - me().z) < 30) heard = { x: f.x, z: f.z, t: 1.6 }; };
@@ -69,11 +69,14 @@
     if (F.alive && F.reveal > 0) { const s = toScreen(F.x, F.y + 1.1, F.z); if (s) { g.strokeStyle = FOE; g.lineWidth = 3; g.beginPath(); g.moveTo(s[0], s[1] - 30); g.lineTo(s[0] + 20, s[1]); g.lineTo(s[0], s[1] + 30); g.lineTo(s[0] - 20, s[1]); g.closePath(); g.stroke(); } }
     if (M.planted && M.phase === 'live') { const s = toScreen(M.planted.x, M.planted.y + .9, M.planted.z); if (s) { const p = 1 + Math.sin(M.time * 9) * .12; g.fillStyle = FOE; g.beginPath(); g.moveTo(s[0], s[1] - 11 * u * p); g.lineTo(s[0] + 9 * u * p, s[1]); g.lineTo(s[0], s[1] + 11 * u * p); g.lineTo(s[0] - 9 * u * p, s[1]); g.fill(); tx(g, Math.hypot(P.x - M.planted.x, P.z - M.planted.z).toFixed(0) + ' m', s[0], s[1] + 24 * u, 13 * u, BONE); } }
     // --- crosshair and hit marks
-    if (P.alive && !(P.scoped && G.scope) && !demo) drawCrosshair(g, 640, 360, Math.tan(spreadOf(P)) / Math.tan((X ? X.camera.fov : BASE_FOV) * D2R / 2) * 360, Math.max(1, u * .85));
+    // the crosshair marks where a shot really goes: the view punch lifts the camera a little, so it sits that much lower
+    const tf = Math.tan((X ? X.camera.fov : BASE_FOV) * D2R / 2), hh = (V.y1 - V.y0) / 2, cy = 360 + Math.tan(M.camKick || 0) / tf * hh;
+    if (P.alive && !(P.scoped && G.scope) && !demo) drawCrosshair(g, 640, cy, Math.tan(spreadOf(P)) / tf * hh, Math.max(1, u * .85));
     if (hitMark && (hitMark.t -= 1 / 60) > 0) {
+      if (hitMark.head) tx(g, hitMark.kill ? 'HEADSHOT' : 'HEAD', 640, cy + 34 * u + (1 - hitMark.t / .28) * 6, 15 * u, GOLD);
       const c = hitMark.kill ? WARN : hitMark.head ? GOLD : '#fff', k = 1 + (1 - hitMark.t / .28) * .4; g.strokeStyle = c; g.lineWidth = 3 * u; g.beginPath();
-      for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { g.moveTo(640 + a * 9 * u * k, 360 + b * 9 * u * k); g.lineTo(640 + a * 17 * u * k, 360 + b * 17 * u * k); } g.stroke();
-      if (range) tx(g, String(hitMark.dmg), 640 + 44 * u + hitMark.x, 360 - 30 * u - (1 - hitMark.t / .28) * 16, 20 * u, c);
+      for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { g.moveTo(640 + a * 9 * u * k, cy + b * 9 * u * k); g.lineTo(640 + a * 17 * u * k, cy + b * 17 * u * k); } g.stroke();
+      if (range) tx(g, String(hitMark.dmg), 640 + 44 * u + hitMark.x, cy - 30 * u - (1 - hitMark.t / .28) * 16, 20 * u, c);
     }
     // --- top: score, clock, round
     g.save(); g.translate(640, V.y0 + 8); g.scale(u, u);
@@ -136,7 +139,12 @@
     if (touch && !UI.armory && !demo) drawTouch(g, u);
     if (canBuy() && !UI.armory && !demo && P.alive) { const w = 190 * u, h = tapH(46); btn(g, 640 - w / 2, V.y0 + 132 * u, w, h, touch ? 'ARMORY' : 'ARMORY  (B)', () => openArmory(true), { px: 17 * u, col: GOLD, edge: GOLD }); }
     if (UI.armory) drawArmory(g);
-    if (!touch && !UI.armory && !demo && !locked() && K.state === 'play') { g.fillStyle = 'rgba(12,16,22,.45)'; g.fillRect(V.x0, V.y0, W, H); tx(g, 'CLICK TO AIM', 640, 330, 34, BONE); tx(g, 'Esc pauses', 640, 372, 15, DIM); }
+    if (!touch && !UI.armory && !UI.opts && !demo && !locked() && K.state === 'play') { g.fillStyle = 'rgba(12,16,22,.45)'; g.fillRect(V.x0, V.y0, W, H); tx(g, 'CLICK TO AIM', 640, 330, 34, BONE); tx(g, 'Esc pauses  ·  O settings', 640, 372, 15, DIM); }
+    // settings: a gear under the pause button (when the mouse is free, or on a phone), and the panel itself
+    if (!demo && !UI.opts && !UI.armory && (touch || !locked())) { const s = 40 / pxPer(), gx = V.x0 + 12 / pxPer(), gy = V.y0 + 58 / pxPer(), cx = gx + s / 2, cy2 = gy + s / 2;
+      rr(g, gx, gy, s, s, s * .22, 'rgba(12,16,22,.6)'); g.fillStyle = BONE; g.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, r = i % 2 ? s * .3 : s * .37; g.lineTo(cx + Math.cos(a) * r, cy2 + Math.sin(a) * r); } g.fill();
+      g.fillStyle = 'rgba(12,16,22,.9)'; g.beginPath(); g.arc(cx, cy2, s * .12, 0, TAU); g.fill(); zone(gx, gy, s, s, () => openOpts(true)); }
+    if (UI.opts) drawOpts(g);
   }
   function drawTouch(g, u) {
     const V = K.view;

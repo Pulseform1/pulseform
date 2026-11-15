@@ -94,7 +94,7 @@
     if (!A || A.userData.op !== f.op) { if (A) X.scene.remove(A); A = agentModel(f); X.agents.set(f, A); }
     const U = A.userData, fk = gun(f).k;
     if (U.gk !== fk) { while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]); const gm = gunModel(fk, { cast: !X.low, flash: true }); gm.scale.setScalar(1.08); U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
-    A.visible = true; A.position.set(f.x, f.y, f.z); A.rotation.y = f.yaw;
+    A.visible = true; A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;
     const sp = Math.hypot(f.vx, f.vz), amp = Math.min(1, sp / 3.5) * .8, ph = f.walkT * 1.9, cr = f.crouch;
     // legs: swing with the stride, the trailing knee bends; a crouch folds both
     for (const [lg, o] of [[U.L, 0], [U.Rg, Math.PI]]) { const s = Math.sin(ph + o); lg.th.rotation.x = s * amp + cr * 1.1; lg.sn.rotation.x = -Math.max(0, -Math.cos(ph + o)) * amp * 1.2 - cr * 1.9; }

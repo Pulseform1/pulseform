@@ -25,9 +25,12 @@
   // settings and lifetime stats live in the kit's save for this game
   // xh is the crosshair: shape (cross, dot, circle, tee), colour, arm length, centre gap, thickness, a centre dot,
   // a dark outline, and whether it opens with your error (dyn) or stays fixed
-  const CFG = { sens: 1, tsens: 1, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 1,
+  // sens: mouse turn speed; zsens: multiplier while aiming down sights or scoped; crouch: 'hold' or 'toggle'; full: go full
+  // screen when you click in to play, which lets the game keep Ctrl shortcuts (Ctrl+W) from the browser
+  const CFG = { v: 2, sens: .45, zsens: 1, tsens: 1, crouch: 'hold', full: true, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 1,
     xh: { shape: 'cross', col: '#35e0c8', len: 9, gap: 3, thick: 3, dot: true, outline: true, dyn: true } };
+  let tickA = 1;   // how far the screen is between the last simulation tick and the next (99-main sets it), so motion is smooth at any refresh rate
   const STATS = { matches: 0, wins: 0, kills: 0, heads: 0 };
   // (the kit, and so K.save, only exists once the page has finished loading: 99-main calls this on the first reset)
-  const loadSave = () => { try { if (K.save.dp) { { const c = K.save.dp.cfg || {}, xh = Object.assign({}, CFG.xh, c.xh || {}); Object.assign(CFG, c); CFG.xh = xh; } Object.assign(STATS, K.save.dp.stats || {}); } } catch (e) {} };
+  const loadSave = () => { try { if (K.save.dp) { { const c = Object.assign({}, K.save.dp.cfg || {}), xh = Object.assign({}, CFG.xh, c.xh || {}); if (!(c.v >= 2)) { delete c.sens; c.v = 2; } Object.assign(CFG, c); CFG.xh = xh; } Object.assign(STATS, K.save.dp.stats || {}); } } catch (e) {} };
   const saveAll = () => { try { K.save.dp = { cfg: CFG, stats: STATS }; K.persist(); } catch (e) {} };

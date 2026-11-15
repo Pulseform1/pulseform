@@ -4,7 +4,7 @@
      by touch, the left of the screen is a movement stick and the right is look, with buttons laid out round the thumb.
      Touch has two helpers a mouse never gets: aim assist (the look slows near the rival and leans toward them) and
      auto-fire (shoots when the crosshair is on them and you are steady). Both can be switched off. */
-  const UI = { armory: false, panel: 'home', pick: null };
+  const UI = { armory: false, panel: 'home', pick: null, opts: false };
   const zones = []; let ptr = { x: 640, y: 360 }, dragZ = null;
   const inside = (z, x, y) => x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h;
   // register a press target for this frame; returns whether the mouse is over it
@@ -18,10 +18,17 @@
 
   /* ---------- keyboard and mouse ---------- */
   let keys = {}; const mouse = { l: false };
-  const KM = { KeyW: 'w', ArrowUp: 'w', KeyS: 's', ArrowDown: 's', KeyA: 'a', ArrowLeft: 'a', KeyD: 'd', ArrowRight: 'd', ShiftLeft: 'walk', ShiftRight: 'walk', ControlLeft: 'crouch', KeyC: 'crouch', Space: 'jump', KeyF: 'use' };
+  const KM = { KeyW: 'w', ArrowUp: 'w', KeyS: 's', ArrowDown: 's', KeyA: 'a', ArrowLeft: 'a', KeyD: 'd', ArrowRight: 'd', ShiftLeft: 'walk', ShiftRight: 'walk', ControlLeft: 'crouch', ControlRight: 'crouch', KeyC: 'crouch', Space: 'jump', KeyF: 'use' };
   const cvEl = () => document.getElementById('cv');
   const locked = () => document.pointerLockElement === cvEl();
-  function grabMouse() { if (isTouch() || K.bot) return; try { const c = cvEl(); if (c && c.requestPointerLock) c.requestPointerLock(); } catch (e) {} }
+  // lock the mouse with raw input (no system acceleration) where the browser offers it; in full screen also lock the
+  // keyboard, which is the only way to stop Ctrl+W and friends reaching the browser while you crouch-walk
+  function grabMouse() {
+    if (isTouch() || K.bot) return; const c = cvEl(); if (!c || !c.requestPointerLock) return;
+    try { const q = c.requestPointerLock({ unadjustedMovement: true }); if (q && q.catch) q.catch(() => { try { c.requestPointerLock(); } catch (e) {} }); } catch (e) { try { c.requestPointerLock(); } catch (e2) {} }
+    if (CFG.full && document.fullscreenEnabled && !document.fullscreenElement) try { const q = document.documentElement.requestFullscreen({ navigationUI: 'hide' }); if (q && q.then) q.then(() => { try { const k = navigator.keyboard; if (k && k.lock) k.lock().catch(() => {}); } catch (e) {} }).catch(() => {}); } catch (e) {}
+  }
+  function openOpts(on) { if (!!UI.opts === !!on) return; UI.opts = on ? 'main' : false; if (on) releaseMouse(); else if (!UI.armory && playing()) grabMouse(); }
   function releaseMouse() { try { if (document.pointerLockElement) document.exitPointerLock(); } catch (e) {} }
   const playing = () => M && screen === 'play' && K.state === 'play' && !M.over;
   function openArmory(open) {
@@ -29,22 +36,28 @@
     if (open) releaseMouse(); else { grabMouse(); setReady(me()); }
   }
   function keyEvent(c, d) {
+    if (KM[c] === 'crouch' && d && !keys.crouch && CFG.crouch === 'toggle') keys.crouchT = !keys.crouchT;   // toggle crouch flips on each fresh press
     if (KM[c]) keys[KM[c]] = d;
     if (!d) return;
     if (screen === 'menu') { if (c === 'Enter' && UI.panel === 'home') menuPlay(); return; }
     if (screen === 'over') { if (c === 'Enter') toMenu(); return; }
     if (!playing()) return; const P = me();
+    if (c === 'KeyO') return openOpts(!UI.opts);
     if (c === 'KeyB' && canBuy()) return openArmory(!UI.armory);
     if (UI.armory) return;
     if (c === 'KeyR') reload(P); else if (c === 'Digit1') switchTo(P, 1); else if (c === 'Digit2') switchTo(P, 2); else if (c === 'Digit3') switchTo(P, 3);
     else if (c === 'KeyQ') ability(P, 'q'); else if (c === 'KeyE') ability(P, 'e'); else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) X.inspT = 2.6;
   }
   if (typeof document !== 'undefined') {
-    document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; const P = me(), s = .0022 * CFG.sens / zoomOf(P); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
-    document.addEventListener('mousedown', e => { if (!locked() || !playing()) return; if (e.button === 0) mouse.l = true; if (e.button === 2) altAction(me()); });
-    document.addEventListener('mouseup', e => { if (e.button === 0) mouse.l = false; });
+    // while you play, keys the game uses (and Ctrl combinations, since Ctrl crouches) do not reach the browser
+    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[e.code] || /^(Key[BRQEFYO]|Digit[1-3]|Tab)$/.test(e.code))) e.preventDefault(); }, true);
+    document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; if (Math.abs(e.movementX) > 500 || Math.abs(e.movementY) > 500) return;   // some browsers send a wild jump when the lock starts
+      const P = me(), s = .0022 * CFG.sens / zoomOf(P) * (P.scoped ? CFG.zsens : 1); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
+    // (on a Mac, Ctrl+click arrives as a right click: while crouching that is still a shot)
+    document.addEventListener('mousedown', e => { if (!locked() || !playing()) return; if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = true; else if (e.button === 2) altAction(me()); });
+    document.addEventListener('mouseup', e => { if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = false; });
     document.addEventListener('contextmenu', e => { if (screen === 'play') e.preventDefault(); });
-    document.addEventListener('wheel', e => { if (locked() && playing()) cycleWeapon(me(), e.deltaY > 0 ? 1 : -1); }, { passive: true });
+    document.addEventListener('wheel', e => { if (screen === 'play' && e.ctrlKey) e.preventDefault(); if (locked() && playing()) cycleWeapon(me(), e.deltaY > 0 ? 1 : -1); }, { passive: false });   // Ctrl+wheel would zoom the page
   }
 
   /* ---------- touch ---------- */
@@ -77,16 +90,16 @@
   }
   function touchMove(x, y, id) {
     if (TS.stick && TS.stick.id === id) { TS.stick.x = x; TS.stick.y = y; }
-    if (TS.look && TS.look.id === id && M) { const P = me(), s = .0052 * CFG.tsens * TS.slow / zoomOf(P) / uiScale(); P.yaw -= (x - TS.look.x) * s; P.pitch = cl(P.pitch - (y - TS.look.y) * s, -1.4, 1.4); TS.look.x = x; TS.look.y = y; }
+    if (TS.look && TS.look.id === id && M) { const P = me(), s = .0052 * CFG.tsens * TS.slow / zoomOf(P) / uiScale() * (P.scoped ? CFG.zsens : 1); P.yaw -= (x - TS.look.x) * s; P.pitch = cl(P.pitch - (y - TS.look.y) * s, -1.4, 1.4); TS.look.x = x; TS.look.y = y; }
   }
   function touchUp(id) { if (TS.stick && TS.stick.id === id) TS.stick = null; if (TS.look && TS.look.id === id) TS.look = null; if (TS.fire === id) TS.fire = null; TS.held.delete(id); }
-  function resetInput() { keys = {}; mouse.l = false; TS.stick = TS.look = TS.fire = null; TS.held.clear(); TS.crouch = false; dragZ = null; }
+  function resetInput() { keys = {}; mouse.l = false; UI.opts = false; TS.stick = TS.look = TS.fire = null; TS.held.clear(); TS.crouch = false; dragZ = null; }
 
   // presses from the kit (mouse) and from our own touch listeners all arrive here, in HUD units
   function pointerDown(x, y, id, touch) {
     ptr = { x, y }; const z = zoneAt(x, y);
     if (z) { if (z.drag) dragZ = z; z.fn(x, y); return; }
-    if (!playing() || UI.armory) return;
+    if (!playing() || UI.armory || UI.opts) return;
     if (touch) touchDown(x, y, id); else if (!locked()) grabMouse();
   }
   function pointerMove(x, y, id, touch) { ptr = { x, y }; if (dragZ) dragZ.fn(x, y); else if (touch && playing()) touchMove(x, y, id); }
@@ -104,7 +117,7 @@
 
   /* ---------- the local fighter's intent, once a tick ---------- */
   readInput = f => {
-    const I = { mx: (keys.d ? 1 : 0) - (keys.a ? 1 : 0), mz: (keys.w ? 1 : 0) - (keys.s ? 1 : 0), walk: !!keys.walk, crouch: !!keys.crouch || TS.crouch, jump: !!keys.jump, use: !!keys.use, fire: mouse.l, rapid: false };
+    const I = { mx: (keys.d ? 1 : 0) - (keys.a ? 1 : 0), mz: (keys.w ? 1 : 0) - (keys.s ? 1 : 0), walk: !!keys.walk, crouch: (CFG.crouch === 'toggle' ? !!keys.crouchT : !!keys.crouch) || TS.crouch, jump: !!keys.jump, use: !!keys.use, fire: mouse.l, rapid: false };
     for (const k of TS.held.values()) { if (k === 'jump') I.jump = true; if (k === 'use') I.use = true; }
     if (TS.stick) {   // how far the thumb has pushed is how fast you go
       const u = uiScale(), dx = TS.stick.x - TS.stick.x0, dy = TS.stick.y - TS.stick.y0, L = Math.hypot(dx, dy), m = cl((L - 9 * u) / (56 * u), 0, 1);

@@ -13,7 +13,7 @@ const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n
 const K = { save: {}, persist() {}, bot: false, state: 'play' };
 const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name: 'Tester', id: 0 };
 const T = new Function('K', 'MP', code + `
-  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY,
+  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
     get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
@@ -74,10 +74,11 @@ function gunplayChecks() {
   I = idle(); run(.6);
   ok(P.spray === 0 && deg() <= .3, 'it settles within the recovery time once you let go', `spray ${P.spray.toFixed(2)}, ${deg().toFixed(2)}°, fireT ${P.fireT.toFixed(2)}, shots ${P.stat.shots}`);
   section('damage');
-  const dmgTo = (gunKey, part, dist) => { const G = T.GUNS[gunKey], row = G.dmg.find(r => dist <= r[0]) || G.dmg[G.dmg.length - 1]; return row[part]; };
+  const dmgTo = (gunKey, part, dist) => T.dmgAt(T.GUNS[gunKey], dist, part);
   ok(dmgTo('lancer', 1, 50) >= 150, 'a Lancer headshot kills through heavy shields at any range', dmgTo('lancer', 1, 50));
   ok(dmgTo('vesper', 1, 10) >= 150 && dmgTo('vesper', 1, 40) < 150, 'the Vesper only does so up close', `${dmgTo('vesper', 1, 10)} then ${dmgTo('vesper', 1, 40)}`);
-  ok(Object.values(T.GUNS).every(G => G.melee || G.dmg.every(r => r[1] > r[2] && r[2] >= r[3])), 'head > body >= legs for every gun');
+  ok(Object.values(T.GUNS).every(G => G.head > 1 && G.legs <= 1 && G.dmg.every(r => r[1] > 0)), 'every gun multiplies head damage up and leg damage down');
+  ok(dmgTo('lancer', 1, 20) === 4 * dmgTo('lancer', 2, 20) && dmgTo('kite', 1, 20) === 2 * dmgTo('kite', 2, 20), 'head multipliers: rifle x4, sniper x2', `${dmgTo('lancer', 1, 20)}/${dmgTo('lancer', 2, 20)}`);
   let F; [M, P, F] = lab(); F.sh = 50; T.applyDamage(F, 40, P, false, 'lancer');
   ok(F.hp === 100 && F.sh === 10, 'shields soak damage first', `hp ${F.hp}, shield ${F.sh}`);
   T.applyDamage(F, 160, P, true, 'lancer');

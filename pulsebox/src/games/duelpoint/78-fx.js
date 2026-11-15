@@ -76,11 +76,11 @@
     }
     const P = me(), G = gun(P);
     // the camera: your eyes (gliding over steps and crouches), kicked by recoil; when you die it sinks and turns to who did it
-    const ey = eyeY(P); X.camY = Math.abs(ey - X.camY) > 1.2 ? ey : X.camY + (ey - X.camY) * Math.min(1, dt * 22);
+    const ey = ipos(P, 'y') + lp(EYE, CEYE, P.crouch); X.camY = Math.abs(ey - X.camY) > 1.2 ? ey : X.camY + (ey - X.camY) * Math.min(1, dt * 22);
     X.dip = Math.max(0, (X.dip || 0) - dt * .5); X.shake = Math.max(0, X.shake - dt);
     let yaw = P.yaw, pitch = P.pitch + M.camKick, y = X.camY - X.dip;
     if (!P.alive && M.deathInfo) { const k = Math.min(1, M.deathInfo.t * 2); y = lp(y, P.y + .5, k); yaw += angDiff(M.deathInfo.yaw, yaw) * k; pitch = lp(pitch, .1, k); }
-    cam.position.set(P.x + (Math.random() - .5) * X.shake * .3, y + (Math.random() - .5) * X.shake * .3, P.z); cam.rotation.set(pitch, yaw, 0);
+    cam.position.set(ipos(P, 'x') + (Math.random() - .5) * X.shake * .3, y + (Math.random() - .5) * X.shake * .3, ipos(P, 'z')); cam.rotation.set(pitch, yaw, 0);
     const fov = 2 * Math.atan(Math.tan(BASE_FOV * D2R / 2) / zoomOf(P)) / D2R; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
 
     // your gun
