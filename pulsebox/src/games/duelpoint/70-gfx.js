@@ -33,7 +33,7 @@
     X = { renderer, scene, camera, glc, low, pr, basePr: pr, aniso: Math.min(8, renderer.capabilities.getMaxAnisotropy()), t: 0, slow: 0, agents: new Map(), camY: EYE, flashT: 0, shake: 0 };
     // a small reflection map for metal: sky above, warm ground below, three bright panels
     { const pm = new THREE.PMREMGenerator(renderer), es = new THREE.Scene();
-      es.add(new THREE.Mesh(new THREE.SphereGeometry(20, 32, 16), new THREE.MeshBasicMaterial({ side: THREE.BackSide, map: canvasTex(16, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#e4f0ff'); gr.addColorStop(.46, '#a9c3dd'); gr.addColorStop(.52, '#8c7c68'); gr.addColorStop(1, '#2a241e'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }) })));
+      es.add(new THREE.Mesh(new THREE.SphereGeometry(20, 32, 16), new THREE.MeshBasicMaterial({ side: THREE.BackSide, map: canvasTex(16, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#e4f0ff'); gr.addColorStop(.46, '#a9c3dd'); gr.addColorStop(.52, '#7e7f83'); gr.addColorStop(1, '#2b2c30'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }) })));
       for (const [x, y, z, sz] of [[6, 10, 4, 7], [-9, 6, -5, 5], [2, 3, 12, 4]]) { const pl = new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), new THREE.MeshBasicMaterial({ color: '#ffffff', side: THREE.DoubleSide })); pl.position.set(x, y, z); pl.lookAt(0, 0, 0); es.add(pl); }
       X.env = pm.fromScene(es, .02).texture; pm.dispose(); }
     // the first-person scene: your gun and hands, lit like the world
