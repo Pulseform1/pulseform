@@ -1372,11 +1372,12 @@ const GAME = {
     GTX = {
       // machined steel: long brushing marks, faint soft patches, a few fine scratches
       brushed: T(S, S, (g, w, h) => { g.fillStyle = '#8a8a8a'; g.fillRect(0, 0, w, h);
-        for (let i = 0; i < 3200; i++) { const y = Math.floor(R() * h), x = R() * w, l = 30 + R() * 340; g.fillStyle = R() < .5 ? `rgba(0,0,0,${.03 + R() * .08})` : `rgba(255,255,255,${.03 + R() * .07})`; g.fillRect(x, y, l, 1); g.fillRect(x - w, y, l, 1); }
-        blots(g, w, h, 12, 50, 150, '255,255,255', .035); blots(g, w, h, 12, 50, 150, '0,0,0', .04); scratches(g, w, h, 34, '230,230,230', .35, 8, 60); }, [5, 5]),
+        for (let y = 0; y < h; y++) { g.fillStyle = `rgba(${R() < .5 ? '0,0,0' : '255,255,255'},${.012 + R() * .022})`; g.fillRect(0, y, w, 1); }
+        for (let i = 0; i < 2600; i++) { const y = Math.floor(R() * h), x = R() * w, l = 200 + R() * 312; g.fillStyle = R() < .5 ? `rgba(0,0,0,${.01 + R() * .025})` : `rgba(255,255,255,${.01 + R() * .025})`; g.fillRect(x, y, l, 1); g.fillRect(x - w, y, l, 1); }
+        scratches(g, w, h, 14, '235,235,235', .18, 6, 30); }, [8, 8]),
       // its data: shinier along fresh scratches, duller where hands have smudged it
-      metalD: D(S, S, (g, w, h) => { g.fillStyle = 'rgb(128,200,255)'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1400; i++) { const y = Math.floor(R() * h); g.fillStyle = `rgba(128,${170 + R() * 60 | 0},255,.5)`; g.fillRect(R() * w, y, 40 + R() * 300, 1); }
-        blots(g, w, h, 22, 30, 110, '128,255,255', .45); scratches(g, w, h, 34, '100,90,255', .9, 8, 60); }, [5, 5]),
+      metalD: D(S, S, (g, w, h) => { g.fillStyle = 'rgb(128,200,255)'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1400; i++) { const y = Math.floor(R() * h); g.fillStyle = `rgba(128,${185 + R() * 30 | 0},255,.4)`; g.fillRect(R() * w, y, 200 + R() * 312, 1); }
+        blots(g, w, h, 10, 40, 110, '128,235,255', .25); scratches(g, w, h, 14, '100,120,255', .8, 6, 30); }, [8, 8]),
       // stippled polymer: raised dots, used for colour and relief
       stipple: T(256, 256, (g, w, h) => { g.fillStyle = '#7a7a7a'; g.fillRect(0, 0, w, h); for (let i = 0; i < 3400; i++) { const x = R() * w, y = R() * h, r = .7 + R() * 1.6, c = R() < .55 ? 'rgba(20,20,20,.32)' : 'rgba(255,255,255,.2)'; g.fillStyle = c; wrap(w, h, x, y, (px, py) => { if (px < -3 || py < -3 || px > w + 3 || py > h + 3) return; g.beginPath(); g.arc(px, py, r, 0, 7); g.fill(); }); }
         blots(g, w, h, 10, 30, 90, '0,0,0', .08); }, [14, 14]),
@@ -1388,8 +1389,8 @@ const GAME = {
         specks(g, w, h, 16000, '0,0,0', '255,255,255', .09); scratches(g, w, h, 30, '255,255,255', .32, 6, 40); }, [4, 4]),
       ceraD: D(S, S, (g, w, h) => { g.fillStyle = 'rgb(140,215,255)'; g.fillRect(0, 0, w, h); specks(g, w, h, 12000, '110,230,255', '170,200,255', .5); blots(g, w, h, 30, 40, 140, '140,170,255', .35); scratches(g, w, h, 30, '110,140,255', .9, 6, 40); }, [4, 4]),
       // anodised aluminium: smooth, faint machining lines, a fine sparkle
-      anod: T(256, 256, (g, w, h) => { g.fillStyle = '#d2d2d2'; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 2) { g.fillStyle = `rgba(${R() < .5 ? '0,0,0' : '255,255,255'},${.015 + R() * .03})`; g.fillRect(0, y, w, 1); }
-        specks(g, w, h, 5000, '0,0,0', '255,255,255', .07); blots(g, w, h, 10, 30, 100, '255,255,255', .05); }, [6, 6]),
+      anod: T(256, 256, (g, w, h) => { g.fillStyle = '#d2d2d2'; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 2) { g.fillStyle = `rgba(${R() < .5 ? '0,0,0' : '255,255,255'},${.006 + R() * .012})`; g.fillRect(0, y, w, 1); }
+        specks(g, w, h, 5000, '0,0,0', '255,255,255', .06); blots(g, w, h, 8, 30, 100, '255,255,255', .03); }, [6, 6]),
       anodD: D(256, 256, (g, w, h) => { g.fillStyle = 'rgb(128,120,255)'; g.fillRect(0, 0, w, h); specks(g, w, h, 4000, '128,80,255', '128,160,255', .6); blots(g, w, h, 12, 30, 90, '128,175,255', .4); }, [6, 6]),
       // walnut: wavy grain with darker late-wood lines, ray flecks and open pores; also its own relief
       wood: T(S, S, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#8a5630'); gr.addColorStop(.5, '#7a4826'); gr.addColorStop(1, '#8a5630'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
@@ -1431,7 +1432,7 @@ const GAME = {
     const data = canvasTex(S, S, g => draw(g, 'rgb(200,225,50)', 'rgb(90,110,170)', 'rgba(170,150,120,.8)', 'rgb(150,230,50)'), [3, 3]); data.encoding = THREE.LinearEncoding;
     return WORN[col] = { map, data };
   }
-  const FINISH = { knife: 'cera', pip: 'cera', stub: 'wood', wasp: 'cera', quill: 'cera', hammer: 'wood', gnat: 'anod', hornet: 'camo', breaker: 'wood', thresher: 'worn', mako: 'anod', paladin: 'worn', vesper: 'carbon', lancer: 'cera', kite: 'cera', longbow: 'carbon', torrent: 'worn' };
+  const FINISH = { knife: 'cera', pip: 'cera', stub: 'wood', wasp: 'cera', quill: 'cera', hammer: 'grip', gnat: 'anod', hornet: 'camo', breaker: 'wood', thresher: 'worn', mako: 'anod', paladin: 'worn', vesper: 'carbon', lancer: 'cera', kite: 'cera', longbow: 'carbon', torrent: 'worn' };
   const BUMP = .0007;   // relief strength; small, because a gun is small
   function gmats(k) {
     if (GMAT[k]) return GMAT[k];
@@ -1439,15 +1440,16 @@ const GAME = {
     const env = (m, ei) => { if (X && X.env) { m.envMap = X.env; m.envMapIntensity = ei; } return m; };
     const std = (o, ei = 1) => env(new THREE.MeshStandardMaterial(o), ei);
     const basic = c => new THREE.MeshBasicMaterial({ color: c, toneMapped: false });
-    const col = { pip: '#8f99a6', lancer: '#d4323e', longbow: '#9468dc', vesper: '#d0509a', hammer: '#ffd9a8', stub: '#ffffff', breaker: '#ffffff' }[k] || W.col, fk = FINISH[k] || 'cera';
+    const col = { pip: '#8f99a6', lancer: '#d4323e', longbow: '#9468dc', vesper: '#d0509a', stub: '#ffffff', breaker: '#ffffff' }[k] || W.col, fk = FINISH[k] || 'cera';
     let fin;
-    if (fk === 'wood') fin = std({ color: col, map: T.wood, bumpMap: T.wood, bumpScale: BUMP * 1.4, roughness: .42, metalness: 0 }, .5);
+    if (fk === 'grip') fin = std({ color: '#26272c', map: T.stipple, bumpMap: T.stipple, bumpScale: BUMP * 1.1, roughness: .88, metalness: 0 }, .35);
+    else if (fk === 'wood') fin = std({ color: col, map: T.wood, bumpMap: T.wood, bumpScale: BUMP * 1.4, roughness: .42, metalness: 0 }, .5);
     else if (fk === 'carbon') fin = env(new THREE.MeshPhysicalMaterial({ color: col, map: T.carbon, bumpMap: T.carbon, bumpScale: BUMP * .8, roughness: .4, metalness: .3, clearcoat: 1, clearcoatRoughness: .07 }), .9);
     else if (fk === 'camo') fin = std({ color: '#ffffff', map: T.camo, roughnessMap: T.ceraD, bumpMap: T.ceraD, bumpScale: BUMP * .5, roughness: .75, metalness: .08 }, .5);
     else if (fk === 'anod') fin = std({ color: col, map: T.anod, roughnessMap: T.anodD, roughness: .55, metalness: .55 }, .9);
     else if (fk === 'worn') { const wt = wornTex(col); fin = std({ color: '#ffffff', map: wt.map, roughnessMap: wt.data, metalnessMap: wt.data, bumpMap: wt.data, bumpScale: BUMP * 1.2, roughness: 1, metalness: 1 }, .7); }
     else fin = std({ color: col, map: T.cera, roughnessMap: T.ceraD, bumpMap: T.ceraD, bumpScale: BUMP * .5, roughness: .62, metalness: .25 }, .6);
-    const metalish = (c, r, mt, ei) => std({ color: c, map: T.brushed, roughnessMap: T.metalD, bumpMap: T.metalD, bumpScale: BUMP * .4, metalness: mt, roughness: r }, ei);
+    const metalish = (c, r, mt, ei) => std({ color: c, map: T.brushed, roughnessMap: T.metalD, metalness: mt, roughness: r }, ei);
     const M2 = GMAT[k] = {
       fin,
       metal: metalish('#3b4049', .42, .85, 1),
@@ -1744,7 +1746,7 @@ const GAME = {
     else {   // the knife: a clipped blade with a fuller and a lit edge, a guard, a shaped grip, a pommel
       len = .24; port = null; pistolHold = true;
       side([[-.02, .022], [-.165, .022], ['q', -.21, .02, -.242, .003], ['q', -.2, -.01, -.16, -.012], [-.02, -.012]], .006, m.blade, 0, .0022);
-      rbox(.0064, .005, .13, m.dark, 0, .012, -.095, .001); rbox(.0066, .0016, .16, m.glow, 0, -.0085, -.105, .0005);
+      rbox(.0074, .005, .13, m.dark, 0, .012, -.095, .001); rbox(.0066, .0016, .16, m.glow, 0, -.0085, -.105, .0005);
       rbox(.03, .052, .012, m.acc, 0, .005, -.014, .004); side([[-.008, .017], [.03, .02], ['q', .07, .022, .1, .012], [.104, -.014], ['q', .07, -.024, .04, -.016], ['q', .02, -.02, -.008, -.014]], .024, m.poly, 0, .009);
       for (let i = 0; i < 4; i++) rbox(.0255, .034, .004, m.rubber, 0, .0, .014 + i * .021, .002); rbox(.028, .032, .016, m.metal, 0, -.001, .108, .006); decal('DP', 'BLADE', .05, .0125, .0036, .008, -.1);
     }
