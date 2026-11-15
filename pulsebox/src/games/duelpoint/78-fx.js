@@ -48,7 +48,7 @@
     // your own streaks start a few metres out and are faint; your rival's are a little clearer so you can tell where fire comes from. Shotguns show a few pellets, not all
     const L = Math.hypot(S.end[0] - mz[0], S.end[1] - mz[1], S.end[2] - mz[2]), s0 = mine ? 3.5 : .6;
     if (L > s0 + 1 && !(G.pel > 1 && Math.random() > .3)) { const tr = X.tracers[X.trN++ % X.tracers.length], u = tr.userData;
-      u.a = [mz[0], mz[1], mz[2]]; u.d = [(S.end[0] - mz[0]) / L, (S.end[1] - mz[1]) / L, (S.end[2] - mz[2]) / L]; u.L = L; u.age = 0; u.s0 = s0; u.len = mine ? 1.4 : 2.2; u.w = mine ? .005 : .008; u.op = mine ? (G.sil ? .08 : .14) : (G.sil ? .16 : .3);
+      u.a = [mz[0], mz[1], mz[2]]; u.d = [(S.end[0] - mz[0]) / L, (S.end[1] - mz[1]) / L, (S.end[2] - mz[2]) / L]; u.L = L; u.age = 0; u.s0 = s0; u.len = mine ? 1.4 : 2.2; u.w = mine ? .005 : .008; u.op = mine ? (G.sil ? .08 : .14) : (G.sil ? .16 : .3); u.mat.color.set(G.rail ? '#38e8ff' : '#ffffff'); if (G.rail) { u.op = .9; u.len = 6; u.w = .02; }
       tr.position.set(mz[0], mz[1], mz[2]); tr.lookAt(S.end[0], S.end[1], S.end[2]); tr.visible = false; tr.userData.live = true; }
     if (first && mine) X.recV = (X.recV || 0) + 2.2 * (VKICK[G.cat] || 1) * (f.scoped ? .55 : 1);
     if (first) { X.muzzle.position.set(mz[0], mz[1], mz[2]); X.muzzle.intensity = G.sil ? 1.2 : 4; if (mine) { X.flashT = G.sil ? .025 : .05; X.ejects.push({ k: G.k, t: G.k === 'breaker' ? .3 : G.k === 'longbow' || G.k === 'kite' ? .6 : .01 }); } }

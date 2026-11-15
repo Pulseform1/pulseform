@@ -28,14 +28,14 @@
   // buy for the kind of round: pistols on round 1 and 5, something cheap when short, a rifle and shields when rich
   function botBuy(f) {
     const c = f.credits, d = f.bot.diff, has = f.guns[1];
-    if (pistolRound(M.round)) { const r = R(); if (r < .35) buy(f, 'hammer'); else if (r < .55) buy(f, 'quill'); else if (r < .75) { buy(f, 'light'); buy(f, 'stub'); } else { buy(f, 'wasp'); buy(f, 'stub'); } return; }
+    if (pistolRound(M.round)) { const r = R(); if (r < .25) buy(f, 'hammer'); else if (r < .4) buy(f, 'quill'); else if (r < .52) buy(f, pick(['viper', 'brick'])); else if (r < .72) { buy(f, 'light'); buy(f, pick(['stub', 'flux'])); } else { buy(f, 'wasp'); buy(f, 'stub'); } return; }
     if (has && GUNS[has].cost >= 2050) { if (f.sh < 50 && f.credits >= 1000) buy(f, 'heavy'); else if (f.sh < 25) buy(f, 'light'); return; }
-    if (c >= 3900) { buy(f, R() < .1 + .08 * d && c >= 5700 ? 'longbow' : R() < .1 ? 'torrent' : R() < .5 ? 'lancer' : 'vesper'); buy(f, 'heavy'); }
-    else if (c >= 3300) { buy(f, R() < .5 ? 'lancer' : 'vesper'); buy(f, 'light'); }
-    else if (c >= 2450 && R() < .6) { buy(f, R() < .55 ? 'mako' : 'paladin'); buy(f, 'light'); }
-    else if (c >= 1950 && R() < .55) { buy(f, pick(['hornet', 'thresher', 'hornet'])); buy(f, 'light'); }
-    else if (c >= 1350 && R() < .4) { buy(f, pick(['gnat', 'breaker', 'kite'])); buy(f, 'light'); }
-    else if (R() < .5) buy(f, pick(['quill', 'hammer', 'stub']));
+    if (c >= 3900) { const r = R(); buy(f, r < .1 + .08 * d && c >= 5700 ? pick(['longbow', 'lumen']) : r < .2 ? pick(['torrent', 'hailstorm', 'cyclone', 'harpoon']) : r < .45 ? pick(['lancer', 'warden']) : r < .7 ? pick(['vesper', 'nova']) : pick(['raptor', 'specter', 'lancer'])); buy(f, 'heavy'); }
+    else if (c >= 3300) { buy(f, pick(['lancer', 'vesper', 'nova', 'raptor', 'specter'])); buy(f, 'light'); }
+    else if (c >= 2450 && R() < .6) { buy(f, pick(['mako', 'paladin', 'raptor'])); buy(f, 'light'); }
+    else if (c >= 1950 && R() < .55) { buy(f, pick(['hornet', 'thresher', 'hornet', 'saber', 'pulsar', 'tempest'])); buy(f, 'light'); }
+    else if (c >= 1350 && R() < .4) { buy(f, pick(['gnat', 'breaker', 'kite', 'grinder', 'saber'])); buy(f, 'light'); }
+    else if (R() < .5) buy(f, pick(['quill', 'hammer', 'stub', 'viper', 'flux']));
   }
   // use an ability at a chosen place, without having to look there first
   function botCast(f, k, data) { if (!f.ab[k] || M.phase !== 'live') return; f.ab[k] = 0; applyAbility(f, k, data); net({ t: 'ab', k, d: data }); }
@@ -111,6 +111,7 @@
       if (G.melee) I.fire = dE < 2.2 && off < .5;
       else {
         if (G.scope && !f.scoped && off < .3) f.scoped = 1;
+        if (G.wind && off < .6) I.spin = true;   // a rotary gun: spin it up while bringing it on target
         const steady = spreadOf(f) < Math.max(.012, size * (2.2 - D.spray)) || dE < (G.pel ? 9 : 5);
         if (G.auto && dE > 12 && f.spray > 2 + D.spray * 6) B.rest = .2 + (1 - D.spray) * .25;   // let a long spray settle
         if (off < size * 1.2 + D.jit && steady && !(B.rest > 0) && (!G.scope || f.scoped)) {

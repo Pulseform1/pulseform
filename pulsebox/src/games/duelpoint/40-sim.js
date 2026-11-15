@@ -127,6 +127,7 @@
     if (!f.alive || f.fireT > 0 || f.reloadT > 0 || f.burst || (M.phase === 'buy' && M.mode !== 'range') || f.plant > 0 || f.defuse > 0) return false;
     if (G.melee) return melee(f, alt === 'heavy');
     if (!A || A.mag <= 0) { if (A && A.res > 0) reload(f); else { f.fireT = .25; emit('dry', f); } return false; }
+    if (G.burst && !alt) { f.burst = { n: Math.min(A.mag, G.burst), gap: G.bgap, t: 0, err: G.berr || 0 }; f.fireT = 60 / G.rpm; stepBurst(f, 0); return true; }   // burst guns: every pull is a burst
     if (alt === 'burst3' || (G.alt === 'burst4' && f.scoped)) { const three = alt === 'burst3'; f.burst = { n: Math.min(A.mag, three ? 3 : 4), gap: three ? 60 / 1100 : 60 / 900, t: 0, err: three ? 2.2 : 0 }; f.fireT = three ? .5 : .36; stepBurst(f, 0); return true; }
     shootOne(f, 0, false); return true;
   }
@@ -316,6 +317,7 @@
     if (!canBuy()) return false;
     const G = GUNS[k], A = ARMOR.find(a => a.k === k), sp = f.spent; let ok = false;
     if (G && !G.melee) {
+      if (G.coins && f.local && M.mode !== 'range' && !STATS.owned.includes(k)) return false;   // a coin gun has to be unlocked first (the range lets you try anything)
       const s = G.slot, prev = sp[s];
       if (f.guns[s] === k) { if (prev && prev.k === k) { f.credits += G.cost; f.guns[s] = prev.was; if (prev.was) giveAmmo(f, prev.was); delete sp[s]; f.slot = f.guns[1] ? 1 : 2; ok = true; } }
       else { const refund = prev ? GUNS[prev.k].cost : 0; if (f.credits + refund >= G.cost) { f.credits += refund - G.cost; sp[s] = { k, was: prev ? prev.was : f.guns[s] }; f.guns[s] = k; giveAmmo(f, k); f.slot = s; f.scoped = 0; f.reloadT = 0; ok = true; } }
@@ -374,7 +376,8 @@
       const I = !f.alive ? NEUTRAL : f.bot ? botThink(f, dt) : readInput(f);
       stepBody(f, I, dt); stepGun(f, dt); stepObjective(f, I, dt);
       if (I.fire && f.sprinting) { f.sprinting = false; f.fireT = Math.max(f.fireT, .1); }
-      if (I.fire && f.alive && (M.phase !== 'buy' || M.mode === 'range')) { const G = gun(f); if (G.auto || !f.semiHeld || (I.rapid && f.fireT < -.07)) fire(f); }
+      { const G = gun(f); f.wind = G.wind ? cl((f.wind || 0) + ((I.fire || I.spin) && f.alive && f.reloadT <= 0 ? dt / G.wind : -dt / (G.wind * 1.6)), 0, 1) : 0; }   // a rotary gun spins up before it fires
+      if (I.fire && f.alive && (M.phase !== 'buy' || M.mode === 'range') && !(gun(f).wind && f.wind < 1)) { const G = gun(f); if (G.auto || !f.semiHeld || (I.rapid && f.fireT < -.07)) fire(f); }
       f.semiHeld = !!I.fire;
       if (M.mode === 'range') { if (f.abT > 0 && (f.abT -= dt) <= 0) f.ab = { q: 1, e: 1 }; if (!f.alive && f.bot && (f.respawn -= dt) <= 0) placeDummy(f); }
     }
