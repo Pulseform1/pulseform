@@ -31,6 +31,7 @@
   }
   // use an ability at a chosen place, without having to look there first
   function botCast(f, k, data) { if (!f.ab[k] || M.phase !== 'live') return; f.ab[k] = 0; applyAbility(f, k, data); net({ t: 'ab', k, d: data }); }
+  const magOf = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return A ? A.mag : 0; };
   const hasAmmo = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return !!A && A.mag + A.res > 0; };
 
   function botThink(f, dt) {
@@ -63,8 +64,8 @@
     if (P.k === 'post' && e.alive && e.defuse > 0 && !P.rush) { P.rush = true; goTo(P, f, M.planted.x, M.planted.z); }
 
     // --- which weapon
-    if (f.slot !== 1 && hasAmmo(f, 1) && !(f.ammo[f.guns[1]].mag === 0 && sees)) switchTo(f, 1);
-    else if (f.slot === 1 && f.ammo[f.guns[1]].mag === 0 && sees && hasAmmo(f, 2) && f.ammo[f.guns[2]].mag > 0 && B.diff > 0) switchTo(f, 2);
+    if (f.slot !== 1 && hasAmmo(f, 1) && !(magOf(f, 1) === 0 && sees)) switchTo(f, 1);
+    else if (f.slot === 1 && magOf(f, 1) === 0 && sees && magOf(f, 2) > 0 && B.diff > 0) switchTo(f, 2);
     else if (f.slot !== 3 && !hasAmmo(f, 1) && !hasAmmo(f, 2)) switchTo(f, 3);
     else if (f.slot === 3 && hasAmmo(f, 2) && !hasAmmo(f, 1)) switchTo(f, 2);
     const G = gun(f), A = f.ammo[G.k];

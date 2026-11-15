@@ -13,6 +13,8 @@
   // screen pixels per world unit, and the factor that keeps touch targets and text big enough on a small screen
   const pxPer = () => innerWidth / (K.view.x1 - K.view.x0);
   const uiScale = () => isTouch() ? cl(.62 / pxPer(), 1, 2) : cl(.8 / pxPer(), 1, 1.5);
+  // a height for something you press: scaled like everything else, but never under `min` real pixels on a touch screen
+  const tapH = (h, min = 44) => isTouch() ? Math.max(h * uiScale(), min / pxPer()) : h * uiScale();
 
   /* ---------- keyboard and mouse ---------- */
   let keys = {}; const mouse = { l: false };
