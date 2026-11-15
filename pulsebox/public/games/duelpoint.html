@@ -2406,8 +2406,8 @@ const GAME = {
   GAME.pose = () => {
     posed = false; seed(11); startMatch({ mode: 'demo' }); const P = me(), F = foe();
     M.phase = 'live'; M.t = 52; P.guns[1] = 'lancer'; P.slot = 1; giveAmmo(P, 'lancer'); F.guns[1] = 'vesper'; F.slot = 1; F.op = 'iris'; P.op = 'vex';
-    Object.assign(P, { x: 33.4, z: 24.2, y: 0, vx: 0, vz: 0 }); Object.assign(F, { x: 42.6, z: 16.6, y: 0, vx: 1.5, vz: 0, walkT: 1.1 });
-    P.yaw = yawTo(P.x, P.z, F.x, F.z) + .05; P.pitch = Math.atan2(eyeY(F) - .35 - eyeY(P), Math.hypot(F.x - P.x, F.z - P.z)); F.yaw = yawTo(F.x, F.z, P.x, P.z) + .3;
+    Object.assign(P, { x: 33.4, z: 24.2, y: 0, vx: 0, vz: 0 }); Object.assign(F, { x: 37.6, z: 18.2, y: 0, vx: -1.5, vz: .4, walkT: 1.1 });
+    P.yaw = yawTo(P.x, P.z, F.x, F.z) + .09; P.pitch = Math.atan2(eyeY(F) - .35 - eyeY(P), Math.hypot(F.x - P.x, F.z - P.z)); F.yaw = yawTo(F.x, F.z, P.x, P.z) + .3;
     P.bot = null; F.bot = null; screen = 'play'; posed = true;
     if (ready) { X.drawT = 0; X.viewKey = ''; renderFrame(.3); renderFrame(.3); P.fireT = 0; fire(P); renderFrame(.016); }
   };
