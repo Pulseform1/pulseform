@@ -88,3 +88,12 @@ class_name = "Elite"
 [[migrations]]
 tag = "v7"
 new_sqlite_classes = ["Elite"]
+
+# LEADERBOARD (players.js): one global Durable Object keeps usernames and the Pulse Score board
+[[durable_objects.bindings]]
+name = "PLAYERS"
+class_name = "Players"
+
+[[migrations]]
+tag = "v8"
+new_sqlite_classes = ["Players"]

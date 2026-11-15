@@ -26,7 +26,9 @@
 // THE HOLLOW co-op: /api/hollow (WebSocket) goes to the HollowRooms Durable Object (hollow-rooms.js), which runs the game's own engine.
 // AFTERHOURS co-op: /api/arcade (WebSocket) goes to the ArcadeRooms Durable Object (arcade-rooms.js), which runs the five games' simulations.
 // PULSEBOX ELITE: /api/elite/* (elite.js) — referral codes, verified referrals and permanent Elite access, in the Elite Durable Object.
-import { elite } from './elite.js';
+import { elite, caller } from './elite.js';
+// LEADERBOARD: /api/players/* (players.js) — usernames picked once per account, and the top 50 by Pulse Score, in the Players Durable Object.
+import { players } from './players.js';
 const PROJECT = 'pulseform-d8282';
 const JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 const MAX_BYTES = 400000;
@@ -282,6 +284,7 @@ export async function api(request, env, ctx, ids, eliteCfg = { live: false }) {
   const url = new URL(request.url);
   if (url.pathname === '/api/play') return play(request, env, ids);
   if (url.pathname.startsWith('/api/elite/') && env.ELITE) return elite(request, env, url, verifyClaims, eliteCfg);
+  if (url.pathname.startsWith('/api/players/') && env.PLAYERS) return players(request, env, url, () => caller(request, env, verifyClaims));
   if (url.pathname === '/api/stats') return stats(request, env, ctx);
   if (url.pathname === '/api/view') return view(request, env);
   if (url.pathname === '/api/live') return live(request, env);
@@ -388,7 +391,7 @@ export class Stats {
       }
       const { g, k, n, t, who, asc, min, max } = JSON.parse(await request.text());
       if (!Number.isInteger(t) || t < min || t > max || typeof who !== 'string') return json({ error: 'rejected' }, 400);
-      const name = String(n || '').replace(/[^\w .'-]/g, '').trim().slice(0, 14) || 'Player', h = await hashWho(who);
+      const name = String(n || '').replace(/[^\w .'-]/g, '').trim().slice(0, 15) || 'Player', h = await hashWho(who);
       this.sql.exec('DELETE FROM lbrate WHERE t < ?', now - 3600000);
       if (this.sql.exec('SELECT COUNT(*) AS n FROM lbrate WHERE who = ?', h).one().n >= 60) return json({ error: 'slow down' }, 429);
       this.sql.exec('INSERT INTO lbrate (who, t) VALUES (?, ?)', h, now);

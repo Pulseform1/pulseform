@@ -41,7 +41,7 @@ function normEmail(e) {
 
 // who is calling. In production: a Firebase ID token, checked by api.js. For local tests only (wrangler dev with
 // --var ELITE_DEV:1, never set in wrangler.toml), a "dev." token stands in for Firebase so the whole flow can be exercised offline.
-async function caller(request, env, verifyClaims) {
+export async function caller(request, env, verifyClaims) {
   const tok = (request.headers.get('authorization') || '').replace(/^Bearer /, '');
   // ELITE_DEV is only ever passed on the command line for local runs (wrangler dev --var ELITE_DEV:1); it is not in wrangler.toml
   if (env.ELITE_DEV === '1' && tok.startsWith('dev.')) {

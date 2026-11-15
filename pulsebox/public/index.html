@@ -782,6 +782,88 @@
   .el-bar-invite .x { border: 0; background: transparent; color: #9b90bd; font-size: 18px; cursor: pointer; padding: 4px 6px; }
   @media (min-width: 900px) { .el-bar-invite { bottom: 22px; } }
   .am-sent { text-align: center; } .am-sent .big { font-size: 46px; margin: 4px 0 6px; }
+
+  /* ============ LEADERBOARD: the top 50 by Pulse Score ============ */
+  .lvt { display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: 9px; background: linear-gradient(135deg, var(--lime), #5fe08a); color: #0a0c12; font-family: var(--display); font-weight: 800; font-size: 15px; box-shadow: 0 0 12px rgba(198,255,61,.3); flex: none; }
+  .lvt::before { content: 'LV'; font-size: 8px; letter-spacing: .08em; margin-right: 2px; opacity: .7; align-self: center; }
+  .lb-band { position: relative; overflow: hidden; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: clamp(14px, 3vw, 30px); margin: 0 0 clamp(16px, 2.2vw, 24px); padding: clamp(20px, 3.2vw, 34px) clamp(18px, 3.4vw, 36px);
+    border-radius: 24px; cursor: pointer; border: 1px solid rgba(255,214,90,.35); transition: transform .25s ease, box-shadow .25s ease;
+    background: radial-gradient(80% 160% at 0% 50%, rgba(255,196,0,.28), transparent 60%), radial-gradient(60% 140% at 100% 0%, rgba(198,255,61,.18), transparent 60%), linear-gradient(120deg, #2a1d05, #141006 55%, #0d1208); box-shadow: 0 0 0 1px rgba(255,214,90,.1) inset, 0 18px 50px rgba(0,0,0,.35); }
+  .lb-band:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px rgba(255,214,90,.25) inset, 0 0 46px rgba(255,196,0,.3), 0 22px 60px rgba(0,0,0,.45); }
+  .lb-band:focus-visible { outline: 3px solid #ffd65a; outline-offset: 4px; }
+  .lb-band::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(115deg, rgba(255,214,90,.05) 0 2px, transparent 2px 22px); }
+  .lb-trophy { font-size: clamp(56px, 8vw, 92px); line-height: 1; filter: drop-shadow(0 0 22px rgba(255,196,0,.6)); animation: lbBob 3s ease-in-out infinite; position: relative; z-index: 1; }
+  @keyframes lbBob { 50% { transform: translateY(-6px) rotate(4deg); } }
+  .lb-txt { position: relative; z-index: 1; }
+  .lb-txt .k { font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .3em; color: #ffd65a; text-transform: uppercase; }
+  .lb-txt { min-width: 0; } .lb-txt h2 { margin: 4px 0 6px; font-family: var(--display); font-size: clamp(26px, 6.6vw, 62px); line-height: .95; letter-spacing: .03em; text-transform: uppercase; background: linear-gradient(90deg, #fff6d0, #ffd65a 45%, #ffae00); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lb-txt p { margin: 0; color: #e8dcb8; font-weight: 700; font-size: clamp(14px, 1.6vw, 17px); }
+  .lb-mini { position: relative; z-index: 1; display: grid; gap: 6px; min-width: 250px; }
+  .lb-mini .row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 12px; background: rgba(0,0,0,.35); box-shadow: 0 0 0 1px rgba(255,214,90,.18) inset; font-weight: 800; }
+  .lb-mini .row .m { width: 22px; text-align: center; } .lb-mini .row .n { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .lb-mini .row .s { color: #ffd65a; font-family: var(--display); }
+  .lb-mini .lvt { min-width: 26px; height: 24px; font-size: 13px; } .lb-mini .lvt::before { font-size: 7px; }
+  .lb-go { border: 0; border-radius: 12px; padding: 12px 18px; margin-top: 4px; font-family: var(--display); font-weight: 700; font-size: 17px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; color: #1a1200; background: linear-gradient(90deg, #ffae00, #ffd65a); box-shadow: 0 0 24px rgba(255,196,0,.45); }
+  @media (max-width: 760px) { .lb-band { grid-template-columns: auto minmax(0, 1fr); } .lb-mini { grid-column: 1 / -1; min-width: 0; } .lb-trophy { font-size: 48px; } }
+  @media (max-width: 420px) { .pod .nm { flex-direction: column; gap: 2px; } .pod .nm b { max-width: 100%; font-size: 13px; } .pod .sc { font-size: 16px; } }
+
+  .board-view { position: relative; min-height: calc(100vh - 70px); padding: clamp(14px, 3vw, 32px) var(--gut) 120px; }
+  .board-view::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(60% 40% at 50% 0%, rgba(255,196,0,.2), transparent 70%), radial-gradient(40% 40% at 100% 30%, rgba(198,255,61,.08), transparent 70%); }
+  .lbv { max-width: 980px; margin: 0 auto; min-width: 0; } .board-view { overflow-x: hidden; }
+  .lbv-back { display: inline-flex; gap: 8px; border: 0; background: rgba(255,255,255,.06); color: #e9e2cc; border-radius: 10px; padding: 9px 14px; font-weight: 800; cursor: pointer; margin-bottom: 10px; }
+  .lbv-hero { text-align: center; margin: 4px 0 22px; }
+  .lbv-hero .t { font-size: clamp(54px, 9vw, 86px); line-height: 1; filter: drop-shadow(0 0 26px rgba(255,196,0,.55)); }
+  .lbv-hero h1 { margin: 6px 0 0; font-family: var(--display); font-size: clamp(36px, 6.4vw, 66px); letter-spacing: .04em; text-transform: uppercase; line-height: 1; background: linear-gradient(90deg, #fff6d0, #ffd65a 50%, #ffae00); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lbv-hero p { margin: 10px 0 0; color: #cdbf98; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; font-size: 14px; }
+  .lbv-you { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 16px 18px; margin-bottom: 18px; border-radius: 18px; background: linear-gradient(120deg, rgba(198,255,61,.14), rgba(255,196,0,.08)); box-shadow: 0 0 0 1px rgba(198,255,61,.35) inset; }
+  .lbv-you .rk { font-family: var(--display); font-size: 34px; color: var(--lime); min-width: 70px; text-align: center; }
+  .lbv-you .rk small { display: block; font-size: 11px; letter-spacing: .2em; color: #b9c48f; }
+  .lbv-you .nm { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 19px; }
+  .lbv-you .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .lbv-you .chips span { font-size: 12px; font-weight: 800; padding: 4px 8px; border-radius: 999px; background: rgba(0,0,0,.3); color: #e4e9cf; }
+  .lbv-you .sc { text-align: right; font-family: var(--display); font-size: 30px; color: #ffd65a; } .lbv-you .sc small { display: block; font-size: 11px; letter-spacing: .2em; color: #cdbf98; }
+  .lbv-cta { text-align: center; padding: 18px; margin-bottom: 18px; border-radius: 18px; background: rgba(255,255,255,.04); box-shadow: 0 0 0 1px rgba(255,255,255,.1) inset; }
+  .lbv-cta p { margin: 0 0 12px; color: #d8d2bd; font-weight: 700; }
+  .lbv-podium { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr); align-items: end; gap: clamp(8px, 2vw, 18px); margin: 8px 0 22px; }
+  .pod { text-align: center; padding: 16px 4px 0; min-width: 0; }
+  .pod .av { width: clamp(58px, 10vw, 84px); aspect-ratio: 1; margin: 0 auto 8px; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-size: clamp(26px, 4.4vw, 38px); color: #1a1200; position: relative;
+    background: radial-gradient(circle at 35% 30%, #fff, var(--c) 55%); box-shadow: 0 0 0 3px rgba(255,255,255,.4), 0 0 30px var(--c); }
+  .pod .crown { position: absolute; top: -26px; left: 50%; translate: -50% 0; font-size: 30px; filter: drop-shadow(0 0 10px rgba(255,214,90,.8)); animation: lbBob 2.6s ease-in-out infinite; }
+  .pod .nm { display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 800; font-size: clamp(14px, 2vw, 18px); min-height: 30px; } .pod .nm { min-width: 0; } .pod .nm b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; max-width: 12ch; }
+  .pod .sc { font-family: var(--display); font-size: clamp(18px, 2.6vw, 24px); color: #ffd65a; margin-top: 2px; }
+  .pod .step { margin-top: 10px; border-radius: 16px 16px 0 0; display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 46px); color: rgba(0,0,0,.35);
+    background: linear-gradient(180deg, var(--c), rgba(0,0,0,.25)); box-shadow: 0 0 30px color-mix(in srgb, var(--c) 45%, transparent); }
+  .pod.p1 { --c: #ffcf3a; } .pod.p1 .step { height: clamp(110px, 16vw, 150px); } .pod.p2 { --c: #cfd8e6; } .pod.p2 .step { height: clamp(80px, 11vw, 110px); } .pod.p3 { --c: #e39a5c; } .pod.p3 .step { height: clamp(60px, 8vw, 84px); }
+  .pod.empty .av { background: rgba(255,255,255,.06); box-shadow: 0 0 0 2px rgba(255,255,255,.12); color: #6b6658; }
+  .lbv-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .lbv-row { display: grid; grid-template-columns: 52px auto 1fr auto auto auto; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 14px; background: rgba(255,255,255,.035); box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset; animation: lbIn .4s ease both; }
+  .lbv-row:nth-child(even) { background: rgba(255,255,255,.055); }
+  .lbv-row.me { background: linear-gradient(90deg, rgba(198,255,61,.18), rgba(198,255,61,.04)); box-shadow: 0 0 0 1px rgba(198,255,61,.5) inset; }
+  @keyframes lbIn { from { opacity: 0; transform: translateY(6px); } }
+  .lbv-row .r { font-family: var(--display); font-size: 20px; color: #a99f84; text-align: center; }
+  .lbv-row .n { font-weight: 800; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lbv-row .st, .lbv-row .bt { font-size: 14px; font-weight: 800; color: #d9d2bc; white-space: nowrap; }
+  .lbv-row .sc { font-family: var(--display); font-size: 20px; color: #ffd65a; min-width: 80px; text-align: right; }
+  .lbv-empty { text-align: center; padding: 26px; color: #b9b29c; }
+  .lbv-how { margin-top: 28px; padding: 20px; border-radius: 18px; background: rgba(255,255,255,.035); box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset; }
+  .lbv-how h2 { margin: 0 0 4px; font-family: var(--display); letter-spacing: .08em; text-transform: uppercase; font-size: 22px; }
+  .lbv-how p { margin: 0 0 12px; color: #b9b29c; }
+  .lbv-how ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+  .lbv-how li { display: flex; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: 12px; background: rgba(0,0,0,.25); font-weight: 700; }
+  .lbv-how li b { color: #ffd65a; font-family: var(--display); white-space: nowrap; } .lbv-how li.big { box-shadow: 0 0 0 1px rgba(255,214,90,.5) inset; }
+  @media (max-width: 600px) { .lbv-row { grid-template-columns: 34px auto 1fr auto; gap: 8px; padding: 9px 10px; } .lbv-row .bt { display: none; } .lbv-row .st { display: none; } .lbv-row .n { font-size: 15px; } .lbv-row .sc { min-width: 0; font-size: 17px; }
+    .lbv-you { grid-template-columns: auto 1fr; } .lbv-you .sc { grid-column: 1 / -1; text-align: left; } }
+  /* the one-time username box */
+  .un-box h2 { margin: 0 0 6px; font-family: var(--display); text-transform: uppercase; letter-spacing: .04em; }
+  .un-box .un-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 6px; border-radius: 12px; background: var(--bg2); box-shadow: 0 0 0 1px var(--edge) inset; }
+  .un-box .un-row:focus-within { box-shadow: 0 0 0 2px var(--lime) inset; }
+  .un-box input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--text); font: 800 19px var(--body); padding: 8px; }
+  .un-box input:focus { outline: none; }
+  .un-box .cnt { font-size: 13px; color: var(--muted); font-weight: 800; padding-right: 6px; }
+  .un-box .rules { margin: 8px 2px 0; font-size: 13px; color: var(--muted); }
+  .un-box .msg { min-height: 22px; margin: 8px 2px 0; font-weight: 800; font-size: 14px; color: var(--pink); } .un-box .msg.ok { color: var(--lime); }
+  .un-box .go { width: 100%; margin-top: 12px; border: 0; border-radius: 12px; padding: 14px; font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: .06em; text-transform: uppercase; background: var(--lime); color: #0a0c12; cursor: pointer; }
+  .un-box .go[disabled] { opacity: .5; cursor: default; }
+  .un-box .later { display: block; margin: 10px auto 0; border: 0; background: none; color: var(--muted); font-weight: 700; cursor: pointer; text-decoration: underline; }
 </style>
 
 <div class="wrap">
@@ -801,6 +883,7 @@
   <main id="home" class="home">
     <section class="hero" id="hero" aria-roledescription="carousel" aria-label="Games of the day"></section>
     <section class="elite-band el-edge" id="eliteBand" role="button" tabindex="0" aria-labelledby="ebTitle"></section>
+    <section class="lb-band" id="lbBand" role="button" tabindex="0" aria-labelledby="lbbTitle"></section>
     <div id="trendTop"></div>
     <section class="actions" id="actions" aria-label="Find a game fast"></section>
     <div class="home-top">
@@ -886,6 +969,8 @@
 
   <!-- PULSEBOX ELITE: progress, invites, and the Elite library -->
   <main id="elite" class="elite-view" hidden><div class="el-wrap" id="elRoot"></div></main>
+  <!-- LEADERBOARD: the top 50 players by Pulse Score -->
+  <main id="leaderboard" class="board-view" hidden aria-labelledby="lbTitle"><div class="lbv" id="lbRoot"></div></main>
 
   <footer><span><b>PULSEBOX</b> · Interactive activities for timing, strategy, and problem-solving.</span><span>Works on phones, tablets, and computers. Found a problem? <button type="button" class="bug-link" id="footBug">Report a bug</button></span></footer>
 </div>
@@ -902,7 +987,7 @@
     <button class="x" id="frX" type="button" aria-label="Close">✕</button>
     <h2 id="frTitle">Play with friends</h2>
     <p>Pick a game, make a room, and send your friends the code. Up to 8 players, depending on the game.</p>
-    <label for="frName">Your name <small style="font-weight:600;color:var(--muted)">· the same name shows on leaderboards</small></label><input id="frName" maxlength="12" placeholder="Type your name" autocomplete="nickname">
+    <label for="frName">Your name <small style="font-weight:600;color:var(--muted)">· the same name shows on leaderboards</small></label><input id="frName" maxlength="15" placeholder="Type your name" autocomplete="nickname">
     <div class="fr-tabs" role="tablist"><button type="button" data-p="make" class="on">Start a room</button><button type="button" data-p="join">Join a friend</button></div>
     <div id="frMake"><div class="fr-grid" id="frGrid"></div></div>
     <div id="frJoin" hidden><label for="frCode">Room code</label><input id="frCode" class="fr-in" maxlength="4" placeholder="ABCD" autocomplete="off" spellcheck="false"><button class="go" id="frGo" type="button">Join the room</button></div>
@@ -2839,7 +2924,7 @@ let lastShelf = null;
 let curView = 'home', prevView = 'home';
 function show(view) {
   prevView = curView; curView = view;
-  ['home', 'detail', 'playing', 'elite'].forEach(v => $(v).hidden = v !== view);
+  ['home', 'detail', 'playing', 'elite', 'leaderboard'].forEach(v => $(v).hidden = v !== view);
   if (view !== 'playing') stopGame();
   if (view !== 'detail') $('dVideo').pause();
   if (view !== 'home') document.querySelectorAll('.hero video').forEach(v => v.pause());
@@ -2847,6 +2932,7 @@ function show(view) {
 function route() {
   let h = location.hash.slice(1), joinC = '';
   if (/^join-[A-Za-z0-9]{4}$/.test(h)) { joinC = h.slice(5).toUpperCase(); h = ''; try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} setTimeout(() => openFriends('join', joinC), 0); }
+  if (h === 'leaderboard') { show('leaderboard'); if (window.pbxBoardShow) window.pbxBoardShow(); window.scrollTo(0, 0); return; }
   if (h === 'elite') { show('elite'); if (window.pbxEliteShow) window.pbxEliteShow(); window.scrollTo(0, 0); return; }   // (on first load the Elite script, further down, shows it)
   { const eg = ELITE_GAMES.find(g => g.id === (h.indexOf('play-') === 0 ? h.slice(5) : h));   // an Elite game: only through the Elite library
     if (eg) { const f = $('stage').querySelector('iframe'); if (h.indexOf('play-') === 0 && !$('playing').hidden && f && f.dataset.id === eg.id) return; if (window.pbxEliteLaunch) window.pbxEliteLaunch(eg, h.indexOf('play-') === 0); else setTimeout(route, 30); return; } }
@@ -2861,7 +2947,7 @@ function route() {
   show('home'); current = null;
   const tm0 = h.indexOf('t-') === 0 && [...CATEGORIES, 'All'].find(c => c.toLowerCase() === h.slice(2)), mm = h.indexOf('m-') === 0 && MOODS[h.slice(2)] ? h.slice(2) : '', tm = tm0 || (mm ? 'mood:' + mm : '') || (h === 'new' ? 'new' : '');
   topic = tm || ''; if (tm) { query = ''; $('q').value = ''; $('q2').value = ''; }
-  $('hero').hidden = !!tm; document.querySelector('.home-top').hidden = !!tm; $('finder').hidden = !!tm; $('friendsBand').hidden = !!tm; $('actions').hidden = !!tm; $('eliteBand').hidden = !!tm;
+  $('hero').hidden = !!tm; document.querySelector('.home-top').hidden = !!tm; $('finder').hidden = !!tm; $('friendsBand').hidden = !!tm; $('actions').hidden = !!tm; $('eliteBand').hidden = !!tm; $('lbBand').hidden = !!tm;
   renderChips(); renderShelves(); heroGo(heroIdx);
   document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.t === (tm ? 'topics' : 'home')));
   if (tm) { window.scrollTo(0, 0); return; }
@@ -2898,7 +2984,7 @@ const API_ORIGIN = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.t
 let roomJoin = null, frPick = null;
 const frGames = () => FRIEND_GAMES.map(byId).filter(Boolean);
 const mpName = () => { try { const n = localStorage.getItem('pbx-mp-name'); if (n) return n; const pp = window.pbxPlayer; return pp && !pp.isDefaultName() ? pp.profile.name : ''; } catch (e) { return ''; } };
-function saveMpName() { const n = ($('frName').value || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12); if (n) { if (window.pbxPlayer) window.pbxPlayer.setName(n); else try { localStorage.setItem('pbx-mp-name', n); } catch (e) {} } return n; }
+function saveMpName() { const n = ($('frName').value || '').replace(/[^\w .'-]/g, '').trim().slice(0, 15); if (n) { if (window.pbxPlayer) window.pbxPlayer.setName(n); else try { localStorage.setItem('pbx-mp-name', n); } catch (e) {} } return n; }
 function frPanel(p) {
   $('frMake').hidden = p !== 'make'; $('frJoin').hidden = p !== 'join'; $('frReady').hidden = p !== 'ready';
   document.querySelectorAll('.fr-tabs button').forEach(b => b.classList.toggle('on', b.dataset.p === p || (p === 'ready' && b.dataset.p === 'make')));
@@ -3549,7 +3635,7 @@ loadStats();
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} };
   // one player name: leaderboards, online rooms and the Arena all use it
   const isDefaultName = () => /^Player\d{4}$/.test(P.name || '');
-  function setName(v) { v = String(v || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12); if (!v) return false; P.name = v; save(); try { localStorage.setItem('pbx-mp-name', v); } catch (e) {} if (typeof chip === 'function') chip(); return true; }
+  function setName(v) { v = String(v || '').replace(/[^\w .'-]/g, '').trim().slice(0, 15); if (!v) return false; P.name = v; save(); try { localStorage.setItem('pbx-mp-name', v); } catch (e) {} if (typeof chip === 'function') chip(); return true; }
   // XP to go from level L to L+1 grows gently: 100, 140, 180, ...
   const need = L => 100 + 40 * (L - 1);
   const levelOf = xp => { let L = 1, left = xp; while (left >= need(L)) { left -= need(L); L++; } return { L, into: left, need: need(L) }; };
@@ -3690,7 +3776,7 @@ loadStats();
     const ranks = Object.entries(P.ranks).filter(([g]) => byIdP(g)).sort((a, b) => a[1] - b[1]).slice(0, 6);
     box.innerHTML = `<button class="x" data-a="close" aria-label="Close">✕</button>
       <div class="pf-head"><div class="pf-ring" style="--p:${l.into / l.need}"><b>${l.L}</b><small>LEVEL</small></div>
-        <div class="pf-id"><label for="pfName">✎ Your player name</label><div class="pf-name"><input id="pfName" maxlength="12" value="${esc(P.name)}" autocomplete="nickname" spellcheck="false"><button id="pfSave" type="button" disabled>Save</button></div><small class="pf-where" id="pfWhere">Shown on world leaderboards and in online rooms with friends. Tap the box to change it.</small>
+        <div class="pf-id"><label for="pfName">✎ Your player name</label><div class="pf-name"><input id="pfName" maxlength="15" value="${esc(P.name)}" autocomplete="nickname" spellcheck="false"><button id="pfSave" type="button" disabled>Save</button></div><small class="pf-where" id="pfWhere">Shown on world leaderboards and in online rooms with friends. Tap the box to change it.</small>
         <div class="pf-bar"><i style="width:${Math.round(l.into / l.need * 100)}%"></i></div><small>${num(l.into)} / ${num(l.need)} XP to level ${l.L + 1} · ${num(P.xp)} XP total</small></div></div>
       ${isDefaultName() ? '<div class="pf-nudge">👋 You\'re still <b>' + esc(P.name) + '</b>. Type a name above and press <b>Save</b> so friends can spot you on the leaderboards.</div>' : ''}
       <div class="pf-stats"><span><b>${tried().length}</b>games tried</span><span><b>${num(P.plays)}</b>sessions</span><span><b>🔥 ${P.streak && P.lastDaily >= addDays(today(), -1) ? P.streak : 0}</b>daily streak</span><span><b>${Object.keys(P.daily).length}</b>dailies done</span></div>
@@ -3774,6 +3860,111 @@ loadStats();
   const sg0 = startGame; startGame = function (g) { sg0.apply(this, arguments); onStart(g); loadingScreen(g); pr.innerHTML = rateHTML(g.id); paintRate(g.id); };
   const rs0 = renderShelves; renderShelves = function () { rs0.apply(this, arguments); renderDaily(); };
   try { renderDaily(); } catch (e) {}
+
+  /* ---------- the leaderboard: a username picked once per account, and the top 50 by Pulse Score (players.js) ---------- */
+  const U = { name: null, known: false, board: null, boardAt: 0, asked: false };
+  const signedIn = () => !!(window.pbxUser && window.pbxUser());
+  async function papi(path, body) {
+    const h = await auth(); if (!h.authorization && path !== 'top') throw Object.assign(new Error('signin'), { code: 401 });
+    const r = await fetch(API + '/api/players/' + path, { method: body ? 'POST' : 'GET', headers: { 'content-type': 'application/json', ...h }, body: body ? JSON.stringify(body) : undefined });
+    const j = await r.json().catch(() => ({})); if (!r.ok) throw Object.assign(new Error(j.error || 'failed'), { code: r.status, error: j.error }); return j;
+  }
+  // what goes into the Pulse Score, from this profile (the server checks each number and does the sums)
+  function myStats() {
+    const days = Object.keys(P.days).sort();
+    return { xp: P.xp, streak: P.streak, bestStreak: P.bestStreak, lastDaily: P.lastDaily, dailies: Object.keys(P.daily).length, beaten: Object.values(P.games).filter(g => g.best > 0).length, tried: tried().length,
+      badges: Object.keys(P.badges).length, top10: Object.values(P.ranks).filter(r => r <= 10).length, firsts: Object.values(P.ranks).filter(r => r === 1).length, sessions: P.plays, lastPlay: days[days.length - 1] || '' };
+  }
+  let statsT = 0, statsLast = '';
+  function pushStats(now) {
+    clearTimeout(statsT); if (!U.name || !signedIn()) return;
+    statsT = setTimeout(async () => { const s = myStats(), k = JSON.stringify(s); if (k === statsLast) return; try { await papi('stats', s); statsLast = k; U.boardAt = 0; } catch (e) { if (e.code === 429) pushStats(); } }, now ? 0 : 15000);
+  }
+  // every XP change redraws the header chip: that is also when the board hears about it
+  const chip0 = chip; chip = function () { chip0.apply(this, arguments); pushStats(); };
+  window.addEventListener('pbx-auth', async e => {
+    U.name = null; U.known = false; statsLast = '';
+    if (!e.detail) { renderBoardPage(); return; }
+    try { U.name = (await papi('me')).name; } catch (err) {}
+    U.known = true;
+    if (U.name) { setName(U.name); pushStats(true); }
+    else if (!U.asked) { U.asked = true; setTimeout(() => askName(), 900); }
+    renderBoardPage(); bandBoard(true);
+  });
+
+  // ---- the one-time username
+  const NAME_RE = /^[A-Za-z0-9][A-Za-z0-9 _.-]{1,13}[A-Za-z0-9]$/;
+  const NAME_MSG = { taken: 'Someone already has that name. Try another one.', rude: 'That name isn\'t allowed on Pulsebox. Pick something friendly.', short: 'Use at least 3 characters.', long: 'Use 15 characters or fewer.',
+    chars: 'Use letters, numbers, spaces, _ . or - (and start and end with a letter or number).', set: 'This account already has a username.', bad: 'That name won\'t work. Try another.' };
+  function askName(why) {
+    if (!signedIn() || U.name) return;
+    const m = document.createElement('div'); m.className = 'modal'; m.id = 'unModal'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-labelledby', 'unTitle');
+    const start = isDefaultName() ? '' : (P.name || '').slice(0, 15);
+    m.innerHTML = `<div class="box un-box"><h2 id="unTitle">Pick your username</h2>
+      <p>${esc(why || 'This is your name on the Pulsebox leaderboard, right next to your level. You only pick it once, and it\'s yours: nobody else can have the same name.')}</p>
+      <form id="unForm"><div class="un-row"><input id="unIn" maxlength="15" autocomplete="nickname" spellcheck="false" placeholder="Your username" value="${esc(start)}" aria-describedby="unRules"><span class="cnt" id="unCnt">0/15</span></div>
+      <p class="rules" id="unRules">3–15 letters or numbers (spaces, _ . - are fine). Keep it friendly: rude names are blocked.</p><div class="msg" id="unMsg" role="status"></div>
+      <button class="go" type="submit" id="unGo">Save my username</button></form><button class="later" type="button" id="unLater">Not now</button></div>`;
+    document.body.append(m);
+    const inp = $('unIn'), cnt = $('unCnt'), msg = $('unMsg'), go = $('unGo');
+    const check = () => { const v = inp.value.replace(/\s+/g, ' ').trim(); cnt.textContent = v.length + '/15'; const ok = NAME_RE.test(v); go.disabled = !ok; msg.className = 'msg'; msg.textContent = !v ? '' : v.length < 3 ? NAME_MSG.short : ok ? '' : NAME_MSG.chars; };
+    inp.oninput = check; check(); setTimeout(() => inp.focus(), 50);
+    $('unLater').onclick = () => m.remove();
+    $('unForm').onsubmit = async e => {
+      e.preventDefault(); const v = inp.value.replace(/\s+/g, ' ').trim(); go.disabled = true; msg.className = 'msg'; msg.textContent = 'Checking…';
+      try { const r = await papi('name', { name: v }); U.name = r.name; setName(r.name); msg.className = 'msg ok'; msg.textContent = '✓ You\'re ' + r.name + ' for good!'; pushStats(true); setTimeout(() => { m.remove(); renderBoardPage(); }, 900); }
+      catch (err) { if (err.error === 'set') { try { U.name = (await papi('me')).name; if (U.name) setName(U.name); } catch (e2) {} m.remove(); renderBoardPage(); return; } msg.textContent = NAME_MSG[err.error] || (err.code === 401 ? 'Sign in again, then try.' : 'Couldn\'t save it. Check your connection and try again.'); go.disabled = false; }
+    };
+  }
+  // with a username, the profile shows it locked instead of an editable box
+  const dp0 = drawProfile; drawProfile = function () {
+    dp0.apply(this, arguments); if (!U.name) return;
+    const inp = $('pfName'), sv = $('pfSave'), where = $('pfWhere'); if (!inp) return;
+    inp.value = U.name; inp.readOnly = true; if (sv) sv.hidden = true; if (where) where.innerHTML = '🔒 Your username is tied to your account. Nobody else can use it.';
+  };
+
+  // ---- the board
+  async function loadBoard(force) {
+    if (!force && U.board && Date.now() - U.boardAt < 20000) return U.board;
+    try { U.board = await papi('top'); U.boardAt = Date.now(); } catch (e) {} return U.board;
+  }
+  const medal = r => r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : r;
+  async function bandBoard(force) {
+    const b = $('lbBand'); if (!b) return;
+    const paint = B => { const top = (B && B.top || []).slice(0, 3);
+      b.innerHTML = `<div class="lb-trophy" aria-hidden="true">🏆</div><div class="lb-txt"><span class="k">Pulsebox</span><h2 id="lbbTitle">Leaderboard</h2><p>The top 50 players. Where do you rank?</p></div>
+        <div class="lb-mini">${top.length ? top.map(p => `<div class="row"><span class="m">${medal(p.rank)}</span><span class="lvt">${p.level}</span><span class="n">${esc(p.name)}</span><span class="s">${num(p.score)}</span></div>`).join('') : '<div class="row"><span class="m">🥇</span><span class="n">Be the first on the board</span></div>'}
+        <button class="lb-go" type="button" tabindex="-1">See the top 50</button></div>`; };
+    paint(U.board); paint(await loadBoard(force));
+  }
+  function renderBoardPage() {
+    const root = $('lbRoot'); if (!root || $('leaderboard').hidden) return;
+    const B = U.board, top = (B && B.top) || [], me = B && B.me, W = (B && B.weights) || {}, mineName = U.name;
+    const pod = r => { const p = top[r - 1]; return p ? `<div class="pod p${r}"><div class="av">${r === 1 ? '<span class="crown" aria-hidden="true">👑</span>' : ''}${esc(p.name[0].toUpperCase())}</div><div class="nm"><span class="lvt">${p.level}</span><b>${esc(p.name)}</b></div><div class="sc">${num(p.score)}</div><div class="step">${r}</div></div>`
+      : `<div class="pod p${r} empty"><div class="av">?</div><div class="nm"><b>Open spot</b></div><div class="sc">&nbsp;</div><div class="step">${r}</div></div>`; };
+    let you = '';
+    if (!signedIn()) you = `<div class="lbv-cta"><p>Sign in and pick a username to get on the board.</p><button class="lb-go" type="button" data-b="signin">Sign in to compete</button></div>`;
+    else if (U.known && !U.name) you = `<div class="lbv-cta"><p>Pick your username to appear on the leaderboard.</p><button class="lb-go" type="button" data-b="name">Pick my username</button></div>`;
+    else if (me) you = `<div class="lbv-you"><div class="rk">#${me.rank}<small>YOUR RANK</small></div><div><div class="nm"><span class="lvt">${me.level}</span>${esc(me.name)}</div>
+      <div class="chips"><span>🔥 ${me.streak}-day streak</span><span>🎮 ${me.beaten} beaten</span><span>🏅 ${(me.st || {}).badges || 0} badges</span><span>📅 ${(me.st || {}).dailies || 0} dailies</span>${(me.st || {}).boost > 1 ? '<span>⚡ Active bonus</span>' : (me.st || {}).boost < 1 ? '<span>💤 Play again to lose the away penalty</span>' : ''}</div></div>
+      <div class="sc">${num(me.score)}<small>PULSE SCORE</small></div></div>`;
+    else if (mineName) you = `<div class="lbv-cta"><p>You're <b>${esc(mineName)}</b>. Your score shows up here within a few seconds of playing.</p></div>`;
+    const rows = top.slice(3).map(p => `<li class="lbv-row ${mineName && p.name === mineName ? 'me' : ''}" style="animation-delay:${Math.min(p.rank * 18, 600)}ms"><span class="r">${p.rank}</span><span class="lvt">${p.level}</span><span class="n">${esc(p.name)}</span><span class="st">🔥 ${p.streak}</span><span class="bt">🎮 ${p.beaten}</span><span class="sc">${num(p.score)}</span></li>`).join('');
+    const how = [['streak', 'Each day of your current daily streak', 1], ['firsts', 'Each world board where you\'re #1'], ['top10', 'Each world board in your top 10'], ['beaten', 'Each game you\'ve finished with a score'], ['badges', 'Each badge'], ['level', 'Each level'],
+      ['dailies', 'Each daily challenge done'], ['bestStreak', 'Each day of your best streak'], ['tried', 'Each different game played'], ['sessions', 'Each session (up to 1,500)']];
+    root.innerHTML = `<button class="lbv-back" type="button" data-b="home">‹ All games</button>
+      <div class="lbv-hero"><div class="t" aria-hidden="true">🏆</div><h1 id="lbTitle">Leaderboard</h1><p>Top 50 players · ranked by Pulse Score${B ? ' · ' + num(B.total) + ' players ranked' : ''}</p></div>
+      ${you}
+      ${B ? `<div class="lbv-podium">${pod(2)}${pod(1)}${pod(3)}</div>${top.length > 3 ? `<ol class="lbv-list" start="4">${rows}</ol>` : top.length ? '' : '<div class="lbv-empty">Nobody on the board yet. Play a game and grab #1!</div>'}` : '<div class="lbv-empty">Loading the leaderboard…</div>'}
+      <section class="lbv-how"><h2>How the Pulse Score works</h2><p>It rewards coming back every day most of all. Played in the last 2 days? Your score gets a <b>×1.25 active bonus</b>. Away for a while and it slowly shrinks, until you play again.</p>
+        <ul>${how.map(([k, t, big]) => `<li class="${big ? 'big' : ''}"><span>${t}</span><b>+${num(W[k] || 0)}</b></li>`).join('')}</ul></section>`;
+  }
+  async function showBoard() { renderBoardPage(); if (signedIn() && U.name) { pushStats(true); setTimeout(async () => { await loadBoard(true); renderBoardPage(); }, 700); } await loadBoard(true); renderBoardPage(); }
+  window.pbxBoardShow = showBoard;
+  { const lbb = $('lbBand'); if (lbb) { lbb.addEventListener('click', () => go('#leaderboard')); lbb.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go('#leaderboard'); } }); }
+    $('lbRoot').addEventListener('click', e => { const a = e.target.closest('[data-b]'); if (!a) return; const k = a.dataset.b;
+      if (k === 'home') go(''); else if (k === 'name') askName(); else if (k === 'signin') { if (window.pbxSignIn) window.pbxSignIn('Sign in, then pick a username to join the leaderboard.'); else $('acctBtn').click(); } });
+    bandBoard(); if (!$('leaderboard').hidden) showBoard(); }
   // debugging and tests
   window.pbxPlayer = { get profile() { return P; }, setName, isDefaultName, openProfile, today, dailyGame, onScore, levelOf, BADGES, SCORE };
 })();
