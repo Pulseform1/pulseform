@@ -11,7 +11,7 @@
   const CT = { state: 'none', t: 0, x: 0, z: 0, y: -90, cool: 0, pending: -1, seen: 0 };
   let saveT = 30, devMode = /[?&]dev\b/.test(typeof location !== 'undefined' ? location.search : ''), runLive = false;   // runLive: a real run (the menu's backdrop raft never saves)
   const MASS = { plank: 1, log: 2, crate: 2.6, barrel: 3, panel: 4, wallpiece: 3.4 }, DRAFT = { plank: .05, log: .12, crate: .25, barrel: .3, panel: .1, wallpiece: .12 };
-  const ui = { aim: null, prompt: '', buildKind: 'foundation', buildOpen: false, craftOpen: false, warn: '' };
+  const ui = { aim: null, prompt: '', buildKind: 'foundation', buildOpen: false, craftOpen: false, warn: '', place: null };   // place: a log you are putting down { lx, lz, rot, set }
 
   // ---- where you are, and where you are looking
   function eyePos(out = [0, 0, 0]) {
@@ -102,7 +102,7 @@
   function contents(f) {
     const out = [];
     const tab = { crate: ['plank', 'plank', 'rope', 'scrap', 'biscuit', 'tinder', 'line', 'scrap', 'water'], barrel: ['rope', 'rope', 'scrap', 'coconut', 'biscuit', 'tinder', 'plank', 'water', 'water'] };
-    if (f.k === 'plank') out.push('plank'); else if (f.k === 'log') out.push('plank', 'plank'); else if (f.k === 'panel') out.push('plank', 'plank', 'plank', ...(chance(.5) ? ['rope'] : []));
+    if (f.k === 'plank') out.push('plank'); else if (f.k === 'log') out.push('log'); else if (f.k === 'panel') out.push('plank', 'plank', 'plank', ...(chance(.5) ? ['rope'] : []));
     else if (f.k === 'wallpiece') out.push('plank', 'plank', 'scrap');
     else { const n = f.k === 'crate' ? Math.floor(rnd(2, 5)) : Math.floor(rnd(2, 4)); for (let i = 0; i < n; i++) out.push(pick(tab[f.k])); if (f.k === 'barrel' && PL.pickups < 6) out.push('rope', 'rope'); }
     return out;
@@ -172,6 +172,29 @@
   // ---- food, fire and the torch
   const foods = () => Object.keys(INV).filter(k => INV[k] > 0 && foodOf(k) > 0).sort((a, b) => foodOf(b) - foodOf(a));
   function eat(k) { k = k || foods()[0]; if (!k || !(INV[k] > 0)) return false; INV[k]--; PL.hunger = Math.min(100, PL.hunger + foodOf(k)); emit('eat', k); return true; }
+  // ---- putting a log on the raft: pick it in the inventory, aim, rotate, click to set it down, click SOLIDIFY to fix it
+  function startPlace(k) { if (!(INV[k] > 0) || !PL.onRaft) { say(PL.onRaft ? 'No logs. Hook one from the sea' : 'Climb aboard first', '#cfd6e2'); return false; } ui.place = { k, lx: 0, lz: 0, rot: PL.yaw - RAFT.yaw + Math.PI / 2, set: false, ok: false }; dropHook(); FS.state = 'idle'; return true; }
+  function placeTick() {
+    const P = ui.place; if (!P) return; if (!PL.onRaft || !(INV[P.k] > 0)) { ui.place = null; return; }
+    if (!P.set) { const a = ui.aim; if (a) { P.lx = a.lx; P.lz = a.lz; } }
+    if (!ui.aim && !P.set) { P.ok = false; return; }
+    P.ok = logFits(P);
+    if (!P.ok && !P.set) {   // slide it along its length (then a little sideways) to the nearest spot where it lies on the deck
+      const ax = Math.cos(P.rot), az = Math.sin(P.rot), x0 = P.lx, z0 = P.lz;
+      for (const sd of [0, .3, -.3, .6, -.6]) { for (let k = 1; k <= 8 && !P.ok; k++) for (const sg of [1, -1]) { const d = sg * k * .15; P.lx = x0 + ax * d - az * sd; P.lz = z0 + az * d + ax * sd; if (logFits(P)) { P.ok = true; break; } } if (P.ok) break; }
+      if (!P.ok) { P.lx = x0; P.lz = z0; }
+    }
+  }
+  function rotatePlace(d) { if (ui.place) ui.place.rot += d * Math.PI / 12; }   // 15 degrees a step
+  function placeClick() {
+    const P = ui.place; if (!P) return false;
+    if (!P.ok) { say(P.set ? 'It has to lie on the deck' : 'Aim at the deck where it should go', '#ff9a7a'); return true; }
+    if (!P.set) { P.set = true; emit('logSet'); return true; }
+    INV[P.k]--; RAFT.logs.push({ lx: P.lx, lz: P.lz, rot: P.rot, solid: true }); RAFT.ver++; ui.place = null; emit('solidify'); say('Solid. It braces the deck under it', '#9fe0a0'); return true;
+  }
+  function placeBack() { const P = ui.place; if (!P) return false; if (P.set) P.set = false; else ui.place = null; return true; }
+  // aiming at a solid log on the deck: E pries it loose again
+  function logAimed() { const a = ui.aim; if (!a || a.dist > 3.2) return null; let best = null, bd = .45; for (const L of RAFT.logs) { const dx = Math.cos(L.rot), dz = Math.sin(L.rot), px = a.lx - L.lx, pz = a.lz - L.lz, along = px * dx + pz * dz, side = Math.abs(-px * dz + pz * dx); if (Math.abs(along) < LOG_LEN / 2 && side < bd) { bd = side; best = L; } } return best; }
   function drink(k) {
     k = k || ((INV.water || 0) > 0 ? 'water' : (INV.coconut || 0) > 0 ? 'coconut' : null); if (!k || !(INV[k] > 0)) { say('Nothing to drink. Build a rain catcher or a water still (B)', '#cfd6e2'); return false; }
     INV[k]--; PL.thirst = Math.min(100, PL.thirst + DRINK[k]); if (k === 'coconut') PL.hunger = Math.min(100, PL.hunger + FOOD.coconut); emit('drink', k); return true;
@@ -366,22 +389,24 @@
     for (const d of DRIFT) { bodyPhys(d, dt, { px: d.px || 0, pz: d.pz || 0 }); d.life -= dt; d.px *= Math.exp(-dt / 50); d.pz *= Math.exp(-dt / 50); } for (let n = DRIFT.length - 1; n >= 0; n--) if (DRIFT[n].life <= 0 || Math.hypot(DRIFT[n].x - RAFT.x, DRIFT[n].z - RAFT.z) > 180) DRIFT.splice(n, 1);
     for (const c of RAFT.cells.values()) { c.shake = Math.max(0, c.shake - dt * 1.5); c.hit = Math.max(0, c.hit - dt * 2); }
     PL.brace = !!I.brace;
-    if (PL.onRaft) moveRaftPlayer(I, dt); else swim(I, dt);
+    if (PL.onRaft) moveRaftPlayer(I, dt); else { swim(I, dt); ui.place = null; }
     HK.reel = I.use && PL.tool === 'hook'; FS.reel = I.use && PL.tool === 'rod';
     hookTick(dt); fishTick(dt); spawnTick(dt); floaterTick(dt); sharkTick(dt); eventsTick(dt); cthulhuTick(dt); fireTick(dt); hungerTick(dt); piecesTick(dt); cacheTick(dt);
     // the aim: what the hammer would build or mend, what E would use
-    ui.aim = PL.onRaft ? deckAim() : null; ui.prompt = promptFor();
+    ui.aim = PL.onRaft ? deckAim() : null; placeTick(); ui.prompt = promptFor();
     recentre();
     saveT -= dt; if (saveT <= 0) { saveT = 30; saveRun(); }
   }
 
   // ---- the controls call these
   function promptFor() {
+    if (ui.place) return ui.place.set ? (ui.place.ok ? 'Click  SOLIDIFY  ·  R rotate  ·  right click to move it' : 'It has to lie on the deck: R rotate · right click to move it') : 'Click to set it down  ·  R or wheel rotate  ·  right click cancel';
     if (nearCache()) return 'E  Open the sunken crate';
     if (!PL.onRaft) return Math.min(...[...RAFT.cells.values()].map(c => { const [wx, wz] = flatW(RAFT, c.i * CS, c.j * CS); return Math.hypot(wx - PL.wx, wz - PL.wz); })) < 2.6 ? 'E  Climb aboard' : 'Swim to the raft';
     const f = nearFloater(); if (f) return 'E  Grab the ' + ({ wallpiece: 'broken wall', panel: 'broken platform' }[f.k] || f.k);
     const a = ui.aim, c = a && a.dist < 3.2 ? cellAt(RAFT, a.i, a.j) : null;
     if (c && c.fire) { const F = c.fire; return !F.lit ? 'E  Light the fire' : F.cook ? (F.cook.done ? 'E  Take the cooked fish' : 'Cooking...') : Object.keys(INV).some(k => k.startsWith('fish:') && INV[k] > 0) ? 'E  Cook a fish' : !PL.torch ? 'E  Light your torch' : 'Fire'; }
+    if (PL.onRaft && logAimed()) return 'E  Pry the log loose';
     if (c && c.obj === 'storage') return `Storage: ${INV.tinder || 0} dry tinder kept here`;
     if (c && HOLD[c.obj]) { const n = c.store || 0, P = PIECES[c.obj]; return n ? `E  Take ${n} ${c.obj === 'trap' ? (n > 1 ? 'fish' : 'fish') : 'fresh water'} from the ${P.n.toLowerCase()}` : `${P.n}: ${P.tip.toLowerCase()}`; }
     if (PL.tool === 'hammer' && c && c.hp < 100) return `Right click  Mend (1 plank)  ·  ${Math.ceil(c.hp)}%`;
@@ -389,6 +414,7 @@
   }
   const act = {
     useDown() {
+      if (placeClick()) return;
       const t = PL.tool;
       if (t === 'hook') { if (HK.state === 'idle') { HK.state = 'charge'; HK.charge = 0; } }
       else if (t === 'rod') { if (!PL.tools.rod) return; if (FS.state === 'idle') { FS.state = 'charge'; FS.charge = 0; } }
@@ -403,6 +429,7 @@
       if (FS.state === 'charge') { throwFrom(FS, FS.charge, 5, 17); FS.state = 'fly'; emit('cast', 'rod'); }
     },
     alt() {
+      if (placeBack()) return;
       if (PL.tool === 'hook' && HK.state !== 'idle') dropHook();
       else if (PL.tool === 'rod' && FS.state !== 'idle') FS.state = 'idle';
       else if (PL.tool === 'hammer') { const a = ui.aim, c = a && cellAt(RAFT, a.i, a.j); if (c && !repair(c)) say(c.hp >= 100 ? 'Not damaged' : 'Mending needs a plank', '#cfd6e2'); }
@@ -414,6 +441,7 @@
       const a = ui.aim, c = a && a.dist < 3.2 ? cellAt(RAFT, a.i, a.j) : null;
       if (c && c.fire) return useFire(c);
       if (c && HOLD[c.obj]) return emptyPiece(c);
+      { const Lg = logAimed(); if (Lg) { RAFT.logs.splice(RAFT.logs.indexOf(Lg), 1); RAFT.ver++; give('log'); emit('pickup', ['log']); return true; } }
       if (PL.tool === 'torch' && !PL.torch) return lightTorch();
     },
     select(t) { if (t === 'food' || t === 'water' || PL.tools[t]) { PL.tool = t; if (t !== 'hook') dropHook(); if (t !== 'rod') FS.state = 'idle'; ui.buildOpen = t === 'hammer' && ui.buildOpen; } },
@@ -434,7 +462,7 @@
     emit('newRun');
   }
   function snapshot() {
-    return { v: 1, raft: { yaw: RAFT.yaw, cells: [...RAFT.cells.values()].map(c => ({ ...c, fire: c.fire ? { lit: c.fire.lit, cook: c.fire.cook } : null })) }, inv: { ...INV },
+    return { v: 1, raft: { yaw: RAFT.yaw, logs: RAFT.logs.map(l => ({ ...l })), cells: [...RAFT.cells.values()].map(c => ({ ...c, fire: c.fire ? { lit: c.fire.lit, cook: c.fire.cook } : null })) }, inv: { ...INV },
       pl: { hunger: PL.hunger, thirst: PL.thirst, tools: PL.tools, tool: PL.tool, pickups: PL.pickups, torch: PL.torch, lx: PL.onRaft ? PL.lx : 0, lz: PL.onRaft ? PL.lz : 0, play: PL.play },
       s: { tod: S.tod, day: S.day, nights: S.nights }, ct: { cool: CT.cool, seen: CT.seen }, at: Date.now() };
   }
@@ -442,7 +470,7 @@
   const savedRun = () => { try { return (K.save.bw || {}).run || null; } catch (e) { return null; } };
   function loadRun(r) {
     newRun(); if (!r) return;
-    RAFT.cells.clear(); for (const c of r.raft.cells) RAFT.cells.set(ckey(c.i, c.j), Object.assign(newCell(c.i, c.j), c, { shake: 0, hit: 0 })); RAFT.yaw = r.raft.yaw || 0; RAFT.ver++;
+    RAFT.cells.clear(); for (const c of r.raft.cells) RAFT.cells.set(ckey(c.i, c.j), Object.assign(newCell(c.i, c.j), c, { shake: 0, hit: 0 })); RAFT.yaw = r.raft.yaw || 0; RAFT.logs = (r.raft.logs || []).map(l => ({ ...l })); RAFT.ver++;
     Object.assign(INV, r.inv); Object.assign(PL, r.pl, { onRaft: true }); if (!cellUnder(RAFT, PL.lx, PL.lz)) { const c = RAFT.cells.values().next().value; PL.lx = c.i * CS; PL.lz = c.j * CS; }
     Object.assign(S, r.s); Object.assign(CT, r.ct || {}); SPN.groups = 3;
   }

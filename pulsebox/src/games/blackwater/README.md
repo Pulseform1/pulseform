@@ -32,6 +32,7 @@ The page is the whole game: it needs nothing beside it except Three.js r128, whi
 - **Thirst** drains faster than hunger (about 16 minutes, worse in the midday sun). Q drinks fresh water; coconuts help too. Salvage barrels and crates sometimes hold water.
 - **Rain catcher** (fills while it rains), **water still** (works while the sun is up) and **fish trap** (hangs off an open edge, catches small fish): each holds a few until you press E at it.
 - **Sunken crates**: every few minutes bubbles rise near the raft. Swim over, hold Shift to dive, and press E beside the crate. Diving uses your breath (AIR bar).
+- **Logs**: a log you haul in goes into your items (I or Tab). Press PLACE, aim at the deck (the see-through log slides to the nearest spot where it fits), rotate with R or the wheel, click to set it down, then click again to SOLIDIFY. Solid logs brace the cells under them (they take about a third less damage); E pries one loose again. `node tools/blackwater-log-check.mjs <folder>` plays it through.
 - **Key panel**: the keys for what you can do right now sit at the top left; H hides or shows it.
 - The ocean's vertex shader keeps the water surface below the logs inside every raft cell (a 32 × 32 map of the cells), so waves never show through the deck.
 

@@ -15,10 +15,11 @@
 
   function touchButtons() {
     const V = K.view, u = uiScale(), R = V.x1, B = V.y1, t = PL.tool;
-    const useLbl = t === 'hook' ? (HK.state === 'water' ? 'REEL' : 'THROW') : t === 'rod' ? (FS.state === 'idle' || FS.state === 'charge' ? 'CAST' : 'REEL') : t === 'hammer' ? 'BUILD' : t === 'spear' ? 'STAB' : t === 'oar' ? 'PADDLE' : t === 'food' ? 'EAT' : PL.torch ? 'TORCH' : 'LIGHT';
-    const L = [{ k: 'use', x: R - 150 * u, y: B - 150 * u, r: 70 * u, t: useLbl, big: 1 }, { k: 'alt', x: R - 290 * u, y: B - 92 * u, r: 40 * u, t: t === 'hammer' ? 'MEND' : 'CANCEL' }, { k: 'jump', x: R - 58 * u, y: B - 255 * u, r: 40 * u, t: PL.onRaft ? 'JUMP' : 'UP' }];
+    const useLbl = ui.place ? (ui.place.set ? 'SOLIDIFY' : 'SET') : t === 'hook' ? (HK.state === 'water' ? 'REEL' : 'THROW') : t === 'rod' ? (FS.state === 'idle' || FS.state === 'charge' ? 'CAST' : 'REEL') : t === 'hammer' ? 'BUILD' : t === 'spear' ? 'STAB' : t === 'oar' ? 'PADDLE' : t === 'food' ? 'EAT' : PL.torch ? 'TORCH' : 'LIGHT';
+    const L = [{ k: 'use', x: R - 150 * u, y: B - 150 * u, r: 70 * u, t: useLbl, big: 1 }, { k: 'alt', x: R - 290 * u, y: B - 92 * u, r: 40 * u, t: ui.place ? (ui.place.set ? 'MOVE' : 'CANCEL') : t === 'hammer' ? 'MEND' : 'CANCEL' }, { k: 'jump', x: R - 58 * u, y: B - 255 * u, r: 40 * u, t: PL.onRaft ? 'JUMP' : 'UP' }];
     if (ui.prompt.startsWith('E ')) L.push({ k: 'grab', x: R - 160 * u, y: B - 300 * u, r: 46 * u, t: ui.prompt.includes('Climb') ? 'CLIMB' : ui.prompt.includes('Grab') ? 'GRAB' : 'USE', hot: 1 });
     if (ui.warn || !PL.onRaft) L.push({ k: 'brace', x: R - 290 * u, y: B - 210 * u, r: 42 * u, t: PL.onRaft ? 'BRACE' : 'DIVE', hot: !!ui.warn });
+    if (ui.place) L.push({ k: 'rotate', x: R - 300 * u, y: B - 220 * u, r: 42 * u, t: 'ROTATE', hot: 1 });
     if ((INV.water || 0) > 0 && PL.thirst < 85) L.push({ k: 'drink', x: R - 58 * u, y: B - 470 * u, r: 32 * u, t: 'DRINK', hot: PL.thirst < 30 });
     if (PL.tools.hammer) L.push({ k: 'build', x: R - 58 * u, y: B - 370 * u, r: 34 * u, t: PL.tool === 'hammer' ? 'PIECE' : 'HAMMER' });
     return L;
@@ -40,7 +41,8 @@
       if (FS.state === 'fight') { tx(g, 'LINE', cx - 108, y + 4, 13, DIM, 'right'); bar(g, cx - 100, y, 200, 10, FS.tension, FS.tension > .9 ? RED : FS.tension > .7 ? GOLD : GREEN); g.fillStyle = 'rgba(255,106,90,.5)'; g.fillRect(cx + 80, y - 3, 2, 16); tx(g, `${Math.max(0, FS.dist).toFixed(0)} m · ease off when it pulls`, cx, y + 26, 14, BONE); }
       if (!PL.tools.rod) tx(g, 'No rod yet: craft one (C)', cx, y, 15, DIM);
     }
-    if (PL.tool === 'hammer' && !panel) {
+    if (ui.place && !panel) { const P = ui.place; tx(g, P.set ? 'LOG SET DOWN: CLICK TO SOLIDIFY' : 'PLACING A LOG', cx, y, 18, P.ok ? GREEN : RED, 'center', 800); tx(g, `${Math.round(((P.rot * 180 / Math.PI) % 360 + 360) % 360)}°  ·  ${INV[P.k] || 0} in your inventory`, cx, y + 22, 13, DIM); }
+    else if (PL.tool === 'hammer' && !panel) {
       const k = ui.buildKind, P = PIECES[k];
       tx(g, `${P.n}  ·  ` + Object.entries(P.need).map(([m, n]) => `${n} ${itemName(m).toLowerCase()}`).join(', '), cx, y, 17, has(P.need) ? GREEN : RED, 'center', 700);
       tx(g, touch ? 'PIECE to change · MEND to repair' : 'B choose piece  ·  click build  ·  R mend', cx, y + 22, 13, DIM);
@@ -65,14 +67,15 @@
     if (!touch) tx(g, '1–9 or mouse wheel to switch', cx + (hb.length * (sw + gap)) / 2 + 12, hy + sw / 2, 13, DIM, 'left');
     // top right: the day, crafting, settings
     const tr = V.x1 - 20;
-    rr(g, tr - 250, V.y0 + 14, 112, 32, 8, 'rgba(6,18,27,.55)'); tx(g, `Day ${S.day}  ${fmtTime(S.tod)}`, tr - 194, V.y0 + 30, 17, BONE, 'center', 600);
+    rr(g, tr - 250, V.y0 + 14, 112, 32, 8, 'rgba(6,18,27,.55)'); if ((INV.log || 0) > 0 && panel !== 'inv') { g.fillStyle = GOLD; g.beginPath(); g.arc(tr - 262, V.y0 + 14, 5, 0, TAU); g.fill(); } tx(g, `Day ${S.day}  ${fmtTime(S.tod)}`, tr - 194, V.y0 + 30, 17, BONE, 'center', 600);
+    btn(g, tr - 324, V.y0 + 12, 64, 36, touch ? 'ITEMS' : 'ITEMS I', () => { panel = panel === 'inv' ? null : 'inv'; panel ? unlockMouse() : lockMouse(); }, { px: 16, on: panel === 'inv' });
     btn(g, tr - 128, V.y0 + 12, 60, 36, touch ? 'CRAFT' : 'CRAFT C', () => { panel = panel === 'craft' ? null : 'craft'; panel ? unlockMouse() : lockMouse(); }, { px: 16, on: panel === 'craft' });
     btn(g, tr - 60, V.y0 + 12, 60, 36, '☰', () => { panel = panel === 'settings' ? null : 'settings'; panel ? unlockMouse() : lockMouse(); }, { px: 20, on: panel === 'settings' });
     if (craftable().some(t => has(TOOLS[t].need)) && panel !== 'craft') { g.fillStyle = GOLD; g.beginPath(); g.arc(tr - 70, V.y0 + 14, 5, 0, TAU); g.fill(); }
     if (!touch && !panel && !(PL.tool === 'hammer' && ui.buildOpen)) drawKeys(g);
     if (PL.tool === 'hammer' && ui.buildOpen) drawBuildList(g);
     if (touch && !panel) drawTouch(g);
-    if (panel === 'craft') drawCraft(g); else if (panel === 'settings') drawSettings(g, true);
+    if (panel === 'craft') drawCraft(g); else if (panel === 'inv') drawInv(g); else if (panel === 'settings') drawSettings(g, true);
     if (!touch && !IN.locked && !panel && K.state === 'play') { rr(g, cx - 160, cy - 80, 320, 50, 10, 'rgba(6,18,27,.75)'); tx(g, 'Click to look around', cx, cy - 55, 20, BONE, 'center', 700); }
   }
   // the keys, always on screen until you hide them (H): what each one does right now
@@ -80,7 +83,7 @@
     const x = K.view.x0 + 20, y0 = K.view.y0 + 64;
     if (!CFG.keys) { tx(g, 'H  show keys', x, y0, 13, DIM, 'left', 600); return; }
     const t = PL.tool, use = t === 'hook' ? 'hold to throw, hold to reel' : t === 'rod' ? 'hold to cast, hold to reel' : t === 'hammer' ? 'build the piece' : t === 'spear' ? 'stab' : t === 'oar' ? 'hold to paddle' : t === 'torch' ? 'light the torch' : t === 'food' ? 'eat' : t === 'water' ? 'drink' : 'use';
-    const rows = [['WASD', PL.onRaft ? 'walk' : 'swim'], ['Mouse', 'look'], ['Click', use], ['R', t === 'hammer' ? 'mend' : 'cancel'], ['E', 'grab / use / climb'],
+    const rows = ui.place ? [['Mouse', 'aim where it goes'], ['R, wheel', 'rotate'], ['Click', ui.place.set ? 'SOLIDIFY' : 'set it down'], ['Right click', ui.place.set ? 'move it again' : 'cancel'], ['I', 'items'], ['H', 'hide keys']] : [['WASD', PL.onRaft ? 'walk' : 'swim'], ['Mouse', 'look'], ['Click', use], ['R', t === 'hammer' ? 'mend' : 'cancel'], ['E', 'grab / use / climb'], ['I, Tab', 'items (place logs)'],
       ['1–9, wheel', 'switch item'], ['C', 'craft tools'], ['B', PL.tools.hammer ? (t === 'hammer' ? 'choose a piece' : 'build (hammer)') : 'build (craft a hammer)'], ['F', 'eat'], ['Q', 'drink'],
       ['Space', PL.onRaft ? 'jump' : 'swim up'], ['Shift', PL.onRaft ? 'brace for waves' : 'dive'], ['O', 'settings'], ['H', 'hide keys']];
     const rh = 19, w = 236; rr(g, x - 8, y0 - 14, w, rows.length * rh + 14, 8, 'rgba(6,18,27,.5)');
@@ -110,6 +113,20 @@
     rr(g, x, y - 34, w, BUILD_ORDER.length * 40 + 46, 10, 'rgba(6,18,27,.82)'); tx(g, isTouch() ? 'BUILD' : 'BUILD  ·  press a number, or B to close', x + 14, y - 14, 15, DIM, 'left', 700);
     BUILD_ORDER.forEach((k, i) => { const P = PIECES[k], ok = has(P.need), on2 = ui.buildKind === k; const hot = zone(x + 6, y, w - 12, 36, () => { ui.buildKind = k; ui.buildOpen = false; });
       rr(g, x + 6, y, w - 12, 36, 6, on2 ? 'rgba(111,210,222,.25)' : hot ? 'rgba(255,255,255,.08)' : null); tx(g, `${(i + 1) % 10}  ${P.n}`, x + 16, y + 18, 18, ok ? BONE : DIM, 'left', 700); tx(g, Object.entries(P.need).map(([m, n]) => n + ' ' + itemName(m).toLowerCase().replace('dry ', '')).join(' · '), x + w - 14, y + 18, 13, ok ? GREEN : RED, 'right'); y += 40; });
+  }
+  // the inventory: everything you carry; logs can be placed on the raft or split into planks
+  function drawInv(g) {
+    const w = 480, x = 640 - w / 2, keys = Object.keys(INV).filter(k => INV[k] > 0).sort((a, b) => (b === 'log') - (a === 'log')); let y = 150;
+    rr(g, x, y - 46, w, Math.max(1, keys.length) * 46 + 96, 12, 'rgba(6,18,27,.92)', 'rgba(238,242,240,.2)'); tx(g, 'ITEMS', x + 20, y - 22, 22, BONE, 'left', 800); tx(g, isTouch() ? '' : 'I to close', x + w - 20, y - 22, 14, DIM, 'right');
+    if (!keys.length) tx(g, 'Nothing yet. Hook wreckage from the sea', 640, y + 20, 16, DIM);
+    for (const k of keys) {
+      rr(g, x + 12, y, w - 24, 40, 8, k === 'log' ? 'rgba(232,180,90,.12)' : 'rgba(255,255,255,.04)'); tx(g, itemName(k), x + 28, y + 20, 18, BONE, 'left', 700); tx(g, '× ' + INV[k], x + 210, y + 20, 17, GOLD, 'left', 700);
+      if (k === 'log') { btn(g, x + w - 214, y + 4, 96, 32, 'PLACE', () => { if (startPlace('log')) { panel = null; lockMouse(); } }, { on: true, px: 16 }); btn(g, x + w - 110, y + 4, 86, 32, '2 PLANKS', () => { INV.log--; give('plank', 2); emit('pickup', ['plank', 'plank']); }, { px: 14 }); }
+      else if (foodOf(k) > 0) btn(g, x + w - 110, y + 4, 86, 32, 'EAT', () => eat(k), { px: 15 });
+      else if (k === 'water') btn(g, x + w - 110, y + 4, 86, 32, 'DRINK', () => drink('water'), { px: 15 });
+      y += 46;
+    }
+    tx(g, 'Place a log, rotate it (R or the wheel), click to set it down, then click SOLIDIFY', 640, y + 20, 14, DIM);
   }
   function drawCraft(g) {
     const w = 460, x = 640 - w / 2; let y = 170; const list = Object.keys(TOOLS).filter(t => TOOLS[t].need);

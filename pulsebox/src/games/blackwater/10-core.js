@@ -14,7 +14,7 @@
   const say = (text, col) => emit('say', text, col);
 
   // what you can carry. Fish are 'fish:<kind>' raw and 'cooked:<kind>'
-  const ITEM = { plank: 'Plank', rope: 'Rope', scrap: 'Scrap', tinder: 'Dry tinder', biscuit: 'Ship biscuit', coconut: 'Coconut', line: 'Fishing line', water: 'Fresh water' };
+  const ITEM = { plank: 'Plank', rope: 'Rope', scrap: 'Scrap', tinder: 'Dry tinder', biscuit: 'Ship biscuit', coconut: 'Coconut', line: 'Fishing line', water: 'Fresh water', log: 'Log' };
   const DRINK = { water: 40, coconut: 18 };   // how much each one quenches thirst
   const FISH = {
     sardine: { n: 'Sardine', len: [.14, .22], kg: [.06, .14], raw: 5, cooked: 12, pull: .45, stam: 3, w: 40 },

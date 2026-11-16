@@ -8,7 +8,7 @@
   const SIDES = [[1, 0], [-1, 0], [0, 1], [0, -1]];   // 0 +x, 1 -x, 2 +z, 3 -z
   const ckey = (i, j) => i + ',' + j;
   const newCell = (i, j) => ({ i, j, hp: 100, floor: false, walls: [0, 0, 0, 0], shelter: false, obj: null, reinforce: false, fire: null, shake: 0, hit: 0 });
-  function newBody(x, z) { return { x, z, y: 0, vy: 0, yaw: 0, vyaw: 0, pitch: 0, vp: 0, roll: 0, vr: 0, vx: 0, vz: 0, cells: new Map(), ver: 0 }; }
+  function newBody(x, z) { return { x, z, y: 0, vy: 0, yaw: 0, vyaw: 0, pitch: 0, vp: 0, roll: 0, vr: 0, vx: 0, vz: 0, cells: new Map(), logs: [], ver: 0 }; }
   let RAFT = newBody(0, 0);
   const DRIFT = [];   // pieces that broke away
   // rotation Ry(yaw)·Rx(pitch)·Rz(roll), the same order as a Three.js 'YXZ' Euler
@@ -76,15 +76,23 @@
     const k = ckey(c.i, c.j); if (!RAFT.cells.has(k)) return;
     RAFT.cells.delete(k); RAFT.ver++;
     const [wx, wz] = flatW(RAFT, c.i * CS, c.j * CS); emit('break', c, wx, wz, why);
+    // logs that lost the deck under them fall into the sea
+    for (let n = RAFT.logs.length - 1; n >= 0; n--) { const L = RAFT.logs[n]; if (!cellUnder(RAFT, L.lx, L.lz)) { RAFT.logs.splice(n, 1); const [lx2, lz2] = flatW(RAFT, L.lx, L.lz); addFloater('log', lx2, lz2); } }
     if (why !== 'shark') for (let n = 0; n < 2; n++) addFloater('plank', wx + rnd(-1, 1), wz + rnd(-1, 1));   // splinters to haul back
     checkJoined(PL.onRaft ? ckey(Math.round(PL.lx / CS), Math.round(PL.lz / CS)) : null);
   }
   function hurtCell(c, amt, why) {
     if (!c || c.hp <= 0) return;
-    const real = amt * (c.reinforce ? (why === 'shark' ? .4 : .5) : 1); c.hp -= real; c.hit = 1; c.shake = Math.max(c.shake, .4); RAFT.ver++;
+    const braced = RAFT.logs.some(L => L.solid && logCovers(L, c));   // a solid log across a cell braces it
+    const real = amt * (c.reinforce ? (why === 'shark' ? .4 : .5) : 1) * (braced ? .65 : 1); c.hp -= real; c.hit = 1; c.shake = Math.max(c.shake, .4); RAFT.ver++;
     emit('hurt', c, real, why);
     if (c.hp <= 0) breakCell(c, why);
   }
+  // a placed log is 2 m long: its ends, and whether it lies across a cell
+  const LOG_LEN = 2;
+  const logEnds = L => { const dx = Math.cos(L.rot) * LOG_LEN * .45, dz = Math.sin(L.rot) * LOG_LEN * .45; return [[L.lx - dx, L.lz - dz], [L.lx, L.lz], [L.lx + dx, L.lz + dz]]; };
+  const logCovers = (L, c) => logEnds(L).some(([x, z]) => Math.round(x / CS) === c.i && Math.round(z / CS) === c.j);
+  const logFits = L => logEnds(L).every(([x, z]) => cellUnder(RAFT, x, z)) && !RAFT.logs.some(o => o !== L && Math.hypot(o.lx - L.lx, o.lz - L.lz) < .3);
   // building: where each piece may go, and what it costs
   const INV = {};
   const has = need => Object.entries(need).every(([k, n]) => (INV[k] || 0) >= n);

@@ -80,7 +80,20 @@
     g.userData.cell = c; return g;
   }
   const dx0 = (d, L) => d ? .14 : L;
+  // logs placed on the deck, and the see-through one you are placing
+  function syncLogs(body, G) {
+    if (!X.logMats) { X.logMats = { ok: new THREE.MeshBasicMaterial({ color: '#8fe0a0', transparent: true, opacity: .45, depthWrite: false }), bad: new THREE.MeshBasicMaterial({ color: '#ff6a5a', transparent: true, opacity: .45, depthWrite: false }), set: new THREE.MeshBasicMaterial({ color: '#e8d080', transparent: true, opacity: .6, depthWrite: false }) }; X.logGeo = new THREE.CylinderGeometry(.17, .19, LOG_LEN, 12); X.logGeo.rotateZ(Math.PI / 2); }
+    G.userData.logs = G.userData.logs || [];
+    const want = body === RAFT ? body.logs.length : 0; const list = G.userData.logs;
+    while (list.length < want) { const m = new THREE.Mesh(X.logGeo, MAT.log); m.castShadow = true; G.add(m); list.push(m); }
+    while (list.length > want) G.remove(list.pop());
+    list.forEach((m, n) => { const L = body.logs[n]; m.position.set(L.lx, DECK + .17, L.lz); m.rotation.set(0, -L.rot, 0); });
+    if (body !== RAFT) return;
+    if (!X.logGhost) X.logGhost = new THREE.Mesh(X.logGeo, X.logMats.ok); if (X.logGhost.parent !== G) G.add(X.logGhost);
+    const P = ui.place, gh = X.logGhost; gh.visible = !!P; if (P) { gh.material = !P.ok ? X.logMats.bad : P.set ? X.logMats.set : X.logMats.ok; gh.position.set(P.lx, DECK + .19, P.lz); gh.rotation.set(0, -P.rot, 0); }
+  }
   function syncRaft(body, G, map) {
+    syncLogs(body, G);
     for (const [k, m] of map) if (body.cells.get(k) !== m.userData.cell || m.userData.v !== cellVer(m.userData.cell)) { G.remove(m); m.traverse(o => { if (o.geometry) o.geometry.dispose(); }); map.delete(k); }
     for (const [k, c] of body.cells) if (!map.has(k)) { const m = cellMesh(c, body); m.userData.v = cellVer(c); map.set(k, m); G.add(m); }
   }
