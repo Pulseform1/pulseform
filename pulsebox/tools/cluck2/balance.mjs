@@ -4,7 +4,7 @@ import { createRequire } from 'module';
 const { chromium } = createRequire(import.meta.url)('playwright');
 import path from 'path';
 const RUNS = +process.argv[2] || 40, SHOTS = process.argv[3];
-const file = 'file://' + path.resolve('public/games/cluck-launch-2.html');
+const file = 'file://' + path.resolve('tools/cluck2/cluck-launch-2.html');
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
 const p = await b.newPage({ viewport: { width: 960, height: 540 } });
 const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); else if (m.text().startsWith('#')) console.log(m.text()); });

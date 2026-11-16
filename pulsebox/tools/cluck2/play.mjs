@@ -2,7 +2,7 @@
 import { createRequire } from 'module'; import path from 'path'; import fs from 'fs';
 const { chromium, devices } = createRequire(import.meta.url)('playwright');
 const OUT = process.argv[2]; fs.mkdirSync(OUT, { recursive: true });
-const url = 'file://' + path.resolve('public/games/cluck-launch-2.html');
+const url = 'file://' + path.resolve('tools/cluck2/cluck-launch-2.html');
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
 const errs = [];
 { const p = await b.newPage({ viewport: { width: 1280, height: 720 } }); p.on('pageerror', e => errs.push(e.message));

@@ -6,7 +6,7 @@ const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
 const p = await b.newPage({ viewport: { width: 854, height: 480 }, deviceScaleFactor: 1 });
 await p.addInitScript(() => { window.requestAnimationFrame = () => 0; });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
-await p.goto('file://' + path.resolve('public/games/cluck-launch-2.html')); await p.waitForTimeout(800);
+await p.goto('file://' + path.resolve('tools/cluck2/cluck-launch-2.html')); await p.waitForTimeout(800);
 await p.evaluate(() => { window.__t = performance.now(); sfx && (window.AudioContext = null); S.tier.helmet = 4; S.tier.sled = 4; S.tier.glider = 4; S.tier.rocket = 3; S.tier.tank = 3; S.tier.ramp = 3; S.coins = 12500; save(); });
 let n = 0; const tick = async (k = 1) => { for (let i = 0; i < k; i++) await p.evaluate(() => { window.__t += 1000 / 30; frame(window.__t); }); };
 const shot = async () => { await tick(); await p.screenshot({ path: `${OUT}/f/${String(n++).padStart(4, '0')}.png` }); };

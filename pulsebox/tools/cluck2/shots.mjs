@@ -2,7 +2,7 @@
 import { createRequire } from 'module'; import path from 'path'; import fs from 'fs';
 const { chromium } = createRequire(import.meta.url)('playwright');
 const OUT = process.argv[2] || 'shots'; fs.mkdirSync(OUT, { recursive: true });
-const url = process.argv[3] || 'file://' + path.resolve('public/games/cluck-launch-2.html');
+const url = process.argv[3] || 'file://' + path.resolve('tools/cluck2/cluck-launch-2.html');
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: process.argv[3] ? ['--proxy-server=' + process.env.HTTPS_PROXY] : [] });
 const p = await b.newPage({ viewport: { width: 960, height: 540 }, deviceScaleFactor: 1, ignoreHTTPSErrors: true });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
