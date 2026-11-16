@@ -1,12 +1,13 @@
   /* ---------- 40 life: you, the salvage, the hook, the rod, food, fire, the torch, sharks, the big events ---------- */
   const EYE = 1.62, REACH = 26;
-  const PL = { onRaft: true, lx: .75, lz: .75, ly: 0, vy: 0, wx: 0, wy: 0, wz: 0, yaw: Math.PI * .8, pitch: -.05, hunger: 100, faint: 0,
+  const PL = { onRaft: true, lx: .75, lz: .75, ly: 0, vy: 0, wx: 0, wy: 0, wz: 0, yaw: Math.PI * .8, pitch: -.05, hunger: 100, thirst: 100, air: 100, faint: 0,
     tools: { hook: 1, torch: 1 }, tool: 'hook', torch: false, torchWet: 0, brace: false, under: false, pickups: 0, knock: 0, cool: 0, play: 0 };
   const HK = { state: 'idle', charge: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, items: [], tension: 0, reel: false };
   const FS = { state: 'idle', charge: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, t: 0, fish: null, dist: 0, tension: 0, over: 0, slack: 0, reel: false, bob: 0 };
   const FL = []; let flId = 0;   // floating salvage
   const SPN = { quiet: 6, left: 0, gx: 0, gz: 0, groups: 0 };
   const SH = { state: 'away', t: 200, x: 0, z: 0, y: -1, ang: 0, cell: null, hits: 0, yaw: 0, stun: 0, biteT: 0, swim: 0 };
+  const CACHE = { x: 0, z: 0, y: -5, on: false, t: 150, open: false };   // a sunken supply crate you dive for
   const CT = { state: 'none', t: 0, x: 0, z: 0, y: -90, cool: 0, pending: -1, seen: 0 };
   let saveT = 30, devMode = /[?&]dev\b/.test(typeof location !== 'undefined' ? location.search : ''), runLive = false;   // runLive: a real run (the menu's backdrop raft never saves)
   const MASS = { plank: 1, log: 2, crate: 2.6, barrel: 3, panel: 4, wallpiece: 3.4 }, DRAFT = { plank: .05, log: .12, crate: .25, barrel: .3, panel: .1, wallpiece: .12 };
@@ -66,6 +67,7 @@
     const surf = waterH(PL.wx, PL.wz), dive = I.brace && !I.jump, want = dive ? surf - 1.8 : surf + (I.jump ? .3 : .08);
     PL.wy = ease(PL.wy, want, dive ? 1.4 : 3.2, dt); PL.under = PL.wy < surf - .02;
     PL.hunger -= dt * .02;
+    if (PL.wy < surf - .5) { PL.air = Math.max(0, PL.air - dt * 100 / 28); if (PL.air <= 0) { PL.air = 100; drown(); } } else PL.air = Math.min(100, PL.air + dt * 40);
   }
 
   // ---- salvage drifting by: groups with quiet stretches between
@@ -99,7 +101,7 @@
   // what a piece of salvage holds
   function contents(f) {
     const out = [];
-    const tab = { crate: ['plank', 'plank', 'rope', 'scrap', 'biscuit', 'tinder', 'line', 'scrap'], barrel: ['rope', 'rope', 'scrap', 'coconut', 'biscuit', 'tinder', 'plank'] };
+    const tab = { crate: ['plank', 'plank', 'rope', 'scrap', 'biscuit', 'tinder', 'line', 'scrap', 'water'], barrel: ['rope', 'rope', 'scrap', 'coconut', 'biscuit', 'tinder', 'plank', 'water', 'water'] };
     if (f.k === 'plank') out.push('plank'); else if (f.k === 'log') out.push('plank', 'plank'); else if (f.k === 'panel') out.push('plank', 'plank', 'plank', ...(chance(.5) ? ['rope'] : []));
     else if (f.k === 'wallpiece') out.push('plank', 'plank', 'scrap');
     else { const n = f.k === 'crate' ? Math.floor(rnd(2, 5)) : Math.floor(rnd(2, 4)); for (let i = 0; i < n; i++) out.push(pick(tab[f.k])); if (f.k === 'barrel' && PL.pickups < 6) out.push('rope', 'rope'); }
@@ -170,6 +172,35 @@
   // ---- food, fire and the torch
   const foods = () => Object.keys(INV).filter(k => INV[k] > 0 && foodOf(k) > 0).sort((a, b) => foodOf(b) - foodOf(a));
   function eat(k) { k = k || foods()[0]; if (!k || !(INV[k] > 0)) return false; INV[k]--; PL.hunger = Math.min(100, PL.hunger + foodOf(k)); emit('eat', k); return true; }
+  function drink(k) {
+    k = k || ((INV.water || 0) > 0 ? 'water' : (INV.coconut || 0) > 0 ? 'coconut' : null); if (!k || !(INV[k] > 0)) { say('Nothing to drink. Build a rain catcher or a water still (B)', '#cfd6e2'); return false; }
+    INV[k]--; PL.thirst = Math.min(100, PL.thirst + DRINK[k]); if (k === 'coconut') PL.hunger = Math.min(100, PL.hunger + FOOD.coconut); emit('drink', k); return true;
+  }
+  // rain catchers fill in the rain, stills work in the sun, traps catch fish: each holds a few until you empty it
+  const HOLD = { catcher: 4, still: 3, trap: 3 };
+  function piecesTick(dt) {
+    const sun = S.tod > 7 && S.tod < 18.5 ? 1 - S.cloud * .6 : 0;
+    for (const c of RAFT.cells.values()) {
+      if (!HOLD[c.obj]) continue; c.store = c.store || 0; if (c.store >= HOLD[c.obj]) continue;
+      const rate = c.obj === 'catcher' ? (S.rain > .15 ? S.rain / 22 : 0) : c.obj === 'still' ? sun / 95 : 1 / rnd(70, 110);
+      c.prog = (c.prog || 0) + dt * rate; if (c.prog >= 1) { c.prog = 0; c.store++; if (c.obj === 'trap') c.fish = (c.fish || []).concat([R() < .6 ? 'sardine' : R() < .8 ? 'mackerel' : 'bream']); RAFT.ver++; }
+    }
+  }
+  function emptyPiece(c) {
+    if (!c.store) { say(c.obj === 'catcher' ? 'Empty. It fills when it rains' : c.obj === 'still' ? 'Nothing yet. It works while the sun is up' : 'Nothing in the trap yet', '#cfd6e2'); return false; }
+    const got = c.obj === 'trap' ? (c.fish || []).map(f => 'fish:' + f) : Array(c.store).fill('water'); got.forEach(k => give(k)); c.store = 0; c.fish = []; RAFT.ver++; emit('pickup', got); return true;
+  }
+  // a sunken supply crate: bubbles mark it; dive (hold Shift in the water) and press E beside it
+  function cacheTick(dt) {
+    if (!CACHE.on) { CACHE.t -= dt; if (CACHE.t <= 0) { const a = rnd(0, TAU), d = rnd(12, 26); Object.assign(CACHE, { on: true, open: false, x: RAFT.x + Math.cos(a) * d, z: RAFT.z + Math.sin(a) * d, y: -rnd(4, 6), life: 300 }); emit('cache'); say('Bubbles rising nearby: something is down there', '#9fd0ff'); } return; }
+    CACHE.life -= dt; if (CACHE.life <= 0 || Math.hypot(CACHE.x - RAFT.x, CACHE.z - RAFT.z) > 90) { CACHE.on = false; CACHE.t = rnd(180, 320); }
+  }
+  const nearCache = () => CACHE.on && !PL.onRaft && Math.hypot(CACHE.x - PL.wx, CACHE.z - PL.wz) < 2.4 && PL.wy < waterH(PL.wx, PL.wz) - 1.5 && Math.abs(PL.wy - CACHE.y) < 3.2;
+  function openCache() {
+    const got = ['scrap', 'scrap', 'rope', pick(['scrap', 'rope', 'plank']), pick(['water', 'water', 'biscuit', 'line', 'tinder'])]; if (R() < .5) got.push('water');
+    got.forEach(k => give(k)); CACHE.on = false; CACHE.t = rnd(200, 340); emit('pickup', got); emit('cacheOpen'); return got;
+  }
+  function drown() { say('You ran out of air', '#ff9a7a'); faint(true); }
   function fireTick(dt) {
     for (const c of RAFT.cells.values()) {
       const F = c.fire; if (!F) continue;
@@ -306,19 +337,22 @@
   // ---- hunger, fainting, the clock that keeps it all turning
   function hungerTick(dt) {
     PL.hunger -= dt * 100 / (22 * 60);   // about twenty-two minutes from full to empty
-    if (PL.hunger <= 0) { PL.hunger = 0; PL.faint += dt; if (PL.faint > 25) faint(); } else PL.faint = 0;
+    PL.thirst -= dt * 100 / (16 * 60) * (S.tod > 11 && S.tod < 16 && S.cloud < .5 ? 1.25 : 1);   // thirst comes faster, worst in the midday sun
+    if (PL.thirst < 0) PL.thirst = 0;
+    if (PL.hunger <= 0 || PL.thirst <= 0) { PL.hunger = Math.max(0, PL.hunger); PL.faint += dt; if (PL.faint > 25) faint(); } else PL.faint = 0;
   }
-  function faint() {
-    PL.faint = 0; PL.hunger = 35; for (const k of Object.keys(INV)) if (k.startsWith('fish:') || k.startsWith('cooked:')) INV[k] = 0;
+  function faint(drowned) {
+    const why = drowned ? 'You black out' : PL.thirst <= 0 ? 'You black out from thirst' : 'You black out from hunger';
+    PL.faint = 0; PL.hunger = Math.max(PL.hunger, 35); PL.thirst = Math.max(PL.thirst, 35); PL.air = 100; for (const k of Object.keys(INV)) if (k.startsWith('fish:') || k.startsWith('cooked:')) INV[k] = 0;
     if (!PL.onRaft) climbOut() || Object.assign(PL, { onRaft: true, lx: 0, lz: 0 });
-    S.tod = 7; emit('faint'); say('You black out from hunger, and wake at dawn', '#ffb08a');
+    S.tod = 7; emit('faint'); say(why + ', and wake at dawn on the raft', '#ffb08a');
   }
   // keep the numbers small: when the raft has drifted far, move the world back round it
   function recentre() {
     if (Math.hypot(RAFT.x, RAFT.z) < 400) return;
     const dx = RAFT.x, dz = RAFT.z; S.ox += dx; S.oz += dz;
     const mv = o => { o.x -= dx; o.z -= dz; };
-    mv(RAFT); DRIFT.forEach(mv); FL.forEach(mv); S.pools.forEach(mv); S.rings.forEach(mv); S.spouts.forEach(mv); mv(SH); mv(CT); mv(HK); mv(FS);
+    mv(RAFT); DRIFT.forEach(mv); FL.forEach(mv); S.pools.forEach(mv); S.rings.forEach(mv); S.spouts.forEach(mv); mv(SH); mv(CT); mv(HK); mv(FS); mv(CACHE);
     for (const g of S.giants) g.s -= g.dx * dx + g.dz * dz;
     PL.wx -= dx; PL.wz -= dz; emit('recentre', dx, dz);
   }
@@ -334,7 +368,7 @@
     PL.brace = !!I.brace;
     if (PL.onRaft) moveRaftPlayer(I, dt); else swim(I, dt);
     HK.reel = I.use && PL.tool === 'hook'; FS.reel = I.use && PL.tool === 'rod';
-    hookTick(dt); fishTick(dt); spawnTick(dt); floaterTick(dt); sharkTick(dt); eventsTick(dt); cthulhuTick(dt); fireTick(dt); hungerTick(dt);
+    hookTick(dt); fishTick(dt); spawnTick(dt); floaterTick(dt); sharkTick(dt); eventsTick(dt); cthulhuTick(dt); fireTick(dt); hungerTick(dt); piecesTick(dt); cacheTick(dt);
     // the aim: what the hammer would build or mend, what E would use
     ui.aim = PL.onRaft ? deckAim() : null; ui.prompt = promptFor();
     recentre();
@@ -343,11 +377,13 @@
 
   // ---- the controls call these
   function promptFor() {
+    if (nearCache()) return 'E  Open the sunken crate';
     if (!PL.onRaft) return Math.min(...[...RAFT.cells.values()].map(c => { const [wx, wz] = flatW(RAFT, c.i * CS, c.j * CS); return Math.hypot(wx - PL.wx, wz - PL.wz); })) < 2.6 ? 'E  Climb aboard' : 'Swim to the raft';
     const f = nearFloater(); if (f) return 'E  Grab the ' + ({ wallpiece: 'broken wall', panel: 'broken platform' }[f.k] || f.k);
     const a = ui.aim, c = a && a.dist < 3.2 ? cellAt(RAFT, a.i, a.j) : null;
     if (c && c.fire) { const F = c.fire; return !F.lit ? 'E  Light the fire' : F.cook ? (F.cook.done ? 'E  Take the cooked fish' : 'Cooking...') : Object.keys(INV).some(k => k.startsWith('fish:') && INV[k] > 0) ? 'E  Cook a fish' : !PL.torch ? 'E  Light your torch' : 'Fire'; }
     if (c && c.obj === 'storage') return `Storage: ${INV.tinder || 0} dry tinder kept here`;
+    if (c && HOLD[c.obj]) { const n = c.store || 0, P = PIECES[c.obj]; return n ? `E  Take ${n} ${c.obj === 'trap' ? (n > 1 ? 'fish' : 'fish') : 'fresh water'} from the ${P.n.toLowerCase()}` : `${P.n}: ${P.tip.toLowerCase()}`; }
     if (PL.tool === 'hammer' && c && c.hp < 100) return `Right click  Mend (1 plank)  ·  ${Math.ceil(c.hp)}%`;
     return '';
   }
@@ -360,6 +396,7 @@
       else if (t === 'torch') { if (!PL.torch) lightTorch(); }
       else if (t === 'hammer') { const a = ui.aim; if (a && ui.buildKind) { if (place(ui.buildKind, a.i, a.j, a.side)) say(PIECES[ui.buildKind].n + ' built', '#9fe0a0'); else if (!has(PIECES[ui.buildKind].need)) say('Not enough materials', '#ff9a7a'); } }
       else if (t === 'food') eat();
+      else if (t === 'water') drink();
     },
     useUp() {
       if (HK.state === 'charge') { throwFrom(HK, HK.charge, 6, 21); HK.state = 'fly'; HK.items = []; emit('cast', 'hook'); }
@@ -371,13 +408,15 @@
       else if (PL.tool === 'hammer') { const a = ui.aim, c = a && cellAt(RAFT, a.i, a.j); if (c && !repair(c)) say(c.hp >= 100 ? 'Not damaged' : 'Mending needs a plank', '#cfd6e2'); }
     },
     interact() {
+      if (nearCache()) return openCache();
       if (!PL.onRaft) return climbOut();
       const f = nearFloater(); if (f) return collect(f);
       const a = ui.aim, c = a && a.dist < 3.2 ? cellAt(RAFT, a.i, a.j) : null;
       if (c && c.fire) return useFire(c);
+      if (c && HOLD[c.obj]) return emptyPiece(c);
       if (PL.tool === 'torch' && !PL.torch) return lightTorch();
     },
-    select(t) { if (t === 'food' || PL.tools[t]) { PL.tool = t; if (t !== 'hook') dropHook(); if (t !== 'rod') FS.state = 'idle'; ui.buildOpen = t === 'hammer' && ui.buildOpen; } },
+    select(t) { if (t === 'food' || t === 'water' || PL.tools[t]) { PL.tool = t; if (t !== 'hook') dropHook(); if (t !== 'rod') FS.state = 'idle'; ui.buildOpen = t === 'hammer' && ui.buildOpen; } },
     craft(t) { const T = TOOLS[t]; if (PL.tools[t] || !T.need || (T.after && PL.pickups < T.after) || !has(T.need)) return false; spend(T.need); PL.tools[t] = 1; act.select(t); emit('craft', t); say(T.n + ' made', '#9fe0a0'); return true; },
   };
   const craftable = () => Object.keys(TOOLS).filter(t => TOOLS[t].need && !PL.tools[t] && !(TOOLS[t].after && PL.pickups < TOOLS[t].after));
@@ -385,8 +424,8 @@
   // ---- a new raft, or the one you left
   function newRun() {
     RAFT = newBody(0, 0); for (const [i, j] of [[0, 0], [1, 0], [0, 1], [1, 1]]) RAFT.cells.set(ckey(i, j), newCell(i, j));
-    DRIFT.length = 0; FL.length = 0; for (const k of Object.keys(INV)) delete INV[k];
-    Object.assign(PL, { onRaft: true, lx: .75, lz: .75, ly: 0, vy: 0, hunger: 100, faint: 0, tools: { hook: 1, torch: 1 }, tool: 'hook', torch: false, torchWet: 0, pickups: 0, play: 0, pitch: -.08 });
+    DRIFT.length = 0; FL.length = 0; for (const k of Object.keys(INV)) delete INV[k]; INV.water = 2; Object.assign(CACHE, { on: false, t: 150 });
+    Object.assign(PL, { onRaft: true, lx: .75, lz: .75, ly: 0, vy: 0, hunger: 100, thirst: 100, air: 100, faint: 0, tools: { hook: 1, torch: 1 }, tool: 'hook', torch: false, torchWet: 0, pickups: 0, play: 0, pitch: -.08 });
     Object.assign(S, { t: 0, ox: 0, oz: 0, sea: .14, seaTo: .14, wind: 4, rain: 0, cloud: .25, phase: 'calm', pt: 330, tod: 7.2, day: 1, nights: 0, giants: [], pools: [], rings: [], spouts: [], bolts: [], nextPool: 480 });
     Object.assign(SPN, { quiet: 5, left: 0, groups: 0 }); Object.assign(SH, { state: 'away', t: 230, hits: 0 }); Object.assign(CT, { state: 'none', cool: 0, pending: -1, y: -90 });
     HK.state = 'idle'; HK.items = []; FS.state = 'idle';
@@ -396,7 +435,7 @@
   }
   function snapshot() {
     return { v: 1, raft: { yaw: RAFT.yaw, cells: [...RAFT.cells.values()].map(c => ({ ...c, fire: c.fire ? { lit: c.fire.lit, cook: c.fire.cook } : null })) }, inv: { ...INV },
-      pl: { hunger: PL.hunger, tools: PL.tools, tool: PL.tool, pickups: PL.pickups, torch: PL.torch, lx: PL.onRaft ? PL.lx : 0, lz: PL.onRaft ? PL.lz : 0, play: PL.play },
+      pl: { hunger: PL.hunger, thirst: PL.thirst, tools: PL.tools, tool: PL.tool, pickups: PL.pickups, torch: PL.torch, lx: PL.onRaft ? PL.lx : 0, lz: PL.onRaft ? PL.lz : 0, play: PL.play },
       s: { tod: S.tod, day: S.day, nights: S.nights }, ct: { cool: CT.cool, seen: CT.seen }, at: Date.now() };
   }
   function saveRun() { if (!runLive) return; try { K.save.bw = Object.assign(K.save.bw || {}, { cfg: CFG, run: snapshot() }); K.persist(); } catch (e) {} }

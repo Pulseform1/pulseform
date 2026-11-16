@@ -105,13 +105,20 @@ void main() {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
     g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5); return g;
   }
+  // which raft cells exist, as a 32 x 32 map centred on cell (0, 0): the ocean's vertex shader keeps the water out of them
+  function raftMask() { if (!X.mask) { X.maskData = new Uint8Array(32 * 32 * 4); X.mask = new THREE.DataTexture(X.maskData, 32, 32, THREE.RGBAFormat); X.mask.magFilter = X.mask.minFilter = THREE.NearestFilter; X.maskVer = -1; } return X.mask; }
+  function updateRaftMask() {
+    raftMask(); if (X.maskVer === RAFT.ver && X.maskCells === RAFT.cells.size) return; X.maskVer = RAFT.ver; X.maskCells = RAFT.cells.size;
+    X.maskData.fill(0); for (const c of RAFT.cells.values()) { const i = c.i + 16, j = c.j + 16; if (i >= 0 && j >= 0 && i < 32 && j < 32) X.maskData[(j * 32 + i) * 4] = 255; }
+    X.mask.needsUpdate = true;
+  }
   function buildOcean() {
-    const u = Object.assign({}, X.common, X.sea, { uCam: { value: new THREE.Vector3() }, uRaft: { value: new THREE.Vector4() }, uRaftV: { value: new THREE.Vector2() }, uUnder: { value: 0 }, uFog: { value: .0011 }, uMoonVis: { value: 0 } });
+    const u = Object.assign({}, X.common, X.sea, { uCam: { value: new THREE.Vector3() }, uRaft: { value: new THREE.Vector4() }, uRaftV: { value: new THREE.Vector2() }, uUnder: { value: 0 }, uMask: { value: raftMask() }, uRaftT: { value: new THREE.Vector4(0, 0, 1, 0) }, uRaftP: { value: new THREE.Vector3() }, uFog: { value: .0011 }, uMoonVis: { value: 0 } });
     const q = X.q;
     const m = new THREE.ShaderMaterial({ uniforms: u, side: THREE.DoubleSide, fog: false, defines: { QUAL: q === 'low' ? 0 : q === 'high' ? 2 : 1 },
       vertexShader: SEA_GLSL.replace(/vec3 gerst\(vec2 p, out vec3 n, out float crest\) \{/, 'vec3 gerstF(vec2 p, out vec3 n, out float crest, float sp) {').replace('float th = w.z * dot(w.xy, p) + q.x, s = sin(th), c = cos(th);', 'float th = w.z * dot(w.xy, p) + q.x, s = sin(th), c = cos(th); float fd = clamp(6.2831 / w.z / (sp * 5.0) - 0.4, 0.0, 1.0); s *= fd; c *= fd;')
         .replace(/float waterH\(vec2 x\) \{[\s\S]*\}$/, '') + `
-uniform vec3 uCam;
+uniform vec3 uCam; uniform sampler2D uMask; uniform vec4 uRaftT; uniform vec3 uRaftP;
 varying vec3 vW; varying vec3 vN; varying float vCrest; varying float vH; varying float vSp;
 void main() {
   vec4 wp = modelMatrix * vec4(position, 1.0);
@@ -120,6 +127,10 @@ void main() {
   float e0 = extras(wp.xz), e1 = extras(wp.xz + vec2(0.7, 0.0)), e2 = extras(wp.xz + vec2(0.0, 0.7));
   n = normalize(n + vec3(-(e1 - e0) / 0.7, 0.0, -(e2 - e0) / 0.7));
   wp.xyz += d; wp.y += e0;
+  // the raft keeps the sea out: inside any of its cells the surface stays below the logs' waterline, so no wave shows through the deck
+  { vec2 q = wp.xz - uRaftT.xy; float lx = uRaftT.z * q.x - uRaftT.w * q.y, lz = uRaftT.w * q.x + uRaftT.z * q.y;
+    vec2 ij = floor(vec2(lx, lz) / 1.5 + 0.5) + 16.0;
+    if (ij.x >= 0.0 && ij.y >= 0.0 && ij.x < 32.0 && ij.y < 32.0 && texture2D(uMask, (ij + 0.5) / 32.0).r > 0.5) { float top = uRaftP.x + uRaftP.y * lx + uRaftP.z * lz + 0.04; if (wp.y > top) { d.y -= wp.y - top; wp.y = top; } } }
   vW = wp.xyz; vN = n; vCrest = crest; vH = d.y + e0; vSp = sp;
   gl_Position = projectionMatrix * viewMatrix * wp;
 }`,

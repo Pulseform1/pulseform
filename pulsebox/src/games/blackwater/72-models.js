@@ -28,6 +28,7 @@
     MAT.skin = std({ color: LC('#c8946a'), roughness: .6 }, .25);
     MAT.sleeve = std({ color: LC('#4a5560'), roughness: .9 }, .15);
     MAT.flame = new THREE.SpriteMaterial({ map: canvasTex(64, 128, (g, w, h) => { const gr = g.createRadialGradient(32, 90, 2, 32, 80, 60); gr.addColorStop(0, 'rgba(255,250,210,1)'); gr.addColorStop(.25, 'rgba(255,190,80,.95)'); gr.addColorStop(.6, 'rgba(240,90,20,.5)'); gr.addColorStop(1, 'rgba(120,20,0,0)'); g.fillStyle = gr; g.beginPath(); g.ellipse(32, 80, 26, 48, 0, 0, 7); g.fill(); }), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
+    MAT.glass = std({ color: LC('#cfefff'), roughness: .05, metalness: .1, transparent: true, opacity: .35 }, 1.2); MAT.fresh = std({ color: LC('#4fb8e8'), roughness: .1, transparent: true, opacity: .75 }, 1);
     MAT.bobber = std({ color: LC('#e8402a'), roughness: .4 }, .6); MAT.white = std({ color: LC('#f0eee8'), roughness: .5 }, .5);
     MAT.ghostOk = new THREE.MeshBasicMaterial({ color: LC('#7fe0a0'), transparent: true, opacity: .35, depthWrite: false });
     MAT.ghostNo = new THREE.MeshBasicMaterial({ color: LC('#ff6a5a'), transparent: true, opacity: .3, depthWrite: false });
@@ -37,6 +38,10 @@
     X.hook = hookMesh(); X.scene.add(X.hook); X.rope = ropeMesh(MAT.rope, .012); X.scene.add(X.rope); X.line = ropeMesh(MAT.white, .004); X.scene.add(X.line);
     X.bobber = new THREE.Group(); { const a = new THREE.Mesh(new THREE.SphereGeometry(.07, 12, 8, 0, TAU, 0, Math.PI / 2), MAT.bobber), b = new THREE.Mesh(new THREE.SphereGeometry(.07, 12, 8, 0, TAU, Math.PI / 2, Math.PI / 2), MAT.white); X.bobber.add(a, b); } X.scene.add(X.bobber);
     X.shark = sharkMesh(); X.scene.add(X.shark);
+    // the sunken supply crate, and the bubbles that give it away
+    X.cache = new THREE.Group(); X.cache.add(box(.9, .55, .6, MAT.crate), box(.92, .08, .62, MAT.iron, 0, .2, 0), box(.92, .08, .62, MAT.iron, 0, -.2, 0), box(.95, .12, .1, MAT.rust, 0, .3, .26)); X.scene.add(X.cache);
+    X.bubbles = []; const bg = new THREE.SphereGeometry(.06, 6, 4), bm = std({ color: LC('#dff6ff'), roughness: .1, transparent: true, opacity: .6 }, 1);
+    for (let i = 0; i < 14; i++) { const b = new THREE.Mesh(bg, bm); b.userData.ph = i / 14; X.scene.add(b); X.bubbles.push(b); }
     X.ct = cthulhuMesh(); X.ct.visible = false; X.scene.add(X.ct);
   }
   const box = (w, h, d, m, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); o.castShadow = o.receiveShadow = true; return o; };
@@ -56,6 +61,18 @@
     c.walls.forEach((w, s) => { if (!w) return; const [dx, dz] = SIDES[s], wg = new THREE.Group(); for (let k = 0; k < 6; k++) wg.add(box(.24, 1.2 + rnd2(k + 20) * .1, .06, k % 2 ? MAT.deck : MAT.wet, -.62 + k * .25, DECK + .55, 0)); wg.add(box(CS, .08, .1, MAT.wet, 0, DECK + .95, .03), box(CS, .08, .1, MAT.wet, 0, DECK + .3, .03)); wg.position.set(x0 + dx * CS * .47, 0, z0 + dz * CS * .47); wg.rotation.y = dx ? Math.PI / 2 : 0; g.add(wg); });
     if (c.reinforce) SIDES.forEach(([di, dj], s) => { if (cellAt(body, c.i + di, c.j + dj)) return; g.add(box(dx0(di, CS * .98), .12, dx0(dj, CS * .98), MAT.iron, x0 + di * CS * .49, DECK - .2, z0 + dj * CS * .49)); for (const t of [-.5, 0, .5]) g.add(box(di ? .05 : .08, .2, dj ? .05 : .08, MAT.rust, x0 + di * CS * .5 + (di ? 0 : t), DECK - .15, z0 + dj * CS * .5 + (dj ? 0 : t))); });
     if (c.shelter) { for (const [px, pz] of [[-.66, -.66], [.66, -.66], [-.66, .66], [.66, .66]]) g.add(cyl(.05, 2.3, MAT.wet, x0 + px, DECK + 1.1 + (pz > 0 ? -.15 : 0), z0 + pz)); const roof = new THREE.Mesh(new THREE.PlaneGeometry(CS * 1.08, CS * 1.12), MAT.canvas); roof.position.set(x0, DECK + 2.15, z0); roof.rotation.set(-Math.PI / 2 + .14, 0, 0); roof.castShadow = true; g.add(roof); }
+    if (c.obj === 'catcher') {   // a canvas funnel on four posts over a barrel; the water shows in the barrel
+      g.add(cyl(.28, .55, MAT.barrel, x0, DECK + .27, z0)); for (const [px, pz] of [[-.5, -.5], [.5, -.5], [-.5, .5], [.5, .5]]) g.add(cyl(.035, 1.2, MAT.wet, x0 + px, DECK + .6, z0 + pz));
+      const fun = new THREE.Mesh(new THREE.ConeGeometry(.78, .5, 12, 1, true), MAT.canvas); fun.rotation.x = Math.PI; fun.position.set(x0, DECK + 1.05, z0); g.add(fun);
+      if (c.store) { const w = cyl(.25, .04, MAT.fresh, x0, DECK + .1 + .4 * c.store / 4, z0); g.add(w); } }
+    if (c.obj === 'still') {   // a glass box over a dark tray; drops gather in a jar
+      g.add(box(1, .06, .8, MAT.iron, x0, DECK + .03, z0), box(.98, .45, .78, MAT.glass, x0, DECK + .28, z0)); const roof = box(1.04, .03, .84, MAT.glass, x0, DECK + .56, z0, .25); g.add(roof);
+      g.add(cyl(.11, .26, MAT.glass, x0 + .62, DECK + .13, z0)); if (c.store) g.add(cyl(.09, .22 * c.store / 3, MAT.fresh, x0 + .62, DECK + .02 + .11 * c.store / 3, z0)); }
+    if (c.obj === 'trap') {   // a slatted cage hanging off the open edge on two ropes
+      const s = SIDES.findIndex(([di, dj]) => !cellAt(body, c.i + di, c.j + dj)), [di, dj] = SIDES[Math.max(0, s)], tx0 = x0 + di * 1.05, tz0 = z0 + dj * 1.05;
+      for (let k = 0; k < 5; k++) g.add(box(di ? .05 : .7, .5, dj ? .05 : .7, MAT.wet, tx0 + (di ? (k - 2) * .14 : 0), DECK - .45, tz0 + (dj ? (k - 2) * .14 : 0)));
+      g.add(box(.72, .05, .72, MAT.wet, tx0, DECK - .7, tz0), box(.72, .05, .72, MAT.wet, tx0, DECK - .2, tz0), cyl(.02, .4, MAT.rope, x0 + di * .7, DECK, z0 + dj * .7));
+      for (let k = 0; k < (c.store || 0); k++) { const f = new THREE.Mesh(new THREE.SphereGeometry(.06, 8, 6), MAT.shark); f.scale.set(3, 1, 1); f.position.set(tx0 + (k - 1) * .12, DECK - .55 + k * .08, tz0); g.add(f); } }
     if (c.obj === 'storage') { g.add(box(.8, .6, .6, MAT.crate, x0 + .2, DECK + .27, z0 - .2), box(.82, .06, .62, MAT.wet, x0 + .2, DECK + .58, z0 - .2), box(.06, .62, .62, MAT.iron, x0 - .19, DECK + .27, z0 - .2)); }
     if (c.obj === 'fire') { for (let k = 0; k < 9; k++) { const a = k / 9 * TAU; g.add(box(.16, .12, .12, MAT.stone, x0 + Math.cos(a) * .36, DECK + .03, z0 + Math.sin(a) * .36, 0, a, 0)); } g.add(box(.7, .04, .7, MAT.iron, x0, DECK - .03, z0)); for (let k = 0; k < 3; k++) g.add(cyl(.04, .55, MAT.log, x0, DECK + .08, z0, Math.PI / 2, k * 1.05, 0));
       const fl = new THREE.Sprite(MAT.flame); fl.scale.set(.55, .9, 1); fl.position.set(x0, DECK + .45, z0); fl.visible = false; fl.userData.fire = c; g.add(fl);
@@ -64,10 +81,10 @@
   }
   const dx0 = (d, L) => d ? .14 : L;
   function syncRaft(body, G, map) {
-    for (const [k, m] of map) if (!body.cells.has(k) || m.userData.v !== cellVer(m.userData.cell)) { G.remove(m); m.traverse(o => { if (o.geometry) o.geometry.dispose(); }); map.delete(k); }
+    for (const [k, m] of map) if (body.cells.get(k) !== m.userData.cell || m.userData.v !== cellVer(m.userData.cell)) { G.remove(m); m.traverse(o => { if (o.geometry) o.geometry.dispose(); }); map.delete(k); }
     for (const [k, c] of body.cells) if (!map.has(k)) { const m = cellMesh(c, body); m.userData.v = cellVer(c); map.set(k, m); G.add(m); }
   }
-  const cellVer = c => [Math.ceil(c.hp / 15), c.floor, c.walls.join(''), c.shelter, c.obj, c.reinforce].join('|');
+  const cellVer = c => [Math.ceil(c.hp / 15), c.floor, c.walls.join(''), c.shelter, c.obj, c.reinforce, c.store || 0].join('|');
   // salvage
   function itemMesh(k) {
     const g = new THREE.Group();

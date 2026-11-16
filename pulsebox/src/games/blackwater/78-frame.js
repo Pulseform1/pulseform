@@ -28,9 +28,10 @@
     // the ocean follows you, snapped to its first ring spacing
     X.ocean.position.set(Math.round(cam.position.x / 2) * 2, 0, Math.round(cam.position.z / 2) * 2);
     const ou = X.ocean.material.uniforms; ou.uCam.value.copy(cam.position);
+    { updateRaftMask(); const m = rotM(RAFT); ou.uRaftT.value.set(RAFT.x, RAFT.z, Math.cos(RAFT.yaw), Math.sin(RAFT.yaw)); ou.uRaftP.value.set(RAFT.y, m[3], m[5]); }
     const n = RAFT.cells.size, cur = currentAt(RAFT.x, RAFT.z, [0, 0]); let ci = 0, cj = 0; for (const c of RAFT.cells.values()) { ci += c.i / n; cj += c.j / n; } const [rcx, rcz] = flatW(RAFT, ci * CS, cj * CS); ou.uRaft.value.set(rcx, rcz, Math.sqrt(n) * CS * .56 + .2, 0); ou.uRaftV.value.set(RAFT.vx - cur[0] * .5 + paddle[0], RAFT.vz - cur[1] * .5 + paddle[1]);
     // underwater: the waterline pass while the lens is near the surface, thick blue haze once it is under
-    const wh = waterH(cam.position.x, cam.position.z); X.underOn = cam.position.y < wh + .7; const fully = cam.position.y < wh - .15;
+    const wh = waterH(cam.position.x, cam.position.z); X.underOn = !PL.onRaft && cam.position.y < wh + .7; const fully = !PL.onRaft && cam.position.y < wh - .15;
     if (fully) { X.scene.fog.color.setRGB(0, .045 * Math.max(L.day, .15), .06 * Math.max(L.day, .15)); X.scene.fog.density = .09; }
     X.under.material.uniforms.uInv.value.copy(cam.projectionMatrixInverse).premultiply(cam.matrixWorld); X.under.material.uniforms.uCamP.value.copy(cam.position); X.under.material.uniforms.uDay.value = L.day;
     syncSea(X.under.material.uniforms); X.sky.position.copy(cam.position);
@@ -65,6 +66,8 @@
     const bv = FS.state === 'fly' || FS.state === 'wait' || FS.state === 'bite' || FS.state === 'fight'; X.bobber.visible = bv; X.line.visible = bv;
     if (bv) { X.bobber.position.set(FS.x, FS.y, FS.z); const tip = rodTip(); const pts = []; for (let i = 0; i <= 16; i++) { const t = i / 16; pts.push([lp(tip.x, FS.x, t), lp(tip.y, FS.y, t) - Math.sin(Math.PI * t) * (1 - FS.tension) * .8, lp(tip.z, FS.z, t)]); } bendRope(X.line, pts); }
     // the shark
+    X.cache.visible = CACHE.on; X.cache.position.set(CACHE.x, CACHE.y, CACHE.z); X.cache.rotation.y = .6;
+    for (const b of X.bubbles) { b.visible = CACHE.on; if (!CACHE.on) continue; const p = (X.t * .25 + b.userData.ph) % 1, top = waterH(CACHE.x, CACHE.z); b.position.set(CACHE.x + Math.sin(b.userData.ph * 40 + X.t) * .25, lp(CACHE.y + .3, top, p), CACHE.z + Math.cos(b.userData.ph * 33 + X.t) * .25); b.scale.setScalar(.6 + p * 1.2); }
     X.shark.visible = SH.state !== 'away';
     if (X.shark.visible) { X.shark.position.set(SH.x, SH.y, SH.z); X.shark.rotation.set(0, -SH.yaw, SH.state === 'bite' ? Math.sin(X.t * 24) * .12 : 0); X.shark.userData.tail.rotation.y = Math.sin(SH.swim) * .45; }
     // the thing from below

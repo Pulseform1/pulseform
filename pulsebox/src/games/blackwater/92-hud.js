@@ -8,6 +8,7 @@
   const SAYS = []; on('say', (t, c) => { SAYS.unshift({ t, c: c || BONE, a: 0 }); SAYS.length = Math.min(SAYS.length, 3); });
   on('pickup', (got, kind) => { const n = {}; got.forEach(k => n[k] = (n[k] || 0) + 1); say('+ ' + Object.entries(n).map(([k, c]) => (c > 1 ? c + ' ' : '') + itemName(k).toLowerCase()).join(', '), GREEN); });
   on('catch', f => say(`${FISH[f.k].n}! ${(f.len * 100).toFixed(0)} cm, ${f.kg < 1 ? Math.round(f.kg * 1000) + ' g' : f.kg.toFixed(1) + ' kg'}`, GOLD));
+  on('drink', k => say(`Drank ${k === 'water' ? 'fresh water' : 'a coconut'} (+${DRINK[k]})`, TEAL));
   on('eat', k => say(`Ate ${itemName(k).toLowerCase()} (+${foodOf(k)})`, GREEN));
   on('craft', t => { if (t === 'rod') say('Fishing rod ready: hold to cast, wait for the bobber to dip, then reel', TEAL); });
   const fmtTime = t => `${String(Math.floor(t)).padStart(2, '0')}:${String(Math.floor(t % 1 * 60)).padStart(2, '0')}`;
@@ -18,6 +19,7 @@
     const L = [{ k: 'use', x: R - 150 * u, y: B - 150 * u, r: 70 * u, t: useLbl, big: 1 }, { k: 'alt', x: R - 290 * u, y: B - 92 * u, r: 40 * u, t: t === 'hammer' ? 'MEND' : 'CANCEL' }, { k: 'jump', x: R - 58 * u, y: B - 255 * u, r: 40 * u, t: PL.onRaft ? 'JUMP' : 'UP' }];
     if (ui.prompt.startsWith('E ')) L.push({ k: 'grab', x: R - 160 * u, y: B - 300 * u, r: 46 * u, t: ui.prompt.includes('Climb') ? 'CLIMB' : ui.prompt.includes('Grab') ? 'GRAB' : 'USE', hot: 1 });
     if (ui.warn || !PL.onRaft) L.push({ k: 'brace', x: R - 290 * u, y: B - 210 * u, r: 42 * u, t: PL.onRaft ? 'BRACE' : 'DIVE', hot: !!ui.warn });
+    if ((INV.water || 0) > 0 && PL.thirst < 85) L.push({ k: 'drink', x: R - 58 * u, y: B - 470 * u, r: 32 * u, t: 'DRINK', hot: PL.thirst < 30 });
     if (PL.tools.hammer) L.push({ k: 'build', x: R - 58 * u, y: B - 370 * u, r: 34 * u, t: PL.tool === 'hammer' ? 'PIECE' : 'HAMMER' });
     return L;
   }
@@ -50,24 +52,39 @@
     for (let i = SAYS.length - 1; i >= 0; i--) if (SAYS[i].a > 4.5) SAYS.splice(i, 1);
     // hunger and materials, bottom left
     const lx = V.x0 + 24 * u + (touch ? 50 * u : 0), by = touch ? V.y0 + 92 * u : V.y1 - 40 * u;
-    if (!touch || true) { tx(g, 'HUNGER', lx, by - 18, 13, DIM, 'left'); bar(g, lx, by - 6, 190 * u, 10, PL.hunger / 100, PL.hunger < 25 ? RED : PL.hunger < 50 ? GOLD : GREEN); }
-    const mats = ['plank', 'rope', 'scrap', 'tinder'].map(k => `${itemName(k).replace('Dry ', '')} ${INV[k] || 0}`).join('   ');
+    { const bw = 150 * u; tx(g, 'HUNGER' + (touch ? '' : '  (F eat)'), lx, by - 18, 13, DIM, 'left'); bar(g, lx, by - 6, bw, 10, PL.hunger / 100, PL.hunger < 25 ? RED : PL.hunger < 50 ? GOLD : GREEN);
+      tx(g, 'THIRST' + (touch ? '' : '  (Q drink)'), lx + bw + 18, by - 18, 13, DIM, 'left'); bar(g, lx + bw + 18, by - 6, bw, 10, PL.thirst / 100, PL.thirst < 25 ? RED : PL.thirst < 50 ? GOLD : TEAL);
+      if (!PL.onRaft && PL.air < 99) { const ay = V.y1 - 64 * u - 14 * u - 70; tx(g, 'AIR', cx - 92, ay + 4, 13, DIM, 'right'); bar(g, cx - 80, ay, 160, 9, PL.air / 100, PL.air < 30 ? RED : '#bfe8ff'); } }
+    const mats = ['plank', 'rope', 'scrap', 'tinder', 'water'].map(k => `${itemName(k).replace('Dry ', '').replace('Fresh ', '')} ${INV[k] || 0}`).join('   ');
     tx(g, mats, lx, by + 18, 15, BONE, 'left', 600);
     // the hotbar
     const hb = hotbar(), sw = 64 * u, gap = 6, hx = cx - (hb.length * (sw + gap) - gap) / 2, hy = V.y1 - sw - 14 * u - (touch ? 6 : 0);
     hb.forEach((h, i) => { const x = hx + i * (sw + gap), on2 = PL.tool === h.k; zone(x, hy, sw, sw, () => act.select(h.k)); rr(g, x, hy, sw, sw, 8, on2 ? 'rgba(111,210,222,.28)' : 'rgba(6,18,27,.62)', on2 ? TEAL : 'rgba(238,242,240,.2)', on2 ? 2.5 : 1.5);
-      tx(g, String(i + 1), x + 9, hy + 11, 12, DIM, 'left'); drawIcon(g, h.k, x + sw / 2, hy + sw / 2 - 4, sw * .36); tx(g, h.k === 'food' ? `${INV[foods()[0]]}` : (h.k === 'torch' && PL.torch ? 'lit' : ''), x + sw - 8, hy + sw - 10, 13, GOLD, 'right', 700); });
-    tx(g, PL.tool === 'food' ? itemName(foods()[0] || '') : TOOLS[PL.tool] ? TOOLS[PL.tool].n : '', cx, hy - 14, 15, BONE, 'center', 700);
+      tx(g, String(i + 1), x + 9, hy + 11, 12, DIM, 'left'); drawIcon(g, h.k, x + sw / 2, hy + sw / 2 - 4, sw * .36); tx(g, h.k === 'water' ? `${INV.water}` : h.k === 'food' ? `${INV[foods()[0]]}` : (h.k === 'torch' && PL.torch ? 'lit' : ''), x + sw - 8, hy + sw - 10, 13, GOLD, 'right', 700); });
+    tx(g, PL.tool === 'food' ? itemName(foods()[0] || '') : PL.tool === 'water' ? 'Fresh water' : TOOLS[PL.tool] ? TOOLS[PL.tool].n : '', cx, hy - 14, 15, BONE, 'center', 700);
+    if (!touch) tx(g, '1–9 or mouse wheel to switch', cx + (hb.length * (sw + gap)) / 2 + 12, hy + sw / 2, 13, DIM, 'left');
     // top right: the day, crafting, settings
     const tr = V.x1 - 20;
     rr(g, tr - 250, V.y0 + 14, 112, 32, 8, 'rgba(6,18,27,.55)'); tx(g, `Day ${S.day}  ${fmtTime(S.tod)}`, tr - 194, V.y0 + 30, 17, BONE, 'center', 600);
-    btn(g, tr - 128, V.y0 + 12, 60, 36, 'CRAFT', () => { panel = panel === 'craft' ? null : 'craft'; panel ? unlockMouse() : lockMouse(); }, { px: 16, on: panel === 'craft' });
+    btn(g, tr - 128, V.y0 + 12, 60, 36, touch ? 'CRAFT' : 'CRAFT C', () => { panel = panel === 'craft' ? null : 'craft'; panel ? unlockMouse() : lockMouse(); }, { px: 16, on: panel === 'craft' });
     btn(g, tr - 60, V.y0 + 12, 60, 36, '☰', () => { panel = panel === 'settings' ? null : 'settings'; panel ? unlockMouse() : lockMouse(); }, { px: 20, on: panel === 'settings' });
     if (craftable().some(t => has(TOOLS[t].need)) && panel !== 'craft') { g.fillStyle = GOLD; g.beginPath(); g.arc(tr - 70, V.y0 + 14, 5, 0, TAU); g.fill(); }
+    if (!touch && !panel && !(PL.tool === 'hammer' && ui.buildOpen)) drawKeys(g);
     if (PL.tool === 'hammer' && ui.buildOpen) drawBuildList(g);
     if (touch && !panel) drawTouch(g);
     if (panel === 'craft') drawCraft(g); else if (panel === 'settings') drawSettings(g, true);
     if (!touch && !IN.locked && !panel && K.state === 'play') { rr(g, cx - 160, cy - 80, 320, 50, 10, 'rgba(6,18,27,.75)'); tx(g, 'Click to look around', cx, cy - 55, 20, BONE, 'center', 700); }
+  }
+  // the keys, always on screen until you hide them (H): what each one does right now
+  function drawKeys(g) {
+    const x = K.view.x0 + 20, y0 = K.view.y0 + 64;
+    if (!CFG.keys) { tx(g, 'H  show keys', x, y0, 13, DIM, 'left', 600); return; }
+    const t = PL.tool, use = t === 'hook' ? 'hold to throw, hold to reel' : t === 'rod' ? 'hold to cast, hold to reel' : t === 'hammer' ? 'build the piece' : t === 'spear' ? 'stab' : t === 'oar' ? 'hold to paddle' : t === 'torch' ? 'light the torch' : t === 'food' ? 'eat' : t === 'water' ? 'drink' : 'use';
+    const rows = [['WASD', PL.onRaft ? 'walk' : 'swim'], ['Mouse', 'look'], ['Click', use], ['R', t === 'hammer' ? 'mend' : 'cancel'], ['E', 'grab / use / climb'],
+      ['1–9, wheel', 'switch item'], ['C', 'craft tools'], ['B', PL.tools.hammer ? (t === 'hammer' ? 'choose a piece' : 'build (hammer)') : 'build (craft a hammer)'], ['F', 'eat'], ['Q', 'drink'],
+      ['Space', PL.onRaft ? 'jump' : 'swim up'], ['Shift', PL.onRaft ? 'brace for waves' : 'dive'], ['O', 'settings'], ['H', 'hide keys']];
+    const rh = 19, w = 236; rr(g, x - 8, y0 - 14, w, rows.length * rh + 14, 8, 'rgba(6,18,27,.5)');
+    rows.forEach(([k, d], i) => { const yy = y0 + i * rh; tx(g, k, x + 80, yy, 14, GOLD, 'right', 700); tx(g, d, x + 90, yy, 14, BONE, 'left', 500); });
   }
   function drawIcon(g, k, x, y, s) {
     g.save(); g.translate(x, y); g.strokeStyle = BONE; g.fillStyle = BONE; g.lineWidth = 2.4; g.lineCap = 'round';
@@ -77,6 +94,7 @@
     else if (k === 'hammer') { L(-.5, .7, .3, -.3); g.fillRect(-.05 * s, -.7 * s, .7 * s, .3 * s); }
     else if (k === 'rod') { L(-.6, .8, .6, -.8); g.beginPath(); g.arc(-.35 * s, .5 * s, .14 * s, 0, TAU); g.stroke(); L(.6, -.8, .6, .4); }
     else if (k === 'spear') { L(-.7, .7, .55, -.55); g.beginPath(); g.moveTo(.75 * s, -.75 * s); g.lineTo(.35 * s, -.55 * s); g.lineTo(.55 * s, -.35 * s); g.closePath(); g.fill(); }
+    else if (k === 'water') { g.fillStyle = '#9fd8ff'; rr(g, -.32 * s, -.4 * s, .64 * s, 1.15 * s, .16 * s, '#9fd8ff'); g.fillStyle = BONE; g.fillRect(-.14 * s, -.75 * s, .28 * s, .36 * s); }
     else if (k === 'oar') { L(-.6, .7, .2, -.1); g.beginPath(); g.ellipse(.42 * s, -.38 * s, .18 * s, .42 * s, -.8, 0, TAU); g.fill(); }
     else { g.beginPath(); g.ellipse(-.1 * s, 0, .55 * s, .26 * s, 0, 0, TAU); g.fill(); g.beginPath(); g.moveTo(.4 * s, 0); g.lineTo(.75 * s, -.3 * s); g.lineTo(.75 * s, .3 * s); g.closePath(); g.fill(); }
     g.restore();
@@ -88,10 +106,10 @@
     for (const b of touchButtons()) { const on2 = (b.k === 'use' && IN.use) || [...IN.held.values()].includes(b.k); g.fillStyle = on2 ? 'rgba(111,210,222,.55)' : b.hot ? 'rgba(232,180,90,.55)' : 'rgba(6,18,27,.5)'; g.beginPath(); g.arc(b.x, b.y, b.r, 0, TAU); g.fill(); g.strokeStyle = 'rgba(238,242,240,.4)'; g.lineWidth = 2; g.stroke(); tx(g, b.t, b.x, b.y, (b.big ? 20 : 14) * u, BONE, 'center', 800); }
   }
   function drawBuildList(g) {
-    const x = K.view.x0 + 24, w = 300; let y = 160;
-    rr(g, x, y - 34, w, BUILD_ORDER.length * 40 + 46, 10, 'rgba(6,18,27,.82)'); tx(g, 'BUILD', x + 14, y - 14, 15, DIM, 'left', 700);
+    const x = K.view.x0 + 24, w = 340; let y = 160;
+    rr(g, x, y - 34, w, BUILD_ORDER.length * 40 + 46, 10, 'rgba(6,18,27,.82)'); tx(g, isTouch() ? 'BUILD' : 'BUILD  ·  press a number, or B to close', x + 14, y - 14, 15, DIM, 'left', 700);
     BUILD_ORDER.forEach((k, i) => { const P = PIECES[k], ok = has(P.need), on2 = ui.buildKind === k; const hot = zone(x + 6, y, w - 12, 36, () => { ui.buildKind = k; ui.buildOpen = false; });
-      rr(g, x + 6, y, w - 12, 36, 6, on2 ? 'rgba(111,210,222,.25)' : hot ? 'rgba(255,255,255,.08)' : null); tx(g, `${i + 1}  ${P.n}`, x + 16, y + 18, 18, ok ? BONE : DIM, 'left', 700); tx(g, Object.entries(P.need).map(([m, n]) => n + ' ' + itemName(m).toLowerCase().replace('dry ', '')).join(' · '), x + w - 14, y + 18, 13, ok ? GREEN : RED, 'right'); y += 40; });
+      rr(g, x + 6, y, w - 12, 36, 6, on2 ? 'rgba(111,210,222,.25)' : hot ? 'rgba(255,255,255,.08)' : null); tx(g, `${(i + 1) % 10}  ${P.n}`, x + 16, y + 18, 18, ok ? BONE : DIM, 'left', 700); tx(g, Object.entries(P.need).map(([m, n]) => n + ' ' + itemName(m).toLowerCase().replace('dry ', '')).join(' · '), x + w - 14, y + 18, 13, ok ? GREEN : RED, 'right'); y += 40; });
   }
   function drawCraft(g) {
     const w = 460, x = 640 - w / 2; let y = 170; const list = Object.keys(TOOLS).filter(t => TOOLS[t].need);
@@ -123,6 +141,6 @@
     if (sv) { btn(g, cx - 160, y, 320, 60, 'CONTINUE', () => menuStart(true), { on: true, px: 26, sub: `Day ${sv.s.day} · ${sv.raft.cells.length} foundations` }); y += 72; }
     btn(g, cx - 160, y, 320, 54, sv ? 'NEW RAFT' : 'WAKE UP', () => menuStart(false), { on: !sv, px: 24 }); y += 66;
     btn(g, cx - 160, y, 320, 46, 'SETTINGS', () => { panel = 'settings'; }, { px: 19 });
-    tx(g, isTouch() ? 'Left thumb moves · drag right to look · hold USE to throw and reel' : 'WASD walk · mouse look · hold click to throw, hold again to reel · E grab · C craft · B build', cx, V.y1 - 40, 15, DIM);
+    tx(g, isTouch() ? 'Left thumb moves · drag right to look · hold USE to throw and reel' : 'WASD walk · mouse look · hold click to throw, hold again to reel · E grab · C craft · B build · F eat · Q drink · H keys', cx, V.y1 - 40, 15, DIM);
     if (panel === 'settings') drawSettings(g, false);
   }

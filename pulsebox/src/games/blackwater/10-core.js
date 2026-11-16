@@ -14,7 +14,8 @@
   const say = (text, col) => emit('say', text, col);
 
   // what you can carry. Fish are 'fish:<kind>' raw and 'cooked:<kind>'
-  const ITEM = { plank: 'Plank', rope: 'Rope', scrap: 'Scrap', tinder: 'Dry tinder', biscuit: 'Ship biscuit', coconut: 'Coconut', line: 'Fishing line' };
+  const ITEM = { plank: 'Plank', rope: 'Rope', scrap: 'Scrap', tinder: 'Dry tinder', biscuit: 'Ship biscuit', coconut: 'Coconut', line: 'Fishing line', water: 'Fresh water' };
+  const DRINK = { water: 40, coconut: 18 };   // how much each one quenches thirst
   const FISH = {
     sardine: { n: 'Sardine', len: [.14, .22], kg: [.06, .14], raw: 5, cooked: 12, pull: .45, stam: 3, w: 40 },
     mackerel: { n: 'Mackerel', len: [.28, .42], kg: [.3, .9], raw: 9, cooked: 22, pull: .62, stam: 5, w: 32 },
@@ -44,11 +45,14 @@
     storage: { n: 'Storage', need: { plank: 4, rope: 1, scrap: 1 } },
     fire: { n: 'Fire pit', need: { plank: 3, scrap: 2 } },
     reinforce: { n: 'Reinforced edge', need: { plank: 2, scrap: 2 } },
+    catcher: { n: 'Rain catcher', need: { plank: 2, rope: 1, scrap: 1 }, tip: 'Fills with fresh water while it rains' },
+    still: { n: 'Water still', need: { plank: 3, scrap: 3 }, tip: 'Turns sea water fresh in the sun' },
+    trap: { n: 'Fish trap', need: { plank: 3, rope: 2 }, tip: 'Hangs off an edge and catches fish by itself' },
   };
-  const BUILD_ORDER = ['foundation', 'floor', 'wall', 'shelter', 'storage', 'fire', 'reinforce'];
+  const BUILD_ORDER = ['foundation', 'floor', 'wall', 'shelter', 'storage', 'fire', 'catcher', 'still', 'trap', 'reinforce'];
   const REPAIR = { plank: 1 };   // one plank mends 35 hp
 
   // settings and the saved run live in the kit's save for this game
-  const CFG = { v: 1, quality: 'auto', reduce: false, vol: .8, sens: .5 };
+  const CFG = { v: 1, quality: 'auto', reduce: false, vol: .8, sens: .5, keys: true };
   const loadCfg = () => { try { Object.assign(CFG, (K.save.bw || {}).cfg || {}); } catch (e) {} };
   const saveCfg = () => { try { K.save.bw = Object.assign(K.save.bw || {}, { cfg: CFG }); K.persist(); } catch (e) {} };

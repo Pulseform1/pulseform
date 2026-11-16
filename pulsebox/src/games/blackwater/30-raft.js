@@ -97,7 +97,8 @@
     if (kind === 'floor') return !c.floor;
     if (kind === 'wall') return side >= 0 && !c.walls[side];
     if (kind === 'shelter') return !c.shelter;
-    if (kind === 'storage' || kind === 'fire') return !c.obj;
+    if (kind === 'storage' || kind === 'fire' || kind === 'catcher' || kind === 'still') return !c.obj;
+    if (kind === 'trap') return !c.obj && exposed(RAFT, c);
     if (kind === 'reinforce') return !c.reinforce && exposed(RAFT, c);
     return false;
   }

@@ -12,7 +12,7 @@
   document.addEventListener('contextmenu', e => { if (screen === 'play') e.preventDefault(); });
   document.addEventListener('wheel', e => { if (playing()) cycleTool(e.deltaY > 0 ? 1 : -1); }, { passive: true });
   function cycleTool(d) { const list = hotbar().map(h => h.k); const i = list.indexOf(PL.tool); act.select(list[(i + d + list.length) % list.length]); }
-  const hotbar = () => [...Object.keys(TOOLS).filter(t => PL.tools[t]).map(t => ({ k: t, n: TOOLS[t].n })), ...(foods().length ? [{ k: 'food', n: itemName(foods()[0]) }] : [])];
+  const hotbar = () => [...Object.keys(TOOLS).filter(t => PL.tools[t]).map(t => ({ k: t, n: TOOLS[t].n })), ...(foods().length ? [{ k: 'food', n: itemName(foods()[0]) }] : []), ...((INV.water || 0) > 0 ? [{ k: 'water', n: 'Fresh water' }] : [])];
   function keyEvent(code, down) {
     IN.keys[code] = down; if (!down) return;
     if (screen === 'menu') { if (code === 'Enter') menuStart(); return; }
@@ -20,10 +20,13 @@
     if (code === 'KeyC') { panel = panel === 'craft' ? null : 'craft'; panel ? unlockMouse() : lockMouse(); return; }
     if (panel) { if (code === 'Escape') panel = null; return; }
     if (code === 'KeyE') act.interact();
+    if (code === 'KeyQ') drink();
+    if (code === 'KeyF') eat() || say('No food. Fish with the rod (C to craft one)', '#cfd6e2');
+    if (code === 'KeyH') { CFG.keys = !CFG.keys; saveCfg(); }
     if (code === 'KeyR') act.alt();
     if (code === 'KeyB') { if (PL.tools.hammer) { if (PL.tool !== 'hammer') act.select('hammer'); else ui.buildOpen = !ui.buildOpen; } else say('Craft a hammer first (C)', '#cfd6e2'); }
-    const num = /^Digit([1-9])$/.exec(code);
-    if (num) { const n = +num[1]; if (PL.tool === 'hammer' && ui.buildOpen && n <= BUILD_ORDER.length) { ui.buildKind = BUILD_ORDER[n - 1]; ui.buildOpen = false; } else { const h = hotbar()[n - 1]; if (h) act.select(h.k); } }
+    const num = /^Digit([0-9])$/.exec(code);
+    if (num) { const n = +num[1] || 10; if (PL.tool === 'hammer' && ui.buildOpen && n <= BUILD_ORDER.length) { ui.buildKind = BUILD_ORDER[n - 1]; ui.buildOpen = false; } else { const h = hotbar()[n - 1]; if (h && n <= 9) act.select(h.k); } }
     if (code === 'F8' && devMode) summon();
   }
   function readInput() {
@@ -47,7 +50,7 @@
     const id = e.pointerId, b = touchButtons().find(b => Math.hypot(x - b.x, y - b.y) < b.r + 10 * uiScale());
     if (b) {
       if (b.k === 'use') { IN.use = true; IN.useId = id; IN.look = { id, x, y }; act.useDown(); }   // the USE thumb keeps aiming while it holds
-      else if (b.k === 'alt') act.alt(); else if (b.k === 'grab') act.interact(); else if (b.k === 'tool') cycleTool(1);
+      else if (b.k === 'alt') act.alt(); else if (b.k === 'grab') act.interact(); else if (b.k === 'drink') drink(); else if (b.k === 'tool') cycleTool(1);
       else if (b.k === 'build') { if (PL.tool === 'hammer') ui.buildOpen = !ui.buildOpen; else act.select('hammer'); }
       else IN.held.set(id, b.k);
       return;

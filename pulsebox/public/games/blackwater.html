@@ -99,7 +99,8 @@ const GAME = {
   const say = (text, col) => emit('say', text, col);
 
   // what you can carry. Fish are 'fish:<kind>' raw and 'cooked:<kind>'
-  const ITEM = { plank: 'Plank', rope: 'Rope', scrap: 'Scrap', tinder: 'Dry tinder', biscuit: 'Ship biscuit', coconut: 'Coconut', line: 'Fishing line' };
+  const ITEM = { plank: 'Plank', rope: 'Rope', scrap: 'Scrap', tinder: 'Dry tinder', biscuit: 'Ship biscuit', coconut: 'Coconut', line: 'Fishing line', water: 'Fresh water' };
+  const DRINK = { water: 40, coconut: 18 };   // how much each one quenches thirst
   const FISH = {
     sardine: { n: 'Sardine', len: [.14, .22], kg: [.06, .14], raw: 5, cooked: 12, pull: .45, stam: 3, w: 40 },
     mackerel: { n: 'Mackerel', len: [.28, .42], kg: [.3, .9], raw: 9, cooked: 22, pull: .62, stam: 5, w: 32 },
@@ -129,12 +130,15 @@ const GAME = {
     storage: { n: 'Storage', need: { plank: 4, rope: 1, scrap: 1 } },
     fire: { n: 'Fire pit', need: { plank: 3, scrap: 2 } },
     reinforce: { n: 'Reinforced edge', need: { plank: 2, scrap: 2 } },
+    catcher: { n: 'Rain catcher', need: { plank: 2, rope: 1, scrap: 1 }, tip: 'Fills with fresh water while it rains' },
+    still: { n: 'Water still', need: { plank: 3, scrap: 3 }, tip: 'Turns sea water fresh in the sun' },
+    trap: { n: 'Fish trap', need: { plank: 3, rope: 2 }, tip: 'Hangs off an edge and catches fish by itself' },
   };
-  const BUILD_ORDER = ['foundation', 'floor', 'wall', 'shelter', 'storage', 'fire', 'reinforce'];
+  const BUILD_ORDER = ['foundation', 'floor', 'wall', 'shelter', 'storage', 'fire', 'catcher', 'still', 'trap', 'reinforce'];
   const REPAIR = { plank: 1 };   // one plank mends 35 hp
 
   // settings and the saved run live in the kit's save for this game
-  const CFG = { v: 1, quality: 'auto', reduce: false, vol: .8, sens: .5 };
+  const CFG = { v: 1, quality: 'auto', reduce: false, vol: .8, sens: .5, keys: true };
   const loadCfg = () => { try { Object.assign(CFG, (K.save.bw || {}).cfg || {}); } catch (e) {} };
   const saveCfg = () => { try { K.save.bw = Object.assign(K.save.bw || {}, { cfg: CFG }); K.persist(); } catch (e) {} };
   /* ---------- 20 sea: one wave model for the picture and the physics ----------
@@ -405,7 +409,8 @@ float waterH(vec2 x) {
     if (kind === 'floor') return !c.floor;
     if (kind === 'wall') return side >= 0 && !c.walls[side];
     if (kind === 'shelter') return !c.shelter;
-    if (kind === 'storage' || kind === 'fire') return !c.obj;
+    if (kind === 'storage' || kind === 'fire' || kind === 'catcher' || kind === 'still') return !c.obj;
+    if (kind === 'trap') return !c.obj && exposed(RAFT, c);
     if (kind === 'reinforce') return !c.reinforce && exposed(RAFT, c);
     return false;
   }
@@ -421,13 +426,14 @@ float waterH(vec2 x) {
   const anyStorage = () => [...RAFT.cells.values()].some(c => c.obj === 'storage');
   /* ---------- 40 life: you, the salvage, the hook, the rod, food, fire, the torch, sharks, the big events ---------- */
   const EYE = 1.62, REACH = 26;
-  const PL = { onRaft: true, lx: .75, lz: .75, ly: 0, vy: 0, wx: 0, wy: 0, wz: 0, yaw: Math.PI * .8, pitch: -.05, hunger: 100, faint: 0,
+  const PL = { onRaft: true, lx: .75, lz: .75, ly: 0, vy: 0, wx: 0, wy: 0, wz: 0, yaw: Math.PI * .8, pitch: -.05, hunger: 100, thirst: 100, air: 100, faint: 0,
     tools: { hook: 1, torch: 1 }, tool: 'hook', torch: false, torchWet: 0, brace: false, under: false, pickups: 0, knock: 0, cool: 0, play: 0 };
   const HK = { state: 'idle', charge: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, items: [], tension: 0, reel: false };
   const FS = { state: 'idle', charge: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, t: 0, fish: null, dist: 0, tension: 0, over: 0, slack: 0, reel: false, bob: 0 };
   const FL = []; let flId = 0;   // floating salvage
   const SPN = { quiet: 6, left: 0, gx: 0, gz: 0, groups: 0 };
   const SH = { state: 'away', t: 200, x: 0, z: 0, y: -1, ang: 0, cell: null, hits: 0, yaw: 0, stun: 0, biteT: 0, swim: 0 };
+  const CACHE = { x: 0, z: 0, y: -5, on: false, t: 150, open: false };   // a sunken supply crate you dive for
   const CT = { state: 'none', t: 0, x: 0, z: 0, y: -90, cool: 0, pending: -1, seen: 0 };
   let saveT = 30, devMode = /[?&]dev\b/.test(typeof location !== 'undefined' ? location.search : ''), runLive = false;   // runLive: a real run (the menu's backdrop raft never saves)
   const MASS = { plank: 1, log: 2, crate: 2.6, barrel: 3, panel: 4, wallpiece: 3.4 }, DRAFT = { plank: .05, log: .12, crate: .25, barrel: .3, panel: .1, wallpiece: .12 };
@@ -487,6 +493,7 @@ float waterH(vec2 x) {
     const surf = waterH(PL.wx, PL.wz), dive = I.brace && !I.jump, want = dive ? surf - 1.8 : surf + (I.jump ? .3 : .08);
     PL.wy = ease(PL.wy, want, dive ? 1.4 : 3.2, dt); PL.under = PL.wy < surf - .02;
     PL.hunger -= dt * .02;
+    if (PL.wy < surf - .5) { PL.air = Math.max(0, PL.air - dt * 100 / 28); if (PL.air <= 0) { PL.air = 100; drown(); } } else PL.air = Math.min(100, PL.air + dt * 40);
   }
 
   // ---- salvage drifting by: groups with quiet stretches between
@@ -520,7 +527,7 @@ float waterH(vec2 x) {
   // what a piece of salvage holds
   function contents(f) {
     const out = [];
-    const tab = { crate: ['plank', 'plank', 'rope', 'scrap', 'biscuit', 'tinder', 'line', 'scrap'], barrel: ['rope', 'rope', 'scrap', 'coconut', 'biscuit', 'tinder', 'plank'] };
+    const tab = { crate: ['plank', 'plank', 'rope', 'scrap', 'biscuit', 'tinder', 'line', 'scrap', 'water'], barrel: ['rope', 'rope', 'scrap', 'coconut', 'biscuit', 'tinder', 'plank', 'water', 'water'] };
     if (f.k === 'plank') out.push('plank'); else if (f.k === 'log') out.push('plank', 'plank'); else if (f.k === 'panel') out.push('plank', 'plank', 'plank', ...(chance(.5) ? ['rope'] : []));
     else if (f.k === 'wallpiece') out.push('plank', 'plank', 'scrap');
     else { const n = f.k === 'crate' ? Math.floor(rnd(2, 5)) : Math.floor(rnd(2, 4)); for (let i = 0; i < n; i++) out.push(pick(tab[f.k])); if (f.k === 'barrel' && PL.pickups < 6) out.push('rope', 'rope'); }
@@ -591,6 +598,35 @@ float waterH(vec2 x) {
   // ---- food, fire and the torch
   const foods = () => Object.keys(INV).filter(k => INV[k] > 0 && foodOf(k) > 0).sort((a, b) => foodOf(b) - foodOf(a));
   function eat(k) { k = k || foods()[0]; if (!k || !(INV[k] > 0)) return false; INV[k]--; PL.hunger = Math.min(100, PL.hunger + foodOf(k)); emit('eat', k); return true; }
+  function drink(k) {
+    k = k || ((INV.water || 0) > 0 ? 'water' : (INV.coconut || 0) > 0 ? 'coconut' : null); if (!k || !(INV[k] > 0)) { say('Nothing to drink. Build a rain catcher or a water still (B)', '#cfd6e2'); return false; }
+    INV[k]--; PL.thirst = Math.min(100, PL.thirst + DRINK[k]); if (k === 'coconut') PL.hunger = Math.min(100, PL.hunger + FOOD.coconut); emit('drink', k); return true;
+  }
+  // rain catchers fill in the rain, stills work in the sun, traps catch fish: each holds a few until you empty it
+  const HOLD = { catcher: 4, still: 3, trap: 3 };
+  function piecesTick(dt) {
+    const sun = S.tod > 7 && S.tod < 18.5 ? 1 - S.cloud * .6 : 0;
+    for (const c of RAFT.cells.values()) {
+      if (!HOLD[c.obj]) continue; c.store = c.store || 0; if (c.store >= HOLD[c.obj]) continue;
+      const rate = c.obj === 'catcher' ? (S.rain > .15 ? S.rain / 22 : 0) : c.obj === 'still' ? sun / 95 : 1 / rnd(70, 110);
+      c.prog = (c.prog || 0) + dt * rate; if (c.prog >= 1) { c.prog = 0; c.store++; if (c.obj === 'trap') c.fish = (c.fish || []).concat([R() < .6 ? 'sardine' : R() < .8 ? 'mackerel' : 'bream']); RAFT.ver++; }
+    }
+  }
+  function emptyPiece(c) {
+    if (!c.store) { say(c.obj === 'catcher' ? 'Empty. It fills when it rains' : c.obj === 'still' ? 'Nothing yet. It works while the sun is up' : 'Nothing in the trap yet', '#cfd6e2'); return false; }
+    const got = c.obj === 'trap' ? (c.fish || []).map(f => 'fish:' + f) : Array(c.store).fill('water'); got.forEach(k => give(k)); c.store = 0; c.fish = []; RAFT.ver++; emit('pickup', got); return true;
+  }
+  // a sunken supply crate: bubbles mark it; dive (hold Shift in the water) and press E beside it
+  function cacheTick(dt) {
+    if (!CACHE.on) { CACHE.t -= dt; if (CACHE.t <= 0) { const a = rnd(0, TAU), d = rnd(12, 26); Object.assign(CACHE, { on: true, open: false, x: RAFT.x + Math.cos(a) * d, z: RAFT.z + Math.sin(a) * d, y: -rnd(4, 6), life: 300 }); emit('cache'); say('Bubbles rising nearby: something is down there', '#9fd0ff'); } return; }
+    CACHE.life -= dt; if (CACHE.life <= 0 || Math.hypot(CACHE.x - RAFT.x, CACHE.z - RAFT.z) > 90) { CACHE.on = false; CACHE.t = rnd(180, 320); }
+  }
+  const nearCache = () => CACHE.on && !PL.onRaft && Math.hypot(CACHE.x - PL.wx, CACHE.z - PL.wz) < 2.4 && PL.wy < waterH(PL.wx, PL.wz) - 1.5 && Math.abs(PL.wy - CACHE.y) < 3.2;
+  function openCache() {
+    const got = ['scrap', 'scrap', 'rope', pick(['scrap', 'rope', 'plank']), pick(['water', 'water', 'biscuit', 'line', 'tinder'])]; if (R() < .5) got.push('water');
+    got.forEach(k => give(k)); CACHE.on = false; CACHE.t = rnd(200, 340); emit('pickup', got); emit('cacheOpen'); return got;
+  }
+  function drown() { say('You ran out of air', '#ff9a7a'); faint(true); }
   function fireTick(dt) {
     for (const c of RAFT.cells.values()) {
       const F = c.fire; if (!F) continue;
@@ -727,19 +763,22 @@ float waterH(vec2 x) {
   // ---- hunger, fainting, the clock that keeps it all turning
   function hungerTick(dt) {
     PL.hunger -= dt * 100 / (22 * 60);   // about twenty-two minutes from full to empty
-    if (PL.hunger <= 0) { PL.hunger = 0; PL.faint += dt; if (PL.faint > 25) faint(); } else PL.faint = 0;
+    PL.thirst -= dt * 100 / (16 * 60) * (S.tod > 11 && S.tod < 16 && S.cloud < .5 ? 1.25 : 1);   // thirst comes faster, worst in the midday sun
+    if (PL.thirst < 0) PL.thirst = 0;
+    if (PL.hunger <= 0 || PL.thirst <= 0) { PL.hunger = Math.max(0, PL.hunger); PL.faint += dt; if (PL.faint > 25) faint(); } else PL.faint = 0;
   }
-  function faint() {
-    PL.faint = 0; PL.hunger = 35; for (const k of Object.keys(INV)) if (k.startsWith('fish:') || k.startsWith('cooked:')) INV[k] = 0;
+  function faint(drowned) {
+    const why = drowned ? 'You black out' : PL.thirst <= 0 ? 'You black out from thirst' : 'You black out from hunger';
+    PL.faint = 0; PL.hunger = Math.max(PL.hunger, 35); PL.thirst = Math.max(PL.thirst, 35); PL.air = 100; for (const k of Object.keys(INV)) if (k.startsWith('fish:') || k.startsWith('cooked:')) INV[k] = 0;
     if (!PL.onRaft) climbOut() || Object.assign(PL, { onRaft: true, lx: 0, lz: 0 });
-    S.tod = 7; emit('faint'); say('You black out from hunger, and wake at dawn', '#ffb08a');
+    S.tod = 7; emit('faint'); say(why + ', and wake at dawn on the raft', '#ffb08a');
   }
   // keep the numbers small: when the raft has drifted far, move the world back round it
   function recentre() {
     if (Math.hypot(RAFT.x, RAFT.z) < 400) return;
     const dx = RAFT.x, dz = RAFT.z; S.ox += dx; S.oz += dz;
     const mv = o => { o.x -= dx; o.z -= dz; };
-    mv(RAFT); DRIFT.forEach(mv); FL.forEach(mv); S.pools.forEach(mv); S.rings.forEach(mv); S.spouts.forEach(mv); mv(SH); mv(CT); mv(HK); mv(FS);
+    mv(RAFT); DRIFT.forEach(mv); FL.forEach(mv); S.pools.forEach(mv); S.rings.forEach(mv); S.spouts.forEach(mv); mv(SH); mv(CT); mv(HK); mv(FS); mv(CACHE);
     for (const g of S.giants) g.s -= g.dx * dx + g.dz * dz;
     PL.wx -= dx; PL.wz -= dz; emit('recentre', dx, dz);
   }
@@ -755,7 +794,7 @@ float waterH(vec2 x) {
     PL.brace = !!I.brace;
     if (PL.onRaft) moveRaftPlayer(I, dt); else swim(I, dt);
     HK.reel = I.use && PL.tool === 'hook'; FS.reel = I.use && PL.tool === 'rod';
-    hookTick(dt); fishTick(dt); spawnTick(dt); floaterTick(dt); sharkTick(dt); eventsTick(dt); cthulhuTick(dt); fireTick(dt); hungerTick(dt);
+    hookTick(dt); fishTick(dt); spawnTick(dt); floaterTick(dt); sharkTick(dt); eventsTick(dt); cthulhuTick(dt); fireTick(dt); hungerTick(dt); piecesTick(dt); cacheTick(dt);
     // the aim: what the hammer would build or mend, what E would use
     ui.aim = PL.onRaft ? deckAim() : null; ui.prompt = promptFor();
     recentre();
@@ -764,11 +803,13 @@ float waterH(vec2 x) {
 
   // ---- the controls call these
   function promptFor() {
+    if (nearCache()) return 'E  Open the sunken crate';
     if (!PL.onRaft) return Math.min(...[...RAFT.cells.values()].map(c => { const [wx, wz] = flatW(RAFT, c.i * CS, c.j * CS); return Math.hypot(wx - PL.wx, wz - PL.wz); })) < 2.6 ? 'E  Climb aboard' : 'Swim to the raft';
     const f = nearFloater(); if (f) return 'E  Grab the ' + ({ wallpiece: 'broken wall', panel: 'broken platform' }[f.k] || f.k);
     const a = ui.aim, c = a && a.dist < 3.2 ? cellAt(RAFT, a.i, a.j) : null;
     if (c && c.fire) { const F = c.fire; return !F.lit ? 'E  Light the fire' : F.cook ? (F.cook.done ? 'E  Take the cooked fish' : 'Cooking...') : Object.keys(INV).some(k => k.startsWith('fish:') && INV[k] > 0) ? 'E  Cook a fish' : !PL.torch ? 'E  Light your torch' : 'Fire'; }
     if (c && c.obj === 'storage') return `Storage: ${INV.tinder || 0} dry tinder kept here`;
+    if (c && HOLD[c.obj]) { const n = c.store || 0, P = PIECES[c.obj]; return n ? `E  Take ${n} ${c.obj === 'trap' ? (n > 1 ? 'fish' : 'fish') : 'fresh water'} from the ${P.n.toLowerCase()}` : `${P.n}: ${P.tip.toLowerCase()}`; }
     if (PL.tool === 'hammer' && c && c.hp < 100) return `Right click  Mend (1 plank)  ·  ${Math.ceil(c.hp)}%`;
     return '';
   }
@@ -781,6 +822,7 @@ float waterH(vec2 x) {
       else if (t === 'torch') { if (!PL.torch) lightTorch(); }
       else if (t === 'hammer') { const a = ui.aim; if (a && ui.buildKind) { if (place(ui.buildKind, a.i, a.j, a.side)) say(PIECES[ui.buildKind].n + ' built', '#9fe0a0'); else if (!has(PIECES[ui.buildKind].need)) say('Not enough materials', '#ff9a7a'); } }
       else if (t === 'food') eat();
+      else if (t === 'water') drink();
     },
     useUp() {
       if (HK.state === 'charge') { throwFrom(HK, HK.charge, 6, 21); HK.state = 'fly'; HK.items = []; emit('cast', 'hook'); }
@@ -792,13 +834,15 @@ float waterH(vec2 x) {
       else if (PL.tool === 'hammer') { const a = ui.aim, c = a && cellAt(RAFT, a.i, a.j); if (c && !repair(c)) say(c.hp >= 100 ? 'Not damaged' : 'Mending needs a plank', '#cfd6e2'); }
     },
     interact() {
+      if (nearCache()) return openCache();
       if (!PL.onRaft) return climbOut();
       const f = nearFloater(); if (f) return collect(f);
       const a = ui.aim, c = a && a.dist < 3.2 ? cellAt(RAFT, a.i, a.j) : null;
       if (c && c.fire) return useFire(c);
+      if (c && HOLD[c.obj]) return emptyPiece(c);
       if (PL.tool === 'torch' && !PL.torch) return lightTorch();
     },
-    select(t) { if (t === 'food' || PL.tools[t]) { PL.tool = t; if (t !== 'hook') dropHook(); if (t !== 'rod') FS.state = 'idle'; ui.buildOpen = t === 'hammer' && ui.buildOpen; } },
+    select(t) { if (t === 'food' || t === 'water' || PL.tools[t]) { PL.tool = t; if (t !== 'hook') dropHook(); if (t !== 'rod') FS.state = 'idle'; ui.buildOpen = t === 'hammer' && ui.buildOpen; } },
     craft(t) { const T = TOOLS[t]; if (PL.tools[t] || !T.need || (T.after && PL.pickups < T.after) || !has(T.need)) return false; spend(T.need); PL.tools[t] = 1; act.select(t); emit('craft', t); say(T.n + ' made', '#9fe0a0'); return true; },
   };
   const craftable = () => Object.keys(TOOLS).filter(t => TOOLS[t].need && !PL.tools[t] && !(TOOLS[t].after && PL.pickups < TOOLS[t].after));
@@ -806,8 +850,8 @@ float waterH(vec2 x) {
   // ---- a new raft, or the one you left
   function newRun() {
     RAFT = newBody(0, 0); for (const [i, j] of [[0, 0], [1, 0], [0, 1], [1, 1]]) RAFT.cells.set(ckey(i, j), newCell(i, j));
-    DRIFT.length = 0; FL.length = 0; for (const k of Object.keys(INV)) delete INV[k];
-    Object.assign(PL, { onRaft: true, lx: .75, lz: .75, ly: 0, vy: 0, hunger: 100, faint: 0, tools: { hook: 1, torch: 1 }, tool: 'hook', torch: false, torchWet: 0, pickups: 0, play: 0, pitch: -.08 });
+    DRIFT.length = 0; FL.length = 0; for (const k of Object.keys(INV)) delete INV[k]; INV.water = 2; Object.assign(CACHE, { on: false, t: 150 });
+    Object.assign(PL, { onRaft: true, lx: .75, lz: .75, ly: 0, vy: 0, hunger: 100, thirst: 100, air: 100, faint: 0, tools: { hook: 1, torch: 1 }, tool: 'hook', torch: false, torchWet: 0, pickups: 0, play: 0, pitch: -.08 });
     Object.assign(S, { t: 0, ox: 0, oz: 0, sea: .14, seaTo: .14, wind: 4, rain: 0, cloud: .25, phase: 'calm', pt: 330, tod: 7.2, day: 1, nights: 0, giants: [], pools: [], rings: [], spouts: [], bolts: [], nextPool: 480 });
     Object.assign(SPN, { quiet: 5, left: 0, groups: 0 }); Object.assign(SH, { state: 'away', t: 230, hits: 0 }); Object.assign(CT, { state: 'none', cool: 0, pending: -1, y: -90 });
     HK.state = 'idle'; HK.items = []; FS.state = 'idle';
@@ -817,7 +861,7 @@ float waterH(vec2 x) {
   }
   function snapshot() {
     return { v: 1, raft: { yaw: RAFT.yaw, cells: [...RAFT.cells.values()].map(c => ({ ...c, fire: c.fire ? { lit: c.fire.lit, cook: c.fire.cook } : null })) }, inv: { ...INV },
-      pl: { hunger: PL.hunger, tools: PL.tools, tool: PL.tool, pickups: PL.pickups, torch: PL.torch, lx: PL.onRaft ? PL.lx : 0, lz: PL.onRaft ? PL.lz : 0, play: PL.play },
+      pl: { hunger: PL.hunger, thirst: PL.thirst, tools: PL.tools, tool: PL.tool, pickups: PL.pickups, torch: PL.torch, lx: PL.onRaft ? PL.lx : 0, lz: PL.onRaft ? PL.lz : 0, play: PL.play },
       s: { tod: S.tod, day: S.day, nights: S.nights }, ct: { cool: CT.cool, seen: CT.seen }, at: Date.now() };
   }
   function saveRun() { if (!runLive) return; try { K.save.bw = Object.assign(K.save.bw || {}, { cfg: CFG, run: snapshot() }); K.persist(); } catch (e) {} }
@@ -935,13 +979,20 @@ void main() {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
     g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5); return g;
   }
+  // which raft cells exist, as a 32 x 32 map centred on cell (0, 0): the ocean's vertex shader keeps the water out of them
+  function raftMask() { if (!X.mask) { X.maskData = new Uint8Array(32 * 32 * 4); X.mask = new THREE.DataTexture(X.maskData, 32, 32, THREE.RGBAFormat); X.mask.magFilter = X.mask.minFilter = THREE.NearestFilter; X.maskVer = -1; } return X.mask; }
+  function updateRaftMask() {
+    raftMask(); if (X.maskVer === RAFT.ver && X.maskCells === RAFT.cells.size) return; X.maskVer = RAFT.ver; X.maskCells = RAFT.cells.size;
+    X.maskData.fill(0); for (const c of RAFT.cells.values()) { const i = c.i + 16, j = c.j + 16; if (i >= 0 && j >= 0 && i < 32 && j < 32) X.maskData[(j * 32 + i) * 4] = 255; }
+    X.mask.needsUpdate = true;
+  }
   function buildOcean() {
-    const u = Object.assign({}, X.common, X.sea, { uCam: { value: new THREE.Vector3() }, uRaft: { value: new THREE.Vector4() }, uRaftV: { value: new THREE.Vector2() }, uUnder: { value: 0 }, uFog: { value: .0011 }, uMoonVis: { value: 0 } });
+    const u = Object.assign({}, X.common, X.sea, { uCam: { value: new THREE.Vector3() }, uRaft: { value: new THREE.Vector4() }, uRaftV: { value: new THREE.Vector2() }, uUnder: { value: 0 }, uMask: { value: raftMask() }, uRaftT: { value: new THREE.Vector4(0, 0, 1, 0) }, uRaftP: { value: new THREE.Vector3() }, uFog: { value: .0011 }, uMoonVis: { value: 0 } });
     const q = X.q;
     const m = new THREE.ShaderMaterial({ uniforms: u, side: THREE.DoubleSide, fog: false, defines: { QUAL: q === 'low' ? 0 : q === 'high' ? 2 : 1 },
       vertexShader: SEA_GLSL.replace(/vec3 gerst\(vec2 p, out vec3 n, out float crest\) \{/, 'vec3 gerstF(vec2 p, out vec3 n, out float crest, float sp) {').replace('float th = w.z * dot(w.xy, p) + q.x, s = sin(th), c = cos(th);', 'float th = w.z * dot(w.xy, p) + q.x, s = sin(th), c = cos(th); float fd = clamp(6.2831 / w.z / (sp * 5.0) - 0.4, 0.0, 1.0); s *= fd; c *= fd;')
         .replace(/float waterH\(vec2 x\) \{[\s\S]*\}$/, '') + `
-uniform vec3 uCam;
+uniform vec3 uCam; uniform sampler2D uMask; uniform vec4 uRaftT; uniform vec3 uRaftP;
 varying vec3 vW; varying vec3 vN; varying float vCrest; varying float vH; varying float vSp;
 void main() {
   vec4 wp = modelMatrix * vec4(position, 1.0);
@@ -950,6 +1001,10 @@ void main() {
   float e0 = extras(wp.xz), e1 = extras(wp.xz + vec2(0.7, 0.0)), e2 = extras(wp.xz + vec2(0.0, 0.7));
   n = normalize(n + vec3(-(e1 - e0) / 0.7, 0.0, -(e2 - e0) / 0.7));
   wp.xyz += d; wp.y += e0;
+  // the raft keeps the sea out: inside any of its cells the surface stays below the logs' waterline, so no wave shows through the deck
+  { vec2 q = wp.xz - uRaftT.xy; float lx = uRaftT.z * q.x - uRaftT.w * q.y, lz = uRaftT.w * q.x + uRaftT.z * q.y;
+    vec2 ij = floor(vec2(lx, lz) / 1.5 + 0.5) + 16.0;
+    if (ij.x >= 0.0 && ij.y >= 0.0 && ij.x < 32.0 && ij.y < 32.0 && texture2D(uMask, (ij + 0.5) / 32.0).r > 0.5) { float top = uRaftP.x + uRaftP.y * lx + uRaftP.z * lz + 0.04; if (wp.y > top) { d.y -= wp.y - top; wp.y = top; } } }
   vW = wp.xyz; vN = n; vCrest = crest; vH = d.y + e0; vSp = sp;
   gl_Position = projectionMatrix * viewMatrix * wp;
 }`,
@@ -1080,6 +1135,7 @@ void main() {
     MAT.skin = std({ color: LC('#c8946a'), roughness: .6 }, .25);
     MAT.sleeve = std({ color: LC('#4a5560'), roughness: .9 }, .15);
     MAT.flame = new THREE.SpriteMaterial({ map: canvasTex(64, 128, (g, w, h) => { const gr = g.createRadialGradient(32, 90, 2, 32, 80, 60); gr.addColorStop(0, 'rgba(255,250,210,1)'); gr.addColorStop(.25, 'rgba(255,190,80,.95)'); gr.addColorStop(.6, 'rgba(240,90,20,.5)'); gr.addColorStop(1, 'rgba(120,20,0,0)'); g.fillStyle = gr; g.beginPath(); g.ellipse(32, 80, 26, 48, 0, 0, 7); g.fill(); }), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
+    MAT.glass = std({ color: LC('#cfefff'), roughness: .05, metalness: .1, transparent: true, opacity: .35 }, 1.2); MAT.fresh = std({ color: LC('#4fb8e8'), roughness: .1, transparent: true, opacity: .75 }, 1);
     MAT.bobber = std({ color: LC('#e8402a'), roughness: .4 }, .6); MAT.white = std({ color: LC('#f0eee8'), roughness: .5 }, .5);
     MAT.ghostOk = new THREE.MeshBasicMaterial({ color: LC('#7fe0a0'), transparent: true, opacity: .35, depthWrite: false });
     MAT.ghostNo = new THREE.MeshBasicMaterial({ color: LC('#ff6a5a'), transparent: true, opacity: .3, depthWrite: false });
@@ -1089,6 +1145,10 @@ void main() {
     X.hook = hookMesh(); X.scene.add(X.hook); X.rope = ropeMesh(MAT.rope, .012); X.scene.add(X.rope); X.line = ropeMesh(MAT.white, .004); X.scene.add(X.line);
     X.bobber = new THREE.Group(); { const a = new THREE.Mesh(new THREE.SphereGeometry(.07, 12, 8, 0, TAU, 0, Math.PI / 2), MAT.bobber), b = new THREE.Mesh(new THREE.SphereGeometry(.07, 12, 8, 0, TAU, Math.PI / 2, Math.PI / 2), MAT.white); X.bobber.add(a, b); } X.scene.add(X.bobber);
     X.shark = sharkMesh(); X.scene.add(X.shark);
+    // the sunken supply crate, and the bubbles that give it away
+    X.cache = new THREE.Group(); X.cache.add(box(.9, .55, .6, MAT.crate), box(.92, .08, .62, MAT.iron, 0, .2, 0), box(.92, .08, .62, MAT.iron, 0, -.2, 0), box(.95, .12, .1, MAT.rust, 0, .3, .26)); X.scene.add(X.cache);
+    X.bubbles = []; const bg = new THREE.SphereGeometry(.06, 6, 4), bm = std({ color: LC('#dff6ff'), roughness: .1, transparent: true, opacity: .6 }, 1);
+    for (let i = 0; i < 14; i++) { const b = new THREE.Mesh(bg, bm); b.userData.ph = i / 14; X.scene.add(b); X.bubbles.push(b); }
     X.ct = cthulhuMesh(); X.ct.visible = false; X.scene.add(X.ct);
   }
   const box = (w, h, d, m, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); o.castShadow = o.receiveShadow = true; return o; };
@@ -1108,6 +1168,18 @@ void main() {
     c.walls.forEach((w, s) => { if (!w) return; const [dx, dz] = SIDES[s], wg = new THREE.Group(); for (let k = 0; k < 6; k++) wg.add(box(.24, 1.2 + rnd2(k + 20) * .1, .06, k % 2 ? MAT.deck : MAT.wet, -.62 + k * .25, DECK + .55, 0)); wg.add(box(CS, .08, .1, MAT.wet, 0, DECK + .95, .03), box(CS, .08, .1, MAT.wet, 0, DECK + .3, .03)); wg.position.set(x0 + dx * CS * .47, 0, z0 + dz * CS * .47); wg.rotation.y = dx ? Math.PI / 2 : 0; g.add(wg); });
     if (c.reinforce) SIDES.forEach(([di, dj], s) => { if (cellAt(body, c.i + di, c.j + dj)) return; g.add(box(dx0(di, CS * .98), .12, dx0(dj, CS * .98), MAT.iron, x0 + di * CS * .49, DECK - .2, z0 + dj * CS * .49)); for (const t of [-.5, 0, .5]) g.add(box(di ? .05 : .08, .2, dj ? .05 : .08, MAT.rust, x0 + di * CS * .5 + (di ? 0 : t), DECK - .15, z0 + dj * CS * .5 + (dj ? 0 : t))); });
     if (c.shelter) { for (const [px, pz] of [[-.66, -.66], [.66, -.66], [-.66, .66], [.66, .66]]) g.add(cyl(.05, 2.3, MAT.wet, x0 + px, DECK + 1.1 + (pz > 0 ? -.15 : 0), z0 + pz)); const roof = new THREE.Mesh(new THREE.PlaneGeometry(CS * 1.08, CS * 1.12), MAT.canvas); roof.position.set(x0, DECK + 2.15, z0); roof.rotation.set(-Math.PI / 2 + .14, 0, 0); roof.castShadow = true; g.add(roof); }
+    if (c.obj === 'catcher') {   // a canvas funnel on four posts over a barrel; the water shows in the barrel
+      g.add(cyl(.28, .55, MAT.barrel, x0, DECK + .27, z0)); for (const [px, pz] of [[-.5, -.5], [.5, -.5], [-.5, .5], [.5, .5]]) g.add(cyl(.035, 1.2, MAT.wet, x0 + px, DECK + .6, z0 + pz));
+      const fun = new THREE.Mesh(new THREE.ConeGeometry(.78, .5, 12, 1, true), MAT.canvas); fun.rotation.x = Math.PI; fun.position.set(x0, DECK + 1.05, z0); g.add(fun);
+      if (c.store) { const w = cyl(.25, .04, MAT.fresh, x0, DECK + .1 + .4 * c.store / 4, z0); g.add(w); } }
+    if (c.obj === 'still') {   // a glass box over a dark tray; drops gather in a jar
+      g.add(box(1, .06, .8, MAT.iron, x0, DECK + .03, z0), box(.98, .45, .78, MAT.glass, x0, DECK + .28, z0)); const roof = box(1.04, .03, .84, MAT.glass, x0, DECK + .56, z0, .25); g.add(roof);
+      g.add(cyl(.11, .26, MAT.glass, x0 + .62, DECK + .13, z0)); if (c.store) g.add(cyl(.09, .22 * c.store / 3, MAT.fresh, x0 + .62, DECK + .02 + .11 * c.store / 3, z0)); }
+    if (c.obj === 'trap') {   // a slatted cage hanging off the open edge on two ropes
+      const s = SIDES.findIndex(([di, dj]) => !cellAt(body, c.i + di, c.j + dj)), [di, dj] = SIDES[Math.max(0, s)], tx0 = x0 + di * 1.05, tz0 = z0 + dj * 1.05;
+      for (let k = 0; k < 5; k++) g.add(box(di ? .05 : .7, .5, dj ? .05 : .7, MAT.wet, tx0 + (di ? (k - 2) * .14 : 0), DECK - .45, tz0 + (dj ? (k - 2) * .14 : 0)));
+      g.add(box(.72, .05, .72, MAT.wet, tx0, DECK - .7, tz0), box(.72, .05, .72, MAT.wet, tx0, DECK - .2, tz0), cyl(.02, .4, MAT.rope, x0 + di * .7, DECK, z0 + dj * .7));
+      for (let k = 0; k < (c.store || 0); k++) { const f = new THREE.Mesh(new THREE.SphereGeometry(.06, 8, 6), MAT.shark); f.scale.set(3, 1, 1); f.position.set(tx0 + (k - 1) * .12, DECK - .55 + k * .08, tz0); g.add(f); } }
     if (c.obj === 'storage') { g.add(box(.8, .6, .6, MAT.crate, x0 + .2, DECK + .27, z0 - .2), box(.82, .06, .62, MAT.wet, x0 + .2, DECK + .58, z0 - .2), box(.06, .62, .62, MAT.iron, x0 - .19, DECK + .27, z0 - .2)); }
     if (c.obj === 'fire') { for (let k = 0; k < 9; k++) { const a = k / 9 * TAU; g.add(box(.16, .12, .12, MAT.stone, x0 + Math.cos(a) * .36, DECK + .03, z0 + Math.sin(a) * .36, 0, a, 0)); } g.add(box(.7, .04, .7, MAT.iron, x0, DECK - .03, z0)); for (let k = 0; k < 3; k++) g.add(cyl(.04, .55, MAT.log, x0, DECK + .08, z0, Math.PI / 2, k * 1.05, 0));
       const fl = new THREE.Sprite(MAT.flame); fl.scale.set(.55, .9, 1); fl.position.set(x0, DECK + .45, z0); fl.visible = false; fl.userData.fire = c; g.add(fl);
@@ -1116,10 +1188,10 @@ void main() {
   }
   const dx0 = (d, L) => d ? .14 : L;
   function syncRaft(body, G, map) {
-    for (const [k, m] of map) if (!body.cells.has(k) || m.userData.v !== cellVer(m.userData.cell)) { G.remove(m); m.traverse(o => { if (o.geometry) o.geometry.dispose(); }); map.delete(k); }
+    for (const [k, m] of map) if (body.cells.get(k) !== m.userData.cell || m.userData.v !== cellVer(m.userData.cell)) { G.remove(m); m.traverse(o => { if (o.geometry) o.geometry.dispose(); }); map.delete(k); }
     for (const [k, c] of body.cells) if (!map.has(k)) { const m = cellMesh(c, body); m.userData.v = cellVer(c); map.set(k, m); G.add(m); }
   }
-  const cellVer = c => [Math.ceil(c.hp / 15), c.floor, c.walls.join(''), c.shelter, c.obj, c.reinforce].join('|');
+  const cellVer = c => [Math.ceil(c.hp / 15), c.floor, c.walls.join(''), c.shelter, c.obj, c.reinforce, c.store || 0].join('|');
   // salvage
   function itemMesh(k) {
     const g = new THREE.Group();
@@ -1272,9 +1344,10 @@ void main() {
     // the ocean follows you, snapped to its first ring spacing
     X.ocean.position.set(Math.round(cam.position.x / 2) * 2, 0, Math.round(cam.position.z / 2) * 2);
     const ou = X.ocean.material.uniforms; ou.uCam.value.copy(cam.position);
+    { updateRaftMask(); const m = rotM(RAFT); ou.uRaftT.value.set(RAFT.x, RAFT.z, Math.cos(RAFT.yaw), Math.sin(RAFT.yaw)); ou.uRaftP.value.set(RAFT.y, m[3], m[5]); }
     const n = RAFT.cells.size, cur = currentAt(RAFT.x, RAFT.z, [0, 0]); let ci = 0, cj = 0; for (const c of RAFT.cells.values()) { ci += c.i / n; cj += c.j / n; } const [rcx, rcz] = flatW(RAFT, ci * CS, cj * CS); ou.uRaft.value.set(rcx, rcz, Math.sqrt(n) * CS * .56 + .2, 0); ou.uRaftV.value.set(RAFT.vx - cur[0] * .5 + paddle[0], RAFT.vz - cur[1] * .5 + paddle[1]);
     // underwater: the waterline pass while the lens is near the surface, thick blue haze once it is under
-    const wh = waterH(cam.position.x, cam.position.z); X.underOn = cam.position.y < wh + .7; const fully = cam.position.y < wh - .15;
+    const wh = waterH(cam.position.x, cam.position.z); X.underOn = !PL.onRaft && cam.position.y < wh + .7; const fully = !PL.onRaft && cam.position.y < wh - .15;
     if (fully) { X.scene.fog.color.setRGB(0, .045 * Math.max(L.day, .15), .06 * Math.max(L.day, .15)); X.scene.fog.density = .09; }
     X.under.material.uniforms.uInv.value.copy(cam.projectionMatrixInverse).premultiply(cam.matrixWorld); X.under.material.uniforms.uCamP.value.copy(cam.position); X.under.material.uniforms.uDay.value = L.day;
     syncSea(X.under.material.uniforms); X.sky.position.copy(cam.position);
@@ -1309,6 +1382,8 @@ void main() {
     const bv = FS.state === 'fly' || FS.state === 'wait' || FS.state === 'bite' || FS.state === 'fight'; X.bobber.visible = bv; X.line.visible = bv;
     if (bv) { X.bobber.position.set(FS.x, FS.y, FS.z); const tip = rodTip(); const pts = []; for (let i = 0; i <= 16; i++) { const t = i / 16; pts.push([lp(tip.x, FS.x, t), lp(tip.y, FS.y, t) - Math.sin(Math.PI * t) * (1 - FS.tension) * .8, lp(tip.z, FS.z, t)]); } bendRope(X.line, pts); }
     // the shark
+    X.cache.visible = CACHE.on; X.cache.position.set(CACHE.x, CACHE.y, CACHE.z); X.cache.rotation.y = .6;
+    for (const b of X.bubbles) { b.visible = CACHE.on; if (!CACHE.on) continue; const p = (X.t * .25 + b.userData.ph) % 1, top = waterH(CACHE.x, CACHE.z); b.position.set(CACHE.x + Math.sin(b.userData.ph * 40 + X.t) * .25, lp(CACHE.y + .3, top, p), CACHE.z + Math.cos(b.userData.ph * 33 + X.t) * .25); b.scale.setScalar(.6 + p * 1.2); }
     X.shark.visible = SH.state !== 'away';
     if (X.shark.visible) { X.shark.position.set(SH.x, SH.y, SH.z); X.shark.rotation.set(0, -SH.yaw, SH.state === 'bite' ? Math.sin(X.t * 24) * .12 : 0); X.shark.userData.tail.rotation.y = Math.sin(SH.swim) * .45; }
     // the thing from below
@@ -1386,6 +1461,8 @@ void main() {
   on('cast', () => hit(.35, .18, 'bandpass', 900, 1.5, 0, 2400));
   on('splash', (x, z, big) => { const d = X ? Math.hypot(x - X.camera.position.x, z - X.camera.position.z) : 10, v = Math.min(.35, (big ? 4 : .5) / (1 + d * .15)); hit(big ? 1.6 : .35, v, 'lowpass', big ? 500 : 1400, .7, d / 343); });
   on('snag', () => tone(300, .08, .06, 'triangle'));
+  on('drink', () => { for (let i = 0; i < 3; i++) hit(.08, .07, 'bandpass', 500 + i * 120, 2, i * .14); });
+  on('cache', () => { for (let i = 0; i < 4; i++) tone(300 + i * 60, .1, .03, 'sine', 120, i * .12); });
   on('pickup', () => { hit(.12, .12, 'lowpass', 900); tone(660, .12, .05, 'triangle', 0, .05); tone(990, .16, .04, 'triangle', 0, .12); });
   on('bite', () => { hit(.15, .2, 'lowpass', 700); });
   on('hooked', () => hit(.4, .2, 'lowpass', 600));
@@ -1425,7 +1502,7 @@ void main() {
   document.addEventListener('contextmenu', e => { if (screen === 'play') e.preventDefault(); });
   document.addEventListener('wheel', e => { if (playing()) cycleTool(e.deltaY > 0 ? 1 : -1); }, { passive: true });
   function cycleTool(d) { const list = hotbar().map(h => h.k); const i = list.indexOf(PL.tool); act.select(list[(i + d + list.length) % list.length]); }
-  const hotbar = () => [...Object.keys(TOOLS).filter(t => PL.tools[t]).map(t => ({ k: t, n: TOOLS[t].n })), ...(foods().length ? [{ k: 'food', n: itemName(foods()[0]) }] : [])];
+  const hotbar = () => [...Object.keys(TOOLS).filter(t => PL.tools[t]).map(t => ({ k: t, n: TOOLS[t].n })), ...(foods().length ? [{ k: 'food', n: itemName(foods()[0]) }] : []), ...((INV.water || 0) > 0 ? [{ k: 'water', n: 'Fresh water' }] : [])];
   function keyEvent(code, down) {
     IN.keys[code] = down; if (!down) return;
     if (screen === 'menu') { if (code === 'Enter') menuStart(); return; }
@@ -1433,10 +1510,13 @@ void main() {
     if (code === 'KeyC') { panel = panel === 'craft' ? null : 'craft'; panel ? unlockMouse() : lockMouse(); return; }
     if (panel) { if (code === 'Escape') panel = null; return; }
     if (code === 'KeyE') act.interact();
+    if (code === 'KeyQ') drink();
+    if (code === 'KeyF') eat() || say('No food. Fish with the rod (C to craft one)', '#cfd6e2');
+    if (code === 'KeyH') { CFG.keys = !CFG.keys; saveCfg(); }
     if (code === 'KeyR') act.alt();
     if (code === 'KeyB') { if (PL.tools.hammer) { if (PL.tool !== 'hammer') act.select('hammer'); else ui.buildOpen = !ui.buildOpen; } else say('Craft a hammer first (C)', '#cfd6e2'); }
-    const num = /^Digit([1-9])$/.exec(code);
-    if (num) { const n = +num[1]; if (PL.tool === 'hammer' && ui.buildOpen && n <= BUILD_ORDER.length) { ui.buildKind = BUILD_ORDER[n - 1]; ui.buildOpen = false; } else { const h = hotbar()[n - 1]; if (h) act.select(h.k); } }
+    const num = /^Digit([0-9])$/.exec(code);
+    if (num) { const n = +num[1] || 10; if (PL.tool === 'hammer' && ui.buildOpen && n <= BUILD_ORDER.length) { ui.buildKind = BUILD_ORDER[n - 1]; ui.buildOpen = false; } else { const h = hotbar()[n - 1]; if (h && n <= 9) act.select(h.k); } }
     if (code === 'F8' && devMode) summon();
   }
   function readInput() {
@@ -1460,7 +1540,7 @@ void main() {
     const id = e.pointerId, b = touchButtons().find(b => Math.hypot(x - b.x, y - b.y) < b.r + 10 * uiScale());
     if (b) {
       if (b.k === 'use') { IN.use = true; IN.useId = id; IN.look = { id, x, y }; act.useDown(); }   // the USE thumb keeps aiming while it holds
-      else if (b.k === 'alt') act.alt(); else if (b.k === 'grab') act.interact(); else if (b.k === 'tool') cycleTool(1);
+      else if (b.k === 'alt') act.alt(); else if (b.k === 'grab') act.interact(); else if (b.k === 'drink') drink(); else if (b.k === 'tool') cycleTool(1);
       else if (b.k === 'build') { if (PL.tool === 'hammer') ui.buildOpen = !ui.buildOpen; else act.select('hammer'); }
       else IN.held.set(id, b.k);
       return;
@@ -1492,6 +1572,7 @@ void main() {
   const SAYS = []; on('say', (t, c) => { SAYS.unshift({ t, c: c || BONE, a: 0 }); SAYS.length = Math.min(SAYS.length, 3); });
   on('pickup', (got, kind) => { const n = {}; got.forEach(k => n[k] = (n[k] || 0) + 1); say('+ ' + Object.entries(n).map(([k, c]) => (c > 1 ? c + ' ' : '') + itemName(k).toLowerCase()).join(', '), GREEN); });
   on('catch', f => say(`${FISH[f.k].n}! ${(f.len * 100).toFixed(0)} cm, ${f.kg < 1 ? Math.round(f.kg * 1000) + ' g' : f.kg.toFixed(1) + ' kg'}`, GOLD));
+  on('drink', k => say(`Drank ${k === 'water' ? 'fresh water' : 'a coconut'} (+${DRINK[k]})`, TEAL));
   on('eat', k => say(`Ate ${itemName(k).toLowerCase()} (+${foodOf(k)})`, GREEN));
   on('craft', t => { if (t === 'rod') say('Fishing rod ready: hold to cast, wait for the bobber to dip, then reel', TEAL); });
   const fmtTime = t => `${String(Math.floor(t)).padStart(2, '0')}:${String(Math.floor(t % 1 * 60)).padStart(2, '0')}`;
@@ -1502,6 +1583,7 @@ void main() {
     const L = [{ k: 'use', x: R - 150 * u, y: B - 150 * u, r: 70 * u, t: useLbl, big: 1 }, { k: 'alt', x: R - 290 * u, y: B - 92 * u, r: 40 * u, t: t === 'hammer' ? 'MEND' : 'CANCEL' }, { k: 'jump', x: R - 58 * u, y: B - 255 * u, r: 40 * u, t: PL.onRaft ? 'JUMP' : 'UP' }];
     if (ui.prompt.startsWith('E ')) L.push({ k: 'grab', x: R - 160 * u, y: B - 300 * u, r: 46 * u, t: ui.prompt.includes('Climb') ? 'CLIMB' : ui.prompt.includes('Grab') ? 'GRAB' : 'USE', hot: 1 });
     if (ui.warn || !PL.onRaft) L.push({ k: 'brace', x: R - 290 * u, y: B - 210 * u, r: 42 * u, t: PL.onRaft ? 'BRACE' : 'DIVE', hot: !!ui.warn });
+    if ((INV.water || 0) > 0 && PL.thirst < 85) L.push({ k: 'drink', x: R - 58 * u, y: B - 470 * u, r: 32 * u, t: 'DRINK', hot: PL.thirst < 30 });
     if (PL.tools.hammer) L.push({ k: 'build', x: R - 58 * u, y: B - 370 * u, r: 34 * u, t: PL.tool === 'hammer' ? 'PIECE' : 'HAMMER' });
     return L;
   }
@@ -1534,24 +1616,39 @@ void main() {
     for (let i = SAYS.length - 1; i >= 0; i--) if (SAYS[i].a > 4.5) SAYS.splice(i, 1);
     // hunger and materials, bottom left
     const lx = V.x0 + 24 * u + (touch ? 50 * u : 0), by = touch ? V.y0 + 92 * u : V.y1 - 40 * u;
-    if (!touch || true) { tx(g, 'HUNGER', lx, by - 18, 13, DIM, 'left'); bar(g, lx, by - 6, 190 * u, 10, PL.hunger / 100, PL.hunger < 25 ? RED : PL.hunger < 50 ? GOLD : GREEN); }
-    const mats = ['plank', 'rope', 'scrap', 'tinder'].map(k => `${itemName(k).replace('Dry ', '')} ${INV[k] || 0}`).join('   ');
+    { const bw = 150 * u; tx(g, 'HUNGER' + (touch ? '' : '  (F eat)'), lx, by - 18, 13, DIM, 'left'); bar(g, lx, by - 6, bw, 10, PL.hunger / 100, PL.hunger < 25 ? RED : PL.hunger < 50 ? GOLD : GREEN);
+      tx(g, 'THIRST' + (touch ? '' : '  (Q drink)'), lx + bw + 18, by - 18, 13, DIM, 'left'); bar(g, lx + bw + 18, by - 6, bw, 10, PL.thirst / 100, PL.thirst < 25 ? RED : PL.thirst < 50 ? GOLD : TEAL);
+      if (!PL.onRaft && PL.air < 99) { const ay = V.y1 - 64 * u - 14 * u - 70; tx(g, 'AIR', cx - 92, ay + 4, 13, DIM, 'right'); bar(g, cx - 80, ay, 160, 9, PL.air / 100, PL.air < 30 ? RED : '#bfe8ff'); } }
+    const mats = ['plank', 'rope', 'scrap', 'tinder', 'water'].map(k => `${itemName(k).replace('Dry ', '').replace('Fresh ', '')} ${INV[k] || 0}`).join('   ');
     tx(g, mats, lx, by + 18, 15, BONE, 'left', 600);
     // the hotbar
     const hb = hotbar(), sw = 64 * u, gap = 6, hx = cx - (hb.length * (sw + gap) - gap) / 2, hy = V.y1 - sw - 14 * u - (touch ? 6 : 0);
     hb.forEach((h, i) => { const x = hx + i * (sw + gap), on2 = PL.tool === h.k; zone(x, hy, sw, sw, () => act.select(h.k)); rr(g, x, hy, sw, sw, 8, on2 ? 'rgba(111,210,222,.28)' : 'rgba(6,18,27,.62)', on2 ? TEAL : 'rgba(238,242,240,.2)', on2 ? 2.5 : 1.5);
-      tx(g, String(i + 1), x + 9, hy + 11, 12, DIM, 'left'); drawIcon(g, h.k, x + sw / 2, hy + sw / 2 - 4, sw * .36); tx(g, h.k === 'food' ? `${INV[foods()[0]]}` : (h.k === 'torch' && PL.torch ? 'lit' : ''), x + sw - 8, hy + sw - 10, 13, GOLD, 'right', 700); });
-    tx(g, PL.tool === 'food' ? itemName(foods()[0] || '') : TOOLS[PL.tool] ? TOOLS[PL.tool].n : '', cx, hy - 14, 15, BONE, 'center', 700);
+      tx(g, String(i + 1), x + 9, hy + 11, 12, DIM, 'left'); drawIcon(g, h.k, x + sw / 2, hy + sw / 2 - 4, sw * .36); tx(g, h.k === 'water' ? `${INV.water}` : h.k === 'food' ? `${INV[foods()[0]]}` : (h.k === 'torch' && PL.torch ? 'lit' : ''), x + sw - 8, hy + sw - 10, 13, GOLD, 'right', 700); });
+    tx(g, PL.tool === 'food' ? itemName(foods()[0] || '') : PL.tool === 'water' ? 'Fresh water' : TOOLS[PL.tool] ? TOOLS[PL.tool].n : '', cx, hy - 14, 15, BONE, 'center', 700);
+    if (!touch) tx(g, '1–9 or mouse wheel to switch', cx + (hb.length * (sw + gap)) / 2 + 12, hy + sw / 2, 13, DIM, 'left');
     // top right: the day, crafting, settings
     const tr = V.x1 - 20;
     rr(g, tr - 250, V.y0 + 14, 112, 32, 8, 'rgba(6,18,27,.55)'); tx(g, `Day ${S.day}  ${fmtTime(S.tod)}`, tr - 194, V.y0 + 30, 17, BONE, 'center', 600);
-    btn(g, tr - 128, V.y0 + 12, 60, 36, 'CRAFT', () => { panel = panel === 'craft' ? null : 'craft'; panel ? unlockMouse() : lockMouse(); }, { px: 16, on: panel === 'craft' });
+    btn(g, tr - 128, V.y0 + 12, 60, 36, touch ? 'CRAFT' : 'CRAFT C', () => { panel = panel === 'craft' ? null : 'craft'; panel ? unlockMouse() : lockMouse(); }, { px: 16, on: panel === 'craft' });
     btn(g, tr - 60, V.y0 + 12, 60, 36, '☰', () => { panel = panel === 'settings' ? null : 'settings'; panel ? unlockMouse() : lockMouse(); }, { px: 20, on: panel === 'settings' });
     if (craftable().some(t => has(TOOLS[t].need)) && panel !== 'craft') { g.fillStyle = GOLD; g.beginPath(); g.arc(tr - 70, V.y0 + 14, 5, 0, TAU); g.fill(); }
+    if (!touch && !panel && !(PL.tool === 'hammer' && ui.buildOpen)) drawKeys(g);
     if (PL.tool === 'hammer' && ui.buildOpen) drawBuildList(g);
     if (touch && !panel) drawTouch(g);
     if (panel === 'craft') drawCraft(g); else if (panel === 'settings') drawSettings(g, true);
     if (!touch && !IN.locked && !panel && K.state === 'play') { rr(g, cx - 160, cy - 80, 320, 50, 10, 'rgba(6,18,27,.75)'); tx(g, 'Click to look around', cx, cy - 55, 20, BONE, 'center', 700); }
+  }
+  // the keys, always on screen until you hide them (H): what each one does right now
+  function drawKeys(g) {
+    const x = K.view.x0 + 20, y0 = K.view.y0 + 64;
+    if (!CFG.keys) { tx(g, 'H  show keys', x, y0, 13, DIM, 'left', 600); return; }
+    const t = PL.tool, use = t === 'hook' ? 'hold to throw, hold to reel' : t === 'rod' ? 'hold to cast, hold to reel' : t === 'hammer' ? 'build the piece' : t === 'spear' ? 'stab' : t === 'oar' ? 'hold to paddle' : t === 'torch' ? 'light the torch' : t === 'food' ? 'eat' : t === 'water' ? 'drink' : 'use';
+    const rows = [['WASD', PL.onRaft ? 'walk' : 'swim'], ['Mouse', 'look'], ['Click', use], ['R', t === 'hammer' ? 'mend' : 'cancel'], ['E', 'grab / use / climb'],
+      ['1–9, wheel', 'switch item'], ['C', 'craft tools'], ['B', PL.tools.hammer ? (t === 'hammer' ? 'choose a piece' : 'build (hammer)') : 'build (craft a hammer)'], ['F', 'eat'], ['Q', 'drink'],
+      ['Space', PL.onRaft ? 'jump' : 'swim up'], ['Shift', PL.onRaft ? 'brace for waves' : 'dive'], ['O', 'settings'], ['H', 'hide keys']];
+    const rh = 19, w = 236; rr(g, x - 8, y0 - 14, w, rows.length * rh + 14, 8, 'rgba(6,18,27,.5)');
+    rows.forEach(([k, d], i) => { const yy = y0 + i * rh; tx(g, k, x + 80, yy, 14, GOLD, 'right', 700); tx(g, d, x + 90, yy, 14, BONE, 'left', 500); });
   }
   function drawIcon(g, k, x, y, s) {
     g.save(); g.translate(x, y); g.strokeStyle = BONE; g.fillStyle = BONE; g.lineWidth = 2.4; g.lineCap = 'round';
@@ -1561,6 +1658,7 @@ void main() {
     else if (k === 'hammer') { L(-.5, .7, .3, -.3); g.fillRect(-.05 * s, -.7 * s, .7 * s, .3 * s); }
     else if (k === 'rod') { L(-.6, .8, .6, -.8); g.beginPath(); g.arc(-.35 * s, .5 * s, .14 * s, 0, TAU); g.stroke(); L(.6, -.8, .6, .4); }
     else if (k === 'spear') { L(-.7, .7, .55, -.55); g.beginPath(); g.moveTo(.75 * s, -.75 * s); g.lineTo(.35 * s, -.55 * s); g.lineTo(.55 * s, -.35 * s); g.closePath(); g.fill(); }
+    else if (k === 'water') { g.fillStyle = '#9fd8ff'; rr(g, -.32 * s, -.4 * s, .64 * s, 1.15 * s, .16 * s, '#9fd8ff'); g.fillStyle = BONE; g.fillRect(-.14 * s, -.75 * s, .28 * s, .36 * s); }
     else if (k === 'oar') { L(-.6, .7, .2, -.1); g.beginPath(); g.ellipse(.42 * s, -.38 * s, .18 * s, .42 * s, -.8, 0, TAU); g.fill(); }
     else { g.beginPath(); g.ellipse(-.1 * s, 0, .55 * s, .26 * s, 0, 0, TAU); g.fill(); g.beginPath(); g.moveTo(.4 * s, 0); g.lineTo(.75 * s, -.3 * s); g.lineTo(.75 * s, .3 * s); g.closePath(); g.fill(); }
     g.restore();
@@ -1572,10 +1670,10 @@ void main() {
     for (const b of touchButtons()) { const on2 = (b.k === 'use' && IN.use) || [...IN.held.values()].includes(b.k); g.fillStyle = on2 ? 'rgba(111,210,222,.55)' : b.hot ? 'rgba(232,180,90,.55)' : 'rgba(6,18,27,.5)'; g.beginPath(); g.arc(b.x, b.y, b.r, 0, TAU); g.fill(); g.strokeStyle = 'rgba(238,242,240,.4)'; g.lineWidth = 2; g.stroke(); tx(g, b.t, b.x, b.y, (b.big ? 20 : 14) * u, BONE, 'center', 800); }
   }
   function drawBuildList(g) {
-    const x = K.view.x0 + 24, w = 300; let y = 160;
-    rr(g, x, y - 34, w, BUILD_ORDER.length * 40 + 46, 10, 'rgba(6,18,27,.82)'); tx(g, 'BUILD', x + 14, y - 14, 15, DIM, 'left', 700);
+    const x = K.view.x0 + 24, w = 340; let y = 160;
+    rr(g, x, y - 34, w, BUILD_ORDER.length * 40 + 46, 10, 'rgba(6,18,27,.82)'); tx(g, isTouch() ? 'BUILD' : 'BUILD  ·  press a number, or B to close', x + 14, y - 14, 15, DIM, 'left', 700);
     BUILD_ORDER.forEach((k, i) => { const P = PIECES[k], ok = has(P.need), on2 = ui.buildKind === k; const hot = zone(x + 6, y, w - 12, 36, () => { ui.buildKind = k; ui.buildOpen = false; });
-      rr(g, x + 6, y, w - 12, 36, 6, on2 ? 'rgba(111,210,222,.25)' : hot ? 'rgba(255,255,255,.08)' : null); tx(g, `${i + 1}  ${P.n}`, x + 16, y + 18, 18, ok ? BONE : DIM, 'left', 700); tx(g, Object.entries(P.need).map(([m, n]) => n + ' ' + itemName(m).toLowerCase().replace('dry ', '')).join(' · '), x + w - 14, y + 18, 13, ok ? GREEN : RED, 'right'); y += 40; });
+      rr(g, x + 6, y, w - 12, 36, 6, on2 ? 'rgba(111,210,222,.25)' : hot ? 'rgba(255,255,255,.08)' : null); tx(g, `${(i + 1) % 10}  ${P.n}`, x + 16, y + 18, 18, ok ? BONE : DIM, 'left', 700); tx(g, Object.entries(P.need).map(([m, n]) => n + ' ' + itemName(m).toLowerCase().replace('dry ', '')).join(' · '), x + w - 14, y + 18, 13, ok ? GREEN : RED, 'right'); y += 40; });
   }
   function drawCraft(g) {
     const w = 460, x = 640 - w / 2; let y = 170; const list = Object.keys(TOOLS).filter(t => TOOLS[t].need);
@@ -1607,7 +1705,7 @@ void main() {
     if (sv) { btn(g, cx - 160, y, 320, 60, 'CONTINUE', () => menuStart(true), { on: true, px: 26, sub: `Day ${sv.s.day} · ${sv.raft.cells.length} foundations` }); y += 72; }
     btn(g, cx - 160, y, 320, 54, sv ? 'NEW RAFT' : 'WAKE UP', () => menuStart(false), { on: !sv, px: 24 }); y += 66;
     btn(g, cx - 160, y, 320, 46, 'SETTINGS', () => { panel = 'settings'; }, { px: 19 });
-    tx(g, isTouch() ? 'Left thumb moves · drag right to look · hold USE to throw and reel' : 'WASD walk · mouse look · hold click to throw, hold again to reel · E grab · C craft · B build', cx, V.y1 - 40, 15, DIM);
+    tx(g, isTouch() ? 'Left thumb moves · drag right to look · hold USE to throw and reel' : 'WASD walk · mouse look · hold click to throw, hold again to reel · E grab · C craft · B build · F eat · Q drink · H keys', cx, V.y1 - 40, 15, DIM);
     if (panel === 'settings') drawSettings(g, false);
   }
   /* ---------- 99 main: the kit's hooks, the menu, quality changes, the test handle ---------- */
@@ -1657,7 +1755,7 @@ void main() {
   // for the browser checks (tools/blackwater-checks.mjs) and for testing by hand from the console
   GAME.test = {
     get X() { return X; }, get ready() { return ready; }, get screen() { return screen; }, get RAFT() { return RAFT; }, get panel() { return panel; }, set panel(v) { panel = v; },
-    S, PL, HK, FS, FL, SH, CT, INV, IN, ui, act, give, place, cellAt, spawnGiant, spawnPool, summon, addFloater, menuStart, toMenu, lifeTick, waterH, eyePos, touchButtons, uiScale, CFG, applyQuality, DRIFT, FISH,
+    S, PL, HK, FS, FL, SH, CT, CACHE, INV, IN, ui, act, drink, keyEvent, give, place, cellAt, spawnGiant, spawnPool, summon, addFloater, menuStart, toMenu, lifeTick, waterH, eyePos, touchButtons, uiScale, CFG, applyQuality, DRIFT, FISH,
     tick: s => { for (let i = 0; i < s * 60; i++) lifeTick(1 / 60, readInput()); },
   };
   (async () => { try { if (typeof document === 'undefined') return; try { await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'); } catch (e) { await loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'); } initGfx(); ready = true; } catch (e) { console.error(e); failed = true; } })();

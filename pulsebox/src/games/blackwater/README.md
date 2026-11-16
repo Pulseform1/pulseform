@@ -27,6 +27,16 @@ node tools/blackwater-sim-test.mjs          # the simulation checks
 
 The page is the whole game: it needs nothing beside it except Three.js r128, which it loads from cdnjs (falling back to jsDelivr). Drop `blackwater.html` in any folder of the site and open it. The hub entry is the `blackwater` record in `public/index.html` (cover, trailer and screenshots in `public/media/blackwater-*`).
 
+## Survival additions
+
+- **Thirst** drains faster than hunger (about 16 minutes, worse in the midday sun). Q drinks fresh water; coconuts help too. Salvage barrels and crates sometimes hold water.
+- **Rain catcher** (fills while it rains), **water still** (works while the sun is up) and **fish trap** (hangs off an open edge, catches small fish): each holds a few until you press E at it.
+- **Sunken crates**: every few minutes bubbles rise near the raft. Swim over, hold Shift to dive, and press E beside the crate. Diving uses your breath (AIR bar).
+- **Key panel**: the keys for what you can do right now sit at the top left; H hides or shows it.
+- The ocean's vertex shader keeps the water surface below the logs inside every raft cell (a 32 × 32 map of the cells), so waves never show through the deck.
+
+`node tools/blackwater-new-check.mjs <folder>` checks all of these in a real browser.
+
 ## Testing tricks
 
 - `blackwater.html?dev` shows a **DEV: call the thing from below** button in Settings and enables **F8**: it skips to tonight if needed and starts the Cthulhu encounter.

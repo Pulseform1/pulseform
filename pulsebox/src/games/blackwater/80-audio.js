@@ -34,6 +34,8 @@
   on('cast', () => hit(.35, .18, 'bandpass', 900, 1.5, 0, 2400));
   on('splash', (x, z, big) => { const d = X ? Math.hypot(x - X.camera.position.x, z - X.camera.position.z) : 10, v = Math.min(.35, (big ? 4 : .5) / (1 + d * .15)); hit(big ? 1.6 : .35, v, 'lowpass', big ? 500 : 1400, .7, d / 343); });
   on('snag', () => tone(300, .08, .06, 'triangle'));
+  on('drink', () => { for (let i = 0; i < 3; i++) hit(.08, .07, 'bandpass', 500 + i * 120, 2, i * .14); });
+  on('cache', () => { for (let i = 0; i < 4; i++) tone(300 + i * 60, .1, .03, 'sine', 120, i * .12); });
   on('pickup', () => { hit(.12, .12, 'lowpass', 900); tone(660, .12, .05, 'triangle', 0, .05); tone(990, .16, .04, 'triangle', 0, .12); });
   on('bite', () => { hit(.15, .2, 'lowpass', 700); });
   on('hooked', () => hit(.4, .2, 'lowpass', 600));

@@ -1,6 +1,7 @@
 // Blackwater Drift in a real browser (mouse and keys): plays through the checklist and saves screenshots.
 //   node tools/blackwater-desktop-check.mjs <screenshot folder>      (build first: python3 tools/build-games.py blackwater)
-import { chromium } from 'playwright';
+import { createRequire } from 'module';
+const { chromium } = createRequire(import.meta.url)('playwright');
 const O = process.argv[2];
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const ctx = await b.newContext({ viewport: { width: 960, height: 540 } }), p = await ctx.newPage(); const errs = [];
