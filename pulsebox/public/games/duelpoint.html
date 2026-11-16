@@ -2444,6 +2444,23 @@ const GAME = {
   // register a press target for this frame; returns whether the mouse is over it
   const zone = (x, y, w, h, fn, drag) => { const z = { x, y, w, h, fn, drag }; zones.push(z); return !isTouch() && inside(z, ptr.x, ptr.y); };
   const zoneAt = (x, y) => { for (let i = zones.length - 1; i >= 0; i--) if (inside(zones[i], x, y)) return zones[i]; return null; };
+  /* menus by keyboard: the arrows move a highlight to the nearest button that way, Enter or Space presses it, left and right
+     nudge a slider. It works by moving the pointer the menus already follow, so hover, highlight and press stay one path. */
+  const KNAV = { on: false };
+  const navZones = () => zones.filter(z => z.w * z.h < 1280 * 720 * .45 && z.w > 6 && z.h > 6);
+  const zc = z => [z.x + z.w / 2, z.y + z.h / 2];
+  const navAt = () => { const l = navZones(); for (let i = l.length - 1; i >= 0; i--) if (inside(l[i], ptr.x, ptr.y)) return l[i]; return null; };
+  function navMove(dx, dy) {
+    const list = navZones(); if (!list.length) return;
+    const cur = KNAV.on ? navAt() : null;
+    if (cur && cur.drag && dx) { const nx = cl(ptr.x + dx * cur.w * .05, cur.x + 1, cur.x + cur.w - 1); ptr = { x: nx, y: ptr.y }; cur.fn(nx, ptr.y); click(); return; }
+    if (!cur) { const first = list.find(z => z.prime) || list.reduce((a, z) => (z.w * z.h > a.w * a.h ? z : a), list[0]); KNAV.on = true; const [x, y] = zc(first); ptr = { x, y }; return; }
+    const [cx, cy] = zc(cur); let best = null, bs = 1e9;
+    for (const z of list) { if (z === cur) continue; const [x, y] = zc(z), along = (x - cx) * dx + (y - cy) * dy, perp = Math.abs((x - cx) * dy - (y - cy) * dx); if (along < 4 || (dx && perp > Math.max(cur.h, z.h) * .75)) continue; const s = along + perp * 2.2; if (s < bs) { bs = s; best = z; } }
+    if (best) { const [x, y] = zc(best); ptr = { x, y }; click(); }
+  }
+  function navGo() { const z = KNAV.on && navAt(); if (!z) return false; if (z.drag) z.fn(ptr.x, ptr.y); else z.fn(); return true; }
+  function drawNav(g) { if (!KNAV.on) return; const z = navAt(); if (!z) return; g.save(); g.strokeStyle = YOU; g.lineWidth = 3; g.shadowColor = YOU; g.shadowBlur = 12; rr(g, z.x - 4, z.y - 4, z.w + 8, z.h + 8, 10, null, YOU, 3); g.restore(); }
   // screen pixels per world unit, and the factor that keeps touch targets and text big enough on a small screen
   const pxPer = () => innerWidth / (K.view.x1 - K.view.x0);
   const uiScale = () => isTouch() ? cl(.62 / pxPer(), 1, 2) : cl(.8 / pxPer(), 1, 1.5);
@@ -2474,6 +2491,12 @@ const GAME = {
     if (KM[c] === 'crouch' && d && !keys.crouch) { if (M && me().sprinting) keys.slideAt = performance.now(); else if (CFG.crouch === 'toggle') keys.crouchT = !keys.crouchT; }
     if (KM[c]) keys[KM[c]] = d;
     if (!d) return;
+    const arrow = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[c];
+    if (screen === 'menu' || screen === 'over' || (screen === 'play' && (UI.armory || UI.opts))) {
+      if (arrow) return navMove(arrow[0], arrow[1]);
+      if ((c === 'Enter' || c === 'Space') && navGo()) return;
+      if (c === 'Escape' && screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; KNAV.on = false; return; }
+    }
     if (screen === 'menu') { if (c === 'Enter' && UI.panel === 'home') menuPlay(); return; }
     if (screen === 'over') { if (c === 'Enter') toMenu(); return; }
     if (!playing()) return; const P = me();
@@ -2538,7 +2561,7 @@ const GAME = {
     if (!playing() || UI.armory || UI.opts) return;
     if (touch) touchDown(x, y, id); else if (!locked()) grabMouse();
   }
-  function pointerMove(x, y, id, touch) { ptr = { x, y }; if (dragZ) dragZ.fn(x, y); else if (touch && playing()) touchMove(x, y, id); }
+  function pointerMove(x, y, id, touch) { if (KNAV.on && Math.hypot(x - ptr.x, y - ptr.y) < 3) return; KNAV.on = false; ptr = { x, y }; if (dragZ) dragZ.fn(x, y); else if (touch && playing()) touchMove(x, y, id); }
   function pointerUp(id, touch) { dragZ = null; if (touch) touchUp(id); }
   // Touch uses the browser's touch events directly: they keep arriving on phones that cancel pointer events mid-drag,
   // and stopping their default keeps the page from scrolling or zooming under your thumbs.
@@ -2599,7 +2622,7 @@ const GAME = {
     const hot = zone(x, y, w, h, () => { click(!o.off); if (!o.off) fn(); }) && !o.off;
     rr(g, x, y, w, h, Math.min(10, h / 4), o.on ? (o.fill || FOE) : hot ? 'rgba(239,233,220,.16)' : o.fill && !o.on && o.solid ? o.fill : 'rgba(12,16,22,.72)', o.on ? null : hot ? BONE : o.edge || 'rgba(239,233,220,.28)');
     tx(g, label, x + w / 2, y + h / 2 - (o.sub ? h * .13 : 0), o.px || h * .42, o.off ? '#5a6272' : o.on ? INK : o.col || BONE);
-    if (o.sub) tx(g, o.sub, x + w / 2, y + h * .74, (o.px || h * .42) * .5, o.on ? 'rgba(12,16,22,.75)' : DIM);
+    if (o.sub) tx(g, o.sub, x + w / 2, y + h * .74, (o.px || h * .42) * .5, o.on || (o.solid && !hot) ? 'rgba(12,16,22,.75)' : DIM);
     return hot;
   }
   // wrap text into lines no wider than w; returns the y after the last line
@@ -2821,16 +2844,21 @@ const GAME = {
       if (on) tx(g, 'SELECTED', x + cw / 2, top + chh - 20 * u, 12 * u, o.col);
     });
     // what to play
-    const rx = V.x1 - m - rw; let y = top;
+    const rx = V.x1 - m - rw; let y = top - 14 * u;
     const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots';
-    btn(g, rx, y, rw, 78 * u, 'PLAY 2V2', () => menuPlay(2), { on: true, fill: FOE, px: 32 * u, sub: 'you + a bot teammate vs two · ' + lvl }); y += 86 * u;
-    btn(g, rx, y, rw, tapH(44), '1V1 DUEL', () => menuPlay(1), { px: 16 * u, sub: 'just you and one rival' }); y += tapH(44) + 8 * u;
-    choice(g, rx, y, rw, tapH(40), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(40) + 14 * u;
-    choice(g, rx, y, rw, tapH(40), [['versus', 'FRIENDS 2V2'], ['coop', 'CO-OP'], ['duel', '1V1']], CFG.team, v => { CFG.team = v; }); y += tapH(40) + 6 * u;
-    btn(g, rx, y, rw, tapH(52), 'PLAY WITH FRIENDS ONLINE', () => MP.show(), { px: 18 * u, sub: CFG.team === 'coop' ? '2-4 of you together against bots' : CFG.team === 'duel' ? 'one friend, one on one' : '2-4 friends, two a side: bots fill any gap' }); y += tapH(52) + 8 * u;
-    btn(g, rx, y, (rw - 8) / 2, tapH(52), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 15 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(52), 'GUNS & UNLOCKS', () => { play({ mode: 'range' }); openArmory(true); }, { px: 15 * u, fill: COIN }); y += tapH(52) + 8 * u;
+    const head = (s, extra) => { tx(g, s, rx, y, 12 * u, DIM, 'left', 800); if (extra) tx(g, extra, rx + rw, y, 11 * u, DIM, 'right'); g.fillStyle = 'rgba(239,233,220,.14)'; g.fillRect(rx, y + 9 * u, rw, 1); y += 18 * u; };
+    head('PLAY VS BOTS');
+    btn(g, rx, y, rw, 70 * u, 'PLAY 2V2', () => menuPlay(2), { on: true, fill: FOE, px: 30 * u, sub: 'you + a bot teammate vs two · ' + lvl }); zones[zones.length - 1].prime = true; y += 76 * u;
+    btn(g, rx, y, rw, tapH(40), '1V1 DUEL', () => menuPlay(1), { px: 16 * u, sub: 'just you and one rival' }); y += tapH(40) + 6 * u;
+    tx(g, 'Bot level', rx, y + tapH(34) / 2, 12 * u, DIM, 'left'); choice(g, rx + 70 * u, y, rw - 70 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 16 * u;
+    head('PLAY WITH FRIENDS', 'room code, 2-4 players');
+    choice(g, rx, y, rw, tapH(34), [['versus', '2V2'], ['coop', 'CO-OP'], ['duel', '1V1']], CFG.team, v => { CFG.team = v; }); y += tapH(34) + 6 * u;
+    btn(g, rx, y, rw, tapH(46), 'PLAY ONLINE', () => MP.show(), { px: 18 * u, fill: YOU, solid: true, col: INK, sub: CFG.team === 'coop' ? '2-4 of you together against bots' : CFG.team === 'duel' ? 'one friend, one on one' : '2-4 friends, two a side: bots fill any gap' }); y += tapH(46) + 16 * u;
+    head('MORE');
+    btn(g, rx, y, (rw - 8) / 2, tapH(44), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 14 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(44), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 14 * u, sub: 'try every gun' }); y += tapH(44) + 8 * u;
     if (!touch) { const ty = top + chh + 26 * u; tx(g, 'HOW IT PLAYS', x0, ty, 13 * u, DIM, 'left'); ['Stand still to shoot straight. Tap the opposite key to stop dead.', 'Tap or burst at range: sprays climb, then sway. Heads take the most.', 'Shift sprints; crouch mid-sprint to slide; Space jumps (even out of a slide).', 'B opens the armory. Right click aims or scopes. F plants and defuses.'].forEach((t, i) => tx(g, t, x0, ty + 26 * u + i * 24 * u, 14 * u, '#b9c0cc', 'left', 600)); }
-    btn(g, rx, y, (rw - 8) / 2, tapH(48), 'SETTINGS', () => { UI.panel = 'settings'; }, { px: 15 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(48), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 15 * u });
+    btn(g, rx, y, (rw - 8) / 2, tapH(44), 'SETTINGS', () => { UI.panel = 'settings'; }, { px: 14 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(44), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 14 * u }); y += tapH(44) + 10 * u;
+    if (!touch) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Tip: the arrow keys and Enter work here too', rx + rw / 2, Math.min(y + 4 * u, V.y1 - 14 * u), 11 * u, DIM);
   }
   function drawSettings(g, V, W, u) {
     const w = Math.min(W - 80, 760 * u), x = 640 - w / 2, row = tapH(44, 38) + 8 * u; let y = V.y0 + 24 * u;
@@ -2976,6 +3004,7 @@ const GAME = {
     tickA = cl(acc * 60, 0, 1);
     if (M.over && M.mode === 'demo') startMatch({ mode: 'demo' });
   };
+  GAME.esc = () => { if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
   GAME.draw = g => {
     const now = performance.now(), dt = Math.min(.1, (now - (lastDraw || now)) / 1000), V = K.view; lastDraw = now;
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, g.canvas.width, g.canvas.height); g.restore();
@@ -2985,6 +3014,7 @@ const GAME = {
     const mute = document.getElementById('bMute'); if (mute) mute.style.display = isTouch() && screen === 'play' && K.state === 'play' ? 'none' : '';
     if (K.bot && !DEMO) return;
     if (screen === 'menu') drawMenu(g); else if (screen === 'play' && M) drawHud(g); else if (screen === 'over' && M) drawOver(g);
+    if (screen !== 'play' || UI.armory || UI.opts) drawNav(g);
     if (isTouch() && innerHeight > innerWidth) {   // an upright phone outside the hub: ask for it to be turned
       g.fillStyle = 'rgba(12,16,22,.96)'; g.fillRect(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0); zones.length = 0; zone(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0, () => {});
       tx(g, 'TURN YOUR PHONE SIDEWAYS', 640, 330, 46, BONE); tx(g, 'Duelpoint needs both thumbs', 640, 392, 26, DIM);
@@ -3009,7 +3039,7 @@ const GAME = {
   GAME.test = {
     get M() { return M; }, get X() { return X; }, get screen() { return screen; }, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
-    throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
+    navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
   };
 })();
@@ -3230,6 +3260,7 @@ addEventListener('pointerup', e => { if (K.state === 'play' && GAME.up) { const 
 addEventListener('keydown', e => {
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.repeat && K.state !== 'play') return;
+  if (e.code === 'Escape' && K.state === 'play' && GAME.esc && GAME.esc()) return;   // a game can use Escape to step back out of its own sub-screens
   if (e.code === 'Escape' || e.code === 'KeyP') { if (K.state === 'play') pause(); else if (K.state === 'paused') resume(); return; }
   if ((e.code === 'Space' || e.code === 'Enter') && K.state !== 'play') {
     if (K.state === 'title' && !$('sTitle').hidden) start();

@@ -60,16 +60,21 @@
       if (on) tx(g, 'SELECTED', x + cw / 2, top + chh - 20 * u, 12 * u, o.col);
     });
     // what to play
-    const rx = V.x1 - m - rw; let y = top;
+    const rx = V.x1 - m - rw; let y = top - 14 * u;
     const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots';
-    btn(g, rx, y, rw, 78 * u, 'PLAY 2V2', () => menuPlay(2), { on: true, fill: FOE, px: 32 * u, sub: 'you + a bot teammate vs two · ' + lvl }); y += 86 * u;
-    btn(g, rx, y, rw, tapH(44), '1V1 DUEL', () => menuPlay(1), { px: 16 * u, sub: 'just you and one rival' }); y += tapH(44) + 8 * u;
-    choice(g, rx, y, rw, tapH(40), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(40) + 14 * u;
-    choice(g, rx, y, rw, tapH(40), [['versus', 'FRIENDS 2V2'], ['coop', 'CO-OP'], ['duel', '1V1']], CFG.team, v => { CFG.team = v; }); y += tapH(40) + 6 * u;
-    btn(g, rx, y, rw, tapH(52), 'PLAY WITH FRIENDS ONLINE', () => MP.show(), { px: 18 * u, sub: CFG.team === 'coop' ? '2-4 of you together against bots' : CFG.team === 'duel' ? 'one friend, one on one' : '2-4 friends, two a side: bots fill any gap' }); y += tapH(52) + 8 * u;
-    btn(g, rx, y, (rw - 8) / 2, tapH(52), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 15 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(52), 'GUNS & UNLOCKS', () => { play({ mode: 'range' }); openArmory(true); }, { px: 15 * u, fill: COIN }); y += tapH(52) + 8 * u;
+    const head = (s, extra) => { tx(g, s, rx, y, 12 * u, DIM, 'left', 800); if (extra) tx(g, extra, rx + rw, y, 11 * u, DIM, 'right'); g.fillStyle = 'rgba(239,233,220,.14)'; g.fillRect(rx, y + 9 * u, rw, 1); y += 18 * u; };
+    head('PLAY VS BOTS');
+    btn(g, rx, y, rw, 70 * u, 'PLAY 2V2', () => menuPlay(2), { on: true, fill: FOE, px: 30 * u, sub: 'you + a bot teammate vs two · ' + lvl }); zones[zones.length - 1].prime = true; y += 76 * u;
+    btn(g, rx, y, rw, tapH(40), '1V1 DUEL', () => menuPlay(1), { px: 16 * u, sub: 'just you and one rival' }); y += tapH(40) + 6 * u;
+    tx(g, 'Bot level', rx, y + tapH(34) / 2, 12 * u, DIM, 'left'); choice(g, rx + 70 * u, y, rw - 70 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 16 * u;
+    head('PLAY WITH FRIENDS', 'room code, 2-4 players');
+    choice(g, rx, y, rw, tapH(34), [['versus', '2V2'], ['coop', 'CO-OP'], ['duel', '1V1']], CFG.team, v => { CFG.team = v; }); y += tapH(34) + 6 * u;
+    btn(g, rx, y, rw, tapH(46), 'PLAY ONLINE', () => MP.show(), { px: 18 * u, fill: YOU, solid: true, col: INK, sub: CFG.team === 'coop' ? '2-4 of you together against bots' : CFG.team === 'duel' ? 'one friend, one on one' : '2-4 friends, two a side: bots fill any gap' }); y += tapH(46) + 16 * u;
+    head('MORE');
+    btn(g, rx, y, (rw - 8) / 2, tapH(44), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 14 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(44), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 14 * u, sub: 'try every gun' }); y += tapH(44) + 8 * u;
     if (!touch) { const ty = top + chh + 26 * u; tx(g, 'HOW IT PLAYS', x0, ty, 13 * u, DIM, 'left'); ['Stand still to shoot straight. Tap the opposite key to stop dead.', 'Tap or burst at range: sprays climb, then sway. Heads take the most.', 'Shift sprints; crouch mid-sprint to slide; Space jumps (even out of a slide).', 'B opens the armory. Right click aims or scopes. F plants and defuses.'].forEach((t, i) => tx(g, t, x0, ty + 26 * u + i * 24 * u, 14 * u, '#b9c0cc', 'left', 600)); }
-    btn(g, rx, y, (rw - 8) / 2, tapH(48), 'SETTINGS', () => { UI.panel = 'settings'; }, { px: 15 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(48), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 15 * u });
+    btn(g, rx, y, (rw - 8) / 2, tapH(44), 'SETTINGS', () => { UI.panel = 'settings'; }, { px: 14 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(44), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 14 * u }); y += tapH(44) + 10 * u;
+    if (!touch) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Tip: the arrow keys and Enter work here too', rx + rw / 2, Math.min(y + 4 * u, V.y1 - 14 * u), 11 * u, DIM);
   }
   function drawSettings(g, V, W, u) {
     const w = Math.min(W - 80, 760 * u), x = 640 - w / 2, row = tapH(44, 38) + 8 * u; let y = V.y0 + 24 * u;

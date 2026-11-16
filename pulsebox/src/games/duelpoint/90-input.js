@@ -10,6 +10,23 @@
   // register a press target for this frame; returns whether the mouse is over it
   const zone = (x, y, w, h, fn, drag) => { const z = { x, y, w, h, fn, drag }; zones.push(z); return !isTouch() && inside(z, ptr.x, ptr.y); };
   const zoneAt = (x, y) => { for (let i = zones.length - 1; i >= 0; i--) if (inside(zones[i], x, y)) return zones[i]; return null; };
+  /* menus by keyboard: the arrows move a highlight to the nearest button that way, Enter or Space presses it, left and right
+     nudge a slider. It works by moving the pointer the menus already follow, so hover, highlight and press stay one path. */
+  const KNAV = { on: false };
+  const navZones = () => zones.filter(z => z.w * z.h < 1280 * 720 * .45 && z.w > 6 && z.h > 6);
+  const zc = z => [z.x + z.w / 2, z.y + z.h / 2];
+  const navAt = () => { const l = navZones(); for (let i = l.length - 1; i >= 0; i--) if (inside(l[i], ptr.x, ptr.y)) return l[i]; return null; };
+  function navMove(dx, dy) {
+    const list = navZones(); if (!list.length) return;
+    const cur = KNAV.on ? navAt() : null;
+    if (cur && cur.drag && dx) { const nx = cl(ptr.x + dx * cur.w * .05, cur.x + 1, cur.x + cur.w - 1); ptr = { x: nx, y: ptr.y }; cur.fn(nx, ptr.y); click(); return; }
+    if (!cur) { const first = list.find(z => z.prime) || list.reduce((a, z) => (z.w * z.h > a.w * a.h ? z : a), list[0]); KNAV.on = true; const [x, y] = zc(first); ptr = { x, y }; return; }
+    const [cx, cy] = zc(cur); let best = null, bs = 1e9;
+    for (const z of list) { if (z === cur) continue; const [x, y] = zc(z), along = (x - cx) * dx + (y - cy) * dy, perp = Math.abs((x - cx) * dy - (y - cy) * dx); if (along < 4 || (dx && perp > Math.max(cur.h, z.h) * .75)) continue; const s = along + perp * 2.2; if (s < bs) { bs = s; best = z; } }
+    if (best) { const [x, y] = zc(best); ptr = { x, y }; click(); }
+  }
+  function navGo() { const z = KNAV.on && navAt(); if (!z) return false; if (z.drag) z.fn(ptr.x, ptr.y); else z.fn(); return true; }
+  function drawNav(g) { if (!KNAV.on) return; const z = navAt(); if (!z) return; g.save(); g.strokeStyle = YOU; g.lineWidth = 3; g.shadowColor = YOU; g.shadowBlur = 12; rr(g, z.x - 4, z.y - 4, z.w + 8, z.h + 8, 10, null, YOU, 3); g.restore(); }
   // screen pixels per world unit, and the factor that keeps touch targets and text big enough on a small screen
   const pxPer = () => innerWidth / (K.view.x1 - K.view.x0);
   const uiScale = () => isTouch() ? cl(.62 / pxPer(), 1, 2) : cl(.8 / pxPer(), 1, 1.5);
@@ -40,6 +57,12 @@
     if (KM[c] === 'crouch' && d && !keys.crouch) { if (M && me().sprinting) keys.slideAt = performance.now(); else if (CFG.crouch === 'toggle') keys.crouchT = !keys.crouchT; }
     if (KM[c]) keys[KM[c]] = d;
     if (!d) return;
+    const arrow = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[c];
+    if (screen === 'menu' || screen === 'over' || (screen === 'play' && (UI.armory || UI.opts))) {
+      if (arrow) return navMove(arrow[0], arrow[1]);
+      if ((c === 'Enter' || c === 'Space') && navGo()) return;
+      if (c === 'Escape' && screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; KNAV.on = false; return; }
+    }
     if (screen === 'menu') { if (c === 'Enter' && UI.panel === 'home') menuPlay(); return; }
     if (screen === 'over') { if (c === 'Enter') toMenu(); return; }
     if (!playing()) return; const P = me();
@@ -104,7 +127,7 @@
     if (!playing() || UI.armory || UI.opts) return;
     if (touch) touchDown(x, y, id); else if (!locked()) grabMouse();
   }
-  function pointerMove(x, y, id, touch) { ptr = { x, y }; if (dragZ) dragZ.fn(x, y); else if (touch && playing()) touchMove(x, y, id); }
+  function pointerMove(x, y, id, touch) { if (KNAV.on && Math.hypot(x - ptr.x, y - ptr.y) < 3) return; KNAV.on = false; ptr = { x, y }; if (dragZ) dragZ.fn(x, y); else if (touch && playing()) touchMove(x, y, id); }
   function pointerUp(id, touch) { dragZ = null; if (touch) touchUp(id); }
   // Touch uses the browser's touch events directly: they keep arriving on phones that cancel pointer events mid-drag,
   // and stopping their default keeps the page from scrolling or zooming under your thumbs.
