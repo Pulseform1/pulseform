@@ -131,6 +131,6 @@
   }
   function netEnd() { NET.on = false; NET.client = false; NET.peers.clear(); NET.paddle = [0, 0]; try { MP.leave(); } catch (e) {} }
   if (typeof MP !== 'undefined') Object.assign(MP.opts, {
-    max: 4, min: 2, bots: 0, solo: 'Back', sub: 'Share one raft with up to three friends. Create a room, send them the code, and start when everyone is in.',
+    max: 4, min: 2, bots: 0, solo: false, onClose: () => {}, sub: 'Share one raft with up to three friends. Create a room, send them the code, and start when everyone is in.',
     config: () => ({ cont: !!savedRun() }), onStart: netStart, onMsg: netMsg, onLeave: netLeave, onHost: id => { if (NET.on && id === MP.id && NET.client) netLeave(NETS.hostId); },
   });

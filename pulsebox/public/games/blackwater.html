@@ -71,7 +71,8 @@ const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
    The first player in a room is the host: the host picks the seats and starts every match.
    A game fills in MP.opts and calls MP.show() from GAME.reset():
      { max, min, bots: seats to fill with bots (0 = none), solo: label of the offline button (false = none),
-       config(): match settings the host sends, onStart(cfg, roster), onMsg(m), onLeave(id), onHost(id) }
+       config(): match settings the host sends, onStart(cfg, roster), onMsg(m), onLeave(id), onHost(id),
+       onClose(): when set, a Back button (and Escape) closes the lobby, leaving any room, and this is called }
    roster: [{ id, name, col, bot, seat }] in seat order, the same on every device. Bots are run by the host. */
 const MP = (() => {
   const COLS = ['#ff4d6d', '#3ec5ff', '#ffd23f', '#5cf28a', '#c77dff', '#ff9f43', '#f2f2f2', '#ff7ad9'];
@@ -100,7 +101,7 @@ const MP = (() => {
         <div id="mp-joinbox" hidden><input id="mp-code" maxlength="4" placeholder="ROOM CODE" autocomplete="off"><button class="big" id="mp-joingo">Join</button></div></div>
       <div id="mp-in" hidden><p class="sub" style="margin:8px 0 0">Room code: tell your friends</p><div class="code" id="mp-codeshow"></div><ul id="mp-list"></ul>
         <button class="big" id="mp-start">Start</button><p class="hint" id="mp-wait"></p><div class="row"><button id="mp-leave">Leave the room</button></div></div>
-      <p class="msg" id="mp-msg"></p></div>`;
+      <p class="msg" id="mp-msg"></p><div class="row"><button id="mp-back">Back</button></div></div>`;
     document.body.appendChild(box);
     for (const id of ['name', 'code']) $m(id).onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter' && id === 'code') $m('joingo').click(); };
     $m('solo').onclick = () => { saveName(); leave(); K.audio && K.audio(); start(); };
@@ -109,6 +110,8 @@ const MP = (() => {
     $m('joingo').onclick = () => { const c = ($m('code').value || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (c.length !== 4) return msg('Room codes are 4 letters.'); connect(c); };
     $m('start').onclick = () => { K.audio && K.audio(); start(); };
     $m('leave').onclick = () => { leave(); refresh(); };
+    $m('back').onclick = () => close();
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && box && !box.hidden && opts.onClose) { e.stopPropagation(); close(); } }, true);
   }
   function saveName() { name = ($m('name').value || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12) || 'Player'; try { localStorage.setItem('pbx-mp-name', name); } catch (e) {} return name; }
   function msg(s) { $m('msg').textContent = s || ''; }
@@ -118,7 +121,7 @@ const MP = (() => {
     const on = online();
     $m('title').textContent = GAME.title; $m('sub').textContent = opts.sub || GAME.tagline;
     $m('name').value = name; $m('out').hidden = on; $m('in').hidden = !on;
-    $m('solo').hidden = opts.solo === false; $m('solo').textContent = opts.solo || 'Play with bots';
+    $m('solo').hidden = opts.solo === false; $m('back').parentNode.hidden = !opts.onClose; $m('solo').textContent = opts.solo || 'Play with bots';
     if (!on) return;
     const ps = list();
     $m('codeshow').textContent = code;
@@ -160,6 +163,8 @@ const MP = (() => {
     send(m); begin(m);
   }
   function send(m) { if (online()) ws.send(JSON.stringify(m)); }
+  // back out of the lobby to the game's own menu (leaving any room); only for games that say where 'back' goes
+  function close() { leave(); pending = null; if (box) box.hidden = true; msg(''); if (opts.onClose) opts.onClose(); }
   function leave() { const w = ws; ws = null; me = 0; host = 0; players.clear(); if (w) try { w.close(); } catch (e) {} }
   function show() {
     build();
@@ -169,7 +174,7 @@ const MP = (() => {
   }
   if (AUTO) { const go = () => { const b = document.getElementById('bPlay'); if (b && typeof K !== 'undefined' && K.state === 'title') b.click(); else setTimeout(go, 150); }; setTimeout(go, 250); }
   return {
-    opts, show, start, send, leave, online, colors: COLS,
+    opts, show, start, send, leave, close, online, colors: COLS,
     hide() { if (box) box.hidden = true; },
     to(id, m) { m.to = id; send(m); },
     isHost: () => !online() || host === me,
@@ -1171,7 +1176,7 @@ float waterH(vec2 x) {
   }
   function netEnd() { NET.on = false; NET.client = false; NET.peers.clear(); NET.paddle = [0, 0]; try { MP.leave(); } catch (e) {} }
   if (typeof MP !== 'undefined') Object.assign(MP.opts, {
-    max: 4, min: 2, bots: 0, solo: 'Back', sub: 'Share one raft with up to three friends. Create a room, send them the code, and start when everyone is in.',
+    max: 4, min: 2, bots: 0, solo: false, onClose: () => {}, sub: 'Share one raft with up to three friends. Create a room, send them the code, and start when everyone is in.',
     config: () => ({ cont: !!savedRun() }), onStart: netStart, onMsg: netMsg, onLeave: netLeave, onHost: id => { if (NET.on && id === MP.id && NET.client) netLeave(NETS.hostId); },
   });
   /* ---------- 70 gfx: Three.js, the sky and the ocean ----------

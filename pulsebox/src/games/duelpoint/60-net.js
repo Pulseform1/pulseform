@@ -60,7 +60,7 @@
     return seats;
   }
   Object.assign(MP.opts, {
-    max: 4, min: 2, bots: 0, solo: false, sub: 'Create a room and send your friends the code. Two to four players.',
+    max: 4, min: 2, bots: 0, solo: false, onClose: () => { if (screen !== 'menu') toMenu(); }, sub: 'Create a room and send your friends the code. Two to four players.',
     config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0, map: Math.floor(R() * MAPS.length), team: CFG.team, botDiff: CFG.diff === 'auto' ? diffFor(STATS.rating).i : CFG.diff,
       names: [...BOT_NAMES].sort(() => R() - .5), ops: Array.from({ length: 4 }, () => pick(Object.keys(OPS))) }),
     onStart: (cfg, roster) => { cfg.names = cfg.names || BOT_NAMES; cfg.ops = cfg.ops || ['vex']; startMatch({ mode: 'online', seats: seatsFor(cfg, roster), hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map, botDiff: cfg.botDiff }); emit('matchStart'); },
