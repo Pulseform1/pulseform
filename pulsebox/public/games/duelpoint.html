@@ -228,10 +228,12 @@ const GAME = {
     xh: { shape: 'cross', col: '#35e0c8', len: 9, gap: 3, thick: 3, dot: true, outline: true, dyn: true } };
   let tickA = 1;   // how far the screen is between the last simulation tick and the next (99-main sets it), so motion is smooth at any refresh rate
   // coins: Duelpoint Coins earned every match and kept; rating: your skill, which sets the adaptive bot; owned: guns bought with coins
-  const STATS = { matches: 0, wins: 0, kills: 0, heads: 0, coins: 0, rating: 1000, owned: [] };
+  const STATS = { matches: 0, wins: 0, kills: 0, heads: 0, coins: 0, rating: 1000, owned: [], eco: 2 };
   // (the kit, and so K.save, only exists once the page has finished loading: 99-main calls this on the first reset)
-  const loadSave = () => { try { if (K.save.dp) { { const c = Object.assign({}, K.save.dp.cfg || {}), xh = Object.assign({}, CFG.xh, c.xh || {}); if (!(c.v >= 2)) { delete c.sens; } if (!(c.v >= 3)) { c.diff = 'auto'; c.v = 3; } Object.assign(CFG, c); CFG.xh = xh; } Object.assign(STATS, K.save.dp.stats || {}); } } catch (e) {} };
-  const saveAll = () => { try { K.save.dp = { cfg: CFG, stats: STATS }; K.persist(); } catch (e) {} };
+  const loadSave = () => { try { if (K.save.dp) { { const c = Object.assign({}, K.save.dp.cfg || {}), xh = Object.assign({}, CFG.xh, c.xh || {}); if (!(c.v >= 2)) { delete c.sens; } if (!(c.v >= 3)) { c.diff = 'auto'; c.v = 3; } Object.assign(CFG, c); CFG.xh = xh; } const st = K.save.dp.stats || {}; if (!(st.eco >= 2)) { st.coins = 0; st.eco = 2; }   /* the coin rules changed (35 a kill, 15 a win): everyone starts again from zero, keeping any guns already bought */
+      Object.assign(STATS, st); if (!Array.isArray(STATS.owned)) STATS.owned = []; } } catch (e) {} };
+  // saved on this device at once; `now` also asks the hub to copy it to the player's account straight away (a gun bought, a match paid)
+  const saveAll = now => { try { K.save.dp = { cfg: CFG, stats: STATS }; K.persist(); if (now && window.parent !== window) window.parent.postMessage({ pbx: 'save' }, location.origin); } catch (e) {} };
   /* ---------- 20 data: guns, shields, operatives, difficulty, timings, money ----------
      Handling follows tactical-shooter rules. The first shot goes exactly where you aim while you stand still. Moving adds
      error, none below about a quarter of run speed, so stopping (or tapping the opposite key to counter-strafe, which brakes
@@ -309,12 +311,9 @@ const GAME = {
     const idx = t > .5 ? i + 1 : i; D.n = DIFF[idx].n; return { D, i: idx };
   }
   const rankName = r => { const { i } = diffFor(r); return DIFF[i].n; };
-  // Duelpoint Coins for a finished match: kept small on purpose, so unlocks take a few evenings, not one match
-  const COIN_LVL = [.8, 1, 1.25, 1.5, 1.8];
-  function coinsFor({ won, rounds, kills, heads, lvl, online }) {
-    const base = (won ? 40 : 12) + 4 * rounds + 3 * kills + 2 * heads;
-    return Math.max(5, Math.round(base * (COIN_LVL[lvl] || 1) * (online ? 1.2 : 1)));
-  }
+  // Duelpoint Coins for a finished match: 35 for each of your kills, and 15 more if you won
+  const COIN_KILL = 35, COIN_WIN = 15;
+  function coinsFor({ won, kills }) { return COIN_KILL * (kills | 0) + (won ? COIN_WIN : 0); }
   // the body: eye heights standing and crouched, radius, speeds (m/s), gravity, jump speed, the step you climb without jumping
   const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.6, STEP = .42;
   // sprinting (hold Shift, or push the stick all the way) and sliding (crouch while sprinting)
@@ -2874,7 +2873,7 @@ const GAME = {
   // shields on the right with the numbers for whatever you are pointing at. Press to buy; press again to sell back.
   const ARMORY_TABS = [['SIDEARMS', 'Sidearm'], ['SMGS', 'SMG'], ['SHOTGUNS', 'Shotgun'], ['RIFLES', 'Rifle'], ['SNIPERS', 'Sniper'], ['HEAVY', 'Heavy'], ['SHIELDS', 'Shield']];
   const coinLocked = G => !!(G && G.coins && !STATS.owned.includes(G.k));
-  function unlock(k) { const G = GUNS[k]; if (!coinLocked(G) || STATS.coins < G.coins) return; STATS.coins -= G.coins; STATS.owned.push(k); saveAll(); click(); buy(me(), k); }
+  function unlock(k) { const G = GUNS[k]; if (!coinLocked(G) || STATS.coins < G.coins) return; STATS.coins -= G.coins; STATS.owned.push(k); saveAll(true); click(); buy(me(), k); }
   // the armory: a tab per class, the guns of that class as big cards, and on the right what you're pointing at
   function drawArmory(g) {
     const V = K.view, W = V.x1 - V.x0, u = uiScale(), P = me(), sp = P.spent, x = V.x0 + 20 * u, w = W - 40 * u, y0 = V.y0 + 56 * Math.min(u, 1.15), h = V.y1 - y0 - 10 * u, gap = 8 * Math.min(u, 1.2);
@@ -2899,7 +2898,7 @@ const GAME = {
       tx(g, it.n.toUpperCase(), cx + 10 * u, ty, tp, can || owned || lock ? it.col : '#5a6272', 'left');
       if (lock) coinTag(g, cx + cw - 10 * u, ty, tp * .9, G.coins); else tx(g, owned ? (mineNow ? 'SELL' : 'OWNED') : it.cost ? `◈ ${it.cost}` : 'FREE', cx + cw - 9 * u, ty, tp * .9, owned ? YOU : can ? GOLD : '#5a6272', 'right');
       g.save(); g.globalAlpha = can || owned ? 1 : lock ? .55 : .35; g.beginPath(); g.rect(cx + 2, cy + 2, cw - 4, ch - 4); g.clip(); const iy = cy + tp * 2, ih = ch - tp * 2 - (G ? tp * 1.6 : 4);
-      if (G) { const ic = gunIcon(it.k); if (ic) { const dh = Math.min(ih, (cw - 16 * u) * 150 / 480 * (G.cat === 'Sidearm' ? 1.6 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.25 : 1)), dw = dh * 480 / 150; g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); } g.globalAlpha = 1; tx(g, lock ? 'LOCKED · UNLOCK WITH COINS' : G.desc.split('.')[0], cx + cw / 2, cy + ch - tp * .9, tp * .62, lock ? COIN : DIM); }
+      if (G) { const ic = gunIcon(it.k); if (ic) { const dh = Math.min(ih, (cw - 16 * u) * 150 / 480 * (G.cat === 'Sidearm' ? 1.6 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.25 : 1)), dw = dh * 480 / 150; g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); } g.globalAlpha = 1; tx(g, lock ? 'BUY WITH COINS · YOURS FOREVER' : G.desc.split('.')[0], cx + cw / 2, cy + ch - tp * .9, tp * .62, lock ? COIN : DIM); }
       else { const mx = cx + cw / 2, my = iy + ih / 2, s2 = ih / 80 * (A.sh === 50 ? 1.05 : .85); g.fillStyle = it.col + '33'; g.strokeStyle = it.col; g.lineWidth = 2.5 * u; g.beginPath(); g.moveTo(mx, my - 32 * s2); g.lineTo(mx + 26 * s2, my - 22 * s2); g.lineTo(mx + 22 * s2, my + 12 * s2); g.lineTo(mx, my + 32 * s2); g.lineTo(mx - 22 * s2, my + 12 * s2); g.lineTo(mx - 26 * s2, my - 22 * s2); g.closePath(); g.fill(); g.stroke(); tx(g, '+' + A.sh, mx, my, 20 * s2, BONE); }
       g.restore();
     });
@@ -2915,7 +2914,7 @@ const GAME = {
         row('BODY', `${d[1]}${G.pel ? ' x' + G.pel + ' PELLETS' : ''}`); row('HEAD · LEGS', `x${G.head} (${dmgAt(G, 0, 1)}) · x${G.legs} (${dmgAt(G, 0, 3)})`); row('FIRE RATE', `${(G.rpm / 60).toFixed(1)}/s ${G.burst ? G.burst + '-ROUND BURST' : G.auto ? 'AUTO' : 'SEMI'}`); row('MAGAZINE', `${G.mag} · ${G.rel}s RELOAD`); row('ERROR STILL · RUN', `${G.scope ? G.acc.sfs : G.acc.fs}° · ${G.acc.run}°`); row('PRICE', G.cost ? `◈ ${G.cost} A ROUND` : 'FREE'); }
       g.restore();
       if (G && coinLocked(G)) { const ok = STATS.coins >= G.coins, uy = dTop + dh - tapH(54) - 10 * u;
-        btn(g, dx + 10 * u, uy, dw - 20 * u, tapH(54), ok ? `UNLOCK · ${G.coins} COINS` : `NEED ${G.coins - STATS.coins} MORE COINS`, () => unlock(G.k), { on: ok, fill: COIN, px: Math.min(17 * u, dw * .06), sub: ok ? 'yours for good' : 'win matches to earn coins' }); }
+        btn(g, dx + 10 * u, uy, dw - 20 * u, tapH(54), ok ? `BUY · ${G.coins} COINS` : `NEED ${G.coins - STATS.coins} MORE COINS`, () => unlock(G.k), { on: ok, fill: COIN, px: Math.min(17 * u, dw * .06), sub: ok ? 'yours forever, saved to your account' : '35 coins a kill, 15 for a win' }); }
     } else para(g, 'Press a weapon to buy it. Press something you bought this round to sell it back. Gold-edged guns are unlocked with Duelpoint Coins.', dx + 10 * u, dTop + 22 * u, dw - 20 * u, Math.min(13 * u, dw * .06), DIM);
     btn(g, dx, by + bh - rh, dw, rh, M.mode === 'range' ? 'CLOSE' : 'READY', () => openArmory(false), { on: true, fill: YOU, px: rh * .4, sub: isTouch() ? '' : 'or press B' });
   }
@@ -2959,11 +2958,11 @@ const GAME = {
     if (M.mode === 'range') return; const P = me();
     STATS.matches++; if (won) STATS.wins++; STATS.kills += P.stat.k; STATS.heads += P.stat.hs;
     // coins: a little for showing up, more for rounds, kills and heads, scaled by how tough the opposition was; saved the moment the match ends
-    const lvl = M.online ? 2 : M.fs[1].bot.diff, earned = coinsFor({ won, rounds: M.wins[0], kills: P.stat.k, heads: P.stat.hs, lvl, online: M.online });
+    const earned = coinsFor({ won, kills: P.stat.k });
     STATS.coins += earned; M.earned = earned;
     // the adaptive bot follows a rating: beat it and the next one is sharper, lose and it eases off
     if (M.auto) { const before = STATS.rating, d = won ? 22 + 4 * (M.wins[0] - M.wins[1]) : -(20 - 3 * M.wins[0]); STATS.rating = Math.round(cl(before + d, 600, 1800)); M.rated = { before, after: STATS.rating }; }
-    saveAll(); K.score = M.wins[0];
+    saveAll(true); K.score = M.wins[0];
     // tell the hub (when it hosts the game) so profiles and the daily challenge count the match
     try { if (!M.online && window.parent !== window) window.parent.postMessage({ pbx: 'score', score: M.wins[0] * 10 + (won ? 50 : 0) + M.fs[1].bot.diff * 10 }, location.origin); } catch (e) {}
   });
@@ -3015,7 +3014,7 @@ const GAME = {
     get M() { return M; }, get X() { return X; }, get screen() { return screen; }, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
     play, toMenu, menuPlay, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
-    botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
+    botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, unlock,
   };
 })();
 

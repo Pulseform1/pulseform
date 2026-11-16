@@ -116,8 +116,7 @@ function moveChecks() {
   const lv = [600, 900, 1100, 1400, 1700].map(r => T.diffFor(r)), keys = ['react', 'err', 'flick'];
   ok(lv.every((L, i) => !i || keys.every(k => L.D[k] <= lv[i - 1].D[k]) && L.D.turn >= lv[i - 1].D.turn), 'the bot gets sharper at every step up in rating', lv.map(L => L.D.n).join(' → '));
   T.STATS.rating = 1500; T.seed(3); T.startMatch({ mode: 'bot', diff: 'auto', map: 0 }); ok(T.foe().bot.D && T.foe().bot.diff >= 2, 'an AUTO match builds its bot from your rating', T.foe().bot.D.n);
-  const c1 = T.coinsFor({ won: true, rounds: 5, kills: 7, heads: 2, lvl: 1 }), c0 = T.coinsFor({ won: false, rounds: 2, kills: 3, heads: 0, lvl: 1 }), cL = T.coinsFor({ won: true, rounds: 5, kills: 7, heads: 2, lvl: 4 });
-  ok(c1 < 120 && c0 < c1 / 2 && cL > c1, 'coins come slowly, more for wins and tougher bots', `win ${c1}, loss ${c0}, win vs Legend ${cL}`);
+  ok(T.coinsFor({ won: true, kills: 7 }) === 260 && T.coinsFor({ won: false, kills: 3 }) === 105 && T.coinsFor({ won: true, kills: 0 }) === 15, 'coins: 35 a kill, 15 more for a win', `7 kills and a win: ${T.coinsFor({ won: true, kills: 7 })}`);
 }
 function teamChecks(count) {
   section(`${count} 2v2 bot matches`);

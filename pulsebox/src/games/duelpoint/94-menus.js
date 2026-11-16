@@ -113,7 +113,7 @@
   // shields on the right with the numbers for whatever you are pointing at. Press to buy; press again to sell back.
   const ARMORY_TABS = [['SIDEARMS', 'Sidearm'], ['SMGS', 'SMG'], ['SHOTGUNS', 'Shotgun'], ['RIFLES', 'Rifle'], ['SNIPERS', 'Sniper'], ['HEAVY', 'Heavy'], ['SHIELDS', 'Shield']];
   const coinLocked = G => !!(G && G.coins && !STATS.owned.includes(G.k));
-  function unlock(k) { const G = GUNS[k]; if (!coinLocked(G) || STATS.coins < G.coins) return; STATS.coins -= G.coins; STATS.owned.push(k); saveAll(); click(); buy(me(), k); }
+  function unlock(k) { const G = GUNS[k]; if (!coinLocked(G) || STATS.coins < G.coins) return; STATS.coins -= G.coins; STATS.owned.push(k); saveAll(true); click(); buy(me(), k); }
   // the armory: a tab per class, the guns of that class as big cards, and on the right what you're pointing at
   function drawArmory(g) {
     const V = K.view, W = V.x1 - V.x0, u = uiScale(), P = me(), sp = P.spent, x = V.x0 + 20 * u, w = W - 40 * u, y0 = V.y0 + 56 * Math.min(u, 1.15), h = V.y1 - y0 - 10 * u, gap = 8 * Math.min(u, 1.2);
@@ -138,7 +138,7 @@
       tx(g, it.n.toUpperCase(), cx + 10 * u, ty, tp, can || owned || lock ? it.col : '#5a6272', 'left');
       if (lock) coinTag(g, cx + cw - 10 * u, ty, tp * .9, G.coins); else tx(g, owned ? (mineNow ? 'SELL' : 'OWNED') : it.cost ? `◈ ${it.cost}` : 'FREE', cx + cw - 9 * u, ty, tp * .9, owned ? YOU : can ? GOLD : '#5a6272', 'right');
       g.save(); g.globalAlpha = can || owned ? 1 : lock ? .55 : .35; g.beginPath(); g.rect(cx + 2, cy + 2, cw - 4, ch - 4); g.clip(); const iy = cy + tp * 2, ih = ch - tp * 2 - (G ? tp * 1.6 : 4);
-      if (G) { const ic = gunIcon(it.k); if (ic) { const dh = Math.min(ih, (cw - 16 * u) * 150 / 480 * (G.cat === 'Sidearm' ? 1.6 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.25 : 1)), dw = dh * 480 / 150; g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); } g.globalAlpha = 1; tx(g, lock ? 'LOCKED · UNLOCK WITH COINS' : G.desc.split('.')[0], cx + cw / 2, cy + ch - tp * .9, tp * .62, lock ? COIN : DIM); }
+      if (G) { const ic = gunIcon(it.k); if (ic) { const dh = Math.min(ih, (cw - 16 * u) * 150 / 480 * (G.cat === 'Sidearm' ? 1.6 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.25 : 1)), dw = dh * 480 / 150; g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); } g.globalAlpha = 1; tx(g, lock ? 'BUY WITH COINS · YOURS FOREVER' : G.desc.split('.')[0], cx + cw / 2, cy + ch - tp * .9, tp * .62, lock ? COIN : DIM); }
       else { const mx = cx + cw / 2, my = iy + ih / 2, s2 = ih / 80 * (A.sh === 50 ? 1.05 : .85); g.fillStyle = it.col + '33'; g.strokeStyle = it.col; g.lineWidth = 2.5 * u; g.beginPath(); g.moveTo(mx, my - 32 * s2); g.lineTo(mx + 26 * s2, my - 22 * s2); g.lineTo(mx + 22 * s2, my + 12 * s2); g.lineTo(mx, my + 32 * s2); g.lineTo(mx - 22 * s2, my + 12 * s2); g.lineTo(mx - 26 * s2, my - 22 * s2); g.closePath(); g.fill(); g.stroke(); tx(g, '+' + A.sh, mx, my, 20 * s2, BONE); }
       g.restore();
     });
@@ -154,7 +154,7 @@
         row('BODY', `${d[1]}${G.pel ? ' x' + G.pel + ' PELLETS' : ''}`); row('HEAD · LEGS', `x${G.head} (${dmgAt(G, 0, 1)}) · x${G.legs} (${dmgAt(G, 0, 3)})`); row('FIRE RATE', `${(G.rpm / 60).toFixed(1)}/s ${G.burst ? G.burst + '-ROUND BURST' : G.auto ? 'AUTO' : 'SEMI'}`); row('MAGAZINE', `${G.mag} · ${G.rel}s RELOAD`); row('ERROR STILL · RUN', `${G.scope ? G.acc.sfs : G.acc.fs}° · ${G.acc.run}°`); row('PRICE', G.cost ? `◈ ${G.cost} A ROUND` : 'FREE'); }
       g.restore();
       if (G && coinLocked(G)) { const ok = STATS.coins >= G.coins, uy = dTop + dh - tapH(54) - 10 * u;
-        btn(g, dx + 10 * u, uy, dw - 20 * u, tapH(54), ok ? `UNLOCK · ${G.coins} COINS` : `NEED ${G.coins - STATS.coins} MORE COINS`, () => unlock(G.k), { on: ok, fill: COIN, px: Math.min(17 * u, dw * .06), sub: ok ? 'yours for good' : 'win matches to earn coins' }); }
+        btn(g, dx + 10 * u, uy, dw - 20 * u, tapH(54), ok ? `BUY · ${G.coins} COINS` : `NEED ${G.coins - STATS.coins} MORE COINS`, () => unlock(G.k), { on: ok, fill: COIN, px: Math.min(17 * u, dw * .06), sub: ok ? 'yours forever, saved to your account' : '35 coins a kill, 15 for a win' }); }
     } else para(g, 'Press a weapon to buy it. Press something you bought this round to sell it back. Gold-edged guns are unlocked with Duelpoint Coins.', dx + 10 * u, dTop + 22 * u, dw - 20 * u, Math.min(13 * u, dw * .06), DIM);
     btn(g, dx, by + bh - rh, dw, rh, M.mode === 'range' ? 'CLOSE' : 'READY', () => openArmory(false), { on: true, fill: YOU, px: rh * .4, sub: isTouch() ? '' : 'or press B' });
   }

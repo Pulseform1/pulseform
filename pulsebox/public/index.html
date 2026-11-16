@@ -3230,7 +3230,9 @@ loadStats();
   function localData() { const d = {}; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (mine(k)) d[k] = localStorage.getItem(k); } } catch (e) {} return d; }
   // two copies of the same game's save: keep the one that has played more (Pulsebox kit saves), otherwise the newer one
   function pick(k, local, cloud, cloudNewer) {
-    if (k.startsWith('pbx-')) { try { const a = JSON.parse(local), b = JSON.parse(cloud); const m = (b.plays || 0) > (a.plays || 0) ? b : a, o = m === a ? b : a; m.best = Math.max(a.best || 0, b.best || 0); m.owned = [...new Set([...(a.owned || []), ...(b.owned || [])])]; return JSON.stringify(m); } catch (e) {} }
+    if (k.startsWith('pbx-')) { try { const a = JSON.parse(local), b = JSON.parse(cloud); const m = (b.plays || 0) > (a.plays || 0) ? b : a, o = m === a ? b : a; m.best = Math.max(a.best || 0, b.best || 0); m.owned = [...new Set([...(a.owned || []), ...(b.owned || [])])];
+      if (a.dp && b.dp && a.dp.stats && b.dp.stats && m.dp.stats) m.dp.stats.owned = [...new Set([...(a.dp.stats.owned || []), ...(b.dp.stats.owned || [])])];   // Duelpoint guns bought on either device stay bought
+      return JSON.stringify(m); } catch (e) {} }
     return cloudNewer ? cloud : local;
   }
   let lastPushed = '';
@@ -3272,6 +3274,8 @@ loadStats();
     location.reload();
   }
   setInterval(push, 30000);
+  // a game asks for its progress to be saved to the account now (Duelpoint, after buying a gun or finishing a match)
+  window.addEventListener('message', e => { if (e.data && e.data.pbx === 'save' && e.origin === location.origin) setTimeout(push, 250); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) push(); else sync(); });
   // a game just closed: save its progress now
   const stop0 = window.stopGame; window.stopGame = function () { stop0.apply(this, arguments); setTimeout(push, 300); };

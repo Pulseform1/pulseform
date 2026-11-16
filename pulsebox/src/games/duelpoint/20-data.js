@@ -75,12 +75,9 @@
     const idx = t > .5 ? i + 1 : i; D.n = DIFF[idx].n; return { D, i: idx };
   }
   const rankName = r => { const { i } = diffFor(r); return DIFF[i].n; };
-  // Duelpoint Coins for a finished match: kept small on purpose, so unlocks take a few evenings, not one match
-  const COIN_LVL = [.8, 1, 1.25, 1.5, 1.8];
-  function coinsFor({ won, rounds, kills, heads, lvl, online }) {
-    const base = (won ? 40 : 12) + 4 * rounds + 3 * kills + 2 * heads;
-    return Math.max(5, Math.round(base * (COIN_LVL[lvl] || 1) * (online ? 1.2 : 1)));
-  }
+  // Duelpoint Coins for a finished match: 35 for each of your kills, and 15 more if you won
+  const COIN_KILL = 35, COIN_WIN = 15;
+  function coinsFor({ won, kills }) { return COIN_KILL * (kills | 0) + (won ? COIN_WIN : 0); }
   // the body: eye heights standing and crouched, radius, speeds (m/s), gravity, jump speed, the step you climb without jumping
   const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.6, STEP = .42;
   // sprinting (hold Shift, or push the stick all the way) and sliding (crouch while sprinting)
