@@ -28,8 +28,8 @@
   // buy for the kind of round: pistols on round 1 and 5, something cheap when short, a rifle and shields when rich
   function botBuy(f) {
     const d = f.bot.diff;
-    if (!f.load[1] || R() < .25) buy(f, R() < .1 + .05 * d ? pick(['longbow', 'lumen', 'harpoon', 'kite']) : R() < .15 ? pick(['torrent', 'hailstorm', 'cyclone']) : R() < .25 ? pick(['gnat', 'hornet', 'saber', 'pulsar', 'breaker', 'thresher', 'tempest', 'grinder']) : pick(['mako', 'paladin', 'vesper', 'lancer', 'raptor', 'nova', 'specter', 'warden']));
-    if (f.load[2] === 'pip' && R() < .5 || R() < .15) buy(f, pick(['hammer', 'quill', 'wasp', 'stub', 'viper', 'flux', 'brick', 'pip']));
+    if (!f.load[1] || R() < .25) buy(f, R() < .1 + .05 * d ? pick(['longbow', 'kite']) : R() < .15 ? 'torrent' : R() < .25 ? pick(['gnat', 'hornet', 'breaker', 'thresher']) : pick(['mako', 'paladin', 'vesper', 'lancer']));
+    if (f.load[2] === 'pip' && R() < .5 || R() < .15) buy(f, pick(['hammer', 'quill', 'wasp', 'stub', 'pip']));
     if (!f.load.sh) buy(f, R() < .3 + .15 * d ? 'heavy' : 'light');
   }
   // use an ability at a chosen place, without having to look there first

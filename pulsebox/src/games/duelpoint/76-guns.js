@@ -110,8 +110,7 @@
     const data = canvasTex(S, S, g => draw(g, 'rgb(200,225,50)', 'rgb(90,110,170)', 'rgba(170,150,120,.8)', 'rgb(150,230,50)'), [3, 3]); data.encoding = THREE.LinearEncoding;
     return WORN[col] = { map, data };
   }
-  const FINISH = { knife: 'cera', pip: 'cera', stub: 'wood', wasp: 'cera', quill: 'cera', hammer: 'grip', gnat: 'anod', hornet: 'camo', breaker: 'wood', thresher: 'worn', mako: 'anod', paladin: 'worn', vesper: 'carbon', lancer: 'cera', kite: 'cera', longbow: 'carbon', torrent: 'worn',
-    viper: 'chrome', flux: 'neon', brick: 'gold', saber: 'holo', pulsar: 'neon', grinder: 'damascus', tempest: 'tiger', raptor: 'gold', nova: 'hex', specter: 'cera', warden: 'woodland', harpoon: 'arctic', lumen: 'cera', hailstorm: 'desert', cyclone: 'hazard' };
+  const FINISH = { knife: 'cera', pip: 'cera', stub: 'wood', wasp: 'cera', quill: 'cera', hammer: 'grip', gnat: 'anod', hornet: 'camo', breaker: 'wood', thresher: 'worn', mako: 'anod', paladin: 'worn', vesper: 'carbon', lancer: 'cera', kite: 'cera', longbow: 'carbon', torrent: 'worn' };
   const BUMP = .0007;   // relief strength; small, because a gun is small
   function gmats(k) {
     if (GMAT[k]) return GMAT[k];
@@ -119,7 +118,7 @@
     const env = (m, ei) => { if (X && X.env) { m.envMap = X.env; m.envMapIntensity = ei; } return m; };
     const std = (o, ei = 1) => env(new THREE.MeshStandardMaterial(o), ei);
     const basic = c => new THREE.MeshBasicMaterial({ color: c, toneMapped: false });
-    const col = { pip: '#8f99a6', lancer: '#d4323e', longbow: '#9468dc', vesper: '#d0509a', stub: '#ffffff', breaker: '#ffffff', specter: '#2b2833', lumen: '#e9eef3' }[k] || W.col, fk = FINISH[k] || 'cera';
+    const col = { pip: '#8f99a6', lancer: '#d4323e', longbow: '#9468dc', vesper: '#d0509a', stub: '#ffffff', breaker: '#ffffff' }[k] || W.col, fk = FINISH[k] || 'cera';
     let fin;
     if (fk === 'grip') fin = std({ color: '#26272c', map: T.stipple, bumpMap: T.stipple, bumpScale: BUMP * 1.1, roughness: .88, metalness: 0 }, .35);
     else if (fk === 'wood') fin = std({ color: col, map: T.wood, bumpMap: T.wood, bumpScale: BUMP * 1.4, roughness: .42, metalness: 0 }, .5);
@@ -409,63 +408,7 @@
       T = G;
     };
 
-    /* ---- bullpups: Saber (SMG) and Nova (rifle). The magazine sits behind the grip, so the gun is short for its barrel ---- */
-    const bullpup = o => {
-      const BY = .03, hw = .026, front = o.front, top = .058; len = o.len; port = [hw, .035, .07]; sight = o.sightY;
-      side([[front, .03], [front + .012, top], [.25, top], [.27, .044], [.285, .02], [.285, -.075], [.27, -.088], [.17, -.074], [.165, -.034], [.07, -.034], [.03, -.03], [.012, -.034], [.004, -.07], [-.062, -.07], ['q', -.071, -.07, -.071, -.06], [-.074, -.034], [front + .02, -.03], [front, -.012]], hw * 2, m.fin, 0, .008,
-        [[[-.064, -.04], [-.064, -.057], ['q', -.064, -.063, -.058, -.063], [-.005, -.063], ['q', .001, -.063, .001, -.056], [-.001, -.04]]]);
-      side([[-.03, -.036], [-.037, -.055], [-.031, -.058], [-.024, -.038]], .008, m.steel, 0, .0015); pistolGrip();
-      for (const sx of [-1, 1]) { rbox(.002, .036, .2, m.poly, sx * (hw + .0005), .005, .1, .002); rbox(.0015, .004, .26, m.glow, sx * (hw + .001), .036, -.02, .001); rbox(.0012, .02, .02, m.acc, sx * (hw + .0012), -.03, .23, .001); }
-      rbox(.003, .02, .05, m.hole, hw - .0005, .035, .07, .003); rbox(.05, .135, .016, m.rubber, 0, -.016, .292, .006); rbox(.046, .012, .15, m.poly, 0, top + .004, .17, .005);
-      rail(front + .02, .14, top + .0035);
-      const br = o.br || .0115; tube(br, -len + (o.tip === 'supp' ? o.sl : .05) - .004, front, m.steel, BY); muzzle(o.tip, -len, BY, br, o.sl);
-      if (o.shroud) { tube(.026, front - o.shroud, front + .01, vent(o.shroud), BY, 0, 18); ring(.026, .003, front - o.shroud + .004, m.dark, BY); }
-      if (o.sight === 'holo') holo(-.01, top + .008); else prism(.0, top + .008, o.sight === 'dmr');
-      if (o.fore === 'vgrip') { const z = front + .06; vtube(.0155, -.11, -.02, m.poly, 0, z, .019); vtube(.0195, -.118, -.108, m.acc, 0, z); sup = [0, -.07, z]; } else sup = [0, -.034, front + .08];
-      if (o.counter) counter(.03, .12, hw);
-      T = parts.bolt = group(0, 0, 0); rbox(.012, .012, .03, m.steel, -hw - .004, .04, front + .05, .003); rbox(.018, .01, .01, m.acc, -hw - .012, .04, front + .038, .003);
-      T = parts.mag = group(0, -.04, .118);
-      if (o.mag === 'curve') side([[.022, .03], [-.022, .03], ['q', -.024, -.06, -.05, -.13], [-.008, -.14], ['q', .03, -.06, .022, .03]], .03, m.poly, 0, .005);
-      else rbox(.028, o.magL || .13, .034, m.poly, 0, -(o.magL || .13) / 2 + .03, 0, .004);
-      rbox(.032, .012, .04, m.acc, 0, o.mag === 'curve' ? -.13 : -(o.magL || .13) + .03, o.mag === 'curve' ? -.03 : 0, .004);
-      T = G;
-    };
-
-    /* ---- the Cyclone: six barrels that spin round a motor, an ammo box on the side, a carry handle ---- */
-    const rotary = () => {
-      const BY = .03; len = .8; port = [.05, .02, .02]; sight = .12;
-      rbox(.1, .11, .26, m.fin, 0, .012, .02, .012); rbox(.104, .03, .06, m.dark, 0, .04, .17, .008); lathe([[.15, .02], [.15, .048], [.2, .044], [.22, .02]], m.metal, .012, 0, 18);
-      for (const sx of [-1, 1]) { rbox(.002, .06, .2, m.dark, sx * .051, .012, .02, .002); for (let i = 0; i < 5; i++) rbox(.003, .05, .008, m.hole, sx * .0515, .012, -.06 + i * .04, .001); }
-      side([[-.08, .068], [-.07, .11], [.1, .11], [.11, .068], [.09, .068], [.085, .095], [-.055, .095], [-.06, .068]], .022, m.dark, 0, .004);   // carry handle
-      side([[-.03, -.036], [-.037, -.055], [-.031, -.058], [-.024, -.038]], .008, m.steel, 0, .0015); side([[-.075, -.04], [.02, -.04], [.02, -.07], [-.075, -.07]], .012, m.dark, 0, .003, [[[-.064, -.046], [.008, -.046], [.008, -.064], [-.064, -.064]]]); pistolGrip();
-      lathe([[-.1, .052], [-.1, .058], [-.16, .058], [-.18, .04]], m.dark, BY, 0, 20); ring(.057, .003, -.12, m.glow, BY);
-      vtube(.016, -.13, -.02, m.poly, 0, -.27, .019); vtube(.02, -.138, -.128, m.acc, 0, -.27); rbox(.03, .03, .06, m.dark, 0, -.015, -.27, .005);
-      decal('CYCLONE', 'ROTARY · 150', .12, .03, .0525, .0, .02, 'rgba(20,20,22,.9)');
-      T = parts.rot = group(0, BY, 0);
-      for (let i = 0; i < 6; i++) { const a = i / 6 * TAU, x = Math.cos(a) * .024, y = Math.sin(a) * .024; tube(.0075, -len, -.16, m.steel, y, x, 10); disc(.0042, x, y, -len - .0005, m.hole); }
-      for (const z of [-.3, -.55, -len + .025]) add(new THREE.CylinderGeometry(.036, .036, .016, 18), m.dark, 0, 0, z, Math.PI / 2);
-      tube(.009, -len + .01, -.16, m.metal, 0, 0, 10);
-      T = parts.mag = group(-.085, -.02, .02); rbox(.06, .1, .13, m.dark, 0, 0, 0, .008); rbox(.062, .016, .132, m.acc, 0, .042, 0, .004); for (let i = 0; i < 3; i++) rbox(.0605, .004, .132, m.rubber, 0, -.03 + i * .02, 0, .001);
-      add(new THREE.TorusGeometry(.03, .008, 6, 12, Math.PI / 2), m.brass, .03, .04, -.02, 0, Math.PI / 2, 0);
-      T = G; sup = [0, -.075, -.27];
-    };
-
     if (k === 'pip') pistol({ light: 1, name: 'PIP', sub: 'DP-9 · 12 RD' });
-    else if (k === 'viper') pistol({ comp: 1, rdot: 1, cuts: 1, ext: 1, name: 'VIPER', sub: 'BURST · 18 RD' });
-    else if (k === 'brick') pistol({ cannon: 1, name: 'BRICK', sub: '.50 · 7 RD' });
-    else if (k === 'flux') { pistol({ ext: 1, rdot: 1, cuts: 1, name: 'FLUX', sub: 'AUTO · 22 RD' }); for (const sx of [-.011, .011]) tube(.004, .03, .2, m.metal, -.035, sx, 8); rbox(.04, .07, .012, m.rubber, 0, -.05, .205, .005); rbox(.03, .012, .03, m.acc, 0, -.02, .05, .004); }
-    else if (k === 'saber') bullpup({ len: .5, front: -.22, br: .0105, tip: 'flash', shroud: .1, mag: 'stick', magL: .14, sight: 'holo', sightY: .099, fore: 'vgrip', counter: 1 });
-    else if (k === 'nova') bullpup({ len: .74, front: -.3, br: .0115, tip: 'brake', mag: 'curve', sight: 'prism', sightY: .1, counter: 1 });
-    else if (k === 'pulsar') { carbine({ len: .45, rf: -.17, hz: -.29, hg: 'slab', hgMat: m.poly, upper: m.fin, lower: m.poly, br: .011, tip: 'flash', stock: 'wire', mag: 'drum', sight: 'holo', sightY: .099, fore: 'vgrip', backup: false, sideHandle: 1 }); decal('PULSAR', 'SMG · 50 DRUM', .1, .025, .0236, .03, -.1); }
-    else if (k === 'tempest') { carbine({ len: .76, rf: -.2, hz: -.5, hg: 'oct', br: .017, tip: 'brake', stock: 'thumb', mag: 'shotbox', sight: 'holo', sightY: .099, fore: 'angled', counter: 1 }); decal('TEMPEST', '12 GA · SEMI', .12, .03, .0236, .03, -.125); }
-    else if (k === 'grinder') shotgun({ len: .84, slug: 1, tip: 'brake', name: 'GRINDER', sub: 'SLUG · PUMP' });
-    else if (k === 'raptor') { carbine({ len: .76, hz: -.5, hg: 'round', br: .0115, tip: 'flash', stock: 'ar', mag: 'curve', curve: .026, sight: 'prism', sightY: .1, fore: 'angled', counter: 1 }); decal('RAPTOR', 'BURST · 30 RD', .12, .03, .0236, .03, -.125); }
-    else if (k === 'warden') { carbine({ len: .93, rf: -.2, hz: -.57, hg: 'slab', br: .013, tip: 'brake', stock: 'thumb', mag: 'stick', magL: .13, sight: 'prism', sightY: .1, fore: 'vgrip', laser: 1 }); decal('WARDEN', '7.62 · 20 RD', .12, .03, .0236, .03, -.125); }
-    else if (k === 'specter') { carbine({ len: .98, hz: -.5, hg: 'round', br: .012, tip: 'supp', sl: .36, stock: 'skel', mag: 'short', sight: 'dmr', sightY: .1, backup: false }); decal('SPECTER', 'SILENT · 15', .12, .03, .0236, .03, -.125, 'rgba(190,170,255,.9)'); }
-    else if (k === 'harpoon') { carbine({ len: 1.04, rf: -.22, hz: -.6, hg: 'oct', br: .014, tip: 'brake', stock: 'heavy', mag: 'short', sight: 'scope', sightY: .112, backup: false, glow: false }); for (const sx of [-.014, .014]) { tube(.0045, -.78, -.56, m.poly, -.02, sx, 8); rbox(.009, .012, .02, m.rubber, sx, -.02, -.79, .003); } decal('HARPOON', 'SEMI · 8 RD', .12, .03, .0236, .03, -.125, 'rgba(40,50,60,.9)'); }
-    else if (k === 'lumen') { carbine({ len: 1.0, rf: -.24, hz: -1.0, hg: 'rail', br: .006, tip: 'crown', stock: 'heavy', mag: 'cell', sight: 'scope', sightY: .112, backup: false, glow: false, upper: m.fin, lower: m.metal }); decal('LUMEN', 'RAIL · 4 CELL', .1, .025, .0236, .03, -.12, 'rgba(40,60,80,.9)'); }
-    else if (k === 'hailstorm') { carbine({ len: 1.0, rf: -.25, hz: -.62, hg: 'shroud', wide: 1, br: .014, tip: 'flash', stock: 'heavy', mag: 'drum', drumBig: 1, sight: 'holo', sightY: .099, counter: 1, sideHandle: 1, glow: false, upper: m.fin, lower: m.metal }); side([[-.36, .07], [-.34, .11], [-.18, .11], [-.16, .07], [-.18, .07], [-.19, .095], [-.33, .095], [-.34, .07]], .02, m.dark, 0, .004); for (const sx of [-.014, .014]) tube(.0045, -.86, -.66, m.poly, -.014, sx, 8); decal('HAILSTORM', 'LMG · 75 DRUM', .13, .033, .0316, .03, -.13); sup = [0, -.02, -.44]; }
-    else if (k === 'cyclone') rotary();
     else if (k === 'wasp') pistol({ comp: 1, ext: 1, rdot: 1, name: 'WASP', sub: 'AUTO · 13 RD' });
     else if (k === 'quill') pistol({ supp: 1, name: 'QUILL', sub: 'SUPPRESSED · 15' });
     else if (k === 'stub') {   // sawn-off double: two short barrels that break open, a wooden forend and a bird's-head grip
@@ -536,7 +479,7 @@
     }
     if (k === 'pip' || k === 'wasp' || k === 'quill' || k === 'stub' || k === 'hammer' || k === 'knife' || GUNS[k].cat === 'Sidearm') pistolHold = true;
 
-    const grip = k === 'knife' ? [0, 0, .045] : k === 'hammer' ? [0, -.055, .052] : k === 'stub' ? [0, -.058, .05] : pistolHold ? [0, -.062, .026] : k === 'breaker' ? [0, -.07, .05] : k === 'kite' || k === 'longbow' ? [0, -.072, .046] : k === 'grinder' ? [0, -.07, .05] : [0, -.076, .026];
+    const grip = k === 'knife' ? [0, 0, .045] : k === 'hammer' ? [0, -.055, .052] : k === 'stub' ? [0, -.058, .05] : pistolHold ? [0, -.062, .026] : k === 'breaker' ? [0, -.07, .05] : k === 'kite' || k === 'longbow' ? [0, -.072, .046] : [0, -.076, .026];
     if (opts.hands) {   // your own gloves and sleeves: fingers wrapped round the grip, the other hand under the gun
       const op = OPS[opts.op] || OPS.vex, band = gmats.band[op.col] || (gmats.band[op.col] = new THREE.MeshStandardMaterial({ color: LC(op.col), roughness: .5 }));
       const arm = (par, x, y, z, rx, ry, l) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(rx, ry, 0); par.add(g); const was = T; T = g;
@@ -578,8 +521,8 @@
     } catch (e) { console.error(e); return ICON[k] = false; }
   }
   // spent brass flying out of the ejection port (first person only)
-  const CASE = { viper: [.0045, .019], flux: [.0045, .019], brick: [.006, .024], saber: [.0045, .019], pulsar: [.0045, .019], raptor: [.005, .03], nova: [.005, .03], warden: [.0055, .036], specter: [.0055, .036], hailstorm: [.005, .03], cyclone: [.005, .03], harpoon: [.006, .04], tempest: [.0095, .05], pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] }, CASEGEO = {};
-  const VOS = { viper: [.17, -.17, -.3], flux: [.17, -.17, -.3], brick: [.17, -.17, -.31], saber: [.19, -.19, -.32], nova: [.2, -.2, -.34], pulsar: [.2, -.19, -.3], grinder: [.2, -.2, -.27], cyclone: [.2, -.22, -.26], hailstorm: [.21, -.21, -.27], harpoon: [.22, -.22, -.26], lumen: [.22, -.22, -.26], knife: [.15, -.15, -.31], pip: [.17, -.17, -.3], wasp: [.17, -.17, -.3], quill: [.17, -.17, -.3], stub: [.17, -.18, -.3], hammer: [.17, -.17, -.3], gnat: [.2, -.19, -.3], hornet: [.2, -.19, -.3], breaker: [.2, -.2, -.27], thresher: [.2, -.2, -.28], mako: [.2, -.2, -.28], paladin: [.21, -.21, -.27], vesper: [.2, -.2, -.28], lancer: [.2, -.2, -.28], kite: [.22, -.22, -.26], longbow: [.23, -.23, -.25], torrent: [.21, -.21, -.27] };
+  const CASE = { pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] };
+  const VOS = { knife: [.15, -.15, -.31], pip: [.17, -.17, -.3], wasp: [.17, -.17, -.3], quill: [.17, -.17, -.3], stub: [.17, -.18, -.3], hammer: [.17, -.17, -.3], gnat: [.2, -.19, -.3], hornet: [.2, -.19, -.3], breaker: [.2, -.2, -.27], thresher: [.2, -.2, -.28], mako: [.2, -.2, -.28], paladin: [.21, -.21, -.27], vesper: [.2, -.2, -.28], lancer: [.2, -.2, -.28], kite: [.22, -.22, -.26], longbow: [.23, -.23, -.25], torrent: [.21, -.21, -.27] };
   /* The moving parts of a gun, for your own view (fp) and your rival's model alike. `ex` carries first-person extras:
      draw (0..1 through the chambering at the end of a draw) and insp (0..1 through an inspect). A reload runs as phases of
      r (0..1): magazine out and dropped, hand away for a fresh one, fresh one in and slapped home, then the bolt or slide. */
@@ -596,7 +539,7 @@
     if (pp.cyl) { // swings out to the left to load, spins shut; turns a chamber each shot
       const o = r < 0 ? 0 : sm(win(.04, .16)) * (1 - sm(win(.84, .95))), want = (G.mag - A.mag) * TAU / 6 + (r > 0 ? sm(win(.25, .8)) * TAU * 2 : 0) + (dq > 0 ? sm(dq) * TAU : 0) + (iq > 0 ? sm(cl((iq - .3) / .5, 0, 1)) * TAU * 3 : 0);
       pp.cyl.rotation.z += (want - pp.cyl.rotation.z) * Math.min(1, dt * 22); pp.cyl.position.x = pp.cyl.userData.p0.x - o * .036; pp.cyl.position.y = pp.cyl.userData.p0.y - o * .012; pp.cyl.rotation.y = -o * .25; }
-    if (pp.rot) { const w = P.net ? (P.fireT > -.15 ? 1 : 0) : (P.wind || 0); pp.rot.rotation.z += dt * w * 38; }   // the Cyclone's barrels spin
+    if (pp.rot) { const w = P.net ? (P.fireT > -.15 ? 1 : 0) : (P.wind || 0); pp.rot.rotation.z += dt * w * 38; }
     if (pp.brk) pp.brk.rotation.x = -Math.max(r < 0 ? 0 : sm(win(.05, .25)) * (1 - sm(win(.8, .95))), dq < 0 ? 0 : (1 - sm(cl(dq * 1.6, 0, 1))) * .8, ib * .5) * .75;
     if (pp.ham) {   // double action: the pull cocks the hammer and it falls; drawing thumbs it back too
       const cock = shotT < .05 ? sm(shotT / .05) : shotT < .08 ? 1 - (shotT - .05) / .03 : 0;
