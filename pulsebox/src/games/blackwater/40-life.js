@@ -108,8 +108,9 @@
     return out;
   }
   function collect(f) {
+    if (NET.client) { NET.ask('collect', { id: f.id }); PL.pickups++; NET.gone.set(f.id, S.t); const i = FL.indexOf(f); if (i >= 0) FL.splice(i, 1); return []; }
     const got = contents(f); got.forEach(k => give(k)); PL.pickups++; const i = FL.indexOf(f); if (i >= 0) FL.splice(i, 1);
-    emit('pickup', got, f.k); return got;
+    pickupMsg(got, f.k); return got;
   }
   function nearFloater(r = 2.4) { const e = eyePos(); let best = null, bd = r; for (const f of FL) { if (f.hooked) continue; const d = Math.hypot(f.x - e[0], f.z - e[2]); if (d < bd) { bd = d; best = f; } } return best; }
 
@@ -190,6 +191,7 @@
     const P = ui.place; if (!P) return false;
     if (!P.ok) { say(P.set ? 'It has to lie on the deck' : 'Aim at the deck where it should go', '#ff9a7a'); return true; }
     if (!P.set) { P.set = true; emit('logSet'); return true; }
+    if (NET.client) { NET.ask('log', { lx: P.lx, lz: P.lz, rot: P.rot }); ui.place = null; emit('solidify'); say('Solid. It braces the deck under it', '#9fe0a0'); return true; }
     INV[P.k]--; RAFT.logs.push({ lx: P.lx, lz: P.lz, rot: P.rot, solid: true }); RAFT.ver++; ui.place = null; emit('solidify'); say('Solid. It braces the deck under it', '#9fe0a0'); return true;
   }
   function placeBack() { const P = ui.place; if (!P) return false; if (P.set) P.set = false; else ui.place = null; return true; }
@@ -210,8 +212,9 @@
     }
   }
   function emptyPiece(c) {
+    if (NET.client) { if (c.store) NET.ask('empty', { i: c.i, j: c.j }); else say(c.obj === 'catcher' ? 'Empty. It fills when it rains' : c.obj === 'still' ? 'Nothing yet. It works while the sun is up' : 'Nothing in the trap yet', '#cfd6e2'); return true; }
     if (!c.store) { say(c.obj === 'catcher' ? 'Empty. It fills when it rains' : c.obj === 'still' ? 'Nothing yet. It works while the sun is up' : 'Nothing in the trap yet', '#cfd6e2'); return false; }
-    const got = c.obj === 'trap' ? (c.fish || []).map(f => 'fish:' + f) : Array(c.store).fill('water'); got.forEach(k => give(k)); c.store = 0; c.fish = []; RAFT.ver++; emit('pickup', got); return true;
+    const got = c.obj === 'trap' ? (c.fish || []).map(f => 'fish:' + f) : Array(c.store).fill('water'); got.forEach(k => give(k)); c.store = 0; c.fish = []; RAFT.ver++; pickupMsg(got); return true;
   }
   // a sunken supply crate: bubbles mark it; dive (hold Shift in the water) and press E beside it
   function cacheTick(dt) {
@@ -220,8 +223,9 @@
   }
   const nearCache = () => CACHE.on && !PL.onRaft && Math.hypot(CACHE.x - PL.wx, CACHE.z - PL.wz) < 2.4 && PL.wy < waterH(PL.wx, PL.wz) - 1.5 && Math.abs(PL.wy - CACHE.y) < 3.2;
   function openCache() {
+    if (NET.client) { NET.ask('cache', {}); CACHE.on = false; return []; }
     const got = ['scrap', 'scrap', 'rope', pick(['scrap', 'rope', 'plank']), pick(['water', 'water', 'biscuit', 'line', 'tinder'])]; if (R() < .5) got.push('water');
-    got.forEach(k => give(k)); CACHE.on = false; CACHE.t = rnd(200, 340); emit('pickup', got); emit('cacheOpen'); return got;
+    got.forEach(k => give(k)); CACHE.on = false; CACHE.t = rnd(200, 340); pickupMsg(got); emit('cacheOpen'); return got;
   }
   function drown() { say('You ran out of air', '#ff9a7a'); faint(true); }
   function fireTick(dt) {
@@ -230,6 +234,8 @@
       if (F.lit && S.rain > .35 && !c.shelter) { F.wet = (F.wet || 0) + dt * S.rain; if (F.wet > 8) { F.lit = false; F.wet = 0; say('The rain put the fire out. Build a shelter over it', '#9fd0ff'); } }
       if (F.lit && F.cook && !F.cook.done) { F.cook.t += dt; if (F.cook.t >= 14) { F.cook.done = true; emit('cooked', F.cook.k); } }
     }
+  }
+  function torchTick(dt) {
     // a torch drowns in heavy rain unless you stand under a roof
     if (PL.torch) {
       const c = PL.onRaft ? cellUnder(RAFT, PL.lx, PL.lz) : null;
@@ -245,6 +251,7 @@
   }
   function useFire(c) {
     const F = c.fire;
+    if (NET.client) { if (F.lit && !PL.torch && !F.cook && !Object.keys(INV).some(k => k.startsWith('fish:') && INV[k] > 0)) return lightTorch(); NET.ask('fire', { i: c.i, j: c.j, torch: PL.torch }); return true; }
     if (!F.lit) { if (PL.torch || (INV.tinder || 0) > 0) { if (!PL.torch) INV.tinder--; F.lit = true; F.wet = 0; emit('fire', true); say('The fire catches', '#ffd28a'); return true; } say('Light it with your torch or dry tinder', '#cfd6e2'); return false; }
     if (F.cook && F.cook.done) { give('cooked:' + F.cook.k); emit('pickup', ['cooked:' + F.cook.k]); F.cook = null; return true; }
     if (!F.cook) { const raw = Object.keys(INV).find(k => k.startsWith('fish:') && INV[k] > 0); if (raw) { INV[raw]--; F.cook = { k: raw.slice(5), t: 0, done: false }; say('Cooking...', '#ffd28a'); return true; } }
@@ -297,6 +304,7 @@
     if (SH.state !== 'bite' && SH.state !== 'player' && SH.state !== 'approach' && SH.state !== 'circle') return false;
     const e = eyePos(), d = lookDir(), vx = SH.x - e[0], vy = SH.y + .2 - e[1], vz = SH.z - e[2], dist = Math.hypot(vx, vy, vz);
     if (dist > 3.6 || (vx * d[0] + vy * d[1] + vz * d[2]) / dist < .8) return false;
+    if (NET.client) { NET.ask('spear', {}); emit('sharkHit'); return true; }
     SH.hits++; SH.stun = 1.2; emit('sharkHit');
     if (SH.hits >= 3) { SH.state = 'flee'; SH.t = 10; say('It lets go and runs', '#9fe0a0'); }
     return true;
@@ -382,19 +390,23 @@
   let paddle = [0, 0];
   function lifeTick(dt, I) {
     PL.play += dt; PL.cool = Math.max(0, PL.cool - dt);
-    seaFrame(); weatherTick(dt, RAFT);
+    seaFrame(); if (NET.client) { S.t += dt; S.tod = (S.tod + dt * 24 / DAY_LEN) % 24; } else { NET.fw = NET.on ? [] : null; weatherTick(dt, RAFT); }
     // paddling with the oar pushes the raft the way you face
     paddle = [0, 0]; if (PL.tool === 'oar' && I.use && PL.onRaft) { const f = 1.65; paddle = [-Math.sin(PL.yaw) * f, -Math.cos(PL.yaw) * f]; PL.paddleT = (PL.paddleT || 0) + dt; } else PL.paddleT = 0;
-    bodyPhys(RAFT, dt, { px: paddle[0], pz: paddle[1] });
-    for (const d of DRIFT) { bodyPhys(d, dt, { px: d.px || 0, pz: d.pz || 0 }); d.life -= dt; d.px *= Math.exp(-dt / 50); d.pz *= Math.exp(-dt / 50); } for (let n = DRIFT.length - 1; n >= 0; n--) if (DRIFT[n].life <= 0 || Math.hypot(DRIFT[n].x - RAFT.x, DRIFT[n].z - RAFT.z) > 180) DRIFT.splice(n, 1);
+    if (NET.client) NET.paddleOut = paddle;
+    bodyPhys(RAFT, dt, { px: paddle[0] + NET.paddle[0], pz: paddle[1] + NET.paddle[1] });
+    if (!NET.client) for (const d of DRIFT) { bodyPhys(d, dt, { px: d.px || 0, pz: d.pz || 0 }); d.life -= dt; d.px *= Math.exp(-dt / 50); d.pz *= Math.exp(-dt / 50); } for (let n = DRIFT.length - 1; n >= 0; n--) if (DRIFT[n].life <= 0 || Math.hypot(DRIFT[n].x - RAFT.x, DRIFT[n].z - RAFT.z) > 180) DRIFT.splice(n, 1);
     for (const c of RAFT.cells.values()) { c.shake = Math.max(0, c.shake - dt * 1.5); c.hit = Math.max(0, c.hit - dt * 2); }
     PL.brace = !!I.brace;
     if (PL.onRaft) moveRaftPlayer(I, dt); else { swim(I, dt); ui.place = null; }
     HK.reel = I.use && PL.tool === 'hook'; FS.reel = I.use && PL.tool === 'rod';
-    hookTick(dt); fishTick(dt); spawnTick(dt); floaterTick(dt); sharkTick(dt); eventsTick(dt); cthulhuTick(dt); fireTick(dt); hungerTick(dt); piecesTick(dt); cacheTick(dt);
+    hookTick(dt); fishTick(dt);
+    if (!NET.client) { spawnTick(dt); floaterTick(dt); sharkTick(dt); eventsTick(dt); cthulhuTick(dt); fireTick(dt); piecesTick(dt); cacheTick(dt); } else for (const f of FL) bob(f, dt, DRAFT[f.k] || .1);
+    if (NET.fw && NET.out) NET.out.push(...NET.fw); NET.fw = null; torchTick(dt); hungerTick(dt);
     // the aim: what the hammer would build or mend, what E would use
     ui.aim = PL.onRaft ? deckAim() : null; placeTick(); ui.prompt = promptFor();
-    recentre();
+    if (!NET.client) recentre();
+    if (NET.tick) NET.tick(dt);
     saveT -= dt; if (saveT <= 0) { saveT = 30; saveRun(); }
   }
 
@@ -441,7 +453,7 @@
       const a = ui.aim, c = a && a.dist < 3.2 ? cellAt(RAFT, a.i, a.j) : null;
       if (c && c.fire) return useFire(c);
       if (c && HOLD[c.obj]) return emptyPiece(c);
-      { const Lg = logAimed(); if (Lg) { RAFT.logs.splice(RAFT.logs.indexOf(Lg), 1); RAFT.ver++; give('log'); emit('pickup', ['log']); return true; } }
+      { const Lg = logAimed(); if (Lg) { if (NET.client) { NET.ask('unlog', { lx: Lg.lx, lz: Lg.lz }); return true; } RAFT.logs.splice(RAFT.logs.indexOf(Lg), 1); RAFT.ver++; give('log'); pickupMsg(['log']); return true; } }
       if (PL.tool === 'torch' && !PL.torch) return lightTorch();
     },
     select(t) { if (t === 'food' || t === 'water' || PL.tools[t]) { PL.tool = t; if (t !== 'hook') dropHook(); if (t !== 'rod') FS.state = 'idle'; ui.buildOpen = t === 'hammer' && ui.buildOpen; } },
@@ -466,7 +478,7 @@
       pl: { hunger: PL.hunger, thirst: PL.thirst, tools: PL.tools, tool: PL.tool, pickups: PL.pickups, torch: PL.torch, lx: PL.onRaft ? PL.lx : 0, lz: PL.onRaft ? PL.lz : 0, play: PL.play },
       s: { tod: S.tod, day: S.day, nights: S.nights }, ct: { cool: CT.cool, seen: CT.seen }, at: Date.now() };
   }
-  function saveRun() { if (!runLive) return; try { K.save.bw = Object.assign(K.save.bw || {}, { cfg: CFG, run: snapshot() }); K.persist(); } catch (e) {} }
+  function saveRun() { if (!runLive || NET.client) return; try { K.save.bw = Object.assign(K.save.bw || {}, { cfg: CFG, run: snapshot() }); K.persist(); } catch (e) {} }
   const savedRun = () => { try { return (K.save.bw || {}).run || null; } catch (e) { return null; } };
   function loadRun(r) {
     newRun(); if (!r) return;

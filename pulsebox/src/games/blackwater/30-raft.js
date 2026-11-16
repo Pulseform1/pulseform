@@ -65,7 +65,7 @@
     let main = groups.find(g => keepKey && g.some(c => ckey(c.i, c.j) === keepKey)) || groups.reduce((a, b) => b.length > a.length ? b : a);
     const off = [];
     for (const g of groups) if (g !== main) {
-      const d = newBody(RAFT.x, RAFT.z); Object.assign(d, { y: RAFT.y, yaw: RAFT.yaw, pitch: RAFT.pitch, roll: RAFT.roll, vx: RAFT.vx, vz: RAFT.vz, life: 140 });
+      const d = newBody(RAFT.x, RAFT.z); d.id = ++RAFT.driftN || (RAFT.driftN = 1); Object.assign(d, { y: RAFT.y, yaw: RAFT.yaw, pitch: RAFT.pitch, roll: RAFT.roll, vx: RAFT.vx, vz: RAFT.vz, life: 140 });
       for (const c of g) { RAFT.cells.delete(ckey(c.i, c.j)); d.cells.set(ckey(c.i, c.j), c); }
       const [ax, az] = flatW(RAFT, g[0].i * CS, g[0].j * CS), aw = Math.atan2(az - RAFT.z, ax - RAFT.x); d.vx += Math.cos(aw) * .6; d.vz += Math.sin(aw) * .6; d.px = Math.cos(aw) * .7; d.pz = Math.sin(aw) * .7;   // pushed clear, and it keeps going (smaller, it rides the wind differently)
       DRIFT.push(d); off.push(d);
@@ -96,8 +96,8 @@
   // building: where each piece may go, and what it costs
   const INV = {};
   const has = need => Object.entries(need).every(([k, n]) => (INV[k] || 0) >= n);
-  const spend = need => { for (const [k, n] of Object.entries(need)) INV[k] -= n; };
-  const give = (k, n = 1) => { INV[k] = (INV[k] || 0) + n; };
+  const spend = need => { for (const [k, n] of Object.entries(need)) INV[k] -= n; if (NET.client) NET.ask('spend', { need }); };
+  const give = (k, n = 1) => { INV[k] = (INV[k] || 0) + n; if (NET.client) NET.ask('give', { k, n }); };
   function canPlace(kind, i, j, side) {
     const c = cellAt(RAFT, i, j);
     if (kind === 'foundation') return !c && SIDES.some(([di, dj]) => cellAt(RAFT, i + di, j + dj)) && RAFT.cells.size < 64;
@@ -112,11 +112,12 @@
   }
   function place(kind, i, j, side) {
     if (!canPlace(kind, i, j, side) || !has(PIECES[kind].need)) return false;
+    if (NET.client) { NET.ask('place', { kind, i, j, side }); emit('build', kind, i, j); return true; }
     spend(PIECES[kind].need);
     if (kind === 'foundation') RAFT.cells.set(ckey(i, j), newCell(i, j));
     else { const c = cellAt(RAFT, i, j); if (kind === 'floor') c.floor = true; else if (kind === 'wall') c.walls[side] = 1; else if (kind === 'shelter') c.shelter = true; else if (kind === 'reinforce') c.reinforce = true; else { c.obj = kind; if (kind === 'fire') c.fire = { lit: false, cook: null }; } }
     RAFT.ver++; emit('build', kind, i, j); return true;
   }
-  function repair(c) { if (!c || c.hp >= 100 || !has(REPAIR)) return false; spend(REPAIR); c.hp = Math.min(100, c.hp + 35); RAFT.ver++; emit('repair', c); return true; }
+  function repair(c) { if (!c || c.hp >= 100 || !has(REPAIR)) return false; if (NET.client) { NET.ask('repair', { i: c.i, j: c.j }); emit('repair', c); return true; } spend(REPAIR); c.hp = Math.min(100, c.hp + 35); RAFT.ver++; emit('repair', c); return true; }
   const sheltered = c => !!(c && c.shelter);
   const anyStorage = () => [...RAFT.cells.values()].some(c => c.obj === 'storage');

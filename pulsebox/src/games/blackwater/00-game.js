@@ -1,3 +1,4 @@
+// @use mp
 /* Blackwater Drift: first-person ocean survival. You wake on a tiny raft with a rope hook and an unlit torch.
    Haul in wreckage, build the raft out, fish, cook, and keep it together through storms, sharks and whirlpools.
    On very rare nights something vast rises out of the sea.

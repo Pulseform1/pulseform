@@ -10,8 +10,13 @@
   const angDiff = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
   const BUS = {};
   const on = (n, fn) => { (BUS[n] || (BUS[n] = [])).push(fn); };
-  const emit = (n, a, b, c) => { const l = BUS[n]; if (l) for (const f of l) f(a, b, c); };
-  const say = (text, col) => emit('say', text, col);
+  const emit = (n, a, b, c) => { if (NET.hook) NET.hook(n, a); const l = BUS[n]; if (l) for (const f of l) f(a, b, c); };
+  /* online co-op (60-net fills this in). Alone, NET.client is false and every part runs here. With friends, the host runs the sea,
+     the raft, the wreckage and the events; a client runs only its own body and tools and sends what it does to the host (NET.ask).
+     NET.cap: while the host carries out a friend's request, what it would say or hand over goes back to that friend instead. */
+  const NET = { on: false, client: false, ask: () => {}, cap: null, paddle: [0, 0], peers: new Map(), fw: null, out: [], gone: new Map(), hook: null };
+  const say = (text, col) => { if (NET.cap) { NET.cap.says.push([text, col || '']); return; } if (NET.fw) NET.fw.push(['say', text, col || '']); emit('say', text, col); };
+  const pickupMsg = (got, kind) => { if (NET.cap) { NET.cap.got.push(...got); return; } emit('pickup', got, kind); };
 
   // what you can carry. Fish are 'fish:<kind>' raw and 'cooked:<kind>'
   const ITEM = { plank: 'Plank', rope: 'Rope', scrap: 'Scrap', tinder: 'Dry tinder', biscuit: 'Ship biscuit', coconut: 'Coconut', line: 'Fishing line', water: 'Fresh water', log: 'Log' };

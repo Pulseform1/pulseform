@@ -81,6 +81,19 @@
   }
   const dx0 = (d, L) => d ? .14 : L;
   // logs placed on the deck, and the see-through one you are placing
+  // a friend on the raft: a simple figure in their colour, with their name over the head
+  function personMesh(col, name) {
+    const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: new THREE.Color(col), roughness: .7 }), dark = new THREE.MeshStandardMaterial({ color: new THREE.Color('#2a3038'), roughness: .8 });
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(.2, .24, .78, 10), m); body.position.y = 1.02; g.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(.15, 12, 10), MAT.skin); head.position.y = 1.58; g.add(head);
+    for (const s of [-1, 1]) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(.075, .07, .64, 8), dark); leg.position.set(s * .1, .32, 0); g.add(leg);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(.06, .055, .62, 8), m); arm.position.set(s * .27, 1.08, 0); arm.rotation.z = s * .12; g.add(arm); g.userData[s < 0 ? 'armL' : 'armR'] = arm; }
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64; const c2 = cv.getContext('2d'); c2.font = '700 34px "Barlow Condensed", sans-serif'; c2.textAlign = 'center'; c2.textBaseline = 'middle';
+    c2.fillStyle = 'rgba(6,18,27,.6)'; const tw = c2.measureText(name).width + 28; c2.fillRect(128 - tw / 2, 10, tw, 44); c2.fillStyle = col; c2.fillText(name, 128, 33);
+    const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false, transparent: true })); tag.scale.set(.8, .2, 1); tag.position.y = 1.95; tag.renderOrder = 5; g.add(tag);
+    const fl = new THREE.Sprite(MAT.flame); fl.scale.set(.3, .5, 1); fl.position.set(.32, 1.62, -.2); fl.visible = false; g.add(fl); g.userData.flame = fl;
+    return g;
+  }
   function syncLogs(body, G) {
     if (!X.logMats) { X.logMats = { ok: new THREE.MeshBasicMaterial({ color: '#8fe0a0', transparent: true, opacity: .45, depthWrite: false }), bad: new THREE.MeshBasicMaterial({ color: '#ff6a5a', transparent: true, opacity: .45, depthWrite: false }), set: new THREE.MeshBasicMaterial({ color: '#e8d080', transparent: true, opacity: .6, depthWrite: false }) }; X.logGeo = new THREE.CylinderGeometry(.17, .19, LOG_LEN, 12); X.logGeo.rotateZ(Math.PI / 2); }
     G.userData.logs = G.userData.logs || [];

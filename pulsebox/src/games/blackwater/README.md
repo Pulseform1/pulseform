@@ -27,6 +27,14 @@ node tools/blackwater-sim-test.mjs          # the simulation checks
 
 The page is the whole game: it needs nothing beside it except Three.js r128, which it loads from cdnjs (falling back to jsDelivr). Drop `blackwater.html` in any folder of the site and open it. The hub entry is the `blackwater` record in `public/index.html` (cover, trailer and screenshots in `public/media/blackwater-*`).
 
+## Play with friends (2 to 4)
+
+PLAY WITH FRIENDS on the menu opens the Pulsebox room lobby: create a room, send the 4-letter code, start when everyone is in.
+The host runs the sea (weather, waves, raft, wreckage, shark, events) and saves the raft; friends run their own body, hunger,
+thirst and tools, and see each other as figures with name tags. Materials are shared. A friend's grabs, builds, fires, logs,
+sunken crates and spear hits go to the host as requests (`60-net.js`), so the one raft never splits. If the host leaves,
+friends go back to the menu. `node tools/blackwater-mp-check.mjs <folder>` plays a host and a friend through the live relay.
+
 ## Survival additions
 
 - **Thirst** drains faster than hunger (about 16 minutes, worse in the midday sun). Q drinks fresh water; coconuts help too. Salvage barrels and crates sometimes hold water.

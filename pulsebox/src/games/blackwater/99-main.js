@@ -5,7 +5,10 @@
     runLive = true; screen = 'play'; panel = null; lockMouse(); saveRun(); lastDay = S.day;
     if (!cont) setTimeout(() => say(isTouch() ? 'Wreckage is drifting your way. Hold THROW, let go to cast the hook' : 'Wreckage is drifting your way. Hold the mouse button, let go to throw the hook', TEAL), 1200);
   }
-  function toMenu() { runLive = false; screen = 'menu'; panel = null; unlockMouse(); resetInput(); newRun(); }
+  // with friends: the host sails its own raft (the saved one, if there is one); a friend climbs aboard and waits for the host's world
+  function netHost(cont) { menuStart(cont); say(`${NET.peers.size + 1} of you on the raft. You are the host: your raft, your save`, TEAL); }
+  function netJoin() { resetInput(); newRun(); runLive = false; screen = 'play'; panel = null; lockMouse(); say('Climbing aboard your friend\'s raft...', TEAL); }
+  function toMenu() { if (NET.on) netEnd(); runLive = false; screen = 'menu'; panel = null; unlockMouse(); resetInput(); newRun(); }
   function applyQuality() { if (!X) return; X.q = quality(); X.low = X.q === 'low'; X.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, X.low ? 1.25 : X.q === 'high' ? 2 : 1.6)); X.renderer.shadowMap.enabled = X.q === 'high'; X.sun.castShadow = X.q === 'high'; buildOcean(); }
   on('faint', () => { if (X) X.fade = 2.5; });
   on('wash', A => { if (X) X.shake = 1.4; if (X) for (let i = 0; i < 40; i++) { const e = eyePos(); sprayAt(e[0] + rnd(-4, 4), e[1] - .6, e[2] + rnd(-4, 4), 4, 6, 3, 2); } });
@@ -16,6 +19,7 @@
   GAME.reset = () => {
     if (!booted) { booted = true; loadCfg(); }
     resetInput(); panel = null; acc = 0; screen = 'menu'; runLive = false; newRun();
+    if (/[?&]room=/.test(location.search) && !GAME.roomShown) { GAME.roomShown = true; setTimeout(() => MP.show(), 300); }   // a Play with friends link: straight to the room
   };
   GAME.update = dt => {
     acc += Math.min(dt, .1); let n = 0;
@@ -45,7 +49,7 @@
   // for the browser checks (tools/blackwater-checks.mjs) and for testing by hand from the console
   GAME.test = {
     get X() { return X; }, get ready() { return ready; }, get screen() { return screen; }, get RAFT() { return RAFT; }, get panel() { return panel; }, set panel(v) { panel = v; },
-    S, PL, HK, FS, FL, SH, CT, CACHE, INV, IN, ui, act, drink, keyEvent, collect, get panelName() { return panel; }, give, place, cellAt, spawnGiant, spawnPool, summon, addFloater, menuStart, toMenu, lifeTick, waterH, eyePos, touchButtons, uiScale, CFG, applyQuality, DRIFT, FISH,
+    S, PL, HK, FS, FL, SH, CT, CACHE, INV, IN, ui, act, drink, keyEvent, collect, NET, get panelName() { return panel; }, give, place, cellAt, spawnGiant, spawnPool, summon, addFloater, menuStart, toMenu, lifeTick, waterH, eyePos, touchButtons, uiScale, CFG, applyQuality, DRIFT, FISH,
     tick: s => { for (let i = 0; i < s * 60; i++) lifeTick(1 / 60, readInput()); },
   };
   (async () => { try { if (typeof document === 'undefined') return; try { await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'); } catch (e) { await loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'); } initGfx(); ready = true; } catch (e) { console.error(e); failed = true; } })();

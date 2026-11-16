@@ -157,6 +157,7 @@
     const sv = savedRun(); let y = 320;
     if (sv) { btn(g, cx - 160, y, 320, 60, 'CONTINUE', () => menuStart(true), { on: true, px: 26, sub: `Day ${sv.s.day} · ${sv.raft.cells.length} foundations` }); y += 72; }
     btn(g, cx - 160, y, 320, 54, sv ? 'NEW RAFT' : 'WAKE UP', () => menuStart(false), { on: !sv, px: 24 }); y += 66;
+    btn(g, cx - 160, y, 320, 50, 'PLAY WITH FRIENDS', () => { unlockMouse(); MP.show(); }, { px: 20, sub: 'one raft, up to 4 of you' }); y += 62;
     btn(g, cx - 160, y, 320, 46, 'SETTINGS', () => { panel = 'settings'; }, { px: 19 });
     tx(g, isTouch() ? 'Left thumb moves · drag right to look · hold USE to throw and reel' : 'WASD walk · mouse look · hold click to throw, hold again to reel · E grab · C craft · B build · F eat · Q drink · H keys', cx, V.y1 - 40, 15, DIM);
     if (panel === 'settings') drawSettings(g, false);

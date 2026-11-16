@@ -1312,8 +1312,8 @@ const GAMES = [
     id: "blackwater",
     title: "Blackwater Drift",
     category: "Action",
-    kind: "Survival · 3D first person · Open ocean · Desktop and iPad",
-    tags: ["Ocean survival", "Build your raft", "Storms and sharks", "Plays on iPad"],
+    kind: "Survival · 3D first person · Co-op for 1-4 · Desktop and iPad",
+    tags: ["Ocean survival", "Co-op with friends", "Build your raft", "Plays on iPad"],
     badge: 'NEW',
     file: 'games/blackwater.html',
     cover: 'media/blackwater-cover.jpg',
@@ -3020,8 +3020,8 @@ $('q2').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDef
    so a code alone is enough to join. The game gets ?room=CODE
    and walks straight into the room's lobby (src/lib/mp.js).
    ============================================================ */
-const FRIEND_GAMES = ['duelpoint', 'odd-crowd', 'lantern-keep', 'siegeworks', 'hyperlane', 'strata', 'bumper-brawl', 'paint-wars', 'turbo-laps', 'sea-battle', 'doodle-guess'];
-const FRIEND_PLAYERS = { duelpoint: '2v2 teams · 1v1', 'odd-crowd': '3-10 players · party', 'lantern-keep': '1-4 players · co-op', siegeworks: '1v1', hyperlane: '2-6 players', strata: '2-4 players · co-op', 'bumper-brawl': '2-4 players', 'paint-wars': '2-4 players', 'turbo-laps': '2-6 players', 'sea-battle': '1v1', 'doodle-guess': '2-8 players' };
+const FRIEND_GAMES = ['blackwater', 'duelpoint', 'odd-crowd', 'lantern-keep', 'siegeworks', 'hyperlane', 'strata', 'bumper-brawl', 'paint-wars', 'turbo-laps', 'sea-battle', 'doodle-guess'];
+const FRIEND_PLAYERS = { blackwater: '2-4 players · co-op', duelpoint: '2v2 teams · 1v1', 'odd-crowd': '3-10 players · party', 'lantern-keep': '1-4 players · co-op', siegeworks: '1v1', hyperlane: '2-6 players', strata: '2-4 players · co-op', 'bumper-brawl': '2-4 players', 'paint-wars': '2-4 players', 'turbo-laps': '2-6 players', 'sea-battle': '1v1', 'doodle-guess': '2-8 players' };
 const API_ORIGIN = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? '' : 'https://box.pulseform.org';
 let roomJoin = null, frPick = null;
 const frGames = () => FRIEND_GAMES.map(byId).filter(Boolean);

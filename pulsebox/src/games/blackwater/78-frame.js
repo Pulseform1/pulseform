@@ -68,6 +68,16 @@
     // the shark
     X.cache.visible = CACHE.on; X.cache.position.set(CACHE.x, CACHE.y, CACHE.z); X.cache.rotation.y = .6;
     for (const b of X.bubbles) { b.visible = CACHE.on; if (!CACHE.on) continue; const p = (X.t * .25 + b.userData.ph) % 1, top = waterH(CACHE.x, CACHE.z); b.position.set(CACHE.x + Math.sin(b.userData.ph * 40 + X.t) * .25, lp(CACHE.y + .3, top, p), CACHE.z + Math.cos(b.userData.ph * 33 + X.t) * .25); b.scale.setScalar(.6 + p * 1.2); }
+    // friends on the raft (or in the water)
+    if (!X.peers) X.peers = new Map();
+    for (const [id, o] of X.peers) if (!NET.peers.has(id)) { X.scene.remove(o); X.peers.delete(id); }
+    for (const [id, p] of NET.peers) {
+      if (!p.pose) continue; let o = X.peers.get(id); if (!o) { o = personMesh(p.col || '#ffd23f', p.name || 'Friend'); X.scene.add(o); X.peers.set(id, o); o.userData.pos = null; }
+      const q = p.pose, tgt = q.onRaft ? toWorld(RAFT, q.lx, DECK + q.ly, q.lz) : [q.wx, q.wy - 1.45, q.wz];
+      const cur = o.userData.pos || (o.userData.pos = tgt.slice()); for (let i = 0; i < 3; i++) cur[i] += (tgt[i] - cur[i]) * Math.min(1, dt * 12);
+      o.position.set(cur[0], cur[1], cur[2]); o.rotation.y = q.yaw; o.userData.flame.visible = !!q.torch;
+      const sw = Math.sin(X.t * 6) * (q.onRaft ? .25 : .7); o.userData.armL.rotation.x = sw; o.userData.armR.rotation.x = q.tool === 'hook' || q.tool === 'rod' ? -.9 : -sw;
+    }
     X.shark.visible = SH.state !== 'away';
     if (X.shark.visible) { X.shark.position.set(SH.x, SH.y, SH.z); X.shark.rotation.set(0, -SH.yaw, SH.state === 'bite' ? Math.sin(X.t * 24) * .12 : 0); X.shark.userData.tail.rotation.y = Math.sin(SH.swim) * .45; }
     // the thing from below
