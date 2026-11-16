@@ -13,7 +13,7 @@ const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n
 const K = { save: {}, persist() {}, bot: false, state: 'play' };
 const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name: 'Tester', id: 0 };
 const T = new Function('K', 'MP', code + `
-  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, coinsFor, STATS, MAPS, loadMap,
+  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
     get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
@@ -48,9 +48,8 @@ function mapChecks() {
 
 // a quiet match to measure in: you against a bot that is parked far away, in the live phase
 function lab(gunKey) {
-  T.STATS.owned = Object.keys(T.GUNS);
   T.seed(7); T.startMatch({ mode: 'bot', diff: 0, map: 0 }); const M = T.M, P = T.me(), F = T.foe();
-  F.bot = { diff: 0, dummy: true, home: [61, 41] }; Object.assign(F, { x: 61, z: 41 });
+  F.bot = { diff: 0, dummy: true, home: [61, 41] }; Object.assign(F, { x: 61, z: 41 }); P.credits = 9000;
   if (gunKey) T.buy(P, gunKey); M.phase = 'live'; M.t = 80; Object.assign(P, { x: 40, z: 3, yaw: 0, pitch: 0 });   // on the Pier, facing the sea, with open ground to the east
   return [M, P, F];
 }
@@ -83,24 +82,27 @@ function gunplayChecks() {
   let F; [M, P, F] = lab(); F.sh = 50; T.applyDamage(F, 40, P, false, 'lancer');
   ok(F.hp === 100 && F.sh === 10, 'shields soak damage first', `hp ${F.hp}, shield ${F.sh}`);
   T.applyDamage(F, 160, P, true, 'lancer');
-  ok(!F.alive && P.stat.k === 1 && P.stat.hs === 1, 'a kill is counted');
+  ok(!F.alive && P.stat.k === 1 && P.stat.hs === 1 && P.credits === 9000, 'a kill is counted and paid (capped at 9000)');
   section('knife');
   const stab = (heavy, fromBehind) => { [M, P, F] = lab(); P.yaw = T.yawTo(40, 3, 60, 3); Object.assign(F, { x: 41.6, z: 3, yaw: fromBehind ? P.yaw : P.yaw + Math.PI }); P.pitch = -.4; T.switchTo(P, 3); P.fireT = 0; if (heavy) T.altAction(P); else T.fire(P); return 100 - F.hp; };
   ok(stab(false, false) === 50, 'a slash to the body does 50'); ok(stab(true, false) === 75, 'a stab does 75'); ok(stab(true, true) === 100 && !F.alive, 'a stab in the back kills');
   [M, P, F] = lab(); P.yaw = T.yawTo(40, 3, 60, 3); Object.assign(F, { x: 44, z: 3 }); T.switchTo(P, 3); P.fireT = 0; T.fire(P); ok(F.hp === 100, 'it does not reach 4 m');
-  section('coins and loadout');
-  [M, P, F] = lab(); T.STATS.owned = []; M.phase = 'buy';
-  ok(Object.values(T.GUNS).every(G => typeof G.coins === 'number') && ['pip', 'mako', 'kite', 'gnat', 'breaker'].every(k => T.GUNS[k].coins === 0), 'every gun has a coin price; one starter per class is free');
-  ok(!T.buy(P, 'lancer') && T.buy(P, 'mako') && P.guns[1] === 'mako', 'you can only take guns you own (or free ones)');
-  T.STATS.owned = ['lancer']; ok(T.buy(P, 'lancer') && P.load[1] === 'lancer', 'a bought gun goes into your loadout');
-  ok(T.buy(P, 'heavy') && P.sh === 50, 'shields are free');
-  P.alive = false; M.phase = 'live'; T.endRound(1, 'elim_att'); T.startRound(M.round + 1);
-  ok(P.guns[1] === 'lancer' && P.sh === 50 && P.alive, 'even after dying, next round starts with your loadout');
+  section('money');
+  [M, P, F] = lab(); P.credits = 800; F.credits = 800; M.phase = 'buy';
+  ok(T.buy(P, 'hammer') && P.credits === 0 && P.guns[2] === 'hammer', 'buying takes the money and gives the gun');
+  ok(T.buy(P, 'quill') && P.credits === 300 && P.guns[2] === 'quill', 'buying another in the same slot refunds the first');
+  ok(T.buy(P, 'quill') && P.credits === 800 && P.guns[2] === 'pip', 'choosing it again sells it back');
+  ok(!T.buy(P, 'lancer') && P.credits === 800, 'you cannot buy what you cannot afford');
+  ok(T.buy(P, 'smoke') && T.buy(P, 'smoke') && P.smokes === 2 && P.credits === 400 && !T.buy(P, 'nothing'), 'smoke grenades cost 200 each, two at most');
+  ok(T.buy(P, 'smoke') && P.smokes === 1 && P.credits === 600, 'pressing smoke with two in hand sells one back');
+  M.phase = 'live'; T.endRound(0, 'elim_def'); ok(P.credits === 3200 && F.credits === 2400, 'win +2600, first loss +1600', P.credits + ' ' + F.credits);
+  M.phase = 'live'; T.endRound(0, 'elim_def'); M.phase = 'live'; T.endRound(0, 'elim_def'); ok(F.credits === 2400 + 2000 + 2400, 'losses pay 1600, 2000, then 2400');
+  P.alive = true; T.startRound(5); ok(P.credits === 800 && P.guns[2] === 'pip' && !P.guns[1], 'round 5 is a pistol round: everyone back to 800 and a pistol');
 }
 
 // whole matches, bot against bot, watching for errors, fighters that stop moving, and rounds that never end
 function moveChecks() {
-  section('sprint, slide, adaptive bots, coins');
+  section('sprint, slide, adaptive bots');
   let I = idle(); T.setInput(() => I);
   let [M, P] = lab(); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1 }; run(.8); const runV = Math.hypot(P.vx, P.vz);
   [M, P] = lab(); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1, sprint: true }; run(.8); const sprV = Math.hypot(P.vx, P.vz);
@@ -116,7 +118,6 @@ function moveChecks() {
   const lv = [600, 900, 1100, 1400, 1700].map(r => T.diffFor(r)), keys = ['react', 'err', 'flick'];
   ok(lv.every((L, i) => !i || keys.every(k => L.D[k] <= lv[i - 1].D[k]) && L.D.turn >= lv[i - 1].D.turn), 'the bot gets sharper at every step up in rating', lv.map(L => L.D.n).join(' → '));
   T.STATS.rating = 1500; T.seed(3); T.startMatch({ mode: 'bot', diff: 'auto', map: 0 }); ok(T.foe().bot.D && T.foe().bot.diff >= 2, 'an AUTO match builds its bot from your rating', T.foe().bot.D.n);
-  ok(T.coinsFor({ won: true, kills: 7 }) === 260 && T.coinsFor({ won: false, kills: 3 }) === 105 && T.coinsFor({ won: true, kills: 0 }) === 15, 'coins: 35 a kill, 15 more for a win', `7 kills and a win: ${T.coinsFor({ won: true, kills: 7 })}`);
 }
 function teamChecks(count) {
   section(`${count} 2v2 bot matches`);

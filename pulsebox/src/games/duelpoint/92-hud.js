@@ -120,14 +120,16 @@
       tx(g, String(Math.ceil(P.hp)), 18, -28, 40, hpCol, 'left'); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(104, -36, 128, 8); g.fillStyle = hpCol; g.fillRect(104, -36, 128 * P.hp / 100, 8);
       if (P.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(104, -22, 128 * P.sh / 50, 6); tx(g, String(P.sh), 104 + 128 * P.sh / 50 + 6, -19, 11, '#7fc8ff', 'left'); }
       const op = OPS[P.op]; [['Q', 'q'], ['E', 'e']].forEach(([key, k], i) => { const x = 266 + i * 96, on = P.ab[k]; rr(g, x, -58, 86, 58, 8, on ? GLASS : 'rgba(12,16,22,.4)', on ? op.col : 'rgba(255,255,255,.12)'); tx(g, op[k].n.toUpperCase(), x + 43, -38, 14, on ? BONE : '#5a6272'); tx(g, key, x + 43, -16, 14, on ? op.col : '#5a6272'); });
-      if (P.load.nade || P.smokes > 0) { const x = 458, on = P.smokes > 0; rr(g, x, -58, 86, 58, 8, on ? GLASS : 'rgba(12,16,22,.4)', on ? NADE.col : 'rgba(255,255,255,.12)'); tx(g, 'SMOKE ×' + (P.smokes || 0), x + 43, -38, 14, on ? BONE : '#5a6272'); tx(g, 'G', x + 43, -16, 12, on ? NADE.col : '#5a6272'); }
+      if (P.smokes > 0) { const x = 458, on = P.smokes > 0; rr(g, x, -58, 86, 58, 8, on ? GLASS : 'rgba(12,16,22,.4)', on ? NADE.col : 'rgba(255,255,255,.12)'); tx(g, 'SMOKE ×' + (P.smokes || 0), x + 43, -38, 14, on ? BONE : '#5a6272'); tx(g, 'G', x + 43, -16, 12, on ? NADE.col : '#5a6272'); }
       g.restore();
       g.save(); g.translate(V.x1 - 22 - 50 / pxPer(), V.y1 - 20); g.scale(u, u); rr(g, -270, -58, 270, 58, 8, GLASS);
       if (G.melee) tx(g, '—', -150, -28, 34, BONE); else { tx(g, String(A.mag), -150, -28, 42, A.mag ? BONE : WARN, 'right'); tx(g, '/ ' + A.res, -140, -22, 18, DIM, 'left'); }
       tx(g, G.n.toUpperCase(), -14, -38, 15, G.col, 'right'); tx(g, G.cat.toUpperCase(), -14, -18, 11, DIM, 'right');
       [1, 2, 3].forEach((s, i) => { const k = P.guns[s], y = -78 - (2 - i) * 24; if (!k) return; const on = P.slot === s; rr(g, -150, y - 10, 150, 21, 5, on ? 'rgba(239,233,220,.24)' : 'rgba(12,16,22,.7)'); tx(g, String(s), -140, y + 1, 12, on ? GOLD : DIM, 'left'); tx(g, GUNS[k].n.toUpperCase(), -10, y + 1, 12, on ? BONE : '#b9c0cc', 'right'); });
+      if (canBuy()) tx(g, `◈ ${P.credits}`, -14, -170, 20, GOLD, 'right');
       g.restore();
     }
+    if (touch && canBuy()) tx(g, `◈ ${P.credits}`, 640, V.y1 - 66 * u, 17 * u, GOLD);
     // --- the charge: what to do, and how far along
     const ring = (frac, label, col) => { const y = 470; g.strokeStyle = 'rgba(12,16,22,.7)'; g.lineWidth = 12 * u; g.beginPath(); g.arc(640, y, 34 * u, 0, TAU); g.stroke(); g.strokeStyle = col; g.lineWidth = 7 * u; g.beginPath(); g.arc(640, y, 34 * u, -Math.PI / 2, -Math.PI / 2 + TAU * frac); g.stroke(); tx(g, label, 640, y + 60 * u, 15 * u, col); };
     if (P.reloadT > 0) tx(g, 'RELOADING', 640, 420, 15 * u, GOLD);
@@ -142,7 +144,7 @@
     // --- banners
     if (M.say) { const a = Math.min(1, M.say.t * 5, (2.6 - M.say.t) * 3); g.globalAlpha = cl(a, 0, 1); tx(g, M.say.s, 640, 170, 30 * u, M.say.c); g.globalAlpha = 1; }
     if (M.phase === 'end' && M.last && !M.over) { const won = M.last.wi === 0, c = won ? YOU : FOE; g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, demo ? `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT` : won ? 'ROUND WON' : 'ROUND LOST', 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); }
-    if (M.phase === 'buy' && !UI.armory && !range) { tx(g, M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? 'You attack: plant the charge on the ring' : 'You defend: keep them off the ring', 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
+    if (M.phase === 'buy' && !UI.armory && !range) { tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? 'You attack: plant the charge on the ring' : 'You defend: keep them off the ring', 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
     if (!P.alive && M.deathInfo && !range) { const D = M.deathInfo; rr(g, 640 - 250 * u, 590 - 34 * u, 500 * u, 68 * u, 8, GLASS, FOE); tx(g, `${D.by.toUpperCase()} · ${D.w}${D.head ? ' · headshot' : ''}`, 640, 590 - 12 * u, 18 * u, FOE); tx(g, `They had ${D.hp} health${D.sh ? ' and ' + D.sh + ' shield' : ''} left`, 640, 590 + 14 * u, 13 * u, BONE); }
     // --- touch controls
     if (touch && !UI.armory && !demo) drawTouch(g, u);

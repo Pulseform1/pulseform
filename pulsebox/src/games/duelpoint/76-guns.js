@@ -521,7 +521,7 @@
     } catch (e) { console.error(e); return ICON[k] = false; }
   }
   // spent brass flying out of the ejection port (first person only)
-  const CASE = { pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] };
+  const CASE = { pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] }, CASEGEO = {};
   const VOS = { knife: [.15, -.15, -.31], pip: [.17, -.17, -.3], wasp: [.17, -.17, -.3], quill: [.17, -.17, -.3], stub: [.17, -.18, -.3], hammer: [.17, -.17, -.3], gnat: [.2, -.19, -.3], hornet: [.2, -.19, -.3], breaker: [.2, -.2, -.27], thresher: [.2, -.2, -.28], mako: [.2, -.2, -.28], paladin: [.21, -.21, -.27], vesper: [.2, -.2, -.28], lancer: [.2, -.2, -.28], kite: [.22, -.22, -.26], longbow: [.23, -.23, -.25], torrent: [.21, -.21, -.27] };
   /* The moving parts of a gun, for your own view (fp) and your rival's model alike. `ex` carries first-person extras:
      draw (0..1 through the chambering at the end of a draw) and insp (0..1 through an inspect). A reload runs as phases of

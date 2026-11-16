@@ -30,7 +30,7 @@
   const CFG = { v: 4, sens: .45, zsens: 1, tsens: 1, crouch: 'hold', full: true, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 'auto', team: 'versus', size: 2,
     xh: { shape: 'cross', col: '#35e0c8', len: 9, gap: 3, thick: 3, dot: true, outline: true, dyn: true } };
   let tickA = 1;   // how far the screen is between the last simulation tick and the next (99-main sets it), so motion is smooth at any refresh rate
-  // coins: Duelpoint Coins earned every match and kept; rating: your skill, which sets the adaptive bot; owned: guns bought with coins
+  // rating: your skill, which sets the adaptive bot
   const STATS = { matches: 0, wins: 0, kills: 0, heads: 0, coins: 0, rating: 1000, owned: [], eco: 2 };
   // (the kit, and so K.save, only exists once the page has finished loading: 99-main calls this on the first reset)
   const loadSave = () => { try { if (K.save.dp) { { const c = Object.assign({}, K.save.dp.cfg || {}), xh = Object.assign({}, CFG.xh, c.xh || {}); if (!(c.v >= 2)) { delete c.sens; } if (!(c.v >= 3)) { c.diff = 'auto'; c.v = 3; } if (!(c.v >= 4)) { c.size = 2; c.team = 'versus'; c.v = 4; } Object.assign(CFG, c); CFG.xh = xh; } const st = K.save.dp.stats || {}; if (!(st.eco >= 2)) { st.coins = 0; st.eco = 2; }   /* the coin rules changed (35 a kill, 15 a win): everyone starts again from zero, keeping any guns already bought */

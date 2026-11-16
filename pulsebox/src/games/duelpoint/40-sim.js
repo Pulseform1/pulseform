@@ -13,7 +13,7 @@
       x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, crouch: 0, ground: true, jumpHeld: false,
       hp: 100, sh: 0, alive: true, guns: { 1: null, 2: 'pip', 3: 'knife' }, slot: 2, ammo: {},
       fireT: 0, reloadT: 0, spray: 0, sseed: 0, burst: null, scoped: 0, kick: 0, swing: null, semiHeld: false,
-      credits: 0, load: { 1: null, 2: 'pip', sh: 0, nade: 0 }, smokes: 0, throwT: 0, spent: {}, lossRun: 0, ready: false, ab: { q: 1, e: 1 }, abT: 0,
+      credits: CASH.start, smokes: 0, throwT: 0, spent: {}, lossRun: 0, ready: false, ab: { q: 1, e: 1 }, abT: 0,
       flash: 0, reveal: 0, heal: null, dash: null, plant: 0, defuse: 0, footT: 0, step: 0, walkT: 0, sprinting: false, slide: null, slideCD: 0, crouchHeld: false,
       stat: { k: 0, d: 0, hs: 0, dmg: 0, shots: 0, hits: 0 },
     }, o);
@@ -204,6 +204,7 @@
   function die(v, by, head, wk) {
     if (!v.alive) return;
     v.alive = false; v.plant = v.defuse = 0; v.scoped = 0; v.burst = null; v.stat.d++; by.stat.k++; if (head) by.stat.hs++;
+    if (!by.net && by.team !== v.team) by.credits = Math.min(CASH.cap, by.credits + CASH.kill);
     M.feed.unshift({ a: by.name, b: v.name, w: GUNS[wk] ? GUNS[wk].n : wk, head, t: 0, mine: by === me() });
     if (v === me()) M.deathInfo = { by: by.name, w: GUNS[wk] ? GUNS[wk].n : wk, head, hp: Math.ceil(by.hp), sh: by.sh, yaw: yawTo(v.x, v.z, by.x, by.z), t: 0 };
     emit('kill', v, by, head, wk);
@@ -313,7 +314,7 @@
     } else f.defuse = 0;
   }
   function plantAt(x, z, f) {
-    M.planted = { x, z, y: hAt(x, z), t: FUSE_T, beep: 0 };
+    M.planted = { x, z, y: hAt(x, z), t: FUSE_T, beep: 0 }; if (!f.net) f.credits = Math.min(CASH.cap, f.credits + CASH.plant);
     say('CHARGE PLANTED', FOE); emit('planted', f);
   }
   function defuseDone(f) { M.defused = true; emit('defused', f); if (M.host) judge(); }
@@ -333,6 +334,7 @@
     if (M.phase === 'end') return;
     M.phase = 'end'; M.t = END_T; M.wins[wi]++; M.last = { wi, why };
     if (M.auto) M.adj += wi === 0 ? 18 : -12;   // the adaptive bot sharpens a little each round you take, and eases off when you lose one
+    M.fs.forEach(f => { if (f.net) return; const won = f.team === wi; f.lossRun = won ? 0 : f.lossRun + 1; f.credits = Math.min(CASH.cap, f.credits + (won ? CASH.win : CASH.loss[Math.min(2, f.lossRun - 1)])); });
     if (why === 'boom') emit('boom', M.planted.x, M.planted.z);
     emit('end', wi, why);
     if (M.host) net({ t: 'end', wi: wi ^ (M.flip || 0), why });
@@ -343,7 +345,8 @@
     const order = [...M.fs].sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);   // the same on every device, so teammates never share a spawn
     M.fs.forEach(f => {
       const side = sideOf(f), sp = SPAWN[side], p = sp[(n + order.filter(q => sideOf(q) === side).indexOf(f)) % sp.length];
-      f.guns = { 1: f.load[1] || null, 2: f.load[2] || 'pip', 3: 'knife' }; f.sh = f.load.sh || 0; f.ammo = {}; f.smokes = f.load.nade ? NADE.per : 0; f.throwT = 0;   // your loadout, fresh every round
+      if (!f.alive || pistolRound(n) || decider) { f.guns = { 1: null, 2: 'pip', 3: 'knife' }; f.sh = 0; f.ammo = {}; f.smokes = 0; }   // you keep what you survived with
+      if (!f.net && n === 5) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
       f.ab = { q: 1, e: 1 }; for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
       f.yaw = yawTo(f.x, f.z, side === 'att' ? f.x + 10 : f.x - 10, f.z); if (f.gone) f.alive = false;
@@ -357,16 +360,19 @@
   // choose a gun (or shield) for your loadout: free, if you own it. It is yours from now on, every round, until you pick another
   function buy(f, k) {
     if (!canBuy()) return false;
-    const G = GUNS[k], A = ARMOR.find(a => a.k === k); let ok = false;
+    const G = GUNS[k], A = ARMOR.find(a => a.k === k), sp = f.spent; let ok = false;
     if (G && !G.melee) {
-      if (G.coins && f.local && M.mode !== 'range' && !STATS.owned.includes(k)) return false;   // not bought yet (the range lets you try anything)
-      const s = G.slot; f.load[s] = k; f.guns[s] = k; giveAmmo(f, k); f.slot = s; f.scoped = 0; f.reloadT = 0; ok = true;
-    } else if (A) { f.load.sh = f.load.sh === A.sh ? 0 : A.sh; f.sh = f.load.sh; ok = true; }
-    else if (k === NADE.k) {
-      if (f.local && M.mode !== 'range' && !STATS.owned.includes(k)) return false;
-      f.load.nade = f.load.nade ? 0 : 1; f.smokes = f.load.nade ? NADE.per : 0; ok = true;
+      const s = G.slot, prev = sp[s];
+      if (f.guns[s] === k) { if (prev && prev.k === k) { f.credits += G.cost; f.guns[s] = prev.was; if (prev.was) giveAmmo(f, prev.was); delete sp[s]; f.slot = f.guns[1] ? 1 : 2; ok = true; } }
+      else { const refund = prev ? GUNS[prev.k].cost : 0; if (f.credits + refund >= G.cost) { f.credits += refund - G.cost; sp[s] = { k, was: prev ? prev.was : f.guns[s] }; f.guns[s] = k; giveAmmo(f, k); f.slot = s; f.scoped = 0; f.reloadT = 0; ok = true; } }
+    } else if (A) {
+      if (f.sh >= A.sh) { if (sp.sh && sp.sh.k === A.k) { f.credits += A.cost; f.sh = sp.sh.was; delete sp.sh; ok = true; } }
+      else { const refund = sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0; if (f.credits + refund >= A.cost) { f.credits += refund - A.cost; sp.sh = { k: A.k, was: sp.sh ? sp.sh.was : f.sh }; f.sh = A.sh; ok = true; } }
+    } else if (k === NADE.k) {   // smokes: one at a time, up to two; with two in hand, pressing again sells back one bought this round
+      if ((f.smokes || 0) >= NADE.per) { if (sp.smoke > 0) { sp.smoke--; f.smokes--; f.credits += NADE.cost; ok = true; } }
+      else if (f.credits >= NADE.cost) { f.credits -= NADE.cost; f.smokes = (f.smokes || 0) + 1; sp.smoke = (sp.smoke || 0) + 1; ok = true; }
     }
-    if (ok && f.local && M.mode !== 'range') { CFG.load = { ...f.load }; saveAll(); }   // remembered for your next match
+    if (M.mode === 'range') f.credits = CASH.cap;
     emit('buy', f, ok); return ok;
   }
   // closing the armory says you are ready: when both are, the buy phase ends early
@@ -377,7 +383,6 @@
   function startMatch(o) {
     const mode = o.mode, online = mode === 'online', host = !online || MP.isHost(), ops = Object.keys(OPS);
     const A = fighter(mode === 'demo' ? { name: 'Rook', op: pick(ops), bot: { diff: 1 } } : { name: online ? MP.name : 'You', op: CFG.op, local: true });
-    if (A.local && mode !== 'range' && CFG.load) { const L0 = CFG.load, mine = k => k && GUNS[k] && (!GUNS[k].coins || STATS.owned.includes(k)); A.load = { 1: mine(L0[1]) ? L0[1] : null, 2: mine(L0[2]) ? L0[2] : 'pip', sh: L0.sh || 0, nade: L0.nade && STATS.owned.includes(NADE.k) ? 1 : 0 }; }
     const auto = mode === 'bot' && (o.diff === 'auto' || o.diff == null), L = auto ? diffFor(STATS.rating) : null;
     const botP = () => auto ? { diff: L.i, D: L.D } : { diff: typeof o.diff === 'number' ? o.diff : 1, dummy: mode === 'range' }, used = new Set([A.name]), bname = () => { const n = pick(BOT_NAMES.filter(q => !used.has(q))); used.add(n); return n; };
     let fs = [A], flip = 0;
@@ -394,8 +399,8 @@
     M = { mode, online, host, auto, flip, byKey: Object.fromEntries(fs.map(f => [f.key, f])), rating: STATS.rating, adj: 0, fs, wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? 0 : 1) ^ flip, decAtt: (decHostAtt ? 0 : 1) ^ flip,
       planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0 };
     startRound(1);
-    if (mode === 'range') { M.phase = 'live'; M.t = 0; Object.assign(A, { x: 9, z: 5, yaw: yawTo(9, 5, 30, 5) }); placeDummy(fs[1]); }
-    if (mode === 'demo') M.t = 1.5;
+    if (mode === 'range') { M.phase = 'live'; M.t = 0; A.credits = CASH.cap; Object.assign(A, { x: 9, z: 5, yaw: yawTo(9, 5, 30, 5) }); placeDummy(fs[1]); }
+    if (mode === 'demo') { M.t = 1.5; A.credits = fs[1].credits = 4500; }
     return M;
   }
   // the range's target: stands somewhere down the Pier and paces from side to side

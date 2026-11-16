@@ -26,16 +26,13 @@
     knife: GUN('knife', 'Knife', 'Melee', 3, 0, '#ff8a3d', { melee: 1, auto: true, mag: 0, res: 0, rpm: 140, rel: 0, spd: 1.18, equip: .4, dmg: [[2.4, 50]], head: 1.5, legs: 1, acc: { fs: 0, walk: 0, run: 0, jump: 0, inc: 0, max: 0, free: 1, recov: .3 }, desc: 'Always with you. Left click slashes, right click stabs: 150 from behind. You run faster with it out.' }),
     torrent: GUN('torrent', 'Torrent', 'Heavy', 1, 3200, '#e8e8e8', { mag: 100, res: 200, rpm: 720, spin: .3, rel: 5, auto: true, ads: 1.25, spd: .9, equip: 1.25, dmg: [[30, 38], [99, 31]], head: 2.5, legs: .85, acc: { fs: .8, walk: 2, run: 4, jump: 8, inc: .15, max: 3.5, free: 1, recov: .45 }, pat: { vk: .12, vmax: 1.6, hs0: 10, hk: .7 }, desc: 'Machine gun. 100 rounds that fire faster the longer you hold.' }),
   };
-  /* One currency: Duelpoint Coins. Every gun is bought once with coins and is yours for good; each round you take any
-     gun you own into it, free. A starter in each class costs nothing; the rest are priced by how strong they are. */
-  const STARTER = ['pip', 'knife', 'gnat', 'breaker', 'mako', 'kite'];
-  for (const G of Object.values(GUNS)) if (G.coins == null) G.coins = STARTER.includes(G.k) ? 0 : Math.max(25, Math.round(G.cost / 50) * 5);
+  // round money: pistol rounds (1 and 5) start everyone on 800; winning, losing streaks, kills and plants pay for the next round's buys
   // damage is the body damage at that range times where it landed: G.head for the head, G.legs for the legs (1 head, 2 body, 3 legs)
   const dmgAt = (G, dist, part) => { const row = G.dmg.find(r => dist <= r[0]) || G.dmg[G.dmg.length - 1]; return Math.round(row[1] * (part === 1 ? G.head : part === 3 ? G.legs : 1)); };
   const zoomOf = f => { const G = GUNS[f.guns[f.slot]] || GUNS.pip; return !f.scoped ? 1 : G.scope ? G.scope[Math.min(G.scope.length, +f.scoped) - 1] : G.ads || 1; };
-  // the smoke grenade: bought once with coins, then you carry `per` of them into every round (G throws one)
-  const NADE = { k: 'smoke', n: 'Smoke grenade', short: 'Smoke', cat: 'Utility', coins: 200, per: 2, col: '#c3cad4', R: 4.2, T: 15, fuse: 1.5,
-    desc: 'Thrown with G (the SMOKE button on touch). Bounces off walls and crates, then pops into a thick grey cloud that blocks sight for 15 s. Two every round.' };
+  // the smoke grenade: bought with round money, up to `per` at a time; G throws one
+  const NADE = { k: 'smoke', n: 'Smoke grenade', short: 'Smoke', cat: 'Utility', cost: 200, per: 2, col: '#c3cad4', R: 4.2, T: 15, fuse: 1.5,
+    desc: 'Thrown with G (the SMOKE button on touch). Bounces off walls and crates, then pops into a thick grey cloud that blocks sight for 15 s. Carry up to two.' };
   const ARMOR = [{ k: 'light', n: 'Light shield', cost: 400, sh: 25 }, { k: 'heavy', n: 'Heavy shield', cost: 1000, sh: 50 }];
   // the armory's tabs, in order
   const CLASSES = [['Sidearm', 'Sidearms'], ['SMG', 'SMGs'], ['Shotgun', 'Shotguns'], ['Rifle', 'Rifles'], ['Sniper', 'Snipers'], ['Heavy', 'Heavy'], ['Shield', 'Shields']];
@@ -66,9 +63,6 @@
     const idx = t > .5 ? i + 1 : i; D.n = DIFF[idx].n; return { D, i: idx };
   }
   const rankName = r => { const { i } = diffFor(r); return DIFF[i].n; };
-  // Duelpoint Coins for a finished match: 35 for each of your kills, and 15 more if you won
-  const COIN_KILL = 35, COIN_WIN = 15;
-  function coinsFor({ won, kills }) { return COIN_KILL * (kills | 0) + (won ? COIN_WIN : 0); }
   // the body: eye heights standing and crouched, radius, speeds (m/s), gravity, jump speed, the step you climb without jumping
   const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.6, STEP = .42;
   // sprinting (hold Shift, or push the stick all the way) and sliding (crouch while sprinting)

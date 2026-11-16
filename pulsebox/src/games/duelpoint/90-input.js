@@ -76,7 +76,7 @@
       { k: 'swap', x: fx + 72 * u, y: fy - 128 * u, r: 36 * u, t: 'SWAP', show: P.alive },
       { k: 'q', x: fx - 118 * u, y: fy - 46 * u, r: 38 * u, t: op.q.n.toUpperCase(), show: P.alive && live, off: !P.ab.q, col: op.col },
       { k: 'e', x: fx - 204 * u, y: fy + 4 * u, r: 38 * u, t: op.e.n.toUpperCase(), show: P.alive && live, off: !P.ab.e, col: op.col },
-      { k: 'nade', x: fx - 196 * u, y: fy - 104 * u, r: 34 * u, t: 'SMOKE ' + (P.smokes || 0), show: P.alive && live && (P.smokes > 0 || P.load.nade), off: !(P.smokes > 0), col: NADE.col },
+      { k: 'nade', x: fx - 196 * u, y: fy - 104 * u, r: 34 * u, t: 'SMOKE ' + (P.smokes || 0), show: P.alive && live && P.smokes > 0, off: !(P.smokes > 0), col: NADE.col },
       { k: 'use', x: 640, y: B - 200 * u, r: 58 * u, t: sideOf(P) === 'att' ? 'PLANT' : 'DEFUSE', show: canUse, col: FOE },
     ].filter(b => b.show);
   }

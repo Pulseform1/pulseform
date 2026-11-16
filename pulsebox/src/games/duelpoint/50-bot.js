@@ -27,12 +27,18 @@
   }
   // buy for the kind of round: pistols on round 1 and 5, something cheap when short, a rifle and shields when rich
   function botBuy(f) {
-    const d = f.bot.diff;
-    if (!f.load[1] || R() < .25) buy(f, R() < .1 + .05 * d ? pick(['longbow', 'kite']) : R() < .15 ? 'torrent' : R() < .25 ? pick(['gnat', 'hornet', 'breaker', 'thresher']) : pick(['mako', 'paladin', 'vesper', 'lancer']));
-    if (f.load[2] === 'pip' && R() < .5 || R() < .15) buy(f, pick(['hammer', 'quill', 'wasp', 'stub', 'pip']));
-    if (!f.load.sh) buy(f, R() < .3 + .15 * d ? 'heavy' : 'light');
-    if (!f.load.nade && R() < .45 + .12 * d) buy(f, 'smoke');
+    const c = f.credits, d = f.bot.diff, has = f.guns[1];
+    if (pistolRound(M.round)) { const r = R(); if (r < .3) buy(f, 'hammer'); else if (r < .5) buy(f, 'quill'); else if (r < .75) { buy(f, 'light'); buy(f, 'stub'); } else { buy(f, 'wasp'); buy(f, 'stub'); } if (f.credits >= 200 && R() < .4) buy(f, 'smoke'); return; }
+    if (has && GUNS[has].cost >= 2050) { if (f.sh < 50 && f.credits >= 1000) buy(f, 'heavy'); else if (f.sh < 25) buy(f, 'light'); }
+    else if (c >= 3900) { const r = R(); buy(f, r < .1 + .08 * d && c >= 5700 ? 'longbow' : r < .2 ? 'torrent' : r < .55 ? 'lancer' : 'vesper'); buy(f, 'heavy'); }
+    else if (c >= 3300) { buy(f, pick(['lancer', 'vesper'])); buy(f, 'light'); }
+    else if (c >= 2450 && R() < .6) { buy(f, pick(['mako', 'paladin'])); buy(f, 'light'); }
+    else if (c >= 1950 && R() < .55) { buy(f, pick(['hornet', 'thresher'])); buy(f, 'light'); }
+    else if (c >= 1350 && R() < .4) { buy(f, pick(['gnat', 'breaker', 'kite'])); buy(f, 'light'); }
+    else if (R() < .5) buy(f, pick(['quill', 'hammer', 'stub']));
+    if (f.credits >= 200 && R() < .65) buy(f, 'smoke'); if (f.credits >= 1400 && R() < .45) buy(f, 'smoke');
   }
+
   // use an ability at a chosen place, without having to look there first
   function botCast(f, k, data) { if (!f.ab[k] || M.phase !== 'live') return; f.ab[k] = 0; applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
   const magOf = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return A ? A.mag : 0; };
