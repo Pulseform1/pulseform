@@ -46,8 +46,8 @@
   // the room: two seats, no bots; the host's settings say who attacks first and in a decider
   Object.assign(MP.opts, {
     max: 2, min: 2, bots: 0, solo: false, sub: 'Create a room and send your friend the code.',
-    config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0 }),
-    onStart: (cfg, roster) => { const rival = roster.find(p => p.id !== MP.id) || {}; startMatch({ mode: 'online', rival, hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt }); emit('matchStart'); },
+    config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0, map: Math.floor(R() * MAPS.length) }),
+    onStart: (cfg, roster) => { const rival = roster.find(p => p.id !== MP.id) || {}; startMatch({ mode: 'online', rival, hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map }); emit('matchStart'); },
     onMsg: netMsg,
     onLeave: () => { if (M && M.online && !M.over) { M.wins[0] = Math.max(M.wins[0], M.wins[1] + 1); M.host = true; matchOver('left'); } },
   });

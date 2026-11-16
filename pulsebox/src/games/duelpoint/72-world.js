@@ -2,7 +2,27 @@
      Only faces you could ever see are made: the ground of open cells, the tops of solids, and a side wherever a
      neighbour is lower. Textures are sized in metres so they never stretch, and corners are darkened in the vertex colours
      (which also puts the Tunnel in shade on phones, where there are no shadow maps). One mesh per material. */
+  /* Themes: what each map looks like. Tints multiply the shared textures; `glow` makes the painted bands light up;
+     sky is [overhead, middle, horizon]; extras is the scenery past the walls. */
+  const THEMES = {
+    harbor: { sky: ['#3f7fc4', '#86b8e0', '#cfe3ee'], fog: '#cfe3ee', far: 420, hemi: ['#dfeeff', '#8a7a66'], sun: ['#fff0d8', 1.3], tint: {} },
+    neon: { sky: ['#07061a', '#24124a', '#4a1f5e'], fog: '#2a1640', far: 260, hemi: ['#8a7cff', '#2a1a3a'], sun: ['#b9a8ff', .55], stars: 1, glow: 1, tint: { wall: '#6a6f8c', ground: '#5a5e70', steel: '#c8c8ff', crate: '#8c7aa8', steeltop: '#9a9ac8' }, steel: ['#ff3ea5', '#3df2ff', '#ffd23f', '#7c5cff', '#2b2f45'] },
+    snow: { sky: ['#6f9ccc', '#b9d3ea', '#eef4f8'], fog: '#e9f0f5', far: 230, hemi: ['#f2f8ff', '#b8c4d0'], sun: ['#ffffff', 1.15], tint: { wall: '#eef3f7', ground: '#ffffff', crate: '#9a8a78', steeltop: '#ffffff' }, steel: ['#c0392b', '#2d6a8f', '#e0e6ea', '#3a4a55'] },
+    desert: { sky: ['#4f8fd0', '#9cc6e8', '#f2dcb0'], fog: '#f0d9ae', far: 300, hemi: ['#fff1d6', '#b08a58'], sun: ['#ffe2b0', 1.45], tint: { wall: '#f0d29a', ground: '#f2d6a0', crate: '#c8a070', steeltop: '#e8d0a0' }, steel: ['#a0522d', '#c9a227', '#6b7f5a', '#8a6a48'] },
+    jungle: { sky: ['#4a8a7a', '#9fc9a8', '#cfe6c8'], fog: '#b7d4b0', far: 200, hemi: ['#d8f0d0', '#4a5a30'], sun: ['#fff4c8', 1.1], tint: { wall: '#a8b890', ground: '#9ab070', crate: '#8a6a40', steeltop: '#a0b080' }, steel: ['#4f6b3a', '#7a5a3a', '#3a5a5a', '#8a8a4a'] },
+    lava: { sky: ['#1a0e0c', '#5a1e10', '#c2501e'], fog: '#5a2414', far: 220, hemi: ['#ff9a6a', '#2a1410'], sun: ['#ffb070', .9], glow: 1, tint: { wall: '#7a6a62', ground: '#6a5a54', crate: '#5a4a40', steel: '#b0a0a0', steeltop: '#8a7a74' }, steel: ['#ff6a1a', '#3a3a40', '#c9862e', '#5a2a1a'] },
+    space: { sky: ['#000004', '#060a1e', '#141a3a'], fog: '#0a1028', far: 320, hemi: ['#bcd4ff', '#2a3044'], sun: ['#e8f0ff', 1.2], stars: 1, glow: 1, tint: { wall: '#d4dcea', ground: '#aab4c8', crate: '#8a96aa', steeltop: '#c8d0e0' }, steel: ['#e8eef6', '#38e8ff', '#ff8a3d', '#5a6680'] },
+  };
+  // a new map: clear the old world away and build this one, with its sky and light
+  function rebuildWorld() {
+    if (!X) return;
+    if (X.world) { X.scene.remove(X.world); X.world.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
+    buildWorld(); buildSky(); resetMini();
+  }
   function buildWorld() {
+    const TH = THEMES[MAP.theme] || THEMES.harbor, W = X.world = new THREE.Group(); X.scene.add(W); X.theme = TH;
+    X.scene.background = new THREE.Color(TH.fog); X.scene.fog.color.set(TH.fog); X.scene.fog.far = TH.far; X.scene.fog.near = TH.far * .2;
+    if (X.hemi) { X.hemi.color.set(TH.hemi[0]); X.hemi.groundColor.set(TH.hemi[1]); X.sun.color.set(TH.sun[0]); X.sun.intensity = TH.sun[1] * (X.low ? .9 : 1); }
     const sh = !X.low, bags = {}, WHITE = [1, 1, 1];
     const bag = k => bags[k] || (bags[k] = { p: [], n: [], uv: [], c: [], i: [] });
     // one four-cornered face: corners in order round the edge, its normal, a uv and a shade for each corner, a tint
@@ -27,7 +47,7 @@
     // how dark a grid corner is: darker the more solid cells meet there
     const corner = (ci, cj) => 1 - .13 * (tall(ci - 1, cj - 1) + tall(ci, cj - 1) + tall(ci - 1, cj) + tall(ci, cj));
     const GROUND_TINT = { pier: WHITE, yard: [1, .98, .93], site: [.9, .9, .9], tunnel: [.7, .7, .73], alley: [.8, .8, .83], gate: [1, .9, .74], sheds: [1, .9, .74] };
-    const STEEL = ['#b5523f', '#2f8f8a', '#d6a23a', '#3d5a80', '#8a8f96'].map(hex);
+    const STEEL = (TH.steel || ['#b5523f', '#2f8f8a', '#d6a23a', '#3d5a80', '#8a8f96']).map(hex);
     // containers that touch share a colour
     const group = new Int16Array(NC).fill(-1); let groups = 0;
     for (let k = 0; k < NC; k++) if (SRC[Math.floor(k / GW)][k % GW] === 'X' && group[k] < 0) { const st = [k]; group[k] = groups; while (st.length) { const q = st.pop(), qi = q % GW, qj = Math.floor(q / GW); for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(qi + di, qj + dj); if (nk >= 0 && group[nk] < 0 && chAt(qi + di, qj + dj) === 'X') { group[nk] = groups; st.push(nk); } } } groups++; }
@@ -37,7 +57,7 @@
       const c = SRC[j][i], k = j * GW + i, x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS, area = AREA[k] >= 0 ? AREAS[AREA[k]] : null, dim = roofed[k] ? .62 : 1;
       if ('.oAD'.includes(c)) {   // open ground
         const sd = [corner(i, j), corner(i, j + 1), corner(i + 1, j + 1), corner(i + 1, j)].map(s => s * dim);
-        flat(area && area.k === 'pier' ? 'deck' : 'ground', x0, z0, x1, z1, 0, 1, 4, sd, area ? GROUND_TINT[area.k] : WHITE); continue;
+        flat(area && area.k === 'pier' && MAP.theme === 'harbor' ? 'deck' : 'ground', x0, z0, x1, z1, 0, 1, 4, sd, area ? GROUND_TINT[area.k] : WHITE); continue;
       }
       if (c === '7' || c === '8') {   // the dock's stairs: four steps a cell, rising south
         for (let s = 0; s < 4; s++) {
@@ -74,8 +94,8 @@
       flat('roof', x0, z0, x1, z1, rf.h, -1, 2, [.8, .8, .8, .8]); flat('roof', x0, z0 - CS, x1, z1 + CS, rf.h + .3, 1, 2, [1, 1, 1, 1]);
       for (const xx of [x0, x1]) quad('roof', [[xx, rf.h, z0], [xx, rf.h, z1], [xx, rf.h + .3, z1], [xx, rf.h + .3, z0]], [xx === x0 ? -1 : 1, 0, 0], [[0, 0], [3, 0], [3, .15], [0, .15]], [.9, .9, .9, .9]);
       for (let x = x0 + 2; x < x1; x += 4) {
-        const beam = new THREE.Mesh(new THREE.BoxGeometry(.22, .26, z1 - z0), beamM); beam.position.set(x, rf.h - .13, (z0 + z1) / 2); X.scene.add(beam);
-        if ((x - x0 - 2) % 8 === 0) { const lamp = new THREE.Mesh(new THREE.BoxGeometry(.5, .08, .2), lampM); lamp.position.set(x, rf.h - .31, (z0 + z1) / 2); X.scene.add(lamp); if (sh) { const pl = new THREE.PointLight('#ffd9a0', .9, 11, 1.6); pl.position.set(x, rf.h - .5, (z0 + z1) / 2); X.scene.add(pl); } }
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(.22, .26, z1 - z0), beamM); beam.position.set(x, rf.h - .13, (z0 + z1) / 2); W.add(beam);
+        if ((x - x0 - 2) % 8 === 0) { const lamp = new THREE.Mesh(new THREE.BoxGeometry(.5, .08, .2), lampM); lamp.position.set(x, rf.h - .31, (z0 + z1) / 2); W.add(lamp); if (sh) { const pl = new THREE.PointLight('#ffd9a0', .9, 11, 1.6); pl.position.set(x, rf.h - .5, (z0 + z1) / 2); W.add(pl); } }
       }
     }
     // doorways: the wall carries on above them, with the name of where the door leads painted over it
@@ -132,7 +152,7 @@
     for (const k in bags) {
       const b = bags[k], geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.Float32BufferAttribute(b.p, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(b.n, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2)); geo.setAttribute('color', new THREE.Float32BufferAttribute(b.c, 3)); geo.setIndex(b.i);
-      const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: T[k] || null, vertexColors: true })); m.castShadow = sh && k !== 'band' && k !== 'deck'; m.receiveShadow = sh; X.scene.add(m);
+      const m = new THREE.Mesh(geo, TH.glow && k === 'band' ? new THREE.MeshBasicMaterial({ vertexColors: true }) : new THREE.MeshLambertMaterial({ map: T[k] || null, vertexColors: true, color: LC(TH.tint[k] || '#ffffff') })); m.castShadow = sh && k !== 'band' && k !== 'deck'; m.receiveShadow = sh; W.add(m);
     }
     // the site: a painted ring on the ground
     const ringT = canvasTex(512, 512, (g, w, h) => {
@@ -141,21 +161,53 @@
       g.fillStyle = 'rgba(255,138,61,.1)'; g.beginPath(); g.arc(0, 0, 226, 0, TAU); g.fill();
       g.lineWidth = 12; g.beginPath(); g.moveTo(0, -70); g.lineTo(62, 0); g.lineTo(0, 70); g.lineTo(-62, 0); g.closePath(); g.stroke();
     }); ringT.wrapS = ringT.wrapT = THREE.ClampToEdgeWrapping;
-    const ring = new THREE.Mesh(new THREE.PlaneGeometry(10.4, 10.4), new THREE.MeshBasicMaterial({ map: ringT, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 })); ring.rotation.x = -Math.PI / 2; ring.position.set(41, .02, 21); X.scene.add(ring);
+    const ring = new THREE.Mesh(new THREE.PlaneGeometry(10.4, 10.4), new THREE.MeshBasicMaterial({ map: ringT, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 })); ring.rotation.x = -Math.PI / 2; ring.position.set(41, .02, 21); W.add(ring);
     // door signs
     const signMat = {};
     for (const s of signs) {
       const m = signMat[s.a.k] || (signMat[s.a.k] = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, map: (() => { const t = canvasTex(256, 64, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = s.a.col; g.fillRect(0, 8, 14, 48); g.font = '700 46px "Chakra Petch", sans-serif'; g.textBaseline = 'middle'; g.fillStyle = 'rgba(40,38,34,.82)'; g.fillText(s.a.n.toUpperCase(), 26, 34); }); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t; })() }));
-      const p = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .65), m); p.position.set(s.x, 3.35, s.z); p.rotation.y = s.ry; X.scene.add(p);
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .65), m); p.position.set(s.x, 3.35, s.z); p.rotation.y = s.ry; W.add(p);
     }
+    if (MAP.theme !== 'harbor') return scenery(W, TH);
     // beyond the sea wall: water, a jetty with a boat, a lighthouse; and two cranes over the east wall
-    const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o)), box = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); X.scene.add(o); return o; };
+    const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o)), box = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); W.add(o); return o; };
     const seaT = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#1d7f88'; g.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { g.fillStyle = `rgba(190,240,240,${.08 + Math.random() * .2})`; g.fillRect(Math.random() * w, Math.random() * h, 10 + Math.random() * 40, 1.5); } }, [70, 40]);
-    const sea = new THREE.Mesh(new THREE.PlaneGeometry(1400, 800), lam('#ffffff', { map: seaT })); sea.rotation.x = -Math.PI / 2; sea.position.set(MW / 2, -1.4, -398); X.scene.add(sea); X.seaT = seaT;
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(1400, 800), lam('#ffffff', { map: seaT })); sea.rotation.x = -Math.PI / 2; sea.position.set(MW / 2, -1.4, -398); W.add(sea); X.seaT = seaT;
     const wood = lam('#8a6a48'), dark = lam('#3a3f48');
     box(3, .25, 20, wood, 21, .55, -10); for (let z = -2; z > -20; z -= 4.4) for (const x of [19.7, 22.3]) box(.3, 2.4, .3, dark, x, -.4, z);
     box(7, 1.3, 2.6, lam('#a23b34'), 27.5, -.9, -12); box(2.4, 1.3, 1.9, lam('#efeae0'), 26, .35, -12); box(.12, 2.2, .12, dark, 29, .9, -12);
     const lh = new THREE.Group(); for (let s = 0; s < 5; s++) { const seg = new THREE.Mesh(new THREE.CylinderGeometry(2.1 - s * .22, 2.32 - s * .22, 4, 16), lam(s % 2 ? '#c8463c' : '#f2efe6')); seg.position.y = 2 + s * 4; lh.add(seg); }
-    const cap = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 1.8, 12), new THREE.MeshBasicMaterial({ color: '#fff3c4' })); cap.position.y = 20.9; lh.add(cap); const hat = new THREE.Mesh(new THREE.ConeGeometry(1.7, 1.6, 12), dark); hat.position.y = 22.6; lh.add(hat); lh.position.set(-22, -1.4, -78); X.scene.add(lh);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 1.8, 12), new THREE.MeshBasicMaterial({ color: '#fff3c4' })); cap.position.y = 20.9; lh.add(cap); const hat = new THREE.Mesh(new THREE.ConeGeometry(1.7, 1.6, 12), dark); hat.position.y = 22.6; lh.add(hat); lh.position.set(-22, -1.4, -78); W.add(lh);
     for (const z of [10, 34]) { box(.9, 30, .9, dark, 72, 15, z - 3); box(.9, 30, .9, dark, 72, 15, z + 3); box(1.2, 1.2, 7.4, dark, 72, 29.4, z); box(26, 1.1, 1.1, lam('#c9862e'), 62, 30.4, z); box(.2, 9, .2, dark, 52, 25.5, z); }
+  }
+  // scenery for the other maps: what you see over the walls
+  function scenery(W, TH) {
+    const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o)), bas = c => new THREE.MeshBasicMaterial({ color: LC(c) });
+    const put = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); W.add(o); return o; };
+    const ring = (n, r0, r1, fn) => { for (let i = 0; i < n; i++) { const a = i / n * TAU + Math.random() * .2, r = r0 + Math.random() * (r1 - r0); fn(MW / 2 + Math.cos(a) * r, MH / 2 + Math.sin(a) * r * .8, i); } };
+    const floor = (c, o) => { const f = put(new THREE.PlaneGeometry(1400, 1400), lam(c, o), MW / 2, -.02, MH / 2); f.rotation.x = -Math.PI / 2; return f; };
+    const t = MAP.theme; X.seaT = null;
+    if (t === 'neon') {   // a city at night: towers with lit windows, signs on the tops
+      floor('#1a1a26'); const winT = canvasTex(64, 128, (g, w, h) => { g.fillStyle = '#10121c'; g.fillRect(0, 0, w, h); for (let y = 4; y < h; y += 8) for (let x = 4; x < w; x += 8) if (Math.random() < .45) { g.fillStyle = Math.random() < .5 ? '#ffd27a' : Math.random() < .5 ? '#7af0ff' : '#ff7ad8'; g.fillRect(x, y, 4, 4); } }); winT.wrapT = winT.wrapS = THREE.RepeatWrapping; winT.repeat.set(2, 3);
+      const tower = new THREE.MeshBasicMaterial({ map: winT });
+      ring(26, 70, 150, (x, z, i) => { const h = 30 + Math.random() * 70, w = 10 + Math.random() * 12; put(new THREE.BoxGeometry(w, h, w), tower, x, h / 2, z); put(new THREE.BoxGeometry(w * .8, 1.2, .4), bas(['#ff3ea5', '#3df2ff', '#ffd23f', '#7c5cff'][i % 4]), x, h + 1, z); });
+    } else if (t === 'snow') {   // snowfields, pines and white peaks
+      floor('#f4f8fb'); const pine = lam('#24442e'), snowM = lam('#ffffff');
+      ring(70, 45, 120, (x, z) => { const s = 1 + Math.random() * 1.6; put(new THREE.CylinderGeometry(.3 * s, .4 * s, 2 * s, 6), lam('#4a3626'), x, s, z); put(new THREE.ConeGeometry(2.4 * s, 6 * s, 7), pine, x, 5 * s, z); put(new THREE.ConeGeometry(1.2 * s, 2.4 * s, 7), snowM, x, 7.6 * s, z); });
+      ring(10, 220, 300, (x, z) => { const h = 60 + Math.random() * 80; put(new THREE.ConeGeometry(h * .9, h, 6), lam('#b8c8d8'), x, h / 2, z); put(new THREE.ConeGeometry(h * .36, h * .4, 6), snowM, x, h * .8, z); });
+    } else if (t === 'desert') {   // dunes, broken columns, a far pyramid of stone
+      floor('#e8c992'); ring(30, 60, 200, (x, z) => { const d = put(new THREE.SphereGeometry(10 + Math.random() * 20, 12, 8), lam('#e2bf86'), x, -4, z); d.scale.y = .3; });
+      ring(16, 40, 70, (x, z) => { const h = 4 + Math.random() * 10; put(new THREE.CylinderGeometry(1.1, 1.3, h, 10), lam('#d8b884'), x, h / 2, z); });
+      put(new THREE.ConeGeometry(60, 70, 4), lam('#d4ae74'), MW / 2 + 40, 35, -180).rotation.y = Math.PI / 4;
+    } else if (t === 'jungle') {   // a wall of trees, broad canopies, vines of mist
+      floor('#4f6a34'); ring(110, 40, 110, (x, z) => { const s = 1 + Math.random() * 1.8; put(new THREE.CylinderGeometry(.5 * s, .8 * s, 10 * s, 7), lam('#5a4026'), x, 5 * s, z); const c = put(new THREE.SphereGeometry(4 * s, 9, 7), lam(Math.random() < .5 ? '#2f6a2a' : '#3f8a34'), x, 11 * s, z); c.scale.y = .7; });
+    } else if (t === 'lava') {   // a glowing lava sea round the works, chimneys smoking into a red sky
+      const lavaT = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#ff5a10'; g.fillRect(0, 0, w, h); for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '60,10,0' : '255,210,80'},${.2 + Math.random() * .5})`; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 6 + Math.random() * 30, 4 + Math.random() * 14, Math.random() * 3, 0, 7); g.fill(); } });
+      lavaT.wrapS = lavaT.wrapT = THREE.RepeatWrapping; lavaT.repeat.set(30, 30); const lv = put(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshBasicMaterial({ map: lavaT }), MW / 2, -1.2, MH / 2); lv.rotation.x = -Math.PI / 2; X.seaT = lavaT;
+      ring(12, 50, 110, (x, z) => { const h = 30 + Math.random() * 30; put(new THREE.CylinderGeometry(2.2, 3, h, 10), lam('#3a3030'), x, h / 2, z); put(new THREE.CylinderGeometry(2.4, 2.4, 1.2, 10), bas('#ff7a2a'), x, h - 2, z); });
+    } else if (t === 'space') {   // a station deck over nothing: a planet, a ring of panels, guide lights
+      const planet = put(new THREE.SphereGeometry(140, 32, 20), lam('#3a6ab8', { emissive: LC('#0a1a3a') }), MW / 2 - 120, -60, -320); planet.rotation.z = .4;
+      const rg = put(new THREE.RingGeometry(170, 230, 48), new THREE.MeshBasicMaterial({ color: LC('#9ab0d8'), side: THREE.DoubleSide, transparent: true, opacity: .35 }), MW / 2 - 120, -60, -320); rg.rotation.x = 1.2;
+      ring(30, 40, 60, (x, z, i) => { put(new THREE.BoxGeometry(6, .6, 6), lam('#8a96aa'), x, -.5, z); if (i % 2) put(new THREE.BoxGeometry(.4, .4, .4), bas('#38e8ff'), x, .1, z); });
+    }
   }

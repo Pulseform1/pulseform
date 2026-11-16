@@ -338,6 +338,8 @@
     const A = fighter(mode === 'demo' ? { name: 'Rook', op: pick(ops), bot: { diff: 1 } } : { name: online ? MP.name : 'You', op: CFG.op, local: true });
     const auto = mode === 'bot' && (o.diff === 'auto' || o.diff == null), L = auto ? diffFor(STATS.rating) : null;
     const B = fighter(online ? { name: (o.rival && o.rival.name) || 'Rival', op: 'vex', net: true } : { name: pick(BOT_NAMES.filter(n => n !== A.name)), op: pick(ops), bot: auto ? { diff: L.i, D: L.D } : { diff: typeof o.diff === 'number' ? o.diff : 1, dummy: mode === 'range' } });
+    // a map at random each match (online, the host's pick); the range is always on Saltworks
+    const mapI = o.map != null ? o.map : mode === 'range' ? 0 : Math.floor(R() * MAPS.length); if (MAP !== MAPS[mapI]) { loadMap(mapI); emit('map', mapI); }
     const hostAtt = o.hostAtt == null ? (R() < .5 ? 1 : 0) : o.hostAtt, decHostAtt = o.decHostAtt == null ? (R() < .5 ? 1 : 0) : o.decHostAtt;
     M = { mode, online, host, auto, rating: STATS.rating, adj: 0, fs: [A, B], wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? host : !host) ? 0 : 1, decAtt: (decHostAtt ? host : !host) ? 0 : 1,
       planted: null, defused: false, smokes: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0 };

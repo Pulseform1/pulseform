@@ -13,7 +13,7 @@ const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n
 const K = { save: {}, persist() {}, bot: false, state: 'play' };
 const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name: 'Tester', id: 0 };
 const T = new Function('K', 'MP', code + `
-  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, coinsFor, STATS,
+  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, coinsFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
     get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
@@ -24,7 +24,7 @@ const DT = 1 / 60, run = s => { for (let i = 0; i < Math.round(s / DT); i++) T.t
 const idle = () => ({ mx: 0, mz: 0, walk: false, crouch: false, jump: false, use: false, fire: false });
 
 function mapChecks() {
-  section('map');
+  section('map'); T.loadMap(0);
   ok(T.SRC.every(r => r.length === T.GW), 'every row is ' + T.GW + ' wide');
   ok(T.SPAWN.att.length >= 2 && T.SPAWN.def.length >= 2 && T.SITE.length >= 12, 'spawns and site exist', `att ${T.SPAWN.att.length}, def ${T.SPAWN.def.length}, site ${T.SITE.length}`);
   const a = T.SPAWN.att[0], d = T.SPAWN.def[0], s = T.siteC;
@@ -48,7 +48,7 @@ function mapChecks() {
 
 // a quiet match to measure in: you against a bot that is parked far away, in the live phase
 function lab(gunKey) {
-  T.seed(7); T.startMatch({ mode: 'bot', diff: 0 }); const M = T.M, P = T.me(), F = T.foe();
+  T.seed(7); T.startMatch({ mode: 'bot', diff: 0, map: 0 }); const M = T.M, P = T.me(), F = T.foe();
   F.bot = { diff: 0, dummy: true, home: [61, 41] }; Object.assign(F, { x: 61, z: 41 }); P.credits = 9000;
   if (gunKey) T.buy(P, gunKey); M.phase = 'live'; M.t = 80; Object.assign(P, { x: 40, z: 3, yaw: 0, pitch: 0 });   // on the Pier, facing the sea, with open ground to the east
   return [M, P, F];
@@ -115,7 +115,7 @@ function moveChecks() {
   [M, P] = lab('lancer'); P.yaw = -Math.PI / 2; P.fireT = -1; I = { ...idle(), mz: 1, sprint: true }; run(.5); ok(T.spreadOf(P) / T.D2R > 5, 'and you cannot shoot straight while sprinting', (T.spreadOf(P) / T.D2R).toFixed(1) + '°');
   const lv = [600, 900, 1100, 1400, 1700].map(r => T.diffFor(r)), keys = ['react', 'err', 'flick'];
   ok(lv.every((L, i) => !i || keys.every(k => L.D[k] <= lv[i - 1].D[k]) && L.D.turn >= lv[i - 1].D.turn), 'the bot gets sharper at every step up in rating', lv.map(L => L.D.n).join(' → '));
-  T.STATS.rating = 1500; T.seed(3); T.startMatch({ mode: 'bot', diff: 'auto' }); ok(T.foe().bot.D && T.foe().bot.diff >= 2, 'an AUTO match builds its bot from your rating', T.foe().bot.D.n);
+  T.STATS.rating = 1500; T.seed(3); T.startMatch({ mode: 'bot', diff: 'auto', map: 0 }); ok(T.foe().bot.D && T.foe().bot.diff >= 2, 'an AUTO match builds its bot from your rating', T.foe().bot.D.n);
   const c1 = T.coinsFor({ won: true, rounds: 5, kills: 7, heads: 2, lvl: 1 }), c0 = T.coinsFor({ won: false, rounds: 2, kills: 3, heads: 0, lvl: 1 }), cL = T.coinsFor({ won: true, rounds: 5, kills: 7, heads: 2, lvl: 4 });
   ok(c1 < 120 && c0 < c1 / 2 && cL > c1, 'coins come slowly, more for wins and tougher bots', `win ${c1}, loss ${c0}, win vs Legend ${cL}`);
 }
@@ -123,7 +123,7 @@ function matchChecks(count) {
   section(`${count} bot matches`);
   const why = {}, post = {}; let rounds = 0, plants = 0, secs = 0, stuck = 0, bad = 0, unfinished = 0, kills = 0, heads = 0; const errors = [];
   for (let n = 1; n <= count; n++) {
-    T.seed(n * 7919); T.startMatch({ mode: 'demo' }); const M = T.M; M.fs[0].bot.diff = n % 3; M.fs[1].bot.diff = (n + 1) % 3;
+    T.seed(n * 7919); T.startMatch({ mode: 'demo', map: n % T.MAPS.length }); const M = T.M; M.fs[0].bot.diff = n % 3; M.fs[1].bot.diff = (n + 1) % 3;
     let lastRound = 0, planted = false, live = 0; const still = [{ t: 0, x: 0, z: 0 }, { t: 0, x: 0, z: 0 }];
     try {
       for (let s = 0; s < 60 * 60 * 20 && !M.over; s++) {

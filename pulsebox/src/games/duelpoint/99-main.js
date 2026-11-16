@@ -6,6 +6,7 @@
   on('matchStart', () => { resetInput(); acc = 0; screen = 'play'; });   // an online match began (60-net started it)
   on('round', () => { UI.armory = false; UI.pick = null; if (M.mode !== 'demo' && M.mode !== 'range') openArmory(true); });   // each round opens on the armory
   on('live', () => { if (UI.armory) { UI.armory = false; grabMouse(); } });
+  on('map', () => { if (ready) rebuildWorld(); });
   on('over', won => {
     if (M.mode === 'demo') return; screen = 'over'; UI.armory = false; releaseMouse(); resetInput();
     if (M.mode === 'range') return; const P = me();

@@ -27,10 +27,10 @@
     if (!low) { renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; }
     const scene = new THREE.Scene(), haze = new THREE.Color('#cfe3ee'); scene.background = haze; scene.fog = new THREE.Fog(haze, 90, 420);
     const camera = new THREE.PerspectiveCamera(BASE_FOV, innerWidth / innerHeight, .05, 900); camera.rotation.order = 'YXZ'; scene.add(camera);
-    scene.add(new THREE.HemisphereLight('#dfeeff', '#8a7a66', low ? .72 : .5));
+    const hemi = new THREE.HemisphereLight('#dfeeff', '#8a7a66', low ? .72 : .5); scene.add(hemi);
     const sun = new THREE.DirectionalLight('#fff0d8', low ? 1.15 : 1.3); sun.position.set(MW / 2 + SUN[0] * 90, SUN[1] * 90, MH / 2 + SUN[2] * 90); sun.target.position.set(MW / 2, 0, MH / 2); scene.add(sun, sun.target);
     if (!low) { sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); const sc = sun.shadow.camera; sc.left = -46; sc.right = 46; sc.top = 40; sc.bottom = -40; sc.near = 20; sc.far = 190; sun.shadow.bias = -.0006; sun.shadow.normalBias = .04; sc.updateProjectionMatrix(); }
-    X = { renderer, scene, camera, glc, low, pr, basePr: pr, aniso: Math.min(8, renderer.capabilities.getMaxAnisotropy()), t: 0, slow: 0, agents: new Map(), camY: EYE, flashT: 0, shake: 0 };
+    X = { hemi, sun, renderer, scene, camera, glc, low, pr, basePr: pr, aniso: Math.min(8, renderer.capabilities.getMaxAnisotropy()), t: 0, slow: 0, agents: new Map(), camY: EYE, flashT: 0, shake: 0 };
     // a small reflection map for metal: sky above, warm ground below, three bright panels
     { const pm = new THREE.PMREMGenerator(renderer), es = new THREE.Scene();
       es.add(new THREE.Mesh(new THREE.SphereGeometry(20, 32, 16), new THREE.MeshBasicMaterial({ side: THREE.BackSide, map: canvasTex(16, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#e4f0ff'); gr.addColorStop(.46, '#a9c3dd'); gr.addColorStop(.52, '#7e7f83'); gr.addColorStop(1, '#2b2c30'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }) })));
@@ -42,13 +42,15 @@
     X.vmuzzle = new THREE.PointLight('#ffcf8a', 0, 2); X.vmuzzle.position.set(.1, -.05, -.8); X.vroot.add(X.vmuzzle);
     X.view = new THREE.Group(); X.vroot.add(X.view); X.viewGun = null; X.viewKey = '';
     addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
-    buildSky(); buildWorld(); buildFx();
+    buildWorld(); buildSky(); buildFx();
   }
   function buildSky() {
+    const TH = X.theme || { sky: ['#3f7fc4', '#86b8e0', '#cfe3ee'] }, S = TH.sky; if (X.dome) { X.scene.remove(X.dome); X.dome.material.map.dispose(); }
     // the dome: deep blue overhead, pale haze at the horizon, a glow round the sun, a few long clouds
     const th = Math.acos(SUN[1]) / Math.PI, ph = ((Math.atan2(SUN[2], -SUN[0]) / TAU) + 1) % 1;
     const tex = canvasTex(1024, 512, (g, w, h) => {
-      const gr = g.createLinearGradient(0, 0, 0, h * .5); gr.addColorStop(0, '#3f7fc4'); gr.addColorStop(.55, '#86b8e0'); gr.addColorStop(1, '#cfe3ee'); g.fillStyle = gr; g.fillRect(0, 0, w, h * .5); g.fillStyle = '#cfe3ee'; g.fillRect(0, h * .5, w, h * .5);
+      const gr = g.createLinearGradient(0, 0, 0, h * .5); gr.addColorStop(0, S[0]); gr.addColorStop(.55, S[1]); gr.addColorStop(1, S[2]); g.fillStyle = gr; g.fillRect(0, 0, w, h * .5); g.fillStyle = S[2]; g.fillRect(0, h * .5, w, h * .5);
+      if (TH.stars) for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(255,255,255,${.3 + Math.random() * .7})`; g.fillRect(Math.random() * w, Math.random() * h * .45, Math.random() < .1 ? 2 : 1, Math.random() < .1 ? 2 : 1); }
       for (const dx of [-w, 0, w]) { const sg = g.createRadialGradient(ph * w + dx, th * h, 4, ph * w + dx, th * h, 190); sg.addColorStop(0, 'rgba(255,252,235,1)'); sg.addColorStop(.06, 'rgba(255,244,205,.95)'); sg.addColorStop(.3, 'rgba(255,230,180,.35)'); sg.addColorStop(1, 'rgba(255,230,180,0)'); g.fillStyle = sg; g.fillRect(0, 0, w, h * .5); }
       for (let i = 0; i < 26; i++) { const x = Math.random() * w, y = h * (.3 + Math.random() * .16), rw = 60 + Math.random() * 150; g.fillStyle = `rgba(255,255,255,${.1 + Math.random() * .2})`; for (let k = 0; k < 5; k++) { g.beginPath(); g.ellipse(x + (Math.random() - .5) * rw, y + (Math.random() - .5) * 8, rw * (.3 + Math.random() * .5), 5 + Math.random() * 9, 0, 0, 7); g.fill(); } }
     });

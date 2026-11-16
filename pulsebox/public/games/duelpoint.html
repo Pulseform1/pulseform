@@ -319,7 +319,7 @@ const GAME = {
   const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.6, STEP = .42;
   // sprinting (hold Shift, or push the stick all the way) and sliding (crouch while sprinting)
   const SPRINT = 7.4, SLIDE_V = 10.8, SLIDE_T = .75, SLIDE_CD = .9;
-  /* ---------- 30 map: Saltworks ----------
+  /* ---------- 30 map: the maps (Saltworks and six more), loaded one per match ----------
      A grid of 2 m cells, 32 by 22. x runs east with the columns, z runs south with the rows; the sea is to the north.
        #  wall (6 m)          X  container (3 m, nothing sees over it)     c  crate (1.1 m: crouch behind, jump onto)
        P  loading dock (1.5 m, you stand on it)      7 8  the dock's stairs, rising south      ~  sea wall (a fence)
@@ -327,8 +327,13 @@ const GAME = {
      The Gate's opening into the Yard is offset from the Yard's doorway, so neither spawn can see the other.
      Three ways from the Gate (west) to the site: Pier along the north, the Yard and its doorway through the middle,
      the roofed Tunnel along the south. Everything else (rays, movement, bot paths, the world mesh) reads these cells. */
-  const CS = 2;
-  const SRC = [
+  const CS = 2, GW = 32, GH = 22, MW = GW * CS, MH = GH * CS;
+  const WALL_H = 6, BOX_H = 3, CRATE_H = 1.1, DOCK_H = 1.5, FENCE_H = 1.1, DOOR_H = 2.7;
+  /* Every map is one of these: rows of cells (all 32 by 22), roofs and doorways as rectangles [col0, row0, col1, row1],
+     named areas, the attacker's routes and the defender's holds in cell units, and a theme for the look (72-world).
+     Saltworks was drawn by hand; the others were laid out by tools/duelpoint-mapgen.mjs and checked for fairness there. */
+  const MAPS = [
+    { k: 'saltworks', n: 'Saltworks', theme: 'harbor', src: [
     '#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#',
     '#.........c....................#',
     '#............XX................#',
@@ -351,37 +356,64 @@ const GAME = {
     '#.............c...........c....#',
     '#......###########.............#',
     '################################',
-  ];
-  const GW = SRC[0].length, GH = SRC.length, MW = GW * CS, MH = GH * CS;
-  const WALL_H = 6, BOX_H = 3, CRATE_H = 1.1, DOCK_H = 1.5, FENCE_H = 1.1;
-  // rectangles are [col0, row0, col1, row1], inclusive
-  const ROOFS = [{ r: [7, 17, 17, 19], h: 2.8 }];                       // the Tunnel's roof
-  const DOORS = [[1, 5, 2, 5], [11, 5, 12, 5], [20, 5, 21, 5], [28, 5, 29, 5], [2, 15, 3, 15], [18, 15, 19, 15], [27, 15, 28, 15], [15, 10, 15, 11], [25, 8, 25, 9]];
-  const DOOR_H = 2.7;
-  const AREAS = [
+    ], roofs: [{ r: [7, 17, 17, 19], h: 2.8 }], doors: [[1, 5, 2, 5], [11, 5, 12, 5], [20, 5, 21, 5], [28, 5, 29, 5], [2, 15, 3, 15], [18, 15, 19, 15], [27, 15, 28, 15], [15, 10, 15, 11], [25, 8, 25, 9]],
+    areas: [
     { k: 'pier', n: 'Pier', r: [1, 1, 30, 5], col: '#2aa7a0' }, { k: 'gate', n: 'Gate', r: [1, 6, 5, 14], col: '#8a9a5b' },
     { k: 'yard', n: 'Yard', r: [6, 6, 15, 14], col: '#d9a441' }, { k: 'site', n: 'Site', r: [16, 6, 24, 14], col: '#ff8a3d' },
     { k: 'sheds', n: 'Sheds', r: [25, 6, 30, 14], col: '#4f7fb0' }, { k: 'tunnel', n: 'Tunnel', r: [1, 15, 19, 20], col: '#b5523f' },
     { k: 'alley', n: 'Alley', r: [20, 15, 30, 20], col: '#8d6bb0' },
+  ],
+    routes: {
+    pier: [[1.5, 5.5], [8, 2.5], [17, 2.5], [20.5, 5.5]],
+    split: [[5.5, 13], [11.5, 5.5], [17, 2.5], [20.5, 5.5]],
+    mid: [[5.5, 13], [10, 10.5], [14, 11], [16.5, 11]],
+    tunnel: [[2.5, 15.5], [5, 18.5], [13, 18.5], [18.5, 17], [18.5, 14.5]],
+  },
+    holds: [
+    { p: [23, 11.5], look: [15.5, 11.5], lane: 'mid' }, { p: [24, 13.5], look: [16.5, 11], lane: 'mid' },
+    { p: [17, 7.5], look: [16, 11], lane: 'mid' }, { p: [27, 2], look: [12, 1.5], lane: 'pier' },
+    { p: [22.5, 7.5], look: [20.5, 5.5], lane: 'pier' }, { p: [21, 19.5], look: [17.5, 18.5], lane: 'tunnel' },
+    { p: [23.5, 13], look: [18.5, 15], lane: 'tunnel' }, { p: [26.5, 9], look: [19, 10], lane: 'any' },
+  ] },
+    /*@maps*/
+    {k: 'neonrow', n: 'Neon Row', theme: 'neon', src: ['################################', '#..............................#', '#.......................c....c.#', '#...........XXXX.c.....c.......#', '#..............................#', '#..............................#', '#.....####..####..#..######....#', '#...#......c.#...........c..c..#', '#...#......................#...#', '#AA.#......XX.......ooooc..#.DD#', '#AA.#........#......oXooo..#.DD#', '#AA.#.c......#......oXooo..#.DD#', '#AA.#........#......ooooo..#.DD#', '#...#........#......ooooo..#...#', '#...#c....c................#c..#', '#...#..........................#', '#.....##..######..##..#####....#', '#................c........c....#', '#..............XXXX............#', '#......................c.......#', '#........................c.....#', '################################'], roofs: [], doors: [], areas: [{k: 'pier', n: 'Rooftops', r: [1, 1, 30, 6], col: '#2aa7a0'}, {k: 'gate', n: 'Arcade', r: [1, 7, 4, 15], col: '#8a9a5b'}, {k: 'yard', n: 'Market', r: [5, 7, 18, 15], col: '#d9a441'}, {k: 'site', n: 'Vault', r: [19, 7, 26, 15], col: '#ff8a3d'}, {k: 'sheds', n: 'Hotel', r: [27, 7, 30, 15], col: '#4f7fb0'}, {k: 'tunnel', n: 'Subway', r: [1, 16, 30, 20], col: '#b5523f'}], routes: {pier: [[3.5, 4.5], [20, 4.5], [20, 7.5]], split: [[5.5, 11], [11, 7.5], [11, 4.5], [20, 4.5], [20, 7.5]], mid: [[5.5, 11], [13.5, 9]], tunnel: [[3.5, 17.5], [21, 17.5], [21, 14.5]]}, holds: [{p: [19.5, 12.5], look: [20, 6.5], lane: 'pier'}, {p: [25.5, 10.5], look: [20, 6.5], lane: 'pier'}, {p: [26.5, 10.5], look: [21, 16.5], lane: 'tunnel'}, {p: [24.5, 10.5], look: [21, 16.5], lane: 'tunnel'}, {p: [26.5, 14.5], look: [13.5, 9], lane: 'mid'}, {p: [19.5, 11.5], look: [13.5, 9], lane: 'mid'}, {p: [25.5, 11.5], look: [13.5, 11], lane: 'any'}]},
+    {k: 'frostline', n: 'Frostline', theme: 'snow', src: ['################################', '#.......c....c..............c..#', '#..............................#', '#......XX......XX..............#', '#..........c..c................#', '#.....##..###..####..######....#', '#...#...................c......#', '#...#......................#...#', '#AA.#..XX....#.......coooo.#.DD#', '#AA.#........#.......oooooc#.DD#', '#AA.#....c...#.......oooXo.#.DD#', '#AA.#........#.......oooXo.#.DD#', '#...#c.......#.......ooooo.#...#', '#...#......................#...#', '#...#..........................#', '#.....####..###..####..####....#', '#...........c.............c.c..#', '#.....................c........#', '#...................XX......c..#', '#.........XX..XX..c............#', '#........c.....................#', '################################'], roofs: [{r: [8, 16, 17, 20], h: 2.8}], doors: [], areas: [{k: 'pier', n: 'Ridge', r: [1, 1, 30, 5], col: '#2aa7a0'}, {k: 'gate', n: 'Camp', r: [1, 6, 4, 14], col: '#8a9a5b'}, {k: 'yard', n: 'Hangar', r: [5, 6, 19, 14], col: '#d9a441'}, {k: 'site', n: 'Reactor', r: [20, 6, 26, 14], col: '#ff8a3d'}, {k: 'sheds', n: 'Lodge', r: [27, 6, 30, 14], col: '#4f7fb0'}, {k: 'tunnel', n: 'Ice Cut', r: [1, 15, 30, 20], col: '#b5523f'}], routes: {pier: [[3.5, 3.5], [20, 3.5], [20, 6.5]], split: [[5.5, 10], [9, 6.5], [9, 3.5], [20, 3.5], [20, 6.5]], mid: [[5.5, 10], [13.5, 7]], tunnel: [[3.5, 16.5], [22, 16.5], [22, 13.5]]}, holds: [{p: [23.5, 7.5], look: [20, 5.5], lane: 'pier'}, {p: [21.5, 9.5], look: [20, 5.5], lane: 'pier'}, {p: [23.5, 8.5], look: [22, 15.5], lane: 'tunnel'}, {p: [21.5, 11.5], look: [22, 15.5], lane: 'tunnel'}, {p: [21.5, 15.5], look: [13.5, 7], lane: 'mid'}, {p: [25.5, 8.5], look: [13.5, 7], lane: 'mid'}, {p: [26.5, 10.5], look: [13.5, 10], lane: 'any'}]},
+    {k: 'dunewatch', n: 'Dunewatch', theme: 'desert', src: ['################################', '#..............................#', '#...............c.XX..XX.......#', '#.......................XXc..c.#', '#..........c..............c....#', '#....................c.........#', '#.....###..####..###..#####....#', '#...#..c.................c.....#', '#...#......................#c..#', '#AA.#..c...#....c..ooooo...#.DD#', '#AA.#......#.......ooooo...#.DD#', '#AA.#..XX..#.......oooXo...#.DD#', '#AA.#......#.......oooXo...#.DD#', '#...#..c...........coooo...#...#', '#...#..........................#', '#.....##..####..###..######....#', '#...........c.........c........#', '#.................XXc..........#', '#..............................#', '#..........XX...c..............#', '#.........c....................#', '################################'], roofs: [], doors: [], areas: [{k: 'pier', n: 'Dunes', r: [1, 1, 30, 6], col: '#2aa7a0'}, {k: 'gate', n: 'Gatehouse', r: [1, 7, 4, 14], col: '#8a9a5b'}, {k: 'yard', n: 'Bazaar', r: [5, 7, 17, 14], col: '#d9a441'}, {k: 'site', n: 'Tomb', r: [18, 7, 26, 14], col: '#ff8a3d'}, {k: 'sheds', n: 'Fort', r: [27, 7, 30, 14], col: '#4f7fb0'}, {k: 'tunnel', n: 'Canal', r: [1, 15, 30, 20], col: '#b5523f'}], routes: {pier: [[3.5, 4.5], [21, 4.5], [21, 7.5]], split: [[5.5, 11], [10, 7.5], [10, 4.5], [21, 4.5], [21, 7.5]], mid: [[5.5, 11], [11.5, 8]], tunnel: [[3.5, 16.5], [20, 16.5], [20, 13.5]]}, holds: [{p: [22.5, 10.5], look: [21, 6.5], lane: 'pier'}, {p: [26.5, 11.5], look: [21, 6.5], lane: 'pier'}, {p: [20.5, 5.5], look: [20, 15.5], lane: 'tunnel'}, {p: [19.5, 8.5], look: [20, 15.5], lane: 'tunnel'}, {p: [19.5, 12.5], look: [11.5, 8], lane: 'mid'}, {p: [21.5, 8.5], look: [11.5, 8], lane: 'mid'}, {p: [24.5, 11.5], look: [11.5, 11], lane: 'any'}]},
+    {k: 'overgrowth', n: 'Overgrowth', theme: 'jungle', src: ['################################', '#..............................#', '#...............c..............#', '#.............c.XXX............#', '#..........c...................#', '#.....###..#####..##..#####....#', '#...#..........................#', '#...#......................#...#', '#AA.#..........#....oooooc.#.DD#', '#AA.#...c.....c#....oooXo..#.DD#', '#AA.#.......XX.#....oooXo..#.DD#', '#AA.#...............ooooo..#.DD#', '#...#...............coooo.c#...#', '#...#..c.......#...........#...#', '#...#..........#...............#', '#.....#..####..#######..###.c.c#', '#.....................c........#', '#.....c.............XX.........#', '#......c..............c........#', '#........c.........XX..........#', '#..............................#', '################################'], roofs: [], doors: [], areas: [{k: 'pier', n: 'Canopy', r: [1, 1, 30, 5], col: '#2aa7a0'}, {k: 'gate', n: 'Outpost', r: [1, 6, 4, 14], col: '#8a9a5b'}, {k: 'yard', n: 'Temple Steps', r: [5, 6, 18, 14], col: '#d9a441'}, {k: 'site', n: 'Shrine', r: [19, 6, 26, 14], col: '#ff8a3d'}, {k: 'sheds', n: 'Camp', r: [27, 6, 30, 14], col: '#4f7fb0'}, {k: 'tunnel', n: 'Riverbed', r: [1, 15, 30, 20], col: '#b5523f'}], routes: {pier: [[3.5, 3.5], [21, 3.5], [21, 6.5]], split: [[5.5, 10], [10, 6.5], [10, 3.5], [21, 3.5], [21, 6.5]], mid: [[5.5, 10], [15.5, 12]], tunnel: [[3.5, 16.5], [23, 16.5], [23, 13.5]]}, holds: [{p: [20.5, 10.5], look: [21, 5.5], lane: 'pier'}, {p: [25.5, 10.5], look: [21, 5.5], lane: 'pier'}, {p: [22.5, 7.5], look: [23, 15.5], lane: 'tunnel'}, {p: [25.5, 10.5], look: [23, 15.5], lane: 'tunnel'}, {p: [20.5, 10.5], look: [15.5, 7], lane: 'mid'}, {p: [23.5, 8.5], look: [15.5, 7], lane: 'mid'}, {p: [25.5, 10.5], look: [15.5, 10], lane: 'any'}]},
+    {k: 'foundry', n: 'Foundry', theme: 'lava', src: ['################################', '#.........c...............c...c#', '#.............cXX..XX..XX......#', '#................c............c#', '#..............................#', '#.....###..####..####..####....#', '#...#.........#................#', '#...#...................c..#..c#', '#AA.#..XX...........ooooo..#.DD#', '#AA.#..XX.....#.....ooooo..#.DD#', '#AA.#.........#..c..oXooo..#.DD#', '#AA.#......c........ooooo..#.DD#', '#...#...............ooooo..#...#', '#...#.........#............#...#', '#...#.........#................#', '#.....###..##..#####..#####....#', '#..............................#', '#..............................#', '#......c....XX.XX..c...........#', '#.................c.........c..#', '#.......c......................#', '################################'], roofs: [{r: [8, 16, 17, 20], h: 2.8}], doors: [], areas: [{k: 'pier', n: 'Catwalk', r: [1, 1, 30, 5], col: '#2aa7a0'}, {k: 'gate', n: 'Intake', r: [1, 6, 4, 14], col: '#8a9a5b'}, {k: 'yard', n: 'Smelter', r: [5, 6, 18, 14], col: '#d9a441'}, {k: 'site', n: 'Crucible', r: [19, 6, 26, 14], col: '#ff8a3d'}, {k: 'sheds', n: 'Control', r: [27, 6, 30, 14], col: '#4f7fb0'}, {k: 'tunnel', n: 'Slag Tunnel', r: [1, 15, 30, 20], col: '#b5523f'}], routes: {pier: [[3.5, 3.5], [22, 3.5], [22, 6.5]], split: [[5.5, 10], [10, 6.5], [10, 3.5], [22, 3.5], [22, 6.5]], mid: [[5.5, 10], [14.5, 12]], tunnel: [[3.5, 16.5], [21, 16.5], [21, 13.5]]}, holds: [{p: [22.5, 10.5], look: [22, 5.5], lane: 'pier'}, {p: [24.5, 10.5], look: [22, 5.5], lane: 'pier'}, {p: [19.5, 8.5], look: [21, 15.5], lane: 'tunnel'}, {p: [19.5, 11.5], look: [21, 15.5], lane: 'tunnel'}, {p: [25.5, 9.5], look: [14.5, 8], lane: 'mid'}, {p: [24.5, 8.5], look: [14.5, 8], lane: 'mid'}, {p: [25.5, 10.5], look: [14.5, 10], lane: 'any'}]},
+    {k: 'orbital', n: 'Orbital', theme: 'space', src: ['################################', '#.............c....c...........#', '#........XX....................#', '#...................c..XX......#', '#............c.................#', '#.........................c....#', '#.....##..####..####..#####....#', '#...#.........................c#', '#...#...........c.........c#...#', '#AA.#.......#........coooo.#.DD#', '#AA.#...XX..#........oXooo.#.DD#', '#AA.#.......#........ooooo.#.DD#', '#AA.#......c.........ooooo.#.DD#', '#...#................ooooo.#...#', '#...#..c..c.#.............c....#', '#.....#..####..########..##....#', '#..............................#', '#.......c....c.................#', '#.......c.....XX....XX....c..c.#', '#....................c........c#', '#..............................#', '################################'], roofs: [{r: [8, 16, 17, 20], h: 2.8}], doors: [], areas: [{k: 'pier', n: 'Observatory', r: [1, 1, 30, 6], col: '#2aa7a0'}, {k: 'gate', n: 'Airlock', r: [1, 7, 4, 14], col: '#8a9a5b'}, {k: 'yard', n: 'Hydroponics', r: [5, 7, 19, 14], col: '#d9a441'}, {k: 'site', n: 'Core', r: [20, 7, 26, 14], col: '#ff8a3d'}, {k: 'sheds', n: 'Command', r: [27, 7, 30, 14], col: '#4f7fb0'}, {k: 'tunnel', n: 'Service Duct', r: [1, 15, 30, 20], col: '#b5523f'}], routes: {pier: [[3.5, 4.5], [21, 4.5], [21, 7.5]], split: [[5.5, 11], [9, 7.5], [9, 4.5], [21, 4.5], [21, 7.5]], mid: [[5.5, 11], [12.5, 13]], tunnel: [[3.5, 16.5], [24, 16.5], [24, 13.5]]}, holds: [{p: [24.5, 9.5], look: [21, 6.5], lane: 'pier'}, {p: [25.5, 12.5], look: [21, 6.5], lane: 'pier'}, {p: [26.5, 12.5], look: [24, 15.5], lane: 'tunnel'}, {p: [25.5, 8.5], look: [24, 15.5], lane: 'tunnel'}, {p: [25.5, 13.5], look: [12.5, 8], lane: 'mid'}, {p: [21.5, 13.5], look: [12.5, 8], lane: 'mid'}, {p: [26.5, 11.5], look: [12.5, 11], lane: 'any'}]},
   ];
+  // the map being played: these keep their identity and are refilled in place by loadMap, so everything that reads them stays wired up
+  const SRC = [], ROOFS = [], DOORS = [], AREAS = [], ROUTES = {}, HOLDS = [], SPAWN = { att: [], def: [] }, SITE = [], siteC = [0, 0], navCells = [];
+  let MAP = MAPS[0];
   // per cell: height at the low and high end (they differ only on stairs), which way stairs run (0 none, 2 along z),
   // the ceiling above it (0 = open sky), whether it is a fence, whether a fighter can stand there, its area
   const NC = GW * GH, CH = new Float32Array(NC), CB = new Float32Array(NC), CAX = new Uint8Array(NC), CEIL = new Float32Array(NC), FENCE = new Uint8Array(NC), NAV = new Uint8Array(NC), AREA = new Int8Array(NC).fill(-1);
   const idx = (i, j) => i < 0 || j < 0 || i >= GW || j >= GH ? -1 : j * GW + i;
   const chAt = (i, j) => { const k = idx(i, j); return k < 0 ? ' ' : SRC[j][i]; };
-  const SPAWN = { att: [], def: [] }, SITE = [];
-  for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
-    const c = SRC[j][i], k = j * GW + i, mid = [i * CS + 1, j * CS + 1];
-    let a = 0, b = 0;
-    if (c === '#') a = b = WALL_H; else if (c === 'X') a = b = BOX_H; else if (c === 'c') a = b = CRATE_H; else if (c === 'P') a = b = DOCK_H;
-    else if (c === '~') { a = b = FENCE_H; FENCE[k] = 1; } else if (c === '7') { b = DOCK_H / 2; CAX[k] = 2; } else if (c === '8') { a = DOCK_H / 2; b = DOCK_H; CAX[k] = 2; }
-    CH[k] = a; CB[k] = b; NAV[k] = '.oADP78'.includes(c) ? 1 : 0;
-    if (c === 'A') SPAWN.att.push(mid); if (c === 'D') SPAWN.def.push(mid); if (c === 'o') SITE.push(mid);
-    AREAS.forEach((A, n) => { if (i >= A.r[0] && i <= A.r[2] && j >= A.r[1] && j <= A.r[3]) AREA[k] = n; });
+  const C = (c, r) => [c * CS, r * CS];
+  function loadMap(n) {
+    MAP = MAPS[((n | 0) % MAPS.length + MAPS.length) % MAPS.length];
+    const fill = (a, b) => { a.length = 0; a.push(...b); };
+    fill(SRC, MAP.src); fill(ROOFS, MAP.roofs || []); fill(DOORS, MAP.doors || []); fill(AREAS, MAP.areas);
+    for (const k in ROUTES) delete ROUTES[k]; for (const k in MAP.routes) ROUTES[k] = MAP.routes[k].map(p => C(p[0], p[1]));
+    fill(HOLDS, MAP.holds.map(h => ({ p: C(h.p[0], h.p[1]), look: C(h.look[0], h.look[1]), lane: h.lane })));
+    SPAWN.att.length = SPAWN.def.length = SITE.length = 0; CEIL.fill(0); FENCE.fill(0); NAV.fill(0); CAX.fill(0); AREA.fill(-1);
+    for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
+      const c = SRC[j][i], k = j * GW + i, mid = [i * CS + 1, j * CS + 1];
+      let a = 0, b = 0;
+      if (c === '#') a = b = WALL_H; else if (c === 'X') a = b = BOX_H; else if (c === 'c') a = b = CRATE_H; else if (c === 'P') a = b = DOCK_H;
+      else if (c === '~') { a = b = FENCE_H; FENCE[k] = 1; } else if (c === '7') { b = DOCK_H / 2; CAX[k] = 2; } else if (c === '8') { a = DOCK_H / 2; b = DOCK_H; CAX[k] = 2; }
+      CH[k] = a; CB[k] = b; NAV[k] = '.oADP78'.includes(c) ? 1 : 0;
+      if (c === 'A') SPAWN.att.push(mid); if (c === 'D') SPAWN.def.push(mid); if (c === 'o') SITE.push(mid);
+      AREAS.forEach((A, q) => { if (i >= A.r[0] && i <= A.r[2] && j >= A.r[1] && j <= A.r[3]) AREA[k] = q; });
+    }
+    for (const rf of ROOFS) for (let j = rf.r[1]; j <= rf.r[3]; j++) for (let i = rf.r[0]; i <= rf.r[2]; i++) CEIL[idx(i, j)] = rf.h;
+    for (const d of DOORS) for (let j = d[1]; j <= d[3]; j++) for (let i = d[0]; i <= d[2]; i++) CEIL[idx(i, j)] = DOOR_H;
+    siteC[0] = siteC[1] = 0; for (const p of SITE) { siteC[0] += p[0] / SITE.length; siteC[1] += p[1] / SITE.length; }
+    navCells.length = 0; for (let k = 0; k < NC; k++) if (NAV[k]) navCells.push([(k % GW) * CS + 1, Math.floor(k / GW) * CS + 1]);
+    return MAP;
   }
-  for (const rf of ROOFS) for (let j = rf.r[1]; j <= rf.r[3]; j++) for (let i = rf.r[0]; i <= rf.r[2]; i++) CEIL[idx(i, j)] = rf.h;
-  for (const d of DOORS) for (let j = d[1]; j <= d[3]; j++) for (let i = d[0]; i <= d[2]; i++) CEIL[idx(i, j)] = DOOR_H;
-  const siteC = SITE.reduce((s, p) => [s[0] + p[0] / SITE.length, s[1] + p[1] / SITE.length], [0, 0]);
 
   // the ground under a point; hMove is the same for movement, where fences and the edge of the map are walls
   function hAt(x, z) {
@@ -424,7 +456,6 @@ const GAME = {
     const e = di > 0 ? 0 : di < 0 ? 1 : dj > 0 ? 2 : 3; return Math.abs(edgeH(a, e) - edgeH(b, e ^ 1)) <= STEP;
   };
   const cellOf = (x, z) => [cl(Math.floor(x / CS), 0, GW - 1), cl(Math.floor(z / CS), 0, GH - 1)];
-  const navCells = []; for (let k = 0; k < NC; k++) if (NAV[k]) navCells.push([(k % GW) * CS + 1, Math.floor(k / GW) * CS + 1]);
   function nearestNav(x, z) {
     const [i, j] = cellOf(x, z); if (NAV[idx(i, j)]) return [i, j];
     let best = null, bd = 1e9; for (const p of navCells) { const d = Math.hypot(p[0] - x, p[1] - z); if (d < bd) { bd = d; best = p; } }
@@ -466,22 +497,7 @@ const GAME = {
   }
   const pathLen = (p, x, z) => { let d = 0; for (const q of p) { d += Math.hypot(q[0] - x, q[1] - z); x = q[0]; z = q[1]; } return d; };
 
-  /* ---------- authored spots, in cell units (C turns them into metres) ---------- */
-  const C = (c, r) => [c * CS, r * CS];
-  // the attacker's routes: points to pass on the way in
-  const ROUTES = {
-    pier: [C(1.5, 5.5), C(8, 2.5), C(17, 2.5), C(20.5, 5.5)],
-    split: [C(5.5, 13), C(11.5, 5.5), C(17, 2.5), C(20.5, 5.5)],
-    mid: [C(5.5, 13), C(10, 10.5), C(14, 11), C(16.5, 11)],
-    tunnel: [C(2.5, 15.5), C(5, 18.5), C(13, 18.5), C(18.5, 17), C(18.5, 14.5)],
-  };
-  // where a defender waits and what they watch
-  const HOLDS = [
-    { p: C(23, 11.5), look: C(15.5, 11.5), lane: 'mid' }, { p: C(24, 13.5), look: C(16.5, 11), lane: 'mid' },
-    { p: C(17, 7.5), look: C(16, 11), lane: 'mid' }, { p: C(27, 2), look: C(12, 1.5), lane: 'pier' },
-    { p: C(22.5, 7.5), look: C(20.5, 5.5), lane: 'pier' }, { p: C(21, 19.5), look: C(17.5, 18.5), lane: 'tunnel' },
-    { p: C(23.5, 13), look: C(18.5, 15), lane: 'tunnel' }, { p: C(26.5, 9), look: C(19, 10), lane: 'any' },
-  ];
+  loadMap(0);
   /* ---------- 40 sim: fighters, movement, shooting, the knife, abilities, the charge, rounds, money ----------
      M is the match. M.fs[0] is always the fighter this device shows (you, or the camera bot in a demo), M.fs[1] the rival.
      A fighter is driven by one of three things: local input, a bot (50-bot), or the network (60-net).
@@ -822,6 +838,8 @@ const GAME = {
     const A = fighter(mode === 'demo' ? { name: 'Rook', op: pick(ops), bot: { diff: 1 } } : { name: online ? MP.name : 'You', op: CFG.op, local: true });
     const auto = mode === 'bot' && (o.diff === 'auto' || o.diff == null), L = auto ? diffFor(STATS.rating) : null;
     const B = fighter(online ? { name: (o.rival && o.rival.name) || 'Rival', op: 'vex', net: true } : { name: pick(BOT_NAMES.filter(n => n !== A.name)), op: pick(ops), bot: auto ? { diff: L.i, D: L.D } : { diff: typeof o.diff === 'number' ? o.diff : 1, dummy: mode === 'range' } });
+    // a map at random each match (online, the host's pick); the range is always on Saltworks
+    const mapI = o.map != null ? o.map : mode === 'range' ? 0 : Math.floor(R() * MAPS.length); if (MAP !== MAPS[mapI]) { loadMap(mapI); emit('map', mapI); }
     const hostAtt = o.hostAtt == null ? (R() < .5 ? 1 : 0) : o.hostAtt, decHostAtt = o.decHostAtt == null ? (R() < .5 ? 1 : 0) : o.decHostAtt;
     M = { mode, online, host, auto, rating: STATS.rating, adj: 0, fs: [A, B], wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? host : !host) ? 0 : 1, decAtt: (decHostAtt ? host : !host) ? 0 : 1,
       planted: null, defused: false, smokes: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0 };
@@ -1110,8 +1128,8 @@ const GAME = {
   // the room: two seats, no bots; the host's settings say who attacks first and in a decider
   Object.assign(MP.opts, {
     max: 2, min: 2, bots: 0, solo: false, sub: 'Create a room and send your friend the code.',
-    config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0 }),
-    onStart: (cfg, roster) => { const rival = roster.find(p => p.id !== MP.id) || {}; startMatch({ mode: 'online', rival, hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt }); emit('matchStart'); },
+    config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0, map: Math.floor(R() * MAPS.length) }),
+    onStart: (cfg, roster) => { const rival = roster.find(p => p.id !== MP.id) || {}; startMatch({ mode: 'online', rival, hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map }); emit('matchStart'); },
     onMsg: netMsg,
     onLeave: () => { if (M && M.online && !M.over) { M.wins[0] = Math.max(M.wins[0], M.wins[1] + 1); M.host = true; matchOver('left'); } },
   });
@@ -1144,10 +1162,10 @@ const GAME = {
     if (!low) { renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; }
     const scene = new THREE.Scene(), haze = new THREE.Color('#cfe3ee'); scene.background = haze; scene.fog = new THREE.Fog(haze, 90, 420);
     const camera = new THREE.PerspectiveCamera(BASE_FOV, innerWidth / innerHeight, .05, 900); camera.rotation.order = 'YXZ'; scene.add(camera);
-    scene.add(new THREE.HemisphereLight('#dfeeff', '#8a7a66', low ? .72 : .5));
+    const hemi = new THREE.HemisphereLight('#dfeeff', '#8a7a66', low ? .72 : .5); scene.add(hemi);
     const sun = new THREE.DirectionalLight('#fff0d8', low ? 1.15 : 1.3); sun.position.set(MW / 2 + SUN[0] * 90, SUN[1] * 90, MH / 2 + SUN[2] * 90); sun.target.position.set(MW / 2, 0, MH / 2); scene.add(sun, sun.target);
     if (!low) { sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); const sc = sun.shadow.camera; sc.left = -46; sc.right = 46; sc.top = 40; sc.bottom = -40; sc.near = 20; sc.far = 190; sun.shadow.bias = -.0006; sun.shadow.normalBias = .04; sc.updateProjectionMatrix(); }
-    X = { renderer, scene, camera, glc, low, pr, basePr: pr, aniso: Math.min(8, renderer.capabilities.getMaxAnisotropy()), t: 0, slow: 0, agents: new Map(), camY: EYE, flashT: 0, shake: 0 };
+    X = { hemi, sun, renderer, scene, camera, glc, low, pr, basePr: pr, aniso: Math.min(8, renderer.capabilities.getMaxAnisotropy()), t: 0, slow: 0, agents: new Map(), camY: EYE, flashT: 0, shake: 0 };
     // a small reflection map for metal: sky above, warm ground below, three bright panels
     { const pm = new THREE.PMREMGenerator(renderer), es = new THREE.Scene();
       es.add(new THREE.Mesh(new THREE.SphereGeometry(20, 32, 16), new THREE.MeshBasicMaterial({ side: THREE.BackSide, map: canvasTex(16, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#e4f0ff'); gr.addColorStop(.46, '#a9c3dd'); gr.addColorStop(.52, '#7e7f83'); gr.addColorStop(1, '#2b2c30'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }) })));
@@ -1159,13 +1177,15 @@ const GAME = {
     X.vmuzzle = new THREE.PointLight('#ffcf8a', 0, 2); X.vmuzzle.position.set(.1, -.05, -.8); X.vroot.add(X.vmuzzle);
     X.view = new THREE.Group(); X.vroot.add(X.view); X.viewGun = null; X.viewKey = '';
     addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
-    buildSky(); buildWorld(); buildFx();
+    buildWorld(); buildSky(); buildFx();
   }
   function buildSky() {
+    const TH = X.theme || { sky: ['#3f7fc4', '#86b8e0', '#cfe3ee'] }, S = TH.sky; if (X.dome) { X.scene.remove(X.dome); X.dome.material.map.dispose(); }
     // the dome: deep blue overhead, pale haze at the horizon, a glow round the sun, a few long clouds
     const th = Math.acos(SUN[1]) / Math.PI, ph = ((Math.atan2(SUN[2], -SUN[0]) / TAU) + 1) % 1;
     const tex = canvasTex(1024, 512, (g, w, h) => {
-      const gr = g.createLinearGradient(0, 0, 0, h * .5); gr.addColorStop(0, '#3f7fc4'); gr.addColorStop(.55, '#86b8e0'); gr.addColorStop(1, '#cfe3ee'); g.fillStyle = gr; g.fillRect(0, 0, w, h * .5); g.fillStyle = '#cfe3ee'; g.fillRect(0, h * .5, w, h * .5);
+      const gr = g.createLinearGradient(0, 0, 0, h * .5); gr.addColorStop(0, S[0]); gr.addColorStop(.55, S[1]); gr.addColorStop(1, S[2]); g.fillStyle = gr; g.fillRect(0, 0, w, h * .5); g.fillStyle = S[2]; g.fillRect(0, h * .5, w, h * .5);
+      if (TH.stars) for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(255,255,255,${.3 + Math.random() * .7})`; g.fillRect(Math.random() * w, Math.random() * h * .45, Math.random() < .1 ? 2 : 1, Math.random() < .1 ? 2 : 1); }
       for (const dx of [-w, 0, w]) { const sg = g.createRadialGradient(ph * w + dx, th * h, 4, ph * w + dx, th * h, 190); sg.addColorStop(0, 'rgba(255,252,235,1)'); sg.addColorStop(.06, 'rgba(255,244,205,.95)'); sg.addColorStop(.3, 'rgba(255,230,180,.35)'); sg.addColorStop(1, 'rgba(255,230,180,0)'); g.fillStyle = sg; g.fillRect(0, 0, w, h * .5); }
       for (let i = 0; i < 26; i++) { const x = Math.random() * w, y = h * (.3 + Math.random() * .16), rw = 60 + Math.random() * 150; g.fillStyle = `rgba(255,255,255,${.1 + Math.random() * .2})`; for (let k = 0; k < 5; k++) { g.beginPath(); g.ellipse(x + (Math.random() - .5) * rw, y + (Math.random() - .5) * 8, rw * (.3 + Math.random() * .5), 5 + Math.random() * 9, 0, 0, 7); g.fill(); } }
     });
@@ -1182,7 +1202,27 @@ const GAME = {
      Only faces you could ever see are made: the ground of open cells, the tops of solids, and a side wherever a
      neighbour is lower. Textures are sized in metres so they never stretch, and corners are darkened in the vertex colours
      (which also puts the Tunnel in shade on phones, where there are no shadow maps). One mesh per material. */
+  /* Themes: what each map looks like. Tints multiply the shared textures; `glow` makes the painted bands light up;
+     sky is [overhead, middle, horizon]; extras is the scenery past the walls. */
+  const THEMES = {
+    harbor: { sky: ['#3f7fc4', '#86b8e0', '#cfe3ee'], fog: '#cfe3ee', far: 420, hemi: ['#dfeeff', '#8a7a66'], sun: ['#fff0d8', 1.3], tint: {} },
+    neon: { sky: ['#07061a', '#24124a', '#4a1f5e'], fog: '#2a1640', far: 260, hemi: ['#8a7cff', '#2a1a3a'], sun: ['#b9a8ff', .55], stars: 1, glow: 1, tint: { wall: '#6a6f8c', ground: '#5a5e70', steel: '#c8c8ff', crate: '#8c7aa8', steeltop: '#9a9ac8' }, steel: ['#ff3ea5', '#3df2ff', '#ffd23f', '#7c5cff', '#2b2f45'] },
+    snow: { sky: ['#6f9ccc', '#b9d3ea', '#eef4f8'], fog: '#e9f0f5', far: 230, hemi: ['#f2f8ff', '#b8c4d0'], sun: ['#ffffff', 1.15], tint: { wall: '#eef3f7', ground: '#ffffff', crate: '#9a8a78', steeltop: '#ffffff' }, steel: ['#c0392b', '#2d6a8f', '#e0e6ea', '#3a4a55'] },
+    desert: { sky: ['#4f8fd0', '#9cc6e8', '#f2dcb0'], fog: '#f0d9ae', far: 300, hemi: ['#fff1d6', '#b08a58'], sun: ['#ffe2b0', 1.45], tint: { wall: '#f0d29a', ground: '#f2d6a0', crate: '#c8a070', steeltop: '#e8d0a0' }, steel: ['#a0522d', '#c9a227', '#6b7f5a', '#8a6a48'] },
+    jungle: { sky: ['#4a8a7a', '#9fc9a8', '#cfe6c8'], fog: '#b7d4b0', far: 200, hemi: ['#d8f0d0', '#4a5a30'], sun: ['#fff4c8', 1.1], tint: { wall: '#a8b890', ground: '#9ab070', crate: '#8a6a40', steeltop: '#a0b080' }, steel: ['#4f6b3a', '#7a5a3a', '#3a5a5a', '#8a8a4a'] },
+    lava: { sky: ['#1a0e0c', '#5a1e10', '#c2501e'], fog: '#5a2414', far: 220, hemi: ['#ff9a6a', '#2a1410'], sun: ['#ffb070', .9], glow: 1, tint: { wall: '#7a6a62', ground: '#6a5a54', crate: '#5a4a40', steel: '#b0a0a0', steeltop: '#8a7a74' }, steel: ['#ff6a1a', '#3a3a40', '#c9862e', '#5a2a1a'] },
+    space: { sky: ['#000004', '#060a1e', '#141a3a'], fog: '#0a1028', far: 320, hemi: ['#bcd4ff', '#2a3044'], sun: ['#e8f0ff', 1.2], stars: 1, glow: 1, tint: { wall: '#d4dcea', ground: '#aab4c8', crate: '#8a96aa', steeltop: '#c8d0e0' }, steel: ['#e8eef6', '#38e8ff', '#ff8a3d', '#5a6680'] },
+  };
+  // a new map: clear the old world away and build this one, with its sky and light
+  function rebuildWorld() {
+    if (!X) return;
+    if (X.world) { X.scene.remove(X.world); X.world.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
+    buildWorld(); buildSky(); resetMini();
+  }
   function buildWorld() {
+    const TH = THEMES[MAP.theme] || THEMES.harbor, W = X.world = new THREE.Group(); X.scene.add(W); X.theme = TH;
+    X.scene.background = new THREE.Color(TH.fog); X.scene.fog.color.set(TH.fog); X.scene.fog.far = TH.far; X.scene.fog.near = TH.far * .2;
+    if (X.hemi) { X.hemi.color.set(TH.hemi[0]); X.hemi.groundColor.set(TH.hemi[1]); X.sun.color.set(TH.sun[0]); X.sun.intensity = TH.sun[1] * (X.low ? .9 : 1); }
     const sh = !X.low, bags = {}, WHITE = [1, 1, 1];
     const bag = k => bags[k] || (bags[k] = { p: [], n: [], uv: [], c: [], i: [] });
     // one four-cornered face: corners in order round the edge, its normal, a uv and a shade for each corner, a tint
@@ -1207,7 +1247,7 @@ const GAME = {
     // how dark a grid corner is: darker the more solid cells meet there
     const corner = (ci, cj) => 1 - .13 * (tall(ci - 1, cj - 1) + tall(ci, cj - 1) + tall(ci - 1, cj) + tall(ci, cj));
     const GROUND_TINT = { pier: WHITE, yard: [1, .98, .93], site: [.9, .9, .9], tunnel: [.7, .7, .73], alley: [.8, .8, .83], gate: [1, .9, .74], sheds: [1, .9, .74] };
-    const STEEL = ['#b5523f', '#2f8f8a', '#d6a23a', '#3d5a80', '#8a8f96'].map(hex);
+    const STEEL = (TH.steel || ['#b5523f', '#2f8f8a', '#d6a23a', '#3d5a80', '#8a8f96']).map(hex);
     // containers that touch share a colour
     const group = new Int16Array(NC).fill(-1); let groups = 0;
     for (let k = 0; k < NC; k++) if (SRC[Math.floor(k / GW)][k % GW] === 'X' && group[k] < 0) { const st = [k]; group[k] = groups; while (st.length) { const q = st.pop(), qi = q % GW, qj = Math.floor(q / GW); for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(qi + di, qj + dj); if (nk >= 0 && group[nk] < 0 && chAt(qi + di, qj + dj) === 'X') { group[nk] = groups; st.push(nk); } } } groups++; }
@@ -1217,7 +1257,7 @@ const GAME = {
       const c = SRC[j][i], k = j * GW + i, x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS, area = AREA[k] >= 0 ? AREAS[AREA[k]] : null, dim = roofed[k] ? .62 : 1;
       if ('.oAD'.includes(c)) {   // open ground
         const sd = [corner(i, j), corner(i, j + 1), corner(i + 1, j + 1), corner(i + 1, j)].map(s => s * dim);
-        flat(area && area.k === 'pier' ? 'deck' : 'ground', x0, z0, x1, z1, 0, 1, 4, sd, area ? GROUND_TINT[area.k] : WHITE); continue;
+        flat(area && area.k === 'pier' && MAP.theme === 'harbor' ? 'deck' : 'ground', x0, z0, x1, z1, 0, 1, 4, sd, area ? GROUND_TINT[area.k] : WHITE); continue;
       }
       if (c === '7' || c === '8') {   // the dock's stairs: four steps a cell, rising south
         for (let s = 0; s < 4; s++) {
@@ -1254,8 +1294,8 @@ const GAME = {
       flat('roof', x0, z0, x1, z1, rf.h, -1, 2, [.8, .8, .8, .8]); flat('roof', x0, z0 - CS, x1, z1 + CS, rf.h + .3, 1, 2, [1, 1, 1, 1]);
       for (const xx of [x0, x1]) quad('roof', [[xx, rf.h, z0], [xx, rf.h, z1], [xx, rf.h + .3, z1], [xx, rf.h + .3, z0]], [xx === x0 ? -1 : 1, 0, 0], [[0, 0], [3, 0], [3, .15], [0, .15]], [.9, .9, .9, .9]);
       for (let x = x0 + 2; x < x1; x += 4) {
-        const beam = new THREE.Mesh(new THREE.BoxGeometry(.22, .26, z1 - z0), beamM); beam.position.set(x, rf.h - .13, (z0 + z1) / 2); X.scene.add(beam);
-        if ((x - x0 - 2) % 8 === 0) { const lamp = new THREE.Mesh(new THREE.BoxGeometry(.5, .08, .2), lampM); lamp.position.set(x, rf.h - .31, (z0 + z1) / 2); X.scene.add(lamp); if (sh) { const pl = new THREE.PointLight('#ffd9a0', .9, 11, 1.6); pl.position.set(x, rf.h - .5, (z0 + z1) / 2); X.scene.add(pl); } }
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(.22, .26, z1 - z0), beamM); beam.position.set(x, rf.h - .13, (z0 + z1) / 2); W.add(beam);
+        if ((x - x0 - 2) % 8 === 0) { const lamp = new THREE.Mesh(new THREE.BoxGeometry(.5, .08, .2), lampM); lamp.position.set(x, rf.h - .31, (z0 + z1) / 2); W.add(lamp); if (sh) { const pl = new THREE.PointLight('#ffd9a0', .9, 11, 1.6); pl.position.set(x, rf.h - .5, (z0 + z1) / 2); W.add(pl); } }
       }
     }
     // doorways: the wall carries on above them, with the name of where the door leads painted over it
@@ -1312,7 +1352,7 @@ const GAME = {
     for (const k in bags) {
       const b = bags[k], geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.Float32BufferAttribute(b.p, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(b.n, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2)); geo.setAttribute('color', new THREE.Float32BufferAttribute(b.c, 3)); geo.setIndex(b.i);
-      const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: T[k] || null, vertexColors: true })); m.castShadow = sh && k !== 'band' && k !== 'deck'; m.receiveShadow = sh; X.scene.add(m);
+      const m = new THREE.Mesh(geo, TH.glow && k === 'band' ? new THREE.MeshBasicMaterial({ vertexColors: true }) : new THREE.MeshLambertMaterial({ map: T[k] || null, vertexColors: true, color: LC(TH.tint[k] || '#ffffff') })); m.castShadow = sh && k !== 'band' && k !== 'deck'; m.receiveShadow = sh; W.add(m);
     }
     // the site: a painted ring on the ground
     const ringT = canvasTex(512, 512, (g, w, h) => {
@@ -1321,23 +1361,55 @@ const GAME = {
       g.fillStyle = 'rgba(255,138,61,.1)'; g.beginPath(); g.arc(0, 0, 226, 0, TAU); g.fill();
       g.lineWidth = 12; g.beginPath(); g.moveTo(0, -70); g.lineTo(62, 0); g.lineTo(0, 70); g.lineTo(-62, 0); g.closePath(); g.stroke();
     }); ringT.wrapS = ringT.wrapT = THREE.ClampToEdgeWrapping;
-    const ring = new THREE.Mesh(new THREE.PlaneGeometry(10.4, 10.4), new THREE.MeshBasicMaterial({ map: ringT, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 })); ring.rotation.x = -Math.PI / 2; ring.position.set(41, .02, 21); X.scene.add(ring);
+    const ring = new THREE.Mesh(new THREE.PlaneGeometry(10.4, 10.4), new THREE.MeshBasicMaterial({ map: ringT, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 })); ring.rotation.x = -Math.PI / 2; ring.position.set(41, .02, 21); W.add(ring);
     // door signs
     const signMat = {};
     for (const s of signs) {
       const m = signMat[s.a.k] || (signMat[s.a.k] = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, map: (() => { const t = canvasTex(256, 64, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = s.a.col; g.fillRect(0, 8, 14, 48); g.font = '700 46px "Chakra Petch", sans-serif'; g.textBaseline = 'middle'; g.fillStyle = 'rgba(40,38,34,.82)'; g.fillText(s.a.n.toUpperCase(), 26, 34); }); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t; })() }));
-      const p = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .65), m); p.position.set(s.x, 3.35, s.z); p.rotation.y = s.ry; X.scene.add(p);
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .65), m); p.position.set(s.x, 3.35, s.z); p.rotation.y = s.ry; W.add(p);
     }
+    if (MAP.theme !== 'harbor') return scenery(W, TH);
     // beyond the sea wall: water, a jetty with a boat, a lighthouse; and two cranes over the east wall
-    const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o)), box = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); X.scene.add(o); return o; };
+    const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o)), box = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); W.add(o); return o; };
     const seaT = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#1d7f88'; g.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { g.fillStyle = `rgba(190,240,240,${.08 + Math.random() * .2})`; g.fillRect(Math.random() * w, Math.random() * h, 10 + Math.random() * 40, 1.5); } }, [70, 40]);
-    const sea = new THREE.Mesh(new THREE.PlaneGeometry(1400, 800), lam('#ffffff', { map: seaT })); sea.rotation.x = -Math.PI / 2; sea.position.set(MW / 2, -1.4, -398); X.scene.add(sea); X.seaT = seaT;
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(1400, 800), lam('#ffffff', { map: seaT })); sea.rotation.x = -Math.PI / 2; sea.position.set(MW / 2, -1.4, -398); W.add(sea); X.seaT = seaT;
     const wood = lam('#8a6a48'), dark = lam('#3a3f48');
     box(3, .25, 20, wood, 21, .55, -10); for (let z = -2; z > -20; z -= 4.4) for (const x of [19.7, 22.3]) box(.3, 2.4, .3, dark, x, -.4, z);
     box(7, 1.3, 2.6, lam('#a23b34'), 27.5, -.9, -12); box(2.4, 1.3, 1.9, lam('#efeae0'), 26, .35, -12); box(.12, 2.2, .12, dark, 29, .9, -12);
     const lh = new THREE.Group(); for (let s = 0; s < 5; s++) { const seg = new THREE.Mesh(new THREE.CylinderGeometry(2.1 - s * .22, 2.32 - s * .22, 4, 16), lam(s % 2 ? '#c8463c' : '#f2efe6')); seg.position.y = 2 + s * 4; lh.add(seg); }
-    const cap = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 1.8, 12), new THREE.MeshBasicMaterial({ color: '#fff3c4' })); cap.position.y = 20.9; lh.add(cap); const hat = new THREE.Mesh(new THREE.ConeGeometry(1.7, 1.6, 12), dark); hat.position.y = 22.6; lh.add(hat); lh.position.set(-22, -1.4, -78); X.scene.add(lh);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 1.8, 12), new THREE.MeshBasicMaterial({ color: '#fff3c4' })); cap.position.y = 20.9; lh.add(cap); const hat = new THREE.Mesh(new THREE.ConeGeometry(1.7, 1.6, 12), dark); hat.position.y = 22.6; lh.add(hat); lh.position.set(-22, -1.4, -78); W.add(lh);
     for (const z of [10, 34]) { box(.9, 30, .9, dark, 72, 15, z - 3); box(.9, 30, .9, dark, 72, 15, z + 3); box(1.2, 1.2, 7.4, dark, 72, 29.4, z); box(26, 1.1, 1.1, lam('#c9862e'), 62, 30.4, z); box(.2, 9, .2, dark, 52, 25.5, z); }
+  }
+  // scenery for the other maps: what you see over the walls
+  function scenery(W, TH) {
+    const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o)), bas = c => new THREE.MeshBasicMaterial({ color: LC(c) });
+    const put = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); W.add(o); return o; };
+    const ring = (n, r0, r1, fn) => { for (let i = 0; i < n; i++) { const a = i / n * TAU + Math.random() * .2, r = r0 + Math.random() * (r1 - r0); fn(MW / 2 + Math.cos(a) * r, MH / 2 + Math.sin(a) * r * .8, i); } };
+    const floor = (c, o) => { const f = put(new THREE.PlaneGeometry(1400, 1400), lam(c, o), MW / 2, -.02, MH / 2); f.rotation.x = -Math.PI / 2; return f; };
+    const t = MAP.theme; X.seaT = null;
+    if (t === 'neon') {   // a city at night: towers with lit windows, signs on the tops
+      floor('#1a1a26'); const winT = canvasTex(64, 128, (g, w, h) => { g.fillStyle = '#10121c'; g.fillRect(0, 0, w, h); for (let y = 4; y < h; y += 8) for (let x = 4; x < w; x += 8) if (Math.random() < .45) { g.fillStyle = Math.random() < .5 ? '#ffd27a' : Math.random() < .5 ? '#7af0ff' : '#ff7ad8'; g.fillRect(x, y, 4, 4); } }); winT.wrapT = winT.wrapS = THREE.RepeatWrapping; winT.repeat.set(2, 3);
+      const tower = new THREE.MeshBasicMaterial({ map: winT });
+      ring(26, 70, 150, (x, z, i) => { const h = 30 + Math.random() * 70, w = 10 + Math.random() * 12; put(new THREE.BoxGeometry(w, h, w), tower, x, h / 2, z); put(new THREE.BoxGeometry(w * .8, 1.2, .4), bas(['#ff3ea5', '#3df2ff', '#ffd23f', '#7c5cff'][i % 4]), x, h + 1, z); });
+    } else if (t === 'snow') {   // snowfields, pines and white peaks
+      floor('#f4f8fb'); const pine = lam('#24442e'), snowM = lam('#ffffff');
+      ring(70, 45, 120, (x, z) => { const s = 1 + Math.random() * 1.6; put(new THREE.CylinderGeometry(.3 * s, .4 * s, 2 * s, 6), lam('#4a3626'), x, s, z); put(new THREE.ConeGeometry(2.4 * s, 6 * s, 7), pine, x, 5 * s, z); put(new THREE.ConeGeometry(1.2 * s, 2.4 * s, 7), snowM, x, 7.6 * s, z); });
+      ring(10, 220, 300, (x, z) => { const h = 60 + Math.random() * 80; put(new THREE.ConeGeometry(h * .9, h, 6), lam('#b8c8d8'), x, h / 2, z); put(new THREE.ConeGeometry(h * .36, h * .4, 6), snowM, x, h * .8, z); });
+    } else if (t === 'desert') {   // dunes, broken columns, a far pyramid of stone
+      floor('#e8c992'); ring(30, 60, 200, (x, z) => { const d = put(new THREE.SphereGeometry(10 + Math.random() * 20, 12, 8), lam('#e2bf86'), x, -4, z); d.scale.y = .3; });
+      ring(16, 40, 70, (x, z) => { const h = 4 + Math.random() * 10; put(new THREE.CylinderGeometry(1.1, 1.3, h, 10), lam('#d8b884'), x, h / 2, z); });
+      put(new THREE.ConeGeometry(60, 70, 4), lam('#d4ae74'), MW / 2 + 40, 35, -180).rotation.y = Math.PI / 4;
+    } else if (t === 'jungle') {   // a wall of trees, broad canopies, vines of mist
+      floor('#4f6a34'); ring(110, 40, 110, (x, z) => { const s = 1 + Math.random() * 1.8; put(new THREE.CylinderGeometry(.5 * s, .8 * s, 10 * s, 7), lam('#5a4026'), x, 5 * s, z); const c = put(new THREE.SphereGeometry(4 * s, 9, 7), lam(Math.random() < .5 ? '#2f6a2a' : '#3f8a34'), x, 11 * s, z); c.scale.y = .7; });
+    } else if (t === 'lava') {   // a glowing lava sea round the works, chimneys smoking into a red sky
+      const lavaT = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#ff5a10'; g.fillRect(0, 0, w, h); for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '60,10,0' : '255,210,80'},${.2 + Math.random() * .5})`; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 6 + Math.random() * 30, 4 + Math.random() * 14, Math.random() * 3, 0, 7); g.fill(); } });
+      lavaT.wrapS = lavaT.wrapT = THREE.RepeatWrapping; lavaT.repeat.set(30, 30); const lv = put(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshBasicMaterial({ map: lavaT }), MW / 2, -1.2, MH / 2); lv.rotation.x = -Math.PI / 2; X.seaT = lavaT;
+      ring(12, 50, 110, (x, z) => { const h = 30 + Math.random() * 30; put(new THREE.CylinderGeometry(2.2, 3, h, 10), lam('#3a3030'), x, h / 2, z); put(new THREE.CylinderGeometry(2.4, 2.4, 1.2, 10), bas('#ff7a2a'), x, h - 2, z); });
+    } else if (t === 'space') {   // a station deck over nothing: a planet, a ring of panels, guide lights
+      const planet = put(new THREE.SphereGeometry(140, 32, 20), lam('#3a6ab8', { emissive: LC('#0a1a3a') }), MW / 2 - 120, -60, -320); planet.rotation.z = .4;
+      const rg = put(new THREE.RingGeometry(170, 230, 48), new THREE.MeshBasicMaterial({ color: LC('#9ab0d8'), side: THREE.DoubleSide, transparent: true, opacity: .35 }), MW / 2 - 120, -60, -320); rg.rotation.x = 1.2;
+      ring(30, 40, 60, (x, z, i) => { put(new THREE.BoxGeometry(6, .6, 6), lam('#8a96aa'), x, -.5, z); if (i % 2) put(new THREE.BoxGeometry(.4, .4, .4), bas('#38e8ff'), x, .1, z); });
+    }
   }
   /* ---------- 74 agents: the rival's body and how it moves ----------
      Built to the hitboxes in 40-sim: about 1.82 m tall, 0.6 m across, head at eye height. Each operative has their own
@@ -2176,7 +2248,7 @@ const GAME = {
   const VKICK = { Sidearm: 1.25, SMG: .7, Rifle: 1, Sniper: 2.2, Shotgun: 1.9, Heavy: .8 };   // how hard each class kicks in your hands
 
   function renderFrame(dt) {
-    if (!X || !ready) return; const cam = X.camera; X.t += dt; tunePixels(dt); X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016;
+    if (!X || !ready) return; const cam = X.camera; X.t += dt; tunePixels(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; }
     const live = M && (screen === 'play' || (screen === 'over' && posed));
     if (!live) {   // behind the menus: a slow flight round the site
       const a = X.t * .06 + 2.4; cam.position.set(41 + Math.cos(a) * 30, 19, 21 + Math.sin(a) * 26); cam.rotation.set(0, 0, 0); cam.lookAt(38, 0, 21); cam.fov = 55; cam.updateProjectionMatrix();
@@ -2537,6 +2609,7 @@ const GAME = {
   // a running step or a shot from the rival marks the minimap for a moment (only if a bot could have heard it too)
   const note = f => { if (M && f === foe() && Math.hypot(f.x - me().x, f.z - me().z) < 30) heard = { x: f.x, z: f.z, t: 1.6 }; };
   on('step', note); on('shot', (f, S, first) => { if (first && !gun(f).sil) note(f); });
+  function resetMini() { mmCanvas = null; }
   function miniMap() {
     if (mmCanvas) return mmCanvas; const s = 8, c = mmCanvas = document.createElement('canvas'); c.width = GW * s; c.height = GH * s; const g = c.getContext('2d');
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const ch = SRC[j][i]; g.fillStyle = ch === '#' ? 'rgba(12,16,22,.9)' : ch === '~' ? 'rgba(53,150,170,.8)' : ch === 'X' ? 'rgba(70,80,96,.95)' : ch === 'c' ? 'rgba(150,120,84,.95)' : ch === 'o' ? 'rgba(255,138,61,.4)' : ch === 'P' || ch === '7' || ch === '8' ? 'rgba(190,190,180,.75)' : 'rgba(210,205,190,.5)'; g.fillRect(i * s, j * s, s, s); }
@@ -2698,7 +2771,7 @@ const GAME = {
     g.fillStyle = 'rgba(12,16,22,.62)'; g.fillRect(V.x0, V.y0, W, H);
     if (UI.panel === 'settings') return drawSettings(g, V, W, u);
     if (UI.panel === 'crosshair') return drawXhair(g, V, W, u);
-    g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'One map. One rival. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
+    g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'Seven maps. One rival. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
     coinTag(g, V.x1 - m, V.y0 + 44 * u, 20 * u, STATS.coins);
     if (STATS.matches) tx(g, `${STATS.wins} wins in ${STATS.matches} matches · ${STATS.kills} kills`, V.x1 - m, V.y0 + 78 * u, 14 * u, DIM, 'right');
     // operatives
@@ -2843,6 +2916,7 @@ const GAME = {
   on('matchStart', () => { resetInput(); acc = 0; screen = 'play'; });   // an online match began (60-net started it)
   on('round', () => { UI.armory = false; UI.pick = null; if (M.mode !== 'demo' && M.mode !== 'range') openArmory(true); });   // each round opens on the armory
   on('live', () => { if (UI.armory) { UI.armory = false; grabMouse(); } });
+  on('map', () => { if (ready) rebuildWorld(); });
   on('over', won => {
     if (M.mode === 'demo') return; screen = 'over'; UI.armory = false; releaseMouse(); resetInput();
     if (M.mode === 'range') return; const P = me();

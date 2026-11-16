@@ -67,7 +67,7 @@
   const VKICK = { Sidearm: 1.25, SMG: .7, Rifle: 1, Sniper: 2.2, Shotgun: 1.9, Heavy: .8 };   // how hard each class kicks in your hands
 
   function renderFrame(dt) {
-    if (!X || !ready) return; const cam = X.camera; X.t += dt; tunePixels(dt); X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016;
+    if (!X || !ready) return; const cam = X.camera; X.t += dt; tunePixels(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; }
     const live = M && (screen === 'play' || (screen === 'over' && posed));
     if (!live) {   // behind the menus: a slow flight round the site
       const a = X.t * .06 + 2.4; cam.position.set(41 + Math.cos(a) * 30, 19, 21 + Math.sin(a) * 26); cam.rotation.set(0, 0, 0); cam.lookAt(38, 0, 21); cam.fov = 55; cam.updateProjectionMatrix();
