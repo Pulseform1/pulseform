@@ -42,6 +42,10 @@
     hailstorm: GUN('hailstorm', 'Hailstorm', 'Heavy', 1, 3000, '#d8b884', { coins: 750, mag: 75, res: 150, rpm: 680, rel: 4.4, auto: true, ads: 1.25, spd: .88, equip: 1.2, dmg: [[99, 36]], head: 2.6, legs: .85, acc: { fs: .6, walk: 2, run: 4.5, jump: 8, inc: .2, max: 3.2, free: 2, recov: .45 }, pat: { vk: .15, vmax: 1.8, hs0: 10, hk: .8 }, desc: 'Drum-fed machine gun with a bipod. 75 rounds of desert-camo trouble.' }),
     cyclone: GUN('cyclone', 'Cyclone', 'Heavy', 1, 3600, '#ffd23f', { coins: 900, mag: 150, res: 150, rpm: 1100, wind: .5, rel: 5.5, auto: true, spd: .82, equip: 1.4, dmg: [[25, 25], [99, 20]], head: 2.5, legs: .85, acc: { fs: .9, walk: 2, run: 4, jump: 8, inc: .08, max: 3.2, free: 1, recov: .5 }, pat: { vk: .07, vmax: 1.4, hs0: 14, hk: .9 }, desc: 'Rotary gun. Spins up for half a second, then 1100 rounds a minute. Hazard stripes.' }),
   };
+  /* One currency: Duelpoint Coins. Every gun is bought once with coins and is yours for good; each round you take any
+     gun you own into it, free. A starter in each class costs nothing; the rest are priced by how strong they are. */
+  const STARTER = ['pip', 'knife', 'gnat', 'breaker', 'mako', 'kite'];
+  for (const G of Object.values(GUNS)) if (G.coins == null) G.coins = STARTER.includes(G.k) ? 0 : Math.max(25, Math.round(G.cost / 50) * 5);
   // damage is the body damage at that range times where it landed: G.head for the head, G.legs for the legs (1 head, 2 body, 3 legs)
   const dmgAt = (G, dist, part) => { const row = G.dmg.find(r => dist <= r[0]) || G.dmg[G.dmg.length - 1]; return Math.round(row[1] * (part === 1 ? G.head : part === 3 ? G.legs : 1)); };
   const zoomOf = f => { const G = GUNS[f.guns[f.slot]] || GUNS.pip; return !f.scoped ? 1 : G.scope ? G.scope[Math.min(G.scope.length, +f.scoped) - 1] : G.ads || 1; };

@@ -27,15 +27,10 @@
   }
   // buy for the kind of round: pistols on round 1 and 5, something cheap when short, a rifle and shields when rich
   function botBuy(f) {
-    const c = f.credits, d = f.bot.diff, has = f.guns[1];
-    if (pistolRound(M.round)) { const r = R(); if (r < .25) buy(f, 'hammer'); else if (r < .4) buy(f, 'quill'); else if (r < .52) buy(f, pick(['viper', 'brick'])); else if (r < .72) { buy(f, 'light'); buy(f, pick(['stub', 'flux'])); } else { buy(f, 'wasp'); buy(f, 'stub'); } return; }
-    if (has && GUNS[has].cost >= 2050) { if (f.sh < 50 && f.credits >= 1000) buy(f, 'heavy'); else if (f.sh < 25) buy(f, 'light'); return; }
-    if (c >= 3900) { const r = R(); buy(f, r < .1 + .08 * d && c >= 5700 ? pick(['longbow', 'lumen']) : r < .2 ? pick(['torrent', 'hailstorm', 'cyclone', 'harpoon']) : r < .45 ? pick(['lancer', 'warden']) : r < .7 ? pick(['vesper', 'nova']) : pick(['raptor', 'specter', 'lancer'])); buy(f, 'heavy'); }
-    else if (c >= 3300) { buy(f, pick(['lancer', 'vesper', 'nova', 'raptor', 'specter'])); buy(f, 'light'); }
-    else if (c >= 2450 && R() < .6) { buy(f, pick(['mako', 'paladin', 'raptor'])); buy(f, 'light'); }
-    else if (c >= 1950 && R() < .55) { buy(f, pick(['hornet', 'thresher', 'hornet', 'saber', 'pulsar', 'tempest'])); buy(f, 'light'); }
-    else if (c >= 1350 && R() < .4) { buy(f, pick(['gnat', 'breaker', 'kite', 'grinder', 'saber'])); buy(f, 'light'); }
-    else if (R() < .5) buy(f, pick(['quill', 'hammer', 'stub', 'viper', 'flux']));
+    const d = f.bot.diff;
+    if (!f.load[1] || R() < .25) buy(f, R() < .1 + .05 * d ? pick(['longbow', 'lumen', 'harpoon', 'kite']) : R() < .15 ? pick(['torrent', 'hailstorm', 'cyclone']) : R() < .25 ? pick(['gnat', 'hornet', 'saber', 'pulsar', 'breaker', 'thresher', 'tempest', 'grinder']) : pick(['mako', 'paladin', 'vesper', 'lancer', 'raptor', 'nova', 'specter', 'warden']));
+    if (f.load[2] === 'pip' && R() < .5 || R() < .15) buy(f, pick(['hammer', 'quill', 'wasp', 'stub', 'viper', 'flux', 'brick', 'pip']));
+    if (!f.load.sh) buy(f, R() < .3 + .15 * d ? 'heavy' : 'light');
   }
   // use an ability at a chosen place, without having to look there first
   function botCast(f, k, data) { if (!f.ab[k] || M.phase !== 'live') return; f.ab[k] = 0; applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }

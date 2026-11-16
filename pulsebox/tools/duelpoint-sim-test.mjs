@@ -48,8 +48,9 @@ function mapChecks() {
 
 // a quiet match to measure in: you against a bot that is parked far away, in the live phase
 function lab(gunKey) {
+  T.STATS.owned = Object.keys(T.GUNS);
   T.seed(7); T.startMatch({ mode: 'bot', diff: 0, map: 0 }); const M = T.M, P = T.me(), F = T.foe();
-  F.bot = { diff: 0, dummy: true, home: [61, 41] }; Object.assign(F, { x: 61, z: 41 }); P.credits = 9000;
+  F.bot = { diff: 0, dummy: true, home: [61, 41] }; Object.assign(F, { x: 61, z: 41 });
   if (gunKey) T.buy(P, gunKey); M.phase = 'live'; M.t = 80; Object.assign(P, { x: 40, z: 3, yaw: 0, pitch: 0 });   // on the Pier, facing the sea, with open ground to the east
   return [M, P, F];
 }
@@ -82,20 +83,19 @@ function gunplayChecks() {
   let F; [M, P, F] = lab(); F.sh = 50; T.applyDamage(F, 40, P, false, 'lancer');
   ok(F.hp === 100 && F.sh === 10, 'shields soak damage first', `hp ${F.hp}, shield ${F.sh}`);
   T.applyDamage(F, 160, P, true, 'lancer');
-  ok(!F.alive && P.stat.k === 1 && P.stat.hs === 1 && P.credits === 9000, 'a kill is counted and paid (capped at 9000)');
+  ok(!F.alive && P.stat.k === 1 && P.stat.hs === 1, 'a kill is counted');
   section('knife');
   const stab = (heavy, fromBehind) => { [M, P, F] = lab(); P.yaw = T.yawTo(40, 3, 60, 3); Object.assign(F, { x: 41.6, z: 3, yaw: fromBehind ? P.yaw : P.yaw + Math.PI }); P.pitch = -.4; T.switchTo(P, 3); P.fireT = 0; if (heavy) T.altAction(P); else T.fire(P); return 100 - F.hp; };
   ok(stab(false, false) === 50, 'a slash to the body does 50'); ok(stab(true, false) === 75, 'a stab does 75'); ok(stab(true, true) === 100 && !F.alive, 'a stab in the back kills');
   [M, P, F] = lab(); P.yaw = T.yawTo(40, 3, 60, 3); Object.assign(F, { x: 44, z: 3 }); T.switchTo(P, 3); P.fireT = 0; T.fire(P); ok(F.hp === 100, 'it does not reach 4 m');
-  section('money');
-  [M, P, F] = lab(); P.credits = 800; F.credits = 800; M.phase = 'buy';
-  ok(T.buy(P, 'hammer') && P.credits === 0 && P.guns[2] === 'hammer', 'buying takes the money and gives the gun');
-  ok(T.buy(P, 'quill') && P.credits === 300 && P.guns[2] === 'quill', 'buying another in the same slot refunds the first');
-  ok(T.buy(P, 'quill') && P.credits === 800 && P.guns[2] === 'pip', 'choosing it again sells it back');
-  ok(!T.buy(P, 'lancer') && P.credits === 800, 'you cannot buy what you cannot afford');
-  M.phase = 'live'; T.endRound(0, 'elim_def'); ok(P.credits === 3400 && F.credits === 2400, 'win +2600, first loss +1600');
-  M.phase = 'live'; T.endRound(0, 'elim_def'); M.phase = 'live'; T.endRound(0, 'elim_def'); ok(F.credits === 2400 + 2000 + 2400, 'losses pay 1600, 2000, then 2400');
-  ok(P.credits === 8600, 'three wins pay 2600 each', P.credits);
+  section('coins and loadout');
+  [M, P, F] = lab(); T.STATS.owned = []; M.phase = 'buy';
+  ok(Object.values(T.GUNS).every(G => typeof G.coins === 'number') && ['pip', 'mako', 'kite', 'gnat', 'breaker'].every(k => T.GUNS[k].coins === 0), 'every gun has a coin price; one starter per class is free');
+  ok(!T.buy(P, 'lancer') && T.buy(P, 'mako') && P.guns[1] === 'mako', 'you can only take guns you own (or free ones)');
+  T.STATS.owned = ['lancer']; ok(T.buy(P, 'lancer') && P.load[1] === 'lancer', 'a bought gun goes into your loadout');
+  ok(T.buy(P, 'heavy') && P.sh === 50, 'shields are free');
+  P.alive = false; M.phase = 'live'; T.endRound(1, 'elim_att'); T.startRound(M.round + 1);
+  ok(P.guns[1] === 'lancer' && P.sh === 50 && P.alive, 'even after dying, next round starts with your loadout');
 }
 
 // whole matches, bot against bot, watching for errors, fighters that stop moving, and rounds that never end
