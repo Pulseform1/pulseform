@@ -1,0 +1,27 @@
+diff --git a/pulsebox/public/index.html b/pulsebox/public/index.html
+index 26f3474..f498600 100644
+--- a/pulsebox/public/index.html
++++ b/pulsebox/public/index.html
+@@ -2079,6 +2079,22 @@ const GAMES = [
+     blurb: "Planet Gravelle is getting cold, and only you can wake its sleeping heart. Drill down through topsoil, red clay, crystal caves, ice, fossil beds, glowing mushroom caverns, lava rock and a lost ancient city, all the way to the core. Grab coal, gold, rubies and diamonds, then fly back to base before your fuel runs out to sell your haul and upgrade your drill, hull, fuel tank, cargo hold, thrusters and radar. Watch out for gas pockets, falling boulders, lava, crushing pressure and hungry cave worms. Dig up 60 fossils and relics for your museum, find secret treasure rooms, beat daily dig challenges and missions, and once you save Gravelle, fly to a tougher new planet.",
+     how: ["Arrow keys or WASD: left, right and down drill. Hold Up to fly with your thrusters. On a phone, use the arrow pad.", "Watch your fuel and cargo. Fly back up to the base pad to sell ore, refuel and repair.", "Buy a better drill for harder rock and a better hull to go deeper without getting crushed.", "Keys 1 to 4 use Dynamite, Fuel cans, Repair kits and Teleporters."]
+   },
++  {
++    id: "cluck-launch-2",
++    title: "Cluck Launch 2",
++    category: "Arcade",
++    kind: "Arcade · Launch, Smash & Upgrade",
++    tags: ["Launch", "Smash for cash", "Around the world", "Upgrade"],
++    badge: 'NEW',
++    file: 'games/cluck-launch-2.html',
++    cover: 'media/cluck-launch-2-cover.jpg',
++    video: 'media/cluck-launch-2-trailer.mp4',
++    shots: ['media/cluck-launch-2-shot1.jpg', 'media/cluck-launch-2-shot2.jpg'],
++    aspect: 16 / 9,
++    pitch: "Launch Pepper, a black hen, all the way around the world, smashing everything in her path for cash.",
++    blurb: "Pepper the black hen wants to fly around the whole world: 40,075 m. Slide down the ramp, glide, fire your rocket and crash straight through fences, hay bales, tractors, barns, cacti, pyramids, boats, totems, igloos and taco trucks. Every smash pays cash, but hit something too tough and you bonk. Fly over ten places, from the Home Farm through the Sizzling Desert, the Big Blue Ocean, a jungle, a red canyon, the frozen north and a neon megacity, then over the sea and home. Bounce on springboards, fly through gold rings, pop crates hanging from balloons and skip across the water. Buy helmets that smash harder, a Piggy Bank, a Water Skipper, wheels and a tail fan, plus all the ramps, sleds, wings and rockets.",
++    how: ["Press Space or tap to slide down the ramp.", "Arrow keys (or hold the left / right side of the screen) tip your nose up or down.", "Hold Space or the ROCKET button to blast off while you have fuel.", "Fly low to smash things for cash. A better helmet breaks bigger things. Skim the sea at speed to skip."]
++  },
+   {
+     id: "cluck-launch",
+     title: "Cluck Launch",

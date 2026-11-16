@@ -183,7 +183,7 @@ const MP = (() => {
    Built from the numbered parts in this folder (see MASTER_PROMPT.md for the design and what each part owns).
    This part: the record the kit reads. Everything after it runs inside one function, closed in 99-main.js. */
 const GAME = {
-  id: 'duelpoint', title: 'Duelpoint', tagline: 'One map. One rival. Every round counts.',
+  id: 'duelpoint', title: 'Duelpoint', tagline: 'Two on two. Seven maps. Every round counts.',
   font: 'Chakra Petch', accent: '#ff8a3d', accent2: '#35e0c8', bg: '#0c1016', noSkins: true, noHud: true, scoreLabel: 'Match score',
   how: [
     'Mouse and keys: WASD moves, mouse aims, click shoots, right click aims or scopes. Shift walks, Ctrl or C crouches (hold or toggle), O opens settings (sensitivity), Space jumps, R reloads, 1 2 3 swap weapons, Q and E are your abilities, F plants and defuses, B opens the armory.',
@@ -224,13 +224,13 @@ const GAME = {
   // a dark outline, and whether it opens with your error (dyn) or stays fixed
   // sens: mouse turn speed; zsens: multiplier while aiming down sights or scoped; crouch: 'hold' or 'toggle'; full: go full
   // screen when you click in to play, which lets the game keep Ctrl shortcuts (Ctrl+W) from the browser
-  const CFG = { v: 3, sens: .45, zsens: 1, tsens: 1, crouch: 'hold', full: true, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 'auto', team: 'versus', size: 1,
+  const CFG = { v: 4, sens: .45, zsens: 1, tsens: 1, crouch: 'hold', full: true, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 'auto', team: 'versus', size: 2,
     xh: { shape: 'cross', col: '#35e0c8', len: 9, gap: 3, thick: 3, dot: true, outline: true, dyn: true } };
   let tickA = 1;   // how far the screen is between the last simulation tick and the next (99-main sets it), so motion is smooth at any refresh rate
   // coins: Duelpoint Coins earned every match and kept; rating: your skill, which sets the adaptive bot; owned: guns bought with coins
   const STATS = { matches: 0, wins: 0, kills: 0, heads: 0, coins: 0, rating: 1000, owned: [], eco: 2 };
   // (the kit, and so K.save, only exists once the page has finished loading: 99-main calls this on the first reset)
-  const loadSave = () => { try { if (K.save.dp) { { const c = Object.assign({}, K.save.dp.cfg || {}), xh = Object.assign({}, CFG.xh, c.xh || {}); if (!(c.v >= 2)) { delete c.sens; } if (!(c.v >= 3)) { c.diff = 'auto'; c.v = 3; } Object.assign(CFG, c); CFG.xh = xh; } const st = K.save.dp.stats || {}; if (!(st.eco >= 2)) { st.coins = 0; st.eco = 2; }   /* the coin rules changed (35 a kill, 15 a win): everyone starts again from zero, keeping any guns already bought */
+  const loadSave = () => { try { if (K.save.dp) { { const c = Object.assign({}, K.save.dp.cfg || {}), xh = Object.assign({}, CFG.xh, c.xh || {}); if (!(c.v >= 2)) { delete c.sens; } if (!(c.v >= 3)) { c.diff = 'auto'; c.v = 3; } if (!(c.v >= 4)) { c.size = 2; c.team = 'versus'; c.v = 4; } Object.assign(CFG, c); CFG.xh = xh; } const st = K.save.dp.stats || {}; if (!(st.eco >= 2)) { st.coins = 0; st.eco = 2; }   /* the coin rules changed (35 a kill, 15 a win): everyone starts again from zero, keeping any guns already bought */
       Object.assign(STATS, st); if (!Array.isArray(STATS.owned)) STATS.owned = []; } } catch (e) {} };
   // saved on this device at once; `now` also asks the hub to copy it to the player's account straight away (a gun bought, a match paid)
   const saveAll = now => { try { K.save.dp = { cfg: CFG, stats: STATS }; K.persist(); if (now && window.parent !== window) window.parent.postMessage({ pbx: 'save' }, location.origin); } catch (e) {} };
@@ -1135,12 +1135,12 @@ const GAME = {
     const a = sn[0], b = sn[1] || a, k = b === a || b.at - a.at < 1e-6 ? 1 : cl((rt - a.at) / (b.at - a.at), 0, 1.4);
     f.x = lp(a.x, b.x, k); f.y = lp(a.y, b.y, k); f.z = lp(a.z, b.z, k); f.yaw = a.yw + angDiff(b.yw, a.yw) * k; f.pitch = lp(a.pt, b.pt, k); f.vx = b.vx; f.vz = b.vz; f.walkT += Math.hypot(f.vx, f.vz) * dt;
   }
-  /* The room: two to four friends. VERSUS splits them into two teams (seat order: 1st and 3rd against 2nd and 4th);
-     CO-OP puts everyone on one team. Bots fill the short team, run by the host; the host's settings say who attacks first. */
+  /* The room: two to four friends. VERSUS (2v2) splits them into two teams of at least two (seat order: 1st and 3rd against
+     2nd and 4th); DUEL is one-on-one with two players; CO-OP puts everyone on one team. Bots fill the short team, run by the host; the host's settings say who attacks first. */
   function seatsFor(cfg, roster) {
     const humans = roster.filter(p => !p.bot), coop = cfg.team === 'coop';
     const seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: coop ? 0 : i % 2 }));
-    const size = coop ? Math.max(2, humans.length) : Math.max(...[0, 1].map(t => seats.filter(s => s.team === t).length));
+    const size = coop ? Math.max(2, humans.length) : Math.max(cfg.team === 'duel' ? 1 : 2, ...[0, 1].map(t => seats.filter(s => s.team === t).length));
     let b = 0; for (const t of [0, 1]) for (let n = seats.filter(s => s.team === t).length; n < size; n++, b++) seats.push({ key: 'b' + b, name: cfg.names[b % cfg.names.length], team: t, bot: true, op: cfg.ops[b % cfg.ops.length] });
     return seats;
   }
@@ -2672,8 +2672,15 @@ const GAME = {
       tx(g, String(M.wins[0]), -98, 30, 38, YOU); tx(g, String(M.wins[1]), 98, 30, 38, FOE);
       if (M.planted && M.phase === 'live') { const k = cl(M.planted.t / FUSE_T, 0, 1), on = Math.sin(M.time * (6 + (1 - k) * 14)) > 0; g.fillStyle = on ? WARN : '#5a2620'; g.beginPath(); g.moveTo(0, 8); g.lineTo(13, 24); g.lineTo(0, 40); g.lineTo(-13, 24); g.fill(); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(-46, 46, 92, 5); g.fillStyle = WARN; g.fillRect(-46, 46, 92 * k, 5); }
       else { tx(g, clock(M.t), 0, 25, 30, M.phase === 'live' && M.t < 10 ? WARN : BONE); tx(g, M.phase === 'buy' ? 'BUY PHASE' : M.phase === 'end' ? 'ROUND OVER' : 'ROUND ' + M.round, 0, 50, 11, DIM); }
-      tx(g, demo ? P.name.toUpperCase() : 'YOU', -166, 20, 14, YOU, 'right'); tx(g, side === 'att' ? 'ATTACK' : 'DEFEND', -166, 40, 12, DIM, 'right');
-      tx(g, F.name.toUpperCase(), 166, 20, 14, FOE, 'left'); tx(g, OPS[F.op].n, 166, 40, 12, DIM, 'left');
+      const mine = M.fs.filter(q => q.team === P.team && !q.gone), theirs = M.fs.filter(q => q.team !== P.team && !q.gone);
+      if (mine.length > 1 || theirs.length > 1) {   // a team game: show the teams and who is still standing
+        const pips = (list, x, dir, col) => list.forEach((q, i) => { g.fillStyle = q.alive ? col : 'rgba(239,233,220,.18)'; g.beginPath(); g.arc(x + dir * i * 16, 45, 5.5, 0, TAU); g.fill(); });
+        tx(g, demo ? P.name.toUpperCase() : 'YOUR TEAM', -166, 20, 14, YOU, 'right'); pips(mine, -172, -1, YOU); tx(g, side === 'att' ? 'ATTACK' : 'DEFEND', -172 - mine.length * 16 - 4, 45, 11, DIM, 'right');
+        tx(g, 'RIVALS', 166, 20, 14, FOE, 'left'); pips(theirs, 172, 1, FOE);
+      } else {
+        tx(g, demo ? P.name.toUpperCase() : 'YOU', -166, 20, 14, YOU, 'right'); tx(g, side === 'att' ? 'ATTACK' : 'DEFEND', -166, 40, 12, DIM, 'right');
+        tx(g, F.name.toUpperCase(), 166, 20, 14, FOE, 'left'); tx(g, OPS[F.op].n, 166, 40, 12, DIM, 'left');
+      }
     } else { rr(g, -210, 0, 420, 44, 8, GLASS); tx(g, 'RANGE', -190, 22, 18, GOLD, 'left'); tx(g, `${P.stat.hits} hits / ${P.stat.shots} shots` + (P.stat.shots ? `  ·  ${Math.round(100 * P.stat.hits / P.stat.shots)}%` : ''), 190, 22, 14, BONE, 'right'); }
     g.restore();
     // --- minimap, top left (beside the kit's pause button)
@@ -2796,7 +2803,7 @@ const GAME = {
     g.fillStyle = 'rgba(12,16,22,.62)'; g.fillRect(V.x0, V.y0, W, H);
     if (UI.panel === 'settings') return drawSettings(g, V, W, u);
     if (UI.panel === 'crosshair') return drawXhair(g, V, W, u);
-    g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'Seven maps. One rival. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
+    g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'Two on two. Seven maps. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
     coinTag(g, V.x1 - m, V.y0 + 44 * u, 20 * u, STATS.coins);
     if (STATS.matches) tx(g, `${STATS.wins} wins in ${STATS.matches} matches · ${STATS.kills} kills`, V.x1 - m, V.y0 + 78 * u, 14 * u, DIM, 'right');
     // operatives
@@ -2813,11 +2820,12 @@ const GAME = {
     });
     // what to play
     const rx = V.x1 - m - rw; let y = top;
-    btn(g, rx, y, rw, 78 * u, 'PLAY', menuPlay, { on: true, fill: FOE, px: 32 * u, sub: CFG.diff === 'auto' ? `bot matched to you: ${rankName(STATS.rating)} · rating ${STATS.rating}` : 'against a ' + DIFF[CFG.diff].n + ' bot' }); y += 88 * u;
-    choice(g, rx, y, rw, tapH(40), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(40) + 6 * u;
-    choice(g, rx, y, rw, tapH(40), [[1, '1 V 1'], [2, '2 V 2 (BOT TEAMMATE)']], CFG.size, v => { CFG.size = v; }); y += tapH(40) + 14 * u;
-    choice(g, rx, y, rw, tapH(40), [['versus', 'FRIENDS: VERSUS'], ['coop', 'FRIENDS: CO-OP']], CFG.team, v => { CFG.team = v; }); y += tapH(40) + 6 * u;
-    btn(g, rx, y, rw, tapH(52), 'PLAY WITH FRIENDS ONLINE', () => MP.show(), { px: 18 * u, sub: CFG.team === 'coop' ? '2-4 of you together against bots' : '2-4 players: 1v1 or 2v2, bots fill gaps' }); y += tapH(52) + 8 * u;
+    const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots';
+    btn(g, rx, y, rw, 78 * u, 'PLAY 2V2', () => menuPlay(2), { on: true, fill: FOE, px: 32 * u, sub: 'you + a bot teammate vs two · ' + lvl }); y += 86 * u;
+    btn(g, rx, y, rw, tapH(44), '1V1 DUEL', () => menuPlay(1), { px: 16 * u, sub: 'just you and one rival' }); y += tapH(44) + 8 * u;
+    choice(g, rx, y, rw, tapH(40), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(40) + 14 * u;
+    choice(g, rx, y, rw, tapH(40), [['versus', 'FRIENDS 2V2'], ['coop', 'CO-OP'], ['duel', '1V1']], CFG.team, v => { CFG.team = v; }); y += tapH(40) + 6 * u;
+    btn(g, rx, y, rw, tapH(52), 'PLAY WITH FRIENDS ONLINE', () => MP.show(), { px: 18 * u, sub: CFG.team === 'coop' ? '2-4 of you together against bots' : CFG.team === 'duel' ? 'one friend, one on one' : '2-4 friends, two a side: bots fill any gap' }); y += tapH(52) + 8 * u;
     btn(g, rx, y, (rw - 8) / 2, tapH(52), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 15 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(52), 'GUNS & UNLOCKS', () => { play({ mode: 'range' }); UI.atab = 'Rifle'; openArmory(true); }, { px: 15 * u, fill: COIN }); y += tapH(52) + 8 * u;
     if (!touch) { const ty = top + chh + 26 * u; tx(g, 'HOW IT PLAYS', x0, ty, 13 * u, DIM, 'left'); ['Stand still to shoot straight. Tap the opposite key to stop dead.', 'Tap or burst at range: sprays climb, then sway. Heads take the most.', 'Shift sprints; crouch mid-sprint to slide; Space jumps (even out of a slide).', 'B opens the armory. Right click aims or scopes. F plants and defuses.'].forEach((t, i) => tx(g, t, x0, ty + 26 * u + i * 24 * u, 14 * u, '#b9c0cc', 'left', 600)); }
     btn(g, rx, y, (rw - 8) / 2, tapH(48), 'SETTINGS', () => { UI.panel = 'settings'; }, { px: 15 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(48), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 15 * u });
@@ -2937,7 +2945,7 @@ const GAME = {
   let booted = false, acc = 0, lastDraw = 0;
   function toMenu() { M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
   function play(o) { resetInput(); UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
-  function menuPlay() { play({ mode: 'bot', diff: CFG.diff, size: CFG.size }); }
+  function menuPlay(size) { if (size) { CFG.size = size; saveAll(); } play({ mode: 'bot', diff: CFG.diff, size: CFG.size }); }
   on('matchStart', () => { resetInput(); acc = 0; screen = 'play'; });   // an online match began (60-net started it)
   on('round', () => { UI.armory = false; UI.pick = null; if (M.mode !== 'demo' && M.mode !== 'range') openArmory(true); });   // each round opens on the armory
   on('live', () => { if (UI.armory) { UI.armory = false; grabMouse(); } });

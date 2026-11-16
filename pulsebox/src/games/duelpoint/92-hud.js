@@ -88,8 +88,15 @@
       tx(g, String(M.wins[0]), -98, 30, 38, YOU); tx(g, String(M.wins[1]), 98, 30, 38, FOE);
       if (M.planted && M.phase === 'live') { const k = cl(M.planted.t / FUSE_T, 0, 1), on = Math.sin(M.time * (6 + (1 - k) * 14)) > 0; g.fillStyle = on ? WARN : '#5a2620'; g.beginPath(); g.moveTo(0, 8); g.lineTo(13, 24); g.lineTo(0, 40); g.lineTo(-13, 24); g.fill(); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(-46, 46, 92, 5); g.fillStyle = WARN; g.fillRect(-46, 46, 92 * k, 5); }
       else { tx(g, clock(M.t), 0, 25, 30, M.phase === 'live' && M.t < 10 ? WARN : BONE); tx(g, M.phase === 'buy' ? 'BUY PHASE' : M.phase === 'end' ? 'ROUND OVER' : 'ROUND ' + M.round, 0, 50, 11, DIM); }
-      tx(g, demo ? P.name.toUpperCase() : 'YOU', -166, 20, 14, YOU, 'right'); tx(g, side === 'att' ? 'ATTACK' : 'DEFEND', -166, 40, 12, DIM, 'right');
-      tx(g, F.name.toUpperCase(), 166, 20, 14, FOE, 'left'); tx(g, OPS[F.op].n, 166, 40, 12, DIM, 'left');
+      const mine = M.fs.filter(q => q.team === P.team && !q.gone), theirs = M.fs.filter(q => q.team !== P.team && !q.gone);
+      if (mine.length > 1 || theirs.length > 1) {   // a team game: show the teams and who is still standing
+        const pips = (list, x, dir, col) => list.forEach((q, i) => { g.fillStyle = q.alive ? col : 'rgba(239,233,220,.18)'; g.beginPath(); g.arc(x + dir * i * 16, 45, 5.5, 0, TAU); g.fill(); });
+        tx(g, demo ? P.name.toUpperCase() : 'YOUR TEAM', -166, 20, 14, YOU, 'right'); pips(mine, -172, -1, YOU); tx(g, side === 'att' ? 'ATTACK' : 'DEFEND', -172 - mine.length * 16 - 4, 45, 11, DIM, 'right');
+        tx(g, 'RIVALS', 166, 20, 14, FOE, 'left'); pips(theirs, 172, 1, FOE);
+      } else {
+        tx(g, demo ? P.name.toUpperCase() : 'YOU', -166, 20, 14, YOU, 'right'); tx(g, side === 'att' ? 'ATTACK' : 'DEFEND', -166, 40, 12, DIM, 'right');
+        tx(g, F.name.toUpperCase(), 166, 20, 14, FOE, 'left'); tx(g, OPS[F.op].n, 166, 40, 12, DIM, 'left');
+      }
     } else { rr(g, -210, 0, 420, 44, 8, GLASS); tx(g, 'RANGE', -190, 22, 18, GOLD, 'left'); tx(g, `${P.stat.hits} hits / ${P.stat.shots} shots` + (P.stat.shots ? `  ·  ${Math.round(100 * P.stat.hits / P.stat.shots)}%` : ''), 190, 22, 14, BONE, 'right'); }
     g.restore();
     // --- minimap, top left (beside the kit's pause button)

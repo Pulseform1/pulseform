@@ -1329,8 +1329,8 @@ const GAMES = [
     id: "duelpoint",
     title: "Duelpoint",
     category: "Action",
-    kind: "Action · 3D tactical shooter · Online 1v1 · Phone and desktop",
-    tags: ["3D shooter", "1v1 online", "16 guns", "Plays on phones"],
+    kind: "Action · 3D tactical shooter · 2v2 and 1v1 online · Phone and desktop",
+    tags: ["3D shooter", "2v2 teams", "Play with friends", "Plays on phones"],
     badge: 'NEW',
     file: 'games/duelpoint.html',
     cover: 'media/duelpoint-cover.jpg',
@@ -1338,8 +1338,8 @@ const GAMES = [
     shots: ['media/duelpoint-shot1.jpg', 'media/duelpoint-shot2.jpg'],
     aspect: 16 / 9,
     immersive: true,
-    pitch: "One map. One rival. Every round counts.",
-    blurb: "A first-person tactical duel, rebuilt from the ground up. Attack and plant the charge on the ring, or defend it and defuse. The gunplay is exact: your first bullet lands on the crosshair when you stand still, moving throws it off, and a counter-strafe stops you dead for the shot. Sprays climb then sway, heads take the most, some guns fade with range. Sixteen guns across pistol rounds, cheap rounds and full buys, a knife, shields, and three operatives with two abilities each. Saltworks is a sea-side yard with three ways in: the long Pier, the Yard doorway and the roofed Tunnel. Play a bot on three difficulties, a friend online, or the practice range. On a phone it takes the whole screen with two-thumb controls, aim assist and auto-fire, and you can design your own crosshair.",
+    pitch: "Two on two. Seven maps. Every round counts.",
+    blurb: "A first-person tactical shooter built for two on two. Team up with a friend or a bot teammate, attack and plant the charge on the ring, or defend it and defuse. The gunplay is exact: your first bullet lands on the crosshair when you stand still, moving throws it off, and a counter-strafe stops you dead for the shot. Sprays climb then sway, heads take the most, some guns fade with range. Sixteen guns across pistol rounds, cheap rounds and full buys, a knife, shields, and three operatives with two abilities each. Saltworks is a sea-side yard with three ways in: the long Pier, the Yard doorway and the roofed Tunnel. Play 2v2 with a bot teammate, team up with friends online (bots fill any empty seat), go co-op against bots, or settle it one on one. On a phone it takes the whole screen with two-thumb controls, aim assist and auto-fire, and you can design your own crosshair.",
     how: ["Mouse and keys: WASD, mouse to aim, click to shoot, right click to aim or scope, B for the armory, F to plant or defuse.", "Phone: left thumb moves, right thumb looks; auto-fire shoots when you are on target. Turn the phone sideways.", "Stand still to shoot straight. Tap the opposite direction to stop instantly. Burst at range.", "First to 5 rounds. Sides swap after round 4. Design your crosshair in the menu."]
   },
   {
@@ -3021,7 +3021,7 @@ $('q2').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDef
    and walks straight into the room's lobby (src/lib/mp.js).
    ============================================================ */
 const FRIEND_GAMES = ['duelpoint', 'odd-crowd', 'lantern-keep', 'siegeworks', 'hyperlane', 'strata', 'bumper-brawl', 'paint-wars', 'turbo-laps', 'sea-battle', 'doodle-guess'];
-const FRIEND_PLAYERS = { duelpoint: '1v1 duel', 'odd-crowd': '3-10 players · party', 'lantern-keep': '1-4 players · co-op', siegeworks: '1v1', hyperlane: '2-6 players', strata: '2-4 players · co-op', 'bumper-brawl': '2-4 players', 'paint-wars': '2-4 players', 'turbo-laps': '2-6 players', 'sea-battle': '1v1', 'doodle-guess': '2-8 players' };
+const FRIEND_PLAYERS = { duelpoint: '2v2 teams · 1v1', 'odd-crowd': '3-10 players · party', 'lantern-keep': '1-4 players · co-op', siegeworks: '1v1', hyperlane: '2-6 players', strata: '2-4 players · co-op', 'bumper-brawl': '2-4 players', 'paint-wars': '2-4 players', 'turbo-laps': '2-6 players', 'sea-battle': '1v1', 'doodle-guess': '2-8 players' };
 const API_ORIGIN = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? '' : 'https://box.pulseform.org';
 let roomJoin = null, frPick = null;
 const frGames = () => FRIEND_GAMES.map(byId).filter(Boolean);
