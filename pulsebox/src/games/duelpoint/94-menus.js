@@ -63,8 +63,10 @@
     // what to play
     const rx = V.x1 - m - rw; let y = top;
     btn(g, rx, y, rw, 78 * u, 'PLAY', menuPlay, { on: true, fill: FOE, px: 32 * u, sub: CFG.diff === 'auto' ? `bot matched to you: ${rankName(STATS.rating)} · rating ${STATS.rating}` : 'against a ' + DIFF[CFG.diff].n + ' bot' }); y += 88 * u;
-    choice(g, rx, y, rw, tapH(44), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(44) + 16 * u;
-    btn(g, rx, y, rw, tapH(52), 'PLAY A FRIEND ONLINE', () => MP.show(), { px: 18 * u }); y += tapH(52) + 8 * u;
+    choice(g, rx, y, rw, tapH(40), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(40) + 6 * u;
+    choice(g, rx, y, rw, tapH(40), [[1, '1 V 1'], [2, '2 V 2 (BOT TEAMMATE)']], CFG.size, v => { CFG.size = v; }); y += tapH(40) + 14 * u;
+    choice(g, rx, y, rw, tapH(40), [['versus', 'FRIENDS: VERSUS'], ['coop', 'FRIENDS: CO-OP']], CFG.team, v => { CFG.team = v; }); y += tapH(40) + 6 * u;
+    btn(g, rx, y, rw, tapH(52), 'PLAY WITH FRIENDS ONLINE', () => MP.show(), { px: 18 * u, sub: CFG.team === 'coop' ? '2-4 of you together against bots' : '2-4 players: 1v1 or 2v2, bots fill gaps' }); y += tapH(52) + 8 * u;
     btn(g, rx, y, (rw - 8) / 2, tapH(52), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 15 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(52), 'GUNS & UNLOCKS', () => { play({ mode: 'range' }); UI.atab = 'Rifle'; openArmory(true); }, { px: 15 * u, fill: COIN }); y += tapH(52) + 8 * u;
     if (!touch) { const ty = top + chh + 26 * u; tx(g, 'HOW IT PLAYS', x0, ty, 13 * u, DIM, 'left'); ['Stand still to shoot straight. Tap the opposite key to stop dead.', 'Tap or burst at range: sprays climb, then sway. Heads take the most.', 'Shift sprints; crouch mid-sprint to slide; Space jumps (even out of a slide).', 'B opens the armory. Right click aims or scopes. F plants and defuses.'].forEach((t, i) => tx(g, t, x0, ty + 26 * u + i * 24 * u, 14 * u, '#b9c0cc', 'left', 600)); }
     btn(g, rx, y, (rw - 8) / 2, tapH(48), 'SETTINGS', () => { UI.panel = 'settings'; }, { px: 15 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(48), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 15 * u });
@@ -179,6 +181,6 @@
       tx(g, `+${M.earned} COINS`, 640 - 8 * u, cy, 24 * u, COIN, 'right', 800); tx(g, `${STATS.coins} total${rt}`, 640 + 8 * u, cy, 14 * u, DIM, 'left');
     }
     const by = Math.min(V.y1 - 80 * u, cy + 40 * u);
-    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); MP.show(); } else play({ mode: M.mode, diff: CFG.diff }); }, { on: true, fill: FOE, px: 19 * u });
+    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); MP.show(); } else play({ mode: M.mode, diff: CFG.diff, size: CFG.size }); }, { on: true, fill: FOE, px: 19 * u });
     btn(g, 640 + 10 * u, by, 240 * u, tapH(56), 'MENU', toMenu, { px: 19 * u });
   }

@@ -119,6 +119,21 @@ function moveChecks() {
   const c1 = T.coinsFor({ won: true, rounds: 5, kills: 7, heads: 2, lvl: 1 }), c0 = T.coinsFor({ won: false, rounds: 2, kills: 3, heads: 0, lvl: 1 }), cL = T.coinsFor({ won: true, rounds: 5, kills: 7, heads: 2, lvl: 4 });
   ok(c1 < 120 && c0 < c1 / 2 && cL > c1, 'coins come slowly, more for wins and tougher bots', `win ${c1}, loss ${c0}, win vs Legend ${cL}`);
 }
+function teamChecks(count) {
+  section(`${count} 2v2 bot matches`);
+  let done = 0, rounds = 0, nan = 0, err = 0, kills = 0; const why = {};
+  for (let n = 0; n < count; n++) {
+    try {
+      T.seed(n * 104729 + 3); T.startMatch({ mode: 'bot', diff: 1, size: 2, map: n % T.MAPS.length }); const M = T.M; M.fs[0].bot = { diff: 1 }; M.fs[0].local = false;
+      if (!n) ok((M.fs.length === 4 && M.fs.filter(f => f.team === 0).length === 2), 'a 2v2 has two on each team');
+      T.on('end', (wi, w) => { why[w] = (why[w] || 0) + 1; });
+      for (let i = 0; i < 60 * 60 * 25 && !M.over; i++) { T.tick(DT); if (i % 60 === 0 && M.fs.some(f => !Number.isFinite(f.x + f.z + f.y))) nan++; }
+      if (M.over) done++; rounds += M.wins[0] + M.wins[1]; kills += M.fs.reduce((a, f) => a + f.stat.k, 0);
+    } catch (e) { err++; console.log(e.stack); }
+  }
+  ok(!err, 'no errors'); ok(done === count, 'every 2v2 finishes', `${done}/${count}`); ok(!nan, 'no NaN');
+  console.log(`    ${rounds} rounds, ${kills} kills`);
+}
 function matchChecks(count) {
   section(`${count} bot matches`);
   const why = {}, post = {}; let rounds = 0, plants = 0, secs = 0, stuck = 0, bad = 0, unfinished = 0, kills = 0, heads = 0; const errors = [];
@@ -164,6 +179,6 @@ function printMap() {
 const arg = process.argv[2];
 if (arg === 'map') { printMap(); process.exit(0); }
 if (arg === 'matches') matchChecks(+process.argv[3] || 20);
-else { mapChecks(); gunplayChecks(); moveChecks(); matchChecks(20); }
+else { mapChecks(); gunplayChecks(); moveChecks(); teamChecks(7); matchChecks(20); }
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

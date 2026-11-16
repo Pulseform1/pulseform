@@ -38,7 +38,7 @@
     else if (R() < .5) buy(f, pick(['quill', 'hammer', 'stub', 'viper', 'flux']));
   }
   // use an ability at a chosen place, without having to look there first
-  function botCast(f, k, data) { if (!f.ab[k] || M.phase !== 'live') return; f.ab[k] = 0; applyAbility(f, k, data); net({ t: 'ab', k, d: data }); }
+  function botCast(f, k, data) { if (!f.ab[k] || M.phase !== 'live') return; f.ab[k] = 0; applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
   const magOf = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return A ? A.mag : 0; };
   const hasAmmo = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return !!A && A.mag + A.res > 0; };
 

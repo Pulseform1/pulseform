@@ -2,7 +2,7 @@
   let booted = false, acc = 0, lastDraw = 0;
   function toMenu() { M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
   function play(o) { resetInput(); UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
-  function menuPlay() { play({ mode: 'bot', diff: CFG.diff }); }
+  function menuPlay() { play({ mode: 'bot', diff: CFG.diff, size: CFG.size }); }
   on('matchStart', () => { resetInput(); acc = 0; screen = 'play'; });   // an online match began (60-net started it)
   on('round', () => { UI.armory = false; UI.pick = null; if (M.mode !== 'demo' && M.mode !== 'range') openArmory(true); });   // each round opens on the armory
   on('live', () => { if (UI.armory) { UI.armory = false; grabMouse(); } });
