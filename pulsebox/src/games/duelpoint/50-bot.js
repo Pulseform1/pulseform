@@ -31,6 +31,7 @@
     if (!f.load[1] || R() < .25) buy(f, R() < .1 + .05 * d ? pick(['longbow', 'kite']) : R() < .15 ? 'torrent' : R() < .25 ? pick(['gnat', 'hornet', 'breaker', 'thresher']) : pick(['mako', 'paladin', 'vesper', 'lancer']));
     if (f.load[2] === 'pip' && R() < .5 || R() < .15) buy(f, pick(['hammer', 'quill', 'wasp', 'stub', 'pip']));
     if (!f.load.sh) buy(f, R() < .3 + .15 * d ? 'heavy' : 'light');
+    if (!f.load.nade && R() < .45 + .12 * d) buy(f, 'smoke');
   }
   // use an ability at a chosen place, without having to look there first
   function botCast(f, k, data) { if (!f.ab[k] || M.phase !== 'live') return; f.ab[k] = 0; applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
@@ -137,6 +138,11 @@
       if (f.op === 'iris' && f.ab.e && !sees && fresh && B.last.heard && dE > 6 && dE < 16 && R() < dt * 1.5) botCast(f, 'e', { x: B.last.x, y: 1.6, z: B.last.z });
       if (f.op === 'bastion' && f.ab.q && engaged && f.hp < 70 && dE > 5) ability(f, 'q');
       if (f.op === 'bastion' && f.ab.e && f.hp < 60 && !sees) ability(f, 'e');
+      // smoke grenades: attackers cover a corner before stepping onto the site; defenders smoke the lane they just heard someone in
+      if (f.smokes > 0 && !sees && !(B.nadeT > M.time)) {
+        if (side === 'att' && P.k === 'push' && near < 24 && near > 8) { const hs = HOLDS.filter(q => (q.lane === P.lane || q.lane === 'any') && Math.hypot(q.p[0] - f.x, q.p[1] - f.z) < 22); if (hs.length && R() < dt * 2) { const h = pick(hs); lobNade(f, h.p[0], h.p[1]); B.nadeT = M.time + 6; } }
+        else if (side === 'def' && fresh && B.last.heard && dE > 8 && dE < 20 && R() < dt * .7) { lobNade(f, B.last.x, B.last.z); B.nadeT = M.time + 8; }
+      }
     }
 
     // --- moving

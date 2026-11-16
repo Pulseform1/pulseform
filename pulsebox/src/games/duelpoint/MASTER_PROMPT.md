@@ -48,8 +48,7 @@ salt yard), its own operatives, its own sixteen guns and its own look. Do not us
   including (asked for during the build) the gun models and the player models: guns are assembled from one kit of
   turned barrels, bevelled receivers, shaped grips, stocks, magazines and sights so the arsenal reads as one
   family; each operative has their own silhouette and their hands reach the gun they hold.
-- There are no bought smoke grenades; the owner said they are not needed. Vex's Veil ability, which is a smoke,
-  stays, because operatives were not part of that remark.
+- Smoke grenades: the owner first removed them, then asked for them back. Bought once with coins, two per round, G throws.
 - The knife is always carried: slash 50 (75 to the head), stab 75, or 150 into the back; faster running with it out.
 - Economy: start 800; win 3000; loss 1900, 2400, then 2900; kill 200; plant 300; cap 9000. Round 5 is a second
   pistol round. A 4-4 decider gives both players 5000.
@@ -172,7 +171,7 @@ damage tables, the economy, the knife, and whole bot matches for errors, stuck b
 
 ## Decisions made while building
 
-- **Smoke grenades stay out of the armory.** The only smoke is Vex's Veil ability; it is part of that operative's kit, not something either side buys.
+- **Smoke grenades are back** (the owner asked for them): bought once with coins in the armory's Utility slot, two every round, thrown with G (a SMOKE button on touch). Their cloud is grey; Vex's Veil stays violet.
 - **First-shot error is a fraction of a degree, not zero.** Standing still, a tapped first shot lands inside the crosshair's centre at any range a duel happens over; moving adds error, and counter-strafing removes it in about 50 ms instead of 150 ms.
 - **Fire rate is exact.** Leftover time between shots carries over, so a 600 rpm gun fires 600 rounds a minute at any frame rate; spray only recovers once the trigger has been released for 50 ms.
 - **The armory shows every weapon at once,** in class columns (sidearms; SMGs and shotguns; rifles; snipers and heavy; shields), with a detail panel for the one you point at.

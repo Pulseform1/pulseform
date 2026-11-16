@@ -186,7 +186,7 @@ const GAME = {
   id: 'duelpoint', title: 'Duelpoint', tagline: 'Two on two. Seven maps. Every round counts.',
   font: 'Chakra Petch', accent: '#ff8a3d', accent2: '#35e0c8', bg: '#0c1016', noSkins: true, noHud: true, scoreLabel: 'Match score',
   how: [
-    'Mouse and keys: WASD moves, mouse aims, click shoots, right click aims or scopes. Shift walks, Ctrl or C crouches (hold or toggle), O opens settings (sensitivity), Space jumps, R reloads, 1 2 3 swap weapons, Q and E are your abilities, F plants and defuses, B opens the armory.',
+    'Mouse and keys: WASD moves, mouse aims, click shoots, right click aims or scopes. Shift walks, Ctrl or C crouches (hold or toggle), O opens settings (sensitivity), Space jumps, R reloads, 1 2 3 swap weapons, Q and E are your abilities, G throws a smoke grenade, F plants and defuses, B opens the armory.',
     'Phone: left thumb moves, right thumb looks. Auto-fire shoots when your crosshair is on your rival; the buttons do the rest.',
     'Stand still to shoot straight. Your first shot lands exactly on the crosshair; moving throws it off. Tap the opposite direction to stop dead. Tap or burst at range: sprays climb, then sway.',
     'Attack: carry the charge to the ring and plant it. Defend: stop them, or defuse it. First to 5 rounds; sides swap after round 4.',
@@ -269,6 +269,9 @@ const GAME = {
   // damage is the body damage at that range times where it landed: G.head for the head, G.legs for the legs (1 head, 2 body, 3 legs)
   const dmgAt = (G, dist, part) => { const row = G.dmg.find(r => dist <= r[0]) || G.dmg[G.dmg.length - 1]; return Math.round(row[1] * (part === 1 ? G.head : part === 3 ? G.legs : 1)); };
   const zoomOf = f => { const G = GUNS[f.guns[f.slot]] || GUNS.pip; return !f.scoped ? 1 : G.scope ? G.scope[Math.min(G.scope.length, +f.scoped) - 1] : G.ads || 1; };
+  // the smoke grenade: bought once with coins, then you carry `per` of them into every round (G throws one)
+  const NADE = { k: 'smoke', n: 'Smoke grenade', short: 'Smoke', cat: 'Utility', coins: 200, per: 2, col: '#c3cad4', R: 4.2, T: 15, fuse: 1.5,
+    desc: 'Thrown with G (the SMOKE button on touch). Bounces off walls and crates, then pops into a thick grey cloud that blocks sight for 15 s. Two every round.' };
   const ARMOR = [{ k: 'light', n: 'Light shield', cost: 400, sh: 25 }, { k: 'heavy', n: 'Heavy shield', cost: 1000, sh: 50 }];
   // the armory's tabs, in order
   const CLASSES = [['Sidearm', 'Sidearms'], ['SMG', 'SMGs'], ['Shotgun', 'Shotguns'], ['Rifle', 'Rifles'], ['Sniper', 'Snipers'], ['Heavy', 'Heavy'], ['Shield', 'Shields']];
@@ -500,7 +503,7 @@ const GAME = {
       x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, crouch: 0, ground: true, jumpHeld: false,
       hp: 100, sh: 0, alive: true, guns: { 1: null, 2: 'pip', 3: 'knife' }, slot: 2, ammo: {},
       fireT: 0, reloadT: 0, spray: 0, sseed: 0, burst: null, scoped: 0, kick: 0, swing: null, semiHeld: false,
-      credits: 0, load: { 1: null, 2: 'pip', sh: 0 }, spent: {}, lossRun: 0, ready: false, ab: { q: 1, e: 1 }, abT: 0,
+      credits: 0, load: { 1: null, 2: 'pip', sh: 0, nade: 0 }, smokes: 0, throwT: 0, spent: {}, lossRun: 0, ready: false, ab: { q: 1, e: 1 }, abT: 0,
       flash: 0, reveal: 0, heal: null, dash: null, plant: 0, defuse: 0, footT: 0, step: 0, walkT: 0, sprinting: false, slide: null, slideCD: 0, crouchHeld: false,
       stat: { k: 0, d: 0, hs: 0, dmg: 0, shots: 0, hits: 0 },
     }, o);
@@ -737,6 +740,46 @@ const GAME = {
     if (key === 'bastione') f.heal = { t: 3 };
     emit('ability', f, k);
   }
+  /* ---------- smoke grenades ---------- */
+  // thrown from the eyes along the view with a little lift; online, both devices fly the same throw and pop the same cloud
+  function throwNade(f) {
+    if (!f.alive || !(M.phase === 'live' || M.mode === 'range') || !(f.smokes > 0) || f.plant > 0 || f.defuse > 0 || f.throwT > 0) return false;
+    if (M.mode !== 'range') f.smokes--; f.throwT = .6;
+    const d = viewDir(f.yaw, f.pitch), e = eyeY(f), n = { x: f.x + d[0] * .45, y: e - .1 + d[1] * .45, z: f.z + d[2] * .45, vx: d[0] * 14 + f.vx * .5, vy: d[1] * 14 + 2.4, vz: d[2] * 14 + f.vz * .5 };
+    addNade(n); net({ t: 'nd', f: f.key, x: n.x, y: n.y, z: n.z, vx: n.vx, vy: n.vy, vz: n.vz }); emit('throw', f); return true;
+  }
+  function lobNade(f, tx, tz) {
+    if (!f.alive || M.phase !== 'live' || !(f.smokes > 0) || f.throwT > 0) return false;
+    f.smokes--; f.throwT = .6; const y0 = eyeY(f) - .1, dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 13, .45, 1.1), ty = hAt(tx, tz) + .1;
+    const n = { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + 9 * T * T) / T, vz: dz / T };
+    f.yaw = yawTo(f.x, f.z, tx, tz); addNade(n); net({ t: 'nd', f: f.key, x: n.x, y: n.y, z: n.z, vx: n.vx, vy: n.vy, vz: n.vz }); emit('throw', f); return true;
+  }
+  function addNade(n) { M.nades.push(Object.assign({ t: 0, rest: 0, spin: 0 }, n)); }
+  function stepNades(dt) {
+    for (const n of M.nades) {
+      n.t += dt; const h = dt / 4;
+      for (let s = 0; s < 4; s++) {
+        n.vy -= 18 * h; const mx = n.vx * h, my = n.vy * h, mz = n.vz * h, L = Math.hypot(mx, my, mz);
+        if (L > 1e-6) {
+          const hit = rayGrid(n.x, n.y, n.z, mx / L, my / L, mz / L, L + .06);
+          if (hit < L + .06) {   // bounce off whatever it met, losing most of its speed
+            const nx = rayN[0], ny = rayN[1], nz = rayN[2], dv = n.vx * nx + n.vy * ny + n.vz * nz, k = Math.max(0, hit - .06) / L;
+            n.x += mx * k; n.y += my * k; n.z += mz * k;
+            n.vx = (n.vx - 2 * dv * nx) * .45; n.vy = (n.vy - 2 * dv * ny) * .38; n.vz = (n.vz - 2 * dv * nz) * .45;
+            if (ny > .5 && Math.abs(n.vy) < 1.2) { n.vy = 0; n.vx *= .7; n.vz *= .7; }
+            if (Math.abs(dv) > 2.5) emit('nadeBounce', n);
+            continue;
+          }
+          n.x += mx; n.y += my; n.z += mz;
+        }
+        const g = hAt(n.x, n.z); if (n.y < g + .05) { n.y = g + .05; if (n.vy < 0) n.vy = Math.abs(n.vy) < 1.2 ? 0 : -n.vy * .38; n.vx *= .8; n.vz *= .8; }
+      }
+      n.spin += dt * Math.hypot(n.vx, n.vz) * 3;
+      if (Math.hypot(n.vx, n.vy, n.vz) < .4) n.rest += dt;
+      if (n.t > NADE.fuse || n.rest > .3) { n.done = true; const s = { x: n.x, z: n.z, y: Math.max(0, n.y - .1), r: 0, R: NADE.R, t: NADE.T, T: NADE.T, grey: 1 }; M.smokes.push(s); emit('smoke', s); emit('nadePop', s); }
+    }
+    if (M.nades.length) M.nades = M.nades.filter(n => !n.done);
+  }
   function popFlare(fl) {
     for (const f of M.fs) {
       if (!f.alive || f.net) continue; const ex = f.x, ey = eyeY(f), ez = f.z, dx = fl.x - ex, dy = fl.y - ey, dz = fl.z - ez, L = Math.hypot(dx, dy, dz) || .01;
@@ -785,12 +828,12 @@ const GAME = {
     if (M.host) net({ t: 'end', wi: wi ^ (M.flip || 0), why });
   }
   function startRound(n) {
-    M.round = n; M.phase = 'buy'; M.t = BUY_T; M.planted = null; M.defused = false; M.smokes = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null;
+    M.round = n; M.phase = 'buy'; M.t = BUY_T; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null;
     const decider = n === WIN_ROUNDS * 2 - 1;
     const order = [...M.fs].sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);   // the same on every device, so teammates never share a spawn
     M.fs.forEach(f => {
       const side = sideOf(f), sp = SPAWN[side], p = sp[(n + order.filter(q => sideOf(q) === side).indexOf(f)) % sp.length];
-      f.guns = { 1: f.load[1] || null, 2: f.load[2] || 'pip', 3: 'knife' }; f.sh = f.load.sh || 0; f.ammo = {};   // your loadout, fresh every round
+      f.guns = { 1: f.load[1] || null, 2: f.load[2] || 'pip', 3: 'knife' }; f.sh = f.load.sh || 0; f.ammo = {}; f.smokes = f.load.nade ? NADE.per : 0; f.throwT = 0;   // your loadout, fresh every round
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
       f.ab = { q: 1, e: 1 }; for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
       f.yaw = yawTo(f.x, f.z, side === 'att' ? f.x + 10 : f.x - 10, f.z); if (f.gone) f.alive = false;
@@ -809,6 +852,10 @@ const GAME = {
       if (G.coins && f.local && M.mode !== 'range' && !STATS.owned.includes(k)) return false;   // not bought yet (the range lets you try anything)
       const s = G.slot; f.load[s] = k; f.guns[s] = k; giveAmmo(f, k); f.slot = s; f.scoped = 0; f.reloadT = 0; ok = true;
     } else if (A) { f.load.sh = f.load.sh === A.sh ? 0 : A.sh; f.sh = f.load.sh; ok = true; }
+    else if (k === NADE.k) {
+      if (f.local && M.mode !== 'range' && !STATS.owned.includes(k)) return false;
+      f.load.nade = f.load.nade ? 0 : 1; f.smokes = f.load.nade ? NADE.per : 0; ok = true;
+    }
     if (ok && f.local && M.mode !== 'range') { CFG.load = { ...f.load }; saveAll(); }   // remembered for your next match
     emit('buy', f, ok); return ok;
   }
@@ -820,7 +867,7 @@ const GAME = {
   function startMatch(o) {
     const mode = o.mode, online = mode === 'online', host = !online || MP.isHost(), ops = Object.keys(OPS);
     const A = fighter(mode === 'demo' ? { name: 'Rook', op: pick(ops), bot: { diff: 1 } } : { name: online ? MP.name : 'You', op: CFG.op, local: true });
-    if (A.local && mode !== 'range' && CFG.load) { const L0 = CFG.load, mine = k => k && GUNS[k] && (!GUNS[k].coins || STATS.owned.includes(k)); A.load = { 1: mine(L0[1]) ? L0[1] : null, 2: mine(L0[2]) ? L0[2] : 'pip', sh: L0.sh || 0 }; }
+    if (A.local && mode !== 'range' && CFG.load) { const L0 = CFG.load, mine = k => k && GUNS[k] && (!GUNS[k].coins || STATS.owned.includes(k)); A.load = { 1: mine(L0[1]) ? L0[1] : null, 2: mine(L0[2]) ? L0[2] : 'pip', sh: L0.sh || 0, nade: L0.nade && STATS.owned.includes(NADE.k) ? 1 : 0 }; }
     const auto = mode === 'bot' && (o.diff === 'auto' || o.diff == null), L = auto ? diffFor(STATS.rating) : null;
     const botP = () => auto ? { diff: L.i, D: L.D } : { diff: typeof o.diff === 'number' ? o.diff : 1, dummy: mode === 'range' }, used = new Set([A.name]), bname = () => { const n = pick(BOT_NAMES.filter(q => !used.has(q))); used.add(n); return n; };
     let fs = [A], flip = 0;
@@ -835,7 +882,7 @@ const GAME = {
     const hostAtt = o.hostAtt == null ? (R() < .5 ? 1 : 0) : o.hostAtt, decHostAtt = o.decHostAtt == null ? (R() < .5 ? 1 : 0) : o.decHostAtt;
     if (online && !o.seats) flip = host ? 0 : 1;
     M = { mode, online, host, auto, flip, byKey: Object.fromEntries(fs.map(f => [f.key, f])), rating: STATS.rating, adj: 0, fs, wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? 0 : 1) ^ flip, decAtt: (decHostAtt ? 0 : 1) ^ flip,
-      planted: null, defused: false, smokes: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0 };
+      planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0 };
     startRound(1);
     if (mode === 'range') { M.phase = 'live'; M.t = 0; Object.assign(A, { x: 9, z: 5, yaw: yawTo(9, 5, 30, 5) }); placeDummy(fs[1]); }
     if (mode === 'demo') M.t = 1.5;
@@ -876,6 +923,7 @@ const GAME = {
       f.semiHeld = !!I.fire;
       if (M.mode === 'range') { if (f.abT > 0 && (f.abT -= dt) <= 0) f.ab = { q: 1, e: 1 }; if (!f.alive && f.bot && (f.respawn -= dt) <= 0) placeDummy(f); }
     }
+    stepNades(dt); for (const f of M.fs) if (f.throwT > 0) f.throwT -= dt;
     for (const s of M.smokes) { s.t -= dt; s.r = s.t > s.T - .6 ? lp(0, s.R, (s.T - s.t) / .6) : s.t < 1 ? s.R * Math.max(0, s.t) : s.R; } M.smokes = M.smokes.filter(s => s.t > 0);
     for (const w of M.walls) { w.t -= dt; w.grow = Math.min(1, w.grow + dt * 4); } M.walls = M.walls.filter(w => w.t > 0);
     for (const fl of M.flares) { fl.t -= dt; if (fl.t <= 0) popFlare(fl); } M.flares = M.flares.filter(fl => fl.t > 0);
@@ -918,6 +966,7 @@ const GAME = {
     if (!f.load[1] || R() < .25) buy(f, R() < .1 + .05 * d ? pick(['longbow', 'kite']) : R() < .15 ? 'torrent' : R() < .25 ? pick(['gnat', 'hornet', 'breaker', 'thresher']) : pick(['mako', 'paladin', 'vesper', 'lancer']));
     if (f.load[2] === 'pip' && R() < .5 || R() < .15) buy(f, pick(['hammer', 'quill', 'wasp', 'stub', 'pip']));
     if (!f.load.sh) buy(f, R() < .3 + .15 * d ? 'heavy' : 'light');
+    if (!f.load.nade && R() < .45 + .12 * d) buy(f, 'smoke');
   }
   // use an ability at a chosen place, without having to look there first
   function botCast(f, k, data) { if (!f.ab[k] || M.phase !== 'live') return; f.ab[k] = 0; applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
@@ -1024,6 +1073,11 @@ const GAME = {
       if (f.op === 'iris' && f.ab.e && !sees && fresh && B.last.heard && dE > 6 && dE < 16 && R() < dt * 1.5) botCast(f, 'e', { x: B.last.x, y: 1.6, z: B.last.z });
       if (f.op === 'bastion' && f.ab.q && engaged && f.hp < 70 && dE > 5) ability(f, 'q');
       if (f.op === 'bastion' && f.ab.e && f.hp < 60 && !sees) ability(f, 'e');
+      // smoke grenades: attackers cover a corner before stepping onto the site; defenders smoke the lane they just heard someone in
+      if (f.smokes > 0 && !sees && !(B.nadeT > M.time)) {
+        if (side === 'att' && P.k === 'push' && near < 24 && near > 8) { const hs = HOLDS.filter(q => (q.lane === P.lane || q.lane === 'any') && Math.hypot(q.p[0] - f.x, q.p[1] - f.z) < 22); if (hs.length && R() < dt * 2) { const h = pick(hs); lobNade(f, h.p[0], h.p[1]); B.nadeT = M.time + 6; } }
+        else if (side === 'def' && fresh && B.last.heard && dE > 8 && dE < 20 && R() < dt * .7) { lobNade(f, B.last.x, B.last.z); B.nadeT = M.time + 8; }
+      }
     }
 
     // --- moving
@@ -1106,6 +1160,7 @@ const GAME = {
         M.feed.unshift({ a: by.name, b: F.name, w: GUNS[m.w] ? GUNS[m.w].n : m.w, head: !!m.h, t: 0, mine: by === me() }); emit('kill', F, by, !!m.h, m.w); if (M.host) judge(); break;
       }
       case 'ab': F.ab[m.k] = 0; applyAbility(F, m.k, m.d || {}); break;
+      case 'nd': F.smokes = Math.max(0, (F.smokes || 0) - 1); F.throwT = .6; addNade({ x: m.x, y: m.y, z: m.z, vx: m.vx, vy: m.vy, vz: m.vz }); emit('throw', F); break;
       case 'pl': if (!M.planted) plantAt(m.x, m.z, F); break;
       case 'df': defuseDone(F); break;
       case 'rdy': F.ready = true; break;
@@ -2158,6 +2213,8 @@ const GAME = {
     X.marks = Array.from({ length: 56 }, () => { const m = add(new THREE.Mesh(mkG, mkM)); m.visible = false; return m; }); X.mkN = 0;
     // smoke clouds and Rampart walls, made as the match needs them
     X.smokeM = new THREE.MeshLambertMaterial({ color: '#b6aedb', transparent: true, opacity: .94, depthWrite: false }); X.smokeG = new THREE.SphereGeometry(1, 16, 10); X.smokes = [];
+    X.smokeGM = new THREE.MeshLambertMaterial({ color: '#c4c8ce', transparent: true, opacity: .96, depthWrite: false });   // a grenade's cloud is grey, Vex's Veil is violet
+    { const body = new THREE.MeshStandardMaterial({ color: '#59606b', metalness: .5, roughness: .45 }), band = new THREE.MeshBasicMaterial({ color: '#c3cad4' }); X.nadeMk = () => { const g = new THREE.Group(); const c = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, .13, 12), body); const t = new THREE.Mesh(new THREE.CylinderGeometry(.034, .034, .035, 10), band); t.position.y = .08; const l = new THREE.Mesh(new THREE.BoxGeometry(.012, .02, .09), body); l.position.set(.045, .05, 0); g.add(c, t, l); return g; }; X.nadeObjs = []; }
     X.wallM = new THREE.MeshLambertMaterial({ color: '#ffb347', emissive: '#a85a10', emissiveIntensity: .7, transparent: true, opacity: .88 }); X.walls = [];
     // the charge: a squat device with a ring and a blinking light
     const ch = X.charge = new THREE.Group(), dk = new THREE.MeshLambertMaterial({ color: '#2a2e38' });
@@ -2204,7 +2261,7 @@ const GAME = {
     const live = M && (screen === 'play' || (screen === 'over' && posed));
     if (!live) {   // behind the menus: a slow flight round the site
       const a = X.t * .06 + 2.4; cam.position.set(41 + Math.cos(a) * 30, 19, 21 + Math.sin(a) * 26); cam.rotation.set(0, 0, 0); cam.lookAt(38, 0, 21); cam.fov = 55; cam.updateProjectionMatrix();
-      for (const A of X.agents.values()) A.visible = false; X.charge.visible = false; for (const g of X.smokes) g.visible = false; for (const w of X.walls) w.visible = false;
+      for (const A of X.agents.values()) A.visible = false; X.charge.visible = false; for (const g of X.smokes) g.visible = false; for (const o of X.nadeObjs) o.visible = false; for (const w of X.walls) w.visible = false;
       X.renderer.render(X.scene, cam); return;
     }
     const P = me(), G = gun(P);
@@ -2260,7 +2317,9 @@ const GAME = {
     for (const f of M.fs) if (f !== P) updateAgent(f, dt);
     // smokes, Rampart walls, the charge, a flare in flight
     while (X.smokes.length < M.smokes.length) { const g = new THREE.Group(); for (let i = 0; i < 7; i++) { const m = new THREE.Mesh(X.smokeG, X.smokeM); m.position.set((Math.random() - .5) * .7, (Math.random() - .5) * .5, (Math.random() - .5) * .7); m.scale.setScalar(.72 + i * .045); g.add(m); } X.scene.add(g); X.smokes.push(g); }
-    X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { g.position.set(s.x, s.y + 1.4, s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .12; } });
+    X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { const mt = s.grey ? X.smokeGM : X.smokeM; if (g.children[0].material !== mt) for (const c of g.children) c.material = mt; g.position.set(s.x, s.y + 1.4, s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .12; } });
+    const NS = M.nades || []; while (X.nadeObjs.length < NS.length) { const o = X.nadeMk(); X.scene.add(o); X.nadeObjs.push(o); }
+    X.nadeObjs.forEach((o, i) => { const n = NS[i]; o.visible = !!n; if (n) { o.position.set(n.x, n.y, n.z); o.rotation.set(n.spin, n.spin * .6, 0); } });
     while (X.walls.length < M.walls.length) { const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), X.wallM); m.castShadow = !X.low; X.scene.add(m); X.walls.push(m); }
     X.walls.forEach((m, i) => { const w = M.walls[i]; m.visible = !!w; if (w) { m.scale.set(w.x1 - w.x0, 3 * w.grow + .01, w.z1 - w.z0); m.position.set((w.x0 + w.x1) / 2, 1.5 * w.grow, (w.z0 + w.z1) / 2); } });
     X.charge.visible = !!M.planted && !(M.phase === 'end' && M.last && M.last.why === 'boom');
@@ -2348,6 +2407,9 @@ const GAME = {
     else if (key === 'irisq') { tone(o, 1300, .25, 'sine', .12, -700); tone(o, 1300, .25, 'sine', .08, -700, .18); } else if (key === 'irise') hiss(o, .08, .12, 'highpass', 1800);
     else if (key === 'bastionq') { tone(o, 80, .35, 'sawtooth', .16, 90); hiss(o, .3, .14, 'lowpass', 600); } else tone(o, 660, .2, 'triangle', .1, 330);
   });
+  cue('throw', f => hiss(outFor(f), .12, .14, 'bandpass', 900));
+  cue('nadeBounce', n => tone(outFor({ x: n.x, y: n.y - 1, z: n.z }), 900, .04, 'square', .05, -300));
+  cue('nadePop', s => { const o = outFor({ x: s.x, y: s.y, z: s.z }); tone(o, 1200, .05, 'square', .06); hiss(o, .9, .26, 'lowpass', 700); });
   cue('flarePop', fl => { const o = outFor({ x: fl.x, y: fl.y - 1, z: fl.z }); hiss(o, .3, .4, 'highpass', 2500); tone(o, 1800, .2, 'sine', .15, 2000); });
   cue('plantStart', f => tone(outFor(f), 600, .1, 'square', .08)); cue('defuseStart', f => { const o = outFor(f); tone(o, 800, .08, 'square', .09); tone(o, 600, .08, 'square', .09, 0, .1); });
   cue('planted', () => { const o = outFor(null); [392, 554, 784].forEach((q, i) => tone(o, q, .2, 'triangle', .12, 0, i * .09)); });
@@ -2409,7 +2471,7 @@ const GAME = {
     if (c === 'KeyB' && canBuy()) return openArmory(!UI.armory);
     if (UI.armory) return;
     if (c === 'KeyR') reload(P); else if (c === 'Digit1') switchTo(P, 1); else if (c === 'Digit2') switchTo(P, 2); else if (c === 'Digit3') switchTo(P, 3);
-    else if (c === 'KeyQ') ability(P, 'q'); else if (c === 'KeyE') ability(P, 'e'); else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) X.inspT = 2.6;
+    else if (c === 'KeyG') throwNade(P); else if (c === 'KeyQ') ability(P, 'q'); else if (c === 'KeyE') ability(P, 'e'); else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) X.inspT = 2.6;
   }
   if (typeof document !== 'undefined') {
     // while you play, keys the game uses (and Ctrl combinations, since Ctrl crouches) do not reach the browser
@@ -2438,6 +2500,7 @@ const GAME = {
       { k: 'swap', x: fx + 72 * u, y: fy - 128 * u, r: 36 * u, t: 'SWAP', show: P.alive },
       { k: 'q', x: fx - 118 * u, y: fy - 46 * u, r: 38 * u, t: op.q.n.toUpperCase(), show: P.alive && live, off: !P.ab.q, col: op.col },
       { k: 'e', x: fx - 204 * u, y: fy + 4 * u, r: 38 * u, t: op.e.n.toUpperCase(), show: P.alive && live, off: !P.ab.e, col: op.col },
+      { k: 'nade', x: fx - 196 * u, y: fy - 104 * u, r: 34 * u, t: 'SMOKE ' + (P.smokes || 0), show: P.alive && live && (P.smokes > 0 || P.load.nade), off: !(P.smokes > 0), col: NADE.col },
       { k: 'use', x: 640, y: B - 200 * u, r: 58 * u, t: sideOf(P) === 'att' ? 'PLANT' : 'DEFUSE', show: canUse, col: FOE },
     ].filter(b => b.show);
   }
@@ -2446,7 +2509,7 @@ const GAME = {
       const P = me(); click();
       if (b.k === 'fire') { TS.fire = id; TS.look = { id, x, y }; }   // the fire thumb keeps aiming while it holds
       else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') { if (me().sprinting) TS.slideAt = performance.now(); else TS.crouch = !TS.crouch; }
-      else if (b.k === 'q' || b.k === 'e') ability(P, b.k); else TS.held.set(id, b.k);
+      else if (b.k === 'q' || b.k === 'e') ability(P, b.k); else if (b.k === 'nade') throwNade(P); else TS.held.set(id, b.k);
       return;
     }
     if (x < lp(K.view.x0, K.view.x1, .45)) { if (!TS.stick) TS.stick = { id, x0: x, y0: y, x, y }; } else if (!TS.look) TS.look = { id, x, y };
@@ -2631,6 +2694,7 @@ const GAME = {
       tx(g, String(Math.ceil(P.hp)), 18, -28, 40, hpCol, 'left'); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(104, -36, 128, 8); g.fillStyle = hpCol; g.fillRect(104, -36, 128 * P.hp / 100, 8);
       if (P.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(104, -22, 128 * P.sh / 50, 6); tx(g, String(P.sh), 104 + 128 * P.sh / 50 + 6, -19, 11, '#7fc8ff', 'left'); }
       const op = OPS[P.op]; [['Q', 'q'], ['E', 'e']].forEach(([key, k], i) => { const x = 266 + i * 96, on = P.ab[k]; rr(g, x, -58, 86, 58, 8, on ? GLASS : 'rgba(12,16,22,.4)', on ? op.col : 'rgba(255,255,255,.12)'); tx(g, op[k].n.toUpperCase(), x + 43, -38, 14, on ? BONE : '#5a6272'); tx(g, key, x + 43, -16, 14, on ? op.col : '#5a6272'); });
+      if (P.load.nade || P.smokes > 0) { const x = 458, on = P.smokes > 0; rr(g, x, -58, 86, 58, 8, on ? GLASS : 'rgba(12,16,22,.4)', on ? NADE.col : 'rgba(255,255,255,.12)'); tx(g, 'SMOKE ×' + (P.smokes || 0), x + 43, -38, 14, on ? BONE : '#5a6272'); tx(g, 'G', x + 43, -16, 12, on ? NADE.col : '#5a6272'); }
       g.restore();
       g.save(); g.translate(V.x1 - 22 - 50 / pxPer(), V.y1 - 20); g.scale(u, u); rr(g, -270, -58, 270, 58, 8, GLASS);
       if (G.melee) tx(g, '—', -150, -28, 34, BONE); else { tx(g, String(A.mag), -150, -28, 42, A.mag ? BONE : WARN, 'right'); tx(g, '/ ' + A.res, -140, -22, 18, DIM, 'left'); }
@@ -2753,7 +2817,7 @@ const GAME = {
     choice(g, rx, y, rw, tapH(40), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(40) + 14 * u;
     choice(g, rx, y, rw, tapH(40), [['versus', 'FRIENDS 2V2'], ['coop', 'CO-OP'], ['duel', '1V1']], CFG.team, v => { CFG.team = v; }); y += tapH(40) + 6 * u;
     btn(g, rx, y, rw, tapH(52), 'PLAY WITH FRIENDS ONLINE', () => MP.show(), { px: 18 * u, sub: CFG.team === 'coop' ? '2-4 of you together against bots' : CFG.team === 'duel' ? 'one friend, one on one' : '2-4 friends, two a side: bots fill any gap' }); y += tapH(52) + 8 * u;
-    btn(g, rx, y, (rw - 8) / 2, tapH(52), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 15 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(52), 'GUNS & UNLOCKS', () => { play({ mode: 'range' }); UI.atab = 'Rifle'; openArmory(true); }, { px: 15 * u, fill: COIN }); y += tapH(52) + 8 * u;
+    btn(g, rx, y, (rw - 8) / 2, tapH(52), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 15 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(52), 'GUNS & UNLOCKS', () => { play({ mode: 'range' }); openArmory(true); }, { px: 15 * u, fill: COIN }); y += tapH(52) + 8 * u;
     if (!touch) { const ty = top + chh + 26 * u; tx(g, 'HOW IT PLAYS', x0, ty, 13 * u, DIM, 'left'); ['Stand still to shoot straight. Tap the opposite key to stop dead.', 'Tap or burst at range: sprays climb, then sway. Heads take the most.', 'Shift sprints; crouch mid-sprint to slide; Space jumps (even out of a slide).', 'B opens the armory. Right click aims or scopes. F plants and defuses.'].forEach((t, i) => tx(g, t, x0, ty + 26 * u + i * 24 * u, 14 * u, '#b9c0cc', 'left', 600)); }
     btn(g, rx, y, (rw - 8) / 2, tapH(48), 'SETTINGS', () => { UI.panel = 'settings'; }, { px: 15 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(48), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 15 * u });
   }
@@ -2796,51 +2860,56 @@ const GAME = {
   }
 
   // The armory, laid out the way players of the genre expect: every weapon on one screen, a column per class,
-  // shields on the right with the numbers for whatever you are pointing at. Press to buy; press again to sell back.
-  const ARMORY_TABS = [['SIDEARMS', 'Sidearm'], ['SMGS', 'SMG'], ['SHOTGUNS', 'Shotgun'], ['RIFLES', 'Rifle'], ['SNIPERS', 'Sniper'], ['HEAVY', 'Heavy'], ['SHIELDS', 'Shield']];
+  // shields on the right with the numbers for whatever you are pointing at. Press a gun you own to take it into every round;
+  // gold-edged ones are bought once with coins first. The smoke grenade sits under the heavy gun.
+  const ARMORY_COLS = [[['SIDEARMS', 'Sidearm']], [['SMGS', 'SMG'], ['SHOTGUNS', 'Shotgun']], [['RIFLES', 'Rifle']], [['SNIPERS', 'Sniper'], ['HEAVY', 'Heavy'], ['UTILITY', 'Utility']], [['SHIELDS', 'Shield']]];
+  const shopItem = k => GUNS[k] || (k === NADE.k ? NADE : null);
   const coinLocked = G => !!(G && G.coins && !STATS.owned.includes(G.k));
-  function unlock(k) { const G = GUNS[k]; if (!coinLocked(G) || STATS.coins < G.coins) return; STATS.coins -= G.coins; STATS.owned.push(k); saveAll(true); click(); buy(me(), k); }
-  // the armory: a tab per class, the guns of that class as big cards, and on the right what you're pointing at
+  function unlock(k) { const G = shopItem(k); if (!coinLocked(G) || STATS.coins < G.coins) return; STATS.coins -= G.coins; STATS.owned.push(k); saveAll(true); click(); buy(me(), k); }
+  const itemsOf = cat => cat === 'Shield' ? ARMOR.map(a => ({ k: a.k, n: a.n, cost: a.cost, col: '#7fc8ff', armor: a })) : cat === 'Utility' ? [NADE] : Object.values(GUNS).filter(q => q.cat === cat);
   function drawArmory(g) {
-    const V = K.view, W = V.x1 - V.x0, u = uiScale(), P = me(), sp = P.spent, x = V.x0 + 20 * u, w = W - 40 * u, y0 = V.y0 + 56 * Math.min(u, 1.15), h = V.y1 - y0 - 10 * u, gap = 8 * Math.min(u, 1.2);
+    const V = K.view, W = V.x1 - V.x0, u = uiScale(), P = me(), x = V.x0 + 20 * u, w = W - 40 * u, y0 = V.y0 + 56 * Math.min(u, 1.15), h = V.y1 - y0 - 10 * u, gap = 7 * Math.min(u, 1.2), range = M.mode === 'range';
     rr(g, x, y0, w, h, 12, 'rgba(12,16,22,.95)', 'rgba(239,233,220,.25)');
     const pad = isTouch() ? 46 / pxPer() : 0; tx(g, 'ARMORY', x + 18 * u + pad, y0 + 24 * u, 24 * u, BONE, 'left'); coinTag(g, x + w - 18 * u - pad, y0 + 24 * u, 22 * u, STATS.coins);
-    tx(g, M.mode === 'range' ? 'The range is free: try any gun before you buy it' : `Round starts in ${Math.max(0, Math.ceil(M.t))}`, x + w / 2, y0 + 24 * u, 14 * u, DIM);
-    if (!UI.atab) UI.atab = 'Rifle';
-    const by = y0 + 46 * u, bh = y0 + h - by - 12 * u, dw = cl(w * .27, 230 * u, 360 * u), lw = w - 28 * u - dw - gap, th = tapH(40);
-    // tabs
-    const tw = (lw - gap * (ARMORY_TABS.length - 1)) / ARMORY_TABS.length;
-    ARMORY_TABS.forEach(([label, cat], i) => btn(g, x + 14 * u + i * (tw + gap), by, tw, th, label, () => { UI.atab = cat; }, { on: UI.atab === cat, fill: YOU, px: Math.min(th * .34, tw / label.length * 1.5) }));
-    const items = UI.atab === 'Shield' ? ARMOR.map(a => ({ k: a.k, n: a.n, cost: a.cost, col: '#7fc8ff', armor: a })) : Object.values(GUNS).filter(q => q.cat === UI.atab);
-    const cols = 4, rows = 2, gy = by + th + gap, cw = (lw - gap * (cols - 1)) / cols, ch = (y0 + h - 12 * u - gy - gap * (rows - 1)) / rows; let focus = null;
-    items.forEach((it, n) => {
-      const cx = x + 14 * u + (n % cols) * (cw + gap), cy = gy + Math.floor(n / cols) * (ch + gap), A = it.armor, G = A ? null : it, lock = !A && coinLocked(G) && M.mode !== 'range';
-      const owned = A ? P.load.sh === A.sh : P.load[G.slot] === it.k, can = !lock;
+    tx(g, range ? 'The range is free: try anything before you buy it' : `Round starts in ${Math.max(0, Math.ceil(M.t))}`, x + w / 2, y0 + 24 * u, 14 * u, DIM);
+    const by = y0 + 46 * u, bh = y0 + h - by - 12 * u, hh = fitPx(g, 12 * u) * 1.7, cw = (w - 28 * u - 4 * gap) / 5, ch = (bh - hh - 4 * gap) / 5; let focus = null;
+    const card = (it, cx, cy) => {
+      const A = it.armor, N = it === NADE ? it : null, G = A || N ? null : it, lock = !A && coinLocked(it) && !range;
+      const on = A ? P.load.sh === A.sh : N ? !!P.load.nade : P.load[G.slot] === it.k, can = !lock;
       const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; if (!lock) buy(P, it.k); }); if (hot || (!focus && UI.pick === it.k)) focus = it;
-      rr(g, cx, cy, cw, ch, 10, owned ? 'rgba(53,224,200,.14)' : hot && can ? 'rgba(255,138,61,.18)' : 'rgba(255,255,255,.045)', owned ? YOU : hot || UI.pick === it.k ? 'rgba(239,233,220,.6)' : lock ? 'rgba(255,201,74,.3)' : can ? 'rgba(239,233,220,.2)' : 'rgba(255,255,255,.06)');
-      const tp = Math.min(17 * u, ch * .13, cw * .085), ty = cy + tp * 1.1;
-      tx(g, it.n.toUpperCase(), cx + 10 * u, ty, tp, can || owned || lock ? it.col : '#5a6272', 'left');
-      if (lock) coinTag(g, cx + cw - 10 * u, ty, tp * .9, G.coins); else tx(g, owned ? 'EQUIPPED' : !A && it.coins && M.mode !== 'range' ? 'OWNED' : 'FREE', cx + cw - 9 * u, ty, tp * .9, owned ? YOU : '#cfd6e2', 'right');
-      g.save(); g.globalAlpha = can || owned ? 1 : lock ? .55 : .35; g.beginPath(); g.rect(cx + 2, cy + 2, cw - 4, ch - 4); g.clip(); const iy = cy + tp * 2, ih = ch - tp * 2 - (G ? tp * 1.6 : 4);
-      if (G) { const ic = gunIcon(it.k); if (ic) { const dh = Math.min(ih, (cw - 16 * u) * 150 / 480 * (G.cat === 'Sidearm' ? 1.6 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.25 : 1)), dw = dh * 480 / 150; g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); } g.globalAlpha = 1; tx(g, lock ? 'BUY WITH COINS · YOURS FOREVER' : G.desc.split('.')[0], cx + cw / 2, cy + ch - tp * .9, tp * .62, lock ? COIN : DIM); }
+      rr(g, cx, cy, cw, ch, 8, on ? 'rgba(53,224,200,.14)' : hot && can ? 'rgba(255,138,61,.18)' : 'rgba(255,255,255,.045)', on ? YOU : hot || UI.pick === it.k ? 'rgba(239,233,220,.6)' : lock ? 'rgba(255,201,74,.32)' : 'rgba(239,233,220,.2)');
+      const tp = Math.min(15 * u, ch * .2, cw * .075), ty = cy + tp * .95;
+      g.font = `700 ${fitPx(g, tp)}px ${FONT}`; const nm = it.short && g.measureText((it.n + '  EQUIPPED').toUpperCase()).width > cw - 18 * u ? it.short : it.n;
+      tx(g, nm.toUpperCase(), cx + 9 * u, ty, tp, it.col, 'left');
+      if (lock) coinTag(g, cx + cw - 8 * u, ty, tp * .85, it.coins); else tx(g, on ? 'EQUIPPED' : !A && it.coins && !range ? 'OWNED' : 'FREE', cx + cw - 8 * u, ty, tp * .8, on ? YOU : '#cfd6e2', 'right');
+      g.save(); g.globalAlpha = lock ? .55 : 1; g.beginPath(); g.rect(cx + 2, cy + 2, cw - 4, ch - 4); g.clip(); const iy = cy + tp * 1.7, ih = ch - tp * 1.7 - 3;
+      if (G) { const ic = gunIcon(it.k); if (ic) { const dh = Math.min(ih * (G.cat === 'Sidearm' ? 1.12 : 1.05), (cw - 12 * u) * 150 / 480 * (G.cat === 'Sidearm' ? 1.5 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.2 : 1)), dw = dh * 480 / 150; g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); } }
+      else if (N) { const ih2 = ih - tp * 1.1, mx = cx + cw / 2, my = iy + ih2 / 2 + 4 * u, s2 = ih2 / 62; for (let i = 0; i < NADE.per; i++) { const ox = mx + (i - (NADE.per - 1) / 2) * 30 * s2; rr(g, ox - 10 * s2, my - 18 * s2, 20 * s2, 40 * s2, 5 * s2, '#59606b', '#9aa3ad', 1.5); g.fillStyle = NADE.col; g.fillRect(ox - 10 * s2, my - 10 * s2, 20 * s2, 5 * s2); rr(g, ox - 6 * s2, my - 25 * s2, 12 * s2, 8 * s2, 2 * s2, '#3d434b'); g.fillStyle = '#9aa3ad'; g.fillRect(ox + 6 * s2, my - 24 * s2, 3 * s2, 18 * s2); } tx(g, NADE.per + ' EVERY ROUND', mx, cy + ch - tp * .7, tp * .62, DIM); }
       else { const mx = cx + cw / 2, my = iy + ih / 2, s2 = ih / 80 * (A.sh === 50 ? 1.05 : .85); g.fillStyle = it.col + '33'; g.strokeStyle = it.col; g.lineWidth = 2.5 * u; g.beginPath(); g.moveTo(mx, my - 32 * s2); g.lineTo(mx + 26 * s2, my - 22 * s2); g.lineTo(mx + 22 * s2, my + 12 * s2); g.lineTo(mx, my + 32 * s2); g.lineTo(mx - 22 * s2, my + 12 * s2); g.lineTo(mx - 26 * s2, my - 22 * s2); g.closePath(); g.fill(); g.stroke(); tx(g, '+' + A.sh, mx, my, 20 * s2, BONE); }
       g.restore();
+    };
+    let endY = by;
+    ARMORY_COLS.forEach((col, ci) => {
+      const cx = x + 14 * u + ci * (cw + gap); let y = by;
+      for (const [label, cat] of col) { tx(g, label, cx + 2, y + hh / 2, 12 * u, DIM, 'left'); y += hh; for (const it of itemsOf(cat)) { card(it, cx, y); y += ch + gap; } }
+      if (ci === 4) endY = y;
     });
-    // the right column: what you are pointing at, an unlock button for a locked gun, and the way out
-    const dx = x + w - 14 * u - dw, rh = tapH(52), dTop = by, dh = bh - rh - gap;
-    rr(g, dx, dTop, dw, dh, 10, 'rgba(255,255,255,.03)', 'rgba(239,233,220,.12)');
+    // the right column, under the shields: what you are pointing at, a buy button for a gold-edged one, and the way out
+    const dx = x + 14 * u + 4 * (cw + gap), rh = tapH(50), dh = by + bh - endY - rh - gap;
+    rr(g, dx, endY, cw, dh, 8, 'rgba(255,255,255,.03)', 'rgba(239,233,220,.12)');
     if (focus) {
-      const F = focus, G = F.armor ? null : F, fp = Math.min(14 * u, dw * .062); let y = dTop + fp * 1.5;
-      tx(g, F.n.toUpperCase(), dx + 10 * u, y, fp * 1.4, F.col, 'left'); if (G) tx(g, G.cat.toUpperCase(), dx + dw - 9 * u, y, fp * .85, DIM, 'right'); y += fp * 2;
-      g.save(); g.beginPath(); g.rect(dx, dTop, dw, dh); g.clip();
-      y = para(g, F.armor ? `Soaks the next ${F.armor.sh} damage. Lasts until used up.` : F.desc, dx + 10 * u, y, dw - 20 * u, fp, '#cfd6e2', 1.25) + fp * .4;
-      if (G) { const d = G.dmg[0], row = (a, b2) => { tx(g, a, dx + 10 * u, y, fp * .9, DIM, 'left'); tx(g, b2, dx + dw - 9 * u, y, fp * .9, BONE, 'right'); y += fp * 1.5; };
-        row('BODY', `${d[1]}${G.pel ? ' x' + G.pel + ' PELLETS' : ''}`); row('HEAD · LEGS', `x${G.head} (${dmgAt(G, 0, 1)}) · x${G.legs} (${dmgAt(G, 0, 3)})`); row('FIRE RATE', `${(G.rpm / 60).toFixed(1)}/s ${G.burst ? G.burst + '-ROUND BURST' : G.auto ? 'AUTO' : 'SEMI'}`); row('MAGAZINE', `${G.mag} · ${G.rel}s RELOAD`); row('ERROR STILL · RUN', `${G.scope ? G.acc.sfs : G.acc.fs}° · ${G.acc.run}°`); row('PRICE', G.coins ? `${G.coins} COINS, ONCE` : 'FREE'); }
+      const F = focus, G = F.armor || F === NADE ? null : F, fp = Math.min(13 * u, cw * .062), ub = coinLocked(F) ? tapH(48) + 8 * u : 0; let y = endY + fp * 1.3;
+      tx(g, F.n.toUpperCase(), dx + 9 * u, y, fp * 1.25, F.col, 'left'); if (G) tx(g, G.cat.toUpperCase(), dx + cw - 8 * u, y, fp * .85, DIM, 'right'); y += fp * 1.9;
+      g.save(); g.beginPath(); g.rect(dx, endY, cw, dh - ub); g.clip();
+      y = para(g, F.armor ? `Soaks the next ${F.armor.sh} damage. Lasts until used up.` : F.desc, dx + 9 * u, y, cw - 18 * u, fp, '#cfd6e2', 1.25) + fp * .3;
+      const row = (a, b2) => { tx(g, a, dx + 9 * u, y, fp * .9, DIM, 'left'); tx(g, b2, dx + cw - 8 * u, y, fp * .9, BONE, 'right'); y += fp * 1.45; };
+      if (G) { const d = G.dmg[0]; row('BODY', `${d[1]}${G.pel ? ' x' + G.pel + ' PELLETS' : ''}`); row('HEAD · LEGS', `x${G.head} (${dmgAt(G, 0, 1)}) · x${G.legs} (${dmgAt(G, 0, 3)})`); row('FIRE RATE', `${(G.rpm / 60).toFixed(1)}/s ${G.auto ? 'AUTO' : 'SEMI'}`); row('MAGAZINE', `${G.mag} · ${G.rel}s RELOAD`); row('ERROR STILL · RUN', `${G.scope ? G.acc.sfs : G.acc.fs}° · ${G.acc.run}°`); }
+      if (F === NADE) { row('EACH ROUND', `${NADE.per} GRENADES`); row('CLOUD', `${NADE.T} S`); }
+      if (!F.armor) row('PRICE', F.coins ? `${F.coins} COINS, ONCE` : 'FREE');
       g.restore();
-      if (G && coinLocked(G)) { const ok = STATS.coins >= G.coins, uy = dTop + dh - tapH(54) - 10 * u;
-        btn(g, dx + 10 * u, uy, dw - 20 * u, tapH(54), ok ? `BUY · ${G.coins} COINS` : `NEED ${G.coins - STATS.coins} MORE COINS`, () => unlock(G.k), { on: ok, fill: COIN, px: Math.min(17 * u, dw * .06), sub: ok ? 'yours forever, saved to your account' : '35 coins a kill, 15 for a win' }); }
-    } else para(g, 'Pick the guns you own to take them into every round. Gold-edged guns are bought once with coins and are yours forever.', dx + 10 * u, dTop + 22 * u, dw - 20 * u, Math.min(13 * u, dw * .06), DIM);
-    btn(g, dx, by + bh - rh, dw, rh, M.mode === 'range' ? 'CLOSE' : 'READY', () => openArmory(false), { on: true, fill: YOU, px: rh * .4, sub: isTouch() ? '' : 'or press B' });
+      if (ub) { const ok = STATS.coins >= F.coins; btn(g, dx + 8 * u, endY + dh - ub, cw - 16 * u, tapH(48), ok ? `BUY · ${F.coins}` : `NEED ${F.coins - STATS.coins} MORE`, () => unlock(F.k), { on: ok, fill: COIN, px: Math.min(15 * u, cw * .065), sub: ok ? 'yours forever' : '35 a kill, 15 a win' }); }
+    } else para(g, 'Press a gun you own to take it into every round. Gold-edged ones are bought once with coins and are yours forever.', dx + 9 * u, endY + 22 * u, cw - 18 * u, Math.min(13 * u, cw * .062), DIM);
+    btn(g, dx, by + bh - rh, cw, rh, range ? 'CLOSE' : 'READY', () => openArmory(false), { on: true, fill: YOU, px: rh * .4, sub: isTouch() ? '' : 'or press B' });
   }
 
   // a coin count: a little gold disc and the number, right-aligned at x
@@ -2937,7 +3006,7 @@ const GAME = {
   GAME.test = {
     get M() { return M; }, get X() { return X; }, get screen() { return screen; }, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
-    play, toMenu, menuPlay, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
+    throwNade: () => throwNade(me()), play, toMenu, menuPlay, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, unlock,
   };
 })();

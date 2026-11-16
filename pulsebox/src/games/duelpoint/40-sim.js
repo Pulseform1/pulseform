@@ -13,7 +13,7 @@
       x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, crouch: 0, ground: true, jumpHeld: false,
       hp: 100, sh: 0, alive: true, guns: { 1: null, 2: 'pip', 3: 'knife' }, slot: 2, ammo: {},
       fireT: 0, reloadT: 0, spray: 0, sseed: 0, burst: null, scoped: 0, kick: 0, swing: null, semiHeld: false,
-      credits: 0, load: { 1: null, 2: 'pip', sh: 0 }, spent: {}, lossRun: 0, ready: false, ab: { q: 1, e: 1 }, abT: 0,
+      credits: 0, load: { 1: null, 2: 'pip', sh: 0, nade: 0 }, smokes: 0, throwT: 0, spent: {}, lossRun: 0, ready: false, ab: { q: 1, e: 1 }, abT: 0,
       flash: 0, reveal: 0, heal: null, dash: null, plant: 0, defuse: 0, footT: 0, step: 0, walkT: 0, sprinting: false, slide: null, slideCD: 0, crouchHeld: false,
       stat: { k: 0, d: 0, hs: 0, dmg: 0, shots: 0, hits: 0 },
     }, o);
@@ -250,6 +250,46 @@
     if (key === 'bastione') f.heal = { t: 3 };
     emit('ability', f, k);
   }
+  /* ---------- smoke grenades ---------- */
+  // thrown from the eyes along the view with a little lift; online, both devices fly the same throw and pop the same cloud
+  function throwNade(f) {
+    if (!f.alive || !(M.phase === 'live' || M.mode === 'range') || !(f.smokes > 0) || f.plant > 0 || f.defuse > 0 || f.throwT > 0) return false;
+    if (M.mode !== 'range') f.smokes--; f.throwT = .6;
+    const d = viewDir(f.yaw, f.pitch), e = eyeY(f), n = { x: f.x + d[0] * .45, y: e - .1 + d[1] * .45, z: f.z + d[2] * .45, vx: d[0] * 14 + f.vx * .5, vy: d[1] * 14 + 2.4, vz: d[2] * 14 + f.vz * .5 };
+    addNade(n); net({ t: 'nd', f: f.key, x: n.x, y: n.y, z: n.z, vx: n.vx, vy: n.vy, vz: n.vz }); emit('throw', f); return true;
+  }
+  function lobNade(f, tx, tz) {
+    if (!f.alive || M.phase !== 'live' || !(f.smokes > 0) || f.throwT > 0) return false;
+    f.smokes--; f.throwT = .6; const y0 = eyeY(f) - .1, dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 13, .45, 1.1), ty = hAt(tx, tz) + .1;
+    const n = { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + 9 * T * T) / T, vz: dz / T };
+    f.yaw = yawTo(f.x, f.z, tx, tz); addNade(n); net({ t: 'nd', f: f.key, x: n.x, y: n.y, z: n.z, vx: n.vx, vy: n.vy, vz: n.vz }); emit('throw', f); return true;
+  }
+  function addNade(n) { M.nades.push(Object.assign({ t: 0, rest: 0, spin: 0 }, n)); }
+  function stepNades(dt) {
+    for (const n of M.nades) {
+      n.t += dt; const h = dt / 4;
+      for (let s = 0; s < 4; s++) {
+        n.vy -= 18 * h; const mx = n.vx * h, my = n.vy * h, mz = n.vz * h, L = Math.hypot(mx, my, mz);
+        if (L > 1e-6) {
+          const hit = rayGrid(n.x, n.y, n.z, mx / L, my / L, mz / L, L + .06);
+          if (hit < L + .06) {   // bounce off whatever it met, losing most of its speed
+            const nx = rayN[0], ny = rayN[1], nz = rayN[2], dv = n.vx * nx + n.vy * ny + n.vz * nz, k = Math.max(0, hit - .06) / L;
+            n.x += mx * k; n.y += my * k; n.z += mz * k;
+            n.vx = (n.vx - 2 * dv * nx) * .45; n.vy = (n.vy - 2 * dv * ny) * .38; n.vz = (n.vz - 2 * dv * nz) * .45;
+            if (ny > .5 && Math.abs(n.vy) < 1.2) { n.vy = 0; n.vx *= .7; n.vz *= .7; }
+            if (Math.abs(dv) > 2.5) emit('nadeBounce', n);
+            continue;
+          }
+          n.x += mx; n.y += my; n.z += mz;
+        }
+        const g = hAt(n.x, n.z); if (n.y < g + .05) { n.y = g + .05; if (n.vy < 0) n.vy = Math.abs(n.vy) < 1.2 ? 0 : -n.vy * .38; n.vx *= .8; n.vz *= .8; }
+      }
+      n.spin += dt * Math.hypot(n.vx, n.vz) * 3;
+      if (Math.hypot(n.vx, n.vy, n.vz) < .4) n.rest += dt;
+      if (n.t > NADE.fuse || n.rest > .3) { n.done = true; const s = { x: n.x, z: n.z, y: Math.max(0, n.y - .1), r: 0, R: NADE.R, t: NADE.T, T: NADE.T, grey: 1 }; M.smokes.push(s); emit('smoke', s); emit('nadePop', s); }
+    }
+    if (M.nades.length) M.nades = M.nades.filter(n => !n.done);
+  }
   function popFlare(fl) {
     for (const f of M.fs) {
       if (!f.alive || f.net) continue; const ex = f.x, ey = eyeY(f), ez = f.z, dx = fl.x - ex, dy = fl.y - ey, dz = fl.z - ez, L = Math.hypot(dx, dy, dz) || .01;
@@ -298,12 +338,12 @@
     if (M.host) net({ t: 'end', wi: wi ^ (M.flip || 0), why });
   }
   function startRound(n) {
-    M.round = n; M.phase = 'buy'; M.t = BUY_T; M.planted = null; M.defused = false; M.smokes = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null;
+    M.round = n; M.phase = 'buy'; M.t = BUY_T; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null;
     const decider = n === WIN_ROUNDS * 2 - 1;
     const order = [...M.fs].sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);   // the same on every device, so teammates never share a spawn
     M.fs.forEach(f => {
       const side = sideOf(f), sp = SPAWN[side], p = sp[(n + order.filter(q => sideOf(q) === side).indexOf(f)) % sp.length];
-      f.guns = { 1: f.load[1] || null, 2: f.load[2] || 'pip', 3: 'knife' }; f.sh = f.load.sh || 0; f.ammo = {};   // your loadout, fresh every round
+      f.guns = { 1: f.load[1] || null, 2: f.load[2] || 'pip', 3: 'knife' }; f.sh = f.load.sh || 0; f.ammo = {}; f.smokes = f.load.nade ? NADE.per : 0; f.throwT = 0;   // your loadout, fresh every round
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
       f.ab = { q: 1, e: 1 }; for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
       f.yaw = yawTo(f.x, f.z, side === 'att' ? f.x + 10 : f.x - 10, f.z); if (f.gone) f.alive = false;
@@ -322,6 +362,10 @@
       if (G.coins && f.local && M.mode !== 'range' && !STATS.owned.includes(k)) return false;   // not bought yet (the range lets you try anything)
       const s = G.slot; f.load[s] = k; f.guns[s] = k; giveAmmo(f, k); f.slot = s; f.scoped = 0; f.reloadT = 0; ok = true;
     } else if (A) { f.load.sh = f.load.sh === A.sh ? 0 : A.sh; f.sh = f.load.sh; ok = true; }
+    else if (k === NADE.k) {
+      if (f.local && M.mode !== 'range' && !STATS.owned.includes(k)) return false;
+      f.load.nade = f.load.nade ? 0 : 1; f.smokes = f.load.nade ? NADE.per : 0; ok = true;
+    }
     if (ok && f.local && M.mode !== 'range') { CFG.load = { ...f.load }; saveAll(); }   // remembered for your next match
     emit('buy', f, ok); return ok;
   }
@@ -333,7 +377,7 @@
   function startMatch(o) {
     const mode = o.mode, online = mode === 'online', host = !online || MP.isHost(), ops = Object.keys(OPS);
     const A = fighter(mode === 'demo' ? { name: 'Rook', op: pick(ops), bot: { diff: 1 } } : { name: online ? MP.name : 'You', op: CFG.op, local: true });
-    if (A.local && mode !== 'range' && CFG.load) { const L0 = CFG.load, mine = k => k && GUNS[k] && (!GUNS[k].coins || STATS.owned.includes(k)); A.load = { 1: mine(L0[1]) ? L0[1] : null, 2: mine(L0[2]) ? L0[2] : 'pip', sh: L0.sh || 0 }; }
+    if (A.local && mode !== 'range' && CFG.load) { const L0 = CFG.load, mine = k => k && GUNS[k] && (!GUNS[k].coins || STATS.owned.includes(k)); A.load = { 1: mine(L0[1]) ? L0[1] : null, 2: mine(L0[2]) ? L0[2] : 'pip', sh: L0.sh || 0, nade: L0.nade && STATS.owned.includes(NADE.k) ? 1 : 0 }; }
     const auto = mode === 'bot' && (o.diff === 'auto' || o.diff == null), L = auto ? diffFor(STATS.rating) : null;
     const botP = () => auto ? { diff: L.i, D: L.D } : { diff: typeof o.diff === 'number' ? o.diff : 1, dummy: mode === 'range' }, used = new Set([A.name]), bname = () => { const n = pick(BOT_NAMES.filter(q => !used.has(q))); used.add(n); return n; };
     let fs = [A], flip = 0;
@@ -348,7 +392,7 @@
     const hostAtt = o.hostAtt == null ? (R() < .5 ? 1 : 0) : o.hostAtt, decHostAtt = o.decHostAtt == null ? (R() < .5 ? 1 : 0) : o.decHostAtt;
     if (online && !o.seats) flip = host ? 0 : 1;
     M = { mode, online, host, auto, flip, byKey: Object.fromEntries(fs.map(f => [f.key, f])), rating: STATS.rating, adj: 0, fs, wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? 0 : 1) ^ flip, decAtt: (decHostAtt ? 0 : 1) ^ flip,
-      planted: null, defused: false, smokes: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0 };
+      planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0 };
     startRound(1);
     if (mode === 'range') { M.phase = 'live'; M.t = 0; Object.assign(A, { x: 9, z: 5, yaw: yawTo(9, 5, 30, 5) }); placeDummy(fs[1]); }
     if (mode === 'demo') M.t = 1.5;
@@ -389,6 +433,7 @@
       f.semiHeld = !!I.fire;
       if (M.mode === 'range') { if (f.abT > 0 && (f.abT -= dt) <= 0) f.ab = { q: 1, e: 1 }; if (!f.alive && f.bot && (f.respawn -= dt) <= 0) placeDummy(f); }
     }
+    stepNades(dt); for (const f of M.fs) if (f.throwT > 0) f.throwT -= dt;
     for (const s of M.smokes) { s.t -= dt; s.r = s.t > s.T - .6 ? lp(0, s.R, (s.T - s.t) / .6) : s.t < 1 ? s.R * Math.max(0, s.t) : s.R; } M.smokes = M.smokes.filter(s => s.t > 0);
     for (const w of M.walls) { w.t -= dt; w.grow = Math.min(1, w.grow + dt * 4); } M.walls = M.walls.filter(w => w.t > 0);
     for (const fl of M.flares) { fl.t -= dt; if (fl.t <= 0) popFlare(fl); } M.flares = M.flares.filter(fl => fl.t > 0);

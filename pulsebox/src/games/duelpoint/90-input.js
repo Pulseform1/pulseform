@@ -47,7 +47,7 @@
     if (c === 'KeyB' && canBuy()) return openArmory(!UI.armory);
     if (UI.armory) return;
     if (c === 'KeyR') reload(P); else if (c === 'Digit1') switchTo(P, 1); else if (c === 'Digit2') switchTo(P, 2); else if (c === 'Digit3') switchTo(P, 3);
-    else if (c === 'KeyQ') ability(P, 'q'); else if (c === 'KeyE') ability(P, 'e'); else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) X.inspT = 2.6;
+    else if (c === 'KeyG') throwNade(P); else if (c === 'KeyQ') ability(P, 'q'); else if (c === 'KeyE') ability(P, 'e'); else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) X.inspT = 2.6;
   }
   if (typeof document !== 'undefined') {
     // while you play, keys the game uses (and Ctrl combinations, since Ctrl crouches) do not reach the browser
@@ -76,6 +76,7 @@
       { k: 'swap', x: fx + 72 * u, y: fy - 128 * u, r: 36 * u, t: 'SWAP', show: P.alive },
       { k: 'q', x: fx - 118 * u, y: fy - 46 * u, r: 38 * u, t: op.q.n.toUpperCase(), show: P.alive && live, off: !P.ab.q, col: op.col },
       { k: 'e', x: fx - 204 * u, y: fy + 4 * u, r: 38 * u, t: op.e.n.toUpperCase(), show: P.alive && live, off: !P.ab.e, col: op.col },
+      { k: 'nade', x: fx - 196 * u, y: fy - 104 * u, r: 34 * u, t: 'SMOKE ' + (P.smokes || 0), show: P.alive && live && (P.smokes > 0 || P.load.nade), off: !(P.smokes > 0), col: NADE.col },
       { k: 'use', x: 640, y: B - 200 * u, r: 58 * u, t: sideOf(P) === 'att' ? 'PLANT' : 'DEFUSE', show: canUse, col: FOE },
     ].filter(b => b.show);
   }
@@ -84,7 +85,7 @@
       const P = me(); click();
       if (b.k === 'fire') { TS.fire = id; TS.look = { id, x, y }; }   // the fire thumb keeps aiming while it holds
       else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') { if (me().sprinting) TS.slideAt = performance.now(); else TS.crouch = !TS.crouch; }
-      else if (b.k === 'q' || b.k === 'e') ability(P, b.k); else TS.held.set(id, b.k);
+      else if (b.k === 'q' || b.k === 'e') ability(P, b.k); else if (b.k === 'nade') throwNade(P); else TS.held.set(id, b.k);
       return;
     }
     if (x < lp(K.view.x0, K.view.x1, .45)) { if (!TS.stick) TS.stick = { id, x0: x, y0: y, x, y }; } else if (!TS.look) TS.look = { id, x, y };
