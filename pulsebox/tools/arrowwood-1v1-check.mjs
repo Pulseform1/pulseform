@@ -43,7 +43,7 @@ for (let r = 0; r < 12; r++) {
   await T(guest, () => GAME.test.tp(70, 75, Math.PI, 0)); await T(host, () => GAME.test.tp(70, 101, 0, 0)); await host.waitForTimeout(400);
   const target = await T(host, () => { const g = [...GAME.test.CL.players.values()].find(p => p.id !== GAME.test.CL.me && p.buf.length); const q = g.buf[g.buf.length - 1]; return [q[1], q[2] + 1.62, q[3]]; });
   await T(host, t => { GAME.test.aimAt(t[0], t[1], t[2], 1); GAME.test.startDraw(); }, target);
-  await host.waitForTimeout(1050);
+  await until(host, () => GAME.test.ME.drawT >= 1, null, 8000);
   await T(host, t => { GAME.test.aimAt(t[0], t[1], t[2], 1); GAME.test.release(); }, target);
   const prev = seen.scores.length, res = await until(guest, n => GAME.test.CL.lastRound && GAME.test.CL.lastRound.score.reduce((a, b) => a + b, 0) > n && GAME.test.CL.lastRound, prev, 8000);
   if (await T(guest, () => GAME.test.ME.cam === 'finisher' || GAME.test.ME.cam === 'dead' || GAME.test.finishers().some(f => f.mine))) seen.finisherGuest++;

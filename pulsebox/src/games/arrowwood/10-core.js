@@ -19,7 +19,7 @@
   const CFG = { quality: 'auto', sens: .5, touchSens: .5, invert: false, vol: .8, fov: 75, name: '', fps: false };
   const loadCfg = () => { try { Object.assign(CFG, (K.save.aw || {}).cfg || {}); } catch (e) {} };
   const saveCfg = () => { try { K.save.aw = Object.assign(K.save.aw || {}, { cfg: CFG }); K.persist(); } catch (e) {} };
-  const quality = () => CFG.quality !== 'auto' ? CFG.quality : (isTouch() || /iPad|iPhone|Android/.test(navigator.userAgent)) ? 'low' : (navigator.hardwareConcurrency || 4) >= 8 ? 'high' : 'medium';
+  const quality = () => QS.get('quality') || (CFG.quality !== 'auto' ? CFG.quality : (isTouch() || /iPad|iPhone|Android/.test(navigator.userAgent)) ? 'low' : (navigator.hardwareConcurrency || 4) >= 8 ? 'high' : 'medium');
 
   // the private player key: made once in this browser; the server keeps only a hash of it with your coins and bows
   const KEY = (() => { let k = ''; try { k = localStorage.getItem('aw-key') || ''; } catch (e) {} if (!/^[a-f0-9]{32}$/.test(k)) { k = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join(''); try { localStorage.setItem('aw-key', k); } catch (e) {} } return k; })();

@@ -549,11 +549,15 @@ function message(room, id, m, now) {
       for (const q of humans(room)) q.ready = false; lobbyOut(room); } break;
     case 'team': if (room.phase === 'lobby' && room.mode !== 'ffa' && (m.team === 0 || m.team === 1) && humans(room).filter(q => q.team === m.team).length < SIZES[room.mode] / 2) { p.team = m.team; p.ready = false; lobbyOut(room); } break;
     case 'ready': if (room.phase === 'lobby') { p.ready = !!m.v; lobbyOut(room); } break;
+    // the host can move anyone to the other team; if that team is full, the two swap
+    case 'move': if (id === room.host && room.phase === 'lobby' && room.mode !== 'ffa') { const q = room.players.get(m.id); if (!q || q.dummy) break; const to = 1 - q.team, there = humans(room).filter(r => r.team === to);
+      if (there.length >= SIZES[room.mode] / 2) { const other = there[there.length - 1]; other.team = q.team; other.ready = false; } q.team = to; q.ready = false; lobbyOut(room); } break;
     case 'start': if (id === room.host && room.phase === 'lobby') { if (canStart(room) || (room.dev && m.force)) startMatch(room); else send(room, id, { t: 'err', msg: room.mode === 'ffa' ? 'Need at least two archers, everyone ready.' : `Need ${SIZES[room.mode] / 2} on each team, everyone ready.` }); } break;
     case 'rematch': if (room.phase === 'results') { room.votes.add(id); lobbyOut(room); const h = humans(room).filter(q => q.connected); if (h.length && h.every(q => room.votes.has(q.id))) { if (canStartTeams(room)) startMatch(room); else { room.phase = 'lobby'; room.votes.clear(); lobbyOut(room); } } } break;
     case 'lobby': if (room.phase === 'results') { room.phase = 'lobby'; room.votes.clear(); for (const q of humans(room)) q.ready = false; lobbyOut(room); } break;
     case 'in': moveIn(room, p, m); break;
-    case 'draw': if (st.alive && live(room) && st.arrows > 0 && room.t >= st.nockAt && !st.sprint) st.drawAt = room.t; break;
+    // a little slack on the nock timer: the client's clock and the server's tick never line up exactly
+    case 'draw': if (st.alive && live(room) && st.arrows > 0 && room.t >= st.nockAt - .15 && !st.sprint) st.drawAt = room.t; else send(room, id, { t: 'nodraw' }); break;
     case 'cancel': st.drawAt = null; break;
     case 'fire': fire(room, p, m); break;
     case 'ping': if (Array.isArray(m.p) && m.p.length === 3 && m.p.every(Number.isFinite)) {
@@ -581,7 +585,7 @@ function moveIn(room, p, m) {
 }
 function fire(room, p, m) {
   const st = p.st;
-  if (!st.alive || !live(room) || st.drawAt == null || st.arrows <= 0) { st.drawAt = null; return; }
+  if (!st.alive || !live(room) || st.drawAt == null || st.arrows <= 0) { st.drawAt = null; send(room, p.id, { t: 'nofire', cid: m.cid | 0, arrows: st.arrows }); return; }
   const seen = room.t - st.drawAt, held = Number.isFinite(m.dt) ? Math.max(0, Math.min(m.dt, seen + .25)) : seen;   // trust the client's draw time only up to what the server saw
   if (Number.isFinite(m.yaw)) st.yaw = m.yaw; if (Number.isFinite(m.pitch)) st.pitch = Math.max(-1.5, Math.min(1.5, m.pitch));
   const power = drawPower(held), speed = launchSpeed(power), o = shotOrigin(st), v = aimVector(st.yaw, st.pitch, speed);
@@ -792,7 +796,7 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
   const CFG = { quality: 'auto', sens: .5, touchSens: .5, invert: false, vol: .8, fov: 75, name: '', fps: false };
   const loadCfg = () => { try { Object.assign(CFG, (K.save.aw || {}).cfg || {}); } catch (e) {} };
   const saveCfg = () => { try { K.save.aw = Object.assign(K.save.aw || {}, { cfg: CFG }); K.persist(); } catch (e) {} };
-  const quality = () => CFG.quality !== 'auto' ? CFG.quality : (isTouch() || /iPad|iPhone|Android/.test(navigator.userAgent)) ? 'low' : (navigator.hardwareConcurrency || 4) >= 8 ? 'high' : 'medium';
+  const quality = () => QS.get('quality') || (CFG.quality !== 'auto' ? CFG.quality : (isTouch() || /iPad|iPhone|Android/.test(navigator.userAgent)) ? 'low' : (navigator.hardwareConcurrency || 4) >= 8 ? 'high' : 'medium');
 
   // the private player key: made once in this browser; the server keeps only a hash of it with your coins and bows
   const KEY = (() => { let k = ''; try { k = localStorage.getItem('aw-key') || ''; } catch (e) {} if (!/^[a-f0-9]{32}$/.test(k)) { k = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join(''); try { localStorage.setItem('aw-key', k); } catch (e) {} } return k; })();
@@ -839,7 +843,7 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
   // ---- the local practice range: the server's own engine running in this page
   function startPractice() {
     stopPractice();
-    const room = ENG.createRoom({ mode: 'practice' }), j = ENG.join(room, { name: myName(), bow: PROFILE.equipped }, Date.now());
+    const room = ENG.createRoom({ mode: 'practice', dev: DEV }), j = ENG.join(room, { name: myName(), bow: PROFILE.equipped }, Date.now());
     CL.local = { room, id: j.id, acc: 0, send: m => ENG.message(room, j.id, m, Date.now()) };
     CL.ids.practice = j.id; useSource('practice'); pumpLocal(0);
   }
@@ -931,6 +935,8 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
       case 'overtime': emit('overtime', m); return;
       case 'results': CL.results = m; CL.phase = 'results'; emit('results', m); emit('ui'); return;
       case 'corr': emit('corr', m); return;
+      case 'nodraw': if (ME.drawing) { ME.drawing = false; ME.drawT = 0; } return;   // the server said no (out of arrows, still nocking): lower the bow
+      case 'nofire': { const a = CL.cidMap.get(m.cid); if (a) { CL.arrows.delete(a.tmpId); CL.arrows.delete(a.id); emit('arrowGone', a); } if (CL.src !== 'practice') ME.arrows = m.arrows; return; }
       case 'clear': CL.arrows.forEach(a => emit('arrowGone', a)); CL.arrows.clear(); CL.stuck.forEach(s => emit('stuckGone', s)); CL.stuck.clear(); CL.picks = W.PICKUPS.map(() => true); CL.cap = [0, 0];
         for (const p of CL.players.values()) { p.deadAt = 0; emit('unstickAll', p); } return;
       case 'respawn': { const p = CL.players.get(m.id); if (p) { p.deadAt = 0; emit('unstickAll', p); } return; }
@@ -1691,12 +1697,12 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     BILLS = { m: new THREE.InstancedMesh(new THREE.PlaneGeometry(.26, .12), std({ map: TEX.bill, side: THREE.DoubleSide, roughness: .8 }), 260), list: [] };
     COINS3 = { m: new THREE.InstancedMesh(new THREE.CylinderGeometry(.045, .045, .008, 14), std({ map: TEX.coin, metalness: .85, roughness: .28, color: LC('#ffd86a') }), 90), list: [] };
     for (const B of [BILLS, COINS3]) { B.m.count = 0; B.m.frustumCulled = false; B.m.castShadow = true; X.scene.add(B.m); }
-    const [c, gg] = cvs(512, 256); gg.font = '900 150px Impact, Arial Black, sans-serif'; gg.textAlign = 'center'; gg.lineWidth = 18; gg.strokeStyle = '#1a1206'; gg.strokeText('THWACK!', 256, 170); gg.fillStyle = '#ffd23f'; gg.fillText('THWACK!', 256, 170);
+    const [c, gg] = cvs(1024, 256); gg.font = '900 150px Impact, Arial Black, sans-serif'; gg.textAlign = 'center'; gg.lineWidth = 18; gg.lineJoin = 'round'; gg.strokeStyle = '#1a1206'; gg.save(); gg.translate(512, 128); gg.rotate(-.08); gg.strokeText('THWACK!', 0, 50); gg.fillStyle = '#ffd23f'; gg.fillText('THWACK!', 0, 50); gg.restore();
     THWACK = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex(c, { clamp: true }), depthTest: false, transparent: true })); THWACK.visible = false; THWACK.renderOrder = 20; X.scene.add(THWACK);
   }
   // ---- archers
   function ensureModel(p) {
-    const col = CL.src === 'practice' ? '#c9b07a' : teamCol(p.team, p.slot, CL.mode), bow = p.bow || 'longbow', key = col + bow + (p.dummy ? 'd' : '');
+    const col = p.dummy ? '#c9b07a' : CL.src === 'practice' ? W.TEAMS[p.team | 0].col : teamCol(p.team, p.slot, CL.mode), bow = p.bow || 'longbow', key = col + bow + (p.dummy ? 'd' : '');
     if (p.model && p.modelKey === key) return p.model;
     if (p.model) X.scene.remove(p.model.root);
     p.model = makePerson({ col, seed: hashId(p.id), dummy: p.dummy, bow }); p.modelKey = key; p.model.stuck = []; X.scene.add(p.model.root);
@@ -1842,7 +1848,7 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
         f.ruler.quaternion.setFromAxisAngle(f.rulerAxis, ang).multiply(f.rulerYaw); }
       if (t > .58 && !f.hit) { f.hit = true; emit('thwack', m.p); X.shake = 1; THWACK.visible = true; f.thw = 0; burst('dust', [x0, groundY(x0, z0) + .2, z0], 18, { col: [.55, .48, .36], size: .6, sp: 2.5, up: .3, g: .2, grow: 1.4, a: .5, life: 1.2 }); burst('leaf', [x0, groundY(x0, z0) + .3, z0], 20, { col: [.5, .42, .2], size: .12, sp: 3, up: 2, g: 2, drag: 2, flutter: 3, life: 2, floor: true }); }
       if (f.hit) { const k = t - .58, sq = 1 + Math.sin(Math.min(k * 18, Math.PI)) * .3 * Math.exp(-k * 4); root.scale.set(1.35 * sq, Math.max(.13, .14 / sq), 1.35 * sq); P.dead = true;
-        f.thw += dt; THWACK.position.set(x0, groundY(x0, z0) + 2.4 + f.thw * .6, z0); const ts = Math.min(1, f.thw * 8) * (1 - cl((f.thw - .9) * 3, 0, 1)); THWACK.scale.set(3 * ts, 1.5 * ts, 1); THWACK.visible = ts > .01; }
+        f.thw += dt; THWACK.position.set(x0, groundY(x0, z0) + 2.4 + f.thw * .6, z0); const ts = Math.min(1, f.thw * 8) * (1 - cl((f.thw - .9) * 3, 0, 1)); THWACK.scale.set(4.4 * ts, 1.1 * ts, 1); THWACK.visible = ts > .01; }
     } else if (f.kind === 'cashout') {
       // a rattle, then a cloud of bank notes and spinning coins; a cash register rings
       root.position.set(x0 + (t < .3 ? (Math.random() - .5) * .06 : 0), y0, z0); root.rotation.set(0, m.yaw, 0); limp(.5); root.scale.setScalar(1 + sm(cl(t / .3, 0, 1)) * .12);
@@ -1889,7 +1895,8 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     if (X.shake > 0) { X.shake = Math.max(0, X.shake - dt * 2.5); cam.position.x += (Math.random() - .5) * .12 * X.shake; cam.position.y += (Math.random() - .5) * .12 * X.shake; }
     const hurt = now() - ME.hurtAt; if (hurt < .3 && ME.cam === 'fp') cam.rotation.z += Math.sin(hurt * 40) * .02 * (1 - hurt / .3);
   }
-  function renderFrame(dt) {
+  function renderFrame(dt) { visualUpdate(dt); drawFrame(); }
+  function visualUpdate(dt) {
     X.t += dt; X.wind.time.value = X.t; X.wind.amt.value = .85 + .35 * Math.sin(X.t * .23) + .15 * Math.sin(X.t * .71);
     updateCharacters(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); updateCash(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
     for (let i = PINGS.length - 1; i >= 0; i--) { const p = PINGS[i]; p.t += dt; p.g.children[0].scale.setScalar(.7 + Math.sin(X.t * 6) * .15); if (p.t > 7) { X.scene.remove(p.g); PINGS.splice(i, 1); } }
@@ -1899,6 +1906,9 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     if (X.motes) X.motes.position.y = Math.sin(X.t * .2) * .3;
     // the sun's shadow follows you (snapped, so it doesn't shimmer)
     const c = X.camera.position, sx = Math.round(c.x / 4) * 4, sz = Math.round(c.z / 4) * 4; X.sun.target.position.set(sx, 0, sz); X.sun.position.set(sx + X.sunDir.x * 90, X.sunDir.y * 90, sz + X.sunDir.z * 90); X.sun.target.updateMatrixWorld();
+  }
+  // draw it (skipped by the automated multi-player checks, which still run everything above)
+  function drawFrame() {
     X.renderer.clear(); X.renderer.render(X.scene, X.camera);
     if (VM.g && VM.g.visible) { X.renderer.clearDepth(); X.vmCam.fov = 62; X.vmCam.updateProjectionMatrix(); X.vmSun.position.copy(X.sunDir); X.renderer.render(X.vmScene, X.vmCam); }
   }
@@ -2244,6 +2254,7 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
       case 'leavePractice': stopPractice(); openMenu(CL.conn && CL.ids.online ? 'room' : 'main'); break;
       case 'room': openMenu('room'); break;
       case 'team': sendRoom({ t: 'team', team: +v }); break;
+      case 'move': sendRoom({ t: 'move', id: v }); break;
       case 'ready': { const me = CL.lobby.find(q => q.id === CL.ids.online); sendRoom({ t: 'ready', v: !(me && me.ready) }); break; }
       case 'rmode': sendRoom({ t: 'mode', mode: v, oneShot: CL.oneShot }); break;
       case 'roneShot': sendRoom({ t: 'mode', mode: CL.mode, oneShot: !CL.oneShot }); break;
@@ -2302,7 +2313,7 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
   }
   function roomPlayersHtml() {
     const me = CL.ids.online, host = CL.host === me, size = CL.lobby.length, ffa = CL.mode === 'ffa', need = { '1v1': 1, '2v2': 2 }[CL.mode];
-    const pl = q => `<div class="pl"><span>${esc(q.name)}${q.id === me ? ' <span class="tag">you</span>' : ''}${q.id === CL.host ? ' <span class="tag">host</span>' : ''}${q.on ? '' : ' <span class="tag">reconnecting</span>'}</span><span>${(q.ready || q.id === CL.host) ? '<span class="tag ok">ready</span>' : '<span class="tag">not ready</span>'}</span></div>`;
+    const pl = q => `<div class="pl"><span>${host && !ffa ? `<button data-a="move" data-v="${q.id}" title="Move to the other team" style="padding:2px 8px;margin-right:6px">⇄</button>` : ''}${esc(q.name)}${q.id === me ? ' <span class="tag">you</span>' : ''}${q.id === CL.host ? ' <span class="tag">host</span>' : ''}${q.on ? '' : ' <span class="tag">reconnecting</span>'}</span><span>${(q.ready || q.id === CL.host) ? '<span class="tag ok">ready</span>' : '<span class="tag">not ready</span>'}</span></div>`;
     if (ffa) return `<div class="card team"><b>Archers (${size}/8)</b>${CL.lobby.map(pl).join('')}</div>`;
     return [0, 1].map(t => { const list = CL.lobby.filter(q => q.team === t), mine = CL.lobby.find(q => q.id === me); return `<div class="card team"><div class="row" style="justify-content:space-between"><b style="color:${W.TEAMS[t].col}">${W.TEAMS[t].n.toUpperCase()} (${list.length}/${need})</b>${mine && mine.team !== t && list.length < need ? `<button data-a="team" data-v="${t}">Switch here</button>` : ''}</div>${list.map(pl).join('') || '<div class="muted" style="margin-top:8px">Waiting for an archer...</div>'}</div>`; }).join('');
   }
@@ -2392,7 +2403,8 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     const t = performance.now(), dt = Math.min(.1, (t - (lastDraw || t)) / 1000), V = K.view; lastDraw = t;
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, g.canvas.width, g.canvas.height); g.restore();
     if (!ready) { g.fillStyle = '#0b120c'; g.fillRect(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0); tx(g, failed ? 'Could not load the 3D engine. Check your connection and reload.' : 'Walking into the King\'s Wood...', 640, 360, failed ? 22 : 28, failed ? HURT : BONE, 'center', 800, 'Cinzel'); return; }
-    if (DEV && QS.has('norender')) { /* automated multi-player checks: skip drawing to save time */ } else { renderFrame(dt); }
+    if (DEV && QS.has('norender')) visualUpdate(dt);   // automated multi-player checks: everything but the drawing
+    else renderFrame(dt);
     audioFrame(dt);
     if (K.bot) return;
     drawHud(g, dt);
@@ -2412,6 +2424,9 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     tp: (x, z, yaw = 0, pitch = 0) => { ME.st.x = x; ME.st.z = z; ME.st.y = W.groundAt(x, z, W.terrainH(x, z) + 3); ME.st.yaw = yaw; ME.st.pitch = pitch; send({ t: 'dev', tp: [x, ME.st.y, z], yaw, pitch }); },
     aimAt: (x, y, z, power = 1) => { const o = W.shotOrigin(ME.st), d = Math.hypot(x - o[0], z - o[2]), v = W.launchSpeed(power), g = W.GRAV, h = y - o[1]; const disc = v ** 4 - g * (g * d * d + 2 * h * v * v); ME.st.yaw = Math.atan2(-(x - o[0]), -(z - o[2])); ME.st.pitch = disc < 0 ? .7 : Math.atan((v * v - Math.sqrt(disc)) / (g * d)); return ME.st.pitch; },
     pos: () => ({ x: ME.st.x, y: ME.st.y, z: ME.st.z, yaw: ME.st.yaw, pitch: ME.st.pitch }),
+    // stage an archer in front of the camera (for the visual checks): o = { id, x, z, yaw, team, bow, draw, crouch }
+    stage: o => { const p = player(o.id || 'stage'); Object.assign(p, { name: o.name || 'Stand-in', team: o.team || 1, bow: o.bow || 'longbow', alive: true, arrows: 6, slot: o.slot || 0 }); const y = W.groundAt(o.x, o.z, W.terrainH(o.x, o.z) + 2); p.buf = [[srvNow() + 1e4, o.x, y, o.z, o.yaw || 0, o.pitch || 0, 1 | (o.draw ? 8 : 0) | (o.crouch ? 2 : 0) | 16, o.draw || 0]]; return p.id; },
+    finish: (id, bow) => { const p = CL.players.get(id), s = p.buf[p.buf.length - 1]; startFinisher({ v: id, k: CL.me, bow, zone: 'body', p: [s[1], s[2], s[3]], yaw: s[4], d: [Math.sin(s[4]), -.1, Math.cos(s[4])], kn: 'You', vn: p.name }); const f = FINS[FINS.length - 1]; if (f) { f.mine = true; ME.cam = 'finisher'; ME.fin = f; finisherCam(f); } },
     finishers: () => FINS.map(f => ({ kind: f.kind, t: f.t, mine: f.mine, hit: f.hit })), cam: () => ME.cam, arcPts: () => { const { o, v } = previewNow(); return W.previewArc(o, v, 13, 18); },
   };
   if (roomQ && !DEV) setTimeout(() => { const b = document.getElementById('bPlay'); if (b && K.state === 'title') b.click(); }, 50);

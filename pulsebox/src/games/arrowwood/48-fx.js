@@ -32,12 +32,12 @@
     BILLS = { m: new THREE.InstancedMesh(new THREE.PlaneGeometry(.26, .12), std({ map: TEX.bill, side: THREE.DoubleSide, roughness: .8 }), 260), list: [] };
     COINS3 = { m: new THREE.InstancedMesh(new THREE.CylinderGeometry(.045, .045, .008, 14), std({ map: TEX.coin, metalness: .85, roughness: .28, color: LC('#ffd86a') }), 90), list: [] };
     for (const B of [BILLS, COINS3]) { B.m.count = 0; B.m.frustumCulled = false; B.m.castShadow = true; X.scene.add(B.m); }
-    const [c, gg] = cvs(512, 256); gg.font = '900 150px Impact, Arial Black, sans-serif'; gg.textAlign = 'center'; gg.lineWidth = 18; gg.strokeStyle = '#1a1206'; gg.strokeText('THWACK!', 256, 170); gg.fillStyle = '#ffd23f'; gg.fillText('THWACK!', 256, 170);
+    const [c, gg] = cvs(1024, 256); gg.font = '900 150px Impact, Arial Black, sans-serif'; gg.textAlign = 'center'; gg.lineWidth = 18; gg.lineJoin = 'round'; gg.strokeStyle = '#1a1206'; gg.save(); gg.translate(512, 128); gg.rotate(-.08); gg.strokeText('THWACK!', 0, 50); gg.fillStyle = '#ffd23f'; gg.fillText('THWACK!', 0, 50); gg.restore();
     THWACK = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex(c, { clamp: true }), depthTest: false, transparent: true })); THWACK.visible = false; THWACK.renderOrder = 20; X.scene.add(THWACK);
   }
   // ---- archers
   function ensureModel(p) {
-    const col = CL.src === 'practice' ? '#c9b07a' : teamCol(p.team, p.slot, CL.mode), bow = p.bow || 'longbow', key = col + bow + (p.dummy ? 'd' : '');
+    const col = p.dummy ? '#c9b07a' : CL.src === 'practice' ? W.TEAMS[p.team | 0].col : teamCol(p.team, p.slot, CL.mode), bow = p.bow || 'longbow', key = col + bow + (p.dummy ? 'd' : '');
     if (p.model && p.modelKey === key) return p.model;
     if (p.model) X.scene.remove(p.model.root);
     p.model = makePerson({ col, seed: hashId(p.id), dummy: p.dummy, bow }); p.modelKey = key; p.model.stuck = []; X.scene.add(p.model.root);
@@ -183,7 +183,7 @@
         f.ruler.quaternion.setFromAxisAngle(f.rulerAxis, ang).multiply(f.rulerYaw); }
       if (t > .58 && !f.hit) { f.hit = true; emit('thwack', m.p); X.shake = 1; THWACK.visible = true; f.thw = 0; burst('dust', [x0, groundY(x0, z0) + .2, z0], 18, { col: [.55, .48, .36], size: .6, sp: 2.5, up: .3, g: .2, grow: 1.4, a: .5, life: 1.2 }); burst('leaf', [x0, groundY(x0, z0) + .3, z0], 20, { col: [.5, .42, .2], size: .12, sp: 3, up: 2, g: 2, drag: 2, flutter: 3, life: 2, floor: true }); }
       if (f.hit) { const k = t - .58, sq = 1 + Math.sin(Math.min(k * 18, Math.PI)) * .3 * Math.exp(-k * 4); root.scale.set(1.35 * sq, Math.max(.13, .14 / sq), 1.35 * sq); P.dead = true;
-        f.thw += dt; THWACK.position.set(x0, groundY(x0, z0) + 2.4 + f.thw * .6, z0); const ts = Math.min(1, f.thw * 8) * (1 - cl((f.thw - .9) * 3, 0, 1)); THWACK.scale.set(3 * ts, 1.5 * ts, 1); THWACK.visible = ts > .01; }
+        f.thw += dt; THWACK.position.set(x0, groundY(x0, z0) + 2.4 + f.thw * .6, z0); const ts = Math.min(1, f.thw * 8) * (1 - cl((f.thw - .9) * 3, 0, 1)); THWACK.scale.set(4.4 * ts, 1.1 * ts, 1); THWACK.visible = ts > .01; }
     } else if (f.kind === 'cashout') {
       // a rattle, then a cloud of bank notes and spinning coins; a cash register rings
       root.position.set(x0 + (t < .3 ? (Math.random() - .5) * .06 : 0), y0, z0); root.rotation.set(0, m.yaw, 0); limp(.5); root.scale.setScalar(1 + sm(cl(t / .3, 0, 1)) * .12);
@@ -230,7 +230,8 @@
     if (X.shake > 0) { X.shake = Math.max(0, X.shake - dt * 2.5); cam.position.x += (Math.random() - .5) * .12 * X.shake; cam.position.y += (Math.random() - .5) * .12 * X.shake; }
     const hurt = now() - ME.hurtAt; if (hurt < .3 && ME.cam === 'fp') cam.rotation.z += Math.sin(hurt * 40) * .02 * (1 - hurt / .3);
   }
-  function renderFrame(dt) {
+  function renderFrame(dt) { visualUpdate(dt); drawFrame(); }
+  function visualUpdate(dt) {
     X.t += dt; X.wind.time.value = X.t; X.wind.amt.value = .85 + .35 * Math.sin(X.t * .23) + .15 * Math.sin(X.t * .71);
     updateCharacters(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); updateCash(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
     for (let i = PINGS.length - 1; i >= 0; i--) { const p = PINGS[i]; p.t += dt; p.g.children[0].scale.setScalar(.7 + Math.sin(X.t * 6) * .15); if (p.t > 7) { X.scene.remove(p.g); PINGS.splice(i, 1); } }
@@ -240,6 +241,9 @@
     if (X.motes) X.motes.position.y = Math.sin(X.t * .2) * .3;
     // the sun's shadow follows you (snapped, so it doesn't shimmer)
     const c = X.camera.position, sx = Math.round(c.x / 4) * 4, sz = Math.round(c.z / 4) * 4; X.sun.target.position.set(sx, 0, sz); X.sun.position.set(sx + X.sunDir.x * 90, X.sunDir.y * 90, sz + X.sunDir.z * 90); X.sun.target.updateMatrixWorld();
+  }
+  // draw it (skipped by the automated multi-player checks, which still run everything above)
+  function drawFrame() {
     X.renderer.clear(); X.renderer.render(X.scene, X.camera);
     if (VM.g && VM.g.visible) { X.renderer.clearDepth(); X.vmCam.fov = 62; X.vmCam.updateProjectionMatrix(); X.vmSun.position.copy(X.sunDir); X.renderer.render(X.vmScene, X.vmCam); }
   }

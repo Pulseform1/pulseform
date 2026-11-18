@@ -25,7 +25,7 @@
   // ---- the local practice range: the server's own engine running in this page
   function startPractice() {
     stopPractice();
-    const room = ENG.createRoom({ mode: 'practice' }), j = ENG.join(room, { name: myName(), bow: PROFILE.equipped }, Date.now());
+    const room = ENG.createRoom({ mode: 'practice', dev: DEV }), j = ENG.join(room, { name: myName(), bow: PROFILE.equipped }, Date.now());
     CL.local = { room, id: j.id, acc: 0, send: m => ENG.message(room, j.id, m, Date.now()) };
     CL.ids.practice = j.id; useSource('practice'); pumpLocal(0);
   }
@@ -117,6 +117,8 @@
       case 'overtime': emit('overtime', m); return;
       case 'results': CL.results = m; CL.phase = 'results'; emit('results', m); emit('ui'); return;
       case 'corr': emit('corr', m); return;
+      case 'nodraw': if (ME.drawing) { ME.drawing = false; ME.drawT = 0; } return;   // the server said no (out of arrows, still nocking): lower the bow
+      case 'nofire': { const a = CL.cidMap.get(m.cid); if (a) { CL.arrows.delete(a.tmpId); CL.arrows.delete(a.id); emit('arrowGone', a); } if (CL.src !== 'practice') ME.arrows = m.arrows; return; }
       case 'clear': CL.arrows.forEach(a => emit('arrowGone', a)); CL.arrows.clear(); CL.stuck.forEach(s => emit('stuckGone', s)); CL.stuck.clear(); CL.picks = W.PICKUPS.map(() => true); CL.cap = [0, 0];
         for (const p of CL.players.values()) { p.deadAt = 0; emit('unstickAll', p); } return;
       case 'respawn': { const p = CL.players.get(m.id); if (p) { p.deadAt = 0; emit('unstickAll', p); } return; }

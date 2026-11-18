@@ -64,6 +64,7 @@
       case 'leavePractice': stopPractice(); openMenu(CL.conn && CL.ids.online ? 'room' : 'main'); break;
       case 'room': openMenu('room'); break;
       case 'team': sendRoom({ t: 'team', team: +v }); break;
+      case 'move': sendRoom({ t: 'move', id: v }); break;
       case 'ready': { const me = CL.lobby.find(q => q.id === CL.ids.online); sendRoom({ t: 'ready', v: !(me && me.ready) }); break; }
       case 'rmode': sendRoom({ t: 'mode', mode: v, oneShot: CL.oneShot }); break;
       case 'roneShot': sendRoom({ t: 'mode', mode: CL.mode, oneShot: !CL.oneShot }); break;
@@ -122,7 +123,7 @@
   }
   function roomPlayersHtml() {
     const me = CL.ids.online, host = CL.host === me, size = CL.lobby.length, ffa = CL.mode === 'ffa', need = { '1v1': 1, '2v2': 2 }[CL.mode];
-    const pl = q => `<div class="pl"><span>${esc(q.name)}${q.id === me ? ' <span class="tag">you</span>' : ''}${q.id === CL.host ? ' <span class="tag">host</span>' : ''}${q.on ? '' : ' <span class="tag">reconnecting</span>'}</span><span>${(q.ready || q.id === CL.host) ? '<span class="tag ok">ready</span>' : '<span class="tag">not ready</span>'}</span></div>`;
+    const pl = q => `<div class="pl"><span>${host && !ffa ? `<button data-a="move" data-v="${q.id}" title="Move to the other team" style="padding:2px 8px;margin-right:6px">⇄</button>` : ''}${esc(q.name)}${q.id === me ? ' <span class="tag">you</span>' : ''}${q.id === CL.host ? ' <span class="tag">host</span>' : ''}${q.on ? '' : ' <span class="tag">reconnecting</span>'}</span><span>${(q.ready || q.id === CL.host) ? '<span class="tag ok">ready</span>' : '<span class="tag">not ready</span>'}</span></div>`;
     if (ffa) return `<div class="card team"><b>Archers (${size}/8)</b>${CL.lobby.map(pl).join('')}</div>`;
     return [0, 1].map(t => { const list = CL.lobby.filter(q => q.team === t), mine = CL.lobby.find(q => q.id === me); return `<div class="card team"><div class="row" style="justify-content:space-between"><b style="color:${W.TEAMS[t].col}">${W.TEAMS[t].n.toUpperCase()} (${list.length}/${need})</b>${mine && mine.team !== t && list.length < need ? `<button data-a="team" data-v="${t}">Switch here</button>` : ''}</div>${list.map(pl).join('') || '<div class="muted" style="margin-top:8px">Waiting for an archer...</div>'}</div>`; }).join('');
   }

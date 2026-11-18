@@ -107,11 +107,15 @@ export function message(room, id, m, now) {
       for (const q of humans(room)) q.ready = false; lobbyOut(room); } break;
     case 'team': if (room.phase === 'lobby' && room.mode !== 'ffa' && (m.team === 0 || m.team === 1) && humans(room).filter(q => q.team === m.team).length < SIZES[room.mode] / 2) { p.team = m.team; p.ready = false; lobbyOut(room); } break;
     case 'ready': if (room.phase === 'lobby') { p.ready = !!m.v; lobbyOut(room); } break;
+    // the host can move anyone to the other team; if that team is full, the two swap
+    case 'move': if (id === room.host && room.phase === 'lobby' && room.mode !== 'ffa') { const q = room.players.get(m.id); if (!q || q.dummy) break; const to = 1 - q.team, there = humans(room).filter(r => r.team === to);
+      if (there.length >= SIZES[room.mode] / 2) { const other = there[there.length - 1]; other.team = q.team; other.ready = false; } q.team = to; q.ready = false; lobbyOut(room); } break;
     case 'start': if (id === room.host && room.phase === 'lobby') { if (canStart(room) || (room.dev && m.force)) startMatch(room); else send(room, id, { t: 'err', msg: room.mode === 'ffa' ? 'Need at least two archers, everyone ready.' : `Need ${SIZES[room.mode] / 2} on each team, everyone ready.` }); } break;
     case 'rematch': if (room.phase === 'results') { room.votes.add(id); lobbyOut(room); const h = humans(room).filter(q => q.connected); if (h.length && h.every(q => room.votes.has(q.id))) { if (canStartTeams(room)) startMatch(room); else { room.phase = 'lobby'; room.votes.clear(); lobbyOut(room); } } } break;
     case 'lobby': if (room.phase === 'results') { room.phase = 'lobby'; room.votes.clear(); for (const q of humans(room)) q.ready = false; lobbyOut(room); } break;
     case 'in': moveIn(room, p, m); break;
-    case 'draw': if (st.alive && live(room) && st.arrows > 0 && room.t >= st.nockAt && !st.sprint) st.drawAt = room.t; break;
+    // a little slack on the nock timer: the client's clock and the server's tick never line up exactly
+    case 'draw': if (st.alive && live(room) && st.arrows > 0 && room.t >= st.nockAt - .15 && !st.sprint) st.drawAt = room.t; else send(room, id, { t: 'nodraw' }); break;
     case 'cancel': st.drawAt = null; break;
     case 'fire': fire(room, p, m); break;
     case 'ping': if (Array.isArray(m.p) && m.p.length === 3 && m.p.every(Number.isFinite)) {
@@ -139,7 +143,7 @@ function moveIn(room, p, m) {
 }
 function fire(room, p, m) {
   const st = p.st;
-  if (!st.alive || !live(room) || st.drawAt == null || st.arrows <= 0) { st.drawAt = null; return; }
+  if (!st.alive || !live(room) || st.drawAt == null || st.arrows <= 0) { st.drawAt = null; send(room, p.id, { t: 'nofire', cid: m.cid | 0, arrows: st.arrows }); return; }
   const seen = room.t - st.drawAt, held = Number.isFinite(m.dt) ? Math.max(0, Math.min(m.dt, seen + .25)) : seen;   // trust the client's draw time only up to what the server saw
   if (Number.isFinite(m.yaw)) st.yaw = m.yaw; if (Number.isFinite(m.pitch)) st.pitch = Math.max(-1.5, Math.min(1.5, m.pitch));
   const power = drawPower(held), speed = launchSpeed(power), o = shotOrigin(st), v = aimVector(st.yaw, st.pitch, speed);
