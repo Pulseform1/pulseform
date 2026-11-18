@@ -385,7 +385,7 @@ export function previewArc(o, v, maxDist = 14, n = 16) {
   return pts;
 }
 export const BOWS = [
-  { id: 'longbow', n: "Forester's Longbow", price: 0, d: 'Carved dark wood, a leather grip and a simple cord. The victim drops their bow, stumbles back and collapses into the leaves.' },
+  { id: 'longbow', n: "Forester's Longbow", price: 0, d: 'Carved dark wood, a leather grip and a simple cord. The archer it finishes bursts into blocks that bounce away.' },
   { id: 'cupid', n: "Cupid's Bow", price: 220, d: 'Rose-gold limbs, carved hearts and red ribbon. Giant hearts, a heart stamp, and a burst of petals.' },
   { id: 'yardstick', n: 'The Yardstick', price: 260, d: 'Bent wooden rulers strapped together. A giant ruler swings down: THWACK.' },
   { id: 'cashout', n: 'Cashout', price: 320, d: 'Limbs wrapped in stacks of bills, a metal grip. The victim bursts into a cloud of cash and coins.' },
