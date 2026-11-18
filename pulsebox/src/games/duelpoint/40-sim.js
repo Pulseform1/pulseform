@@ -72,10 +72,22 @@
       const v2 = Math.hypot(f.vx, f.vz); if (v2 > .1 && (wx || wz)) { const a = Math.atan2(f.vx, f.vz), b = Math.atan2(wx, wz), turn = cl(angDiff(b, a), -1.6 * dt, 1.6 * dt); f.vx = Math.sin(a + turn) * v2; f.vz = Math.cos(a + turn) * v2; }
       if (f.slide.t <= 0 || v2 < 2.4 || !f.ground && f.vy > 0) { f.slide = null; f.slideCD = SLIDE_CD; }
     } else {
-      // head for the wanted velocity at a fixed rate: quickest when braking against your motion (the counter-strafe), slowest in the air
-      const tx = wx * sp, tz = wz * sp, ddx = tx - f.vx, ddz = tz - f.vz, dl = Math.hypot(ddx, ddz);
-      const rate = !f.ground ? 6 : Math.hypot(tx, tz) < .01 ? 26 : tx * f.vx + tz * f.vz < 0 ? 80 : f.sprinting ? 30 : 44;
+      // head for the wanted velocity at a fixed rate: quickest when braking against your motion (the counter-strafe), slowest in the air.
+      // A counter-strafe stops you dead: each axis (sideways, forward) brakes to exactly zero and never overshoots, then stays
+      // pinned at zero for a moment while the key is still down, so a tap never carries you back the other way. Hold the key
+      // past that moment and you start moving that way as usual.
+      const rx = c, rz = -s, fx = -s, fz = -c, vR = f.vx * rx + f.vz * rz, vF = f.vx * fx + f.vz * fz;
+      const tR0 = (wx * rx + wz * rz) * sp, tF0 = (wx * fx + wz * fz) * sp, cs = f.cs || (f.cs = [0, 0, 0, 0]);
+      const pin = (t, i) => { const d = Math.sign(t); if (cs[i] > 0) { if (f.ground && d === cs[i + 1]) { cs[i] -= dt; return 0; } cs[i] = 0; } return t; };
+      const tR = pin(tR0, 0), tF = pin(tF0, 2), against = (t, v) => f.ground && t !== 0 && Math.sign(t) === -Math.sign(v) && Math.abs(v) > .05;
+      const cR = against(tR, vR), cF = against(tF, vF);
+      const tx = tR * rx + tF * fx, tz = tR * rz + tF * fz, ddx = tx - f.vx, ddz = tz - f.vz, dl = Math.hypot(ddx, ddz);
+      const rate = !f.ground ? 6 : cR || cF ? 80 : Math.hypot(tx, tz) < .01 ? 26 : f.sprinting ? 30 : 44;
       if (dl > 0) { const stp = Math.min(dl, rate * dt); f.vx += ddx / dl * stp; f.vz += ddz / dl * stp; }
+      for (const [on, v0, ax, az, i] of [[cR, vR, rx, rz, 0], [cF, vF, fx, fz, 2]]) {
+        if (!on) continue; const v1 = f.vx * ax + f.vz * az;
+        if (Math.sign(v1) !== Math.sign(v0)) { f.vx -= v1 * ax; f.vz -= v1 * az; cs[i] = CS_HOLD; cs[i + 1] = Math.sign(i ? tF : tR); }   // stopped: clamp to zero and pin
+      }
     }
     if (f.dash) { f.dash.t -= dt; f.vx = f.dash.dx * 36; f.vz = f.dash.dz * 36; if (f.dash.t <= 0) { f.dash = null; f.vx *= .2; f.vz *= .2; } }
     if (I.jump && !f.jumpHeld && f.ground && !frozen && (f.crouch < .5 || f.slide)) { f.vy = JUMP; f.ground = false; if (f.slide) { f.slide = null; f.slideCD = SLIDE_CD; } emit('jump', f); }
@@ -102,14 +114,16 @@
   // the half-angle of the cone the next bullet can leave in, in radians
   function spreadOf(f) {
     const G = gun(f), A = G.acc, sc = G.scope && f.scoped, ad = !G.scope && G.ads && f.scoped;
-    let e = (sc ? A.sfs : A.fs) * (ad ? .8 : 1) + Math.min(A.max, A.inc * Math.max(0, f.spray - A.free)) * (ad ? .85 : 1) + moveErr(f, G);
+    const n = Math.max(0, f.spray - A.free), sp = A.inc * n + (A.inc2 ? A.inc2 * Math.max(0, n - A.n2) : 0);   // inc2: a gun that gets wilder after its n2th shot
+    let e = (sc ? A.sfs : A.fs) * (ad ? .8 : 1) + Math.min(A.max, sp) * (ad ? .85 : 1) + moveErr(f, G);
     if (f.crouch > .5 && f.ground) e *= .85;
     return e * D2R;
   }
   // where the spray has pushed the next bullet: up first, then side to side
   function patOf(f, G) {
     const P = G.pat; if (!P) return [0, 0]; const n = Math.max(0, f.spray - G.acc.free);
-    return [n > P.hs0 ? P.hk * Math.sin((n - P.hs0) * .85 + f.sseed) * D2R : 0, Math.min(P.vmax, P.vk * n) * D2R];
+    const up = P.n2 && n > P.n2 ? P.vk * P.n2 + P.vk2 * (n - P.n2) : P.vk * n;   // vk2: a steeper climb after the n2th shot
+    return [n > P.hs0 ? P.hk * Math.sin((n - P.hs0) * .85 + f.sseed) * D2R : 0, Math.min(P.vmax, up) * D2R];
   }
   const viewDir = (yaw, pitch) => { const cp = Math.cos(pitch); return [-Math.sin(yaw) * cp, Math.sin(pitch), -Math.cos(yaw) * cp]; };
   // ray against a sphere / an axis-aligned box: the distance, or -1
@@ -151,7 +165,7 @@
       if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k); }
     }
     if (landed) f.stat.hits++;
-    f.spray += 1; f.kick = .08; if (f === me()) M.camKick = Math.min(M.camKick + G.punch * .3 * D2R * (f.scoped && G.scope ? .4 : 1), 1.2 * D2R);
+    f.spray += 1; f.kick = .08; if (f === me()) M.camKick = Math.min(M.camKick + G.punch * .42 * D2R * (f.scoped && G.scope ? .4 : 1), 1.6 * D2R);
     if (!f.net) net({ t: 'sh', a: r3(y0), b: r3(p0), f: f.key });
     if (A.mag === 0 && A.res > 0) f.autoReload = .26;
   }

@@ -4,6 +4,16 @@
      and the charge, then your own gun in a second pass on top. `screen` is which screen is up; 99-main changes it. */
   let screen = 'menu', posed = false;
   const _v = [0, 0, 0];
+  function addSmoke() { const g = new THREE.Group(); for (let i = 0; i < 7; i++) { const m = new THREE.Mesh(X.smokeG, X.smokeM); m.position.set((Math.random() - .5) * .7, (Math.random() - .5) * .5, (Math.random() - .5) * .7); m.scale.setScalar(.72 + i * .045); g.add(m); } g.visible = false; X.scene.add(g); X.smokes.push(g); }
+  function addWall() { const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), X.wallM); m.castShadow = !X.low; m.visible = false; X.scene.add(m); X.walls.push(m); }
+  // build every shader the match can need before it starts: a material seen for the first time mid-round (the charge, a
+  // smoke, a wall, a grenade) would otherwise compile on the spot and hitch the frame
+  function warmShaders() {
+    if (!X || !X.renderer) return;
+    if (!X.olDummy) { X.olDummy = new THREE.Mesh(new THREE.BoxGeometry(.01, .01, .01), outlineMat()); X.olDummy.visible = false; X.scene.add(X.olDummy); }
+    if (!X.smokes.length) addSmoke(); if (!X.walls.length) addWall(); if (!X.nadeObjs.length) { const o = X.nadeMk(); o.visible = false; X.scene.add(o); X.nadeObjs.push(o); }
+    try { X.renderer.compile(X.scene, X.camera); X.renderer.compile(X.vscene, X.camera); } catch (e) { console.warn(e); }
+  }
   function buildFx() {
     const add = o => { X.scene.add(o); return o; }, fm = o => new THREE.MeshBasicMaterial(Object.assign({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }, o));
     // muzzle flash: a spiky star facing you and two crossed flames along the barrel
@@ -34,7 +44,9 @@
     const rg = new THREE.Mesh(new THREE.TorusGeometry(.23, .025, 8, 20), new THREE.MeshLambertMaterial({ color: FOE })); rg.rotation.x = Math.PI / 2; rg.position.y = .2; ch.add(rg);
     const an = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .4, 6), dk); an.position.set(.1, .44, 0); ch.add(an);
     X.chargeLamp = new THREE.Mesh(new THREE.SphereGeometry(.06, 10, 8), new THREE.MeshBasicMaterial({ color: WARN })); X.chargeLamp.position.y = .31; ch.add(X.chargeLamp);
-    X.chargePL = new THREE.PointLight(WARN, 0, 7); X.chargePL.position.y = .7; ch.add(X.chargePL); ch.visible = false; add(ch);
+    // its light is always in the scene, just dark: a light appearing mid-round changes the light count, and every lit material
+    // would then rebuild its shader at once (the stutter you used to feel the moment the charge went down)
+    X.chargePL = add(new THREE.PointLight(WARN, 0, 7)); X.chargePL.position.set(0, -20, 0); ch.visible = false; add(ch);
     X.flareBall = add(new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffffff' }))); X.flareBall.visible = false;
     X.boom = add(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), fm({ color: '#ffb060', opacity: .8 }))); X.boom.visible = false; X.boomT = 0;
     X.ejects = []; X.casings = [];
@@ -52,7 +64,7 @@
     if (L > s0 + 1 && !(G.pel > 1 && Math.random() > .3)) { const tr = X.tracers[X.trN++ % X.tracers.length], u = tr.userData;
       u.a = [mz[0], mz[1], mz[2]]; u.d = [(S.end[0] - mz[0]) / L, (S.end[1] - mz[1]) / L, (S.end[2] - mz[2]) / L]; u.L = L; u.age = 0; u.s0 = s0; u.len = mine ? 1.4 : 2.2; u.w = mine ? .005 : .008; u.op = mine ? (G.sil ? .08 : .14) : (G.sil ? .16 : .3); u.mat.color.set(G.rail ? '#38e8ff' : '#ffffff'); if (G.rail) { u.op = .9; u.len = 6; u.w = .02; }
       tr.position.set(mz[0], mz[1], mz[2]); tr.lookAt(S.end[0], S.end[1], S.end[2]); tr.visible = false; tr.userData.live = true; }
-    if (first && mine) X.recV = (X.recV || 0) + 2.2 * (G.kickV || VKICK[G.cat] || 1) * (f.scoped ? .55 : 1);
+    if (first && mine) { const kv = (G.kickV || VKICK[G.cat] || 1) * (f.scoped ? .55 : 1); X.recV = (X.recV || 0) + 2.6 * kv; X.recYV = (X.recYV || 0) + (Math.random() - .5) * 1.6 * kv; }
     if (first) { X.muzzle.position.set(mz[0], mz[1], mz[2]); X.muzzle.intensity = G.sil ? 1.2 : 4; if (mine) { X.flashT = G.sil ? .025 : .05; X.ejects.push({ k: G.k, t: G.k === 'breaker' ? .3 : G.k === 'longbow' || G.k === 'kite' ? .6 : .01 }); } }
     if (S.hit) { const c = (OPS[S.hit.f.op] || OPS.vex).col; for (let i = 0; i < 5; i++) spark(S.end, [rnd(-1.5, 1.5), rnd(-.5, 2), rnd(-1.5, 1.5)], S.hit.head ? '#fff3c4' : c, .28); }
     else if (S.dist < 139) {
@@ -81,7 +93,11 @@
     const ey = ipos(P, 'y') + lp(EYE, CEYE, P.crouch); X.camY = Math.abs(ey - X.camY) > 1.2 ? ey : X.camY + (ey - X.camY) * Math.min(1, dt * 22);
     X.dip = Math.max(0, (X.dip || 0) - dt * .5); X.shake = Math.max(0, X.shake - dt);
     X.roll = lp(X.roll || 0, P.slide ? .075 : 0, Math.min(1, dt * 9));   // a slide tips the view a little
-    let yaw = P.yaw, pitch = P.pitch + M.camKick, y = X.camY - X.dip;
+    // the spray climbs the view as well as the bullets: the camera follows about half of where the pattern has pushed the
+    // next shot (the crosshair stays put on screen, so the rest shows as bullets landing above it), and glides back as the spray settles
+    { const pt = P.alive && !G.melee ? patOf(P, G) : [0, 0], fol = P.scoped && G.scope ? .25 : .55, k = Math.min(1, dt * 18);
+      X.vpY = lp(X.vpY || 0, pt[0] * fol, k); X.vpP = lp(X.vpP || 0, pt[1] * fol, k); }
+    let yaw = P.yaw + X.vpY, pitch = P.pitch + M.camKick + X.vpP, y = X.camY - X.dip;
     if (!P.alive && M.deathInfo) { const k = Math.min(1, M.deathInfo.t * 2); y = lp(y, P.y + .5, k); yaw += angDiff(M.deathInfo.yaw, yaw) * k; pitch = lp(pitch, .1, k); }
     cam.position.set(ipos(P, 'x') + (Math.random() - .5) * X.shake * .3, y + (Math.random() - .5) * X.shake * .3, ipos(P, 'z')); cam.rotation.set(pitch, yaw, X.roll);
     X.fovK = lp(X.fovK || 0, P.slide ? 1 : P.sprinting ? .6 : 0, Math.min(1, dt * 7));   // speed widens the view a touch
@@ -94,6 +110,8 @@
     // recoil on a spring: each shot kicks it, it settles by itself (sub-stepped so a slow frame cannot blow it up)
     for (let n = Math.ceil(dt / .008), i = 0; i < n; i++) { const h = dt / n; X.recV = (X.recV || 0) + (-420 * (X.recP || 0) - 30 * X.recV) * h; X.recP = (X.recP || 0) + X.recV * h; }
     X.recP = cl(X.recP, -.08, .22); const rk = X.recP;
+    for (let n = Math.ceil(dt / .008), i = 0; i < n; i++) { const h = dt / n; X.recYV = (X.recYV || 0) + (-300 * (X.recY || 0) - 26 * X.recYV) * h; X.recY = (X.recY || 0) + X.recYV * h; }
+    const climb = cl((X.vpP || 0) * 9, 0, 1.2), sideK = cl((X.vpY || 0) * 9, -.6, .6) + cl(X.recY || 0, -.06, .06);   // how far up the spray has walked the gun
     const v = Math.hypot(P.vx, P.vz), mv = Math.min(1, v / 4), sway = Math.sin(X.t * 1.3) * .004, swayX = Math.sin(X.t * .65) * .003, VO = VOS[G.k] || [.2, -.2, -.28];
     X.runK = lp(X.runK || 0, P.sprinting ? 1.25 : P.slide ? .5 : v > 3.6 && P.fireT < -.2 && P.reloadT <= 0 && !P.scoped && P.ground ? .55 : 0, Math.min(1, dt * 7));   // running: the gun drops and turns in
     X.air = lp(X.air || 0, P.ground ? 0 : cl(-P.vy * .006, -.03, .03), Math.min(1, dt * 10));   // jumping: it lags up, then down
@@ -105,8 +123,8 @@
     const RH = G.k === 'breaker' ? [.045, .07, -.75, .3] : G.cat === 'Sidearm' ? [.04, .06, -.4, .3] : G.cat === 'Sniper' ? [.07, .09, .35, .2] : [.1, .13, -.62, .34];
     const turn = cl(angDiff(P.yaw, X.lastYaw == null ? P.yaw : X.lastYaw) / Math.max(dt, .001) * .006, -.05, .05); X.lastYaw = P.yaw; X.lag = lp(X.lag || 0, turn, Math.min(1, dt * 10));   // the gun trails a turn slightly
     X.view.visible = P.alive && !(P.scoped && G.scope);
-    X.view.position.set(VO[0] + bobX + swayX + X.lag * .5 - tilt * RH[0] - X.runK * .03, VO[1] + Math.abs(bob) * .6 + sway + tilt * RH[1] + seat * .012 - rk * .22 - raise * raise * .3 - X.dip * .5 - X.runK * .035 + X.air, VO[2] + rk * .9 + raise * .05 + X.runK * .02);
-    X.view.rotation.set(rk * 1.6 + tilt * .12 + seat * .05 - raise * .7 - X.runK * .14 - dry * .035, .02 + tilt * RH[3] + X.lag + X.runK * .38, tilt * RH[2] + raise * .35 + X.lag * .6 + X.runK * .26);
+    X.view.position.set(VO[0] + bobX + swayX + X.lag * .5 - tilt * RH[0] - X.runK * .03 + sideK * .02, VO[1] + Math.abs(bob) * .6 + sway + tilt * RH[1] + seat * .012 - rk * .22 - raise * raise * .3 - X.dip * .5 - X.runK * .035 + X.air + climb * .028, VO[2] + rk * .9 + raise * .05 + X.runK * .02 + climb * .02);
+    X.view.rotation.set(rk * 1.6 + tilt * .12 + seat * .05 - raise * .7 - X.runK * .14 - dry * .035 + climb * .2, .02 + tilt * RH[3] + X.lag + X.runK * .38 - sideK * .35, tilt * RH[2] + raise * .35 + X.lag * .6 + X.runK * .26 - sideK * .3);
     X.mflash.position.set(0, .025, -(X.viewGun.userData.len || .5) - .03); X.mflash.visible = X.flashT > 0 && !G.melee; X.mflash.rotation.z = Math.random() * 3; X.mflash.scale.setScalar(G.cat === 'Sniper' || G.cat === 'Shotgun' ? 1.5 : G.cat === 'Sidearm' ? .8 : 1);
     viewAnim(P, G, dt, { draw: chamber, insp: X.inspT > 0 ? 1 - X.inspT / 2.6 : -1 });
     { const pb = X.viewGun.userData.parts.boltL; if (pb) { X.view.rotation.z += pb.rotation.z * .14; X.view.position.y -= pb.rotation.z * .012; } }   // working a bolt rolls the rifle
@@ -128,14 +146,15 @@
     for (const [f, A] of X.agents) if (!M.fs.includes(f)) { X.scene.remove(A); X.agents.delete(f); }
     for (const f of M.fs) if (f !== P) updateAgent(f, dt);
     // smokes, Rampart walls, the charge, a flare in flight
-    while (X.smokes.length < M.smokes.length) { const g = new THREE.Group(); for (let i = 0; i < 7; i++) { const m = new THREE.Mesh(X.smokeG, X.smokeM); m.position.set((Math.random() - .5) * .7, (Math.random() - .5) * .5, (Math.random() - .5) * .7); m.scale.setScalar(.72 + i * .045); g.add(m); } X.scene.add(g); X.smokes.push(g); }
+    while (X.smokes.length < M.smokes.length) addSmoke();
     X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { const mt = s.grey ? X.smokeGM : X.smokeM; if (g.children[0].material !== mt) for (const c of g.children) c.material = mt; g.position.set(s.x, s.y + 1.4, s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .12; } });
     const NS = M.nades || []; while (X.nadeObjs.length < NS.length) { const o = X.nadeMk(); X.scene.add(o); X.nadeObjs.push(o); }
     X.nadeObjs.forEach((o, i) => { const n = NS[i]; o.visible = !!n; if (n) { o.position.set(n.x, n.y, n.z); o.rotation.set(n.spin, n.spin * .6, 0); } });
-    while (X.walls.length < M.walls.length) { const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), X.wallM); m.castShadow = !X.low; X.scene.add(m); X.walls.push(m); }
+    while (X.walls.length < M.walls.length) addWall();
     X.walls.forEach((m, i) => { const w = M.walls[i]; m.visible = !!w; if (w) { m.scale.set(w.x1 - w.x0, 3 * w.grow + .01, w.z1 - w.z0); m.position.set((w.x0 + w.x1) / 2, 1.5 * w.grow, (w.z0 + w.z1) / 2); } });
     X.charge.visible = !!M.planted && !(M.phase === 'end' && M.last && M.last.why === 'boom');
-    if (M.planted) { const C = M.planted, lit = !M.defused && C.beep > Math.max(.06, cl(C.t / 12, .12, 1) - .08); X.charge.position.set(C.x, C.y, C.z); X.chargeLamp.material.color.set(M.defused ? YOU : lit ? WARN : '#401018'); X.chargePL.intensity = lit ? 2.4 : 0; }
+    if (M.planted) { const C = M.planted, lit = !M.defused && C.beep > Math.max(.06, cl(C.t / 12, .12, 1) - .08); X.charge.position.set(C.x, C.y, C.z); X.chargePL.position.set(C.x, C.y + .7, C.z); X.chargeLamp.material.color.set(M.defused ? YOU : lit ? WARN : '#401018'); X.chargePL.intensity = lit && X.charge.visible ? 2.4 : 0; }
+    else X.chargePL.intensity = 0;
     const fl = M.flares[0]; X.flareBall.visible = !!fl; if (fl) X.flareBall.position.set(fl.x, fl.y, fl.z);
     // tracers, sparks, lights fading
     for (const t of X.tracers) { const u = t.userData; if (!u.live) continue; u.age += dt;

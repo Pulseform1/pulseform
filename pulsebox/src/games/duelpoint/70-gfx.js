@@ -42,7 +42,7 @@
     X.vmuzzle = new THREE.PointLight('#ffcf8a', 0, 2); X.vmuzzle.position.set(.1, -.05, -.8); X.vroot.add(X.vmuzzle);
     X.view = new THREE.Group(); X.vroot.add(X.view); X.viewGun = null; X.viewKey = '';
     addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
-    buildWorld(); buildSky(); buildFx();
+    buildWorld(); buildSky(); buildFx(); warmShaders();
   }
   function buildSky() {
     const TH = X.theme || { sky: ['#3f7fc4', '#86b8e0', '#cfe3ee'] }, S = TH.sky; if (X.dome) { X.scene.remove(X.dome); X.dome.material.map.dispose(); }

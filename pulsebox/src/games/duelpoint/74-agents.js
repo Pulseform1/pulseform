@@ -89,12 +89,29 @@
     G.userData = { hip, L, Rg, torso, head, arms, gunHold, tails, pose, gk: '', flash: null, op: f.op, dead: 0 };
     X.scene.add(G); return G;
   }
+  // enemies wear a red outline you can pick out at a glance, even in shade or against a busy wall: every piece of the body
+  // and gun gets a copy drawn from the inside, pushed out along its normals in flat red. The push grows with distance, so the
+  // line stays about two pixels wide whether they are across the site or in your face. Walls and smoke still hide it.
+  let OLM = null;
+  function outlineMat() {
+    if (OLM) return OLM;
+    OLM = new THREE.ShaderMaterial({ uniforms: { col: { value: new THREE.Color(FOE) }, k: { value: .0036 } }, side: THREE.BackSide,
+      vertexShader: 'uniform float k; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vec3 n = normalize(mat3(modelMatrix) * normal); w.xyz += n * (k * length(w.xyz - cameraPosition) + .006); gl_Position = projectionMatrix * viewMatrix * w; }',
+      fragmentShader: 'uniform vec3 col; void main() { gl_FragColor = vec4(col, 1.0); }' });
+    return OLM;
+  }
+  function outline(root, show) {
+    const add = []; root.traverse(o => { if (o.isMesh && !o.userData.isOL && !o.userData.ol && !(o.material && o.material.transparent)) add.push(o); });
+    for (const o of add) { const m = new THREE.Mesh(o.geometry, outlineMat()); m.userData.isOL = true; m.raycast = () => {}; m.frustumCulled = o.frustumCulled; o.add(m); o.userData.ol = m; }
+    root.traverse(o => { if (o.userData.isOL) o.visible = show; });
+  }
   function updateAgent(f, dt) {
     let A = X.agents.get(f);
     if (!A || A.userData.op !== f.op) { if (A) X.scene.remove(A); A = agentModel(f); X.agents.set(f, A); }
     const U = A.userData, fk = gun(f).k;
     if (U.gk !== fk) { while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]); const gm = gunModel(fk, { cast: !X.low, flash: true }); gm.scale.setScalar(1.08); U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
     A.visible = true; A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;
+    { const P = me(), red = !!P && f.team !== P.team && f.alive; if (U.olOn !== red || U.olGk !== U.gk) { outline(A, red); U.olOn = red; U.olGk = U.gk; } }
     const sp = Math.hypot(f.vx, f.vz), sl = f.slide ? 1 : 0, amp = Math.min(1, sp / 3.5) * (f.sprinting ? 1.15 : .8) * (1 - sl), ph = f.walkT * 1.9, cr = f.crouch * (1 - sl);
     U.sl = lp(U.sl || 0, sl, Math.min(1, dt * 12)); U.spr = lp(U.spr || 0, f.sprinting ? 1 : 0, Math.min(1, dt * 8)); const sk = U.sl;
     // legs: swing with the stride, the trailing knee bends; a crouch folds both

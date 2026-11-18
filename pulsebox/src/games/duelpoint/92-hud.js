@@ -47,6 +47,64 @@
   let hitMark = null, heard = null, mmCanvas = null;
   on('hurt', (v, by, dmg, head) => { if (M && by === me()) hitMark = { t: head ? .5 : .28, head, dmg, kill: v.hp <= 0 && !v.net, x: rnd(-14, 14) }; });
   on('kill', (v, by) => { if (M && by === me() && hitMark) hitMark.kill = true; });
+  // the kill banner, bottom centre: the emblem of the skin you have equipped (a skull until you own one) bursts in,
+  // with a pip for each kill in your run, then fades
+  let banner = null;
+  on('kill', (v, by, head) => { if (M && by === me() && v !== me() && M.mode !== 'demo') banner = { t0: performance.now(), n: killRun, head, name: v.name, em: killEmblem() }; });
+  on('round', n => { if (n === 1) banner = null; });
+  const killEmblem = () => ({ shape: 'skull', col: BONE, glow: YOU });
+  // the emblem's glyph, drawn round (0, 0) at radius r
+  function glyph(g, shape, r, col, ink) {
+    g.fillStyle = col; g.beginPath();
+    if (shape === 'bolt') { g.moveTo(.14 * r, -.62 * r); g.lineTo(-.34 * r, .08 * r); g.lineTo(-.02 * r, .08 * r); g.lineTo(-.16 * r, .62 * r); g.lineTo(.34 * r, -.12 * r); g.lineTo(.02 * r, -.12 * r); g.closePath(); g.fill(); return; }
+    if (shape === 'star') { for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? .26 : .6; g.lineTo(Math.cos(a) * q * r, Math.sin(a) * q * r); } g.closePath(); g.fill(); return; }
+    if (shape === 'crown') { g.moveTo(-.5 * r, .34 * r); g.lineTo(-.56 * r, -.3 * r); g.lineTo(-.26 * r, -.02 * r); g.lineTo(0, -.46 * r); g.lineTo(.26 * r, -.02 * r); g.lineTo(.56 * r, -.3 * r); g.lineTo(.5 * r, .34 * r); g.closePath(); g.fill(); g.fillRect(-.5 * r, .4 * r, r, .12 * r); return; }
+    if (shape === 'flame') { g.moveTo(0, .58 * r); g.bezierCurveTo(-.5 * r, .5 * r, -.48 * r, -.05 * r, -.12 * r, -.62 * r); g.bezierCurveTo(-.1 * r, -.2 * r, .1 * r, -.25 * r, .16 * r, -.38 * r); g.bezierCurveTo(.5 * r, -.05 * r, .48 * r, .5 * r, 0, .58 * r); g.fill();
+      g.fillStyle = ink; g.beginPath(); g.moveTo(0, .5 * r); g.bezierCurveTo(-.22 * r, .45 * r, -.2 * r, .15 * r, 0, -.05 * r); g.bezierCurveTo(.2 * r, .15 * r, .22 * r, .45 * r, 0, .5 * r); g.fill(); return; }
+    if (shape === 'fang') { for (const sx of [-1, 1]) { g.moveTo(sx * .42 * r, -.5 * r); g.quadraticCurveTo(sx * .44 * r, .2 * r, sx * .1 * r, .6 * r); g.quadraticCurveTo(sx * .2 * r, .05 * r, sx * .05 * r, -.5 * r); g.closePath(); } g.fill(); return; }
+    // the skull: a dome and a jaw, deep eyes, a notch for a nose, teeth
+    g.arc(0, -.12 * r, .48 * r, Math.PI * .82, Math.PI * 2.18); g.lineTo(.3 * r, .3 * r); g.lineTo(.26 * r, .5 * r); g.lineTo(-.26 * r, .5 * r); g.lineTo(-.3 * r, .3 * r); g.closePath(); g.fill();
+    g.fillStyle = ink; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(sx * .19 * r, -.06 * r, .13 * r, .15 * r, sx * .25, 0, TAU); g.fill(); }
+    g.beginPath(); g.moveTo(0, .1 * r); g.lineTo(.07 * r, .24 * r); g.lineTo(-.07 * r, .24 * r); g.closePath(); g.fill();
+    for (const tx0 of [-.12, 0, .12]) g.fillRect((tx0 - .018) * r, .36 * r, .036 * r, .14 * r);
+  }
+  // a small bust of an operative for the top bar: shoulders in their colour and their headgear, greyed once they are down
+  function opBust(g, op, x, y, s, up) {
+    const O = OPS[op] || OPS.vex, kt = KIT[op] || KIT.vex, grey = c => up ? c : '#3c4049', glow = up ? O.col : '#555a63';
+    g.save(); g.translate(x, y); g.scale(s, s);
+    g.fillStyle = grey(kt.suit); g.beginPath(); g.moveTo(-21, 24); g.quadraticCurveTo(-20, 7, 0, 6); g.quadraticCurveTo(20, 7, 21, 24); g.closePath(); g.fill();
+    g.fillStyle = grey(kt.plate); g.beginPath(); g.moveTo(-9, 24); g.lineTo(-7, 11); g.lineTo(7, 11); g.lineTo(9, 24); g.closePath(); g.fill();
+    g.fillStyle = grey(kt.skin); g.beginPath(); g.ellipse(0, -5, 8.5, 10, 0, 0, TAU); g.fill();
+    if (op === 'vex') { g.fillStyle = grey(kt.cloth); g.beginPath(); g.arc(0, -6, 12.5, Math.PI * .92, Math.PI * 2.08); g.lineTo(9, 7); g.quadraticCurveTo(0, 2, -9, 7); g.closePath(); g.fill();
+      g.fillStyle = grey(kt.skin); g.beginPath(); g.ellipse(0, -3, 6.2, 7.5, 0, 0, TAU); g.fill(); g.fillStyle = glow; g.fillRect(-6, -6, 12, 2.4); }
+    else if (op === 'iris') { g.fillStyle = grey(kt.plate); g.beginPath(); g.arc(0, -6, 11, Math.PI, TAU); g.lineTo(11, -2); g.lineTo(-11, -2); g.closePath(); g.fill(); g.fillStyle = glow; g.fillRect(-11, -7, 22, 4.5);
+      g.strokeStyle = grey('#15171c'); g.lineWidth = 1.2; g.beginPath(); g.moveTo(-9, -12); g.lineTo(-11, -22); g.stroke(); g.fillStyle = glow; g.beginPath(); g.arc(-11, -22, 1.6, 0, TAU); g.fill(); }
+    else if (op === 'bastion') { g.fillStyle = grey(kt.plate); g.beginPath(); g.moveTo(-11, 6); g.lineTo(-12, -12); g.quadraticCurveTo(0, -21, 12, -12); g.lineTo(11, 6); g.closePath(); g.fill(); g.fillStyle = glow; g.fillRect(-7.5, -7, 15, 2.6); g.fillRect(-1.3, -7, 2.6, 8); }
+    else { g.fillStyle = glow; tx(g, (O.n || '?')[0], 0, -4, 12, glow, 'center', 900); }
+    g.restore();
+  }
+  function drawBanner(g, V, u) {
+    if (!banner) return; const t = (performance.now() - banner.t0) / 1000, T = 2; if (t > T) { banner = null; return; }
+    const B = banner, E = B.em, cx = 640, cy = V.y1 - (isTouch() ? 150 : 128) * u, R = 44 * u * (1 + Math.min(4, B.n - 1) * .05);
+    const pop = t < .16 ? 1.55 - .55 * smooth(t / .16) : 1 + Math.sin(Math.min(1, (t - .16) / .25) * Math.PI) * .05, a = t > T - .4 ? (T - t) / .4 : 1;
+    g.save(); g.globalAlpha = a; g.translate(cx, cy);
+    if (t < .55) { const q = t / .55; g.strokeStyle = E.glow; g.globalAlpha = a * (1 - q) * .8; g.lineWidth = 6 * u * (1 - q) + 1; g.beginPath(); g.arc(0, 0, R * (1.1 + q * 1.6), 0, TAU); g.stroke();   // a ring bursting out
+      for (let i = 0; i < 12; i++) { const an = i / 12 * TAU + .13, r0 = R * (1.15 + q * .9), r1 = r0 + R * .5 * (1 - q); g.beginPath(); g.moveTo(Math.cos(an) * r0, Math.sin(an) * r0); g.lineTo(Math.cos(an) * r1, Math.sin(an) * r1); g.stroke(); } g.globalAlpha = a; }
+    g.scale(pop, pop);
+    const hex = rr0 => { g.beginPath(); for (let i = 0; i < 6; i++) { const an = -Math.PI / 2 + i * TAU / 6; g.lineTo(Math.cos(an) * rr0, Math.sin(an) * rr0); } g.closePath(); };
+    g.shadowColor = E.glow; g.shadowBlur = 22 * u; hex(R); g.fillStyle = 'rgba(10,14,20,.86)'; g.fill(); g.shadowBlur = 0;
+    g.lineWidth = 3 * u; g.strokeStyle = E.glow; g.stroke(); hex(R * .84); g.lineWidth = 1.2 * u; g.strokeStyle = 'rgba(239,233,220,.3)'; g.stroke();
+    glyph(g, E.shape, R * .92, E.col, 'rgba(10,14,20,.95)');
+    if (t < .12) { g.globalAlpha = a * (1 - t / .12); hex(R); g.fillStyle = '#ffffff'; g.fill(); g.globalAlpha = a; }   // the white flash as it lands
+    g.restore(); g.save(); g.globalAlpha = a;
+    // pips: one diamond for each kill in this run
+    const n = Math.max(1, B.n), pw = 16 * u, px0 = cx - (n - 1) * pw / 2, py = cy + R + 16 * u;
+    for (let i = 0; i < n; i++) { const fresh = i === n - 1, sz = 5.5 * u * (fresh && t < .25 ? 1 + (1 - t / .25) * .8 : 1); g.fillStyle = fresh ? E.glow : BONE; g.beginPath(); g.moveTo(px0 + i * pw, py - sz); g.lineTo(px0 + i * pw + sz, py); g.lineTo(px0 + i * pw, py + sz); g.lineTo(px0 + i * pw - sz, py); g.closePath(); g.fill(); }
+    const run = ['', '', 'DOUBLE', 'TRIPLE', 'QUAD', 'RAMPAGE'][Math.min(5, B.n)];
+    if (run) tx(g, run, cx, cy - R - 16 * u, 14 * u, E.glow, 'center', 900);
+    tx(g, 'ELIMINATED  ' + B.name.toUpperCase(), cx, py + 20 * u, 12 * u, 'rgba(239,233,220,.8)', 'center', 800);
+    g.restore();
+  }
   // a running step or a shot from the rival marks the minimap for a moment (only if a bot could have heard it too)
   const note = f => { if (M && f === foe() && Math.hypot(f.x - me().x, f.z - me().z) < 30) heard = { x: f.x, z: f.z, t: 1.6 }; };
   on('step', note); on('shot', (f, S, first) => { if (first && !gun(f).sil) note(f); });
@@ -75,28 +133,33 @@
     // the crosshair marks where a shot really goes: the view punch lifts the camera a little, so it sits that much lower
     const tf = Math.tan((X ? X.camera.fov : BASE_FOV) * D2R / 2), hh = (V.y1 - V.y0) / 2, cy = 360 + Math.tan(M.camKick || 0) / tf * hh;
     if (P.alive && !(P.scoped && G.scope) && !demo) drawCrosshair(g, 640, cy, Math.tan(spreadOf(P)) / tf * hh, Math.max(1, u * .85));
-    if (hitMark && (hitMark.t -= 1 / 60) > 0) {
-      if (hitMark.head) tx(g, hitMark.kill ? 'HEADSHOT' : 'HEAD', 640, cy + 34 * u + (1 - hitMark.t / .28) * 6, 15 * u, GOLD);
-      const c = hitMark.kill ? WARN : hitMark.head ? GOLD : '#fff', k = 1 + (1 - hitMark.t / .28) * .4; g.strokeStyle = c; g.lineWidth = 3 * u; g.beginPath();
-      for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { g.moveTo(640 + a * 9 * u * k, cy + b * 9 * u * k); g.lineTo(640 + a * 17 * u * k, cy + b * 17 * u * k); } g.stroke();
-      if (range) tx(g, String(hitMark.dmg), 640 + 44 * u + hitMark.x, cy - 30 * u - (1 - hitMark.t / .28) * 16, 20 * u, c);
-    }
-    // --- top: score, clock, round
+    // no hit marks over the crosshair; the range alone shows the damage each shot did
+    if (hitMark && (hitMark.t -= 1 / 60) > 0 && range) tx(g, String(hitMark.dmg), 640 + 44 * u + hitMark.x, cy - 30 * u - (1 - Math.min(1, hitMark.t / .28)) * 16, 20 * u, hitMark.head ? GOLD : '#fff');
+    drawBanner(g, V, u);
+    // --- top: the clock in the middle, round wins either side of it, then a tile for every fighter: your team to the left,
+    // the rivals to the right. A tile is lit while they stand and goes grey with a skull once they are down; your
+    // teammates' tiles carry their health
     g.save(); g.translate(640, V.y0 + 8); g.scale(u, u);
     if (!range) {
-      g.fillStyle = GLASS; g.beginPath(); g.moveTo(-150, 0); g.lineTo(150, 0); g.lineTo(128, 62); g.lineTo(-128, 62); g.closePath(); g.fill();
-      tx(g, String(M.wins[0]), -98, 30, 38, YOU); tx(g, String(M.wins[1]), 98, 30, 38, FOE);
-      if (M.planted && M.phase === 'live') { const k = cl(M.planted.t / FUSE_T, 0, 1), on = Math.sin(M.time * (6 + (1 - k) * 14)) > 0; g.fillStyle = on ? WARN : '#5a2620'; g.beginPath(); g.moveTo(0, 8); g.lineTo(13, 24); g.lineTo(0, 40); g.lineTo(-13, 24); g.fill(); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(-46, 46, 92, 5); g.fillStyle = WARN; g.fillRect(-46, 46, 92 * k, 5); }
-      else { tx(g, clock(M.t), 0, 25, 30, M.phase === 'live' && M.t < 10 ? WARN : BONE); tx(g, M.phase === 'buy' ? 'BUY PHASE' : M.phase === 'end' ? 'ROUND OVER' : 'ROUND ' + M.round, 0, 50, 11, DIM); }
-      const mine = M.fs.filter(q => q.team === P.team && !q.gone), theirs = M.fs.filter(q => q.team !== P.team && !q.gone);
-      if (mine.length > 1 || theirs.length > 1) {   // a team game: show the teams and who is still standing
-        const pips = (list, x, dir, col) => list.forEach((q, i) => { g.fillStyle = q.alive ? col : 'rgba(239,233,220,.18)'; g.beginPath(); g.arc(x + dir * i * 16, 45, 5.5, 0, TAU); g.fill(); });
-        tx(g, demo ? P.name.toUpperCase() : 'YOUR TEAM', -166, 20, 14, YOU, 'right'); pips(mine, -172, -1, YOU); tx(g, side === 'att' ? 'ATTACK' : 'DEFEND', -172 - mine.length * 16 - 4, 45, 11, DIM, 'right');
-        tx(g, 'RIVALS', 166, 20, 14, FOE, 'left'); pips(theirs, 172, 1, FOE);
-      } else {
-        tx(g, demo ? P.name.toUpperCase() : 'YOU', -166, 20, 14, YOU, 'right'); tx(g, side === 'att' ? 'ATTACK' : 'DEFEND', -166, 40, 12, DIM, 'right');
-        tx(g, F.name.toUpperCase(), 166, 20, 14, FOE, 'left'); tx(g, OPS[F.op].n, 166, 40, 12, DIM, 'left');
-      }
+      const PANEL = 'rgba(10,13,18,.84)', mine = M.fs.filter(q => q.team === P.team && !q.gone).sort((a, b) => (b === P) - (a === P)), theirs = M.fs.filter(q => q.team !== P.team && !q.gone);
+      g.fillStyle = PANEL; g.beginPath(); g.moveTo(-64, 0); g.lineTo(64, 0); g.lineTo(56, 50); g.lineTo(-56, 50); g.closePath(); g.fill();
+      if (M.planted && M.phase === 'live') {   // the charge is down: its light blinks faster as the fuse burns, and the bar runs out
+        const k = cl(M.planted.t / FUSE_T, 0, 1), on = Math.sin(M.time * (6 + (1 - k) * 14)) > 0;
+        g.fillStyle = on ? WARN : '#5a2620'; g.beginPath(); g.moveTo(0, 6); g.lineTo(13, 21); g.lineTo(0, 36); g.lineTo(-13, 21); g.closePath(); g.fill();
+        g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(-42, 41, 84, 4); g.fillStyle = WARN; g.fillRect(-42, 41, 84 * k, 4);
+      } else tx(g, clock(M.t), 0, 24, 29, M.phase === 'live' && M.t < 10 ? WARN : BONE, 'center', 800);
+      tx(g, M.phase === 'buy' ? 'BUY PHASE' : M.phase === 'end' ? 'ROUND OVER' : M.planted ? 'CHARGE PLANTED' : 'ROUND ' + M.round, 0, 62, 10, M.planted && M.phase === 'live' ? WARN : DIM, 'center', 800);
+      const score = (x, n, col, tag) => { g.fillStyle = PANEL; g.fillRect(x - 25, 0, 50, 50); g.fillStyle = col; g.fillRect(x - 25, 0, 50, 3); tx(g, String(n), x, 27, 30, col, 'center', 800); if (tag) tx(g, tag, x, 62, 10, col, 'center', 800); };
+      score(-92, M.wins[0], YOU, side === 'att' ? 'ATTACK' : 'DEFEND'); score(92, M.wins[1], FOE, side === 'att' ? 'DEFEND' : 'ATTACK');
+      const tile = (q, x, col, ours) => {
+        const w = 44, h = 50, up = q.alive; g.fillStyle = up ? PANEL : 'rgba(10,13,18,.5)'; g.fillRect(x - w / 2, 0, w, h);
+        g.save(); g.beginPath(); g.rect(x - w / 2, 0, w, h); g.clip(); opBust(g, q.op, x, 28, 1, up); g.restore();
+        if (!up) { g.save(); g.translate(x, 24); glyph(g, 'skull', 15, 'rgba(239,233,220,.7)', 'rgba(10,13,18,.9)'); g.restore(); }
+        g.fillStyle = up ? col : 'rgba(239,233,220,.16)'; g.fillRect(x - w / 2, h - 3, w, 3);
+        if (q === P) { g.strokeStyle = 'rgba(239,233,220,.55)'; g.lineWidth = 1.5; g.strokeRect(x - w / 2 + .75, .75, w - 1.5, h - 1.5); }
+        if (ours && up) { g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(x - w / 2, h + 3, w, 4); g.fillStyle = q.hp > 30 ? BONE : WARN; g.fillRect(x - w / 2, h + 3, w * cl(q.hp / 100, 0, 1), 4); }
+      };
+      mine.forEach((q, i) => tile(q, -147 - i * 48, YOU, true)); theirs.forEach((q, i) => tile(q, 147 + i * 48, FOE, false));
     } else { rr(g, -210, 0, 420, 44, 8, GLASS); tx(g, 'RANGE', -190, 22, 18, GOLD, 'left'); tx(g, `${P.stat.hits} hits / ${P.stat.shots} shots` + (P.stat.shots ? `  ·  ${Math.round(100 * P.stat.hits / P.stat.shots)}%` : ''), 190, 22, 14, BONE, 'right'); }
     g.restore();
     // --- minimap, top left (beside the kit's pause button)

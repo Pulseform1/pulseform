@@ -17,7 +17,7 @@
   function rebuildWorld() {
     if (!X) return;
     if (X.world) { X.scene.remove(X.world); X.world.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
-    buildWorld(); buildSky(); resetMini();
+    buildWorld(); buildSky(); resetMini(); warmShaders();
   }
   function buildWorld() {
     const TH = THEMES[MAP.theme] || THEMES.harbor, W = X.world = new THREE.Group(); X.scene.add(W); X.theme = TH;

@@ -63,16 +63,34 @@ function gunplayChecks() {
   const settle = input => { [M, P] = lab('lancer'); I = { ...idle(), mx: 1 }; run(.7); I = input; let t = 0; while (deg() > .3 && t < 1) { T.tick(DT); t += DT; } return Math.round(t * 1000); };
   const letGo = settle(idle()), counter = settle({ ...idle(), mx: -1 });
   ok(counter < letGo && counter <= 70, 'a counter-strafe is accurate again sooner than letting go', `${counter} ms against ${letGo} ms`);
+  { // a counter-strafe stops you dead: tap the other key and you never drift back the way it points
+    [M, P] = lab('lancer'); I = { ...idle(), mx: 1 }; run(.7);
+    const right = () => P.vx * Math.cos(P.yaw) - P.vz * Math.sin(P.yaw), v0 = right(); let back = 0, t = 0, stopMs = -1;
+    I = { ...idle(), mx: -1 };
+    for (; t < .15; t += DT) { T.tick(DT); back = Math.min(back, right()); if (stopMs < 0 && Math.abs(right()) < 1e-9) stopMs = Math.round(t * 1000); }
+    I = idle(); for (let i = 0; i < 30; i++) { T.tick(DT); back = Math.min(back, right()); }
+    ok(v0 > 5 && stopMs >= 0 && stopMs <= 80 && back === 0 && Math.hypot(P.vx, P.vz) === 0, 'a 150 ms counter-strafe tap stops you dead and never pushes you back', `from ${v0.toFixed(1)} m/s, still after ${stopMs} ms, worst backwards ${back.toFixed(3)} m/s`);
+    [M, P] = lab('lancer'); I = { ...idle(), mx: 1 }; run(.7); I = { ...idle(), mx: -1 }; run(.7);
+    ok(right() < -4, 'keep holding it and you do move the other way', right().toFixed(1) + ' m/s'); }
   [M, P] = lab('lancer'); I = { ...idle(), mx: .5 }; run(.7);
   ok(deg() > .3 && deg() < runErr * .6, 'walking is in between', deg().toFixed(2) + '°');
   [M, P] = lab('lancer'); I = { ...idle(), jump: true }; run(.2);
   ok(deg() >= 9, 'jumping is hopeless', deg().toFixed(1) + '°');
   [M, P] = lab('lancer'); I = { ...idle(), fire: true }; const climb = []; let t0 = 0; while (climb.length < 12) { T.tick(DT); t0 += DT; if (P.stat.shots > climb.length) climb.push(T.patOf(P, T.GUNS.lancer)[1] / T.D2R); }
   ok(Math.abs(t0 - 11 * 60 / 585) < .04, 'the fire rate is exact', `12 shots in ${t0.toFixed(3)} s, ${(11 * 60 / t0).toFixed(0)} a minute`);
-  ok(climb[1] < climb[4] && climb[4] < climb[8] && Math.abs(climb[11] - 3.4) < .01, 'a spray climbs to its ceiling', climb.map(v => v.toFixed(1)).join(' '));
+  ok(climb[1] < climb[4] && climb[4] < climb[8] && Math.abs(climb[11] - T.GUNS.lancer.pat.vmax) < .01, 'a spray climbs to its ceiling', climb.map(v => v.toFixed(1)).join(' '));
   ok(deg() > 2, 'and gets wide', deg().toFixed(2) + '°');
   I = idle(); run(.6);
-  ok(P.spray === 0 && deg() <= .3, 'it settles within the recovery time once you let go', `spray ${P.spray.toFixed(2)}, ${deg().toFixed(2)}°, fireT ${P.fireT.toFixed(2)}, shots ${P.stat.shots}`);
+  const settled = P.spray === 0 && deg() <= .3, settledMsg = `spray ${P.spray.toFixed(2)}, ${deg().toFixed(2)}°, fireT ${P.fireT.toFixed(2)}, shots ${P.stat.shots}`;
+  // the machine gun: 60 rounds, steady for ten shots, then a much steeper climb
+  { const G = T.GUNS.torrent, f = { spray: 0, sseed: 0 }, at = n => (f.spray = n, T.patOf(f, G)[1] / T.D2R), early = at(10) - at(5), late = at(15) - at(10);
+    ok(G.mag === 60 && G.res === 120, 'the Torrent holds 60 rounds', `${G.mag} + ${G.res}`);
+    ok(late > early * 2.5, 'and climbs far harder after its tenth shot', `shots 5-10 +${early.toFixed(2)}°, 10-15 +${late.toFixed(2)}°`); }
+  // the 2900 rifles: the Vesper sprays (gentle climb, tight early shots), the Lancer taps (pin-point first shot, harder climb)
+  { const V = T.GUNS.vesper, L = T.GUNS.lancer, up = (G, n) => T.patOf({ spray: n, sseed: 0 }, G)[1] / T.D2R;
+    ok(V.acc.free >= 2 && up(V, 2) === 0 && up(V, 8) < up(L, 8), 'the Vesper\'s first shots do not climb and its spray stays lower', `Vesper ${up(V, 8).toFixed(2)}° at shot 8, Lancer ${up(L, 8).toFixed(2)}°`);
+    ok(L.acc.fs < V.acc.fs && L.dmg.length === 1, 'the Lancer\'s first shot is the more precise, with no fall-off', `${L.acc.fs}° against ${V.acc.fs}°`); }
+  ok(settled, 'it settles within the recovery time once you let go', settledMsg);
   section('damage');
   const dmgTo = (gunKey, part, dist) => T.dmgAt(T.GUNS[gunKey], dist, part);
   ok(dmgTo('lancer', 1, 50) >= 150, 'a Lancer headshot kills through heavy shields at any range', dmgTo('lancer', 1, 50));

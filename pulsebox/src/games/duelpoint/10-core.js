@@ -20,7 +20,7 @@
   const emit = (name, a, b, c, d) => { const l = BUS[name]; if (l) for (let i = 0; i < l.length; i++) l[i](a, b, c, d); };
 
   // colours used by every drawing part
-  const INK = '#0c1016', BONE = '#efe9dc', YOU = '#35e0c8', FOE = '#ff8a3d', GOLD = '#ffd23f', DIM = '#8d97a6', WARN = '#ff5a4d', COIN = '#ffc94a';
+  const INK = '#0c1016', BONE = '#efe9dc', YOU = '#35e0c8', FOE = '#f43f3f', GOLD = '#ffd23f', DIM = '#8d97a6', WARN = '#ff5a4d', COIN = '#ffc94a';
 
   // settings and lifetime stats live in the kit's save for this game
   // xh is the crosshair: shape (cross, dot, circle, tee), colour, arm length, centre gap, thickness, a centre dot,

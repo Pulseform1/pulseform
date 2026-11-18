@@ -53,7 +53,21 @@
     if (by === me()) { const o = outFor(null); if (head) { tone(o, 2300, .05, 'square', .07); tone(o, 3100, .06, 'square', .06, 0, .04); } else tone(o, 1500, .04, 'square', .06); }
     if (v === me()) { const o = outFor(null); tone(o, 140, .12, 'sine', .35, -70); hiss(o, .07, .18, 'lowpass', 700); }
   });
-  cue('kill', (v, by) => { const o = outFor(null); if (by === me()) { tone(o, 660, .09, 'triangle', .14); tone(o, 990, .16, 'triangle', .14, 0, .08); } else if (v === me()) tone(o, 200, .5, 'sawtooth', .1, -130); });
+  // your kill run: every kill without dying adds one (up to five), and the kill sound and banner climb with it
+  let killRun = 0;
+  on('round', n => { if (n === 1) killRun = 0; });
+  on('kill', (v, by) => { if (!M) return; if (v === me()) killRun = 0; else if (by === me()) killRun = Math.min(5, killRun + 1); });
+  // the kill sound: a deep thump, a dry crack, then a bright bell chord that steps up the scale with each kill in a run, and a
+  // shimmer that hangs in the air; a headshot adds a glassy ping on top, and three or more in a run a rising sparkle
+  function killSound(n, head) {
+    const o = outFor(null), k = [1, 1.122, 1.26, 1.335, 1.498][cl(n, 1, 5) - 1];
+    tone(o, 150, .24, 'sine', .34, -95); hiss(o, .05, .2, 'highpass', 3200);
+    tone(o, 784 * k, .45, 'triangle', .13, 0, .015); tone(o, 1176 * k, .36, 'sine', .075, 0, .03); tone(o, 1568 * k, .55, 'sine', .04, 0, .05);
+    hiss(o, .5, .04, 'bandpass', 6500 * k, .05, 2.5);
+    if (head) { tone(o, 2350, .05, 'square', .045, 0, .01); tone(o, 3136, .12, 'sine', .055, 0, .03); }
+    if (n >= 3) for (let i = 0; i < n - 1; i++) tone(o, 1046 * k * (1 + i * .25), .16, 'triangle', .05, 0, .1 + i * .055);
+  }
+  cue('kill', (v, by, head) => { if (by === me() && v !== me()) killSound(killRun, head); else if (v === me()) tone(outFor(null), 200, .5, 'sawtooth', .1, -130); });
   cue('ability', (f, k) => {
     const key = f.op + k, o = outFor(f);
     if (key === 'vexq') tone(o, 500, .16, 'sine', .14, 1100); else if (key === 'vexe') hiss(o, .5, .2, 'lowpass', 500);
