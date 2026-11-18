@@ -2,7 +2,15 @@
      Each tick botThink returns the same intent a person's input would. What a bot knows about its rival is only what it
      has seen (in its field of view, with a clear line), heard (running steps within earshot, gunfire) or been shown by a
      Ping. Its state lives in f.bot: the plan it is following, when it last knew where the rival was, and its aim error. */
-  const laneOf = (x, z) => { const a = areaAt(x, z), k = a ? a.k : ''; return k === 'pier' ? 'pier' : k === 'tunnel' ? 'tunnel' : k === 'yard' || k === 'gate' ? 'mid' : 'any'; };
+  const laneOf = (x, z) => { const a = areaAt(x, z), k = a ? a.k : ''; if (a && a.lane) return a.lane; return k === 'pier' ? 'pier' : k === 'tunnel' ? 'tunnel' : k === 'yard' || k === 'gate' ? 'mid' : 'any'; };
+  // on a two-site map: which site a lane leads to (null for Mid, which leads to both)
+  const laneSite = lane => twoSites() && lane in RSITE ? RSITE[lane] : null;
+  // which site a defender holds this round: two defenders take one each; one alone guesses
+  function defSiteFor(f) {
+    const team = M.fs.filter(q => q.team === f.team && q.alive).sort((a, b) => a.key < b.key ? -1 : 1);
+    if (!M.defPick || M.defPick.r !== M.round) M.defPick = { r: M.round, s: R() < .5 ? 0 : 1 };
+    return team.length > 1 ? (team.indexOf(f) + M.defPick.s) % 2 : M.defPick.s;
+  }
   // somewhere to stand with a clear view of a point, a set distance from it (the attacker's post after planting)
   function watchSpot(x, z, rMin, rMax) {
     const c = navCells.filter(q => { const d = Math.hypot(q[0] - x, q[1] - z); return d >= rMin && d <= rMax && los(q[0], hAt(q[0], q[1]) + 1.5, q[1], x, .6, z, false) >= Math.hypot(d, hAt(q[0], q[1]) + .9) - .6; });
@@ -17,14 +25,24 @@
       if (!walkLine(f.x, f.z, q[0], q[1]) && d > 4) continue; best = q; bd = d; }
     return best;
   }
+  // attack: a route to a site. On a two-site map the attackers pick a site together each round, then each takes a way in
   function planAttack(f) {
-    const lane = pick(['pier', 'split', 'mid', 'mid', 'tunnel', 'tunnel']);
-    return { k: 'push', lane: lane === 'split' ? 'pier' : lane, pts: ROUTES[lane].map(p => [p[0], p[1]]), site: pick(SITE), path: [] };
+    let lane;
+    if (twoSites()) { if (!M.atkPick || M.atkPick.r !== M.round) M.atkPick = { r: M.round, s: R() < .5 ? 0 : 1 }; lane = pick(Object.keys(ROUTES).filter(k => RSITE[k] === M.atkPick.s)); }
+    else lane = pick(['pier', 'split', 'mid', 'mid', 'tunnel', 'tunnel'].filter(k => ROUTES[k]));
+    const S = SITES[RSITE[lane] || 0];
+    return { k: 'push', lane: lane === 'split' ? 'pier' : lane, pts: ROUTES[lane].map(p => [p[0], p[1]]), site: pick(S.cells), sc: S.c, path: [] };
   }
+  // defend: a spot watching a way in. On a two-site map, at the site this defender is holding; a noise from a lane that
+  // leads to the other site is a reason to rotate there
   function planHold(f, lane) {
-    const c = HOLDS.filter(h => !lane || h.lane === lane), h = pick(c.length ? c : HOLDS), P = { k: 'hold', lane: h.lane, look: h.look, crouch: R() < .35 };
+    let at = HOLDS;
+    if (twoSites()) { const ls = laneSite(lane); f.bot.hs = ls != null ? ls : f.bot.hs != null ? f.bot.hs : defSiteFor(f); at = HOLDS.filter(h => h.s === f.bot.hs); }
+    const c = at.filter(h => !lane || h.lane === lane || (lane === 'mid' && laneSite(h.lane) != null)), h = pick(c.length ? c : at.length ? at : HOLDS), P = { k: 'hold', lane: h.lane, look: h.look, crouch: R() < .35, sc: (SITES[h.s] || SITES[0]).c };
     goTo(P, f, h.p[0], h.p[1]); return P;
   }
+  // the site a plan is about (its target, or the nearest)
+  const siteOfPlan = (P, f) => P && P.sc ? P.sc : nearestSite(f.x, f.z).c;
   // buy for the kind of round: pistols on round 1 and 5, something cheap when short, a rifle and shields when rich
   function botBuy(f) {
     const c = f.credits, d = f.bot.diff, has = f.guns[1];
@@ -124,7 +142,7 @@
       if (!sees) { B.locked = false; B.rx = D.react * rnd(.85, 1.25) + (B.alarm && M.time - B.alarm < 1 ? .1 : 0); }
       const node = P.path && P.path.length ? P.path[Math.min(1, P.path.length - 1)] : null;
       // clearing a site on the way in: look at the corners someone could hold, nearest first, rather than at the floor ahead
-      if (P.k === 'push' && !fresh && Math.hypot(siteC[0] - f.x, siteC[1] - f.z) < 20 && !(B.chk && B.chkT > M.time)) {
+      if (P.k === 'push' && !fresh && Math.hypot(siteOfPlan(P, f)[0] - f.x, siteOfPlan(P, f)[1] - f.z) < 20 && !(B.chk && B.chkT > M.time)) {
         const vis = HOLDS.filter(h => { const d = Math.hypot(h.p[0] - f.x, h.p[1] - f.z); return d > 3 && d < 22 && los(f.x, eyeY(f), f.z, h.p[0], hAt(h.p[0], h.p[1]) + 1.5, h.p[1], true) >= d - .5; });
         B.chk = vis.length ? pick(vis).p : null; B.chkT = M.time + rnd(.9, 1.6);
       }
@@ -137,10 +155,10 @@
 
     // --- abilities, each with a reason
     if (M.phase === 'live') {
-      const near = Math.hypot(siteC[0] - f.x, siteC[1] - f.z);
+      const sc = siteOfPlan(P, f), near = Math.hypot(sc[0] - f.x, sc[1] - f.z);
       if (f.op === 'vex' && f.ab.e && side === 'att' && P.k === 'push' && near < 22 && !sees) { const h = pick(HOLDS.filter(q => q.lane === P.lane || q.lane === 'any')); if (Math.hypot(h.p[0] - f.x, h.p[1] - f.z) < 24) botCast(f, 'e', { x: h.p[0], z: h.p[1] }); }
       if (f.op === 'vex' && f.ab.q && engaged && f.hp < 45 && Math.hypot(f.vx, f.vz) > 2) ability(f, 'q');
-      if (f.op === 'iris' && f.ab.q && (side === 'att' ? near < 26 : M.t < ROUND_T - 10 || fresh)) ability(f, 'q');
+      if (f.op === 'iris' && f.ab.q && (side === 'att' ? near < 26 : M.t < roundT() - 10 || fresh)) ability(f, 'q');
       if (f.op === 'iris' && f.ab.e && !sees && fresh && B.last.heard && dE > 6 && dE < 16 && R() < dt * 1.5) botCast(f, 'e', { x: B.last.x, y: 1.6, z: B.last.z });
       if (f.op === 'bastion' && f.ab.q && engaged && f.hp < 70 && dE > 5) ability(f, 'q');
       if (f.op === 'bastion' && f.ab.e && f.hp < 60 && !sees) ability(f, 'e');
@@ -179,10 +197,10 @@
     B.hp0 = f.hp;
     if (goal) {
       const da = angDiff(yawTo(f.x, f.z, goal[0], goal[1]), f.yaw); I.mz = Math.cos(da); I.mx = -Math.sin(da);
-      I.walk = M.t > 30 && !fresh && ((P.k === 'hold') || (P.k === 'push' && B.diff > 0 && Math.hypot(siteC[0] - f.x, siteC[1] - f.z) < 15));
+      I.walk = M.t > 30 && !fresh && ((P.k === 'hold') || (P.k === 'push' && B.diff > 0 && Math.hypot(siteOfPlan(P, f)[0] - f.x, siteOfPlan(P, f)[1] - f.z) < 15));
       // sprint the long, quiet stretches (rotations, retakes, the early push); now and then a good bot slides into a fight it heard
       const far = P.dest ? Math.hypot(P.dest[0] - f.x, P.dest[1] - f.z) : 0;
-      I.sprint = !I.walk && !sees && !engaged && Math.abs(da) < .45 && M.time - (B.engT || -9) > 2 && far > 5 && (B.diff > 0 || M.t > ROUND_T - 15);
+      I.sprint = !I.walk && !sees && !engaged && Math.abs(da) < .45 && M.time - (B.engT || -9) > 2 && far > 5 && (B.diff > 0 || M.t > roundT() - 15);
       if (f.sprinting && B.diff > 1 && fresh && far < 9 && !B.slid) { B.slid = true; I.crouch = true; }
     }
     // stuck against something: hop, then find the way again

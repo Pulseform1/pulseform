@@ -9,12 +9,12 @@
   function netTick(dt) {
     if (!M.online) return; M.netT -= dt; if (M.netT > 0) return; M.netT = .05;
     for (const f of M.fs) if (!f.net && !f.gone) net({ t: 's', f: f.key, x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
-      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, op: f.op, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0 });
+      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, op: f.op, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0, rt: f.rating || 0 });
   }
   function netMsg(m) {
     if (!M || !M.online || M.over) return;
     switch (m.t) {   // the host's calls
-      case 'live': if (!M.host) { M.phase = 'live'; M.t = ROUND_T; emit('live'); } return;
+      case 'live': if (!M.host) { M.phase = 'live'; M.t = roundT(); emit('live'); } return;
       case 'end': if (!M.host) endRound(m.wi ^ (M.flip || 0), m.why); return;
       case 'rs': if (!M.host) startRound(m.n); return;
       case 'over': if (!M.host) matchOver(); return;
@@ -24,7 +24,7 @@
     switch (m.t) {
       case 's':
         { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
-        F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
+        if (m.rt) F.rating = m.rt; F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
         break;
@@ -61,7 +61,7 @@
   }
   Object.assign(MP.opts, {
     max: 4, min: 2, bots: 0, solo: false, onClose: () => { if (screen !== 'menu') toMenu(); }, sub: 'Create a room and send your friends the code. Two to four players.',
-    config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0, map: Math.floor(R() * MAPS.length), team: CFG.team, botDiff: CFG.diff === 'auto' ? diffFor(STATS.rating).i : CFG.diff,
+    config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0, map: pick(mapPool(CFG.sites)), sites: CFG.sites, team: CFG.team, botDiff: CFG.diff === 'auto' ? diffFor(STATS.rating).i : CFG.diff,
       names: [...BOT_NAMES].sort(() => R() - .5), ops: Array.from({ length: 4 }, () => pick(Object.keys(OPS))) }),
     onStart: (cfg, roster) => { cfg.names = cfg.names || BOT_NAMES; cfg.ops = cfg.ops || ['vex']; startMatch({ mode: 'online', seats: seatsFor(cfg, roster), hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map, botDiff: cfg.botDiff }); emit('matchStart'); },
     onMsg: netMsg,

@@ -32,7 +32,11 @@ await p.click('#mp-back'); await p.waitForTimeout(500);
 r = await T(p, () => ({ online: MP.online(), hidden: document.getElementById('mp-box').hidden }));
 ok(!r.online && r.hidden, 'Back from inside a room leaves the room', JSON.stringify(r));
 // ---- a 2v2 bot match: buy, fire every class, smoke, money, round flow
-await T(p, () => GAME.test.menuPlay(2)); await p.waitForTimeout(1200);
+await T(p, () => GAME.test.menuPlay(2)); await p.waitForTimeout(600);
+r = await T(p, () => ({ load: GAME.test.loadingNow(), armory: GAME.test.UI.armory, sites: GAME.test.SITES.length }));
+ok(r.load && !r.armory, 'a match opens on the loading screen, armory closed until it ends', JSON.stringify(r));
+await p.screenshot({ path: O + '/bug-loading.png' });
+await T(p, () => GAME.test.skipLoad()); await p.waitForTimeout(900);
 r = await T(p, () => ({ n: GAME.test.M.fs.length, cr: GAME.test.M.fs[0].credits, armory: GAME.test.UI.armory, round: GAME.test.M.round }));
 ok(r.n === 4 && r.cr === 800 && r.armory && r.round === 1, '2v2 starts: four fighters, pistol round, 800 to spend, armory open', JSON.stringify(r));
 r = await T(p, () => { const t = GAME.test, P = t.M.fs[0]; const a = t.buy('quill'), s = t.buy('smoke'); return { a, s, cr: P.credits, g: P.guns[2], sm: P.smokes }; });
@@ -57,7 +61,7 @@ ok(r.credits.length >= 4 && r.credits.every(c => c >= 0 && c <= 9000), 'money mo
 await p.waitForTimeout(800); await p.screenshot({ path: O + '/bug-over.png' });
 r = await T(p, () => GAME.test.screen); ok(r === 'over', 'the match ends on the results screen', r);
 // play again, 1v1
-await T(p, () => { GAME.test.menuPlay(1); }); await p.waitForTimeout(800);
+await T(p, () => { GAME.test.menuPlay(1); GAME.test.skipLoad(); }); await p.waitForTimeout(800);
 r = await T(p, () => ({ n: GAME.test.M.fs.length, cr: GAME.test.M.fs[0].credits, screen: GAME.test.screen }));
 ok(r.n === 2 && r.cr === 800 && r.screen === 'play', 'a 1v1 duel starts fresh', JSON.stringify(r));
 // the practice range
@@ -83,7 +87,7 @@ r = await T(H, () => ({ screen: GAME.test.screen, over: !!(GAME.test.M && GAME.t
 ok(r.screen === 'play' || r.screen === 'over', 'when the friend leaves, the host is not stuck', JSON.stringify(r));
 // ---- a phone: the FIRE button
 const ph = await open('phone', 'iPhone 13 landscape');
-await T(ph, () => GAME.test.menuPlay(1)); await ph.waitForTimeout(800);
+await T(ph, () => { GAME.test.menuPlay(1); GAME.test.skipLoad(); }); await ph.waitForTimeout(800);
 await T(ph, () => { const t = GAME.test; t.UI.armory = false; t.M.t = .01; t.tick(.2); const P = t.M.fs[0]; P.ammo.pip = { mag: 12, res: 36 }; });
 const fb = await T(ph, () => { const b = GAME.test.touchButtons().find(b => b.k === 'fire'); const c = document.getElementById('cv').getBoundingClientRect(), V = K.view; return [c.left + (b.x - V.x0) / (V.x1 - V.x0) * c.width, c.top + (b.y - V.y0) / (V.y1 - V.y0) * c.height]; });
 const cdp = await ph.context().newCDPSession(ph);

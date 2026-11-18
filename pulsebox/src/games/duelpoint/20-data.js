@@ -52,6 +52,7 @@
     { n: 'Elite', react: .36, lag: .14, err: .065, flick: .32, jit: .013, turn: 6, spray: .72, hs: .28, hear: 26 },
     { n: 'Legend', react: .27, lag: .11, err: .045, flick: .26, jit: .01, turn: 7.2, spray: .84, hs: .36, hear: 30 },
   ];
+  const LOAD_T = 5;   // the loading screen before the first round: added to that round's buy phase, so no buy time is lost
   const WIN_ROUNDS = 5, BUY_T = 15, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5;
   // round credits are tight: a win doesn't always buy a rifle and shields, a loss rarely does
   const CASH = { start: 800, win: 2600, loss: [1600, 2000, 2400], kill: 150, plant: 250, cap: 9000, decider: 4500 };
@@ -64,6 +65,9 @@
     const idx = t > .5 ? i + 1 : i; D.n = DIFF[idx].n; return { D, i: idx };
   }
   const rankName = r => { const { i } = diffFor(r); return DIFF[i].n; };
+  const RANK_COL = ['#9aa4b0', '#7fc8ff', '#c58cff', '#ffd23f'];
+  // a bot's rating, for the loading screen: an adaptive one sits near yours, a fixed level near that level's rating
+  const botRating = (f, M) => Math.round(M.auto ? cl(M.rating + rnd(-60, 60), 600, 1800) : RATING_AT[cl(f.bot ? f.bot.diff : 1, 0, 3)] + rnd(10, 140));
   // the body: eye heights standing and crouched, radius, speeds (m/s), gravity, jump speed, the step you climb without jumping
   const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.6, STEP = .42;
   // sprinting (hold Shift, or push the stick all the way) and sliding (crouch while sprinting)

@@ -13,7 +13,7 @@ const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n
 const K = { save: {}, persist() {}, bot: false, state: 'play' };
 const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name: 'Tester', id: 0 };
 const T = new Function('K', 'MP', code + `
-  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
+  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, mapPool, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
     get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
@@ -48,7 +48,7 @@ function mapChecks() {
 
 // a quiet match to measure in: you against a bot that is parked far away, in the live phase
 function lab(gunKey) {
-  T.seed(7); T.startMatch({ mode: 'bot', diff: 0, map: 0 }); const M = T.M, P = T.me(), F = T.foe();
+  T.seed(7); T.startMatch({ mode: 'bot', diff: 0, map: 0 }); T.skipLoad(); const M = T.M, P = T.me(), F = T.foe();
   F.bot = { diff: 0, dummy: true, home: [61, 41] }; Object.assign(F, { x: 61, z: 41 }); P.credits = 9000;
   if (gunKey) T.buy(P, gunKey); M.phase = 'live'; M.t = 80; Object.assign(P, { x: 40, z: 3, yaw: 0, pitch: 0 });   // on the Pier, facing the sea, with open ground to the east
   return [M, P, F];
@@ -186,6 +186,42 @@ function matchChecks(count) {
   console.log(`    ${rounds} rounds averaging ${(secs / Math.max(1, rounds)).toFixed(0)} s, ${kills} kills, ${(100 * heads / Math.max(1, kills)).toFixed(0)}% headshots`);
 }
 
+// the two-site maps: both sites see plants, planting wins rounds, 1v1 and 2v2 both finish
+// the loading screen: the first LOAD_T seconds of a match, added to round 1's buy phase; nothing can be bought under it
+function loadChecks() {
+  section('loading screen');
+  T.seed(5); T.startMatch({ mode: 'bot', diff: 1, map: 0 }); const M = T.M, P = T.me(); P.credits = 9000;
+  ok(T.loadingNow() && Math.abs(M.t - (T.BUY_T + T.LOAD_T)) < 1e-9, 'a bot match opens on the loading screen, with the full buy phase still to come', M.t.toFixed(2) + ' s');
+  ok(!T.buy(P, 'lancer'), 'nothing can be bought while it shows');
+  run(T.LOAD_T + .05); ok(!T.loadingNow() && M.phase === 'buy' && T.buy(P, 'lancer'), 'once it ends the buy phase runs as usual', `${M.phase} ${M.t.toFixed(1)} s`);
+  T.startMatch({ mode: 'bot', diff: 1, map: 0 }); T.skipLoad(); ok(!T.loadingNow() && Math.abs(T.M.t - T.BUY_T) < 1e-9, 'offline it can be skipped');
+  T.startMatch({ mode: 'range' }); ok(!T.loadingNow(), 'the range has none'); T.startMatch({ mode: 'demo' }); ok(!T.loadingNow(), 'nor the demo');
+  T.startMatch({ mode: 'bot', diff: 1, map: 0 }); ok(T.M.fs.every(f => f.rating >= 600 && f.rating <= 1800), 'every player has a rating for their card', T.M.fs.map(f => f.rating).join(', '));
+}
+function twoSiteChecks(count) {
+  section(`${count} matches on the two-site maps`);
+  const pool = T.mapPool(2), bySite = [0, 0], why = {}; let rounds = 0, plants = 0, done = 0, err = 0, boomWins = 0;
+  ok(pool.length === 6 && T.mapPool(1).length === 7, 'six two-site maps and seven one-site maps', `${pool.length} and ${T.mapPool(1).length}`);
+  for (let n = 0; n < count; n++) {
+    try {
+      T.seed(n * 6151 + 17); const size = n % 2 ? 2 : 1; T.startMatch({ mode: 'bot', diff: 1, size, map: pool[n % pool.length] }); const M = T.M; M.fs[0].bot = { diff: 1 + (n % 2) }; M.fs[0].local = false;
+      if (!n) ok(T.SITES.length === 2 && T.roundT() === 100, 'a two-site map has sites A and B and 100 s rounds', T.SITES.map(S => S.k + ' ' + S.cells.length + ' cells').join(', '));
+      let planted = false, lastRound = 0;
+      for (let i = 0; i < 60 * 60 * 30 && !M.over; i++) {
+        T.tick(DT);
+        if (M.round !== lastRound) { lastRound = M.round; planted = false; }
+        if (M.planted && !planted) { planted = true; plants++; bySite[M.planted.s]++; }
+        if (M.phase === 'end' && M.last && !M.last.seen2) { M.last.seen2 = true; rounds++; why[M.last.why] = (why[M.last.why] || 0) + 1; if (M.last.why === 'boom') boomWins++; }
+      }
+      if (M.over) done++;
+    } catch (e) { err++; console.log(e.stack); }
+  }
+  ok(!err, 'no errors'); ok(done === count, 'every match finishes', `${done}/${count}`);
+  ok(bySite[0] > 0 && bySite[1] > 0, 'attackers plant on both sites', `A ${bySite[0]}, B ${bySite[1]}`);
+  ok(plants / Math.max(1, rounds) > .2 && boomWins > 0, 'planting is a real way to win', `${plants} plants in ${rounds} rounds, ${boomWins} won by the charge`);
+  console.log(`    ${Object.entries(why).map(([k, v]) => `${T.WHY[k]} ${v}`).join(', ')}`);
+}
+
 function printMap() {
   const g = T.SRC.map(r => [...r]); let n = 0;
   const mark = (pts, ch) => { for (const p of pts) { const i = Math.floor(p[0] / T.CS), j = Math.floor(p[1] / T.CS); if (g[j] && '.oAD'.includes(g[j][i])) g[j][i] = ch; } };
@@ -197,6 +233,8 @@ function printMap() {
 const arg = process.argv[2];
 if (arg === 'map') { printMap(); process.exit(0); }
 if (arg === 'matches') matchChecks(+process.argv[3] || 20);
-else { mapChecks(); gunplayChecks(); moveChecks(); teamChecks(7); matchChecks(20); }
+else if (arg === 'two') twoSiteChecks(+process.argv[3] || 12);
+else if (arg === 'quick') { mapChecks(); gunplayChecks(); moveChecks(); loadChecks(); }
+else { mapChecks(); gunplayChecks(); moveChecks(); loadChecks(); teamChecks(7); matchChecks(20); twoSiteChecks(12); }
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

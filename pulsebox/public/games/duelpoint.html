@@ -229,7 +229,7 @@ const GAME = {
   // a dark outline, and whether it opens with your error (dyn) or stays fixed
   // sens: mouse turn speed; zsens: multiplier while aiming down sights or scoped; crouch: 'hold' or 'toggle'; full: go full
   // screen when you click in to play, which lets the game keep Ctrl shortcuts (Ctrl+W) from the browser
-  const CFG = { v: 4, sens: .45, zsens: 1, tsens: 1, crouch: 'hold', full: true, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 'auto', team: 'versus', size: 2,
+  const CFG = { v: 4, sens: .45, zsens: 1, tsens: 1, crouch: 'hold', full: true, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 'auto', team: 'versus', size: 2, sites: 2,
     xh: { shape: 'cross', col: '#35e0c8', len: 9, gap: 3, thick: 3, dot: true, outline: true, dyn: true } };
   let tickA = 1;   // how far the screen is between the last simulation tick and the next (99-main sets it), so motion is smooth at any refresh rate
   // rating: your skill, which sets the adaptive bot
@@ -293,6 +293,7 @@ const GAME = {
     { n: 'Elite', react: .36, lag: .14, err: .065, flick: .32, jit: .013, turn: 6, spray: .72, hs: .28, hear: 26 },
     { n: 'Legend', react: .27, lag: .11, err: .045, flick: .26, jit: .01, turn: 7.2, spray: .84, hs: .36, hear: 30 },
   ];
+  const LOAD_T = 5;   // the loading screen before the first round: added to that round's buy phase, so no buy time is lost
   const WIN_ROUNDS = 5, BUY_T = 15, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5;
   // round credits are tight: a win doesn't always buy a rifle and shields, a loss rarely does
   const CASH = { start: 800, win: 2600, loss: [1600, 2000, 2400], kill: 150, plant: 250, cap: 9000, decider: 4500 };
@@ -305,6 +306,9 @@ const GAME = {
     const idx = t > .5 ? i + 1 : i; D.n = DIFF[idx].n; return { D, i: idx };
   }
   const rankName = r => { const { i } = diffFor(r); return DIFF[i].n; };
+  const RANK_COL = ['#9aa4b0', '#7fc8ff', '#c58cff', '#ffd23f'];
+  // a bot's rating, for the loading screen: an adaptive one sits near yours, a fixed level near that level's rating
+  const botRating = (f, M) => Math.round(M.auto ? cl(M.rating + rnd(-60, 60), 600, 1800) : RATING_AT[cl(f.bot ? f.bot.diff : 1, 0, 3)] + rnd(10, 140));
   // the body: eye heights standing and crouched, radius, speeds (m/s), gravity, jump speed, the step you climb without jumping
   const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.6, STEP = .42;
   // sprinting (hold Shift, or push the stick all the way) and sliding (crouch while sprinting)
@@ -314,11 +318,12 @@ const GAME = {
      A grid of 2 m cells, 32 by 22. x runs east with the columns, z runs south with the rows; the sea is to the north.
        #  wall (6 m)          X  container (3 m, nothing sees over it)     c  crate (1.1 m: crouch behind, jump onto)
        P  loading dock (1.5 m, you stand on it)      7 8  the dock's stairs, rising south      ~  sea wall (a fence)
-       o  the site (plant here)      A D  attacker and defender spawns      .  open ground
+       o  the site (plant here; site A on a two-site map)      q  site B      A D  attacker and defender spawns      .  open ground
      The Gate's opening into the Yard is offset from the Yard's doorway, so neither spawn can see the other.
      Three ways from the Gate (west) to the site: Pier along the north, the Yard and its doorway through the middle,
      the roofed Tunnel along the south. Everything else (rays, movement, bot paths, the world mesh) reads these cells. */
-  const CS = 2, GW = 32, GH = 22, MW = GW * CS, MH = GH * CS;
+  // the grid's size is the map's own: the one-site maps are 32 by 22, the two-site maps bigger (loadMap sets these)
+  const CS = 2, MAXNC = 64 * 40; let GW = 32, GH = 22, MW = GW * CS, MH = GH * CS, NC = GW * GH;
   const WALL_H = 6, BOX_H = 3, CRATE_H = 1.1, DOCK_H = 1.5, FENCE_H = 1.1, DOOR_H = 2.7;
   /* Every map is one of these: rows of cells (all 32 by 22), roofs and doorways as rectangles [col0, row0, col1, row1],
      named areas, the attacker's routes and the defender's holds in cell units, and a theme for the look (72-world).
@@ -373,46 +378,67 @@ const GAME = {
     {k: 'overgrowth', n: 'Overgrowth', theme: 'jungle', src: ['################################', '#..............................#', '#...............c..............#', '#.............c.XXX............#', '#..........c...................#', '#.....###..#####..##..#####....#', '#...#..........................#', '#...#......................#...#', '#AA.#..........#....oooooc.#.DD#', '#AA.#...c.....c#....oooXo..#.DD#', '#AA.#.......XX.#....oooXo..#.DD#', '#AA.#...............ooooo..#.DD#', '#...#...............coooo.c#...#', '#...#..c.......#...........#...#', '#...#..........#...............#', '#.....#..####..#######..###.c.c#', '#.....................c........#', '#.....c.............XX.........#', '#......c..............c........#', '#........c.........XX..........#', '#..............................#', '################################'], roofs: [], doors: [], areas: [{k: 'pier', n: 'Canopy', r: [1, 1, 30, 5], col: '#2aa7a0'}, {k: 'gate', n: 'Outpost', r: [1, 6, 4, 14], col: '#8a9a5b'}, {k: 'yard', n: 'Temple Steps', r: [5, 6, 18, 14], col: '#d9a441'}, {k: 'site', n: 'Shrine', r: [19, 6, 26, 14], col: '#ff8a3d'}, {k: 'sheds', n: 'Camp', r: [27, 6, 30, 14], col: '#4f7fb0'}, {k: 'tunnel', n: 'Riverbed', r: [1, 15, 30, 20], col: '#b5523f'}], routes: {pier: [[3.5, 3.5], [21, 3.5], [21, 6.5]], split: [[5.5, 10], [10, 6.5], [10, 3.5], [21, 3.5], [21, 6.5]], mid: [[5.5, 10], [15.5, 12]], tunnel: [[3.5, 16.5], [23, 16.5], [23, 13.5]]}, holds: [{p: [20.5, 10.5], look: [21, 5.5], lane: 'pier'}, {p: [25.5, 10.5], look: [21, 5.5], lane: 'pier'}, {p: [22.5, 7.5], look: [23, 15.5], lane: 'tunnel'}, {p: [25.5, 10.5], look: [23, 15.5], lane: 'tunnel'}, {p: [20.5, 10.5], look: [15.5, 7], lane: 'mid'}, {p: [23.5, 8.5], look: [15.5, 7], lane: 'mid'}, {p: [25.5, 10.5], look: [15.5, 10], lane: 'any'}]},
     {k: 'foundry', n: 'Foundry', theme: 'lava', src: ['################################', '#.........c...............c...c#', '#.............cXX..XX..XX......#', '#................c............c#', '#..............................#', '#.....###..####..####..####....#', '#...#.........#................#', '#...#...................c..#..c#', '#AA.#..XX...........ooooo..#.DD#', '#AA.#..XX.....#.....ooooo..#.DD#', '#AA.#.........#..c..oXooo..#.DD#', '#AA.#......c........ooooo..#.DD#', '#...#...............ooooo..#...#', '#...#.........#............#...#', '#...#.........#................#', '#.....###..##..#####..#####....#', '#..............................#', '#..............................#', '#......c....XX.XX..c...........#', '#.................c.........c..#', '#.......c......................#', '################################'], roofs: [{r: [8, 16, 17, 20], h: 2.8}], doors: [], areas: [{k: 'pier', n: 'Catwalk', r: [1, 1, 30, 5], col: '#2aa7a0'}, {k: 'gate', n: 'Intake', r: [1, 6, 4, 14], col: '#8a9a5b'}, {k: 'yard', n: 'Smelter', r: [5, 6, 18, 14], col: '#d9a441'}, {k: 'site', n: 'Crucible', r: [19, 6, 26, 14], col: '#ff8a3d'}, {k: 'sheds', n: 'Control', r: [27, 6, 30, 14], col: '#4f7fb0'}, {k: 'tunnel', n: 'Slag Tunnel', r: [1, 15, 30, 20], col: '#b5523f'}], routes: {pier: [[3.5, 3.5], [22, 3.5], [22, 6.5]], split: [[5.5, 10], [10, 6.5], [10, 3.5], [22, 3.5], [22, 6.5]], mid: [[5.5, 10], [14.5, 12]], tunnel: [[3.5, 16.5], [21, 16.5], [21, 13.5]]}, holds: [{p: [22.5, 10.5], look: [22, 5.5], lane: 'pier'}, {p: [24.5, 10.5], look: [22, 5.5], lane: 'pier'}, {p: [19.5, 8.5], look: [21, 15.5], lane: 'tunnel'}, {p: [19.5, 11.5], look: [21, 15.5], lane: 'tunnel'}, {p: [25.5, 9.5], look: [14.5, 8], lane: 'mid'}, {p: [24.5, 8.5], look: [14.5, 8], lane: 'mid'}, {p: [25.5, 10.5], look: [14.5, 10], lane: 'any'}]},
     {k: 'orbital', n: 'Orbital', theme: 'space', src: ['################################', '#.............c....c...........#', '#........XX....................#', '#...................c..XX......#', '#............c.................#', '#.........................c....#', '#.....##..####..####..#####....#', '#...#.........................c#', '#...#...........c.........c#...#', '#AA.#.......#........coooo.#.DD#', '#AA.#...XX..#........oXooo.#.DD#', '#AA.#.......#........ooooo.#.DD#', '#AA.#......c.........ooooo.#.DD#', '#...#................ooooo.#...#', '#...#..c..c.#.............c....#', '#.....#..####..########..##....#', '#..............................#', '#.......c....c.................#', '#.......c.....XX....XX....c..c.#', '#....................c........c#', '#..............................#', '################################'], roofs: [{r: [8, 16, 17, 20], h: 2.8}], doors: [], areas: [{k: 'pier', n: 'Observatory', r: [1, 1, 30, 6], col: '#2aa7a0'}, {k: 'gate', n: 'Airlock', r: [1, 7, 4, 14], col: '#8a9a5b'}, {k: 'yard', n: 'Hydroponics', r: [5, 7, 19, 14], col: '#d9a441'}, {k: 'site', n: 'Core', r: [20, 7, 26, 14], col: '#ff8a3d'}, {k: 'sheds', n: 'Command', r: [27, 7, 30, 14], col: '#4f7fb0'}, {k: 'tunnel', n: 'Service Duct', r: [1, 15, 30, 20], col: '#b5523f'}], routes: {pier: [[3.5, 4.5], [21, 4.5], [21, 7.5]], split: [[5.5, 11], [9, 7.5], [9, 4.5], [21, 4.5], [21, 7.5]], mid: [[5.5, 11], [12.5, 13]], tunnel: [[3.5, 16.5], [24, 16.5], [24, 13.5]]}, holds: [{p: [24.5, 9.5], look: [21, 6.5], lane: 'pier'}, {p: [25.5, 12.5], look: [21, 6.5], lane: 'pier'}, {p: [26.5, 12.5], look: [24, 15.5], lane: 'tunnel'}, {p: [25.5, 8.5], look: [24, 15.5], lane: 'tunnel'}, {p: [25.5, 13.5], look: [12.5, 8], lane: 'mid'}, {p: [21.5, 13.5], look: [12.5, 8], lane: 'mid'}, {p: [26.5, 11.5], look: [12.5, 11], lane: 'any'}]},
+    /*@maps2*/
+    {k: 'breakwater', n: 'Breakwater', tag: 'A storm-battered port. Two loading yards, one charge.', theme: 'harbor', sites: 2, roundT: 100, src: ['############################################', '#.........c..............#............#....#', '#................c.......#.....ooooo..#....#', '#....................XX........ooooo..#....#', '#..............................oooXo.......#', '#..............XX..............coooo....c..#', '#.................c......#.c..........#....#', '#........................#............#c...#', '#.............c..........#............#....#', '#.....####..##################..######..c..#', '#........................c......######.....#', '#...............................######.....#', '#....#c......XX.........XX......#######....#', '#AA..#...c...c....###...........#######.DD.#', '#AA..#.....XX.....###...........#######.DD.#', '#AA..#............###...........#######.DD.#', '#AA..#..........................#######.DD.#', '#....#..........................#######....#', '#...............................######.....#', '#...............................######.....#', '#.....####..################..########.....#', '#..............c........#.............#....#', '#...................c...#..................#', '#.......................#....qqqqq.........#', '#..........XX...........#....qqqXq....#....#', '#.........XX.................qqqqq....#....#', '#.......c......XX............qqqqq....#....#', '#............................qqqqq....#....#', '#.......................#.....c.......#....#', '############################################'], roofs: [], doors: [[10, 9, 11, 9], [10, 20, 11, 20], [30, 9, 31, 9], [28, 20, 29, 20], [25, 3, 25, 4], [24, 25, 24, 26], [38, 4, 38, 5], [38, 22, 38, 23]], areas: [{k: 'aspawn', n: 'Ferry Ramp', r: [1, 1, 5, 28], col: '#8a9a5b', lane: 'any'}, {k: 'along', n: 'A Seawall', r: [6, 1, 24, 8], col: '#2aa7a0', lane: 'along'}, {k: 'asite', n: 'A Cranes', r: [25, 1, 37, 9], col: '#ff8a3d', lane: 'any'}, {k: 'mid', n: 'Customs', r: [6, 10, 31, 19], col: '#d9a441', lane: 'mid'}, {k: 'blong', n: 'B Warehouse', r: [6, 21, 23, 28], col: '#b5523f', lane: 'blong'}, {k: 'bsite', n: 'B Drydock', r: [24, 20, 37, 28], col: '#c46bff', lane: 'any'}, {k: 'dspawn', n: 'Lighthouse', r: [38, 1, 42, 28], col: '#4f7fb0', lane: 'any'}], routes: {along: [[3, 6], [23.5, 4], [26.5, 4]], amid: [[6.5, 10.5], [31, 10.5], [31, 7.5]], bmid: [[6.5, 19.5], [29, 18.5], [29, 21.5]], blong: [[3, 23], [22.5, 26], [25.5, 26]]}, rsite: {along: 0, amid: 0, bmid: 1, blong: 1}, holds: [{p: [29.5, 1.5], look: [25.5, 4], lane: 'along', s: 0}, {p: [29.5, 7.5], look: [25.5, 4], lane: 'along', s: 0}, {p: [29.5, 3.5], look: [31, 9.5], lane: 'amid', s: 0}, {p: [30.5, 3.5], look: [31, 9.5], lane: 'amid', s: 0}, {p: [33.5, 27.5], look: [24.5, 26], lane: 'blong', s: 1}, {p: [31.5, 21.5], look: [24.5, 26], lane: 'blong', s: 1}, {p: [36.5, 25.5], look: [29, 20.5], lane: 'bmid', s: 1}, {p: [33.5, 23.5], look: [29, 20.5], lane: 'bmid', s: 1}, {p: [35.05555555555556, 3.8888888888888884], look: [25.5, 4], lane: 'any', s: 0}, {p: [32.95833333333333, 25.541666666666664], look: [24.5, 26], lane: 'any', s: 1}]},
+    {k: 'skyline', n: 'Skyline', tag: 'Rooftop arcades over a city that never sleeps.', theme: 'neon', sites: 2, roundT: 100, src: ['############################################', '#...........c..c........#.............#....#', '#.......................#.............#....#', '#..............................ooooo..#....#', '#..................XX..........ooXoo..#....#', '#..............................ooXoo.......#', '#......c............XX..#......ooooo.......#', '#....................XX.#......ooooo..#....#', '#.......................#.............#....#', '#.....#####..###############..########.....#', '#...............................######....c#', '#...............................######.....#', '#....#..........................#######....#', '#AA..#...........c..............#######.DD.#', '#AA..#........XX.###............#######.DD.#', '#AA..#...........###............#######cDD.#', '#AA..#...........###............#######.DD.#', '#....#.c...........XX...........#######....#', '#.....................XX........######.....#', '#................c..............######.....#', '#.....#####..################..#######.....#', '#.........................#...........#....#', '#...........c.........XX..............#....#', '#...........................c..cqqqq..#....#', '#...........XX.................qqXqq.......#', '#.........................#....qqXqq.......#', '#...............c.........#....qqqqq..#....#', '#.....................XX..#...........#....#', '#................c........#...........#....#', '############################################'], roofs: [{r: [8, 21, 25, 28], h: 2.8}], doors: [[11, 9, 12, 9], [11, 20, 12, 20], [28, 9, 29, 9], [29, 20, 30, 20], [24, 3, 24, 4], [26, 22, 26, 23], [38, 5, 38, 6], [38, 24, 38, 25]], areas: [{k: 'aspawn', n: 'Elevators', r: [1, 1, 5, 28], col: '#8a9a5b', lane: 'any'}, {k: 'along', n: 'A Billboards', r: [6, 1, 23, 8], col: '#2aa7a0', lane: 'along'}, {k: 'asite', n: 'A Helipad', r: [24, 1, 37, 9], col: '#ff8a3d', lane: 'any'}, {k: 'mid', n: 'Food Court', r: [6, 10, 31, 19], col: '#d9a441', lane: 'mid'}, {k: 'blong', n: 'B Arcade', r: [6, 21, 25, 28], col: '#b5523f', lane: 'blong'}, {k: 'bsite', n: 'B Penthouse', r: [26, 20, 37, 28], col: '#c46bff', lane: 'any'}, {k: 'dspawn', n: 'Skybridge', r: [38, 1, 42, 28], col: '#4f7fb0', lane: 'any'}], routes: {along: [[3, 6], [22.5, 4], [25.5, 4]], amid: [[6.5, 10.5], [29, 10.5], [29, 7.5]], bmid: [[6.5, 19.5], [30, 18.5], [30, 21.5]], blong: [[3, 23], [24.5, 23], [27.5, 23]]}, rsite: {along: 0, amid: 0, bmid: 1, blong: 1}, holds: [{p: [31.5, 4.5], look: [24.5, 4], lane: 'along', s: 0}, {p: [34.5, 8.5], look: [24.5, 4], lane: 'along', s: 0}, {p: [29.5, 4.5], look: [29, 9.5], lane: 'amid', s: 0}, {p: [32.5, 4.5], look: [29, 9.5], lane: 'amid', s: 0}, {p: [34.5, 21.5], look: [26.5, 23], lane: 'blong', s: 1}, {p: [35.5, 23.5], look: [26.5, 23], lane: 'blong', s: 1}, {p: [30.5, 24.5], look: [30, 20.5], lane: 'bmid', s: 1}, {p: [31.5, 27.5], look: [30, 20.5], lane: 'bmid', s: 1}, {p: [35, 5.543478260869565], look: [24.5, 4], lane: 'any', s: 0}, {p: [35.11764705882352, 25.08823529411765], look: [26.5, 23], lane: 'any', s: 1}]},
+    {k: 'glacierpass', n: 'Glacier Pass', tag: 'A research outpost buried in the ice.', theme: 'snow', sites: 2, roundT: 100, src: ['############################################', '#.........................#.....c.....#....#', '#...................c.....#.....ooooo.#.c..#', '#.......XXX...............#.....ooooo.#....#', '#............c............#.....oooXo.#....#', '#...........c...................ooooc......#', '#...............................ooooo......#', '#......c..............................#....#', '#.........................#...........#....#', '#.....######..##############..########.....#', '#...............................######.....#', '#...............................######.....#', '#....#...........XX........c....#######...c#', '#AA..#.............###..........#######.DD.#', '#AA..#...c.........###..........#######.DD.#', '#AA..#.........c..X###XX........#######.DD.#', '#AA..#..........................#######.DD.#', '#....#..........................#######....#', '#...............................######.....#', '#...............................######.....#', '#.....####..##################..######.....#', '#.........................#...........#....#', '#............XX...........#..........c#...c#', '#........c................#....qqqqq..#....#', '#....................XX...#....qqqqq..#....#', '#.....................c........qqXqq.......#', '#............XX................qqXqq.......#', '#.....................................#....#', '#...................c.....#...........#....#', '############################################'], roofs: [{r: [8, 21, 25, 28], h: 2.8}], doors: [[12, 9, 13, 9], [10, 20, 11, 20], [28, 9, 29, 9], [30, 20, 31, 20], [26, 5, 26, 6], [26, 25, 26, 26], [38, 5, 38, 6], [38, 25, 38, 26]], areas: [{k: 'aspawn', n: 'Snowcat Bay', r: [1, 1, 5, 28], col: '#8a9a5b', lane: 'any'}, {k: 'along', n: 'A Ridge', r: [6, 1, 25, 8], col: '#2aa7a0', lane: 'along'}, {k: 'asite', n: 'A Antenna', r: [26, 1, 37, 9], col: '#ff8a3d', lane: 'any'}, {k: 'mid', n: 'Mess Hall', r: [6, 10, 31, 19], col: '#d9a441', lane: 'mid'}, {k: 'blong', n: 'B Ice Cave', r: [6, 21, 25, 28], col: '#b5523f', lane: 'blong'}, {k: 'bsite', n: 'B Reactor', r: [26, 20, 37, 28], col: '#c46bff', lane: 'any'}, {k: 'dspawn', n: 'Bunker', r: [38, 1, 42, 28], col: '#4f7fb0', lane: 'any'}], routes: {along: [[3, 6], [24.5, 6], [27.5, 6]], amid: [[6.5, 10.5], [29, 10.5], [29, 7.5]], bmid: [[6.5, 19.5], [31, 18.5], [31, 21.5]], blong: [[3, 23], [24.5, 26], [27.5, 26]]}, rsite: {along: 0, amid: 0, bmid: 1, blong: 1}, holds: [{p: [30.5, 1.5], look: [26.5, 6], lane: 'along', s: 0}, {p: [35.5, 6.5], look: [26.5, 6], lane: 'along', s: 0}, {p: [34.5, 5.5], look: [29, 9.5], lane: 'amid', s: 0}, {p: [34.5, 2.5], look: [29, 9.5], lane: 'amid', s: 0}, {p: [36.5, 21.5], look: [26.5, 26], lane: 'blong', s: 1}, {p: [31.5, 27.5], look: [26.5, 26], lane: 'blong', s: 1}, {p: [30.5, 28.5], look: [31, 20.5], lane: 'bmid', s: 1}, {p: [37.5, 28.5], look: [31, 20.5], lane: 'bmid', s: 1}, {p: [35.869565217391305, 4.4565217391304355], look: [26.5, 6], lane: 'any', s: 0}, {p: [35.00000000000001, 24.888888888888886], look: [26.5, 26], lane: 'any', s: 1}]},
+    {k: 'sandgate', n: 'Sandgate', tag: 'An old caravan fort where the dunes meet the wall.', theme: 'desert', sites: 2, roundT: 100, src: ['############################################', '#...............c.........#......c....#....#', '#...............XX........#................#', '#.............................ooooo........#', '#.............................ooooo...#....#', '#.............................ooXoo...#...c#', '#.......XX................#...coooo...#....#', '#..................c......#...........#....#', '#...............c.....c...#...........#....#', '#.....###..#################..########.....#', '#...............................######.....#', '#....#..........................#######....#', '#AA..#........####..............#######.DD.#', '#AA..#........####..............#######.DD.#', '#AA..#........####..............#######.DD.#', '#AA..#..........................#######.DD.#', '#....#..XX...........c..........#######....#', '#...............cXX.XX..........######.....#', '#.....c.........................######.....#', '#.....######..##############..########.....#', '#.......................#.............#....#', '#...........XXXX........#.....qqqqq...#....#', '#.......................#...c.qqXqq...#....#', '#.......................#.....qqXqq........#', '#.............c.........#.....cqqqq........#', '#.............................qqqqq...#....#', '#....................XX...............#....#', '#........c............................#.c..#', '#........c.c............#..........c..#....#', '############################################'], roofs: [{r: [8, 1, 25, 8], h: 2.8}], doors: [[9, 9, 10, 9], [12, 19, 13, 19], [28, 9, 29, 9], [28, 19, 29, 19], [26, 3, 26, 4], [24, 25, 24, 26], [38, 2, 38, 3], [38, 23, 38, 24]], areas: [{k: 'aspawn', n: 'Caravan', r: [1, 1, 5, 28], col: '#8a9a5b', lane: 'any'}, {k: 'along', n: 'A Ramparts', r: [6, 1, 25, 8], col: '#2aa7a0', lane: 'along'}, {k: 'asite', n: 'A Keep', r: [26, 1, 37, 9], col: '#ff8a3d', lane: 'any'}, {k: 'mid', n: 'Bazaar', r: [6, 10, 31, 18], col: '#d9a441', lane: 'mid'}, {k: 'blong', n: 'B Cistern', r: [6, 20, 23, 28], col: '#b5523f', lane: 'blong'}, {k: 'bsite', n: 'B Tomb', r: [24, 19, 37, 28], col: '#c46bff', lane: 'any'}, {k: 'dspawn', n: 'Oasis', r: [38, 1, 42, 28], col: '#4f7fb0', lane: 'any'}], routes: {along: [[3, 6], [24.5, 4], [27.5, 4]], amid: [[6.5, 9.5], [29, 10.5], [29, 7.5]], bmid: [[6.5, 18.5], [29, 17.5], [29, 20.5]], blong: [[3, 22], [22.5, 26], [25.5, 26]]}, rsite: {along: 0, amid: 0, bmid: 1, blong: 1}, holds: [{p: [34.5, 2.5], look: [26.5, 4], lane: 'along', s: 0}, {p: [30.5, 5.5], look: [26.5, 4], lane: 'along', s: 0}, {p: [30.5, 2.5], look: [29, 9.5], lane: 'amid', s: 0}, {p: [33.5, 6.5], look: [29, 9.5], lane: 'amid', s: 0}, {p: [31.5, 20.5], look: [24.5, 26], lane: 'blong', s: 1}, {p: [30.5, 17.5], look: [24.5, 26], lane: 'blong', s: 1}, {p: [28.5, 28.5], look: [29, 19.5], lane: 'bmid', s: 1}, {p: [35.5, 23.5], look: [29, 19.5], lane: 'bmid', s: 1}, {p: [34.111111111111114, 4.8888888888888875], look: [26.5, 4], lane: 'any', s: 0}, {p: [34.09090909090909, 23.500000000000004], look: [24.5, 26], lane: 'any', s: 1}]},
+    {k: 'verdance', n: 'Verdance', tag: 'Temple ruins swallowed by the rainforest.', theme: 'jungle', sites: 2, roundT: 100, src: ['############################################', '#.........................#...........#....#', '#...............................ooooc......#', '#............c..................ooXoo......#', '#.........c.........XX..........ooooo.#....#', '#.........................#.....ooooo.#....#', '#...................c.....#...........#....#', '#.......c...XX............#...........#....#', '#.........................#...........#....#', '#.....####..#################..#######.....#', '#...............................######.....#', '#...............c...............######.....#', '#....#..........................#######....#', '#AA..#.............####...c.....#######.DD.#', '#AA..#...........XX####.........#######cDD.#', '#AA..#...XX........####.........#######.DD.#', '#AA..#.............####.........#######.DD.#', '#....#.......XX................c#######....#', '#...............................######.....#', '#...............................######.....#', '#.....####..#################..#######.....#', '#.......................#.............#....#', '#.......................#.....qqqqq...#...c#', '#.......................#.....qqqqqc.......#', '#.......XX..............#.....qqXqq........#', '#............XX...............qqXqq...#....#', '#.............................qqqqq...#....#', '#..............cc.....................#...c#', '#......c................#.............#....#', '############################################'], roofs: [], doors: [[10, 9, 11, 9], [10, 20, 11, 20], [29, 9, 30, 9], [29, 20, 30, 20], [26, 2, 26, 3], [24, 25, 24, 26], [38, 2, 38, 3], [38, 23, 38, 24]], areas: [{k: 'aspawn', n: 'Landing', r: [1, 1, 5, 28], col: '#8a9a5b', lane: 'any'}, {k: 'along', n: 'A Canopy', r: [6, 1, 25, 8], col: '#2aa7a0', lane: 'along'}, {k: 'asite', n: 'A Altar', r: [26, 1, 37, 9], col: '#ff8a3d', lane: 'any'}, {k: 'mid', n: 'Courtyard', r: [6, 10, 31, 19], col: '#d9a441', lane: 'mid'}, {k: 'blong', n: 'B River', r: [6, 21, 23, 28], col: '#b5523f', lane: 'blong'}, {k: 'bsite', n: 'B Shrine', r: [24, 20, 37, 28], col: '#c46bff', lane: 'any'}, {k: 'dspawn', n: 'Waterfall', r: [38, 1, 42, 28], col: '#4f7fb0', lane: 'any'}], routes: {along: [[3, 6], [24.5, 3], [27.5, 3]], amid: [[6.5, 10.5], [30, 10.5], [30, 7.5]], bmid: [[6.5, 19.5], [30, 18.5], [30, 21.5]], blong: [[3, 23], [22.5, 26], [25.5, 26]]}, rsite: {along: 0, amid: 0, bmid: 1, blong: 1}, holds: [{p: [32.5, 4.5], look: [26.5, 3], lane: 'along', s: 0}, {p: [33.5, 7.5], look: [26.5, 3], lane: 'along', s: 0}, {p: [33.5, 2.5], look: [30, 9.5], lane: 'amid', s: 0}, {p: [36.5, 3.5], look: [30, 9.5], lane: 'amid', s: 0}, {p: [33.5, 22.5], look: [24.5, 26], lane: 'blong', s: 1}, {p: [27.5, 23.5], look: [24.5, 26], lane: 'blong', s: 1}, {p: [29.5, 27.5], look: [30, 20.5], lane: 'bmid', s: 1}, {p: [33.5, 23.5], look: [30, 20.5], lane: 'bmid', s: 1}, {p: [35.8888888888889, 4.11111111111111], look: [26.5, 3], lane: 'any', s: 0}, {p: [34, 24.45652173913043], look: [24.5, 26], lane: 'any', s: 1}]},
+    {k: 'ironworks', n: 'Ironworks', tag: 'A foundry on the rim of a live caldera.', theme: 'lava', sites: 2, roundT: 100, src: ['############################################', '#........................#............#....#', '#..........XX......................c.......#', '#............c..................coooo......#', '#...............................oooXo.#....#', '#........................#......ooooo.#....#', '#.............XX.........#......ooooo.#....#', '#........c........c......#......ooooo.#..c.#', '#........................#............#....#', '#.....####..################..########...c.#', '#...............................######.....#', '#....#.......................XX.#######....#', '#AA..#.........###....XX........#######.DD.#', '#AA..#.c.......###..............#######.DD.#', '#AA..#.........###..............#######.DD.#', '#AA..#.........###..cc..........#######.DD.#', '#....#..........................#######....#', '#...........XX..................######.....#', '#......................c........######..c..#', '#.....######..###############..#######.....#', '#........................#............#....#', '#..................XX....#............#....#', '#........................#...qqqqq..c......#', '#.............XX.........#...qXqqq.........#', '#................c...c.......qXqqq....#....#', '#............................cqqqq....#....#', '#.........XX.................qqqqq....#....#', '#..............c.........#............#....#', '#........................#...........c#....#', '############################################'], roofs: [{r: [8, 20, 24, 28], h: 2.8}], doors: [[10, 9, 11, 9], [12, 19, 13, 19], [28, 9, 29, 9], [29, 19, 30, 19], [25, 2, 25, 3], [25, 24, 25, 25], [38, 2, 38, 3], [38, 22, 38, 23]], areas: [{k: 'aspawn', n: 'Rail Yard', r: [1, 1, 5, 28], col: '#8a9a5b', lane: 'any'}, {k: 'along', n: 'A Catwalk', r: [6, 1, 24, 8], col: '#2aa7a0', lane: 'along'}, {k: 'asite', n: 'A Crucible', r: [25, 1, 37, 9], col: '#ff8a3d', lane: 'any'}, {k: 'mid', n: 'Pump Room', r: [6, 10, 31, 18], col: '#d9a441', lane: 'mid'}, {k: 'blong', n: 'B Slag Tunnel', r: [6, 20, 24, 28], col: '#b5523f', lane: 'blong'}, {k: 'bsite', n: 'B Furnace', r: [25, 19, 37, 28], col: '#c46bff', lane: 'any'}, {k: 'dspawn', n: 'Control', r: [38, 1, 42, 28], col: '#4f7fb0', lane: 'any'}], routes: {along: [[3, 6], [23.5, 3], [26.5, 3]], amid: [[6.5, 9.5], [29, 10.5], [29, 7.5]], bmid: [[6.5, 18.5], [30, 17.5], [30, 20.5]], blong: [[3, 22], [23.5, 25], [26.5, 25]]}, rsite: {along: 0, amid: 0, bmid: 1, blong: 1}, holds: [{p: [32.5, 1.5], look: [25.5, 3], lane: 'along', s: 0}, {p: [34.5, 1.5], look: [25.5, 3], lane: 'along', s: 0}, {p: [33.5, 2.5], look: [29, 9.5], lane: 'amid', s: 0}, {p: [32.5, 7.5], look: [29, 9.5], lane: 'amid', s: 0}, {p: [33.5, 20.5], look: [25.5, 25], lane: 'blong', s: 1}, {p: [29.5, 26.5], look: [25.5, 25], lane: 'blong', s: 1}, {p: [36.5, 25.5], look: [30, 19.5], lane: 'bmid', s: 1}, {p: [28.5, 25.5], look: [30, 19.5], lane: 'bmid', s: 1}, {p: [36.04347826086957, 5.630434782608696], look: [25.5, 3], lane: 'any', s: 0}, {p: [33.18181818181819, 24.499999999999996], look: [25.5, 25], lane: 'any', s: 1}]},
   ];
   // the map being played: these keep their identity and are refilled in place by loadMap, so everything that reads them stays wired up
-  const SRC = [], ROOFS = [], DOORS = [], AREAS = [], ROUTES = {}, HOLDS = [], SPAWN = { att: [], def: [] }, SITE = [], siteC = [0, 0], navCells = [];
+  // SITE holds every plantable cell; SITES each site on its own ({ k: 'A', cells, c: centre }); siteC is site A's centre.
+  // RSITE says which site each attacker route ends at.
+  const SRC = [], ROOFS = [], DOORS = [], AREAS = [], ROUTES = {}, RSITE = {}, HOLDS = [], SPAWN = { att: [], def: [] }, SITE = [], SITES = [], siteC = [0, 0], navCells = [];
   let MAP = MAPS[0];
   // per cell: height at the low and high end (they differ only on stairs), which way stairs run (0 none, 2 along z),
   // the ceiling above it (0 = open sky), whether it is a fence, whether a fighter can stand there, its area
-  const NC = GW * GH, CH = new Float32Array(NC), CB = new Float32Array(NC), CAX = new Uint8Array(NC), CEIL = new Float32Array(NC), FENCE = new Uint8Array(NC), NAV = new Uint8Array(NC), AREA = new Int8Array(NC).fill(-1);
+  const CH = new Float32Array(MAXNC), CB = new Float32Array(MAXNC), CAX = new Uint8Array(MAXNC), CEIL = new Float32Array(MAXNC), FENCE = new Uint8Array(MAXNC), NAV = new Uint8Array(MAXNC), AREA = new Int8Array(MAXNC).fill(-1);
   const idx = (i, j) => i < 0 || j < 0 || i >= GW || j >= GH ? -1 : j * GW + i;
   const chAt = (i, j) => { const k = idx(i, j); return k < 0 ? ' ' : SRC[j][i]; };
   const C = (c, r) => [c * CS, r * CS];
   function loadMap(n) {
     MAP = MAPS[((n | 0) % MAPS.length + MAPS.length) % MAPS.length];
+    GW = MAP.src[0].length; GH = MAP.src.length; MW = GW * CS; MH = GH * CS; NC = GW * GH;
     const fill = (a, b) => { a.length = 0; a.push(...b); };
     fill(SRC, MAP.src); fill(ROOFS, MAP.roofs || []); fill(DOORS, MAP.doors || []); fill(AREAS, MAP.areas);
     for (const k in ROUTES) delete ROUTES[k]; for (const k in MAP.routes) ROUTES[k] = MAP.routes[k].map(p => C(p[0], p[1]));
-    fill(HOLDS, MAP.holds.map(h => ({ p: C(h.p[0], h.p[1]), look: C(h.look[0], h.look[1]), lane: h.lane })));
-    SPAWN.att.length = SPAWN.def.length = SITE.length = 0; CEIL.fill(0); FENCE.fill(0); NAV.fill(0); CAX.fill(0); AREA.fill(-1);
+    for (const k in RSITE) delete RSITE[k]; for (const k in ROUTES) RSITE[k] = (MAP.rsite && MAP.rsite[k]) || 0;
+    fill(HOLDS, MAP.holds.map(h => ({ p: C(h.p[0], h.p[1]), look: C(h.look[0], h.look[1]), lane: h.lane, s: h.s || 0 })));
+    SPAWN.att.length = SPAWN.def.length = SITE.length = 0; SITES.length = 0; CH.fill(0); CB.fill(0); CEIL.fill(0); FENCE.fill(0); NAV.fill(0); CAX.fill(0); AREA.fill(-1);
+    const siteCells = [[], []];
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
       const c = SRC[j][i], k = j * GW + i, mid = [i * CS + 1, j * CS + 1];
       let a = 0, b = 0;
       if (c === '#') a = b = WALL_H; else if (c === 'X') a = b = BOX_H; else if (c === 'c') a = b = CRATE_H; else if (c === 'P') a = b = DOCK_H;
       else if (c === '~') { a = b = FENCE_H; FENCE[k] = 1; } else if (c === '7') { b = DOCK_H / 2; CAX[k] = 2; } else if (c === '8') { a = DOCK_H / 2; b = DOCK_H; CAX[k] = 2; }
-      CH[k] = a; CB[k] = b; NAV[k] = '.oADP78'.includes(c) ? 1 : 0;
-      if (c === 'A') SPAWN.att.push(mid); if (c === 'D') SPAWN.def.push(mid); if (c === 'o') SITE.push(mid);
+      CH[k] = a; CB[k] = b; NAV[k] = '.oqADP78'.includes(c) ? 1 : 0;
+      if (c === 'A') SPAWN.att.push(mid); if (c === 'D') SPAWN.def.push(mid); if (c === 'o' || c === 'q') { SITE.push(mid); siteCells[c === 'q' ? 1 : 0].push(mid); }
       AREAS.forEach((A, q) => { if (i >= A.r[0] && i <= A.r[2] && j >= A.r[1] && j <= A.r[3]) AREA[k] = q; });
     }
     for (const rf of ROOFS) for (let j = rf.r[1]; j <= rf.r[3]; j++) for (let i = rf.r[0]; i <= rf.r[2]; i++) CEIL[idx(i, j)] = rf.h;
     for (const d of DOORS) for (let j = d[1]; j <= d[3]; j++) for (let i = d[0]; i <= d[2]; i++) CEIL[idx(i, j)] = DOOR_H;
-    siteC[0] = siteC[1] = 0; for (const p of SITE) { siteC[0] += p[0] / SITE.length; siteC[1] += p[1] / SITE.length; }
+    siteCells.forEach((cells, q) => { if (!cells.length) return; const c = [0, 0]; for (const p of cells) { c[0] += p[0] / cells.length; c[1] += p[1] / cells.length; } SITES.push({ k: 'AB'[q], cells, c }); });
+    siteC[0] = SITES[0].c[0]; siteC[1] = SITES[0].c[1];
     navCells.length = 0; for (let k = 0; k < NC; k++) if (NAV[k]) navCells.push([(k % GW) * CS + 1, Math.floor(k / GW) * CS + 1]);
     return MAP;
   }
 
+  // a round's length on this map (the two-site maps are bigger, so their rounds run longer)
+  const roundT = () => MAP.roundT || ROUND_T;
+  // the maps for a mode: sites 1 (the seven one-site maps) or 2 (the six two-site maps)
+  const mapPool = sites => MAPS.map((m, i) => i).filter(i => (MAPS[i].sites || 1) === (sites === 2 ? 2 : 1));
   // the ground under a point; hMove is the same for movement, where fences and the edge of the map are walls
   function hAt(x, z) {
     const i = Math.floor(x / CS), j = Math.floor(z / CS), k = idx(i, j); if (k < 0) return 0;
     return CAX[k] ? lp(CH[k], CB[k], z / CS - j) : CH[k];
   }
   const hMove = (x, z) => { const k = idx(Math.floor(x / CS), Math.floor(z / CS)); return k < 0 || FENCE[k] ? 99 : hAt(x, z); };
-  const onSite = (x, z) => chAt(Math.floor(x / CS), Math.floor(z / CS)) === 'o';
+  // which site a point is on: 0 (A, or the only site), 1 (B), or -1
+  const siteAt = (x, z) => { const c = chAt(Math.floor(x / CS), Math.floor(z / CS)); return c === 'o' ? 0 : c === 'q' ? 1 : -1; };
+  const onSite = (x, z) => siteAt(x, z) >= 0;
+  const twoSites = () => SITES.length > 1;
+  const nearestSite = (x, z) => { let b = SITES[0], bd = 1e9; for (const S of SITES) { const d = Math.hypot(S.c[0] - x, S.c[1] - z); if (d < bd) { bd = d; b = S; } } return b; };
   const areaAt = (x, z) => { const k = idx(Math.floor(x / CS), Math.floor(z / CS)); return k < 0 || AREA[k] < 0 ? null : AREAS[AREA[k]]; };
 
   // A ray through the cells: the distance to the first thing it meets (ground, a wall, a crate, stairs, a roof), or max.
@@ -465,7 +491,7 @@ const GAME = {
     return true;
   }
   const NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]];
-  const gCost = new Float32Array(NC), cameFrom = new Int32Array(NC), closed = new Uint8Array(NC);
+  const gCost = new Float32Array(MAXNC), cameFrom = new Int32Array(MAXNC), closed = new Uint8Array(MAXNC);
   // A* over the cells, then pulled straight wherever a fighter could walk it directly. Returns points in metres.
   function findPath(x0, z0, x1, z1) {
     const [si, sj] = nearestNav(x0, z0), [ti, tj] = nearestNav(x1, z1), sk = idx(si, sj), tk = idx(ti, tj);
@@ -819,8 +845,8 @@ const GAME = {
     } else f.defuse = 0;
   }
   function plantAt(x, z, f) {
-    M.planted = { x, z, y: hAt(x, z), t: FUSE_T, beep: 0 }; if (!f.net) f.credits = Math.min(CASH.cap, f.credits + CASH.plant);
-    say('CHARGE PLANTED', FOE); emit('planted', f);
+    M.planted = { x, z, y: hAt(x, z), t: FUSE_T, beep: 0, s: Math.max(0, siteAt(x, z)) }; if (!f.net) f.credits = Math.min(CASH.cap, f.credits + CASH.plant);
+    say(twoSites() ? 'CHARGE PLANTED ON ' + SITES[M.planted.s].k : 'CHARGE PLANTED', FOE); emit('planted', f);
   }
   function defuseDone(f) { M.defused = true; emit('defused', f); if (M.host) judge(); }
 
@@ -845,7 +871,7 @@ const GAME = {
     if (M.host) net({ t: 'end', wi: wi ^ (M.flip || 0), why });
   }
   function startRound(n) {
-    M.round = n; M.phase = 'buy'; M.t = BUY_T; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null;
+    M.round = n; M.phase = 'buy'; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null;
     const decider = n === WIN_ROUNDS * 2 - 1;
     const order = [...M.fs].sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);   // the same on every device, so teammates never share a spawn
     M.fs.forEach(f => {
@@ -857,10 +883,15 @@ const GAME = {
       f.yaw = yawTo(f.x, f.z, side === 'att' ? f.x + 10 : f.x - 10, f.z); if (f.gone) f.alive = false;
       if (f.bot) { if (M.auto && !f.bot.dummy) { const L = diffFor(M.rating + M.adj); f.bot = { diff: L.i, D: L.D }; } else f.bot = { diff: f.bot.diff, D: f.bot.D, dummy: f.bot.dummy }; }
     });
-    if (n === 5) say('SIDES SWAPPED'); else if (decider) say('DECIDER');
+    if ((n === 5 || decider) && M.mode === 'demo') say(decider ? 'DECIDER' : 'SIDES SWAPPED');   // players get the switching-sides band instead
     emit('round', n);
   }
-  const canBuy = () => M.phase === 'buy' || M.mode === 'range';
+  const canBuy = () => (M.phase === 'buy' && !loadingNow()) || M.mode === 'range';
+  // the loading screen shows for the first LOAD_T seconds of the match
+  // (once it has ended it stays ended, whatever the clock does afterwards)
+  const loadingNow = () => { if (!M) return false; if (M.loading && !(M.round === 1 && M.phase === 'buy' && M.t > BUY_T)) M.loading = false; return !!M.loading; };
+  // offline you can skip it
+  const skipLoad = () => { if (loadingNow() && !M.online) { M.t = BUY_T; M.loading = false; } };
   // Buying over something you bought this round refunds it; choosing it again sells it back.
   // choose a gun (or shield) for your loadout: free, if you own it. It is yours from now on, every round, until you pick another
   function buy(f, k) {
@@ -898,11 +929,13 @@ const GAME = {
     else { for (let i = 0; i < Math.max(1, o.size | 0); i++) fs.push(fighter({ name: bname(), op: pick(ops), team: 1, key: 'e' + i, bot: botP() })); for (let i = 1; i < (o.size | 0); i++) fs.push(fighter({ name: bname(), op: pick(ops), team: 0, key: 'm' + i, bot: botP() })); }
     fs = [A, ...fs.slice(1).sort((a, b) => b.team - a.team)];   // enemies first, so M.fs[1] is always a rival
     // a map at random each match (online, the host's pick); the range is always on Saltworks
-    const mapI = o.map != null ? o.map : mode === 'range' ? 0 : Math.floor(R() * MAPS.length); if (MAP !== MAPS[mapI]) { loadMap(mapI); emit('map', mapI); }
+    const mapI = o.map != null ? o.map : mode === 'range' ? 0 : pick(mapPool(o.sites)); if (MAP !== MAPS[mapI]) { loadMap(mapI); emit('map', mapI); }
     const hostAtt = o.hostAtt == null ? (R() < .5 ? 1 : 0) : o.hostAtt, decHostAtt = o.decHostAtt == null ? (R() < .5 ? 1 : 0) : o.decHostAtt;
     if (online && !o.seats) flip = host ? 0 : 1;
     M = { mode, online, host, auto, flip, byKey: Object.fromEntries(fs.map(f => [f.key, f])), rating: STATS.rating, adj: 0, fs, wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? 0 : 1) ^ flip, decAtt: (decHostAtt ? 0 : 1) ^ flip,
       planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0 };
+    M.loadT = mode === 'bot' || online ? LOAD_T : 0; M.loading = M.loadT > 0;
+    for (const f of fs) f.rating = f === A ? STATS.rating : f.bot ? botRating(f, M) : f.rating || 0;
     startRound(1);
     if (mode === 'range') { M.phase = 'live'; M.t = 0; A.credits = CASH.cap; Object.assign(A, { x: 9, z: 5, yaw: yawTo(9, 5, 30, 5) }); placeDummy(fs[1]); }
     if (mode === 'demo') { M.t = 1.5; A.credits = fs[1].credits = 4500; }
@@ -925,7 +958,7 @@ const GAME = {
     M.time += dt; if (M.mode !== 'range') M.t -= dt;
     if (M.phase === 'buy' && M.host && M.mode !== 'range') {
       if (M.t > 1.5 && M.fs.every(f => f.ready)) M.t = 1.5;
-      if (M.t <= 0) { M.phase = 'live'; M.t = ROUND_T; emit('live'); net({ t: 'live' }); }
+      if (M.t <= 0) { M.phase = 'live'; M.t = roundT(); emit('live'); net({ t: 'live' }); }
     }
     if (M.phase === 'live' && M.planted) { const P = M.planted; P.t -= dt; P.beep -= dt; if (P.beep <= 0) { P.beep = cl(P.t / 12, .12, 1); emit('beep'); } }
     if (M.phase === 'live' && M.host) judge();
@@ -957,7 +990,15 @@ const GAME = {
      Each tick botThink returns the same intent a person's input would. What a bot knows about its rival is only what it
      has seen (in its field of view, with a clear line), heard (running steps within earshot, gunfire) or been shown by a
      Ping. Its state lives in f.bot: the plan it is following, when it last knew where the rival was, and its aim error. */
-  const laneOf = (x, z) => { const a = areaAt(x, z), k = a ? a.k : ''; return k === 'pier' ? 'pier' : k === 'tunnel' ? 'tunnel' : k === 'yard' || k === 'gate' ? 'mid' : 'any'; };
+  const laneOf = (x, z) => { const a = areaAt(x, z), k = a ? a.k : ''; if (a && a.lane) return a.lane; return k === 'pier' ? 'pier' : k === 'tunnel' ? 'tunnel' : k === 'yard' || k === 'gate' ? 'mid' : 'any'; };
+  // on a two-site map: which site a lane leads to (null for Mid, which leads to both)
+  const laneSite = lane => twoSites() && lane in RSITE ? RSITE[lane] : null;
+  // which site a defender holds this round: two defenders take one each; one alone guesses
+  function defSiteFor(f) {
+    const team = M.fs.filter(q => q.team === f.team && q.alive).sort((a, b) => a.key < b.key ? -1 : 1);
+    if (!M.defPick || M.defPick.r !== M.round) M.defPick = { r: M.round, s: R() < .5 ? 0 : 1 };
+    return team.length > 1 ? (team.indexOf(f) + M.defPick.s) % 2 : M.defPick.s;
+  }
   // somewhere to stand with a clear view of a point, a set distance from it (the attacker's post after planting)
   function watchSpot(x, z, rMin, rMax) {
     const c = navCells.filter(q => { const d = Math.hypot(q[0] - x, q[1] - z); return d >= rMin && d <= rMax && los(q[0], hAt(q[0], q[1]) + 1.5, q[1], x, .6, z, false) >= Math.hypot(d, hAt(q[0], q[1]) + .9) - .6; });
@@ -972,14 +1013,24 @@ const GAME = {
       if (!walkLine(f.x, f.z, q[0], q[1]) && d > 4) continue; best = q; bd = d; }
     return best;
   }
+  // attack: a route to a site. On a two-site map the attackers pick a site together each round, then each takes a way in
   function planAttack(f) {
-    const lane = pick(['pier', 'split', 'mid', 'mid', 'tunnel', 'tunnel']);
-    return { k: 'push', lane: lane === 'split' ? 'pier' : lane, pts: ROUTES[lane].map(p => [p[0], p[1]]), site: pick(SITE), path: [] };
+    let lane;
+    if (twoSites()) { if (!M.atkPick || M.atkPick.r !== M.round) M.atkPick = { r: M.round, s: R() < .5 ? 0 : 1 }; lane = pick(Object.keys(ROUTES).filter(k => RSITE[k] === M.atkPick.s)); }
+    else lane = pick(['pier', 'split', 'mid', 'mid', 'tunnel', 'tunnel'].filter(k => ROUTES[k]));
+    const S = SITES[RSITE[lane] || 0];
+    return { k: 'push', lane: lane === 'split' ? 'pier' : lane, pts: ROUTES[lane].map(p => [p[0], p[1]]), site: pick(S.cells), sc: S.c, path: [] };
   }
+  // defend: a spot watching a way in. On a two-site map, at the site this defender is holding; a noise from a lane that
+  // leads to the other site is a reason to rotate there
   function planHold(f, lane) {
-    const c = HOLDS.filter(h => !lane || h.lane === lane), h = pick(c.length ? c : HOLDS), P = { k: 'hold', lane: h.lane, look: h.look, crouch: R() < .35 };
+    let at = HOLDS;
+    if (twoSites()) { const ls = laneSite(lane); f.bot.hs = ls != null ? ls : f.bot.hs != null ? f.bot.hs : defSiteFor(f); at = HOLDS.filter(h => h.s === f.bot.hs); }
+    const c = at.filter(h => !lane || h.lane === lane || (lane === 'mid' && laneSite(h.lane) != null)), h = pick(c.length ? c : at.length ? at : HOLDS), P = { k: 'hold', lane: h.lane, look: h.look, crouch: R() < .35, sc: (SITES[h.s] || SITES[0]).c };
     goTo(P, f, h.p[0], h.p[1]); return P;
   }
+  // the site a plan is about (its target, or the nearest)
+  const siteOfPlan = (P, f) => P && P.sc ? P.sc : nearestSite(f.x, f.z).c;
   // buy for the kind of round: pistols on round 1 and 5, something cheap when short, a rifle and shields when rich
   function botBuy(f) {
     const c = f.credits, d = f.bot.diff, has = f.guns[1];
@@ -1079,7 +1130,7 @@ const GAME = {
       if (!sees) { B.locked = false; B.rx = D.react * rnd(.85, 1.25) + (B.alarm && M.time - B.alarm < 1 ? .1 : 0); }
       const node = P.path && P.path.length ? P.path[Math.min(1, P.path.length - 1)] : null;
       // clearing a site on the way in: look at the corners someone could hold, nearest first, rather than at the floor ahead
-      if (P.k === 'push' && !fresh && Math.hypot(siteC[0] - f.x, siteC[1] - f.z) < 20 && !(B.chk && B.chkT > M.time)) {
+      if (P.k === 'push' && !fresh && Math.hypot(siteOfPlan(P, f)[0] - f.x, siteOfPlan(P, f)[1] - f.z) < 20 && !(B.chk && B.chkT > M.time)) {
         const vis = HOLDS.filter(h => { const d = Math.hypot(h.p[0] - f.x, h.p[1] - f.z); return d > 3 && d < 22 && los(f.x, eyeY(f), f.z, h.p[0], hAt(h.p[0], h.p[1]) + 1.5, h.p[1], true) >= d - .5; });
         B.chk = vis.length ? pick(vis).p : null; B.chkT = M.time + rnd(.9, 1.6);
       }
@@ -1092,10 +1143,10 @@ const GAME = {
 
     // --- abilities, each with a reason
     if (M.phase === 'live') {
-      const near = Math.hypot(siteC[0] - f.x, siteC[1] - f.z);
+      const sc = siteOfPlan(P, f), near = Math.hypot(sc[0] - f.x, sc[1] - f.z);
       if (f.op === 'vex' && f.ab.e && side === 'att' && P.k === 'push' && near < 22 && !sees) { const h = pick(HOLDS.filter(q => q.lane === P.lane || q.lane === 'any')); if (Math.hypot(h.p[0] - f.x, h.p[1] - f.z) < 24) botCast(f, 'e', { x: h.p[0], z: h.p[1] }); }
       if (f.op === 'vex' && f.ab.q && engaged && f.hp < 45 && Math.hypot(f.vx, f.vz) > 2) ability(f, 'q');
-      if (f.op === 'iris' && f.ab.q && (side === 'att' ? near < 26 : M.t < ROUND_T - 10 || fresh)) ability(f, 'q');
+      if (f.op === 'iris' && f.ab.q && (side === 'att' ? near < 26 : M.t < roundT() - 10 || fresh)) ability(f, 'q');
       if (f.op === 'iris' && f.ab.e && !sees && fresh && B.last.heard && dE > 6 && dE < 16 && R() < dt * 1.5) botCast(f, 'e', { x: B.last.x, y: 1.6, z: B.last.z });
       if (f.op === 'bastion' && f.ab.q && engaged && f.hp < 70 && dE > 5) ability(f, 'q');
       if (f.op === 'bastion' && f.ab.e && f.hp < 60 && !sees) ability(f, 'e');
@@ -1134,10 +1185,10 @@ const GAME = {
     B.hp0 = f.hp;
     if (goal) {
       const da = angDiff(yawTo(f.x, f.z, goal[0], goal[1]), f.yaw); I.mz = Math.cos(da); I.mx = -Math.sin(da);
-      I.walk = M.t > 30 && !fresh && ((P.k === 'hold') || (P.k === 'push' && B.diff > 0 && Math.hypot(siteC[0] - f.x, siteC[1] - f.z) < 15));
+      I.walk = M.t > 30 && !fresh && ((P.k === 'hold') || (P.k === 'push' && B.diff > 0 && Math.hypot(siteOfPlan(P, f)[0] - f.x, siteOfPlan(P, f)[1] - f.z) < 15));
       // sprint the long, quiet stretches (rotations, retakes, the early push); now and then a good bot slides into a fight it heard
       const far = P.dest ? Math.hypot(P.dest[0] - f.x, P.dest[1] - f.z) : 0;
-      I.sprint = !I.walk && !sees && !engaged && Math.abs(da) < .45 && M.time - (B.engT || -9) > 2 && far > 5 && (B.diff > 0 || M.t > ROUND_T - 15);
+      I.sprint = !I.walk && !sees && !engaged && Math.abs(da) < .45 && M.time - (B.engT || -9) > 2 && far > 5 && (B.diff > 0 || M.t > roundT() - 15);
       if (f.sprinting && B.diff > 1 && fresh && far < 9 && !B.slid) { B.slid = true; I.crouch = true; }
     }
     // stuck against something: hop, then find the way again
@@ -1159,12 +1210,12 @@ const GAME = {
   function netTick(dt) {
     if (!M.online) return; M.netT -= dt; if (M.netT > 0) return; M.netT = .05;
     for (const f of M.fs) if (!f.net && !f.gone) net({ t: 's', f: f.key, x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
-      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, op: f.op, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0 });
+      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, op: f.op, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0, rt: f.rating || 0 });
   }
   function netMsg(m) {
     if (!M || !M.online || M.over) return;
     switch (m.t) {   // the host's calls
-      case 'live': if (!M.host) { M.phase = 'live'; M.t = ROUND_T; emit('live'); } return;
+      case 'live': if (!M.host) { M.phase = 'live'; M.t = roundT(); emit('live'); } return;
       case 'end': if (!M.host) endRound(m.wi ^ (M.flip || 0), m.why); return;
       case 'rs': if (!M.host) startRound(m.n); return;
       case 'over': if (!M.host) matchOver(); return;
@@ -1174,7 +1225,7 @@ const GAME = {
     switch (m.t) {
       case 's':
         { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
-        F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
+        if (m.rt) F.rating = m.rt; F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
         break;
@@ -1211,7 +1262,7 @@ const GAME = {
   }
   Object.assign(MP.opts, {
     max: 4, min: 2, bots: 0, solo: false, onClose: () => { if (screen !== 'menu') toMenu(); }, sub: 'Create a room and send your friends the code. Two to four players.',
-    config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0, map: Math.floor(R() * MAPS.length), team: CFG.team, botDiff: CFG.diff === 'auto' ? diffFor(STATS.rating).i : CFG.diff,
+    config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0, map: pick(mapPool(CFG.sites)), sites: CFG.sites, team: CFG.team, botDiff: CFG.diff === 'auto' ? diffFor(STATS.rating).i : CFG.diff,
       names: [...BOT_NAMES].sort(() => R() - .5), ops: Array.from({ length: 4 }, () => pick(Object.keys(OPS))) }),
     onStart: (cfg, roster) => { cfg.names = cfg.names || BOT_NAMES; cfg.ops = cfg.ops || ['vex']; startMatch({ mode: 'online', seats: seatsFor(cfg, roster), hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map, botDiff: cfg.botDiff }); emit('matchStart'); },
     onMsg: netMsg,
@@ -1307,7 +1358,12 @@ const GAME = {
   function rebuildWorld() {
     if (!X) return;
     if (X.world) { X.scene.remove(X.world); X.world.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
-    buildWorld(); buildSky(); resetMini(); warmShaders();
+    fitSun(); buildWorld(); buildSky(); resetMini(); warmShaders();
+  }
+  // the sun and its shadow cover the whole map, whatever its size
+  function fitSun() {
+    const s = X.sun; s.position.set(MW / 2 + SUN[0] * 90, SUN[1] * 90, MH / 2 + SUN[2] * 90); s.target.position.set(MW / 2, 0, MH / 2); s.target.updateMatrixWorld();
+    if (s.castShadow) { const sc = s.shadow.camera, hw = Math.max(46, MW * .72), hh = Math.max(40, MH * .9); sc.left = -hw; sc.right = hw; sc.top = hh; sc.bottom = -hh; sc.far = 190 + MW; sc.updateProjectionMatrix(); }
   }
   function buildWorld() {
     const TH = THEMES[MAP.theme] || THEMES.harbor, W = X.world = new THREE.Group(); X.scene.add(W); X.theme = TH;
@@ -1336,7 +1392,8 @@ const GAME = {
     const tall = (i, j) => { const k = idx(i, j); return k >= 0 && CH[k] >= 1 && !CAX[k] ? 1 : 0; };
     // how dark a grid corner is: darker the more solid cells meet there
     const corner = (ci, cj) => 1 - .13 * (tall(ci - 1, cj - 1) + tall(ci, cj - 1) + tall(ci - 1, cj) + tall(ci, cj));
-    const GROUND_TINT = { pier: WHITE, yard: [1, .98, .93], site: [.9, .9, .9], tunnel: [.7, .7, .73], alley: [.8, .8, .83], gate: [1, .9, .74], sheds: [1, .9, .74] };
+    const GROUND_TINT = { pier: WHITE, yard: [1, .98, .93], site: [.9, .9, .9], tunnel: [.7, .7, .73], alley: [.8, .8, .83], gate: [1, .9, .74], sheds: [1, .9, .74],
+      aspawn: [1, .9, .74], along: WHITE, asite: [.9, .9, .9], mid: [1, .98, .93], blong: [.8, .8, .83], bsite: [.9, .9, .92], dspawn: [1, .9, .74] };
     const STEEL = (TH.steel || ['#b5523f', '#2f8f8a', '#d6a23a', '#3d5a80', '#8a8f96']).map(hex);
     // containers that touch share a colour
     const group = new Int16Array(NC).fill(-1); let groups = 0;
@@ -1345,7 +1402,7 @@ const GAME = {
 
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
       const c = SRC[j][i], k = j * GW + i, x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS, area = AREA[k] >= 0 ? AREAS[AREA[k]] : null, dim = roofed[k] ? .62 : 1;
-      if ('.oAD'.includes(c)) {   // open ground
+      if ('.oqAD'.includes(c)) {   // open ground
         const sd = [corner(i, j), corner(i, j + 1), corner(i + 1, j + 1), corner(i + 1, j)].map(s => s * dim);
         flat(area && area.k === 'pier' && MAP.theme === 'harbor' ? 'deck' : 'ground', x0, z0, x1, z1, 0, 1, 4, sd, area ? GROUND_TINT[area.k] : WHITE); continue;
       }
@@ -1451,7 +1508,20 @@ const GAME = {
       g.fillStyle = 'rgba(255,138,61,.1)'; g.beginPath(); g.arc(0, 0, 226, 0, TAU); g.fill();
       g.lineWidth = 12; g.beginPath(); g.moveTo(0, -70); g.lineTo(62, 0); g.lineTo(0, 70); g.lineTo(-62, 0); g.closePath(); g.stroke();
     }); ringT.wrapS = ringT.wrapT = THREE.ClampToEdgeWrapping;
-    const ring = new THREE.Mesh(new THREE.PlaneGeometry(10.4, 10.4), new THREE.MeshBasicMaterial({ map: ringT, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 })); ring.rotation.x = -Math.PI / 2; ring.position.set(41, .02, 21); W.add(ring);
+    // one ring on each site; on a two-site map each carries its letter, and big letters on the walls round it say which is which
+    for (const S of SITES) {
+      const two = SITES.length > 1, tex = two ? canvasTex(512, 512, (g, w, h) => { g.drawImage(ringT.image, 0, 0); g.translate(w / 2, h / 2); g.fillStyle = 'rgba(255,138,61,.85)'; g.font = '900 150px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(S.k, 0, 8); }) : ringT;
+      if (two) tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+      const ring = new THREE.Mesh(new THREE.PlaneGeometry(10.4, 10.4), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 })); ring.rotation.x = -Math.PI / 2; ring.position.set(S.c[0], hAt(S.c[0], S.c[1]) + .02, S.c[1]); W.add(ring);
+      if (!two) continue;
+      const letT = canvasTex(256, 256, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = 'rgba(255,138,61,.92)'; g.fillRect(18, 18, w - 36, h - 36); g.fillStyle = 'rgba(20,18,16,.92)'; g.font = '900 190px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(S.k, w / 2, h / 2 + 10); });
+      const letM = new THREE.MeshBasicMaterial({ map: letT, transparent: true, polygonOffset: true, polygonOffsetFactor: -2 });
+      for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {   // walk out from the site's middle to the first wall in each direction
+        for (let d = 2; d < 16; d += .5) { const x = S.c[0] + dx * d, z = S.c[1] + dz * d; if (chAt(Math.floor(x / CS), Math.floor(z / CS)) !== '#') continue;
+          const fx = dx ? (dx > 0 ? Math.floor(x / CS) * CS : Math.floor(x / CS) * CS + CS) : x, fz = dz ? (dz > 0 ? Math.floor(z / CS) * CS : Math.floor(z / CS) * CS + CS) : z;
+          const p = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), letM); p.position.set(fx - dx * .02, 3.6, fz - dz * .02); p.rotation.y = Math.atan2(-dx, -dz); W.add(p); break; }
+      }
+    }
     // door signs
     const signMat = {};
     for (const s of signs) {
@@ -2313,9 +2383,9 @@ const GAME = {
 
   function renderFrame(dt) {
     if (!X || !ready) return; const cam = X.camera; X.t += dt; tunePixels(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; }
-    const live = M && (screen === 'play' || (screen === 'over' && posed));
+    const live = M && (screen === 'play' || (screen === 'over' && posed)) && !loadingNow();
     if (!live) {   // behind the menus: a slow flight round the site
-      const a = X.t * .06 + 2.4; cam.position.set(41 + Math.cos(a) * 30, 19, 21 + Math.sin(a) * 26); cam.rotation.set(0, 0, 0); cam.lookAt(38, 0, 21); cam.fov = 55; cam.updateProjectionMatrix();
+      const a = X.t * .06 + 2.4, k = MW / 64; cam.position.set(MW / 2 + 9 * k + Math.cos(a) * 30 * k, 19 * k, MH / 2 - 1 + Math.sin(a) * 26 * k); cam.rotation.set(0, 0, 0); cam.lookAt(MW / 2 + 6 * k, 0, MH / 2 - 1); cam.fov = 55; cam.updateProjectionMatrix();
       for (const A of X.agents.values()) A.visible = false; X.charge.visible = false; for (const g of X.smokes) g.visible = false; for (const o of X.nadeObjs) o.visible = false; for (const w of X.walls) w.visible = false;
       X.renderer.render(X.scene, cam); return;
     }
@@ -2784,13 +2854,75 @@ const GAME = {
   function resetMini() { mmCanvas = null; }
   function miniMap() {
     if (mmCanvas) return mmCanvas; const s = 8, c = mmCanvas = document.createElement('canvas'); c.width = GW * s; c.height = GH * s; const g = c.getContext('2d');
-    for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const ch = SRC[j][i]; g.fillStyle = ch === '#' ? 'rgba(12,16,22,.9)' : ch === '~' ? 'rgba(53,150,170,.8)' : ch === 'X' ? 'rgba(70,80,96,.95)' : ch === 'c' ? 'rgba(150,120,84,.95)' : ch === 'o' ? 'rgba(255,138,61,.4)' : ch === 'P' || ch === '7' || ch === '8' ? 'rgba(190,190,180,.75)' : 'rgba(210,205,190,.5)'; g.fillRect(i * s, j * s, s, s); }
+    for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const ch = SRC[j][i]; g.fillStyle = ch === '#' ? 'rgba(12,16,22,.9)' : ch === '~' ? 'rgba(53,150,170,.8)' : ch === 'X' ? 'rgba(70,80,96,.95)' : ch === 'c' ? 'rgba(150,120,84,.95)' : ch === 'o' || ch === 'q' ? 'rgba(255,138,61,.4)' : ch === 'P' || ch === '7' || ch === '8' ? 'rgba(190,190,180,.75)' : 'rgba(210,205,190,.5)'; g.fillRect(i * s, j * s, s, s); }
     return c;
   }
   function hint(g, s, y, px, col) { if (!s) return; px = fitPx(g, px); g.font = `700 ${px}px ${FONT}`; const w = g.measureText(s).width + px * 1.6; rr(g, 640 - w / 2, y - px * .95, w, px * 1.9, px * .5, 'rgba(12,16,22,.62)'); tx(g, s, 640, y, px, col); }
   const clock = t => { t = Math.max(0, Math.ceil(t)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
 
+  // ---- the loading screen: the new map turning slowly behind its name, the mode, a plan of the map, and every player's
+  // card (operative, name, rank and rating), your team on the left
+  const TAGS = { saltworks: 'A salt harbour at low tide. One site, three ways in.', neonrow: 'Back streets under the signs. Nobody sleeps here.', frostline: 'A weather station on the edge of the ice.',
+    dunewatch: 'A border post half buried in the dunes.', overgrowth: 'A jungle outpost the forest is taking back.', foundry: 'Molten steel and a long way down.', orbital: 'A station deck above a blue planet.' };
+  function rankBadge(g, x, y, r, rating) {
+    const i = diffFor(rating).i, col = RANK_COL[i]; g.save(); g.translate(x, y); g.fillStyle = col; g.strokeStyle = col; g.lineWidth = r * .22;
+    g.beginPath(); for (let k = 0; k < 6; k++) { const a = -Math.PI / 2 + k * TAU / 6; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); } g.closePath(); g.globalAlpha = .22; g.fill(); g.globalAlpha = 1; g.stroke();
+    g.fillStyle = col; for (let k = 0; k <= i; k++) { const yy = r * .35 - k * r * .32; g.beginPath(); g.moveTo(-r * .5, yy + r * .12); g.lineTo(0, yy - r * .2); g.lineTo(r * .5, yy + r * .12); g.lineTo(r * .5, yy + r * .3); g.lineTo(0, yy - .02 * r); g.lineTo(-r * .5, yy + r * .3); g.closePath(); g.fill(); }
+    g.restore();
+  }
+  function drawLoading(g) {
+    if (!UI.loadT0 || UI.loadM !== M) { UI.loadT0 = performance.now(); UI.loadM = M; }
+    const V = K.view, u = uiScale(), W = V.x1 - V.x0, H = V.y1 - V.y0, P = me(), k = cl(1 - (M.t - BUY_T) / M.loadT, 0, 1), rt = (performance.now() - UI.loadT0) / 1000, ease = smooth(cl(rt / .5, 0, 1));
+    if (!M.online) zone(V.x0, V.y0, W, H, skipLoad);
+    let gr = g.createLinearGradient(V.x0, 0, V.x0 + W * .62, 0); gr.addColorStop(0, 'rgba(8,10,14,.94)'); gr.addColorStop(.7, 'rgba(8,10,14,.55)'); gr.addColorStop(1, 'rgba(8,10,14,0)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H);
+    gr = g.createLinearGradient(0, V.y1 - 220 * u, 0, V.y1); gr.addColorStop(0, 'rgba(8,10,14,0)'); gr.addColorStop(1, 'rgba(8,10,14,.92)'); g.fillStyle = gr; g.fillRect(V.x0, V.y1 - 220 * u, W, 220 * u);
+    const x0 = V.x0 + 64 * u, slide = (1 - ease) * -40 * u, acc = (THEMES[MAP.theme] || THEMES.harbor).sky[1], two = SITES.length > 1, side = sideOf(P);
+    g.save(); g.globalAlpha = ease; g.translate(slide, 0);
+    g.fillStyle = acc; g.fillRect(x0, V.y0 + 70 * u, 8 * u, 150 * u);
+    tx(g, 'NOW ENTERING', x0 + 26 * u, V.y0 + 86 * u, 14 * u, DIM, 'left', 800);
+    tx(g, MAP.n.toUpperCase(), x0 + 22 * u, V.y0 + 140 * u, 86 * u, BONE, 'left', 900);
+    tx(g, MAP.tag || TAGS[MAP.k] || '', x0 + 26 * u, V.y0 + 196 * u, 16 * u, '#c9cfd8', 'left', 600);
+    const chips = [two ? 'TWO SITES' : 'ONE SITE', M.fs.length > 2 ? '2V2' : '1V1', 'FIRST TO ' + WIN_ROUNDS];
+    let cx = x0 + 26 * u; for (const c of chips) { g.font = `800 ${12 * u}px ${FONT}`; const w = g.measureText(c).width + 22 * u; rr(g, cx, V.y0 + 222 * u, w, 26 * u, 4, 'rgba(239,233,220,.1)', 'rgba(239,233,220,.25)', 1); tx(g, c, cx + w / 2, V.y0 + 235 * u, 12 * u, BONE, 'center', 800); cx += w + 8 * u; }
+    tx(g, side === 'att' ? 'YOU ATTACK FIRST' : 'YOU DEFEND FIRST', x0 + 26 * u, V.y0 + 282 * u, 22 * u, side === 'att' ? FOE : YOU, 'left', 900);
+    tx(g, side === 'att' ? (two ? 'Plant the charge on site A or B' : 'Plant the charge on the site') : (two ? 'Hold both sites. Stop the plant, or defuse it' : 'Stop the plant, or defuse it'), x0 + 26 * u, V.y0 + 308 * u, 14 * u, '#c9cfd8', 'left', 600);
+    // the plan of the map, with the sites marked
+    { const mw = 230 * u, mh = mw * GH / GW, mx = x0 + 26 * u, my = V.y0 + 332 * u, kk = mw / MW; g.globalAlpha = ease * .92; g.drawImage(miniMap(), mx, my, mw, mh); g.globalAlpha = ease; g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 1.5; g.strokeRect(mx, my, mw, mh);
+      for (const S of SITES) tx(g, two ? S.k : '◆', mx + S.c[0] * kk, my + S.c[1] * kk, 16 * u, '#ffb070', 'center', 900);
+      const sp = SPAWN[side][0]; if (sp) { g.fillStyle = side === 'att' ? FOE : YOU; g.beginPath(); g.arc(mx + sp[0] * kk, my + sp[1] * kk, 5 * u, 0, TAU); g.fill(); tx(g, 'YOU', mx + sp[0] * kk, my + sp[1] * kk - 12 * u, 10 * u, BONE, 'center', 800); } }
+    g.restore();
+    // the players: a card each
+    const mine = M.fs.filter(q => q.team === P.team).sort((a, b) => (b === P) - (a === P)), theirs = M.fs.filter(q => q.team !== P.team);
+    const cw = Math.min(250 * u, (W - 160 * u) / 4), ch = 74 * u, y = V.y1 - ch - 40 * u;
+    const card = (q, x, col, i) => {
+      const a = smooth(cl((rt - .35 - i * .12) / .4, 0, 1)); g.save(); g.globalAlpha = a; g.translate(0, (1 - a) * 30 * u);
+      rr(g, x, y, cw, ch, 6, 'rgba(12,16,22,.88)', q === P ? 'rgba(239,233,220,.6)' : 'rgba(239,233,220,.14)', q === P ? 2 : 1); g.fillStyle = col; g.fillRect(x, y, 5 * u, ch);
+      g.save(); g.beginPath(); g.rect(x + 8 * u, y + 6 * u, 56 * u, ch - 12 * u); g.clip(); g.fillStyle = 'rgba(255,255,255,.04)'; g.fillRect(x + 8 * u, y + 6 * u, 56 * u, ch - 12 * u); opBust(g, q.op, x + 36 * u, y + ch * .56, 1.25 * u, true); g.restore();
+      tx(g, q.name.toUpperCase(), x + 74 * u, y + 24 * u, 16 * u, BONE, 'left', 800); tx(g, (OPS[q.op] || OPS.vex).n, x + 74 * u, y + 44 * u, 11 * u, (OPS[q.op] || OPS.vex).col, 'left', 800);
+      if (q.rating) { rankBadge(g, x + cw - 24 * u, y + 28 * u, 13 * u, q.rating); tx(g, rankName(q.rating).toUpperCase(), x + cw - 42 * u, y + 24 * u, 11 * u, RANK_COL[diffFor(q.rating).i], 'right', 800); tx(g, String(q.rating), x + cw - 42 * u, y + 42 * u, 13 * u, BONE, 'right', 700); }
+      else tx(g, '—', x + cw - 24 * u, y + 30 * u, 14 * u, DIM, 'center');
+      tx(g, q.bot ? 'BOT' : q.net && !q.isBot ? 'PLAYER' : q === P ? 'YOU' : 'BOT', x + 74 * u, y + 60 * u, 10 * u, DIM, 'left', 800);
+      g.restore();
+    };
+    mine.forEach((q, i) => card(q, V.x0 + 40 * u + i * (cw + 10 * u), YOU, i)); theirs.forEach((q, i) => card(q, V.x1 - 40 * u - (i + 1) * (cw + 10 * u) + 10 * u, FOE, i + 1));
+    tx(g, 'VS', 640, y + ch / 2, 26 * u, 'rgba(239,233,220,.55)', 'center', 900);
+    // progress
+    g.fillStyle = 'rgba(239,233,220,.12)'; g.fillRect(V.x0, V.y1 - 6 * u, W, 6 * u); g.fillStyle = acc; g.fillRect(V.x0, V.y1 - 6 * u, W * k, 6 * u);
+    if (!M.online) tx(g, isTouch() ? 'Tap to skip' : 'Click to skip', V.x1 - 24 * u, V.y1 - 22 * u, 11 * u, DIM, 'right', 700);
+  }
+  // ---- switching sides: a band across the screen at the start of the second half (and the decider) says which side you are now
+  function drawSwitch(g) {
+    const S = UI.switched; if (!S) return; const t = (performance.now() - S.t0) / 1000; if (t > 3.2) { UI.switched = null; return; }
+    const V = K.view, u = uiScale(), W = V.x1 - V.x0, a = t < .25 ? smooth(t / .25) : t > 2.8 ? 1 - (t - 2.8) / .4 : 1, col = S.side === 'att' ? FOE : YOU, cy = 330;
+    g.save(); g.globalAlpha = a; g.fillStyle = 'rgba(8,10,14,.86)'; g.fillRect(V.x0, cy - 78 * u, W, 156 * u); g.fillStyle = col; g.fillRect(V.x0, cy - 78 * u, W, 4 * u); g.fillRect(V.x0, cy + 74 * u, W, 4 * u);
+    const sw = (t * 260 * u) % (80 * u); for (let i = -2; i < W / (80 * u) + 2; i++) { const x = V.x0 + i * 80 * u + sw; g.fillStyle = 'rgba(239,233,220,.05)'; g.beginPath(); g.moveTo(x, cy - 74 * u); g.lineTo(x + 30 * u, cy - 74 * u); g.lineTo(x + 70 * u, cy); g.lineTo(x + 30 * u, cy + 74 * u); g.lineTo(x, cy + 74 * u); g.lineTo(x + 40 * u, cy); g.closePath(); g.fill(); }
+    tx(g, S.decider ? 'DECIDER' : 'SWITCHING SIDES', 640, cy - 34 * u, 20 * u, DIM, 'center', 900);
+    tx(g, S.side === 'att' ? 'YOU NOW ATTACK' : 'YOU NOW DEFEND', 640, cy + 12 * u, 54 * u, col, 'center', 900);
+    tx(g, S.side === 'att' ? (SITES.length > 1 ? 'Take the charge to A or B' : 'Take the charge to the site') : 'Hold them off, or defuse the charge', 640, cy + 52 * u, 15 * u, BONE, 'center', 700);
+    g.restore();
+  }
   function drawHud(g) {
+    if (loadingNow()) return drawLoading(g);
     const P = me(), F = foe(), G = gun(P), V = K.view, u = uiScale(), touch = isTouch(), side = sideOf(P), W = V.x1 - V.x0, H = V.y1 - V.y0, range = M.mode === 'range', demo = M.mode === 'demo';
     // --- over the whole view: scope, flash, the red of being hit
     if (P.scoped && G.scope && P.alive) { const r = Math.min(H * .46, 330); g.fillStyle = '#000'; g.beginPath(); g.rect(V.x0, V.y0, W, H); g.arc(640, 360, r, 0, TAU, true); g.fill(); g.strokeStyle = 'rgba(0,0,0,.9)'; g.lineWidth = 2; g.beginPath(); g.moveTo(640 - r, 360); g.lineTo(640 + r, 360); g.moveTo(640, 360 - r); g.lineTo(640, 360 + r); g.stroke(); g.fillStyle = WARN; g.fillRect(639, 359, 2, 2); }
@@ -2808,7 +2940,7 @@ const GAME = {
     if (P.alive && !(P.scoped && G.scope) && !demo) drawCrosshair(g, 640, cy, Math.tan(spreadOf(P)) / tf * hh, Math.max(1, u * .85));
     // no hit marks over the crosshair; the range alone shows the damage each shot did
     if (hitMark && (hitMark.t -= 1 / 60) > 0 && range) tx(g, String(hitMark.dmg), 640 + 44 * u + hitMark.x, cy - 30 * u - (1 - Math.min(1, hitMark.t / .28)) * 16, 20 * u, hitMark.head ? GOLD : '#fff');
-    drawBanner(g, V, u);
+    drawBanner(g, V, u); drawSwitch(g);
     // --- top: the clock in the middle, round wins either side of it, then a tile for every fighter: your team to the left,
     // the rivals to the right. A tile is lit while they stand and goes grey with a skull once they are down; your
     // teammates' tiles carry their health
@@ -2838,6 +2970,7 @@ const GAME = {
     // --- minimap, top left (beside the kit's pause button)
     { const mw = 200 * u, mh = mw * GH / GW, mx = V.x0 + 62 / pxPer(), my = V.y0 + 10, k = mw / MW;
       g.globalAlpha = .9; g.drawImage(miniMap(), mx, my, mw, mh); g.globalAlpha = 1; g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 1.5; g.strokeRect(mx, my, mw, mh);
+      if (SITES.length > 1) for (const S of SITES) tx(g, S.k, mx + S.c[0] * k, my + S.c[1] * k, 14 * u, '#ffb070', 'center', 900);
       if (M.planted) { g.fillStyle = WARN; g.beginPath(); g.arc(mx + M.planted.x * k, my + M.planted.z * k, 4.5 * u, 0, TAU); g.fill(); }
       if (heard && (heard.t -= 1 / 60) > 0) { g.strokeStyle = `rgba(255,138,61,${heard.t / 1.6})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + heard.x * k, my + heard.z * k, (8 + (1.6 - heard.t) * 8) * u, 0, TAU); g.stroke(); }
       if (F.alive && (F.reveal > 0 || canSee(P, F))) { g.fillStyle = FOE; g.beginPath(); g.arc(mx + F.x * k, my + F.z * k, 4 * u, 0, TAU); g.fill(); }
@@ -2872,19 +3005,19 @@ const GAME = {
     if (M.phase === 'live' && P.alive && !range && !demo) {
       const near = M.planted && Math.hypot(P.x - M.planted.x, P.z - M.planted.z) < 1.7, key = touch ? 'Hold the button' : 'Hold F';
       if (P.plant > 0) ring(P.plant / PLANT_T, 'PLANTING', FOE); else if (P.defuse > 0) ring(P.defuse / DEFUSE_T, 'DEFUSING', YOU);
-      else if (side === 'att' && !M.planted) hint(g, onSite(P.x, P.z) ? key + ' to plant the charge' : M.t > ROUND_T - 6 ? 'Carry the charge to the ring and plant it' : '', V.y0 + 104 * u, 16 * u, onSite(P.x, P.z) ? GOLD : 'rgba(239,233,220,.75)');
+      else if (side === 'att' && !M.planted) hint(g, onSite(P.x, P.z) ? key + ' to plant the charge' : M.t > roundT() - 6 ? (twoSites() ? 'Carry the charge to site A or B and plant it' : 'Carry the charge to the ring and plant it') : '', V.y0 + 104 * u, 16 * u, onSite(P.x, P.z) ? GOLD : 'rgba(239,233,220,.75)');
       else if (side === 'def' && M.planted) hint(g, near ? key + ' to defuse' : 'Defuse the charge', V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
-      else if (side === 'def' && M.t > ROUND_T - 6) hint(g, 'Stop them planting on the ring', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
+      else if (side === 'def' && M.t > roundT() - 6) hint(g, twoSites() ? 'Hold A and B: stop them planting' : 'Stop them planting on the ring', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
       if (F.alive && F.defuse > 0) tx(g, 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);
     }
     // --- banners
     if (M.say) { const a = Math.min(1, M.say.t * 5, (2.6 - M.say.t) * 3); g.globalAlpha = cl(a, 0, 1); tx(g, M.say.s, 640, 170, 30 * u, M.say.c); g.globalAlpha = 1; }
     if (M.phase === 'end' && M.last && !M.over) { const won = M.last.wi === 0, c = won ? YOU : FOE; g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, demo ? `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT` : won ? 'ROUND WON' : 'ROUND LOST', 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); }
-    if (M.phase === 'buy' && !UI.armory && !range) { tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? 'You attack: plant the charge on the ring' : 'You defend: keep them off the ring', 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
+    if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? (twoSites() ? 'You attack: plant the charge on A or B' : 'You attack: plant the charge on the ring') : (twoSites() ? 'You defend: hold A and B' : 'You defend: keep them off the ring'), 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
     if (!P.alive && M.deathInfo && !range) { const D = M.deathInfo; rr(g, 640 - 250 * u, 590 - 34 * u, 500 * u, 68 * u, 8, GLASS, FOE); tx(g, `${D.by.toUpperCase()} · ${D.w}${D.head ? ' · headshot' : ''}`, 640, 590 - 12 * u, 18 * u, FOE); tx(g, `They had ${D.hp} health${D.sh ? ' and ' + D.sh + ' shield' : ''} left`, 640, 590 + 14 * u, 13 * u, BONE); }
     // --- touch controls
     if (touch && !UI.armory && !demo) drawTouch(g, u);
-    if (canBuy() && !UI.armory && !demo && P.alive) { const w = 190 * u, h = tapH(46); btn(g, 640 - w / 2, V.y0 + 132 * u, w, h, touch ? 'ARMORY' : 'ARMORY  (B)', () => openArmory(true), { px: 17 * u, col: GOLD, edge: GOLD }); }
+    if (canBuy() && !UI.armory && !demo && P.alive && !UI.switched) { const w = 190 * u, h = tapH(46); btn(g, 640 - w / 2, V.y0 + 132 * u, w, h, touch ? 'ARMORY' : 'ARMORY  (B)', () => openArmory(true), { px: 17 * u, col: GOLD, edge: GOLD }); }
     if (UI.armory) drawArmory(g);
     if (!touch && !UI.armory && !UI.opts && !demo && !locked() && K.state === 'play') { g.fillStyle = 'rgba(12,16,22,.45)'; g.fillRect(V.x0, V.y0, W, H); tx(g, 'CLICK TO AIM', 640, 330, 34, BONE); tx(g, 'Esc pauses  ·  O settings', 640, 372, 15, DIM); }
     // settings: a gear under the pause button (when the mouse is free, or on a phone), and the panel itself
@@ -2958,7 +3091,7 @@ const GAME = {
     g.fillStyle = 'rgba(12,16,22,.62)'; g.fillRect(V.x0, V.y0, W, H);
     if (UI.panel === 'settings') return drawSettings(g, V, W, u);
     if (UI.panel === 'crosshair') return drawXhair(g, V, W, u);
-    g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'Two on two. Seven maps. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
+    g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'Two on two. Thirteen maps, one site or two. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
     if (STATS.matches) tx(g, `${STATS.wins} wins in ${STATS.matches} matches · ${STATS.kills} kills`, V.x1 - m, V.y0 + 78 * u, 14 * u, DIM, 'right');
     // operatives
     const rw = cl(W * .27, 300, 420), top = V.y0 + 132 * u, cw = (W - rw - m * 3 - 44 / pxPer() - 28) / 3, chh = Math.min(V.y1 - top - m, 330 * u);
@@ -2977,6 +3110,7 @@ const GAME = {
     const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots';
     const head = (s, extra) => { tx(g, s, rx, y, 12 * u, DIM, 'left', 800); if (extra) tx(g, extra, rx + rw, y, 11 * u, DIM, 'right'); g.fillStyle = 'rgba(239,233,220,.14)'; g.fillRect(rx, y + 9 * u, rw, 1); y += 18 * u; };
     head('PLAY VS BOTS');
+    choice(g, rx, y, rw, tapH(34), [[2, 'TWO SITES'], [1, 'ONE SITE']], CFG.sites === 1 ? 1 : 2, v => { CFG.sites = v; saveAll(); }); y += tapH(34) + 6 * u;
     btn(g, rx, y, rw, 70 * u, 'PLAY 2V2', () => menuPlay(2), { on: true, fill: FOE, px: 30 * u, sub: 'you + a bot teammate vs two · ' + lvl }); zones[zones.length - 1].prime = true; y += 76 * u;
     btn(g, rx, y, rw, tapH(40), '1V1 DUEL', () => menuPlay(1), { px: 16 * u, sub: 'just you and one rival' }); y += tapH(40) + 6 * u;
     tx(g, 'Bot level', rx, y + tapH(34) / 2, 12 * u, DIM, 'left'); choice(g, rx + 70 * u, y, rw - 70 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 16 * u;
@@ -3103,10 +3237,15 @@ const GAME = {
   /* ---------- 99 main: the kit's hooks, moving between screens, demo and cover-art modes, the test handle ---------- */
   let booted = false, acc = 0, lastDraw = 0;
   function toMenu() { M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
-  function play(o) { resetInput(); UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
-  function menuPlay(size) { if (size) { CFG.size = size; saveAll(); } play({ mode: 'bot', diff: CFG.diff, size: CFG.size }); }
-  on('matchStart', () => { resetInput(); acc = 0; screen = 'play'; });   // an online match began (60-net started it)
-  on('round', () => { UI.armory = false; UI.pick = null; if (M.mode !== 'demo' && M.mode !== 'range') openArmory(true); });   // each round opens on the armory
+  function play(o) { resetInput(); UI.lastSide = null; UI.switched = null; UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
+  function menuPlay(size) { if (size) { CFG.size = size; saveAll(); } play({ mode: 'bot', diff: CFG.diff, size: CFG.size, sites: CFG.sites }); }
+  on('matchStart', () => { resetInput(); acc = 0; screen = 'play'; UI.lastSide = null; UI.switched = null; });   // an online match began (60-net started it)
+  // each round opens on the armory, after the loading screen or the switching-sides band if there is one
+  on('round', n => {
+    UI.armory = false; UI.pick = null; UI.pendingArmory = false; if (M.mode === 'demo' || M.mode === 'range') return;
+    const side = sideOf(me()), decider = n === WIN_ROUNDS * 2 - 1; UI.switched = n > 1 && UI.lastSide && side !== UI.lastSide ? { t0: performance.now(), side, decider } : null; UI.lastSide = side;
+    if (loadingNow() || UI.switched) UI.pendingArmory = true; else openArmory(true);
+  });
   on('live', () => { if (UI.armory) { UI.armory = false; grabMouse(); } });
   on('map', () => { if (ready) rebuildWorld(); });
   on('over', won => {
@@ -3129,6 +3268,7 @@ const GAME = {
   };
   GAME.update = dt => {
     if (screen !== 'play' || !M || posed) return;
+    if (UI.pendingArmory && !loadingNow() && !UI.switched) { UI.pendingArmory = false; if (M.phase === 'buy') openArmory(true); }
     acc += Math.min(dt, .1); let n = 0; while (acc >= 1 / 60 && n++ < 5) { for (const f of M.fs) { f.px = f.x; f.py = f.y; f.pz = f.z; } tick(1 / 60); acc -= 1 / 60; }
     tickA = cl(acc * 60, 0, 1);
     if (M.over && M.mode === 'demo') startMatch({ mode: 'demo' });
@@ -3166,7 +3306,7 @@ const GAME = {
   };
   // for the browser tests
   GAME.test = {
-    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, CFG, UI, GUNS, TS, zones, ready: () => ready,
+    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,

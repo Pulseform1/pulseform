@@ -1,10 +1,15 @@
   /* ---------- 99 main: the kit's hooks, moving between screens, demo and cover-art modes, the test handle ---------- */
   let booted = false, acc = 0, lastDraw = 0;
   function toMenu() { M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
-  function play(o) { resetInput(); UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
-  function menuPlay(size) { if (size) { CFG.size = size; saveAll(); } play({ mode: 'bot', diff: CFG.diff, size: CFG.size }); }
-  on('matchStart', () => { resetInput(); acc = 0; screen = 'play'; });   // an online match began (60-net started it)
-  on('round', () => { UI.armory = false; UI.pick = null; if (M.mode !== 'demo' && M.mode !== 'range') openArmory(true); });   // each round opens on the armory
+  function play(o) { resetInput(); UI.lastSide = null; UI.switched = null; UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
+  function menuPlay(size) { if (size) { CFG.size = size; saveAll(); } play({ mode: 'bot', diff: CFG.diff, size: CFG.size, sites: CFG.sites }); }
+  on('matchStart', () => { resetInput(); acc = 0; screen = 'play'; UI.lastSide = null; UI.switched = null; });   // an online match began (60-net started it)
+  // each round opens on the armory, after the loading screen or the switching-sides band if there is one
+  on('round', n => {
+    UI.armory = false; UI.pick = null; UI.pendingArmory = false; if (M.mode === 'demo' || M.mode === 'range') return;
+    const side = sideOf(me()), decider = n === WIN_ROUNDS * 2 - 1; UI.switched = n > 1 && UI.lastSide && side !== UI.lastSide ? { t0: performance.now(), side, decider } : null; UI.lastSide = side;
+    if (loadingNow() || UI.switched) UI.pendingArmory = true; else openArmory(true);
+  });
   on('live', () => { if (UI.armory) { UI.armory = false; grabMouse(); } });
   on('map', () => { if (ready) rebuildWorld(); });
   on('over', won => {
@@ -27,6 +32,7 @@
   };
   GAME.update = dt => {
     if (screen !== 'play' || !M || posed) return;
+    if (UI.pendingArmory && !loadingNow() && !UI.switched) { UI.pendingArmory = false; if (M.phase === 'buy') openArmory(true); }
     acc += Math.min(dt, .1); let n = 0; while (acc >= 1 / 60 && n++ < 5) { for (const f of M.fs) { f.px = f.x; f.py = f.y; f.pz = f.z; } tick(1 / 60); acc -= 1 / 60; }
     tickA = cl(acc * 60, 0, 1);
     if (M.over && M.mode === 'demo') startMatch({ mode: 'demo' });
@@ -64,7 +70,7 @@
   };
   // for the browser tests
   GAME.test = {
-    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, CFG, UI, GUNS, TS, zones, ready: () => ready,
+    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,

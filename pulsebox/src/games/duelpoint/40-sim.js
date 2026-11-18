@@ -328,8 +328,8 @@
     } else f.defuse = 0;
   }
   function plantAt(x, z, f) {
-    M.planted = { x, z, y: hAt(x, z), t: FUSE_T, beep: 0 }; if (!f.net) f.credits = Math.min(CASH.cap, f.credits + CASH.plant);
-    say('CHARGE PLANTED', FOE); emit('planted', f);
+    M.planted = { x, z, y: hAt(x, z), t: FUSE_T, beep: 0, s: Math.max(0, siteAt(x, z)) }; if (!f.net) f.credits = Math.min(CASH.cap, f.credits + CASH.plant);
+    say(twoSites() ? 'CHARGE PLANTED ON ' + SITES[M.planted.s].k : 'CHARGE PLANTED', FOE); emit('planted', f);
   }
   function defuseDone(f) { M.defused = true; emit('defused', f); if (M.host) judge(); }
 
@@ -354,7 +354,7 @@
     if (M.host) net({ t: 'end', wi: wi ^ (M.flip || 0), why });
   }
   function startRound(n) {
-    M.round = n; M.phase = 'buy'; M.t = BUY_T; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null;
+    M.round = n; M.phase = 'buy'; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null;
     const decider = n === WIN_ROUNDS * 2 - 1;
     const order = [...M.fs].sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);   // the same on every device, so teammates never share a spawn
     M.fs.forEach(f => {
@@ -366,10 +366,15 @@
       f.yaw = yawTo(f.x, f.z, side === 'att' ? f.x + 10 : f.x - 10, f.z); if (f.gone) f.alive = false;
       if (f.bot) { if (M.auto && !f.bot.dummy) { const L = diffFor(M.rating + M.adj); f.bot = { diff: L.i, D: L.D }; } else f.bot = { diff: f.bot.diff, D: f.bot.D, dummy: f.bot.dummy }; }
     });
-    if (n === 5) say('SIDES SWAPPED'); else if (decider) say('DECIDER');
+    if ((n === 5 || decider) && M.mode === 'demo') say(decider ? 'DECIDER' : 'SIDES SWAPPED');   // players get the switching-sides band instead
     emit('round', n);
   }
-  const canBuy = () => M.phase === 'buy' || M.mode === 'range';
+  const canBuy = () => (M.phase === 'buy' && !loadingNow()) || M.mode === 'range';
+  // the loading screen shows for the first LOAD_T seconds of the match
+  // (once it has ended it stays ended, whatever the clock does afterwards)
+  const loadingNow = () => { if (!M) return false; if (M.loading && !(M.round === 1 && M.phase === 'buy' && M.t > BUY_T)) M.loading = false; return !!M.loading; };
+  // offline you can skip it
+  const skipLoad = () => { if (loadingNow() && !M.online) { M.t = BUY_T; M.loading = false; } };
   // Buying over something you bought this round refunds it; choosing it again sells it back.
   // choose a gun (or shield) for your loadout: free, if you own it. It is yours from now on, every round, until you pick another
   function buy(f, k) {
@@ -407,11 +412,13 @@
     else { for (let i = 0; i < Math.max(1, o.size | 0); i++) fs.push(fighter({ name: bname(), op: pick(ops), team: 1, key: 'e' + i, bot: botP() })); for (let i = 1; i < (o.size | 0); i++) fs.push(fighter({ name: bname(), op: pick(ops), team: 0, key: 'm' + i, bot: botP() })); }
     fs = [A, ...fs.slice(1).sort((a, b) => b.team - a.team)];   // enemies first, so M.fs[1] is always a rival
     // a map at random each match (online, the host's pick); the range is always on Saltworks
-    const mapI = o.map != null ? o.map : mode === 'range' ? 0 : Math.floor(R() * MAPS.length); if (MAP !== MAPS[mapI]) { loadMap(mapI); emit('map', mapI); }
+    const mapI = o.map != null ? o.map : mode === 'range' ? 0 : pick(mapPool(o.sites)); if (MAP !== MAPS[mapI]) { loadMap(mapI); emit('map', mapI); }
     const hostAtt = o.hostAtt == null ? (R() < .5 ? 1 : 0) : o.hostAtt, decHostAtt = o.decHostAtt == null ? (R() < .5 ? 1 : 0) : o.decHostAtt;
     if (online && !o.seats) flip = host ? 0 : 1;
     M = { mode, online, host, auto, flip, byKey: Object.fromEntries(fs.map(f => [f.key, f])), rating: STATS.rating, adj: 0, fs, wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? 0 : 1) ^ flip, decAtt: (decHostAtt ? 0 : 1) ^ flip,
       planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0 };
+    M.loadT = mode === 'bot' || online ? LOAD_T : 0; M.loading = M.loadT > 0;
+    for (const f of fs) f.rating = f === A ? STATS.rating : f.bot ? botRating(f, M) : f.rating || 0;
     startRound(1);
     if (mode === 'range') { M.phase = 'live'; M.t = 0; A.credits = CASH.cap; Object.assign(A, { x: 9, z: 5, yaw: yawTo(9, 5, 30, 5) }); placeDummy(fs[1]); }
     if (mode === 'demo') { M.t = 1.5; A.credits = fs[1].credits = 4500; }
@@ -434,7 +441,7 @@
     M.time += dt; if (M.mode !== 'range') M.t -= dt;
     if (M.phase === 'buy' && M.host && M.mode !== 'range') {
       if (M.t > 1.5 && M.fs.every(f => f.ready)) M.t = 1.5;
-      if (M.t <= 0) { M.phase = 'live'; M.t = ROUND_T; emit('live'); net({ t: 'live' }); }
+      if (M.t <= 0) { M.phase = 'live'; M.t = roundT(); emit('live'); net({ t: 'live' }); }
     }
     if (M.phase === 'live' && M.planted) { const P = M.planted; P.t -= dt; P.beep -= dt; if (P.beep <= 0) { P.beep = cl(P.t / 12, .12, 1); emit('beep'); } }
     if (M.phase === 'live' && M.host) judge();

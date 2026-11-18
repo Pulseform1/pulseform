@@ -17,7 +17,12 @@
   function rebuildWorld() {
     if (!X) return;
     if (X.world) { X.scene.remove(X.world); X.world.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
-    buildWorld(); buildSky(); resetMini(); warmShaders();
+    fitSun(); buildWorld(); buildSky(); resetMini(); warmShaders();
+  }
+  // the sun and its shadow cover the whole map, whatever its size
+  function fitSun() {
+    const s = X.sun; s.position.set(MW / 2 + SUN[0] * 90, SUN[1] * 90, MH / 2 + SUN[2] * 90); s.target.position.set(MW / 2, 0, MH / 2); s.target.updateMatrixWorld();
+    if (s.castShadow) { const sc = s.shadow.camera, hw = Math.max(46, MW * .72), hh = Math.max(40, MH * .9); sc.left = -hw; sc.right = hw; sc.top = hh; sc.bottom = -hh; sc.far = 190 + MW; sc.updateProjectionMatrix(); }
   }
   function buildWorld() {
     const TH = THEMES[MAP.theme] || THEMES.harbor, W = X.world = new THREE.Group(); X.scene.add(W); X.theme = TH;
@@ -46,7 +51,8 @@
     const tall = (i, j) => { const k = idx(i, j); return k >= 0 && CH[k] >= 1 && !CAX[k] ? 1 : 0; };
     // how dark a grid corner is: darker the more solid cells meet there
     const corner = (ci, cj) => 1 - .13 * (tall(ci - 1, cj - 1) + tall(ci, cj - 1) + tall(ci - 1, cj) + tall(ci, cj));
-    const GROUND_TINT = { pier: WHITE, yard: [1, .98, .93], site: [.9, .9, .9], tunnel: [.7, .7, .73], alley: [.8, .8, .83], gate: [1, .9, .74], sheds: [1, .9, .74] };
+    const GROUND_TINT = { pier: WHITE, yard: [1, .98, .93], site: [.9, .9, .9], tunnel: [.7, .7, .73], alley: [.8, .8, .83], gate: [1, .9, .74], sheds: [1, .9, .74],
+      aspawn: [1, .9, .74], along: WHITE, asite: [.9, .9, .9], mid: [1, .98, .93], blong: [.8, .8, .83], bsite: [.9, .9, .92], dspawn: [1, .9, .74] };
     const STEEL = (TH.steel || ['#b5523f', '#2f8f8a', '#d6a23a', '#3d5a80', '#8a8f96']).map(hex);
     // containers that touch share a colour
     const group = new Int16Array(NC).fill(-1); let groups = 0;
@@ -55,7 +61,7 @@
 
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
       const c = SRC[j][i], k = j * GW + i, x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS, area = AREA[k] >= 0 ? AREAS[AREA[k]] : null, dim = roofed[k] ? .62 : 1;
-      if ('.oAD'.includes(c)) {   // open ground
+      if ('.oqAD'.includes(c)) {   // open ground
         const sd = [corner(i, j), corner(i, j + 1), corner(i + 1, j + 1), corner(i + 1, j)].map(s => s * dim);
         flat(area && area.k === 'pier' && MAP.theme === 'harbor' ? 'deck' : 'ground', x0, z0, x1, z1, 0, 1, 4, sd, area ? GROUND_TINT[area.k] : WHITE); continue;
       }
@@ -161,7 +167,20 @@
       g.fillStyle = 'rgba(255,138,61,.1)'; g.beginPath(); g.arc(0, 0, 226, 0, TAU); g.fill();
       g.lineWidth = 12; g.beginPath(); g.moveTo(0, -70); g.lineTo(62, 0); g.lineTo(0, 70); g.lineTo(-62, 0); g.closePath(); g.stroke();
     }); ringT.wrapS = ringT.wrapT = THREE.ClampToEdgeWrapping;
-    const ring = new THREE.Mesh(new THREE.PlaneGeometry(10.4, 10.4), new THREE.MeshBasicMaterial({ map: ringT, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 })); ring.rotation.x = -Math.PI / 2; ring.position.set(41, .02, 21); W.add(ring);
+    // one ring on each site; on a two-site map each carries its letter, and big letters on the walls round it say which is which
+    for (const S of SITES) {
+      const two = SITES.length > 1, tex = two ? canvasTex(512, 512, (g, w, h) => { g.drawImage(ringT.image, 0, 0); g.translate(w / 2, h / 2); g.fillStyle = 'rgba(255,138,61,.85)'; g.font = '900 150px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(S.k, 0, 8); }) : ringT;
+      if (two) tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+      const ring = new THREE.Mesh(new THREE.PlaneGeometry(10.4, 10.4), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 })); ring.rotation.x = -Math.PI / 2; ring.position.set(S.c[0], hAt(S.c[0], S.c[1]) + .02, S.c[1]); W.add(ring);
+      if (!two) continue;
+      const letT = canvasTex(256, 256, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = 'rgba(255,138,61,.92)'; g.fillRect(18, 18, w - 36, h - 36); g.fillStyle = 'rgba(20,18,16,.92)'; g.font = '900 190px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(S.k, w / 2, h / 2 + 10); });
+      const letM = new THREE.MeshBasicMaterial({ map: letT, transparent: true, polygonOffset: true, polygonOffsetFactor: -2 });
+      for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {   // walk out from the site's middle to the first wall in each direction
+        for (let d = 2; d < 16; d += .5) { const x = S.c[0] + dx * d, z = S.c[1] + dz * d; if (chAt(Math.floor(x / CS), Math.floor(z / CS)) !== '#') continue;
+          const fx = dx ? (dx > 0 ? Math.floor(x / CS) * CS : Math.floor(x / CS) * CS + CS) : x, fz = dz ? (dz > 0 ? Math.floor(z / CS) * CS : Math.floor(z / CS) * CS + CS) : z;
+          const p = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), letM); p.position.set(fx - dx * .02, 3.6, fz - dz * .02); p.rotation.y = Math.atan2(-dx, -dz); W.add(p); break; }
+      }
+    }
     // door signs
     const signMat = {};
     for (const s of signs) {

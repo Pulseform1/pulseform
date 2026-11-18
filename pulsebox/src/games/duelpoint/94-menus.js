@@ -45,7 +45,7 @@
     g.fillStyle = 'rgba(12,16,22,.62)'; g.fillRect(V.x0, V.y0, W, H);
     if (UI.panel === 'settings') return drawSettings(g, V, W, u);
     if (UI.panel === 'crosshair') return drawXhair(g, V, W, u);
-    g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'Two on two. Seven maps. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
+    g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'Two on two. Thirteen maps, one site or two. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
     if (STATS.matches) tx(g, `${STATS.wins} wins in ${STATS.matches} matches · ${STATS.kills} kills`, V.x1 - m, V.y0 + 78 * u, 14 * u, DIM, 'right');
     // operatives
     const rw = cl(W * .27, 300, 420), top = V.y0 + 132 * u, cw = (W - rw - m * 3 - 44 / pxPer() - 28) / 3, chh = Math.min(V.y1 - top - m, 330 * u);
@@ -64,6 +64,7 @@
     const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots';
     const head = (s, extra) => { tx(g, s, rx, y, 12 * u, DIM, 'left', 800); if (extra) tx(g, extra, rx + rw, y, 11 * u, DIM, 'right'); g.fillStyle = 'rgba(239,233,220,.14)'; g.fillRect(rx, y + 9 * u, rw, 1); y += 18 * u; };
     head('PLAY VS BOTS');
+    choice(g, rx, y, rw, tapH(34), [[2, 'TWO SITES'], [1, 'ONE SITE']], CFG.sites === 1 ? 1 : 2, v => { CFG.sites = v; saveAll(); }); y += tapH(34) + 6 * u;
     btn(g, rx, y, rw, 70 * u, 'PLAY 2V2', () => menuPlay(2), { on: true, fill: FOE, px: 30 * u, sub: 'you + a bot teammate vs two · ' + lvl }); zones[zones.length - 1].prime = true; y += 76 * u;
     btn(g, rx, y, rw, tapH(40), '1V1 DUEL', () => menuPlay(1), { px: 16 * u, sub: 'just you and one rival' }); y += tapH(40) + 6 * u;
     tx(g, 'Bot level', rx, y + tapH(34) / 2, 12 * u, DIM, 'left'); choice(g, rx + 70 * u, y, rw - 70 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 16 * u;

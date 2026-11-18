@@ -27,7 +27,7 @@
   // a dark outline, and whether it opens with your error (dyn) or stays fixed
   // sens: mouse turn speed; zsens: multiplier while aiming down sights or scoped; crouch: 'hold' or 'toggle'; full: go full
   // screen when you click in to play, which lets the game keep Ctrl shortcuts (Ctrl+W) from the browser
-  const CFG = { v: 4, sens: .45, zsens: 1, tsens: 1, crouch: 'hold', full: true, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 'auto', team: 'versus', size: 2,
+  const CFG = { v: 4, sens: .45, zsens: 1, tsens: 1, crouch: 'hold', full: true, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 'auto', team: 'versus', size: 2, sites: 2,
     xh: { shape: 'cross', col: '#35e0c8', len: 9, gap: 3, thick: 3, dot: true, outline: true, dyn: true } };
   let tickA = 1;   // how far the screen is between the last simulation tick and the next (99-main sets it), so motion is smooth at any refresh rate
   // rating: your skill, which sets the adaptive bot

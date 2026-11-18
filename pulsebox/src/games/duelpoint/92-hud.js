@@ -111,13 +111,75 @@
   function resetMini() { mmCanvas = null; }
   function miniMap() {
     if (mmCanvas) return mmCanvas; const s = 8, c = mmCanvas = document.createElement('canvas'); c.width = GW * s; c.height = GH * s; const g = c.getContext('2d');
-    for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const ch = SRC[j][i]; g.fillStyle = ch === '#' ? 'rgba(12,16,22,.9)' : ch === '~' ? 'rgba(53,150,170,.8)' : ch === 'X' ? 'rgba(70,80,96,.95)' : ch === 'c' ? 'rgba(150,120,84,.95)' : ch === 'o' ? 'rgba(255,138,61,.4)' : ch === 'P' || ch === '7' || ch === '8' ? 'rgba(190,190,180,.75)' : 'rgba(210,205,190,.5)'; g.fillRect(i * s, j * s, s, s); }
+    for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const ch = SRC[j][i]; g.fillStyle = ch === '#' ? 'rgba(12,16,22,.9)' : ch === '~' ? 'rgba(53,150,170,.8)' : ch === 'X' ? 'rgba(70,80,96,.95)' : ch === 'c' ? 'rgba(150,120,84,.95)' : ch === 'o' || ch === 'q' ? 'rgba(255,138,61,.4)' : ch === 'P' || ch === '7' || ch === '8' ? 'rgba(190,190,180,.75)' : 'rgba(210,205,190,.5)'; g.fillRect(i * s, j * s, s, s); }
     return c;
   }
   function hint(g, s, y, px, col) { if (!s) return; px = fitPx(g, px); g.font = `700 ${px}px ${FONT}`; const w = g.measureText(s).width + px * 1.6; rr(g, 640 - w / 2, y - px * .95, w, px * 1.9, px * .5, 'rgba(12,16,22,.62)'); tx(g, s, 640, y, px, col); }
   const clock = t => { t = Math.max(0, Math.ceil(t)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
 
+  // ---- the loading screen: the new map turning slowly behind its name, the mode, a plan of the map, and every player's
+  // card (operative, name, rank and rating), your team on the left
+  const TAGS = { saltworks: 'A salt harbour at low tide. One site, three ways in.', neonrow: 'Back streets under the signs. Nobody sleeps here.', frostline: 'A weather station on the edge of the ice.',
+    dunewatch: 'A border post half buried in the dunes.', overgrowth: 'A jungle outpost the forest is taking back.', foundry: 'Molten steel and a long way down.', orbital: 'A station deck above a blue planet.' };
+  function rankBadge(g, x, y, r, rating) {
+    const i = diffFor(rating).i, col = RANK_COL[i]; g.save(); g.translate(x, y); g.fillStyle = col; g.strokeStyle = col; g.lineWidth = r * .22;
+    g.beginPath(); for (let k = 0; k < 6; k++) { const a = -Math.PI / 2 + k * TAU / 6; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); } g.closePath(); g.globalAlpha = .22; g.fill(); g.globalAlpha = 1; g.stroke();
+    g.fillStyle = col; for (let k = 0; k <= i; k++) { const yy = r * .35 - k * r * .32; g.beginPath(); g.moveTo(-r * .5, yy + r * .12); g.lineTo(0, yy - r * .2); g.lineTo(r * .5, yy + r * .12); g.lineTo(r * .5, yy + r * .3); g.lineTo(0, yy - .02 * r); g.lineTo(-r * .5, yy + r * .3); g.closePath(); g.fill(); }
+    g.restore();
+  }
+  function drawLoading(g) {
+    if (!UI.loadT0 || UI.loadM !== M) { UI.loadT0 = performance.now(); UI.loadM = M; }
+    const V = K.view, u = uiScale(), W = V.x1 - V.x0, H = V.y1 - V.y0, P = me(), k = cl(1 - (M.t - BUY_T) / M.loadT, 0, 1), rt = (performance.now() - UI.loadT0) / 1000, ease = smooth(cl(rt / .5, 0, 1));
+    if (!M.online) zone(V.x0, V.y0, W, H, skipLoad);
+    let gr = g.createLinearGradient(V.x0, 0, V.x0 + W * .62, 0); gr.addColorStop(0, 'rgba(8,10,14,.94)'); gr.addColorStop(.7, 'rgba(8,10,14,.55)'); gr.addColorStop(1, 'rgba(8,10,14,0)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H);
+    gr = g.createLinearGradient(0, V.y1 - 220 * u, 0, V.y1); gr.addColorStop(0, 'rgba(8,10,14,0)'); gr.addColorStop(1, 'rgba(8,10,14,.92)'); g.fillStyle = gr; g.fillRect(V.x0, V.y1 - 220 * u, W, 220 * u);
+    const x0 = V.x0 + 64 * u, slide = (1 - ease) * -40 * u, acc = (THEMES[MAP.theme] || THEMES.harbor).sky[1], two = SITES.length > 1, side = sideOf(P);
+    g.save(); g.globalAlpha = ease; g.translate(slide, 0);
+    g.fillStyle = acc; g.fillRect(x0, V.y0 + 70 * u, 8 * u, 150 * u);
+    tx(g, 'NOW ENTERING', x0 + 26 * u, V.y0 + 86 * u, 14 * u, DIM, 'left', 800);
+    tx(g, MAP.n.toUpperCase(), x0 + 22 * u, V.y0 + 140 * u, 86 * u, BONE, 'left', 900);
+    tx(g, MAP.tag || TAGS[MAP.k] || '', x0 + 26 * u, V.y0 + 196 * u, 16 * u, '#c9cfd8', 'left', 600);
+    const chips = [two ? 'TWO SITES' : 'ONE SITE', M.fs.length > 2 ? '2V2' : '1V1', 'FIRST TO ' + WIN_ROUNDS];
+    let cx = x0 + 26 * u; for (const c of chips) { g.font = `800 ${12 * u}px ${FONT}`; const w = g.measureText(c).width + 22 * u; rr(g, cx, V.y0 + 222 * u, w, 26 * u, 4, 'rgba(239,233,220,.1)', 'rgba(239,233,220,.25)', 1); tx(g, c, cx + w / 2, V.y0 + 235 * u, 12 * u, BONE, 'center', 800); cx += w + 8 * u; }
+    tx(g, side === 'att' ? 'YOU ATTACK FIRST' : 'YOU DEFEND FIRST', x0 + 26 * u, V.y0 + 282 * u, 22 * u, side === 'att' ? FOE : YOU, 'left', 900);
+    tx(g, side === 'att' ? (two ? 'Plant the charge on site A or B' : 'Plant the charge on the site') : (two ? 'Hold both sites. Stop the plant, or defuse it' : 'Stop the plant, or defuse it'), x0 + 26 * u, V.y0 + 308 * u, 14 * u, '#c9cfd8', 'left', 600);
+    // the plan of the map, with the sites marked
+    { const mw = 230 * u, mh = mw * GH / GW, mx = x0 + 26 * u, my = V.y0 + 332 * u, kk = mw / MW; g.globalAlpha = ease * .92; g.drawImage(miniMap(), mx, my, mw, mh); g.globalAlpha = ease; g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 1.5; g.strokeRect(mx, my, mw, mh);
+      for (const S of SITES) tx(g, two ? S.k : '◆', mx + S.c[0] * kk, my + S.c[1] * kk, 16 * u, '#ffb070', 'center', 900);
+      const sp = SPAWN[side][0]; if (sp) { g.fillStyle = side === 'att' ? FOE : YOU; g.beginPath(); g.arc(mx + sp[0] * kk, my + sp[1] * kk, 5 * u, 0, TAU); g.fill(); tx(g, 'YOU', mx + sp[0] * kk, my + sp[1] * kk - 12 * u, 10 * u, BONE, 'center', 800); } }
+    g.restore();
+    // the players: a card each
+    const mine = M.fs.filter(q => q.team === P.team).sort((a, b) => (b === P) - (a === P)), theirs = M.fs.filter(q => q.team !== P.team);
+    const cw = Math.min(250 * u, (W - 160 * u) / 4), ch = 74 * u, y = V.y1 - ch - 40 * u;
+    const card = (q, x, col, i) => {
+      const a = smooth(cl((rt - .35 - i * .12) / .4, 0, 1)); g.save(); g.globalAlpha = a; g.translate(0, (1 - a) * 30 * u);
+      rr(g, x, y, cw, ch, 6, 'rgba(12,16,22,.88)', q === P ? 'rgba(239,233,220,.6)' : 'rgba(239,233,220,.14)', q === P ? 2 : 1); g.fillStyle = col; g.fillRect(x, y, 5 * u, ch);
+      g.save(); g.beginPath(); g.rect(x + 8 * u, y + 6 * u, 56 * u, ch - 12 * u); g.clip(); g.fillStyle = 'rgba(255,255,255,.04)'; g.fillRect(x + 8 * u, y + 6 * u, 56 * u, ch - 12 * u); opBust(g, q.op, x + 36 * u, y + ch * .56, 1.25 * u, true); g.restore();
+      tx(g, q.name.toUpperCase(), x + 74 * u, y + 24 * u, 16 * u, BONE, 'left', 800); tx(g, (OPS[q.op] || OPS.vex).n, x + 74 * u, y + 44 * u, 11 * u, (OPS[q.op] || OPS.vex).col, 'left', 800);
+      if (q.rating) { rankBadge(g, x + cw - 24 * u, y + 28 * u, 13 * u, q.rating); tx(g, rankName(q.rating).toUpperCase(), x + cw - 42 * u, y + 24 * u, 11 * u, RANK_COL[diffFor(q.rating).i], 'right', 800); tx(g, String(q.rating), x + cw - 42 * u, y + 42 * u, 13 * u, BONE, 'right', 700); }
+      else tx(g, '—', x + cw - 24 * u, y + 30 * u, 14 * u, DIM, 'center');
+      tx(g, q.bot ? 'BOT' : q.net && !q.isBot ? 'PLAYER' : q === P ? 'YOU' : 'BOT', x + 74 * u, y + 60 * u, 10 * u, DIM, 'left', 800);
+      g.restore();
+    };
+    mine.forEach((q, i) => card(q, V.x0 + 40 * u + i * (cw + 10 * u), YOU, i)); theirs.forEach((q, i) => card(q, V.x1 - 40 * u - (i + 1) * (cw + 10 * u) + 10 * u, FOE, i + 1));
+    tx(g, 'VS', 640, y + ch / 2, 26 * u, 'rgba(239,233,220,.55)', 'center', 900);
+    // progress
+    g.fillStyle = 'rgba(239,233,220,.12)'; g.fillRect(V.x0, V.y1 - 6 * u, W, 6 * u); g.fillStyle = acc; g.fillRect(V.x0, V.y1 - 6 * u, W * k, 6 * u);
+    if (!M.online) tx(g, isTouch() ? 'Tap to skip' : 'Click to skip', V.x1 - 24 * u, V.y1 - 22 * u, 11 * u, DIM, 'right', 700);
+  }
+  // ---- switching sides: a band across the screen at the start of the second half (and the decider) says which side you are now
+  function drawSwitch(g) {
+    const S = UI.switched; if (!S) return; const t = (performance.now() - S.t0) / 1000; if (t > 3.2) { UI.switched = null; return; }
+    const V = K.view, u = uiScale(), W = V.x1 - V.x0, a = t < .25 ? smooth(t / .25) : t > 2.8 ? 1 - (t - 2.8) / .4 : 1, col = S.side === 'att' ? FOE : YOU, cy = 330;
+    g.save(); g.globalAlpha = a; g.fillStyle = 'rgba(8,10,14,.86)'; g.fillRect(V.x0, cy - 78 * u, W, 156 * u); g.fillStyle = col; g.fillRect(V.x0, cy - 78 * u, W, 4 * u); g.fillRect(V.x0, cy + 74 * u, W, 4 * u);
+    const sw = (t * 260 * u) % (80 * u); for (let i = -2; i < W / (80 * u) + 2; i++) { const x = V.x0 + i * 80 * u + sw; g.fillStyle = 'rgba(239,233,220,.05)'; g.beginPath(); g.moveTo(x, cy - 74 * u); g.lineTo(x + 30 * u, cy - 74 * u); g.lineTo(x + 70 * u, cy); g.lineTo(x + 30 * u, cy + 74 * u); g.lineTo(x, cy + 74 * u); g.lineTo(x + 40 * u, cy); g.closePath(); g.fill(); }
+    tx(g, S.decider ? 'DECIDER' : 'SWITCHING SIDES', 640, cy - 34 * u, 20 * u, DIM, 'center', 900);
+    tx(g, S.side === 'att' ? 'YOU NOW ATTACK' : 'YOU NOW DEFEND', 640, cy + 12 * u, 54 * u, col, 'center', 900);
+    tx(g, S.side === 'att' ? (SITES.length > 1 ? 'Take the charge to A or B' : 'Take the charge to the site') : 'Hold them off, or defuse the charge', 640, cy + 52 * u, 15 * u, BONE, 'center', 700);
+    g.restore();
+  }
   function drawHud(g) {
+    if (loadingNow()) return drawLoading(g);
     const P = me(), F = foe(), G = gun(P), V = K.view, u = uiScale(), touch = isTouch(), side = sideOf(P), W = V.x1 - V.x0, H = V.y1 - V.y0, range = M.mode === 'range', demo = M.mode === 'demo';
     // --- over the whole view: scope, flash, the red of being hit
     if (P.scoped && G.scope && P.alive) { const r = Math.min(H * .46, 330); g.fillStyle = '#000'; g.beginPath(); g.rect(V.x0, V.y0, W, H); g.arc(640, 360, r, 0, TAU, true); g.fill(); g.strokeStyle = 'rgba(0,0,0,.9)'; g.lineWidth = 2; g.beginPath(); g.moveTo(640 - r, 360); g.lineTo(640 + r, 360); g.moveTo(640, 360 - r); g.lineTo(640, 360 + r); g.stroke(); g.fillStyle = WARN; g.fillRect(639, 359, 2, 2); }
@@ -135,7 +197,7 @@
     if (P.alive && !(P.scoped && G.scope) && !demo) drawCrosshair(g, 640, cy, Math.tan(spreadOf(P)) / tf * hh, Math.max(1, u * .85));
     // no hit marks over the crosshair; the range alone shows the damage each shot did
     if (hitMark && (hitMark.t -= 1 / 60) > 0 && range) tx(g, String(hitMark.dmg), 640 + 44 * u + hitMark.x, cy - 30 * u - (1 - Math.min(1, hitMark.t / .28)) * 16, 20 * u, hitMark.head ? GOLD : '#fff');
-    drawBanner(g, V, u);
+    drawBanner(g, V, u); drawSwitch(g);
     // --- top: the clock in the middle, round wins either side of it, then a tile for every fighter: your team to the left,
     // the rivals to the right. A tile is lit while they stand and goes grey with a skull once they are down; your
     // teammates' tiles carry their health
@@ -165,6 +227,7 @@
     // --- minimap, top left (beside the kit's pause button)
     { const mw = 200 * u, mh = mw * GH / GW, mx = V.x0 + 62 / pxPer(), my = V.y0 + 10, k = mw / MW;
       g.globalAlpha = .9; g.drawImage(miniMap(), mx, my, mw, mh); g.globalAlpha = 1; g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 1.5; g.strokeRect(mx, my, mw, mh);
+      if (SITES.length > 1) for (const S of SITES) tx(g, S.k, mx + S.c[0] * k, my + S.c[1] * k, 14 * u, '#ffb070', 'center', 900);
       if (M.planted) { g.fillStyle = WARN; g.beginPath(); g.arc(mx + M.planted.x * k, my + M.planted.z * k, 4.5 * u, 0, TAU); g.fill(); }
       if (heard && (heard.t -= 1 / 60) > 0) { g.strokeStyle = `rgba(255,138,61,${heard.t / 1.6})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + heard.x * k, my + heard.z * k, (8 + (1.6 - heard.t) * 8) * u, 0, TAU); g.stroke(); }
       if (F.alive && (F.reveal > 0 || canSee(P, F))) { g.fillStyle = FOE; g.beginPath(); g.arc(mx + F.x * k, my + F.z * k, 4 * u, 0, TAU); g.fill(); }
@@ -199,19 +262,19 @@
     if (M.phase === 'live' && P.alive && !range && !demo) {
       const near = M.planted && Math.hypot(P.x - M.planted.x, P.z - M.planted.z) < 1.7, key = touch ? 'Hold the button' : 'Hold F';
       if (P.plant > 0) ring(P.plant / PLANT_T, 'PLANTING', FOE); else if (P.defuse > 0) ring(P.defuse / DEFUSE_T, 'DEFUSING', YOU);
-      else if (side === 'att' && !M.planted) hint(g, onSite(P.x, P.z) ? key + ' to plant the charge' : M.t > ROUND_T - 6 ? 'Carry the charge to the ring and plant it' : '', V.y0 + 104 * u, 16 * u, onSite(P.x, P.z) ? GOLD : 'rgba(239,233,220,.75)');
+      else if (side === 'att' && !M.planted) hint(g, onSite(P.x, P.z) ? key + ' to plant the charge' : M.t > roundT() - 6 ? (twoSites() ? 'Carry the charge to site A or B and plant it' : 'Carry the charge to the ring and plant it') : '', V.y0 + 104 * u, 16 * u, onSite(P.x, P.z) ? GOLD : 'rgba(239,233,220,.75)');
       else if (side === 'def' && M.planted) hint(g, near ? key + ' to defuse' : 'Defuse the charge', V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
-      else if (side === 'def' && M.t > ROUND_T - 6) hint(g, 'Stop them planting on the ring', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
+      else if (side === 'def' && M.t > roundT() - 6) hint(g, twoSites() ? 'Hold A and B: stop them planting' : 'Stop them planting on the ring', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
       if (F.alive && F.defuse > 0) tx(g, 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);
     }
     // --- banners
     if (M.say) { const a = Math.min(1, M.say.t * 5, (2.6 - M.say.t) * 3); g.globalAlpha = cl(a, 0, 1); tx(g, M.say.s, 640, 170, 30 * u, M.say.c); g.globalAlpha = 1; }
     if (M.phase === 'end' && M.last && !M.over) { const won = M.last.wi === 0, c = won ? YOU : FOE; g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, demo ? `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT` : won ? 'ROUND WON' : 'ROUND LOST', 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); }
-    if (M.phase === 'buy' && !UI.armory && !range) { tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? 'You attack: plant the charge on the ring' : 'You defend: keep them off the ring', 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
+    if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? (twoSites() ? 'You attack: plant the charge on A or B' : 'You attack: plant the charge on the ring') : (twoSites() ? 'You defend: hold A and B' : 'You defend: keep them off the ring'), 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
     if (!P.alive && M.deathInfo && !range) { const D = M.deathInfo; rr(g, 640 - 250 * u, 590 - 34 * u, 500 * u, 68 * u, 8, GLASS, FOE); tx(g, `${D.by.toUpperCase()} · ${D.w}${D.head ? ' · headshot' : ''}`, 640, 590 - 12 * u, 18 * u, FOE); tx(g, `They had ${D.hp} health${D.sh ? ' and ' + D.sh + ' shield' : ''} left`, 640, 590 + 14 * u, 13 * u, BONE); }
     // --- touch controls
     if (touch && !UI.armory && !demo) drawTouch(g, u);
-    if (canBuy() && !UI.armory && !demo && P.alive) { const w = 190 * u, h = tapH(46); btn(g, 640 - w / 2, V.y0 + 132 * u, w, h, touch ? 'ARMORY' : 'ARMORY  (B)', () => openArmory(true), { px: 17 * u, col: GOLD, edge: GOLD }); }
+    if (canBuy() && !UI.armory && !demo && P.alive && !UI.switched) { const w = 190 * u, h = tapH(46); btn(g, 640 - w / 2, V.y0 + 132 * u, w, h, touch ? 'ARMORY' : 'ARMORY  (B)', () => openArmory(true), { px: 17 * u, col: GOLD, edge: GOLD }); }
     if (UI.armory) drawArmory(g);
     if (!touch && !UI.armory && !UI.opts && !demo && !locked() && K.state === 'play') { g.fillStyle = 'rgba(12,16,22,.45)'; g.fillRect(V.x0, V.y0, W, H); tx(g, 'CLICK TO AIM', 640, 330, 34, BONE); tx(g, 'Esc pauses  ·  O settings', 640, 372, 15, DIM); }
     // settings: a gear under the pause button (when the mouse is free, or on a phone), and the panel itself
