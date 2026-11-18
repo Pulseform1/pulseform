@@ -74,7 +74,7 @@
   // a bot's rating, for the loading screen: an adaptive one sits near yours, a fixed level near that level's rating
   const botRating = (f, M) => Math.round(M.auto ? cl(M.rating + rnd(-60, 60), 600, 1800) : RATING_AT[cl(f.bot ? f.bot.diff : 1, 0, 3)] + rnd(10, 140));
   // the body: eye heights standing and crouched, radius, speeds (m/s), gravity, jump speed, the step you climb without jumping
+  const teamSize = n => Math.max(1, Math.min(3, (n | 0) || 2)), vsLabel = n => teamSize(n) + 'V' + teamSize(n);   // 1v1, 2v2 or 3v3
   const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.6, STEP = .42;
   // sprinting (hold Shift, or push the stick all the way) and sliding (crouch while sprinting)
   const SPRINT = 7.4, SLIDE_V = 10.8, SLIDE_T = .75, SLIDE_CD = .9;
-  const CS_HOLD = .16;   // seconds a counter-strafe keeps you dead still while the key stays down

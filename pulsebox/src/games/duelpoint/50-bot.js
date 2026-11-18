@@ -5,6 +5,7 @@
   const laneOf = (x, z) => { const a = areaAt(x, z), k = a ? a.k : ''; if (a && a.lane) return a.lane; return k === 'pier' ? 'pier' : k === 'tunnel' ? 'tunnel' : k === 'yard' || k === 'gate' ? 'mid' : 'any'; };
   // on a two-site map: which site a lane leads to (null for Mid, which leads to both)
   const laneSite = lane => twoSites() && lane in RSITE ? RSITE[lane] : null;
+  const dS0 = (f, s) => Math.hypot(s.x - f.x, s.z - f.z);   // flat distance to where a rival was seen
   // which site a defender holds this round: two defenders take one each; one alone guesses
   function defSiteFor(f) {
     const team = M.fs.filter(q => q.team === f.team && q.alive).sort((a, b) => a.key < b.key ? -1 : 1);
@@ -107,9 +108,9 @@
     if (M.kit) for (const L of M.kit.lures) if (L.loud > 0 && L.by.team !== f.team && Math.hypot(L.x - f.x, L.z - f.z) < D.hear * 1.4) B.last = { x: L.x, z: L.z, t: M.time, heard: true };   // a Ghost Step sounds real
     if (B.hitBy && M.time - B.hitBy.t < .05) { if (!sees) { B.last = { x: B.hitBy.x, z: B.hitBy.z, t: M.time, heard: true }; B.alarm = M.time; } if (B.err) { B.err[0] += rnd(-1, 1) * .035; B.err[1] += rnd(-.2, 1) * .03; } }   // shot: turn to it, and the hit throws the aim
     // what it believes about where you are is a moment old: it aims at that, so moving makes it miss
-    B.hist = B.hist || []; if (sees) B.hist.push({ t: M.time, x: e.x, z: e.z, y: e.y, cr: e.crouch }); else B.hist.length = 0;
+    B.hist = B.hist || []; if (sees) B.hist.push({ t: M.time, x: e.x, z: e.z, y: e.y, cr: e.crouch, h: headOf(e) }); else B.hist.length = 0;
     while (B.hist.length > 1 && B.hist[1].t <= M.time - D.lag) B.hist.shift();
-    const seen = B.hist[0] || { x: e.x, z: e.z, y: e.y, cr: e.crouch };
+    const seen = B.hist[0] || { x: e.x, z: e.z, y: e.y, cr: e.crouch, h: headOf(e) };
     const fresh = B.last && M.time - B.last.t < 4;
 
     // --- the plan
@@ -150,8 +151,9 @@
       if (!B.locked) { B.locked = true; B.head = R() < D.hs; const a = R() * TAU, m = D.err * (.6 + R() * .8); B.err = [Math.cos(a) * m, Math.sin(a) * m * .6]; B.mt = rnd(.5, 1.2); }
       const k = Math.pow(.05, dt / D.flick); B.err[0] *= k; B.err[1] *= k;
       if ((B.mt -= dt) <= 0) { B.mt = rnd(.5, 1.3); B.err[0] += rnd(-1, 1) * D.jit * 1.5; B.err[1] += rnd(-1, 1) * D.jit; }   // a little re-adjust now and then
-      const dS = Math.hypot(seen.x - f.x, seen.z - f.z), toS = yawTo(f.x, f.z, seen.x, seen.z), mv = Math.hypot(f.vx, f.vz);
-      const ty = B.head && dS > 3 ? seen.y + lp(EYE, CEYE, seen.cr) - .03 : seen.y + lp(1.1, .75, seen.cr), aimP = Math.atan2(ty - eyeY(f), dS), pt = patOf(f, G);
+      // a head shot aims where the head really is (a crouch or a run moves it off the feet); a body shot at the chest
+      const hd = B.head && dS0(f, seen) > 3, ax = hd ? seen.h.x : seen.x, az = hd ? seen.h.z : seen.z, dS = Math.hypot(ax - f.x, az - f.z), toS = yawTo(f.x, f.z, ax, az), mv = Math.hypot(f.vx, f.vz);
+      const ty = hd ? seen.h.y - .01 : seen.y + lp(1.1, .75, seen.cr), aimP = Math.atan2(ty - eyeY(f), dS), pt = patOf(f, G);
       const wob = D.jit * (1 + mv * .25 + Math.min(2, f.spray * .15));
       tYaw = toS + B.err[0] + Math.sin(M.time * 3.1 + B.ph) * wob - pt[0] * D.spray; tPitch = aimP + B.err[1] + Math.cos(M.time * 2.7 + B.ph) * wob * .7 - pt[1] * D.spray;
       const off = Math.hypot(angDiff(toS - pt[0] * D.spray, f.yaw), aimP - pt[1] * D.spray - f.pitch), size = Math.atan2(.3, dS);

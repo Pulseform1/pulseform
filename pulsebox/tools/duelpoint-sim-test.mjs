@@ -15,7 +15,7 @@ const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name:
 const T = new Function('K', 'MP', code + `
   return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
-    get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
+    hitboxes, headOf, castShot, get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
 let failed = 0;
 const ok = (cond, name, extra = '') => { if (!cond) failed++; console.log((cond ? '  ok   ' : '  FAIL ') + name + (extra !== '' ? '  (' + extra + ')' : '')); };
@@ -63,15 +63,18 @@ function gunplayChecks() {
   const settle = input => { [M, P] = lab('lancer'); I = { ...idle(), mx: 1 }; run(.7); I = input; let t = 0; while (deg() > .3 && t < 1) { T.tick(DT); t += DT; } return Math.round(t * 1000); };
   const letGo = settle(idle()), counter = settle({ ...idle(), mx: -1 });
   ok(counter < letGo && counter <= 70, 'a counter-strafe is accurate again sooner than letting go', `${counter} ms against ${letGo} ms`);
-  { // a counter-strafe stops you dead: tap the other key and you never drift back the way it points
+  { // a quick counter-strafe tap stops you dead; holding the key carries you straight on the other way, with no pause at zero
     [M, P] = lab('lancer'); I = { ...idle(), mx: 1 }; run(.7);
     const right = () => P.vx * Math.cos(P.yaw) - P.vz * Math.sin(P.yaw), v0 = right(); let back = 0, t = 0, stopMs = -1;
     I = { ...idle(), mx: -1 };
-    for (; t < .15; t += DT) { T.tick(DT); back = Math.min(back, right()); if (stopMs < 0 && Math.abs(right()) < 1e-9) stopMs = Math.round(t * 1000); }
+    for (; t < .08; t += DT) { T.tick(DT); back = Math.min(back, right()); if (stopMs < 0 && Math.abs(right()) < 1e-9) stopMs = Math.round(t * 1000); }
     I = idle(); for (let i = 0; i < 30; i++) { T.tick(DT); back = Math.min(back, right()); }
-    ok(v0 > 5 && stopMs >= 0 && stopMs <= 80 && back === 0 && Math.hypot(P.vx, P.vz) === 0, 'a 150 ms counter-strafe tap stops you dead and never pushes you back', `from ${v0.toFixed(1)} m/s, still after ${stopMs} ms, worst backwards ${back.toFixed(3)} m/s`);
-    [M, P] = lab('lancer'); I = { ...idle(), mx: 1 }; run(.7); I = { ...idle(), mx: -1 }; run(.7);
-    ok(right() < -4, 'keep holding it and you do move the other way', right().toFixed(1) + ' m/s'); }
+    ok(v0 > 5 && stopMs >= 0 && stopMs <= 80 && back > -.3 && Math.hypot(P.vx, P.vz) < .01, 'a quick counter-strafe tap stops you dead', `from ${v0.toFixed(1)} m/s, still after ${stopMs} ms, worst backwards ${(-back).toFixed(2)} m/s`);
+    [M, P] = lab('lancer'); I = { ...idle(), mx: 1 }; run(.7); I = { ...idle(), mx: -1 }; let still = 0, to80 = -1;
+    for (t = 0; t < .5; t += DT) { T.tick(DT); if (Math.abs(right()) < .05) still += DT; if (to80 < 0 && right() < -.8 * 5.4) to80 = t; }
+    ok(still <= .034 && to80 > 0 && to80 <= .2, 'holding the other key turns you round with no pause at zero', `${Math.round(still * 1000)} ms at zero, 80% speed the other way after ${Math.round(to80 * 1000)} ms`);
+    [M, P] = lab('lancer'); let sum = 0, n = 0; for (let k = 0; k < 10; k++) { I = { ...idle(), mx: k % 2 ? -1 : 1 }; for (let i = 0; i < 18; i++) { T.tick(DT); sum += Math.abs(right()); n++; } }
+    ok(sum / n >= 3, 'strafing side to side (A-D-A-D every 300 ms) keeps its speed', (sum / n).toFixed(1) + ' m/s on average'); }
   [M, P] = lab('lancer'); I = { ...idle(), mx: .5 }; run(.7);
   ok(deg() > .3 && deg() < runErr * .6, 'walking is in between', deg().toFixed(2) + '°');
   [M, P] = lab('lancer'); I = { ...idle(), jump: true }; run(.2);
@@ -137,19 +140,20 @@ function moveChecks() {
   ok(lv.every((L, i) => !i || keys.every(k => L.D[k] <= lv[i - 1].D[k]) && L.D.turn >= lv[i - 1].D.turn), 'the bot gets sharper at every step up in rating', lv.map(L => L.D.n).join(' → '));
   T.STATS.rating = 1500; T.seed(3); T.startMatch({ mode: 'bot', diff: 'auto', map: 0 }); ok(T.foe().bot.D && T.foe().bot.diff >= 2, 'an AUTO match builds its bot from your rating', T.foe().bot.D.n);
 }
-function teamChecks(count) {
-  section(`${count} 2v2 bot matches`);
+function teamChecks(count, size = 2) {
+  const vs = `${size}v${size}`; section(`${count} ${vs} bot matches`);
   let done = 0, rounds = 0, nan = 0, err = 0, kills = 0; const why = {};
   for (let n = 0; n < count; n++) {
     try {
-      T.seed(n * 104729 + 3); T.startMatch({ mode: 'bot', diff: 1, size: 2, map: n % T.MAPS.length }); const M = T.M; M.fs[0].bot = { diff: 1 }; M.fs[0].local = false;
-      if (!n) ok((M.fs.length === 4 && M.fs.filter(f => f.team === 0).length === 2), 'a 2v2 has two on each team');
+      T.seed(n * 104729 + 3 + size); T.startMatch({ mode: 'bot', diff: 1, size, map: (n * size) % T.MAPS.length }); const M = T.M; M.fs[0].bot = { diff: 1 }; M.fs[0].local = false;
+      if (!n) { ok((M.fs.length === 2 * size && M.fs.filter(f => f.team === 0).length === size), `a ${vs} has ${size} on each team`);
+        const spots = M.fs.map(f => f.x.toFixed(1) + ',' + f.z.toFixed(1)); ok(new Set(spots).size === spots.length, `everyone in a ${vs} starts on their own spot`, spots.join(' ')); }
       T.on('end', (wi, w) => { why[w] = (why[w] || 0) + 1; });
       for (let i = 0; i < 60 * 60 * 25 && !M.over; i++) { T.tick(DT); if (i % 60 === 0 && M.fs.some(f => !Number.isFinite(f.x + f.z + f.y))) nan++; }
       if (M.over) done++; rounds += M.wins[0] + M.wins[1]; kills += M.fs.reduce((a, f) => a + f.stat.k, 0);
     } catch (e) { err++; console.log(e.stack); }
   }
-  ok(!err, 'no errors'); ok(done === count, 'every 2v2 finishes', `${done}/${count}`); ok(!nan, 'no NaN');
+  ok(!err, 'no errors'); ok(done === count, `every ${vs} finishes`, `${done}/${count}`); ok(!nan, 'no NaN');
   console.log(`    ${rounds} rounds, ${kills} kills`);
 }
 function matchChecks(count) {
@@ -282,6 +286,38 @@ function twoSiteChecks(count) {
   console.log(`    ${Object.entries(why).map(([k, v]) => `${T.WHY[k]} ${v}`).join(', ')}`);
 }
 
+function hitboxChecks() {
+  section('hitboxes');
+  let [M, P, F] = lab('lancer'); T.setInput(() => idle());
+  // the rival stands 6 m east of the shooter on open ground
+  const place = o => { Object.assign(F, { x: P.x + 6, z: P.z, y: P.y, yaw: 0, pitch: 0, crouch: 0, vx: 0, vz: 0, sprinting: false, slide: null, alive: true }, o); };
+  const shootAt = (q, from) => { if (from) Object.assign(P, from); const e = T.eyeY(P), dx = q[0] - P.x, dy = q[1] - e, dz = q[2] - P.z, L = Math.hypot(dx, dy, dz); return T.castShot(P, [dx / L, dy / L, dz / L]); };
+  const part = s => !s.hit ? 'miss' : s.hit.head ? 'head' : s.hit.leg ? 'legs' : 'body';
+  place({ crouch: 1, yaw: 0 });   // crouched, side on (facing north): the head is pushed forward and down off the feet
+  const h = T.headOf(F); let s = shootAt([h.x, h.y, h.z]);
+  ok(part(s) === 'head', 'a shot at a crouched rival\'s head is a headshot', `head ${(h.y - F.y).toFixed(2)} m up, ${Math.hypot(h.x - F.x, h.z - F.z).toFixed(2)} m ahead of the feet: ${part(s)}`);
+  s = shootAt([F.x, F.y + 1.10, F.z - .02]);
+  ok(part(s) !== 'head', 'the old spot (eye height straight above the feet) is no longer the head when crouched', part(s));
+  place({ yaw: 0 });   // standing side on to the shooter (facing north): narrow front to back
+  s = shootAt([F.x, F.y + 1.2, F.z + .32]);
+  ok(part(s) === 'miss', 'a shot 32 cm behind a side-on back misses (the old square box took it)', part(s));
+  s = shootAt([F.x, F.y + 1.2, F.z - .15]);
+  ok(part(s) === 'body', 'a shot at a side-on chest hits the body', part(s));
+  place({ yaw: Math.PI / 2 });   // facing the shooter square on: shoulder wide
+  s = shootAt([F.x, F.y + 1.2, F.z + .26]);
+  ok(part(s) === 'body', 'facing you, the body is shoulder wide', part(s));
+  s = shootAt([F.x, F.y + .7, F.z]);
+  ok(part(s) === 'legs', 'below the hips is the legs', part(s));
+  place({ yaw: 0 });   // the arms and gun held out in front (to the north) are body
+  s = shootAt([F.x + .04, F.y + 1.38, F.z - .45]);
+  ok(part(s) === 'body', 'the arms held out in front count as body', part(s));
+  place({ yaw: Math.PI / 2 });   // up close and low, the bullet meets the chest before it reaches the head
+  { const hh = T.headOf(F), from = { x: F.x - .62, z: F.z, crouch: 1 }; s = shootAt([hh.x, hh.y, hh.z], from);
+    ok(part(s) === 'body', 'whichever part a bullet meets first is the one it hits', part(s)); Object.assign(P, { crouch: 0 }); }
+  [M, P, F] = lab('lancer'); place({ vx: 0, vz: -7, sprinting: true });   // sprinting north, leaning into it
+  { const hh = T.headOf(F); s = shootAt([hh.x, hh.y, hh.z]); ok(part(s) === 'head' && Math.hypot(hh.x - F.x, hh.z - F.z) > .15, 'a sprinting rival\'s head leans into the run, and that is where it is hit', part(s)); }
+}
+
 function printMap() {
   const g = T.SRC.map(r => [...r]); let n = 0;
   const mark = (pts, ch) => { for (const p of pts) { const i = Math.floor(p[0] / T.CS), j = Math.floor(p[1] / T.CS); if (g[j] && '.oAD'.includes(g[j][i])) g[j][i] = ch; } };
@@ -294,9 +330,11 @@ const arg = process.argv[2];
 if (arg === 'map') { printMap(); process.exit(0); }
 if (arg === 'matches') matchChecks(+process.argv[3] || 20);
 else if (arg === 'two') twoSiteChecks(+process.argv[3] || 12);
-else if (arg === 'quick') { mapChecks(); gunplayChecks(); moveChecks(); loadChecks(); }
+else if (arg === 'quick') { mapChecks(); gunplayChecks(); hitboxChecks(); moveChecks(); loadChecks(); }
+else if (arg === 'hit') hitboxChecks();
+else if (arg === 'teams') { teamChecks(7); teamChecks(6, 3); }
 else if (arg === 'kits') kitChecks();
 else if (arg === 'skins') skinChecks();
-else { mapChecks(); gunplayChecks(); moveChecks(); loadChecks(); kitChecks(); skinChecks(); teamChecks(7); matchChecks(20); twoSiteChecks(12); }
+else { mapChecks(); gunplayChecks(); hitboxChecks(); moveChecks(); loadChecks(); kitChecks(); skinChecks(); teamChecks(7); teamChecks(6, 3); matchChecks(20); twoSiteChecks(12); }
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

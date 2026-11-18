@@ -24,24 +24,48 @@
     for (const word of s.split(' ')) { const t = line ? line + ' ' + word : word; if (g.measureText(t).width > w && line) { g.fillText(line, x, y); line = word; y += px * lh; } else line = t; }
     g.fillText(line, x, y); return y + px * lh;
   }
+  // the crosshair: every setting, the presets (pick one, then change anything), the swatches, and a share code
+  const XH_BASE = { shape: 'cross', col: '#35e0c8', alpha: 1, len: 9, gap: 3, thick: 3, dot: true, dotSize: 0, outline: true, oth: 1.5, dyn: true, out: false, olen: 4, ogap: 6 };
+  const XH_SHAPES = ['cross', 'tee', 'x', 'circle', 'square', 'chevron', 'dot'];
   const XH_PRESETS = [
-    { n: 'Classic', shape: 'cross', col: '#35e0c8', len: 9, gap: 3, thick: 3, dot: true, outline: true, dyn: true },
-    { n: 'Tight', shape: 'cross', col: '#ffffff', len: 5, gap: 2, thick: 2, dot: false, outline: true, dyn: false },
-    { n: 'Dot', shape: 'dot', col: '#7dff9a', len: 0, gap: 0, thick: 5, dot: true, outline: true, dyn: false },
-    { n: 'Ring', shape: 'circle', col: '#ffd23f', len: 0, gap: 7, thick: 2, dot: true, outline: false, dyn: true },
-    { n: 'Tee', shape: 'tee', col: '#ff8a3d', len: 10, gap: 4, thick: 3, dot: false, outline: true, dyn: true },
-  ];
-  const XH_COLS = ['#35e0c8', '#7dff9a', '#ffffff', '#ffd23f', '#ff8a3d', '#ff5a8a', '#6fb8ff', '#c58cff'];
-  // the crosshair, centred on x,y: err is the extra gap (in HUD units) that your current inaccuracy opens it by
-  function drawCrosshair(g, x, y, err, k = 1) {
-    const c = CFG.xh, th = Math.max(1, c.thick * k), gap = c.gap * k + (c.dyn ? err : 0), len = c.len * k, o = c.outline ? 1.5 : 0;
-    const arm = (ax, ay, w, h) => { if (o) { g.fillStyle = 'rgba(0,0,0,.75)'; g.fillRect(ax - o, ay - o, w + o * 2, h + o * 2); } g.fillStyle = c.col; g.fillRect(ax, ay, w, h); };
-    if (c.shape === 'circle') { const r = gap + 4 * k; if (o) { g.strokeStyle = 'rgba(0,0,0,.75)'; g.lineWidth = th + o * 2; g.beginPath(); g.arc(x, y, r, 0, TAU); g.stroke(); } g.strokeStyle = c.col; g.lineWidth = th; g.beginPath(); g.arc(x, y, r, 0, TAU); g.stroke(); }
-    else if (c.shape !== 'dot' && len > 0) {
-      if (o) { g.fillStyle = 'rgba(0,0,0,.75)'; for (const [ax, ay, w, h] of [[x - gap - len, y - th / 2, len, th], [x + gap, y - th / 2, len, th], [x - th / 2, y + gap, th, len]].concat(c.shape === 'tee' ? [] : [[x - th / 2, y - gap - len, th, len]])) g.fillRect(ax - o, ay - o, w + o * 2, h + o * 2); }
-      g.fillStyle = c.col; g.fillRect(x - gap - len, y - th / 2, len, th); g.fillRect(x + gap, y - th / 2, len, th); g.fillRect(x - th / 2, y + gap, th, len); if (c.shape !== 'tee') g.fillRect(x - th / 2, y - gap - len, th, len);
-    }
-    if (c.dot || c.shape === 'dot') { const d = c.shape === 'dot' ? th * 1.2 : Math.max(2, th * .8); arm(x - d / 2, y - d / 2, d, d); }
+    { n: 'Classic' },
+    { n: 'Tight', col: '#ffffff', len: 5, gap: 2, thick: 2, dot: false, dyn: false },
+    { n: 'Dot', shape: 'dot', col: '#7dff9a', thick: 5, dyn: false },
+    { n: 'Ring', shape: 'circle', col: '#ffd23f', gap: 7, thick: 2, outline: false },
+    { n: 'Tee', shape: 'tee', col: '#ff8a3d', len: 10, gap: 4, dot: false },
+    { n: 'Pinpoint', col: '#ff5ac8', len: 4, gap: 0, thick: 2, dot: false, dyn: false },
+    { n: 'Pro', col: '#c8ff3d', len: 5, gap: 2, thick: 2, dot: false, dyn: false, out: true, olen: 3, ogap: 6 },
+    { n: 'X', shape: 'x', col: '#ffffff', len: 7, gap: 3, thick: 2, dotSize: 2 },
+    { n: 'Box', shape: 'square', col: '#6fb8ff', gap: 6, thick: 2 },
+    { n: 'Chevron', shape: 'chevron', col: '#ffd23f', len: 8, gap: 2, thick: 3, dot: false },
+  ].map(p => Object.assign({}, XH_BASE, p));
+  const XH_COLS = ['#35e0c8', '#7dff9a', '#c8ff3d', '#ffffff', '#ffd23f', '#ff8a3d', '#ff3b3b', '#ff5ac8', '#e23dff', '#c58cff', '#6fb8ff', '#3d7bff'];
+  // a share code: the whole crosshair in one short line (DPX1-...), to copy to a friend or keep
+  const xhCode = c => 'DPX1-' + [XH_SHAPES.indexOf(c.shape), c.col.slice(1), Math.round((c.alpha == null ? 1 : c.alpha) * 10), c.len, c.gap, c.thick, (c.dot ? 1 : 0) | (c.outline ? 2 : 0) | (c.dyn ? 4 : 0) | (c.out ? 8 : 0), c.dotSize || 0, Math.round((c.oth || 1.5) * 2), c.olen || 0, c.ogap || 0].map(v => typeof v === 'number' ? Math.max(0, Math.round(v)).toString(36) : v).join('-').toUpperCase();
+  function xhFromCode(str) {
+    const p = String(str || '').trim().toUpperCase().split('-'); if (p[0] !== 'DPX1' || p.length !== 12 || !/^[0-9A-F]{6}$/.test(p[2]) || p.some((v, i) => i > 0 && !/^[0-9A-Z]+$/.test(v))) return null;
+    const n = i => parseInt(p[i], 36), f = n(7), c = { shape: XH_SHAPES[n(1)] || 'cross', col: '#' + p[2].toLowerCase(), alpha: cl(n(3) / 10, .2, 1), len: cl(n(4), 0, 22), gap: cl(n(5), 0, 16), thick: cl(n(6), 1, 8),
+      dot: !!(f & 1), outline: !!(f & 2), dyn: !!(f & 4), out: !!(f & 8), dotSize: cl(n(8), 0, 8), oth: cl(n(9) / 2, .5, 3), olen: cl(n(10), 1, 16), ogap: cl(n(11), 0, 20) };
+    return Object.values(c).every(v => typeof v !== 'number' || Number.isFinite(v)) ? c : null;
+  }
+  // the crosshair, centred on x,y: err is the extra gap (in HUD units) that your current inaccuracy opens it by.
+  // Drawn in two passes, the dark outline under everything first, so outlines never cover the colour.
+  function drawCrosshair(g, x, y, err, k = 1, c = CFG.xh) {
+    const sh = c.shape, th = Math.max(1, c.thick * k), gap = c.gap * k + (c.dyn ? err : 0), len = c.len * k, o = c.outline ? Math.max(.5, (c.oth || 1.5) * Math.max(1, k * .8)) : 0, bars = [];
+    const arms = (L, G) => { bars.push([-G - L, -th / 2, L, th], [G, -th / 2, L, th], [-th / 2, G, th, L]); if (sh !== 'tee') bars.push([-th / 2, -G - L, th, L]); };
+    if ((sh === 'cross' || sh === 'tee' || sh === 'x') && len > 0) arms(len, gap);
+    if (c.out && (sh === 'cross' || sh === 'tee' || sh === 'x')) arms((c.olen || 4) * k, gap + len + (c.ogap || 0) * k);   // outer lines, past the inner ones
+    const d = c.dotSize ? c.dotSize * k * (sh === 'dot' ? 1.4 : 1) : sh === 'dot' ? th * 1.2 : Math.max(2, th * .8), r = gap + 4 * k, s = Math.max(3 * k, len);
+    g.save(); g.globalAlpha = c.alpha == null ? 1 : c.alpha; g.translate(x, y); g.lineJoin = sh === 'square' ? 'miter' : 'round'; g.lineCap = sh === 'chevron' ? 'round' : 'butt';
+    const pass = (col, e) => {
+      g.fillStyle = g.strokeStyle = col; g.lineWidth = th + e * 2;
+      if (sh === 'x') g.rotate(Math.PI / 4); for (const [a, b, w, h] of bars) g.fillRect(a - e, b - e, w + e * 2, h + e * 2); if (sh === 'x') g.rotate(-Math.PI / 4);
+      if (sh === 'circle') { g.beginPath(); g.arc(0, 0, r, 0, TAU); g.stroke(); }
+      else if (sh === 'square') { g.beginPath(); g.rect(-r, -r, r * 2, r * 2); g.stroke(); }
+      else if (sh === 'chevron') { g.beginPath(); g.moveTo(-s, gap + s * .75); g.lineTo(0, gap); g.lineTo(s, gap + s * .75); g.stroke(); }
+      if (c.dot || sh === 'dot') g.fillRect(-d / 2 - e, -d / 2 - e, d + e * 2, d + e * 2);
+    };
+    if (o) pass('rgba(0,0,0,.8)', o); pass(c.col, 0); g.restore();
   }
 
   let hitMark = null, heard = null, mmCanvas = null;
@@ -145,7 +169,7 @@
     tx(g, 'NOW ENTERING', x0 + 26 * u, V.y0 + 86 * u, 14 * u, DIM, 'left', 800);
     tx(g, MAP.n.toUpperCase(), x0 + 22 * u, V.y0 + 140 * u, 86 * u, BONE, 'left', 900);
     tx(g, MAP.tag || TAGS[MAP.k] || '', x0 + 26 * u, V.y0 + 196 * u, 16 * u, '#c9cfd8', 'left', 600);
-    const chips = [two ? 'TWO SITES' : 'ONE SITE', M.fs.length > 2 ? '2V2' : '1V1', 'FIRST TO ' + WIN_ROUNDS];
+    const chips = [two ? 'TWO SITES' : 'ONE SITE', vsLabel(Math.ceil(M.fs.length / 2)), 'FIRST TO ' + WIN_ROUNDS];
     let cx = x0 + 26 * u; for (const c of chips) { g.font = `800 ${12 * u}px ${FONT}`; const w = g.measureText(c).width + 22 * u; rr(g, cx, V.y0 + 222 * u, w, 26 * u, 4, 'rgba(239,233,220,.1)', 'rgba(239,233,220,.25)', 1); tx(g, c, cx + w / 2, V.y0 + 235 * u, 12 * u, BONE, 'center', 800); cx += w + 8 * u; }
     tx(g, side === 'att' ? 'YOU ATTACK FIRST' : 'YOU DEFEND FIRST', x0 + 26 * u, V.y0 + 282 * u, 22 * u, side === 'att' ? FOE : YOU, 'left', 900);
     tx(g, side === 'att' ? (two ? 'Plant the charge on site A or B' : 'Plant the charge on the site') : (two ? 'Hold both sites. Stop the plant, or defuse it' : 'Stop the plant, or defuse it'), x0 + 26 * u, V.y0 + 308 * u, 14 * u, '#c9cfd8', 'left', 600);
@@ -156,13 +180,14 @@
     g.restore();
     // the players: a card each
     const mine = M.fs.filter(q => q.team === P.team).sort((a, b) => (b === P) - (a === P)), theirs = M.fs.filter(q => q.team !== P.team);
-    const cw = Math.min(250 * u, (W - 160 * u) / 4), ch = 74 * u, y = V.y1 - ch - 40 * u;
+    const per = Math.max(2, mine.length, theirs.length), cw = Math.min(250 * u, (W - 140 * u - (2 * per - 2) * 10 * u) / (2 * per)), ch = 74 * u, y = V.y1 - ch - 40 * u, slim = cw < 215 * u;   // 3v3 cards are narrower
     const card = (q, x, col, i) => {
       const a = smooth(cl((rt - .35 - i * .12) / .4, 0, 1)); g.save(); g.globalAlpha = a; g.translate(0, (1 - a) * 30 * u);
       rr(g, x, y, cw, ch, 6, 'rgba(12,16,22,.88)', q === P ? 'rgba(239,233,220,.6)' : 'rgba(239,233,220,.14)', q === P ? 2 : 1); g.fillStyle = col; g.fillRect(x, y, 5 * u, ch);
       portraitTile(g, q.op, x + 8 * u, y + 6 * u, 56 * u, ch - 12 * u, { r: 4 });
-      tx(g, q.name.toUpperCase(), x + 74 * u, y + 24 * u, 16 * u, BONE, 'left', 800); tx(g, (OPS[q.op] || OPS.vex).n, x + 74 * u, y + 44 * u, 11 * u, (OPS[q.op] || OPS.vex).col, 'left', 800);
-      if (q.rating) { rankBadge(g, x + cw - 24 * u, y + 28 * u, 13 * u, q.rating); tx(g, rankName(q.rating).toUpperCase(), x + cw - 42 * u, y + 24 * u, 11 * u, RANK_COL[diffFor(q.rating).i], 'right', 800); tx(g, String(q.rating), x + cw - 42 * u, y + 42 * u, 13 * u, BONE, 'right', 700); }
+      tx(g, q.name.toUpperCase(), x + 74 * u, y + 24 * u, (slim ? 14 : 16) * u, BONE, 'left', 800); tx(g, (OPS[q.op] || OPS.vex).n, x + 74 * u, y + 44 * u, 11 * u, (OPS[q.op] || OPS.vex).col, 'left', 800);
+      if (q.rating && slim) { rankBadge(g, x + cw - 22 * u, y + 26 * u, 12 * u, q.rating); tx(g, String(q.rating), x + cw - 22 * u, y + 56 * u, 11 * u, BONE, 'center', 700); }
+      else if (q.rating) { rankBadge(g, x + cw - 24 * u, y + 28 * u, 13 * u, q.rating); tx(g, rankName(q.rating).toUpperCase(), x + cw - 42 * u, y + 24 * u, 11 * u, RANK_COL[diffFor(q.rating).i], 'right', 800); tx(g, String(q.rating), x + cw - 42 * u, y + 42 * u, 13 * u, BONE, 'right', 700); }
       else tx(g, '—', x + cw - 24 * u, y + 30 * u, 14 * u, DIM, 'center');
       tx(g, q.bot ? 'BOT' : q.net && !q.isBot ? 'PLAYER' : q === P ? 'YOU' : 'BOT', x + 74 * u, y + 60 * u, 10 * u, DIM, 'left', 800);
       g.restore();

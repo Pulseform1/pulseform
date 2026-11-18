@@ -74,20 +74,18 @@
       if (f.slide.t <= 0 || v2 < 2.4 || !f.ground && f.vy > 0) { f.slide = null; f.slideCD = SLIDE_CD; }
     } else {
       // head for the wanted velocity at a fixed rate: quickest when braking against your motion (the counter-strafe), slowest in the air.
-      // A counter-strafe stops you dead: each axis (sideways, forward) brakes to exactly zero and never overshoots, then stays
-      // pinned at zero for a moment while the key is still down, so a tap never carries you back the other way. Hold the key
-      // past that moment and you start moving that way as usual.
+      // A counter-strafe brakes each axis (sideways, forward) hard to exactly zero without overshooting in that step, so a short tap
+      // leaves you still and accurate. Keep holding the key and you carry straight on the other way: no pause at zero, so
+      // strafing side to side (A-D-A-D) keeps its speed.
       const rx = c, rz = -s, fx = -s, fz = -c, vR = f.vx * rx + f.vz * rz, vF = f.vx * fx + f.vz * fz;
-      const tR0 = (wx * rx + wz * rz) * sp, tF0 = (wx * fx + wz * fz) * sp, cs = f.cs || (f.cs = [0, 0, 0, 0]);
-      const pin = (t, i) => { const d = Math.sign(t); if (cs[i] > 0) { if (f.ground && d === cs[i + 1]) { cs[i] -= dt; return 0; } cs[i] = 0; } return t; };
-      const tR = pin(tR0, 0), tF = pin(tF0, 2), against = (t, v) => f.ground && t !== 0 && Math.sign(t) === -Math.sign(v) && Math.abs(v) > .05;
+      const tR = (wx * rx + wz * rz) * sp, tF = (wx * fx + wz * fz) * sp, against = (t, v) => f.ground && t !== 0 && Math.sign(t) === -Math.sign(v) && Math.abs(v) > .05;
       const cR = against(tR, vR), cF = against(tF, vF);
       const tx = tR * rx + tF * fx, tz = tR * rz + tF * fz, ddx = tx - f.vx, ddz = tz - f.vz, dl = Math.hypot(ddx, ddz);
       const rate = !f.ground ? 6 : cR || cF ? 80 : Math.hypot(tx, tz) < .01 ? 26 : f.sprinting ? 30 : 44;
       if (dl > 0) { const stp = Math.min(dl, rate * dt); f.vx += ddx / dl * stp; f.vz += ddz / dl * stp; }
-      for (const [on, v0, ax, az, i] of [[cR, vR, rx, rz, 0], [cF, vF, fx, fz, 2]]) {
+      for (const [on, v0, ax, az] of [[cR, vR, rx, rz], [cF, vF, fx, fz]]) {
         if (!on) continue; const v1 = f.vx * ax + f.vz * az;
-        if (Math.sign(v1) !== Math.sign(v0)) { f.vx -= v1 * ax; f.vz -= v1 * az; cs[i] = CS_HOLD; cs[i + 1] = Math.sign(i ? tF : tR); }   // stopped: clamp to zero and pin
+        if (Math.sign(v1) !== Math.sign(v0)) { f.vx -= v1 * ax; f.vz -= v1 * az; }   // braked through zero this step: stop exactly at zero
       }
     }
     if (f.dash) { f.dash.t -= dt; f.vx = f.dash.dx * 36; f.vz = f.dash.dz * 36; if (f.dash.t <= 0) { f.dash = null; f.vx *= .2; f.vz *= .2; } }
@@ -131,14 +129,38 @@
   // ray against a sphere / an axis-aligned box: the distance, or -1
   function raySphere(o, d, c, r) { const ox = o[0] - c[0], oy = o[1] - c[1], oz = o[2] - c[2], b = ox * d[0] + oy * d[1] + oz * d[2], q = ox * ox + oy * oy + oz * oz - r * r, h = b * b - q; if (h < 0) return -1; const t = -b - Math.sqrt(h); return t > 0 ? t : -1; }
   function rayBox(o, d, mn, mx) { let t0 = 0, t1 = 1e9; for (let a = 0; a < 3; a++) { const inv = 1 / (d[a] || 1e-9); let ta = (mn[a] - o[a]) * inv, tb = (mx[a] - o[a]) * inv; if (ta > tb) { const s = ta; ta = tb; tb = s; } if (ta > t0) t0 = ta; if (tb < t1) t1 = tb; if (t0 > t1) return -1; } return t0; }
-  // where a fighter can be hit: a head sphere, and a body box whose lower 45% is the legs
-  function hitboxes(f) { const e = eyeY(f); return { head: [f.x, e - .02, f.z], hr: .2, mn: [f.x - .3, f.y, f.z - .3], mx: [f.x + .3, e - .2, f.z + .3], leg: f.y + (e - .2 - f.y) * .45 }; }
+  /* where a fighter can be hit, matched to the model as it is posed (measured from the agent models):
+     - the head: a sphere that sits where the model's head is. A crouch drops it and pushes it forward, a run or sprint
+       leans it into the stride, the aim nods it, a slide lays it back;
+     - the body: a box turned with the fighter, shoulder-wide and chest-deep, from the feet to the neck. Below the hips
+       is the legs;
+     - the arms and the gun held out in front count as body too. */
+  function headOf(f) {
+    const sl = f.slide ? 1 : 0, cr = f.crouch * (1 - sl), spr = f.sprinting ? 1 : 0, amp = Math.min(1, Math.hypot(f.vx, f.vz) / 3.5) * (spr ? 1.15 : .8) * (1 - sl);
+    const up = lp(1.652, 1.221, cr) - .038 * spr - .636 * sl, fw = .207 * cr + .07 * amp + .15 * spr + .07 * f.pitch - .336 * sl;
+    return { x: f.x - Math.sin(f.yaw) * fw, y: f.y + up + .02, z: f.z - Math.cos(f.yaw) * fw, up, cr, sl, spr, amp };
+  }
+  function hitboxes(f) {
+    const h = headOf(f), top = f.y + h.up - .15, fc = .19 * h.cr - .34 * h.sl, hd = .23 + .04 * h.cr + .06 * h.amp + .3 * h.sl, ap = f.pitch;
+    return { head: [h.x, h.y, h.z], hr: .18, x: f.x, z: f.z, yaw: f.yaw, leg: f.y + lp(.92, .55, h.cr) - .5 * h.sl,
+      body: [-.3, f.y, fc - hd, .3, top, fc + hd],
+      arms: h.sl ? null : [-.18, top - .32 + Math.min(0, ap) * .3 - .2 * h.spr, .1 + .19 * h.cr, .26, top + .04 + Math.max(0, ap) * .3 - .15 * h.spr, .62 + .19 * h.cr] };
+  }
+  // a ray against a box in a fighter's own frame (x to its right, z ahead of it): turn the ray into that frame and test there
+  function rayFrame(o, d, hb, b) {
+    if (!b) return -1; const r0 = Math.cos(hb.yaw), r2 = -Math.sin(hb.yaw), f0 = -Math.sin(hb.yaw), f2 = -Math.cos(hb.yaw), ox = o[0] - hb.x, oz = o[2] - hb.z;
+    return rayBox([ox * r0 + oz * r2, o[1], ox * f0 + oz * f2], [d[0] * r0 + d[2] * r2, d[1], d[0] * f0 + d[2] * f2], [b[0], b[1], b[2]], [b[3], b[4], b[5]]);
+  }
   // a bullet from f's eyes along d: what it meets first (the world, a Rampart, or the rival)
   function castShot(f, d) {
     const o = [f.x, eyeY(f), f.z]; let dist = rayGrid(o[0], o[1], o[2], d[0], d[1], d[2], 140), hit = null; const n = [rayN[0], rayN[1], rayN[2]];
     for (const w of M.walls) { const t = rayBox(o, d, [w.x0, 0, w.z0], [w.x1, 3 * w.grow, w.z1]); if (t > 0 && t < dist) { dist = t; n[0] = -Math.sign(d[0]) * (w.x1 - w.x0 < 1 ? 1 : 0); n[1] = 0; n[2] = -Math.sign(d[2]) * (w.x1 - w.x0 < 1 ? 0 : 1); } }
     let sentry = null; for (const b of sentryBoxes(f)) { const t = rayBox(o, d, b.mn, b.mx); if (t > 0 && t < dist) { dist = t; sentry = b.s; } }   // an enemy sentry is in the way
-    for (const v of M.fs) if (v.team !== f.team && v.alive) { const hb = hitboxes(v), th = raySphere(o, d, hb.head, hb.hr), tb = rayBox(o, d, hb.mn, hb.mx); if (th > 0 && th < dist) { dist = th; hit = { f: v, head: true }; sentry = null; } else if (tb > 0 && tb < dist) { dist = tb; hit = { f: v, head: false, leg: o[1] + d[1] * tb < hb.leg }; sentry = null; } }
+    for (const v of M.fs) if (v.team !== f.team && v.alive) {   // whichever part of them the bullet meets first
+      const hb = hitboxes(v), th = raySphere(o, d, hb.head, hb.hr), tb = rayFrame(o, d, hb, hb.body), ta = rayFrame(o, d, hb, hb.arms);
+      const tbody = tb > 0 && (ta <= 0 || tb <= ta) ? tb : ta, near = th > 0 && (tbody <= 0 || th <= tbody) ? th : tbody;
+      if (near > 0 && near < dist) { dist = near; sentry = null; hit = near === th ? { f: v, head: true } : { f: v, head: false, leg: near === tb && o[1] + d[1] * tb < hb.leg }; }
+    }
     return { o, d, dist, hit, sentry, n, end: [o[0] + d[0] * dist, o[1] + d[1] * dist, o[2] + d[2] * dist] };
   }
   // pull the trigger: one shot, a burst (the Pip's alternate fire, the Mako aimed down sights), or a knife swing

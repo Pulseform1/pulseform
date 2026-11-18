@@ -11,7 +11,9 @@
   function sendProfile(force) { if (!MP.online()) return; const p = partyProfile(), key = JSON.stringify(p); if (!force && key === PARTY.sent) return; PARTY.sent = key; PARTY.prof.set(myId(), p); MP.send(Object.assign({ t: 'lprof' }, p)); }
   // the host keeps everyone on a team: newcomers go to the shorter side, and nobody stays on a team that has no room
   function hostTeams() {
-    if (!MP.online() || !MP.isHost()) return; const ps = MP.players(), T2 = PARTY.teams, size = PARTY.set.size;
+    if (!MP.online() || !MP.isHost()) return; const ps = MP.players(), T2 = PARTY.teams;
+    if (ps.length > 2 * PARTY.set.size) PARTY.set.size = teamSize(Math.ceil(ps.length / 2));   // more people than seats: the teams grow (up to 3v3)
+    const size = PARTY.set.size;
     for (const id of Object.keys(T2)) if (!ps.some(p => String(p.id) === id)) delete T2[id];
     for (const p of ps) if (T2[p.id] == null) { const n0 = ps.filter(q => T2[q.id] === 0).length, n1 = ps.filter(q => T2[q.id] === 1).length; T2[p.id] = n0 <= n1 && n0 < size ? 0 : n1 < size ? 1 : 0; }
     for (const t of [0, 1]) { const on = ps.filter(q => T2[q.id] === t); while (on.length > size) { const q = on.pop(); T2[q.id] = 1 - t; } }
@@ -37,7 +39,7 @@
     CFG.sites = PARTY.set.sites; MP.start();
   }
   // the room tells the match who is where: teams, operatives and ratings from the lobby
-  MP.opts.max = 4; MP.opts.min = 1;
+  MP.opts.max = 6; MP.opts.min = 1;
   const baseConfig = MP.opts.config;
   MP.opts.config = () => { const c = baseConfig(); c.map = pick(mapPool(PARTY.set.sites)); c.sites = PARTY.set.sites; c.teams = Object.assign({}, PARTY.teams); c.size = PARTY.set.size; c.fill = PARTY.set.fill;
     c.hops = {}; c.rts = {}; for (const [id, p] of PARTY.prof) { c.hops[id] = p.op; c.rts[id] = p.rt; } c.hops[myId()] = CFG.op; c.rts[myId()] = STATS.rating; return c; };
@@ -100,9 +102,9 @@
     const sy = V.y1 - 92 * u;
     if (host) {
       const sx = 640 - 470 * u, cs = (opts, val, fn, w) => { choice(g, sx2, sy, w, tapH(34), opts, val, v => { fn(v); MP.send({ t: 'lteam', teams: PARTY.teams, set: S2 }); hostTeams(); }); sx2 += w + 10 * u; }; let sx2 = sx;
-      cs([[2, 'TWO SITES'], [1, 'ONE SITE']], S2.sites, v => { S2.sites = v; }, 230 * u); cs([[1, '1V1'], [2, '2V2']], S2.size, v => { S2.size = v; }, 140 * u); cs([[true, 'BOTS FILL'], [false, 'NO BOTS']], S2.fill, v => { S2.fill = v; }, 200 * u);
+      cs([[2, 'TWO SITES'], [1, 'ONE SITE']], S2.sites, v => { S2.sites = v; }, 230 * u); cs([[1, '1V1'], [2, '2V2'], [3, '3V3']], S2.size, v => { S2.size = Math.max(v, teamSize(Math.ceil(ps.length / 2))); }, 200 * u); cs([[true, 'BOTS FILL'], [false, 'NO BOTS']], S2.fill, v => { S2.fill = v; }, 200 * u);
       const ok = readyAll(); btn(g, sx2, sy - 6 * u, 200 * u, 48 * u, 'START MATCH', startParty, { on: ok, fill: FOE, solid: ok, col: ok ? INK : DIM, px: 17 * u, sub: ok ? '' : 'waiting for ready' });
-    } else tx(g, `${S2.sites === 2 ? 'TWO SITES' : 'ONE SITE'}  ·  ${S2.size === 1 ? '1V1' : '2V2'}  ·  ${S2.fill ? 'BOTS FILL EMPTY SEATS' : 'NO BOTS'}  ·  the host starts the match`, 640, sy + 14 * u, 13 * u, DIM, 'center', 800);
+    } else tx(g, `${S2.sites === 2 ? 'TWO SITES' : 'ONE SITE'}  ·  ${vsLabel(S2.size)}  ·  ${S2.fill ? 'BOTS FILL EMPTY SEATS' : 'NO BOTS'}  ·  the host starts the match`, 640, sy + 14 * u, 13 * u, DIM, 'center', 800);
     const waiting = ps.filter(p => p.id !== MP.hostId && !(p.id === me2 ? PARTY.ready : (PARTY.prof.get(p.id) || {}).rd)).length;
     tx(g, ps.length < 2 ? 'Send your friends the code. You can also start now and play with bots.' : waiting ? `Waiting for ${waiting} to ready up` : 'Everyone is ready', 640, by - 22 * u, 13 * u, waiting ? DIM : YOU, 'center', 800);
   }

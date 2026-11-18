@@ -23,12 +23,13 @@
   const INK = '#0c1016', BONE = '#efe9dc', YOU = '#35e0c8', FOE = '#f43f3f', GOLD = '#ffd23f', DIM = '#8d97a6', WARN = '#ff5a4d', COIN = '#ffc94a';
 
   // settings and lifetime stats live in the kit's save for this game
-  // xh is the crosshair: shape (cross, dot, circle, tee), colour, arm length, centre gap, thickness, a centre dot,
-  // a dark outline, and whether it opens with your error (dyn) or stays fixed
+  // xh is the crosshair: shape (cross, tee, x, circle, square, chevron, dot), colour and opacity, arm length, centre gap,
+  // thickness, a centre dot and its size, a dark outline and its thickness, outer lines, and whether it opens with your
+  // error (dyn) or stays fixed
   // sens: mouse turn speed; zsens: multiplier while aiming down sights or scoped; crouch: 'hold' or 'toggle'; full: go full
   // screen when you click in to play, which lets the game keep Ctrl shortcuts (Ctrl+W) from the browser
   const CFG = { v: 4, sens: .45, zsens: 1, tsens: 1, crouch: 'hold', full: true, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 'auto', team: 'versus', size: 2, sites: 2,
-    xh: { shape: 'cross', col: '#35e0c8', len: 9, gap: 3, thick: 3, dot: true, outline: true, dyn: true } };
+    xh: { shape: 'cross', col: '#35e0c8', alpha: 1, len: 9, gap: 3, thick: 3, dot: true, dotSize: 0, outline: true, oth: 1.5, dyn: true, out: false, olen: 4, ogap: 6 } };
   let tickA = 1;   // how far the screen is between the last simulation tick and the next (99-main sets it), so motion is smooth at any refresh rate
   // rating: your skill, which sets the adaptive bot
   // skins: the ids you own ('line:gun'); equip: what each gun wears

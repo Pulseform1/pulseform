@@ -40,16 +40,16 @@
   }
   const choice = (g, x, y, w, h, opts, cur, set) => opts.forEach(([v, label], i) => { const bw = (w - (opts.length - 1) * 8) / opts.length; btn(g, x + i * (bw + 8), y, bw, h, label, () => { set(v); saveAll(); }, { on: cur === v, fill: YOU, px: Math.min(h * .36, bw * 1.5 / Math.max(5, label.length)) }); });
 
-  /* The menus: a bar along the top (PLAY, AGENTS, STORE, LOCKER, CAREER, SETTINGS, and your card: operative, name, rank,
+  /* The menus: a bar along the top (PLAY, AGENTS, STORE, LOCKER, CROSSHAIR, CAREER, SETTINGS, and your card: operative, name, rank,
      rating, coins) over whichever page is open. PLAY: pick the mode (STANDARD, two sites; SWIFT, one site), the team size
      and the bots, then the big PLAY button takes you to agent select. Friends go through the party. */
-  const MENU_TABS = [['home', 'PLAY'], ['agents', 'AGENTS'], ['store', 'STORE'], ['locker', 'LOCKER'], ['career', 'CAREER'], ['settings', 'SETTINGS']];
+  const MENU_TABS = [['home', 'PLAY'], ['agents', 'AGENTS'], ['store', 'STORE'], ['locker', 'LOCKER'], ['crosshair', 'CROSSHAIR'], ['career', 'CAREER'], ['settings', 'SETTINGS']];
   function drawTopBar(g, V, u) {
     const h = 56 * u, W = V.x1 - V.x0, x0 = V.x0 + 60 / pxPer() + 20 * u;
     g.fillStyle = 'rgba(8,10,14,.94)'; g.fillRect(V.x0, V.y0, W, h); g.fillStyle = 'rgba(239,233,220,.08)'; g.fillRect(V.x0, V.y0 + h - 1, W, 1);
     g.fillStyle = FOE; g.fillRect(x0, V.y0 + 17 * u, 4 * u, 22 * u); tx(g, 'DUELPOINT', x0 + 12 * u, V.y0 + h / 2 + 1, 19 * u, BONE, 'left', 900);
     const logoEnd = x0 + 140 * u, cardX = V.x1 - 300 * u, tw = Math.min(112 * u, (cardX - logoEnd - 16 * u) / MENU_TABS.length), tx0 = Math.max(logoEnd + 8 * u, Math.min(640 - MENU_TABS.length * tw / 2, cardX - 8 * u - MENU_TABS.length * tw));   // the tabs fit between the name and your card
-    MENU_TABS.forEach(([k, n], i) => { const x = tx0 + i * tw, on = UI.panel === k || (k === 'settings' && UI.panel === 'crosshair'), hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
+    MENU_TABS.forEach(([k, n], i) => { const x = tx0 + i * tw, on = UI.panel === k, hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
       tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, Math.min(13 * u, tw / 7.5), on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + 16 * u, V.y0 + h - 4 * u, tw - 32 * u, 3 * u); } });
     const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
     tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 20 * u, 13 * u, BONE, 'left', 900); rankBadge(g, px + 57 * u, V.y0 + 38 * u, 7 * u, STATS.rating);
@@ -98,7 +98,7 @@
     });
     // team size and the bots
     let y = top + ch + 26 * u; const lw = cw * 2 + 16 * u;
-    tx(g, 'TEAM SIZE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [[2, '2V2 · A BOT TEAMMATE'], [1, '1V1 · A DUEL']], CFG.size === 1 ? 1 : 2, v => { CFG.size = v; saveAll(); }); y += tapH(34) + 14 * u;
+    tx(g, 'TEAM SIZE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [[3, '3V3 · TWO TEAMMATES'], [2, '2V2 · A TEAMMATE'], [1, '1V1 · A DUEL']], teamSize(CFG.size), v => { CFG.size = v; saveAll(); }); y += tapH(34) + 14 * u;
     tx(g, 'BOT LEVEL', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 14 * u;
     if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Shift sprints, crouch mid-sprint slides. B opens the armory, F plants and defuses, Q and E are abilities.'].forEach((l, i) => tx(g, l, x0, y + 26 * u + i * 18 * u, 11.5 * u, '#aeb6c2', 'left', 600)); }
     // the right column: your operative, friends, practice
@@ -106,12 +106,12 @@
     { const h = 120 * u, hot = zone(rx, ry, rw, h, () => openSelect(null)); rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', hot ? O.col : 'rgba(239,233,220,.14)', hot ? 2 : 1.5);
       portraitTile(g, CFG.op, rx + 10 * u, ry + 10 * u, h - 20 * u, h - 20 * u, { r: 6 }); tx(g, 'YOUR OPERATIVE', rx + h + 4 * u, ry + 24 * u, 10 * u, DIM, 'left', 900); tx(g, O.n, rx + h + 2 * u, ry + 54 * u, 28 * u, BONE, 'left', 900);
       tx(g, `${O.q.n} · ${O.e.n}`, rx + h + 4 * u, ry + 80 * u, 12 * u, O.col, 'left', 800); tx(g, hot ? 'CHANGE →' : 'CHANGE', rx + rw - 14 * u, ry + h - 16 * u, 10 * u, hot ? O.col : DIM, 'right', 900); ry += h + 14 * u; }
-    { const h = 104 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, 'up to four, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
+    { const h = 104 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, 'up to six, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
       btn(g, rx + 16 * u, ry + 56 * u, rw - 32 * u, 36 * u, MP.online() ? 'BACK TO YOUR PARTY · ' + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u }); ry += h + 14 * u; }
     btn(g, rx, ry, (rw - 10 * u) / 2, tapH(42), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 13 * u }); btn(g, rx + (rw + 10 * u) / 2, ry, (rw - 10 * u) / 2, tapH(42), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 13 * u, sub: 'try every gun' });
     // PLAY
     const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots', ph = 72 * u, below = ry + tapH(42) + 12 * u, roomy = V.y1 - ph - 64 * u >= below, pyy = roomy ? V.y1 - ph - 64 * u : below, pw = roomy ? rw : rw - 84 * u;   // clear of the sound button in the corner, and of the buttons above
-    btn(g, rx, pyy, pw, ph, 'PLAY', () => menuPlay(CFG.size === 1 ? 1 : 2), { on: true, fill: FOE, solid: true, col: INK, px: 36 * u, sub: `${sites === 2 ? 'STANDARD' : 'SWIFT'} · ${CFG.size === 1 ? '1V1' : '2V2'}` + (roomy ? ` · ${lvl}` : '') }); zones[zones.length - 1].prime = true;
+    btn(g, rx, pyy, pw, ph, 'PLAY', () => menuPlay(teamSize(CFG.size)), { on: true, fill: FOE, solid: true, col: INK, px: 36 * u, sub: `${sites === 2 ? 'STANDARD' : 'SWIFT'} · ${vsLabel(CFG.size)}` + (roomy ? ` · ${lvl}` : '') }); zones[zones.length - 1].prime = true;
     if (!touch && roomy) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Enter plays · the arrow keys work here too', rx + pw / 2, pyy - 12 * u, 10 * u, DIM, 'center', 700);
   }
   // CAREER: your record, your rank and the ladder, your collection
@@ -134,7 +134,8 @@
     tx(g, 'SETTINGS', x, y + 24 * u, 36 * u, BONE, 'left'); btn(g, x + w - 150 * u, y, 150 * u, tapH(46), 'BACK', () => { UI.panel = 'home'; }, { px: 17 * u }); y += tapH(46) + 22 * u;
     y = controlRows(g, x, y, w, row);
     tx(g, 'Picture quality', x, y + tapH(44, 38) / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, tapH(44, 38), [['auto', 'AUTO'], ['low', 'FAST'], ['high', 'SHARP']], CFG.quality, v => { CFG.quality = v; }); y += row;
-    tx(g, 'Quality changes apply the next time you open the game.', x + w * .42, y + 8 * u, 12 * u, DIM, 'left');
+    tx(g, 'Quality changes apply the next time you open the game.', x + w * .42, y + 8 * u, 12 * u, DIM, 'left'); y += 30 * u;
+    btn(g, x, y, Math.min(w, 260 * u), tapH(46), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 16 * u, sub: 'shape, colour, presets, codes' });
   }
   function drawOpts(g) {
     const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale();
@@ -145,26 +146,62 @@
     y = controlRows(g, x, y, w, row);
     btn(g, x, y, Math.min(w, 260 * u), tapH(46), 'CROSSHAIR', () => { UI.opts = 'xh'; }, { px: 16 * u });
   }
+  // the crosshair designer: four sections on the left (shape, colour, dot and outline, outer lines), the live preview,
+  // the presets and the share code on the right. Opens from its own tab on the menu, and from Settings in a match (O).
+  const XH_TABS = [['shape', 'SHAPE'], ['colour', 'COLOUR'], ['dot', 'DOT & OUTLINE'], ['outer', 'OUTER LINES']];
+  const hueHex = h => { const l = .58, a = Math.min(l, 1 - l), f = n => { const k = (n + h / 30) % 12; return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))).toString(16).padStart(2, '0'); }; return '#' + f(0) + f(8) + f(4); };   // a bright, full colour at hue h
+  const hexHue = c => { const r = parseInt(c.slice(1, 3), 16) / 255, gg = parseInt(c.slice(3, 5), 16) / 255, b = parseInt(c.slice(5, 7), 16) / 255, mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), d = mx - mn; if (!d) return 0; const h = mx === r ? ((gg - b) / d) % 6 : mx === gg ? (b - r) / d + 2 : (r - gg) / d + 4; return (h * 60 + 360) % 360; };
   function drawXhair(g, V, W, u) {
-    const w = Math.min(W - 80, 1000 * u), x = 640 - w / 2, c = CFG.xh, lw = w * .56, px = x + lw + 30 * u, pw = w - lw - 30 * u, rh = tapH(44, 38), row = rh + 6 * u; let y = V.y0 + 20 * u;
-    tx(g, 'CROSSHAIR', x, y + 24 * u, 36 * u, BONE, 'left'); btn(g, x + w - 150 * u, y, 150 * u, tapH(46), 'BACK', () => { UI.panel = 'home'; if (UI.opts) UI.opts = 'main'; }, { px: 17 * u }); y += tapH(46) + 14 * u;
-    // the preview: against light, dark and bright, and opening the way it will when you move and shoot
-    const pb = tapH(40), ph = Math.min(300 * u, V.y1 - y - pb - 46 * u), err = c.dyn ? (Math.sin(K.t * 2.2) * .5 + .5) * 14 : 0;
+    const w = Math.min(W - 80, 1060 * u), x = 640 - w / 2, c = CFG.xh, lw = w * .54, px = x + lw + 30 * u, pw = w - lw - 30 * u, rh = tapH(44, 38), row = rh + 8 * u, tab = UI.xhTab || 'shape', set = (k, v) => { c[k] = v; saveAll(); }, num = v => String(Math.round(v));
+    let y = V.y0 + 20 * u;
+    tx(g, 'CROSSHAIR', x, y + 24 * u, 36 * u, BONE, 'left'); btn(g, x + w - 150 * u, y, 150 * u, tapH(46), 'BACK', () => { if (UI.opts) UI.opts = 'main'; else UI.panel = 'home'; }, { px: 17 * u }); y += tapH(46) + 14 * u;
+    // the left: a section at a time
+    const sb = tapH(38, 34), tw = (lw - 3 * 6 * u) / 4; XH_TABS.forEach(([k, n], i) => btn(g, x + i * (tw + 6 * u), y, tw, sb, n, () => { UI.xhTab = k; }, { on: tab === k, fill: YOU, px: Math.min(13 * u, tw / 9) }));
+    let ly = y + sb + 18 * u; const lines = c.shape === 'cross' || c.shape === 'tee' || c.shape === 'x';
+    if (tab === 'shape') {
+      tx(g, 'Shape', x, ly + rh / 2, 17 * u, BONE, 'left'); choice(g, x + lw * .2, ly, lw * .8, rh, [['cross', 'CROSS'], ['tee', 'TEE'], ['x', 'X'], ['circle', 'RING'], ['square', 'BOX'], ['chevron', 'CHEVRON'], ['dot', 'DOT']], c.shape, v => { c.shape = v; }); ly += row;
+      if (lines || c.shape === 'chevron') { slider(g, x, ly, lw, c.shape === 'chevron' ? 'Width' : 'Length', c.len, 1, 22, v => set('len', Math.round(v)), num); ly += row; }
+      if (c.shape !== 'dot') { slider(g, x, ly, lw, c.shape === 'circle' || c.shape === 'square' ? 'Size' : 'Gap', c.gap, 0, 16, v => set('gap', Math.round(v)), num); ly += row; }
+      slider(g, x, ly, lw, 'Thickness', c.thick, 1, 8, v => set('thick', Math.round(v)), num); ly += row;
+      if (c.shape !== 'dot') { toggle(g, x, ly, lw, 'Opens with error', c.dyn, v => { c.dyn = v; }, isTouch() ? '' : 'shows how accurate you are'); ly += row; }
+    } else if (tab === 'colour') {
+      tx(g, 'Colour', x, ly + rh / 2, 17 * u, BONE, 'left');
+      XH_COLS.forEach((col, i) => { const sw = (lw * .8 - 11 * 5 * u) / 12, bx = x + lw * .2 + i * (sw + 5 * u); zone(bx, ly, sw, rh, () => { set('col', col); click(); }); rr(g, bx, ly + 2, sw, rh - 4, 6, col, c.col === col ? BONE : 'rgba(0,0,0,.4)', c.col === col ? 4 : 2); }); ly += row;
+      { // any colour: drag along the rainbow
+        tx(g, 'Any colour', x, ly + rh / 2, 17 * u, BONE, 'left'); const sx = x + lw * .42, sw = lw * .44, hy = ly + rh / 2 - 6 * u, h0 = hexHue(c.col);
+        zone(sx - 14 * u, ly, sw + 28 * u, rh, px2 => { set('col', hueHex(cl((px2 - sx) / sw, 0, 1) * 359)); }, true);
+        const gr = g.createLinearGradient(sx, 0, sx + sw, 0); for (let i = 0; i <= 12; i++) gr.addColorStop(i / 12, hueHex(i * 30 % 360)); rr(g, sx, hy, sw, 12 * u, 6 * u, gr);
+        if (!XH_COLS.includes(c.col)) { g.fillStyle = BONE; g.beginPath(); g.arc(sx + sw * h0 / 359, hy + 6 * u, 11 * u, 0, TAU); g.fill(); g.fillStyle = c.col; g.beginPath(); g.arc(sx + sw * h0 / 359, hy + 6 * u, 7 * u, 0, TAU); g.fill(); }
+        rr(g, x + lw - 34 * u, ly + rh / 2 - 13 * u, 34 * u, 26 * u, 6, c.col, BONE, 2); ly += row; }
+      slider(g, x, ly, lw, 'Opacity', c.alpha == null ? 1 : c.alpha, .2, 1, v => set('alpha', Math.round(v * 20) / 20), v => Math.round(v * 100) + '%'); ly += row;
+    } else if (tab === 'dot') {
+      if (c.shape !== 'dot') { toggle(g, x, ly, lw, 'Centre dot', c.dot, v => { c.dot = v; }); ly += row; }
+      if (c.dot || c.shape === 'dot') { slider(g, x, ly, lw, 'Dot size', c.dotSize || 0, 0, 8, v => set('dotSize', Math.round(v)), v => Math.round(v) ? num(v) : 'AUTO'); ly += row; }
+      toggle(g, x, ly, lw, 'Dark outline', c.outline, v => { c.outline = v; }, isTouch() ? '' : 'stands out on bright walls'); ly += row;
+      if (c.outline) { slider(g, x, ly, lw, 'Outline', c.oth || 1.5, .5, 3, v => set('oth', Math.round(v * 2) / 2), v => v.toFixed(1)); ly += row; }
+    } else {
+      if (!lines) { para(g, 'Outer lines go with the CROSS, TEE and X shapes. Pick one of those under SHAPE.', x, ly + 8 * u, lw, 13 * u, '#aeb6c2'); ly += row; }
+      else {
+        toggle(g, x, ly, lw, 'Outer lines', c.out, v => { c.out = v; }, isTouch() ? '' : 'a second set, further out'); ly += row;
+        if (c.out) { slider(g, x, ly, lw, 'Outer length', c.olen || 4, 1, 16, v => set('olen', Math.round(v)), num); ly += row; slider(g, x, ly, lw, 'Outer gap', c.ogap || 0, 0, 20, v => set('ogap', Math.round(v)), num); ly += row; }
+      }
+    }
+    // the right: the preview against light, dark and bright, opening the way it will when you move and shoot
+    const pb = tapH(38, 34), ph = Math.max(120 * u, Math.min(250 * u, V.y1 - y - pb * 4 - 96 * u)), err = c.dyn ? (Math.sin(K.t * 2.2) * .5 + .5) * 14 : 0;
     ['#cfd8dc', '#3a4250', '#e8b06a'].forEach((bg, i) => { g.fillStyle = bg; g.fillRect(px + i * pw / 3, y, pw / 3 + 1, ph); });
     g.fillStyle = 'rgba(12,16,22,.5)'; g.fillRect(px, y + ph * .62, pw, ph * .38); [0, 1, 2].forEach(i => drawCrosshair(g, px + pw * (i + .5) / 3, y + ph * .4, i === 1 ? err : 0, Math.max(1, u * .85)));
     tx(g, 'still', px + pw / 6, y + ph - 14 * u, 12 * u, BONE); tx(g, c.dyn ? 'moving' : 'fixed', px + pw / 2, y + ph - 14 * u, 12 * u, BONE); tx(g, 'still', px + pw * 5 / 6, y + ph - 14 * u, 12 * u, BONE);
-    tx(g, 'PRESETS', px, y + ph + 16 * u, 12 * u, DIM, 'left');
-    XH_PRESETS.forEach((p, i) => { const bw = (pw - 4 * 6) / 5; btn(g, px + i * (bw + 6), y + ph + 30 * u, bw, pb, p.n.toUpperCase(), () => { const { n, ...rest } = p; CFG.xh = { ...rest }; saveAll(); }, { px: 12 * u }); });
-    const set = (k, v) => { c[k] = v; };
-    tx(g, 'Shape', x, y + rh / 2, 17 * u, BONE, 'left'); choice(g, x + lw * .3, y, lw * .7, rh, [['cross', 'CROSS'], ['tee', 'TEE'], ['circle', 'RING'], ['dot', 'DOT']], c.shape, v => set('shape', v)); y += row;
-    tx(g, 'Colour', x, y + rh / 2, 17 * u, BONE, 'left');
-    XH_COLS.forEach((col, i) => { const sw = (lw * .7 - 7 * 6) / 8, bx = x + lw * .3 + i * (sw + 6); zone(bx, y, sw, rh, () => { set('col', col); saveAll(); click(); }); rr(g, bx, y + 2, sw, rh - 4, 6, col, c.col === col ? BONE : 'rgba(0,0,0,.4)', c.col === col ? 4 : 2); }); y += row;
-    if (c.shape !== 'dot' && c.shape !== 'circle') { slider(g, x, y, lw, 'Length', c.len, 2, 22, v => set('len', Math.round(v)), v => String(Math.round(v))); y += row; }
-    if (c.shape !== 'dot') { slider(g, x, y, lw, c.shape === 'circle' ? 'Size' : 'Gap', c.gap, 0, 16, v => set('gap', Math.round(v)), v => String(Math.round(v))); y += row; }
-    slider(g, x, y, lw, 'Thickness', c.thick, 1, 8, v => set('thick', Math.round(v)), v => String(Math.round(v))); y += row;
-    if (c.shape !== 'dot') { toggle(g, x, y, lw, 'Centre dot', c.dot, v => set('dot', v)); y += row; }
-    toggle(g, x, y, lw, 'Dark outline', c.outline, v => set('outline', v)); y += row;
-    if (c.shape !== 'dot') toggle(g, x, y, lw, 'Opens with error', c.dyn, v => set('dyn', v), isTouch() ? '' : 'shows how accurate you are');
+    let ry = y + ph + 22 * u; tx(g, 'PRESETS', px, ry, 12 * u, DIM, 'left'); ry += 12 * u;
+    XH_PRESETS.forEach((p, i) => { const per = 5, bw = (pw - (per - 1) * 6) / per, bx = px + (i % per) * (bw + 6), by = ry + Math.floor(i / per) * (pb + 6); const { n, ...rest } = p, on = xhCode(rest) === xhCode(c);
+      btn(g, bx, by, bw, pb, n.toUpperCase(), () => { CFG.xh = Object.assign({}, rest); saveAll(); }, { on, fill: YOU, px: Math.min(12 * u, bw / 6.5) }); });
+    ry += Math.ceil(XH_PRESETS.length / 5) * (pb + 6) + 20 * u;
+    // share it: the whole crosshair as one short code
+    const code = xhCode(c); tx(g, 'SHARE CODE', px, ry, 12 * u, DIM, 'left'); ry += 12 * u;
+    rr(g, px, ry, pw, pb, 6, 'rgba(255,255,255,.06)', 'rgba(239,233,220,.2)', 1); tx(g, code, px + pw / 2, ry + pb / 2, Math.min(14 * u, pw / code.length * 1.5), GOLD, 'center', 800); ry += pb + 6;
+    const copied = UI.xhCopied && performance.now() - UI.xhCopied < 1500, hb = (pw - 6) / 2;
+    btn(g, px, ry, hb, pb, copied ? 'COPIED' : 'COPY CODE', () => { try { navigator.clipboard.writeText(code); } catch (e) {} UI.xhCopied = performance.now(); }, { px: 12 * u });
+    btn(g, px + hb + 6, ry, hb, pb, 'USE A CODE', () => { const str = window.prompt('Paste a crosshair code (it starts DPX1-)', ''); if (str == null) return; const n2 = xhFromCode(str); UI.xhMsg = n2 ? 'Crosshair loaded' : 'That isn\'t a crosshair code'; UI.xhMsgT = performance.now(); if (n2) { CFG.xh = n2; saveAll(); } }, { px: 12 * u });
+    if (UI.xhMsg && performance.now() - UI.xhMsgT < 2500) tx(g, UI.xhMsg, px + pw / 2, ry + pb + 16 * u, 12 * u, UI.xhMsg[0] === 'C' ? YOU : GOLD, 'center', 800);
   }
 
   // The armory, laid out the way players of the genre expect: every weapon on one screen, a column per class,
@@ -243,6 +280,6 @@
       const yb = py0 + 50 * u + M.pay.rows.length * 22 * u + 6 * u, frac = cl(M.pay.total / RARITY.mythic.price, 0, 1); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(px0 + 16 * u, yb, 218 * u, 5 * u); g.fillStyle = RARITY.mythic.col; g.fillRect(px0 + 16 * u, yb, 218 * u * frac * smooth(cl(t / 1.4, 0, 1)), 5 * u);
       tx(g, `${Math.round(frac * 100)}% of a Mythic  ·  you have ${STATS.coins}`, px0 + 16 * u, yb + 16 * u, 10 * u, DIM, 'left', 700); }
     const by = Math.min(V.y1 - 80 * u, cy + 40 * u);
-    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); openParty(); } else play({ mode: M.mode, diff: CFG.diff, size: CFG.size, sites: CFG.sites }); }, { on: true, fill: FOE, px: 19 * u });
+    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); openParty(); } else play({ mode: M.mode, diff: CFG.diff, size: teamSize(CFG.size), sites: CFG.sites }); }, { on: true, fill: FOE, px: 19 * u });
     btn(g, 640 + 10 * u, by, 240 * u, tapH(56), 'MENU', toMenu, { px: 19 * u });
   }
