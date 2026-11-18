@@ -1,0 +1,50 @@
+/* Pulsebox fit: the game fills the frame with no page scrolling; on small screens the side panel becomes a drawer
+   and the buttons a touch player needs sit on the game itself. */
+html,body{height:100%;overflow:hidden}
+.app{max-width:none;margin:0;padding:10px 12px;height:100vh;height:100dvh;display:flex;flex-direction:column}
+header{margin-bottom:10px;flex:none}
+.back,.footer{display:none!important}
+.layout{flex:1;min-height:0;grid-template-columns:minmax(0,1fr) 280px;gap:12px}
+.layout>div:first-child{min-width:0;min-height:0;display:grid;place-items:center}
+.viewport{aspect-ratio:auto;flex:none}
+.sidebar{overflow:auto;min-height:0;padding:18px;display:block}
+#pbMenu{display:none}
+.pb-dock{position:absolute;right:12px;bottom:12px;z-index:2;display:none;gap:8px;align-items:flex-end}
+.pb-dock button{width:auto!important;min-height:46px!important;font-size:14px!important;margin:0!important;padding:10px 16px;box-shadow:0 6px 20px #0008}
+.pb-dock button:not(.primary){background:#0c1b31e6}
+body.compact .pb-dock{display:flex}
+body.compact .layout{grid-template-columns:minmax(0,1fr)}
+body.compact .sidebar{position:fixed;top:0;right:0;bottom:0;width:min(330px,88vw);z-index:60;border-radius:14px 0 0 14px;transform:translateX(105%);transition:transform .2s;box-shadow:-20px 0 60px #000a}
+body.compact.menu .sidebar{transform:none}
+body.compact #pbMenu{display:inline-block}
+body.compact .brand small{display:none}
+body.compact .brand{font-size:17px}
+body.compact header{margin-bottom:6px}
+body.compact .app{padding:6px 8px}
+body.compact .actions{gap:5px}
+body.compact .actions button{padding:8px 10px;font-size:12px}
+body.compact .actions #fullscreen{display:none}
+body.compact .notice{bottom:10px;font-size:10px;padding:6px 10px;max-width:60%;white-space:normal;left:12px;transform:none;text-align:left}
+/* a small game area (a phone held sideways): everything drawn over the game shrinks with it */
+body.tiny .hud{left:8px;right:8px;top:6px;gap:6px}
+body.tiny .stat{padding:4px 8px}
+body.tiny .stat b{font-size:15px}
+body.tiny .stat small{font-size:7px;letter-spacing:1px}
+body.tiny .overlay{padding:8px;overflow:auto}
+body.tiny .modal h1{font-size:22px;margin:6px 0;letter-spacing:-1px}
+body.tiny .modal p{font-size:11px;line-height:1.35;margin:6px 0}
+body.tiny .modal .kicker{font-size:8px}
+body.tiny .modal button{padding:8px 14px;margin:3px}
+body.tiny .respawn b{font-size:46px}
+body.tiny .brand{font-size:14px}
+body.tiny .actions button{padding:6px 8px;font-size:11px}
+body.tiny .pb-dock button{min-height:40px!important;font-size:12px!important;padding:8px 12px}
+/* where the touch buttons sit, so they stay clear of what each game draws along its bottom edge */
+body[data-game="bricktide-salvage"] .pb-dock #fire,body[data-game="bricktide-salvage"] .pb-dock #ready{font-size:0!important}
+body[data-game="bricktide-salvage"] .pb-dock #fire::after{content:'FIRE';font-size:14px}
+body[data-game="bricktide-salvage"] .pb-dock #ready::after{content:'READY';font-size:14px}
+body[data-game="nibbleborough"] .pb-dock{bottom:27%}
+body[data-game="nibbleborough"] .pb-dock button{font-size:12px!important}
+/* inside the Pulsebox player the hub already shows the title and has its own full-screen button */
+body.embedded .brand,body.embedded .actions #fullscreen{display:none}
+body.embedded header{justify-content:flex-end;margin-bottom:8px}

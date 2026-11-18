@@ -1,0 +1,12 @@
+import {ANIMAL_EXPANSION,createExpandedAnimal} from './expansion-animals.js';
+import {BIRD_EXPANSION,createExpandedBird} from './expansion-birds.js';
+import {AQUATIC_EXPANSION,createExpandedAquatic} from './expansion-aquatic.js';
+import {BUILDING_EXPANSION,createExpandedBuilding} from './expansion-buildings.js';
+import {PEOPLE_EXPANSION,createExpandedPerson} from './expansion-people.js';
+import {PLANT_EXPANSION,createExpandedPlant} from './expansion-plants.js';
+import {DECOR_EXPANSION,createExpandedDecor} from './expansion-decor.js';
+import {ZOO_EXPANSION,createExpandedZoo} from './expansion-zoo.js';
+import {ROAD_EXPANSION,createExpandedRoad} from './expansion-roads.js';
+const sections=[[ANIMAL_EXPANSION,createExpandedAnimal],[BIRD_EXPANSION,createExpandedBird],[AQUATIC_EXPANSION,createExpandedAquatic],[BUILDING_EXPANSION,createExpandedBuilding],[PEOPLE_EXPANSION,createExpandedPerson],[PLANT_EXPANSION,createExpandedPlant],[DECOR_EXPANSION,createExpandedDecor],[ZOO_EXPANSION,createExpandedZoo],[ROAD_EXPANSION,createExpandedRoad]];
+export const WORLD_EXPANSION=sections.flatMap(([items])=>items);
+export const worldFactories=new Map(sections.flatMap(([items,factory])=>items.map(item=>[item.id,factory])));

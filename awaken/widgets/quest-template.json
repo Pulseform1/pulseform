@@ -1,0 +1,36 @@
+{
+  "type": "AdaptiveCard",
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "ColumnSet",
+      "columns": [
+        { "type": "Column", "width": "stretch", "items": [ { "type": "TextBlock", "text": "QUEST INFO", "weight": "Bolder", "color": "Accent", "size": "Medium" } ] },
+        { "type": "Column", "width": "auto", "verticalContentAlignment": "Center", "items": [ { "type": "TextBlock", "text": "LV ${level} · ${rank}-Rank", "isSubtle": true, "size": "Small" } ] }
+      ]
+    },
+    { "type": "TextBlock", "text": "${status}", "weight": "Bolder", "wrap": true, "spacing": "Small" },
+    {
+      "type": "Container",
+      "spacing": "Medium",
+      "items": [
+        {
+          "type": "ColumnSet",
+          "$data": "${goals}",
+          "spacing": "Small",
+          "columns": [
+            { "type": "Column", "width": "auto", "items": [ { "type": "TextBlock", "text": "${mark}", "color": "Accent" } ] },
+            { "type": "Column", "width": "stretch", "items": [ { "type": "TextBlock", "text": "${name}", "wrap": true } ] },
+            { "type": "Column", "width": "auto", "items": [ { "type": "TextBlock", "text": "${progress}", "horizontalAlignment": "Right" } ] }
+          ]
+        }
+      ]
+    },
+    { "type": "TextBlock", "text": "Streak ${streak} · ${resets}", "isSubtle": true, "size": "Small", "wrap": true, "spacing": "Medium" }
+  ],
+  "actions": [
+    { "type": "Action.Execute", "title": "Open quest", "verb": "quest" },
+    { "type": "Action.Execute", "title": "Recover", "verb": "recover" }
+  ]
+}

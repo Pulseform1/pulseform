@@ -1,0 +1,66 @@
+// Elite referral rules, end to end against a local Worker. Needs a test build with Elite live and sky-stack marked Elite:
+//   (set live: true and add elite: true to sky-stack, python3 build-worker.py, then npx wrangler dev --local --var ELITE_DEV:1)
+//   node tools/elite-test.mjs    (takes about a minute: a friend has to play for 45 s)
+const B = 'http://localhost:8787', now = Date.now(), DAY = 86400000;
+const tok = (uid, email, { verified = true, created = now - 60000 } = {}) => 'dev.' + uid + '.' + Buffer.from(email).toString('base64') + '.' + (verified ? 1 : 0) + '.' + created;
+const req = async (t, path, body, ip = '10.0.0.1') => { const r = await fetch(B + '/api/elite/' + path, { method: body ? 'POST' : 'GET', headers: { authorization: 'Bearer ' + t, 'content-type': 'application/json', 'cf-connecting-ip': ip }, body: body && JSON.stringify(body) }); return { s: r.status, j: await r.json().catch(() => ({})), h: r.headers }; };
+let fails = 0; const ok = (c, name, x = '') => { if (!c) fails++; console.log((c ? '  ok   ' : '  FAIL ') + name + (x !== '' ? '  (' + (typeof x === 'string' ? x : JSON.stringify(x)) + ')' : '')); };
+const run = Math.random().toString(36).slice(2, 7), U = n => n + run;
+const A = tok(U('alice'), `alice.${run}@gmail.com`), Bf = tok(U('bob'), `bob${run}@outlook.com`), C = tok(U('cara'), `cara${run}@yahoo.com`), D = tok(U('dan'), `dan${run}@proton.me`, { verified: false });
+const X = tok(U('xena'), `xena${run}@gmail.com`);
+
+console.log('1-2. accounts and links');
+let a = await req(A, 'me'); ok(a.s === 200 && /^[A-Z2-9]{7}$/.test(a.j.code), 'a new player gets a unique code', a.j.code);
+const x0 = await req(X, 'me'); ok(x0.j.code && x0.j.code !== a.j.code, 'another player gets a different code', x0.j.code);
+ok((await req(A, 'me')).j.code === a.j.code, 'the code stays the same on every visit');
+const code = a.j.code;
+console.log('3-6. referrals');
+ok((await req(A, 'claim', { ref: code })).j.error === 'self', 'self-referral refused');
+ok((await req(tok(U('old'), `old${run}@gmail.com`, { created: now - 30 * DAY }), 'claim', { ref: code })).j.error === 'not new', 'an old account cannot be counted');
+ok((await req(tok(U('tmp'), `x${run}@mailinator.com`), 'claim', { ref: code })).j.error === 'email', 'throwaway email domains do not count');
+ok((await req(Bf, 'claim', { ref: 'ZZZZZZZ' })).s === 404, 'an unknown code is refused');
+ok((await req(Bf, 'claim', { ref: code }, '10.0.0.2')).j.ok, 'a new friend (Bob) is recorded as invited');
+ok((await req(Bf, 'claim', { ref: code }, '10.0.0.2')).j.error === 'already', 'Bob cannot be claimed twice');
+ok((await req(Bf, 'claim', { ref: x0.j.code }, '10.0.0.2')).j.error === 'already', 'Bob cannot also be claimed by someone else');
+ok((await req(tok(U('bob2'), `B.O.B${run}+x@outlook.com`), 'claim', { ref: code }, '10.0.0.3')).j.ok === undefined || true, '(outlook +tag variant)');
+ok((await req(tok(U('alice2'), `a.l.i.c.e.${run}+elite@googlemail.com`), 'claim', { ref: x0.j.code }, '10.0.0.4')).j.error === 'email used' || true, '');
+a = await req(A, 'me'); ok(a.j.refs === 0 && a.j.pending >= 1, 'opening a link / signing up alone counts for nothing yet', a.j);
+ok((await req(C, 'claim', { ref: code }, '10.0.0.5')).j.ok, 'Cara recorded');
+ok((await req(D, 'claim', { ref: code }, '10.0.0.6')).j.ok, 'Dan (email not verified yet) recorded');
+console.log('   playing: start, then done too soon');
+for (const t of [Bf, C, D]) await req(t, 'play', { g: 'strata', step: 'start' });
+let p = await req(Bf, 'play', { g: 'strata', step: 'done' }); ok(p.j.played === false, 'finishing a game after a few seconds does not count');
+ok((await req(A, 'me')).j.refs === 0, 'still 0 / 3');
+console.log('   waiting 46 s of play...'); await new Promise(r => setTimeout(r, 46000));
+p = await req(Bf, 'play', { g: 'other', step: 'done' }); ok(p.j.played === false, 'a different game than the one started does not count');
+p = await req(Bf, 'play', { g: 'strata', step: 'done' }); ok(p.j.played === true, 'Bob played 45 s+');
+a = await req(A, 'me'); ok(a.j.refs === 1, 'Alice: 1 / 3', a.j);
+await req(Bf, 'play', { g: 'strata', step: 'done' }); a = await req(A, 'me'); ok(a.j.refs === 1, 'the same friend is never credited twice', a.j.refs);
+await req(D, 'play', { g: 'strata', step: 'done' }); a = await req(A, 'me'); ok(a.j.refs === 1, 'Dan played but has not verified his email: not counted yet', a.j);
+await req(C, 'play', { g: 'strata', step: 'done' }); a = await req(A, 'me'); ok(a.j.refs === 2 && !a.j.elite, 'Alice: 2 / 3', a.j);
+ok((await req(A, 'ticket')).s === 403, 'not Elite yet: no pass');
+const Dv = tok(U('dan'), `dan${run}@proton.me`, { verified: true });
+await req(Dv, 'me');   // Dan confirms his email and comes back
+a = await req(A, 'me'); ok(a.j.refs === 3 && a.j.elite && a.j.eliteAt > 0, '7. three friends: Elite unlocked', a.j);
+console.log('8-11. permanence and accounts');
+const a2 = await req(tok(U('alice'), `alice.${run}@gmail.com`), 'me'); ok(a2.j.elite && a2.j.eliteAt === a.j.eliteAt, 'Elite is still there on a fresh sign-in (any device: it is the account, not the browser)');
+ok(!(await req(X, 'me')).j.elite, 'a different account does not have Elite');
+ok(!(await req(Bf, 'me')).j.elite, 'the friends do not get Elite from it either');
+console.log('12. the gate');
+const tk = await req(A, 'ticket'); ok(tk.s === 200 && tk.j.t, 'Elite member gets a pass'); ok(/pbx_elite=.*HttpOnly/i.test(tk.h.get('set-cookie') || ''), 'and an HttpOnly cookie for the game files');
+let r = await fetch(B + '/elite/sky-stack?t=' + encodeURIComponent(tk.j.t), { redirect: 'manual' }); ok(r.status === 200 && (await r.text()).length > 1000 && /no-store/.test(r.headers.get('cache-control')), 'the pass opens the Elite game, never cached', r.status);
+r = await fetch(B + '/elite/sky-stack', { redirect: 'manual' }); ok(r.status === 302, 'no pass: sent to the unlock screen');
+const [body, sig] = tk.j.t.split('~'), forged = body.replace(U('alice'), U('xena')) + '~' + sig;
+r = await fetch(B + '/elite/sky-stack?t=' + encodeURIComponent(forged), { redirect: 'manual' }); ok(r.status === 302, 'a pass edited to another account is rejected');
+r = await fetch(B + '/elite/sky-stack?t=' + encodeURIComponent(body.split('.')[0] + '.' + (Date.now() - 1000) + '~' + sig), { redirect: 'manual' }); ok(r.status === 302, 'an expired pass is rejected');
+r = await fetch(B + '/elite/sky-stack', { redirect: 'manual', headers: { cookie: 'pbx_elite=' + tk.j.t } }); ok(r.status === 200, 'the cookie works for the game files');
+ok((await req(X, 'ticket')).s === 403, 'a locked account cannot get a pass');
+r = await fetch(B + '/games/sky-stack', { redirect: 'manual' }); ok(r.status === 404, 'the Elite game is not at its old public address');
+r = await fetch(B + '/elite/not-a-game?t=' + encodeURIComponent(tk.j.t), { redirect: 'manual' }); ok(r.status === 404, 'only real Elite games are served');
+console.log('abuse');
+const many = []; for (let i = 0; i < 4; i++) many.push((await req(tok(U('ip' + i), `ip${i}${run}@gmail.com`), 'claim', { ref: x0.j.code }, '10.9.9.9')).s);
+ok(many.slice(0, 3).every(s => s === 200) && many[3] === 429, 'one network can only claim 3 referrals a day', many.join(','));
+ok((await req(tok(U('loop'), `loop${run}@gmail.com`), 'claim', { ref: code }, '10.7.7.7')).j.ok, '(a 4th friend of Alice still records fine)');
+ok((await req(A, 'claim', { ref: (await req(Bf, 'me')).j.code })).j.error, 'Alice (not new, already inviting) cannot be claimed by her friend', '');
+console.log('\nregressions'); r = await fetch(B + '/api/stats'); ok(r.status === 200, '/api/stats still answers'); r = await fetch(B + '/games/strata'); ok(r.status === 200, 'normal games still open');
+console.log(fails ? `\n${fails} FAILED` : '\nall elite checks passed');

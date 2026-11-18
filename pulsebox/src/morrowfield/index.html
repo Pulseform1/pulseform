@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f3e9">
+  <meta name="description" content="A little land. Endless possibility. Shape a living miniature world in Morrowfield, an original creative sandbox.">
+  <title>Morrowfield — A world of your making</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='19' fill='%233d5140'/%3E%3Cpath d='M20 45C18 24 31 15 46 17C47 34 36 43 20 45Z' fill='%23dce8ac'/%3E%3Cpath d='M18 48L38 26' stroke='%233d5140' stroke-width='3'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css?v=1.4.0">
+</head>
+<body>
+  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 18C3 9 10 3 20 4c1 10-6 15-15 14Z"/><path d="m4 21 11-12"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="m8 5-5 5 5 5M3 10h10a7 7 0 0 1 7 7v2"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="m16 5 5 5-5 5m5-5H11a7 7 0 0 0-7 7v2"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h12l4 4v14H3V3Zm2 0v6h10V3M7 21v-8h10v8"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h14"/></symbol>
+    <symbol id="i-cursor" viewBox="0 0 24 24"><path d="m5 3 14 10-7 1-3 7Z"/></symbol>
+    <symbol id="i-orbit" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="5" transform="rotate(-35 12 12)"/><path d="m16 3 4 1-1 4M12 9v6m-3-3h6"/></symbol>
+    <symbol id="i-mountain" viewBox="0 0 24 24"><path d="m2 20 7-14 5 8 3-5 6 11Zm4-8 3 2 2-2M9 2v3m-3-2 3-2 3 2"/></symbol>
+    <symbol id="i-valley" viewBox="0 0 24 24"><path d="m2 6 7 13h6L22 6M12 2v10m-3-3 3 3 3-3"/></symbol>
+    <symbol id="i-smooth" viewBox="0 0 24 24"><path d="M2 17c3-12 6-12 10-4s7 7 10-2M3 22h18M16 2v5m-2-3h4"/></symbol>
+    <symbol id="i-flat" viewBox="0 0 24 24"><path d="M3 17h18M12 3v9m-4-4 4 4 4-4M5 21h14"/></symbol>
+    <symbol id="i-paint" viewBox="0 0 24 24"><path d="m14 4 6 6-9 9-6-6ZM4 12 2 14l7 7 2-2M16 2l6 6-2 2-6-6ZM3 7V3h4"/></symbol>
+    <symbol id="i-water" viewBox="0 0 24 24"><path d="M12 2S5 10 5 14a7 7 0 0 0 14 0c0-4-7-12-7-12ZM9 15a3 3 0 0 0 3 3"/></symbol>
+    <symbol id="i-pond" viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="9" ry="5"/><path d="M7 16c2-2 3 2 5 0s3 2 5 0M15 11V4m0 3 3-2M5 8l2 2m0-5v5"/></symbol>
+    <symbol id="i-biome" viewBox="0 0 24 24"><path d="m3 19 5-9 5 9Zm6-7 5-8 7 15h-9M2 21h20M17 4v-2m3 5h2"/></symbol>
+    <symbol id="i-house" viewBox="0 0 24 24"><path d="m2 11 10-8 10 8M5 9v12h14V9M9 21v-7h6v7"/></symbol>
+    <symbol id="i-paw" viewBox="0 0 24 24"><ellipse cx="5" cy="8" rx="2.2" ry="3" transform="rotate(-25 5 8)"/><ellipse cx="10" cy="5.5" rx="2" ry="2.8"/><ellipse cx="15.5" cy="6" rx="2" ry="2.8" transform="rotate(15 15.5 6)"/><ellipse cx="20" cy="10" rx="1.8" ry="2.6" transform="rotate(30 20 10)"/><path d="M5.5 17c0-2 2.5-3.5 4-5s4-1.5 5.5.5 3.5 3 3.5 5-1.5 3.5-4 2.5-3.5-1-5.5-.5-3.5-.5-3.5-2.5Z"/></symbol>
+    <symbol id="i-fence" viewBox="0 0 24 24"><path d="m3 21 0-17 2-2 2 2v17m10 0V4l2-2 2 2v17M7 8h10M7 16h10"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path d="m3 5 0 6 6 0M3 11a9 9 0 1 1 2 7"/></symbol>
+    <symbol id="i-focus" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M15 8V3H3v12h5"/></symbol>
+    <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M9 5l3-3 3 3M9 19l3 3 3-3M5 9l-3 3 3 3M19 9l3 3-3 3"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M3 3l6 6m6 6 6 6M21 3l-6 6m-6 6-6 6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 8a3 3 0 1 1 4 3c-1 .5-1 1-1 3m0 3h.01"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 1v2m0 18v2M1 12h2m18 0h2M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 16v5h16v-5"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7V4h7l2 3h9v14H3ZM3 10h18"/></symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m16 8-2 6-6 2 2-6Z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6.5c4 2 10 2 14 0M5 17.5c4-2 10-2 14 0"/></symbol>
+    <symbol id="i-fly" viewBox="0 0 24 24"><path d="m3 11 18-8-8 18-2-8Z"/><path d="m11 13 10-10"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a5 5 0 1 1 .5-10 6 6 0 0 1 11.6 1.7A4.2 4.2 0 0 1 18 18"/><path d="M12 20V10m-3 3 3-3 3 3"/></symbol>
+  </defs></svg>
+
+  <canvas id="world" aria-label="Interactive 3D world. Select a tool to sculpt or place objects. Use camera mode to orbit, pan, and zoom."></canvas>
+  <div class="scene-vignette" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="world-brand">
+      <a class="brand" href="./" aria-label="Morrowfield home"><span class="brand-icon"><svg><use href="#i-leaf"/></svg></span><span>Morrowfield<span class="brand-dot">.</span></span></a>
+      <span class="brand-rule"></span>
+      <div class="world-heading"><span class="eyebrow" id="regionName">YOUR LITTLE CORNER OF THE WORLD</span><span class="world-title"><span id="worldTitle">Meadow beginnings</span> <span class="creative-badge">Creative</span></span></div>
+    </div>
+    <div class="top-actions">
+      <span id="saveStatus" class="save-status"><span class="status-dot"></span>All yours to shape</span>
+      <button id="goalsToggle" class="soft-button projects-toggle surface goals-toggle" title="Town goals" aria-label="Town goals"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.8z"/></svg><span>Goals <b id="goalsCount">0</b></span></button>
+      <button id="projectToggle" class="soft-button projects-toggle surface" title="Open my projects" aria-label="My projects"><svg><use href="#i-folder"/></svg><span>My projects</span></button>
+      <div class="history-group surface"><button id="undo" class="icon-button" title="Undo (⌘/Ctrl Z)" aria-label="Undo"><svg><use href="#i-undo"/></svg></button><button id="redo" class="icon-button" title="Redo (⌘/Ctrl Shift Z)" aria-label="Redo"><svg><use href="#i-redo"/></svg></button></div>
+      <button id="save" class="primary-button save-button" aria-label="Save world" title="Save world (⌘/Ctrl S)"><svg><use href="#i-save"/></svg><span>Save world</span></button>
+      <button id="menuToggle" class="icon-button surface" title="World menu" aria-label="Open world menu" aria-expanded="false"><svg><use href="#i-menu"/></svg></button>
+    </div>
+  </header>
+
+  <nav class="tool-dock surface" aria-label="World tools">
+    <div class="dock-group"><button data-tool="camera" class="tool-button" title="Explore — orbit, pan & zoom (C)" aria-label="Camera"><svg><use href="#i-orbit"/></svg><span>Explore</span></button><button data-tool="select" class="tool-button" title="Select an object (V)" aria-label="Select object"><svg><use href="#i-cursor"/></svg><span>Select</span></button></div>
+    <div class="dock-divider"></div>
+    <div class="dock-group"><button data-tool="raise" class="tool-button active" title="Raise terrain — hold and drag (1)" aria-label="Raise terrain"><svg><use href="#i-mountain"/></svg><span>Raise</span></button><button data-tool="lower" class="tool-button" title="Lower terrain — hold and drag (2)" aria-label="Lower terrain"><svg><use href="#i-valley"/></svg><span>Lower</span></button><button data-tool="smooth" class="tool-button" title="Smooth terrain (3)" aria-label="Smooth terrain"><svg><use href="#i-smooth"/></svg><span>Smooth</span></button><button data-tool="flatten" class="tool-button" title="Flatten terrain (4)" aria-label="Flatten terrain"><svg><use href="#i-flat"/></svg><span>Flatten</span></button><button data-tool="paint" class="tool-button" title="Paint ground (5)" aria-label="Paint terrain"><svg><use href="#i-paint"/></svg><span>Paint</span></button><button data-tool="biome" class="tool-button" title="Paint a local biome" aria-label="Paint biome"><svg><use href="#i-biome"/></svg><span>Biome</span></button><button data-tool="water" class="tool-button" title="Fill a basin with water (6)" aria-label="Basin water"><svg><use href="#i-water"/></svg><span>Water</span></button><button data-tool="pond" class="tool-button" title="Create a pond in one click" aria-label="Create pond"><svg><use href="#i-pond"/></svg><span>Pond</span></button></div>
+    <div class="dock-divider"></div>
+    <div class="dock-group"><button data-tool="place" class="tool-button" title="Place objects (B)" aria-label="Place objects"><svg><use href="#i-house"/></svg><span>Build</span></button><button id="animalsToggle" class="tool-button" title="Browse animals, birds, and fish" aria-label="Open Animals library" aria-controls="library"><svg><use href="#i-paw"/></svg><span>Animals</span></button><button data-tool="enclosure" class="tool-button" title="Build a wildlife enclosure" aria-label="Build enclosure"><svg><use href="#i-fence"/></svg><span>Habitat</span></button></div>
+  </nav>
+
+  <button id="libraryToggle" class="library-toggle surface" title="Show or hide object library" aria-label="Toggle object library"><svg><use href="#i-grid"/></svg><span>Object library</span></button>
+  <aside id="library" class="library surface" aria-label="Object library">
+    <div class="library-heading"><div><span class="eyebrow">A WORLD OF POSSIBILITIES</span><h1 id="libraryTitle">Make it yours<span>.</span></h1></div><button id="libraryClose" class="icon-button" title="Collapse library" aria-label="Collapse object library"><svg><use href="#i-close"/></svg></button></div>
+    <div class="library-sections" aria-label="Browse collections"><button data-library-section="Buildings" aria-pressed="false" title="Browse buildings and fences"><svg><use href="#i-house"/></svg><span><strong>Buildings</strong><small>Places &amp; fences</small></span></button><button data-library-section="Animals" aria-pressed="false" title="Browse animals, birds, and fish"><svg><use href="#i-paw"/></svg><span><strong>Animals</strong><small>Birds &amp; fish, too</small></span></button></div>
+    <label class="search-box"><svg><use href="#i-search"/></svg><input id="search" type="search" autocomplete="off" placeholder="A cottage, a fox, a little forest…" aria-label="Search objects"><kbd>/</kbd></label>
+    <div id="categories" class="categories" aria-label="Filter objects by category"></div>
+    <div class="catalog-caption"><span id="resultCount">Original miniatures</span><label class="new-only"><input id="newOnly" type="checkbox"> New only</label></div>
+    <div id="catalog" class="catalog" aria-live="polite"></div>
+    <button id="catalogMore" class="catalog-more soft-button" aria-controls="catalog" hidden>Show 60 more</button>
+    <div class="library-footer"><svg><use href="#i-cursor"/></svg><span>Choose something. Find it a home.</span></div>
+  </aside>
+
+  <section id="tutorial" class="tutorial surface" aria-label="Getting started">
+    <button id="tutorialClose" class="icon-button tutorial-close" title="Close getting started" aria-label="Close tutorial"><svg><use href="#i-close"/></svg></button>
+    <span class="eyebrow">WELCOME, WORLDBUILDER</span>
+    <h2>A little land.<br>Endless possibility.</h2>
+    <p>A plain, open meadow. A fresh canvas.</p>
+    <ol><li><span>01</span>Choose Raise. Click, hold, and drag.</li><li><span>02</span>Choose Pond. One click makes water.</li><li><span>03</span>Pick a miniature. Give it a home.</li></ol>
+    <p class="tutorial-tip">No double-click needed. Open <strong>Build</strong> for buildings and fences, or <strong>Planet</strong> to find another landscape.</p>
+    <button id="startBuilding" class="text-button">Let’s make something <svg><use href="#i-arrow"/></svg></button>
+  </section>
+
+  <section id="context" class="context surface" aria-label="Active tool settings">
+    <div class="active-tool"><span class="active-tool-dot"></span><div><span class="eyebrow">CURRENT TOOL</span><strong id="toolName">Raise terrain</strong></div></div>
+    <div data-context="brush" class="context-group">
+      <label class="slider-control"><span>Brush size <output id="brushSizeValue">7 m</output></span><input id="brushSize" type="range" min="2" max="20" value="7" step="1" aria-label="Brush size"></label>
+      <label class="slider-control strength-control"><span>Strength <output id="brushStrengthValue">1×</output></span><input id="brushStrength" type="range" min="0.2" max="3" value="1" step="0.1" aria-label="Brush strength"></label>
+      <label class="material-control"><span>Surface</span><select id="material" aria-label="Ground material"><option value="0">Meadow grass</option><option value="1">Rich soil</option><option value="2">Soft sand</option><option value="3">Stone</option><option value="4">Snow</option></select></label>
+    </div>
+    <div data-context="water" class="context-group" hidden><label class="slider-control wide-slider"><span>Water level <output id="waterLevelValue">−0.3 m</output></span><input id="waterLevel" type="range" min="-8" max="12" step="0.1" value="-0.3" aria-label="Water level"></label><span class="context-note">Click inside a carved basin.</span></div>
+    <div data-context="biome" class="context-group" hidden><label class="select-control"><span>Biome</span><select id="biomeSelect" aria-label="Biome to paint"><option value="grassland">Grassland</option><option value="desert">Desert</option><option value="jungle">Jungle</option><option value="snow">Snow</option></select></label><label class="slider-control"><span>Brush size <output id="biomeSizeValue">10 m</output></span><input id="biomeSize" type="range" min="2" max="24" step="1" value="10" aria-label="Biome brush size"></label><span class="context-note">Hold and drag to paint.</span></div>
+    <div data-context="pond" class="context-group" hidden><label class="slider-control"><span>Pond size <output id="pondSizeValue">8 m</output></span><input id="pondSize" type="range" min="3" max="18" step="1" value="8" aria-label="Pond size"></label><label class="slider-control"><span>Depth <output id="pondDepthValue">3 m</output></span><input id="pondDepth" type="range" min="1" max="7" step="0.5" value="3" aria-label="Pond depth"></label><span class="context-note">Click once to make a pond.</span></div>
+    <div data-context="placement" class="context-group placement-group" hidden><div class="rotation-pair"><button id="rotateBack" class="icon-button" title="Rotate object left 45°" aria-label="Rotate left 45 degrees"><svg class="reverse-icon"><use href="#i-rotate"/></svg></button><button id="rotate" class="soft-button" title="Rotate object right 45° (R)"><svg><use href="#i-rotate"/></svg><span>Rotate</span><kbd>R</kbd></button></div><label id="drawLineControl" class="check-control" hidden><input id="drawLine" type="checkbox"><span>Draw line</span></label><label id="fenceModeControl" class="select-control fence-mode-control" hidden><span>Fence drawing</span><select id="fenceMode" aria-label="Fence drawing mode"><option value="freehand">Draw freely</option><option value="line">Straight line</option><option value="points">Click corners</option></select></label><button id="finishFence" class="soft-button fence-action" hidden title="Finish the fence at the last corner">Finish</button><button id="closeFence" class="soft-button fence-action" hidden title="Connect the last corner to the first">Close loop</button><details id="placementOptions" class="placement-options"><summary>Options <svg><use href="#i-chevron"/></svg></summary><div class="placement-options-panel"><label class="select-control scale-control"><span>Object size</span><select id="placementScale" aria-label="Object placement scale"><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option></select></label><label class="check-control"><input id="snap" type="checkbox" checked><span>Snap to grid</span></label><label class="check-control"><input id="foundation" type="checkbox" checked><span>Level ground beneath objects</span></label><label id="floatBuildControl" class="check-control" hidden><input id="floatBuild" type="checkbox" checked><span>Floating foundation</span></label></div></details></div>
+    <div data-context="selection" class="context-group" hidden><strong id="selectedName" class="selected-name">Your miniature</strong><button id="focusObject" class="icon-button" title="Focus camera on this object" aria-label="Focus selected object"><svg><use href="#i-focus"/></svg></button><button id="move" class="icon-button" title="Move selected object" aria-label="Move object"><svg><use href="#i-move"/></svg></button><button id="rotateSelected" class="icon-button" title="Rotate selected object (R)" aria-label="Rotate selected object"><svg><use href="#i-rotate"/></svg></button><button id="duplicate" class="icon-button" title="Duplicate selected object" aria-label="Duplicate object"><svg><use href="#i-copy"/></svg></button><button id="delete" class="icon-button danger" title="Delete selected object (Delete)" aria-label="Delete object"><svg><use href="#i-trash"/></svg></button></div>
+    <div data-context="camera" class="context-group" hidden><span class="context-note camera-instructions">Drag to orbit <i>·</i> Shift-drag to pan <i>·</i> Scroll to zoom</span><button id="flyToggle" class="soft-button fly-toggle" title="Fly freely — WASD to move, Q/E down/up" aria-label="Toggle flight mode" aria-pressed="false"><svg><use href="#i-fly"/></svg><span>Fly</span></button><button id="resetCamera" class="soft-button" title="Return to the meadow"><svg><use href="#i-compass"/></svg><span>Home view</span></button></div>
+  </section>
+  <div id="hint" class="interaction-hint">Drag to sculpt <span>·</span> Right-drag to look around</div>
+
+  <section id="flightControls" class="flight-controls surface" aria-label="Flight movement controls" hidden><div class="flight-label"><svg><use href="#i-fly"/></svg><span>FREE FLIGHT</span></div><div class="flight-pad"><button data-fly="w" class="flight-key fly-forward" aria-label="Fly forward" title="Forward (W)">↑</button><button data-fly="a" class="flight-key fly-left" aria-label="Fly left" title="Left (A)">←</button><button data-fly="s" class="flight-key fly-back" aria-label="Fly backward" title="Backward (S)">↓</button><button data-fly="d" class="flight-key fly-right" aria-label="Fly right" title="Right (D)">→</button><div class="flight-height"><button data-fly="e" class="flight-key" aria-label="Fly upward" title="Up (E)"><span>＋</span><small>Up</small></button><button data-fly="q" class="flight-key" aria-label="Fly downward" title="Down (Q)"><span>−</span><small>Down</small></button></div></div><p>WASD to move · Q/E to descend / climb</p></section>
+
+  <section class="minimap-wrap surface" aria-label="World map">
+    <button id="globeToggle" class="planet-toggle" title="Explore your planet and choose a region" aria-label="Open planet view"><svg><use href="#i-globe"/></svg><span>Planet</span><svg class="planet-arrow"><use href="#i-arrow"/></svg></button>
+    <div class="minimap-heading"><span>YOUR MEADOW</span><button id="expand" class="icon-button" title="Expand this region to 1,024 × 1,024 m" aria-label="Expand world"><svg><use href="#i-expand"/></svg></button></div>
+    <div class="minimap-canvas"><canvas id="minimap" width="160" height="120" aria-label="Top down world map"></canvas><span class="north-marker">N<span>↑</span></span></div>
+    <div class="map-details"><span id="worldSize">128 × 128 m</span><span><b id="objectCount">0</b> objects</span></div>
+  </section>
+  <div class="view-controls"><button id="zoomIn" class="icon-button surface" title="Zoom in" aria-label="Zoom in"><svg><use href="#i-plus"/></svg></button><button id="zoomOut" class="icon-button surface" title="Zoom out" aria-label="Zoom out"><svg><use href="#i-minus"/></svg></button></div>
+  <div class="bottom-left"><span class="weather"><svg><use href="#i-sun"/></svg> A good day to create</span><button id="helpToggle" class="icon-button surface" title="Getting started and controls" aria-label="Show tutorial"><svg><use href="#i-help"/></svg></button></div>
+  <aside id="habitat" class="habitat surface" aria-live="polite" hidden></aside>
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <section id="globePanel" class="globe-panel surface" aria-labelledby="globeTitle" hidden>
+    <div class="globe-heading"><span class="eyebrow">THERE’S MORE TO MAKE</span><h2 id="globeTitle">Your little planet<span>.</span></h2><p>Pick a landscape. Make a place of your own.</p></div>
+    <div class="planet-scale"><svg><use href="#i-globe"/></svg><span>8 build regions <i>·</i> up to 1,024 × 1,024 m each</span></div>
+    <div id="regionList" class="region-list" aria-label="Choose a build region"></div>
+    <p id="globeHint" class="globe-hint">Select a region to enter its own editable landscape. Your work stays with each region.</p>
+    <button id="backToRegion" class="primary-button back-to-region"><svg class="reverse-icon"><use href="#i-arrow"/></svg><span>Back to my region</span></button>
+  </section>
+
+  <section id="goalsPanel" class="goals-panel surface" role="dialog" aria-labelledby="goalsTitle" hidden>
+    <div class="goals-head"><div><span class="eyebrow">YOUR TOWN CHARTER</span><h2 id="goalsTitle">Goals<span>.</span></h2><p id="goalsSummary"></p></div><button id="goalsClose" class="icon-button" title="Close goals" aria-label="Close goals"><svg><use href="#i-close"/></svg></button></div>
+    <div id="goalsList" class="goals-list"></div>
+  </section>
+  <section id="projectsPanel" class="projects-panel surface" role="dialog" aria-labelledby="projectsTitle" hidden>
+    <div class="projects-heading"><div><span class="eyebrow">LITTLE WORLDS, BIG IDEAS</span><h2 id="projectsTitle">My projects<span>.</span></h2></div><button id="projectsClose" class="icon-button" title="Close projects" aria-label="Close projects"><svg><use href="#i-close"/></svg></button></div>
+    <div class="project-account"><span class="account-symbol"><svg><use href="#i-leaf"/></svg></span><div><strong id="accountName">On this device</strong><p id="projectStatus" role="status">Your saved projects live here.</p></div><a id="signInLink" class="soft-button" href="/signin-with-chatgpt?return_to=%2F" target="_top" hidden>Sign in</a></div>
+    <div class="project-actions"><button id="projectNew" class="primary-button"><svg><use href="#i-plus"/></svg><span>New project</span></button><button id="projectSaveAs" class="soft-button"><svg><use href="#i-copy"/></svg><span>Save as new</span></button></div>
+    <div id="projectList" class="project-list" aria-label="Saved projects"></div>
+    <div id="projectEmpty" class="project-empty" hidden><svg><use href="#i-leaf"/></svg><h3>A world begins with an idea.</h3><p>Create your first project and give it a name.<br>There’s plenty of room to imagine.</p></div>
+    <div class="projects-footer"><p>Keep an exported copy of the worlds you love.</p><button id="syncNow" class="soft-button"><svg><use href="#i-cloud"/></svg><span>Sync current project</span></button></div>
+  </section>
+
+  <section id="worldMenu" class="world-menu surface" aria-label="World menu" hidden>
+    <div class="menu-heading"><span class="eyebrow">YOUR WORLD, YOUR WAY</span><h2>The little details.</h2></div>
+    <label class="world-name-control"><span>World name</span><input id="worldName" type="text" value="Meadow beginnings" maxlength="80" autocomplete="off" placeholder="Name your little world" aria-label="World name"></label>
+    <button id="load" class="menu-item"><svg><use href="#i-folder"/></svg><span>Load saved world</span></button>
+    <button id="export" class="menu-item"><svg><use href="#i-download"/></svg><span>Export world file</span><small>JSON</small></button>
+    <button id="import" class="menu-item"><svg><use href="#i-upload"/></svg><span>Import a world</span></button>
+    <label class="quality-row"><span>Graphics quality</span><select id="quality"><option value="low">Low</option><option value="medium">Balanced</option><option value="high" selected>Beautiful</option></select></label>
+    <div class="world-atmosphere"><label class="slider-control daylight-control"><span>Daylight <output id="daylightValue">0.75</output></span><input id="daylight" type="range" min="0" max="1" step="0.05" value="0.75" aria-label="Daylight atmosphere"></label><div class="daylight-labels" aria-hidden="true"><span>Morning</span><span>Noon</span><span>Evening</span></div><label class="check-control"><input id="pauseLife" type="checkbox"><span>Pause wildlife</span></label><label class="check-control"><input id="gridToggle" type="checkbox"><span>Show building grid</span></label></div>
+    <fieldset class="world-setup"><legend>World setup</legend><label class="preset-control"><span>Start with</span><select id="preset" aria-label="New world landscape preset"><option value="grassland" selected>Plain grassland</option><option value="desert">Quiet desert</option><option value="pond">Pond meadow</option><option value="highlands">Open highlands</option><option value="jungle">Emerald jungle</option><option value="sand">Soft sand</option><option value="ocean">Open ocean</option></select></label><button id="newWorld" class="menu-item new-world"><svg><use href="#i-plus"/></svg><span>Create a fresh world</span><svg class="new-world-arrow"><use href="#i-arrow"/></svg></button><p>Applies to a new world. Your saved world stays available.</p></fieldset>
+    <p class="menu-footnote">Manage saved worlds in My projects. Export a copy to take your world with you.</p>
+  </section>
+  <input id="importFile" type="file" accept=".json,application/json" hidden>
+  <dialog id="modal" class="modal"><h2 id="modalTitle"></h2><p id="modalText"></p><div id="modalActions" class="modal-actions"></div></dialog>
+
+  <div id="loading" class="loading-screen"><div class="loading-brand"><svg><use href="#i-leaf"/></svg><h2>Morrowfield<span>.</span></h2><p>A world of your making</p><span class="loading-line"></span><small>Planting the first seeds…</small></div></div>
+  <noscript><div class="no-script">Morrowfield needs JavaScript and WebGL to bring your world to life. Please enable JavaScript and reload.</div></noscript>
+  <script type="module" src="./app.js?v=1.4.0"></script>
+</body>
+</html>

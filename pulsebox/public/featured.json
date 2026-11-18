@@ -1,0 +1,4 @@
+{
+  "_how": "GAMES OF THE DAY: the big carousel at the very top of box.pulseform.org, with Trending right under it. Put 3 to 6 game ids in 'default' (the id is the name of the game's file in public/games, without .html). To plan a specific day, add a line like \"2026-11-08\": [\"turbo-laps\", \"dead-air\"]. That day shows those instead. Edit this file on GitHub and save: the next deploy picks it up.",
+  "default": ["cart-rush", "odd-crowd", "turbo-laps", "space-colony", "lantern-keep", "dead-air"]
+}

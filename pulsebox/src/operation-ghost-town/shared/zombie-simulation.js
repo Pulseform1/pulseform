@@ -1,0 +1,18 @@
+import {CRASH_EXIT} from './plane-wreck.js';
+import {Simulation} from './simulation.js';
+import {createZombie,zombieSpawnClear} from './zombie-ai.js';
+import {SURVIVAL_LOADOUT,WEAPONS} from './weapons.js';
+import {CITY_STATIONS} from './city.js';
+import {visible} from './physics.js';
+export const DAY_SECONDS=120,NIGHT_SECONDS=120,SURVIVAL_DAYS=10,SURVIVAL_DURATION=2400;
+export function survivalClock(time){const t=Math.max(0,Math.min(SURVIVAL_DURATION,time)),day=Math.min(10,Math.floor(t/240)+1),night=t<2400&&t%240>=120;return {day,night,phase:night?'NIGHT':'DAY',remaining:Math.max(0,120-t%120),elapsed:t,progress:t/SURVIVAL_DURATION}}
+export class ZombieSimulation extends Simulation{
+ constructor(){super('zombie','normal','ghost-town','city');this.duration=SURVIVAL_DURATION;this.supplies=CITY_STATIONS.map(s=>({...s,readyAt:0}));this.nextZombie=0;this.lastDay=1;this.lastNight=false}
+ addPlayer(id,name='Survivor'){const p=super.addPlayer(id,name,'alpha','market');Object.assign(p,CRASH_EXIT,{maxHealth:150,health:150,loadout:[...SURVIVAL_LOADOUT],weapon:7,grenades:0,traps:0,survival:true});p.magUpgrades=WEAPONS.map(()=>0);p.ammo=WEAPONS.map(w=>w.clip);p.reserve=WEAPONS.map(w=>w.clip*12);return p}
+ start(){this.ensureWorld();this.events.push({kind:'missionMessage',text:'DEAD CITY / TEN DAYS. One life. Climb the four stair towers, scavenge supplies and survive every night. Keys 1–4: sniper, AK, pistol, knife.'});this.spawnZombies(9);this.nextZombie=5}
+ spawnZombies(count){const human=[...this.players.values()].find(p=>p.alive);if(!human||this.finished)return;const clock=survivalClock(this.time),cap=Math.min(38,16+clock.day*2+(clock.night?4:0));count=Math.min(count,cap-this.bots.filter(b=>b.alive).length);for(let n=0;n<count;n++){let point;for(let i=0;i<80;i++){const side=(i+this.nextBot)%4,along=-48+this.random()*96,p=side===0?{x:-50,z:along}:side===1?{x:50,z:along}:side===2?{x:along,z:-50}:{x:along,z:50};if(Math.hypot(p.x-human.x,p.z-human.z)<22||!zombieSpawnClear(p)||this.bots.some(z=>z.alive&&Math.hypot(z.x-p.x,z.z-p.z)<2))continue;if(visible(human,{...p,y:.1})&&i<60)continue;point=p;break}if(!point)continue;const z=createZombie(++this.nextBot,point,clock.day);z.spawnedAt=this.time;this.bots.push(z)}}
+ update(dt,inputs=new Map()){if(this.finished)return;super.update(dt,inputs);if(this.finished)return;this.bots=this.bots.filter(z=>z.alive||this.time-(z.diedAt??this.time)<10);const c=survivalClock(this.time);if(c.night!==this.lastNight||c.day!==this.lastDay){this.lastNight=c.night;this.lastDay=c.day;this.events.push({kind:'survivalPhase',night:c.night,day:c.day});if(!c.night){for(const p of this.players.values()){for(const w of SURVIVAL_LOADOUT)p.reserve[w]=Math.min(WEAPONS[w].clip*16,p.reserve[w]+WEAPONS[w].clip*5)}this.supplies.forEach(s=>s.readyAt=Math.min(s.readyAt,this.time))}this.events.push({kind:'missionMessage',text:c.night?'NIGHT '+c.day+' / Heat-tracking goggles engaged. More infected are entering the city.':'DAY '+c.day+' / Goggles off. Ammunition replenished; regroup and find cover.'})}if(this.time>=this.nextZombie){this.nextZombie=this.time+(c.night?3:5);this.spawnZombies(c.night?3:2)}}
+ damage(target,attacker,amount){super.damage(target,attacker,amount);if(!target.bot&&!target.alive&&!this.finished){this.finished=true;this.result={title:'THE CITY CLAIMED YOU',detail:'You reached day '+survivalClock(this.time).day+' of 10. One life: restart from day one.',winner:'bravo'}}}
+ endMatch(){this.finished=true;this.result={title:'TEN DAYS SURVIVED',detail:'You survived all ten days and ten nights in Dead City. The city did not break you.',winner:'alpha'}}
+ snapshot(){return {...super.snapshot(),survival:survivalClock(this.time)}}
+}

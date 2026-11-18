@@ -1,0 +1,3 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {planHaunt} from '../horror-director.js';
+test('scare director avoids immediate repeats and leaves recovery time',()=>{for(const kind of ['blackout','footsteps','whisper','apparition','impact','ambush','falsealarm','stalker'])for(const random of [0,.4,.999]){const p=planHaunt(kind,60,()=>random);assert.notEqual(p.kind,kind);assert.ok(p.delay>=20&&p.delay<40)}});
+test('opening encounters build tension before close-up scares are introduced',()=>{for(let i=0;i<100;i++)assert.ok(!['ambush','falsealarm','stalker'].includes(planHaunt(null,10,()=>i/100).kind))});
