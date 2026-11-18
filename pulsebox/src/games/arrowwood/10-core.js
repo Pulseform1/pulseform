@@ -18,10 +18,13 @@
   const teamCol = (team, slot, mode) => mode === 'ffa' ? FFA_COLS[(slot | 0) % 8] : W.TEAMS[team | 0].col;
 
   // settings (kept in the kit's save for this game)
-  const CFG = { quality: 'auto', sens: .5, touchSens: .5, invert: false, vol: .8, amb: 1, fov: 75, name: '', fps: false, aimLine: 'full' };   // amb: the forest's own sounds (birds, leaves, the creek)
+  const CFG = { quality: 'auto', sens: .5, touchSens: .5, invert: false, vol: .8, amb: 1, fov: 75, name: '', fps: false, aimLine: 'full' };   // amb: the forest's own sounds (birdsong)
   const loadCfg = () => { try { Object.assign(CFG, (K.save.aw || {}).cfg || {}); } catch (e) {} };
   const saveCfg = () => { try { K.save.aw = Object.assign(K.save.aw || {}, { cfg: CFG }); K.persist(); } catch (e) {} };
-  const quality = () => QS.get('quality') || (CFG.quality !== 'auto' ? CFG.quality : (isTouch() || /iPad|iPhone|Android/.test(navigator.userAgent)) ? 'low' : (navigator.hardwareConcurrency || 4) >= 8 ? 'high' : 'medium');
+  // auto: medium on a computer, low on a phone or tablet; if frames still run long at the smallest resolution, auto steps
+  // down to low (no shadows) by itself. High is only ever picked by hand: many laptops have the cores but not the GPU for it
+  const AUTOQ = { tier: 'medium' };
+  const quality = () => QS.get('quality') || (CFG.quality !== 'auto' ? CFG.quality : (isTouch() || /iPad|iPhone|Android/.test(navigator.userAgent)) ? 'low' : AUTOQ.tier);
 
   // the private player key: made once in this browser; the server keeps only a hash of it with your coins and bows
   const KEY = (() => { let k = ''; try { k = localStorage.getItem('aw-key') || ''; } catch (e) {} if (!/^[a-f0-9]{32}$/.test(k)) { k = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join(''); try { localStorage.setItem('aw-key', k); } catch (e) {} } return k; })();
