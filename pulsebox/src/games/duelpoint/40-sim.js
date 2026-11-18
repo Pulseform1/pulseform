@@ -414,7 +414,7 @@
     let fs = [A], flip = 0;
     if (online && o.seats) {   // seats: { key, name, team (the host's numbering), bot, op } in the same order on every device; the host runs the bots
       const mine = o.seats.find(s => s.key === String(MP.id)) || o.seats[0]; flip = mine.team; A.key = mine.key;
-      for (const s of o.seats) if (s !== mine) fs.push(fighter({ name: s.name, op: s.op || 'vex', key: s.key, team: s.team ^ flip, net: !(s.bot && host), isBot: !!s.bot, bot: s.bot && host ? { diff: o.botDiff == null ? 1 : o.botDiff } : null }));
+      for (const s of o.seats) if (s !== mine) fs.push(fighter({ name: s.name, op: s.op || 'vex', key: s.key, team: s.team ^ flip, net: !(s.bot && host), isBot: !!s.bot, bot: s.bot && host ? { diff: o.botDiff == null ? 1 : o.botDiff } : null, rating: s.rating || 0 }));
     } else if (online) fs.push(fighter({ name: (o.rival && o.rival.name) || 'Rival', op: 'vex', net: true, team: 1, key: String(o.rival && o.rival.id) }));
     else { for (let i = 0; i < Math.max(1, o.size | 0); i++) fs.push(fighter({ name: bname(), op: pick(ops), team: 1, key: 'e' + i, bot: botP() })); for (let i = 1; i < (o.size | 0); i++) { const mt = o.mates && o.mates[i - 1]; if (mt) used.add(mt.name); fs.push(fighter({ name: mt ? mt.name : bname(), op: mt ? mt.op : pick(ops), team: 0, key: 'm' + i, bot: botP() })); } }
     fs = [A, ...fs.slice(1).sort((a, b) => b.team - a.team)];   // enemies first, so M.fs[1] is always a rival

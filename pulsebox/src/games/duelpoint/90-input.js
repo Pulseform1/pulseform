@@ -79,7 +79,7 @@
     document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; if (Math.abs(e.movementX) > 500 || Math.abs(e.movementY) > 500) return;   // some browsers send a wild jump when the lock starts
       const P = me(), s = .0022 * CFG.sens / zoomOf(P) * (P.scoped ? CFG.zsens : 1); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
     // (on a Mac, Ctrl+click arrives as a right click: while crouching that is still a shot)
-    document.addEventListener('mousedown', e => { if (!locked() || !playing()) return; if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = true; else if (e.button === 2) altAction(me()); });
+    document.addEventListener('mousedown', e => { if (M && screen === 'play' && !me().alive && UI.spec && X) { nextSpec(); return; } if (!locked() || !playing()) return; if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = true; else if (e.button === 2) altAction(me()); });
     document.addEventListener('mouseup', e => { if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = false; });
     document.addEventListener('contextmenu', e => { if (screen === 'play') e.preventDefault(); });
     document.addEventListener('wheel', e => { if (screen === 'play' && e.ctrlKey) e.preventDefault(); if (locked() && playing()) cycleWeapon(me(), e.deltaY > 0 ? 1 : -1); }, { passive: false });   // Ctrl+wheel would zoom the page

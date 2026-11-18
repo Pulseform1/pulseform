@@ -72,7 +72,9 @@ const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
    A game fills in MP.opts and calls MP.show() from GAME.reset():
      { max, min, bots: seats to fill with bots (0 = none), solo: label of the offline button (false = none),
        config(): match settings the host sends, onStart(cfg, roster), onMsg(m), onLeave(id), onHost(id),
-       onClose(): when set, a Back button (and Escape) closes the lobby, leaving any room, and this is called }
+       onClose(): when set, a Back button (and Escape) closes the lobby, leaving any room, and this is called,
+       custom: true for a game that draws its own lobby (no lobby box; it calls MP.create(), MP.join(code), MP.players()),
+       onRoster(): someone joined, left or became host; onStatus(text): a connection message for the player }
    roster: [{ id, name, col, bot, seat }] in seat order, the same on every device. Bots are run by the host. */
 const MP = (() => {
   const COLS = ['#ff4d6d', '#3ec5ff', '#ffd23f', '#5cf28a', '#c77dff', '#ff9f43', '#f2f2f2', '#ff7ad9'];
@@ -113,10 +115,11 @@ const MP = (() => {
     $m('back').onclick = () => close();
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && box && !box.hidden && opts.onClose) { e.stopPropagation(); close(); } }, true);
   }
-  function saveName() { name = ($m('name').value || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12) || 'Player'; try { localStorage.setItem('pbx-mp-name', name); } catch (e) {} return name; }
-  function msg(s) { $m('msg').textContent = s || ''; }
+  function saveName() { const el = $m('name'); if (!el) return name || 'Player'; name = (el.value || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12) || 'Player'; try { localStorage.setItem('pbx-mp-name', name); } catch (e) {} return name; }
+  function msg(s) { const el = $m('msg'); if (el) el.textContent = s || ''; if (opts.onStatus) opts.onStatus(s || ''); }
   function list() { return [...(online() ? [[me, { name }]] : []), ...players].map(([id, p]) => ({ id, name: p.name })).sort((a, b) => a.id - b.id); }
   function refresh() {
+    if (opts.onRoster) opts.onRoster();
     if (!box) return;
     const on = online();
     $m('title').textContent = GAME.title; $m('sub').textContent = opts.sub || GAME.tagline;
@@ -135,7 +138,7 @@ const MP = (() => {
     try { ws = new WebSocket(`wss://${WSHOST}/api/room/${c}?n=${encodeURIComponent(name)}&g=${encodeURIComponent(GAME.id)}`); } catch (e) { msg('Could not connect.'); return; }
     code = c; const my = ws;
     ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (err) { return; } onNet(m); };
-    ws.onclose = () => { if (ws !== my) return; ws = null; me = 0; players.clear(); if (opts.onLeave && K.state === 'play' && box && box.hidden) opts.onLeave(-1); else { refresh(); msg('Disconnected from the room.'); } };
+    ws.onclose = () => { if (ws !== my) return; ws = null; me = 0; players.clear(); if (opts.onLeave && K.state === 'play' && (opts.custom || (box && box.hidden))) opts.onLeave(-1); else { refresh(); msg('Disconnected from the room.'); } };
   }
   function onNet(m) {
     switch (m.t) {
@@ -167,6 +170,7 @@ const MP = (() => {
   function close() { leave(); pending = null; if (box) box.hidden = true; msg(''); if (opts.onClose) opts.onClose(); }
   function leave() { const w = ws; ws = null; me = 0; host = 0; players.clear(); if (w) try { w.close(); } catch (e) {} }
   function show() {
+    if (opts.custom) { if (pending && online()) { const p = pending; pending = null; return begin(p); } if (AUTO && !autoDone && !online()) { autoDone = true; connect(AUTO); } return; }
     build();
     if (pending && online()) { const p = pending; pending = null; return begin(p); }
     box.hidden = false; refresh();
@@ -175,6 +179,11 @@ const MP = (() => {
   if (AUTO) { const go = () => { const b = document.getElementById('bPlay'); if (b && typeof K !== 'undefined' && K.state === 'title') b.click(); else setTimeout(go, 150); }; setTimeout(go, 250); }
   return {
     opts, show, start, send, leave, close, online, colors: COLS,
+    // for games with their own lobby: make a room, join one by code, who is in (in join order), your name
+    create() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; connect(Array.from({ length: 4 }, () => A[Math.floor(Math.random() * A.length)]).join('')); },
+    join(c) { c = String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (c.length !== 4) return msg('Room codes are 4 letters.'); connect(c); },
+    players: () => online() ? list() : [], setName(n) { name = String(n || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12) || 'Player'; try { localStorage.setItem('pbx-mp-name', name); } catch (e) {} },
+    get autoRoom() { return AUTO; },
     hide() { if (box) box.hidden = true; },
     to(id, m) { m.to = id; send(m); },
     isHost: () => !online() || host === me,
@@ -999,7 +1008,7 @@ const GAME = {
     let fs = [A], flip = 0;
     if (online && o.seats) {   // seats: { key, name, team (the host's numbering), bot, op } in the same order on every device; the host runs the bots
       const mine = o.seats.find(s => s.key === String(MP.id)) || o.seats[0]; flip = mine.team; A.key = mine.key;
-      for (const s of o.seats) if (s !== mine) fs.push(fighter({ name: s.name, op: s.op || 'vex', key: s.key, team: s.team ^ flip, net: !(s.bot && host), isBot: !!s.bot, bot: s.bot && host ? { diff: o.botDiff == null ? 1 : o.botDiff } : null }));
+      for (const s of o.seats) if (s !== mine) fs.push(fighter({ name: s.name, op: s.op || 'vex', key: s.key, team: s.team ^ flip, net: !(s.bot && host), isBot: !!s.bot, bot: s.bot && host ? { diff: o.botDiff == null ? 1 : o.botDiff } : null, rating: s.rating || 0 }));
     } else if (online) fs.push(fighter({ name: (o.rival && o.rival.name) || 'Rival', op: 'vex', net: true, team: 1, key: String(o.rival && o.rival.id) }));
     else { for (let i = 0; i < Math.max(1, o.size | 0); i++) fs.push(fighter({ name: bname(), op: pick(ops), team: 1, key: 'e' + i, bot: botP() })); for (let i = 1; i < (o.size | 0); i++) { const mt = o.mates && o.mates[i - 1]; if (mt) used.add(mt.name); fs.push(fighter({ name: mt ? mt.name : bname(), op: mt ? mt.op : pick(ops), team: 0, key: 'm' + i, bot: botP() })); } }
     fs = [A, ...fs.slice(1).sort((a, b) => b.team - a.team)];   // enemies first, so M.fs[1] is always a rival
@@ -1491,6 +1500,11 @@ const GAME = {
      2nd and 4th); DUEL is one-on-one with two players; CO-OP puts everyone on one team. Bots fill the short team, run by the host; the host's settings say who attacks first. */
   function seatsFor(cfg, roster) {
     const humans = roster.filter(p => !p.bot), coop = cfg.team === 'coop';
+    if (cfg.teams) {   // from the party: the host's teams, everyone's operative and rating; bots fill up to the team size (or just enough for a rival)
+      const seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: cfg.teams[p.id] != null ? +cfg.teams[p.id] : i % 2, op: cfg.hops && cfg.hops[p.id], rating: cfg.rts && cfg.rts[p.id] })), size = cfg.size || 2; let b = 0;
+      for (const t of [0, 1]) { const have = seats.filter(s => s.team === t).length, want = cfg.fill === false ? Math.max(1, have) : Math.max(size, have); for (let n = have; n < want; n++, b++) seats.push({ key: 'b' + b, name: cfg.names[b % cfg.names.length], team: t, bot: true, op: cfg.ops[b % cfg.ops.length] }); }
+      return seats;
+    }
     const seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: coop ? 0 : i % 2 }));
     const size = coop ? Math.max(2, humans.length) : Math.max(cfg.team === 'duel' ? 1 : 2, ...[0, 1].map(t => seats.filter(s => s.team === t).length));
     let b = 0; for (const t of [0, 1]) for (let n = seats.filter(s => s.team === t).length; n < size; n++, b++) seats.push({ key: 'b' + b, name: cfg.names[b % cfg.names.length], team: t, bot: true, op: cfg.ops[b % cfg.ops.length] });
@@ -2832,11 +2846,11 @@ const GAME = {
   function spark(p, v, col, t) { const m = X.sparks[X.spN++ % X.sparks.length]; m.visible = true; m.position.set(p[0], p[1], p[2]); m.material.color.set(col); m.userData.t = t; m.userData.v = v; }
   // where a fighter's muzzle is, near enough for a tracer to start from
   function muzzleOf(f) {
-    const d = viewDir(f.yaw, f.pitch), rx = Math.cos(f.yaw), rz = -Math.sin(f.yaw), mine = M && f === me(), side = mine && f.scoped ? 0 : mine ? .14 : .1, drop = mine ? (f.scoped ? .06 : .12) : .28, out = mine ? .75 : .7;
+    const d = viewDir(f.yaw, f.pitch), rx = Math.cos(f.yaw), rz = -Math.sin(f.yaw), mine = M && f === viewer(), side = mine && f.scoped ? 0 : mine ? .14 : .1, drop = mine ? (f.scoped ? .06 : .12) : .28, out = mine ? .75 : .7;
     _v[0] = f.x + d[0] * out + rx * side; _v[1] = eyeY(f) - drop + d[1] * out; _v[2] = f.z + d[2] * out + rz * side; return _v;
   }
   on('shot', (f, S, first) => {
-    if (!X || !ready) return; const mine = f === me(), mz = muzzleOf(f), G = gun(f);
+    if (!X || !ready) return; const mine = f === viewer(), mz = muzzleOf(f), G = gun(f);
     // your own streaks start a few metres out and are faint; your rival's are a little clearer so you can tell where fire comes from. Shotguns show a few pellets, not all
     const L = Math.hypot(S.end[0] - mz[0], S.end[1] - mz[1], S.end[2] - mz[2]), s0 = mine ? 3.5 : .6;
     if (L > s0 + 1 && !(G.pel > 1 && Math.random() > .3)) { const tr = X.tracers[X.trN++ % X.tracers.length], u = tr.userData;
@@ -2861,6 +2875,11 @@ const GAME = {
   on('dry', f => { if (X && M && f === me()) X.dryT = .16; });
   const VKICK = { Sidearm: 1.25, SMG: .7, Rifle: 1, Sniper: 2.2, Shotgun: 1.9, Heavy: .8 };   // how hard each class kicks in your hands
 
+  /* Spectating: a couple of seconds after you die in a team game you watch through a living teammate's eyes, with their
+     gun and their HUD; a click moves to the next one. viewer() is who the camera and HUD follow. */
+  const viewer = () => { if (!M) return null; const P = me(); return !P.alive && UI.spec && UI.spec.alive && UI.spec.team === P.team && M.mode !== 'range' ? UI.spec : P; };
+  function nextSpec() { const P = me(), mates = M.fs.filter(f => f !== P && f.team === P.team && f.alive && !f.gone); if (!mates.length) { UI.spec = null; return; } const i = mates.indexOf(UI.spec); UI.spec = mates[(i + 1) % mates.length]; X.viewKey = ''; }
+  function updateSpec() { const P = me(); if (!M || P.alive || M.mode === 'range' || M.mode === 'demo') { UI.spec = null; return; } if (M.deathInfo && M.deathInfo.t > 2.2 && !(UI.spec && UI.spec.alive)) nextSpec(); }
   function renderFrame(dt) {
     if (!X || !ready) return; const cam = X.camera; X.t += dt; tunePixels(dt); skinTick(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; }
     const live = M && (screen === 'play' || (screen === 'over' && posed)) && !loadingNow();
@@ -2871,7 +2890,7 @@ const GAME = {
       for (const A of X.agents.values()) A.visible = false; X.charge.visible = false; for (const g of X.smokes) g.visible = false; for (const o of X.nadeObjs) o.visible = false; for (const w of X.walls) w.visible = false; hideKitFx();
       X.renderer.render(X.scene, cam); return;
     }
-    const P = me(), G = gun(P); if (X.hemiBase != null) X.hemi.intensity = X.hemiBase;
+    updateSpec(); const P = viewer(), G = gun(P); if (X.hemiBase != null) X.hemi.intensity = X.hemiBase;
     // the camera: your eyes (gliding over steps and crouches), kicked by recoil; when you die it sinks and turns to who did it
     const ey = ipos(P, 'y') + lp(EYE, CEYE, P.crouch); X.camY = Math.abs(ey - X.camY) > 1.2 ? ey : X.camY + (ey - X.camY) * Math.min(1, dt * 22);
     X.dip = Math.max(0, (X.dip || 0) - dt * .5); X.shake = Math.max(0, X.shake - dt);
@@ -2929,7 +2948,7 @@ const GAME = {
 
     // the rival
     for (const [f, A] of X.agents) if (!M.fs.includes(f)) { X.scene.remove(A); X.agents.delete(f); }
-    for (const f of M.fs) if (f !== P) updateAgent(f, dt);
+    { const AP = X.agents.get(P); if (AP) AP.visible = false; } for (const f of M.fs) if (f !== P) updateAgent(f, dt);
     // smokes, Rampart walls, the charge, a flare in flight
     while (X.smokes.length < M.smokes.length) addSmoke();
     X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { const mt = s.heat ? X.smokeHM : s.grey ? X.smokeGM : X.smokeM; if (g.children[0].material !== mt) for (const c of g.children) c.material = mt; g.position.set(s.x, s.y + 1.4, s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .12; } });
@@ -3251,7 +3270,7 @@ const GAME = {
     document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; if (Math.abs(e.movementX) > 500 || Math.abs(e.movementY) > 500) return;   // some browsers send a wild jump when the lock starts
       const P = me(), s = .0022 * CFG.sens / zoomOf(P) * (P.scoped ? CFG.zsens : 1); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
     // (on a Mac, Ctrl+click arrives as a right click: while crouching that is still a shot)
-    document.addEventListener('mousedown', e => { if (!locked() || !playing()) return; if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = true; else if (e.button === 2) altAction(me()); });
+    document.addEventListener('mousedown', e => { if (M && screen === 'play' && !me().alive && UI.spec && X) { nextSpec(); return; } if (!locked() || !playing()) return; if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = true; else if (e.button === 2) altAction(me()); });
     document.addEventListener('mouseup', e => { if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = false; });
     document.addEventListener('contextmenu', e => { if (screen === 'play') e.preventDefault(); });
     document.addEventListener('wheel', e => { if (screen === 'play' && e.ctrlKey) e.preventDefault(); if (locked() && playing()) cycleWeapon(me(), e.deltaY > 0 ? 1 : -1); }, { passive: false });   // Ctrl+wheel would zoom the page
@@ -3532,7 +3551,7 @@ const GAME = {
   }
   function drawHud(g) {
     if (loadingNow()) return drawLoading(g);
-    const P = me(), F = foe(), G = gun(P), V = K.view, u = uiScale(), touch = isTouch(), side = sideOf(P), W = V.x1 - V.x0, H = V.y1 - V.y0, range = M.mode === 'range', demo = M.mode === 'demo';
+    const P = viewer(), F = foe(), G = gun(P), V = K.view, u = uiScale(), touch = isTouch(), side = sideOf(P), W = V.x1 - V.x0, H = V.y1 - V.y0, range = M.mode === 'range', demo = M.mode === 'demo';
     // --- over the whole view: scope, flash, the red of being hit
     if (P.scoped && G.scope && P.alive) { const r = Math.min(H * .46, 330); g.fillStyle = '#000'; g.beginPath(); g.rect(V.x0, V.y0, W, H); g.arc(640, 360, r, 0, TAU, true); g.fill(); g.strokeStyle = 'rgba(0,0,0,.9)'; g.lineWidth = 2; g.beginPath(); g.moveTo(640 - r, 360); g.lineTo(640 + r, 360); g.moveTo(640, 360 - r); g.lineTo(640, 360 + r); g.stroke(); g.fillStyle = WARN; g.fillRect(639, 359, 2, 2); }
     if (P.flash > 0) { g.fillStyle = `rgba(255,255,255,${cl(P.flash / 1.2, 0, 1)})`; g.fillRect(V.x0, V.y0, W, H); }
@@ -3626,7 +3645,12 @@ const GAME = {
     if (M.say) { const a = Math.min(1, M.say.t * 5, (2.6 - M.say.t) * 3); g.globalAlpha = cl(a, 0, 1); tx(g, M.say.s, 640, 170, 30 * u, M.say.c); g.globalAlpha = 1; }
     if (M.phase === 'end' && M.last && !M.over) { const won = M.last.wi === 0, c = won ? YOU : FOE; g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, demo ? `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT` : won ? 'ROUND WON' : 'ROUND LOST', 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); }
     if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? (twoSites() ? 'You attack: plant the charge on A or B' : 'You attack: plant the charge on the ring') : (twoSites() ? 'You defend: hold A and B' : 'You defend: keep them off the ring'), 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
-    if (!P.alive && M.deathInfo && !range) { const D = M.deathInfo; rr(g, 640 - 250 * u, 590 - 34 * u, 500 * u, 68 * u, 8, GLASS, FOE); tx(g, `${D.by.toUpperCase()} · ${D.w}${D.head ? ' · headshot' : ''}`, 640, 590 - 12 * u, 18 * u, FOE); tx(g, `They had ${D.hp} health${D.sh ? ' and ' + D.sh + ' shield' : ''} left`, 640, 590 + 14 * u, 13 * u, BONE); }
+    if (P !== me()) {   // spectating a teammate
+      const w = 360 * u, y = V.y1 - 150 * u; rr(g, 640 - w / 2, y, w, 52 * u, 8, 'rgba(10,13,18,.82)', YOU, 1.5); portraitTile(g, P.op, 640 - w / 2 + 6 * u, y + 6 * u, 40 * u, 40 * u, { r: 4 });
+      tx(g, 'SPECTATING', 640 - w / 2 + 58 * u, y + 17 * u, 10 * u, DIM, 'left', 900); tx(g, P.name.toUpperCase(), 640 - w / 2 + 58 * u, y + 35 * u, 17 * u, YOU, 'left', 900);
+      if (M.fs.filter(f => f !== me() && f.team === me().team && f.alive).length > 1) tx(g, isTouch() ? 'tap to switch' : 'click to switch', 640 + w / 2 - 12 * u, y + 26 * u, 11 * u, DIM, 'right', 800);
+    }
+    if (!me().alive && M.deathInfo && !range && P === me()) { const D = M.deathInfo; rr(g, 640 - 250 * u, 590 - 34 * u, 500 * u, 68 * u, 8, GLASS, FOE); tx(g, `${D.by.toUpperCase()} · ${D.w}${D.head ? ' · headshot' : ''}`, 640, 590 - 12 * u, 18 * u, FOE); tx(g, `They had ${D.hp} health${D.sh ? ' and ' + D.sh + ' shield' : ''} left`, 640, 590 + 14 * u, 13 * u, BONE); }
     // --- touch controls
     if (touch && !UI.armory && !demo) drawTouch(g, u);
     if (canBuy() && !UI.armory && !demo && P.alive && !UI.switched) { const w = 190 * u, h = tapH(46); btn(g, 640 - w / 2, V.y0 + 132 * u, w, h, touch ? 'ARMORY' : 'ARMORY  (B)', () => openArmory(true), { px: 17 * u, col: GOLD, edge: GOLD }); }
@@ -3698,45 +3722,90 @@ const GAME = {
   }
   const choice = (g, x, y, w, h, opts, cur, set) => opts.forEach(([v, label], i) => { const bw = (w - (opts.length - 1) * 8) / opts.length; btn(g, x + i * (bw + 8), y, bw, h, label, () => { set(v); saveAll(); }, { on: cur === v, fill: YOU, px: Math.min(h * .36, bw * 1.5 / Math.max(5, label.length)) }); });
 
+  /* The menus: a bar along the top (PLAY, AGENTS, STORE, LOCKER, CAREER, SETTINGS, and your card: operative, name, rank,
+     rating, coins) over whichever page is open. PLAY: pick the mode (STANDARD, two sites; SWIFT, one site), the team size
+     and the bots, then the big PLAY button takes you to agent select. Friends go through the party. */
+  const MENU_TABS = [['home', 'PLAY'], ['agents', 'AGENTS'], ['store', 'STORE'], ['locker', 'LOCKER'], ['career', 'CAREER'], ['settings', 'SETTINGS']];
+  function drawTopBar(g, V, u) {
+    const h = 56 * u, W = V.x1 - V.x0, x0 = V.x0 + 60 / pxPer() + 20 * u;
+    g.fillStyle = 'rgba(8,10,14,.94)'; g.fillRect(V.x0, V.y0, W, h); g.fillStyle = 'rgba(239,233,220,.08)'; g.fillRect(V.x0, V.y0 + h - 1, W, 1);
+    g.fillStyle = FOE; g.fillRect(x0, V.y0 + 17 * u, 4 * u, 22 * u); tx(g, 'DUELPOINT', x0 + 12 * u, V.y0 + h / 2 + 1, 19 * u, BONE, 'left', 900);
+    const tw = Math.min(112 * u, (W - 640 * u) / MENU_TABS.length + 60 * u), tx0 = 640 - MENU_TABS.length * tw / 2;
+    MENU_TABS.forEach(([k, n], i) => { const x = tx0 + i * tw, on = UI.panel === k || (k === 'settings' && UI.panel === 'crosshair'), hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
+      tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, 13 * u, on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + 16 * u, V.y0 + h - 4 * u, tw - 32 * u, 3 * u); } });
+    const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
+    tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 20 * u, 13 * u, BONE, 'left', 900); rankBadge(g, px + 57 * u, V.y0 + 38 * u, 7 * u, STATS.rating);
+    tx(g, rankName(STATS.rating).toUpperCase() + '  ' + STATS.rating, px + 69 * u, V.y0 + 38 * u, 10 * u, RANK_COL[diffFor(STATS.rating).i], 'left', 800);
+    coinTag(g, V.x1 - 22 * u, V.y0 + h / 2, 17 * u, STATS.coins);
+    return h;
+  }
   function drawMenu(g) {
-    const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale(), m = 36 * Math.min(u, 1.3), x0 = V.x0 + m + 44 / pxPer(), touch = isTouch();
-    g.fillStyle = 'rgba(12,16,22,.62)'; g.fillRect(V.x0, V.y0, W, H);
-    if (UI.panel === 'store' || UI.panel === 'locker') return drawShop(g, V, W, H, u);
-    if (UI.panel === 'settings') return drawSettings(g, V, W, u);
-    if (UI.panel === 'crosshair') return drawXhair(g, V, W, u);
-    g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'Two on two. Thirteen maps, one site or two. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
-    if (STATS.matches) tx(g, `${STATS.wins} wins in ${STATS.matches} matches · ${STATS.kills} kills`, V.x1 - m, V.y0 + 92 * u, 13 * u, DIM, 'right');
-    // the store and the locker, with your coins
-    { const bw = 120 * u, bh = 40 * u, bx = V.x1 - m - bw * 2 - 8 * u, by = V.y0 + 30 * u;
-      btn(g, bx, by, bw, bh, 'STORE', () => { UI.panel = 'store'; SH.show = null; }, { on: true, fill: '#ffb020', solid: true, col: INK, px: 15 * u, sub: 'new skins daily' }); btn(g, bx + bw + 8 * u, by, bw, bh, 'LOCKER', () => { UI.panel = 'locker'; }, { px: 15 * u });
-      coinTag(g, bx - 16 * u, by + bh / 2, 20 * u, STATS.coins); }
-    // your operative: who you are bringing, and a way to change
-    const rw = cl(W * .27, 300, 420), top = V.y0 + 132 * u, cwAll = W - rw - m * 3 - 44 / pxPer() - 28, chh = Math.min(V.y1 - top - m, 330 * u), O = OPS[CFG.op] || OPS.vex, cw = Math.min(cwAll, 640 * u);
-    tx(g, 'YOUR OPERATIVE', x0, top - 14 * u, 13 * u, DIM, 'left');
-    { const x = x0, hot = zone(x, top, cw, chh, () => { openSelect(null); click(); });
-      rr(g, x, top, cw, chh, 10, 'rgba(20,26,36,.92)', hot ? O.col : 'rgba(239,233,220,.2)', 2); g.fillStyle = O.col; g.fillRect(x, top, cw, 6 * u);
-      const bw = Math.min(200 * u, cw * .36); portraitTile(g, CFG.op, x + 2, top + 6 * u, bw, chh - 8 * u, { r: 0, bar: O.col });
-      const tx0 = x + bw + 24 * u; tx(g, O.role.toUpperCase(), tx0, top + 36 * u, 12 * u, O.col, 'left', 900); tx(g, O.n, tx0 - 2 * u, top + 72 * u, Math.min(46 * u, (cw - bw) * .16), BONE, 'left', 900);
-      let y = para(g, O.bio || '', tx0, top + 104 * u, cw - bw - 44 * u, 13 * u, '#c9cfd8') + 14 * u;
-      for (const [key, a] of [['Q', O.q], ['E', O.e]]) { rr(g, tx0, y - 14 * u, 28 * u, 28 * u, 5, null, O.col); tx(g, key, tx0 + 14 * u, y, 14 * u, O.col); tx(g, a.n.toUpperCase(), tx0 + 40 * u, y, 15 * u, BONE, 'left', 800); y = para(g, a.d, tx0 + 40 * u, y + 24 * u, cw - bw - 84 * u, 12 * u, '#b9c0cc') + 12 * u; }
-      tx(g, `CHANGE OPERATIVE  ·  ${Object.keys(OPS).length} TO CHOOSE FROM`, x + cw - 16 * u, top + chh - 18 * u, 12 * u, hot ? O.col : DIM, 'right', 800); }
-    // what to play
-    const rx = V.x1 - m - rw; let y = top - 14 * u;
-    const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots';
-    const head = (s, extra) => { tx(g, s, rx, y, 12 * u, DIM, 'left', 800); if (extra) tx(g, extra, rx + rw, y, 11 * u, DIM, 'right'); g.fillStyle = 'rgba(239,233,220,.14)'; g.fillRect(rx, y + 9 * u, rw, 1); y += 18 * u; };
-    head('PLAY VS BOTS');
-    choice(g, rx, y, rw, tapH(34), [[2, 'TWO SITES'], [1, 'ONE SITE']], CFG.sites === 1 ? 1 : 2, v => { CFG.sites = v; saveAll(); }); y += tapH(34) + 6 * u;
-    btn(g, rx, y, rw, 70 * u, 'PLAY 2V2', () => menuPlay(2), { on: true, fill: FOE, px: 30 * u, sub: 'you + a bot teammate vs two · ' + lvl }); zones[zones.length - 1].prime = true; y += 76 * u;
-    btn(g, rx, y, rw, tapH(40), '1V1 DUEL', () => menuPlay(1), { px: 16 * u, sub: 'just you and one rival' }); y += tapH(40) + 6 * u;
-    tx(g, 'Bot level', rx, y + tapH(34) / 2, 12 * u, DIM, 'left'); choice(g, rx + 70 * u, y, rw - 70 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 16 * u;
-    head('PLAY WITH FRIENDS', 'room code, 2-4 players');
-    choice(g, rx, y, rw, tapH(34), [['versus', '2V2'], ['coop', 'CO-OP'], ['duel', '1V1']], CFG.team, v => { CFG.team = v; }); y += tapH(34) + 6 * u;
-    btn(g, rx, y, rw, tapH(46), 'PLAY ONLINE', () => MP.show(), { px: 18 * u, fill: YOU, solid: true, col: INK, sub: CFG.team === 'coop' ? '2-4 of you together against bots' : CFG.team === 'duel' ? 'one friend, one on one' : '2-4 friends, two a side: bots fill any gap' }); y += tapH(46) + 16 * u;
-    head('MORE');
-    btn(g, rx, y, (rw - 8) / 2, tapH(44), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 14 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(44), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 14 * u, sub: 'try every gun' }); y += tapH(44) + 8 * u;
-    if (!touch) { const ty = top + chh + 26 * u; tx(g, 'HOW IT PLAYS', x0, ty, 13 * u, DIM, 'left'); ['Stand still to shoot straight. Tap the opposite key to stop dead.', 'Tap or burst at range: sprays climb, then sway. Heads take the most.', 'Shift sprints; crouch mid-sprint to slide; Space jumps (even out of a slide).', 'B opens the armory. Right click aims or scopes. F plants and defuses.'].forEach((t, i) => tx(g, t, x0, ty + 26 * u + i * 24 * u, 14 * u, '#b9c0cc', 'left', 600)); }
-    btn(g, rx, y, (rw - 8) / 2, tapH(44), 'SETTINGS', () => { UI.panel = 'settings'; }, { px: 14 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(44), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 14 * u }); y += tapH(44) + 10 * u;
-    if (!touch) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Tip: the arrow keys and Enter work here too', rx + rw / 2, Math.min(y + 4 * u, V.y1 - 14 * u), 11 * u, DIM);
+    const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale();
+    if ((UI.panel === 'store' || UI.panel === 'locker') && (SH.show || SH.reveal)) return drawShop(g, V, W, H, u);   // a skin preview takes the whole screen
+    g.fillStyle = 'rgba(12,16,22,.5)'; g.fillRect(V.x0, V.y0, W, H);
+    const nh = drawTopBar(g, V, u), VN = Object.assign({}, V, { y0: V.y0 + nh });
+    if (UI.panel === 'store' || UI.panel === 'locker') return drawShop(g, VN, W, H - nh, u);
+    if (UI.panel === 'settings') return drawSettings(g, VN, W, u);
+    if (UI.panel === 'crosshair') return drawXhair(g, VN, W, u);
+    if (UI.panel === 'career') return drawCareer(g, VN, W, u);
+    drawPlay(g, VN, W, H - nh, u);
+  }
+  // a little plan for a mode card: the site diamonds with their letters, joined by lanes
+  function modeGlyph(g, cx, cy, s, two, col) {
+    g.strokeStyle = 'rgba(239,233,220,.35)'; g.lineWidth = 2; g.beginPath(); g.moveTo(cx - s * 1.6, cy); g.lineTo(cx + s * .4, cy); if (two) { g.moveTo(cx - s * 1.6, cy); g.quadraticCurveTo(cx - s * .2, cy - s * 1.2, cx + s * 1.1, cy - s * .9); g.moveTo(cx - s * 1.6, cy); g.quadraticCurveTo(cx - s * .2, cy + s * 1.2, cx + s * 1.1, cy + s * .9); } g.stroke();
+    g.fillStyle = col; g.beginPath(); g.arc(cx - s * 1.6, cy, s * .16, 0, TAU); g.fill();
+    const dia = (x, y, L) => { g.fillStyle = col; g.beginPath(); g.moveTo(x, y - s * .45); g.lineTo(x + s * .45, y); g.lineTo(x, y + s * .45); g.lineTo(x - s * .45, y); g.closePath(); g.fill(); if (L) tx(g, L, x, y + 1, s * .42, INK, 'center', 900); };
+    if (two) { dia(cx + s * 1.1, cy - s * .9, 'A'); dia(cx + s * 1.1, cy + s * .9, 'B'); } else dia(cx + s * .7, cy, '');
+  }
+  function drawPlay(g, V, W, H, u) {
+    const x0 = V.x0 + 60 / pxPer() + 20 * u, touch = isTouch(), O = OPS[CFG.op] || OPS.vex, sites = CFG.sites === 1 ? 1 : 2, top = V.y0 + 46 * u;
+    tx(g, 'CHOOSE A MODE', x0, V.y0 + 26 * u, 12 * u, DIM, 'left', 900);
+    const modes = [{ k: 2, n: 'STANDARD', sub: 'TWO SITES', d: 'Bigger maps with sites A and B. Read the defence, choose a site, plant.', col: '#ff9a3c', maps: '6 MAPS · 100 S ROUNDS' },
+      { k: 1, n: 'SWIFT', sub: 'ONE SITE', d: 'Tight maps, one site and three ways in. Quick, sharp rounds.', col: YOU, maps: '7 MAPS · 80 S ROUNDS' }];
+    const rw = 330 * u, cw = Math.min(330 * u, (V.x1 - x0 - rw - 70 * u) / 2 - 8 * u), ch = Math.min(250 * u, H * .42);
+    modes.forEach((md, i) => {
+      const x = x0 + i * (cw + 16 * u), on = sites === md.k, hot = zone(x, top, cw, ch, () => { CFG.sites = md.k; saveAll(); click(); });
+      g.save(); g.beginPath(); if (g.roundRect) g.roundRect(x, top, cw, ch, 10); else g.rect(x, top, cw, ch); g.clip();
+      const gr = g.createLinearGradient(x, top + ch, x + cw, top); gr.addColorStop(0, md.col + (on ? '55' : '22')); gr.addColorStop(1, 'rgba(14,18,26,.94)'); g.fillStyle = 'rgba(14,18,26,.94)'; g.fillRect(x, top, cw, ch); g.fillStyle = gr; g.fillRect(x, top, cw, ch);
+      g.strokeStyle = 'rgba(255,255,255,.04)'; g.lineWidth = 1; g.beginPath(); for (let k = -ch; k < cw; k += 12) { g.moveTo(x + k, top + ch); g.lineTo(x + k + ch, top); } g.stroke();
+      modeGlyph(g, x + cw * .62, top + ch * .36, 38 * u, md.k === 2, md.col); g.restore();
+      rr(g, x, top, cw, ch, 10, null, on ? md.col : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.14)', on ? 3 : 1.5);
+      tx(g, md.sub, x + 18 * u, top + 24 * u, 11 * u, md.col, 'left', 900); tx(g, md.n, x + 16 * u, top + ch - 92 * u, 34 * u, BONE, 'left', 900);
+      para(g, md.d, x + 18 * u, top + ch - 62 * u, cw - 36 * u, 12 * u, '#c9cfd8'); tx(g, md.maps, x + 18 * u, top + ch - 16 * u, 10 * u, DIM, 'left', 800);
+      if (on) tx(g, '✓ SELECTED', x + cw - 16 * u, top + 24 * u, 11 * u, md.col, 'right', 900);
+    });
+    // team size and the bots
+    let y = top + ch + 26 * u; const lw = cw * 2 + 16 * u;
+    tx(g, 'TEAM SIZE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [[2, '2V2 · A BOT TEAMMATE'], [1, '1V1 · A DUEL']], CFG.size === 1 ? 1 : 2, v => { CFG.size = v; saveAll(); }); y += tapH(34) + 14 * u;
+    tx(g, 'BOT LEVEL', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 14 * u;
+    if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Shift sprints, crouch mid-sprint slides. B opens the armory, F plants and defuses, Q and E are abilities.'].forEach((l, i) => tx(g, l, x0, y + 26 * u + i * 18 * u, 11.5 * u, '#aeb6c2', 'left', 600)); }
+    // the right column: your operative, friends, practice
+    const rx = V.x1 - rw - 30 * u; let ry = top;
+    { const h = 120 * u, hot = zone(rx, ry, rw, h, () => openSelect(null)); rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', hot ? O.col : 'rgba(239,233,220,.14)', hot ? 2 : 1.5);
+      portraitTile(g, CFG.op, rx + 10 * u, ry + 10 * u, h - 20 * u, h - 20 * u, { r: 6 }); tx(g, 'YOUR OPERATIVE', rx + h + 4 * u, ry + 24 * u, 10 * u, DIM, 'left', 900); tx(g, O.n, rx + h + 2 * u, ry + 54 * u, 28 * u, BONE, 'left', 900);
+      tx(g, `${O.q.n} · ${O.e.n}`, rx + h + 4 * u, ry + 80 * u, 12 * u, O.col, 'left', 800); tx(g, hot ? 'CHANGE →' : 'CHANGE', rx + rw - 14 * u, ry + h - 16 * u, 10 * u, hot ? O.col : DIM, 'right', 900); ry += h + 14 * u; }
+    { const h = 104 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, 'a party of up to four, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
+      btn(g, rx + 16 * u, ry + 56 * u, rw - 32 * u, 36 * u, MP.online() ? 'BACK TO YOUR PARTY · ' + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u }); ry += h + 14 * u; }
+    btn(g, rx, ry, (rw - 10 * u) / 2, tapH(42), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 13 * u }); btn(g, rx + (rw + 10 * u) / 2, ry, (rw - 10 * u) / 2, tapH(42), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 13 * u, sub: 'try every gun' });
+    // PLAY
+    const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots', pw = rw, ph = 76 * u, pyy = V.y1 - ph - 26 * u;
+    btn(g, rx, pyy, pw, ph, 'PLAY', () => menuPlay(CFG.size === 1 ? 1 : 2), { on: true, fill: FOE, solid: true, col: INK, px: 36 * u, sub: `${sites === 2 ? 'STANDARD' : 'SWIFT'} · ${CFG.size === 1 ? '1V1' : '2V2'} · ${lvl}` }); zones[zones.length - 1].prime = true;
+    if (!touch) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Enter plays · the arrow keys work here too', rx + pw / 2, pyy - 12 * u, 10 * u, DIM, 'center', 700);
+  }
+  // CAREER: your record, your rank and the ladder, your collection
+  function drawCareer(g, V, W, u) {
+    const x0 = V.x0 + 60 / pxPer() + 20 * u, top = V.y0 + 40 * u, i = diffFor(STATS.rating).i;
+    tx(g, 'CAREER', x0, top, 34 * u, BONE, 'left', 900);
+    const card = (x, y, w, h, label, val, col) => { rr(g, x, y, w, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, label, x + 16 * u, y + 22 * u, 11 * u, DIM, 'left', 900); tx(g, String(val), x + 16 * u, y + h - 30 * u, 34 * u, col || BONE, 'left', 900); };
+    const cw = 200 * u, ch = 110 * u, y = top + 40 * u, hs = STATS.kills ? Math.round(100 * STATS.heads / STATS.kills) + '%' : '—', wr = STATS.matches ? Math.round(100 * STATS.wins / STATS.matches) + '%' : '—';
+    [['MATCHES', STATS.matches], ['WINS', STATS.wins + '  ·  ' + wr], ['KILLS', STATS.kills], ['HEADSHOTS', hs]].forEach(([a, b], k) => card(x0 + k * (cw + 14 * u), y, cw, ch, a, b));
+    const ry = y + ch + 24 * u; rr(g, x0, ry, cw * 2 + 14 * u, 190 * u, 10, 'rgba(14,18,26,.94)', RANK_COL[i], 2); rankBadge(g, x0 + 70 * u, ry + 95 * u, 44 * u, STATS.rating);
+    tx(g, 'RANK', x0 + 140 * u, ry + 40 * u, 11 * u, DIM, 'left', 900); tx(g, rankName(STATS.rating).toUpperCase(), x0 + 138 * u, ry + 84 * u, 38 * u, RANK_COL[i], 'left', 900); tx(g, `Rating ${STATS.rating}`, x0 + 140 * u, ry + 118 * u, 15 * u, BONE, 'left', 800);
+    para(g, 'Win against AUTO bots to climb; your rating sets how good they are, and every rival you meet online sees it.', x0 + 140 * u, ry + 142 * u, cw * 2 - 150 * u, 11 * u, '#aeb6c2');
+    // the ladder
+    const lx = x0 + cw * 2 + 28 * u; rr(g, lx, ry, cw * 2 + 14 * u, 190 * u, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'THE LADDER', lx + 16 * u, ry + 22 * u, 11 * u, DIM, 'left', 900);
+    DIFF.forEach((d, k) => { const yy = ry + 52 * u + k * 34 * u; rankBadge(g, lx + 34 * u, yy, 12 * u, RATING_AT[k] + 1); tx(g, d.n.toUpperCase(), lx + 56 * u, yy, 15 * u, k === i ? RANK_COL[k] : BONE, 'left', 900); tx(g, k < 3 ? `${RATING_AT[k]} – ${RATING_AT[k + 1]}` : `${RATING_AT[k]}+`, lx + cw * 2 - 10 * u, yy, 12 * u, DIM, 'right', 700); if (k === i) tx(g, 'YOU', lx + 200 * u, yy, 11 * u, RANK_COL[k], 'left', 900); });
+    const cy = ry + 210 * u; card(x0, cy, cw, ch, 'COINS', STATS.coins, COIN); card(x0 + cw + 14 * u, cy, cw, ch, 'SKINS OWNED', STATS.skins.length); card(x0 + (cw + 14 * u) * 2, cy, cw, ch, 'OPERATIVES', Object.keys(OPS).length);
   }
   function drawSettings(g, V, W, u) {
     const w = Math.min(W - 80, 760 * u), x = 640 - w / 2, row = tapH(44, 38) + 8 * u; let y = V.y0 + 24 * u;
@@ -3852,7 +3921,7 @@ const GAME = {
       const yb = py0 + 50 * u + M.pay.rows.length * 22 * u + 6 * u, frac = cl(M.pay.total / RARITY.mythic.price, 0, 1); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(px0 + 16 * u, yb, 218 * u, 5 * u); g.fillStyle = RARITY.mythic.col; g.fillRect(px0 + 16 * u, yb, 218 * u * frac * smooth(cl(t / 1.4, 0, 1)), 5 * u);
       tx(g, `${Math.round(frac * 100)}% of a Mythic  ·  you have ${STATS.coins}`, px0 + 16 * u, yb + 16 * u, 10 * u, DIM, 'left', 700); }
     const by = Math.min(V.y1 - 80 * u, cy + 40 * u);
-    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); MP.show(); } else play({ mode: M.mode, diff: CFG.diff, size: CFG.size, sites: CFG.sites }); }, { on: true, fill: FOE, px: 19 * u });
+    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); openParty(); } else play({ mode: M.mode, diff: CFG.diff, size: CFG.size, sites: CFG.sites }); }, { on: true, fill: FOE, px: 19 * u });
     btn(g, 640 + 10 * u, by, 240 * u, tapH(56), 'MENU', toMenu, { px: 19 * u });
   }
   /* ---------- 95 agent select: pick and lock in an operative before a match ----------
@@ -3869,7 +3938,7 @@ const GAME = {
   }
   function lockIn() {
     const S = UI.sel; if (!S || S.locked) return; S.locked = performance.now(); CFG.op = S.op; saveAll(); click();
-    if (!S.o) { setTimeout(() => { if (UI.sel === S) { UI.sel = null; screen = 'menu'; UI.panel = 'home'; } }, 450); return; }
+    if (!S.o) { setTimeout(() => { if (UI.sel === S) { UI.sel = null; if (UI.returnTo === 'party') { UI.returnTo = null; screen = 'party'; } else { screen = 'menu'; UI.panel = 'home'; } } }, 450); return; }
     const ops = {}; S.mates.forEach((m, i) => { ops['m' + (i + 1)] = m; });
     setTimeout(() => { if (UI.sel !== S) return; UI.sel = null; play(Object.assign({}, S.o, { map: S.map, mates: S.mates })); }, 900);
   }
@@ -3879,7 +3948,7 @@ const GAME = {
     else if (c === 'ArrowLeft' || c === 'ArrowUp') S.op = keys[(i - 1 + keys.length) % keys.length];
     else if (/^Digit[1-9]$/.test(c)) { const k = Object.keys(OPS)[+c.slice(5) - 1]; if (k && !taken.includes(k)) S.op = k; }
     else if (c === 'Enter' || c === 'Space') lockIn();
-    else if (c === 'Escape') { UI.sel = null; screen = 'menu'; UI.panel = 'home'; }
+    else if (c === 'Escape') { UI.sel = null; if (UI.returnTo === 'party') { UI.returnTo = null; screen = 'party'; } else { screen = 'menu'; UI.panel = 'home'; } }
   }
   // the showcase: the chosen operative on the match's map, turning slowly, framed from the front
   function selectSpot() {
@@ -3916,7 +3985,7 @@ const GAME = {
     if (S.o) { const mp = MAPS[S.map]; tx(g, `${mp.n.toUpperCase()}  ·  ${(mp.sites || 1) > 1 ? 'TWO SITES' : 'ONE SITE'}  ·  ${(S.o.size | 0) > 1 ? '2V2' : '1V1'}`, 640, V.y0 + 27 * u, 14 * u, '#c9cfd8', 'center', 800);
       const left = Math.max(0, Math.ceil(S.T - el)), k = cl(el / S.T, 0, 1), rx = V.x1 - 46 * u, ry = V.y0 + 27 * u; g.strokeStyle = 'rgba(239,233,220,.15)'; g.lineWidth = 4 * u; g.beginPath(); g.arc(rx, ry, 18 * u, 0, TAU); g.stroke();
       g.strokeStyle = left <= 5 ? WARN : BONE; g.beginPath(); g.arc(rx, ry, 18 * u, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - k)); g.stroke(); tx(g, String(left), rx, ry + 1, 16 * u, left <= 5 ? WARN : BONE, 'center', 900); }
-    else btn(g, V.x1 - 130 * u, V.y0 + 9 * u, 110 * u, 36 * u, 'BACK', () => { UI.sel = null; screen = 'menu'; UI.panel = 'home'; }, { px: 13 * u });
+    else btn(g, V.x1 - 130 * u, V.y0 + 9 * u, 110 * u, 36 * u, 'BACK', () => selectKey('Escape'), { px: 13 * u });
     // your team, down the left
     if (S.o) { let y = V.y0 + 90 * u; tx(g, 'YOUR TEAM', x0, y - 16 * u, 11 * u, DIM, 'left', 800);
       const row = (name, op, done, me2) => { const col = done ? OPS[op].col : 'rgba(239,233,220,.3)'; rr(g, x0, y, 230 * u, 54 * u, 6, me2 ? 'rgba(20,26,36,.92)' : 'rgba(12,16,22,.8)', me2 ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.12)', me2 ? 2 : 1); g.fillStyle = col; g.fillRect(x0, y, 4 * u, 54 * u);
@@ -4060,7 +4129,115 @@ const GAME = {
     if (SH.reveal) return drawReveal(g, V, W, H, u);
     if (UI.panel === 'store') { if (SH.show) return drawShow(g, V, W, H, u); g.fillStyle = 'rgba(8,10,14,.82)'; g.fillRect(V.x0, V.y0, W, H); drawStore(g, V, W, u); }
     else { let gr = g.createLinearGradient(V.x0, 0, V.x0 + W * .62, 0); gr.addColorStop(0, 'rgba(8,10,14,.95)'); gr.addColorStop(1, 'rgba(8,10,14,.35)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H); drawLocker(g, V, W, u); }
-    btn(g, V.x1 - 250 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'BACK', () => { UI.panel = 'home'; SH.show = null; }, { px: 13 * u });
+    btn(g, V.x1 - 250 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'BACK', () => { UI.panel = 'home'; SH.show = null; if (UI.returnTo === 'party') { UI.returnTo = null; screen = 'party'; } }, { px: 13 * u });
+  }
+  /* ---------- 97 party: play with friends ----------
+     Make a party (or join one with its 4-letter code or an invite link), see who is in on two team columns with their
+     operative, rank and rating, and get ready. While you wait you can change operative or skins. The host sets the
+     mode (one site or two), the team size, whether bots fill empty seats and how good they are, moves players between
+     teams, and starts once everyone is ready. Lobby messages ride the room relay: 'lprof' (my operative, rating, ready),
+     'lteam' (the host's teams and settings), 'lswap' (please move me). */
+  const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true }, status: '', ready: false, sent: '', joinOpen: false };
+  const myId = () => MP.id;
+  function openParty() { screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; }
+  function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost() }; }
+  function sendProfile(force) { if (!MP.online()) return; const p = partyProfile(), key = JSON.stringify(p); if (!force && key === PARTY.sent) return; PARTY.sent = key; PARTY.prof.set(myId(), p); MP.send(Object.assign({ t: 'lprof' }, p)); }
+  // the host keeps everyone on a team: newcomers go to the shorter side, and nobody stays on a team that has no room
+  function hostTeams() {
+    if (!MP.online() || !MP.isHost()) return; const ps = MP.players(), T2 = PARTY.teams, size = PARTY.set.size;
+    for (const id of Object.keys(T2)) if (!ps.some(p => String(p.id) === id)) delete T2[id];
+    for (const p of ps) if (T2[p.id] == null) { const n0 = ps.filter(q => T2[q.id] === 0).length, n1 = ps.filter(q => T2[q.id] === 1).length; T2[p.id] = n0 <= n1 && n0 < size ? 0 : n1 < size ? 1 : 0; }
+    for (const t of [0, 1]) { const on = ps.filter(q => T2[q.id] === t); while (on.length > size) { const q = on.pop(); T2[q.id] = 1 - t; } }
+    MP.send({ t: 'lteam', teams: T2, set: PARTY.set });
+  }
+  MP.opts.custom = true;
+  { const netOn = MP.opts.onMsg; MP.opts.onMsg = m => { if (!partyMsg(m)) netOn(m); }; }
+  on('over', () => { if (M && M.online) PARTY.ready = false; });
+  MP.opts.onRoster = () => { if (!MP.online()) { PARTY.prof.clear(); PARTY.teams = {}; PARTY.ready = false; PARTY.sent = ''; return; } sendProfile(true); hostTeams(); };
+  MP.opts.onStatus = s => { PARTY.status = s; };
+  // lobby messages; anything else is the match's
+  function partyMsg(m) {
+    if (m.t === 'lprof') { PARTY.prof.set(m.from, { op: OPS[m.op] ? m.op : 'vex', rt: m.rt | 0, rd: !!m.rd }); return true; }
+    if (m.t === 'lteam') { if (m.from === MP.hostId) { PARTY.teams = m.teams || {}; PARTY.set = Object.assign(PARTY.set, m.set || {}); } return true; }
+    if (m.t === 'lswap') { if (MP.isHost()) { swapTeam(m.from); } return true; }
+    return false;
+  }
+  function swapTeam(id) { const ps = MP.players(), T2 = PARTY.teams, to = 1 - (T2[id] || 0); if (ps.filter(q => T2[q.id] === to).length >= PARTY.set.size) return; T2[id] = to; MP.send({ t: 'lteam', teams: T2, set: PARTY.set }); }
+  const readyAll = () => MP.players().every(p => p.id === MP.hostId || (PARTY.prof.get(p.id) || {}).rd);
+  function startParty() {
+    if (!MP.isHost() || !readyAll()) return; const ps = MP.players();
+    if (!ps.some(p => PARTY.teams[p.id] === 0) || (!PARTY.set.fill && !ps.some(p => PARTY.teams[p.id] === 1))) { PARTY.status = PARTY.set.fill ? '' : 'Each team needs someone, or let bots fill the seats'; if (!PARTY.set.fill) return; }
+    CFG.sites = PARTY.set.sites; MP.start();
+  }
+  // the room tells the match who is where: teams, operatives and ratings from the lobby
+  MP.opts.max = 4; MP.opts.min = 1;
+  const baseConfig = MP.opts.config;
+  MP.opts.config = () => { const c = baseConfig(); c.map = pick(mapPool(PARTY.set.sites)); c.sites = PARTY.set.sites; c.teams = Object.assign({}, PARTY.teams); c.size = PARTY.set.size; c.fill = PARTY.set.fill;
+    c.hops = {}; c.rts = {}; for (const [id, p] of PARTY.prof) { c.hops[id] = p.op; c.rts[id] = p.rt; } c.hops[myId()] = CFG.op; c.rts[myId()] = STATS.rating; return c; };
+
+  // a text box for your name and a room code, laid over the canvas where the party screen asks for it
+  let domIn = null;
+  function textBox(id, x, y, w, h, ph, max, val, onEnter) {
+    if (!domIn) { domIn = {}; const st = document.createElement('style'); st.textContent = '.dp-in{position:fixed;z-index:5;background:rgba(10,13,18,.92);border:1px solid rgba(239,233,220,.3);border-radius:8px;color:#efe9dc;font:800 18px "Chakra Petch",sans-serif;text-align:center;letter-spacing:.06em;outline:none;padding:0 10px}.dp-in:focus{border-color:#35e0c8}'; document.head.appendChild(st); }
+    let el = domIn[id]; if (!el) { el = domIn[id] = document.createElement('input'); el.className = 'dp-in'; el.maxLength = max; el.placeholder = ph; el.value = val || ''; el.autocomplete = 'off'; el.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') onEnter(el.value); if (e.key === 'Escape') el.blur(); }; document.body.appendChild(el); }
+    const V = K.view, sx = innerWidth / (V.x1 - V.x0), sy = innerHeight / (V.y1 - V.y0); el.style.left = (x - V.x0) * sx + 'px'; el.style.top = (y - V.y0) * sy + 'px'; el.style.width = w * sx + 'px'; el.style.height = h * sy + 'px'; el.style.fontSize = Math.round(h * sy * .45) + 'px'; el.hidden = false; el.dataset.seen = '1'; return el;
+  }
+  function hideBoxes() { if (domIn) for (const el of Object.values(domIn)) { if (!el.dataset.seen) el.hidden = true; delete el.dataset.seen; } }
+  function drawParty(g) {
+    const V = K.view, u = uiScale(), W = V.x1 - V.x0, H = V.y1 - V.y0, on = MP.online(), x0 = V.x0 + 60 / pxPer() + 20 * u;
+    g.fillStyle = 'rgba(8,10,14,.8)'; g.fillRect(V.x0, V.y0, W, H);
+    tx(g, 'PLAY WITH FRIENDS', x0, V.y0 + 46 * u, 34 * u, BONE, 'left', 900); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, on ? 'LEAVE' : 'BACK', () => { if (on) MP.leave(); PARTY.status = ''; if (!on) { screen = 'menu'; UI.panel = 'home'; } MP.opts.onRoster(); }, { px: 13 * u });
+    if (!on) {   // make a party or join one
+      tx(g, 'YOUR NAME', 640, V.y0 + 150 * u, 12 * u, DIM, 'center', 900); const nm = textBox('name', 640 - 160 * u, V.y0 + 164 * u, 320 * u, 44 * u, 'Your name', 12, MP.name === 'You' ? '' : MP.name, v => MP.setName(v));
+      const cw = 300 * u, ch = 190 * u, cy = V.y0 + 250 * u;
+      { const x = 640 - cw - 12 * u, hot = zone(x, cy, cw, ch, () => { MP.setName(nm.value); MP.create(); }); rr(g, x, cy, cw, ch, 10, hot ? 'rgba(53,224,200,.16)' : 'rgba(20,26,36,.92)', hot ? YOU : 'rgba(239,233,220,.2)', 2); g.fillStyle = YOU; g.fillRect(x, cy, cw, 5 * u);
+        tx(g, 'CREATE A PARTY', x + cw / 2, cy + 70 * u, 24 * u, BONE, 'center', 900); para(g, 'You get a code to send. Up to four of you, bots fill any gap.', x + 24 * u, cy + 112 * u, cw - 48 * u, 13 * u, '#c9cfd8'); }
+      { const x = 640 + 12 * u; rr(g, x, cy, cw, ch, 10, 'rgba(20,26,36,.92)', 'rgba(239,233,220,.2)', 2); g.fillStyle = FOE; g.fillRect(x, cy, cw, 5 * u); tx(g, 'JOIN WITH A CODE', x + cw / 2, cy + 50 * u, 24 * u, BONE, 'center', 900);
+        const cd = textBox('code', x + 40 * u, cy + 80 * u, cw - 80 * u, 46 * u, 'CODE', 4, '', v => { MP.setName(nm.value); MP.join(v); });
+        btn(g, x + 40 * u, cy + 136 * u, cw - 80 * u, 40 * u, 'JOIN', () => { MP.setName(nm.value); MP.join(cd.value); }, { on: true, fill: FOE, solid: true, col: INK, px: 16 * u }); }
+      if (PARTY.status) tx(g, PARTY.status, 640, cy + ch + 40 * u, 15 * u, PARTY.status.startsWith('Connect') ? DIM : WARN, 'center', 800);
+      hideBoxes(); return;
+    }
+    hideBoxes(); sendProfile(false);
+    const ps = MP.players(), host = MP.isHost(), S2 = PARTY.set, me2 = myId();
+    // the code and an invite link
+    { const cx = x0 + 380 * u, cy = V.y0 + 46 * u; rr(g, cx, cy - 20 * u, 200 * u, 40 * u, 6, 'rgba(255,255,255,.06)', 'rgba(239,233,220,.25)', 1); tx(g, 'CODE', cx + 14 * u, cy, 11 * u, DIM, 'left', 900); tx(g, MP.code, cx + 186 * u, cy, 22 * u, GOLD, 'right', 900);
+      btn(g, cx + 212 * u, cy - 20 * u, 150 * u, 40 * u, PARTY.copied && performance.now() - PARTY.copied < 1500 ? 'COPIED' : 'COPY INVITE', () => { const link = location.origin + location.pathname + '?room=' + MP.code; try { navigator.clipboard.writeText(link); } catch (e) {} PARTY.copied = performance.now(); }, { px: 12 * u }); }
+    // two teams
+    const colW = 380 * u, gap = 60 * u, top = V.y0 + 120 * u, cardH = 92 * u;
+    [0, 1].forEach(t => {
+      const cx = t ? 640 + gap / 2 : 640 - gap / 2 - colW, col = t ? FOE : YOU, mates = ps.filter(p => (PARTY.teams[p.id] || 0) === t);
+      tx(g, t ? 'TEAM B' : 'TEAM A', cx, top - 14 * u, 15 * u, col, 'left', 900); tx(g, `${mates.length} / ${S2.size}`, cx + colW, top - 14 * u, 12 * u, DIM, 'right', 800);
+      for (let i = 0; i < S2.size; i++) {
+        const p = mates[i], y = top + i * (cardH + 10 * u);
+        if (!p) { rr(g, cx, y, colW, cardH, 8, 'rgba(12,16,22,.6)', 'rgba(239,233,220,.1)', 1); tx(g, S2.fill ? 'BOT' : 'OPEN', cx + colW / 2, y + cardH / 2, 15 * u, DIM, 'center', 900); continue; }
+        const pr = p.id === me2 ? partyProfile() : PARTY.prof.get(p.id) || { op: 'vex', rt: 0, rd: false }, isHost = p.id === MP.hostId, ready = isHost || pr.rd;
+        const hot = host && zone(cx, y, colW, cardH, () => swapTeam(p.id));
+        rr(g, cx, y, colW, cardH, 8, p.id === me2 ? 'rgba(24,30,42,.96)' : 'rgba(14,18,26,.92)', hot ? col : p.id === me2 ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.14)', p.id === me2 || hot ? 2 : 1); g.fillStyle = col; g.fillRect(cx, y, 4 * u, cardH);
+        portraitTile(g, pr.op, cx + 10 * u, y + 8 * u, cardH - 16 * u, cardH - 16 * u, { r: 5 });
+        const nx = cx + cardH + 4 * u; tx(g, p.name.toUpperCase() + (p.id === me2 ? '  (YOU)' : ''), nx, y + 26 * u, 16 * u, BONE, 'left', 900); tx(g, (OPS[pr.op] || OPS.vex).n, nx, y + 48 * u, 12 * u, (OPS[pr.op] || OPS.vex).col, 'left', 800);
+        if (isHost) tx(g, 'HOST', nx, y + 70 * u, 10 * u, GOLD, 'left', 900);
+        if (pr.rt) { rankBadge(g, cx + colW - 30 * u, y + 30 * u, 14 * u, pr.rt); tx(g, rankName(pr.rt).toUpperCase(), cx + colW - 52 * u, y + 26 * u, 11 * u, RANK_COL[diffFor(pr.rt).i], 'right', 800); tx(g, String(pr.rt), cx + colW - 52 * u, y + 44 * u, 13 * u, BONE, 'right', 700); }
+        tx(g, ready ? '✓ READY' : 'NOT READY', cx + colW - 14 * u, y + cardH - 16 * u, 11 * u, ready ? YOU : DIM, 'right', 900);
+        if (hot) tx(g, '⇄ MOVE', cx + colW / 2 + 40 * u, y + cardH - 16 * u, 10 * u, col, 'center', 900);
+      }
+    });
+    // what you can do while you wait
+    const by = V.y1 - 150 * u, bw = 150 * u;
+    btn(g, 640 - bw * 1.5 - 12 * u, by, bw, 46 * u, 'AGENT', () => { UI.returnTo = 'party'; openSelect(null); }, { px: 15 * u, sub: (OPS[CFG.op] || OPS.vex).n });
+    btn(g, 640 - bw / 2, by, bw, 46 * u, 'LOCKER', () => { UI.returnTo = 'party'; screen = 'menu'; UI.panel = 'locker'; }, { px: 15 * u, sub: 'skins' });
+    if (!host) btn(g, 640 + bw / 2 + 12 * u, by, bw, 46 * u, PARTY.ready ? 'READY ✓' : 'READY', () => { PARTY.ready = !PARTY.ready; click(); }, { on: true, fill: YOU, solid: PARTY.ready, col: PARTY.ready ? INK : BONE, px: 16 * u });
+    else btn(g, 640 + bw / 2 + 12 * u, by, bw, 46 * u, 'SWAP TEAMS', () => { const T2 = PARTY.teams; for (const p of ps) T2[p.id] = 1 - (T2[p.id] || 0); MP.send({ t: 'lteam', teams: T2, set: S2 }); }, { px: 13 * u });
+    if (!host) { const mine = PARTY.teams[me2] || 0; btn(g, 640 - bw * 1.5 - 12 * u - bw - 12 * u, by, bw, 46 * u, 'SWITCH TEAM', () => MP.to(MP.hostId, { t: 'lswap' }), { px: 13 * u, sub: mine ? 'to team A' : 'to team B' }); }
+    // the host's settings and the start button
+    const sy = V.y1 - 92 * u;
+    if (host) {
+      const sx = 640 - 470 * u, cs = (opts, val, fn, w) => { choice(g, sx2, sy, w, tapH(34), opts, val, v => { fn(v); MP.send({ t: 'lteam', teams: PARTY.teams, set: S2 }); hostTeams(); }); sx2 += w + 10 * u; }; let sx2 = sx;
+      cs([[2, 'TWO SITES'], [1, 'ONE SITE']], S2.sites, v => { S2.sites = v; }, 230 * u); cs([[1, '1V1'], [2, '2V2']], S2.size, v => { S2.size = v; }, 140 * u); cs([[true, 'BOTS FILL'], [false, 'NO BOTS']], S2.fill, v => { S2.fill = v; }, 200 * u);
+      const ok = readyAll(); btn(g, sx2, sy - 6 * u, 200 * u, 48 * u, 'START MATCH', startParty, { on: ok, fill: FOE, solid: ok, col: ok ? INK : DIM, px: 17 * u, sub: ok ? '' : 'waiting for ready' });
+    } else tx(g, `${S2.sites === 2 ? 'TWO SITES' : 'ONE SITE'}  ·  ${S2.size === 1 ? '1V1' : '2V2'}  ·  ${S2.fill ? 'BOTS FILL EMPTY SEATS' : 'NO BOTS'}  ·  the host starts the match`, 640, sy + 14 * u, 13 * u, DIM, 'center', 800);
+    const waiting = ps.filter(p => p.id !== MP.hostId && !(p.id === me2 ? PARTY.ready : (PARTY.prof.get(p.id) || {}).rd)).length;
+    tx(g, ps.length < 2 ? 'Send your friends the code. You can also start now and play with bots.' : waiting ? `Waiting for ${waiting} to ready up` : 'Everyone is ready', 640, by - 22 * u, 13 * u, waiting ? DIM : YOU, 'center', 800);
   }
   /* ---------- 99 main: the kit's hooks, moving between screens, demo and cover-art modes, the test handle ---------- */
   let booted = false, acc = 0, lastDraw = 0;
@@ -4095,7 +4272,7 @@ const GAME = {
     resetInput(); posed = false; UI.armory = false; UI.panel = 'home'; acc = 0; MP.hide();
     if (K.bot) { if (DEMO) { startMatch({ mode: 'demo' }); screen = 'play'; } else { M = null; screen = 'menu'; } return; }   // behind the title card, or a trailer
     M = null; screen = 'menu';
-    if (/[?&]room=/.test(location.search)) MP.show();   // arrived from an invite: straight to the room
+    if (/[?&]room=/.test(location.search)) openParty();   // arrived from an invite: straight to the party
   };
   GAME.update = dt => {
     if (screen !== 'play' || !M || posed) return;
@@ -4105,6 +4282,7 @@ const GAME = {
     if (M.over && M.mode === 'demo') startMatch({ mode: 'demo' });
   };
   GAME.esc = () => { if (screen === 'select') { selectKey('Escape'); return true; }
+    if (screen === 'party') { if (!MP.online()) { screen = 'menu'; UI.panel = 'home'; } return true; }
     if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker')) { if (SH.reveal) SH.reveal = null; else if (SH.show) SH.show = null; else UI.panel = 'home'; return true; } if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
   GAME.draw = g => {
     const now = performance.now(), dt = Math.min(.1, (now - (lastDraw || now)) / 1000), V = K.view; lastDraw = now;
@@ -4114,7 +4292,8 @@ const GAME = {
     renderFrame(dt); if (posed) return;
     const mute = document.getElementById('bMute'); if (mute) mute.style.display = isTouch() && screen === 'play' && K.state === 'play' ? 'none' : '';
     if (K.bot && !DEMO) return;
-    if (screen === 'menu') drawMenu(g); else if (screen === 'select') drawSelect(g); else if (screen === 'play' && M) drawHud(g); else if (screen === 'over' && M) drawOver(g);
+    if (screen !== 'party') hideBoxes();
+    if (screen === 'menu') drawMenu(g); else if (screen === 'party') drawParty(g); else if (screen === 'select') drawSelect(g); else if (screen === 'play' && M) drawHud(g); else if (screen === 'over' && M) drawOver(g);
     if (screen !== 'play' || UI.armory || UI.opts) drawNav(g);
     if (isTouch() && innerHeight > innerWidth) {   // an upright phone outside the hub: ask for it to be turned
       g.fillStyle = 'rgba(12,16,22,.96)'; g.fillRect(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0); zones.length = 0; zone(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0, () => {});
@@ -4140,7 +4319,7 @@ const GAME = {
   GAME.test = {
     get M() { return M; }, get X() { return X; }, get screen() { return screen; }, get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
-    navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), SH, buySkin, equipSkin, dailyStore, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
+    navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, dailyStore, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
   };
 })();

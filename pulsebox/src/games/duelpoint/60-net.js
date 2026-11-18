@@ -56,6 +56,11 @@
      2nd and 4th); DUEL is one-on-one with two players; CO-OP puts everyone on one team. Bots fill the short team, run by the host; the host's settings say who attacks first. */
   function seatsFor(cfg, roster) {
     const humans = roster.filter(p => !p.bot), coop = cfg.team === 'coop';
+    if (cfg.teams) {   // from the party: the host's teams, everyone's operative and rating; bots fill up to the team size (or just enough for a rival)
+      const seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: cfg.teams[p.id] != null ? +cfg.teams[p.id] : i % 2, op: cfg.hops && cfg.hops[p.id], rating: cfg.rts && cfg.rts[p.id] })), size = cfg.size || 2; let b = 0;
+      for (const t of [0, 1]) { const have = seats.filter(s => s.team === t).length, want = cfg.fill === false ? Math.max(1, have) : Math.max(size, have); for (let n = have; n < want; n++, b++) seats.push({ key: 'b' + b, name: cfg.names[b % cfg.names.length], team: t, bot: true, op: cfg.ops[b % cfg.ops.length] }); }
+      return seats;
+    }
     const seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: coop ? 0 : i % 2 }));
     const size = coop ? Math.max(2, humans.length) : Math.max(cfg.team === 'duel' ? 1 : 2, ...[0, 1].map(t => seats.filter(s => s.team === t).length));
     let b = 0; for (const t of [0, 1]) for (let n = seats.filter(s => s.team === t).length; n < size; n++, b++) seats.push({ key: 'b' + b, name: cfg.names[b % cfg.names.length], team: t, bot: true, op: cfg.ops[b % cfg.ops.length] });

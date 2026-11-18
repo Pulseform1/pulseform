@@ -40,45 +40,90 @@
   }
   const choice = (g, x, y, w, h, opts, cur, set) => opts.forEach(([v, label], i) => { const bw = (w - (opts.length - 1) * 8) / opts.length; btn(g, x + i * (bw + 8), y, bw, h, label, () => { set(v); saveAll(); }, { on: cur === v, fill: YOU, px: Math.min(h * .36, bw * 1.5 / Math.max(5, label.length)) }); });
 
+  /* The menus: a bar along the top (PLAY, AGENTS, STORE, LOCKER, CAREER, SETTINGS, and your card: operative, name, rank,
+     rating, coins) over whichever page is open. PLAY: pick the mode (STANDARD, two sites; SWIFT, one site), the team size
+     and the bots, then the big PLAY button takes you to agent select. Friends go through the party. */
+  const MENU_TABS = [['home', 'PLAY'], ['agents', 'AGENTS'], ['store', 'STORE'], ['locker', 'LOCKER'], ['career', 'CAREER'], ['settings', 'SETTINGS']];
+  function drawTopBar(g, V, u) {
+    const h = 56 * u, W = V.x1 - V.x0, x0 = V.x0 + 60 / pxPer() + 20 * u;
+    g.fillStyle = 'rgba(8,10,14,.94)'; g.fillRect(V.x0, V.y0, W, h); g.fillStyle = 'rgba(239,233,220,.08)'; g.fillRect(V.x0, V.y0 + h - 1, W, 1);
+    g.fillStyle = FOE; g.fillRect(x0, V.y0 + 17 * u, 4 * u, 22 * u); tx(g, 'DUELPOINT', x0 + 12 * u, V.y0 + h / 2 + 1, 19 * u, BONE, 'left', 900);
+    const tw = Math.min(112 * u, (W - 640 * u) / MENU_TABS.length + 60 * u), tx0 = 640 - MENU_TABS.length * tw / 2;
+    MENU_TABS.forEach(([k, n], i) => { const x = tx0 + i * tw, on = UI.panel === k || (k === 'settings' && UI.panel === 'crosshair'), hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
+      tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, 13 * u, on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + 16 * u, V.y0 + h - 4 * u, tw - 32 * u, 3 * u); } });
+    const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
+    tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 20 * u, 13 * u, BONE, 'left', 900); rankBadge(g, px + 57 * u, V.y0 + 38 * u, 7 * u, STATS.rating);
+    tx(g, rankName(STATS.rating).toUpperCase() + '  ' + STATS.rating, px + 69 * u, V.y0 + 38 * u, 10 * u, RANK_COL[diffFor(STATS.rating).i], 'left', 800);
+    coinTag(g, V.x1 - 22 * u, V.y0 + h / 2, 17 * u, STATS.coins);
+    return h;
+  }
   function drawMenu(g) {
-    const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale(), m = 36 * Math.min(u, 1.3), x0 = V.x0 + m + 44 / pxPer(), touch = isTouch();
-    g.fillStyle = 'rgba(12,16,22,.62)'; g.fillRect(V.x0, V.y0, W, H);
-    if (UI.panel === 'store' || UI.panel === 'locker') return drawShop(g, V, W, H, u);
-    if (UI.panel === 'settings') return drawSettings(g, V, W, u);
-    if (UI.panel === 'crosshair') return drawXhair(g, V, W, u);
-    g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'Two on two. Thirteen maps, one site or two. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
-    if (STATS.matches) tx(g, `${STATS.wins} wins in ${STATS.matches} matches · ${STATS.kills} kills`, V.x1 - m, V.y0 + 92 * u, 13 * u, DIM, 'right');
-    // the store and the locker, with your coins
-    { const bw = 120 * u, bh = 40 * u, bx = V.x1 - m - bw * 2 - 8 * u, by = V.y0 + 30 * u;
-      btn(g, bx, by, bw, bh, 'STORE', () => { UI.panel = 'store'; SH.show = null; }, { on: true, fill: '#ffb020', solid: true, col: INK, px: 15 * u, sub: 'new skins daily' }); btn(g, bx + bw + 8 * u, by, bw, bh, 'LOCKER', () => { UI.panel = 'locker'; }, { px: 15 * u });
-      coinTag(g, bx - 16 * u, by + bh / 2, 20 * u, STATS.coins); }
-    // your operative: who you are bringing, and a way to change
-    const rw = cl(W * .27, 300, 420), top = V.y0 + 132 * u, cwAll = W - rw - m * 3 - 44 / pxPer() - 28, chh = Math.min(V.y1 - top - m, 330 * u), O = OPS[CFG.op] || OPS.vex, cw = Math.min(cwAll, 640 * u);
-    tx(g, 'YOUR OPERATIVE', x0, top - 14 * u, 13 * u, DIM, 'left');
-    { const x = x0, hot = zone(x, top, cw, chh, () => { openSelect(null); click(); });
-      rr(g, x, top, cw, chh, 10, 'rgba(20,26,36,.92)', hot ? O.col : 'rgba(239,233,220,.2)', 2); g.fillStyle = O.col; g.fillRect(x, top, cw, 6 * u);
-      const bw = Math.min(200 * u, cw * .36); portraitTile(g, CFG.op, x + 2, top + 6 * u, bw, chh - 8 * u, { r: 0, bar: O.col });
-      const tx0 = x + bw + 24 * u; tx(g, O.role.toUpperCase(), tx0, top + 36 * u, 12 * u, O.col, 'left', 900); tx(g, O.n, tx0 - 2 * u, top + 72 * u, Math.min(46 * u, (cw - bw) * .16), BONE, 'left', 900);
-      let y = para(g, O.bio || '', tx0, top + 104 * u, cw - bw - 44 * u, 13 * u, '#c9cfd8') + 14 * u;
-      for (const [key, a] of [['Q', O.q], ['E', O.e]]) { rr(g, tx0, y - 14 * u, 28 * u, 28 * u, 5, null, O.col); tx(g, key, tx0 + 14 * u, y, 14 * u, O.col); tx(g, a.n.toUpperCase(), tx0 + 40 * u, y, 15 * u, BONE, 'left', 800); y = para(g, a.d, tx0 + 40 * u, y + 24 * u, cw - bw - 84 * u, 12 * u, '#b9c0cc') + 12 * u; }
-      tx(g, `CHANGE OPERATIVE  ·  ${Object.keys(OPS).length} TO CHOOSE FROM`, x + cw - 16 * u, top + chh - 18 * u, 12 * u, hot ? O.col : DIM, 'right', 800); }
-    // what to play
-    const rx = V.x1 - m - rw; let y = top - 14 * u;
-    const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots';
-    const head = (s, extra) => { tx(g, s, rx, y, 12 * u, DIM, 'left', 800); if (extra) tx(g, extra, rx + rw, y, 11 * u, DIM, 'right'); g.fillStyle = 'rgba(239,233,220,.14)'; g.fillRect(rx, y + 9 * u, rw, 1); y += 18 * u; };
-    head('PLAY VS BOTS');
-    choice(g, rx, y, rw, tapH(34), [[2, 'TWO SITES'], [1, 'ONE SITE']], CFG.sites === 1 ? 1 : 2, v => { CFG.sites = v; saveAll(); }); y += tapH(34) + 6 * u;
-    btn(g, rx, y, rw, 70 * u, 'PLAY 2V2', () => menuPlay(2), { on: true, fill: FOE, px: 30 * u, sub: 'you + a bot teammate vs two · ' + lvl }); zones[zones.length - 1].prime = true; y += 76 * u;
-    btn(g, rx, y, rw, tapH(40), '1V1 DUEL', () => menuPlay(1), { px: 16 * u, sub: 'just you and one rival' }); y += tapH(40) + 6 * u;
-    tx(g, 'Bot level', rx, y + tapH(34) / 2, 12 * u, DIM, 'left'); choice(g, rx + 70 * u, y, rw - 70 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 16 * u;
-    head('PLAY WITH FRIENDS', 'room code, 2-4 players');
-    choice(g, rx, y, rw, tapH(34), [['versus', '2V2'], ['coop', 'CO-OP'], ['duel', '1V1']], CFG.team, v => { CFG.team = v; }); y += tapH(34) + 6 * u;
-    btn(g, rx, y, rw, tapH(46), 'PLAY ONLINE', () => MP.show(), { px: 18 * u, fill: YOU, solid: true, col: INK, sub: CFG.team === 'coop' ? '2-4 of you together against bots' : CFG.team === 'duel' ? 'one friend, one on one' : '2-4 friends, two a side: bots fill any gap' }); y += tapH(46) + 16 * u;
-    head('MORE');
-    btn(g, rx, y, (rw - 8) / 2, tapH(44), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 14 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(44), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 14 * u, sub: 'try every gun' }); y += tapH(44) + 8 * u;
-    if (!touch) { const ty = top + chh + 26 * u; tx(g, 'HOW IT PLAYS', x0, ty, 13 * u, DIM, 'left'); ['Stand still to shoot straight. Tap the opposite key to stop dead.', 'Tap or burst at range: sprays climb, then sway. Heads take the most.', 'Shift sprints; crouch mid-sprint to slide; Space jumps (even out of a slide).', 'B opens the armory. Right click aims or scopes. F plants and defuses.'].forEach((t, i) => tx(g, t, x0, ty + 26 * u + i * 24 * u, 14 * u, '#b9c0cc', 'left', 600)); }
-    btn(g, rx, y, (rw - 8) / 2, tapH(44), 'SETTINGS', () => { UI.panel = 'settings'; }, { px: 14 * u }); btn(g, rx + (rw + 8) / 2, y, (rw - 8) / 2, tapH(44), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 14 * u }); y += tapH(44) + 10 * u;
-    if (!touch) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Tip: the arrow keys and Enter work here too', rx + rw / 2, Math.min(y + 4 * u, V.y1 - 14 * u), 11 * u, DIM);
+    const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale();
+    if ((UI.panel === 'store' || UI.panel === 'locker') && (SH.show || SH.reveal)) return drawShop(g, V, W, H, u);   // a skin preview takes the whole screen
+    g.fillStyle = 'rgba(12,16,22,.5)'; g.fillRect(V.x0, V.y0, W, H);
+    const nh = drawTopBar(g, V, u), VN = Object.assign({}, V, { y0: V.y0 + nh });
+    if (UI.panel === 'store' || UI.panel === 'locker') return drawShop(g, VN, W, H - nh, u);
+    if (UI.panel === 'settings') return drawSettings(g, VN, W, u);
+    if (UI.panel === 'crosshair') return drawXhair(g, VN, W, u);
+    if (UI.panel === 'career') return drawCareer(g, VN, W, u);
+    drawPlay(g, VN, W, H - nh, u);
+  }
+  // a little plan for a mode card: the site diamonds with their letters, joined by lanes
+  function modeGlyph(g, cx, cy, s, two, col) {
+    g.strokeStyle = 'rgba(239,233,220,.35)'; g.lineWidth = 2; g.beginPath(); g.moveTo(cx - s * 1.6, cy); g.lineTo(cx + s * .4, cy); if (two) { g.moveTo(cx - s * 1.6, cy); g.quadraticCurveTo(cx - s * .2, cy - s * 1.2, cx + s * 1.1, cy - s * .9); g.moveTo(cx - s * 1.6, cy); g.quadraticCurveTo(cx - s * .2, cy + s * 1.2, cx + s * 1.1, cy + s * .9); } g.stroke();
+    g.fillStyle = col; g.beginPath(); g.arc(cx - s * 1.6, cy, s * .16, 0, TAU); g.fill();
+    const dia = (x, y, L) => { g.fillStyle = col; g.beginPath(); g.moveTo(x, y - s * .45); g.lineTo(x + s * .45, y); g.lineTo(x, y + s * .45); g.lineTo(x - s * .45, y); g.closePath(); g.fill(); if (L) tx(g, L, x, y + 1, s * .42, INK, 'center', 900); };
+    if (two) { dia(cx + s * 1.1, cy - s * .9, 'A'); dia(cx + s * 1.1, cy + s * .9, 'B'); } else dia(cx + s * .7, cy, '');
+  }
+  function drawPlay(g, V, W, H, u) {
+    const x0 = V.x0 + 60 / pxPer() + 20 * u, touch = isTouch(), O = OPS[CFG.op] || OPS.vex, sites = CFG.sites === 1 ? 1 : 2, top = V.y0 + 46 * u;
+    tx(g, 'CHOOSE A MODE', x0, V.y0 + 26 * u, 12 * u, DIM, 'left', 900);
+    const modes = [{ k: 2, n: 'STANDARD', sub: 'TWO SITES', d: 'Bigger maps with sites A and B. Read the defence, choose a site, plant.', col: '#ff9a3c', maps: '6 MAPS · 100 S ROUNDS' },
+      { k: 1, n: 'SWIFT', sub: 'ONE SITE', d: 'Tight maps, one site and three ways in. Quick, sharp rounds.', col: YOU, maps: '7 MAPS · 80 S ROUNDS' }];
+    const rw = 330 * u, cw = Math.min(330 * u, (V.x1 - x0 - rw - 70 * u) / 2 - 8 * u), ch = Math.min(250 * u, H * .42);
+    modes.forEach((md, i) => {
+      const x = x0 + i * (cw + 16 * u), on = sites === md.k, hot = zone(x, top, cw, ch, () => { CFG.sites = md.k; saveAll(); click(); });
+      g.save(); g.beginPath(); if (g.roundRect) g.roundRect(x, top, cw, ch, 10); else g.rect(x, top, cw, ch); g.clip();
+      const gr = g.createLinearGradient(x, top + ch, x + cw, top); gr.addColorStop(0, md.col + (on ? '55' : '22')); gr.addColorStop(1, 'rgba(14,18,26,.94)'); g.fillStyle = 'rgba(14,18,26,.94)'; g.fillRect(x, top, cw, ch); g.fillStyle = gr; g.fillRect(x, top, cw, ch);
+      g.strokeStyle = 'rgba(255,255,255,.04)'; g.lineWidth = 1; g.beginPath(); for (let k = -ch; k < cw; k += 12) { g.moveTo(x + k, top + ch); g.lineTo(x + k + ch, top); } g.stroke();
+      modeGlyph(g, x + cw * .62, top + ch * .36, 38 * u, md.k === 2, md.col); g.restore();
+      rr(g, x, top, cw, ch, 10, null, on ? md.col : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.14)', on ? 3 : 1.5);
+      tx(g, md.sub, x + 18 * u, top + 24 * u, 11 * u, md.col, 'left', 900); tx(g, md.n, x + 16 * u, top + ch - 92 * u, 34 * u, BONE, 'left', 900);
+      para(g, md.d, x + 18 * u, top + ch - 62 * u, cw - 36 * u, 12 * u, '#c9cfd8'); tx(g, md.maps, x + 18 * u, top + ch - 16 * u, 10 * u, DIM, 'left', 800);
+      if (on) tx(g, '✓ SELECTED', x + cw - 16 * u, top + 24 * u, 11 * u, md.col, 'right', 900);
+    });
+    // team size and the bots
+    let y = top + ch + 26 * u; const lw = cw * 2 + 16 * u;
+    tx(g, 'TEAM SIZE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [[2, '2V2 · A BOT TEAMMATE'], [1, '1V1 · A DUEL']], CFG.size === 1 ? 1 : 2, v => { CFG.size = v; saveAll(); }); y += tapH(34) + 14 * u;
+    tx(g, 'BOT LEVEL', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 14 * u;
+    if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Shift sprints, crouch mid-sprint slides. B opens the armory, F plants and defuses, Q and E are abilities.'].forEach((l, i) => tx(g, l, x0, y + 26 * u + i * 18 * u, 11.5 * u, '#aeb6c2', 'left', 600)); }
+    // the right column: your operative, friends, practice
+    const rx = V.x1 - rw - 30 * u; let ry = top;
+    { const h = 120 * u, hot = zone(rx, ry, rw, h, () => openSelect(null)); rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', hot ? O.col : 'rgba(239,233,220,.14)', hot ? 2 : 1.5);
+      portraitTile(g, CFG.op, rx + 10 * u, ry + 10 * u, h - 20 * u, h - 20 * u, { r: 6 }); tx(g, 'YOUR OPERATIVE', rx + h + 4 * u, ry + 24 * u, 10 * u, DIM, 'left', 900); tx(g, O.n, rx + h + 2 * u, ry + 54 * u, 28 * u, BONE, 'left', 900);
+      tx(g, `${O.q.n} · ${O.e.n}`, rx + h + 4 * u, ry + 80 * u, 12 * u, O.col, 'left', 800); tx(g, hot ? 'CHANGE →' : 'CHANGE', rx + rw - 14 * u, ry + h - 16 * u, 10 * u, hot ? O.col : DIM, 'right', 900); ry += h + 14 * u; }
+    { const h = 104 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, 'a party of up to four, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
+      btn(g, rx + 16 * u, ry + 56 * u, rw - 32 * u, 36 * u, MP.online() ? 'BACK TO YOUR PARTY · ' + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u }); ry += h + 14 * u; }
+    btn(g, rx, ry, (rw - 10 * u) / 2, tapH(42), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 13 * u }); btn(g, rx + (rw + 10 * u) / 2, ry, (rw - 10 * u) / 2, tapH(42), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 13 * u, sub: 'try every gun' });
+    // PLAY
+    const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots', pw = rw, ph = 76 * u, pyy = V.y1 - ph - 26 * u;
+    btn(g, rx, pyy, pw, ph, 'PLAY', () => menuPlay(CFG.size === 1 ? 1 : 2), { on: true, fill: FOE, solid: true, col: INK, px: 36 * u, sub: `${sites === 2 ? 'STANDARD' : 'SWIFT'} · ${CFG.size === 1 ? '1V1' : '2V2'} · ${lvl}` }); zones[zones.length - 1].prime = true;
+    if (!touch) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Enter plays · the arrow keys work here too', rx + pw / 2, pyy - 12 * u, 10 * u, DIM, 'center', 700);
+  }
+  // CAREER: your record, your rank and the ladder, your collection
+  function drawCareer(g, V, W, u) {
+    const x0 = V.x0 + 60 / pxPer() + 20 * u, top = V.y0 + 40 * u, i = diffFor(STATS.rating).i;
+    tx(g, 'CAREER', x0, top, 34 * u, BONE, 'left', 900);
+    const card = (x, y, w, h, label, val, col) => { rr(g, x, y, w, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, label, x + 16 * u, y + 22 * u, 11 * u, DIM, 'left', 900); tx(g, String(val), x + 16 * u, y + h - 30 * u, 34 * u, col || BONE, 'left', 900); };
+    const cw = 200 * u, ch = 110 * u, y = top + 40 * u, hs = STATS.kills ? Math.round(100 * STATS.heads / STATS.kills) + '%' : '—', wr = STATS.matches ? Math.round(100 * STATS.wins / STATS.matches) + '%' : '—';
+    [['MATCHES', STATS.matches], ['WINS', STATS.wins + '  ·  ' + wr], ['KILLS', STATS.kills], ['HEADSHOTS', hs]].forEach(([a, b], k) => card(x0 + k * (cw + 14 * u), y, cw, ch, a, b));
+    const ry = y + ch + 24 * u; rr(g, x0, ry, cw * 2 + 14 * u, 190 * u, 10, 'rgba(14,18,26,.94)', RANK_COL[i], 2); rankBadge(g, x0 + 70 * u, ry + 95 * u, 44 * u, STATS.rating);
+    tx(g, 'RANK', x0 + 140 * u, ry + 40 * u, 11 * u, DIM, 'left', 900); tx(g, rankName(STATS.rating).toUpperCase(), x0 + 138 * u, ry + 84 * u, 38 * u, RANK_COL[i], 'left', 900); tx(g, `Rating ${STATS.rating}`, x0 + 140 * u, ry + 118 * u, 15 * u, BONE, 'left', 800);
+    para(g, 'Win against AUTO bots to climb; your rating sets how good they are, and every rival you meet online sees it.', x0 + 140 * u, ry + 142 * u, cw * 2 - 150 * u, 11 * u, '#aeb6c2');
+    // the ladder
+    const lx = x0 + cw * 2 + 28 * u; rr(g, lx, ry, cw * 2 + 14 * u, 190 * u, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'THE LADDER', lx + 16 * u, ry + 22 * u, 11 * u, DIM, 'left', 900);
+    DIFF.forEach((d, k) => { const yy = ry + 52 * u + k * 34 * u; rankBadge(g, lx + 34 * u, yy, 12 * u, RATING_AT[k] + 1); tx(g, d.n.toUpperCase(), lx + 56 * u, yy, 15 * u, k === i ? RANK_COL[k] : BONE, 'left', 900); tx(g, k < 3 ? `${RATING_AT[k]} – ${RATING_AT[k + 1]}` : `${RATING_AT[k]}+`, lx + cw * 2 - 10 * u, yy, 12 * u, DIM, 'right', 700); if (k === i) tx(g, 'YOU', lx + 200 * u, yy, 11 * u, RANK_COL[k], 'left', 900); });
+    const cy = ry + 210 * u; card(x0, cy, cw, ch, 'COINS', STATS.coins, COIN); card(x0 + cw + 14 * u, cy, cw, ch, 'SKINS OWNED', STATS.skins.length); card(x0 + (cw + 14 * u) * 2, cy, cw, ch, 'OPERATIVES', Object.keys(OPS).length);
   }
   function drawSettings(g, V, W, u) {
     const w = Math.min(W - 80, 760 * u), x = 640 - w / 2, row = tapH(44, 38) + 8 * u; let y = V.y0 + 24 * u;
@@ -194,6 +239,6 @@
       const yb = py0 + 50 * u + M.pay.rows.length * 22 * u + 6 * u, frac = cl(M.pay.total / RARITY.mythic.price, 0, 1); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(px0 + 16 * u, yb, 218 * u, 5 * u); g.fillStyle = RARITY.mythic.col; g.fillRect(px0 + 16 * u, yb, 218 * u * frac * smooth(cl(t / 1.4, 0, 1)), 5 * u);
       tx(g, `${Math.round(frac * 100)}% of a Mythic  ·  you have ${STATS.coins}`, px0 + 16 * u, yb + 16 * u, 10 * u, DIM, 'left', 700); }
     const by = Math.min(V.y1 - 80 * u, cy + 40 * u);
-    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); MP.show(); } else play({ mode: M.mode, diff: CFG.diff, size: CFG.size, sites: CFG.sites }); }, { on: true, fill: FOE, px: 19 * u });
+    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); openParty(); } else play({ mode: M.mode, diff: CFG.diff, size: CFG.size, sites: CFG.sites }); }, { on: true, fill: FOE, px: 19 * u });
     btn(g, 640 + 10 * u, by, 240 * u, tapH(56), 'MENU', toMenu, { px: 19 * u });
   }

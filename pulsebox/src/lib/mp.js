@@ -4,7 +4,9 @@
    A game fills in MP.opts and calls MP.show() from GAME.reset():
      { max, min, bots: seats to fill with bots (0 = none), solo: label of the offline button (false = none),
        config(): match settings the host sends, onStart(cfg, roster), onMsg(m), onLeave(id), onHost(id),
-       onClose(): when set, a Back button (and Escape) closes the lobby, leaving any room, and this is called }
+       onClose(): when set, a Back button (and Escape) closes the lobby, leaving any room, and this is called,
+       custom: true for a game that draws its own lobby (no lobby box; it calls MP.create(), MP.join(code), MP.players()),
+       onRoster(): someone joined, left or became host; onStatus(text): a connection message for the player }
    roster: [{ id, name, col, bot, seat }] in seat order, the same on every device. Bots are run by the host. */
 const MP = (() => {
   const COLS = ['#ff4d6d', '#3ec5ff', '#ffd23f', '#5cf28a', '#c77dff', '#ff9f43', '#f2f2f2', '#ff7ad9'];
@@ -45,10 +47,11 @@ const MP = (() => {
     $m('back').onclick = () => close();
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && box && !box.hidden && opts.onClose) { e.stopPropagation(); close(); } }, true);
   }
-  function saveName() { name = ($m('name').value || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12) || 'Player'; try { localStorage.setItem('pbx-mp-name', name); } catch (e) {} return name; }
-  function msg(s) { $m('msg').textContent = s || ''; }
+  function saveName() { const el = $m('name'); if (!el) return name || 'Player'; name = (el.value || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12) || 'Player'; try { localStorage.setItem('pbx-mp-name', name); } catch (e) {} return name; }
+  function msg(s) { const el = $m('msg'); if (el) el.textContent = s || ''; if (opts.onStatus) opts.onStatus(s || ''); }
   function list() { return [...(online() ? [[me, { name }]] : []), ...players].map(([id, p]) => ({ id, name: p.name })).sort((a, b) => a.id - b.id); }
   function refresh() {
+    if (opts.onRoster) opts.onRoster();
     if (!box) return;
     const on = online();
     $m('title').textContent = GAME.title; $m('sub').textContent = opts.sub || GAME.tagline;
@@ -67,7 +70,7 @@ const MP = (() => {
     try { ws = new WebSocket(`wss://${WSHOST}/api/room/${c}?n=${encodeURIComponent(name)}&g=${encodeURIComponent(GAME.id)}`); } catch (e) { msg('Could not connect.'); return; }
     code = c; const my = ws;
     ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (err) { return; } onNet(m); };
-    ws.onclose = () => { if (ws !== my) return; ws = null; me = 0; players.clear(); if (opts.onLeave && K.state === 'play' && box && box.hidden) opts.onLeave(-1); else { refresh(); msg('Disconnected from the room.'); } };
+    ws.onclose = () => { if (ws !== my) return; ws = null; me = 0; players.clear(); if (opts.onLeave && K.state === 'play' && (opts.custom || (box && box.hidden))) opts.onLeave(-1); else { refresh(); msg('Disconnected from the room.'); } };
   }
   function onNet(m) {
     switch (m.t) {
@@ -99,6 +102,7 @@ const MP = (() => {
   function close() { leave(); pending = null; if (box) box.hidden = true; msg(''); if (opts.onClose) opts.onClose(); }
   function leave() { const w = ws; ws = null; me = 0; host = 0; players.clear(); if (w) try { w.close(); } catch (e) {} }
   function show() {
+    if (opts.custom) { if (pending && online()) { const p = pending; pending = null; return begin(p); } if (AUTO && !autoDone && !online()) { autoDone = true; connect(AUTO); } return; }
     build();
     if (pending && online()) { const p = pending; pending = null; return begin(p); }
     box.hidden = false; refresh();
@@ -107,6 +111,11 @@ const MP = (() => {
   if (AUTO) { const go = () => { const b = document.getElementById('bPlay'); if (b && typeof K !== 'undefined' && K.state === 'title') b.click(); else setTimeout(go, 150); }; setTimeout(go, 250); }
   return {
     opts, show, start, send, leave, close, online, colors: COLS,
+    // for games with their own lobby: make a room, join one by code, who is in (in join order), your name
+    create() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; connect(Array.from({ length: 4 }, () => A[Math.floor(Math.random() * A.length)]).join('')); },
+    join(c) { c = String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (c.length !== 4) return msg('Room codes are 4 letters.'); connect(c); },
+    players: () => online() ? list() : [], setName(n) { name = String(n || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12) || 'Player'; try { localStorage.setItem('pbx-mp-name', name); } catch (e) {} },
+    get autoRoom() { return AUTO; },
     hide() { if (box) box.hidden = true; },
     to(id, m) { m.to = id; send(m); },
     isHost: () => !online() || host === me,

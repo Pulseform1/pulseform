@@ -12,7 +12,7 @@
   }
   function lockIn() {
     const S = UI.sel; if (!S || S.locked) return; S.locked = performance.now(); CFG.op = S.op; saveAll(); click();
-    if (!S.o) { setTimeout(() => { if (UI.sel === S) { UI.sel = null; screen = 'menu'; UI.panel = 'home'; } }, 450); return; }
+    if (!S.o) { setTimeout(() => { if (UI.sel === S) { UI.sel = null; if (UI.returnTo === 'party') { UI.returnTo = null; screen = 'party'; } else { screen = 'menu'; UI.panel = 'home'; } } }, 450); return; }
     const ops = {}; S.mates.forEach((m, i) => { ops['m' + (i + 1)] = m; });
     setTimeout(() => { if (UI.sel !== S) return; UI.sel = null; play(Object.assign({}, S.o, { map: S.map, mates: S.mates })); }, 900);
   }
@@ -22,7 +22,7 @@
     else if (c === 'ArrowLeft' || c === 'ArrowUp') S.op = keys[(i - 1 + keys.length) % keys.length];
     else if (/^Digit[1-9]$/.test(c)) { const k = Object.keys(OPS)[+c.slice(5) - 1]; if (k && !taken.includes(k)) S.op = k; }
     else if (c === 'Enter' || c === 'Space') lockIn();
-    else if (c === 'Escape') { UI.sel = null; screen = 'menu'; UI.panel = 'home'; }
+    else if (c === 'Escape') { UI.sel = null; if (UI.returnTo === 'party') { UI.returnTo = null; screen = 'party'; } else { screen = 'menu'; UI.panel = 'home'; } }
   }
   // the showcase: the chosen operative on the match's map, turning slowly, framed from the front
   function selectSpot() {
@@ -59,7 +59,7 @@
     if (S.o) { const mp = MAPS[S.map]; tx(g, `${mp.n.toUpperCase()}  ·  ${(mp.sites || 1) > 1 ? 'TWO SITES' : 'ONE SITE'}  ·  ${(S.o.size | 0) > 1 ? '2V2' : '1V1'}`, 640, V.y0 + 27 * u, 14 * u, '#c9cfd8', 'center', 800);
       const left = Math.max(0, Math.ceil(S.T - el)), k = cl(el / S.T, 0, 1), rx = V.x1 - 46 * u, ry = V.y0 + 27 * u; g.strokeStyle = 'rgba(239,233,220,.15)'; g.lineWidth = 4 * u; g.beginPath(); g.arc(rx, ry, 18 * u, 0, TAU); g.stroke();
       g.strokeStyle = left <= 5 ? WARN : BONE; g.beginPath(); g.arc(rx, ry, 18 * u, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - k)); g.stroke(); tx(g, String(left), rx, ry + 1, 16 * u, left <= 5 ? WARN : BONE, 'center', 900); }
-    else btn(g, V.x1 - 130 * u, V.y0 + 9 * u, 110 * u, 36 * u, 'BACK', () => { UI.sel = null; screen = 'menu'; UI.panel = 'home'; }, { px: 13 * u });
+    else btn(g, V.x1 - 130 * u, V.y0 + 9 * u, 110 * u, 36 * u, 'BACK', () => selectKey('Escape'), { px: 13 * u });
     // your team, down the left
     if (S.o) { let y = V.y0 + 90 * u; tx(g, 'YOUR TEAM', x0, y - 16 * u, 11 * u, DIM, 'left', 800);
       const row = (name, op, done, me2) => { const col = done ? OPS[op].col : 'rgba(239,233,220,.3)'; rr(g, x0, y, 230 * u, 54 * u, 6, me2 ? 'rgba(20,26,36,.92)' : 'rgba(12,16,22,.8)', me2 ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.12)', me2 ? 2 : 1); g.fillStyle = col; g.fillRect(x0, y, 4 * u, 54 * u);
