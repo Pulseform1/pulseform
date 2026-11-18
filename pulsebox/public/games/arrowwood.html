@@ -77,7 +77,7 @@ const GAME = {
   how: [
     'Mouse and keys: WASD moves, mouse aims. Hold the left button to draw, let go to shoot; right button or Q lowers the bow without losing the arrow. Shift sprints, C crouches, Space jumps, F pings a spot for your team.',
     'Touch: left thumb moves; drag on the right to aim. Hold DRAW to pull the string and keep dragging (even from the button) to adjust; let go to shoot.',
-    'A quick tap lobs a short arrow; a full draw flies far and flat. While you draw, a dotted line shows the flight and a ring marks where the arrow will land (Settings can shorten it). Headshots at full draw end it.',
+    'A quick tap lobs a short arrow that drops; hold to a full draw (the ring turns gold) and the arrow flies dead straight to the crosshair. While you draw, a dotted line shows the flight and a ring marks where the arrow will land (Settings can shorten it). Headshots at full draw end it.',
   ],
   skins: [{ name: 'Default', price: 0 }],
 };
@@ -392,10 +392,15 @@ function moveStep(s, i, dt) {
 }
 
 // ---- arrows: a point under gravity, swept against the world and bodies segment by segment
-const arrowAt = (o, v, t) => [o[0] + v[0] * t, o[1] + v[1] * t - .5 * GRAV * t * t, o[2] + v[2] * t];
+// a full draw flies dead straight along your line of sight (no drop), so it lands exactly on the crosshair;
+// anything short of a full draw arcs under gravity
+const isFull = p => p >= 1;
+const gravFor = p => isFull(p) ? 0 : GRAV;
+const arrowAt = (o, v, t, g = GRAV) => [o[0] + v[0] * t, o[1] + v[1] * t - .5 * g * t * t, o[2] + v[2] * t];
 function aimVector(yaw, pitch, speed) { const cp = Math.cos(pitch); return [-Math.sin(yaw) * cp * speed, Math.sin(pitch) * speed, -Math.cos(yaw) * cp * speed]; }
 // the arrow leaves from half a metre in front of the eye, just below it, where the drawn arrow lies
-function shotOrigin(s) { const e = eyeHeight(s.crouch), cp = Math.cos(s.pitch); return [s.x - Math.sin(s.yaw) * cp * .5, s.y + e - .065 + Math.sin(s.pitch) * .5, s.z - Math.cos(s.yaw) * cp * .5]; }
+// (a straight full-draw arrow leaves from the line of sight itself, so it goes exactly where you look)
+function shotOrigin(s, straight) { const e = eyeHeight(s.crouch), cp = Math.cos(s.pitch); return [s.x - Math.sin(s.yaw) * cp * .5, s.y + e - (straight ? 0 : .065) + Math.sin(s.pitch) * .5, s.z - Math.cos(s.yaw) * cp * .5]; }
 // first hit along p0 -> p1 against the static world: { t (0..1), mat, kind } or null
 function sweepWorld(p0, p1) {
   let best = null;
@@ -435,12 +440,13 @@ function sweepWorld(p0, p1) {
   }
   return best;
 }
-// a body's hitboxes: a head sphere, a torso capsule and a legs capsule (lower when crouched)
+// a body's hitboxes: a head sphere, a torso capsule and a legs capsule (lower when crouched). The torso capsule's rounded
+// top stops at the shoulders, under the head sphere, so a shot straight at someone's face is a headshot
 function hitboxes(s) {
   const c = s.crouch;
   return [
     { zone: 'head', a: [s.x, s.y + (c ? 1.12 : 1.62), s.z], b: null, r: .15 },
-    { zone: 'body', a: [s.x, s.y + (c ? .64 : 1.0), s.z], b: [s.x, s.y + (c ? 1.0 : 1.44), s.z], r: .25 },
+    { zone: 'body', a: [s.x, s.y + (c ? .64 : 1.0), s.z], b: [s.x, s.y + (c ? .84 : 1.25), s.z], r: .25 },
     { zone: 'legs', a: [s.x, s.y + .12, s.z], b: [s.x, s.y + (c ? .58 : .96), s.z], r: .19 },
   ];
 }
@@ -467,9 +473,9 @@ function rayWorld(o, d, max) {
   return h ? h.t * max : max;
 }
 // the arrow's early flight for the aim preview: the same launch speed and gravity the real arrow uses
-function previewArc(o, v, maxDist = 14, n = 16) {
+function previewArc(o, v, maxDist = 14, n = 16, g = GRAV) {
   const pts = [], sp = Math.hypot(v[0], v[1], v[2]) || 1, T = maxDist / sp;
-  for (let k = 1; k <= n; k++) { const t = T * k / n, p = arrowAt(o, v, t); pts.push(p); }
+  for (let k = 1; k <= n; k++) { const t = T * k / n, p = arrowAt(o, v, t, g); pts.push(p); }
   return pts;
 }
 const BOWS = [
@@ -481,7 +487,7 @@ const BOWS = [
 const BOW_IDS = BOWS.map(b => b.id);
 const COINS = { start: 160, match: 40, win: 25, ffaTop: 25 };
 
-return { damageFor, rng, creekDist, terrainH, areaName, groundAt, blocked, moveStep, aimVector, shotOrigin, sweepWorld, hitboxes, sweepBodies, rayWorld, previewArc, MAP_SIZE, MIN, MAX, CX, CZ, GRAV, BOW, drawPower, launchSpeed, ZONES, PL, eyeHeight, creekZ, CREEK_W, waterY, inWater, TREES, BOXES, PROPS, BUSHES, PICKUPS, SPAWNS, SPAWN_YAW, FFA_SPAWNS, GROVES, MEADOWS, inGrove, inMeadow, ZONE, AREAS, gridRef, TEAMS, arrowAt, BOWS, BOW_IDS, COINS };
+return { damageFor, rng, creekDist, terrainH, areaName, groundAt, blocked, moveStep, aimVector, shotOrigin, sweepWorld, hitboxes, sweepBodies, rayWorld, previewArc, MAP_SIZE, MIN, MAX, CX, CZ, GRAV, BOW, drawPower, launchSpeed, ZONES, PL, eyeHeight, creekZ, CREEK_W, waterY, inWater, TREES, BOXES, PROPS, BUSHES, PICKUPS, SPAWNS, SPAWN_YAW, FFA_SPAWNS, GROVES, MEADOWS, inGrove, inMeadow, ZONE, AREAS, gridRef, TEAMS, isFull, gravFor, arrowAt, BOWS, BOW_IDS, COINS };
 })();
 
 /* ---- shared: arrowwood/server/engine.js ---- */
@@ -500,7 +506,7 @@ const ENG = (() => {
 const {
   BOW, PL, drawPower, launchSpeed, damageFor, moveStep, groundAt, blocked, terrainH, arrowAt, aimVector, shotOrigin,
   sweepWorld, sweepBodies, PICKUPS, SPAWNS, SPAWN_YAW, FFA_SPAWNS, ZONE, COINS, BOW_IDS, gridRef, areaName, inWater,
-  rayWorld, eyeHeight, GRAV, MIN, MAX, CX, CZ,
+  rayWorld, eyeHeight, GRAV, MIN, MAX, CX, CZ, gravFor, isFull,
 } = W;
 const TICK = 1 / 20;
 const NORMAL = { intro: 3.5, round: 80, ot: 40, capture: 6, end: 4.6, ffa: 150, respawn: 3.4, grace: 45, lobbyGrace: 25, ffaPick: 22 };
@@ -634,11 +640,11 @@ function fire(room, p, m) {
   if (!st.alive || !live(room) || st.drawAt == null || st.arrows <= 0) { st.drawAt = null; send(room, p.id, { t: 'nofire', cid: m.cid | 0, arrows: st.arrows }); return; }
   const seen = room.t - st.drawAt, held = Number.isFinite(m.dt) ? Math.max(0, Math.min(m.dt, seen + .25)) : seen;   // trust the client's draw time only up to what the server saw
   if (Number.isFinite(m.yaw)) st.yaw = m.yaw; if (Number.isFinite(m.pitch)) st.pitch = Math.max(-1.5, Math.min(1.5, m.pitch));
-  const power = drawPower(held), speed = launchSpeed(power), o = shotOrigin(st), v = aimVector(st.yaw, st.pitch, speed);
+  const power = drawPower(held), full = isFull(power), speed = launchSpeed(power), o = shotOrigin(st, full), v = aimVector(st.yaw, st.pitch, speed);
   st.drawAt = null; st.nockAt = room.t + BOW.nock; if (!room.practice) st.arrows--;
-  const a = { id: room.nextId++, cid: m.cid | 0, by: p.id, o, v, t0: room.t, age: 0, prev: o.slice(), power, bow: p.bow };
+  const a = { id: room.nextId++, cid: m.cid | 0, by: p.id, o, v, g: gravFor(power), t0: room.t, age: 0, prev: o.slice(), power, bow: p.bow };
   room.arrows.push(a);
-  send(room, '*', { t: 'shot', id: a.id, cid: a.cid, by: p.id, o: o.map(r3), v: v.map(r3), tm: r3(room.t), pw: r2(power) });
+  send(room, '*', { t: 'shot', id: a.id, cid: a.cid, by: p.id, o: o.map(r3), v: v.map(r3), tm: r3(room.t), pw: r2(power), str: full ? 1 : 0 });
 }
 
 // ---- matches, rounds, free for all
@@ -787,10 +793,10 @@ function botThink(room, p) {
   if (drawing && tdist > L.shoot * 1.25) { st.drawAt = null; return; }
   if (!drawing && st.arrows > 0 && room.t >= st.nockAt && room.t >= B.reactAt && tdist <= L.shoot) { st.drawAt = room.t; B.drawFor = BOW.fullDraw * rr(L.draw[0], L.draw[1]); if (Math.random() < .5) B.crouchT = room.t + 3; return; }
   if (drawing && room.t - st.drawAt >= B.drawFor) {
-    const held = room.t - st.drawAt, v = launchSpeed(drawPower(held)), head = Math.random() < L.head;
+    const held = room.t - st.drawAt, full = isFull(drawPower(held)), v = launchSpeed(drawPower(held)), head = Math.random() < L.head;
     let aim = [T.st.x, T.st.y + (T.st.crouch ? (head ? 1.12 : .82) : (head ? 1.6 : 1.2)), T.st.z], yaw = st.yaw, pitch = 0;
     for (let k = 0; k < 3; k++) {   // aim where they will be when the arrow gets there
-      const o = shotOrigin({ ...st, yaw, pitch }); yaw = Math.atan2(-(aim[0] - o[0]), -(aim[2] - o[2])); const pt = solvePitch(o, aim, v); if (pt == null) { pitch = .6; break; } pitch = pt;
+      const o = shotOrigin({ ...st, yaw, pitch }, full); yaw = Math.atan2(-(aim[0] - o[0]), -(aim[2] - o[2])); const pt = full ? Math.atan2(aim[1] - o[1], Math.hypot(aim[0] - o[0], aim[2] - o[2])) : solvePitch(o, aim, v); if (pt == null) { pitch = .6; break; } pitch = pt;
       const tf = Math.hypot(aim[0] - o[0], aim[2] - o[2]) / Math.max(1, v * Math.cos(pitch)); aim = [T.st.x + (T.st.vx || 0) * tf, aim[1], T.st.z + (T.st.vz || 0) * tf];
     }
     const e = L.err * (.6 + tdist / 50);
@@ -846,7 +852,7 @@ function arrowsStep(room) {
   for (const a of room.arrows) {
     if (a.dead) continue;
     for (let k = 0; k < sub && !a.dead; k++) {
-      a.age += dt; const p1 = arrowAt(a.o, a.v, a.age), p0 = a.prev;
+      a.age += dt; const p1 = arrowAt(a.o, a.v, a.age, a.g), p0 = a.prev;
       const shooter = room.players.get(a.by);
       const bodies = live(room) ? list(room).filter(q => q.st.alive && (shooter ? foes(room, shooter, q) : q.id !== a.by)).map(q => ({ s: q.st, q })) : [];
       const hw = sweepWorld(p0, p1), hb = bodies.length ? sweepBodies(p0, p1, bodies) : null;
@@ -860,7 +866,7 @@ function arrowsStep(room) {
 }
 const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 function stick(room, a, p0, p1, hw) {
-  const p = lerp3(p0, p1, hw.t), vel = [a.v[0], a.v[1] - 9.81 * a.age, a.v[2]], sp = Math.hypot(...vel), d = vel.map(v => v / sp);
+  const p = lerp3(p0, p1, hw.t), vel = [a.v[0], a.v[1] - a.g * a.age, a.v[2]], sp = Math.hypot(...vel), d = vel.map(v => v / sp);
   const tip = [p[0] + d[0] * .12, p[1] + d[1] * .12, p[2] + d[2] * .12];   // the head buries itself a little
   const rec = hw.mat !== 'water' ? p[1] - terrainH(p[0], p[2]) < 2.3 : true;
   const s = { id: a.id, by: a.by, p: tip, d, mat: hw.mat, kind: hw.kind, rec, bow: a.bow };
@@ -869,7 +875,7 @@ function stick(room, a, p0, p1, hw) {
 }
 const stuckOut = s => ({ id: s.id, by: s.by, p: s.p.map(r2), d: s.d.map(r3), mat: s.mat, kind: s.kind, rec: s.rec });
 function hitBody(room, a, hb, p0, p1) {
-  const victim = hb.body.q, st = victim.st, p = lerp3(p0, p1, hb.t), vel = [a.v[0], a.v[1] - 9.81 * a.age, a.v[2]], sp = Math.hypot(...vel);
+  const victim = hb.body.q, st = victim.st, p = lerp3(p0, p1, hb.t), vel = [a.v[0], a.v[1] - a.g * a.age, a.v[2]], sp = Math.hypot(...vel);
   const dmg = damageFor(hb.zone, sp, room.oneShot && !room.practice), killer = room.players.get(a.by);
   st.hp -= dmg; victim.hurtAt = room.t;
   // the arrow stays in them (until they are out of the round or respawn): where, in their own frame
@@ -1087,8 +1093,8 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
       }
       case 'shot': {
         const local = m.by === CL.me ? CL.cidMap.get(m.cid) : null;
-        if (local) { local.id = m.id; CL.arrows.delete(local.tmpId); CL.arrows.set(m.id, local); local.srv = m; return; }
-        const a = { id: m.id, by: m.by, o: m.o, v: m.v, tm: m.tm, local: false, pw: m.pw, end: null };
+        if (local) { local.id = m.id; CL.arrows.delete(local.tmpId); CL.arrows.set(m.id, local); local.srv = m; local.o = m.o; local.v = m.v; local.g = m.str ? 0 : W.GRAV; return; }   // the server's word on the flight (normally the same)
+        const a = { id: m.id, by: m.by, o: m.o, v: m.v, g: m.str ? 0 : W.GRAV, tm: m.tm, local: false, pw: m.pw, end: null };
         CL.arrows.set(m.id, a); emit('arrowNew', a); return;
       }
       case 'stick': { const a = CL.arrows.get(m.id); if (a) a.end = { kind: 'stick', m }; else addStuck(m); emit('impactSoon', m); return; }
@@ -1162,10 +1168,10 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   function release() {
     if (!ME.drawing) return; ME.drawing = false;
     if (!canAct()) return;
-    const power = W.drawPower(ME.drawT), speed = W.launchSpeed(power), o = W.shotOrigin(ME.st), v = W.aimVector(ME.st.yaw, ME.st.pitch, speed), cid = ++ME.cid;
+    const power = W.drawPower(ME.drawT), full = W.isFull(power), speed = W.launchSpeed(power), o = W.shotOrigin(ME.st, full), v = W.aimVector(ME.st.yaw, ME.st.pitch, speed), cid = ++ME.cid;
     send({ t: 'fire', cid, yaw: ME.st.yaw, pitch: ME.st.pitch, dt: ME.drawT });
     // the arrow leaves the bow now; the server's copy takes over its id when it arrives
-    const a = { id: 'L' + cid, tmpId: 'L' + cid, by: CL.me, o, v, local: true, t0: now(), pw: power, end: null };
+    const a = { id: 'L' + cid, tmpId: 'L' + cid, by: CL.me, o, v, g: W.gravFor(power), local: true, t0: now(), pw: power, end: null };
     CL.arrows.set(a.tmpId, a); CL.cidMap.set(cid, a); emit('arrowNew', a);
     if (CL.src !== 'practice') ME.arrows = Math.max(0, ME.arrows - 1);
     ME.nockT = W.BOW.nock; ME.releasedAt = now(); ME.drawT = 0; emit('release', power);
@@ -1189,7 +1195,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     ME.sendAcc += dt; if (ME.sendAcc >= .05 && CL.src) { ME.sendAcc = 0; send({ t: 'in', s: ++ME.seq, p: [+st.x.toFixed(3), +st.y.toFixed(3), +st.z.toFixed(3)], yaw: +st.yaw.toFixed(4), pitch: +st.pitch.toFixed(4), c: st.crouch, sp: st.sprint }); }
   }
   // the dotted preview: the same launch speed and gravity the real arrow will have
-  function previewNow() { const p = W.drawPower(ME.drawT), v = W.aimVector(ME.st.yaw, ME.st.pitch, W.launchSpeed(p)); return { o: W.shotOrigin(ME.st), v, p }; }
+  function previewNow() { const p = W.drawPower(ME.drawT), v = W.aimVector(ME.st.yaw, ME.st.pitch, W.launchSpeed(p)); return { o: W.shotOrigin(ME.st, W.isFull(p)), v, p, g: W.gravFor(p) }; }
   function myEye(out) { out[0] = ME.st.x; out[1] = ME.st.y + ME.eye; out[2] = ME.st.z; return out; }
   /* ---------- 40 gfx: the renderer, light, sky and every texture (all painted here at load time: no image files) ---------- */
   let X = null, gfxReady = false, gfxFailed = false;
@@ -2048,7 +2054,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
       if (t > 8) { CL.arrows.delete(id); if (m) { X.scene.remove(m); ARW.delete(a); } continue; }
       if (!m) continue;
       if (t < 0) { m.visible = false; continue; }
-      const p = W.arrowAt(a.o, a.v, t), vy = a.v[1] - W.GRAV * t; m.visible = true; m.position.set(p[0], p[1], p[2]); m.lookAt(p[0] - a.v[0], p[1] - vy, p[2] - a.v[2]);
+      const g = a.g == null ? W.GRAV : a.g, p = W.arrowAt(a.o, a.v, t, g), vy = a.v[1] - g * t; m.visible = true; m.position.set(p[0], p[1], p[2]); m.lookAt(p[0] - a.v[0], p[1] - vy, p[2] - a.v[2]);
       // a bright streak behind every arrow in the air, in the colour of its bow
       if (t > .03) { const sh = CL.players.get(a.by), col = TRAIL[(sh && sh.bow) || 'longbow'] || TRAIL.longbow, prev = a.lastTrail || p; for (let k = 0; k < 3; k++) { const u = k / 3; PS.trail.add(lp(prev[0], p[0], u), lp(prev[1], p[1], u), lp(prev[2], p[2], u), 0, 0, 0, { life: .32, size: .09 + (a.pw || 1) * .05, col, a: .85, g: 0 }); } a.lastTrail = p; }
       // a fly-by you can hear
@@ -2112,7 +2118,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   let _aimF, _aimR, _aimU; LAZY.push(() => { _aimF = new THREE.Vector3(); _aimR = new THREE.Vector3(); _aimU = new THREE.Vector3(); });
   function updateArc() {
     if (!ARC) return; const show = ME.drawing && ME.cam === 'fp' && canAct(); ARC.visible = show; AIMMARK.visible = false; if (!show) return;
-    const { o, v } = previewNow(), sp = Math.hypot(v[0], v[1], v[2]) || 1, full = CFG.aimLine !== 'short', pa = ARC.geometry.attributes.position, aa = ARC.geometry.attributes.aa, k0 = cl(ME.drawT / .1, 0, 1);
+    const { o, v, g } = previewNow(), sp = Math.hypot(v[0], v[1], v[2]) || 1, full = CFG.aimLine !== 'short', pa = ARC.geometry.attributes.position, aa = ARC.geometry.attributes.aa, k0 = cl(ME.drawT / .1, 0, 1);
     const pr = X.renderer.getPixelRatio(); ARC.material.uniforms.px.value = 6 * pr; ARC.material.uniforms.sc.value = innerHeight * pr * .5 / Math.tan(X.camera.fov * Math.PI / 360);
     // seen from behind, a fast arrow's path lies almost on your line of sight; so the drawn line leaves from the bow (low on the
     // left of the screen) and eases onto the true flight over the first dozen metres, which keeps it readable as an arc
@@ -2120,7 +2126,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     const sx = cam.position.x + rt.x * -.3 + up.x * -.24 + fwd.x * 1.1 - o[0], sy = cam.position.y + rt.y * -.3 + up.y * -.24 + fwd.y * 1.1 - o[1], sz = cam.position.z + rt.z * -.3 + up.z * -.24 + fwd.z * 1.1 - o[2];
     const step = .7 / sp, maxT = full ? 4.5 : 13 / sp; let prev = o, n = 0, hit = null;
     for (let i = 1; i < AIM_N; i++) {
-      const t = i * step; if (t > maxT) break; const p = W.arrowAt(o, v, t);
+      const t = i * step; if (t > maxT) break; const p = W.arrowAt(o, v, t, g);
       if (full) { const h = W.sweepWorld(prev, p); if (h) { hit = [lp(prev[0], p[0], h.t), lp(prev[1], p[1], h.t), lp(prev[2], p[2], h.t)]; break; } }
       const dist = t * sp, ease = full ? 1 - sm(cl(dist / 14, 0, 1)) : 0; pa.setXYZ(n, p[0] + sx * ease, p[1] + sy * ease, p[2] + sz * ease); aa.setX(n, k0 * (full ? cl((dist - .6) / 1.5, 0, 1) * .95 : (i < 2 ? 0 : .55 * Math.pow(1 - i / 18, 1.5)))); n++; prev = p;
     }
@@ -2453,7 +2459,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
       const p = ME.drawing ? W.drawPower(ME.drawT) : 0;
       g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(cx, cy, 1.8, 0, TAU); g.fill();
       if (ME.drawing) { const full = p >= 1, r = lp(24, 13, p); g.strokeStyle = full ? GOLD : 'rgba(255,255,255,.55)'; g.lineWidth = full ? 2.4 : 1.6; g.beginPath(); g.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + TAU * p); g.stroke();
-        if (full) { const pulse = .6 + .4 * Math.sin(t * 9); g.globalAlpha = pulse; txS(g, 'FULL', cx, cy + 30, 12, GOLD, 'center', 900); g.globalAlpha = 1; } }
+        if (full) { const pulse = .6 + .4 * Math.sin(t * 9); g.globalAlpha = pulse; txS(g, 'FULL · STRAIGHT', cx, cy + 30, 12, GOLD, 'center', 900); g.globalAlpha = 1; } }
       else if (ME.nockT > 0) { g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, 10, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - ME.nockT / W.BOW.nock)); g.stroke(); }
     }
     // hit markers: where your arrows landed (the server has confirmed them)
@@ -2791,13 +2797,13 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   GAME.test = {
     get ready() { return ready; }, get X() { return X; }, CL, ME, UI, IN, W, ENG, VM, PROFILE, KEY, SERVER, act, openMenu, closeMenu, startDraw, release, cancelDraw, connect, startPractice, startBotMatch, botRoom, leaveRoom, send, sendRoom, meP, previewNow, renderFrame, readInput,
     tp: (x, z, yaw = 0, pitch = 0) => { ME.st.x = x; ME.st.z = z; ME.st.y = W.groundAt(x, z, W.terrainH(x, z) + 3); ME.st.yaw = yaw; ME.st.pitch = pitch; send({ t: 'dev', tp: [x, ME.st.y, z], yaw, pitch }); },
-    aimAt: (x, y, z, power = 1) => { const o = W.shotOrigin(ME.st), d = Math.hypot(x - o[0], z - o[2]), v = W.launchSpeed(power), g = W.GRAV, h = y - o[1]; const disc = v ** 4 - g * (g * d * d + 2 * h * v * v); ME.st.yaw = Math.atan2(-(x - o[0]), -(z - o[2])); ME.st.pitch = disc < 0 ? .7 : Math.atan((v * v - Math.sqrt(disc)) / (g * d)); return ME.st.pitch; },
+    aimAt: (x, y, z, power = 1) => { const full = W.isFull(power), o = W.shotOrigin(ME.st, full), d = Math.hypot(x - o[0], z - o[2]), v = W.launchSpeed(power), g = W.GRAV, h = y - o[1]; const disc = v ** 4 - g * (g * d * d + 2 * h * v * v); ME.st.yaw = Math.atan2(-(x - o[0]), -(z - o[2])); ME.st.pitch = full ? Math.atan2(h, d) : disc < 0 ? .7 : Math.atan((v * v - Math.sqrt(disc)) / (g * d)); },
     pos: () => ({ x: ME.st.x, y: ME.st.y, z: ME.st.z, yaw: ME.st.yaw, pitch: ME.st.pitch }),
     // stage an archer in front of the camera (for the visual checks): o = { id, x, z, yaw, team, bow, draw, crouch }
     stage: o => { const p = player(o.id || 'stage'); Object.assign(p, { name: o.name || 'Stand-in', team: o.team || 1, bow: o.bow || 'longbow', alive: true, arrows: 6, slot: o.slot || 0 }); const y = W.groundAt(o.x, o.z, W.terrainH(o.x, o.z) + 2); p.buf = [[srvNow() + 1e4, o.x, y, o.z, o.yaw || 0, o.pitch || 0, 1 | (o.draw ? 8 : 0) | (o.crouch ? 2 : 0) | 16, o.draw || 0]]; return p.id; },
     finish: (id, bow) => { const p = CL.players.get(id), s = p.buf[p.buf.length - 1]; startFinisher({ v: id, k: CL.me, bow, zone: 'body', p: [s[1], s[2], s[3]], yaw: s[4], d: [Math.sin(s[4]), -.1, Math.cos(s[4])], kn: 'You', vn: p.name }); const f = FINS[FINS.length - 1]; if (f) { f.mine = true; ME.cam = 'finisher'; ME.fin = f; finisherCam(f); } },
     finCam: (x, z, y) => { const yy = y != null ? y : W.groundAt(x, z, W.terrainH(x, z) + .3); const f = { m: { p: [x, yy, z], d: [0, 0, -1] }, kind: 'longbow', fromYaw: 0 }; finisherCam(f); const c = f.cam.cam, C = [x, yy + 1, z], d = [c.x - C[0], c.y - C[1], c.z - C[2]], L = Math.hypot(...d); return { cam: [c.x, c.y, c.z], L, clear: W.rayWorld(C, d.map(v => v / L), L), ground: W.terrainH(c.x, c.z), inside: W.blocked(c.x, c.y - .9, c.z, .9) }; },
-    finishers: () => FINS.map(f => ({ kind: f.kind, t: f.t, mine: f.mine, hit: f.hit })), fx: () => ({ debris: DEBRIS.length, first: DEBRIS.slice(0, 3).map(b => [b.m.position.toArray().map(v => +v.toFixed(2)), b.m.visible, !!b.m.parent, b.t.toFixed(2), b.m.scale.x.toFixed(2)]), floats: FLOATS.length }), cam: () => ME.cam, arcPts: () => { const { o, v } = previewNow(); return W.previewArc(o, v, 13, 18); },
+    finishers: () => FINS.map(f => ({ kind: f.kind, t: f.t, mine: f.mine, hit: f.hit })), fx: () => ({ debris: DEBRIS.length, first: DEBRIS.slice(0, 3).map(b => [b.m.position.toArray().map(v => +v.toFixed(2)), b.m.visible, !!b.m.parent, b.t.toFixed(2), b.m.scale.x.toFixed(2)]), floats: FLOATS.length }), cam: () => ME.cam, arcPts: () => { const { o, v, g } = previewNow(); return W.previewArc(o, v, 13, 18, g); },
   };
   if (roomQ && !DEV) setTimeout(() => { const b = document.getElementById('bPlay'); if (b && K.state === 'title') b.click(); }, 50);
 })();

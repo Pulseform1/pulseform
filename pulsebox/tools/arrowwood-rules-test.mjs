@@ -12,11 +12,22 @@ function match(mode, oneShot) {
 }
 const tp = (room, id, x, z, yaw = 0) => E.message(room, id, { t: 'dev', tp: [x, 0, z], yaw });
 function shootAt(room, from, to, zoneY, power = 1) {   // a real arrow from `from` at the point zoneY above `to`'s feet
-  const a = room.players.get(from).st, b = room.players.get(to).st, o = W.shotOrigin({ ...a, yaw: 0, pitch: 0 }), tx = b.x, ty = b.y + zoneY, tz = b.z;
+  const a = room.players.get(from).st, b = room.players.get(to).st, full = W.isFull(power), o = W.shotOrigin({ ...a, yaw: 0, pitch: 0 }, full), tx = b.x, ty = b.y + zoneY, tz = b.z;
   const yaw = Math.atan2(-(tx - o[0]), -(tz - o[2])), d = Math.hypot(tx - o[0], tz - o[2]), v = W.launchSpeed(power), g = W.GRAV, h = ty - o[1], disc = v ** 4 - g * (g * d * d + 2 * h * v * v);
-  const pitch = Math.atan((v * v - Math.sqrt(Math.max(0, disc))) / (g * d)); E.message(room, from, { t: 'in', s: 1, p: [a.x, a.y, a.z], yaw, pitch });
+  const pitch = full ? Math.atan2(h, d) : Math.atan((v * v - Math.sqrt(Math.max(0, disc))) / (g * d)); E.message(room, from, { t: 'in', s: 1, p: [a.x, a.y, a.z], yaw, pitch });
   E.message(room, from, { t: 'draw' }); step(room, power >= 1 ? 1 : W.BOW.fullDraw * (1 - Math.sqrt(1 - power)) + .05); E.message(room, from, { t: 'fire', cid: 1, yaw, pitch, dt: power >= 1 ? 1 : W.BOW.fullDraw * (1 - Math.sqrt(1 - power)) });
 }
+// a full draw flies dead straight: no drop at all, so it goes exactly where you look; a weaker draw still arcs
+{ const { room, ids, P } = match('1v1'); tp(room, ids[0], 70, 120); tp(room, ids[1], 30, 30); step(room, .2);
+  const s = P(ids[0]).st; E.message(room, ids[0], { t: 'in', s: 1, p: [s.x, s.y, s.z], yaw: 0, pitch: .05 }); E.message(room, ids[0], { t: 'draw' }); step(room, 1);
+  E.message(room, ids[0], { t: 'fire', cid: 1, yaw: 0, pitch: .05, dt: 1 }); step(room, .5); const a = room.arrows[0], o = W.shotOrigin({ ...P(ids[0]).st, yaw: 0, pitch: .05 }, true);
+  const off = a ? Math.abs((a.prev[1] - o[1]) - Math.tan(.05) * Math.hypot(a.prev[0] - o[0], a.prev[2] - o[2])) : 9;
+  ok(a && a.g === 0 && off < .01, 'a full draw flies dead straight along the line of sight', a ? `${Math.hypot(a.prev[0] - o[0], a.prev[2] - o[2]).toFixed(1)} m out, ${(off * 100).toFixed(1)} cm off the line` : 'no arrow');
+  step(room, 1); E.message(room, ids[0], { t: 'draw' }); step(room, .4); E.message(room, ids[0], { t: 'fire', cid: 2, yaw: 0, pitch: .05, dt: .4 }); step(room, .5);
+  const b = room.arrows.find(q => q.cid === 2); ok(b && b.g > 9, 'a part draw still arcs under gravity', b ? 'g ' + b.g : 'no arrow'); }
+{ const { room, ids, P } = match('1v1'); tp(room, ids[0], 70, 100); tp(room, ids[1], 70, 55, Math.PI); step(room, .2); E.drain(room);
+  shootAt(room, ids[0], ids[1], 1.62); step(room, 2); const h = E.drain(room).filter(o => o.m.t === 'hit').map(o => o.m)[0];
+  ok(h && h.zone === 'head', 'a full draw aimed at a head 45 m away hits the head, exactly where it was aimed', h ? h.zone + ' at ' + h.dist + ' m' : 'missed'); }
 // damage: full-draw head eliminates; full-draw body twice; leg shots and weak shots wound
 { const { room, ids, P } = match('1v1'); tp(room, ids[0], 70, 100); tp(room, ids[1], 70, 75, Math.PI); step(room, .2);
   shootAt(room, ids[0], ids[1], 1.0); step(room, 1.5); const hp1 = P(ids[1]).st.hp; step(room, .6);
@@ -43,7 +54,7 @@ function shootAt(room, from, to, zoneY, power = 1) {   // a real arrow from `fro
 { const { room, ids, P } = match('1v1'); tp(room, ids[0], 70, 100, 0); tp(room, ids[1], 70, 76, Math.PI); step(room, .2);
   const a = P(ids[0]), b = P(ids[1]); a.st.hp = 1; b.st.hp = 1;
   // both arrows land on the same tick: release them on the same tick from the same distance
-  for (const [f, t] of [[ids[0], ids[1]], [ids[1], ids[0]]]) { const s = P(f).st, o = P(t).st, oo = W.shotOrigin({ ...s, pitch: 0 }); const yaw = Math.atan2(-(o.x - oo[0]), -(o.z - oo[2])); E.message(room, f, { t: 'in', s: 1, p: [s.x, s.y, s.z], yaw, pitch: .012 }); E.message(room, f, { t: 'draw' }); }
+  for (const [f, t] of [[ids[0], ids[1]], [ids[1], ids[0]]]) { const s = P(f).st, o = P(t).st, oo = W.shotOrigin({ ...s, pitch: 0 }, true); const yaw = Math.atan2(-(o.x - oo[0]), -(o.z - oo[2])), pitch = Math.atan2(o.y + 1.2 - oo[1], Math.hypot(o.x - oo[0], o.z - oo[2])); E.message(room, f, { t: 'in', s: 1, p: [s.x, s.y, s.z], yaw, pitch }); E.message(room, f, { t: 'draw' }); }
   step(room, 1); for (const f of ids) { const s = P(f).st; E.message(room, f, { t: 'fire', cid: 1, yaw: s.yaw, pitch: s.pitch, dt: 1 }); }
   step(room, 2); const r = E.drain(room).filter(o => o.m.t === 'round').map(o => o.m)[0];
   ok(r && r.winner === 'replay' && r.reason === 'wipe' && room.score.join('') === '00', 'both archers down on the same tick: the round is replayed', r && `${r.winner} ${r.reason} ${room.score.join('-')}`); }

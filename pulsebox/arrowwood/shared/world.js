@@ -304,10 +304,15 @@ export function moveStep(s, i, dt) {
 }
 
 // ---- arrows: a point under gravity, swept against the world and bodies segment by segment
-export const arrowAt = (o, v, t) => [o[0] + v[0] * t, o[1] + v[1] * t - .5 * GRAV * t * t, o[2] + v[2] * t];
+// a full draw flies dead straight along your line of sight (no drop), so it lands exactly on the crosshair;
+// anything short of a full draw arcs under gravity
+export const isFull = p => p >= 1;
+export const gravFor = p => isFull(p) ? 0 : GRAV;
+export const arrowAt = (o, v, t, g = GRAV) => [o[0] + v[0] * t, o[1] + v[1] * t - .5 * g * t * t, o[2] + v[2] * t];
 export function aimVector(yaw, pitch, speed) { const cp = Math.cos(pitch); return [-Math.sin(yaw) * cp * speed, Math.sin(pitch) * speed, -Math.cos(yaw) * cp * speed]; }
 // the arrow leaves from half a metre in front of the eye, just below it, where the drawn arrow lies
-export function shotOrigin(s) { const e = eyeHeight(s.crouch), cp = Math.cos(s.pitch); return [s.x - Math.sin(s.yaw) * cp * .5, s.y + e - .065 + Math.sin(s.pitch) * .5, s.z - Math.cos(s.yaw) * cp * .5]; }
+// (a straight full-draw arrow leaves from the line of sight itself, so it goes exactly where you look)
+export function shotOrigin(s, straight) { const e = eyeHeight(s.crouch), cp = Math.cos(s.pitch); return [s.x - Math.sin(s.yaw) * cp * .5, s.y + e - (straight ? 0 : .065) + Math.sin(s.pitch) * .5, s.z - Math.cos(s.yaw) * cp * .5]; }
 // first hit along p0 -> p1 against the static world: { t (0..1), mat, kind } or null
 export function sweepWorld(p0, p1) {
   let best = null;
@@ -347,12 +352,13 @@ export function sweepWorld(p0, p1) {
   }
   return best;
 }
-// a body's hitboxes: a head sphere, a torso capsule and a legs capsule (lower when crouched)
+// a body's hitboxes: a head sphere, a torso capsule and a legs capsule (lower when crouched). The torso capsule's rounded
+// top stops at the shoulders, under the head sphere, so a shot straight at someone's face is a headshot
 export function hitboxes(s) {
   const c = s.crouch;
   return [
     { zone: 'head', a: [s.x, s.y + (c ? 1.12 : 1.62), s.z], b: null, r: .15 },
-    { zone: 'body', a: [s.x, s.y + (c ? .64 : 1.0), s.z], b: [s.x, s.y + (c ? 1.0 : 1.44), s.z], r: .25 },
+    { zone: 'body', a: [s.x, s.y + (c ? .64 : 1.0), s.z], b: [s.x, s.y + (c ? .84 : 1.25), s.z], r: .25 },
     { zone: 'legs', a: [s.x, s.y + .12, s.z], b: [s.x, s.y + (c ? .58 : .96), s.z], r: .19 },
   ];
 }
@@ -379,9 +385,9 @@ export function rayWorld(o, d, max) {
   return h ? h.t * max : max;
 }
 // the arrow's early flight for the aim preview: the same launch speed and gravity the real arrow uses
-export function previewArc(o, v, maxDist = 14, n = 16) {
+export function previewArc(o, v, maxDist = 14, n = 16, g = GRAV) {
   const pts = [], sp = Math.hypot(v[0], v[1], v[2]) || 1, T = maxDist / sp;
-  for (let k = 1; k <= n; k++) { const t = T * k / n, p = arrowAt(o, v, t); pts.push(p); }
+  for (let k = 1; k <= n; k++) { const t = T * k / n, p = arrowAt(o, v, t, g); pts.push(p); }
   return pts;
 }
 export const BOWS = [

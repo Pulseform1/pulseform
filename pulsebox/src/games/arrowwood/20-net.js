@@ -115,8 +115,8 @@
       }
       case 'shot': {
         const local = m.by === CL.me ? CL.cidMap.get(m.cid) : null;
-        if (local) { local.id = m.id; CL.arrows.delete(local.tmpId); CL.arrows.set(m.id, local); local.srv = m; return; }
-        const a = { id: m.id, by: m.by, o: m.o, v: m.v, tm: m.tm, local: false, pw: m.pw, end: null };
+        if (local) { local.id = m.id; CL.arrows.delete(local.tmpId); CL.arrows.set(m.id, local); local.srv = m; local.o = m.o; local.v = m.v; local.g = m.str ? 0 : W.GRAV; return; }   // the server's word on the flight (normally the same)
+        const a = { id: m.id, by: m.by, o: m.o, v: m.v, g: m.str ? 0 : W.GRAV, tm: m.tm, local: false, pw: m.pw, end: null };
         CL.arrows.set(m.id, a); emit('arrowNew', a); return;
       }
       case 'stick': { const a = CL.arrows.get(m.id); if (a) a.end = { kind: 'stick', m }; else addStuck(m); emit('impactSoon', m); return; }

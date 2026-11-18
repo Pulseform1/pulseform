@@ -86,7 +86,7 @@
       if (t > 8) { CL.arrows.delete(id); if (m) { X.scene.remove(m); ARW.delete(a); } continue; }
       if (!m) continue;
       if (t < 0) { m.visible = false; continue; }
-      const p = W.arrowAt(a.o, a.v, t), vy = a.v[1] - W.GRAV * t; m.visible = true; m.position.set(p[0], p[1], p[2]); m.lookAt(p[0] - a.v[0], p[1] - vy, p[2] - a.v[2]);
+      const g = a.g == null ? W.GRAV : a.g, p = W.arrowAt(a.o, a.v, t, g), vy = a.v[1] - g * t; m.visible = true; m.position.set(p[0], p[1], p[2]); m.lookAt(p[0] - a.v[0], p[1] - vy, p[2] - a.v[2]);
       // a bright streak behind every arrow in the air, in the colour of its bow
       if (t > .03) { const sh = CL.players.get(a.by), col = TRAIL[(sh && sh.bow) || 'longbow'] || TRAIL.longbow, prev = a.lastTrail || p; for (let k = 0; k < 3; k++) { const u = k / 3; PS.trail.add(lp(prev[0], p[0], u), lp(prev[1], p[1], u), lp(prev[2], p[2], u), 0, 0, 0, { life: .32, size: .09 + (a.pw || 1) * .05, col, a: .85, g: 0 }); } a.lastTrail = p; }
       // a fly-by you can hear
@@ -150,7 +150,7 @@
   let _aimF, _aimR, _aimU; LAZY.push(() => { _aimF = new THREE.Vector3(); _aimR = new THREE.Vector3(); _aimU = new THREE.Vector3(); });
   function updateArc() {
     if (!ARC) return; const show = ME.drawing && ME.cam === 'fp' && canAct(); ARC.visible = show; AIMMARK.visible = false; if (!show) return;
-    const { o, v } = previewNow(), sp = Math.hypot(v[0], v[1], v[2]) || 1, full = CFG.aimLine !== 'short', pa = ARC.geometry.attributes.position, aa = ARC.geometry.attributes.aa, k0 = cl(ME.drawT / .1, 0, 1);
+    const { o, v, g } = previewNow(), sp = Math.hypot(v[0], v[1], v[2]) || 1, full = CFG.aimLine !== 'short', pa = ARC.geometry.attributes.position, aa = ARC.geometry.attributes.aa, k0 = cl(ME.drawT / .1, 0, 1);
     const pr = X.renderer.getPixelRatio(); ARC.material.uniforms.px.value = 6 * pr; ARC.material.uniforms.sc.value = innerHeight * pr * .5 / Math.tan(X.camera.fov * Math.PI / 360);
     // seen from behind, a fast arrow's path lies almost on your line of sight; so the drawn line leaves from the bow (low on the
     // left of the screen) and eases onto the true flight over the first dozen metres, which keeps it readable as an arc
@@ -158,7 +158,7 @@
     const sx = cam.position.x + rt.x * -.3 + up.x * -.24 + fwd.x * 1.1 - o[0], sy = cam.position.y + rt.y * -.3 + up.y * -.24 + fwd.y * 1.1 - o[1], sz = cam.position.z + rt.z * -.3 + up.z * -.24 + fwd.z * 1.1 - o[2];
     const step = .7 / sp, maxT = full ? 4.5 : 13 / sp; let prev = o, n = 0, hit = null;
     for (let i = 1; i < AIM_N; i++) {
-      const t = i * step; if (t > maxT) break; const p = W.arrowAt(o, v, t);
+      const t = i * step; if (t > maxT) break; const p = W.arrowAt(o, v, t, g);
       if (full) { const h = W.sweepWorld(prev, p); if (h) { hit = [lp(prev[0], p[0], h.t), lp(prev[1], p[1], h.t), lp(prev[2], p[2], h.t)]; break; } }
       const dist = t * sp, ease = full ? 1 - sm(cl(dist / 14, 0, 1)) : 0; pa.setXYZ(n, p[0] + sx * ease, p[1] + sy * ease, p[2] + sz * ease); aa.setX(n, k0 * (full ? cl((dist - .6) / 1.5, 0, 1) * .95 : (i < 2 ? 0 : .55 * Math.pow(1 - i / 18, 1.5)))); n++; prev = p;
     }

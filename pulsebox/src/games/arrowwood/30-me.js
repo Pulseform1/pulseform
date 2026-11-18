@@ -28,10 +28,10 @@
   function release() {
     if (!ME.drawing) return; ME.drawing = false;
     if (!canAct()) return;
-    const power = W.drawPower(ME.drawT), speed = W.launchSpeed(power), o = W.shotOrigin(ME.st), v = W.aimVector(ME.st.yaw, ME.st.pitch, speed), cid = ++ME.cid;
+    const power = W.drawPower(ME.drawT), full = W.isFull(power), speed = W.launchSpeed(power), o = W.shotOrigin(ME.st, full), v = W.aimVector(ME.st.yaw, ME.st.pitch, speed), cid = ++ME.cid;
     send({ t: 'fire', cid, yaw: ME.st.yaw, pitch: ME.st.pitch, dt: ME.drawT });
     // the arrow leaves the bow now; the server's copy takes over its id when it arrives
-    const a = { id: 'L' + cid, tmpId: 'L' + cid, by: CL.me, o, v, local: true, t0: now(), pw: power, end: null };
+    const a = { id: 'L' + cid, tmpId: 'L' + cid, by: CL.me, o, v, g: W.gravFor(power), local: true, t0: now(), pw: power, end: null };
     CL.arrows.set(a.tmpId, a); CL.cidMap.set(cid, a); emit('arrowNew', a);
     if (CL.src !== 'practice') ME.arrows = Math.max(0, ME.arrows - 1);
     ME.nockT = W.BOW.nock; ME.releasedAt = now(); ME.drawT = 0; emit('release', power);
@@ -55,5 +55,5 @@
     ME.sendAcc += dt; if (ME.sendAcc >= .05 && CL.src) { ME.sendAcc = 0; send({ t: 'in', s: ++ME.seq, p: [+st.x.toFixed(3), +st.y.toFixed(3), +st.z.toFixed(3)], yaw: +st.yaw.toFixed(4), pitch: +st.pitch.toFixed(4), c: st.crouch, sp: st.sprint }); }
   }
   // the dotted preview: the same launch speed and gravity the real arrow will have
-  function previewNow() { const p = W.drawPower(ME.drawT), v = W.aimVector(ME.st.yaw, ME.st.pitch, W.launchSpeed(p)); return { o: W.shotOrigin(ME.st), v, p }; }
+  function previewNow() { const p = W.drawPower(ME.drawT), v = W.aimVector(ME.st.yaw, ME.st.pitch, W.launchSpeed(p)); return { o: W.shotOrigin(ME.st, W.isFull(p)), v, p, g: W.gravFor(p) }; }
   function myEye(out) { out[0] = ME.st.x; out[1] = ME.st.y + ME.eye; out[2] = ME.st.z; return out; }

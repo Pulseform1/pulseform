@@ -12,7 +12,7 @@
 import {
   BOW, PL, drawPower, launchSpeed, damageFor, moveStep, groundAt, blocked, terrainH, arrowAt, aimVector, shotOrigin,
   sweepWorld, sweepBodies, PICKUPS, SPAWNS, SPAWN_YAW, FFA_SPAWNS, ZONE, COINS, BOW_IDS, gridRef, areaName, inWater,
-  rayWorld, eyeHeight, GRAV, MIN, MAX, CX, CZ,
+  rayWorld, eyeHeight, GRAV, MIN, MAX, CX, CZ, gravFor, isFull,
 } from '../shared/world.js';
 
 export const TICK = 1 / 20;
@@ -147,11 +147,11 @@ function fire(room, p, m) {
   if (!st.alive || !live(room) || st.drawAt == null || st.arrows <= 0) { st.drawAt = null; send(room, p.id, { t: 'nofire', cid: m.cid | 0, arrows: st.arrows }); return; }
   const seen = room.t - st.drawAt, held = Number.isFinite(m.dt) ? Math.max(0, Math.min(m.dt, seen + .25)) : seen;   // trust the client's draw time only up to what the server saw
   if (Number.isFinite(m.yaw)) st.yaw = m.yaw; if (Number.isFinite(m.pitch)) st.pitch = Math.max(-1.5, Math.min(1.5, m.pitch));
-  const power = drawPower(held), speed = launchSpeed(power), o = shotOrigin(st), v = aimVector(st.yaw, st.pitch, speed);
+  const power = drawPower(held), full = isFull(power), speed = launchSpeed(power), o = shotOrigin(st, full), v = aimVector(st.yaw, st.pitch, speed);
   st.drawAt = null; st.nockAt = room.t + BOW.nock; if (!room.practice) st.arrows--;
-  const a = { id: room.nextId++, cid: m.cid | 0, by: p.id, o, v, t0: room.t, age: 0, prev: o.slice(), power, bow: p.bow };
+  const a = { id: room.nextId++, cid: m.cid | 0, by: p.id, o, v, g: gravFor(power), t0: room.t, age: 0, prev: o.slice(), power, bow: p.bow };
   room.arrows.push(a);
-  send(room, '*', { t: 'shot', id: a.id, cid: a.cid, by: p.id, o: o.map(r3), v: v.map(r3), tm: r3(room.t), pw: r2(power) });
+  send(room, '*', { t: 'shot', id: a.id, cid: a.cid, by: p.id, o: o.map(r3), v: v.map(r3), tm: r3(room.t), pw: r2(power), str: full ? 1 : 0 });
 }
 
 // ---- matches, rounds, free for all
@@ -300,10 +300,10 @@ function botThink(room, p) {
   if (drawing && tdist > L.shoot * 1.25) { st.drawAt = null; return; }
   if (!drawing && st.arrows > 0 && room.t >= st.nockAt && room.t >= B.reactAt && tdist <= L.shoot) { st.drawAt = room.t; B.drawFor = BOW.fullDraw * rr(L.draw[0], L.draw[1]); if (Math.random() < .5) B.crouchT = room.t + 3; return; }
   if (drawing && room.t - st.drawAt >= B.drawFor) {
-    const held = room.t - st.drawAt, v = launchSpeed(drawPower(held)), head = Math.random() < L.head;
+    const held = room.t - st.drawAt, full = isFull(drawPower(held)), v = launchSpeed(drawPower(held)), head = Math.random() < L.head;
     let aim = [T.st.x, T.st.y + (T.st.crouch ? (head ? 1.12 : .82) : (head ? 1.6 : 1.2)), T.st.z], yaw = st.yaw, pitch = 0;
     for (let k = 0; k < 3; k++) {   // aim where they will be when the arrow gets there
-      const o = shotOrigin({ ...st, yaw, pitch }); yaw = Math.atan2(-(aim[0] - o[0]), -(aim[2] - o[2])); const pt = solvePitch(o, aim, v); if (pt == null) { pitch = .6; break; } pitch = pt;
+      const o = shotOrigin({ ...st, yaw, pitch }, full); yaw = Math.atan2(-(aim[0] - o[0]), -(aim[2] - o[2])); const pt = full ? Math.atan2(aim[1] - o[1], Math.hypot(aim[0] - o[0], aim[2] - o[2])) : solvePitch(o, aim, v); if (pt == null) { pitch = .6; break; } pitch = pt;
       const tf = Math.hypot(aim[0] - o[0], aim[2] - o[2]) / Math.max(1, v * Math.cos(pitch)); aim = [T.st.x + (T.st.vx || 0) * tf, aim[1], T.st.z + (T.st.vz || 0) * tf];
     }
     const e = L.err * (.6 + tdist / 50);
@@ -359,7 +359,7 @@ function arrowsStep(room) {
   for (const a of room.arrows) {
     if (a.dead) continue;
     for (let k = 0; k < sub && !a.dead; k++) {
-      a.age += dt; const p1 = arrowAt(a.o, a.v, a.age), p0 = a.prev;
+      a.age += dt; const p1 = arrowAt(a.o, a.v, a.age, a.g), p0 = a.prev;
       const shooter = room.players.get(a.by);
       const bodies = live(room) ? list(room).filter(q => q.st.alive && (shooter ? foes(room, shooter, q) : q.id !== a.by)).map(q => ({ s: q.st, q })) : [];
       const hw = sweepWorld(p0, p1), hb = bodies.length ? sweepBodies(p0, p1, bodies) : null;
@@ -373,7 +373,7 @@ function arrowsStep(room) {
 }
 const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 function stick(room, a, p0, p1, hw) {
-  const p = lerp3(p0, p1, hw.t), vel = [a.v[0], a.v[1] - 9.81 * a.age, a.v[2]], sp = Math.hypot(...vel), d = vel.map(v => v / sp);
+  const p = lerp3(p0, p1, hw.t), vel = [a.v[0], a.v[1] - a.g * a.age, a.v[2]], sp = Math.hypot(...vel), d = vel.map(v => v / sp);
   const tip = [p[0] + d[0] * .12, p[1] + d[1] * .12, p[2] + d[2] * .12];   // the head buries itself a little
   const rec = hw.mat !== 'water' ? p[1] - terrainH(p[0], p[2]) < 2.3 : true;
   const s = { id: a.id, by: a.by, p: tip, d, mat: hw.mat, kind: hw.kind, rec, bow: a.bow };
@@ -382,7 +382,7 @@ function stick(room, a, p0, p1, hw) {
 }
 const stuckOut = s => ({ id: s.id, by: s.by, p: s.p.map(r2), d: s.d.map(r3), mat: s.mat, kind: s.kind, rec: s.rec });
 function hitBody(room, a, hb, p0, p1) {
-  const victim = hb.body.q, st = victim.st, p = lerp3(p0, p1, hb.t), vel = [a.v[0], a.v[1] - 9.81 * a.age, a.v[2]], sp = Math.hypot(...vel);
+  const victim = hb.body.q, st = victim.st, p = lerp3(p0, p1, hb.t), vel = [a.v[0], a.v[1] - a.g * a.age, a.v[2]], sp = Math.hypot(...vel);
   const dmg = damageFor(hb.zone, sp, room.oneShot && !room.practice), killer = room.players.get(a.by);
   st.hp -= dmg; victim.hurtAt = room.t;
   // the arrow stays in them (until they are out of the round or respawn): where, in their own frame

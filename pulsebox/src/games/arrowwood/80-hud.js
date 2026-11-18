@@ -30,7 +30,7 @@
       const p = ME.drawing ? W.drawPower(ME.drawT) : 0;
       g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(cx, cy, 1.8, 0, TAU); g.fill();
       if (ME.drawing) { const full = p >= 1, r = lp(24, 13, p); g.strokeStyle = full ? GOLD : 'rgba(255,255,255,.55)'; g.lineWidth = full ? 2.4 : 1.6; g.beginPath(); g.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + TAU * p); g.stroke();
-        if (full) { const pulse = .6 + .4 * Math.sin(t * 9); g.globalAlpha = pulse; txS(g, 'FULL', cx, cy + 30, 12, GOLD, 'center', 900); g.globalAlpha = 1; } }
+        if (full) { const pulse = .6 + .4 * Math.sin(t * 9); g.globalAlpha = pulse; txS(g, 'FULL · STRAIGHT', cx, cy + 30, 12, GOLD, 'center', 900); g.globalAlpha = 1; } }
       else if (ME.nockT > 0) { g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, 10, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - ME.nockT / W.BOW.nock)); g.stroke(); }
     }
     // hit markers: where your arrows landed (the server has confirmed them)

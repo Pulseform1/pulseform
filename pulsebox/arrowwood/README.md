@@ -4,7 +4,8 @@ First-person archery for Pulsebox in a bright, toy-like style. Two to eight frie
 Wood (rolling hills, groves of tall trees whose crowns meet overhead, open meadows, bushes, a creek, the Stone Bridge,
 Split Oak and the Old Tower), draw, and land the last arrow.
 
-While you draw, a dotted aim line shows the whole flight (it leaves from the bow and eases onto the arrow's true path)
+A full draw (the ring turns gold) flies dead straight along your line of sight, with no drop, so it lands exactly on the
+crosshair; anything less arcs under gravity. While you draw, a dotted aim line shows the whole flight (it leaves from the bow and eases onto the arrow's true path)
 and a ring marks where the arrow will land; leaves let arrows through, so the line passes through them too. Settings can
 cut it back to a short arc.
 
