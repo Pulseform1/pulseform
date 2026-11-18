@@ -13,7 +13,7 @@ only = set(sys.argv[1:])
 FROZEN = {'strata', 'siegeworks'}
 # Games under test: built from src/ to a private, unlisted page (own save slot, own rooms, a TEST BUILD tag) and the live
 # page is left as it was. To ship the tested version, take the game out of LAB and build it again.
-LAB = {'blackwater': 'blackwater-lab-b860f455'}
+LAB = {}   # e.g. {'blackwater': 'blackwater-lab-b860f455'}
 def lab_page(gid, html):
     assert f"id: '{gid}'" in html
     html = html.replace(f"id: '{gid}'", f"id: '{gid}-lab'", 1).replace('<head>', '<head>\n<meta name="robots" content="noindex,nofollow">', 1)
