@@ -29,6 +29,7 @@
     if (m.t === 'lprof') { PARTY.prof.set(m.from, { op: OPS[m.op] ? m.op : 'vex', rt: m.rt | 0, rd: !!m.rd }); return true; }
     if (m.t === 'lteam') { if (m.from === MP.hostId) { PARTY.teams = m.teams || {}; PARTY.set = Object.assign(PARTY.set, m.set || {}); } return true; }
     if (m.t === 'lswap') { if (MP.isHost()) { swapTeam(m.from); } return true; }
+    if (m.t === 'mp-rejoin' && MP.isHost() && PARTY.teams[m.old] != null) { PARTY.teams[m.from] = PARTY.teams[m.old]; delete PARTY.teams[m.old]; const pf = PARTY.prof.get(m.old); if (pf) PARTY.prof.set(m.from, pf); MP.send({ t: 'lteam', teams: PARTY.teams, set: PARTY.set }); }   // back after a drop: same team (the match hears it too)
     return false;
   }
   function swapTeam(id) { const ps = MP.players(), T2 = PARTY.teams, to = 1 - (T2[id] || 0); if (ps.filter(q => T2[q.id] === to).length >= PARTY.set.size) return; T2[id] = to; MP.send({ t: 'lteam', teams: T2, set: PARTY.set }); }

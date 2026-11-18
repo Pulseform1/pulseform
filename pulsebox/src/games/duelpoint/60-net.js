@@ -6,8 +6,14 @@
   function net(m) { if (M && M.online && MP.online()) MP.send(m); }
   const r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000;
   // every fighter this device runs (you, and the bots if you host) streams its state, tagged with whose it is
+  function goneFor(f) {   // a dropped fighter who did not come back in time
+    f.gone = true; f.alive = false; f.dc = 0;
+    if (M.fs.length <= 2 || !M.fs.some(q => q.team === f.team && !q.gone)) { M.wins[0] = Math.max(M.wins[0], M.wins[1] + 1); M.host = true; matchOver('left'); } else if (M.host) judge();
+  }
   function netTick(dt) {
-    if (!M.online) return; M.netT -= dt; if (M.netT > 0) return; M.netT = .05;
+    if (!M.online) return;
+    if (!M.over) for (const f of M.fs) if (f.dc && M.time - f.dc > DC_WAIT) goneFor(f);
+    M.netT -= dt; if (M.netT > 0) return; M.netT = .05;
     for (const f of M.fs) if (!f.net && !f.gone) net({ t: 's', f: f.key, x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
       al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, op: f.op, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0, rt: f.rating || 0, sk: (f.skins && f.skins[f.guns[f.slot]]) || 0 });
   }
@@ -19,11 +25,15 @@
       case 'rs': if (!M.host) startRound(m.n); return;
       case 'over': if (!M.host) matchOver(); return;
     }
-    const F = M.byKey[String(m.f != null ? m.f : m.from)];
+    if (m.t === 'mp-rejoin') { M.alias = M.alias || {}; const key = M.alias[String(m.old)] || String(m.old); M.alias[String(m.from)] = key; const R0 = M.byKey[key]; if (R0) R0.dc = 0; return; }   // back with a new room id: same fighter
+    const F = M.byKey[String(m.f != null ? m.f : (M.alias && M.alias[String(m.from)]) || m.from)];
     if (!F || !F.net) return;   // about nobody here, or about a fighter this device runs itself
+    if (F.dc) F.dc = 0;
+    if (m.t === 'gate') { const G = GATES[m.g | 0]; if (G && G.open !== !!m.o) toggleGate(m.g | 0, F, true); return; }   // someone used a gate's switch
+    if (m.t === 'brk') { hitWall(m.b | 0, +m.d || 0, F, true); return; }   // someone shot a breakable wall
     switch (m.t) {
       case 's':
-        { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
+        { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && Math.hypot(sn[sn.length - 1].x - m.x, sn[sn.length - 1].z - m.z) > 6) sn.length = 0; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
         if (m.rt) F.rating = m.rt; if (m.g) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
@@ -72,11 +82,21 @@
       names: [...BOT_NAMES].sort(() => R() - .5), ops: Array.from({ length: 4 }, () => pick(Object.keys(OPS))) }),
     onStart: (cfg, roster) => { cfg.names = cfg.names || BOT_NAMES; cfg.ops = cfg.ops || ['vex']; startMatch({ mode: 'online', seats: seatsFor(cfg, roster), hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map, botDiff: cfg.botDiff }); emit('matchStart'); },
     onMsg: netMsg,
-    // someone left: in a duel you win; in a team game they drop out (and if the host left, the new host takes over the bots)
+    // someone's connection dropped: they get DC_WAIT seconds to come back (their game rejoins the room by itself) before
+    // they count as gone. Gone: in a duel you win; in a team game they drop out. If the host dropped, the room's next
+    // player became host and took over the bots and the clock.
     onLeave: id => {
-      if (!M || !M.online || M.over) return; const f = id === -1 ? null : M.byKey[String(id)];
-      if (M.fs.length <= 2 || !f) { M.wins[0] = Math.max(M.wins[0], M.wins[1] + 1); M.host = true; matchOver('left'); return; }
-      f.gone = true; f.alive = false; if (!M.fs.some(q => q.team === f.team && !q.gone)) { M.wins[0] = Math.max(M.wins[0], M.wins[1] + 1); M.host = true; matchOver('left'); } else if (M.host) judge();
+      if (!M || !M.online || M.over) return;
+      if (id === -1) { matchOver('dropped'); return; }   // it was you, and getting back in failed
+      const f = M.byKey[(M.alias && M.alias[String(id)]) || String(id)]; if (f && !f.gone && !f.dc) f.dc = M.time;
     },
-    onHost: id => { if (!M || !M.online || M.over || String(id) !== String(MP.id)) return; M.host = true; for (const f of M.fs) if (f.isBot) { f.net = false; f.bot = { diff: 1 }; } },
+    onHost: id => { if (!M || !M.online || M.over) return;
+      if (String(id) === String(MP.id)) { if (!M.host) { M.host = true; for (const f of M.fs) if (f.isBot) { f.net = false; f.bot = { diff: 1 }; } } }
+      else if (M.host) { M.host = false; for (const f of M.fs) if (f.isBot) { f.net = true; f.bot = null; f.snaps = []; } } },   // someone else hosts now: their bots, their clock
+    // your own connection: lost (the game keeps running while it reconnects) and back. Back, you may no longer be the host.
+    rejoin: true,
+    onDrop: on => { if (M && M.online) M.dropped = on; },
+    onRejoin: () => { if (!M || !M.online || M.over) return; M.dropped = false; const host = MP.hostId === MP.id;
+      if (M.host && !host) { M.host = false; for (const f of M.fs) if (f.isBot) { f.net = true; f.bot = null; f.snaps = []; } }
+      else if (!M.host && host) MP.opts.onHost(MP.id); },
   });

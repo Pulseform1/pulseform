@@ -5,7 +5,7 @@
   let M = null;
   let readInput = () => ({ mx: 0, mz: 0, walk: false, sprint: false, crouch: false, jump: false, use: false, fire: false, rapid: false });   // 90-input replaces this
   const BOT_NAMES = ['Rook', 'Kestrel', 'Mercer', 'Harrow', 'Nyx', 'Sable', 'Quill', 'Cinder', 'Wren', 'Onyx'];
-  const WHY = { elim_att: 'Attacker eliminated', elim_def: 'Defender eliminated', time: 'Time ran out', boom: 'Charge detonated', defuse: 'Charge defused', left: 'Rival left the match' };
+  const WHY = { elim_att: 'Attacker eliminated', elim_def: 'Defender eliminated', time: 'Time ran out', boom: 'Charge detonated', defuse: 'Charge defused', left: 'Rival left the match', dropped: 'Connection lost' };
 
   function fighter(o) {
     return Object.assign({
@@ -68,7 +68,9 @@
     sp *= (f.surge > 0 ? 1.3 : 1) * (f.daze > 0 ? .6 : 1) * (f.snare > 0 ? .35 : 1);   // Surge, a Shockwave's daze, a Snare
     const s = Math.sin(f.yaw), c = Math.cos(f.yaw); let wx = -s * I.mz + c * I.mx, wz = -c * I.mz - s * I.mx; const L = Math.hypot(wx, wz); if (L > 1) { wx /= L; wz /= L; }
     if (frozen) wx = wz = 0;
-    if (f.slide) {   // a slide carries its speed and bleeds it off; you can steer it a little, and jump out of it
+    const ck = idx(Math.floor(f.x / CS), Math.floor(f.z / CS)), onIce = f.ground && ck >= 0 && ICE[ck];   // the floor under you: ice has no grip
+    if (f.padT > 0) f.padT -= dt;   // thrown by a jump pad: you fly where it sends you
+    else if (f.slide) {   // a slide carries its speed and bleeds it off; you can steer it a little, and jump out of it
       f.slide.t -= dt; const dec = Math.exp(-1.25 * dt); f.vx *= dec; f.vz *= dec;
       const v2 = Math.hypot(f.vx, f.vz); if (v2 > .1 && (wx || wz)) { const a = Math.atan2(f.vx, f.vz), b = Math.atan2(wx, wz), turn = cl(angDiff(b, a), -1.6 * dt, 1.6 * dt); f.vx = Math.sin(a + turn) * v2; f.vz = Math.cos(a + turn) * v2; }
       if (f.slide.t <= 0 || v2 < 2.4 || !f.ground && f.vy > 0) { f.slide = null; f.slideCD = SLIDE_CD; }
@@ -81,7 +83,7 @@
       const tR = (wx * rx + wz * rz) * sp, tF = (wx * fx + wz * fz) * sp, against = (t, v) => f.ground && t !== 0 && Math.sign(t) === -Math.sign(v) && Math.abs(v) > .05;
       const cR = against(tR, vR), cF = against(tF, vF);
       const tx = tR * rx + tF * fx, tz = tR * rz + tF * fz, ddx = tx - f.vx, ddz = tz - f.vz, dl = Math.hypot(ddx, ddz);
-      const rate = !f.ground ? 6 : cR || cF ? 80 : Math.hypot(tx, tz) < .01 ? 26 : f.sprinting ? 30 : 44;
+      const rate = (!f.ground ? 6 : cR || cF ? 80 : Math.hypot(tx, tz) < .01 ? 26 : f.sprinting ? 30 : 44) * (onIce ? ICE_GRIP : 1);
       if (dl > 0) { const stp = Math.min(dl, rate * dt); f.vx += ddx / dl * stp; f.vz += ddz / dl * stp; }
       for (const [on, v0, ax, az] of [[cR, vR, rx, rz], [cF, vF, fx, fz]]) {
         if (!on) continue; const v1 = f.vx * ax + f.vz * az;
@@ -91,8 +93,9 @@
     if (f.dash) { f.dash.t -= dt; f.vx = f.dash.dx * 36; f.vz = f.dash.dz * 36; if (f.dash.t <= 0) { f.dash = null; f.vx *= .2; f.vz *= .2; } }
     if (I.jump && !f.jumpHeld && f.ground && !frozen && (f.crouch < .5 || f.slide)) { f.vy = JUMP; f.ground = false; if (f.slide) { f.slide = null; f.slideCD = SLIDE_CD; } emit('jump', f); }
     f.jumpHeld = !!I.jump;
-    f.vy -= GRAV * dt; f.y += f.vy * dt;
+    f.vy -= GRAV * (ck >= 0 && LOWG[ck] ? LOW_G : 1) * dt; f.y += f.vy * dt;   // low gravity: jump three times as high
     moveF(f, f.vx * dt, f.vz * dt);
+    stepMech(f, dt, frozen);
     const v = Math.hypot(f.vx, f.vz); f.walkT += v * dt;
     // running is loud: a footstep every stride, which bots hear and the other player's speakers play
     if (f.ground && v > 3.6 && f.crouch < .5 && !(f.cloak > 0)) { f.footT -= dt; if (f.footT <= 0) { f.footT = f.sprinting ? .29 : .36; f.step = f.sprinting ? .7 : .5; emit('step', f); } }
@@ -189,6 +192,7 @@
       emit('shot', f, S, p === 0);
       if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k); }
       else if (S.sentry && !f.net) hurtSentry(S.sentry, dmgAt(G, S.dist, 2), false);
+      else if (!S.hit && !f.net && BRKS.length) { const e = S.end, k = idx(Math.floor((e[0] + S.d[0] * .06) / CS), Math.floor((e[2] + S.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) hitWall(BRKX[k], dmgAt(G, S.dist, 2), f); }   // a breakable wall
     }
     if (landed) f.stat.hits++;
     f.spray += 1; f.kick = .08; f.cloak = 0; if (f === me()) M.camKick = Math.min(M.camKick + G.punch * .42 * D2R * (f.scoped && G.scope ? .4 : 1), 1.6 * D2R);
@@ -260,11 +264,13 @@
     let t = rayGrid(ax, ay, az, d[0], d[1], d[2], L);
     for (const w of M.walls) { const tw = rayBox(o, d, [w.x0, 0, w.z0], [w.x1, 3 * w.grow, w.z1]); if (tw > 0 && tw < t) t = tw; }
     if (smoke) for (const s of M.smokes) { if (s.r < 1.5) continue; if (Math.hypot(ax - s.x, az - s.z) < s.r) return 0; const ts = raySphere(o, d, [s.x, s.y + 1.3, s.z], s.r * .92); if (ts > 0 && ts < t) t = ts; }
+    if (smoke && mechOf() === 'grass') for (let q = 1.4; q < t - 1.4; q += .45) { const y = ay + d[1] * q, k = idx(Math.floor((ax + d[0] * q) / CS), Math.floor((az + d[2] * q) / CS)); if (k >= 0 && GRASS[k] && y < GRASS_H) { t = q; break; } }   // tall grass hides; bullets go through
     return t;
   }
   function canSee(a, b) {
     if (a.flash > .5) return false; const ea = eyeY(a), d = Math.hypot(b.x - a.x, b.z - a.z);
     if (b.cloak > 0 && d > 5 && !(b.kick > 0)) return false;   // Shroud
+    if (M.storm > .05 && d > lp(200, STORM_SIGHT, M.storm)) return false;   // a sandstorm: nobody sees far
     for (const hy of [eyeY(b) - .05, b.y + .9]) { const L = Math.hypot(d, hy - ea); if (los(a.x, ea, a.z, b.x, hy, b.z) >= L - .25) return true; }
     return false;
   }
@@ -343,8 +349,46 @@
     emit('flarePop', fl);
   }
 
+  /* ---------- the map's mechanic, under a fighter's feet ---------- */
+  // a belt carries you; a teleporter pad puts you at its exit; a jump pad throws you onto the ledge it points at
+  function stepMech(f, dt, frozen) {
+    if (f.tpCD > 0) f.tpCD -= dt; if (f.padCD > 0) f.padCD -= dt;
+    let k = idx(Math.floor(f.x / CS), Math.floor(f.z / CS)); if (k < 0 || !f.ground || frozen) return;
+    if (BELT[k]) { const bd = BELTS_D[BELT[k] - 1]; moveF(f, bd[0] * BELT_V * dt, bd[1] * BELT_V * dt); k = idx(Math.floor(f.x / CS), Math.floor(f.z / CS)); if (k < 0) return; }
+    if (TPX[k] >= 0 && !(f.tpCD > 0)) {
+      const t = TPS[TPX[k]], from = [f.x, f.z]; f.x = t.b[0]; f.z = t.b[1]; f.y = hAt(f.x, f.z); f.vy = 0; f.tpCD = .9; f.slide = null;
+      emit('tp', f, from, t.b); f.step = 1.2; return;   // loud at both ends
+    }
+    if (PADX[k] >= 0 && !(f.padCD > 0)) {
+      const t = PADS[PADX[k]], g = GRAV * (LOWG[k] ? LOW_G : 1), dh = t.h - f.y, tl = (PAD_VY + Math.sqrt(Math.max(0, PAD_VY * PAD_VY - 2 * g * dh))) / g;
+      f.vy = PAD_VY; f.vx = (t.b[0] - f.x) / tl; f.vz = (t.b[1] - f.z) / tl; f.ground = false; f.padT = tl * .95; f.padCD = .5; f.slide = null; f.sprinting = false; emit('pad', f);
+    }
+  }
+  // gates: stand at a switch and press the use key (F) to shut the gate into a wall, or open it again. A gate will not
+  // close on anyone standing in it.
+  function gateNear(f) { for (let g = 0; g < GATES.length; g++) for (const p of GATES[g].sw) if (Math.hypot(p[0] - f.x, p[1] - f.z) < 1.8) return g; return -1; }
+  function toggleGate(g, by, remote) {
+    const G = GATES[g]; if (!G) return false; const shut = G.open;
+    if (shut) for (const q of M.fs) if (q.alive && G.cells.some(k => Math.abs(q.x - ((k % GW) + .5) * CS) < CS / 2 + RAD && Math.abs(q.z - (Math.floor(k / GW) + .5) * CS) < CS / 2 + RAD)) { if (!remote) emit('gateJam', g, by); return false; }
+    setGate(g, !shut); emit('gate', g, !shut, by); if (!remote && by && !by.net) net({ t: 'gate', g, o: shut ? 0 : 1, f: by.key }); return true;
+  }
+  // a breakable wall takes the damage of every bullet that hits it; when it falls, it is open ground for the round
+  function hitWall(b, dmg, by, remote) {
+    const B = BRKS[b]; if (!B || B.hp <= 0) return; B.hp -= dmg; emit('wallHit', b, dmg);
+    if (!remote && by && !by.net) net({ t: 'brk', b, d: Math.round(dmg), f: by.key });
+    if (B.hp <= 0) { setWall(b, false); emit('wallDown', b); }
+  }
+  // the map's clock (from the start of the live phase): steam vents puff in turn, a sandstorm blows through now and then
+  function stepMapClock(dt) {
+    const live = M.phase === 'live', tr = live ? roundT() - M.t : -1;
+    if (VENTS.length) { M.vent = M.vent || []; VENTS.forEach((v, n) => { const on = live && (tr + n * VENT_GAP) % VENT_EVERY < VENT_ON; if (on && !M.vent[n]) { const sm = { x: v[0], z: v[1], y: 0, r: 0, R: 2.9, t: VENT_ON, T: VENT_ON, steam: 1 }; M.smokes.push(sm); emit('smoke', sm); emit('vent', n); } M.vent[n] = on; }); }
+    if (mechOf() === 'storm') { const ph = live ? (tr + STORM_SHIFT) % STORM_EVERY : 99, on = ph >= STORM_AT && ph < STORM_AT + STORM_LEN; M.storm = cl((M.storm || 0) + (on ? dt / 2.5 : -dt / 2), 0, 1); if (on && !M.stormOn) emit('storm', true); if (!on && M.stormOn) emit('storm', false); M.stormOn = on; }
+    else M.storm = 0;
+  }
   /* ---------- the charge ---------- */
   function stepObjective(f, I, dt) {
+    if (I.use && !f.useHeld && GATES.length && f.alive && !f.plant && !f.defuse) { const g = gateNear(f); if (g >= 0) toggleGate(g, f); }   // a gate's switch
+    f.useHeld = !!I.use;
     if (M.phase !== 'live' || !f.alive || M.mode === 'range') { f.plant = f.defuse = 0; return; }
     const side = sideOf(f);
     if (side === 'att' && !M.planted && I.use && f.ground && onSite(f.x, f.z)) {
@@ -383,7 +427,7 @@
     if (M.host) net({ t: 'end', wi: wi ^ (M.flip || 0), why });
   }
   function startRound(n) {
-    M.round = n; M.phase = 'buy'; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
+    M.round = n; M.phase = 'buy'; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); resetMech(); M.vent = []; M.storm = 0; M.stormOn = false; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
     const decider = n === WIN_ROUNDS * 2 - 1;
     const order = [...M.fs].sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);   // the same on every device, so teammates never share a spawn
     M.fs.forEach(f => {
@@ -392,7 +436,7 @@
       if (!f.net && n === 5) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, surge: 0, cloak: 0, daze: 0, snare: 0, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
       f.ab = { q: 1, e: 1 }; for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
-      f.yaw = yawTo(f.x, f.z, side === 'att' ? f.x + 10 : f.x - 10, f.z); if (f.gone) f.alive = false;
+      f.yaw = MAP.split && side === 'att' ? yawTo(f.x, f.z, MW / 2, f.z) : yawTo(f.x, f.z, side === 'att' ? f.x + 10 : f.x - 10, f.z); f.padT = f.tpCD = f.padCD = 0; if (f.gone) f.alive = false;
       if (f.bot) { if (M.auto && !f.bot.dummy) { const L = diffFor(M.rating + M.adj); f.bot = { diff: L.i, D: L.D }; } else f.bot = { diff: f.bot.diff, D: f.bot.D, dummy: f.bot.dummy }; }
     });
     if ((n === 5 || decider) && M.mode === 'demo') say(decider ? 'DECIDER' : 'SIDES SWAPPED');   // players get the switching-sides band instead
@@ -474,6 +518,7 @@
     }
     if (M.phase === 'live' && M.planted) { const P = M.planted; P.t -= dt; P.beep -= dt; if (P.beep <= 0) { P.beep = cl(P.t / 12, .12, 1); emit('beep'); } }
     if (M.phase === 'live' && M.host) judge();
+    stepMapClock(dt);
     if (M.phase === 'end' && M.host && M.t <= 0) {
       if (M.wins[0] >= WIN_ROUNDS || M.wins[1] >= WIN_ROUNDS) return matchOver();
       startRound(M.round + 1); net({ t: 'rs', n: M.round });

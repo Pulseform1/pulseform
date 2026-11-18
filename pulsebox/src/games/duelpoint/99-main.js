@@ -26,6 +26,17 @@
     try { if (!M.online && window.parent !== window) window.parent.postMessage({ pbx: 'score', score: M.wins[0] * 10 + (won ? 50 : 0) + M.fs[1].bot.diff * 10 }, location.origin); } catch (e) {}
   });
 
+  // online, the match never pauses (the others are still playing, and the host runs the clock and the bots): losing focus
+  // keeps it running, and Escape opens the settings over it instead of the kit's pause screen
+  Object.defineProperty(GAME, 'noPause', { get: () => !!(M && M.online) || MP.online(), configurable: true });
+  GAME.onPause = () => { try { if (document.hasFocus() && screen === 'play' && M && !M.over) openOpts(true); } catch (e) {} };
+  // a hidden tab gets no animation frames, but an online match must not stop (the host runs the clock and the bots):
+  // while hidden, a timer keeps it going, and any keys held when you left are let go
+  { let hidT = 0; setInterval(() => {
+      if (!document.hidden || !M || !M.online || screen !== 'play' || M.over) { hidT = 0; return; }
+      const now = performance.now(); if (!hidT) { hidT = now; resetInput(); return; } let dt = Math.min(2, (now - hidT) / 1000); hidT = now;
+      try { while (dt > 1e-4) { const s = Math.min(1 / 60, dt); tick(s); dt -= s; } } catch (e) {}
+    }, 250); }
   GAME.reset = () => {
     if (!booted) { booted = true; loadSave(); }
     resetInput(); posed = false; UI.armory = false; UI.panel = 'home'; acc = 0; MP.hide();

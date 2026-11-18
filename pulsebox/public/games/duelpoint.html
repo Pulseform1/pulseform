@@ -74,7 +74,14 @@ const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
        config(): match settings the host sends, onStart(cfg, roster), onMsg(m), onLeave(id), onHost(id),
        onClose(): when set, a Back button (and Escape) closes the lobby, leaving any room, and this is called,
        custom: true for a game that draws its own lobby (no lobby box; it calls MP.create(), MP.join(code), MP.players()),
-       onRoster(): someone joined, left or became host; onStatus(text): a connection message for the player }
+       onRoster(): someone joined, left or became host; onStatus(text): a connection message for the player,
+       rejoin: true to get back into the same room by itself when the connection drops in the middle of a game (the game
+         hears onDrop(true) when it drops, onRejoin(oldId, newId) when it is back, or onDrop(false) then onLeave(-1) when
+         it gives up); everyone else hears the usual leave, then { t: 'mp-rejoin', old } from the new id }
+   While a room is open the connection pings itself every 25 s, so a quiet lobby is never dropped as idle.
+   A game with rejoin also keeps its own count of who is really there: everyone sends a heartbeat to the room every 2 s,
+   anyone silent for 7 s is gone (a connection that died without closing stays listed on the server for minutes), and the
+   host is the lowest id still there, which every device works out the same way.
    roster: [{ id, name, col, bot, seat }] in seat order, the same on every device. Bots are run by the host. */
 const MP = (() => {
   const COLS = ['#ff4d6d', '#3ec5ff', '#ffd23f', '#5cf28a', '#c77dff', '#ff9f43', '#f2f2f2', '#ff7ad9'];
@@ -84,7 +91,7 @@ const MP = (() => {
   // ?room=CODE (from the hub's Play with friends): skip the title screen and walk straight into that room
   const AUTO = (() => { try { const q = new URLSearchParams(location.search).get('room') || ''; return /^[A-Za-z0-9]{4}$/.test(q) ? q.toUpperCase() : ''; } catch (e) { return ''; } })();
   let autoDone = false;
-  let ws = null, me = 0, host = 0, code = '', pending = null, box = null, name = '';
+  let ws = null, me = 0, host = 0, code = '', pending = null, box = null, name = '', rejoin = null;   // rejoin: { old, n } while getting back in after a drop
   const players = new Map(), skinOf = new Map();
   const mySkin = () => (typeof K !== 'undefined' && K.save && K.save.skin) || 0;
   try { name = localStorage.getItem('pbx-mp-name') || ''; } catch (e) {}
@@ -117,7 +124,7 @@ const MP = (() => {
   }
   function saveName() { const el = $m('name'); if (!el) return name || 'Player'; name = (el.value || '').replace(/[^\w .'-]/g, '').trim().slice(0, 12) || 'Player'; try { localStorage.setItem('pbx-mp-name', name); } catch (e) {} return name; }
   function msg(s) { const el = $m('msg'); if (el) el.textContent = s || ''; if (opts.onStatus) opts.onStatus(s || ''); }
-  function list() { return [...(online() ? [[me, { name }]] : []), ...players].map(([id, p]) => ({ id, name: p.name })).sort((a, b) => a.id - b.id); }
+  function list() { return [...(online() ? [[me, { name }]] : []), ...[...players].filter(([id]) => !stale.has(id))].map(([id, p]) => ({ id, name: p.name })).sort((a, b) => a.id - b.id); }
   function refresh() {
     if (opts.onRoster) opts.onRoster();
     if (!box) return;
@@ -133,24 +140,57 @@ const MP = (() => {
     $m('start').hidden = host !== me; $m('start').disabled = !enough; $m('start').style.opacity = enough ? 1 : .4;
     $m('wait').textContent = host !== me ? 'Waiting for the host to start.' : enough ? (ps.length > 1 ? 'Everyone in? Start when ready.' : 'Waiting for friends to join...') : `Needs at least ${opts.min} players.`;
   }
-  function connect(c) {
-    saveName(); leave(); K.audio && K.audio(); msg('Connecting...');
+  // keep the connection busy: networks and proxies drop a socket that has been silent for a minute or two
+  setInterval(() => { if (online() && !opts.rejoin) send({ t: 'mp-ping', to: me }); }, 25000);
+  // who is really there (games with rejoin): heard from in the last few seconds, and the host is the lowest of them
+  const seen = new Map(), STALE = 7000, stale = new Set();
+  function elect() {
+    if (!opts.rejoin || !online()) return; let h = me; for (const id of players.keys()) if (!stale.has(id) && id < h) h = id;
+    if (h !== host) { host = h; refresh(); if (opts.onHost) opts.onHost(host); }
+  }
+  setInterval(() => {
+    if (!opts.rejoin || !online()) return; send({ t: 'mp-hb' }); const now = performance.now();
+    for (const id of players.keys()) if (!stale.has(id) && now - (seen.get(id) || now) > STALE) { stale.add(id); refresh(); if (opts.onLeave) opts.onLeave(id); }   // gone quiet: as good as gone
+    elect();
+  }, 2000);
+  function connect(c, again) {
+    if (!again) rejoin = null;
+    saveName(); leave(); K.audio && K.audio(); msg(again ? 'Reconnecting...' : 'Connecting...');
     try { ws = new WebSocket(`wss://${WSHOST}/api/room/${c}?n=${encodeURIComponent(name)}&g=${encodeURIComponent(GAME.id)}`); } catch (e) { msg('Could not connect.'); return; }
     code = c; const my = ws;
     ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (err) { return; } onNet(m); };
-    ws.onclose = () => { if (ws !== my) return; ws = null; me = 0; players.clear(); if (opts.onLeave && K.state === 'play' && (opts.custom || (box && box.hidden))) opts.onLeave(-1); else { refresh(); msg('Disconnected from the room.'); } };
+    ws.onclose = () => {
+      if (ws !== my) return; const old = me; ws = null; me = 0; players.clear();
+      if (rejoin) return;   // a try at getting back in failed: the next one is already on its way
+      if (opts.rejoin && old && code && typeof K !== 'undefined' && K.state === 'play') { rejoin = { old, n: 0 }; if (opts.onDrop) opts.onDrop(true); setTimeout(retry, 300); return; }
+      lost();
+    };
+  }
+  function lost() { if (opts.onLeave && K.state === 'play' && (opts.custom || (box && box.hidden))) opts.onLeave(-1); else { refresh(); msg('Disconnected from the room.'); } }
+  // the connection dropped mid-game: try the same room again for about fifteen seconds before giving up
+  function retry() {
+    if (!rejoin) return; if (me) { rejoin = null; return; }
+    if (rejoin.n++ >= 7) { rejoin = null; if (opts.onDrop) opts.onDrop(false); lost(); return; }
+    connect(code, true); setTimeout(retry, 2200);
   }
   function onNet(m) {
+    if (m.from != null && players.has(m.from)) { seen.set(m.from, performance.now()); if (stale.has(m.from)) { stale.delete(m.from); refresh(); elect(); } }   // heard from: still here (or back)
     switch (m.t) {
       case 'full': msg('That room is full.'); leave(); refresh(); return;
       case 'hello':
-        me = m.id; host = m.host; players.clear(); m.players.forEach(p => { if (p.id !== me) players.set(p.id, { name: p.name }); });
-        if (players.size + 1 > opts.max) { msg(`This game takes up to ${opts.max} players.`); leave(); }
-        msg(''); refresh(); send({ t: 'mp-skin', s: mySkin() }); return;
+        me = m.id; host = m.host; players.clear(); stale.clear(); m.players.forEach(p => { if (p.id !== me) { players.set(p.id, { name: p.name }); seen.set(p.id, performance.now()); } });
+        if (rejoin && opts.rejoin) { stale.add(rejoin.old); }   // our own old connection may still be listed: it is not anyone
+        if (players.size + 1 > opts.max && !rejoin) { msg(`This game takes up to ${opts.max} players.`); leave(); }
+        msg(''); refresh(); send({ t: 'mp-skin', s: mySkin() });
+        if (opts.rejoin) { host = 0; elect(); }
+        if (rejoin) { const old = rejoin.old; rejoin = null; send({ t: 'mp-rejoin', old }); if (opts.onRejoin) opts.onRejoin(old, me); if (opts.onDrop) opts.onDrop(false); }
+        return;
+      case 'mp-ping': case 'mp-hb': return;
+      case 'mp-rejoin': if (players.has(m.old)) { stale.add(m.old); refresh(); } elect(); break;   // back under a new id: the old one is nobody now (the game hears this too)
       case 'mp-skin': skinOf.set(m.from, m.s | 0); return;
-      case 'join': players.set(m.id, { name: m.name }); send({ t: 'mp-skin', s: mySkin() }); refresh(); if (opts.onJoin) opts.onJoin(m.id, m.name); return;
-      case 'leave': players.delete(m.id); refresh(); if (opts.onLeave) opts.onLeave(m.id); return;
-      case 'host': host = m.id; refresh(); if (opts.onHost) opts.onHost(m.id); return;
+      case 'join': players.set(m.id, { name: m.name }); seen.set(m.id, performance.now()); send({ t: 'mp-skin', s: mySkin() }); refresh(); if (opts.onJoin) opts.onJoin(m.id, m.name); elect(); return;
+      case 'leave': { const was = stale.has(m.id); players.delete(m.id); stale.delete(m.id); refresh(); if (opts.onLeave && !was) opts.onLeave(m.id); elect(); return; }
+      case 'host': if (opts.rejoin) return; host = m.id; refresh(); if (opts.onHost) opts.onHost(m.id); return;   // games with rejoin pick their own host
       case 'mp-start': if (K.state !== 'play') pending = m; else begin(m); return;
     }
     if (opts.onMsg) opts.onMsg(m);
@@ -167,8 +207,9 @@ const MP = (() => {
   }
   function send(m) { if (online()) ws.send(JSON.stringify(m)); }
   // back out of the lobby to the game's own menu (leaving any room); only for games that say where 'back' goes
-  function close() { leave(); pending = null; if (box) box.hidden = true; msg(''); if (opts.onClose) opts.onClose(); }
-  function leave() { const w = ws; ws = null; me = 0; host = 0; players.clear(); if (w) try { w.close(); } catch (e) {} }
+  function close() { quit(); pending = null; if (box) box.hidden = true; msg(''); if (opts.onClose) opts.onClose(); }
+  function leave() { const w = ws; ws = null; me = 0; host = 0; players.clear(); stale.clear(); if (w) try { w.close(); } catch (e) {} }
+  function quit() { rejoin = null; leave(); }   // leaving on purpose: no getting back in
   function show() {
     if (opts.custom) { if (pending && online()) { const p = pending; pending = null; return begin(p); } if (AUTO && !autoDone && !online()) { autoDone = true; connect(AUTO); } return; }
     build();
@@ -178,7 +219,8 @@ const MP = (() => {
   }
   if (AUTO) { const go = () => { const b = document.getElementById('bPlay'); if (b && typeof K !== 'undefined' && K.state === 'title') b.click(); else setTimeout(go, 150); }; setTimeout(go, 250); }
   return {
-    opts, show, start, send, leave, close, online, colors: COLS,
+    opts, show, start, send, leave: quit, close, online, colors: COLS,
+    get rejoining() { return !!rejoin; }, _drop() { if (ws) ws.close(); },   // _drop: for tests, a connection that falls over
     // for games with their own lobby: make a room, join one by code, who is in (in join order), your name
     create() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; connect(Array.from({ length: 4 }, () => A[Math.floor(Math.random() * A.length)]).join('')); },
     join(c) { c = String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (c.length !== 4) return msg('Room codes are 4 letters.'); connect(c); },
@@ -327,6 +369,10 @@ const GAME = {
   const botRating = (f, M) => Math.round(M.auto ? cl(M.rating + rnd(-60, 60), 600, 1800) : RATING_AT[cl(f.bot ? f.bot.diff : 1, 0, 3)] + rnd(10, 140));
   // the body: eye heights standing and crouched, radius, speeds (m/s), gravity, jump speed, the step you climb without jumping
   const teamSize = n => Math.max(1, Math.min(3, (n | 0) || 2)), vsLabel = n => teamSize(n) + 'V' + teamSize(n);   // 1v1, 2v2 or 3v3
+  // the maps' mechanics: ice grip (of normal), low gravity (of normal), belt speed, a jump pad's throw, the vents' clock,
+  // the sandstorm's clock and how far you see in it
+  const DC_WAIT = 20;   // seconds a dropped player has to reconnect before they count as gone
+  const ICE_GRIP = .14, LOW_G = .36, BELT_V = 3.4, PAD_VY = 11.5, VENT_EVERY = 15, VENT_ON = 5.5, VENT_GAP = 5.2, STORM_EVERY = 40, STORM_AT = 14, STORM_LEN = 12, STORM_SHIFT = 0, STORM_SIGHT = 13;
   const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.6, STEP = .42;
   // sprinting (hold Shift, or push the stick all the way) and sliding (crouch while sprinting)
   const SPRINT = 7.4, SLIDE_V = 10.8, SLIDE_T = .75, SLIDE_CD = .9;
@@ -440,13 +486,20 @@ const GAME = {
      A grid of 2 m cells, 32 by 22. x runs east with the columns, z runs south with the rows; the sea is to the north.
        #  wall (6 m)          X  container (3 m, nothing sees over it)     c  crate (1.1 m: crouch behind, jump onto)
        P  loading dock (1.5 m, you stand on it)      7 8  the dock's stairs, rising south      ~  sea wall (a fence)
-       o  the site (plant here; site A on a two-site map)      q  site B      A D  attacker and defender spawns      .  open ground
+       o  the site (plant here; site A on a two-site map)      q  site B      r  site C      A D  attacker and defender spawns      .  open ground
+     Each map but Saltworks has a mechanic of its own, and these cells for it:
+       T  a teleporter pad (one way: MAP.tps sends it to its exit)      J  a jump pad (MAP.pads: where it throws you)
+       H  a high ledge (3.2 m: reached by a jump pad, dropped off)       i  ice (no grip: you slide, and stop late)
+       g  tall grass (hides you; bullets go straight through)            L  low gravity (jump onto the containers)
+       V  a steam vent (puffs a cloud that blocks sight, on a clock)      < > ^ v  a conveyor belt running that way
+       G  a gate (open; a switch at MAP.sw closes it into a wall)         W  a breakable wall (enough fire knocks it down)
      The Gate's opening into the Yard is offset from the Yard's doorway, so neither spawn can see the other.
      Three ways from the Gate (west) to the site: Pier along the north, the Yard and its doorway through the middle,
      the roofed Tunnel along the south. Everything else (rays, movement, bot paths, the world mesh) reads these cells. */
   // the grid's size is the map's own: the one-site maps are 32 by 22, the two-site maps bigger (loadMap sets these)
   const CS = 2, MAXNC = 64 * 40; let GW = 32, GH = 22, MW = GW * CS, MH = GH * CS, NC = GW * GH;
-  const WALL_H = 6, BOX_H = 3, CRATE_H = 1.1, DOCK_H = 1.5, FENCE_H = 1.1, DOOR_H = 2.7;
+  const WALL_H = 6, BOX_H = 3, CRATE_H = 1.1, DOCK_H = 1.5, FENCE_H = 1.1, DOOR_H = 2.7, HIGH_H = 3.2, GRASS_H = 1.75, GATE_H = 3.6, BRK_HP = 320;
+  const WALKABLE = '.oqrADP78HJTigLVG<>^v', BELTS = '>v<^';   // belt directions: east, south, west, north
   /* Every map is one of these: rows of cells (all 32 by 22), roofs and doorways as rectangles [col0, row0, col1, row1],
      named areas, the attacker's routes and the defender's holds in cell units, and a theme for the look (72-world).
      Saltworks was drawn by hand; the others were laid out by tools/duelpoint-mapgen.mjs and checked for fairness there. */
@@ -512,9 +565,13 @@ const GAME = {
   // SITE holds every plantable cell; SITES each site on its own ({ k: 'A', cells, c: centre }); siteC is site A's centre.
   // RSITE says which site each attacker route ends at.
   const SRC = [], ROOFS = [], DOORS = [], AREAS = [], ROUTES = {}, RSITE = {}, HOLDS = [], SPAWN = { att: [], def: [] }, SITE = [], SITES = [], siteC = [0, 0], navCells = [];
+  // the map's mechanic: teleporters, jump pads, gates and their switches, breakable walls, vents (and per cell: ice,
+  // grass, low gravity, belts, which teleporter or pad a cell is)
+  const TPS = [], PADS = [], GATES = [], BRKS = [], VENTS = [];
   let MAP = MAPS[0];
   // per cell: height at the low and high end (they differ only on stairs), which way stairs run (0 none, 2 along z),
   // the ceiling above it (0 = open sky), whether it is a fence, whether a fighter can stand there, its area
+  const ICE = new Uint8Array(MAXNC), GRASS = new Uint8Array(MAXNC), LOWG = new Uint8Array(MAXNC), BELT = new Uint8Array(MAXNC), TPX = new Int8Array(MAXNC), PADX = new Int8Array(MAXNC), GATEX = new Int8Array(MAXNC), BRKX = new Int8Array(MAXNC);
   const CH = new Float32Array(MAXNC), CB = new Float32Array(MAXNC), CAX = new Uint8Array(MAXNC), CEIL = new Float32Array(MAXNC), FENCE = new Uint8Array(MAXNC), NAV = new Uint8Array(MAXNC), AREA = new Int8Array(MAXNC).fill(-1);
   const idx = (i, j) => i < 0 || j < 0 || i >= GW || j >= GH ? -1 : j * GW + i;
   const chAt = (i, j) => { const k = idx(i, j); return k < 0 ? ' ' : SRC[j][i]; };
@@ -528,28 +585,48 @@ const GAME = {
     for (const k in RSITE) delete RSITE[k]; for (const k in ROUTES) RSITE[k] = (MAP.rsite && MAP.rsite[k]) || 0;
     fill(HOLDS, MAP.holds.map(h => ({ p: C(h.p[0], h.p[1]), look: C(h.look[0], h.look[1]), lane: h.lane, s: h.s || 0 })));
     SPAWN.att.length = SPAWN.def.length = SITE.length = 0; SITES.length = 0; CH.fill(0); CB.fill(0); CEIL.fill(0); FENCE.fill(0); NAV.fill(0); CAX.fill(0); AREA.fill(-1);
-    const siteCells = [[], []];
+    for (const a of [ICE, GRASS, LOWG, BELT]) a.fill(0); for (const a of [TPX, PADX, GATEX, BRKX]) a.fill(-1); for (const a of [TPS, PADS, GATES, BRKS, VENTS]) a.length = 0;
+    const siteCells = [[], [], []];
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
       const c = SRC[j][i], k = j * GW + i, mid = [i * CS + 1, j * CS + 1];
       let a = 0, b = 0;
       if (c === '#') a = b = WALL_H; else if (c === 'X') a = b = BOX_H; else if (c === 'c') a = b = CRATE_H; else if (c === 'P') a = b = DOCK_H;
       else if (c === '~') { a = b = FENCE_H; FENCE[k] = 1; } else if (c === '7') { b = DOCK_H / 2; CAX[k] = 2; } else if (c === '8') { a = DOCK_H / 2; b = DOCK_H; CAX[k] = 2; }
-      CH[k] = a; CB[k] = b; NAV[k] = '.oqADP78'.includes(c) ? 1 : 0;
-      if (c === 'A') SPAWN.att.push(mid); if (c === 'D') SPAWN.def.push(mid); if (c === 'o' || c === 'q') { SITE.push(mid); siteCells[c === 'q' ? 1 : 0].push(mid); }
+      else if (c === 'H') a = b = HIGH_H; else if (c === 'W') a = b = WALL_H;
+      CH[k] = a; CB[k] = b; NAV[k] = WALKABLE.includes(c) ? 1 : 0;
+      if (c === 'i') ICE[k] = 1; else if (c === 'g') GRASS[k] = 1; else if (c === 'L') LOWG[k] = 1; else if (BELTS.includes(c)) BELT[k] = BELTS.indexOf(c) + 1; else if (c === 'V') VENTS.push(mid);
+      if (c === 'A') SPAWN.att.push(mid); if (c === 'D') SPAWN.def.push(mid); if (c === 'o' || c === 'q' || c === 'r') { SITE.push(mid); siteCells['oqr'.indexOf(c)].push(mid); }
       AREAS.forEach((A, q) => { if (i >= A.r[0] && i <= A.r[2] && j >= A.r[1] && j <= A.r[3]) AREA[k] = q; });
     }
     for (const rf of ROOFS) for (let j = rf.r[1]; j <= rf.r[3]; j++) for (let i = rf.r[0]; i <= rf.r[2]; i++) CEIL[idx(i, j)] = rf.h;
     for (const d of DOORS) for (let j = d[1]; j <= d[3]; j++) for (let i = d[0]; i <= d[2]; i++) CEIL[idx(i, j)] = DOOR_H;
-    siteCells.forEach((cells, q) => { if (!cells.length) return; const c = [0, 0]; for (const p of cells) { c[0] += p[0] / cells.length; c[1] += p[1] / cells.length; } SITES.push({ k: 'AB'[q], cells, c }); });
+    siteCells.forEach((cells, q) => { if (!cells.length) return; const c = [0, 0]; for (const p of cells) { c[0] += p[0] / cells.length; c[1] += p[1] / cells.length; } SITES.push({ k: 'ABC'[q], cells, c }); });
     siteC[0] = SITES[0].c[0]; siteC[1] = SITES[0].c[1];
+    // the mechanic's pieces
+    (MAP.tps || []).forEach((t, n) => { TPS.push({ a: C(t[0] + .5, t[1] + .5), b: C(t[2] + .5, t[3] + .5), yaw: t[4] }); TPX[idx(t[0], t[1])] = n; });
+    (MAP.pads || []).forEach((t, n) => { PADS.push({ a: C(t[0] + .5, t[1] + .5), b: C(t[2] + .5, t[3] + .5), h: CH[idx(t[2], t[3])] }); PADX[idx(t[0], t[1])] = n; });
+    const groupOf = (ch, X2, list, mk) => { for (let k = 0; k < NC; k++) if (SRC[Math.floor(k / GW)][k % GW] === ch && X2[k] < 0) {
+      const n = list.length, st = [k], cells = []; X2[k] = n; while (st.length) { const q = st.pop(); cells.push(q); for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(q % GW + di, Math.floor(q / GW) + dj); if (nk >= 0 && X2[nk] < 0 && SRC[Math.floor(nk / GW)][nk % GW] === ch) { X2[nk] = n; st.push(nk); } } }
+      const c = [0, 0]; for (const q of cells) { c[0] += ((q % GW) + .5) * CS / cells.length; c[1] += (Math.floor(q / GW) + .5) * CS / cells.length; } list.push(mk(cells, c)); } };
+    groupOf('G', GATEX, GATES, (cells, c) => ({ cells, c, open: true, sw: [] }));
+    groupOf('W', BRKX, BRKS, (cells, c) => ({ cells, c, hp: BRK_HP * cells.length / 2, HP: BRK_HP * cells.length / 2 }));
+    for (const w of MAP.sw || []) { const G = GATES[w[2] | 0]; if (G) G.sw.push(C(w[0] + .5, w[1] + .5)); }
+    // attackers who start at both ends of the map take turns at each end, so a team is split across them
+    if (MAP.split && SPAWN.att.length) { const cx = MW / 2, a = SPAWN.att.filter(p => p[0] < cx), b = SPAWN.att.filter(p => p[0] >= cx); SPAWN.att.length = 0; for (let n = 0; n < Math.max(a.length, b.length); n++) { if (a[n]) SPAWN.att.push(a[n]); if (b[n]) SPAWN.att.push(b[n]); } }
     navCells.length = 0; for (let k = 0; k < NC; k++) if (NAV[k]) navCells.push([(k % GW) * CS + 1, Math.floor(k / GW) * CS + 1]);
+    resetMech();
     return MAP;
   }
+  // gates shut into walls and open again; breakable walls fall to rubble. Both reset every round.
+  function setGate(g, open) { const G = GATES[g]; if (!G) return; G.open = open; for (const k of G.cells) { CH[k] = CB[k] = open ? 0 : GATE_H; NAV[k] = open ? 1 : 0; } }
+  function setWall(b, up) { const B = BRKS[b]; if (!B) return; if (up) B.hp = B.HP; else B.hp = 0; for (const k of B.cells) { CH[k] = CB[k] = up ? WALL_H : 0; NAV[k] = up ? 0 : 1; } }
+  function resetMech() { GATES.forEach((G, g) => setGate(g, true)); BRKS.forEach((B, b) => setWall(b, true)); }
+  const mechOf = () => MAP.mech || '';
 
   // a round's length on this map (the two-site maps are bigger, so their rounds run longer)
   const roundT = () => MAP.roundT || ROUND_T;
   // the maps for a mode: sites 1 (the seven one-site maps) or 2 (the six two-site maps)
-  const mapPool = sites => MAPS.map((m, i) => i).filter(i => (MAPS[i].sites || 1) === (sites === 2 ? 2 : 1));
+  const mapPool = sites => MAPS.map((m, i) => i).filter(i => ((MAPS[i].sites || 1) > 1) === (sites === 2));   // STANDARD takes the two- and three-site maps
   // the ground under a point; hMove is the same for movement, where fences and the edge of the map are walls
   function hAt(x, z) {
     const i = Math.floor(x / CS), j = Math.floor(z / CS), k = idx(i, j); if (k < 0) return 0;
@@ -557,7 +634,7 @@ const GAME = {
   }
   const hMove = (x, z) => { const k = idx(Math.floor(x / CS), Math.floor(z / CS)); return k < 0 || FENCE[k] ? 99 : hAt(x, z); };
   // which site a point is on: 0 (A, or the only site), 1 (B), or -1
-  const siteAt = (x, z) => { const c = chAt(Math.floor(x / CS), Math.floor(z / CS)); return c === 'o' ? 0 : c === 'q' ? 1 : -1; };
+  const siteAt = (x, z) => { const c = chAt(Math.floor(x / CS), Math.floor(z / CS)); return c === 'o' ? 0 : c === 'q' ? 1 : c === 'r' ? 2 : -1; };
   const onSite = (x, z) => siteAt(x, z) >= 0;
   const twoSites = () => SITES.length > 1;
   const nearestSite = (x, z) => { let b = SITES[0], bd = 1e9; for (const S of SITES) { const d = Math.hypot(S.c[0] - x, S.c[1] - z); if (d < bd) { bd = d; b = S; } } return b; };
@@ -597,22 +674,23 @@ const GAME = {
   const cellOf = (x, z) => [cl(Math.floor(x / CS), 0, GW - 1), cl(Math.floor(z / CS), 0, GH - 1)];
   function nearestNav(x, z) {
     const [i, j] = cellOf(x, z); if (NAV[idx(i, j)]) return [i, j];
-    let best = null, bd = 1e9; for (const p of navCells) { const d = Math.hypot(p[0] - x, p[1] - z); if (d < bd) { bd = d; best = p; } }
+    let best = null, bd = 1e9; for (const p of navCells) { const d = Math.hypot(p[0] - x, p[1] - z); if (d < bd && NAV[idx(Math.floor(p[0] / CS), Math.floor(p[1] / CS))]) { bd = d; best = p; } }
     return cellOf(best[0], best[1]);
   }
   // can a fighter walk the straight line between two points? (used to straighten paths and by bots that strafe)
   function walkLine(ax, az, bx, bz) {
     const d = Math.hypot(bx - ax, bz - az); if (d < .01) return true;
-    const n = Math.ceil(d / .35), px = -(bz - az) / d * (RAD + .1), pz = (bx - ax) / d * (RAD + .1); let prev = hAt(ax, az);
+    const n = Math.ceil(d / .35), px = -(bz - az) / d * (RAD + .1), pz = (bx - ax) / d * (RAD + .1), endK = idx(Math.floor(bx / CS), Math.floor(bz / CS)); let prev = hAt(ax, az);
     for (let s = 1; s <= n; s++) {
-      const x = lp(ax, bx, s / n), z = lp(az, bz, s / n), h = hAt(x, z);
-      if (!NAV[idx(Math.floor(x / CS), Math.floor(z / CS))] || Math.abs(h - prev) > STEP) return false;
+      const x = lp(ax, bx, s / n), z = lp(az, bz, s / n), h = hAt(x, z), k = idx(Math.floor(x / CS), Math.floor(z / CS));
+      if (!NAV[k] || Math.abs(h - prev) > STEP) return false;
+      if ((TPX[k] >= 0 || PADX[k] >= 0) && k !== endK) return false;   // never across a teleporter or a jump pad by accident
       if (hMove(x + px, z + pz) > h + STEP || hMove(x - px, z - pz) > h + STEP) return false;
       prev = h;
     }
     return true;
   }
-  const NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]];
+  const NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]], BELTS_D = [[1, 0], [0, 1], [-1, 0], [0, -1]];
   const gCost = new Float32Array(MAXNC), cameFrom = new Int32Array(MAXNC), closed = new Uint8Array(MAXNC);
   // A* over the cells, then pulled straight wherever a fighter could walk it directly. Returns points in metres.
   function findPath(x0, z0, x1, z1) {
@@ -621,10 +699,16 @@ const GAME = {
     while (open.length) {
       let bi = 0, bf = 1e9; for (let n = 0; n < open.length; n++) { const k = open[n], f = gCost[k] + Math.hypot(k % GW - ti, Math.floor(k / GW) - tj); if (f < bf) { bf = f; bi = n; } }
       const k = open[bi]; open[bi] = open[open.length - 1]; open.pop(); if (k === tk) break; if (closed[k]) continue; closed[k] = 1;
-      const i = k % GW, j = Math.floor(k / GW);
+      const i = k % GW, j = Math.floor(k / GW), relax = (nk, w) => { const g = gCost[k] + w; if (g < gCost[nk]) { gCost[nk] = g; cameFrom[nk] = k; open.push(nk); } };
+      // stepping onto a teleporter or a jump pad takes you to its other end, and nowhere else
+      if (TPX[k] >= 0 && k !== sk) { const t = TPS[TPX[k]]; relax(idx(Math.floor(t.b[0] / CS), Math.floor(t.b[1] / CS)), 1); continue; }
+      if (PADX[k] >= 0 && k !== sk) { const t = PADS[PADX[k]]; relax(idx(Math.floor(t.b[0] / CS), Math.floor(t.b[1] / CS)), Math.hypot(t.b[0] - t.a[0], t.b[1] - t.a[1]) / CS * .7); continue; }
       for (const [di, dj, w] of NB) {
-        if (di && dj) { if (!joined(i, j, di, 0) || !joined(i, j, 0, dj) || !joined(i + di, j, 0, dj) || !joined(i, j + dj, di, 0)) continue; } else if (!joined(i, j, di, dj)) continue;
-        const nk = idx(i + di, j + dj), g = gCost[k] + w; if (g < gCost[nk]) { gCost[nk] = g; cameFrom[nk] = k; open.push(nk); }
+        const nk = idx(i + di, j + dj);
+        if (di && dj) { if (!joined(i, j, di, 0) || !joined(i, j, 0, dj) || !joined(i + di, j, 0, dj) || !joined(i, j + dj, di, 0)) continue; }
+        else if (!joined(i, j, di, dj)) { if (!(nk >= 0 && NAV[nk] && CH[k] - CH[nk] > STEP && CH[k] - CH[nk] <= HIGH_H + .1 && !CAX[k] && !CAX[nk])) continue; }   // or a drop off a ledge (one way)
+        let cw = w; if (BELT[nk]) { const bd = BELTS_D[BELT[nk] - 1], along = bd[0] * di + bd[1] * dj; cw *= along > 0 ? .55 : along < 0 ? 2.4 : 1; }   // belts: quick with them, slow against
+        relax(nk, cw);
       }
     }
     if (tk !== sk && cameFrom[tk] < 0) return [];
@@ -644,7 +728,7 @@ const GAME = {
   let M = null;
   let readInput = () => ({ mx: 0, mz: 0, walk: false, sprint: false, crouch: false, jump: false, use: false, fire: false, rapid: false });   // 90-input replaces this
   const BOT_NAMES = ['Rook', 'Kestrel', 'Mercer', 'Harrow', 'Nyx', 'Sable', 'Quill', 'Cinder', 'Wren', 'Onyx'];
-  const WHY = { elim_att: 'Attacker eliminated', elim_def: 'Defender eliminated', time: 'Time ran out', boom: 'Charge detonated', defuse: 'Charge defused', left: 'Rival left the match' };
+  const WHY = { elim_att: 'Attacker eliminated', elim_def: 'Defender eliminated', time: 'Time ran out', boom: 'Charge detonated', defuse: 'Charge defused', left: 'Rival left the match', dropped: 'Connection lost' };
 
   function fighter(o) {
     return Object.assign({
@@ -707,7 +791,9 @@ const GAME = {
     sp *= (f.surge > 0 ? 1.3 : 1) * (f.daze > 0 ? .6 : 1) * (f.snare > 0 ? .35 : 1);   // Surge, a Shockwave's daze, a Snare
     const s = Math.sin(f.yaw), c = Math.cos(f.yaw); let wx = -s * I.mz + c * I.mx, wz = -c * I.mz - s * I.mx; const L = Math.hypot(wx, wz); if (L > 1) { wx /= L; wz /= L; }
     if (frozen) wx = wz = 0;
-    if (f.slide) {   // a slide carries its speed and bleeds it off; you can steer it a little, and jump out of it
+    const ck = idx(Math.floor(f.x / CS), Math.floor(f.z / CS)), onIce = f.ground && ck >= 0 && ICE[ck];   // the floor under you: ice has no grip
+    if (f.padT > 0) f.padT -= dt;   // thrown by a jump pad: you fly where it sends you
+    else if (f.slide) {   // a slide carries its speed and bleeds it off; you can steer it a little, and jump out of it
       f.slide.t -= dt; const dec = Math.exp(-1.25 * dt); f.vx *= dec; f.vz *= dec;
       const v2 = Math.hypot(f.vx, f.vz); if (v2 > .1 && (wx || wz)) { const a = Math.atan2(f.vx, f.vz), b = Math.atan2(wx, wz), turn = cl(angDiff(b, a), -1.6 * dt, 1.6 * dt); f.vx = Math.sin(a + turn) * v2; f.vz = Math.cos(a + turn) * v2; }
       if (f.slide.t <= 0 || v2 < 2.4 || !f.ground && f.vy > 0) { f.slide = null; f.slideCD = SLIDE_CD; }
@@ -720,7 +806,7 @@ const GAME = {
       const tR = (wx * rx + wz * rz) * sp, tF = (wx * fx + wz * fz) * sp, against = (t, v) => f.ground && t !== 0 && Math.sign(t) === -Math.sign(v) && Math.abs(v) > .05;
       const cR = against(tR, vR), cF = against(tF, vF);
       const tx = tR * rx + tF * fx, tz = tR * rz + tF * fz, ddx = tx - f.vx, ddz = tz - f.vz, dl = Math.hypot(ddx, ddz);
-      const rate = !f.ground ? 6 : cR || cF ? 80 : Math.hypot(tx, tz) < .01 ? 26 : f.sprinting ? 30 : 44;
+      const rate = (!f.ground ? 6 : cR || cF ? 80 : Math.hypot(tx, tz) < .01 ? 26 : f.sprinting ? 30 : 44) * (onIce ? ICE_GRIP : 1);
       if (dl > 0) { const stp = Math.min(dl, rate * dt); f.vx += ddx / dl * stp; f.vz += ddz / dl * stp; }
       for (const [on, v0, ax, az] of [[cR, vR, rx, rz], [cF, vF, fx, fz]]) {
         if (!on) continue; const v1 = f.vx * ax + f.vz * az;
@@ -730,8 +816,9 @@ const GAME = {
     if (f.dash) { f.dash.t -= dt; f.vx = f.dash.dx * 36; f.vz = f.dash.dz * 36; if (f.dash.t <= 0) { f.dash = null; f.vx *= .2; f.vz *= .2; } }
     if (I.jump && !f.jumpHeld && f.ground && !frozen && (f.crouch < .5 || f.slide)) { f.vy = JUMP; f.ground = false; if (f.slide) { f.slide = null; f.slideCD = SLIDE_CD; } emit('jump', f); }
     f.jumpHeld = !!I.jump;
-    f.vy -= GRAV * dt; f.y += f.vy * dt;
+    f.vy -= GRAV * (ck >= 0 && LOWG[ck] ? LOW_G : 1) * dt; f.y += f.vy * dt;   // low gravity: jump three times as high
     moveF(f, f.vx * dt, f.vz * dt);
+    stepMech(f, dt, frozen);
     const v = Math.hypot(f.vx, f.vz); f.walkT += v * dt;
     // running is loud: a footstep every stride, which bots hear and the other player's speakers play
     if (f.ground && v > 3.6 && f.crouch < .5 && !(f.cloak > 0)) { f.footT -= dt; if (f.footT <= 0) { f.footT = f.sprinting ? .29 : .36; f.step = f.sprinting ? .7 : .5; emit('step', f); } }
@@ -828,6 +915,7 @@ const GAME = {
       emit('shot', f, S, p === 0);
       if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k); }
       else if (S.sentry && !f.net) hurtSentry(S.sentry, dmgAt(G, S.dist, 2), false);
+      else if (!S.hit && !f.net && BRKS.length) { const e = S.end, k = idx(Math.floor((e[0] + S.d[0] * .06) / CS), Math.floor((e[2] + S.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) hitWall(BRKX[k], dmgAt(G, S.dist, 2), f); }   // a breakable wall
     }
     if (landed) f.stat.hits++;
     f.spray += 1; f.kick = .08; f.cloak = 0; if (f === me()) M.camKick = Math.min(M.camKick + G.punch * .42 * D2R * (f.scoped && G.scope ? .4 : 1), 1.6 * D2R);
@@ -899,11 +987,13 @@ const GAME = {
     let t = rayGrid(ax, ay, az, d[0], d[1], d[2], L);
     for (const w of M.walls) { const tw = rayBox(o, d, [w.x0, 0, w.z0], [w.x1, 3 * w.grow, w.z1]); if (tw > 0 && tw < t) t = tw; }
     if (smoke) for (const s of M.smokes) { if (s.r < 1.5) continue; if (Math.hypot(ax - s.x, az - s.z) < s.r) return 0; const ts = raySphere(o, d, [s.x, s.y + 1.3, s.z], s.r * .92); if (ts > 0 && ts < t) t = ts; }
+    if (smoke && mechOf() === 'grass') for (let q = 1.4; q < t - 1.4; q += .45) { const y = ay + d[1] * q, k = idx(Math.floor((ax + d[0] * q) / CS), Math.floor((az + d[2] * q) / CS)); if (k >= 0 && GRASS[k] && y < GRASS_H) { t = q; break; } }   // tall grass hides; bullets go through
     return t;
   }
   function canSee(a, b) {
     if (a.flash > .5) return false; const ea = eyeY(a), d = Math.hypot(b.x - a.x, b.z - a.z);
     if (b.cloak > 0 && d > 5 && !(b.kick > 0)) return false;   // Shroud
+    if (M.storm > .05 && d > lp(200, STORM_SIGHT, M.storm)) return false;   // a sandstorm: nobody sees far
     for (const hy of [eyeY(b) - .05, b.y + .9]) { const L = Math.hypot(d, hy - ea); if (los(a.x, ea, a.z, b.x, hy, b.z) >= L - .25) return true; }
     return false;
   }
@@ -982,8 +1072,46 @@ const GAME = {
     emit('flarePop', fl);
   }
 
+  /* ---------- the map's mechanic, under a fighter's feet ---------- */
+  // a belt carries you; a teleporter pad puts you at its exit; a jump pad throws you onto the ledge it points at
+  function stepMech(f, dt, frozen) {
+    if (f.tpCD > 0) f.tpCD -= dt; if (f.padCD > 0) f.padCD -= dt;
+    let k = idx(Math.floor(f.x / CS), Math.floor(f.z / CS)); if (k < 0 || !f.ground || frozen) return;
+    if (BELT[k]) { const bd = BELTS_D[BELT[k] - 1]; moveF(f, bd[0] * BELT_V * dt, bd[1] * BELT_V * dt); k = idx(Math.floor(f.x / CS), Math.floor(f.z / CS)); if (k < 0) return; }
+    if (TPX[k] >= 0 && !(f.tpCD > 0)) {
+      const t = TPS[TPX[k]], from = [f.x, f.z]; f.x = t.b[0]; f.z = t.b[1]; f.y = hAt(f.x, f.z); f.vy = 0; f.tpCD = .9; f.slide = null;
+      emit('tp', f, from, t.b); f.step = 1.2; return;   // loud at both ends
+    }
+    if (PADX[k] >= 0 && !(f.padCD > 0)) {
+      const t = PADS[PADX[k]], g = GRAV * (LOWG[k] ? LOW_G : 1), dh = t.h - f.y, tl = (PAD_VY + Math.sqrt(Math.max(0, PAD_VY * PAD_VY - 2 * g * dh))) / g;
+      f.vy = PAD_VY; f.vx = (t.b[0] - f.x) / tl; f.vz = (t.b[1] - f.z) / tl; f.ground = false; f.padT = tl * .95; f.padCD = .5; f.slide = null; f.sprinting = false; emit('pad', f);
+    }
+  }
+  // gates: stand at a switch and press the use key (F) to shut the gate into a wall, or open it again. A gate will not
+  // close on anyone standing in it.
+  function gateNear(f) { for (let g = 0; g < GATES.length; g++) for (const p of GATES[g].sw) if (Math.hypot(p[0] - f.x, p[1] - f.z) < 1.8) return g; return -1; }
+  function toggleGate(g, by, remote) {
+    const G = GATES[g]; if (!G) return false; const shut = G.open;
+    if (shut) for (const q of M.fs) if (q.alive && G.cells.some(k => Math.abs(q.x - ((k % GW) + .5) * CS) < CS / 2 + RAD && Math.abs(q.z - (Math.floor(k / GW) + .5) * CS) < CS / 2 + RAD)) { if (!remote) emit('gateJam', g, by); return false; }
+    setGate(g, !shut); emit('gate', g, !shut, by); if (!remote && by && !by.net) net({ t: 'gate', g, o: shut ? 0 : 1, f: by.key }); return true;
+  }
+  // a breakable wall takes the damage of every bullet that hits it; when it falls, it is open ground for the round
+  function hitWall(b, dmg, by, remote) {
+    const B = BRKS[b]; if (!B || B.hp <= 0) return; B.hp -= dmg; emit('wallHit', b, dmg);
+    if (!remote && by && !by.net) net({ t: 'brk', b, d: Math.round(dmg), f: by.key });
+    if (B.hp <= 0) { setWall(b, false); emit('wallDown', b); }
+  }
+  // the map's clock (from the start of the live phase): steam vents puff in turn, a sandstorm blows through now and then
+  function stepMapClock(dt) {
+    const live = M.phase === 'live', tr = live ? roundT() - M.t : -1;
+    if (VENTS.length) { M.vent = M.vent || []; VENTS.forEach((v, n) => { const on = live && (tr + n * VENT_GAP) % VENT_EVERY < VENT_ON; if (on && !M.vent[n]) { const sm = { x: v[0], z: v[1], y: 0, r: 0, R: 2.9, t: VENT_ON, T: VENT_ON, steam: 1 }; M.smokes.push(sm); emit('smoke', sm); emit('vent', n); } M.vent[n] = on; }); }
+    if (mechOf() === 'storm') { const ph = live ? (tr + STORM_SHIFT) % STORM_EVERY : 99, on = ph >= STORM_AT && ph < STORM_AT + STORM_LEN; M.storm = cl((M.storm || 0) + (on ? dt / 2.5 : -dt / 2), 0, 1); if (on && !M.stormOn) emit('storm', true); if (!on && M.stormOn) emit('storm', false); M.stormOn = on; }
+    else M.storm = 0;
+  }
   /* ---------- the charge ---------- */
   function stepObjective(f, I, dt) {
+    if (I.use && !f.useHeld && GATES.length && f.alive && !f.plant && !f.defuse) { const g = gateNear(f); if (g >= 0) toggleGate(g, f); }   // a gate's switch
+    f.useHeld = !!I.use;
     if (M.phase !== 'live' || !f.alive || M.mode === 'range') { f.plant = f.defuse = 0; return; }
     const side = sideOf(f);
     if (side === 'att' && !M.planted && I.use && f.ground && onSite(f.x, f.z)) {
@@ -1022,7 +1150,7 @@ const GAME = {
     if (M.host) net({ t: 'end', wi: wi ^ (M.flip || 0), why });
   }
   function startRound(n) {
-    M.round = n; M.phase = 'buy'; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
+    M.round = n; M.phase = 'buy'; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); resetMech(); M.vent = []; M.storm = 0; M.stormOn = false; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
     const decider = n === WIN_ROUNDS * 2 - 1;
     const order = [...M.fs].sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);   // the same on every device, so teammates never share a spawn
     M.fs.forEach(f => {
@@ -1031,7 +1159,7 @@ const GAME = {
       if (!f.net && n === 5) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, surge: 0, cloak: 0, daze: 0, snare: 0, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
       f.ab = { q: 1, e: 1 }; for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
-      f.yaw = yawTo(f.x, f.z, side === 'att' ? f.x + 10 : f.x - 10, f.z); if (f.gone) f.alive = false;
+      f.yaw = MAP.split && side === 'att' ? yawTo(f.x, f.z, MW / 2, f.z) : yawTo(f.x, f.z, side === 'att' ? f.x + 10 : f.x - 10, f.z); f.padT = f.tpCD = f.padCD = 0; if (f.gone) f.alive = false;
       if (f.bot) { if (M.auto && !f.bot.dummy) { const L = diffFor(M.rating + M.adj); f.bot = { diff: L.i, D: L.D }; } else f.bot = { diff: f.bot.diff, D: f.bot.D, dummy: f.bot.dummy }; }
     });
     if ((n === 5 || decider) && M.mode === 'demo') say(decider ? 'DECIDER' : 'SIDES SWAPPED');   // players get the switching-sides band instead
@@ -1113,6 +1241,7 @@ const GAME = {
     }
     if (M.phase === 'live' && M.planted) { const P = M.planted; P.t -= dt; P.beep -= dt; if (P.beep <= 0) { P.beep = cl(P.t / 12, .12, 1); emit('beep'); } }
     if (M.phase === 'live' && M.host) judge();
+    stepMapClock(dt);
     if (M.phase === 'end' && M.host && M.t <= 0) {
       if (M.wins[0] >= WIN_ROUNDS || M.wins[1] >= WIN_ROUNDS) return matchOver();
       startRound(M.round + 1); net({ t: 'rs', n: M.round });
@@ -1519,8 +1648,14 @@ const GAME = {
   function net(m) { if (M && M.online && MP.online()) MP.send(m); }
   const r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000;
   // every fighter this device runs (you, and the bots if you host) streams its state, tagged with whose it is
+  function goneFor(f) {   // a dropped fighter who did not come back in time
+    f.gone = true; f.alive = false; f.dc = 0;
+    if (M.fs.length <= 2 || !M.fs.some(q => q.team === f.team && !q.gone)) { M.wins[0] = Math.max(M.wins[0], M.wins[1] + 1); M.host = true; matchOver('left'); } else if (M.host) judge();
+  }
   function netTick(dt) {
-    if (!M.online) return; M.netT -= dt; if (M.netT > 0) return; M.netT = .05;
+    if (!M.online) return;
+    if (!M.over) for (const f of M.fs) if (f.dc && M.time - f.dc > DC_WAIT) goneFor(f);
+    M.netT -= dt; if (M.netT > 0) return; M.netT = .05;
     for (const f of M.fs) if (!f.net && !f.gone) net({ t: 's', f: f.key, x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
       al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, op: f.op, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0, rt: f.rating || 0, sk: (f.skins && f.skins[f.guns[f.slot]]) || 0 });
   }
@@ -1532,11 +1667,15 @@ const GAME = {
       case 'rs': if (!M.host) startRound(m.n); return;
       case 'over': if (!M.host) matchOver(); return;
     }
-    const F = M.byKey[String(m.f != null ? m.f : m.from)];
+    if (m.t === 'mp-rejoin') { M.alias = M.alias || {}; const key = M.alias[String(m.old)] || String(m.old); M.alias[String(m.from)] = key; const R0 = M.byKey[key]; if (R0) R0.dc = 0; return; }   // back with a new room id: same fighter
+    const F = M.byKey[String(m.f != null ? m.f : (M.alias && M.alias[String(m.from)]) || m.from)];
     if (!F || !F.net) return;   // about nobody here, or about a fighter this device runs itself
+    if (F.dc) F.dc = 0;
+    if (m.t === 'gate') { const G = GATES[m.g | 0]; if (G && G.open !== !!m.o) toggleGate(m.g | 0, F, true); return; }   // someone used a gate's switch
+    if (m.t === 'brk') { hitWall(m.b | 0, +m.d || 0, F, true); return; }   // someone shot a breakable wall
     switch (m.t) {
       case 's':
-        { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
+        { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && Math.hypot(sn[sn.length - 1].x - m.x, sn[sn.length - 1].z - m.z) > 6) sn.length = 0; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
         if (m.rt) F.rating = m.rt; if (m.g) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
@@ -1585,13 +1724,23 @@ const GAME = {
       names: [...BOT_NAMES].sort(() => R() - .5), ops: Array.from({ length: 4 }, () => pick(Object.keys(OPS))) }),
     onStart: (cfg, roster) => { cfg.names = cfg.names || BOT_NAMES; cfg.ops = cfg.ops || ['vex']; startMatch({ mode: 'online', seats: seatsFor(cfg, roster), hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map, botDiff: cfg.botDiff }); emit('matchStart'); },
     onMsg: netMsg,
-    // someone left: in a duel you win; in a team game they drop out (and if the host left, the new host takes over the bots)
+    // someone's connection dropped: they get DC_WAIT seconds to come back (their game rejoins the room by itself) before
+    // they count as gone. Gone: in a duel you win; in a team game they drop out. If the host dropped, the room's next
+    // player became host and took over the bots and the clock.
     onLeave: id => {
-      if (!M || !M.online || M.over) return; const f = id === -1 ? null : M.byKey[String(id)];
-      if (M.fs.length <= 2 || !f) { M.wins[0] = Math.max(M.wins[0], M.wins[1] + 1); M.host = true; matchOver('left'); return; }
-      f.gone = true; f.alive = false; if (!M.fs.some(q => q.team === f.team && !q.gone)) { M.wins[0] = Math.max(M.wins[0], M.wins[1] + 1); M.host = true; matchOver('left'); } else if (M.host) judge();
+      if (!M || !M.online || M.over) return;
+      if (id === -1) { matchOver('dropped'); return; }   // it was you, and getting back in failed
+      const f = M.byKey[(M.alias && M.alias[String(id)]) || String(id)]; if (f && !f.gone && !f.dc) f.dc = M.time;
     },
-    onHost: id => { if (!M || !M.online || M.over || String(id) !== String(MP.id)) return; M.host = true; for (const f of M.fs) if (f.isBot) { f.net = false; f.bot = { diff: 1 }; } },
+    onHost: id => { if (!M || !M.online || M.over) return;
+      if (String(id) === String(MP.id)) { if (!M.host) { M.host = true; for (const f of M.fs) if (f.isBot) { f.net = false; f.bot = { diff: 1 }; } } }
+      else if (M.host) { M.host = false; for (const f of M.fs) if (f.isBot) { f.net = true; f.bot = null; f.snaps = []; } } },   // someone else hosts now: their bots, their clock
+    // your own connection: lost (the game keeps running while it reconnects) and back. Back, you may no longer be the host.
+    rejoin: true,
+    onDrop: on => { if (M && M.online) M.dropped = on; },
+    onRejoin: () => { if (!M || !M.online || M.over) return; M.dropped = false; const host = MP.hostId === MP.id;
+      if (M.host && !host) { M.host = false; for (const f of M.fs) if (f.isBot) { f.net = true; f.bot = null; f.snaps = []; } }
+      else if (!M.host && host) MP.opts.onHost(MP.id); },
   });
   /* ---------- 70 gfx: Three.js, loaded when the page opens; textures, sky and light; picture quality ----------
      X holds everything the drawing parts share: renderer, scene, camera, the first-person scene (drawn on top of the world
@@ -3880,6 +4029,9 @@ const GAME = {
     }
     // --- banners
     if (M.say) { const a = Math.min(1, M.say.t * 5, (2.6 - M.say.t) * 3); g.globalAlpha = cl(a, 0, 1); tx(g, M.say.s, 640, 170, 30 * u, M.say.c); g.globalAlpha = 1; }
+    // the connection: yours dropped (the game keeps going while it gets back in), or someone else's
+    if (M.online && (M.dropped || MP.rejoining)) { const p = .6 + .4 * Math.sin(K.t * 6); rr(g, 640 - 170 * u, 118 * u, 340 * u, 34 * u, 8, 'rgba(12,16,22,.85)', GOLD, 1.5); tx(g, 'CONNECTION LOST · RECONNECTING', 640, 135 * u, 14 * u, GOLD, 'center', 900); g.globalAlpha = 1; void p; }
+    else if (M.online) { const dc = M.fs.find(f => f.dc && !f.gone); if (dc) { const left = Math.max(0, Math.ceil(DC_WAIT - (M.time - dc.dc))); tx(g, `${dc.name.toUpperCase()} LOST CONNECTION · WAITING ${left} s`, 640, 135 * u, 14 * u, GOLD, 'center', 900); } }
     if (M.phase === 'end' && M.last && !M.over) { const won = M.last.wi === 0, c = won ? YOU : FOE; g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, demo ? `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT` : won ? 'ROUND WON' : 'ROUND LOST', 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); }
     if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? (twoSites() ? 'You attack: plant the charge on A or B' : 'You attack: plant the charge on the ring') : (twoSites() ? 'You defend: hold A and B' : 'You defend: keep them off the ring'), 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
     if (P !== me()) {   // spectating a teammate
@@ -4185,6 +4337,7 @@ const GAME = {
     g.fillStyle = 'rgba(12,16,22,.78)'; g.fillRect(V.x0, V.y0, W, H);
     tx(g, won ? 'VICTORY' : 'DEFEAT', 640, V.y0 + 90 * u, 84 * u, won ? YOU : FOE); tx(g, `${M.wins[0]}  –  ${M.wins[1]}`, 640, V.y0 + 170 * u, 44 * u, BONE);
     if (M.over.why === 'left') tx(g, 'Your rival left the match', 640, V.y0 + 212 * u, 15 * u, DIM);
+    else if (M.over.why === 'dropped') tx(g, 'You lost the connection to the room, and could not get back in', 640, V.y0 + 212 * u, 15 * u, DIM);
     const rows = [['Kills', f => f.stat.k], ['Headshots', f => f.stat.hs], ['Damage dealt', f => Math.round(f.stat.dmg)], ['Accuracy', f => f.net ? '—' : f.stat.shots ? Math.round(100 * f.stat.hits / f.stat.shots) + '%' : '—']], tw = 520 * u, ty = V.y0 + 250 * u;
     rr(g, 640 - tw / 2, ty, tw, (rows.length + 1) * 40 * u + 14 * u, 10, GLASS);
     tx(g, P.name.toUpperCase(), 640 - 70 * u, ty + 26 * u, 15 * u, YOU, 'right'); tx(g, F.name.toUpperCase(), 640 + 70 * u, ty + 26 * u, 15 * u, FOE, 'left');
@@ -4452,6 +4605,7 @@ const GAME = {
     if (m.t === 'lprof') { PARTY.prof.set(m.from, { op: OPS[m.op] ? m.op : 'vex', rt: m.rt | 0, rd: !!m.rd }); return true; }
     if (m.t === 'lteam') { if (m.from === MP.hostId) { PARTY.teams = m.teams || {}; PARTY.set = Object.assign(PARTY.set, m.set || {}); } return true; }
     if (m.t === 'lswap') { if (MP.isHost()) { swapTeam(m.from); } return true; }
+    if (m.t === 'mp-rejoin' && MP.isHost() && PARTY.teams[m.old] != null) { PARTY.teams[m.from] = PARTY.teams[m.old]; delete PARTY.teams[m.old]; const pf = PARTY.prof.get(m.old); if (pf) PARTY.prof.set(m.from, pf); MP.send({ t: 'lteam', teams: PARTY.teams, set: PARTY.set }); }   // back after a drop: same team (the match hears it too)
     return false;
   }
   function swapTeam(id) { const ps = MP.players(), T2 = PARTY.teams, to = 1 - (T2[id] || 0); if (ps.filter(q => T2[q.id] === to).length >= PARTY.set.size) return; T2[id] = to; MP.send({ t: 'lteam', teams: T2, set: PARTY.set }); }
@@ -4559,6 +4713,17 @@ const GAME = {
     try { if (!M.online && window.parent !== window) window.parent.postMessage({ pbx: 'score', score: M.wins[0] * 10 + (won ? 50 : 0) + M.fs[1].bot.diff * 10 }, location.origin); } catch (e) {}
   });
 
+  // online, the match never pauses (the others are still playing, and the host runs the clock and the bots): losing focus
+  // keeps it running, and Escape opens the settings over it instead of the kit's pause screen
+  Object.defineProperty(GAME, 'noPause', { get: () => !!(M && M.online) || MP.online(), configurable: true });
+  GAME.onPause = () => { try { if (document.hasFocus() && screen === 'play' && M && !M.over) openOpts(true); } catch (e) {} };
+  // a hidden tab gets no animation frames, but an online match must not stop (the host runs the clock and the bots):
+  // while hidden, a timer keeps it going, and any keys held when you left are let go
+  { let hidT = 0; setInterval(() => {
+      if (!document.hidden || !M || !M.online || screen !== 'play' || M.over) { hidT = 0; return; }
+      const now = performance.now(); if (!hidT) { hidT = now; resetInput(); return; } let dt = Math.min(2, (now - hidT) / 1000); hidT = now;
+      try { while (dt > 1e-4) { const s = Math.min(1 / 60, dt); tick(s); dt -= s; } } catch (e) {}
+    }, 250); }
   GAME.reset = () => {
     if (!booted) { booted = true; loadSave(); }
     resetInput(); posed = false; UI.armory = false; UI.panel = 'home'; acc = 0; MP.hide();

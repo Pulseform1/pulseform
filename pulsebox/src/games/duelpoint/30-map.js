@@ -2,13 +2,20 @@
      A grid of 2 m cells, 32 by 22. x runs east with the columns, z runs south with the rows; the sea is to the north.
        #  wall (6 m)          X  container (3 m, nothing sees over it)     c  crate (1.1 m: crouch behind, jump onto)
        P  loading dock (1.5 m, you stand on it)      7 8  the dock's stairs, rising south      ~  sea wall (a fence)
-       o  the site (plant here; site A on a two-site map)      q  site B      A D  attacker and defender spawns      .  open ground
+       o  the site (plant here; site A on a two-site map)      q  site B      r  site C      A D  attacker and defender spawns      .  open ground
+     Each map but Saltworks has a mechanic of its own, and these cells for it:
+       T  a teleporter pad (one way: MAP.tps sends it to its exit)      J  a jump pad (MAP.pads: where it throws you)
+       H  a high ledge (3.2 m: reached by a jump pad, dropped off)       i  ice (no grip: you slide, and stop late)
+       g  tall grass (hides you; bullets go straight through)            L  low gravity (jump onto the containers)
+       V  a steam vent (puffs a cloud that blocks sight, on a clock)      < > ^ v  a conveyor belt running that way
+       G  a gate (open; a switch at MAP.sw closes it into a wall)         W  a breakable wall (enough fire knocks it down)
      The Gate's opening into the Yard is offset from the Yard's doorway, so neither spawn can see the other.
      Three ways from the Gate (west) to the site: Pier along the north, the Yard and its doorway through the middle,
      the roofed Tunnel along the south. Everything else (rays, movement, bot paths, the world mesh) reads these cells. */
   // the grid's size is the map's own: the one-site maps are 32 by 22, the two-site maps bigger (loadMap sets these)
   const CS = 2, MAXNC = 64 * 40; let GW = 32, GH = 22, MW = GW * CS, MH = GH * CS, NC = GW * GH;
-  const WALL_H = 6, BOX_H = 3, CRATE_H = 1.1, DOCK_H = 1.5, FENCE_H = 1.1, DOOR_H = 2.7;
+  const WALL_H = 6, BOX_H = 3, CRATE_H = 1.1, DOCK_H = 1.5, FENCE_H = 1.1, DOOR_H = 2.7, HIGH_H = 3.2, GRASS_H = 1.75, GATE_H = 3.6, BRK_HP = 320;
+  const WALKABLE = '.oqrADP78HJTigLVG<>^v', BELTS = '>v<^';   // belt directions: east, south, west, north
   /* Every map is one of these: rows of cells (all 32 by 22), roofs and doorways as rectangles [col0, row0, col1, row1],
      named areas, the attacker's routes and the defender's holds in cell units, and a theme for the look (72-world).
      Saltworks was drawn by hand; the others were laid out by tools/duelpoint-mapgen.mjs and checked for fairness there. */
@@ -74,9 +81,13 @@
   // SITE holds every plantable cell; SITES each site on its own ({ k: 'A', cells, c: centre }); siteC is site A's centre.
   // RSITE says which site each attacker route ends at.
   const SRC = [], ROOFS = [], DOORS = [], AREAS = [], ROUTES = {}, RSITE = {}, HOLDS = [], SPAWN = { att: [], def: [] }, SITE = [], SITES = [], siteC = [0, 0], navCells = [];
+  // the map's mechanic: teleporters, jump pads, gates and their switches, breakable walls, vents (and per cell: ice,
+  // grass, low gravity, belts, which teleporter or pad a cell is)
+  const TPS = [], PADS = [], GATES = [], BRKS = [], VENTS = [];
   let MAP = MAPS[0];
   // per cell: height at the low and high end (they differ only on stairs), which way stairs run (0 none, 2 along z),
   // the ceiling above it (0 = open sky), whether it is a fence, whether a fighter can stand there, its area
+  const ICE = new Uint8Array(MAXNC), GRASS = new Uint8Array(MAXNC), LOWG = new Uint8Array(MAXNC), BELT = new Uint8Array(MAXNC), TPX = new Int8Array(MAXNC), PADX = new Int8Array(MAXNC), GATEX = new Int8Array(MAXNC), BRKX = new Int8Array(MAXNC);
   const CH = new Float32Array(MAXNC), CB = new Float32Array(MAXNC), CAX = new Uint8Array(MAXNC), CEIL = new Float32Array(MAXNC), FENCE = new Uint8Array(MAXNC), NAV = new Uint8Array(MAXNC), AREA = new Int8Array(MAXNC).fill(-1);
   const idx = (i, j) => i < 0 || j < 0 || i >= GW || j >= GH ? -1 : j * GW + i;
   const chAt = (i, j) => { const k = idx(i, j); return k < 0 ? ' ' : SRC[j][i]; };
@@ -90,28 +101,48 @@
     for (const k in RSITE) delete RSITE[k]; for (const k in ROUTES) RSITE[k] = (MAP.rsite && MAP.rsite[k]) || 0;
     fill(HOLDS, MAP.holds.map(h => ({ p: C(h.p[0], h.p[1]), look: C(h.look[0], h.look[1]), lane: h.lane, s: h.s || 0 })));
     SPAWN.att.length = SPAWN.def.length = SITE.length = 0; SITES.length = 0; CH.fill(0); CB.fill(0); CEIL.fill(0); FENCE.fill(0); NAV.fill(0); CAX.fill(0); AREA.fill(-1);
-    const siteCells = [[], []];
+    for (const a of [ICE, GRASS, LOWG, BELT]) a.fill(0); for (const a of [TPX, PADX, GATEX, BRKX]) a.fill(-1); for (const a of [TPS, PADS, GATES, BRKS, VENTS]) a.length = 0;
+    const siteCells = [[], [], []];
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
       const c = SRC[j][i], k = j * GW + i, mid = [i * CS + 1, j * CS + 1];
       let a = 0, b = 0;
       if (c === '#') a = b = WALL_H; else if (c === 'X') a = b = BOX_H; else if (c === 'c') a = b = CRATE_H; else if (c === 'P') a = b = DOCK_H;
       else if (c === '~') { a = b = FENCE_H; FENCE[k] = 1; } else if (c === '7') { b = DOCK_H / 2; CAX[k] = 2; } else if (c === '8') { a = DOCK_H / 2; b = DOCK_H; CAX[k] = 2; }
-      CH[k] = a; CB[k] = b; NAV[k] = '.oqADP78'.includes(c) ? 1 : 0;
-      if (c === 'A') SPAWN.att.push(mid); if (c === 'D') SPAWN.def.push(mid); if (c === 'o' || c === 'q') { SITE.push(mid); siteCells[c === 'q' ? 1 : 0].push(mid); }
+      else if (c === 'H') a = b = HIGH_H; else if (c === 'W') a = b = WALL_H;
+      CH[k] = a; CB[k] = b; NAV[k] = WALKABLE.includes(c) ? 1 : 0;
+      if (c === 'i') ICE[k] = 1; else if (c === 'g') GRASS[k] = 1; else if (c === 'L') LOWG[k] = 1; else if (BELTS.includes(c)) BELT[k] = BELTS.indexOf(c) + 1; else if (c === 'V') VENTS.push(mid);
+      if (c === 'A') SPAWN.att.push(mid); if (c === 'D') SPAWN.def.push(mid); if (c === 'o' || c === 'q' || c === 'r') { SITE.push(mid); siteCells['oqr'.indexOf(c)].push(mid); }
       AREAS.forEach((A, q) => { if (i >= A.r[0] && i <= A.r[2] && j >= A.r[1] && j <= A.r[3]) AREA[k] = q; });
     }
     for (const rf of ROOFS) for (let j = rf.r[1]; j <= rf.r[3]; j++) for (let i = rf.r[0]; i <= rf.r[2]; i++) CEIL[idx(i, j)] = rf.h;
     for (const d of DOORS) for (let j = d[1]; j <= d[3]; j++) for (let i = d[0]; i <= d[2]; i++) CEIL[idx(i, j)] = DOOR_H;
-    siteCells.forEach((cells, q) => { if (!cells.length) return; const c = [0, 0]; for (const p of cells) { c[0] += p[0] / cells.length; c[1] += p[1] / cells.length; } SITES.push({ k: 'AB'[q], cells, c }); });
+    siteCells.forEach((cells, q) => { if (!cells.length) return; const c = [0, 0]; for (const p of cells) { c[0] += p[0] / cells.length; c[1] += p[1] / cells.length; } SITES.push({ k: 'ABC'[q], cells, c }); });
     siteC[0] = SITES[0].c[0]; siteC[1] = SITES[0].c[1];
+    // the mechanic's pieces
+    (MAP.tps || []).forEach((t, n) => { TPS.push({ a: C(t[0] + .5, t[1] + .5), b: C(t[2] + .5, t[3] + .5), yaw: t[4] }); TPX[idx(t[0], t[1])] = n; });
+    (MAP.pads || []).forEach((t, n) => { PADS.push({ a: C(t[0] + .5, t[1] + .5), b: C(t[2] + .5, t[3] + .5), h: CH[idx(t[2], t[3])] }); PADX[idx(t[0], t[1])] = n; });
+    const groupOf = (ch, X2, list, mk) => { for (let k = 0; k < NC; k++) if (SRC[Math.floor(k / GW)][k % GW] === ch && X2[k] < 0) {
+      const n = list.length, st = [k], cells = []; X2[k] = n; while (st.length) { const q = st.pop(); cells.push(q); for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(q % GW + di, Math.floor(q / GW) + dj); if (nk >= 0 && X2[nk] < 0 && SRC[Math.floor(nk / GW)][nk % GW] === ch) { X2[nk] = n; st.push(nk); } } }
+      const c = [0, 0]; for (const q of cells) { c[0] += ((q % GW) + .5) * CS / cells.length; c[1] += (Math.floor(q / GW) + .5) * CS / cells.length; } list.push(mk(cells, c)); } };
+    groupOf('G', GATEX, GATES, (cells, c) => ({ cells, c, open: true, sw: [] }));
+    groupOf('W', BRKX, BRKS, (cells, c) => ({ cells, c, hp: BRK_HP * cells.length / 2, HP: BRK_HP * cells.length / 2 }));
+    for (const w of MAP.sw || []) { const G = GATES[w[2] | 0]; if (G) G.sw.push(C(w[0] + .5, w[1] + .5)); }
+    // attackers who start at both ends of the map take turns at each end, so a team is split across them
+    if (MAP.split && SPAWN.att.length) { const cx = MW / 2, a = SPAWN.att.filter(p => p[0] < cx), b = SPAWN.att.filter(p => p[0] >= cx); SPAWN.att.length = 0; for (let n = 0; n < Math.max(a.length, b.length); n++) { if (a[n]) SPAWN.att.push(a[n]); if (b[n]) SPAWN.att.push(b[n]); } }
     navCells.length = 0; for (let k = 0; k < NC; k++) if (NAV[k]) navCells.push([(k % GW) * CS + 1, Math.floor(k / GW) * CS + 1]);
+    resetMech();
     return MAP;
   }
+  // gates shut into walls and open again; breakable walls fall to rubble. Both reset every round.
+  function setGate(g, open) { const G = GATES[g]; if (!G) return; G.open = open; for (const k of G.cells) { CH[k] = CB[k] = open ? 0 : GATE_H; NAV[k] = open ? 1 : 0; } }
+  function setWall(b, up) { const B = BRKS[b]; if (!B) return; if (up) B.hp = B.HP; else B.hp = 0; for (const k of B.cells) { CH[k] = CB[k] = up ? WALL_H : 0; NAV[k] = up ? 0 : 1; } }
+  function resetMech() { GATES.forEach((G, g) => setGate(g, true)); BRKS.forEach((B, b) => setWall(b, true)); }
+  const mechOf = () => MAP.mech || '';
 
   // a round's length on this map (the two-site maps are bigger, so their rounds run longer)
   const roundT = () => MAP.roundT || ROUND_T;
   // the maps for a mode: sites 1 (the seven one-site maps) or 2 (the six two-site maps)
-  const mapPool = sites => MAPS.map((m, i) => i).filter(i => (MAPS[i].sites || 1) === (sites === 2 ? 2 : 1));
+  const mapPool = sites => MAPS.map((m, i) => i).filter(i => ((MAPS[i].sites || 1) > 1) === (sites === 2));   // STANDARD takes the two- and three-site maps
   // the ground under a point; hMove is the same for movement, where fences and the edge of the map are walls
   function hAt(x, z) {
     const i = Math.floor(x / CS), j = Math.floor(z / CS), k = idx(i, j); if (k < 0) return 0;
@@ -119,7 +150,7 @@
   }
   const hMove = (x, z) => { const k = idx(Math.floor(x / CS), Math.floor(z / CS)); return k < 0 || FENCE[k] ? 99 : hAt(x, z); };
   // which site a point is on: 0 (A, or the only site), 1 (B), or -1
-  const siteAt = (x, z) => { const c = chAt(Math.floor(x / CS), Math.floor(z / CS)); return c === 'o' ? 0 : c === 'q' ? 1 : -1; };
+  const siteAt = (x, z) => { const c = chAt(Math.floor(x / CS), Math.floor(z / CS)); return c === 'o' ? 0 : c === 'q' ? 1 : c === 'r' ? 2 : -1; };
   const onSite = (x, z) => siteAt(x, z) >= 0;
   const twoSites = () => SITES.length > 1;
   const nearestSite = (x, z) => { let b = SITES[0], bd = 1e9; for (const S of SITES) { const d = Math.hypot(S.c[0] - x, S.c[1] - z); if (d < bd) { bd = d; b = S; } } return b; };
@@ -159,22 +190,23 @@
   const cellOf = (x, z) => [cl(Math.floor(x / CS), 0, GW - 1), cl(Math.floor(z / CS), 0, GH - 1)];
   function nearestNav(x, z) {
     const [i, j] = cellOf(x, z); if (NAV[idx(i, j)]) return [i, j];
-    let best = null, bd = 1e9; for (const p of navCells) { const d = Math.hypot(p[0] - x, p[1] - z); if (d < bd) { bd = d; best = p; } }
+    let best = null, bd = 1e9; for (const p of navCells) { const d = Math.hypot(p[0] - x, p[1] - z); if (d < bd && NAV[idx(Math.floor(p[0] / CS), Math.floor(p[1] / CS))]) { bd = d; best = p; } }
     return cellOf(best[0], best[1]);
   }
   // can a fighter walk the straight line between two points? (used to straighten paths and by bots that strafe)
   function walkLine(ax, az, bx, bz) {
     const d = Math.hypot(bx - ax, bz - az); if (d < .01) return true;
-    const n = Math.ceil(d / .35), px = -(bz - az) / d * (RAD + .1), pz = (bx - ax) / d * (RAD + .1); let prev = hAt(ax, az);
+    const n = Math.ceil(d / .35), px = -(bz - az) / d * (RAD + .1), pz = (bx - ax) / d * (RAD + .1), endK = idx(Math.floor(bx / CS), Math.floor(bz / CS)); let prev = hAt(ax, az);
     for (let s = 1; s <= n; s++) {
-      const x = lp(ax, bx, s / n), z = lp(az, bz, s / n), h = hAt(x, z);
-      if (!NAV[idx(Math.floor(x / CS), Math.floor(z / CS))] || Math.abs(h - prev) > STEP) return false;
+      const x = lp(ax, bx, s / n), z = lp(az, bz, s / n), h = hAt(x, z), k = idx(Math.floor(x / CS), Math.floor(z / CS));
+      if (!NAV[k] || Math.abs(h - prev) > STEP) return false;
+      if ((TPX[k] >= 0 || PADX[k] >= 0) && k !== endK) return false;   // never across a teleporter or a jump pad by accident
       if (hMove(x + px, z + pz) > h + STEP || hMove(x - px, z - pz) > h + STEP) return false;
       prev = h;
     }
     return true;
   }
-  const NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]];
+  const NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]], BELTS_D = [[1, 0], [0, 1], [-1, 0], [0, -1]];
   const gCost = new Float32Array(MAXNC), cameFrom = new Int32Array(MAXNC), closed = new Uint8Array(MAXNC);
   // A* over the cells, then pulled straight wherever a fighter could walk it directly. Returns points in metres.
   function findPath(x0, z0, x1, z1) {
@@ -183,10 +215,16 @@
     while (open.length) {
       let bi = 0, bf = 1e9; for (let n = 0; n < open.length; n++) { const k = open[n], f = gCost[k] + Math.hypot(k % GW - ti, Math.floor(k / GW) - tj); if (f < bf) { bf = f; bi = n; } }
       const k = open[bi]; open[bi] = open[open.length - 1]; open.pop(); if (k === tk) break; if (closed[k]) continue; closed[k] = 1;
-      const i = k % GW, j = Math.floor(k / GW);
+      const i = k % GW, j = Math.floor(k / GW), relax = (nk, w) => { const g = gCost[k] + w; if (g < gCost[nk]) { gCost[nk] = g; cameFrom[nk] = k; open.push(nk); } };
+      // stepping onto a teleporter or a jump pad takes you to its other end, and nowhere else
+      if (TPX[k] >= 0 && k !== sk) { const t = TPS[TPX[k]]; relax(idx(Math.floor(t.b[0] / CS), Math.floor(t.b[1] / CS)), 1); continue; }
+      if (PADX[k] >= 0 && k !== sk) { const t = PADS[PADX[k]]; relax(idx(Math.floor(t.b[0] / CS), Math.floor(t.b[1] / CS)), Math.hypot(t.b[0] - t.a[0], t.b[1] - t.a[1]) / CS * .7); continue; }
       for (const [di, dj, w] of NB) {
-        if (di && dj) { if (!joined(i, j, di, 0) || !joined(i, j, 0, dj) || !joined(i + di, j, 0, dj) || !joined(i, j + dj, di, 0)) continue; } else if (!joined(i, j, di, dj)) continue;
-        const nk = idx(i + di, j + dj), g = gCost[k] + w; if (g < gCost[nk]) { gCost[nk] = g; cameFrom[nk] = k; open.push(nk); }
+        const nk = idx(i + di, j + dj);
+        if (di && dj) { if (!joined(i, j, di, 0) || !joined(i, j, 0, dj) || !joined(i + di, j, 0, dj) || !joined(i, j + dj, di, 0)) continue; }
+        else if (!joined(i, j, di, dj)) { if (!(nk >= 0 && NAV[nk] && CH[k] - CH[nk] > STEP && CH[k] - CH[nk] <= HIGH_H + .1 && !CAX[k] && !CAX[nk])) continue; }   // or a drop off a ledge (one way)
+        let cw = w; if (BELT[nk]) { const bd = BELTS_D[BELT[nk] - 1], along = bd[0] * di + bd[1] * dj; cw *= along > 0 ? .55 : along < 0 ? 2.4 : 1; }   // belts: quick with them, slow against
+        relax(nk, cw);
       }
     }
     if (tk !== sk && cameFrom[tk] < 0) return [];

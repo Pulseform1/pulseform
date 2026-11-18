@@ -75,6 +75,10 @@
   const botRating = (f, M) => Math.round(M.auto ? cl(M.rating + rnd(-60, 60), 600, 1800) : RATING_AT[cl(f.bot ? f.bot.diff : 1, 0, 3)] + rnd(10, 140));
   // the body: eye heights standing and crouched, radius, speeds (m/s), gravity, jump speed, the step you climb without jumping
   const teamSize = n => Math.max(1, Math.min(3, (n | 0) || 2)), vsLabel = n => teamSize(n) + 'V' + teamSize(n);   // 1v1, 2v2 or 3v3
+  // the maps' mechanics: ice grip (of normal), low gravity (of normal), belt speed, a jump pad's throw, the vents' clock,
+  // the sandstorm's clock and how far you see in it
+  const DC_WAIT = 20;   // seconds a dropped player has to reconnect before they count as gone
+  const ICE_GRIP = .14, LOW_G = .36, BELT_V = 3.4, PAD_VY = 11.5, VENT_EVERY = 15, VENT_ON = 5.5, VENT_GAP = 5.2, STORM_EVERY = 40, STORM_AT = 14, STORM_LEN = 12, STORM_SHIFT = 0, STORM_SIGHT = 13;
   const EYE = 1.62, CEYE = 1.12, RAD = .34, SPD = 5.4, WALK = 2.7, CSPD = 2.3, GRAV = 19, JUMP = 6.6, STEP = .42;
   // sprinting (hold Shift, or push the stick all the way) and sliding (crouch while sprinting)
   const SPRINT = 7.4, SLIDE_V = 10.8, SLIDE_T = .75, SLIDE_CD = .9;
