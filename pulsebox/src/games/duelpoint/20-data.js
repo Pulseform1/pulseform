@@ -47,6 +47,24 @@
     ember: { n: 'EMBER', role: 'Pyre', col: '#ff7a2f', bio: 'Foundry-born. Thinks every problem is a fuel problem.', q: { n: 'Ignite', d: 'Lob a firebomb: its pool burns rivals for 30 a second, 5 s.' }, e: { n: 'Heat Haze', d: 'A wall of amber haze across your view that blocks sight for 10 s.' } },
     axiom: { n: 'AXIOM', role: 'Engineer', col: '#5aa0ff', bio: 'Builds the thing that holds the angle, then goes for coffee.', q: { n: 'Sentry', d: 'A turret that fires on rivals in front of it until it is shot down.' }, e: { n: 'Tripmine', d: 'A mine at your feet. Armed, it bursts for up to 75 when a rival comes near.' } },
   };
+  /* Abilities the way the genre does them: Q is bought in the armory (a price a charge, up to its most), E is the signature that
+     comes free every round, X is the ultimate, which charges a point at a time: a kill, a death, planting or defusing the
+     charge, and the two orbs that sit on the map each round (hold F over one). Bought charges you don't use carry into the
+     next round; they are cleared when sides swap. Ultimate points never are. */
+  const ABQ = { vex: [150, 2], iris: [250, 1], bastion: [300, 1], nova: [150, 2], wraith: [250, 1], talon: [150, 2], ember: [250, 1], axiom: [300, 1] };
+  const ULTS = {
+    vex: { n: 'Nightwalk', d: 'Gather the dark for a second, then step out of it wherever you aim, up to 30 m away.', pts: 6 },
+    iris: { n: 'Allsight', d: 'Every rival on the map shows through the walls for 6 s.', pts: 6 },
+    bastion: { n: 'Bulwark', d: 'Back to full health with a heavy shield, and you take half damage for 8 s.', pts: 6 },
+    nova: { n: 'Overdrive', d: '10 s of Surge, and running no longer throws your aim.', pts: 6 },
+    wraith: { n: 'Phase', d: 'Gone for 8 s: unseen even up close, and silent. Firing brings you back.', pts: 6 },
+    talon: { n: 'Piercer', d: 'Three bolts along your aim, a second apart, that go straight through walls for 75 each.', pts: 7 },
+    ember: { n: 'Inferno', d: 'Lob a great firebomb: a 5.5 m blaze that burns rivals for 40 a second, 8 s.', pts: 6 },
+    axiom: { n: 'Lockdown', d: 'Plant a device; 2.5 s later every rival within 14 m is held: slowed, and unable to fire or use abilities, for 4 s.', pts: 7 },
+  };
+  for (const k in OPS) { OPS[k].q.cost = ABQ[k][0]; OPS[k].q.max = ABQ[k][1]; OPS[k].x = ULTS[k]; }
+  const ultCost = f => OPS[f.op] ? OPS[f.op].x.pts : 6;
+  const ORB = { n: 2, take: 1, r: 1.3 };   // ultimate orbs: how many on the map, the seconds of F to take one, how near you stand
   // bots aim like people, not aimbots: react = seconds before they start shooting at what they see; lag = how old their
   // picture of where you are is (so strafing makes them miss); err = the first-sight aim error (rad) they then correct over
   // flick seconds; jit = the wobble that never goes away (rad); turn = fastest they can swing (rad/s); spray = recoil

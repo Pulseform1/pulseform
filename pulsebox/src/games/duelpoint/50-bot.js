@@ -59,7 +59,7 @@
   // buy for the kind of round: pistols on round 1 and 5, something cheap when short, a rifle and shields when rich
   function botBuy(f) {
     const c = f.credits, d = f.bot.diff, has = f.guns[1];
-    if (pistolRound(M.round)) { const r = R(); if (r < .3) buy(f, 'hammer'); else if (r < .5) buy(f, 'quill'); else if (r < .75) { buy(f, 'light'); buy(f, 'stub'); } else { buy(f, 'wasp'); buy(f, 'stub'); } if (f.credits >= 200 && R() < .4) buy(f, 'smoke'); return; }
+    if (pistolRound(M.round)) { const r = R(); if (r < .3) buy(f, 'hammer'); else if (r < .5) buy(f, 'quill'); else if (r < .75) { buy(f, 'light'); buy(f, 'stub'); } else { buy(f, 'wasp'); buy(f, 'stub'); } if (f.credits >= 200 && R() < .4) buy(f, 'smoke'); if (f.credits >= OPS[f.op].q.cost && R() < .6) buy(f, 'abq'); return; }
     if (has && GUNS[has].cost >= 2050) { if (f.sh < 50 && f.credits >= 1000) buy(f, 'heavy'); else if (f.sh < 25) buy(f, 'light'); }
     else if (c >= 3900) { const r = R(); buy(f, r < .1 + .08 * d && c >= 5700 ? 'longbow' : r < .2 ? 'torrent' : r < .55 ? 'lancer' : 'vesper'); buy(f, 'heavy'); }
     else if (c >= 3300) { buy(f, pick(['lancer', 'vesper'])); buy(f, 'light'); }
@@ -68,6 +68,7 @@
     else if (c >= 1350 && R() < .4) { buy(f, pick(['gnat', 'breaker', 'kite'])); buy(f, 'light'); }
     else if (R() < .5) buy(f, pick(['quill', 'hammer', 'stub']));
     if (f.credits >= 200 && R() < .65) buy(f, 'smoke'); if (f.credits >= 1400 && R() < .45) buy(f, 'smoke');
+    for (let n = 0; n < 2; n++) if (f.credits >= OPS[f.op].q.cost && R() < .8) buy(f, 'abq');   // ability charges
   }
 
   // the newer operatives' abilities, each with a reason
@@ -98,7 +99,18 @@
     }
   }
   // use an ability at a chosen place, without having to look there first
-  function botCast(f, k, data) { if (!f.ab[k] || M.phase !== 'live') return; f.ab[k] = 0; applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
+  function botCast(f, k, data) { if (!hasAb(f, k) || M.phase !== 'live' || f.lock > 0 || f.chan) return; spendAb(f, k); applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
+  // the ultimate, when there is a reason for it
+  function botUlt(f, B, P, side, sees, engaged, fresh, near, dE, e, dt) {
+    const op = f.op, push = side === 'att' && P.k === 'push', retake = P.k === 'retake', chance = R() < dt * .8;
+    if (op === 'vex' && !sees && chance && (push && near < 32 || retake)) { const tgt = retake && M.planted ? watchSpot(M.planted.x, M.planted.z, 3, 8) : pick(SITES[RSITE[P.lane] || 0].cells); botCast(f, 'x', { x: tgt[0], z: tgt[1] }); }
+    else if (op === 'iris' && chance && (push && near < 30 || retake || (side === 'def' && fresh && !sees))) botCast(f, 'x', {});
+    else if (op === 'bastion' && engaged && f.hp < 50) botCast(f, 'x', {});
+    else if ((op === 'nova' || op === 'wraith') && !sees && chance && (push && near < 26 || retake)) botCast(f, 'x', {});
+    else if (op === 'talon' && fresh && !sees && dE < 40 && Math.abs(angDiff(yawTo(f.x, f.z, B.last.x, B.last.z), f.yaw)) < .1) botCast(f, 'x', {});
+    else if (op === 'ember' && fresh && !sees && dE > 6 && dE < 24 && chance) { const tx = B.last.x, tz = B.last.z, dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 14, .5, 1.2), y0 = eyeY(f) - .1, ty = hAt(tx, tz) + .1; botCast(f, 'x', { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + 7 * T * T) / T, vz: dz / T }); }
+    else if (op === 'axiom' && ((side === 'def' && fresh && dE < 13) || (retake && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 12))) botCast(f, 'x', { x: f.x, z: f.z });
+  }
   const magOf = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return A ? A.mag : 0; };
   const hasAmmo = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return !!A && A.mag + A.res > 0; };
 
@@ -223,6 +235,7 @@
       if (f.op === 'bastion' && f.ab.q && engaged && f.hp < 70 && dE > 5) ability(f, 'q');
       if (f.op === 'bastion' && f.ab.e && f.hp < 60 && !sees) ability(f, 'e');
       kitBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);
+      if (hasAb(f, 'x')) botUlt(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);
       // smoke grenades: attackers cover a corner before stepping onto the site; defenders smoke the lane they just heard someone in
       if (f.smokes > 0 && !sees && !(B.nadeT > M.time)) {
         if (side === 'att' && P.k === 'push' && near < 24 && near > 8) { const hs = HOLDS.filter(q => (q.lane === P.lane || q.lane === 'any') && Math.hypot(q.p[0] - f.x, q.p[1] - f.z) < 22); if (hs.length && R() < dt * 2) { const h = pick(hs); lobNade(f, h.p[0], h.p[1]); B.nadeT = M.time + 6; } }
@@ -256,6 +269,11 @@
       if (f.hp < B.hp0 && M.planted.t > DEFUSE_T - f.defuse + 2.5) B.wait = 1.2;   // shot at while defusing: stand up and look
       if (B.wait > 0) B.wait -= dt;
       else if ((!sees && B.lostT > 1) || M.planted.t < DEFUSE_T - f.defuse + 1.5) { I.use = true; goal = null; I.mx = 0; I.fire = false; }
+    }
+    // an ultimate orb close by, with nothing else going on: go and take it
+    if (M.orbs && !sees && !engaged && !fresh && !M.planted && P.k !== 'retake' && (f.ult | 0) < ultCost(f) && !gun(f).melee) {
+      const o = M.orbs.find(q => !q.taken && Math.hypot(q.x - f.x, q.z - f.z) < 7 && Math.abs(hAt(q.x, q.z) - f.y) < .5);
+      if (o) { if (Math.hypot(o.x - f.x, o.z - f.z) < ORB.r * .7) { I.use = true; goal = null; } else goal = [o.x, o.z]; }
     }
     B.hp0 = f.hp;
     if (goal) {

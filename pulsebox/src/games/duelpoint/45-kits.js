@@ -11,7 +11,7 @@
                        E Tripmine: a mine at your feet that arms, then bursts for up to 75 when a rival comes near.
      The things they leave in the world live in M.kit and are stepped by stepKits. Like damage, every effect on a fighter
      is worked out on that fighter's own device: a trap or mine that goes off there tells the others, so all screens agree. */
-  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [] };
+  const KIT_N = { fires: [], darts: [], bombs: [], waves: [], mines: [], snares: [], sentries: [], lures: [], locks: [], bolts: [] };
   const freshKit = () => Object.fromEntries(Object.keys(KIT_N).map(k => [k, []]));
   const enemyOf = (a, b) => a.team !== b.team;
   const kitId = (f, k) => f.key + ':' + k + ':' + M.round;
@@ -26,6 +26,10 @@
     if (key === 'embere') { const dd = Math.min(reach(10), 10); return { x: f.x + d[0] * dd, z: f.z + d[2] * dd, px: Math.cos(f.yaw), pz: -Math.sin(f.yaw) }; }
     if (key === 'axiomq') { const fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw), dd = walkLine(f.x, f.z, f.x + fx * 1.4, f.z + fz * 1.4) ? 1.4 : .6; return { x: f.x + fx * dd, z: f.z + fz * dd, yaw: f.yaw }; }
     if (key === 'axiome') return { x: f.x, z: f.z };
+    // the ultimates
+    if (key === 'vexx') { const dd = Math.max(2, Math.min(S.hit ? S.dist : S.dist, 30) - .8); let x = f.x + d[0] * dd, z = f.z + d[2] * dd; const [ci, cj] = nearestNav(x, z); x = (ci + .5) * CS; z = (cj + .5) * CS; return { x, z }; }
+    if (key === 'emberx') return { x: f.x + d[0] * .5, y: e - .1 + d[1] * .5, z: f.z + d[2] * .5, vx: d[0] * 17 + f.vx * .4, vy: d[1] * 17 + 3.5, vz: d[2] * 17 + f.vz * .4 };
+    if (key === 'axiomx') return { x: f.x, z: f.z };
     return {};
   }
   // the ability itself, the same on every device
@@ -41,6 +45,15 @@
     if (key === 'embere') { for (const o of [-2.6, 0, 2.6]) { const x = d.x + d.px * o, z = d.z + d.pz * o, s = { x, z, y: hAt(x, z) > 2 ? 0 : hAt(x, z), r: 0, R: 2.1, t: 10, T: 10, heat: 1 }; M.smokes.push(s); emit('smoke', s); } return true; }
     if (key === 'axiomq') { K2.sentries.push({ id: kitId(f, 'q'), x: d.x, z: d.z, y: hAt(d.x, d.z), yaw: d.yaw, aim: d.yaw, pitch: 0, hp: 60, cd: .8, by: f, target: null, flash: 0 }); return true; }
     if (key === 'axiome') { K2.mines.push({ id: kitId(f, 'e'), x: d.x, z: d.z, y: hAt(d.x, d.z), arm: 1.5, fuse: -1, by: f }); return true; }
+    // the ultimates
+    if (key === 'vexx') { f.chan = { t: 1.1, T: 1.1, x: d.x, z: d.z, fx: f.x, fz: f.z }; if (f === me()) say('NIGHTWALK', OPS.vex.col); return true; }
+    if (key === 'irisx') { for (const q of M.fs) if (enemyOf(f, q)) q.reveal = Math.max(q.reveal, 6); if (me().team !== f.team) say('ALLSIGHT: YOU ARE SEEN', WARN); else if (f === me()) say('ALLSIGHT', OPS.iris.col); return true; }
+    if (key === 'bastionx') { f.hp = 100; f.sh = Math.max(f.sh, 50); f.guard = 8; if (f === me()) say('BULWARK', OPS.bastion.col); return true; }
+    if (key === 'novax') { f.surge = 10; f.od = 10; if (f === me()) say('OVERDRIVE', OPS.nova.col); return true; }
+    if (key === 'wraithx') { f.cloak = 8; f.phase = 8; if (f === me()) say('PHASE', OPS.wraith.col); return true; }
+    if (key === 'talonx') { f.volley = { n: 3, t: .35 }; if (f === me()) say('PIERCER', OPS.talon.col); return true; }
+    if (key === 'emberx') { K2.bombs.push({ x: d.x, y: d.y, z: d.z, vx: d.vx, vy: d.vy, vz: d.vz, t: 0, by: f, big: true }); return true; }
+    if (key === 'axiomx') { K2.locks.push({ x: d.x, z: d.z, y: hAt(d.x, d.z), t: 2.5, T: 2.5, R: 14, by: f }); if (me().team !== f.team && Math.hypot(me().x - d.x, me().z - d.z) < 18) say('LOCKDOWN INCOMING', WARN); return true; }
     return false;
   }
   // the fighters this device is in charge of
@@ -63,7 +76,24 @@
   function sentryBoxes(f) { return M.kit ? M.kit.sentries.filter(s => enemyOf(s.by, f)).map(s => ({ s, mn: [s.x - .28, s.y, s.z - .28], mx: [s.x + .28, s.y + .95, s.z + .28] })) : []; }
   function stepKits(dt) {
     const K2 = M.kit || (M.kit = freshKit());
-    for (const f of M.fs) for (const k of ['surge', 'cloak', 'daze', 'snare']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
+    for (const f of M.fs) for (const k of ['surge', 'cloak', 'daze', 'snare', 'guard', 'od', 'phase', 'lock']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
+    // Nightwalk: a second gathering the dark, then out of it at the far end
+    for (const f of M.fs) if (f.chan && (f.chan.t -= dt) <= 0) { const c = f.chan; f.chan = null; if (!f.alive) continue; const from = [f.x, f.z];
+      if (!f.net) { f.x = c.x; f.z = c.z; f.y = hAt(c.x, c.z); f.vx = f.vz = f.vy = 0; } emit('nightwalk', f, from, [c.x, c.z]); }
+    // Piercer: three bolts along the aim, a second apart, straight through walls
+    for (const f of M.fs) { const V = f.volley; if (!V) continue; if (!f.alive) { f.volley = null; continue; } if ((V.t -= dt) > 0) continue;
+      V.n--; V.t = 1; if (V.n <= 0) f.volley = null;
+      const d = viewDir(f.yaw, f.pitch), o = [f.x, eyeY(f), f.z], L = 90; K2.bolts.push({ a: o, b: [o[0] + d[0] * L, o[1] + d[1] * L, o[2] + d[2] * L], t: .5, by: f }); emit('bolt', f, o, d);
+      if (!f.net) for (const v of M.fs) { if (!v.alive || !enemyOf(f, v)) continue;
+        for (const hy of [eyeY(v) - .05, v.y + 1.05, v.y + .5]) { const px = v.x - o[0], py = hy - o[1], pz = v.z - o[2], along = px * d[0] + py * d[1] + pz * d[2]; if (along < 0 || along > L) continue;
+          const cx = px - d[0] * along, cy = py - d[1] * along, cz = pz - d[2] * along; if (Math.hypot(cx, cy, cz) < .55) { damage(v, 75, f, false, 'piercer'); break; } } } }
+    K2.bolts = K2.bolts.filter(B => (B.t -= dt) > 0);
+    // Lockdown: a short wind-up, then every rival in range is held
+    for (const L of K2.locks) if ((L.t -= dt) <= 0) {
+      for (const v of localFs()) { if (!enemyOf(L.by, v) || Math.hypot(v.x - L.x, v.z - L.z) > L.R) continue; v.lock = 4; v.snare = Math.max(v.snare, 4); v.reveal = Math.max(v.reveal, 2); v.scoped = 0; v.chan = null; if (v === me()) say('LOCKED DOWN', WARN); }
+      L.done = true; emit('lockPop', L);
+    }
+    K2.locks = K2.locks.filter(L => !L.done);
     // Shockwave: a short fuse, then a blast
     for (const w of K2.waves) if ((w.t -= dt) <= 0) {
       for (const v of localFs()) { if (!enemyOf(w.by, v)) continue; const d = Math.hypot(v.x - w.x, v.y + 1 - w.y, v.z - w.z); if (d > 4.5 || los(w.x, w.y, w.z, v.x, eyeY(v) - .2, v.z, false) < d - .4) continue; v.daze = 2.5; applyDamage(v, 15, w.by, false, 'shockwave'); if (v === me()) say('DAZED', WARN); }
@@ -92,13 +122,13 @@
     // Ignite: the firebomb arcs, and where it lands it burns
     for (const B of K2.bombs) {
       B.t += dt; B.vy -= 14 * dt; const sp = Math.hypot(B.vx, B.vy, B.vz) || 1, step = sp * dt, dx = B.vx / sp, dy = B.vy / sp, dz = B.vz / sp, hit = rayGrid(B.x, B.y, B.z, dx, dy, dz, step + .05);
-      if (hit < step + .05 || B.t > 3) { const x = B.x + dx * Math.max(0, hit - .1), z = B.z + dz * Math.max(0, hit - .1), y = hAt(x, z); B.done = true; const fire = { x, z, y, r: 3.2, t: 5, T: 5, by: B.by, tick: 0 }; K2.fires.push(fire); emit('fireStart', fire); }
+      if (hit < step + .05 || B.t > 3) { const x = B.x + dx * Math.max(0, hit - .1), z = B.z + dz * Math.max(0, hit - .1), y = hAt(x, z); B.done = true; const fire = B.big ? { x, z, y, r: 5.5, t: 8, T: 8, by: B.by, tick: 0, big: true } : { x, z, y, r: 3.2, t: 5, T: 5, by: B.by, tick: 0 }; K2.fires.push(fire); emit('fireStart', fire); }
       else { B.x += B.vx * dt; B.y += B.vy * dt; B.z += B.vz * dt; }
     }
     K2.bombs = K2.bombs.filter(B => !B.done);
     for (const F of K2.fires) {
       F.t -= dt; F.tick -= dt; if (F.tick > 1e-6) continue; F.tick += .25;
-      for (const v of localFs()) if (enemyOf(F.by, v) && Math.hypot(v.x - F.x, v.z - F.z) < F.r && Math.abs(v.y - F.y) < 1.6) { applyDamage(v, 7.5, F.by, false, 'ignite'); if (v.bot) v.bot.hitBy = { x: F.x, z: F.z, t: M.time }; }
+      for (const v of localFs()) if (enemyOf(F.by, v) && Math.hypot(v.x - F.x, v.z - F.z) < F.r && Math.abs(v.y - F.y) < 1.6) { applyDamage(v, F.big ? 10 : 7.5, F.by, false, F.big ? 'inferno' : 'ignite'); if (v.bot) v.bot.hitBy = { x: F.x, z: F.z, t: M.time }; }
     }
     K2.fires = K2.fires.filter(F => F.t > 0);
     // Snare: arms, then waits for a rival's feet (worked out where that rival is run)

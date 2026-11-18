@@ -286,8 +286,13 @@
       g.save(); g.translate(V.x0 + 22, V.y1 - 20); g.scale(u, u); rr(g, 0, -58, 250, 58, 8, GLASS);
       tx(g, String(Math.ceil(P.hp)), 18, -28, 40, hpCol, 'left'); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(104, -36, 128, 8); g.fillStyle = hpCol; g.fillRect(104, -36, 128 * P.hp / 100, 8);
       if (P.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(104, -22, 128 * P.sh / 50, 6); tx(g, String(P.sh), 104 + 128 * P.sh / 50 + 6, -19, 11, '#7fc8ff', 'left'); }
-      const op = OPS[P.op]; [['Q', 'q'], ['E', 'e']].forEach(([key, k], i) => { const x = 266 + i * 96, on = P.ab[k]; rr(g, x, -58, 86, 58, 8, on ? GLASS : 'rgba(12,16,22,.4)', on ? op.col : 'rgba(255,255,255,.12)'); tx(g, op[k].n.toUpperCase(), x + 43, -38, 14, on ? BONE : '#5a6272'); tx(g, key, x + 43, -16, 14, on ? op.col : '#5a6272'); });
-      if (P.smokes > 0) { const x = 458, on = P.smokes > 0; rr(g, x, -58, 86, 58, 8, on ? GLASS : 'rgba(12,16,22,.4)', on ? NADE.col : 'rgba(255,255,255,.12)'); tx(g, 'SMOKE ×' + (P.smokes || 0), x + 43, -38, 14, on ? BONE : '#5a6272'); tx(g, 'G', x + 43, -16, 12, on ? NADE.col : '#5a6272'); }
+      // the abilities: Q (bought, its charges as pips), E (the free signature), X (the ultimate, its points round a ring)
+      const op = OPS[P.op]; [['Q', 'q'], ['E', 'e']].forEach(([key, k], i) => { const x = 266 + i * 96, n = P.ab[k] | 0, on = n > 0 && M.mode !== 'demo'; rr(g, x, -58, 86, 58, 8, on ? GLASS : 'rgba(12,16,22,.4)', on ? op.col : 'rgba(255,255,255,.12)'); tx(g, op[k].n.toUpperCase(), x + 43, -38, 14, on ? BONE : '#5a6272'); tx(g, key, x + 43 - (k === 'q' ? 12 : 0), -16, 14, on ? op.col : '#5a6272');
+        if (k === 'q') for (let c = 0; c < op.q.max; c++) { g.fillStyle = c < n ? op.col : 'rgba(255,255,255,.15)'; g.fillRect(x + 50 + c * 11, -21, 8, 8); } });
+      { const x = 458, c = ultCost(P), pts = Math.min(c, P.ult | 0), ready = pts >= c, pulse = ready ? .55 + .45 * Math.sin(K.t * 5) : 0; rr(g, x, -58, 86, 58, 8, ready ? 'rgba(12,16,22,.7)' : 'rgba(12,16,22,.4)', ready ? op.col : 'rgba(255,255,255,.12)', ready ? 2 + pulse * 2 : 1);
+        for (let q = 0; q < c; q++) { const a0 = -Math.PI / 2 + q * TAU / c + .08, a1 = -Math.PI / 2 + (q + 1) * TAU / c - .08; g.strokeStyle = q < pts ? op.col : 'rgba(255,255,255,.18)'; g.lineWidth = 4; g.beginPath(); g.arc(x + 22, -29, 13, a0, a1); g.stroke(); }
+        tx(g, 'X', x + 22, -29, 12, ready ? BONE : '#5a6272'); tx(g, ready ? op.x.n.toUpperCase() : `${pts}/${c}`, x + 61, -36, ready ? 11 : 13, ready ? BONE : '#5a6272'); tx(g, 'ULT', x + 61, -18, 10, ready ? op.col : '#5a6272'); }
+      if (P.smokes > 0) { const x = 554, on = P.smokes > 0; rr(g, x, -58, 86, 58, 8, on ? GLASS : 'rgba(12,16,22,.4)', on ? NADE.col : 'rgba(255,255,255,.12)'); tx(g, 'SMOKE ×' + (P.smokes || 0), x + 43, -38, 14, on ? BONE : '#5a6272'); tx(g, 'G', x + 43, -16, 12, on ? NADE.col : '#5a6272'); }
       g.restore();
       g.save(); g.translate(V.x1 - 22 - 50 / pxPer(), V.y1 - 20); g.scale(u, u); rr(g, -270, -58, 270, 58, 8, GLASS);
       if (G.melee) tx(g, '—', -150, -28, 34, BONE); else { tx(g, String(A.mag), -150, -28, 42, A.mag ? BONE : WARN, 'right'); tx(g, '/ ' + A.res, -140, -22, 18, DIM, 'left'); }
@@ -302,6 +307,8 @@
     if (P.reloadT > 0) tx(g, 'RELOADING', 640, 420, 15 * u, GOLD);
     if (M.phase === 'live' && P.alive && !range && !demo) {
       const near = M.planted && Math.hypot(P.x - M.planted.x, P.z - M.planted.z) < 1.7, key = touch ? 'Hold the button' : 'Hold F';
+      if (P.orbT > 0) ring(P.orbT / ORB.take, 'ULT ORB', OPS[P.op].col);
+      else if (M.orbs && M.orbs.some(o => !o.taken && Math.hypot(o.x - P.x, o.z - P.z) < ORB.r)) hint(g, (touch ? 'Hold the button' : 'Hold F') + ' to take the orb: an ultimate point', V.y0 + 140 * u, 16 * u, OPS[P.op].col);
       if (P.plant > 0) ring(P.plant / PLANT_T, 'PLANTING', FOE); else if (P.defuse > 0) ring(P.defuse / DEFUSE_T, 'DEFUSING', YOU);
       else if (side === 'att' && !M.planted) hint(g, onSite(P.x, P.z) ? key + ' to plant the charge' : M.t > roundT() - 6 ? (twoSites() ? 'Carry the charge to site ' + siteWords() + ' and plant it' : 'Carry the charge to the ring and plant it') : '', V.y0 + 104 * u, 16 * u, onSite(P.x, P.z) ? GOLD : 'rgba(239,233,220,.75)');
       else if (side === 'def' && M.planted) hint(g, near ? key + ' to defuse' : 'Defuse the charge', V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');

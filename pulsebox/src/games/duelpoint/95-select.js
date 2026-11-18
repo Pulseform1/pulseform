@@ -66,11 +66,11 @@
         if (done) portraitTile(g, op, x0 + 8 * u, y + 4 * u, 46 * u, 46 * u, { r: 4 }); else { rr(g, x0 + 8 * u, y + 4 * u, 46 * u, 46 * u, 4, 'rgba(255,255,255,.04)', 'rgba(239,233,220,.12)', 1); tx(g, '?', x0 + 31 * u, y + 27 * u, 22 * u, DIM, 'center', 900); }
         tx(g, name.toUpperCase(), x0 + 62 * u, y + 20 * u, 14 * u, BONE, 'left', 800); tx(g, done ? OPS[op].n + (me2 && S.locked ? '  ·  LOCKED IN' : '') : 'picking' + '.'.repeat(1 + Math.floor(el * 3) % 3), x0 + 62 * u, y + 38 * u, 11 * u, done ? OPS[op].col : DIM, 'left', 800); y += 62 * u; };
       row('You', S.op, true, true); for (const m of S.mates) row(m.name, m.op, m.done, false); }
-    // the operative: name, role, story, and what Q and E do
+    // the operative: name, role, story, and what Q, E and the ultimate (X) do
     { const pop = smooth(cl((now - (S.pickT || S.t0)) / 260, 0, 1)), cx = x0 + (S.o ? 260 * u : 0) + 20 * u, cy = V.y0 + 150 * u; g.save(); g.globalAlpha = .4 + .6 * pop;
       tx(g, O.role.toUpperCase(), cx, cy - 40 * u, 13 * u, O.col, 'left', 900); tx(g, O.n, cx - 4 * u, cy + 8 * u, 74 * u, BONE, 'left', 900);
       let y = para(g, O.bio || '', cx, cy + 56 * u, 320 * u, 14 * u, '#c9cfd8') + 18 * u;
-      for (const [key, a] of [['Q', O.q], ['E', O.e]]) { rr(g, cx, y - 15 * u, 30 * u, 30 * u, 5, 'rgba(12,16,22,.8)', O.col, 2); tx(g, key, cx + 15 * u, y, 15 * u, O.col, 'center', 900); tx(g, a.n.toUpperCase(), cx + 42 * u, y - 2 * u, 16 * u, BONE, 'left', 900); y = para(g, a.d, cx + 42 * u, y + 18 * u, 290 * u, 12.5 * u, '#b9c0cc') + 16 * u; }
+      for (const [key, a] of [['Q', O.q], ['E', O.e], ['X', O.x]]) { rr(g, cx, y - 15 * u, 30 * u, 30 * u, 5, 'rgba(12,16,22,.8)', O.col, 2); tx(g, key, cx + 15 * u, y, 15 * u, O.col, 'center', 900); tx(g, a.n.toUpperCase(), cx + 42 * u, y - 2 * u, 16 * u, BONE, 'left', 900); y = para(g, a.d, cx + 42 * u, y + 18 * u, 290 * u, 12.5 * u, '#b9c0cc') + 16 * u; }
       g.restore(); }
     // the roster along the bottom
     const n = keys.length, tw = Math.min(86 * u, (W - 160 * u) / n - 8 * u), th = tw * 1.1, total = n * (tw + 8 * u) - 8 * u, rx0 = 640 - total / 2, ry = V.y1 - th - 30 * u;

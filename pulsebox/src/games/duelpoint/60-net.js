@@ -45,7 +45,8 @@
         if (!F.alive) break; const by = M.byKey[String(m.by)] || other(F); F.alive = false; F.hp = 0; F.stat.d++; by.stat.k++; if (m.h) by.stat.hs++; if (!by.net && by.team !== F.team) by.credits = Math.min(CASH.cap, by.credits + CASH.kill);
         M.feed.unshift({ a: by.name, b: F.name, w: GUNS[m.w] ? GUNS[m.w].n : m.w, head: !!m.h, t: 0, mine: by === me() }); emit('kill', F, by, !!m.h, m.w); if (M.host) judge(); break;
       }
-      case 'ab': F.ab[m.k] = 0; applyAbility(F, m.k, m.d || {}); break;
+      case 'ab': spendAb(F, m.k); applyAbility(F, m.k, m.d || {}); break;
+      case 'orb': takeOrb(m.i | 0, F); break;   // someone took an ultimate orb
       case 'kx': kitTrip(m.id, m.v, true); break;   // a snare or mine went off on the victim's device
       case 'kd': { const s2 = M.kit && M.kit.sentries.find(q => q.id === m.id); if (s2) hurtSentry(s2, m.d, true); break; }   // someone shot a sentry
       case 'nd': F.smokes = Math.max(0, (F.smokes || 0) - 1); F.throwT = .6; addNade({ x: m.x, y: m.y, z: m.z, vx: m.vx, vy: m.vy, vz: m.vz }); emit('throw', F); break;

@@ -166,3 +166,11 @@
     if (!canHear() || !M || screen !== 'play' || M.over) return; AMB.t -= dt; if (AMB.t > 0) return;
     AMB.t = 4 + Math.random() * 7; const L = LIFE[MAP.theme]; if (!L) return; L[Math.floor(Math.random() * L.length)](ambOut(.9));
   }
+
+  // the ultimates
+  cue('ultReady', f => { if (f !== me()) return; const o = outFor(null); [660, 880, 1320].forEach((q, i) => tone(o, q, .3, 'triangle', .08, 0, i * .09)); });
+  cue('ultUsed', f => { const o = outFor(f, 1.3); tone(o, 110, .9, 'sawtooth', .07, 220); tone(o, 440, .6, 'triangle', .05, 440, .1); hiss(o, .6, .08, 'bandpass', 1800, .05); });
+  cue('orb', (o, f) => { const out = atPos(o.x, o.z); [990, 1320, 1760].forEach((q, i) => tone(out, q, .25, 'sine', .07, 0, i * .07)); });
+  cue('nightwalk', (f, a, b) => { for (const p of [a, b]) { const o = atPos(p[0], p[1], 1.2); tone(o, 90, .7, 'sine', .14, -40); hiss(o, .5, .07, 'lowpass', 600); } });
+  cue('bolt', (f, o2) => { const o = outFor(f, 1.4); tone(o, 1600, .35, 'sawtooth', .05, -1200); hiss(o, .25, .09, 'highpass', 3000); });
+  cue('lockPop', L => { const o = atPos(L.x, L.z, 1.4); tone(o, 220, .8, 'square', .07, -150); tone(o, 1100, .5, 'sine', .05, -700, .05); });

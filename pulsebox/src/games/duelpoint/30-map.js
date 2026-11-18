@@ -71,6 +71,8 @@
   // the map's mechanic: teleporters, jump pads, gates and their switches, breakable walls, vents (and per cell: ice,
   // grass, low gravity, belts, which teleporter or pad a cell is)
   const TPS = [], PADS = [], GATES = [], BRKS = [], VENTS = [];
+  // the ultimate orbs' spots: halfway along two of the attackers' ways in (or where the map says)
+  const ORBS = [];
   let MAP = MAPS[0];
   // per cell: height at the low and high end (they differ only on stairs), which way stairs run (0 none, 2 along z),
   // the ceiling above it (0 = open sky), whether it is a fence, whether a fighter can stand there, its area
@@ -117,8 +119,28 @@
     // attackers who start at both ends of the map take turns at each end, so a team is split across them
     if (MAP.split && SPAWN.att.length) { const cx = MW / 2, a = SPAWN.att.filter(p => p[0] < cx), b = SPAWN.att.filter(p => p[0] >= cx); SPAWN.att.length = 0; for (let n = 0; n < Math.max(a.length, b.length); n++) { if (a[n]) SPAWN.att.push(a[n]); if (b[n]) SPAWN.att.push(b[n]); } }
     navCells.length = 0; for (let k = 0; k < NC; k++) if (NAV[k]) navCells.push([(k % GW) * CS + 1, Math.floor(k / GW) * CS + 1]);
-    resetMech();
+    resetMech(); placeOrbs();
     return MAP;
+  }
+  // the nearest cell to stand still on: open ground, not a belt, ice, a pad, a teleporter or a vent
+  function plainNear(i0, j0) {
+    for (let r = 0; r <= 4; r++) for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) { if (Math.max(Math.abs(di), Math.abs(dj)) !== r) continue; const i = i0 + di, j = j0 + dj, k = idx(i, j);
+      if (k >= 0 && NAV[k] && !BELT[k] && !ICE[k] && TPX[k] < 0 && PADX[k] < 0 && !CAX[k] && '.oqrADgL'.includes(SRC[j][i])) return [i, j]; }
+    return null;
+  }
+  function placeOrbs() {
+    ORBS.length = 0;
+    if (MAP.orbs) { for (const o of MAP.orbs) ORBS.push(C(o[0] + .5, o[1] + .5)); return; }
+    const a = SPAWN.att[0]; if (!a) return; const mids = [];
+    for (const k of Object.keys(ROUTES).sort()) {
+      const S = SITES[RSITE[k] || 0], pts = [...ROUTES[k], S.c], line = []; let x = a[0], z = a[1];
+      for (const q of pts) { const pp = findPath(x, z, q[0], q[1]); if (!pp.length) break; line.push([x, z], ...pp); x = q[0]; z = q[1]; }
+      let L = 0; for (let i = 1; i < line.length; i++) L += Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]); if (L < 8) continue;
+      let t = L * .5; for (let i = 1; i < line.length; i++) { const d = Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]); if (t <= d) { const u = t / d, px = lp(line[i - 1][0], line[i][0], u), pz = lp(line[i - 1][1], line[i][1], u), c = plainNear(...nearestNav(px, pz)); if (c) mids.push(C(c[0] + .5, c[1] + .5)); break; } t -= d; }
+    }
+    if (!mids.length) return; let best = [mids[0]], bd = -1;   // the two that are furthest apart
+    for (let i = 0; i < mids.length; i++) for (let j = i + 1; j < mids.length; j++) { const d = Math.hypot(mids[i][0] - mids[j][0], mids[i][1] - mids[j][1]); if (d > bd) { bd = d; best = [mids[i], mids[j]]; } }
+    ORBS.push(...best.slice(0, ORB.n));
   }
   // gates shut into walls and open again; breakable walls fall to rubble. Both reset every round.
   function setGate(g, open) { const G = GATES[g]; if (!G) return; G.open = open; for (const k of G.cells) { CH[k] = CB[k] = open ? 0 : GATE_H; NAV[k] = open ? 1 : 0; } }

@@ -15,7 +15,7 @@ const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name:
 const T = new Function('K', 'MP', code + `
   return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
-    hitboxes, headOf, castShot, get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
+    hitboxes, headOf, castShot, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
 let failed = 0;
 const ok = (cond, name, extra = '') => { if (!cond) failed++; console.log((cond ? '  ok   ' : '  FAIL ') + name + (extra !== '' ? '  (' + extra + ')' : '')); };
@@ -289,7 +289,7 @@ function twoSiteChecks(count) {
 // every map, bots only: a 1v1 and a 3v3 on each, and the map's own feature gets used
 function everyMapChecks(per = 2) {
   section(`bot matches on all ${T.MAPS.length} maps`);
-  const use = {}; for (const ev of ['tp', 'pad', 'gate', 'wallDown', 'vent', 'storm']) T.on(ev, () => { use[ev] = (use[ev] || 0) + 1; });
+  const use = {}; for (const ev of ['tp', 'pad', 'gate', 'wallDown', 'vent', 'storm', 'ultUsed', 'orb']) T.on(ev, () => { use[ev] = (use[ev] || 0) + 1; });
   let allOk = true;
   T.MAPS.forEach((mp, mi) => {
     const row = { rounds: 0, plants: {}, why: {}, stalls: 0, err: null, done: 0 }; for (const k in use) use[k] = 0;
@@ -315,6 +315,45 @@ function everyMapChecks(per = 2) {
     console.log(`  ${good ? 'ok  ' : 'FAIL'} ${mp.n.padEnd(13)} ${row.done}/${per} done, ${row.rounds} rounds, plants ${JSON.stringify(row.plants)}, ${Object.entries(row.why).map(([k, v]) => `${k} ${v}`).join(' ')}${row.stalls ? `, ${row.stalls} stalls` : ''}${feat ? '  [' + feat + ']' : ''}${row.err ? '  ERR ' + row.err : ''}`);
   });
   ok(allOk, 'every map plays out with bots: no errors, matches finish, attackers keep moving and plant');
+}
+
+// abilities bought by the charge, the free signature, and the ultimate with its points and orbs
+function ultChecks() {
+  section('abilities and ultimates');
+  let I = idle(); T.setInput(() => I);
+  T.seed(3); T.startMatch({ mode: 'bot', diff: 0, map: 0 }); T.skipLoad(); let M = T.M, P = T.me(), F = T.foe(); P.op = 'vex';
+  ok((P.ab.q | 0) === 0 && P.ab.e === 1 && (P.ult | 0) === 0, 'a match starts with no bought charges, the signature, and no ultimate points', JSON.stringify({ ab: P.ab, ult: P.ult }));
+  const Q = T.OPS.vex.q, c0 = P.credits; T.buy(P, 'abq'); T.buy(P, 'abq'); const c2 = P.credits, n2 = P.ab.q; T.buy(P, 'abq'); const c3 = P.credits;
+  ok(n2 === Q.max && P.ab.q === Q.max - 1 && c0 - c2 === Q.cost * Q.max && c3 === c2 + Q.cost, `Q is bought by the charge (◈ ${Q.cost}, up to ${Q.max}); pressing again at the most sells one back`, `credits ${c0} -> ${c2} -> ${c3}, charges ${P.ab.q}`);
+  T.buy(P, 'abq'); M.phase = 'live'; M.t = 60; T.ability(P, 'e'); T.ability(P, 'q'); const used = { q: P.ab.q, e: P.ab.e };
+  T.startRound(2); ok(P.ab.q === used.q && P.ab.e === 1, 'unused charges carry into the next round, the signature comes back', JSON.stringify({ before: used, after: P.ab }));
+  T.startRound(5); ok((P.ab.q | 0) === 0, 'bought charges are cleared when sides swap', JSON.stringify(P.ab));
+  // ultimate points: a death, a kill, a plant, an orb; capped at the cost
+  T.startRound(6); M.phase = 'live'; M.t = 60; P.ult = 0; F.ult = 0; Object.assign(F, { x: P.x + 4, z: P.z, alive: true, hp: 100 }); T.applyDamage(F, 200, P, false, 'quill');
+  ok(P.ult === 1 && F.ult === 1, 'a kill gives the killer a point, and the one who died a point', `${P.ult}, ${F.ult}`);
+  ok(M.orbs && M.orbs.length === 2 && T.ORBS.length === 2, 'two ultimate orbs on the map each round', JSON.stringify(T.ORBS));
+  T.takeOrb(0, P); T.takeOrb(0, P); ok(P.ult === 2 && M.orbs[0].taken, 'an orb is a point, and only once', P.ult);
+  // and holding F over the other one takes it
+  const u0 = P.ult; T.startRound(7); M.phase = 'live'; M.t = 60; P.ult = u0; const o = M.orbs[1]; Object.assign(P, { x: o.x, z: o.z, y: T.hAt(o.x, o.z), alive: true }); I = { ...idle(), use: true }; run(1.2); I = idle();
+  ok(P.ult === u0 + 1 && o.taken, 'holding F over an orb for a second takes it', P.ult);
+  // each ultimate does what it says
+  const setup = (op, gunKey) => { const [M2, P2, F2] = lab(gunKey); P2.op = op; P2.ult = T.ultCost(P2); F2.bot = { diff: 0, dummy: true, home: [50, 3] }; Object.assign(F2, { x: 50, z: 3, y: 0, hp: 100, sh: 0, alive: true, reveal: 0 }); P2.yaw = T.yawTo(P2.x, P2.z, 60, 3); P2.pitch = 0; I = idle(); return [M2, P2, F2]; };
+  [M, P, F] = setup('vex'); P.pitch = -.05; const to = [P.x - Math.sin(P.yaw) * 10, P.z - Math.cos(P.yaw) * 10]; T.ability(P, 'x');
+  ok(P.ult === 0 && P.chan, 'using the ultimate spends its points', P.ult); run(1.4);
+  ok(Math.hypot(P.x - to[0], P.z - to[1]) < 3, 'Vex Nightwalk: a second of gathering, then out where you aimed', `${P.x.toFixed(1)}, ${P.z.toFixed(1)} vs ${to.map(v => v.toFixed(1))}`);
+  [M, P, F] = setup('iris'); Object.assign(F, { x: 33, z: 15 }); T.ability(P, 'x'); ok(F.reveal >= 5, 'Iris Allsight: every rival shows through walls', F.reveal.toFixed(1));
+  [M, P, F] = setup('bastion'); P.hp = 40; T.ability(P, 'x'); const h0 = P.hp, s0 = P.sh; T.applyDamage(P, 40, F, false, 'quill');
+  ok(h0 === 100 && s0 >= 50 && P.hp + P.sh === 100 + s0 - 20, 'Bastion Bulwark: full health, a heavy shield, half damage', `hp ${h0}, shield ${s0}, after 40: ${P.hp}+${P.sh}`);
+  [M, P, F] = setup('nova', 'vesper'); T.ability(P, 'x'); I = { ...idle(), mz: 1 }; run(.8); const G = T.M.fs[0]; ok(P.od > 0 && T.moveErr(P, { acc: { walk: 3, run: 6, jump: 9 } }) === 0, 'Nova Overdrive: running no longer throws your aim', `od ${P.od.toFixed(1)}, ${Math.hypot(P.vx, P.vz).toFixed(1)} m/s`); I = idle();
+  [M, P, F] = setup('wraith'); Object.assign(F, { x: P.x + 2.5, z: P.z, yaw: T.yawTo(P.x + 2.5, P.z, P.x, P.z) }); const seen0 = T.canSee(F, P); T.ability(P, 'x'); const seen1 = T.canSee(F, P);
+  ok(seen0 && !seen1 && P.phase > 0, 'Wraith Phase: unseen even close up', `before ${seen0}, after ${seen1}`);
+  [M, P, F] = setup('talon'); Object.assign(P, { x: 33, z: 3 }); Object.assign(F, { x: 33, z: 15, bot: null }); P.yaw = T.yawTo(33, 3, 33, 15); P.pitch = Math.atan2(F.y + 1.05 - T.eyeY(P), 12);
+  const sees0 = T.canSee(P, F); T.ability(P, 'x'); run(.5); ok(!sees0 && F.hp <= 25, 'Talon Piercer: a bolt straight through a wall', `wall between: ${!sees0}, rival ${Math.round(F.hp)} hp`);
+  [M, P, F] = setup('ember'); Object.assign(F, { x: P.x + 9, z: P.z, bot: { diff: 0, dummy: true, home: [P.x + 9, P.z] } }); P.yaw = T.yawTo(P.x, P.z, F.x, F.z); P.pitch = -.12; T.ability(P, 'x'); run(3);
+  ok(F.hp < 100 || !F.alive, 'Ember Inferno: a great blaze where it lands', `rival ${Math.round(F.hp)} hp`);
+  [M, P, F] = setup('axiom'); Object.assign(F, { x: P.x + 9, z: P.z, bot: { diff: 0, dummy: true, home: [P.x + 9, P.z] } }); T.ability(P, 'x'); run(3);
+  ok(F.lock > 0 && F.snare > 0, 'Axiom Lockdown: rivals in range are held', `lock ${F.lock.toFixed(1)}`);
+  const sh0 = F.stat.shots; F.fireT = 0; F.bot = null; F.local = false; T.setInput(f => f === F ? { ...idle(), fire: true } : idle()); run(.5); ok(F.stat.shots === sh0, 'held, a rival cannot fire', F.stat.shots - sh0); T.setInput(() => I);
 }
 
 function hitboxChecks() {
@@ -366,7 +405,8 @@ else if (arg === 'quick') { mapChecks(); gunplayChecks(); hitboxChecks(); moveCh
 else if (arg === 'hit') hitboxChecks();
 else if (arg === 'teams') { teamChecks(7); teamChecks(6, 3); }
 else if (arg === 'kits') kitChecks();
+else if (arg === 'ults') ultChecks();
 else if (arg === 'skins') skinChecks();
-else { mapChecks(); gunplayChecks(); hitboxChecks(); moveChecks(); loadChecks(); kitChecks(); skinChecks(); teamChecks(7); teamChecks(6, 3); matchChecks(20); twoSiteChecks(12); }
+else { mapChecks(); gunplayChecks(); hitboxChecks(); moveChecks(); loadChecks(); kitChecks(); ultChecks(); skinChecks(); teamChecks(7); teamChecks(6, 3); matchChecks(20); twoSiteChecks(12); }
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

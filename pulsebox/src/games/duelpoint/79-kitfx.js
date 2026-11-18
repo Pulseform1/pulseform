@@ -44,6 +44,14 @@
     for (let i = 0; i < 6; i++) { const m = add(disc(1, glow('#ffffff', { map: ringT, opacity: .6 }))); m.visible = false; X.kf.rings.push(m); }   // status rings under fighters (Surge, a daze, a snare)
     for (let i = 0; i < 2; i++) { const m = add(new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), glow('#ffb060', { opacity: .8 }))); m.visible = false; m.userData = { t: 9 }; X.kf.booms.push(m); }
     X.smokeHM = new THREE.MeshLambertMaterial({ color: '#e2a46a', emissive: '#5a2a08', transparent: true, opacity: .9, depthWrite: false });   // Heat Haze
+    // the ultimates and their orbs
+    X.kf.orbs = []; for (let i = 0; i < 3; i++) { const g = add(new THREE.Group()), gem = new THREE.Mesh(new THREE.OctahedronGeometry(.32, 0), glow('#b8f0ff', { opacity: .95 })); gem.position.y = 1.1; g.add(gem);
+      const halo = new THREE.Mesh(new THREE.OctahedronGeometry(.5, 0), glow('#5ad1ff', { opacity: .25, wireframe: true })); halo.position.y = 1.1; g.add(halo); const base = disc(.9, glow('#5ad1ff', { map: ringT, opacity: .5 })); base.position.y = .03; g.add(base); g.userData = { gem, halo }; g.visible = false; X.kf.orbs.push(g); }
+    X.kf.beams = []; for (let i = 0; i < 3; i++) { const m = add(new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 1, 8, 1, true), glow('#b6ff8a', { opacity: .9 }))); m.visible = false; X.kf.beams.push(m); }
+    X.kf.domes = []; for (let i = 0; i < 2; i++) { const g = add(new THREE.Group()), dome = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 14, 0, TAU, 0, Math.PI / 2), glow('#5aa0ff', { opacity: .22, wireframe: true })); g.add(dome);
+      const core = new THREE.Mesh(new THREE.CylinderGeometry(.22, .28, .5, 10), lit('#2a2e36')); core.position.y = .25; g.add(core); const eye = new THREE.Mesh(new THREE.SphereGeometry(.12, 10, 8), glow('#5aa0ff', { opacity: 1 })); eye.position.y = .58; g.add(eye); g.userData = { dome, eye }; g.visible = false; X.kf.domes.push(g); }
+    X.kf.chans = []; for (let i = 0; i < 2; i++) { const g = add(new THREE.Group()); for (let k = 0; k < 3; k++) { const r = new THREE.Mesh(new THREE.TorusGeometry(.7 + k * .25, .04, 6, 28), glow('#8f6bff', { opacity: .7 })); r.rotation.x = Math.PI / 2; g.add(r); }
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(.6, .9, 3.2, 20, 1, true), glow('#3a1a7a', { opacity: .35 })); col.position.y = 1.6; g.add(col); g.visible = false; X.kf.chans.push(g); }
   }
   // a tracer from a to b (a sentry's shot)
   function tracerAB(a, b, col) {
@@ -57,6 +65,9 @@
     for (let i = 0; i < 18; i++) spark([m.x, m.y + .2, m.z], [rnd(-6, 6), rnd(1, 7), rnd(-6, 6)], '#ffb060', .4); if (me() && Math.hypot(me().x - m.x, me().z - m.z) < 10) X.shake = Math.max(X.shake, .45); });
   on('sentryShot', (s, v) => { if (!X || !ready) return; const a = [s.x - Math.sin(s.aim) * .45, s.y + .78, s.z - Math.cos(s.aim) * .45]; tracerAB(a, [v.x + rnd(-.3, .3), v.y + 1.1 + rnd(-.3, .3), v.z + rnd(-.3, .3)], '#ffd28a'); s.muzzle = .05; });
   on('sentryDown', s => { if (!X || !ready) return; for (let i = 0; i < 16; i++) spark([s.x, s.y + .7, s.z], [rnd(-3, 3), rnd(0, 4), rnd(-3, 3)], '#9fb6ff', .5); });
+  on('nightwalk', (f, a, b) => { if (!X || !ready) return; for (const p of [a, b]) for (let i = 0; i < 18; i++) spark([p[0], hAt(p[0], p[1]) + rnd(.2, 2.4), p[1]], [rnd(-3, 3), rnd(-1, 3), rnd(-3, 3)], i % 2 ? '#8f6bff' : '#1c0c3a', .6); });
+  on('lockPop', L => { if (!X || !ready) return; const m = X.kf.shells.find(p => p.userData.t > .5) || X.kf.shells[0]; m.userData.t = 0; m.position.set(L.x, L.y + 1, L.z); m.material.color.set('#5aa0ff'); for (let i = 0; i < 24; i++) spark([L.x, L.y + .6, L.z], [rnd(-8, 8), rnd(0, 4), rnd(-8, 8)], '#9fc4ff', .7); });
+  on('orb', o => { if (!X || !ready) return; for (let i = 0; i < 16; i++) spark([o.x, hAt(o.x, o.z) + 1.1, o.z], [rnd(-2, 2), rnd(1, 4), rnd(-2, 2)], '#b8f0ff', .6); });
   on('snared', (sn, v) => { if (!X || !ready) return; for (let i = 0; i < 10; i++) spark([sn.x, sn.y + .2, sn.z], [rnd(-2, 2), rnd(1, 3), rnd(-2, 2)], '#9dff6b', .4); });
   function kitFx(dt) {
     const K2 = M.kit, P = me(), kf = X.kf; if (!kf) return;
@@ -75,8 +86,14 @@
     list(kf.snares, K2 && K2.snares && K2.snares.filter(s => mine(s) || near(s, 4)), (g, s) => { g.position.set(s.x, s.y, s.z); g.userData.ring.material.opacity = (mine(s) ? .55 : .22) * (s.arm > 0 ? .4 : 1) * (.75 + Math.sin(X.t * 4) * .25); });
     list(kf.sentries, K2 && K2.sentries, (g, s) => { const U = g.userData; g.position.set(s.x, s.y, s.z); U.head.rotation.set(s.pitch || 0, s.aim, 0, 'YXZ'); U.eye.material.color.set(s.flash > 0 ? '#ffffff' : s.target ? '#ff5a4d' : '#5aa0ff');
       s.muzzle = Math.max(0, (s.muzzle || 0) - dt); U.fl.visible = s.muzzle > 0; U.fl.rotation.z = Math.random() * 6; });
-    // status rings: Surge (yellow) under a rival, a daze (gold, over the head), a snare (green)
-    const st = []; for (const f of M.fs) { if (!f.alive || f === P) continue; if (f.surge > 0) st.push([f, '#ffe14d', .05, .55]); if (f.daze > 0) st.push([f, '#ffd23f', eyeY(f) + .35, .3]); if (f.snare > 0) st.push([f, '#7bd65a', .05, .75]); }
+    // the ultimates: orbs waiting to be taken, Piercer's bolts, Lockdown's dome, Nightwalk gathering and where it comes out
+    list(kf.orbs, M.orbs && M.orbs.filter(o => !o.taken), (g, o, i) => { g.position.set(o.x, hAt(o.x, o.z), o.z); g.userData.gem.rotation.y = X.t * 2 + i; g.userData.gem.position.y = 1.1 + Math.sin(X.t * 2.4 + i) * .12; g.userData.halo.rotation.y = -X.t; g.userData.halo.position.y = g.userData.gem.position.y; });
+    list(kf.beams, K2 && K2.bolts, (m, B) => { const dx = B.b[0] - B.a[0], dy = B.b[1] - B.a[1], dz = B.b[2] - B.a[2], L = Math.hypot(dx, dy, dz); m.position.set(B.a[0] + dx / 2, B.a[1] + dy / 2, B.a[2] + dz / 2); m.scale.set(1 + (.5 - B.t) * 3, L, 1 + (.5 - B.t) * 3); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dx / L, dy / L, dz / L)); m.material.opacity = B.t / .5; });
+    list(kf.domes, K2 && K2.locks, (g, L) => { const k = 1 - L.t / L.T; g.position.set(L.x, L.y, L.z); g.userData.dome.scale.setScalar(.5 + k * L.R); g.userData.dome.material.opacity = .12 + k * .25; g.userData.eye.material.color.set(Math.sin(X.t * (8 + k * 30)) > 0 ? '#ffffff' : '#5aa0ff'); });
+    list(kf.chans, M.fs.filter(f => f.chan && f.alive && (f.team === P.team || f === P)).flatMap(f => [[f.chan.fx, f.chan.fz, f.chan], [f.chan.x, f.chan.z, f.chan]]), (g, [x, z, c], i) => { const k = 1 - c.t / c.T; g.position.set(x, hAt(x, z), z); g.rotation.y = X.t * 3 * (i % 2 ? -1 : 1); g.scale.setScalar(i % 2 ? .4 + k * .6 : 1.2 - k * .5); });
+    // status rings: Surge (yellow) under a rival, a daze (gold, over the head), a snare (green); Bulwark (amber), Overdrive (white), held by a Lockdown (blue)
+    const st = []; for (const f of M.fs) { if (!f.alive || f === P) continue; if (f.surge > 0) st.push([f, '#ffe14d', .05, .55]); if (f.daze > 0) st.push([f, '#ffd23f', eyeY(f) + .35, .3]); if (f.snare > 0) st.push([f, '#7bd65a', .05, .75]);
+      if (f.guard > 0) st.push([f, '#ffb347', 1.1, .7]); if (f.od > 0) st.push([f, '#ffffff', .1, .9]); if (f.lock > 0) st.push([f, '#5aa0ff', eyeY(f) + .3, .45]); }
     list(kf.rings, st, (m, [f, c, y, r]) => { m.position.set(ipos(f, 'x'), ipos(f, 'y') + y, ipos(f, 'z')); m.scale.setScalar(r * (1 + Math.sin(X.t * 8) * .08)); m.material.color.set(c); m.rotation.z = X.t * 2; });
   }
-  function hideKitFx() { if (!X.kf) return; for (const k of ['fires', 'darts', 'pulses', 'bombs', 'waves', 'shells', 'mines', 'snares', 'sentries', 'rings', 'booms']) for (const m of X.kf[k]) m.visible = false; }
+  function hideKitFx() { if (!X.kf) return; for (const k of ['fires', 'darts', 'pulses', 'bombs', 'waves', 'shells', 'mines', 'snares', 'sentries', 'rings', 'booms', 'orbs', 'beams', 'domes', 'chans']) for (const m of X.kf[k]) m.visible = false; }
