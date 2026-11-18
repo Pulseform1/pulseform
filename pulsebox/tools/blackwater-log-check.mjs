@@ -9,7 +9,7 @@ p.on('pageerror', e => errs.push(e.message + ' @ ' + (e.stack || '').split('\n')
 await p.addInitScript(() => { let now = 0, q = []; performance.now = () => now; window.requestAnimationFrame = cb => { q.push(cb); return q.length; }; window.__step = (n, ms = 1000 / 60) => { for (let i = 0; i < n; i++) { now += ms; const run = q; q = []; run.forEach(cb => cb(now)); } };
   /* headless Chromium cannot lock the pointer: pretend it is locked, the way a real click would leave it */
   Object.defineProperty(Document.prototype, 'pointerLockElement', { get() { return document.getElementById('cv'); } }); Element.prototype.requestPointerLock = function () { setTimeout(() => document.dispatchEvent(new Event('pointerlockchange'))); }; Document.prototype.exitPointerLock = function () {}; });
-await p.goto('file://' + new URL('../public/games/blackwater.html', import.meta.url).pathname + '?dev'); await p.waitForTimeout(4500);
+await p.goto('file://' + new URL('../public/games/' + (process.env.BW_PAGE || 'blackwater.html'), import.meta.url).pathname + '?dev'); await p.waitForTimeout(4500);
 const st = n => p.evaluate(n => window.__step(n), n), shot = n => p.screenshot({ path: `${O}/${n}.png`, timeout: 120000 }), ev = (fn, a) => p.evaluate(fn, a), out = {};
 const ok = (c, name, x = '') => console.log((c ? '  ok   ' : '  FAIL ') + name + (x !== '' ? '  (' + x + ')' : ''));
 const G2P = (x, y) => ev(([x, y]) => { const r = document.getElementById('cv').getBoundingClientRect(), V = K.view; return [r.left + (x - V.x0) / (V.x1 - V.x0) * r.width, r.top + (y - V.y0) / (V.y1 - V.y0) * r.height]; }, [x, y]);

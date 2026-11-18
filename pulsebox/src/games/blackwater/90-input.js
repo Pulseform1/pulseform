@@ -12,7 +12,7 @@
   document.addEventListener('contextmenu', e => { if (screen === 'play') e.preventDefault(); });
   document.addEventListener('wheel', e => { if (!playing()) return; if (ui.place) rotatePlace(e.deltaY > 0 ? 1 : -1); else cycleTool(e.deltaY > 0 ? 1 : -1); }, { passive: true });
   function cycleTool(d) { const list = hotbar().map(h => h.k); const i = list.indexOf(PL.tool); act.select(list[(i + d + list.length) % list.length]); }
-  const hotbar = () => [...Object.keys(TOOLS).filter(t => PL.tools[t]).map(t => ({ k: t, n: TOOLS[t].n })), ...(foods().length ? [{ k: 'food', n: itemName(foods()[0]) }] : []), ...((INV.water || 0) > 0 ? [{ k: 'water', n: 'Fresh water' }] : [])];
+  const hotbar = () => [...Object.keys(TOOLS).filter(t => PL.tools[t] && !TOOLS[t].up).map(t => ({ k: t, n: TOOLS[t].n })), ...(foods().length ? [{ k: 'food', n: itemName(foods()[0]) }] : []), ...((INV.water || 0) > 0 ? [{ k: 'water', n: 'Fresh water' }] : [])];
   function keyEvent(code, down) {
     IN.keys[code] = down; if (!down) return;
     if (screen === 'menu') { if (code === 'Enter') menuStart(); return; }
@@ -20,6 +20,8 @@
     if (code === 'KeyC') { panel = panel === 'craft' ? null : 'craft'; panel ? unlockMouse() : lockMouse(); return; }
     if (code === 'KeyI' || code === 'Tab') { panel = panel === 'inv' ? null : 'inv'; panel ? unlockMouse() : lockMouse(); return; }
     if (panel) { if (code === 'Escape') panel = null; return; }
+    if (PL.helm && (code === 'KeyW' || code === 'ArrowUp')) { setSail(1); return; }
+    if (PL.helm && (code === 'KeyS' || code === 'ArrowDown')) { setSail(-1); return; }
     if (code === 'KeyE') act.interact();
     if (code === 'KeyQ') drink();
     if (code === 'KeyF') eat() || say('No food. Fish with the rod (C to craft one)', '#cfd6e2');
@@ -52,6 +54,7 @@
     if (b) {
       if (b.k === 'use') { IN.use = true; IN.useId = id; IN.look = { id, x, y }; act.useDown(); }   // the USE thumb keeps aiming while it holds
       else if (b.k === 'alt') act.alt(); else if (b.k === 'grab') act.interact(); else if (b.k === 'drink') drink(); else if (b.k === 'rotate') rotatePlace(1); else if (b.k === 'tool') cycleTool(1);
+      else if (b.k === 'sailup') setSail(1); else if (b.k === 'saildn') setSail(-1);
       else if (b.k === 'build') { if (PL.tool === 'hammer') ui.buildOpen = !ui.buildOpen; else act.select('hammer'); }
       else IN.held.set(id, b.k);
       return;

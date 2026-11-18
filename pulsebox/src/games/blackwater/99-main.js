@@ -49,7 +49,7 @@
   // for the browser checks (tools/blackwater-checks.mjs) and for testing by hand from the console
   GAME.test = {
     get X() { return X; }, get ready() { return ready; }, get screen() { return screen; }, get RAFT() { return RAFT; }, get panel() { return panel; }, set panel(v) { panel = v; },
-    S, PL, HK, FS, FL, SH, CT, CACHE, INV, IN, ui, act, drink, keyEvent, collect, NET, get panelName() { return panel; }, give, place, cellAt, spawnGiant, spawnPool, summon, addFloater, menuStart, toMenu, lifeTick, waterH, eyePos, touchButtons, uiScale, CFG, applyQuality, DRIFT, FISH,
+    S, PL, HK, FS, FL, SH, CT, CACHE, INV, IN, ui, act, drink, keyEvent, collect, NET, get panelName() { return panel; }, give, place, cellAt, spawnGiant, spawnPool, summon, addFloater, menuStart, toMenu, takeHelm, leaveHelm, setSail, toggleAnchor, sailPush, sailLevel, make, MAKE, GEAR, TOOLS, PIECES, BUILD_ORDER, piecesTick, emptyPiece, hurtCell, hotbar, lifeTick, waterH, eyePos, touchButtons, uiScale, CFG, applyQuality, DRIFT, FISH,
     tick: s => { for (let i = 0; i < s * 60; i++) lifeTick(1 / 60, readInput()); },
   };
   (async () => { try { if (typeof document === 'undefined') return; try { await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'); } catch (e) { await loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'); } initGfx(); ready = true; } catch (e) { console.error(e); failed = true; } })();

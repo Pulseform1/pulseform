@@ -11,6 +11,14 @@ only = set(sys.argv[1:])
 # screens and join-a-match fix). Rebuilding them from src/ with this kit would undo that, so they are never rebuilt here.
 # Their game code still comes from src/games/strata.js and siegeworks.js: only that part of the page is refreshed.
 FROZEN = {'strata', 'siegeworks'}
+# Games under test: built from src/ to a private, unlisted page (own save slot, own rooms, a TEST BUILD tag) and the live
+# page is left as it was. To ship the tested version, take the game out of LAB and build it again.
+LAB = {'blackwater': 'blackwater-lab-b860f455'}
+def lab_page(gid, html):
+    assert f"id: '{gid}'" in html
+    html = html.replace(f"id: '{gid}'", f"id: '{gid}-lab'", 1).replace('<head>', '<head>\n<meta name="robots" content="noindex,nofollow">', 1)
+    tag = '<div style="position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:99;background:#f2b33d;color:#1a1200;font:700 11px system-ui;padding:3px 9px;border-radius:9px;pointer-events:none;letter-spacing:.08em">TEST BUILD</div>'
+    return html.replace('</body>', tag + '</body>', 1)
 # a game is one file, src/games/<id>.js, or a folder, src/games/<id>/, whose .js parts are joined in name order
 games = glob.glob(os.path.join(HERE, 'src', 'games', '*.js')) + [d for d in glob.glob(os.path.join(HERE, 'src', 'games', '*')) if os.path.isdir(d)]
 for path in sorted(games, key=lambda q: os.path.splitext(os.path.basename(q))[0]):
@@ -50,6 +58,7 @@ const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
 </body>
 </html>
 '''
+    if gid in LAB: html = lab_page(gid, html); gid = LAB[gid]
     out = os.path.join(HERE, 'public', 'games', gid + '.html')
     open(out, 'w', encoding='utf-8').write(html)
     print(gid, len(html.encode()), 'bytes')

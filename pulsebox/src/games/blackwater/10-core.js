@@ -19,7 +19,7 @@
   const pickupMsg = (got, kind) => { if (NET.cap) { NET.cap.got.push(...got); return; } emit('pickup', got, kind); };
 
   // what you can carry. Fish are 'fish:<kind>' raw and 'cooked:<kind>'
-  const ITEM = { plank: 'Plank', rope: 'Rope', scrap: 'Scrap', tinder: 'Dry tinder', biscuit: 'Ship biscuit', coconut: 'Coconut', line: 'Fishing line', water: 'Fresh water', log: 'Log' };
+  const ITEM = { plank: 'Plank', rope: 'Rope', scrap: 'Scrap', tinder: 'Dry tinder', biscuit: 'Ship biscuit', coconut: 'Coconut', line: 'Fishing line', water: 'Fresh water', log: 'Log', helm: 'Helm', sail: 'Sail', anchor: 'Anchor' };
   const DRINK = { water: 40, coconut: 18 };   // how much each one quenches thirst
   const FISH = {
     sardine: { n: 'Sardine', len: [.14, .22], kg: [.06, .14], raw: 5, cooked: 12, pull: .45, stam: 3, w: 40 },
@@ -39,7 +39,22 @@
     rod: { n: 'Fishing rod', key: 4, need: { plank: 2, rope: 2 }, after: 3 },
     spear: { n: 'Spear', key: 5, need: { plank: 2, scrap: 2 }, after: 5 },
     oar: { n: 'Oar', key: 6, need: { plank: 3, rope: 1 }, after: 5 },
+    // upgrades: made once, they improve a tool you already have (they take no hotbar slot)
+    ironhook: { n: 'Iron hook', need: { scrap: 4, rope: 2 }, after: 8, up: 'hook', tip: 'Throws further, reels heavy salvage in faster' },
+    harpoon: { n: 'Barbed spear', need: { scrap: 3, plank: 1, rope: 1 }, up: 'spear', tip: 'Sharks give up after two hits, not three' },
   };
+  // the steering gear: crafted at the bench (C) into your items, then placed on the deck with the hammer
+  const GEAR = [
+    { k: 'helm', n: 'Helm', need: { plank: 4, rope: 2, scrap: 2 }, tip: 'A wheel and rudder: steer the raft' },
+    { k: 'sail', n: 'Sail', need: { plank: 5, rope: 4 }, tip: 'Mast and canvas: catch the wind' },
+    { k: 'anchor', n: 'Anchor', need: { plank: 2, rope: 3, scrap: 3 }, tip: 'Hold the raft in one place' },
+  ];
+  // things you make from what you carry (as many as you like)
+  const MAKE = [
+    { k: 'rope', n: 'Twist rope', need: { tinder: 2 }, tip: 'Dry fibre twisted into a length of rope' },
+    { k: 'plank', n: 'Split a log', need: { log: 1 }, out: 2, tip: 'Two planks from one log' },
+    { k: 'scrap', n: 'Strip a barrel hoop', need: { plank: 3 }, tip: 'Pull the nails and bands: one scrap' },
+  ];
   /* raft pieces. foundation: a cell of the raft. On a foundation: floor (decking), wall (one edge), shelter (a roof),
      storage (keeps tinder dry), fire (a fire pit: cook, relight the torch), reinforce (iron bands: sharks and waves do less) */
   const PIECES = {
@@ -53,8 +68,13 @@
     catcher: { n: 'Rain catcher', need: { plank: 2, rope: 1, scrap: 1 }, tip: 'Fills with fresh water while it rains' },
     still: { n: 'Water still', need: { plank: 3, scrap: 3 }, tip: 'Turns sea water fresh in the sun' },
     trap: { n: 'Fish trap', need: { plank: 3, rope: 2 }, tip: 'Hangs off an edge and catches fish by itself' },
+    helm: { n: 'Helm', need: { helm: 1 }, tip: 'E to take the wheel: A/D steer, W/S raise or lower the sails' },   // crafted first (C), then set on the deck
+    sail: { n: 'Sail', need: { sail: 1 }, tip: 'Catches the wind. Raise it from the helm' },
+    anchor: { n: 'Anchor', need: { anchor: 1 }, tip: 'E drops or raises it: holds the raft where it is' },
+    net: { n: 'Salvage net', need: { plank: 2, rope: 3 }, tip: 'Hangs off an edge and catches wreckage that drifts into it' },
+    lantern: { n: 'Lantern', need: { plank: 1, scrap: 2, tinder: 1 }, tip: 'Lights the deck at night; sharks shy away from it' },
   };
-  const BUILD_ORDER = ['foundation', 'floor', 'wall', 'shelter', 'storage', 'fire', 'catcher', 'still', 'trap', 'reinforce'];
+  const BUILD_ORDER = ['foundation', 'floor', 'wall', 'shelter', 'storage', 'fire', 'helm', 'sail', 'anchor', 'catcher', 'still', 'trap', 'net', 'lantern', 'reinforce'];
   const REPAIR = { plank: 1 };   // one plank mends 35 hp
 
   // settings and the saved run live in the kit's save for this game

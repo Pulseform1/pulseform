@@ -7,7 +7,7 @@ const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', a
 const ctx = await b.newContext({ ...devices['iPad Pro 11 landscape'], deviceScaleFactor: 1 }), p = await ctx.newPage(); const errs = [];
 p.on('pageerror', e => errs.push(e.message + ' @ ' + (e.stack || '').split('\n').slice(1, 3).join(' | ')));
 await p.addInitScript(() => { let now = 0, q = []; performance.now = () => now; window.requestAnimationFrame = cb => { q.push(cb); return q.length; }; window.__step = (n, ms = 1000 / 60) => { for (let i = 0; i < n; i++) { now += ms; const run = q; q = []; run.forEach(cb => cb(now)); } }; });
-await p.goto('file://' + new URL('../public/games/blackwater.html', import.meta.url).pathname + ''); await p.waitForTimeout(4500);
+await p.goto('file://' + new URL('../public/games/' + (process.env.BW_PAGE || 'blackwater.html'), import.meta.url).pathname + ''); await p.waitForTimeout(4500);
 const st = n => p.evaluate(n => window.__step(n), n), shot = n => p.screenshot({ path: `${O}/${n}.png`, timeout: 120000 }), ev = (fn, a) => p.evaluate(fn, a);
 const ok = (c, name, x = '') => console.log((c ? '  ok   ' : '  FAIL ') + name + (x !== '' ? '  (' + x + ')' : ''));
 const cdp = await ctx.newCDPSession(p), pts = new Map();

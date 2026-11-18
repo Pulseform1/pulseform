@@ -8,7 +8,7 @@
   const FWD = new Set(['thunder', 'giant', 'pool', 'spout', 'rumble', 'dusk', 'cthulhu']);   // events friends should hear too
   NET.hook = (name, a) => { if (NET.on && !NET.client && NET.fw && FWD.has(name)) NET.fw.push(['ev', name, typeof a === 'number' || typeof a === 'string' ? a : null]); };
   const r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000;
-  const cellOut = c => ({ i: c.i, j: c.j, hp: Math.round(c.hp), floor: c.floor, walls: c.walls, shelter: c.shelter, obj: c.obj, reinforce: c.reinforce, store: c.store || 0, fish: c.fish || [], fire: c.fire ? { lit: c.fire.lit, cook: c.fire.cook } : null });
+  const cellOut = c => ({ i: c.i, j: c.j, hp: Math.round(c.hp), floor: c.floor, walls: c.walls, shelter: c.shelter, obj: c.obj, reinforce: c.reinforce, store: c.store || 0, fish: c.fish || [], loot: c.loot || [], up: c.up || 0, down: !!c.down, fire: c.fire ? { lit: c.fire.lit, cook: c.fire.cook } : null });
   function netSend(m) { try { MP.send(m); } catch (e) {} }
   // ---- the host: the world, the raft, the materials
   function hostWorld() {
@@ -27,7 +27,7 @@
     if (RAFT.ver !== NETS.ver) { NETS.ver = RAFT.ver; netSend({ t: 'raft', ver: RAFT.ver, yaw: RAFT.yaw, cells: [...RAFT.cells.values()].map(cellOut), logs: RAFT.logs }); }
     const ij = JSON.stringify(INV); if (ij !== NETS.invJ) { NETS.invJ = ij; netSend({ t: 'inv', inv: INV }); }
     if (NETS.t - NETS.lastW >= .1) { NETS.lastW = NETS.t; netSend(hostWorld()); NET.out = []; }
-    NET.paddle[0] *= Math.exp(-dt * 6); NET.paddle[1] *= Math.exp(-dt * 6);   // a friend's paddling fades unless they keep at it
+    NET.paddle[0] *= Math.exp(-dt * 6); NET.paddle[1] *= Math.exp(-dt * 6); NET.steer = (NET.steer || 0) * Math.exp(-dt * 6);   // a friend's paddling fades unless they keep at it
   }
   // a friend asks: carry it out here, and send back what they would have seen
   function hostDo(m) {
@@ -48,12 +48,15 @@
           else if (!F.cook && k0) { INV[k0]--; F.cook = { k: k0.slice(5), t: 0, done: false }; say('Cooking...', '#ffd28a'); RAFT.ver++; }
           PL.torch = t0; } break; }
         case 'cache': if (CACHE.on) openCache(); break;
-        case 'spear': if (SH.state === 'bite' || SH.state === 'player' || SH.state === 'approach' || SH.state === 'circle') { SH.hits++; SH.stun = 1.2; emit('sharkHit'); if (SH.hits >= 3) { SH.state = 'flee'; SH.t = 10; NET.out.push(['say', 'It lets go and runs', '#9fe0a0']); emit('say', 'It lets go and runs', '#9fe0a0'); } } break;
+        case 'spear': if (SH.state === 'bite' || SH.state === 'player' || SH.state === 'approach' || SH.state === 'circle') { SH.hits += d.barb ? 1.5 : 1; SH.stun = 1.2; emit('sharkHit'); if (SH.hits >= 3) { SH.state = 'flee'; SH.t = 10; NET.out.push(['say', 'It lets go and runs', '#9fe0a0']); emit('say', 'It lets go and runs', '#9fe0a0'); } } break;
         case 'log': if ((INV.log || 0) > 0) { const L = { lx: d.lx, lz: d.lz, rot: d.rot, solid: true }; if (logFits(L)) { INV.log--; RAFT.logs.push(L); RAFT.ver++; } else say('It no longer fits there', '#ff9a7a'); } break;
         case 'unlog': { const L = RAFT.logs.find(L => Math.abs(L.lx - d.lx) < .05 && Math.abs(L.lz - d.lz) < .05); if (L) { RAFT.logs.splice(RAFT.logs.indexOf(L), 1); RAFT.ver++; give('log'); NET.cap.got.push('log'); } break; }
         case 'give': INV[d.k] = (INV[d.k] || 0) + (d.n || 1); break;
         case 'spend': for (const [k, n] of Object.entries(d.need || {})) INV[k] = Math.max(0, (INV[k] || 0) - n); break;
         case 'paddle': NET.paddle[0] = d.px || 0; NET.paddle[1] = d.pz || 0; break;
+        case 'steer': NET.steer = cl(+d.s || 0, -.4, .4); break;
+        case 'sail': { const lv = cl(+d.lv || 0, 0, 1); for (const c of RAFT.cells.values()) if (c.obj === 'sail') c.up = lv; RAFT.ver++; break; }
+        case 'anchor': { const c = cell(); if (c && c.obj === 'anchor') { c.down = !c.down; RAFT.ver++; } break; }
       }
     } catch (e) { console.error(e); }
     const cap = NET.cap; NET.cap = null;
@@ -96,6 +99,7 @@
       if (HK.items.length) NET.ask('hk', { items: HK.items.map(f => [f.id, r2(f.x), r2(f.z)]) }); else if (NETS.hk) NET.ask('hk', { items: [] });
       NETS.hk = HK.items.length > 0;
       const p = NET.paddleOut || [0, 0]; if (p[0] || p[1] || NETS.pad) NET.ask('paddle', { px: p[0], pz: p[1] }); NETS.pad = !!(p[0] || p[1]);
+      const st = NET.steerOut || 0; if (st || NETS.st) NET.ask('steer', { s: st }); NETS.st = !!st;
     }
   }
   // ---- everyone: where I am, and where my friends are

@@ -29,6 +29,7 @@
     MAT.sleeve = std({ color: LC('#4a5560'), roughness: .9 }, .15);
     MAT.flame = new THREE.SpriteMaterial({ map: canvasTex(64, 128, (g, w, h) => { const gr = g.createRadialGradient(32, 90, 2, 32, 80, 60); gr.addColorStop(0, 'rgba(255,250,210,1)'); gr.addColorStop(.25, 'rgba(255,190,80,.95)'); gr.addColorStop(.6, 'rgba(240,90,20,.5)'); gr.addColorStop(1, 'rgba(120,20,0,0)'); g.fillStyle = gr; g.beginPath(); g.ellipse(32, 80, 26, 48, 0, 0, 7); g.fill(); }), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
     MAT.glass = std({ color: LC('#cfefff'), roughness: .05, metalness: .1, transparent: true, opacity: .35 }, 1.2); MAT.fresh = std({ color: LC('#4fb8e8'), roughness: .1, transparent: true, opacity: .75 }, 1);
+    MAT.lamp = std({ color: LC('#ffe2a0'), emissive: LC('#ffb347'), emissiveIntensity: 1.4, roughness: .4 }, .3);
     MAT.bobber = std({ color: LC('#e8402a'), roughness: .4 }, .6); MAT.white = std({ color: LC('#f0eee8'), roughness: .5 }, .5);
     MAT.ghostOk = new THREE.MeshBasicMaterial({ color: LC('#7fe0a0'), transparent: true, opacity: .35, depthWrite: false });
     MAT.ghostNo = new THREE.MeshBasicMaterial({ color: LC('#ff6a5a'), transparent: true, opacity: .3, depthWrite: false });
@@ -73,6 +74,32 @@
       for (let k = 0; k < 5; k++) g.add(box(di ? .05 : .7, .5, dj ? .05 : .7, MAT.wet, tx0 + (di ? (k - 2) * .14 : 0), DECK - .45, tz0 + (dj ? (k - 2) * .14 : 0)));
       g.add(box(.72, .05, .72, MAT.wet, tx0, DECK - .7, tz0), box(.72, .05, .72, MAT.wet, tx0, DECK - .2, tz0), cyl(.02, .4, MAT.rope, x0 + di * .7, DECK, z0 + dj * .7));
       for (let k = 0; k < (c.store || 0); k++) { const f = new THREE.Mesh(new THREE.SphereGeometry(.06, 8, 6), MAT.shark); f.scale.set(3, 1, 1); f.position.set(tx0 + (k - 1) * .12, DECK - .55 + k * .08, tz0); g.add(f); } }
+    if (c.obj === 'helm') {   // a ship's wheel on a post, facing the way the raft goes (-z); you stand behind it
+      g.add(box(.16, .9, .16, MAT.wet, x0, DECK + .45, z0 - .05), box(.5, .06, .3, MAT.wet, x0, DECK + .03, z0 - .05));
+      const wh = new THREE.Group(); wh.position.set(x0, DECK + 1.0, z0 + .06);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(.36, .035, 6, 18), MAT.deck); wh.add(rim);
+      for (let k = 0; k < 8; k++) { const a = k / 8 * TAU, sp = box(.035, .5, .035, MAT.wet, Math.cos(a) * .2, Math.sin(a) * .2, 0, 0, 0, a + Math.PI / 2); wh.add(sp); wh.add(box(.04, .12, .04, MAT.deck, Math.cos(a) * .43, Math.sin(a) * .43, 0, 0, 0, a + Math.PI / 2)); }
+      wh.add(cyl(.07, .1, MAT.iron, 0, 0, 0)); wh.children[wh.children.length - 1].rotation.x = Math.PI / 2; wh.userData.wheel = true; g.add(wh);
+      for (const s of [-1, 1]) g.add(cyl(.02, .6, MAT.rope, x0 + s * .5, DECK + .02, z0 + .5)); }
+    if (c.obj === 'sail') {   // a mast with a square sail across the raft; furled on the yard when it is down
+      const up = c.up || 0; g.add(cyl(.07, 4.4, MAT.wet, x0, DECK + 2.2, z0), box(1.9, .07, .07, MAT.wet, x0, DECK + 4.1, z0 + .05), box(1.6, .05, .05, MAT.wet, x0, DECK + 4.1 - 2.6 * Math.max(up, .05), z0 + .05));
+      if (up > 0) { const h = 2.6 * up, sl = new THREE.Mesh(new THREE.PlaneGeometry(1.7, h, 4, 4), MAT.canvas); const pos = sl.geometry.attributes.position; for (let n = 0; n < pos.count; n++) { const px = pos.getX(n), py = pos.getY(n); pos.setZ(n, -.28 * (1 - (px / .85) ** 2) * (1 - (py / (h / 2)) ** 2)); } sl.geometry.computeVertexNormals(); sl.position.set(x0, DECK + 4.1 - h / 2, z0 + .1); g.add(sl); }
+      else { const roll = cyl(.12, 1.7, MAT.canvas, x0, DECK + 3.98, z0 + .1); roll.rotation.z = Math.PI / 2; g.add(roll); }
+      for (const s of [-1, 1]) { const st = cyl(.012, 4.3, MAT.rope, x0 + s * .62, DECK + 2.1, z0); st.rotation.z = s * .15; g.add(st); } }
+    if (c.obj === 'anchor') {   // a winch drum; with the anchor down its rope runs over the edge into the sea
+      const drum = cyl(.22, .7, MAT.barrel, x0, DECK + .35, z0); drum.rotation.z = Math.PI / 2; g.add(drum, box(.08, .6, .5, MAT.wet, x0 - .4, DECK + .3, z0), box(.08, .6, .5, MAT.wet, x0 + .4, DECK + .3, z0));
+      const s = SIDES.findIndex(([di, dj]) => !cellAt(body, c.i + di, c.j + dj)), [di, dj] = SIDES[Math.max(0, s)];
+      if (c.down) { const r = cyl(.025, 2.4, MAT.rope, x0 + di * .7, DECK - .8, z0 + dj * .7); g.add(r, box(.6, .05, .05, MAT.rope, x0 + di * .35, DECK + .3, z0 + dj * .35, 0, Math.atan2(dj, di), 0)); }
+      else { g.add(box(.08, .7, .08, MAT.iron, x0 + .5, DECK + .05, z0 + .45, Math.PI / 2, 0, 0), box(.5, .08, .08, MAT.iron, x0 + .5, DECK + .05, z0 + .75), box(.4, .06, .06, MAT.iron, x0 + .5, DECK + .05, z0 + .15)); } }
+    if (c.obj === 'net') {   // two posts on the open edge with a rope net slung between them into the water
+      const s = SIDES.findIndex(([di, dj]) => !cellAt(body, c.i + di, c.j + dj)), [di, dj] = SIDES[Math.max(0, s)], ex = x0 + di * 1.0, ez = z0 + dj * 1.0, ax = dj, az = di;
+      for (const t of [-1, 1]) { g.add(cyl(.05, 1.6, MAT.wet, x0 + di * .7 + ax * t * .7, DECK + .1, z0 + dj * .7 + az * t * .7)); }
+      for (let k = 0; k < 5; k++) g.add(box(ax ? .02 : 1.4, .02, az ? .02 : 1.4, MAT.rope, ex, DECK - .1 - k * .2, ez));
+      for (let k = 0; k < 6; k++) { const o = (k - 2.5) * .26; g.add(box(.02, 1, .02, MAT.rope, ex + ax * o, DECK - .5, ez + az * o)); }
+      for (let k = 0; k < (c.store || 0); k++) g.add(box(.3, .2, .25, k % 2 ? MAT.crate : MAT.drift, ex + ax * (k - 1.5) * .3, DECK - .55, ez + az * (k - 1.5) * .3)); }
+    if (c.obj === 'lantern') {   // a pole with a hanging lamp
+      g.add(cyl(.05, 2.2, MAT.wet, x0 + .4, DECK + 1.1, z0 + .4), box(.5, .05, .05, MAT.wet, x0 + .2, DECK + 2.15, z0 + .4), cyl(.01, .25, MAT.rope, x0, DECK + 2.0, z0 + .4));
+      const lamp = box(.2, .26, .2, MAT.lamp, x0, DECK + 1.78, z0 + .4); lamp.userData.lamp = true; g.add(lamp, box(.24, .04, .24, MAT.iron, x0, DECK + 1.93, z0 + .4), box(.24, .04, .24, MAT.iron, x0, DECK + 1.63, z0 + .4)); }
     if (c.obj === 'storage') { g.add(box(.8, .6, .6, MAT.crate, x0 + .2, DECK + .27, z0 - .2), box(.82, .06, .62, MAT.wet, x0 + .2, DECK + .58, z0 - .2), box(.06, .62, .62, MAT.iron, x0 - .19, DECK + .27, z0 - .2)); }
     if (c.obj === 'fire') { for (let k = 0; k < 9; k++) { const a = k / 9 * TAU; g.add(box(.16, .12, .12, MAT.stone, x0 + Math.cos(a) * .36, DECK + .03, z0 + Math.sin(a) * .36, 0, a, 0)); } g.add(box(.7, .04, .7, MAT.iron, x0, DECK - .03, z0)); for (let k = 0; k < 3; k++) g.add(cyl(.04, .55, MAT.log, x0, DECK + .08, z0, Math.PI / 2, k * 1.05, 0));
       const fl = new THREE.Sprite(MAT.flame); fl.scale.set(.55, .9, 1); fl.position.set(x0, DECK + .45, z0); fl.visible = false; fl.userData.fire = c; g.add(fl);
@@ -110,7 +137,7 @@
     for (const [k, m] of map) if (body.cells.get(k) !== m.userData.cell || m.userData.v !== cellVer(m.userData.cell)) { G.remove(m); m.traverse(o => { if (o.geometry) o.geometry.dispose(); }); map.delete(k); }
     for (const [k, c] of body.cells) if (!map.has(k)) { const m = cellMesh(c, body); m.userData.v = cellVer(c); map.set(k, m); G.add(m); }
   }
-  const cellVer = c => [Math.ceil(c.hp / 15), c.floor, c.walls.join(''), c.shelter, c.obj, c.reinforce, c.store || 0].join('|');
+  const cellVer = c => [Math.ceil(c.hp / 15), c.floor, c.walls.join(''), c.shelter, c.obj, c.reinforce, c.store || 0, c.up || 0, !!c.down].join('|');
   // salvage
   function itemMesh(k) {
     const g = new THREE.Group();

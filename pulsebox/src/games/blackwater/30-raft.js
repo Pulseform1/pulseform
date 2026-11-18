@@ -46,10 +46,11 @@
     b.vr += (wr * wr * (rT - b.roll) - 2 * .7 * wr * b.vr) * dt; b.roll += b.vr * dt;
     // drift with the water, turning with any swirl in it; bigger rafts answer more slowly
     currentAt(b.x, b.z, _cur); const k = .7 / (1 + .06 * n);
-    b.vx += ((_cur[0] + (extra.px || 0)) - b.vx) * k * dt; b.vz += ((_cur[1] + (extra.pz || 0)) - b.vz) * k * dt;
+    const hold = extra.hold ? .12 : 1;   // a dropped anchor holds against the drift (a whirlpool still drags it)
+    b.vx += ((_cur[0] * hold + (extra.px || 0)) - b.vx) * k * dt; b.vz += ((_cur[1] * hold + (extra.pz || 0)) - b.vz) * k * dt;
     let curl = 0, rr = 0;
     for (const c of b.cells.values()) { const [wx, wz] = flatW(b, c.i * CS, c.j * CS), rx = wx - b.x, rz = wz - b.z, v = currentAt(wx, wz, [0, 0]); curl += rz * v[0] - rx * v[1]; rr += rx * rx + rz * rz; }
-    const spin = rr > .5 ? curl / rr : 0; b.vyaw += ((spin * .9 + (extra.spin || 0)) - b.vyaw) * k * 1.4 * dt;
+    const spin = rr > .5 ? curl / rr : 0; b.vyaw += ((spin * .9 * hold + (extra.spin || 0)) - b.vyaw) * (extra.spin ? Math.max(k, .45) : k) * 1.4 * dt;
     b.x += b.vx * dt; b.z += b.vz * dt; b.yaw += b.vyaw * dt;
   }
 
@@ -84,7 +85,8 @@
   function hurtCell(c, amt, why) {
     if (!c || c.hp <= 0) return;
     const braced = RAFT.logs.some(L => L.solid && logCovers(L, c));   // a solid log across a cell braces it
-    const real = amt * (c.reinforce ? (why === 'shark' ? .4 : .5) : 1) * (braced ? .65 : 1); c.hp -= real; c.hit = 1; c.shake = Math.max(c.shake, .4); RAFT.ver++;
+    const lit = why === 'shark' && [...RAFT.cells.values()].some(o => o.obj === 'lantern' && Math.abs(o.i - c.i) <= 1 && Math.abs(o.j - c.j) <= 1);   // a lantern close by
+    const real = amt * (c.reinforce ? (why === 'shark' ? .4 : .5) : 1) * (braced ? .65 : 1) * (lit ? .55 : 1); c.hp -= real; c.hit = 1; c.shake = Math.max(c.shake, .4); RAFT.ver++;
     emit('hurt', c, real, why);
     if (c.hp <= 0) breakCell(c, why);
   }
@@ -104,9 +106,10 @@
     if (!c) return false;
     if (kind === 'floor') return !c.floor;
     if (kind === 'wall') return side >= 0 && !c.walls[side];
-    if (kind === 'shelter') return !c.shelter;
-    if (kind === 'storage' || kind === 'fire' || kind === 'catcher' || kind === 'still') return !c.obj;
-    if (kind === 'trap') return !c.obj && exposed(RAFT, c);
+    if (kind === 'shelter') return !c.shelter && c.obj !== 'sail';
+    if (kind === 'storage' || kind === 'fire' || kind === 'catcher' || kind === 'still' || kind === 'helm' || kind === 'anchor' || kind === 'lantern') return !c.obj;
+    if (kind === 'sail') return !c.obj && !c.shelter && [...RAFT.cells.values()].filter(o => o.obj === 'sail').length < 3;
+    if (kind === 'trap' || kind === 'net') return !c.obj && exposed(RAFT, c);
     if (kind === 'reinforce') return !c.reinforce && exposed(RAFT, c);
     return false;
   }

@@ -46,6 +46,7 @@
     // fires: flames, a light, the fish on the spit
     let fireNear = null, fd = 1e9;
     X.raftG.traverse(o => { if (o.userData.fire) { const F = o.userData.fire.fire; o.visible = !!(F && F.lit); if (o.visible) { o.scale.set(.5 + Math.random() * .12, .85 + Math.random() * .2, 1); o.getWorldPosition(_v1); const d = _v1.distanceTo(cam.position); if (d < fd) { fd = d; fireNear = _v1.clone(); } } } if (o.userData.cook) { const F = o.userData.cook.fire; o.visible = !!(F && F.cook); if (o.visible) o.material = F.cook.done ? MAT.hurt : MAT.shark; } });
+    if (!fireNear && (S.tod < 6.6 || S.tod > 18.4)) X.raftG.traverse(o => { if (o.userData.lamp) { o.getWorldPosition(_v1); const d = _v1.distanceTo(cam.position); if (d < fd) { fd = d; fireNear = _v1.clone(); } } });   // lanterns light the deck at night
     X.firePt.intensity = fireNear ? 1.6 + Math.random() * .5 : 0; if (fireNear) X.firePt.position.copy(fireNear).add(_v2.set(0, .4, 0));
     // your torch: warm, flickering, on your hands and the wood near you
     const fl = PL.torch ? 1.5 + Math.sin(X.t * 17) * .15 + Math.sin(X.t * 31) * .1 + (Math.random() - .5) * .25 : 0;

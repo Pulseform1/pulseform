@@ -9,7 +9,7 @@ async function open(tag) {
   const ctx = await b.newContext({ viewport: { width: 960, height: 540 }, ignoreHTTPSErrors: true }), p = await ctx.newPage();
   p.on('pageerror', e => errs.push(tag + ': ' + e.message + ' @ ' + (e.stack || '').split('\n').slice(1, 3).join(' | ')));
   await p.addInitScript(() => { Object.defineProperty(Document.prototype, 'pointerLockElement', { get() { return document.getElementById('cv'); } }); Element.prototype.requestPointerLock = function () {}; try { localStorage.setItem('pbx-mp-name', 'P' + Math.floor(Math.random() * 90 + 10)); } catch (e) {} });
-  await p.goto('file://' + new URL('../public/games/blackwater.html', import.meta.url).pathname);
+  await p.goto('file://' + new URL('../public/games/' + (process.env.BW_PAGE || 'blackwater.html'), import.meta.url).pathname);
   await p.waitForFunction(() => typeof GAME !== 'undefined' && GAME.test && GAME.test.ready, null, { timeout: 60000 });
   await p.click('#bPlay'); await p.waitForTimeout(800);
   await p.evaluate(() => { GAME.test.CFG.quality = 'low'; GAME.test.applyQuality(); });
