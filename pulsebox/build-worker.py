@@ -45,6 +45,7 @@ added_file = os.path.join(PUB, 'games-added.json')
 added = json.load(open(added_file)) if os.path.exists(added_file) else {}
 for f in sorted(glob.glob(os.path.join(PUB, 'games', '*.html'))):
     gid = os.path.basename(f)[:-5]
+    if '-lab-' in gid: continue  # private test pages stay out of the hub's data
     try:
         d = subprocess.run(['git', 'log', '--diff-filter=A', '--format=%cI', '--', os.path.relpath(f, HERE)], cwd=HERE, capture_output=True, text=True).stdout.split()
         if d: added[gid] = d[-1][:19]
