@@ -77,6 +77,16 @@
     }
     // belts: the chevrons in their ground run with the belt (72-world made one texture for each direction)
     Z.belts = X.beltT || [];
+    // the spawn barriers: a wall of light round each side's spawn room in the buy phase, dropped when the round goes live
+    const barT = canvasTex(64, 256, (g, w, h) => { const gr = g.createLinearGradient(0, h, 0, 0); gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(.25, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      g.fillStyle = 'rgba(255,255,255,.5)'; for (let y = 6; y < h; y += 22) g.fillRect(0, y, w, 2); });
+    Z.barriers = ['att', 'def'].map(side => {
+      const Zs = ZONE[side], P = [], U = [], I = []; const quad = (a, b) => { const n = P.length / 3; P.push(a[0], 0, a[1], b[0], 0, b[1], b[0], 3.2, b[1], a[0], 3.2, a[1]); U.push(0, 0, 1, 0, 1, 1, 0, 1); I.push(n, n + 1, n + 2, n, n + 2, n + 3); };
+      for (let k = 0; k < NC; k++) { if (!Zs[k]) continue; const i = k % GW, j = Math.floor(k / GW), x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS;
+        for (const [di, dj, a, b] of [[1, 0, [x1, z0], [x1, z1]], [-1, 0, [x0, z0], [x0, z1]], [0, 1, [x0, z1], [x1, z1]], [0, -1, [x0, z0], [x1, z0]]]) { const nk = idx(i + di, j + dj); if (nk >= 0 && NAV[nk] && !Zs[nk]) quad(a, b); } }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); geo.setIndex(I);
+      const m = add(new THREE.Mesh(geo, glow(side === 'att' ? '#ff8a3d' : '#4fd0ff', { map: barT, opacity: .7 }))); m.visible = false; return { m, side, y: 1 };
+    });
     buildLife(W, TH);
   }
   // merge plain geometries (positions, normals and uvs; indexed or not) into one
@@ -169,6 +179,8 @@
     for (const w of Z.brks) { const B = BRKS[w.bi]; if (!B) continue; w.m.visible = B.hp > 0; if (!w.m.visible) continue; const k = cl(B.hp / B.HP, 0, 1); w.m.material.color.setRGB(lp(.45, 1, k), lp(.38, 1, k), lp(.34, 1, k));
       if (w.shake > 0) { w.shake = Math.max(0, w.shake - dt); w.m.position.x = Math.sin(T * 90) * .03 * w.shake * 8; } else w.m.position.x = 0; }
     if (Z.motes) { const a = Z.motes.geometry.attributes.position.array, sp = Z.motes.userData.sp; for (let k = 0; k < sp.length; k++) { a[k * 3 + 1] += sp[k] * dt; a[k * 3] += Math.sin(T * .7 + k) * dt * .1; if (a[k * 3 + 1] > 5) a[k * 3 + 1] = 0; } Z.motes.geometry.attributes.position.needsUpdate = true; }
+    // the barriers: up through the buy phase, then they sink away as the round goes live
+    for (const b of Z.barriers || []) { const up = M.phase === 'buy' && M.mode !== 'range' && M.mode !== 'demo'; b.y = up ? 1 : Math.max(0, b.y - dt * 2.2); b.m.visible = b.y > 0; if (b.m.visible) { b.m.scale.y = b.y; b.m.material.opacity = .55 * b.y + Math.sin(T * 3) * .08 * b.y; } }
     for (const fn of Z.life) fn(T, dt);
     ambTick(dt);
   }

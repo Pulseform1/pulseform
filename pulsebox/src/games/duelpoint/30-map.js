@@ -73,6 +73,9 @@
   const TPS = [], PADS = [], GATES = [], BRKS = [], VENTS = [];
   // the ultimate orbs' spots: halfway along two of the attackers' ways in (or where the map says)
   const ORBS = [];
+  // each side's spawn room for the buy phase: the cells within a few steps of its spawn (you move freely inside, a barrier
+  // holds you there until the round goes live)
+  const ZONE = { att: new Uint8Array(MAXNC), def: new Uint8Array(MAXNC) };
   let MAP = MAPS[0];
   // per cell: height at the low and high end (they differ only on stairs), which way stairs run (0 none, 2 along z),
   // the ceiling above it (0 = open sky), whether it is a fence, whether a fighter can stand there, its area
@@ -119,7 +122,7 @@
     // attackers who start at both ends of the map take turns at each end, so a team is split across them
     if (MAP.split && SPAWN.att.length) { const cx = MW / 2, a = SPAWN.att.filter(p => p[0] < cx), b = SPAWN.att.filter(p => p[0] >= cx); SPAWN.att.length = 0; for (let n = 0; n < Math.max(a.length, b.length); n++) { if (a[n]) SPAWN.att.push(a[n]); if (b[n]) SPAWN.att.push(b[n]); } }
     navCells.length = 0; for (let k = 0; k < NC; k++) if (NAV[k]) navCells.push([(k % GW) * CS + 1, Math.floor(k / GW) * CS + 1]);
-    resetMech(); placeOrbs();
+    resetMech(); placeOrbs(); spawnZones();
     return MAP;
   }
   // the nearest cell to stand still on: open ground, not a belt, ice, a pad, a teleporter or a vent
@@ -128,6 +131,15 @@
       if (k >= 0 && NAV[k] && !BELT[k] && !ICE[k] && TPX[k] < 0 && PADX[k] < 0 && !CAX[k] && '.oqrADgL'.includes(SRC[j][i])) return [i, j]; }
     return null;
   }
+  function spawnZones() {
+    for (const side of ['att', 'def']) {
+      const Z = ZONE[side], q = []; Z.fill(0);
+      for (const p of SPAWN[side]) { const k = idx(Math.floor(p[0] / CS), Math.floor(p[1] / CS)); if (k >= 0 && !Z[k]) { Z[k] = 1; q.push([k, 0]); } }
+      while (q.length) { const [k, d] = q.shift(); if (d >= 3) continue; const i = k % GW, j = Math.floor(k / GW);
+        for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(i + di, j + dj); if (nk < 0 || Z[nk] || !NAV[nk] || TPX[nk] >= 0 || PADX[nk] >= 0 || CH[nk] > STEP) continue; Z[nk] = 2; q.push([nk, d + 1]); } }
+    }
+  }
+  const inZone = (side, x, z) => { const Z = ZONE[side]; for (const [ox, oz] of [[-RAD, -RAD], [RAD, -RAD], [-RAD, RAD], [RAD, RAD]]) { const k = idx(Math.floor((x + ox) / CS), Math.floor((z + oz) / CS)); if (k < 0 || !Z[k]) return false; } return true; };
   function placeOrbs() {
     ORBS.length = 0;
     if (MAP.orbs) { for (const o of MAP.orbs) ORBS.push(C(o[0] + .5, o[1] + .5)); return; }

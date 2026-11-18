@@ -174,3 +174,6 @@
   cue('nightwalk', (f, a, b) => { for (const p of [a, b]) { const o = atPos(p[0], p[1], 1.2); tone(o, 90, .7, 'sine', .14, -40); hiss(o, .5, .07, 'lowpass', 600); } });
   cue('bolt', (f, o2) => { const o = outFor(f, 1.4); tone(o, 1600, .35, 'sawtooth', .05, -1200); hiss(o, .25, .09, 'highpass', 3000); });
   cue('lockPop', L => { const o = atPos(L.x, L.z, 1.4); tone(o, 220, .8, 'square', .07, -150); tone(o, 1100, .5, 'sine', .05, -700, .05); });
+
+  // the barriers dropping as the round goes live
+  cue('live', () => { if (!M || M.mode === 'range') return; const o = outFor(null, .9); tone(o, 180, .5, 'sawtooth', .05, -120); hiss(o, .45, .06, 'highpass', 2200); });   // (the chime above says the round is live)

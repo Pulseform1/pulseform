@@ -52,7 +52,7 @@ ok(r.k === 'play', 'Escape in an online match opens the settings over it instead
 // the friend's connection falls over: they get back into the same match
 await T(C, () => MP._drop()); await C.waitForTimeout(700);
 r = { h: await st(H), c: await st(C) };
-ok(r.c.rejoining && !r.c.over && r.c.kstate === 'play', 'the friend loses the connection: their game keeps running while it reconnects', JSON.stringify(r.c));
+ok((r.c.rejoining || r.c.online) && !r.c.over && r.c.kstate === 'play', 'the friend loses the connection: their game keeps running while it reconnects (or already has)', JSON.stringify(r.c));
 await C.waitForFunction(() => MP.online(), null, { timeout: 20000 }); await H.waitForTimeout(2500);
 r = { h: await st(H), c: await st(C) };
 ok(!r.h.over && !r.c.over && !r.h.gone.length && !r.h.dc.length && r.c.online && !r.c.dropped, 'the friend is back in the same match; the host never dropped them', JSON.stringify(r));

@@ -75,7 +75,7 @@
   // with a pip for each kill in your run, then fades
   let banner = null;
   on('kill', (v, by, head, wk) => { if (M && by === me() && v !== me() && M.mode !== 'demo') banner = { t0: performance.now(), n: killRun, head, name: v.name, em: killEmblem(wk) }; });
-  on('round', n => { if (n === 1) banner = null; });
+  on('round', n => { if (n === 1) banner = null; else if (X) X.roundFadeT = performance.now(); });
   // the banner wears the emblem of the skin you made the kill with (Epic and up), or the plain skull
   const killEmblem = wk => { const sk = skinOfId(skinFor(me(), wk)); return sk && sk.L.emblem ? Object.assign({ tier: sk.R.tier }, sk.L.emblem) : { shape: 'skull', col: BONE, glow: YOU }; };
   // the emblem's glyph, drawn round (0, 0) at radius r
@@ -334,6 +334,9 @@
       tx(g, G2.n.toUpperCase(), 640 + w / 2 - 14 * u, y + 20 * u, 13 * u, G2.col || BONE, 'right', 800);
       if (mates.length > 1) tx(g, `${mates.indexOf(P) + 1} / ${mates.length}  ·  ${isTouch() ? 'tap' : 'click or Space'} to switch`, 640 + w / 2 - 14 * u, y + 40 * u, 10.5 * u, DIM, 'right', 800);
     }
+    // between rounds: the end of one fades out to black and the next fades in, rather than a cut
+    { let k = 0; if (M.phase === 'end' && M.t < .45 && !(M.wins[0] >= WIN_ROUNDS || M.wins[1] >= WIN_ROUNDS)) k = 1 - M.t / .45; if (X.roundFadeT) { const e = (performance.now() - X.roundFadeT) / 500; if (e >= 1) X.roundFadeT = 0; else k = Math.max(k, 1 - e); }
+      if (k > 0) { g.fillStyle = `rgba(0,0,0,${smooth(cl(k, 0, 1))})`; g.fillRect(V.x0, V.y0, W, H); } }
     if (X.specFade > 0) { if (!X.specFadeT) X.specFadeT = performance.now(); const k = 1 - (performance.now() - X.specFadeT) / 400; if (k <= 0) { X.specFade = 0; X.specFadeT = 0; } else { g.fillStyle = `rgba(0,0,0,${smooth(k)})`; g.fillRect(V.x0, V.y0, W, H); } }   // 0.4 s, whatever the frame rate
     if (!me().alive && M.deathInfo && !range && P === me()) {
       const D = M.deathInfo, a = cl(D.t * 3, 0, 1), cw2 = 520 * u, ch2 = 104 * u, x = 640 - cw2 / 2, y = V.y1 - 196 * u + (1 - smooth(a)) * 30 * u, L = M.dlog || {}, gave = L[me().key + '>' + D.key] || { d: 0, n: 0, h: 0 }, took = L[D.key + '>' + me().key] || { d: 0, n: 0, h: 0 };

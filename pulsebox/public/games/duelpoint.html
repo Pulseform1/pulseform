@@ -590,6 +590,9 @@ const GAME = {
   const TPS = [], PADS = [], GATES = [], BRKS = [], VENTS = [];
   // the ultimate orbs' spots: halfway along two of the attackers' ways in (or where the map says)
   const ORBS = [];
+  // each side's spawn room for the buy phase: the cells within a few steps of its spawn (you move freely inside, a barrier
+  // holds you there until the round goes live)
+  const ZONE = { att: new Uint8Array(MAXNC), def: new Uint8Array(MAXNC) };
   let MAP = MAPS[0];
   // per cell: height at the low and high end (they differ only on stairs), which way stairs run (0 none, 2 along z),
   // the ceiling above it (0 = open sky), whether it is a fence, whether a fighter can stand there, its area
@@ -636,7 +639,7 @@ const GAME = {
     // attackers who start at both ends of the map take turns at each end, so a team is split across them
     if (MAP.split && SPAWN.att.length) { const cx = MW / 2, a = SPAWN.att.filter(p => p[0] < cx), b = SPAWN.att.filter(p => p[0] >= cx); SPAWN.att.length = 0; for (let n = 0; n < Math.max(a.length, b.length); n++) { if (a[n]) SPAWN.att.push(a[n]); if (b[n]) SPAWN.att.push(b[n]); } }
     navCells.length = 0; for (let k = 0; k < NC; k++) if (NAV[k]) navCells.push([(k % GW) * CS + 1, Math.floor(k / GW) * CS + 1]);
-    resetMech(); placeOrbs();
+    resetMech(); placeOrbs(); spawnZones();
     return MAP;
   }
   // the nearest cell to stand still on: open ground, not a belt, ice, a pad, a teleporter or a vent
@@ -645,6 +648,15 @@ const GAME = {
       if (k >= 0 && NAV[k] && !BELT[k] && !ICE[k] && TPX[k] < 0 && PADX[k] < 0 && !CAX[k] && '.oqrADgL'.includes(SRC[j][i])) return [i, j]; }
     return null;
   }
+  function spawnZones() {
+    for (const side of ['att', 'def']) {
+      const Z = ZONE[side], q = []; Z.fill(0);
+      for (const p of SPAWN[side]) { const k = idx(Math.floor(p[0] / CS), Math.floor(p[1] / CS)); if (k >= 0 && !Z[k]) { Z[k] = 1; q.push([k, 0]); } }
+      while (q.length) { const [k, d] = q.shift(); if (d >= 3) continue; const i = k % GW, j = Math.floor(k / GW);
+        for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = idx(i + di, j + dj); if (nk < 0 || Z[nk] || !NAV[nk] || TPX[nk] >= 0 || PADX[nk] >= 0 || CH[nk] > STEP) continue; Z[nk] = 2; q.push([nk, d + 1]); } }
+    }
+  }
+  const inZone = (side, x, z) => { const Z = ZONE[side]; for (const [ox, oz] of [[-RAD, -RAD], [RAD, -RAD], [-RAD, RAD], [RAD, RAD]]) { const k = idx(Math.floor((x + ox) / CS), Math.floor((z + oz) / CS)); if (k < 0 || !Z[k]) return false; } return true; };
   function placeOrbs() {
     ORBS.length = 0;
     if (MAP.orbs) { for (const o of MAP.orbs) ORBS.push(C(o[0] + .5, o[1] + .5)); return; }
@@ -809,8 +821,9 @@ const GAME = {
   function blocked(x, z, feet) { for (const [a, b] of RING) if (solidAt(x + a, z + b, feet)) return true; return false; }
   function groundAt(x, z, feet) { let g = 0; for (const [a, b] of [[0, 0], [RAD, 0], [-RAD, 0], [0, RAD], [0, -RAD]]) { const h = hMove(x + a, z + b); if (h <= feet + STEP && h > g) g = h; } return g; }
   function moveF(f, dx, dz) {
-    if (!blocked(f.x + dx, f.z, f.y)) f.x += dx; else f.vx = 0;
-    if (!blocked(f.x, f.z + dz, f.y)) f.z += dz; else f.vz = 0;
+    const pen = M && M.phase === 'buy' && M.mode !== 'range' && !f.net ? sideOf(f) : null, held = (x, z) => pen && inZone(pen, f.x, f.z) && !inZone(pen, x, z);   // the spawn barrier
+    if (!blocked(f.x + dx, f.z, f.y) && !held(f.x + dx, f.z)) f.x += dx; else f.vx = 0;
+    if (!blocked(f.x, f.z + dz, f.y) && !held(f.x, f.z + dz)) f.z += dz; else f.vz = 0;
     const g = groundAt(f.x, f.z, f.y), was = f.ground;
     if (f.y > g + .001 || f.vy > 0) f.ground = false;
     if (f.y <= g) { if (!was && f.vy < -4) emit('land', f); f.y = g; f.vy = 0; f.ground = true; }
@@ -820,7 +833,7 @@ const GAME = {
   // one step of a fighter's body from its intent I: { mx, mz (-1..1, how hard and which way), walk, crouch, jump }
   function stepBody(f, I, dt) {
     if (!f.alive) return;
-    const G = gun(f), frozen = (M.phase === 'buy' && M.mode !== 'range') || f.plant > 0 || f.defuse > 0;
+    const G = gun(f), frozen = f.plant > 0 || f.defuse > 0;   // in the buy phase you move, but only inside your spawn (moveF)
     // sprint: forward, standing, not aiming, reloading or just after a shot; slide: crouch while sprinting fast on the ground
     const hv = Math.hypot(f.vx, f.vz), crouchTap = I.crouch && !f.crouchHeld; f.crouchHeld = !!I.crouch;
     if (f.slideCD > 0) f.slideCD -= dt;
@@ -2025,6 +2038,16 @@ const GAME = {
     }
     // belts: the chevrons in their ground run with the belt (72-world made one texture for each direction)
     Z.belts = X.beltT || [];
+    // the spawn barriers: a wall of light round each side's spawn room in the buy phase, dropped when the round goes live
+    const barT = canvasTex(64, 256, (g, w, h) => { const gr = g.createLinearGradient(0, h, 0, 0); gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(.25, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      g.fillStyle = 'rgba(255,255,255,.5)'; for (let y = 6; y < h; y += 22) g.fillRect(0, y, w, 2); });
+    Z.barriers = ['att', 'def'].map(side => {
+      const Zs = ZONE[side], P = [], U = [], I = []; const quad = (a, b) => { const n = P.length / 3; P.push(a[0], 0, a[1], b[0], 0, b[1], b[0], 3.2, b[1], a[0], 3.2, a[1]); U.push(0, 0, 1, 0, 1, 1, 0, 1); I.push(n, n + 1, n + 2, n, n + 2, n + 3); };
+      for (let k = 0; k < NC; k++) { if (!Zs[k]) continue; const i = k % GW, j = Math.floor(k / GW), x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS;
+        for (const [di, dj, a, b] of [[1, 0, [x1, z0], [x1, z1]], [-1, 0, [x0, z0], [x0, z1]], [0, 1, [x0, z1], [x1, z1]], [0, -1, [x0, z0], [x1, z0]]]) { const nk = idx(i + di, j + dj); if (nk >= 0 && NAV[nk] && !Zs[nk]) quad(a, b); } }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); geo.setIndex(I);
+      const m = add(new THREE.Mesh(geo, glow(side === 'att' ? '#ff8a3d' : '#4fd0ff', { map: barT, opacity: .7 }))); m.visible = false; return { m, side, y: 1 };
+    });
     buildLife(W, TH);
   }
   // merge plain geometries (positions, normals and uvs; indexed or not) into one
@@ -2117,6 +2140,8 @@ const GAME = {
     for (const w of Z.brks) { const B = BRKS[w.bi]; if (!B) continue; w.m.visible = B.hp > 0; if (!w.m.visible) continue; const k = cl(B.hp / B.HP, 0, 1); w.m.material.color.setRGB(lp(.45, 1, k), lp(.38, 1, k), lp(.34, 1, k));
       if (w.shake > 0) { w.shake = Math.max(0, w.shake - dt); w.m.position.x = Math.sin(T * 90) * .03 * w.shake * 8; } else w.m.position.x = 0; }
     if (Z.motes) { const a = Z.motes.geometry.attributes.position.array, sp = Z.motes.userData.sp; for (let k = 0; k < sp.length; k++) { a[k * 3 + 1] += sp[k] * dt; a[k * 3] += Math.sin(T * .7 + k) * dt * .1; if (a[k * 3 + 1] > 5) a[k * 3 + 1] = 0; } Z.motes.geometry.attributes.position.needsUpdate = true; }
+    // the barriers: up through the buy phase, then they sink away as the round goes live
+    for (const b of Z.barriers || []) { const up = M.phase === 'buy' && M.mode !== 'range' && M.mode !== 'demo'; b.y = up ? 1 : Math.max(0, b.y - dt * 2.2); b.m.visible = b.y > 0; if (b.m.visible) { b.m.scale.y = b.y; b.m.material.opacity = .55 * b.y + Math.sin(T * 3) * .08 * b.y; } }
     for (const fn of Z.life) fn(T, dt);
     ambTick(dt);
   }
@@ -3960,6 +3985,9 @@ const GAME = {
   cue('nightwalk', (f, a, b) => { for (const p of [a, b]) { const o = atPos(p[0], p[1], 1.2); tone(o, 90, .7, 'sine', .14, -40); hiss(o, .5, .07, 'lowpass', 600); } });
   cue('bolt', (f, o2) => { const o = outFor(f, 1.4); tone(o, 1600, .35, 'sawtooth', .05, -1200); hiss(o, .25, .09, 'highpass', 3000); });
   cue('lockPop', L => { const o = atPos(L.x, L.z, 1.4); tone(o, 220, .8, 'square', .07, -150); tone(o, 1100, .5, 'sine', .05, -700, .05); });
+
+  // the barriers dropping as the round goes live
+  cue('live', () => { if (!M || M.mode === 'range') return; const o = outFor(null, .9); tone(o, 180, .5, 'sawtooth', .05, -120); hiss(o, .45, .06, 'highpass', 2200); });   // (the chime above says the round is live)
   /* ---------- 90 input: keyboard and mouse, touch, and the click zones the drawn interface uses ----------
      The interface is drawn fresh every frame; as it draws a button it registers a zone, and a press goes to the
      topmost zone under it. Whatever no zone claims belongs to the game: with a mouse, a click captures the pointer;
@@ -4222,7 +4250,7 @@ const GAME = {
   // with a pip for each kill in your run, then fades
   let banner = null;
   on('kill', (v, by, head, wk) => { if (M && by === me() && v !== me() && M.mode !== 'demo') banner = { t0: performance.now(), n: killRun, head, name: v.name, em: killEmblem(wk) }; });
-  on('round', n => { if (n === 1) banner = null; });
+  on('round', n => { if (n === 1) banner = null; else if (X) X.roundFadeT = performance.now(); });
   // the banner wears the emblem of the skin you made the kill with (Epic and up), or the plain skull
   const killEmblem = wk => { const sk = skinOfId(skinFor(me(), wk)); return sk && sk.L.emblem ? Object.assign({ tier: sk.R.tier }, sk.L.emblem) : { shape: 'skull', col: BONE, glow: YOU }; };
   // the emblem's glyph, drawn round (0, 0) at radius r
@@ -4481,6 +4509,9 @@ const GAME = {
       tx(g, G2.n.toUpperCase(), 640 + w / 2 - 14 * u, y + 20 * u, 13 * u, G2.col || BONE, 'right', 800);
       if (mates.length > 1) tx(g, `${mates.indexOf(P) + 1} / ${mates.length}  ·  ${isTouch() ? 'tap' : 'click or Space'} to switch`, 640 + w / 2 - 14 * u, y + 40 * u, 10.5 * u, DIM, 'right', 800);
     }
+    // between rounds: the end of one fades out to black and the next fades in, rather than a cut
+    { let k = 0; if (M.phase === 'end' && M.t < .45 && !(M.wins[0] >= WIN_ROUNDS || M.wins[1] >= WIN_ROUNDS)) k = 1 - M.t / .45; if (X.roundFadeT) { const e = (performance.now() - X.roundFadeT) / 500; if (e >= 1) X.roundFadeT = 0; else k = Math.max(k, 1 - e); }
+      if (k > 0) { g.fillStyle = `rgba(0,0,0,${smooth(cl(k, 0, 1))})`; g.fillRect(V.x0, V.y0, W, H); } }
     if (X.specFade > 0) { if (!X.specFadeT) X.specFadeT = performance.now(); const k = 1 - (performance.now() - X.specFadeT) / 400; if (k <= 0) { X.specFade = 0; X.specFadeT = 0; } else { g.fillStyle = `rgba(0,0,0,${smooth(k)})`; g.fillRect(V.x0, V.y0, W, H); } }   // 0.4 s, whatever the frame rate
     if (!me().alive && M.deathInfo && !range && P === me()) {
       const D = M.deathInfo, a = cl(D.t * 3, 0, 1), cw2 = 520 * u, ch2 = 104 * u, x = 640 - cw2 / 2, y = V.y1 - 196 * u + (1 - smooth(a)) * 30 * u, L = M.dlog || {}, gave = L[me().key + '>' + D.key] || { d: 0, n: 0, h: 0 }, took = L[D.key + '>' + me().key] || { d: 0, n: 0, h: 0 };

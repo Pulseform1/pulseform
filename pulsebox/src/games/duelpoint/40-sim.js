@@ -44,8 +44,9 @@
   function blocked(x, z, feet) { for (const [a, b] of RING) if (solidAt(x + a, z + b, feet)) return true; return false; }
   function groundAt(x, z, feet) { let g = 0; for (const [a, b] of [[0, 0], [RAD, 0], [-RAD, 0], [0, RAD], [0, -RAD]]) { const h = hMove(x + a, z + b); if (h <= feet + STEP && h > g) g = h; } return g; }
   function moveF(f, dx, dz) {
-    if (!blocked(f.x + dx, f.z, f.y)) f.x += dx; else f.vx = 0;
-    if (!blocked(f.x, f.z + dz, f.y)) f.z += dz; else f.vz = 0;
+    const pen = M && M.phase === 'buy' && M.mode !== 'range' && !f.net ? sideOf(f) : null, held = (x, z) => pen && inZone(pen, f.x, f.z) && !inZone(pen, x, z);   // the spawn barrier
+    if (!blocked(f.x + dx, f.z, f.y) && !held(f.x + dx, f.z)) f.x += dx; else f.vx = 0;
+    if (!blocked(f.x, f.z + dz, f.y) && !held(f.x, f.z + dz)) f.z += dz; else f.vz = 0;
     const g = groundAt(f.x, f.z, f.y), was = f.ground;
     if (f.y > g + .001 || f.vy > 0) f.ground = false;
     if (f.y <= g) { if (!was && f.vy < -4) emit('land', f); f.y = g; f.vy = 0; f.ground = true; }
@@ -55,7 +56,7 @@
   // one step of a fighter's body from its intent I: { mx, mz (-1..1, how hard and which way), walk, crouch, jump }
   function stepBody(f, I, dt) {
     if (!f.alive) return;
-    const G = gun(f), frozen = (M.phase === 'buy' && M.mode !== 'range') || f.plant > 0 || f.defuse > 0;
+    const G = gun(f), frozen = f.plant > 0 || f.defuse > 0;   // in the buy phase you move, but only inside your spawn (moveF)
     // sprint: forward, standing, not aiming, reloading or just after a shot; slide: crouch while sprinting fast on the ground
     const hv = Math.hypot(f.vx, f.vz), crouchTap = I.crouch && !f.crouchHeld; f.crouchHeld = !!I.crouch;
     if (f.slideCD > 0) f.slideCD -= dt;
