@@ -13,7 +13,7 @@ const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n
 const K = { save: {}, persist() {}, bot: false, state: 'play' };
 const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name: 'Tester', id: 0 };
 const T = new Function('K', 'MP', code + `
-  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, skinOfId, skinPrice, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
+  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
     get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
@@ -232,10 +232,13 @@ function kitChecks() {
 function skinChecks() {
   section('skins and coins');
   const days = Array.from({ length: 200 }, (_, i) => T.dailyStore(20000 + i)), flat = days.flat();
-  ok(days.every(d => d.length === 5 && new Set(d).size === 5 && d.every(id => T.skinOfId(id))), 'five different real skins every day');
+  ok(days.every(d => d.length === 7 && new Set(d).size === 7 && d.every(id => T.skinOfId(id))), 'seven different real skins in every three-hour set');
   ok(JSON.stringify(T.dailyStore(20123)) === JSON.stringify(T.dailyStore(20123)), 'the same day gives the same store');
   const myth = days.filter(d => d.some(id => T.skinOfId(id).L.r === 'mythic')).length, perDay = days.map(d => d.filter(id => T.skinOfId(id).L.r === 'mythic').length);
-  ok(myth >= 15 && myth <= 50 && Math.max(...perDay) <= 1, 'a Mythic shows up about one day in seven, never two at once', `${myth} of 200 days`);
+  ok(myth >= 8 && myth <= 40 && Math.max(...perDay) <= 1, 'a Mythic shows up in about one set in ten (about one a day), never two at once', `${myth} of 200 sets`);
+  ok(T.storeLeft(3 * 3600000 * 100 + 5000) === 3 * 3600000 - 5000, 'the store turns over every three hours', T.storeLeft(3 * 3600000 * 100 + 5000));
+  const all = T.allSkinIds(); ok(T.codeHash('vault 7q4k all') === T.ALL_SKINS_HASH && T.codeHash('VAULT-7Q4K-ALL') === T.ALL_SKINS_HASH && all.length === Object.keys(T.LINES).length * 17 && all.every(id => T.skinOfId(id)), 'the all-skins code matches however it is typed, and covers every skin on every weapon', `${all.length} skins in ${Object.keys(T.LINES).length} lines`);
+  ok(T.codeHash('NOT-A-CODE') !== T.ALL_SKINS_HASH, 'a wrong code does not match');
   const tally = {}; for (const id of flat) { const r = T.skinOfId(id).L.r; tally[r] = (tally[r] || 0) + 1; }
   ok(tally.common > tally.rare && tally.rare > tally.epic && tally.epic > tally.legendary && tally.legendary > (tally.mythic || 0), 'rarer lines are rarer in the store', JSON.stringify(tally));
   ok(T.skinPrice('dune:vesper') === 300 && T.skinPrice('voidline:vesper') === 4800 && T.skinPrice('voidline:knife') === 7200, 'prices: 300 for a Common, 4800 for a Mythic, half as much again for a knife');

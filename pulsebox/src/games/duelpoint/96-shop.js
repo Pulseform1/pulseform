@@ -1,6 +1,6 @@
   /* ---------- 96 store and locker ----------
-     STORE: five skins a day (22-skins picks them), a featured card for the rarest and four more, a countdown to the next
-     rotation. Any card opens a preview: the skin on its gun, turning in 3D, with what it brings. Buying one plays a reveal
+     STORE: seven skins, a new set every three hours (22-skins picks them), a featured card for the rarest and six more, a
+     countdown to the next rotation, and a CODE box. Any card opens a preview: the skin on its gun, turning in 3D, with what it brings. Buying one plays a reveal
      in the rarity's colour and puts it on the gun at once. LOCKER: every weapon, the skins you own for it, and what it is
      wearing now. Prices are in coins, which matches pay (see the results screen). */
   const SH = { show: null, reveal: null, locker: 'vesper', msg: null, spin: 0, hov: null };
@@ -30,6 +30,12 @@
     X.renderer.render(S.scene, cam); cam.clearViewOffset(); return true;
   }
   const owns = id => STATS.skins.includes(id);
+  // a code: VAULT-7Q4K-ALL (any case, dashes optional) unlocks every skin on every weapon
+  function enterCode() {
+    let c = null; try { c = prompt('Enter a code'); } catch (e) {} if (!c) return;
+    if (codeHash(c) === ALL_SKINS_HASH) { const all = allSkinIds(), before = STATS.skins.length; for (const id of all) if (!STATS.skins.includes(id)) STATS.skins.push(id); saveAll(true); SH.msg = { s: `Code accepted: every skin unlocked (${all.length}, ${STATS.skins.length - before} new). See them in the LOCKER.`, t0: performance.now(), good: true }; emit('unlock', skinOfId(all[all.length - 1])); }
+    else SH.msg = { s: "That code isn't valid", t0: performance.now() };
+  }
   function buySkin(id) {
     const price = skinPrice(id), sk = skinOfId(id); if (!sk || owns(id)) return;
     if (STATS.coins < price) { SH.msg = { s: `You need ${price - STATS.coins} more coins`, t0: performance.now() }; return; }
@@ -67,10 +73,11 @@
   function drawStore(g, V, W, u) {
     const items = dailyStore(), left = storeLeft(), hh = Math.floor(left / 3600000), mm = Math.floor(left / 60000) % 60, ss = Math.floor(left / 1000) % 60, x0 = V.x0 + 60 / pxPer() + 20 * u, top = V.y0 + 96 * u;
     tx(g, 'STORE', x0, V.y0 + 46 * u, 40 * u, BONE, 'left', 900); tx(g, `New skins in ${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`, x0 + 4 * u, V.y0 + 78 * u, 13 * u, DIM, 'left', 700);
-    coinTag(g, V.x1 - 266 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'LOCKER', () => { UI.panel = 'locker'; SH.show = null; }, { px: 13 * u });
-    const gw = V.x1 - x0 - 40 * u, gh = V.y1 - top - 70 * u, fw = gw * .5, cw = (gw - fw - 16 * u) / 2 - 8 * u, ch = (gh - 16 * u) / 2;
+    coinTag(g, V.x1 - 386 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 250 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'CODE', enterCode, { px: 13 * u }); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'LOCKER', () => { UI.panel = 'locker'; SH.show = null; }, { px: 13 * u });
+    if (SH.msg && performance.now() - SH.msg.t0 < 3200 && !SH.show) tx(g, SH.msg.s, V.x1 - 20 * u, V.y0 + 82 * u, 14 * u, SH.msg.good ? YOU : WARN, 'right', 800);
+    const gw = V.x1 - x0 - 40 * u, gh = V.y1 - top - 70 * u, fw = gw * .36, cols = 3, cw = (gw - fw - 16 * u - (cols - 1) * 14 * u) / cols, ch = (gh - 14 * u) / 2;
     skinCard(g, items[0], x0, top, fw, gh, u, true); tx(g, 'FEATURED', x0 + 14 * u, top + 20 * u, 11 * u, skinOfId(items[0]).R.col, 'left', 900);
-    items.slice(1).forEach((id, i) => skinCard(g, id, x0 + fw + 16 * u + (i % 2) * (cw + 16 * u), top + Math.floor(i / 2) * (ch + 16 * u), cw, ch, u, false));
+    items.slice(1).forEach((id, i) => skinCard(g, id, x0 + fw + 16 * u + (i % cols) * (cw + 14 * u), top + Math.floor(i / cols) * (ch + 14 * u), cw, ch, u, false));
   }
   function drawShow(g, V, W, H, u) {   // the preview panel over the turning gun
     const id = SH.show, sk = skinOfId(id); if (!sk) { SH.show = null; return; } const own = owns(id), price = skinPrice(id), L = sk.L, px = V.x1 - 430 * u, py = V.y0 + 70 * u;
@@ -113,7 +120,7 @@
     let y = top + 24 * u; for (const id of [null, ...mine]) { const sk = skinOfId(id), on = (STATS.equip[k] || null) === id, h2 = 44 * u, hot = zone(rx, y, rw, h2, () => equipSkin(k, id));
       rr(g, rx, y, rw, h2, 6, on ? 'rgba(53,224,200,.14)' : 'rgba(12,16,22,.82)', on ? YOU : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.12)', on ? 2 : 1); if (sk) { g.fillStyle = sk.R.col; g.fillRect(rx, y, 4 * u, h2); }
       tx(g, sk ? sk.L.n : 'Standard', rx + 16 * u, y + 17 * u, 14 * u, BONE, 'left', 800); tx(g, sk ? sk.R.n : 'The factory finish', rx + 16 * u, y + 32 * u, 10 * u, sk ? sk.R.col : DIM, 'left', 700); if (on) tx(g, 'EQUIPPED', rx + rw - 12 * u, y + h2 / 2, 11 * u, YOU, 'right', 900); y += h2 + 6 * u; }
-    if (!mine.length) para(g, 'No skins for this one yet. The store has five new ones every day.', rx, y + 16 * u, rw, 12 * u, DIM);
+    if (!mine.length) para(g, 'No skins for this one yet. The store has seven new ones every three hours.', rx, y + 16 * u, rw, 12 * u, DIM);
   }
   function drawShop(g, V, W, H, u) {
     if (SH.reveal) return drawReveal(g, V, W, H, u);

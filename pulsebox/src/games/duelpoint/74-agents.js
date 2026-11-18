@@ -14,10 +14,25 @@
     ember: { suit: '#3a2620', plate: '#7a3e22', cloth: '#ff7a2f', skin: '#d8a07a', wide: 1.02 },
     axiom: { suit: '#25303e', plate: '#d9dde3', cloth: '#5aa0ff', skin: '#8a5a3c', wide: 1.05 },
   };
+  // the agents' materials: fabric with a woven grain, armour plates with panel lines and worn edges, skin, rubber and
+  // trim, all lit by the map's reflections. Made once per operative and shared by every copy.
+  const AGM = {}, AGTX = {};
+  function agentTex() {
+    if (AGTX.fab) return AGTX;
+    AGTX.fab = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#c8c8c8'; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 4) for (let x = 0; x < w; x += 4) { const v = 175 + (((x >> 2) + (y >> 2)) % 2 ? 22 : -10) + R() * 20; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(x, y, 4, 2); } for (let i = 0; i < 30; i++) { g.strokeStyle = 'rgba(90,90,90,.25)'; g.lineWidth = 1; g.beginPath(); const y = R() * h; g.moveTo(0, y); g.lineTo(w, y + (R() - .5) * 20); g.stroke(); } }, [4, 4]);
+    AGTX.plate = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#d6d6d6'; g.fillRect(0, 0, w, h); for (let i = 0; i < 6000; i++) { g.fillStyle = `rgba(${R() < .5 ? '0,0,0' : '255,255,255'},${R() * .06})`; g.fillRect(R() * w, R() * h, 2, 2); } g.strokeStyle = 'rgba(40,40,40,.55)'; g.lineWidth = 2; for (const y of [64, 160]) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } for (const x of [96, 200]) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let i = 0; i < 40; i++) { g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(R() * w, R() * h, R() * 14, 1.5); } g.fillStyle = 'rgba(30,30,30,.6)'; for (let i = 0; i < 10; i++) { g.beginPath(); g.arc(R() * w, R() * h, 2.5, 0, TAU); g.fill(); } }, [2, 2]);
+    return AGTX;
+  }
+  function agentMats(id, kit, op) {
+    if (AGM[id]) return AGM[id]; const T = agentTex(), env = m => { if (X.env) { m.envMap = X.env; m.envMapIntensity = .7; } return m; };
+    const st = (c, o) => env(new THREE.MeshStandardMaterial(Object.assign({ color: LC(c) }, o)));
+    return AGM[id] = { suit: st(kit.suit, { map: T.fab, roughness: .88, metalness: 0 }), plate: st(kit.plate, { map: T.plate, roughness: .42, metalness: .35 }), cloth: st(kit.cloth, { map: T.fab, roughness: .82, metalness: 0 }),
+      skin: st(kit.skin, { roughness: .62, metalness: 0 }), dark: st('#15171c', { roughness: .6, metalness: .25 }), acc: st(op.col, { roughness: .35, metalness: .5, emissive: LC(op.col), emissiveIntensity: .12 }),
+      metal: st('#9aa3ad', { roughness: .3, metalness: .9 }), glow: new THREE.MeshBasicMaterial({ color: LC(op.col), toneMapped: false, side: THREE.DoubleSide }) };
+  }
   function agentModel(f) {
     const G = new THREE.Group(), op = OPS[f.op] || OPS.vex, kit = KIT[f.op] || KIT.vex, sh = !X.low, w = kit.wide; G.rotation.order = 'YXZ';
-    const lam = c => new THREE.MeshLambertMaterial({ color: LC(c) });
-    const M = { suit: lam(kit.suit), plate: lam(kit.plate), cloth: lam(kit.cloth), skin: lam(kit.skin), dark: lam('#15171c'), acc: lam(op.col), glow: new THREE.MeshBasicMaterial({ color: LC(op.col), toneMapped: false, side: THREE.DoubleSide }) };
+    const M = agentMats(f.op, kit, op);
     let T = G;
     const add = (geo, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); T.add(m); return m; };
     const cyl = (rt, rb2, h, seg = 12) => new THREE.CylinderGeometry(rt, rb2, h, seg), sph = (r, a = 14, b = 10) => new THREE.SphereGeometry(r, a, b);
@@ -49,6 +64,13 @@
     const plateG = new THREE.ExtrudeGeometry(front, { depth: .035, bevelEnabled: true, bevelThickness: .014, bevelSize: .014, bevelSegments: 2 });
     add(plateG, M.plate, 0, 0, -.178 * w); add(plateG, M.plate, 0, 0, .13 * w); add(rb(.07, .07, .012, .02), M.acc, .065 * w, .42, -.196 * w, 0, 0, Math.PI / 4); for (let i = 0; i < 3; i++) add(rb(.058, .085, .035, .01), M.cloth, (-.068 + i * .068) * w, .27, -.2 * w);
     for (const sx of [-1, 1]) add(rb(.05, .2, .05, .015), M.dark, sx * .1 * w, .52, 0, .0, 0, 0);   // shoulder straps
+    // the trim: glowing edges down the chest plate and across the collar bone, chevrons on both shoulders, a collar ring
+    for (const sx of [-1, 1]) { add(rb(.008, .2, .01, .003), M.glow, sx * .135 * w, .36, -.214 * w, 0, 0, sx * -.32); add(rb(.05, .008, .01, .003), M.glow, sx * .06 * w, .49, -.214 * w);
+      const ch = add(new THREE.ConeGeometry(.028, .03, 3), M.glow, sx * .232 * w, .47, -.05, 0, 0, Math.PI); ch.scale.z = .3; ch.rotation.y = sx * Math.PI / 2; }
+    add(new THREE.TorusGeometry(.078, .014, 8, 18), M.plate, 0, .575, 0, Math.PI / 2);
+    // the belt: pouches round it, a holster with a sidearm on the right hip, a knife on the left
+    T = torso; for (let i = 0; i < 4; i++) { const a = -2.2 + i * .55; add(rb(.06, .07, .04, .012), i % 2 ? M.cloth : M.dark, Math.sin(a) * .17 * w, .02, Math.cos(a) * -.13 * w, 0, -a); }
+    add(rb(.03, .02, .025, .006), M.metal, 0, .1, -.15 * w); T = Rg.th; add(rb(.05, .14, .08, .012), M.dark, .125 * w, -.08, .01); add(rb(.03, .07, .03, .006), M.metal, .125 * w, .0, .01); T = L.th; add(rb(.02, .12, .035, .006), M.metal, -.12 * w, -.06, .03, .2); T = torso;
     add(cyl(.058, .072, .1), M.skin, 0, .6, 0);
     // what they carry on their back, and their shoulders
     if (f.op === 'bastion') { add(rb(.3, .34, .15, .04), M.cloth, 0, .37, .21); add(cyl(.062, .062, .36, 12), M.plate, 0, .58, .2, 0, 0, Math.PI / 2); for (const sx of [-1, 1]) { const pd = add(rb(.17, .1, .2, .04), M.plate, sx * .285, .535, 0, 0, 0, sx * -.3); pd.scale.z = 1; add(rb(.12, .03, .15, .012), M.acc, sx * .3, .592, 0, 0, 0, sx * -.3); } }
@@ -109,7 +131,7 @@
         const d = new THREE.Vector3(Tg[0] - S[0], Tg[1] - S[1], Tg[2] - S[2]), Ld = Math.min(d.length(), a + b - .005); d.normalize();
         const x = (a * a - b * b + Ld * Ld) / (2 * Ld), h = Math.sqrt(Math.max(0, a * a - x * x)), pole = new THREE.Vector3(px * .7, -1, .2); pole.addScaledVector(d, -pole.dot(d)).normalize();
         const E = [S[0] + d.x * x + pole.x * h, S[1] + d.y * x + pole.y * h, S[2] + d.z * x + pole.z * h], Hn = [S[0] + d.x * Ld, S[1] + d.y * Ld, S[2] + d.z * Ld];
-        limb(S, E, .064, .054, M.suit); limb(E, Hn, .052, .042, M.suit); add(sph(.057, 10, 8), M.plate, E[0], E[1], E[2]); add(sph(.05, 10, 8), M.dark, Hn[0], Hn[1], Hn[2]);
+        limb(S, E, .064, .054, M.suit); limb(E, Hn, .052, .042, M.suit); add(sph(.057, 10, 8), M.plate, E[0], E[1], E[2]); { const gl = add(rb(.078, .095, .07, .02), M.dark, Hn[0], Hn[1], Hn[2]); gl.lookAt(Hn[0] + d.x, Hn[1] + d.y, Hn[2] + d.z); const kn = add(rb(.07, .022, .02, .006), M.plate, Hn[0] + d.x * .03, Hn[1] + d.y * .03 + .02, Hn[2] + d.z * .03); kn.lookAt(Hn[0] + d.x, Hn[1] + d.y + .02, Hn[2] + d.z); }
         const mid = [(E[0] + Hn[0]) / 2, (E[1] + Hn[1]) / 2, (E[2] + Hn[2]) / 2]; add(sph(.056, 10, 8), M.acc, mid[0], mid[1], mid[2]).scale.set(1, .5, 1);
       }
       bake(armMesh, sh);

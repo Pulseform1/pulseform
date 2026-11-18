@@ -71,7 +71,7 @@
     if (c === 'KeyB' && canBuy()) return openArmory(!UI.armory);
     if (UI.armory) return;
     if (c === 'KeyR') reload(P); else if (c === 'Digit1') switchTo(P, 1); else if (c === 'Digit2') switchTo(P, 2); else if (c === 'Digit3') switchTo(P, 3);
-    else if (c === 'KeyG') throwNade(P); else if (c === 'KeyQ') ability(P, 'q'); else if (c === 'KeyE') ability(P, 'e'); else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) X.inspT = 2.6;
+    else if (c === 'KeyG') throwNade(P); else if (c === 'KeyQ') ability(P, 'q'); else if (c === 'KeyE') ability(P, 'e'); else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) X.inspT = INSP_D;
   }
   if (typeof document !== 'undefined') {
     // while you play, keys the game uses (and Ctrl combinations, since Ctrl crouches) do not reach the browser

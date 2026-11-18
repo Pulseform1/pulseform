@@ -90,6 +90,30 @@
   const viewer = () => { if (!M) return null; const P = me(); return !P.alive && UI.spec && UI.spec.alive && UI.spec.team === P.team && M.mode !== 'range' ? UI.spec : P; };
   function nextSpec() { const P = me(), mates = M.fs.filter(f => f !== P && f.team === P.team && f.alive && !f.gone); if (!mates.length) { UI.spec = null; return; } const i = mates.indexOf(UI.spec); UI.spec = mates[(i + 1) % mates.length]; X.viewKey = ''; }
   function updateSpec() { const P = me(); if (!M || P.alive || M.mode === 'range' || M.mode === 'demo') { UI.spec = null; return; } if (M.deathInfo && M.deathInfo.t > 2.2 && !(UI.spec && UI.spec.alive)) nextSpec(); }
+  /* ---- reload and inspect, choreographed: keyframes [q, dx, dy, dz, rx, ry, rz] over the action (0..1), eased between,
+     added on top of where the gun is held. One track per kind of weapon. */
+  const VKF = {
+    reload: {
+      rifle: [[0, 0, 0, 0, 0, 0, 0], [.1, -.06, .085, -.02, .1, .32, -.58], [.2, -.065, .07, -.01, .06, .34, -.66], [.3, -.07, .1, -.03, .14, .3, -.72], [.6, -.07, .1, -.03, .12, .3, -.7], [.74, -.06, .12, -.02, .1, .28, -.62], [.79, -.055, .15, -.04, .2, .28, -.6], [.86, -.03, .07, 0, .05, .05, .32], [.93, -.02, .05, .02, .02, -.06, .38], [1, 0, 0, 0, 0, 0, 0]],
+      sidearm: [[0, 0, 0, 0, 0, 0, 0], [.12, -.04, .07, -.01, .05, .36, -.52], [.24, -.045, .085, 0, .2, .36, -.56], [.6, -.045, .07, -.01, .05, .34, -.5], [.74, -.04, .09, -.02, .1, .3, -.45], [.79, -.035, .11, -.03, .2, .3, -.42], [.88, -.01, .05, .03, -.25, .05, .1], [1, 0, 0, 0, 0, 0, 0]],
+      shotgun: [[0, 0, 0, 0, 0, 0, 0], [.1, -.05, .07, -.02, .05, .3, -1.15], [.85, -.05, .075, -.02, .05, .3, -1.15], [.92, -.01, .03, .05, .05, .05, -.1], [1, 0, 0, 0, 0, 0, 0]],
+      sniper: [[0, 0, 0, 0, 0, 0, 0], [.12, -.07, .09, -.02, .12, .22, .48], [.5, -.07, .095, -.02, .12, .22, .5], [.78, -.06, .12, -.03, .2, .2, .45], [.86, -.03, .06, 0, .05, .05, .62], [.95, -.01, .03, .01, .02, 0, .2], [1, 0, 0, 0, 0, 0, 0]],
+    },
+    inspect: {
+      rifle: [[0, 0, 0, 0, 0, 0, 0], [.14, -.04, .045, -.09, .05, .95, .28], [.3, -.04, .05, -.1, -.02, 1.08, .4], [.44, -.03, .06, -.1, -.1, .3, -1.25], [.6, -.03, .06, -.1, -.16, .05, -1.42], [.72, -.01, .075, -.07, .55, .12, -.05], [.86, 0, .055, -.05, .45, .02, .05], [1, 0, 0, 0, 0, 0, 0]],
+      sidearm: [[0, 0, 0, 0, 0, 0, 0], [.14, -.05, .05, -.08, .05, .9, .3], [.3, -.05, .055, -.09, 0, 1.05, .35], [.48, -.06, .07, -.08, .12, -.5, -.5], [.64, -.06, .07, -.08, -.02, -.7, -.62], [.78, -.02, .08, -.06, .5, .05, -.2], [.9, 0, .04, -.03, .3, 0, 0], [1, 0, 0, 0, 0, 0, 0]],
+      sniper: [[0, 0, 0, 0, 0, 0, 0], [.16, -.05, .05, -.08, .04, .85, .25], [.36, -.05, .06, -.1, -.05, 1, .35], [.56, -.04, .07, -.1, .5, .3, .1], [.72, -.03, .065, -.08, .55, -.1, -.2], [.88, -.01, .04, -.04, .3, 0, 0], [1, 0, 0, 0, 0, 0, 0]],
+      shotgun: [[0, 0, 0, 0, 0, 0, 0], [.16, -.04, .05, -.09, .05, .9, .3], [.34, -.04, .055, -.1, -.05, 1.05, .45], [.52, -.03, .06, -.09, -.1, .3, -1.2], [.68, -.02, .065, -.08, .45, .1, -.1], [.86, 0, .04, -.04, .3, 0, 0], [1, 0, 0, 0, 0, 0, 0]],
+      melee: [[0, 0, 0, 0, 0, 0, 0], [.12, -.02, .03, -.04, .2, .6, .4], [.3, -.02, .03, -.04, .2, .6, .4 - TAU * 2], [.42, -.02, .18, -.06, .1, .4, -TAU * 2.5], [.54, -.02, .03, -.04, .25, .7, -TAU * 3], [.74, 0, .05, -.05, .6, .1, -TAU * 3], [.9, 0, .02, -.02, .2, 0, -TAU * 3], [1, 0, 0, 0, 0, 0, -TAU * 3]],
+    },
+  };
+  const INSP_D = 3.4;
+  const vkfKind = (G, kind) => G.melee ? (kind === 'inspect' ? 'melee' : 'rifle') : G.cat === 'Sidearm' ? 'sidearm' : G.cat === 'Shotgun' ? 'shotgun' : G.cat === 'Sniper' ? 'sniper' : 'rifle';
+  function vkf(kind, G, q) {
+    const K = VKF[kind][vkfKind(G, kind)] || VKF[kind].rifle; if (q <= 0) return K[0].slice(1);
+    for (let i = 1; i < K.length; i++) if (q <= K[i][0]) { const a = K[i - 1], b = K[i], u = (q - a[0]) / (b[0] - a[0]), e = u * u * (3 - 2 * u); return a.slice(1).map((v, j) => v + (b[j + 1] - v) * e); }
+    return K[K.length - 1].slice(1);
+  }
   function renderFrame(dt) {
     if (!X || !ready) return; const cam = X.camera; X.t += dt; tunePixels(dt); skinTick(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; }
     const live = M && (screen === 'play' || (screen === 'over' && posed)) && !loadingNow();
@@ -137,10 +161,12 @@
     const RH = G.k === 'breaker' ? [.045, .07, -.75, .3] : G.cat === 'Sidearm' ? [.04, .06, -.4, .3] : G.cat === 'Sniper' ? [.07, .09, .35, .2] : [.1, .13, -.62, .34];
     const turn = cl(angDiff(P.yaw, X.lastYaw == null ? P.yaw : X.lastYaw) / Math.max(dt, .001) * .006, -.05, .05); X.lastYaw = P.yaw; X.lag = lp(X.lag || 0, turn, Math.min(1, dt * 10));   // the gun trails a turn slightly
     X.view.visible = P.alive && !(P.scoped && G.scope);
-    X.view.position.set(VO[0] + bobX + swayX + X.lag * .5 - tilt * RH[0] - X.runK * .03 + sideK * .02, VO[1] + Math.abs(bob) * .6 + sway + tilt * RH[1] + seat * .012 - rk * .22 - raise * raise * .3 - X.dip * .5 - X.runK * .035 + X.air + climb * .028, VO[2] + rk * .9 + raise * .05 + X.runK * .02 + climb * .02);
-    X.view.rotation.set(rk * 1.6 + tilt * .12 + seat * .05 - raise * .7 - X.runK * .14 - dry * .035 + climb * .2, .02 + tilt * RH[3] + X.lag + X.runK * .38 - sideK * .35, tilt * RH[2] + raise * .35 + X.lag * .6 + X.runK * .26 - sideK * .3);
+    const RK = rt < 0 ? [0, 0, 0, 0, 0, 0] : vkf('reload', G, rt);   // the reload's own moves (and the seat jolt on top)
+    if (G.k === 'breaker' && rt > .1 && rt < .85) { const ph = (rt * 5) % 1; RK[1] += Math.sin(ph * Math.PI) * .012; RK[3] += Math.sin(ph * Math.PI) * .06; }   // each shell pushed in
+    X.view.position.set(VO[0] + bobX + swayX + X.lag * .5 + RK[0] - X.runK * .03 + sideK * .02, VO[1] + Math.abs(bob) * .6 + sway + RK[1] + seat * .012 - rk * .22 - raise * raise * .3 - X.dip * .5 - X.runK * .035 + X.air + climb * .028, VO[2] + RK[2] + rk * .9 + raise * .05 + X.runK * .02 + climb * .02);
+    X.view.rotation.set(rk * 1.6 + RK[3] + seat * .05 - raise * .7 - X.runK * .14 - dry * .035 + climb * .2, .02 + RK[4] + X.lag + X.runK * .38 - sideK * .35, RK[5] + raise * .35 + X.lag * .6 + X.runK * .26 - sideK * .3);
     X.mflash.position.set(0, .025, -(X.viewGun.userData.len || .5) - .03); X.mflash.visible = X.flashT > 0 && !G.melee; X.mflash.rotation.z = Math.random() * 3; X.mflash.scale.setScalar(G.cat === 'Sniper' || G.cat === 'Shotgun' ? 1.5 : G.cat === 'Sidearm' ? .8 : 1);
-    viewAnim(P, G, dt, { draw: chamber, insp: X.inspT > 0 ? 1 - X.inspT / 2.6 : -1 });
+    viewAnim(P, G, dt, { draw: chamber, insp: X.inspT > 0 ? 1 - X.inspT / INSP_D : -1 });
     { const pb = X.viewGun.userData.parts.boltL; if (pb) { X.view.rotation.z += pb.rotation.z * .14; X.view.position.y -= pb.rotation.z * .012; } }   // working a bolt rolls the rifle
     X.viewGun.rotation.z = G.melee && X.drawT > 0 ? (1 - sm(cl(dq, 0, 1))) * TAU : 0;   // the knife flips into the hand
     if (G.melee) { X.view.rotation.x += .28; X.view.rotation.y += .5; X.view.rotation.z -= .2; }
@@ -151,7 +177,7 @@
         X.view.position.x += k * (sd > 0 ? lp(.06, -.22, sw) : lp(-.2, .08, sw)); X.view.position.y += k * (.05 - .07 * sw); X.view.position.z -= k * .04; X.view.rotation.y += sd * k * lp(-.5, .8, sw); X.view.rotation.z += sd * k * lp(.7, -.6, sw); X.view.rotation.x -= k * .15; }
     }
     if (X.inspT > 0) { if (P.reloadT > 0 || P.kick > 0) X.inspT = 0; else X.inspT -= dt; }
-    if (X.inspT > 0) { const q = 1 - X.inspT / 2.6, e = smooth(cl(Math.sin(q * Math.PI) * 1.6, 0, 1)), tw = Math.sin(q * TAU) * e; X.view.position.x -= e * .03; X.view.position.y += e * .035; X.view.position.z -= e * .1; X.view.rotation.y += e * .85; X.view.rotation.z += e * .3 + tw * .25; X.view.rotation.x += tw * .15; }
+    if (X.inspT > 0) { const k = vkf('inspect', G, 1 - X.inspT / INSP_D); X.view.position.x += k[0]; X.view.position.y += k[1]; X.view.position.z += k[2]; X.view.rotation.x += k[3]; X.view.rotation.y += k[4]; X.view.rotation.z += k[5]; }
     X.adsK = lp(X.adsK || 0, P.scoped && !G.scope && P.alive ? 1 : 0, Math.min(1, dt * 16));
     if (X.adsK > .001) { const a = X.adsK, sy = X.viewGun.userData.sight || .09; X.view.position.x = lp(X.view.position.x, 0, a); X.view.position.y = lp(X.view.position.y, -sy - rk * .05, a); X.view.position.z = lp(X.view.position.z, VO[2] - .03 + rk * .5, a); X.view.rotation.y = lp(X.view.rotation.y, 0, a); X.view.rotation.z = lp(X.view.rotation.z, 0, a); X.view.rotation.x = lp(X.view.rotation.x, rk * .5, a); }
     if (X.flashT > 0) X.flashT -= dt;

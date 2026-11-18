@@ -355,26 +355,70 @@ const GAME = {
     voidline: { n: 'Voidline', r: 'mythic', blurb: 'Obsidian with violet light running through it, and rings that never stop turning.', base: '#0c0a14', alt: '#b46bff', live: 'flow', fx: { tracer: '#d29bff', muzzle: '#c07bff', idle: 'motes' }, kill: { kind: 'void', col: '#b46bff', col2: '#ffffff' }, emblem: { shape: 'fang', col: '#f3e6ff', glow: '#b46bff' }, sound: 'void' },
     solaris: { n: 'Solaris', r: 'mythic', blurb: 'White ceramic and gold, a halo of sun behind the sight. It burns bright.', base: '#f6f2ea', alt: '#ffb52e', live: 'flow', fx: { tracer: '#ffe7a0', muzzle: '#fff1c4', idle: 'motes' }, kill: { kind: 'sun', col: '#ffcf5a', col2: '#fff8e0' }, emblem: { shape: 'star', col: '#fff8e0', glow: '#ffb52e' }, sound: 'sun' },
   };
+  // thirty-two more lines, each a painted pattern (77-skins paints it from pat): commons are paint, rares add parts and
+  // tracers, epics a muzzle flash, kill effect, banner and sound, legendaries a living finish and idle effects, mythics all of it
+  const PL = (n, r, blurb, base, alt, pat, more = {}) => Object.assign({ n, r, blurb, base, alt, pat }, more);
+  Object.assign(LINES, {
+    tigerline: PL('Tiger Line', 'common', 'Burnt orange with black tiger stripes.', '#e8862a', '#151210', 'tiger'),
+    arctic: PL('Arctic Camo', 'common', 'Snow, slate and ice-blue camouflage.', '#e9eef2', '#7f93a6', 'camo', { cols: ['#b9c6d2', '#7f93a6', '#5d6f80'] }),
+    redwood: PL('Redwood', 'common', 'Oiled redwood grain, warm and deep.', '#8a3f22', '#c0703a', 'wood'),
+    checkpoint: PL('Checkpoint', 'common', 'Racing checks in black and white.', '#f2f2f2', '#141414', 'checker'),
+    mintchip: PL('Mint Chip', 'common', 'Mint green with chocolate chips. Do not lick.', '#a8ecd2', '#4a2a1a', 'dots'),
+    brutal: PL('Brutalist', 'common', 'Poured concrete, stencilled with a serial.', '#9a9a96', '#e8c13a', 'concrete'),
+    sakura: PL('Sakura', 'rare', 'Cherry blossom drifting over cream lacquer.', '#f6ece4', '#e8789a', 'sakura', { fx: { tracer: '#ffb3c8', muzzle: '#ffd6e2' } }),
+    carbon: PL('Carbon Strike', 'rare', 'Woven carbon fibre with a racing-red flash.', '#1a1c20', '#e8202a', 'carbon', { fx: { tracer: '#ff6060', muzzle: '#ffb0a0' }, metal: .4 }),
+    hive: PL('Hive', 'rare', 'Black honeycomb filled with gold.', '#1a1610', '#f2b82a', 'hex', { fx: { tracer: '#ffd060', muzzle: '#fff0b0' } }),
+    contour: PL('Contour', 'rare', 'Map contour lines in sage and rust.', '#c9c7a8', '#9a4a2a', 'topo', { fx: { tracer: '#ffd8a0', muzzle: '#fff0c0' } }),
+    koi: PL('Koi Pond', 'rare', 'Deep teal water with orange koi circling.', '#12424a', '#ff7a2a', 'koi', { fx: { tracer: '#7fe0e0', muzzle: '#c0fff8' } }),
+    racer: PL('Racer', 'rare', 'Hazard chevrons in yellow and black.', '#1a1a1a', '#ffd21a', 'chevron', { fx: { tracer: '#ffe060', muzzle: '#fff4b0' } }),
+    paintball: PL('Paintball', 'rare', 'White, splattered every colour going.', '#f4f4f0', '#ff3b8f', 'splatter', { fx: { tracer: '#7fd8ff', muzzle: '#ffffff' } }),
+    leopard: PL('Leopard', 'rare', 'Golden leopard print, sharp and loud.', '#d9a54a', '#2a1a0e', 'leopard', { fx: { tracer: '#ffd890', muzzle: '#fff0c8' } }),
+    dragonscale: PL('Dragonscale', 'epic', 'Overlapping crimson scales edged in gold.', '#7a1018', '#e8b030', 'scales', { fx: { tracer: '#ff7a3a', muzzle: '#ffb060' }, kill: { kind: 'flame', col: '#ff5a2a', col2: '#ffd27a' }, emblem: { shape: 'flame', col: '#ffd27a', glow: '#ff3a1a' }, sound: 'fire', metal: .5 }),
+    damascus: PL('Damascus', 'epic', 'Folded steel, its layers rippling like water.', '#7c838c', '#cfd6de', 'damascus', { fx: { tracer: '#dfe8f2', muzzle: '#ffffff' }, kill: { kind: 'shards', col: '#cfd6de', col2: '#ffffff' }, emblem: { shape: 'fang', col: '#eef4fa', glow: '#8aa0b8' }, sound: 'ice', metal: 1 }),
+    jade: PL('Jade Emperor', 'epic', 'Carved jade veined with gold.', '#2f8a5a', '#e8c040', 'marble', { fx: { tracer: '#9ff0c0', muzzle: '#e8ffd0' }, kill: { kind: 'coins', col: '#e8c040', col2: '#c8ffd8' }, emblem: { shape: 'crown', col: '#f4ffe8', glow: '#2f8a5a' }, sound: 'coin', clear: 1 }),
+    synthwave: PL('Synthwave', 'epic', 'A neon grid running into a striped sunset.', '#1a0a2e', '#ff3ac8', 'grid', { glow: 1, fx: { tracer: '#ff6ae0', muzzle: '#7ff0ff' }, kill: { kind: 'bolt', col: '#ff3ac8', col2: '#3af0ff' }, emblem: { shape: 'star', col: '#ffe0ff', glow: '#ff3ac8' }, sound: 'zap' }),
+    toxic: PL('Toxic', 'epic', 'Hazard green ooze that glows in the dark.', '#1c2418', '#8aff2a', 'ooze', { glow: 1, fx: { tracer: '#aaff5a', muzzle: '#d8ffa0' }, kill: { kind: 'void', col: '#8aff2a', col2: '#e8ffb0' }, emblem: { shape: 'fang', col: '#e8ffd0', glow: '#5aff1a' }, sound: 'void' }),
+    abyssal: PL('Abyssal', 'epic', 'The deep sea, lit by drifting glowing creatures.', '#05121e', '#3ae8ff', 'biolum', { glow: 1, fx: { tracer: '#7ff4ff', muzzle: '#c0faff' }, kill: { kind: 'shards', col: '#3ae8ff', col2: '#c0faff' }, emblem: { shape: 'star', col: '#e0fdff', glow: '#3ae8ff' }, sound: 'ice' }),
+    royalguard: PL('Royal Guard', 'epic', 'Midnight navy with gold filigree.', '#141c3a', '#e3b341', 'filigree', { fx: { tracer: '#ffe08a', muzzle: '#fff3c4' }, kill: { kind: 'coins', col: '#ffd24a', col2: '#fff3c4' }, emblem: { shape: 'crown', col: '#fff3c4', glow: '#e3b341' }, sound: 'coin', clear: 1 }),
+    glitch: PL('Glitch', 'epic', 'Corrupted pixels shearing in red, green and blue.', '#0a0a0e', '#ff2a5a', 'glitch', { glow: 1, live: 'flicker', fx: { tracer: '#ff5a8a', muzzle: '#8affff' }, kill: { kind: 'bolt', col: '#ff2a5a', col2: '#2affd8' }, emblem: { shape: 'bolt', col: '#ffffff', glow: '#ff2a5a' }, sound: 'zap' }),
+    nebula: PL('Nebula', 'legendary', 'A whole galaxy, slowly turning on the steel.', '#0a0620', '#b46bff', 'galaxy', { glow: 1, live: 'flow', fx: { tracer: '#d0a0ff', muzzle: '#f0d8ff', idle: 'motes' }, kill: { kind: 'void', col: '#b46bff', col2: '#7fd8ff' }, emblem: { shape: 'star', col: '#f3e6ff', glow: '#b46bff' }, sound: 'void' }),
+    phoenix: PL('Phoenix', 'legendary', 'Feathers of flame that never burn out.', '#5a0e08', '#ffb02a', 'feathers', { glow: 1, live: 'pulse', fx: { tracer: '#ffa040', muzzle: '#ffd080', idle: 'embers' }, kill: { kind: 'flame', col: '#ff6a1a', col2: '#ffe08a' }, emblem: { shape: 'flame', col: '#fff0c0', glow: '#ff7a1a' }, sound: 'fire' }),
+    aurora: PL('Aurora', 'legendary', 'Green and pink lights rippling across a polar night.', '#06101e', '#5aff9a', 'aurora', { glow: 1, live: 'flow', fx: { tracer: '#9affc8', muzzle: '#d8ffe8', idle: 'motes' }, kill: { kind: 'sun', col: '#5aff9a', col2: '#ff7ad8' }, emblem: { shape: 'star', col: '#e8fff2', glow: '#5aff9a' }, sound: 'sun' }),
+    tempest: PL('Tempest', 'legendary', 'Thunderheads with lightning crawling through them.', '#1c222e', '#9ad8ff', 'clouds', { glow: 1, live: 'flicker', fx: { tracer: '#b8e8ff', muzzle: '#e8f8ff', idle: 'arcs' }, kill: { kind: 'bolt', col: '#9ad8ff', col2: '#ffffff' }, emblem: { shape: 'bolt', col: '#f0faff', glow: '#5ab8ff' }, sound: 'zap' }),
+    prism: PL('Prism', 'legendary', 'Cut crystal throwing rainbows as it moves.', '#d8e4f0', '#ff9aea', 'facets', { glow: 1, live: 'shift', fx: { tracer: '#ffffff', muzzle: '#e8f0ff', idle: 'motes' }, kill: { kind: 'shards', col: '#ff9aea', col2: '#9ae8ff' }, emblem: { shape: 'star', col: '#ffffff', glow: '#c89aff' }, sound: 'ice', clear: 1 }),
+    magmaflow: PL('Magma Flow', 'legendary', 'Rivers of lava creeping through black rock.', '#140c0a', '#ff5a10', 'lava', { glow: 1, live: 'flow', fx: { tracer: '#ff8a3a', muzzle: '#ffb060', idle: 'embers' }, kill: { kind: 'flame', col: '#ff4a10', col2: '#ffc060' }, emblem: { shape: 'flame', col: '#ffe0a0', glow: '#ff4a10' }, sound: 'fire' }),
+    celestial: PL('Celestial', 'mythic', 'White porcelain mapped with glowing golden constellations.', '#f4f1ea', '#ffc23a', 'stars', { glow: 1, live: 'pulse', fx: { tracer: '#ffe7a0', muzzle: '#fff4d0', idle: 'motes' }, kill: { kind: 'sun', col: '#ffcf5a', col2: '#fff8e0' }, emblem: { shape: 'crown', col: '#fff8e0', glow: '#ffc23a' }, sound: 'sun', clear: 1 }),
+    abyss: PL('Abyss', 'mythic', 'Jet black, split by red cracks that breathe.', '#060406', '#ff1a3a', 'cracks', { glow: 1, live: 'pulse', fx: { tracer: '#ff4a6a', muzzle: '#ff8a9a', idle: 'embers' }, kill: { kind: 'void', col: '#ff1a3a', col2: '#ffb0c0' }, emblem: { shape: 'fang', col: '#ffe0e6', glow: '#ff1a3a' }, sound: 'void' }),
+    spectrum: PL('Spectrum', 'mythic', 'Liquid rainbow chrome that never stops shifting.', '#e8e8f0', '#ff5ac8', 'holo', { glow: 1, live: 'shift', fx: { tracer: '#ffffff', muzzle: '#ffe8ff', idle: 'arcs' }, kill: { kind: 'sun', col: '#ff5ac8', col2: '#5ae8ff' }, emblem: { shape: 'star', col: '#ffffff', glow: '#ff5ac8' }, sound: 'sun', metal: .9 }),
+    eclipse: PL('Eclipse', 'mythic', 'A black sun ringed in burning gold.', '#0a0806', '#ffb02a', 'corona', { glow: 1, live: 'flow', fx: { tracer: '#ffd27a', muzzle: '#fff0c4', idle: 'motes' }, kill: { kind: 'void', col: '#ffb02a', col2: '#fff0c4' }, emblem: { shape: 'crown', col: '#fff0c4', glow: '#ffb02a' }, sound: 'void', metal: .6 }),
+  });
   const SKIN_GUNS = ['pip', 'wasp', 'quill', 'hammer', 'stub', 'gnat', 'hornet', 'breaker', 'thresher', 'mako', 'paladin', 'vesper', 'lancer', 'kite', 'longbow', 'torrent', 'knife'];
   const skinId = (line, k) => line + ':' + k;
   const skinOfId = id => { if (!id) return null; const [line, k] = id.split(':'), L = LINES[line]; return L && SKIN_GUNS.includes(k) ? { id, line, k, L, R: RARITY[L.r] } : null; };
   const skinName = id => { const s = skinOfId(id); if (!s) return ''; return s.L.n + ' ' + (s.k === 'knife' ? 'Blade' : GUNS[s.k].n); };
   // knives cost half as much again: they are the one thing you hold every round
   const skinPrice = id => { const s = skinOfId(id); return s ? Math.round(s.R.price * (s.k === 'knife' ? 1.5 : 1) / 50) * 50 : 0; };
-  // the store: five skins a day, the same for everyone, drawn by rarity. At most one Mythic, and only on about one day in seven.
-  const DAY = 86400000, storeDay = (now = Date.now()) => Math.floor(now / DAY), storeLeft = (now = Date.now()) => DAY - now % DAY;
+  // the store: seven skins, the same for everyone, a new set every three hours, drawn by rarity. At most one Mythic, in
+  // about one set in ten (so roughly one a day).
+  const STORE_PERIOD = 3 * 3600000, STORE_SIZE = 7, storeDay = (now = Date.now()) => Math.floor(now / STORE_PERIOD), storeLeft = (now = Date.now()) => STORE_PERIOD - now % STORE_PERIOD;
   function dailyStore(day = storeDay()) {
     let s = (day * 2654435761) >>> 0; const r = () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-    const mythicDay = r() < .15, out = [], lines = Object.keys(LINES), gunFor = () => r() < .16 ? 'knife' : SKIN_GUNS[Math.floor(r() * (SKIN_GUNS.length - 1))];
+    const mythicDay = r() < .1, out = [], lines = Object.keys(LINES), gunFor = () => r() < .16 ? 'knife' : SKIN_GUNS[Math.floor(r() * (SKIN_GUNS.length - 1))];
     if (mythicDay) { const ms = lines.filter(l => LINES[l].r === 'mythic'); out.push(skinId(ms[Math.floor(r() * ms.length)], gunFor())); }   // a Mythic day: one, as the featured skin
-    while (out.length < 5) {
-      const pool = lines.filter(l => LINES[l].r !== 'mythic' && !(LINES[l].r === 'legendary' && out.filter(id => skinOfId(id).L.r === 'legendary').length >= 2));
-      let tot = 0; for (const l of pool) tot += RARITY[LINES[l].r].w; let x = r() * tot, line = pool[0]; for (const l of pool) { x -= RARITY[LINES[l].r].w; if (x <= 0) { line = l; break; } }
-      const k = gunFor(), id = skinId(line, k);
-      if (!out.includes(id) && !out.some(q => skinOfId(q).line === line)) out.push(id);
+    while (out.length < STORE_SIZE) {
+      // roll a rarity first (so adding lines never changes how rare a rarity is), then a line of that rarity
+      const legs = out.filter(id => skinOfId(id).L.r === 'legendary').length, tiers = ['common', 'rare', 'epic', 'legendary'].filter(r => !(r === 'legendary' && legs >= 2));
+      let tot = 0; for (const t of tiers) tot += RARITY[t].w; let x = r() * tot, tier = tiers[0]; for (const t of tiers) { x -= RARITY[t].w; if (x <= 0) { tier = t; break; } }
+      const pool = lines.filter(l => LINES[l].r === tier && !out.some(q => skinOfId(q).line === l)); if (!pool.length) continue;
+      const line = pool[Math.floor(r() * pool.length)], id = skinId(line, gunFor());
+      if (!out.includes(id)) out.push(id);
     }
     return out.sort((a, b) => skinOfId(b).R.tier - skinOfId(a).R.tier);
   }
+  // codes typed into the store: one unlocks every skin. Only a hash of it is kept here.
+  const codeHash = s => { let h = 2166136261; for (const c of String(s).trim().toUpperCase().replace(/[^A-Z0-9]/g, '')) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; } return h; };
+  const ALL_SKINS_HASH = 3385685177;
+  const allSkinIds = () => { const o = []; for (const line of Object.keys(LINES)) for (const k of SKIN_GUNS) o.push(skinId(line, k)); return o; };
   // which skin a fighter has on gun k: yours from the locker, a bot's from what it was dealt, a remote player's as they sent it
   const skinFor = (f, k) => (f && f.skins && f.skins[k]) || null;
   // the skins a bot is dealt for a match: mostly plain, now and then something special
@@ -1887,10 +1931,25 @@ const GAME = {
     ember: { suit: '#3a2620', plate: '#7a3e22', cloth: '#ff7a2f', skin: '#d8a07a', wide: 1.02 },
     axiom: { suit: '#25303e', plate: '#d9dde3', cloth: '#5aa0ff', skin: '#8a5a3c', wide: 1.05 },
   };
+  // the agents' materials: fabric with a woven grain, armour plates with panel lines and worn edges, skin, rubber and
+  // trim, all lit by the map's reflections. Made once per operative and shared by every copy.
+  const AGM = {}, AGTX = {};
+  function agentTex() {
+    if (AGTX.fab) return AGTX;
+    AGTX.fab = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#c8c8c8'; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 4) for (let x = 0; x < w; x += 4) { const v = 175 + (((x >> 2) + (y >> 2)) % 2 ? 22 : -10) + R() * 20; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(x, y, 4, 2); } for (let i = 0; i < 30; i++) { g.strokeStyle = 'rgba(90,90,90,.25)'; g.lineWidth = 1; g.beginPath(); const y = R() * h; g.moveTo(0, y); g.lineTo(w, y + (R() - .5) * 20); g.stroke(); } }, [4, 4]);
+    AGTX.plate = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#d6d6d6'; g.fillRect(0, 0, w, h); for (let i = 0; i < 6000; i++) { g.fillStyle = `rgba(${R() < .5 ? '0,0,0' : '255,255,255'},${R() * .06})`; g.fillRect(R() * w, R() * h, 2, 2); } g.strokeStyle = 'rgba(40,40,40,.55)'; g.lineWidth = 2; for (const y of [64, 160]) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } for (const x of [96, 200]) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let i = 0; i < 40; i++) { g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(R() * w, R() * h, R() * 14, 1.5); } g.fillStyle = 'rgba(30,30,30,.6)'; for (let i = 0; i < 10; i++) { g.beginPath(); g.arc(R() * w, R() * h, 2.5, 0, TAU); g.fill(); } }, [2, 2]);
+    return AGTX;
+  }
+  function agentMats(id, kit, op) {
+    if (AGM[id]) return AGM[id]; const T = agentTex(), env = m => { if (X.env) { m.envMap = X.env; m.envMapIntensity = .7; } return m; };
+    const st = (c, o) => env(new THREE.MeshStandardMaterial(Object.assign({ color: LC(c) }, o)));
+    return AGM[id] = { suit: st(kit.suit, { map: T.fab, roughness: .88, metalness: 0 }), plate: st(kit.plate, { map: T.plate, roughness: .42, metalness: .35 }), cloth: st(kit.cloth, { map: T.fab, roughness: .82, metalness: 0 }),
+      skin: st(kit.skin, { roughness: .62, metalness: 0 }), dark: st('#15171c', { roughness: .6, metalness: .25 }), acc: st(op.col, { roughness: .35, metalness: .5, emissive: LC(op.col), emissiveIntensity: .12 }),
+      metal: st('#9aa3ad', { roughness: .3, metalness: .9 }), glow: new THREE.MeshBasicMaterial({ color: LC(op.col), toneMapped: false, side: THREE.DoubleSide }) };
+  }
   function agentModel(f) {
     const G = new THREE.Group(), op = OPS[f.op] || OPS.vex, kit = KIT[f.op] || KIT.vex, sh = !X.low, w = kit.wide; G.rotation.order = 'YXZ';
-    const lam = c => new THREE.MeshLambertMaterial({ color: LC(c) });
-    const M = { suit: lam(kit.suit), plate: lam(kit.plate), cloth: lam(kit.cloth), skin: lam(kit.skin), dark: lam('#15171c'), acc: lam(op.col), glow: new THREE.MeshBasicMaterial({ color: LC(op.col), toneMapped: false, side: THREE.DoubleSide }) };
+    const M = agentMats(f.op, kit, op);
     let T = G;
     const add = (geo, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); T.add(m); return m; };
     const cyl = (rt, rb2, h, seg = 12) => new THREE.CylinderGeometry(rt, rb2, h, seg), sph = (r, a = 14, b = 10) => new THREE.SphereGeometry(r, a, b);
@@ -1922,6 +1981,13 @@ const GAME = {
     const plateG = new THREE.ExtrudeGeometry(front, { depth: .035, bevelEnabled: true, bevelThickness: .014, bevelSize: .014, bevelSegments: 2 });
     add(plateG, M.plate, 0, 0, -.178 * w); add(plateG, M.plate, 0, 0, .13 * w); add(rb(.07, .07, .012, .02), M.acc, .065 * w, .42, -.196 * w, 0, 0, Math.PI / 4); for (let i = 0; i < 3; i++) add(rb(.058, .085, .035, .01), M.cloth, (-.068 + i * .068) * w, .27, -.2 * w);
     for (const sx of [-1, 1]) add(rb(.05, .2, .05, .015), M.dark, sx * .1 * w, .52, 0, .0, 0, 0);   // shoulder straps
+    // the trim: glowing edges down the chest plate and across the collar bone, chevrons on both shoulders, a collar ring
+    for (const sx of [-1, 1]) { add(rb(.008, .2, .01, .003), M.glow, sx * .135 * w, .36, -.214 * w, 0, 0, sx * -.32); add(rb(.05, .008, .01, .003), M.glow, sx * .06 * w, .49, -.214 * w);
+      const ch = add(new THREE.ConeGeometry(.028, .03, 3), M.glow, sx * .232 * w, .47, -.05, 0, 0, Math.PI); ch.scale.z = .3; ch.rotation.y = sx * Math.PI / 2; }
+    add(new THREE.TorusGeometry(.078, .014, 8, 18), M.plate, 0, .575, 0, Math.PI / 2);
+    // the belt: pouches round it, a holster with a sidearm on the right hip, a knife on the left
+    T = torso; for (let i = 0; i < 4; i++) { const a = -2.2 + i * .55; add(rb(.06, .07, .04, .012), i % 2 ? M.cloth : M.dark, Math.sin(a) * .17 * w, .02, Math.cos(a) * -.13 * w, 0, -a); }
+    add(rb(.03, .02, .025, .006), M.metal, 0, .1, -.15 * w); T = Rg.th; add(rb(.05, .14, .08, .012), M.dark, .125 * w, -.08, .01); add(rb(.03, .07, .03, .006), M.metal, .125 * w, .0, .01); T = L.th; add(rb(.02, .12, .035, .006), M.metal, -.12 * w, -.06, .03, .2); T = torso;
     add(cyl(.058, .072, .1), M.skin, 0, .6, 0);
     // what they carry on their back, and their shoulders
     if (f.op === 'bastion') { add(rb(.3, .34, .15, .04), M.cloth, 0, .37, .21); add(cyl(.062, .062, .36, 12), M.plate, 0, .58, .2, 0, 0, Math.PI / 2); for (const sx of [-1, 1]) { const pd = add(rb(.17, .1, .2, .04), M.plate, sx * .285, .535, 0, 0, 0, sx * -.3); pd.scale.z = 1; add(rb(.12, .03, .15, .012), M.acc, sx * .3, .592, 0, 0, 0, sx * -.3); } }
@@ -1982,7 +2048,7 @@ const GAME = {
         const d = new THREE.Vector3(Tg[0] - S[0], Tg[1] - S[1], Tg[2] - S[2]), Ld = Math.min(d.length(), a + b - .005); d.normalize();
         const x = (a * a - b * b + Ld * Ld) / (2 * Ld), h = Math.sqrt(Math.max(0, a * a - x * x)), pole = new THREE.Vector3(px * .7, -1, .2); pole.addScaledVector(d, -pole.dot(d)).normalize();
         const E = [S[0] + d.x * x + pole.x * h, S[1] + d.y * x + pole.y * h, S[2] + d.z * x + pole.z * h], Hn = [S[0] + d.x * Ld, S[1] + d.y * Ld, S[2] + d.z * Ld];
-        limb(S, E, .064, .054, M.suit); limb(E, Hn, .052, .042, M.suit); add(sph(.057, 10, 8), M.plate, E[0], E[1], E[2]); add(sph(.05, 10, 8), M.dark, Hn[0], Hn[1], Hn[2]);
+        limb(S, E, .064, .054, M.suit); limb(E, Hn, .052, .042, M.suit); add(sph(.057, 10, 8), M.plate, E[0], E[1], E[2]); { const gl = add(rb(.078, .095, .07, .02), M.dark, Hn[0], Hn[1], Hn[2]); gl.lookAt(Hn[0] + d.x, Hn[1] + d.y, Hn[2] + d.z); const kn = add(rb(.07, .022, .02, .006), M.plate, Hn[0] + d.x * .03, Hn[1] + d.y * .03 + .02, Hn[2] + d.z * .03); kn.lookAt(Hn[0] + d.x, Hn[1] + d.y + .02, Hn[2] + d.z); }
         const mid = [(E[0] + Hn[0]) / 2, (E[1] + Hn[1]) / 2, (E[2] + Hn[2]) / 2]; add(sph(.056, 10, 8), M.acc, mid[0], mid[1], mid[2]).scale.set(1, .5, 1);
       }
       bake(armMesh, sh);
@@ -2654,8 +2720,72 @@ const GAME = {
      skinKit adds the line's parts to a built gun, sized from the gun itself, so one line fits every weapon. Parts that
      move (rings, embers, arcs, a hovering crystal) stay separate meshes with an anim(m, t, dt) the frame calls. */
   const SKTX = {}, SKMAT = {};
+  // the newer lines are painted from a pattern name (LINES[line].pat): map is the paint, em (when the line glows) what lights up
+  function patternTex(L) {
+    const S = 512, P = L.pat, out = {}, rr2 = (a, b) => a + R() * (b - a), base = L.base, alt = L.alt;
+    const blots = (g, n, r0, r1, col) => { for (let i = 0; i < n; i++) { const x = R() * S, y = R() * S, r = rr2(r0, r1), q = rr2(.5, 1); g.fillStyle = col; for (const dx of [-S, 0, S]) for (const dy of [-S, 0, S]) { g.beginPath(); g.ellipse(x + dx, y + dy, r, r * q, R() * 3, 0, TAU); g.fill(); } } };
+    const specks = (g, n, a) => { for (let i = 0; i < n; i++) { g.fillStyle = `rgba(${R() < .5 ? '0,0,0' : '255,255,255'},${a * R()})`; g.fillRect(R() * S, R() * S, 1.5, 1.5); } };
+    const wave = (g, y0, amp, f, ph) => { g.beginPath(); for (let x = 0; x <= S; x += 6) g.lineTo(x, y0 + Math.sin(x / S * TAU * f + ph) * amp + Math.sin(x / S * TAU * f * 2.7 + ph * 2) * amp * .3); g.stroke(); };
+    const fill = (g, c) => { g.fillStyle = c; g.fillRect(0, 0, S, S); };
+    const T2 = (fn, rep = [2, 2]) => canvasTex(S, S, g => fn(g), rep);
+    const crackSet = []; for (let i = 0; i < 24; i++) { let x = R() * S, y = R() * S, a = R() * TAU; const q = [[x, y]]; for (let k = 0; k < 12; k++) { a += (R() - .5) * 1.3; x += Math.cos(a) * 18; y += Math.sin(a) * 18; q.push([x, y]); } crackSet.push([q, rr2(1.5, 4)]); }
+    const cracks = (g, col, glow) => { for (const [q, lw] of crackSet) for (const [c, k] of [[glow, 3.4], [col, 1]]) { g.strokeStyle = c; g.lineWidth = lw * k; g.beginPath(); q.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); } };
+    const stars = (g, n, col) => { for (let i = 0; i < n; i++) { const x = R() * S, y = R() * S, r = R() < .1 ? 2.4 : rr2(.5, 1.3); g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); } };
+    const fp = []; for (let i = 0; i < 40; i++) fp.push([R() * S, R() * S, R()]);
+    switch (P) {
+      case 'tiger': out.map = T2(g => { const gr = g.createLinearGradient(0, 0, 0, S); gr.addColorStop(0, '#f29a3a'); gr.addColorStop(1, base); g.fillStyle = gr; g.fillRect(0, 0, S, S); g.fillStyle = alt; for (let i = 0; i < 16; i++) { const y = i * S / 16 + rr2(-8, 8), w = rr2(6, 16); g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= S; x += 16) g.lineTo(x, y + Math.sin(x * .03 + i) * 10 - w * Math.sin(x / S * Math.PI)); for (let x = S; x >= 0; x -= 16) g.lineTo(x, y + Math.sin(x * .03 + i) * 10 + w * Math.sin(x / S * Math.PI) * .4); g.fill(); } specks(g, 6000, .08); }); break;
+      case 'camo': out.map = T2(g => { fill(g, base); (L.cols || [alt]).forEach((c, i) => blots(g, 22 - i * 4, 22, 70 - i * 10, c)); specks(g, 8000, .08); }, [3, 3]); break;
+      case 'wood': out.map = T2(g => { fill(g, base); for (let i = 0; i < 70; i++) { g.strokeStyle = i % 3 ? 'rgba(60,20,10,.35)' : `${alt}88`; g.lineWidth = rr2(1, 3.5); wave(g, i * S / 70, rr2(3, 9), rr2(1, 2), R() * 6); } for (let i = 0; i < 4; i++) { const x = R() * S, y = R() * S; for (let r = 4; r < 26; r += 4) { g.strokeStyle = 'rgba(50,15,5,.35)'; g.lineWidth = 1.5; g.beginPath(); g.ellipse(x, y, r * 2, r * .7, 0, 0, TAU); g.stroke(); } } }); break;
+      case 'checker': out.map = T2(g => { const c = 64; for (let y = 0; y < S; y += c) for (let x = 0; x < S; x += c) { g.fillStyle = ((x + y) / c) % 2 ? alt : base; g.fillRect(x, y, c, c); } specks(g, 10000, .12); blots(g, 8, 10, 30, 'rgba(120,120,120,.12)'); }); break;
+      case 'dots': out.map = T2(g => { fill(g, base); for (let i = 0; i < 160; i++) { const x = R() * S, y = R() * S, r = rr2(3, 9); g.fillStyle = alt; g.beginPath(); for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + R() * .5; g.lineTo(x + Math.cos(a) * r * rr2(.7, 1.2), y + Math.sin(a) * r * rr2(.7, 1.2)); } g.fill(); } specks(g, 5000, .06); }); break;
+      case 'concrete': out.map = T2(g => { fill(g, base); blots(g, 30, 20, 80, 'rgba(70,70,66,.12)'); blots(g, 30, 10, 40, 'rgba(255,255,250,.08)'); specks(g, 22000, .16); g.fillStyle = alt; g.fillRect(0, S * .42, S, S * .06); g.font = '900 64px monospace'; g.fillStyle = '#1a1a1a'; g.fillText('DP-07', 40, S * .3); g.fillText('DP-07', 290, S * .78); }, [1, 1]); break;
+      case 'sakura': out.map = T2(g => { fill(g, base); g.strokeStyle = '#4a2a20'; g.lineCap = 'round'; for (let i = 0; i < 6; i++) { let x = R() * S, y = R() * S, a = R() * TAU; g.lineWidth = rr2(4, 8); g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 6; k++) { a += rr2(-.6, .6); x += Math.cos(a) * 30; y += Math.sin(a) * 30; g.lineTo(x, y); } g.stroke(); } for (let i = 0; i < 70; i++) { const x = R() * S, y = R() * S, r = rr2(6, 13); for (let k = 0; k < 5; k++) { const a = k / 5 * TAU; g.fillStyle = k % 2 ? alt : '#f4a8c0'; g.beginPath(); g.ellipse(x + Math.cos(a) * r * .6, y + Math.sin(a) * r * .6, r * .55, r * .35, a, 0, TAU); g.fill(); } g.fillStyle = '#ffe08a'; g.beginPath(); g.arc(x, y, r * .2, 0, TAU); g.fill(); } }); break;
+      case 'carbon': out.map = T2(g => { const c = 16; for (let y = 0; y < S; y += c) for (let x = 0; x < S; x += c) { const v = ((x + y) / c) % 2, gr = v ? g.createLinearGradient(x, y, x + c, y) : g.createLinearGradient(x, y, x, y + c); gr.addColorStop(0, '#0e0f12'); gr.addColorStop(.5, '#2c3036'); gr.addColorStop(1, '#0e0f12'); g.fillStyle = gr; g.fillRect(x, y, c, c); } g.fillStyle = alt; g.save(); g.translate(S / 2, S / 2); g.rotate(-.6); g.fillRect(-S, -18, S * 2, 36); g.restore(); }, [3, 3]); break;
+      case 'hex': out.map = T2(g => { fill(g, alt); const r = 26, hw = r * Math.sqrt(3); g.lineWidth = 7; g.strokeStyle = base; for (let row = -1; row < S / (r * 1.5) + 1; row++) for (let col = -1; col < S / hw + 1; col++) { const cx = col * hw + (row % 2) * hw / 2, cy = row * r * 1.5; g.beginPath(); for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + Math.PI / 6; g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } g.closePath(); g.stroke(); g.fillStyle = `rgba(255,255,255,${R() * .12})`; g.fill(); } }); break;
+      case 'topo': out.map = T2(g => { fill(g, base); for (let c = 0; c < 5; c++) { const cx = R() * S, cy = R() * S, ph = R() * 9; for (let r = 10; r < 240; r += 12) { g.strokeStyle = r % 60 < 12 ? alt : 'rgba(90,80,50,.45)'; g.lineWidth = r % 60 < 12 ? 2.4 : 1.2; g.beginPath(); for (let a = 0; a <= TAU + .01; a += .1) { const rr = r * (1 + .25 * Math.sin(a * 3 + ph) + .12 * Math.sin(a * 5 + r * .05)); g.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); } g.stroke(); } } }, [1, 1]); break;
+      case 'koi': out.map = T2(g => { fill(g, base); g.strokeStyle = 'rgba(120,220,220,.18)'; g.lineWidth = 2; for (let i = 0; i < 14; i++) wave(g, i * S / 14, 6, 2, i); for (let i = 0; i < 9; i++) { const x = R() * S, y = R() * S, a = R() * TAU, l = rr2(40, 70); g.save(); g.translate(x, y); g.rotate(a); g.fillStyle = '#ffffff'; g.beginPath(); g.ellipse(0, 0, l / 2, l / 6, 0, 0, TAU); g.fill(); g.fillStyle = alt; g.beginPath(); g.ellipse(-l * .1, 0, l * .25, l / 7, 0, 0, TAU); g.fill(); g.beginPath(); g.moveTo(-l / 2, 0); g.lineTo(-l * .8, -l / 6); g.lineTo(-l * .8, l / 6); g.fill(); g.restore(); } }, [1, 1]); break;
+      case 'chevron': out.map = T2(g => { fill(g, base); g.fillStyle = alt; for (let i = -6; i < 12; i++) { const x = i * 64; g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 32, 0); g.lineTo(x + 32 + S / 2, S / 2); g.lineTo(x + 32, S); g.lineTo(x, S); g.lineTo(x + S / 2, S / 2); g.fill(); } specks(g, 8000, .1); }); break;
+      case 'splatter': out.map = T2(g => { fill(g, base); const cols = ['#ff3b8f', '#3bc4ff', '#ffd23a', '#5ad84a', '#a05aff', '#ff7a2a']; for (let i = 0; i < 26; i++) { const x = R() * S, y = R() * S, r = rr2(12, 34), c = cols[i % cols.length]; g.fillStyle = c; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); for (let k = 0; k < 12; k++) { const a = R() * TAU, d = r * rr2(1.1, 2.4); g.beginPath(); g.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, rr2(2, 6), 0, TAU); g.fill(); } } }, [1, 1]); break;
+      case 'leopard': out.map = T2(g => { fill(g, base); blots(g, 16, 20, 60, 'rgba(255,220,150,.2)'); for (let i = 0; i < 70; i++) { const x = R() * S, y = R() * S, r = rr2(8, 16); g.fillStyle = '#a0682a'; g.beginPath(); g.ellipse(x, y, r, r * .8, R(), 0, TAU); g.fill(); g.strokeStyle = alt; g.lineWidth = rr2(3, 5); g.beginPath(); g.arc(x, y, r * 1.05, R() * 2, R() * 2 + rr2(3, 5)); g.stroke(); } }); break;
+      case 'scales': out.map = T2(g => { fill(g, base); const r = 28; for (let row = 0; row < S / (r * .9) + 2; row++) for (let col = -1; col < S / (r * 1.6) + 2; col++) { const cx = col * r * 1.6 + (row % 2) * r * .8, cy = row * r * .9 - r; const gr = g.createRadialGradient(cx, cy + r * .3, 2, cx, cy, r); gr.addColorStop(0, '#c02028'); gr.addColorStop(1, base); g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI); g.fill(); g.strokeStyle = alt; g.lineWidth = 3; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI); g.stroke(); } }); break;
+      case 'damascus': out.map = T2(g => { fill(g, base); for (let i = 0; i < 90; i++) { g.strokeStyle = i % 2 ? alt + 'cc' : 'rgba(40,46,52,.6)'; g.lineWidth = rr2(1.5, 4); g.beginPath(); for (let x = 0; x <= S; x += 4) { const y = i * S / 90 + Math.sin(x * .02 + Math.sin(x * .007 + i * .3) * 3) * 18; g.lineTo(x, y); } g.stroke(); } }, [1, 2]); break;
+      case 'marble': out.map = T2(g => { fill(g, base); blots(g, 30, 20, 90, 'rgba(160,240,190,.18)'); blots(g, 20, 10, 50, 'rgba(10,60,30,.25)'); g.lineCap = 'round'; for (const [c, lw, n] of [[alt, 3, 14], ['#fff0b0', 1.2, 18]]) { g.strokeStyle = c; for (let i = 0; i < n; i++) { let x = R() * S, y = R() * S, a = R() * TAU; g.lineWidth = lw * rr2(.5, 1.4); g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 14; k++) { a += rr2(-.7, .7); x += Math.cos(a) * 22; y += Math.sin(a) * 22; g.lineTo(x, y); } g.stroke(); } } }); break;
+      case 'grid': { const draw = (g, bg, glowA) => { if (bg) { const gr = g.createLinearGradient(0, 0, 0, S); gr.addColorStop(0, '#1a0a2e'); gr.addColorStop(.55, '#3a0a4e'); gr.addColorStop(1, '#0a0418'); g.fillStyle = gr; g.fillRect(0, 0, S, S); } else fill(g, '#000');
+          const sg = g.createLinearGradient(0, S * .12, 0, S * .5); sg.addColorStop(0, '#ffd23a'); sg.addColorStop(1, '#ff3ac8'); g.fillStyle = sg; g.beginPath(); g.arc(S / 2, S * .42, S * .2, Math.PI, 0); g.fill(); g.fillStyle = bg ? '#2a0a3e' : '#000'; for (let i = 0; i < 5; i++) g.fillRect(S * .28, S * .3 + i * 16, S * .44, 4 + i * 2);
+          g.strokeStyle = glowA; g.lineWidth = 3; for (let i = 0; i < 12; i++) { const y = S * .55 + (i / 12) ** 1.8 * S * .45; g.beginPath(); g.moveTo(0, y); g.lineTo(S, y); g.stroke(); } for (let i = -10; i <= 10; i++) { g.beginPath(); g.moveTo(S / 2 + i * 12, S * .55); g.lineTo(S / 2 + i * 90, S); g.stroke(); } };
+        out.map = canvasTex(S, S, g => draw(g, true, '#ff3ac8'), [1, 1]); out.em = canvasTex(S, S, g => draw(g, false, '#ff5ae0'), [1, 1]); } break;
+      case 'ooze': { const bl = []; for (let i = 0; i < 26; i++) bl.push([R() * S, R() * S, rr2(14, 46)]); const draw = (g, bg, col) => { fill(g, bg); g.fillStyle = col; for (const [x, y, r] of bl) { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); g.fillRect(x - r * .25, y, r * .5, r * 1.6); g.beginPath(); g.arc(x, y + r * 1.6, r * .25, 0, TAU); g.fill(); } };
+        out.map = T2(g => { draw(g, base, alt); specks(g, 6000, .1); }); out.em = T2(g => draw(g, '#000', alt)); } break;
+      case 'biolum': { const pts = []; for (let i = 0; i < 160; i++) pts.push([R() * S, R() * S, rr2(1, 4), R() < .5 ? alt : '#7fffd8']); const draw = (g, bg) => { fill(g, bg); for (const [x, y, r, c] of pts) { g.fillStyle = c; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); } for (let i = 0; i < 6; i++) { const x = fp[i][0], y = fp[i][1]; g.strokeStyle = alt; g.lineWidth = 2; g.beginPath(); g.arc(x, y, 18, Math.PI, 0); g.stroke(); for (let k = 0; k < 5; k++) { g.beginPath(); g.moveTo(x - 14 + k * 7, y); g.quadraticCurveTo(x - 14 + k * 7 + 6, y + 20, x - 14 + k * 7, y + 40); g.stroke(); } } };
+        out.map = T2(g => { draw(g, base); blots(g, 10, 40, 120, 'rgba(20,60,90,.25)'); }); out.em = T2(g => draw(g, '#000')); } break;
+      case 'filigree': out.map = T2(g => { fill(g, base); specks(g, 6000, .06); g.strokeStyle = alt; g.lineCap = 'round'; for (let i = 0; i < 16; i++) { const x = (i % 4) * S / 4 + 64, y = Math.floor(i / 4) * S / 4 + 64; for (const sgn of [1, -1]) { g.lineWidth = 3; g.beginPath(); for (let a = 0; a < 9; a += .15) { const r = 4 + a * 4.5; g.lineTo(x + sgn * Math.cos(a) * r, y + Math.sin(a) * r); } g.stroke(); } g.lineWidth = 2; g.beginPath(); g.arc(x, y, 6, 0, TAU); g.stroke(); } }); break;
+      case 'glitch': { const blk = []; for (let i = 0; i < 60; i++) blk.push([R() * S, R() * S, rr2(20, 160), rr2(3, 14), ['#ff2a5a', '#2affd8', '#5aff4a', '#ffffff'][i % 4]]); const draw = (g, bg) => { fill(g, bg); for (const [x, y, w, h, c] of blk) { g.fillStyle = c; g.fillRect(x, y, w, h); g.globalAlpha = .4; g.fillRect(x + 6, y + 2, w, h); g.globalAlpha = 1; } };
+        out.map = T2(g => { draw(g, base); for (let y = 0; y < S; y += 4) { g.fillStyle = 'rgba(255,255,255,.03)'; g.fillRect(0, y, S, 1); } }); out.em = T2(g => draw(g, '#000')); } break;
+      case 'galaxy': { const draw = (g, bg) => { fill(g, bg); for (let i = 0; i < 9; i++) { const x = R() * S, y = R() * S, r = rr2(60, 180), gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, ['rgba(180,107,255,.5)', 'rgba(90,150,255,.45)', 'rgba(255,90,200,.4)'][i % 3]); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, S, S); } stars(g, 500, '#ffffff'); };
+        out.map = T2(g => draw(g, base), [1, 1]); out.em = T2(g => draw(g, '#000'), [1, 1]); } break;
+      case 'feathers': { const draw = (g, bg, em) => { fill(g, bg); for (let row = 0; row < 9; row++) for (let i = 0; i < 7; i++) { const x = i * S / 6 + (row % 2) * 36, y = row * S / 8; g.save(); g.translate(x, y); g.rotate(.3); const gr = g.createLinearGradient(0, -40, 0, 40); gr.addColorStop(0, em ? '#000' : '#7a1408'); gr.addColorStop(.6, '#ff6a1a'); gr.addColorStop(1, alt); g.fillStyle = gr; g.beginPath(); g.ellipse(0, 0, 18, 44, 0, 0, TAU); g.fill(); g.strokeStyle = em ? '#ffd27a' : '#3a0804'; g.lineWidth = 2; g.beginPath(); g.moveTo(0, -40); g.lineTo(0, 44); g.stroke(); g.restore(); } };
+        out.map = T2(g => draw(g, base, false)); out.em = T2(g => draw(g, '#000', true)); } break;
+      case 'aurora': { const draw = (g, bg) => { fill(g, bg); if (bg !== '#000') stars(g, 260, 'rgba(255,255,255,.8)'); for (let i = 0; i < 7; i++) { const x0 = i * S / 7 + rr2(-20, 20), c = i % 3 ? alt : '#ff7ad8'; for (let y = 0; y < S; y += 3) { const x = x0 + Math.sin(y * .02 + i) * 30, a = Math.max(0, Math.sin(y / S * Math.PI)) * .5; g.fillStyle = c + Math.round(a * 255).toString(16).padStart(2, '0'); g.fillRect(x, y, 26, 3); } } };
+        out.map = T2(g => draw(g, base), [1, 1]); out.em = T2(g => draw(g, '#000'), [1, 1]); } break;
+      case 'clouds': out.map = T2(g => { fill(g, base); blots(g, 40, 30, 90, 'rgba(120,135,160,.25)'); blots(g, 30, 20, 60, 'rgba(20,24,32,.35)'); }, [2, 2]); out.em = T2(g => { fill(g, '#000'); g.strokeStyle = alt; g.lineWidth = 2.5; for (let i = 0; i < 10; i++) { let x = R() * S, y = R() * S; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 7; k++) { x += rr2(-24, 24); y += rr2(10, 30); g.lineTo(x, y); } g.stroke(); } }); break;
+      case 'facets': { const tris = []; const n = 9, c = S / n; for (let y = 0; y <= n; y++) for (let x = 0; x <= n; x++) tris.push([x * c + rr2(-14, 14), y * c + rr2(-14, 14)]); const at = (x, y) => tris[y * (n + 1) + x];
+        const draw = (g, em) => { for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) for (const t of [[at(x, y), at(x + 1, y), at(x, y + 1)], [at(x + 1, y), at(x + 1, y + 1), at(x, y + 1)]]) { const h = (x * 37 + y * 53 + (t === 0 ? 0 : 19)) % 360; g.fillStyle = em ? `hsla(${h},90%,60%,.35)` : `hsl(${h},55%,${82 + R() * 12}%)`; g.beginPath(); t.forEach(([a, b], i) => i ? g.lineTo(a, b) : g.moveTo(a, b)); g.closePath(); g.fill(); g.strokeStyle = em ? 'rgba(255,255,255,.6)' : 'rgba(255,255,255,.7)'; g.lineWidth = 1.5; g.stroke(); } };
+        out.map = T2(g => draw(g, false), [1, 1]); out.em = T2(g => { fill(g, '#000'); draw(g, true); }, [1, 1]); } break;
+      case 'lava': { const riv = []; for (let i = 0; i < 9; i++) riv.push([R() * S, rr2(8, 22), R() * 9]); const draw = (g, bg) => { fill(g, bg); if (bg !== '#000') { blots(g, 40, 10, 40, 'rgba(60,40,36,.5)'); specks(g, 12000, .15); } for (const [x0, w, ph] of riv) for (const [c, k] of [['rgba(255,60,0,.5)', 2.2], [alt, 1], ['#ffd27a', .35]]) { g.strokeStyle = c; g.lineWidth = w * k; g.beginPath(); for (let y = 0; y <= S; y += 8) g.lineTo(x0 + Math.sin(y * .015 + ph) * 40, y); g.stroke(); } };
+        out.map = T2(g => draw(g, base)); out.em = T2(g => draw(g, '#000')); } break;
+      case 'stars': { const pts = fp.map(([x, y]) => [x, y]); const draw = (g, bg) => { fill(g, bg); if (bg !== '#000') blots(g, 18, 30, 90, 'rgba(220,210,190,.2)'); g.strokeStyle = alt; g.lineWidth = 1.6; for (let i = 0; i < pts.length - 1; i++) if (i % 5 !== 4) { const [a, b] = pts[i], [c, d] = pts[i + 1]; if (Math.hypot(a - c, b - d) < 160) { g.beginPath(); g.moveTo(a, b); g.lineTo(c, d); g.stroke(); } } for (const [x, y] of pts) { g.fillStyle = alt; g.beginPath(); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU, r = k % 2 ? 2.5 : 7; g.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } g.fill(); } };
+        out.map = T2(g => draw(g, base)); out.em = T2(g => draw(g, '#000')); } break;
+      case 'cracks': out.map = T2(g => { fill(g, base); specks(g, 9000, .1); cracks(g, '#ff5a6a', 'rgba(120,0,20,.6)'); }); out.em = T2(g => { fill(g, '#000'); cracks(g, '#ffb0c0', 'rgba(255,26,58,.6)'); }); break;
+      case 'holo': out.map = canvasTex(S, S, g => { const gr = g.createLinearGradient(0, 0, S, S); for (let i = 0; i <= 12; i++) gr.addColorStop(i / 12, `hsl(${i * 30 % 360},90%,${70 + (i % 2) * 10}%)`); g.fillStyle = gr; g.fillRect(0, 0, S, S); g.globalAlpha = .25; for (let i = 0; i < 30; i++) { g.strokeStyle = '#ffffff'; g.lineWidth = rr2(1, 4); wave(g, R() * S, 20, 1, R() * 6); } g.globalAlpha = 1; }, [1, 1]); out.em = out.map; break;
+      case 'corona': { const draw = (g, bg) => { fill(g, bg); for (const [cx, cy] of [[S * .3, S * .35], [S * .75, S * .8]]) { for (let i = 0; i < 28; i++) { const a = i / 28 * TAU + R() * .1, r0 = 54, r1 = r0 + rr2(20, 70); g.strokeStyle = alt; g.lineWidth = rr2(1.5, 4); g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); g.stroke(); } g.lineWidth = 8; g.strokeStyle = '#fff0c4'; g.beginPath(); g.arc(cx, cy, 52, 0, TAU); g.stroke(); g.fillStyle = '#000'; g.beginPath(); g.arc(cx, cy, 48, 0, TAU); g.fill(); } };
+        out.map = T2(g => { draw(g, base); specks(g, 6000, .08); }, [1, 1]); out.em = T2(g => draw(g, '#000'), [1, 1]); } break;
+      default: out.map = T2(g => fill(g, base));
+    }
+    return out;
+  }
   function skinTex(line) {
     if (SKTX[line]) return SKTX[line];
+    if (LINES[line] && LINES[line].pat) return SKTX[line] = patternTex(LINES[line]);
     const L = LINES[line], S = 512, rr2 = (a, b) => a + R() * (b - a), out = {};
     const veins = (g, w, h, n, col, lw, jag) => { g.strokeStyle = col; g.lineCap = 'round'; for (let i = 0; i < n; i++) { let x = R() * w, y = R() * h, a = R() * TAU; g.lineWidth = lw * (.5 + R()); g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 14; k++) { a += (R() - .5) * jag; x += Math.cos(a) * 16; y += Math.sin(a) * 16; g.lineTo(x, y); } g.stroke(); } };
     const blots = (g, w, h, n, r0, r1, col) => { for (let i = 0; i < n; i++) { const x = R() * w, y = R() * h, r = rr2(r0, r1); for (const dx of [-w, 0, w]) for (const dy of [-h, 0, h]) { g.fillStyle = col; g.beginPath(); g.ellipse(x + dx, y + dy, r, r * rr2(.5, 1), R() * 3, 0, TAU); g.fill(); } } };
@@ -2703,6 +2833,19 @@ const GAME = {
       M2.fin = phys({ map: T.map, emissive: lc('#ffffff'), emissiveMap: T.em, emissiveIntensity: vo ? 1.5 : 1.1, roughness: vo ? .25 : .3, metalness: vo ? .6 : .1, clearcoat: 1, clearcoatRoughness: .05 });
       M2.metal = std({ color: lc(vo ? '#2a2440' : '#e3b341'), metalness: 1, roughness: .2 }, 1.6); M2.acc = std({ color: lc(L.alt), emissive: lc(L.alt), emissiveIntensity: .6, metalness: .6, roughness: .3 }, 1); M2.glow = new THREE.MeshBasicMaterial({ color: lc(L.alt), toneMapped: false });
       const em = T.em; SKIN_LIVE.push(t => { em.offset.x = (t * (vo ? .12 : .05)) % 1; }); }
+    if (L.pat) {   // a painted line: the finish by rarity, a glow where the pattern lights up, a living finish at the top
+      const o = { map: T.map, roughness: L.metal ? .28 : tier >= 2 ? .34 : .62, metalness: L.metal || (tier >= 2 ? .2 : .05) };
+      if (T.em) Object.assign(o, { emissive: lc('#ffffff'), emissiveMap: T.em, emissiveIntensity: tier >= 3 ? 1.25 : 1 });
+      M2.fin = (L.clear || tier >= 2) ? phys(Object.assign(o, { clearcoat: 1, clearcoatRoughness: .08 })) : std(o, .5);
+      M2.acc = std({ color: lc(L.alt), roughness: .35, metalness: .6, emissive: L.glow ? lc(L.alt) : lc('#000000'), emissiveIntensity: L.glow ? .5 : 0 }, .9);
+      if (tier >= 2) M2.glow = new THREE.MeshBasicMaterial({ color: lc(L.alt), toneMapped: false });
+      if ((L.metal || 0) >= .8) M2.metal = std({ color: lc(L.base), metalness: 1, roughness: .2 }, 1.4);
+      const f = M2.fin, em = T.em, mp = T.map;
+      if (L.live === 'pulse') SKIN_LIVE.push(t => { f.emissiveIntensity = 1.05 + Math.sin(t * 2.4) * .4; });
+      else if (L.live === 'flow' && em) SKIN_LIVE.push(t => { em.offset.x = (t * .06) % 1; });
+      else if (L.live === 'flicker') { let nx = 0, on = 1; SKIN_LIVE.push((t, dt) => { if ((nx -= dt) <= 0) { nx = .04 + R() * .3; on = R() < .2 ? 2.2 : .7 + R() * .4; } f.emissiveIntensity = lp(f.emissiveIntensity, on, .5); }); }
+      else if (L.live === 'shift') SKIN_LIVE.push(t => { mp.offset.x = (t * .05) % 1; mp.offset.y = (t * .02) % 1; });
+    }
     for (const q of ['fin']) if (M2[q] !== base[q] && M2[q].color && !M2[q].map) M2[q].color.convertSRGBToLinear();
     return SKMAT[key] = M2;
   }
@@ -2718,6 +2861,19 @@ const GAME = {
     const glowM = c => new THREE.MeshBasicMaterial({ color: lc(c), toneMapped: false, transparent: true, opacity: .9, blending: THREE.AdditiveBlending, depthWrite: false });
     const live = (o, fn) => { o.userData.live = true; o.userData.anim = fn; return o; };
     const along = q => lp(bb.max.z, -len, q);   // along the gun: 0 at the back, 1 at the muzzle
+    if (L.pat) {
+      const hw = (bb.max.x - bb.min.x) / 2;
+      for (const q of [.86, .93]) add(new THREE.TorusGeometry(.016, .003, 8, 18), m.acc, 0, ax, along(q));
+      for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.003, .016, (bb.max.z - bb.min.z) * .18), m.acc, sx * (hw + .0015), ax + .004, along(.42));
+      if (tier >= 2) { for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.002, .005, (bb.max.z - bb.min.z) * .3), m.glow, sx * (hw + .003), ax - .008, along(.35)); add(new THREE.CylinderGeometry(.015, .013, .028, 12, 1, true), m.acc, 0, ax, along(.985), Math.PI / 2); }
+      if (tier >= 3) { const id = L.fx && L.fx.idle;
+        if (id === 'embers') for (let i = 0; i < 8; i++) { const z0 = along(.5 + R() * .4); live(add(new THREE.PlaneGeometry(.006, .006), glowM(i % 2 ? '#ffd27a' : L.alt), 0, topAt(z0), z0), (o, t, dt) => { const u = o.userData; u.k = (u.k == null ? R() : u.k) + dt * .6; if (u.k > 1) { u.k = 0; u.x = (R() - .5) * .02; } o.position.y = topAt(z0) + u.k * .07; o.position.x = (u.x || 0) + Math.sin(u.k * 9) * .004; o.material.opacity = 1 - u.k; }); }
+        else if (id === 'motes') for (let i = 0; i < 6; i++) live(add(new THREE.PlaneGeometry(.005, .005), glowM(i % 2 ? '#ffffff' : L.alt), 0, 0, 0), (o, t) => { const a = t * 1.2 + i * TAU / 6; o.position.set(Math.cos(a) * .045, ax + Math.sin(a * 1.3) * .03, along(.55) + Math.sin(a) * .05); });
+        else if (id === 'arcs') for (let i = 0; i < 2; i++) { const g2 = new THREE.BufferGeometry(); g2.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(18), 3)); const ln = new THREE.Line(g2, new THREE.LineBasicMaterial({ color: lc(L.alt), transparent: true, opacity: .9 })); K2.add(ln); ln.userData.live = true;
+          ln.userData.anim = (o, t, dt) => { const u = o.userData; if ((u.n = (u.n || 0) - dt) > 0) return; u.n = .04 + R() * .14; o.visible = R() < .5; const pa = o.geometry.attributes.position.array, z0 = along(.45 + R() * .35); for (let k = 0; k < 6; k++) { pa[k * 3] = (k % 2 ? 1 : -1) * hw * .8 + (R() - .5) * .006; pa[k * 3 + 1] = ax + (R() - .5) * .02; pa[k * 3 + 2] = z0 - k * .008; } o.geometry.attributes.position.needsUpdate = true; }; } }
+      if (tier >= 4) { for (const [r, sp] of [[.03, 1.4], [.022, -2]]) live(add(new THREE.TorusGeometry(r, .0022, 6, 32), glowM(L.alt), 0, ax, along(.99)), (o, t) => { o.rotation.set(t * sp * .4, t * sp, 0); });
+        const cz = along(.62), cy0 = topAt(cz) + .04; live(add(new THREE.OctahedronGeometry(.012, 0), glowM(L.alt), 0, cy0, cz), (o, t) => { o.position.y = cy0 + Math.sin(t * 2) * .006; o.rotation.y = t * 1.5; }); }
+    }
     if (line === 'tidewater') for (const q of [.72, .8, .88]) add(new THREE.TorusGeometry(.016, .0028, 8, 18), m.acc, 0, ax, along(q));
     if (line === 'circuit') { add(new THREE.BoxGeometry(.012, .024, .05), m.dark, .024, ax + .01, along(.45)); add(new THREE.BoxGeometry(.003, .016, .04), m.glow, .031, ax + .01, along(.45)); }
     if (line === 'glacier') {   // ice: shards along the top and a crown of them round the muzzle
@@ -2753,6 +2909,7 @@ const GAME = {
   }
   // knife blades by line: the shape of the blade and what is built round it
   const KNIFE_SHAPE = { dune: 'kukri', nightshift: 'tanto', tidewater: 'kukri', circuit: 'tanto', glacier: 'crystal', aurum: 'ornate', inferno: 'cleaver', storm: 'coil', voidline: 'energy', solaris: 'energy' };
+  for (const [k, L] of Object.entries(LINES)) if (L.pat && !KNIFE_SHAPE[k]) KNIFE_SHAPE[k] = ['tanto', 'kukri', 'cleaver', 'coil', 'energy'][RARITY[L.r].tier];
   // call every moving part's anim under a gun (first person or a rival's)
   function animKit(G, dt) { if (!G) return; let A = G.userData.kitAnims; if (!A) { A = G.userData.kitAnims = []; G.traverse(o => { if (o.userData.anim) A.push(o); }); } const t = X.t; for (const o of A) o.userData.anim(o, t, dt); }
 
@@ -2882,6 +3039,30 @@ const GAME = {
   const viewer = () => { if (!M) return null; const P = me(); return !P.alive && UI.spec && UI.spec.alive && UI.spec.team === P.team && M.mode !== 'range' ? UI.spec : P; };
   function nextSpec() { const P = me(), mates = M.fs.filter(f => f !== P && f.team === P.team && f.alive && !f.gone); if (!mates.length) { UI.spec = null; return; } const i = mates.indexOf(UI.spec); UI.spec = mates[(i + 1) % mates.length]; X.viewKey = ''; }
   function updateSpec() { const P = me(); if (!M || P.alive || M.mode === 'range' || M.mode === 'demo') { UI.spec = null; return; } if (M.deathInfo && M.deathInfo.t > 2.2 && !(UI.spec && UI.spec.alive)) nextSpec(); }
+  /* ---- reload and inspect, choreographed: keyframes [q, dx, dy, dz, rx, ry, rz] over the action (0..1), eased between,
+     added on top of where the gun is held. One track per kind of weapon. */
+  const VKF = {
+    reload: {
+      rifle: [[0, 0, 0, 0, 0, 0, 0], [.1, -.06, .085, -.02, .1, .32, -.58], [.2, -.065, .07, -.01, .06, .34, -.66], [.3, -.07, .1, -.03, .14, .3, -.72], [.6, -.07, .1, -.03, .12, .3, -.7], [.74, -.06, .12, -.02, .1, .28, -.62], [.79, -.055, .15, -.04, .2, .28, -.6], [.86, -.03, .07, 0, .05, .05, .32], [.93, -.02, .05, .02, .02, -.06, .38], [1, 0, 0, 0, 0, 0, 0]],
+      sidearm: [[0, 0, 0, 0, 0, 0, 0], [.12, -.04, .07, -.01, .05, .36, -.52], [.24, -.045, .085, 0, .2, .36, -.56], [.6, -.045, .07, -.01, .05, .34, -.5], [.74, -.04, .09, -.02, .1, .3, -.45], [.79, -.035, .11, -.03, .2, .3, -.42], [.88, -.01, .05, .03, -.25, .05, .1], [1, 0, 0, 0, 0, 0, 0]],
+      shotgun: [[0, 0, 0, 0, 0, 0, 0], [.1, -.05, .07, -.02, .05, .3, -1.15], [.85, -.05, .075, -.02, .05, .3, -1.15], [.92, -.01, .03, .05, .05, .05, -.1], [1, 0, 0, 0, 0, 0, 0]],
+      sniper: [[0, 0, 0, 0, 0, 0, 0], [.12, -.07, .09, -.02, .12, .22, .48], [.5, -.07, .095, -.02, .12, .22, .5], [.78, -.06, .12, -.03, .2, .2, .45], [.86, -.03, .06, 0, .05, .05, .62], [.95, -.01, .03, .01, .02, 0, .2], [1, 0, 0, 0, 0, 0, 0]],
+    },
+    inspect: {
+      rifle: [[0, 0, 0, 0, 0, 0, 0], [.14, -.04, .045, -.09, .05, .95, .28], [.3, -.04, .05, -.1, -.02, 1.08, .4], [.44, -.03, .06, -.1, -.1, .3, -1.25], [.6, -.03, .06, -.1, -.16, .05, -1.42], [.72, -.01, .075, -.07, .55, .12, -.05], [.86, 0, .055, -.05, .45, .02, .05], [1, 0, 0, 0, 0, 0, 0]],
+      sidearm: [[0, 0, 0, 0, 0, 0, 0], [.14, -.05, .05, -.08, .05, .9, .3], [.3, -.05, .055, -.09, 0, 1.05, .35], [.48, -.06, .07, -.08, .12, -.5, -.5], [.64, -.06, .07, -.08, -.02, -.7, -.62], [.78, -.02, .08, -.06, .5, .05, -.2], [.9, 0, .04, -.03, .3, 0, 0], [1, 0, 0, 0, 0, 0, 0]],
+      sniper: [[0, 0, 0, 0, 0, 0, 0], [.16, -.05, .05, -.08, .04, .85, .25], [.36, -.05, .06, -.1, -.05, 1, .35], [.56, -.04, .07, -.1, .5, .3, .1], [.72, -.03, .065, -.08, .55, -.1, -.2], [.88, -.01, .04, -.04, .3, 0, 0], [1, 0, 0, 0, 0, 0, 0]],
+      shotgun: [[0, 0, 0, 0, 0, 0, 0], [.16, -.04, .05, -.09, .05, .9, .3], [.34, -.04, .055, -.1, -.05, 1.05, .45], [.52, -.03, .06, -.09, -.1, .3, -1.2], [.68, -.02, .065, -.08, .45, .1, -.1], [.86, 0, .04, -.04, .3, 0, 0], [1, 0, 0, 0, 0, 0, 0]],
+      melee: [[0, 0, 0, 0, 0, 0, 0], [.12, -.02, .03, -.04, .2, .6, .4], [.3, -.02, .03, -.04, .2, .6, .4 - TAU * 2], [.42, -.02, .18, -.06, .1, .4, -TAU * 2.5], [.54, -.02, .03, -.04, .25, .7, -TAU * 3], [.74, 0, .05, -.05, .6, .1, -TAU * 3], [.9, 0, .02, -.02, .2, 0, -TAU * 3], [1, 0, 0, 0, 0, 0, -TAU * 3]],
+    },
+  };
+  const INSP_D = 3.4;
+  const vkfKind = (G, kind) => G.melee ? (kind === 'inspect' ? 'melee' : 'rifle') : G.cat === 'Sidearm' ? 'sidearm' : G.cat === 'Shotgun' ? 'shotgun' : G.cat === 'Sniper' ? 'sniper' : 'rifle';
+  function vkf(kind, G, q) {
+    const K = VKF[kind][vkfKind(G, kind)] || VKF[kind].rifle; if (q <= 0) return K[0].slice(1);
+    for (let i = 1; i < K.length; i++) if (q <= K[i][0]) { const a = K[i - 1], b = K[i], u = (q - a[0]) / (b[0] - a[0]), e = u * u * (3 - 2 * u); return a.slice(1).map((v, j) => v + (b[j + 1] - v) * e); }
+    return K[K.length - 1].slice(1);
+  }
   function renderFrame(dt) {
     if (!X || !ready) return; const cam = X.camera; X.t += dt; tunePixels(dt); skinTick(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; }
     const live = M && (screen === 'play' || (screen === 'over' && posed)) && !loadingNow();
@@ -2929,10 +3110,12 @@ const GAME = {
     const RH = G.k === 'breaker' ? [.045, .07, -.75, .3] : G.cat === 'Sidearm' ? [.04, .06, -.4, .3] : G.cat === 'Sniper' ? [.07, .09, .35, .2] : [.1, .13, -.62, .34];
     const turn = cl(angDiff(P.yaw, X.lastYaw == null ? P.yaw : X.lastYaw) / Math.max(dt, .001) * .006, -.05, .05); X.lastYaw = P.yaw; X.lag = lp(X.lag || 0, turn, Math.min(1, dt * 10));   // the gun trails a turn slightly
     X.view.visible = P.alive && !(P.scoped && G.scope);
-    X.view.position.set(VO[0] + bobX + swayX + X.lag * .5 - tilt * RH[0] - X.runK * .03 + sideK * .02, VO[1] + Math.abs(bob) * .6 + sway + tilt * RH[1] + seat * .012 - rk * .22 - raise * raise * .3 - X.dip * .5 - X.runK * .035 + X.air + climb * .028, VO[2] + rk * .9 + raise * .05 + X.runK * .02 + climb * .02);
-    X.view.rotation.set(rk * 1.6 + tilt * .12 + seat * .05 - raise * .7 - X.runK * .14 - dry * .035 + climb * .2, .02 + tilt * RH[3] + X.lag + X.runK * .38 - sideK * .35, tilt * RH[2] + raise * .35 + X.lag * .6 + X.runK * .26 - sideK * .3);
+    const RK = rt < 0 ? [0, 0, 0, 0, 0, 0] : vkf('reload', G, rt);   // the reload's own moves (and the seat jolt on top)
+    if (G.k === 'breaker' && rt > .1 && rt < .85) { const ph = (rt * 5) % 1; RK[1] += Math.sin(ph * Math.PI) * .012; RK[3] += Math.sin(ph * Math.PI) * .06; }   // each shell pushed in
+    X.view.position.set(VO[0] + bobX + swayX + X.lag * .5 + RK[0] - X.runK * .03 + sideK * .02, VO[1] + Math.abs(bob) * .6 + sway + RK[1] + seat * .012 - rk * .22 - raise * raise * .3 - X.dip * .5 - X.runK * .035 + X.air + climb * .028, VO[2] + RK[2] + rk * .9 + raise * .05 + X.runK * .02 + climb * .02);
+    X.view.rotation.set(rk * 1.6 + RK[3] + seat * .05 - raise * .7 - X.runK * .14 - dry * .035 + climb * .2, .02 + RK[4] + X.lag + X.runK * .38 - sideK * .35, RK[5] + raise * .35 + X.lag * .6 + X.runK * .26 - sideK * .3);
     X.mflash.position.set(0, .025, -(X.viewGun.userData.len || .5) - .03); X.mflash.visible = X.flashT > 0 && !G.melee; X.mflash.rotation.z = Math.random() * 3; X.mflash.scale.setScalar(G.cat === 'Sniper' || G.cat === 'Shotgun' ? 1.5 : G.cat === 'Sidearm' ? .8 : 1);
-    viewAnim(P, G, dt, { draw: chamber, insp: X.inspT > 0 ? 1 - X.inspT / 2.6 : -1 });
+    viewAnim(P, G, dt, { draw: chamber, insp: X.inspT > 0 ? 1 - X.inspT / INSP_D : -1 });
     { const pb = X.viewGun.userData.parts.boltL; if (pb) { X.view.rotation.z += pb.rotation.z * .14; X.view.position.y -= pb.rotation.z * .012; } }   // working a bolt rolls the rifle
     X.viewGun.rotation.z = G.melee && X.drawT > 0 ? (1 - sm(cl(dq, 0, 1))) * TAU : 0;   // the knife flips into the hand
     if (G.melee) { X.view.rotation.x += .28; X.view.rotation.y += .5; X.view.rotation.z -= .2; }
@@ -2943,7 +3126,7 @@ const GAME = {
         X.view.position.x += k * (sd > 0 ? lp(.06, -.22, sw) : lp(-.2, .08, sw)); X.view.position.y += k * (.05 - .07 * sw); X.view.position.z -= k * .04; X.view.rotation.y += sd * k * lp(-.5, .8, sw); X.view.rotation.z += sd * k * lp(.7, -.6, sw); X.view.rotation.x -= k * .15; }
     }
     if (X.inspT > 0) { if (P.reloadT > 0 || P.kick > 0) X.inspT = 0; else X.inspT -= dt; }
-    if (X.inspT > 0) { const q = 1 - X.inspT / 2.6, e = smooth(cl(Math.sin(q * Math.PI) * 1.6, 0, 1)), tw = Math.sin(q * TAU) * e; X.view.position.x -= e * .03; X.view.position.y += e * .035; X.view.position.z -= e * .1; X.view.rotation.y += e * .85; X.view.rotation.z += e * .3 + tw * .25; X.view.rotation.x += tw * .15; }
+    if (X.inspT > 0) { const k = vkf('inspect', G, 1 - X.inspT / INSP_D); X.view.position.x += k[0]; X.view.position.y += k[1]; X.view.position.z += k[2]; X.view.rotation.x += k[3]; X.view.rotation.y += k[4]; X.view.rotation.z += k[5]; }
     X.adsK = lp(X.adsK || 0, P.scoped && !G.scope && P.alive ? 1 : 0, Math.min(1, dt * 16));
     if (X.adsK > .001) { const a = X.adsK, sy = X.viewGun.userData.sight || .09; X.view.position.x = lp(X.view.position.x, 0, a); X.view.position.y = lp(X.view.position.y, -sy - rk * .05, a); X.view.position.z = lp(X.view.position.z, VO[2] - .03 + rk * .5, a); X.view.rotation.y = lp(X.view.rotation.y, 0, a); X.view.rotation.z = lp(X.view.rotation.z, 0, a); X.view.rotation.x = lp(X.view.rotation.x, rk * .5, a); }
     if (X.flashT > 0) X.flashT -= dt;
@@ -3265,7 +3448,7 @@ const GAME = {
     if (c === 'KeyB' && canBuy()) return openArmory(!UI.armory);
     if (UI.armory) return;
     if (c === 'KeyR') reload(P); else if (c === 'Digit1') switchTo(P, 1); else if (c === 'Digit2') switchTo(P, 2); else if (c === 'Digit3') switchTo(P, 3);
-    else if (c === 'KeyG') throwNade(P); else if (c === 'KeyQ') ability(P, 'q'); else if (c === 'KeyE') ability(P, 'e'); else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) X.inspT = 2.6;
+    else if (c === 'KeyG') throwNade(P); else if (c === 'KeyQ') ability(P, 'q'); else if (c === 'KeyE') ability(P, 'e'); else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) X.inspT = INSP_D;
   }
   if (typeof document !== 'undefined') {
     // while you play, keys the game uses (and Ctrl combinations, since Ctrl crouches) do not reach the browser
@@ -4022,8 +4205,8 @@ const GAME = {
     if (!S.o && !touch) tx(g, '← → to browse · Enter to choose · Esc to go back', 640, V.y1 - 10 * u, 11 * u, DIM, 'center', 700);
   }
   /* ---------- 96 store and locker ----------
-     STORE: five skins a day (22-skins picks them), a featured card for the rarest and four more, a countdown to the next
-     rotation. Any card opens a preview: the skin on its gun, turning in 3D, with what it brings. Buying one plays a reveal
+     STORE: seven skins, a new set every three hours (22-skins picks them), a featured card for the rarest and six more, a
+     countdown to the next rotation, and a CODE box. Any card opens a preview: the skin on its gun, turning in 3D, with what it brings. Buying one plays a reveal
      in the rarity's colour and puts it on the gun at once. LOCKER: every weapon, the skins you own for it, and what it is
      wearing now. Prices are in coins, which matches pay (see the results screen). */
   const SH = { show: null, reveal: null, locker: 'vesper', msg: null, spin: 0, hov: null };
@@ -4053,6 +4236,12 @@ const GAME = {
     X.renderer.render(S.scene, cam); cam.clearViewOffset(); return true;
   }
   const owns = id => STATS.skins.includes(id);
+  // a code: VAULT-7Q4K-ALL (any case, dashes optional) unlocks every skin on every weapon
+  function enterCode() {
+    let c = null; try { c = prompt('Enter a code'); } catch (e) {} if (!c) return;
+    if (codeHash(c) === ALL_SKINS_HASH) { const all = allSkinIds(), before = STATS.skins.length; for (const id of all) if (!STATS.skins.includes(id)) STATS.skins.push(id); saveAll(true); SH.msg = { s: `Code accepted: every skin unlocked (${all.length}, ${STATS.skins.length - before} new). See them in the LOCKER.`, t0: performance.now(), good: true }; emit('unlock', skinOfId(all[all.length - 1])); }
+    else SH.msg = { s: "That code isn't valid", t0: performance.now() };
+  }
   function buySkin(id) {
     const price = skinPrice(id), sk = skinOfId(id); if (!sk || owns(id)) return;
     if (STATS.coins < price) { SH.msg = { s: `You need ${price - STATS.coins} more coins`, t0: performance.now() }; return; }
@@ -4090,10 +4279,11 @@ const GAME = {
   function drawStore(g, V, W, u) {
     const items = dailyStore(), left = storeLeft(), hh = Math.floor(left / 3600000), mm = Math.floor(left / 60000) % 60, ss = Math.floor(left / 1000) % 60, x0 = V.x0 + 60 / pxPer() + 20 * u, top = V.y0 + 96 * u;
     tx(g, 'STORE', x0, V.y0 + 46 * u, 40 * u, BONE, 'left', 900); tx(g, `New skins in ${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`, x0 + 4 * u, V.y0 + 78 * u, 13 * u, DIM, 'left', 700);
-    coinTag(g, V.x1 - 266 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'LOCKER', () => { UI.panel = 'locker'; SH.show = null; }, { px: 13 * u });
-    const gw = V.x1 - x0 - 40 * u, gh = V.y1 - top - 70 * u, fw = gw * .5, cw = (gw - fw - 16 * u) / 2 - 8 * u, ch = (gh - 16 * u) / 2;
+    coinTag(g, V.x1 - 386 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 250 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'CODE', enterCode, { px: 13 * u }); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'LOCKER', () => { UI.panel = 'locker'; SH.show = null; }, { px: 13 * u });
+    if (SH.msg && performance.now() - SH.msg.t0 < 3200 && !SH.show) tx(g, SH.msg.s, V.x1 - 20 * u, V.y0 + 82 * u, 14 * u, SH.msg.good ? YOU : WARN, 'right', 800);
+    const gw = V.x1 - x0 - 40 * u, gh = V.y1 - top - 70 * u, fw = gw * .36, cols = 3, cw = (gw - fw - 16 * u - (cols - 1) * 14 * u) / cols, ch = (gh - 14 * u) / 2;
     skinCard(g, items[0], x0, top, fw, gh, u, true); tx(g, 'FEATURED', x0 + 14 * u, top + 20 * u, 11 * u, skinOfId(items[0]).R.col, 'left', 900);
-    items.slice(1).forEach((id, i) => skinCard(g, id, x0 + fw + 16 * u + (i % 2) * (cw + 16 * u), top + Math.floor(i / 2) * (ch + 16 * u), cw, ch, u, false));
+    items.slice(1).forEach((id, i) => skinCard(g, id, x0 + fw + 16 * u + (i % cols) * (cw + 14 * u), top + Math.floor(i / cols) * (ch + 14 * u), cw, ch, u, false));
   }
   function drawShow(g, V, W, H, u) {   // the preview panel over the turning gun
     const id = SH.show, sk = skinOfId(id); if (!sk) { SH.show = null; return; } const own = owns(id), price = skinPrice(id), L = sk.L, px = V.x1 - 430 * u, py = V.y0 + 70 * u;
@@ -4136,7 +4326,7 @@ const GAME = {
     let y = top + 24 * u; for (const id of [null, ...mine]) { const sk = skinOfId(id), on = (STATS.equip[k] || null) === id, h2 = 44 * u, hot = zone(rx, y, rw, h2, () => equipSkin(k, id));
       rr(g, rx, y, rw, h2, 6, on ? 'rgba(53,224,200,.14)' : 'rgba(12,16,22,.82)', on ? YOU : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.12)', on ? 2 : 1); if (sk) { g.fillStyle = sk.R.col; g.fillRect(rx, y, 4 * u, h2); }
       tx(g, sk ? sk.L.n : 'Standard', rx + 16 * u, y + 17 * u, 14 * u, BONE, 'left', 800); tx(g, sk ? sk.R.n : 'The factory finish', rx + 16 * u, y + 32 * u, 10 * u, sk ? sk.R.col : DIM, 'left', 700); if (on) tx(g, 'EQUIPPED', rx + rw - 12 * u, y + h2 / 2, 11 * u, YOU, 'right', 900); y += h2 + 6 * u; }
-    if (!mine.length) para(g, 'No skins for this one yet. The store has five new ones every day.', rx, y + 16 * u, rw, 12 * u, DIM);
+    if (!mine.length) para(g, 'No skins for this one yet. The store has seven new ones every three hours.', rx, y + 16 * u, rw, 12 * u, DIM);
   }
   function drawShop(g, V, W, H, u) {
     if (SH.reveal) return drawReveal(g, V, W, H, u);
@@ -4332,7 +4522,7 @@ const GAME = {
   GAME.test = {
     get M() { return M; }, get X() { return X; }, get screen() { return screen; }, get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
-    navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, dailyStore, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
+    navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
   };
 })();
