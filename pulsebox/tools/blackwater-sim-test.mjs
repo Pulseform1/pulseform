@@ -8,7 +8,7 @@ const code = fs.readdirSync(dir).filter(f => /^[1-4]\d-.*\.js$/.test(f)).sort().
 const K = { save: {}, persist() {} };
 const T = new Function('K', code + `
   return { S, RAFT: () => RAFT, DRIFT, PL, HK, FS, FL, SH, CT, INV, act, lifeTick, newRun, addFloater, waterH, seaFrame, spawnGiant, spawnPool, summon, give, place, cellAt, exposed,
-    seed, on, snapshot, loadRun, craftable, eat, toWorld, eyePos, CS, DECK, ui, FISH, cellUnder, ckey, hurtCell };`)(K);
+    seed, on, snapshot, loadRun, craftable, eat, toWorld, eyePos, CS, DECK, ui, FISH, cellUnder, ckey, hurtCell, SAIL, canPlace, platformAt, TOOLS, PIECES, SPN };`)(K);
 let failed = 0;
 const ok = (c, name, extra = '') => { if (!c) failed++; console.log((c ? '  ok   ' : '  FAIL ') + name + (extra !== '' ? '  (' + extra + ')' : '')); };
 const section = n => console.log('\n' + n);
@@ -116,6 +116,35 @@ fresh(); T.S.phase = 'build'; T.S.pt = .01; T.S.severe = true; let thunder = 0, 
 run(200, () => { maxSea = Math.max(maxSea, T.S.sea); });
 ok(flash > 3 && thunder > 0 && thunder <= flash, 'lightning flashes, and its thunder follows later', `${flash} flashes, ${thunder} thunderclaps so far`);
 ok(maxSea > .8, 'the sea builds up through the storm', maxSea.toFixed(2));
+
+section('steering, a little');
+// drift only, for a baseline
+const drift = (setup, s = 60, each) => { fresh(); T.S.wind = T.S.windTo = 7; T.S.phase = 'calm'; T.S.pt = 9999; run(.5); const R = T.RAFT(); setup && setup(R); const x0 = R.x, z0 = R.z; run(s, each); I = I0(); return [R.x - x0, R.z - z0]; };
+const wdir = () => [Math.cos(T.S.windAng), Math.sin(T.S.windAng)];
+{ const [dx, dz] = drift(); const base = Math.hypot(dx, dz) / 60;
+  const [px, pz] = drift(R => { T.give('plank', 5); T.give('rope', 2); T.PL.pickups = 6; T.act.craft('oar'); }, 60, () => { const [wx, wz] = wdir(); T.PL.yaw = Math.atan2(wz, -wx); I.use = true; });   // paddle across the wind
+  const [wx, wz] = wdir(), across = Math.abs(px * -wz + pz * wx) / 60;
+  ok(across > .08 && across < .45, 'the oar nudges the raft across the drift, but only a little', `${across.toFixed(2)} m/s across, drift ${base.toFixed(2)} m/s`);
+  ok(T.PL.arms < .2, 'and your arms tire', T.PL.arms.toFixed(2)); }
+// build a sail and a steering oar
+const rig = R => { T.give('plank', 20); T.give('rope', 20); T.give('scrap', 10);
+  ok(T.place('sail', 0, 0) && T.place('helm', 1, 1), 'a sail and a steering oar can be built'); T.cellAt(R, 0, 0).up = true; };
+{ let sp = 0; const [dx, dz] = drift(R => { rig(R); R.yaw = Math.atan2(-Math.cos(T.S.windAng), -Math.sin(T.S.windAng)); }, 40, () => { sp = Math.hypot(T.RAFT().vx, T.RAFT().vz); });   // bow pointed downwind
+
+  ok(T.SAIL.fill > .9 && sp > .6 && sp < 1.4, 'running before the wind, the sail fills and the raft moves, not fast', `fill ${T.SAIL.fill.toFixed(2)}, ${sp.toFixed(2)} m/s`); }
+{ drift(R => { rig(R); R.yaw = Math.atan2(Math.cos(T.S.windAng), Math.sin(T.S.windAng)); }, 5);   // bow into the wind
+  ok(T.SAIL.fill === 0, 'pointed into the wind it only flaps'); }
+{ let y0 = 0; drift(R => { rig(R); y0 = R.yaw; T.PL.helm = T.ckey(1, 1); }, 20, () => { I.mx = -1; });
+  const turned = T.RAFT().yaw - y0; ok(turned > .6 && turned < 2.6, 'at the helm, A turns the raft slowly', `${(turned * 180 / Math.PI).toFixed(0)}° in 20 s`); }
+{ const [dx, dz] = drift(R => { T.give('plank', 5); T.give('rope', 5); T.give('scrap', 5); T.place('anchor', 0, 0); T.cellAt(R, 0, 0).up = true; }, 40);
+  ok(Math.hypot(dx, dz) / 40 < .08, 'the anchor holds the raft almost still', (Math.hypot(dx, dz) / 40).toFixed(3) + ' m/s'); }
+{ fresh(); T.give('plank', 30); T.give('rope', 20); const R = T.RAFT(), n0 = R.cells.size; ok(T.place('platform', 2, 0) && R.cells.size === n0 + 4, 'a platform adds four foundations at once', `${n0} -> ${R.cells.size}`); }
+{ fresh(); const R = T.RAFT(); T.give('plank', 10); T.give('rope', 10); ok(T.place('net', 1, 0), 'a debris net hangs off an edge'); const c = T.cellAt(R, 1, 0);
+  const [wx, wz] = T.toWorld(R, 1 * T.CS + 1.1 * (T.cellAt(R, 2, 0) ? 0 : 1), 0, 0); T.addFloater('plank', wx, wz); run(1); ok(c.store === 1, 'and catches wreckage that drifts into it'); }
+{ fresh(); const R = T.RAFT(); T.give('plank', 5); T.give('scrap', 5); T.give('tinder', 2); T.place('lantern', 0, 0); T.S.tod = 22; run(.1); T.PL.play = 999;
+  Object.assign(T.SH, { state: 'circle', t: .1, x: R.x + 10, z: R.z }); run(5); ok(T.SH.state === 'circle', 'at night sharks keep off the edges a lantern lights'); }
+{ fresh(); T.give('scrap', 10); T.give('rope', 5); T.give('plank', 5); T.PL.pickups = 9; ok(!T.act.craft('spear2'), 'an upgrade needs the tool first');
+  ok(T.act.craft('hook2') && T.PL.tool === 'hook', 'the metal hook upgrades the hook you have'); }
 
 section('saving');
 fresh(); T.give('plank', 7); T.place; const snap = JSON.parse(JSON.stringify(T.snapshot())); T.newRun(); T.loadRun(snap);

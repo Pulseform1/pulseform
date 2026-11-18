@@ -46,6 +46,13 @@
     // fires: flames, a light, the fish on the spit
     let fireNear = null, fd = 1e9;
     X.raftG.traverse(o => { if (o.userData.fire) { const F = o.userData.fire.fire; o.visible = !!(F && F.lit); if (o.visible) { o.scale.set(.5 + Math.random() * .12, .85 + Math.random() * .2, 1); o.getWorldPosition(_v1); const d = _v1.distanceTo(cam.position); if (d < fd) { fd = d; fireNear = _v1.clone(); } } } if (o.userData.cook) { const F = o.userData.cook.fire; o.visible = !!(F && F.cook); if (o.visible) o.material = F.cook.done ? MAT.hurt : MAT.shark; } });
+    // sails fill with the wind (and flap when they can't), the steering oar swings, lanterns glow after dark
+    let lampNear = null, ld = 1e9; const lit = lampsLit(); MAT.lamp.emissiveIntensity = lit ? 2.4 : 0;
+    X.raftG.traverse(o => { const U = o.userData;
+      if (U.sail) { const f = SAIL.fill; o.scale.z = .15 + f * 1.05 + (f < .3 ? Math.sin(X.t * 9 + o.id) * .25 : Math.sin(X.t * 2.3) * .05); }
+      else if (U.helm) o.rotation.y = (RAFT.rudder || 0) * .55;
+      else if (U.lamp && lit) { o.getWorldPosition(_v1); const d = _v1.distanceTo(cam.position); if (d < ld) { ld = d; lampNear = _v1.clone(); } } });
+    X.lampPt.intensity = lampNear ? 1.4 + Math.sin(X.t * 7) * .08 : 0; if (lampNear) X.lampPt.position.copy(lampNear);
     X.firePt.intensity = fireNear ? 1.6 + Math.random() * .5 : 0; if (fireNear) X.firePt.position.copy(fireNear).add(_v2.set(0, .4, 0));
     // your torch: warm, flickering, on your hands and the wood near you
     const fl = PL.torch ? 1.5 + Math.sin(X.t * 17) * .15 + Math.sin(X.t * 31) * .1 + (Math.random() - .5) * .25 : 0;
@@ -103,6 +110,8 @@
     const k = ui.buildKind, ok = canPlace(k, a.i, a.j, a.side) && has(PIECES[k].need), m = ok ? MAT.ghostOk : MAT.ghostNo;
     const x0 = a.i * CS, z0 = a.j * CS; let o;
     if (k === 'foundation') o = new THREE.Mesh(new THREE.BoxGeometry(CS * .98, .36, CS * .98), m), o.position.set(x0, DECK - .2, z0);
+    else if (k === 'platform') { const blk = platformAt(a.i, a.j) || [[a.i, a.j], [a.i + 1, a.j], [a.i, a.j + 1], [a.i + 1, a.j + 1]]; o = new THREE.Group(); for (const [bi, bj] of blk) { const q = new THREE.Mesh(new THREE.BoxGeometry(CS * .98, .36, CS * .98), m); q.position.set(bi * CS, DECK - .2, bj * CS); o.add(q); } }
+    else if (k === 'sail') o = new THREE.Mesh(new THREE.BoxGeometry(.2, 3.6, .2), m), o.position.set(x0, DECK + 1.8, z0);
     else if (k === 'wall') { const [dx, dz] = SIDES[a.side]; o = new THREE.Mesh(new THREE.BoxGeometry(dx ? .1 : CS, 1.25, dz ? .1 : CS), m); o.position.set(x0 + dx * CS * .47, DECK + .6, z0 + dz * CS * .47); }
     else if (k === 'shelter') o = new THREE.Mesh(new THREE.BoxGeometry(CS, 2.2, CS), m), o.position.set(x0, DECK + 1.1, z0);
     else o = new THREE.Mesh(new THREE.BoxGeometry(CS * .9, k === 'floor' ? .06 : .6, CS * .9), m), o.position.set(x0, DECK + (k === 'floor' ? 0 : .3), z0);

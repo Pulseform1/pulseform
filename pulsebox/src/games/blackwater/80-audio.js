@@ -43,6 +43,9 @@
   on('snap', () => { tone(2400, .05, .1, 'square'); hit(.2, .12, 'highpass', 3000); });
   on('eat', () => { for (let i = 0; i < 3; i++) hit(.08, .1, 'bandpass', 1800, 2, i * .12); });
   on('build', () => { for (let i = 0; i < 3; i++) { hit(.06, .22, 'bandpass', 900, 3, i * .16); tone(160, .08, .1, 'square', 90, i * .16); } });
+  on('sailUp', () => { hit(.6, .18, 'bandpass', 700, .8, 0, 1600); hit(.3, .12, 'lowpass', 500, 1, .4); });
+  on('sailDown', () => hit(.5, .16, 'bandpass', 500, .8, 0, 300));
+  on('anchor', down => { for (let i = 0; i < 7; i++) hit(.05, .12, 'bandpass', 2400 + Math.random() * 800, 4, i * .07); if (down) hit(1, .3, 'lowpass', 400, .7, .55); });
   on('repair', () => { hit(.06, .2, 'bandpass', 1000, 3); hit(.06, .2, 'bandpass', 1100, 3, .18); });
   on('hurt', (c, amt, why) => { if (why === 'shark' && Math.random() < .3) hit(.25, .2, 'bandpass', 500, 2); });
   on('break', () => { hit(.5, .45, 'highpass', 1500); tone(90, .6, .3, 'sine', 40); hit(1.2, .2, 'lowpass', 400, .7, .1); });

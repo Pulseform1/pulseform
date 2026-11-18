@@ -8,13 +8,13 @@
   const FWD = new Set(['thunder', 'giant', 'pool', 'spout', 'rumble', 'dusk', 'cthulhu']);   // events friends should hear too
   NET.hook = (name, a) => { if (NET.on && !NET.client && NET.fw && FWD.has(name)) NET.fw.push(['ev', name, typeof a === 'number' || typeof a === 'string' ? a : null]); };
   const r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000;
-  const cellOut = c => ({ i: c.i, j: c.j, hp: Math.round(c.hp), floor: c.floor, walls: c.walls, shelter: c.shelter, obj: c.obj, reinforce: c.reinforce, store: c.store || 0, fish: c.fish || [], fire: c.fire ? { lit: c.fire.lit, cook: c.fire.cook } : null });
+  const cellOut = c => ({ i: c.i, j: c.j, hp: Math.round(c.hp), floor: c.floor, walls: c.walls, shelter: c.shelter, obj: c.obj, reinforce: c.reinforce, store: c.store || 0, fish: c.fish || [], catch: c.catch || [], up: !!c.up, fire: c.fire ? { lit: c.fire.lit, cook: c.fire.cook } : null });
   function netSend(m) { try { MP.send(m); } catch (e) {} }
   // ---- the host: the world, the raft, the materials
   function hostWorld() {
     const s = { t: r3(S.t), tod: r3(S.tod), day: S.day, nights: S.nights, sea: r3(S.sea), seaTo: S.seaTo, wind: r2(S.wind), windAng: r3(S.windAng), rain: r3(S.rain), cloud: r3(S.cloud), phase: S.phase, severe: S.severe, flash: r2(S.flash), ox: S.ox, oz: S.oz,
       giants: S.giants, pools: S.pools, rings: S.rings, spouts: S.spouts };
-    const R = RAFT, b = [r3(R.x), r3(R.y), r3(R.z), r3(R.yaw), r3(R.pitch), r3(R.roll), r3(R.vx), r3(R.vz), r3(R.vy), r3(R.vyaw), r3(R.vp), r3(R.vr)];
+    const R = RAFT, b = [r3(R.x), r3(R.y), r3(R.z), r3(R.yaw), r3(R.pitch), r3(R.roll), r3(R.vx), r3(R.vz), r3(R.vy), r3(R.vyaw), r3(R.vp), r3(R.vr), r3(R.rudder || 0)];
     const fl = FL.map(f => [f.id, f.k, r2(f.x), r2(f.z), r2(f.yaw), f.hooked ? 1 : 0]);
     const sh = [SH.state, r2(SH.x), r2(SH.y), r2(SH.z), r2(SH.yaw), SH.cell || '', r2(SH.swim)];
     const ct = { state: CT.state, t: r2(CT.t), x: r2(CT.x), z: r2(CT.z), y: r2(CT.y), ring: CT.ring };
@@ -27,7 +27,7 @@
     if (RAFT.ver !== NETS.ver) { NETS.ver = RAFT.ver; netSend({ t: 'raft', ver: RAFT.ver, yaw: RAFT.yaw, cells: [...RAFT.cells.values()].map(cellOut), logs: RAFT.logs }); }
     const ij = JSON.stringify(INV); if (ij !== NETS.invJ) { NETS.invJ = ij; netSend({ t: 'inv', inv: INV }); }
     if (NETS.t - NETS.lastW >= .1) { NETS.lastW = NETS.t; netSend(hostWorld()); NET.out = []; }
-    NET.paddle[0] *= Math.exp(-dt * 6); NET.paddle[1] *= Math.exp(-dt * 6);   // a friend's paddling fades unless they keep at it
+    NET.paddle[0] *= Math.exp(-dt * 6); NET.paddle[1] *= Math.exp(-dt * 6); NET.rudder *= Math.exp(-dt * 3);   // a friend's paddling fades unless they keep at it
   }
   // a friend asks: carry it out here, and send back what they would have seen
   function hostDo(m) {
@@ -53,6 +53,8 @@
         case 'unlog': { const L = RAFT.logs.find(L => Math.abs(L.lx - d.lx) < .05 && Math.abs(L.lz - d.lz) < .05); if (L) { RAFT.logs.splice(RAFT.logs.indexOf(L), 1); RAFT.ver++; give('log'); NET.cap.got.push('log'); } break; }
         case 'give': INV[d.k] = (INV[d.k] || 0) + (d.n || 1); break;
         case 'spend': for (const [k, n] of Object.entries(d.need || {})) INV[k] = Math.max(0, (INV[k] || 0) - n); break;
+        case 'rig': { const c = cell(); if (c && (c.obj === 'sail' || c.obj === 'anchor')) toggleRig(c); break; }
+        case 'rudder': NET.rudder = cl(d.r || 0, -1, 1); break;
         case 'paddle': NET.paddle[0] = d.px || 0; NET.paddle[1] = d.pz || 0; break;
       }
     } catch (e) { console.error(e); }
@@ -66,7 +68,7 @@
     if (dox || doz) { const mv = o => { o.x -= dox; o.z -= doz; }; mv(RAFT); FL.forEach(mv); mv(HK); mv(FS); PL.wx -= dox; PL.wz -= doz; for (const p of NET.peers.values()) if (p.pose && !p.pose.onRaft) { p.pose.wx -= dox; p.pose.wz -= doz; } emit('recentre', dox, doz); }
     const tOff = s.t - S.t; Object.assign(S, s); S.t = Math.abs(tOff) > 1 ? s.t : S.t + tOff * .15;   // ease the clock so the waves never jump
     const b = m.b, k = .25; RAFT.x += (b[0] - RAFT.x) * k; RAFT.z += (b[2] - RAFT.z) * k; RAFT.y += (b[1] - RAFT.y) * k; RAFT.yaw += Math.atan2(Math.sin(b[3] - RAFT.yaw), Math.cos(b[3] - RAFT.yaw)) * k; RAFT.pitch += (b[4] - RAFT.pitch) * k; RAFT.roll += (b[5] - RAFT.roll) * k;
-    RAFT.vx = b[6]; RAFT.vz = b[7]; RAFT.vy = b[8]; RAFT.vyaw = b[9]; RAFT.vp = b[10]; RAFT.vr = b[11];
+    RAFT.vx = b[6]; RAFT.vz = b[7]; RAFT.vy = b[8]; RAFT.vyaw = b[9]; RAFT.vp = b[10]; RAFT.vr = b[11]; if (!PL.helm) RAFT.rudder = b[12] || 0;
     // wreckage: new pieces appear, gone ones go, the rest glide to where the host has them (the ones on your own hook stay with you)
     const seen = new Set();
     for (const [id, kk, x, z, yaw, h] of m.fl) { seen.add(id); let f = FL.find(f => f.id === id); if (!f) { if (NET.gone.has(id) && S.t - NET.gone.get(id) < 3) continue; f = addFloater(kk, x, z); f.id = id; }
@@ -96,6 +98,7 @@
       if (HK.items.length) NET.ask('hk', { items: HK.items.map(f => [f.id, r2(f.x), r2(f.z)]) }); else if (NETS.hk) NET.ask('hk', { items: [] });
       NETS.hk = HK.items.length > 0;
       const p = NET.paddleOut || [0, 0]; if (p[0] || p[1] || NETS.pad) NET.ask('paddle', { px: p[0], pz: p[1] }); NETS.pad = !!(p[0] || p[1]);
+      const r = NET.rudderOut || 0; if (r || NETS.rud) NET.ask('rudder', { r }); NETS.rud = !!r;
     }
   }
   // ---- everyone: where I am, and where my friends are
@@ -129,7 +132,7 @@
     const p = NET.peers.get(id); NET.peers.delete(id); if (p) say(p.name + ' left the raft', '#cfd6e2');
     if (!NET.client) for (const f of FL) if (f.heldBy === id) { f.hooked = false; f.heldBy = 0; }
   }
-  function netEnd() { NET.on = false; NET.client = false; NET.peers.clear(); NET.paddle = [0, 0]; try { MP.leave(); } catch (e) {} }
+  function netEnd() { NET.on = false; NET.client = false; NET.peers.clear(); NET.paddle = [0, 0]; NET.rudder = 0; try { MP.leave(); } catch (e) {} }
   if (typeof MP !== 'undefined') Object.assign(MP.opts, {
     max: 4, min: 2, bots: 0, solo: false, onClose: () => {}, sub: 'Share one raft with up to three friends. Create a room, send them the code, and start when everyone is in.',
     config: () => ({ cont: !!savedRun() }), onStart: netStart, onMsg: netMsg, onLeave: netLeave, onHost: id => { if (NET.on && id === MP.id && NET.client) netLeave(NETS.hostId); },

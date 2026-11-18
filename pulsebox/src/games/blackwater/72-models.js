@@ -19,6 +19,7 @@
     MAT.hurt = std({ map: wetWood, roughness: .5, color: LC('#7a5040') }, .4);
     MAT.rope = std({ color: LC('#b9a27a'), roughness: .9 }, .2);
     MAT.iron = std({ color: LC('#3a3d42'), roughness: .45, metalness: .8 }, 1);
+    MAT.lamp = std({ color: LC('#ffe2b0'), emissive: LC('#ffa040'), emissiveIntensity: 0, roughness: .3 }, .4);
     MAT.rust = std({ color: LC('#6a4030'), roughness: .8, metalness: .4 }, .5);
     MAT.canvas = std({ map: canvasTex(128, 128, (g, w, h) => { g.fillStyle = '#b9ab88'; g.fillRect(0, 0, w, h); for (let i = 0; i < 64; i++) { g.fillStyle = `rgba(80,60,30,${Math.random() * .12})`; g.fillRect(0, i * 2, w, 1); g.fillRect(i * 2, 0, 1, h); } for (let i = 0; i < 12; i++) { g.fillStyle = 'rgba(60,40,20,.12)'; g.beginPath(); g.arc(Math.random() * w, Math.random() * h, 6 + Math.random() * 14, 0, 7); g.fill(); } }), roughness: .85, side: THREE.DoubleSide }, .2);
     MAT.stone = std({ color: LC('#4a4a4a'), roughness: .8 }, .2);
@@ -73,6 +74,38 @@
       for (let k = 0; k < 5; k++) g.add(box(di ? .05 : .7, .5, dj ? .05 : .7, MAT.wet, tx0 + (di ? (k - 2) * .14 : 0), DECK - .45, tz0 + (dj ? (k - 2) * .14 : 0)));
       g.add(box(.72, .05, .72, MAT.wet, tx0, DECK - .7, tz0), box(.72, .05, .72, MAT.wet, tx0, DECK - .2, tz0), cyl(.02, .4, MAT.rope, x0 + di * .7, DECK, z0 + dj * .7));
       for (let k = 0; k < (c.store || 0); k++) { const f = new THREE.Mesh(new THREE.SphereGeometry(.06, 8, 6), MAT.shark); f.scale.set(3, 1, 1); f.position.set(tx0 + (k - 1) * .12, DECK - .55 + k * .08, tz0); g.add(f); } }
+    // edge pieces: which open side they hang off, and a group turned so its +x points out over the water
+    const edgeG = () => { const s = SIDES.findIndex(([di, dj]) => !cellAt(body, c.i + di, c.j + dj)), [di, dj] = SIDES[Math.max(0, s)], e = new THREE.Group(); e.position.set(x0 + di * CS * .45, DECK, z0 + dj * CS * .45); e.rotation.y = Math.atan2(-dj, di); g.add(e); return e; };
+    if (c.obj === 'sail') {   // a mast, a yard and a square sail facing the bow (local -z); furled on the yard when it is down
+      g.add(cyl(.075, 3.9, MAT.wet, x0, DECK + 1.95, z0), cyl(.05, 2.5, MAT.wet, x0, DECK + 3.55, z0, 0, 0, Math.PI / 2), cyl(.04, 2.3, MAT.wet, x0, DECK + 1.2, z0, 0, 0, Math.PI / 2));
+      g.add(cyl(.012, 2.6, MAT.rope, x0 + .55, DECK + 1.9, z0 + .5, .5, 0, -.2), cyl(.012, 2.6, MAT.rope, x0 - .55, DECK + 1.9, z0 + .5, .5, 0, .2));
+      if (c.up) {
+        const geo = new THREE.PlaneGeometry(2.3, 2.3, 8, 8), pos = geo.attributes.position;
+        for (let n = 0; n < pos.count; n++) { const u = pos.getX(n) / 1.15, v = pos.getY(n) / 1.15; pos.setZ(n, -.45 * (1 - u * u) * (1 - .6 * v * v)); }
+        geo.computeVertexNormals(); const sm = new THREE.Mesh(geo, MAT.canvas); sm.position.set(x0, DECK + 2.37, z0 - .08); sm.castShadow = true; sm.userData.sail = c; g.add(sm);
+      } else { const f = cyl(.13, 2.2, MAT.canvas, x0, DECK + 3.4, z0, 0, 0, Math.PI / 2); g.add(f); }
+    }
+    if (c.obj === 'helm') {   // a post on the edge and a long steering oar sweeping down into the sea; it swings with the rudder
+      const e = edgeG(); e.add(box(.14, .7, .14, MAT.wet, 0, .3, 0), box(.3, .06, .3, MAT.iron, 0, .62, 0));
+      const piv = new THREE.Group(); piv.position.set(0, .62, 0); piv.userData.helm = true; e.add(piv);
+      const tilt = new THREE.Group(); tilt.rotation.z = -.42; piv.add(tilt);
+      tilt.add(cyl(.04, 3.2, MAT.wet, .9, 0, 0, 0, 0, Math.PI / 2), box(.6, .05, .32, MAT.deck, 2.35, 0, 0, Math.PI / 2, 0, 0), cyl(.035, .5, MAT.wet, -.75, 0, 0, 0, 0, Math.PI / 2));
+    }
+    if (c.obj === 'anchor') {   // an iron anchor and a coil of rope; when it is down, the rope runs over the edge into the dark
+      g.add(new THREE.Mesh(new THREE.TorusGeometry(.26, .07, 6, 16), MAT.rope)); g.children[g.children.length - 1].position.set(x0 + .3, DECK + .05, z0 + .2); g.children[g.children.length - 1].rotation.x = Math.PI / 2;
+      if (!c.up) g.add(box(.08, .7, .08, MAT.iron, x0 - .3, DECK + .06, z0 - .1, Math.PI / 2, 0, 0), box(.6, .08, .08, MAT.iron, x0 - .3, DECK + .06, z0 + .22), box(.3, .05, .05, MAT.iron, x0 - .3, DECK + .06, z0 - .42));
+      else { const e = edgeG(); e.add(cyl(.025, 4, MAT.rope, .1, -2, 0)); }
+    }
+    if (c.obj === 'net') {   // two poles out over the water holding a rope net; what it caught bobs inside
+      const e = edgeG(); e.add(cyl(.04, 1.6, MAT.wet, .7, 0, -.55, 0, 0, Math.PI / 2 - .25), cyl(.04, 1.6, MAT.wet, .7, 0, .55, 0, 0, Math.PI / 2 - .25));
+      for (let k = 0; k < 5; k++) e.add(cyl(.01, 1.15, MAT.rope, .3 + k * .28, -.35 - k * .07, 0, Math.PI / 2, 0, 0));
+      for (let k = 0; k < 4; k++) e.add(cyl(.01, 1.4, MAT.rope, .9, -.55, -.45 + k * .3, 0, 0, Math.PI / 2 - .25));
+      for (let k = 0; k < (c.store || 0); k++) e.add(box(.7, .06, .16, MAT.drift, 1 + (k % 2) * .2, -.68 + k * .05, -.3 + k * .2, 0, k, 0));
+    }
+    if (c.obj === 'lantern') {   // a post with a glass lantern; it glows after dark
+      g.add(cyl(.04, 1.5, MAT.wet, x0 + .5, DECK + .75, z0 + .5), box(.4, .04, .04, MAT.wet, x0 + .35, DECK + 1.48, z0 + .5));
+      const L = box(.18, .24, .18, MAT.lamp, x0 + .2, DECK + 1.3, z0 + .5); L.userData.lamp = c; g.add(L, box(.22, .04, .22, MAT.iron, x0 + .2, DECK + 1.44, z0 + .5), box(.22, .04, .22, MAT.iron, x0 + .2, DECK + 1.17, z0 + .5));
+    }
     if (c.obj === 'storage') { g.add(box(.8, .6, .6, MAT.crate, x0 + .2, DECK + .27, z0 - .2), box(.82, .06, .62, MAT.wet, x0 + .2, DECK + .58, z0 - .2), box(.06, .62, .62, MAT.iron, x0 - .19, DECK + .27, z0 - .2)); }
     if (c.obj === 'fire') { for (let k = 0; k < 9; k++) { const a = k / 9 * TAU; g.add(box(.16, .12, .12, MAT.stone, x0 + Math.cos(a) * .36, DECK + .03, z0 + Math.sin(a) * .36, 0, a, 0)); } g.add(box(.7, .04, .7, MAT.iron, x0, DECK - .03, z0)); for (let k = 0; k < 3; k++) g.add(cyl(.04, .55, MAT.log, x0, DECK + .08, z0, Math.PI / 2, k * 1.05, 0));
       const fl = new THREE.Sprite(MAT.flame); fl.scale.set(.55, .9, 1); fl.position.set(x0, DECK + .45, z0); fl.visible = false; fl.userData.fire = c; g.add(fl);
@@ -110,7 +143,7 @@
     for (const [k, m] of map) if (body.cells.get(k) !== m.userData.cell || m.userData.v !== cellVer(m.userData.cell)) { G.remove(m); m.traverse(o => { if (o.geometry) o.geometry.dispose(); }); map.delete(k); }
     for (const [k, c] of body.cells) if (!map.has(k)) { const m = cellMesh(c, body); m.userData.v = cellVer(c); map.set(k, m); G.add(m); }
   }
-  const cellVer = c => [Math.ceil(c.hp / 15), c.floor, c.walls.join(''), c.shelter, c.obj, c.reinforce, c.store || 0].join('|');
+  const cellVer = c => [Math.ceil(c.hp / 15), c.floor, c.walls.join(''), c.shelter, c.obj, c.reinforce, c.store || 0, c.up ? 1 : 0, c.obj && EDGE_PIECES.has(c.obj) || c.obj === 'anchor' ? SIDES.map(([di, dj]) => cellAt(RAFT, c.i + di, c.j + dj) ? 1 : 0).join('') : ''].join('|');
   // salvage
   function itemMesh(k) {
     const g = new THREE.Group();

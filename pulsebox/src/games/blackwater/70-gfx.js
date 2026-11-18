@@ -49,8 +49,8 @@ vec3 skyCol(vec3 d) {
     const hemi = new THREE.HemisphereLight('#cfe3ff', '#20384a', .5), sun = new THREE.DirectionalLight('#fff1d8', 1.6), moon = new THREE.DirectionalLight('#9fb4e6', 0), bolt = new THREE.DirectionalLight('#cfd8ff', 0);
     scene.add(hemi, sun, sun.target, moon, moon.target, bolt, bolt.target);
     if (q === 'high') { sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); const sc = sun.shadow.camera; sc.left = sc.bottom = -9; sc.right = sc.top = 9; sc.near = 1; sc.far = 60; sun.shadow.bias = -.0008; sun.shadow.normalBias = .03; }
-    const torch = new THREE.PointLight('#ffad5a', 0, 11, 1.6), firePt = new THREE.PointLight('#ff9a40', 0, 9, 1.6); scene.add(torch, firePt);
-    X = { renderer, scene, camera, glc, q, low, pr, aniso: Math.min(8, renderer.capabilities.getMaxAnisotropy()), hemi, sun, moon, bolt, torch, firePt, t: 0 };
+    const torch = new THREE.PointLight('#ffad5a', 0, 11, 1.6), firePt = new THREE.PointLight('#ff9a40', 0, 9, 1.6); const lampPt = new THREE.PointLight('#ffb866', 0, 12, 1.6); scene.add(torch, firePt, lampPt);
+    X = { renderer, scene, camera, glc, q, low, pr, aniso: Math.min(8, renderer.capabilities.getMaxAnisotropy()), hemi, sun, moon, bolt, torch, firePt, lampPt, t: 0 };
     // a small reflection map for wet wood and skin
     { const pm = new THREE.PMREMGenerator(renderer), es = new THREE.Scene();
       es.add(new THREE.Mesh(new THREE.SphereGeometry(20, 24, 12), new THREE.MeshBasicMaterial({ side: THREE.BackSide, map: canvasTex(8, 128, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#9fbbd6'); gr.addColorStop(.48, '#d9e6ee'); gr.addColorStop(.52, '#1c3240'); gr.addColorStop(1, '#0a1820'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }) })));

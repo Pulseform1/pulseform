@@ -14,7 +14,7 @@
   /* online co-op (60-net fills this in). Alone, NET.client is false and every part runs here. With friends, the host runs the sea,
      the raft, the wreckage and the events; a client runs only its own body and tools and sends what it does to the host (NET.ask).
      NET.cap: while the host carries out a friend's request, what it would say or hand over goes back to that friend instead. */
-  const NET = { on: false, client: false, ask: () => {}, cap: null, paddle: [0, 0], peers: new Map(), fw: null, out: [], gone: new Map(), hook: null };
+  const NET = { on: false, client: false, ask: () => {}, cap: null, paddle: [0, 0], rudder: 0, peers: new Map(), fw: null, out: [], gone: new Map(), hook: null };
   const say = (text, col) => { if (NET.cap) { NET.cap.says.push([text, col || '']); return; } if (NET.fw) NET.fw.push(['say', text, col || '']); emit('say', text, col); };
   const pickupMsg = (got, kind) => { if (NET.cap) { NET.cap.got.push(...got); return; } emit('pickup', got, kind); };
 
@@ -39,6 +39,9 @@
     rod: { n: 'Fishing rod', key: 4, need: { plank: 2, rope: 2 }, after: 3 },
     spear: { n: 'Spear', key: 5, need: { plank: 2, scrap: 2 }, after: 5 },
     oar: { n: 'Oar', key: 6, need: { plank: 3, rope: 1 }, after: 5 },
+    // upgrades: they improve a tool you already have instead of taking a slot
+    hook2: { n: 'Metal hook', up: 'hook', need: { scrap: 4, rope: 2 }, after: 8, tip: 'Throws farther, snags wider, reels faster' },
+    spear2: { n: 'Iron spear', up: 'spear', need: { scrap: 4, plank: 1 }, after: 8, tip: 'Two hits drive a shark off' },
   };
   /* raft pieces. foundation: a cell of the raft. On a foundation: floor (decking), wall (one edge), shelter (a roof),
      storage (keeps tinder dry), fire (a fire pit: cook, relight the torch), reinforce (iron bands: sharks and waves do less) */
@@ -53,8 +56,16 @@
     catcher: { n: 'Rain catcher', need: { plank: 2, rope: 1, scrap: 1 }, tip: 'Fills with fresh water while it rains' },
     still: { n: 'Water still', need: { plank: 3, scrap: 3 }, tip: 'Turns sea water fresh in the sun' },
     trap: { n: 'Fish trap', need: { plank: 3, rope: 2 }, tip: 'Hangs off an edge and catches fish by itself' },
+    platform: { n: 'Platform (2 × 2)', need: { plank: 12, rope: 6 }, tip: 'Four foundations at once, cheaper than one by one' },
+    sail: { n: 'Sail', need: { plank: 5, rope: 4 }, tip: 'E raises or lowers it: the wind pushes the raft the way it points' },
+    helm: { n: 'Steering oar', need: { plank: 3, rope: 2 }, tip: 'Hangs off an edge. E takes the helm, A and D turn the raft' },
+    anchor: { n: 'Anchor', need: { plank: 2, rope: 3, scrap: 4 }, tip: 'E drops or raises it: the raft almost stops' },
+    net: { n: 'Debris net', need: { plank: 2, rope: 4 }, tip: 'Hangs off an edge and catches wreckage that drifts into it' },
+    lantern: { n: 'Lantern', need: { plank: 1, scrap: 2, tinder: 1 }, tip: 'Lights itself at night; sharks keep away from lit edges' },
   };
-  const BUILD_ORDER = ['foundation', 'floor', 'wall', 'shelter', 'storage', 'fire', 'catcher', 'still', 'trap', 'reinforce'];
+  const BUILD_ORDER = ['foundation', 'platform', 'floor', 'wall', 'shelter', 'storage', 'fire', 'catcher', 'still', 'trap', 'net', 'sail', 'helm', 'anchor', 'lantern', 'reinforce'];
+  const BUILD_PAGE = 8;   // the build list shows eight at a time on a keyboard (B turns the page)
+  const EDGE_PIECES = new Set(['trap', 'helm', 'net']);   // these hang off an open edge
   const REPAIR = { plank: 1 };   // one plank mends 35 hp
 
   // settings and the saved run live in the kit's save for this game

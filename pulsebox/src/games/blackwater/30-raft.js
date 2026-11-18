@@ -45,11 +45,13 @@
     b.vp += (wr * wr * (pT - b.pitch) - 2 * .7 * wr * b.vp) * dt; b.pitch += b.vp * dt;
     b.vr += (wr * wr * (rT - b.roll) - 2 * .7 * wr * b.vr) * dt; b.roll += b.vr * dt;
     // drift with the water, turning with any swirl in it; bigger rafts answer more slowly
-    currentAt(b.x, b.z, _cur); const k = .7 / (1 + .06 * n);
-    b.vx += ((_cur[0] + (extra.px || 0)) - b.vx) * k * dt; b.vz += ((_cur[1] + (extra.pz || 0)) - b.vz) * k * dt;
-    let curl = 0, rr = 0;
-    for (const c of b.cells.values()) { const [wx, wz] = flatW(b, c.i * CS, c.j * CS), rx = wx - b.x, rz = wz - b.z, v = currentAt(wx, wz, [0, 0]); curl += rz * v[0] - rx * v[1]; rr += rx * rx + rz * rz; }
-    const spin = rr > .5 ? curl / rr : 0; b.vyaw += ((spin * .9 + (extra.spin || 0)) - b.vyaw) * k * 1.4 * dt;
+    currentAt(b.x, b.z, _cur); const k = .7 / (1 + .06 * n), hold = extra.hold == null ? 1 : extra.hold;   // hold: an anchor down keeps only a little of the drift
+    b.vx += ((_cur[0] + (extra.px || 0)) * hold - b.vx) * k * dt; b.vz += ((_cur[1] + (extra.pz || 0)) * hold - b.vz) * k * dt;
+    // the swirl: measured about the middle of the cells, against their average current, so a steady drift never spins the raft
+    let curl = 0, rr = 0, ax = 0, az = 0, ux = 0, uz = 0; const pts = [];
+    for (const c of b.cells.values()) { const [wx, wz] = flatW(b, c.i * CS, c.j * CS), v = currentAt(wx, wz, [0, 0]); pts.push([wx, wz, v[0], v[1]]); ax += wx / n; az += wz / n; ux += v[0] / n; uz += v[1] / n; }
+    for (const [wx, wz, v0, v1] of pts) { const rx = wx - ax, rz = wz - az; curl += rz * (v0 - ux) - rx * (v1 - uz); rr += rx * rx + rz * rz; }
+    const spin = rr > .5 ? curl / rr : 0; b.vyaw += ((spin * .9 * hold + (extra.spin || 0)) - b.vyaw) * k * 1.4 * dt;
     b.x += b.vx * dt; b.z += b.vz * dt; b.yaw += b.vyaw * dt;
   }
 
@@ -101,20 +103,38 @@
   function canPlace(kind, i, j, side) {
     const c = cellAt(RAFT, i, j);
     if (kind === 'foundation') return !c && SIDES.some(([di, dj]) => cellAt(RAFT, i + di, j + dj)) && RAFT.cells.size < 64;
+    if (kind === 'platform') return !!platformAt(i, j);
     if (!c) return false;
     if (kind === 'floor') return !c.floor;
     if (kind === 'wall') return side >= 0 && !c.walls[side];
     if (kind === 'shelter') return !c.shelter;
     if (kind === 'storage' || kind === 'fire' || kind === 'catcher' || kind === 'still') return !c.obj;
-    if (kind === 'trap') return !c.obj && exposed(RAFT, c);
+    if (EDGE_PIECES.has(kind)) return !c.obj && exposed(RAFT, c) && (kind !== 'helm' || !countObj('helm'));
+    if (kind === 'sail') return !c.obj && countObj('sail') < 2;
+    if (kind === 'anchor') return !c.obj && !countObj('anchor');
+    if (kind === 'lantern') return !c.obj && countObj('lantern') < 6;
     if (kind === 'reinforce') return !c.reinforce && exposed(RAFT, c);
     return false;
+  }
+  const countObj = k => { let n = 0; for (const c of RAFT.cells.values()) if (c.obj === k) n++; return n; };
+  // a platform is a 2 × 2 block of new foundations: the block that holds the aimed spot, is all open water and touches the raft
+  function platformAt(i, j) {
+    if (cellAt(RAFT, i, j) || RAFT.cells.size > 60) return null;
+    let best = null, bestT = 0;
+    for (const [oi, oj] of [[0, 0], [-1, 0], [0, -1], [-1, -1]]) {
+      const blk = [[i + oi, j + oj], [i + oi + 1, j + oj], [i + oi, j + oj + 1], [i + oi + 1, j + oj + 1]];
+      if (blk.some(([a, b]) => cellAt(RAFT, a, b))) continue;
+      const touch = blk.reduce((n, [a, b]) => n + SIDES.filter(([di, dj]) => cellAt(RAFT, a + di, b + dj)).length, 0);
+      if (touch > bestT) { bestT = touch; best = blk; }
+    }
+    return best;
   }
   function place(kind, i, j, side) {
     if (!canPlace(kind, i, j, side) || !has(PIECES[kind].need)) return false;
     if (NET.client) { NET.ask('place', { kind, i, j, side }); emit('build', kind, i, j); return true; }
     spend(PIECES[kind].need);
     if (kind === 'foundation') RAFT.cells.set(ckey(i, j), newCell(i, j));
+    else if (kind === 'platform') for (const [a, b] of platformAt(i, j)) RAFT.cells.set(ckey(a, b), Object.assign(newCell(a, b), { floor: true }));
     else { const c = cellAt(RAFT, i, j); if (kind === 'floor') c.floor = true; else if (kind === 'wall') c.walls[side] = 1; else if (kind === 'shelter') c.shelter = true; else if (kind === 'reinforce') c.reinforce = true; else { c.obj = kind; if (kind === 'fire') c.fire = { lit: false, cook: null }; } }
     RAFT.ver++; emit('build', kind, i, j); return true;
   }

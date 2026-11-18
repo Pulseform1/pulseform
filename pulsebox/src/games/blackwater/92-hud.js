@@ -48,6 +48,17 @@
       tx(g, touch ? 'PIECE to change · MEND to repair' : 'B choose piece  ·  click build  ·  R mend', cx, y + 22, 13, DIM);
       const a = ui.aim, c = a && cellAt(RAFT, a.i, a.j); if (c && c.hp < 100) { bar(g, cx - 60, y + 40, 120, 7, c.hp / 100, c.hp < 35 ? RED : GOLD); }
     }
+    if (PL.helm && !panel) { // a compass strip: where the wind blows, how the sail draws, which way the oar is over
+      const wx = Math.cos(S.windAng), wz = Math.sin(S.windAng), cy0 = Math.cos(RAFT.yaw), sy0 = Math.sin(RAFT.yaw), rel = Math.atan2(cy0 * wx - sy0 * wz, -(sy0 * wx + cy0 * wz));   // the wind in the raft's frame, bow up
+      tx(g, 'AT THE HELM', cx, y, 16, GOLD, 'center', 800);
+      tx(g, SAIL.up ? `Sail ${SAIL.fill > .75 ? 'full' : SAIL.fill > .35 ? 'drawing' : SAIL.fill > 0 ? 'barely drawing' : 'flapping'}  ·  ${(Math.hypot(RAFT.vx, RAFT.vz) * 1.94).toFixed(1)} knots` : SAIL.anchor ? 'Anchor down' : 'No sail up: the oar only turns you', cx, y + 22, 14, BONE);
+      bar(g, cx - 80, y + 40, 160, 8, SAIL.fill, SAIL.fill > .6 ? GREEN : SAIL.fill > .25 ? GOLD : RED);
+      g.save(); g.translate(cx, y + 78); g.strokeStyle = 'rgba(238,242,240,.35)'; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, 22, 0, TAU); g.stroke();
+      g.fillStyle = BONE; g.beginPath(); g.moveTo(0, -26); g.lineTo(-6, -16); g.lineTo(6, -16); g.fill();   // the bow
+      g.rotate(rel); g.strokeStyle = TEAL; g.lineWidth = 3; g.beginPath(); g.moveTo(0, 18); g.lineTo(0, -14); g.stroke(); g.fillStyle = TEAL; g.beginPath(); g.moveTo(0, -20); g.lineTo(-6, -10); g.lineTo(6, -10); g.fill(); g.restore();
+      tx(g, 'wind', cx + 34, y + 78, 12, TEAL, 'left'); const r = RAFT.rudder || 0; if (Math.abs(r) > .1) tx(g, r > 0 ? '◀ turning' : 'turning ▶', cx, y + 112, 13, DIM);
+    }
+    if (PL.tool === 'oar' && !PL.helm && !panel && PL.arms < .98) { tx(g, 'ARMS', cx - 68, y + 4, 13, DIM, 'right'); bar(g, cx - 60, y, 120, 8, PL.arms, PL.arms < .25 ? RED : GOLD); }
     if (SH.state === 'bite') { const c = RAFT.cells.get(SH.cell); if (c) { tx(g, 'SHARK ON THE RAFT', cx, 132, 22 * u, RED, 'center', 800); bar(g, cx - 110, 150, 220, 10, c.hp / 100, RED); tx(g, PL.tools.spear ? 'Spear it! (tool 5)' : 'Craft a spear (C) to drive it off', cx, 176, 15, BONE); } }
     if (ui.warn) tx(g, ui.warn, cx, 104, (ui.warn.startsWith('HOLD') ? 30 : 20) * u, Math.sin(S.t * 8) > 0 ? GOLD : BONE, 'center', 800);
     SAYS.forEach((s, i) => { s.a += 1 / 60; const al = cl(Math.min(s.a * 4, (4.5 - s.a) / .6), 0, 1); if (al <= 0) return; g.globalAlpha = al; tx(g, s.t, cx, 214 + i * 28, 20 * u, s.c, 'center', 700); g.globalAlpha = 1; });
@@ -83,7 +94,7 @@
     const x = K.view.x0 + 20, y0 = K.view.y0 + 64;
     if (!CFG.keys) { tx(g, 'H  show keys', x, y0, 13, DIM, 'left', 600); return; }
     const t = PL.tool, use = t === 'hook' ? 'hold to throw, hold to reel' : t === 'rod' ? 'hold to cast, hold to reel' : t === 'hammer' ? 'build the piece' : t === 'spear' ? 'stab' : t === 'oar' ? 'hold to paddle' : t === 'torch' ? 'light the torch' : t === 'food' ? 'eat' : t === 'water' ? 'drink' : 'use';
-    const rows = ui.place ? [['Mouse', 'aim where it goes'], ['R, wheel', 'rotate'], ['Click', ui.place.set ? 'SOLIDIFY' : 'set it down'], ['Right click', ui.place.set ? 'move it again' : 'cancel'], ['I', 'items'], ['H', 'hide keys']] : [['WASD', PL.onRaft ? 'walk' : 'swim'], ['Mouse', 'look'], ['Click', use], ['R', t === 'hammer' ? 'mend' : 'cancel'], ['E', 'grab / use / climb'], ['I, Tab', 'items (place logs)'],
+    const rows = PL.helm ? [['A, D', 'steer'], ['Mouse', 'look'], ['E, W, S', 'let go of the helm'], ['H', 'hide keys']] : ui.place ? [['Mouse', 'aim where it goes'], ['R, wheel', 'rotate'], ['Click', ui.place.set ? 'SOLIDIFY' : 'set it down'], ['Right click', ui.place.set ? 'move it again' : 'cancel'], ['I', 'items'], ['H', 'hide keys']] : [['WASD', PL.onRaft ? 'walk' : 'swim'], ['Mouse', 'look'], ['Click', use], ['R', t === 'hammer' ? 'mend' : 'cancel'], ['E', PL.helm ? 'let go of the helm' : 'grab / use / climb'], ['I, Tab', 'items (place logs)'],
       ['1–9, wheel', 'switch item'], ['C', 'craft tools'], ['B', PL.tools.hammer ? (t === 'hammer' ? 'choose a piece' : 'build (hammer)') : 'build (craft a hammer)'], ['F', 'eat'], ['Q', 'drink'],
       ['Space', PL.onRaft ? 'jump' : 'swim up'], ['Shift', PL.onRaft ? 'brace for waves' : 'dive'], ['O', 'settings'], ['H', 'hide keys']];
     const rh = 19, w = 236; rr(g, x - 8, y0 - 14, w, rows.length * rh + 14, 8, 'rgba(6,18,27,.5)');
@@ -109,10 +120,13 @@
     for (const b of touchButtons()) { const on2 = (b.k === 'use' && IN.use) || [...IN.held.values()].includes(b.k); g.fillStyle = on2 ? 'rgba(111,210,222,.55)' : b.hot ? 'rgba(232,180,90,.55)' : 'rgba(6,18,27,.5)'; g.beginPath(); g.arc(b.x, b.y, b.r, 0, TAU); g.fill(); g.strokeStyle = 'rgba(238,242,240,.4)'; g.lineWidth = 2; g.stroke(); tx(g, b.t, b.x, b.y, (b.big ? 20 : 14) * u, BONE, 'center', 800); }
   }
   function drawBuildList(g) {
-    const x = K.view.x0 + 24, w = 340; let y = 160;
-    rr(g, x, y - 34, w, BUILD_ORDER.length * 40 + 46, 10, 'rgba(6,18,27,.82)'); tx(g, isTouch() ? 'BUILD' : 'BUILD  ·  press a number, or B to close', x + 14, y - 14, 15, DIM, 'left', 700);
-    BUILD_ORDER.forEach((k, i) => { const P = PIECES[k], ok = has(P.need), on2 = ui.buildKind === k; const hot = zone(x + 6, y, w - 12, 36, () => { ui.buildKind = k; ui.buildOpen = false; });
-      rr(g, x + 6, y, w - 12, 36, 6, on2 ? 'rgba(111,210,222,.25)' : hot ? 'rgba(255,255,255,.08)' : null); tx(g, `${(i + 1) % 10}  ${P.n}`, x + 16, y + 18, 18, ok ? BONE : DIM, 'left', 700); tx(g, Object.entries(P.need).map(([m, n]) => n + ' ' + itemName(m).toLowerCase().replace('dry ', '')).join(' · '), x + w - 14, y + 18, 13, ok ? GREEN : RED, 'right'); y += 40; });
+    // a keyboard sees one page of eight (B turns the page); a touch screen sees them all in two columns
+    const touch = isTouch(), pg = ui.buildPage || 0, list = touch ? BUILD_ORDER : BUILD_ORDER.slice(pg * BUILD_PAGE, pg * BUILD_PAGE + BUILD_PAGE), cols = touch ? 2 : 1, rows = Math.ceil(list.length / cols);
+    const x = K.view.x0 + 24, w = 360; let y0 = 150;
+    rr(g, x, y0 - 34, w * cols + (cols - 1) * 8, rows * 40 + 64, 10, 'rgba(6,18,27,.82)'); tx(g, touch ? 'BUILD' : `BUILD  ${pg + 1}/2  ·  press a number  ·  B ${pg ? 'to close' : 'for more'}`, x + 14, y0 - 14, 15, DIM, 'left', 700);
+    list.forEach((k, i) => { const P = PIECES[k], ok = has(P.need), on2 = ui.buildKind === k, xx = x + Math.floor(i / rows) * (w + 8), y = y0 + (i % rows) * 40; const hot = zone(xx + 6, y, w - 12, 36, () => { ui.buildKind = k; ui.buildOpen = false; });
+      rr(g, xx + 6, y, w - 12, 36, 6, on2 ? 'rgba(111,210,222,.25)' : hot ? 'rgba(255,255,255,.08)' : null); tx(g, `${touch ? '' : i + 1 + '  '}${P.n}`, xx + 16, y + 18, 17, ok ? BONE : DIM, 'left', 700); tx(g, Object.entries(P.need).map(([m, n]) => n + ' ' + itemName(m).toLowerCase().replace('dry ', '')).join(' · '), xx + w - 14, y + 18, 13, ok ? GREEN : RED, 'right'); });
+    const sel = PIECES[ui.buildKind]; if (sel && sel.tip) tx(g, sel.tip, x + 14, y0 + rows * 40 + 12, 13, DIM, 'left', 500);
   }
   // the inventory: everything you carry; logs can be placed on the raft or split into planks
   function drawInv(g) {
@@ -129,12 +143,12 @@
     tx(g, 'Place a log, rotate it (R or the wheel), click to set it down, then click SOLIDIFY', 640, y + 20, 14, DIM);
   }
   function drawCraft(g) {
-    const w = 460, x = 640 - w / 2; let y = 170; const list = Object.keys(TOOLS).filter(t => TOOLS[t].need);
+    const w = 520, x = 640 - w / 2; let y = 170; const list = Object.keys(TOOLS).filter(t => TOOLS[t].need);
     rr(g, x, y - 50, w, list.length * 56 + 110, 12, 'rgba(6,18,27,.9)', 'rgba(238,242,240,.2)'); tx(g, 'CRAFT', x + 20, y - 24, 22, BONE, 'left', 800); tx(g, 'C to close', x + w - 20, y - 24, 14, DIM, 'right');
-    for (const t of list) { const T = TOOLS[t], got = PL.tools[t], locked = T.after && PL.pickups < T.after, ok = !got && !locked && has(T.need);
+    for (const t of list) { const T = TOOLS[t], got = PL.tools[t], noBase = T.up && !PL.tools[T.up], locked = noBase || (T.after && PL.pickups < T.after), ok = !got && !locked && has(T.need);
       const hot = zone(x + 12, y, w - 24, 48, () => act.craft(t)); rr(g, x + 12, y, w - 24, 48, 8, ok ? (hot ? 'rgba(143,224,160,.25)' : 'rgba(143,224,160,.12)') : 'rgba(255,255,255,.04)');
-      drawIcon(g, t, x + 40, y + 24, 14); tx(g, T.n, x + 66, y + 16, 19, got ? DIM : BONE, 'left', 700);
-      tx(g, got ? 'made' : locked ? `haul in ${T.after - PL.pickups} more salvage first` : Object.entries(T.need).map(([m, n]) => `${n} ${itemName(m).toLowerCase()} (${INV[m] || 0})`).join(' · '), x + 66, y + 35, 13, got ? DIM : ok ? GREEN : locked ? DIM : RED, 'left'); y += 56; }
+      drawIcon(g, T.up || t, x + 40, y + 24, 14); tx(g, T.n, x + 66, y + 16, 19, got ? DIM : BONE, 'left', 700); if (T.tip) tx(g, T.tip, x + w - 24, y + 16, 12, DIM, 'right', 500);
+      tx(g, got ? (T.up ? 'upgraded' : 'made') : noBase ? `make the ${TOOLS[T.up].n.toLowerCase()} first` : locked ? `haul in ${T.after - PL.pickups} more salvage first` : Object.entries(T.need).map(([m, n]) => `${n} ${itemName(m).toLowerCase()} (${INV[m] || 0})`).join(' · '), x + 66, y + 35, 13, got ? DIM : ok ? GREEN : locked ? DIM : RED, 'left'); y += 56; }
     const fd = foods(); tx(g, fd.length ? 'Food: ' + fd.map(k => `${itemName(k)} x${INV[k]}`).join(', ') : 'No food yet', 640, y + 22, 14, DIM);
   }
   function drawSettings(g, inGame) {
