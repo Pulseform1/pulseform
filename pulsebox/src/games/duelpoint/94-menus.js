@@ -47,18 +47,16 @@
     if (UI.panel === 'crosshair') return drawXhair(g, V, W, u);
     g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'Two on two. Thirteen maps, one site or two. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
     if (STATS.matches) tx(g, `${STATS.wins} wins in ${STATS.matches} matches · ${STATS.kills} kills`, V.x1 - m, V.y0 + 78 * u, 14 * u, DIM, 'right');
-    // operatives
-    const rw = cl(W * .27, 300, 420), top = V.y0 + 132 * u, cw = (W - rw - m * 3 - 44 / pxPer() - 28) / 3, chh = Math.min(V.y1 - top - m, 330 * u);
-    tx(g, 'CHOOSE YOUR OPERATIVE', x0, top - 14 * u, 13 * u, DIM, 'left');
-    Object.entries(OPS).forEach(([k, o], i) => {
-      const x = x0 + i * (cw + 14), on = CFG.op === k, hot = zone(x, top, cw, chh, () => { CFG.op = k; saveAll(); click(); });
-      rr(g, x, top, cw, chh, 10, on ? 'rgba(20,26,36,.95)' : 'rgba(20,26,36,.7)', on ? o.col : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.16)', on ? 3 : 2);
-      g.fillStyle = o.col; g.fillRect(x, top, cw, 6 * u);
-      tx(g, o.n, x + 18 * u, top + 40 * u, Math.min(30 * u, cw * .13), on ? o.col : BONE, 'left'); if (cw > 250 * u) tx(g, o.role.toUpperCase(), x + cw - 16 * u, top + 40 * u, 12 * u, DIM, 'right');
-      let y = top + 84 * u;
-      for (const [key, a] of [['Q', o.q], ['E', o.e]]) { rr(g, x + 18 * u, y - 15 * u, 30 * u, 30 * u, 5, null, o.col); tx(g, key, x + 33 * u, y, 15 * u, o.col); tx(g, a.n.toUpperCase(), x + 60 * u, y, 17 * u, BONE, 'left'); y = para(g, a.d, x + 18 * u, y + 32 * u, cw - 36 * u, 13.5 * u, '#b9c0cc') + 18 * u; }
-      if (on) tx(g, 'SELECTED', x + cw / 2, top + chh - 20 * u, 12 * u, o.col);
-    });
+    // your operative: who you are bringing, and a way to change
+    const rw = cl(W * .27, 300, 420), top = V.y0 + 132 * u, cwAll = W - rw - m * 3 - 44 / pxPer() - 28, chh = Math.min(V.y1 - top - m, 330 * u), O = OPS[CFG.op] || OPS.vex, cw = Math.min(cwAll, 640 * u);
+    tx(g, 'YOUR OPERATIVE', x0, top - 14 * u, 13 * u, DIM, 'left');
+    { const x = x0, hot = zone(x, top, cw, chh, () => { openSelect(null); click(); });
+      rr(g, x, top, cw, chh, 10, 'rgba(20,26,36,.92)', hot ? O.col : 'rgba(239,233,220,.2)', 2); g.fillStyle = O.col; g.fillRect(x, top, cw, 6 * u);
+      const bw = Math.min(200 * u, cw * .36); portraitTile(g, CFG.op, x + 2, top + 6 * u, bw, chh - 8 * u, { r: 0, bar: O.col });
+      const tx0 = x + bw + 24 * u; tx(g, O.role.toUpperCase(), tx0, top + 36 * u, 12 * u, O.col, 'left', 900); tx(g, O.n, tx0 - 2 * u, top + 72 * u, Math.min(46 * u, (cw - bw) * .16), BONE, 'left', 900);
+      let y = para(g, O.bio || '', tx0, top + 104 * u, cw - bw - 44 * u, 13 * u, '#c9cfd8') + 14 * u;
+      for (const [key, a] of [['Q', O.q], ['E', O.e]]) { rr(g, tx0, y - 14 * u, 28 * u, 28 * u, 5, null, O.col); tx(g, key, tx0 + 14 * u, y, 14 * u, O.col); tx(g, a.n.toUpperCase(), tx0 + 40 * u, y, 15 * u, BONE, 'left', 800); y = para(g, a.d, tx0 + 40 * u, y + 24 * u, cw - bw - 84 * u, 12 * u, '#b9c0cc') + 12 * u; }
+      tx(g, `CHANGE OPERATIVE  ·  ${Object.keys(OPS).length} TO CHOOSE FROM`, x + cw - 16 * u, top + chh - 18 * u, 12 * u, hot ? O.col : DIM, 'right', 800); }
     // what to play
     const rx = V.x1 - m - rw; let y = top - 14 * u;
     const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots';

@@ -80,6 +80,11 @@
     else if (op === 'iris') { g.fillStyle = grey(kt.plate); g.beginPath(); g.arc(0, -6, 11, Math.PI, TAU); g.lineTo(11, -2); g.lineTo(-11, -2); g.closePath(); g.fill(); g.fillStyle = glow; g.fillRect(-11, -7, 22, 4.5);
       g.strokeStyle = grey('#15171c'); g.lineWidth = 1.2; g.beginPath(); g.moveTo(-9, -12); g.lineTo(-11, -22); g.stroke(); g.fillStyle = glow; g.beginPath(); g.arc(-11, -22, 1.6, 0, TAU); g.fill(); }
     else if (op === 'bastion') { g.fillStyle = grey(kt.plate); g.beginPath(); g.moveTo(-11, 6); g.lineTo(-12, -12); g.quadraticCurveTo(0, -21, 12, -12); g.lineTo(11, 6); g.closePath(); g.fill(); g.fillStyle = glow; g.fillRect(-7.5, -7, 15, 2.6); g.fillRect(-1.3, -7, 2.6, 8); }
+    else if (op === 'nova') { g.fillStyle = grey(kt.plate); g.beginPath(); g.arc(0, -6, 10.5, Math.PI, TAU); g.lineTo(10.5, -3); g.lineTo(-10.5, -3); g.closePath(); g.fill(); g.fillStyle = grey(O.col); g.fillRect(-1.4, -20, 2.8, 10); g.fillStyle = glow; g.fillRect(-9, -6, 18, 3.4); }
+    else if (op === 'wraith') { g.fillStyle = grey(kt.suit); g.beginPath(); g.arc(0, -6, 11.5, Math.PI * .95, Math.PI * 2.05); g.lineTo(9, 6); g.lineTo(-9, 6); g.closePath(); g.fill(); g.fillStyle = grey(kt.plate); g.beginPath(); g.ellipse(0, -3, 6.5, 8.5, 0, 0, TAU); g.fill(); g.fillStyle = glow; g.fillRect(-5, -5, 3.6, 1.6); g.fillRect(1.4, -5, 3.6, 1.6); g.fillStyle = grey(kt.cloth); g.fillRect(-10, 6, 20, 4); }
+    else if (op === 'talon') { g.fillStyle = grey(kt.cloth); g.beginPath(); g.arc(0, -8, 10, Math.PI, TAU); g.fill(); g.fillRect(-14, -9, 28, 2.6); g.fillStyle = grey('#15171c'); g.fillRect(-7, -13, 14, 4); g.fillStyle = glow; g.beginPath(); g.arc(-3.5, -11, 1.6, 0, TAU); g.arc(3.5, -11, 1.6, 0, TAU); g.fill(); }
+    else if (op === 'ember') { g.fillStyle = grey('#15171c'); g.fillRect(-6, -2, 12, 7); g.fillStyle = grey(kt.plate); g.beginPath(); g.arc(-5.5, 2, 2.4, 0, TAU); g.arc(5.5, 2, 2.4, 0, TAU); g.fill(); g.fillStyle = glow; for (let i = 0; i < 4; i++) { g.beginPath(); g.moveTo(-6 + i * 4, -13); g.lineTo(-4 + i * 4, -23 + Math.abs(i - 1.5) * 3); g.lineTo(-2 + i * 4, -13); g.closePath(); g.fill(); } }
+    else if (op === 'axiom') { g.fillStyle = grey(kt.plate); g.beginPath(); g.arc(0, -8, 10, Math.PI, TAU); g.fill(); g.fillRect(-13, -9, 26, 2.4); g.fillStyle = glow; g.fillRect(-8, -6, 16, 2.6); g.beginPath(); g.arc(0, -16, 1.8, 0, TAU); g.fill(); }
     else { g.fillStyle = glow; tx(g, (O.n || '?')[0], 0, -4, 12, glow, 'center', 900); }
     g.restore();
   }
@@ -154,7 +159,7 @@
     const card = (q, x, col, i) => {
       const a = smooth(cl((rt - .35 - i * .12) / .4, 0, 1)); g.save(); g.globalAlpha = a; g.translate(0, (1 - a) * 30 * u);
       rr(g, x, y, cw, ch, 6, 'rgba(12,16,22,.88)', q === P ? 'rgba(239,233,220,.6)' : 'rgba(239,233,220,.14)', q === P ? 2 : 1); g.fillStyle = col; g.fillRect(x, y, 5 * u, ch);
-      g.save(); g.beginPath(); g.rect(x + 8 * u, y + 6 * u, 56 * u, ch - 12 * u); g.clip(); g.fillStyle = 'rgba(255,255,255,.04)'; g.fillRect(x + 8 * u, y + 6 * u, 56 * u, ch - 12 * u); opBust(g, q.op, x + 36 * u, y + ch * .56, 1.25 * u, true); g.restore();
+      portraitTile(g, q.op, x + 8 * u, y + 6 * u, 56 * u, ch - 12 * u, { r: 4 });
       tx(g, q.name.toUpperCase(), x + 74 * u, y + 24 * u, 16 * u, BONE, 'left', 800); tx(g, (OPS[q.op] || OPS.vex).n, x + 74 * u, y + 44 * u, 11 * u, (OPS[q.op] || OPS.vex).col, 'left', 800);
       if (q.rating) { rankBadge(g, x + cw - 24 * u, y + 28 * u, 13 * u, q.rating); tx(g, rankName(q.rating).toUpperCase(), x + cw - 42 * u, y + 24 * u, 11 * u, RANK_COL[diffFor(q.rating).i], 'right', 800); tx(g, String(q.rating), x + cw - 42 * u, y + 42 * u, 13 * u, BONE, 'right', 700); }
       else tx(g, '—', x + cw - 24 * u, y + 30 * u, 14 * u, DIM, 'center');
@@ -198,6 +203,12 @@
     // no hit marks over the crosshair; the range alone shows the damage each shot did
     if (hitMark && (hitMark.t -= 1 / 60) > 0 && range) tx(g, String(hitMark.dmg), 640 + 44 * u + hitMark.x, cy - 30 * u - (1 - Math.min(1, hitMark.t / .28)) * 16, 20 * u, hitMark.head ? GOLD : '#fff');
     drawBanner(g, V, u); drawSwitch(g);
+    // --- dazed, snared, surging, shrouded: the whole view says so
+    { const ring = (col, a, inner) => { const gr = g.createRadialGradient(640, 360, H * inner, 640, 360, H * .85); gr.addColorStop(0, col.replace('A', '0')); gr.addColorStop(1, col.replace('A', String(a))); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H); };
+      if (P.daze > 0) ring('rgba(255,225,77,A)', .32 * Math.min(1, P.daze / .6), .3);
+      if (P.snare > 0) { ring('rgba(123,214,90,A)', .34 * Math.min(1, P.snare / .6), .35); tx(g, 'SNARED', 640, 470, 15 * u, '#9dff6b', 'center', 900); }
+      if (P.cloak > 0) { g.fillStyle = 'rgba(120,140,200,.1)'; g.fillRect(V.x0, V.y0, W, H); ring('rgba(169,184,255,A)', .3, .4); tx(g, 'SHROUDED', 640, 470, 15 * u, '#c9d2ff', 'center', 900); g.fillStyle = 'rgba(169,184,255,.8)'; g.fillRect(640 - 50 * u, 482 * u / u + 4, 100 * u * P.cloak / 5, 3 * u); }
+      if (P.surge > 0) { g.save(); g.translate(640, 360); g.strokeStyle = `rgba(255,236,150,${.16 * Math.min(1, P.surge / .5)})`; g.lineWidth = 2; for (let i = 0; i < 26; i++) { const a = i / 26 * TAU + (i * 7.3), r0 = H * (.42 + ((X ? X.t : 0) * 1.7 + i * .37) % .3); g.beginPath(); g.moveTo(Math.cos(a) * r0, Math.sin(a) * r0); g.lineTo(Math.cos(a) * (r0 + 60 * u), Math.sin(a) * (r0 + 60 * u)); g.stroke(); } g.restore(); } }
     // --- top: the clock in the middle, round wins either side of it, then a tile for every fighter: your team to the left,
     // the rivals to the right. A tile is lit while they stand and goes grey with a skull once they are down; your
     // teammates' tiles carry their health
@@ -214,11 +225,8 @@
       const score = (x, n, col, tag) => { g.fillStyle = PANEL; g.fillRect(x - 25, 0, 50, 50); g.fillStyle = col; g.fillRect(x - 25, 0, 50, 3); tx(g, String(n), x, 27, 30, col, 'center', 800); if (tag) tx(g, tag, x, 62, 10, col, 'center', 800); };
       score(-92, M.wins[0], YOU, side === 'att' ? 'ATTACK' : 'DEFEND'); score(92, M.wins[1], FOE, side === 'att' ? 'DEFEND' : 'ATTACK');
       const tile = (q, x, col, ours) => {
-        const w = 44, h = 50, up = q.alive; g.fillStyle = up ? PANEL : 'rgba(10,13,18,.5)'; g.fillRect(x - w / 2, 0, w, h);
-        g.save(); g.beginPath(); g.rect(x - w / 2, 0, w, h); g.clip(); opBust(g, q.op, x, 28, 1, up); g.restore();
-        if (!up) { g.save(); g.translate(x, 24); glyph(g, 'skull', 15, 'rgba(239,233,220,.7)', 'rgba(10,13,18,.9)'); g.restore(); }
-        g.fillStyle = up ? col : 'rgba(239,233,220,.16)'; g.fillRect(x - w / 2, h - 3, w, 3);
-        if (q === P) { g.strokeStyle = 'rgba(239,233,220,.55)'; g.lineWidth = 1.5; g.strokeRect(x - w / 2 + .75, .75, w - 1.5, h - 1.5); }
+        const w = 44, h = 50, up = q.alive;
+        portraitTile(g, q.op, x - w / 2, 0, w, h, { dead: !up, bar: col, r: 3, on: q === P && up });
         if (ours && up) { g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(x - w / 2, h + 3, w, 4); g.fillStyle = q.hp > 30 ? BONE : WARN; g.fillRect(x - w / 2, h + 3, w * cl(q.hp / 100, 0, 1), 4); }
       };
       mine.forEach((q, i) => tile(q, -147 - i * 48, YOU, true)); theirs.forEach((q, i) => tile(q, 147 + i * 48, FOE, false));

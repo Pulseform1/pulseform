@@ -28,7 +28,7 @@
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
         break;
-      case 'sh': { const S = castShot(F, viewDir(m.a, m.b)); F.kick = .08; emit('shot', F, S, true); break; }
+      case 'sh': { const S = castShot(F, viewDir(m.a, m.b)); F.kick = .08; F.cloak = 0; emit('shot', F, S, true); break; }
       case 'kn': F.swing = { t: 0, heavy: !!m.h, side: 1 }; emit('melee', F, !!m.h, null); break;
       case 'hit': { const V = M.byKey[String(m.v)]; if (V && !V.net) applyDamage(V, m.d, F, !!m.h, m.w); break; }
       case 'dead': {
@@ -36,6 +36,8 @@
         M.feed.unshift({ a: by.name, b: F.name, w: GUNS[m.w] ? GUNS[m.w].n : m.w, head: !!m.h, t: 0, mine: by === me() }); emit('kill', F, by, !!m.h, m.w); if (M.host) judge(); break;
       }
       case 'ab': F.ab[m.k] = 0; applyAbility(F, m.k, m.d || {}); break;
+      case 'kx': kitTrip(m.id, m.v, true); break;   // a snare or mine went off on the victim's device
+      case 'kd': { const s2 = M.kit && M.kit.sentries.find(q => q.id === m.id); if (s2) hurtSentry(s2, m.d, true); break; }   // someone shot a sentry
       case 'nd': F.smokes = Math.max(0, (F.smokes || 0) - 1); F.throwT = .6; addNade({ x: m.x, y: m.y, z: m.z, vx: m.vx, vy: m.vy, vz: m.vz }); emit('throw', F); break;
       case 'pl': if (!M.planted) plantAt(m.x, m.z, F); break;
       case 'df': defuseDone(F); break;

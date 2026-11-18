@@ -57,6 +57,33 @@
     if (f.credits >= 200 && R() < .65) buy(f, 'smoke'); if (f.credits >= 1400 && R() < .45) buy(f, 'smoke');
   }
 
+  // the newer operatives' abilities, each with a reason
+  function kitBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt) {
+    const ey = eyeY(f), there = P.path && !P.path.length, holdLook = P.look || (B.last ? [B.last.x, B.last.z] : null);
+    const lob = (k, tx, tz, g) => { const dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), T = cl(d / 13, .45, 1.1), y0 = ey - .1, ty = hAt(tx, tz) + .1; botCast(f, k, { x: f.x, y: y0, z: f.z, vx: dx / T, vy: (ty - y0 + g / 2 * T * T) / T, vz: dz / T }); };
+    if (f.op === 'nova') {
+      if (f.ab.q && (engaged || (side === 'att' && P.k === 'push' && near < 18 && !sees) || P.k === 'retake')) ability(f, 'q');
+      if (f.ab.e && fresh && !sees && dE > 5 && dE < 18 && R() < dt * 1.2) botCast(f, 'e', { x: B.last.x, y: hAt(B.last.x, B.last.z) + 1.2, z: B.last.z });
+    } else if (f.op === 'wraith') {
+      if (f.ab.q && !sees && ((side === 'att' && P.k === 'push' && near < 20) || (P.k === 'retake' && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 24))) ability(f, 'q');
+      if (f.ab.e && side === 'att' && P.k === 'push' && !sees && M.t < roundT() - 8 && R() < dt * .4) {   // fake a push somewhere else
+        const o = SITES.length > 1 ? SITES[1 - (RSITE[P.lane] || 0)].c : pick(HOLDS).look; botCast(f, 'e', { x: o[0], z: o[1] }); }
+    } else if (f.op === 'talon') {
+      if (f.ab.q && !sees && ((side === 'att' && P.k === 'push' && near < 26 && near > 8) || (side === 'def' && there && M.t < roundT() - 10))) {
+        const tg = side === 'att' ? siteOfPlan(P, f) : holdLook; if (tg) { const dx = tg[0] - f.x, dz = tg[1] - f.z, dy = hAt(tg[0], tg[1]) + 2.4 - ey, L = Math.hypot(dx, dy, dz) || 1; botCast(f, 'q', { x: f.x, y: ey, z: f.z, vx: dx / L * 42, vy: dy / L * 42 + 1.5, vz: dz / L * 42 }); } }
+      if (f.ab.e && there && ((side === 'def' && P.k === 'hold' && holdLook) || (side === 'att' && P.k === 'post' && M.planted))) {
+        const tg = side === 'def' ? holdLook : [M.planted.x, M.planted.z], dx = tg[0] - f.x, dz = tg[1] - f.z, L = Math.hypot(dx, dz) || 1, dd = Math.min(4, L * .5); botCast(f, 'e', { x: f.x + dx / L * dd, z: f.z + dz / L * dd }); }
+    } else if (f.op === 'ember') {
+      if (f.ab.q && !sees && ((fresh && dE > 6 && dE < 20 && R() < dt * 1.2) || (side === 'att' && M.planted && e.defuse > 0))) { const tg = side === 'att' && M.planted && e.defuse > 0 ? [M.planted.x, M.planted.z] : [B.last.x, B.last.z]; lob('q', tg[0], tg[1], 14); }
+      if (f.ab.e && side === 'att' && P.k === 'push' && near < 22 && near > 9 && !sees) {
+        const hs = HOLDS.filter(q => q.lane === P.lane || q.lane === 'any'), h = hs.length ? pick(hs) : null;
+        if (h) { const dx = h.p[0] - f.x, dz = h.p[1] - f.z, L = Math.hypot(dx, dz) || 1, dd = Math.min(9, L * .55); botCast(f, 'e', { x: f.x + dx / L * dd, z: f.z + dz / L * dd, px: -dz / L, pz: dx / L }); } }
+    } else if (f.op === 'axiom') {
+      if (f.ab.q && there && ((side === 'def' && P.k === 'hold') || (side === 'att' && P.k === 'post')) && holdLook) {
+        const yaw = yawTo(f.x, f.z, holdLook[0], holdLook[1]), fx = -Math.sin(yaw), fz = -Math.cos(yaw); botCast(f, 'q', { x: f.x + fx * 1.2, z: f.z + fz * 1.2, yaw }); }
+      if (f.ab.e && ((side === 'def' && P.k === 'hold' && there && M.t < roundT() - 6) || (side === 'att' && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 2))) botCast(f, 'e', { x: f.x, z: f.z });
+    }
+  }
   // use an ability at a chosen place, without having to look there first
   function botCast(f, k, data) { if (!f.ab[k] || M.phase !== 'live') return; f.ab[k] = 0; applyAbility(f, k, data); net({ t: 'ab', k, d: data, f: f.key }); }
   const magOf = (f, s) => { const k = f.guns[s], A = k && f.ammo[k]; return A ? A.mag : 0; };
@@ -77,6 +104,7 @@
     const sees = e.alive && (Math.abs(angDiff(toE, f.yaw)) < 1.1 || dE < 4) && canSee(f, e);
     if (sees) { B.seen = (B.seen || 0) + dt; B.last = { x: e.x, z: e.z, t: M.time }; B.lostT = 0; } else { B.seen = 0; B.lostT = (B.lostT || 0) + dt; }
     if (e.alive && !sees && ((e.step > 0 && dE < D.hear) || (e.kick > 0 && dE < 45) || e.reveal > 0)) B.last = { x: e.x, z: e.z, t: M.time, heard: true };
+    if (M.kit) for (const L of M.kit.lures) if (L.loud > 0 && L.by.team !== f.team && Math.hypot(L.x - f.x, L.z - f.z) < D.hear * 1.4) B.last = { x: L.x, z: L.z, t: M.time, heard: true };   // a Ghost Step sounds real
     if (B.hitBy && M.time - B.hitBy.t < .05) { if (!sees) { B.last = { x: B.hitBy.x, z: B.hitBy.z, t: M.time, heard: true }; B.alarm = M.time; } if (B.err) { B.err[0] += rnd(-1, 1) * .035; B.err[1] += rnd(-.2, 1) * .03; } }   // shot: turn to it, and the hit throws the aim
     // what it believes about where you are is a moment old: it aims at that, so moving makes it miss
     B.hist = B.hist || []; if (sees) B.hist.push({ t: M.time, x: e.x, z: e.z, y: e.y, cr: e.crouch }); else B.hist.length = 0;
@@ -150,6 +178,10 @@
       if (lk) { const d = Math.max(1.5, Math.hypot(lk[0] - f.x, lk[1] - f.z)); tYaw = yawTo(f.x, f.z, lk[0], lk[1]); tPitch = Math.atan2(hAt(lk[0], lk[1]) + 1.5 - eyeY(f), d); }
       if (G.scope && f.scoped) f.scoped = 0;
     }
+    if (!sees && M.kit && M.kit.sentries.length && !gun(f).melee) {
+      const st = M.kit.sentries.find(q => q.by.team !== f.team && Math.hypot(q.x - f.x, q.z - f.z) < 20 && los(f.x, eyeY(f), f.z, q.x, q.y + .6, q.z) >= Math.hypot(q.x - f.x, q.z - f.z, q.y + .6 - eyeY(f)) - .4);
+      if (st) { const d = Math.hypot(st.x - f.x, st.z - f.z); tYaw = yawTo(f.x, f.z, st.x, st.z) + Math.sin(M.time * 3 + B.ph) * D.jit; tPitch = Math.atan2(st.y + .6 - eyeY(f), d); if (Math.abs(angDiff(tYaw, f.yaw)) < Math.atan2(.25, d) + .01 && Math.abs(tPitch - f.pitch) < .05) I.fire = true; }
+    }
     const rate = (engaged ? D.turn : B.alarm && M.time - B.alarm < .6 ? D.turn * .8 : 2.2 + B.diff * .8) * dt;
     f.yaw += cl(angDiff(tYaw, f.yaw), -rate, rate); f.pitch += cl(tPitch - f.pitch, -rate * .7, rate * .7);
 
@@ -162,6 +194,7 @@
       if (f.op === 'iris' && f.ab.e && !sees && fresh && B.last.heard && dE > 6 && dE < 16 && R() < dt * 1.5) botCast(f, 'e', { x: B.last.x, y: 1.6, z: B.last.z });
       if (f.op === 'bastion' && f.ab.q && engaged && f.hp < 70 && dE > 5) ability(f, 'q');
       if (f.op === 'bastion' && f.ab.e && f.hp < 60 && !sees) ability(f, 'e');
+      kitBot(f, B, P, side, sees, engaged, fresh, near, dE, e, dt);
       // smoke grenades: attackers cover a corner before stepping onto the site; defenders smoke the lane they just heard someone in
       if (f.smokes > 0 && !sees && !(B.nadeT > M.time)) {
         if (side === 'att' && P.k === 'push' && near < 24 && near > 8) { const hs = HOLDS.filter(q => (q.lane === P.lane || q.lane === 'any') && Math.hypot(q.p[0] - f.x, q.p[1] - f.z) < 22); if (hs.length && R() < dt * 2) { const h = pick(hs); lobNade(f, h.p[0], h.p[1]); B.nadeT = M.time + 6; } }

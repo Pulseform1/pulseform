@@ -72,8 +72,31 @@
     const key = f.op + k, o = outFor(f);
     if (key === 'vexq') tone(o, 500, .16, 'sine', .14, 1100); else if (key === 'vexe') hiss(o, .5, .2, 'lowpass', 500);
     else if (key === 'irisq') { tone(o, 1300, .25, 'sine', .12, -700); tone(o, 1300, .25, 'sine', .08, -700, .18); } else if (key === 'irise') hiss(o, .08, .12, 'highpass', 1800);
-    else if (key === 'bastionq') { tone(o, 80, .35, 'sawtooth', .16, 90); hiss(o, .3, .14, 'lowpass', 600); } else tone(o, 660, .2, 'triangle', .1, 330);
+    else if (key === 'bastionq') { tone(o, 80, .35, 'sawtooth', .16, 90); hiss(o, .3, .14, 'lowpass', 600); }
+    else if (key === 'novaq') { tone(o, 260, .4, 'sawtooth', .07, 620); tone(o, 520, .35, 'square', .03, 900, .05); hiss(o, .35, .08, 'bandpass', 2600, 0, 2); }
+    else if (key === 'novae' || key === 'emberq') { hiss(o, .14, .14, 'bandpass', 1400, 0, 1.2); tone(o, 500, .1, 'triangle', .06, 260); }
+    else if (key === 'wraithq') { tone(o, 1100, .6, 'sine', .07, -820); hiss(o, .6, .05, 'highpass', 5200); }
+    else if (key === 'wraithe') hiss(o, .2, .06, 'highpass', 4000);
+    else if (key === 'talonq') { hiss(o, .1, .16, 'highpass', 2600); tone(o, 1400, .06, 'triangle', .05, -400); }
+    else if (key === 'talone' || key === 'axiome') { tone(o, 1250, .05, 'square', .05); tone(o, 1650, .05, 'square', .05, 0, .08); }
+    else if (key === 'axiomq') { tone(o, 200, .22, 'square', .06, 240); tone(o, 900, .07, 'square', .05, 0, .26); tone(o, 1200, .07, 'square', .05, 0, .36); }
+    else if (key === 'embere') { hiss(o, .7, .14, 'lowpass', 800); hiss(o, .5, .05, 'bandpass', 2200, .1, 1.5); }
+    else tone(o, 660, .2, 'triangle', .1, 330);
   });
+  // the things the newer operatives leave in the world
+  const at = (x, y, z) => ({ x, y: y - 1, z });
+  cue('wavePop', w => { const o = outFor(at(w.x, w.y, w.z), 1.3); tone(o, 90, .45, 'sine', .5, -50); hiss(o, .35, .35, 'bandpass', 900, 0, .8); tone(o, 1800, .3, 'sawtooth', .05, -1400, .02); });
+  cue('lureStep', L => { const o = outFor(at(L.x, hAt(L.x, L.z) + 1, L.z)); hiss(o, .06, .32, 'lowpass', 420); tone(o, 95, .05, 'sine', .14, -30); });
+  cue('lureShot', L => { const o = outFor(at(L.x, hAt(L.x, L.z) + 1, L.z)); const [d, cf, tf, tail, v] = SHOT.Rifle; hiss(o, d, .5 * v, 'bandpass', cf, 0, .6); hiss(o, tail, .16 * v, 'lowpass', 900, .02); tone(o, tf, .11, 'sine', .5 * v, -tf * .55); });
+  cue('dartStick', D => tone(outFor(at(D.x, D.y, D.z)), 2200, .05, 'square', .05, -900));
+  cue('dartPulse', D => { const o = outFor(at(D.x, D.y, D.z), 1.4); tone(o, 1500, .5, 'sine', .14, -900); tone(o, 2250, .4, 'sine', .06, -1300, .05); });
+  cue('snared', (sn, v) => { const o = outFor(v || at(sn.x, sn.y + 1, sn.z)); tone(o, 700, .3, 'sawtooth', .1, -500); hiss(o, .25, .1, 'highpass', 3500); });
+  cue('fireStart', F => { const o = outFor(at(F.x, F.y + 1, F.z), 1.2); hiss(o, .5, .45, 'lowpass', 700); hiss(o, 1.2, .12, 'bandpass', 1200, .1, .7); tone(o, 70, .4, 'sine', .3, -20); });
+  cue('mineArm', m => { const o = outFor(at(m.x, m.y + 1, m.z)); tone(o, 1900, .06, 'square', .08); tone(o, 1900, .06, 'square', .08, 0, .14); tone(o, 2400, .08, 'square', .09, 0, .27); });
+  cue('mineBoom', m => { const o = outFor(at(m.x, m.y + 1, m.z), 1.5); hiss(o, .7, .6, 'lowpass', 600); tone(o, 55, .6, 'sine', .6, -25); hiss(o, .2, .3, 'bandpass', 1800); });
+  cue('sentryShot', s => { const o = outFor(at(s.x, s.y + 1.6, s.z), .8); hiss(o, .05, .32, 'bandpass', 2600, 0, .7); tone(o, 220, .06, 'square', .06, -120); });
+  cue('sentryHit', s => tone(outFor(at(s.x, s.y + 1.6, s.z), .7), 1700, .04, 'square', .05, -500));
+  cue('sentryDown', s => { const o = outFor(at(s.x, s.y + 1.6, s.z), 1.2); hiss(o, .5, .35, 'lowpass', 900); tone(o, 400, .5, 'sawtooth', .08, -330); });
   cue('throw', f => hiss(outFor(f), .12, .14, 'bandpass', 900));
   cue('nadeBounce', n => tone(outFor({ x: n.x, y: n.y - 1, z: n.z }), 900, .04, 'square', .05, -300));
   cue('nadePop', s => { const o = outFor({ x: s.x, y: s.y, z: s.z }); tone(o, 1200, .05, 'square', .06); hiss(o, .9, .26, 'lowpass', 700); });

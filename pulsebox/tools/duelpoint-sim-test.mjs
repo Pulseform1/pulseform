@@ -13,7 +13,7 @@ const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n
 const K = { save: {}, persist() {}, bot: false, state: 'play' };
 const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name: 'Tester', id: 0 };
 const T = new Function('K', 'MP', code + `
-  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, mapPool, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
+  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
     get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
@@ -187,6 +187,47 @@ function matchChecks(count) {
 }
 
 // the two-site maps: both sites see plants, planting wins rounds, 1v1 and 2v2 both finish
+// the newer operatives' abilities, one at a time, on the Pier with the rival placed by hand
+function kitChecks() {
+  section('new operatives');
+  let I = idle(); T.setInput(() => I);
+  const setup = (op, gunKey) => { const [M, P, F] = lab(gunKey); P.op = op; P.ab = { q: 1, e: 1 }; F.bot = { diff: 0, dummy: true, home: [50, 3] }; Object.assign(F, { x: 50, z: 3, y: 0, hp: 100, sh: 0, alive: true }); P.yaw = T.yawTo(P.x, P.z, 60, 3); P.pitch = 0; I = idle(); return [M, P, F]; };
+  let M, P, F;
+  [M, P, F] = setup('nova'); I = { ...idle(), mz: 1 }; run(.6); const v0 = Math.hypot(P.vx, P.vz); T.ability(P, 'q'); run(.4); const v1 = Math.hypot(P.vx, P.vz);
+  ok(v1 > v0 * 1.25, 'Nova Surge: faster', `${v0.toFixed(1)} -> ${v1.toFixed(1)} m/s`);
+  [M, P, F] = setup('nova'); Object.assign(F, { x: 48, z: 3 }); P.yaw = T.yawTo(P.x, P.z, 48, 3); P.pitch = -.02; T.ability(P, 'e'); run(.6);
+  ok(F.daze > 0 && F.hp === 85 && T.spreadOf(F) / T.D2R >= 2.5, 'Nova Shockwave: dazes, shakes the aim and stings for 15', `daze ${F.daze.toFixed(2)}, hp ${F.hp}`);
+  [M, P, F] = setup('wraith'); F.yaw = T.yawTo(F.x, F.z, P.x, P.z); const seen0 = T.canSee(F, P); T.ability(P, 'q'); const seen1 = T.canSee(F, P); Object.assign(F, { x: 43, z: 3 }); const seen2 = T.canSee(F, P);
+  P.fireT = 0; T.fire(P); ok(seen0 && !seen1 && seen2 && P.cloak === 0, 'Wraith Shroud: unseen at 10 m, seen up close, and firing ends it', `${seen0} ${seen1} ${seen2} cloak ${P.cloak}`);
+  [M, P, F] = setup('wraith'); F.bot = { diff: 1 }; F.team = 1; Object.assign(F, { x: 56, z: 9 }); T.ability(P, 'e'); run(.5);
+  ok(F.bot.last && F.bot.last.heard && Math.hypot(F.bot.last.x - M.kit.lures[0].x, F.bot.last.z - M.kit.lures[0].z) < .1, 'Wraith Ghost Step: a rival bot hears it as real', JSON.stringify(F.bot.last && { x: +F.bot.last.x.toFixed(1), z: +F.bot.last.z.toFixed(1) }));
+  [M, P, F] = setup('talon'); P.yaw = T.yawTo(P.x, P.z, 61, 3); P.pitch = .05; T.ability(P, 'q'); run(1);
+  ok(M.kit.darts.length === 1 && M.kit.darts[0].stuck >= 0 && F.reveal > 0, 'Talon Recon Dart: sticks and reveals the rival', `stuck ${M.kit.darts[0] && M.kit.darts[0].stuck.toFixed(2)}, reveal ${F.reveal.toFixed(2)}`);
+  [M, P, F] = setup('talon'); T.ability(P, 'e'); const sn = M.kit.snares[0]; run(1); Object.assign(F, { x: sn.x + 3, z: sn.z, bot: null, local: true }); T.setInput(f => f === F ? { ...idle(), mx: 0, mz: 1 } : I); F.yaw = T.yawTo(F.x, F.z, sn.x - 3, sn.z); run(.8);
+  ok(F.snare > 0 && F.reveal > 0 && !M.kit.snares.length && Math.hypot(F.vx, F.vz) < 2.2, 'Talon Snare: the first rival over it is slowed and revealed', `snare ${F.snare.toFixed(2)}, speed ${Math.hypot(F.vx, F.vz).toFixed(1)}`);
+  T.setInput(() => I);
+  [M, P, F] = setup('ember'); P.yaw = T.yawTo(P.x, P.z, 50, 3); P.pitch = -.12; T.ability(P, 'q'); let landed = 0; for (let i = 0; i < 120 && !M.kit.fires.length; i++) { T.tick(DT); landed += DT; }
+  const fire = M.kit.fires[0]; if (fire) Object.assign(F, { x: fire.x, z: fire.z, bot: null, vx: 0, vz: 0 }); const hp0 = F.hp; run(1.02);
+  ok(fire && hp0 - F.hp >= 28 && hp0 - F.hp <= 32, 'Ember Ignite: the pool burns for 30 a second', fire ? `landed ${Math.hypot(fire.x - P.x, fire.z - P.z).toFixed(1)} m away after ${landed.toFixed(2)} s, ${hp0 - F.hp} damage in 1 s` : 'no pool');
+  [M, P, F] = setup('ember'); T.ability(P, 'e'); run(.8);
+  ok(M.smokes.length === 3 && M.smokes.every(q => q.heat) && !T.canSee(P, F), 'Ember Heat Haze: three clouds in a line that block sight', `${M.smokes.length} clouds`);
+  [M, P, F] = setup('axiom'); Object.assign(F, { x: 52, z: 3 }); T.ability(P, 'q'); run(3);
+  ok(F.hp < 100 && M.kit.sentries.length === 1, 'Axiom Sentry: fires on a rival in front of it', `rival on ${F.hp}`);
+  { const st = M.kit.sentries[0]; F.guns[1] = 'lancer'; F.slot = 1; T.giveAmmo(F, 'lancer'); F.alive = true; F.hp = 100; F.yaw = T.yawTo(F.x, F.z, st.x, st.z); F.pitch = Math.atan2(st.y + .5 - T.eyeY(F), Math.hypot(st.x - F.x, st.z - F.z)); F.bot = null;
+    for (let i = 0; i < 3; i++) { F.fireT = 0; F.spray = 0; T.fire(F); } ok(!M.kit.sentries.length, 'and three rifle shots bring it down', `${M.kit.sentries.length ? M.kit.sentries[0].hp : 0} health left`); }
+  [M, P, F] = setup('axiom'); T.ability(P, 'e'); const mine = M.kit.mines[0]; Object.assign(P, { x: 30, z: 3 }); run(2); Object.assign(F, { x: mine.x + 1.5, z: mine.z, bot: { diff: 0, dummy: true, home: [mine.x + 1.5, mine.z] } }); run(.6);
+  ok(F.hp <= 60 && !M.kit.mines.length, 'Axiom Tripmine: arms, then bursts when a rival comes near', `rival on ${F.hp}`);
+  // bot matches where everyone is one of the newer operatives: no errors, and they use their abilities
+  const used = {}; T.on('ability', (f, k) => { used[f.op + k] = (used[f.op + k] || 0) + 1; }); let err = 0, done = 0;
+  const ops = ['nova', 'wraith', 'talon', 'ember', 'axiom'];
+  for (let n = 0; n < 10; n++) {
+    try { T.seed(n * 911 + 5); T.startMatch({ mode: 'demo', map: n % T.MAPS.length }); const M2 = T.M; M2.fs[0].op = ops[n % 5]; M2.fs[1].op = ops[(n + 2) % 5]; M2.fs[0].bot.diff = 1; M2.fs[1].bot.diff = 2;
+      for (let i = 0; i < 60 * 60 * 25 && !M2.over; i++) T.tick(DT); if (M2.over) done++; } catch (e2) { err++; console.log(e2.stack.split('\n').slice(0, 4).join(' | ')); }
+  }
+  ok(!err && done === 10, 'bot matches with the new operatives finish without errors', `${done}/10`);
+  const keys = ops.flatMap(o => [o + 'q', o + 'e']), missing = keys.filter(k => !used[k]);
+  ok(!missing.length, 'bots use every new ability', keys.map(k => `${k} ${used[k] || 0}`).join(', '));
+}
 // the loading screen: the first LOAD_T seconds of a match, added to round 1's buy phase; nothing can be bought under it
 function loadChecks() {
   section('loading screen');
@@ -235,6 +276,7 @@ if (arg === 'map') { printMap(); process.exit(0); }
 if (arg === 'matches') matchChecks(+process.argv[3] || 20);
 else if (arg === 'two') twoSiteChecks(+process.argv[3] || 12);
 else if (arg === 'quick') { mapChecks(); gunplayChecks(); moveChecks(); loadChecks(); }
-else { mapChecks(); gunplayChecks(); moveChecks(); loadChecks(); teamChecks(7); matchChecks(20); twoSiteChecks(12); }
+else if (arg === 'kits') kitChecks();
+else { mapChecks(); gunplayChecks(); moveChecks(); loadChecks(); kitChecks(); teamChecks(7); matchChecks(20); twoSiteChecks(12); }
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

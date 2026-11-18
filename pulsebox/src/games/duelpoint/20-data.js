@@ -38,9 +38,14 @@
   // the armory's tabs, in order
   const CLASSES = [['Sidearm', 'Sidearms'], ['SMG', 'SMGs'], ['Shotgun', 'Shotguns'], ['Rifle', 'Rifles'], ['Sniper', 'Snipers'], ['Heavy', 'Heavy'], ['Shield', 'Shields']];
   const OPS = {
-    vex: { n: 'VEX', role: 'Shade', col: '#8f6bff', q: { n: 'Blink', d: 'Dash 6 m the way you are moving.' }, e: { n: 'Veil', d: 'Throw a smoke cloud that blocks sight for 12 s.' } },
-    iris: { n: 'IRIS', role: 'Seer', col: '#35e0c8', q: { n: 'Ping', d: 'See your rival through walls for 3 s.' }, e: { n: 'Flare', d: 'A flash that blinds whoever is looking at it.' } },
-    bastion: { n: 'BASTION', role: 'Warden', col: '#ffb347', q: { n: 'Rampart', d: 'Raise a wall in front of you for 12 s.' }, e: { n: 'Patch', d: 'Heal 60 health over 3 s.' } },
+    vex: { n: 'VEX', role: 'Shade', col: '#8f6bff', bio: 'Smoke and a sudden step: Vex fights where you cannot see.', q: { n: 'Blink', d: 'Dash 6 m the way you are moving.' }, e: { n: 'Veil', d: 'Throw a smoke cloud that blocks sight for 12 s.' } },
+    iris: { n: 'IRIS', role: 'Seer', col: '#35e0c8', bio: 'Iris sees through walls. Then she makes you look away.', q: { n: 'Ping', d: 'See your rival through walls for 3 s.' }, e: { n: 'Flare', d: 'A flash that blinds whoever is looking at it.' } },
+    bastion: { n: 'BASTION', role: 'Warden', col: '#ffb347', bio: 'A wall, a patch, and a refusal to move.', q: { n: 'Rampart', d: 'Raise a wall in front of you for 12 s.' }, e: { n: 'Patch', d: 'Heal 60 health over 3 s.' } },
+    nova: { n: 'NOVA', role: 'Striker', col: '#ffe14d', bio: 'A courier who outran everything once. She still does.', q: { n: 'Surge', d: '3.5 s of speed, and your sprays settle twice as fast.' }, e: { n: 'Shockwave', d: 'A blast where you aim: rivals caught are slowed, shaky and stung for 15.' } },
+    wraith: { n: 'WRAITH', role: 'Phantom', col: '#a9b8ff', bio: 'Nobody has seen Wraith arrive. That is the point.', q: { n: 'Shroud', d: 'Nearly invisible beyond 5 m and silent for 5 s. Firing ends it.' }, e: { n: 'Ghost Step', d: 'Fake footsteps, then fake gunfire, where you aim. Rivals hear it as real.' } },
+    talon: { n: 'TALON', role: 'Tracker', col: '#7bd65a', bio: 'A ranger who reads a room like tracks in snow.', q: { n: 'Recon Dart', d: 'A dart that sticks where it lands and pulses twice, revealing rivals in its sight.' }, e: { n: 'Snare', d: 'A trap on the floor ahead: the first rival over it is slowed and revealed.' } },
+    ember: { n: 'EMBER', role: 'Pyre', col: '#ff7a2f', bio: 'Foundry-born. Thinks every problem is a fuel problem.', q: { n: 'Ignite', d: 'Lob a firebomb: its pool burns rivals for 30 a second, 5 s.' }, e: { n: 'Heat Haze', d: 'A wall of amber haze across your view that blocks sight for 10 s.' } },
+    axiom: { n: 'AXIOM', role: 'Engineer', col: '#5aa0ff', bio: 'Builds the thing that holds the angle, then goes for coffee.', q: { n: 'Sentry', d: 'A turret that fires on rivals in front of it until it is shot down.' }, e: { n: 'Tripmine', d: 'A mine at your feet. Armed, it bursts for up to 75 when a rival comes near.' } },
   };
   // bots aim like people, not aimbots: react = seconds before they start shooting at what they see; lag = how old their
   // picture of where you are is (so strafing makes them miss); err = the first-sight aim error (rad) they then correct over

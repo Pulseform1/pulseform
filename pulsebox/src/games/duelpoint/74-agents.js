@@ -8,6 +8,11 @@
     vex: { suit: '#2a2740', plate: '#4c4573', cloth: '#6a55c2', skin: '#b9886a', wide: 1 },
     iris: { suit: '#1b3640', plate: '#2f7480', cloth: '#d8e6e4', skin: '#8a5a3c', wide: .96 },
     bastion: { suit: '#474334', plate: '#8a7448', cloth: '#b9742a', skin: '#d2a47e', wide: 1.13 },
+    nova: { suit: '#2b2a24', plate: '#d8c04a', cloth: '#3a3a40', skin: '#c58c66', wide: .95 },
+    wraith: { suit: '#1d2130', plate: '#5c6684', cloth: '#a9b8ff', skin: '#b39a8a', wide: .97 },
+    talon: { suit: '#2e3a24', plate: '#5f6f3c', cloth: '#8a6a40', skin: '#9a6b4a', wide: 1 },
+    ember: { suit: '#3a2620', plate: '#7a3e22', cloth: '#ff7a2f', skin: '#d8a07a', wide: 1.02 },
+    axiom: { suit: '#25303e', plate: '#d9dde3', cloth: '#5aa0ff', skin: '#8a5a3c', wide: 1.05 },
   };
   function agentModel(f) {
     const G = new THREE.Group(), op = OPS[f.op] || OPS.vex, kit = KIT[f.op] || KIT.vex, sh = !X.low, w = kit.wide; G.rotation.order = 'YXZ';
@@ -48,7 +53,15 @@
     // what they carry on their back, and their shoulders
     if (f.op === 'bastion') { add(rb(.3, .34, .15, .04), M.cloth, 0, .37, .21); add(cyl(.062, .062, .36, 12), M.plate, 0, .58, .2, 0, 0, Math.PI / 2); for (const sx of [-1, 1]) { const pd = add(rb(.17, .1, .2, .04), M.plate, sx * .285, .535, 0, 0, 0, sx * -.3); pd.scale.z = 1; add(rb(.12, .03, .15, .012), M.acc, sx * .3, .592, 0, 0, 0, sx * -.3); } }
     else if (f.op === 'iris') { add(rb(.22, .26, .09, .03), M.plate, 0, .38, .175); add(cyl(.006, .006, .34, 6), M.dark, .08, .66, .19); add(sph(.012, 8, 6), M.glow, .08, .835, .19); add(rb(.14, .03, .01, .01), M.glow, 0, .44, .222); for (const sx of [-1, 1]) add(sph(.098), M.plate, sx * .245 * w, .525, 0).scale.set(1, .8, 1); }
-    else { add(rb(.24, .28, .1, .03), M.dark, 0, .37, .175); for (const sx of [-1, 1]) add(sph(.1), M.cloth, sx * .25 * w, .525, 0).scale.set(1.05, .8, 1.05); }
+    else if (f.op === 'vex') { add(rb(.24, .28, .1, .03), M.dark, 0, .37, .175); for (const sx of [-1, 1]) add(sph(.1), M.cloth, sx * .25 * w, .525, 0).scale.set(1.05, .8, 1.05); }
+    else {
+      for (const sx of [-1, 1]) add(rb(.12, .08, .15, .03), M.plate, sx * .262 * w, .535, 0, 0, 0, sx * -.28);   // shoulder pads
+      if (f.op === 'nova') { add(rb(.18, .22, .08, .03), M.plate, 0, .38, .17); add(rb(.04, .18, .02, .01), M.glow, 0, .38, .215); for (const sx of [-1, 1]) add(cyl(.025, .025, .2, 8), M.dark, sx * .07, .38, .2); }
+      else if (f.op === 'wraith') { add(rb(.34, .58, .014, .03), M.cloth, 0, .24, .17, -.06); add(rb(.36, .05, .04, .015), M.plate, 0, .52, .16); }
+      else if (f.op === 'talon') { const q = add(cyl(.055, .05, .42, 10), M.cloth, .08, .36, .19, 0, 0, -.45); for (let k = 0; k < 3; k++) add(new THREE.ConeGeometry(.018, .07, 6), M.glow, .16 + k * .022, .58 - k * .012, .19 + (k - 1) * .025, 0, 0, -.45); add(rb(.05, .3, .015, .01), M.dark, 0, .36, .16, 0, 0, .6); }
+      else if (f.op === 'ember') { for (const sx of [-1, 1]) { add(cyl(.065, .065, .34, 12), M.plate, sx * .075, .37, .2); add(sph(.065, 12, 8), M.plate, sx * .075, .54, .2); } add(new THREE.TorusGeometry(.12, .015, 6, 16, Math.PI), M.dark, 0, .55, .25, 0, 0, 0); add(rb(.05, .04, .02, .01), M.glow, 0, .3, .27); }
+      else if (f.op === 'axiom') { add(rb(.26, .3, .14, .035), M.suit, 0, .37, .2); add(rb(.2, .06, .02, .01), M.glow, 0, .44, .275); add(cyl(.008, .008, .36, 6), M.dark, -.09, .66, .22); add(sph(.018, 8, 6), M.glow, -.09, .845, .22); }
+    }
     // coat tails that swing as they run (Vex only)
     const tails = bone(torso, 0, .1, .1 * w); if (f.op === 'vex') { T = tails; for (const sx of [-1, 1]) add(rb(.15, .5, .014, .03), M.cloth, sx * .085, -.26, .02, .08, 0, sx * .06); T = torso; }
     // the head
@@ -61,6 +74,22 @@
       const dome = add(new THREE.SphereGeometry(.152, 18, 12, 0, TAU, 0, Math.PI * .56), M.plate, 0, .012, .008); dome.scale.set(1, .96, 1.08);
       add(new THREE.CylinderGeometry(.137, .132, .062, 22, 1, true, Math.PI - 1.15, 2.3), M.glow, 0, .004, 0); add(rb(.3, .016, .02, .006), M.plate, 0, .042, -.115);
       for (const sx of [-1, 1]) add(cyl(.042, .042, .03, 14), M.plate, sx * .148, -.005, .01, 0, 0, Math.PI / 2); add(cyl(.005, .005, .2, 6), M.dark, -.15, .11, .03); add(sph(.01, 8, 6), M.glow, -.15, .215, .03); add(rb(.05, .05, .05, .01), M.dark, 0, -.085, -.11);
+    } else if (f.op === 'nova') {   // a sleek half helmet, a crest fin and a gold visor
+      add(new THREE.SphereGeometry(.147, 18, 12, 0, TAU, 0, Math.PI * .5), M.plate, 0, .012, .012); add(rb(.026, .12, .3, .01), M.acc, 0, .145, .02);
+      add(rb(.27, .034, .03, .012), M.glow, 0, .005, -.124); for (const sx of [-1, 1]) add(rb(.022, .085, .08, .008), M.plate, sx * .142, -.015, -.035);
+    } else if (f.op === 'wraith') {   // a close cowl, a high collar and a blank mask with two slits
+      add(new THREE.SphereGeometry(.158, 18, 12, 0, TAU, 0, Math.PI * .62), M.suit, 0, .014, .022); add(rb(.19, .2, .05, .05), M.plate, 0, -.025, -.118);
+      for (const sx of [-1, 1]) add(rb(.05, .013, .02, .006), M.glow, sx * .045, .008, -.146); add(new THREE.CylinderGeometry(.152, .128, .15, 16, 1, true), M.cloth, 0, -.12, 0);
+    } else if (f.op === 'talon') {   // a brimmed ranger's cap, goggles pushed up, a feather
+      add(new THREE.SphereGeometry(.15, 16, 10, 0, TAU, 0, Math.PI * .5), M.cloth, 0, .02, 0); add(cyl(.21, .21, .014, 20), M.cloth, 0, .03, -.025);
+      for (const sx of [-1, 1]) { add(cyl(.032, .032, .03, 12), M.dark, sx * .05, .075, -.135, Math.PI / 2); add(cyl(.024, .024, .032, 12), M.glow, sx * .05, .075, -.14, Math.PI / 2); }
+      add(rb(.016, .17, .004, .006), M.acc, .15, .1, .05, 0, 0, -.5);
+    } else if (f.op === 'ember') {   // a respirator with two filters and a crest of flame
+      add(rb(.17, .09, .085, .03), M.dark, 0, -.06, -.1); for (const sx of [-1, 1]) add(cyl(.032, .036, .045, 10), M.plate, sx * .072, -.07, -.138, Math.PI / 2);
+      for (let i = 0; i < 5; i++) add(new THREE.ConeGeometry(.034, .15, 6), M.glow, 0, .13 + (2 - Math.abs(i - 2)) * .022, -.09 + i * .045, -.25 + i * .12);
+    } else if (f.op === 'axiom') {   // an engineer's hard hat with a lamp and a glowing visor
+      add(turn([[0, .175], [.11, .165], [.155, .1], [.165, .03], [.2, .005], [.2, -.008], [0, -.008]], 18), M.plate, 0, .018, 0); add(rb(.23, .045, .03, .012), M.glow, 0, -.008, -.128);
+      add(cyl(.028, .028, .03, 10), M.dark, 0, .16, -.12, Math.PI / 2); add(sph(.02, 8, 6), M.glow, 0, .16, -.137);
     } else {
       add(turn([[0, .185], [.1, .178], [.158, .13], [.17, .02], [.174, -.075], [.15, -.075]], 16), M.plate, 0, 0, .004); add(rb(.3, .045, .07, .015), M.plate, 0, .055, -.13); add(rb(.34, .03, .3, .012), M.dark, 0, -.065, 0);
       add(rb(.21, .03, .02, .008), M.glow, 0, .005, -.172); add(rb(.032, .09, .02, .008), M.glow, 0, -.045, -.172); for (const sx of [-1, 1]) add(rb(.02, .1, .1, .008), M.acc, sx * .172, .0, -.02);
@@ -111,7 +140,10 @@
     const U = A.userData, fk = gun(f).k;
     if (U.gk !== fk) { while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]); const gm = gunModel(fk, { cast: !X.low, flash: true }); gm.scale.setScalar(1.08); U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
     A.visible = true; A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;
-    { const P = me(), red = !!P && f.team !== P.team && f.alive; if (U.olOn !== red || U.olGk !== U.gk) { outline(A, red); U.olOn = red; U.olGk = U.gk; } }
+    { const P = M ? me() : null, foeSide = !!P && f.team !== P.team, op = f.cloak > 0 && f.alive ? (foeSide ? .07 : .35) : 1; U.cop = lp(U.cop == null ? 1 : U.cop, op, Math.min(1, dt * 10));
+      if (Math.abs((U.copSet || 1) - U.cop) > .01 || (U.cop < 1 && U.copGk !== U.gk)) { const o2 = U.cop > .99 ? 1 : U.cop; const walk = o => { if (o === U.gunHold) return; if (o.isMesh && !o.userData.isOL && o.material && !o.material.isShaderMaterial) { o.material.transparent = o2 < 1; o.material.opacity = o2; o.material.depthWrite = o2 >= 1; } for (const c of o.children) walk(c); }; walk(A); U.copSet = o2; U.copGk = U.gk; }
+      U.gunHold.visible = U.cop > .5;
+      const red = foeSide && f.alive && U.cop > .9; if (U.olOn !== red || U.olGk !== U.gk) { outline(A, red); U.olOn = red; U.olGk = U.gk; } }
     const sp = Math.hypot(f.vx, f.vz), sl = f.slide ? 1 : 0, amp = Math.min(1, sp / 3.5) * (f.sprinting ? 1.15 : .8) * (1 - sl), ph = f.walkT * 1.9, cr = f.crouch * (1 - sl);
     U.sl = lp(U.sl || 0, sl, Math.min(1, dt * 12)); U.spr = lp(U.spr || 0, f.sprinting ? 1 : 0, Math.min(1, dt * 8)); const sk = U.sl;
     // legs: swing with the stride, the trailing knee bends; a crouch folds both

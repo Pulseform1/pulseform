@@ -2,7 +2,8 @@
   let booted = false, acc = 0, lastDraw = 0;
   function toMenu() { M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
   function play(o) { resetInput(); UI.lastSide = null; UI.switched = null; UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
-  function menuPlay(size) { if (size) { CFG.size = size; saveAll(); } play({ mode: 'bot', diff: CFG.diff, size: CFG.size, sites: CFG.sites }); }
+  // a bot match from the menu: agent select first (the tests can skip it)
+  function menuPlay(size, select = true) { if (size) { CFG.size = size; saveAll(); } const o = { mode: 'bot', diff: CFG.diff, size: CFG.size, sites: CFG.sites }; if (select) openSelect(o); else play(o); }
   on('matchStart', () => { resetInput(); acc = 0; screen = 'play'; UI.lastSide = null; UI.switched = null; });   // an online match began (60-net started it)
   // each round opens on the armory, after the loading screen or the switching-sides band if there is one
   on('round', n => {
@@ -37,7 +38,7 @@
     tickA = cl(acc * 60, 0, 1);
     if (M.over && M.mode === 'demo') startMatch({ mode: 'demo' });
   };
-  GAME.esc = () => { if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
+  GAME.esc = () => { if (screen === 'select') { selectKey('Escape'); return true; } if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
   GAME.draw = g => {
     const now = performance.now(), dt = Math.min(.1, (now - (lastDraw || now)) / 1000), V = K.view; lastDraw = now;
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, g.canvas.width, g.canvas.height); g.restore();
@@ -46,7 +47,7 @@
     renderFrame(dt); if (posed) return;
     const mute = document.getElementById('bMute'); if (mute) mute.style.display = isTouch() && screen === 'play' && K.state === 'play' ? 'none' : '';
     if (K.bot && !DEMO) return;
-    if (screen === 'menu') drawMenu(g); else if (screen === 'play' && M) drawHud(g); else if (screen === 'over' && M) drawOver(g);
+    if (screen === 'menu') drawMenu(g); else if (screen === 'select') drawSelect(g); else if (screen === 'play' && M) drawHud(g); else if (screen === 'over' && M) drawOver(g);
     if (screen !== 'play' || UI.armory || UI.opts) drawNav(g);
     if (isTouch() && innerHeight > innerWidth) {   // an upright phone outside the hub: ask for it to be turned
       g.fillStyle = 'rgba(12,16,22,.96)'; g.fillRect(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0); zones.length = 0; zone(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0, () => {});
@@ -72,7 +73,7 @@
   GAME.test = {
     get M() { return M; }, get X() { return X; }, get screen() { return screen; }, get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
-    navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
+    navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
   };
 })();

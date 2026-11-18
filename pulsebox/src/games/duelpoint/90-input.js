@@ -57,6 +57,7 @@
     if (KM[c] === 'crouch' && d && !keys.crouch) { if (M && me().sprinting) keys.slideAt = performance.now(); else if (CFG.crouch === 'toggle') keys.crouchT = !keys.crouchT; }
     if (KM[c]) keys[KM[c]] = d;
     if (!d) return;
+    if (screen === 'select') return selectKey(c);
     const arrow = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[c];
     if (screen === 'menu' || screen === 'over' || (screen === 'play' && (UI.armory || UI.opts))) {
       if (arrow) return navMove(arrow[0], arrow[1]);
