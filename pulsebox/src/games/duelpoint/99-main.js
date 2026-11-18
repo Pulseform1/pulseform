@@ -13,11 +13,13 @@
   });
   on('live', () => { if (UI.armory) { UI.armory = false; grabMouse(); } });
   on('map', () => { if (ready) rebuildWorld(); });
+  on('planted', f => { if (M && f === me()) M.myPlants = (M.myPlants || 0) + 1; }); on('defused', f => { if (M && f === me()) M.myDefuses = (M.myDefuses || 0) + 1; });
   on('over', won => {
     if (M.mode === 'demo') return; screen = 'over'; UI.armory = false; releaseMouse(); resetInput();
     if (M.mode === 'range') return; const P = me();
     STATS.matches++; if (won) STATS.wins++; STATS.kills += P.stat.k; STATS.heads += P.stat.hs;
     // the adaptive bot follows a rating: beat it and the next one is sharper, lose and it eases off
+    { const lvl = M.auto ? diffFor(M.rating).i : (M.fs.find(f => f.team !== P.team && f.bot) || { bot: { diff: 1 } }).bot.diff; M.pay = matchCoins(P, M, won, { plants: M.myPlants, defuses: M.myDefuses, botLevel: lvl }); STATS.coins += M.pay.total; M.payT = performance.now(); }
     if (M.auto) { const before = STATS.rating, d = won ? 22 + 4 * (M.wins[0] - M.wins[1]) : -(20 - 3 * M.wins[0]); STATS.rating = Math.round(cl(before + d, 600, 1800)); M.rated = { before, after: STATS.rating }; }
     saveAll(true); K.score = M.wins[0];
     // tell the hub (when it hosts the game) so profiles and the daily challenge count the match
@@ -38,7 +40,8 @@
     tickA = cl(acc * 60, 0, 1);
     if (M.over && M.mode === 'demo') startMatch({ mode: 'demo' });
   };
-  GAME.esc = () => { if (screen === 'select') { selectKey('Escape'); return true; } if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
+  GAME.esc = () => { if (screen === 'select') { selectKey('Escape'); return true; }
+    if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker')) { if (SH.reveal) SH.reveal = null; else if (SH.show) SH.show = null; else UI.panel = 'home'; return true; } if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
   GAME.draw = g => {
     const now = performance.now(), dt = Math.min(.1, (now - (lastDraw || now)) / 1000), V = K.view; lastDraw = now;
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, g.canvas.width, g.canvas.height); g.restore();
@@ -73,7 +76,7 @@
   GAME.test = {
     get M() { return M; }, get X() { return X; }, get screen() { return screen; }, get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
-    navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
+    navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), SH, buySkin, equipSkin, dailyStore, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
   };
 })();

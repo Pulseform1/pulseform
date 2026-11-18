@@ -50,9 +50,10 @@
   // the kill banner, bottom centre: the emblem of the skin you have equipped (a skull until you own one) bursts in,
   // with a pip for each kill in your run, then fades
   let banner = null;
-  on('kill', (v, by, head) => { if (M && by === me() && v !== me() && M.mode !== 'demo') banner = { t0: performance.now(), n: killRun, head, name: v.name, em: killEmblem() }; });
+  on('kill', (v, by, head, wk) => { if (M && by === me() && v !== me() && M.mode !== 'demo') banner = { t0: performance.now(), n: killRun, head, name: v.name, em: killEmblem(wk) }; });
   on('round', n => { if (n === 1) banner = null; });
-  const killEmblem = () => ({ shape: 'skull', col: BONE, glow: YOU });
+  // the banner wears the emblem of the skin you made the kill with (Epic and up), or the plain skull
+  const killEmblem = wk => { const sk = skinOfId(skinFor(me(), wk)); return sk && sk.L.emblem ? Object.assign({ tier: sk.R.tier }, sk.L.emblem) : { shape: 'skull', col: BONE, glow: YOU }; };
   // the emblem's glyph, drawn round (0, 0) at radius r
   function glyph(g, shape, r, col, ink) {
     g.fillStyle = col; g.beginPath();

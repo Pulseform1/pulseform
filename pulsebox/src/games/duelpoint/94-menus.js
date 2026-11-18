@@ -43,10 +43,15 @@
   function drawMenu(g) {
     const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale(), m = 36 * Math.min(u, 1.3), x0 = V.x0 + m + 44 / pxPer(), touch = isTouch();
     g.fillStyle = 'rgba(12,16,22,.62)'; g.fillRect(V.x0, V.y0, W, H);
+    if (UI.panel === 'store' || UI.panel === 'locker') return drawShop(g, V, W, H, u);
     if (UI.panel === 'settings') return drawSettings(g, V, W, u);
     if (UI.panel === 'crosshair') return drawXhair(g, V, W, u);
     g.fillStyle = FOE; g.fillRect(x0, V.y0 + 26 * u, 7 * u, 66 * u); tx(g, 'DUELPOINT', x0 + 22 * u, V.y0 + 52 * u, 58 * u, BONE, 'left'); tx(g, 'Two on two. Thirteen maps, one site or two. Every round counts.', x0 + 24 * u, V.y0 + 96 * u, 15 * u, DIM, 'left');
-    if (STATS.matches) tx(g, `${STATS.wins} wins in ${STATS.matches} matches · ${STATS.kills} kills`, V.x1 - m, V.y0 + 78 * u, 14 * u, DIM, 'right');
+    if (STATS.matches) tx(g, `${STATS.wins} wins in ${STATS.matches} matches · ${STATS.kills} kills`, V.x1 - m, V.y0 + 92 * u, 13 * u, DIM, 'right');
+    // the store and the locker, with your coins
+    { const bw = 120 * u, bh = 40 * u, bx = V.x1 - m - bw * 2 - 8 * u, by = V.y0 + 30 * u;
+      btn(g, bx, by, bw, bh, 'STORE', () => { UI.panel = 'store'; SH.show = null; }, { on: true, fill: '#ffb020', solid: true, col: INK, px: 15 * u, sub: 'new skins daily' }); btn(g, bx + bw + 8 * u, by, bw, bh, 'LOCKER', () => { UI.panel = 'locker'; }, { px: 15 * u });
+      coinTag(g, bx - 16 * u, by + bh / 2, 20 * u, STATS.coins); }
     // your operative: who you are bringing, and a way to change
     const rw = cl(W * .27, 300, 420), top = V.y0 + 132 * u, cwAll = W - rw - m * 3 - 44 / pxPer() - 28, chh = Math.min(V.y1 - top - m, 330 * u), O = OPS[CFG.op] || OPS.vex, cw = Math.min(cwAll, 640 * u);
     tx(g, 'YOUR OPERATIVE', x0, top - 14 * u, 13 * u, DIM, 'left');
@@ -182,7 +187,13 @@
     // what the match paid, and where the adaptive bot goes next
     const cy = ty + (rows.length + 1) * 40 * u + 44 * u;
     if (M.rated) { const r = M.rated; tx(g, `Rating ${r.after} (${r.after >= r.before ? '+' : ''}${r.after - r.before})   ·   next bot: ${rankName(r.after)}`, 640, cy, 15 * u, DIM); }
+    // coins: the total counts up, the reasons beside it, and how far it takes you toward the rarest skin
+    if (M.pay) { const t = (performance.now() - M.payT) / 1000, shown = Math.round(M.pay.total * smooth(cl(t / 1.4, 0, 1))), px0 = 640 + 280 * u, py0 = V.y0 + 236 * u;
+      rr(g, px0, py0, 250 * u, (M.pay.rows.length + 2) * 22 * u + 44 * u, 10, GLASS); tx(g, 'COINS', px0 + 16 * u, py0 + 20 * u, 12 * u, COIN, 'left', 900); coinTag(g, px0 + 234 * u, py0 + 20 * u, 22 * u, '+' + shown);
+      M.pay.rows.forEach(([a, b], i) => { const y = py0 + 50 * u + i * 22 * u, a2 = cl((t - .2 - i * .12) / .25, 0, 1); g.save(); g.globalAlpha = a2; tx(g, a, px0 + 16 * u, y, 12 * u, '#c9cfd8', 'left', 700); tx(g, (b >= 0 ? '+' : '') + b, px0 + 234 * u, y, 12 * u, b >= 0 ? BONE : WARN, 'right', 800); g.restore(); });
+      const yb = py0 + 50 * u + M.pay.rows.length * 22 * u + 6 * u, frac = cl(M.pay.total / RARITY.mythic.price, 0, 1); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(px0 + 16 * u, yb, 218 * u, 5 * u); g.fillStyle = RARITY.mythic.col; g.fillRect(px0 + 16 * u, yb, 218 * u * frac * smooth(cl(t / 1.4, 0, 1)), 5 * u);
+      tx(g, `${Math.round(frac * 100)}% of a Mythic  ·  you have ${STATS.coins}`, px0 + 16 * u, yb + 16 * u, 10 * u, DIM, 'left', 700); }
     const by = Math.min(V.y1 - 80 * u, cy + 40 * u);
-    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); MP.show(); } else play({ mode: M.mode, diff: CFG.diff, size: CFG.size }); }, { on: true, fill: FOE, px: 19 * u });
+    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); MP.show(); } else play({ mode: M.mode, diff: CFG.diff, size: CFG.size, sites: CFG.sites }); }, { on: true, fill: FOE, px: 19 * u });
     btn(g, 640 + 10 * u, by, 240 * u, tapH(56), 'MENU', toMenu, { px: 19 * u });
   }

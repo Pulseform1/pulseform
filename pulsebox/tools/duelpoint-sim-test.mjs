@@ -13,7 +13,7 @@ const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n
 const K = { save: {}, persist() {}, bot: false, state: 'play' };
 const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name: 'Tester', id: 0 };
 const T = new Function('K', 'MP', code + `
-  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
+  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, skinOfId, skinPrice, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
     get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
@@ -228,6 +228,22 @@ function kitChecks() {
   const keys = ops.flatMap(o => [o + 'q', o + 'e']), missing = keys.filter(k => !used[k]);
   ok(!missing.length, 'bots use every new ability', keys.map(k => `${k} ${used[k] || 0}`).join(', '));
 }
+// skins: the store is the same for everyone each day, rarities are gated, prices follow rarity, a match pays by performance
+function skinChecks() {
+  section('skins and coins');
+  const days = Array.from({ length: 200 }, (_, i) => T.dailyStore(20000 + i)), flat = days.flat();
+  ok(days.every(d => d.length === 5 && new Set(d).size === 5 && d.every(id => T.skinOfId(id))), 'five different real skins every day');
+  ok(JSON.stringify(T.dailyStore(20123)) === JSON.stringify(T.dailyStore(20123)), 'the same day gives the same store');
+  const myth = days.filter(d => d.some(id => T.skinOfId(id).L.r === 'mythic')).length, perDay = days.map(d => d.filter(id => T.skinOfId(id).L.r === 'mythic').length);
+  ok(myth >= 15 && myth <= 50 && Math.max(...perDay) <= 1, 'a Mythic shows up about one day in seven, never two at once', `${myth} of 200 days`);
+  const tally = {}; for (const id of flat) { const r = T.skinOfId(id).L.r; tally[r] = (tally[r] || 0) + 1; }
+  ok(tally.common > tally.rare && tally.rare > tally.epic && tally.epic > tally.legendary && tally.legendary > (tally.mythic || 0), 'rarer lines are rarer in the store', JSON.stringify(tally));
+  ok(T.skinPrice('dune:vesper') === 300 && T.skinPrice('voidline:vesper') === 4800 && T.skinPrice('voidline:knife') === 7200, 'prices: 300 for a Common, 4800 for a Mythic, half as much again for a knife');
+  const fake = (k, hs, d) => ({ stat: { k, hs, d } }), M5 = w => ({ wins: [w, 5 - w], online: false });
+  const big = T.matchCoins(fake(12, 6, 3), M5(5), true, { plants: 2, botLevel: 2 }).total, avg = T.matchCoins(fake(5, 2, 6), M5(3), false, { botLevel: 1 }).total;
+  ok(big >= 520 && big <= 760, 'a big win pays about an eighth of a Mythic', `${big} coins, ${(big / 4800 * 100).toFixed(0)}%`);
+  ok(avg >= 120 && avg <= 260 && avg < big / 2.5, 'an ordinary loss pays a fair amount, far less', `${avg} coins`);
+}
 // the loading screen: the first LOAD_T seconds of a match, added to round 1's buy phase; nothing can be bought under it
 function loadChecks() {
   section('loading screen');
@@ -277,6 +293,7 @@ if (arg === 'matches') matchChecks(+process.argv[3] || 20);
 else if (arg === 'two') twoSiteChecks(+process.argv[3] || 12);
 else if (arg === 'quick') { mapChecks(); gunplayChecks(); moveChecks(); loadChecks(); }
 else if (arg === 'kits') kitChecks();
-else { mapChecks(); gunplayChecks(); moveChecks(); loadChecks(); kitChecks(); teamChecks(7); matchChecks(20); twoSiteChecks(12); }
+else if (arg === 'skins') skinChecks();
+else { mapChecks(); gunplayChecks(); moveChecks(); loadChecks(); kitChecks(); skinChecks(); teamChecks(7); matchChecks(20); twoSiteChecks(12); }
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

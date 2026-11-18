@@ -3267,7 +3267,7 @@ loadStats();
   // two copies of the same game's save: keep the one that has played more (Pulsebox kit saves), otherwise the newer one
   function pick(k, local, cloud, cloudNewer) {
     if (k.startsWith('pbx-')) { try { const a = JSON.parse(local), b = JSON.parse(cloud); const m = (b.plays || 0) > (a.plays || 0) ? b : a, o = m === a ? b : a; m.best = Math.max(a.best || 0, b.best || 0); m.owned = [...new Set([...(a.owned || []), ...(b.owned || [])])];
-      if (a.dp && b.dp && a.dp.stats && b.dp.stats && m.dp.stats) m.dp.stats.owned = [...new Set([...(a.dp.stats.owned || []), ...(b.dp.stats.owned || [])])];   // Duelpoint guns bought on either device stay bought
+      if (a.dp && b.dp && a.dp.stats && b.dp.stats && m.dp.stats) { m.dp.stats.owned = [...new Set([...(a.dp.stats.owned || []), ...(b.dp.stats.owned || [])])]; m.dp.stats.skins = [...new Set([...(a.dp.stats.skins || []), ...(b.dp.stats.skins || [])])]; }   // Duelpoint guns and skins bought on either device stay bought
       return JSON.stringify(m); } catch (e) {} }
     return cloudNewer ? cloud : local;
   }

@@ -425,7 +425,7 @@
     M = { mode, online, host, auto, flip, byKey: Object.fromEntries(fs.map(f => [f.key, f])), rating: STATS.rating, adj: 0, fs, wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? 0 : 1) ^ flip, decAtt: (decHostAtt ? 0 : 1) ^ flip,
       planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0 };
     M.loadT = mode === 'bot' || online ? LOAD_T : 0; M.loading = M.loadT > 0;
-    for (const f of fs) f.rating = f === A ? STATS.rating : f.bot ? botRating(f, M) : f.rating || 0;
+    for (const f of fs) { f.rating = f === A ? STATS.rating : f.bot ? botRating(f, M) : f.rating || 0; f.skins = f === A ? Object.assign({}, STATS.equip) : f.bot || f.isBot ? botSkins() : {}; }
     startRound(1);
     if (mode === 'range') { M.phase = 'live'; M.t = 0; A.credits = CASH.cap; Object.assign(A, { x: 9, z: 5, yaw: yawTo(9, 5, 30, 5) }); placeDummy(fs[1]); }
     if (mode === 'demo') { M.t = 1.5; A.credits = fs[1].credits = 4500; }

@@ -112,7 +112,9 @@
   }
   const FINISH = { knife: 'cera', pip: 'cera', stub: 'wood', wasp: 'cera', quill: 'cera', hammer: 'grip', gnat: 'anod', hornet: 'camo', breaker: 'wood', thresher: 'worn', mako: 'anod', paladin: 'worn', vesper: 'carbon', lancer: 'cera', kite: 'cera', longbow: 'carbon', torrent: 'worn' };
   const BUMP = .0007;   // relief strength; small, because a gun is small
-  function gmats(k) {
+  // a gun's materials, in its own finish or in a skin line's
+  function gmats(k, line) { const b = baseMats(k); return line && LINES[line] ? skinMats(b, k, line) : b; }
+  function baseMats(k) {
     if (GMAT[k]) return GMAT[k];
     const W = GUNS[k], T = gunTex();
     const env = (m, ei) => { if (X && X.env) { m.envMap = X.env; m.envMapIntensity = ei; } return m; };
@@ -199,7 +201,8 @@
      magazine, the support hand) are their own groups so the first-person view can animate them. Each gun reports where
      its grip and its support hand go, which is how both your own hands and your rival's arms find it. */
   function gunModel(k, opts = {}) {
-    const W = GUNS[k], m = gmats(k), G = new THREE.Group(), cast = !!opts.cast, parts = {};
+    const sk = skinOfId(opts.skin), line = sk && sk.k === k ? sk.line : null;
+    const W = GUNS[k], m = gmats(k, line), G = new THREE.Group(), cast = !!opts.cast, parts = {};
     let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false;
     const add = (geo, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); T.add(o); return o; };
     const box = (w, h, d, mat, x, y, z, rx = 0, ry = 0, rz = 0) => add(new THREE.BoxGeometry(w, h, d), mat, x, y, z, rx, ry, rz);
@@ -470,15 +473,28 @@
     else if (k === 'thresher') shotgun({ len: .66, auto: 1 });
     else if (k === 'kite') boltgun({ len: .95 });
     else if (k === 'longbow') boltgun({ len: 1.03, big: 1 });
-    else {   // the knife: a clipped blade with a fuller and a lit edge, a guard, a shaped grip, a pommel
+    else {   // the knife: a clipped blade with a fuller and a lit edge, a guard, a shaped grip, a pommel (a skin can change the blade)
       len = .24; port = null; pistolHold = true;
-      side([[-.02, .022], [-.165, .022], ['q', -.21, .02, -.242, .003], ['q', -.2, -.01, -.16, -.012], [-.02, -.012]], .006, m.blade, 0, .0022);
-      rbox(.0074, .005, .13, m.dark, 0, .012, -.095, .001); rbox(.0066, .0016, .16, m.glow, 0, -.0085, -.105, .0005);
-      rbox(.03, .052, .012, m.acc, 0, .005, -.014, .004); side([[-.008, .017], [.03, .02], ['q', .07, .022, .1, .012], [.104, -.014], ['q', .07, -.024, .04, -.016], ['q', .02, -.02, -.008, -.014]], .024, m.poly, 0, .009);
+      const shape = line ? KNIFE_SHAPE[line] : null, bladeM = line === 'aurum' ? m.metal : line === 'nightshift' ? m.dark : m.blade, lcx = c => new THREE.Color(c).convertSRGBToLinear();
+      const glowB = c => new THREE.MeshBasicMaterial({ color: lcx(c), toneMapped: false, transparent: true, opacity: .92, blending: THREE.AdditiveBlending, depthWrite: false });
+      if (shape === 'tanto') side([[-.02, .022], [-.19, .022], [-.238, -.004], [-.205, -.012], [-.02, -.012]], .006, bladeM, 0, .0022);
+      else if (shape === 'kukri') side([[-.02, .018], ['q', -.12, .034, -.2, .014], ['q', -.25, -.002, -.236, -.02], ['q', -.15, -.03, -.02, -.012]], .007, bladeM, 0, .0022);
+      else if (shape === 'cleaver') { side([[-.02, .032], [-.2, .034], [-.218, .022], [-.212, -.022], [-.02, -.014]], .006, bladeM, 0, .002); rbox(.0066, .002, .19, glowB(LINES[line].alt), 0, -.019, -.115, .0005); }
+      else if (shape === 'crystal') { const ice = new THREE.MeshPhysicalMaterial({ color: lcx('#cfeaff'), roughness: .04, clearcoat: 1, transparent: true, opacity: .85, emissive: lcx('#3a8ad0'), emissiveIntensity: .45 }); if (X && X.env) { ice.envMap = X.env; ice.envMapIntensity = 1.6; }
+        const c = add(new THREE.OctahedronGeometry(1, 0), ice, 0, .005, -.13); c.scale.set(.008, .026, .115); for (let i = 0; i < 3; i++) { const sh = add(new THREE.OctahedronGeometry(1, 0), ice, (i - 1) * .006, .018 + i % 2 * .006, -.05 - i * .025, 0, 0, (i - 1) * .4); sh.scale.set(.004, .014, .018); } }
+      else if (shape === 'energy') { const L2 = LINES[line]; side([[-.02, .02], [-.17, .02], ['q', -.215, .018, -.25, .002], ['q', -.205, -.012, -.165, -.013], [-.02, -.013]], .004, glowB(L2.alt), 0, .0015); rbox(.0016, .006, .2, glowB('#ffffff'), 0, .003, -.12, .0005);
+        const ring = add(new THREE.TorusGeometry(.03, .0016, 6, 28), glowB(L2.alt), 0, .005, -.012); ring.userData.live = true; ring.userData.anim = (o, t) => { o.rotation.set(t * 1.7, t * 1.1, 0); }; }
+      else side([[-.02, .022], [-.165, .022], ['q', -.21, .02, -.242, .003], ['q', -.2, -.01, -.16, -.012], [-.02, -.012]], .006, bladeM, 0, .0022);
+      if (shape === 'ornate') for (const sx of [-1, 1]) add(new THREE.ConeGeometry(.005, .03, 5), m.metal, sx * .02, .005, -.014, 0, 0, sx * Math.PI / 2);
+      if (shape === 'coil') { for (let i = 0; i < 5; i++) add(new THREE.TorusGeometry(.012, .002, 6, 14), m.acc, 0, .006, -.05 - i * .024); rbox(.002, .003, .17, glowB(LINES[line].alt), 0, .023, -.11, .0005); }
+      if (shape !== 'crystal' && shape !== 'energy') rbox(.0074, .005, .13, m.dark, 0, .012, -.095, .001);
+      if (shape !== 'energy' && shape !== 'cleaver') rbox(.0066, .0016, .16, m.glow, 0, -.0085, -.105, .0005);
+      rbox(.03, .052, .012, m.acc, 0, .005, -.014, .004); side([[-.008, .017], [.03, .02], ['q', .07, .022, .1, .012], [.104, -.014], ['q', .07, -.024, .04, -.016], ['q', .02, -.02, -.008, -.014]], .024, line ? m.fin : m.poly, 0, .009);
       for (let i = 0; i < 4; i++) rbox(.0255, .034, .004, m.rubber, 0, .0, .014 + i * .021, .002); rbox(.028, .032, .016, m.metal, 0, -.001, .108, .006); decal('DP', 'BLADE', .05, .0125, .0036, .008, -.1);
     }
     if (k === 'pip' || k === 'wasp' || k === 'quill' || k === 'stub' || k === 'hammer' || k === 'knife' || GUNS[k].cat === 'Sidearm') pistolHold = true;
 
+    if (line) skinKit(G, k, line, m, len);
     const grip = k === 'knife' ? [0, 0, .045] : k === 'hammer' ? [0, -.055, .052] : k === 'stub' ? [0, -.058, .05] : pistolHold ? [0, -.062, .026] : k === 'breaker' ? [0, -.07, .05] : k === 'kite' || k === 'longbow' ? [0, -.072, .046] : [0, -.076, .026];
     if (opts.hands) {   // your own gloves and sleeves: fingers wrapped round the grip, the other hand under the gun
       const op = OPS[opts.op] || OPS.vex, band = gmats.band[op.col] || (gmats.band[op.col] = new THREE.MeshStandardMaterial({ color: LC(op.col), roughness: .5 }));
@@ -502,14 +518,14 @@
     return G;
   }
   gmats.band = {};
-  function viewGun(k, op) { return gunModel(k, { hands: true, op }); }
+  function viewGun(k, op, skin) { return gunModel(k, { hands: true, op, skin }); }
   // the armory pictures: each gun rendered side-on into a small transparent image, once
-  function gunIcon(k) {
-    if (ICON[k] !== undefined) return ICON[k];
+  function gunIcon(k, skin) {
+    const ik = skin ? k + '|' + skin : k; if (ICON[ik] !== undefined) return ICON[ik];
     if (!X || !ready) return null;
     try {
       const w = 480, h = 150, r = X.renderer, rt = new THREE.WebGLRenderTarget(w, h); rt.texture.encoding = THREE.sRGBEncoding;
-      const sc = new THREE.Scene(), gm = gunModel(k); sc.add(gm); sc.add(new THREE.HemisphereLight('#ffffff', '#5a6270', 1.5));
+      const sc = new THREE.Scene(), gm = gunModel(k, { skin }); sc.add(gm); sc.add(new THREE.HemisphereLight('#ffffff', '#5a6270', 1.5));
       const kl = new THREE.DirectionalLight('#fff4e0', 2.6); kl.position.set(3, 4, 1); sc.add(kl); const rl = new THREE.DirectionalLight('#9fd8ff', 2.4); rl.position.set(-3, 2, -1); sc.add(rl);
       const bb = new THREE.Box3().setFromObject(gm), c = bb.getCenter(new THREE.Vector3()), s = bb.getSize(new THREE.Vector3());
       const hw = Math.max(s.z / 2, s.y / 2 * w / h) * 1.06, hh = hw * h / w, cam = new THREE.OrthographicCamera(-hw, hw, hh, -hh, .01, 10); cam.position.set(c.x + 3, c.y, c.z); cam.lookAt(c);
@@ -517,8 +533,8 @@
       r.setRenderTarget(rt); r.setClearColor(0x000000, 0); r.clear(); r.render(sc, cam); const buf = new Uint8Array(w * h * 4); r.readRenderTargetPixels(rt, 0, 0, w, h, buf); r.setRenderTarget(prev); r.setClearColor(cc, ca); rt.dispose();
       const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const ctx = cv.getContext('2d'), id = ctx.createImageData(w, h);
       for (let y = 0; y < h; y++) id.data.set(buf.subarray((h - 1 - y) * w * 4, (h - y) * w * 4), y * w * 4);
-      ctx.putImageData(id, 0, 0); return ICON[k] = cv;
-    } catch (e) { console.error(e); return ICON[k] = false; }
+      ctx.putImageData(id, 0, 0); return ICON[ik] = cv;
+    } catch (e) { console.error(e); return ICON[ik] = false; }
   }
   // spent brass flying out of the ejection port (first person only)
   const CASE = { pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] }, CASEGEO = {};

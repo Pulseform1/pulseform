@@ -59,15 +59,23 @@
   on('kill', (v, by) => { if (!M) return; if (v === me()) killRun = 0; else if (by === me()) killRun = Math.min(5, killRun + 1); });
   // the kill sound: a deep thump, a dry crack, then a bright bell chord that steps up the scale with each kill in a run, and a
   // shimmer that hangs in the air; a headshot adds a glassy ping on top, and three or more in a run a rising sparkle
-  function killSound(n, head) {
+  function killSound(n, head, line) {
     const o = outFor(null), k = [1, 1.122, 1.26, 1.335, 1.498][cl(n, 1, 5) - 1];
     tone(o, 150, .24, 'sine', .34, -95); hiss(o, .05, .2, 'highpass', 3200);
     tone(o, 784 * k, .45, 'triangle', .13, 0, .015); tone(o, 1176 * k, .36, 'sine', .075, 0, .03); tone(o, 1568 * k, .55, 'sine', .04, 0, .05);
     hiss(o, .5, .04, 'bandpass', 6500 * k, .05, 2.5);
     if (head) { tone(o, 2350, .05, 'square', .045, 0, .01); tone(o, 3136, .12, 'sine', .055, 0, .03); }
     if (n >= 3) for (let i = 0; i < n - 1; i++) tone(o, 1046 * k * (1 + i * .25), .16, 'triangle', .05, 0, .1 + i * .055);
+    // a skin's own layer on top
+    const snd = line && LINES[line] && LINES[line].sound;
+    if (snd === 'ice') { for (const [f, d] of [[2637, .06], [3520, .11], [4186, .16]]) tone(o, f * k, .3, 'sine', .045, 0, d); hiss(o, .3, .05, 'highpass', 7000, .05); }
+    else if (snd === 'coin') { for (const [f, d] of [[1975, .04], [2637, .09], [3135, .14], [2637, .2]]) tone(o, f, .12, 'square', .03, 0, d); }
+    else if (snd === 'fire') { hiss(o, .6, .22, 'lowpass', 900, .02); tone(o, 110, .5, 'sawtooth', .06, 160, .02); hiss(o, .4, .06, 'bandpass', 2400, .1, 1.5); }
+    else if (snd === 'zap') { tone(o, 1900, .18, 'sawtooth', .07, -1600); hiss(o, .2, .14, 'highpass', 4000, .02); tone(o, 60, .3, 'sine', .25, -20, .03); }
+    else if (snd === 'void') { tone(o, 180, .55, 'sine', .14, 820, 0); tone(o, 48, .7, 'sine', .4, -10, .45); hiss(o, .5, .07, 'bandpass', 1200, .4, 3); }
+    else if (snd === 'sun') { for (const [f, d] of [[523, 0], [659, .05], [784, .1], [1046, .16]]) tone(o, f * k, .9, 'sine', .05, 0, d); hiss(o, .8, .03, 'highpass', 8000, .1); }
   }
-  cue('kill', (v, by, head) => { if (by === me() && v !== me()) killSound(killRun, head); else if (v === me()) tone(outFor(null), 200, .5, 'sawtooth', .1, -130); });
+  cue('kill', (v, by, head, wk) => { if (by === me() && v !== me()) killSound(killRun, head, (skinOfId(skinFor(me(), wk)) || {}).line); else if (v === me()) tone(outFor(null), 200, .5, 'sawtooth', .1, -130); });
   cue('ability', (f, k) => {
     const key = f.op + k, o = outFor(f);
     if (key === 'vexq') tone(o, 500, .16, 'sine', .14, 1100); else if (key === 'vexe') hiss(o, .5, .2, 'lowpass', 500);
@@ -83,6 +91,10 @@
     else if (key === 'embere') { hiss(o, .7, .14, 'lowpass', 800); hiss(o, .5, .05, 'bandpass', 2200, .1, 1.5); }
     else tone(o, 660, .2, 'triangle', .1, 330);
   });
+  // a skin unlocked: a fanfare that grows with the rarity
+  cue('unlock', sk => { const o = outFor(null), t = sk.R.tier, notes = [523, 659, 784, 1046, 1318, 1568].slice(0, 3 + t);
+    notes.forEach((f, i) => { tone(o, f, .5 + t * .1, 'triangle', .1, 0, i * .09); tone(o, f * 2, .35, 'sine', .04, 0, i * .09 + .02); });
+    hiss(o, .6 + t * .2, .08, 'highpass', 6000, .05); if (t >= 3) { tone(o, 98, 1, 'sine', .3, -20, 0); hiss(o, 1.2, .1, 'bandpass', 2400, .3, 2); } });
   // the things the newer operatives leave in the world
   const at = (x, y, z) => ({ x, y: y - 1, z });
   cue('wavePop', w => { const o = outFor(at(w.x, w.y, w.z), 1.3); tone(o, 90, .45, 'sine', .5, -50); hiss(o, .35, .35, 'bandpass', 900, 0, .8); tone(o, 1800, .3, 'sawtooth', .05, -1400, .02); });
