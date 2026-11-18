@@ -3,7 +3,7 @@
 //   node tools/arrowwood-media.mjs [frames dir]
 import { createRequire } from 'module'; import { execSync } from 'node:child_process'; import fs from 'node:fs';
 const { chromium } = createRequire(import.meta.url)('playwright');
-const OUT = new URL('../public/media/', import.meta.url).pathname, TMP = process.argv[2] || '/tmp/aw-frames';
+const OUT = new URL('../public/media/', import.meta.url).pathname, TMP = process.argv[2] || '/tmp/aw-frames', ONLY_COVER = process.argv.includes('--cover');
 fs.mkdirSync(TMP, { recursive: true });
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
@@ -18,15 +18,17 @@ await p.evaluate(() => { const room = GAME.test.CL.local.room; for (const q of r
 // a squad in the wood, bows up
 const stageSquad = () => p.evaluate(() => { const T = GAME.test; T.stage({ id: 'a1', x: 66.4, z: 104.5, yaw: Math.PI * .82, team: 1, draw: 1, pitch: .08 }); T.stage({ id: 'a2', x: 73.6, z: 103.2, yaw: Math.PI * 1.18, team: 1, draw: .7, bow: 'cupid' }); T.stage({ id: 'a3', x: 69.3, z: 99.4, yaw: Math.PI * 1.02, team: 1, crouch: true, draw: 1, bow: 'cashout', pitch: .05 }); });
 await stageSquad(); await p.evaluate(() => GAME.test.tp(70, 113.5, 0, -.04)); await st(30, 50);
-await hideUi(); await p.screenshot({ path: OUT + 'arrowwood-shot1.jpg', type: 'jpeg', quality: 86 });
+await hideUi(); if (!ONLY_COVER) await p.screenshot({ path: OUT + 'arrowwood-shot1.jpg', type: 'jpeg', quality: 86 });
 // full draw at the squad, HUD on
 await showHud(); await p.evaluate(() => { GAME.test.tp(70.6, 112, .03, .01); GAME.test.startDraw(); }); await st(28, 50); await p.evaluate(() => document.getElementById('aw').style.display = 'none');
-await p.screenshot({ path: OUT + 'arrowwood-shot2.jpg', type: 'jpeg', quality: 86 }); await p.evaluate(() => GAME.test.cancelDraw());
-// cover: a Cupid finisher mid-burst, framed square, with the title painted on
-await hideUi(); await p.evaluate(() => { const T = GAME.test; T.tp(70, 113, 0, 0); T.stage({ id: 'cv', x: 70, z: 106, yaw: Math.PI, team: 1 }); T.finish('cv', 'cupid'); }); await st(26, 1000 / 24);
+if (!ONLY_COVER) await p.screenshot({ path: OUT + 'arrowwood-shot2.jpg', type: 'jpeg', quality: 86 }); await p.evaluate(() => GAME.test.cancelDraw());
+// cover: the Cashout finisher mid-burst (bills and coins in the air), framed square, with the title painted on
+await hideUi(); await p.evaluate(() => { const T = GAME.test; T.tp(70, 113, 0, 0); T.stage({ id: 'cv', x: 70, z: 106, yaw: Math.PI, team: 1 }); T.finish('cv', 'cashout'); }); await st(17, 1000 / 24);
 await p.screenshot({ path: TMP + '/cover-src.png', clip: { x: 280, y: 0, width: 720, height: 720 } });
 await p.evaluate(() => { const T = GAME.test; T.ME.cam = 'fp'; T.ME.fin = null; });
+if (ONLY_COVER) { await b.close(); }
 // the trailer: the wood, a full draw, three finishers
+if (!ONLY_COVER) {
 await p.setViewportSize({ width: 960, height: 540 });
 let f = 0; const rec = async (n, fn) => { for (let k = 0; k < n; k++) { if (fn) await p.evaluate(fn, k); await st(1); await p.screenshot({ path: `${TMP}/f${String(f++).padStart(4, '0')}.jpg`, type: 'jpeg', quality: 82 }); } };
 await p.evaluate(() => { GAME.test.tp(70, 113.5, -.2, -.02); }); await stageSquad();
@@ -35,7 +37,8 @@ await showHud(); await p.evaluate(() => { GAME.test.ME.st.yaw = .03; GAME.test.M
 await hideUi();
 for (const [bow, n] of [['yardstick', 40], ['cashout', 40], ['longbow', 36]]) { await p.evaluate(b => { const T = GAME.test; T.tp(70, 113.5, 0, 0); T.stage({ id: 'v' + b, x: 70, z: 106, yaw: Math.PI, team: 1 }); T.finish('v' + b, b); }, bow); await rec(n); await p.evaluate(() => { GAME.test.ME.cam = 'fp'; GAME.test.ME.fin = null; }); }
 await b.close();
-execSync(`ffmpeg -y -loglevel error -framerate 24 -i ${TMP}/f%04d.jpg -vf "scale=960:540,format=yuv420p" -c:v libx264 -preset slow -crf 27 -movflags +faststart ${OUT}arrowwood-trailer.mp4`);
+}
+if (!ONLY_COVER) execSync(`ffmpeg -y -loglevel error -framerate 24 -i ${TMP}/f%04d.jpg -vf "scale=960:540,format=yuv420p" -c:v libx264 -preset slow -crf 27 -movflags +faststart ${OUT}arrowwood-trailer.mp4`);
 // the cover: crop, title and a strap line
 execSync(`ffmpeg -y -loglevel error -i ${TMP}/cover-src.png -vf "scale=600:600" ${TMP}/cover-sq.png`);
 const py = `
