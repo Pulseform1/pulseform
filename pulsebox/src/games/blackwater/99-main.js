@@ -3,6 +3,7 @@
   function menuStart(cont) {
     resetInput(); if (cont) loadRun(savedRun()); else newRun();
     runLive = true; screen = 'play'; panel = null; lockMouse(); saveRun(); lastDay = S.day;
+    setTimeout(() => say(isTouch() ? 'Tap STEER to steer the raft: the stick turns it and rows it forward' : 'Press T to steer the raft: A and D turn it, W rows it forward', TEAL), cont ? 1200 : 7000);
     if (!cont) setTimeout(() => say(isTouch() ? 'Wreckage is drifting your way. Hold THROW, let go to cast the hook' : 'Wreckage is drifting your way. Hold the mouse button, let go to throw the hook', TEAL), 1200);
   }
   // with friends: the host sails its own raft (the saved one, if there is one); a friend climbs aboard and waits for the host's world

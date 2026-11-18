@@ -21,6 +21,7 @@
     if (code === 'KeyI' || code === 'Tab') { panel = panel === 'inv' ? null : 'inv'; panel ? unlockMouse() : lockMouse(); return; }
     if (panel) { if (code === 'Escape') panel = null; return; }
     if (code === 'KeyE') act.interact();
+    if (code === 'KeyT') { if (PL.helm) PL.helm = null; else takeHelm(); }
     if (code === 'KeyQ') drink();
     if (code === 'KeyF') eat() || say('No food. Fish with the rod (C to craft one)', '#cfd6e2');
     if (code === 'KeyH') { CFG.keys = !CFG.keys; saveCfg(); }
@@ -51,7 +52,7 @@
     const id = e.pointerId, b = touchButtons().find(b => Math.hypot(x - b.x, y - b.y) < b.r + 10 * uiScale());
     if (b) {
       if (b.k === 'use') { IN.use = true; IN.useId = id; IN.look = { id, x, y }; act.useDown(); }   // the USE thumb keeps aiming while it holds
-      else if (b.k === 'alt') act.alt(); else if (b.k === 'grab') act.interact(); else if (b.k === 'drink') drink(); else if (b.k === 'rotate') rotatePlace(1); else if (b.k === 'tool') cycleTool(1);
+      else if (b.k === 'alt') act.alt(); else if (b.k === 'grab') act.interact(); else if (b.k === 'helm') takeHelm(); else if (b.k === 'drink') drink(); else if (b.k === 'rotate') rotatePlace(1); else if (b.k === 'tool') cycleTool(1);
       else if (b.k === 'build') { if (PL.tool === 'hammer') ui.buildOpen = !ui.buildOpen; else act.select('hammer'); }
       else IN.held.set(id, b.k);
       return;
