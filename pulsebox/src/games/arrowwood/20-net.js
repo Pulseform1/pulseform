@@ -67,7 +67,7 @@
       switch (m.t) {
         case 'welcome': CL.ids.online = m.id; CL.code = m.code; CL.mode = m.mode; CL.oneShot = m.oneShot; CL.err = '';
           if (m.phase !== 'lobby' && m.phase !== 'results') { stopPractice(); useSource('online'); CL.me = m.id; m.stuck.forEach(s => addStuck(s)); m.picks.forEach(i => CL.picks[i] = false); }
-          if (CL.src === 'online') CL.me = m.id; emit('joined', m); emit('ui'); return;
+          if (CL.src === 'online') CL.me = m.id; emit('joined', m); if (m.results) { CL.results = m.results; CL.phase = 'results'; CL.roomPhase = 'results'; emit('results', m.results); } emit('ui'); return;
         case 'err': if (m.code === 'taken' && CL.conn && CL.conn.create) { const cr = CL.conn.create; connect(newCode(), cr); return; } if (CL.conn && !CL.ids.online) CL.conn.fail(m.msg); else { CL.err = m.msg; emit('toast', m.msg); } emit('ui'); return;
         case 'lobby': Object.assign(CL, { mode: m.mode, oneShot: m.oneShot, host: m.host, lobby: m.players, votes: m.votes, code: m.code });
           for (const q of m.players) { const p = CL.src === 'online' ? CL.players.get(q.id) : null; if (p) Object.assign(p, { name: q.name, team: q.team, bow: q.bow, on: q.on }); }

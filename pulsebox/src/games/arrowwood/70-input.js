@@ -77,4 +77,6 @@
     if (IN.look && IN.look.id === id) IN.look = null;
     IN.held.delete(id);
   }
+  // a touch the browser takes back (a system gesture) counts as lifting the finger
+  addEventListener('pointercancel', e => { if (e.pointerType === 'touch' && K.state === 'play') pointerUp(0, 0, e); });
   function resetInput() { IN.keys = {}; IN.stick = IN.look = null; IN.drawId = null; IN.held.clear(); }

@@ -59,6 +59,15 @@ ok(coinsH === 65 && coinsG === 40, 'coins for finishing (+40) and winning (+25)'
 const shown = await until(host, () => GAME.test.UI.open === 'results', null, 6000);
 ok(!!shown, 'the results screen opens with Rematch');
 if (OUT) await host.screenshot({ path: OUT + '/1v1-results.png' });
+// rewards are granted once: the server balance moved by exactly the match reward, and a refresh on the results
+// screen brings the results back without paying out again
+const bal = p => T(p, async () => (await (await fetch(GAME.test.SERVER.http + '/api/arrowwood/profile', { headers: { 'x-aw-key': GAME.test.KEY } })).json()).coins);
+await host.waitForTimeout(800); const gb1 = await bal(guest), hb1 = await bal(host);
+await guest.reload(); await guest.waitForTimeout(600); await guest.click('#bPlay'); await until(guest, () => GAME.test.ready, null, 30000);
+const back = await until(guest, () => GAME.test.UI.open === 'results' && GAME.test.CL.results && GAME.test.CL.results.score.join('-'), null, 15000);
+ok(!!back, 'a player who refreshes on the results screen comes back to the results', back);
+await host.waitForTimeout(800); const gb2 = await bal(guest), hb2 = await bal(host);
+ok(gb2 === gb1 && hb2 === hb1 && hb1 - gb1 === 25, 'the coins were granted once (no second payout after the refresh)', `host ${hb1}->${hb2}, guest ${gb1}->${gb2}`);
 // rematch with the same teams
 await T(host, () => GAME.test.act('rematch')); await T(guest, () => GAME.test.act('rematch'));
 const again = await until(host, () => GAME.test.CL.phase === 'intro' || (GAME.test.CL.phase === 'live' && GAME.test.CL.score.join('') === '00'), null, 8000);

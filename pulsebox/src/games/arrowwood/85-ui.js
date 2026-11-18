@@ -33,7 +33,7 @@
     UI.el.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'awCode') act('doJoin'); if (e.key === 'Enter' && e.target.id === 'awName') e.target.blur(); if (e.key === 'Escape') act('back'); });
     UI.el.addEventListener('change', e => { if (e.target.id === 'awName') { CFG.name = (e.target.value || '').trim().slice(0, 16) || CFG.name; saveCfg(); sendRoom({ t: 'name', name: CFG.name }); } });
     on('ui', () => render()); on('profile', () => render());
-    on('joined', () => { UI.creating = false; if (CL.phase === 'lobby' || CL.roomPhase === 'lobby' || !CL.roomPhase) openMenu('room'); else closeMenu(); });
+    on('joined', m => { UI.creating = false; if (m.results) return; if (m.phase === 'lobby') openMenu('room'); else closeMenu(); });
     on('connErr', msg => { UI.creating = false; UI.joinErr = msg; openMenu(UI.from === 'create' ? 'create' : 'join'); });
     on('roundStart', () => { if (CL.src === 'online' && UI.open && UI.open !== 'settings') closeMenu(); });
     on('results', () => { unlockMouse(); setTimeout(() => { if (CL.phase === 'results') { openMenu('results'); loadProfile(); } }, CL.mode === 'ffa' ? 600 : 2400); });

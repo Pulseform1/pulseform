@@ -62,7 +62,7 @@ const seenByC = await until(C2, () => { const d = GAME.test.CL.players.get(GAME.
 ok(!!seenByC, 'the spectator follows the teammate on screen');
 if (OUT) await C2.screenshot({ path: OUT + '/2v2-spectate.png', timeout: 120000 });
 // finish the round: A shoots D
-await T(A, () => GAME.test.tp(78, 74, 0, 0)); await A.waitForTimeout(400);
+await T(D2, () => GAME.test.tp(70, 76, Math.PI, 0)); await T(A, () => GAME.test.tp(70, 100, 0, 0)); await A.waitForTimeout(700); await until(A, () => GAME.test.ME.nockT === 0);
 const dIdA = dId; const tgtD2 = await T(A, id => { const q = GAME.test.CL.players.get(id).buf.slice(-1)[0]; return [q[1], q[2] + 1.62, q[3]]; }, dIdA);
 await T(A, t => { GAME.test.aimAt(...t, 1); GAME.test.startDraw(); }, tgtD2); await until(A, () => GAME.test.ME.drawT >= 1, null, 8000); await T(A, t => { GAME.test.aimAt(...t, 1); GAME.test.release(); }, tgtD2);
 const r1 = await until(B2, () => GAME.test.CL.lastRound && GAME.test.CL.lastRound, null, 8000);

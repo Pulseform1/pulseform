@@ -61,7 +61,7 @@ export function join(room, info, now) {
 }
 function welcome(room, p) {
   send(room, p.id, { t: 'welcome', id: p.id, token: p.token, code: room.code, mode: room.mode, oneShot: room.oneShot, phase: room.phase, tm: r2(room.t),
-    stuck: room.stuck.map(stuckOut), picks: room.picks.map((k, i) => k.taken ? i : -1).filter(i => i >= 0), score: room.score, round: room.round });
+    stuck: room.stuck.map(stuckOut), picks: room.picks.map((k, i) => k.taken ? i : -1).filter(i => i >= 0), score: room.score, round: room.round, results: room.phase === 'results' ? room.lastResults : undefined });
 }
 export function drop(room, id, now) {
   const p = room.players.get(id); if (!p) return;
@@ -202,8 +202,9 @@ function endMatch(room, reason) {
       coins[p.id] = c; if (room.grant && p.profile) room.grant(p.profile, room.matchId, c, winners.includes(p.id));
     }
   }
-  send(room, '*', { t: 'results', reason, mode: room.mode, score: room.score, winner: room.winner, winners, coins, matchId: room.matchId,
-    board: humans(room).map(p => ({ id: p.id, name: p.name, team: p.team, k: p.kills, d: p.deaths })).sort((a, b) => b.k - a.k || a.d - b.d) });
+  room.lastResults = { t: 'results', reason, mode: room.mode, score: room.score.slice(), winner: room.winner, winners, coins, matchId: room.matchId,
+    board: humans(room).map(p => ({ id: p.id, name: p.name, team: p.team, k: p.kills, d: p.deaths })).sort((a, b) => b.k - a.k || a.d - b.d) };
+  send(room, '*', room.lastResults);
   lobbyOut(room); phaseOut(room);
 }
 

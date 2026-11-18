@@ -503,7 +503,7 @@ function join(room, info, now) {
 }
 function welcome(room, p) {
   send(room, p.id, { t: 'welcome', id: p.id, token: p.token, code: room.code, mode: room.mode, oneShot: room.oneShot, phase: room.phase, tm: r2(room.t),
-    stuck: room.stuck.map(stuckOut), picks: room.picks.map((k, i) => k.taken ? i : -1).filter(i => i >= 0), score: room.score, round: room.round });
+    stuck: room.stuck.map(stuckOut), picks: room.picks.map((k, i) => k.taken ? i : -1).filter(i => i >= 0), score: room.score, round: room.round, results: room.phase === 'results' ? room.lastResults : undefined });
 }
 function drop(room, id, now) {
   const p = room.players.get(id); if (!p) return;
@@ -644,8 +644,9 @@ function endMatch(room, reason) {
       coins[p.id] = c; if (room.grant && p.profile) room.grant(p.profile, room.matchId, c, winners.includes(p.id));
     }
   }
-  send(room, '*', { t: 'results', reason, mode: room.mode, score: room.score, winner: room.winner, winners, coins, matchId: room.matchId,
-    board: humans(room).map(p => ({ id: p.id, name: p.name, team: p.team, k: p.kills, d: p.deaths })).sort((a, b) => b.k - a.k || a.d - b.d) });
+  room.lastResults = { t: 'results', reason, mode: room.mode, score: room.score.slice(), winner: room.winner, winners, coins, matchId: room.matchId,
+    board: humans(room).map(p => ({ id: p.id, name: p.name, team: p.team, k: p.kills, d: p.deaths })).sort((a, b) => b.k - a.k || a.d - b.d) };
+  send(room, '*', room.lastResults);
   lobbyOut(room); phaseOut(room);
 }
 
@@ -885,7 +886,7 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
       switch (m.t) {
         case 'welcome': CL.ids.online = m.id; CL.code = m.code; CL.mode = m.mode; CL.oneShot = m.oneShot; CL.err = '';
           if (m.phase !== 'lobby' && m.phase !== 'results') { stopPractice(); useSource('online'); CL.me = m.id; m.stuck.forEach(s => addStuck(s)); m.picks.forEach(i => CL.picks[i] = false); }
-          if (CL.src === 'online') CL.me = m.id; emit('joined', m); emit('ui'); return;
+          if (CL.src === 'online') CL.me = m.id; emit('joined', m); if (m.results) { CL.results = m.results; CL.phase = 'results'; CL.roomPhase = 'results'; emit('results', m.results); } emit('ui'); return;
         case 'err': if (m.code === 'taken' && CL.conn && CL.conn.create) { const cr = CL.conn.create; connect(newCode(), cr); return; } if (CL.conn && !CL.ids.online) CL.conn.fail(m.msg); else { CL.err = m.msg; emit('toast', m.msg); } emit('ui'); return;
         case 'lobby': Object.assign(CL, { mode: m.mode, oneShot: m.oneShot, host: m.host, lobby: m.players, votes: m.votes, code: m.code });
           for (const q of m.players) { const p = CL.src === 'online' ? CL.players.get(q.id) : null; if (p) Object.assign(p, { name: q.name, team: q.team, bow: q.bow, on: q.on }); }
@@ -2062,6 +2063,8 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     if (IN.look && IN.look.id === id) IN.look = null;
     IN.held.delete(id);
   }
+  // a touch the browser takes back (a system gesture) counts as lifting the finger
+  addEventListener('pointercancel', e => { if (e.pointerType === 'touch' && K.state === 'play') pointerUp(0, 0, e); });
   function resetInput() { IN.keys = {}; IN.stick = IN.look = null; IN.drawId = null; IN.held.clear(); }
   /* ---------- 80 hud: crosshair and draw cue, health, arrows, score, timers, overtime zone, coordinates, pings, feed ---------- */
   const GOLD = '#e9c46a', BONE = '#f1ead8', DIM = 'rgba(241,234,216,.62)', DARK = 'rgba(10,16,11,.66)', TEAL = '#8fd0c0', HURT = '#e08a5a';
@@ -2223,7 +2226,7 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     UI.el.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'awCode') act('doJoin'); if (e.key === 'Enter' && e.target.id === 'awName') e.target.blur(); if (e.key === 'Escape') act('back'); });
     UI.el.addEventListener('change', e => { if (e.target.id === 'awName') { CFG.name = (e.target.value || '').trim().slice(0, 16) || CFG.name; saveCfg(); sendRoom({ t: 'name', name: CFG.name }); } });
     on('ui', () => render()); on('profile', () => render());
-    on('joined', () => { UI.creating = false; if (CL.phase === 'lobby' || CL.roomPhase === 'lobby' || !CL.roomPhase) openMenu('room'); else closeMenu(); });
+    on('joined', m => { UI.creating = false; if (m.results) return; if (m.phase === 'lobby') openMenu('room'); else closeMenu(); });
     on('connErr', msg => { UI.creating = false; UI.joinErr = msg; openMenu(UI.from === 'create' ? 'create' : 'join'); });
     on('roundStart', () => { if (CL.src === 'online' && UI.open && UI.open !== 'settings') closeMenu(); });
     on('results', () => { unlockMouse(); setTimeout(() => { if (CL.phase === 'results') { openMenu('results'); loadProfile(); } }, CL.mode === 'ffa' ? 600 : 2400); });
