@@ -20,6 +20,8 @@ async function open(tag, name) {
   await p.click('#bPlay'); await p.waitForTimeout(800);
   return p;
 }
+// a dropped connection may linger on the server unseen (it never closed); the game notices its silence within 7 s, so wait for states, not a fixed time
+const until = async (p, fn, ms) => { const t0 = Date.now(); for (;;) { const s = await st(p); if (fn(s) || Date.now() - t0 > ms) return s; await p.waitForTimeout(500); } };
 const T = (p, fn, a) => p.evaluate(fn, a), st = p => T(p, () => { const t = GAME.test, M = t.M; return M ? { over: M.over ? M.over.why : null, host: M.host, round: M.round, phase: M.phase, time: +M.time.toFixed(1), online: MP.online(), rejoining: MP.rejoining, dropped: !!M.dropped, kstate: K.state, gone: M.fs.filter(f => f.gone).map(f => f.name), dc: M.fs.filter(f => f.dc).map(f => f.name) } : { none: 1, kstate: K.state, online: MP.online() }; });
 
 // a party of two on one team, bots on the other
@@ -60,10 +62,10 @@ ok(r, 'the host sees the friend move again after the reconnect', r);
 await H.screenshot({ path: O + '/online-after-friend-drop.png' });
 
 // the host's connection falls over: the friend takes over the room, and the old host comes back as a player
-await T(H, () => MP._drop()); await H.waitForTimeout(3000); 
-r = { c: await st(C) };
+await T(H, () => MP._drop());
+r = { c: await until(C, s => s.host, 15000) };
 ok(r.c.host && !r.c.over, 'the host drops: the friend becomes host and the match goes on', JSON.stringify(r.c));
-await H.waitForFunction(() => MP.online(), null, { timeout: 20000 }); await H.waitForTimeout(2500);
+await H.waitForFunction(() => MP.online(), null, { timeout: 20000 }); await until(H, s => !s.host, 12000); await until(C, s => s.host, 12000);
 r = { h: await st(H), c: await st(C), bots: await T(H, () => GAME.test.M.fs.filter(f => f.isBot).every(f => f.net && !f.bot)) };
 ok(!r.h.host && r.c.host && r.bots && !r.h.over && !r.c.over, 'the old host is back as a player: one host, and its bots now follow the new host', JSON.stringify(r));
 // the round still ends and the next one starts on both
@@ -72,7 +74,7 @@ r = { h: await st(H), c: await st(C) };
 ok(r.h.round === r.c.round && (r.c.round > rd || r.c.phase === 'end'), 'rounds still move on for both after the handover', JSON.stringify({ h: [r.h.round, r.h.phase], c: [r.c.round, r.c.phase], from: rd }));
 
 // someone who never comes back: dropped after the wait, and the team game carries on
-await C.close(); await H.waitForTimeout(4000); r = await st(H);
+await C.close(); r = await until(H, s => s.dc.length === 1, 15000);
 ok(r.dc.length === 1 && !r.over, 'a friend who closes the game gets the reconnect wait first', JSON.stringify(r));
 await T(H, () => { GAME.test.M.time += 25; }); await H.waitForTimeout(2500); r = await st(H);   // the wait runs on game time, which crawls under software rendering
 ok(r.gone.length === 1 && !r.dc.length && !r.over, 'after the wait they count as gone and the host plays on with the bots', JSON.stringify(r));
