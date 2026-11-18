@@ -4,11 +4,11 @@
   const INTERP = .1;
   const CL = {
     src: null, conn: null, local: null, me: null, ids: {}, code: '', mode: '1v1', oneShot: false, host: null, phase: 'lobby', phaseEnd: 0, ffaEnd: 0,
-    round: 0, score: [0, 0], lobby: [], votes: [], players: new Map(), arrows: new Map(), stuck: new Map(), picks: W.PICKUPS.map(() => true),
+    round: 0, score: [0, 0], lobby: [], votes: [], players: new Map(), arrows: new Map(), stuck: new Map(), tg: W.TARGETS.map(() => true),
     cap: [0, 0], zoneIn: [0, 0], results: null, off: null, feed: [], notes: [], status: '', err: '', lastRound: null, pings: [], cidMap: new Map(),
   };
   const srvNow = () => now() + (CL.off || 0);
-  const WORLD = new Set(['s', 'shot', 'stick', 'hit', 'elim', 'gone', 'pick', 'phase', 'round', 'results', 'overtime', 'corr', 'clear', 'respawn', 'ping']);
+  const WORLD = new Set(['s', 'shot', 'stick', 'hit', 'elim', 'gone', 'tgt', 'phase', 'round', 'results', 'overtime', 'corr', 'clear', 'respawn', 'ping']);
   function player(id) {
     let p = CL.players.get(id);
     if (!p) { p = { id, name: '', team: 0, slot: 0, bow: 'longbow', buf: [], vis: null, stuckIn: [], deadAt: 0, step: 0, k: 0, d: 0 }; CL.players.set(id, p); emit('playerNew', p); }
@@ -17,7 +17,7 @@
   function resetWorld() {
     for (const p of CL.players.values()) emit('playerGone', p);
     CL.players.clear(); CL.arrows.forEach(a => emit('arrowGone', a)); CL.arrows.clear(); CL.stuck.forEach(s => emit('stuckGone', s)); CL.stuck.clear();
-    CL.picks = W.PICKUPS.map(() => true); CL.cap = [0, 0]; CL.zoneIn = [0, 0]; CL.off = null; CL.cidMap.clear(); emit('worldReset');
+    CL.tg = W.TARGETS.map(() => true); CL.cap = [0, 0]; CL.zoneIn = [0, 0]; CL.off = null; CL.cidMap.clear(); emit('worldReset');
   }
   function useSource(src) {
     if (CL.src === src) return; CL.src = src; CL.me = CL.ids[src] || null; resetWorld(); emit('source', src);
@@ -84,7 +84,7 @@
     if (src === 'online') {
       switch (m.t) {
         case 'welcome': CL.ids.online = m.id; CL.code = m.code; CL.mode = m.mode; CL.oneShot = m.oneShot; CL.err = '';
-          if (m.phase !== 'lobby' && m.phase !== 'results') { stopPractice(); useSource('online'); CL.me = m.id; m.stuck.forEach(s => addStuck(s)); m.picks.forEach(i => CL.picks[i] = false); }
+          if (m.phase !== 'lobby' && m.phase !== 'results') { stopPractice(); useSource('online'); CL.me = m.id; m.stuck.forEach(s => addStuck(s)); (m.tg || []).forEach(i => CL.tg[i] = false); }
           if (CL.src === 'online') CL.me = m.id; emit('joined', m); if (m.results) { CL.results = m.results; CL.phase = 'results'; CL.roomPhase = 'results'; emit('results', m.results); } emit('ui'); return;
         case 'err': if (m.code === 'taken' && CL.conn && CL.conn.create) { const cr = CL.conn.create; connect(newCode(), cr); return; }
           if (m.code === 'nocode' && CL.conn && CL.conn.makeOnMiss) { connect(CL.conn.code, { mode: '1v1' }); return; }   // the hub made this code for us: open the room
@@ -126,7 +126,11 @@
       }
       case 'elim': emit('elim', m); CL.feed.push({ k: m.kn, v: m.vn, kid: m.k, vid: m.v, bow: m.bow, zone: m.zone, t: now() }); if (CL.feed.length > 5) CL.feed.shift(); return;
       case 'gone': { const s = CL.stuck.get(m.id); if (s) { CL.stuck.delete(m.id); emit('stuckGone', s); } if (m.by === CL.me) emit('recovered'); return; }
-      case 'pick': CL.picks[m.i] = !!m.on; if (!m.on && m.by === CL.me) emit('picked'); return;
+      case 'tgt': {   // a target broke (paid to whoever broke it), or stands again
+        CL.tg[m.i] = !!m.up; if (m.up) { emit('tgtUp', m.i); return; }
+        const mine = m.by === CL.me; emit('tgtBreak', m.i, m.p, mine, m.coins | 0);
+        if (mine && CL.src === 'practice') earn('target', W.TARGET.coins);   // the range has no match end: bank it now (a match banks its targets with its coins)
+        return; }
       case 'phase': {
         const was = CL.phase; Object.assign(CL, { phase: m.ph, phaseEnd: m.end, round: m.round, score: m.score, ffaEnd: m.ffaEnd });
         if (m.mode) CL.mode = m.mode;
@@ -136,11 +140,13 @@
       }
       case 'round': CL.score = m.score; CL.lastRound = { ...m, at: now() }; emit('roundEnd', m); return;
       case 'overtime': emit('overtime', m); return;
-      case 'results': CL.results = m; CL.phase = 'results'; emit('results', m); emit('ui'); return;
+      case 'results': CL.results = m; CL.phase = 'results'; emit('results', m); emit('ui');
+        if (botRoom() && m.coins && m.coins[CL.me]) earn('bots', m.coins[CL.me], m.matchId);   // a bot match pays too (an online one is paid by the server)
+        return;
       case 'corr': emit('corr', m); return;
       case 'nodraw': if (ME.drawing) { ME.drawing = false; ME.drawT = 0; } return;   // the server said no (out of arrows, still nocking): lower the bow
       case 'nofire': { const a = CL.cidMap.get(m.cid); if (a) { CL.arrows.delete(a.tmpId); CL.arrows.delete(a.id); emit('arrowGone', a); } if (CL.src !== 'practice') ME.arrows = m.arrows; return; }
-      case 'clear': CL.arrows.forEach(a => emit('arrowGone', a)); CL.arrows.clear(); CL.stuck.forEach(s => emit('stuckGone', s)); CL.stuck.clear(); CL.picks = W.PICKUPS.map(() => true); CL.cap = [0, 0];
+      case 'clear': CL.arrows.forEach(a => emit('arrowGone', a)); CL.arrows.clear(); CL.stuck.forEach(s => emit('stuckGone', s)); CL.stuck.clear(); CL.tg = W.TARGETS.map(() => true); CL.cap = [0, 0];
         for (const p of CL.players.values()) { p.deadAt = 0; emit('unstickAll', p); } return;
       case 'respawn': { const p = CL.players.get(m.id); if (p) { p.deadAt = 0; emit('unstickAll', p); } return; }
       case 'ping': CL.pings.push({ ...m, t: now() }); if (CL.pings.length > 4) CL.pings.shift(); emit('ping', m); return;

@@ -12,6 +12,7 @@ export const BOW = {
   fullDraw: .9,                // seconds to reach a full draw
   nock: .5,                    // seconds after a release before the next arrow is on the string
   startArrows: 6, maxArrows: 9, bundle: 3,
+  infinite: true,              // the quiver never runs out (the count stays at startArrows)
 };
 export const drawPower = t => Math.max(0, Math.min(1, t / BOW.fullDraw));
 export const launchSpeed = p => BOW.vMin + (BOW.vMax - BOW.vMin) * (1 - (1 - p) * (1 - p));   // rises quickly, then settles into a full draw
@@ -164,7 +165,7 @@ const SPLIT = { x: 26, z: 80 };
   });
 })();
 
-// arrow pickups (a bundle of three) in exposed spots, and named areas for callouts
+// six clearings in exposed spots (they once held arrow bundles; now each has a target on a post), kept clear of trees
 export const PICKUPS = [];
 both(P => { for (const [x, z] of [[56, 75], [37, 97], [97, 104]]) { const [px, pz] = P(x, z); PICKUPS.push({ x: px, z: pz, y: terrainH(px, pz) }); } });
 export const SPAWNS = { 0: [[70, 126], [64, 128], [76, 128], [70, 131]], 1: [[70, 14], [76, 12], [64, 12], [70, 9]] };
@@ -224,6 +225,38 @@ export const inMeadow = (x, z, pad = 0) => MEADOWS.some(m => Math.hypot(x - m.x,
   }
   for (const q of bh) { BUSHES.push(q); const [x, z] = rot(q.x, q.z); BUSHES.push({ ...q, x, z, seed: q.seed + 1 }); }
 })();
+
+/* ---- targets: little bullseyes worth coins. On posts in the clearings and meadows, nailed to lone tree trunks, and
+   flying in circles under balloons over the meadows. One arrow breaks one; it comes back a while later. They are not
+   solid: you walk through them, and only arrows hit them. Flying ones move on the room's clock (targetPos). */
+export const TARGET = { coins: 5, back: 30, r: .46, rFly: .62 };
+export const TARGETS = [];
+(function targets() {
+  const g = (x, z) => terrainH(x, z);
+  for (const k of PICKUPS) TARGETS.push({ kind: 'ground', x: k.x, y: k.y + 1.25, z: k.z, face: Math.atan2(CX - k.x, CZ - k.z) });
+  both(P => { for (const [x, z] of [[44, 86], [96, 86], [122, 80], [70, 104]]) { const [px, pz] = P(x, z); TARGETS.push({ kind: 'ground', x: px, y: g(px, pz) + 1.25, z: pz, face: Math.atan2(CX - px, CZ - pz) }); } });
+  // on trees: every third lone tree on each half, on the side facing the middle of the wood, at head height
+  const lone = TREES.filter(t => t.kind === 'oak' || t.kind === 'oak2');
+  lone.forEach((t, i) => { if (i % 3) return; const a = Math.atan2(CX - t.x, CZ - t.z), d = t.r + .07, x = t.x + Math.sin(a) * d, z = t.z + Math.cos(a) * d; TARGETS.push({ kind: 'tree', x, y: g(t.x, t.z) + 2.3 + (i % 2) * .5, z, face: a, tree: TREES.indexOf(t) }); });
+  // in the sky: circling over the meadows, high enough to need a lob or a long straight shot
+  MEADOWS.forEach((m, i) => TARGETS.push({ kind: 'fly', x: m.x, y: g(m.x, m.z) + 11 + (i % 3) * 2.5, z: m.z, rad: Math.max(4, m.r * .7), per: 18 + (i % 4) * 4, ph: i * 1.7, dir: i % 2 ? 1 : -1 }));
+})();
+// where a target is at room time t (fixed ones never move)
+export function targetPos(k, t) {
+  if (k.kind !== 'fly') return [k.x, k.y, k.z];
+  const a = k.ph + k.dir * t * Math.PI * 2 / k.per; return [k.x + Math.cos(a) * k.rad, k.y + Math.sin(t * 1.1 + k.ph) * .7, k.z + Math.sin(a) * k.rad];
+}
+// the first target an arrow's step from p0 to p1 meets (up: which are standing), with how far along it, or null
+export function sweepTargets(p0, p1, up, t) {
+  const dx = p1[0] - p0[0], dy = p1[1] - p0[1], dz = p1[2] - p0[2], L2 = dx * dx + dy * dy + dz * dz; if (L2 < 1e-9) return null; let best = null;
+  for (let i = 0; i < TARGETS.length; i++) {
+    if (!up[i]) continue; const k = TARGETS[i], c = targetPos(k, t), r = k.kind === 'fly' ? TARGET.rFly : TARGET.r;
+    const fx = p0[0] - c[0], fy = p0[1] - c[1], fz = p0[2] - c[2], b = 2 * (fx * dx + fy * dy + fz * dz), cc = fx * fx + fy * fy + fz * fz - r * r, disc = b * b - 4 * L2 * cc;
+    if (disc < 0) continue; const tt = (-b - Math.sqrt(disc)) / (2 * L2); if (tt < 0 || tt > 1 || (best && tt >= best.t)) continue;
+    best = { i, t: tt, p: [p0[0] + dx * tt, p0[1] + dy * tt, p0[2] + dz * tt] };
+  }
+  return best;
+}
 
 export const ZONE = { x: CX, z: CZ, r: 9, name: 'Stone Bridge' };
 export const AREAS = [
@@ -434,4 +467,6 @@ export const BOWS = [
 export const tierOf = price => price === 0 ? 'Starter' : price < 500 ? 'Common' : price < 1200 ? 'Rare' : price < 2500 ? 'Epic' : price < 4500 ? 'Legendary' : 'Mythic';
 export const BOW_IDS = BOWS.map(b => b.id);
 // coins for online matches: for playing, each elimination, each round your side wins, and the win itself
-export const COINS = { start: 150, match: 25, kill: 15, round: 10, win: 50, ffaTop: 50, maxMatch: 1000 };
+// coins: online matches pay these (and targets), up to maxMatch; bot matches pay the same rows up to maxBots; offline
+// earnings (bot matches and targets outside online matches) are capped at offlineHour an hour on the server
+export const COINS = { start: 150, match: 25, kill: 15, round: 10, win: 50, ffaTop: 50, maxMatch: 1000, maxBots: 300, offlineHour: 1500 };

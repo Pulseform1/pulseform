@@ -205,17 +205,29 @@
         fragmentShader: 'uniform vec3 col; uniform float t, a; varying vec2 vU; void main(){ float f = pow(1. - vU.y, 2.2) * (.55 + .45 * sin(vU.x * 60. + t * 3.)); gl_FragColor = vec4(col, f * a); }' });
       const zone = new THREE.Mesh(zg, zm); zone.position.set(W.ZONE.x, W.terrainH(W.ZONE.x, W.ZONE.z) + 1.6, W.ZONE.z); zone.visible = false; S.add(zone); X.zone = zone;
     }
-    // ---- arrow bundles at the pickups: a stump, three arrows, a glow and a spinning ring so you can spot them
+    // ---- targets: a painted bullseye on a post (the ground), nailed to a trunk (the trees), or hanging under a balloon (the
+    // sky). The face looks toward the middle of the wood; a flying one turns slowly as it circles.
     {
-      X.picks = W.PICKUPS.map(k => {
-        const g = new THREE.Group(); g.position.set(k.x, visH(k.x, k.z), k.z);
-        const stump = new THREE.Mesh(new THREE.CylinderGeometry(.34, .42, .45, 12), std2({ color: LC('#8a5a33') })); stump.position.y = .2; stump.castShadow = true; g.add(stump);
-        const topc = new THREE.Mesh(new THREE.CircleGeometry(.34, 12), std2({ color: LC('#e2b97a') })); topc.rotation.x = -Math.PI / 2; topc.position.y = .43; g.add(topc);
-        for (let n = 0; n < 3; n++) { const a = makeArrowMesh('longbow'); a.position.set((n - 1) * .06, .62, (n - 1) * .03); a.rotation.set(Math.PI / 2 - .15 + n * .1, 0, (n - 1) * .15); g.add(a); }
-        const band = new THREE.Mesh(new THREE.TorusGeometry(.06, .015, 6, 12), std2({ color: LC('#c0392b') })); band.rotation.x = Math.PI / 2; band.position.y = .62; g.add(band);
-        const ringM = new THREE.Mesh(new THREE.TorusGeometry(.62, .035, 6, 32), new THREE.MeshBasicMaterial({ color: '#ffe066', transparent: true, opacity: .8 })); ringM.rotation.x = Math.PI / 2; ringM.position.y = .08; g.add(ringM); g.userData.ring = ringM;
-        const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.dot, color: new THREE.Color('#fff0a0'), transparent: true, opacity: .6, depthWrite: false, blending: THREE.AdditiveBlending })); glow.scale.setScalar(1.8); glow.position.y = .7; g.add(glow); g.userData.glow = glow;
-        X.scene.add(g); return g;
+      const c = document.createElement('canvas'); c.width = c.height = 256; const g2 = c.getContext('2d');
+      [['#f7f1e3', 124], ['#d6452f', 104], ['#f7f1e3', 82], ['#d6452f', 60], ['#f7f1e3', 38], ['#f2c230', 18]].forEach(([col, r]) => { g2.fillStyle = col; g2.beginPath(); g2.arc(128, 128, r, 0, Math.PI * 2); g2.fill(); });
+      g2.strokeStyle = 'rgba(60,30,10,.45)'; g2.lineWidth = 6; g2.beginPath(); g2.arc(128, 128, 124, 0, Math.PI * 2); g2.stroke();
+      const face = new THREE.CanvasTexture(c); face.encoding = THREE.sRGBEncoding; face.anisotropy = 4;
+      const faceM = new THREE.MeshStandardMaterial({ map: face, roughness: .7 }), rimM = std2({ color: LC('#7a4a26') }), postM = std2({ color: LC('#8a5a33') }), ropeM = new THREE.LineBasicMaterial({ color: '#e8dcc0' });
+      const BAL = ['#ff6b6b', '#4fc3f7', '#ffd23a', '#7bd88f', '#c792ea', '#ff9f43'];
+      const disc = r => { const d = new THREE.Group(), body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, .09, 28), [rimM, faceM, faceM]); body.rotation.x = Math.PI / 2; body.castShadow = true; d.add(body); return d; };
+      X.tgts = W.TARGETS.map((k, i) => {
+        const g = new THREE.Group(), fly = k.kind === 'fly', r = fly ? W.TARGET.rFly * .9 : W.TARGET.r; g.position.set(k.x, k.y, k.z); g.rotation.y = k.face || 0;
+        const d = disc(r); g.add(d); g.userData.disc = d;
+        if (k.kind === 'ground') { const post = new THREE.Mesh(new THREE.CylinderGeometry(.06, .08, k.y - visH(k.x, k.z) + .1, 8), postM); post.position.set(0, -(k.y - visH(k.x, k.z)) / 2, -.08); post.castShadow = true; g.add(post);
+          const foot = new THREE.Mesh(new THREE.CylinderGeometry(.28, .32, .12, 10), postM); foot.position.set(0, -(k.y - visH(k.x, k.z)) + .05, -.08); g.add(foot); }
+        if (k.kind === 'tree') for (const sx of [-1, 1]) { const nail = new THREE.Mesh(new THREE.SphereGeometry(.025, 6, 4), std2({ color: LC('#9aa0a6'), metalness: .6 })); nail.position.set(sx * r * .7, r * .55, .05); g.add(nail); }
+        if (fly) {   // a balloon on a string above it
+          const bal = new THREE.Mesh(new THREE.SphereGeometry(.42, 16, 12), new THREE.MeshStandardMaterial({ color: LC(BAL[i % BAL.length]), roughness: .35 })); bal.scale.set(1, 1.18, 1); bal.position.y = 1.55; bal.castShadow = true; g.add(bal); g.userData.bal = bal;
+          const knot = new THREE.Mesh(new THREE.ConeGeometry(.06, .1, 6), bal.material); knot.position.y = 1.03; knot.rotation.x = Math.PI; g.add(knot);
+          g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, r, 0), new THREE.Vector3(.04, .6, 0), new THREE.Vector3(0, 1.0, 0)]), ropeM));
+        }
+        const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.dot, color: new THREE.Color('#fff0a0'), transparent: true, opacity: .25, depthWrite: false, blending: THREE.AdditiveBlending })); glow.scale.setScalar(r * 3.2); glow.position.z = .06; g.add(glow); g.userData.glow = glow;
+        g.userData.k = k; g.userData.in = 1; X.scene.add(g); return g;
       });
     }
   }

@@ -121,6 +121,15 @@
   function floatText(p, txt, col, scale = 1, word) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: word ? wordTex(txt, col) : numTex(txt, col), transparent: true, depthTest: false, depthWrite: false })); s.renderOrder = 30; s.position.set(p[0], p[1], p[2]); X.scene.add(s); FLOATS.push({ s, t: 0, scale, vx: word ? 0 : (Math.random() - .5) * .6, ar: word ? 4 : 2.67, life: word ? 1.6 : .95 }); }
   const WORDTEX = {};
   function wordTex(txt, col) { const k = txt + col; if (WORDTEX[k]) return WORDTEX[k]; const [c, g] = cvs(512, 128); let fs = 96; g.font = `400 ${fs}px 'Lilita One', Impact, sans-serif`; while (g.measureText(txt).width > 470 && fs > 30) { fs -= 4; g.font = `400 ${fs}px 'Lilita One', Impact, sans-serif`; } g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 16; g.lineJoin = 'round'; g.strokeStyle = '#1b1b1b'; g.save(); g.translate(256, 64); g.rotate(-.05); g.strokeText(txt, 0, 4); g.fillStyle = col; g.fillText(txt, 0, 0); g.restore(); return WORDTEX[k] = tex(c, { clamp: true }); }
+  // a target breaks: splinters and painted chips, a balloon pops, and if it was yours the coins float up
+  on('tgtBreak', (i, p, mine, coins) => {
+    if (!X || !X.tgts || !X.tgts[i]) return; const g = X.tgts[i], k = g.userData.k, c = p || W.targetPos(k, srvNow());
+    burst('cube', c, 14, { col: [.85, .27, .18], size: .07, sp: 4, up: 1.4, life: 1.1, floor: true }); burst('cube', c, 12, { col: [.97, .94, .89], size: .07, sp: 4, up: 1.4, life: 1.1, floor: true });
+    burst('cube', c, 8, { col: [.55, .36, .2], size: .06, sp: 3, up: 1.2, life: 1, floor: true }); burst('star', c, 8, { col: [1, .9, .4], size: .2, sp: 2.4, g: 0, life: .45 });
+    if (k.kind === 'fly' && g.userData.bal) { const b = g.userData.bal.getWorldPosition(new THREE.Vector3()); burst('cube', [b.x, b.y, b.z], 14, { col: g.userData.bal.material.color.toArray(), size: .06, sp: 3.5, life: .7, g: .4 }); }
+    if (mine) floatText([c[0], c[1] + .5, c[2]], '+' + (coins || W.TARGET.coins) + ' COINS', '#ffd23a', 1.25, true);
+    g.visible = false; g.userData.in = 0;
+  });
   on('hitInfo', m => { if (!X) return; const kill = m.hp <= 0, head = m.zone === 'head'; floatText([m.p[0], m.p[1] + .4, m.p[2]], kill ? (head ? 'HEADSHOT!' : 'KO!') : '-' + m.dmg, kill ? '#ffd23a' : head ? '#ffb02e' : '#ffffff', kill ? 1.5 : head ? 1.25 : 1); });
   // the toy-figure break-apart: every block of the archer flies off, bounces, and pops away
   function breakApart(P, m, opt = {}) {
@@ -293,7 +302,13 @@
     X.t += dt; X.wind.time.value = X.t; X.wind.amt.value = .85 + .35 * Math.sin(X.t * .23) + .15 * Math.sin(X.t * .71);
     updateCharacters(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); updateCash(dt); updateDebris(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
     for (let i = PINGS.length - 1; i >= 0; i--) { const p = PINGS[i]; p.t += dt; p.g.children[0].scale.setScalar(.7 + Math.sin(X.t * 6) * .15); if (p.t > 7) { X.scene.remove(p.g); PINGS.splice(i, 1); } }
-    X.picks.forEach((g, i) => { g.visible = !!CL.picks[i]; g.userData.glow.material.opacity = .35 + Math.sin(X.t * 3 + i) * .2; if (g.userData.ring) { g.userData.ring.rotation.z = X.t * 1.5; g.userData.ring.position.y = .08 + Math.sin(X.t * 2.4 + i) * .04; g.userData.ring.scale.setScalar(1 + Math.sin(X.t * 3 + i) * .06); } });
+    // targets: the flying ones circle on the room's clock; a broken one is gone until it stands again, then pops back in
+    { const st = srvNow(); X.tgts.forEach((g, i) => {
+      const up = !!CL.tg[i], k = g.userData.k; if (!up) { g.visible = false; g.userData.in = 0; return; }
+      g.visible = true; const e = g.userData.in = Math.min(1, g.userData.in + dt * 2.2), sc = e * e * (3 - 2 * e) * (1 + .22 * Math.sin(e * Math.PI)); g.scale.setScalar(Math.max(.01, sc));
+      if (k.kind === 'fly') { const q = W.targetPos(k, st); g.position.set(q[0], q[1], q[2]); g.rotation.y = (k.face || 0) + st * .5 * k.dir; if (g.userData.bal) g.userData.bal.position.y = 1.55 + Math.sin(st * 2.1 + i) * .06; }
+      g.userData.glow.material.opacity = .14 + Math.sin(X.t * 3 + i) * .1;
+    }); }
     const zone = X.zone, ot = CL.phase === 'overtime'; zone.visible = ot; if (ot) { const inn = CL.zoneIn || [0, 0], col = inn[0] && inn[1] ? '#f4f1e6' : inn[0] ? W.TEAMS[0].col : inn[1] ? W.TEAMS[1].col : '#e9c46a'; zone.material.uniforms.col.value.set(col); zone.material.uniforms.t.value = X.t; zone.material.uniforms.a.value = .55; }
     if (X.water) X.water.rn.offset.set(X.t * .03, X.t * .011);
     // the sun's shadow follows you (snapped, so it doesn't shimmer)

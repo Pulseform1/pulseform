@@ -2,6 +2,7 @@
 // produces eliminations, rematches start without bots voting, and offline matches pay no coins.
 //   node tools/arrowwood-bots-test.mjs
 import * as E from '../arrowwood/server/engine.js';
+import * as W from '../arrowwood/shared/world.js';
 let fails = 0; const ok = (c, name, x = '') => { if (!c) fails++; console.log((c ? '  ok   ' : '  FAIL ') + name + (x !== '' ? '  (' + x + ')' : '')); };
 const step = (room, s) => { for (let i = 0; i < Math.round(s * 20); i++) E.step(room); E.drain(room); };
 function offline(mode, level) {
@@ -21,9 +22,10 @@ for (const level of ['easy', 'normal', 'hard']) {
   for (let i = 0; i < 20 * 60; i++) { const p = room.players.get(me); p.st.x = 8; p.st.z = 8; p.st.alive = p.st.alive; E.step(room); for (const o of E.drain(room)) { if (o.m.t === 'shot') shots++; if (o.m.t === 'elim') elims++; } }
   for (const p of room.players.values()) if (p.bot) { const s = start.get(p.id); if (Math.hypot(p.st.x - s[0], p.st.z - s[1]) > 5) moved++; }
   ok(shots > 15 && elims >= 3, 'a minute of bot free for all: arrows fly and archers fall', `${shots} shots, ${elims} eliminations`); ok(moved >= 4, 'bots move around the wood', `${moved} of 5 moved`); }
-// the match ends with results and no coins; a rematch starts on the person's vote alone
+// the match ends with results and the person's coin rows; a rematch starts on their vote alone
 { const { room, me } = offline('1v1', 'hard'); let res = null;
   for (let i = 0; i < 20 * 900 && !res; i++) { E.step(room); for (const o of E.drain(room)) if (o.m.t === 'results') res = o.m; }
-  ok(res && Object.keys(res.coins).length === 0, 'an offline match ends with results and pays no coins', res ? `${res.score.join('-')} ${res.reason}` : 'no result');
+  const mine = res && res.coins[me];
+  ok(res && mine > 0 && mine <= W.COINS.maxBots && Object.keys(res.coins).length === 1, `a bot match ends with results and pays you its coin rows (at most ${W.COINS.maxBots}), bots get nothing`, res ? `${res.score.join('-')} ${res.reason}, ${mine} coins` : 'no result');
   E.message(room, me, { t: 'rematch' }); ok(room.phase === 'intro', 'rematch starts on your vote (bots always agree)', room.phase); }
 console.log(fails ? fails + ' FAILED' : 'ALL OK');

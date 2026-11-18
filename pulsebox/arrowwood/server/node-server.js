@@ -33,6 +33,7 @@ const server = http.createServer(async (req, res) => {
     if (!id) return json(res, { error: 'missing player key' }, 400);
     if (sub === 'profile') return json(res, await Bank.profile(store, id));
     if (sub === 'devgrant' && DEV) return json(res, await Bank.grant(store, id, 'dev-' + Date.now() + Math.random(), 1000, false));   // test coins, --dev only
+    if (sub === 'earn') { let body = ''; for await (const c of req) { body += c; if (body.length > 200) break; } let b = {}; try { b = JSON.parse(body); } catch (e) {} return json(res, await Bank.earn(store, id, String(b.kind || ''), b.n | 0, String(b.match || ''))); }
     if (sub === 'buy' || sub === 'equip') { let body = ''; for await (const c of req) { body += c; if (body.length > 200) break; } let b = {}; try { b = JSON.parse(body); } catch (e) {} return json(res, await Bank[sub](store, id, String(b.bow || ''))); }
     return json(res, { error: 'not found' }, 404);
   }

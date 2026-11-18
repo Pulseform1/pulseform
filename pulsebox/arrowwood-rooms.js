@@ -5,6 +5,7 @@
 //   GET  /api/arrowwood/profile    (header x-aw-key) -> { coins, owned, equipped, bows }
 //   POST /api/arrowwood/buy        (header x-aw-key) <- { bow } -> profile (or { error })
 //   POST /api/arrowwood/equip      (header x-aw-key) <- { bow } -> profile (or { error })
+//   POST /api/arrowwood/earn       (header x-aw-key) <- { kind: bots|target, n, match } -> profile + got (capped: see bank.js)
 import { createRoom, join, message, drop, step, drain, TICK } from './arrowwood/server/engine.js';
 import * as Bank from './arrowwood/server/bank.js';
 
@@ -28,6 +29,10 @@ export async function arrowwoodApi(request, env, url) {
     let b = {}; try { b = JSON.parse((await request.text()).slice(0, 200)); } catch (e) {}
     return json(await bankCall(env, sub, { id, bow: String(b.bow || '') }));
   }
+  if (sub === 'earn' && request.method === 'POST') {   // coins from a bot match or a target (capped by the bank)
+    let b = {}; try { b = JSON.parse((await request.text()).slice(0, 200)); } catch (e) {}
+    return json(await bankCall(env, 'earn', { id, kind: String(b.kind || ''), n: b.n | 0, match: String(b.match || '') }));
+  }
   return json({ error: 'not found' }, 404);
 }
 
@@ -40,6 +45,7 @@ export class ArrowwoodBank {
     if (path === 'buy') return json(await Bank.buy(this.store, b.id, b.bow));
     if (path === 'equip') return json(await Bank.equip(this.store, b.id, b.bow));
     if (path === 'grant') return json(await Bank.grant(this.store, b.id, String(b.match || ''), b.coins, !!b.won));
+    if (path === 'earn') return json(await Bank.earn(this.store, b.id, b.kind, b.n, b.match));
     return json({ error: 'not found' }, 404);
   }
 }

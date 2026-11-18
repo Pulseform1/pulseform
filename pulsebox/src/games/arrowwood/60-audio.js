@@ -1,19 +1,22 @@
   /* ---------- 60 audio: all synthesized; footsteps, impacts and fly-bys come from where they happen (HRTF panning) ---------- */
-  const AU = { ready: false, out: null, buf: {}, birdT: 2, creak: 0, creek: null, wind: null, rustle: null };
+  const AU = { ready: false, out: null, buf: {}, birdT: 1, creak: 0, creek: null, wind: null, rustle: null, amb: null, bubT: 0, peckT: 9, gust: 0 };
   function audioInit() {
     const ac = K.audio && K.audio(); if (!ac || AU.ready) return; AU.ready = true; AU.ac = ac;
     AU.out = ac.createGain(); AU.out.gain.value = CFG.vol; AU.out.connect(K.master);
     const mk = (secs, fn) => { const n = Math.floor(ac.sampleRate * secs), b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0); fn(d, n); return b; };
     AU.buf.white = mk(2, (d, n) => { for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; });
     AU.buf.brown = mk(3, (d, n) => { let l = 0; for (let i = 0; i < n; i++) { l = (l + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = l * 3.5; } });
-    // the wood around you: wind in the canopy, rustling leaves, the creek
+    // the wood around you, on its own volume (Settings: forest sounds): wind in the canopy, leaves rustling in gusts, the
+    // creek running over stones (loud beside it, faint across the whole wood), and birds singing in the trees
+    AU.amb = ac.createGain(); AU.amb.gain.value = CFG.amb == null ? 1 : CFG.amb; AU.amb.connect(AU.out);
     const loop = (buf, f, q, type, g, dest) => { const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; const fl = ac.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; const gn = ac.createGain(); gn.gain.value = g; s.connect(fl).connect(gn).connect(dest || AU.out); s.start(); return { s, fl, gn }; };
-    AU.wind = loop(AU.buf.brown, 420, .4, 'lowpass', .09); AU.rustle = loop(AU.buf.white, 3800, .3, 'highpass', .012);
-    const pan = ac.createPanner(); Object.assign(pan, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: 3, maxDistance: 60, rolloffFactor: 1.3 }); pan.connect(AU.out);
-    AU.creek = loop(AU.buf.brown, 900, .6, 'bandpass', .55, pan); AU.creek.pan = pan;
+    AU.wind = loop(AU.buf.brown, 420, .4, 'lowpass', .09, AU.amb); AU.rustle = loop(AU.buf.white, 2600, .5, 'bandpass', .02, AU.amb); AU.rustle2 = loop(AU.buf.white, 5200, .4, 'highpass', .01, AU.amb);
+    const pan = ac.createPanner(); Object.assign(pan, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: 7, maxDistance: 120, rolloffFactor: .9 }); pan.connect(AU.amb);
+    AU.creek = loop(AU.buf.brown, 900, .6, 'bandpass', .7, pan); AU.creek.pan = pan; AU.creekHi = loop(AU.buf.white, 2400, 1.2, 'bandpass', .05, pan);   // the flow, and its hiss over the stones
+    AU.river = loop(AU.buf.brown, 700, .5, 'bandpass', .05, AU.amb);   // the river heard from anywhere in the wood, softly
   }
   const t0 = () => AU.ac.currentTime;
-  function at(p, ref = 4) { const ac = AU.ac, pn = ac.createPanner(); Object.assign(pn, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: ref, maxDistance: 90, rolloffFactor: 1.2 }); if (pn.positionX) { pn.positionX.value = p[0]; pn.positionY.value = p[1]; pn.positionZ.value = p[2]; } else pn.setPosition(p[0], p[1], p[2]); pn.connect(AU.out); return pn; }
+  function at(p, ref = 4, dest) { const ac = AU.ac, pn = ac.createPanner(); Object.assign(pn, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: ref, maxDistance: 90, rolloffFactor: 1.2 }); if (pn.positionX) { pn.positionX.value = p[0]; pn.positionY.value = p[1]; pn.positionZ.value = p[2]; } else pn.setPosition(p[0], p[1], p[2]); pn.connect(dest || AU.out); return pn; }
   function nz(dest, dur, f, q, type, g, delay = 0, sweepTo) { const ac = AU.ac, s = ac.createBufferSource(); s.buffer = AU.buf.white; const fl = ac.createBiquadFilter(); fl.type = type; fl.frequency.setValueAtTime(f, t0() + delay); if (sweepTo) fl.frequency.exponentialRampToValueAtTime(sweepTo, t0() + delay + dur); fl.Q.value = q; const a = ac.createGain(); a.gain.setValueAtTime(.0001, t0() + delay); a.gain.exponentialRampToValueAtTime(g, t0() + delay + .005); a.gain.exponentialRampToValueAtTime(.0001, t0() + delay + dur); s.connect(fl).connect(a).connect(dest); s.start(t0() + delay, Math.random() * 1.5); s.stop(t0() + delay + dur + .05); }
   function tone(dest, f, dur, type, g, delay = 0, to) { const ac = AU.ac, o = ac.createOscillator(), a = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t0() + delay); if (to) o.frequency.exponentialRampToValueAtTime(to, t0() + delay + dur); a.gain.setValueAtTime(.0001, t0() + delay); a.gain.exponentialRampToValueAtTime(g, t0() + delay + .004); a.gain.exponentialRampToValueAtTime(.0001, t0() + delay + dur); o.connect(a).connect(dest); o.start(t0() + delay); o.stop(t0() + delay + dur + .05); }
   const S = {
@@ -81,7 +84,15 @@
     win: () => [0, 4, 7, 12].forEach((k, i) => tone(AU.out, 523 * Math.pow(2, k / 12), .35, 'triangle', .14, i * .1)),
     lose: () => [7, 3, 0].forEach((k, i) => tone(AU.out, 330 * Math.pow(2, k / 12), .4, 'triangle', .12, i * .14)),
     click: () => tone(AU.out, 1200, .03, 'sine', .06),
-    bird: p => { const d = at(p, 10), b = 1800 + Math.random() * 1600, n = 2 + Math.floor(Math.random() * 5); for (let k = 0; k < n; k++) tone(d, b * (1 + Math.random() * .2), .07 + Math.random() * .06, 'sine', .08, k * .11, b * (1.3 + Math.random() * .4)); },
+    bird: (p, kind) => { const d = at(p, 14, AU.amb), R = Math.random, T = (f, dur, g, delay, to) => tone(d, f, dur, 'sine', g, delay, to);
+      kind = kind == null ? Math.floor(R() * 5) : kind;
+      if (kind === 0) { const b = 2600 + R() * 1400, n = 5 + Math.floor(R() * 6); let t = 0; for (let k = 0; k < n; k++) { const f = b * (.8 + R() * .5), dur = .04 + R() * .07; T(f, dur, .13, t, f * (.8 + R() * .7)); t += dur + .015 + R() * .05; } }   // a songbird's warble
+      else if (kind === 1) { const b = 3000 + R() * 900; T(b, .22, .14, 0, b * 1.05); T(b * .78, .3, .14, .3, b * .62); }   // a two-note whistle, high then low
+      else if (kind === 2) { const b = 4200 + R() * 1200, n = 8 + Math.floor(R() * 8); for (let k = 0; k < n; k++) T(b, .03, .09, k * .055, b * 1.15); }   // a trill
+      else if (kind === 3) { const b = 700 + R() * 120; T(b, .3, .1, 0, b * .97); T(b * .8, .42, .1, .42, b * .78); }   // a far-off two-note call, low
+      else { const b = 2000 + R() * 2000; T(b, .09, .12, 0, b * 1.6); T(b * 1.4, .07, .1, .14, b * .9); T(b * 1.1, .12, .1, .26, b * 1.5); } },   // chirps
+    peck: p => { const d = at(p, 10, AU.amb), n = 8 + Math.floor(Math.random() * 10); for (let k = 0; k < n; k++) nz(d, .015, 1600, 4, 'bandpass', .25, k * (.055 + k * .002)); },   // a woodpecker on a trunk
+    bubble: (p, g) => { const d = at(p, 5, AU.amb), f = 380 + Math.random() * 900; tone(d, f, .03 + Math.random() * .05, 'sine', g, 0, f * (1.4 + Math.random() * .9)); },   // one bubble in the creek
   };
   const surfaceAt = (x, y, z) => W.inWater(x, z, y + .3) ? 'water' : W.groundAt(x, z, y + .1) > W.terrainH(x, z) + .05 ? 'stone' : 'dirt';
   on('drawStart', () => AU.ready && S.nock());
@@ -96,14 +107,26 @@
   on('thud', p => AU.ready && S.thud(p)); on('cupidPop', p => AU.ready && S.cupid(p)); on('thwack', p => AU.ready && S.thwack(p)); on('cashout', p => AU.ready && S.cashout(p));
   on('pop', p => AU.ready && S.pop(p));
   on('finSfx', (k, p) => AU.ready && S.fin(k, p));
-  on('picked', () => AU.ready && S.pick()); on('recovered', () => AU.ready && S.pick());
+  on('tgtBreak', (i, p, mine) => { if (!AU.ready || !p) return; const d = at(p, 7); nz(d, .09, 1900, 2, 'bandpass', .5); tone(d, 230, .12, 'sine', .35, 0, 120); nz(d, .2, 900, 1, 'lowpass', .3, .02);   // the board cracks
+    if (W.TARGETS[i] && W.TARGETS[i].kind === 'fly') nz(d, .06, 3200, 1.5, 'bandpass', .5);   // and a balloon pops
+    if (mine) { tone(AU.out, 1320, .09, 'triangle', .16, .05); tone(AU.out, 1760, .14, 'triangle', .14, .13); tone(AU.out, 2640, .18, 'sine', .08, .2); } });   // coins
   on('go', () => AU.ready && S.horn());
   function audioFrame(dt) {
     if (!AU.ready) return; const ac = AU.ac, L = ac.listener, c = X.camera, f = c.getWorldDirection(new THREE.Vector3());
     if (L.positionX) { L.positionX.value = c.position.x; L.positionY.value = c.position.y; L.positionZ.value = c.position.z; L.forwardX.value = f.x; L.forwardY.value = f.y; L.forwardZ.value = f.z; L.upX.value = 0; L.upY.value = 1; L.upZ.value = 0; } else { L.setPosition(c.position.x, c.position.y, c.position.z); L.setOrientation(f.x, f.y, f.z, 0, 1, 0); }
     AU.out.gain.value = CFG.vol;
-    const w = X.wind.amt.value; AU.wind.gn.gain.value = .05 + w * .05; AU.rustle.gn.gain.value = .006 + w * .012;
-    const cx = cl(c.position.x, 0, 140), cz = W.creekZ(cx), pn = AU.creek.pan; if (pn.positionX) { pn.positionX.value = cx; pn.positionY.value = W.waterY(cx); pn.positionZ.value = cz; } else pn.setPosition(cx, W.waterY(cx), cz);
-    AU.birdT -= dt; if (AU.birdT <= 0) { AU.birdT = 2 + Math.random() * 6; const a = Math.random() * TAU, r = 12 + Math.random() * 25; S.bird([c.position.x + Math.cos(a) * r, c.position.y + 8 + Math.random() * 8, c.position.z + Math.sin(a) * r]); }
+    AU.amb.gain.value = CFG.amb == null ? 1 : CFG.amb;
+    // wind and leaves: gusts come and go; under the groves' canopy the leaves are louder
+    AU.gust += (Math.max(0, Math.sin(X.t * .23) * Math.sin(X.t * .61 + 1)) - AU.gust) * Math.min(1, dt * .8);
+    const w = X.wind.amt.value, gr = W.inGrove(c.position.x, c.position.z, 4) ? 1 : .55, gu = AU.gust;
+    AU.wind.gn.gain.value = .05 + w * .05 + gu * .05; AU.rustle.gn.gain.value = (.012 + w * .02 + gu * .05) * gr; AU.rustle2.gn.gain.value = (.004 + gu * .02) * gr;
+    // the creek: its sound comes from the nearest stretch of water; bubbles trickle over the stones, thick when you are near
+    const cx = cl(c.position.x, 0, 140), cz = W.creekZ(cx), wy = W.waterY(cx), pn = AU.creek.pan; if (pn.positionX) { pn.positionX.value = cx; pn.positionY.value = wy; pn.positionZ.value = cz; } else pn.setPosition(cx, wy, cz);
+    const dCreek = Math.hypot(c.position.z - cz, c.position.y - wy); AU.bubT -= dt;
+    while (AU.bubT <= 0) { AU.bubT += dCreek < 30 ? .035 + Math.random() * .06 : .25; if (dCreek < 45) S.bubble([cx + (Math.random() - .5) * 10, wy, cz + (Math.random() - .5) * 2], .05 * Math.max(.15, 1 - dCreek / 45)); }
+    // birds in the trees round you, often answered by another; now and then a woodpecker
+    AU.birdT -= dt; if (AU.birdT <= 0) { AU.birdT = 1 + Math.random() * 3.5; const a = Math.random() * TAU, r = 10 + Math.random() * 26, kind = Math.floor(Math.random() * 5), at3 = [c.position.x + Math.cos(a) * r, c.position.y + 7 + Math.random() * 9, c.position.z + Math.sin(a) * r];
+      S.bird(at3, kind); if (Math.random() < .4) { const b = a + 1.5 + Math.random() * 3, r2 = 14 + Math.random() * 24; setTimeout(() => AU.ready && S.bird([c.position.x + Math.cos(b) * r2, c.position.y + 8 + Math.random() * 8, c.position.z + Math.sin(b) * r2], kind), 700 + Math.random() * 900); } }
+    AU.peckT -= dt; if (AU.peckT <= 0) { AU.peckT = 14 + Math.random() * 22; const a = Math.random() * TAU, r = 15 + Math.random() * 20; S.peck([c.position.x + Math.cos(a) * r, c.position.y + 4, c.position.z + Math.sin(a) * r]); }
     if (ME.drawing) { AU.creak -= dt; if (AU.creak <= 0) { const d = W.drawPower(ME.drawT); AU.creak = d >= 1 ? .45 + Math.random() * .3 : .06 + Math.random() * .05; S.creak(d); } }
   }

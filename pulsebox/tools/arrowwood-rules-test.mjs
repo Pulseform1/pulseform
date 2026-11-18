@@ -1,5 +1,5 @@
 // ARROWWOOD round rules in Node (no browser): overtime capture, a same-tick double wipe replays the round, the 4–4
-// decider, damage by zone and draw, friendly fire off, recovering your own arrows, pickups.   node tools/arrowwood-rules-test.mjs
+// decider, damage by zone and draw, friendly fire off, a quiver that never runs out, targets and their coins.   node tools/arrowwood-rules-test.mjs
 import * as E from '../arrowwood/server/engine.js';
 import * as W from '../arrowwood/shared/world.js';
 let fails = 0; const ok = (c, name, x = '') => { if (!c) fails++; console.log((c ? '  ok   ' : '  FAIL ') + name + (x !== '' ? '  (' + x + ')' : '')); };
@@ -62,11 +62,30 @@ function shootAt(room, from, to, zoneY, power = 1) {   // a real arrow from `fro
 { const { room, ids, P } = match('1v1'); room.score = [4, 4]; tp(room, ids[0], 70, 100); tp(room, ids[1], 70, 75, Math.PI); step(room, .2);
   shootAt(room, ids[0], ids[1], 1.62); step(room, 1.5); const r = E.drain(room).filter(o => o.m.t === 'round').map(o => o.m)[0]; step(room, 3);
   ok(r && r.score.join('-') === '5-4' && room.phase === 'results', 'at 4–4 the next round wins the match', r && r.score.join('-')); }
-// arrows: six a round; your misses can be pulled back out; a bundle gives three
-{ const { room, ids, P } = match('1v1'); const me = P(ids[0]); tp(room, ids[0], 70, 100); step(room, .2);
-  E.message(room, ids[0], { t: 'in', s: 1, p: [me.st.x, me.st.y, me.st.z], yaw: 0, pitch: -.3 }); E.message(room, ids[0], { t: 'draw' }); step(room, .3); E.message(room, ids[0], { t: 'fire', cid: 1, yaw: 0, pitch: -.3, dt: .3 }); step(room, 1);
-  const s = room.stuck.find(q => q.by === ids[0]), n0 = me.st.arrows; tp(room, ids[0], s.p[0], s.p[2] + .6); step(room, .3);
-  ok(n0 === 5 && me.st.arrows === 6, 'a missed arrow you walk up to goes back in your quiver', `${n0} -> ${me.st.arrows}`);
-  const k = room.picks[0]; me.st.arrows = 2; tp(room, ids[0], k.x, k.z); step(room, .3);
-  ok(me.st.arrows === 5 && k.taken, 'an arrow bundle in the open gives three', me.st.arrows); }
+// arrows: the quiver never runs out
+{ const { room, ids, P } = match('1v1'); const me = P(ids[0]); tp(room, ids[0], 70, 100); step(room, .2); const n0 = me.st.arrows; let fired = 0;
+  for (let k = 0; k < 12; k++) { E.message(room, ids[0], { t: 'in', s: 1, p: [me.st.x, me.st.y, me.st.z], yaw: 0, pitch: -.3 }); E.message(room, ids[0], { t: 'draw' }); step(room, .3); const before = room.nextId; E.message(room, ids[0], { t: 'fire', cid: 10 + k, yaw: 0, pitch: -.3, dt: .3 }); step(room, .4); if (room.nextId > before) fired++; }
+  ok(fired === 12 && me.st.arrows === n0 && n0 > 0, 'twelve shots in a row and the quiver is still full', `${fired} fired, quiver ${n0} -> ${me.st.arrows}`); }
+// targets: one arrow breaks one, it pays its archer, it stands again later, and a match's coins count it
+function shootPoint(room, id, q, lead = 0) {   // a full draw straight at a point
+  const st = room.players.get(id).st; let yaw = Math.atan2(-(q[0] - st.x), -(q[2] - st.z)), pitch = 0;
+  for (let n = 0; n < 3; n++) { const o = W.shotOrigin({ ...st, yaw, pitch }, true); yaw = Math.atan2(-(q[0] - o[0]), -(q[2] - o[2])); pitch = Math.atan2(q[1] - o[1], Math.hypot(q[0] - o[0], q[2] - o[2])); }
+  E.message(room, id, { t: 'in', s: 1, p: [st.x, st.y, st.z], yaw, pitch }); E.message(room, id, { t: 'draw' }); step(room, 1); E.message(room, id, { t: 'fire', cid: 99, yaw, pitch, dt: 1 });
+}
+{ const { room, ids, P } = match('1v1'); const me = P(ids[0]);
+  for (const kind of ['ground', 'tree']) {
+    const i = W.TARGETS.findIndex(k => k.kind === kind), k = W.TARGETS[i], bx = k.x + Math.sin(k.face) * 9, bz = k.z + Math.cos(k.face) * 9;   // stand 9 m in front of its face
+    tp(room, ids[0], bx, bz); step(room, .3); E.drain(room); shootPoint(room, ids[0], [k.x, k.y, k.z]); step(room, .6);
+    const ev = E.drain(room).map(o => o.m).find(m => m.t === 'tgt' && m.i === i && !m.up);
+    ok(!room.tg[i].up && ev && ev.by === ids[0] && ev.coins === W.TARGET.coins, `an arrow breaks a target on ${kind === 'tree' ? 'a tree' : 'a post'}, and it pays ${W.TARGET.coins} coins`, ev ? `by ${ev.by}, ${ev.coins} coins` : 'not broken');
+  }
+  ok(me.tgts === 2, 'the archer is credited with both', me.tgts);
+  const i0 = W.TARGETS.findIndex(k => k.kind === 'ground'); step(room, W.TARGET.back + 1); ok(room.tg[i0].up, `a broken target stands again after ${W.TARGET.back} s`); }
+{ const { room, ids, P } = match('1v1'); const me = P(ids[0]);   // a flying target: lead it a little
+  const i = W.TARGETS.findIndex(k => k.kind === 'fly'), k = W.TARGETS[i]; tp(room, ids[0], k.x + 12, k.z + 3); step(room, .3); E.drain(room);
+  const st = me.st, now = room.t + 1.0, here = W.targetPos(k, now), dist = Math.hypot(here[0] - st.x, here[1] - st.y - 1.6, here[2] - st.z), q = W.targetPos(k, now + dist / W.launchSpeed(1));
+  shootPoint(room, ids[0], q); step(room, 1.2); ok(!room.tg[i].up, 'a target flying under its balloon can be shot down', `${dist.toFixed(0)} m up and away`); }
+{ const { room, ids, P } = match('1v1'); const me = P(ids[0]); me.tgts = 3; room.score = [4, 0]; tp(room, ids[0], 70, 100); tp(room, ids[1], 70, 75, Math.PI); step(room, .2);   // end the match: the coins list the targets
+  shootAt(room, ids[0], ids[1], 1.62); step(room, 4); const r = E.drain(room).map(o => o.m).find(m => m.t === 'results'); const rows = r && r.coinRows[ids[0]] || [];
+  ok(rows.some(([l, n]) => /3 targets broken/.test(l) && n === 3 * W.TARGET.coins), 'a match pays for the targets you broke', rows.map(r2 => r2.join(' +')).join(', ')); }
 console.log(fails ? fails + ' FAILED' : 'ALL OK');

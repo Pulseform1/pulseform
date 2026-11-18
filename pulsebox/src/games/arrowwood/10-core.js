@@ -18,7 +18,7 @@
   const teamCol = (team, slot, mode) => mode === 'ffa' ? FFA_COLS[(slot | 0) % 8] : W.TEAMS[team | 0].col;
 
   // settings (kept in the kit's save for this game)
-  const CFG = { quality: 'auto', sens: .5, touchSens: .5, invert: false, vol: .8, fov: 75, name: '', fps: false, aimLine: 'full' };
+  const CFG = { quality: 'auto', sens: .5, touchSens: .5, invert: false, vol: .8, amb: 1, fov: 75, name: '', fps: false, aimLine: 'full' };   // amb: the forest's own sounds (birds, leaves, the creek)
   const loadCfg = () => { try { Object.assign(CFG, (K.save.aw || {}).cfg || {}); } catch (e) {} };
   const saveCfg = () => { try { K.save.aw = Object.assign(K.save.aw || {}, { cfg: CFG }); K.persist(); } catch (e) {} };
   const quality = () => QS.get('quality') || (CFG.quality !== 'auto' ? CFG.quality : (isTouch() || /iPad|iPhone|Android/.test(navigator.userAgent)) ? 'low' : (navigator.hardwareConcurrency || 4) >= 8 ? 'high' : 'medium');
@@ -36,7 +36,27 @@
     return r.json();
   };
   const PROFILE = { coins: 0, owned: ['longbow'], equipped: 'longbow', loaded: false, err: '' };
-  async function loadProfile() { if (TESTER) { Object.assign(PROFILE, { coins: 0, owned: W.BOW_IDS.slice(), loaded: true, err: '' }); try { const e = localStorage.getItem('aw-tester-bow'); if (W.BOW_IDS.includes(e)) PROFILE.equipped = e; } catch (er) {} emit('profile'); return PROFILE; }
+  /* The wallet: coins, owned bows, the equipped one. Kept by the bank on the server; the tester build has no server, so it
+     keeps one in this browser instead. Either way you start with the Forester's Longbow and buy the rest. */
+  const LW = 'aw-tester-wallet';
+  function localWallet() {
+    let w = null; try { w = JSON.parse(localStorage.getItem(LW) || 'null'); } catch (e) {}
+    if (!w || !Array.isArray(w.owned) || typeof w.coins !== 'number') w = { coins: W.COINS.start, owned: ['longbow'], equipped: 'longbow' };
+    w.owned = w.owned.filter(b => W.BOW_IDS.includes(b)); if (!w.owned.includes('longbow')) w.owned.unshift('longbow'); if (!w.owned.includes(w.equipped)) w.equipped = 'longbow';
+    return w;
+  }
+  async function bank(op, body) {   // 'buy' | 'equip' | 'earn': the new profile, or { error }
+    if (!TESTER) return api(op, body);
+    const w = localWallet();
+    if (op === 'buy') { const b = W.BOWS.find(x => x.id === body.bow); if (!b) return { error: 'No such bow.' }; if (w.owned.includes(b.id)) return { error: 'You already own it.', ...w }; if (w.coins < b.price) return { error: `Not enough coins: ${b.price - w.coins} more needed.`, ...w }; w.coins -= b.price; w.owned.push(b.id); w.equipped = b.id; }
+    else if (op === 'equip') { if (!w.owned.includes(body.bow)) return { error: 'You do not own that bow.', ...w }; w.equipped = body.bow; }
+    else if (op === 'earn') { if (body.kind === 'bots') { const seen = (() => { try { return JSON.parse(localStorage.getItem(LW + '-m') || '[]'); } catch (e) { return []; } })(); if (seen.includes(body.match)) return { ...w }; seen.push(body.match); try { localStorage.setItem(LW + '-m', JSON.stringify(seen.slice(-30))); } catch (e) {} }
+      w.coins += Math.max(0, Math.min(body.kind === 'bots' ? W.COINS.maxBots : W.TARGET.coins, body.n | 0)); }
+    try { localStorage.setItem(LW, JSON.stringify(w)); } catch (e) {} return { ...w };
+  }
+  // coins from a bot match (its coin rows) or a target on the practice range
+  async function earn(kind, n, match) { try { const p = await bank('earn', { kind, n, match }); if (p && p.coins != null) { Object.assign(PROFILE, p, { err: '' }); emit('profile'); } return p; } catch (e) { return null; } }
+  async function loadProfile() { if (TESTER) { Object.assign(PROFILE, localWallet(), { loaded: true, err: '' }); emit('profile'); return PROFILE; }
     try { const p = await api('profile'); if (p && !p.error) { Object.assign(PROFILE, p, { loaded: true, err: '' }); emit('profile'); } else PROFILE.err = (p && p.error) || 'offline'; } catch (e) { PROFILE.err = 'Could not reach the server for your coins.'; } return PROFILE; }
   const myName = () => CFG.name || (CFG.name = 'Archer ' + (100 + Math.floor(Math.random() * 900)), saveCfg(), CFG.name);
   const fmtT = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };

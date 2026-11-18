@@ -12,7 +12,7 @@
   });
   on('thwack', () => HUD.rulerFlash = 1);
   on('toast', t => HUD.toast = { t, at: now() });
-  on('picked', () => HUD.toast = { t: '+3 arrows', at: now() });
+  on('tgtBreak', (i, p, mine, c) => { if (mine) HUD.toast = { t: `Target broken · +${c || W.TARGET.coins} coins`, at: now() }; });
   on('recovered', () => HUD.toast = { t: 'Arrow recovered', at: now() });
   on('roundStart', m => { HUD.banner = { t: CL.mode === 'ffa' ? 'FREE FOR ALL' : `ROUND ${m.round}`, s: CL.mode === 'ffa' ? 'One shot, one kill · most eliminations in 2:30' : (m.score[0] === 4 && m.score[1] === 4 ? 'MATCH POINT · this round wins it' : `${W.TEAMS[0].n} ${m.score[0]}–${m.score[1]} ${W.TEAMS[1].n}`), at: now(), dur: 3 }; });
   on('go', () => { HUD.banner = { t: 'DRAW!', s: '', at: now(), dur: 1.1 }; });
@@ -41,11 +41,6 @@
     for (const pg of CL.pings) { const age = t - pg.t; if (age > 7) continue; const s = toScreen(pg.p); const d = Math.hypot(pg.p[0] - ME.st.x, pg.p[2] - ME.st.z); if (!s) continue; g.globalAlpha = Math.min(1, (7 - age) * 2); g.fillStyle = GOLD; g.save(); g.translate(s[0], s[1]); g.rotate(Math.PI / 4); g.fillRect(-6, -6, 12, 12); g.restore(); txS(g, `${pg.from === CL.me ? 'You' : pg.name} · ${pg.label}`, s[0], s[1] - 20, 13, GOLD, 'center', 800); txS(g, `${Math.round(d)} m`, s[0], s[1] + 18, 12, BONE, 'center', 700); g.globalAlpha = 1; }
     // teammates: names over their heads
     if (CL.src === 'online' && CL.mode !== 'ffa') for (const p of CL.players.values()) { if (p.id === CL.me || !mine || p.team !== mine.team || !p.vis || !p.alive) continue; const s = toScreen([p.vis.x, p.vis.y + 2.05, p.vis.z]); if (s) { txS(g, p.name, s[0], s[1], 13, W.TEAMS[p.team].col, 'center', 800); g.fillStyle = W.TEAMS[p.team].col; g.beginPath(); g.moveTo(s[0] - 5, s[1] + 9); g.lineTo(s[0] + 5, s[1] + 9); g.lineTo(s[0], s[1] + 15); g.fill(); } }
-    // low on arrows: show where the bundles are and your own misses you can pull back out
-    if (live() && ME.alive && ME.arrows <= 2 && CL.src !== 'practice') {
-      W.PICKUPS.forEach((k, i) => { if (!CL.picks[i]) return; const s = toScreen([k.x, k.y + 1, k.z]); if (s) { g.globalAlpha = .8; txS(g, '➶ ×3', s[0], s[1], 13, GOLD, 'center', 900); g.globalAlpha = 1; } });
-      for (const s of CL.stuck.values()) { if (s.by !== CL.me || !s.rec) continue; const q = toScreen(s.p); if (q && Math.hypot(s.p[0] - ME.st.x, s.p[2] - ME.st.z) < 30) { g.fillStyle = 'rgba(233,196,106,.85)'; g.beginPath(); g.arc(q[0], q[1], 3.5, 0, TAU); g.fill(); } }
-    }
     // top: score and clock (or the free-for-all board)
     const remain = Math.max(0, CL.phaseEnd - srvNow());
     if (CL.src === 'online' && CL.mode !== 'ffa' && CL.phase !== 'lobby') {
@@ -84,9 +79,8 @@
     if (CL.src && ME.alive && ME.cam === 'fp') {
       const x = V.x0 + 22, y = V.y1 - 64 - (touch ? 150 : 0);
       tx(g, 'HEALTH', x, y - 6, 11, DIM, 'left', 900); bar(g, x, y + 4, 190, 11, ME.hp / 100, ME.hp > 55 ? '#a8d88a' : ME.hp > 25 ? GOLD : HURT); tx(g, String(ME.hp), x + 200, y + 10, 14, BONE, 'left', 900);
-      const n = CL.src === 'practice' ? 0 : ME.arrows; tx(g, CL.src === 'practice' ? 'ARROWS ∞' : 'ARROWS', x, y + 30, 11, ME.arrows <= 1 && CL.src !== 'practice' ? HURT : DIM, 'left', 900);
+      tx(g, 'ARROWS', x, y + 30, 11, DIM, 'left', 900); tx(g, '∞', x + 62, y + 31, 24, GOLD, 'left', 900); const n = 0;   // the quiver never runs out
       for (let k = 0; k < Math.min(9, n); k++) { const ax = x + 64 + k * 12; g.strokeStyle = BONE; g.lineWidth = 2; g.beginPath(); g.moveTo(ax, y + 40); g.lineTo(ax, y + 22); g.stroke(); g.fillStyle = GOLD; g.beginPath(); g.moveTo(ax - 3, y + 26); g.lineTo(ax, y + 19); g.lineTo(ax + 3, y + 26); g.fill(); }
-      if (CL.src !== 'practice' && n === 0) tx(g, 'none: grab a bundle or pull your misses out', x + 64, y + 31, 11, HURT, 'left', 800);
     }
     // kill feed
     let fy = V.y0 + 16; for (const f of CL.feed) { const age = t - f.t; if (age > 6) continue; g.globalAlpha = Math.min(1, (6 - age) * 2); const s = `${f.k || '?'}  ➶  ${f.v}${f.zone === 'head' ? '  (head)' : ''}`; g.font = '800 13px Nunito'; const w = g.measureText(s).width + 20; rr(g, V.x1 - 16 - w, fy, w, 24, 6, DARK); tx(g, s, V.x1 - 26, fy + 12, 13, f.kid === CL.me ? GOLD : f.vid === CL.me ? HURT : BONE, 'right', 800); fy += 28; g.globalAlpha = 1; }

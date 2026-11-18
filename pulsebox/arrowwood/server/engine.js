@@ -11,7 +11,7 @@
    room.grant(profile, matchId, coins) is called once per player when a match ends (the host of the engine saves it). */
 import {
   BOW, PL, drawPower, launchSpeed, damageFor, moveStep, groundAt, blocked, terrainH, arrowAt, aimVector, shotOrigin,
-  sweepWorld, sweepBodies, PICKUPS, SPAWNS, SPAWN_YAW, FFA_SPAWNS, ZONE, COINS, BOW_IDS, gridRef, areaName, inWater,
+  sweepWorld, sweepBodies, TARGETS, TARGET, targetPos, sweepTargets, SPAWNS, SPAWN_YAW, FFA_SPAWNS, ZONE, COINS, BOW_IDS, gridRef, areaName, inWater,
   rayWorld, eyeHeight, GRAV, MIN, MAX, CX, CZ, gravFor, isFull,
 } from '../shared/world.js';
 
@@ -29,7 +29,7 @@ export function createRoom(o = {}) {
   return {
     code: o.code || '', mode, oneShot: !!o.oneShot || mode === 'ffa', dev: !!o.dev, T: (o.fast != null ? o.fast : o.dev) ? FAST : NORMAL,
     players: new Map(), host: null, phase: 'lobby', t: 0, phaseEnd: 0, round: 0, score: [0, 0], winner: null,
-    arrows: [], stuck: [], picks: [], nextId: 1, out: [], cap: [0, 0], matchId: '', votes: new Set(), log: [],
+    arrows: [], stuck: [], tg: TARGETS.map(() => ({ up: true, back: 0 })), nextId: 1, out: [], cap: [0, 0], matchId: '', votes: new Set(), log: [],
     grant: o.grant || null, practice: mode === 'practice', lastSnap: 0, created: o.now || 0, ffaEnd: 0, lobbyVer: 0, offline: !!o.offline,
   };
 }
@@ -62,7 +62,7 @@ export function join(room, info, now) {
 }
 function welcome(room, p) {
   send(room, p.id, { t: 'welcome', id: p.id, token: p.token, code: room.code, mode: room.mode, oneShot: room.oneShot, phase: room.phase, tm: r2(room.t),
-    stuck: room.stuck.map(stuckOut), picks: room.picks.map((k, i) => k.taken ? i : -1).filter(i => i >= 0), score: room.score, round: room.round, results: room.phase === 'results' ? room.lastResults : undefined });
+    stuck: room.stuck.map(stuckOut), tg: room.tg.map((k, i) => k.up ? -1 : i).filter(i => i >= 0), score: room.score, round: room.round, results: room.phase === 'results' ? room.lastResults : undefined });
 }
 export function drop(room, id, now) {
   const p = room.players.get(id); if (!p) return;
@@ -148,7 +148,7 @@ function fire(room, p, m) {
   const seen = room.t - st.drawAt, held = Number.isFinite(m.dt) ? Math.max(0, Math.min(m.dt, seen + .25)) : seen;   // trust the client's draw time only up to what the server saw
   if (Number.isFinite(m.yaw)) st.yaw = m.yaw; if (Number.isFinite(m.pitch)) st.pitch = Math.max(-1.5, Math.min(1.5, m.pitch));
   const power = drawPower(held), full = isFull(power), speed = launchSpeed(power), o = shotOrigin(st, full), v = aimVector(st.yaw, st.pitch, speed);
-  st.drawAt = null; st.nockAt = room.t + BOW.nock; if (!room.practice) st.arrows--;
+  st.drawAt = null; st.nockAt = room.t + BOW.nock; if (!room.practice && !BOW.infinite) st.arrows--;   // the quiver never runs out
   const a = { id: room.nextId++, cid: m.cid | 0, by: p.id, o, v, g: gravFor(power), t0: room.t, age: 0, prev: o.slice(), power, bow: p.bow };
   room.arrows.push(a);
   send(room, '*', { t: 'shot', id: a.id, cid: a.cid, by: p.id, o: o.map(r3), v: v.map(r3), tm: r3(room.t), pw: r2(power), str: full ? 1 : 0 });
@@ -157,13 +157,13 @@ function fire(room, p, m) {
 // ---- matches, rounds, free for all
 function startMatch(room) {
   room.score = [0, 0]; room.round = 0; room.winner = null; room.votes.clear(); room.matchId = room.code + '-' + rid(6); room.granted = false;
-  for (const p of humans(room)) { p.kills = 0; p.deaths = 0; p.ready = false; }
+  for (const p of humans(room)) { p.kills = 0; p.deaths = 0; p.tgts = 0; p.ready = false; }
   if (room.mode === 'ffa') { room.phase = 'intro'; room.phaseEnd = room.t + room.T.intro; resetWorld(room); humans(room).forEach((p, i) => spawnFfa(room, p, i)); room.ffaEnd = room.phaseEnd + room.T.ffa; lobbyOut(room); phaseOut(room); return; }
   nextRound(room);
 }
 function resetWorld(room) {
   room.arrows = []; room.stuck = []; room.cap = [0, 0];
-  room.picks = PICKUPS.map(k => ({ ...k, taken: false, back: 0 }));
+  room.tg = TARGETS.map(() => ({ up: true, back: 0 }));   // every target stands again
   send(room, '*', { t: 'clear' });
 }
 function nextRound(room) {
@@ -195,16 +195,17 @@ function endMatch(room, reason) {
   if (room.mode === 'ffa') { const h = humans(room), top = Math.max(0, ...h.map(p => p.kills)); winners = h.filter(p => p.kills === top && top > 0).map(p => p.id); }
   else if (room.winner === 0 || room.winner === 1) winners = humans(room).filter(p => p.team === room.winner).map(p => p.id);
   const coins = {}, coinRows = {};
-  if (!room.granted && !room.practice && !room.offline) {
+  if (!room.granted && !room.practice) {
     room.granted = true;   // rewards are decided once per match, here; the bank also refuses a second grant for the same match
-    for (const p of humans(room)) {
+    for (const p of humans(room).filter(q => !q.bot)) {
       if (!p.connected && room.t - p.goneAt > room.T.grace) continue;
       const won = winners.includes(p.id), rw = room.mode === 'ffa' ? 0 : room.score[p.team] || 0, rows = [['Match played', COINS.match]];
       if (p.kills) rows.push([`${p.kills} elimination${p.kills === 1 ? '' : 's'}`, p.kills * COINS.kill]);
       if (rw) rows.push([`${rw} round${rw === 1 ? '' : 's'} won`, rw * COINS.round]);
       if (won) rows.push([room.mode === 'ffa' ? 'Most eliminations' : 'Victory', room.mode === 'ffa' ? COINS.ffaTop : COINS.win]);
-      const c = Math.min(COINS.maxMatch, rows.reduce((a, r) => a + r[1], 0));
-      coins[p.id] = c; coinRows[p.id] = rows; if (room.grant && p.profile) room.grant(p.profile, room.matchId, c, won);
+      if (p.tgts) rows.push([`${p.tgts} target${p.tgts === 1 ? '' : 's'} broken`, p.tgts * TARGET.coins]);
+      const c = Math.min(room.offline ? COINS.maxBots : COINS.maxMatch, rows.reduce((a, r) => a + r[1], 0));
+      coins[p.id] = c; coinRows[p.id] = rows; if (!room.offline && room.grant && p.profile) room.grant(p.profile, room.matchId, c, won);   // a bot match: the player's own game banks it
     }
   }
   room.lastResults = { t: 'results', reason, mode: room.mode, score: room.score.slice(), winner: room.winner, winners, coins, coinRows, matchId: room.matchId,
@@ -262,11 +263,7 @@ function botThink(room, p) {
   const T = B.tgt && B.tgt.st.alive ? B.tgt : null;
   // where to go
   let gx = null, gz = null, want = 1, sprint = false;
-  if (st.arrows <= 0) {
-    let best = null, bd = 1e9; for (const s of room.stuck) if (s.by === p.id && s.rec) { const d = Math.hypot(s.p[0] - st.x, s.p[2] - st.z); if (d < bd) { bd = d; best = [s.p[0], s.p[2]]; } }
-    room.picks.forEach(k => { if (k.taken) return; const d = Math.hypot(k.x - st.x, k.z - st.z); if (d < bd) { bd = d; best = [k.x, k.z]; } });
-    if (best) { [gx, gz] = best; sprint = !T; }
-  } else if (T) {
+  if (T) {   // (the quiver never runs out, so there is never a reason to go looking for arrows)
     const dx = T.st.x - st.x, dz = T.st.z - st.z, d = Math.hypot(dx, dz), ux = dx / d, uz = dz / d;
     if (room.t >= B.strafeT) { B.strafe = Math.random() < .5 ? -1 : 1; B.strafeT = room.t + rr(.8, 2.4); }
     const far = d > L.shoot * .85, fwd = far ? 1 : d < 12 ? -.8 : 0, side = far ? L.strafe * B.strafe * .35 : L.strafe * B.strafe;
@@ -340,10 +337,11 @@ export function tick(room, now) {
   if (live(room)) {
     botsStep(room);
     arrowsStep(room);
-    pickupsStep(room);
+    targetsStep(room);
     if (room.mode === 'ffa') for (const p of humans(room)) if (!p.st.alive && p.respawnAt && room.t >= p.respawnAt) spawnFfa(room, p);
     if (room.phase === 'overtime') overtimeStep(room);
   } else if (room.phase === 'roundEnd' || room.phase === 'results') arrowsStep(room);   // arrows already in the air still land
+  if (room.practice || room.phase === 'lobby' || room.phase === 'results' || room.phase === 'intro' || room.phase === 'roundEnd') targetsStep(room);
   // snapshots, about 20 a second
   const pl = list(room).map(p => { const s = p.st; return [p.id, r2(s.x), r2(s.y), r2(s.z), r3(s.yaw), r3(s.pitch), (s.alive ? 1 : 0) | (s.crouch ? 2 : 0) | (s.sprint ? 4 : 0) | (s.drawAt != null ? 8 : 0) | (p.connected ? 16 : 0) | (s.inWater ? 32 : 0), Math.max(0, Math.round(s.hp)), s.arrows, s.drawAt != null ? r2(drawPower(room.t - s.drawAt)) : 0, p.kills, p.deaths]; });
   const snap = { t: 's', tm: r3(room.t), ph: room.phase, end: r2(room.phaseEnd), pl };
@@ -366,7 +364,8 @@ function arrowsStep(room) {
       a.age += dt; const p1 = arrowAt(a.o, a.v, a.age, a.g), p0 = a.prev;
       const shooter = room.players.get(a.by);
       const bodies = live(room) ? list(room).filter(q => q.st.alive && (shooter ? foes(room, shooter, q) : q.id !== a.by)).map(q => ({ s: q.st, q })) : [];
-      const hw = sweepWorld(p0, p1), hb = bodies.length ? sweepBodies(p0, p1, bodies) : null;
+      const hw = sweepWorld(p0, p1), hb = bodies.length ? sweepBodies(p0, p1, bodies) : null, ht = sweepTargets(p0, p1, room.tg.map(k => k.up), room.t);
+      if (ht && (!hw || ht.t <= hw.t) && (!hb || ht.t <= hb.t)) { breakTarget(room, ht.i, a.by, ht.p); a.dead = true; break; }   // a target: it breaks, the arrow is spent
       if (hb && (!hw || hb.t <= hw.t)) { hitBody(room, a, hb, p0, p1); a.dead = true; break; }
       if (hw) { stick(room, a, p0, p1, hw); a.dead = true; break; }
       a.prev = p1;
@@ -405,23 +404,14 @@ function eliminate(room, victim, killer, zone, dir) {
   // the round is decided at the end of this tick (settle), after every arrow in the air has landed: a double wipe on one tick is a replay
   room.checkQueued = true;
 }
-function pickupsStep(room) {
-  for (const k of room.picks) {
-    if (k.taken) { if (room.mode === 'ffa' && k.back && room.t >= k.back) { k.taken = false; send(room, '*', { t: 'pick', i: room.picks.indexOf(k), on: 1 }); } continue; }
-    for (const p of humans(room)) {
-      const st = p.st; if (!st.alive || st.arrows >= BOW.maxArrows || Math.hypot(st.x - k.x, st.z - k.z) > 1.5 || Math.abs(st.y - k.y) > 1.6) continue;
-      st.arrows = Math.min(BOW.maxArrows, st.arrows + BOW.bundle); k.taken = true; k.back = room.mode === 'ffa' ? room.t + room.T.ffaPick : 0;
-      send(room, '*', { t: 'pick', i: room.picks.indexOf(k), on: 0, by: p.id }); break;
-    }
-  }
-  // your own missed arrows: walk up to one and you take it back
-  for (const p of humans(room)) {
-    const st = p.st; if (!st.alive || st.arrows >= BOW.maxArrows) continue;
-    for (let n = room.stuck.length - 1; n >= 0; n--) {
-      const s = room.stuck[n]; if (s.by !== p.id || !s.rec) continue;
-      if (Math.hypot(st.x - s.p[0], st.z - s.p[2]) < 1.5 && s.p[1] - st.y > -.8 && s.p[1] - st.y < 2.2) { room.stuck.splice(n, 1); st.arrows++; send(room, '*', { t: 'gone', id: s.id, by: p.id }); if (st.arrows >= BOW.maxArrows) break; }
-    }
-  }
+// targets: a broken one stands again after a while. Whoever broke it is paid for it (online, with the match's coins)
+function targetsStep(room) {
+  room.tg.forEach((k, i) => { if (!k.up && room.t >= k.back) { k.up = true; send(room, '*', { t: 'tgt', i, up: 1 }); } });
+}
+function breakTarget(room, i, by, at) {
+  const k = room.tg[i]; if (!k || !k.up) return; k.up = false; k.back = room.t + TARGET.back;
+  const p = room.players.get(by); if (p && !p.bot && !p.dummy) p.tgts = (p.tgts || 0) + 1;
+  send(room, '*', { t: 'tgt', i, up: 0, by, p: at.map(r2), coins: p && !p.bot ? TARGET.coins : 0 });
 }
 function zoneTeams(room) { const t = [0, 0]; for (const p of humans(room)) if (p.st.alive && Math.hypot(p.st.x - ZONE.x, p.st.z - ZONE.z) < ZONE.r) t[p.team]++; return t; }
 function overtimeStep(room) {

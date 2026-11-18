@@ -100,6 +100,7 @@ const BOW = {
   fullDraw: .9,                // seconds to reach a full draw
   nock: .5,                    // seconds after a release before the next arrow is on the string
   startArrows: 6, maxArrows: 9, bundle: 3,
+  infinite: true,              // the quiver never runs out (the count stays at startArrows)
 };
 const drawPower = t => Math.max(0, Math.min(1, t / BOW.fullDraw));
 const launchSpeed = p => BOW.vMin + (BOW.vMax - BOW.vMin) * (1 - (1 - p) * (1 - p));   // rises quickly, then settles into a full draw
@@ -252,7 +253,7 @@ const SPLIT = { x: 26, z: 80 };
   });
 })();
 
-// arrow pickups (a bundle of three) in exposed spots, and named areas for callouts
+// six clearings in exposed spots (they once held arrow bundles; now each has a target on a post), kept clear of trees
 const PICKUPS = [];
 both(P => { for (const [x, z] of [[56, 75], [37, 97], [97, 104]]) { const [px, pz] = P(x, z); PICKUPS.push({ x: px, z: pz, y: terrainH(px, pz) }); } });
 const SPAWNS = { 0: [[70, 126], [64, 128], [76, 128], [70, 131]], 1: [[70, 14], [76, 12], [64, 12], [70, 9]] };
@@ -312,6 +313,38 @@ const inMeadow = (x, z, pad = 0) => MEADOWS.some(m => Math.hypot(x - m.x, z - m.
   }
   for (const q of bh) { BUSHES.push(q); const [x, z] = rot(q.x, q.z); BUSHES.push({ ...q, x, z, seed: q.seed + 1 }); }
 })();
+
+/* ---- targets: little bullseyes worth coins. On posts in the clearings and meadows, nailed to lone tree trunks, and
+   flying in circles under balloons over the meadows. One arrow breaks one; it comes back a while later. They are not
+   solid: you walk through them, and only arrows hit them. Flying ones move on the room's clock (targetPos). */
+const TARGET = { coins: 5, back: 30, r: .46, rFly: .62 };
+const TARGETS = [];
+(function targets() {
+  const g = (x, z) => terrainH(x, z);
+  for (const k of PICKUPS) TARGETS.push({ kind: 'ground', x: k.x, y: k.y + 1.25, z: k.z, face: Math.atan2(CX - k.x, CZ - k.z) });
+  both(P => { for (const [x, z] of [[44, 86], [96, 86], [122, 80], [70, 104]]) { const [px, pz] = P(x, z); TARGETS.push({ kind: 'ground', x: px, y: g(px, pz) + 1.25, z: pz, face: Math.atan2(CX - px, CZ - pz) }); } });
+  // on trees: every third lone tree on each half, on the side facing the middle of the wood, at head height
+  const lone = TREES.filter(t => t.kind === 'oak' || t.kind === 'oak2');
+  lone.forEach((t, i) => { if (i % 3) return; const a = Math.atan2(CX - t.x, CZ - t.z), d = t.r + .07, x = t.x + Math.sin(a) * d, z = t.z + Math.cos(a) * d; TARGETS.push({ kind: 'tree', x, y: g(t.x, t.z) + 2.3 + (i % 2) * .5, z, face: a, tree: TREES.indexOf(t) }); });
+  // in the sky: circling over the meadows, high enough to need a lob or a long straight shot
+  MEADOWS.forEach((m, i) => TARGETS.push({ kind: 'fly', x: m.x, y: g(m.x, m.z) + 11 + (i % 3) * 2.5, z: m.z, rad: Math.max(4, m.r * .7), per: 18 + (i % 4) * 4, ph: i * 1.7, dir: i % 2 ? 1 : -1 }));
+})();
+// where a target is at room time t (fixed ones never move)
+function targetPos(k, t) {
+  if (k.kind !== 'fly') return [k.x, k.y, k.z];
+  const a = k.ph + k.dir * t * Math.PI * 2 / k.per; return [k.x + Math.cos(a) * k.rad, k.y + Math.sin(t * 1.1 + k.ph) * .7, k.z + Math.sin(a) * k.rad];
+}
+// the first target an arrow's step from p0 to p1 meets (up: which are standing), with how far along it, or null
+function sweepTargets(p0, p1, up, t) {
+  const dx = p1[0] - p0[0], dy = p1[1] - p0[1], dz = p1[2] - p0[2], L2 = dx * dx + dy * dy + dz * dz; if (L2 < 1e-9) return null; let best = null;
+  for (let i = 0; i < TARGETS.length; i++) {
+    if (!up[i]) continue; const k = TARGETS[i], c = targetPos(k, t), r = k.kind === 'fly' ? TARGET.rFly : TARGET.r;
+    const fx = p0[0] - c[0], fy = p0[1] - c[1], fz = p0[2] - c[2], b = 2 * (fx * dx + fy * dy + fz * dz), cc = fx * fx + fy * fy + fz * fz - r * r, disc = b * b - 4 * L2 * cc;
+    if (disc < 0) continue; const tt = (-b - Math.sqrt(disc)) / (2 * L2); if (tt < 0 || tt > 1 || (best && tt >= best.t)) continue;
+    best = { i, t: tt, p: [p0[0] + dx * tt, p0[1] + dy * tt, p0[2] + dz * tt] };
+  }
+  return best;
+}
 
 const ZONE = { x: CX, z: CZ, r: 9, name: 'Stone Bridge' };
 const AREAS = [
@@ -522,9 +555,11 @@ const BOWS = [
 const tierOf = price => price === 0 ? 'Starter' : price < 500 ? 'Common' : price < 1200 ? 'Rare' : price < 2500 ? 'Epic' : price < 4500 ? 'Legendary' : 'Mythic';
 const BOW_IDS = BOWS.map(b => b.id);
 // coins for online matches: for playing, each elimination, each round your side wins, and the win itself
-const COINS = { start: 150, match: 25, kill: 15, round: 10, win: 50, ffaTop: 50, maxMatch: 1000 };
+// coins: online matches pay these (and targets), up to maxMatch; bot matches pay the same rows up to maxBots; offline
+// earnings (bot matches and targets outside online matches) are capped at offlineHour an hour on the server
+const COINS = { start: 150, match: 25, kill: 15, round: 10, win: 50, ffaTop: 50, maxMatch: 1000, maxBots: 300, offlineHour: 1500 };
 
-return { damageFor, rng, creekDist, terrainH, areaName, groundAt, blocked, moveStep, aimVector, shotOrigin, sweepWorld, hitboxes, sweepBodies, rayWorld, previewArc, MAP_SIZE, MIN, MAX, CX, CZ, GRAV, BOW, drawPower, launchSpeed, ZONES, PL, eyeHeight, creekZ, CREEK_W, waterY, inWater, TREES, BOXES, PROPS, BUSHES, PICKUPS, SPAWNS, SPAWN_YAW, FFA_SPAWNS, GROVES, MEADOWS, inGrove, inMeadow, ZONE, AREAS, gridRef, TEAMS, isFull, gravFor, arrowAt, BOWS, tierOf, BOW_IDS, COINS };
+return { damageFor, rng, creekDist, terrainH, targetPos, sweepTargets, areaName, groundAt, blocked, moveStep, aimVector, shotOrigin, sweepWorld, hitboxes, sweepBodies, rayWorld, previewArc, MAP_SIZE, MIN, MAX, CX, CZ, GRAV, BOW, drawPower, launchSpeed, ZONES, PL, eyeHeight, creekZ, CREEK_W, waterY, inWater, TREES, BOXES, PROPS, BUSHES, PICKUPS, SPAWNS, SPAWN_YAW, FFA_SPAWNS, GROVES, MEADOWS, inGrove, inMeadow, TARGET, TARGETS, ZONE, AREAS, gridRef, TEAMS, isFull, gravFor, arrowAt, BOWS, tierOf, BOW_IDS, COINS };
 })();
 
 /* ---- shared: arrowwood/server/engine.js ---- */
@@ -542,7 +577,7 @@ const ENG = (() => {
    room.grant(profile, matchId, coins) is called once per player when a match ends (the host of the engine saves it). */
 const {
   BOW, PL, drawPower, launchSpeed, damageFor, moveStep, groundAt, blocked, terrainH, arrowAt, aimVector, shotOrigin,
-  sweepWorld, sweepBodies, PICKUPS, SPAWNS, SPAWN_YAW, FFA_SPAWNS, ZONE, COINS, BOW_IDS, gridRef, areaName, inWater,
+  sweepWorld, sweepBodies, TARGETS, TARGET, targetPos, sweepTargets, SPAWNS, SPAWN_YAW, FFA_SPAWNS, ZONE, COINS, BOW_IDS, gridRef, areaName, inWater,
   rayWorld, eyeHeight, GRAV, MIN, MAX, CX, CZ, gravFor, isFull,
 } = W;
 const TICK = 1 / 20;
@@ -559,7 +594,7 @@ function createRoom(o = {}) {
   return {
     code: o.code || '', mode, oneShot: !!o.oneShot || mode === 'ffa', dev: !!o.dev, T: (o.fast != null ? o.fast : o.dev) ? FAST : NORMAL,
     players: new Map(), host: null, phase: 'lobby', t: 0, phaseEnd: 0, round: 0, score: [0, 0], winner: null,
-    arrows: [], stuck: [], picks: [], nextId: 1, out: [], cap: [0, 0], matchId: '', votes: new Set(), log: [],
+    arrows: [], stuck: [], tg: TARGETS.map(() => ({ up: true, back: 0 })), nextId: 1, out: [], cap: [0, 0], matchId: '', votes: new Set(), log: [],
     grant: o.grant || null, practice: mode === 'practice', lastSnap: 0, created: o.now || 0, ffaEnd: 0, lobbyVer: 0, offline: !!o.offline,
   };
 }
@@ -592,7 +627,7 @@ function join(room, info, now) {
 }
 function welcome(room, p) {
   send(room, p.id, { t: 'welcome', id: p.id, token: p.token, code: room.code, mode: room.mode, oneShot: room.oneShot, phase: room.phase, tm: r2(room.t),
-    stuck: room.stuck.map(stuckOut), picks: room.picks.map((k, i) => k.taken ? i : -1).filter(i => i >= 0), score: room.score, round: room.round, results: room.phase === 'results' ? room.lastResults : undefined });
+    stuck: room.stuck.map(stuckOut), tg: room.tg.map((k, i) => k.up ? -1 : i).filter(i => i >= 0), score: room.score, round: room.round, results: room.phase === 'results' ? room.lastResults : undefined });
 }
 function drop(room, id, now) {
   const p = room.players.get(id); if (!p) return;
@@ -678,7 +713,7 @@ function fire(room, p, m) {
   const seen = room.t - st.drawAt, held = Number.isFinite(m.dt) ? Math.max(0, Math.min(m.dt, seen + .25)) : seen;   // trust the client's draw time only up to what the server saw
   if (Number.isFinite(m.yaw)) st.yaw = m.yaw; if (Number.isFinite(m.pitch)) st.pitch = Math.max(-1.5, Math.min(1.5, m.pitch));
   const power = drawPower(held), full = isFull(power), speed = launchSpeed(power), o = shotOrigin(st, full), v = aimVector(st.yaw, st.pitch, speed);
-  st.drawAt = null; st.nockAt = room.t + BOW.nock; if (!room.practice) st.arrows--;
+  st.drawAt = null; st.nockAt = room.t + BOW.nock; if (!room.practice && !BOW.infinite) st.arrows--;   // the quiver never runs out
   const a = { id: room.nextId++, cid: m.cid | 0, by: p.id, o, v, g: gravFor(power), t0: room.t, age: 0, prev: o.slice(), power, bow: p.bow };
   room.arrows.push(a);
   send(room, '*', { t: 'shot', id: a.id, cid: a.cid, by: p.id, o: o.map(r3), v: v.map(r3), tm: r3(room.t), pw: r2(power), str: full ? 1 : 0 });
@@ -687,13 +722,13 @@ function fire(room, p, m) {
 // ---- matches, rounds, free for all
 function startMatch(room) {
   room.score = [0, 0]; room.round = 0; room.winner = null; room.votes.clear(); room.matchId = room.code + '-' + rid(6); room.granted = false;
-  for (const p of humans(room)) { p.kills = 0; p.deaths = 0; p.ready = false; }
+  for (const p of humans(room)) { p.kills = 0; p.deaths = 0; p.tgts = 0; p.ready = false; }
   if (room.mode === 'ffa') { room.phase = 'intro'; room.phaseEnd = room.t + room.T.intro; resetWorld(room); humans(room).forEach((p, i) => spawnFfa(room, p, i)); room.ffaEnd = room.phaseEnd + room.T.ffa; lobbyOut(room); phaseOut(room); return; }
   nextRound(room);
 }
 function resetWorld(room) {
   room.arrows = []; room.stuck = []; room.cap = [0, 0];
-  room.picks = PICKUPS.map(k => ({ ...k, taken: false, back: 0 }));
+  room.tg = TARGETS.map(() => ({ up: true, back: 0 }));   // every target stands again
   send(room, '*', { t: 'clear' });
 }
 function nextRound(room) {
@@ -725,16 +760,17 @@ function endMatch(room, reason) {
   if (room.mode === 'ffa') { const h = humans(room), top = Math.max(0, ...h.map(p => p.kills)); winners = h.filter(p => p.kills === top && top > 0).map(p => p.id); }
   else if (room.winner === 0 || room.winner === 1) winners = humans(room).filter(p => p.team === room.winner).map(p => p.id);
   const coins = {}, coinRows = {};
-  if (!room.granted && !room.practice && !room.offline) {
+  if (!room.granted && !room.practice) {
     room.granted = true;   // rewards are decided once per match, here; the bank also refuses a second grant for the same match
-    for (const p of humans(room)) {
+    for (const p of humans(room).filter(q => !q.bot)) {
       if (!p.connected && room.t - p.goneAt > room.T.grace) continue;
       const won = winners.includes(p.id), rw = room.mode === 'ffa' ? 0 : room.score[p.team] || 0, rows = [['Match played', COINS.match]];
       if (p.kills) rows.push([`${p.kills} elimination${p.kills === 1 ? '' : 's'}`, p.kills * COINS.kill]);
       if (rw) rows.push([`${rw} round${rw === 1 ? '' : 's'} won`, rw * COINS.round]);
       if (won) rows.push([room.mode === 'ffa' ? 'Most eliminations' : 'Victory', room.mode === 'ffa' ? COINS.ffaTop : COINS.win]);
-      const c = Math.min(COINS.maxMatch, rows.reduce((a, r) => a + r[1], 0));
-      coins[p.id] = c; coinRows[p.id] = rows; if (room.grant && p.profile) room.grant(p.profile, room.matchId, c, won);
+      if (p.tgts) rows.push([`${p.tgts} target${p.tgts === 1 ? '' : 's'} broken`, p.tgts * TARGET.coins]);
+      const c = Math.min(room.offline ? COINS.maxBots : COINS.maxMatch, rows.reduce((a, r) => a + r[1], 0));
+      coins[p.id] = c; coinRows[p.id] = rows; if (!room.offline && room.grant && p.profile) room.grant(p.profile, room.matchId, c, won);   // a bot match: the player's own game banks it
     }
   }
   room.lastResults = { t: 'results', reason, mode: room.mode, score: room.score.slice(), winner: room.winner, winners, coins, coinRows, matchId: room.matchId,
@@ -792,11 +828,7 @@ function botThink(room, p) {
   const T = B.tgt && B.tgt.st.alive ? B.tgt : null;
   // where to go
   let gx = null, gz = null, want = 1, sprint = false;
-  if (st.arrows <= 0) {
-    let best = null, bd = 1e9; for (const s of room.stuck) if (s.by === p.id && s.rec) { const d = Math.hypot(s.p[0] - st.x, s.p[2] - st.z); if (d < bd) { bd = d; best = [s.p[0], s.p[2]]; } }
-    room.picks.forEach(k => { if (k.taken) return; const d = Math.hypot(k.x - st.x, k.z - st.z); if (d < bd) { bd = d; best = [k.x, k.z]; } });
-    if (best) { [gx, gz] = best; sprint = !T; }
-  } else if (T) {
+  if (T) {   // (the quiver never runs out, so there is never a reason to go looking for arrows)
     const dx = T.st.x - st.x, dz = T.st.z - st.z, d = Math.hypot(dx, dz), ux = dx / d, uz = dz / d;
     if (room.t >= B.strafeT) { B.strafe = Math.random() < .5 ? -1 : 1; B.strafeT = room.t + rr(.8, 2.4); }
     const far = d > L.shoot * .85, fwd = far ? 1 : d < 12 ? -.8 : 0, side = far ? L.strafe * B.strafe * .35 : L.strafe * B.strafe;
@@ -870,10 +902,11 @@ function tick(room, now) {
   if (live(room)) {
     botsStep(room);
     arrowsStep(room);
-    pickupsStep(room);
+    targetsStep(room);
     if (room.mode === 'ffa') for (const p of humans(room)) if (!p.st.alive && p.respawnAt && room.t >= p.respawnAt) spawnFfa(room, p);
     if (room.phase === 'overtime') overtimeStep(room);
   } else if (room.phase === 'roundEnd' || room.phase === 'results') arrowsStep(room);   // arrows already in the air still land
+  if (room.practice || room.phase === 'lobby' || room.phase === 'results' || room.phase === 'intro' || room.phase === 'roundEnd') targetsStep(room);
   // snapshots, about 20 a second
   const pl = list(room).map(p => { const s = p.st; return [p.id, r2(s.x), r2(s.y), r2(s.z), r3(s.yaw), r3(s.pitch), (s.alive ? 1 : 0) | (s.crouch ? 2 : 0) | (s.sprint ? 4 : 0) | (s.drawAt != null ? 8 : 0) | (p.connected ? 16 : 0) | (s.inWater ? 32 : 0), Math.max(0, Math.round(s.hp)), s.arrows, s.drawAt != null ? r2(drawPower(room.t - s.drawAt)) : 0, p.kills, p.deaths]; });
   const snap = { t: 's', tm: r3(room.t), ph: room.phase, end: r2(room.phaseEnd), pl };
@@ -896,7 +929,8 @@ function arrowsStep(room) {
       a.age += dt; const p1 = arrowAt(a.o, a.v, a.age, a.g), p0 = a.prev;
       const shooter = room.players.get(a.by);
       const bodies = live(room) ? list(room).filter(q => q.st.alive && (shooter ? foes(room, shooter, q) : q.id !== a.by)).map(q => ({ s: q.st, q })) : [];
-      const hw = sweepWorld(p0, p1), hb = bodies.length ? sweepBodies(p0, p1, bodies) : null;
+      const hw = sweepWorld(p0, p1), hb = bodies.length ? sweepBodies(p0, p1, bodies) : null, ht = sweepTargets(p0, p1, room.tg.map(k => k.up), room.t);
+      if (ht && (!hw || ht.t <= hw.t) && (!hb || ht.t <= hb.t)) { breakTarget(room, ht.i, a.by, ht.p); a.dead = true; break; }   // a target: it breaks, the arrow is spent
       if (hb && (!hw || hb.t <= hw.t)) { hitBody(room, a, hb, p0, p1); a.dead = true; break; }
       if (hw) { stick(room, a, p0, p1, hw); a.dead = true; break; }
       a.prev = p1;
@@ -935,23 +969,14 @@ function eliminate(room, victim, killer, zone, dir) {
   // the round is decided at the end of this tick (settle), after every arrow in the air has landed: a double wipe on one tick is a replay
   room.checkQueued = true;
 }
-function pickupsStep(room) {
-  for (const k of room.picks) {
-    if (k.taken) { if (room.mode === 'ffa' && k.back && room.t >= k.back) { k.taken = false; send(room, '*', { t: 'pick', i: room.picks.indexOf(k), on: 1 }); } continue; }
-    for (const p of humans(room)) {
-      const st = p.st; if (!st.alive || st.arrows >= BOW.maxArrows || Math.hypot(st.x - k.x, st.z - k.z) > 1.5 || Math.abs(st.y - k.y) > 1.6) continue;
-      st.arrows = Math.min(BOW.maxArrows, st.arrows + BOW.bundle); k.taken = true; k.back = room.mode === 'ffa' ? room.t + room.T.ffaPick : 0;
-      send(room, '*', { t: 'pick', i: room.picks.indexOf(k), on: 0, by: p.id }); break;
-    }
-  }
-  // your own missed arrows: walk up to one and you take it back
-  for (const p of humans(room)) {
-    const st = p.st; if (!st.alive || st.arrows >= BOW.maxArrows) continue;
-    for (let n = room.stuck.length - 1; n >= 0; n--) {
-      const s = room.stuck[n]; if (s.by !== p.id || !s.rec) continue;
-      if (Math.hypot(st.x - s.p[0], st.z - s.p[2]) < 1.5 && s.p[1] - st.y > -.8 && s.p[1] - st.y < 2.2) { room.stuck.splice(n, 1); st.arrows++; send(room, '*', { t: 'gone', id: s.id, by: p.id }); if (st.arrows >= BOW.maxArrows) break; }
-    }
-  }
+// targets: a broken one stands again after a while. Whoever broke it is paid for it (online, with the match's coins)
+function targetsStep(room) {
+  room.tg.forEach((k, i) => { if (!k.up && room.t >= k.back) { k.up = true; send(room, '*', { t: 'tgt', i, up: 1 }); } });
+}
+function breakTarget(room, i, by, at) {
+  const k = room.tg[i]; if (!k || !k.up) return; k.up = false; k.back = room.t + TARGET.back;
+  const p = room.players.get(by); if (p && !p.bot && !p.dummy) p.tgts = (p.tgts || 0) + 1;
+  send(room, '*', { t: 'tgt', i, up: 0, by, p: at.map(r2), coins: p && !p.bot ? TARGET.coins : 0 });
 }
 function zoneTeams(room) { const t = [0, 0]; for (const p of humans(room)) if (p.st.alive && Math.hypot(p.st.x - ZONE.x, p.st.z - ZONE.z) < ZONE.r) t[p.team]++; return t; }
 function overtimeStep(room) {
@@ -993,7 +1018,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   const teamCol = (team, slot, mode) => mode === 'ffa' ? FFA_COLS[(slot | 0) % 8] : W.TEAMS[team | 0].col;
 
   // settings (kept in the kit's save for this game)
-  const CFG = { quality: 'auto', sens: .5, touchSens: .5, invert: false, vol: .8, fov: 75, name: '', fps: false, aimLine: 'full' };
+  const CFG = { quality: 'auto', sens: .5, touchSens: .5, invert: false, vol: .8, amb: 1, fov: 75, name: '', fps: false, aimLine: 'full' };   // amb: the forest's own sounds (birds, leaves, the creek)
   const loadCfg = () => { try { Object.assign(CFG, (K.save.aw || {}).cfg || {}); } catch (e) {} };
   const saveCfg = () => { try { K.save.aw = Object.assign(K.save.aw || {}, { cfg: CFG }); K.persist(); } catch (e) {} };
   const quality = () => QS.get('quality') || (CFG.quality !== 'auto' ? CFG.quality : (isTouch() || /iPad|iPhone|Android/.test(navigator.userAgent)) ? 'low' : (navigator.hardwareConcurrency || 4) >= 8 ? 'high' : 'medium');
@@ -1011,7 +1036,27 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     return r.json();
   };
   const PROFILE = { coins: 0, owned: ['longbow'], equipped: 'longbow', loaded: false, err: '' };
-  async function loadProfile() { if (TESTER) { Object.assign(PROFILE, { coins: 0, owned: W.BOW_IDS.slice(), loaded: true, err: '' }); try { const e = localStorage.getItem('aw-tester-bow'); if (W.BOW_IDS.includes(e)) PROFILE.equipped = e; } catch (er) {} emit('profile'); return PROFILE; }
+  /* The wallet: coins, owned bows, the equipped one. Kept by the bank on the server; the tester build has no server, so it
+     keeps one in this browser instead. Either way you start with the Forester's Longbow and buy the rest. */
+  const LW = 'aw-tester-wallet';
+  function localWallet() {
+    let w = null; try { w = JSON.parse(localStorage.getItem(LW) || 'null'); } catch (e) {}
+    if (!w || !Array.isArray(w.owned) || typeof w.coins !== 'number') w = { coins: W.COINS.start, owned: ['longbow'], equipped: 'longbow' };
+    w.owned = w.owned.filter(b => W.BOW_IDS.includes(b)); if (!w.owned.includes('longbow')) w.owned.unshift('longbow'); if (!w.owned.includes(w.equipped)) w.equipped = 'longbow';
+    return w;
+  }
+  async function bank(op, body) {   // 'buy' | 'equip' | 'earn': the new profile, or { error }
+    if (!TESTER) return api(op, body);
+    const w = localWallet();
+    if (op === 'buy') { const b = W.BOWS.find(x => x.id === body.bow); if (!b) return { error: 'No such bow.' }; if (w.owned.includes(b.id)) return { error: 'You already own it.', ...w }; if (w.coins < b.price) return { error: `Not enough coins: ${b.price - w.coins} more needed.`, ...w }; w.coins -= b.price; w.owned.push(b.id); w.equipped = b.id; }
+    else if (op === 'equip') { if (!w.owned.includes(body.bow)) return { error: 'You do not own that bow.', ...w }; w.equipped = body.bow; }
+    else if (op === 'earn') { if (body.kind === 'bots') { const seen = (() => { try { return JSON.parse(localStorage.getItem(LW + '-m') || '[]'); } catch (e) { return []; } })(); if (seen.includes(body.match)) return { ...w }; seen.push(body.match); try { localStorage.setItem(LW + '-m', JSON.stringify(seen.slice(-30))); } catch (e) {} }
+      w.coins += Math.max(0, Math.min(body.kind === 'bots' ? W.COINS.maxBots : W.TARGET.coins, body.n | 0)); }
+    try { localStorage.setItem(LW, JSON.stringify(w)); } catch (e) {} return { ...w };
+  }
+  // coins from a bot match (its coin rows) or a target on the practice range
+  async function earn(kind, n, match) { try { const p = await bank('earn', { kind, n, match }); if (p && p.coins != null) { Object.assign(PROFILE, p, { err: '' }); emit('profile'); } return p; } catch (e) { return null; } }
+  async function loadProfile() { if (TESTER) { Object.assign(PROFILE, localWallet(), { loaded: true, err: '' }); emit('profile'); return PROFILE; }
     try { const p = await api('profile'); if (p && !p.error) { Object.assign(PROFILE, p, { loaded: true, err: '' }); emit('profile'); } else PROFILE.err = (p && p.error) || 'offline'; } catch (e) { PROFILE.err = 'Could not reach the server for your coins.'; } return PROFILE; }
   const myName = () => CFG.name || (CFG.name = 'Archer ' + (100 + Math.floor(Math.random() * 900)), saveCfg(), CFG.name);
   const fmtT = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
@@ -1023,11 +1068,11 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   const INTERP = .1;
   const CL = {
     src: null, conn: null, local: null, me: null, ids: {}, code: '', mode: '1v1', oneShot: false, host: null, phase: 'lobby', phaseEnd: 0, ffaEnd: 0,
-    round: 0, score: [0, 0], lobby: [], votes: [], players: new Map(), arrows: new Map(), stuck: new Map(), picks: W.PICKUPS.map(() => true),
+    round: 0, score: [0, 0], lobby: [], votes: [], players: new Map(), arrows: new Map(), stuck: new Map(), tg: W.TARGETS.map(() => true),
     cap: [0, 0], zoneIn: [0, 0], results: null, off: null, feed: [], notes: [], status: '', err: '', lastRound: null, pings: [], cidMap: new Map(),
   };
   const srvNow = () => now() + (CL.off || 0);
-  const WORLD = new Set(['s', 'shot', 'stick', 'hit', 'elim', 'gone', 'pick', 'phase', 'round', 'results', 'overtime', 'corr', 'clear', 'respawn', 'ping']);
+  const WORLD = new Set(['s', 'shot', 'stick', 'hit', 'elim', 'gone', 'tgt', 'phase', 'round', 'results', 'overtime', 'corr', 'clear', 'respawn', 'ping']);
   function player(id) {
     let p = CL.players.get(id);
     if (!p) { p = { id, name: '', team: 0, slot: 0, bow: 'longbow', buf: [], vis: null, stuckIn: [], deadAt: 0, step: 0, k: 0, d: 0 }; CL.players.set(id, p); emit('playerNew', p); }
@@ -1036,7 +1081,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   function resetWorld() {
     for (const p of CL.players.values()) emit('playerGone', p);
     CL.players.clear(); CL.arrows.forEach(a => emit('arrowGone', a)); CL.arrows.clear(); CL.stuck.forEach(s => emit('stuckGone', s)); CL.stuck.clear();
-    CL.picks = W.PICKUPS.map(() => true); CL.cap = [0, 0]; CL.zoneIn = [0, 0]; CL.off = null; CL.cidMap.clear(); emit('worldReset');
+    CL.tg = W.TARGETS.map(() => true); CL.cap = [0, 0]; CL.zoneIn = [0, 0]; CL.off = null; CL.cidMap.clear(); emit('worldReset');
   }
   function useSource(src) {
     if (CL.src === src) return; CL.src = src; CL.me = CL.ids[src] || null; resetWorld(); emit('source', src);
@@ -1103,7 +1148,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     if (src === 'online') {
       switch (m.t) {
         case 'welcome': CL.ids.online = m.id; CL.code = m.code; CL.mode = m.mode; CL.oneShot = m.oneShot; CL.err = '';
-          if (m.phase !== 'lobby' && m.phase !== 'results') { stopPractice(); useSource('online'); CL.me = m.id; m.stuck.forEach(s => addStuck(s)); m.picks.forEach(i => CL.picks[i] = false); }
+          if (m.phase !== 'lobby' && m.phase !== 'results') { stopPractice(); useSource('online'); CL.me = m.id; m.stuck.forEach(s => addStuck(s)); (m.tg || []).forEach(i => CL.tg[i] = false); }
           if (CL.src === 'online') CL.me = m.id; emit('joined', m); if (m.results) { CL.results = m.results; CL.phase = 'results'; CL.roomPhase = 'results'; emit('results', m.results); } emit('ui'); return;
         case 'err': if (m.code === 'taken' && CL.conn && CL.conn.create) { const cr = CL.conn.create; connect(newCode(), cr); return; }
           if (m.code === 'nocode' && CL.conn && CL.conn.makeOnMiss) { connect(CL.conn.code, { mode: '1v1' }); return; }   // the hub made this code for us: open the room
@@ -1145,7 +1190,11 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
       }
       case 'elim': emit('elim', m); CL.feed.push({ k: m.kn, v: m.vn, kid: m.k, vid: m.v, bow: m.bow, zone: m.zone, t: now() }); if (CL.feed.length > 5) CL.feed.shift(); return;
       case 'gone': { const s = CL.stuck.get(m.id); if (s) { CL.stuck.delete(m.id); emit('stuckGone', s); } if (m.by === CL.me) emit('recovered'); return; }
-      case 'pick': CL.picks[m.i] = !!m.on; if (!m.on && m.by === CL.me) emit('picked'); return;
+      case 'tgt': {   // a target broke (paid to whoever broke it), or stands again
+        CL.tg[m.i] = !!m.up; if (m.up) { emit('tgtUp', m.i); return; }
+        const mine = m.by === CL.me; emit('tgtBreak', m.i, m.p, mine, m.coins | 0);
+        if (mine && CL.src === 'practice') earn('target', W.TARGET.coins);   // the range has no match end: bank it now (a match banks its targets with its coins)
+        return; }
       case 'phase': {
         const was = CL.phase; Object.assign(CL, { phase: m.ph, phaseEnd: m.end, round: m.round, score: m.score, ffaEnd: m.ffaEnd });
         if (m.mode) CL.mode = m.mode;
@@ -1155,11 +1204,13 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
       }
       case 'round': CL.score = m.score; CL.lastRound = { ...m, at: now() }; emit('roundEnd', m); return;
       case 'overtime': emit('overtime', m); return;
-      case 'results': CL.results = m; CL.phase = 'results'; emit('results', m); emit('ui'); return;
+      case 'results': CL.results = m; CL.phase = 'results'; emit('results', m); emit('ui');
+        if (botRoom() && m.coins && m.coins[CL.me]) earn('bots', m.coins[CL.me], m.matchId);   // a bot match pays too (an online one is paid by the server)
+        return;
       case 'corr': emit('corr', m); return;
       case 'nodraw': if (ME.drawing) { ME.drawing = false; ME.drawT = 0; } return;   // the server said no (out of arrows, still nocking): lower the bow
       case 'nofire': { const a = CL.cidMap.get(m.cid); if (a) { CL.arrows.delete(a.tmpId); CL.arrows.delete(a.id); emit('arrowGone', a); } if (CL.src !== 'practice') ME.arrows = m.arrows; return; }
-      case 'clear': CL.arrows.forEach(a => emit('arrowGone', a)); CL.arrows.clear(); CL.stuck.forEach(s => emit('stuckGone', s)); CL.stuck.clear(); CL.picks = W.PICKUPS.map(() => true); CL.cap = [0, 0];
+      case 'clear': CL.arrows.forEach(a => emit('arrowGone', a)); CL.arrows.clear(); CL.stuck.forEach(s => emit('stuckGone', s)); CL.stuck.clear(); CL.tg = W.TARGETS.map(() => true); CL.cap = [0, 0];
         for (const p of CL.players.values()) { p.deadAt = 0; emit('unstickAll', p); } return;
       case 'respawn': { const p = CL.players.get(m.id); if (p) { p.deadAt = 0; emit('unstickAll', p); } return; }
       case 'ping': CL.pings.push({ ...m, t: now() }); if (CL.pings.length > 4) CL.pings.shift(); emit('ping', m); return;
@@ -1214,7 +1265,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     // the arrow leaves the bow now; the server's copy takes over its id when it arrives
     const a = { id: 'L' + cid, tmpId: 'L' + cid, by: CL.me, o, v, g: W.gravFor(power), local: true, t0: now(), pw: power, end: null };
     CL.arrows.set(a.tmpId, a); CL.cidMap.set(cid, a); emit('arrowNew', a);
-    if (CL.src !== 'practice') ME.arrows = Math.max(0, ME.arrows - 1);
+    if (CL.src !== 'practice' && !W.BOW.infinite) ME.arrows = Math.max(0, ME.arrows - 1);   // the quiver never runs out
     ME.nockT = W.BOW.nock; ME.releasedAt = now(); ME.drawT = 0; emit('release', power);
   }
   function meTick(dt, I) {
@@ -1639,17 +1690,29 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
         fragmentShader: 'uniform vec3 col; uniform float t, a; varying vec2 vU; void main(){ float f = pow(1. - vU.y, 2.2) * (.55 + .45 * sin(vU.x * 60. + t * 3.)); gl_FragColor = vec4(col, f * a); }' });
       const zone = new THREE.Mesh(zg, zm); zone.position.set(W.ZONE.x, W.terrainH(W.ZONE.x, W.ZONE.z) + 1.6, W.ZONE.z); zone.visible = false; S.add(zone); X.zone = zone;
     }
-    // ---- arrow bundles at the pickups: a stump, three arrows, a glow and a spinning ring so you can spot them
+    // ---- targets: a painted bullseye on a post (the ground), nailed to a trunk (the trees), or hanging under a balloon (the
+    // sky). The face looks toward the middle of the wood; a flying one turns slowly as it circles.
     {
-      X.picks = W.PICKUPS.map(k => {
-        const g = new THREE.Group(); g.position.set(k.x, visH(k.x, k.z), k.z);
-        const stump = new THREE.Mesh(new THREE.CylinderGeometry(.34, .42, .45, 12), std2({ color: LC('#8a5a33') })); stump.position.y = .2; stump.castShadow = true; g.add(stump);
-        const topc = new THREE.Mesh(new THREE.CircleGeometry(.34, 12), std2({ color: LC('#e2b97a') })); topc.rotation.x = -Math.PI / 2; topc.position.y = .43; g.add(topc);
-        for (let n = 0; n < 3; n++) { const a = makeArrowMesh('longbow'); a.position.set((n - 1) * .06, .62, (n - 1) * .03); a.rotation.set(Math.PI / 2 - .15 + n * .1, 0, (n - 1) * .15); g.add(a); }
-        const band = new THREE.Mesh(new THREE.TorusGeometry(.06, .015, 6, 12), std2({ color: LC('#c0392b') })); band.rotation.x = Math.PI / 2; band.position.y = .62; g.add(band);
-        const ringM = new THREE.Mesh(new THREE.TorusGeometry(.62, .035, 6, 32), new THREE.MeshBasicMaterial({ color: '#ffe066', transparent: true, opacity: .8 })); ringM.rotation.x = Math.PI / 2; ringM.position.y = .08; g.add(ringM); g.userData.ring = ringM;
-        const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.dot, color: new THREE.Color('#fff0a0'), transparent: true, opacity: .6, depthWrite: false, blending: THREE.AdditiveBlending })); glow.scale.setScalar(1.8); glow.position.y = .7; g.add(glow); g.userData.glow = glow;
-        X.scene.add(g); return g;
+      const c = document.createElement('canvas'); c.width = c.height = 256; const g2 = c.getContext('2d');
+      [['#f7f1e3', 124], ['#d6452f', 104], ['#f7f1e3', 82], ['#d6452f', 60], ['#f7f1e3', 38], ['#f2c230', 18]].forEach(([col, r]) => { g2.fillStyle = col; g2.beginPath(); g2.arc(128, 128, r, 0, Math.PI * 2); g2.fill(); });
+      g2.strokeStyle = 'rgba(60,30,10,.45)'; g2.lineWidth = 6; g2.beginPath(); g2.arc(128, 128, 124, 0, Math.PI * 2); g2.stroke();
+      const face = new THREE.CanvasTexture(c); face.encoding = THREE.sRGBEncoding; face.anisotropy = 4;
+      const faceM = new THREE.MeshStandardMaterial({ map: face, roughness: .7 }), rimM = std2({ color: LC('#7a4a26') }), postM = std2({ color: LC('#8a5a33') }), ropeM = new THREE.LineBasicMaterial({ color: '#e8dcc0' });
+      const BAL = ['#ff6b6b', '#4fc3f7', '#ffd23a', '#7bd88f', '#c792ea', '#ff9f43'];
+      const disc = r => { const d = new THREE.Group(), body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, .09, 28), [rimM, faceM, faceM]); body.rotation.x = Math.PI / 2; body.castShadow = true; d.add(body); return d; };
+      X.tgts = W.TARGETS.map((k, i) => {
+        const g = new THREE.Group(), fly = k.kind === 'fly', r = fly ? W.TARGET.rFly * .9 : W.TARGET.r; g.position.set(k.x, k.y, k.z); g.rotation.y = k.face || 0;
+        const d = disc(r); g.add(d); g.userData.disc = d;
+        if (k.kind === 'ground') { const post = new THREE.Mesh(new THREE.CylinderGeometry(.06, .08, k.y - visH(k.x, k.z) + .1, 8), postM); post.position.set(0, -(k.y - visH(k.x, k.z)) / 2, -.08); post.castShadow = true; g.add(post);
+          const foot = new THREE.Mesh(new THREE.CylinderGeometry(.28, .32, .12, 10), postM); foot.position.set(0, -(k.y - visH(k.x, k.z)) + .05, -.08); g.add(foot); }
+        if (k.kind === 'tree') for (const sx of [-1, 1]) { const nail = new THREE.Mesh(new THREE.SphereGeometry(.025, 6, 4), std2({ color: LC('#9aa0a6'), metalness: .6 })); nail.position.set(sx * r * .7, r * .55, .05); g.add(nail); }
+        if (fly) {   // a balloon on a string above it
+          const bal = new THREE.Mesh(new THREE.SphereGeometry(.42, 16, 12), new THREE.MeshStandardMaterial({ color: LC(BAL[i % BAL.length]), roughness: .35 })); bal.scale.set(1, 1.18, 1); bal.position.y = 1.55; bal.castShadow = true; g.add(bal); g.userData.bal = bal;
+          const knot = new THREE.Mesh(new THREE.ConeGeometry(.06, .1, 6), bal.material); knot.position.y = 1.03; knot.rotation.x = Math.PI; g.add(knot);
+          g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, r, 0), new THREE.Vector3(.04, .6, 0), new THREE.Vector3(0, 1.0, 0)]), ropeM));
+        }
+        const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.dot, color: new THREE.Color('#fff0a0'), transparent: true, opacity: .25, depthWrite: false, blending: THREE.AdditiveBlending })); glow.scale.setScalar(r * 3.2); glow.position.z = .06; g.add(glow); g.userData.glow = glow;
+        g.userData.k = k; g.userData.in = 1; X.scene.add(g); return g;
       });
     }
   }
@@ -2288,6 +2351,15 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   function floatText(p, txt, col, scale = 1, word) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: word ? wordTex(txt, col) : numTex(txt, col), transparent: true, depthTest: false, depthWrite: false })); s.renderOrder = 30; s.position.set(p[0], p[1], p[2]); X.scene.add(s); FLOATS.push({ s, t: 0, scale, vx: word ? 0 : (Math.random() - .5) * .6, ar: word ? 4 : 2.67, life: word ? 1.6 : .95 }); }
   const WORDTEX = {};
   function wordTex(txt, col) { const k = txt + col; if (WORDTEX[k]) return WORDTEX[k]; const [c, g] = cvs(512, 128); let fs = 96; g.font = `400 ${fs}px 'Lilita One', Impact, sans-serif`; while (g.measureText(txt).width > 470 && fs > 30) { fs -= 4; g.font = `400 ${fs}px 'Lilita One', Impact, sans-serif`; } g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 16; g.lineJoin = 'round'; g.strokeStyle = '#1b1b1b'; g.save(); g.translate(256, 64); g.rotate(-.05); g.strokeText(txt, 0, 4); g.fillStyle = col; g.fillText(txt, 0, 0); g.restore(); return WORDTEX[k] = tex(c, { clamp: true }); }
+  // a target breaks: splinters and painted chips, a balloon pops, and if it was yours the coins float up
+  on('tgtBreak', (i, p, mine, coins) => {
+    if (!X || !X.tgts || !X.tgts[i]) return; const g = X.tgts[i], k = g.userData.k, c = p || W.targetPos(k, srvNow());
+    burst('cube', c, 14, { col: [.85, .27, .18], size: .07, sp: 4, up: 1.4, life: 1.1, floor: true }); burst('cube', c, 12, { col: [.97, .94, .89], size: .07, sp: 4, up: 1.4, life: 1.1, floor: true });
+    burst('cube', c, 8, { col: [.55, .36, .2], size: .06, sp: 3, up: 1.2, life: 1, floor: true }); burst('star', c, 8, { col: [1, .9, .4], size: .2, sp: 2.4, g: 0, life: .45 });
+    if (k.kind === 'fly' && g.userData.bal) { const b = g.userData.bal.getWorldPosition(new THREE.Vector3()); burst('cube', [b.x, b.y, b.z], 14, { col: g.userData.bal.material.color.toArray(), size: .06, sp: 3.5, life: .7, g: .4 }); }
+    if (mine) floatText([c[0], c[1] + .5, c[2]], '+' + (coins || W.TARGET.coins) + ' COINS', '#ffd23a', 1.25, true);
+    g.visible = false; g.userData.in = 0;
+  });
   on('hitInfo', m => { if (!X) return; const kill = m.hp <= 0, head = m.zone === 'head'; floatText([m.p[0], m.p[1] + .4, m.p[2]], kill ? (head ? 'HEADSHOT!' : 'KO!') : '-' + m.dmg, kill ? '#ffd23a' : head ? '#ffb02e' : '#ffffff', kill ? 1.5 : head ? 1.25 : 1); });
   // the toy-figure break-apart: every block of the archer flies off, bounces, and pops away
   function breakApart(P, m, opt = {}) {
@@ -2460,7 +2532,13 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     X.t += dt; X.wind.time.value = X.t; X.wind.amt.value = .85 + .35 * Math.sin(X.t * .23) + .15 * Math.sin(X.t * .71);
     updateCharacters(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); updateCash(dt); updateDebris(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
     for (let i = PINGS.length - 1; i >= 0; i--) { const p = PINGS[i]; p.t += dt; p.g.children[0].scale.setScalar(.7 + Math.sin(X.t * 6) * .15); if (p.t > 7) { X.scene.remove(p.g); PINGS.splice(i, 1); } }
-    X.picks.forEach((g, i) => { g.visible = !!CL.picks[i]; g.userData.glow.material.opacity = .35 + Math.sin(X.t * 3 + i) * .2; if (g.userData.ring) { g.userData.ring.rotation.z = X.t * 1.5; g.userData.ring.position.y = .08 + Math.sin(X.t * 2.4 + i) * .04; g.userData.ring.scale.setScalar(1 + Math.sin(X.t * 3 + i) * .06); } });
+    // targets: the flying ones circle on the room's clock; a broken one is gone until it stands again, then pops back in
+    { const st = srvNow(); X.tgts.forEach((g, i) => {
+      const up = !!CL.tg[i], k = g.userData.k; if (!up) { g.visible = false; g.userData.in = 0; return; }
+      g.visible = true; const e = g.userData.in = Math.min(1, g.userData.in + dt * 2.2), sc = e * e * (3 - 2 * e) * (1 + .22 * Math.sin(e * Math.PI)); g.scale.setScalar(Math.max(.01, sc));
+      if (k.kind === 'fly') { const q = W.targetPos(k, st); g.position.set(q[0], q[1], q[2]); g.rotation.y = (k.face || 0) + st * .5 * k.dir; if (g.userData.bal) g.userData.bal.position.y = 1.55 + Math.sin(st * 2.1 + i) * .06; }
+      g.userData.glow.material.opacity = .14 + Math.sin(X.t * 3 + i) * .1;
+    }); }
     const zone = X.zone, ot = CL.phase === 'overtime'; zone.visible = ot; if (ot) { const inn = CL.zoneIn || [0, 0], col = inn[0] && inn[1] ? '#f4f1e6' : inn[0] ? W.TEAMS[0].col : inn[1] ? W.TEAMS[1].col : '#e9c46a'; zone.material.uniforms.col.value.set(col); zone.material.uniforms.t.value = X.t; zone.material.uniforms.a.value = .55; }
     if (X.water) X.water.rn.offset.set(X.t * .03, X.t * .011);
     // the sun's shadow follows you (snapped, so it doesn't shimmer)
@@ -2726,21 +2804,24 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     if (cue(f, 'd', t, 2.05)) { burst('star', [hx, f.y0 + 1.1, hz], 24, { col: [.8, .5, 1], size: .2, sp: 4, g: 0, life: .5 }); sfx(f, 'pop'); }
   } };
   /* ---------- 60 audio: all synthesized; footsteps, impacts and fly-bys come from where they happen (HRTF panning) ---------- */
-  const AU = { ready: false, out: null, buf: {}, birdT: 2, creak: 0, creek: null, wind: null, rustle: null };
+  const AU = { ready: false, out: null, buf: {}, birdT: 1, creak: 0, creek: null, wind: null, rustle: null, amb: null, bubT: 0, peckT: 9, gust: 0 };
   function audioInit() {
     const ac = K.audio && K.audio(); if (!ac || AU.ready) return; AU.ready = true; AU.ac = ac;
     AU.out = ac.createGain(); AU.out.gain.value = CFG.vol; AU.out.connect(K.master);
     const mk = (secs, fn) => { const n = Math.floor(ac.sampleRate * secs), b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0); fn(d, n); return b; };
     AU.buf.white = mk(2, (d, n) => { for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; });
     AU.buf.brown = mk(3, (d, n) => { let l = 0; for (let i = 0; i < n; i++) { l = (l + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = l * 3.5; } });
-    // the wood around you: wind in the canopy, rustling leaves, the creek
+    // the wood around you, on its own volume (Settings: forest sounds): wind in the canopy, leaves rustling in gusts, the
+    // creek running over stones (loud beside it, faint across the whole wood), and birds singing in the trees
+    AU.amb = ac.createGain(); AU.amb.gain.value = CFG.amb == null ? 1 : CFG.amb; AU.amb.connect(AU.out);
     const loop = (buf, f, q, type, g, dest) => { const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; const fl = ac.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; const gn = ac.createGain(); gn.gain.value = g; s.connect(fl).connect(gn).connect(dest || AU.out); s.start(); return { s, fl, gn }; };
-    AU.wind = loop(AU.buf.brown, 420, .4, 'lowpass', .09); AU.rustle = loop(AU.buf.white, 3800, .3, 'highpass', .012);
-    const pan = ac.createPanner(); Object.assign(pan, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: 3, maxDistance: 60, rolloffFactor: 1.3 }); pan.connect(AU.out);
-    AU.creek = loop(AU.buf.brown, 900, .6, 'bandpass', .55, pan); AU.creek.pan = pan;
+    AU.wind = loop(AU.buf.brown, 420, .4, 'lowpass', .09, AU.amb); AU.rustle = loop(AU.buf.white, 2600, .5, 'bandpass', .02, AU.amb); AU.rustle2 = loop(AU.buf.white, 5200, .4, 'highpass', .01, AU.amb);
+    const pan = ac.createPanner(); Object.assign(pan, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: 7, maxDistance: 120, rolloffFactor: .9 }); pan.connect(AU.amb);
+    AU.creek = loop(AU.buf.brown, 900, .6, 'bandpass', .7, pan); AU.creek.pan = pan; AU.creekHi = loop(AU.buf.white, 2400, 1.2, 'bandpass', .05, pan);   // the flow, and its hiss over the stones
+    AU.river = loop(AU.buf.brown, 700, .5, 'bandpass', .05, AU.amb);   // the river heard from anywhere in the wood, softly
   }
   const t0 = () => AU.ac.currentTime;
-  function at(p, ref = 4) { const ac = AU.ac, pn = ac.createPanner(); Object.assign(pn, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: ref, maxDistance: 90, rolloffFactor: 1.2 }); if (pn.positionX) { pn.positionX.value = p[0]; pn.positionY.value = p[1]; pn.positionZ.value = p[2]; } else pn.setPosition(p[0], p[1], p[2]); pn.connect(AU.out); return pn; }
+  function at(p, ref = 4, dest) { const ac = AU.ac, pn = ac.createPanner(); Object.assign(pn, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: ref, maxDistance: 90, rolloffFactor: 1.2 }); if (pn.positionX) { pn.positionX.value = p[0]; pn.positionY.value = p[1]; pn.positionZ.value = p[2]; } else pn.setPosition(p[0], p[1], p[2]); pn.connect(dest || AU.out); return pn; }
   function nz(dest, dur, f, q, type, g, delay = 0, sweepTo) { const ac = AU.ac, s = ac.createBufferSource(); s.buffer = AU.buf.white; const fl = ac.createBiquadFilter(); fl.type = type; fl.frequency.setValueAtTime(f, t0() + delay); if (sweepTo) fl.frequency.exponentialRampToValueAtTime(sweepTo, t0() + delay + dur); fl.Q.value = q; const a = ac.createGain(); a.gain.setValueAtTime(.0001, t0() + delay); a.gain.exponentialRampToValueAtTime(g, t0() + delay + .005); a.gain.exponentialRampToValueAtTime(.0001, t0() + delay + dur); s.connect(fl).connect(a).connect(dest); s.start(t0() + delay, Math.random() * 1.5); s.stop(t0() + delay + dur + .05); }
   function tone(dest, f, dur, type, g, delay = 0, to) { const ac = AU.ac, o = ac.createOscillator(), a = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t0() + delay); if (to) o.frequency.exponentialRampToValueAtTime(to, t0() + delay + dur); a.gain.setValueAtTime(.0001, t0() + delay); a.gain.exponentialRampToValueAtTime(g, t0() + delay + .004); a.gain.exponentialRampToValueAtTime(.0001, t0() + delay + dur); o.connect(a).connect(dest); o.start(t0() + delay); o.stop(t0() + delay + dur + .05); }
   const S = {
@@ -2808,7 +2889,15 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     win: () => [0, 4, 7, 12].forEach((k, i) => tone(AU.out, 523 * Math.pow(2, k / 12), .35, 'triangle', .14, i * .1)),
     lose: () => [7, 3, 0].forEach((k, i) => tone(AU.out, 330 * Math.pow(2, k / 12), .4, 'triangle', .12, i * .14)),
     click: () => tone(AU.out, 1200, .03, 'sine', .06),
-    bird: p => { const d = at(p, 10), b = 1800 + Math.random() * 1600, n = 2 + Math.floor(Math.random() * 5); for (let k = 0; k < n; k++) tone(d, b * (1 + Math.random() * .2), .07 + Math.random() * .06, 'sine', .08, k * .11, b * (1.3 + Math.random() * .4)); },
+    bird: (p, kind) => { const d = at(p, 14, AU.amb), R = Math.random, T = (f, dur, g, delay, to) => tone(d, f, dur, 'sine', g, delay, to);
+      kind = kind == null ? Math.floor(R() * 5) : kind;
+      if (kind === 0) { const b = 2600 + R() * 1400, n = 5 + Math.floor(R() * 6); let t = 0; for (let k = 0; k < n; k++) { const f = b * (.8 + R() * .5), dur = .04 + R() * .07; T(f, dur, .13, t, f * (.8 + R() * .7)); t += dur + .015 + R() * .05; } }   // a songbird's warble
+      else if (kind === 1) { const b = 3000 + R() * 900; T(b, .22, .14, 0, b * 1.05); T(b * .78, .3, .14, .3, b * .62); }   // a two-note whistle, high then low
+      else if (kind === 2) { const b = 4200 + R() * 1200, n = 8 + Math.floor(R() * 8); for (let k = 0; k < n; k++) T(b, .03, .09, k * .055, b * 1.15); }   // a trill
+      else if (kind === 3) { const b = 700 + R() * 120; T(b, .3, .1, 0, b * .97); T(b * .8, .42, .1, .42, b * .78); }   // a far-off two-note call, low
+      else { const b = 2000 + R() * 2000; T(b, .09, .12, 0, b * 1.6); T(b * 1.4, .07, .1, .14, b * .9); T(b * 1.1, .12, .1, .26, b * 1.5); } },   // chirps
+    peck: p => { const d = at(p, 10, AU.amb), n = 8 + Math.floor(Math.random() * 10); for (let k = 0; k < n; k++) nz(d, .015, 1600, 4, 'bandpass', .25, k * (.055 + k * .002)); },   // a woodpecker on a trunk
+    bubble: (p, g) => { const d = at(p, 5, AU.amb), f = 380 + Math.random() * 900; tone(d, f, .03 + Math.random() * .05, 'sine', g, 0, f * (1.4 + Math.random() * .9)); },   // one bubble in the creek
   };
   const surfaceAt = (x, y, z) => W.inWater(x, z, y + .3) ? 'water' : W.groundAt(x, z, y + .1) > W.terrainH(x, z) + .05 ? 'stone' : 'dirt';
   on('drawStart', () => AU.ready && S.nock());
@@ -2823,15 +2912,27 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   on('thud', p => AU.ready && S.thud(p)); on('cupidPop', p => AU.ready && S.cupid(p)); on('thwack', p => AU.ready && S.thwack(p)); on('cashout', p => AU.ready && S.cashout(p));
   on('pop', p => AU.ready && S.pop(p));
   on('finSfx', (k, p) => AU.ready && S.fin(k, p));
-  on('picked', () => AU.ready && S.pick()); on('recovered', () => AU.ready && S.pick());
+  on('tgtBreak', (i, p, mine) => { if (!AU.ready || !p) return; const d = at(p, 7); nz(d, .09, 1900, 2, 'bandpass', .5); tone(d, 230, .12, 'sine', .35, 0, 120); nz(d, .2, 900, 1, 'lowpass', .3, .02);   // the board cracks
+    if (W.TARGETS[i] && W.TARGETS[i].kind === 'fly') nz(d, .06, 3200, 1.5, 'bandpass', .5);   // and a balloon pops
+    if (mine) { tone(AU.out, 1320, .09, 'triangle', .16, .05); tone(AU.out, 1760, .14, 'triangle', .14, .13); tone(AU.out, 2640, .18, 'sine', .08, .2); } });   // coins
   on('go', () => AU.ready && S.horn());
   function audioFrame(dt) {
     if (!AU.ready) return; const ac = AU.ac, L = ac.listener, c = X.camera, f = c.getWorldDirection(new THREE.Vector3());
     if (L.positionX) { L.positionX.value = c.position.x; L.positionY.value = c.position.y; L.positionZ.value = c.position.z; L.forwardX.value = f.x; L.forwardY.value = f.y; L.forwardZ.value = f.z; L.upX.value = 0; L.upY.value = 1; L.upZ.value = 0; } else { L.setPosition(c.position.x, c.position.y, c.position.z); L.setOrientation(f.x, f.y, f.z, 0, 1, 0); }
     AU.out.gain.value = CFG.vol;
-    const w = X.wind.amt.value; AU.wind.gn.gain.value = .05 + w * .05; AU.rustle.gn.gain.value = .006 + w * .012;
-    const cx = cl(c.position.x, 0, 140), cz = W.creekZ(cx), pn = AU.creek.pan; if (pn.positionX) { pn.positionX.value = cx; pn.positionY.value = W.waterY(cx); pn.positionZ.value = cz; } else pn.setPosition(cx, W.waterY(cx), cz);
-    AU.birdT -= dt; if (AU.birdT <= 0) { AU.birdT = 2 + Math.random() * 6; const a = Math.random() * TAU, r = 12 + Math.random() * 25; S.bird([c.position.x + Math.cos(a) * r, c.position.y + 8 + Math.random() * 8, c.position.z + Math.sin(a) * r]); }
+    AU.amb.gain.value = CFG.amb == null ? 1 : CFG.amb;
+    // wind and leaves: gusts come and go; under the groves' canopy the leaves are louder
+    AU.gust += (Math.max(0, Math.sin(X.t * .23) * Math.sin(X.t * .61 + 1)) - AU.gust) * Math.min(1, dt * .8);
+    const w = X.wind.amt.value, gr = W.inGrove(c.position.x, c.position.z, 4) ? 1 : .55, gu = AU.gust;
+    AU.wind.gn.gain.value = .05 + w * .05 + gu * .05; AU.rustle.gn.gain.value = (.012 + w * .02 + gu * .05) * gr; AU.rustle2.gn.gain.value = (.004 + gu * .02) * gr;
+    // the creek: its sound comes from the nearest stretch of water; bubbles trickle over the stones, thick when you are near
+    const cx = cl(c.position.x, 0, 140), cz = W.creekZ(cx), wy = W.waterY(cx), pn = AU.creek.pan; if (pn.positionX) { pn.positionX.value = cx; pn.positionY.value = wy; pn.positionZ.value = cz; } else pn.setPosition(cx, wy, cz);
+    const dCreek = Math.hypot(c.position.z - cz, c.position.y - wy); AU.bubT -= dt;
+    while (AU.bubT <= 0) { AU.bubT += dCreek < 30 ? .035 + Math.random() * .06 : .25; if (dCreek < 45) S.bubble([cx + (Math.random() - .5) * 10, wy, cz + (Math.random() - .5) * 2], .05 * Math.max(.15, 1 - dCreek / 45)); }
+    // birds in the trees round you, often answered by another; now and then a woodpecker
+    AU.birdT -= dt; if (AU.birdT <= 0) { AU.birdT = 1 + Math.random() * 3.5; const a = Math.random() * TAU, r = 10 + Math.random() * 26, kind = Math.floor(Math.random() * 5), at3 = [c.position.x + Math.cos(a) * r, c.position.y + 7 + Math.random() * 9, c.position.z + Math.sin(a) * r];
+      S.bird(at3, kind); if (Math.random() < .4) { const b = a + 1.5 + Math.random() * 3, r2 = 14 + Math.random() * 24; setTimeout(() => AU.ready && S.bird([c.position.x + Math.cos(b) * r2, c.position.y + 8 + Math.random() * 8, c.position.z + Math.sin(b) * r2], kind), 700 + Math.random() * 900); } }
+    AU.peckT -= dt; if (AU.peckT <= 0) { AU.peckT = 14 + Math.random() * 22; const a = Math.random() * TAU, r = 15 + Math.random() * 20; S.peck([c.position.x + Math.cos(a) * r, c.position.y + 4, c.position.z + Math.sin(a) * r]); }
     if (ME.drawing) { AU.creak -= dt; if (AU.creak <= 0) { const d = W.drawPower(ME.drawT); AU.creak = d >= 1 ? .45 + Math.random() * .3 : .06 + Math.random() * .05; S.creak(d); } }
   }
   /* ---------- 70 input: mouse and keys with the pointer locked; touch with a move stick, drag-to-aim and a DRAW button ---------- */
@@ -2932,7 +3033,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   });
   on('thwack', () => HUD.rulerFlash = 1);
   on('toast', t => HUD.toast = { t, at: now() });
-  on('picked', () => HUD.toast = { t: '+3 arrows', at: now() });
+  on('tgtBreak', (i, p, mine, c) => { if (mine) HUD.toast = { t: `Target broken · +${c || W.TARGET.coins} coins`, at: now() }; });
   on('recovered', () => HUD.toast = { t: 'Arrow recovered', at: now() });
   on('roundStart', m => { HUD.banner = { t: CL.mode === 'ffa' ? 'FREE FOR ALL' : `ROUND ${m.round}`, s: CL.mode === 'ffa' ? 'One shot, one kill · most eliminations in 2:30' : (m.score[0] === 4 && m.score[1] === 4 ? 'MATCH POINT · this round wins it' : `${W.TEAMS[0].n} ${m.score[0]}–${m.score[1]} ${W.TEAMS[1].n}`), at: now(), dur: 3 }; });
   on('go', () => { HUD.banner = { t: 'DRAW!', s: '', at: now(), dur: 1.1 }; });
@@ -2961,11 +3062,6 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     for (const pg of CL.pings) { const age = t - pg.t; if (age > 7) continue; const s = toScreen(pg.p); const d = Math.hypot(pg.p[0] - ME.st.x, pg.p[2] - ME.st.z); if (!s) continue; g.globalAlpha = Math.min(1, (7 - age) * 2); g.fillStyle = GOLD; g.save(); g.translate(s[0], s[1]); g.rotate(Math.PI / 4); g.fillRect(-6, -6, 12, 12); g.restore(); txS(g, `${pg.from === CL.me ? 'You' : pg.name} · ${pg.label}`, s[0], s[1] - 20, 13, GOLD, 'center', 800); txS(g, `${Math.round(d)} m`, s[0], s[1] + 18, 12, BONE, 'center', 700); g.globalAlpha = 1; }
     // teammates: names over their heads
     if (CL.src === 'online' && CL.mode !== 'ffa') for (const p of CL.players.values()) { if (p.id === CL.me || !mine || p.team !== mine.team || !p.vis || !p.alive) continue; const s = toScreen([p.vis.x, p.vis.y + 2.05, p.vis.z]); if (s) { txS(g, p.name, s[0], s[1], 13, W.TEAMS[p.team].col, 'center', 800); g.fillStyle = W.TEAMS[p.team].col; g.beginPath(); g.moveTo(s[0] - 5, s[1] + 9); g.lineTo(s[0] + 5, s[1] + 9); g.lineTo(s[0], s[1] + 15); g.fill(); } }
-    // low on arrows: show where the bundles are and your own misses you can pull back out
-    if (live() && ME.alive && ME.arrows <= 2 && CL.src !== 'practice') {
-      W.PICKUPS.forEach((k, i) => { if (!CL.picks[i]) return; const s = toScreen([k.x, k.y + 1, k.z]); if (s) { g.globalAlpha = .8; txS(g, '➶ ×3', s[0], s[1], 13, GOLD, 'center', 900); g.globalAlpha = 1; } });
-      for (const s of CL.stuck.values()) { if (s.by !== CL.me || !s.rec) continue; const q = toScreen(s.p); if (q && Math.hypot(s.p[0] - ME.st.x, s.p[2] - ME.st.z) < 30) { g.fillStyle = 'rgba(233,196,106,.85)'; g.beginPath(); g.arc(q[0], q[1], 3.5, 0, TAU); g.fill(); } }
-    }
     // top: score and clock (or the free-for-all board)
     const remain = Math.max(0, CL.phaseEnd - srvNow());
     if (CL.src === 'online' && CL.mode !== 'ffa' && CL.phase !== 'lobby') {
@@ -3004,9 +3100,8 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     if (CL.src && ME.alive && ME.cam === 'fp') {
       const x = V.x0 + 22, y = V.y1 - 64 - (touch ? 150 : 0);
       tx(g, 'HEALTH', x, y - 6, 11, DIM, 'left', 900); bar(g, x, y + 4, 190, 11, ME.hp / 100, ME.hp > 55 ? '#a8d88a' : ME.hp > 25 ? GOLD : HURT); tx(g, String(ME.hp), x + 200, y + 10, 14, BONE, 'left', 900);
-      const n = CL.src === 'practice' ? 0 : ME.arrows; tx(g, CL.src === 'practice' ? 'ARROWS ∞' : 'ARROWS', x, y + 30, 11, ME.arrows <= 1 && CL.src !== 'practice' ? HURT : DIM, 'left', 900);
+      tx(g, 'ARROWS', x, y + 30, 11, DIM, 'left', 900); tx(g, '∞', x + 62, y + 31, 24, GOLD, 'left', 900); const n = 0;   // the quiver never runs out
       for (let k = 0; k < Math.min(9, n); k++) { const ax = x + 64 + k * 12; g.strokeStyle = BONE; g.lineWidth = 2; g.beginPath(); g.moveTo(ax, y + 40); g.lineTo(ax, y + 22); g.stroke(); g.fillStyle = GOLD; g.beginPath(); g.moveTo(ax - 3, y + 26); g.lineTo(ax, y + 19); g.lineTo(ax + 3, y + 26); g.fill(); }
-      if (CL.src !== 'practice' && n === 0) tx(g, 'none: grab a bundle or pull your misses out', x + 64, y + 31, 11, HURT, 'left', 800);
     }
     // kill feed
     let fy = V.y0 + 16; for (const f of CL.feed) { const age = t - f.t; if (age > 6) continue; g.globalAlpha = Math.min(1, (6 - age) * 2); const s = `${f.k || '?'}  ➶  ${f.v}${f.zone === 'head' ? '  (head)' : ''}`; g.font = '800 13px Nunito'; const w = g.measureText(s).width + 20; rr(g, V.x1 - 16 - w, fy, w, 24, 6, DARK); tx(g, s, V.x1 - 26, fy + 12, 13, f.kid === CL.me ? GOLD : f.vid === CL.me ? HURT : BONE, 'right', 800); fy += 28; g.globalAlpha = 1; }
@@ -3089,7 +3184,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   function openMenu(name) { UI.open = name; if (name) { unlockMouse(); if (ME.drawing) cancelDraw(true); resetInput(); } render(); }
   function closeMenu() { UI.open = null; render(); if (CL.src) lockMouse(); }
   function setting(k, v) {
-    if (k === 'sens' || k === 'touchSens' || k === 'vol') CFG[k] = +v; else if (k === 'fov') { CFG.fov = +v; if (X) { X.camera.fov = CFG.fov; X.camera.updateProjectionMatrix(); } } else if (k === 'invert') CFG.invert = !!v;
+    if (k === 'sens' || k === 'touchSens' || k === 'vol' || k === 'amb') CFG[k] = +v; else if (k === 'fov') { CFG.fov = +v; if (X) { X.camera.fov = CFG.fov; X.camera.updateProjectionMatrix(); } } else if (k === 'invert') CFG.invert = !!v;
     else if (k === 'quality') { CFG.quality = v; if (X) applyQuality(); } else if (k === 'aimLine') CFG.aimLine = v; saveCfg();
   }
   const inviteLink = code => location.origin.startsWith('http') ? `${location.origin}${location.pathname}?room=${code}${QS.get('server') ? '&server=' + encodeURIComponent(QS.get('server')) : ''}` : `https://box.pulseform.org/games/arrowwood?room=${code}`;
@@ -3130,8 +3225,8 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
       case 'toRoom': sendRoom({ t: 'lobby' }); openMenu('room'); break;
       case 'pickBow': UI.shopSel = v; UI.shopView = 'detail'; UI.shopErr = ''; render(); break;
       case 'shopGrid': UI.shopView = 'grid'; render(); break;
-      case 'buy': api('buy', { bow: UI.shopSel }).then(p => { if (p.error) { UI.shopErr = p.error; } else { UI.shopErr = ''; if (AU.ready) S.cashout([X.camera.position.x, X.camera.position.y, X.camera.position.z]); } Object.assign(PROFILE, p.coins != null ? p : {}); afterEquip(); render(); }).catch(() => { UI.shopErr = 'Could not reach the server.'; render(); }); break;
-      case 'equip': if (TESTER) { PROFILE.equipped = UI.shopSel; try { localStorage.setItem('aw-tester-bow', UI.shopSel); } catch (e) {} afterEquip(); render(); break; } api('equip', { bow: UI.shopSel }).then(p => { if (p.error) UI.shopErr = p.error; else UI.shopErr = ''; Object.assign(PROFILE, p.coins != null ? p : {}); afterEquip(); render(); }).catch(() => { UI.shopErr = 'Could not reach the server.'; render(); }); break;
+      case 'buy': bank('buy', { bow: UI.shopSel }).then(p => { if (p.error) { UI.shopErr = p.error; } else { UI.shopErr = ''; if (AU.ready) S.cashout([X.camera.position.x, X.camera.position.y, X.camera.position.z]); } Object.assign(PROFILE, p.coins != null ? p : {}); afterEquip(); render(); }).catch(() => { UI.shopErr = 'Could not reach the server.'; render(); }); break;
+      case 'equip': bank('equip', { bow: UI.shopSel }).then(p => { if (p.error) UI.shopErr = p.error; else UI.shopErr = ''; Object.assign(PROFILE, p.coins != null ? p : {}); afterEquip(); render(); }).catch(() => { UI.shopErr = 'Could not reach the server.'; render(); }); break;
       case 'previewFin': previewFinisher(UI.shopSel); break;
       case 'retry': if (CL.conn) { CL.conn.tries = 1; CL.conn.state = 'lost'; CL.conn.open(); } break;
     }
@@ -3148,7 +3243,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     if (o === 'main') h = `<div class="pn" style="text-align:center"><h1>ARROWWOOD</h1><div class="awsub">Take cover in the King's Wood. Draw. Breathe. Land the last arrow.</div>
       <div class="col" style="max-width:420px;margin:0 auto"><button class="go awbig" data-a="bots">Play vs bots</button>${TESTER ? '' : '<button class="go awbig" data-a="friends">Play with friends</button><button class="awbig" data-a="join">Join a room</button>'}<button class="awbig" data-a="practice">Practice range</button>
       <div class="awrow"><button class="grow" data-a="shop">Bow shop ${coins}</button><button class="grow" data-a="settings">Settings</button><button class="grow" data-a="howto">How to play</button></div></div>
-      ${TESTER ? '<p class="muted" style="margin-top:14px">Tester build: bot matches and the practice range work here. Online rooms and coins turn on once Arrowwood is live on Pulsebox. Every bow is unlocked so you can try its finisher.</p>' : PROFILE.err ? `<p class="muted" style="margin-top:14px">${esc(PROFILE.err)}</p>` : ''}</div>`;
+      ${TESTER ? '<p class="muted" style="margin-top:14px">Tester build: bot matches and the practice range work here; online rooms turn on once Arrowwood is live on Pulsebox. You start with the Forester\'s Longbow. Earn coins in bot matches and by breaking targets, then buy the rest (your coins are kept in this browser). The shop can preview any bow\'s finisher before you buy.</p>' : PROFILE.err ? `<p class="muted" style="margin-top:14px">${esc(PROFILE.err)}</p>` : ''}</div>`;
     else if (o === 'create') h = `<div class="pn"><div class="top"><h2>Make a room</h2><button data-a="back">Back</button></div><div class="awsub">Pick how you want to play. You'll get a code and a link for your friends.</div>
       <div class="awrow">${Object.entries(MODES).map(([k, [n, d]]) => `<button class="grow ${UI.mode === k ? 'sel' : ''}" data-a="mode" data-v="${k}" style="min-width:180px;text-align:left"><b style="font-family:'Lilita One'">${n}</b><br><span class="muted">${d}</span></button>`).join('')}</div>
       ${UI.mode !== 'ffa' ? `<p><label class="awrow" style="cursor:pointer"><button data-a="oneShot" class="${UI.oneShot ? 'sel' : ''}">${UI.oneShot ? '✓ ' : ''}One-shot rules</button><span class="muted">any hit eliminates (off: realistic damage)</span></label></p>` : ''}
@@ -3172,6 +3267,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
       <label>Touch aim sensitivity<input class="slider" type="range" min="0" max="1" step=".01" value="${CFG.touchSens}" data-set="touchSens"></label>
       <label>Field of view<input class="slider" type="range" min="60" max="95" step="1" value="${CFG.fov}" data-set="fov"></label>
       <label>Volume<input class="slider" type="range" min="0" max="1" step=".01" value="${CFG.vol}" data-set="vol"></label>
+      <label>Forest sounds<input class="slider" type="range" min="0" max="1.5" step=".01" value="${CFG.amb == null ? 1 : CFG.amb}" data-set="amb"></label>
       <label class="awrow"><input type="checkbox" ${CFG.invert ? 'checked' : ''} data-set="invert"> Invert vertical aim</label></div></div>`;
     else if (o === 'howto') h = `<div class="pn"><div class="top"><h2>How to play</h2><button data-a="back">Back</button></div><ul class="rules">${GAME.how.map(t => `<li>${esc(t)}</li>`).join('')}
       <li>Your missed arrows stay where they land. Walk up to one of yours (if it's low enough to reach) to take it back.</li><li>Bundles of three arrows wait in the open: it's a risk to go and get them.</li><li>Your position is on the left: grid square, exact X and Z, and the way you're facing. F (or PING) marks a spot for your team.</li><li>Every bow plays the same. Skins change the look, the sound and the finisher.</li></ul></div>`;
@@ -3211,7 +3307,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     const me = CL.ids.online, mine = CL.lobby.find(q => q.id === me), won = r.mode === 'ffa' ? r.winners.includes(me) : mine && r.winner === mine.team, coins = r.coins && r.coins[me];
     const votes = CL.votes.length, total = CL.lobby.filter(q => q.on).length;
     const head = r.reason === 'forfeit' ? 'The other side left' : r.mode === 'ffa' ? (won ? 'You topped the wood' : `${esc((r.board[0] || {}).name || '?')} wins`) : won ? 'Victory' : 'Defeat';
-    return `<div class="pn" style="text-align:center"><h1 style="font-size:46px">${head}</h1>${botRoom() ? `<div class="muted">Against ${CL.conn.level} bots · no coins for bot matches</div>` : ''}
+    return `<div class="pn" style="text-align:center"><h1 style="font-size:46px">${head}</h1>${botRoom() ? `<div class="muted">Against ${CL.conn.level} bots</div>` : ''}
       ${r.mode !== 'ffa' ? `<div class="code" style="font-size:54px"><span style="color:${W.TEAMS[0].col}">${r.score[0]}</span> – <span style="color:${W.TEAMS[1].col}">${r.score[1]}</span></div><div class="muted">${W.TEAMS[0].n} vs ${W.TEAMS[1].n}</div>` : ''}
       <div class="awcard" style="margin:14px auto;max-width:460px;text-align:left">${r.board.map((b, i) => `<div class="pl"><span>${i + 1}. ${esc(b.name)}${b.id === me ? ' (you)' : ''}</span><span>${b.k} elims · ${b.d} outs</span></div>`).join('')}</div>
       ${coins ? `<div class="awcard" style="margin:10px auto;max-width:360px;text-align:left">${((r.coinRows || {})[me] || []).map(([l, n]) => `<div class="awrow" style="justify-content:space-between"><span>${esc(l)}</span><span class="coins">+${n}</span></div>`).join('')}<div class="awrow" style="justify-content:space-between;border-top:1px solid rgba(255,255,255,.25);margin-top:6px;padding-top:6px"><b>Coins earned</b><b class="coins" style="font-size:20px">+${coins} ◆</b></div><div class="muted" style="text-align:right">balance ${PROFILE.coins.toLocaleString()}</div></div>` : ''}

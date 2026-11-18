@@ -33,7 +33,7 @@
     // the arrow leaves the bow now; the server's copy takes over its id when it arrives
     const a = { id: 'L' + cid, tmpId: 'L' + cid, by: CL.me, o, v, g: W.gravFor(power), local: true, t0: now(), pw: power, end: null };
     CL.arrows.set(a.tmpId, a); CL.cidMap.set(cid, a); emit('arrowNew', a);
-    if (CL.src !== 'practice') ME.arrows = Math.max(0, ME.arrows - 1);
+    if (CL.src !== 'practice' && !W.BOW.infinite) ME.arrows = Math.max(0, ME.arrows - 1);   // the quiver never runs out
     ME.nockT = W.BOW.nock; ME.releasedAt = now(); ME.drawT = 0; emit('release', power);
   }
   function meTick(dt, I) {

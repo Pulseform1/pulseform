@@ -44,7 +44,7 @@
   function openMenu(name) { UI.open = name; if (name) { unlockMouse(); if (ME.drawing) cancelDraw(true); resetInput(); } render(); }
   function closeMenu() { UI.open = null; render(); if (CL.src) lockMouse(); }
   function setting(k, v) {
-    if (k === 'sens' || k === 'touchSens' || k === 'vol') CFG[k] = +v; else if (k === 'fov') { CFG.fov = +v; if (X) { X.camera.fov = CFG.fov; X.camera.updateProjectionMatrix(); } } else if (k === 'invert') CFG.invert = !!v;
+    if (k === 'sens' || k === 'touchSens' || k === 'vol' || k === 'amb') CFG[k] = +v; else if (k === 'fov') { CFG.fov = +v; if (X) { X.camera.fov = CFG.fov; X.camera.updateProjectionMatrix(); } } else if (k === 'invert') CFG.invert = !!v;
     else if (k === 'quality') { CFG.quality = v; if (X) applyQuality(); } else if (k === 'aimLine') CFG.aimLine = v; saveCfg();
   }
   const inviteLink = code => location.origin.startsWith('http') ? `${location.origin}${location.pathname}?room=${code}${QS.get('server') ? '&server=' + encodeURIComponent(QS.get('server')) : ''}` : `https://box.pulseform.org/games/arrowwood?room=${code}`;
@@ -85,8 +85,8 @@
       case 'toRoom': sendRoom({ t: 'lobby' }); openMenu('room'); break;
       case 'pickBow': UI.shopSel = v; UI.shopView = 'detail'; UI.shopErr = ''; render(); break;
       case 'shopGrid': UI.shopView = 'grid'; render(); break;
-      case 'buy': api('buy', { bow: UI.shopSel }).then(p => { if (p.error) { UI.shopErr = p.error; } else { UI.shopErr = ''; if (AU.ready) S.cashout([X.camera.position.x, X.camera.position.y, X.camera.position.z]); } Object.assign(PROFILE, p.coins != null ? p : {}); afterEquip(); render(); }).catch(() => { UI.shopErr = 'Could not reach the server.'; render(); }); break;
-      case 'equip': if (TESTER) { PROFILE.equipped = UI.shopSel; try { localStorage.setItem('aw-tester-bow', UI.shopSel); } catch (e) {} afterEquip(); render(); break; } api('equip', { bow: UI.shopSel }).then(p => { if (p.error) UI.shopErr = p.error; else UI.shopErr = ''; Object.assign(PROFILE, p.coins != null ? p : {}); afterEquip(); render(); }).catch(() => { UI.shopErr = 'Could not reach the server.'; render(); }); break;
+      case 'buy': bank('buy', { bow: UI.shopSel }).then(p => { if (p.error) { UI.shopErr = p.error; } else { UI.shopErr = ''; if (AU.ready) S.cashout([X.camera.position.x, X.camera.position.y, X.camera.position.z]); } Object.assign(PROFILE, p.coins != null ? p : {}); afterEquip(); render(); }).catch(() => { UI.shopErr = 'Could not reach the server.'; render(); }); break;
+      case 'equip': bank('equip', { bow: UI.shopSel }).then(p => { if (p.error) UI.shopErr = p.error; else UI.shopErr = ''; Object.assign(PROFILE, p.coins != null ? p : {}); afterEquip(); render(); }).catch(() => { UI.shopErr = 'Could not reach the server.'; render(); }); break;
       case 'previewFin': previewFinisher(UI.shopSel); break;
       case 'retry': if (CL.conn) { CL.conn.tries = 1; CL.conn.state = 'lost'; CL.conn.open(); } break;
     }
@@ -103,7 +103,7 @@
     if (o === 'main') h = `<div class="pn" style="text-align:center"><h1>ARROWWOOD</h1><div class="awsub">Take cover in the King's Wood. Draw. Breathe. Land the last arrow.</div>
       <div class="col" style="max-width:420px;margin:0 auto"><button class="go awbig" data-a="bots">Play vs bots</button>${TESTER ? '' : '<button class="go awbig" data-a="friends">Play with friends</button><button class="awbig" data-a="join">Join a room</button>'}<button class="awbig" data-a="practice">Practice range</button>
       <div class="awrow"><button class="grow" data-a="shop">Bow shop ${coins}</button><button class="grow" data-a="settings">Settings</button><button class="grow" data-a="howto">How to play</button></div></div>
-      ${TESTER ? '<p class="muted" style="margin-top:14px">Tester build: bot matches and the practice range work here. Online rooms and coins turn on once Arrowwood is live on Pulsebox. Every bow is unlocked so you can try its finisher.</p>' : PROFILE.err ? `<p class="muted" style="margin-top:14px">${esc(PROFILE.err)}</p>` : ''}</div>`;
+      ${TESTER ? '<p class="muted" style="margin-top:14px">Tester build: bot matches and the practice range work here; online rooms turn on once Arrowwood is live on Pulsebox. You start with the Forester\'s Longbow. Earn coins in bot matches and by breaking targets, then buy the rest (your coins are kept in this browser). The shop can preview any bow\'s finisher before you buy.</p>' : PROFILE.err ? `<p class="muted" style="margin-top:14px">${esc(PROFILE.err)}</p>` : ''}</div>`;
     else if (o === 'create') h = `<div class="pn"><div class="top"><h2>Make a room</h2><button data-a="back">Back</button></div><div class="awsub">Pick how you want to play. You'll get a code and a link for your friends.</div>
       <div class="awrow">${Object.entries(MODES).map(([k, [n, d]]) => `<button class="grow ${UI.mode === k ? 'sel' : ''}" data-a="mode" data-v="${k}" style="min-width:180px;text-align:left"><b style="font-family:'Lilita One'">${n}</b><br><span class="muted">${d}</span></button>`).join('')}</div>
       ${UI.mode !== 'ffa' ? `<p><label class="awrow" style="cursor:pointer"><button data-a="oneShot" class="${UI.oneShot ? 'sel' : ''}">${UI.oneShot ? '✓ ' : ''}One-shot rules</button><span class="muted">any hit eliminates (off: realistic damage)</span></label></p>` : ''}
@@ -127,6 +127,7 @@
       <label>Touch aim sensitivity<input class="slider" type="range" min="0" max="1" step=".01" value="${CFG.touchSens}" data-set="touchSens"></label>
       <label>Field of view<input class="slider" type="range" min="60" max="95" step="1" value="${CFG.fov}" data-set="fov"></label>
       <label>Volume<input class="slider" type="range" min="0" max="1" step=".01" value="${CFG.vol}" data-set="vol"></label>
+      <label>Forest sounds<input class="slider" type="range" min="0" max="1.5" step=".01" value="${CFG.amb == null ? 1 : CFG.amb}" data-set="amb"></label>
       <label class="awrow"><input type="checkbox" ${CFG.invert ? 'checked' : ''} data-set="invert"> Invert vertical aim</label></div></div>`;
     else if (o === 'howto') h = `<div class="pn"><div class="top"><h2>How to play</h2><button data-a="back">Back</button></div><ul class="rules">${GAME.how.map(t => `<li>${esc(t)}</li>`).join('')}
       <li>Your missed arrows stay where they land. Walk up to one of yours (if it's low enough to reach) to take it back.</li><li>Bundles of three arrows wait in the open: it's a risk to go and get them.</li><li>Your position is on the left: grid square, exact X and Z, and the way you're facing. F (or PING) marks a spot for your team.</li><li>Every bow plays the same. Skins change the look, the sound and the finisher.</li></ul></div>`;
@@ -166,7 +167,7 @@
     const me = CL.ids.online, mine = CL.lobby.find(q => q.id === me), won = r.mode === 'ffa' ? r.winners.includes(me) : mine && r.winner === mine.team, coins = r.coins && r.coins[me];
     const votes = CL.votes.length, total = CL.lobby.filter(q => q.on).length;
     const head = r.reason === 'forfeit' ? 'The other side left' : r.mode === 'ffa' ? (won ? 'You topped the wood' : `${esc((r.board[0] || {}).name || '?')} wins`) : won ? 'Victory' : 'Defeat';
-    return `<div class="pn" style="text-align:center"><h1 style="font-size:46px">${head}</h1>${botRoom() ? `<div class="muted">Against ${CL.conn.level} bots · no coins for bot matches</div>` : ''}
+    return `<div class="pn" style="text-align:center"><h1 style="font-size:46px">${head}</h1>${botRoom() ? `<div class="muted">Against ${CL.conn.level} bots</div>` : ''}
       ${r.mode !== 'ffa' ? `<div class="code" style="font-size:54px"><span style="color:${W.TEAMS[0].col}">${r.score[0]}</span> – <span style="color:${W.TEAMS[1].col}">${r.score[1]}</span></div><div class="muted">${W.TEAMS[0].n} vs ${W.TEAMS[1].n}</div>` : ''}
       <div class="awcard" style="margin:14px auto;max-width:460px;text-align:left">${r.board.map((b, i) => `<div class="pl"><span>${i + 1}. ${esc(b.name)}${b.id === me ? ' (you)' : ''}</span><span>${b.k} elims · ${b.d} outs</span></div>`).join('')}</div>
       ${coins ? `<div class="awcard" style="margin:10px auto;max-width:360px;text-align:left">${((r.coinRows || {})[me] || []).map(([l, n]) => `<div class="awrow" style="justify-content:space-between"><span>${esc(l)}</span><span class="coins">+${n}</span></div>`).join('')}<div class="awrow" style="justify-content:space-between;border-top:1px solid rgba(255,255,255,.25);margin-top:6px;padding-top:6px"><b>Coins earned</b><b class="coins" style="font-size:20px">+${coins} ◆</b></div><div class="muted" style="text-align:right">balance ${PROFILE.coins.toLocaleString()}</div></div>` : ''}
