@@ -12,7 +12,7 @@
   document.addEventListener('contextmenu', e => { if (screen === 'play') e.preventDefault(); });
   document.addEventListener('wheel', e => { if (!playing()) return; if (ui.place) rotatePlace(e.deltaY > 0 ? 1 : -1); else cycleTool(e.deltaY > 0 ? 1 : -1); }, { passive: true });
   function cycleTool(d) { const list = hotbar().map(h => h.k); const i = list.indexOf(PL.tool); act.select(list[(i + d + list.length) % list.length]); }
-  const hotbar = () => [...Object.keys(TOOLS).filter(t => PL.tools[t]).map(t => ({ k: t, n: TOOLS[t].n })), ...(foods().length ? [{ k: 'food', n: itemName(foods()[0]) }] : []), ...((INV.water || 0) > 0 ? [{ k: 'water', n: 'Fresh water' }] : [])];
+  const hotbar = () => [...Object.keys(TOOLS).filter(t => PL.tools[t] && !TOOLS[t].up).map(t => ({ k: t, n: TOOLS[t].n })), ...(foods().length ? [{ k: 'food', n: itemName(foods()[0]) }] : []), ...((INV.water || 0) > 0 ? [{ k: 'water', n: 'Fresh water' }] : [])];
   function keyEvent(code, down) {
     IN.keys[code] = down; if (!down) return;
     if (screen === 'menu') { if (code === 'Enter') menuStart(); return; }
@@ -25,9 +25,9 @@
     if (code === 'KeyF') eat() || say('No food. Fish with the rod (C to craft one)', '#cfd6e2');
     if (code === 'KeyH') { CFG.keys = !CFG.keys; saveCfg(); }
     if (code === 'KeyR') { if (ui.place) rotatePlace(1); else act.alt(); }
-    if (code === 'KeyB') { if (PL.tools.hammer) { if (PL.tool !== 'hammer') act.select('hammer'); else ui.buildOpen = !ui.buildOpen; } else say('Craft a hammer first (C)', '#cfd6e2'); }
+    if (code === 'KeyB') { if (PL.tools.hammer) { if (PL.tool !== 'hammer') act.select('hammer'); else if (!ui.buildOpen) { ui.buildOpen = true; ui.buildPage = 0; } else if (!ui.buildPage) ui.buildPage = 1; else ui.buildOpen = false; } else say('Craft a hammer first (C)', '#cfd6e2'); }
     const num = /^Digit([0-9])$/.exec(code);
-    if (num) { const n = +num[1] || 10; if (PL.tool === 'hammer' && ui.buildOpen && n <= BUILD_ORDER.length) { ui.buildKind = BUILD_ORDER[n - 1]; ui.buildOpen = false; } else { const h = hotbar()[n - 1]; if (h && n <= 9) act.select(h.k); } }
+    if (num) { const n = +num[1] || 10; const bk = BUILD_ORDER[(ui.buildPage || 0) * BUILD_PAGE + n - 1]; if (PL.tool === 'hammer' && ui.buildOpen && n <= BUILD_PAGE && bk) { ui.buildKind = bk; ui.buildOpen = false; } else { const h = hotbar()[n - 1]; if (h && n <= 9) act.select(h.k); } }
     if (code === 'F8' && devMode) summon();
   }
   function readInput() {

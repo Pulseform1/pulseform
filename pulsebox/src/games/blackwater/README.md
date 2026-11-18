@@ -46,6 +46,24 @@ friends go back to the menu. `node tools/blackwater-mp-check.mjs <folder>` plays
 
 `node tools/blackwater-new-check.mjs <folder>` checks all of these in a real browser.
 
+## Steering (a little, never a lot)
+
+The raft always drifts with the wind's current. On top of that (`sailing()` in `40-life.js`):
+
+- **Oar**: paddles the way you face at about 0.8 m/s on a 2 × 2 raft, less on a bigger one (÷ √(cells/4)). Your arms tire in about 9 s of paddling down to a quarter of that and rest in about 7 s (ARMS bar). In a whirlpool's or a waterspout's pull you dig in at full strength without tiring, so you can still escape them.
+- **Sail** (up to 2): E raises or lowers it. It pushes the way the raft points (its bow is local −z) with 0.25 + 0.035 × wind m/s (capped at 0.9, ×1.3 with two sails), full running before the wind, about a third across it, nothing pointing into it. A storm (wind over 15) can tear it down.
+- **Steering oar** (one, on an open edge): E takes the helm; A and D turn the raft about 3°/s, faster when it is moving; your view turns with the raft; E, W, S or Space let go. A compass shows the wind against the bow and how well the sail draws.
+- **Anchor**: E drops or raises it. Down, the raft keeps about an eighth of its drift, but it drags in a whirlpool or waterspout.
+- The raft's swirl is now measured about the middle of its cells against their average current, so a steady drift no longer spins it.
+
+## More to build and craft
+
+- **Platform (2 × 2)**: four foundations (with decking) at once, cheaper than one by one. It fills the 2 × 2 block that holds the aimed spot and touches the raft most.
+- **Debris net**: hangs off an open edge and catches up to four pieces of wreckage that drift into it; E empties it.
+- **Lantern** (up to 6): lights itself after dark; a shark won't pick an edge within one cell of a lit lantern.
+- **Metal hook** (upgrade): longer rope (34 m), wider snag, faster reel. **Iron spear** (upgrade): two hits drive a shark off. Upgrades need the tool first and take no hotbar slot.
+- The build list has two pages on a keyboard (B opens it, B again for page 2, B closes); a touch screen shows all of it in two columns.
+
 ## Testing tricks
 
 - `blackwater.html?dev` shows a **DEV: call the thing from below** button in Settings and enables **F8**: it skips to tonight if needed and starts the Cthulhu encounter.

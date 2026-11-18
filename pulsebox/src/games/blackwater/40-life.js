@@ -1,5 +1,6 @@
   /* ---------- 40 life: you, the salvage, the hook, the rod, food, fire, the torch, sharks, the big events ---------- */
-  const EYE = 1.62, REACH = 26;
+  const EYE = 1.62, REACH0 = 26;
+  const REACHF = () => PL.tools && PL.tools.hook2 ? 34 : REACH0;   // the metal hook's rope is longer
   const PL = { onRaft: true, lx: .75, lz: .75, ly: 0, vy: 0, wx: 0, wy: 0, wz: 0, yaw: Math.PI * .8, pitch: -.05, hunger: 100, thirst: 100, air: 100, faint: 0,
     tools: { hook: 1, torch: 1 }, tool: 'hook', torch: false, torchWet: 0, brace: false, under: false, pickups: 0, knock: 0, cool: 0, play: 0 };
   const HK = { state: 'idle', charge: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, items: [], tension: 0, reel: false };
@@ -30,7 +31,7 @@
 
   // ---- walking the deck, falling in, swimming, climbing out
   function fallIn(push = 1) {
-    if (!PL.onRaft) return; const e = toWorld(RAFT, PL.lx, DECK, PL.lz), c = cellUnder(RAFT, PL.lx, PL.lz);
+    if (!PL.onRaft) return; PL.helm = null; const e = toWorld(RAFT, PL.lx, DECK, PL.lz), c = cellUnder(RAFT, PL.lx, PL.lz);
     let ox = 0, oz = 0; if (c) { const sides = openSides(RAFT, c); const s = sides.length ? sides[0] : 0; [ox, oz] = SIDES[s]; }
     const [wx, wz] = flatW(RAFT, PL.lx + ox * 1.1 * push, PL.lz + oz * 1.1 * push);
     Object.assign(PL, { onRaft: false, wx: e[0] + (wx - e[0]), wz: e[2] + (wz - e[2]), wy: e[1] - .5, vy: -1, ly: 0, knock: 0 });
@@ -44,6 +45,11 @@
     if (!best) return false; Object.assign(PL, { onRaft: true, lx: best.i * CS, lz: best.j * CS, ly: 0, vy: 0, under: false }); emit('climb'); return true;
   }
   function moveRaftPlayer(I, dt) {
+    if (PL.helm) {   // at the helm: A and D turn the steering oar, the view turns with the raft; W, S, Space or E let go
+      const c = RAFT.cells.get(PL.helm);
+      if (!c || c.obj !== 'helm' || I.mz || I.jump) PL.helm = null;
+      else { PL.yaw += RAFT.vyaw * dt; PL.vy -= G * dt; PL.ly = Math.max(0, PL.ly + PL.vy * dt); if (PL.ly <= 0) PL.vy = 0; return; }
+    }
     const sp = 2.6 * (PL.brace ? .35 : 1), ly = PL.yaw - RAFT.yaw, s = Math.sin(ly), c = Math.cos(ly);
     let mx = -s * I.mz + c * I.mx, mz = -c * I.mz - s * I.mx; const L = Math.hypot(mx, mz); if (L > 1) { mx /= L; mz /= L; }
     const tryMove = (nx, nz) => {
@@ -122,20 +128,20 @@
     if (HK.state === 'charge') HK.charge = Math.min(1, HK.charge + dt / 1.1);
     else if (HK.state === 'fly') {
       HK.vy -= G * dt; HK.x += HK.vx * dt; HK.y += HK.vy * dt; HK.z += HK.vz * dt;
-      const d = Math.hypot(HK.x - h[0], HK.z - h[2]); if (d > REACH) { const k = REACH / d; HK.x = h[0] + (HK.x - h[0]) * k; HK.z = h[2] + (HK.z - h[2]) * k; HK.vx *= .3; HK.vz *= .3; }   // the rope runs out
+      const d = Math.hypot(HK.x - h[0], HK.z - h[2]); const REACH = REACHF(); if (d > REACH) { const k = REACH / d; HK.x = h[0] + (HK.x - h[0]) * k; HK.z = h[2] + (HK.z - h[2]) * k; HK.vx *= .3; HK.vz *= .3; }   // the rope runs out
       const wh = waterH(HK.x, HK.z); if (HK.y <= wh) { HK.y = wh; HK.state = 'water'; emit('splash', HK.x, HK.z, false); }
     } else if (HK.state === 'water') {
       const wh = waterH(HK.x, HK.z); HK.y = wh - .04;
-      if (!HK.items.length) for (const f of FL) if (!f.hooked && Math.hypot(f.x - HK.x, f.z - HK.z) < 1.4) { f.hooked = true; HK.items.push(f); emit('snag', f); break; }
+      if (!HK.items.length) for (const f of FL) if (!f.hooked && Math.hypot(f.x - HK.x, f.z - HK.z) < (PL.tools.hook2 ? 2 : 1.4)) { f.hooked = true; HK.items.push(f); emit('snag', f); break; }
       const mass = HK.items.reduce((a, f) => a + (MASS[f.k] || 1), 0);
       if (HK.reel) {
-        const dx = h[0] - HK.x, dz = h[2] - HK.z, d = Math.hypot(dx, dz), sp = 3.6 / (1 + mass * .45) * (1 - .45 * S.sea);
+        const dx = h[0] - HK.x, dz = h[2] - HK.z, d = Math.hypot(dx, dz), sp = (PL.tools.hook2 ? 5 : 3.6) / (1 + mass * .45) * (1 - .45 * S.sea);
         HK.x += dx / d * Math.min(d, sp * dt); HK.z += dz / d * Math.min(d, sp * dt);
         HK.tension = ease(HK.tension, cl(.18 + mass * .14 + S.sea * .35 + Math.abs(waterH(HK.x, HK.z) - wh) * 3, 0, 1), 6, dt);
         if (d < 1.6 || (PL.onRaft && cellUnder(RAFT, ...flatL(RAFT, HK.x, HK.z)))) { HK.items.slice().forEach(collect); HK.items = []; HK.state = 'idle'; emit('reeled'); }
       } else { const cur = currentAt(HK.x, HK.z, [0, 0]); HK.x += cur[0] * .3 * dt; HK.z += cur[1] * .3 * dt; HK.tension = ease(HK.tension, HK.items.length ? .12 : 0, 4, dt); }
       for (const f of HK.items) { f.x = HK.x; f.z = HK.z; }
-      if (Math.hypot(HK.x - h[0], HK.z - h[2]) > REACH + 6) dropHook();
+      if (Math.hypot(HK.x - h[0], HK.z - h[2]) > REACHF() + 6) dropHook();
     }
   }
   function dropHook() { HK.items.forEach(f => f.hooked = false); HK.items = []; HK.state = 'idle'; HK.tension = 0; }
@@ -202,19 +208,36 @@
     INV[k]--; PL.thirst = Math.min(100, PL.thirst + DRINK[k]); if (k === 'coconut') PL.hunger = Math.min(100, PL.hunger + FOOD.coconut); emit('drink', k); return true;
   }
   // rain catchers fill in the rain, stills work in the sun, traps catch fish: each holds a few until you empty it
-  const HOLD = { catcher: 4, still: 3, trap: 3 };
+  const HOLD = { catcher: 4, still: 3, trap: 3, net: 4 };
+  // lanterns light themselves after dark; a shark won't bite an edge next to one
+  const lampsLit = () => S.tod < 6.4 || S.tod > 18.9;
+  const nearLamp = c => lampsLit() && [...RAFT.cells.values()].some(o => o.obj === 'lantern' && Math.abs(o.i - c.i) <= 1 && Math.abs(o.j - c.j) <= 1);
+  // where a piece that hangs off the edge sits in the water
+  const edgeSpot = c => { const s = openSides(RAFT, c)[0], [di, dj] = SIDES[s == null ? 0 : s]; return flatW(RAFT, c.i * CS + di * 1.1, c.j * CS + dj * 1.1); };
   function piecesTick(dt) {
     const sun = S.tod > 7 && S.tod < 18.5 ? 1 - S.cloud * .6 : 0;
     for (const c of RAFT.cells.values()) {
       if (!HOLD[c.obj]) continue; c.store = c.store || 0; if (c.store >= HOLD[c.obj]) continue;
+      if (c.obj === 'net') {   // wreckage that drifts into the net stays there
+        const [nx, nz] = edgeSpot(c);
+        for (let n = FL.length - 1; n >= 0 && c.store < HOLD.net; n--) { const f = FL[n]; if (f.hooked || Math.hypot(f.x - nx, f.z - nz) > 1.8) continue; FL.splice(n, 1); c.catch = (c.catch || []).concat([f.k]); c.store++; RAFT.ver++; }
+        continue;
+      }
       const rate = c.obj === 'catcher' ? (S.rain > .15 ? S.rain / 22 : 0) : c.obj === 'still' ? sun / 95 : 1 / rnd(70, 110);
       c.prog = (c.prog || 0) + dt * rate; if (c.prog >= 1) { c.prog = 0; c.store++; if (c.obj === 'trap') c.fish = (c.fish || []).concat([R() < .6 ? 'sardine' : R() < .8 ? 'mackerel' : 'bream']); RAFT.ver++; }
     }
   }
+  const emptyMsg = c => c.obj === 'catcher' ? 'Empty. It fills when it rains' : c.obj === 'still' ? 'Nothing yet. It works while the sun is up' : c.obj === 'net' ? 'Nothing in the net yet: wreckage has to drift into it' : 'Nothing in the trap yet';
   function emptyPiece(c) {
-    if (NET.client) { if (c.store) NET.ask('empty', { i: c.i, j: c.j }); else say(c.obj === 'catcher' ? 'Empty. It fills when it rains' : c.obj === 'still' ? 'Nothing yet. It works while the sun is up' : 'Nothing in the trap yet', '#cfd6e2'); return true; }
-    if (!c.store) { say(c.obj === 'catcher' ? 'Empty. It fills when it rains' : c.obj === 'still' ? 'Nothing yet. It works while the sun is up' : 'Nothing in the trap yet', '#cfd6e2'); return false; }
-    const got = c.obj === 'trap' ? (c.fish || []).map(f => 'fish:' + f) : Array(c.store).fill('water'); got.forEach(k => give(k)); c.store = 0; c.fish = []; RAFT.ver++; pickupMsg(got); return true;
+    if (NET.client) { if (c.store) NET.ask('empty', { i: c.i, j: c.j }); else say(emptyMsg(c), '#cfd6e2'); return true; }
+    if (!c.store) { say(emptyMsg(c), '#cfd6e2'); return false; }
+    const got = c.obj === 'trap' ? (c.fish || []).map(f => 'fish:' + f) : c.obj === 'net' ? (c.catch || []).flatMap(k => contents({ k })) : Array(c.store).fill('water'); got.forEach(k => give(k)); if (c.obj === 'net' && got.length) PL.pickups++; c.store = 0; c.fish = []; c.catch = []; RAFT.ver++; pickupMsg(got); return true;
+  }
+  // raise or lower a sail, drop or raise the anchor
+  function toggleRig(c) {
+    if (NET.client) { NET.ask('rig', { i: c.i, j: c.j }); return true; }
+    c.up = !c.up; RAFT.ver++; emit(c.obj === 'sail' ? (c.up ? 'sailUp' : 'sailDown') : 'anchor', c.up);
+    say(c.obj === 'sail' ? (c.up ? 'Sail up: it pushes the raft the way it points. Steer with the steering oar' : 'Sail down') : c.up ? 'Anchor down: the raft holds almost still' : 'Anchor up: you drift again', '#cfd6e2'); return true;
   }
   // a sunken supply crate: bubbles mark it; dive (hold Shift in the water) and press E beside it
   function cacheTick(dt) {
@@ -269,7 +292,7 @@
       SH.ang += dt * .32; const r = 10 + Math.sin(S.t * .4) * 1.5; goTo(RAFT.x + Math.cos(SH.ang) * r, RAFT.z + Math.sin(SH.ang) * r, 4.2); SH.y = ease(SH.y, surf - .45, 2, dt);
       SH.t -= dt; if (SH.t <= 0) {
         if (!PL.onRaft) { SH.state = 'player'; return; }
-        const edge = [...RAFT.cells.values()].filter(c => exposed(RAFT, c)).sort((a, b) => (a.reinforce - b.reinforce) || (a.hp - b.hp) || (R() - .5))[0];
+        const edge = [...RAFT.cells.values()].filter(c => exposed(RAFT, c) && !nearLamp(c)).sort((a, b) => (a.reinforce - b.reinforce) || (a.hp - b.hp) || (R() - .5))[0];
         if (edge) { SH.cell = ckey(edge.i, edge.j); SH.side = pick(openSides(RAFT, edge)); SH.state = 'approach'; } else SH.t = 10;
       }
       if (!PL.onRaft && Math.hypot(PL.wx - SH.x, PL.wz - SH.z) < 25) SH.state = 'player';
@@ -306,7 +329,7 @@
     if (dist > 3.6 || (vx * d[0] + vy * d[1] + vz * d[2]) / dist < .8) return false;
     if (NET.client) { NET.ask('spear', {}); emit('sharkHit'); return true; }
     SH.hits++; SH.stun = 1.2; emit('sharkHit');
-    if (SH.hits >= 3) { SH.state = 'flee'; SH.t = 10; say('It lets go and runs', '#9fe0a0'); }
+    if (SH.hits >= (PL.tools.spear2 ? 2 : 3)) { SH.state = 'flee'; SH.t = 10; say('It lets go and runs', '#9fe0a0'); }
     return true;
   }
 
@@ -387,14 +410,44 @@
     for (const g of S.giants) g.s -= g.dx * dx + g.dz * dz;
     PL.wx -= dx; PL.wz -= dz; emit('recentre', dx, dz);
   }
+  /* ---- steering: a little, never a lot. The raft always drifts with the current; on top of that:
+     the oar paddles the way you face, but your arms tire fast and a big raft hardly answers;
+     a sail pushes the way the raft points (its bow is local -z), full before the wind, weaker across it, nothing into it;
+     the steering oar turns the raft slowly (faster when it is moving); the anchor almost stops it */
+  const SAIL = { fill: 0, F: 0, push: [0, 0] };
+  function sailing(dt, rudIn) {
+    let up = 0, helm = false, anchor = false;
+    for (const c of RAFT.cells.values()) { if (c.obj === 'sail' && c.up) up++; else if (c.obj === 'helm') helm = true; else if (c.obj === 'anchor' && c.up) anchor = true; }
+    const hx = -Math.sin(RAFT.yaw), hz = -Math.cos(RAFT.yaw), cos = hx * Math.cos(S.windAng) + hz * Math.sin(S.windAng);
+    SAIL.fill = up ? cl(.3 + .7 * cos, 0, 1) : 0;
+    SAIL.F = up ? Math.min(.9, (.25 + .035 * S.wind) * (up > 1 ? 1.3 : 1)) * SAIL.fill : 0;
+    SAIL.push = [hx * SAIL.F, hz * SAIL.F]; SAIL.up = up; SAIL.anchor = anchor; SAIL.helm = helm;
+    RAFT.rudder = !helm ? 0 : NET.client && !PL.helm ? RAFT.rudder || 0 : ease(RAFT.rudder || 0, cl(rudIn, -1, 1), 2.2, dt);   // a friend sees the host's rudder
+    const sp = Math.hypot(RAFT.vx, RAFT.vz);
+    // an anchor can't hold against a whirlpool or a waterspout: it drags
+    const drag = anchor && (S.pools.some(p => p.str > .2 && Math.hypot(RAFT.x - p.x, RAFT.z - p.z) < p.R * 2.2) || S.spouts.some(q => q.form > .5 && Math.hypot(RAFT.x - q.x, RAFT.z - q.z) < 34));
+    if (drag && !SAIL.drag && !NET.client) say('The anchor is dragging!', '#ff9a7a'); SAIL.drag = drag;
+    // a bad storm tears a sail down
+    if (!NET.client && up && S.wind > 15) for (const c of RAFT.cells.values()) if (c.obj === 'sail' && c.up && R() < dt * .05) { c.up = false; RAFT.ver++; say('The wind tore the sail down. Raise it again when it calms', '#ff9a7a'); emit('sailDown'); }
+    return RAFT.rudder * (.035 + .065 * Math.min(1, sp));
+  }
   let paddle = [0, 0];
   function lifeTick(dt, I) {
     PL.play += dt; PL.cool = Math.max(0, PL.cool - dt);
     seaFrame(); if (NET.client) { S.t += dt; S.tod = (S.tod + dt * 24 / DAY_LEN) % 24; } else { NET.fw = NET.on ? [] : null; weatherTick(dt, RAFT); }
     // paddling with the oar pushes the raft the way you face
-    paddle = [0, 0]; if (PL.tool === 'oar' && I.use && PL.onRaft) { const f = 1.65; paddle = [-Math.sin(PL.yaw) * f, -Math.cos(PL.yaw) * f]; PL.paddleT = (PL.paddleT || 0) + dt; } else PL.paddleT = 0;
-    if (NET.client) NET.paddleOut = paddle;
-    bodyPhys(RAFT, dt, { px: paddle[0] + NET.paddle[0], pz: paddle[1] + NET.paddle[1] });
+    // the oar: a nudge that fades as your arms tire (they rest when you stop); a bigger raft answers less
+    paddle = [0, 0]; if (PL.arms == null) PL.arms = 1;
+    if (PL.tool === 'oar' && I.use && PL.onRaft && !PL.helm) {
+      // in a whirlpool's or a waterspout's pull you dig in for your life: full strength, no tiring
+      const cur = currentAt(RAFT.x, RAFT.z, [0, 0]), base = .1 + .028 * S.wind, danger = Math.hypot(cur[0], cur[1]) > base * 1.6 + .15;
+      const f = danger ? 1.6 : .8 * (.25 + .75 * PL.arms) / Math.sqrt(Math.max(1, RAFT.cells.size / 4)); paddle = [-Math.sin(PL.yaw) * f, -Math.cos(PL.yaw) * f]; PL.paddleT = (PL.paddleT || 0) + dt;
+      const was = PL.arms; if (!danger) PL.arms = Math.max(0, PL.arms - dt / 9); if (was >= .15 && PL.arms < .15) say('Your arms are burning: rest them a moment', '#ffd28a');
+    } else { PL.paddleT = 0; PL.arms = Math.min(1, PL.arms + dt / 7); }
+    const rudIn = PL.helm && PL.onRaft ? -I.mx : NET.client ? 0 : NET.rudder;
+    if (NET.client) { NET.paddleOut = paddle; NET.rudderOut = PL.helm ? -I.mx : 0; }
+    const spin = sailing(dt, rudIn);
+    bodyPhys(RAFT, dt, { px: paddle[0] + NET.paddle[0] + SAIL.push[0], pz: paddle[1] + NET.paddle[1] + SAIL.push[1], spin, hold: SAIL.anchor ? (SAIL.drag ? .75 : .12) : 1 });
     if (!NET.client) for (const d of DRIFT) { bodyPhys(d, dt, { px: d.px || 0, pz: d.pz || 0 }); d.life -= dt; d.px *= Math.exp(-dt / 50); d.pz *= Math.exp(-dt / 50); } for (let n = DRIFT.length - 1; n >= 0; n--) if (DRIFT[n].life <= 0 || Math.hypot(DRIFT[n].x - RAFT.x, DRIFT[n].z - RAFT.z) > 180) DRIFT.splice(n, 1);
     for (const c of RAFT.cells.values()) { c.shake = Math.max(0, c.shake - dt * 1.5); c.hit = Math.max(0, c.hit - dt * 2); }
     PL.brace = !!I.brace;
@@ -419,8 +472,13 @@
     const a = ui.aim, c = a && a.dist < 3.2 ? cellAt(RAFT, a.i, a.j) : null;
     if (c && c.fire) { const F = c.fire; return !F.lit ? 'E  Light the fire' : F.cook ? (F.cook.done ? 'E  Take the cooked fish' : 'Cooking...') : Object.keys(INV).some(k => k.startsWith('fish:') && INV[k] > 0) ? 'E  Cook a fish' : !PL.torch ? 'E  Light your torch' : 'Fire'; }
     if (PL.onRaft && logAimed()) return 'E  Pry the log loose';
+    if (PL.helm) return 'E  Let go of the helm  ·  A / D steer';
+    if (c && c.obj === 'sail') return c.up ? `E  Lower the sail  ·  ${SAIL.fill > .75 ? 'full of wind' : SAIL.fill > .35 ? 'drawing' : SAIL.fill > 0 ? 'barely drawing: turn away from the wind' : 'flapping: it points into the wind'}` : 'E  Raise the sail';
+    if (c && c.obj === 'helm') return 'E  Take the helm';
+    if (c && c.obj === 'anchor') return c.up ? 'E  Raise the anchor' : 'E  Drop the anchor';
+    if (c && c.obj === 'lantern') return lampsLit() ? 'Lantern: lit. Sharks keep off this edge' : 'Lantern: it lights itself at dusk';
     if (c && c.obj === 'storage') return `Storage: ${INV.tinder || 0} dry tinder kept here`;
-    if (c && HOLD[c.obj]) { const n = c.store || 0, P = PIECES[c.obj]; return n ? `E  Take ${n} ${c.obj === 'trap' ? (n > 1 ? 'fish' : 'fish') : 'fresh water'} from the ${P.n.toLowerCase()}` : `${P.n}: ${P.tip.toLowerCase()}`; }
+    if (c && HOLD[c.obj]) { const n = c.store || 0, P = PIECES[c.obj]; return n ? `E  Take ${c.obj === 'net' ? 'what is in' : n + ' ' + (c.obj === 'trap' ? 'fish' : 'fresh water') + ' from'} the ${P.n.toLowerCase()}` : `${P.n}: ${P.tip.toLowerCase()}`; }
     if (PL.tool === 'hammer' && c && c.hp < 100) return `Right click  Mend (1 plank)  ·  ${Math.ceil(c.hp)}%`;
     return '';
   }
@@ -437,7 +495,7 @@
       else if (t === 'water') drink();
     },
     useUp() {
-      if (HK.state === 'charge') { throwFrom(HK, HK.charge, 6, 21); HK.state = 'fly'; HK.items = []; emit('cast', 'hook'); }
+      if (HK.state === 'charge') { throwFrom(HK, HK.charge, 6, PL.tools.hook2 ? 26 : 21); HK.state = 'fly'; HK.items = []; emit('cast', 'hook'); }
       if (FS.state === 'charge') { throwFrom(FS, FS.charge, 5, 17); FS.state = 'fly'; emit('cast', 'rod'); }
     },
     alt() {
@@ -447,25 +505,28 @@
       else if (PL.tool === 'hammer') { const a = ui.aim, c = a && cellAt(RAFT, a.i, a.j); if (c && !repair(c)) say(c.hp >= 100 ? 'Not damaged' : 'Mending needs a plank', '#cfd6e2'); }
     },
     interact() {
+      if (PL.helm) { PL.helm = null; return true; }
       if (nearCache()) return openCache();
       if (!PL.onRaft) return climbOut();
       const f = nearFloater(); if (f) return collect(f);
       const a = ui.aim, c = a && a.dist < 3.2 ? cellAt(RAFT, a.i, a.j) : null;
       if (c && c.fire) return useFire(c);
       if (c && HOLD[c.obj]) return emptyPiece(c);
+      if (c && c.obj === 'helm') { PL.helm = ckey(c.i, c.j); const [di, dj] = SIDES[openSides(RAFT, c)[0] || 0]; PL.lx = c.i * CS - di * .35; PL.lz = c.j * CS - dj * .35; PL.yaw = RAFT.yaw; /* face the bow */ say('A and D steer. The raft turns slowly, faster when it is moving', '#cfd6e2'); return true; }
+      if (c && (c.obj === 'sail' || c.obj === 'anchor')) return toggleRig(c);
       { const Lg = logAimed(); if (Lg) { if (NET.client) { NET.ask('unlog', { lx: Lg.lx, lz: Lg.lz }); return true; } RAFT.logs.splice(RAFT.logs.indexOf(Lg), 1); RAFT.ver++; give('log'); pickupMsg(['log']); return true; } }
       if (PL.tool === 'torch' && !PL.torch) return lightTorch();
     },
     select(t) { if (t === 'food' || t === 'water' || PL.tools[t]) { PL.tool = t; if (t !== 'hook') dropHook(); if (t !== 'rod') FS.state = 'idle'; ui.buildOpen = t === 'hammer' && ui.buildOpen; } },
-    craft(t) { const T = TOOLS[t]; if (PL.tools[t] || !T.need || (T.after && PL.pickups < T.after) || !has(T.need)) return false; spend(T.need); PL.tools[t] = 1; act.select(t); emit('craft', t); say(T.n + ' made', '#9fe0a0'); return true; },
+    craft(t) { const T = TOOLS[t]; if (PL.tools[t] || !T.need || (T.up && !PL.tools[T.up]) || (T.after && PL.pickups < T.after) || !has(T.need)) return false; spend(T.need); PL.tools[t] = 1; act.select(T.up || t); emit('craft', t); say(T.n + ' made', '#9fe0a0'); return true; },
   };
-  const craftable = () => Object.keys(TOOLS).filter(t => TOOLS[t].need && !PL.tools[t] && !(TOOLS[t].after && PL.pickups < TOOLS[t].after));
+  const craftable = () => Object.keys(TOOLS).filter(t => TOOLS[t].need && !PL.tools[t] && !(TOOLS[t].up && !PL.tools[TOOLS[t].up]) && !(TOOLS[t].after && PL.pickups < TOOLS[t].after));
 
   // ---- a new raft, or the one you left
   function newRun() {
     RAFT = newBody(0, 0); for (const [i, j] of [[0, 0], [1, 0], [0, 1], [1, 1]]) RAFT.cells.set(ckey(i, j), newCell(i, j));
     DRIFT.length = 0; FL.length = 0; for (const k of Object.keys(INV)) delete INV[k]; INV.water = 2; Object.assign(CACHE, { on: false, t: 150 });
-    Object.assign(PL, { onRaft: true, lx: .75, lz: .75, ly: 0, vy: 0, hunger: 100, thirst: 100, air: 100, faint: 0, tools: { hook: 1, torch: 1 }, tool: 'hook', torch: false, torchWet: 0, pickups: 0, play: 0, pitch: -.08 });
+    Object.assign(PL, { helm: null, arms: 1, onRaft: true, lx: .75, lz: .75, ly: 0, vy: 0, hunger: 100, thirst: 100, air: 100, faint: 0, tools: { hook: 1, torch: 1 }, tool: 'hook', torch: false, torchWet: 0, pickups: 0, play: 0, pitch: -.08 });
     Object.assign(S, { t: 0, ox: 0, oz: 0, sea: .14, seaTo: .14, wind: 4, rain: 0, cloud: .25, phase: 'calm', pt: 330, tod: 7.2, day: 1, nights: 0, giants: [], pools: [], rings: [], spouts: [], bolts: [], nextPool: 480 });
     Object.assign(SPN, { quiet: 5, left: 0, groups: 0 }); Object.assign(SH, { state: 'away', t: 230, hits: 0 }); Object.assign(CT, { state: 'none', cool: 0, pending: -1, y: -90 });
     HK.state = 'idle'; HK.items = []; FS.state = 'idle';

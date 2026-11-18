@@ -10,7 +10,8 @@ const GAME = {
   how: [
     'Mouse and keys: WASD walks, mouse looks. Hold the left button to charge a throw, let go to cast; hold it again to reel in. Right button cancels. E grabs and uses things, 1-7 pick a tool, B builds (with the hammer), C crafts, Shift braces, Space jumps or swims up, O settings.',
     'Touch: left thumb moves, drag anywhere on the right to look. Hold USE to charge and cast, hold it again to reel; keep dragging while you hold it to aim.',
-    'Hook planks, barrels and crates as they drift past. Build foundations to grow the raft, a fishing rod to eat, a spear for sharks, an oar for currents.',
+    'Hook planks, barrels and crates as they drift past. Build foundations or 2 x 2 platforms to grow the raft, a fishing rod to eat, a spear for sharks.',
+    'You drift with the sea, but you can steer a little: the oar gives a tiring nudge, a sail pushes the raft the way it points (never into the wind), the steering oar turns it slowly (E to take the helm, A and D), and an anchor holds it nearly still.',
   ],
   skins: [{ name: 'Default', price: 0 }],
 };
