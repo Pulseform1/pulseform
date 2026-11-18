@@ -11,7 +11,7 @@
     const side = sideOf(me()), decider = n === WIN_ROUNDS * 2 - 1; UI.switched = n > 1 && UI.lastSide && side !== UI.lastSide ? { t0: performance.now(), side, decider } : null; UI.lastSide = side;
     if (loadingNow() || UI.switched) UI.pendingArmory = true; else openArmory(true);
   });
-  on('live', () => { if (UI.armory) { UI.armory = false; grabMouse(); } });
+  on('live', () => { if (UI.armory) { UI.armory = false; if (!locked()) grabMouse(); } });
   on('map', () => { if (ready) rebuildWorld(); });
   on('planted', f => { if (M && f === me()) M.myPlants = (M.myPlants || 0) + 1; }); on('defused', f => { if (M && f === me()) M.myDefuses = (M.myDefuses || 0) + 1; });
   on('over', won => {
@@ -65,15 +65,17 @@
     if (screen !== 'party') hideBoxes();
     if (screen === 'menu') drawMenu(g); else if (screen === 'party') drawParty(g); else if (screen === 'select') drawSelect(g); else if (screen === 'play' && M) drawHud(g); else if (screen === 'over' && M) drawOver(g);
     if (screen !== 'play' || UI.armory || UI.opts) drawNav(g);
+    drawCursor(g);
     if (isTouch() && innerHeight > innerWidth) {   // an upright phone outside the hub: ask for it to be turned
       g.fillStyle = 'rgba(12,16,22,.96)'; g.fillRect(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0); zones.length = 0; zone(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0, () => {});
       tx(g, 'TURN YOUR PHONE SIDEWAYS', 640, 330, 46, BONE); tx(g, 'Duelpoint needs both thumbs', 640, 392, 26, DIM);
     }
   };
   const isTouchEvent = e => e && e.pointerType === 'touch';   // touches come through our own listeners in 90-input
-  GAME.down = (x, y, e) => { if (!isTouchEvent(e)) pointerDown(x, y, 'm', false); };
-  GAME.move = (x, y, e) => { if (!isTouchEvent(e)) pointerMove(x, y, 'm', false); };
-  GAME.up = (x, y, e) => { if (!isTouchEvent(e)) pointerUp('m', false); };
+  // with the mouse captured the page's own pointer never moves: the armory's cursor is driven from the raw mouse instead (90-input)
+  GAME.down = (x, y, e) => { if (!isTouchEvent(e) && !vcursor()) pointerDown(x, y, 'm', false); };
+  GAME.move = (x, y, e) => { if (!isTouchEvent(e) && !vcursor()) pointerMove(x, y, 'm', false); };
+  GAME.up = (x, y, e) => { if (!isTouchEvent(e) && !vcursor()) pointerUp('m', false); };
   GAME.key = keyEvent;
   GAME.bot = () => {};
   // cover art: you on the site with a rifle, your rival stepping out by the container, the dock behind
@@ -87,7 +89,7 @@
   };
   // for the browser tests
   GAME.test = {
-    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
+    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, get ptr() { return ptr; }, get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, hitboxes, headOf, castShot, viewDir, XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
