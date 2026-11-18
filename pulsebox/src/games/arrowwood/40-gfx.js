@@ -148,7 +148,8 @@
     X.renderer.setPixelRatio(pr);
     const sh = q !== 'low'; X.renderer.shadowMap.enabled = sh; X.sun.castShadow = sh;
     if (sh) { const s = q === 'high' ? 2048 : 1024; X.sun.shadow.mapSize.set(s, s); const c = X.sun.shadow.camera; c.left = c.bottom = -38; c.right = c.top = 38; c.near = 1; c.far = 200; X.sun.shadow.bias = -.0004; X.sun.shadow.normalBias = .04; if (X.sun.shadow.map) { X.sun.shadow.map.dispose(); X.sun.shadow.map = null; } }
-    if (!first) { X.scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => m.needsUpdate = true); }); }
+    if (!first && X.lastShadow !== sh) { X.scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => m.needsUpdate = true); }); }
+    X.lastShadow = sh;
     onResize();
   }
   function onResize() { if (!X) return; X.renderer.setSize(innerWidth, innerHeight, false); X.camera.aspect = innerWidth / innerHeight; X.camera.updateProjectionMatrix(); X.vmCam.aspect = X.camera.aspect; X.vmCam.updateProjectionMatrix(); }

@@ -1326,6 +1326,23 @@ const GAMES = [
     how: ["Mouse and keys: WASD walks, mouse looks. Hold the left button to charge a throw, let go to cast; hold it again to reel in. E grabs, C crafts, B picks what to build, F eats, Q drinks, Shift braces for a big wave (or dives when you're swimming). The keys are listed on screen; H hides them.", "iPad: left thumb moves, drag on the right to look. Hold THROW, let go to cast, then hold REEL; keep dragging while you hold it to aim."],
   },
   {
+    id: "arrowwood",
+    title: "Arrowwood",
+    category: "Action",
+    kind: "Archery · 3D first person · 1v1, 2v2 and free for all online · Desktop and iPad",
+    tags: ["Bows and arrows", "Play with friends", "First to five", "Plays on iPad"],
+    badge: 'NEW',
+    file: 'games/arrowwood.html',
+    cover: 'media/arrowwood-cover.jpg',
+    video: 'media/arrowwood-trailer.mp4',
+    shots: ['media/arrowwood-shot1.jpg', 'media/arrowwood-shot2.jpg'],
+    aspect: 16 / 9,
+    immersive: true,
+    pitch: "Draw. Breathe. Land the last arrow.",
+    blurb: "Forest ambushes with real bows in the King's Wood: tall oaks, mossy roots, a shallow creek, the Stone Bridge, Split Oak and the Old Tower. Hold to draw and let go to shoot; a quick tap lobs short with a big drop, a full draw flies far and flat, and a faint row of dots shows only the start of the flight. Arrows fly in real time, so lead your target. A full-draw headshot ends it, strong body hits take two. 1v1 and 2v2 are first to five round wins with an overtime zone; Free for All is two and a half minutes of one-shot eliminations for up to eight. Every elimination ends in a finisher set by the winner's bow: a stumble into the leaves, a giant heart, a giant ruler's THWACK, or an explosion of cash. Earn coins, unlock bows, invite friends with a code or a link.",
+    how: ["Mouse and keys: WASD moves, mouse aims. Hold the left button to draw, let go to shoot. Right button or Q lowers the bow without losing the arrow. Shift sprints (and lowers the bow), C crouches, Space jumps, F pings a spot for your team, Tab shows the scoreboard.", "iPad: the left thumb moves. Hold DRAW and keep dragging, even from the button itself, to aim; let go to shoot. LOWER puts the bow down.", "Six arrows a round. Bundles of three sit out in the open. Walk up to your own missed arrows to pull them back out.", "Play with friends: Create Room, pick 1v1, 2v2 or Free for All, and send the code or the link. Practice on the range while you wait."],
+  },
+  {
     id: "duelpoint",
     title: "Duelpoint",
     category: "Action",
@@ -2934,8 +2951,8 @@ function startGame(g) {
   const f = document.createElement('iframe');
   f.dataset.id = g.id; f.title = g.title; f.allow = 'fullscreen; autoplay; gamepad' + (g.mic ? '; microphone' : '');
   f.addEventListener('load', () => { st.classList.add('ready'); try { f.focus(); } catch (e) {} watchErrors(f, g.id); });
-  const room = roomJoin && roomJoin.id === g.id ? roomJoin.code : ''; roomJoin = null;
-  f.src = g.file + (room ? '?room=' + room : '');
+  const room = roomJoin && roomJoin.id === g.id ? roomJoin.code : '', make = room && roomJoin.make; roomJoin = null;
+  f.src = g.file + (room ? '?room=' + room + (make ? '&make=1' : '') : '');
   $('pRoom').hidden = !room; if (room) { $('pRoom').textContent = `Room ${room} · copy invite`; $('pRoom').dataset.code = room; }
   st.prepend(f);
   setImmersive(!!g.immersive && window.matchMedia('(pointer: coarse)').matches);
@@ -3020,8 +3037,8 @@ $('q2').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDef
    so a code alone is enough to join. The game gets ?room=CODE
    and walks straight into the room's lobby (src/lib/mp.js).
    ============================================================ */
-const FRIEND_GAMES = ['blackwater', 'duelpoint', 'odd-crowd', 'lantern-keep', 'siegeworks', 'hyperlane', 'strata', 'bumper-brawl', 'paint-wars', 'turbo-laps', 'sea-battle', 'doodle-guess'];
-const FRIEND_PLAYERS = { blackwater: '2-4 players · co-op', duelpoint: '2v2 teams · 1v1', 'odd-crowd': '3-10 players · party', 'lantern-keep': '1-4 players · co-op', siegeworks: '1v1', hyperlane: '2-6 players', strata: '2-4 players · co-op', 'bumper-brawl': '2-4 players', 'paint-wars': '2-4 players', 'turbo-laps': '2-6 players', 'sea-battle': '1v1', 'doodle-guess': '2-8 players' };
+const FRIEND_GAMES = ['arrowwood', 'blackwater', 'duelpoint', 'odd-crowd', 'lantern-keep', 'siegeworks', 'hyperlane', 'strata', 'bumper-brawl', 'paint-wars', 'turbo-laps', 'sea-battle', 'doodle-guess'];
+const FRIEND_PLAYERS = { arrowwood: '1v1 · 2v2 · up to 8 free for all', blackwater: '2-4 players · co-op', duelpoint: '2v2 teams · 1v1', 'odd-crowd': '3-10 players · party', 'lantern-keep': '1-4 players · co-op', siegeworks: '1v1', hyperlane: '2-6 players', strata: '2-4 players · co-op', 'bumper-brawl': '2-4 players', 'paint-wars': '2-4 players', 'turbo-laps': '2-6 players', 'sea-battle': '1v1', 'doodle-guess': '2-8 players' };
 const API_ORIGIN = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? '' : 'https://box.pulseform.org';
 let roomJoin = null, frPick = null;
 const frGames = () => FRIEND_GAMES.map(byId).filter(Boolean);
@@ -3053,8 +3070,8 @@ function makeRoom(g) {
   $('frCodeShow').textContent = c; $('frCodeShow').dataset.code = c; frPanel('ready');
   $('frShare').hidden = !navigator.share;
 }
-function enterRoom(g, c) {
-  saveMpName(); closeFriends(); roomJoin = { id: g.id, code: c };
+function enterRoom(g, c, make) {
+  saveMpName(); closeFriends(); roomJoin = { id: g.id, code: c, make: !!make };
   if (current && current.id === g.id && !$('playing').hidden) { stopGame(); startGame(g); return; }
   go('#play-' + g.id);
 }
@@ -3063,7 +3080,9 @@ async function joinRoom(raw) {
   if (c.length !== 4) { $('frErr').textContent = 'Room codes are 4 letters.'; return; }
   $('frErr').innerHTML = '<span class="ok">Looking for room ' + c + '...</span>'; $('frGo').disabled = true;
   try {
-    const r = await (await fetch(API_ORIGIN + '/api/room/' + c, { cache: 'no-store' })).json(), g = byId(r.game);
+    let r = await (await fetch(API_ORIGIN + '/api/room/' + c, { cache: 'no-store' })).json();
+    if (!r.players) { try { const a = await (await fetch(API_ORIGIN + '/api/arrowwood/room/' + c, { cache: 'no-store' })).json(); if (a.players) r = a; } catch (e) {} }   // ARROWWOOD keeps its own rooms
+    const g = byId(r.game);
     if (!r.players) $('frErr').textContent = `No one is in room ${c} right now. Check the code, or ask your friend to open their room first.`;
     else if (!g) $('frErr').textContent = `Room ${c} is open, but it's not a game you can join from here. Open the game and join from its lobby.`;
     else enterRoom(g, c);
@@ -3083,7 +3102,7 @@ $('frCode').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom($
 $('frCode').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
 $('frCopy').addEventListener('click', async () => { const ok = await copyText(roomLink($('frCodeShow').dataset.code)); $('frCopy').textContent = ok ? '✓ Link copied' : 'Copy failed'; setTimeout(() => { $('frCopy').textContent = '🔗 Copy invite link'; }, 1800); });
 $('frShare').addEventListener('click', () => { const c = $('frCodeShow').dataset.code; try { navigator.share({ title: 'Play ' + (frPick ? frPick.title : 'Pulsebox') + ' with me', text: `Join my ${frPick ? frPick.title : ''} room on Pulsebox! Code: ${c}`, url: roomLink(c) }).catch(() => {}); } catch (e) {} });
-$('frEnter').addEventListener('click', () => { if (frPick) enterRoom(frPick, $('frCodeShow').dataset.code); });
+$('frEnter').addEventListener('click', () => { if (frPick) enterRoom(frPick, $('frCodeShow').dataset.code, true); });
 $('pRoom').addEventListener('click', async () => { const c = $('pRoom').dataset.code, ok = await copyText(roomLink(c)); $('pRoom').textContent = ok ? '✓ Invite link copied' : `Room ${c}`; setTimeout(() => { $('pRoom').textContent = `Room ${c} · copy invite`; }, 1800); });
 (() => { const n = frGames().length; $('fbSub').textContent = `Make a room in any of ${n} online games, send your friends the code or link, and play together. No accounts needed.`; })();
 $('tabbar').addEventListener('click', e => {

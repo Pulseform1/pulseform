@@ -349,8 +349,8 @@ function moveStep(s, i, dt) {
 // ---- arrows: a point under gravity, swept against the world and bodies segment by segment
 const arrowAt = (o, v, t) => [o[0] + v[0] * t, o[1] + v[1] * t - .5 * GRAV * t * t, o[2] + v[2] * t];
 function aimVector(yaw, pitch, speed) { const cp = Math.cos(pitch); return [-Math.sin(yaw) * cp * speed, Math.sin(pitch) * speed, -Math.cos(yaw) * cp * speed]; }
-// the arrow leaves from just in front of the eye, a little left and below it, where the drawn bow sits
-function shotOrigin(s) { const e = eyeHeight(s.crouch), cp = Math.cos(s.pitch); return [s.x - Math.sin(s.yaw) * cp * .5 - Math.cos(s.yaw) * .05, s.y + e - .07 + Math.sin(s.pitch) * .5, s.z - Math.cos(s.yaw) * cp * .5 + Math.sin(s.yaw) * .05]; }
+// the arrow leaves from half a metre in front of the eye, just below it, where the drawn arrow lies
+function shotOrigin(s) { const e = eyeHeight(s.crouch), cp = Math.cos(s.pitch); return [s.x - Math.sin(s.yaw) * cp * .5, s.y + e - .065 + Math.sin(s.pitch) * .5, s.z - Math.cos(s.yaw) * cp * .5]; }
 // first hit along p0 -> p1 against the static world: { t (0..1), mat, kind } or null
 function sweepWorld(p0, p1) {
   let best = null;
@@ -887,7 +887,8 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
         case 'welcome': CL.ids.online = m.id; CL.code = m.code; CL.mode = m.mode; CL.oneShot = m.oneShot; CL.err = '';
           if (m.phase !== 'lobby' && m.phase !== 'results') { stopPractice(); useSource('online'); CL.me = m.id; m.stuck.forEach(s => addStuck(s)); m.picks.forEach(i => CL.picks[i] = false); }
           if (CL.src === 'online') CL.me = m.id; emit('joined', m); if (m.results) { CL.results = m.results; CL.phase = 'results'; CL.roomPhase = 'results'; emit('results', m.results); } emit('ui'); return;
-        case 'err': if (m.code === 'taken' && CL.conn && CL.conn.create) { const cr = CL.conn.create; connect(newCode(), cr); return; } if (CL.conn && !CL.ids.online) CL.conn.fail(m.msg); else { CL.err = m.msg; emit('toast', m.msg); } emit('ui'); return;
+        case 'err': if (m.code === 'taken' && CL.conn && CL.conn.create) { const cr = CL.conn.create; connect(newCode(), cr); return; }
+          if (m.code === 'nocode' && CL.conn && CL.conn.makeOnMiss) { connect(CL.conn.code, { mode: '1v1' }); return; }   // the hub made this code for us: open the room if (CL.conn && !CL.ids.online) CL.conn.fail(m.msg); else { CL.err = m.msg; emit('toast', m.msg); } emit('ui'); return;
         case 'lobby': Object.assign(CL, { mode: m.mode, oneShot: m.oneShot, host: m.host, lobby: m.players, votes: m.votes, code: m.code });
           for (const q of m.players) { const p = CL.src === 'online' ? CL.players.get(q.id) : null; if (p) Object.assign(p, { name: q.name, team: q.team, bow: q.bow, on: q.on }); }
           CL.lobby.forEach((q, i) => q.slot = i); CL.roomPhase = m.phase; if (m.phase === 'lobby' && CL.src === 'online') { CL.phase = 'lobby'; CL.results = null; useSource(null); }
@@ -1167,7 +1168,8 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     X.renderer.setPixelRatio(pr);
     const sh = q !== 'low'; X.renderer.shadowMap.enabled = sh; X.sun.castShadow = sh;
     if (sh) { const s = q === 'high' ? 2048 : 1024; X.sun.shadow.mapSize.set(s, s); const c = X.sun.shadow.camera; c.left = c.bottom = -38; c.right = c.top = 38; c.near = 1; c.far = 200; X.sun.shadow.bias = -.0004; X.sun.shadow.normalBias = .04; if (X.sun.shadow.map) { X.sun.shadow.map.dispose(); X.sun.shadow.map = null; } }
-    if (!first) { X.scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => m.needsUpdate = true); }); }
+    if (!first && X.lastShadow !== sh) { X.scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => m.needsUpdate = true); }); }
+    X.lastShadow = sh;
     onResize();
   }
   function onResize() { if (!X) return; X.renderer.setSize(innerWidth, innerHeight, false); X.camera.aspect = innerWidth / innerHeight; X.camera.updateProjectionMatrix(); X.vmCam.aspect = X.camera.aspect; X.vmCam.updateProjectionMatrix(); }
@@ -1430,7 +1432,7 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     PGEO.jaw = new THREE.SphereGeometry(.08, s, 8, 0, TAU, Math.PI * .45, Math.PI * .55); PGEO.jaw.scale(.95, .9, .95);
     PGEO.nose = new THREE.ConeGeometry(.018, .05, 6); PGEO.nose.rotateX(-Math.PI / 2 - .3);
     PGEO.eye = new THREE.SphereGeometry(.011, 6, 5);
-    PGEO.hood = new THREE.SphereGeometry(.135, s, 10, Math.PI * .72, Math.PI * 1.56, 0, Math.PI * .72); PGEO.hood.scale(1, 1.12, 1.05);
+    PGEO.hood = new THREE.SphereGeometry(.135, s, 10, Math.PI * 1.97, Math.PI * 1.06, 0, Math.PI * .74);   // open at the front (-Z), so the face shows PGEO.hood.scale(1, 1.12, 1.05);
     PGEO.cowl = turned([[.08, .02], [.13, -.04], [.21, -.12], [.24, -.17]], s); PGEO.cowl.scale(1, 1, .78);
     PGEO.upper = limbGeo(.058, .047, .29, s - 4); PGEO.fore = limbGeo(.047, .036, .26, s - 4); PGEO.bracer = limbGeo(.05, .045, .16, s - 4);
     PGEO.hand = new THREE.SphereGeometry(.045, 8, 6); PGEO.hand.scale(.75, 1.15, .95); PGEO.hand.translate(0, -.04, 0);
@@ -1439,7 +1441,7 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     PGEO.belt = new THREE.TorusGeometry(.155, .022, 6, 20); PGEO.belt.rotateX(Math.PI / 2); PGEO.belt.scale(1, 1, .72);
     PGEO.pouch = new THREE.BoxGeometry(.09, .1, .05);
     PGEO.quiver = new THREE.CylinderGeometry(.06, .05, .55, 10, 1, true); PGEO.quiverBot = new THREE.CircleGeometry(.05, 10);
-    PGEO.fletch = new THREE.ConeGeometry(.012, .09, 4);
+    PGEO.fletch = new THREE.ConeGeometry(.009, .06, 4);
     PGEO.cape = new THREE.PlaneGeometry(.42, .7, 3, 6); PGEO.cape.translate(0, -.35, 0); { const p = PGEO.cape.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, Math.abs(p.getX(i)) * .25 + p.getY(i) * -.05); }
     return PGEO;
   }
@@ -1463,8 +1465,8 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     if (!o.dummy) { M(G.nose, skin, 0, .0, -.1, head); for (const s of [-1, 1]) M(G.eye, dark, s * .036, .025, -.088, head); M(G.hood, cloth, 0, .03, .01, head); M(G.cowl, cloth, 0, .3, 0, chest);
       if (R() < .5) M(new THREE.SphereGeometry(.07, 8, 6, 0, TAU, Math.PI * .5, Math.PI * .5), hair, 0, -.03, -.03, head).scale.set(1.05, .8, .9);
       const cape = M(G.cape, clothDark, 0, .28, .1, chest); cape.rotation.x = .12; root.userData.cape = cape;
-      const q = J(chest, .05, .12, .14); q.rotation.set(.25, 0, -.45); M(G.quiver, leatherD, 0, 0, 0, q); M(G.quiverBot, leatherD, 0, -.275, 0, q).rotation.x = Math.PI / 2;
-      root.userData.quiver = []; const fm = pmat('fl', { color: LC('#e9e2cf'), roughness: .8 }); for (let k = 0; k < 9; k++) { const f = M(G.fletch, fm, (k % 3 - 1) * .025, .33 + (k % 2) * .02, (Math.floor(k / 3) - 1) * .025, q); root.userData.quiver.push(f); }
+      const q = J(chest, .07, .02, .16); q.rotation.set(.32, 0, -.5); M(G.quiver, leatherD, 0, 0, 0, q); M(G.quiverBot, leatherD, 0, -.275, 0, q).rotation.x = Math.PI / 2;
+      root.userData.quiver = []; const fm = pmat('fl', { color: LC('#8a7d68'), roughness: .85 }); for (let k = 0; k < 9; k++) { const f = M(G.fletch, fm, (k % 3 - 1) * .022, .3 + (k % 2) * .015, (Math.floor(k / 3) - 1) * .022, q); root.userData.quiver.push(f); }
     } else { M(new THREE.CylinderGeometry(.03, .04, 1.3, 6), pmat('post', { color: LC('#5a4028'), roughness: .9 }), 0, .2, 0, root); const tg = cvs(64, 64); const g = tg[1]; for (const [r, c] of [[30, '#f1e6c8'], [22, '#b54a2c'], [14, '#f1e6c8'], [6, '#b54a2c']]) { g.fillStyle = c; g.beginPath(); g.arc(32, 32, r, 0, TAU); g.fill(); } M(new THREE.CircleGeometry(.13, 20), std({ map: tex(tg[0], { clamp: true }), roughness: .9 }), 0, .1, -.12, chest).rotation.y = Math.PI; }
     const arm = s => { const sh = J(chest, s * .2, .22, 0), up = M(G.upper, cloth, 0, 0, 0, sh), el = J(sh, 0, -.29, 0), fo = M(G.fore, s < 0 ? cloth : cloth, 0, 0, 0, el); if (s < 0 && !o.dummy) M(G.bracer, leather, 0, -.08, 0, el); const hd = J(el, 0, -.26, 0); M(G.hand, o.dummy ? skin : s > 0 ? leatherD : skin, 0, 0, 0, hd); return { sh, el, hd }; };
     const leg = s => { const hp = J(hips, s * .095, -.04, 0); M(G.thigh, trousers, 0, 0, 0, hp); const kn = J(hp, 0, -.45, 0); M(G.shin, trousers, 0, 0, 0, kn); if (!o.dummy) M(G.boot, leatherD, 0, -.19, 0, kn); const ft = J(kn, 0, -.43, 0); M(G.foot, o.dummy ? trousers : leatherD, 0, 0, 0, ft); return { hp, kn, ft }; };
@@ -1636,7 +1638,7 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     VM.g.add(VM.foreL, VM.braceL, VM.handR, VM.foreR);
   }
   let _vp, _vg, _ve; LAZY.push(() => { _vp = new THREE.Vector3(); _vg = new THREE.Vector3(); _ve = new THREE.Vector3(); });
-  function aimLimb(mesh, from, to) { _vd.copy(to).sub(from); const L = _vd.length(); mesh.position.copy(from); mesh.quaternion.setFromUnitVectors(_vu.set(0, -1, 0), _vd.multiplyScalar(1 / L)); mesh.scale.set(1, L / .26, 1); }
+  function aimLimb(mesh, from, to) { _vd.copy(to).sub(from); const L = _vd.length(); mesh.position.copy(from); mesh.quaternion.setFromUnitVectors(_vu.set(0, -1, 0), _vd.multiplyScalar(1 / L)); mesh.scale.set(.78, L / .26, .78); }
   function poseViewModel(dt) {
     if (!VM.g) return;
     const show = ME.cam === 'fp' && ME.alive && CL.src; VM.g.visible = !!show; if (!show) return;
@@ -1648,8 +1650,8 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     const bobX = Math.sin(ME.bob) * .012 * ME.moveAmt, bobY = -Math.abs(Math.cos(ME.bob)) * .014 * ME.moveAmt, tremble = drawing && ME.drawT > 2.2 ? Math.sin(X.t * 31) * .0012 * Math.min(1, ME.drawT - 2.2) : 0;
     const r = VM.raise, s = VM.sprint, low = ME.nockT > 0 ? Math.sin(nockP * Math.PI) * .25 : 0;
     // at rest the bow hangs low on the left; drawn, it comes up beside your line of sight
-    const bx = lp(lp(-.17, -.085, r), -.27, s) + bobX, by = lp(lp(-.2, -.072, r), -.44, s) + bobY - low * .05 + tremble, bz = lp(lp(-.5, -.6, r), -.4, s) - VM.kick * .03;
-    VM.bow.g.position.set(bx, by, bz); VM.bow.g.rotation.set(lp(-.06, .0012, r) + VM.kick * .22, lp(.16, .002, r) + s * .6, lp(.42, -.17, r) + s * .5);
+    const bx = lp(lp(-.17, .03, r), -.27, s) + bobX, by = lp(lp(-.2, -.066, r), -.44, s) + bobY - low * .05 + tremble, bz = lp(lp(-.5, -.62, r), -.4, s) - VM.kick * .03;
+    VM.bow.g.position.set(bx, by, bz); VM.bow.g.rotation.set(lp(-.06, .001, r) + VM.kick * .22, lp(.16, -.03, r) + s * .6, lp(.42, -.16, r) + s * .5);
     // first person: the string travels less than on a body (the hand would be behind your eye)
     VM.bow.setDraw(VM.draw * .72, !out && nockP >= .3);
     if (nockP < 1 && !out) { const k = sm(cl((nockP - .3) / .7, 0, 1)); VM.bow.arrow.position.x += (1 - k) * .12; VM.bow.arrow.position.y -= (1 - k) * .08; VM.bow.arrow.position.z += (1 - k) * .3; }
@@ -1896,7 +1898,16 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     if (X.shake > 0) { X.shake = Math.max(0, X.shake - dt * 2.5); cam.position.x += (Math.random() - .5) * .12 * X.shake; cam.position.y += (Math.random() - .5) * .12 * X.shake; }
     const hurt = now() - ME.hurtAt; if (hurt < .3 && ME.cam === 'fp') cam.rotation.z += Math.sin(hurt * 40) * .02 * (1 - hurt / .3);
   }
-  function renderFrame(dt) { visualUpdate(dt); drawFrame(); }
+  function renderFrame(dt) { visualUpdate(dt); drawFrame(); dynRes(dt); }
+  // keep it smooth on an iPad or a laptop: if frames run long for a couple of seconds, draw fewer pixels (and more when there's room)
+  const DYN = { acc: 0, n: 0, slowT: 0, fastT: 0 };
+  function dynRes(dt) {
+    if (DEV || CFG.quality !== 'auto') return; DYN.acc += dt; DYN.n++;
+    if (DYN.acc < .5) return; const avg = DYN.acc / DYN.n * 1000; DYN.acc = 0; DYN.n = 0;
+    if (avg > 23) { DYN.slowT += .5; DYN.fastT = 0; } else if (avg < 15) { DYN.fastT += .5; DYN.slowT = 0; } else { DYN.slowT = DYN.fastT = 0; }
+    if (DYN.slowT >= 2 && X.dyn > .55) { X.dyn = Math.max(.55, X.dyn - .15); DYN.slowT = 0; applyQuality(); }
+    else if (DYN.fastT >= 6 && X.dyn < 1) { X.dyn = Math.min(1, X.dyn + .1); DYN.fastT = 0; applyQuality(); }
+  }
   function visualUpdate(dt) {
     X.t += dt; X.wind.time.value = X.t; X.wind.amt.value = .85 + .35 * Math.sin(X.t * .23) + .15 * Math.sin(X.t * .71);
     updateCharacters(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); updateCash(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
@@ -2395,7 +2406,7 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
     if (!booted) boot();
     resetInput();
     if (K.bot) return;   // the title screen behind the kit's menu: just the wood
-    if (roomQ) { const c = roomQ; roomQ = ''; UI.code = c; UI.from = 'join'; UI.creating = true; openMenu('join'); connect(c, null); }
+    if (roomQ) { const c = roomQ; roomQ = ''; UI.code = c; UI.from = 'join'; UI.creating = true; openMenu('join'); const cn = connect(c, null); cn.makeOnMiss = QS.has('make'); }
     else if (!CL.src && !CL.conn) openMenu('main');
   };
   GAME.update = dt => {

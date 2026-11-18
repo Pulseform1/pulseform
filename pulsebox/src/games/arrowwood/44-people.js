@@ -15,7 +15,7 @@
     PGEO.jaw = new THREE.SphereGeometry(.08, s, 8, 0, TAU, Math.PI * .45, Math.PI * .55); PGEO.jaw.scale(.95, .9, .95);
     PGEO.nose = new THREE.ConeGeometry(.018, .05, 6); PGEO.nose.rotateX(-Math.PI / 2 - .3);
     PGEO.eye = new THREE.SphereGeometry(.011, 6, 5);
-    PGEO.hood = new THREE.SphereGeometry(.135, s, 10, Math.PI * .72, Math.PI * 1.56, 0, Math.PI * .72); PGEO.hood.scale(1, 1.12, 1.05);
+    PGEO.hood = new THREE.SphereGeometry(.135, s, 10, Math.PI * 1.97, Math.PI * 1.06, 0, Math.PI * .74);   // open at the front (-Z), so the face shows PGEO.hood.scale(1, 1.12, 1.05);
     PGEO.cowl = turned([[.08, .02], [.13, -.04], [.21, -.12], [.24, -.17]], s); PGEO.cowl.scale(1, 1, .78);
     PGEO.upper = limbGeo(.058, .047, .29, s - 4); PGEO.fore = limbGeo(.047, .036, .26, s - 4); PGEO.bracer = limbGeo(.05, .045, .16, s - 4);
     PGEO.hand = new THREE.SphereGeometry(.045, 8, 6); PGEO.hand.scale(.75, 1.15, .95); PGEO.hand.translate(0, -.04, 0);
@@ -24,7 +24,7 @@
     PGEO.belt = new THREE.TorusGeometry(.155, .022, 6, 20); PGEO.belt.rotateX(Math.PI / 2); PGEO.belt.scale(1, 1, .72);
     PGEO.pouch = new THREE.BoxGeometry(.09, .1, .05);
     PGEO.quiver = new THREE.CylinderGeometry(.06, .05, .55, 10, 1, true); PGEO.quiverBot = new THREE.CircleGeometry(.05, 10);
-    PGEO.fletch = new THREE.ConeGeometry(.012, .09, 4);
+    PGEO.fletch = new THREE.ConeGeometry(.009, .06, 4);
     PGEO.cape = new THREE.PlaneGeometry(.42, .7, 3, 6); PGEO.cape.translate(0, -.35, 0); { const p = PGEO.cape.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, Math.abs(p.getX(i)) * .25 + p.getY(i) * -.05); }
     return PGEO;
   }
@@ -48,8 +48,8 @@
     if (!o.dummy) { M(G.nose, skin, 0, .0, -.1, head); for (const s of [-1, 1]) M(G.eye, dark, s * .036, .025, -.088, head); M(G.hood, cloth, 0, .03, .01, head); M(G.cowl, cloth, 0, .3, 0, chest);
       if (R() < .5) M(new THREE.SphereGeometry(.07, 8, 6, 0, TAU, Math.PI * .5, Math.PI * .5), hair, 0, -.03, -.03, head).scale.set(1.05, .8, .9);
       const cape = M(G.cape, clothDark, 0, .28, .1, chest); cape.rotation.x = .12; root.userData.cape = cape;
-      const q = J(chest, .05, .12, .14); q.rotation.set(.25, 0, -.45); M(G.quiver, leatherD, 0, 0, 0, q); M(G.quiverBot, leatherD, 0, -.275, 0, q).rotation.x = Math.PI / 2;
-      root.userData.quiver = []; const fm = pmat('fl', { color: LC('#e9e2cf'), roughness: .8 }); for (let k = 0; k < 9; k++) { const f = M(G.fletch, fm, (k % 3 - 1) * .025, .33 + (k % 2) * .02, (Math.floor(k / 3) - 1) * .025, q); root.userData.quiver.push(f); }
+      const q = J(chest, .07, .02, .16); q.rotation.set(.32, 0, -.5); M(G.quiver, leatherD, 0, 0, 0, q); M(G.quiverBot, leatherD, 0, -.275, 0, q).rotation.x = Math.PI / 2;
+      root.userData.quiver = []; const fm = pmat('fl', { color: LC('#8a7d68'), roughness: .85 }); for (let k = 0; k < 9; k++) { const f = M(G.fletch, fm, (k % 3 - 1) * .022, .3 + (k % 2) * .015, (Math.floor(k / 3) - 1) * .022, q); root.userData.quiver.push(f); }
     } else { M(new THREE.CylinderGeometry(.03, .04, 1.3, 6), pmat('post', { color: LC('#5a4028'), roughness: .9 }), 0, .2, 0, root); const tg = cvs(64, 64); const g = tg[1]; for (const [r, c] of [[30, '#f1e6c8'], [22, '#b54a2c'], [14, '#f1e6c8'], [6, '#b54a2c']]) { g.fillStyle = c; g.beginPath(); g.arc(32, 32, r, 0, TAU); g.fill(); } M(new THREE.CircleGeometry(.13, 20), std({ map: tex(tg[0], { clamp: true }), roughness: .9 }), 0, .1, -.12, chest).rotation.y = Math.PI; }
     const arm = s => { const sh = J(chest, s * .2, .22, 0), up = M(G.upper, cloth, 0, 0, 0, sh), el = J(sh, 0, -.29, 0), fo = M(G.fore, s < 0 ? cloth : cloth, 0, 0, 0, el); if (s < 0 && !o.dummy) M(G.bracer, leather, 0, -.08, 0, el); const hd = J(el, 0, -.26, 0); M(G.hand, o.dummy ? skin : s > 0 ? leatherD : skin, 0, 0, 0, hd); return { sh, el, hd }; };
     const leg = s => { const hp = J(hips, s * .095, -.04, 0); M(G.thigh, trousers, 0, 0, 0, hp); const kn = J(hp, 0, -.45, 0); M(G.shin, trousers, 0, 0, 0, kn); if (!o.dummy) M(G.boot, leatherD, 0, -.19, 0, kn); const ft = J(kn, 0, -.43, 0); M(G.foot, o.dummy ? trousers : leatherD, 0, 0, 0, ft); return { hp, kn, ft }; };

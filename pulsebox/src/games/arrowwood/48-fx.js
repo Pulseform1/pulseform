@@ -230,7 +230,16 @@
     if (X.shake > 0) { X.shake = Math.max(0, X.shake - dt * 2.5); cam.position.x += (Math.random() - .5) * .12 * X.shake; cam.position.y += (Math.random() - .5) * .12 * X.shake; }
     const hurt = now() - ME.hurtAt; if (hurt < .3 && ME.cam === 'fp') cam.rotation.z += Math.sin(hurt * 40) * .02 * (1 - hurt / .3);
   }
-  function renderFrame(dt) { visualUpdate(dt); drawFrame(); }
+  function renderFrame(dt) { visualUpdate(dt); drawFrame(); dynRes(dt); }
+  // keep it smooth on an iPad or a laptop: if frames run long for a couple of seconds, draw fewer pixels (and more when there's room)
+  const DYN = { acc: 0, n: 0, slowT: 0, fastT: 0 };
+  function dynRes(dt) {
+    if (DEV || CFG.quality !== 'auto') return; DYN.acc += dt; DYN.n++;
+    if (DYN.acc < .5) return; const avg = DYN.acc / DYN.n * 1000; DYN.acc = 0; DYN.n = 0;
+    if (avg > 23) { DYN.slowT += .5; DYN.fastT = 0; } else if (avg < 15) { DYN.fastT += .5; DYN.slowT = 0; } else { DYN.slowT = DYN.fastT = 0; }
+    if (DYN.slowT >= 2 && X.dyn > .55) { X.dyn = Math.max(.55, X.dyn - .15); DYN.slowT = 0; applyQuality(); }
+    else if (DYN.fastT >= 6 && X.dyn < 1) { X.dyn = Math.min(1, X.dyn + .1); DYN.fastT = 0; applyQuality(); }
+  }
   function visualUpdate(dt) {
     X.t += dt; X.wind.time.value = X.t; X.wind.amt.value = .85 + .35 * Math.sin(X.t * .23) + .15 * Math.sin(X.t * .71);
     updateCharacters(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); updateCash(dt); updateCamera(dt); updateArc(); poseViewModel(dt);

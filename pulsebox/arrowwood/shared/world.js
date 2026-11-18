@@ -261,8 +261,8 @@ export function moveStep(s, i, dt) {
 // ---- arrows: a point under gravity, swept against the world and bodies segment by segment
 export const arrowAt = (o, v, t) => [o[0] + v[0] * t, o[1] + v[1] * t - .5 * GRAV * t * t, o[2] + v[2] * t];
 export function aimVector(yaw, pitch, speed) { const cp = Math.cos(pitch); return [-Math.sin(yaw) * cp * speed, Math.sin(pitch) * speed, -Math.cos(yaw) * cp * speed]; }
-// the arrow leaves from just in front of the eye, a little left and below it, where the drawn bow sits
-export function shotOrigin(s) { const e = eyeHeight(s.crouch), cp = Math.cos(s.pitch); return [s.x - Math.sin(s.yaw) * cp * .5 - Math.cos(s.yaw) * .05, s.y + e - .07 + Math.sin(s.pitch) * .5, s.z - Math.cos(s.yaw) * cp * .5 + Math.sin(s.yaw) * .05]; }
+// the arrow leaves from half a metre in front of the eye, just below it, where the drawn arrow lies
+export function shotOrigin(s) { const e = eyeHeight(s.crouch), cp = Math.cos(s.pitch); return [s.x - Math.sin(s.yaw) * cp * .5, s.y + e - .065 + Math.sin(s.pitch) * .5, s.z - Math.cos(s.yaw) * cp * .5]; }
 // first hit along p0 -> p1 against the static world: { t (0..1), mat, kind } or null
 export function sweepWorld(p0, p1) {
   let best = null;

@@ -26,6 +26,8 @@ const json = (res, b, s = 200) => { res.writeHead(s, { 'content-type': 'applicat
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   if (req.method === 'OPTIONS') return json(res, {});
+  const peek = /^\/api\/arrowwood\/room\/([A-Za-z0-9]{4,6})$/.exec(url.pathname);
+  if (peek) { const r = rooms.get(peek[1].toUpperCase()); return json(res, { game: 'arrowwood', players: r ? [...r.room.players.values()].filter(p => !p.dummy && p.connected).length : 0, mode: r && r.room.mode, phase: r && r.room.phase }); }
   if (url.pathname.startsWith('/api/arrowwood/')) {
     const sub = url.pathname.slice(15), id = await Bank.profileId(req.headers['x-aw-key'] || '');
     if (!id) return json(res, { error: 'missing player key' }, 400);

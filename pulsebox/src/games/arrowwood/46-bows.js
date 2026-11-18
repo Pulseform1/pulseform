@@ -105,7 +105,7 @@
     VM.g.add(VM.foreL, VM.braceL, VM.handR, VM.foreR);
   }
   let _vp, _vg, _ve; LAZY.push(() => { _vp = new THREE.Vector3(); _vg = new THREE.Vector3(); _ve = new THREE.Vector3(); });
-  function aimLimb(mesh, from, to) { _vd.copy(to).sub(from); const L = _vd.length(); mesh.position.copy(from); mesh.quaternion.setFromUnitVectors(_vu.set(0, -1, 0), _vd.multiplyScalar(1 / L)); mesh.scale.set(1, L / .26, 1); }
+  function aimLimb(mesh, from, to) { _vd.copy(to).sub(from); const L = _vd.length(); mesh.position.copy(from); mesh.quaternion.setFromUnitVectors(_vu.set(0, -1, 0), _vd.multiplyScalar(1 / L)); mesh.scale.set(.78, L / .26, .78); }
   function poseViewModel(dt) {
     if (!VM.g) return;
     const show = ME.cam === 'fp' && ME.alive && CL.src; VM.g.visible = !!show; if (!show) return;
@@ -117,8 +117,8 @@
     const bobX = Math.sin(ME.bob) * .012 * ME.moveAmt, bobY = -Math.abs(Math.cos(ME.bob)) * .014 * ME.moveAmt, tremble = drawing && ME.drawT > 2.2 ? Math.sin(X.t * 31) * .0012 * Math.min(1, ME.drawT - 2.2) : 0;
     const r = VM.raise, s = VM.sprint, low = ME.nockT > 0 ? Math.sin(nockP * Math.PI) * .25 : 0;
     // at rest the bow hangs low on the left; drawn, it comes up beside your line of sight
-    const bx = lp(lp(-.17, -.085, r), -.27, s) + bobX, by = lp(lp(-.2, -.072, r), -.44, s) + bobY - low * .05 + tremble, bz = lp(lp(-.5, -.6, r), -.4, s) - VM.kick * .03;
-    VM.bow.g.position.set(bx, by, bz); VM.bow.g.rotation.set(lp(-.06, .0012, r) + VM.kick * .22, lp(.16, .002, r) + s * .6, lp(.42, -.17, r) + s * .5);
+    const bx = lp(lp(-.17, .03, r), -.27, s) + bobX, by = lp(lp(-.2, -.066, r), -.44, s) + bobY - low * .05 + tremble, bz = lp(lp(-.5, -.62, r), -.4, s) - VM.kick * .03;
+    VM.bow.g.position.set(bx, by, bz); VM.bow.g.rotation.set(lp(-.06, .001, r) + VM.kick * .22, lp(.16, -.03, r) + s * .6, lp(.42, -.16, r) + s * .5);
     // first person: the string travels less than on a body (the hand would be behind your eye)
     VM.bow.setDraw(VM.draw * .72, !out && nockP >= .3);
     if (nockP < 1 && !out) { const k = sm(cl((nockP - .3) / .7, 0, 1)); VM.bow.arrow.position.x += (1 - k) * .12; VM.bow.arrow.position.y -= (1 - k) * .08; VM.bow.arrow.position.z += (1 - k) * .3; }

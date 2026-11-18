@@ -14,7 +14,7 @@
     if (!booted) boot();
     resetInput();
     if (K.bot) return;   // the title screen behind the kit's menu: just the wood
-    if (roomQ) { const c = roomQ; roomQ = ''; UI.code = c; UI.from = 'join'; UI.creating = true; openMenu('join'); connect(c, null); }
+    if (roomQ) { const c = roomQ; roomQ = ''; UI.code = c; UI.from = 'join'; UI.creating = true; openMenu('join'); const cn = connect(c, null); cn.makeOnMiss = QS.has('make'); }
     else if (!CL.src && !CL.conn) openMenu('main');
   };
   GAME.update = dt => {

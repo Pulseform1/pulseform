@@ -1,6 +1,7 @@
 // ARROWWOOD on Cloudflare: one Durable Object per room code runs the authoritative match engine (arrowwood/server/engine.js)
 // twenty times a second while anyone is connected; one global Durable Object (the bank) keeps coins and bows.
 //   GET  /api/arrowwood/room/CODE  (WebSocket) then { t: 'hello', key, name, token?, create? } -> { t: 'welcome', ... }, snapshots, events
+//   GET  /api/arrowwood/room/CODE  (plain) -> { game: 'arrowwood', players, mode, phase }   (the hub's Join box)
 //   GET  /api/arrowwood/profile    (header x-aw-key) -> { coins, owned, equipped, bows }
 //   POST /api/arrowwood/buy        (header x-aw-key) <- { bow } -> profile (or { error })
 //   POST /api/arrowwood/equip      (header x-aw-key) <- { bow } -> profile (or { error })
@@ -17,7 +18,7 @@ export async function arrowwoodApi(request, env, url) {
   if (sub.startsWith('room/')) {
     const code = sub.slice(5).toUpperCase();
     if (!/^[A-Z0-9]{4,6}$/.test(code)) return json({ error: 'bad room code' }, 400);
-    if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
+    if (request.headers.get('upgrade') !== 'websocket' && request.method !== 'GET') return json({ error: 'expected a websocket' }, 426);   // a plain GET: who is in it (the hub's Join box)
     return env.ARROWWOOD_ROOM.get(env.ARROWWOOD_ROOM.idFromName('room:' + code)).fetch(new Request('https://room/' + code, request));
   }
   const id = await Bank.profileId(request.headers.get('x-aw-key') || '');
@@ -47,6 +48,7 @@ export class ArrowwoodRoom {
   constructor(state, env) { this.state = state; this.env = env; this.room = null; this.socks = new Map(); this.timer = null; this.code = ''; }
   async fetch(request) {
     this.code = new URL(request.url).pathname.slice(1);
+    if (request.headers.get('upgrade') !== 'websocket') { const n = this.room ? [...this.room.players.values()].filter(p => !p.dummy && p.connected).length : 0; return json({ game: 'arrowwood', players: n, mode: this.room && this.room.mode, phase: this.room && this.room.phase }); }
     const pair = new WebSocketPair(), [client, ws] = Object.values(pair);
     ws.accept();
     let id = null, joining = false;
