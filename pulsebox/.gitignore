@@ -4,3 +4,4 @@ dist/
 wrangler.embedded.toml
 arrowwood/node_modules/
 arrowwood/.data/
+tools/__pycache__/
