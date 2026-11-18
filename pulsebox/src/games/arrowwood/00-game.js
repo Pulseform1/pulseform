@@ -9,7 +9,7 @@ const GAME = {
   how: [
     'Mouse and keys: WASD moves, mouse aims. Hold the left button to draw, let go to shoot; right button or Q lowers the bow without losing the arrow. Shift sprints, C crouches, Space jumps, F pings a spot for your team.',
     'Touch: left thumb moves; drag on the right to aim. Hold DRAW to pull the string and keep dragging (even from the button) to adjust; let go to shoot.',
-    'A quick tap lobs a short arrow; a full draw flies far and flat. The faint dots show only the start of the flight. Headshots at full draw end it.',
+    'A quick tap lobs a short arrow; a full draw flies far and flat. While you draw, a dotted line shows the flight and a ring marks where the arrow will land (Settings can shorten it). Headshots at full draw end it.',
   ],
   skins: [{ name: 'Default', price: 0 }],
 };

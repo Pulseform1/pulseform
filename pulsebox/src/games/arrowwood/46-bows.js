@@ -118,6 +118,7 @@
     const palm = roundBox(.032, .098, .09, .014, 3); palm.rotateY(212 * Math.PI / 180); const pc = P(212, .046, -.047); palm.translate(pc.x, pc.y, pc.z); tint(palm, () => [1, 1, 1]); parts.push(palm);
     const heel = new THREE.SphereGeometry(.026, 12, 10); heel.scale(.9, 1.2, 1); const hc = P(244, .04, -.06); heel.translate(hc.x, hc.y, hc.z); tint(heel, () => [1, .97, .96]); parts.push(heel);
     const wrist = new THREE.CylinderGeometry(.03, .032, .06, 12); wrist.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(_hy(), new THREE.Vector3(-.3, -.35, .88).normalize()))); const wc = P(256, .05, -.062); wrist.translate(wc.x, wc.y, wc.z); tint(wrist, () => [.98, .96, .95]); parts.push(wrist);
+    { const d = new THREE.Vector3(-.3, -.35, .88).normalize(), e = new THREE.SphereGeometry(.031, 12, 10); e.translate(wc.x + d.x * .03, wc.y + d.y * .03, wc.z + d.z * .03); tint(e, () => [.98, .96, .95]); parts.push(e); }
     const h = new THREE.Mesh(merge(parts), mat); h.userData.wrist = P(262, .055, -.07); return h;
   }
   // the string hand: three fingers hooked on the string (one above the arrow, two below), a shooting glove on them, thumb tucked
@@ -131,6 +132,7 @@
     const strap = roundBox(.034, .02, .07, .006, 2); strap.translate(.066, -.005, .06); tint(strap, () => [.36, .25, .2]); parts.push(strap);
     const band = new THREE.TorusGeometry(.032, .007, 6, 16); band.rotateY(Math.PI / 2); band.rotateZ(.3); band.translate(.07, -.03, .108); tint(band, () => [.36, .25, .2]); parts.push(band);
     const wrist = new THREE.CylinderGeometry(.03, .032, .06, 12); wrist.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(_hy(), V(.35, -.4, .85).normalize()))); wrist.translate(.07, -.032, .108); parts.push(wrist);
+    { const d = V(.35, -.4, .85).normalize(), e = new THREE.SphereGeometry(.031, 12, 10); e.translate(.07 + d.x * .03, -.032 + d.y * .03, .108 + d.z * .03); parts.push(e); }
     const h = new THREE.Mesh(merge(parts), mat); h.userData.wrist = V(.074, -.036, .125); return h;
   }
   const VMG = {};
@@ -159,15 +161,17 @@
     const nockP = ME.nockT > 0 ? 1 - ME.nockT / W.BOW.nock : 1, out = ME.arrows <= 0 && !drawing;
     const bobX = Math.sin(ME.bob) * .012 * ME.moveAmt, bobY = -Math.abs(Math.cos(ME.bob)) * .014 * ME.moveAmt, tremble = drawing && ME.drawT > 2.2 ? Math.sin(X.t * 31) * .0012 * Math.min(1, ME.drawT - 2.2) : 0;
     const r = VM.raise, s = VM.sprint, low = ME.nockT > 0 ? Math.sin(nockP * Math.PI) * .25 : 0;
-    // at rest the bow hangs low on the left; drawn, it comes up beside your line of sight
-    const bx = lp(lp(-.19, .03, r), -.27, s) + bobX, by = lp(lp(-.16, -.066, r), -.44, s) + bobY - low * .05 + tremble, bz = lp(lp(-.48, -.62, r), -.4, s) - VM.kick * .03;
-    VM.bow.g.position.set(bx, by, bz); VM.bow.g.rotation.set(lp(-.06, .001, r) + VM.kick * .22, lp(.16, -.03, r) + s * .6, lp(.42, -.16, r) + s * .5);
+    // at rest the bow hangs low in the bottom-left corner; drawn, it comes up canted to the left of your line of sight, so
+    // the target and the aim line stay clear and the arrow points in at the crosshair
+    const bx = lp(lp(-.27, -.235, r), -.3, s) + bobX, by = lp(lp(-.24, -.165, r), -.46, s) + bobY - low * .05 + tremble, bz = lp(lp(-.5, -.66, r), -.42, s) - VM.kick * .03;
+    VM.bow.g.position.set(bx, by, bz); VM.bow.g.rotation.set(lp(-.08, .001, r) + VM.kick * .22, lp(.16, -.13, r) + s * .6, lp(.62, .86, r) + s * .4);
+    VM.bow.g.scale.setScalar(.74); VM.handR.scale.setScalar(.74);
     // first person: the string travels less than on a body (the hand would be behind your eye)
     VM.bow.setDraw(VM.draw * .72, !out && nockP >= .3);
     if (nockP < 1 && !out) { const k = sm(cl((nockP - .3) / .7, 0, 1)); VM.bow.arrow.position.x += (1 - k) * .12; VM.bow.arrow.position.y -= (1 - k) * .08; VM.bow.arrow.position.z += (1 - k) * .3; }
     VM.bow.g.updateMatrix();
     const nk = VM.bow.nockLocal(_vp).applyMatrix4(VM.bow.g.matrix), wl = _vg.copy(VM.handL.userData.wrist).applyMatrix4(VM.bow.g.matrix);
-    aimLimb(VM.foreL, _ve.set(wl.x - .2, wl.y - .13, wl.z + .17), wl);
+    aimLimb(VM.foreL, _ve.set(wl.x - .2, wl.y - .2, wl.z + .1), wl);
     // the string hand rides the nock (reaching down for the next arrow while nocking; flicking back on release)
     const reach = ME.nockT > 0 ? Math.sin(cl(nockP * 1.3, 0, 1) * Math.PI) : 0;
     VM.handR.position.copy(nk); VM.handR.position.lerp(_ve.set(.2, -.34, .02), reach);

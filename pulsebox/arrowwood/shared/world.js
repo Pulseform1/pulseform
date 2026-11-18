@@ -164,7 +164,22 @@ const SPLIT = { x: 26, z: 80 };
   });
 })();
 
-// Trees: tall irregular oaks scattered through each half (seeded, so every machine grows the same wood), turned for the other half.
+// arrow pickups (a bundle of three) in exposed spots, and named areas for callouts
+export const PICKUPS = [];
+both(P => { for (const [x, z] of [[56, 75], [37, 97], [97, 104]]) { const [px, pz] = P(x, z); PICKUPS.push({ x: px, z: pz, y: terrainH(px, pz) }); } });
+export const SPAWNS = { 0: [[70, 126], [64, 128], [76, 128], [70, 131]], 1: [[70, 14], [76, 12], [64, 12], [70, 9]] };
+export const SPAWN_YAW = { 0: 0, 1: Math.PI };   // yaw 0 looks north (-Z)
+// free-for-all spawns: spread around the whole wood
+export const FFA_SPAWNS = [];
+both(P => { for (const [x, z] of [[70, 126], [30, 126], [110, 124], [14, 100], [44, 96], [96, 98], [124, 90], [52, 78], [86, 82], [20, 72]]) FFA_SPAWNS.push(P(x, z)); });
+// Trees: groves of tall old trees standing close, so their crowns meet overhead and shade the ground; open meadows with
+// nothing but grass and the odd bush; a few lone trees in between. Placed on the south half and turned for the north.
+export const GROVES = [], MEADOWS = [];
+{ const G = [[30, 101, 13], [105, 101, 12], [51, 117, 8.5], [119, 121, 9], [12, 121, 8], [88, 88, 6.5]], Mw = [[70, 98, 12], [44, 83, 7], [96, 83, 7], [70, 123, 12], [124, 82, 7]];
+  for (const [x, z, r] of G) { GROVES.push({ x, z, r }); const [a, b] = rot(x, z); GROVES.push({ x: a, z: b, r }); }
+  for (const [x, z, r] of Mw) { MEADOWS.push({ x, z, r }); const [a, b] = rot(x, z); MEADOWS.push({ x: a, z: b, r }); } }
+export const inGrove = (x, z, pad = 0) => GROVES.some(g => Math.hypot(x - g.x, z - g.z) < g.r + pad);
+export const inMeadow = (x, z, pad = 0) => MEADOWS.some(m => Math.hypot(x - m.x, z - m.z) < m.r + pad);
 (function trees() {
   const R = rng(1187), keepOut = (x, z) => {
     if (creekDist(x, z) < CREEK_W + 2.2) return true;
@@ -174,25 +189,34 @@ const SPLIT = { x: 26, z: 80 };
     const [rx, rz] = rot(x, z); if (Math.hypot(rx - SPLIT.x, rz - SPLIT.z) < 8 || Math.hypot(rx - TOWER.x, rz - TOWER.z) < 9) return true;
     if (Math.abs(x - CX) < 2.6 && z > 86 && z < 112) return true;                   // the long north-south lane stays open
     if (Math.hypot(x - 70, z - 124) < 9) return true;                               // the camp
+    if (inMeadow(x, z, 1)) return true;
+    if (PICKUPS.some(k => Math.hypot(k.x - x, k.z - z) < 2.6) || FFA_SPAWNS.some(([sx, sz]) => Math.hypot(sx - x, sz - z) < 2.4)) return true;
     return BOXES.some(b => Math.abs(x - b.x) < b.hx + 2.2 && Math.abs(z - b.z) < b.hx + 2.2);
   };
   const half = [];
-  for (let n = 0; n < 900 && half.length < 46; n++) {
+  // the groves first: tall trunks about five metres apart
+  for (let n = 0; n < 2400; n++) {
     const x = MIN + 2 + R() * (MAX - MIN - 4), z = CZ + 1 + R() * (MAX - CZ - 3);
-    if (keepOut(x, z)) continue;
-    if (half.some(t => Math.hypot(t.x - x, t.z - z) < 6.4)) continue;
-    // small round-topped trees: a short trunk you can hide behind, a ball of leaves arrows pass through
-    const big = R() < .25, r = big ? .42 + R() * .12 : .28 + R() * .1;
+    if (!inGrove(x, z) || keepOut(x, z) || half.some(t => Math.hypot(t.x - x, t.z - z) < 4.7)) continue;
+    half.push({ x, z, r: .44 + R() * .2, h: 12 + R() * 4, lean: [(R() - .5) * .06, (R() - .5) * .06], kind: 'tall', seed: (R() * 1e6) | 0 });
+  }
+  // then a scatter of smaller trees across the rest (never in a meadow)
+  let lone = 0;
+  for (let n = 0; n < 1200 && lone < 24; n++) {
+    const x = MIN + 2 + R() * (MAX - MIN - 4), z = CZ + 1 + R() * (MAX - CZ - 3);
+    if (inGrove(x, z, 2) || keepOut(x, z) || half.some(t => Math.hypot(t.x - x, t.z - z) < 8)) continue;
+    const big = R() < .25, r = big ? .42 + R() * .12 : .28 + R() * .1; lone++;
     half.push({ x, z, r, h: big ? 8 + R() * 2 : 5.5 + R() * 2, lean: [(R() - .5) * .08, (R() - .5) * .08], kind: big ? 'oak' : 'oak2', seed: (R() * 1e6) | 0 });
   }
   for (const t of half) { TREES.push(t); const [x, z] = rot(t.x, t.z); TREES.push({ ...t, x, z, lean: [-t.lean[0], -t.lean[1]], seed: t.seed + 1 }); }
-  // bushes: round shrubs to crouch behind (you can see and shoot through them, but they break up your outline)
+  // bushes: round shrubs to crouch behind (you can see and shoot through them, but they break up your outline); few in the meadows
   const B = rng(2207), bh = [];
-  for (let n = 0; n < 1400 && bh.length < 80; n++) {
+  for (let n = 0; n < 1600 && bh.length < 80; n++) {
     const x = MIN + 1 + B() * (MAX - MIN - 2), z = CZ + 4 + B() * (MAX - CZ - 5);
     if (creekDist(x, z) < CREEK_W + 1) continue;
     if (Math.abs(x - CX) < 2.2 && z > 80) continue;
     if (Math.hypot(x - 70, z - 124) < 6) continue;
+    if (inMeadow(x, z) && B() < .75) continue;
     if (TREES.some(t => Math.hypot(t.x - x, t.z - z) < t.r + .9)) continue;
     if (BOXES.some(b => { const dx = x - b.x, dz = z - b.z, lx = dx * b.c - dz * b.s, lz = dx * b.s + dz * b.c; return Math.abs(lx) < b.hx + .7 && Math.abs(lz) < b.hz + .7; })) continue;
     if (bh.some(q => Math.hypot(q.x - x, q.z - z) < 2.6)) continue;
@@ -201,14 +225,6 @@ const SPLIT = { x: 26, z: 80 };
   for (const q of bh) { BUSHES.push(q); const [x, z] = rot(q.x, q.z); BUSHES.push({ ...q, x, z, seed: q.seed + 1 }); }
 })();
 
-// arrow pickups (a bundle of three) in exposed spots, and named areas for callouts
-export const PICKUPS = [];
-both(P => { for (const [x, z] of [[56, 75], [37, 97], [97, 104]]) { const [px, pz] = P(x, z); PICKUPS.push({ x: px, z: pz, y: terrainH(px, pz) }); } });
-export const SPAWNS = { 0: [[70, 126], [64, 128], [76, 128], [70, 131]], 1: [[70, 14], [76, 12], [64, 12], [70, 9]] };
-export const SPAWN_YAW = { 0: 0, 1: Math.PI };   // yaw 0 looks north (-Z)
-// free-for-all spawns: spread around the whole wood
-export const FFA_SPAWNS = [];
-both(P => { for (const [x, z] of [[70, 126], [30, 126], [110, 124], [14, 100], [44, 96], [96, 98], [124, 90], [52, 78], [86, 82], [20, 72]]) FFA_SPAWNS.push(P(x, z)); });
 export const ZONE = { x: CX, z: CZ, r: 9, name: 'Stone Bridge' };
 export const AREAS = [
   { n: 'Stone Bridge', x: CX, z: CZ, r: 14 }, { n: 'Split Oak', x: SPLIT.x, z: SPLIT.z, r: 14 }, { n: 'Old Tower', x: TOWER.x, z: TOWER.z, r: 14 },

@@ -42,7 +42,7 @@
   function closeMenu() { UI.open = null; render(); if (CL.src) lockMouse(); }
   function setting(k, v) {
     if (k === 'sens' || k === 'touchSens' || k === 'vol') CFG[k] = +v; else if (k === 'fov') { CFG.fov = +v; if (X) { X.camera.fov = CFG.fov; X.camera.updateProjectionMatrix(); } } else if (k === 'invert') CFG.invert = !!v;
-    else if (k === 'quality') { CFG.quality = v; if (X) applyQuality(); } saveCfg();
+    else if (k === 'quality') { CFG.quality = v; if (X) applyQuality(); } else if (k === 'aimLine') CFG.aimLine = v; saveCfg();
   }
   const inviteLink = code => location.origin.startsWith('http') ? `${location.origin}${location.pathname}?room=${code}${QS.get('server') ? '&server=' + encodeURIComponent(QS.get('server')) : ''}` : `https://box.pulseform.org/games/arrowwood?room=${code}`;
   async function copy(t) { try { await navigator.clipboard.writeText(t); return true; } catch (e) { const i = document.createElement('input'); i.value = t; document.body.append(i); i.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (er) {} i.remove(); return ok; } }
@@ -118,6 +118,7 @@
     else if (o === 'shop') h = shopHtml(coins);
     else if (o === 'settings') h = `<div class="pn" style="max-width:520px"><div class="top"><h2>Settings</h2><button data-a="back">Done</button></div><div class="col">
       <label>Graphics <select data-set="quality">${['auto', 'low', 'medium', 'high'].map(q => `<option ${CFG.quality === q ? 'selected' : ''}>${q}</option>`).join('')}</select> <span class="muted">now: ${X ? X.q : '…'} · low suits an iPad</span></label>
+      <label>Aim line <select data-set="aimLine"><option value="full" ${CFG.aimLine !== 'short' ? 'selected' : ''}>Full: shows where the arrow lands</option><option value="short" ${CFG.aimLine === 'short' ? 'selected' : ''}>Short: just the first few metres</option></select></label>
       <label>Mouse sensitivity<input class="slider" type="range" min="0" max="1" step=".01" value="${CFG.sens}" data-set="sens"></label>
       <label>Touch aim sensitivity<input class="slider" type="range" min="0" max="1" step=".01" value="${CFG.touchSens}" data-set="touchSens"></label>
       <label>Field of view<input class="slider" type="range" min="60" max="95" step="1" value="${CFG.fov}" data-set="fov"></label>

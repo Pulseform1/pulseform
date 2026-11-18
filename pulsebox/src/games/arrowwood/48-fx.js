@@ -1,5 +1,5 @@
   /* ---------- 48 fx: archers on screen, arrows (flying, stuck, in bodies), impacts, the aim arc, pings, finishers, cameras ---------- */
-  let PS = {}, ARC = null, FINS = [], BILLS = null, COINS3 = null, THWACK = null; const DEBRIS = [], FLOATS = [], RINGS = [];
+  let PS = {}, ARC = null, AIMMARK = null, FINS = [], BILLS = null, COINS3 = null, THWACK = null; const DEBRIS = [], FLOATS = [], RINGS = [], AIM_N = 190;
   const hashId = id => { let h = 7; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
   // ---- a small particle system on points with per-particle size, colour, fade and spin
   function partSys(map, max, additive) {
@@ -25,9 +25,15 @@
   function initFx() {
     PS.dust = partSys(TEX.dot, 500, false); PS.chip = partSys(TEX.chip, 300, false); PS.cube = partSys(TEX.square, 500, false); PS.trail = partSys(TEX.dot, 900, true); PS.star = partSys(TEX.star, 120, true); PS.leaf = partSys(TEX.leafP, 400, false); PS.petal = partSys(TEX.petal, 400, false); PS.heart = partSys(TEX.heart, 200, false); PS.spark = partSys(TEX.dot, 300, true);
     // the aim preview: a short line of faint dots
-    const n = 18, g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('aa', new THREE.BufferAttribute(new Float32Array(n), 1));
-    ARC = new THREE.Points(g, new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { sc: { value: innerHeight * .5 } }, vertexShader: 'attribute float aa; varying float vA; uniform float sc; void main(){ vA = aa; vec4 mv = modelViewMatrix * vec4(position,1.); gl_PointSize = max(2., .045 * sc / -mv.z); gl_Position = projectionMatrix * mv; }', fragmentShader: 'varying float vA; void main(){ vec2 p = gl_PointCoord - .5; float d = length(p); if (d > .5) discard; gl_FragColor = vec4(1., .97, .86, vA * smoothstep(.5, .2, d)); }' }));
-    ARC.frustumCulled = false; ARC.visible = false; X.scene.add(ARC);
+    // the aim line: round dots a fixed size on screen (white with a dark rim, so they read on sky and on grass), every 0.7 m
+    // of the flight to where the arrow will land, and a ring at that spot
+    const n = AIM_N, g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('aa', new THREE.BufferAttribute(new Float32Array(n), 1));
+    ARC = new THREE.Points(g, new THREE.ShaderMaterial({ transparent: true, depthWrite: false, depthTest: true, uniforms: { px: { value: 7 }, sc: { value: 600 } },
+      vertexShader: 'attribute float aa; varying float vA; uniform float px, sc; void main(){ vA = aa; vec4 mv = modelViewMatrix * vec4(position,1.); gl_PointSize = clamp(.07 * sc / -mv.z, px, px * 2.4); gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'varying float vA; void main(){ float d = length(gl_PointCoord - .5); if (d > .5) discard; vec3 c = mix(vec3(1., .98, .9), vec3(.32, .3, .27), smoothstep(.3, .38, d)); gl_FragColor = vec4(c, vA * (1. - smoothstep(.44, .5, d)) * (d > .38 ? .3 : 1.)); }' }));
+    ARC.frustumCulled = false; ARC.visible = false; ARC.renderOrder = 15; X.scene.add(ARC);
+    AIMMARK = new THREE.Group(); const ringS = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.ring, color: new THREE.Color('#ffffff'), transparent: true, depthTest: false })), dotS = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.dot, color: new THREE.Color('#ffd23a'), transparent: true, depthTest: false }));
+    ringS.renderOrder = dotS.renderOrder = 16; AIMMARK.add(ringS, dotS); AIMMARK.userData = { ringS, dotS }; AIMMARK.visible = false; X.scene.add(AIMMARK);
     // cash: bills and coins for the Cashout finisher
     BILLS = { m: new THREE.InstancedMesh(new THREE.PlaneGeometry(.26, .12), std({ map: TEX.bill, side: THREE.DoubleSide, roughness: .8 }), 260), list: [] };
     COINS3 = { m: new THREE.InstancedMesh(new THREE.CylinderGeometry(.045, .045, .008, 14), std({ map: TEX.coin, metalness: .85, roughness: .28, color: LC('#ffd86a') }), 90), list: [] };
@@ -139,12 +145,26 @@
     for (let i = FLOATS.length - 1; i >= 0; i--) { const f = FLOATS[i]; f.t += dt; const k = f.t / .95, pop = f.t < .12 ? f.t / .12 * 1.25 : lp(1.25, 1, cl((f.t - .12) / .15, 0, 1)); f.s.position.y += dt * 1.1; f.s.position.x += f.vx * dt; const dk = cl(f.s.position.distanceTo(X.camera.position) * .13, .8, 6); f.s.scale.set(1.15 * f.scale * pop * dk, .43 * f.scale * pop * dk, 1); f.s.material.opacity = 1 - sm(cl((k - .6) / .4, 0, 1)); if (k >= 1) { X.scene.remove(f.s); FLOATS.splice(i, 1); } }
     for (let i = RINGS.length - 1; i >= 0; i--) { const r = RINGS[i]; if (!r.s.parent) { r.s.position.set(...r.p); X.scene.add(r.s); } r.t += dt; const k = r.t / .4; r.s.scale.setScalar(.2 + k * r.size); r.s.material.opacity = 1 - k; if (k >= 1) { X.scene.remove(r.s); r.s.material.dispose(); RINGS.splice(i, 1); } }
   }
-  // ---- the dotted preview arc
+  // ---- the aim line: the same launch speed and gravity the real arrow will have, flown until it meets the world
+  // (a tree, a wall, the ground); leaves let arrows through, so they don't stop it. Settings can cut it back to a short arc.
+  let _aimF, _aimR, _aimU; LAZY.push(() => { _aimF = new THREE.Vector3(); _aimR = new THREE.Vector3(); _aimU = new THREE.Vector3(); });
   function updateArc() {
-    if (!ARC) return; const show = ME.drawing && ME.cam === 'fp' && canAct(); ARC.visible = show; if (!show) return;
-    const { o, v } = previewNow(), pts = W.previewArc(o, v, 13, 18), pa = ARC.geometry.attributes.position, aa = ARC.geometry.attributes.aa, k0 = cl(ME.drawT / .12, 0, 1);
-    pts.forEach((q, i) => { pa.setXYZ(i, q[0], q[1], q[2]); const u = i / (pts.length - 1); aa.setX(i, (i < 1 ? 0 : .55 * Math.pow(1 - u, 1.5)) * k0); });
-    pa.needsUpdate = aa.needsUpdate = true;
+    if (!ARC) return; const show = ME.drawing && ME.cam === 'fp' && canAct(); ARC.visible = show; AIMMARK.visible = false; if (!show) return;
+    const { o, v } = previewNow(), sp = Math.hypot(v[0], v[1], v[2]) || 1, full = CFG.aimLine !== 'short', pa = ARC.geometry.attributes.position, aa = ARC.geometry.attributes.aa, k0 = cl(ME.drawT / .1, 0, 1);
+    const pr = X.renderer.getPixelRatio(); ARC.material.uniforms.px.value = 6 * pr; ARC.material.uniforms.sc.value = innerHeight * pr * .5 / Math.tan(X.camera.fov * Math.PI / 360);
+    // seen from behind, a fast arrow's path lies almost on your line of sight; so the drawn line leaves from the bow (low on the
+    // left of the screen) and eases onto the true flight over the first dozen metres, which keeps it readable as an arc
+    const cam = X.camera, fwd = _aimF.set(0, 0, -1).applyQuaternion(cam.quaternion), rt = _aimR.set(1, 0, 0).applyQuaternion(cam.quaternion), up = _aimU.set(0, 1, 0).applyQuaternion(cam.quaternion);
+    const sx = cam.position.x + rt.x * -.3 + up.x * -.24 + fwd.x * 1.1 - o[0], sy = cam.position.y + rt.y * -.3 + up.y * -.24 + fwd.y * 1.1 - o[1], sz = cam.position.z + rt.z * -.3 + up.z * -.24 + fwd.z * 1.1 - o[2];
+    const step = .7 / sp, maxT = full ? 4.5 : 13 / sp; let prev = o, n = 0, hit = null;
+    for (let i = 1; i < AIM_N; i++) {
+      const t = i * step; if (t > maxT) break; const p = W.arrowAt(o, v, t);
+      if (full) { const h = W.sweepWorld(prev, p); if (h) { hit = [lp(prev[0], p[0], h.t), lp(prev[1], p[1], h.t), lp(prev[2], p[2], h.t)]; break; } }
+      const dist = t * sp, ease = full ? 1 - sm(cl(dist / 14, 0, 1)) : 0; pa.setXYZ(n, p[0] + sx * ease, p[1] + sy * ease, p[2] + sz * ease); aa.setX(n, k0 * (full ? cl((dist - .6) / 1.5, 0, 1) * .95 : (i < 2 ? 0 : .55 * Math.pow(1 - i / 18, 1.5)))); n++; prev = p;
+    }
+    for (let i = n; i < AIM_N; i++) aa.setX(i, 0);
+    ARC.geometry.setDrawRange(0, n); pa.needsUpdate = aa.needsUpdate = true;
+    if (hit) { const c = X.camera.position, d = Math.hypot(hit[0] - c.x, hit[1] - c.y, hit[2] - c.z), k = d * .045 * (1 + Math.sin(X.t * 8) * .06); AIMMARK.visible = true; AIMMARK.position.set(hit[0], hit[1] + .02, hit[2]); AIMMARK.userData.ringS.scale.setScalar(k); AIMMARK.userData.dotS.scale.setScalar(k * .45); AIMMARK.userData.ringS.material.opacity = .9 * k0; }
   }
   // ---- pings
   const PINGS = [];

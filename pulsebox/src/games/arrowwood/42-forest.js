@@ -46,7 +46,7 @@
   const LEAF_COLS = ['#4caf3c', '#5cbc43', '#3f9e3a', '#6ac24a', '#47a83f'], PINE_COLS = ['#2f8a4a', '#2a7d44', '#368f52'];
   // one tree: a tapered trunk and a crown of balls (or, now and then, a stack of cones). Returns [trunk geos, crown geos].
   function treeGeos(t, ground) {
-    const R = W.rng((t.seed || 5) + Math.round(t.x * 31 + t.z * 17)), H = t.h, r = t.r, pine = t.kind !== 'split' && R() < .22, trunkH = H * (pine ? .3 : .52), tr = [], cr = [];
+    const R = W.rng((t.seed || 5) + Math.round(t.x * 31 + t.z * 17)), H = t.h, r = t.r, tall = t.kind === 'tall', pine = !tall && t.kind !== 'split' && R() < .22, trunkH = H * (pine ? .3 : tall ? .6 : .52), tr = [], cr = [];
     const lean = [t.lean ? t.lean[0] : 0, t.lean ? t.lean[1] : 0];
     const trunk = new THREE.CylinderGeometry(r * .72, r * 1.08, trunkH + .6, 8, 2); trunk.translate(0, trunkH / 2 - .3, 0);
     { const p = trunk.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i); p.setX(i, p.getX(i) + lean[0] * y); p.setZ(i, p.getZ(i) + lean[1] * y); } }
@@ -55,6 +55,14 @@
     if (pine) {
       const col = pick2(R, PINE_COLS); for (let k = 0; k < 3; k++) { const rad = H * (.26 - k * .06), hh = H * .3, g = new THREE.ConeGeometry(rad, hh, 9, 1); g.translate(top[0], top[1] + k * H * .2 + hh / 2 - H * .04, top[2]); g.computeVertexNormals();
         const c = new THREE.Color(col).convertSRGBToLinear(); tint(g, (x, y, z, ny) => { const f = ny < -.5 ? .55 : .85 + k * .1 + R() * .02; return [c.r * f, c.g * f, c.b * f]; }); cr.push(g); }
+      return [tr, cr];
+    }
+    if (tall) {   // a wide, flat-bottomed crown about seven metres across
+      const col = pick2(R, ['#3f9e3a', '#47a83f', '#368f36', '#4caf3c']), main = 3.1 + R() * .5;
+      cr.push(leafBall(R, main, top[0], top[1] + main * .55, top[2], 1.15, .62, 1.15, col));
+      for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + R() * .8, rr = main * (.62 + R() * .18), d = main * (.75 + R() * .25); cr.push(leafBall(R, rr, top[0] + Math.cos(a) * d, top[1] + main * (.15 + R() * .35), top[2] + Math.sin(a) * d, 1.1, .7, 1.1, col)); }
+      cr.push(leafBall(R, main * .6, top[0] + (R() - .5), top[1] + main * 1.05, top[2] + (R() - .5), 1, .8, 1, col));
+      for (let k = 0; k < 3; k++) { const a = R() * TAU, b = new THREE.CylinderGeometry(r * .2, r * .38, main * 1.1, 6); b.translate(0, main * .55, 0); b.rotateZ(1); b.rotateY(a); b.translate(top[0], top[1] - trunkH * .1, top[2]); b.computeVertexNormals(); tr.push(b); }
       return [tr, cr];
     }
     const big = t.kind === 'split' ? 1.25 : 1, main = (H * .3 + .4) * big, col = pick2(R, LEAF_COLS);
@@ -76,13 +84,18 @@
       const ext = 26, size = 140 + ext * 2, seg = q === 'low' ? 140 : 220, geo = new THREE.PlaneGeometry(size, size, seg, seg); geo.rotateX(-Math.PI / 2); geo.translate(70, 0, 70);
       const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, visH(p.getX(i), p.getZ(i))); geo.computeVertexNormals();
       const n = geo.attributes.normal, col = new Float32Array(p.count * 3);
-      const G1 = LC('#47a334'), G2 = LC('#62b83f'), G3 = LC('#378a2c'), DIRT = LC('#b98a55'), SAND = LC('#dcc98c'), SLOPE = LC('#7f8f44'), BED = LC('#9a9178');
+      // where the crowns meet overhead the grass lies in shade (painted in, so it reads even without shadows)
+      const SH = 192, SO = -26, shade = new Float32Array(SH * SH);
+      for (const t of W.TREES) { if (t.kind !== 'tall' && t.kind !== 'split') continue; const R0 = 4.6; for (let gz = Math.floor(t.z - R0); gz <= t.z + R0; gz++) for (let gx = Math.floor(t.x - R0); gx <= t.x + R0; gx++) { const i = gx - SO, j = gz - SO; if (i < 0 || j < 0 || i >= SH || j >= SH) continue; const d = Math.hypot(gx - t.x, gz - t.z), v = 1 - sm(cl((d - 2.2) / 2.4, 0, 1)); if (v > shade[j * SH + i]) shade[j * SH + i] = v; } }
+      const shadeAt = (x, z) => { const i = cl(Math.round(x - SO), 0, SH - 1), j = cl(Math.round(z - SO), 0, SH - 1); return shade[j * SH + i]; };
+      const SHADEC = LC('#2f6f2a'), G1 = LC('#47a334'), G2 = LC('#62b83f'), G3 = LC('#378a2c'), DIRT = LC('#b98a55'), SAND = LC('#dcc98c'), SLOPE = LC('#7f8f44'), BED = LC('#9a9178');
       const c = new THREE.Color();
       for (let i = 0; i < p.count; i++) {
         const x = p.getX(i), y = p.getY(i), z = p.getZ(i), ny = n.getY(i), nz1 = noiseAt(x, z, .045), nz2 = noiseAt(x + 40, z - 9, .16);
         c.copy(G1).lerp(G2, cl((y - .5) / 4, 0, 1) * .8).lerp(G3, cl(nz1 * 1.6 - .6, 0, 1) * .55); c.multiplyScalar(.94 + nz2 * .12);
         c.lerp(SLOPE, cl((.93 - ny) * 4, 0, .6));
         const pd = pathDist(x, z); if (pd < 2) c.lerp(DIRT, (1 - sm(cl((pd - .5) / 1.5, 0, 1))) * .85);
+        const shd = shadeAt(x, z); if (shd > 0) { c.lerp(SHADEC, shd * .45); c.multiplyScalar(1 - shd * .22); }
         const cd = W.creekDist(x, z); if (cd < W.CREEK_W + 3) { const k = 1 - sm(cl((cd - W.CREEK_W + .3) / 3, 0, 1)); c.lerp(cd < W.CREEK_W ? BED : SAND, k); }
         col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
       }

@@ -1,8 +1,12 @@
 # ARROWWOOD
 
 First-person archery for Pulsebox in a bright, toy-like style. Two to eight friends (or bots) take cover in the King's
-Wood (rolling hills, round trees and bushes, a creek, the Stone Bridge, Split Oak and the Old Tower), draw, and land
-the last arrow.
+Wood (rolling hills, groves of tall trees whose crowns meet overhead, open meadows, bushes, a creek, the Stone Bridge,
+Split Oak and the Old Tower), draw, and land the last arrow.
+
+While you draw, a dotted aim line shows the whole flight (it leaves from the bow and eases onto the arrow's true path)
+and a ring marks where the arrow will land; leaves let arrows through, so the line passes through them too. Settings can
+cut it back to a short arc.
 
 - **1v1 and 2v2**: first to five round wins. One life per round, six arrows per round, an overtime capture zone at
   the Stone Bridge clearing after 80 seconds. A host can switch on **one-shot rules** for a room.

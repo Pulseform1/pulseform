@@ -77,7 +77,7 @@ const GAME = {
   how: [
     'Mouse and keys: WASD moves, mouse aims. Hold the left button to draw, let go to shoot; right button or Q lowers the bow without losing the arrow. Shift sprints, C crouches, Space jumps, F pings a spot for your team.',
     'Touch: left thumb moves; drag on the right to aim. Hold DRAW to pull the string and keep dragging (even from the button) to adjust; let go to shoot.',
-    'A quick tap lobs a short arrow; a full draw flies far and flat. The faint dots show only the start of the flight. Headshots at full draw end it.',
+    'A quick tap lobs a short arrow; a full draw flies far and flat. While you draw, a dotted line shows the flight and a ring marks where the arrow will land (Settings can shorten it). Headshots at full draw end it.',
   ],
   skins: [{ name: 'Default', price: 0 }],
 };
@@ -252,7 +252,22 @@ const SPLIT = { x: 26, z: 80 };
   });
 })();
 
-// Trees: tall irregular oaks scattered through each half (seeded, so every machine grows the same wood), turned for the other half.
+// arrow pickups (a bundle of three) in exposed spots, and named areas for callouts
+const PICKUPS = [];
+both(P => { for (const [x, z] of [[56, 75], [37, 97], [97, 104]]) { const [px, pz] = P(x, z); PICKUPS.push({ x: px, z: pz, y: terrainH(px, pz) }); } });
+const SPAWNS = { 0: [[70, 126], [64, 128], [76, 128], [70, 131]], 1: [[70, 14], [76, 12], [64, 12], [70, 9]] };
+const SPAWN_YAW = { 0: 0, 1: Math.PI };   // yaw 0 looks north (-Z)
+// free-for-all spawns: spread around the whole wood
+const FFA_SPAWNS = [];
+both(P => { for (const [x, z] of [[70, 126], [30, 126], [110, 124], [14, 100], [44, 96], [96, 98], [124, 90], [52, 78], [86, 82], [20, 72]]) FFA_SPAWNS.push(P(x, z)); });
+// Trees: groves of tall old trees standing close, so their crowns meet overhead and shade the ground; open meadows with
+// nothing but grass and the odd bush; a few lone trees in between. Placed on the south half and turned for the north.
+const GROVES = [], MEADOWS = [];
+{ const G = [[30, 101, 13], [105, 101, 12], [51, 117, 8.5], [119, 121, 9], [12, 121, 8], [88, 88, 6.5]], Mw = [[70, 98, 12], [44, 83, 7], [96, 83, 7], [70, 123, 12], [124, 82, 7]];
+  for (const [x, z, r] of G) { GROVES.push({ x, z, r }); const [a, b] = rot(x, z); GROVES.push({ x: a, z: b, r }); }
+  for (const [x, z, r] of Mw) { MEADOWS.push({ x, z, r }); const [a, b] = rot(x, z); MEADOWS.push({ x: a, z: b, r }); } }
+const inGrove = (x, z, pad = 0) => GROVES.some(g => Math.hypot(x - g.x, z - g.z) < g.r + pad);
+const inMeadow = (x, z, pad = 0) => MEADOWS.some(m => Math.hypot(x - m.x, z - m.z) < m.r + pad);
 (function trees() {
   const R = rng(1187), keepOut = (x, z) => {
     if (creekDist(x, z) < CREEK_W + 2.2) return true;
@@ -262,25 +277,34 @@ const SPLIT = { x: 26, z: 80 };
     const [rx, rz] = rot(x, z); if (Math.hypot(rx - SPLIT.x, rz - SPLIT.z) < 8 || Math.hypot(rx - TOWER.x, rz - TOWER.z) < 9) return true;
     if (Math.abs(x - CX) < 2.6 && z > 86 && z < 112) return true;                   // the long north-south lane stays open
     if (Math.hypot(x - 70, z - 124) < 9) return true;                               // the camp
+    if (inMeadow(x, z, 1)) return true;
+    if (PICKUPS.some(k => Math.hypot(k.x - x, k.z - z) < 2.6) || FFA_SPAWNS.some(([sx, sz]) => Math.hypot(sx - x, sz - z) < 2.4)) return true;
     return BOXES.some(b => Math.abs(x - b.x) < b.hx + 2.2 && Math.abs(z - b.z) < b.hx + 2.2);
   };
   const half = [];
-  for (let n = 0; n < 900 && half.length < 46; n++) {
+  // the groves first: tall trunks about five metres apart
+  for (let n = 0; n < 2400; n++) {
     const x = MIN + 2 + R() * (MAX - MIN - 4), z = CZ + 1 + R() * (MAX - CZ - 3);
-    if (keepOut(x, z)) continue;
-    if (half.some(t => Math.hypot(t.x - x, t.z - z) < 6.4)) continue;
-    // small round-topped trees: a short trunk you can hide behind, a ball of leaves arrows pass through
-    const big = R() < .25, r = big ? .42 + R() * .12 : .28 + R() * .1;
+    if (!inGrove(x, z) || keepOut(x, z) || half.some(t => Math.hypot(t.x - x, t.z - z) < 4.7)) continue;
+    half.push({ x, z, r: .44 + R() * .2, h: 12 + R() * 4, lean: [(R() - .5) * .06, (R() - .5) * .06], kind: 'tall', seed: (R() * 1e6) | 0 });
+  }
+  // then a scatter of smaller trees across the rest (never in a meadow)
+  let lone = 0;
+  for (let n = 0; n < 1200 && lone < 24; n++) {
+    const x = MIN + 2 + R() * (MAX - MIN - 4), z = CZ + 1 + R() * (MAX - CZ - 3);
+    if (inGrove(x, z, 2) || keepOut(x, z) || half.some(t => Math.hypot(t.x - x, t.z - z) < 8)) continue;
+    const big = R() < .25, r = big ? .42 + R() * .12 : .28 + R() * .1; lone++;
     half.push({ x, z, r, h: big ? 8 + R() * 2 : 5.5 + R() * 2, lean: [(R() - .5) * .08, (R() - .5) * .08], kind: big ? 'oak' : 'oak2', seed: (R() * 1e6) | 0 });
   }
   for (const t of half) { TREES.push(t); const [x, z] = rot(t.x, t.z); TREES.push({ ...t, x, z, lean: [-t.lean[0], -t.lean[1]], seed: t.seed + 1 }); }
-  // bushes: round shrubs to crouch behind (you can see and shoot through them, but they break up your outline)
+  // bushes: round shrubs to crouch behind (you can see and shoot through them, but they break up your outline); few in the meadows
   const B = rng(2207), bh = [];
-  for (let n = 0; n < 1400 && bh.length < 80; n++) {
+  for (let n = 0; n < 1600 && bh.length < 80; n++) {
     const x = MIN + 1 + B() * (MAX - MIN - 2), z = CZ + 4 + B() * (MAX - CZ - 5);
     if (creekDist(x, z) < CREEK_W + 1) continue;
     if (Math.abs(x - CX) < 2.2 && z > 80) continue;
     if (Math.hypot(x - 70, z - 124) < 6) continue;
+    if (inMeadow(x, z) && B() < .75) continue;
     if (TREES.some(t => Math.hypot(t.x - x, t.z - z) < t.r + .9)) continue;
     if (BOXES.some(b => { const dx = x - b.x, dz = z - b.z, lx = dx * b.c - dz * b.s, lz = dx * b.s + dz * b.c; return Math.abs(lx) < b.hx + .7 && Math.abs(lz) < b.hz + .7; })) continue;
     if (bh.some(q => Math.hypot(q.x - x, q.z - z) < 2.6)) continue;
@@ -289,14 +313,6 @@ const SPLIT = { x: 26, z: 80 };
   for (const q of bh) { BUSHES.push(q); const [x, z] = rot(q.x, q.z); BUSHES.push({ ...q, x, z, seed: q.seed + 1 }); }
 })();
 
-// arrow pickups (a bundle of three) in exposed spots, and named areas for callouts
-const PICKUPS = [];
-both(P => { for (const [x, z] of [[56, 75], [37, 97], [97, 104]]) { const [px, pz] = P(x, z); PICKUPS.push({ x: px, z: pz, y: terrainH(px, pz) }); } });
-const SPAWNS = { 0: [[70, 126], [64, 128], [76, 128], [70, 131]], 1: [[70, 14], [76, 12], [64, 12], [70, 9]] };
-const SPAWN_YAW = { 0: 0, 1: Math.PI };   // yaw 0 looks north (-Z)
-// free-for-all spawns: spread around the whole wood
-const FFA_SPAWNS = [];
-both(P => { for (const [x, z] of [[70, 126], [30, 126], [110, 124], [14, 100], [44, 96], [96, 98], [124, 90], [52, 78], [86, 82], [20, 72]]) FFA_SPAWNS.push(P(x, z)); });
 const ZONE = { x: CX, z: CZ, r: 9, name: 'Stone Bridge' };
 const AREAS = [
   { n: 'Stone Bridge', x: CX, z: CZ, r: 14 }, { n: 'Split Oak', x: SPLIT.x, z: SPLIT.z, r: 14 }, { n: 'Old Tower', x: TOWER.x, z: TOWER.z, r: 14 },
@@ -465,7 +481,7 @@ const BOWS = [
 const BOW_IDS = BOWS.map(b => b.id);
 const COINS = { start: 160, match: 40, win: 25, ffaTop: 25 };
 
-return { damageFor, rng, creekDist, terrainH, areaName, groundAt, blocked, moveStep, aimVector, shotOrigin, sweepWorld, hitboxes, sweepBodies, rayWorld, previewArc, MAP_SIZE, MIN, MAX, CX, CZ, GRAV, BOW, drawPower, launchSpeed, ZONES, PL, eyeHeight, creekZ, CREEK_W, waterY, inWater, TREES, BOXES, PROPS, BUSHES, PICKUPS, SPAWNS, SPAWN_YAW, FFA_SPAWNS, ZONE, AREAS, gridRef, TEAMS, arrowAt, BOWS, BOW_IDS, COINS };
+return { damageFor, rng, creekDist, terrainH, areaName, groundAt, blocked, moveStep, aimVector, shotOrigin, sweepWorld, hitboxes, sweepBodies, rayWorld, previewArc, MAP_SIZE, MIN, MAX, CX, CZ, GRAV, BOW, drawPower, launchSpeed, ZONES, PL, eyeHeight, creekZ, CREEK_W, waterY, inWater, TREES, BOXES, PROPS, BUSHES, PICKUPS, SPAWNS, SPAWN_YAW, FFA_SPAWNS, GROVES, MEADOWS, inGrove, inMeadow, ZONE, AREAS, gridRef, TEAMS, arrowAt, BOWS, BOW_IDS, COINS };
 })();
 
 /* ---- shared: arrowwood/server/engine.js ---- */
@@ -930,7 +946,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   const teamCol = (team, slot, mode) => mode === 'ffa' ? FFA_COLS[(slot | 0) % 8] : W.TEAMS[team | 0].col;
 
   // settings (kept in the kit's save for this game)
-  const CFG = { quality: 'auto', sens: .5, touchSens: .5, invert: false, vol: .8, fov: 75, name: '', fps: false };
+  const CFG = { quality: 'auto', sens: .5, touchSens: .5, invert: false, vol: .8, fov: 75, name: '', fps: false, aimLine: 'full' };
   const loadCfg = () => { try { Object.assign(CFG, (K.save.aw || {}).cfg || {}); } catch (e) {} };
   const saveCfg = () => { try { K.save.aw = Object.assign(K.save.aw || {}, { cfg: CFG }); K.persist(); } catch (e) {} };
   const quality = () => QS.get('quality') || (CFG.quality !== 'auto' ? CFG.quality : (isTouch() || /iPad|iPhone|Android/.test(navigator.userAgent)) ? 'low' : (navigator.hardwareConcurrency || 4) >= 8 ? 'high' : 'medium');
@@ -1417,7 +1433,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   const LEAF_COLS = ['#4caf3c', '#5cbc43', '#3f9e3a', '#6ac24a', '#47a83f'], PINE_COLS = ['#2f8a4a', '#2a7d44', '#368f52'];
   // one tree: a tapered trunk and a crown of balls (or, now and then, a stack of cones). Returns [trunk geos, crown geos].
   function treeGeos(t, ground) {
-    const R = W.rng((t.seed || 5) + Math.round(t.x * 31 + t.z * 17)), H = t.h, r = t.r, pine = t.kind !== 'split' && R() < .22, trunkH = H * (pine ? .3 : .52), tr = [], cr = [];
+    const R = W.rng((t.seed || 5) + Math.round(t.x * 31 + t.z * 17)), H = t.h, r = t.r, tall = t.kind === 'tall', pine = !tall && t.kind !== 'split' && R() < .22, trunkH = H * (pine ? .3 : tall ? .6 : .52), tr = [], cr = [];
     const lean = [t.lean ? t.lean[0] : 0, t.lean ? t.lean[1] : 0];
     const trunk = new THREE.CylinderGeometry(r * .72, r * 1.08, trunkH + .6, 8, 2); trunk.translate(0, trunkH / 2 - .3, 0);
     { const p = trunk.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i); p.setX(i, p.getX(i) + lean[0] * y); p.setZ(i, p.getZ(i) + lean[1] * y); } }
@@ -1426,6 +1442,14 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     if (pine) {
       const col = pick2(R, PINE_COLS); for (let k = 0; k < 3; k++) { const rad = H * (.26 - k * .06), hh = H * .3, g = new THREE.ConeGeometry(rad, hh, 9, 1); g.translate(top[0], top[1] + k * H * .2 + hh / 2 - H * .04, top[2]); g.computeVertexNormals();
         const c = new THREE.Color(col).convertSRGBToLinear(); tint(g, (x, y, z, ny) => { const f = ny < -.5 ? .55 : .85 + k * .1 + R() * .02; return [c.r * f, c.g * f, c.b * f]; }); cr.push(g); }
+      return [tr, cr];
+    }
+    if (tall) {   // a wide, flat-bottomed crown about seven metres across
+      const col = pick2(R, ['#3f9e3a', '#47a83f', '#368f36', '#4caf3c']), main = 3.1 + R() * .5;
+      cr.push(leafBall(R, main, top[0], top[1] + main * .55, top[2], 1.15, .62, 1.15, col));
+      for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + R() * .8, rr = main * (.62 + R() * .18), d = main * (.75 + R() * .25); cr.push(leafBall(R, rr, top[0] + Math.cos(a) * d, top[1] + main * (.15 + R() * .35), top[2] + Math.sin(a) * d, 1.1, .7, 1.1, col)); }
+      cr.push(leafBall(R, main * .6, top[0] + (R() - .5), top[1] + main * 1.05, top[2] + (R() - .5), 1, .8, 1, col));
+      for (let k = 0; k < 3; k++) { const a = R() * TAU, b = new THREE.CylinderGeometry(r * .2, r * .38, main * 1.1, 6); b.translate(0, main * .55, 0); b.rotateZ(1); b.rotateY(a); b.translate(top[0], top[1] - trunkH * .1, top[2]); b.computeVertexNormals(); tr.push(b); }
       return [tr, cr];
     }
     const big = t.kind === 'split' ? 1.25 : 1, main = (H * .3 + .4) * big, col = pick2(R, LEAF_COLS);
@@ -1447,13 +1471,18 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
       const ext = 26, size = 140 + ext * 2, seg = q === 'low' ? 140 : 220, geo = new THREE.PlaneGeometry(size, size, seg, seg); geo.rotateX(-Math.PI / 2); geo.translate(70, 0, 70);
       const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, visH(p.getX(i), p.getZ(i))); geo.computeVertexNormals();
       const n = geo.attributes.normal, col = new Float32Array(p.count * 3);
-      const G1 = LC('#47a334'), G2 = LC('#62b83f'), G3 = LC('#378a2c'), DIRT = LC('#b98a55'), SAND = LC('#dcc98c'), SLOPE = LC('#7f8f44'), BED = LC('#9a9178');
+      // where the crowns meet overhead the grass lies in shade (painted in, so it reads even without shadows)
+      const SH = 192, SO = -26, shade = new Float32Array(SH * SH);
+      for (const t of W.TREES) { if (t.kind !== 'tall' && t.kind !== 'split') continue; const R0 = 4.6; for (let gz = Math.floor(t.z - R0); gz <= t.z + R0; gz++) for (let gx = Math.floor(t.x - R0); gx <= t.x + R0; gx++) { const i = gx - SO, j = gz - SO; if (i < 0 || j < 0 || i >= SH || j >= SH) continue; const d = Math.hypot(gx - t.x, gz - t.z), v = 1 - sm(cl((d - 2.2) / 2.4, 0, 1)); if (v > shade[j * SH + i]) shade[j * SH + i] = v; } }
+      const shadeAt = (x, z) => { const i = cl(Math.round(x - SO), 0, SH - 1), j = cl(Math.round(z - SO), 0, SH - 1); return shade[j * SH + i]; };
+      const SHADEC = LC('#2f6f2a'), G1 = LC('#47a334'), G2 = LC('#62b83f'), G3 = LC('#378a2c'), DIRT = LC('#b98a55'), SAND = LC('#dcc98c'), SLOPE = LC('#7f8f44'), BED = LC('#9a9178');
       const c = new THREE.Color();
       for (let i = 0; i < p.count; i++) {
         const x = p.getX(i), y = p.getY(i), z = p.getZ(i), ny = n.getY(i), nz1 = noiseAt(x, z, .045), nz2 = noiseAt(x + 40, z - 9, .16);
         c.copy(G1).lerp(G2, cl((y - .5) / 4, 0, 1) * .8).lerp(G3, cl(nz1 * 1.6 - .6, 0, 1) * .55); c.multiplyScalar(.94 + nz2 * .12);
         c.lerp(SLOPE, cl((.93 - ny) * 4, 0, .6));
         const pd = pathDist(x, z); if (pd < 2) c.lerp(DIRT, (1 - sm(cl((pd - .5) / 1.5, 0, 1))) * .85);
+        const shd = shadeAt(x, z); if (shd > 0) { c.lerp(SHADEC, shd * .45); c.multiplyScalar(1 - shd * .22); }
         const cd = W.creekDist(x, z); if (cd < W.CREEK_W + 3) { const k = 1 - sm(cl((cd - W.CREEK_W + .3) / 3, 0, 1)); c.lerp(cd < W.CREEK_W ? BED : SAND, k); }
         col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
       }
@@ -1867,6 +1896,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     const palm = roundBox(.032, .098, .09, .014, 3); palm.rotateY(212 * Math.PI / 180); const pc = P(212, .046, -.047); palm.translate(pc.x, pc.y, pc.z); tint(palm, () => [1, 1, 1]); parts.push(palm);
     const heel = new THREE.SphereGeometry(.026, 12, 10); heel.scale(.9, 1.2, 1); const hc = P(244, .04, -.06); heel.translate(hc.x, hc.y, hc.z); tint(heel, () => [1, .97, .96]); parts.push(heel);
     const wrist = new THREE.CylinderGeometry(.03, .032, .06, 12); wrist.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(_hy(), new THREE.Vector3(-.3, -.35, .88).normalize()))); const wc = P(256, .05, -.062); wrist.translate(wc.x, wc.y, wc.z); tint(wrist, () => [.98, .96, .95]); parts.push(wrist);
+    { const d = new THREE.Vector3(-.3, -.35, .88).normalize(), e = new THREE.SphereGeometry(.031, 12, 10); e.translate(wc.x + d.x * .03, wc.y + d.y * .03, wc.z + d.z * .03); tint(e, () => [.98, .96, .95]); parts.push(e); }
     const h = new THREE.Mesh(merge(parts), mat); h.userData.wrist = P(262, .055, -.07); return h;
   }
   // the string hand: three fingers hooked on the string (one above the arrow, two below), a shooting glove on them, thumb tucked
@@ -1880,6 +1910,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     const strap = roundBox(.034, .02, .07, .006, 2); strap.translate(.066, -.005, .06); tint(strap, () => [.36, .25, .2]); parts.push(strap);
     const band = new THREE.TorusGeometry(.032, .007, 6, 16); band.rotateY(Math.PI / 2); band.rotateZ(.3); band.translate(.07, -.03, .108); tint(band, () => [.36, .25, .2]); parts.push(band);
     const wrist = new THREE.CylinderGeometry(.03, .032, .06, 12); wrist.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(_hy(), V(.35, -.4, .85).normalize()))); wrist.translate(.07, -.032, .108); parts.push(wrist);
+    { const d = V(.35, -.4, .85).normalize(), e = new THREE.SphereGeometry(.031, 12, 10); e.translate(.07 + d.x * .03, -.032 + d.y * .03, .108 + d.z * .03); parts.push(e); }
     const h = new THREE.Mesh(merge(parts), mat); h.userData.wrist = V(.074, -.036, .125); return h;
   }
   const VMG = {};
@@ -1908,15 +1939,17 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     const nockP = ME.nockT > 0 ? 1 - ME.nockT / W.BOW.nock : 1, out = ME.arrows <= 0 && !drawing;
     const bobX = Math.sin(ME.bob) * .012 * ME.moveAmt, bobY = -Math.abs(Math.cos(ME.bob)) * .014 * ME.moveAmt, tremble = drawing && ME.drawT > 2.2 ? Math.sin(X.t * 31) * .0012 * Math.min(1, ME.drawT - 2.2) : 0;
     const r = VM.raise, s = VM.sprint, low = ME.nockT > 0 ? Math.sin(nockP * Math.PI) * .25 : 0;
-    // at rest the bow hangs low on the left; drawn, it comes up beside your line of sight
-    const bx = lp(lp(-.19, .03, r), -.27, s) + bobX, by = lp(lp(-.16, -.066, r), -.44, s) + bobY - low * .05 + tremble, bz = lp(lp(-.48, -.62, r), -.4, s) - VM.kick * .03;
-    VM.bow.g.position.set(bx, by, bz); VM.bow.g.rotation.set(lp(-.06, .001, r) + VM.kick * .22, lp(.16, -.03, r) + s * .6, lp(.42, -.16, r) + s * .5);
+    // at rest the bow hangs low in the bottom-left corner; drawn, it comes up canted to the left of your line of sight, so
+    // the target and the aim line stay clear and the arrow points in at the crosshair
+    const bx = lp(lp(-.27, -.235, r), -.3, s) + bobX, by = lp(lp(-.24, -.165, r), -.46, s) + bobY - low * .05 + tremble, bz = lp(lp(-.5, -.66, r), -.42, s) - VM.kick * .03;
+    VM.bow.g.position.set(bx, by, bz); VM.bow.g.rotation.set(lp(-.08, .001, r) + VM.kick * .22, lp(.16, -.13, r) + s * .6, lp(.62, .86, r) + s * .4);
+    VM.bow.g.scale.setScalar(.74); VM.handR.scale.setScalar(.74);
     // first person: the string travels less than on a body (the hand would be behind your eye)
     VM.bow.setDraw(VM.draw * .72, !out && nockP >= .3);
     if (nockP < 1 && !out) { const k = sm(cl((nockP - .3) / .7, 0, 1)); VM.bow.arrow.position.x += (1 - k) * .12; VM.bow.arrow.position.y -= (1 - k) * .08; VM.bow.arrow.position.z += (1 - k) * .3; }
     VM.bow.g.updateMatrix();
     const nk = VM.bow.nockLocal(_vp).applyMatrix4(VM.bow.g.matrix), wl = _vg.copy(VM.handL.userData.wrist).applyMatrix4(VM.bow.g.matrix);
-    aimLimb(VM.foreL, _ve.set(wl.x - .2, wl.y - .13, wl.z + .17), wl);
+    aimLimb(VM.foreL, _ve.set(wl.x - .2, wl.y - .2, wl.z + .1), wl);
     // the string hand rides the nock (reaching down for the next arrow while nocking; flicking back on release)
     const reach = ME.nockT > 0 ? Math.sin(cl(nockP * 1.3, 0, 1) * Math.PI) : 0;
     VM.handR.position.copy(nk); VM.handR.position.lerp(_ve.set(.2, -.34, .02), reach);
@@ -1928,7 +1961,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   }
   on('release', () => { VM.snap = 1; VM.kick = 1; });
   /* ---------- 48 fx: archers on screen, arrows (flying, stuck, in bodies), impacts, the aim arc, pings, finishers, cameras ---------- */
-  let PS = {}, ARC = null, FINS = [], BILLS = null, COINS3 = null, THWACK = null; const DEBRIS = [], FLOATS = [], RINGS = [];
+  let PS = {}, ARC = null, AIMMARK = null, FINS = [], BILLS = null, COINS3 = null, THWACK = null; const DEBRIS = [], FLOATS = [], RINGS = [], AIM_N = 190;
   const hashId = id => { let h = 7; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
   // ---- a small particle system on points with per-particle size, colour, fade and spin
   function partSys(map, max, additive) {
@@ -1954,9 +1987,15 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   function initFx() {
     PS.dust = partSys(TEX.dot, 500, false); PS.chip = partSys(TEX.chip, 300, false); PS.cube = partSys(TEX.square, 500, false); PS.trail = partSys(TEX.dot, 900, true); PS.star = partSys(TEX.star, 120, true); PS.leaf = partSys(TEX.leafP, 400, false); PS.petal = partSys(TEX.petal, 400, false); PS.heart = partSys(TEX.heart, 200, false); PS.spark = partSys(TEX.dot, 300, true);
     // the aim preview: a short line of faint dots
-    const n = 18, g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('aa', new THREE.BufferAttribute(new Float32Array(n), 1));
-    ARC = new THREE.Points(g, new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { sc: { value: innerHeight * .5 } }, vertexShader: 'attribute float aa; varying float vA; uniform float sc; void main(){ vA = aa; vec4 mv = modelViewMatrix * vec4(position,1.); gl_PointSize = max(2., .045 * sc / -mv.z); gl_Position = projectionMatrix * mv; }', fragmentShader: 'varying float vA; void main(){ vec2 p = gl_PointCoord - .5; float d = length(p); if (d > .5) discard; gl_FragColor = vec4(1., .97, .86, vA * smoothstep(.5, .2, d)); }' }));
-    ARC.frustumCulled = false; ARC.visible = false; X.scene.add(ARC);
+    // the aim line: round dots a fixed size on screen (white with a dark rim, so they read on sky and on grass), every 0.7 m
+    // of the flight to where the arrow will land, and a ring at that spot
+    const n = AIM_N, g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('aa', new THREE.BufferAttribute(new Float32Array(n), 1));
+    ARC = new THREE.Points(g, new THREE.ShaderMaterial({ transparent: true, depthWrite: false, depthTest: true, uniforms: { px: { value: 7 }, sc: { value: 600 } },
+      vertexShader: 'attribute float aa; varying float vA; uniform float px, sc; void main(){ vA = aa; vec4 mv = modelViewMatrix * vec4(position,1.); gl_PointSize = clamp(.07 * sc / -mv.z, px, px * 2.4); gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'varying float vA; void main(){ float d = length(gl_PointCoord - .5); if (d > .5) discard; vec3 c = mix(vec3(1., .98, .9), vec3(.32, .3, .27), smoothstep(.3, .38, d)); gl_FragColor = vec4(c, vA * (1. - smoothstep(.44, .5, d)) * (d > .38 ? .3 : 1.)); }' }));
+    ARC.frustumCulled = false; ARC.visible = false; ARC.renderOrder = 15; X.scene.add(ARC);
+    AIMMARK = new THREE.Group(); const ringS = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.ring, color: new THREE.Color('#ffffff'), transparent: true, depthTest: false })), dotS = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.dot, color: new THREE.Color('#ffd23a'), transparent: true, depthTest: false }));
+    ringS.renderOrder = dotS.renderOrder = 16; AIMMARK.add(ringS, dotS); AIMMARK.userData = { ringS, dotS }; AIMMARK.visible = false; X.scene.add(AIMMARK);
     // cash: bills and coins for the Cashout finisher
     BILLS = { m: new THREE.InstancedMesh(new THREE.PlaneGeometry(.26, .12), std({ map: TEX.bill, side: THREE.DoubleSide, roughness: .8 }), 260), list: [] };
     COINS3 = { m: new THREE.InstancedMesh(new THREE.CylinderGeometry(.045, .045, .008, 14), std({ map: TEX.coin, metalness: .85, roughness: .28, color: LC('#ffd86a') }), 90), list: [] };
@@ -2068,12 +2107,26 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     for (let i = FLOATS.length - 1; i >= 0; i--) { const f = FLOATS[i]; f.t += dt; const k = f.t / .95, pop = f.t < .12 ? f.t / .12 * 1.25 : lp(1.25, 1, cl((f.t - .12) / .15, 0, 1)); f.s.position.y += dt * 1.1; f.s.position.x += f.vx * dt; const dk = cl(f.s.position.distanceTo(X.camera.position) * .13, .8, 6); f.s.scale.set(1.15 * f.scale * pop * dk, .43 * f.scale * pop * dk, 1); f.s.material.opacity = 1 - sm(cl((k - .6) / .4, 0, 1)); if (k >= 1) { X.scene.remove(f.s); FLOATS.splice(i, 1); } }
     for (let i = RINGS.length - 1; i >= 0; i--) { const r = RINGS[i]; if (!r.s.parent) { r.s.position.set(...r.p); X.scene.add(r.s); } r.t += dt; const k = r.t / .4; r.s.scale.setScalar(.2 + k * r.size); r.s.material.opacity = 1 - k; if (k >= 1) { X.scene.remove(r.s); r.s.material.dispose(); RINGS.splice(i, 1); } }
   }
-  // ---- the dotted preview arc
+  // ---- the aim line: the same launch speed and gravity the real arrow will have, flown until it meets the world
+  // (a tree, a wall, the ground); leaves let arrows through, so they don't stop it. Settings can cut it back to a short arc.
+  let _aimF, _aimR, _aimU; LAZY.push(() => { _aimF = new THREE.Vector3(); _aimR = new THREE.Vector3(); _aimU = new THREE.Vector3(); });
   function updateArc() {
-    if (!ARC) return; const show = ME.drawing && ME.cam === 'fp' && canAct(); ARC.visible = show; if (!show) return;
-    const { o, v } = previewNow(), pts = W.previewArc(o, v, 13, 18), pa = ARC.geometry.attributes.position, aa = ARC.geometry.attributes.aa, k0 = cl(ME.drawT / .12, 0, 1);
-    pts.forEach((q, i) => { pa.setXYZ(i, q[0], q[1], q[2]); const u = i / (pts.length - 1); aa.setX(i, (i < 1 ? 0 : .55 * Math.pow(1 - u, 1.5)) * k0); });
-    pa.needsUpdate = aa.needsUpdate = true;
+    if (!ARC) return; const show = ME.drawing && ME.cam === 'fp' && canAct(); ARC.visible = show; AIMMARK.visible = false; if (!show) return;
+    const { o, v } = previewNow(), sp = Math.hypot(v[0], v[1], v[2]) || 1, full = CFG.aimLine !== 'short', pa = ARC.geometry.attributes.position, aa = ARC.geometry.attributes.aa, k0 = cl(ME.drawT / .1, 0, 1);
+    const pr = X.renderer.getPixelRatio(); ARC.material.uniforms.px.value = 6 * pr; ARC.material.uniforms.sc.value = innerHeight * pr * .5 / Math.tan(X.camera.fov * Math.PI / 360);
+    // seen from behind, a fast arrow's path lies almost on your line of sight; so the drawn line leaves from the bow (low on the
+    // left of the screen) and eases onto the true flight over the first dozen metres, which keeps it readable as an arc
+    const cam = X.camera, fwd = _aimF.set(0, 0, -1).applyQuaternion(cam.quaternion), rt = _aimR.set(1, 0, 0).applyQuaternion(cam.quaternion), up = _aimU.set(0, 1, 0).applyQuaternion(cam.quaternion);
+    const sx = cam.position.x + rt.x * -.3 + up.x * -.24 + fwd.x * 1.1 - o[0], sy = cam.position.y + rt.y * -.3 + up.y * -.24 + fwd.y * 1.1 - o[1], sz = cam.position.z + rt.z * -.3 + up.z * -.24 + fwd.z * 1.1 - o[2];
+    const step = .7 / sp, maxT = full ? 4.5 : 13 / sp; let prev = o, n = 0, hit = null;
+    for (let i = 1; i < AIM_N; i++) {
+      const t = i * step; if (t > maxT) break; const p = W.arrowAt(o, v, t);
+      if (full) { const h = W.sweepWorld(prev, p); if (h) { hit = [lp(prev[0], p[0], h.t), lp(prev[1], p[1], h.t), lp(prev[2], p[2], h.t)]; break; } }
+      const dist = t * sp, ease = full ? 1 - sm(cl(dist / 14, 0, 1)) : 0; pa.setXYZ(n, p[0] + sx * ease, p[1] + sy * ease, p[2] + sz * ease); aa.setX(n, k0 * (full ? cl((dist - .6) / 1.5, 0, 1) * .95 : (i < 2 ? 0 : .55 * Math.pow(1 - i / 18, 1.5)))); n++; prev = p;
+    }
+    for (let i = n; i < AIM_N; i++) aa.setX(i, 0);
+    ARC.geometry.setDrawRange(0, n); pa.needsUpdate = aa.needsUpdate = true;
+    if (hit) { const c = X.camera.position, d = Math.hypot(hit[0] - c.x, hit[1] - c.y, hit[2] - c.z), k = d * .045 * (1 + Math.sin(X.t * 8) * .06); AIMMARK.visible = true; AIMMARK.position.set(hit[0], hit[1] + .02, hit[2]); AIMMARK.userData.ringS.scale.setScalar(k); AIMMARK.userData.dotS.scale.setScalar(k * .45); AIMMARK.userData.ringS.material.opacity = .9 * k0; }
   }
   // ---- pings
   const PINGS = [];
@@ -2537,7 +2590,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   function closeMenu() { UI.open = null; render(); if (CL.src) lockMouse(); }
   function setting(k, v) {
     if (k === 'sens' || k === 'touchSens' || k === 'vol') CFG[k] = +v; else if (k === 'fov') { CFG.fov = +v; if (X) { X.camera.fov = CFG.fov; X.camera.updateProjectionMatrix(); } } else if (k === 'invert') CFG.invert = !!v;
-    else if (k === 'quality') { CFG.quality = v; if (X) applyQuality(); } saveCfg();
+    else if (k === 'quality') { CFG.quality = v; if (X) applyQuality(); } else if (k === 'aimLine') CFG.aimLine = v; saveCfg();
   }
   const inviteLink = code => location.origin.startsWith('http') ? `${location.origin}${location.pathname}?room=${code}${QS.get('server') ? '&server=' + encodeURIComponent(QS.get('server')) : ''}` : `https://box.pulseform.org/games/arrowwood?room=${code}`;
   async function copy(t) { try { await navigator.clipboard.writeText(t); return true; } catch (e) { const i = document.createElement('input'); i.value = t; document.body.append(i); i.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (er) {} i.remove(); return ok; } }
@@ -2613,6 +2666,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     else if (o === 'shop') h = shopHtml(coins);
     else if (o === 'settings') h = `<div class="pn" style="max-width:520px"><div class="top"><h2>Settings</h2><button data-a="back">Done</button></div><div class="col">
       <label>Graphics <select data-set="quality">${['auto', 'low', 'medium', 'high'].map(q => `<option ${CFG.quality === q ? 'selected' : ''}>${q}</option>`).join('')}</select> <span class="muted">now: ${X ? X.q : '…'} · low suits an iPad</span></label>
+      <label>Aim line <select data-set="aimLine"><option value="full" ${CFG.aimLine !== 'short' ? 'selected' : ''}>Full: shows where the arrow lands</option><option value="short" ${CFG.aimLine === 'short' ? 'selected' : ''}>Short: just the first few metres</option></select></label>
       <label>Mouse sensitivity<input class="slider" type="range" min="0" max="1" step=".01" value="${CFG.sens}" data-set="sens"></label>
       <label>Touch aim sensitivity<input class="slider" type="range" min="0" max="1" step=".01" value="${CFG.touchSens}" data-set="touchSens"></label>
       <label>Field of view<input class="slider" type="range" min="60" max="95" step="1" value="${CFG.fov}" data-set="fov"></label>
