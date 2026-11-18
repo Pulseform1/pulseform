@@ -300,7 +300,7 @@
   }
   function visualUpdate(dt) {
     X.t += dt; X.wind.time.value = X.t; X.wind.amt.value = .85 + .35 * Math.sin(X.t * .23) + .15 * Math.sin(X.t * .71);
-    updateCharacters(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); updateCash(dt); updateDebris(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
+    updateCharacters(dt); updateWildlife(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); updateCash(dt); updateDebris(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
     for (let i = PINGS.length - 1; i >= 0; i--) { const p = PINGS[i]; p.t += dt; p.g.children[0].scale.setScalar(.7 + Math.sin(X.t * 6) * .15); if (p.t > 7) { X.scene.remove(p.g); PINGS.splice(i, 1); } }
     // targets: the flying ones circle on the room's clock; a broken one is gone until it stands again, then pops back in
     { const st = srvNow(); X.tgts.forEach((g, i) => {

@@ -6,14 +6,16 @@
     const mk = (secs, fn) => { const n = Math.floor(ac.sampleRate * secs), b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0); fn(d, n); return b; };
     AU.buf.white = mk(2, (d, n) => { for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; });
     AU.buf.brown = mk(3, (d, n) => { let l = 0; for (let i = 0; i < n; i++) { l = (l + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = l * 3.5; } });
-    // the wood around you, on its own volume (Settings: forest sounds): wind in the canopy, leaves rustling in gusts, the
-    // creek running over stones (loud beside it, faint across the whole wood), and birds singing in the trees
+    // the wood around you, on its own volume (Settings: forest sounds): a sunny day. Birds singing in the trees (with a
+    // touch of echo off the wood) and the creek trickling over its stones, made of single drops, never of noise
     AU.amb = ac.createGain(); AU.amb.gain.value = CFG.amb == null ? 1 : CFG.amb; AU.amb.connect(AU.out);
-    const loop = (buf, f, q, type, g, dest) => { const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; const fl = ac.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; const gn = ac.createGain(); gn.gain.value = g; s.connect(fl).connect(gn).connect(dest || AU.out); s.start(); return { s, fl, gn }; };
-    AU.wind = loop(AU.buf.brown, 420, .4, 'lowpass', .09, AU.amb); AU.rustle = loop(AU.buf.white, 2600, .5, 'bandpass', .02, AU.amb); AU.rustle2 = loop(AU.buf.white, 5200, .4, 'highpass', .01, AU.amb);
-    const pan = ac.createPanner(); Object.assign(pan, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: 7, maxDistance: 120, rolloffFactor: .9 }); pan.connect(AU.amb);
-    AU.creek = loop(AU.buf.brown, 900, .6, 'bandpass', .7, pan); AU.creek.pan = pan; AU.creekHi = loop(AU.buf.white, 2400, 1.2, 'bandpass', .05, pan);   // the flow, and its hiss over the stones
-    AU.river = loop(AU.buf.brown, 700, .5, 'bandpass', .05, AU.amb);   // the river heard from anywhere in the wood, softly
+    { const len = Math.floor(ac.sampleRate * 1.8), ir = ac.createBuffer(2, len, ac.sampleRate);
+      for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2) * .5; }
+      AU.verb = ac.createConvolver(); AU.verb.buffer = ir; const wet = ac.createGain(); wet.gain.value = .22; AU.verb.connect(wet); wet.connect(AU.amb); }
+    AU.birds = ac.createGain(); AU.birds.gain.value = 1; AU.birds.connect(AU.amb); AU.birds.connect(AU.verb);
+    AU.water = ac.createGain(); AU.water.gain.value = 1; AU.water.connect(AU.amb);
+    AU.waterFar = ac.createBiquadFilter(); AU.waterFar.type = 'lowpass'; AU.waterFar.frequency.value = 2200; AU.waterFar.connect(AU.water);   // the creek heard from further off: softer, rounder
+    AU.dropAt = 0;
   }
   const t0 = () => AU.ac.currentTime;
   function at(p, ref = 4, dest) { const ac = AU.ac, pn = ac.createPanner(); Object.assign(pn, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: ref, maxDistance: 90, rolloffFactor: 1.2 }); if (pn.positionX) { pn.positionX.value = p[0]; pn.positionY.value = p[1]; pn.positionZ.value = p[2]; } else pn.setPosition(p[0], p[1], p[2]); pn.connect(dest || AU.out); return pn; }
@@ -35,7 +37,7 @@
       if (surf === 'water') { nz(d, .2, 1200, 1, 'bandpass', .22 * loud, 0, 400); } else if (surf === 'stone') { nz(d, .05, 3200, 2, 'bandpass', .18 * loud); tone(d, 260, .04, 'sine', .05 * loud); } else { nz(d, .11, 1700 + Math.random() * 900, .8, 'bandpass', .2 * loud); nz(d, .07, 260, 1, 'lowpass', .2 * loud); } },
     whoosh: p => nz(at(p, 2), .35, 3600, 2, 'bandpass', .5, 0, 700),
     // the bows' finishers: one small recipe each, played where it happens
-    fin: (k, p) => { const d = at(p, 6), T = (f, dur, type, g, delay = 0, to) => tone(d, f, dur, type, g, delay, to), Nz = (dur, f, q, type, g, delay = 0, to) => nz(d, dur, f, q, type, g, delay, to);
+    fin: (k, p) => { const d = at(p, 24), T = (f, dur, type, g, delay = 0, to) => tone(d, f, dur, type, g * 1.7, delay, to), Nz = (dur, f, q, type, g, delay = 0, to) => nz(d, dur, f, q, type, g * 1.5, delay, to);
       switch (k) {
         case 'pop': T(600, .08, 'square', .12, 0, 1500); Nz(.06, 2600, 1.5, 'bandpass', .3); break;
         case 'bang': Nz(.25, 900, .7, 'lowpass', .8); T(120, .3, 'sine', .5, 0, 50); for (let i = 0; i < 6; i++) T(900 + Math.random() * 1200, .05, 'triangle', .05, .05 + i * .04); break;
@@ -69,30 +71,38 @@
         case 'void': T(160, 1.6, 'sawtooth', .12, 0, 40); Nz(1.4, 300, .5, 'lowpass', .4, 0, 80); break;
       } },
     // the toy break-apart: a bright pop, a springy boing, then a rattle of blocks
-    pop: p => { const d = at(p, 6); tone(d, 520, .09, 'square', .12, 0, 1400); tone(d, 300, .32, 'sine', .3, .04, 620); nz(d, .06, 2600, 1.5, 'bandpass', .3); for (let k = 0; k < 5; k++) tone(d, 700 + Math.random() * 900, .04, 'triangle', .05, .12 + k * .06 + Math.random() * .03); },
+    pop: p => { const d = at(p, 24); tone(d, 520, .09, 'square', .12, 0, 1400); tone(d, 300, .32, 'sine', .3, .04, 620); nz(d, .06, 2600, 1.5, 'bandpass', .3); for (let k = 0; k < 5; k++) tone(d, 700 + Math.random() * 900, .04, 'triangle', .05, .12 + k * .06 + Math.random() * .03); },
     distantTwang: p => tone(at(p, 6), 170, .22, 'triangle', .3, 0, 130),
     hitmark: zone => { if (zone === 'head') { tone(AU.out, 1500, .09, 'sine', .14); tone(AU.out, 2250, .14, 'sine', .1, .05); } else tone(AU.out, 1150, .07, 'sine', .12); },
     elimMark: () => { tone(AU.out, 880, .12, 'triangle', .14); tone(AU.out, 1320, .2, 'triangle', .12, .07); nz(AU.out, .1, 300, 1, 'lowpass', .2); },
     hurt: () => { nz(AU.out, .18, 260, 1, 'lowpass', .5); tone(AU.out, 80, .2, 'sine', .3); },
     pick: () => { tone(AU.out, 700, .07, 'triangle', .1); tone(AU.out, 1050, .1, 'triangle', .08, .05); nz(AU.out, .06, 2500, 2, 'bandpass', .06); },
     thud: p => { const d = at(p, 6); nz(d, .3, 300, 1, 'lowpass', .7); nz(d, .45, 2200, .7, 'bandpass', .12, .05); },
-    cupid: p => { const d = at(p, 8); [0, 4, 7, 11, 14, 19].forEach((k, i) => tone(d, 660 * Math.pow(2, k / 12), .5, 'sine', .14, i * .04)); tone(d, 220, .35, 'sine', .4, .05, 520); nz(d, .2, 1200, 1, 'bandpass', .2, .05); },
-    thwack: p => { const d = at(p, 10); nz(d, .16, 1100, .6, 'bandpass', 1.1); tone(d, 95, .25, 'sine', .9, 0, 45); nz(d, .35, 250, 1, 'lowpass', .6); tone(d, 300, .4, 'sine', .25, .12, 140); tone(d, 600, .25, 'triangle', .12, .2, 900); },
-    cashout: p => { const d = at(p, 10); nz(d, .12, 1500, 2, 'bandpass', .5); for (let k = 0; k < 5; k++) nz(d, .03, 4000, 4, 'bandpass', .25, .05 + k * .03); tone(d, 2093, .9, 'sine', .3, .22); tone(d, 2637, .9, 'sine', .22, .22); tone(d, 4186, .6, 'sine', .1, .22); for (let k = 0; k < 12; k++) tone(d, 3000 + Math.random() * 2500, .12, 'sine', .07, .4 + k * .06 + Math.random() * .05); },
+    cupid: p => { const d = at(p, 24); [0, 4, 7, 11, 14, 19].forEach((k, i) => tone(d, 660 * Math.pow(2, k / 12), .5, 'sine', .14, i * .04)); tone(d, 220, .35, 'sine', .4, .05, 520); nz(d, .2, 1200, 1, 'bandpass', .2, .05); },
+    thwack: p => { const d = at(p, 24); nz(d, .16, 1100, .6, 'bandpass', 1.1); tone(d, 95, .25, 'sine', .9, 0, 45); nz(d, .35, 250, 1, 'lowpass', .6); tone(d, 300, .4, 'sine', .25, .12, 140); tone(d, 600, .25, 'triangle', .12, .2, 900); },
+    // KA-CHING: the drawer clunks open, the bell rings, the coins spill out
+    cashout: p => { const d = at(p, 24);
+      nz(d, .07, 420, 1.2, 'lowpass', 1.1); tone(d, 140, .09, 'square', .3, 0, 90); nz(d, .012, 3200, 3, 'bandpass', .7); nz(d, .14, 900, 2, 'bandpass', .35, .03, 300);   // ka: the clunk and the drawer
+      for (const [f, g] of [[1319, .3], [2637, .42], [3951, .22], [5274, .12]]) { tone(d, f, 1.5, 'sine', g, .16); tone(d, f * 1.003, 1.2, 'triangle', g * .3, .16); }   // ching: the bell
+      for (let k = 0; k < 16; k++) tone(d, 3200 + Math.random() * 3200, .07 + Math.random() * .07, 'sine', .12, .3 + k * .045 + Math.random() * .03, 4500 + Math.random() * 2000);   // the coins
+      for (let k = 0; k < 5; k++) tone(d, 1700 + Math.random() * 700, .05, 'triangle', .14, .5 + k * .11 + Math.random() * .05); },
     horn: () => { tone(AU.out, 196, .9, 'sawtooth', .07); tone(AU.out, 294, .9, 'sawtooth', .05, .02); nz(AU.out, .8, 400, 1, 'lowpass', .05); },
     beep: hi => tone(AU.out, hi ? 1040 : 660, .12, 'sine', .14),
     win: () => [0, 4, 7, 12].forEach((k, i) => tone(AU.out, 523 * Math.pow(2, k / 12), .35, 'triangle', .14, i * .1)),
     lose: () => [7, 3, 0].forEach((k, i) => tone(AU.out, 330 * Math.pow(2, k / 12), .4, 'triangle', .12, i * .14)),
     click: () => tone(AU.out, 1200, .03, 'sine', .06),
-    bird: (p, kind) => { const d = at(p, 14, AU.amb), R = Math.random, T = (f, dur, g, delay, to) => tone(d, f, dur, 'sine', g, delay, to);
+    bird: (p, kind) => { const d = at(p, 14, AU.birds), R = Math.random, T = (f, dur, g, delay, to) => tone(d, f, dur, 'sine', g, delay, to);
       kind = kind == null ? Math.floor(R() * 5) : kind;
       if (kind === 0) { const b = 2600 + R() * 1400, n = 5 + Math.floor(R() * 6); let t = 0; for (let k = 0; k < n; k++) { const f = b * (.8 + R() * .5), dur = .04 + R() * .07; T(f, dur, .13, t, f * (.8 + R() * .7)); t += dur + .015 + R() * .05; } }   // a songbird's warble
       else if (kind === 1) { const b = 3000 + R() * 900; T(b, .22, .14, 0, b * 1.05); T(b * .78, .3, .14, .3, b * .62); }   // a two-note whistle, high then low
       else if (kind === 2) { const b = 4200 + R() * 1200, n = 8 + Math.floor(R() * 8); for (let k = 0; k < n; k++) T(b, .03, .09, k * .055, b * 1.15); }   // a trill
       else if (kind === 3) { const b = 700 + R() * 120; T(b, .3, .1, 0, b * .97); T(b * .8, .42, .1, .42, b * .78); }   // a far-off two-note call, low
-      else { const b = 2000 + R() * 2000; T(b, .09, .12, 0, b * 1.6); T(b * 1.4, .07, .1, .14, b * .9); T(b * 1.1, .12, .1, .26, b * 1.5); } },   // chirps
-    peck: p => { const d = at(p, 10, AU.amb), n = 8 + Math.floor(Math.random() * 10); for (let k = 0; k < n; k++) nz(d, .015, 1600, 4, 'bandpass', .25, k * (.055 + k * .002)); },   // a woodpecker on a trunk
-    bubble: (p, g) => { const d = at(p, 5, AU.amb), f = 380 + Math.random() * 900; tone(d, f, .03 + Math.random() * .05, 'sine', g, 0, f * (1.4 + Math.random() * .9)); },   // one bubble in the creek
+      else if (kind === 4) { const b = 2000 + R() * 2000; T(b, .09, .12, 0, b * 1.6); T(b * 1.4, .07, .1, .14, b * .9); T(b * 1.1, .12, .1, .26, b * 1.5); }   // chirps
+      else if (kind === 5) { const sc = [0, 2, 4, 7, 9, 12], b = 1800 + R() * 600; let t = 0; for (let k = 0; k < 6 + Math.floor(R() * 4); k++) { const f = b * Math.pow(2, sc[Math.floor(R() * sc.length)] / 12), dur = .1 + R() * .12; T(f, dur, .11, t, f * (1 + (R() - .5) * .08)); t += dur + .04; } }   // a melodic song, robin-like
+      else { const b = 3400 + R() * 800; for (let k = 0; k < 3; k++) { T(b, .14, .12, k * .32, b * .7); } } },   // cheer, cheer, cheer
+    peck: p => { const d = at(p, 10, AU.birds), n = 8 + Math.floor(Math.random() * 10); for (let k = 0; k < n; k++) nz(d, .015, 1600, 4, 'bandpass', .25, k * (.055 + k * .002)); },   // a woodpecker on a trunk
+    drop: (dest, when, f, dur, g, rise) => { const ac = AU.ac, o = ac.createOscillator(), a = ac.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f, when); o.frequency.exponentialRampToValueAtTime(f * rise, when + dur);
+      a.gain.setValueAtTime(0, when); a.gain.linearRampToValueAtTime(g, when + .004); a.gain.exponentialRampToValueAtTime(.0005, when + dur); o.connect(a); a.connect(dest); o.start(when); o.stop(when + dur + .02); },   // one drop of water
   };
   const surfaceAt = (x, y, z) => W.inWater(x, z, y + .3) ? 'water' : W.groundAt(x, z, y + .1) > W.terrainH(x, z) + .05 ? 'stone' : 'dirt';
   on('drawStart', () => AU.ready && S.nock());
@@ -116,17 +126,18 @@
     if (L.positionX) { L.positionX.value = c.position.x; L.positionY.value = c.position.y; L.positionZ.value = c.position.z; L.forwardX.value = f.x; L.forwardY.value = f.y; L.forwardZ.value = f.z; L.upX.value = 0; L.upY.value = 1; L.upZ.value = 0; } else { L.setPosition(c.position.x, c.position.y, c.position.z); L.setOrientation(f.x, f.y, f.z, 0, 1, 0); }
     AU.out.gain.value = CFG.vol;
     AU.amb.gain.value = CFG.amb == null ? 1 : CFG.amb;
-    // wind and leaves: gusts come and go; under the groves' canopy the leaves are louder
-    AU.gust += (Math.max(0, Math.sin(X.t * .23) * Math.sin(X.t * .61 + 1)) - AU.gust) * Math.min(1, dt * .8);
-    const w = X.wind.amt.value, gr = W.inGrove(c.position.x, c.position.z, 4) ? 1 : .55, gu = AU.gust;
-    AU.wind.gn.gain.value = .05 + w * .05 + gu * .05; AU.rustle.gn.gain.value = (.012 + w * .02 + gu * .05) * gr; AU.rustle2.gn.gain.value = (.004 + gu * .02) * gr;
-    // the creek: its sound comes from the nearest stretch of water; bubbles trickle over the stones, thick when you are near
-    const cx = cl(c.position.x, 0, 140), cz = W.creekZ(cx), wy = W.waterY(cx), pn = AU.creek.pan; if (pn.positionX) { pn.positionX.value = cx; pn.positionY.value = wy; pn.positionZ.value = cz; } else pn.setPosition(cx, wy, cz);
-    const dCreek = Math.hypot(c.position.z - cz, c.position.y - wy); AU.bubT -= dt;
-    while (AU.bubT <= 0) { AU.bubT += dCreek < 30 ? .035 + Math.random() * .06 : .25; if (dCreek < 45) S.bubble([cx + (Math.random() - .5) * 10, wy, cz + (Math.random() - .5) * 2], .05 * Math.max(.15, 1 - dCreek / 45)); }
+    // the creek: drops scheduled a moment ahead, thick and close beside the water, a soft trickle from anywhere in the wood
+    { const now = ac.currentTime, cx = cl(c.position.x, 0, 140), cz = W.creekZ(cx), wy = W.waterY(cx), dC = Math.hypot(c.position.z - cz, c.position.y - wy), near = Math.max(0, 1 - dC / 40);
+      if (AU.dropAt < now) AU.dropAt = now;
+      while (AU.dropAt < now + .12) {
+        const R = Math.random, low = R() < .22, f = low ? 180 + R() * 260 : 520 + R() * 1250, dur = low ? .06 + R() * .07 : .018 + R() * .045, rise = low ? 1.5 + R() * .8 : 1.8 + R() * 1.6;
+        if (near > .02) { const pn = at([cx + (R() - .5) * 14, wy + .1, cz + (R() - .5) * 2.4], 4, AU.water); S.drop(pn, AU.dropAt, f, dur, (low ? .16 : .1) * (.5 + R() * .5), rise); }
+        if (R() < .55) S.drop(AU.waterFar, AU.dropAt, f, dur, (low ? .035 : .022) * (.5 + R() * .5), rise);
+        AU.dropAt += (near > .02 ? .022 + R() * .045 : .05 + R() * .08);
+      } }
     // birds in the trees round you, often answered by another; now and then a woodpecker
-    AU.birdT -= dt; if (AU.birdT <= 0) { AU.birdT = 1 + Math.random() * 3.5; const a = Math.random() * TAU, r = 10 + Math.random() * 26, kind = Math.floor(Math.random() * 5), at3 = [c.position.x + Math.cos(a) * r, c.position.y + 7 + Math.random() * 9, c.position.z + Math.sin(a) * r];
-      S.bird(at3, kind); if (Math.random() < .4) { const b = a + 1.5 + Math.random() * 3, r2 = 14 + Math.random() * 24; setTimeout(() => AU.ready && S.bird([c.position.x + Math.cos(b) * r2, c.position.y + 8 + Math.random() * 8, c.position.z + Math.sin(b) * r2], kind), 700 + Math.random() * 900); } }
+    AU.birdT -= dt; if (AU.birdT <= 0) { AU.birdT = .6 + Math.random() * 2.2; const a = Math.random() * TAU, r = 10 + Math.random() * 26, kind = Math.floor(Math.random() * 7), at3 = [c.position.x + Math.cos(a) * r, c.position.y + 7 + Math.random() * 9, c.position.z + Math.sin(a) * r];
+      S.bird(at3, kind); if (Math.random() < .45) { const b = a + 1.5 + Math.random() * 3, r2 = 14 + Math.random() * 24; setTimeout(() => AU.ready && S.bird([c.position.x + Math.cos(b) * r2, c.position.y + 8 + Math.random() * 8, c.position.z + Math.sin(b) * r2], kind), 600 + Math.random() * 900); } }
     AU.peckT -= dt; if (AU.peckT <= 0) { AU.peckT = 14 + Math.random() * 22; const a = Math.random() * TAU, r = 15 + Math.random() * 20; S.peck([c.position.x + Math.cos(a) * r, c.position.y + 4, c.position.z + Math.sin(a) * r]); }
     if (ME.drawing) { AU.creak -= dt; if (AU.creak <= 0) { const d = W.drawPower(ME.drawT); AU.creak = d >= 1 ? .45 + Math.random() * .3 : .06 + Math.random() * .05; S.creak(d); } }
   }

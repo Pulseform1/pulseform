@@ -4,7 +4,7 @@
     booted = true; loadCfg(); uiInit(); loadProfile().then(() => { if (ready && VM.skin !== PROFILE.equipped) buildViewModel(PROFILE.equipped, W.TEAMS[0].col); });
     (async () => {
       try { try { await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'); } catch (e) { await loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'); }
-        initGfx(); buildForest(); initFx(); buildViewModel(PROFILE.equipped || 'longbow', W.TEAMS[0].col); ready = true; emit('ready'); }
+        initGfx(); buildForest(); buildWildlife(); initFx(); buildViewModel(PROFILE.equipped || 'longbow', W.TEAMS[0].col); ready = true; emit('ready'); }
       catch (e) { console.error(e); failed = true; }
     })();
   }
@@ -42,7 +42,7 @@
   GAME.bot = () => {};
   // for the browser checks (tools/arrowwood-*.mjs) and for poking at by hand from the console
   GAME.test = {
-    get ready() { return ready; }, get X() { return X; }, CL, ME, UI, IN, W, ENG, VM, makeBow, PROFILE, KEY, SERVER, act, openMenu, closeMenu, startDraw, release, cancelDraw, connect, startPractice, startBotMatch, botRoom, leaveRoom, send, sendRoom, meP, previewNow, renderFrame, readInput,
+    get ready() { return ready; }, get X() { return X; }, WILD, CL, ME, UI, IN, W, ENG, VM, makeBow, PROFILE, KEY, SERVER, act, openMenu, closeMenu, startDraw, release, cancelDraw, connect, startPractice, startBotMatch, botRoom, leaveRoom, send, sendRoom, meP, previewNow, renderFrame, readInput,
     tp: (x, z, yaw = 0, pitch = 0) => { ME.st.x = x; ME.st.z = z; ME.st.y = W.groundAt(x, z, W.terrainH(x, z) + 3); ME.st.yaw = yaw; ME.st.pitch = pitch; send({ t: 'dev', tp: [x, ME.st.y, z], yaw, pitch }); },
     aimAt: (x, y, z, power = 1) => { const full = W.isFull(power), o = W.shotOrigin(ME.st, full), d = Math.hypot(x - o[0], z - o[2]), v = W.launchSpeed(power), g = W.GRAV, h = y - o[1]; const disc = v ** 4 - g * (g * d * d + 2 * h * v * v); ME.st.yaw = Math.atan2(-(x - o[0]), -(z - o[2])); ME.st.pitch = full ? Math.atan2(h, d) : disc < 0 ? .7 : Math.atan((v * v - Math.sqrt(disc)) / (g * d)); },
     pos: () => ({ x: ME.st.x, y: ME.st.y, z: ME.st.z, yaw: ME.st.yaw, pitch: ME.st.pitch }),

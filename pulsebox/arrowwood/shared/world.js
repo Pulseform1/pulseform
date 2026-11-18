@@ -25,7 +25,7 @@ export function damageFor(zone, speed, oneShot) {
   return Math.round(ZONES[zone] * f);
 }
 // ---- the player body
-export const PL = { r: .34, h: 1.8, hCrouch: 1.25, eye: 1.62, eyeCrouch: 1.12, step: .48, walk: 4.4, sprint: 6.6, crouch: 2.3, aim: 2.7, jump: 4.6, grav: 18, waterMul: .68 };
+export const PL = { r: .34, h: 1.8, hCrouch: 1.25, eye: 1.62, eyeCrouch: 1.12, step: .48, walk: 4.4, sprint: 6.6, crouch: 2.3, aim: 2.7, jump: 6.4, grav: 18, waterMul: .68 };
 export const eyeHeight = crouch => crouch ? PL.eyeCrouch : PL.eye;
 
 // ---- deterministic noise
