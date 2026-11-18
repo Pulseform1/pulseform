@@ -264,12 +264,12 @@ function loadChecks() {
 }
 function twoSiteChecks(count) {
   section(`${count} matches on the two-site maps`);
-  const pool = T.mapPool(2), bySite = [0, 0], why = {}; let rounds = 0, plants = 0, done = 0, err = 0, boomWins = 0;
+  const pool = T.mapPool(2), bySite = [0, 0, 0], why = {}; let rounds = 0, plants = 0, done = 0, err = 0, boomWins = 0;
   ok(pool.length === 6 && T.mapPool(1).length === 7, 'six two-site maps and seven one-site maps', `${pool.length} and ${T.mapPool(1).length}`);
   for (let n = 0; n < count; n++) {
     try {
       T.seed(n * 6151 + 17); const size = n % 2 ? 2 : 1; T.startMatch({ mode: 'bot', diff: 1, size, map: pool[n % pool.length] }); const M = T.M; M.fs[0].bot = { diff: 1 + (n % 2) }; M.fs[0].local = false;
-      if (!n) ok(T.SITES.length === 2 && T.roundT() === 100, 'a two-site map has sites A and B and 100 s rounds', T.SITES.map(S => S.k + ' ' + S.cells.length + ' cells').join(', '));
+      if (!n) ok(T.SITES.length >= 2 && T.roundT() >= 100, 'a STANDARD map has two or three sites and rounds of 100 s or more', T.SITES.map(S => S.k + ' ' + S.cells.length + ' cells').join(', ') + ', ' + T.roundT() + ' s');
       let planted = false, lastRound = 0;
       for (let i = 0; i < 60 * 60 * 30 && !M.over; i++) {
         T.tick(DT);
@@ -281,9 +281,40 @@ function twoSiteChecks(count) {
     } catch (e) { err++; console.log(e.stack); }
   }
   ok(!err, 'no errors'); ok(done === count, 'every match finishes', `${done}/${count}`);
-  ok(bySite[0] > 0 && bySite[1] > 0, 'attackers plant on both sites', `A ${bySite[0]}, B ${bySite[1]}`);
+  ok(bySite[0] > 0 && bySite[1] > 0, 'attackers plant on both sites', `A ${bySite[0]}, B ${bySite[1]}${bySite[2] ? ', C ' + bySite[2] : ''}`);
   ok(plants / Math.max(1, rounds) > .2 && boomWins > 0, 'planting is a real way to win', `${plants} plants in ${rounds} rounds, ${boomWins} won by the charge`);
   console.log(`    ${Object.entries(why).map(([k, v]) => `${T.WHY[k]} ${v}`).join(', ')}`);
+}
+
+// every map, bots only: a 1v1 and a 3v3 on each, and the map's own feature gets used
+function everyMapChecks(per = 2) {
+  section(`bot matches on all ${T.MAPS.length} maps`);
+  const use = {}; for (const ev of ['tp', 'pad', 'gate', 'wallDown', 'vent', 'storm']) T.on(ev, () => { use[ev] = (use[ev] || 0) + 1; });
+  let allOk = true;
+  T.MAPS.forEach((mp, mi) => {
+    const row = { rounds: 0, plants: {}, why: {}, stalls: 0, err: null, done: 0 }; for (const k in use) use[k] = 0;
+    for (let n = 0; n < per; n++) {
+      try {
+        T.seed(mi * 7717 + n * 131 + 5); const size = n % 2 ? 3 : 1;
+        T.startMatch({ mode: 'bot', diff: 1, size, map: mi }); const M = T.M; M.fs[0].bot = { diff: 1 + (n % 2) }; M.fs[0].local = false;
+        const still = M.fs.map(() => ({ t: 0, x: 0, z: 0 })); let lastRound = 0, planted = false;
+        for (let i = 0; i < 60 * 60 * 30 && !M.over; i++) {
+          T.tick(DT);
+          if (M.round !== lastRound) { lastRound = M.round; planted = false; }
+          if (M.planted && !planted) { planted = true; const k = T.SITES[M.planted.s].k; row.plants[k] = (row.plants[k] || 0) + 1; }
+          if (M.phase === 'end' && M.last && !M.last.seen3) { M.last.seen3 = true; row.rounds++; row.why[M.last.why] = (row.why[M.last.why] || 0) + 1; }
+          M.fs.forEach((f, q) => { const st = still[q]; if (M.phase !== 'live' || !f.alive || T.sideOf(f) !== 'att' || M.planted) { st.t = 0; st.x = f.x; st.z = f.z; st.flag = false; return; }
+            if (Math.hypot(f.x - st.x, f.z - st.z) > 1.5) { st.t = 0; st.x = f.x; st.z = f.z; st.flag = false; } else if ((st.t += DT) > 20 && !st.flag) { st.flag = true; row.stalls++; if (row.stalls <= 2) console.log(`    ${mp.n} round ${M.round}: attacker still for 20 s at ${f.x.toFixed(1)}, ${f.z.toFixed(1)}, plan ${f.bot.plan && f.bot.plan.k} ${f.bot.plan && f.bot.plan.lane}`); } });
+        }
+        if (M.over) row.done++;
+      } catch (e) { row.err = e.stack.split('\n').slice(0, 3).join(' | '); }
+    }
+    const feat = Object.entries(use).filter(([, v]) => v).map(([k, v]) => `${k} ${v}`).join(' ');
+    const good = !row.err && row.done === per && row.stalls <= per * 2 && Object.keys(row.plants).length >= 1;
+    if (!good) allOk = false;
+    console.log(`  ${good ? 'ok  ' : 'FAIL'} ${mp.n.padEnd(13)} ${row.done}/${per} done, ${row.rounds} rounds, plants ${JSON.stringify(row.plants)}, ${Object.entries(row.why).map(([k, v]) => `${k} ${v}`).join(' ')}${row.stalls ? `, ${row.stalls} stalls` : ''}${feat ? '  [' + feat + ']' : ''}${row.err ? '  ERR ' + row.err : ''}`);
+  });
+  ok(allOk, 'every map plays out with bots: no errors, matches finish, attackers keep moving and plant');
 }
 
 function hitboxChecks() {
@@ -330,6 +361,7 @@ const arg = process.argv[2];
 if (arg === 'map') { printMap(); process.exit(0); }
 if (arg === 'matches') matchChecks(+process.argv[3] || 20);
 else if (arg === 'two') twoSiteChecks(+process.argv[3] || 12);
+else if (arg === 'maps') everyMapChecks(+process.argv[3] || 2);
 else if (arg === 'quick') { mapChecks(); gunplayChecks(); hitboxChecks(); moveChecks(); loadChecks(); }
 else if (arg === 'hit') hitboxChecks();
 else if (arg === 'teams') { teamChecks(7); teamChecks(6, 3); }

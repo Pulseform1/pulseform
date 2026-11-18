@@ -124,3 +124,45 @@
   cue('end', wi => { const o = outFor(null); if (wi === 0) [523, 659, 784].forEach((q, i) => tone(o, q, .2, 'triangle', .11, 0, i * .08)); else tone(o, 280, .5, 'triangle', .1, -130); });
   cue('over', won => { const o = outFor(null); (won ? [523, 659, 784, 1047, 1319] : [392, 330, 262]).forEach((q, i) => tone(o, q, .3, 'triangle', .12, 0, .4 + i * .12)); });
   const click = (ok = true) => { if (canHear()) tone(outFor(null), ok ? 880 : 200, .04, 'square', .04); };
+
+  /* ---------- the map's own sounds: its mechanic, and a little life around it ----------
+     No hiss beds: just the odd sound now and then, quiet and off to one side, so each place has a voice of its own. */
+  const atPos = (x, z, v = 1) => outFor(M ? { x, z, y: 0 } : null, v);
+  cue('tp', (f, from, to) => { for (const p of [from, to]) { const o = atPos(p[0], p[1]); tone(o, 220, .35, 'sine', .12, 900); tone(o, 880, .25, 'triangle', .05, -500, .05); } });
+  cue('pad', f => { const o = outFor(f); tone(o, 140, .32, 'sine', .2, 420); tone(o, 600, .14, 'square', .03, 300); });
+  cue('gate', (g, open) => { const G = GATES[g]; if (!G) return; const o = atPos(G.c[0], G.c[1]); tone(o, 70, .9, 'sawtooth', .07, open ? -20 : 30); hiss(o, .8, .05, 'lowpass', 300); tone(o, 120, .12, 'square', .1, -40, .85); });
+  cue('gateJam', () => tone(outFor(null), 180, .12, 'square', .05, -60));
+  cue('wallHit', b => { const B = BRKS[b]; if (!B || Math.random() < .6) return; const o = atPos(B.c[0], B.c[1], .7); hiss(o, .07, .08, 'bandpass', 900, 0, 1.2); });
+  cue('wallDown', b => { const B = BRKS[b]; if (!B) return; const o = atPos(B.c[0], B.c[1], 1.3); hiss(o, 1.2, .4, 'lowpass', 700); tone(o, 60, .9, 'sine', .35, -25); for (let k = 0; k < 6; k++) hiss(o, .08, .12, 'bandpass', 1500 + Math.random() * 1500, .1 + k * .09, 2); });
+  cue('vent', n => { const v = VENTS[n]; if (!v) return; const o = atPos(v[0], v[1]); hiss(o, 1.6, .08, 'highpass', 2600); tone(o, 95, .5, 'sine', .05, -30); });
+  cue('storm', on2 => { if (!on2) return; const o = outFor(null, .8); hiss(o, 3.5, .06, 'bandpass', 520, 0, .6); });
+  // life: a sound every few seconds, from somewhere out past the walls
+  const AMB = { t: 4 };
+  const ambOut = v => { const ac = K.ac, g = ac.createGain(); g.gain.value = v; if (ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = Math.random() * 1.6 - .8; g.connect(p).connect(K.master); } else g.connect(K.master); return g; };
+  const LIFE = {
+    harbor: [o => { for (let k = 0; k < 2 + (Math.random() * 3 | 0); k++) tone(o, 1150 + Math.random() * 300, .22, 'sine', .05, -420, k * .26); },   // gulls
+      o => tone(o, 110, 1.6, 'sawtooth', .025, -4),   // a ship's horn far off
+      o => { tone(o, 660, 1.4, 'sine', .03); tone(o, 990, 1, 'sine', .012, 0, .02); }],   // a bell buoy
+    neon: [o => { for (let k = 0; k < 4; k++) tone(o, k % 2 ? 700 : 950, .32, 'triangle', .02, 0, k * .34); },   // a siren streets away
+      o => { tone(o, 420, .12, 'square', .025); tone(o, 420, .12, 'square', .025, 0, .18); },   // a horn
+      o => tone(o, 120, .3, 'square', .02, 0)],   // a sign buzzing
+    snow: [o => tone(o, 320, 2.2, 'sine', .022, 180),   // the wind in the mast
+      o => { tone(o, 70, .3, 'sine', .08, -20); tone(o, 140, .2, 'triangle', .02, -40, .05); },   // the ice settling
+      o => { for (let k = 0; k < 3; k++) tone(o, 2400 + k * 300, .4, 'sine', .01, 0, k * .2); }],   // a wind chime on the lodge
+    desert: [o => tone(o, 2100, .9, 'sine', .03, -700),   // a hawk
+      o => { for (let k = 0; k < 4; k++) tone(o, 1800 + Math.random() * 900, .6, 'sine', .012, 0, k * .15); },   // chimes
+      o => tone(o, 260, 1.8, 'sine', .015, 120)],
+    jungle: [o => { const b = 2400 + Math.random() * 900; for (let k = 0; k < 5; k++) tone(o, b * (1 + (Math.random() - .5) * .3), .07, 'sine', .04, b * .3, k * .1); },   // birds
+      o => { for (let k = 0; k < 3; k++) tone(o, 160, .12, 'square', .03, -50, k * .22); },   // a frog
+      o => { for (let k = 0; k < 10; k++) tone(o, 4200, .02, 'square', .008, 0, k * .05); }],   // insects
+    lava: [o => tone(o, 48, 2.4, 'sine', .09, -10),   // the caldera rumbling
+      o => { tone(o, 300, .15, 'triangle', .04, -120); tone(o, 240, .2, 'triangle', .03, -100, .12); },   // metal knocking
+      o => tone(o, 90, .8, 'sawtooth', .02, -30)],
+    space: [o => { for (let k = 0; k < 3; k++) tone(o, 1200 + k * 400, .06, 'sine', .03, 0, k * .09); },   // radio chatter
+      o => tone(o, 80, 2, 'sine', .05, 6),   // the station's hum
+      o => tone(o, 520, .5, 'triangle', .02, -300)],
+  };
+  function ambTick(dt) {
+    if (!canHear() || !M || screen !== 'play' || M.over) return; AMB.t -= dt; if (AMB.t > 0) return;
+    AMB.t = 4 + Math.random() * 7; const L = LIFE[MAP.theme]; if (!L) return; L[Math.floor(Math.random() * L.length)](ambOut(.9));
+  }

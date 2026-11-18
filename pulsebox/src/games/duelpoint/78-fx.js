@@ -115,7 +115,7 @@
     return K[K.length - 1].slice(1);
   }
   function renderFrame(dt) {
-    if (!X || !ready) return; const cam = X.camera; X.t += dt; tunePixels(dt); skinTick(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; }
+    if (!X || !ready) return; const cam = X.camera; X.t += dt; tunePixels(dt); skinTick(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; } mechFrame(dt);
     const live = M && (screen === 'play' || (screen === 'over' && posed)) && !loadingNow();
     if (!live) {   // behind the menus: a slow flight round the site
       if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker') && renderGunShow(dt)) return;

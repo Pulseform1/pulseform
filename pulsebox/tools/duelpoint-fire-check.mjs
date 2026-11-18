@@ -12,6 +12,7 @@ await p.evaluate(() => { window.__lockErr = 0; document.addEventListener('pointe
 await p.evaluate(() => GAME.test.menuPlay(1)); await p.waitForTimeout(600); await p.evaluate(() => GAME.test.skipLoad()); await p.waitForTimeout(1200);
 const st = () => p.evaluate(() => { const t = GAME.test, P = t.M.fs[0]; return { phase: t.M.phase, armory: t.UI.armory, locked: !!document.pointerLockElement, shots: P.stat.shots, lockErr: window.__lockErr }; });
 let failed = 0; const ok = (c, n, x) => { if (!c) failed++; console.log((c ? '  ok   ' : '  FAIL ') + n + '  ' + JSON.stringify(x)); };
+await p.waitForFunction(() => GAME.test.UI.armory || GAME.test.M.phase !== 'buy', null, { timeout: 20000 }).catch(() => {});   // the first frames on a new map compile its shaders
 let r = await st(); console.log('buy phase', JSON.stringify(r));
 // capture the mouse in the buy phase (a click outside the armory's buttons), as a player would
 if (!r.locked) { await p.mouse.click(1250, 700); await p.waitForTimeout(500); }

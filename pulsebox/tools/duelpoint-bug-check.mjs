@@ -45,8 +45,9 @@ const shots = {};
 await p.mouse.move(640, 360); await p.mouse.down(); await p.waitForTimeout(300); await p.mouse.up();
 for (const g of ['quill', 'stub', 'wasp', 'hammer', 'gnat', 'hornet', 'breaker', 'thresher', 'mako', 'paladin', 'vesper', 'lancer', 'kite', 'longbow', 'torrent', 'pip']) {
   await T(p, g => { const t = GAME.test, P = t.M.fs[0], G = t.GUNS[g]; P.alive = true; P.hp = 100; P.guns[G.slot] = g; P.slot = G.slot; P.ammo[g] = { mag: G.mag, res: 90 }; P.fireT = 0; P.reloadT = 0; P.burst = null; t.M.phase = 'live'; t.M.t = 60; }, g);
+  const s0 = await T(p, () => GAME.test.M.fs[0].stat.shots);   // counted from before the press: a frame drawn between the press and the count can fire the first shot
   await p.mouse.move(640, 360); await p.mouse.down();
-  shots[g] = await T(p, () => { const t = GAME.test, s0 = t.M.fs[0].stat.shots; t.tick(.5); return t.M.fs[0].stat.shots - s0; });
+  shots[g] = await T(p, s0 => { const t = GAME.test; t.tick(.5); return t.M.fs[0].stat.shots - s0; }, s0);
   await p.waitForTimeout(250); await p.mouse.up();
 }
 ok(Object.values(shots).every(n => n >= 1), 'every gun fires with the mouse (and the game keeps drawing)', JSON.stringify(shots));

@@ -61,9 +61,10 @@
 
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
       const c = SRC[j][i], k = j * GW + i, x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS, area = AREA[k] >= 0 ? AREAS[AREA[k]] : null, dim = roofed[k] ? .62 : 1;
-      if ('.oqAD'.includes(c)) {   // open ground
-        const sd = [corner(i, j), corner(i, j + 1), corner(i + 1, j + 1), corner(i + 1, j)].map(s => s * dim);
-        flat(area && area.k === 'pier' && MAP.theme === 'harbor' ? 'deck' : 'ground', x0, z0, x1, z1, 0, 1, 4, sd, area ? GROUND_TINT[area.k] : WHITE); continue;
+      if ('.oqrADTJigLVG<>^vW'.includes(c)) {   // open ground (a breakable wall and a gate stand on it; 71-mech makes them)
+        const sd = [corner(i, j), corner(i, j + 1), corner(i + 1, j + 1), corner(i + 1, j)].map(s => s * dim), b = BELTS.indexOf(c);
+        const bk = c === 'i' ? 'ice' : c === 'V' ? 'vent' : c === 'L' ? 'lowg' : b >= 0 ? 'belt' + b : area && area.k === 'pier' && MAP.theme === 'harbor' ? 'deck' : 'ground';
+        flat(bk, x0, z0, x1, z1, 0, 1, b >= 0 || c === 'V' ? 2 : 4, sd, bk === 'ground' || bk === 'deck' ? (c === 'r' ? [.9, .9, .9] : area ? GROUND_TINT[area.k] : WHITE) : WHITE); continue;
       }
       if (c === '7' || c === '8') {   // the dock's stairs: four steps a cell, rising south
         for (let s = 0; s < 4; s++) {
@@ -74,7 +75,7 @@
         }
         continue;
       }
-      const top = CH[k], kind = c === '#' ? 'wall' : c === 'X' ? 'steel' : c === 'c' ? 'crate' : c === 'P' ? 'dock' : 'quay';
+      const top = CH[k], kind = c === '#' ? 'wall' : c === 'X' ? 'steel' : c === 'c' ? 'crate' : c === 'P' || c === 'H' ? 'dock' : 'quay';
       const tint = kind === 'steel' ? STEEL[group[k] % STEEL.length] : kind === 'quay' ? [.86, .85, .82] : WHITE, uv = kind === 'wall' ? uvWall : kind === 'steel' ? uvBox : kind === 'crate' ? uvCrate : kind === 'dock' ? uvDock : uvPlain;
       const mat = kind === 'quay' ? 'ground' : kind;
       // the top
@@ -85,7 +86,7 @@
       for (let e = 0; e < 4; e++) {
         const ni = i + (e === 0 ? 1 : e === 1 ? -1 : 0), nj = j + (e === 2 ? 1 : e === 3 ? -1 : 0), nk = idx(ni, nj);
         if (nk < 0 && c !== '~') continue;
-        const nh = nk < 0 ? -1.4 : CH[nk]; if (nh >= top) continue;
+        const nh = nk < 0 ? -1.4 : SRC[nj][ni] === 'W' ? 0 : CH[nk]; if (nh >= top) continue;   // beside a breakable wall: the face shows once it falls
         const d = nk >= 0 && roofed[nk] ? .62 : 1, lo = (nh <= .01 ? .78 : .92) * d;
         wallFace(mat, i, j, e, nh, top, uv, [lo, lo, d, d], tint);
         // the painted band that names the lane
@@ -154,11 +155,23 @@
       dock: canvasTex(256, 256, (g, w, h) => { grain(g, w, h, '#a9a49a', .12, 4000); for (let i = 0; i < 8; i++) { g.fillStyle = `rgba(50,44,36,${.05 + Math.random() * .08})`; g.fillRect(Math.random() * w, 40 + Math.random() * 200, 20 + Math.random() * 60, 4 + Math.random() * 30); } }),
       roof: canvasTex(128, 128, (g, w, h) => { g.fillStyle = '#6a6d72'; g.fillRect(0, 0, w, h); for (let x = 0; x < w; x += 16) { const gr = g.createLinearGradient(x, 0, x + 16, 0); gr.addColorStop(0, 'rgba(0,0,0,.4)'); gr.addColorStop(.5, 'rgba(255,255,255,.1)'); gr.addColorStop(1, 'rgba(0,0,0,.4)'); g.fillStyle = gr; g.fillRect(x, 0, 16, h); } }),
     };
+    // the mechanic's floors: ice, belts (one texture each way, so each can run), vent grates, the low-gravity deck
+    T.ice = canvasTex(512, 512, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#cfeeff'); gr.addColorStop(1, '#a8d8f4'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2; for (let k = 0; k < 18; k++) { let x = Math.random() * w, y = Math.random() * h; g.beginPath(); g.moveTo(x, y); for (let q = 0; q < 5; q++) { x += (Math.random() - .5) * 120; y += (Math.random() - .5) * 120; g.lineTo(x, y); } g.stroke(); }
+      for (let k = 0; k < 40; k++) { g.fillStyle = `rgba(255,255,255,${.1 + Math.random() * .2})`; g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 10 + Math.random() * 50, 4 + Math.random() * 12, Math.random() * 3, 0, 7); g.fill(); } });
+    const beltDraw = dir => (g, w, h) => { g.fillStyle = '#26282c'; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(255,255,255,.05)'; for (let y = 0; y < h; y += 8) g.fillRect(0, y, w, 2);
+      g.translate(w / 2, h / 2); g.rotate([Math.PI / 2, Math.PI, -Math.PI / 2, 0][dir]); g.strokeStyle = '#f2b51e'; g.lineWidth = 16; g.lineJoin = 'round'; g.beginPath(); g.moveTo(-38, 26); g.lineTo(0, -16); g.lineTo(38, 26); g.stroke(); g.setTransform(1, 0, 0, 1, 0, 0);
+      g.fillStyle = '#111'; g.fillRect(0, 0, 6, h); g.fillRect(w - 6, 0, 6, h); };
+    X.beltT = [0, 1, 2, 3].map(dir => { const t = canvasTex(128, 128, beltDraw(dir)); t.userData = { dir }; T['belt' + dir] = t; return t; });
+    T.vent = canvasTex(128, 128, (g, w, h) => { g.fillStyle = '#2a2c30'; g.fillRect(0, 0, w, h); g.fillStyle = '#0c0d0f'; for (let x = 12; x < w - 8; x += 14) g.fillRect(x, 10, 7, h - 20); g.strokeStyle = '#5a5e66'; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6); });
+    T.lowg = canvasTex(256, 256, (g, w, h) => { grain(g, w, h, '#3a4256', .1, 2000); g.strokeStyle = 'rgba(110,220,255,.85)'; g.lineWidth = 3; const r = 32;
+      for (let yy = 0, row = 0; yy < h + r; yy += r * 1.5, row++) for (let xx = (row % 2) * r * .866; xx < w + r; xx += r * 1.732) { g.beginPath(); for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * TAU / 6; g.lineTo(xx + Math.cos(a) * r * .95, yy + Math.sin(a) * r * .95); } g.closePath(); g.stroke(); } });
     X.tex = T;
     for (const k in bags) {
       const b = bags[k], geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.Float32BufferAttribute(b.p, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(b.n, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2)); geo.setAttribute('color', new THREE.Float32BufferAttribute(b.c, 3)); geo.setIndex(b.i);
-      const m = new THREE.Mesh(geo, TH.glow && k === 'band' ? new THREE.MeshBasicMaterial({ vertexColors: true }) : new THREE.MeshLambertMaterial({ map: T[k] || null, vertexColors: true, color: LC(TH.tint[k] || '#ffffff') })); m.castShadow = sh && k !== 'band' && k !== 'deck'; m.receiveShadow = sh; W.add(m);
+      const m = new THREE.Mesh(geo, TH.glow && k === 'band' ? new THREE.MeshBasicMaterial({ vertexColors: true }) : k === 'ice' ? new THREE.MeshPhongMaterial({ map: T.ice, vertexColors: true, shininess: 90, specular: LC('#c8ecff') })
+        : k === 'lowg' ? new THREE.MeshLambertMaterial({ map: T.lowg, vertexColors: true, emissive: LC('#3aa8d8'), emissiveMap: T.lowg, emissiveIntensity: .55 }) : new THREE.MeshLambertMaterial({ map: T[k] || null, vertexColors: true, color: LC(TH.tint[k] || '#ffffff') })); m.castShadow = sh && k !== 'band' && k !== 'deck'; m.receiveShadow = sh; W.add(m);
     }
     // the site: a painted ring on the ground
     const ringT = canvasTex(512, 512, (g, w, h) => {
@@ -187,7 +200,7 @@
       const m = signMat[s.a.k] || (signMat[s.a.k] = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, map: (() => { const t = canvasTex(256, 64, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = s.a.col; g.fillRect(0, 8, 14, 48); g.font = '700 46px "Chakra Petch", sans-serif'; g.textBaseline = 'middle'; g.fillStyle = 'rgba(40,38,34,.82)'; g.fillText(s.a.n.toUpperCase(), 26, 34); }); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t; })() }));
       const p = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .65), m); p.position.set(s.x, 3.35, s.z); p.rotation.y = s.ry; W.add(p);
     }
-    if (MAP.theme !== 'harbor') return scenery(W, TH);
+    if (MAP.theme !== 'harbor') { scenery(W, TH); buildMech(W, TH); return; }
     // beyond the sea wall: water, a jetty with a boat, a lighthouse; and two cranes over the east wall
     const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o)), box = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); W.add(o); return o; };
     const seaT = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#1d7f88'; g.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { g.fillStyle = `rgba(190,240,240,${.08 + Math.random() * .2})`; g.fillRect(Math.random() * w, Math.random() * h, 10 + Math.random() * 40, 1.5); } }, [70, 40]);
@@ -197,13 +210,15 @@
     box(7, 1.3, 2.6, lam('#a23b34'), 27.5, -.9, -12); box(2.4, 1.3, 1.9, lam('#efeae0'), 26, .35, -12); box(.12, 2.2, .12, dark, 29, .9, -12);
     const lh = new THREE.Group(); for (let s = 0; s < 5; s++) { const seg = new THREE.Mesh(new THREE.CylinderGeometry(2.1 - s * .22, 2.32 - s * .22, 4, 16), lam(s % 2 ? '#c8463c' : '#f2efe6')); seg.position.y = 2 + s * 4; lh.add(seg); }
     const cap = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 1.8, 12), new THREE.MeshBasicMaterial({ color: '#fff3c4' })); cap.position.y = 20.9; lh.add(cap); const hat = new THREE.Mesh(new THREE.ConeGeometry(1.7, 1.6, 12), dark); hat.position.y = 22.6; lh.add(hat); lh.position.set(-22, -1.4, -78); W.add(lh);
-    for (const z of [10, 34]) { box(.9, 30, .9, dark, 72, 15, z - 3); box(.9, 30, .9, dark, 72, 15, z + 3); box(1.2, 1.2, 7.4, dark, 72, 29.4, z); box(26, 1.1, 1.1, lam('#c9862e'), 62, 30.4, z); box(.2, 9, .2, dark, 52, 25.5, z); }
+    for (const z of [MH * .23, MH * .77]) { const ox = MW - 64; box(.9, 30, .9, dark, 72 + ox, 15, z - 3); box(.9, 30, .9, dark, 72 + ox, 15, z + 3); box(1.2, 1.2, 7.4, dark, 72 + ox, 29.4, z); box(26, 1.1, 1.1, lam('#c9862e'), 62 + ox, 30.4, z); box(.2, 9, .2, dark, 52 + ox, 25.5, z); }
+    buildMech(W, TH);
   }
   // scenery for the other maps: what you see over the walls
   function scenery(W, TH) {
     const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o)), bas = c => new THREE.MeshBasicMaterial({ color: LC(c) });
     const put = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); W.add(o); return o; };
-    const ring = (n, r0, r1, fn) => { for (let i = 0; i < n; i++) { const a = i / n * TAU + Math.random() * .2, r = r0 + Math.random() * (r1 - r0); fn(MW / 2 + Math.cos(a) * r, MH / 2 + Math.sin(a) * r * .8, i); } };
+    // scenery stands on rings round the map, pushed out on the bigger maps so none of it ends up inside the walls
+    const ex = Math.max(0, MW / 2 - 32, (MH / 2 - 22) / .8), ring = (n, r0, r1, fn) => { for (let i = 0; i < n; i++) { const a = i / n * TAU + Math.random() * .2, r = r0 + ex + Math.random() * (r1 - r0); fn(MW / 2 + Math.cos(a) * r, MH / 2 + Math.sin(a) * r * .8, i); } };
     const floor = (c, o) => { const f = put(new THREE.PlaneGeometry(1400, 1400), lam(c, o), MW / 2, -.02, MH / 2); f.rotation.x = -Math.PI / 2; return f; };
     const t = MAP.theme; X.seaT = null;
     if (t === 'neon') {   // a city at night: towers with lit windows, signs on the tops

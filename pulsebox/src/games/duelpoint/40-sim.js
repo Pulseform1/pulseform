@@ -360,8 +360,10 @@
       emit('tp', f, from, t.b); f.step = 1.2; return;   // loud at both ends
     }
     if (PADX[k] >= 0 && !(f.padCD > 0)) {
-      const t = PADS[PADX[k]], g = GRAV * (LOWG[k] ? LOW_G : 1), dh = t.h - f.y, tl = (PAD_VY + Math.sqrt(Math.max(0, PAD_VY * PAD_VY - 2 * g * dh))) / g;
-      f.vy = PAD_VY; f.vx = (t.b[0] - f.x) / tl; f.vz = (t.b[1] - f.z) / tl; f.ground = false; f.padT = tl * .95; f.padCD = .5; f.slide = null; f.sprinting = false; emit('pad', f);
+      const t0 = PADS[PADX[k]], lx = t0.b[0] - f.x, lz = t0.b[1] - f.z, sp = Math.hypot(f.vx, f.vz);
+      if (sp > 1.5 && (f.vx * lx + f.vz * lz) / (sp * (Math.hypot(lx, lz) || 1)) < -.2) return;   // a pad throws you only if you step onto it toward where it points (or stand on it)
+      const t = t0, g = GRAV * (LOWG[k] ? LOW_G : 1), dh = t.h - f.y, tl = (PAD_VY + Math.sqrt(Math.max(0, PAD_VY * PAD_VY - 2 * g * dh))) / g;
+      f.vy = PAD_VY; f.vx = (t.b[0] - f.x) / tl; f.vz = (t.b[1] - f.z) / tl; f.ground = false; f.padT = tl * .95; f.padCD = .5; f.slide = null; f.sprinting = false; emit('pad', f, [f.x, f.z], t.b);
     }
   }
   // gates: stand at a switch and press the use key (F) to shut the gate into a wall, or open it again. A gate will not
@@ -529,7 +531,7 @@
       stepBody(f, I, dt); stepGun(f, dt); stepObjective(f, I, dt);
       if (I.fire && f.sprinting) { f.sprinting = false; f.fireT = Math.max(f.fireT, .1); }
       { const G = gun(f); f.wind = G.wind ? cl((f.wind || 0) + ((I.fire || I.spin) && f.alive && f.reloadT <= 0 ? dt / G.wind : -dt / (G.wind * 1.6)), 0, 1) : 0; }   // a rotary gun spins up before it fires
-      if (I.fire && f.alive && (M.phase !== 'buy' || M.mode === 'range') && !(gun(f).wind && f.wind < 1)) { const G = gun(f); if (G.auto || !f.semiHeld || (I.rapid && f.fireT < -.07)) fire(f); }
+      if (I.fire && f.alive && (M.phase !== 'buy' || M.mode === 'range') && !(gun(f).wind && f.wind < 1)) { const G = gun(f); if (G.auto || !f.semiHeld || I.press || (I.rapid && f.fireT < -.07)) fire(f); }
       f.semiHeld = !!I.fire;
       if (M.mode === 'range') { if (f.abT > 0 && (f.abT -= dt) <= 0) f.ab = { q: 1, e: 1 }; if (!f.alive && f.bot && (f.respawn -= dt) <= 0) placeDummy(f); }
     }

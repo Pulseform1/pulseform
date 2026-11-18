@@ -9,8 +9,8 @@
   // which site a defender holds this round: two defenders take one each; one alone guesses
   function defSiteFor(f) {
     const team = M.fs.filter(q => q.team === f.team && q.alive).sort((a, b) => a.key < b.key ? -1 : 1);
-    if (!M.defPick || M.defPick.r !== M.round) M.defPick = { r: M.round, s: R() < .5 ? 0 : 1 };
-    return team.length > 1 ? (team.indexOf(f) + M.defPick.s) % 2 : M.defPick.s;
+    if (!M.defPick || M.defPick.r !== M.round) M.defPick = { r: M.round, s: Math.floor(R() * SITES.length) };
+    return team.length > 1 ? (team.indexOf(f) + M.defPick.s) % SITES.length : M.defPick.s;
   }
   // somewhere to stand with a clear view of a point, a set distance from it (the attacker's post after planting)
   function watchSpot(x, z, rMin, rMax) {
@@ -18,6 +18,11 @@
     return c.length ? pick(c) : [x, z];
   }
   const goTo = (P, f, x, z) => { P.dest = [x, z]; P.path = findPath(f.x, f.z, x, z); };
+  // a teleporter or a jump pad moves a bot before it reaches the middle of the pad: count that as arriving there,
+  // and find the way on from where it came out (otherwise it walks back to the pad, and round it goes)
+  const moved = (f, from, to) => { const P = f.bot && f.bot.plan; if (!P || !P.dest) return; if (Math.hypot(P.dest[0] - from[0], P.dest[1] - from[1]) < 2.4) { P.path = []; P.dest = [to[0], to[1]]; } else goTo(P, f, P.dest[0], P.dest[1]); };
+  on('tp', (f, from, to) => moved(f, from, to));
+  on('pad', (f, from, to) => { const P = f.bot && f.bot.plan; if (!P) return; if (P.dest && Math.hypot(P.dest[0] - from[0], P.dest[1] - from[1]) < 2.4) { P.path = []; P.dest = [to[0], to[1]]; } P.landing = true; });   // in the air: the next leg is worked out on landing
   function coverFrom(f, ex, ez, ey) {
     let best = null, bd = 1e9;
     for (const q of navCells) { const d = Math.hypot(q[0] - f.x, q[1] - f.z); if (d < 1.5 || d > 9 || d >= bd) continue;
@@ -27,12 +32,14 @@
     return best;
   }
   // attack: a route to a site. On a two-site map the attackers pick a site together each round, then each takes a way in
+  // On a map where the attackers start at both ends, each takes a way in that starts on their own side.
+  // A way in through a breakable wall (MAP.rbrk) shoots it down on the way; MAP.rw weights the ways on a one-site map.
   function planAttack(f) {
-    let lane;
-    if (twoSites()) { if (!M.atkPick || M.atkPick.r !== M.round) M.atkPick = { r: M.round, s: R() < .5 ? 0 : 1 }; lane = pick(Object.keys(ROUTES).filter(k => RSITE[k] === M.atkPick.s)); }
-    else lane = pick(['pier', 'split', 'mid', 'mid', 'tunnel', 'tunnel'].filter(k => ROUTES[k]));
-    const S = SITES[RSITE[lane] || 0];
-    return { k: 'push', lane: lane === 'split' ? 'pier' : lane, pts: ROUTES[lane].map(p => [p[0], p[1]]), site: pick(S.cells), sc: S.c, path: [] };
+    let lane; const all = MAP.rw || Object.keys(ROUTES), mine = MAP.split ? all.filter(k => (ROUTES[k][0][0] < MW / 2) === (f.x < MW / 2)) : all, ways = mine.length ? mine : all;
+    if (twoSites()) { if (!M.atkPick || M.atkPick.r !== M.round) M.atkPick = { r: M.round, s: Math.floor(R() * SITES.length) }; const c = ways.filter(k => RSITE[k] === M.atkPick.s); lane = pick(c.length ? c : ways); }
+    else lane = pick(ways);
+    const S = SITES[RSITE[lane] || 0], brk = MAP.rbrk && MAP.rbrk[lane] != null ? MAP.rbrk[lane] : null;
+    return { k: 'push', lane: lane === 'split' ? 'pier' : lane, pts: ROUTES[lane].map(p => [p[0], p[1]]), site: pick(S.cells), sc: S.c, path: [], brk };
   }
   // defend: a spot watching a way in. On a two-site map, at the site this defender is holding; a noise from a lane that
   // leads to the other site is a reason to rotate there
@@ -40,6 +47,11 @@
     let at = HOLDS;
     if (twoSites()) { const ls = laneSite(lane); f.bot.hs = ls != null ? ls : f.bot.hs != null ? f.bot.hs : defSiteFor(f); at = HOLDS.filter(h => h.s === f.bot.hs); }
     const c = at.filter(h => !lane || h.lane === lane || (lane === 'mid' && laneSite(h.lane) != null)), h = pick(c.length ? c : at.length ? at : HOLDS), P = { k: 'hold', lane: h.lane, look: h.look, crouch: R() < .35, sc: (SITES[h.s] || SITES[0]).c };
+    // a map with gates: early in the round a defender may go and shut the one into its site first, then take its spot
+    if (GATES.length && !lane && M.t > roundT() - 25 && R() < .6) {
+      const g = GATES.findIndex(G2 => G2.open && G2.sw.some(q => Math.hypot(q[0] - P.sc[0], q[1] - P.sc[1]) < 16) && !M.fs.some(o => o !== f && o.bot && o.bot.plan && o.bot.plan.gate === GATES.indexOf(G2)));
+      if (g >= 0) { const sw = GATES[g].sw.reduce((a, q) => Math.hypot(q[0] - P.sc[0], q[1] - P.sc[1]) < Math.hypot(a[0] - P.sc[0], a[1] - P.sc[1]) ? q : a); P.gate = g; P.holdP = h.p; goTo(P, f, sw[0], sw[1]); return P; }
+    }
     goTo(P, f, h.p[0], h.p[1]); return P;
   }
   // the site a plan is about (its target, or the nearest)
@@ -68,7 +80,7 @@
     } else if (f.op === 'wraith') {
       if (f.ab.q && !sees && ((side === 'att' && P.k === 'push' && near < 20) || (P.k === 'retake' && M.planted && Math.hypot(M.planted.x - f.x, M.planted.z - f.z) < 24))) ability(f, 'q');
       if (f.ab.e && side === 'att' && P.k === 'push' && !sees && M.t < roundT() - 8 && R() < dt * .4) {   // fake a push somewhere else
-        const o = SITES.length > 1 ? SITES[1 - (RSITE[P.lane] || 0)].c : pick(HOLDS).look; botCast(f, 'e', { x: o[0], z: o[1] }); }
+        const o = SITES.length > 1 ? pick(SITES.filter((S2, i) => i !== (RSITE[P.lane] || 0))).c : pick(HOLDS).look; botCast(f, 'e', { x: o[0], z: o[1] }); }
     } else if (f.op === 'talon') {
       if (f.ab.q && !sees && ((side === 'att' && P.k === 'push' && near < 26 && near > 8) || (side === 'def' && there && M.t < roundT() - 10))) {
         const tg = side === 'att' ? siteOfPlan(P, f) : holdLook; if (tg) { const dx = tg[0] - f.x, dz = tg[1] - f.z, dy = hAt(tg[0], tg[1]) + 2.4 - ey, L = Math.hypot(dx, dy, dz) || 1; botCast(f, 'q', { x: f.x, y: ey, z: f.z, vx: dx / L * 42, vy: dy / L * 42 + 1.5, vz: dz / L * 42 }); } }
@@ -184,6 +196,20 @@
       const st = M.kit.sentries.find(q => q.by.team !== f.team && Math.hypot(q.x - f.x, q.z - f.z) < 20 && los(f.x, eyeY(f), f.z, q.x, q.y + .6, q.z) >= Math.hypot(q.x - f.x, q.z - f.z, q.y + .6 - eyeY(f)) - .4);
       if (st) { const d = Math.hypot(st.x - f.x, st.z - f.z); tYaw = yawTo(f.x, f.z, st.x, st.z) + Math.sin(M.time * 3 + B.ph) * D.jit; tPitch = Math.atan2(st.y + .6 - eyeY(f), d); if (Math.abs(angDiff(tYaw, f.yaw)) < Math.atan2(.25, d) + .01 && Math.abs(tPitch - f.pitch) < .05) I.fire = true; }
     }
+    B.breaking = false;
+    if (!sees && P.k === 'push' && P.brk != null && BRKS[P.brk] && BRKS[P.brk].hp > 0 && !gun(f).melee) {
+      const W2 = BRKS[P.brk], d = Math.hypot(W2.c[0] - f.x, W2.c[1] - f.z), wy = 1.4;
+      if (d < 13 && los(f.x, eyeY(f), f.z, W2.c[0], wy, W2.c[1], false) >= Math.hypot(d, wy - eyeY(f)) - 1.6) {
+        B.breaking = true; tYaw = yawTo(f.x, f.z, W2.c[0], W2.c[1]) + Math.sin(M.time * 3 + B.ph) * D.jit; tPitch = Math.atan2(wy - eyeY(f), d);
+        if (Math.abs(angDiff(tYaw, f.yaw)) < .08) { if (G.auto) I.fire = true; else { B.semi = (B.semi || 0) - dt; if (B.semi <= 0) { I.fire = true; B.semi = 60 / G.rpm + .1; } } }
+        const A0 = f.ammo[G.k]; if (A0 && A0.mag === 0 && A0.res > 0) reload(f);
+      }
+    }
+    if (GATES.length && M.phase === 'live') {
+      const g = gateNear(f);
+      if (g >= 0 && side === 'att' && !GATES[g].open && !sees) I.use = !f.useHeld;   // let ourselves through
+      if (side === 'def' && P.gate != null) { const G2 = GATES[P.gate]; if (!G2 || !G2.open) { P.gate = null; if (P.holdP) { goTo(P, f, P.holdP[0], P.holdP[1]); P.holdP = null; } } else if (g === P.gate) I.use = !f.useHeld; }
+    }
     const rate = (engaged ? D.turn : B.alarm && M.time - B.alarm < .6 ? D.turn * .8 : 2.2 + B.diff * .8) * dt;
     f.yaw += cl(angDiff(tYaw, f.yaw), -rate, rate); f.pitch += cl(tPitch - f.pitch, -rate * .7, rate * .7);
 
@@ -206,7 +232,8 @@
 
     // --- moving
     if (P.path && P.path.length) { goal = P.path[0]; if (Math.hypot(goal[0] - f.x, goal[1] - f.z) < .55) { P.path.shift(); goal = P.path[0] || null; } }
-    const arrived = !P.path || !P.path.length;
+    const flying = P.landing && (f.padT > 0 || !f.ground); if (P.landing && !flying) { P.landing = false; if (P.path && P.path.length && P.dest) goTo(P, f, P.dest[0], P.dest[1]); }
+    const arrived = !flying && (!P.path || !P.path.length);
     if (arrived) {
       if (P.k === 'push') { if (P.pts.length) { const q = P.pts.shift(); goTo(P, f, q[0], q[1]); } else if (!P.toSite) { P.toSite = true; goTo(P, f, P.site[0], P.site[1]); } }
       if (P.k === 'hunt') B.plan = planHold(f, null);
@@ -222,6 +249,7 @@
       if (G.melee) goal = [e.x, e.z];
       if (B.diff > 0 && G.auto && dE < 12 && f.spray > 4) I.crouch = true;
     } else if (M.time - (B.engT || -9) < .8 && P.k !== 'retake' && P.k !== 'cover') goal = null;   // just lost a rival it was fighting: hold the angle a moment
+    if (B.breaking) goal = null;   // stand and knock the wall down first
     // the charge
     if (side === 'att' && !M.planted && P.k === 'push' && P.toSite && onSite(f.x, f.z) && (arrived || Math.hypot(P.site[0] - f.x, P.site[1] - f.z) < 1.4) && !sees && M.time - (B.engT || -9) > 1) { I.use = true; goal = null; }
     if (side === 'def' && M.planted && Math.hypot(f.x - M.planted.x, f.z - M.planted.z) < 1.5) {

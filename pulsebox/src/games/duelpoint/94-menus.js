@@ -82,8 +82,8 @@
   function drawPlay(g, V, W, H, u) {
     const x0 = V.x0 + 60 / pxPer() + 20 * u, touch = isTouch(), O = OPS[CFG.op] || OPS.vex, sites = CFG.sites === 1 ? 1 : 2, top = V.y0 + 46 * u;
     tx(g, 'CHOOSE A MODE', x0, V.y0 + 26 * u, 12 * u, DIM, 'left', 900);
-    const modes = [{ k: 2, n: 'STANDARD', sub: 'TWO SITES', d: 'Bigger maps with sites A and B. Read the defence, choose a site, plant.', col: '#ff9a3c', maps: '6 MAPS · 100 S ROUNDS' },
-      { k: 1, n: 'SWIFT', sub: 'ONE SITE', d: 'Tight maps, one site and three ways in. Quick, sharp rounds.', col: YOU, maps: '7 MAPS · 80 S ROUNDS' }];
+    const modes = [{ k: 2, n: 'STANDARD', sub: 'TWO OR THREE SITES', d: 'Big maps, each with its own twist: walls you shoot down, blast doors, jump pads, belts, three sites. Read the defence, choose a site, plant.', col: '#ff9a3c', maps: '6 MAPS · 100-105 S ROUNDS' },
+      { k: 1, n: 'SWIFT', sub: 'ONE SITE', d: 'One site and three ways in, with a twist on every map: teleporters, ice, sandstorms, tall grass, steam, low gravity.', col: YOU, maps: '7 MAPS · 80-90 S ROUNDS' }];
     const rw = 330 * u, cw = Math.min(330 * u, (V.x1 - x0 - rw - 70 * u) / 2 - 8 * u), ch = Math.min(250 * u, H * .42);
     modes.forEach((md, i) => {
       const x = x0 + i * (cw + 16 * u), on = sites === md.k, hot = zone(x, top, cw, ch, () => { CFG.sites = md.k; saveAll(); click(); });

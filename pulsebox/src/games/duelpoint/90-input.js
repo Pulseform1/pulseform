@@ -160,8 +160,8 @@
       // push the thumb out past the ring, mostly forward, and you sprint
       TS.sprint = L > 84 * u && -dy > Math.abs(dx) * .8; if (TS.sprint) I.sprint = true;
     } else TS.sprint = false;
-    if (TS.fire != null || TS.tap) { I.fire = true; I.rapid = true; } TS.tap = false;
-    if (mouse.tap) { I.fire = true; mouse.tap = false; }
+    if (TS.fire != null || TS.tap) { I.fire = true; I.rapid = true; if (TS.tap) I.press = true; } TS.tap = false;
+    if (mouse.tap) { I.fire = true; I.press = true; mouse.tap = false; }   // a fresh press: a new trigger pull, even if the last one has not been seen to let go
     if (isTouch() && f.alive && M.phase === 'live') assist(f, I);
     if (UI.armory) I.fire = false;
     return I;
