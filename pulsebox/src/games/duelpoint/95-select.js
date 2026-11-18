@@ -73,7 +73,7 @@
       for (const [key, a] of [['Q', O.q], ['E', O.e]]) { rr(g, cx, y - 15 * u, 30 * u, 30 * u, 5, 'rgba(12,16,22,.8)', O.col, 2); tx(g, key, cx + 15 * u, y, 15 * u, O.col, 'center', 900); tx(g, a.n.toUpperCase(), cx + 42 * u, y - 2 * u, 16 * u, BONE, 'left', 900); y = para(g, a.d, cx + 42 * u, y + 18 * u, 290 * u, 12.5 * u, '#b9c0cc') + 16 * u; }
       g.restore(); }
     // the roster along the bottom
-    const n = keys.length, tw = Math.min(86 * u, (W - 360 * u) / n - 8 * u), th = tw * 1.1, total = n * (tw + 8 * u) - 8 * u, rx0 = 640 - total / 2, ry = V.y1 - th - 30 * u;
+    const n = keys.length, tw = Math.min(86 * u, (W - 160 * u) / n - 8 * u), th = tw * 1.1, total = n * (tw + 8 * u) - 8 * u, rx0 = 640 - total / 2, ry = V.y1 - th - 30 * u;
     keys.forEach((k, i) => {
       const o = OPS[k], x = rx0 + i * (tw + 8 * u), on = S.op === k, gone = taken.includes(k), hot = !S.locked && !gone && zone(x, ry, tw, th, () => { if (S.op !== k) { S.op = k; S.pickT = performance.now(); click(); } });
       const lift = on ? 6 * u : hot ? 3 * u : 0;
@@ -82,7 +82,7 @@
       if (!touch && i < 9) tx(g, String(i + 1), x + 9 * u, ry - lift + 11 * u, 9 * u, DIM, 'center', 800);
     });
     // lock in
-    { const bw = 220 * u, bh = 64 * u, bx = V.x1 - bw - 40 * u, by = V.y1 - bh - 40 * u - th * .2, locked = !!S.locked;
+    { const bw = 220 * u, bh = 60 * u, bx = V.x1 - bw - 40 * u, by = ry - bh - 24 * u, locked = !!S.locked;   // above the roster, clear of the corner
       btn(g, bx, by, bw, bh, locked ? 'LOCKED IN' : S.o ? 'LOCK IN' : 'SELECT', lockIn, { on: true, fill: O.col, solid: true, col: INK, px: 24 * u, sub: locked ? '' : touch ? '' : 'Enter' });
       if (locked) { const t = (now - S.locked) / 1000, a = 1 - cl(t / .9, 0, 1); g.save(); g.globalAlpha = a * .9; g.fillStyle = O.col; g.fillRect(V.x0, 360 - 40 * u * (1 + t), W, 80 * u * (1 + t) * a); g.restore(); tx(g, O.n + ' LOCKED IN', 640, 360, 40 * u * (1 + t * .1), INK, 'center', 900); } }
     if (!S.o && !touch) tx(g, '← → to browse · Enter to choose · Esc to go back', 640, V.y1 - 10 * u, 11 * u, DIM, 'center', 700);

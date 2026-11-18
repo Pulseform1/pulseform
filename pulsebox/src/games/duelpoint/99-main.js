@@ -1,6 +1,6 @@
   /* ---------- 99 main: the kit's hooks, moving between screens, demo and cover-art modes, the test handle ---------- */
   let booted = false, acc = 0, lastDraw = 0;
-  function toMenu() { M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
+  function toMenu() { UI.trying = null; M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
   function play(o) { resetInput(); UI.lastSide = null; UI.switched = null; UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
   // a bot match from the menu: agent select first (the tests can skip it)
   function menuPlay(size, select = true) { if (size) { CFG.size = size; saveAll(); } const o = { mode: 'bot', diff: CFG.diff, size: CFG.size, sites: CFG.sites }; if (select) openSelect(o); else play(o); }

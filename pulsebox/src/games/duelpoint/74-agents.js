@@ -157,6 +157,7 @@
     const sw = f.swing ? Math.sin(Math.min(1, f.swing.t / .4) * Math.PI) : 0;
     U.arms.rotation.x = f.pitch * .9 + f.kick * 1.2 - (f.swing && f.swing.heavy ? 0 : sw * .7) + Math.sin(ph * 2) * amp * .03; U.arms.rotation.y = f.swing && !f.swing.heavy ? (f.swing.t / .4 - .5) * 1.3 * (f.swing.side || 1) * (sw > 0 ? 1 : 0) : 0; U.arms.position.z = f.swing && f.swing.heavy ? -sw * .25 : 0;
     U.arms.rotation.x -= U.spr * .5;   // gun down while sprinting
+    if (f.castT > 0) { f.castT -= dt; const c = Math.sin(cl(1 - f.castT / .5, 0, 1) * Math.PI); U.arms.rotation.x -= c * .55; U.arms.rotation.z += c * .3; U.torso.rotation.y += c * .2; }   // using an ability
     U.head.rotation.x = f.pitch * .6 - sk * .3;
     if (U.flash) { U.flash.visible = f.kick > .05 && f.alive && !gun(f).melee; if (U.flash.visible) U.flash.material.rotation = Math.random() * 6; }
     // the rival's gun works too: slide, bolt, pump, magazine; and the arms tip it over to reload

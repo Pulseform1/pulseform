@@ -36,6 +36,11 @@
     STATS.coins -= price; STATS.skins.push(id); STATS.equip[sk.k] = id; saveAll(true);
     SH.reveal = { id, t0: performance.now() }; SH.show = null; emit('unlock', sk);
   }
+  // try a skin on the range before buying: it goes back to what you had when you leave
+  function tryInRange(id) {
+    const sk = skinOfId(id); if (!sk) return; SH.show = null; UI.panel = 'home'; play({ mode: 'range' }); const P = me(); P.skins[sk.k] = id; UI.trying = id;
+    if (sk.k === 'knife') switchTo(P, 3); else { const G = GUNS[sk.k]; P.guns[G.slot] = sk.k; giveAmmo(P, sk.k); P.slot = 0; switchTo(P, G.slot); }
+  }
   function equipSkin(k, id) { if (id) STATS.equip[k] = id; else delete STATS.equip[k]; saveAll(true); click(); }
   // a skin's card: rarity colour behind it, the gun in that skin, name, rarity, price or OWNED
   function skinCard(g, id, x, y, w, h, u, big) {
@@ -63,7 +68,7 @@
     const items = dailyStore(), left = storeLeft(), hh = Math.floor(left / 3600000), mm = Math.floor(left / 60000) % 60, ss = Math.floor(left / 1000) % 60, x0 = V.x0 + 60 / pxPer() + 20 * u, top = V.y0 + 96 * u;
     tx(g, 'STORE', x0, V.y0 + 46 * u, 40 * u, BONE, 'left', 900); tx(g, `New skins in ${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`, x0 + 4 * u, V.y0 + 78 * u, 13 * u, DIM, 'left', 700);
     coinTag(g, V.x1 - 266 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'LOCKER', () => { UI.panel = 'locker'; SH.show = null; }, { px: 13 * u });
-    const gw = V.x1 - x0 - 40 * u, gh = V.y1 - top - 30 * u, fw = gw * .5, cw = (gw - fw - 16 * u) / 2 - 8 * u, ch = (gh - 16 * u) / 2;
+    const gw = V.x1 - x0 - 40 * u, gh = V.y1 - top - 70 * u, fw = gw * .5, cw = (gw - fw - 16 * u) / 2 - 8 * u, ch = (gh - 16 * u) / 2;
     skinCard(g, items[0], x0, top, fw, gh, u, true); tx(g, 'FEATURED', x0 + 14 * u, top + 20 * u, 11 * u, skinOfId(items[0]).R.col, 'left', 900);
     items.slice(1).forEach((id, i) => skinCard(g, id, x0 + fw + 16 * u + (i % 2) * (cw + 16 * u), top + Math.floor(i / 2) * (ch + 16 * u), cw, ch, u, false));
   }
@@ -76,7 +81,7 @@
     const by = V.y1 - 120 * u;
     if (own) { const on = STATS.equip[sk.k] === id; btn(g, px, by, 380 * u, 60 * u, on ? 'EQUIPPED' : 'EQUIP', () => equipSkin(sk.k, on ? null : id), { on: !on, fill: YOU, solid: true, col: INK, px: 22 * u, sub: on ? 'press again to take it off' : '' }); }
     else { const can = STATS.coins >= price; btn(g, px, by, 380 * u, 60 * u, `BUY  ·  ${price}`, () => buySkin(id), { on: can, fill: sk.R.col, solid: can, col: INK, px: 22 * u, sub: can ? `you have ${STATS.coins}` : `you have ${STATS.coins} · win matches to earn coins` }); }
-    btn(g, px, by + 70 * u, 185 * u, 40 * u, 'BACK', () => { SH.show = null; }, { px: 13 * u });
+    btn(g, px, by + 70 * u, 185 * u, 40 * u, 'BACK', () => { SH.show = null; }, { px: 13 * u }); btn(g, px + 195 * u, by + 70 * u, 185 * u, 40 * u, 'TRY IN THE RANGE', () => tryInRange(id), { px: 12 * u });
     if (SH.msg && performance.now() - SH.msg.t0 < 2200) tx(g, SH.msg.s, px + 190 * u, by - 18 * u, 14 * u, WARN, 'center', 800);
   }
   function drawReveal(g, V, W, H, u) {   // the unlock: a burst in the rarity's colour, the gun spinning down, its name

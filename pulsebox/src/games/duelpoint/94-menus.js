@@ -48,9 +48,9 @@
     const h = 56 * u, W = V.x1 - V.x0, x0 = V.x0 + 60 / pxPer() + 20 * u;
     g.fillStyle = 'rgba(8,10,14,.94)'; g.fillRect(V.x0, V.y0, W, h); g.fillStyle = 'rgba(239,233,220,.08)'; g.fillRect(V.x0, V.y0 + h - 1, W, 1);
     g.fillStyle = FOE; g.fillRect(x0, V.y0 + 17 * u, 4 * u, 22 * u); tx(g, 'DUELPOINT', x0 + 12 * u, V.y0 + h / 2 + 1, 19 * u, BONE, 'left', 900);
-    const tw = Math.min(112 * u, (W - 640 * u) / MENU_TABS.length + 60 * u), tx0 = 640 - MENU_TABS.length * tw / 2;
+    const logoEnd = x0 + 140 * u, cardX = V.x1 - 300 * u, tw = Math.min(112 * u, (cardX - logoEnd - 16 * u) / MENU_TABS.length), tx0 = Math.max(logoEnd + 8 * u, Math.min(640 - MENU_TABS.length * tw / 2, cardX - 8 * u - MENU_TABS.length * tw));   // the tabs fit between the name and your card
     MENU_TABS.forEach(([k, n], i) => { const x = tx0 + i * tw, on = UI.panel === k || (k === 'settings' && UI.panel === 'crosshair'), hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
-      tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, 13 * u, on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + 16 * u, V.y0 + h - 4 * u, tw - 32 * u, 3 * u); } });
+      tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, Math.min(13 * u, tw / 7.5), on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + 16 * u, V.y0 + h - 4 * u, tw - 32 * u, 3 * u); } });
     const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
     tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 20 * u, 13 * u, BONE, 'left', 900); rankBadge(g, px + 57 * u, V.y0 + 38 * u, 7 * u, STATS.rating);
     tx(g, rankName(STATS.rating).toUpperCase() + '  ' + STATS.rating, px + 69 * u, V.y0 + 38 * u, 10 * u, RANK_COL[diffFor(STATS.rating).i], 'left', 800);
@@ -62,11 +62,15 @@
     if ((UI.panel === 'store' || UI.panel === 'locker') && (SH.show || SH.reveal)) return drawShop(g, V, W, H, u);   // a skin preview takes the whole screen
     g.fillStyle = 'rgba(12,16,22,.5)'; g.fillRect(V.x0, V.y0, W, H);
     const nh = drawTopBar(g, V, u), VN = Object.assign({}, V, { y0: V.y0 + nh });
-    if (UI.panel === 'store' || UI.panel === 'locker') return drawShop(g, VN, W, H - nh, u);
+    if (UI.lastPanel !== UI.panel) { UI.lastPanel = UI.panel; UI.panelT = performance.now(); }
+    const fade = smooth(cl((performance.now() - (UI.panelT || 0)) / 220, 0, 1)); g.globalAlpha = .25 + .75 * fade; g.save(); g.translate(0, (1 - fade) * 10 * u); drawPage(g, VN, W, H - nh, u); g.restore(); g.globalAlpha = 1;
+  }
+  function drawPage(g, VN, W, H2, u) {
+    if (UI.panel === 'store' || UI.panel === 'locker') return drawShop(g, VN, W, H2, u);
     if (UI.panel === 'settings') return drawSettings(g, VN, W, u);
     if (UI.panel === 'crosshair') return drawXhair(g, VN, W, u);
     if (UI.panel === 'career') return drawCareer(g, VN, W, u);
-    drawPlay(g, VN, W, H - nh, u);
+    drawPlay(g, VN, W, H2, u);
   }
   // a little plan for a mode card: the site diamonds with their letters, joined by lanes
   function modeGlyph(g, cx, cy, s, two, col) {
@@ -86,7 +90,7 @@
       g.save(); g.beginPath(); if (g.roundRect) g.roundRect(x, top, cw, ch, 10); else g.rect(x, top, cw, ch); g.clip();
       const gr = g.createLinearGradient(x, top + ch, x + cw, top); gr.addColorStop(0, md.col + (on ? '55' : '22')); gr.addColorStop(1, 'rgba(14,18,26,.94)'); g.fillStyle = 'rgba(14,18,26,.94)'; g.fillRect(x, top, cw, ch); g.fillStyle = gr; g.fillRect(x, top, cw, ch);
       g.strokeStyle = 'rgba(255,255,255,.04)'; g.lineWidth = 1; g.beginPath(); for (let k = -ch; k < cw; k += 12) { g.moveTo(x + k, top + ch); g.lineTo(x + k + ch, top); } g.stroke();
-      modeGlyph(g, x + cw * .62, top + ch * .36, 38 * u, md.k === 2, md.col); g.restore();
+      modeGlyph(g, x + cw * .6, top + ch * .4, Math.min(38 * u, ch * .15), md.k === 2, md.col); g.restore();
       rr(g, x, top, cw, ch, 10, null, on ? md.col : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.14)', on ? 3 : 1.5);
       tx(g, md.sub, x + 18 * u, top + 24 * u, 11 * u, md.col, 'left', 900); tx(g, md.n, x + 16 * u, top + ch - 92 * u, 34 * u, BONE, 'left', 900);
       para(g, md.d, x + 18 * u, top + ch - 62 * u, cw - 36 * u, 12 * u, '#c9cfd8'); tx(g, md.maps, x + 18 * u, top + ch - 16 * u, 10 * u, DIM, 'left', 800);
@@ -102,13 +106,13 @@
     { const h = 120 * u, hot = zone(rx, ry, rw, h, () => openSelect(null)); rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', hot ? O.col : 'rgba(239,233,220,.14)', hot ? 2 : 1.5);
       portraitTile(g, CFG.op, rx + 10 * u, ry + 10 * u, h - 20 * u, h - 20 * u, { r: 6 }); tx(g, 'YOUR OPERATIVE', rx + h + 4 * u, ry + 24 * u, 10 * u, DIM, 'left', 900); tx(g, O.n, rx + h + 2 * u, ry + 54 * u, 28 * u, BONE, 'left', 900);
       tx(g, `${O.q.n} · ${O.e.n}`, rx + h + 4 * u, ry + 80 * u, 12 * u, O.col, 'left', 800); tx(g, hot ? 'CHANGE →' : 'CHANGE', rx + rw - 14 * u, ry + h - 16 * u, 10 * u, hot ? O.col : DIM, 'right', 900); ry += h + 14 * u; }
-    { const h = 104 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, 'a party of up to four, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
+    { const h = 104 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, 'up to four, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
       btn(g, rx + 16 * u, ry + 56 * u, rw - 32 * u, 36 * u, MP.online() ? 'BACK TO YOUR PARTY · ' + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u }); ry += h + 14 * u; }
     btn(g, rx, ry, (rw - 10 * u) / 2, tapH(42), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 13 * u }); btn(g, rx + (rw + 10 * u) / 2, ry, (rw - 10 * u) / 2, tapH(42), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 13 * u, sub: 'try every gun' });
     // PLAY
-    const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots', pw = rw, ph = 76 * u, pyy = V.y1 - ph - 26 * u;
-    btn(g, rx, pyy, pw, ph, 'PLAY', () => menuPlay(CFG.size === 1 ? 1 : 2), { on: true, fill: FOE, solid: true, col: INK, px: 36 * u, sub: `${sites === 2 ? 'STANDARD' : 'SWIFT'} · ${CFG.size === 1 ? '1V1' : '2V2'} · ${lvl}` }); zones[zones.length - 1].prime = true;
-    if (!touch) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Enter plays · the arrow keys work here too', rx + pw / 2, pyy - 12 * u, 10 * u, DIM, 'center', 700);
+    const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots', ph = 72 * u, below = ry + tapH(42) + 12 * u, roomy = V.y1 - ph - 64 * u >= below, pyy = roomy ? V.y1 - ph - 64 * u : below, pw = roomy ? rw : rw - 84 * u;   // clear of the sound button in the corner, and of the buttons above
+    btn(g, rx, pyy, pw, ph, 'PLAY', () => menuPlay(CFG.size === 1 ? 1 : 2), { on: true, fill: FOE, solid: true, col: INK, px: 36 * u, sub: `${sites === 2 ? 'STANDARD' : 'SWIFT'} · ${CFG.size === 1 ? '1V1' : '2V2'}` + (roomy ? ` · ${lvl}` : '') }); zones[zones.length - 1].prime = true;
+    if (!touch && roomy) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Enter plays · the arrow keys work here too', rx + pw / 2, pyy - 12 * u, 10 * u, DIM, 'center', 700);
   }
   // CAREER: your record, your rank and the ladder, your collection
   function drawCareer(g, V, W, u) {

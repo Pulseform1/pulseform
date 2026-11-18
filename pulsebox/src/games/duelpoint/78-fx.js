@@ -81,6 +81,7 @@
   // a skin with a kill effect plays it on the rival it finishes
   on('kill', (v, by, head, wk) => { if (!X || !ready || !by || v === by) return; const sk = skinOfId(skinFor(by, wk)); if (sk) killFx(v, sk.line); });
   on('land', f => { if (X && M && f === me()) X.dip = .09; });
+  on('ability', f => { f.castT = .5; });
   on('dry', f => { if (X && M && f === me()) X.dryT = .16; });
   const VKICK = { Sidearm: 1.25, SMG: .7, Rifle: 1, Sniper: 2.2, Shotgun: 1.9, Heavy: .8 };   // how hard each class kicks in your hands
 
@@ -154,6 +155,7 @@
     X.adsK = lp(X.adsK || 0, P.scoped && !G.scope && P.alive ? 1 : 0, Math.min(1, dt * 16));
     if (X.adsK > .001) { const a = X.adsK, sy = X.viewGun.userData.sight || .09; X.view.position.x = lp(X.view.position.x, 0, a); X.view.position.y = lp(X.view.position.y, -sy - rk * .05, a); X.view.position.z = lp(X.view.position.z, VO[2] - .03 + rk * .5, a); X.view.rotation.y = lp(X.view.rotation.y, 0, a); X.view.rotation.z = lp(X.view.rotation.z, 0, a); X.view.rotation.x = lp(X.view.rotation.x, rk * .5, a); }
     if (X.flashT > 0) X.flashT -= dt;
+    if (P.castT > 0) { P.castT -= dt; const q = 1 - Math.max(0, P.castT) / .5, c = Math.sin(Math.min(1, q) * Math.PI); X.view.position.y -= c * .07; X.view.position.x += c * .03; X.view.rotation.x -= c * .45; X.view.rotation.z += c * .35; }   // the off hand casts: the gun dips out of the way
 
     // the rival
     for (const [f, A] of X.agents) if (!M.fs.includes(f)) { X.scene.remove(A); X.agents.delete(f); }

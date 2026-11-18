@@ -204,6 +204,7 @@
     // no hit marks over the crosshair; the range alone shows the damage each shot did
     if (hitMark && (hitMark.t -= 1 / 60) > 0 && range) tx(g, String(hitMark.dmg), 640 + 44 * u + hitMark.x, cy - 30 * u - (1 - Math.min(1, hitMark.t / .28)) * 16, 20 * u, hitMark.head ? GOLD : '#fff');
     drawBanner(g, V, u); drawSwitch(g);
+    if (range && UI.trying) { const sk = skinOfId(UI.trying); if (sk) { const w = 460 * u, y = V.y0 + 64 * u; rr(g, 640 - w / 2, y, w, 34 * u, 6, 'rgba(10,13,18,.82)', sk.R.col, 1.5); tx(g, `TRYING ${skinName(UI.trying).toUpperCase()}  ·  ${owns(UI.trying) ? 'YOURS' : skinPrice(UI.trying) + ' IN THE STORE'}`, 640, y + 17 * u, 12 * u, sk.R.col, 'center', 900); } }
     // --- dazed, snared, surging, shrouded: the whole view says so
     { const ring = (col, a, inner) => { const gr = g.createRadialGradient(640, 360, H * inner, 640, 360, H * .85); gr.addColorStop(0, col.replace('A', '0')); gr.addColorStop(1, col.replace('A', String(a))); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H); };
       if (P.daze > 0) ring('rgba(255,225,77,A)', .32 * Math.min(1, P.daze / .6), .3);

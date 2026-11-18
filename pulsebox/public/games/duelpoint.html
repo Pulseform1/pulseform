@@ -2030,6 +2030,7 @@ const GAME = {
     const sw = f.swing ? Math.sin(Math.min(1, f.swing.t / .4) * Math.PI) : 0;
     U.arms.rotation.x = f.pitch * .9 + f.kick * 1.2 - (f.swing && f.swing.heavy ? 0 : sw * .7) + Math.sin(ph * 2) * amp * .03; U.arms.rotation.y = f.swing && !f.swing.heavy ? (f.swing.t / .4 - .5) * 1.3 * (f.swing.side || 1) * (sw > 0 ? 1 : 0) : 0; U.arms.position.z = f.swing && f.swing.heavy ? -sw * .25 : 0;
     U.arms.rotation.x -= U.spr * .5;   // gun down while sprinting
+    if (f.castT > 0) { f.castT -= dt; const c = Math.sin(cl(1 - f.castT / .5, 0, 1) * Math.PI); U.arms.rotation.x -= c * .55; U.arms.rotation.z += c * .3; U.torso.rotation.y += c * .2; }   // using an ability
     U.head.rotation.x = f.pitch * .6 - sk * .3;
     if (U.flash) { U.flash.visible = f.kick > .05 && f.alive && !gun(f).melee; if (U.flash.visible) U.flash.material.rotation = Math.random() * 6; }
     // the rival's gun works too: slide, bolt, pump, magazine; and the arms tip it over to reload
@@ -2872,6 +2873,7 @@ const GAME = {
   // a skin with a kill effect plays it on the rival it finishes
   on('kill', (v, by, head, wk) => { if (!X || !ready || !by || v === by) return; const sk = skinOfId(skinFor(by, wk)); if (sk) killFx(v, sk.line); });
   on('land', f => { if (X && M && f === me()) X.dip = .09; });
+  on('ability', f => { f.castT = .5; });
   on('dry', f => { if (X && M && f === me()) X.dryT = .16; });
   const VKICK = { Sidearm: 1.25, SMG: .7, Rifle: 1, Sniper: 2.2, Shotgun: 1.9, Heavy: .8 };   // how hard each class kicks in your hands
 
@@ -2945,6 +2947,7 @@ const GAME = {
     X.adsK = lp(X.adsK || 0, P.scoped && !G.scope && P.alive ? 1 : 0, Math.min(1, dt * 16));
     if (X.adsK > .001) { const a = X.adsK, sy = X.viewGun.userData.sight || .09; X.view.position.x = lp(X.view.position.x, 0, a); X.view.position.y = lp(X.view.position.y, -sy - rk * .05, a); X.view.position.z = lp(X.view.position.z, VO[2] - .03 + rk * .5, a); X.view.rotation.y = lp(X.view.rotation.y, 0, a); X.view.rotation.z = lp(X.view.rotation.z, 0, a); X.view.rotation.x = lp(X.view.rotation.x, rk * .5, a); }
     if (X.flashT > 0) X.flashT -= dt;
+    if (P.castT > 0) { P.castT -= dt; const q = 1 - Math.max(0, P.castT) / .5, c = Math.sin(Math.min(1, q) * Math.PI); X.view.position.y -= c * .07; X.view.position.x += c * .03; X.view.rotation.x -= c * .45; X.view.rotation.z += c * .35; }   // the off hand casts: the gun dips out of the way
 
     // the rival
     for (const [f, A] of X.agents) if (!M.fs.includes(f)) { X.scene.remove(A); X.agents.delete(f); }
@@ -3569,6 +3572,7 @@ const GAME = {
     // no hit marks over the crosshair; the range alone shows the damage each shot did
     if (hitMark && (hitMark.t -= 1 / 60) > 0 && range) tx(g, String(hitMark.dmg), 640 + 44 * u + hitMark.x, cy - 30 * u - (1 - Math.min(1, hitMark.t / .28)) * 16, 20 * u, hitMark.head ? GOLD : '#fff');
     drawBanner(g, V, u); drawSwitch(g);
+    if (range && UI.trying) { const sk = skinOfId(UI.trying); if (sk) { const w = 460 * u, y = V.y0 + 64 * u; rr(g, 640 - w / 2, y, w, 34 * u, 6, 'rgba(10,13,18,.82)', sk.R.col, 1.5); tx(g, `TRYING ${skinName(UI.trying).toUpperCase()}  ·  ${owns(UI.trying) ? 'YOURS' : skinPrice(UI.trying) + ' IN THE STORE'}`, 640, y + 17 * u, 12 * u, sk.R.col, 'center', 900); } }
     // --- dazed, snared, surging, shrouded: the whole view says so
     { const ring = (col, a, inner) => { const gr = g.createRadialGradient(640, 360, H * inner, 640, 360, H * .85); gr.addColorStop(0, col.replace('A', '0')); gr.addColorStop(1, col.replace('A', String(a))); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H); };
       if (P.daze > 0) ring('rgba(255,225,77,A)', .32 * Math.min(1, P.daze / .6), .3);
@@ -3730,9 +3734,9 @@ const GAME = {
     const h = 56 * u, W = V.x1 - V.x0, x0 = V.x0 + 60 / pxPer() + 20 * u;
     g.fillStyle = 'rgba(8,10,14,.94)'; g.fillRect(V.x0, V.y0, W, h); g.fillStyle = 'rgba(239,233,220,.08)'; g.fillRect(V.x0, V.y0 + h - 1, W, 1);
     g.fillStyle = FOE; g.fillRect(x0, V.y0 + 17 * u, 4 * u, 22 * u); tx(g, 'DUELPOINT', x0 + 12 * u, V.y0 + h / 2 + 1, 19 * u, BONE, 'left', 900);
-    const tw = Math.min(112 * u, (W - 640 * u) / MENU_TABS.length + 60 * u), tx0 = 640 - MENU_TABS.length * tw / 2;
+    const logoEnd = x0 + 140 * u, cardX = V.x1 - 300 * u, tw = Math.min(112 * u, (cardX - logoEnd - 16 * u) / MENU_TABS.length), tx0 = Math.max(logoEnd + 8 * u, Math.min(640 - MENU_TABS.length * tw / 2, cardX - 8 * u - MENU_TABS.length * tw));   // the tabs fit between the name and your card
     MENU_TABS.forEach(([k, n], i) => { const x = tx0 + i * tw, on = UI.panel === k || (k === 'settings' && UI.panel === 'crosshair'), hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
-      tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, 13 * u, on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + 16 * u, V.y0 + h - 4 * u, tw - 32 * u, 3 * u); } });
+      tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, Math.min(13 * u, tw / 7.5), on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + 16 * u, V.y0 + h - 4 * u, tw - 32 * u, 3 * u); } });
     const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
     tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 20 * u, 13 * u, BONE, 'left', 900); rankBadge(g, px + 57 * u, V.y0 + 38 * u, 7 * u, STATS.rating);
     tx(g, rankName(STATS.rating).toUpperCase() + '  ' + STATS.rating, px + 69 * u, V.y0 + 38 * u, 10 * u, RANK_COL[diffFor(STATS.rating).i], 'left', 800);
@@ -3744,11 +3748,15 @@ const GAME = {
     if ((UI.panel === 'store' || UI.panel === 'locker') && (SH.show || SH.reveal)) return drawShop(g, V, W, H, u);   // a skin preview takes the whole screen
     g.fillStyle = 'rgba(12,16,22,.5)'; g.fillRect(V.x0, V.y0, W, H);
     const nh = drawTopBar(g, V, u), VN = Object.assign({}, V, { y0: V.y0 + nh });
-    if (UI.panel === 'store' || UI.panel === 'locker') return drawShop(g, VN, W, H - nh, u);
+    if (UI.lastPanel !== UI.panel) { UI.lastPanel = UI.panel; UI.panelT = performance.now(); }
+    const fade = smooth(cl((performance.now() - (UI.panelT || 0)) / 220, 0, 1)); g.globalAlpha = .25 + .75 * fade; g.save(); g.translate(0, (1 - fade) * 10 * u); drawPage(g, VN, W, H - nh, u); g.restore(); g.globalAlpha = 1;
+  }
+  function drawPage(g, VN, W, H2, u) {
+    if (UI.panel === 'store' || UI.panel === 'locker') return drawShop(g, VN, W, H2, u);
     if (UI.panel === 'settings') return drawSettings(g, VN, W, u);
     if (UI.panel === 'crosshair') return drawXhair(g, VN, W, u);
     if (UI.panel === 'career') return drawCareer(g, VN, W, u);
-    drawPlay(g, VN, W, H - nh, u);
+    drawPlay(g, VN, W, H2, u);
   }
   // a little plan for a mode card: the site diamonds with their letters, joined by lanes
   function modeGlyph(g, cx, cy, s, two, col) {
@@ -3768,7 +3776,7 @@ const GAME = {
       g.save(); g.beginPath(); if (g.roundRect) g.roundRect(x, top, cw, ch, 10); else g.rect(x, top, cw, ch); g.clip();
       const gr = g.createLinearGradient(x, top + ch, x + cw, top); gr.addColorStop(0, md.col + (on ? '55' : '22')); gr.addColorStop(1, 'rgba(14,18,26,.94)'); g.fillStyle = 'rgba(14,18,26,.94)'; g.fillRect(x, top, cw, ch); g.fillStyle = gr; g.fillRect(x, top, cw, ch);
       g.strokeStyle = 'rgba(255,255,255,.04)'; g.lineWidth = 1; g.beginPath(); for (let k = -ch; k < cw; k += 12) { g.moveTo(x + k, top + ch); g.lineTo(x + k + ch, top); } g.stroke();
-      modeGlyph(g, x + cw * .62, top + ch * .36, 38 * u, md.k === 2, md.col); g.restore();
+      modeGlyph(g, x + cw * .6, top + ch * .4, Math.min(38 * u, ch * .15), md.k === 2, md.col); g.restore();
       rr(g, x, top, cw, ch, 10, null, on ? md.col : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.14)', on ? 3 : 1.5);
       tx(g, md.sub, x + 18 * u, top + 24 * u, 11 * u, md.col, 'left', 900); tx(g, md.n, x + 16 * u, top + ch - 92 * u, 34 * u, BONE, 'left', 900);
       para(g, md.d, x + 18 * u, top + ch - 62 * u, cw - 36 * u, 12 * u, '#c9cfd8'); tx(g, md.maps, x + 18 * u, top + ch - 16 * u, 10 * u, DIM, 'left', 800);
@@ -3784,13 +3792,13 @@ const GAME = {
     { const h = 120 * u, hot = zone(rx, ry, rw, h, () => openSelect(null)); rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', hot ? O.col : 'rgba(239,233,220,.14)', hot ? 2 : 1.5);
       portraitTile(g, CFG.op, rx + 10 * u, ry + 10 * u, h - 20 * u, h - 20 * u, { r: 6 }); tx(g, 'YOUR OPERATIVE', rx + h + 4 * u, ry + 24 * u, 10 * u, DIM, 'left', 900); tx(g, O.n, rx + h + 2 * u, ry + 54 * u, 28 * u, BONE, 'left', 900);
       tx(g, `${O.q.n} · ${O.e.n}`, rx + h + 4 * u, ry + 80 * u, 12 * u, O.col, 'left', 800); tx(g, hot ? 'CHANGE →' : 'CHANGE', rx + rw - 14 * u, ry + h - 16 * u, 10 * u, hot ? O.col : DIM, 'right', 900); ry += h + 14 * u; }
-    { const h = 104 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, 'a party of up to four, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
+    { const h = 104 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, 'up to four, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
       btn(g, rx + 16 * u, ry + 56 * u, rw - 32 * u, 36 * u, MP.online() ? 'BACK TO YOUR PARTY · ' + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u }); ry += h + 14 * u; }
     btn(g, rx, ry, (rw - 10 * u) / 2, tapH(42), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 13 * u }); btn(g, rx + (rw + 10 * u) / 2, ry, (rw - 10 * u) / 2, tapH(42), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 13 * u, sub: 'try every gun' });
     // PLAY
-    const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots', pw = rw, ph = 76 * u, pyy = V.y1 - ph - 26 * u;
-    btn(g, rx, pyy, pw, ph, 'PLAY', () => menuPlay(CFG.size === 1 ? 1 : 2), { on: true, fill: FOE, solid: true, col: INK, px: 36 * u, sub: `${sites === 2 ? 'STANDARD' : 'SWIFT'} · ${CFG.size === 1 ? '1V1' : '2V2'} · ${lvl}` }); zones[zones.length - 1].prime = true;
-    if (!touch) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Enter plays · the arrow keys work here too', rx + pw / 2, pyy - 12 * u, 10 * u, DIM, 'center', 700);
+    const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots', ph = 72 * u, below = ry + tapH(42) + 12 * u, roomy = V.y1 - ph - 64 * u >= below, pyy = roomy ? V.y1 - ph - 64 * u : below, pw = roomy ? rw : rw - 84 * u;   // clear of the sound button in the corner, and of the buttons above
+    btn(g, rx, pyy, pw, ph, 'PLAY', () => menuPlay(CFG.size === 1 ? 1 : 2), { on: true, fill: FOE, solid: true, col: INK, px: 36 * u, sub: `${sites === 2 ? 'STANDARD' : 'SWIFT'} · ${CFG.size === 1 ? '1V1' : '2V2'}` + (roomy ? ` · ${lvl}` : '') }); zones[zones.length - 1].prime = true;
+    if (!touch && roomy) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Enter plays · the arrow keys work here too', rx + pw / 2, pyy - 12 * u, 10 * u, DIM, 'center', 700);
   }
   // CAREER: your record, your rank and the ladder, your collection
   function drawCareer(g, V, W, u) {
@@ -3999,7 +4007,7 @@ const GAME = {
       for (const [key, a] of [['Q', O.q], ['E', O.e]]) { rr(g, cx, y - 15 * u, 30 * u, 30 * u, 5, 'rgba(12,16,22,.8)', O.col, 2); tx(g, key, cx + 15 * u, y, 15 * u, O.col, 'center', 900); tx(g, a.n.toUpperCase(), cx + 42 * u, y - 2 * u, 16 * u, BONE, 'left', 900); y = para(g, a.d, cx + 42 * u, y + 18 * u, 290 * u, 12.5 * u, '#b9c0cc') + 16 * u; }
       g.restore(); }
     // the roster along the bottom
-    const n = keys.length, tw = Math.min(86 * u, (W - 360 * u) / n - 8 * u), th = tw * 1.1, total = n * (tw + 8 * u) - 8 * u, rx0 = 640 - total / 2, ry = V.y1 - th - 30 * u;
+    const n = keys.length, tw = Math.min(86 * u, (W - 160 * u) / n - 8 * u), th = tw * 1.1, total = n * (tw + 8 * u) - 8 * u, rx0 = 640 - total / 2, ry = V.y1 - th - 30 * u;
     keys.forEach((k, i) => {
       const o = OPS[k], x = rx0 + i * (tw + 8 * u), on = S.op === k, gone = taken.includes(k), hot = !S.locked && !gone && zone(x, ry, tw, th, () => { if (S.op !== k) { S.op = k; S.pickT = performance.now(); click(); } });
       const lift = on ? 6 * u : hot ? 3 * u : 0;
@@ -4008,7 +4016,7 @@ const GAME = {
       if (!touch && i < 9) tx(g, String(i + 1), x + 9 * u, ry - lift + 11 * u, 9 * u, DIM, 'center', 800);
     });
     // lock in
-    { const bw = 220 * u, bh = 64 * u, bx = V.x1 - bw - 40 * u, by = V.y1 - bh - 40 * u - th * .2, locked = !!S.locked;
+    { const bw = 220 * u, bh = 60 * u, bx = V.x1 - bw - 40 * u, by = ry - bh - 24 * u, locked = !!S.locked;   // above the roster, clear of the corner
       btn(g, bx, by, bw, bh, locked ? 'LOCKED IN' : S.o ? 'LOCK IN' : 'SELECT', lockIn, { on: true, fill: O.col, solid: true, col: INK, px: 24 * u, sub: locked ? '' : touch ? '' : 'Enter' });
       if (locked) { const t = (now - S.locked) / 1000, a = 1 - cl(t / .9, 0, 1); g.save(); g.globalAlpha = a * .9; g.fillStyle = O.col; g.fillRect(V.x0, 360 - 40 * u * (1 + t), W, 80 * u * (1 + t) * a); g.restore(); tx(g, O.n + ' LOCKED IN', 640, 360, 40 * u * (1 + t * .1), INK, 'center', 900); } }
     if (!S.o && !touch) tx(g, '← → to browse · Enter to choose · Esc to go back', 640, V.y1 - 10 * u, 11 * u, DIM, 'center', 700);
@@ -4051,6 +4059,11 @@ const GAME = {
     STATS.coins -= price; STATS.skins.push(id); STATS.equip[sk.k] = id; saveAll(true);
     SH.reveal = { id, t0: performance.now() }; SH.show = null; emit('unlock', sk);
   }
+  // try a skin on the range before buying: it goes back to what you had when you leave
+  function tryInRange(id) {
+    const sk = skinOfId(id); if (!sk) return; SH.show = null; UI.panel = 'home'; play({ mode: 'range' }); const P = me(); P.skins[sk.k] = id; UI.trying = id;
+    if (sk.k === 'knife') switchTo(P, 3); else { const G = GUNS[sk.k]; P.guns[G.slot] = sk.k; giveAmmo(P, sk.k); P.slot = 0; switchTo(P, G.slot); }
+  }
   function equipSkin(k, id) { if (id) STATS.equip[k] = id; else delete STATS.equip[k]; saveAll(true); click(); }
   // a skin's card: rarity colour behind it, the gun in that skin, name, rarity, price or OWNED
   function skinCard(g, id, x, y, w, h, u, big) {
@@ -4078,7 +4091,7 @@ const GAME = {
     const items = dailyStore(), left = storeLeft(), hh = Math.floor(left / 3600000), mm = Math.floor(left / 60000) % 60, ss = Math.floor(left / 1000) % 60, x0 = V.x0 + 60 / pxPer() + 20 * u, top = V.y0 + 96 * u;
     tx(g, 'STORE', x0, V.y0 + 46 * u, 40 * u, BONE, 'left', 900); tx(g, `New skins in ${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`, x0 + 4 * u, V.y0 + 78 * u, 13 * u, DIM, 'left', 700);
     coinTag(g, V.x1 - 266 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'LOCKER', () => { UI.panel = 'locker'; SH.show = null; }, { px: 13 * u });
-    const gw = V.x1 - x0 - 40 * u, gh = V.y1 - top - 30 * u, fw = gw * .5, cw = (gw - fw - 16 * u) / 2 - 8 * u, ch = (gh - 16 * u) / 2;
+    const gw = V.x1 - x0 - 40 * u, gh = V.y1 - top - 70 * u, fw = gw * .5, cw = (gw - fw - 16 * u) / 2 - 8 * u, ch = (gh - 16 * u) / 2;
     skinCard(g, items[0], x0, top, fw, gh, u, true); tx(g, 'FEATURED', x0 + 14 * u, top + 20 * u, 11 * u, skinOfId(items[0]).R.col, 'left', 900);
     items.slice(1).forEach((id, i) => skinCard(g, id, x0 + fw + 16 * u + (i % 2) * (cw + 16 * u), top + Math.floor(i / 2) * (ch + 16 * u), cw, ch, u, false));
   }
@@ -4091,7 +4104,7 @@ const GAME = {
     const by = V.y1 - 120 * u;
     if (own) { const on = STATS.equip[sk.k] === id; btn(g, px, by, 380 * u, 60 * u, on ? 'EQUIPPED' : 'EQUIP', () => equipSkin(sk.k, on ? null : id), { on: !on, fill: YOU, solid: true, col: INK, px: 22 * u, sub: on ? 'press again to take it off' : '' }); }
     else { const can = STATS.coins >= price; btn(g, px, by, 380 * u, 60 * u, `BUY  ·  ${price}`, () => buySkin(id), { on: can, fill: sk.R.col, solid: can, col: INK, px: 22 * u, sub: can ? `you have ${STATS.coins}` : `you have ${STATS.coins} · win matches to earn coins` }); }
-    btn(g, px, by + 70 * u, 185 * u, 40 * u, 'BACK', () => { SH.show = null; }, { px: 13 * u });
+    btn(g, px, by + 70 * u, 185 * u, 40 * u, 'BACK', () => { SH.show = null; }, { px: 13 * u }); btn(g, px + 195 * u, by + 70 * u, 185 * u, 40 * u, 'TRY IN THE RANGE', () => tryInRange(id), { px: 12 * u });
     if (SH.msg && performance.now() - SH.msg.t0 < 2200) tx(g, SH.msg.s, px + 190 * u, by - 18 * u, 14 * u, WARN, 'center', 800);
   }
   function drawReveal(g, V, W, H, u) {   // the unlock: a burst in the rarity's colour, the gun spinning down, its name
@@ -4241,7 +4254,7 @@ const GAME = {
   }
   /* ---------- 99 main: the kit's hooks, moving between screens, demo and cover-art modes, the test handle ---------- */
   let booted = false, acc = 0, lastDraw = 0;
-  function toMenu() { M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
+  function toMenu() { UI.trying = null; M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
   function play(o) { resetInput(); UI.lastSide = null; UI.switched = null; UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
   // a bot match from the menu: agent select first (the tests can skip it)
   function menuPlay(size, select = true) { if (size) { CFG.size = size; saveAll(); } const o = { mode: 'bot', diff: CFG.diff, size: CFG.size, sites: CFG.sites }; if (select) openSelect(o); else play(o); }
