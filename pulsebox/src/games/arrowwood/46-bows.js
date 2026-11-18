@@ -83,29 +83,72 @@
 
   // ---- your own bow and hands, drawn over the world from the eye
   const VM = { bow: null, skin: '', g: null, raise: 0, draw: 0, snap: 0, kick: 0, sprint: 0 };
-  // a hand closed round the grip: four fingers wrapping the bow, a thumb across
+  /* ---- first-person hands: built joint by joint (palm, three bones a finger, a two-bone thumb, knuckles and nails),
+     shaded skin with warmer knuckles and fingertips, a leather shooting glove on the string fingers. Positions are in the
+     bow's frame: the grip runs along Y, the arrow flies down -Z, the archer is behind (+Z). */
+  const _hy = () => new THREE.Vector3(0, 1, 0);
+  function handPart(list, a, b, ra, rb, col) {   // a tapered bone from a to b, with a round joint at a
+    const d = new THREE.Vector3().subVectors(b, a), L = d.length(); d.normalize();
+    const g = new THREE.CylinderGeometry(rb, ra, L, 10, 1, true); g.translate(0, L / 2, 0); g.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(_hy(), d))); g.translate(a.x, a.y, a.z);
+    tint(g, () => col.a || col); list.push(g);
+    const j = new THREE.SphereGeometry(ra * 1.04, 10, 8); j.translate(a.x, a.y, a.z); tint(j, () => col.j || col.a || col); list.push(j);
+    return { d, L };
+  }
+  function nail(list, a, b, r, out) {   // a fingernail on the back of the last bone (out: the way the back of the finger faces)
+    const d = new THREE.Vector3().subVectors(b, a), L = d.length(); d.normalize();
+    const z = out.clone().addScaledVector(d, -out.dot(d)).normalize(), x = new THREE.Vector3().crossVectors(d, z);
+    const g = roundBox(r * 1.45, L * .62, r * .5, r * .22, 2), M = new THREE.Matrix4().makeBasis(x, d, z);
+    M.setPosition(a.clone().addScaledVector(d, L * .62).addScaledVector(z, r * .78)); g.applyMatrix4(M); tint(g, () => [1.28, 1.12, 1.08]); list.push(g);
+  }
+  function fingerChain(list, pts, radii, out, cols) {
+    for (let k = 0; k < pts.length - 1; k++) handPart(list, pts[k], pts[k + 1], radii[k], radii[k + 1], cols[k]);
+    const tip = new THREE.SphereGeometry(radii[radii.length - 1], 10, 8), e = pts[pts.length - 1]; tip.translate(e.x, e.y, e.z); tint(tip, () => cols[cols.length - 1].a || cols[cols.length - 1]); list.push(tip);
+    nail(list, pts[pts.length - 2], pts[pts.length - 1], radii[radii.length - 1], out(pts[pts.length - 1]));
+  }
+  const SKINC = { a: [1, 1, 1], j: [1.04, .9, .88] }, TIPC = { a: [1.03, .93, .9], j: [1.04, .9, .88] }, GLOVE = { a: [.42, .3, .24], j: [.38, .27, .22] };
+  // the bow hand, closed round the grip just under the arrow; you see the thumb over the index finger and the curled fingertips
   function gripHand(mat) {
-    const h = new THREE.Group(), palm = new THREE.Mesh(new THREE.SphereGeometry(.036, 12, 10), mat); palm.scale.set(.75, 1.45, .8); palm.position.set(-.028, 0, .012); h.add(palm);
-    for (let k = 0; k < 4; k++) { const f = new THREE.Mesh(new THREE.TorusGeometry(.027, .0105, 6, 12, 3.5), mat); f.rotation.set(Math.PI / 2, 0, -.6); f.position.y = .03 - k * .02; f.scale.set(1, 1, 1 - k * .08); h.add(f); }
-    const th = new THREE.Mesh(new THREE.CylinderGeometry(.011, .01, .055, 8), mat); th.rotation.set(0, 0, 1.2); th.position.set(.012, .045, -.026); h.add(th); return h;
+    const parts = [], P = (deg, R, y) => { const a = deg * Math.PI / 180; return new THREE.Vector3(R * Math.cos(a), y, -R * Math.sin(a)); };
+    const radial = p => new THREE.Vector3(p.x, 0, p.z).normalize();
+    const F = [[-.014, .0094, 0], [-.036, .0099, 4], [-.058, .0092, 6], [-.078, .0081, 14]];
+    for (const [y, r, sw] of F) fingerChain(parts, [P(160 + sw * .3, .049, y), P(102 + sw, .036, y), P(50 + sw, .0315, y - .002), P(10 + sw * 1.5, .029, y - .003)], [r * 1.12, r, r * .93, r * .85], radial, [SKINC, SKINC, TIPC]);
+    // the thumb: from the heel of the hand, over the top of the index finger, pointing forward
+    fingerChain(parts, [P(238, .046, -.026), P(200, .043, .0), P(146, .035, .006), P(100, .031, .004)], [.0135, .0115, .0105, .0095], p => new THREE.Vector3(0, 1, 0).add(radial(p)).normalize(), [SKINC, SKINC, TIPC]);
+    // the palm and the back of the hand: a soft slab on the left-back of the grip, knuckle bumps along its front edge
+    const palm = roundBox(.032, .098, .09, .014, 3); palm.rotateY(212 * Math.PI / 180); const pc = P(212, .046, -.047); palm.translate(pc.x, pc.y, pc.z); tint(palm, () => [1, 1, 1]); parts.push(palm);
+    const heel = new THREE.SphereGeometry(.026, 12, 10); heel.scale(.9, 1.2, 1); const hc = P(244, .04, -.06); heel.translate(hc.x, hc.y, hc.z); tint(heel, () => [1, .97, .96]); parts.push(heel);
+    const wrist = new THREE.CylinderGeometry(.03, .032, .06, 12); wrist.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(_hy(), new THREE.Vector3(-.3, -.35, .88).normalize()))); const wc = P(256, .05, -.062); wrist.translate(wc.x, wc.y, wc.z); tint(wrist, () => [.98, .96, .95]); parts.push(wrist);
+    const h = new THREE.Mesh(merge(parts), mat); h.userData.wrist = P(262, .055, -.07); return h;
   }
-  // the string hand: knuckles, three fingers hooked on the string
+  // the string hand: three fingers hooked on the string (one above the arrow, two below), a shooting glove on them, thumb tucked
   function stringHand(mat) {
-    const h = new THREE.Group(), back = new THREE.Mesh(new THREE.SphereGeometry(.04, 12, 10), mat); back.scale.set(.85, 1.15, .7); back.position.set(.035, -.01, .03); h.add(back);
-    for (let k = 0; k < 3; k++) { const f = new THREE.Mesh(new THREE.TorusGeometry(.014, .009, 6, 10, 3.3), mat); f.rotation.set(0, Math.PI / 2, Math.PI * .9); f.position.set(.008, .022 - k * .021, .006); h.add(f); }
-    const th = new THREE.Mesh(new THREE.CylinderGeometry(.01, .009, .05, 8), mat); th.rotation.set(.4, 0, .5); th.position.set(.045, .03, .01); h.add(th); return h;
+    const parts = [], V = (x, y, z) => new THREE.Vector3(x, y, z), out = () => V(.6, .1, -.8).normalize();
+    const F = [[.014, .0092], [-.012, .0097], [-.034, .009]];
+    for (const [y, r] of F) fingerChain(parts, [V(.053, y, .03), V(.017, y, .009), V(-.004, y, -.013), V(-.013, y, .005)], [r * 1.12, r, r * .94, r * .86], () => V(-.2, 0, -1), [SKINC, GLOVE, GLOVE]);
+    fingerChain(parts, [V(.051, -.054, .03), V(.026, -.058, .016), V(.026, -.059, .038), V(.04, -.056, .046)], [.009, .0082, .0076, .007], () => V(0, 0, -1), [SKINC, SKINC, TIPC]);   // little finger curled into the palm
+    fingerChain(parts, [V(.058, -.02, .078), V(.044, -.046, .062), V(.034, -.062, .046), V(.03, -.07, .03)], [.0135, .0118, .0106, .0096], () => V(1, -.2, 0).normalize(), [SKINC, SKINC, TIPC]);   // thumb, tucked down the jaw
+    const palm = roundBox(.03, .096, .084, .013, 3); palm.translate(.064, -.02, .066); tint(palm, () => [1, 1, 1]); parts.push(palm);
+    const strap = roundBox(.034, .02, .07, .006, 2); strap.translate(.066, -.005, .06); tint(strap, () => [.36, .25, .2]); parts.push(strap);
+    const band = new THREE.TorusGeometry(.032, .007, 6, 16); band.rotateY(Math.PI / 2); band.rotateZ(.3); band.translate(.07, -.03, .108); tint(band, () => [.36, .25, .2]); parts.push(band);
+    const wrist = new THREE.CylinderGeometry(.03, .032, .06, 12); wrist.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(_hy(), V(.35, -.4, .85).normalize()))); wrist.translate(.07, -.032, .108); parts.push(wrist);
+    const h = new THREE.Mesh(merge(parts), mat); h.userData.wrist = V(.074, -.036, .125); return h;
   }
+  const VMG = {};
   function buildViewModel(skin, col) {
     if (VM.g) X.vmScene.remove(VM.g);
     VM.g = new THREE.Group(); X.vmScene.add(VM.g); VM.skin = skin;
     VM.bow = makeBow(skin); VM.g.add(VM.bow.g);
-    const G = peopleGeos(), sleeve = std({ color: new THREE.Color(col).convertSRGBToLinear().multiplyScalar(.72), map: TEX.cloth, normalMap: TEX.clothN, roughness: .9 }), glove = std({ color: LC('#4a3220'), map: TEX.leather, roughness: .75 }), skinM = std({ color: LC('#d9a682'), roughness: .6 }), brace = std({ color: LC('#6a4a2e'), map: TEX.leather, roughness: .7 });
+    if (!VMG.fore) { VMG.fore = limbGeo(.043, .031, .26, 14); VMG.sleeve = limbGeo(.056, .05, .1, 14); VMG.brace = limbGeo(.046, .04, .12, 14); VMG.brace.translate(0, -.12, 0); VMG.cuff = new THREE.TorusGeometry(.052, .008, 6, 18); VMG.cuff.rotateX(Math.PI / 2); VMG.cuff.translate(0, -.1, 0); }
+    const c = new THREE.Color(col).convertSRGBToLinear(), sleeve = std({ color: c.clone().multiplyScalar(.85), roughness: .6 }), cuffM = std({ color: c.clone().multiplyScalar(.55), roughness: .6 });
+    const skinM = std({ color: LC('#e2a987'), roughness: .5, vertexColors: true }), brace = std({ color: LC('#7a4e2c'), roughness: .55 }), skinA = std({ color: LC('#dda07c'), roughness: .52 });
     VM.handL = gripHand(skinM); VM.bow.g.add(VM.handL);
-    VM.foreL = new THREE.Mesh(G.fore, sleeve); VM.braceL = new THREE.Mesh(G.bracer, brace); VM.handR = stringHand(glove); VM.foreR = new THREE.Mesh(G.fore, sleeve);
-    VM.g.add(VM.foreL, VM.braceL, VM.handR, VM.foreR);
+    VM.handR = stringHand(skinM);
+    const arm = withBrace => { const g = new THREE.Group(); g.add(new THREE.Mesh(VMG.fore, skinA)); g.add(new THREE.Mesh(VMG.sleeve, sleeve)); if (withBrace) g.add(new THREE.Mesh(VMG.brace, brace)); return g; };
+    VM.foreL = arm(true); VM.foreR = arm(false); VM.braceL = new THREE.Group();
+    VM.g.add(VM.foreL, VM.handR, VM.foreR);
   }
   let _vp, _vg, _ve; LAZY.push(() => { _vp = new THREE.Vector3(); _vg = new THREE.Vector3(); _ve = new THREE.Vector3(); });
-  function aimLimb(mesh, from, to) { _vd.copy(to).sub(from); const L = _vd.length(); mesh.position.copy(from); mesh.quaternion.setFromUnitVectors(_vu.set(0, -1, 0), _vd.multiplyScalar(1 / L)); mesh.scale.set(.78, L / .26, .78); }
+  function aimLimb(mesh, from, to) { _vd.copy(to).sub(from); const L = _vd.length(); mesh.position.copy(from); mesh.quaternion.setFromUnitVectors(_vu.set(0, -1, 0), _vd.multiplyScalar(1 / L)); mesh.scale.set(1, L / .26, 1); }
   function poseViewModel(dt) {
     if (!VM.g) return;
     const show = ME.cam === 'fp' && ME.alive && CL.src; VM.g.visible = !!show; if (!show) return;
@@ -117,19 +160,21 @@
     const bobX = Math.sin(ME.bob) * .012 * ME.moveAmt, bobY = -Math.abs(Math.cos(ME.bob)) * .014 * ME.moveAmt, tremble = drawing && ME.drawT > 2.2 ? Math.sin(X.t * 31) * .0012 * Math.min(1, ME.drawT - 2.2) : 0;
     const r = VM.raise, s = VM.sprint, low = ME.nockT > 0 ? Math.sin(nockP * Math.PI) * .25 : 0;
     // at rest the bow hangs low on the left; drawn, it comes up beside your line of sight
-    const bx = lp(lp(-.17, .03, r), -.27, s) + bobX, by = lp(lp(-.2, -.066, r), -.44, s) + bobY - low * .05 + tremble, bz = lp(lp(-.5, -.62, r), -.4, s) - VM.kick * .03;
+    const bx = lp(lp(-.19, .03, r), -.27, s) + bobX, by = lp(lp(-.16, -.066, r), -.44, s) + bobY - low * .05 + tremble, bz = lp(lp(-.48, -.62, r), -.4, s) - VM.kick * .03;
     VM.bow.g.position.set(bx, by, bz); VM.bow.g.rotation.set(lp(-.06, .001, r) + VM.kick * .22, lp(.16, -.03, r) + s * .6, lp(.42, -.16, r) + s * .5);
     // first person: the string travels less than on a body (the hand would be behind your eye)
     VM.bow.setDraw(VM.draw * .72, !out && nockP >= .3);
     if (nockP < 1 && !out) { const k = sm(cl((nockP - .3) / .7, 0, 1)); VM.bow.arrow.position.x += (1 - k) * .12; VM.bow.arrow.position.y -= (1 - k) * .08; VM.bow.arrow.position.z += (1 - k) * .3; }
     VM.bow.g.updateMatrix();
-    const nk = VM.bow.nockLocal(_vp).applyMatrix4(VM.bow.g.matrix), grip = _vg.set(-.03, 0, .02).applyMatrix4(VM.bow.g.matrix);
-    aimLimb(VM.foreL, _ve.set(grip.x - .2, grip.y - .24, grip.z + .26), grip); VM.braceL.position.copy(VM.foreL.position); VM.braceL.quaternion.copy(VM.foreL.quaternion); VM.braceL.scale.copy(VM.foreL.scale).multiplyScalar(1.03);
+    const nk = VM.bow.nockLocal(_vp).applyMatrix4(VM.bow.g.matrix), wl = _vg.copy(VM.handL.userData.wrist).applyMatrix4(VM.bow.g.matrix);
+    aimLimb(VM.foreL, _ve.set(wl.x - .2, wl.y - .13, wl.z + .17), wl);
     // the string hand rides the nock (reaching down for the next arrow while nocking; flicking back on release)
     const reach = ME.nockT > 0 ? Math.sin(cl(nockP * 1.3, 0, 1) * Math.PI) : 0;
-    VM.handR.position.copy(nk).add(_ve.set(.004, -.004, .004)); VM.handR.position.lerp(_ve.set(.2, -.34, .02), reach);
+    VM.handR.position.copy(nk); VM.handR.position.lerp(_ve.set(.2, -.34, .02), reach);
     VM.handR.position.x += VM.snap * .05; VM.handR.position.z += VM.snap * .08; VM.handR.quaternion.copy(VM.bow.g.quaternion);
-    VM.handR.visible = VM.handR.position.z < -.13 || reach > .1;
-    aimLimb(VM.foreR, _ve.set(VM.handR.position.x + .22, VM.handR.position.y - .16, VM.handR.position.z + .25), VM.handR.position); VM.foreR.visible = VM.handR.visible;
+    if (VM.snap > 0) VM.handR.rotateZ(-VM.snap * .5);
+    VM.handR.visible = VM.handR.position.z < -.12 || reach > .1;
+    VM.handR.updateMatrix(); const wr = _vp.copy(VM.handR.userData.wrist).applyMatrix4(VM.handR.matrix);
+    aimLimb(VM.foreR, _ve.set(wr.x + .13, wr.y - .1, wr.z + .2), wr); VM.foreR.visible = VM.handR.visible;
   }
   on('release', () => { VM.snap = 1; VM.kick = 1; });

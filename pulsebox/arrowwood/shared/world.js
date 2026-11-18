@@ -41,14 +41,23 @@ const rot = (x, z) => [MAP_SIZE - x, MAP_SIZE - z];   // the half-turn that swap
 // ---- the creek: a shallow stream meandering west to east through the middle
 export const creekZ = x => CZ + 5 * Math.sin((x - CX) * .06);
 export const CREEK_W = 2.5;
-const knolls = [   // [x, z, height, radius]: Split Oak's rise, the tower mound, the two camp terraces
-  [26, 80, 2.4, 10], [114, 60, 1.3, 9], [70, 127, .6, 14], [70, 13, .6, 14], [46, 104, .9, 12], [94, 36, .9, 12],
+// rolling hills: [x, z, height, radius] on the south half, turned for the north (so neither side has the better ground).
+// Split Oak's rise and the tower mound are the tall ones; the camps sit on flat terraces; the long lane down the middle stays low.
+const HILLS_HALF = [
+  [26, 80, 3.6, 11], [46, 101, 3.4, 9], [97, 106, 3.2, 10], [24, 114, 3.6, 12], [116, 116, 3.2, 12], [84, 90, 1.8, 7],
+  [54, 88, 1.6, 6], [12, 94, 2.8, 9], [128, 94, 2.6, 9], [42, 124, 2.2, 8], [100, 126, 2.4, 8], [36, 72, 1.8, 7],
 ];
+const knolls = [];
+for (const [x, z, h, r] of HILLS_HALF) { knolls.push([x, z, h, r]); const [rx, rz] = rot(x, z); knolls.push([rx, rz, h, r]); }
+const CAMPS = [[70, 124], [70, 16]];
 function baseH(x, z) {
-  const f = (x, z) => 1.1 * vnoise(x * .045, z * .045) + .45 * vnoise(x * .11 + 7, z * .11 + 3) + .12 * vnoise(x * .4, z * .4);
+  const f = (x, z) => 2.1 * vnoise(x * .05, z * .05) + .6 * vnoise(x * .12 + 7, z * .12 + 3) + .1 * vnoise(x * .4, z * .4);
   const [rx, rz] = rot(x, z);
-  let h = (f(x, z) + f(rx, rz)) * .5 - .8;
-  for (const [kx, kz, kh, kr] of knolls) { const d2 = ((x - kx) ** 2 + (z - kz) ** 2) / (kr * kr); h += kh * Math.exp(-d2 * 1.6); }
+  let h = (f(x, z) + f(rx, rz)) * .5 - 1.2;
+  for (const [kx, kz, kh, kr] of knolls) { const d2 = ((x - kx) ** 2 + (z - kz) ** 2) / (kr * kr); h += kh * 1.3 * Math.exp(-d2 * 1.4); }
+  // the lane down the middle (camp to bridge) stays low and the camps are flat terraces
+  const lane = 1 - sstep(3, 9, Math.abs(x - CX)); h -= lane * Math.max(0, h - .15) * .75;
+  for (const [cx, cz] of CAMPS) { const k = 1 - sstep(9, 15, Math.hypot(x - cx, z - cz)); h = h * (1 - k) + .25 * k; }
   // the edges rise into banks of earth so the wood closes in
   const e = Math.max(0, Math.max(MIN + 2 - x, x - MAX + 2, MIN + 2 - z, z - MAX + 2));
   return h + e * e * .12;
@@ -66,8 +75,14 @@ export const inWater = (x, z, y) => creekDist(x, z) < CREEK_W + 1.2 && y < water
    TREES: trunks (vertical cylinders) {x, z, r, h, lean?}. Branches and leaves let arrows through.
    BOXES: oriented boxes turned about Y {x, z, hx, hz, a, y0, y1, mat}: walls, logs, rocks, the bridge, the tower.
    A box's top is ground you can stand on; a box taller than a step blocks you while you overlap it in height. */
-export const TREES = [], BOXES = [], PROPS = [];
-const box = (x, z, hx, hz, a, y0, y1, mat, kind) => { const b = { x, z, hx, hz, a, c: Math.cos(a), s: Math.sin(a), y0, y1, mat, kind: kind || mat }; BOXES.push(b); return b; };
+export const TREES = [], BOXES = [], PROPS = [], BUSHES = [];
+const SEAT = new Set(['wall', 'log', 'rock', 'tower', 'rubble']);
+const box = (x, z, hx, hz, a, y0, y1, mat, kind) => {
+  const b = { x, z, hx, hz, a, c: Math.cos(a), s: Math.sin(a), y0, y1, mat, kind: kind || mat };
+  // on a hillside a wall, log or rock reaches down to the lowest ground under it, so nothing floats
+  if (SEAT.has(b.kind)) for (const [u, v] of [[-1, -1], [1, -1], [-1, 1], [1, 1], [-1, 0], [1, 0], [0, -1], [0, 1]]) { const lx = u * hx, lz = v * hz, wx = x + lx * b.c + lz * b.s, wz = z - lx * b.s + lz * b.c; b.y0 = Math.min(b.y0, terrainH(wx, wz) - .25); }
+  BOXES.push(b); return b;
+};
 const both = fn => { fn((x, z) => [x, z], 0); fn((x, z) => rot(x, z), Math.PI); };   // place something and its half-turn twin
 const gnd = (x, z) => terrainH(x, z);
 
@@ -111,7 +126,7 @@ const TOWER = { x: 114, z: 60, s: 3.6, wall: .45 };
 const SPLIT = { x: 26, z: 80 };
 (function splitOak() {
   const { x, z } = SPLIT, g = gnd(x, z);
-  TREES.push({ x: x - .9, z, r: .95, h: 15, lean: [-.16, .05], kind: 'split' }, { x: x + .9, z: z + .2, r: .9, h: 14, lean: [.18, -.04], kind: 'split' });
+  TREES.push({ x: x - .9, z, r: .62, h: 11, lean: [-.16, .05], kind: 'split' }, { x: x + .9, z: z + .2, r: .58, h: 10, lean: [.18, -.04], kind: 'split' });
   // rock ledges on the knoll: high ground with a lip to crouch behind
   box(x + 5.5, z - 3, 2.6, 1.6, .4, g - 1, g + 1.15, 'stone', 'rock');
   box(x + 6.6, z - 4.6, 1.8, .3, .4, g + 1.1, g + 1.75, 'stone', 'rock');
@@ -162,14 +177,28 @@ const SPLIT = { x: 26, z: 80 };
     return BOXES.some(b => Math.abs(x - b.x) < b.hx + 2.2 && Math.abs(z - b.z) < b.hx + 2.2);
   };
   const half = [];
-  for (let n = 0; n < 900 && half.length < 58; n++) {
+  for (let n = 0; n < 900 && half.length < 46; n++) {
     const x = MIN + 2 + R() * (MAX - MIN - 4), z = CZ + 1 + R() * (MAX - CZ - 3);
     if (keepOut(x, z)) continue;
-    if (half.some(t => Math.hypot(t.x - x, t.z - z) < 7.2)) continue;
-    const big = R() < .3, r = big ? .72 + R() * .3 : .38 + R() * .26;
-    half.push({ x, z, r, h: big ? 15 + R() * 5 : 10 + R() * 5, lean: [(R() - .5) * .12, (R() - .5) * .12], kind: big ? 'oak' : 'oak2', seed: (R() * 1e6) | 0 });
+    if (half.some(t => Math.hypot(t.x - x, t.z - z) < 6.4)) continue;
+    // small round-topped trees: a short trunk you can hide behind, a ball of leaves arrows pass through
+    const big = R() < .25, r = big ? .42 + R() * .12 : .28 + R() * .1;
+    half.push({ x, z, r, h: big ? 8 + R() * 2 : 5.5 + R() * 2, lean: [(R() - .5) * .08, (R() - .5) * .08], kind: big ? 'oak' : 'oak2', seed: (R() * 1e6) | 0 });
   }
   for (const t of half) { TREES.push(t); const [x, z] = rot(t.x, t.z); TREES.push({ ...t, x, z, lean: [-t.lean[0], -t.lean[1]], seed: t.seed + 1 }); }
+  // bushes: round shrubs to crouch behind (you can see and shoot through them, but they break up your outline)
+  const B = rng(2207), bh = [];
+  for (let n = 0; n < 1400 && bh.length < 80; n++) {
+    const x = MIN + 1 + B() * (MAX - MIN - 2), z = CZ + 4 + B() * (MAX - CZ - 5);
+    if (creekDist(x, z) < CREEK_W + 1) continue;
+    if (Math.abs(x - CX) < 2.2 && z > 80) continue;
+    if (Math.hypot(x - 70, z - 124) < 6) continue;
+    if (TREES.some(t => Math.hypot(t.x - x, t.z - z) < t.r + .9)) continue;
+    if (BOXES.some(b => { const dx = x - b.x, dz = z - b.z, lx = dx * b.c - dz * b.s, lz = dx * b.s + dz * b.c; return Math.abs(lx) < b.hx + .7 && Math.abs(lz) < b.hz + .7; })) continue;
+    if (bh.some(q => Math.hypot(q.x - x, q.z - z) < 2.6)) continue;
+    bh.push({ x, z, r: .55 + B() * .55, seed: (B() * 1e6) | 0 });
+  }
+  for (const q of bh) { BUSHES.push(q); const [x, z] = rot(q.x, q.z); BUSHES.push({ ...q, x, z, seed: q.seed + 1 }); }
 })();
 
 // arrow pickups (a bundle of three) in exposed spots, and named areas for callouts

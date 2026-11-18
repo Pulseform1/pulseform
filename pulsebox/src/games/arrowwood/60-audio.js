@@ -31,6 +31,8 @@
     step: (p, surf, loud) => { const d = at(p, 2.5);
       if (surf === 'water') { nz(d, .2, 1200, 1, 'bandpass', .22 * loud, 0, 400); } else if (surf === 'stone') { nz(d, .05, 3200, 2, 'bandpass', .18 * loud); tone(d, 260, .04, 'sine', .05 * loud); } else { nz(d, .11, 1700 + Math.random() * 900, .8, 'bandpass', .2 * loud); nz(d, .07, 260, 1, 'lowpass', .2 * loud); } },
     whoosh: p => nz(at(p, 2), .35, 3600, 2, 'bandpass', .5, 0, 700),
+    // the toy break-apart: a bright pop, a springy boing, then a rattle of blocks
+    pop: p => { const d = at(p, 6); tone(d, 520, .09, 'square', .12, 0, 1400); tone(d, 300, .32, 'sine', .3, .04, 620); nz(d, .06, 2600, 1.5, 'bandpass', .3); for (let k = 0; k < 5; k++) tone(d, 700 + Math.random() * 900, .04, 'triangle', .05, .12 + k * .06 + Math.random() * .03); },
     distantTwang: p => tone(at(p, 6), 170, .22, 'triangle', .3, 0, 130),
     hitmark: zone => { if (zone === 'head') { tone(AU.out, 1500, .09, 'sine', .14); tone(AU.out, 2250, .14, 'sine', .1, .05); } else tone(AU.out, 1150, .07, 'sine', .12); },
     elimMark: () => { tone(AU.out, 880, .12, 'triangle', .14); tone(AU.out, 1320, .2, 'triangle', .12, .07); nz(AU.out, .1, 300, 1, 'lowpass', .2); },
@@ -58,6 +60,7 @@
   on('whoosh', p => AU.ready && S.whoosh(p));
   on('shotHeard', a => AU.ready && S.distantTwang(a.o));
   on('thud', p => AU.ready && S.thud(p)); on('cupidPop', p => AU.ready && S.cupid(p)); on('thwack', p => AU.ready && S.thwack(p)); on('cashout', p => AU.ready && S.cashout(p));
+  on('pop', p => AU.ready && S.pop(p));
   on('picked', () => AU.ready && S.pick()); on('recovered', () => AU.ready && S.pick());
   on('go', () => AU.ready && S.horn());
   function audioFrame(dt) {

@@ -1,5 +1,5 @@
   /* ---------- 80 hud: crosshair and draw cue, health, arrows, score, timers, overtime zone, coordinates, pings, feed ---------- */
-  const GOLD = '#e9c46a', BONE = '#f1ead8', DIM = 'rgba(241,234,216,.62)', DARK = 'rgba(10,16,11,.66)', TEAL = '#8fd0c0', HURT = '#e08a5a';
+  const GOLD = '#ffd23a', BONE = '#ffffff', DIM = 'rgba(255,255,255,.72)', DARK = 'rgba(16,40,92,.72)', TEAL = '#7fe0d0', HURT = '#ff8a5a';
   const HUD = { hits: [], banner: null, rulerFlash: 0, hurtFlash: 0, toast: null, lastHp: 100 };
   function tx(g, s, x, y, size, col, align = 'center', weight = 700, font = 'Nunito') { g.font = `${weight} ${size}px ${font}, system-ui, sans-serif`; g.textAlign = align; g.textBaseline = 'middle'; g.fillStyle = col; g.fillText(s, x, y); }
   function txS(g, s, x, y, size, col, align, weight, font) { g.save(); g.shadowColor = 'rgba(0,0,0,.65)'; g.shadowBlur = 6; tx(g, s, x, y, size, col, align, weight, font); g.restore(); }
@@ -50,7 +50,7 @@
     const remain = Math.max(0, CL.phaseEnd - srvNow());
     if (CL.src === 'online' && CL.mode !== 'ffa' && CL.phase !== 'lobby') {
       const w = 300, x = cx - w / 2, y = V.y0 + 12; rr(g, x, y, w, 56, 10, DARK);
-      txS(g, String(CL.score[0]), cx - 34, y + 24, 30, W.TEAMS[0].col, 'center', 900, 'Cinzel'); txS(g, '–', cx, y + 24, 24, BONE, 'center', 700); txS(g, String(CL.score[1]), cx + 34, y + 24, 30, W.TEAMS[1].col, 'center', 900, 'Cinzel');
+      txS(g, String(CL.score[0]), cx - 34, y + 24, 30, W.TEAMS[0].col, 'center', 900, 'Lilita One'); txS(g, '–', cx, y + 24, 24, BONE, 'center', 700); txS(g, String(CL.score[1]), cx + 34, y + 24, 30, W.TEAMS[1].col, 'center', 900, 'Lilita One');
       tx(g, W.TEAMS[0].n.toUpperCase(), x + 14, y + 24, 12, W.TEAMS[0].col, 'left', 900); tx(g, W.TEAMS[1].n.toUpperCase(), x + w - 14, y + 24, 12, W.TEAMS[1].col, 'right', 900);
       tx(g, CL.phase === 'overtime' ? `OVERTIME ${fmtT(remain)}` : CL.phase === 'intro' ? `ROUND ${CL.round} · get ready` : CL.phase === 'roundEnd' ? `ROUND ${CL.round}` : `ROUND ${CL.round} · ${fmtT(remain)}`, cx, y + 46, 12, CL.phase === 'overtime' ? GOLD : DIM, 'center', 800);
       if (CL.score[0] === 4 && CL.score[1] === 4 && CL.phase !== 'results') txS(g, 'MATCH POINT', cx, y + 70, 12, GOLD, 'center', 900);
@@ -58,9 +58,9 @@
       const tm = [0, 1].map(k => [...CL.players.values()].filter(p => p.team === k && !p.dummy)); tm.forEach((list, k) => list.forEach((p, i) => { g.fillStyle = p.alive ? W.TEAMS[k].col : 'rgba(255,255,255,.18)'; g.beginPath(); g.arc(k ? x + w + 14 + i * 14 : x - 14 - i * 14, y + 24, 5, 0, TAU); g.fill(); }));
     } else if (CL.src === 'online' && CL.mode === 'ffa') {
       const y = V.y0 + 12, me = mine || { k: 0 }, ranked = [...CL.players.values()].filter(p => !p.dummy).sort((a, b) => b.k - a.k), lead = ranked[0];
-      rr(g, cx - 150, y, 300, 56, 10, DARK); txS(g, CL.phase === 'intro' ? 'GET READY' : fmtT(CL.phase === 'live' ? remain : 0), cx, y + 22, 26, remain < 20 && CL.phase === 'live' ? GOLD : BONE, 'center', 900, 'Cinzel');
+      rr(g, cx - 150, y, 300, 56, 10, DARK); txS(g, CL.phase === 'intro' ? 'GET READY' : fmtT(CL.phase === 'live' ? remain : 0), cx, y + 22, 26, remain < 20 && CL.phase === 'live' ? GOLD : BONE, 'center', 900, 'Lilita One');
       tx(g, `You ${me.k || 0}   ·   ${lead && lead.id !== CL.me ? `${lead.name} ${lead.k}` : 'you lead'}`, cx, y + 45, 12, DIM, 'center', 800);
-    } else if (CL.src === 'practice') { const y = V.y0 + 12; rr(g, cx - 200, y, 400, 46, 10, DARK); txS(g, 'PRACTICE RANGE', cx, y + 17, 16, GOLD, 'center', 900, 'Cinzel'); tx(g, 'Straw dummies at 10, 20, 35 and 50 m; one walks. Endless arrows.', cx, y + 34, 11, DIM, 'center', 700); }
+    } else if (CL.src === 'practice') { const y = V.y0 + 12; rr(g, cx - 200, y, 400, 46, 10, DARK); txS(g, 'PRACTICE RANGE', cx, y + 17, 16, GOLD, 'center', 900, 'Lilita One'); tx(g, 'Straw dummies at 10, 20, 35 and 50 m; one walks. Endless arrows.', cx, y + 34, 11, DIM, 'center', 700); }
     // overtime: who is in the zone, the capture bars, and which way it is
     if (CL.phase === 'overtime') {
       const y = V.y0 + 92, inn = CL.zoneIn, st = inn[0] && inn[1] ? 'CONTESTED' : inn[0] ? `${W.TEAMS[0].n.toUpperCase()} CAPTURING` : inn[1] ? `${W.TEAMS[1].n.toUpperCase()} CAPTURING` : 'NOBODY IN THE ZONE';
@@ -93,8 +93,8 @@
     // notes from the room (someone reconnected, left...)
     let ny = V.y1 - 120; for (const n of CL.notes) { const age = t - n.t; if (age > 5) continue; g.globalAlpha = Math.min(1, (5 - age) * 2); tx(g, n.text, V.x1 - 20, ny, 12, DIM, 'right', 700); ny -= 18; g.globalAlpha = 1; }
     // banners
-    const b = HUD.banner; if (b && t >= b.at && t - b.at < b.dur) { const a = Math.min(1, (t - b.at) * 4, (b.dur - (t - b.at)) * 2.5); g.globalAlpha = a; txS(g, b.t, cx, cy - 120, 46, b.col || BONE, 'center', 900, 'Cinzel'); if (b.s) txS(g, b.s, cx, cy - 78, 18, DIM, 'center', 800); g.globalAlpha = 1; }
-    if (CL.phase === 'intro' && remain > 0 && remain < 3.2) { txS(g, String(Math.ceil(remain)), cx, cy - 20, 64, GOLD, 'center', 900, 'Cinzel'); }
+    const b = HUD.banner; if (b && t >= b.at && t - b.at < b.dur) { const a = Math.min(1, (t - b.at) * 4, (b.dur - (t - b.at)) * 2.5); g.globalAlpha = a; txS(g, b.t, cx, cy - 120, 46, b.col || BONE, 'center', 900, 'Lilita One'); if (b.s) txS(g, b.s, cx, cy - 78, 18, DIM, 'center', 800); g.globalAlpha = 1; }
+    if (CL.phase === 'intro' && remain > 0 && remain < 3.2) { txS(g, String(Math.ceil(remain)), cx, cy - 20, 64, GOLD, 'center', 900, 'Lilita One'); }
     // spectating / out of the round
     if (CL.src && !ME.alive && ME.cam === 'spectate') { const p = CL.players.get(ME.specId); if (p) { rr(g, cx - 170, V.y1 - 96, 340, 44, 9, DARK); txS(g, `SPECTATING ${p.name.toUpperCase()}`, cx, V.y1 - 82, 14, W.TEAMS[p.team].col, 'center', 900); tx(g, `${p.hp} health · ${p.arrows} arrows`, cx, V.y1 - 64, 12, DIM, 'center', 700); } }
     else if (CL.src && !ME.alive && ME.cam === 'dead' && live()) { rr(g, cx - 160, V.y1 - 96, 320, 40, 9, DARK); txS(g, CL.mode === 'ffa' || CL.src === 'practice' ? 'Back in a moment...' : 'Out for this round', cx, V.y1 - 76, 15, BONE, 'center', 800); }
@@ -111,7 +111,7 @@
   }
   function drawBoard(g, cx, cy) {
     const rows = [...CL.players.values()].filter(p => !p.dummy).sort((a, b) => b.k - a.k || a.d - b.d), w = 420, h = 50 + rows.length * 28, x = cx - w / 2, y = cy - h / 2;
-    rr(g, x, y, w, h, 12, 'rgba(10,16,11,.88)', 'rgba(233,196,106,.3)'); tx(g, 'ARCHERS', x + 18, y + 22, 15, GOLD, 'left', 900, 'Cinzel'); tx(g, 'ELIMS   OUTS', x + w - 18, y + 22, 11, DIM, 'right', 900);
+    rr(g, x, y, w, h, 12, 'rgba(10,16,11,.88)', 'rgba(233,196,106,.3)'); tx(g, 'ARCHERS', x + 18, y + 22, 15, GOLD, 'left', 900, 'Lilita One'); tx(g, 'ELIMS   OUTS', x + w - 18, y + 22, 11, DIM, 'right', 900);
     rows.forEach((p, i) => { const yy = y + 50 + i * 28; tx(g, p.name + (p.id === CL.me ? '  (you)' : '') + (p.on === false ? '  · away' : ''), x + 18, yy, 14, teamCol(p.team, p.slot, CL.mode), 'left', 800); tx(g, `${p.k}        ${p.d}`, x + w - 22, yy, 14, BONE, 'right', 800); });
   }
   function drawTouch(g) {

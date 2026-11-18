@@ -5,7 +5,7 @@
    draws it, plays its sound and reads the controls. arrowwood/README.md says how to run and ship it. */
 const GAME = {
   id: 'arrowwood', title: 'ARROWWOOD', tagline: 'Draw. Breathe. Land the last arrow.',
-  font: 'Cinzel', accent: '#e9c46a', accent2: '#8fbf6a', bg: '#0b120c', noSkins: true, noHud: true, noPause: true, scoreLabel: 'Matches won',
+  font: 'Lilita One', accent: '#ffd23a', accent2: '#4fd15f', bg: '#2a6fc9', noSkins: true, noHud: true, noPause: true, scoreLabel: 'Matches won',
   how: [
     'Mouse and keys: WASD moves, mouse aims. Hold the left button to draw, let go to shoot; right button or Q lowers the bow without losing the arrow. Shift sprints, C crouches, Space jumps, F pings a spot for your team.',
     'Touch: left thumb moves; drag on the right to aim. Hold DRAW to pull the string and keep dragging (even from the button) to adjust; let go to shoot.',

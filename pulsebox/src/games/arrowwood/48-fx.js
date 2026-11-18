@@ -1,5 +1,5 @@
   /* ---------- 48 fx: archers on screen, arrows (flying, stuck, in bodies), impacts, the aim arc, pings, finishers, cameras ---------- */
-  let PS = {}, ARC = null, FINS = [], BILLS = null, COINS3 = null, THWACK = null;
+  let PS = {}, ARC = null, FINS = [], BILLS = null, COINS3 = null, THWACK = null; const DEBRIS = [], FLOATS = [], RINGS = [];
   const hashId = id => { let h = 7; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
   // ---- a small particle system on points with per-particle size, colour, fade and spin
   function partSys(map, max, additive) {
@@ -23,7 +23,7 @@
     return P;
   }
   function initFx() {
-    PS.dust = partSys(TEX.dot, 500, false); PS.chip = partSys(TEX.chip, 300, false); PS.leaf = partSys(TEX.leafP, 400, false); PS.petal = partSys(TEX.petal, 400, false); PS.heart = partSys(TEX.heart, 200, false); PS.spark = partSys(TEX.dot, 300, true);
+    PS.dust = partSys(TEX.dot, 500, false); PS.chip = partSys(TEX.chip, 300, false); PS.cube = partSys(TEX.square, 500, false); PS.trail = partSys(TEX.dot, 900, true); PS.star = partSys(TEX.star, 120, true); PS.leaf = partSys(TEX.leafP, 400, false); PS.petal = partSys(TEX.petal, 400, false); PS.heart = partSys(TEX.heart, 200, false); PS.spark = partSys(TEX.dot, 300, true);
     // the aim preview: a short line of faint dots
     const n = 18, g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('aa', new THREE.BufferAttribute(new Float32Array(n), 1));
     ARC = new THREE.Points(g, new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { sc: { value: innerHeight * .5 } }, vertexShader: 'attribute float aa; varying float vA; uniform float sc; void main(){ vA = aa; vec4 mv = modelViewMatrix * vec4(position,1.); gl_PointSize = max(2., .045 * sc / -mv.z); gl_Position = projectionMatrix * mv; }', fragmentShader: 'varying float vA; void main(){ vec2 p = gl_PointCoord - .5; float d = length(p); if (d > .5) discard; gl_FragColor = vec4(1., .97, .86, vA * smoothstep(.5, .2, d)); }' }));
@@ -68,7 +68,7 @@
   const STUCK = new Map();
   on('stuckNew', s => { if (!X) return; const shooter = CL.players.get(s.by); const m = makeArrowMesh((shooter && shooter.bow) || 'longbow'); placeArrow(m, s.p, s.d, .12); X.scene.add(m); STUCK.set(s.id, { m, s, wob: 1, base: m.quaternion.clone() }); });
   on('stuckGone', s => { const k = STUCK.get(s.id); if (k) { X.scene.remove(k.m); STUCK.delete(s.id); if (s.by === CL.me) burst('spark', s.p, 6, { col: [1, .9, .6], size: .05, sp: 1 }); } });
-  on('worldReset', () => { for (const [, m] of ARW) X && X.scene.remove(m); ARW.clear(); for (const [, k] of STUCK) X && X.scene.remove(k.m); STUCK.clear(); FINS.forEach(f => f.objs.forEach(o => o.parent && o.parent.remove(o))); FINS = []; if (BILLS) { BILLS.list = []; COINS3.list = []; } });
+  on('worldReset', () => { for (const b of DEBRIS) X && X.scene.remove(b.m); DEBRIS.length = 0; for (const f of FLOATS) X && X.scene.remove(f.s); FLOATS.length = 0; for (const [, m] of ARW) X && X.scene.remove(m); ARW.clear(); for (const [, k] of STUCK) X && X.scene.remove(k.m); STUCK.clear(); FINS.forEach(f => f.objs.forEach(o => o.parent && o.parent.remove(o))); FINS = []; if (BILLS) { BILLS.list = []; COINS3.list = []; } });
   const _ld = { v: null };
   function placeArrow(m, p, d, bury) { const v = new THREE.Vector3(p[0], p[1], p[2]); m.position.copy(v).addScaledVector(new THREE.Vector3(d[0], d[1], d[2]), -bury + .12); m.lookAt(v.x - d[0], v.y - d[1], v.z - d[2]); }
   function arrowTime(a) { return a.local ? now() - a.t0 : srvNow() - INTERP - a.tm; }
@@ -81,11 +81,14 @@
       if (!m) continue;
       if (t < 0) { m.visible = false; continue; }
       const p = W.arrowAt(a.o, a.v, t), vy = a.v[1] - W.GRAV * t; m.visible = true; m.position.set(p[0], p[1], p[2]); m.lookAt(p[0] - a.v[0], p[1] - vy, p[2] - a.v[2]);
+      // a bright streak behind every arrow in the air, in the colour of its bow
+      if (t > .03) { const sh = CL.players.get(a.by), col = TRAIL[(sh && sh.bow) || 'longbow'] || TRAIL.longbow, prev = a.lastTrail || p; for (let k = 0; k < 3; k++) { const u = k / 3; PS.trail.add(lp(prev[0], p[0], u), lp(prev[1], p[1], u), lp(prev[2], p[2], u), 0, 0, 0, { life: .32, size: .09 + (a.pw || 1) * .05, col, a: .85, g: 0 }); } a.lastTrail = p; }
       // a fly-by you can hear
       if (a.by !== CL.me && !a.whoosh) { const c = X.camera.position, d = Math.hypot(p[0] - c.x, p[1] - c.y, p[2] - c.z); if (d < 3.5) { a.whoosh = true; emit('whoosh', p); } }
     }
     for (const [, k] of STUCK) if (k.wob > 0) { k.wob = Math.max(0, k.wob - dt * 2.2); k.m.quaternion.copy(k.base); k.m.rotateX(Math.sin(k.wob * 40) * .06 * k.wob); }
   }
+  const TRAIL = { longbow: [1, .92, .7], cupid: [1, .5, .75], yardstick: [1, .85, .25], cashout: [.45, 1, .5] };
   function finishArrow(a) {
     const e = a.end; if (!e) return;
     if (e.kind === 'stick') { addStuck(e.m); impact(e.m.p, e.m.mat, e.m.d); emit('impact', e.m.p, e.m.mat); }
@@ -99,11 +102,42 @@
   }
   function burst(kind, p, n, o = {}) { const P = PS[kind]; if (!P) return; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, u = Math.random() * 2 - 1, s = (o.sp || 2) * (.4 + Math.random() * .8), r = Math.sqrt(1 - u * u); P.add(p[0], p[1], p[2], Math.cos(a) * r * s + (o.vx || 0), Math.abs(u) * s * (o.up || 1) + (o.vy || 0), Math.sin(a) * r * s + (o.vz || 0), { life: (o.life || .8) * (.6 + Math.random() * .8), size: o.size || .08, col: o.col, g: o.g, drag: o.drag, spin: (Math.random() - .5) * 10, flutter: o.flutter, grow: o.grow, a: o.a, floor: o.floor }); } }
   function impact(p, mat, d) {
-    if (mat === 'wood') { burst('chip', p, 10, { col: [.45, .33, .22], size: .05, sp: 2.5, life: .9, floor: true }); burst('dust', p, 4, { col: [.5, .42, .32], size: .25, sp: .4, g: .3, life: .8, grow: 1, a: .35 }); }
-    else if (mat === 'stone') { burst('dust', p, 8, { col: [.7, .68, .62], size: .3, sp: .8, g: .2, life: 1, grow: 1.4, a: .45 }); burst('spark', p, 6, { col: [1, .85, .5], size: .04, sp: 3, life: .25 }); burst('chip', p, 5, { col: [.6, .58, .54], size: .04, sp: 2.5, floor: true }); }
-    else if (mat === 'water') { burst('dust', p, 14, { col: [.8, .9, .95], size: .12, sp: 2.2, up: 2.5, g: 9, life: .7, a: .6 }); }
-    else if (mat === 'body') { burst('dust', p, 6, { col: [.75, .7, .6], size: .18, sp: .7, g: .5, life: .5, grow: 1, a: .5 }); }
-    else { burst('dust', p, 10, { col: [.42, .34, .24], size: .3, sp: .9, g: .8, life: 1.1, grow: 1.5, a: .5 }); burst('chip', p, 4, { col: [.35, .28, .2], size: .04, sp: 2, floor: true }); }
+    const ring = (col, size) => RINGS.push({ p: [p[0], p[1], p[2]], t: 0, col, size, s: new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.ring, color: new THREE.Color(...col), transparent: true, depthWrite: false })) });
+    if (mat === 'wood') { burst('cube', p, 10, { col: [.62, .42, .24], size: .07, sp: 3, up: 1.5, life: 1, floor: true }); burst('dust', p, 4, { col: [.7, .58, .42], size: .3, sp: .5, g: .3, life: .7, grow: 1, a: .4 }); }
+    else if (mat === 'stone') { burst('cube', p, 9, { col: [.72, .72, .7], size: .07, sp: 3.2, up: 1.5, life: .9, floor: true }); burst('spark', p, 10, { col: [1, .85, .45], size: .05, sp: 4, life: .25 }); burst('dust', p, 5, { col: [.85, .85, .8], size: .3, sp: .6, g: .2, life: .8, grow: 1.2, a: .4 }); }
+    else if (mat === 'water') { burst('dust', p, 16, { col: [.75, .92, 1], size: .12, sp: 2.4, up: 3, g: 9, life: .75, a: .8 }); ring([.8, .95, 1], 1.6); }
+    else if (mat === 'body') { burst('star', p, 5, { col: [1, 1, .8], size: .22, sp: 1.6, g: 0, life: .35 }); burst('cube', p, 12, { col: [1, .35, .3], size: .06, sp: 3, up: 1.5, life: .7, floor: true }); ring([1, 1, 1], 1.1); }
+    else { burst('cube', p, 10, { col: [.35, .55, .22], size: .07, sp: 2.6, up: 2, life: 1, floor: true }); burst('cube', p, 6, { col: [.55, .4, .25], size: .06, sp: 2.2, up: 2, life: 1, floor: true }); burst('dust', p, 6, { col: [.7, .62, .45], size: .32, sp: .8, g: .5, life: .9, grow: 1.4, a: .45 }); }
+  }
+  // floating numbers over whoever got hit (bigger and gold for a headshot)
+  const NUMTEX = {};
+  function numTex(txt, col) { const k = txt + col; if (NUMTEX[k]) return NUMTEX[k]; const [c, g] = cvs(256, 96); g.font = '900 64px Nunito, Arial Black, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 12; g.lineJoin = 'round'; g.strokeStyle = '#1b1b1b'; g.strokeText(txt, 128, 50); g.fillStyle = col; g.fillText(txt, 128, 48); return NUMTEX[k] = tex(c, { clamp: true }); }
+  function floatText(p, txt, col, scale = 1) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: numTex(txt, col), transparent: true, depthTest: false, depthWrite: false })); s.renderOrder = 30; s.position.set(p[0], p[1], p[2]); X.scene.add(s); FLOATS.push({ s, t: 0, scale, vx: (Math.random() - .5) * .6 }); }
+  on('hitInfo', m => { if (!X) return; const kill = m.hp <= 0, head = m.zone === 'head'; floatText([m.p[0], m.p[1] + .4, m.p[2]], kill ? (head ? 'HEADSHOT!' : 'KO!') : '-' + m.dmg, kill ? '#ffd23a' : head ? '#ffb02e' : '#ffffff', kill ? 1.5 : head ? 1.25 : 1); });
+  // the toy-figure break-apart: every block of the archer flies off, bounces, and pops away
+  function breakApart(P, m) {
+    P.root.updateMatrixWorld(true);
+    const dir = new THREE.Vector3(m.d[0], 0, m.d[2]); if (dir.lengthSq() < 1e-6) dir.set(0, 0, 1); dir.normalize();
+    const c = new THREE.Vector3(m.p[0], m.p[1] + 1, m.p[2]);
+    P.root.traverse(o => {
+      if (!o.isMesh || !o.visible) return; let vis = true; for (let q = o; q && q !== P.root; q = q.parent) if (!q.visible) vis = false; if (!vis) return;
+      // a fresh mesh, not clone(): clone copies userData, which points back at the archer
+      const d = new THREE.Mesh(o.geometry, o.material); o.matrixWorld.decompose(d.position, d.quaternion, d.scale); d.castShadow = true; X.scene.add(d);
+      const out = d.position.clone().sub(c); out.y = Math.max(.2, out.y + .4); out.normalize();
+      DEBRIS.push({ m: d, v: out.multiplyScalar(1.6 + Math.random() * 2.4).addScaledVector(dir, 2.2).add(new THREE.Vector3(0, 2 + Math.random() * 2.2, 0)), w: new THREE.Vector3((Math.random() - .5) * 14, (Math.random() - .5) * 14, (Math.random() - .5) * 14), t: Math.random() * -.05, s0: d.scale.clone() });
+    });
+    burst('dust', [c.x, c.y, c.z], 14, { col: [1, 1, 1], size: .5, sp: 1.6, g: .3, life: .9, grow: 1.6, a: .55 });
+    burst('cube', [c.x, c.y, c.z], 26, { col: [1, .85, .3], size: .07, sp: 4.5, up: 2.5, life: 1.3, floor: true });
+  }
+  function updateDebris(dt) {
+    for (let i = DEBRIS.length - 1; i >= 0; i--) {
+      const b = DEBRIS[i]; b.t += dt; if (b.t < 0) continue; const m = b.m;
+      b.v.y -= 16 * dt; m.position.addScaledVector(b.v, dt); m.rotation.x += b.w.x * dt; m.rotation.y += b.w.y * dt; m.rotation.z += b.w.z * dt;
+      const gy = visH(m.position.x, m.position.z) + .06; if (m.position.y < gy) { m.position.y = gy; if (b.v.y < 0) b.v.y *= -.32; b.v.x *= .55; b.v.z *= .55; b.w.multiplyScalar(.5); }
+      if (b.t > 2.4) { const k = Math.max(0, 1 - (b.t - 2.4) / .35); m.scale.copy(b.s0).multiplyScalar(k); if (k <= 0) { X.scene.remove(m); DEBRIS.splice(i, 1); if (Math.random() < .3) burst('star', [m.position.x, m.position.y + .1, m.position.z], 1, { col: [1, 1, .85], size: .25, sp: .2, g: 0, life: .3 }); } }
+    }
+    for (let i = FLOATS.length - 1; i >= 0; i--) { const f = FLOATS[i]; f.t += dt; const k = f.t / .95, pop = f.t < .12 ? f.t / .12 * 1.25 : lp(1.25, 1, cl((f.t - .12) / .15, 0, 1)); f.s.position.y += dt * 1.1; f.s.position.x += f.vx * dt; const dk = cl(f.s.position.distanceTo(X.camera.position) * .13, .8, 6); f.s.scale.set(1.15 * f.scale * pop * dk, .43 * f.scale * pop * dk, 1); f.s.material.opacity = 1 - sm(cl((k - .6) / .4, 0, 1)); if (k >= 1) { X.scene.remove(f.s); FLOATS.splice(i, 1); } }
+    for (let i = RINGS.length - 1; i >= 0; i--) { const r = RINGS[i]; if (!r.s.parent) { r.s.position.set(...r.p); X.scene.add(r.s); } r.t += dt; const k = r.t / .4; r.s.scale.setScalar(.2 + k * r.size); r.s.material.opacity = 1 - k; if (k >= 1) { X.scene.remove(r.s); r.s.material.dispose(); RINGS.splice(i, 1); } }
   }
   // ---- the dotted preview arc
   function updateArc() {
@@ -159,17 +193,9 @@
     const P = f.P, m = f.m, t = f.t, root = P.root, x0 = m.p[0], y0 = m.p[1], z0 = m.p[2];
     const limp = k => { P.L.sh.rotation.set(k * .6, 0, -.5 - k * .8); P.R.sh.rotation.set(k * .6, 0, .5 + k * .8); P.L.el.rotation.set(-.4, 0, 0); P.R.el.rotation.set(-.4, 0, 0); };
     if (f.kind === 'longbow') {
-      // drops the bow, stumbles back, folds into the leaves
-      const back = new THREE.Vector3(m.d[0], 0, m.d[2]).normalize();
-      if (t < .05 && P.bow && P.bow.g.parent === P.chest) { P.bow.g.updateMatrixWorld(); const wp = new THREE.Vector3(), wq = new THREE.Quaternion(); P.bow.g.getWorldPosition(wp); P.bow.g.getWorldQuaternion(wq); P.chest.remove(P.bow.g); X.scene.add(P.bow.g); P.bow.g.position.copy(wp); P.bow.g.quaternion.copy(wq); f.bowV = new THREE.Vector3(back.x * 1.2, 1.4, back.z * 1.2); f.bowS = new THREE.Vector3(3, 1, 5); f.objs.push(P.bow.g); }
-      if (f.bowV) { const bg = P.bow.g, gy = groundY(bg.position.x, bg.position.z) + .05; if (bg.position.y > gy || f.bowV.y > 0) { f.bowV.y -= 9.8 * dt; bg.position.addScaledVector(f.bowV, dt); bg.rotation.x += f.bowS.x * dt; bg.rotation.z += f.bowS.z * dt; } if (bg.position.y < gy) { bg.position.y = gy; f.bowV.set(0, 0, 0); f.bowS.set(0, 0, 0); bg.rotation.x = Math.PI / 2; } }
-      const st = sm(cl(t / .5, 0, 1)), fall = sm(cl((t - .45) / .55, 0, 1));
-      root.position.set(x0 + back.x * .7 * st, y0, z0 + back.z * .7 * st);
-      root.rotation.set(0, m.yaw, 0); root.rotateX(-fall * 1.45 + Math.sin(st * Math.PI) * -.15);
-      P.hips.position.y = .98 - fall * .1; P.LL.hp.rotation.x = st * .5 * Math.sin(t * 9) + fall * .3; P.RL.hp.rotation.x = -st * .4 * Math.sin(t * 9); P.LL.kn.rotation.x = -fall * .5 - .3 * st; P.RL.kn.rotation.x = -fall * .9;
-      P.spine.rotation.x = st * -.3; P.neck.rotation.x = -fall * .3; limp(1 - fall * .5);
-      if (t > 1 && !f.hit) { f.hit = true; burst('leaf', [x0 + back.x * 1.3, groundY(x0, z0) + .2, z0 + back.z * 1.3], 30, { col: [.55, .45, .2], size: .14, sp: 2.2, up: 2, g: 2, drag: 2, flutter: 3, life: 2.4, floor: true }); burst('dust', [x0 + back.x, groundY(x0, z0) + .2, z0 + back.z], 10, { col: [.45, .38, .28], size: .5, sp: .6, g: .1, grow: 1.5, a: .4, life: 1.4 }); emit('thud', m.p); }
-      if (t > 1.1) P.dead = true;
+      // a moment's wobble, then the toy archer bursts into its blocks
+      root.position.set(x0, y0, z0); root.rotation.set(0, m.yaw, 0); limp(.3); root.rotation.z = Math.sin(t * 40) * .05;
+      if (t > .12 && !f.hit) { f.hit = true; breakApart(P, m); root.visible = false; P.dead = true; X.shake = Math.max(X.shake, f.mine ? .4 : 0); emit('pop', m.p); }
     } else if (f.kind === 'cupid') {
       // hearts swirl up around them; a giant heart stamps the ground; petals and tiny hearts where they stood
       const lift = sm(cl(t / .9, 0, 1)); root.position.set(x0, y0 + lift * .25, z0); root.rotation.set(0, m.yaw + lift * 1.2, 0); limp(lift); P.neck.rotation.x = -lift * .3;
@@ -242,12 +268,11 @@
   }
   function visualUpdate(dt) {
     X.t += dt; X.wind.time.value = X.t; X.wind.amt.value = .85 + .35 * Math.sin(X.t * .23) + .15 * Math.sin(X.t * .71);
-    updateCharacters(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); updateCash(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
+    updateCharacters(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); updateCash(dt); updateDebris(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
     for (let i = PINGS.length - 1; i >= 0; i--) { const p = PINGS[i]; p.t += dt; p.g.children[0].scale.setScalar(.7 + Math.sin(X.t * 6) * .15); if (p.t > 7) { X.scene.remove(p.g); PINGS.splice(i, 1); } }
-    X.picks.forEach((g, i) => { g.visible = !!CL.picks[i]; g.userData.glow.material.opacity = .35 + Math.sin(X.t * 3 + i) * .2; });
+    X.picks.forEach((g, i) => { g.visible = !!CL.picks[i]; g.userData.glow.material.opacity = .35 + Math.sin(X.t * 3 + i) * .2; if (g.userData.ring) { g.userData.ring.rotation.z = X.t * 1.5; g.userData.ring.position.y = .08 + Math.sin(X.t * 2.4 + i) * .04; g.userData.ring.scale.setScalar(1 + Math.sin(X.t * 3 + i) * .06); } });
     const zone = X.zone, ot = CL.phase === 'overtime'; zone.visible = ot; if (ot) { const inn = CL.zoneIn || [0, 0], col = inn[0] && inn[1] ? '#f4f1e6' : inn[0] ? W.TEAMS[0].col : inn[1] ? W.TEAMS[1].col : '#e9c46a'; zone.material.uniforms.col.value.set(col); zone.material.uniforms.t.value = X.t; zone.material.uniforms.a.value = .55; }
     if (X.water) X.water.rn.offset.set(X.t * .03, X.t * .011);
-    if (X.motes) X.motes.position.y = Math.sin(X.t * .2) * .3;
     // the sun's shadow follows you (snapped, so it doesn't shimmer)
     const c = X.camera.position, sx = Math.round(c.x / 4) * 4, sz = Math.round(c.z / 4) * 4; X.sun.target.position.set(sx, 0, sz); X.sun.position.set(sx + X.sunDir.x * 90, X.sunDir.y * 90, sz + X.sunDir.z * 90); X.sun.target.updateMatrixWorld();
   }

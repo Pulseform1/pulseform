@@ -36,6 +36,24 @@
     while (L.acc >= ENG.TICK) { L.acc -= ENG.TICK; ENG.step(L.room, Date.now()); }
     for (const o of ENG.drain(L.room)) if (o.to === '*' || o.to === L.id) handle(o.m, 'practice');
   }
+  // ---- a match against bots: the same engine, run in this page, wired in exactly like an online room
+  function startBotMatch(mode, level) {
+    stopPractice(); if (CL.conn) leaveRoom();
+    const room = ENG.createRoom({ mode, dev: DEV, fast: DEV && QS.has('fast'), offline: true, code: 'BOTS' });
+    const c = { code: 'BOTS', local: true, room, acc: 0, state: 'open', tries: 0, level, create: null };
+    c.send = m => { if (m.t === 'leave') return; ENG.message(room, c.id, m, Date.now()); };
+    c.close = () => { c.state = 'closed'; }; c.fail = msg => { CL.err = msg; emit('ui'); }; c.open = () => {};
+    CL.conn = c; CL.code = 'BOTS';
+    c.id = ENG.join(room, { name: myName(), bow: PROFILE.equipped }, Date.now()).id;
+    ENG.fillBots(room, level); pumpBots(0); c.send({ t: 'start' }); pumpBots(0);
+  }
+  function pumpBots(dt) {
+    const c = CL.conn; if (!c || !c.local) return;
+    c.acc += Math.min(dt, .25);
+    while (c.acc >= ENG.TICK) { c.acc -= ENG.TICK; ENG.step(c.room, Date.now()); }
+    for (const o of ENG.drain(c.room)) if (o.to === '*' || o.to === c.id) handle(o.m, 'online');
+  }
+  const botRoom = () => !!(CL.conn && CL.conn.local);
   // ---- the online room
   function connect(code, create) {
     if (CL.conn) CL.conn.close(true);

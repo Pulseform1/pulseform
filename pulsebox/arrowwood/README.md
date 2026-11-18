@@ -1,12 +1,17 @@
 # ARROWWOOD
 
-First-person forest archery for Pulsebox. Two to eight friends take cover in the King's Wood (oaks, a creek, the
-Stone Bridge, Split Oak and the Old Tower), draw, and land the last arrow.
+First-person archery for Pulsebox in a bright, toy-like style. Two to eight friends (or bots) take cover in the King's
+Wood (rolling hills, round trees and bushes, a creek, the Stone Bridge, Split Oak and the Old Tower), draw, and land
+the last arrow.
 
 - **1v1 and 2v2**: first to five round wins. One life per round, six arrows per round, an overtime capture zone at
   the Stone Bridge clearing after 80 seconds. A host can switch on **one-shot rules** for a room.
 - **Free for All**: up to 8 archers, 2 minutes 30, most eliminations wins. One shot, one kill. You respawn
   somewhere new.
+- **Play vs bots**: 1v1, 2v2 (with a bot partner) or a six-archer free for all against computer archers, on Easy,
+  Normal or Hard. It runs the server's engine inside the page, so it needs no server and plays exactly like a room.
+  Bots use the same body, draw timing and arrows as everyone; they see only what a straight line from the eye reaches
+  and hear roughly where you are when nobody is in sight. Bot matches pay no coins.
 - **Practice range**: straw dummies at 10, 20, 35 and 50 m (one walks), endless arrows. It runs the server's engine
   inside the page, so it plays exactly like a match. It also works while you wait in a room.
 - **Bows**: Forester's Longbow, Cupid's Bow, The Yardstick and Cashout. Every bow has identical stats; a skin changes
@@ -27,7 +32,7 @@ arrowwood/
   server/node-server.js  a local/standalone server: static pages + the same API and engine
 arrowwood-rooms.js       the same engine on Cloudflare: one Durable Object per room code, one "bank" Durable Object
 src/games/arrowwood/     the browser client (Three.js r128): 10-core ... 99-main, built into public/games/arrowwood.html
-tools/arrowwood-*.mjs    browser checks (see "Checks" below)
+tools/arrowwood-*.mjs    browser checks and Node tests (see "Checks" below)
 ```
 
 The client never decides anything that matters:
@@ -43,6 +48,15 @@ The client never decides anything that matters:
 
 Graphics settings (Low, Medium, High, or Auto) change only pixel ratio, shadows, foliage density and texture size.
 Physics and hit detection are the same at every setting. Auto picks Low on iPads and phones.
+
+The look: bright sky with puffy clouds, grassy hills coloured by height and slope, round trees and bushes, clean bricks
+and planks, chunky toy-figure archers (rounded blocks, painted faces, hats and hair, quivers), detailed bows, and
+realistic first-person hands (jointed fingers, knuckles, nails, a shooting glove and a bracer). Effects: arrow trails
+in each bow's colour, chunky block bursts on hits, floating damage numbers, and archers bursting into their blocks
+when the Forester's Longbow lands the last arrow (the other bows keep their own finishers).
+
+A **tester copy** (the page opened anywhere but Pulsebox or a local server, or with `?tester`) offers bot matches and
+the range only, turns coins off and unlocks every bow so its finisher can be tried.
 
 Everything you see and hear is made in code at load time: the textures are painted on canvases and the sounds are
 synthesized with Web Audio. The only outside files are Three.js r128 (MIT, from cdnjs) and the Cinzel and Nunito
@@ -127,4 +141,6 @@ node tools/arrowwood-bows-check.mjs  http://localhost:8790   # buy and equip, re
 node tools/arrowwood-net-check.mjs   http://localhost:8790   # full room, wrong code, drop and reconnect, free for all, a copy in another folder with ?server=
 node tools/arrowwood-touch-check.mjs http://localhost:8790   # iPad emulation with two fingers at once: walk + draw + drag-aim, release, LOWER
 node tools/arrowwood-media.mjs                               # hub cover, screenshots and trailer
+node tools/arrowwood-rules-test.mjs                          # (no server) round rules, damage, overtime, pickups
+node tools/arrowwood-bots-test.mjs                           # (no server) bots fill seats, find and shoot people, no coins offline, rematch
 ```

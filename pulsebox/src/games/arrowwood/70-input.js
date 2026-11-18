@@ -1,5 +1,5 @@
   /* ---------- 70 input: mouse and keys with the pointer locked; touch with a move stick, drag-to-aim and a DRAW button ---------- */
-  const IN = { keys: {}, locked: false, stick: null, look: null, drawId: null, held: new Map(), jumpQ: false, board: false, wantLock: false };
+  const IN = { keys: {}, locked: false, noLock: false, stick: null, look: null, drawId: null, held: new Map(), jumpQ: false, board: false, wantLock: false };
   const inGame = () => !!CL.src && !UI.open;
   const lockMouse = () => { if (isTouch() || DEV && QS.has('nolock')) return; try { const c = document.getElementById('cv'); if (c && document.pointerLockElement !== c) { IN.wantLock = true; c.requestPointerLock(); } } catch (e) {} };
   const unlockMouse = () => { try { if (document.pointerLockElement) document.exitPointerLock(); } catch (e) {} };
@@ -8,7 +8,9 @@
     if (was && !IN.locked && inGame()) { if (ME.drawing) cancelDraw(true); IN.keys = {}; openMenu('pause'); }   // Escape while playing: the menu (the match keeps going)
   });
   const look = (dx, dy, s) => { ME.st.yaw -= dx * s; ME.st.pitch = cl(ME.st.pitch - dy * s * (CFG.invert ? -1 : 1), -1.45, 1.45); };
-  document.addEventListener('mousemove', e => { if (!IN.locked || !inGame()) return; const s = (.0006 + CFG.sens * .0034) * (ME.drawing ? .8 : 1); look(e.movementX, e.movementY, s); });
+  // where the page can't lock the mouse (some embedded frames), the view follows the mouse as it moves instead
+  document.addEventListener('pointerlockerror', () => { IN.noLock = true; });
+  document.addEventListener('mousemove', e => { if ((!IN.locked && !IN.noLock) || !inGame()) return; const s = (.0006 + CFG.sens * .0034) * (ME.drawing ? .8 : 1); look(e.movementX, e.movementY, s); });
   document.addEventListener('contextmenu', e => { if (CL.src) e.preventDefault(); });
   function keyEvent(code, down) {
     IN.keys[code] = down;

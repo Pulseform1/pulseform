@@ -12,6 +12,7 @@
 import {
   BOW, PL, drawPower, launchSpeed, damageFor, moveStep, groundAt, blocked, terrainH, arrowAt, aimVector, shotOrigin,
   sweepWorld, sweepBodies, PICKUPS, SPAWNS, SPAWN_YAW, FFA_SPAWNS, ZONE, COINS, BOW_IDS, gridRef, areaName, inWater,
+  rayWorld, eyeHeight, GRAV, MIN, MAX, CX, CZ,
 } from '../shared/world.js';
 
 export const TICK = 1 / 20;
@@ -26,10 +27,10 @@ const cleanName = n => String(n || '').replace(/[^\p{L}\p{N} _.'-]/gu, '').trim(
 export function createRoom(o = {}) {
   const mode = SIZES[o.mode] ? o.mode : '1v1';
   return {
-    code: o.code || '', mode, oneShot: !!o.oneShot || mode === 'ffa', dev: !!o.dev, T: o.dev ? FAST : NORMAL,
+    code: o.code || '', mode, oneShot: !!o.oneShot || mode === 'ffa', dev: !!o.dev, T: (o.fast != null ? o.fast : o.dev) ? FAST : NORMAL,
     players: new Map(), host: null, phase: 'lobby', t: 0, phaseEnd: 0, round: 0, score: [0, 0], winner: null,
     arrows: [], stuck: [], picks: [], nextId: 1, out: [], cap: [0, 0], matchId: '', votes: new Set(), log: [],
-    grant: o.grant || null, practice: mode === 'practice', lastSnap: 0, created: o.now || 0, ffaEnd: 0, lobbyVer: 0,
+    grant: o.grant || null, practice: mode === 'practice', lastSnap: 0, created: o.now || 0, ffaEnd: 0, lobbyVer: 0, offline: !!o.offline,
   };
 }
 const send = (room, to, m) => room.out.push({ to, m });
@@ -84,7 +85,7 @@ function say(room, text) { send(room, '*', { t: 'note', text }); }
 function lobbyOut(room) {
   room.lobbyVer++;
   send(room, '*', { t: 'lobby', code: room.code, mode: room.mode, oneShot: room.oneShot, host: room.host, phase: room.phase, score: room.score, round: room.round, size: SIZES[room.mode],
-    players: humans(room).map(p => ({ id: p.id, name: p.name, team: p.team, ready: p.ready, on: p.connected, bow: p.bow, k: p.kills, d: p.deaths })), votes: [...room.votes] });
+    players: humans(room).map(p => ({ id: p.id, name: p.name, team: p.team, ready: p.ready, on: p.connected, bow: p.bow, k: p.kills, d: p.deaths, bot: p.bot ? p.bot.level : undefined })), votes: [...room.votes] });
 }
 const canStart = room => {
   const h = humans(room), need = SIZES[room.mode];
@@ -111,7 +112,7 @@ export function message(room, id, m, now) {
     case 'move': if (id === room.host && room.phase === 'lobby' && room.mode !== 'ffa') { const q = room.players.get(m.id); if (!q || q.dummy) break; const to = 1 - q.team, there = humans(room).filter(r => r.team === to);
       if (there.length >= SIZES[room.mode] / 2) { const other = there[there.length - 1]; other.team = q.team; other.ready = false; } q.team = to; q.ready = false; lobbyOut(room); } break;
     case 'start': if (id === room.host && room.phase === 'lobby') { if (canStart(room) || (room.dev && m.force)) startMatch(room); else send(room, id, { t: 'err', msg: room.mode === 'ffa' ? 'Need at least two archers, everyone ready.' : `Need ${SIZES[room.mode] / 2} on each team, everyone ready.` }); } break;
-    case 'rematch': if (room.phase === 'results') { room.votes.add(id); lobbyOut(room); const h = humans(room).filter(q => q.connected); if (h.length && h.every(q => room.votes.has(q.id))) { if (canStartTeams(room)) startMatch(room); else { room.phase = 'lobby'; room.votes.clear(); lobbyOut(room); } } } break;
+    case 'rematch': if (room.phase === 'results') { room.votes.add(id); lobbyOut(room); const h = humans(room).filter(q => q.connected && !q.bot); if (h.length && h.every(q => room.votes.has(q.id))) { if (canStartTeams(room)) startMatch(room); else { room.phase = 'lobby'; room.votes.clear(); lobbyOut(room); } } } break;
     case 'lobby': if (room.phase === 'results') { room.phase = 'lobby'; room.votes.clear(); for (const q of humans(room)) q.ready = false; lobbyOut(room); } break;
     case 'in': moveIn(room, p, m); break;
     // a little slack on the nock timer: the client's clock and the server's tick never line up exactly
@@ -194,7 +195,7 @@ function endMatch(room, reason) {
   if (room.mode === 'ffa') { const h = humans(room), top = Math.max(0, ...h.map(p => p.kills)); winners = h.filter(p => p.kills === top && top > 0).map(p => p.id); }
   else if (room.winner === 0 || room.winner === 1) winners = humans(room).filter(p => p.team === room.winner).map(p => p.id);
   const coins = {};
-  if (!room.granted && !room.practice) {
+  if (!room.granted && !room.practice && !room.offline) {
     room.granted = true;   // rewards are decided once per match, here; the bank also refuses a second grant for the same match
     for (const p of humans(room)) {
       if (!p.connected && room.t - p.goneAt > room.T.grace) continue;
@@ -206,6 +207,108 @@ function endMatch(room, reason) {
     board: humans(room).map(p => ({ id: p.id, name: p.name, team: p.team, k: p.kills, d: p.deaths })).sort((a, b) => b.k - a.k || a.d - b.d) };
   send(room, '*', room.lastResults);
   lobbyOut(room); phaseOut(room);
+}
+
+// ---- bots: offline matches against the computer. They play by the same rules as everyone: the same body, the same
+// draw timing, real arrows through the same collision. They see only what a straight line from the eye reaches.
+const BOT_NAMES = ['Bramble', 'Fletch', 'Hazel', 'Rook', 'Wren', 'Thistle', 'Kestrel', 'Juniper', 'Sorrel', 'Pip', 'Alder', 'Briar'];
+export const BOT_LEVELS = {
+  easy: { err: .034, react: [.9, 1.5], draw: [.45, .8], range: 45, shoot: 26, strafe: .5, head: 0, think: .35 },
+  normal: { err: .021, react: [.5, .9], draw: [.65, 1], range: 60, shoot: 34, strafe: .8, head: .15, think: .25 },
+  hard: { err: .011, react: [.25, .5], draw: [.85, 1.05], range: 75, shoot: 48, strafe: 1, head: .35, think: .15 },
+};
+const rr = (a, b) => a + Math.random() * (b - a), gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / .5;
+export function addBot(room, level = 'normal', team) {
+  if ((room.phase !== 'lobby' && room.phase !== 'results') || humans(room).length >= SIZES[room.mode]) return null;
+  const used = new Set(humans(room).map(p => p.name)), name = BOT_NAMES.find(n => !used.has(n)) || 'Bot ' + rid(2);
+  const cnt = [0, 1].map(t => humans(room).filter(p => p.team === t).length), id = 'b' + rid(5);
+  const p = { id, token: rid(16), name, profile: '', bow: BOW_IDS[Math.floor(Math.random() * BOW_IDS.length)], team: room.mode === 'ffa' ? 0 : team != null ? team : cnt[0] <= cnt[1] ? 0 : 1,
+    ready: true, connected: true, goneAt: 0, kills: 0, deaths: 0, st: newState(70, 120, 0), stuckIn: [], bot: { level: BOT_LEVELS[level] ? level : 'normal' } };
+  if (room.mode === 'ffa') p.slot = humans(room).length;
+  room.players.set(id, p); lobbyOut(room); return p;
+}
+// fill every empty seat with bots (team modes: your partner and the other side; free for all: `ffa` archers in all)
+export function fillBots(room, level = 'normal', ffa = 6) {
+  for (const p of humans(room)) if (p.bot) room.players.delete(p.id);
+  const size = room.mode === 'ffa' ? Math.min(SIZES.ffa, ffa) : SIZES[room.mode];
+  if (room.mode !== 'ffa') for (const t of [0, 1]) while (humans(room).filter(p => p.team === t).length < size / 2) if (!addBot(room, level, t)) break;
+  while (humans(room).length < size) if (!addBot(room, level)) break;
+  humans(room).forEach((p, i) => { p.slot = i; }); lobbyOut(room);
+}
+function botsStep(room) { for (const p of humans(room)) if (p.bot && p.st.alive) botThink(room, p); else if (p.bot) p.st.drawAt = null; }
+const chestOf = s => [s.x, s.y + (s.crouch ? .85 : 1.2), s.z];
+function canSee(eye, s) { const c = chestOf(s), d = [c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]], L = Math.hypot(d[0], d[1], d[2]); return L < 1 || rayWorld(eye, d.map(v => v / L), L) >= L - .35; }
+function solvePitch(o, t, v) { const d = Math.hypot(t[0] - o[0], t[2] - o[2]), h = t[1] - o[1], g = GRAV, disc = v ** 4 - g * (g * d * d + 2 * h * v * v); return disc < 0 ? null : Math.atan((v * v - Math.sqrt(disc)) / (g * Math.max(d, .1))); }
+function botThink(room, p) {
+  const st = p.st, B = p.bot, L = BOT_LEVELS[B.level], dt = TICK;
+  if (B.round !== room.round || B.life !== st) { Object.assign(B, { round: room.round, life: st, seen: null, tgt: null, sense: 0, wp: null, wpT: 0, strafe: 1, strafeT: 0, prog: [st.x, st.z, room.t], detour: 0, detourDir: 1, seenAt: -9, reactAt: 0, drawFor: 0, cid: B.cid || 0, crouchT: 0 }); }
+  const eye = [st.x, st.y + eyeHeight(st.crouch), st.z];
+  // senses, a few times a second: the nearest foe in plain sight
+  if (room.t >= B.sense) {
+    B.sense = room.t + L.think * rr(.8, 1.2); let best = null, bd = L.range;
+    for (const q of list(room)) { if (q === p || !q.st.alive || !foes(room, p, q)) continue; const d = Math.hypot(q.st.x - st.x, q.st.z - st.z); if (d < bd && canSee(eye, q.st)) { best = q; bd = d; } }
+    if (best && (!B.tgt || B.tgt.id !== best.id)) B.reactAt = room.t + rr(L.react[0], L.react[1]);
+    B.tgt = best; if (best) { B.seen = { x: best.st.x, z: best.st.z }; B.seenAt = room.t; }
+    // nobody in sight for a while: they hear roughly where the nearest foe is (footsteps, a twang) and go hunting
+    else if (room.t - B.seenAt > 7 && room.t >= (B.hearT || 0)) {
+      B.hearT = room.t + rr(4, 7); let nf = null, nd = 1e9; for (const q of list(room)) { if (q === p || !q.st.alive || !foes(room, p, q)) continue; const d = Math.hypot(q.st.x - st.x, q.st.z - st.z); if (d < nd) { nd = d; nf = q; } }
+      if (nf) { B.seen = { x: nf.st.x + (Math.random() - .5) * 14, z: nf.st.z + (Math.random() - .5) * 14 }; B.seenAt = room.t - 1; }
+    }
+  }
+  const T = B.tgt && B.tgt.st.alive ? B.tgt : null;
+  // where to go
+  let gx = null, gz = null, want = 1, sprint = false;
+  if (st.arrows <= 0) {
+    let best = null, bd = 1e9; for (const s of room.stuck) if (s.by === p.id && s.rec) { const d = Math.hypot(s.p[0] - st.x, s.p[2] - st.z); if (d < bd) { bd = d; best = [s.p[0], s.p[2]]; } }
+    room.picks.forEach(k => { if (k.taken) return; const d = Math.hypot(k.x - st.x, k.z - st.z); if (d < bd) { bd = d; best = [k.x, k.z]; } });
+    if (best) { [gx, gz] = best; sprint = !T; }
+  } else if (T) {
+    const dx = T.st.x - st.x, dz = T.st.z - st.z, d = Math.hypot(dx, dz), ux = dx / d, uz = dz / d;
+    if (room.t >= B.strafeT) { B.strafe = Math.random() < .5 ? -1 : 1; B.strafeT = room.t + rr(.8, 2.4); }
+    const far = d > L.shoot * .85, fwd = far ? 1 : d < 12 ? -.8 : 0, side = far ? L.strafe * B.strafe * .35 : L.strafe * B.strafe;
+    gx = st.x + (ux * fwd - uz * side) * 4; gz = st.z + (uz * fwd + ux * side) * 4; want = far || d < 12 ? 1 : .8;
+  } else if (B.seen && room.t - B.seenAt < 5) { gx = B.seen.x; gz = B.seen.z; sprint = Math.hypot(gx - st.x, gz - st.z) > 15; }
+  else if (room.phase === 'overtime') { gx = ZONE.x; gz = ZONE.z; sprint = true; }
+  if (gx == null) {
+    if (!B.wp || room.t > B.wpT || Math.hypot(B.wp[0] - st.x, B.wp[1] - st.z) < 3) {
+      // roam toward the other side's ground (or anywhere, in a free for all)
+      const ffa = room.mode === 'ffa', side = p.team === 0 ? -1 : 1;
+      const x = MIN + 8 + Math.random() * (MAX - MIN - 16), z = ffa ? MIN + 8 + Math.random() * (MAX - MIN - 16) : CZ + side * Math.random() * 45 + (Math.random() - .5) * 12;
+      B.wp = [x, z]; B.wpT = room.t + rr(8, 16);
+    }
+    [gx, gz] = B.wp; sprint = true;
+  }
+  // stuck on a wall or a tree: step sideways for a moment
+  if (room.t - B.prog[2] > 1) { const moved = Math.hypot(st.x - B.prog[0], st.z - B.prog[1]); if (moved < .6 && Math.hypot(gx - st.x, gz - st.z) > 2) { B.detour = room.t + rr(.8, 1.6); B.detourDir = Math.random() < .5 ? -1 : 1; B.jump = true; } B.prog = [st.x, st.z, room.t]; }
+  let mvx = gx - st.x, mvz = gz - st.z; const ml = Math.hypot(mvx, mvz);
+  if (ml > .4) { mvx /= ml; mvz /= ml; } else { mvx = 0; mvz = 0; }
+  if (room.t < B.detour) { const t = mvx; mvx = -mvz * B.detourDir; mvz = t * B.detourDir; }
+  // aiming: face the target while drawing, else the way you walk
+  const drawing = st.drawAt != null;
+  let wantYaw = st.yaw, wantPitch = 0;
+  if (T) { const c = chestOf(T.st); wantYaw = Math.atan2(-(c[0] - st.x), -(c[2] - st.z)); wantPitch = Math.atan2(c[1] - eye[1], Math.hypot(c[0] - st.x, c[2] - st.z)); }
+  else if (ml > .4) wantYaw = Math.atan2(-mvx, -mvz);
+  const turn = (a, b, k) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * Math.min(1, k * dt);
+  st.yaw = turn(st.yaw, wantYaw, T ? 9 : 6); st.pitch += (wantPitch - st.pitch) * Math.min(1, 8 * dt);
+  st.sprint = sprint && !drawing && !T; st.crouch = drawing && B.level === 'hard' && room.t < B.crouchT;
+  const sy = Math.sin(st.yaw), cy = Math.cos(st.yaw);
+  moveStep(st, { mx: (cy * mvx - sy * mvz) * want, mz: (-sy * mvx - cy * mvz) * want, jump: !!B.jump, drawing }, dt); B.jump = false;
+  st.inWater = inWater(st.x, st.z, st.y + .3);
+  // shooting
+  if (!T) { if (drawing && room.t - B.seenAt > 1.2) st.drawAt = null; return; }
+  const tdist = Math.hypot(T.st.x - st.x, T.st.z - st.z);
+  if (drawing && tdist > L.shoot * 1.25) { st.drawAt = null; return; }
+  if (!drawing && st.arrows > 0 && room.t >= st.nockAt && room.t >= B.reactAt && tdist <= L.shoot) { st.drawAt = room.t; B.drawFor = BOW.fullDraw * rr(L.draw[0], L.draw[1]); if (Math.random() < .5) B.crouchT = room.t + 3; return; }
+  if (drawing && room.t - st.drawAt >= B.drawFor) {
+    const held = room.t - st.drawAt, v = launchSpeed(drawPower(held)), head = Math.random() < L.head;
+    let aim = [T.st.x, T.st.y + (T.st.crouch ? (head ? 1.12 : .82) : (head ? 1.6 : 1.2)), T.st.z], yaw = st.yaw, pitch = 0;
+    for (let k = 0; k < 3; k++) {   // aim where they will be when the arrow gets there
+      const o = shotOrigin({ ...st, yaw, pitch }); yaw = Math.atan2(-(aim[0] - o[0]), -(aim[2] - o[2])); const pt = solvePitch(o, aim, v); if (pt == null) { pitch = .6; break; } pitch = pt;
+      const tf = Math.hypot(aim[0] - o[0], aim[2] - o[2]) / Math.max(1, v * Math.cos(pitch)); aim = [T.st.x + (T.st.vx || 0) * tf, aim[1], T.st.z + (T.st.vz || 0) * tf];
+    }
+    const e = L.err * (.6 + tdist / 50);
+    fire(room, p, { cid: ++B.cid, yaw: yaw + gauss() * e, pitch: pitch + gauss() * e * .6, dt: held });
+  }
 }
 
 // ---- the practice range: straw dummies at marked distances, one walking a rail; endless arrows
@@ -229,7 +332,9 @@ export function tick(room, now) {
   if (room.phase === 'live' && room.mode === 'ffa' && room.t >= room.phaseEnd) { endMatch(room, 'time'); }
   if (room.phase === 'roundEnd' && room.t >= room.phaseEnd) { if (Math.max(...room.score) >= WIN_ROUNDS) endMatch(room, 'score'); else nextRound(room); }
   if (room.practice) dummies(room);
+  for (const p of list(room)) { const s = p.st; s.vx = (s.x - (s.px ?? s.x)) / TICK; s.vz = (s.z - (s.pz ?? s.z)) / TICK; s.px = s.x; s.pz = s.z; }
   if (live(room)) {
+    botsStep(room);
     arrowsStep(room);
     pickupsStep(room);
     if (room.mode === 'ffa') for (const p of humans(room)) if (!p.st.alive && p.respawnAt && room.t >= p.respawnAt) spawnFfa(room, p);
