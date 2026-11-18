@@ -31,6 +31,40 @@
     step: (p, surf, loud) => { const d = at(p, 2.5);
       if (surf === 'water') { nz(d, .2, 1200, 1, 'bandpass', .22 * loud, 0, 400); } else if (surf === 'stone') { nz(d, .05, 3200, 2, 'bandpass', .18 * loud); tone(d, 260, .04, 'sine', .05 * loud); } else { nz(d, .11, 1700 + Math.random() * 900, .8, 'bandpass', .2 * loud); nz(d, .07, 260, 1, 'lowpass', .2 * loud); } },
     whoosh: p => nz(at(p, 2), .35, 3600, 2, 'bandpass', .5, 0, 700),
+    // the bows' finishers: one small recipe each, played where it happens
+    fin: (k, p) => { const d = at(p, 6), T = (f, dur, type, g, delay = 0, to) => tone(d, f, dur, type, g, delay, to), Nz = (dur, f, q, type, g, delay = 0, to) => nz(d, dur, f, q, type, g, delay, to);
+      switch (k) {
+        case 'pop': T(600, .08, 'square', .12, 0, 1500); Nz(.06, 2600, 1.5, 'bandpass', .3); break;
+        case 'bang': Nz(.25, 900, .7, 'lowpass', .8); T(120, .3, 'sine', .5, 0, 50); for (let i = 0; i < 6; i++) T(900 + Math.random() * 1200, .05, 'triangle', .05, .05 + i * .04); break;
+        case 'shrink': T(500, .9, 'sine', .15, 0, 2200); break;
+        case 'squeak': T(2400, .08, 'square', .1, 0, 3200); T(2800, .06, 'square', .08, .1, 3600); break;
+        case 'boing': T(220, .5, 'sine', .3, 0, 660); break;
+        case 'blip': [988, 784, 659, 523, 392].forEach((f, i) => T(f, .1, 'square', .1, i * .11)); break;
+        case 'blub': for (let i = 0; i < 4; i++) T(300 + i * 80, .12, 'sine', .15, i * .09, 700); break;
+        case 'chime': [1047, 1319, 1568, 2093].forEach((f, i) => T(f, .5, 'sine', .1, i * .07)); break;
+        case 'splat': Nz(.4, 500, .8, 'lowpass', .5, 0, 200); T(160, .3, 'sine', .2, 0, 80); break;
+        case 'buzz': for (let i = 0; i < 3; i++) T(180 + i * 7, 1.2, 'sawtooth', .04, i * .05, 200 + i * 9); break;
+        case 'paper': Nz(.25, 3000, 1, 'highpass', .15); Nz(.2, 2400, 1, 'highpass', .12, .25); break;
+        case 'freeze': Nz(.6, 5000, 2, 'bandpass', .15, 0, 9000); T(1800, .4, 'sine', .06, .1, 2600); break;
+        case 'shatter': Nz(.5, 4200, .8, 'highpass', .5); for (let i = 0; i < 8; i++) T(2000 + Math.random() * 3000, .08, 'triangle', .06, Math.random() * .3); break;
+        case 'bonk': T(180, .25, 'square', .3, 0, 90); Nz(.15, 600, 1, 'lowpass', .5); T(1400, .3, 'sine', .08, .15, 1500); break;
+        case 'poof': Nz(.5, 900, .6, 'lowpass', .5, 0, 300); T(400, .2, 'sine', .1, .3, 300); T(300, .2, 'sine', .1, .5, 250); break;
+        case 'crack': Nz(.12, 1800, 1, 'bandpass', .5); Nz(.3, 300, 1, 'lowpass', .5, .05); break;
+        case 'wind': Nz(1.6, 700, .5, 'bandpass', .35, 0, 2200); break;
+        case 'burn': Nz(1.4, 1200, .4, 'bandpass', .3, 0, 600); Nz(.3, 300, 1, 'lowpass', .3); break;
+        case 'rumble': Nz(.9, 180, .7, 'lowpass', .7); T(60, .8, 'sine', .4, 0, 40); break;
+        case 'disco': [523, 659, 784, 1047, 784, 659].forEach((f, i) => T(f, .12, 'square', .06, i * .12)); Nz(.06, 6000, 2, 'highpass', .1); break;
+        case 'rocket': Nz(1.8, 500, .5, 'bandpass', .4, .3, 2500); T(90, 1.6, 'sawtooth', .08, .3, 300); break;
+        case 'boom': Nz(1.1, 400, .5, 'lowpass', .9, 0, 80); T(70, .9, 'sine', .6, 0, 30); break;
+        case 'zap': Nz(.35, 3000, .5, 'highpass', .6); T(80, .5, 'sawtooth', .3, 0, 40); Nz(1, 200, .7, 'lowpass', .5, .05); break;
+        case 'ghost': T(500, 1.2, 'sine', .12, 0, 900); T(505, 1.2, 'sine', .12, 0, 880); break;
+        case 'volley': for (let i = 0; i < 10; i++) Nz(.25, 3200, 2, 'bandpass', .15, Math.random() * .7, 800); break;
+        case 'ufo': T(400, 1.6, 'sine', .15, 0, 1200); T(410, 1.6, 'triangle', .08, .1, 300); break;
+        case 'clank': T(900, .5, 'triangle', .25, 0, 860); T(1350, .4, 'sine', .12, 0, 1300); Nz(.08, 3000, 2, 'bandpass', .3); break;
+        case 'magic': [880, 1175, 1480, 1760, 2349].forEach((f, i) => T(f, .4, 'sine', .08, i * .08)); Nz(.8, 7000, 2, 'highpass', .06); break;
+        case 'falling': T(2200, .8, 'sine', .15, 0, 300); break;
+        case 'void': T(160, 1.6, 'sawtooth', .12, 0, 40); Nz(1.4, 300, .5, 'lowpass', .4, 0, 80); break;
+      } },
     // the toy break-apart: a bright pop, a springy boing, then a rattle of blocks
     pop: p => { const d = at(p, 6); tone(d, 520, .09, 'square', .12, 0, 1400); tone(d, 300, .32, 'sine', .3, .04, 620); nz(d, .06, 2600, 1.5, 'bandpass', .3); for (let k = 0; k < 5; k++) tone(d, 700 + Math.random() * 900, .04, 'triangle', .05, .12 + k * .06 + Math.random() * .03); },
     distantTwang: p => tone(at(p, 6), 170, .22, 'triangle', .3, 0, 130),
@@ -61,6 +95,7 @@
   on('shotHeard', a => AU.ready && S.distantTwang(a.o));
   on('thud', p => AU.ready && S.thud(p)); on('cupidPop', p => AU.ready && S.cupid(p)); on('thwack', p => AU.ready && S.thwack(p)); on('cashout', p => AU.ready && S.cashout(p));
   on('pop', p => AU.ready && S.pop(p));
+  on('finSfx', (k, p) => AU.ready && S.fin(k, p));
   on('picked', () => AU.ready && S.pick()); on('recovered', () => AU.ready && S.pick());
   on('go', () => AU.ready && S.horn());
   function audioFrame(dt) {

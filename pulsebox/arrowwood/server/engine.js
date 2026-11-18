@@ -194,16 +194,20 @@ function endMatch(room, reason) {
   let winners = [];
   if (room.mode === 'ffa') { const h = humans(room), top = Math.max(0, ...h.map(p => p.kills)); winners = h.filter(p => p.kills === top && top > 0).map(p => p.id); }
   else if (room.winner === 0 || room.winner === 1) winners = humans(room).filter(p => p.team === room.winner).map(p => p.id);
-  const coins = {};
+  const coins = {}, coinRows = {};
   if (!room.granted && !room.practice && !room.offline) {
     room.granted = true;   // rewards are decided once per match, here; the bank also refuses a second grant for the same match
     for (const p of humans(room)) {
       if (!p.connected && room.t - p.goneAt > room.T.grace) continue;
-      const c = COINS.match + (winners.includes(p.id) ? (room.mode === 'ffa' ? COINS.ffaTop : COINS.win) : 0);
-      coins[p.id] = c; if (room.grant && p.profile) room.grant(p.profile, room.matchId, c, winners.includes(p.id));
+      const won = winners.includes(p.id), rw = room.mode === 'ffa' ? 0 : room.score[p.team] || 0, rows = [['Match played', COINS.match]];
+      if (p.kills) rows.push([`${p.kills} elimination${p.kills === 1 ? '' : 's'}`, p.kills * COINS.kill]);
+      if (rw) rows.push([`${rw} round${rw === 1 ? '' : 's'} won`, rw * COINS.round]);
+      if (won) rows.push([room.mode === 'ffa' ? 'Most eliminations' : 'Victory', room.mode === 'ffa' ? COINS.ffaTop : COINS.win]);
+      const c = Math.min(COINS.maxMatch, rows.reduce((a, r) => a + r[1], 0));
+      coins[p.id] = c; coinRows[p.id] = rows; if (room.grant && p.profile) room.grant(p.profile, room.matchId, c, won);
     }
   }
-  room.lastResults = { t: 'results', reason, mode: room.mode, score: room.score.slice(), winner: room.winner, winners, coins, matchId: room.matchId,
+  room.lastResults = { t: 'results', reason, mode: room.mode, score: room.score.slice(), winner: room.winner, winners, coins, coinRows, matchId: room.matchId,
     board: humans(room).map(p => ({ id: p.id, name: p.name, team: p.team, k: p.kills, d: p.deaths })).sort((a, b) => b.k - a.k || a.d - b.d) };
   send(room, '*', room.lastResults);
   lobbyOut(room); phaseOut(room);

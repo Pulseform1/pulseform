@@ -29,7 +29,7 @@ export async function equip(store, id, bow) {
 export async function grant(store, id, matchId, coins, won) {
   const g = 'g:' + matchId + ':' + id;
   if (await store.get(g)) return { already: true, ...(await profile(store, id)) };
-  const p = await load(store, id); p.coins += Math.max(0, Math.min(200, coins | 0)); p.matches++; if (won) p.wins++;
+  const p = await load(store, id); p.coins += Math.max(0, Math.min(COINS.maxMatch, coins | 0)); p.matches++; if (won) p.wins++;
   await store.put('p:' + id, p); await store.put(g, 1);
   return pub(p);
 }

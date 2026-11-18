@@ -51,7 +51,7 @@
   }
   on('playerGone', p => { if (p.model) X && X.scene.remove(p.model.root); p.model = null; });
   on('unstickAll', p => { if (p.model) { p.model.stuck.forEach(m => m.parent && m.parent.remove(m)); p.model.stuck = []; p.model.fin = null; resetDeath(p.model); } });
-  function resetDeath(P) { P.root.visible = true; P.root.scale.set(1, 1, 1); P.root.rotation.set(0, P.root.rotation.y, 0); P.root.rotation.x = 0; P.root.rotation.z = 0; if (P.bow && P.bow.g.parent !== P.chest) { P.bow.g.parent && P.bow.g.parent.remove(P.bow.g); P.chest.add(P.bow.g); } P.dead = false; }
+  function resetDeath(P) { P.root.traverse(o => { if (o.userData.mat0) { o.material = o.userData.mat0; delete o.userData.mat0; } }); P.root.visible = true; P.root.scale.set(1, 1, 1); P.root.rotation.set(0, P.root.rotation.y, 0); P.root.rotation.x = 0; P.root.rotation.z = 0; if (P.bow && P.bow.g.parent !== P.chest) { P.bow.g.parent && P.bow.g.parent.remove(P.bow.g); P.chest.add(P.bow.g); } P.dead = false; }
   function updateCharacters(dt) {
     const rt = srvNow() - INTERP;
     for (const p of CL.players.values()) {
@@ -74,7 +74,7 @@
   const STUCK = new Map();
   on('stuckNew', s => { if (!X) return; const shooter = CL.players.get(s.by); const m = makeArrowMesh((shooter && shooter.bow) || 'longbow'); placeArrow(m, s.p, s.d, .12); X.scene.add(m); STUCK.set(s.id, { m, s, wob: 1, base: m.quaternion.clone() }); });
   on('stuckGone', s => { const k = STUCK.get(s.id); if (k) { X.scene.remove(k.m); STUCK.delete(s.id); if (s.by === CL.me) burst('spark', s.p, 6, { col: [1, .9, .6], size: .05, sp: 1 }); } });
-  on('worldReset', () => { for (const b of DEBRIS) X && X.scene.remove(b.m); DEBRIS.length = 0; for (const f of FLOATS) X && X.scene.remove(f.s); FLOATS.length = 0; for (const [, m] of ARW) X && X.scene.remove(m); ARW.clear(); for (const [, k] of STUCK) X && X.scene.remove(k.m); STUCK.clear(); FINS.forEach(f => f.objs.forEach(o => o.parent && o.parent.remove(o))); FINS = []; if (BILLS) { BILLS.list = []; COINS3.list = []; } });
+  on('worldReset', () => { if (THWACK) THWACK.visible = false; for (const b of DEBRIS) X && X.scene.remove(b.m); DEBRIS.length = 0; for (const f of FLOATS) X && X.scene.remove(f.s); FLOATS.length = 0; for (const [, m] of ARW) X && X.scene.remove(m); ARW.clear(); for (const [, k] of STUCK) X && X.scene.remove(k.m); STUCK.clear(); FINS.forEach(f => f.objs.forEach(o => o.parent && o.parent.remove(o))); FINS = []; if (BILLS) { BILLS.list = []; COINS3.list = []; } });
   const _ld = { v: null };
   function placeArrow(m, p, d, bury) { const v = new THREE.Vector3(p[0], p[1], p[2]); m.position.copy(v).addScaledVector(new THREE.Vector3(d[0], d[1], d[2]), -bury + .12); m.lookAt(v.x - d[0], v.y - d[1], v.z - d[2]); }
   function arrowTime(a) { return a.local ? now() - a.t0 : srvNow() - INTERP - a.tm; }
@@ -88,13 +88,13 @@
       if (t < 0) { m.visible = false; continue; }
       const g = a.g == null ? W.GRAV : a.g, p = W.arrowAt(a.o, a.v, t, g), vy = a.v[1] - g * t; m.visible = true; m.position.set(p[0], p[1], p[2]); m.lookAt(p[0] - a.v[0], p[1] - vy, p[2] - a.v[2]);
       // a bright streak behind every arrow in the air, in the colour of its bow
-      if (t > .03) { const sh = CL.players.get(a.by), col = TRAIL[(sh && sh.bow) || 'longbow'] || TRAIL.longbow, prev = a.lastTrail || p; for (let k = 0; k < 3; k++) { const u = k / 3; PS.trail.add(lp(prev[0], p[0], u), lp(prev[1], p[1], u), lp(prev[2], p[2], u), 0, 0, 0, { life: .32, size: .09 + (a.pw || 1) * .05, col, a: .85, g: 0 }); } a.lastTrail = p; }
+      if (t > .03) { const sh = CL.players.get(a.by), bw = (sh && sh.bow) || (a.by === CL.me ? PROFILE.equipped : 'longbow'), col = TRAIL[bw] || (TRAILC[bw] || (TRAILC[bw] = trailOf(bw))), prev = a.lastTrail || p; for (let k = 0; k < 3; k++) { const u = k / 3; PS.trail.add(lp(prev[0], p[0], u), lp(prev[1], p[1], u), lp(prev[2], p[2], u), 0, 0, 0, { life: .32, size: .09 + (a.pw || 1) * .05, col, a: .85, g: 0 }); } a.lastTrail = p; }
       // a fly-by you can hear
       if (a.by !== CL.me && !a.whoosh) { const c = X.camera.position, d = Math.hypot(p[0] - c.x, p[1] - c.y, p[2] - c.z); if (d < 3.5) { a.whoosh = true; emit('whoosh', p); } }
     }
     for (const [, k] of STUCK) if (k.wob > 0) { k.wob = Math.max(0, k.wob - dt * 2.2); k.m.quaternion.copy(k.base); k.m.rotateX(Math.sin(k.wob * 40) * .06 * k.wob); }
   }
-  const TRAIL = { longbow: [1, .92, .7], cupid: [1, .5, .75], yardstick: [1, .85, .25], cashout: [.45, 1, .5] };
+  const TRAIL = { longbow: [1, .92, .7], cupid: [1, .5, .75], yardstick: [1, .85, .25], cashout: [.45, 1, .5] }, TRAILC = {};
   function finishArrow(a) {
     const e = a.end; if (!e) return;
     if (e.kind === 'stick') { addStuck(e.m); impact(e.m.p, e.m.mat, e.m.d); emit('impact', e.m.p, e.m.mat); }
@@ -118,31 +118,32 @@
   // floating numbers over whoever got hit (bigger and gold for a headshot)
   const NUMTEX = {};
   function numTex(txt, col) { const k = txt + col; if (NUMTEX[k]) return NUMTEX[k]; const [c, g] = cvs(256, 96); g.font = '900 64px Nunito, Arial Black, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 12; g.lineJoin = 'round'; g.strokeStyle = '#1b1b1b'; g.strokeText(txt, 128, 50); g.fillStyle = col; g.fillText(txt, 128, 48); return NUMTEX[k] = tex(c, { clamp: true }); }
-  function floatText(p, txt, col, scale = 1) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: numTex(txt, col), transparent: true, depthTest: false, depthWrite: false })); s.renderOrder = 30; s.position.set(p[0], p[1], p[2]); X.scene.add(s); FLOATS.push({ s, t: 0, scale, vx: (Math.random() - .5) * .6 }); }
+  function floatText(p, txt, col, scale = 1, word) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: word ? wordTex(txt, col) : numTex(txt, col), transparent: true, depthTest: false, depthWrite: false })); s.renderOrder = 30; s.position.set(p[0], p[1], p[2]); X.scene.add(s); FLOATS.push({ s, t: 0, scale, vx: word ? 0 : (Math.random() - .5) * .6, ar: word ? 4 : 2.67, life: word ? 1.6 : .95 }); }
+  const WORDTEX = {};
+  function wordTex(txt, col) { const k = txt + col; if (WORDTEX[k]) return WORDTEX[k]; const [c, g] = cvs(512, 128); let fs = 96; g.font = `400 ${fs}px 'Lilita One', Impact, sans-serif`; while (g.measureText(txt).width > 470 && fs > 30) { fs -= 4; g.font = `400 ${fs}px 'Lilita One', Impact, sans-serif`; } g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 16; g.lineJoin = 'round'; g.strokeStyle = '#1b1b1b'; g.save(); g.translate(256, 64); g.rotate(-.05); g.strokeText(txt, 0, 4); g.fillStyle = col; g.fillText(txt, 0, 0); g.restore(); return WORDTEX[k] = tex(c, { clamp: true }); }
   on('hitInfo', m => { if (!X) return; const kill = m.hp <= 0, head = m.zone === 'head'; floatText([m.p[0], m.p[1] + .4, m.p[2]], kill ? (head ? 'HEADSHOT!' : 'KO!') : '-' + m.dmg, kill ? '#ffd23a' : head ? '#ffb02e' : '#ffffff', kill ? 1.5 : head ? 1.25 : 1); });
   // the toy-figure break-apart: every block of the archer flies off, bounces, and pops away
-  function breakApart(P, m) {
+  function breakApart(P, m, opt = {}) {
     P.root.updateMatrixWorld(true);
     const dir = new THREE.Vector3(m.d[0], 0, m.d[2]); if (dir.lengthSq() < 1e-6) dir.set(0, 0, 1); dir.normalize();
     const c = new THREE.Vector3(m.p[0], m.p[1] + 1, m.p[2]);
     P.root.traverse(o => {
       if (!o.isMesh || !o.visible) return; let vis = true; for (let q = o; q && q !== P.root; q = q.parent) if (!q.visible) vis = false; if (!vis) return;
       // a fresh mesh, not clone(): clone copies userData, which points back at the archer
-      const d = new THREE.Mesh(o.geometry, o.material); o.matrixWorld.decompose(d.position, d.quaternion, d.scale); d.castShadow = true; X.scene.add(d);
+      const d = new THREE.Mesh(o.geometry, opt.mat || o.material); o.matrixWorld.decompose(d.position, d.quaternion, d.scale); d.castShadow = true; X.scene.add(d);
       const out = d.position.clone().sub(c); out.y = Math.max(.2, out.y + .4); out.normalize();
-      DEBRIS.push({ m: d, v: out.multiplyScalar(1.6 + Math.random() * 2.4).addScaledVector(dir, 2.2).add(new THREE.Vector3(0, 2 + Math.random() * 2.2, 0)), w: new THREE.Vector3((Math.random() - .5) * 14, (Math.random() - .5) * 14, (Math.random() - .5) * 14), t: Math.random() * -.05, s0: d.scale.clone() });
+      const pw = opt.power || 1; DEBRIS.push({ m: d, v: out.multiplyScalar((1.6 + Math.random() * 2.4) * pw).addScaledVector(dir, 2.2 * pw).add(new THREE.Vector3((opt.wind || [0, 0])[0] * (1 + Math.random()), opt.float ? 1 + Math.random() : (2 + Math.random() * 2.2) * pw, (opt.wind || [0, 0])[1] * (1 + Math.random()))), w: new THREE.Vector3((Math.random() - .5) * 14, (Math.random() - .5) * 14, (Math.random() - .5) * 14), t: Math.random() * -.05, s0: d.scale.clone(), float: !!opt.float, wind: opt.wind, life: opt.life || 2.4 });
     });
-    burst('dust', [c.x, c.y, c.z], 14, { col: [1, 1, 1], size: .5, sp: 1.6, g: .3, life: .9, grow: 1.6, a: .55 });
-    burst('cube', [c.x, c.y, c.z], 26, { col: [1, .85, .3], size: .07, sp: 4.5, up: 2.5, life: 1.3, floor: true });
+    if (!opt.quiet) { burst('dust', [c.x, c.y, c.z], 14, { col: [1, 1, 1], size: .5, sp: 1.6, g: .3, life: .9, grow: 1.6, a: .55 }); burst('cube', [c.x, c.y, c.z], 26, { col: [1, .85, .3], size: .07, sp: 4.5, up: 2.5, life: 1.3, floor: true }); }
   }
   function updateDebris(dt) {
     for (let i = DEBRIS.length - 1; i >= 0; i--) {
       const b = DEBRIS[i]; b.t += dt; if (b.t < 0) continue; const m = b.m;
-      b.v.y -= 16 * dt; m.position.addScaledVector(b.v, dt); m.rotation.x += b.w.x * dt; m.rotation.y += b.w.y * dt; m.rotation.z += b.w.z * dt;
-      const gy = visH(m.position.x, m.position.z) + .06; if (m.position.y < gy) { m.position.y = gy; if (b.v.y < 0) b.v.y *= -.32; b.v.x *= .55; b.v.z *= .55; b.w.multiplyScalar(.5); }
-      if (b.t > 2.4) { const k = Math.max(0, 1 - (b.t - 2.4) / .35); m.scale.copy(b.s0).multiplyScalar(k); if (k <= 0) { X.scene.remove(m); DEBRIS.splice(i, 1); if (Math.random() < .3) burst('star', [m.position.x, m.position.y + .1, m.position.z], 1, { col: [1, 1, .85], size: .25, sp: .2, g: 0, life: .3 }); } }
+      if (b.float) { b.v.y += (1.5 - b.v.y) * dt; } else b.v.y -= 16 * dt; if (b.wind) { b.v.x += b.wind[0] * dt * 2; b.v.z += b.wind[1] * dt * 2; } m.position.addScaledVector(b.v, dt); m.rotation.x += b.w.x * dt; m.rotation.y += b.w.y * dt; m.rotation.z += b.w.z * dt;
+      const gy = visH(m.position.x, m.position.z) + .06; if (!b.float && m.position.y < gy) { m.position.y = gy; if (b.v.y < 0) b.v.y *= -.32; b.v.x *= .55; b.v.z *= .55; b.w.multiplyScalar(.5); }
+      if (b.t > b.life) { const k = Math.max(0, 1 - (b.t - b.life) / .35); m.scale.copy(b.s0).multiplyScalar(k); if (k <= 0) { X.scene.remove(m); DEBRIS.splice(i, 1); if (Math.random() < .3) burst('star', [m.position.x, m.position.y + .1, m.position.z], 1, { col: [1, 1, .85], size: .25, sp: .2, g: 0, life: .3 }); } }
     }
-    for (let i = FLOATS.length - 1; i >= 0; i--) { const f = FLOATS[i]; f.t += dt; const k = f.t / .95, pop = f.t < .12 ? f.t / .12 * 1.25 : lp(1.25, 1, cl((f.t - .12) / .15, 0, 1)); f.s.position.y += dt * 1.1; f.s.position.x += f.vx * dt; const dk = cl(f.s.position.distanceTo(X.camera.position) * .13, .8, 6); f.s.scale.set(1.15 * f.scale * pop * dk, .43 * f.scale * pop * dk, 1); f.s.material.opacity = 1 - sm(cl((k - .6) / .4, 0, 1)); if (k >= 1) { X.scene.remove(f.s); FLOATS.splice(i, 1); } }
+    for (let i = FLOATS.length - 1; i >= 0; i--) { const f = FLOATS[i]; f.t += dt; const k = f.t / (f.life || .95), pop = f.t < .12 ? f.t / .12 * 1.25 : lp(1.25, 1, cl((f.t - .12) / .15, 0, 1)); f.s.position.y += dt * (f.ar > 3 ? .5 : 1.1); f.s.position.x += f.vx * dt; const dk = cl(f.s.position.distanceTo(X.camera.position) * .13, .8, 6), w = 1.15 * f.scale * pop * dk; f.s.scale.set(w, w / (f.ar || 2.67), 1); f.s.material.opacity = 1 - sm(cl((k - .6) / .4, 0, 1)); if (k >= 1) { X.scene.remove(f.s); FLOATS.splice(i, 1); } }
     for (let i = RINGS.length - 1; i >= 0; i--) { const r = RINGS[i]; if (!r.s.parent) { r.s.position.set(...r.p); X.scene.add(r.s); } r.t += dt; const k = r.t / .4; r.s.scale.setScalar(.2 + k * r.size); r.s.material.opacity = 1 - k; if (k >= 1) { X.scene.remove(r.s); r.s.material.dispose(); RINGS.splice(i, 1); } }
   }
   // ---- the aim line: the same launch speed and gravity the real arrow will have, flown until it meets the world
@@ -175,6 +176,7 @@
   function startFinisher(m) {
     const p = CL.players.get(m.v); if (!p) return; const P = ensureModel(p);
     const f = { m, P, p, t: 0, kind: m.bow || 'longbow', mine: m.v === CL.me, objs: [], hit: false, dur: m.v === CL.me ? 2.2 : 1.7 };
+    if (FX[f.kind]) f.dur = (FX[f.kind].dur || 2.2) * (f.mine ? 1 : .8);
     P.fin = f; P.root.visible = true; P.root.position.set(m.p[0], m.p[1], m.p[2]); P.root.rotation.set(0, m.yaw, 0); P.draw = 0; P.raise = 0;
     const killer = CL.players.get(m.k), kpos = killer && (killer.id === CL.me ? ME.st : killer.vis);
     f.fromYaw = kpos ? Math.atan2(kpos.x - m.p[0], kpos.z - m.p[2]) : m.yaw + Math.PI;
@@ -187,7 +189,7 @@
   }
   const groundY = (x, z) => visH(x, z);
   function finisherCam(f) {
-    const m = f.m, C = new THREE.Vector3(m.p[0], m.p[1] + 1, m.p[2]), base = f.fromYaw, far = f.kind === 'cashout' ? 4.2 : f.kind === 'yardstick' ? 5.2 : 3.4, hi = f.kind === 'yardstick' ? 2.1 : 1.3;
+    const D = FX[f.kind], m = f.m, C = new THREE.Vector3(m.p[0], m.p[1] + 1, m.p[2]), base = f.fromYaw, far = D && D.far || (f.kind === 'cashout' ? 4.2 : f.kind === 'yardstick' ? 5.2 : 3.4), hi = D && D.hi || (f.kind === 'yardstick' ? 2.1 : 1.3);
     let best = null, bestScore = -1;
     for (const off of [.7, -.7, 1.4, -1.4, .2, -.2, 2.2, -2.2, Math.PI]) for (const [dist, h] of [[far, hi], [far * .75, hi * .6], [far * .55, .45]]) {
       const a = base + off, cam = new THREE.Vector3(C.x + Math.sin(a) * dist, C.y + h, C.z + Math.cos(a) * dist), dir = cam.clone().sub(C), L = dir.length(); dir.normalize();
@@ -210,6 +212,7 @@
   }
   on('finisher', f => { FINS.push(f); if (f.ruler && !f.rulerAxis) placeRuler(f, f.fromYaw + Math.PI / 2); });
   function stepFinisher(f, dt) {
+    if (FX[f.kind]) return runFX(f, dt);
     const P = f.P, m = f.m, t = f.t, root = P.root, x0 = m.p[0], y0 = m.p[1], z0 = m.p[2];
     const limp = k => { P.L.sh.rotation.set(k * .6, 0, -.5 - k * .8); P.R.sh.rotation.set(k * .6, 0, .5 + k * .8); P.L.el.rotation.set(-.4, 0, 0); P.R.el.rotation.set(-.4, 0, 0); };
     if (f.kind === 'longbow') {
@@ -258,7 +261,7 @@
       const a = X.t * .04, r = 24; cam.position.set(70 + Math.sin(a) * r, W.terrainH(70, 70) + 5.5 + Math.sin(X.t * .1) * .8, 70 + Math.cos(a) * r); cam.lookAt(70, W.terrainH(70, 70) + 1.4, 70); return;
     }
     if (ME.cam === 'finisher' && ME.fin) {
-      const f = ME.fin, k = sm(cl(f.t / .35, 0, 1)), C = new THREE.Vector3(f.m.p[0], f.m.p[1] + (f.kind === 'yardstick' && f.hit ? .3 : 1), f.m.p[2]);
+      const f = ME.fin, k = sm(cl(f.t / .35, 0, 1)), C = new THREE.Vector3(f.m.p[0], f.m.p[1] + (f.camY != null ? f.camY : f.kind === 'yardstick' && f.hit ? .3 : 1), f.m.p[2]);
       let target = f.cam.cam.clone(); if (f.kind === 'cashout') { const back = target.clone().sub(C); target = C.clone().add(back.multiplyScalar(1 + sm(cl((f.t - .2) / 1.2, 0, 1)) * .55)); }
       cam.position.copy(f.camFrom).lerp(target, k); const look = f.lookFrom.clone().lerp(C, k); cam.lookAt(look);
       if (f.t > f.dur) { const mate = CL.mode !== 'ffa' && CL.src === 'online' && [...CL.players.values()].find(p => p.id !== CL.me && !p.dummy && p.team === (meP() || {}).team && p.alive && CL.phase !== 'roundEnd'); if (mate) { ME.cam = 'spectate'; ME.specId = mate.id; } else ME.cam = 'dead'; }

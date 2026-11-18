@@ -20,7 +20,10 @@
   #aw .team{flex:1;min-width:200px} #aw .pl{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.2);margin-top:6px;font-weight:900}
   #aw .tag{font-size:11px;font-weight:900;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.18)} #aw .tag.ok{background:#2fae3d;color:#fff} #aw .tag.gold{background:#ffd23a;color:#3a2600}
   #aw .coins{font-weight:900;color:#ffd23a} #aw .bows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  #aw .bow{cursor:pointer;text-align:left} #aw canvas.prev{width:100%;height:260px;border-radius:16px;background:radial-gradient(circle at 50% 40%,#8fd0ff,#2a6fc9);cursor:grab;display:block}
+  #aw .bow{cursor:pointer;text-align:left}
+  #aw .pn.shop{width:min(940px,96vw)} #aw .bowgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;max-height:62vh;overflow-y:auto;padding:6px 4px 10px;margin-top:8px}
+  #aw .bowc{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 6px 10px;border:3px solid transparent;background:rgba(255,255,255,.1)} #aw .bowc img{width:100%;aspect-ratio:1;object-fit:contain;border-radius:10px;background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.3),rgba(0,0,0,.18))} #aw .bowc b{font-size:13px;line-height:1.1;text-align:center;min-height:2.2em;display:flex;align-items:center}
+  @media (max-width:640px){#aw .bowgrid{grid-template-columns:repeat(3,minmax(0,1fr))}} #aw canvas.prev{width:100%;height:260px;border-radius:16px;background:radial-gradient(circle at 50% 40%,#8fd0ff,#2a6fc9);cursor:grab;display:block}
   #aw .top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
   #aw .rules li{margin:3px 0} #aw .rules{margin:6px 0 0 18px;padding:0;color:rgba(255,255,255,.9);font-size:14px;font-weight:700}
   #aw .slider{width:100%} #aw .bar{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);pointer-events:auto}
@@ -60,10 +63,10 @@
       case 'botLevel': UI.botLevel = v; render(); break;
       case 'botGo': startBotMatch(UI.botMode, UI.botLevel); closeMenu(); break;
       case 'botsAgain': leaveRoom(); act('bots'); break;
-      case 'shop': UI.back = UI.open; openMenu('shop'); loadProfile(); break;
+      case 'shop': if (UI.open !== 'shop') UI.back = UI.open; UI.shopView = 'grid'; openMenu('shop'); loadProfile(); break;
       case 'settings': UI.back = UI.open; openMenu('settings'); break;
       case 'howto': UI.back = UI.open; openMenu('howto'); break;
-      case 'back': if (UI.open === 'shop' || UI.open === 'settings' || UI.open === 'howto') { openMenu(UI.back && UI.back !== UI.open ? UI.back : CL.conn && CL.ids.online ? 'room' : 'main'); } else if (UI.open === 'pause') closeMenu(); else if (UI.open === 'create' || UI.open === 'join' || UI.open === 'bots') openMenu('main'); break;
+      case 'back': if (UI.open === 'shop' && UI.shopView === 'detail') { UI.shopView = 'grid'; render(); } else if (UI.open === 'shop' || UI.open === 'settings' || UI.open === 'howto') { openMenu(UI.back && UI.back !== UI.open ? UI.back : CL.conn && CL.ids.online ? 'room' : 'main'); } else if (UI.open === 'pause') closeMenu(); else if (UI.open === 'create' || UI.open === 'join' || UI.open === 'bots') openMenu('main'); break;
       case 'resume': closeMenu(); break;
       case 'leave': leaveRoom(); stopPractice(); openMenu('main'); break;
       case 'leavePractice': stopPractice(); openMenu(CL.conn && CL.ids.online ? 'room' : 'main'); break;
@@ -80,7 +83,8 @@
       case 'share': if (navigator.share) navigator.share({ title: 'ARROWWOOD', text: `Join my ARROWWOOD room ${CL.code}`, url: inviteLink(CL.code) }).catch(() => {}); break;
       case 'rematch': sendRoom({ t: 'rematch' }); break;
       case 'toRoom': sendRoom({ t: 'lobby' }); openMenu('room'); break;
-      case 'pickBow': UI.shopSel = v; render(); break;
+      case 'pickBow': UI.shopSel = v; UI.shopView = 'detail'; UI.shopErr = ''; render(); break;
+      case 'shopGrid': UI.shopView = 'grid'; render(); break;
       case 'buy': api('buy', { bow: UI.shopSel }).then(p => { if (p.error) { UI.shopErr = p.error; } else { UI.shopErr = ''; if (AU.ready) S.cashout([X.camera.position.x, X.camera.position.y, X.camera.position.z]); } Object.assign(PROFILE, p.coins != null ? p : {}); afterEquip(); render(); }).catch(() => { UI.shopErr = 'Could not reach the server.'; render(); }); break;
       case 'equip': if (TESTER) { PROFILE.equipped = UI.shopSel; try { localStorage.setItem('aw-tester-bow', UI.shopSel); } catch (e) {} afterEquip(); render(); break; } api('equip', { bow: UI.shopSel }).then(p => { if (p.error) UI.shopErr = p.error; else UI.shopErr = ''; Object.assign(PROFILE, p.coins != null ? p : {}); afterEquip(); render(); }).catch(() => { UI.shopErr = 'Could not reach the server.'; render(); }); break;
       case 'previewFin': previewFinisher(UI.shopSel); break;
@@ -130,7 +134,7 @@
       <button class="go awbig" data-a="resume">Back to it</button>${CL.src === 'practice' ? `<button data-a="leavePractice">${CL.conn && CL.ids.online ? 'Back to the room' : 'Leave the range'}</button>` : botRoom() ? '' : `<button data-a="copyLink">Copy invite link (${esc(CL.code)})</button>`}
       <button data-a="settings">Settings</button><button data-a="shop">Bow shop</button>${CL.src === 'online' ? '<button data-a="leave">Leave the match</button>' : ''}</div></div>`;
     UI.el.innerHTML = h;
-    if (o === 'shop') startShopPreview();
+    if (o === 'shop') { if (UI.shopView === 'detail') startShopPreview(); else makeThumbs(); }
   }
   function roomPlayersHtml() {
     const me = CL.ids.online, host = CL.host === me, size = CL.lobby.length, ffa = CL.mode === 'ffa', need = { '1v1': 1, '2v2': 2 }[CL.mode];
@@ -165,22 +169,43 @@
     return `<div class="pn" style="text-align:center"><h1 style="font-size:46px">${head}</h1>${botRoom() ? `<div class="muted">Against ${CL.conn.level} bots · no coins for bot matches</div>` : ''}
       ${r.mode !== 'ffa' ? `<div class="code" style="font-size:54px"><span style="color:${W.TEAMS[0].col}">${r.score[0]}</span> – <span style="color:${W.TEAMS[1].col}">${r.score[1]}</span></div><div class="muted">${W.TEAMS[0].n} vs ${W.TEAMS[1].n}</div>` : ''}
       <div class="awcard" style="margin:14px auto;max-width:460px;text-align:left">${r.board.map((b, i) => `<div class="pl"><span>${i + 1}. ${esc(b.name)}${b.id === me ? ' (you)' : ''}</span><span>${b.k} elims · ${b.d} outs</span></div>`).join('')}</div>
-      ${coins ? `<p style="font-size:20px">+${coins} <span class="coins">◆</span> coins  <span class="muted">(balance ${PROFILE.coins})</span></p>` : ''}
+      ${coins ? `<div class="awcard" style="margin:10px auto;max-width:360px;text-align:left">${((r.coinRows || {})[me] || []).map(([l, n]) => `<div class="awrow" style="justify-content:space-between"><span>${esc(l)}</span><span class="coins">+${n}</span></div>`).join('')}<div class="awrow" style="justify-content:space-between;border-top:1px solid rgba(255,255,255,.25);margin-top:6px;padding-top:6px"><b>Coins earned</b><b class="coins" style="font-size:20px">+${coins} ◆</b></div><div class="muted" style="text-align:right">balance ${PROFILE.coins.toLocaleString()}</div></div>` : ''}
       ${botRoom() ? `<div class="awrow" style="justify-content:center"><button class="go awbig" data-a="rematch">Play again</button><button data-a="botsAgain">Change match</button><button data-a="shop">Bow shop</button><button data-a="leave">Leave</button></div>` : `<div class="awrow" style="justify-content:center"><button class="go awbig" data-a="rematch" ${CL.votes.includes(me) ? 'disabled' : ''}>${CL.votes.includes(me) ? `Waiting for rematch (${votes}/${total})` : `Rematch${votes ? ` (${votes}/${total})` : ''}`}</button><button data-a="toRoom">Back to the room</button><button data-a="shop">Bow shop</button><button data-a="leave">Leave</button></div>`}</div>`;
   }
+  // the bow shop: a grid of every bow (picture, name, price), cheapest first; tap one for the full story and a big preview
+  const TIER_COL = { Starter: '#c9d1da', Common: '#a7b1bd', Rare: '#4fa3ff', Epic: '#b56bff', Legendary: '#ffb020', Mythic: '#ff5ac8' };
+  const shopBows = () => W.BOWS.slice().sort((a, b) => a.price - b.price);
+  const priceTag = b => PROFILE.equipped === b.id ? '<span class="tag gold">EQUIPPED</span>' : PROFILE.owned.includes(b.id) ? '<span class="tag ok">OWNED</span>' : `<span class="coins">◆ ${b.price.toLocaleString()}</span>`;
   function shopHtml(coins) {
-    const sel = W.BOWS.find(b => b.id === UI.shopSel) || W.BOWS[0], own = PROFILE.owned.includes(sel.id), eq = PROFILE.equipped === sel.id;
-    return `<div class="pn"><div class="top"><h2>Bow shop</h2><span>${coins}</span><button data-a="back">Back</button></div>
-      <div class="awrow" style="align-items:stretch"><div style="flex:1.2;min-width:260px"><canvas class="prev" id="awPrev"></canvas><div class="muted" style="text-align:center;margin-top:4px">Drag to turn it</div></div>
-      <div class="col" style="flex:1;min-width:240px"><b style="font-family:'Lilita One';font-size:20px;color:#e9c46a">${esc(sel.n)}</b><div class="muted">${esc(sel.d)}</div><div class="muted">Every bow shoots the same: skins change the look, the sound and the finisher.</div>
-      <div class="awrow">${eq ? '<span class="tag gold">EQUIPPED</span>' : own ? `<button class="go" data-a="equip">Equip</button>` : `<button class="go" data-a="buy" ${PROFILE.coins < sel.price ? 'disabled' : ''}>Buy for ◆ ${sel.price}</button>`}<button data-a="previewFin">▶ Preview finisher</button></div>
-      ${!own && PROFILE.coins < sel.price ? `<div class="muted">${sel.price - PROFILE.coins} more coins: finish matches (+40, +25 for a win).</div>` : ''}<div class="err">${esc(UI.shopErr || '')}</div></div></div>
-      <div class="bows" style="margin-top:12px">${W.BOWS.map(b => `<button class="bow ${b.id === UI.shopSel ? 'sel' : ''}" data-a="pickBow" data-v="${b.id}"><b>${esc(b.n)}</b><br><span class="muted">${PROFILE.equipped === b.id ? 'Equipped' : PROFILE.owned.includes(b.id) ? 'Owned' : '◆ ' + b.price}</span></button>`).join('')}</div></div>`;
+    const earn = '<div class="muted">Earn coins online: 25 a match, 15 for every elimination, 10 for every round your side wins, 50 for a win.</div>';
+    if (UI.shopView === 'detail') {
+      const sel = W.BOWS.find(b => b.id === UI.shopSel) || W.BOWS[0], own = PROFILE.owned.includes(sel.id), eq = PROFILE.equipped === sel.id, tier = W.tierOf(sel.price), tc = TIER_COL[tier];
+      return `<div class="pn shop"><div class="top"><button data-a="shopGrid">‹ All bows</button><h2 style="margin:0">Bow shop</h2><span>${coins}</span></div>
+        <div class="awrow" style="align-items:stretch"><div style="flex:1.3;min-width:260px"><canvas class="prev" id="awPrev" style="height:300px;border:3px solid ${tc}"></canvas><div class="muted" style="text-align:center;margin-top:4px">Drag to turn it</div></div>
+        <div class="col" style="flex:1;min-width:240px"><span class="tag" style="background:${tc};color:#10203a;align-self:flex-start">${tier.toUpperCase()}</span><b style="font-family:'Lilita One';font-size:28px;color:#ffd23a;line-height:1.05">${esc(sel.n)}</b>
+          <div><b>Look</b><div class="muted" style="font-size:14px">${esc(sel.d)}</div></div><div><b>Finisher</b><div class="muted" style="font-size:14px">${esc(sel.fin)}</div></div>
+          <div class="muted">Every bow shoots exactly the same. A bow changes the look, the arrow trail and the finisher.</div>
+          <div class="awrow">${eq ? '<span class="tag gold">EQUIPPED</span>' : own ? `<button class="go awbig" data-a="equip">Equip</button>` : `<button class="go awbig" data-a="buy" ${PROFILE.coins < sel.price ? 'disabled' : ''}>Buy · ◆ ${sel.price.toLocaleString()}</button>`}<button data-a="previewFin">▶ Preview finisher</button></div>
+          ${!own && PROFILE.coins < sel.price ? `<div class="muted">${(sel.price - PROFILE.coins).toLocaleString()} more coins needed.</div>${earn}` : ''}<div class="err">${esc(UI.shopErr || '')}</div></div></div></div>`;
+    }
+    return `<div class="pn shop"><div class="top"><h2 style="margin:0">Bow shop</h2><span>${coins}</span><button data-a="back">Back</button></div>${earn}
+      <div class="bowgrid" id="awBowGrid">${shopBows().map(b => { const tc = TIER_COL[W.tierOf(b.price)]; return `<button class="bowc" data-a="pickBow" data-v="${b.id}" style="border-color:${tc}"><img alt="" data-thumb="${b.id}" src="${UI.thumbs && UI.thumbs[b.id] || BLANK}"><b>${esc(b.n)}</b>${priceTag(b)}</button>`; }).join('')}</div></div>`;
+  }
+  const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  // the pictures in the grid: each bow drawn once on a small offscreen renderer, a few per frame, then kept
+  function makeThumbs() {
+    if (!window.THREE || !TEX.bark) return; UI.thumbs = UI.thumbs || {};
+    if (!UI.thumbR) { const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); r.setSize(192, 192, false); r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.1;
+      const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(28, 1, .05, 20); cam.position.set(0, 0, 3.4); sc.add(new THREE.HemisphereLight(LC('#f2f6ff'), LC('#5a5040'), 1.1)); const d = new THREE.DirectionalLight(LC('#fff2dc'), 1.8); d.position.set(1.2, 1.6, 2.4); sc.add(d); UI.thumbR = { r, sc, cam }; }
+    const T = UI.thumbR, todo = shopBows().filter(b => !UI.thumbs[b.id]); if (!todo.length || UI.thumbBusy) return; UI.thumbBusy = true;
+    const step = () => { for (let n = 0; n < 3 && todo.length; n++) { const b = todo.shift(), bow = makeBow(b.id); bow.g.rotation.set(.1, .55, -.62); bow.setDraw(.25, true); T.sc.add(bow.g); T.r.render(T.sc, T.cam); T.sc.remove(bow.g); UI.thumbs[b.id] = T.r.domElement.toDataURL('image/png'); const img = document.querySelector(`img[data-thumb="${b.id}"]`); if (img) img.src = UI.thumbs[b.id]; }
+      if (todo.length) requestAnimationFrame(step); else UI.thumbBusy = false; };
+    requestAnimationFrame(step);
   }
   // a little turntable for the bow in the shop
   function startShopPreview() {
     const c = document.getElementById('awPrev'); if (!c || !window.THREE || !TEX.bark) return;
-    if (!UI.prev) { const r = new THREE.WebGLRenderer({ antialias: true, alpha: true }); r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.ACESFilmicToneMapping; const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(32, 1, .05, 20); cam.position.set(0, 0, 2.6); sc.add(new THREE.HemisphereLight(LC('#e8eef2'), LC('#4a3f2a'), .9)); const d = new THREE.DirectionalLight(LC('#ffe2b6'), 1.6); d.position.set(1, 1.5, 2); sc.add(d); UI.prev = { r, sc, cam, rot: .6, drag: null, skin: '', bow: null }; }
+    if (!UI.prev) { const r = new THREE.WebGLRenderer({ antialias: true, alpha: true }); r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.ACESFilmicToneMapping; const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(32, 1, .05, 20); cam.position.set(0, 0, 3.2); sc.add(new THREE.HemisphereLight(LC('#e8eef2'), LC('#4a3f2a'), .9)); const d = new THREE.DirectionalLight(LC('#ffe2b6'), 1.6); d.position.set(1, 1.5, 2); sc.add(d); UI.prev = { r, sc, cam, rot: .6, drag: null, skin: '', bow: null }; }
     const P = UI.prev; c.replaceWith(P.r.domElement); P.r.domElement.className = 'prev'; P.r.domElement.id = 'awPrev'; const w = P.r.domElement.clientWidth || 360, h = 260; P.r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); P.r.setSize(w, h, false); P.cam.aspect = w / h; P.cam.updateProjectionMatrix();
     if (P.skin !== UI.shopSel) { if (P.bow) P.sc.remove(P.bow.g); P.bow = makeBow(UI.shopSel); P.bow.g.rotation.z = .12; P.sc.add(P.bow.g); P.skin = UI.shopSel; }
     const el = P.r.domElement; el.onpointerdown = e => { P.drag = e.clientX; el.setPointerCapture(e.pointerId); }; el.onpointermove = e => { if (P.drag != null) { P.rot += (e.clientX - P.drag) * .012; P.drag = e.clientX; } }; el.onpointerup = () => P.drag = null;

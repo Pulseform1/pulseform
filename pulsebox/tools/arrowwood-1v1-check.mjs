@@ -55,7 +55,9 @@ const results = await until(host, () => GAME.test.CL.results, null, 15000);
 ok(results && Math.max(...results.score) === 5, 'first to five round wins: the match ends', results && results.score.join('–'));
 ok(seen.finisherGuest >= 4, 'the eliminated archer sees the third-person finisher', seen.finisherGuest);
 const coinsH = results && results.coins[await T(host, () => GAME.test.CL.ids.online)], coinsG = results && results.coins[await T(guest, () => GAME.test.CL.ids.online)];
-ok(coinsH === 65 && coinsG === 40, 'coins for finishing (+40) and winning (+25)', `${coinsH} / ${coinsG}`);
+const idH = await T(host, () => GAME.test.CL.ids.online), rowsH = (results && results.coinRows || {})[idH] || [], sumH = rowsH.reduce((a, r) => a + r[1], 0);
+ok(coinsH === sumH && rowsH.some(r => /elimination/.test(r[0])) && rowsH.some(r => /5 rounds won/.test(r[0])) && rowsH.some(r => r[0] === 'Victory'), 'the winner is paid for playing, every elimination, every round won and the win', rowsH.map(r => r.join(' ')).join(', '));
+ok(coinsG >= 25 && coinsG < coinsH, 'the loser is paid less, but still paid', `${coinsH} / ${coinsG}`);
 const shown = await until(host, () => GAME.test.UI.open === 'results', null, 6000);
 ok(!!shown, 'the results screen opens with Rematch');
 if (OUT) await host.screenshot({ path: OUT + '/1v1-results.png' });
@@ -67,7 +69,7 @@ await guest.reload(); await guest.waitForTimeout(600); await guest.click('#bPlay
 const back = await until(guest, () => GAME.test.UI.open === 'results' && GAME.test.CL.results && GAME.test.CL.results.score.join('-'), null, 15000);
 ok(!!back, 'a player who refreshes on the results screen comes back to the results', back);
 await host.waitForTimeout(800); const gb2 = await bal(guest), hb2 = await bal(host);
-ok(gb2 === gb1 && hb2 === hb1 && hb1 - gb1 === 25, 'the coins were granted once (no second payout after the refresh)', `host ${hb1}->${hb2}, guest ${gb1}->${gb2}`);
+ok(gb2 === gb1 && hb2 === hb1, 'the coins were granted once (no second payout after the refresh)', `host ${hb1}->${hb2}, guest ${gb1}->${gb2}`);
 // rematch with the same teams
 await T(host, () => GAME.test.act('rematch')); await T(guest, () => GAME.test.act('rematch'));
 const again = await until(host, () => GAME.test.CL.phase === 'intro' || (GAME.test.CL.phase === 'live' && GAME.test.CL.score.join('') === '00'), null, 8000);

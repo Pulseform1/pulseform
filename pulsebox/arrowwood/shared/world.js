@@ -390,11 +390,48 @@ export function previewArc(o, v, maxDist = 14, n = 16, g = GRAV) {
   for (let k = 1; k <= n; k++) { const t = T * k / n, p = arrowAt(o, v, t, g); pts.push(p); }
   return pts;
 }
+// Bows: every bow shoots exactly the same; a bow changes the look, the arrows' trail and the finisher (what happens to the
+// archer it eliminates). Listed cheapest first; the price climbs as you go down the shop.
+// d: what it looks like; fin: its finisher.
+const B = (id, n, price, d, fin) => ({ id, n, price, d, fin });
 export const BOWS = [
-  { id: 'longbow', n: "Forester's Longbow", price: 0, d: 'Carved dark wood, a leather grip and a simple cord. The archer it finishes bursts into blocks that bounce away.' },
-  { id: 'cupid', n: "Cupid's Bow", price: 220, d: 'Rose-gold limbs, carved hearts and red ribbon. Giant hearts, a heart stamp, and a burst of petals.' },
-  { id: 'yardstick', n: 'The Yardstick', price: 260, d: 'Bent wooden rulers strapped together. A giant ruler swings down: THWACK.' },
-  { id: 'cashout', n: 'Cashout', price: 320, d: 'Limbs wrapped in stacks of bills, a metal grip. The victim bursts into a cloud of cash and coins.' },
+  B('longbow', "Forester's Longbow", 0, 'Carved dark wood, a leather grip and a simple cord.', 'The archer it finishes bursts into blocks that bounce away.'),
+  B('cupid', "Cupid's Bow", 150, 'Rose-gold limbs, carved hearts and red ribbon.', 'Hearts swirl, a giant heart stamps down, petals everywhere.'),
+  B('yardstick', 'The Yardstick', 200, 'Bent wooden rulers strapped together with tape.', 'A giant ruler swings down: THWACK. Flattened.'),
+  B('partypopper', 'Party Popper', 250, 'Candy-striped limbs with curly streamers and a party hat on each tip.', 'A giant party popper goes off and they burst into confetti.'),
+  B('pocketsize', 'Pocket Bow', 300, 'A chunky toy bow in bright plastic, with big round buttons.', 'They shrink smaller and smaller, squeak, and pop.'),
+  B('sugarrush', 'Sugar Rush', 350, 'Twisted red-and-white candy cane with a lollipop on each tip.', 'They rattle, then burst into a shower of sweets.'),
+  B('skyfloat', 'Skyfloat', 400, 'A string of shiny balloons in every colour, tied to a light frame.', 'A bunch of balloons lifts them into the sky, where they pop.'),
+  B('bitbow', '8-Bit Bow', 500, 'Built from chunky red and white pixels, like an old arcade game.', 'They break into pixels that float away: GAME OVER.'),
+  B('bubbleburst', 'Bubbleburst', 600, 'A chain of shimmering soap bubbles on a silver frame.', 'A giant bubble traps them and floats off until it pops.'),
+  B('blossom', 'Blossom', 700, 'A living green vine covered in pink flowers.', 'Flowers spring up and they turn into a blooming bush.'),
+  B('gloop', 'Gloop', 800, 'Wobbly lime-green slime that never quite sets.', 'They melt into a bubbling puddle of slime.'),
+  B('beekeeper', 'Beekeeper', 900, 'Honey-gold with black stripes, a honeycomb grip and a bee on each tip.', 'An angry swarm of bees chases them out of the fight.'),
+  B('origami', 'Origami', 1000, 'Folded white paper, crisp creases, a paper crane on each tip.', 'They fold flat into a paper plane and glide away.'),
+  B('cashout', 'Cashout', 1200, 'Limbs wrapped in stacks of bills, a metal grip.', 'They burst into a cloud of cash and spinning coins.'),
+  B('frostfall', 'Frostfall', 1400, 'Snow-white birch with a red knitted scarf and snowflake tips.', 'Snow piles up and they become a snowman with a carrot nose.'),
+  B('toonbow', 'Toon Bow', 1600, 'Cartoon red with thick black outlines and giant bolts.', 'A cartoon anvil drops on them: BONK, stars and all.'),
+  B('hexbow', 'Hexbow', 1800, 'Twisted purple wood, a bubbling potion bottle on each tip.', 'A puff of green smoke, and a frog hops away.'),
+  B('rootbind', 'Rootbind', 2000, 'Gnarled roots, thorns and fresh leaves.', 'Roots burst from the ground and drag them under.'),
+  B('dune', 'Dune', 2250, 'Carved sandstone with turquoise inlay and golden scarab tips.', 'They turn to sand and blow away on the wind.'),
+  B('frostbite', 'Frostbite', 2500, 'Clear blue ice crystal with frozen spikes on the tips.', 'A block of ice freezes them solid, then shatters.'),
+  B('emberwood', 'Emberwood', 2800, 'Charred black wood split by glowing embers, a flame on each tip.', 'They catch fire and crumble into ash.'),
+  B('gorgon', 'Gorgon', 3100, 'Green bronze scales, with a snake head rearing from each tip.', 'They turn to stone and crumble to rubble.'),
+  B('discofever', 'Disco Fever', 3400, 'Mirror-ball silver that throws rainbow sparkles, a disco ball on each tip.', 'A disco ball drops in, they dance, and vanish in glitter.'),
+  B('galeforce', 'Galeforce', 3750, 'Sleek white-and-teal wind blades with feathers.', 'A tornado spins up and whisks them into the sky.'),
+  B('skyrocket', 'Skyrocket', 4100, 'Red-and-white rocket tubes with fins on the tips.', 'They blast off into the sky and explode like a firework.'),
+  B('thunderclap', 'Thunderclap', 4500, 'Dark steel blades with yellow lightning running through them.', 'A bolt of lightning strikes them: ZAP.'),
+  B('spectral', 'Spectral', 5000, 'See-through ghostly blue that glows in the shade.', 'They fall, and their ghost floats up and away.'),
+  B('magmacore', 'Magmacore', 5500, 'Black volcanic rock with lava glowing through the cracks.', 'A pool of lava opens and they sink into it.'),
+  B('arrowstorm', 'Arrowstorm', 6000, 'Polished steel and gold with white wings on the tips.', 'A storm of arrows rains down on them from the sky.'),
+  B('abductor', 'Abductor', 6500, 'Silver alien tech with green lights and a tiny saucer on each tip.', 'A flying saucer beams them up and zooms off.'),
+  B('midas', 'Midas', 7000, 'Solid gold set with rubies.', 'They turn to a solid gold statue and topple over.'),
+  B('arcane', 'Arcane', 8000, 'Midnight blue with glowing runes and a crystal orb on each tip.', 'A rune circle lights up and they vanish in a storm of sparks.'),
+  B('starfall', 'Starfall', 9000, 'Deep space blue scattered with gold stars.', 'A meteor falls from the sky: KABOOM.'),
+  B('voidstring', 'Voidstring', 10000, 'Pure black with purple light and rings that never stop turning.', 'A black hole opens and swallows them whole.'),
 ];
+// rarity by price, for the shop's colours
+export const tierOf = price => price === 0 ? 'Starter' : price < 500 ? 'Common' : price < 1200 ? 'Rare' : price < 2500 ? 'Epic' : price < 4500 ? 'Legendary' : 'Mythic';
 export const BOW_IDS = BOWS.map(b => b.id);
-export const COINS = { start: 160, match: 40, win: 25, ffaTop: 25 };
+// coins for online matches: for playing, each elimination, each round your side wins, and the win itself
+export const COINS = { start: 150, match: 25, kill: 15, round: 10, win: 50, ffaTop: 50, maxMatch: 1000 };

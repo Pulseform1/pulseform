@@ -19,9 +19,11 @@ cut it back to a short arc.
   and hear roughly where you are when nobody is in sight. Bot matches pay no coins.
 - **Practice range**: straw dummies at 10, 20, 35 and 50 m (one walks), endless arrows. It runs the server's engine
   inside the page, so it plays exactly like a match. It also works while you wait in a room.
-- **Bows**: Forester's Longbow, Cupid's Bow, The Yardstick and Cashout. Every bow has identical stats; a skin changes
-  the look, the sound and the elimination finisher. Coins come from finishing matches (+40, +25 for a win or for
-  topping a free-for-all). New players start with 160.
+- **Bows**: 34 of them, from the Forester's Longbow (free) through Commons, Rares, Epics and Legendaries to Mythics at
+  up to 10,000 coins. Every bow has identical stats; a bow changes the look, the arrow trail and the elimination
+  finisher (each bow has its own: in 48-fx for the first four, 49-finishers for the rest). Coins come from online
+  matches: 25 for playing, 15 per elimination, 10 per round your side wins, 50 for a win (or for topping a free for
+  all). New players start with 150. The shop is a grid, five to a row, cheapest first; tap a bow for its detail page.
 
 Damage in rounds (unless one-shot rules are on) depends on where an arrow lands and how fast it was still flying. A
 full-draw headshot eliminates; strong body hits take two; weak shots and leg hits only wound. Arrows that hit someone

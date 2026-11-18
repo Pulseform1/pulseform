@@ -24,8 +24,17 @@ const grant = p => T(p, async () => (await fetch(GAME.test.SERVER.http + '/api/a
 await grant(A); await grant(A); await grant(D); await grant(D);
 const buy = async (p, bow) => { await T(p, () => GAME.test.act('shop')); await p.waitForTimeout(300); await T(p, b => GAME.test.act('pickBow', b), bow); const c0 = await T(p, async () => (await (await fetch(GAME.test.SERVER.http + '/api/arrowwood/profile', { headers: { 'x-aw-key': GAME.test.KEY } })).json()).coins); await T(p, () => GAME.test.act('buy')); return { got: await until(p, b => GAME.test.PROFILE.owned.includes(b) && GAME.test.PROFILE.equipped === b && GAME.test.PROFILE.coins, bow), c0 }; };
 const ba = await buy(A, 'cashout'), bd = await buy(D, 'yardstick');
-ok(ba.got && ba.c0 - ba.got === 320, 'Cashout bought for 320 coins and equipped', `${ba.c0} -> ${ba.got}`);
-ok(bd.got && bd.c0 - bd.got === 260, 'The Yardstick bought for 260 coins and equipped', `${bd.c0} -> ${bd.got}`);
+const priceOf = b => T(A, id => GAME.test.W.BOWS.find(q => q.id === id).price, b), pC = await priceOf('cashout'), pY = await priceOf('yardstick');
+ok(ba.got && ba.c0 - ba.got === pC, `Cashout bought for ${pC} coins and equipped`, `${ba.c0} -> ${ba.got}`);
+ok(bd.got && bd.c0 - bd.got === pY, `The Yardstick bought for ${pY} coins and equipped`, `${bd.c0} -> ${bd.got}`);
+// the grid: every bow, cheapest first, five to a row, each with a picture, a name and a price
+await T(A, () => GAME.test.act('shopGrid')); await A.waitForTimeout(400);
+const grid = await T(A, () => { const cards = [...document.querySelectorAll('#awBowGrid .bowc')], g = document.getElementById('awBowGrid'), cols = getComputedStyle(g).gridTemplateColumns.split(' ').length; return { n: cards.length, cols, ids: cards.map(c => c.dataset.v), imgs: cards.every(c => c.querySelector('img')) }; });
+const sorted = await T(A, ids => ids.map(id => GAME.test.W.BOWS.find(b => b.id === id).price).every((p, i, a) => !i || a[i - 1] <= p), grid.ids);
+ok(grid.n === 34 && grid.cols === 5 && grid.imgs && sorted, 'the shop grid shows all 34 bows, five to a row, cheapest first, each with a picture', `${grid.n} bows, ${grid.cols} per row`);
+for (let i = 0; i < 40 && !(await T(A, () => Object.keys(GAME.test.UI.thumbs || {}).length >= 34)); i++) await A.waitForTimeout(250);
+ok(await T(A, () => [...document.querySelectorAll('#awBowGrid img')].every(i => i.src.startsWith('data:image/png'))), 'every card has its bow\'s picture');
+await T(A, () => GAME.test.act('pickBow', 'cashout')); await A.waitForTimeout(400);
 const shopShown = await T(A, () => !!document.querySelector('#aw canvas.prev') && /EQUIPPED/.test(document.getElementById('aw').textContent));
 ok(shopShown, 'the shop shows the 3D preview, the price/balance and EQUIPPED');
 // reload: the server still has it

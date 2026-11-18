@@ -7,6 +7,46 @@
     yardstick: { L: 1.46, string: '#cdb88a', fletch: ['#e8c35a', '#1a1206', '#e8c35a'], head: '#2a2a2a', shaft: '#e8c35a' },
     cashout: { L: 1.42, string: '#e0c050', fletch: ['#6aa35a', '#6aa35a', '#d4af37'], head: '#d4af37', shaft: '#3d6b3a' },
   };
+  /* The other bows are built from a recipe: kind (the limb shape), colours (col, and col2 for stripes), finish (metal, rough,
+     opacity, glow), deco (something on every other segment), tip (what sits on each end), grip and string colours, and the
+     arrow and trail colours (filled in from the recipe when not given). */
+  const GEN = {
+    partypopper: { kind: 'round', col: '#ff5fa2', col2: '#ffd23a', stripes: 1, deco: 'streamer', decoCol: '#4fc3ff', tip: 'hat', tipCol: '#7b5cff', grip: '#ffffff', string: '#ffffff' },
+    pocketsize: { kind: 'tube', th: 1.5, col: '#2fb5ff', deco: 'button', decoCol: '#ff3b3b', tip: 'button', tipCol: '#3bd16f', grip: '#ff9f1a', string: '#333333', rough: .35 },
+    sugarrush: { kind: 'twist', col: '#ffffff', col2: '#e8202a', stripes: 1, tip: 'lolly', tipCol: '#ff5fa2', grip: '#e8202a', string: '#ffffff', rough: .3 },
+    skyfloat: { kind: 'beads', col: '#ff4d6d', palette: ['#ff4d6d', '#ffd23a', '#4fc3ff', '#7ee36b', '#b06bff', '#ff9f1a'], tip: 'balloon', tipCol: '#ff4d6d', grip: '#f4f4f4', string: '#ffffff', rough: .2 },
+    bitbow: { kind: 'blocks', col: '#e83a3a', col2: '#ffffff', stripes: 1, tip: 'cube', tipCol: '#ffd23a', grip: '#333333', string: '#ffffff', flat: 1 },
+    bubbleburst: { kind: 'beads', col: '#bfe9ff', opacity: .45, rough: .05, metal: .2, tip: 'orb', tipCol: '#e6f7ff', grip: '#c0c6cc', string: '#e6f7ff', iri: 1 },
+    blossom: { kind: 'twist', col: '#4caf3c', deco: 'flower', decoCol: '#ff7eb6', tip: 'flower', tipCol: '#ff7eb6', grip: '#6b4a2c', string: '#c8e6a0' },
+    gloop: { kind: 'beads', col: '#8fe03a', opacity: .78, glow: '#2f6a00', rough: .15, tip: 'drip', tipCol: '#8fe03a', grip: '#3a7a1a', string: '#c8ff8a' },
+    beekeeper: { kind: 'round', th: 1.2, col: '#ffc21a', col2: '#1a1a1a', stripes: 1, tip: 'bee', tipCol: '#ffc21a', grip: '#e09a1a', string: '#3a2a10' },
+    origami: { kind: 'facet', col: '#f7f5ef', col2: '#e2ddd0', stripes: 1, tip: 'crane', tipCol: '#ff6b6b', grip: '#d9d4c7', string: '#9a948a', flat: 1 },
+    frostfall: { kind: 'round', col: '#f3f1ea', deco: 'birch', decoCol: '#2a2a2a', tip: 'flake', tipCol: '#dff4ff', grip: '#c8202a', string: '#e6f4ff', scarf: '#c8202a' },
+    toonbow: { kind: 'round', th: 1.6, col: '#ff3b30', outline: 1, deco: 'nut', decoCol: '#d0d0d0', tip: 'ball', tipCol: '#ffd23a', grip: '#2a2a2a', string: '#111111', rough: .4 },
+    hexbow: { kind: 'twist', col: '#5b2a86', col2: '#3a1a5a', tip: 'bottle', tipCol: '#5cff7a', grip: '#2a1a3a', string: '#b9ff9a', glowTip: 1 },
+    rootbind: { kind: 'twist', col: '#6b4a2c', deco: 'thorn', decoCol: '#3a2a1a', tip: 'leaf', tipCol: '#5cb83a', grip: '#4a3020', string: '#8aa060' },
+    dune: { kind: 'blade', col: '#d8b97a', deco: 'inlay', decoCol: '#2fc4b2', tip: 'scarab', tipCol: '#e8b730', grip: '#8a5a2a', string: '#f0e0b0', metalTip: 1 },
+    frostbite: { kind: 'crystal', col: '#9fdcff', opacity: .72, glow: '#1a5a88', rough: .08, deco: 'shard', decoCol: '#dff6ff', tip: 'spike', tipCol: '#dff6ff', grip: '#6fb6e0', string: '#e6f8ff', flat: 1 },
+    emberwood: { kind: 'round', col: '#1e1a18', deco: 'ember', decoCol: '#ff6a1a', tip: 'flame', tipCol: '#ff8a1a', grip: '#3a2a20', string: '#ffb070', glowTip: 1 },
+    gorgon: { kind: 'round', col: '#3f7a5a', col2: '#6f8a3a', stripes: 1, metal: .45, rough: .45, deco: 'scale', decoCol: '#2c5a40', tip: 'snake', tipCol: '#4f9a6a', grip: '#8a6a2a', string: '#c8d8a0' },
+    discofever: { kind: 'facet', col: '#d9dde3', metal: 1, rough: .12, deco: 'gem', decoCol: '#ff5ac8', rainbow: 1, tip: 'disco', tipCol: '#e6e9ee', grip: '#9b5cff', string: '#ff9be6', flat: 1 },
+    galeforce: { kind: 'blade', col: '#f4f8fa', col2: '#3fc4c4', stripes: 1, deco: 'feather', decoCol: '#ffffff', tip: 'wing', tipCol: '#ffffff', grip: '#2a9a9a', string: '#bff4f0' },
+    skyrocket: { kind: 'tube', col: '#e8202a', col2: '#ffffff', stripes: 1, metal: .5, rough: .3, tip: 'fin', tipCol: '#e8202a', grip: '#9aa3ad', string: '#dddddd' },
+    thunderclap: { kind: 'blade', col: '#2a2f38', metal: .8, rough: .3, deco: 'bolt', decoCol: '#ffe23a', tip: 'bolt', tipCol: '#ffe23a', grip: '#14171c', string: '#fff59a', glowTip: 1 },
+    spectral: { kind: 'round', col: '#8fe6ff', opacity: .42, glow: '#3fbfff', tip: 'wisp', tipCol: '#c8f4ff', grip: '#5fa8c8', string: '#c8f4ff', glowTip: 1 },
+    magmacore: { kind: 'blocks', col: '#1a1614', col2: '#2a2220', stripes: 1, deco: 'ember', decoCol: '#ff5a1a', tip: 'flame', tipCol: '#ff7a1a', grip: '#3a1a10', string: '#ff9a50', glowTip: 1, flat: 1 },
+    arrowstorm: { kind: 'blade', col: '#c8ced6', metal: 1, rough: .22, deco: 'ring', decoCol: '#e3b341', tip: 'wing', tipCol: '#ffffff', grip: '#e3b341', string: '#f2e6c0' },
+    abductor: { kind: 'tube', col: '#c9ced6', metal: 1, rough: .2, deco: 'light', decoCol: '#5cff7a', tip: 'saucer', tipCol: '#9aa3ad', grip: '#5cff7a', string: '#9affb0', glowTip: 1 },
+    midas: { kind: 'round', th: 1.15, col: '#f2c230', metal: 1, rough: .18, deco: 'gem', decoCol: '#d0102a', tip: 'gem', tipCol: '#d0102a', grip: '#b8902a', string: '#ffe680' },
+    arcane: { kind: 'round', col: '#18205a', rough: .4, deco: 'rune', decoCol: '#4fe0ff', tip: 'orb', tipCol: '#7fe8ff', grip: '#0c1030', string: '#9ff0ff', glowTip: 1 },
+    starfall: { kind: 'round', col: '#0f1a4a', rough: .35, deco: 'star', decoCol: '#ffd23a', tip: 'star', tipCol: '#ffd23a', grip: '#1a2a6a', string: '#ffe8a0', glowTip: 1 },
+    voidstring: { kind: 'crystal', col: '#0a0810', glow: '#3a1060', rough: .2, metal: .4, deco: 'vring', decoCol: '#b46bff', tip: 'vring', tipCol: '#b46bff', grip: '#1a1022', string: '#d29bff', glowTip: 1, flat: 1 },
+  };
+  for (const [k, r] of Object.entries(GEN)) {   // fill in what every bow needs: length, string, arrow colours, trail
+    const c2 = r.col2 || r.decoCol || r.tipCol || r.col;
+    BOW_LOOK[k] = Object.assign({ L: 1.48, gen: 1, fletch: [r.tipCol || r.col, r.col, c2], head: r.metalTip ? '#e8b730' : r.tipCol || '#8d9196', shaft: r.kind === 'blocks' ? r.col : '#9a7b52' }, r);
+  }
+  const trailOf = skin => { const L = BOW_LOOK[skin] || BOW_LOOK.longbow; const c = new THREE.Color(L.trailCol || L.decoCol || L.tipCol || L.col || '#fff0c0'); return [c.r * .7 + .3, c.g * .7 + .3, c.b * .7 + .3]; };
   const BMAT = {}; let _UP, _vq, _vu, _vd;
   LAZY.push(() => { _UP = new THREE.Vector3(0, 1, 0); _vq = new THREE.Quaternion(); _vu = new THREE.Vector3(); _vd = new THREE.Vector3(); });
   const bmat = (k, o) => BMAT[k] || (BMAT[k] = std(o));
@@ -30,6 +70,7 @@
   function makeArrowMesh(skin) { const m = new THREE.Mesh(arrowGeo(skin), arrowMat()); m.castShadow = true; return m; }
 
   function makeBow(skin) {
+    if (BOW_LOOK[skin] && BOW_LOOK[skin].gen) return makeGenBow(skin, BOW_LOOK[skin]);
     const look = BOW_LOOK[skin] || BOW_LOOK.longbow, g = new THREE.Group(), N = 6, half = look.L / 2, grip = .07, segL = (half - grip) / N;
     const rest = [.02, .04, .07, .1, .14, .2], flex = [.05, .08, .12, .15, .19, .24];   // how each segment bends at rest and at full draw
     const limbMat = skin === 'cupid' ? bmat('rose', { color: LC('#e7a68e'), metalness: .85, roughness: .26 }) : skin === 'yardstick' ? bmat('ruler', { map: TEX.ruler, roughness: .6 }) : skin === 'cashout' ? bmat('bills', { map: TEX.bill, roughness: .8 }) : bmat('wood', { map: TEX.bowWood, roughness: .5, color: LC('#7a5238') });
@@ -80,6 +121,123 @@
     B.setDraw(0, true);
     return B;
   }
+
+
+  // ---- recipe bows: the same frame, joints and string as every bow (so draw and aim match), dressed by the recipe
+  function makeGenBow(skin, R) {
+    const g = new THREE.Group(), N = 6, half = R.L / 2, grip = .07, segL = (half - grip) / N, th = R.th || 1;
+    const rest = [.02, .04, .07, .1, .14, .2], flex = [.05, .08, .12, .15, .19, .24];
+    const C = c => LC(c), spin = [];
+    const M = (key, o) => bmat(skin + key, Object.assign({ roughness: R.rough != null ? R.rough : .5, metalness: R.metal || 0, flatShading: !!R.flat }, o));
+    const glowM = (key, col, k = 1) => bmat(skin + key, { color: C(col), emissive: C(col), emissiveIntensity: .9 * k, roughness: .4 });
+    const limbM = k => R.palette ? M('p' + (k % R.palette.length), { color: C(R.palette[k % R.palette.length]) }) : R.stripes && k % 2 ? M('l2', { color: C(R.col2) }) : M('l1', { color: C(R.col), transparent: R.opacity != null, opacity: R.opacity != null ? R.opacity : 1, emissive: R.glow ? C(R.glow) : C('#000000'), emissiveIntensity: R.glow ? .8 : 0 });
+    const segGeo = k => {
+      const w0 = lp(1, .6, k / N), w1 = lp(1, .6, (k + 1) / N); let gm;
+      if (R.kind === 'blocks') gm = new THREE.BoxGeometry(.05 * w0 * th, segL * .94, .05 * w0 * th);
+      else if (R.kind === 'tube') gm = new THREE.CylinderGeometry(.02 * w1 * th, .02 * w0 * th, segL * 1.02, 12);
+      else if (R.kind === 'crystal') { gm = new THREE.CylinderGeometry(.012 * w1, .03 * w0, segL * 1.06, 5); }
+      else if (R.kind === 'blade') { gm = new THREE.CylinderGeometry(.008 * w1, .012 * w0, segL * 1.04, 4); gm.scale(5 * w0, 1, 1); }
+      else if (R.kind === 'facet') { gm = new THREE.CylinderGeometry(.018 * w1, .028 * w0, segL * 1.04, 3); }
+      else if (R.kind === 'beads') { gm = new THREE.SphereGeometry(segL * .55 * lp(1, .75, k / N), 14, 10); gm.scale(1, 1.15, 1); }
+      else if (R.kind === 'twist') { const parts = [new THREE.CylinderGeometry(.013 * w1 * th, .017 * w0 * th, segL * 1.04, 8)]; for (let j = 0; j < 4; j++) { const a = (k * 4 + j) * 1.3, b = new THREE.SphereGeometry(.009 * w0 * th, 6, 5); b.translate(Math.cos(a) * .014 * w0, (j / 4 - .5) * segL, Math.sin(a) * .014 * w0); parts.push(b); } gm = merge(parts); }
+      else { gm = new THREE.CylinderGeometry(.017 * w1 * th, .017 * w0 * th, segL * 1.04, 10); gm.scale(1, 1, .78); }
+      gm.translate(0, segL / 2, 0); return gm;
+    };
+    const geos = Array.from({ length: N }, (_, k) => segGeo(k));
+    // decorations on a segment (in the segment's own frame: +Y along the limb, -Z faces the target)
+    const deco = (node, k, dir) => {
+      const y = segL * .5 * dir, add = (m, x, yy, z) => { m.position.set(x, yy, z); node.add(m); return m; }, dc = R.decoCol || '#ffffff';
+      switch (R.deco) {
+        case 'streamer': for (let j = 0; j < 5; j++) { const a = j * 1.2 + k; add(new THREE.Mesh(new THREE.SphereGeometry(.007, 5, 4), M('st' + (j % 3), { color: C(['#4fc3ff', '#ffd23a', '#7ee36b'][j % 3]) })), Math.cos(a) * .028, y + (j - 2) * .012 * dir, Math.sin(a) * .028); } break;
+        case 'button': add(new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .01, 14), M('btn', { color: C(dc), roughness: .3 })), 0, y, -.03).rotation.x = Math.PI / 2; break;
+        case 'flower': { const fl = new THREE.Group(); for (let j = 0; j < 5; j++) { const pt = new THREE.Mesh(new THREE.SphereGeometry(.009, 6, 4), M('pet', { color: C(dc) })); pt.position.set(Math.cos(j * 1.256) * .012, Math.sin(j * 1.256) * .012, 0); fl.add(pt); } fl.add(new THREE.Mesh(new THREE.SphereGeometry(.007, 6, 4), M('pc', { color: C('#ffd23a') }))); add(fl, k % 4 ? .022 : -.022, y, -.012); } break;
+        case 'birch': add(new THREE.Mesh(new THREE.BoxGeometry(.036, .006, .03), M('bir', { color: C(dc) })), 0, y, 0); break;
+        case 'nut': { const n = add(new THREE.Mesh(new THREE.CylinderGeometry(.014, .014, .012, 6), M('nut', { color: C(dc), metalness: .9, roughness: .3 })), 0, y, -.026); n.rotation.x = Math.PI / 2; } break;
+        case 'thorn': for (const sx of [-1, 1]) { const t = add(new THREE.Mesh(new THREE.ConeGeometry(.005, .025, 5), M('thn', { color: C(dc) })), sx * .018, y, 0); t.rotation.z = -sx * Math.PI / 2; } if (k % 2 === 0) add(new THREE.Mesh(new THREE.SphereGeometry(.013, 6, 4), M('lf', { color: C('#5cb83a') })), .02, y + .02 * dir, -.01).scale.set(1.6, .5, 1); break;
+        case 'inlay': add(new THREE.Mesh(new THREE.BoxGeometry(.03, segL * .6, .004), M('inl', { color: C(dc), metalness: .3, roughness: .3 })), 0, y, -.008); break;
+        case 'shard': { const sh = add(new THREE.Mesh(new THREE.ConeGeometry(.008, .045, 4), M('shd', { color: C(dc), transparent: true, opacity: .8, roughness: .05 })), .02, y, -.01); sh.rotation.z = -1.1; } break;
+        case 'ember': add(new THREE.Mesh(new THREE.BoxGeometry(.006, segL * .7, .036), glowM('emb', dc)), 0, y, 0).rotation.y = .4; break;
+        case 'scale': for (let j = 0; j < 3; j++) add(new THREE.Mesh(new THREE.SphereGeometry(.01, 6, 4), M('scl', { color: C(dc), metalness: .5, roughness: .4 })), (j - 1) * .012, y, -.016).scale.set(1, 1, .4); break;
+        case 'gem': add(new THREE.Mesh(new THREE.OctahedronGeometry(.012), R.rainbow ? glowM('gm' + (k % 3), ['#ff5ac8', '#4fc3ff', '#ffd23a'][k % 3], .7) : M('gem', { color: C(dc), metalness: .3, roughness: .1, emissive: C(dc), emissiveIntensity: .25 })), 0, y, -.024); break;
+        case 'feather': { const f = add(new THREE.Mesh(new THREE.PlaneGeometry(.02, .07), M('fth', { color: C(dc), side: THREE.DoubleSide })), .03, y, 0); f.rotation.z = -.9; } break;
+        case 'bolt': { const b = add(new THREE.Mesh(new THREE.BoxGeometry(.008, segL * .8, .02), glowM('blt', dc)), 0, y, -.004); b.rotation.z = (k % 2 ? .35 : -.35); } break;
+        case 'ring': add(new THREE.Mesh(new THREE.TorusGeometry(.026, .005, 6, 16), M('rng', { color: C(dc), metalness: 1, roughness: .2 })), 0, y, 0).rotation.x = Math.PI / 2; break;
+        case 'light': add(new THREE.Mesh(new THREE.SphereGeometry(.008, 8, 6), glowM('lgt', dc, 1.4)), 0, y, -.02); break;
+        case 'rune': add(new THREE.Mesh(new THREE.TorusGeometry(.021, .003, 4, 16), glowM('run', dc, 1.2)), 0, y, 0).rotation.x = Math.PI / 2; break;
+        case 'star': add(new THREE.Mesh(starGeo(.014, .004), glowM('str', dc, .8)), 0, y, -.02); break;
+        case 'vring': { const r = add(new THREE.Mesh(new THREE.TorusGeometry(.03, .003, 4, 20), glowM('vr', dc, 1.3)), 0, y, 0); r.rotation.x = Math.PI / 2; spin.push([r, k % 2 ? 2.2 : -1.7]); } break;
+      }
+    };
+    // what sits on each end of the bow
+    const tipObj = (tip, dir) => {
+      const t = new THREE.Group(), tc = R.tipCol || R.col, tm = R.glowTip ? glowM('tip', tc) : M('tip', { color: C(tc) }), add = (m, x = 0, y = 0, z = 0) => { m.position.set(x, y, z); t.add(m); return m; };
+      switch (tip) {
+        case 'hat': { const h = add(new THREE.Mesh(new THREE.ConeGeometry(.03, .08, 10), tm), 0, .04 * dir); if (dir < 0) h.rotation.z = Math.PI; add(new THREE.Mesh(new THREE.SphereGeometry(.012, 8, 6), M('pom', { color: C('#ffffff') })), 0, .085 * dir); } break;
+        case 'button': add(new THREE.Mesh(new THREE.SphereGeometry(.032, 14, 10), tm)).scale.set(1, .7, 1); break;
+        case 'lolly': { const d = add(new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, .012, 20), tm), 0, .05 * dir); d.rotation.x = Math.PI / 2; add(new THREE.Mesh(new THREE.TorusGeometry(.028, .006, 6, 18), M('swl', { color: C('#ffffff') })), 0, .05 * dir, -.007); } break;
+        case 'balloon': { const b = add(new THREE.Mesh(new THREE.SphereGeometry(.05, 14, 10), M('bal', { color: C(tc), roughness: .2 })), 0, .07 * dir); b.scale.set(1, 1.15, 1); add(new THREE.Mesh(new THREE.ConeGeometry(.008, .014, 6), M('bal', {})), 0, .018 * dir); } break;
+        case 'cube': add(new THREE.Mesh(new THREE.BoxGeometry(.05, .05, .05), tm), 0, .03 * dir); break;
+        case 'orb': add(new THREE.Mesh(new THREE.SphereGeometry(.035, 16, 12), R.glowTip ? tm : M('orb', { color: C(tc), transparent: true, opacity: .55, roughness: .05, metalness: .3 })), 0, .035 * dir); break;
+        case 'flower': { for (let j = 0; j < 6; j++) add(new THREE.Mesh(new THREE.SphereGeometry(.016, 8, 6), tm), Math.cos(j * 1.05) * .022, .03 * dir + Math.sin(j * 1.05) * .022, 0).scale.set(1, 1, .5); add(new THREE.Mesh(new THREE.SphereGeometry(.012, 8, 6), M('pc', { color: C('#ffd23a') })), 0, .03 * dir); } break;
+        case 'drip': add(new THREE.Mesh(new THREE.SphereGeometry(.03, 12, 10), M('l1', {})), 0, .03 * dir).scale.set(1, 1.5, 1); break;
+        case 'bee': { add(new THREE.Mesh(new THREE.SphereGeometry(.026, 12, 8), M('l1', {})), 0, .03 * dir).scale.set(1, 1.4, 1); for (const sx of [-1, 1]) { const w = add(new THREE.Mesh(new THREE.SphereGeometry(.02, 8, 6), M('wng', { color: C('#e8f6ff'), transparent: true, opacity: .6 })), sx * .028, .035 * dir, .01); w.scale.set(1, .4, .7); } } break;
+        case 'crane': { const b = add(new THREE.Mesh(new THREE.TetrahedronGeometry(.03), tm), 0, .03 * dir); b.rotation.set(.6, .8, 0); for (const sx of [-1, 1]) { const w = add(new THREE.Mesh(new THREE.PlaneGeometry(.05, .025), M('pw', { color: C('#ffffff'), side: THREE.DoubleSide, flatShading: true })), sx * .03, .035 * dir, 0); w.rotation.set(0, sx * .5, sx * .4); } } break;
+        case 'flake': for (let j = 0; j < 3; j++) add(new THREE.Mesh(new THREE.BoxGeometry(.075, .008, .008), M('flk', { color: C(tc), emissive: C('#3a6a8a'), emissiveIntensity: .3 })), 0, .035 * dir).rotation.z = j * Math.PI / 3; break;
+        case 'ball': add(new THREE.Mesh(new THREE.SphereGeometry(.035, 14, 10), tm), 0, .03 * dir); break;
+        case 'bottle': { add(new THREE.Mesh(new THREE.SphereGeometry(.03, 12, 10), M('btl', { color: C('#c8f0ff'), transparent: true, opacity: .45, roughness: .05 })), 0, .045 * dir); add(new THREE.Mesh(new THREE.SphereGeometry(.024, 12, 10), tm), 0, .042 * dir); add(new THREE.Mesh(new THREE.CylinderGeometry(.009, .009, .028, 8), M('crk', { color: C('#8a5a2a') })), 0, .08 * dir); } break;
+        case 'leaf': { const l = add(new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), tm), 0, .035 * dir); l.scale.set(.6, 1.4, .2); } break;
+        case 'scarab': { add(new THREE.Mesh(new THREE.SphereGeometry(.028, 12, 8), M('scb', { color: C(tc), metalness: 1, roughness: .25 })), 0, .03 * dir).scale.set(1, 1.3, .55); add(new THREE.Mesh(new THREE.SphereGeometry(.01, 8, 6), M('scg', { color: C('#2fc4b2'), metalness: .3 })), 0, .03 * dir, -.015); } break;
+        case 'spike': for (let j = 0; j < 3; j++) { const c = add(new THREE.Mesh(new THREE.ConeGeometry(.012, .07 - j * .015, 5), M('spk', { color: C(tc), transparent: true, opacity: .85, roughness: .05, flatShading: true })), (j - 1) * .014, .04 * dir, 0); c.rotation.z = (j - 1) * -.35 * dir; if (dir < 0) c.rotation.x = Math.PI; } break;
+        case 'flame': { const f1 = add(new THREE.Mesh(new THREE.ConeGeometry(.026, .08, 10), tm), 0, .045 * dir); const f2 = add(new THREE.Mesh(new THREE.ConeGeometry(.014, .05, 8), glowM('fl2', '#fff0a0', 1.2)), 0, .04 * dir, -.004); if (dir < 0) { f1.rotation.z = f2.rotation.z = Math.PI; } spin.push([f1, 0, 'flick']); } break;
+        case 'snake': { const h = add(new THREE.Mesh(new THREE.ConeGeometry(.022, .06, 8), tm), 0, .03 * dir, -.02); h.rotation.x = dir > 0 ? -1.1 : -2.0; for (const sx of [-1, 1]) add(new THREE.Mesh(new THREE.SphereGeometry(.005, 6, 4), glowM('eye', '#ffd23a', 1.2)), sx * .01, .035 * dir, -.035); } break;
+        case 'disco': add(new THREE.Mesh(new THREE.IcosahedronGeometry(.035, 1), M('dsc', { color: C('#e6e9ee'), metalness: 1, roughness: .05, flatShading: true })), 0, .035 * dir); break;
+        case 'wing': for (const sx of [-1, 1]) { const w = add(new THREE.Mesh(new THREE.PlaneGeometry(.09, .035), M('wg', { color: C(tc), side: THREE.DoubleSide })), sx * .045, .02 * dir, .01); w.rotation.z = sx * .5 * dir; } break;
+        case 'fin': for (let j = 0; j < 3; j++) { const f = add(new THREE.Mesh(new THREE.BoxGeometry(.004, .05, .035), tm), 0, .01 * dir); f.rotation.y = j * TAU / 3; f.translateZ(.024); } add(new THREE.Mesh(new THREE.ConeGeometry(.02, .045, 12), M('ncn', { color: C('#ffffff'), metalness: .4 })), 0, .045 * dir).rotation.z = dir < 0 ? Math.PI : 0; break;
+        case 'bolt': { const b = add(new THREE.Mesh(new THREE.BoxGeometry(.012, .06, .03), tm), 0, .03 * dir); b.rotation.z = .5; const b2 = add(new THREE.Mesh(new THREE.BoxGeometry(.012, .04, .03), tm), .012, .065 * dir); b2.rotation.z = -.4; } break;
+        case 'wisp': add(new THREE.Mesh(new THREE.SphereGeometry(.03, 12, 10), M('wsp', { color: C(tc), transparent: true, opacity: .45, emissive: C(tc), emissiveIntensity: .8 })), 0, .04 * dir).scale.set(1, 1.6, 1); break;
+        case 'saucer': { add(new THREE.Mesh(new THREE.SphereGeometry(.04, 16, 8), M('sau', { color: C(tc), metalness: 1, roughness: .2 })), 0, .03 * dir).scale.set(1, .3, 1); add(new THREE.Mesh(new THREE.SphereGeometry(.018, 12, 8, 0, TAU, 0, Math.PI / 2), M('dom', { color: C('#9affb0'), transparent: true, opacity: .6, emissive: C('#2a8a3a') })), 0, .036 * dir); } break;
+        case 'gem': add(new THREE.Mesh(new THREE.OctahedronGeometry(.03), M('tgm', { color: C(tc), metalness: .3, roughness: .05, emissive: C(tc), emissiveIntensity: .3 })), 0, .035 * dir).scale.set(1, 1.4, 1); break;
+        case 'star': add(new THREE.Mesh(starGeo(.035, .01), tm), 0, .035 * dir); break;
+        case 'vring': { add(new THREE.Mesh(new THREE.SphereGeometry(.018, 12, 10), M('blk', { color: C('#050308'), roughness: .1, metalness: .6 })), 0, .03 * dir); const r = add(new THREE.Mesh(new THREE.TorusGeometry(.035, .004, 4, 24), glowM('vr', R.decoCol, 1.3)), 0, .03 * dir); spin.push([r, 3]); } break;
+      }
+      return t;
+    };
+    const limbs = [1, -1].map(dir => {
+      const base = new THREE.Group(); base.position.y = grip * dir; g.add(base); let parent = base; const nodes = [];
+      for (let k = 0; k < N; k++) {
+        const node = new THREE.Group(); if (k) node.position.y = segL * dir; parent.add(node);
+        const m = new THREE.Mesh(geos[k], limbM(k)); m.castShadow = true; if (dir < 0) m.scale.y = -1; node.add(m);
+        if (R.outline) { const o = new THREE.Mesh(geos[k], bmat('outline', { color: LC('#111111'), side: THREE.BackSide })); o.scale.set(1.35, dir < 0 ? -1.04 : 1.04, 1.35); node.add(o); }
+        if (R.deco && (k % 2 === 1 || R.deco === 'ember' || R.deco === 'rune' || R.deco === 'streamer')) deco(node, k, dir);
+        parent = node; nodes.push(node);
+      }
+      const tip = new THREE.Group(); tip.position.y = segL * dir; parent.add(tip); tip.add(tipObj(R.tip, dir));
+      return { dir, nodes };
+    });
+    // the grip: wrapped in its own colour, with bands; a scarf for Frostfall
+    const gm = new THREE.Mesh(new THREE.CylinderGeometry(.022 * Math.max(1, th * .85), .022 * Math.max(1, th * .85), grip * 2 + .02, 12), M('grip', { color: C(R.grip || '#3b2416'), metalness: R.metal ? .4 : 0, emissive: R.glowTip ? C(R.grip) : C('#000'), emissiveIntensity: R.glowTip ? .25 : 0 })); gm.castShadow = true; g.add(gm);
+    for (const y of [-grip, grip]) { const ring = new THREE.Mesh(new THREE.TorusGeometry(.024 * Math.max(1, th * .85), .004, 6, 14), M('band', { color: C(R.decoCol || R.tipCol || '#d8b94a'), metalness: .6, roughness: .3 })); ring.rotation.x = Math.PI / 2; ring.position.y = y; g.add(ring); }
+    if (R.scarf) { const sc = new THREE.Mesh(new THREE.TorusGeometry(.03, .012, 8, 16), M('scf', { color: C(R.scarf), roughness: .9 })); sc.rotation.x = Math.PI / 2; sc.position.y = .05; g.add(sc); const tail = new THREE.Mesh(new THREE.BoxGeometry(.03, .14, .008), M('scf', {})); tail.position.set(.02, -.02, .03); tail.rotation.z = .3; g.add(tail); }
+    const strMat = bmat('str' + skin, { color: LC(R.string || '#d9cfb4'), roughness: .6, emissive: R.glowTip ? LC(R.string || '#fff') : LC('#000'), emissiveIntensity: R.glowTip ? .4 : 0 });
+    const strs = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.CylinderGeometry(.0018, .0018, 1, 4), strMat); g.add(m); return m; });
+    const arrow = makeArrowMesh(skin); g.add(arrow);
+    const tipYZ = (dir, d) => { let y = grip * dir, z = 0, a = 0; for (let k = 0; k < N; k++) { a += rest[k] + d * flex[k]; y += Math.cos(a) * segL * dir; z += Math.sin(a) * segL; } return [y, z]; };
+    const B = { g, skin, draw: 0, nockZ: 0, arrow, limbs,
+      setDraw(d, nocked) {
+        d = cl(d, 0, 1); B.draw = d; const tt = performance.now() / 1000;
+        for (const L of limbs) L.nodes.forEach((n, k) => n.rotation.x = (rest[k] + d * flex[k]) * L.dir);
+        const [yu, zu] = tipYZ(1, d), [yl, zl] = tipYZ(-1, d), nz = zu + d * .6; B.nockZ = nz;
+        const set = (m, ay, az) => { const dy = -ay, dz = nz - az, L = Math.hypot(dy, dz); m.position.set(0, ay + dy / 2, az + dz / 2); m.scale.set(1, L, 1); m.quaternion.setFromUnitVectors(_UP, _vd.set(0, dy / L, dz / L)); };
+        set(strs[0], yu, zu); set(strs[1], yl, zl);
+        arrow.visible = !!nocked; arrow.position.set(-.012, 0, nz - .79);
+        for (const [m, sp, kind] of spin) { if (kind === 'flick') { const f = 1 + Math.sin(tt * 17 + m.id) * .12; m.scale.set(f, 1 + Math.sin(tt * 13) * .15, f); } else m.rotation.z = tt * sp; }
+      },
+      nockLocal(v) { return v.set(0, 0, B.nockZ); },
+    };
+    B.setDraw(0, true);
+    return B;
+  }
+  function starGeo(r, d) { const s = new THREE.Shape(); for (let k = 0; k < 10; k++) { const a = k / 10 * TAU + Math.PI / 2, rr = k % 2 ? r * .45 : r; if (k) s.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); else s.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } const g = new THREE.ExtrudeGeometry(s, { depth: d, bevelEnabled: false }); g.translate(0, 0, -d / 2); return g; }
 
   // ---- your own bow and hands, drawn over the world from the eye
   const VM = { bow: null, skin: '', g: null, raise: 0, draw: 0, snap: 0, kick: 0, sprint: 0 };
