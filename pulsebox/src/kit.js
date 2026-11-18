@@ -192,7 +192,7 @@ K.over = (o = {}) => {
   // tell the Pulsebox hub (when it hosts this game) about the score: profiles, leaderboards and the daily challenge
   try { if (K.score > 0 && window.parent !== window) window.parent.postMessage({ pbx: 'score', score: Math.floor(K.score) }, location.origin); } catch (e) {}
 };
-function pause() { if (K.state !== 'play') return; K.state = 'paused'; showScr('sPause'); }
+function pause() { if (K.state !== 'play') return; if (GAME.noPause) { if (GAME.onPause) GAME.onPause(); return; } K.state = 'paused'; showScr('sPause'); }   // an online game keeps running: it shows its own menu instead
 function resume() { K.state = 'play'; showScr(null); last = performance.now(); }
 function toMenu() { refresh(); attract(); showScr('sTitle'); }
 

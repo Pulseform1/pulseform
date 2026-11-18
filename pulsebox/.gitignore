@@ -2,3 +2,5 @@ worker.js
 .wrangler/
 dist/
 wrangler.embedded.toml
+arrowwood/node_modules/
+arrowwood/.data/

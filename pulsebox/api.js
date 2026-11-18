@@ -29,6 +29,8 @@
 import { elite, caller } from './elite.js';
 // LEADERBOARD: /api/players/* (players.js) — usernames picked once per account, and the top 50 by Pulse Score, in the Players Durable Object.
 import { players } from './players.js';
+// ARROWWOOD: /api/arrowwood/* (arrowwood-rooms.js) — authoritative archery rooms (one Durable Object per code) and the coin/bow bank.
+import { arrowwoodApi } from './arrowwood-rooms.js';
 const PROJECT = 'pulseform-d8282';
 const JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 const MAX_BYTES = 400000;
@@ -292,6 +294,7 @@ export async function api(request, env, ctx, ids, eliteCfg = { live: false }) {
   if (url.pathname === '/api/rate') return rate(request, env, ids);
   if (url.pathname.startsWith('/api/arena/')) return arena(request, env, url);
   if (url.pathname === '/api/bug' || url.pathname === '/api/bug/status' || url.pathname === '/api/bugs' || url.pathname === '/api/bugs/update' || url.pathname === '/api/featured' || url.pathname === '/api/featured/admin') return bugs(request, env, url, ids);
+  if (url.pathname.startsWith('/api/arrowwood/') && env.ARROWWOOD_ROOM) return arrowwoodApi(request, env, url);
   if (url.pathname === '/api/hollow') {
     if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
     return env.HOLLOW.get(env.HOLLOW.idFromName('global')).fetch(request);

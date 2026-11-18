@@ -97,3 +97,17 @@ class_name = "Players"
 [[migrations]]
 tag = "v8"
 new_sqlite_classes = ["Players"]
+
+# ARROWWOOD (arrowwood-rooms.js): one Durable Object per room code runs the authoritative archery match;
+# one global Durable Object (named "bank") keeps every player's coins and bows
+[[durable_objects.bindings]]
+name = "ARROWWOOD_ROOM"
+class_name = "ArrowwoodRoom"
+
+[[durable_objects.bindings]]
+name = "ARROWWOOD_BANK"
+class_name = "ArrowwoodBank"
+
+[[migrations]]
+tag = "v9"
+new_sqlite_classes = ["ArrowwoodRoom", "ArrowwoodBank"]
