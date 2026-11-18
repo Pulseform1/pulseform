@@ -128,13 +128,13 @@ const wdir = () => [Math.cos(T.S.windAng), Math.sin(T.S.windAng)];
   ok(T.PL.arms < .2, 'and your arms tire', T.PL.arms.toFixed(2)); }
 // build a sail and a steering oar
 const rig = R => { T.give('plank', 20); T.give('rope', 20); T.give('scrap', 10);
-  ok(T.place('sail', 0, 0) && T.place('helm', 1, 1), 'a sail and a steering oar can be built'); T.cellAt(R, 0, 0).up = true; };
+  ok(T.place('sail', 0, 0) && !T.place('helm', 1, 1), 'a sail can be built (the raft already has its one steering oar)'); T.cellAt(R, 0, 0).up = true; };
 { let sp = 0; const [dx, dz] = drift(R => { rig(R); R.yaw = Math.atan2(-Math.cos(T.S.windAng), -Math.sin(T.S.windAng)); }, 40, () => { sp = Math.hypot(T.RAFT().vx, T.RAFT().vz); });   // bow pointed downwind
 
   ok(T.SAIL.fill > .9 && sp > .6 && sp < 1.4, 'running before the wind, the sail fills and the raft moves, not fast', `fill ${T.SAIL.fill.toFixed(2)}, ${sp.toFixed(2)} m/s`); }
 { drift(R => { rig(R); R.yaw = Math.atan2(Math.cos(T.S.windAng), Math.sin(T.S.windAng)); }, 5);   // bow into the wind
   ok(T.SAIL.fill === 0, 'pointed into the wind it only flaps'); }
-{ let y0 = 0; drift(R => { rig(R); y0 = R.yaw; T.PL.helm = T.ckey(1, 1); }, 20, () => { I.mx = -1; });
+{ let y0 = 0; drift(R => { rig(R); y0 = R.yaw; T.PL.helm = T.ckey(0, 1); }, 20, () => { I.mx = -1; });
   const turned = T.RAFT().yaw - y0; ok(turned > .6 && turned < 2.6, 'at the helm, A turns the raft slowly', `${(turned * 180 / Math.PI).toFixed(0)}° in 20 s`); }
 { const [dx, dz] = drift(R => { T.give('plank', 5); T.give('rope', 5); T.give('scrap', 5); T.place('anchor', 0, 0); T.cellAt(R, 0, 0).up = true; }, 40);
   ok(Math.hypot(dx, dz) / 40 < .08, 'the anchor holds the raft almost still', (Math.hypot(dx, dz) / 40).toFixed(3) + ' m/s'); }
@@ -145,6 +145,13 @@ const rig = R => { T.give('plank', 20); T.give('rope', 20); T.give('scrap', 10);
   Object.assign(T.SH, { state: 'circle', t: .1, x: R.x + 10, z: R.z }); run(5); ok(T.SH.state === 'circle', 'at night sharks keep off the edges a lantern lights'); }
 { fresh(); T.give('scrap', 10); T.give('rope', 5); T.give('plank', 5); T.PL.pickups = 9; ok(!T.act.craft('spear2'), 'an upgrade needs the tool first');
   ok(T.act.craft('hook2') && T.PL.tool === 'hook', 'the metal hook upgrades the hook you have'); }
+
+section('steering from the start');
+{ fresh(); const R = T.RAFT(); ok([...R.cells.values()].some(c => c.obj === 'helm'), 'every raft starts with a steering oar');
+  T.S.wind = T.S.windTo = 4; T.S.phase = 'calm'; T.S.pt = 9999; run(.5); T.PL.helm = T.ckey(0, 1); const y0 = R.yaw, x0 = R.x, z0 = R.z;
+  run(20, () => { I.mx = -1; I.mz = 1; }); I = I0();
+  ok(R.yaw - y0 > .3, 'at the helm, A turns it', ((R.yaw - y0) * 180 / Math.PI).toFixed(0) + '° in 20 s');
+  ok(T.PL.helm, 'and W rows without letting go of the helm'); }
 
 section('saving');
 fresh(); T.give('plank', 7); T.place; const snap = JSON.parse(JSON.stringify(T.snapshot())); T.newRun(); T.loadRun(snap);

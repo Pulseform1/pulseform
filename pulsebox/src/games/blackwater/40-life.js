@@ -45,9 +45,9 @@
     if (!best) return false; Object.assign(PL, { onRaft: true, lx: best.i * CS, lz: best.j * CS, ly: 0, vy: 0, under: false }); emit('climb'); return true;
   }
   function moveRaftPlayer(I, dt) {
-    if (PL.helm) {   // at the helm: A and D turn the steering oar, the view turns with the raft; W, S, Space or E let go
+    if (PL.helm) {   // at the helm: A and D turn the steering oar, W and S scull, the view turns with the raft; Space, E or T let go
       const c = RAFT.cells.get(PL.helm);
-      if (!c || c.obj !== 'helm' || I.mz || I.jump) PL.helm = null;
+      if (!c || c.obj !== 'helm' || I.jump) PL.helm = null;
       else { PL.yaw += RAFT.vyaw * dt; PL.vy -= G * dt; PL.ly = Math.max(0, PL.ly + PL.vy * dt); if (PL.ly <= 0) PL.vy = 0; return; }
     }
     const sp = 2.6 * (PL.brace ? .35 : 1), ly = PL.yaw - RAFT.yaw, s = Math.sin(ly), c = Math.cos(ly);
@@ -233,6 +233,15 @@
     if (!c.store) { say(emptyMsg(c), '#cfd6e2'); return false; }
     const got = c.obj === 'trap' ? (c.fish || []).map(f => 'fish:' + f) : c.obj === 'net' ? (c.catch || []).flatMap(k => contents({ k })) : Array(c.store).fill('water'); got.forEach(k => give(k)); if (c.obj === 'net' && got.length) PL.pickups++; c.store = 0; c.fish = []; c.catch = []; RAFT.ver++; pickupMsg(got); return true;
   }
+  // the helm: stand behind the steering oar facing the bow
+  const helmCell = () => [...RAFT.cells.values()].find(c => c.obj === 'helm');
+  function takeHelm(c) {
+    c = c || helmCell(); if (!c || !PL.onRaft) { say(PL.onRaft ? 'No steering oar: build one (B, hammer)' : 'Climb aboard first', '#cfd6e2'); return false; }
+    const [di, dj] = SIDES[openSides(RAFT, c)[0] || 0]; PL.helm = ckey(c.i, c.j); PL.lx = c.i * CS - di * .35; PL.lz = c.j * CS - dj * .35; PL.yaw = RAFT.yaw;
+    say('At the helm: A and D steer, W rows forward, S backs. T or E to let go', '#cfd6e2'); return true;
+  }
+  // a raft without a steering oar gets one on a free edge (every raft starts with one)
+  function giveHelm() { if (helmCell()) return; const c = [...RAFT.cells.values()].find(c => !c.obj && exposed(RAFT, c)); if (c) { c.obj = 'helm'; RAFT.ver++; } }
   // raise or lower a sail, drop or raise the anchor
   function toggleRig(c) {
     if (NET.client) { NET.ask('rig', { i: c.i, j: c.j }); return true; }
@@ -443,6 +452,10 @@
       const cur = currentAt(RAFT.x, RAFT.z, [0, 0]), base = .1 + .028 * S.wind, danger = Math.hypot(cur[0], cur[1]) > base * 1.6 + .15;
       const f = danger ? 1.6 : .8 * (.25 + .75 * PL.arms) / Math.sqrt(Math.max(1, RAFT.cells.size / 4)); paddle = [-Math.sin(PL.yaw) * f, -Math.cos(PL.yaw) * f]; PL.paddleT = (PL.paddleT || 0) + dt;
       const was = PL.arms; if (!danger) PL.arms = Math.max(0, PL.arms - dt / 9); if (was >= .15 && PL.arms < .15) say('Your arms are burning: rest them a moment', '#ffd28a');
+    } else if (PL.helm && PL.onRaft && I.mz) {   // sculling with the steering oar: a slow push along the bow (or back), and it tires you too
+      const f = .55 * (.25 + .75 * PL.arms) / Math.sqrt(Math.max(1, RAFT.cells.size / 4)) * Math.sign(I.mz) * (I.mz < 0 ? .5 : 1);
+      paddle = [-Math.sin(RAFT.yaw) * f, -Math.cos(RAFT.yaw) * f]; PL.paddleT = (PL.paddleT || 0) + dt;
+      const was = PL.arms; PL.arms = Math.max(0, PL.arms - dt / 14); if (was >= .15 && PL.arms < .15) say('Your arms are burning: rest them a moment', '#ffd28a');
     } else { PL.paddleT = 0; PL.arms = Math.min(1, PL.arms + dt / 7); }
     const rudIn = PL.helm && PL.onRaft ? -I.mx : NET.client ? 0 : NET.rudder;
     if (NET.client) { NET.paddleOut = paddle; NET.rudderOut = PL.helm ? -I.mx : 0; }
@@ -472,7 +485,7 @@
     const a = ui.aim, c = a && a.dist < 3.2 ? cellAt(RAFT, a.i, a.j) : null;
     if (c && c.fire) { const F = c.fire; return !F.lit ? 'E  Light the fire' : F.cook ? (F.cook.done ? 'E  Take the cooked fish' : 'Cooking...') : Object.keys(INV).some(k => k.startsWith('fish:') && INV[k] > 0) ? 'E  Cook a fish' : !PL.torch ? 'E  Light your torch' : 'Fire'; }
     if (PL.onRaft && logAimed()) return 'E  Pry the log loose';
-    if (PL.helm) return 'E  Let go of the helm  ·  A / D steer';
+    if (PL.helm) return 'E  Let go of the helm  ·  A / D steer  ·  W row';
     if (c && c.obj === 'sail') return c.up ? `E  Lower the sail  ·  ${SAIL.fill > .75 ? 'full of wind' : SAIL.fill > .35 ? 'drawing' : SAIL.fill > 0 ? 'barely drawing: turn away from the wind' : 'flapping: it points into the wind'}` : 'E  Raise the sail';
     if (c && c.obj === 'helm') return 'E  Take the helm';
     if (c && c.obj === 'anchor') return c.up ? 'E  Raise the anchor' : 'E  Drop the anchor';
@@ -512,7 +525,7 @@
       const a = ui.aim, c = a && a.dist < 3.2 ? cellAt(RAFT, a.i, a.j) : null;
       if (c && c.fire) return useFire(c);
       if (c && HOLD[c.obj]) return emptyPiece(c);
-      if (c && c.obj === 'helm') { PL.helm = ckey(c.i, c.j); const [di, dj] = SIDES[openSides(RAFT, c)[0] || 0]; PL.lx = c.i * CS - di * .35; PL.lz = c.j * CS - dj * .35; PL.yaw = RAFT.yaw; /* face the bow */ say('A and D steer. The raft turns slowly, faster when it is moving', '#cfd6e2'); return true; }
+      if (c && c.obj === 'helm') return takeHelm(c);
       if (c && (c.obj === 'sail' || c.obj === 'anchor')) return toggleRig(c);
       { const Lg = logAimed(); if (Lg) { if (NET.client) { NET.ask('unlog', { lx: Lg.lx, lz: Lg.lz }); return true; } RAFT.logs.splice(RAFT.logs.indexOf(Lg), 1); RAFT.ver++; give('log'); pickupMsg(['log']); return true; } }
       if (PL.tool === 'torch' && !PL.torch) return lightTorch();
@@ -524,7 +537,7 @@
 
   // ---- a new raft, or the one you left
   function newRun() {
-    RAFT = newBody(0, 0); for (const [i, j] of [[0, 0], [1, 0], [0, 1], [1, 1]]) RAFT.cells.set(ckey(i, j), newCell(i, j));
+    RAFT = newBody(0, 0); for (const [i, j] of [[0, 0], [1, 0], [0, 1], [1, 1]]) RAFT.cells.set(ckey(i, j), newCell(i, j)); RAFT.cells.get(ckey(0, 1)).obj = 'helm';
     DRIFT.length = 0; FL.length = 0; for (const k of Object.keys(INV)) delete INV[k]; INV.water = 2; Object.assign(CACHE, { on: false, t: 150 });
     Object.assign(PL, { helm: null, arms: 1, onRaft: true, lx: .75, lz: .75, ly: 0, vy: 0, hunger: 100, thirst: 100, air: 100, faint: 0, tools: { hook: 1, torch: 1 }, tool: 'hook', torch: false, torchWet: 0, pickups: 0, play: 0, pitch: -.08 });
     Object.assign(S, { t: 0, ox: 0, oz: 0, sea: .14, seaTo: .14, wind: 4, rain: 0, cloud: .25, phase: 'calm', pt: 330, tod: 7.2, day: 1, nights: 0, giants: [], pools: [], rings: [], spouts: [], bolts: [], nextPool: 480 });
@@ -545,5 +558,5 @@
     newRun(); if (!r) return;
     RAFT.cells.clear(); for (const c of r.raft.cells) RAFT.cells.set(ckey(c.i, c.j), Object.assign(newCell(c.i, c.j), c, { shake: 0, hit: 0 })); RAFT.yaw = r.raft.yaw || 0; RAFT.logs = (r.raft.logs || []).map(l => ({ ...l })); RAFT.ver++;
     Object.assign(INV, r.inv); Object.assign(PL, r.pl, { onRaft: true }); if (!cellUnder(RAFT, PL.lx, PL.lz)) { const c = RAFT.cells.values().next().value; PL.lx = c.i * CS; PL.lz = c.j * CS; }
-    Object.assign(S, r.s); Object.assign(CT, r.ct || {}); SPN.groups = 3;
+    Object.assign(S, r.s); Object.assign(CT, r.ct || {}); SPN.groups = 3; giveHelm();
   }
