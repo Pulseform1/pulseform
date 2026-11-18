@@ -1011,13 +1011,14 @@ const GAME = {
     emit('hurt', v, by, dmg, head);
     if (v.hp <= 0) { v.hp = 0; die(v, by, head, wk); }
   }
+  on('hurt', (v, by, dmg, head) => { if (!M || !v || !by || v === by) return; const L = M.dlog || (M.dlog = {}), r = L[by.key + '>' + v.key] || (L[by.key + '>' + v.key] = { d: 0, n: 0, h: 0 }); r.d += Math.min(dmg, 150); r.n++; if (head) r.h++; });
   function die(v, by, head, wk) {
     if (!v.alive) return;
     v.alive = false; v.plant = v.defuse = 0; v.scoped = 0; v.burst = null; v.chan = null; v.volley = null; v.stat.d++; by.stat.k++; if (head) by.stat.hs++;
     ultGain(v, 1); if (by.team !== v.team) ultGain(by, 1);
     if (!by.net && by.team !== v.team) by.credits = Math.min(CASH.cap, by.credits + CASH.kill);
     M.feed.unshift({ a: by.name, b: v.name, w: GUNS[wk] ? GUNS[wk].n : wk, head, t: 0, mine: by === me() });
-    if (v === me()) M.deathInfo = { by: by.name, w: GUNS[wk] ? GUNS[wk].n : wk, head, hp: Math.ceil(by.hp), sh: by.sh, yaw: yawTo(v.x, v.z, by.x, by.z), t: 0 };
+    if (v === me()) M.deathInfo = { by: by.name, key: by.key, op: by.op, w: GUNS[wk] ? GUNS[wk].n : wk, head, hp: Math.ceil(by.hp), sh: by.sh, yaw: yawTo(v.x, v.z, by.x, by.z), at: [v.x, v.y, v.z], kat: [by.x, by.y, by.z], t: 0 };
     emit('kill', v, by, head, wk);
     if (!v.net) net({ t: 'dead', h: head ? 1 : 0, w: wk, f: v.key, by: by.key });
     if (M.mode === 'range') v.respawn = 1.6;
@@ -1204,7 +1205,7 @@ const GAME = {
     if (M.host) net({ t: 'end', wi: wi ^ (M.flip || 0), why });
   }
   function startRound(n) {
-    M.round = n; M.phase = 'buy'; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); resetMech(); M.vent = []; M.storm = 0; M.stormOn = false; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
+    M.round = n; M.phase = 'buy'; M.dlog = {}; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); resetMech(); M.vent = []; M.storm = 0; M.stormOn = false; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
     const decider = n === WIN_ROUNDS * 2 - 1;
     const order = [...M.fs].sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);   // the same on every device, so teammates never share a spawn
     M.fs.forEach(f => {
@@ -3544,7 +3545,9 @@ const GAME = {
      gun and their HUD; a click moves to the next one. viewer() is who the camera and HUD follow. */
   const viewer = () => { if (!M) return null; const P = me(); return !P.alive && UI.spec && UI.spec.alive && UI.spec.team === P.team && M.mode !== 'range' ? UI.spec : P; };
   function nextSpec() { const P = me(), mates = M.fs.filter(f => f !== P && f.team === P.team && f.alive && !f.gone); if (!mates.length) { UI.spec = null; return; } const i = mates.indexOf(UI.spec); UI.spec = mates[(i + 1) % mates.length]; X.viewKey = ''; }
-  function updateSpec() { const P = me(); if (!M || P.alive || M.mode === 'range' || M.mode === 'demo') { UI.spec = null; return; } if (M.deathInfo && M.deathInfo.t > 2.2 && !(UI.spec && UI.spec.alive)) nextSpec(); }
+  // after the death cam (killer watched for a moment) the view fades through black into a teammate's eyes
+  function updateSpec() { const P = me(); if (!M || P.alive || M.mode === 'range' || M.mode === 'demo') { UI.spec = null; return; }
+    if (M.deathInfo && M.deathInfo.t > 2.8 && !(UI.spec && UI.spec.alive)) { const had = UI.spec; nextSpec(); if (UI.spec && UI.spec !== had) X.specFade = 1; } }
   /* ---- reload and inspect, choreographed: keyframes [q, dx, dy, dz, rx, ry, rz] over the action (0..1), eased between,
      added on top of where the gun is held. One track per kind of weapon. */
   const VKF = {
@@ -3590,8 +3593,17 @@ const GAME = {
       X.vpY = lp(X.vpY || 0, pt[0] * fol, k); X.vpP = lp(X.vpP || 0, pt[1] * fol, k); }
     let yaw = P.yaw + X.vpY, pitch = P.pitch + M.camKick + X.vpP, y = X.camY - X.dip;
     if (P.daze > 0) { const k = Math.min(1, P.daze / .8); yaw += Math.sin(X.t * 6.3) * .014 * k; pitch += Math.cos(X.t * 4.7) * .011 * k; }   // a Shockwave's daze rocks the view
-    if (!P.alive && M.deathInfo) { const k = Math.min(1, M.deathInfo.t * 2); y = lp(y, P.y + .5, k); yaw += angDiff(M.deathInfo.yaw, yaw) * k; pitch = lp(pitch, .1, k); }
-    cam.position.set(ipos(P, 'x') + (Math.random() - .5) * X.shake * .3, y + (Math.random() - .5) * X.shake * .3, ipos(P, 'z')); cam.rotation.set(pitch, yaw, X.roll);
+    let deathCam = null;
+    if (!P.alive && M.deathInfo) {   // the death cam: you drop, turn to whoever did it, then rise behind your body to watch them
+      const D = M.deathInfo, k = Math.min(1, D.t * 2); y = lp(y, P.y + .5, k); yaw += angDiff(D.yaw, yaw) * k; pitch = lp(pitch, .1, k);
+      const kf = M.byKey[D.key], tx2 = kf && kf.alive ? [ipos(kf, 'x'), ipos(kf, 'y') + 1.2, ipos(kf, 'z')] : [D.kat[0], D.kat[1] + 1.2, D.kat[2]];
+      if (M.planted && D.t > 3.2 && !M.fs.some(f => f !== P && f.team === P.team && f.alive)) {   // nobody left to watch: circle the charge
+        const a = X.t * .25, r = 7; deathCam = { p: [M.planted.x + Math.cos(a) * r, M.planted.y + 3.4, M.planted.z + Math.sin(a) * r], at: [M.planted.x, M.planted.y + .3, M.planted.z] };
+      } else if (D.t > .55) { const u = smooth(cl((D.t - .55) / .9, 0, 1)), dx = tx2[0] - D.at[0], dz = tx2[2] - D.at[2], L = Math.hypot(dx, dz) || 1;
+        deathCam = { p: [lp(ipos(P, 'x'), D.at[0] - dx / L * 2.6, u), lp(y, D.at[1] + 2.5, u), lp(ipos(P, 'z'), D.at[2] - dz / L * 2.6, u)], at: tx2, u }; }
+    }
+    if (deathCam) { cam.position.set(deathCam.p[0], deathCam.p[1], deathCam.p[2]); cam.lookAt(deathCam.at[0], deathCam.at[1], deathCam.at[2]); X.deathCam = deathCam; }
+    else { cam.position.set(ipos(P, 'x') + (Math.random() - .5) * X.shake * .3, y + (Math.random() - .5) * X.shake * .3, ipos(P, 'z')); cam.rotation.set(pitch, yaw, X.roll); X.deathCam = null; }
     X.fovK = lp(X.fovK || 0, P.slide ? 1 : P.sprinting ? .6 : 0, Math.min(1, dt * 7));   // speed widens the view a touch
     const fov = 2 * Math.atan(Math.tan(BASE_FOV * (1 + X.fovK * .09) * D2R / 2) / zoomOf(P)) / D2R; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
 
@@ -3640,7 +3652,7 @@ const GAME = {
 
     // the rival
     for (const [f, A] of X.agents) if (!M.fs.includes(f)) { X.scene.remove(A); X.agents.delete(f); }
-    { const AP = X.agents.get(P); if (AP) AP.visible = false; } for (const f of M.fs) if (f !== P) updateAgent(f, dt);
+    { const AP = X.agents.get(P); if (AP) AP.visible = false; } for (const f of M.fs) if (f !== P || X.deathCam) updateAgent(f, dt);   // on the death cam you see your own body fall
     // smokes, Rampart walls, the charge, a flare in flight
     while (X.smokes.length < M.smokes.length) addSmoke();
     X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { const mt = s.heat ? X.smokeHM : s.grey ? X.smokeGM : X.smokeM; if (g.children[0].material !== mt) for (const c of g.children) c.material = mt; g.position.set(s.x, s.y + 1.4, s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .12; } });
@@ -4021,6 +4033,7 @@ const GAME = {
     if (screen === 'menu') { if (c === 'Enter' && UI.panel === 'home') menuPlay(); return; }
     if (screen === 'over') { if (c === 'Enter') toMenu(); return; }
     if (!playing()) return; const P = me();
+    if (c === 'Space' && !P.alive && UI.spec && M.mode !== 'range') { nextSpec(); return; }   // dead: Space moves to the next teammate
     if (c === 'KeyO') return openOpts(!UI.opts);
     if (c === 'KeyB' && canBuy()) return openArmory(!UI.armory);
     if (UI.armory) return;
@@ -4360,7 +4373,10 @@ const GAME = {
     // --- markers in the world: a pinged rival, the planted charge
     // teammates: a name and a marker over each, and their health
     for (const q of M.fs) if (q !== P && q.team === P.team && q.alive) { const s = toScreen(q.x, q.y + 2.05, q.z); if (s) { g.fillStyle = YOU; g.beginPath(); g.moveTo(s[0] - 7, s[1] - 10); g.lineTo(s[0] + 7, s[1] - 10); g.lineTo(s[0], s[1]); g.closePath(); g.fill(); tx(g, `${q.name.toUpperCase()} ${Math.ceil(q.hp)}`, s[0], s[1] - 20, 13, YOU, 'center', 800); } }
-    if (F.alive && F.reveal > 0) { const s = toScreen(F.x, F.y + 1.1, F.z); if (s) { g.strokeStyle = FOE; g.lineWidth = 3; g.beginPath(); g.moveTo(s[0], s[1] - 30); g.lineTo(s[0] + 20, s[1]); g.lineTo(s[0], s[1] + 30); g.lineTo(s[0] - 20, s[1]); g.closePath(); g.stroke(); } }
+    for (const E of M.fs) if (E.alive && E.team !== me().team && E.reveal > 0) { const s = toScreen(E.x, E.y + 1.1, E.z); if (s) { g.strokeStyle = FOE; g.lineWidth = 3; g.beginPath(); g.moveTo(s[0], s[1] - 30); g.lineTo(s[0] + 20, s[1]); g.lineTo(s[0], s[1] + 30); g.lineTo(s[0] - 20, s[1]); g.closePath(); g.stroke(); } }   // everyone revealed, not just the nearest
+    // the death cam: whoever killed you, marked where they stand
+    if (X.deathCam && M.deathInfo) { const D = M.deathInfo, kf = M.byKey[D.key]; if (kf && kf.alive) { const s = toScreen(ipos(kf, 'x'), ipos(kf, 'y') + 2.25, ipos(kf, 'z')); if (s) { const p = .8 + .2 * Math.sin(K.t * 6);
+      g.fillStyle = FOE; g.beginPath(); g.moveTo(s[0], s[1] + 14 * p); g.lineTo(s[0] - 10 * p, s[1]); g.lineTo(s[0] + 10 * p, s[1]); g.closePath(); g.fill(); tx(g, D.by.toUpperCase(), s[0], s[1] - 14, 13, FOE, 'center', 900); } } }
     if (M.planted && M.phase === 'live') { const s = toScreen(M.planted.x, M.planted.y + .9, M.planted.z); if (s) { const p = 1 + Math.sin(M.time * 9) * .12; g.fillStyle = FOE; g.beginPath(); g.moveTo(s[0], s[1] - 11 * u * p); g.lineTo(s[0] + 9 * u * p, s[1]); g.lineTo(s[0], s[1] + 11 * u * p); g.lineTo(s[0] - 9 * u * p, s[1]); g.fill(); tx(g, Math.hypot(P.x - M.planted.x, P.z - M.planted.z).toFixed(0) + ' m', s[0], s[1] + 24 * u, 13 * u, BONE); } }
     // --- crosshair and hit marks
     // the crosshair marks where a shot really goes: the view punch lifts the camera a little, so it sits that much lower
@@ -4457,12 +4473,29 @@ const GAME = {
     else if (M.online) { const dc = M.fs.find(f => f.dc && !f.gone); if (dc) { const left = Math.max(0, Math.ceil(DC_WAIT - (M.time - dc.dc))); tx(g, `${dc.name.toUpperCase()} LOST CONNECTION · WAITING ${left} s`, 640, 135 * u, 14 * u, GOLD, 'center', 900); } }
     if (M.phase === 'end' && M.last && !M.over) { const won = M.last.wi === 0, c = won ? YOU : FOE; g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, demo ? `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT` : won ? 'ROUND WON' : 'ROUND LOST', 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); }
     if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? (twoSites() ? 'You attack: plant the charge on ' + siteWords() : 'You attack: plant the charge on the ring') : (twoSites() ? 'You defend: hold ' + siteWords('and') : 'You defend: keep them off the ring'), 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
-    if (P !== me()) {   // spectating a teammate
-      const w = 360 * u, y = V.y1 - 150 * u; rr(g, 640 - w / 2, y, w, 52 * u, 8, 'rgba(10,13,18,.82)', YOU, 1.5); portraitTile(g, P.op, 640 - w / 2 + 6 * u, y + 6 * u, 40 * u, 40 * u, { r: 4 });
-      tx(g, 'SPECTATING', 640 - w / 2 + 58 * u, y + 17 * u, 10 * u, DIM, 'left', 900); tx(g, P.name.toUpperCase(), 640 - w / 2 + 58 * u, y + 35 * u, 17 * u, YOU, 'left', 900);
-      if (M.fs.filter(f => f !== me() && f.team === me().team && f.alive).length > 1) tx(g, isTouch() ? 'tap to switch' : 'click to switch', 640 + w / 2 - 12 * u, y + 26 * u, 11 * u, DIM, 'right', 800);
+    if (P !== me()) {   // spectating a teammate: who, their health and shield, their gun, and the others you could switch to
+      const w = 420 * u, y = V.y1 - 156 * u, mates = M.fs.filter(f => f !== me() && f.team === me().team && f.alive), G2 = gun(P);
+      rr(g, 640 - w / 2, y, w, 58 * u, 8, 'rgba(10,13,18,.86)', YOU, 1.5); portraitTile(g, P.op, 640 - w / 2 + 6 * u, y + 6 * u, 46 * u, 46 * u, { r: 4 });
+      tx(g, 'SPECTATING', 640 - w / 2 + 62 * u, y + 15 * u, 10 * u, DIM, 'left', 900); tx(g, P.name.toUpperCase(), 640 - w / 2 + 62 * u, y + 32 * u, 17 * u, YOU, 'left', 900);
+      const bx = 640 - w / 2 + 62 * u, bw = 130 * u; g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(bx, y + 44 * u, bw, 5 * u); g.fillStyle = P.hp > 30 ? BONE : WARN; g.fillRect(bx, y + 44 * u, bw * P.hp / 100, 5 * u); if (P.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(bx + bw + 6 * u, y + 44 * u, 40 * u * P.sh / 50, 5 * u); }
+      tx(g, G2.n.toUpperCase(), 640 + w / 2 - 14 * u, y + 20 * u, 13 * u, G2.col || BONE, 'right', 800);
+      if (mates.length > 1) tx(g, `${mates.indexOf(P) + 1} / ${mates.length}  ·  ${isTouch() ? 'tap' : 'click or Space'} to switch`, 640 + w / 2 - 14 * u, y + 40 * u, 10.5 * u, DIM, 'right', 800);
     }
-    if (!me().alive && M.deathInfo && !range && P === me()) { const D = M.deathInfo; rr(g, 640 - 250 * u, 590 - 34 * u, 500 * u, 68 * u, 8, GLASS, FOE); tx(g, `${D.by.toUpperCase()} · ${D.w}${D.head ? ' · headshot' : ''}`, 640, 590 - 12 * u, 18 * u, FOE); tx(g, `They had ${D.hp} health${D.sh ? ' and ' + D.sh + ' shield' : ''} left`, 640, 590 + 14 * u, 13 * u, BONE); }
+    if (X.specFade > 0) { if (!X.specFadeT) X.specFadeT = performance.now(); const k = 1 - (performance.now() - X.specFadeT) / 400; if (k <= 0) { X.specFade = 0; X.specFadeT = 0; } else { g.fillStyle = `rgba(0,0,0,${smooth(k)})`; g.fillRect(V.x0, V.y0, W, H); } }   // 0.4 s, whatever the frame rate
+    if (!me().alive && M.deathInfo && !range && P === me()) {
+      const D = M.deathInfo, a = cl(D.t * 3, 0, 1), cw2 = 520 * u, ch2 = 104 * u, x = 640 - cw2 / 2, y = V.y1 - 196 * u + (1 - smooth(a)) * 30 * u, L = M.dlog || {}, gave = L[me().key + '>' + D.key] || { d: 0, n: 0, h: 0 }, took = L[D.key + '>' + me().key] || { d: 0, n: 0, h: 0 };
+      g.save(); g.globalAlpha = a; rr(g, x, y, cw2, ch2, 10, 'rgba(10,13,18,.9)', FOE, 2); g.fillStyle = FOE; g.fillRect(x, y, 6 * u, ch2);
+      if (D.op) portraitTile(g, D.op, x + 16 * u, y + 12 * u, 80 * u, 80 * u, { r: 6 });
+      tx(g, 'KILLED BY', x + 110 * u, y + 20 * u, 11 * u, DIM, 'left', 900); tx(g, D.by.toUpperCase(), x + 110 * u, y + 44 * u, 24 * u, FOE, 'left', 900);
+      tx(g, `${D.w}${D.head ? '  ·  HEADSHOT' : ''}`, x + 110 * u, y + 68 * u, 13 * u, D.head ? GOLD : BONE, 'left', 800);
+      const hb = x + 110 * u; g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(hb, y + 82 * u, 150 * u, 6 * u); g.fillStyle = BONE; g.fillRect(hb, y + 82 * u, 150 * u * D.hp / 100, 6 * u); if (D.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(hb + 156 * u, y + 82 * u, 50 * u * D.sh / 50, 6 * u); }
+      tx(g, `${D.hp} HP${D.sh ? ' · ' + D.sh + ' SHIELD' : ''} LEFT`, hb, y + 96 * u, 9.5 * u, DIM, 'left', 800);
+      const rx = x + cw2 - 18 * u; tx(g, 'DAMAGE THIS ROUND', rx, y + 20 * u, 10 * u, DIM, 'right', 900);
+      tx(g, `DEALT  ${Math.round(gave.d)}`, rx, y + 46 * u, 17 * u, YOU, 'right', 900); tx(g, `${gave.n} hit${gave.n === 1 ? '' : 's'}${gave.h ? ' · ' + gave.h + ' head' : ''}`, rx, y + 62 * u, 10.5 * u, DIM, 'right', 700);
+      tx(g, `TAKEN  ${Math.round(took.d)}`, rx, y + 82 * u, 17 * u, FOE, 'right', 900); tx(g, `${took.n} hit${took.n === 1 ? '' : 's'}${took.h ? ' · ' + took.h + ' head' : ''}`, rx, y + 97 * u, 10.5 * u, DIM, 'right', 700);
+      g.restore();
+      if (M.planted && D.t > 3.2 && !M.fs.some(f => f !== me() && f.team === me().team && f.alive)) tx(g, 'WATCHING THE CHARGE', 640, V.y0 + 120 * u, 14 * u, GOLD, 'center', 900);
+    }
     // --- touch controls
     if (touch && !UI.armory && !demo) drawTouch(g, u);
     if (canBuy() && !UI.armory && !demo && P.alive && !UI.switched) { const w = 190 * u, h = tapH(46); btn(g, 640 - w / 2, V.y0 + 132 * u, w, h, touch ? 'ARMORY' : 'ARMORY  (B)', () => openArmory(true), { px: 17 * u, col: GOLD, edge: GOLD }); }
@@ -5207,7 +5240,7 @@ const GAME = {
   };
   // for the browser tests
   GAME.test = {
-    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, get ptr() { return ptr; }, mech: () => ({ TPS, PADS, GATES, BRKS, VENTS, navCells, GRASS, ICE, LOWG, BELT, GW, GH, NC, hAt, los, setGate, setWall }), get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
+    get M() { return M; }, get X() { return X; }, get screen() { return screen; }, get ptr() { return ptr; }, mech: () => ({ TPS, PADS, GATES, BRKS, VENTS, navCells, GRASS, ICE, LOWG, BELT, GW, GH, NC, hAt, los, setGate, setWall }), hurt: (v, n, by, h) => applyDamage(v, n, by, h, 'vesper'), get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     botMe: d => { me().bot = { diff: d }; me().local = false; }, dmgAt, hitboxes, headOf, castShot, viewDir, XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,

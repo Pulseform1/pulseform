@@ -246,13 +246,14 @@
     emit('hurt', v, by, dmg, head);
     if (v.hp <= 0) { v.hp = 0; die(v, by, head, wk); }
   }
+  on('hurt', (v, by, dmg, head) => { if (!M || !v || !by || v === by) return; const L = M.dlog || (M.dlog = {}), r = L[by.key + '>' + v.key] || (L[by.key + '>' + v.key] = { d: 0, n: 0, h: 0 }); r.d += Math.min(dmg, 150); r.n++; if (head) r.h++; });
   function die(v, by, head, wk) {
     if (!v.alive) return;
     v.alive = false; v.plant = v.defuse = 0; v.scoped = 0; v.burst = null; v.chan = null; v.volley = null; v.stat.d++; by.stat.k++; if (head) by.stat.hs++;
     ultGain(v, 1); if (by.team !== v.team) ultGain(by, 1);
     if (!by.net && by.team !== v.team) by.credits = Math.min(CASH.cap, by.credits + CASH.kill);
     M.feed.unshift({ a: by.name, b: v.name, w: GUNS[wk] ? GUNS[wk].n : wk, head, t: 0, mine: by === me() });
-    if (v === me()) M.deathInfo = { by: by.name, w: GUNS[wk] ? GUNS[wk].n : wk, head, hp: Math.ceil(by.hp), sh: by.sh, yaw: yawTo(v.x, v.z, by.x, by.z), t: 0 };
+    if (v === me()) M.deathInfo = { by: by.name, key: by.key, op: by.op, w: GUNS[wk] ? GUNS[wk].n : wk, head, hp: Math.ceil(by.hp), sh: by.sh, yaw: yawTo(v.x, v.z, by.x, by.z), at: [v.x, v.y, v.z], kat: [by.x, by.y, by.z], t: 0 };
     emit('kill', v, by, head, wk);
     if (!v.net) net({ t: 'dead', h: head ? 1 : 0, w: wk, f: v.key, by: by.key });
     if (M.mode === 'range') v.respawn = 1.6;
@@ -439,7 +440,7 @@
     if (M.host) net({ t: 'end', wi: wi ^ (M.flip || 0), why });
   }
   function startRound(n) {
-    M.round = n; M.phase = 'buy'; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); resetMech(); M.vent = []; M.storm = 0; M.stormOn = false; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
+    M.round = n; M.phase = 'buy'; M.dlog = {}; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); resetMech(); M.vent = []; M.storm = 0; M.stormOn = false; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
     const decider = n === WIN_ROUNDS * 2 - 1;
     const order = [...M.fs].sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);   // the same on every device, so teammates never share a spawn
     M.fs.forEach(f => {

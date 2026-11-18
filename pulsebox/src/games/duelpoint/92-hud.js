@@ -226,7 +226,10 @@
     // --- markers in the world: a pinged rival, the planted charge
     // teammates: a name and a marker over each, and their health
     for (const q of M.fs) if (q !== P && q.team === P.team && q.alive) { const s = toScreen(q.x, q.y + 2.05, q.z); if (s) { g.fillStyle = YOU; g.beginPath(); g.moveTo(s[0] - 7, s[1] - 10); g.lineTo(s[0] + 7, s[1] - 10); g.lineTo(s[0], s[1]); g.closePath(); g.fill(); tx(g, `${q.name.toUpperCase()} ${Math.ceil(q.hp)}`, s[0], s[1] - 20, 13, YOU, 'center', 800); } }
-    if (F.alive && F.reveal > 0) { const s = toScreen(F.x, F.y + 1.1, F.z); if (s) { g.strokeStyle = FOE; g.lineWidth = 3; g.beginPath(); g.moveTo(s[0], s[1] - 30); g.lineTo(s[0] + 20, s[1]); g.lineTo(s[0], s[1] + 30); g.lineTo(s[0] - 20, s[1]); g.closePath(); g.stroke(); } }
+    for (const E of M.fs) if (E.alive && E.team !== me().team && E.reveal > 0) { const s = toScreen(E.x, E.y + 1.1, E.z); if (s) { g.strokeStyle = FOE; g.lineWidth = 3; g.beginPath(); g.moveTo(s[0], s[1] - 30); g.lineTo(s[0] + 20, s[1]); g.lineTo(s[0], s[1] + 30); g.lineTo(s[0] - 20, s[1]); g.closePath(); g.stroke(); } }   // everyone revealed, not just the nearest
+    // the death cam: whoever killed you, marked where they stand
+    if (X.deathCam && M.deathInfo) { const D = M.deathInfo, kf = M.byKey[D.key]; if (kf && kf.alive) { const s = toScreen(ipos(kf, 'x'), ipos(kf, 'y') + 2.25, ipos(kf, 'z')); if (s) { const p = .8 + .2 * Math.sin(K.t * 6);
+      g.fillStyle = FOE; g.beginPath(); g.moveTo(s[0], s[1] + 14 * p); g.lineTo(s[0] - 10 * p, s[1]); g.lineTo(s[0] + 10 * p, s[1]); g.closePath(); g.fill(); tx(g, D.by.toUpperCase(), s[0], s[1] - 14, 13, FOE, 'center', 900); } } }
     if (M.planted && M.phase === 'live') { const s = toScreen(M.planted.x, M.planted.y + .9, M.planted.z); if (s) { const p = 1 + Math.sin(M.time * 9) * .12; g.fillStyle = FOE; g.beginPath(); g.moveTo(s[0], s[1] - 11 * u * p); g.lineTo(s[0] + 9 * u * p, s[1]); g.lineTo(s[0], s[1] + 11 * u * p); g.lineTo(s[0] - 9 * u * p, s[1]); g.fill(); tx(g, Math.hypot(P.x - M.planted.x, P.z - M.planted.z).toFixed(0) + ' m', s[0], s[1] + 24 * u, 13 * u, BONE); } }
     // --- crosshair and hit marks
     // the crosshair marks where a shot really goes: the view punch lifts the camera a little, so it sits that much lower
@@ -323,12 +326,29 @@
     else if (M.online) { const dc = M.fs.find(f => f.dc && !f.gone); if (dc) { const left = Math.max(0, Math.ceil(DC_WAIT - (M.time - dc.dc))); tx(g, `${dc.name.toUpperCase()} LOST CONNECTION · WAITING ${left} s`, 640, 135 * u, 14 * u, GOLD, 'center', 900); } }
     if (M.phase === 'end' && M.last && !M.over) { const won = M.last.wi === 0, c = won ? YOU : FOE; g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, demo ? `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT` : won ? 'ROUND WON' : 'ROUND LOST', 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); }
     if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? (twoSites() ? 'You attack: plant the charge on ' + siteWords() : 'You attack: plant the charge on the ring') : (twoSites() ? 'You defend: hold ' + siteWords('and') : 'You defend: keep them off the ring'), 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
-    if (P !== me()) {   // spectating a teammate
-      const w = 360 * u, y = V.y1 - 150 * u; rr(g, 640 - w / 2, y, w, 52 * u, 8, 'rgba(10,13,18,.82)', YOU, 1.5); portraitTile(g, P.op, 640 - w / 2 + 6 * u, y + 6 * u, 40 * u, 40 * u, { r: 4 });
-      tx(g, 'SPECTATING', 640 - w / 2 + 58 * u, y + 17 * u, 10 * u, DIM, 'left', 900); tx(g, P.name.toUpperCase(), 640 - w / 2 + 58 * u, y + 35 * u, 17 * u, YOU, 'left', 900);
-      if (M.fs.filter(f => f !== me() && f.team === me().team && f.alive).length > 1) tx(g, isTouch() ? 'tap to switch' : 'click to switch', 640 + w / 2 - 12 * u, y + 26 * u, 11 * u, DIM, 'right', 800);
+    if (P !== me()) {   // spectating a teammate: who, their health and shield, their gun, and the others you could switch to
+      const w = 420 * u, y = V.y1 - 156 * u, mates = M.fs.filter(f => f !== me() && f.team === me().team && f.alive), G2 = gun(P);
+      rr(g, 640 - w / 2, y, w, 58 * u, 8, 'rgba(10,13,18,.86)', YOU, 1.5); portraitTile(g, P.op, 640 - w / 2 + 6 * u, y + 6 * u, 46 * u, 46 * u, { r: 4 });
+      tx(g, 'SPECTATING', 640 - w / 2 + 62 * u, y + 15 * u, 10 * u, DIM, 'left', 900); tx(g, P.name.toUpperCase(), 640 - w / 2 + 62 * u, y + 32 * u, 17 * u, YOU, 'left', 900);
+      const bx = 640 - w / 2 + 62 * u, bw = 130 * u; g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(bx, y + 44 * u, bw, 5 * u); g.fillStyle = P.hp > 30 ? BONE : WARN; g.fillRect(bx, y + 44 * u, bw * P.hp / 100, 5 * u); if (P.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(bx + bw + 6 * u, y + 44 * u, 40 * u * P.sh / 50, 5 * u); }
+      tx(g, G2.n.toUpperCase(), 640 + w / 2 - 14 * u, y + 20 * u, 13 * u, G2.col || BONE, 'right', 800);
+      if (mates.length > 1) tx(g, `${mates.indexOf(P) + 1} / ${mates.length}  ·  ${isTouch() ? 'tap' : 'click or Space'} to switch`, 640 + w / 2 - 14 * u, y + 40 * u, 10.5 * u, DIM, 'right', 800);
     }
-    if (!me().alive && M.deathInfo && !range && P === me()) { const D = M.deathInfo; rr(g, 640 - 250 * u, 590 - 34 * u, 500 * u, 68 * u, 8, GLASS, FOE); tx(g, `${D.by.toUpperCase()} · ${D.w}${D.head ? ' · headshot' : ''}`, 640, 590 - 12 * u, 18 * u, FOE); tx(g, `They had ${D.hp} health${D.sh ? ' and ' + D.sh + ' shield' : ''} left`, 640, 590 + 14 * u, 13 * u, BONE); }
+    if (X.specFade > 0) { if (!X.specFadeT) X.specFadeT = performance.now(); const k = 1 - (performance.now() - X.specFadeT) / 400; if (k <= 0) { X.specFade = 0; X.specFadeT = 0; } else { g.fillStyle = `rgba(0,0,0,${smooth(k)})`; g.fillRect(V.x0, V.y0, W, H); } }   // 0.4 s, whatever the frame rate
+    if (!me().alive && M.deathInfo && !range && P === me()) {
+      const D = M.deathInfo, a = cl(D.t * 3, 0, 1), cw2 = 520 * u, ch2 = 104 * u, x = 640 - cw2 / 2, y = V.y1 - 196 * u + (1 - smooth(a)) * 30 * u, L = M.dlog || {}, gave = L[me().key + '>' + D.key] || { d: 0, n: 0, h: 0 }, took = L[D.key + '>' + me().key] || { d: 0, n: 0, h: 0 };
+      g.save(); g.globalAlpha = a; rr(g, x, y, cw2, ch2, 10, 'rgba(10,13,18,.9)', FOE, 2); g.fillStyle = FOE; g.fillRect(x, y, 6 * u, ch2);
+      if (D.op) portraitTile(g, D.op, x + 16 * u, y + 12 * u, 80 * u, 80 * u, { r: 6 });
+      tx(g, 'KILLED BY', x + 110 * u, y + 20 * u, 11 * u, DIM, 'left', 900); tx(g, D.by.toUpperCase(), x + 110 * u, y + 44 * u, 24 * u, FOE, 'left', 900);
+      tx(g, `${D.w}${D.head ? '  ·  HEADSHOT' : ''}`, x + 110 * u, y + 68 * u, 13 * u, D.head ? GOLD : BONE, 'left', 800);
+      const hb = x + 110 * u; g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(hb, y + 82 * u, 150 * u, 6 * u); g.fillStyle = BONE; g.fillRect(hb, y + 82 * u, 150 * u * D.hp / 100, 6 * u); if (D.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(hb + 156 * u, y + 82 * u, 50 * u * D.sh / 50, 6 * u); }
+      tx(g, `${D.hp} HP${D.sh ? ' · ' + D.sh + ' SHIELD' : ''} LEFT`, hb, y + 96 * u, 9.5 * u, DIM, 'left', 800);
+      const rx = x + cw2 - 18 * u; tx(g, 'DAMAGE THIS ROUND', rx, y + 20 * u, 10 * u, DIM, 'right', 900);
+      tx(g, `DEALT  ${Math.round(gave.d)}`, rx, y + 46 * u, 17 * u, YOU, 'right', 900); tx(g, `${gave.n} hit${gave.n === 1 ? '' : 's'}${gave.h ? ' · ' + gave.h + ' head' : ''}`, rx, y + 62 * u, 10.5 * u, DIM, 'right', 700);
+      tx(g, `TAKEN  ${Math.round(took.d)}`, rx, y + 82 * u, 17 * u, FOE, 'right', 900); tx(g, `${took.n} hit${took.n === 1 ? '' : 's'}${took.h ? ' · ' + took.h + ' head' : ''}`, rx, y + 97 * u, 10.5 * u, DIM, 'right', 700);
+      g.restore();
+      if (M.planted && D.t > 3.2 && !M.fs.some(f => f !== me() && f.team === me().team && f.alive)) tx(g, 'WATCHING THE CHARGE', 640, V.y0 + 120 * u, 14 * u, GOLD, 'center', 900);
+    }
     // --- touch controls
     if (touch && !UI.armory && !demo) drawTouch(g, u);
     if (canBuy() && !UI.armory && !demo && P.alive && !UI.switched) { const w = 190 * u, h = tapH(46); btn(g, 640 - w / 2, V.y0 + 132 * u, w, h, touch ? 'ARMORY' : 'ARMORY  (B)', () => openArmory(true), { px: 17 * u, col: GOLD, edge: GOLD }); }

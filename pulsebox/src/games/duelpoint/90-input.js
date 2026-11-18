@@ -71,6 +71,7 @@
     if (screen === 'menu') { if (c === 'Enter' && UI.panel === 'home') menuPlay(); return; }
     if (screen === 'over') { if (c === 'Enter') toMenu(); return; }
     if (!playing()) return; const P = me();
+    if (c === 'Space' && !P.alive && UI.spec && M.mode !== 'range') { nextSpec(); return; }   // dead: Space moves to the next teammate
     if (c === 'KeyO') return openOpts(!UI.opts);
     if (c === 'KeyB' && canBuy()) return openArmory(!UI.armory);
     if (UI.armory) return;

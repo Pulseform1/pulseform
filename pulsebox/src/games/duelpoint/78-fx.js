@@ -89,7 +89,9 @@
      gun and their HUD; a click moves to the next one. viewer() is who the camera and HUD follow. */
   const viewer = () => { if (!M) return null; const P = me(); return !P.alive && UI.spec && UI.spec.alive && UI.spec.team === P.team && M.mode !== 'range' ? UI.spec : P; };
   function nextSpec() { const P = me(), mates = M.fs.filter(f => f !== P && f.team === P.team && f.alive && !f.gone); if (!mates.length) { UI.spec = null; return; } const i = mates.indexOf(UI.spec); UI.spec = mates[(i + 1) % mates.length]; X.viewKey = ''; }
-  function updateSpec() { const P = me(); if (!M || P.alive || M.mode === 'range' || M.mode === 'demo') { UI.spec = null; return; } if (M.deathInfo && M.deathInfo.t > 2.2 && !(UI.spec && UI.spec.alive)) nextSpec(); }
+  // after the death cam (killer watched for a moment) the view fades through black into a teammate's eyes
+  function updateSpec() { const P = me(); if (!M || P.alive || M.mode === 'range' || M.mode === 'demo') { UI.spec = null; return; }
+    if (M.deathInfo && M.deathInfo.t > 2.8 && !(UI.spec && UI.spec.alive)) { const had = UI.spec; nextSpec(); if (UI.spec && UI.spec !== had) X.specFade = 1; } }
   /* ---- reload and inspect, choreographed: keyframes [q, dx, dy, dz, rx, ry, rz] over the action (0..1), eased between,
      added on top of where the gun is held. One track per kind of weapon. */
   const VKF = {
@@ -135,8 +137,17 @@
       X.vpY = lp(X.vpY || 0, pt[0] * fol, k); X.vpP = lp(X.vpP || 0, pt[1] * fol, k); }
     let yaw = P.yaw + X.vpY, pitch = P.pitch + M.camKick + X.vpP, y = X.camY - X.dip;
     if (P.daze > 0) { const k = Math.min(1, P.daze / .8); yaw += Math.sin(X.t * 6.3) * .014 * k; pitch += Math.cos(X.t * 4.7) * .011 * k; }   // a Shockwave's daze rocks the view
-    if (!P.alive && M.deathInfo) { const k = Math.min(1, M.deathInfo.t * 2); y = lp(y, P.y + .5, k); yaw += angDiff(M.deathInfo.yaw, yaw) * k; pitch = lp(pitch, .1, k); }
-    cam.position.set(ipos(P, 'x') + (Math.random() - .5) * X.shake * .3, y + (Math.random() - .5) * X.shake * .3, ipos(P, 'z')); cam.rotation.set(pitch, yaw, X.roll);
+    let deathCam = null;
+    if (!P.alive && M.deathInfo) {   // the death cam: you drop, turn to whoever did it, then rise behind your body to watch them
+      const D = M.deathInfo, k = Math.min(1, D.t * 2); y = lp(y, P.y + .5, k); yaw += angDiff(D.yaw, yaw) * k; pitch = lp(pitch, .1, k);
+      const kf = M.byKey[D.key], tx2 = kf && kf.alive ? [ipos(kf, 'x'), ipos(kf, 'y') + 1.2, ipos(kf, 'z')] : [D.kat[0], D.kat[1] + 1.2, D.kat[2]];
+      if (M.planted && D.t > 3.2 && !M.fs.some(f => f !== P && f.team === P.team && f.alive)) {   // nobody left to watch: circle the charge
+        const a = X.t * .25, r = 7; deathCam = { p: [M.planted.x + Math.cos(a) * r, M.planted.y + 3.4, M.planted.z + Math.sin(a) * r], at: [M.planted.x, M.planted.y + .3, M.planted.z] };
+      } else if (D.t > .55) { const u = smooth(cl((D.t - .55) / .9, 0, 1)), dx = tx2[0] - D.at[0], dz = tx2[2] - D.at[2], L = Math.hypot(dx, dz) || 1;
+        deathCam = { p: [lp(ipos(P, 'x'), D.at[0] - dx / L * 2.6, u), lp(y, D.at[1] + 2.5, u), lp(ipos(P, 'z'), D.at[2] - dz / L * 2.6, u)], at: tx2, u }; }
+    }
+    if (deathCam) { cam.position.set(deathCam.p[0], deathCam.p[1], deathCam.p[2]); cam.lookAt(deathCam.at[0], deathCam.at[1], deathCam.at[2]); X.deathCam = deathCam; }
+    else { cam.position.set(ipos(P, 'x') + (Math.random() - .5) * X.shake * .3, y + (Math.random() - .5) * X.shake * .3, ipos(P, 'z')); cam.rotation.set(pitch, yaw, X.roll); X.deathCam = null; }
     X.fovK = lp(X.fovK || 0, P.slide ? 1 : P.sprinting ? .6 : 0, Math.min(1, dt * 7));   // speed widens the view a touch
     const fov = 2 * Math.atan(Math.tan(BASE_FOV * (1 + X.fovK * .09) * D2R / 2) / zoomOf(P)) / D2R; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
 
@@ -185,7 +196,7 @@
 
     // the rival
     for (const [f, A] of X.agents) if (!M.fs.includes(f)) { X.scene.remove(A); X.agents.delete(f); }
-    { const AP = X.agents.get(P); if (AP) AP.visible = false; } for (const f of M.fs) if (f !== P) updateAgent(f, dt);
+    { const AP = X.agents.get(P); if (AP) AP.visible = false; } for (const f of M.fs) if (f !== P || X.deathCam) updateAgent(f, dt);   // on the death cam you see your own body fall
     // smokes, Rampart walls, the charge, a flare in flight
     while (X.smokes.length < M.smokes.length) addSmoke();
     X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { const mt = s.heat ? X.smokeHM : s.grey ? X.smokeGM : X.smokeM; if (g.children[0].material !== mt) for (const c of g.children) c.material = mt; g.position.set(s.x, s.y + 1.4, s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .12; } });
