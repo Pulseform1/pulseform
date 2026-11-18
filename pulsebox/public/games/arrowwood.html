@@ -619,7 +619,7 @@ function spawnFfa(room, p, i) {
   FFA_SPAWNS.forEach(([x, z], k) => { if (k === p.lastSpawn) return; const d = others.length ? Math.min(...others.map(q => Math.hypot(q.st.x - x, q.st.z - z))) : (k * 37 + (i || 0) * 11) % 50; if (d > bd) { bd = d; best = k; } });
   p.lastSpawn = best; const [x, z] = FFA_SPAWNS[best], yaw = Math.atan2(x - 70, z - 70);   // face toward the middle
   p.st = { ...newState(x, z, yaw), lastIn: room.t }; p.stuckIn = []; p.respawnAt = 0;
-  send(room, p.id, { t: 'corr', p: [r2(p.st.x), r2(p.st.y), r2(p.st.z)], yaw, spawn: 1 });
+  send(room, p.id, { t: 'corr', p: [r2(p.st.x), r2(p.st.y), r2(p.st.z)], yaw, spawn: 1 }); send(room, '*', { t: 'respawn', id: p.id });
 }
 function phaseOut(room) { send(room, '*', { t: 'phase', ph: room.phase, end: r2(room.phaseEnd), round: room.round, score: room.score, winner: room.winner, mode: room.mode, ffaEnd: r2(room.ffaEnd) }); }
 function endRound(room, winner, reason) {
@@ -904,7 +904,8 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
         CL.phase = m.ph; CL.phaseEnd = m.end; if (m.cap) { CL.cap = m.cap; CL.zoneIn = m.in; }
         for (const e of m.pl) {
           const [id, x, y, z, yaw, pitch, f, hp, arrows, draw, k, d] = e, p = player(id);
-          p.k = k; p.d = d; p.hp = hp; p.arrows = arrows; p.alive = !!(f & 1); p.on = !!(f & 16);
+          const wasDead = p.alive === false; p.k = k; p.d = d; p.hp = hp; p.arrows = arrows; p.alive = !!(f & 1); p.on = !!(f & 16);
+          if (wasDead && p.alive) { p.buf.length = 0; emit('unstickAll', p); }   // back in (a respawn or a new round): clear the finisher pose and the arrows in them
           const lb = CL.src === 'online' ? CL.lobby.find(q => q.id === id) : null; if (lb) { p.name = lb.name; p.team = lb.team; p.bow = lb.bow; p.slot = lb.slot; }
           else if (CL.src === 'practice' && id !== CL.me) { p.name = 'Straw dummy'; p.team = 1; p.dummy = true; } else if (id === CL.me && !p.name) { p.name = myName(); p.team = 0; p.bow = PROFILE.equipped; }
           p.buf.push([m.tm, x, y, z, yaw, pitch, f, draw]); if (p.buf.length > 40) p.buf.shift();
@@ -2232,7 +2233,7 @@ return { createRoom, drain, join, drop, message, tick, settle, step, TICK, SIZES
   function uiInit() {
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     UI.el = document.createElement('div'); UI.el.id = 'aw'; document.body.appendChild(UI.el);
-    UI.el.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled) { if (AU.ready) S.click(); act(b.dataset.a, b.dataset.v, b); } });
+    UI.el.addEventListener('click', e => { audioInit(); const b = e.target.closest('[data-a]'); if (b && !b.disabled) { if (AU.ready) S.click(); act(b.dataset.a, b.dataset.v, b); } });
     UI.el.addEventListener('input', e => { const t = e.target; if (t.dataset.set) setting(t.dataset.set, t.type === 'checkbox' ? t.checked : t.value); });
     UI.el.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'awCode') act('doJoin'); if (e.key === 'Enter' && e.target.id === 'awName') e.target.blur(); if (e.key === 'Escape') act('back'); });
     UI.el.addEventListener('change', e => { if (e.target.id === 'awName') { CFG.name = (e.target.value || '').trim().slice(0, 16) || CFG.name; saveCfg(); sendRoom({ t: 'name', name: CFG.name }); } });

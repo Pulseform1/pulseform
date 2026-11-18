@@ -14,7 +14,7 @@ const st = (n, ms = 1000 / 24) => p.evaluate(([n, ms]) => window.__step(n, ms), 
 const hideUi = () => p.evaluate(() => { document.getElementById('aw').style.display = 'none'; document.getElementById('cv').style.opacity = '0'; });
 const showHud = () => p.evaluate(() => { document.getElementById('cv').style.opacity = '1'; });
 await p.evaluate(() => { window.__manual = true; GAME.test.act('practice'); }); await st(30, 50);
-await p.evaluate(() => { const T = GAME.test; for (const [id, k] of [['d0'], ['d1'], ['d2'], ['d3'], ['d4']].map(a => a)) { const pl = T.CL.players.get(id); if (pl) pl.buf.length = 0; } });
+await p.evaluate(() => { const room = GAME.test.CL.local.room; for (const q of room.players.values()) if (q.dummy) { q.home = [300, 300]; q.st.x = 300; q.st.z = 300; q.dummy = 'still'; } });   // the straw dummies step out of the picture
 // a squad in the wood, bows up
 const stageSquad = () => p.evaluate(() => { const T = GAME.test; T.stage({ id: 'a1', x: 66.4, z: 104.5, yaw: Math.PI * .82, team: 1, draw: 1, pitch: .08 }); T.stage({ id: 'a2', x: 73.6, z: 103.2, yaw: Math.PI * 1.18, team: 1, draw: .7, bow: 'cupid' }); T.stage({ id: 'a3', x: 69.3, z: 99.4, yaw: Math.PI * 1.02, team: 1, crouch: true, draw: 1, bow: 'cashout', pitch: .05 }); });
 await stageSquad(); await p.evaluate(() => GAME.test.tp(70, 113.5, 0, -.04)); await st(30, 50);
@@ -27,6 +27,7 @@ await hideUi(); await p.evaluate(() => { const T = GAME.test; T.tp(70, 113, 0, 0
 await p.screenshot({ path: TMP + '/cover-src.png', clip: { x: 280, y: 0, width: 720, height: 720 } });
 await p.evaluate(() => { const T = GAME.test; T.ME.cam = 'fp'; T.ME.fin = null; });
 // the trailer: the wood, a full draw, three finishers
+await p.setViewportSize({ width: 960, height: 540 });
 let f = 0; const rec = async (n, fn) => { for (let k = 0; k < n; k++) { if (fn) await p.evaluate(fn, k); await st(1); await p.screenshot({ path: `${TMP}/f${String(f++).padStart(4, '0')}.jpg`, type: 'jpeg', quality: 82 }); } };
 await p.evaluate(() => { GAME.test.tp(70, 113.5, -.2, -.02); }); await stageSquad();
 await rec(40, k => { GAME.test.ME.st.yaw = -.25 + k * .012; });

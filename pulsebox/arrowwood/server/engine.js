@@ -177,7 +177,7 @@ function spawnFfa(room, p, i) {
   FFA_SPAWNS.forEach(([x, z], k) => { if (k === p.lastSpawn) return; const d = others.length ? Math.min(...others.map(q => Math.hypot(q.st.x - x, q.st.z - z))) : (k * 37 + (i || 0) * 11) % 50; if (d > bd) { bd = d; best = k; } });
   p.lastSpawn = best; const [x, z] = FFA_SPAWNS[best], yaw = Math.atan2(x - 70, z - 70);   // face toward the middle
   p.st = { ...newState(x, z, yaw), lastIn: room.t }; p.stuckIn = []; p.respawnAt = 0;
-  send(room, p.id, { t: 'corr', p: [r2(p.st.x), r2(p.st.y), r2(p.st.z)], yaw, spawn: 1 });
+  send(room, p.id, { t: 'corr', p: [r2(p.st.x), r2(p.st.y), r2(p.st.z)], yaw, spawn: 1 }); send(room, '*', { t: 'respawn', id: p.id });
 }
 function phaseOut(room) { send(room, '*', { t: 'phase', ph: room.phase, end: r2(room.phaseEnd), round: room.round, score: room.score, winner: room.winner, mode: room.mode, ffaEnd: r2(room.ffaEnd) }); }
 function endRound(room, winner, reason) {

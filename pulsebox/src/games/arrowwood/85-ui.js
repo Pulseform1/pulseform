@@ -28,7 +28,7 @@
   function uiInit() {
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     UI.el = document.createElement('div'); UI.el.id = 'aw'; document.body.appendChild(UI.el);
-    UI.el.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled) { if (AU.ready) S.click(); act(b.dataset.a, b.dataset.v, b); } });
+    UI.el.addEventListener('click', e => { audioInit(); const b = e.target.closest('[data-a]'); if (b && !b.disabled) { if (AU.ready) S.click(); act(b.dataset.a, b.dataset.v, b); } });
     UI.el.addEventListener('input', e => { const t = e.target; if (t.dataset.set) setting(t.dataset.set, t.type === 'checkbox' ? t.checked : t.value); });
     UI.el.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'awCode') act('doJoin'); if (e.key === 'Enter' && e.target.id === 'awName') e.target.blur(); if (e.key === 'Escape') act('back'); });
     UI.el.addEventListener('change', e => { if (e.target.id === 'awName') { CFG.name = (e.target.value || '').trim().slice(0, 16) || CFG.name; saveCfg(); sendRoom({ t: 'name', name: CFG.name }); } });

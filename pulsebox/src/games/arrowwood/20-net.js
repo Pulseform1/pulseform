@@ -85,7 +85,8 @@
         CL.phase = m.ph; CL.phaseEnd = m.end; if (m.cap) { CL.cap = m.cap; CL.zoneIn = m.in; }
         for (const e of m.pl) {
           const [id, x, y, z, yaw, pitch, f, hp, arrows, draw, k, d] = e, p = player(id);
-          p.k = k; p.d = d; p.hp = hp; p.arrows = arrows; p.alive = !!(f & 1); p.on = !!(f & 16);
+          const wasDead = p.alive === false; p.k = k; p.d = d; p.hp = hp; p.arrows = arrows; p.alive = !!(f & 1); p.on = !!(f & 16);
+          if (wasDead && p.alive) { p.buf.length = 0; emit('unstickAll', p); }   // back in (a respawn or a new round): clear the finisher pose and the arrows in them
           const lb = CL.src === 'online' ? CL.lobby.find(q => q.id === id) : null; if (lb) { p.name = lb.name; p.team = lb.team; p.bow = lb.bow; p.slot = lb.slot; }
           else if (CL.src === 'practice' && id !== CL.me) { p.name = 'Straw dummy'; p.team = 1; p.dummy = true; } else if (id === CL.me && !p.name) { p.name = myName(); p.team = 0; p.bow = PROFILE.equipped; }
           p.buf.push([m.tm, x, y, z, yaw, pitch, f, draw]); if (p.buf.length > 40) p.buf.shift();
