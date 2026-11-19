@@ -3656,7 +3656,9 @@ const GAME = {
     return U.rfxA = { host, mag: !!pp.mag, well, lc, w, h: hh, bottom: V3(well.x, well.y + (pp.mag ? -hh * .82 : -hh * .5), well.z), shells: !host && !!pp.pump };
   }
   function rfxTake(Gm, rl, mode, full) {
-    let rig = RFX.free.pop(); if (!rig) { if (RFX.busy.length >= RFX.cap) return null; rig = rfxRig(); }
+    let rig = RFX.free.pop();
+    if (!rig && RFX.busy.length >= RFX.cap) { const lent = full && RFX.busy.find(q => !q.full); if (!lent) return null; rfxDrop(lent); rig = RFX.free.pop(); }   // all out: your own gun takes one back from a rival's
+    if (!rig) rig = rfxRig();
     RFX.busy.push(rig); rig.gun = Gm; Gm.userData.rig = rig; Gm.add(rig.g); rig.g.visible = true;
     rig.mode = mode; rig.full = full; rig.low = !!(X && X.low); rig.K = RLK[rl.kind] || RLK.snap; rig.kind = rl.kind; rig.c1.set(rl.col); rig.c2.set(rl.col2); rig.A = rfxAnchor(Gm);
     rig.l1.copy(rig.c1).convertSRGBToLinear(); rig.l2.copy(rig.c2).convertSRGBToLinear();
@@ -5713,6 +5715,8 @@ const GAME = {
   function equipSkin(k, id) { if (id) STATS.equip[k] = id; else delete STATS.equip[k]; saveAll(true); click(); }
   // text that shrinks to fit a width
   const fitTx = (g, s2, x, y, px, col, align, weight, maxW) => { g.font = `${weight} ${px}px "Chakra Petch", system-ui, sans-serif`; const w = g.measureText(s2).width; tx(g, s2, x, y, w > maxW ? px * maxW / w : px, col, align, weight); };
+  // how many real screen pixels one layout unit is (text never goes below a minimum size, so small cards drop lines)
+  const scrPx = g => g.getTransform().a * innerWidth / g.canvas.width;
   // the Paragon colours: a hue that turns, for the edges and lettering of the rarest
   const prism = (t, off = 0, l = 62) => `hsl(${((t * 60 + off) % 360 + 360) % 360},100%,${l}%)`;
   // a skin's card: rarity colour behind it, the gun in that skin, name, rarity, price or OWNED
@@ -5726,9 +5730,10 @@ const GAME = {
     g.restore();
     g.fillStyle = R2.col; g.fillRect(x, y + h - 4 * u, w, 4 * u);
     rr(g, x, y, w, h, 8, null, hot ? R2.col : 'rgba(239,233,220,.14)', hot ? 2.5 : 1);
-    const px = big ? 20 * u : 15 * u; fitTx(g, skinName(id).toUpperCase(), x + 14 * u, y + h - 44 * u * (big ? 1.25 : 1), px, BONE, 'left', 900, w - 28 * u);
-    fitTx(g, R2.n.toUpperCase() + (sk.k === 'knife' ? '  ·  MELEE' : '  ·  ' + GUNS[sk.k].cat.toUpperCase()), x + 14 * u, y + h - 20 * u * (big ? 1.25 : 1), 11 * u, R2.col, 'left', 800, w - 96 * u);
-    if (own) tx(g, 'OWNED', x + w - 14 * u, y + h - 20 * u * (big ? 1.25 : 1), 12 * u, YOU, 'right', 900); else coinTag(g, x + w - 14 * u, y + h - 20 * u * (big ? 1.25 : 1), 15 * u, skinPrice(id));
+    const px = big ? 20 * u : 15 * u, tight = w * scrPx(g) < 170;   // a small card (a phone): the price goes up in the corner, the rarity line keeps the whole width
+    fitTx(g, skinName(id).toUpperCase(), x + 14 * u, y + h - 44 * u * (big ? 1.25 : 1), px, BONE, 'left', 900, w - 28 * u);
+    fitTx(g, R2.n.toUpperCase() + (tight ? '' : sk.k === 'knife' ? '  ·  MELEE' : '  ·  ' + GUNS[sk.k].cat.toUpperCase()), x + 14 * u, y + h - 20 * u * (big ? 1.25 : 1), 11 * u, R2.col, 'left', 800, tight ? w - 28 * u : w - 96 * u);
+    const py = tight ? y + 18 * u : y + h - 20 * u * (big ? 1.25 : 1); if (own) tx(g, 'OWNED', x + w - 14 * u, py, 12 * u, YOU, 'right', 900); else coinTag(g, x + w - 14 * u, py, 15 * u, skinPrice(id));
   }
   const RELOAD_FX_N = { snap: 'a flash as it seats', sparks: 'sparks and a shock ring', flame: 'a burst of flame', frost: 'ice forms on the magazine', bolt: 'lightning to the magazine', void: 'light drawn into the well', digital: 'the magazine rebuilt in pixels', runes: 'a ring of runes', gold: 'gilded glints', motes: 'spiralling light', cell: 'an energy magazine', neon: 'it flickers on like neon', forge: 'the magazine forged white-hot', rift: 'a portal, pixels, a power surge', glyph: 'circles of runes and a surge' };
   const SIG_N = { star: 'a captive star in three rings', rift: 'a tear in the air, shards circling', glyph: 'turning circles of runes', crescent: 'a crescent moon', icicles: 'glowing ice', fans: 'spinning RGB fans' };
@@ -5770,10 +5775,11 @@ const GAME = {
     rr(g, x + 5 * u, y + 5 * u, w - 10 * u, h - 10 * u, 7, null, 'rgba(255,255,255,.12)', 1);
     tx(g, 'PARAGON', x + 18 * u, y + 24 * u, 13 * u, prism(t, 0, 70), 'left', 900); tx(g, '·  FEATURED', x + 92 * u, y + 24 * u, 11 * u, BONE, 'left', 800);
     rr(g, x + w - 128 * u, y + 13 * u, 112 * u, 22 * u, 11, 'rgba(0,0,0,.45)', sk.R.col + '88', 1); tx(g, 'ONE IN EVERY SET', x + w - 72 * u, y + 24 * u, 9.5 * u, sk.R.col, 'center', 800);
-    const by = y + h * .72; fitTx(g, L.n.toUpperCase(), x + 18 * u, by, 34 * u, BONE, 'left', 900, w - 36 * u); tx(g, sk.k === 'knife' ? 'BLADE' : GUNS[sk.k].n.toUpperCase() + '  ·  ' + GUNS[sk.k].cat.toUpperCase(), x + 18 * u, by + 30 * u, 13 * u, L.alt, 'left', 800);
-    para(g, L.blurb, x + 18 * u, by + 54 * u, w - 36 * u, 11.5 * u, '#c9cfd8');
-    const hh = Math.floor(left / 3600000), mm = Math.floor(left / 60000) % 60, ss = Math.floor(left / 1000) % 60; tx(g, `LEAVES IN ${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`, x + 18 * u, y + h - 22 * u, 11 * u, DIM, 'left', 800);
-    if (own) tx(g, 'OWNED', x + w - 18 * u, y + h - 22 * u, 14 * u, YOU, 'right', 900); else coinTag(g, x + w - 18 * u, y + h - 22 * u, 18 * u, skinPrice(id));
+    // the words, laid out from the bottom up: on a short card (a phone) the blurb and the countdown give way
+    const roomy = h * scrPx(g) > 330, by = roomy ? y + h * .72 : y + h - 72 * u; fitTx(g, L.n.toUpperCase(), x + 18 * u, by, 34 * u, BONE, 'left', 900, w - 36 * u); tx(g, sk.k === 'knife' ? 'BLADE' : GUNS[sk.k].n.toUpperCase() + '  ·  ' + GUNS[sk.k].cat.toUpperCase(), x + 18 * u, by + 30 * u, 13 * u, L.alt, 'left', 800);
+    if (roomy) { para(g, L.blurb, x + 18 * u, by + 54 * u, w - 36 * u, 11.5 * u, '#c9cfd8');
+      const hh = Math.floor(left / 3600000), mm = Math.floor(left / 60000) % 60, ss = Math.floor(left / 1000) % 60; tx(g, `LEAVES IN ${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`, x + 18 * u, y + h - 22 * u, 11 * u, DIM, 'left', 800); }
+    const py = roomy ? y + h - 22 * u : y + 52 * u; if (own) tx(g, 'OWNED', x + w - 18 * u, py, 14 * u, YOU, 'right', 900); else coinTag(g, x + w - 18 * u, py, 18 * u, skinPrice(id));
   }
   // a point a fraction of the way round a rectangle's edge, for the turning colours
   function perim(x, y, w, h, a, b) { const L2 = 2 * (w + h), at = q => { let d = ((q % 1) + 1) % 1 * L2; if (d < w) return [x + d, y]; d -= w; if (d < h) return [x + w, y + d]; d -= h; if (d < w) return [x + w - d, y + h]; d -= w; return [x, y + h - d]; }, out = [at(a)];
@@ -5784,7 +5790,7 @@ const GAME = {
     tx(g, 'NEXT SET IN', x + w / 2, y + h * .2, 11 * u, DIM, 'center', 800); tx(g, `${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`, x + w / 2, y + h * .34, 26 * u, BONE, 'center', 900);
     g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(x + 16 * u, y + h * .46, w - 32 * u, 3 * u); g.fillStyle = YOU; g.fillRect(x + 16 * u, y + h * .46, (w - 32 * u) * (1 - left / STORE_PERIOD), 3 * u);
     tx(g, 'NEXT PARAGON', x + w / 2, y + h * .6, 10 * u, prism(t, 120, 70), 'center', 900); fitTx(g, skinName(nx.id).toUpperCase(), x + w / 2, y + h * .7, 14 * u, BONE, 'center', 900, w - 20 * u);
-    para(g, 'Seven new skins and a new Paragon every three hours.', x + 14 * u, y + h * .82, w - 28 * u, 10 * u, DIM);
+    if (h * scrPx(g) > 200) para(g, 'Seven new skins and a new Paragon every three hours.', x + 14 * u, y + h * .82, w - 28 * u, 10 * u, DIM);
   }
   function drawShow(g, V, W, H, u) {   // the preview panel over the turning gun
     const id = SH.show, sk = skinOfId(id); if (!sk) { SH.show = null; return; } const own = owns(id), price = skinPrice(id), L = sk.L, px = V.x1 - 430 * u, py = V.y0 + 70 * u;

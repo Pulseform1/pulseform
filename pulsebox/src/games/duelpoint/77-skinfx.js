@@ -219,7 +219,9 @@
     return U.rfxA = { host, mag: !!pp.mag, well, lc, w, h: hh, bottom: V3(well.x, well.y + (pp.mag ? -hh * .82 : -hh * .5), well.z), shells: !host && !!pp.pump };
   }
   function rfxTake(Gm, rl, mode, full) {
-    let rig = RFX.free.pop(); if (!rig) { if (RFX.busy.length >= RFX.cap) return null; rig = rfxRig(); }
+    let rig = RFX.free.pop();
+    if (!rig && RFX.busy.length >= RFX.cap) { const lent = full && RFX.busy.find(q => !q.full); if (!lent) return null; rfxDrop(lent); rig = RFX.free.pop(); }   // all out: your own gun takes one back from a rival's
+    if (!rig) rig = rfxRig();
     RFX.busy.push(rig); rig.gun = Gm; Gm.userData.rig = rig; Gm.add(rig.g); rig.g.visible = true;
     rig.mode = mode; rig.full = full; rig.low = !!(X && X.low); rig.K = RLK[rl.kind] || RLK.snap; rig.kind = rl.kind; rig.c1.set(rl.col); rig.c2.set(rl.col2); rig.A = rfxAnchor(Gm);
     rig.l1.copy(rig.c1).convertSRGBToLinear(); rig.l2.copy(rig.c2).convertSRGBToLinear();
