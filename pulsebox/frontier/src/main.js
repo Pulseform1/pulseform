@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { U } from './fx.js';
 import { World } from './world.js';
 import { Jobs } from './jobs.js';
-import { groundTextures, macroTexture, barkTexture, foliageTextures, canvasTexture, woodTexture, blanketTexture, endGrainTexture } from './texgen.js';
+import { groundTextures, macroTexture, barkTexture, foliageTextures, canvasTexture, woodTexture, blanketTexture, endGrainTexture, glowTexture, puffTexture } from './texgen.js';
 import { Terrain } from './terrain.js';
 import { buildPlants } from './plants.js';
 import { Flora } from './flora.js';
@@ -15,6 +15,8 @@ import { Player, pushOut } from './player.js';
 import { Input } from './input.js';
 import { Weather } from './weather.js';
 import { Audio } from './audio.js';
+import { Wildlife } from './wildlife.js';
+import { Weapons } from './weapons.js';
 
 const $ = s => document.querySelector(s);
 const params = new URLSearchParams(location.search);
@@ -61,7 +63,7 @@ async function assets() {
   setLoad(.18, 'Growing needles and leaves'); await frame();
   const leaf = foliageTextures();
   setLoad(.22, 'Stitching the tent'); await frame();
-  TEX = { ...ground, ground, bark, leaf, canvas: canvasTexture(), wood: woodTexture(61, '#8a6a48', '#46301e'), wood2: woodTexture(67, '#6a4a30', '#2e1e12'), blanket: blanketTexture(), endGrain: endGrainTexture() };
+  TEX = { ...ground, ground, bark, leaf, canvas: canvasTexture(), wood: woodTexture(61, '#8a6a48', '#46301e'), wood2: woodTexture(67, '#6a4a30', '#2e1e12'), blanket: blanketTexture(), endGrain: endGrainTexture(), glow: glowTexture(), puff: puffTexture() };
   setLoad(.28, 'Raising pines, spruce and aspen'); await frame();
   PLANTS = buildPlants(renderer, { bark, leaf, rock: ground.rock, rockN: ground.rockN }, U);
 }
@@ -85,12 +87,16 @@ async function start(opts) {
   const camp = new Camp(scene, world, TEX, PLANTS);
   const player = new Player(camera, world);
   const weather = new Weather(scene, sky, camp);
+  const wildlife = new Wildlife(scene, world, flora, camp, audio);
+  wildlife.panOf = p => { const r = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion), d = p.clone().sub(camera.position).normalize(); return Math.max(-1, Math.min(1, r.dot(d))); };
+  wildlife.onBump = a => { const d = player.pos.clone().sub(a.pos).setY(0).normalize(); player.vel.addScaledVector(d, 9); G.shake = .6; toast('The bear bowls you over, then wheels away into the timber.'); };
+  if (!G.weapons) G.weapons = new Weapons(camera, TEX, TEX.glow);
   player.onStep = kind => audio.step(surfaceAt(kind), kind === 'run');
   // stand in the tent doorway looking out at the fire
   const door = camp.toWorld(0, TENT.cz + TENT.L / 2 + 0.9);
   player.place(door.x, door.z, camp.yaw + Math.PI);
   if (opts.player) { player.place(opts.player.x, opts.player.z, opts.player.yaw); }
-  Object.assign(G, { world, jobs, sky, terrain, flora, grass, water, camp, player, weather, seed, spawn: opts.spawn, gameTime: 0, day: 0, envT: 0, env: { waterDist: 99, riverDist: 99, forest: 0 } });
+  Object.assign(G, { world, jobs, sky, terrain, flora, grass, water, camp, player, weather, wildlife, inv: { meat: [] }, seed, spawn: opts.spawn, gameTime: 0, day: 0, envT: 0, env: { waterDist: 99, riverDist: 99, forest: 0 } });
   // build the world around the player before showing it
   const t0 = performance.now();
   while (true) {
@@ -106,6 +112,7 @@ async function start(opts) {
   sky.update(0, camera.position, 0);
   renderer.compile(scene, camera);
   $('#loading').hidden = true; $('#hud').hidden = false; G.state = 'play';
+  setTimeout(() => toast('Press 1 for the rifle, 2 for the shotgun, 3 to put it away.'), 1500);
   if (!input.isTouch) input.lock();
 }
 
@@ -157,14 +164,16 @@ function step(dt) {
   if (G.state === 'play') {
     if (input.locked || input.isTouch) player.look(input.lookX, input.lookY, G.settings.sens);
     player.update(dt, input, (x, z, r) => collide(x, z, r));
-    if (input.hit('KeyE')) { const it = nearestInteract(); if (it) doInteract(it); else if (player.seated) { player.seated = null; player.frozen = false; } }
+    if (input.hit('Digit1')) G.weapons.select('rifle'); if (input.hit('Digit2')) G.weapons.select('shotgun'); if (input.hit('Digit3') || input.hit('KeyH')) G.weapons.select(null);
+    if (input.wheel) { const order = [null, 'rifle', 'shotgun'], i = order.indexOf(G.weapons.want); G.weapons.select(order[(i + (input.wheel > 0 ? 1 : 2)) % 3]); }
+    if (input.hit('KeyE')) { const it = nearestInteract(), carcass = !it && G.carcass; if (it) doInteract(it); else if (carcass) harvest(carcass); else if (player.seated) { player.seated = null; player.frozen = false; } }
     if (input.hit('KeyL')) { if (camp.lantern.carried) camp.lantern.toggle(); else toast('Your lantern hangs by the tent door.'); }
     if (input.hit('Escape') || (!input.locked && !input.isTouch && G.wasLocked)) pause(true);
     G.wasLocked = input.locked;
     G.gameTime += dt;
   }
   U.uTime.value += dt;
-  const w = U.uWind.value, wt = U.uTime.value; w.z = 0.35 + 0.25 * Math.sin(wt * 0.05) + 0.15 * Math.sin(wt * 0.013);
+  const w = U.uWind.value;
   const gameDt = G.state === 'play' ? dt * 60 : 0, before = sky.hours;
   sky.update(dt, camera.position, gameDt);
   if (sky.hours < before) G.day++;
@@ -173,6 +182,19 @@ function step(dt) {
   audio.update({ day: sky.daylight, night: sky.night, wind: U.uWind.value.z, rain: G.weather.cur.rain, inTent: camp.inside(player.pos.x, player.pos.z), fireDist: camera.position.distanceTo(camp.firePos), fireFuel: camp.fire.u.uFuel.value, waterDist: G.env.waterDist, riverDist: G.env.riverDist, forest: G.env.forest, dt });
   terrain.update(camera.position, dt); terrain.sync(); flora.update(camera.position, dt); grass.update(camera.position, player.pos); water.update(camera.position); jobs.tick(4);
   camp.update(dt, sky.night, new THREE.Vector3(w.x * w.z, 0, w.y * w.z));
+  // wildlife and guns
+  const moving = player.speed > .4, noise = player.swimming ? .7 : !moving ? .04 : player.crouched ? .14 : player.speed > 4.5 ? 1 : .42;
+  if (G.state === 'play') G.wildlife.update(dt, { pos: player.pos, noise, crouched: player.crouched, moving, night: sky.night > .5, lantern: camp.lantern.carried && camp.lantern.on, wind: { x: w.x, z: w.y } }, sky.hours);
+  G.wildlife.render(dt, camera.position);
+  const W = G.weapons;
+  if (G.state === 'play') {
+    W.update(dt, player.seated || player.sleeping ? { mouseDown: [], clicked: new Set(), hit: () => false } : input, gunCtx);
+    for (const m of Object.values(W.models)) { const a = m.holder.children[1]; if (a.userData.left) { a.userData.left.visible = a.userData.leftHand.visible = !camp.lantern.carried; } }
+    G.handL.visible = !(camp.lantern.carried && W.ads > .6);
+  }
+  if (G.recoilBack > 0) { const r = Math.min(G.recoilBack, dt * .25); player.pitch -= r; G.recoilBack -= r; }
+  if (G.shake > 0) { G.shake = Math.max(0, G.shake - dt); camera.rotation.x += (Math.random() - .5) * G.shake * .05; camera.rotation.y += (Math.random() - .5) * G.shake * .05; }
+  updateDust(dt);
   if (camp.lantern.carried) {
     camp.lantern.update(dt, Math.max(sky.night, 1 - sky.daylight));
     const sw = player.bobAmt, ph = player.stepPhase;
@@ -181,15 +203,51 @@ function step(dt) {
   }
   // HUD
   const it = G.state === 'play' ? nearestInteract() : null, pr = $('#prompt');
-  if (it) { pr.textContent = 'E  ' + it.label(); pr.classList.add('on'); } else pr.classList.remove('on');
+  G.carcass = !it && G.state === 'play' ? G.wildlife.carcassNear(player.pos, camera.getWorldDirection(new THREE.Vector3())) : null;
+  if (it) { pr.textContent = 'E  ' + it.label(); pr.classList.add('on'); } else if (G.carcass) { pr.textContent = 'E  Dress the ' + G.carcass.sp.label.toLowerCase(); pr.classList.add('on'); } else pr.classList.remove('on');
+  $('#ammo').textContent = W.label; $('#hit').classList.toggle('on', G.hitT > 0); G.hitT -= dt;
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('#toast').classList.remove('on'); }
   const h = sky.hours, hh = Math.floor(h), mm = Math.floor((h - hh) * 60);
   $('#clock').textContent = `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'am' : 'pm'}`;
   if (G.debug) $('#debug').textContent = `${fps.toFixed(0)} fps  calls ${renderer.info.render.calls}  tris ${(renderer.info.render.triangles / 1e6).toFixed(2)}M  trees ${flora.counts.near}/${flora.counts.mid}/${flora.counts.far}  jobs ${jobs.pending}`;
-  renderer.render(scene, camera);
+  if (!G.noRender) renderer.render(scene, camera);
   input.endFrame();
 }
 requestAnimationFrame(loop);
+
+// ---------- shooting ----------
+const gunCtx = {
+  scene, get puff() { return TEX.puff; }, get bob() { return G.player.bobAmt; }, get phase() { return G.player.stepPhase; },
+  setFov(f) { if (Math.abs(camera.fov - f) > .05) { camera.fov = f; camera.updateProjectionMatrix(); } },
+  recoil(k) { G.player.pitch += k; G.recoilBack = (G.recoilBack || 0) + k * .7; },
+  sound(kind, gun) { if (kind === 'shot') { audio.shot(gun); G.wildlife.gunshot(G.player.pos); } else if (kind === 'click') audio.click(); else audio.mech(kind === 'load' ? 'load' : 'reload'); if (kind === 'shot' && gun === 'rifle') setTimeout(() => audio.mech('lever'), 260); },
+  trace(o, d, range, power, first) {
+    let blockT = range, hitTree = false;
+    for (let t = .6; t < range; t += t < 30 ? .35 : 1) {
+      const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t;
+      if (y < G.world.height(x, z)) { blockT = t; break; }
+      G.flora.near(x, z, 0, () => { hitTree = true; }); if (hitTree) { blockT = t; break; }
+    }
+    const h = G.wildlife.raycast(o, d, blockT);
+    if (h) {
+      const down = h.a.hit(h.vital, power); G.hitT = .15;
+      spawnDust(h.point, 0x8a7a64, .4);
+      if (first || down) toast(down ? (h.a.sp.small || h.a.sp.bird ? `Got the ${h.a.sp.label.toLowerCase()}.` : `A clean shot. The ${h.a.sp.label.toLowerCase()} is down.`) : `Hit, but the ${h.a.sp.label.toLowerCase()} runs on. Follow it.`);
+    } else if (blockT < range && first) spawnDust(o.clone().addScaledVector(d, blockT), hitTree ? 0x6a5040 : 0x7a6a50, .6);
+  },
+};
+const dust = [];
+function spawnDust(p, color, size) {
+  for (let i = 0; i < 3; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.puff, color, transparent: true, depthWrite: false, opacity: .6 })); s.position.copy(p).add(new THREE.Vector3((Math.random() - .5) * .2, Math.random() * .2, (Math.random() - .5) * .2)); s.userData = { t: 0, s: size * (.6 + Math.random() * .5) }; scene.add(s); dust.push(s); }
+}
+function updateDust(dt) { for (let i = dust.length - 1; i >= 0; i--) { const s = dust[i]; s.userData.t += dt; const k = s.userData.t / 1.4; s.scale.setScalar(s.userData.s * (1 + k * 2.5)); s.position.y += dt * .3; s.material.opacity = .6 * (1 - k); if (k >= 1) { scene.remove(s); s.material.dispose(); dust.splice(i, 1); } } }
+function harvest(a) {
+  fade();
+  setTimeout(() => {
+    const r = G.wildlife.harvest(a); G.inv.meat.push({ kind: r.kind, meat: r.meat, lb: r.lb, state: 'raw' });
+    toast(`You dress the ${r.label.toLowerCase()} and pack ${r.lb} lb of ${r.meat}.`);
+  }, 450);
+}
 
 // what is around the player, for sound: open water, a river, how wooded
 function senseSurroundings(dt) {
@@ -237,9 +295,10 @@ drawSettings();
 // test hooks
 window.__fh = { G, THREE, start, scene, camera, renderer, input, hold: on => { G.hold = on; },
   // run frames by hand and grab the picture (for headless tests)
+  tick: (frames = 1, dt = 1 / 30) => { G.noRender = true; for (let i = 0; i < frames; i++) step(dt); G.noRender = false; },
   snap: (frames = 1, dt = 1 / 30) => { for (let i = 0; i < frames; i++) step(dt); return renderer.domElement.toDataURL('image/jpeg', 0.92); },
   look: (yaw, pitch) => { G.player.yaw = yaw; G.player.pitch = pitch; G.player.applyCamera(); },
-  collideTest: (x, z, r) => collide(x, z, r), weather: st => G.weather.set(st), audio,
+  collideTest: (x, z, r) => collide(x, z, r), weather: st => G.weather.set(st), audio, gunCtx,
   goto: (x, z, yaw = G.player.yaw, pitch = G.player.pitch) => { G.player.place(x, z, yaw); G.player.pitch = pitch; G.player.applyCamera(); }, setTime: h => { G.sky.hours = h; G.sky.renderEnv(); }, debug: on => { G.debug = on; $('#debug').hidden = !on; } };
 if (params.get('debug')) window.__fh.debug(true);
 if (params.get('spawn')) start({ spawn: params.get('spawn'), seed: params.get('seed') ? +params.get('seed') : 1234, hours: params.get('t') ? +params.get('t') : undefined });

@@ -107,7 +107,7 @@ export class Flora {
         const k = p[i + 5], x = p[i], z = p[i + 2], d2 = (x - cam.x) ** 2 + (z - cam.z) ** 2;
         if (d2 > pr[k] || propN[k] >= this.propCap) continue;
         const s = p[i + 4];
-        if (k === 4 || k === 5) setM(pA[k], propN[k]++ * 16, x, p[i + 1], z, p[i + 3], s, s * (.6 + .4 * ((x * 13.7) % 1 + 1) % 1), s * 1.1);
+        if (k === 4 || k === 5) setM(pA[k], propN[k]++ * 16, x, p[i + 1], z, p[i + 3], s, s * (.75 + .45 * ((x * 13.7) % 1 + 1) % 1), s * 1.1);
         else setM(pA[k], propN[k]++ * 16, x, p[i + 1], z, p[i + 3], s);
       }
     }

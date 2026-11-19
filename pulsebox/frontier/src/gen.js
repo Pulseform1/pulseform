@@ -76,7 +76,7 @@ export function flora(world, cx, cz, C) {
     const edge = 4 * f * (1 - f);
     if (r < 0.02 + 0.06 * rocky) { // rocks
       const big = q < 0.12 + 0.2 * rocky;
-      props.push(x, s.h - (big ? .5 : .12), z, rot, big ? 1.1 + sz * 2.4 : 0.25 + sz * .6, big ? 5 : 4); continue;
+      props.push(x, s.h - (big ? .45 : .06), z, rot, big ? 1.1 + sz * 2.4 : 0.22 + sz * .5, big ? 5 : 4); continue;
     }
     if (s.h < 1.3) { if (q < 0.25 && nrm[1] > .85) props.push(x, s.h, z, rot, .7 + sz * .6, 8); continue; }
     if (nrm[1] < 0.7) continue;

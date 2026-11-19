@@ -274,7 +274,7 @@ export function buildPlants(renderer, tex, U) {
   { const o = {}; const m = foliageMat(tex.leaf.fern, 'leaf', leafK(.8, .05, .03), o); P(fern(53), m, null, { shadow: false, r: .8 }); }
   { const o = {}; const m = foliageMat(tex.leaf.flower, 'leaf', leafK(.6, .06, .03), o); P(crossCards(54, .7, .6), m, null, { shadow: false, r: .5 }); }
   const rockMat = new THREE.MeshStandardMaterial({ map: tex.rock, normalMap: tex.rockN, normalScale: new THREE.Vector2(1.4, 1.4), vertexColors: true, roughness: .92 });
-  P(rockGeometry(55, .7, 2), rockMat, null, { shadow: true, rock: true, r: .7 });
+  P(rockGeometry(55, .95, 2), rockMat, null, { shadow: true, rock: true, r: .7 });
   P(rockGeometry(56, .62, 3), rockMat, null, { shadow: true, rock: true, r: 1.0 });
   const logMat = barkMat(tex.bark.dead, 'bark', [0, 0, 0]).mat;
   P(log(57), logMat, null, { shadow: true, r: .35 });

@@ -55,6 +55,16 @@ export class Audio {
     this.burst(1.8, 'lowpass', 240, .5, .35, 0, .04, true);
   }
   click() { if (this.ctx) this.burst(.04, 'bandpass', 2400, 4, .18); }
+  mech(kind) { if (!this.ctx) return; if (kind === 'lever') { this.burst(.05, 'bandpass', 1800, 3, .2); this.burst(.06, 'bandpass', 1200, 3, .18, 0, .22); } else if (kind === 'reload') this.burst(.08, 'bandpass', 1500, 2, .15); else this.burst(.05, 'bandpass', 2600, 3, .16); }
+  // animal voices, quieter and more echoing with distance
+  animal(kind, dist, pan) {
+    if (!this.ctx) return; const g = Math.max(.08, 1 - dist / 220);
+    if (kind === 'snort') { this.burst(.25, 'bandpass', 700, 1.5, .25 * g, pan, 0, true); this.burst(.18, 'bandpass', 600, 1.5, .18 * g, pan, .32, true); }
+    else if (kind === 'bear') { this.tone([110, 90, 80], [.4, .6], 'sawtooth', .05 * g, pan, 12, true); this.burst(.9, 'lowpass', 300, 1, .3 * g, pan, 0, true); }
+    else if (kind === 'quack') { for (let i = 0; i < 3; i++) this.tone([480, 420], [.12], 'square', .025 * g, pan, 0, true, i * .18); }
+    else if (kind === 'gobble') { for (let i = 0; i < 7; i++) this.tone([700 - i * 20, 520], [.05], 'square', .02 * g, pan, 0, true, i * .06); }
+    else if (kind === 'grunt') this.tone([90, 70], [.5], 'sawtooth', .04 * g, pan, 6, true);
+  }
   // env: { day, night, wind, rain, inTent, fireDist, fireFuel, waterDist, riverDist, forest, dt }
   update(e) {
     if (!this.ctx || this.ctx.state !== 'running') return;
