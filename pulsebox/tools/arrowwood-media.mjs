@@ -1,4 +1,4 @@
-// ARROWWOOD hub media: cover (600x600), two screenshots (1280x720) and a short trailer, rendered from the game itself
+// ARROWWOOD hub media: two screenshots (1280x720) and a short trailer (the cover: tools/arrowwood-cover.mjs), rendered from the game itself
 // on a stepped clock. Needs the local server (node arrowwood/server/node-server.js --dev) and ffmpeg.
 //   node tools/arrowwood-media.mjs [frames dir]
 import { createRequire } from 'module'; import { execSync } from 'node:child_process'; import fs from 'node:fs';
@@ -59,7 +59,7 @@ t = 'ARROWWOOD'; f = font(70); w = dr.textlength(t, font=f)
 for dx, dy in [(0, 6), (0, 5), (0, 4), (-2, 0), (2, 0), (0, -2), (0, 2)]: dr.text(((600 - w) / 2 + dx, 466 + dy), t, font=f, fill=(150, 80, 0) if dy >= 4 else (70, 40, 0))
 dr.text(((600 - w) / 2, 466), t, font=f, fill=(255, 210, 58))
 s = 'BOW BATTLES · 1v1 · 2v2 · FREE FOR ALL · BOTS'; f2 = font(20); w2 = dr.textlength(s, font=f2); dr.text(((600 - w2) / 2, 552), s, font=f2, fill=(255, 255, 255))
-im.save('${OUT}arrowwood-cover.jpg', quality=88)
+im.save('${TMP}/old-cover.jpg', quality=88)   # the hub cover now comes from tools/arrowwood-cover.mjs
 `;
 fs.writeFileSync(TMP + '/cover.py', py); execSync(`python3 ${TMP}/cover.py`);
 console.log('media written:', fs.readdirSync(OUT).filter(n => n.startsWith('arrowwood')).join(', '));
