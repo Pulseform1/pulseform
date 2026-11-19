@@ -1,4 +1,9 @@
 import { art } from './_art.mjs';
+/* GLACIER PASS (snow, two sites, blast gates). Very wide and short: an outpost strung along a glacier. The attackers start
+   north-centre in the Drill Camp, the defenders south-centre in the Dorms. A Tunnel runs west (two wide, straight) and B Tunnel
+   east (three wide, through the Pump Room), each ending at a blast gate onto its site at the far end: A Lab (open, with a raised
+   platform at Deep A) and B Hangar (roofed, an L round Deep B). Ramps drop from both tunnels into the Courtyard and its mess
+   hall, with a short link onto each site. The defenders rotate along the straight Service Tunnel under it all. */
 const m = art([
   '################################################################',
   '############################..AAAA..############################',
@@ -18,23 +23,23 @@ const m = art([
   '#.................:..#..XX................:...:................#',
   '#..XX.............:..#..XX...........c....#####............XX..#',
   '#..XX.............####.........XX.........#####............XX..#',
-  '#.......oooooooc..####....................#####.qqqqqqqq.......#',
-  '#.......ooXXoooo..#############################.qq#qqq#q.......#',
-  '#.......oooooooo..#############################.qqqqqqqq.......#',
-  '#.......oooooooo..:___________________________:.qqqqcqqq.......#',
-  '#.c.....oooooooo..:___________________________:.qqqqqqqq.....c.#',
-  '#.......ooooooXo..##########::####::###########.qq#qqq#q.......#',
-  '#.......coooooXo..#########..........##########.qqqqqqqq.......#',
-  '#.................#########...DDDD...##########................#',
-  '#...XX............#########...DDDD...##########.c.........XX...#',
-  '#.................#########..........##########................#',
-  '#.................#############################................#',
+  '#.......oooooooc..####....................#####.qqqqqqcq.......#',
+  '#.......ooXXoooo..#############################.qqqqqqqq.......#',
+  '#.......oooooooo..#############################.qqqXXqqq.......#',
+  '#.c.....oooooooo..:___________________________:.qqqXXqqq.....c.#',
+  '#.......oooooooo..:___________________________:.qqqqqqqq.......#',
+  '#..7....ooooooXo..##########::####::###########.qcqqqqqq.......#',
+  '#..8....coooooXo..#########..........##########.qqqqqqqq..######',
+  '#PPPPP............#########...DDDD...##########...........######',
+  '#PPPPP............#########...DDDD...##########.c......XX.######',
+  '#PPPPP............#########..........##########...........######',
+  '#PPPPP............#############################...........######',
   '################################################################',
 ], { roofH: 3 });
 export default { k: 'glacierpass', n: 'Glacier Pass', theme: 'snow', mech: 'gate', sites: 2, roundT: 105,
   tag: 'A research outpost strung along a glacier: long ice tunnels to sites at either end, a courtyard in between.',
   tip: 'Each tunnel ends at a blast door onto its site. Press F at the switch beside it, on the site side, to shut it into a wall, or open it again. Shut, the tunnel is a dead end.',
-  src: m.src, roofs: [...m.roofs, { r: [47, 13, 62, 28], h: 4 }], doors: m.doors, sw: [[12, 14, 0], [54, 14, 1]],
+  src: m.src, roofs: [...m.roofs, { r: [47, 13, 62, 23], h: 4 }, { r: [47, 24, 57, 28], h: 4 }], doors: m.doors, sw: [[12, 14, 0], [54, 14, 1]],
   areas: [
     { k: 'aspawn', n: 'Drill Camp', r: [27, 1, 36, 4], col: '#8a9a5b', lane: 'any' },
     { k: 'along', n: 'A Tunnel', r: [10, 3, 26, 4], col: '#2aa7a0', lane: 'along' },
@@ -46,9 +51,10 @@ export default { k: 'glacierpass', n: 'Glacier Pass', theme: 'snow', mech: 'gate
     { k: 'alink', n: 'A Link', r: [18, 9, 21, 16], col: '#8d6bb0', lane: 'amid' },
     { k: 'blink', n: 'B Link', r: [42, 14, 46, 15], col: '#a77fd0', lane: 'bmid' },
     { k: 'asite', n: 'A Lab', r: [1, 13, 17, 28], col: '#ff8a3d', lane: 'any' },
-    { k: 'adeep', n: 'Deep A', r: [1, 13, 5, 28], col: '#e0a060', lane: 'any' },
+    { k: 'adeep', n: 'Deep A', r: [1, 13, 5, 24], col: '#e0a060', lane: 'any' },
+    { k: 'aplat', n: 'Platform', r: [1, 25, 5, 28], col: '#b08d57', lane: 'any' },
     { k: 'bsite', n: 'B Hangar', r: [47, 13, 62, 28], col: '#c46bff', lane: 'any' },
-    { k: 'bdeep', n: 'Deep B', r: [58, 13, 62, 28], col: '#d07ab0', lane: 'any' },
+    { k: 'bdeep', n: 'Deep B', r: [58, 13, 62, 23], col: '#d07ab0', lane: 'any' },
     { k: 'back', n: 'Service Tunnel', r: [18, 21, 46, 23], col: '#6f8fb0', lane: 'any' },
     { k: 'dspawn', n: 'Dorms', r: [27, 24, 36, 27], col: '#4f7fb0', lane: 'any' },
   ],

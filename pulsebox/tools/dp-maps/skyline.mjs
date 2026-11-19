@@ -1,4 +1,9 @@
 import { art } from './_art.mjs';
+/* SKYLINE (neon, two sites, jump pads). Rooftops over a city that never sleeps. The attackers start in the Rooftop Bar
+   (west), the defenders in the Penthouse (east) on the Service Lift that runs to both sites. A is a rooftop in the north-east,
+   reached over the long, straight A Bridge; jump pads throw you onto its two high ledges, A Heaven and the Sign. B is a covered
+   arcade hall in the south-east, its roof on pillars, reached through the twisting B Arcade. The Market in the middle has a
+   tower with a pad up each side, a narrow link up onto A and a wide stair down onto B. */
 const m = art([
   '####################################################',
   '##################################HHH......HHH######',
