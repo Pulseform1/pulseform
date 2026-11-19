@@ -178,7 +178,7 @@
     } else TS.sprint = false;
     if (TS.fire != null || TS.tap) { I.fire = true; I.rapid = true; if (TS.tap) I.press = true; } TS.tap = false;
     if (mouse.tap) { I.fire = true; I.press = true; mouse.tap = false; }   // a fresh press: a new trigger pull, even if the last one has not been seen to let go
-    if ((isTouch() || (trackpad() && CFG.tpassist)) && f.alive && M.phase === 'live') assist(f, I); else TS.slow = 1;
+    if (isTouch() && f.alive && M.phase === 'live') assist(f, I); else TS.slow = 1;   // aim assist is for touch screens only: a trackpad aims unaided
     if (UI.armory) I.fire = false;
     return I;
   };
@@ -186,9 +186,9 @@
     const e = other(f), G = gun(f); TS.slow = 1;
     if (!e.alive || !canSee(f, e)) { TS.onT = 0; return; }
     const d = Math.hypot(e.x - f.x, e.z - f.z), dy = angDiff(yawTo(f.x, f.z, e.x, e.z), f.yaw), dp = Math.atan2(e.y + lp(1.25, .85, e.crouch) - eyeY(f), d) - f.pitch, off = Math.hypot(dy, dp);
-    if (CFG.assist || trackpad()) {
-      if (off < .08) TS.slow = trackpad() ? .7 : .55;
-      if (off < .12 && (TS.stick || TS.look || I.fire || (trackpad() && performance.now() - (TS.mvT || 0) < 120))) { const r = .5 / 60 * (1 - off / .12); f.yaw += cl(dy, -r, r); f.pitch += cl(dp, -r, r); }
+    if (CFG.assist) {
+      if (off < .08) TS.slow = .55;
+      if (off < .12 && (TS.stick || TS.look || I.fire)) { const r = .5 / 60 * (1 - off / .12); f.yaw += cl(dy, -r, r); f.pitch += cl(dp, -r, r); }
     }
     if (CFG.autofire && isTouch()) {
       const pt = patOf(f, G), S = castShot(f, viewDir(f.yaw + pt[0], f.pitch + pt[1])), onTarget = S.hit && (!G.melee || S.dist < 2.2);
