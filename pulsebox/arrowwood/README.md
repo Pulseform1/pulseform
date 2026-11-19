@@ -48,8 +48,11 @@ The client never decides anything that matters:
   body could have done (speed, walls, ground) and sends a correction when it couldn't have.
 - Drawing and releasing are immediate on screen. The server times the draw itself, spawns the real arrow, flies it,
   and decides hits, health, ammo, eliminations, timers, scores and rewards.
-- Remote players are drawn 0.1 s in the past and interpolated between snapshots. Arrows are flown on every screen from
-  the server's launch data with the same gravity.
+- Remote players are drawn a little in the past and interpolated between snapshots: 0.1 s on a steady connection, growing
+  to at most 0.25 s when snapshots arrive unevenly; if one is late they carry on their way for up to 0.12 s rather than
+  freeze. Arrows are flown on every screen from the server's launch data with the same gravity.
+- The servers step the room on the wall clock (`due()` in engine.js): a timer that fires late catches up next time,
+  so the room's clock never falls behind real time.
 - Collision is swept: each server tick an arrow is tested as three segments against trunks, boxes, the ground and
   every body, so a fast arrow cannot skip through a thin wall or a moving archer.
 

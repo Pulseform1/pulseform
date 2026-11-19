@@ -1,7 +1,11 @@
   /* ---------- 20 net: the connection to a room (or the local practice range) and the world as the server describes it ----------
      Two sources can be open at once: the online room and the practice range you warm up on while friends join.
      Lobby news always comes from the room; the world on screen comes from whichever source is playing (CL.src). */
-  const INTERP = .1;
+  // other archers are drawn this far behind the server, gliding between its snapshots (20 a second). It grows with how unevenly
+  // the snapshots arrive (a tenth of a second on a steady connection, up to a quarter on a patchy one), so they don't stop and jump.
+  let INTERP = .1;
+  // moved toward the wanted cushion a little each frame (others move up to 5% fast or slow while it changes, which nobody sees)
+  function easeInterp(dt) { if (CL.interpWant) INTERP += cl(CL.interpWant - INTERP, -dt * .05, dt * .05); }
   const CL = {
     src: null, conn: null, local: null, me: null, ids: {}, code: '', mode: '1v1', oneShot: false, host: null, phase: 'lobby', phaseEnd: 0, ffaEnd: 0,
     round: 0, score: [0, 0], lobby: [], votes: [], players: new Map(), arrows: new Map(), stuck: new Map(), tg: W.TARGETS.map(() => true),
@@ -101,6 +105,7 @@
     switch (m.t) {
       case 's': {
         const sample = m.tm - now(); if (CL.off == null || sample > CL.off) CL.off = sample; else CL.off = CL.off * .98 + sample * .02;
+        { const late = Math.max(0, CL.off - sample); CL.jit = CL.jit == null ? 0 : late > CL.jit ? CL.jit + (late - CL.jit) * .3 : CL.jit * .997 + late * .003; CL.interpWant = cl(.085 + CL.jit * 1.3, .1, .25); }
         CL.phase = m.ph; CL.phaseEnd = m.end; if (m.cap) { CL.cap = m.cap; CL.zoneIn = m.in; }
         for (const e of m.pl) {
           const [id, x, y, z, yaw, pitch, f, hp, arrows, draw, k, d] = e, p = player(id);
@@ -158,6 +163,11 @@
     const b = p.buf; if (!b.length) return null;
     let i = b.length - 1; while (i > 0 && b[i - 1][0] > rt) i--;
     const B = b[i], A = b[Math.max(0, i - 1)];
+    if (rt >= B[0] && A && A !== B && (A[6] & B[6] & 1)) {
+      // the next snapshot is late: carry on the way they were going for a moment rather than freeze (not across a jump in place)
+      const span = B[0] - A[0], ex = Math.min(rt - B[0], .12);
+      if (span > 1e-3 && Math.hypot(B[1] - A[1], B[3] - A[3]) < span * 9) { const k = ex / span; return { x: B[1] + (B[1] - A[1]) * k, y: B[2] + Math.max(-.3, Math.min(.3, (B[2] - A[2]) * k)), z: B[3] + (B[3] - A[3]) * k, yaw: B[4] + angD(B[4], A[4]) * k, pitch: B[5], f: B[6], draw: B[7] }; }
+    }
     if (!A || A === B || rt >= B[0]) return { x: B[1], y: B[2], z: B[3], yaw: B[4], pitch: B[5], f: B[6], draw: B[7] };
     const t = cl((rt - A[0]) / Math.max(1e-3, B[0] - A[0]), 0, 1);
     return { x: lp(A[1], B[1], t), y: lp(A[2], B[2], t), z: lp(A[3], B[3], t), yaw: A[4] + angD(B[4], A[4]) * t, pitch: lp(A[5], B[5], t), f: t < .5 ? A[6] : B[6], draw: lp(A[7], B[7], t) };

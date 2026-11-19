@@ -50,13 +50,13 @@ for (let r = 0; r < 12; r++) {
   if (res) seen.scores.push(res.score.join('-'));
   if (r === 0 && OUT) await guest.screenshot({ path: OUT + '/1v1-round1-guest.png' });
 }
-ok(seen.scores.length >= 5, 'rounds end on a confirmed elimination and the score counts up', seen.scores.join(' '));
+ok(seen.scores.length >= 3, 'rounds end on a confirmed elimination and the score counts up', seen.scores.join(' '));
 const results = await until(host, () => GAME.test.CL.results, null, 15000);
 ok(results && Math.max(...results.score) === 3, 'first to three round wins: the match ends', results && results.score.join('–'));
-ok(seen.finisherGuest >= 4, 'the eliminated archer sees the third-person finisher', seen.finisherGuest);
+ok(seen.finisherGuest >= 2, 'the eliminated archer sees the third-person finisher', seen.finisherGuest);
 const coinsH = results && results.coins[await T(host, () => GAME.test.CL.ids.online)], coinsG = results && results.coins[await T(guest, () => GAME.test.CL.ids.online)];
 const idH = await T(host, () => GAME.test.CL.ids.online), rowsH = (results && results.coinRows || {})[idH] || [], sumH = rowsH.reduce((a, r) => a + r[1], 0);
-ok(coinsH === sumH && rowsH.some(r => /elimination/.test(r[0])) && rowsH.some(r => /5 rounds won/.test(r[0])) && rowsH.some(r => r[0] === 'Victory'), 'the winner is paid for playing, every elimination, every round won and the win', rowsH.map(r => r.join(' ')).join(', '));
+ok(coinsH === sumH && rowsH.some(r => /elimination/.test(r[0])) && rowsH.some(r => /3 rounds won/.test(r[0])) && rowsH.some(r => r[0] === 'Victory'), 'the winner is paid for playing, every elimination, every round won and the win', rowsH.map(r => r.join(' ')).join(', '));
 ok(coinsG >= 25 && coinsG < coinsH, 'the loser is paid less, but still paid', `${coinsH} / ${coinsG}`);
 const shown = await until(host, () => GAME.test.UI.open === 'results', null, 6000);
 ok(!!shown, 'the results screen opens with Rematch');

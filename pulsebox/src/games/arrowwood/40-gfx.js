@@ -143,7 +143,9 @@
     const q = quality(), low = q === 'low';
     const glc = document.createElement('canvas'); glc.id = 'gl'; glc.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;display:block;background:#8cc8f2';
     const cv2 = document.getElementById('cv'); cv2.parentNode.insertBefore(glc, cv2);
-    const renderer = new THREE.WebGLRenderer({ canvas: glc, antialias: !low, powerPreference: 'high-performance' });
+    // smoothed edges on tablets and phones too: their GPUs draw in tiles, where it costs very little, and without it the
+    // leaves and edges crawl at a tablet's pixel size (the grainy look)
+    const renderer = new THREE.WebGLRenderer({ canvas: glc, antialias: !low || isTouch(), powerPreference: 'high-performance' });
     renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .98;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.autoClear = false;
     const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(CFG.fov, innerWidth / innerHeight, .05, 1200); camera.rotation.order = 'YXZ';
@@ -162,12 +164,15 @@
     applyQuality(true);
     addEventListener('resize', onResize); onResize();
   }
+  const basePR = () => Math.min(window.devicePixelRatio || 1, X.q === 'low' ? 1 : X.q === 'high' ? 2 : 1.5);
+  // the pixel count alone (dynamic resolution): no shadow or shader changes
+  function applyRes() { X.renderer.setPixelRatio(basePR() * X.dyn); onResize(); }
   function applyQuality(first) {
     const q = quality(); X.q = q; X.low = q === 'low';
-    const pr = Math.min(window.devicePixelRatio || 1, q === 'low' ? 1 : q === 'high' ? 2 : 1.5) * X.dyn;
-    X.renderer.setPixelRatio(pr);
+    X.renderer.setPixelRatio(basePR() * X.dyn);
     const sh = q !== 'low'; X.renderer.shadowMap.enabled = sh; X.sun.castShadow = sh;
-    if (sh) { const s = q === 'high' ? 2048 : 1024; X.sun.shadow.mapSize.set(s, s); const c = X.sun.shadow.camera; c.left = c.bottom = -38; c.right = c.top = 38; c.near = 1; c.far = 200; X.sun.shadow.bias = -.0004; X.sun.shadow.normalBias = .04; if (X.sun.shadow.map) { X.sun.shadow.map.dispose(); X.sun.shadow.map = null; } }
+    if (sh) { const s = q === 'high' ? 2048 : 1024, c = X.sun.shadow.camera; c.left = c.bottom = -38; c.right = c.top = 38; c.near = 1; c.far = 200; X.sun.shadow.bias = -.0004; X.sun.shadow.normalBias = .04;
+      if (X.sun.shadow.mapSize.x !== s) { X.sun.shadow.mapSize.set(s, s); if (X.sun.shadow.map) { X.sun.shadow.map.dispose(); X.sun.shadow.map = null; } } c.updateProjectionMatrix(); }
     if (!first && X.lastShadow !== sh) { X.scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => m.needsUpdate = true); }); }
     X.lastShadow = sh;
     onResize();

@@ -7,6 +7,9 @@
   ME.st.y = W.terrainH(ME.st.x, ME.st.z);
   const canAct = () => CL.src && live() && ME.alive;
   on('corr', m => {
+    // reports already on their way when we were put back get refused too: obey only the first of them
+    if (!m.spawn && m.s != null && m.s <= (ME.corrSeq || 0)) return;
+    if (!m.spawn) ME.corrSeq = ME.seq;
     ME.st.x = m.p[0]; ME.st.y = m.p[1]; ME.st.z = m.p[2]; ME.st.vy = 0;
     if (m.spawn) { ME.st.yaw = m.yaw; ME.st.pitch = 0; ME.drawing = false; ME.drawT = 0; ME.nockT = 0; ME.alive = true; ME.hp = 100; ME.cam = 'fp'; ME.specId = null; ME.deadAt = 0; ME.spawnAt = now(); ME.st.crouch = false; ME.crouchToggle = false; emit('spawn'); }
   });

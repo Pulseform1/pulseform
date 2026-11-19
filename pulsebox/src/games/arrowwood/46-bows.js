@@ -306,6 +306,15 @@
     const arm = withBrace => { const g = new THREE.Group(); g.add(new THREE.Mesh(VMG.fore, skinA)); g.add(new THREE.Mesh(VMG.sleeve, sleeve)); if (withBrace) g.add(new THREE.Mesh(VMG.brace, brace)); return g; };
     VM.foreL = arm(true); VM.foreR = arm(false); VM.braceL = new THREE.Group();
     VM.g.add(VM.foreL, VM.handR, VM.foreR);
+    // its own copies of any material it shares with the wood (the arrow's, the bow's): the two scenes are lit and fogged differently,
+    // and a material drawn in both had its whole shader set-up redone twice every frame
+    VM.g.traverse(o => { if (o.material) o.material = Array.isArray(o.material) ? o.material.map(vmOwn) : vmOwn(o.material); });
+  }
+  const VMMAT = new WeakMap();
+  function vmOwn(m) {
+    let c = VMMAT.get(m); if (c) return c;
+    c = m.clone(); c.onBeforeCompile = m.onBeforeCompile; if (Object.prototype.hasOwnProperty.call(m, 'customProgramCacheKey')) c.customProgramCacheKey = m.customProgramCacheKey;
+    VMMAT.set(m, c); return c;
   }
   let _vp, _vg, _ve; LAZY.push(() => { _vp = new THREE.Vector3(); _vg = new THREE.Vector3(); _ve = new THREE.Vector3(); });
   function aimLimb(mesh, from, to) { _vd.copy(to).sub(from); const L = _vd.length(); mesh.position.copy(from); mesh.quaternion.setFromUnitVectors(_vu.set(0, -1, 0), _vd.multiplyScalar(1 / L)); mesh.scale.set(1, L / .26, 1); }

@@ -16,6 +16,8 @@ import {
 } from '../shared/world.js';
 
 export const TICK = 1 / 20;
+// the most a report may rise above the last one: a whole jump (about 1.14 m) and some, so a late report at the top of a jump isn't refused
+const JUMP_UP = PL.jump * PL.jump / (2 * PL.grav) + .3;
 const NORMAL = { intro: 3.5, round: 80, ot: 40, capture: 6, end: 4.6, ffa: 150, respawn: 3.4, grace: 45, lobbyGrace: 25, ffaPick: 22 };
 const FAST = { intro: 1, round: 25, ot: 10, capture: 2.5, end: 2.6, ffa: 40, respawn: 2.2, grace: 8, lobbyGrace: 8, ffaPick: 6 };
 export const SIZES = { '1v1': 2, '2v2': 4, ffa: 8, practice: 1 };
@@ -136,9 +138,10 @@ function moveIn(room, p, m) {
   const wasSprint = st.sprint; st.crouch = !!m.c; st.sprint = !!m.sp && !st.crouch; if (st.sprint && !wasSprint) st.drawAt = null;   // sprinting lowers the bow
   if (!st.alive || !live(room)) { st.lastIn = room.t; return; }   // frozen at the spawn during the countdown, still while out
   const dt = Math.min(.5, Math.max(0, room.t - (st.lastIn || room.t))); st.lastIn = room.t;
-  st.budget = Math.min(2.6, st.budget + dt * PL.sprint * 1.25);
+  // a little saved up, so a hitch on the player's device (half a second with no reports, then one long step) isn't thrown back
+  st.budget = Math.min(4.2, st.budget + dt * PL.sprint * 1.25);
   let [x, y, z] = m.p; const d = Math.hypot(x - st.x, z - st.z);
-  const g = groundAt(x, z, y + .1), bad = d > st.budget + .35 || blocked(x, y, z, st.crouch ? PL.hCrouch : PL.h) || y < g - .7 || y > Math.max(st.y, g) + 1.05;
+  const g = groundAt(x, z, y + .1), bad = d > st.budget + .35 || blocked(x, y, z, st.crouch ? PL.hCrouch : PL.h) || y < g - .7 || y > Math.max(st.y, g) + JUMP_UP;
   if (bad) { send(room, p.id, { t: 'corr', p: [r2(st.x), r2(st.y), r2(st.z)], s: st.seq }); return; }
   st.budget -= d; st.x = x; st.y = Math.max(y, g - .05); st.z = z; st.inWater = inWater(x, z, st.y + .3);
 }
@@ -320,6 +323,17 @@ function startPractice(room, now) {
   DUMMIES.forEach(([x, z, k], i) => { const id = 'd' + i; room.players.set(id, { id, dummy: k, name: 'Straw dummy', team: 1, bow: 'longbow', connected: true, kills: 0, deaths: 0, home: [x, z], stuckIn: [], st: newState(x, z, Math.PI) }); });
   send(room, me.id, { t: 'corr', p: [r2(me.st.x), r2(me.st.y), r2(me.st.z)], yaw: 0, spawn: 1 });
   phaseOut(room);
+}
+
+// how many steps to run now. The room keeps to the wall clock: a timer that fires late catches up on the next call instead of
+// letting the room's clock fall behind real time (which starved the movement budget and made every archer's snapshots
+// come in slow and bunched)
+export function due(room, now) {
+  if (room.wall == null) { room.wall = now; room.lag = 0; return 1; }
+  room.lag = Math.min(TICK * 6, room.lag + Math.max(0, now - room.wall) / 1000); room.wall = now;
+  let n = 0; while (room.lag >= TICK * .75 && n < 6) { room.lag -= TICK; n++; }
+  if (room.lag < -TICK) room.lag = -TICK;
+  return n;
 }
 
 // ---- the simulation step

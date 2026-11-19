@@ -6,7 +6,7 @@
 //   POST /api/arrowwood/buy        (header x-aw-key) <- { bow } -> profile (or { error })
 //   POST /api/arrowwood/equip      (header x-aw-key) <- { bow } -> profile (or { error })
 //   POST /api/arrowwood/earn       (header x-aw-key) <- { kind: bots|target, n, match } -> profile + got (capped: see bank.js)
-import { createRoom, join, message, drop, step, drain, TICK } from './arrowwood/server/engine.js';
+import { createRoom, join, message, drop, step, drain, due, TICK } from './arrowwood/server/engine.js';
 import * as Bank from './arrowwood/server/bank.js';
 
 const json = (b, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
@@ -95,7 +95,7 @@ export class ArrowwoodRoom {
     if (this.timer) return; let idle = 0;
     this.timer = setInterval(() => {
       if (!this.room) return;
-      step(this.room, Date.now()); this.flush();
+      const now = Date.now(); for (let n = due(this.room, now); n > 0; n--) step(this.room, now); this.flush();
       if (!this.socks.size) { idle += TICK; if (idle > 60 || ![...this.room.players.values()].some(p => !p.dummy)) { clearInterval(this.timer); this.timer = null; this.room = null; } } else idle = 0;
     }, TICK * 1000);
   }

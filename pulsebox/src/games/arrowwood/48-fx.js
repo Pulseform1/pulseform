@@ -53,6 +53,7 @@
   on('unstickAll', p => { if (p.model) { p.model.stuck.forEach(m => m.parent && m.parent.remove(m)); p.model.stuck = []; p.model.fin = null; resetDeath(p.model); } });
   function resetDeath(P) { P.root.traverse(o => { if (o.userData.mat0) { o.material = o.userData.mat0; delete o.userData.mat0; } }); P.root.visible = true; P.root.scale.set(1, 1, 1); P.root.rotation.set(0, P.root.rotation.y, 0); P.root.rotation.x = 0; P.root.rotation.z = 0; if (P.bow && P.bow.g.parent !== P.chest) { P.bow.g.parent && P.bow.g.parent.remove(P.bow.g); P.chest.add(P.bow.g); } P.dead = false; }
   function updateCharacters(dt) {
+    easeInterp(dt);
     const rt = srvNow() - INTERP;
     for (const p of CL.players.values()) {
       const P = ensureModel(p), mine = p.id === CL.me;
@@ -293,15 +294,22 @@
     const hurt = now() - ME.hurtAt; if (hurt < .3 && ME.cam === 'fp') cam.rotation.z += Math.sin(hurt * 40) * .02 * (1 - hurt / .3);
   }
   function renderFrame(dt) { visualUpdate(dt); drawFrame(); dynRes(dt); }
-  // keep it smooth on an iPad or a laptop: if frames run long for a couple of seconds, draw fewer pixels (and more when there's room)
-  const DYN = { acc: 0, n: 0, slowT: 0, fastT: 0 };
+  // keep it smooth on an iPad or a laptop: if frames run long for a few seconds, draw fewer pixels (and more when there's room).
+  // Every change re-makes the drawing buffer (a hitch you can feel), so it moves slowly and never seesaws: a step back up that
+  // turns out too much is undone and that level is not tried again.
+  const DYN = { acc: 0, n: 0, slowT: 0, fastT: 0, cap: 1, upAt: -99, lastT: 0 };
   function dynRes(dt) {
-    if (DEV || CFG.quality !== 'auto') return; DYN.acc += dt; DYN.n++;
+    if (DEV || CFG.quality !== 'auto' || STG.on || UI.open) { DYN.acc = DYN.n = 0; return; }   // menus and the shop stage aren't play
+    DYN.acc += dt; DYN.n++;
     if (DYN.acc < .5) return; const avg = DYN.acc / DYN.n * 1000; DYN.acc = 0; DYN.n = 0;
     if (avg > 23) { DYN.slowT += .5; DYN.fastT = 0; } else if (avg < 15) { DYN.fastT += .5; DYN.slowT = 0; } else { DYN.slowT = DYN.fastT = 0; }
-    if (DYN.slowT >= 2 && X.dyn > .6) { X.dyn = Math.max(.6, X.dyn - .15); DYN.slowT = 0; applyQuality(); }
-    else if (DYN.slowT >= 3 && AUTOQ.tier !== 'low') { AUTOQ.tier = 'low'; X.dyn = .85; DYN.slowT = 0; applyQuality(); }   // still slow: shadows off
-    else if (DYN.fastT >= 6 && X.dyn < 1) { X.dyn = Math.min(1, X.dyn + .1); DYN.fastT = 0; applyQuality(); }
+    const floor = isTouch() ? .75 : .6;
+    if (DYN.slowT >= 2.5) {
+      DYN.slowT = 0;
+      if (X.t - DYN.upAt < 12) DYN.cap = Math.max(floor, X.dyn - .1);   // the last step up was too much: stay below it from now on
+      if (X.dyn > floor + .01) { X.dyn = Math.max(floor, X.dyn - .125); applyRes(); }
+      else if (X.q !== 'low') { AUTOQ.tier = 'low'; X.dyn = Math.min(1, X.dyn + .2); DYN.cap = 1; applyQuality(); }   // still slow: shadows off
+    } else if (DYN.fastT >= 10 && X.dyn < DYN.cap - .01) { DYN.fastT = 0; X.dyn = Math.min(DYN.cap, X.dyn + .125); DYN.upAt = X.t; applyRes(); }
   }
   function visualUpdate(dt) {
     X.t += dt; X.wind.time.value = X.t; X.wind.amt.value = .85 + .35 * Math.sin(X.t * .23) + .15 * Math.sin(X.t * .71);

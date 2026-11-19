@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
-import { createRoom, join, message, drop, step, drain, TICK } from './engine.js';
+import { createRoom, join, message, drop, step, drain, due, TICK } from './engine.js';
 import * as Bank from './bank.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -77,7 +77,7 @@ function onSocket(ws, code) {
 }
 function loop(code) {
   const r = rooms.get(code); if (!r) return;
-  step(r.room, Date.now()); flush(r);
+  const now = Date.now(); for (let n = due(r.room, now); n > 0; n--) step(r.room, now); flush(r);
   if (!r.socks.size) { r.idle += TICK; if (r.idle > 60 || ![...r.room.players.values()].some(p => !p.dummy)) { clearInterval(r.timer); rooms.delete(code); } } else r.idle = 0;
 }
 function flush(r) {

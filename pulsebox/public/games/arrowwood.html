@@ -581,6 +581,8 @@ const {
   rayWorld, eyeHeight, GRAV, MIN, MAX, CX, CZ, gravFor, isFull,
 } = W;
 const TICK = 1 / 20;
+// the most a report may rise above the last one: a whole jump (about 1.14 m) and some, so a late report at the top of a jump isn't refused
+const JUMP_UP = PL.jump * PL.jump / (2 * PL.grav) + .3;
 const NORMAL = { intro: 3.5, round: 80, ot: 40, capture: 6, end: 4.6, ffa: 150, respawn: 3.4, grace: 45, lobbyGrace: 25, ffaPick: 22 };
 const FAST = { intro: 1, round: 25, ot: 10, capture: 2.5, end: 2.6, ffa: 40, respawn: 2.2, grace: 8, lobbyGrace: 8, ffaPick: 6 };
 const SIZES = { '1v1': 2, '2v2': 4, ffa: 8, practice: 1 };
@@ -701,9 +703,10 @@ function moveIn(room, p, m) {
   const wasSprint = st.sprint; st.crouch = !!m.c; st.sprint = !!m.sp && !st.crouch; if (st.sprint && !wasSprint) st.drawAt = null;   // sprinting lowers the bow
   if (!st.alive || !live(room)) { st.lastIn = room.t; return; }   // frozen at the spawn during the countdown, still while out
   const dt = Math.min(.5, Math.max(0, room.t - (st.lastIn || room.t))); st.lastIn = room.t;
-  st.budget = Math.min(2.6, st.budget + dt * PL.sprint * 1.25);
+  // a little saved up, so a hitch on the player's device (half a second with no reports, then one long step) isn't thrown back
+  st.budget = Math.min(4.2, st.budget + dt * PL.sprint * 1.25);
   let [x, y, z] = m.p; const d = Math.hypot(x - st.x, z - st.z);
-  const g = groundAt(x, z, y + .1), bad = d > st.budget + .35 || blocked(x, y, z, st.crouch ? PL.hCrouch : PL.h) || y < g - .7 || y > Math.max(st.y, g) + 1.05;
+  const g = groundAt(x, z, y + .1), bad = d > st.budget + .35 || blocked(x, y, z, st.crouch ? PL.hCrouch : PL.h) || y < g - .7 || y > Math.max(st.y, g) + JUMP_UP;
   if (bad) { send(room, p.id, { t: 'corr', p: [r2(st.x), r2(st.y), r2(st.z)], s: st.seq }); return; }
   st.budget -= d; st.x = x; st.y = Math.max(y, g - .05); st.z = z; st.inWater = inWater(x, z, st.y + .3);
 }
@@ -887,6 +890,17 @@ function startPractice(room, now) {
   phaseOut(room);
 }
 
+// how many steps to run now. The room keeps to the wall clock: a timer that fires late catches up on the next call instead of
+// letting the room's clock fall behind real time (which starved the movement budget and made every archer's snapshots
+// come in slow and bunched)
+function due(room, now) {
+  if (room.wall == null) { room.wall = now; room.lag = 0; return 1; }
+  room.lag = Math.min(TICK * 6, room.lag + Math.max(0, now - room.wall) / 1000); room.wall = now;
+  let n = 0; while (room.lag >= TICK * .75 && n < 6) { room.lag -= TICK; n++; }
+  if (room.lag < -TICK) room.lag = -TICK;
+  return n;
+}
+
 // ---- the simulation step
 function tick(room, now) {
   room.t += TICK;
@@ -1000,7 +1014,7 @@ function settle(room) {
 // one call per tick for the hosts: step, settle, and age out
 function step(room, now) { tick(room, now); settle(room); }
 
-return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle, step, TICK, SIZES, WIN_ROUNDS, BOT_LEVELS };
+return { createRoom, drain, join, drop, message, addBot, fillBots, due, tick, settle, step, TICK, SIZES, WIN_ROUNDS, BOT_LEVELS };
 })();
 
   const TAU = Math.PI * 2, cl = (v, a, b) => v < a ? a : v > b ? b : v, lp = (a, b, t) => a + (b - a) * t, sm = x => x * x * (3 - 2 * x);
@@ -1070,7 +1084,11 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   /* ---------- 20 net: the connection to a room (or the local practice range) and the world as the server describes it ----------
      Two sources can be open at once: the online room and the practice range you warm up on while friends join.
      Lobby news always comes from the room; the world on screen comes from whichever source is playing (CL.src). */
-  const INTERP = .1;
+  // other archers are drawn this far behind the server, gliding between its snapshots (20 a second). It grows with how unevenly
+  // the snapshots arrive (a tenth of a second on a steady connection, up to a quarter on a patchy one), so they don't stop and jump.
+  let INTERP = .1;
+  // moved toward the wanted cushion a little each frame (others move up to 5% fast or slow while it changes, which nobody sees)
+  function easeInterp(dt) { if (CL.interpWant) INTERP += cl(CL.interpWant - INTERP, -dt * .05, dt * .05); }
   const CL = {
     src: null, conn: null, local: null, me: null, ids: {}, code: '', mode: '1v1', oneShot: false, host: null, phase: 'lobby', phaseEnd: 0, ffaEnd: 0,
     round: 0, score: [0, 0], lobby: [], votes: [], players: new Map(), arrows: new Map(), stuck: new Map(), tg: W.TARGETS.map(() => true),
@@ -1170,6 +1188,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     switch (m.t) {
       case 's': {
         const sample = m.tm - now(); if (CL.off == null || sample > CL.off) CL.off = sample; else CL.off = CL.off * .98 + sample * .02;
+        { const late = Math.max(0, CL.off - sample); CL.jit = CL.jit == null ? 0 : late > CL.jit ? CL.jit + (late - CL.jit) * .3 : CL.jit * .997 + late * .003; CL.interpWant = cl(.085 + CL.jit * 1.3, .1, .25); }
         CL.phase = m.ph; CL.phaseEnd = m.end; if (m.cap) { CL.cap = m.cap; CL.zoneIn = m.in; }
         for (const e of m.pl) {
           const [id, x, y, z, yaw, pitch, f, hp, arrows, draw, k, d] = e, p = player(id);
@@ -1227,6 +1246,11 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     const b = p.buf; if (!b.length) return null;
     let i = b.length - 1; while (i > 0 && b[i - 1][0] > rt) i--;
     const B = b[i], A = b[Math.max(0, i - 1)];
+    if (rt >= B[0] && A && A !== B && (A[6] & B[6] & 1)) {
+      // the next snapshot is late: carry on the way they were going for a moment rather than freeze (not across a jump in place)
+      const span = B[0] - A[0], ex = Math.min(rt - B[0], .12);
+      if (span > 1e-3 && Math.hypot(B[1] - A[1], B[3] - A[3]) < span * 9) { const k = ex / span; return { x: B[1] + (B[1] - A[1]) * k, y: B[2] + Math.max(-.3, Math.min(.3, (B[2] - A[2]) * k)), z: B[3] + (B[3] - A[3]) * k, yaw: B[4] + angD(B[4], A[4]) * k, pitch: B[5], f: B[6], draw: B[7] }; }
+    }
     if (!A || A === B || rt >= B[0]) return { x: B[1], y: B[2], z: B[3], yaw: B[4], pitch: B[5], f: B[6], draw: B[7] };
     const t = cl((rt - A[0]) / Math.max(1e-3, B[0] - A[0]), 0, 1);
     return { x: lp(A[1], B[1], t), y: lp(A[2], B[2], t), z: lp(A[3], B[3], t), yaw: A[4] + angD(B[4], A[4]) * t, pitch: lp(A[5], B[5], t), f: t < .5 ? A[6] : B[6], draw: lp(A[7], B[7], t) };
@@ -1244,6 +1268,9 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   ME.st.y = W.terrainH(ME.st.x, ME.st.z);
   const canAct = () => CL.src && live() && ME.alive;
   on('corr', m => {
+    // reports already on their way when we were put back get refused too: obey only the first of them
+    if (!m.spawn && m.s != null && m.s <= (ME.corrSeq || 0)) return;
+    if (!m.spawn) ME.corrSeq = ME.seq;
     ME.st.x = m.p[0]; ME.st.y = m.p[1]; ME.st.z = m.p[2]; ME.st.vy = 0;
     if (m.spawn) { ME.st.yaw = m.yaw; ME.st.pitch = 0; ME.drawing = false; ME.drawT = 0; ME.nockT = 0; ME.alive = true; ME.hp = 100; ME.cam = 'fp'; ME.specId = null; ME.deadAt = 0; ME.spawnAt = now(); ME.st.crouch = false; ME.crouchToggle = false; emit('spawn'); }
   });
@@ -1439,7 +1466,9 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     const q = quality(), low = q === 'low';
     const glc = document.createElement('canvas'); glc.id = 'gl'; glc.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;display:block;background:#8cc8f2';
     const cv2 = document.getElementById('cv'); cv2.parentNode.insertBefore(glc, cv2);
-    const renderer = new THREE.WebGLRenderer({ canvas: glc, antialias: !low, powerPreference: 'high-performance' });
+    // smoothed edges on tablets and phones too: their GPUs draw in tiles, where it costs very little, and without it the
+    // leaves and edges crawl at a tablet's pixel size (the grainy look)
+    const renderer = new THREE.WebGLRenderer({ canvas: glc, antialias: !low || isTouch(), powerPreference: 'high-performance' });
     renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .98;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.autoClear = false;
     const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(CFG.fov, innerWidth / innerHeight, .05, 1200); camera.rotation.order = 'YXZ';
@@ -1458,12 +1487,15 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     applyQuality(true);
     addEventListener('resize', onResize); onResize();
   }
+  const basePR = () => Math.min(window.devicePixelRatio || 1, X.q === 'low' ? 1 : X.q === 'high' ? 2 : 1.5);
+  // the pixel count alone (dynamic resolution): no shadow or shader changes
+  function applyRes() { X.renderer.setPixelRatio(basePR() * X.dyn); onResize(); }
   function applyQuality(first) {
     const q = quality(); X.q = q; X.low = q === 'low';
-    const pr = Math.min(window.devicePixelRatio || 1, q === 'low' ? 1 : q === 'high' ? 2 : 1.5) * X.dyn;
-    X.renderer.setPixelRatio(pr);
+    X.renderer.setPixelRatio(basePR() * X.dyn);
     const sh = q !== 'low'; X.renderer.shadowMap.enabled = sh; X.sun.castShadow = sh;
-    if (sh) { const s = q === 'high' ? 2048 : 1024; X.sun.shadow.mapSize.set(s, s); const c = X.sun.shadow.camera; c.left = c.bottom = -38; c.right = c.top = 38; c.near = 1; c.far = 200; X.sun.shadow.bias = -.0004; X.sun.shadow.normalBias = .04; if (X.sun.shadow.map) { X.sun.shadow.map.dispose(); X.sun.shadow.map = null; } }
+    if (sh) { const s = q === 'high' ? 2048 : 1024, c = X.sun.shadow.camera; c.left = c.bottom = -38; c.right = c.top = 38; c.near = 1; c.far = 200; X.sun.shadow.bias = -.0004; X.sun.shadow.normalBias = .04;
+      if (X.sun.shadow.mapSize.x !== s) { X.sun.shadow.mapSize.set(s, s); if (X.sun.shadow.map) { X.sun.shadow.map.dispose(); X.sun.shadow.map = null; } } c.updateProjectionMatrix(); }
     if (!first && X.lastShadow !== sh) { X.scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => m.needsUpdate = true); }); }
     X.lastShadow = sh;
     onResize();
@@ -1569,6 +1601,33 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   function buildForest() {
     const S = X.scene, q = X.q;
     const std2 = o => new THREE.MeshStandardMaterial(Object.assign({ roughness: .78, metalness: 0 }, o));
+    // The big merged scenery (trees, bushes, walls, the ground) is cut into tiles of the wood, so three.js can skip the tiles
+    // behind you and, for the sun's shadow, everything outside the shadow box round you. One mesh for the whole wood was drawn
+    // in full every frame, twice where there are shadows.
+    // Each tile is a draw call of its own, so only the heavy layers are cut up, into big tiles (a 3 x 3 grid over the wood); the
+    // light ones (walls, rocks, logs, pebbles) stay whole.
+    const TILE = 66, tileKey = (x, z, t) => t ? Math.floor((x + 26) / t) + ',' + Math.floor((z + 26) / t) : '0';
+    const tiled = (list, mat, cast, recv, t = TILE) => {
+      const groups = new Map();
+      for (const g of list) { if (!g.boundingBox) g.computeBoundingBox(); const bb = g.boundingBox, k = tileKey((bb.min.x + bb.max.x) / 2, (bb.min.z + bb.max.z) / 2, t); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(g); }
+      const out = []; for (const gs of groups.values()) { const m = new THREE.Mesh(merge(gs), mat); m.castShadow = !!cast; m.receiveShadow = !!recv; S.add(m); out.push(m); }
+      list.forEach(g => g.dispose()); return out;
+    };
+    // the same for instanced bits (flowers, pebbles, wall-top blocks): one instanced mesh per tile, each with a bounding sphere that
+    // really holds its instances (three.js otherwise culls an instanced mesh by its single shape at the world's corner)
+    const tiledInst = (geo, mat, items, cast, recv, t = TILE) => {
+      const groups = new Map(), v = new THREE.Vector3(); if (!geo.boundingSphere) geo.computeBoundingSphere();
+      for (const it of items) { v.setFromMatrixPosition(it.m); const k = tileKey(v.x, v.z, t); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(it); }
+      const out = [];
+      for (const its of groups.values()) {
+        const g = geo.clone(), box = new THREE.Box3(), sv = new THREE.Vector3(); let rmax = 0;
+        for (const it of its) { box.expandByPoint(v.setFromMatrixPosition(it.m)); sv.setFromMatrixScale(it.m); rmax = Math.max(rmax, Math.max(sv.x, sv.y, sv.z)); }
+        const sph = box.getBoundingSphere(new THREE.Sphere()); sph.radius += (geo.boundingSphere.radius + geo.boundingSphere.center.length()) * rmax; g.boundingSphere = sph;
+        const m = new THREE.InstancedMesh(g, mat, its.length); its.forEach((it, i) => { m.setMatrixAt(i, it.m); if (it.c) m.setColorAt(i, it.c); });
+        m.castShadow = !!cast; m.receiveShadow = !!recv; S.add(m); out.push(m);
+      }
+      return out;
+    };
     // ---- ground: rolling grassy hills coloured by height and slope, sandy creek banks, worn dirt paths
     {
       const ext = 26, size = 140 + ext * 2, seg = q === 'low' ? 140 : 220, geo = new THREE.PlaneGeometry(size, size, seg, seg); geo.rotateX(-Math.PI / 2); geo.translate(70, 0, 70);
@@ -1591,7 +1650,14 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
       }
       geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
       const map = TEX.grassTile; map.repeat.set(size / 7, size / 7);
-      const m = new THREE.Mesh(geo, std2({ map, vertexColors: true, roughness: .92 })); m.receiveShadow = true; S.add(m); X.ground = m;
+      // one vertex buffer, a separate list of triangles per tile (no seams in the lighting where the tiles meet)
+      const gm = std2({ map, vertexColors: true, roughness: .92 }), cellW = size / seg, per = Math.max(1, Math.round(TILE / cellW)), idx = geo.index.array, P = geo.attributes.position; X.ground = [];
+      for (let ty = 0; ty < seg; ty += per) for (let tx = 0; tx < seg; tx += per) {
+        const ix = [], box = new THREE.Box3(), v = new THREE.Vector3();
+        for (let iy = ty; iy < Math.min(seg, ty + per); iy++) for (let ix0 = tx; ix0 < Math.min(seg, tx + per); ix0++) { const c = (iy * seg + ix0) * 6; for (let k = 0; k < 6; k++) { const vi = idx[c + k]; ix.push(vi); box.expandByPoint(v.fromBufferAttribute(P, vi)); } }
+        const g = new THREE.BufferGeometry(); for (const a of ['position', 'normal', 'uv', 'color']) g.setAttribute(a, geo.attributes[a]); g.setIndex(ix); g.boundingSphere = box.getBoundingSphere(new THREE.Sphere()); g.boundingBox = box;
+        const m = new THREE.Mesh(g, gm); m.receiveShadow = true; S.add(m); X.ground.push(m);
+      }
     }
     // ---- the creek: bright, clear blue water
     {
@@ -1610,9 +1676,8 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
       for (let k = 0; k < (q === 'low' ? 60 : 110); k++) { let x, z; if (R() < .5) { x = R() * 180 - 20; z = R() < .5 ? -18 + R() * 20 : 138 + R() * 20; } else { z = R() * 180 - 20; x = R() < .5 ? -18 + R() * 20 : 138 + R() * 20; }
         if (x > 3 && x < 137 && z > 3 && z < 137) continue; extra.push({ x, z, r: .35 + R() * .2, h: 6 + R() * 4, lean: [0, 0], kind: R() < .3 ? 'oak' : 'oak2', seed: (R() * 1e6) | 0 }); }
       for (const t of [...W.TREES, ...extra]) { const [a, b] = treeGeos(t, visH(t.x, t.z)); trunks.push(...a); crowns.push(...b); }
-      const tm = new THREE.Mesh(merge(trunks), std2({ color: LC('#8a5a33'), vertexColors: true, roughness: .85 })); tm.castShadow = tm.receiveShadow = true; S.add(tm); X.trunks = tm;
-      const cm = new THREE.Mesh(merge(crowns), windify(std2({ vertexColors: true, roughness: .7 }), .25)); cm.castShadow = true; cm.receiveShadow = true; S.add(cm); X.leaves = cm;
-      trunks.forEach(g => g.dispose()); crowns.forEach(g => g.dispose());
+      X.trunks = tiled(trunks, std2({ color: LC('#8a5a33'), vertexColors: true, roughness: .85 }), true, true);
+      X.leaves = tiled(crowns, windify(std2({ vertexColors: true, roughness: .7 }), .25), true, true);
     }
     // ---- bushes (from the map) with a few flowers; small rocks and flower patches on the grass
     {
@@ -1622,21 +1687,19 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
         for (let k = 0; k < n; k++) { const a = R() * TAU, d = k ? b.r * .55 : 0, rr = b.r * (k ? .7 + R() * .2 : 1); parts.push(leafBall(R, rr, b.x + Math.cos(a) * d, y + rr * .55, b.z + Math.sin(a) * d, 1.1, .78, 1.1, col)); }
         if (R() < .35) { const fc = pick2(R, ['#ff5f9e', '#ffd23a', '#ff7a3a', '#c06bff', '#ffffff']); for (let k = 0; k < 6; k++) { const a = R() * TAU, u = R() * .9 + .1; flowers.push([b.x + Math.cos(a) * b.r * .9 * u, y + b.r * (.55 + .45 * Math.sqrt(1 - u * u)) * .95, b.z + Math.sin(a) * b.r * .9 * u, fc]); } }
       }
-      const bm = new THREE.Mesh(merge(parts), windify(std2({ vertexColors: true, roughness: .72 }), .15)); bm.castShadow = true; bm.receiveShadow = true; S.add(bm); X.bushes = bm;
+      X.bushes = tiled(parts, windify(std2({ vertexColors: true, roughness: .72 }), .15), true, true);
       // flower patches on open grass
       const free = (x, z) => W.creekDist(x, z) > W.CREEK_W + .8 && pathDist(x, z) > 1.4 && !treeNear(x, z, .6) && !boxNear(x, z, .5);
       for (let k = 0; k < (q === 'low' ? 60 : 110); k++) { const x = 8 + R() * 124, z = 8 + R() * 124; if (!free(x, z)) continue; const fc = pick2(R, ['#ff5f9e', '#ffd23a', '#ff7a3a', '#c06bff', '#ff4a4a']); for (let j = 0; j < 5; j++) { const fx = x + (R() - .5) * 1.6, fz = z + (R() - .5) * 1.6; flowers.push([fx, visH(fx, fz) + .22 + R() * .08, fz, fc, 1]); } }
       if (flowers.length) {
         // a flower is tiny: five low-poly petals, a centre and a stem (about 50 triangles; there are hundreds of them)
         const fg = merge([...[0, 1, 2, 3, 4].map(k => { const g = new THREE.OctahedronGeometry(.048, 0); g.scale(1, .42, 1); g.translate(Math.cos(k * TAU / 5) * .055, 0, Math.sin(k * TAU / 5) * .055); return g; }), (() => { const g = new THREE.OctahedronGeometry(.036, 0); g.scale(1, .6, 1); g.translate(0, .01, 0); tint(g, () => [1.6, 1.3, .2]); return g; })(), (() => { const g = new THREE.CylinderGeometry(.01, .012, .24, 3, 1, true); g.translate(0, -.12, 0); tint(g, () => [.3, .7, .25]); return g; })()]);
-        const fi = new THREE.InstancedMesh(fg, std2({ vertexColors: true, roughness: .6 }), flowers.length), M = new THREE.Matrix4(), c = new THREE.Color();
-        flowers.forEach(([x, y, z, fc, stem], i) => { M.makeTranslation(x, y, z); fi.setMatrixAt(i, M); fi.setColorAt(i, c.set(fc).convertSRGBToLinear()); });
-        S.add(fi);
+        tiledInst(fg, std2({ vertexColors: true, roughness: .6 }), flowers.map(([x, y, z, fc]) => ({ m: new THREE.Matrix4().makeTranslation(x, y, z), c: new THREE.Color(fc).convertSRGBToLinear() })));
       }
       // pebbles
-      const pg = new THREE.DodecahedronGeometry(.22, 0), pi = new THREE.InstancedMesh(pg, std2({ color: LC('#a2a6aa'), roughness: .8, flatShading: true }), 90), M = new THREE.Matrix4(), Q = new THREE.Quaternion(); let np = 0;
-      for (let k = 0; k < 400 && np < 90; k++) { const x = 8 + R() * 124, z = 8 + R() * 124; if (!free(x, z)) continue; const s = .6 + R() * 1.4; Q.setFromEuler(new THREE.Euler(R() * 3, R() * 3, R() * 3)); M.compose(V3(x, visH(x, z), z), Q, V3(s, s * .6, s)); pi.setMatrixAt(np++, M); }
-      pi.count = np; pi.receiveShadow = true; S.add(pi);
+      const pg = new THREE.DodecahedronGeometry(.22, 0), Q = new THREE.Quaternion(), peb = [];
+      for (let k = 0; k < 400 && peb.length < 90; k++) { const x = 8 + R() * 124, z = 8 + R() * 124; if (!free(x, z)) continue; const s = .6 + R() * 1.4; Q.setFromEuler(new THREE.Euler(R() * 3, R() * 3, R() * 3)); peb.push({ m: new THREE.Matrix4().compose(V3(x, visH(x, z), z), Q, V3(s, s * .6, s)) }); }
+      tiledInst(pg, std2({ color: LC('#a2a6aa'), roughness: .8, flatShading: true }), peb, false, true, 0);
     }
     // ---- stone: walls, the tower and the bridge in clean bricks with a broken top; rocks; logs; planks
     {
@@ -1658,19 +1721,18 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
         }
       }
       const stoneM = std2({ map: TEX.brick, roughness: .82, color: LC('#bdb8ad') });
-      for (const [list, mat] of [[wallG, stoneM], [deckG, stoneM], [woodG, std2({ map: TEX.plankB, roughness: .8 })]]) if (list.length) { const m = new THREE.Mesh(merge(list), mat); m.castShadow = m.receiveShadow = true; S.add(m); }
-      const bi = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), std2({ color: LC('#aeaaa0'), roughness: .8 }), Math.max(1, blocks.length)), M = new THREE.Matrix4(), Q = new THREE.Quaternion();
-      blocks.forEach((k, i) => { Q.setFromEuler(new THREE.Euler(0, k.a, 0)); M.compose(V3(k.x, k.y, k.z), Q, V3(k.sx, k.sy, k.sz)); bi.setMatrixAt(i, M); bi.setColorAt(i, new THREE.Color().setScalar(.88 + R() * .14)); });
-      bi.count = blocks.length; bi.castShadow = bi.receiveShadow = true; S.add(bi);
+      for (const [list, mat] of [[wallG, stoneM], [deckG, stoneM], [woodG, std2({ map: TEX.plankB, roughness: .8 })]]) if (list.length) tiled(list, mat, true, true, 0);
+      const Q = new THREE.Quaternion();
+      if (blocks.length) tiledInst(new THREE.BoxGeometry(1, 1, 1), std2({ color: LC('#aeaaa0'), roughness: .8 }), blocks.map(k => { Q.setFromEuler(new THREE.Euler(0, k.a, 0)); return { m: new THREE.Matrix4().compose(V3(k.x, k.y, k.z), Q, V3(k.sx, k.sy, k.sz)), c: new THREE.Color().setScalar(.88 + R() * .14) }; }), true, true, 0);
       // rocks: chunky faceted boulders, a lick of moss on top
       const rg = []; for (const b of rocks) { const g = new THREE.DodecahedronGeometry(1, 1), p = g.attributes.position, sd = R() * 10; for (let i = 0; i < p.count; i++) { const v = V3(p.getX(i), p.getY(i), p.getZ(i)), n = 1 + .16 * (noiseAt(v.x * 2 + sd, v.y * 2 + v.z, 1) - .5) * 2; p.setXYZ(i, v.x * n, v.y * n, v.z * n); }
         g.scale(b.hx * 1.1, (b.y1 - b.y0) / 2, b.hz * 1.1); g.rotateY(b.a); g.translate(b.x, (b.y0 + b.y1) / 2, b.z); g.computeVertexNormals(); tint(g, (x, y, z, ny) => ny > .6 ? [.62, .88, .5] : [1, 1, 1]); rg.push(g); }
-      if (rg.length) { const m = new THREE.Mesh(merge(rg), std2({ color: LC('#9da3a8'), roughness: .85, vertexColors: true, flatShading: true })); m.castShadow = m.receiveShadow = true; S.add(m); }
+      if (rg.length) tiled(rg, std2({ color: LC('#9da3a8'), roughness: .85, vertexColors: true, flatShading: true }), true, true, 0);
       // logs: brown bark with pale cut ends
       const lg = []; for (const b of logs) { const r = (b.y1 - b.y0) * .44, g = new THREE.CylinderGeometry(r, r, b.hx * 2, q === 'low' ? 10 : 14, 1); g.rotateZ(Math.PI / 2);
         tint(g, (x, y, z, ny) => [1, 1, 1]); const nn = g.attributes.normal, cc = g.attributes.color; for (let i = 0; i < nn.count; i++) if (Math.abs(nn.getX(i)) > .9) cc.setXYZ(i, 2.2, 1.9, 1.35);
         g.rotateY(b.a); g.translate(b.x, b.y0 + r * 1.05, b.z); lg.push(g); }
-      if (lg.length) { const m = new THREE.Mesh(merge(lg), std2({ color: LC('#7c5131'), roughness: .85, vertexColors: true })); m.castShadow = m.receiveShadow = true; S.add(m); }
+      if (lg.length) tiled(lg, std2({ color: LC('#7c5131'), roughness: .85, vertexColors: true }), true, true, 0);
     }
     // ---- the bridge's arch underneath (stone faces that curve up from the banks, leaving the creek open under the middle),
     // the tower's beams, camp banners, the zone stones
@@ -2222,6 +2284,15 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     const arm = withBrace => { const g = new THREE.Group(); g.add(new THREE.Mesh(VMG.fore, skinA)); g.add(new THREE.Mesh(VMG.sleeve, sleeve)); if (withBrace) g.add(new THREE.Mesh(VMG.brace, brace)); return g; };
     VM.foreL = arm(true); VM.foreR = arm(false); VM.braceL = new THREE.Group();
     VM.g.add(VM.foreL, VM.handR, VM.foreR);
+    // its own copies of any material it shares with the wood (the arrow's, the bow's): the two scenes are lit and fogged differently,
+    // and a material drawn in both had its whole shader set-up redone twice every frame
+    VM.g.traverse(o => { if (o.material) o.material = Array.isArray(o.material) ? o.material.map(vmOwn) : vmOwn(o.material); });
+  }
+  const VMMAT = new WeakMap();
+  function vmOwn(m) {
+    let c = VMMAT.get(m); if (c) return c;
+    c = m.clone(); c.onBeforeCompile = m.onBeforeCompile; if (Object.prototype.hasOwnProperty.call(m, 'customProgramCacheKey')) c.customProgramCacheKey = m.customProgramCacheKey;
+    VMMAT.set(m, c); return c;
   }
   let _vp, _vg, _ve; LAZY.push(() => { _vp = new THREE.Vector3(); _vg = new THREE.Vector3(); _ve = new THREE.Vector3(); });
   function aimLimb(mesh, from, to) { _vd.copy(to).sub(from); const L = _vd.length(); mesh.position.copy(from); mesh.quaternion.setFromUnitVectors(_vu.set(0, -1, 0), _vd.multiplyScalar(1 / L)); mesh.scale.set(1, L / .26, 1); }
@@ -2510,6 +2581,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   on('unstickAll', p => { if (p.model) { p.model.stuck.forEach(m => m.parent && m.parent.remove(m)); p.model.stuck = []; p.model.fin = null; resetDeath(p.model); } });
   function resetDeath(P) { P.root.traverse(o => { if (o.userData.mat0) { o.material = o.userData.mat0; delete o.userData.mat0; } }); P.root.visible = true; P.root.scale.set(1, 1, 1); P.root.rotation.set(0, P.root.rotation.y, 0); P.root.rotation.x = 0; P.root.rotation.z = 0; if (P.bow && P.bow.g.parent !== P.chest) { P.bow.g.parent && P.bow.g.parent.remove(P.bow.g); P.chest.add(P.bow.g); } P.dead = false; }
   function updateCharacters(dt) {
+    easeInterp(dt);
     const rt = srvNow() - INTERP;
     for (const p of CL.players.values()) {
       const P = ensureModel(p), mine = p.id === CL.me;
@@ -2750,15 +2822,22 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     const hurt = now() - ME.hurtAt; if (hurt < .3 && ME.cam === 'fp') cam.rotation.z += Math.sin(hurt * 40) * .02 * (1 - hurt / .3);
   }
   function renderFrame(dt) { visualUpdate(dt); drawFrame(); dynRes(dt); }
-  // keep it smooth on an iPad or a laptop: if frames run long for a couple of seconds, draw fewer pixels (and more when there's room)
-  const DYN = { acc: 0, n: 0, slowT: 0, fastT: 0 };
+  // keep it smooth on an iPad or a laptop: if frames run long for a few seconds, draw fewer pixels (and more when there's room).
+  // Every change re-makes the drawing buffer (a hitch you can feel), so it moves slowly and never seesaws: a step back up that
+  // turns out too much is undone and that level is not tried again.
+  const DYN = { acc: 0, n: 0, slowT: 0, fastT: 0, cap: 1, upAt: -99, lastT: 0 };
   function dynRes(dt) {
-    if (DEV || CFG.quality !== 'auto') return; DYN.acc += dt; DYN.n++;
+    if (DEV || CFG.quality !== 'auto' || STG.on || UI.open) { DYN.acc = DYN.n = 0; return; }   // menus and the shop stage aren't play
+    DYN.acc += dt; DYN.n++;
     if (DYN.acc < .5) return; const avg = DYN.acc / DYN.n * 1000; DYN.acc = 0; DYN.n = 0;
     if (avg > 23) { DYN.slowT += .5; DYN.fastT = 0; } else if (avg < 15) { DYN.fastT += .5; DYN.slowT = 0; } else { DYN.slowT = DYN.fastT = 0; }
-    if (DYN.slowT >= 2 && X.dyn > .6) { X.dyn = Math.max(.6, X.dyn - .15); DYN.slowT = 0; applyQuality(); }
-    else if (DYN.slowT >= 3 && AUTOQ.tier !== 'low') { AUTOQ.tier = 'low'; X.dyn = .85; DYN.slowT = 0; applyQuality(); }   // still slow: shadows off
-    else if (DYN.fastT >= 6 && X.dyn < 1) { X.dyn = Math.min(1, X.dyn + .1); DYN.fastT = 0; applyQuality(); }
+    const floor = isTouch() ? .75 : .6;
+    if (DYN.slowT >= 2.5) {
+      DYN.slowT = 0;
+      if (X.t - DYN.upAt < 12) DYN.cap = Math.max(floor, X.dyn - .1);   // the last step up was too much: stay below it from now on
+      if (X.dyn > floor + .01) { X.dyn = Math.max(floor, X.dyn - .125); applyRes(); }
+      else if (X.q !== 'low') { AUTOQ.tier = 'low'; X.dyn = Math.min(1, X.dyn + .2); DYN.cap = 1; applyQuality(); }   // still slow: shadows off
+    } else if (DYN.fastT >= 10 && X.dyn < DYN.cap - .01) { DYN.fastT = 0; X.dyn = Math.min(DYN.cap, X.dyn + .125); DYN.upAt = X.t; applyRes(); }
   }
   function visualUpdate(dt) {
     X.t += dt; X.wind.time.value = X.t; X.wind.amt.value = .85 + .35 * Math.sin(X.t * .23) + .15 * Math.sin(X.t * .71);
@@ -3757,7 +3836,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   GAME.bot = () => {};
   // for the browser checks (tools/arrowwood-*.mjs) and for poking at by hand from the console
   GAME.test = {
-    get ready() { return ready; }, get X() { return X; }, WILD, updateWildlife, deerVisit, STG, CL, ME, UI, IN, W, ENG, VM, makeBow, PROFILE, KEY, SERVER, act, openMenu, closeMenu, startDraw, release, cancelDraw, connect, startPractice, startBotMatch, botRoom, leaveRoom, send, sendRoom, meP, previewNow, renderFrame, readInput,
+    get ready() { return ready; }, get X() { return X; }, get INTERP() { return INTERP; }, easeInterp, handle, sampleP, srvNow, player, WILD, updateWildlife, deerVisit, STG, CL, ME, UI, IN, W, ENG, VM, makeBow, PROFILE, KEY, SERVER, act, openMenu, closeMenu, startDraw, release, cancelDraw, connect, startPractice, startBotMatch, botRoom, leaveRoom, send, sendRoom, meP, previewNow, renderFrame, readInput,
     tp: (x, z, yaw = 0, pitch = 0) => { ME.st.x = x; ME.st.z = z; ME.st.y = W.groundAt(x, z, W.terrainH(x, z) + 3); ME.st.yaw = yaw; ME.st.pitch = pitch; send({ t: 'dev', tp: [x, ME.st.y, z], yaw, pitch }); },
     aimAt: (x, y, z, power = 1) => { const full = W.isFull(power), o = W.shotOrigin(ME.st, full), d = Math.hypot(x - o[0], z - o[2]), v = W.launchSpeed(power), g = W.GRAV, h = y - o[1]; const disc = v ** 4 - g * (g * d * d + 2 * h * v * v); ME.st.yaw = Math.atan2(-(x - o[0]), -(z - o[2])); ME.st.pitch = full ? Math.atan2(h, d) : disc < 0 ? .7 : Math.atan((v * v - Math.sqrt(disc)) / (g * d)); },
     pos: () => ({ x: ME.st.x, y: ME.st.y, z: ME.st.z, yaw: ME.st.yaw, pitch: ME.st.pitch }),

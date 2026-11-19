@@ -79,6 +79,33 @@
   function buildForest() {
     const S = X.scene, q = X.q;
     const std2 = o => new THREE.MeshStandardMaterial(Object.assign({ roughness: .78, metalness: 0 }, o));
+    // The big merged scenery (trees, bushes, walls, the ground) is cut into tiles of the wood, so three.js can skip the tiles
+    // behind you and, for the sun's shadow, everything outside the shadow box round you. One mesh for the whole wood was drawn
+    // in full every frame, twice where there are shadows.
+    // Each tile is a draw call of its own, so only the heavy layers are cut up, into big tiles (a 3 x 3 grid over the wood); the
+    // light ones (walls, rocks, logs, pebbles) stay whole.
+    const TILE = 66, tileKey = (x, z, t) => t ? Math.floor((x + 26) / t) + ',' + Math.floor((z + 26) / t) : '0';
+    const tiled = (list, mat, cast, recv, t = TILE) => {
+      const groups = new Map();
+      for (const g of list) { if (!g.boundingBox) g.computeBoundingBox(); const bb = g.boundingBox, k = tileKey((bb.min.x + bb.max.x) / 2, (bb.min.z + bb.max.z) / 2, t); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(g); }
+      const out = []; for (const gs of groups.values()) { const m = new THREE.Mesh(merge(gs), mat); m.castShadow = !!cast; m.receiveShadow = !!recv; S.add(m); out.push(m); }
+      list.forEach(g => g.dispose()); return out;
+    };
+    // the same for instanced bits (flowers, pebbles, wall-top blocks): one instanced mesh per tile, each with a bounding sphere that
+    // really holds its instances (three.js otherwise culls an instanced mesh by its single shape at the world's corner)
+    const tiledInst = (geo, mat, items, cast, recv, t = TILE) => {
+      const groups = new Map(), v = new THREE.Vector3(); if (!geo.boundingSphere) geo.computeBoundingSphere();
+      for (const it of items) { v.setFromMatrixPosition(it.m); const k = tileKey(v.x, v.z, t); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(it); }
+      const out = [];
+      for (const its of groups.values()) {
+        const g = geo.clone(), box = new THREE.Box3(), sv = new THREE.Vector3(); let rmax = 0;
+        for (const it of its) { box.expandByPoint(v.setFromMatrixPosition(it.m)); sv.setFromMatrixScale(it.m); rmax = Math.max(rmax, Math.max(sv.x, sv.y, sv.z)); }
+        const sph = box.getBoundingSphere(new THREE.Sphere()); sph.radius += (geo.boundingSphere.radius + geo.boundingSphere.center.length()) * rmax; g.boundingSphere = sph;
+        const m = new THREE.InstancedMesh(g, mat, its.length); its.forEach((it, i) => { m.setMatrixAt(i, it.m); if (it.c) m.setColorAt(i, it.c); });
+        m.castShadow = !!cast; m.receiveShadow = !!recv; S.add(m); out.push(m);
+      }
+      return out;
+    };
     // ---- ground: rolling grassy hills coloured by height and slope, sandy creek banks, worn dirt paths
     {
       const ext = 26, size = 140 + ext * 2, seg = q === 'low' ? 140 : 220, geo = new THREE.PlaneGeometry(size, size, seg, seg); geo.rotateX(-Math.PI / 2); geo.translate(70, 0, 70);
@@ -101,7 +128,14 @@
       }
       geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
       const map = TEX.grassTile; map.repeat.set(size / 7, size / 7);
-      const m = new THREE.Mesh(geo, std2({ map, vertexColors: true, roughness: .92 })); m.receiveShadow = true; S.add(m); X.ground = m;
+      // one vertex buffer, a separate list of triangles per tile (no seams in the lighting where the tiles meet)
+      const gm = std2({ map, vertexColors: true, roughness: .92 }), cellW = size / seg, per = Math.max(1, Math.round(TILE / cellW)), idx = geo.index.array, P = geo.attributes.position; X.ground = [];
+      for (let ty = 0; ty < seg; ty += per) for (let tx = 0; tx < seg; tx += per) {
+        const ix = [], box = new THREE.Box3(), v = new THREE.Vector3();
+        for (let iy = ty; iy < Math.min(seg, ty + per); iy++) for (let ix0 = tx; ix0 < Math.min(seg, tx + per); ix0++) { const c = (iy * seg + ix0) * 6; for (let k = 0; k < 6; k++) { const vi = idx[c + k]; ix.push(vi); box.expandByPoint(v.fromBufferAttribute(P, vi)); } }
+        const g = new THREE.BufferGeometry(); for (const a of ['position', 'normal', 'uv', 'color']) g.setAttribute(a, geo.attributes[a]); g.setIndex(ix); g.boundingSphere = box.getBoundingSphere(new THREE.Sphere()); g.boundingBox = box;
+        const m = new THREE.Mesh(g, gm); m.receiveShadow = true; S.add(m); X.ground.push(m);
+      }
     }
     // ---- the creek: bright, clear blue water
     {
@@ -120,9 +154,8 @@
       for (let k = 0; k < (q === 'low' ? 60 : 110); k++) { let x, z; if (R() < .5) { x = R() * 180 - 20; z = R() < .5 ? -18 + R() * 20 : 138 + R() * 20; } else { z = R() * 180 - 20; x = R() < .5 ? -18 + R() * 20 : 138 + R() * 20; }
         if (x > 3 && x < 137 && z > 3 && z < 137) continue; extra.push({ x, z, r: .35 + R() * .2, h: 6 + R() * 4, lean: [0, 0], kind: R() < .3 ? 'oak' : 'oak2', seed: (R() * 1e6) | 0 }); }
       for (const t of [...W.TREES, ...extra]) { const [a, b] = treeGeos(t, visH(t.x, t.z)); trunks.push(...a); crowns.push(...b); }
-      const tm = new THREE.Mesh(merge(trunks), std2({ color: LC('#8a5a33'), vertexColors: true, roughness: .85 })); tm.castShadow = tm.receiveShadow = true; S.add(tm); X.trunks = tm;
-      const cm = new THREE.Mesh(merge(crowns), windify(std2({ vertexColors: true, roughness: .7 }), .25)); cm.castShadow = true; cm.receiveShadow = true; S.add(cm); X.leaves = cm;
-      trunks.forEach(g => g.dispose()); crowns.forEach(g => g.dispose());
+      X.trunks = tiled(trunks, std2({ color: LC('#8a5a33'), vertexColors: true, roughness: .85 }), true, true);
+      X.leaves = tiled(crowns, windify(std2({ vertexColors: true, roughness: .7 }), .25), true, true);
     }
     // ---- bushes (from the map) with a few flowers; small rocks and flower patches on the grass
     {
@@ -132,21 +165,19 @@
         for (let k = 0; k < n; k++) { const a = R() * TAU, d = k ? b.r * .55 : 0, rr = b.r * (k ? .7 + R() * .2 : 1); parts.push(leafBall(R, rr, b.x + Math.cos(a) * d, y + rr * .55, b.z + Math.sin(a) * d, 1.1, .78, 1.1, col)); }
         if (R() < .35) { const fc = pick2(R, ['#ff5f9e', '#ffd23a', '#ff7a3a', '#c06bff', '#ffffff']); for (let k = 0; k < 6; k++) { const a = R() * TAU, u = R() * .9 + .1; flowers.push([b.x + Math.cos(a) * b.r * .9 * u, y + b.r * (.55 + .45 * Math.sqrt(1 - u * u)) * .95, b.z + Math.sin(a) * b.r * .9 * u, fc]); } }
       }
-      const bm = new THREE.Mesh(merge(parts), windify(std2({ vertexColors: true, roughness: .72 }), .15)); bm.castShadow = true; bm.receiveShadow = true; S.add(bm); X.bushes = bm;
+      X.bushes = tiled(parts, windify(std2({ vertexColors: true, roughness: .72 }), .15), true, true);
       // flower patches on open grass
       const free = (x, z) => W.creekDist(x, z) > W.CREEK_W + .8 && pathDist(x, z) > 1.4 && !treeNear(x, z, .6) && !boxNear(x, z, .5);
       for (let k = 0; k < (q === 'low' ? 60 : 110); k++) { const x = 8 + R() * 124, z = 8 + R() * 124; if (!free(x, z)) continue; const fc = pick2(R, ['#ff5f9e', '#ffd23a', '#ff7a3a', '#c06bff', '#ff4a4a']); for (let j = 0; j < 5; j++) { const fx = x + (R() - .5) * 1.6, fz = z + (R() - .5) * 1.6; flowers.push([fx, visH(fx, fz) + .22 + R() * .08, fz, fc, 1]); } }
       if (flowers.length) {
         // a flower is tiny: five low-poly petals, a centre and a stem (about 50 triangles; there are hundreds of them)
         const fg = merge([...[0, 1, 2, 3, 4].map(k => { const g = new THREE.OctahedronGeometry(.048, 0); g.scale(1, .42, 1); g.translate(Math.cos(k * TAU / 5) * .055, 0, Math.sin(k * TAU / 5) * .055); return g; }), (() => { const g = new THREE.OctahedronGeometry(.036, 0); g.scale(1, .6, 1); g.translate(0, .01, 0); tint(g, () => [1.6, 1.3, .2]); return g; })(), (() => { const g = new THREE.CylinderGeometry(.01, .012, .24, 3, 1, true); g.translate(0, -.12, 0); tint(g, () => [.3, .7, .25]); return g; })()]);
-        const fi = new THREE.InstancedMesh(fg, std2({ vertexColors: true, roughness: .6 }), flowers.length), M = new THREE.Matrix4(), c = new THREE.Color();
-        flowers.forEach(([x, y, z, fc, stem], i) => { M.makeTranslation(x, y, z); fi.setMatrixAt(i, M); fi.setColorAt(i, c.set(fc).convertSRGBToLinear()); });
-        S.add(fi);
+        tiledInst(fg, std2({ vertexColors: true, roughness: .6 }), flowers.map(([x, y, z, fc]) => ({ m: new THREE.Matrix4().makeTranslation(x, y, z), c: new THREE.Color(fc).convertSRGBToLinear() })));
       }
       // pebbles
-      const pg = new THREE.DodecahedronGeometry(.22, 0), pi = new THREE.InstancedMesh(pg, std2({ color: LC('#a2a6aa'), roughness: .8, flatShading: true }), 90), M = new THREE.Matrix4(), Q = new THREE.Quaternion(); let np = 0;
-      for (let k = 0; k < 400 && np < 90; k++) { const x = 8 + R() * 124, z = 8 + R() * 124; if (!free(x, z)) continue; const s = .6 + R() * 1.4; Q.setFromEuler(new THREE.Euler(R() * 3, R() * 3, R() * 3)); M.compose(V3(x, visH(x, z), z), Q, V3(s, s * .6, s)); pi.setMatrixAt(np++, M); }
-      pi.count = np; pi.receiveShadow = true; S.add(pi);
+      const pg = new THREE.DodecahedronGeometry(.22, 0), Q = new THREE.Quaternion(), peb = [];
+      for (let k = 0; k < 400 && peb.length < 90; k++) { const x = 8 + R() * 124, z = 8 + R() * 124; if (!free(x, z)) continue; const s = .6 + R() * 1.4; Q.setFromEuler(new THREE.Euler(R() * 3, R() * 3, R() * 3)); peb.push({ m: new THREE.Matrix4().compose(V3(x, visH(x, z), z), Q, V3(s, s * .6, s)) }); }
+      tiledInst(pg, std2({ color: LC('#a2a6aa'), roughness: .8, flatShading: true }), peb, false, true, 0);
     }
     // ---- stone: walls, the tower and the bridge in clean bricks with a broken top; rocks; logs; planks
     {
@@ -168,19 +199,18 @@
         }
       }
       const stoneM = std2({ map: TEX.brick, roughness: .82, color: LC('#bdb8ad') });
-      for (const [list, mat] of [[wallG, stoneM], [deckG, stoneM], [woodG, std2({ map: TEX.plankB, roughness: .8 })]]) if (list.length) { const m = new THREE.Mesh(merge(list), mat); m.castShadow = m.receiveShadow = true; S.add(m); }
-      const bi = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), std2({ color: LC('#aeaaa0'), roughness: .8 }), Math.max(1, blocks.length)), M = new THREE.Matrix4(), Q = new THREE.Quaternion();
-      blocks.forEach((k, i) => { Q.setFromEuler(new THREE.Euler(0, k.a, 0)); M.compose(V3(k.x, k.y, k.z), Q, V3(k.sx, k.sy, k.sz)); bi.setMatrixAt(i, M); bi.setColorAt(i, new THREE.Color().setScalar(.88 + R() * .14)); });
-      bi.count = blocks.length; bi.castShadow = bi.receiveShadow = true; S.add(bi);
+      for (const [list, mat] of [[wallG, stoneM], [deckG, stoneM], [woodG, std2({ map: TEX.plankB, roughness: .8 })]]) if (list.length) tiled(list, mat, true, true, 0);
+      const Q = new THREE.Quaternion();
+      if (blocks.length) tiledInst(new THREE.BoxGeometry(1, 1, 1), std2({ color: LC('#aeaaa0'), roughness: .8 }), blocks.map(k => { Q.setFromEuler(new THREE.Euler(0, k.a, 0)); return { m: new THREE.Matrix4().compose(V3(k.x, k.y, k.z), Q, V3(k.sx, k.sy, k.sz)), c: new THREE.Color().setScalar(.88 + R() * .14) }; }), true, true, 0);
       // rocks: chunky faceted boulders, a lick of moss on top
       const rg = []; for (const b of rocks) { const g = new THREE.DodecahedronGeometry(1, 1), p = g.attributes.position, sd = R() * 10; for (let i = 0; i < p.count; i++) { const v = V3(p.getX(i), p.getY(i), p.getZ(i)), n = 1 + .16 * (noiseAt(v.x * 2 + sd, v.y * 2 + v.z, 1) - .5) * 2; p.setXYZ(i, v.x * n, v.y * n, v.z * n); }
         g.scale(b.hx * 1.1, (b.y1 - b.y0) / 2, b.hz * 1.1); g.rotateY(b.a); g.translate(b.x, (b.y0 + b.y1) / 2, b.z); g.computeVertexNormals(); tint(g, (x, y, z, ny) => ny > .6 ? [.62, .88, .5] : [1, 1, 1]); rg.push(g); }
-      if (rg.length) { const m = new THREE.Mesh(merge(rg), std2({ color: LC('#9da3a8'), roughness: .85, vertexColors: true, flatShading: true })); m.castShadow = m.receiveShadow = true; S.add(m); }
+      if (rg.length) tiled(rg, std2({ color: LC('#9da3a8'), roughness: .85, vertexColors: true, flatShading: true }), true, true, 0);
       // logs: brown bark with pale cut ends
       const lg = []; for (const b of logs) { const r = (b.y1 - b.y0) * .44, g = new THREE.CylinderGeometry(r, r, b.hx * 2, q === 'low' ? 10 : 14, 1); g.rotateZ(Math.PI / 2);
         tint(g, (x, y, z, ny) => [1, 1, 1]); const nn = g.attributes.normal, cc = g.attributes.color; for (let i = 0; i < nn.count; i++) if (Math.abs(nn.getX(i)) > .9) cc.setXYZ(i, 2.2, 1.9, 1.35);
         g.rotateY(b.a); g.translate(b.x, b.y0 + r * 1.05, b.z); lg.push(g); }
-      if (lg.length) { const m = new THREE.Mesh(merge(lg), std2({ color: LC('#7c5131'), roughness: .85, vertexColors: true })); m.castShadow = m.receiveShadow = true; S.add(m); }
+      if (lg.length) tiled(lg, std2({ color: LC('#7c5131'), roughness: .85, vertexColors: true }), true, true, 0);
     }
     // ---- the bridge's arch underneath (stone faces that curve up from the banks, leaving the creek open under the middle),
     // the tower's beams, camp banners, the zone stones
