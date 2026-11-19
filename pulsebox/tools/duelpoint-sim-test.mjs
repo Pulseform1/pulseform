@@ -148,6 +148,18 @@ function teamChecks(count, size = 2) {
   const spread = { att: 0, attOf: 0, attBad: [], dup: 0, defOf: 0, sites: 0, sitesOf: 0 };
   const four = FOUR_MAPS.map(k => T.MAPS.findIndex(m => m.k === k)).filter(i => i >= 0);
   const onEnd = (wi, w) => { why[w] = (why[w] || 0) + 1; }; T.on('end', (wi, w) => onEnd(wi, w));
+  if (size >= 4) {
+    // agent select hands over the bot teammates' picks: two of them on one operative, one on yours, still make four different ones
+    const teamOps = t => T.M.fs.filter(f => f.team === t).map(f => f.op), allDiff = a => new Set(a).size === a.length;
+    T.seed(77); T.startMatch({ mode: 'bot', diff: 1, size, map: four[0], mates: [{ name: 'Ash', op: 'vex' }, { name: 'Bo', op: 'nova' }, { name: 'Cy', op: 'nova' }] });
+    ok(allDiff(teamOps(0)) && T.M.fs.find(f => f.name === 'Bo').op === 'nova', 'agent select picks that clash are sorted out at the start (the first keeps theirs)', teamOps(0).join(','));
+    // a party: two players on one team both on Vex, and the other team's two both on Iris
+    const roster = [0, 1, 2, 3, 4].map(i => ({ id: i, name: 'P' + i })), cfg = () => ({ teams: { 0: 0, 1: 0, 2: 0, 3: 1, 4: 1 }, size, fill: true, hops: { 0: 'vex', 1: 'vex', 2: 'iris', 3: 'iris', 4: 'iris' }, ops: Object.keys(T.OPS), hostAtt: 1, decHostAtt: 1, map: four[0], botDiff: 1 });
+    MP.opts.onStart(cfg(), roster); const M0 = T.M, s0 = [0, 1].map(t => M0.fs.filter(f => f.team === t).map(f => f.op));
+    ok(s0.every(allDiff) && M0.fs.length === 2 * size && M0.byKey['0'].op === 'vex' && M0.byKey['3'].op === 'iris' && M0.byKey['1'].op !== 'vex' && M0.byKey['4'].op !== 'iris', 'party players on one team never share an operative (the first in the room keeps it)', s0.map(a => a.join(',')).join(' | '));
+    const given = M0.byKey['1'].op; MP.id = 1; MP.opts.onStart(cfg(), roster); MP.id = 0;
+    ok(T.M.fs[0].key === '1' && T.M.fs[0].op === given, 'the player who gave way plays the operative the room gave them, the same on every device', `${T.M.fs[0].op} / ${given}`);
+  }
   for (let n = 0; n < count; n++) {
     try {
       const mi = size === 4 ? four[n % four.length] : (n * size) % T.MAPS.length, mp = T.MAPS[mi];
