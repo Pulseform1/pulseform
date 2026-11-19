@@ -4,9 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Pulsebox Games of the Day</title>
+<title>Pulsebox Banner and Picks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&display=swap">
 <style>
-  :root { color-scheme: dark; --bg: #0a0c12; --panel: #161a26; --panel2: #1d2231; --edge: #2a3144; --text: #eef1f8; --muted: #8d95ab; --lime: #c6ff3d; --pink: #ff2e88; --cyan: #29e0ff; }
+  :root { color-scheme: dark; --display: 'Chakra Petch', 'Arial Narrow', system-ui, sans-serif; --bg: #0a0c12; --panel: #161a26; --panel2: #1d2231; --edge: #2a3144; --text: #eef1f8; --muted: #8d95ab; --lime: #c6ff3d; --pink: #ff2e88; --cyan: #29e0ff; }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 20px 16px 80px; }
   main { max-width: 980px; margin: 0 auto; }
@@ -43,12 +44,57 @@
   .day { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #11141d; border: 1px solid var(--edge); border-radius: 10px; padding: 8px 10px; }
   .day b { min-width: 110px; } .day .names { color: var(--muted); flex: 1; font-size: 14px; }
   .msg { color: var(--muted); margin: 8px 0 0; min-height: 1.4em; } .ok { color: var(--lime); font-weight: 700; } .bad { color: #ff8aa8; font-weight: 700; }
+  /* the owner's banner: a big animated announcement at the top of the hub (its words are set on picks.html) */
+  .sbn { --a: #ff2e88; --b: #29e0ff; --c: #c6ff3d; position: relative; margin: 0 0 18px; border-radius: 24px; padding: 3px; overflow: hidden; isolation: isolate; animation: sbn-in .6s cubic-bezier(.2,.8,.2,1) both; }
+  .sbn[data-style="sunset"] { --a: #ff7a1a; --b: #ff2e88; --c: #ffd23a; }
+  .sbn[data-style="gold"] { --a: #ffc93a; --b: #ff8a1a; --c: #fff1b0; }
+  .sbn[data-style="ice"] { --a: #29e0ff; --b: #7c6cff; --c: #dff9ff; }
+  .sbn::before { content: ''; position: absolute; inset: -150%; z-index: -2; background: conic-gradient(from 0deg, var(--a), var(--b), var(--c), var(--a), var(--b), var(--c), var(--a)); animation: sbn-spin 5s linear infinite; }
+  .sbn::after { content: ''; position: absolute; inset: 3px; z-index: -1; border-radius: 21px; box-shadow: 0 0 30px color-mix(in srgb, var(--a) 55%, transparent), 0 0 60px color-mix(in srgb, var(--b) 35%, transparent); pointer-events: none; }
+  .sbn-in { position: relative; border-radius: 21px; overflow: hidden; padding: clamp(20px, 3.6vw, 38px) clamp(20px, 4.4vw, 52px); display: flex; align-items: center; justify-content: space-between; gap: 18px 32px; flex-wrap: wrap;
+    background: radial-gradient(90% 160% at 0% 0%, color-mix(in srgb, var(--a) 46%, transparent), transparent 60%), radial-gradient(90% 160% at 100% 100%, color-mix(in srgb, var(--b) 46%, transparent), transparent 60%), #0c0e17; }
+  .sbn-in::before { content: ''; position: absolute; inset: 0; z-index: 0; background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.13) 45%, transparent 60%); background-size: 260% 100%; animation: sbn-sweep 4.5s ease-in-out infinite; pointer-events: none; }
+  .sbn-in > * { position: relative; z-index: 1; }
+  .sbn-words { flex: 1 1 420px; min-width: 0; }
+  .sbn-tag { display: inline-flex; align-items: center; gap: 7px; font-family: var(--display, system-ui); font-weight: 700; text-transform: uppercase; letter-spacing: .14em; font-size: 13px; color: #0a0c12; background: var(--c); border-radius: 999px; padding: 5px 12px; box-shadow: 0 0 18px color-mix(in srgb, var(--c) 70%, transparent); }
+  .sbn-tag::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #0a0c12; animation: sbn-blink 1.1s steps(2, end) infinite; }
+  .sbn h2 { font-family: var(--display, system-ui); font-weight: 700; text-transform: uppercase; font-size: clamp(30px, 5.6vw, 64px); line-height: .95; letter-spacing: .01em; margin: 12px 0 0; overflow-wrap: anywhere; text-wrap: balance;
+    background: linear-gradient(100deg, #fff 0%, #fff 38%, var(--c) 48%, #fff 58%, #fff 100%); background-size: 260% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 16px color-mix(in srgb, var(--a) 60%, transparent)); animation: sbn-shine 3.8s ease-in-out infinite; }
+  .sbn p { margin: 10px 0 0; color: #e3e7f3; font-size: clamp(15px, 1.9vw, 20px); line-height: 1.45; font-weight: 500; max-width: 62ch; overflow-wrap: anywhere; }
+  .sbn-go { flex: none; display: inline-flex; align-items: center; gap: 10px; text-decoration: none; cursor: pointer; border: 0; font-family: var(--display, system-ui); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: clamp(15px, 1.7vw, 19px);
+    color: #0a0c12; background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 60%, #fff)); padding: 14px 26px; border-radius: 999px; box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 60%, transparent); animation: sbn-pulse 2s ease-out infinite; }
+  .sbn-go::after { content: '→'; font-size: 1.15em; }
+  .sbn-go:hover, .sbn-go:focus-visible { transform: translateY(-2px); }
+  .sbn-x { position: absolute; top: 10px; right: 10px; z-index: 2; width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,.22); background: rgba(10,12,18,.55); color: #fff; font-size: 18px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+  .sbn-x:hover { background: rgba(10,12,18,.85); }
+  .sbn i { position: absolute; z-index: 0; width: 5px; height: 5px; border-radius: 50%; background: #fff; box-shadow: 0 0 10px 2px var(--c); opacity: 0; animation: sbn-twinkle 2.8s ease-in-out infinite; pointer-events: none; }
+  @keyframes sbn-spin { to { transform: rotate(1turn); } }
+  @keyframes sbn-shine { 0% { background-position: 110% 0; } 55%, 100% { background-position: -10% 0; } }
+  @keyframes sbn-sweep { 0% { background-position: 130% 0; } 60%, 100% { background-position: -30% 0; } }
+  @keyframes sbn-twinkle { 0%, 100% { opacity: 0; transform: scale(.3); } 50% { opacity: 1; transform: scale(1); } }
+  @keyframes sbn-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 65%, transparent); } 100% { box-shadow: 0 0 0 18px transparent; } }
+  @keyframes sbn-blink { to { opacity: .15; } }
+  @keyframes sbn-in { from { opacity: 0; transform: translateY(-12px) scale(.985); } }
+  @media (prefers-reduced-motion: reduce) { .sbn, .sbn::before, .sbn-in::before, .sbn h2, .sbn i, .sbn-go, .sbn-tag::before { animation: none; } .sbn i { opacity: .6; } }
+  .bform { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin-top: 12px; }
+  @media (max-width: 760px) { .bform { grid-template-columns: 1fr; } }
+  .bform label { display: block; font-weight: 700; font-size: 14px; margin-bottom: 4px; } .bform .wide { grid-column: 1 / -1; }
+  .bform small { color: var(--muted); font-weight: 500; }
+  textarea, select { font: inherit; color: var(--text); width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--edge); background: #11141d; }
+  textarea { min-height: 70px; resize: vertical; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; } .chips button { padding: 3px 10px; font-size: 13px; }
+  .sw { display: flex; gap: 8px; flex-wrap: wrap; } .sw button { padding: 8px 14px; border-width: 2px; } .sw button.on { border-color: var(--text); }
+  .toggle.on { background: var(--lime); color: #0a0c12; border-color: var(--lime); }
+  .pv { margin-top: 14px; padding: 14px; border-radius: 16px; background: #0a0c12; border: 1px dashed var(--edge); }
+  .pv .empty { color: var(--muted); text-align: center; padding: 20px; }
 </style>
 </head>
 <body>
 <main>
-  <h1><a href="/">Pulsebox</a> · Games of the Day <a href="/bugs.html" style="font-size:15px;color:var(--cyan);margin-left:10px">Bug reports ›</a></h1>
+  <h1><a href="/">Pulsebox</a> · Banner and Games of the Day <a href="/bugs.html" style="font-size:15px;color:var(--cyan);margin-left:10px">Bug reports ›</a></h1>
   <p class="sub">Choose the games in the big carousel at the very top of the homepage. Trending comes right under it.</p>
+  <div id="bannerApp"></div>
   <div id="app"></div>
 </main>
 <script>
@@ -61,6 +107,84 @@ let key = ''; try { key = sessionStorage.getItem('pbx-bug-key') || ''; } catch (
 let data = { default: [], days: {} }, which = 'default', dirty = false, filter = '';
 const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 
+// The owner's banner: the words come from the admin page (picks.html) and are only ever put in as text. A button can open
+// a game here (#id, #play-id) or an https address in a new tab. The × hides it for this visitor until the words change.
+function bannerEl(b, opt = {}) {
+  const el = document.createElement('section'); el.className = 'sbn'; el.dataset.style = b.style || 'neon'; el.setAttribute('aria-label', 'Announcement');
+  if (opt.preview) el.style.animation = 'none';   // the editor redraws it on every key: no fade-in each time
+  const inner = document.createElement('div'); inner.className = 'sbn-in'; el.appendChild(inner);
+  for (let k = 0; k < 14; k++) { const s = document.createElement('i'); s.style.left = (4 + (k * 37) % 92) + '%'; s.style.top = (8 + (k * 53) % 84) + '%'; s.style.animationDelay = (k * .37 % 2.8).toFixed(2) + 's'; inner.appendChild(s); }
+  const words = document.createElement('div'); words.className = 'sbn-words'; inner.appendChild(words);
+  if (b.tag) { const t = document.createElement('span'); t.className = 'sbn-tag'; t.textContent = b.tag; words.appendChild(t); }
+  const h = document.createElement('h2'); h.textContent = b.title || ''; words.appendChild(h);
+  if (b.text) { const p = document.createElement('p'); p.textContent = b.text; words.appendChild(p); }
+  if (b.button && b.link && (/^https:\/\/[^\s"'<>]+$/.test(b.link) || /^#(play-)?[a-z0-9-]+$/.test(b.link))) {
+    const a = document.createElement('a'); a.className = 'sbn-go'; a.textContent = b.button;
+    if (/^https:\/\//.test(b.link)) { a.href = b.link; a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+    else if (/^#(play-)?[a-z0-9-]+$/.test(b.link)) { a.href = b.link; a.addEventListener('click', e => { if (opt.preview) { e.preventDefault(); return; } if (typeof go === 'function') { e.preventDefault(); go(b.link); } }); }
+    inner.appendChild(a);
+  }
+  if (!opt.preview) { const x = document.createElement('button'); x.type = 'button'; x.className = 'sbn-x'; x.setAttribute('aria-label', 'Hide this message'); x.textContent = '×'; el.appendChild(x); }
+  return el;
+}
+
+// ---- the homepage banner: its own panel above the picks (saved separately)
+let banner = null, bDirty = false;
+const STYLES = [['neon', 'Neon', 'linear-gradient(90deg,#ff2e88,#29e0ff,#c6ff3d)'], ['sunset', 'Sunset', 'linear-gradient(90deg,#ff7a1a,#ff2e88,#ffd23a)'], ['gold', 'Gold', 'linear-gradient(90deg,#ffc93a,#ff8a1a,#fff1b0)'], ['ice', 'Ice', 'linear-gradient(90deg,#29e0ff,#7c6cff,#dff9ff)']];
+async function bannerApi(method, body) {
+  const r = await fetch('/api/banner/admin', { method, headers: { 'x-admin-key': key, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ('error ' + r.status));
+  return j;
+}
+function drawBanner(msg) {
+  const b = banner, kind = !b.link ? 'none' : /^https:/.test(b.link) ? 'web' : 'game', gid = kind === 'game' ? b.link.replace(/^#(play-)?/, '') : '';
+  $('bannerApp').innerHTML = `
+    <div class="panel">
+      <div class="tabs"><h2 style="margin:0">Homepage banner</h2><span class="sp"></span>
+        <button class="toggle ${b.on ? 'on' : ''}" id="bOn">${b.on ? '● On: showing on the homepage' : '○ Off: hidden'}</button></div>
+      <p class="sub" style="margin:0">A big animated banner at the top of the homepage. Only you can change it (it needs this code). Visitors can hide it with ×; it comes back when you change the words.</p>
+      <div class="bform">
+        <div><label for="bTitle">Headline <small id="cTitle"></small></label><input id="bTitle" maxlength="90" placeholder="e.g. Three new maps in Arrowwood!" value="${esc(b.title || '')}"></div>
+        <div><label for="bTag">Little tag <small>(optional)</small></label><input id="bTag" maxlength="16" placeholder="NEW" value="${esc(b.tag || '')}">
+          <div class="chips">${['NEW', 'EVENT', 'UPDATE', 'NEWS', 'HOT'].map(t => `<button data-tag="${t}">${t}</button>`).join('')}</div></div>
+        <div class="wide"><label for="bText">Message <small id="cText"></small></label><textarea id="bText" maxlength="220" placeholder="One or two lines under the headline (optional)">${esc(b.text || '')}</textarea></div>
+        <div><label for="bKind">Button</label><select id="bKind"><option value="none" ${kind === 'none' ? 'selected' : ''}>No button</option><option value="game" ${kind === 'game' ? 'selected' : ''}>Opens a game</option><option value="web" ${kind === 'web' ? 'selected' : ''}>Opens a web address</option></select></div>
+        <div id="bWhere">${kind === 'game' ? `<label for="bGame">Which game</label><select id="bGame">${GAMES.map(g => `<option value="${esc(g.id)}" ${g.id === gid ? 'selected' : ''}>${esc(g.title)}</option>`).join('')}</select>`
+          : kind === 'web' ? `<label for="bUrl">Web address <small>(https://…)</small></label><input id="bUrl" placeholder="https://" value="${esc(b.link || '')}">` : ''}</div>
+        ${kind !== 'none' ? `<div><label for="bBtn">Button words</label><input id="bBtn" maxlength="30" placeholder="${kind === 'game' ? 'Play now' : 'Find out more'}" value="${esc(b.button || '')}"></div>` : ''}
+        ${kind === 'game' ? `<div><label>When clicked</label><select id="bPlay"><option value="play" ${/^#play-/.test(b.link || '') ? 'selected' : ''}>Start the game</option><option value="page" ${/^#play-/.test(b.link || '') ? '' : 'selected'}>Open the game's page</option></select></div>` : ''}
+        <div class="wide"><label>Colours</label><div class="sw">${STYLES.map(([k, n, bg]) => `<button data-style="${k}" class="${(b.style || 'neon') === k ? 'on' : ''}" style="background:${bg};color:#0a0c12">${n}</button>`).join('')}</div></div>
+      </div>
+      <div class="pv" id="bPv"></div>
+      <div class="row"><button class="go" id="bSave" ${bDirty ? '' : 'disabled'}>${bDirty ? 'Save banner' : 'Saved'}</button><span class="sp"></span><a href="/" target="_blank" style="color:var(--cyan)">Open the homepage ↗</a></div>
+      <p class="msg" id="bMsg">${msg || ''}</p>
+    </div>`;
+  const pv = () => { const P = $('bPv'); P.innerHTML = ''; if (!b.title) { P.innerHTML = '<div class="empty">Type a headline to see the banner here.</div>'; return; } P.appendChild(bannerEl(b, { preview: true })); if (!b.on) { const n = document.createElement('div'); n.className = 'empty'; n.style.padding = '8px 0 0'; n.textContent = 'Preview only: the banner is off, so the homepage is not showing it.'; P.appendChild(n); } };
+  const counts = () => { $('cTitle').textContent = `${(b.title || '').length}/90`; $('cText').textContent = `${(b.text || '').length}/220`; };
+  const touch = () => { bDirty = true; $('bSave').disabled = false; $('bSave').textContent = 'Save banner'; $('bMsg').textContent = ''; counts(); pv(); };
+  const link = () => { const k = $('bKind').value; if (k === 'none') b.link = ''; else if (k === 'web') b.link = ($('bUrl') ? $('bUrl').value.trim() : b.link) || ''; else { const g = $('bGame') ? $('bGame').value : (GAMES[0] || {}).id; b.link = ($('bPlay') && $('bPlay').value === 'page' ? '#' : '#play-') + g; } };
+  $('bTitle').oninput = e => { b.title = e.target.value; touch(); };
+  $('bTag').oninput = e => { b.tag = e.target.value; touch(); };
+  $('bText').oninput = e => { b.text = e.target.value; touch(); };
+  if ($('bBtn')) $('bBtn').oninput = e => { b.button = e.target.value; touch(); };
+  if ($('bUrl')) $('bUrl').oninput = () => { link(); touch(); };
+  if ($('bGame')) $('bGame').onchange = () => { link(); touch(); };
+  if ($('bPlay')) $('bPlay').onchange = () => { link(); touch(); };
+  $('bKind').onchange = e => { const k = e.target.value; b.link = k === 'none' ? '' : k === 'web' ? 'https://' : '#play-' + ((GAMES[0] || {}).id || ''); if (k !== 'none' && !b.button) b.button = k === 'game' ? 'Play now' : 'Find out more'; bDirty = true; drawBanner(); };
+  document.querySelectorAll('[data-tag]').forEach(x => x.onclick = () => { b.tag = x.dataset.tag; $('bTag').value = b.tag; touch(); });
+  document.querySelectorAll('[data-style]').forEach(x => x.onclick = () => { b.style = x.dataset.style; bDirty = true; drawBanner(); });
+  $('bOn').onclick = () => { b.on = !b.on; bDirty = true; drawBanner(); };
+  $('bSave').onclick = async () => {
+    if (b.on && !(b.title || '').trim()) { $('bMsg').innerHTML = '<span class="bad">Give it a headline first (or switch it off).</span>'; return; }
+    if (b.link && /^https:\/\/$/.test(b.link)) b.link = '';
+    $('bSave').disabled = true; $('bSave').textContent = 'Saving…';
+    try { const r = await bannerApi('POST', b); banner = r.saved || b; bDirty = false; drawBanner('<span class="ok">' + (banner.on ? 'Saved. The homepage shows it within a minute.' : 'Saved. The banner is off.') + '</span>'); }
+    catch (e) { $('bSave').disabled = false; $('bSave').textContent = 'Save banner'; $('bMsg').innerHTML = '<span class="bad">' + esc(e.message === 'wrong key' ? 'The code stopped working. Lock and unlock again.' : e.message) + '</span>'; }
+  };
+  counts(); pv();
+}
+
 async function api(method, body) {
   const r = await fetch('/api/featured/admin', { method, headers: { 'x-admin-key': key, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
   const j = await r.json().catch(() => ({}));
@@ -68,6 +192,7 @@ async function api(method, body) {
   return j;
 }
 function login(msg) {
+  $('bannerApp').innerHTML = '';
   $('app').innerHTML = '<div class="panel login"><label for="k"><b>Admin code</b> (the same one as the bug reports page)</label><input id="k" type="password" autocomplete="current-password" style="margin:8px 0 12px"><button class="go" id="kGo">Unlock</button><p class="msg" id="lm"></p></div>';
   if (msg) $('lm').innerHTML = '<span class="bad">' + esc(msg) + '</span>';
   $('kGo').onclick = () => { key = $('k').value.trim(); try { sessionStorage.setItem('pbx-bug-key', key); } catch (e) {} load(); };
@@ -77,7 +202,8 @@ function login(msg) {
 async function load() {
   if (!key) return login();
   $('app').innerHTML = '<p class="msg">Loading…</p>';
-  try { data = await api('GET'); if (!data.days) data.days = {}; if (!data.default) data.default = []; dirty = false; draw(); }
+  try { data = await api('GET'); if (!data.days) data.days = {}; if (!data.default) data.default = []; dirty = false; draw();
+    try { banner = await bannerApi('GET'); } catch (e) { banner = { on: false }; } if (!banner || typeof banner !== 'object') banner = { on: false }; bDirty = false; drawBanner(); }
   catch (e) { key = ''; try { sessionStorage.removeItem('pbx-bug-key'); } catch (er) {} login(e.message === 'wrong key' ? 'That code is not right.' : e.message); }
 }
 const list = () => which === 'default' ? data.default : (data.days[which] || (data.days[which] = []));
@@ -137,7 +263,7 @@ function draw() {
     catch (e) { $('save').disabled = false; $('save').textContent = 'Save changes'; $('msg').innerHTML = '<span class="bad">' + esc(e.message === 'wrong key' ? 'The code stopped working. Lock and unlock again.' : e.message) + '</span>'; }
   };
 }
-addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+addEventListener('beforeunload', e => { if (dirty || bDirty) { e.preventDefault(); e.returnValue = ''; } });
 load();
 </script>
 </body>

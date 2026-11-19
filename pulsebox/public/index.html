@@ -886,6 +886,39 @@
   .gate .fine { margin: 14px 0 0; font-size: 13px; color: var(--muted); }
   .gate .spin { width: 40px; height: 40px; margin: 22px auto 6px; border-radius: 50%; border: 4px solid rgba(198,255,61,.2); border-top-color: var(--lime); animation: gateSpin .8s linear infinite; }
   @keyframes gateSpin { to { transform: rotate(1turn); } }
+  /* the owner's banner: a big animated announcement at the top of the hub (its words are set on picks.html) */
+  .sbn { --a: #ff2e88; --b: #29e0ff; --c: #c6ff3d; position: relative; margin: 0 0 18px; border-radius: 24px; padding: 3px; overflow: hidden; isolation: isolate; animation: sbn-in .6s cubic-bezier(.2,.8,.2,1) both; }
+  .sbn[data-style="sunset"] { --a: #ff7a1a; --b: #ff2e88; --c: #ffd23a; }
+  .sbn[data-style="gold"] { --a: #ffc93a; --b: #ff8a1a; --c: #fff1b0; }
+  .sbn[data-style="ice"] { --a: #29e0ff; --b: #7c6cff; --c: #dff9ff; }
+  .sbn::before { content: ''; position: absolute; inset: -150%; z-index: -2; background: conic-gradient(from 0deg, var(--a), var(--b), var(--c), var(--a), var(--b), var(--c), var(--a)); animation: sbn-spin 5s linear infinite; }
+  .sbn::after { content: ''; position: absolute; inset: 3px; z-index: -1; border-radius: 21px; box-shadow: 0 0 30px color-mix(in srgb, var(--a) 55%, transparent), 0 0 60px color-mix(in srgb, var(--b) 35%, transparent); pointer-events: none; }
+  .sbn-in { position: relative; border-radius: 21px; overflow: hidden; padding: clamp(20px, 3.6vw, 38px) clamp(20px, 4.4vw, 52px); display: flex; align-items: center; justify-content: space-between; gap: 18px 32px; flex-wrap: wrap;
+    background: radial-gradient(90% 160% at 0% 0%, color-mix(in srgb, var(--a) 46%, transparent), transparent 60%), radial-gradient(90% 160% at 100% 100%, color-mix(in srgb, var(--b) 46%, transparent), transparent 60%), #0c0e17; }
+  .sbn-in::before { content: ''; position: absolute; inset: 0; z-index: 0; background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.13) 45%, transparent 60%); background-size: 260% 100%; animation: sbn-sweep 4.5s ease-in-out infinite; pointer-events: none; }
+  .sbn-in > * { position: relative; z-index: 1; }
+  .sbn-words { flex: 1 1 420px; min-width: 0; }
+  .sbn-tag { display: inline-flex; align-items: center; gap: 7px; font-family: var(--display, system-ui); font-weight: 700; text-transform: uppercase; letter-spacing: .14em; font-size: 13px; color: #0a0c12; background: var(--c); border-radius: 999px; padding: 5px 12px; box-shadow: 0 0 18px color-mix(in srgb, var(--c) 70%, transparent); }
+  .sbn-tag::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #0a0c12; animation: sbn-blink 1.1s steps(2, end) infinite; }
+  .sbn h2 { font-family: var(--display, system-ui); font-weight: 700; text-transform: uppercase; font-size: clamp(30px, 5.6vw, 64px); line-height: .95; letter-spacing: .01em; margin: 12px 0 0; overflow-wrap: anywhere; text-wrap: balance;
+    background: linear-gradient(100deg, #fff 0%, #fff 38%, var(--c) 48%, #fff 58%, #fff 100%); background-size: 260% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 16px color-mix(in srgb, var(--a) 60%, transparent)); animation: sbn-shine 3.8s ease-in-out infinite; }
+  .sbn p { margin: 10px 0 0; color: #e3e7f3; font-size: clamp(15px, 1.9vw, 20px); line-height: 1.45; font-weight: 500; max-width: 62ch; overflow-wrap: anywhere; }
+  .sbn-go { flex: none; display: inline-flex; align-items: center; gap: 10px; text-decoration: none; cursor: pointer; border: 0; font-family: var(--display, system-ui); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: clamp(15px, 1.7vw, 19px);
+    color: #0a0c12; background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 60%, #fff)); padding: 14px 26px; border-radius: 999px; box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 60%, transparent); animation: sbn-pulse 2s ease-out infinite; }
+  .sbn-go::after { content: '→'; font-size: 1.15em; }
+  .sbn-go:hover, .sbn-go:focus-visible { transform: translateY(-2px); }
+  .sbn-x { position: absolute; top: 10px; right: 10px; z-index: 2; width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,.22); background: rgba(10,12,18,.55); color: #fff; font-size: 18px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+  .sbn-x:hover { background: rgba(10,12,18,.85); }
+  .sbn i { position: absolute; z-index: 0; width: 5px; height: 5px; border-radius: 50%; background: #fff; box-shadow: 0 0 10px 2px var(--c); opacity: 0; animation: sbn-twinkle 2.8s ease-in-out infinite; pointer-events: none; }
+  @keyframes sbn-spin { to { transform: rotate(1turn); } }
+  @keyframes sbn-shine { 0% { background-position: 110% 0; } 55%, 100% { background-position: -10% 0; } }
+  @keyframes sbn-sweep { 0% { background-position: 130% 0; } 60%, 100% { background-position: -30% 0; } }
+  @keyframes sbn-twinkle { 0%, 100% { opacity: 0; transform: scale(.3); } 50% { opacity: 1; transform: scale(1); } }
+  @keyframes sbn-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 65%, transparent); } 100% { box-shadow: 0 0 0 18px transparent; } }
+  @keyframes sbn-blink { to { opacity: .15; } }
+  @keyframes sbn-in { from { opacity: 0; transform: translateY(-12px) scale(.985); } }
+  @media (prefers-reduced-motion: reduce) { .sbn, .sbn::before, .sbn-in::before, .sbn h2, .sbn i, .sbn-go, .sbn-tag::before { animation: none; } .sbn i { opacity: .6; } }
 </style>
 
 <div class="wrap">
@@ -2491,6 +2524,38 @@ function soonTile() {
    HOME: hero carousel
    ============================================================ */
 let heroIdx = 0, heroKey = '';
+// The owner's banner: the words come from the admin page (picks.html) and are only ever put in as text. A button can open
+// a game here (#id, #play-id) or an https address in a new tab. The × hides it for this visitor until the words change.
+function bannerEl(b, opt = {}) {
+  const el = document.createElement('section'); el.className = 'sbn'; el.dataset.style = b.style || 'neon'; el.setAttribute('aria-label', 'Announcement');
+  if (opt.preview) el.style.animation = 'none';   // the editor redraws it on every key: no fade-in each time
+  const inner = document.createElement('div'); inner.className = 'sbn-in'; el.appendChild(inner);
+  for (let k = 0; k < 14; k++) { const s = document.createElement('i'); s.style.left = (4 + (k * 37) % 92) + '%'; s.style.top = (8 + (k * 53) % 84) + '%'; s.style.animationDelay = (k * .37 % 2.8).toFixed(2) + 's'; inner.appendChild(s); }
+  const words = document.createElement('div'); words.className = 'sbn-words'; inner.appendChild(words);
+  if (b.tag) { const t = document.createElement('span'); t.className = 'sbn-tag'; t.textContent = b.tag; words.appendChild(t); }
+  const h = document.createElement('h2'); h.textContent = b.title || ''; words.appendChild(h);
+  if (b.text) { const p = document.createElement('p'); p.textContent = b.text; words.appendChild(p); }
+  if (b.button && b.link && (/^https:\/\/[^\s"'<>]+$/.test(b.link) || /^#(play-)?[a-z0-9-]+$/.test(b.link))) {
+    const a = document.createElement('a'); a.className = 'sbn-go'; a.textContent = b.button;
+    if (/^https:\/\//.test(b.link)) { a.href = b.link; a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+    else if (/^#(play-)?[a-z0-9-]+$/.test(b.link)) { a.href = b.link; a.addEventListener('click', e => { if (opt.preview) { e.preventDefault(); return; } if (typeof go === 'function') { e.preventDefault(); go(b.link); } }); }
+    inner.appendChild(a);
+  }
+  if (!opt.preview) { const x = document.createElement('button'); x.type = 'button'; x.className = 'sbn-x'; x.setAttribute('aria-label', 'Hide this message'); x.textContent = '×'; el.appendChild(x); }
+  return el;
+}
+function loadBanner() {
+  const origin = /^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? '' : 'https://box.pulseform.org';
+  fetch(origin + '/api/banner').then(r => r.ok ? r.json() : null).then(showBanner).catch(() => {});
+}
+function showBanner(b) {
+  const old = document.getElementById('siteBanner'); if (old) old.remove();
+  if (!b || !b.on || !b.title) return;
+  const sig = (b.tag || '') + '|' + b.title + '|' + (b.text || ''); try { if (localStorage.getItem('pbx-banner-hidden') === sig) return; } catch (e) {}
+  const el = bannerEl(b); el.id = 'siteBanner';
+  el.querySelector('.sbn-x').addEventListener('click', () => { try { localStorage.setItem('pbx-banner-hidden', sig); } catch (e) {} el.remove(); });
+  const home = document.getElementById('home'); home.insertBefore(el, home.firstChild);
+}
 // Games of the Day: chosen by hand in public/featured.json (build-worker.py bakes it in here). A date key beats 'default'.
 const FEATURED = /*@featured*/null, ADDED = /*@added*/null; window.FEATURED_BUILT = FEATURED;
 // picks saved on the admin page (box.pulseform.org/picks.html) override the built-in ones as soon as they load
@@ -3128,7 +3193,7 @@ window.addEventListener('resize', sizeStage);
 window.addEventListener('popstate', route);
 window.addEventListener('hashchange', route);
 
-renderFinder(); renderHero(); renderActions(); loadLivePicks();
+renderFinder(); renderHero(); renderActions(); loadLivePicks(); loadBanner();
 route();
 trackView();
 loadStats();

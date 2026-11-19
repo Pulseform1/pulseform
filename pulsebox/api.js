@@ -20,6 +20,8 @@
 //   POST /api/bugs/update      (header x-admin-key) <- { id, status, note } -> { ok }
 //   GET  /api/featured  -> { default: [ids], days: { 'YYYY-MM-DD': [ids] } }  (Games of the Day, read by the hub)
 //   GET/POST /api/featured/admin  (header x-admin-key) -> read / save them  (the admin page, public/picks.html)
+//   GET  /api/banner  -> { on, tag, title, text, button, link, style, at }  (the big banner at the top of the hub)
+//   GET/POST /api/banner/admin  (header x-admin-key) -> read / save it  (the admin page, public/picks.html)
 // Multiplayer rooms: one Durable Object (Rooms) per 4-character room code relays JSON messages between up to 8 players (14 for the Odd Crowd party game).
 //   GET  /api/room/CODE?n=NAME&g=GAME  (WebSocket) -> { t: 'hello', id, host, players } then every other player's messages
 //   GET  /api/room/CODE  (plain) -> { game, players }: which game the room is playing, so the hub can join by code alone
@@ -113,6 +115,10 @@ async function bugs(request, env, url, ids = []) {
   if (url.pathname === '/api/featured' && request.method === 'GET') {
     const r = await stub.fetch('https://bugs/featured'); return new Response(r.body, { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=30', 'access-control-allow-origin': '*', 'x-content-type-options': 'nosniff' } });
   }
+  // the hub's banner: anyone can read it; only the admin key changes it
+  if (url.pathname === '/api/banner' && request.method === 'GET') {
+    const r = await stub.fetch('https://bugs/banner'); return new Response(r.body, { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=30', 'access-control-allow-origin': '*', 'x-content-type-options': 'nosniff' } });
+  }
   if (url.pathname === '/api/bug/status') {
     // ids look like 12.TOKEN: the token (given only to whoever sent the report) is needed to read the note on it
     const ids = (url.searchParams.get('ids') || '').split(',').slice(0, 50).map(s => { const [i, t] = s.split('.'); return { id: Number(i), tok: /^[a-f0-9]{32}$/.test(t || '') ? t : '' }; }).filter(q => Number.isInteger(q.id) && q.id > 0);
@@ -122,6 +128,18 @@ async function bugs(request, env, url, ids = []) {
   if (ok === 'off') return json({ error: 'The admin key is not set up yet (BUG_ADMIN_KEY, at least 16 characters).' }, 503);
   if (ok === 'locked') return json({ error: 'Too many wrong keys from here. Try again in 15 minutes.' }, 429);
   if (ok !== 'ok') return json({ error: 'wrong key' }, 401);
+  if (url.pathname === '/api/banner/admin') {
+    if (request.method === 'GET') return stub.fetch('https://bugs/banner');
+    if (request.method !== 'POST') return json({ error: 'method' }, 405);
+    const body = await request.text(); if (body.length > 4000) return json({ error: 'too big' }, 413);
+    let b; try { b = JSON.parse(body); } catch (e) { return json({ error: 'bad banner' }, 400); }
+    // plain text only (the hub never puts it in as HTML); a button may open a game on the hub or an https address
+    const str = (v, n) => typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, n) : '';
+    let link = str(b.link, 300); if (link && !/^#(play-)?[a-z0-9-]{1,60}$/.test(link) && !/^https:\/\/[^\s"'<>]+$/.test(link)) link = '';
+    const out = { on: !!b.on, tag: str(b.tag, 16), title: str(b.title, 90), text: str(b.text, 220), button: str(b.button, 30), link, style: ['neon', 'sunset', 'gold', 'ice'].includes(b.style) ? b.style : 'neon', at: Date.now() };
+    if (out.on && !out.title) return json({ error: 'The banner needs a headline.' }, 400);
+    return stub.fetch('https://bugs/banner/set', { method: 'POST', body: JSON.stringify(out) });
+  }
   if (url.pathname === '/api/featured/admin') {
     if (request.method === 'GET') return stub.fetch('https://bugs/featured');
     if (request.method !== 'POST') return json({ error: 'method' }, 405);
@@ -169,6 +187,8 @@ export class Bugs {
       if (url.pathname === '/fail') { this.sql.exec('INSERT INTO fails (k, t) VALUES (?, ?)', who, now); return json({ ok: true }); }
       return this.sql.exec('SELECT COUNT(*) AS n FROM fails WHERE k = ?', who).one().n >= 8 ? json({ error: 'locked' }, 429) : json({ ok: true });
     }
+    if (url.pathname === '/banner') { const r = this.sql.exec("SELECT v FROM kv WHERE k = 'banner'").toArray()[0]; return json(r ? JSON.parse(r.v) : { on: false }); }
+    if (url.pathname === '/banner/set') { const v = await request.text(); this.sql.exec("INSERT INTO kv (k, v) VALUES ('banner', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v", v); return json({ ok: true, saved: JSON.parse(v) }); }
     if (url.pathname === '/featured') { const r = this.sql.exec("SELECT v FROM kv WHERE k = 'featured'").toArray()[0]; return json(r ? JSON.parse(r.v) : { default: [], days: {} }); }
     if (url.pathname === '/featured/set') { const v = await request.text(); this.sql.exec("INSERT INTO kv (k, v) VALUES ('featured', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v", v); return json({ ok: true, saved: JSON.parse(v) }); }
     if (url.pathname === '/list') {
@@ -293,7 +313,7 @@ export async function api(request, env, ctx, ids, eliteCfg = { live: false }) {
   if (url.pathname === '/api/lb' || url.pathname === '/api/lb/mine') return lb(request, env, url, ids);
   if (url.pathname === '/api/rate') return rate(request, env, ids);
   if (url.pathname.startsWith('/api/arena/')) return arena(request, env, url);
-  if (url.pathname === '/api/bug' || url.pathname === '/api/bug/status' || url.pathname === '/api/bugs' || url.pathname === '/api/bugs/update' || url.pathname === '/api/featured' || url.pathname === '/api/featured/admin') return bugs(request, env, url, ids);
+  if (url.pathname === '/api/bug' || url.pathname === '/api/bug/status' || url.pathname === '/api/bugs' || url.pathname === '/api/bugs/update' || url.pathname === '/api/featured' || url.pathname === '/api/featured/admin' || url.pathname === '/api/banner' || url.pathname === '/api/banner/admin') return bugs(request, env, url, ids);
   if (url.pathname.startsWith('/api/arrowwood/') && env.ARROWWOOD_ROOM) return arrowwoodApi(request, env, url);
   if (url.pathname === '/api/hollow') {
     if (request.headers.get('upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
