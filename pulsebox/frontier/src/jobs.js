@@ -44,7 +44,7 @@ export class Jobs {
     const t0 = performance.now();
     while (this.queue.length && performance.now() - t0 < budgetMs) {
       const job = this.queue.shift(); if (job.dead) continue; const m = job.msg, w = this.world;
-      const r = m.t === 'terrain' ? gen.terrainChunk(w, m.x0, m.z0, m.size, m.res, m.skirt) : m.t === 'flora' ? gen.flora(w, m.cx, m.cz, m.C) : gen.grassField(w, m.x0, m.z0, m.n, m.step, m.h0);
+      const r = m.t === 'terrain' ? gen.terrainChunk(w, m.x0, m.z0, m.size, m.res, m.skirt) : m.t === 'flora' ? gen.flora(w, m.cx, m.cz, m.C) : m.t === 'map' ? gen.mapTile(w, m.x0, m.z0, m.size, m.n) : gen.grassField(w, m.x0, m.z0, m.n, m.step, m.h0);
       job.res(r);
     }
   }

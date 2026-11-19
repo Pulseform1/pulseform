@@ -57,3 +57,10 @@ button.on{background:#6b4a22;border-color:var(--gold)}
 #panel .empty{color:#8f7f62;font-style:italic;font-size:13px;padding:6px 0}
 #panel .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 @media (max-width:560px){#panel .cols{grid-template-columns:1fr}}
+#map{position:fixed;inset:0;z-index:6;background:#1a130c}
+#mapcv{position:absolute;inset:0;width:100%;height:100%;cursor:grab;touch-action:none}
+.maptools{position:absolute;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 24px)}
+.maptools button{background:rgba(40,28,16,.85);padding:6px 11px}
+.maptitle{font-style:italic;color:#2a1a0c;font-size:17px;margin-right:8px;text-shadow:0 1px 0 rgba(255,250,235,.5)}
+.maphint{position:absolute;bottom:max(10px,env(safe-area-inset-bottom));left:0;right:0;text-align:center;color:#3a2a18;font-style:italic;font-size:13px}
+#compass{position:absolute;left:50%;top:max(8px,env(safe-area-inset-top));transform:translateX(-50%);width:min(520px,70vw);height:38px;pointer-events:none;-webkit-mask:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);mask:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent)}

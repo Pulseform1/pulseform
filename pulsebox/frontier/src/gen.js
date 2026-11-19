@@ -99,3 +99,25 @@ export function grassField(world, x0, z0, n, step, h0) {
   }
   return out;
 }
+
+// a square of the survey map: parchment, water ink, forest tint, hill shading and 20 m contours (RGBA, n x n)
+export function mapTile(world, x0, z0, size, n) {
+  const m = n + 1, step = size / n, H = new Float32Array(m * m), F = new Float32Array(m * m), out = new Uint8Array(n * n * 4);
+  for (let j = 0; j < m; j++) for (let i = 0; i < m; i++) { const x = x0 + i * step, z = z0 + j * step, s = world.sample(x, z, S2); H[j * m + i] = s.h; F[j * m + i] = s.h > 0 ? world.forestRaw(x, z, s) : 0; }
+  const cl = 20;
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const h = H[j * m + i], hx = H[j * m + i + 1] - h, hz = H[(j + 1) * m + i] - h, f = F[j * m + i], o = (j * n + i) * 4;
+    let r, g, b;
+    if (h < 0) { const d = Math.min(1, -h / 9); r = 118 - 40 * d; g = 150 - 35 * d; b = 156 - 22 * d; if (h > -.6) { r += 18; g += 14; b += 6; } }
+    else {
+      const t = Math.min(1, h / 230); r = 214 - 30 * t; g = 198 - 36 * t; b = 158 - 30 * t;
+      r -= 62 * f; g -= 38 * f; b -= 58 * f;
+      if (h > 190) { const k = Math.min(1, (h - 190) / 25); r += (242 - r) * k; g += (238 - g) * k; b += (226 - b) * k; }
+      const shade = Math.max(-.35, Math.min(.3, -(hx + hz) / step * .55)); r *= 1 + shade; g *= 1 + shade; b *= 1 + shade * .9;
+      if (Math.floor(h / cl) !== Math.floor((h + hx) / cl) || Math.floor(h / cl) !== Math.floor((h + hz) / cl)) { r *= .78; g *= .72; b *= .64; }
+      if (h < 1.2) { r = r * .7 + 70 * .3; g = g * .7 + 90 * .3; b = b * .7 + 96 * .3; }
+    }
+    out[o] = Math.max(0, Math.min(255, r)); out[o + 1] = Math.max(0, Math.min(255, g)); out[o + 2] = Math.max(0, Math.min(255, b)); out[o + 3] = 255;
+  }
+  return out;
+}

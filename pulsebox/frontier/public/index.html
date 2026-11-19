@@ -36,6 +36,7 @@
   <div id="cross"></div>
   <div id="prompt"></div>
   <div id="toast"></div>
+  <canvas id="compass"></canvas>
   <div id="clock"></div>
   <div id="ammo"></div>
   <div id="hit"></div>
@@ -50,6 +51,11 @@
   </div>
 </section>
 <section id="panel" hidden></section>
+<section id="map" hidden>
+  <canvas id="mapcv"></canvas>
+  <div class="maptools"><span class="maptitle">Survey of the country</span><button data-m="in">+</button><button data-m="out">&minus;</button><button data-m="me">Me</button><button data-m="camp">Camp</button><button data-m="guide">Guide me to camp</button><button data-m="close">Close &middot; M</button></div>
+  <p class="maphint">Drag to look around &middot; wheel to zoom &middot; click to set a marker, click it again to clear</p>
+</section>
 <div id="fade"></div>
 <pre id="debug" hidden></pre>
 <script type="module" src="main.js"></script>

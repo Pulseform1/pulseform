@@ -19,6 +19,7 @@ import { Wildlife } from './wildlife.js';
 import { Weapons } from './weapons.js';
 import { CampLife } from './camplife.js';
 import { UI } from './ui.js';
+import { SurveyMap } from './map.js';
 
 const $ = s => document.querySelector(s);
 const params = new URLSearchParams(location.search);
@@ -100,6 +101,7 @@ async function start(opts) {
   if (opts.player) { player.place(opts.player.x, opts.player.z, opts.player.yaw); }
   Object.assign(G, { world, jobs, sky, terrain, flora, grass, water, camp, player, weather, wildlife, stats: { taken: {} }, timeScale: 1, gameHours: 0, seed, spawn: opts.spawn, gameTime: 0, day: 0, envT: 0, env: { waterDist: 99, riverDist: 99, forest: 0 } });
   G.tex = TEX; G.life = new CampLife(G, G.ui);
+  G.map = G.map || new SurveyMap(G); G.map.explored.clear(); G.map.markers = []; G.map.guide = false;
   // build the world around the player before showing it
   const t0 = performance.now();
   while (true) {
@@ -177,8 +179,10 @@ function step(dt) {
   fpsT += dt; fpsN++; if (fpsT > .5) { fps = fpsN / fpsT; fpsT = 0; fpsN = 0; }
   if (G.state !== 'play' && G.state !== 'pause' && G.state !== 'ui') { input.endFrame(); return; }
   const { player, sky, terrain, flora, grass, water, camp, jobs } = G, live = G.state === 'play' || G.state === 'ui';
-  if (G.state === 'ui' && (input.hit('Escape') || input.hit('KeyI') || (input.hit('KeyE') && G.ui.open !== 'pack'))) { G.ui.close(); input.pressed.clear(); }
+  if (G.state === 'ui' && G.map.isOpen) { if (input.hit('Escape') || input.hit('KeyM')) { G.map.close(); input.pressed.clear(); } }
+  else if (G.state === 'ui' && (input.hit('Escape') || input.hit('KeyI') || (input.hit('KeyE') && G.ui.open !== 'pack'))) { G.ui.close(); input.pressed.clear(); }
   else if (G.state === 'play' && input.hit('KeyI')) G.ui.openPack();
+  else if (G.state === 'play' && input.hit('KeyM')) G.map.open();
   if (G.state === 'play') {
     if (input.locked || input.isTouch) player.look(input.lookX, input.lookY, G.settings.sens);
     player.update(dt, input, (x, z, r) => collide(x, z, r));
@@ -231,6 +235,8 @@ function step(dt) {
   else if (it) { pr.textContent = 'E  ' + it.label(); pr.classList.add('on'); } else if (G.carcass) { pr.textContent = 'E  Dress the ' + G.carcass.sp.label.toLowerCase(); pr.classList.add('on'); } else if (G.wood) { pr.textContent = 'E  Gather dry wood' + (G.wood.kind === 6 ? ' from the fallen log' : G.wood.kind === 7 ? ' from the old stump' : ' from the dead tree'); pr.classList.add('on'); } else pr.classList.remove('on');
   $('#ammo').textContent = W.label; $('#hit').classList.toggle('on', G.hitT > 0); G.hitT -= dt;
   G.ui.tick(dt);
+  if (live) G.map.reveal(dt);
+  G.map.draw(); G.map.compass();
   const h = sky.hours, hh = Math.floor(h), mm = Math.floor((h - hh) * 60);
   $('#clock').textContent = `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'am' : 'pm'}`;
   if (G.debug) $('#debug').textContent = `${fps.toFixed(0)} fps  calls ${renderer.info.render.calls}  tris ${(renderer.info.render.triangles / 1e6).toFixed(2)}M  trees ${flora.counts.near}/${flora.counts.mid}/${flora.counts.far}  jobs ${jobs.pending}`;
