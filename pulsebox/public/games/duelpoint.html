@@ -1292,12 +1292,17 @@ const GAME = {
   const skipLoad = () => { if (loadingNow() && !M.online) { M.t = BUY_T; M.loading = false; } };
   // Buying over something you bought this round refunds it; choosing it again sells it back.
   // choose a gun (or shield) for your loadout: free, if you own it. It is yours from now on, every round, until you pick another
+  // what a gun kept from an earlier round sells for: half its price (bought this round, it refunds in full)
+  const resale = k => { const G = GUNS[k]; return G && !G.melee && k !== 'pip' && G.cost ? Math.floor(G.cost / 2 / 50) * 50 : 0; };
   function buy(f, k) {
     if (!canBuy()) return false;
     const G = GUNS[k], A = ARMOR.find(a => a.k === k), sp = f.spent; let ok = false;
     if (G && !G.melee) {
       const s = G.slot, prev = sp[s];
-      if (f.guns[s] === k) { if (prev && prev.k === k) { f.credits += G.cost; f.guns[s] = prev.was; if (prev.was) giveAmmo(f, prev.was); delete sp[s]; f.slot = f.guns[1] ? 1 : 2; ok = true; } }
+      if (f.guns[s] === k) {
+        if (prev && prev.k === k) { f.credits += G.cost; f.guns[s] = prev.was; if (prev.was) giveAmmo(f, prev.was); delete sp[s]; f.slot = f.guns[1] ? 1 : 2; ok = true; }
+        else if (resale(k) && !f.bot) { f.credits = Math.min(CASH.cap, f.credits + resale(k)); f.guns[s] = s === 2 ? 'pip' : null; if (s === 2) giveAmmo(f, 'pip'); f.slot = f.guns[1] ? 1 : 2; f.scoped = 0; f.reloadT = 0; ok = true; }   // a gun kept from an earlier round sells for half
+      }
       else { const refund = prev ? GUNS[prev.k].cost : 0; if (f.credits + refund >= G.cost) { f.credits += refund - G.cost; sp[s] = { k, was: prev ? prev.was : f.guns[s] }; f.guns[s] = k; giveAmmo(f, k); f.slot = s; f.scoped = 0; f.reloadT = 0; ok = true; } }
     } else if (A) {
       if (f.sh >= A.sh) { if (sp.sh && sp.sh.k === A.k) { f.credits += A.cost; f.sh = sp.sh.was; delete sp.sh; ok = true; } }
@@ -5706,7 +5711,7 @@ const GAME = {
       g.font = `700 ${fitPx(g, tp)}px ${FONT}`; const nm = it.short && g.measureText((it.n + '  ◈ 200').toUpperCase()).width > cw - 18 * u ? it.short : it.n;
       const have = (N && P.smokes) || (AB && P.ab.q);
       tx(g, nm.toUpperCase(), cx + 9 * u, ty, tp, can || on || have ? it.col : '#5a6272', 'left');
-      tx(g, on ? (mineNow ? 'SELL' : AB ? 'FULL' : 'OWNED') : have ? `${N ? P.smokes : P.ab.q} · ◈ ${it.cost}` : it.cost ? `◈ ${it.cost}` : 'FREE', cx + cw - 8 * u, ty, tp * .85, on ? YOU : can ? GOLD : '#5a6272', 'right');
+      tx(g, on ? (mineNow ? 'SELL' : AB ? 'FULL' : G && resale(it.k) ? `SELL ◈ ${resale(it.k)}` : 'OWNED') : have ? `${N ? P.smokes : P.ab.q} · ◈ ${it.cost}` : it.cost ? `◈ ${it.cost}` : 'FREE', cx + cw - 8 * u, ty, tp * .85, on ? YOU : can ? GOLD : '#5a6272', 'right');
       g.save(); g.globalAlpha = can || on || have ? 1 : .35; g.beginPath(); g.rect(cx + 2, cy + 2, cw - 4, ch - 4); g.clip(); const iy = cy + tp * 1.7, ih = ch - tp * 1.7 - 3;
       if (G) { const ic = gunIcon(it.k); if (ic) { const dh = Math.min(ih * (G.cat === 'Sidearm' ? 1.12 : 1.05), (cw - 12 * u) * 150 / 480 * (G.cat === 'Sidearm' ? 1.5 : G.cat === 'SMG' || G.cat === 'Shotgun' ? 1.2 : 1)), dw = dh * 480 / 150; g.drawImage(ic, cx + (cw - dw) / 2, iy + (ih - dh) / 2, dw, dh); } }
       else if (AB) { const mx = cx + cw / 2, my = iy + ih / 2, r = Math.min(ih * .36, cw * .22), mx2 = AB.ab.q.max; g.strokeStyle = it.col; g.lineWidth = 3 * u; g.beginPath(); g.arc(mx, my - 4 * u, r, 0, TAU); g.stroke(); tx(g, 'Q', mx, my - 4 * u, r * 1.1, it.col, 'center', 900);

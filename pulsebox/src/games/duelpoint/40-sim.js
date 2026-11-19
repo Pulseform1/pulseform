@@ -475,12 +475,17 @@
   const skipLoad = () => { if (loadingNow() && !M.online) { M.t = BUY_T; M.loading = false; } };
   // Buying over something you bought this round refunds it; choosing it again sells it back.
   // choose a gun (or shield) for your loadout: free, if you own it. It is yours from now on, every round, until you pick another
+  // what a gun kept from an earlier round sells for: half its price (bought this round, it refunds in full)
+  const resale = k => { const G = GUNS[k]; return G && !G.melee && k !== 'pip' && G.cost ? Math.floor(G.cost / 2 / 50) * 50 : 0; };
   function buy(f, k) {
     if (!canBuy()) return false;
     const G = GUNS[k], A = ARMOR.find(a => a.k === k), sp = f.spent; let ok = false;
     if (G && !G.melee) {
       const s = G.slot, prev = sp[s];
-      if (f.guns[s] === k) { if (prev && prev.k === k) { f.credits += G.cost; f.guns[s] = prev.was; if (prev.was) giveAmmo(f, prev.was); delete sp[s]; f.slot = f.guns[1] ? 1 : 2; ok = true; } }
+      if (f.guns[s] === k) {
+        if (prev && prev.k === k) { f.credits += G.cost; f.guns[s] = prev.was; if (prev.was) giveAmmo(f, prev.was); delete sp[s]; f.slot = f.guns[1] ? 1 : 2; ok = true; }
+        else if (resale(k) && !f.bot) { f.credits = Math.min(CASH.cap, f.credits + resale(k)); f.guns[s] = s === 2 ? 'pip' : null; if (s === 2) giveAmmo(f, 'pip'); f.slot = f.guns[1] ? 1 : 2; f.scoped = 0; f.reloadT = 0; ok = true; }   // a gun kept from an earlier round sells for half
+      }
       else { const refund = prev ? GUNS[prev.k].cost : 0; if (f.credits + refund >= G.cost) { f.credits += refund - G.cost; sp[s] = { k, was: prev ? prev.was : f.guns[s] }; f.guns[s] = k; giveAmmo(f, k); f.slot = s; f.scoped = 0; f.reloadT = 0; ok = true; } }
     } else if (A) {
       if (f.sh >= A.sh) { if (sp.sh && sp.sh.k === A.k) { f.credits += A.cost; f.sh = sp.sh.was; delete sp.sh; ok = true; } }
