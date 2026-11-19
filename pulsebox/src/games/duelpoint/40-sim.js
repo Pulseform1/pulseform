@@ -440,6 +440,14 @@
     emit('end', wi, why);
     if (M.host) net({ t: 'end', wi: wi ^ (M.flip || 0), why });
   }
+  // which way to face at the start of a round: down the way out of the spawn, toward the site (any map, any orientation)
+  function spawnYaw(f, side) {
+    let t = SITES[0].c;
+    if (side === 'att') { const ks = Object.keys(ROUTES).filter(k => ROUTES[k].length); if (ks.length) { const k = ks.reduce((b, k) => Math.hypot(ROUTES[k][0][0] - f.x, ROUTES[k][0][1] - f.z) < Math.hypot(ROUTES[b][0][0] - f.x, ROUTES[b][0][1] - f.z) ? k : b); t = ROUTES[k][0]; } }
+    else t = SITES.reduce((b, S) => Math.hypot(S.c[0] - f.x, S.c[1] - f.z) < Math.hypot(b.c[0] - f.x, b.c[1] - f.z) ? S : b).c;
+    const p = findPath(f.x, f.z, t[0], t[1]), q = p.length ? p[Math.min(p.length - 1, 3)] : t;
+    return yawTo(f.x, f.z, q[0], q[1]);
+  }
   function startRound(n) {
     M.round = n; M.phase = 'buy'; M.dlog = {}; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); resetMech(); M.vent = []; M.storm = 0; M.stormOn = false; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
     const decider = n === WIN_ROUNDS * 2 - 1;
@@ -452,7 +460,7 @@
       f.ab.e = 1; if (n === 1 || n === WIN_ROUNDS || decider) f.ab.q = 0; if (n === 1) f.ult = 0;
       Object.assign(f, { guard: 0, od: 0, phase: 0, lock: 0, chan: null, volley: null, orbT: 0 });
       for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
-      f.yaw = MAP.split && side === 'att' ? yawTo(f.x, f.z, MW / 2, f.z) : yawTo(f.x, f.z, side === 'att' ? f.x + 10 : f.x - 10, f.z); f.padT = f.tpCD = f.padCD = 0; if (f.gone) f.alive = false;
+      f.yaw = spawnYaw(f, side); f.padT = f.tpCD = f.padCD = 0; if (f.gone) f.alive = false;
       if (f.bot) { if (M.auto && !f.bot.dummy) { const L = diffFor(M.rating + M.adj); f.bot = { diff: L.i, D: L.D }; } else f.bot = { diff: f.bot.diff, D: f.bot.D, dummy: f.bot.dummy }; }
     });
     M.orbs = ORBS.map((p, i) => ({ i, x: p[0], z: p[1], taken: false }));

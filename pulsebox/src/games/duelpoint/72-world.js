@@ -53,6 +53,8 @@
     const corner = (ci, cj) => 1 - .13 * (tall(ci - 1, cj - 1) + tall(ci, cj - 1) + tall(ci - 1, cj) + tall(ci, cj));
     const GROUND_TINT = { pier: WHITE, yard: [1, .98, .93], site: [.9, .9, .9], tunnel: [.7, .7, .73], alley: [.8, .8, .83], gate: [1, .9, .74], sheds: [1, .9, .74],
       aspawn: [1, .9, .74], along: WHITE, asite: [.9, .9, .9], mid: [1, .98, .93], blong: [.8, .8, .83], bsite: [.9, .9, .92], dspawn: [1, .9, .74] };
+    // each area's floor leans a little toward its callout colour, so the zones read apart (the old maps keep their own)
+    const tints = {}, areaTint = A => GROUND_TINT[A.k] || tints[A.k] || (tints[A.k] = hex(A.col).map(q => .86 + .14 * Math.min(1, q * 2.2)));
     const STEEL = (TH.steel || ['#b5523f', '#2f8f8a', '#d6a23a', '#3d5a80', '#8a8f96']).map(hex);
     // containers that touch share a colour
     const group = new Int16Array(NC).fill(-1); let groups = 0;
@@ -64,7 +66,7 @@
       if ('.oqrADTJigLVG<>^vW'.includes(c)) {   // open ground (a breakable wall and a gate stand on it; 71-mech makes them)
         const sd = [corner(i, j), corner(i, j + 1), corner(i + 1, j + 1), corner(i + 1, j)].map(s => s * dim), b = BELTS.indexOf(c);
         const bk = c === 'i' ? 'ice' : c === 'V' ? 'vent' : c === 'L' ? 'lowg' : b >= 0 ? 'belt' + b : area && area.k === 'pier' && MAP.theme === 'harbor' ? 'deck' : 'ground';
-        flat(bk, x0, z0, x1, z1, 0, 1, b >= 0 || c === 'V' ? 2 : 4, sd, bk === 'ground' || bk === 'deck' ? (c === 'r' ? [.9, .9, .9] : area ? GROUND_TINT[area.k] : WHITE) : WHITE); continue;
+        flat(bk, x0, z0, x1, z1, 0, 1, b >= 0 || c === 'V' ? 2 : 4, sd, bk === 'ground' || bk === 'deck' ? (c === 'r' ? [.9, .9, .9] : area ? areaTint(area) : WHITE) : WHITE); continue;
       }
       if (c === '7' || c === '8') {   // the dock's stairs: four steps a cell, rising south
         for (let s = 0; s < 4; s++) {
@@ -108,7 +110,8 @@
     // doorways: the wall carries on above them, with the name of where the door leads painted over it
     const signs = [];
     for (const d of DOORS) {
-      const x0 = d[0] * CS, z0 = d[1] * CS, x1 = (d[2] + 1) * CS, z1 = (d[3] + 1) * CS, across = d[1] === d[3];   // across: a door in a wall that runs east-west
+      const solid = (i, j) => { const k = idx(i, j); return k < 0 || CH[k] >= DOOR_H; }, x0 = d[0] * CS, z0 = d[1] * CS, x1 = (d[2] + 1) * CS, z1 = (d[3] + 1) * CS;
+      const across = d[0] !== d[2] ? true : d[1] !== d[3] ? false : solid(d[0] - 1, d[1]) && solid(d[0] + 1, d[1]);   // across: a door in a wall that runs east-west
       flat('wall', x0, z0, x1, z1, DOOR_H, -1, 4, [.6, .6, .6, .6]);
       const faces = across ? [[[x0, z0], [x1, z0], [0, 0, -1], 0, -1], [[x0, z1], [x1, z1], [0, 0, 1], 0, 1]] : [[[x0, z0], [x0, z1], [-1, 0, 0], -1, 0], [[x1, z0], [x1, z1], [1, 0, 0], 1, 0]];
       for (const [a, b, n, di, dj] of faces) {

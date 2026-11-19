@@ -35,14 +35,17 @@
 
   /* ---------- keyboard and mouse ---------- */
   let keys = {}; const mouse = { l: false, tap: false };   // tap: a press not yet seen by a tick (a quick click can start and end between two)
-  const KM = { KeyW: 'w', ArrowUp: 'w', KeyS: 's', ArrowDown: 's', KeyA: 'a', ArrowLeft: 'a', KeyD: 'd', ArrowRight: 'd', ShiftLeft: 'sprint', ShiftRight: 'sprint', KeyZ: 'walk', ControlLeft: 'crouch', ControlRight: 'crouch', KeyC: 'crouch', Space: 'jump', KeyF: 'use' };
+  const KM = { KeyW: 'w', ArrowUp: 'w', KeyS: 's', ArrowDown: 's', KeyA: 'a', ArrowLeft: 'a', KeyD: 'd', ArrowRight: 'd', ShiftLeft: 'sprint', ShiftRight: 'sprint', KeyZ: 'walk', ControlLeft: 'crouch', ControlRight: 'crouch', KeyC: 'crouch', Space: 'jump', KeyF: 'use', KeyV: 'fire' };   // V fires too (handy on a trackpad)
+  // trackpad aiming: the system's pointer acceleration stays on (raw input feels dead on a trackpad), its own speed, and a light assist
+  const trackpad = () => CFG.aim === 'trackpad' && !isTouch();
+  const WHEEL = { acc: 0, t: 0, cd: 0, small: 0 };
   const cvEl = () => document.getElementById('cv');
   const locked = () => document.pointerLockElement === cvEl();
   // lock the mouse with raw input (no system acceleration) where the browser offers it; in full screen also lock the
   // keyboard, which is the only way to stop Ctrl+W and friends reaching the browser while you crouch-walk
   function grabMouse() {
     if (isTouch() || K.bot) return; const c = cvEl(); if (!c || !c.requestPointerLock) return;
-    try { const q = c.requestPointerLock({ unadjustedMovement: true }); if (q && q.catch) q.catch(() => { try { c.requestPointerLock(); } catch (e) {} }); } catch (e) { try { c.requestPointerLock(); } catch (e2) {} }
+    try { const q = trackpad() ? c.requestPointerLock() : c.requestPointerLock({ unadjustedMovement: true }); if (q && q.catch) q.catch(() => { try { c.requestPointerLock(); } catch (e) {} }); } catch (e) { try { c.requestPointerLock(); } catch (e2) {} }
     if (CFG.full && document.fullscreenEnabled && !document.fullscreenElement) try { const q = document.documentElement.requestFullscreen({ navigationUI: 'hide' }); if (q && q.then) q.then(() => { try { const k = navigator.keyboard; if (k && k.lock) k.lock().catch(() => {}); } catch (e) {} }).catch(() => {}); } catch (e) {}
   }
   function openOpts(on) { if (!!UI.opts === !!on) return; UI.opts = on ? 'main' : false; if (on) releaseMouse(); else if (!UI.armory && playing()) grabMouse(); }
@@ -83,14 +86,22 @@
     addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[e.code] || /^(Key[BRQEFYOX]|Digit[1-3]|Tab)$/.test(e.code))) e.preventDefault(); }, true);
     document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; if (Math.abs(e.movementX) > 500 || Math.abs(e.movementY) > 500) return;   // some browsers send a wild jump when the lock starts
       if (UI.armory) { const V = K.view, s = 1 / pxPer(); ptr = { x: cl(ptr.x + e.movementX * s, V.x0 + 2, V.x1 - 4), y: cl(ptr.y + e.movementY * s, V.y0 + 2, V.y1 - 4) }; KNAV.on = false; if (dragZ) dragZ.fn(ptr.x, ptr.y); return; }   // the armory's cursor
-      const P = me(), s = .0022 * CFG.sens / zoomOf(P) * (P.scoped ? CFG.zsens : 1); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
+      const P = me(), s = .0022 * (trackpad() ? CFG.tpsens * TS.slow : CFG.sens) / zoomOf(P) * (P.scoped ? CFG.zsens : 1); TS.mvT = performance.now(); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
     // (on a Mac, Ctrl+click arrives as a right click: while crouching that is still a shot)
     document.addEventListener('mousedown', e => { if (M && screen === 'play' && !me().alive && UI.spec && X) { nextSpec(); return; } if (!locked() || !playing()) return;
       if (UI.armory) { if (e.button === 0) { const z = zoneAt(ptr.x, ptr.y); if (z) { if (z.drag) dragZ = z; z.fn(ptr.x, ptr.y); } } return; }   // a click on the armory, at our cursor
       if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = mouse.tap = true; else if (e.button === 2) altAction(me()); });
     document.addEventListener('mouseup', e => { if (e.button === 0 || (e.button === 2 && e.ctrlKey)) mouse.l = false; if (vcursor()) dragZ = null; });
     document.addEventListener('contextmenu', e => { if (screen === 'play') e.preventDefault(); });
-    document.addEventListener('wheel', e => { if (screen === 'play' && e.ctrlKey) e.preventDefault(); if (locked() && playing()) cycleWeapon(me(), e.deltaY > 0 ? 1 : -1); }, { passive: false });   // Ctrl+wheel would zoom the page
+    // the wheel changes weapon, one step per notch; a trackpad's two-finger swipe sends a stream of tiny steps, so they add up
+    // to a notch first (and a swipe like that is how we notice a trackpad, and offer trackpad aiming)
+    document.addEventListener('wheel', e => { if (screen === 'play' && e.ctrlKey) e.preventDefault();
+      const t = performance.now(), d = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY;
+      if (e.deltaMode === 0 && Math.abs(d) > 0 && (Math.abs(d) < 12 || d % 1 !== 0)) WHEEL.small++;
+      if (WHEEL.small >= 6 && !CFG.aimSet && CFG.aim !== 'trackpad' && !isTouch()) { CFG.aim = 'trackpad'; saveAll(); toast('Trackpad found: trackpad aiming is on (Settings to change)'); if (locked()) { releaseMouse(); grabMouse(); } }
+      if (!locked() || !playing()) return;
+      if (t - WHEEL.t > 260) WHEEL.acc = 0; WHEEL.t = t; WHEEL.acc += d;
+      if (Math.abs(WHEEL.acc) >= 40 && t > WHEEL.cd) { cycleWeapon(me(), WHEEL.acc > 0 ? 1 : -1); WHEEL.acc = 0; WHEEL.cd = t + (Math.abs(d) < 40 ? 320 : 60); } }, { passive: false });   // Ctrl+wheel would zoom the page
   }
 
   /* ---------- touch ---------- */
@@ -155,7 +166,8 @@
   readInput = f => {
     const now = performance.now(), sliding = now - (keys.slideAt || 0) < 260 || now - TS.slideAt < 260;
     if (sliding) { keys.crouchT = false; TS.crouch = false; }
-    const I = { mx: (keys.d ? 1 : 0) - (keys.a ? 1 : 0), mz: (keys.w ? 1 : 0) - (keys.s ? 1 : 0), walk: !!keys.walk, sprint: !!keys.sprint, crouch: sliding || (CFG.crouch === 'toggle' ? !!keys.crouchT : !!keys.crouch) || TS.crouch, jump: !!keys.jump, use: !!keys.use, fire: mouse.l, rapid: false };
+    const I = { mx: (keys.d ? 1 : 0) - (keys.a ? 1 : 0), mz: (keys.w ? 1 : 0) - (keys.s ? 1 : 0), walk: !!keys.walk, sprint: !!keys.sprint, crouch: sliding || (CFG.crouch === 'toggle' ? !!keys.crouchT : !!keys.crouch) || TS.crouch, jump: !!keys.jump, use: !!keys.use, fire: mouse.l || !!keys.fire, rapid: false };
+    if (keys.fire && !keys.fireSeen) { I.press = true; } keys.fireSeen = !!keys.fire;
     for (const k of TS.held.values()) { if (k === 'jump') I.jump = true; if (k === 'use') I.use = true; }
     if (TS.stick) {   // how far the thumb has pushed is how fast you go
       const u = uiScale(), dx = TS.stick.x - TS.stick.x0, dy = TS.stick.y - TS.stick.y0, L = Math.hypot(dx, dy), m = cl((L - 9 * u) / (56 * u), 0, 1);
@@ -165,7 +177,7 @@
     } else TS.sprint = false;
     if (TS.fire != null || TS.tap) { I.fire = true; I.rapid = true; if (TS.tap) I.press = true; } TS.tap = false;
     if (mouse.tap) { I.fire = true; I.press = true; mouse.tap = false; }   // a fresh press: a new trigger pull, even if the last one has not been seen to let go
-    if (isTouch() && f.alive && M.phase === 'live') assist(f, I);
+    if ((isTouch() || (trackpad() && CFG.tpassist)) && f.alive && M.phase === 'live') assist(f, I); else TS.slow = 1;
     if (UI.armory) I.fire = false;
     return I;
   };
@@ -173,11 +185,11 @@
     const e = other(f), G = gun(f); TS.slow = 1;
     if (!e.alive || !canSee(f, e)) { TS.onT = 0; return; }
     const d = Math.hypot(e.x - f.x, e.z - f.z), dy = angDiff(yawTo(f.x, f.z, e.x, e.z), f.yaw), dp = Math.atan2(e.y + lp(1.25, .85, e.crouch) - eyeY(f), d) - f.pitch, off = Math.hypot(dy, dp);
-    if (CFG.assist) {
-      if (off < .08) TS.slow = .55;
-      if (off < .12 && (TS.stick || TS.look || I.fire)) { const r = .5 / 60 * (1 - off / .12); f.yaw += cl(dy, -r, r); f.pitch += cl(dp, -r, r); }
+    if (CFG.assist || trackpad()) {
+      if (off < .08) TS.slow = trackpad() ? .7 : .55;
+      if (off < .12 && (TS.stick || TS.look || I.fire || (trackpad() && performance.now() - (TS.mvT || 0) < 120))) { const r = .5 / 60 * (1 - off / .12); f.yaw += cl(dy, -r, r); f.pitch += cl(dp, -r, r); }
     }
-    if (CFG.autofire) {
+    if (CFG.autofire && isTouch()) {
       const pt = patOf(f, G), S = castShot(f, viewDir(f.yaw + pt[0], f.pitch + pt[1])), onTarget = S.hit && (!G.melee || S.dist < 2.2);
       TS.onT = onTarget ? TS.onT + 1 / 60 : 0;
       if (TS.onT > .1 && (G.melee || spreadOf(f) < Math.max(.014, Math.atan2(.3, d) * 1.6)) && (!G.scope || f.scoped)) { I.fire = true; I.rapid = true; }

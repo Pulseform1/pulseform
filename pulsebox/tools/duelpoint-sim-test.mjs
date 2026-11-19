@@ -292,6 +292,7 @@ function everyMapChecks(per = 2) {
   const use = {}; for (const ev of ['tp', 'pad', 'gate', 'wallDown', 'vent', 'storm', 'ultUsed', 'orb']) T.on(ev, () => { use[ev] = (use[ev] || 0) + 1; });
   let allOk = true;
   T.MAPS.forEach((mp, mi) => {
+    if (process.argv[4] && mp.k !== process.argv[4]) return;   // node tools/duelpoint-sim-test.mjs maps 2 <key>: one map
     const row = { rounds: 0, plants: {}, why: {}, stalls: 0, err: null, done: 0 }; for (const k in use) use[k] = 0;
     for (let n = 0; n < per; n++) {
       try {

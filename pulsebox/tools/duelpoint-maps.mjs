@@ -434,6 +434,16 @@ const MAPS = [];
   });
 }
 
+// ---------- maps drawn as pictures, one file each in tools/dp-maps/<key>.mjs (see tools/dp-maps/_art.mjs) ----------
+// a file there takes the place of the map above with the same key (or is added at the end)
+{
+  const md = path.join(path.dirname(fileURLToPath(import.meta.url)), 'dp-maps');
+  for (const f of fs.readdirSync(md).filter(f => /^[a-z0-9]+\.mjs$/.test(f)).sort()) {
+    try { const def = (await import(path.join(md, f))).default; const i = MAPS.findIndex(m => m.k === def.k); if (i >= 0) MAPS[i] = def; else MAPS.push(def); }
+    catch (e) { console.log('SKIPPED tools/dp-maps/' + f + ': ' + e.message); }
+  }
+}
+
 // ---------- checks ----------
 const parts = fs.readdirSync(dir).filter(f => /^[1-3]\d-.*\.js$/.test(f) && f !== '29-maps.js').sort();
 const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
