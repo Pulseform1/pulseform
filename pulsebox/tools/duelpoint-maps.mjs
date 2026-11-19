@@ -448,7 +448,7 @@ const MAPS = [];
 const parts = fs.readdirSync(dir).filter(f => /^[1-3]\d-.*\.js$/.test(f) && f !== '29-maps.js').sort();
 const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
 const K = { save: {}, persist() {}, bot: false, state: 'play' }, MP = { online: () => false, isHost: () => true, send() {}, opts: {} };
-const T = new Function('K', 'MP', 'MAP_DEFS', code.replace('const MAP_DEFS = ', 'const MAP_DEFS_UNUSED = ') + `; return { setWall, resetMech, MAPS, loadMap, findPath, pathLen, rayGrid, SPAWN, SITE, SITES, siteC, NAV, TPS, TPX, PADS, PADX, idx, size: () => [GW, GH], CS, HOLDS, ROUTES, RSITE, joined, CH, CAX, STEP, HIGH_H };`)(K, MP, []);
+const T = new Function('K', 'MP', 'MAP_DEFS', code.replace('const MAP_DEFS = ', 'const MAP_DEFS_UNUSED = ') + `; return { setWall, resetMech, MAPS, loadMap, findPath, pathLen, rayGrid, SPAWN, SITE, SITES, siteC, NAV, TPS, TPX, PADS, PADX, idx, size: () => [GW, GH], CS, HOLDS, ROUTES, RSITE, joined, CH, CAX, STEP, HIGH_H, ZONE };`)(K, MP, []);
 const sees = (p, q) => { const L = Math.hypot(q[0] - p[0], q[1] - p[1]); return T.rayGrid(p[0], 1.6, p[1], (q[0] - p[0]) / L, 0, (q[1] - p[1]) / L, 200) >= L - .5; };
 const walk = (a, b) => { const q = T.findPath(a[0], a[1], b[0], b[1]); return q.length || Math.hypot(a[0] - b[0], a[1] - b[1]) < 1.5 ? T.pathLen(q, a[0], a[1]) / SPD : 1e9; };
 // where you end up after stepping on a cell (a teleporter or a jump pad moves you)
@@ -480,7 +480,9 @@ function check(def) {
   while (st.length) { const [i, j] = st.pop(), k = T.idx(i, j); if (k < 0 || seen.has(k) || !T.NAV[k]) continue; seen.add(k);
     for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nk = T.idx(i + di, j + dj); if (nk < 0 || !T.NAV[nk]) continue; if (T.joined(i, j, di, dj) || (T.CH[k] - T.CH[nk] > T.STEP && T.CH[k] - T.CH[nk] <= T.HIGH_H + .1 && !T.CAX[k] && !T.CAX[nk])) st.push([i + di, j + dj]); } if (T.TPX[k] >= 0) { const b = T.TPS[T.TPX[k]].b; st.push([Math.floor(b[0] / 2), Math.floor(b[1] / 2)]); } if (T.PADX[k] >= 0) { const b = T.PADS[T.PADX[k]].b; st.push([Math.floor(b[0] / 2), Math.floor(b[1] / 2)]); } }
   let n = 0; for (let k = 0; k < W * H; k++) if (T.NAV[k]) n++; if (seen.size !== n) { out.ok = false; out.why.push(`${n - seen.size} cells cut off`); }
-  if (T.SPAWN.att.length < 3 || T.SPAWN.def.length < 3) { out.ok = false; out.why.push('spawns too small for 3v3'); }
+  if (T.SPAWN.att.length < 4 || T.SPAWN.def.length < 4) { out.ok = false; out.why.push('spawns too small for 4v4'); }
+  // the buy-phase barrier: each side's spawn room (the cells round its spawn) holds four standing apart
+  for (const side of ['att', 'def']) { let n = 0; for (let k = 0; k < W * H; k++) if (T.ZONE[side][k]) n++; if (n < 8) { out.ok = false; out.why.push(`${side} spawn room too small for 4v4 (${n} cells)`); } }
   return out;
 }
 // defender holds: near each site, watching where each way in arrives; and one on each site

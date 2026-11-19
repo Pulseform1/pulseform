@@ -34,25 +34,40 @@
   // attack: a route to a site. On a two-site map the attackers pick a site together each round, then each takes a way in
   // On a map where the attackers start at both ends, each takes a way in that starts on their own side.
   // A way in through a breakable wall (MAP.rbrk) shoots it down on the way; MAP.rw weights the ways on a one-site map.
+  // A team spreads out: each attacker takes the way in the fewest teammates are already on (so four take every way to
+  // the site between them), picking by the map's weights among those.
   function planAttack(f) {
-    let lane; const all = MAP.rw || Object.keys(ROUTES), mine = MAP.split ? all.filter(k => (ROUTES[k][0][0] < MW / 2) === (f.x < MW / 2)) : all, ways = mine.length ? mine : all;
-    if (twoSites()) { if (!M.atkPick || M.atkPick.r !== M.round) M.atkPick = { r: M.round, s: Math.floor(R() * SITES.length) }; const c = ways.filter(k => RSITE[k] === M.atkPick.s); lane = pick(c.length ? c : ways); }
-    else lane = pick(ways);
+    let lane, c; const all = MAP.rw || Object.keys(ROUTES), mine = MAP.split ? all.filter(k => (ROUTES[k][0][0] < MW / 2) === (f.x < MW / 2)) : all, ways = mine.length ? mine : all;
+    if (twoSites()) { if (!M.atkPick || M.atkPick.r !== M.round) M.atkPick = { r: M.round, s: Math.floor(R() * SITES.length) }; c = ways.filter(k => RSITE[k] === M.atkPick.s); if (!c.length) c = ways; }
+    else c = ways;
+    { const used = {}; for (const q of M.fs) { const p = q !== f && q.team === f.team && q.alive && q.bot && q.bot.plan; if (p && p.k === 'push') used[p.way] = (used[p.way] || 0) + 1; }
+      const least = Math.min(...c.map(k => used[k] || 0)); lane = pick(c.filter(k => (used[k] || 0) === least)); }
     const S = SITES[RSITE[lane] || 0], brk = MAP.rbrk && MAP.rbrk[lane] != null ? MAP.rbrk[lane] : null;
-    return { k: 'push', lane: lane === 'split' ? 'pier' : lane, pts: ROUTES[lane].map(p => [p[0], p[1]]), site: pick(S.cells), sc: S.c, path: [], brk };
+    return { k: 'push', way: lane, lane: lane === 'split' ? 'pier' : lane, pts: ROUTES[lane].map(p => [p[0], p[1]]), site: pick(S.cells), sc: S.c, path: [], brk };
   }
   // defend: a spot watching a way in. On a two-site map, at the site this defender is holding; a noise from a lane that
   // leads to the other site is a reason to rotate there
   function planHold(f, lane) {
     let at = HOLDS;
     if (twoSites()) { const ls = laneSite(lane); f.bot.hs = ls != null ? ls : f.bot.hs != null ? f.bot.hs : defSiteFor(f); at = HOLDS.filter(h => h.s === f.bot.hs); }
-    const c = at.filter(h => !lane || h.lane === lane || (lane === 'mid' && laneSite(h.lane) != null)), h = pick(c.length ? c : at.length ? at : HOLDS), P = { k: 'hold', lane: h.lane, look: h.look, crouch: R() < .35, sc: (SITES[h.s] || SITES[0]).c };
+    const c = at.filter(h => !lane || h.lane === lane || (lane === 'mid' && laneSite(h.lane) != null));
+    // with teammates holding too: not a spot one of them has, and at the start of a round a way in nobody watches yet
+    let pool = c.length ? c : at.length ? at : HOLDS; const held = M.fs.map(o => o !== f && o.team === f.team && o.alive && o.bot && o.bot.plan).filter(Boolean).map(p => p.h || (p.back && p.back.h)).filter(Boolean);
+    if (held.length) { const free = pool.filter(h2 => !held.includes(h2)); if (free.length) pool = free; if (!lane) { const fresh = pool.filter(h2 => !held.some(q => q.lane === h2.lane)); if (fresh.length) pool = fresh; } }
+    const h = pick(pool), P = { k: 'hold', h, lane: h.lane, look: h.look, crouch: R() < .35, sc: (SITES[h.s] || SITES[0]).c };
     // a map with gates: early in the round a defender may go and shut the one into its site first, then take its spot
     if (GATES.length && !lane && M.t > roundT() - 25 && R() < .6) {
       const g = GATES.findIndex(G2 => G2.open && G2.sw.some(q => Math.hypot(q[0] - P.sc[0], q[1] - P.sc[1]) < 16) && !M.fs.some(o => o !== f && o.bot && o.bot.plan && o.bot.plan.gate === GATES.indexOf(G2)));
       if (g >= 0) { const sw = GATES[g].sw.reduce((a, q) => Math.hypot(q[0] - P.sc[0], q[1] - P.sc[1]) < Math.hypot(a[0] - P.sc[0], a[1] - P.sc[1]) ? q : a); P.gate = g; P.holdP = h.p; goTo(P, f, sw[0], sw[1]); return P; }
     }
     goTo(P, f, h.p[0], h.p[1]); return P;
+  }
+  // a big team does not all run to one noise: at most two watch a way in, and the last defender on a site stays on it
+  function mayRotate(f, lane) {
+    const mates = M.fs.filter(o => o !== f && o.team === f.team && o.alive); if (mates.length < 2) return true;   // two left (or one): as ever
+    const plans = mates.map(o => o.bot && o.bot.plan).filter(Boolean); if (plans.filter(p => p.k === 'hold' && p.lane === lane).length >= 2) return false;
+    if (twoSites()) { const ls = laneSite(lane); if (ls != null && ls !== f.bot.hs && !mates.some(o => o.bot && o.bot.hs === f.bot.hs && o.bot.plan && o.bot.plan.k === 'hold')) return false; }
+    return true;
   }
   // the site a plan is about (its target, or the nearest)
   const siteOfPlan = (P, f) => P && P.sc ? P.sc : nearestSite(f.x, f.z).c;
@@ -143,7 +158,7 @@
     if (M.planted && side === 'att' && B.plan.k !== 'post') { const s = watchSpot(M.planted.x, M.planted.z, 5, 13); B.plan = { k: 'post', look: [M.planted.x, M.planted.z], crouch: R() < .5 }; goTo(B.plan, f, s[0], s[1]); }
     let P = B.plan;
     if (P.k === 'hold' && B.diff > 0 && B.last && B.last.heard && M.time - B.last.t < .3 && !(P.until > M.time)) {   // turn to face the lane the noise came from
-      const lane = laneOf(B.last.x, B.last.z); if (lane !== 'any' && lane !== P.lane) { P = B.plan = planHold(f, lane); P.until = M.time + 7; }
+      const lane = laneOf(B.last.x, B.last.z); if (lane !== 'any' && lane !== P.lane && mayRotate(f, lane)) { P = B.plan = planHold(f, lane); P.until = M.time + 7; }
     }
     if (P.k === 'hold' && !sees && B.last && !B.last.heard && B.lostT > 3.5 && B.lostT < 3.6 && R() < .25 + .15 * B.diff) { P = B.plan = { k: 'hunt' }; goTo(P, f, B.last.x, B.last.z); }
     if (P.k === 'push' && M.t < 28 && P.pts.length) P.pts.length = 0;   // out of time: straight to the site

@@ -97,12 +97,13 @@
       modeGlyph(g, x + cw * .6, top + ch * .4, Math.min(38 * u, ch * .15), md.k === 2, md.col); g.restore();
       rr(g, x, top, cw, ch, 10, null, on ? md.col : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.14)', on ? 3 : 1.5);
       tx(g, md.sub, x + 18 * u, top + 24 * u, 11 * u, md.col, 'left', 900); tx(g, md.n, x + 16 * u, top + ch - 92 * u, 34 * u, BONE, 'left', 900);
-      para(g, md.d, x + 18 * u, top + ch - 62 * u, cw - 36 * u, 12 * u, '#c9cfd8'); tx(g, md.maps, x + 18 * u, top + ch - 16 * u, 10 * u, DIM, 'left', 800);
-      if (on) tx(g, '✓ SELECTED', x + cw - 16 * u, top + 24 * u, 11 * u, md.col, 'right', 900);
+      // on a phone the words come out too big for the card (and ran over the TEAM SIZE row): the name, the sites and the maps say enough
+      if (!touch) para(g, md.d, x + 18 * u, top + ch - 62 * u, cw - 36 * u, 12 * u, '#c9cfd8'); tx(g, md.maps, x + 18 * u, top + ch - 16 * u, 10 * u, DIM, 'left', 800);
+      if (on && cw >= 300 * u) tx(g, '✓ SELECTED', x + cw - 16 * u, top + 24 * u, 11 * u, md.col, 'right', 900);
     });
     // team size and the bots
     let y = top + ch + 26 * u; const lw = cw * 2 + 16 * u;
-    tx(g, 'TEAM SIZE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [[3, '3V3 · TWO TEAMMATES'], [2, '2V2 · A TEAMMATE'], [1, '1V1 · A DUEL']], teamSize(CFG.size), v => { CFG.size = v; saveAll(); }); y += tapH(34) + 14 * u;
+    tx(g, 'TEAM SIZE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [[4, '4V4 · SQUADS'], [3, '3V3'], [2, '2V2'], [1, '1V1 · DUEL']], teamSize(CFG.size), v => { CFG.size = v; saveAll(); }); y += tapH(34) + 14 * u;
     tx(g, 'BOT LEVEL', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 14 * u;
     if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Shift sprints, crouch mid-sprint slides. B opens the armory (buy Q there), F plants, defuses and takes orbs, E is free each round, X is your ultimate.'].forEach((l, i) => tx(g, l, x0, y + 26 * u + i * 18 * u, 11.5 * u, '#aeb6c2', 'left', 600)); }
     // the right column: your operative, friends, practice
@@ -110,7 +111,7 @@
     { const h = 120 * u, hot = zone(rx, ry, rw, h, () => openSelect(null)); rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', hot ? O.col : 'rgba(239,233,220,.14)', hot ? 2 : 1.5);
       portraitTile(g, CFG.op, rx + 10 * u, ry + 10 * u, h - 20 * u, h - 20 * u, { r: 6 }); tx(g, 'YOUR OPERATIVE', rx + h + 4 * u, ry + 24 * u, 10 * u, DIM, 'left', 900); tx(g, O.n, rx + h + 2 * u, ry + 54 * u, 28 * u, BONE, 'left', 900);
       tx(g, `${O.q.n} · ${O.e.n}`, rx + h + 4 * u, ry + 80 * u, 12 * u, O.col, 'left', 800); tx(g, hot ? 'CHANGE →' : 'CHANGE', rx + rw - 14 * u, ry + h - 16 * u, 10 * u, hot ? O.col : DIM, 'right', 900); ry += h + 14 * u; }
-    { const h = 104 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, 'up to six, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
+    { const h = 104 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, 'up to eight, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
       btn(g, rx + 16 * u, ry + 56 * u, rw - 32 * u, 36 * u, MP.online() ? 'BACK TO YOUR PARTY · ' + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u }); ry += h + 14 * u; }
     btn(g, rx, ry, (rw - 10 * u) / 2, tapH(42), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 13 * u }); btn(g, rx + (rw + 10 * u) / 2, ry, (rw - 10 * u) / 2, tapH(42), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 13 * u, sub: 'try every gun' });
     // PLAY
@@ -279,12 +280,25 @@
     tx(g, won ? 'VICTORY' : 'DEFEAT', 640, V.y0 + 90 * u, 84 * u, won ? YOU : FOE); tx(g, `${M.wins[0]}  –  ${M.wins[1]}`, 640, V.y0 + 170 * u, 44 * u, BONE);
     if (M.over.why === 'left') tx(g, 'Your rival left the match', 640, V.y0 + 212 * u, 15 * u, DIM);
     else if (M.over.why === 'dropped') tx(g, 'You lost the connection to the room, and could not get back in', 640, V.y0 + 212 * u, 15 * u, DIM);
-    const rows = [['Kills', f => f.stat.k], ['Headshots', f => f.stat.hs], ['Damage dealt', f => Math.round(f.stat.dmg)], ['Accuracy', f => f.net ? '—' : f.stat.shots ? Math.round(100 * f.stat.hits / f.stat.shots) + '%' : '—']], tw = 520 * u, ty = V.y0 + 250 * u;
-    rr(g, 640 - tw / 2, ty, tw, (rows.length + 1) * 40 * u + 14 * u, 10, GLASS);
-    tx(g, P.name.toUpperCase(), 640 - 70 * u, ty + 26 * u, 15 * u, YOU, 'right'); tx(g, F.name.toUpperCase(), 640 + 70 * u, ty + 26 * u, 15 * u, FOE, 'left');
-    rows.forEach(([label, fn], i) => { const y = ty + (i + 1) * 40 * u + 26 * u; tx(g, label, 640, y, 13 * u, DIM); tx(g, String(fn(P)), 640 - 110 * u, y, 22 * u, BONE, 'right'); tx(g, String(fn(F)), 640 + 110 * u, y, 22 * u, BONE, 'left'); });
+    const rows = [['Kills', f => f.stat.k], ['Headshots', f => f.stat.hs], ['Damage dealt', f => Math.round(f.stat.dmg)], ['Accuracy', f => f.net ? '—' : f.stat.shots ? Math.round(100 * f.stat.hits / f.stat.shots) + '%' : '—']], tw = 520 * u;
+    let ty = V.y0 + 250 * u, cy;
+    if (M.fs.length > 2) {   // a team match: everyone, your team first (you at the top), then the rivals, best first; the rows shrink to fit 4v4
+      ty = V.y0 + 236 * u; const mine = M.fs.filter(f => f.team === P.team).sort((a, b) => (b === P) - (a === P) || b.stat.k - a.stat.k), theirs = M.fs.filter(f => f.team !== P.team).sort((a, b) => b.stat.k - a.stat.k), n = mine.length + theirs.length;
+      const hh = 26 * u, rh = Math.max(18 * u, Math.min(30 * u, (V.y1 - 150 * u - ty - hh - 18 * u) / n)), th = hh + n * rh + 8 * u + 10 * u, x0 = 640 - tw / 2;
+      const cols = [['K', f => f.stat.k, 210], ['D', f => f.stat.d, 165], ['HS', f => f.stat.hs, 115], ['DMG', f => Math.round(f.stat.dmg), 40]];
+      rr(g, x0, ty, tw, th, 10, GLASS); tx(g, 'SCOREBOARD', x0 + 16 * u, ty + hh / 2 + 3 * u, 11 * u, DIM, 'left', 900); for (const [k, , dx] of cols) tx(g, k, x0 + tw - dx * u, ty + hh / 2 + 3 * u, 11 * u, DIM, 'right', 900);
+      let y = ty + hh; const row = (f, col) => { if (f === P) { g.fillStyle = 'rgba(53,224,200,.12)'; g.fillRect(x0 + 4 * u, y + 1, tw - 8 * u, rh - 2); } g.fillStyle = col; g.fillRect(x0 + 4 * u, y + 2, 3 * u, rh - 4);
+        portraitTile(g, f.op, x0 + 12 * u, y + 2, rh - 4, rh - 4, { r: 3, dead: !!f.gone }); tx(g, f.name.toUpperCase() + (f === P ? (/^you$/i.test(f.name) ? '' : '  (YOU)') : f.bot || f.isBot ? '  · BOT' : ''), x0 + 18 * u + rh, y + rh / 2, Math.min(14 * u, rh * .52), f === P ? YOU : BONE, 'left', 800);
+        for (const [, fn, dx] of cols) tx(g, String(fn(f)), x0 + tw - dx * u, y + rh / 2, Math.min(16 * u, rh * .58), BONE, 'right', 800); y += rh; };
+      mine.forEach(f => row(f, YOU)); y += 8 * u; theirs.forEach(f => row(f, FOE));
+      cy = ty + th + 30 * u;
+    } else {
+      rr(g, 640 - tw / 2, ty, tw, (rows.length + 1) * 40 * u + 14 * u, 10, GLASS);
+      tx(g, P.name.toUpperCase(), 640 - 70 * u, ty + 26 * u, 15 * u, YOU, 'right'); tx(g, F.name.toUpperCase(), 640 + 70 * u, ty + 26 * u, 15 * u, FOE, 'left');
+      rows.forEach(([label, fn], i) => { const y = ty + (i + 1) * 40 * u + 26 * u; tx(g, label, 640, y, 13 * u, DIM); tx(g, String(fn(P)), 640 - 110 * u, y, 22 * u, BONE, 'right'); tx(g, String(fn(F)), 640 + 110 * u, y, 22 * u, BONE, 'left'); });
+      cy = ty + (rows.length + 1) * 40 * u + 44 * u;
+    }
     // what the match paid, and where the adaptive bot goes next
-    const cy = ty + (rows.length + 1) * 40 * u + 44 * u;
     if (M.rated) { const r = M.rated; tx(g, `Rating ${r.after} (${r.after >= r.before ? '+' : ''}${r.after - r.before})   ·   next bot: ${rankName(r.after)}`, 640, cy, 15 * u, DIM); }
     // coins: the total counts up, the reasons beside it, and how far it takes you toward the rarest skin
     if (M.pay) { const t = (performance.now() - M.payT) / 1000, shown = Math.round(M.pay.total * smooth(cl(t / 1.4, 0, 1))), px0 = 640 + 280 * u, py0 = V.y0 + 236 * u;

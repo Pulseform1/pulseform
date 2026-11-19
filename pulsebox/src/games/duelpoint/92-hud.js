@@ -148,7 +148,55 @@
   function miniMap() {
     if (mmCanvas) return mmCanvas; const s = 8, c = mmCanvas = document.createElement('canvas'); c.width = GW * s; c.height = GH * s; const g = c.getContext('2d');
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const ch = SRC[j][i]; g.fillStyle = MM_COL[ch] ? MM_COL[ch] : ch === '#' ? 'rgba(12,16,22,.9)' : ch === '~' ? 'rgba(53,150,170,.8)' : ch === 'X' ? 'rgba(70,80,96,.95)' : ch === 'c' ? 'rgba(150,120,84,.95)' : ch === 'o' || ch === 'q' ? 'rgba(255,138,61,.4)' : ch === 'P' || ch === '7' || ch === '8' ? 'rgba(190,190,180,.75)' : 'rgba(210,205,190,.5)'; g.fillRect(i * s, j * s, s, s); }
+    // the sites: every plantable cell in the site colour, with a light rim where the site meets open ground (as on the floor)
+    for (const S of SITES) { const P = siteSpot(S); g.fillStyle = 'rgba(255,138,61,.88)'; for (const [i, j] of P.cells) g.fillRect(i * s, j * s, s, s);
+      g.fillStyle = 'rgba(255,226,190,1)'; for (const [i, j, e] of P.edges) g.fillRect(i * s + (e === 0 ? s - 2 : 0), j * s + (e === 2 ? s - 2 : 0), e < 2 ? 2 : s, e < 2 ? s : 2); }
     return c;
+  }
+  // a site's letter (the plant mark on a one-site map) over its spot on a plan of the map
+  function siteLabel(g, S, mx, my, k, px) {
+    const P = siteSpot(S), s = SITES.length > 1 ? S.k : '◆', x = mx + P.x * k, y = my + P.z * k; px = fitPx(g, px);
+    g.font = `900 ${px}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = Math.max(2, px * .26); g.strokeStyle = 'rgba(12,16,22,.92)'; g.strokeText(s, x, y); g.fillStyle = '#fff3e4'; g.fillText(s, x, y);
+  }
+  /* The sites in the world: a diamond with the letter and how far it is, over each site's spot. They show through the buy
+     phase and the first seconds of the round, then fade out unless you are far from every site, and each fades as you
+     come up to it. One off the screen (or behind you) waits at the edge, pointing the way. */
+  function drawSiteMarks(g, P, u) {
+    if (!X || !ready || !P || !P.alive || M.planted || (M.phase !== 'buy' && M.phase !== 'live') || M.mode === 'range' || M.mode === 'demo' || (P.scoped && gun(P).scope)) return;
+    const early = M.phase === 'buy' ? 1 : cl(1 - (roundT() - M.t - 9) / 2, 0, 1);
+    const near = SITES.map(S => { let d = 1e9; for (const [i, j] of siteSpot(S).cells) d = Math.min(d, Math.hypot((i + .5) * CS - P.x, (j + .5) * CS - P.z)); return d; });
+    const show = Math.max(early, cl((Math.min(...near) - 30) / 10, 0, 1)); if (show <= 0) return;
+    const V = K.view, cam = X.camera, two = SITES.length > 1, ix = 1 - 2 * 48 / (V.x1 - V.x0), iy = 1 - 2 * 96 * u / (V.y1 - V.y0);
+    const marks = [];
+    SITES.forEach((S, n) => {
+      const Q = siteSpot(S), a = show * cl((near[n] - 2) / 8, 0, 1); if (a <= .02) return;
+      const v = new THREE.Vector3(Q.x, Q.y + 2.4, Q.z), c = v.clone().applyMatrix4(cam.matrixWorldInverse); let nx, ny, edge = false;
+      if (c.z < -.2) { v.project(cam); nx = v.x; ny = v.y; }
+      else { const k = cl((Math.abs(Math.atan2(c.x, -c.z)) - Math.PI / 2) / (Math.PI / 2), 0, 1); nx = (c.x < 0 ? -1 : 1) * ix; ny = -k * iy; edge = true; }   // beside or behind you: on that side's edge, lower the further round it is
+      if (Math.abs(nx) > ix || Math.abs(ny) > iy) { const q = Math.min(ix / Math.max(Math.abs(nx), 1e-6), iy / Math.max(Math.abs(ny), 1e-6)); nx *= q; ny *= q; edge = true; }
+      marks.push({ S, a, nx, ny, edge, x: lp(V.x0, V.x1, (nx + 1) / 2), y: lp(V.y0, V.y1, (1 - ny) / 2), d: Math.round(Math.hypot(Q.x - P.x, Q.z - P.z)) });
+    });
+    // two on the same edge never sit on top of each other
+    for (const side of [-1, 1]) { const col = marks.filter(k => k.edge && Math.sign(k.nx) === side && Math.abs(k.nx) >= ix - .01).sort((p, q) => p.y - q.y), gap = 52 * u, lo = lp(V.y0, V.y1, (1 + iy) / 2);
+      for (let i = 1; i < col.length; i++) col[i].y = Math.max(col[i].y, col[i - 1].y + gap); for (let i = col.length - 1; i >= 0; i--) { if (col[i].y > lo) col[i].y = lo; if (i < col.length - 1) col[i].y = Math.min(col[i].y, col[i + 1].y - gap); } }
+    for (const { S, a, nx, ny, edge, x, y, d } of marks) {
+      const r = 14 * u * (edge ? .85 : 1);
+      g.save(); g.globalAlpha = a * (edge ? .85 : 1); g.translate(x, y);
+      if (edge) { const ang = Math.atan2(-ny, nx); g.save(); g.rotate(ang); g.fillStyle = '#ff8a3d'; g.beginPath(); g.moveTo(r * 2.1, 0); g.lineTo(r * 1.45, -r * .5); g.lineTo(r * 1.45, r * .5); g.closePath(); g.fill(); g.restore(); }
+      g.fillStyle = 'rgba(12,16,22,.78)'; g.strokeStyle = '#ff8a3d'; g.lineWidth = 2.5 * u; g.beginPath(); g.moveTo(0, -r * 1.3); g.lineTo(r * 1.1, 0); g.lineTo(0, r * 1.3); g.lineTo(-r * 1.1, 0); g.closePath(); g.fill(); g.stroke();
+      if (two) tx(g, S.k, 0, 1 * u, 17 * u, '#ffd2ad', 'center', 900); else { g.fillStyle = '#ff8a3d'; g.beginPath(); g.moveTo(0, -r * .5); g.lineTo(r * .42, 0); g.lineTo(0, r * .5); g.lineTo(-r * .42, 0); g.closePath(); g.fill(); }
+      const px = fitPx(g, 13 * u); g.font = `800 ${px}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 3 * u; g.strokeStyle = 'rgba(12,16,22,.85)'; g.strokeText(d + ' m', 0, r * 1.3 + 11 * u); g.fillStyle = BONE; g.fillText(d + ' m', 0, r * 1.3 + 11 * u);
+      g.restore();
+    }
+  }
+  // standing on a site with the charge: say so, which site, and the key that plants it
+  function onSiteHint(g, letter, key, y, u) {
+    const a = 'ON SITE' + (SITES.length > 1 ? ' ' + letter : ''), b = key.toUpperCase() + ' TO PLANT', p1 = fitPx(g, 19 * u), p2 = fitPx(g, 15 * u);
+    g.font = `900 ${p1}px ${FONT}`; const w1 = g.measureText(a).width; g.font = `800 ${p2}px ${FONT}`; const w2 = g.measureText(b).width;
+    const d = 8 * u, gap = 16 * u, w = 20 * u + d * 2 + 12 * u + w1 + gap + w2 + 22 * u, h = 40 * u, x0 = 640 - w / 2, pulse = .5 + .5 * Math.sin(K.t * 5);
+    rr(g, x0, y - h / 2, w, h, h / 2, 'rgba(12,16,22,.82)', `rgba(255,138,61,${.55 + .45 * pulse})`, 2 * u);
+    let x = x0 + 20 * u + d; g.fillStyle = '#ff8a3d'; g.beginPath(); g.moveTo(x, y - d * 1.25); g.lineTo(x + d, y); g.lineTo(x, y + d * 1.25); g.lineTo(x - d, y); g.closePath(); g.fill();
+    x += d + 12 * u; tx(g, a, x, y, 19 * u, '#ffb070', 'left', 900); x += w1 + gap; tx(g, b, x, y, 15 * u, BONE, 'left', 800);
   }
   function hint(g, s, y, px, col) { if (!s) return; px = fitPx(g, px); g.font = `700 ${px}px ${FONT}`; const w = g.measureText(s).width + px * 1.6; rr(g, 640 - w / 2, y - px * .95, w, px * 1.9, px * .5, 'rgba(12,16,22,.62)'); tx(g, s, 640, y, px, col); }
   const clock = t => { t = Math.max(0, Math.ceil(t)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
@@ -177,21 +225,31 @@
     tx(g, MAP.tag || TAGS[MAP.k] || '', x0 + 26 * u, V.y0 + 196 * u, 16 * u, '#c9cfd8', 'left', 600);
     if (MAP.tip) { g.save(); g.font = `700 ${fitPx(g, 14 * u)}px ${FONT}`; const tw = Math.min(g.measureText(MAP.tip).width + 30 * u, 620 * u); rr(g, x0 + 22 * u, V.y0 + 214 * u, tw, 30 * u, 6, 'rgba(12,16,22,.62)', acc, 1.5); g.restore();
       g.save(); g.beginPath(); g.rect(x0 + 22 * u, V.y0 + 214 * u, tw, 30 * u); g.clip(); tx(g, MAP.tip, x0 + 36 * u, V.y0 + 229 * u, 13 * u, BONE, 'left', 700); g.restore(); }
-    const chips = [two ? 'TWO SITES' : 'ONE SITE', vsLabel(Math.ceil(M.fs.length / 2)), 'FIRST TO ' + WIN_ROUNDS];
-    let cx = x0 + 26 * u; for (const c of chips) { g.font = `800 ${12 * u}px ${FONT}`; const w = g.measureText(c).width + 22 * u; rr(g, cx, V.y0 + 222 * u, w, 26 * u, 4, 'rgba(239,233,220,.1)', 'rgba(239,233,220,.25)', 1); tx(g, c, cx + w / 2, V.y0 + 235 * u, 12 * u, BONE, 'center', 800); cx += w + 8 * u; }
+    const chips = [two ? 'TWO SITES' : 'ONE SITE', M.fs.filter(q => q.team === P.team).length + 'V' + M.fs.filter(q => q.team !== P.team).length, 'FIRST TO ' + WIN_ROUNDS];
+    // the mode, the team size and the target ride on the NOW ENTERING line (lower down they sat under the map's tip)
+    g.font = `800 ${fitPx(g, 14 * u)}px ${FONT}`; let cx = x0 + 26 * u + g.measureText('NOW ENTERING').width + 18 * u;
+    for (const c of chips) { const px = fitPx(g, 12 * u); g.font = `800 ${px}px ${FONT}`; const w = g.measureText(c).width + px * 1.8, h = Math.max(26 * u, px * 1.9); rr(g, cx, V.y0 + 86 * u - h / 2, w, h, 4, 'rgba(239,233,220,.1)', 'rgba(239,233,220,.25)', 1); tx(g, c, cx + w / 2, V.y0 + 86 * u, 12 * u, BONE, 'center', 800); cx += w + 8 * u; }
     tx(g, side === 'att' ? 'YOU ATTACK FIRST' : 'YOU DEFEND FIRST', x0 + 26 * u, V.y0 + 282 * u, 22 * u, side === 'att' ? FOE : YOU, 'left', 900);
     tx(g, side === 'att' ? (two ? 'Plant the charge on site ' + siteWords() : 'Plant the charge on the site') : (two ? 'Hold ' + (SITES.length > 2 ? 'all three' : 'both') + ' sites. Stop the plant, or defuse it' : 'Stop the plant, or defuse it'), x0 + 26 * u, V.y0 + 308 * u, 14 * u, '#c9cfd8', 'left', 600);
     // the plan of the map, with the sites marked
-    { const mw = 230 * u, mh = mw * GH / GW, mx = x0 + 26 * u, my = V.y0 + 332 * u, kk = mw / MW; g.globalAlpha = ease * .92; g.drawImage(miniMap(), mx, my, mw, mh); g.globalAlpha = ease; g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 1.5; g.strokeRect(mx, my, mw, mh);
-      for (const S of SITES) tx(g, two ? S.k : '◆', mx + S.c[0] * kk, my + S.c[1] * kk, 16 * u, '#ffb070', 'center', 900);
+    { const mw = Math.min(230 * u, (V.y1 - 136 * u - (V.y0 + 332 * u)) * GW / GH), mh = mw * GH / GW, mx = x0 + 26 * u, my = V.y0 + 332 * u, kk = mw / MW; /* a tall map's plan stops short of the player cards */ g.globalAlpha = ease * .92; g.drawImage(miniMap(), mx, my, mw, mh); g.globalAlpha = ease; g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 1.5; g.strokeRect(mx, my, mw, mh);
+      for (const S of SITES) siteLabel(g, S, mx, my, kk, 16 * u);
       const sp = SPAWN[side][0]; if (sp) { g.fillStyle = side === 'att' ? FOE : YOU; g.beginPath(); g.arc(mx + sp[0] * kk, my + sp[1] * kk, 5 * u, 0, TAU); g.fill(); tx(g, 'YOU', mx + sp[0] * kk, my + sp[1] * kk - 12 * u, 10 * u, BONE, 'center', 800); } }
     g.restore();
     // the players: a card each
     const mine = M.fs.filter(q => q.team === P.team).sort((a, b) => (b === P) - (a === P)), theirs = M.fs.filter(q => q.team !== P.team);
-    const per = Math.max(2, mine.length, theirs.length), cw = Math.min(250 * u, (W - 140 * u - (2 * per - 2) * 10 * u) / (2 * per)), ch = 74 * u, y = V.y1 - ch - 40 * u, slim = cw < 215 * u;   // 3v3 cards are narrower
+    // 3v3 cards are narrower; 4v4 ones (tiny) stack their words in three short lines, with tighter margins and gaps
+    const per = Math.max(2, mine.length, theirs.length), cw0 = (W - 140 * u - (2 * per - 2) * 10 * u) / (2 * per), tiny = cw0 < 170 * u, m = tiny ? 14 * u : 40 * u, gp = tiny ? 6 * u : 10 * u,
+      cw = Math.min(250 * u, tiny ? (W - 2 * m - 48 * u - (2 * per - 2) * gp) / (2 * per) : cw0), ch = 74 * u, y = V.y1 - ch - (tiny ? 52 : 40) * u, slim = cw < 215 * u, pw = tiny ? 36 * u : 42 * u;   // (tiny ones sit a little higher, clear of the sound button)
     const card = (q, x, col, i) => {
       const a = smooth(cl((rt - .35 - i * .12) / .4, 0, 1)); g.save(); g.globalAlpha = a; g.translate(0, (1 - a) * 30 * u);
       rr(g, x, y, cw, ch, 6, 'rgba(12,16,22,.88)', q === P ? 'rgba(239,233,220,.6)' : 'rgba(239,233,220,.14)', q === P ? 2 : 1); g.fillStyle = col; g.fillRect(x, y, 5 * u, ch);
+      if (tiny) { const O2 = OPS[q.op] || OPS.vex, tx0 = x + 12 * u + pw; portraitTile(g, q.op, x + 8 * u, y + 6 * u, pw, ch - 12 * u, { r: 4 });
+        g.save(); g.beginPath(); g.rect(tx0 - 2 * u, y, x + cw - 3 * u - (tx0 - 2 * u), ch); g.clip();
+        tx(g, q.name.toUpperCase(), tx0, y + 17 * u, 12.5 * u, BONE, 'left', 800); tx(g, O2.n, tx0, y + 37 * u, 10.5 * u, O2.col, 'left', 800);
+        const isB = q.bot || q.isBot, lx = q.rating ? tx0 + 16 * u : tx0; if (q.rating) rankBadge(g, tx0 + 6 * u, y + 57 * u, 6.5 * u, q.rating);   // the third line: a bot says so, a player shows their rating
+        tx(g, isB ? 'BOT' : q.rating ? String(q.rating) : q === P ? 'YOU' : 'PLAYER', lx, y + 57 * u, 10.5 * u, isB ? DIM : BONE, 'left', 800);
+        g.restore(); g.restore(); return; }
       portraitTile(g, q.op, x + 8 * u, y + 6 * u, 56 * u, ch - 12 * u, { r: 4 });
       tx(g, q.name.toUpperCase(), x + 74 * u, y + 24 * u, (slim ? 14 : 16) * u, BONE, 'left', 800); tx(g, (OPS[q.op] || OPS.vex).n, x + 74 * u, y + 44 * u, 11 * u, (OPS[q.op] || OPS.vex).col, 'left', 800);
       if (q.rating && slim) { rankBadge(g, x + cw - 22 * u, y + 26 * u, 12 * u, q.rating); tx(g, String(q.rating), x + cw - 22 * u, y + 56 * u, 11 * u, BONE, 'center', 700); }
@@ -200,7 +258,7 @@
       tx(g, q.bot ? 'BOT' : q.net && !q.isBot ? 'PLAYER' : q === P ? 'YOU' : 'BOT', x + 74 * u, y + 60 * u, 10 * u, DIM, 'left', 800);
       g.restore();
     };
-    mine.forEach((q, i) => card(q, V.x0 + 40 * u + i * (cw + 10 * u), YOU, i)); theirs.forEach((q, i) => card(q, V.x1 - 40 * u - (i + 1) * (cw + 10 * u) + 10 * u, FOE, i + 1));
+    mine.forEach((q, i) => card(q, V.x0 + m + i * (cw + gp), YOU, i)); theirs.forEach((q, i) => card(q, V.x1 - m - (i + 1) * (cw + gp) + gp, FOE, i + 1));
     tx(g, 'VS', 640, y + ch / 2, 26 * u, 'rgba(239,233,220,.55)', 'center', 900);
     // progress
     g.fillStyle = 'rgba(239,233,220,.12)'; g.fillRect(V.x0, V.y1 - 6 * u, W, 6 * u); g.fillStyle = acc; g.fillRect(V.x0, V.y1 - 6 * u, W * k, 6 * u);
@@ -233,6 +291,7 @@
     if (X.deathCam && M.deathInfo) { const D = M.deathInfo, kf = M.byKey[D.key]; if (kf && kf.alive) { const s = toScreen(ipos(kf, 'x'), ipos(kf, 'y') + 2.25, ipos(kf, 'z')); if (s) { const p = .8 + .2 * Math.sin(K.t * 6);
       g.fillStyle = FOE; g.beginPath(); g.moveTo(s[0], s[1] + 14 * p); g.lineTo(s[0] - 10 * p, s[1]); g.lineTo(s[0] + 10 * p, s[1]); g.closePath(); g.fill(); tx(g, D.by.toUpperCase(), s[0], s[1] - 14, 13, FOE, 'center', 900); } } }
     if (M.planted && M.phase === 'live') { const s = toScreen(M.planted.x, M.planted.y + .9, M.planted.z); if (s) { const p = 1 + Math.sin(M.time * 9) * .12; g.fillStyle = FOE; g.beginPath(); g.moveTo(s[0], s[1] - 11 * u * p); g.lineTo(s[0] + 9 * u * p, s[1]); g.lineTo(s[0], s[1] + 11 * u * p); g.lineTo(s[0] - 9 * u * p, s[1]); g.fill(); tx(g, Math.hypot(P.x - M.planted.x, P.z - M.planted.z).toFixed(0) + ' m', s[0], s[1] + 24 * u, 13 * u, BONE); } }
+    drawSiteMarks(g, P, u);   // the sites, while you are finding your way
     // --- crosshair and hit marks
     // the crosshair marks where a shot really goes: the view punch lifts the camera a little, so it sits that much lower
     const tf = Math.tan((X ? X.camera.fov : BASE_FOV) * D2R / 2), hh = (V.y1 - V.y0) / 2, cy = 360 + Math.tan(M.camKick || 0) / tf * hh;
@@ -250,7 +309,10 @@
     // --- top: the clock in the middle, round wins either side of it, then a tile for every fighter: your team to the left,
     // the rivals to the right. A tile is lit while they stand and goes grey with a skull once they are down; your
     // teammates' tiles carry their health
-    g.save(); g.translate(640, V.y0 + 8); g.scale(u, u);
+    // four a side must clear the minimap (left) and the kill feed (right): the tiles narrow first, then the whole bar shrinks
+    let tw = 44, ts = 1; if (!range) { const n = Math.max(1, M.fs.filter(q => q.team === P.team && !q.gone).length, M.fs.filter(q => q.team !== P.team && !q.gone).length), need = w => 125 + n * w + (n - 1) * 4,
+      room = Math.min(640 - (V.x0 + 62 / pxPer() + 200 * u + 10), (touch ? V.x1 - 20 : V.x1 - 24 - 250 * u) - 640) / u; while (tw > 32 && need(tw) > room) tw -= 2; ts = cl(room / need(tw), .72, 1); }
+    g.save(); g.translate(640, V.y0 + 8); g.scale(u * ts, u * ts);
     if (!range) {
       const PANEL = 'rgba(10,13,18,.84)', mine = M.fs.filter(q => q.team === P.team && !q.gone).sort((a, b) => (b === P) - (a === P)), theirs = M.fs.filter(q => q.team !== P.team && !q.gone);
       g.fillStyle = PANEL; g.beginPath(); g.moveTo(-64, 0); g.lineTo(64, 0); g.lineTo(56, 50); g.lineTo(-56, 50); g.closePath(); g.fill();
@@ -263,17 +325,17 @@
       const score = (x, n, col, tag) => { g.fillStyle = PANEL; g.fillRect(x - 25, 0, 50, 50); g.fillStyle = col; g.fillRect(x - 25, 0, 50, 3); tx(g, String(n), x, 27, 30, col, 'center', 800); if (tag) tx(g, tag, x, 62, 10, col, 'center', 800); };
       score(-92, M.wins[0], YOU, side === 'att' ? 'ATTACK' : 'DEFEND'); score(92, M.wins[1], FOE, side === 'att' ? 'DEFEND' : 'ATTACK');
       const tile = (q, x, col, ours) => {
-        const w = 44, h = 50, up = q.alive;
+        const w = tw, h = 50, up = q.alive;
         portraitTile(g, q.op, x - w / 2, 0, w, h, { dead: !up, bar: col, r: 3, on: q === P && up });
         if (ours && up) { g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(x - w / 2, h + 3, w, 4); g.fillStyle = q.hp > 30 ? BONE : WARN; g.fillRect(x - w / 2, h + 3, w * cl(q.hp / 100, 0, 1), 4); }
       };
-      mine.forEach((q, i) => tile(q, -147 - i * 48, YOU, true)); theirs.forEach((q, i) => tile(q, 147 + i * 48, FOE, false));
+      mine.forEach((q, i) => tile(q, -125 - tw / 2 - i * (tw + 4), YOU, true)); theirs.forEach((q, i) => tile(q, 125 + tw / 2 + i * (tw + 4), FOE, false));
     } else { rr(g, -210, 0, 420, 44, 8, GLASS); tx(g, 'RANGE', -190, 22, 18, GOLD, 'left'); tx(g, `${P.stat.hits} hits / ${P.stat.shots} shots` + (P.stat.shots ? `  ·  ${Math.round(100 * P.stat.hits / P.stat.shots)}%` : ''), 190, 22, 14, BONE, 'right'); }
     g.restore();
     // --- minimap, top left (beside the kit's pause button)
     { const mw = 200 * u, mh = mw * GH / GW, mx = V.x0 + 62 / pxPer(), my = V.y0 + 10, k = mw / MW;
       g.globalAlpha = .9; g.drawImage(miniMap(), mx, my, mw, mh); g.globalAlpha = 1; g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 1.5; g.strokeRect(mx, my, mw, mh);
-      if (SITES.length > 1) for (const S of SITES) tx(g, S.k, mx + S.c[0] * k, my + S.c[1] * k, 14 * u, '#ffb070', 'center', 900);
+      for (const S of SITES) siteLabel(g, S, mx, my, k, 14 * u);
       if (M.planted) { g.fillStyle = WARN; g.beginPath(); g.arc(mx + M.planted.x * k, my + M.planted.z * k, 4.5 * u, 0, TAU); g.fill(); }
       if (heard && (heard.t -= 1 / 60) > 0) { g.strokeStyle = `rgba(255,138,61,${heard.t / 1.6})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + heard.x * k, my + heard.z * k, (8 + (1.6 - heard.t) * 8) * u, 0, TAU); g.stroke(); }
       if (F.alive && (F.reveal > 0 || canSee(P, F))) { g.fillStyle = FOE; g.beginPath(); g.arc(mx + F.x * k, my + F.z * k, 4 * u, 0, TAU); g.fill(); }
@@ -315,9 +377,9 @@
       if (P.orbT > 0) ring(P.orbT / ORB.take, 'ULT ORB', OPS[P.op].col);
       else if (M.orbs && M.orbs.some(o => !o.taken && Math.hypot(o.x - P.x, o.z - P.z) < ORB.r)) hint(g, (touch ? 'Hold the button' : 'Hold F') + ' to take the orb: an ultimate point', V.y0 + 140 * u, 16 * u, OPS[P.op].col);
       if (P.plant > 0) ring(P.plant / PLANT_T, 'PLANTING', FOE); else if (P.defuse > 0) ring(P.defuse / DEFUSE_T, 'DEFUSING', YOU);
-      else if (side === 'att' && !M.planted) hint(g, onSite(P.x, P.z) ? key + ' to plant the charge' : M.t > roundT() - 6 ? (twoSites() ? 'Carry the charge to site ' + siteWords() + ' and plant it' : 'Carry the charge to the ring and plant it') : '', V.y0 + 104 * u, 16 * u, onSite(P.x, P.z) ? GOLD : 'rgba(239,233,220,.75)');
+      else if (side === 'att' && !M.planted) { if (onSite(P.x, P.z)) onSiteHint(g, 'ABC'[siteAt(P.x, P.z)], key, V.y0 + 104 * u, u); else hint(g, M.t > roundT() - 6 ? (twoSites() ? 'Carry the charge to site ' + siteWords() + ' and plant it' : 'Carry the charge to the site and plant it') : '', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
       else if (side === 'def' && M.planted) hint(g, near ? key + ' to defuse' : 'Defuse the charge', V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
-      else if (side === 'def' && M.t > roundT() - 6) hint(g, twoSites() ? 'Hold ' + siteWords('and') + ': stop them planting' : 'Stop them planting on the ring', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
+      else if (side === 'def' && M.t > roundT() - 6) hint(g, twoSites() ? 'Hold ' + siteWords('and') + ': stop them planting' : 'Stop them planting on the site', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
       if (F.alive && F.defuse > 0) tx(g, 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);
       if (GATES.length && P.plant <= 0 && P.defuse <= 0) { const gi = gateNear(P); if (gi >= 0) hint(g, (touch ? 'Tap the button' : 'Press F') + (GATES[gi].open ? ' to shut the blast door' : ' to open the blast door'), V.y0 + 140 * u, 16 * u, GOLD); }
     }
@@ -328,7 +390,7 @@
     if (M.online && (M.dropped || MP.rejoining)) { const p = .6 + .4 * Math.sin(K.t * 6); rr(g, 640 - 170 * u, 118 * u, 340 * u, 34 * u, 8, 'rgba(12,16,22,.85)', GOLD, 1.5); tx(g, 'CONNECTION LOST · RECONNECTING', 640, 135 * u, 14 * u, GOLD, 'center', 900); g.globalAlpha = 1; void p; }
     else if (M.online) { const dc = M.fs.find(f => f.dc && !f.gone); if (dc) { const left = Math.max(0, Math.ceil(DC_WAIT - (M.time - dc.dc))); tx(g, `${dc.name.toUpperCase()} LOST CONNECTION · WAITING ${left} s`, 640, 135 * u, 14 * u, GOLD, 'center', 900); } }
     if (M.phase === 'end' && M.last && !M.over) { const won = M.last.wi === 0, c = won ? YOU : FOE; g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, demo ? `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT` : won ? 'ROUND WON' : 'ROUND LOST', 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); }
-    if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? (twoSites() ? 'You attack: plant the charge on ' + siteWords() : 'You attack: plant the charge on the ring') : (twoSites() ? 'You defend: hold ' + siteWords('and') : 'You defend: keep them off the ring'), 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
+    if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? (twoSites() ? 'You attack: plant the charge on ' + siteWords() : 'You attack: plant the charge on the site') : (twoSites() ? 'You defend: hold ' + siteWords('and') : 'You defend: keep them off the site'), 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
     if (P !== me()) {   // spectating a teammate: who, their health and shield, their gun, and the others you could switch to
       const w = 420 * u, y = V.y1 - 156 * u, mates = M.fs.filter(f => f !== me() && f.team === me().team && f.alive), G2 = gun(P);
       rr(g, 640 - w / 2, y, w, 58 * u, 8, 'rgba(10,13,18,.86)', YOU, 1.5); portraitTile(g, P.op, 640 - w / 2 + 6 * u, y + 6 * u, 46 * u, 46 * u, { r: 4 });

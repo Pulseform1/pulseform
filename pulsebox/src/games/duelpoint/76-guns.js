@@ -513,12 +513,15 @@
       T = G;
     }
     bake(G, cast);
-    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold;
+    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.line = line;
     if (opts.flash) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.starT, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); sp.scale.setScalar(.4); sp.position.set(0, .03, -len - .06); sp.visible = false; G.add(sp); G.userData.flash = sp; }
     return G;
   }
   gmats.band = {};
   function viewGun(k, op, skin) { return gunModel(k, { hands: true, op, skin }); }
+  // a gun model that is finished with: free the shapes it alone owns (materials and textures are shared and cached;
+  // shapes marked shared, like the skin effects', stay), and hand back any reload rig still on it
+  function disposeGun(G) { if (!G) return; if (G.userData.rig) rfxDrop(G.userData.rig); G.traverse(o => { if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose(); }); const ct = G.userData.parts && G.userData.parts.counter; if (ct && ct.t) ct.t.dispose(); }
   // the armory pictures: each gun rendered side-on into a small transparent image, once
   function gunIcon(k, skin) {
     const ik = skin ? k + '|' + skin : k; if (ICON[ik] !== undefined) return ICON[ik];
@@ -533,14 +536,15 @@
       r.setRenderTarget(rt); r.setClearColor(0x000000, 0); r.clear(); r.render(sc, cam); const buf = new Uint8Array(w * h * 4); r.readRenderTargetPixels(rt, 0, 0, w, h, buf); r.setRenderTarget(prev); r.setClearColor(cc, ca); rt.dispose();
       const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const ctx = cv.getContext('2d'), id = ctx.createImageData(w, h);
       for (let y = 0; y < h; y++) id.data.set(buf.subarray((h - 1 - y) * w * 4, (h - y) * w * 4), y * w * 4);
-      ctx.putImageData(id, 0, 0); return ICON[ik] = cv;
+      ctx.putImageData(id, 0, 0); disposeGun(gm); return ICON[ik] = cv;
     } catch (e) { console.error(e); return ICON[ik] = false; }
   }
   // spent brass flying out of the ejection port (first person only)
   const CASE = { pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] }, CASEGEO = {};
   const VOS = { knife: [.15, -.15, -.31], pip: [.17, -.17, -.3], wasp: [.17, -.17, -.3], quill: [.17, -.17, -.3], stub: [.17, -.18, -.3], hammer: [.17, -.17, -.3], gnat: [.2, -.19, -.3], hornet: [.2, -.19, -.3], breaker: [.2, -.2, -.27], thresher: [.2, -.2, -.28], mako: [.2, -.2, -.28], paladin: [.21, -.21, -.27], vesper: [.2, -.2, -.28], lancer: [.2, -.2, -.28], kite: [.22, -.22, -.26], longbow: [.23, -.23, -.25], torrent: [.21, -.21, -.27] };
   /* The moving parts of a gun, for your own view (fp) and your rival's model alike. `ex` carries first-person extras:
-     draw (0..1 through the chambering at the end of a draw) and insp (0..1 through an inspect). A reload runs as phases of
+     draw (0..1 through the chambering at the end of a draw) and insp (0..1 through an inspect); show marks the store's
+     turntable, which gets a skin's full reload effect without your hands. A reload runs as phases of
      r (0..1): magazine out and dropped, hand away for a fresh one, fresh one in and slapped home, then the bolt or slide. */
   const sm = x => x * x * (3 - 2 * x);
   function animParts(Gm, P, G, dt, fp, ex = {}) {
@@ -581,6 +585,8 @@
       if (pp.hshell && G.k !== 'breaker') pp.hshell.visible = false; else if (pp.hshell && r < 0) pp.hshell.visible = false;
       pp.lhand.position.set(lp(p0.x, tx, h), lp(p0.y, ty, h), h > 0 ? lp(p0.z, tz, h) : tz);
     }
+    // the skin's own effects: its reload (and a Mythic's inspect) on your gun, in the store, and a lighter one on a rival's
+    if (U.line) skinFx(Gm, P, G, r, iq, dt, fp, fp || !!ex.show);
     if (pp.counter && pp.counter.last !== A.mag) { const { c, t } = pp.counter, g = c.getContext('2d'); pp.counter.last = A.mag; g.fillStyle = '#05080c'; g.fillRect(0, 0, 64, 44); const low = A.mag <= G.mag * .25; g.fillStyle = low ? WARN : GUNS[G.k].col; g.font = '700 30px "Chakra Petch", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(A.mag).padStart(2, '0'), 32, 20); g.fillRect(6, 38, 52 * A.mag / G.mag, 3); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(6 + 52 * A.mag / G.mag, 38, 52 * (1 - A.mag / G.mag), 3); t.needsUpdate = true; }
   }
   function viewAnim(P, G, dt, ex) { animParts(X.viewGun, P, G, dt, true, ex); }

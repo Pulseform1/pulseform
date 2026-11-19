@@ -13,7 +13,7 @@ const code = parts.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n
 const K = { save: {}, persist() {}, bot: false, state: 'play' };
 const MP = { online: () => false, isHost: () => true, send() {}, opts: {}, name: 'Tester', id: 0 };
 const T = new Function('K', 'MP', code + `
-  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
+  return { SRC, GW, GH, CS, findPath, pathLen, SPAWN, SITE, siteC, ROUTES, HOLDS, SITES, MAPS, mapPool, dailyStore, storeLeft, codeHash, ALL_SKINS_HASH, allSkinIds, LINES, skinOfId, skinPrice, skinSort, botSkins, matchCoins, roundT, loadingNow, skipLoad, LOAD_T, BUY_T, hAt, hMove, rayGrid, walkLine, NAV, idx, GUNS, dmgAt, CASH, DIFF, D2R, SPD, WIN_ROUNDS, WHY, SPRINT, SLIDE_V, diffFor, STATS, MAPS, loadMap,
     seed, startMatch, tick, buy, fire, altAction, reload, spreadOf, patOf, moveErr, switchTo, giveAmmo, applyDamage, endRound, startRound, sideOf, me, foe, on, eyeY, yawTo, canSee, ability, onSite, areaAt,
     hitboxes, headOf, castShot, ultCost, OPS, takeOrb, ORBS, hasAb, plantAt, stepKits: dt => stepKits(dt), get M() { return M; }, setInput: fn => { readInput = fn; } };`)(K, MP);
 
@@ -140,21 +140,50 @@ function moveChecks() {
   ok(lv.every((L, i) => !i || keys.every(k => L.D[k] <= lv[i - 1].D[k]) && L.D.turn >= lv[i - 1].D.turn), 'the bot gets sharper at every step up in rating', lv.map(L => L.D.n).join(' → '));
   T.STATS.rating = 1500; T.seed(3); T.startMatch({ mode: 'bot', diff: 'auto', map: 0 }); ok(T.foe().bot.D && T.foe().bot.diff >= 2, 'an AUTO match builds its bot from your rating', T.foe().bot.D.n);
 }
+// a 4v4 plays a spread of maps: one-site ones, two-site ones, the three-site one and the one where attackers start at both ends
+const FOUR_MAPS = ['saltworks', 'verdance', 'neonrow', 'sandgate', 'skyline', 'orbital', 'ironworks', 'frostline'];
 function teamChecks(count, size = 2) {
   const vs = `${size}v${size}`; section(`${count} ${vs} bot matches`);
-  let done = 0, rounds = 0, nan = 0, err = 0, kills = 0; const why = {};
+  let done = 0, rounds = 0, nan = 0, err = 0, kills = 0, plants = 0, ticks = 0, ms = 0; const why = {}, maps = [], distinct = [];
+  const spread = { att: 0, attOf: 0, attBad: [], dup: 0, defOf: 0, sites: 0, sitesOf: 0 };
+  const four = FOUR_MAPS.map(k => T.MAPS.findIndex(m => m.k === k)).filter(i => i >= 0);
+  const onEnd = (wi, w) => { why[w] = (why[w] || 0) + 1; }; T.on('end', (wi, w) => onEnd(wi, w));
   for (let n = 0; n < count; n++) {
     try {
-      T.seed(n * 104729 + 3 + size); T.startMatch({ mode: 'bot', diff: 1, size, map: (n * size) % T.MAPS.length }); const M = T.M; M.fs[0].bot = { diff: 1 }; M.fs[0].local = false;
+      const mi = size === 4 ? four[n % four.length] : (n * size) % T.MAPS.length, mp = T.MAPS[mi];
+      T.seed(n * 104729 + 3 + size); T.startMatch({ mode: 'bot', diff: 1, size, map: mi }); const M = T.M; M.fs[0].bot = { diff: 1 }; M.fs[0].local = false; maps.push(mp.n);
       if (!n) { ok((M.fs.length === 2 * size && M.fs.filter(f => f.team === 0).length === size), `a ${vs} has ${size} on each team`);
         const spots = M.fs.map(f => f.x.toFixed(1) + ',' + f.z.toFixed(1)); ok(new Set(spots).size === spots.length, `everyone in a ${vs} starts on their own spot`, spots.join(' ')); }
-      T.on('end', (wi, w) => { why[w] = (why[w] || 0) + 1; });
-      for (let i = 0; i < 60 * 60 * 25 && !M.over; i++) { T.tick(DT); if (i % 60 === 0 && M.fs.some(f => !Number.isFinite(f.x + f.z + f.y))) nan++; }
+      for (const t of [0, 1]) { const ops = M.fs.filter(f => f.team === t).map(f => f.op); distinct.push(new Set(ops).size === ops.length); }
+      let seenRound = 0, planted = 0; const t0 = performance.now();
+      for (let i = 0; i < 60 * 60 * 25 && !M.over; i++) {
+        T.tick(DT); ticks++; if (i % 60 === 0 && M.fs.some(f => !Number.isFinite(f.x + f.z + f.y))) nan++;
+        if (M.planted && planted !== M.round) { planted = M.round; plants++; }
+        // a second and a half into each round: where the team's plans have spread them
+        if (size >= 4 && M.phase === 'live' && seenRound !== M.round && M.t < T.roundT() - 1.5) {
+          seenRound = M.round; const two = T.SITES.length > 1, side = f => T.sideOf(f), bots = M.fs.filter(f => f.alive && f.bot && f.bot.plan);
+          const atk = bots.filter(f => side(f) === 'att' && f.bot.plan.k === 'push'), ways = new Set(atk.map(f => f.bot.plan.way)), all = mp.rw || Object.keys(T.ROUTES);
+          const avail = new Set(all.filter(k => !two || !mp.rsite || mp.rsite[k] === (M.atkPick ? M.atkPick.s : 0)));
+          if (atk.length >= 2) { spread.attOf++; if (ways.size >= Math.min(atk.length, avail.size)) spread.att++; else if (spread.attBad.length < 3) spread.attBad.push(`${mp.n} r${M.round}: ${[...ways].join('+')} of ${[...avail].join('/')}`); }
+          const def = bots.filter(f => side(f) === 'def' && f.bot.plan.h), hs = def.map(f => f.bot.plan.h);
+          if (def.length >= 2) { spread.defOf++; if (new Set(hs).size < hs.length) spread.dup++; }
+          if (two && def.length >= 2) { spread.sitesOf++; if (new Set(def.map(f => f.bot.hs)).size >= 2) spread.sites++; }
+        }
+      }
+      ms += performance.now() - t0;
       if (M.over) done++; rounds += M.wins[0] + M.wins[1]; kills += M.fs.reduce((a, f) => a + f.stat.k, 0);
     } catch (e) { err++; console.log(e.stack); }
   }
   ok(!err, 'no errors'); ok(done === count, `every ${vs} finishes`, `${done}/${count}`); ok(!nan, 'no NaN');
-  console.log(`    ${rounds} rounds, ${kills} kills`);
+  if (size >= 3) ok(distinct.every(Boolean), `within each ${vs} team every operative is different`);
+  if (size >= 4) {
+    ok(new Set(maps).size >= Math.min(count, 4) && four.some(i => (T.MAPS[i].sites || 1) === 1 && maps.includes(T.MAPS[i].n)) && four.some(i => (T.MAPS[i].sites || 1) > 1 && maps.includes(T.MAPS[i].n)), `4v4 on one-site and two/three-site maps`, [...new Set(maps)].join(', '));
+    ok(spread.attOf > 0 && spread.att / spread.attOf >= .85, 'four attackers spread over the ways in to their site', `${spread.att}/${spread.attOf} rounds${spread.attBad.length ? '; ' + spread.attBad.join('; ') : ''}`);
+    ok(spread.defOf > 0 && !spread.dup, 'no two defenders take the same hold spot', `${spread.dup} of ${spread.defOf} rounds`);
+    ok(!spread.sitesOf || spread.sites === spread.sitesOf, 'on a two- or three-site map the defenders split across the sites', `${spread.sites}/${spread.sitesOf} rounds`);
+    ok(plants / Math.max(1, rounds) > .15, 'a 4v4 still gets the charge planted', `${plants} plants in ${rounds} rounds`);
+  }
+  console.log(`    ${rounds} rounds, ${kills} kills, ${plants} plants; the simulation ran ${(ticks / 60 / (ms / 1000)).toFixed(0)}x real time`);
 }
 function matchChecks(count) {
   section(`${count} bot matches`);
@@ -190,7 +219,7 @@ function matchChecks(count) {
   console.log(`    ${rounds} rounds averaging ${(secs / Math.max(1, rounds)).toFixed(0)} s, ${kills} kills, ${(100 * heads / Math.max(1, kills)).toFixed(0)}% headshots`);
 }
 
-// the two-site maps: both sites see plants, planting wins rounds, 1v1 and 2v2 both finish
+// the two-site maps: both sites see plants, planting wins rounds, 1v1, 2v2 and 4v4 all finish
 // the newer operatives' abilities, one at a time, on the Pier with the rival placed by hand
 function kitChecks() {
   section('new operatives');
@@ -235,17 +264,44 @@ function kitChecks() {
 // skins: the store is the same for everyone each day, rarities are gated, prices follow rarity, a match pays by performance
 function skinChecks() {
   section('skins and coins');
-  const days = Array.from({ length: 200 }, (_, i) => T.dailyStore(20000 + i)), flat = days.flat();
-  ok(days.every(d => d.length === 7 && new Set(d).size === 7 && d.every(id => T.skinOfId(id))), 'seven different real skins in every three-hour set');
+  const S = id => T.skinOfId(id), tierOf = id => S(id).R.tier, isPar = id => S(id).L.r === 'paragon';
+  const days = Array.from({ length: 400 }, (_, i) => T.dailyStore(20000 + i)), rot = days.map(d => d.slice(1)), flat = rot.flat();
+  ok(days.every(d => d.length === 8 && new Set(d).size === 8 && d.every(id => S(id))), 'eight different real skins in every three-hour set: a featured Paragon and seven more');
   ok(JSON.stringify(T.dailyStore(20123)) === JSON.stringify(T.dailyStore(20123)), 'the same day gives the same store');
-  const myth = days.filter(d => d.some(id => T.skinOfId(id).L.r === 'mythic')).length, perDay = days.map(d => d.filter(id => T.skinOfId(id).L.r === 'mythic').length);
-  ok(myth >= 8 && myth <= 40 && Math.max(...perDay) <= 1, 'a Mythic shows up in about one set in ten (about one a day), never two at once', `${myth} of 200 sets`);
+  // the Paragon guarantee: exactly one, always first (its own featured slot), never among the seven, new every period
+  const pars = days.map(d => d.filter(isPar).length);
+  ok(days.every(d => isPar(d[0])) && pars.every(n => n === 1), 'exactly one Paragon in every set, in the featured slot, over 400 periods', `${pars.filter(n => n === 1).length} of ${days.length}`);
+  ok(days.every((d, i) => !i || d[0] !== days[i - 1][0]) && days.every((d, i) => !i || S(d[0]).line !== S(days[i - 1][0]).line), 'the featured Paragon changes every period, and never to the same line twice running');
+  const parLines = Object.keys(T.LINES).filter(l => T.LINES[l].r === 'paragon'), seen = new Set(days.map(d => d[0])), wk = new Set(days.map(d => S(d[0]).k));
+  ok(parLines.length >= 2 && parLines.length <= 3 && parLines.every(l => days.some(d => S(d[0]).line === l)) && wk.size === 17, 'it rotates across every Paragon line and every weapon', `${parLines.length} lines, ${wk.size} weapons, ${seen.size} different skins`);
+  ok(seen.size === parLines.length * 17, 'every Paragon skin comes round in turn', `${seen.size} of ${parLines.length * 17}`);
+  ok(rot.every(d => d.every(id => tierOf(id) <= tierOf(d[0]) && !isPar(id))) && rot.every(d => d.every((id, i) => !i || tierOf(d[i - 1]) >= tierOf(id))), 'the seven are rarest first, under the Paragon');
+  const myth = rot.filter(d => d.some(id => S(id).L.r === 'mythic')).length, perDay = rot.map(d => d.filter(id => S(id).L.r === 'mythic').length);
+  ok(myth >= 16 && myth <= 80 && Math.max(...perDay) <= 1, 'a Mythic shows up in about one set in ten (about one a day), never two at once', `${myth} of 400 sets`);
   ok(T.storeLeft(3 * 3600000 * 100 + 5000) === 3 * 3600000 - 5000, 'the store turns over every three hours', T.storeLeft(3 * 3600000 * 100 + 5000));
-  const all = T.allSkinIds(); ok(T.codeHash('vault 7q4k all') === T.ALL_SKINS_HASH && T.codeHash('VAULT-7Q4K-ALL') === T.ALL_SKINS_HASH && all.length === Object.keys(T.LINES).length * 17 && all.every(id => T.skinOfId(id)), 'the all-skins code matches however it is typed, and covers every skin on every weapon', `${all.length} skins in ${Object.keys(T.LINES).length} lines`);
+  const now = T.dailyStore(); ok(now.length === 8 && isPar(now[0]), 'the store right now has its Paragon', S(now[0]).L.n + ' ' + S(now[0]).k);
+  const all = T.allSkinIds(); ok(T.codeHash('vault 7q4k all') === T.ALL_SKINS_HASH && T.codeHash('VAULT-7Q4K-ALL') === T.ALL_SKINS_HASH && all.length === Object.keys(T.LINES).length * 17 && all.every(id => T.skinOfId(id)) && parLines.every(l => all.includes(l + ':knife')), 'the all-skins code matches however it is typed, and covers every skin on every weapon, Paragons too', `${all.length} skins in ${Object.keys(T.LINES).length} lines`);
   ok(T.codeHash('NOT-A-CODE') !== T.ALL_SKINS_HASH, 'a wrong code does not match');
-  const tally = {}; for (const id of flat) { const r = T.skinOfId(id).L.r; tally[r] = (tally[r] || 0) + 1; }
-  ok(tally.common > tally.rare && tally.rare > tally.epic && tally.epic > tally.legendary && tally.legendary > (tally.mythic || 0), 'rarer lines are rarer in the store', JSON.stringify(tally));
+  { const had = T.STATS.skins; T.STATS.skins = all.slice(); const same = days.slice(0, 60).every((d, i) => JSON.stringify(T.dailyStore(20000 + i)) === JSON.stringify(d)); T.STATS.skins = had;
+    ok(same && rot.every(d => d.length === 7 && new Set(d).size === 7), 'owning every skin changes nothing: the same Paragon and seven, period after period'); }
+  const tally = {}; for (const id of flat) { const r = S(id).L.r; tally[r] = (tally[r] || 0) + 1; }
+  ok(tally.common > tally.rare && tally.rare > tally.epic && tally.epic > tally.legendary && tally.legendary > (tally.mythic || 0) && !tally.paragon, 'rarer lines are rarer in the seven, and no Paragon among them', JSON.stringify(tally));
   ok(T.skinPrice('dune:vesper') === 300 && T.skinPrice('voidline:vesper') === 4800 && T.skinPrice('voidline:knife') === 7200, 'prices: 300 for a Common, 4800 for a Mythic, half as much again for a knife');
+  const pp = parLines.map(l => T.skinPrice(l + ':vesper')), pk = parLines.map(l => T.skinPrice(l + ':knife'));
+  ok(pp.every(p => p === 8000) && pk.every(p => p === 12000) && pp[0] > T.skinPrice('voidline:vesper'), 'a Paragon costs more than a Mythic: 8000, and 12000 on a knife', pp.join('/'));
+  // the new lines and the reload effects
+  const L = T.LINES, glowing = Object.keys(L).filter(l => L[l].gk), hi = Object.keys(L).filter(l => S(l + ':vesper').R.tier >= 2);
+  ok(glowing.length >= 10 && glowing.length <= 14 && glowing.filter(l => S(l + ':vesper').R.tier >= 2).length >= glowing.length - 2, 'ten to fourteen new glowing lines, most of them Epic and up', `${glowing.length} lines: ${glowing.map(l => L[l].r[0].toUpperCase()).join('')}`);
+  ok(glowing.every(l => L[l].glow && L[l].live && L[l].rl), 'every new line glows, lives and has a reload effect');
+  ok(hi.every(l => L[l].rl && L[l].rl.kind && L[l].rl.col && L[l].rl.col2), 'every Epic and up reloads with an effect of its own', `${hi.length} lines`);
+  ok(parLines.every(l => L[l].kill && L[l].emblem && L[l].sound && L[l].fx && L[l].fx.idle && L[l].gk.sig), 'every Paragon has a kill effect, banner, sound, idle effect and a signature piece');
+  const names = Object.values(L).map(x => x.n.toLowerCase()); ok(new Set(names).size === names.length, 'no two lines share a name');
+  // the locker: rarest first
+  const mix = ['dune:vesper', parLines[0] + ':vesper', 'voidline:vesper', 'tidewater:vesper', 'inferno:vesper', 'bogus:vesper'], sorted = T.skinSort(mix);
+  ok(sorted.length === 5 && sorted[0] === parLines[0] + ':vesper' && sorted.every((id, i) => !i || tierOf(sorted[i - 1]) >= tierOf(id)), 'the locker lists Paragons first, then rarest down', sorted.map(id => S(id).L.r).join(' > '));
+  // bots now and then carry something special
+  T.seed(5); const botRolls = Array.from({ length: 3000 }, () => T.botSkins()).flatMap(o => Object.values(o)), btally = {}; for (const id of botRolls) { const r = S(id).L.r; btally[r] = (btally[r] || 0) + 1; }
+  ok(botRolls.every(id => S(id)) && (btally.paragon || 0) > 0 && (btally.paragon || 0) < (btally.mythic || 0), 'bots carry a Paragon very rarely', JSON.stringify(btally));
   const fake = (k, hs, d) => ({ stat: { k, hs, d } }), M5 = w => ({ wins: [w, 5 - w], online: false });
   const big = T.matchCoins(fake(12, 6, 3), M5(5), true, { plants: 2, botLevel: 2 }).total, avg = T.matchCoins(fake(5, 2, 6), M5(3), false, { botLevel: 1 }).total;
   ok(big >= 520 && big <= 760, 'a big win pays about an eighth of a Mythic', `${big} coins, ${(big / 4800 * 100).toFixed(0)}%`);
@@ -264,11 +320,11 @@ function loadChecks() {
 }
 function twoSiteChecks(count) {
   section(`${count} matches on the two-site maps`);
-  const pool = T.mapPool(2), bySite = [0, 0, 0], why = {}; let rounds = 0, plants = 0, done = 0, err = 0, boomWins = 0;
+  const pool = T.mapPool(2), bySite = [0, 0, 0], why = {}, sizes = {}; let rounds = 0, plants = 0, done = 0, err = 0, boomWins = 0;
   ok(pool.length === 6 && T.mapPool(1).length === 7, 'six two-site maps and seven one-site maps', `${pool.length} and ${T.mapPool(1).length}`);
   for (let n = 0; n < count; n++) {
     try {
-      T.seed(n * 6151 + 17); const size = n % 2 ? 2 : 1; T.startMatch({ mode: 'bot', diff: 1, size, map: pool[n % pool.length] }); const M = T.M; M.fs[0].bot = { diff: 1 + (n % 2) }; M.fs[0].local = false;
+      T.seed(n * 6151 + 17); const size = [1, 2, 1, 4][n % 4]; sizes[size] = (sizes[size] || 0) + 1; T.startMatch({ mode: 'bot', diff: 1, size, map: pool[n % pool.length] }); const M = T.M; M.fs[0].bot = { diff: 1 + (n % 2) }; M.fs[0].local = false;
       if (!n) ok(T.SITES.length >= 2 && T.roundT() >= 100, 'a STANDARD map has two or three sites and rounds of 100 s or more', T.SITES.map(S => S.k + ' ' + S.cells.length + ' cells').join(', ') + ', ' + T.roundT() + ' s');
       let planted = false, lastRound = 0;
       for (let i = 0; i < 60 * 60 * 30 && !M.over; i++) {
@@ -283,7 +339,7 @@ function twoSiteChecks(count) {
   ok(!err, 'no errors'); ok(done === count, 'every match finishes', `${done}/${count}`);
   ok(bySite[0] > 0 && bySite[1] > 0, 'attackers plant on both sites', `A ${bySite[0]}, B ${bySite[1]}${bySite[2] ? ', C ' + bySite[2] : ''}`);
   ok(plants / Math.max(1, rounds) > .2 && boomWins > 0, 'planting is a real way to win', `${plants} plants in ${rounds} rounds, ${boomWins} won by the charge`);
-  console.log(`    ${Object.entries(why).map(([k, v]) => `${T.WHY[k]} ${v}`).join(', ')}`);
+  console.log(`    ${Object.entries(why).map(([k, v]) => `${T.WHY[k]} ${v}`).join(', ')}; team sizes ${Object.entries(sizes).map(([k, v]) => `${k}v${k} x${v}`).join(', ')}`);
 }
 
 // every map, bots only: a 1v1 and a 3v3 on each, and the map's own feature gets used
@@ -404,10 +460,10 @@ else if (arg === 'two') twoSiteChecks(+process.argv[3] || 12);
 else if (arg === 'maps') everyMapChecks(+process.argv[3] || 2);
 else if (arg === 'quick') { mapChecks(); gunplayChecks(); hitboxChecks(); moveChecks(); loadChecks(); }
 else if (arg === 'hit') hitboxChecks();
-else if (arg === 'teams') { teamChecks(7); teamChecks(6, 3); }
+else if (arg === 'teams') { teamChecks(7); teamChecks(6, 3); teamChecks(8, 4); }
 else if (arg === 'kits') kitChecks();
 else if (arg === 'ults') ultChecks();
 else if (arg === 'skins') skinChecks();
-else { mapChecks(); gunplayChecks(); hitboxChecks(); moveChecks(); loadChecks(); kitChecks(); ultChecks(); skinChecks(); teamChecks(7); teamChecks(6, 3); matchChecks(20); twoSiteChecks(12); }
+else { mapChecks(); gunplayChecks(); hitboxChecks(); moveChecks(); loadChecks(); kitChecks(); ultChecks(); skinChecks(); teamChecks(7); teamChecks(6, 3); teamChecks(8, 4); matchChecks(20); twoSiteChecks(12); }
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

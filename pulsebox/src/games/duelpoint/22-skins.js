@@ -2,14 +2,17 @@
      A skin is a line (its look, its add-on parts, its effects) on one weapon, so 'inferno:lancer' is the Inferno Lancer.
      Rarity sets what a line brings: a Common is a paint job; a Rare adds parts and coloured tracers; an Epic reshapes the
      gun and brings its own muzzle flash and kill banner; a Legendary adds a living finish, idle effects, a kill effect and
-     a kill sound; a Mythic is all of that at full strength, and turns up in the store about once a week.
-     Pure data and rules: the pictures are in 77-skins. */
+     a kill sound; a Mythic is all of that at full strength, and turns up in the store about once a week. A Paragon is
+     above them all: the most elaborate glow, reload, idle and kill effects and its own sounds, and exactly one is on sale
+     in every rotation, in a featured slot of its own.
+     Pure data and rules: the pictures are in 77-skins and 77-skinfx. */
   const RARITY = {
     common: { n: 'Common', col: '#a7b1bd', price: 300, w: 38, tier: 0 },
     rare: { n: 'Rare', col: '#4fa3ff', price: 700, w: 30, tier: 1 },
     epic: { n: 'Epic', col: '#b56bff', price: 1400, w: 19, tier: 2 },
     legendary: { n: 'Legendary', col: '#ffb020', price: 2600, w: 10, tier: 3 },
     mythic: { n: 'Mythic', col: '#ff5ac8', price: 4800, w: 3, tier: 4 },
+    paragon: { n: 'Paragon', col: '#c6ff3a', price: 8000, w: 0, tier: 5 },   // never rolled: it has its own slot
   };
   // fx: tracer and muzzle colours; kill: the kill effect; emblem: the kill banner's glyph and glow; sound: the kill sound's extra layer
   const LINES = {
@@ -61,16 +64,51 @@
     spectrum: PL('Spectrum', 'mythic', 'Liquid rainbow chrome that never stops shifting.', '#e8e8f0', '#ff5ac8', 'holo', { glow: 1, live: 'shift', fx: { tracer: '#ffffff', muzzle: '#ffe8ff', idle: 'arcs' }, kill: { kind: 'sun', col: '#ff5ac8', col2: '#5ae8ff' }, emblem: { shape: 'star', col: '#ffffff', glow: '#ff5ac8' }, sound: 'sun', metal: .9 }),
     eclipse: PL('Eclipse', 'mythic', 'A black sun ringed in burning gold.', '#0a0806', '#ffb02a', 'corona', { glow: 1, live: 'flow', fx: { tracer: '#ffd27a', muzzle: '#fff0c4', idle: 'motes' }, kill: { kind: 'void', col: '#ffb02a', col2: '#fff0c4' }, emblem: { shape: 'crown', col: '#fff0c4', glow: '#ffb02a' }, sound: 'void', metal: .6 }),
   });
+  /* thirteen lines that really glow: a finish that lights up and breathes, energy flowing along strips, glowing barrel
+     rings, energy cells, halos on the sight and the muzzle, and drifting particles; and each reloads with its own effect.
+     gk is what 77-skinfx builds onto the gun (strips, rings, cell, sight and muzzle halos, idle particles pts, a
+     signature piece sig, a second glow colour c2); rl is the reload effect (its kind and two colours). */
+  Object.assign(LINES, {
+    glowstick: PL('Glowstick', 'rare', 'Matte black wrapped in amber chemical light. Snap it and it glows all night.', '#16140f', '#ffb21a', 'strips', { glow: 1, live: 'pulse', fx: { tracer: '#ffd27a', muzzle: '#fff0c4' }, gk: { strips: 2, c2: '#ffe8a0' }, rl: { kind: 'snap', col: '#ffb21a', col2: '#fff0c4' } }),
+    neondrift: PL('Neon Drift', 'epic', 'Night-street black with pink and sunset-orange neon tubes bent along it.', '#0d0a14', '#ff4ad8', 'tubes', { glow: 1, live: 'flicker', fx: { tracer: '#ff8ae6', muzzle: '#ffd0f4' }, kill: { kind: 'bolt', col: '#ff4ad8', col2: '#ff9a3a' }, emblem: { shape: 'bolt', col: '#ffe0f8', glow: '#ff4ad8' }, sound: 'zap', gk: { strips: 3, rings: 2, sight: 1, c2: '#ff9a3a' }, rl: { kind: 'neon', col: '#ff4ad8', col2: '#ff9a3a' } }),
+    voltaic: PL('Voltaic', 'epic', 'Gunmetal wired with live current. Do not touch the bare bits.', '#23272d', '#ffe23a', 'wires', { glow: 1, live: 'flicker', metal: .6, fx: { tracer: '#fff08a', muzzle: '#ffffff' }, kill: { kind: 'bolt', col: '#ffe23a', col2: '#ffffff' }, emblem: { shape: 'bolt', col: '#fffbe0', glow: '#ffe23a' }, sound: 'zap', gk: { strips: 2, cell: 1, rings: 2, c2: '#ffffff' }, rl: { kind: 'sparks', col: '#ffe23a', col2: '#ffffff' } }),
+    holoform: PL('Holoform', 'epic', 'A hard-light projection of a gun, scan lines and all.', '#071626', '#4ab8ff', 'hologrid', { glow: 1, live: 'flow', fx: { tracer: '#8ad4ff', muzzle: '#d8f4ff' }, kill: { kind: 'shards', col: '#4ab8ff', col2: '#d8f4ff' }, emblem: { shape: 'star', col: '#e8f8ff', glow: '#4ab8ff' }, sound: 'ice', gk: { strips: 2, sight: 1, muzzle: 1, pts: 'pixels', c2: '#c8f0ff' }, rl: { kind: 'digital', col: '#4ab8ff', col2: '#d8f4ff' } }),
+    moonlit: PL('Moonlit', 'epic', 'Midnight lacquer, a silver crescent, and a tide of moonlight along every edge.', '#0d1330', '#cfe0ff', 'moon', { glow: 1, live: 'pulse', fx: { tracer: '#e0eaff', muzzle: '#ffffff' }, kill: { kind: 'shards', col: '#cfe0ff', col2: '#ffffff' }, emblem: { shape: 'star', col: '#ffffff', glow: '#8aa8ff' }, sound: 'ice', clear: 1, gk: { strips: 2, sight: 1, sig: 'crescent', c2: '#8aa8ff' }, rl: { kind: 'runes', col: '#cfe0ff', col2: '#8aa8ff' } }),
+    permafrost: PL('Permafrost', 'legendary', 'Ice so old it glows blue from inside, veined with frost that creeps as you watch.', '#cfe4f2', '#6cc8ff', 'frost', { glow: 1, live: 'pulse', clear: 1, fx: { tracer: '#bfe8ff', muzzle: '#ffffff', idle: 'frost' }, kill: { kind: 'shards', col: '#9adcff', col2: '#ffffff' }, emblem: { shape: 'star', col: '#ffffff', glow: '#6cc8ff' }, sound: 'ice', gk: { strips: 2, rings: 2, cell: 1, muzzle: 1, pts: 'frost', sig: 'icicles', c2: '#ffffff' }, rl: { kind: 'frost', col: '#8adcff', col2: '#ffffff' } }),
+    fission: PL('Fission', 'legendary', 'Hazard-yellow plating over a reactor core that burns a deep blue.', '#1b1d22', '#3a7dff', 'reactor', { glow: 1, live: 'pulse', fx: { tracer: '#8ab0ff', muzzle: '#d8e6ff', idle: 'motes' }, kill: { kind: 'void', col: '#3a7dff', col2: '#ffd23a' }, emblem: { shape: 'bolt', col: '#ffe890', glow: '#3a7dff' }, sound: 'zap', gk: { strips: 1, rings: 3, cell: 2, sight: 1, pts: 'motes', c2: '#9ad0ff' }, rl: { kind: 'cell', col: '#3a7dff', col2: '#cfe0ff' } }),
+    cinderwake: PL('Cinderwake', 'legendary', 'Volcanic glass with fire just under the surface, and embers trailing off the barrel.', '#120808', '#ff4a1a', 'cinder', { glow: 1, live: 'flow', fx: { tracer: '#ff8a4a', muzzle: '#ffc070', idle: 'embers' }, kill: { kind: 'flame', col: '#ff4a1a', col2: '#ffc04a' }, emblem: { shape: 'flame', col: '#ffe0b0', glow: '#ff4a1a' }, sound: 'fire', gk: { strips: 2, rings: 2, muzzle: 1, pts: 'sparks', c2: '#ffc04a' }, rl: { kind: 'flame', col: '#ff5a1a', col2: '#ffc04a' } }),
+    overclock: PL('Overclock', 'mythic', 'A rig built to run hot: smoked glass, fans, and RGB light chasing round every edge.', '#090b10', '#ff3ad0', 'rgb', { glow: 1, live: 'flow', fx: { tracer: '#ff8ae6', muzzle: '#c0fff8', idle: 'arcs' }, kill: { kind: 'bolt', col: '#ff3ad0', col2: '#3affea' }, emblem: { shape: 'bolt', col: '#ffffff', glow: '#ff3ad0' }, sound: 'zap', gk: { strips: 3, rings: 2, cell: 1, sight: 1, muzzle: 1, pts: 'pixels', sig: 'fans', c2: '#3affea' }, rl: { kind: 'digital', col: '#3affea', col2: '#ff3ad0' } }),
+    ghostfire: PL('Ghostfire', 'mythic', 'Pale spirit flame that burns cold and never lights anything it touches.', '#08100e', '#7dff9a', 'spirit', { glow: 1, live: 'pulse', fx: { tracer: '#b0ffc4', muzzle: '#eafff0', idle: 'embers' }, kill: { kind: 'flame', col: '#7dff9a', col2: '#eafff0' }, emblem: { shape: 'flame', col: '#eafff0', glow: '#4aff7a' }, sound: 'void', gk: { strips: 2, rings: 2, cell: 1, sight: 1, muzzle: 1, pts: 'wisps', c2: '#eafff0' }, rl: { kind: 'flame', col: '#7dff9a', col2: '#eafff0' } }),
+    starforge: PL('Starforge', 'paragon', 'Blackened iron split by white-hot plasma, forged in the heart of a dying star.', '#110d0b', '#ff8a2a', 'forge', { glow: 1, live: 'surge', metal: .5, fx: { tracer: '#ffd27a', muzzle: '#fff3d6', idle: 'motes' }, kill: { kind: 'nova', col: '#ff8a2a', col2: '#fff3d6' }, emblem: { shape: 'star', col: '#fff3d6', glow: '#ff8a2a' }, sound: 'forge', gk: { strips: 3, rings: 3, cell: 2, sight: 1, muzzle: 1, pts: 'sparks', sig: 'star', c2: '#fff3d6' }, rl: { kind: 'forge', col: '#ff8a2a', col2: '#fff3d6' } }),
+    riftborn: PL('Riftborn', 'paragon', 'Black glass torn open onto somewhere else. The light leaks through the cracks.', '#07060d', '#9a5bff', 'rift', { glow: 1, live: 'flowpulse', fx: { tracer: '#c49aff', muzzle: '#c0faff', idle: 'motes' }, kill: { kind: 'rift', col: '#9a5bff', col2: '#3af0ff' }, emblem: { shape: 'fang', col: '#eafcff', glow: '#9a5bff' }, sound: 'rift', gk: { strips: 3, rings: 2, cell: 1, sight: 1, muzzle: 1, pts: 'pixels', sig: 'rift', c2: '#3af0ff' }, rl: { kind: 'rift', col: '#9a5bff', col2: '#3af0ff' } }),
+    glyphbound: PL('Glyphbound', 'paragon', 'Old dark stone carved with golden runes that wake in your hands and remember every shot.', '#17191d', '#ffd04a', 'runes', { glow: 1, live: 'flowpulse', fx: { tracer: '#ffe490', muzzle: '#d0fff0', idle: 'motes' }, kill: { kind: 'glyph', col: '#ffd04a', col2: '#3affd0' }, emblem: { shape: 'crown', col: '#fff6d8', glow: '#ffd04a' }, sound: 'glyph', gk: { strips: 2, rings: 2, cell: 1, sight: 1, muzzle: 1, pts: 'runes', sig: 'glyph', c2: '#3affd0' }, rl: { kind: 'glyph', col: '#ffd04a', col2: '#3affd0' } }),
+  });
+  // every Epic and up reloads with an effect that fits it: the older lines get theirs here
+  for (const [l, kind, col, col2] of [['circuit', 'snap', '#4dff9a', '#c8ffe0'], ['tidewater', 'snap', '#7fd8ff', '#ffffff'], ['glacier', 'frost', '#bfe8ff', '#ffffff'], ['aurum', 'gold', '#ffd24a', '#fff3c4'], ['inferno', 'flame', '#ff7a2a', '#ffd27a'], ['storm', 'bolt', '#8fe6ff', '#ffffff'],
+    ['voidline', 'void', '#b46bff', '#f0dcff'], ['solaris', 'gold', '#ffcf5a', '#fff8e0'], ['dragonscale', 'flame', '#ff5a2a', '#ffd27a'], ['damascus', 'sparks', '#dfe8f2', '#ffd27a'], ['jade', 'gold', '#e8c040', '#c8ffd8'], ['synthwave', 'neon', '#ff3ac8', '#3af0ff'],
+    ['toxic', 'cell', '#8aff2a', '#e8ffb0'], ['abyssal', 'motes', '#3ae8ff', '#c0faff'], ['royalguard', 'gold', '#ffd24a', '#fff3c4'], ['glitch', 'digital', '#ff2a5a', '#2affd8'], ['nebula', 'void', '#b46bff', '#7fd8ff'], ['phoenix', 'flame', '#ff6a1a', '#ffe08a'],
+    ['aurora', 'motes', '#5aff9a', '#ff7ad8'], ['tempest', 'bolt', '#9ad8ff', '#ffffff'], ['prism', 'motes', '#ff9aea', '#9ae8ff'], ['magmaflow', 'flame', '#ff4a10', '#ffc060'], ['celestial', 'runes', '#ffc23a', '#fff8e0'], ['abyss', 'void', '#ff1a3a', '#ffb0c0'],
+    ['spectrum', 'digital', '#ff5ac8', '#5ae8ff'], ['eclipse', 'void', '#ffb02a', '#fff0c4']]) LINES[l].rl = { kind, col, col2 };
   const SKIN_GUNS = ['pip', 'wasp', 'quill', 'hammer', 'stub', 'gnat', 'hornet', 'breaker', 'thresher', 'mako', 'paladin', 'vesper', 'lancer', 'kite', 'longbow', 'torrent', 'knife'];
   const skinId = (line, k) => line + ':' + k;
   const skinOfId = id => { if (!id) return null; const [line, k] = id.split(':'), L = LINES[line]; return L && SKIN_GUNS.includes(k) ? { id, line, k, L, R: RARITY[L.r] } : null; };
   const skinName = id => { const s = skinOfId(id); if (!s) return ''; return s.L.n + ' ' + (s.k === 'knife' ? 'Blade' : GUNS[s.k].n); };
   // knives cost half as much again: they are the one thing you hold every round
   const skinPrice = id => { const s = skinOfId(id); return s ? Math.round(s.R.price * (s.k === 'knife' ? 1.5 : 1) / 50) * 50 : 0; };
-  // the store: seven skins, the same for everyone, a new set every three hours, drawn by rarity. At most one Mythic, in
-  // about one set in ten (so roughly one a day).
+  // the store: a Paragon in its own featured slot, then seven skins drawn by rarity; the same for everyone, a new set every
+  // three hours. At most one Mythic among the seven, in about one set in ten (so roughly one a day).
   const STORE_PERIOD = 3 * 3600000, STORE_SIZE = 7, storeDay = (now = Date.now()) => Math.floor(now / STORE_PERIOD), storeLeft = (now = Date.now()) => STORE_PERIOD - now % STORE_PERIOD;
-  function dailyStore(day = storeDay()) {
+  /* the featured Paragon of a period: every line on every weapon in turn, in a shuffled order that never repeats the
+     line of the period before (the step, 23, shares no factor with lines x weapons, so all of them come round) */
+  const PARAGONS = Object.keys(LINES).filter(l => LINES[l].r === 'paragon');
+  function paragonFor(day = storeDay()) {
+    const n = PARAGONS.length, all = n * SKIN_GUNS.length; let step = 23; while (gcdI(step, all) !== 1 || step % n === 0) step++;
+    const i = ((day * step) % all + all) % all; return skinId(PARAGONS[i % n], SKIN_GUNS[Math.floor(i / n)]);
+  }
+  const gcdI = (a, b) => b ? gcdI(b, a % b) : a;
+  // the whole store: [the featured Paragon, then the seven, rarest first]
+  function dailyStore(day = storeDay()) { return [paragonFor(day), ...rotationFor(day)]; }
+  function rotationFor(day) {
     let s = (day * 2654435761) >>> 0; const r = () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
     const mythicDay = r() < .1, out = [], lines = Object.keys(LINES), gunFor = () => r() < .16 ? 'knife' : SKIN_GUNS[Math.floor(r() * (SKIN_GUNS.length - 1))];
     if (mythicDay) { const ms = lines.filter(l => LINES[l].r === 'mythic'); out.push(skinId(ms[Math.floor(r() * ms.length)], gunFor())); }   // a Mythic day: one, as the featured skin
@@ -91,7 +129,9 @@
   // which skin a fighter has on gun k: yours from the locker, a bot's from what it was dealt, a remote player's as they sent it
   const skinFor = (f, k) => (f && f.skins && f.skins[k]) || null;
   // the skins a bot is dealt for a match: mostly plain, now and then something special
-  function botSkins() { const o = {}; for (const k of SKIN_GUNS) { const x = R(); if (x < .45) continue; const tier = x < .72 ? 'common' : x < .88 ? 'rare' : x < .96 ? 'epic' : x < .99 ? 'legendary' : 'mythic'; const ls = Object.keys(LINES).filter(l => LINES[l].r === tier); o[k] = skinId(pick(ls), k); } return o; }
+  function botSkins() { const o = {}; for (const k of SKIN_GUNS) { const x = R(); if (x < .45) continue; const tier = x < .72 ? 'common' : x < .88 ? 'rare' : x < .96 ? 'epic' : x < .99 ? 'legendary' : x < .997 ? 'mythic' : 'paragon'; const ls = Object.keys(LINES).filter(l => LINES[l].r === tier); o[k] = skinId(pick(ls), k); } return o; }
+  // how the locker lists skins: rarest first (Paragon at the top), then by name
+  const skinSort = ids => ids.filter(id => skinOfId(id)).sort((a, b) => { const A = skinOfId(a), B = skinOfId(b); return B.R.tier - A.R.tier || (A.L.n < B.L.n ? -1 : A.L.n > B.L.n ? 1 : 0); });
   /* What a match pays, in coins. A strong match comes to about 600, an eighth of a Mythic. Kills, headshots, rounds and
      the result count; a K/D of 2 or better adds a quarter; tougher opposition pays more. */
   function matchCoins(P, Mx, won, extra = {}) {

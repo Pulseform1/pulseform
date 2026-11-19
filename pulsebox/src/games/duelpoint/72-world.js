@@ -176,27 +176,9 @@
       const m = new THREE.Mesh(geo, TH.glow && k === 'band' ? new THREE.MeshBasicMaterial({ vertexColors: true }) : k === 'ice' ? new THREE.MeshPhongMaterial({ map: T.ice, vertexColors: true, shininess: 90, specular: LC('#c8ecff') })
         : k === 'lowg' ? new THREE.MeshLambertMaterial({ map: T.lowg, vertexColors: true, emissive: LC('#3aa8d8'), emissiveMap: T.lowg, emissiveIntensity: .55 }) : new THREE.MeshLambertMaterial({ map: T[k] || null, vertexColors: true, color: LC(TH.tint[k] || '#ffffff') })); m.castShadow = sh && k !== 'band' && k !== 'deck'; m.receiveShadow = sh; W.add(m);
     }
-    // the site: a painted ring on the ground
-    const ringT = canvasTex(512, 512, (g, w, h) => {
-      g.clearRect(0, 0, w, h); g.translate(w / 2, h / 2); g.strokeStyle = 'rgba(255,138,61,.95)'; g.lineWidth = 16; g.beginPath(); g.arc(0, 0, 226, 0, TAU); g.stroke();
-      g.lineWidth = 6; g.setLineDash([26, 20]); g.beginPath(); g.arc(0, 0, 196, 0, TAU); g.stroke(); g.setLineDash([]);
-      g.fillStyle = 'rgba(255,138,61,.1)'; g.beginPath(); g.arc(0, 0, 226, 0, TAU); g.fill();
-      g.lineWidth = 12; g.beginPath(); g.moveTo(0, -70); g.lineTo(62, 0); g.lineTo(0, 70); g.lineTo(-62, 0); g.closePath(); g.stroke();
-    }); ringT.wrapS = ringT.wrapT = THREE.ClampToEdgeWrapping;
-    // one ring on each site; on a two-site map each carries its letter, and big letters on the walls round it say which is which
-    for (const S of SITES) {
-      const two = SITES.length > 1, tex = two ? canvasTex(512, 512, (g, w, h) => { g.drawImage(ringT.image, 0, 0); g.translate(w / 2, h / 2); g.fillStyle = 'rgba(255,138,61,.85)'; g.font = '900 150px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(S.k, 0, 8); }) : ringT;
-      if (two) tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-      const ring = new THREE.Mesh(new THREE.PlaneGeometry(10.4, 10.4), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 })); ring.rotation.x = -Math.PI / 2; ring.position.set(S.c[0], hAt(S.c[0], S.c[1]) + .02, S.c[1]); W.add(ring);
-      if (!two) continue;
-      const letT = canvasTex(256, 256, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = 'rgba(255,138,61,.92)'; g.fillRect(18, 18, w - 36, h - 36); g.fillStyle = 'rgba(20,18,16,.92)'; g.font = '900 190px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(S.k, w / 2, h / 2 + 10); });
-      const letM = new THREE.MeshBasicMaterial({ map: letT, transparent: true, polygonOffset: true, polygonOffsetFactor: -2 });
-      for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {   // walk out from the site's middle to the first wall in each direction
-        for (let d = 2; d < 16; d += .5) { const x = S.c[0] + dx * d, z = S.c[1] + dz * d; if (chAt(Math.floor(x / CS), Math.floor(z / CS)) !== '#') continue;
-          const fx = dx ? (dx > 0 ? Math.floor(x / CS) * CS : Math.floor(x / CS) * CS + CS) : x, fz = dz ? (dz > 0 ? Math.floor(z / CS) * CS : Math.floor(z / CS) * CS + CS) : z;
-          const p = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), letM); p.position.set(fx - dx * .02, 3.6, fz - dz * .02); p.rotation.y = Math.atan2(-dx, -dz); W.add(p); break; }
-      }
-    }
+    // the sites: every plantable cell painted on the floor, and on a map of two or three, big letters on the walls round each
+    (X.siteTex || []).forEach(t => t.dispose()); X.siteTex = [];   // the last map's paint
+    for (const S of SITES) siteMarks(W, S, TH, sh);
     // door signs
     const signMat = {};
     for (const s of signs) {
@@ -215,6 +197,98 @@
     const cap = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 1.8, 12), new THREE.MeshBasicMaterial({ color: '#fff3c4' })); cap.position.y = 20.9; lh.add(cap); const hat = new THREE.Mesh(new THREE.ConeGeometry(1.7, 1.6, 12), dark); hat.position.y = 22.6; lh.add(hat); lh.position.set(-22, -1.4, -78); W.add(lh);
     for (const z of [MH * .23, MH * .77]) { const ox = MW - 64; box(.9, 30, .9, dark, 72 + ox, 15, z - 3); box(.9, 30, .9, dark, 72 + ox, 15, z + 3); box(1.2, 1.2, 7.4, dark, 72 + ox, 29.4, z); box(26, 1.1, 1.1, lam('#c9862e'), 62 + ox, 30.4, z); box(.2, 9, .2, dark, 52 + ox, 25.5, z); }
     buildMech(W, TH);
+  }
+  /* The sites. A site's middle (the average of its cells) often lands in a wall, a container, tall grass or under a roof,
+     so its marks go on the open site cell nearest the middle that has room round it. siteSpot works that out once a map:
+     x, y, z the spot, r the ring's radius, rot the way its letter reads (from the attackers' side), edges where the site
+     meets open ground ([i, j, e], e as in wallFace), and lets: up to two open 2 by 2 blocks near its ways in for the
+     stencilled letter, each read from the way in beside it. The HUD's site markers and the minimap use the same spot. */
+  function siteSpot(S) {
+    if (S.spot) return S.spot;
+    const ch = 'oqr'['ABC'.indexOf(S.k)], mine = (i, j) => chAt(i, j) === ch, roof = (i, j) => CEIL[idx(i, j)] > 0;
+    const openAt = (i, j) => { const k = idx(i, j); return k >= 0 && !!NAV[k] && CH[k] < 1 && !mine(i, j); };
+    const DIR = [[1, 0], [-1, 0], [0, 1], [0, -1]], ROT = [-Math.PI / 2, Math.PI / 2, 0, Math.PI];   // a letter read by someone east, west, south, north of it
+    const cells = S.cells.map(p => [Math.floor(p[0] / CS), Math.floor(p[1] / CS)]), edges = [];
+    for (const [i, j] of cells) DIR.forEach(([di, dj], e) => { if (openAt(i + di, j + dj)) edges.push([i, j, e]); });
+    // how far a point is from the nearest cell that is not this site, and from the nearest open ground that is not
+    const room = (x, z) => { let any = 9, open = 9; const i0 = Math.floor(x / CS), j0 = Math.floor(z / CS);
+      for (let j = j0 - 4; j <= j0 + 4; j++) for (let i = i0 - 4; i <= i0 + 4; i++) { if (mine(i, j)) continue;
+        const d = Math.hypot(Math.max(i * CS - x, 0, x - (i + 1) * CS), Math.max(j * CS - z, 0, z - (j + 1) * CS)); if (d < any) any = d; if (d < open && openAt(i, j)) open = d; }
+      return [any, open]; };
+    // the spot: the middle of an unroofed site cell or the corner where four meet (under the roof only when all the site is)
+    const sky = cells.some(([i, j]) => !roof(i, j)), ok = (i, j) => mine(i, j) && (!sky || !roof(i, j)), quad4 = (i, j) => ok(i, j) && ok(i + 1, j) && ok(i, j + 1) && ok(i + 1, j + 1), spots = [];
+    for (const [i, j] of cells) { if (ok(i, j)) spots.push([(i + .5) * CS, (j + .5) * CS]); if (quad4(i, j)) spots.push([(i + 1) * CS, (j + 1) * CS]); }
+    let at = spots[0] || S.c, best = 1e9;
+    for (const p of spots) { const s = Math.hypot(p[0] - S.c[0], p[1] - S.c[1]) - 1.2 * Math.min(room(p[0], p[1])[0], 3); if (s < best) { best = s; at = p; } }
+    const [any, open] = room(at[0], at[1]), r = cl(Math.min(open - .5, any + 1.6), 2, 4.4), a = SPAWN.att[0] || [MW / 2, MH];
+    const facing = (x, z, tx, tz) => Math.abs(tx - x) > Math.abs(tz - z) ? (tx > x ? 0 : 1) : (tz > z ? 2 : 3);
+    // the stencils: open 2 by 2 blocks clear of the ring, as near a way in as they can be, and apart from each other
+    const blocks = [], lets = [];
+    for (const [i, j] of cells) if (quad4(i, j)) {
+      const x = (i + 1) * CS, z = (j + 1) * CS, dS = Math.hypot(x - at[0], z - at[1]); if (dS < r + 2.6) continue;
+      let dE = 1e9, e = facing(x, z, a[0], a[1]); for (const E of edges) { const d = Math.hypot((E[0] + .5 + DIR[E[2]][0] * .5) * CS - x, (E[1] + .5 + DIR[E[2]][1] * .5) * CS - z); if (d < dE) { dE = d; e = E[2]; } }
+      blocks.push({ x, z, dS, dE, rot: ROT[e] });
+    }
+    for (let n = 0; n < (cells.length >= 36 ? 2 : 1); n++) {
+      let pick = null, ps = 1e9; for (const b of blocks) { if (lets.some(l => Math.hypot(l.x - b.x, l.z - b.z) < 9)) continue; const s = b.dE - .3 * Math.min(b.dS, 12); if (s < ps) { ps = s; pick = b; } }
+      if (pick) lets.push(pick);
+    }
+    return (S.spot = { x: at[0], z: at[1], y: hAt(at[0], at[1]), r, rot: ROT[facing(at[0], at[1], a[0], a[1])], cells, edges, lets, sky });
+  }
+  /* A site's floor: one mesh over just its plantable cells, at their own height, painted from one canvas: a tint with a
+     faint hatch, a bold border wherever the site meets open ground (dark at its outer side, so it reads on snow and sand
+     as well as on the dark floors), the ring at the site's spot, and the letter (a plant mark on a one-site map) in the ring
+     and stencilled by the ways in. Nothing is drawn off the site's cells, so nothing spills onto the ground round it. */
+  function siteMarks(W, S, TH, sh) {
+    const P = siteSpot(S), two = SITES.length > 1, COL = '255,138,61';
+    let i0 = 1e9, j0 = 1e9, i1 = -1, j1 = -1; for (const [i, j] of P.cells) { i0 = Math.min(i0, i); j0 = Math.min(j0, j); i1 = Math.max(i1, i); j1 = Math.max(j1, j); }
+    const nw = i1 - i0 + 1, nh = j1 - j0 + 1, ppc = Math.min(64, Math.floor(2048 / Math.max(nw, nh))), pot = n => 2 ** Math.ceil(Math.log2(n)), cw = pot(nw * ppc), chh = pot(nh * ppc), m = ppc / CS;
+    const ox = i0 * CS, oz = j0 * CS, px = x => (x - ox) * m, pz = z => (z - oz) * m;
+    const mark = (g, size, words) => {   // the letter, or on a one-site map the plant diamond (over SITE by the ways in)
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.strokeStyle = 'rgba(28,18,10,.55)'; g.fillStyle = `rgba(${COL},.97)`;
+      if (two) { g.font = `900 ${size}px "Chakra Petch", sans-serif`; g.lineWidth = size * .08; g.strokeText(S.k, 0, size * .06); g.fillText(S.k, 0, size * .06); return; }
+      const cy = words ? -size * .14 : 0, hh = size * (words ? .28 : .34), hw = hh * .8, dia = () => { g.beginPath(); g.moveTo(0, cy - hh); g.lineTo(hw, cy); g.lineTo(0, cy + hh); g.lineTo(-hw, cy); g.closePath(); };
+      dia(); g.fillStyle = `rgba(${COL},.3)`; g.fill(); g.lineWidth = size * .13; g.stroke(); g.strokeStyle = `rgba(${COL},.97)`; g.lineWidth = size * .09; g.stroke();
+      if (words) { g.font = `900 ${size * .3}px "Chakra Petch", sans-serif`; g.lineWidth = size * .04; g.strokeStyle = 'rgba(28,18,10,.55)'; g.fillStyle = `rgba(${COL},.97)`; g.strokeText('SITE', 0, size * .34); g.fillText('SITE', 0, size * .34); }
+    };
+    const tex = canvasTex(cw, chh, g => {
+      g.fillStyle = `rgba(${COL},.2)`; g.fillRect(0, 0, cw, chh);   // the whole canvas, so the colour holds up in the mipmaps
+      g.strokeStyle = `rgba(${COL},.24)`; g.lineWidth = .22 * m; g.beginPath(); for (let d = -chh; d < cw; d += 1.2 * m) { g.moveTo(d, 0); g.lineTo(d + chh, chh); } g.stroke();
+      // the border: each edge stroked along the cell line, so only its inner half lands on the site
+      const edgePath = () => { g.beginPath(); for (const [i, j, e] of P.edges) { const x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS, s = e === 0 ? [x1, z0, x1, z1] : e === 1 ? [x0, z0, x0, z1] : e === 2 ? [x0, z1, x1, z1] : [x0, z0, x1, z0]; g.moveTo(px(s[0]), pz(s[1])); g.lineTo(px(s[2]), pz(s[3])); } };
+      g.lineCap = 'square'; edgePath(); g.strokeStyle = 'rgba(28,18,10,.5)'; g.lineWidth = 1.44 * m; g.stroke();   // a dark rim on its inner side,
+      edgePath(); g.strokeStyle = `rgba(${COL},.97)`; g.lineWidth = 1.24 * m; g.stroke(); edgePath(); g.strokeStyle = 'rgba(28,18,10,.65)'; g.lineWidth = .2 * m; g.stroke();   // the band, a dark line at the edge
+      // the ring, its letter read from the attackers' side
+      g.save(); g.translate(px(P.x), pz(P.z)); g.rotate(P.rot); const R = P.r * m;
+      g.fillStyle = `rgba(${COL},.12)`; g.beginPath(); g.arc(0, 0, R, 0, TAU); g.fill();
+      g.strokeStyle = 'rgba(28,18,10,.45)'; g.lineWidth = .56 * m; g.beginPath(); g.arc(0, 0, R - .26 * m, 0, TAU); g.stroke();
+      g.strokeStyle = `rgba(${COL},.97)`; g.lineWidth = .42 * m; g.beginPath(); g.arc(0, 0, R - .26 * m, 0, TAU); g.stroke();
+      g.lineWidth = .16 * m; g.setLineDash([.55 * m, .4 * m]); g.beginPath(); g.arc(0, 0, R - .85 * m, 0, TAU); g.stroke(); g.setLineDash([]);
+      mark(g, Math.min(2.8, P.r * .95) * m, false); g.restore();
+      for (const L of P.lets) { g.save(); g.translate(px(L.x), pz(L.z)); g.rotate(L.rot); mark(g, 3.6 * m, true); g.restore(); }
+    });
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping; X.siteTex.push(tex);
+    const pos = [], uv = [], ix = [];
+    for (const [i, j] of P.cells) {
+      const y = hAt((i + .5) * CS, (j + .5) * CS) + .02, n = pos.length / 3, x0 = i * CS, z0 = j * CS, x1 = x0 + CS, z1 = z0 + CS;
+      for (const [x, z] of [[x0, z0], [x0, z1], [x1, z1], [x1, z0]]) { pos.push(x, y, z); uv.push(px(x) / cw, 1 - pz(z) / chh); }
+      ix.push(n, n + 1, n + 2, n, n + 2, n + 3);
+    }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(ix); geo.computeVertexNormals();
+    // lit like paint (dimmer under the stronger suns, so it never washes out to the colour of the sand), with a glow that keeps it bright in shade and at night
+    const alb = cl(.6 / ((TH.sun && TH.sun[1]) || 1.2), .3, .75);
+    const mat = new THREE.MeshLambertMaterial({ map: tex, color: new THREE.Color(alb, alb, alb), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, emissive: new THREE.Color(1, 1, 1), emissiveMap: tex, emissiveIntensity: TH.glow ? .7 : .3 });
+    const floor = new THREE.Mesh(geo, mat); floor.receiveShadow = sh; floor.renderOrder = 1; W.add(floor);
+    if (!two) return;
+    // big letters on the walls: walk out from the spot to the first wall each way (under a roof, low enough to show beneath it)
+    const letT = canvasTex(256, 256, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = 'rgba(255,138,61,.92)'; g.fillRect(18, 18, w - 36, h - 36); g.fillStyle = 'rgba(20,18,16,.92)'; g.font = '900 190px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(S.k, w / 2, h / 2 + 10); });
+    const letM = new THREE.MeshBasicMaterial({ map: letT, transparent: true, polygonOffset: true, polygonOffsetFactor: -2 }); X.siteTex.push(letT);
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      for (let d = 1; d < 16; d += .5) { const x = P.x + dx * d, z = P.z + dz * d; if (chAt(Math.floor(x / CS), Math.floor(z / CS)) !== '#') continue;
+        const fx = dx ? (dx > 0 ? Math.floor(x / CS) * CS : Math.floor(x / CS) * CS + CS) : x, fz = dz ? (dz > 0 ? Math.floor(z / CS) * CS : Math.floor(z / CS) * CS + CS) : z;
+        const ceil = CEIL[idx(Math.floor((fx - dx * .5) / CS), Math.floor((fz - dz * .5) / CS))] || 0, y = ceil ? Math.min(3.6, ceil - 1) : 3.6;
+        const p = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), letM); p.position.set(fx - dx * .02, y, fz - dz * .02); p.rotation.y = Math.atan2(-dx, -dz); W.add(p); break; }
+    }
   }
   // scenery for the other maps: what you see over the walls
   function scenery(W, TH) {

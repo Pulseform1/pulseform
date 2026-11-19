@@ -141,19 +141,49 @@
     X.scene.add(G); return G;
   }
   // enemies wear a red outline you can pick out at a glance, even in shade or against a busy wall: every piece of the body
-  // and gun gets a copy drawn from the inside, pushed out along its normals in flat red. The push grows with distance, so the
-  // line stays about two pixels wide whether they are across the site or in your face. Walls and smoke still hide it.
-  let OLM = null;
+  // and gun gets a copy drawn from the inside, pushed out along its normals in flat red. The push is a fixed 1.8 cm, so the
+  // rim shrinks with the body as they get further away and never swamps a far silhouette; it is held between OL_LO and
+  // OL_HI screen pixels, so it stays a hairline up close and never thins away to nothing across the map (past about 10 m
+  // it is the one-pixel floor: a crisp edge round a small figure, not a fill). Only the outer
+  // edge shows: as each piece draws it marks its pixels in the stencil with that fighter's number, and the red copies,
+  // drawn after, skip their own fighter's marks, so an arm or the gun held across the chest adds no red lines inside the
+  // body (which at range ran together into a red blob). Walls and smoke still hide it.
+  const OL_TH = .018, OL_LO = 1, OL_HI = 1.5;   // metres; CSS pixels
+  let OLM = null, OLV = null;
   function outlineMat() {
     if (OLM) return OLM;
-    OLM = new THREE.ShaderMaterial({ uniforms: { col: { value: new THREE.Color(FOE) }, k: { value: .0036 } }, side: THREE.BackSide,
-      vertexShader: 'uniform float k; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vec3 n = normalize(mat3(modelMatrix) * normal); w.xyz += n * (k * length(w.xyz - cameraPosition) + .006); gl_Position = projectionMatrix * viewMatrix * w; }',
+    OLV = new THREE.Vector4();
+    OLM = new THREE.ShaderMaterial({ uniforms: { col: { value: new THREE.Color(FOE) }, th: { value: OL_TH }, vh: { value: 720 }, lo: { value: OL_LO }, hi: { value: OL_HI } }, side: THREE.BackSide,
+      stencilWrite: true, stencilWriteMask: 0, stencilFunc: THREE.NotEqualStencilFunc, stencilRef: 0,
+      vertexShader: 'uniform float th, vh, lo, hi; void main() { vec4 v = modelViewMatrix * vec4(position, 1.0); vec3 n = normalize(normalMatrix * normal); float px = 2.0 * max(-v.z, .05) / (projectionMatrix[1][1] * vh); v.xyz += n * clamp(th, lo * px, hi * px); gl_Position = projectionMatrix * v; }',
       fragmentShader: 'uniform vec3 col; void main() { gl_FragColor = vec4(col, 1.0); }' });
     return OLM;
   }
+  // the pixel limits need the height of what is being drawn, in device pixels: read just before each outline draws.
+  // On a screen drawn below full resolution the floor may go under a device pixel, but only with antialiasing on:
+  // without it a sub-pixel line breaks up into dots.
+  function olPx(r) {
+    if (!OLM) return; r.getCurrentViewport(OLV); const pr = r.getRenderTarget() ? 1 : r.getPixelRatio(), U = OLM.uniforms, aa = !(X && X.low);
+    const vh = Math.max(1, OLV.w), lo = Math.max(aa ? .6 : 1, OL_LO * pr), hi = Math.max(lo, OL_HI * pr);
+    if (U.vh.value !== vh || U.lo.value !== lo || U.hi.value !== hi) { U.vh.value = vh; U.lo.value = lo; U.hi.value = hi; OLM.uniformsNeedUpdate = true; }
+  }
+  // the red copy reads its fighter's number; the piece itself, while its copy shows, writes that number into the stencil
+  // for the length of its own draw (the materials are shared, so the setting is put back straight after)
+  function olPre(r, sc, cam, geo, mat) { olPx(r); mat.stencilRef = this.userData.olRef; }
+  function olMark(r, sc, cam, geo, mat) { const ol = this.userData.ol; if (!ol || !ol.visible || !mat) return; mat.stencilWrite = true; mat.stencilWriteMask = 0xff; mat.stencilFunc = THREE.AlwaysStencilFunc; mat.stencilRef = ol.userData.olRef; mat.stencilZPass = THREE.ReplaceStencilOp; }
+  function olUnmark(r, sc, cam, geo, mat) { if (!mat || !mat.stencilWrite) return; mat.stencilWrite = false; mat.stencilRef = 0; mat.stencilZPass = THREE.KeepStencilOp; }
+  let olN = 0;
   function outline(root, show) {
-    const add = []; root.traverse(o => { if (o.isMesh && !o.userData.isOL && !o.userData.ol && !(o.material && o.material.transparent)) add.push(o); });
-    for (const o of add) { const m = new THREE.Mesh(o.geometry, outlineMat()); m.userData.isOL = true; m.raycast = () => {}; m.frustumCulled = o.frustumCulled; o.add(m); o.userData.ol = m; }
+    // see-through parts of the gun (glass, glows, decals) get no outline; the body always does, even when caught half-faded by a cloak
+    const add = [], gh = root.userData.gunHold, U = root.userData; if (!U.olRef) U.olRef = olN++ % 255 + 1;
+    const walk = (o, inGun) => { if (o.userData.isOL) return; inGun = inGun || o === gh; if (o.isMesh && !o.userData.ol && !(inGun && o.material && o.material.transparent)) add.push(o); for (const c of o.children) walk(c, inGun); };
+    walk(root, false);
+    for (const o of add) {
+      const m = new THREE.Mesh(o.geometry, outlineMat()); m.userData.isOL = true; m.userData.olRef = U.olRef; m.raycast = () => {}; m.onBeforeRender = olPre; m.renderOrder = 1; m.frustumCulled = o.frustumCulled; o.add(m); o.userData.ol = m;
+      const b0 = o.onBeforeRender, a0 = o.onAfterRender, own = THREE.Object3D.prototype;   // keep any hooks a piece already has
+      o.onBeforeRender = b0 === own.onBeforeRender ? olMark : function (...a) { b0.apply(this, a); olMark.apply(this, a); };
+      o.onAfterRender = a0 === own.onAfterRender ? olUnmark : function (...a) { olUnmark.apply(this, a); a0.apply(this, a); };
+    }
     root.traverse(o => { if (o.userData.isOL) o.visible = show; });
   }
   function updateAgent(f, dt) {

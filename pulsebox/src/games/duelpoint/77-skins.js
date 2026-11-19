@@ -5,7 +5,7 @@
   const SKTX = {}, SKMAT = {};
   // the newer lines are painted from a pattern name (LINES[line].pat): map is the paint, em (when the line glows) what lights up
   function patternTex(L) {
-    const S = 512, P = L.pat, out = {}, rr2 = (a, b) => a + R() * (b - a), base = L.base, alt = L.alt;
+    const S = 512, P = L.pat, out = {}, rr2 = (a, b) => a + R() * (b - a), base = L.base, alt = L.alt, c2 = (L.gk && L.gk.c2) || '#ffffff';
     const blots = (g, n, r0, r1, col) => { for (let i = 0; i < n; i++) { const x = R() * S, y = R() * S, r = rr2(r0, r1), q = rr2(.5, 1); g.fillStyle = col; for (const dx of [-S, 0, S]) for (const dy of [-S, 0, S]) { g.beginPath(); g.ellipse(x + dx, y + dy, r, r * q, R() * 3, 0, TAU); g.fill(); } } };
     const specks = (g, n, a) => { for (let i = 0; i < n; i++) { g.fillStyle = `rgba(${R() < .5 ? '0,0,0' : '255,255,255'},${a * R()})`; g.fillRect(R() * S, R() * S, 1.5, 1.5); } };
     const wave = (g, y0, amp, f, ph) => { g.beginPath(); for (let x = 0; x <= S; x += 6) g.lineTo(x, y0 + Math.sin(x / S * TAU * f + ph) * amp + Math.sin(x / S * TAU * f * 2.7 + ph * 2) * amp * .3); g.stroke(); };
@@ -62,6 +62,61 @@
       case 'holo': out.map = canvasTex(S, S, g => { const gr = g.createLinearGradient(0, 0, S, S); for (let i = 0; i <= 12; i++) gr.addColorStop(i / 12, `hsl(${i * 30 % 360},90%,${70 + (i % 2) * 10}%)`); g.fillStyle = gr; g.fillRect(0, 0, S, S); g.globalAlpha = .25; for (let i = 0; i < 30; i++) { g.strokeStyle = '#ffffff'; g.lineWidth = rr2(1, 4); wave(g, R() * S, 20, 1, R() * 6); } g.globalAlpha = 1; }, [1, 1]); out.em = out.map; break;
       case 'corona': { const draw = (g, bg) => { fill(g, bg); for (const [cx, cy] of [[S * .3, S * .35], [S * .75, S * .8]]) { for (let i = 0; i < 28; i++) { const a = i / 28 * TAU + R() * .1, r0 = 54, r1 = r0 + rr2(20, 70); g.strokeStyle = alt; g.lineWidth = rr2(1.5, 4); g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); g.stroke(); } g.lineWidth = 8; g.strokeStyle = '#fff0c4'; g.beginPath(); g.arc(cx, cy, 52, 0, TAU); g.stroke(); g.fillStyle = '#000'; g.beginPath(); g.arc(cx, cy, 48, 0, TAU); g.fill(); } };
         out.map = T2(g => { draw(g, base); specks(g, 6000, .08); }, [1, 1]); out.em = T2(g => draw(g, '#000'), [1, 1]); } break;
+      // the glowing lines (22-skins: gk): each has a lit layer, em, that 77-skinfx's glow and the living finish drive
+      case 'strips': { const draw = (g, bg) => { fill(g, bg); if (bg !== '#000') specks(g, 14000, .1); for (const y of [S * .06, S * .31, S * .56, S * .81]) { const gr = g.createLinearGradient(0, y - 16, 0, y + 16); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(.5, alt); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, y - 16, S, 32); g.fillStyle = c2; g.fillRect(0, y - 2, S, 4); } };
+        out.map = T2(g => draw(g, base)); out.em = T2(g => draw(g, '#000')); } break;
+      case 'tubes': { const tb = []; for (let i = 0; i < 7; i++) { const y0 = rr2(30, S - 30), q = [], amp = rr2(10, 40); for (let x = -20; x <= S + 20; x += 32) q.push([x, y0 + Math.sin(x / S * TAU * 2 + i) * amp]); tb.push([q, i % 2 ? c2 : alt]); }
+        const draw = (g, bg) => { const em = bg === '#000'; fill(g, bg); if (!em) { blots(g, 20, 20, 70, 'rgba(60,40,90,.15)'); specks(g, 9000, .1); } g.lineCap = 'round'; g.lineJoin = 'round';
+          for (const [q, c] of tb) for (const [cc, lw, al] of (em ? [[c, 12, .45], [c, 5, 1], ['#ffffff', 1.8, 1]] : [['#2a2430', 12, 1], [c, 5, 1], ['#ffffff', 1.5, 1]])) { g.globalAlpha = al; g.strokeStyle = cc; g.lineWidth = lw; g.beginPath(); q.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); } g.globalAlpha = 1; };
+        out.map = T2(g => draw(g, base), [3, 3]); out.em = T2(g => draw(g, '#000'), [3, 3]); } break;
+      case 'wires': { const wr = []; for (let i = 0; i < 26; i++) { let x = Math.floor(R() * 16) * 32, y = Math.floor(R() * 16) * 32; const q = [[x, y]]; for (let k = 0; k < 6; k++) { if (k % 2) x += (R() < .5 ? -1 : 1) * 32 * (1 + Math.floor(R() * 3)); else y += (R() < .5 ? -1 : 1) * 32 * (1 + Math.floor(R() * 2)); q.push([x, y]); } wr.push(q); }
+        const draw = (g, bg) => { const em = bg === '#000'; fill(g, bg); if (!em) for (let y = 0; y < S; y += 2) { g.fillStyle = `rgba(255,255,255,${R() * .05})`; g.fillRect(0, y, S, 1); }
+          for (const q of wr) for (const [c, lw] of (em ? [[alt, 4], ['#ffffff', 1.2]] : [['#14161a', 6], [alt, 2]])) { g.strokeStyle = c; g.lineWidth = lw; g.beginPath(); q.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); g.fillStyle = c; for (const [x, y] of [q[0], q[q.length - 1]]) { g.beginPath(); g.arc(x, y, lw * 1.4, 0, TAU); g.fill(); } } };
+        out.map = T2(g => draw(g, base)); out.em = T2(g => draw(g, '#000')); } break;
+      case 'hologrid': { const bands = [rr2(0, S), rr2(0, S), rr2(0, S)], draw = (g, bg) => { const em = bg === '#000'; fill(g, bg);
+          for (let y = 0; y < S; y += 4) { const major = y % 32 === 0; g.fillStyle = em ? `rgba(74,184,255,${major ? .55 : .1})` : `rgba(120,200,255,${major ? .3 : .05})`; g.fillRect(0, y, S, major ? 2 : 1); }
+          g.strokeStyle = em ? alt : 'rgba(74,184,255,.5)'; g.lineWidth = 2; for (let x = 0; x < S; x += 64) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, S); g.stroke(); }
+          for (const y of bands) { const gr = g.createLinearGradient(0, y - 30, 0, y + 30); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(.5, em ? 'rgba(210,244,255,.6)' : 'rgba(150,220,255,.22)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, y - 30, S, 60); } };
+        out.map = T2(g => draw(g, base)); out.em = T2(g => draw(g, '#000')); } break;
+      case 'moon': { const draw = (g, bg) => { const em = bg === '#000'; fill(g, bg); if (!em) blots(g, 16, 40, 120, 'rgba(40,60,140,.18)'); stars(g, 160, em ? 'rgba(220,230,255,.9)' : 'rgba(220,230,255,.7)');
+          for (const [mx, my] of [[S * .25, S * .9], [S * .75, S * .4]]) { g.fillStyle = em ? alt : '#e8eeff'; g.beginPath(); g.arc(mx, my, 40, 0, TAU); g.fill(); g.fillStyle = bg; g.beginPath(); g.arc(mx + 16, my - 8, 35, 0, TAU); g.fill(); }
+          g.strokeStyle = em ? c2 : 'rgba(170,190,255,.6)'; g.lineWidth = 3; for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) wave(g, S * (.12 + i * .25) + j * 12, 7, 2, i + j); };
+        out.map = T2(g => draw(g, base)); out.em = T2(g => draw(g, '#000')); } break;
+      case 'frost': { const vn = []; for (let i = 0; i < 14; i++) { let x = R() * S, y = R() * S, a = R() * TAU; const q = [[x, y]]; for (let k = 0; k < 12; k++) { a += (R() - .5) * 1.1; x += Math.cos(a) * 18; y += Math.sin(a) * 18; q.push([x, y]); } vn.push(q); }
+        const draw = (g, bg) => { const em = bg === '#000'; fill(g, bg); if (!em) { blots(g, 30, 20, 90, 'rgba(150,200,235,.25)'); blots(g, 24, 10, 40, 'rgba(255,255,255,.3)'); }
+          for (const q of vn) { for (const [c, lw] of (em ? [[alt, 5], ['#ffffff', 1.5]] : [['rgba(90,170,230,.6)', 3], ['rgba(255,255,255,.8)', 1]])) { g.strokeStyle = c; g.lineWidth = lw; g.beginPath(); q.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); }
+            g.lineWidth = 1.2; g.strokeStyle = em ? 'rgba(200,240,255,.8)' : 'rgba(255,255,255,.7)'; for (let k = 2; k < q.length; k += 3) { const [x, y] = q[k]; for (const sg of [-1, 1]) { g.beginPath(); g.moveTo(x, y); g.lineTo(x + sg * 10, y - 9); g.stroke(); } } } };
+        out.map = T2(g => draw(g, base)); out.em = T2(g => draw(g, '#000')); } break;
+      case 'reactor': { const draw = (g, bg) => { const em = bg === '#000'; fill(g, bg);
+          if (!em) { for (let y = 0; y < S; y += 2) { g.fillStyle = `rgba(255,255,255,${R() * .04})`; g.fillRect(0, y, S, 1); } for (const y0 of [S * .05, S * .55]) { g.save(); g.beginPath(); g.rect(0, y0, S, S * .1); g.clip(); g.fillStyle = '#ffd23a'; g.fillRect(0, y0, S, S * .1); g.fillStyle = '#16181c'; for (let x = -S; x < S * 2; x += 40) { g.beginPath(); g.moveTo(x, y0); g.lineTo(x + 20, y0); g.lineTo(x + 20 + S * .1, y0 + S * .1); g.lineTo(x + S * .1, y0 + S * .1); g.fill(); } g.restore(); } }
+          for (const y of [S * .28, S * .78]) for (let x = 12; x < S; x += 40) { g.fillStyle = em ? alt : '#0c1630'; g.fillRect(x, y - 7, 26, 14); if (em) { g.fillStyle = c2; g.fillRect(x + 4, y - 2, 18, 4); } }
+          g.strokeStyle = em ? alt : 'rgba(58,125,255,.6)'; g.lineWidth = 2.5; for (const y of [S * .2, S * .36, S * .7, S * .86]) { g.beginPath(); g.moveTo(0, y); g.lineTo(S, y); g.stroke(); } };
+        out.map = T2(g => draw(g, base)); out.em = T2(g => draw(g, '#000')); } break;
+      case 'cinder': { const riv = []; for (let i = 0; i < 14; i++) { let x = R() * S, y = R() * S, a = (R() - .5) * .8; const q = [[x, y]]; for (let k = 0; k < 16; k++) { a += (R() - .5) * .7; x += Math.cos(a) * 22; y += Math.sin(a) * 22; q.push([x, y]); } riv.push([q, rr2(1, 3)]); }
+        const draw = (g, bg) => { const em = bg === '#000'; fill(g, bg); if (!em) { blots(g, 30, 20, 80, 'rgba(40,30,40,.4)'); g.globalAlpha = .1; g.strokeStyle = '#ffffff'; for (let i = 0; i < 20; i++) { g.lineWidth = rr2(1, 3); wave(g, R() * S, 30, 1, R() * 6); } g.globalAlpha = 1; }
+          for (const [q, lw] of riv) for (const [c, k] of [['rgba(255,40,0,.4)', 5], [alt, 2], [c2, .7]]) { g.strokeStyle = c; g.lineWidth = lw * k; g.lineJoin = 'round'; g.beginPath(); q.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); }
+          for (let i = 0; i < 140; i++) { g.fillStyle = R() < .5 ? alt : c2; g.fillRect(R() * S, R() * S, 2, 2); } };
+        out.map = T2(g => draw(g, base)); out.em = T2(g => draw(g, '#000')); } break;
+      case 'rgb': { const draw = (g, em) => { if (!em) { fill(g, base); g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = 1.5; const r = 14, hw2 = r * Math.sqrt(3); for (let row = -1; row < S / (r * 1.5) + 1; row++) for (let col = -1; col < S / hw2 + 1; col++) { const cx = col * hw2 + (row % 2) * hw2 / 2, cy = row * r * 1.5; g.beginPath(); for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + Math.PI / 6; g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } g.closePath(); g.stroke(); } } else fill(g, '#000');
+          for (const [y, w] of [[S * .125, 8], [S * .375, 12], [S * .625, 8], [S * .875, 12]]) { const gr = g.createLinearGradient(0, 0, S, 0); for (let i = 0; i <= 12; i++) gr.addColorStop(i / 12, `hsl(${i * 30},100%,${em ? 60 : 45}%)`); g.fillStyle = gr; g.fillRect(0, y - w / 2, S, w); if (em) { g.globalAlpha = .3; g.fillRect(0, y - w * 1.7, S, w * 3.4); g.globalAlpha = 1; } } };
+        out.map = T2(g => draw(g, false), [3, 3]); out.em = T2(g => draw(g, true), [3, 3]); } break;
+      case 'spirit': { const fl = []; for (let i = 0; i < 22; i++) fl.push([R() * S, R() * S, rr2(14, 30), rr2(50, 110)]);
+        const draw = (g, bg) => { const em = bg === '#000'; fill(g, bg); if (!em) { blots(g, 20, 30, 90, 'rgba(30,70,60,.25)'); specks(g, 6000, .08); }
+          for (const [x, y, w, h] of fl) for (const dx of [-S, 0, S]) for (const dy of [-S, 0, S]) { const X0 = x + dx, Y0 = y + dy, gr = g.createLinearGradient(0, Y0, 0, Y0 - h); gr.addColorStop(0, em ? alt : 'rgba(125,255,154,.5)'); gr.addColorStop(.6, em ? c2 : 'rgba(234,255,240,.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(X0 - w, Y0); g.quadraticCurveTo(X0 - w * .8, Y0 - h * .5, X0 + w * .2, Y0 - h); g.quadraticCurveTo(X0 + w * .1, Y0 - h * .45, X0 + w, Y0); g.closePath(); g.fill(); } };
+        out.map = T2(g => draw(g, base)); out.em = T2(g => draw(g, '#000')); } break;
+      case 'forge': { const seams = []; for (let i = 0; i < 24; i++) { let x = R() * S, y = R() * S, a = R() * TAU; const q = [[x, y]]; for (let k = 0; k < 14; k++) { a += (R() - .5) * .9; x += Math.cos(a) * 20; y += Math.sin(a) * 20; q.push([x, y]); } seams.push([q, rr2(1.5, 3.5)]); }
+        const draw = (g, bg) => { const em = bg === '#000'; fill(g, bg); if (!em) { blots(g, 40, 8, 30, 'rgba(70,58,52,.35)'); blots(g, 30, 6, 18, 'rgba(0,0,0,.35)'); specks(g, 12000, .14); }
+          for (const [q, lw] of seams) for (const [c, k] of [['rgba(255,90,10,.35)', 5], [alt, 2.2], [c2, .8]]) { g.strokeStyle = c; g.lineWidth = lw * k; g.lineJoin = 'round'; g.beginPath(); q.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); }
+          if (em) for (let i = 0; i < 260; i++) { g.fillStyle = R() < .6 ? alt : c2; g.globalAlpha = .4 + R() * .6; g.fillRect(R() * S, R() * S, 2, 2); } g.globalAlpha = 1; };
+        out.map = T2(g => draw(g, base), [3, 3]); out.em = T2(g => draw(g, '#000'), [3, 3]); } break;
+      case 'rift': { const cr = []; for (let i = 0; i < 15; i++) { let x = R() * S, y = R() * S, a = R() * TAU; const q = [[x, y]]; for (let k = 0; k < 10; k++) { a += (R() - .5) * 1.8; x += Math.cos(a) * rr2(14, 30); y += Math.sin(a) * rr2(14, 30); q.push([x, y]); } cr.push(q); }
+        const draw = (g, bg) => { const em = bg === '#000'; fill(g, bg); if (!em) { for (let i = 0; i < 6; i++) { const x = R() * S, y = R() * S, r = rr2(60, 160), gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, i % 2 ? 'rgba(120,70,255,.22)' : 'rgba(40,200,255,.12)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, S, S); } specks(g, 5000, .08); }
+          stars(g, 120, 'rgba(200,240,255,.8)'); for (const q of cr) for (const [c, lw] of [[alt + '73', 9], [alt, 3.5], [c2, 1.4], ['#ffffff', .6]]) { g.strokeStyle = c; g.lineWidth = lw; g.lineJoin = 'miter'; g.beginPath(); q.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); } };
+        out.map = T2(g => draw(g, base)); out.em = T2(g => draw(g, '#000')); } break;
+      case 'runes': { const glyph = (g, x, y, s2, sd) => { g.beginPath(); g.moveTo(x - s2 * .2, y - s2); g.lineTo(x - s2 * .2, y + s2); if (sd & 1) { g.moveTo(x - s2 * .2, y - s2 * .3); g.lineTo(x + s2 * .7, y - s2); } if (sd & 2) { g.moveTo(x - s2 * .2, y + s2 * .2); g.lineTo(x + s2 * .7, y + s2 * .8); } if (sd & 4) { g.moveTo(x + s2 * .7, y - s2); g.lineTo(x + s2 * .7, y + s2 * .3); } if (sd & 8) { g.moveTo(x - s2 * .8, y); g.lineTo(x + s2 * .3, y); } g.stroke(); };
+        const rows = [S * .18, S * .5, S * .82], draw = (g, bg) => { const em = bg === '#000'; fill(g, bg); if (!em) { blots(g, 40, 10, 50, 'rgba(70,74,82,.3)'); blots(g, 30, 5, 20, 'rgba(0,0,0,.3)'); specks(g, 20000, .16); }
+          g.lineCap = 'round'; for (const y of rows) { g.strokeStyle = c2; g.lineWidth = 1.5; g.beginPath(); g.moveTo(0, y - 22); g.lineTo(S, y - 22); g.moveTo(0, y + 22); g.lineTo(S, y + 22); g.stroke(); g.strokeStyle = em ? alt : alt + 'cc'; g.lineWidth = 3; for (let x = 16; x < S; x += 32) glyph(g, x, y, 12, (x * 7 + y * 3) % 16); } };
+        out.map = T2(g => draw(g, base), [3, 3]); out.em = T2(g => draw(g, '#000'), [3, 3]); } break;
       default: out.map = T2(g => fill(g, base));
     }
     return out;
@@ -95,7 +150,7 @@
   }
   // the animated finishes, ticked every frame
   const SKIN_LIVE = [];
-  function skinTick(dt) { const t = X ? X.t : 0; for (const L2 of SKIN_LIVE) L2(t, dt); }
+  function skinTick(dt) { const t = X ? X.t : 0; for (const L2 of SKIN_LIVE) L2(t, dt); rfxTick(); }
   function skinMats(base, k, line) {
     const key = k + '|' + line; if (SKMAT[key]) return SKMAT[key];
     const L = LINES[line], T = skinTex(line), env = (m, ei) => { if (X && X.env) { m.envMap = X.env; m.envMapIntensity = ei; } return m; }, tier = RARITY[L.r].tier, lc = c => new THREE.Color(c).convertSRGBToLinear();
@@ -128,13 +183,15 @@
       else if (L.live === 'flow' && em) SKIN_LIVE.push(t => { em.offset.x = (t * .06) % 1; });
       else if (L.live === 'flicker') { let nx = 0, on = 1; SKIN_LIVE.push((t, dt) => { if ((nx -= dt) <= 0) { nx = .04 + R() * .3; on = R() < .2 ? 2.2 : .7 + R() * .4; } f.emissiveIntensity = lp(f.emissiveIntensity, on, .5); }); }
       else if (L.live === 'shift') SKIN_LIVE.push(t => { mp.offset.x = (t * .05) % 1; mp.offset.y = (t * .02) % 1; });
+      else if (L.live === 'surge') SKIN_LIVE.push(t => { f.emissiveIntensity = 1.15 + Math.sin(t * 2.6) * .3 + Math.pow(Math.max(0, Math.sin(t * 1.3)), 12) * .9; if (em) em.offset.x = (t * .03) % 1; });   // a forge's heat, and its heartbeat
+      else if (L.live === 'flowpulse') SKIN_LIVE.push(t => { f.emissiveIntensity = 1.1 + Math.sin(t * 2.2) * .35; if (em) em.offset.x = (t * .05) % 1; });
     }
     for (const q of ['fin']) if (M2[q] !== base[q] && M2[q].color && !M2[q].map) M2[q].color.convertSRGBToLinear();
     return SKMAT[key] = M2;
   }
   // a line's parts, sized from the gun: bb is the gun's box, len its barrel, ax the barrel's axis height
   function skinKit(G, k, line, m, len) {
-    const L = LINES[line], tier = RARITY[L.r].tier; if (tier < 1 || k === 'knife') return;
+    const L = LINES[line], tier = RARITY[L.r].tier, gl = !!L.gk; if (k === 'knife') { if (gl) knifeGlow(G, line); return; } if (tier < 1) return;
     G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(G), top = bb.max.y, ax = .025, lc = c => new THREE.Color(c).convertSRGBToLinear();
     // the gun's own surface under a point along it (so parts sit on the barrel, not up at the height of the sight)
     const ray = new THREE.Raycaster(), meshes = []; G.traverse(o => { if (o.isMesh) meshes.push(o); });
@@ -146,17 +203,18 @@
     const along = q => lp(bb.max.z, -len, q);   // along the gun: 0 at the back, 1 at the muzzle
     if (L.pat) {
       const hw = (bb.max.x - bb.min.x) / 2;
-      for (const q of [.86, .93]) add(new THREE.TorusGeometry(.016, .003, 8, 18), m.acc, 0, ax, along(q));
+      if (!gl) for (const q of [.86, .93]) add(new THREE.TorusGeometry(.016, .003, 8, 18), m.acc, 0, ax, along(q));   // (a glowing line brings its own rings)
       for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.003, .016, (bb.max.z - bb.min.z) * .18), m.acc, sx * (hw + .0015), ax + .004, along(.42));
       if (tier >= 2) { for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.002, .005, (bb.max.z - bb.min.z) * .3), m.glow, sx * (hw + .003), ax - .008, along(.35)); add(new THREE.CylinderGeometry(.015, .013, .028, 12, 1, true), m.acc, 0, ax, along(.985), Math.PI / 2); }
-      if (tier >= 3) { const id = L.fx && L.fx.idle;
+      if (tier >= 3 && !(gl && L.gk.pts)) { const id = L.fx && L.fx.idle;
         if (id === 'embers') for (let i = 0; i < 8; i++) { const z0 = along(.5 + R() * .4); live(add(new THREE.PlaneGeometry(.006, .006), glowM(i % 2 ? '#ffd27a' : L.alt), 0, topAt(z0), z0), (o, t, dt) => { const u = o.userData; u.k = (u.k == null ? R() : u.k) + dt * .6; if (u.k > 1) { u.k = 0; u.x = (R() - .5) * .02; } o.position.y = topAt(z0) + u.k * .07; o.position.x = (u.x || 0) + Math.sin(u.k * 9) * .004; o.material.opacity = 1 - u.k; }); }
         else if (id === 'motes') for (let i = 0; i < 6; i++) live(add(new THREE.PlaneGeometry(.005, .005), glowM(i % 2 ? '#ffffff' : L.alt), 0, 0, 0), (o, t) => { const a = t * 1.2 + i * TAU / 6; o.position.set(Math.cos(a) * .045, ax + Math.sin(a * 1.3) * .03, along(.55) + Math.sin(a) * .05); });
         else if (id === 'arcs') for (let i = 0; i < 2; i++) { const g2 = new THREE.BufferGeometry(); g2.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(18), 3)); const ln = new THREE.Line(g2, new THREE.LineBasicMaterial({ color: lc(L.alt), transparent: true, opacity: .9 })); K2.add(ln); ln.userData.live = true;
           ln.userData.anim = (o, t, dt) => { const u = o.userData; if ((u.n = (u.n || 0) - dt) > 0) return; u.n = .04 + R() * .14; o.visible = R() < .5; const pa = o.geometry.attributes.position.array, z0 = along(.45 + R() * .35); for (let k = 0; k < 6; k++) { pa[k * 3] = (k % 2 ? 1 : -1) * hw * .8 + (R() - .5) * .006; pa[k * 3 + 1] = ax + (R() - .5) * .02; pa[k * 3 + 2] = z0 - k * .008; } o.geometry.attributes.position.needsUpdate = true; }; } }
-      if (tier >= 4) { for (const [r, sp] of [[.03, 1.4], [.022, -2]]) live(add(new THREE.TorusGeometry(r, .0022, 6, 32), glowM(L.alt), 0, ax, along(.99)), (o, t) => { o.rotation.set(t * sp * .4, t * sp, 0); });
+      if (tier >= 4 && !gl) { for (const [r, sp] of [[.03, 1.4], [.022, -2]]) live(add(new THREE.TorusGeometry(r, .0022, 6, 32), glowM(L.alt), 0, ax, along(.99)), (o, t) => { o.rotation.set(t * sp * .4, t * sp, 0); });
         const cz = along(.62), cy0 = topAt(cz) + .04; live(add(new THREE.OctahedronGeometry(.012, 0), glowM(L.alt), 0, cy0, cz), (o, t) => { o.position.y = cy0 + Math.sin(t * 2) * .006; o.rotation.y = t * 1.5; }); }
     }
+    if (gl) glowKit(G, K2, k, line, { bb, len, ax, topAt, along, add, live, meshes, m });   // 77-skinfx: strips, rings, cells, halos, particles, its signature piece
     if (line === 'tidewater') for (const q of [.72, .8, .88]) add(new THREE.TorusGeometry(.016, .0028, 8, 18), m.acc, 0, ax, along(q));
     if (line === 'circuit') { add(new THREE.BoxGeometry(.012, .024, .05), m.dark, .024, ax + .01, along(.45)); add(new THREE.BoxGeometry(.003, .016, .04), m.glow, .031, ax + .01, along(.45)); }
     if (line === 'glacier') {   // ice: shards along the top and a crown of them round the muzzle
@@ -191,8 +249,8 @@
     }
   }
   // knife blades by line: the shape of the blade and what is built round it
-  const KNIFE_SHAPE = { dune: 'kukri', nightshift: 'tanto', tidewater: 'kukri', circuit: 'tanto', glacier: 'crystal', aurum: 'ornate', inferno: 'cleaver', storm: 'coil', voidline: 'energy', solaris: 'energy' };
-  for (const [k, L] of Object.entries(LINES)) if (L.pat && !KNIFE_SHAPE[k]) KNIFE_SHAPE[k] = ['tanto', 'kukri', 'cleaver', 'coil', 'energy'][RARITY[L.r].tier];
+  const KNIFE_SHAPE = { dune: 'kukri', nightshift: 'tanto', tidewater: 'kukri', circuit: 'tanto', glacier: 'crystal', aurum: 'ornate', inferno: 'cleaver', storm: 'coil', voidline: 'energy', solaris: 'energy', starforge: 'cleaver', riftborn: 'energy', glyphbound: 'ornate', permafrost: 'crystal', holoform: 'energy' };
+  for (const [k, L] of Object.entries(LINES)) if (L.pat && !KNIFE_SHAPE[k]) KNIFE_SHAPE[k] = ['tanto', 'kukri', 'cleaver', 'coil', 'energy', 'energy'][RARITY[L.r].tier];
   // call every moving part's anim under a gun (first person or a rival's)
   function animKit(G, dt) { if (!G) return; let A = G.userData.kitAnims; if (!A) { A = G.userData.kitAnims = []; G.traverse(o => { if (o.userData.anim) A.push(o); }); } const t = X.t; for (const o of A) o.userData.anim(o, t, dt); }
 
@@ -205,28 +263,49 @@
     for (let i = 0; i < 90; i++) { const mt = glowM(); if (i >= 30) mt.map = dot; else { mt.blending = THREE.NormalBlending; mt.transparent = true; } const m = new THREE.Mesh(i < 30 ? cg : pg, mt); m.visible = false; m.userData = { t: 0, life: 0 }; X.scene.add(m); X.kx.parts.push(m); }
     for (let i = 0; i < 3; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), glowM()); m.visible = false; m.userData = { t: 9 }; X.scene.add(m); X.kx.shells.push(m); }
     for (let i = 0; i < 2; i++) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(16 * 3), 3)); const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color: '#ffffff', transparent: true, blending: THREE.AdditiveBlending, toneMapped: false })); l.visible = false; l.userData = { t: 9 }; X.scene.add(l); X.kx.bolts.push(l); }
+    // the Paragons': circles laid on the floor (rings, runes, a portal), a tear in the air, a pillar of light
+    const S = sfx(), one = (geo, map) => { const mt = glowM(); mt.map = map; const m = new THREE.Mesh(geo, mt); m.visible = false; m.userData = { t: 9, life: 1 }; X.scene.add(m); return m; };
+    X.kx.flat = [0, 1, 2].map(() => one(pg, S.ring)); X.kx.tear = one(pg, S.tear);
+    X.kx.beam = one(new THREE.CylinderGeometry(1, 1, 1, 18, 1, true), canvasTex(8, 128, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.3, 'rgba(255,255,255,.85)'); gr.addColorStop(1, 'rgba(255,255,255,.35)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }));
   }
   function killFx(v, line) {
     const L = LINES[line], K3 = L && L.kill; if (!K3 || !X || !X.kx) return; const c = [v.x, v.y + 1.1, v.z], kx = X.kx, cols = [K3.col, K3.col2];
-    const part = (pos, vel, col, life, size, mode, i) => { const m = kx.parts.find(p => !p.visible && (mode === 'coin') === (kx.parts.indexOf(p) < 30)) || kx.parts[(kx.pn = (kx.pn || 0) + 1) % kx.parts.length]; m.visible = true; m.position.set(pos[0], pos[1], pos[2]); m.material.color.set(col); m.scale.setScalar(size); Object.assign(m.userData, { t: 0, life, v: vel.slice(), mode, size, c0: [pos[0], pos[1], pos[2]], cen: c, spin: rnd(-8, 8) }); };
-    const shell = (col, r, life, implode) => { const m = kx.shells.find(s => s.userData.t > s.userData.life) || kx.shells[0]; m.visible = true; m.position.set(c[0], c[1], c[2]); m.material.color.set(col); Object.assign(m.userData, { t: 0, life, r, implode }); };
+    const part = (pos, vel, col, life, size, mode, delay = 0) => { const m = kx.parts.find(p => !p.visible && (mode === 'coin') === (kx.parts.indexOf(p) < 30)) || kx.parts[(kx.pn = (kx.pn || 0) + 1) % kx.parts.length]; m.visible = true; m.position.set(pos[0], pos[1], pos[2]); m.material.color.set(col); m.scale.setScalar(delay ? .0001 : size); Object.assign(m.userData, { t: -delay, life, v: vel.slice(), mode, size, c0: [pos[0], pos[1], pos[2]], cen: c, spin: rnd(-8, 8) }); };
+    const shell = (col, r, life, implode, delay = 0) => { const m = kx.shells.find(s => s.userData.t > s.userData.life) || kx.shells[0]; m.visible = true; m.position.set(c[0], c[1], c[2]); m.material.color.set(col); m.scale.setScalar(.0001); Object.assign(m.userData, { t: -delay, life, r, implode }); };
+    const S = sfx(), flat = (map, col, y, r0, r1, life, delay = 0, spin = 0) => { const m = kx.flat.find(f => !f.visible) || kx.flat[0]; m.visible = true; m.material.map = map; m.material.color.set(col); m.position.set(c[0], y, c[2]); m.rotation.set(-Math.PI / 2, 0, 0); m.scale.setScalar(.0001); Object.assign(m.userData, { t: -delay, life, r0, r1, spin }); };
     if (K3.kind === 'shards') { for (let i = 0; i < 26; i++) part(c, [rnd(-4, 4), rnd(0, 5), rnd(-4, 4)], pick(cols), rnd(.7, 1.1), rnd(.05, .12), 'fall'); shell(K3.col, 1.8, .4); }
     else if (K3.kind === 'coins') { for (let i = 0; i < 22; i++) part(c, [rnd(-2.5, 2.5), rnd(3, 6), rnd(-2.5, 2.5)], pick(cols), rnd(1, 1.4), rnd(.07, .1), 'coin'); shell(K3.col2, 1.4, .35); }
     else if (K3.kind === 'flame') { for (let i = 0; i < 34; i++) part([c[0] + rnd(-.3, .3), c[1] + rnd(-.8, .4), c[2] + rnd(-.3, .3)], [rnd(-.8, .8), rnd(1.5, 4), rnd(-.8, .8)], pick(cols), rnd(.6, 1.1), rnd(.08, .2), 'rise'); shell(K3.col, 1.6, .35); }
     else if (K3.kind === 'bolt') { const b = kx.bolts.find(q => q.userData.t > .35) || kx.bolts[0], p = b.geometry.attributes.position.array; for (let j = 0; j < 16; j++) { const q = j / 15; p[j * 3] = c[0] + (j && j < 15 ? rnd(-.6, .6) : 0); p[j * 3 + 1] = lp(c[1] + 22, v.y, q); p[j * 3 + 2] = c[2] + (j && j < 15 ? rnd(-.6, .6) : 0); } b.geometry.attributes.position.needsUpdate = true; b.visible = true; b.material.color.set(K3.col2); b.userData.t = 0;
       for (let i = 0; i < 20; i++) part([c[0], v.y + .1, c[2]], [rnd(-5, 5), rnd(1, 5), rnd(-5, 5)], pick(cols), rnd(.4, .7), rnd(.04, .08), 'fall'); shell(K3.col, 1.5, .3); X.flashL.position.set(c[0], c[1] + 1, c[2]); X.flashL.intensity = 22; }
     else if (K3.kind === 'void') { for (let i = 0; i < 36; i++) { const a = rnd(0, TAU), r = rnd(1.2, 2.4); part([c[0] + Math.cos(a) * r, c[1] + rnd(-1, 1), c[2] + Math.sin(a) * r], [0, 0, 0], pick(cols), rnd(.45, .6), rnd(.06, .12), 'suck'); } shell(K3.col, 2.4, .6, true); }
+    else if (K3.kind === 'nova') {   // a star collapsing, then going off: drawn in, a flash, rings of fire across the floor, rays every way
+      for (let i = 0; i < 30; i++) { const a = rnd(0, TAU), r = rnd(1, 2); part([c[0] + Math.cos(a) * r, c[1] + rnd(-.8, .8), c[2] + Math.sin(a) * r], [0, 0, 0], pick(cols), .32, rnd(.06, .1), 'suck'); }
+      for (let i = 0; i < 36; i++) { const a = i / 36 * TAU, e = rnd(-.4, .6); part(c, [Math.cos(a) * 7 * Math.cos(e), Math.sin(e) * 5, Math.sin(a) * 7 * Math.cos(e)], pick(cols), .55, rnd(.08, .15), 'ray', .3); }
+      flat(S.ring, K3.col, v.y + .05, .3, 5.5, .7, .3); flat(S.ring, K3.col2, v.y + .08, .2, 3.4, .55, .36); shell(K3.col2, 2.6, .5, false, .3); X.flashL.position.set(c[0], c[1], c[2]); X.flashL.intensity = 26; }
+    else if (K3.kind === 'rift') {   // the air tears open where they stood, drinks them in and snaps shut
+      const tr = kx.tear; tr.visible = true; tr.position.set(c[0], c[1], c[2]); tr.material.color.set(K3.col2); Object.assign(tr.userData, { t: 0, life: 1 });
+      for (let i = 0; i < 40; i++) { const a = rnd(0, TAU), r = rnd(.8, 2.2); part([c[0] + Math.cos(a) * r, c[1] + rnd(-1.2, 1.2), c[2] + Math.sin(a) * r], [0, 0, 0], pick(cols), rnd(.45, .75), rnd(.05, .1), 'suck'); }
+      shell(K3.col, 1.6, .7, true); flat(S.portal, K3.col, v.y + .04, 2.4, .2, .9, 0, -6); for (let i = 0; i < 16; i++) part(c, [rnd(-3, 3), rnd(-1, 3), rnd(-3, 3)], K3.col2, .4, rnd(.05, .09), 'fall', .75); }
+    else if (K3.kind === 'glyph') {   // a circle of runes burns into the floor and a pillar of light takes them
+      flat(S.rune, K3.col, v.y + .04, .4, 2.6, 1.4, 0, 1.4); flat(S.rune, K3.col2, v.y + .06, .3, 1.5, 1.2, .1, -2.2);
+      const b = kx.beam; b.visible = true; b.position.set(c[0], v.y, c[2]); b.material.color.set(K3.col); Object.assign(b.userData, { t: -.12, life: 1.1, y0: v.y });
+      for (let i = 0; i < 30; i++) { const a = rnd(0, TAU), r = rnd(.2, 1.2); part([c[0] + Math.cos(a) * r, v.y + rnd(0, .4), c[2] + Math.sin(a) * r], [0, rnd(1.5, 4), 0], pick(cols), rnd(.7, 1.1), rnd(.05, .1), 'rise', rnd(0, .3)); }
+      shell(K3.col2, 1.7, .45, false, .15); X.flashL.position.set(c[0], c[1] + 1, c[2]); X.flashL.intensity = 16; }
     else if (K3.kind === 'sun') { for (let i = 0; i < 30; i++) { const a = i / 30 * TAU; part(c, [Math.cos(a) * 6, rnd(-.5, .5), Math.sin(a) * 6], pick(cols), .5, rnd(.08, .14), 'ray'); } shell(K3.col2, 2.2, .45); X.flashL.position.set(c[0], c[1], c[2]); X.flashL.intensity = 18; }
   }
   function stepKillFx(dt) {
     const kx = X.kx; if (!kx) return; const q = X.camera.quaternion;
-    for (const m of kx.parts) { if (!m.visible) continue; const u = m.userData; u.t += dt; const k = u.t / u.life; if (k >= 1) { m.visible = false; continue; }
+    for (const m of kx.parts) { if (!m.visible) continue; const u = m.userData; u.t += dt; if (u.t < 0) continue; const k = u.t / u.life; if (k >= 1) { m.visible = false; continue; }
       if (u.mode === 'suck') { const f = k * k * (3 - 2 * k); m.position.set(lp(u.c0[0], u.cen[0], f), lp(u.c0[1], u.cen[1], f), lp(u.c0[2], u.cen[2], f)); }   // drawn into the middle
       if (u.mode === 'fall' || u.mode === 'coin') { u.v[1] -= 12 * dt; } else if (u.mode === 'rise') { u.v[0] *= .96; u.v[2] *= .96; }
       if (u.mode !== 'suck') { m.position.x += u.v[0] * dt; m.position.y += u.v[1] * dt; m.position.z += u.v[2] * dt; }
       if (u.mode === 'coin') { m.rotation.x += u.spin * dt; m.rotation.z += u.spin * .7 * dt; m.material.opacity = 1 - Math.max(0, k - .7) / .3; }
       else { m.quaternion.copy(q); m.material.opacity = (1 - k) * .95; m.scale.setScalar(u.size * 2.2 * (u.mode === 'rise' ? 1 + k : u.mode === 'ray' ? 1 - k * .5 : 1)); }
     }
-    for (const s of kx.shells) { const u = s.userData; if (!s.visible) continue; u.t += dt; const k = u.t / u.life; if (k >= 1) { s.visible = false; continue; } s.scale.setScalar(u.implode ? u.r * (1 - k) + .05 : .2 + u.r * k); s.material.opacity = u.implode ? .5 * k : .55 * (1 - k); }
+    for (const s of kx.shells) { const u = s.userData; if (!s.visible) continue; u.t += dt; if (u.t < 0) continue; const k = u.t / u.life; if (k >= 1) { s.visible = false; continue; } s.scale.setScalar(u.implode ? u.r * (1 - k) + .05 : .2 + u.r * k); s.material.opacity = u.implode ? .5 * k : .55 * (1 - k); }
     for (const b of kx.bolts) { const u = b.userData; if (!b.visible) continue; u.t += dt; b.visible = u.t < .35; b.material.opacity = Math.random() < .3 ? .3 : 1 - u.t / .35; }
+    for (const m of kx.flat || []) { if (!m.visible) continue; const u = m.userData; u.t += dt; if (u.t < 0) continue; const k = u.t / u.life; if (k >= 1) { m.visible = false; continue; } m.scale.setScalar(lp(u.r0, u.r1, 1 - (1 - k) * (1 - k)) * 2); m.rotation.z += u.spin * dt; m.material.opacity = (1 - k) * Math.min(1, k * 10); }
+    if (kx.tear && kx.tear.visible) { const m = kx.tear, u = m.userData; u.t += dt; const k = u.t / u.life; if (k >= 1) m.visible = false; else { const open = k < .2 ? sm(k / .2) : k < .7 ? 1 : 1 - sm((k - .7) / .3); m.scale.set(.15 + open * .7 + (Math.random() < .2 ? .12 : 0), 2.6 * (.5 + open * .5), 1); m.rotation.set(0, Math.atan2(X.camera.position.x - m.position.x, X.camera.position.z - m.position.z), 0); m.material.opacity = open; } }
+    if (kx.beam && kx.beam.visible) { const m = kx.beam, u = m.userData; u.t += dt; if (u.t < 0) m.scale.set(.0001, .0001, .0001); else { const k = u.t / u.life; if (k >= 1) m.visible = false; else { const r = .55 * (1 - k * .6), hh = 7 * sm(Math.min(1, k * 4)); m.scale.set(r, hh, r); m.position.y = u.y0 + hh / 2; m.material.opacity = (1 - k) * .9; } } }
   }

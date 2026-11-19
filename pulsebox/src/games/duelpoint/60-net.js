@@ -14,11 +14,15 @@
     if (!M.online) return;
     if (!M.over) for (const f of M.fs) if (f.dc && M.time - f.dc > DC_WAIT) goneFor(f);
     M.netT -= dt; if (M.netT > 0) return; M.netT = .05;
-    for (const f of M.fs) if (!f.net && !f.gone) net({ t: 's', f: f.key, x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
+    // a host running bots sends all its fighters in one message (up to eight fighters: far fewer messages through the relay)
+    const out = [];
+    for (const f of M.fs) if (!f.net && !f.gone) out.push({ t: 's', f: f.key, x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
       al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, op: f.op, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0, rt: f.rating || 0, sk: (f.skins && f.skins[f.guns[f.slot]]) || 0 });
+    if (out.length === 1) net(out[0]); else if (out.length) net({ t: 'S', a: out.map(q => { delete q.t; return q; }) });
   }
   function netMsg(m) {
     if (!M || !M.online || M.over) return;
+    if (m.t === 'S') { if (Array.isArray(m.a)) for (const q of m.a) if (q && typeof q === 'object') netMsg(Object.assign(q, { t: 's', from: m.from })); return; }   // several fighters' snapshots in one
     switch (m.t) {   // the host's calls
       case 'live': if (!M.host) { M.phase = 'live'; M.t = roundT(); emit('live'); } return;
       case 'end': if (!M.host) endRound(m.wi ^ (M.flip || 0), m.why); return;
@@ -63,24 +67,29 @@
     const a = sn[0], b = sn[1] || a, k = b === a || b.at - a.at < 1e-6 ? 1 : cl((rt - a.at) / (b.at - a.at), 0, 1.4);
     f.x = lp(a.x, b.x, k); f.y = lp(a.y, b.y, k); f.z = lp(a.z, b.z, k); f.yaw = a.yw + angDiff(b.yw, a.yw) * k; f.pitch = lp(a.pt, b.pt, k); f.vx = b.vx; f.vz = b.vz; f.walkT += Math.hypot(f.vx, f.vz) * dt;
   }
-  /* The room: two to four friends. VERSUS (2v2) splits them into two teams of at least two (seat order: 1st and 3rd against
-     2nd and 4th); DUEL is one-on-one with two players; CO-OP puts everyone on one team. Bots fill the short team, run by the host; the host's settings say who attacks first. */
+  /* The room: two to eight friends. VERSUS (2v2) splits them into two teams of at least two (seat order: 1st and 3rd against
+     2nd and 4th); DUEL is one-on-one with two players; CO-OP puts everyone on one team. Bots fill the short team, run by the host; the host's settings say who attacks first.
+     From the party, teams run up to 4v4. A bot takes an operative nobody on its team has yet, and a name no player has. */
   function seatsFor(cfg, roster) {
     const humans = roster.filter(p => !p.bot), coop = cfg.team === 'coop';
+    let seats, b = 0;
+    const bot = t => { const mine = seats.filter(s => s.team === t).map(s => s.op), ops = cfg.ops, names = cfg.names.filter(n => !seats.some(s => s.name === n));
+      let op = ops[b % ops.length]; for (let i = 0; i < ops.length; i++) { const k = ops[(b + i) % ops.length]; if (!mine.includes(k)) { op = k; break; } }
+      seats.push({ key: 'b' + b, name: names.length ? names[b % names.length] : cfg.names[b % cfg.names.length], team: t, bot: true, op }); b++; };
     if (cfg.teams) {   // from the party: the host's teams, everyone's operative and rating; bots fill up to the team size (or just enough for a rival)
-      const seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: cfg.teams[p.id] != null ? +cfg.teams[p.id] : i % 2, op: cfg.hops && cfg.hops[p.id], rating: cfg.rts && cfg.rts[p.id] })), size = cfg.size || 2; let b = 0;
-      for (const t of [0, 1]) { const have = seats.filter(s => s.team === t).length, want = cfg.fill === false ? Math.max(1, have) : Math.max(size, have); for (let n = have; n < want; n++, b++) seats.push({ key: 'b' + b, name: cfg.names[b % cfg.names.length], team: t, bot: true, op: cfg.ops[b % cfg.ops.length] }); }
+      seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: cfg.teams[p.id] != null ? +cfg.teams[p.id] : i % 2, op: cfg.hops && cfg.hops[p.id], rating: cfg.rts && cfg.rts[p.id] })); const size = cfg.size || 2;
+      for (const t of [0, 1]) { const have = seats.filter(s => s.team === t).length, want = cfg.fill === false ? Math.max(1, have) : Math.max(size, have); for (let n = have; n < want; n++) bot(t); }
       return seats;
     }
-    const seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: coop ? 0 : i % 2 }));
+    seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: coop ? 0 : i % 2 }));
     const size = coop ? Math.max(2, humans.length) : Math.max(cfg.team === 'duel' ? 1 : 2, ...[0, 1].map(t => seats.filter(s => s.team === t).length));
-    let b = 0; for (const t of [0, 1]) for (let n = seats.filter(s => s.team === t).length; n < size; n++, b++) seats.push({ key: 'b' + b, name: cfg.names[b % cfg.names.length], team: t, bot: true, op: cfg.ops[b % cfg.ops.length] });
+    for (const t of [0, 1]) for (let n = seats.filter(s => s.team === t).length; n < size; n++) bot(t);
     return seats;
   }
   Object.assign(MP.opts, {
-    max: 4, min: 2, bots: 0, solo: false, onClose: () => { if (screen !== 'menu') toMenu(); }, sub: 'Create a room and send your friends the code. Two to four players.',
+    max: 8, min: 2, bots: 0, solo: false, onClose: () => { if (screen !== 'menu') toMenu(); }, sub: 'Create a room and send your friends the code. Two to eight players.',
     config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0, map: pick(mapPool(CFG.sites)), sites: CFG.sites, team: CFG.team, botDiff: CFG.diff === 'auto' ? diffFor(STATS.rating).i : CFG.diff,
-      names: [...BOT_NAMES].sort(() => R() - .5), ops: Array.from({ length: 4 }, () => pick(Object.keys(OPS))) }),
+      names: [...BOT_NAMES].sort(() => R() - .5), ops: [...Object.keys(OPS)].sort(() => R() - .5) }),
     onStart: (cfg, roster) => { cfg.names = cfg.names || BOT_NAMES; cfg.ops = cfg.ops || ['vex']; startMatch({ mode: 'online', seats: seatsFor(cfg, roster), hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map, botDiff: cfg.botDiff }); emit('matchStart'); },
     onMsg: netMsg,
     // someone's connection dropped: they get DC_WAIT seconds to come back (their game rejoins the room by itself) before
