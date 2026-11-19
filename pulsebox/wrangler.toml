@@ -111,3 +111,12 @@ class_name = "ArrowwoodBank"
 [[migrations]]
 tag = "v9"
 new_sqlite_classes = ["ArrowwoodRoom", "ArrowwoodBank"]
+
+# STILLWATER (stillwater-rooms.js): one Durable Object per room code runs the poolrooms simulation (stillwater/shared)
+[[durable_objects.bindings]]
+name = "STILLWATER"
+class_name = "StillwaterRoom"
+
+[[migrations]]
+tag = "v10"
+new_sqlite_classes = ["StillwaterRoom"]

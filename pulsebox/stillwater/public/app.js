@@ -87,10 +87,10 @@ function leave(){versionMismatch=false;clearScare();deathSequence.reset(null);co
 function connect(payload){
   versionMismatch=false;
   if(connection)connection.close();screen='connecting';render();
-  const ws=new WebSocket(socketURL(location));connection=ws;
+  const ws=new WebSocket(socketURL(location,payload));connection=ws;
   ws.addEventListener('open',()=>{connected=true;ws.send(JSON.stringify({...payload,worldVersion:WORLD_VERSION}));});
   ws.addEventListener('message',e=>{if(connection!==ws)return;let msg;try{msg=JSON.parse(e.data);}catch{return;}onMessage(msg);});
-  ws.addEventListener('close',()=>{if(connection!==ws)return;connected=false;controls.suspend();clearScare();if(room){releaseInput();screen='disconnected';render();}else if(screen==='connecting'){screen='home';render();toast('Could not connect. Start the local game server and try again.');}});
+  ws.addEventListener('close',()=>{if(connection!==ws)return;connected=false;controls.suspend();clearScare();if(room){releaseInput();screen='disconnected';render();}else if(screen==='connecting'){screen='home';render();toast(globalThis.STILLWATER_ROOMS?'Could not connect. Check your internet connection and try again.':'Could not connect. Start the local game server and try again.');}});
   ws.addEventListener('error',()=>{if(screen==='connecting')toast('Could not reach the game server.');});
 }
 function onMessage(m){
