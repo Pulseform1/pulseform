@@ -7,7 +7,7 @@ import { art } from './_art.mjs';
      Ruins       broken rooms in the middle: Gatehouse, the roofed Pillar Hall, the Broken Hall, then the Arch Court and the
                  wide Arch (3 wide). Corners and doorways everywhere; the Collapse links it to Vine Hall.
      Riverbed    a winding 2-wide ravine down the south-west, a grass curtain at the end, in at the River Mouth.
-   The Bridge drops from the Broken Hall into the Riverbed. Defenders come up the roofed Sanctum to the Temple's east door,
+   The Bridge runs from the Broken Hall down into the Riverbed. Defenders come up the roofed Sanctum to the Temple's east door,
    or out through the Vine Drop to catch Vine Hall from the side. */
 const m = art([
   '########################################',
