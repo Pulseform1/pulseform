@@ -93,14 +93,14 @@ function paintGrass(T) {
 }
 function paintForest(T) {
   const c = canvas(GS), g = c.getContext('2d'), im = g.createImageData(GS, GS), d = im.data;
-  const a0 = hex('#2a1c11'), a1 = hex('#47301c'), moss = hex('#3f4b22');
+  const a0 = hex('#2a1f15'), a1 = hex('#443222'), moss = hex('#3f4b22');
   for (let y = 0; y < GS; y++) for (let x = 0; x < GS; x++) {
     const u = x / GS, v = y / GS, n1 = T.fbm(u, v, 6, 4), n2 = T.fbm(u + .5, v + .2, 3, 3);
     let col = lerpC(a0, a1, clamp01(.5 + n1 * 1.2)); col = lerpC(col, moss, sstep(.18, .4, n2) * .8);
     const o = (y * GS + x) * 4; d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = 255;
   }
   g.putImageData(im, 0, 0);
-  const R = T.R, cols = ['#8a5a2e', '#9c7a4c', '#5a3a22', '#6b5d4d', '#b07a40', '#7a4a26', '#3a2818'].map(hex);
+  const R = T.R, cols = ['#7a5636', '#8c7452', '#54402a', '#6b5d4d', '#94704a', '#6a4a30', '#3a2c1e'].map(hex);
   g.lineCap = 'round';
   for (let i = 0; i < 2600; i++) { // fallen leaves and bark flakes under the needles
     const x = R() * GS, y = R() * GS, r = 2 + R() * 4, cc = R() < .5 ? hex('#7a5a2a') : hex('#5a4024'), a = R() * Math.PI;

@@ -32,7 +32,7 @@ export class Lantern {
     this.level += ((this.on ? 1 : 0) - this.level) * Math.min(1, dt * 6);
     const fl = 0.9 + 0.06 * Math.sin(this.t * 17.3) * Math.sin(this.t * 6.1) + 0.04 * Math.sin(this.t * 31.7);
     const k = this.level * fl;
-    this.light.intensity = (this.carried ? 5.5 : 7) * k * (0.35 + 0.65 * night);
+    this.light.intensity = (this.carried ? 11 : 8) * k * (0.3 + 0.7 * night);
     this.glass.emissiveIntensity = 1.6 * k; this.flame.visible = this.level > 0.05; this.flame.scale.set(1, 1.6 + .5 * fl, 1);
   }
 }

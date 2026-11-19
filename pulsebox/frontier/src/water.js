@@ -26,10 +26,10 @@ export class Water {
         .replace('#include <normal_fragment_maps>', `{
   vec2 w = uWind.xy * ( 0.4 + uWind.z );
   vec2 p = vWP.xz;
-  vec3 n1 = texture2D( uRip, p * 0.045 + w * uTime * 0.012 ).xyz * 2.0 - 1.0;
-  vec3 n2 = texture2D( uRip, p * 0.11 * mat2( 0.8, 0.6, -0.6, 0.8 ) - w * uTime * 0.021 ).xyz * 2.0 - 1.0;
+  vec3 n1 = texture2D( uRip, p * 0.03 + w * uTime * 0.01 ).xyz * 2.0 - 1.0;
+  vec3 n2 = texture2D( uRip, p * 0.075 * mat2( 0.8, 0.6, -0.6, 0.8 ) - w * uTime * 0.017 ).xyz * 2.0 - 1.0;
   vec3 n3 = texture2D( uRip, p * 0.013 + vec2( uTime * 0.004, 0.0 ) ).xyz * 2.0 - 1.0;
-  float d = distance( vWP, cameraPosition ), k = ( 0.45 + 0.4 * uWind.z ) * mix( 1.0, 0.3, smoothstep( 30.0, 400.0, d ) );
+  float d = distance( vWP, cameraPosition ), k = ( 0.22 + 0.3 * uWind.z ) * mix( 1.0, 0.25, smoothstep( 20.0, 300.0, d ) );
   vec2 t = ( n1.xy + n2.xy * 0.7 + n3.xy * 0.8 ) * k;
   vec3 pn = normalize( vec3( t.x, 1.0, t.y ) );
   normal = normalize( ( viewMatrix * vec4( pn, 0.0 ) ).xyz );

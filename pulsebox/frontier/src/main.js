@@ -13,6 +13,8 @@ import { Sky } from './sky.js';
 import { Camp, TENT } from './camp.js';
 import { Player, pushOut } from './player.js';
 import { Input } from './input.js';
+import { Weather } from './weather.js';
+import { Audio } from './audio.js';
 
 const $ = s => document.querySelector(s);
 const params = new URLSearchParams(location.search);
@@ -42,6 +44,8 @@ function resize() {
 }
 addEventListener('resize', resize); resize();
 const input = new Input(canvas);
+const audio = new Audio();
+addEventListener('pointerdown', () => audio.start()); addEventListener('keydown', () => audio.start());
 
 // ---------- loading ----------
 function setLoad(p, msg) { $('#loadbar i').style.width = Math.round(p * 100) + '%'; if (msg) $('#loadmsg').textContent = msg; }
@@ -80,11 +84,13 @@ async function start(opts) {
   const water = new Water(scene);
   const camp = new Camp(scene, world, TEX, PLANTS);
   const player = new Player(camera, world);
+  const weather = new Weather(scene, sky, camp);
+  player.onStep = kind => audio.step(surfaceAt(kind), kind === 'run');
   // stand in the tent doorway looking out at the fire
   const door = camp.toWorld(0, TENT.cz + TENT.L / 2 + 0.9);
   player.place(door.x, door.z, camp.yaw + Math.PI);
   if (opts.player) { player.place(opts.player.x, opts.player.z, opts.player.yaw); }
-  Object.assign(G, { world, jobs, sky, terrain, flora, grass, water, camp, player, seed, spawn: opts.spawn, gameTime: 0 });
+  Object.assign(G, { world, jobs, sky, terrain, flora, grass, water, camp, player, weather, seed, spawn: opts.spawn, gameTime: 0, day: 0, envT: 0, env: { waterDist: 99, riverDist: 99, forest: 0 } });
   // build the world around the player before showing it
   const t0 = performance.now();
   while (true) {
@@ -159,13 +165,18 @@ function step(dt) {
   }
   U.uTime.value += dt;
   const w = U.uWind.value, wt = U.uTime.value; w.z = 0.35 + 0.25 * Math.sin(wt * 0.05) + 0.15 * Math.sin(wt * 0.013);
-  sky.update(dt, camera.position, G.state === 'play' ? dt * 60 : 0);
+  const gameDt = G.state === 'play' ? dt * 60 : 0, before = sky.hours;
+  sky.update(dt, camera.position, gameDt);
+  if (sky.hours < before) G.day++;
+  G.weather.update(dt, gameDt, sky.hours, G.day);
+  senseSurroundings(dt);
+  audio.update({ day: sky.daylight, night: sky.night, wind: U.uWind.value.z, rain: G.weather.cur.rain, inTent: camp.inside(player.pos.x, player.pos.z), fireDist: camera.position.distanceTo(camp.firePos), fireFuel: camp.fire.u.uFuel.value, waterDist: G.env.waterDist, riverDist: G.env.riverDist, forest: G.env.forest, dt });
   terrain.update(camera.position, dt); terrain.sync(); flora.update(camera.position, dt); grass.update(camera.position, player.pos); water.update(camera.position); jobs.tick(4);
   camp.update(dt, sky.night, new THREE.Vector3(w.x * w.z, 0, w.y * w.z));
   if (camp.lantern.carried) {
     camp.lantern.update(dt, Math.max(sky.night, 1 - sky.daylight));
     const sw = player.bobAmt, ph = player.stepPhase;
-    G.handL.position.set(-0.27 + Math.sin(ph) * .012 * sw, -0.43 + Math.abs(Math.cos(ph)) * .015 * sw, -0.5);
+    G.handL.position.set(-0.36 + Math.sin(ph) * .012 * sw, -0.52 + Math.abs(Math.cos(ph)) * .015 * sw, -0.62);
     G.handL.rotation.set(0.05 + Math.sin(ph) * .05 * sw, 0.2, Math.sin(ph * .5) * .06 * sw);
   }
   // HUD
@@ -180,6 +191,21 @@ function step(dt) {
 }
 requestAnimationFrame(loop);
 
+// what is around the player, for sound: open water, a river, how wooded
+function senseSurroundings(dt) {
+  G.envT -= dt; if (G.envT > 0) return; G.envT = 0.5;
+  const w = G.world, p = G.player.pos; let wd = 99, rd = 99;
+  for (let a = 0; a < 12; a++) { const an = a / 12 * Math.PI * 2; for (const r of [0, 8, 16, 26, 40]) { const x = p.x + Math.cos(an) * r, z = p.z + Math.sin(an) * r, s = w.sample(x, z, {}); if (s.h < -0.2 && r < wd) wd = r; if (s.river > .7 && s.h < 0 && r < rd) rd = r; if (s.h < -0.2) break; } }
+  G.env.waterDist = wd; G.env.riverDist = rd; G.env.forest = w.forest(p.x, p.z);
+}
+function surfaceAt(kind) {
+  if (kind === 'water' || kind === 'swim') return 'water';
+  const p = G.player.pos, c = G.camp;
+  if (c.inside(p.x, p.z)) return 'floor';
+  if (Math.hypot(p.x - c.c.x, p.z - c.c.z) < 9) return 'dirt';
+  const n = G.world.normal(p.x, p.z, [0, 1, 0], 1); if (n[1] < .8) return 'rock';
+  return G.world.forest(p.x, p.z) > .55 ? 'dirt' : 'grass';
+}
 function collide(x, z, r) {
   let p = [x, z];
   G.flora.near(p[0], p[1], r, (cx, cz, cr) => { p = pushOut(p[0], p[1], r, { t: 'c', x: cx, z: cz, r: cr }); });
@@ -209,10 +235,11 @@ function applyQuality() {
 drawSettings();
 
 // test hooks
-window.__fh = { G, THREE, start, scene, camera, renderer, hold: on => { G.hold = on; },
+window.__fh = { G, THREE, start, scene, camera, renderer, input, hold: on => { G.hold = on; },
   // run frames by hand and grab the picture (for headless tests)
   snap: (frames = 1, dt = 1 / 30) => { for (let i = 0; i < frames; i++) step(dt); return renderer.domElement.toDataURL('image/jpeg', 0.92); },
   look: (yaw, pitch) => { G.player.yaw = yaw; G.player.pitch = pitch; G.player.applyCamera(); },
+  collideTest: (x, z, r) => collide(x, z, r), weather: st => G.weather.set(st), audio,
   goto: (x, z, yaw = G.player.yaw, pitch = G.player.pitch) => { G.player.place(x, z, yaw); G.player.pitch = pitch; G.player.applyCamera(); }, setTime: h => { G.sky.hours = h; G.sky.renderEnv(); }, debug: on => { G.debug = on; $('#debug').hidden = !on; } };
 if (params.get('debug')) window.__fh.debug(true);
 if (params.get('spawn')) start({ spawn: params.get('spawn'), seed: params.get('seed') ? +params.get('seed') : 1234, hours: params.get('t') ? +params.get('t') : undefined });

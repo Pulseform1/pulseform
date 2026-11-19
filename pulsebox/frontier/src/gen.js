@@ -17,7 +17,7 @@ export function terrainChunk(world, x0, z0, size, res, skirt) {
     pos[v * 3] = i * step; pos[v * 3 + 1] = h; pos[v * 3 + 2] = j * step; nrm[v * 3] = nx; nrm[v * 3 + 1] = ny; nrm[v * 3 + 2] = nz;
     world.sample(x, z, S); const f = world.forest(x, z, S);
     const nz1 = k.n2(x * .02 + 31, z * .02 - 17), nz2 = k.n2(x * .07, z * .07);
-    let rock = smooth(0.84, 0.66, ny + nz2 * .03) + smooth(140, 240, h) * smooth(0.97, 0.86, ny) * .8 + S.m * smooth(0.95, 0.88, ny) * .35;
+    let rock = smooth(0.8, 0.6, ny + nz2 * .03) + smooth(140, 240, h) * smooth(0.97, 0.86, ny) * .8 + S.m * smooth(0.95, 0.88, ny) * .35;
     rock = clamp(rock + smooth(0.55, 0.8, nz1) * .25 * smooth(0.97, 0.9, ny), 0, 1);
     const snow = smooth(178, 222, h + nz1 * 22) * smooth(0.62, 0.82, ny);
     const sand = clamp(smooth(1.9 + nz2 * .5, 0.5, h) + S.lake * smooth(3.5, 1.5, h) * .5, 0, 1);

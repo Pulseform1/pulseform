@@ -2,7 +2,7 @@
 // horizon. The ground shader blends six painted layers (grass, needle litter, dirt, rock, sand/mud, snow) by height so
 // rocks poke through grass and litter gathers between, with large-scale colour variation and wet, dark shorelines.
 import * as THREE from 'three';
-import { patch } from './fx.js';
+import { patch, U } from './fx.js';
 
 export const CHUNK = 64;
 const FAR = 512, COVER_N = 40;
@@ -22,7 +22,7 @@ const COMMON_VS = `#include <common>
 attribute vec4 splat; attribute vec4 splat2;
 varying vec4 vSplat; varying vec4 vSplat2; varying vec3 vWP; varying vec3 vWN;`;
 const COMMON_FS = `#include <common>
-uniform sampler2DArray uAlb; uniform sampler2DArray uNrm; uniform sampler2D uMacro; uniform sampler2D uCover; uniform vec3 uCoverO;
+uniform float uWet; uniform sampler2DArray uAlb; uniform sampler2DArray uNrm; uniform sampler2D uMacro; uniform sampler2D uCover; uniform vec3 uCoverO;
 varying vec4 vSplat; varying vec4 vSplat2; varying vec3 vWP; varying vec3 vWN;
 const float TSC[6] = float[6]( 0.29, 0.33, 0.3, 0.12, 0.23, 0.15 );`;
 const SAMPLE_FS = `
@@ -61,7 +61,7 @@ tN *= 1.0 - 0.65 * smoothstep( 50.0, 260.0, camD );
 tA *= 0.8 + 0.4 * mac.r;
 tA = mix( tA, tA * vec3( 1.14, 1.03, 0.74 ), W[0] * smoothstep( 0.42, 0.78, mac.g ) * 0.85 );
 tA = mix( tA, tA * vec3( 0.86, 1.0, 0.86 ), W[0] * smoothstep( 0.55, 0.3, mac.g ) * 0.5 );
-float wet = vSplat2.z;
+float wet = max( vSplat2.z, uWet * 0.55 * ( 1.0 - W[5] ) );
 tA *= 1.0 - 0.4 * wet;
 tA = mix( tA, tA * vec3( 0.42, 0.55, 0.52 ), smoothstep( 0.0, -2.6, vWP.y ) );
 diffuseColor.rgb = tA;
@@ -69,7 +69,7 @@ float tRough = clamp( mix( 0.97, 0.45, wet ) - 0.32 * W[5] - 0.08 * W[3], 0.3, 1
 
 function terrainMaterial(tex, far, cover) {
   const m = new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 });
-  const uni = { uAlb: { value: tex.albedo }, uNrm: { value: tex.normal }, uMacro: { value: tex.macro }, uCover: { value: cover.tex }, uCoverO: cover.o };
+  const uni = { uWet: U.uWet, uAlb: { value: tex.albedo }, uNrm: { value: tex.normal }, uMacro: { value: tex.macro }, uCover: { value: cover.tex }, uCoverO: cover.o };
   patch(m, far ? 'terrain-far' : 'terrain', sh => {
     Object.assign(sh.uniforms, uni);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', COMMON_VS)

@@ -10,6 +10,7 @@ export const U = {
   uSunDirW: { value: new THREE.Vector3(0, 1, 0) },
   uFogP: { value: new THREE.Vector4(0.05, 0.0, 0, 1) },     // mist falloff, mist density, mist base height, max fog
   uSunCol: { value: new THREE.Color(1, 1, 1) },
+  uWet: { value: 0 },                                       // how rain-soaked the ground is
 };
 
 THREE.ShaderChunk.fog_pars_vertex = `#ifdef USE_FOG
