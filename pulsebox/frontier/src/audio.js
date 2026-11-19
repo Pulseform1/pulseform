@@ -48,14 +48,17 @@ export class Audio {
     else { this.burst(.14, 'highpass', 1800 + Math.random() * 900, .5, .055 * k); this.burst(.08, 'lowpass', 280, .6, .12 * k); }
   }
   shot(kind) {
-    if (!this.ctx) return; const c = this.ctx;
-    const big = kind !== 'shotgun';
-    this.burst(big ? .55 : .45, 'lowpass', big ? 1400 : 1900, .7, .9, 0, 0, true);
-    this.burst(.08, 'highpass', 2600, .5, .45);
-    this.burst(1.8, 'lowpass', 240, .5, .35, 0, .04, true);
+    if (!this.ctx) return;
+    if (kind === 'pistol') { this.burst(.32, 'lowpass', 2400, .7, .7, 0, 0, true); this.burst(.06, 'highpass', 3200, .5, .5); this.burst(1.1, 'lowpass', 300, .5, .22, 0, .03, true); return; }
+    if (kind === 'shotgun') { this.burst(.5, 'lowpass', 1700, .6, .95, 0, 0, true); this.burst(.1, 'highpass', 2200, .5, .4); this.burst(2, 'lowpass', 200, .5, .4, 0, .04, true); return; }
+    // the long rifle: a hard crack and a long roll off the hills
+    this.burst(.6, 'lowpass', 1300, .7, 1, 0, 0, true); this.burst(.07, 'highpass', 3000, .5, .55); this.burst(2.6, 'lowpass', 180, .5, .45, 0, .05, true); this.burst(1.4, 'lowpass', 260, .6, .18, 0, .9, true);
   }
+  hurt(dmg) { if (!this.ctx) return; this.burst(.25, 'lowpass', 420, 1, .5); this.tone([180, 120], [.25], 'sawtooth', .04 + dmg / 1200, 0, 0, false); }
+  splash(big, pan = 0) { if (!this.ctx) return; this.burst(big ? .5 : .22, 'bandpass', big ? 700 : 1300, .8, big ? .4 : .18, pan); this.burst(.15, 'highpass', 2500, .5, .08, pan, .03); }
+  reel(on) { if (this.ctx && on) this.burst(.03, 'bandpass', 3200 + Math.random() * 600, 6, .05); }
   click() { if (this.ctx) this.burst(.04, 'bandpass', 2400, 4, .18); }
-  mech(kind) { if (!this.ctx) return; if (kind === 'lever') { this.burst(.05, 'bandpass', 1800, 3, .2); this.burst(.06, 'bandpass', 1200, 3, .18, 0, .22); } else if (kind === 'reload') this.burst(.08, 'bandpass', 1500, 2, .15); else this.burst(.05, 'bandpass', 2600, 3, .16); }
+  mech(kind) { if (!this.ctx) return; if (kind === 'bolt') { this.burst(.04, 'bandpass', 2000, 3, .2); this.burst(.07, 'bandpass', 1300, 3, .2, 0, .14); this.burst(.05, 'bandpass', 2200, 3, .2, 0, .32); } else if (kind === 'pump') { this.burst(.08, 'bandpass', 900, 2, .3); this.burst(.07, 'bandpass', 1400, 2, .28, 0, .18); } else if (kind === 'break') { this.burst(.06, 'bandpass', 1600, 3, .25); this.burst(.12, 'bandpass', 700, 2, .15, 0, .1); } else if (kind === 'cock') this.burst(.03, 'bandpass', 3000, 4, .2); else if (kind === 'reload') this.burst(.08, 'bandpass', 1500, 2, .15); else this.burst(.05, 'bandpass', 2600, 3, .16); }
   // animal voices, quieter and more echoing with distance
   animal(kind, dist, pan) {
     if (!this.ctx) return; const g = Math.max(.08, 1 - dist / 220);
@@ -64,6 +67,11 @@ export class Audio {
     else if (kind === 'quack') { for (let i = 0; i < 3; i++) this.tone([480, 420], [.12], 'square', .025 * g, pan, 0, true, i * .18); }
     else if (kind === 'gobble') { for (let i = 0; i < 7; i++) this.tone([700 - i * 20, 520], [.05], 'square', .02 * g, pan, 0, true, i * .06); }
     else if (kind === 'grunt') this.tone([90, 70], [.5], 'sawtooth', .04 * g, pan, 6, true);
+    // the dangerous ones: a grizzly's roar, a bull moose's bellow, a cougar's scream, a wolf's snarl
+    else if (kind === 'roar') { this.tone([150, 95, 70, 60], [.3, .7, .6], 'sawtooth', .09 * g, pan, 18, true); this.burst(1.6, 'lowpass', 420, 1.2, .55 * g, pan, 0, true); this.burst(1.2, 'bandpass', 220, 1.5, .35 * g, pan, .2, true); }
+    else if (kind === 'bellow') { this.tone([120, 160, 90], [.5, .9], 'sawtooth', .07 * g, pan, 8, true); this.burst(1.2, 'lowpass', 300, 1, .3 * g, pan, 0, true); }
+    else if (kind === 'scream') { this.tone([900, 1500, 1200, 700], [.25, .5, .5], 'sawtooth', .05 * g, pan, 30, true); this.burst(1, 'bandpass', 1800, 2, .25 * g, pan, 0, true); }
+    else if (kind === 'snarl') { for (let i = 0; i < 4; i++) this.tone([200 + i * 15, 160], [.18], 'sawtooth', .04 * g, pan, 25, true, i * .16); this.burst(.7, 'bandpass', 500, 2, .25 * g, pan, 0, true); }
   }
   // env: { day, night, wind, rain, inTent, fireDist, fireFuel, waterDist, riverDist, forest, dt }
   update(e) {

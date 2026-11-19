@@ -16,7 +16,9 @@ import { Input } from './input.js';
 import { Weather } from './weather.js';
 import { Audio } from './audio.js';
 import { Wildlife } from './wildlife.js';
-import { Weapons } from './weapons.js';
+import { Weapons, GUNS, ORDER, AMMO } from './weapons.js';
+import { Fishing } from './fishing.js';
+import { Post } from './post.js';
 import { CampLife } from './camplife.js';
 import { UI } from './ui.js';
 import { SurveyMap } from './map.js';
@@ -29,6 +31,8 @@ const QUALITY = {
   high: { pr: 1.6, shadow: 4096, span: 65, nearR: 440, farR: 3800, veg: { vegR: 950, nearR: 62, midR: 165, propR: 80 }, grass: 'high' },
 };
 const SPAWNS = { forest: 'Deep Forest', valley: 'Mountain Valley', lake: 'Wilderness Lake' };
+// what a kill pays, in coins
+const BOUNTY = { rabbit: 2, duck: 3, turkey: 4, deer: 12, goat: 20, elk: 22, wolf: 16, bison: 26, moose: 32, cougar: 38, bear: 48 };
 
 const G = { settings: loadSettings(), state: 'menu' };
 // a sensible first guess at graphics quality: phones and tablets low, small laptops medium
@@ -47,9 +51,10 @@ const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.08, 6
 function resize() {
   const q = QUALITY[G.settings.quality] || QUALITY.high;
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, q.pr)); renderer.setSize(innerWidth, innerHeight, false);
-  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); if (G.post) G.post.resize();
 }
 addEventListener('resize', resize); resize();
+G.post = new Post(renderer, scene, camera, G.settings.quality);
 const input = new Input(canvas);
 const audio = new Audio();
 addEventListener('pointerdown', () => audio.start()); addEventListener('keydown', () => audio.start());
@@ -82,9 +87,9 @@ async function start(opts) {
   const world = new World(seed);
   setLoad(.32, 'Scouting a place for camp'); await frame();
   const sp = opts.camp || world.findSpawn(opts.spawn);
-  world.setCamp(sp.x, sp.z);
+  world.setCamp(sp.x, sp.z, opts.spawn);
   const q = QUALITY[G.settings.quality] || QUALITY.high;
-  const jobs = new Jobs(seed, { x: sp.x, z: sp.z });
+  const jobs = new Jobs(seed, { x: sp.x, z: sp.z, region: opts.spawn });
   const sky = new Sky(renderer, scene, { shadowSize: q.shadow, shadowSpan: q.span }); sky.hours = opts.hours ?? 16.2;
   const terrain = new Terrain(scene, jobs, TEX.ground, { nearR: q.nearR, farR: q.farR });
   const flora = new Flora(scene, jobs, PLANTS, U, q.veg);
@@ -96,15 +101,18 @@ async function start(opts) {
   const wildlife = new Wildlife(scene, world, flora, camp, audio);
   wildlife.panOf = p => { const r = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion), d = p.clone().sub(camera.position).normalize(); return Math.max(-1, Math.min(1, r.dot(d))); };
   wildlife.onBump = a => { const d = player.pos.clone().sub(a.pos).setY(0).normalize(); player.vel.addScaledVector(d, 9); G.shake = .6; toast('The bear bowls you over, then wheels away into the timber.'); };
-  if (!G.weapons) G.weapons = new Weapons(camera, TEX, TEX.glow);
+  wildlife.onAttack = (a, dmg) => hurt(dmg, a);
+  wildlife.region = opts.spawn; wildlife.home = world.camp;
   player.onStep = kind => audio.step(surfaceAt(kind), kind === 'run');
   // stand in the tent doorway looking out at the fire
   const door = camp.toWorld(0, TENT.cz + TENT.L / 2 + 0.9);
   player.place(door.x, door.z, camp.yaw + Math.PI);
   if (opts.player) { player.place(opts.player.x, opts.player.z, opts.player.yaw); }
-  Object.assign(G, { world, jobs, sky, terrain, flora, grass, water, camp, player, weather, wildlife, stats: { taken: {} }, timeScale: 1, gameHours: 0, seed, spawn: opts.spawn, gameTime: 0, day: 0, envT: 0, env: { waterDist: 99, riverDist: 99, forest: 0 } });
+  Object.assign(G, { world, jobs, sky, terrain, flora, grass, water, camp, player, weather, wildlife, stats: { taken: {} }, timeScale: 1, gameHours: 0, seed, spawn: opts.spawn, gameTime: 0, day: 0, envT: 0, env: { waterDist: 99, riverDist: 99, forest: 0 }, coins: 40, health: 100, breath: 4, dead: false });
+  if (!G.weapons) { G.weapons = new Weapons(camera, TEX, TEX.glow); }
+  G.fishing = new Fishing(G, scene, camera, audio);
   G.tex = TEX; G.life = new CampLife(G, G.ui);
-  G.map = G.map || new SurveyMap(G); G.map.explored.clear(); G.map.markers = []; G.map.guide = false;
+  G.map = G.map || new SurveyMap(G); G.map.explored.clear(); G.map.markers = []; G.map.guide = true; G.map.trail = [];
   if (opts.restore) restore(opts.restore);
   // build the world around the player before showing it
   const t0 = performance.now();
@@ -122,7 +130,8 @@ async function start(opts) {
   renderer.compile(scene, camera);
   $('#loading').hidden = true; $('#hud').hidden = false; G.state = 'play'; G.saveT = 20;
   $('#touch').hidden = !input.isTouch;
-  setTimeout(() => toast(opts.restore ? `Back at camp. Day ${G.day + 1}.` : input.isTouch ? 'Drag left to walk, right to look. Gun: draw a weapon.' : 'Press 1 for the rifle, 2 for the shotgun, 3 to put it away.'), 1500);
+  setTimeout(() => toast(opts.restore ? `Back at camp. Day ${G.day + 1}.` : input.isTouch ? 'Drag left to walk, right to look. Gun: change weapon.' : '1 long rifle · 2 pump · 3 double barrel · 4 revolver · 5 rod · H put away. Buy ammunition at the chest.'), 1500);
+  updateHud(true);
   if (!input.isTouch) input.lock();
 }
 
@@ -166,7 +175,7 @@ function carryLantern(on) {
 }
 function toast(msg) { G.ui.toast(msg); }
 function fade(ms = 900) { const f = $('#fade'); f.classList.add('on'); setTimeout(() => f.classList.remove('on'), ms); }
-G.ui = new UI(G);
+G.ui = new UI(G); G.eat = () => eat();
 G.onPanel = open => { if (open) { G.state = 'ui'; input.unlock(); } else if (G.state === 'ui') { G.state = 'play'; G.wasLocked = false; if (!input.isTouch) input.lock(); } };
 
 // the hand that carries the lantern: hangs low on the left, sways as you walk
@@ -176,17 +185,6 @@ G.handL = new THREE.Group(); camera.add(G.handL); scene.add(camera);
 let last = performance.now(), fpsT = 0, fpsN = 0, fps = 60;
 function loop(now) {
   requestAnimationFrame(loop);
-// keep the frame rate up on smaller machines: trade resolution for smoothness, and take it back when there is room
-let frameAvg = 16, resT = 0, resScale = 1;
-function adaptResolution(dt) {
-  if (G.noRender || G.hold) return;
-  frameAvg += (dt * 1000 - frameAvg) * .05; resT += dt; if (resT < 2) return; resT = 0;
-  const q = QUALITY[G.settings.quality] || QUALITY.high, base = Math.min(devicePixelRatio || 1, q.pr);
-  if (frameAvg > 24 && resScale > .6) resScale = Math.max(.6, resScale - .1);
-  else if (frameAvg < 14 && resScale < 1) resScale = Math.min(1, resScale + .05);
-  else return;
-  renderer.setPixelRatio(base * resScale); renderer.setSize(innerWidth, innerHeight, false);
-}
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
   if (G.hold) return;
   step(dt);
@@ -200,12 +198,22 @@ function step(dt) {
   else if (G.state === 'play' && input.hit('KeyI')) G.ui.openPack();
   else if (G.state === 'play' && input.hit('KeyM')) G.map.open();
   if (G.state === 'play') {
-    if (input.locked || input.isTouch) player.look(input.lookX, input.lookY, G.settings.sens);
+    const Wp = G.weapons, aimK = camera.fov / 72;   // aiming and the scope slow the look to match the view
+    if (input.locked || input.isTouch) player.look(input.lookX, input.lookY, G.settings.sens * (Wp.scoped > .5 || Wp.ads > .5 ? Math.max(.12, aimK) : 1));
     player.update(dt, input, (x, z, r) => collide(x, z, r));
-    if (input.hit('Digit1')) G.weapons.select('rifle'); if (input.hit('Digit2')) G.weapons.select('shotgun'); if (input.hit('Digit3') || input.hit('KeyH')) G.weapons.select(null);
-    if (input.wheel) { const order = [null, 'rifle', 'shotgun'], i = order.indexOf(G.weapons.want); G.weapons.select(order[(i + (input.wheel > 0 ? 1 : 2)) % 3]); }
+    ORDER.forEach((k, i) => { if (input.hit('Digit' + (i + 1))) Wp.select(Wp.want === k && k === 'rod' ? null : k); });
+    if (input.hit('KeyH')) Wp.select(null);
+    if (input.wheel && !(Wp.scoped > .5) && !(G.fishing && G.fishing.busy)) Wp.cycle(input.wheel > 0 ? 1 : -1);
+    if (input.hit('KeyF') && G.health < 100) eat();
     if (input.hit('KeyE')) { const it = nearestInteract(), carcass = !it && G.carcass; if (player.seated && (!it || it.id === 'seat')) { player.seated = null; player.frozen = false; toast('You stand up.'); } else if (it) doInteract(it); else if (carcass) harvest(carcass); else if (G.wood) G.life.gather(G.wood); }
     G.timeScale = player.seated && input.down('Space') ? 30 : 1;
+    // through the scope the crosshair drifts with your breathing and heartbeat; Shift holds your breath for a few seconds
+    { const sc = Wp.scoped > .5, hold = sc && (input.down('ShiftLeft') || input.down('ShiftRight')) && G.breath > 0;
+      G.breath = Math.max(0, Math.min(4, G.breath + (hold ? -dt : dt * .7))); const tired = G.breath < .5 && sc ? 1.8 : 1, k = sc ? (hold ? .12 : 1) * tired * (1 + (100 - G.health) / 120) : 0, t = G.gameTime;
+      G.swayX = (G.swayX || 0) + ((Math.sin(t * .63) * .0036 + Math.sin(t * 1.37) * .0016) * k - (G.swayX || 0)) * Math.min(1, dt * 4);
+      G.swayY = (G.swayY || 0) + ((Math.sin(t * .91 + 1) * .0028 + Math.sin(t * 2.1) * .001 + Math.max(0, Math.sin(t * 7.5)) * .0006) * k - (G.swayY || 0)) * Math.min(1, dt * 4);
+      camera.rotation.y += G.swayX; camera.rotation.x += G.swayY; }
+    G.health = Math.min(100, G.health + dt * (camp.inside(player.pos.x, player.pos.z) || player.seated ? .5 : .08));
     if (input.hit('KeyL')) { if (camp.lantern.carried) camp.lantern.toggle(); else toast('Your lantern hangs by the tent door.'); }
     if (input.hit('Escape') || (!input.locked && !input.isTouch && G.wasLocked)) pause(true);
     G.wasLocked = input.locked;
@@ -225,13 +233,14 @@ function step(dt) {
   camp.update(dt * G.timeScale, sky.night, new THREE.Vector3(w.x * w.z, 0, w.y * w.z));
   // wildlife and guns
   const moving = player.speed > .4, noise = player.swimming ? .7 : !moving ? .04 : player.crouched ? .14 : player.speed > 4.5 ? 1 : .42;
-  if (live) G.wildlife.update(dt, { pos: player.pos, noise, crouched: player.crouched, moving, night: sky.night > .5, lantern: camp.lantern.carried && camp.lantern.on, wind: { x: w.x, z: w.y } }, sky.hours);
+  const lookV = camera.getWorldDirection(new THREE.Vector3()), inCamp = Math.hypot(player.pos.x - camp.c.x, player.pos.z - camp.c.z) < 16;
+  if (live) G.wildlife.update(dt, { pos: player.pos, noise, crouched: player.crouched, moving, night: sky.night > .5, lantern: camp.lantern.carried && camp.lantern.on, wind: { x: w.x, z: w.y }, look: lookV, inCamp, dead: G.dead }, sky.hours);
+  G.wildlife.furR = G.weapons.scoped > .5 ? 240 : 34; G.wildlife.lightK = Math.max(0, sky.night - .3) * (camp.lantern.carried && camp.lantern.on ? 1 : .35);
   G.wildlife.render(dt, camera.position);
   const W = G.weapons;
   if (G.state === 'play') {
-    W.update(dt, player.seated || player.sleeping ? { mouseDown: [], clicked: new Set(), hit: () => false } : input, gunCtx);
-    for (const m of Object.values(W.models)) { const a = m.holder.children[1]; if (a.userData.left) { a.userData.left.visible = a.userData.leftHand.visible = !camp.lantern.carried; } }
-    G.handL.visible = !(camp.lantern.carried && W.ads > .6);
+    W.update(dt, player.seated || player.sleeping || G.dead ? { mouseDown: [], clicked: new Set(), hit: () => false } : input, gunCtx);
+    G.handL.visible = !(camp.lantern.carried && W.ads > .6) && !(W.scoped > .5);
   }
   if (G.recoilBack > 0) { const r = Math.min(G.recoilBack, dt * .25); player.pitch -= r; G.recoilBack -= r; }
   if (G.shake > 0) { G.shake = Math.max(0, G.shake - dt); camera.rotation.x += (Math.random() - .5) * G.shake * .05; camera.rotation.y += (Math.random() - .5) * G.shake * .05; }
@@ -249,7 +258,8 @@ function step(dt) {
   G.woodT = (G.woodT || 0) - dt; if (G.woodT < 0) { G.woodT = .25; G.wood = !it && !G.carcass && G.state === 'play' ? G.life.gatherSpot(player.pos, look) : null; }
   if (player.seated && G.timeScale > 1) { pr.textContent = 'Time passes by the fire...'; pr.classList.add('on'); }
   else if (it) { pr.textContent = 'E  ' + it.label(); pr.classList.add('on'); } else if (G.carcass) { pr.textContent = 'E  Dress the ' + G.carcass.sp.label.toLowerCase(); pr.classList.add('on'); } else if (G.wood) { pr.textContent = 'E  Gather dry wood' + (G.wood.kind === 6 ? ' from the fallen log' : G.wood.kind === 7 ? ' from the old stump' : ' from the dead tree'); pr.classList.add('on'); } else pr.classList.remove('on');
-  $('#ammo').textContent = W.label; $('#hit').classList.toggle('on', G.hitT > 0); G.hitT -= dt;
+  $('#cross').style.opacity = W.ads > .5 || W.scoped > .5 ? 0 : 1;
+  $('#ammo').textContent = W.label; $('#hit').classList.toggle('on', G.hitT > 0); G.hitT -= dt; updateHud(); G.fishing.tick(dt);
   G.ui.tick(dt);
   if (live) G.map.reveal(dt);
   G.map.draw(); G.map.compass(); drawStick();
@@ -258,7 +268,7 @@ function step(dt) {
   const h = sky.hours, hh = Math.floor(h), mm = Math.floor((h - hh) * 60);
   $('#clock').textContent = `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'am' : 'pm'}`;
   if (G.debug) $('#debug').textContent = `${fps.toFixed(0)} fps  calls ${renderer.info.render.calls}  tris ${(renderer.info.render.triangles / 1e6).toFixed(2)}M  trees ${flora.counts.near}/${flora.counts.mid}/${flora.counts.far}  jobs ${jobs.pending}`;
-  if (!G.noRender) renderer.render(scene, camera);
+  if (!G.noRender) G.post.render(dt, U.uSunDirW.value, sky.daylight * (1 - Math.min(1, G.weather.cur.rain * 2)), sky.night);
   input.endFrame();
 }
 requestAnimationFrame(loop);
@@ -271,16 +281,17 @@ function adaptResolution(dt) {
   if (frameAvg > 24 && resScale > .6) resScale = Math.max(.6, resScale - .1);
   else if (frameAvg < 14 && resScale < 1) resScale = Math.min(1, resScale + .05);
   else return;
-  renderer.setPixelRatio(base * resScale); renderer.setSize(innerWidth, innerHeight, false);
+  renderer.setPixelRatio(base * resScale); renderer.setSize(innerWidth, innerHeight, false); G.post.resize();
 }
 
 // ---------- shooting ----------
 const gunCtx = {
-  scene, get puff() { return TEX.puff; }, get bob() { return G.player.bobAmt; }, get phase() { return G.player.stepPhase; },
+  scene, get puff() { return TEX.puff; }, get bob() { return G.player.bobAmt; }, get phase() { return G.player.stepPhase; }, get fishing() { return G.fishing; }, get lanternInHand() { return G.camp && G.camp.lantern.carried; },
+  scope(k, fov) { const s = $('#scope'); s.style.opacity = k > .5 ? 1 : 0; s.classList.toggle('on', k > .5); if (k > .5) $('#scopepow').textContent = fov ? `${Math.round(72 / fov)}×` : ''; },
   setFov(f) { if (Math.abs(camera.fov - f) > .05) { camera.fov = f; camera.updateProjectionMatrix(); } },
   recoil(k) { G.player.pitch += k; G.recoilBack = (G.recoilBack || 0) + k * .7; },
-  sound(kind, gun) { if (kind === 'shot') { audio.shot(gun); G.wildlife.gunshot(G.player.pos); } else if (kind === 'click') audio.click(); else audio.mech(kind === 'load' ? 'load' : 'reload'); if (kind === 'shot' && gun === 'rifle') setTimeout(() => audio.mech('lever'), 260); },
-  trace(o, d, range, power, first) {
+  sound(kind, gun) { if (kind === 'shot') { audio.shot(gun); G.wildlife.gunshot(G.player.pos); } else if (kind === 'click') audio.click(); else audio.mech(kind); },
+  trace(o, d, range, power, first, gun) {
     let blockT = range, hitTree = false;
     for (let t = .6; t < range; t += t < 30 ? .35 : 1) {
       const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t;
@@ -289,9 +300,12 @@ const gunCtx = {
     }
     const h = G.wildlife.raycast(o, d, blockT);
     if (h) {
-      const down = h.a.hit(h.vital, power); G.hitT = .15;
+      const fall = gun && gun.pellets > 1 ? Math.max(.25, 1 - h.t / range) : 1;   // shot spreads and slows with distance
+      const down = h.a.hit(h.vital, power * fall); G.hitT = .15;
       spawnDust(h.point, 0x8a7a64, .4);
-      if (first || down) toast(down ? (h.a.sp.small || h.a.sp.bird ? `Got the ${h.a.sp.label.toLowerCase()}.` : `A clean shot. The ${h.a.sp.label.toLowerCase()} is down.`) : `Hit, but the ${h.a.sp.label.toLowerCase()} runs on. Follow it.`);
+      if (down) { const c = BOUNTY[h.a.sp.name] || 5; G.coins += c; coinPop(c); }
+      const danger = h.a.sp.bear || h.a.sp.ornery || h.a.sp.predator;
+      if (first || down) toast(down ? (h.a.sp.small || h.a.sp.bird ? `Got the ${h.a.sp.label.toLowerCase()}. +${BOUNTY[h.a.sp.name] || 5} coins` : `A clean shot. The ${h.a.sp.label.toLowerCase()} is down. +${BOUNTY[h.a.sp.name] || 5} coins`) : danger ? `Hit! The ${h.a.sp.label.toLowerCase()} is wounded, and angry.` : `Hit, but the ${h.a.sp.label.toLowerCase()} runs on. Follow it.`);
     } else if (blockT < range && first) spawnDust(o.clone().addScaledVector(d, blockT), hitTree ? 0x6a5040 : 0x7a6a50, .6);
   },
 };
@@ -306,6 +320,47 @@ function harvest(a) {
     const r = G.wildlife.harvest(a); G.stats.taken[r.kind] = (G.stats.taken[r.kind] || 0) + 1;
     toast(G.life.packKill(r));
   }, 450);
+}
+
+// ---------- health ----------
+// a blow from an animal: the view jolts and reddens, you are knocked back; at nothing, you black out and wake at camp
+function hurt(dmg, a) {
+  if (G.dead || G.state !== 'play' && G.state !== 'ui') return;
+  G.health = Math.max(0, G.health - dmg); G.shake = Math.min(1.2, (G.shake || 0) + .5 + dmg / 60); G.hurtT = 1;
+  const d = G.player.pos.clone().sub(a.pos).setY(0); if (d.lengthSq() > 1e-4) G.player.vel.addScaledVector(d.normalize(), 5 + dmg / 8);
+  audio.hurt(dmg);
+  if (G.health <= 0) return die(a);
+  if (G.state === 'play') toast(a.sp.bear ? 'The grizzly is on you! Shoot it, or it will maul you.' : a.sp.ornery ? 'The moose tramples you and wheels away.' : a.sp.predator === 'cougar' ? 'The cougar has you! Shoot it off!' : 'A wolf bites and darts back to the pack.');
+}
+function die(a) {
+  G.dead = true; G.weapons.select(null); if (G.state === 'ui') G.ui.close();
+  const lost = Math.floor(G.coins * .25); G.coins -= lost; G.life.pack.meat.length = 0;
+  $('#death').hidden = false; $('#deathmsg').textContent = `${a.sp.bear ? 'Mauled by a grizzly' : a.sp.ornery ? 'Trampled by a moose' : a.sp.predator === 'cougar' ? 'Taken by a cougar' : 'Pulled down by wolves'}. You lost the meat in your pack${lost ? ` and ${lost} coins` : ''}.`;
+  setTimeout(() => {
+    fade(1800);
+    setTimeout(() => {
+      const c = G.camp, door = c.toWorld(0, TENT.cz + TENT.L / 2 + 0.9); G.player.place(door.x, door.z, c.yaw + Math.PI); G.player.vel.set(0, 0, 0);
+      const h = G.sky.hours; if (h > 6.4) G.day++; G.sky.hours = 6.4; G.sky.renderEnv();
+      for (const g of [...G.wildlife.groups]) G.wildlife.removeGroup(g); G.wildlife.seeded = false;
+      G.health = 60; G.dead = false; $('#death').hidden = true; toast('You come to in your bedroll, bandaged and sore. Hunt carefully.'); saveGame();
+    }, 900);
+  }, 2600);
+}
+// F: eat from your pack (roast or dried meat heals; raw does too, a little)
+function eat() {
+  const L = G.life, m = L.pack.meat.find(q => q.state === 'cooked' && q.lb > 0) || L.pack.meat.find(q => q.state === 'dried' && q.lb > 0) || L.pack.meat.find(q => q.lb > 0);
+  if (!m) return toast('Nothing to eat. Roast some meat at the fire.');
+  const lb = Math.min(1, m.lb); m.lb -= lb; L.pack.meat = L.pack.meat.filter(q => q.lb > .01);
+  const heal = m.state === 'raw' ? 8 : m.state === 'dried' ? 18 : 25; G.health = Math.min(100, G.health + heal);
+  toast(`You eat ${m.state === 'raw' ? 'some raw' : m.state === 'dried' ? 'dried' : 'roast'} ${m.meat}. ${m.state === 'raw' ? 'It sits poorly.' : 'You feel stronger.'}`);
+}
+G.coinPop = n => coinPop(n);
+function coinPop(n) { const e = $('#coinpop'); e.textContent = `+${n}`; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
+function updateHud(force) {
+  const h = Math.round(G.health || 0), c = G.coins | 0;
+  if (force || h !== G._hh) { G._hh = h; $('#hpbar i').style.width = h + '%'; $('#hp').classList.toggle('low', h < 35); $('#hpnum').textContent = h; }
+  if (force || c !== G._cc) { G._cc = c; $('#coins b').textContent = c; }
+  G.hurtT = Math.max(0, (G.hurtT || 0) - 1 / 60); $('#hurt').style.opacity = Math.max(G.hurtT * .8, h < 30 ? .25 + .1 * Math.sin(performance.now() / 300) : 0);
 }
 
 // what is around the player, for sound: open water, a river, how wooded
@@ -336,16 +391,16 @@ function saveGame() {
   if (!G.world || (G.state !== 'play' && G.state !== 'pause' && G.state !== 'ui')) return;
   const P = G.player, W = G.weapons, c = G.world.camp;
   const d = { v: 1, seed: G.seed, spawn: G.spawn, camp: { x: c.x, z: c.z }, player: { x: P.pos.x, z: P.pos.z, yaw: P.yaw }, hours: G.sky.hours, day: G.day,
-    weather: G.weather.state, life: G.life.save(), ammo: W.ammo, reserve: W.reserve, gun: W.want, map: G.map.save(), stats: G.stats, lantern: { carried: G.camp.lantern.carried, on: G.camp.lantern.on }, fire: { lit: G.camp.fire.lit, fuel: G.camp.fire.fuel }, saved: Date.now() };
+    weather: G.weather.state, life: G.life.save(), ammo: W.ammo, reserve: W.reserve, gun: W.want, map: G.map.save(), stats: G.stats, coins: G.coins, health: G.health, fish: G.fishing ? G.fishing.save() : null, lantern: { carried: G.camp.lantern.carried, on: G.camp.lantern.on }, fire: { lit: G.camp.fire.lit, fuel: G.camp.fire.fuel }, saved: Date.now() };
   try { localStorage.setItem('fh-save', JSON.stringify(d)); $('#saved').textContent = 'Saved.'; } catch { }
 }
 function loadSave() { try { const d = JSON.parse(localStorage.getItem('fh-save') || 'null'); return d && d.v === 1 ? d : null; } catch { return null; } }
 function restore(d) {
-  G.day = d.day || 0; G.life.load(d.life); Object.assign(G.weapons.ammo, d.ammo); Object.assign(G.weapons.reserve, d.reserve); G.map.load(d.map); G.stats = d.stats || { taken: {} };
+  G.day = d.day || 0; G.life.load(d.life); G.weapons.load(d.ammo, d.reserve); G.map.load(d.map); G.stats = d.stats || { taken: {} }; if (d.coins != null) G.coins = d.coins; if (d.health != null) G.health = Math.max(30, d.health); if (G.fishing) G.fishing.load(d.fish);
   if (d.weather) { G.weather.state = d.weather === 'rain' ? 'cloudy' : 'clear'; G.weather.roll(); Object.assign(G.weather.cur, G.weather.tgt); }
   if (d.fire) { G.camp.fire.lit = d.fire.lit; G.camp.fire.fuel = d.fire.fuel; }
   if (d.lantern) { G.camp.lantern.on = d.lantern.on; if (d.lantern.carried) carryLantern(true); }
-  if (d.gun) G.weapons.select(d.gun);
+  if (d.gun && GUNS[d.gun]) G.weapons.select(d.gun);
 }
 addEventListener('visibilitychange', () => { if (document.hidden) saveGame(); });
 addEventListener('pagehide', saveGame);
@@ -363,7 +418,8 @@ function drawContinue() {
     if (k === 'fire') input.touchFire = true;
     else if (k === 'aim') { input.touchAim = !input.touchAim; b.classList.toggle('on', input.touchAim); }
     else if (k === 'run') { input.runLatch = !input.runLatch; b.classList.toggle('on', input.runLatch); }
-    else if (k === 'weapon') { const order = [null, 'rifle', 'shotgun'], i = order.indexOf(G.weapons.want); G.weapons.select(order[(i + 1) % 3]); }
+    else if (k === 'weapon') G.weapons.cycle(1);
+    else if (k === 'eat') eat();
     else if (k === 'Escape') { if (G.state === 'play') pause(true); else if (G.state === 'ui') input.press('Escape'); }
     else if (k === 'KeyC') { input.press(k); b.classList.toggle('on'); }
     else input.press(k);
@@ -400,7 +456,7 @@ document.addEventListener('click', e => {
 canvas.addEventListener('click', () => { if (G.state === 'play' && !input.locked && !input.isTouch) input.lock(); });
 function drawSettings() { for (const b of document.querySelectorAll('[data-act=quality]')) b.classList.toggle('on', b.dataset.q === G.settings.quality); }
 function applyQuality() {
-  resize(); if (!G.terrain) return; const q = QUALITY[G.settings.quality];
+  resize(); G.post.setQuality(G.settings.quality); if (!G.terrain) return; const q = QUALITY[G.settings.quality];
   G.terrain.setRadius(q.nearR, q.farR); G.flora.set(q.veg); G.grass.build(q.grass); G.sky.setShadowQuality(q.shadow, q.span);
 }
 drawSettings(); drawContinue();
@@ -411,7 +467,7 @@ window.__fh = { G, THREE, start, scene, camera, renderer, input, hold: on => { G
   tick: (frames = 1, dt = 1 / 30) => { G.noRender = true; for (let i = 0; i < frames; i++) step(dt); G.noRender = false; },
   snap: (frames = 1, dt = 1 / 30) => { for (let i = 0; i < frames; i++) step(dt); return renderer.domElement.toDataURL('image/jpeg', 0.92); },
   look: (yaw, pitch) => { G.player.yaw = yaw; G.player.pitch = pitch; G.player.applyCamera(); },
-  collideTest: (x, z, r) => collide(x, z, r), interact: id => doInteract(G.camp.interact.find(i => i.id === id)), sleep, weather: st => G.weather.set(st), audio, gunCtx,
+  collideTest: (x, z, r) => collide(x, z, r), interact: id => doInteract(G.camp.interact.find(i => i.id === id)), sleep, weather: st => G.weather.set(st), audio, gunCtx, hurt, eat, BOUNTY,
   goto: (x, z, yaw = G.player.yaw, pitch = G.player.pitch) => { G.player.place(x, z, yaw); G.player.pitch = pitch; G.player.applyCamera(); }, setTime: h => { G.sky.hours = h; G.sky.renderEnv(); }, debug: on => { G.debug = on; $('#debug').hidden = !on; } };
 if (params.get('debug')) window.__fh.debug(true);
 if (params.get('spawn')) start({ spawn: params.get('spawn'), seed: params.get('seed') ? +params.get('seed') : 1234, hours: params.get('t') ? +params.get('t') : undefined });

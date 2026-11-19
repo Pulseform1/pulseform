@@ -1,4 +1,6 @@
-// The pack (I) and the storage panels for the meat box and the chest. Plain DOM over the game.
+// The pack (I: your guns, food, ammunition and coin), the meat box, and the supply chest where you buy ammunition.
+// Plain DOM over the game.
+import { GUNS, ORDER, AMMO } from './weapons.js';
 const $ = s => document.querySelector(s);
 const cap = s => s[0].toUpperCase() + s.slice(1);
 const STATE = { raw: 'raw', cooked: 'roasted', dried: 'dried' };
@@ -20,10 +22,12 @@ export class UI {
     let html = '', extra = '';
     if (k === 'pack') {
       const tally = Object.entries(G.stats.taken).map(([n, c]) => `${c} ${n}`).join(', ') || 'nothing yet';
-      html = `<h2>Your pack</h2><p class="sub">Day ${G.day + 1}, ${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'am' : 'pm'}</p>
+      const guns = ORDER.map((g, i) => { const d = GUNS[g], on = W.want === g; return `<div class="gun${on ? ' on' : ''}"><i>${i + 1}</i><span>${d.name}</span><b>${d.rod ? (G.fishing ? G.fishing.caughtLabel : '') : `${W.ammo[g]} / ${W.reserve[d.ammo]}`}</b><button data-a="equip" data-g="${g}">${on ? 'Put away' : 'Equip'}</button></div>`; }).join('');
+      const food = L.pack.meat.filter(m => m.lb > .01 && m.state !== 'raw').reduce((s, m) => s + m.lb, 0);
+      html = `<h2>Your pack</h2><p class="sub">Day ${G.day + 1}, ${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'am' : 'pm'} &middot; <b class="coin">${G.coins | 0} coins</b> &middot; health ${Math.round(G.health)}</p>
+        <h3>Guns <small>number keys, or Equip</small></h3><div class="guns">${guns}</div>
+        <h3>Meat <small>${Math.round(L.lbCarried)} / 120 lb</small></h3>${this.meatRows(L.pack.meat)}${G.health < 100 && L.pack.meat.some(m => m.lb > .01) ? `<div class="acts left"><button data-a="eat">Eat (F)${food ? '' : ' raw meat'}</button></div>` : ''}
         <h3>Firewood</h3><div class="row2"><span>Split and dry wood</span><b>${L.pack.wood} / 8</b></div>
-        <h3>Meat <small>${Math.round(L.lbCarried)} / 120 lb</small></h3>${this.meatRows(L.pack.meat)}
-        <h3>Ammunition</h3><div class="row2"><span>Rifle cartridges</span><b>${W.ammo.rifle} loaded, ${W.reserve.rifle} spare</b></div><div class="row2"><span>Shotgun shells</span><b>${W.ammo.shotgun} loaded, ${W.reserve.shotgun} spare</b></div>
         <h3>Lantern</h3><div class="row2"><span>${G.camp.lantern.carried ? 'In your hand' : 'Hanging at camp'}</span><b>${G.camp.lantern.on ? 'lit' : 'out'}</b></div>
         <h3>Taken this trip</h3><p class="sub">${tally}</p>`;
     } else if (k === 'meatbox') {
@@ -33,9 +37,10 @@ export class UI {
 `;
       extra = '<button data-a="storeall">Store all meat</button>';
     } else if (k === 'chest') {
-      html = `<h2>Chest</h2><p class="sub">Powder, lead and primers: you load fresh cartridges each morning.</p>
-        <div class="row2"><span>Rifle cartridges</span><b>${W.reserve.rifle} carried &middot; ${L.chest.rifle} in the chest</b><button data-a="ammo" data-k="rifle" data-n="10">Take 10</button><button data-a="ammo" data-k="rifle" data-n="-10">Store 10</button></div>
-        <div class="row2"><span>Shotgun shells</span><b>${W.reserve.shotgun} carried &middot; ${L.chest.shotgun} in the chest</b><button data-a="ammo" data-k="shotgun" data-n="6">Take 6</button><button data-a="ammo" data-k="shotgun" data-n="-6">Store 6</button></div>`;
+      const used = { rifle: 'Long rifle', shell: 'Pump shotgun and double barrel', pistol: 'Revolver' };
+      html = `<h2>Supply chest</h2><p class="sub">Ammunition from the trading post, paid for with what you hunt. You have <b class="coin">${G.coins | 0} coins</b>.</p>
+        ${Object.entries(AMMO).map(([a, d]) => `<div class="row2 shop"><span>${d.name}<small>${used[a]}</small></span><b>${W.reserve[a]} carried${L.chest[a] ? ` &middot; ${L.chest[a]} in the chest` : ''}</b><button data-a="buy" data-k="${a}" ${G.coins < d.price ? 'disabled' : ''}>Buy ${d.box} &middot; ${d.price} coins</button>${L.chest[a] ? `<button data-a="ammo" data-k="${a}" data-n="${d.box}">Take ${Math.min(d.box, L.chest[a])}</button>` : ''}${W.reserve[a] ? `<button data-a="ammo" data-k="${a}" data-n="-${d.box}">Store</button>` : ''}</div>`).join('')}
+        <p class="sub">Every animal you bring down pays: a rabbit 2 coins, a deer 12, an elk 22, a moose 32, a grizzly 48. Fish pay by the pound.</p>`;
     }
     html += `<div class="acts">${extra}<button data-a="close" class="close">Close &middot; ${k === 'pack' ? 'I' : 'E'}</button></div>`;
     if (force || html !== this._last) { this.el.innerHTML = html; this._last = html; }
@@ -47,6 +52,9 @@ export class UI {
     if (a === 'storeall') { for (const m of L.pack.meat) L.addMeat(L.box, m.meat, m.lb, m.state); L.pack.meat.length = 0; }
     if (a === 'take') { const m = L.box[+b.dataset.i]; if (m) { const room = 120 - L.lbCarried, n = Math.min(m.lb, room); if (n <= 0) this.toast('Your pack is full.'); else { L.addMeat(L.pack.meat, m.meat, n, m.state); m.lb -= n; L.addMeat(L.box, m.meat, 0, m.state); } } }
     if (a === 'ammo') { const k = b.dataset.k, n = +b.dataset.n; if (n > 0) { const t = Math.min(n, L.chest[k]); L.chest[k] -= t; W.reserve[k] += t; } else { const t = Math.min(-n, W.reserve[k]); W.reserve[k] -= t; L.chest[k] += t; } }
+    if (a === 'buy') { const k = b.dataset.k, d = AMMO[k]; if (this.G.coins >= d.price) { this.G.coins -= d.price; W.reserve[k] += d.box; this.toast(`You buy ${d.box} ${d.name.toLowerCase()}.`); } else this.toast('Not enough coins. Hunt or fish for more.'); }
+    if (a === 'equip') { const g = b.dataset.g; W.select(W.want === g ? null : g); }
+    if (a === 'eat') this.G.eat && this.G.eat();
     this.render(true);
   }
 }

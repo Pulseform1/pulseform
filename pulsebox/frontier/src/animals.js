@@ -15,12 +15,24 @@ function furTexture() {
     g.strokeStyle = `rgba(${v},${v},${v},.55)`; g.lineWidth = .8 + R() * .8;
     for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) { if (x + ox < -10 || x + ox > S + 10 || y + oy < -10 || y + oy > S + 10) continue; g.beginPath(); g.moveTo(x + ox, y + oy); g.lineTo(x + ox + Math.cos(a) * l, y + oy + Math.sin(a) * l); g.stroke(); }
   }
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  // the same strokes as a normal map, so the coat catches the light along its lay
+  const d = g.getImageData(0, 0, S, S).data, nc = document.createElement('canvas'); nc.width = nc.height = S; const ng = nc.getContext('2d'), im = ng.createImageData(S, S), hgt = (x, y) => d[(((y + S) % S) * S + ((x + S) % S)) * 4] / 255;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const dx = (hgt(x + 1, y) - hgt(x - 1, y)) * 2.2, dy = (hgt(x, y + 1) - hgt(x, y - 1)) * 2.2, l = Math.hypot(dx, dy, 1), o = (y * S + x) * 4; im.data[o] = (-dx / l * .5 + .5) * 255; im.data[o + 1] = (-dy / l * .5 + .5) * 255; im.data[o + 2] = (1 / l * .5 + .5) * 255; im.data[o + 3] = 255; }
+  ng.putImageData(im, 0, 0); const n = new THREE.CanvasTexture(nc); n.wrapS = n.wrapT = THREE.RepeatWrapping; n.anisotropy = 4;
+  return { map: t, normal: n };
+}
+// fur strands for the shells: soft dots, each a hair seen end-on; the shells keep less of each dot the further out they sit
+function strandTexture() {
+  const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), R = mulberry(91);
+  g.fillStyle = '#000'; g.fillRect(0, 0, S, S);
+  for (let i = 0; i < 2600; i++) { const x = R() * S, y = R() * S, r = .6 + R() * 1.3, v = 120 + R() * 135, gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgb(${v},${v},${v})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.minFilter = THREE.LinearMipmapLinearFilter; return t;
 }
 
 // ---- skinned loft builder ----
 class Skin {
-  constructor() { this.p = []; this.n = []; this.uv = []; this.c = []; this.si = []; this.sw = []; this.i = []; }
+  constructor() { this.p = []; this.n = []; this.uv = []; this.c = []; this.si = []; this.sw = []; this.i = []; this.f = []; this.fur = 0; }
   // st: [{p, rx, ry, w: [[bone, weight], ...], rb (belly radius), s (0..1 along the part)}], col(s, ang) -> [r,g,b]
   loft(st, seg, col, vScale = .25) {
     const base = this.p.length / 3, up = V(0, 1, 0);
@@ -38,7 +50,7 @@ class Skin {
         const off = V().addScaledVector(side, ca * rx).addScaledVector(upv, sa * ry);
         const n = V().addScaledVector(side, ca * ry).addScaledVector(upv, sa * rx).normalize();
         this.p.push(s.p.x + off.x, s.p.y + off.y, s.p.z + off.z); this.n.push(n.x, n.y, n.z); this.uv.push(j / seg * 2, len / vScale);
-        const cc = col(s.s ?? k / (st.length - 1), sa, ca, s); this.c.push(cc[0], cc[1], cc[2]);
+        const cc = col(s.s ?? k / (st.length - 1), sa, ca, s); this.c.push(cc[0], cc[1], cc[2]); this.f.push(this.fur * (s.fur ?? 1) * (s.hoof || s.nose ? 0 : 1));
         for (const [bi, bw] of w) { this.si.push(bi); this.sw.push(bw / tot); }
       }
     });
@@ -52,7 +64,7 @@ class Skin {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
     g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2)); g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
-    g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(this.si, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(this.sw, 4));
+    g.setAttribute('fur', new THREE.Float32BufferAttribute(this.f, 1)); g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(this.si, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(this.sw, 4));
     g.setIndex(this.i); g.computeBoundingSphere(); g.boundingSphere.radius *= 1.35; return g;
   }
 }
@@ -76,8 +88,10 @@ function quadruped(o) {
     bone(n + '1', n + '0', V(x, top * .52, z + (front ? -.01 : .06) * top));
     bone(n + '2', n + '1', V(x, top * (front ? .24 : .27), z + (front ? .0 : -.07) * top));
   }
+  const hdDir0 = V(0, -Math.sin(o.headAng * Math.PI / 180), Math.cos(o.headAng * Math.PI / 180));
+  if (o.jaw) bone('jaw', 'head', hd.clone().addScaledVector(hdDir0, o.headLen * .28).add(V(0, -o.headR * .55, 0)));
   const sk = new Skin(), w = (...a) => { const r = []; for (let i = 0; i < a.length; i += 2) r.push([idx[a[i]], a[i + 1]]); return r; };
-  const col = o.col;
+  const col = o.col; sk.fur = o.fur || 0;
   // body, neck and head in one sweep: rump -> chest -> neck -> head -> nose
   const hdDir = V(0, -Math.sin(o.headAng * Math.PI / 180), Math.cos(o.headAng * Math.PI / 180));
   const st = [
@@ -99,7 +113,13 @@ function quadruped(o) {
   st.push({ p: hd.clone().addScaledVector(hdDir, hl * .75), rx: o.snoutR * 1.05, ry: o.snoutR * 1.1, rb: o.snoutR * (o.snoutDrop || 1.1), w: w('head', 1), s: .98, head: 1 });
   st.push({ p: hd.clone().addScaledVector(hdDir, hl * .98), rx: o.snoutR * .8, ry: o.snoutR * .85, w: w('head', 1), s: .995, head: 1, nose: 1 });
   st.push({ p: hd.clone().addScaledVector(hdDir, hl * 1.02), rx: o.snoutR * .2, ry: o.snoutR * .2, w: w('head', 1), s: 1, head: 1, nose: 1 });
-  sk.loft(st, 14, (s, sa, ca, stn) => col('body', s, sa, ca, stn), .3);
+  if (o.mane) for (const s of st) if (s.s > .55 && s.s < .9) s.fur = 1 + o.mane;
+  sk.loft(st, 22, (s, sa, ca, stn) => col('body', s, sa, ca, stn), .3);
+  // a predator's lower jaw: its own bone, so the mouth opens to snarl and roar
+  if (o.jaw) {
+    const j0 = hd.clone().addScaledVector(hdDir0, o.headLen * .28).add(V(0, -o.headR * .55, 0)), jd = hdDir0.clone();
+    sk.loft([{ p: j0.clone().addScaledVector(jd, -.02), rx: o.snoutR * .9, ry: o.snoutR * .45, w: w('jaw', 1), s: .97, head: 1 }, { p: j0.clone().addScaledVector(jd, o.headLen * .4), rx: o.snoutR * .78, ry: o.snoutR * .38, w: w('jaw', 1), s: .99, head: 1 }, { p: j0.clone().addScaledVector(jd, o.headLen * .66), rx: o.snoutR * .3, ry: o.snoutR * .2, w: w('jaw', 1), s: 1, head: 1 }], 12, (s, sa, ca, stn) => col('body', s, sa, ca, stn), .2);
+  }
   // legs
   for (const [n, sx, sz] of legs) {
     const a = B[idx[n + '0']].p, b = B[idx[n + '1']].p, c = B[idx[n + '2']].p, foot = V(c.x, 0, c.z + (sz > 0 ? .02 : .03)), front = sz > 0, lr = o.legR;
@@ -115,7 +135,7 @@ function quadruped(o) {
       { p: foot.clone().add(V(0, o.hoofH || .06, 0)), rx: lr * (o.paw ? 1.0 : .62), ry: lr * (o.paw ? 1.3 : .75), w: w(n + '2', 1), s: .95, hoof: 1 },
       { p: foot.clone().add(V(0, .005, (o.paw ? .05 : .012))), rx: lr * (o.paw ? 1.05 : .7), ry: lr * (o.paw ? 1.5 : .85), w: w(n + '2', 1), s: 1, hoof: 1 },
     ];
-    sk.loft(ls, 9, (s, sa, ca, stn) => col('leg', s, sa, ca, stn, front), .25);
+    sk.loft(ls, 12, (s, sa, ca, stn) => col('leg', s, sa, ca, stn, front), .25);
   }
   // tail
   const tb = B[idx.tail].p;
@@ -125,7 +145,9 @@ function quadruped(o) {
     const e0 = hd.clone().add(V(sx * o.headR * .7, o.headR * .8, -hl * .05)), ed = V(sx * (o.earOut ?? .7), o.earUp ?? .7, -.25).normalize();
     sk.loft([{ p: e0, rx: o.earW * .5, ry: o.earW * .25, w: w('head', 1), s: 0 }, { p: e0.clone().addScaledVector(ed, o.earLen * .5), rx: o.earW, ry: o.earW * .35, w: w('head', 1), s: .5 }, { p: e0.clone().addScaledVector(ed, o.earLen), rx: o.earW * .15, ry: o.earW * .1, w: w('head', 1), s: 1 }], 7, (s, sa, ca, stn) => col('ear', s, sa, ca, stn), .1);
   }
-  return { bones: B, idx, geo: sk.build(), dims: { hips, chest, hd, hdDir, nb } };
+  // where the eyes sit (relative to the head bone), and the mouth
+  const eyes = [1, -1].map(sx => V(sx * o.headR * .8, o.headR * .4, o.headLen * .16));
+  return { bones: B, idx, geo: sk.build(), dims: { hips, chest, hd, hdDir, nb, eyes, eyeR: o.headR * .17, snout: o.headLen, snoutR: o.snoutR, jaw: !!o.jaw } };
 }
 
 // ---- birds ----
@@ -191,22 +213,34 @@ export const SPECIES = {
       col: (part, s, sa, ca, st, front) => { const back = hex('#7a5a3e'), belly = hex('#d8cfc0'), dark = hex('#2a201a'); if (part === 'tail') return s > .55 ? dark : mixc(hex('#e8e4dc'), back, sa > 0 ? .4 : 0); if (part === 'ear') return mixc(back, dark, s); if (part === 'leg') return st.hoof ? dark : mixc(back, hex('#5e4a3a'), s * .8);
         if (st.nose) return dark; let c = mixc(back, belly, (-sa - .35) * 2.2); if (s < .06 && sa < .3) c = mixc(c, hex('#ede8de'), .8); if (st.head) c = mixc(c, hex('#d6cbb8'), sa < -.2 ? .7 : 0); if (s > .8 && s < .9 && sa < 0) c = mixc(c, belly, .7); return c; } }),
     extras: (rig, rnd, mats) => rnd < .45 ? [{ bone: 'head', obj: antlers({ points: 4, size: 1.0, seed: 5 }, mats.antler), at: [0, .11, -.06] }] : [] },
-  elk: { name: 'elk', graze: [1.5, -.8], label: 'Elk', meat: 'elk meat', lb: [160, 240], walk: 1.4, trot: 3.6, run: 12, stride: 1.7, herd: [3, 7], wary: .8, sight: 85, hear: .9, hp: 2, scale: [.92, 1.1], gait: 'gallop',
+  elk: { name: 'elk', graze: [1.5, -.8], label: 'Elk', meat: 'elk meat', lb: [160, 240], walk: 1.4, trot: 3.6, run: 12, stride: 1.7, herd: [3, 7], wary: .8, sight: 85, hear: .9, hp: 2.4, scale: [.92, 1.1], gait: 'gallop',
     build: () => quadruped({ L: 1.2, hipH: 1.08, shH: 1.12, R: .27, H: .32, neckAng: 42, neckLen: .7, neckR0: .2, neckR1: .1, neckDeep: 1.45, headLen: .5, headR: .1, snoutR: .065, headAng: 50, legR: .05, tailLen: .1, tailR: .04, earLen: .2, earW: .07, earUp: .6, earOut: .8,
       col: (part, s, sa, ca, st) => { const body = hex('#b08a5e'), dark = hex('#3a2416'), rump = hex('#e2d2b4'); if (part === 'tail') return rump; if (part === 'ear') return body; if (part === 'leg') return st.hoof ? hex('#1a1410') : mixc(dark, body, s < .3 ? .2 : 0); if (st.nose) return hex('#1a1410');
         if (s < .07 && sa < .4) return rump; if (s > .76) return mixc(dark, hex('#4e3220'), sa); return mixc(body, hex('#8a6a48'), (-sa - .4) * 1.5); } }),
     extras: (rig, rnd, mats) => rnd < .4 ? [{ bone: 'head', obj: antlers({ points: 6, size: 1.9, seed: 9 }, mats.antler), at: [0, .14, -.1] }] : [] },
-  moose: { name: 'moose', graze: [1.15, -.55], label: 'Moose', meat: 'moose meat', lb: [250, 380], walk: 1.3, trot: 3.4, run: 9.5, stride: 1.9, herd: [1, 2], wary: .6, sight: 55, hear: .9, hp: 2, scale: [.95, 1.1], gait: 'trot', water: 1,
-    build: () => quadruped({ L: 1.3, hipH: 1.22, shH: 1.4, R: .32, H: .42, hump: .1, neckAng: 22, neckLen: .5, neckR0: .25, neckR1: .17, neckDeep: 1.4, headLen: .72, headR: .13, snoutR: .1, snoutDrop: 1.5, jowl: 1.3, headAng: 40, legR: .055, tailLen: .08, tailR: .04, earLen: .24, earW: .085, earUp: .5, earOut: 1,
+  moose: { name: 'moose', graze: [1.15, -.55], label: 'Moose', meat: 'moose meat', lb: [250, 380], walk: 1.3, trot: 3.4, run: 10, stride: 1.9, herd: [1, 2], wary: .6, sight: 55, hear: .9, hp: 4, scale: [1.0, 1.18], gait: 'trot', water: 1, ornery: 1, fur: 1,
+    build: () => quadruped({ L: 1.3, hipH: 1.22, shH: 1.4, R: .32, H: .42, hump: .1, neckAng: 22, neckLen: .5, neckR0: .25, neckR1: .17, neckDeep: 1.4, headLen: .72, headR: .13, snoutR: .1, snoutDrop: 1.5, jowl: 1.3, headAng: 40, legR: .055, tailLen: .08, tailR: .04, earLen: .24, earW: .085, earUp: .5, earOut: 1, fur: .03, mane: 1.2,
       col: (part, s, sa, ca, st) => { const b = hex('#2a1e16'), leg = hex('#9a8a74'); if (part === 'leg') return st.hoof ? hex('#141010') : mixc(b, leg, (s - .3) * 3); if (st.nose) return hex('#3a2c22'); return mixc(b, hex('#3e2c20'), sa * .5 + .2); } }),
     extras: (rig, rnd, mats) => rnd < .45 ? [{ bone: 'head', obj: antlers({ palm: 1 }, mats.antler), at: [0, .14, -.05] }] : [] },
-  bison: { name: 'bison', graze: [.7, -.2], label: 'Bison', meat: 'bison meat', lb: [300, 450], walk: 1.1, trot: 3.2, run: 10, stride: 1.6, herd: [4, 9], wary: .5, sight: 65, hear: .7, hp: 2, scale: [.92, 1.12], gait: 'gallop',
-    build: () => quadruped({ L: 1.35, hipH: .9, shH: 1.15, R: .42, H: .48, hump: .32, belly: .1, neckAng: -12, neckLen: .32, neckR0: .38, neckR1: .3, neckDeep: 1.1, headLen: .5, headR: .2, snoutR: .13, headAng: 75, jowl: 1.35, legR: .07, legX: .5, tailLen: .4, tailR: .03, earLen: .12, earW: .07, earUp: .1, earOut: 1,
+  bison: { name: 'bison', graze: [.7, -.2], label: 'Bison', meat: 'bison meat', lb: [300, 450], walk: 1.1, trot: 3.2, run: 10, stride: 1.6, herd: [4, 9], wary: .5, sight: 65, hear: .7, hp: 4, fur: 1, scale: [.92, 1.12], gait: 'gallop',
+    build: () => quadruped({ L: 1.35, hipH: .9, shH: 1.15, R: .42, H: .48, hump: .32, belly: .1, neckAng: -12, neckLen: .32, neckR0: .38, neckR1: .3, neckDeep: 1.1, headLen: .5, headR: .2, snoutR: .13, headAng: 75, jowl: 1.35, legR: .07, legX: .5, tailLen: .4, tailR: .03, earLen: .12, earW: .07, earUp: .1, earOut: 1, fur: .04, mane: 1.5,
       col: (part, s, sa, ca, st) => { const b = hex('#4a3020'), shag = hex('#2a1a10'); if (part === 'leg') return st.hoof ? hex('#100c0a') : mixc(b, shag, s > .6 ? 1 : .4); if (part === 'tail') return shag; if (st.nose) return hex('#141010'); return s > .55 ? mixc(shag, hex('#5a3a22'), sa * .4) : mixc(b, hex('#5e4430'), sa * .3); } }),
     extras: (rig, rnd, mats) => [{ bone: 'head', obj: horns(mats.horn, 1.2), at: [0, .15, -.02] }] },
-  bear: { name: 'bear', graze: [1.0, -.35], label: 'Grizzly bear', meat: 'bear meat', lb: [180, 320], walk: 1.2, trot: 3.5, run: 11, stride: 1.2, herd: [1, 1], wary: .5, sight: 45, hear: 1.1, hp: 2, scale: [.9, 1.15], gait: 'gallop', bear: 1,
-    build: () => quadruped({ L: .9, hipH: .58, shH: .66, R: .33, H: .36, hump: .12, belly: .1, neckAng: 18, neckLen: .26, neckR0: .27, neckR1: .2, neckDeep: 1.1, headLen: .36, headR: .16, snoutR: .075, headAng: 25, legR: .1, legX: .55, hoofH: .03, paw: 1, tailLen: .06, tailR: .04, earLen: .08, earW: .06, earUp: .9, earOut: .5,
+  bear: { name: 'bear', graze: [1.0, -.35], label: 'Grizzly bear', meat: 'bear meat', lb: [180, 320], walk: 1.2, trot: 3.5, run: 12, stride: 1.2, herd: [1, 1], wary: .5, sight: 45, hear: 1.1, hp: 5, scale: [1.0, 1.25], gait: 'gallop', bear: 1, predator: 'bear', fur: 1,
+    build: () => quadruped({ L: .9, hipH: .58, shH: .66, R: .33, H: .36, hump: .12, belly: .1, neckAng: 18, neckLen: .26, neckR0: .27, neckR1: .2, neckDeep: 1.1, headLen: .36, headR: .16, snoutR: .075, headAng: 25, legR: .1, legX: .55, hoofH: .03, paw: 1, tailLen: .06, tailR: .04, earLen: .08, earW: .06, earUp: .9, earOut: .5, jaw: 1, fur: .045, mane: .5,
       col: (part, s, sa, ca, st) => { const b = hex('#4a3424'), tip = hex('#8a6a4a'); if (part === 'leg') return st.hoof ? hex('#1a1410') : hex('#2e2018'); if (st.nose) return hex('#120e0c'); if (st.head && s > .97) return hex('#8a6e52'); return mixc(b, tip, sa * .5 + (s > .55 && s < .75 ? .3 : 0)); } }) },
+  cougar: { name: 'cougar', graze: [1.0, -.4], label: 'Cougar', meat: 'cougar meat', lb: [90, 150], walk: 1.2, trot: 3.4, run: 13, stride: 1.4, herd: [1, 1], wary: .7, sight: 70, hear: 1.2, hp: 2.6, scale: [.95, 1.12], gait: 'gallop', predator: 'cougar', fur: 1,
+    build: () => quadruped({ L: .98, hipH: .6, shH: .58, R: .2, H: .22, neckAng: 18, neckLen: .24, neckR0: .14, neckR1: .1, headLen: .22, headR: .088, snoutR: .052, headAng: 18, legR: .046, legX: .55, hoofH: .03, paw: 1, tailLen: .85, tailR: .036, earLen: .07, earW: .05, earUp: .95, earOut: .55, jaw: 1, fur: .012,
+      col: (part, s, sa, ca, st) => { const b = hex('#a8804e'), back = hex('#8a6438'), belly = hex('#e6d8c0'), dark = hex('#2a1c12'); if (part === 'tail') return s > .8 ? dark : mixc(back, b, (-sa) * .6); if (part === 'ear') return mixc(dark, b, sa * .5 + .3); if (part === 'leg') return st.hoof ? hex('#3a2a20') : mixc(b, belly, ca * ca * .3);
+        if (st.nose) return hex('#6a4a40'); if (st.head && s > .975) return mixc(belly, dark, sa < -.3 ? .6 : 0); if (st.head && s > .93 && sa < -.1) return belly; let c = mixc(back, belly, (-sa - .25) * 1.8); if (st.head && s > .945 && Math.abs(ca) > .6 && sa > -.2) c = mixc(c, dark, .55); return c; } }) },
+  goat: { name: 'goat', graze: [1.35, -.8], label: 'Mountain goat', meat: 'goat meat', lb: [120, 200], walk: 1.0, trot: 2.6, run: 7.5, stride: 1.0, herd: [2, 5], wary: .9, sight: 110, hear: .9, hp: 1.6, scale: [.92, 1.1], gait: 'gallop', climber: 1, fur: 1,
+    build: () => quadruped({ L: .86, hipH: .7, shH: .78, R: .25, H: .28, hump: .08, neckAng: 34, neckLen: .3, neckR0: .17, neckR1: .1, neckDeep: 1.35, headLen: .3, headR: .08, snoutR: .045, headAng: 62, legR: .05, tailLen: .08, tailR: .04, earLen: .12, earW: .045, earUp: .55, earOut: .9, fur: .03, mane: 1,
+      col: (part, s, sa, ca, st) => { const w2 = hex('#ece6d6'), shade = hex('#cfc6b2'); if (part === 'leg') return st.hoof ? hex('#141210') : mixc(w2, shade, s * .5); if (st.nose) return hex('#1a1614'); return mixc(w2, shade, (-sa - .2) * .8 + (s > .9 ? .2 : 0)); } }),
+    extras: (rig, rnd, mats) => { const g = new THREE.Group(); for (const sx of [1, -1]) { const h = new THREE.Mesh(new THREE.ConeGeometry(.018, .2, 8), mats.horn); h.position.set(sx * .045, .09, -.04); h.rotation.set(-.55, 0, sx * -.12); h.castShadow = true; g.add(h); } const beard = new THREE.Mesh(new THREE.ConeGeometry(.035, .14, 8), mats.goatHair); beard.position.set(0, -.11, .14); beard.rotation.x = Math.PI; g.add(beard); return [{ bone: 'head', obj: g, at: [0, 0, 0] }]; } },
+  wolf: { name: 'wolf', graze: [1.2, -.5], label: 'Gray wolf', meat: 'wolf meat', lb: [70, 110], walk: 1.4, trot: 3.6, run: 12, stride: 1.25, herd: [3, 5], wary: .7, sight: 80, hear: 1.3, hp: 1.6, scale: [.95, 1.1], gait: 'gallop', predator: 'wolf', fur: 1,
+    build: () => quadruped({ L: .8, hipH: .64, shH: .66, R: .17, H: .2, neckAng: 24, neckLen: .25, neckR0: .14, neckR1: .09, headLen: .27, headR: .078, snoutR: .04, headAng: 12, legR: .036, legX: .58, hoofH: .03, paw: 1, tailLen: .46, tailR: .055, earLen: .1, earW: .048, earUp: 1, earOut: .45, jaw: 1, fur: .028, mane: .8,
+      col: (part, s, sa, ca, st) => { const g1 = hex('#7a746c'), back = hex('#3e3a36'), belly = hex('#cfc8bc'), dark = hex('#1a1816'); if (part === 'tail') return s > .75 ? dark : mixc(back, g1, (-sa) * .7); if (part === 'ear') return mixc(dark, g1, .4); if (part === 'leg') return st.hoof ? dark : mixc(g1, belly, .35);
+        if (st.nose) return dark; if (st.head && s > .97) return mixc(belly, dark, sa > .2 ? .5 : 0); let c = mixc(back, belly, (-sa + .05) * 1.4); if (st.head && s > .93 && sa < 0) c = mixc(c, belly, .5); return c; } }) },
   rabbit: { name: 'rabbit', graze: [.6, -.2], label: 'Cottontail rabbit', meat: 'rabbit', lb: [2, 3], walk: .6, trot: 2.5, run: 8, stride: .5, herd: [1, 2], wary: 1.2, sight: 35, hear: 1.2, hp: 1, scale: [.9, 1.1], gait: 'hop', small: 1,
     build: () => quadruped({ L: .14, hipH: .1, shH: .085, R: .07, H: .075, neckAng: 40, neckLen: .05, neckR0: .045, neckR1: .04, headLen: .09, headR: .04, snoutR: .025, headAng: 30, legR: .014, legX: .55, tailLen: .03, tailR: .025, earLen: .1, earW: .025, earUp: 1, earOut: .25,
       col: (part, s, sa) => { const b = hex('#8a7a66'); if (part === 'tail') return hex('#f2efe8'); if (part === 'ear') return mixc(b, hex('#3a2e24'), s - .5); return mixc(b, hex('#d8d0c4'), (-sa - .3) * 2); } }) },
@@ -222,17 +256,35 @@ export const SPECIES = {
 
 // shared geometry and materials per species, built once
 let MATS = null;
+const SHELLS = 7;   // fur: this many shells over the skin, close up
 export function speciesAssets(name) {
   if (!MATS) {
-    const fur = furTexture();
-    MATS = { skin: new THREE.MeshStandardMaterial({ map: fur, vertexColors: true, roughness: .92, metalness: 0 }), antler: new THREE.MeshStandardMaterial({ color: 0x8a7458, roughness: .75 }), horn: new THREE.MeshStandardMaterial({ color: 0x1a1612, roughness: .4 }),
-      fan: new THREE.MeshStandardMaterial({ color: 0x4a3420, roughness: .8, side: THREE.DoubleSide }), wing: new THREE.MeshStandardMaterial({ color: 0x8a8278, roughness: .8 }) };
+    const fur = furTexture(), strands = strandTexture();
+    MATS = { skin: new THREE.MeshStandardMaterial({ map: fur.map, normalMap: fur.normal, normalScale: new THREE.Vector2(.6, .6), vertexColors: true, roughness: .9, metalness: 0 }), antler: new THREE.MeshStandardMaterial({ color: 0x8a7458, roughness: .75 }), horn: new THREE.MeshStandardMaterial({ color: 0x1a1612, roughness: .4 }),
+      fan: new THREE.MeshStandardMaterial({ color: 0x4a3420, roughness: .8, side: THREE.DoubleSide }), wing: new THREE.MeshStandardMaterial({ color: 0x8a8278, roughness: .8 }), goatHair: new THREE.MeshStandardMaterial({ color: 0xe0d8c6, roughness: 1 }),
+      eye: new THREE.MeshStandardMaterial({ color: 0x0a0806, roughness: .05, metalness: .3 }), tooth: new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: .35 }), mouth: new THREE.MeshStandardMaterial({ color: 0x4a1612, roughness: .5 }),
+      shine: new THREE.SpriteMaterial({ color: 0xd8ff9a, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }) };
+    // the fur shells: the skin pushed out along its normals by a fraction of each spot's fur length; each shell keeps only
+    // the hairs long enough to reach it, darker at the root
+    MATS.shells = [];
+    for (let i = 1; i <= SHELLS; i++) {
+      const k = i / SHELLS, m = new THREE.MeshStandardMaterial({ map: fur.map, vertexColors: true, roughness: 1, metalness: 0 });
+      m.onBeforeCompile = sh => {
+        sh.uniforms.uK = { value: k }; sh.uniforms.uStrand = { value: strands };
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float fur; uniform float uK; varying vec2 vFurUv; varying float vFurOn;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed += normal * fur * uK; transformed.y -= fur * uK * uK * 0.35; vFurUv = uv * vec2( 9.0, 9.0 ); vFurOn = step( 0.0001, fur );');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uK; uniform sampler2D uStrand; varying vec2 vFurUv; varying float vFurOn;')
+          .replace('#include <map_fragment>', '#include <map_fragment>\nif ( vFurOn < 0.5 || texture2D( uStrand, vFurUv ).r < uK * 0.92 + 0.04 ) discard; diffuseColor.rgb *= mix( 0.62, 1.12, uK );');
+      };
+      m.customProgramCacheKey = () => 'furshell' + i;
+      MATS.shells.push(m);
+    }
   }
   if (!C[name]) { const sp = SPECIES[name], rig = sp.build(); C[name] = { rig, sp }; }
   return { ...C[name], mats: MATS };
 }
 
-// one animal: its own skeleton on the shared skin
+// one animal: its own skeleton on the shared skin, eyes that shine back at a lantern, a predator's teeth, and fur
 export function makeAnimal(name, rnd) {
   const { rig, sp, mats } = speciesAssets(name);
   const bones = rig.bones.map(b => { const o = new THREE.Bone(); o.name = b.name; return o; });
@@ -241,7 +293,21 @@ export function makeAnimal(name, rnd) {
   const B = {}; bones.forEach(b => { B[b.name] = b; b.userData.rest = b.position.clone(); });
   const wings = [], ex = sp.extras ? sp.extras(rig, rnd, mats) : [];
   for (const e of ex) { e.obj.position.set(...e.at); B[e.bone].add(e.obj); if (e.wing) wings.push(e); }
-  return { mesh, B, rig, sp, wings, male: ex.some(e => e.bone === 'head') && name !== 'bison' };
+  const shine = [], D = rig.dims;
+  if (D.eyes && !sp.bird) for (const p of D.eyes) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(D.eyeR, 10, 8), mats.eye); eye.position.copy(p); B.head.add(eye);
+    const s = new THREE.Sprite(mats.shine.clone()); s.position.copy(p).add(V(0, 0, D.eyeR * .6)); s.scale.setScalar(D.eyeR * 5); s.renderOrder = 3; B.head.add(s); shine.push(s);
+  }
+  if (D.jaw) {   // fangs above and below, and the red of the mouth between
+    const dir = D.hdDir, fang = (bone, x, y, z, up, l) => { const t = new THREE.Mesh(new THREE.ConeGeometry(D.snoutR * .14, l, 6), mats.tooth); t.position.set(x, y, z); t.rotation.x = up ? Math.PI : 0; bone.add(t); };
+    const fz = D.snout * .82, jz = D.snout * .58;
+    for (const sx of [1, -1]) { fang(B.head, sx * D.snoutR * .5, -D.snoutR * .85 + dir.y * fz, dir.z * fz, true, D.snoutR * .7); fang(B.jaw, sx * D.snoutR * .42, D.snoutR * .15, jz * dir.z, false, D.snoutR * .55); }
+    const mouth = new THREE.Mesh(new THREE.SphereGeometry(D.snoutR * .7, 10, 8), mats.mouth); mouth.scale.set(1, .5, 2.2); mouth.position.set(0, -D.snoutR * .55 + dir.y * D.snout * .5, dir.z * D.snout * .5); B.head.add(mouth);
+  }
+  // fur: shells over the skin, shown only close by (fishing.js and the scope bring them close too)
+  const shells = [];
+  if (sp.fur) for (const m of mats.shells) { const s = new THREE.SkinnedMesh(rig.geo, m); s.bind(mesh.skeleton, mesh.bindMatrix); s.castShadow = false; s.receiveShadow = true; s.frustumCulled = false; s.visible = false; mesh.add(s); shells.push(s); }
+  return { mesh, B, rig, sp, wings, shine, shells, male: ex.some(e => e.bone === 'head') && name !== 'bison' && name !== 'goat' };
 }
 
 const q = new THREE.Quaternion(), e = new THREE.Euler();
@@ -282,7 +348,12 @@ export function pose(a, p) {
   B.chest.position.y = B.chest.userData.rest.y - down * .04;
   rot(B.neck, down * gz[0] - al * .35 + (run ? .25 : 0) + lie * .25 + fall * .6, (p.look || 0) * .6 * (1 - down));
   rot(B.head, down * gz[1] - al * .15 + Math.sin(p.t * 1.7) * .03 * (1 - down) - fall * .3, (p.look || 0) * .4, p.tilt || 0);
-  if (B.tail) rot(B.tail, (run ? -.6 : .1) * (1 - fall) + (p.flag || 0) * -1.2 + (sp.name === 'turkey' ? -(p.display || 0) * 1.1 : 0));
+  if (B.tail) rot(B.tail, (run ? -.6 : .1) * (1 - fall) + (p.flag || 0) * -1.2 + (sp.name === 'turkey' ? -(p.display || 0) * 1.1 : 0) + (sp.predator === 'cougar' ? Math.sin(p.t * 2.3) * .25 * (p.crouch || 0) : 0), sp.predator === 'cougar' ? Math.sin(p.t * 1.7) * .4 * (p.crouch || 0) : 0);
+  if (B.jaw) rot(B.jaw, (p.jaw || 0) * .75);
+  // a stalk: belly to the ground, head low and level, shoulders working
+  const cr = p.crouch || 0; if (cr > .01) { B.hips.position.y -= cr * H * .32; rot(B.chest, -.12 * cr); B.chest.position.y -= cr * H * .25; rot(B.neck, -.25 * cr + (p.look || 0) * 0, (p.look || 0) * .6); rot(B.head, .35 * cr); }
+  // a strike: the bear rises and swings a forepaw; the cat and the wolf lunge and snap
+  const sw = p.swipe || 0; if (sw > .01) { const arcS = Math.sin(sw * Math.PI); if (B.FL0) { rot(B.FL0, -1.6 * arcS); if (B.FL1) rot(B.FL1, .9 * arcS); } rot(B.neck, B.neck.rotation.x - .35 * arcS); rot(B.head, .2 * arcS); }
   // biped legs
   if (sp.gait === 'biped' && B.HL0) { for (const [n, off] of [['HL', 0], ['HR', .5]]) { const t = ph + off * Math.PI * 2; rot(B[n + '0'], Math.sin(t) * amp * 1.2 - lie * 1.2); rot(B[n + '1'], -Math.max(0, Math.cos(t)) * amp * 1.5 + lie * 2); } B.hips.position.y = B.hips.userData.rest.y + bob - lie * .3; }
   // wings

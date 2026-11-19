@@ -6,7 +6,7 @@ import { World } from './world.js';
 
 export class Jobs {
   constructor(seed, camp) {
-    this.world = new World(seed); if (camp) this.world.setCamp(camp.x, camp.z);
+    this.world = new World(seed); if (camp) this.world.setCamp(camp.x, camp.z, camp.region);
     this.queue = []; this.wait = new Map(); this.nextId = 1; this.workers = []; this.inflight = [];
     const cores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) || 4, n = Math.max(1, Math.min(4, cores - 2));
     try {

@@ -6,7 +6,7 @@ const CELL = 64, REVEAL = 170;
 
 export class SurveyMap {
   constructor(G) {
-    this.G = G; this.tiles = new Map(); this.explored = new Set(); this.markers = []; this.guide = false;
+    this.G = G; this.tiles = new Map(); this.explored = new Set(); this.markers = []; this.guide = true; this.trail = [];
     this.view = { x: 0, z: 0, mpp: 3 }; this.revealT = 0;
     this.el = $('#map'); this.cv = $('#mapcv'); this.ctx = this.cv.getContext('2d');
     this.comp = $('#compass'); this.cc = this.comp.getContext('2d');
@@ -34,6 +34,8 @@ export class SurveyMap {
   reveal(dt) {
     this.revealT -= dt; if (this.revealT > 0) return; this.revealT = 1;
     const p = this.G.player.pos, r = Math.ceil(REVEAL / CELL);
+    // the trail you have walked: a crumb every few metres, so the way back is on the map
+    const last = this.trail[this.trail.length - 1]; if (!last || Math.hypot(last[0] - p.x, last[1] - p.z) > 7) { this.trail.push([Math.round(p.x * 10) / 10, Math.round(p.z * 10) / 10]); if (this.trail.length > 3000) this.trail.splice(0, this.trail.length - 3000); }
     for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) { const cx = Math.floor(p.x / CELL) + i, cz = Math.floor(p.z / CELL) + j; if (Math.hypot((cx + .5) * CELL - p.x, (cz + .5) * CELL - p.z) < REVEAL) this.explored.add(cx + ',' + cz); }
   }
   tile(level, tx, tz) {
@@ -68,6 +70,13 @@ export class SurveyMap {
     const bar = [50, 100, 250, 500, 1000, 2000].find(m => m / v.mpp > 80) || 2000, bl = bar / v.mpp * k;
     g.strokeStyle = '#3a2a18'; g.fillStyle = '#3a2a18'; g.lineWidth = 2 * k; g.beginPath(); g.moveTo(20 * k, H - 24 * k); g.lineTo(20 * k + bl, H - 24 * k); g.stroke();
     g.font = `${12 * k}px Georgia, serif`; g.fillText(bar >= 1000 ? bar / 1000 + ' km' : bar + ' m', 20 * k, H - 32 * k);
+    // your trail (older stretches fade), and a dashed line straight home
+    if (this.trail.length > 1) {
+      g.lineCap = 'round'; g.lineWidth = 2.6 * k; const n = this.trail.length;
+      for (let i = 1; i < n; i++) { const [ax, ay] = this.toScreen(this.trail[i - 1][0], this.trail[i - 1][1]), [bx, by] = this.toScreen(this.trail[i][0], this.trail[i][1]); if ((ax < -50 && bx < -50) || (ay < -50 && by < -50) || (ax > W + 50 && bx > W + 50) || (ay > H + 50 && by > H + 50)) continue; g.strokeStyle = `rgba(122,38,18,${.25 + .6 * (i / n)})`; if (i % 2) { g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke(); } }
+    }
+    { const P = this.G.player.pos, c = this.G.world.camp, [ax, ay] = this.toScreen(P.x, P.z), [bx, by] = this.toScreen(c.x, c.z); g.save(); g.setLineDash([8 * k, 7 * k]); g.strokeStyle = 'rgba(40,24,10,.75)'; g.lineWidth = 2 * k; g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke(); g.restore();
+      const d = Math.hypot(c.x - P.x, c.z - P.z); if (d > 40) { g.fillStyle = 'rgba(244,232,204,.85)'; const mx = (ax + bx) / 2, my = (ay + by) / 2, txt = `camp ${d > 1000 ? (d / 1000).toFixed(1) + ' km' : Math.round(d) + ' m'} ${this.dirWord(c.x - P.x, c.z - P.z)}`; g.font = `italic ${12 * k}px Georgia, serif`; const tw = g.measureText(txt).width; g.fillRect(mx - tw / 2 - 5 * k, my - 13 * k, tw + 10 * k, 18 * k); g.fillStyle = '#2a1a0c'; g.textAlign = 'center'; g.fillText(txt, mx, my); g.textAlign = 'left'; } }
     // markers
     for (const m of this.markers) { const [sx, sy] = this.toScreen(m.x, m.z); this.flag(g, sx, sy, k, '#8a2a1a', String(m.n)); }
     // camp: a big tent, pinned to the edge when off the chart
@@ -79,6 +88,7 @@ export class SurveyMap {
     g.save(); g.translate(px, py); g.rotate(b); g.fillStyle = '#7a1e10'; g.strokeStyle = '#f4e8cc'; g.lineWidth = 2 * k; g.beginPath(); g.moveTo(0, -11 * k); g.lineTo(7 * k, 8 * k); g.lineTo(0, 4 * k); g.lineTo(-7 * k, 8 * k); g.closePath(); g.stroke(); g.fill(); g.restore();
     this.rose(g, W - 60 * k, 70 * k, k);
   }
+  dirWord(dx, dz) { const a = (Math.atan2(dx, -dz) / (Math.PI * 2) * 8 + 8.5) % 8 | 0; return ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][a]; }
   tent(g, x, y, k) {
     g.save(); g.translate(x, y); g.scale(k, k);
     g.fillStyle = '#f2e6c8'; g.strokeStyle = '#3a2410'; g.lineWidth = 2;
@@ -108,9 +118,9 @@ export class SurveyMap {
     g.textAlign = 'center'; g.font = `${12 * k}px Georgia, serif`;
     for (let i = 0; i < 72; i++) { const a = i / 72 * Math.PI * 2, x = at(a); if (x === null) continue; const big = i % 9 === 0, mid = i % 3 === 0; g.strokeStyle = `rgba(243,231,207,${big ? .9 : .5})`; g.lineWidth = k; g.beginPath(); g.moveTo(x, H * (big ? .45 : mid ? .55 : .65)); g.lineTo(x, H * .8); g.stroke(); if (big) { g.fillStyle = i === 0 ? '#ffd27a' : 'rgba(243,231,207,.95)'; g.fillText(['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][i / 9], x, H * .38); } }
     const mark = (x, z, col, txt) => { const a = Math.atan2(x - P.pos.x, -(z - P.pos.z)), sx = at((a + Math.PI * 2) % (Math.PI * 2)); if (sx === null) return; g.fillStyle = col; g.beginPath(); g.moveTo(sx, H * .82); g.lineTo(sx - 5 * k, H); g.lineTo(sx + 5 * k, H); g.fill(); if (txt) { g.font = `${10.5 * k}px Georgia, serif`; g.fillText(txt, sx, H * .2 + 2 * k); } };
-    const c = this.G.world.camp; if (this.guide) mark(c.x, c.z, '#ffb24a', `camp ${Math.round(Math.hypot(c.x - P.pos.x, c.z - P.pos.z))} m`);
+    const c = this.G.world.camp, cd = Math.hypot(c.x - P.pos.x, c.z - P.pos.z); if (this.guide && cd > 18) mark(c.x, c.z, '#ffb24a', `camp ${cd > 1000 ? (cd / 1000).toFixed(1) + ' km' : Math.round(cd) + ' m'}`);
     for (const m of this.markers) mark(m.x, m.z, '#e06a4a', '');
   }
-  save() { return { explored: [...this.explored].slice(-6000), markers: this.markers, guide: this.guide }; }
-  load(d) { if (!d) return; this.explored = new Set(d.explored || []); this.markers = d.markers || []; this.guide = !!d.guide; }
+  save() { return { explored: [...this.explored].slice(-6000), markers: this.markers, guide: this.guide, trail: this.trail.slice(-1500) }; }
+  load(d) { if (!d) return; this.explored = new Set(d.explored || []); this.markers = d.markers || []; this.guide = d.guide !== false; this.trail = d.trail || []; }
 }

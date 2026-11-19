@@ -11,7 +11,7 @@ export class CampLife {
     this.G = G; this.ui = ui;
     this.pack = { wood: 2, meat: [] };     // meat: { meat: 'venison', lb, state: raw|cooked|dried }
     this.box = [];                          // the meat box in the tent
-    this.chest = { rifle: 40, shotgun: 24, restockDay: 0 };
+    this.chest = { rifle: 0, shell: 0, pistol: 0 };   // ammunition you bought and left at camp
     this.pile = 14;                         // split logs on the woodpile
     this.spit = [null, null, null];         // { meat, lb, t (seconds cooked) }
     this.rack = [];                         // { meat, lb, hung (game hours) }
@@ -64,7 +64,7 @@ export class CampLife {
       if (it.id === 'fire') it.label = () => { const f = c.fire; if (!f.lit) return L.pack.wood >= 2 ? 'Light the fire (2 wood)' : 'Light the fire (needs 2 firewood)'; return L.pack.wood ? `Add a log to the fire (${L.pack.wood} in your pack)` : 'Add a log (no firewood in your pack)'; };
       if (it.id === 'woodpile') it.label = () => L.pack.wood < WOOD_CAP && L.pile > 0 ? `Take firewood (${L.pile} on the pile)` : L.pile <= 0 ? 'The woodpile is empty' : 'Your arms are full of wood';
       if (it.id === 'meatbox') it.label = () => 'Open the meat box';
-      if (it.id === 'chest') it.label = () => 'Open the chest';
+      if (it.id === 'chest') it.label = () => 'Supply chest: buy ammunition';
       if (it.id === 'rack') it.label = () => L.rack.length ? 'Drying rack: take or hang meat' : 'Hang meat to dry';
       if (it.id === 'table') it.label = () => 'Camp table: check your pack';
     }
@@ -149,7 +149,6 @@ export class CampLife {
     // the drying rack
     this.strips.forEach((m, i) => { const r = this.rack[i]; m.visible = !!r; if (r) { const k = Math.min(1, (G.gameHours - r.hung) / DRY_HOURS); m.material.color.setRGB(.42 - .18 * k, .17 - .06 * k, .12 - .05 * k); m.scale.y = 1 - .25 * k; } });
     // a new day: you load fresh cartridges at camp
-    if (G.day > this.chest.restockDay) { this.chest.restockDay = G.day; if (G.day > 0) { this.chest.rifle = Math.min(80, this.chest.rifle + 12); this.chest.shotgun = Math.min(48, this.chest.shotgun + 8); } }
   }
   // sleeping or sitting lets time pass: the fire burns down, the spit keeps roasting
   passTime(hours) {
@@ -158,5 +157,5 @@ export class CampLife {
     this.spit.forEach(s => { if (s && f.lit) s.t = Math.min(COOK_TIME, s.t + secs); });
   }
   save() { return { pack: this.pack, box: this.box, chest: this.chest, pile: this.pile, spit: this.spit, rack: this.rack, gathered: [...this.gathered].slice(-400) }; }
-  load(d) { if (!d) return; Object.assign(this, { pack: d.pack, box: d.box, chest: d.chest, pile: d.pile, spit: d.spit, rack: d.rack }); this.gathered = new Set(d.gathered || []); this.updatePile(); }
+  load(d) { if (!d) return; Object.assign(this, { pack: d.pack, box: d.box, chest: d.chest && 'shell' in d.chest ? d.chest : { rifle: 0, shell: 0, pistol: 0 }, pile: d.pile, spit: d.spit, rack: d.rack }); this.gathered = new Set(d.gathered || []); this.updatePile(); }
 }

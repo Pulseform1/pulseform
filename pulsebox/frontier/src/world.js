@@ -9,16 +9,20 @@ const S = { h: 0, m: 0, lake: 0, river: 0, rv: 1 };
 export class World {
   constructor(seed) { this.seed = seed >>> 0; this.n = makeNoise(this.seed); this.k = makeNoise((this.seed ^ 0x9e3779b9) >>> 0); this.camp = null; }
 
-  setCamp(x, z) { this.camp = null; const h = this.sample(x, z).h; this.camp = { x, z, h: Math.max(h, 2.2) }; return this.camp; }
+  // the camp, and the kind of country it was chosen for: that shapes the land for a few kilometres around it
+  setCamp(x, z, region) { this.camp = null; const h = this.sample(x, z).h; this.camp = { x, z, h: Math.max(h, 2.2), region: region || null }; return this.camp; }
 
   // the ground before anything else is added; `o` gets the fields other systems use
   sample(x, z, o = S) {
     const n = this.n;
     const wx = x + 170 * n.fbm(x * .0006 + 3.1, z * .0006 - 7.7, 3), wz = z + 170 * n.fbm(x * .0006 - 11.3, z * .0006 + 5.9, 3);
     // mountain ranges: a slow mask, then ridged noise on top
-    const m = smooth(-0.02, 0.3, n.fbm(wx * .00028 + 17.2, wz * .00028 - 4.4, 3));
+    let m = smooth(-0.02, 0.3, n.fbm(wx * .00028 + 17.2, wz * .00028 - 4.4, 3));
+    // a mountain valley camp sits in a ring of giants: past the valley floor the ranges close in and rise far higher
+    let ring = 0;
+    if (this.camp && this.camp.region === 'valley') { const d = Math.hypot(x - this.camp.x, z - this.camp.z); ring = smooth(420, 1000, d) * (1 - smooth(3400, 4600, d)); m = Math.max(m, ring * (.8 + .2 * n.fbm(wx * .0011 + 3, wz * .0011 - 8, 2))); }
     let h = 10 + 12 * n.fbm(wx * .0011, wz * .0011, 4) + 1.7 * n.fbm(x * .013, z * .013, 2) + 0.22 * n.n2(x * .17, z * .17);
-    if (m > 0) { const r = n.ridged(wx * .0007 + 5.5, wz * .0007 + 1.3, 6); h += m * (24 + 290 * Math.pow(r, 1.75)) + m * 30 * n.fbm(wx * .003, wz * .003, 3); }
+    if (m > 0) { const r = n.ridged(wx * .0007 + 5.5, wz * .0007 + 1.3, 6); h += m * (24 + 290 * Math.pow(r, 1.75)) + m * 30 * n.fbm(wx * .003, wz * .003, 3); if (ring > 0) h += ring * (90 + 430 * Math.pow(n.ridged(wx * .0009 - 2.1, wz * .0009 + 7.7, 5), 1.5)); }
     // lakes sink below the water line, mostly away from the mountains
     const L = n.fbm(wx * .00068 - 40.1, wz * .00068 + 12.7, 3);
     const lake = smooth(0.22, 0.38, L) * (1 - 0.9 * m);
@@ -47,7 +51,10 @@ export class World {
     f = smooth(-0.22, 0.18, f);
     f *= 1 - smooth(130, 200, s.h);              // treeline
     f *= smooth(0.9, 2.6, s.h);                  // nothing grows in the water or on the beach
-    f *= smooth(-0.66, -0.34, k.n2(x * .012 + 9, z * .012 - 3)); // meadows and clearings
+    const reg = this.camp && this.camp.region, d = reg ? Math.hypot(x - this.camp.x, z - this.camp.z) : 1e9;
+    if (reg === 'forest' && d < 4000) { const k2 = 1 - smooth(3000, 4000, d); f = Math.max(f, k2 * smooth(-0.5, -0.05, k.fbm(x * .0021 + 200, z * .0021 - 90, 4)) * smooth(0.9, 2.6, s.h) * (1 - smooth(130, 200, s.h))); f *= 1 - k2 * .7 * (1 - smooth(-0.8, -0.55, k.n2(x * .012 + 9, z * .012 - 3))); }   // deep forest: thick timber, few clearings
+    else f *= smooth(-0.66, -0.34, k.n2(x * .012 + 9, z * .012 - 3)); // meadows and clearings
+    if (reg === 'valley' && d < 3200 && s.h < this.camp.h + 70) f *= .22 + .78 * smooth(1700, 3200, d) + .5 * smooth(.25, .6, k.n2(x * .006 - 4, z * .006 + 9));   // the valley floor lies open, with stands of timber
     return f;
   }
   forest(x, z, s = this.sample(x, z)) {
@@ -69,8 +76,12 @@ export class World {
     g *= smooth(0.72, 0.86, ny);
     g *= 1 - smooth(150, 185, s.h);
     g *= 0.55 + 0.45 * smooth(-0.4, 0.3, this.k.n2(x * .05 + 3, z * .05 - 8));
-    if (this.camp) { const d = Math.hypot(x - this.camp.x, z - this.camp.z); g *= smooth(6.5, 12, d); }
-    return clamp(g, 0, 1);
+    if (this.camp) {
+      const d = Math.hypot(x - this.camp.x, z - this.camp.z); g *= smooth(6.5, 12, d);
+      // the valley's tall grass: patches of it, waist to chest high, where a crouching hunter (or a cat) can hide
+      if (this.camp.region === 'valley' && d < 3000 && f < .35) { const tall = smooth(.05, .35, this.k.n2(x * .021 + 41, z * .021 - 17)) * smooth(18, 30, d); g = g * (1 + 1.1 * tall) + .35 * tall * smooth(0.72, 0.86, ny) * smooth(0.55, 1.4, s.h); }
+    }
+    return clamp(g, 0, 2.1);
   }
 
   // places for the camp, by the kind chosen on the menu

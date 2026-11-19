@@ -1,5 +1,7 @@
 // Wildlife: herds that graze, wander, bed down and go to water by the clock; notice you by sight, sound and scent
-// (downwind of you they smell you); stare, then bolt. Bears rear and bluff-charge. Ducks paddle and take off.
+// (downwind of you they smell you); stare, then bolt. Some fight: a grizzly rears, roars and charges home, then mauls;
+// a moose runs you down; a cougar stalks you from behind, freezes when you turn, and springs from close in; wolves
+// circle and rush in one at a time. A wounded predator comes for you. Ducks paddle and take off.
 // Groups are spawned in suitable country around the player and removed far behind. Shot animals fold and lie
 // still (no blood) until you harvest them.
 import * as THREE from 'three';
@@ -18,7 +20,11 @@ const ACTIVE = {
   rabbit: h => h > 17 || h < 8.5 ? 1 : .35,
   turkey: h => h > 6 && h < 18.5 ? 1 : 0,
   duck: h => h > 5.5 && h < 20 ? 1 : .4,
+  cougar: h => h < 8 || h > 17.5 ? 1 : .55,
+  goat: h => h > 6 && h < 19.5 ? 1 : .35,
+  wolf: h => h < 8.5 || h > 17 ? 1 : .5,
 };
+const FAR = 900;   // how far an animal is still drawn and kept: far enough to glass a goat on the mountain
 
 class Animal {
   constructor(W, kind, x, z, group, rnd) {
@@ -30,7 +36,7 @@ class Animal {
     this.state = 'graze'; this.t = Math.random() * 5; this.stateT = 3 + Math.random() * 6; this.aware = 0; this.hp = this.sp.hp; this.wounded = false;
     this.headDown = 0; this.alertK = 0; this.lie = 0; this.fall = 0; this.roll = 0; this.flap = 0; this.fly = 0; this.vy = 0;
     this.slot = new THREE.Vector2((Math.random() - .5) * 2, (Math.random() - .5) * 2).multiplyScalar(group.spread);
-    this.look = 0; this.lookT = 0; this.display = 0; this.called = 0;
+    this.look = 0; this.lookT = 0; this.display = 0; this.called = 0; this.jawK = 0; this.crouchK = 0; this.swipe = 0; this.atkT = 0; this.strikes = 0; this.roarT = 0;
     this.ground();
   }
   get L() { return (this.m.rig.dims.chest?.z ?? .3) * 2 * this.scale; }
@@ -45,7 +51,7 @@ class Animal {
     if (this.sp.swim) return h < -.2; // ducks keep to the water
     if (h < (this.sp.water ? -1.1 : -.25)) return false;
     let blocked = false; this.W.flora.near(x, z, .35 * this.scale, () => { blocked = true; }); if (blocked) return false;
-    const n = w.normal(x, z, this._n || (this._n = [0, 1, 0]), 1.5); if (n[1] < .72) return false;
+    const n = w.normal(x, z, this._n || (this._n = [0, 1, 0]), 1.5); if (n[1] < (this.sp.climber ? .3 : this.sp.predator === 'cougar' ? .55 : .72)) return false;
     const c = this.W.camp; if (c && Math.hypot(x - c.c.x, z - c.c.z) < 12) return false;
     return true;
   }
@@ -55,7 +61,8 @@ class Animal {
     const look = 1.6 + speed * .45;
     for (const off of [0, .5, -.5, 1, -1, 1.6, -1.6, 2.4, -2.4]) {
       const a = want + off * (this._side || 1), x = this.pos.x + Math.sin(a) * look, z = this.pos.z + Math.cos(a) * look;
-      if (this.canGo(x, z)) { want = a; if (off) this._side = Math.sign(off) * (this._side || 1); break; }
+      // clear just ahead as well as further on (a trunk can sit between the two)
+      if (this.canGo(x, z) && this.canGo(this.pos.x + Math.sin(a) * .7, this.pos.z + Math.cos(a) * .7)) { want = a; if (off) this._side = Math.sign(off) * (this._side || 1); break; }
       if (off === -2.4) { want = this.yaw + Math.PI; }
     }
     this.yaw += Math.max(-turn * dt, Math.min(turn * dt, angDiff(this.yaw, want)));
@@ -65,7 +72,7 @@ class Animal {
     if (this.speed < .01) return;
     const nx = this.pos.x + Math.sin(this.yaw) * this.speed * dt, nz = this.pos.z + Math.cos(this.yaw) * this.speed * dt;
     if (this.state === 'flee' || this.canGo(nx, nz) || !this.canGo(this.pos.x, this.pos.z)) { this.pos.x = nx; this.pos.z = nz; }
-    else this.speed *= .5;
+    else { this.speed *= .5; this.yaw += (this._side || 1) * .5; }   // up against something: turn off it
   }
   perceive(dt, P) {
     const dx = this.pos.x - P.pos.x, dz = this.pos.z - P.pos.z, d = Math.hypot(dx, dz); this.dist = d;
@@ -87,11 +94,14 @@ class Animal {
     if (this.state === 'down' || this.state === 'dead' || this.state === 'fallfly') return this.updateDown(dt);
     this.perceive(dt, P);
     const act = ACTIVE[this.kind](hours), lead = g.leader === this ? null : g.leader;
+    if (this.fight(dt, P)) return this.finish(dt);
     // the group bolts together
     if (g.fleeUntil > this.W.time && this.state !== 'flee' && this.state !== 'charge' && this.state !== 'rear' && this.state !== 'fly') this.startFlee(P, g.fleeFrom);
     if (this.state !== 'flee' && this.state !== 'charge' && this.state !== 'rear' && this.state !== 'fly') {
       if (this.aware > 1 || (this.wounded && this.aware > .2)) {
-        if (sp.bear && !g.charged && this.dist < 28 && !this.wounded) { g.charged = true; this.setState('rear', 1.6); this.W.call('bear', this); }
+        if (sp.bear && !g.charged && this.dist < 45) { g.charged = true; this.real = Math.random() < .75 || this.wounded; this.setState('rear', 1.4); this.W.call('roar', this); }
+        else if (sp.ornery && this.dist < 30 && (this.m.male || this.wounded || Math.random() < .4) && !g.charged) { g.charged = true; this.real = true; this.setState('charge', 6); this.W.call('bellow', this); }
+        else if (sp.predator && !this.fled && this.dist < 30 && Math.random() < .5) { this.real = true; this.setState('charge', 5); this.W.call(sp.predator === 'wolf' ? 'snarl' : 'scream', this); }
         else { this.W.alarm(g, P.pos); this.startFlee(P, P.pos); }
       } else if (this.aware > .35 && this.state !== 'alert') { this.setState('alert', 2 + Math.random() * 3); if (sp.name === 'deer' && Math.random() < .5) this.W.call('snort', this); }
     }
@@ -111,11 +121,11 @@ class Animal {
         gait = 'run'; if (this.stateT < 0 || Math.hypot(fx - this.pos.x, fz - this.pos.z) < 6) { this.setState('alert', 4); this.aware = .5; }
         break;
       }
-      case 'rear': { alertK = 1; this.speed *= .8; this.rear = Math.min(1, (this.rear || 0) + dt * 2); if (this.stateT < 0) { this.rear = 0; this.setState('charge', 3.5); this.W.call('bear', this); } break; }
+      case 'rear': { alertK = 1; this.speed *= .8; this.rear = Math.min(1, (this.rear || 0) + dt * 2); this.jawK = 1; if (this.stateT < 0) { this.rear = 0; this.setState('charge', this.real ? 9 : 3.5); this.W.call('roar', this); } break; }
       case 'charge': {
-        this.steer(P.pos.x, P.pos.z, sp.run * .85, dt, 5); gait = 'run';
-        if (this.dist < 2.2) this.W.bump(this);
-        if (this.dist < 3 || this.stateT < 0) { g.fleeUntil = this.W.time + 10; this.startFlee(P, P.pos); }
+        this.steer(P.pos.x, P.pos.z, sp.run * (sp.ornery ? .8 : .9), dt, 5); gait = 'run'; this.jawK = sp.predator ? 1 : 0; head = sp.ornery ? .55 : 0;
+        if (this.real) { if (this.dist < (sp.ornery ? 2.6 : 2.3)) this.startAttack(P); else if (this.stateT < 0) { g.fleeUntil = this.W.time + 10; this.startFlee(P, P.pos); } }
+        else if (this.dist < 3 || this.stateT < 0) { g.fleeUntil = this.W.time + 10; this.startFlee(P, P.pos); }
         break;
       }
       case 'fly': {
@@ -148,14 +158,72 @@ class Animal {
         }
       }
     }
+    return this.finish(dt, gait, head, alertK, lie);
+  }
+  finish(dt, gait = this.gait, head = 0, alertK = this.state === 'stalk' ? 1 : 0, lie = 0) {
+    const sp = this.sp;
     if (this.state !== 'fly') this.move(dt);
+    this.jawK += ((this.state === 'attack' || this.state === 'rear' || (this.state === 'charge' && sp.predator) || this.state === 'circle' ? 1 : 0) * (this.state === 'circle' ? .35 : 1) - this.jawK) * Math.min(1, dt * 6);
+    this.crouchK += ((this.state === 'stalk' ? 1 : 0) - this.crouchK) * Math.min(1, dt * 4); this.swipe = Math.max(0, this.swipe - dt * 2.4);
     this.display = Math.max(0, this.display - dt * .3);
     this.headDown += (head - this.headDown) * Math.min(1, dt * 2.2); this.alertK += (alertK - this.alertK) * Math.min(1, dt * 4); this.lie += (lie - this.lie) * Math.min(1, dt * .9);
     const spd = this.speed; if (spd > .05) this.phase += dt * spd / (sp.stride * this.scale);
     if (this.state !== 'fly') { if (spd > sp.trot * 1.15) gait = 'run'; else if (spd > sp.walk * 1.4) gait = gait === 'run' ? 'run' : 'trot'; else if (spd > .12) gait = 'walk'; else gait = 'stand'; }
+    if (this.fightGait) { gait = this.fightGait; this.fightGait = null; }
     this.gait = gait;
     this.ground();
   }
+  // the fight: stalking, springing, mauling, circling; returns true while it is in charge of the animal
+  fight(dt, P) {
+    const sp = this.sp, s = this.state, g = this.group, W = this.W;
+    if (P.dead) { if (s === 'attack' || s === 'stalk' || s === 'pounce' || s === 'circle') { this.setState('graze', 5); this.aware = 0; } return false; }
+    const toP = Math.atan2(P.pos.x - this.pos.x, P.pos.z - this.pos.z), look = P.look ? Math.abs(angDiff(Math.atan2(P.look.x, P.look.z), Math.atan2(this.pos.x - P.pos.x, this.pos.z - P.pos.z))) : 9;   // how far off your line of sight it is
+    // a cougar: comes in behind you, freezes when you turn its way, and springs from close in
+    if (sp.predator === 'cougar' && (s === 'graze' || s === 'walk' || s === 'idle' || s === 'alert' || s === 'rest') && this.dist < 85 && !this.fled && !P.inCamp) { this.setState('stalk', 40); }
+    if (s === 'stalk') {
+      if (P.inCamp || this.dist > 110) { this.setState('graze', 4); return false; }
+      const seen = look < .45 && this.dist < 60;
+      if (seen && this.aware > 1.6) { if (this.dist < 22 && Math.random() < .55) { this.real = true; this.setState('charge', 5); W.call('scream', this); } else { this.fled = true; W.alarm(g, P.pos); this.startFlee(P, P.pos); } return true; }
+      if (seen) { this.speed *= Math.pow(.02, dt); this.yaw += angDiff(this.yaw, toP) * Math.min(1, dt * 2); this.fightGait = 'stand'; }
+      else { this.steer(P.pos.x, P.pos.z, sp.walk * 1.1, dt, 3); this.fightGait = 'walk'; this.aware = Math.min(this.aware, .9); }
+      if (this.dist < 9) { this.setState('pounce', 1.2); this.leapY = 0; this.leapV = 4.2; W.call('scream', this); }
+      return true;
+    }
+    if (s === 'pounce') {
+      this.yaw += angDiff(this.yaw, toP) * Math.min(1, dt * 8); this.speed = sp.run * 1.05; this.fightGait = 'run';
+      this.leapV -= 14 * dt; this.leapY = Math.max(0, (this.leapY || 0) + this.leapV * dt);
+      if (this.dist < 2.1) { this.leapY = 0; this.startAttack(P); } else if (this.stateT < 0) { this.leapY = 0; this.setState('charge', 3); this.real = true; }
+      return true;
+    }
+    // wolves: the pack rings you, snarling, and one at a time they rush in
+    if (sp.predator === 'wolf' && (s === 'graze' || s === 'walk' || s === 'idle' || s === 'alert' || s === 'rest') && !g.scattered && !P.inCamp && (this.dist < 38 || (P.night && this.dist < 70 && this.aware > .4))) { for (const m of g.members) if (m.state !== 'down' && m.state !== 'dead' && m.state !== 'flee') m.setState('circle', 7 + Math.random() * 6); g.rushT = 2; W.call('snarl', this); }
+    if (s === 'circle') {
+      if (g.scattered || P.inCamp || this.dist > 120) { this.setState('graze', 4); return false; }
+      const R = 13 + (this.slot.x + 1) * 3, a = Math.atan2(this.pos.x - P.pos.x, this.pos.z - P.pos.z) + .5;
+      this.steer(P.pos.x + Math.sin(a) * R, P.pos.z + Math.cos(a) * R, sp.trot, dt, 4); this.fightGait = 'trot';
+      g.rushT -= dt / Math.max(1, g.members.length); if (g.rushT < 0 && !g.members.some(m => m.state === 'charge' || m.state === 'attack')) { g.rushT = 3 + Math.random() * 3; this.real = true; this.setState('charge', 5); W.call('snarl', this); }
+      return true;
+    }
+    if (s === 'attack') {
+      this.yaw += angDiff(this.yaw, toP) * Math.min(1, dt * 7);
+      const reach = sp.ornery ? 2.4 : sp.bear ? 2.0 : 1.7;
+      if (this.dist > reach + 1.4) { this.steer(P.pos.x, P.pos.z, sp.trot * 1.4, dt, 6); this.fightGait = 'trot'; } else { this.speed *= Math.pow(.01, dt); this.fightGait = 'stand'; }
+      if (sp.bear) this.rear = Math.max(0, (this.rear || 0) - dt * 2);
+      this.atkT -= dt;
+      if (this.atkT <= 0 && this.dist < reach + .8) {
+        this.swipe = 1; this.strikes++; this.atkT = sp.bear ? 1.05 : sp.ornery ? 1.6 : sp.predator === 'cougar' ? .85 : 1.2;
+        const k = this.scale, dmg = sp.bear ? 26 + 16 * Math.random() : sp.ornery ? 30 + 12 * Math.random() : sp.predator === 'cougar' ? (this.strikes === 1 ? 34 : 16 + 8 * Math.random()) : 11 + 8 * Math.random();
+        W.attack(this, dmg * k);
+        W.call(sp.bear ? 'roar' : sp.ornery ? 'bellow' : sp.predator === 'cougar' ? 'scream' : 'snarl', this);
+      }
+      // it breaks off: a moose after one blow, a wolf after a bite or two, a bear or a cat when it has done enough (or is hurt)
+      const done = sp.ornery ? this.strikes >= 1 && this.atkT < .8 : sp.predator === 'wolf' ? this.strikes >= 1 + (this.slot.y > 0 ? 1 : 0) && this.atkT < .6 : this.strikes >= (this.wounded ? 6 : 3) || (this.wounded && this.hp < this.sp.hp * .3);
+      if (done) { if (sp.predator === 'wolf' && !g.scattered) this.setState('circle', 6); else { g.fleeUntil = W.time + 12; this.fled = true; this.startFlee(P, P.pos); } }
+      return true;
+    }
+    return false;
+  }
+  startAttack(P) { this.setState('attack', 30); this.atkT = this.sp.ornery ? .05 : .25; this.strikes = 0; if (this.sp.ornery) this.atkT = 0; }
   startFlee(P, from) {
     const a = Math.atan2(this.pos.x - from.x, this.pos.z - from.z) + (Math.random() - .5) * .6, r = 90 + Math.random() * 80;
     this.fleeTo = new THREE.Vector2(this.pos.x + Math.sin(a) * r, this.pos.z + Math.cos(a) * r);
@@ -165,9 +233,15 @@ class Animal {
   }
   hit(vital, power) {
     if (this.state === 'down' || this.state === 'dead' || this.state === 'fallfly') return false;
-    this.hp -= vital || this.sp.hp <= 1 ? 99 : power;
-    if (this.hp > 0) { this.wounded = true; this.aware = 2; return false; }
-    this.state = this.state === 'fly' ? 'fallfly' : 'down'; this.downT = 0; this.rollDir = Math.random() < .5 ? 1 : -1; this.speed *= .5;
+    this.hp -= this.sp.hp <= 1 ? 99 : power * (vital ? 2.6 : 1);
+    if (this.hp > 0) {
+      this.wounded = true; this.aware = 2; const sp = this.sp;
+      if ((sp.bear || sp.ornery || sp.predator === 'cougar') && this.dist < 90 && this.state !== 'attack' && this.state !== 'charge') { this.real = true; this.setState('charge', 9); this.W.call(sp.bear ? 'roar' : sp.ornery ? 'bellow' : 'scream', this); }
+      if (sp.predator === 'wolf' && Math.random() < .5) { this.group.scattered = true; this.W.alarm(this.group, this.W.lastShot || this.pos); }
+      return false;
+    }
+    this.state = this.state === 'fly' ? 'fallfly' : 'down'; this.downT = 0; this.rollDir = Math.random() < .5 ? 1 : -1; this.speed *= .5; this.rear = 0; this.leapY = 0;
+    if (this.sp.predator === 'wolf') { const left = this.group.members.filter(m => m.state !== 'down' && m.state !== 'dead'); if (left.length <= 1 || Math.random() < .5) { this.group.scattered = true; this.W.alarm(this.group, this.pos); } }
     return true;
   }
   updateDown(dt) {
@@ -190,7 +264,13 @@ class Animal {
     m.rotation.set(-pitch + (this.rear || 0) * -.9, this.yaw, this.roll);
     m.position.y -= Math.abs(this.roll) / 1.45 * R * .55;
     if (this.rear) m.position.y += this.rear * .4 * this.scale;
-    if (camDist < 260 || this.state === 'fly') pose(this.m, { gait: this.gait || 'stand', phase: this.phase, headDown: this.headDown, alert: this.alertK, lie: this.lie, fall: this.fall, look: this.look, t: this.t, flap: this.flap, display: this.display, flag: this.state === 'flee' && this.kind === 'deer' ? 1 : 0 });
+    if (this.leapY) m.position.y += this.leapY;
+    if (camDist < 260 || this.state === 'fly') pose(this.m, { gait: this.gait || 'stand', phase: this.phase, headDown: this.headDown, alert: this.alertK, lie: this.lie, fall: this.fall, look: this.look, t: this.t, flap: this.flap, display: this.display, flag: this.state === 'flee' && this.kind === 'deer' ? 1 : 0, jaw: this.jawK * (.75 + .25 * Math.sin(this.t * 9)), crouch: this.crouchK, swipe: this.swipe });
+    // fur shells close up (or through the scope)
+    const fur = camDist < this.W.furR && this.state !== 'down' || (camDist < this.W.furR && this.state === 'dead');
+    for (const s of this.m.shells) s.visible = fur;
+    // eyes that throw back the lantern (and a little moonlight): brightest looking straight at you
+    if (this.m.shine.length) { const L = this.W.lightK; let o = 0; if (L > .02 && this.state !== 'dead' && this.state !== 'down' && camDist < 140) { const c = this.W.camPos, dx = c.x - this.pos.x, dz = c.z - this.pos.z, dl = Math.hypot(dx, dz) || 1, f = (Math.sin(this.yaw) * dx + Math.cos(this.yaw) * dz) / dl; o = L * smooth(.2, .85, f) * (1 - smooth(60, 140, camDist)) * (this.sp.predator ? 1 : .7); } for (const s of this.m.shine) s.material.opacity = o; }
   }
   dispose() { this.W.scene.remove(this.m.mesh); }
 }
@@ -198,11 +278,13 @@ class Animal {
 export class Wildlife {
   constructor(scene, world, flora, camp, audio) {
     this.scene = scene; this.world = world; this.flora = flora; this.camp = camp; this.audio = audio;
-    this.groups = []; this.animals = []; this.time = 0; this.spawnT = 0; this.target = 13; this.onBump = null; this.seeded = false;
+    this.groups = []; this.animals = []; this.time = 0; this.spawnT = 0; this.target = 13; this.onBump = null; this.onAttack = null; this.seeded = false;
+    this.region = null; this.home = null; this.furR = 32; this.lightK = 0; this.camPos = new THREE.Vector3();
   }
   call(kind, a) { if (this.audio && this.audio.ctx && a.dist < 220) this.audio.animal(kind, a.dist, this.panOf ? this.panOf(a.pos) : 0); }
   alarm(g, from) { g.fleeUntil = this.time + 8; g.fleeFrom = from.clone(); }
   bump(a) { if (this.onBump) this.onBump(a); }
+  attack(a, dmg) { if (this.onAttack) this.onAttack(a, dmg); }
   wander(g, leader) {
     // drift about the home range; sometimes head to water
     const w = this.world;
@@ -216,29 +298,38 @@ export class Wildlife {
     }
     g.target = { x: g.home.x, z: g.home.z };
   }
+  // which kind of country this is: the camp's region holds for a few kilometres around it
+  regionK(x, z) { const r = this.region, c = this.home, near = !c || Math.hypot(x - c.x, z - c.z) < 3500; return { forest: near && r === 'forest', valley: near && r === 'valley', lake: near && r === 'lake' }; }
   // habitat suitability at a spot for each kind
   habitat(x, z) {
     const w = this.world, s = w.sample(x, z, {}), h = s.h, f = w.forest(x, z, s), n = w.normal(x, z, [0, 1, 0], 2);
     if (h < -1) return { duck: 3 };
+    const R = this.regionK(x, z), hc = this.home ? this.home.h : 10;
+    // mountain goats and cougars keep to the steep high ground
+    if (h > hc + 35 && n[1] < .86 && n[1] > .35 && h < 420) return { goat: 3 * (R.valley ? 1.6 : .6), cougar: .35 * (R.valley ? 1.4 : .5) };
     if (h < .6 || n[1] < .8) return {};
     let wet = false; for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; if (w.height(x + Math.cos(a) * 45, z + Math.sin(a) * 45) < -.5) { wet = true; break; } }
     const open = 1 - f;
+    // the deep forest is big-game country: bears, moose, elk and wolves; the small game keeps to the open
+    const big = R.forest ? 3 : 1, small = R.forest ? .35 : 1;
     return {
-      deer: 2.2 * (f > .15 && f < .9 ? 1 : .4) * (h < 140 ? 1 : .3),
-      elk: 1.4 * (open > .5 ? 1 : .3) * (h < 170 ? 1 : .2),
-      moose: wet ? 1.6 : .15 * f,
-      bison: 1.5 * (f < .12 && n[1] > .93 && s.m < .35 && h < 90 ? 1 : 0),
-      bear: .35 * (f > .4 || s.m > .4 ? 1 : .2),
-      rabbit: 1.6 * (open > .35 ? 1 : .3),
-      turkey: 1.1 * (f > .45 ? 1 : .15) * (h < 120 ? 1 : 0),
+      deer: 2.2 * (f > .15 && f < .9 ? 1 : .4) * (h < 140 ? 1 : .3) * (R.forest ? .6 : 1),
+      elk: 1.4 * (open > .5 ? 1 : .3) * (h < 170 ? 1 : .2) * (R.forest ? 2.2 : R.valley ? 1.5 : 1),
+      moose: (wet ? 1.6 : .15 * f) * (R.forest ? 4 : R.lake ? 1.8 : 1),
+      bison: 1.5 * (f < .12 && n[1] > .93 && s.m < .35 && h < 90 ? 1 : 0) * (R.forest ? .2 : 1),
+      bear: .35 * (f > .4 || s.m > .4 ? 1 : .2) * big * 1.4,
+      wolf: .3 * (f > .35 ? 1 : .3) * big,
+      cougar: .12 * (s.m > .3 || f > .5 ? 1 : .2) * (R.valley ? 2 : 1),
+      rabbit: 1.6 * (open > .35 ? 1 : .3) * small,
+      turkey: 1.1 * (f > .45 ? 1 : .15) * (h < 120 ? 1 : 0) * small,
     };
   }
   spawnGroup(kind, x, z, n) {
-    const sp = SPECIES[kind], g = { kind, members: [], leader: null, home: { x, z }, target: { x, z }, spread: kind === 'bison' ? 7 : kind === 'duck' ? 4 : sp.small ? 3 : 5, fleeUntil: 0, fleeFrom: null };
+    const sp = SPECIES[kind], g = { kind, members: [], leader: null, home: { x, z }, target: { x, z }, spread: kind === 'bison' ? 7 : kind === 'duck' ? 4 : sp.small ? 3 : kind === 'goat' ? 6 : 5, fleeUntil: 0, fleeFrom: null };
     n = n ?? Math.round(sp.herd[0] + Math.random() * (sp.herd[1] - sp.herd[0]));
     for (let i = 0; i < n; i++) {
       let px = x, pz = z;
-      for (let k = 0; k < 10; k++) { const tx = x + (Math.random() - .5) * g.spread * 2.5, tz = z + (Math.random() - .5) * g.spread * 2.5, h = this.world.height(tx, tz); if (sp.swim ? h < -.4 : h > .5) { px = tx; pz = tz; break; } }
+      for (let k = 0; k < 10; k++) { const tx = x + (Math.random() - .5) * g.spread * 2.5, tz = z + (Math.random() - .5) * g.spread * 2.5, h = this.world.height(tx, tz); if (sp.swim ? h < -.4 : h > .5 && (!sp.climber || this.world.normal(tx, tz, [0, 1, 0], 1.5)[1] > .3)) { px = tx; pz = tz; break; } }
       const a = new Animal(this, kind, px, pz, g, Math.random()); g.members.push(a); this.animals.push(a);
     }
     g.leader = g.members[0]; this.groups.push(g); return g;
@@ -253,7 +344,8 @@ export class Wildlife {
       const have = {}; for (const g of this.groups) have[g.kind] = (have[g.kind] || 0) + 1;
       let tot = 0; const wts = kinds.map(k => { const v = hab[k] / (1 + (have[k] || 0) * 1.4); tot += v; return v; });
       let pick = Math.random() * tot, kind = kinds[0]; for (let i = 0; i < kinds.length; i++) { pick -= wts[i]; if (pick <= 0) { kind = kinds[i]; break; } }
-      if (kind === 'bear' && (have.bear || 0) >= 1) continue;
+      if (kind === 'bear' && (have.bear || 0) >= (this.regionK(x, z).forest ? 2 : 1)) continue;
+      if ((kind === 'cougar' || kind === 'wolf') && (have[kind] || 0) >= 1) continue;
       return this.spawnGroup(kind, x, z);
     }
     return null;
@@ -270,8 +362,8 @@ export class Wildlife {
     this.spawnT -= dt;
     if (this.spawnT < 0) {
       this.spawnT = 1.5;
-      for (const g of [...this.groups]) { const d = Math.hypot(g.leader.pos.x - P.pos.x, g.leader.pos.z - P.pos.z); if (d > 520 || g.members.every(a => a.gone)) this.removeGroup(g); }
-      if (this.groups.length < this.target) this.trySpawn(P, 170, 330);
+      for (const g of [...this.groups]) { const d = Math.hypot(g.leader.pos.x - P.pos.x, g.leader.pos.z - P.pos.z); if (d > (g.kind === 'goat' ? FAR : 560) || g.members.every(a => a.gone)) this.removeGroup(g); }
+      if (this.groups.length < this.target) this.trySpawn(P, 170, this.regionK(P.pos.x, P.pos.z).valley ? 640 : 330);
     }
     for (const g of this.groups) {
       if (g.leader.state === 'down' || g.leader.state === 'dead' || g.leader.gone) { const alive = g.members.find(a => a.state !== 'down' && a.state !== 'dead' && !a.gone); if (alive) g.leader = alive; }
@@ -284,10 +376,11 @@ export class Wildlife {
     }
   }
   render(dt, cam) {
+    this.camPos.copy(cam);
     for (const a of this.animals) {
       if (a.gone) continue;
       const d = Math.hypot(a.pos.x - cam.x, a.pos.z - cam.z);
-      a.m.mesh.visible = d < 480;
+      a.m.mesh.visible = d < FAR;
       if (a.m.mesh.visible) a.render(dt, d);
     }
   }
@@ -309,7 +402,7 @@ export class Wildlife {
   parts(a) {
     if (a._parts) return a._parts;
     const B = a.m.B, s = a.scale, sp = a.sp, R = (sp.bird ? .14 : .2) * s, out = [];
-    const body = sp.bird ? (sp.name === 'duck' ? .11 : .2) : ({ deer: .26, elk: .4, moose: .5, bison: .62, bear: .45, rabbit: .09 }[sp.name] || .3);
+    const body = sp.bird ? (sp.name === 'duck' ? .11 : .2) : ({ deer: .26, elk: .4, moose: .5, bison: .62, bear: .45, rabbit: .09, cougar: .22, goat: .3, wolf: .2 }[sp.name] || .3);
     out.push({ bone: B.chest, r: body * s, vital: true, off: new THREE.Vector3(0, -body * .2 * s, 0) });
     out.push({ bone: B.spine, r: body * .95 * s, vital: false, off: new THREE.Vector3() });
     out.push({ bone: B.hips, r: body * .9 * s, vital: false, off: new THREE.Vector3() });
@@ -334,6 +427,9 @@ export class Wildlife {
   }
   // any animals within r of p hear a gunshot
   gunshot(p) {
+    this.lastShot = p.clone();
     for (const g of this.groups) for (const a of g.members) { const d = Math.hypot(a.pos.x - p.x, a.pos.z - p.z); if (d < 320) a.aware = Math.min(2, a.aware + 3 * (1 - d / 320)); }
+    // a shot breaks up a wolf ring now and then; a stalking cat thinks better of it
+    for (const g of this.groups) { if (g.kind === 'wolf' && g.members.some(a => a.state === 'circle') && Math.random() < .3) { g.scattered = true; this.alarm(g, p); } if (g.kind === 'cougar') for (const a of g.members) if (a.state === 'stalk' && Math.random() < .6) { a.fled = true; a.startFlee(null, p); } }
   }
 }

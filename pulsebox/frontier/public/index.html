@@ -17,15 +17,15 @@
     <button id="continue" data-act="continue" class="big" hidden></button>
     <h2>Choose where to make camp</h2>
     <div class="spawns">
-      <button data-act="spawn" data-spawn="forest"><b>Deep Forest</b><span>A quiet clearing among tall pines and spruce. Deer and elk browse the shade.</span></button>
-      <button data-act="spawn" data-spawn="valley"><b>Mountain Valley</b><span>A river flat under snow-capped peaks. Wide views, cold nights, big game.</span></button>
-      <button data-act="spawn" data-spawn="lake"><b>Wilderness Lake</b><span>A level spot near the shore. Ducks on the water, moose in the shallows.</span></button>
+      <button data-act="spawn" data-spawn="forest"><b>Deep Forest</b><span>Thick timber and big game: grizzlies, moose, elk and wolves. Dangerous country.</span></button>
+      <button data-act="spawn" data-spawn="valley"><b>Mountain Valley</b><span>Open grass under a ring of giant peaks. Glass the cliffs for goats and cougars.</span></button>
+      <button data-act="spawn" data-spawn="lake"><b>Wilderness Lake</b><span>A level spot by the shore. Fish for trout and pike; moose in the shallows.</span></button>
     </div>
     <div class="row">
       <span class="label">Graphics</span>
       <button data-act="quality" data-q="low">Low</button><button data-act="quality" data-q="medium">Medium</button><button data-act="quality" data-q="high">High</button>
     </div>
-    <p class="keys">WASD walk &middot; Mouse look &middot; Shift run &middot; C crouch &middot; E use &middot; L lantern &middot; I pack &middot; M map &middot; Esc pause</p>
+    <p class="keys">WASD walk &middot; Mouse look &middot; Shift run &middot; C crouch &middot; E use &middot; 1-4 guns &middot; 5 rod &middot; Right mouse aim &middot; F eat &middot; L lantern &middot; I pack &middot; M map &middot; Esc pause</p>
   </div>
 </section>
 
@@ -41,7 +41,13 @@
   <div id="clock"></div>
   <div id="ammo"></div>
   <div id="hit"></div>
+  <div id="hp"><span>Health <b id="hpnum">100</b></span><div id="hpbar"><i></i></div></div>
+  <div id="coins"><i></i><b>0</b> coins<span id="coinpop"></span></div>
+  <div id="fishbar" hidden><span>Line</span><div><i></i></div><b>0 m</b></div>
 </section>
+<div id="scope"><div class="reticle"><i class="h"></i><i class="v"></i><i class="dots"></i></div><span id="scopepow"></span><span class="breath">Shift: hold your breath</span></div>
+<div id="hurt"></div>
+<section id="death" hidden><div class="menu-inner small"><h1>You were hurt</h1><p id="deathmsg"></p><p class="sub">You wake at camp...</p></div></section>
 
 <section id="pause" hidden>
   <div class="menu-inner small">
@@ -60,6 +66,7 @@
     <button data-k="fire" class="tfire">Fire</button>
     <button data-k="aim" class="taim">Aim</button>
     <button data-k="KeyR">Reload</button>
+    <button data-k="eat">Eat</button>
     <button data-k="weapon">Gun</button>
     <button data-k="KeyE" class="tuse">Use</button>
     <button data-k="Space">Jump</button>
