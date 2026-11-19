@@ -278,7 +278,9 @@
     // lit like paint (dimmer under the stronger suns, so it never washes out to the colour of the sand), with a glow that keeps it bright in shade and at night
     const alb = cl(.6 / ((TH.sun && TH.sun[1]) || 1.2), .3, .75);
     const mat = new THREE.MeshLambertMaterial({ map: tex, color: new THREE.Color(alb, alb, alb), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, emissive: new THREE.Color(1, 1, 1), emissiveMap: tex, emissiveIntensity: TH.glow ? .7 : .3 });
-    const floor = new THREE.Mesh(geo, mat); floor.receiveShadow = sh; floor.renderOrder = 1; W.add(floor);
+    // paint, so drawn first of everything see-through (it lies on the solid floor and writes no depth): smoke, fire, snares,
+    // bullet marks and shadows over the site all draw on top of it, never under it
+    const floor = new THREE.Mesh(geo, mat); floor.receiveShadow = sh; floor.renderOrder = -1; W.add(floor);
     if (!two) return;
     // big letters on the walls: walk out from the spot to the first wall each way (under a roof, low enough to show beneath it)
     const letT = canvasTex(256, 256, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = 'rgba(255,138,61,.92)'; g.fillRect(18, 18, w - 36, h - 36); g.fillStyle = 'rgba(20,18,16,.92)'; g.font = '900 190px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(S.k, w / 2, h / 2 + 10); });

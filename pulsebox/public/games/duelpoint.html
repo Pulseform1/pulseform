@@ -2505,7 +2505,9 @@ const GAME = {
     // lit like paint (dimmer under the stronger suns, so it never washes out to the colour of the sand), with a glow that keeps it bright in shade and at night
     const alb = cl(.6 / ((TH.sun && TH.sun[1]) || 1.2), .3, .75);
     const mat = new THREE.MeshLambertMaterial({ map: tex, color: new THREE.Color(alb, alb, alb), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, emissive: new THREE.Color(1, 1, 1), emissiveMap: tex, emissiveIntensity: TH.glow ? .7 : .3 });
-    const floor = new THREE.Mesh(geo, mat); floor.receiveShadow = sh; floor.renderOrder = 1; W.add(floor);
+    // paint, so drawn first of everything see-through (it lies on the solid floor and writes no depth): smoke, fire, snares,
+    // bullet marks and shadows over the site all draw on top of it, never under it
+    const floor = new THREE.Mesh(geo, mat); floor.receiveShadow = sh; floor.renderOrder = -1; W.add(floor);
     if (!two) return;
     // big letters on the walls: walk out from the spot to the first wall each way (under a roof, low enough to show beneath it)
     const letT = canvasTex(256, 256, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = 'rgba(255,138,61,.92)'; g.fillRect(18, 18, w - 36, h - 36); g.fillStyle = 'rgba(20,18,16,.92)'; g.font = '900 190px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(S.k, w / 2, h / 2 + 10); });
@@ -4967,6 +4969,13 @@ const GAME = {
     const P = siteSpot(S), s = SITES.length > 1 ? S.k : '◆', x = mx + P.x * k, y = my + P.z * k; px = fitPx(g, px);
     g.font = `900 ${px}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = Math.max(2, px * .26); g.strokeStyle = 'rgba(12,16,22,.92)'; g.strokeText(s, x, y); g.fillStyle = '#fff3e4'; g.fillText(s, x, y);
   }
+  // what a phone's thumb controls cover, as boxes [x0, y0, x1, y1] in the HUD's units: each button, the corner the move
+  // stick rests in (to the screen's edge, where the thumb lies), and the stick wherever it is held
+  function touchCover(V, u) {
+    const c = touchButtons().map(b => [b.x - b.r, b.y - b.r, b.x + b.r, b.y + b.r]), s = TS.stick;
+    c.push([V.x0, V.y1 - 212 * u, V.x0 + 232 * u, V.y1]); if (s) c.push([s.x0 - 92 * u, s.y0 - 116 * u, s.x0 + 92 * u, s.y0 + 92 * u]);
+    return c;
+  }
   /* The sites in the world: a diamond with the letter and how far it is, over each site's spot. They show through the buy
      phase and the first seconds of the round, then fade out unless you are far from every site, and each fades as you
      come up to it. One off the screen (or behind you) waits at the edge, pointing the way. */
@@ -4985,9 +4994,18 @@ const GAME = {
       if (Math.abs(nx) > ix || Math.abs(ny) > iy) { const q = Math.min(ix / Math.max(Math.abs(nx), 1e-6), iy / Math.max(Math.abs(ny), 1e-6)); nx *= q; ny *= q; edge = true; }
       marks.push({ S, a, nx, ny, edge, x: lp(V.x0, V.x1, (nx + 1) / 2), y: lp(V.y0, V.y1, (1 - ny) / 2), d: Math.round(Math.hypot(Q.x - P.x, Q.z - P.z)) });
     });
+    // on a phone the thumb controls (drawn over this) fill the lower corners, and the pause and settings buttons the top
+    // left: no marker sits under one, and those on the side edges keep to the stretch of edge between them
+    const cover = isTouch() ? touchCover(V, u) : null, hw = 26 * u, above = 20 * u, below = 37 * u, gap = 52 * u;
+    const clear = (x, y) => { for (let n = 0; cover && n < 12; n++) { const c = cover.find(c => x + hw > c[0] && x - hw < c[2] && y + below > c[1] && y - above < c[3]); if (!c) break; y = c[1] - below - 3 * u; } return y; };
+    const top0 = lp(V.y0, V.y1, (1 - iy) / 2), lo0 = lp(V.y0, V.y1, (1 + iy) / 2), mid = (V.y0 + V.y1) / 2;
     // two on the same edge never sit on top of each other
-    for (const side of [-1, 1]) { const col = marks.filter(k => k.edge && Math.sign(k.nx) === side && Math.abs(k.nx) >= ix - .01).sort((p, q) => p.y - q.y), gap = 52 * u, lo = lp(V.y0, V.y1, (1 + iy) / 2);
+    for (const side of [-1, 1]) { const col = marks.filter(k => k.edge && Math.sign(k.nx) === side && Math.abs(k.nx) >= ix - .01).sort((p, q) => p.y - q.y); let lo = lo0;
+      if (cover) {   // squeeze the edge (beside you at the middle while there is room, behind you at the lowest clear point) into the clear stretch
+        const top = Math.max(top0, V.y0 + 98 / pxPer() + above + 6 * u); lo = Math.max(top, clear(side < 0 ? V.x0 + 48 : V.x1 - 48, lo0)); const ya = Math.max(top, Math.min(mid, lo - 1.2 * gap));
+        for (const k of col) { k.col = true; k.y = k.y <= mid ? lp(top, ya, cl((k.y - top0) / (mid - top0), 0, 1)) : lp(ya, lo, cl((k.y - mid) / (lo0 - mid), 0, 1)); } }
       for (let i = 1; i < col.length; i++) col[i].y = Math.max(col[i].y, col[i - 1].y + gap); for (let i = col.length - 1; i >= 0; i--) { if (col[i].y > lo) col[i].y = lo; if (i < col.length - 1) col[i].y = Math.min(col[i].y, col[i + 1].y - gap); } }
+    if (cover) for (const k of marks) if (!k.col) k.y = clear(k.x, k.y);   // one in view but under a button: lifted just clear of it
     for (const { S, a, nx, ny, edge, x, y, d } of marks) {
       const r = 14 * u * (edge ? .85 : 1);
       g.save(); g.globalAlpha = a * (edge ? .85 : 1); g.translate(x, y);
