@@ -1,0 +1,50 @@
+// Original quiet, movement-driven creature sounds. Beats schedule only while a
+// creature actually moves; signatures are intermittent, never continuous loops.
+export const CREATURE_ACOUSTICS = Object.freeze({
+  dredge: { variant: 'blob', interval: 1.5, beats: [0], tone: 56, signature: 'bubbles' },
+  wader: { variant: 'crawler', interval: 1.65, beats: [0, .38], tone: 116, signature: 'creak' },
+  mirehound: { variant: 'stalker', interval: 1.35, beats: [0, .26], tone: 82, signature: 'double-drop' },
+  glassjaw: { variant: 'veil', interval: 2.05, beats: [0,.45], tone: 338, signature: 'resonance' },
+  gloomfin: { variant: 'serpent', interval: 1.55, beats: [0], tone: 156, signature: 'ripple' },
+  hush: { variant: 'radial', interval: 1.55, beats: [0, .42], tone: 218, signature: 'flutter' },
+  carapace: { variant: 'armored', interval: 1.65, beats: [0,.42], tone: 62, signature: 'shell-click' },
+  lantern: { variant: 'wing', interval: 2.2, beats: [0,.45], tone: 173, signature: 'whistle' },
+  leech: { variant: 'suction', interval: 1.8, beats: [0], tone: 49, signature: 'gulp' },
+  knuckle: { variant: 'heavy-step', interval: 1.5, beats: [0,.52], tone: 71, signature: 'chuff' },
+  crown: { variant: 'shell-drag', interval: 2.1, beats: [0,.45], tone: 226, signature: 'hinge' },
+  siphon: { variant: 'pitcher-flow', interval: 1.85, beats: [0,.42], tone: 63, signature: 'throat-bubble' },
+  sawtooth: { variant: 'blade-wake', interval: 1.35, beats: [0,.40], tone: 142, signature: 'edge-chime' },
+  gutter: { variant: 'skitter', interval: 1.15, beats: [0,.38], tone: 192, signature: 'leg-tick' },
+  cradle: { variant: 'cage-step', interval: 1.7, beats: [0,.46], tone: 88, signature: 'rib-hum' },
+  raker: { variant: 'palm-drag', interval: 1.6, beats: [0,.46], tone: 51, signature: 'hollow-knock' },
+  knot: { variant: 'loop-roll', interval: 1.95, beats: [0,.45], tone: 117, signature: 'ring-pulse' },
+  drifter: { variant: 'sail-wash', interval: 2.35, beats: [0,.45], tone: 279, signature: 'membrane' },
+  hermit: { variant: 'conch-step', interval: 1.55, beats: [0,.43], tone: 203, signature: 'conch-call' },
+  urchin: { variant: 'spine-brush', interval: 1.8, beats: [0,.35], tone: 317, signature: 'prickle' },
+  scissor: { variant: 'shear-stroke', interval: 1.45, beats: [0,.34], tone: 154, signature: 'blade-clack' },
+});
+
+// Render each short preset with the caller's existing positional/common routing.
+// gainScale is relative to the quiet planner gain; at most two voices per cue.
+export const EXTRA_CREATURE_VOICES = Object.freeze({
+  'pitcher-flow': [{noise:true,duration:.43,filter:470,attack:.12,wet:.28},{frequency:110,endFrequency:43,duration:.24,filter:300,gainScale:.28,attack:.025,wet:.20}],
+  'throat-bubble': [{frequency:155,endFrequency:53,duration:.43,filter:330,attack:.035,wet:.36}],
+  'blade-wake': [{noise:true,duration:.34,filter:1800,filterType:'bandpass',attack:.06,gainScale:.70,wet:.18}],
+  'edge-chime': [{frequency:510,endFrequency:142,duration:.32,type:'triangle',filter:850,gainScale:.65,attack:.01,wet:.37}],
+  'skitter': [{noise:true,duration:.10,filter:2150,attack:.006,gainScale:.62,wet:.21}],
+  'leg-tick': [{frequency:310,endFrequency:192,duration:.08,type:'triangle',filter:1000,gainScale:.64,attack:.003,wet:.32}],
+  'cage-step': [{noise:true,duration:.29,filter:570,attack:.045,gainScale:.8,wet:.34},{frequency:88,endFrequency:68,duration:.22,filter:300,gainScale:.25,attack:.04,wet:.4}],
+  'rib-hum': [{frequency:88,endFrequency:84,duration:.85,type:'triangle',filter:260,gainScale:.70,attack:.22,wet:.43}],
+  'palm-drag': [{noise:true,duration:.30,filter:820,filterType:'bandpass',attack:.075,gainScale:.75,wet:.23}],
+  'hollow-knock': [{frequency:102,endFrequency:51,duration:.16,type:'triangle',filter:360,attack:.004,wet:.36}],
+  'loop-roll': [{noise:true,duration:.58,filter:730,filterType:'bandpass',attack:.16,gainScale:.75,wet:.2},{frequency:150,endFrequency:90,duration:.38,filter:260,gainScale:.18,attack:.11,wet:.22}],
+  'ring-pulse': [{frequency:117,endFrequency:176,duration:.56,filter:420,gainScale:.65,attack:.15,wet:.36}],
+  'sail-wash': [{noise:true,duration:.78,filter:1550,filterType:'bandpass',attack:.24,gainScale:.46,wet:.34}],
+  'membrane': [{frequency:279,endFrequency:266,duration:.95,filter:460,gainScale:.58,attack:.29,wet:.43}],
+  'conch-step': [{noise:true,duration:.18,filter:1250,attack:.018,gainScale:.62,wet:.27},{frequency:203,endFrequency:121,duration:.11,filter:520,gainScale:.16,attack:.005,wet:.3}],
+  'conch-call': [{frequency:203,endFrequency:153,duration:.65,type:'triangle',filter:420,gainScale:.65,attack:.20,wet:.42}],
+  'spine-brush': [{noise:true,duration:.24,filter:2600,filterType:'bandpass',attack:.065,gainScale:.48,wet:.27}],
+  'prickle': [{frequency:634,endFrequency:317,duration:.14,filter:1100,gainScale:.50,attack:.008,wet:.33}],
+  'shear-stroke': [{noise:true,duration:.22,filter:1700,filterType:'bandpass',attack:.025,gainScale:.68,wet:.19}],
+  'blade-clack': [{frequency:462,endFrequency:154,duration:.17,type:'triangle',filter:840,gainScale:.70,attack:.005,wet:.37}],
+});

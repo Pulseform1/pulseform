@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#143e46"><title>STILLWATER — Don't make waves</title><meta name="description" content="A first-person poolrooms parkour game. Bring your friends. Stay out of the water."><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='25' fill='%23163e46'/%3E%3Cpath d='M15 42 Q30 25 50 42 T85 42 M15 63 Q30 46 50 63 T85 63' fill='none' stroke='%23b0ecd3' stroke-width='8'/%3E%3C/svg%3E"><link rel="stylesheet" href="/style.css"><script type="importmap">{"imports":{"three":"/vendor/three.module.js"}}</script></head><body>
+<canvas id="world" tabindex="0" aria-label="First-person 3D poolrooms. WASD moves, Space jumps, arrow keys look, Q and E turn, C levels the view, F toggles the torch. Click to capture the mouse; Tab releases it. Mouse is optional."></canvas><div class="screen-wash"></div><div class="vignette"></div>
+<div id="app"><div class="boot"><div class="brand">≈ STILLWATER</div><p>Filling the pools…</p></div></div>
+<div id="death-scare" class="hidden" role="dialog" aria-modal="true" aria-label="Caught by the creature. Press Space, Enter or Escape to continue."></div>
+<div id="threat-pulse" class="hidden" aria-hidden="true"><div class="threat-heart">♥</div><span>SOMETHING IS COMING</span><i></i></div>
+<aside id="capture-notice" class="hidden" role="status" aria-live="polite"></aside>
+<div id="hud" class="hidden"></div><div id="toast" role="status"></div><div id="crosshair" class="hidden"></div>
+<noscript>This game needs JavaScript and a browser with WebGL2 support.</noscript><script type="module" src="/app.js"></script>
+</body></html>
