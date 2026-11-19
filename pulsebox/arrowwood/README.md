@@ -29,6 +29,29 @@ Damage in rounds (unless one-shot rules are on) depends on where an arrow lands 
 full-draw headshot eliminates; strong body hits take two; weak shots and leg hits only wound. Arrows that hit someone
 stay in them until they are out of the round or respawn.
 
+## The maps
+
+Four woods, all 140 x 140 m with the two camps at the north and south ends, each the same turned half a circle so
+neither team has the better ground (the King's Wood pairs its Old Tower with Split Oak instead). All are built in
+`shared/world.js`: the King's Wood by its own hand-placed code, the others with the toolkit below it (`ground()`,
+`growWood()`, `hangTargets()`, `kit()`).
+
+- **The King's Wood**: the creek and the Stone Bridge (overtime ground), the Old Tower, Split Oak.
+- **Emberfall**: an autumn wood. Keep Hill in the middle with a ruined keep on top (gates on all sides, a turret with
+  stairs, the beacon), an orchard on one flank and a hay barn with a loft on the other.
+- **Frostpine**: snowy pines round a frozen lake. The ice is open ground with a few rocks and an ice-fishing shack for
+  cover; ridges, Hunter's Lodge and Bearback Rocks on the flanks.
+- **Mirewood**: a misty swamp. Water wherever the ground dips under one level (it slows you down), boardwalks across
+  it, the Sunken Shrine on an island ringed by a moat, a stilt hut and a fallen giant of a log.
+
+A room has a map (`room.map`) and the host's pick (`room.mapPick`, an id or `random`); a random room draws a new map
+for every match and announces it (`{ t: 'map' }`) before anyone is placed. Every engine entry point calls `useMap()`
+first, so rooms on different maps can share one process. The practice range is always the King's Wood. The client
+follows the room's map and rebuilds the wood (and its sky, light and colours, `THEMES` in `42-forest.js`) when it
+changes. `node tools/arrowwood-maps-test.mjs` checks every map in Node (spawns, targets, symmetry, that both camps can
+walk everywhere, bot matches); `node tools/arrowwood-maps-check.mjs` checks the menus, bot matches and an online room in
+the browser.
+
 ## How it is built
 
 ```
@@ -153,4 +176,6 @@ node tools/arrowwood-touch-check.mjs http://localhost:8790   # iPad emulation wi
 node tools/arrowwood-media.mjs                               # hub cover, screenshots and trailer
 node tools/arrowwood-rules-test.mjs                          # (no server) round rules, damage, overtime, pickups
 node tools/arrowwood-bots-test.mjs                           # (no server) bots fill seats, find and shoot people, no coins offline, rematch
+node tools/arrowwood-maps-test.mjs                           # (no server) every map: spawns, targets, symmetry, walkable everywhere, bot matches
+node tools/arrowwood-maps-check.mjs  http://localhost:8790   # map menus, a bot match on each map, an online room switching maps
 ```

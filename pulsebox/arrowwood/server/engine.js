@@ -12,7 +12,7 @@
 import {
   BOW, PL, drawPower, launchSpeed, damageFor, moveStep, groundAt, blocked, terrainH, arrowAt, aimVector, shotOrigin,
   sweepWorld, sweepBodies, TARGETS, TARGET, targetPos, sweepTargets, SPAWNS, SPAWN_YAW, FFA_SPAWNS, ZONE, COINS, BOW_IDS, gridRef, areaName, inWater,
-  rayWorld, eyeHeight, GRAV, MIN, MAX, CX, CZ, gravFor, isFull,
+  rayWorld, eyeHeight, GRAV, MIN, MAX, CX, CZ, gravFor, isFull, useMap, MAP_IDS,
 } from '../shared/world.js';
 
 export const TICK = 1 / 20;
@@ -26,9 +26,14 @@ const rid = n => { let s = ''; for (let i = 0; i < n; i++) s += 'abcdefghijkmnpq
 const r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000;
 const cleanName = n => String(n || '').replace(/[^\p{L}\p{N} _.'-]/gu, '').trim().slice(0, 16) || 'Archer';
 
+// the map: a room is on one map at a time (room.map); the host picks one or 'random' (room.mapPick), and a random room
+// draws a new map for every match. The practice range is always the King's Wood. Every entry point below switches the
+// shared world to this room's map first, so rooms on different maps can share one process.
+const pickMap = (pick, last) => { if (pick !== 'random') return pick; const pool = MAP_IDS.filter(id => id !== last); return pool[Math.floor(Math.random() * pool.length)]; };
 export function createRoom(o = {}) {
-  const mode = SIZES[o.mode] ? o.mode : '1v1';
-  return {
+  const mode = SIZES[o.mode] ? o.mode : '1v1', mapPick = mode === 'practice' ? 'kingswood' : o.map === 'random' || MAP_IDS.includes(o.map) ? o.map : 'kingswood', map = pickMap(mapPick);
+  useMap(map);
+  return { map, mapPick,
     code: o.code || '', mode, oneShot: !!o.oneShot || mode === 'ffa', dev: !!o.dev, T: (o.fast != null ? o.fast : o.dev) ? FAST : NORMAL,
     players: new Map(), host: null, phase: 'lobby', t: 0, phaseEnd: 0, round: 0, score: [0, 0], winner: null,
     arrows: [], stuck: [], tg: TARGETS.map(() => ({ up: true, back: 0 })), nextId: 1, out: [], cap: [0, 0], matchId: '', votes: new Set(), log: [],
@@ -46,6 +51,7 @@ function newState(x, z, yaw) { const y = groundAt(x, z, terrainH(x, z) + 3); ret
 
 // ---- joining, leaving, coming back
 export function join(room, info, now) {
+  useMap(room.map);
   if (info.token) {   // a player coming back to their seat after a dropped connection
     const p = list(room).find(q => q.token === info.token);
     if (p) { p.connected = true; p.goneAt = 0; if (info.bow && BOW_IDS.includes(info.bow)) p.bow = info.bow; lobbyOut(room); welcome(room, p); say(room, `${p.name} reconnected`); return { id: p.id, token: p.token, back: true }; }
@@ -63,10 +69,11 @@ export function join(room, info, now) {
   return { id, token };
 }
 function welcome(room, p) {
-  send(room, p.id, { t: 'welcome', id: p.id, token: p.token, code: room.code, mode: room.mode, oneShot: room.oneShot, phase: room.phase, tm: r2(room.t),
+  send(room, p.id, { t: 'welcome', id: p.id, token: p.token, code: room.code, mode: room.mode, oneShot: room.oneShot, phase: room.phase, tm: r2(room.t), map: room.map, mapPick: room.mapPick,
     stuck: room.stuck.map(stuckOut), tg: room.tg.map((k, i) => k.up ? -1 : i).filter(i => i >= 0), score: room.score, round: room.round, results: room.phase === 'results' ? room.lastResults : undefined });
 }
 export function drop(room, id, now) {
+  useMap(room.map);
   const p = room.players.get(id); if (!p) return;
   p.connected = false; p.goneAt = room.t; p.st.drawAt = null;
   say(room, `${p.name} lost connection${room.phase === 'lobby' ? '' : '. Waiting for them to come back...'}`);
@@ -86,7 +93,7 @@ function removePlayer(room, p) {
 function say(room, text) { send(room, '*', { t: 'note', text }); }
 function lobbyOut(room) {
   room.lobbyVer++;
-  send(room, '*', { t: 'lobby', code: room.code, mode: room.mode, oneShot: room.oneShot, host: room.host, phase: room.phase, score: room.score, round: room.round, size: SIZES[room.mode],
+  send(room, '*', { t: 'lobby', code: room.code, mode: room.mode, oneShot: room.oneShot, host: room.host, map: room.map, mapPick: room.mapPick, phase: room.phase, score: room.score, round: room.round, size: SIZES[room.mode],
     players: humans(room).map(p => ({ id: p.id, name: p.name, team: p.team, ready: p.ready, on: p.connected, bow: p.bow, k: p.kills, d: p.deaths, bot: p.bot ? p.bot.level : undefined })), votes: [...room.votes] });
 }
 const canStart = room => {
@@ -98,6 +105,7 @@ const canStart = room => {
 
 // ---- messages from a player
 export function message(room, id, m, now) {
+  useMap(room.map);
   const p = room.players.get(id); if (!p || !m || typeof m !== 'object') return;
   const st = p.st;
   switch (m.t) {
@@ -108,6 +116,7 @@ export function message(room, id, m, now) {
       room.mode = m.mode; room.oneShot = m.mode === 'ffa' ? true : !!m.oneShot;
       if (m.mode !== 'ffa') { const h = humans(room); h.forEach((q, i) => { if (h.filter(r => r.team === q.team).length > size / 2) q.team = 1 - q.team; }); }
       for (const q of humans(room)) q.ready = false; lobbyOut(room); } break;
+    case 'map': if (id === room.host && room.phase === 'lobby' && !room.practice && (m.map === 'random' || MAP_IDS.includes(m.map))) { room.mapPick = m.map; lobbyOut(room); } break;
     case 'team': if (room.phase === 'lobby' && room.mode !== 'ffa' && (m.team === 0 || m.team === 1) && humans(room).filter(q => q.team === m.team).length < SIZES[room.mode] / 2) { p.team = m.team; p.ready = false; lobbyOut(room); } break;
     case 'ready': if (room.phase === 'lobby') { p.ready = !!m.v; lobbyOut(room); } break;
     // the host can move anyone to the other team; if that team is full, the two swap
@@ -159,6 +168,7 @@ function fire(room, p, m) {
 
 // ---- matches, rounds, free for all
 function startMatch(room) {
+  room.map = pickMap(room.mapPick, room.map); useMap(room.map); send(room, '*', { t: 'map', id: room.map });
   room.score = [0, 0]; room.round = 0; room.winner = null; room.votes.clear(); room.matchId = room.code + '-' + rid(6); room.granted = false;
   for (const p of humans(room)) { p.kills = 0; p.deaths = 0; p.tgts = 0; p.ready = false; }
   if (room.mode === 'ffa') { room.phase = 'intro'; room.phaseEnd = room.t + room.T.intro; resetWorld(room); humans(room).forEach((p, i) => spawnFfa(room, p, i)); room.ffaEnd = room.phaseEnd + room.T.ffa; lobbyOut(room); phaseOut(room); return; }
@@ -183,7 +193,7 @@ function spawnFfa(room, p, i) {
   p.st = { ...newState(x, z, yaw), lastIn: room.t }; p.stuckIn = []; p.respawnAt = 0;
   send(room, p.id, { t: 'corr', p: [r2(p.st.x), r2(p.st.y), r2(p.st.z)], yaw, spawn: 1 }); send(room, '*', { t: 'respawn', id: p.id });
 }
-function phaseOut(room) { send(room, '*', { t: 'phase', ph: room.phase, end: r2(room.phaseEnd), round: room.round, score: room.score, winner: room.winner, mode: room.mode, ffaEnd: r2(room.ffaEnd) }); }
+function phaseOut(room) { send(room, '*', { t: 'phase', map: room.map, ph: room.phase, end: r2(room.phaseEnd), round: room.round, score: room.score, winner: room.winner, mode: room.mode, ffaEnd: r2(room.ffaEnd) }); }
 function endRound(room, winner, reason) {
   if (room.phase === 'roundEnd') return;
   room.phase = 'roundEnd'; room.phaseEnd = room.t + room.T.end; room.winner = winner; room.arrows.forEach(a => a.dead = true);
@@ -227,6 +237,7 @@ export const BOT_LEVELS = {
 };
 const rr = (a, b) => a + Math.random() * (b - a), gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / .5;
 export function addBot(room, level = 'normal', team) {
+  useMap(room.map);
   if ((room.phase !== 'lobby' && room.phase !== 'results') || humans(room).length >= SIZES[room.mode]) return null;
   const used = new Set(humans(room).map(p => p.name)), name = BOT_NAMES.find(n => !used.has(n)) || 'Bot ' + rid(2);
   const cnt = [0, 1].map(t => humans(room).filter(p => p.team === t).length), id = 'b' + rid(5);
@@ -237,6 +248,7 @@ export function addBot(room, level = 'normal', team) {
 }
 // fill every empty seat with bots (team modes: your partner and the other side; free for all: `ffa` archers in all)
 export function fillBots(room, level = 'normal', ffa = 6) {
+  useMap(room.map);
   for (const p of humans(room)) if (p.bot) room.players.delete(p.id);
   const size = room.mode === 'ffa' ? Math.min(SIZES.ffa, ffa) : SIZES[room.mode];
   if (room.mode !== 'ffa') for (const t of [0, 1]) while (humans(room).filter(p => p.team === t).length < size / 2) if (!addBot(room, level, t)) break;
@@ -338,6 +350,7 @@ export function due(room, now) {
 
 // ---- the simulation step
 export function tick(room, now) {
+  useMap(room.map);
   room.t += TICK;
   const T = room.T;
   // seats held for people who dropped: give them up after the grace period
@@ -441,10 +454,11 @@ function overtimeStep(room) {
 }
 // round decisions queued by eliminations this tick are made here, after every arrow of the tick has flown
 export function settle(room) {
+  useMap(room.map);
   if (!room.checkQueued) return; room.checkQueued = false;
   if (room.phase !== 'live' && room.phase !== 'overtime') return;
   const up = [0, 1].map(t => humans(room).some(p => p.team === t && p.st.alive));
   if (!up[0] && !up[1]) endRound(room, 'replay', 'wipe'); else if (!up[0]) endRound(room, 1, 'elim'); else if (!up[1]) endRound(room, 0, 'elim');
 }
 // one call per tick for the hosts: step, settle, and age out
-export function step(room, now) { tick(room, now); settle(room); }
+export function step(room, now) { useMap(room.map); tick(room, now); settle(room); }

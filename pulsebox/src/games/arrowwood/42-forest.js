@@ -22,12 +22,13 @@
     return g;
   }
   // routes people actually take: kept clear of ferns and worn into the floor
-  const PATHS = [];
+  const PATHS = [];   // the King's Wood's worn paths (the other maps carry theirs in the shared world)
+  let CUR_PATHS = PATHS;
   { const half = [[[70, 118], [70, 104], [69, 90], [70, 79]], [[62, 116], [48, 104], [36, 92], [28, 84]], [[78, 116], [92, 106], [104, 92], [110, 74], [113, 66]], [[48, 104], [56, 90], [60, 80]], [[92, 106], [84, 92], [80, 80]], [[36, 92], [22, 100], [14, 112]]];
     for (const pth of half) { PATHS.push(pth); PATHS.push(pth.map(([x, z]) => [140 - x, 140 - z])); } }
   function pathDist(x, z) {
     let best = 1e9;
-    for (const p of PATHS) for (let i = 0; i < p.length - 1; i++) { const [ax, az] = p[i], [bx, bz] = p[i + 1], dx = bx - ax, dz = bz - az, t = cl(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz), 0, 1), d = Math.hypot(x - ax - dx * t, z - az - dz * t); if (d < best) best = d; }
+    for (const p of CUR_PATHS) for (let i = 0; i < p.length - 1; i++) { const [ax, az] = p[i], [bx, bz] = p[i + 1], dx = bx - ax, dz = bz - az, t = cl(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz), 0, 1), d = Math.hypot(x - ax - dx * t, z - az - dz * t); if (d < best) best = d; }
     return best;
   }
   const visH = (x, z) => { if (x < -1500) return STAGE.y; const cx = cl(x, 0, 140), cz = cl(z, 0, 140), out = Math.hypot(x - cx, z - cz); return W.terrainH(cx, cz) + out * .38; };
@@ -43,29 +44,69 @@
     tint(g, (x, y) => { const k = cl((y - cy) / (r * sy) * .5 + .5, 0, 1); const f = lp(.55, 1.08, k) * lift; return [c.r * f, c.g * f, c.b * f]; });
     return g;
   }
-  const LEAF_COLS = ['#4caf3c', '#5cbc43', '#3f9e3a', '#6ac24a', '#47a83f'], PINE_COLS = ['#2f8a4a', '#2a7d44', '#368f52'];
+  // each map's look: sky, light and haze, the ground's colours, leaves, bark, stone, water, and what grows round the edge
+  const THEMES = {
+    kingswood: { sky: ['#2d7fdc', '#6fb4f2', '#d8efff'], fog: ['#cfe7fb', .0062], hemi: ['#e4f2ff', '#5f8a3c', .72], sun: ['#fff3dc', 2.15], fill: ['#bcd6ef', .35], cloud: '#ffffff', exp: .98,
+      ground: ['#47a334', '#62b83f', '#378a2c', '#2f6f2a', '#b98a55', '#dcc98c', '#7f8f44', '#9a9178'], leaf: ['#4caf3c', '#5cbc43', '#3f9e3a', '#6ac24a', '#47a83f'], tall: ['#3f9e3a', '#47a83f', '#368f36', '#4caf3c'],
+      pine: ['#2f8a4a', '#2a7d44', '#368f52'], pineChance: .22, bush: ['#3f9b3a', '#4aa83d', '#358f36', '#52b142'], trunk: '#8a5a33', stone: '#bdb8ad', moss: [.62, .88, .5],
+      flowers: ['#ff5f9e', '#ffd23a', '#ff7a3a', '#c06bff', '#ffffff'], patches: ['#ff5f9e', '#ffd23a', '#ff7a3a', '#c06bff', '#ff4a4a'], ring: R => R() < .3 ? 'oak' : 'oak2' },
+    emberfall: { sky: ['#4a7fcc', '#f3c596', '#fff0d6'], fog: ['#f2d6b0', .0066], hemi: ['#ffeacc', '#7a5a2a', .74], sun: ['#ffdcaa', 2.35], fill: ['#c9c6e6', .35], cloud: '#fff0dc', exp: 1.0,
+      ground: ['#b4a03a', '#c9b44c', '#9a8a32', '#6e5a2a', '#a8774a', '#d9c58c', '#9a7a3a', '#8a7a5a'], leaf: ['#e8742a', '#f2a33a', '#d4462a', '#f4c542', '#c8552a'], tall: ['#d4542a', '#e8862e', '#c94a26', '#f0a83a', '#b8402a'],
+      pine: ['#3b6b3a', '#46753f'], pineChance: .1, bush: ['#c96a2a', '#b8862e', '#9a4a24', '#d8902e'], trunk: '#6e4a30', stone: '#c9b9a0', moss: [1.05, .82, .5],
+      flowers: ['#ffd23a', '#ff7a3a', '#ffffff'], patches: ['#ffd23a', '#ff7a3a', '#c06bff'], fruit: '#d8282a', ring: R => R() < .3 ? 'oak' : 'oak2' },
+    frostpine: { sky: ['#5f93d6', '#b9d4ee', '#eef6ff'], fog: ['#e4edf7', .0085], hemi: ['#eef4ff', '#8a9ab0', .82], sun: ['#fff4e6', 2.0], fill: ['#c8daf2', .4], cloud: '#f4f8ff', exp: 1.0,
+      ground: ['#eef3f8', '#f8fbfe', '#e0e8f1', '#b9c7d9', '#c9d1db', '#e3e9f0', '#c6d0db', '#aab8c8'], leaf: ['#2f6450', '#2a5a46'], tall: ['#2a5a46', '#2f6450'],
+      pine: ['#24543f', '#2b5f48', '#1f4a37'], pineChance: 1, bush: ['#4f7564', '#5a8070'], trunk: '#5a4030', stone: '#b4b9c2', moss: [1.5, 1.55, 1.62], snow: true, ice: '#9fcdec',
+      flowers: null, patches: null, ring: () => 'pine' },
+    mirewood: { sky: ['#56746e', '#9db4a2', '#ccd8c2'], fog: ['#a8b8a2', .0105], hemi: ['#d6e4cc', '#3a4a2a', .7], sun: ['#f2e8c8', 1.65], fill: ['#a8c0b0', .35], cloud: '#d6dfd0', exp: .98,
+      ground: ['#58782f', '#688a38', '#48682a', '#33502a', '#6a5a3a', '#6e6040', '#566a36', '#3a3626'], leaf: ['#5a8a3a', '#6a9a44', '#4a7a34'], tall: ['#5f9442', '#6fa24c', '#53853a'],
+      pine: ['#2e5a3a', '#355f40'], pineChance: .08, bush: ['#45652d', '#557634', '#3c5a28'], trunk: '#4a3a2a', stone: '#9aa294', moss: [.55, .8, .45],
+      flowers: ['#f4f0d8'], patches: null, water: ['#3d7a6a', .84], ring: R => R() < .7 ? 'willow' : 'snag' },
+  };
+  let TH = THEMES.kingswood;
+  const LEAF_COLS = THEMES.kingswood.leaf, PINE_COLS = THEMES.kingswood.pine;
+  // sky, haze and light for the map in use
+  function applyTheme() {
+    const L = c => LC(c), u = X.sky && X.sky.material.uniforms;
+    if (u) { u.top.value = L(TH.sky[0]); u.mid.value = L(TH.sky[1]); u.hor.value = L(TH.sky[2]); }
+    X.scene.fog.color = L(TH.fog[0]); X.scene.fog.density = TH.fog[1];
+    X.hemi.color = L(TH.hemi[0]); X.hemi.groundColor = L(TH.hemi[1]); X.hemi.intensity = TH.hemi[2];
+    X.sun.color = L(TH.sun[0]); X.sun.intensity = TH.sun[1];
+    X.scene.traverse(o => { if (o.isDirectionalLight && o !== X.sun && o.parent === X.scene) { o.color = L(TH.fill[0]); o.intensity = TH.fill[1]; } });
+    if (X.clouds) X.clouds.material.color = new THREE.Color(TH.cloud);
+    X.renderer.toneMappingExposure = TH.exp;
+  }
+  // the wood is rebuilt when a room moves to another map
+  function rebuildWood() { buildForest(); applyTheme(); emit('woodBuilt', W.mapId()); }
+  function disposeWood(g) { g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach(m => m.dispose()); }); }
   // one tree: a tapered trunk and a crown of balls (or, now and then, a stack of cones). Returns [trunk geos, crown geos].
   function treeGeos(t, ground) {
-    const R = W.rng((t.seed || 5) + Math.round(t.x * 31 + t.z * 17)), H = t.h, r = t.r, tall = t.kind === 'tall', pine = !tall && t.kind !== 'split' && R() < .22, trunkH = H * (pine ? .3 : tall ? .6 : .52), tr = [], cr = [];
+    const R = W.rng((t.seed || 5) + Math.round(t.x * 31 + t.z * 17)), H = t.h, r = t.r, tall = t.kind === 'tall', pine = t.kind === 'pine' || (!tall && t.kind !== 'split' && t.kind !== 'willow' && t.kind !== 'apple' && t.kind !== 'snag' && R() < TH.pineChance), trunkH = H * (pine ? .3 : tall ? .6 : .52), tr = [], cr = [];
     const lean = [t.lean ? t.lean[0] : 0, t.lean ? t.lean[1] : 0];
     const trunk = new THREE.CylinderGeometry(r * .72, r * 1.08, trunkH + .6, 8, 2); trunk.translate(0, trunkH / 2 - .3, 0);
     { const p = trunk.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i); p.setX(i, p.getX(i) + lean[0] * y); p.setZ(i, p.getZ(i) + lean[1] * y); } }
     trunk.translate(t.x, ground, t.z); trunk.computeVertexNormals(); tint(trunk, (x, y, z, ny) => { const k = .85 + .15 * Math.sin(Math.atan2(z - t.z, x - t.x) * 3 + y); return [k, k, k]; }); tr.push(trunk);
     const top = [t.x + lean[0] * trunkH, ground + trunkH, t.z + lean[1] * trunkH];
     if (pine) {
-      const col = pick2(R, PINE_COLS); for (let k = 0; k < 3; k++) { const rad = H * (.26 - k * .06), hh = H * .3, g = new THREE.ConeGeometry(rad, hh, 9, 1); g.translate(top[0], top[1] + k * H * .2 + hh / 2 - H * .04, top[2]); g.computeVertexNormals();
+      if (t.kind === 'pine') return pineGeos(t, R, tr, cr, top);
+      const col = pick2(R, TH.pine); for (let k = 0; k < 3; k++) { const rad = H * (.26 - k * .06), hh = H * .3, g = new THREE.ConeGeometry(rad, hh, 9, 1); g.translate(top[0], top[1] + k * H * .2 + hh / 2 - H * .04, top[2]); g.computeVertexNormals();
         const c = new THREE.Color(col).convertSRGBToLinear(); tint(g, (x, y, z, ny) => { const f = ny < -.5 ? .55 : .85 + k * .1 + R() * .02; return [c.r * f, c.g * f, c.b * f]; }); cr.push(g); }
       return [tr, cr];
     }
+    if (t.kind === 'willow') return willowGeos(t, R, tr, cr, top);
+    if (t.kind === 'snag') { for (let k = 0; k < 3; k++) { const a = R() * TAU, b = new THREE.CylinderGeometry(r * .12, r * .28, H * .35, 5); b.translate(0, H * .17, 0); b.rotateZ(.7 + R() * .4); b.rotateY(a); b.translate(top[0], top[1] - k * H * .12, top[2]); const c = new THREE.Color(TH.trunk).convertSRGBToLinear(); tint(b, () => [.8, .8, .8]); tr.push(b); } return [tr, cr]; }
+    if (t.kind === 'apple') { const main = 1.5 + R() * .2; cr.push(leafBall(R, main, top[0], top[1] + main * .5, top[2], 1.1, .85, 1.1, pick2(R, ['#5d9a35', '#6aa63c', '#548f30'])));
+      for (let k = 0; k < 7; k++) { const a = R() * TAU, e = R() * 1.2 - .2, fr = new THREE.SphereGeometry(.13, 6, 5); fr.translate(top[0] + Math.cos(a) * Math.cos(e) * main * 1.05, top[1] + main * .5 + Math.sin(e) * main * .8, top[2] + Math.sin(a) * Math.cos(e) * main * 1.05); const fc = new THREE.Color(TH.fruit || '#d8282a').convertSRGBToLinear(); tint(fr, () => [fc.r, fc.g, fc.b]); cr.push(fr); }
+      return [tr, cr]; }
     if (tall) {   // a wide, flat-bottomed crown about seven metres across
-      const col = pick2(R, ['#3f9e3a', '#47a83f', '#368f36', '#4caf3c']), main = 3.1 + R() * .5;
+      const col = pick2(R, TH.tall), main = 3.1 + R() * .5;
       cr.push(leafBall(R, main, top[0], top[1] + main * .55, top[2], 1.15, .62, 1.15, col));
       for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + R() * .8, rr = main * (.62 + R() * .18), d = main * (.75 + R() * .25); cr.push(leafBall(R, rr, top[0] + Math.cos(a) * d, top[1] + main * (.15 + R() * .35), top[2] + Math.sin(a) * d, 1.1, .7, 1.1, col)); }
       cr.push(leafBall(R, main * .6, top[0] + (R() - .5), top[1] + main * 1.05, top[2] + (R() - .5), 1, .8, 1, col));
       for (let k = 0; k < 3; k++) { const a = R() * TAU, b = new THREE.CylinderGeometry(r * .2, r * .38, main * 1.1, 6); b.translate(0, main * .55, 0); b.rotateZ(1); b.rotateY(a); b.translate(top[0], top[1] - trunkH * .1, top[2]); b.computeVertexNormals(); tr.push(b); }
       return [tr, cr];
     }
-    const big = t.kind === 'split' ? 1.25 : 1, main = (H * .3 + .4) * big, col = pick2(R, LEAF_COLS);
+    const big = t.kind === 'split' ? 1.25 : 1, main = (H * .3 + .4) * big, col = pick2(R, TH.leaf);
     cr.push(leafBall(R, main, top[0], top[1] + main * .62, top[2], 1, .9, 1, col));
     const n = t.kind === 'oak' || t.kind === 'split' ? 4 : 2;
     for (let k = 0; k < n; k++) { const a = k / n * TAU + R() * 1.2, rr = main * (.55 + R() * .2), d = main * .72; cr.push(leafBall(R, rr, top[0] + Math.cos(a) * d, top[1] + main * (.25 + R() * .5), top[2] + Math.sin(a) * d, 1, .88, 1, col)); }
@@ -75,9 +116,27 @@
     return [tr, cr];
   }
   const pick2 = (R, a) => a[Math.floor(R() * a.length)];
+  // a tall pine: a short bare trunk under four stacked cones, snow on their tops in the winter wood
+  function pineGeos(t, R, tr, cr, top) {
+    const H = t.h, col = pick2(R, TH.pine), c = new THREE.Color(col).convertSRGBToLinear(), base = top[1] - H * .12;
+    for (let k = 0; k < 4; k++) { const rad = H * (.27 - k * .055), hh = H * .3, g = new THREE.ConeGeometry(rad, hh, 9, 2); g.translate(top[0], base + k * H * .19 + hh / 2, top[2]); g.computeVertexNormals();
+      tint(g, (x, y, z, ny) => { const rel = (y - (base + k * H * .19)) / hh, f = ny < -.5 ? .55 : .82 + k * .08; if (TH.snow && ny > -.2 && rel > .35) { const s = cl((rel - .35) * 2.2, 0, 1); return [lp(c.r * f, 1.45, s), lp(c.g * f, 1.5, s), lp(c.b * f, 1.58, s)]; } return [c.r * f, c.g * f, c.b * f]; }); cr.push(g); }
+    return [tr, cr];
+  }
+  // a willow: a broad low crown with a skirt of hanging leaves down to head height
+  function willowGeos(t, R, tr, cr, top) {
+    const col = pick2(R, TH.tall), main = 2.6 + R() * .6, c = new THREE.Color(col).convertSRGBToLinear();
+    cr.push(leafBall(R, main, top[0], top[1] + main * .35, top[2], 1.25, .6, 1.25, col));
+    const skirt = new THREE.CylinderGeometry(main * 1.1, main * 1.32, main * 1.25, 12, 2, true); skirt.translate(top[0], top[1] - main * .15, top[2]);
+    { const p = skirt.attributes.position; for (let i = 0; i < p.count; i++) { const a = Math.atan2(p.getZ(i) - top[2], p.getX(i) - top[0]); if (p.getY(i) < top[1] - main * .5) p.setY(i, p.getY(i) + Math.sin(a * 5 + t.seed) * .35); } }
+    skirt.computeVertexNormals(); tint(skirt, (x, y) => { const k = cl((y - (top[1] - main * .8)) / (main * 1.2), 0, 1), f = lp(.5, .95, k); return [c.r * f, c.g * f, c.b * f]; }); cr.push(skirt);
+    return [tr, cr];
+  }
 
   function buildForest() {
-    const S = X.scene, q = X.q;
+    TH = THEMES[W.mapId()] || THEMES.kingswood; CUR_PATHS = W.mapId() === 'kingswood' ? PATHS : W.PATHS;
+    if (X.wood) { X.scene.remove(X.wood); disposeWood(X.wood); }
+    const S = X.wood = new THREE.Group(), q = X.q; X.scene.add(S); X.mapBuilt = W.mapId(); X.water = null;
     const std2 = o => new THREE.MeshStandardMaterial(Object.assign({ roughness: .78, metalness: 0 }, o));
     // The big merged scenery (trees, bushes, walls, the ground) is cut into tiles of the wood, so three.js can skip the tiles
     // behind you and, for the sun's shadow, everything outside the shadow box round you. One mesh for the whole wood was drawn
@@ -113,9 +172,9 @@
       const n = geo.attributes.normal, col = new Float32Array(p.count * 3);
       // where the crowns meet overhead the grass lies in shade (painted in, so it reads even without shadows)
       const SH = 192, SO = -26, shade = new Float32Array(SH * SH);
-      for (const t of W.TREES) { if (t.kind !== 'tall' && t.kind !== 'split') continue; const R0 = 4.6; for (let gz = Math.floor(t.z - R0); gz <= t.z + R0; gz++) for (let gx = Math.floor(t.x - R0); gx <= t.x + R0; gx++) { const i = gx - SO, j = gz - SO; if (i < 0 || j < 0 || i >= SH || j >= SH) continue; const d = Math.hypot(gx - t.x, gz - t.z), v = 1 - sm(cl((d - 2.2) / 2.4, 0, 1)); if (v > shade[j * SH + i]) shade[j * SH + i] = v; } }
+      for (const t of W.TREES) { if (t.kind !== 'tall' && t.kind !== 'split' && t.kind !== 'pine' && t.kind !== 'willow') continue; const R0 = 4.6; for (let gz = Math.floor(t.z - R0); gz <= t.z + R0; gz++) for (let gx = Math.floor(t.x - R0); gx <= t.x + R0; gx++) { const i = gx - SO, j = gz - SO; if (i < 0 || j < 0 || i >= SH || j >= SH) continue; const d = Math.hypot(gx - t.x, gz - t.z), v = 1 - sm(cl((d - 2.2) / 2.4, 0, 1)); if (v > shade[j * SH + i]) shade[j * SH + i] = v; } }
       const shadeAt = (x, z) => { const i = cl(Math.round(x - SO), 0, SH - 1), j = cl(Math.round(z - SO), 0, SH - 1); return shade[j * SH + i]; };
-      const SHADEC = LC('#2f6f2a'), G1 = LC('#47a334'), G2 = LC('#62b83f'), G3 = LC('#378a2c'), DIRT = LC('#b98a55'), SAND = LC('#dcc98c'), SLOPE = LC('#7f8f44'), BED = LC('#9a9178');
+      const [G1, G2, G3, SHADEC, DIRT, SAND, SLOPE, BED] = TH.ground.map(LC), ICE = LC(TH.ice || '#cfe6f5'), ices = W.WATER.filter(w => w.kind === 'ice');
       const c = new THREE.Color();
       for (let i = 0; i < p.count; i++) {
         const x = p.getX(i), y = p.getY(i), z = p.getZ(i), ny = n.getY(i), nz1 = noiseAt(x, z, .045), nz2 = noiseAt(x + 40, z - 9, .16);
@@ -124,6 +183,7 @@
         const pd = pathDist(x, z); if (pd < 2) c.lerp(DIRT, (1 - sm(cl((pd - .5) / 1.5, 0, 1))) * .85);
         const shd = shadeAt(x, z); if (shd > 0) { c.lerp(SHADEC, shd * .45); c.multiplyScalar(1 - shd * .22); }
         const cd = W.creekDist(x, z); if (cd < W.CREEK_W + 3) { const k = 1 - sm(cl((cd - W.CREEK_W + .3) / 3, 0, 1)); c.lerp(cd < W.CREEK_W ? BED : SAND, k); }
+        for (const w of ices) { const e = Math.hypot((x - w.x) / w.rx, (z - w.z) / w.rz); if (e < 1.12) c.lerp(ICE, 1 - sm(cl((e - .9) / .22, 0, 1))); }
         col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
       }
       geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
@@ -137,38 +197,51 @@
         const m = new THREE.Mesh(g, gm); m.receiveShadow = true; S.add(m); X.ground.push(m);
       }
     }
-    // ---- the creek: bright, clear blue water
-    {
+    // ---- water: the King's Wood's creek, a marsh's sheet of water, a frozen lake's ice
+    const rip = paint(128, 128, (x, y) => { const v = tile(x, y, 128, 128, .08) * .6 + tile(x, y, 128, 128, .2) * .4; return [v * 255, v * 255, v * 255]; }), rn = normalFrom(rip, 4);
+    if (W.WATER.some(w => w.kind === 'creek')) {
       const N = 150, half = W.CREEK_W + 1.5, pos = [], uv = [], idx = [];
       for (let k = 0; k <= N; k++) { const x = -20 + k * 180 / N, zc = W.creekZ(cl(x, 0, 140)), dz = .3 * Math.cos((x - 70) * .06), L = Math.hypot(1, dz), nx = -dz / L, nz = 1 / L, y = W.waterY(cl(x, 0, 140));
         pos.push(x + nx * half, y, zc + nz * half, x - nx * half, y, zc - nz * half); uv.push(k * .6, 0, k * .6, 1); if (k) { const a = (k - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
-      const rip = paint(128, 128, (x, y) => { const v = tile(x, y, 128, 128, .08) * .6 + tile(x, y, 128, 128, .2) * .4; return [v * 255, v * 255, v * 255]; });
-      const rn = normalFrom(rip, 4);
       const mat = std2({ color: LC('#3aa9e6'), roughness: .08, metalness: .1, transparent: true, opacity: .8, normalMap: rn, normalScale: new THREE.Vector2(.35, .35), side: THREE.DoubleSide });   // both sides: the strip is wound facing down, which hid the creek from above
       const m = new THREE.Mesh(g, mat); m.renderOrder = 2; S.add(m); X.water = { m, rn };
     }
+    for (const w of W.WATER) {
+      if (w.kind === 'marsh') {   // one sheet over the whole wood; the ground shows through wherever it's higher
+        const g = new THREE.PlaneGeometry(200, 200, 1, 1); g.rotateX(-Math.PI / 2); g.translate(70, w.y, 70); rn.repeat.set(30, 30); rn.wrapS = rn.wrapT = THREE.RepeatWrapping;
+        const m = new THREE.Mesh(g, std2({ color: LC(TH.water ? TH.water[0] : '#46705e'), roughness: .12, metalness: .05, transparent: true, opacity: TH.water ? TH.water[1] : .84, normalMap: rn, normalScale: new THREE.Vector2(.3, .3) }));
+        m.renderOrder = 2; m.receiveShadow = true; S.add(m); X.water = { m, rn };
+      }
+      if (w.kind === 'ice') {   // glassy ice with a few cracks, flush on the flat lake bed
+        const [c, g2] = cvs(512, 512); g2.fillStyle = '#ffffff'; g2.fillRect(0, 0, 512, 512); g2.strokeStyle = 'rgba(120,150,180,.35)'; g2.lineWidth = 2; const R = W.rng(99);
+        for (let k = 0; k < 26; k++) { let x = R() * 512, y = R() * 512; g2.beginPath(); g2.moveTo(x, y); for (let j = 0; j < 5; j++) { x += (R() - .5) * 90; y += (R() - .5) * 90; g2.lineTo(x, y); } g2.stroke(); }
+        const geo = new THREE.CircleGeometry(1, 72); geo.rotateX(-Math.PI / 2); geo.scale(w.rx * 1.02, 1, w.rz * 1.02); geo.translate(w.x, w.y + .025, w.z);
+        const m = new THREE.Mesh(geo, std2({ color: LC(TH.ice || '#cfe6f5'), map: tex(c, { rep: [3, 2] }), roughness: .08, metalness: .15, polygonOffset: true, polygonOffsetFactor: -2 })); m.receiveShadow = true; S.add(m);
+      }
+    }
+
     // ---- trees: the map's trunks (the ones arrows hit) plus a ring of the same outside the edge, so the wood closes in
     {
       const trunks = [], crowns = [], R = W.rng(77), extra = [];
       for (let k = 0; k < (q === 'low' ? 60 : 110); k++) { let x, z; if (R() < .5) { x = R() * 180 - 20; z = R() < .5 ? -18 + R() * 20 : 138 + R() * 20; } else { z = R() * 180 - 20; x = R() < .5 ? -18 + R() * 20 : 138 + R() * 20; }
-        if (x > 3 && x < 137 && z > 3 && z < 137) continue; extra.push({ x, z, r: .35 + R() * .2, h: 6 + R() * 4, lean: [0, 0], kind: R() < .3 ? 'oak' : 'oak2', seed: (R() * 1e6) | 0 }); }
+        if (x > 3 && x < 137 && z > 3 && z < 137) continue; const h = 6 + R() * 4; extra.push({ x, z, r: .35 + R() * .2, h, lean: [0, 0], kind: W.mapId() === 'kingswood' ? (R() < .3 ? 'oak' : 'oak2') : TH.ring(R), seed: (R() * 1e6) | 0 }); if (extra[extra.length - 1].kind === 'pine') extra[extra.length - 1].h = h * 1.5; }
       for (const t of [...W.TREES, ...extra]) { const [a, b] = treeGeos(t, visH(t.x, t.z)); trunks.push(...a); crowns.push(...b); }
-      X.trunks = tiled(trunks, std2({ color: LC('#8a5a33'), vertexColors: true, roughness: .85 }), true, true);
+      X.trunks = tiled(trunks, std2({ color: LC(TH.trunk), vertexColors: true, roughness: .85 }), true, true);
       X.leaves = tiled(crowns, windify(std2({ vertexColors: true, roughness: .7 }), .25), true, true);
     }
     // ---- bushes (from the map) with a few flowers; small rocks and flower patches on the grass
     {
       const R = W.rng(4242), parts = [], flowers = [];
       for (const b of W.BUSHES) {
-        const y = visH(b.x, b.z), col = pick2(R, ['#3f9b3a', '#4aa83d', '#358f36', '#52b142']), n = 2 + (R() * 2 | 0);
+        const y = visH(b.x, b.z), col = pick2(R, TH.bush), n = 2 + (R() * 2 | 0);
         for (let k = 0; k < n; k++) { const a = R() * TAU, d = k ? b.r * .55 : 0, rr = b.r * (k ? .7 + R() * .2 : 1); parts.push(leafBall(R, rr, b.x + Math.cos(a) * d, y + rr * .55, b.z + Math.sin(a) * d, 1.1, .78, 1.1, col)); }
-        if (R() < .35) { const fc = pick2(R, ['#ff5f9e', '#ffd23a', '#ff7a3a', '#c06bff', '#ffffff']); for (let k = 0; k < 6; k++) { const a = R() * TAU, u = R() * .9 + .1; flowers.push([b.x + Math.cos(a) * b.r * .9 * u, y + b.r * (.55 + .45 * Math.sqrt(1 - u * u)) * .95, b.z + Math.sin(a) * b.r * .9 * u, fc]); } }
+        if (R() < .35 && TH.flowers) { const fc = pick2(R, TH.flowers); for (let k = 0; k < 6; k++) { const a = R() * TAU, u = R() * .9 + .1; flowers.push([b.x + Math.cos(a) * b.r * .9 * u, y + b.r * (.55 + .45 * Math.sqrt(1 - u * u)) * .95, b.z + Math.sin(a) * b.r * .9 * u, fc]); } }
       }
       X.bushes = tiled(parts, windify(std2({ vertexColors: true, roughness: .72 }), .15), true, true);
       // flower patches on open grass
       const free = (x, z) => W.creekDist(x, z) > W.CREEK_W + .8 && pathDist(x, z) > 1.4 && !treeNear(x, z, .6) && !boxNear(x, z, .5);
-      for (let k = 0; k < (q === 'low' ? 60 : 110); k++) { const x = 8 + R() * 124, z = 8 + R() * 124; if (!free(x, z)) continue; const fc = pick2(R, ['#ff5f9e', '#ffd23a', '#ff7a3a', '#c06bff', '#ff4a4a']); for (let j = 0; j < 5; j++) { const fx = x + (R() - .5) * 1.6, fz = z + (R() - .5) * 1.6; flowers.push([fx, visH(fx, fz) + .22 + R() * .08, fz, fc, 1]); } }
+      for (let k = 0; k < (q === 'low' ? 60 : 110); k++) { const x = 8 + R() * 124, z = 8 + R() * 124; if (!free(x, z) || !TH.patches) continue; const fc = pick2(R, TH.patches); for (let j = 0; j < 5; j++) { const fx = x + (R() - .5) * 1.6, fz = z + (R() - .5) * 1.6; flowers.push([fx, visH(fx, fz) + .22 + R() * .08, fz, fc, 1]); } }
       if (flowers.length) {
         // a flower is tiny: five low-poly petals, a centre and a stem (about 50 triangles; there are hundreds of them)
         const fg = merge([...[0, 1, 2, 3, 4].map(k => { const g = new THREE.OctahedronGeometry(.048, 0); g.scale(1, .42, 1); g.translate(Math.cos(k * TAU / 5) * .055, 0, Math.sin(k * TAU / 5) * .055); return g; }), (() => { const g = new THREE.OctahedronGeometry(.036, 0); g.scale(1, .6, 1); g.translate(0, .01, 0); tint(g, () => [1.6, 1.3, .2]); return g; })(), (() => { const g = new THREE.CylinderGeometry(.01, .012, .24, 3, 1, true); g.translate(0, -.12, 0); tint(g, () => [.3, .7, .25]); return g; })()]);
@@ -181,16 +254,18 @@
     }
     // ---- stone: walls, the tower and the bridge in clean bricks with a broken top; rocks; logs; planks
     {
-      const wallG = [], deckG = [], woodG = [], blocks = [], rocks = [], logs = [];
+      const wallG = [], deckG = [], woodG = [], hayG = [], snowG = [], blocks = [], rocks = [], logs = [];
+      const snowCap = (b, M4, w, d) => { const g = new THREE.BoxGeometry(w + .06, .14, d + .06); g.translate(0, b.y1 + .05, 0); g.applyMatrix4(M4); snowG.push(g); };
       const R = W.rng(31);
       for (const b of W.BOXES) {
         const w = b.hx * 2, d = b.hz * 2, h = b.y1 - b.y0, M4 = new THREE.Matrix4().makeRotationY(b.a).setPosition(b.x, 0, b.z);
         if (b.kind === 'rock') { rocks.push(b); continue; }
         if (b.kind === 'log') { logs.push(b); continue; }
-        if (b.mat === 'wood') { const g = worldBox(w, h, d, 2); g.translate(0, (b.y0 + b.y1) / 2, 0); g.applyMatrix4(M4); woodG.push(g); continue; }
+        if (b.mat === 'wood' || b.mat === 'hay') { const g = worldBox(w, h, d, 2); g.translate(0, (b.y0 + b.y1) / 2, 0); g.applyMatrix4(M4); (b.mat === 'hay' ? hayG : woodG).push(g); if (TH.snow && b.kind !== 'post' && b.kind !== 'stair') snowCap(b, M4, w, d); continue; }
+        if (b.kind === 'pillar' || b.kind === 'plinth' || b.kind === 'chimney' || b.kind === 'stair') { const g = worldBox(w, h, d, 2.4); g.translate(0, (b.y0 + b.y1) / 2, 0); g.applyMatrix4(M4); wallG.push(g); if (TH.snow) snowCap(b, M4, w, d); continue; }
         if (b.kind === 'deck') { const g = worldBox(w, h, d, 2.4); g.translate(0, (b.y0 + b.y1) / 2, 0); g.applyMatrix4(M4); deckG.push(g); continue; }
         const jag = b.kind === 'parapet' ? .18 : Math.min(.5, h * .28), body = h - jag;
-        const g = worldBox(w, body, d, 2.4); g.translate(0, b.y0 + body / 2, 0); g.applyMatrix4(M4); wallG.push(g);
+        const g = worldBox(w, body, d, 2.4); g.translate(0, b.y0 + body / 2, 0); g.applyMatrix4(M4); wallG.push(g); if (TH.snow) snowCap({ y1: b.y0 + body }, M4, w, d);
         const along = b.hx >= b.hz, L = along ? w : d, T = along ? d : w, n = Math.max(1, Math.round(L / .6));
         for (let k = 0; k < n; k++) {
           const u = -L / 2 + (k + .5) * L / n, hh = jag * (b.kind === 'parapet' ? 1 : R() < .25 ? 0 : .5 + R() * .5); if (hh < .05) continue;
@@ -198,13 +273,13 @@
           blocks.push({ x: wx, y: b.y0 + body + hh / 2, z: wz, sx: (along ? L / n : T) * .94, sy: hh, sz: (along ? T : L / n) * .94, a: b.a });
         }
       }
-      const stoneM = std2({ map: TEX.brick, roughness: .82, color: LC('#bdb8ad') });
-      for (const [list, mat] of [[wallG, stoneM], [deckG, stoneM], [woodG, std2({ map: TEX.plankB, roughness: .8 })]]) if (list.length) tiled(list, mat, true, true, 0);
+      const stoneM = std2({ map: TEX.brick, roughness: .82, color: LC(TH.stone) });
+      for (const [list, mat] of [[wallG, stoneM], [deckG, stoneM], [woodG, std2({ map: TEX.plankB, roughness: .8 })], [hayG, std2({ map: TEX.plankB, roughness: .95, color: LC('#f0cf62') })], [snowG, std2({ color: LC('#f6f9fd'), roughness: .9 })]]) if (list.length) tiled(list, mat, true, true, 0);
       const Q = new THREE.Quaternion();
       if (blocks.length) tiledInst(new THREE.BoxGeometry(1, 1, 1), std2({ color: LC('#aeaaa0'), roughness: .8 }), blocks.map(k => { Q.setFromEuler(new THREE.Euler(0, k.a, 0)); return { m: new THREE.Matrix4().compose(V3(k.x, k.y, k.z), Q, V3(k.sx, k.sy, k.sz)), c: new THREE.Color().setScalar(.88 + R() * .14) }; }), true, true, 0);
       // rocks: chunky faceted boulders, a lick of moss on top
       const rg = []; for (const b of rocks) { const g = new THREE.DodecahedronGeometry(1, 1), p = g.attributes.position, sd = R() * 10; for (let i = 0; i < p.count; i++) { const v = V3(p.getX(i), p.getY(i), p.getZ(i)), n = 1 + .16 * (noiseAt(v.x * 2 + sd, v.y * 2 + v.z, 1) - .5) * 2; p.setXYZ(i, v.x * n, v.y * n, v.z * n); }
-        g.scale(b.hx * 1.1, (b.y1 - b.y0) / 2, b.hz * 1.1); g.rotateY(b.a); g.translate(b.x, (b.y0 + b.y1) / 2, b.z); g.computeVertexNormals(); tint(g, (x, y, z, ny) => ny > .6 ? [.62, .88, .5] : [1, 1, 1]); rg.push(g); }
+        g.scale(b.hx * 1.1, (b.y1 - b.y0) / 2, b.hz * 1.1); g.rotateY(b.a); g.translate(b.x, (b.y0 + b.y1) / 2, b.z); g.computeVertexNormals(); tint(g, (x, y, z, ny) => ny > .6 ? TH.moss : [1, 1, 1]); rg.push(g); }
       if (rg.length) tiled(rg, std2({ color: LC('#9da3a8'), roughness: .85, vertexColors: true, flatShading: true }), true, true, 0);
       // logs: brown bark with pale cut ends
       const lg = []; for (const b of logs) { const r = (b.y1 - b.y0) * .44, g = new THREE.CylinderGeometry(r, r, b.hx * 2, q === 'low' ? 10 : 14, 1); g.rotateZ(Math.PI / 2);
@@ -220,6 +295,12 @@
       const tw = W.PROPS.find(p => p.t === 'tower');
       if (tw) { for (let k = 0; k < 3; k++) { const g = new THREE.BoxGeometry(.2, .24, 2 * tw.s + .6); g.translate(tw.x - 1.5 + k * 1.6, tw.top - .4 - k * .3, tw.z); parts.push(g); } }
       if (parts.length) { const m = new THREE.Mesh(merge(parts), stoneM); m.castShadow = m.receiveShadow = true; S.add(m); }
+      // Emberfall's beacon: an iron brazier on the stone with a flame in it
+      for (const pr of W.PROPS.filter(p => p.t === 'beacon')) {
+        const bowl = new THREE.Mesh(new THREE.CylinderGeometry(.55, .35, .45, 10), std2({ color: LC('#3a3430'), metalness: .6, roughness: .5 })); bowl.position.set(pr.x, pr.y + .22, pr.z); bowl.castShadow = true; S.add(bowl);
+        const fl = new THREE.Mesh(new THREE.ConeGeometry(.42, 1.2, 8), new THREE.MeshBasicMaterial({ color: '#ffb347', transparent: true, opacity: .9 })); fl.position.set(pr.x, pr.y + 1.0, pr.z); S.add(fl);
+        fl.onBeforeRender = () => { const t = X.t || 0; fl.scale.set(1 + Math.sin(t * 11) * .08, 1 + Math.sin(t * 7.3) * .15, 1 + Math.cos(t * 9) * .08); };
+      }
       // banners at the two camps
       for (const [x, z, team] of [[55.8, 125.5, 0], [84.2, 125.5, 0], [84.2, 14.5, 1], [55.8, 14.5, 1]]) {
         const [c, g] = cvs(128, 256); g.fillStyle = W.TEAMS[team].col; g.fillRect(0, 0, 128, 256); g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(0, 0, 128, 14); g.fillStyle = '#fffaf0';
@@ -249,7 +330,7 @@
       const faceM = new THREE.MeshStandardMaterial({ map: face, emissiveMap: face, emissive: new THREE.Color('#5a4a30'), roughness: .7 }), rimM = std2({ color: LC('#7a4a26') }), postM = std2({ color: LC('#8a5a33') });
       const BAL = ['#ff6b6b', '#4fc3f7', '#ffd23a', '#7bd88f', '#c792ea', '#ff9f43'];
       const T = W.TARGETS, nT = T.length, ground = T.filter(k => k.kind === 'ground'), fly = T.filter(k => k.kind === 'fly');
-      const inst = (geo, mat, n, shadow) => { const m = new THREE.InstancedMesh(geo, mat, Math.max(1, n)); m.frustumCulled = false; m.castShadow = !!shadow; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); X.scene.add(m); return m; };
+      const inst = (geo, mat, n, shadow) => { const m = new THREE.InstancedMesh(geo, mat, Math.max(1, n)); m.frustumCulled = false; m.castShadow = !!shadow; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); S.add(m); return m; };
       const discG = new THREE.CylinderGeometry(1, 1, .09, 28); discG.rotateX(Math.PI / 2);
       const postG = new THREE.CylinderGeometry(.06, .08, 1, 8); postG.translate(0, -.5, 0);
       const footG = new THREE.CylinderGeometry(.28, .32, .12, 10);

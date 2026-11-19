@@ -14,7 +14,7 @@
   on('toast', t => HUD.toast = { t, at: now() });
   on('tgtBreak', (i, p, mine, c) => { if (mine) HUD.toast = { t: `Target broken · +${c || W.TARGET.coins} coins`, at: now() }; });
   on('recovered', () => HUD.toast = { t: 'Arrow recovered', at: now() });
-  on('roundStart', m => { HUD.banner = { t: CL.mode === 'ffa' ? 'FREE FOR ALL' : `ROUND ${m.round}`, s: CL.mode === 'ffa' ? 'One shot, one kill · most eliminations in 2:30' : (m.score[0] === ENG.WIN_ROUNDS - 1 && m.score[1] === ENG.WIN_ROUNDS - 1 ? 'MATCH POINT · this round wins it' : `${W.TEAMS[0].n} ${m.score[0]}–${m.score[1]} ${W.TEAMS[1].n}`), at: now(), dur: 3 }; });
+  on('roundStart', m => { const where = W.mapInfo().n.toUpperCase(); HUD.banner = { t: CL.mode === 'ffa' ? 'FREE FOR ALL' : `ROUND ${m.round}`, s: CL.mode === 'ffa' ? `${where} · one shot, one kill · most eliminations in 2:30` : (m.score[0] === ENG.WIN_ROUNDS - 1 && m.score[1] === ENG.WIN_ROUNDS - 1 ? 'MATCH POINT · this round wins it' : `${m.round === 1 ? where + ' · ' : ''}${W.TEAMS[0].n} ${m.score[0]}–${m.score[1]} ${W.TEAMS[1].n}`), at: now(), dur: 3 }; });
   on('go', () => { HUD.banner = { t: 'DRAW!', s: '', at: now(), dur: 1.1 }; });
   on('overtime', () => { HUD.banner = { t: 'OVERTIME', s: 'Hold the Stone Bridge clearing to win the round', at: now(), dur: 3 }; if (AU.ready) S.horn(); });
   on('roundEnd', m => { const mine = meP(), won = mine && m.winner === mine.team; const nm = m.winner === 'replay' ? 'ROUND REPLAYED' : `${W.TEAMS[m.winner].n.toUpperCase()} TAKE THE ROUND`;

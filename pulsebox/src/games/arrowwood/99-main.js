@@ -4,7 +4,7 @@
     booted = true; loadCfg(); uiInit(); loadProfile().then(() => { if (ready && VM.skin !== PROFILE.equipped) buildViewModel(PROFILE.equipped, W.TEAMS[0].col); });
     (async () => {
       try { try { await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'); } catch (e) { await loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'); }
-        initGfx(); buildForest(); buildWildlife(); initFx(); buildViewModel(PROFILE.equipped || 'longbow', W.TEAMS[0].col); ready = true; emit('ready'); }
+        initGfx(); buildForest(); applyTheme(); buildWildlife(); initFx(); buildViewModel(PROFILE.equipped || 'longbow', W.TEAMS[0].col); ready = true; emit('ready'); }
       catch (e) { console.error(e); failed = true; }
     })();
   }

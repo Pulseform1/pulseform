@@ -24,7 +24,14 @@
     CL.tg = W.TARGETS.map(() => true); CL.cap = [0, 0]; CL.zoneIn = [0, 0]; CL.off = null; CL.cidMap.clear(); emit('worldReset');
   }
   function useSource(src) {
-    if (CL.src === src) return; CL.src = src; CL.me = CL.ids[src] || null; resetWorld(); emit('source', src);
+    if (CL.src === src) return; CL.src = src; CL.me = CL.ids[src] || null; if (src === 'online') roomMap(); resetWorld(); emit('source', src);
+  }
+  // the wood follows the room you're playing in: an online room's map (it changes at the start of each match on 'random'),
+  // a bot match's or the practice range's (their engines run in this page and set it themselves)
+  function roomMap(id) {
+    if (id) CL.roomMap = id;
+    if (CL.src !== 'online' || !CL.roomMap || W.mapId() === CL.roomMap) return;
+    W.useMap(CL.roomMap); CL.tg = W.TARGETS.map(() => true); emit('map', CL.roomMap);
   }
   // ---- the local practice range: the server's own engine running in this page
   function startPractice() {
@@ -41,9 +48,9 @@
     for (const o of ENG.drain(L.room)) if (o.to === '*' || o.to === L.id) handle(o.m, 'practice');
   }
   // ---- a match against bots: the same engine, run in this page, wired in exactly like an online room
-  function startBotMatch(mode, level) {
+  function startBotMatch(mode, level, map) {
     stopPractice(); if (CL.conn) leaveRoom();
-    const room = ENG.createRoom({ mode, dev: DEV, fast: DEV && QS.has('fast'), offline: true, code: 'BOTS' });
+    const room = ENG.createRoom({ mode, dev: DEV, fast: DEV && QS.has('fast'), offline: true, code: 'BOTS', map: map || (DEV ? 'kingswood' : 'random') });
     const c = { code: 'BOTS', local: true, room, acc: 0, state: 'open', tries: 0, level, create: null };
     c.send = m => { if (m.t === 'leave') return; ENG.message(room, c.id, m, Date.now()); };
     c.close = () => { c.state = 'closed'; }; c.fail = msg => { CL.err = msg; emit('ui'); }; c.open = () => {};
@@ -87,13 +94,14 @@
   function handle(m, src) {
     if (src === 'online') {
       switch (m.t) {
-        case 'welcome': CL.ids.online = m.id; CL.code = m.code; CL.mode = m.mode; CL.oneShot = m.oneShot; CL.err = '';
+        case 'welcome': CL.ids.online = m.id; CL.code = m.code; CL.mode = m.mode; CL.oneShot = m.oneShot; CL.err = ''; CL.mapPick = m.mapPick; roomMap(m.map);
           if (m.phase !== 'lobby' && m.phase !== 'results') { stopPractice(); useSource('online'); CL.me = m.id; m.stuck.forEach(s => addStuck(s)); (m.tg || []).forEach(i => CL.tg[i] = false); }
           if (CL.src === 'online') CL.me = m.id; emit('joined', m); if (m.results) { CL.results = m.results; CL.phase = 'results'; CL.roomPhase = 'results'; emit('results', m.results); } emit('ui'); return;
         case 'err': if (m.code === 'taken' && CL.conn && CL.conn.create) { const cr = CL.conn.create; connect(newCode(), cr); return; }
-          if (m.code === 'nocode' && CL.conn && CL.conn.makeOnMiss) { connect(CL.conn.code, { mode: '1v1' }); return; }   // the hub made this code for us: open the room
+          if (m.code === 'nocode' && CL.conn && CL.conn.makeOnMiss) { connect(CL.conn.code, { mode: '1v1', map: DEV ? 'kingswood' : 'random' }); return; }   // the hub made this code for us: open the room
           if (CL.conn && !CL.ids.online) CL.conn.fail(m.msg); else { CL.err = m.msg; emit('toast', m.msg); } emit('ui'); return;
-        case 'lobby': Object.assign(CL, { mode: m.mode, oneShot: m.oneShot, host: m.host, lobby: m.players, votes: m.votes, code: m.code });
+        case 'map': roomMap(m.id); emit('ui'); return;
+        case 'lobby': Object.assign(CL, { mode: m.mode, oneShot: m.oneShot, host: m.host, lobby: m.players, votes: m.votes, code: m.code, mapPick: m.mapPick }); roomMap(m.map);
           for (const q of m.players) { const p = CL.src === 'online' ? CL.players.get(q.id) : null; if (p) Object.assign(p, { name: q.name, team: q.team, bow: q.bow, on: q.on }); }
           CL.lobby.forEach((q, i) => q.slot = i); CL.roomPhase = m.phase; if (m.phase === 'lobby' && CL.src === 'online') { CL.phase = 'lobby'; CL.results = null; useSource(null); }
           emit('ui'); return;
@@ -137,6 +145,7 @@
         if (mine && CL.src === 'practice') earn('target', W.TARGET.coins);   // the range has no match end: bank it now (a match banks its targets with its coins)
         return; }
       case 'phase': {
+        if (m.map) roomMap(m.map);
         const was = CL.phase; Object.assign(CL, { phase: m.ph, phaseEnd: m.end, round: m.round, score: m.score, ffaEnd: m.ffaEnd });
         if (m.mode) CL.mode = m.mode;
         if (m.ph === 'intro') { CL.results = null; emit('roundStart', m); }

@@ -65,7 +65,7 @@ function onSocket(ws, code) {
       let r = rooms.get(code); const active = r && [...r.room.players.values()].some(p => !p.dummy);
       if (m.create && active) return out({ t: 'err', code: 'taken', msg: 'That code is taken. Making another...' });
       if (!m.create && !active) return out({ t: 'err', code: 'nocode', msg: 'No room with that code. Check it with your friend.' });
-      if (m.create || !r) { if (r) clearInterval(r.timer); r = { room: createRoom({ code, mode: (m.create && m.create.mode) || '1v1', oneShot: m.create && m.create.oneShot, dev: DEV, grant: (p, match, coins, won) => Bank.grant(store, p, match, coins, won) }), socks: new Map(), idle: 0 }; rooms.set(code, r); r.timer = setInterval(() => loop(code), TICK * 1000); }
+      if (m.create || !r) { if (r) clearInterval(r.timer); r = { room: createRoom({ code, mode: (m.create && m.create.mode) || '1v1', oneShot: m.create && m.create.oneShot, map: (m.create && m.create.map) || (DEV ? 'kingswood' : 'random'), dev: DEV, grant: (p, match, coins, won) => Bank.grant(store, p, match, coins, won) }), socks: new Map(), idle: 0 }; rooms.set(code, r); r.timer = setInterval(() => loop(code), TICK * 1000); }
       const j = join(r.room, { name: m.name, profile: pid, bow: prof && prof.equipped, token: m.token }, Date.now());
       if (j.err) return out({ t: 'err', code: 'full', msg: j.err });
       id = j.id; R = r; r.socks.set(id, ws); flush(r); return;

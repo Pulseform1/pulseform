@@ -1,5 +1,8 @@
   /* ---------- 85 ui: menus, rooms, results, the bow shop and settings (page elements over the 3D view) ---------- */
-  const UI = { open: null, el: null, joinErr: '', creating: false, shopSel: 'longbow', prev: null, from: 'main', previewing: false, mode: '1v1', oneShot: false };
+  const UI = { open: null, el: null, joinErr: '', creating: false, shopSel: 'longbow', prev: null, from: 'main', previewing: false, mode: '1v1', oneShot: false, map: DEV ? 'kingswood' : 'random', botMap: DEV ? 'kingswood' : 'random' };
+  // the map choice: Random (a new wood each match) or one of the woods
+  const mapName = id => id === 'random' ? 'Random' : W.mapInfo(id).n;
+  const mapPickHtml = (sel, act) => `<div class="awrow" style="margin:10px 0 4px">${[['random', 'Random'], ...W.MAPS.map(m => [m.id, m.n])].map(([k, n]) => `<button class="grow ${sel === k ? 'sel' : ''}" data-a="${act}" data-v="${k}" style="min-width:110px"><b style="font-family:'Lilita One'">${esc(n)}</b></button>`).join('')}</div><div class="muted" style="margin-bottom:8px">${esc(sel === 'random' ? 'A different wood every match.' : W.mapInfo(sel).d)}</div>`;
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const CSS = `
   #aw{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;font-family:Nunito,system-ui,sans-serif;color:#fff;pointer-events:none}
@@ -58,13 +61,16 @@
       case 'join': UI.from = 'join'; UI.joinErr = ''; openMenu('join'); setTimeout(() => { const i = document.getElementById('awCode'); i && i.focus(); }, 30); break;
       case 'mode': UI.mode = v; if (v === 'ffa') UI.oneShot = true; render(); break;
       case 'oneShot': UI.oneShot = !UI.oneShot; render(); break;
-      case 'create': UI.creating = true; UI.joinErr = ''; render(); connect(newCode(), { mode: UI.mode, oneShot: UI.mode === 'ffa' || UI.oneShot }); break;
+      case 'create': UI.creating = true; UI.joinErr = ''; render(); connect(newCode(), { mode: UI.mode, oneShot: UI.mode === 'ffa' || UI.oneShot, map: UI.map }); break;
+      case 'map': UI.map = v; render(); break;
+      case 'botMap': UI.botMap = v; render(); break;
+      case 'roomMap': sendRoom({ t: 'map', map: v }); break;
       case 'doJoin': { const c = (document.getElementById('awCode').value || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (c.length !== 4) { UI.joinErr = 'Room codes are 4 letters or numbers.'; render(); break; } UI.joinErr = ''; UI.creating = true; render(); connect(c, null); break; }
       case 'practice': stopPractice(); startPractice(); closeMenu(); break;
       case 'bots': UI.botMode = UI.botMode || '1v1'; UI.botLevel = UI.botLevel || 'normal'; openMenu('bots'); break;
       case 'botMode': UI.botMode = v; render(); break;
       case 'botLevel': UI.botLevel = v; render(); break;
-      case 'botGo': startBotMatch(UI.botMode, UI.botLevel); closeMenu(); break;
+      case 'botGo': startBotMatch(UI.botMode, UI.botLevel, UI.botMap); closeMenu(); break;
       case 'botsAgain': leaveRoom(); act('bots'); break;
       case 'shop': if (UI.open !== 'shop') UI.back = UI.open; UI.shopView = 'grid'; openMenu('shop'); loadProfile(); break;
       case 'settings': UI.back = UI.open; openMenu('settings'); break;
@@ -109,6 +115,7 @@
       ${TESTER ? '<p class="muted" style="margin-top:14px">Tester build: bot matches and the practice range work here; online rooms turn on once Arrowwood is live on Pulsebox. You start with the Forester\'s Longbow. Earn coins in bot matches and by breaking targets, then buy the rest (your coins are kept in this browser). The shop can preview any bow\'s finisher before you buy.</p>' : PROFILE.err ? `<p class="muted" style="margin-top:14px">${esc(PROFILE.err)}</p>` : ''}</div>`;
     else if (o === 'create') h = `<div class="pn"><div class="top"><h2>Make a room</h2><button data-a="back">Back</button></div><div class="awsub">Pick how you want to play. You'll get a code and a link for your friends.</div>
       <div class="awrow">${Object.entries(MODES).map(([k, [n, d]]) => `<button class="grow ${UI.mode === k ? 'sel' : ''}" data-a="mode" data-v="${k}" style="min-width:180px;text-align:left"><b style="font-family:'Lilita One'">${n}</b><br><span class="muted">${d}</span></button>`).join('')}</div>
+      <div class="muted" style="margin-top:12px">MAP</div>${mapPickHtml(UI.map, 'map')}
       ${UI.mode !== 'ffa' ? `<p><label class="awrow" style="cursor:pointer"><button data-a="oneShot" class="${UI.oneShot ? 'sel' : ''}">${UI.oneShot ? '✓ ' : ''}One-shot rules</button><span class="muted">any hit eliminates (off: realistic damage)</span></label></p>` : ''}
       <ul class="rules">${rulesFor(UI.mode, UI.oneShot).map(r => `<li>${r}</li>`).join('')}</ul>
       <p class="err">${esc(UI.joinErr)}</p><button class="go awbig" data-a="create" ${UI.creating ? 'disabled' : ''} style="width:100%">${UI.creating ? (CL.status || 'Making your room...') : 'Create room'}</button></div>`;
@@ -118,6 +125,7 @@
     else if (o === 'bots') h = `<div class="pn"><div class="top"><h2>Play vs bots</h2><button data-a="back">Back</button></div><div class="awsub">A full match against computer archers, right here (no room, no wait). Matches with bots don't pay coins.</div>
       <div class="awrow">${Object.entries({ '1v1': ['1v1 DUEL', 'You against one bot. First to three round wins.'], '2v2': ['2v2 AMBUSH', 'You and a bot partner against two bots.'], ffa: ['FREE FOR ALL', 'You and five bots, 2½ minutes, one shot one kill.'] }).map(([k, [n, d]]) => `<button class="grow ${UI.botMode === k ? 'sel' : ''}" data-a="botMode" data-v="${k}" style="min-width:180px;text-align:left"><b style="font-family:'Lilita One'">${n}</b><br><span class="muted">${d}</span></button>`).join('')}</div>
       <div class="awrow" style="margin:12px 0">${[['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']].map(([k, n]) => `<button class="grow ${UI.botLevel === k ? 'sel' : ''}" data-a="botLevel" data-v="${k}">${n}</button>`).join('')}</div>
+      <div class="muted">MAP</div>${mapPickHtml(UI.botMap, 'botMap')}
       <ul class="rules">${rulesFor(UI.botMode, UI.botMode === 'ffa').map(r => `<li>${r}</li>`).join('')}</ul>
       <button class="go awbig" data-a="botGo" style="width:100%">Start the match</button></div>`;
     else if (o === 'room') h = roomHtml();
@@ -159,6 +167,7 @@
     const me = CL.ids.online, host = CL.host === me, mine = CL.lobby.find(q => q.id === me), reason = startReason(), [mn] = MODES[CL.mode] || ['?'];
     return `<div class="pn"><div class="top"><div><div class="muted">ROOM CODE</div><div class="code">${esc(CL.code)}</div></div><div class="col" style="align-items:flex-end"><div class="awrow"><button data-a="copyCode">Copy code</button><button class="go" data-a="copyLink">Copy invite link</button>${navigator.share ? '<button data-a="share">Share</button>' : ''}</div><span class="muted">Friends open the link, or type the code under Join a room.</span></div></div>
       <div class="awcard" style="margin:10px 0"><div class="awrow" style="justify-content:space-between"><b style="font-family:'Lilita One';color:#e9c46a">${mn}${CL.mode !== 'ffa' && CL.oneShot ? ' · ONE-SHOT' : ''}</b>${host ? `<span class="awrow">${Object.keys(MODES).map(k => `<button class="${CL.mode === k ? 'sel' : ''}" data-a="rmode" data-v="${k}">${k.toUpperCase()}</button>`).join('')}${CL.mode !== 'ffa' ? `<button class="${CL.oneShot ? 'sel' : ''}" data-a="roneShot">One-shot ${CL.oneShot ? 'on' : 'off'}</button>` : ''}</span>` : '<span class="muted">The host picks the mode</span>'}</div><ul class="rules">${rulesFor(CL.mode, CL.oneShot).map(r => `<li>${r}</li>`).join('')}</ul></div>
+      <div class="awcard" style="margin:0 0 10px"><div class="awrow" style="justify-content:space-between"><b style="font-family:'Lilita One';color:#e9c46a">MAP · ${esc(mapName(CL.mapPick || 'kingswood').toUpperCase())}</b>${host ? '' : `<span class="muted">${esc(CL.mapPick === 'random' ? 'a different wood every match' : W.mapInfo(CL.mapPick || 'kingswood').d)}</span>`}</div>${host ? mapPickHtml(CL.mapPick || 'kingswood', 'roomMap') : ''}</div>
       <div class="awrow" id="awTeams">${roomPlayersHtml()}</div>
       <div class="awrow" style="margin-top:14px"><label class="awrow muted">Your name <input id="awName" maxlength="16" value="${esc(myName())}"></label><span class="grow"></span>
       ${host ? `<button class="go awbig" data-a="start" ${reason ? 'disabled' : ''}>Start match</button>` : `<button class="${mine && mine.ready ? 'sel' : 'go'} awbig" data-a="ready">${mine && mine.ready ? '✓ Ready' : "I'm ready"}</button>`}</div>

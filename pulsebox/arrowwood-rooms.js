@@ -70,7 +70,7 @@ export class ArrowwoodRoom {
         const active = this.room && [...this.room.players.values()].some(p => !p.dummy);
         if (m.create && active) { joining = false; return out({ t: 'err', code: 'taken', msg: 'That code is taken. Making another...' }); }
         if (!m.create && !active) { joining = false; return out({ t: 'err', code: 'nocode', msg: 'No room with that code. Check it with your friend.' }); }
-        if (m.create || !this.room) this.room = createRoom({ code: this.code, mode: (m.create && m.create.mode) || '1v1', oneShot: m.create && m.create.oneShot, dev: this.env.ARROWWOOD_DEV === '1', grant: (p, match, coins, won) => this.grant(p, match, coins, won) });
+        if (m.create || !this.room) this.room = createRoom({ code: this.code, mode: (m.create && m.create.mode) || '1v1', oneShot: m.create && m.create.oneShot, map: (m.create && m.create.map) || 'random', dev: this.env.ARROWWOOD_DEV === '1', grant: (p, match, coins, won) => this.grant(p, match, coins, won) });
         const r = join(this.room, { name: m.name, profile: pid, bow: prof && prof.equipped, token: m.token }, Date.now());
         joining = false;
         if (r.err) return out({ t: 'err', code: 'full', msg: r.err });

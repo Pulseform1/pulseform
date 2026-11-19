@@ -312,6 +312,7 @@
     } else if (DYN.fastT >= 10 && X.dyn < DYN.cap - .01) { DYN.fastT = 0; X.dyn = Math.min(DYN.cap, X.dyn + .125); DYN.upAt = X.t; applyRes(); }
   }
   function visualUpdate(dt) {
+    if (X.mapBuilt !== W.mapId()) rebuildWood();   // the room moved to another map
     X.t += dt; X.wind.time.value = X.t; X.wind.amt.value = .85 + .35 * Math.sin(X.t * .23) + .15 * Math.sin(X.t * .71);
     updateCharacters(dt); updateWildlife(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); if (STG.on) stepStage(dt); updateCash(dt); updateDebris(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
     for (let i = PINGS.length - 1; i >= 0; i--) { const p = PINGS[i]; p.t += dt; p.g.children[0].scale.setScalar(.7 + Math.sin(X.t * 6) * .15); if (p.t > 7) { X.scene.remove(p.g); PINGS.splice(i, 1); } }
