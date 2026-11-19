@@ -507,13 +507,13 @@
     const botP = () => auto ? { diff: L.i, D: L.D } : { diff: typeof o.diff === 'number' ? o.diff : 1, dummy: mode === 'range' }, used = new Set([A.name, ...(o.mates || []).map(m => m.name)]), bname = () => { const n = pick(BOT_NAMES.filter(q => !used.has(q))); used.add(n); return n; };
     let fs = [A], flip = 0;
     if (online && o.seats) {   // seats: { key, name, team (the host's numbering), bot, op } in the same order on every device; the host runs the bots
-      const mine = o.seats.find(s => s.key === String(MP.id)) || o.seats[0]; flip = mine.team; A.key = mine.key;
+      const mine = o.seats.find(s => s.key === String(MP.id)) || o.seats[0]; flip = mine.team; A.key = mine.key; if (OPS[mine.op]) A.op = mine.op;   // (a teammate had your operative first: you play the one the room gave you)
       for (const s of o.seats) if (s !== mine) fs.push(fighter({ name: s.name, op: s.op || 'vex', key: s.key, team: s.team ^ flip, net: !(s.bot && host), isBot: !!s.bot, bot: s.bot && host ? { diff: o.botDiff == null ? 1 : o.botDiff } : null, rating: s.rating || 0 }));
     } else if (online) fs.push(fighter({ name: (o.rival && o.rival.name) || 'Rival', op: 'vex', net: true, team: 1, key: String(o.rival && o.rival.id) }));
     else {   // bots: within a team every operative is different (eight operatives, at most four a side)
-      const eOps = [], mOps = [A.op, ...(o.mates || []).map(m => m.op)], fresh = taken => { const c = ops.filter(k => !taken.includes(k)); return pick(c.length ? c : ops); };
+      const eOps = [], mOps = [A.op], fresh = taken => { const c = ops.filter(k => !taken.includes(k)); return pick(c.length ? c : ops); };
       for (let i = 0; i < Math.max(1, o.size | 0); i++) { const name = bname(), op = fresh(eOps); eOps.push(op); fs.push(fighter({ name, op, team: 1, key: 'e' + i, bot: botP() })); }
-      for (let i = 1; i < (o.size | 0); i++) { const mt = o.mates && o.mates[i - 1]; if (mt) used.add(mt.name); const name = mt ? mt.name : bname(), op = mt ? mt.op : fresh(mOps); if (!mt) mOps.push(op); fs.push(fighter({ name, op, team: 0, key: 'm' + i, bot: botP() })); } }
+      for (let i = 1; i < (o.size | 0); i++) { const mt = o.mates && o.mates[i - 1]; if (mt) used.add(mt.name); const name = mt ? mt.name : bname(), op = mt && OPS[mt.op] && !mOps.includes(mt.op) ? mt.op : fresh(mOps); mOps.push(op); fs.push(fighter({ name, op, team: 0, key: 'm' + i, bot: botP() })); } }
     fs = [A, ...fs.slice(1).sort((a, b) => b.team - a.team)];   // enemies first, so M.fs[1] is always a rival
     // a map at random each match (online, the host's pick); the range is always on Saltworks
     const mapI = o.map != null ? o.map : mode === 'range' ? 0 : pick(mapPool(o.sites)); if (MAP !== MAPS[mapI]) { loadMap(mapI); emit('map', mapI); }

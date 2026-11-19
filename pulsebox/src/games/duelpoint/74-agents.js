@@ -141,31 +141,58 @@
     X.scene.add(G); return G;
   }
   // enemies wear a red outline you can pick out at a glance, even in shade or against a busy wall: every piece of the body
-  // and gun gets a copy drawn from the inside, pushed out along its normals in flat red. The push is a fixed 1.8 cm, so the
-  // rim shrinks with the body as they get further away and never swamps a far silhouette; it is held between OL_LO and
-  // OL_HI screen pixels, so it stays a hairline up close and never thins away to nothing across the map (past about 10 m
-  // it is the one-pixel floor: a crisp edge round a small figure, not a fill). Only the outer
+  // and gun gets a copy drawn from the inside, pushed out in flat red. The push is a fixed 1.8 cm of world, so the rim keeps
+  // its proportion to the body at any range instead of swamping a far silhouette. Up close it is held to a hairline (OL_HI
+  // screen pixels). Where 1.8 cm comes to less than a pixel (past about 10 m) it is drawn one device pixel wide, the
+  // thinnest line that stays whole, and faded in proportion down to OL_A, so a far enemy has a crisp light-red edge round
+  // their own colours, not a red fill, on every screen and quality (an antialiased line smears its pixel over two, so it
+  // fades less far, OL_AA). The copies push out along normals averaged across hard
+  // edges, so boxes and plates get a closed rim on both sides instead of splitting open at their corners. Only the outer
   // edge shows: as each piece draws it marks its pixels in the stencil with that fighter's number, and the red copies,
-  // drawn after, skip their own fighter's marks, so an arm or the gun held across the chest adds no red lines inside the
-  // body (which at range ran together into a red blob). Walls and smoke still hide it.
-  const OL_TH = .018, OL_LO = 1, OL_HI = 1.5;   // metres; CSS pixels
-  let OLM = null, OLV = null;
+  // drawn after, skip their fighter's marks (and mark their own, so overlapping copies don't stack up their red), so an arm
+  // or the gun held across the chest adds no red lines inside the body. Walls and smoke still hide it.
+  const OL_TH = .018, OL_LO = 1, OL_HI = 1.5, OL_A = .6, OL_AA = .8;   // metres; device pixels; CSS pixels; the faintest it fades to
+  let OLM = null, OLV = null, OLAA = null;
   function outlineMat() {
     if (OLM) return OLM;
     OLV = new THREE.Vector4();
-    OLM = new THREE.ShaderMaterial({ uniforms: { col: { value: new THREE.Color(FOE) }, th: { value: OL_TH }, vh: { value: 720 }, lo: { value: OL_LO }, hi: { value: OL_HI } }, side: THREE.BackSide,
-      stencilWrite: true, stencilWriteMask: 0, stencilFunc: THREE.NotEqualStencilFunc, stencilRef: 0,
-      vertexShader: 'uniform float th, vh, lo, hi; void main() { vec4 v = modelViewMatrix * vec4(position, 1.0); vec3 n = normalize(normalMatrix * normal); float px = 2.0 * max(-v.z, .05) / (projectionMatrix[1][1] * vh); v.xyz += n * clamp(th, lo * px, hi * px); gl_Position = projectionMatrix * v; }',
-      fragmentShader: 'uniform vec3 col; void main() { gl_FragColor = vec4(col, 1.0); }' });
+    OLM = new THREE.ShaderMaterial({ uniforms: { col: { value: new THREE.Color(FOE) }, th: { value: OL_TH }, vh: { value: 720 }, lo: { value: OL_LO }, hi: { value: OL_HI }, amin: { value: OL_A } }, side: THREE.BackSide,
+      // blended, but kept in the solid pass so it still draws before smoke and everything see-through
+      blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+      stencilWrite: true, stencilWriteMask: 0xff, stencilFunc: THREE.NotEqualStencilFunc, stencilRef: 0, stencilZPass: THREE.ReplaceStencilOp,
+      vertexShader: 'attribute vec3 olN; uniform float th, vh, lo, hi, amin; varying float vA; void main() { vec4 v = modelViewMatrix * vec4(position, 1.0); vec3 n = normalMatrix * olN; float l = length(n);' +
+        ' float px = 2.0 * max(-v.z, .05) / (projectionMatrix[1][1] * vh), w = th / px; vA = clamp(w / lo, amin, 1.0);' +
+        ' if (l > 1e-6) v.xyz += n * (length(olN) / l * clamp(w, lo, hi) * px); gl_Position = projectionMatrix * v; }',
+      fragmentShader: 'uniform vec3 col; varying float vA; void main() { gl_FragColor = vec4(col, vA); }' });
     return OLM;
   }
   // the pixel limits need the height of what is being drawn, in device pixels: read just before each outline draws.
-  // On a screen drawn below full resolution the floor may go under a device pixel, but only with antialiasing on:
-  // without it a sub-pixel line breaks up into dots.
+  // The floor is a whole device pixel whatever the resolution: thinner, an antialiased line goes pink and patchy and a
+  // plain one breaks up into dots; below it the line fades instead of thinning.
   function olPx(r) {
-    if (!OLM) return; r.getCurrentViewport(OLV); const pr = r.getRenderTarget() ? 1 : r.getPixelRatio(), U = OLM.uniforms, aa = !(X && X.low);
-    const vh = Math.max(1, OLV.w), lo = Math.max(aa ? .6 : 1, OL_LO * pr), hi = Math.max(lo, OL_HI * pr);
-    if (U.vh.value !== vh || U.lo.value !== lo || U.hi.value !== hi) { U.vh.value = vh; U.lo.value = lo; U.hi.value = hi; OLM.uniformsNeedUpdate = true; }
+    if (!OLM) return; r.getCurrentViewport(OLV); const pr = r.getRenderTarget() ? 1 : r.getPixelRatio(), U = OLM.uniforms;
+    if (OLAA == null) OLAA = !!(r.getContext().getContextAttributes() || {}).antialias;
+    const vh = Math.max(1, OLV.w), lo = OL_LO, hi = Math.max(lo, OL_HI * pr), am = OLAA && !r.getRenderTarget() ? OL_AA : OL_A;
+    if (U.vh.value !== vh || U.lo.value !== lo || U.hi.value !== hi || U.amin.value !== am) { U.vh.value = vh; U.lo.value = lo; U.hi.value = hi; U.amin.value = am; OLM.uniformsNeedUpdate = true; }
+  }
+  // the directions the copy is pushed along: at each corner, the average of every face that meets there (so a box's rim
+  // stays closed round its edges), lengthened so each of those faces still moves out by the full width. Once per shape.
+  function olNormals(g) {
+    if (!g || g.attributes.olN || !g.attributes.normal) return;
+    const P = g.attributes.position, N = g.attributes.normal, n = P.count, at = new Int32Array(n), key = new Map(), sum = [], seen = [], out = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const k = Math.round(P.getX(i) * 1e4) + ',' + Math.round(P.getY(i) * 1e4) + ',' + Math.round(P.getZ(i) * 1e4);
+      let c = key.get(k); if (c === undefined) { c = sum.length; key.set(k, c); sum.push([0, 0, 0]); seen.push([]); } at[i] = c;
+      const x = N.getX(i), y = N.getY(i), z = N.getZ(i), L = seen[c];
+      if (!L.some(q => q[0] * x + q[1] * y + q[2] * z > .999)) { L.push([x, y, z]); const s = sum[c]; s[0] += x; s[1] += y; s[2] += z; }
+    }
+    for (let i = 0; i < n; i++) {
+      const c = at[i], s = sum[c], l = Math.hypot(s[0], s[1], s[2]);
+      if (l < .3) { out[i * 3] = N.getX(i); out[i * 3 + 1] = N.getY(i); out[i * 3 + 2] = N.getZ(i); continue; }   // a sheet seen from both sides: its own normal
+      const x = s[0] / l, y = s[1] / l, z = s[2] / l; let m = 1; for (const q of seen[c]) m = Math.min(m, q[0] * x + q[1] * y + q[2] * z);
+      const k = 1 / Math.max(m, 1 / 1.5); out[i * 3] = x * k; out[i * 3 + 1] = y * k; out[i * 3 + 2] = z * k;
+    }
+    g.setAttribute('olN', new THREE.BufferAttribute(out, 3));
   }
   // the red copy reads its fighter's number; the piece itself, while its copy shows, writes that number into the stencil
   // for the length of its own draw (the materials are shared, so the setting is put back straight after)
@@ -179,7 +206,7 @@
     const walk = (o, inGun) => { if (o.userData.isOL) return; inGun = inGun || o === gh; if (o.isMesh && !o.userData.ol && !(inGun && o.material && o.material.transparent)) add.push(o); for (const c of o.children) walk(c, inGun); };
     walk(root, false);
     for (const o of add) {
-      const m = new THREE.Mesh(o.geometry, outlineMat()); m.userData.isOL = true; m.userData.olRef = U.olRef; m.raycast = () => {}; m.onBeforeRender = olPre; m.renderOrder = 1; m.frustumCulled = o.frustumCulled; o.add(m); o.userData.ol = m;
+      olNormals(o.geometry); const m = new THREE.Mesh(o.geometry, outlineMat()); m.userData.isOL = true; m.userData.olRef = U.olRef; m.raycast = () => {}; m.onBeforeRender = olPre; m.renderOrder = 1; m.frustumCulled = o.frustumCulled; o.add(m); o.userData.ol = m;
       const b0 = o.onBeforeRender, a0 = o.onAfterRender, own = THREE.Object3D.prototype;   // keep any hooks a piece already has
       o.onBeforeRender = b0 === own.onBeforeRender ? olMark : function (...a) { b0.apply(this, a); olMark.apply(this, a); };
       o.onAfterRender = a0 === own.onAfterRender ? olUnmark : function (...a) { olUnmark.apply(this, a); a0.apply(this, a); };
@@ -188,14 +215,21 @@
   }
   function updateAgent(f, dt) {
     let A = X.agents.get(f);
-    if (!A || A.userData.op !== f.op) { if (A) X.scene.remove(A); A = agentModel(f); X.agents.set(f, A); }
+    if (!A || A.userData.op !== f.op) { if (A) { X.scene.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); } A = agentModel(f); X.agents.set(f, A); }
     const U = A.userData, fk0 = gun(f).k, fsk = skinFor(f, fk0) || '', fk = fk0;
     if (U.gk !== fk || U.gsk !== fsk) { U.gsk = fsk; while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]); const gm = gunModel(fk, { cast: !X.low, flash: true, skin: fsk }); gm.scale.setScalar(1.08); U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
     A.visible = true; A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;
     { const P = M ? me() : null, foeSide = !!P && f.team !== P.team, op = f.cloak > 0 && f.alive ? (foeSide ? .07 : .35) : 1; U.cop = lp(U.cop == null ? 1 : U.cop, op, Math.min(1, dt * 10));
-      if (Math.abs((U.copSet || 1) - U.cop) > .01 || (U.cop < 1 && U.copGk !== U.gk)) { const o2 = U.cop > .99 ? 1 : U.cop; const walk = o => { if (o === U.gunHold) return; if (o.isMesh && !o.userData.isOL && o.material && !o.material.isShaderMaterial) { o.material.transparent = o2 < 1; o.material.opacity = o2; o.material.depthWrite = o2 >= 1; } for (const c of o.children) walk(c); }; walk(A); U.copSet = o2; U.copGk = U.gk; }
+      // the fade goes on this fighter's own copies of its materials (everyone playing the same operative shares the
+      // originals, so fading those turned every other Wraith on the field see-through too)
+      const o2 = U.cop > .99 ? 1 : U.cop, cs = U.copSet == null ? 1 : U.copSet;
+      if (o2 === 1 ? cs !== 1 : Math.abs(cs - o2) > .01 || U.copGk !== U.gk) { const own = U.ownM || (U.ownM = new Map()), mine = m => { let c = own.get(m); if (!c) { c = m.clone(); own.set(m, c); own.set(c, c); } return c; };
+        const walk = o => { if (o === U.gunHold) return; if (o.isMesh && !o.userData.isOL && o.material && !o.material.isShaderMaterial) { const m = o.material = mine(o.material); m.transparent = o2 < 1; m.opacity = o2; m.depthWrite = o2 >= 1; } for (const c of o.children) walk(c); }; walk(A); U.copSet = o2; U.copGk = U.gk; }
       U.gunHold.visible = U.cop > .5;
-      const red = foeSide && f.alive && U.cop > .9; if (U.olOn !== red || U.olGk !== U.gk) { outline(A, red); U.olOn = red; U.olGk = U.gk; } }
+      // the red edge only on a fully solid body: a see-through one draws after it, so the whole red copy would show through.
+      // Redone whenever the gun is rebuilt (a new gun or a new skin on it), so the new gun and arms get theirs.
+      const red = foeSide && f.alive && (U.copSet == null || U.copSet === 1), gid = U.gk + '|' + U.gsk;
+      if (U.olOn !== red || (red && U.olGk !== gid)) { outline(A, red); U.olOn = red; U.olGk = gid; } }
     const sp = Math.hypot(f.vx, f.vz), sl = f.slide ? 1 : 0, amp = Math.min(1, sp / 3.5) * (f.sprinting ? 1.15 : .8) * (1 - sl), ph = f.walkT * 1.9, cr = f.crouch * (1 - sl);
     animKit(U.gunHold.children[0], dt);
     U.sl = lp(U.sl || 0, sl, Math.min(1, dt * 12)); U.spr = lp(U.spr || 0, f.sprinting ? 1 : 0, Math.min(1, dt * 8)); const sk = U.sl;

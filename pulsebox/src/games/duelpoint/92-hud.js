@@ -138,7 +138,7 @@
     g.restore();
   }
   // a running step or a shot from the rival marks the minimap for a moment (only if a bot could have heard it too)
-  const note = f => { if (M && f === foe() && Math.hypot(f.x - me().x, f.z - me().z) < 30) heard = { x: f.x, z: f.z, t: 1.6 }; };
+  const note = f => { if (M && f && f.team !== me().team && Math.hypot(f.x - me().x, f.z - me().z) < 30) heard = { x: f.x, z: f.z, t: 1.6 }; };   // any rival, not just the nearest
   on('step', note); on('shot', (f, S, first) => { if (first && !gun(f).sil) note(f); });
   function resetMini() { mmCanvas = null; }
   // the sites by letter: 'A or B', 'A, B or C'
@@ -158,9 +158,11 @@
     const P = siteSpot(S), s = SITES.length > 1 ? S.k : '◆', x = mx + P.x * k, y = my + P.z * k; px = fitPx(g, px);
     g.font = `900 ${px}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = Math.max(2, px * .26); g.strokeStyle = 'rgba(12,16,22,.92)'; g.strokeText(s, x, y); g.fillStyle = '#fff3e4'; g.fillText(s, x, y);
   }
-  // what a phone's thumb controls cover, as boxes [x0, y0, x1, y1] in the HUD's units: each button, the corner the move
-  // stick rests in (to the screen's edge, where the thumb lies), and the stick wherever it is held
-  function touchCover(V, u) {
+  // what the HUD keeps in the lower corners, as boxes [x0, y0, x1, y1] in its units, for the site markers to stay clear of.
+  // On a phone: each thumb button, the corner the move stick rests in (to the screen's edge, where the thumb lies), and the
+  // stick wherever it is held. Otherwise the health and abilities panel and the weapon panel with its gun list (as drawn in drawHUD).
+  function markCover(V, u, touch) {
+    if (!touch) { const r = V.x1 - 22 - 50 / pxPer(); return [[V.x0 + 22, V.y1 - 20 - 58 * u, V.x0 + 22 + 640 * u, V.y1], [r - 270 * u, V.y1 - 20 - 58 * u, r, V.y1], [r - 150 * u, V.y1 - 20 - 136 * u, r, V.y1]]; }
     const c = touchButtons().map(b => [b.x - b.r, b.y - b.r, b.x + b.r, b.y + b.r]), s = TS.stick;
     c.push([V.x0, V.y1 - 212 * u, V.x0 + 232 * u, V.y1]); if (s) c.push([s.x0 - 92 * u, s.y0 - 116 * u, s.x0 + 92 * u, s.y0 + 92 * u]);
     return c;
@@ -183,18 +185,20 @@
       if (Math.abs(nx) > ix || Math.abs(ny) > iy) { const q = Math.min(ix / Math.max(Math.abs(nx), 1e-6), iy / Math.max(Math.abs(ny), 1e-6)); nx *= q; ny *= q; edge = true; }
       marks.push({ S, a, nx, ny, edge, x: lp(V.x0, V.x1, (nx + 1) / 2), y: lp(V.y0, V.y1, (1 - ny) / 2), d: Math.round(Math.hypot(Q.x - P.x, Q.z - P.z)) });
     });
-    // on a phone the thumb controls (drawn over this) fill the lower corners, and the pause and settings buttons the top
-    // left: no marker sits under one, and those on the side edges keep to the stretch of edge between them
-    const cover = isTouch() ? touchCover(V, u) : null, hw = 26 * u, above = 20 * u, below = 37 * u, gap = 52 * u;
-    const clear = (x, y) => { for (let n = 0; cover && n < 12; n++) { const c = cover.find(c => x + hw > c[0] && x - hw < c[2] && y + below > c[1] && y - above < c[3]); if (!c) break; y = c[1] - below - 3 * u; } return y; };
+    // the lower corners hold the HUD's panels, or on a phone the thumb controls (drawn over this), and the top left on a
+    // phone the pause and settings buttons: no marker sits under one, and on a phone those on the side edges keep to the
+    // stretch of edge between them
+    const touch = isTouch(), cover = markCover(V, u, touch), hw = 26 * u, above = 20 * u, below = 37 * u, gap = 52 * u;
+    const clear = (x, y) => { for (let n = 0; n < 12; n++) { const c = cover.find(c => x + hw > c[0] && x - hw < c[2] && y + below > c[1] && y - above < c[3]); if (!c) break; y = c[1] - below - 3 * u; } return y; };
     const top0 = lp(V.y0, V.y1, (1 - iy) / 2), lo0 = lp(V.y0, V.y1, (1 + iy) / 2), mid = (V.y0 + V.y1) / 2;
     // two on the same edge never sit on top of each other
-    for (const side of [-1, 1]) { const col = marks.filter(k => k.edge && Math.sign(k.nx) === side && Math.abs(k.nx) >= ix - .01).sort((p, q) => p.y - q.y); let lo = lo0;
-      if (cover) {   // squeeze the edge (beside you at the middle while there is room, behind you at the lowest clear point) into the clear stretch
-        const top = Math.max(top0, V.y0 + 98 / pxPer() + above + 6 * u); lo = Math.max(top, clear(side < 0 ? V.x0 + 48 : V.x1 - 48, lo0)); const ya = Math.max(top, Math.min(mid, lo - 1.2 * gap));
-        for (const k of col) { k.col = true; k.y = k.y <= mid ? lp(top, ya, cl((k.y - top0) / (mid - top0), 0, 1)) : lp(ya, lo, cl((k.y - mid) / (lo0 - mid), 0, 1)); } }
+    for (const side of [-1, 1]) { const col = marks.filter(k => k.edge && Math.sign(k.nx) === side && Math.abs(k.nx) >= ix - .01).sort((p, q) => p.y - q.y), top = touch ? Math.max(top0, V.y0 + 98 / pxPer() + above + 6 * u) : top0;
+      const lo = Math.max(top, clear(side < 0 ? V.x0 + 48 : V.x1 - 48, lo0)); for (const k of col) k.col = true;
+      if (touch) {   // squeeze the edge (beside you at the middle while there is room, behind you at the lowest clear point) into the clear stretch
+        const ya = Math.max(top, Math.min(mid, lo - 1.2 * gap));
+        for (const k of col) k.y = k.y <= mid ? lp(top, ya, cl((k.y - top0) / (mid - top0), 0, 1)) : lp(ya, lo, cl((k.y - mid) / (lo0 - mid), 0, 1)); }
       for (let i = 1; i < col.length; i++) col[i].y = Math.max(col[i].y, col[i - 1].y + gap); for (let i = col.length - 1; i >= 0; i--) { if (col[i].y > lo) col[i].y = lo; if (i < col.length - 1) col[i].y = Math.min(col[i].y, col[i + 1].y - gap); } }
-    if (cover) for (const k of marks) if (!k.col) k.y = clear(k.x, k.y);   // one in view but under a button: lifted just clear of it
+    for (const k of marks) if (!k.col) k.y = clear(k.x, k.y);   // one in view but under a panel or a button: lifted just clear of it
     for (const { S, a, nx, ny, edge, x, y, d } of marks) {
       const r = 14 * u * (edge ? .85 : 1);
       g.save(); g.globalAlpha = a * (edge ? .85 : 1); g.translate(x, y);
@@ -226,6 +230,13 @@
     g.beginPath(); for (let k = 0; k < 6; k++) { const a = -Math.PI / 2 + k * TAU / 6; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); } g.closePath(); g.globalAlpha = .22; g.fill(); g.globalAlpha = 1; g.stroke();
     g.fillStyle = col; for (let k = 0; k <= i; k++) { const yy = r * .35 - k * r * .32; g.beginPath(); g.moveTo(-r * .5, yy + r * .12); g.lineTo(0, yy - r * .2); g.lineTo(r * .5, yy + r * .12); g.lineTo(r * .5, yy + r * .3); g.lineTo(0, yy - .02 * r); g.lineTo(-r * .5, yy + r * .3); g.closePath(); g.fill(); }
     g.restore();
+  }
+  // a name squeezed onto a card w wide: a touch smaller first, then cut with an ellipsis. Gives [text, px] for tx
+  function fitName(g, s, w, px, weight = 800) {
+    const width = (t, p) => { g.font = `${weight} ${fitPx(g, p)}px ${FONT}`; return g.measureText(t).width; };
+    for (const k of [1, .9, .82]) if (width(s, px * k) <= w) return [s, px * k];
+    const p = px * .82; let t = s; while (t.length > 1 && width(t + '…', p) > w) t = t.slice(0, -1);
+    return [t.trimEnd() + '…', p];
   }
   function drawLoading(g) {
     if (!UI.loadT0 || UI.loadM !== M) { UI.loadT0 = performance.now(); UI.loadM = M; }
@@ -262,12 +273,13 @@
       rr(g, x, y, cw, ch, 6, 'rgba(12,16,22,.88)', q === P ? 'rgba(239,233,220,.6)' : 'rgba(239,233,220,.14)', q === P ? 2 : 1); g.fillStyle = col; g.fillRect(x, y, 5 * u, ch);
       if (tiny) { const O2 = OPS[q.op] || OPS.vex, tx0 = x + 12 * u + pw; portraitTile(g, q.op, x + 8 * u, y + 6 * u, pw, ch - 12 * u, { r: 4 });
         g.save(); g.beginPath(); g.rect(tx0 - 2 * u, y, x + cw - 3 * u - (tx0 - 2 * u), ch); g.clip();
-        tx(g, q.name.toUpperCase(), tx0, y + 17 * u, 12.5 * u, BONE, 'left', 800); tx(g, O2.n, tx0, y + 37 * u, 10.5 * u, O2.col, 'left', 800);
+        { const [nm, npx] = fitName(g, q.name.toUpperCase(), x + cw - 6 * u - tx0, 12.5 * u); tx(g, nm, tx0, y + 17 * u, npx, BONE, 'left', 800); } tx(g, O2.n, tx0, y + 37 * u, 10.5 * u, O2.col, 'left', 800);
         const isB = q.bot || q.isBot, lx = q.rating ? tx0 + 16 * u : tx0; if (q.rating) rankBadge(g, tx0 + 6 * u, y + 57 * u, 6.5 * u, q.rating);   // the third line: a bot says so, a player shows their rating
         tx(g, isB ? 'BOT' : q.rating ? String(q.rating) : q === P ? 'YOU' : 'PLAYER', lx, y + 57 * u, 10.5 * u, isB ? DIM : BONE, 'left', 800);
         g.restore(); g.restore(); return; }
       portraitTile(g, q.op, x + 8 * u, y + 6 * u, 56 * u, ch - 12 * u, { r: 4 });
-      tx(g, q.name.toUpperCase(), x + 74 * u, y + 24 * u, (slim ? 14 : 16) * u, BONE, 'left', 800); tx(g, (OPS[q.op] || OPS.vex).n, x + 74 * u, y + 44 * u, 11 * u, (OPS[q.op] || OPS.vex).col, 'left', 800);
+      { const rk = q.rating && !slim ? (g.font = `800 ${fitPx(g, 11 * u)}px ${FONT}`, g.measureText(rankName(q.rating).toUpperCase()).width + 52 * u) : (q.rating ? 40 : 36) * u;   // clear of the rank beside it
+        const [nm, npx] = fitName(g, q.name.toUpperCase(), cw - 74 * u - rk, (slim ? 14 : 16) * u); tx(g, nm, x + 74 * u, y + 24 * u, npx, BONE, 'left', 800); } tx(g, (OPS[q.op] || OPS.vex).n, x + 74 * u, y + 44 * u, 11 * u, (OPS[q.op] || OPS.vex).col, 'left', 800);
       if (q.rating && slim) { rankBadge(g, x + cw - 22 * u, y + 26 * u, 12 * u, q.rating); tx(g, String(q.rating), x + cw - 22 * u, y + 56 * u, 11 * u, BONE, 'center', 700); }
       else if (q.rating) { rankBadge(g, x + cw - 24 * u, y + 28 * u, 13 * u, q.rating); tx(g, rankName(q.rating).toUpperCase(), x + cw - 42 * u, y + 24 * u, 11 * u, RANK_COL[diffFor(q.rating).i], 'right', 800); tx(g, String(q.rating), x + cw - 42 * u, y + 42 * u, 13 * u, BONE, 'right', 700); }
       else tx(g, '—', x + cw - 24 * u, y + 30 * u, 14 * u, DIM, 'center');
@@ -290,6 +302,28 @@
     tx(g, S.side === 'att' ? 'YOU NOW ATTACK' : 'YOU NOW DEFEND', 640, cy + 12 * u, 54 * u, col, 'center', 900);
     tx(g, S.side === 'att' ? (SITES.length > 1 ? 'Take the charge to ' + siteWords() : 'Take the charge to the site') : 'Hold them off, or defuse the charge', 640, cy + 52 * u, 15 * u, BONE, 'center', 700);
     g.restore();
+  }
+  // ---- the scoreboard mid-match: hold Tab (on a phone, tap the clock) for everyone's kills, deaths, headshots and damage,
+  // who is still standing this round, and your team's credits. Your team first (you at the top), then theirs, best first.
+  if (typeof document !== 'undefined') { addEventListener('keydown', e => { if (e.code === 'Tab') UI.board = true; }); addEventListener('keyup', e => { if (e.code === 'Tab') UI.board = false; }); addEventListener('blur', () => { UI.board = false; }); }
+  on('over', () => { UI.board = false; });
+  function drawBoard(g, V, u) {
+    const P = me(), mine = M.fs.filter(f => f.team === P.team).sort((a, b) => (b === P) - (a === P) || b.stat.k - a.stat.k), theirs = M.fs.filter(f => f.team !== P.team).sort((a, b) => b.stat.k - a.stat.k), n = mine.length + theirs.length;
+    const tw = Math.min(660 * u, V.x1 - V.x0 - 40 * u), s = tw / (660 * u), x0 = 640 - tw / 2, top = V.y0 + 84 * u, hh = 32 * u, bh = 22 * u, rh = Math.max(20 * u, Math.min(34 * u, (V.y1 - 24 * u - top - hh - 2 * bh - 10 * u) / n)), th = hh + 2 * bh + n * rh + 10 * u;
+    const cols = [['K', f => f.stat.k, 262], ['D', f => f.stat.d, 220], ['HS', f => f.stat.hs, 178], ['DMG', f => Math.round(f.stat.dmg), 112], ['CREDITS', f => f.team === P.team && !f.gone ? '◈ ' + f.credits : '', 18]];
+    g.save(); rr(g, x0, top, tw, th, 10, 'rgba(10,13,18,.92)', 'rgba(239,233,220,.2)', 1.5);
+    tx(g, 'SCOREBOARD', x0 + 16 * u, top + hh / 2, 13 * u, BONE, 'left', 900); tx(g, `ROUND ${M.round}  ·  ${M.wins[0]} – ${M.wins[1]}`, x0 + 136 * u, top + hh / 2, 11 * u, DIM, 'left', 800);
+    for (const [k, , dx] of cols) tx(g, k, x0 + tw - dx * u * s, top + hh / 2, 10 * u, DIM, 'right', 900);
+    let y = top + hh;
+    const row = (f, col) => { const down = !f.alive || f.gone; if (f === P) { g.fillStyle = 'rgba(53,224,200,.12)'; g.fillRect(x0 + 4 * u, y + 1, tw - 8 * u, rh - 2); }
+      g.fillStyle = col; g.fillRect(x0 + 4 * u, y + 2, 3 * u, rh - 4); portraitTile(g, f.op, x0 + 12 * u, y + 2, rh - 4, rh - 4, { r: 3, dead: down });
+      g.globalAlpha = down ? .5 : 1; const tag = f.gone ? '  · LEFT' : f === P ? '' : f.bot || f.isBot ? '  · BOT' : '', [nm, npx] = fitName(g, f.name.toUpperCase() + tag, tw - 280 * u * s - rh - 22 * u, Math.min(14 * u, rh * .5));
+      tx(g, nm, x0 + 18 * u + rh, y + rh / 2, npx, f === P ? YOU : BONE, 'left', 800);
+      for (const [k, fn, dx] of cols) tx(g, String(fn(f)), x0 + tw - dx * u * s, y + rh / 2, Math.min(k === 'CREDITS' ? 13 * u : 15 * u, rh * .56), k === 'CREDITS' ? GOLD : BONE, 'right', 800);
+      g.globalAlpha = 1; y += rh; };
+    const band = (label, col, list) => { tx(g, label, x0 + 16 * u, y + bh / 2 + 2 * u, 10 * u, col, 'left', 900); tx(g, `${list.filter(f => f.alive && !f.gone).length} STANDING`, x0 + tw - 18 * u, y + bh / 2 + 2 * u, 10 * u, DIM, 'right', 800); y += bh; list.forEach(f => row(f, col)); };
+    band(sideOf(P) === 'att' ? 'YOUR TEAM  ·  ATTACK' : 'YOUR TEAM  ·  DEFEND', YOU, mine); band(sideOf(P) === 'att' ? 'THEIRS  ·  DEFEND' : 'THEIRS  ·  ATTACK', FOE, theirs);
+    g.restore(); if (isTouch()) zone(x0, top, tw, th, () => { UI.board = false; });
   }
   function drawHud(g) {
     if (loadingNow()) return drawLoading(g);
@@ -346,6 +380,7 @@
         if (ours && up) { g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(x - w / 2, h + 3, w, 4); g.fillStyle = q.hp > 30 ? BONE : WARN; g.fillRect(x - w / 2, h + 3, w * cl(q.hp / 100, 0, 1), 4); }
       };
       mine.forEach((q, i) => tile(q, -125 - tw / 2 - i * (tw + 4), YOU, true)); theirs.forEach((q, i) => tile(q, 125 + tw / 2 + i * (tw + 4), FOE, false));
+      if (touch && !demo) zone(640 - 64 * u * ts, V.y0 + 8, 128 * u * ts, 70 * u * ts, () => { UI.board = !UI.board; });   // a phone: tap the clock for the scoreboard
     } else { rr(g, -210, 0, 420, 44, 8, GLASS); tx(g, 'RANGE', -190, 22, 18, GOLD, 'left'); tx(g, `${P.stat.hits} hits / ${P.stat.shots} shots` + (P.stat.shots ? `  ·  ${Math.round(100 * P.stat.hits / P.stat.shots)}%` : ''), 190, 22, 14, BONE, 'right'); }
     g.restore();
     // --- minimap, top left (beside the kit's pause button)
@@ -354,7 +389,7 @@
       for (const S of SITES) siteLabel(g, S, mx, my, k, 14 * u);
       if (M.planted) { g.fillStyle = WARN; g.beginPath(); g.arc(mx + M.planted.x * k, my + M.planted.z * k, 4.5 * u, 0, TAU); g.fill(); }
       if (heard && (heard.t -= 1 / 60) > 0) { g.strokeStyle = `rgba(255,138,61,${heard.t / 1.6})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + heard.x * k, my + heard.z * k, (8 + (1.6 - heard.t) * 8) * u, 0, TAU); g.stroke(); }
-      if (F.alive && (F.reveal > 0 || canSee(P, F))) { g.fillStyle = FOE; g.beginPath(); g.arc(mx + F.x * k, my + F.z * k, 4 * u, 0, TAU); g.fill(); }
+      for (const q of M.fs) if (q !== P && q.alive && !q.gone) { const ours = q.team === P.team; if (!ours && !(q.reveal > 0 || canSee(P, q))) continue; g.fillStyle = ours ? YOU : FOE; g.beginPath(); g.arc(mx + q.x * k, my + q.z * k, (ours ? 3.2 : 4) * u, 0, TAU); g.fill(); }   // your teammates, and every rival in sight
       g.save(); g.translate(mx + P.x * k, my + P.z * k); g.rotate(-P.yaw); g.fillStyle = 'rgba(53,224,200,.22)'; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 30 * u, -Math.PI / 2 - .6, -Math.PI / 2 + .6); g.fill(); g.fillStyle = YOU; g.beginPath(); g.moveTo(0, -7 * u); g.lineTo(5 * u, 5 * u); g.lineTo(-5 * u, 5 * u); g.fill(); g.restore();
       const ar = areaAt(P.x, P.z); if (ar) tx(g, ar.n.toUpperCase(), mx + 4, my + mh + 12 * u, 13 * u, ar.col, 'left'); }
     // --- kill feed, top right
@@ -396,7 +431,7 @@
       else if (side === 'att' && !M.planted) { if (onSite(P.x, P.z)) onSiteHint(g, 'ABC'[siteAt(P.x, P.z)], key, V.y0 + 104 * u, u); else hint(g, M.t > roundT() - 6 ? (twoSites() ? 'Carry the charge to site ' + siteWords() + ' and plant it' : 'Carry the charge to the site and plant it') : '', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
       else if (side === 'def' && M.planted) hint(g, near ? key + ' to defuse' : 'Defuse the charge', V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
       else if (side === 'def' && M.t > roundT() - 6) hint(g, twoSites() ? 'Hold ' + siteWords('and') + ': stop them planting' : 'Stop them planting on the site', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
-      if (F.alive && F.defuse > 0) tx(g, 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);
+      if (M.fs.some(q => q.team !== P.team && q.alive && q.defuse > 0)) tx(g, M.fs.length > 2 ? 'THEY ARE DEFUSING' : 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);   // any of them, not just the nearest
       if (GATES.length && P.plant <= 0 && P.defuse <= 0) { const gi = gateNear(P); if (gi >= 0) hint(g, (touch ? 'Tap the button' : 'Press F') + (GATES[gi].open ? ' to shut the blast door' : ' to open the blast door'), V.y0 + 140 * u, 16 * u, GOLD); }
     }
     // --- banners
@@ -433,6 +468,7 @@
       g.restore();
       if (M.planted && D.t > 3.2 && !M.fs.some(f => f !== me() && f.team === me().team && f.alive)) tx(g, 'WATCHING THE CHARGE', 640, V.y0 + 120 * u, 14 * u, GOLD, 'center', 900);
     }
+    if (UI.board && !UI.armory && !UI.opts && !range && !demo) drawBoard(g, V, u);
     // --- touch controls
     if (touch && !UI.armory && !demo) drawTouch(g, u);
     if (canBuy() && !UI.armory && !demo && P.alive && !UI.switched) { const w = 190 * u, h = tapH(46); btn(g, 640 - w / 2, V.y0 + 132 * u, w, h, touch ? 'ARMORY' : 'ARMORY  (B)', () => openArmory(true), { px: 17 * u, col: GOLD, edge: GOLD }); }

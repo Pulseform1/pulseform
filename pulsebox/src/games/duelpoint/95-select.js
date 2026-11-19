@@ -6,18 +6,26 @@
     const opsAll = Object.keys(OPS), sites = o ? o.sites : CFG.sites, map = o ? pick(mapPool(sites)) : MAPS.indexOf(MAP);
     if (o && MAP !== MAPS[map]) { loadMap(map); emit('map', map); }
     const used = new Set(['You']), mates = [];
-    if (o) for (let i = 1; i < (o.size | 0); i++) { const n = pick(BOT_NAMES.filter(q => !used.has(q))); used.add(n); mates.push({ name: n, op: pick(opsAll), at: rnd(1.4, 5) }); }
+    // each teammate's first idea is an operative none of the others has (eight operatives, at most three teammates)
+    if (o) for (let i = 1; i < (o.size | 0); i++) { const n = pick(BOT_NAMES.filter(q => !used.has(q))), free = opsAll.filter(k => !mates.some(m => m.op === k)); used.add(n); mates.push({ name: n, op: pick(free.length ? free : opsAll), at: rnd(1.4, 5) }); }
     UI.sel = { o, op: OPS[CFG.op] ? CFG.op : 'vex', map, t0: performance.now(), T: o ? 25 : 0, locked: 0, mates, spin: 0, hover: null };
     screen = 'select'; UI.armory = false; MP.hide(); releaseMouse(); KNAV.on = false;
   }
   function lockIn() {
     const S = UI.sel; if (!S || S.locked) return; S.locked = performance.now(); CFG.op = S.op; saveAll(); click();
     if (!S.o) { setTimeout(() => { if (UI.sel === S) { UI.sel = null; if (UI.returnTo === 'party') { UI.returnTo = null; screen = 'party'; } else { screen = 'menu'; UI.panel = 'home'; } } }, 450); return; }
-    const ops = {}; S.mates.forEach((m, i) => { ops['m' + (i + 1)] = m; });
+    mateOps(S, true);   // anyone still picking picks now, each one an operative nobody on the team has
     setTimeout(() => { if (UI.sel !== S) return; UI.sel = null; play(Object.assign({}, S.o, { map: S.map, mates: S.mates })); }, 900);
   }
+  // the bot teammates pick when their moment comes (all of them at once when you lock in): never an operative you or a
+  // teammate already has
+  function mateOps(S, all, el = 0) {
+    for (const m of S.mates) if (!m.done && (all || el > m.at)) { m.done = true; m.t = performance.now(); const mine = [S.op, ...S.mates.filter(q => q.done && q !== m).map(q => q.op)]; if (mine.includes(m.op)) { const free = Object.keys(OPS).filter(k => !mine.includes(k)); if (free.length) m.op = pick(free); } }
+  }
+  // what you cannot pick: the bot teammates' picks and, choosing from the party, the operatives your teammates there have
+  const selTaken = S => [...S.mates.filter(m => m.done).map(m => m.op), ...(!S.o && UI.returnTo === 'party' ? partyTaken() : [])];
   function selectKey(c) {
-    const S = UI.sel; if (!S || S.locked) return; const taken = S.mates.filter(m => m.done).map(m => m.op), keys = Object.keys(OPS).filter(k => !taken.includes(k)), i = keys.indexOf(S.op);
+    const S = UI.sel; if (!S || S.locked) return; const taken = selTaken(S), keys = Object.keys(OPS).filter(k => !taken.includes(k)), i = keys.indexOf(S.op);
     if (c === 'ArrowRight' || c === 'ArrowDown') S.op = keys[(i + 1) % keys.length];
     else if (c === 'ArrowLeft' || c === 'ArrowUp') S.op = keys[(i - 1 + keys.length) % keys.length];
     else if (/^Digit[1-9]$/.test(c)) { const k = Object.keys(OPS)[+c.slice(5) - 1]; if (k && !taken.includes(k)) S.op = k; }
@@ -49,8 +57,8 @@
     const S = UI.sel; if (!S) { screen = 'menu'; return; }
     const V = K.view, u = uiScale(), W = V.x1 - V.x0, H = V.y1 - V.y0, now = performance.now(), el = (now - S.t0) / 1000, O = OPS[S.op], keys = Object.keys(OPS), touch = isTouch();
     if (S.T && !S.locked && el >= S.T) lockIn();
-    for (const m of S.mates) if (!m.done && el > m.at) { m.done = true; m.t = now; const mine = [S.op, ...S.mates.filter(q => q.done && q !== m).map(q => q.op)]; if (mine.includes(m.op)) m.op = pick(keys.filter(k => !mine.includes(k))); }   // a teammate never takes an operative already picked
-    const taken = S.mates.filter(m => m.done).map(m => m.op); if (taken.includes(S.op) && !S.locked) S.op = keys.find(k => !taken.includes(k));
+    mateOps(S, false, el);   // a teammate never takes an operative already picked
+    const taken = selTaken(S); if (taken.includes(S.op) && !S.locked) S.op = keys.find(k => !taken.includes(k)) || S.op;
     let gr = g.createLinearGradient(V.x0, 0, V.x0 + W * .55, 0); gr.addColorStop(0, 'rgba(8,10,14,.9)'); gr.addColorStop(1, 'rgba(8,10,14,0)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H);
     gr = g.createLinearGradient(0, V.y1 - 200 * u, 0, V.y1); gr.addColorStop(0, 'rgba(8,10,14,0)'); gr.addColorStop(1, 'rgba(8,10,14,.95)'); g.fillStyle = gr; g.fillRect(V.x0, V.y1 - 200 * u, W, 200 * u);
     g.fillStyle = 'rgba(8,10,14,.7)'; g.fillRect(V.x0, V.y0, W, 54 * u);

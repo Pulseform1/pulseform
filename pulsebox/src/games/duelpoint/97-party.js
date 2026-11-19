@@ -32,6 +32,12 @@
     if (m.t === 'mp-rejoin' && MP.isHost() && PARTY.teams[m.old] != null) { PARTY.teams[m.from] = PARTY.teams[m.old]; delete PARTY.teams[m.old]; const pf = PARTY.prof.get(m.old); if (pf) PARTY.prof.set(m.from, pf); MP.send({ t: 'lteam', teams: PARTY.teams, set: PARTY.set }); }   // back after a drop: same team (the match hears it too)
     return false;
   }
+  // the operatives your teammates in the party have: agent select shows them as taken. Two on a team who still end up
+  // on the same one (picked at the same moment, or a move between teams) are sorted out at the start: the first in the
+  // room keeps it, the other gets one nobody on their team has (60-net seatsFor), and their card says so meanwhile
+  function partyTaken() { if (!MP.online()) return []; const me2 = myId(), t = PARTY.teams[me2] || 0; return MP.players().filter(p => p.id !== me2 && (PARTY.teams[p.id] || 0) === t).map(p => (PARTY.prof.get(p.id) || {}).op).filter(Boolean); }
+  const opOf = p => p.id === myId() ? CFG.op : (PARTY.prof.get(p.id) || { op: 'vex' }).op;
+  const opClash = (p, ps) => { const t = PARTY.teams[p.id] || 0, op = opOf(p); return ps.slice(0, ps.indexOf(p)).some(q => (PARTY.teams[q.id] || 0) === t && opOf(q) === op); };
   function swapTeam(id) { const ps = MP.players(), T2 = PARTY.teams, to = 1 - (T2[id] || 0); if (ps.filter(q => T2[q.id] === to).length >= PARTY.set.size) return; T2[id] = to; MP.send({ t: 'lteam', teams: T2, set: PARTY.set }); }
   const readyAll = () => MP.players().every(p => p.id === MP.hostId || (PARTY.prof.get(p.id) || {}).rd);
   function startParty() {
@@ -86,7 +92,7 @@
         const hot = host && zone(cx, y, colW, cardH, () => swapTeam(p.id));
         rr(g, cx, y, colW, cardH, 8, p.id === me2 ? 'rgba(24,30,42,.96)' : 'rgba(14,18,26,.92)', hot ? col : p.id === me2 ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.14)', p.id === me2 || hot ? 2 : 1); g.fillStyle = col; g.fillRect(cx, y, 4 * u, cardH);
         portraitTile(g, pr.op, cx + 10 * u, y + 8 * u, cardH - 16 * u, cardH - 16 * u, { r: 5 });
-        const nx = cx + cardH + 4 * u; tx(g, p.name.toUpperCase() + (p.id === me2 ? '  (YOU)' : ''), nx, y + 26 * u * k, 16 * u * Math.max(.85, k), BONE, 'left', 900); tx(g, (OPS[pr.op] || OPS.vex).n, nx, y + 48 * u * k, 12 * u, (OPS[pr.op] || OPS.vex).col, 'left', 800);
+        const nx = cx + cardH + 4 * u; tx(g, p.name.toUpperCase() + (p.id === me2 ? '  (YOU)' : ''), nx, y + 26 * u * k, 16 * u * Math.max(.85, k), BONE, 'left', 900); { const clash = opClash(p, ps); tx(g, (OPS[pr.op] || OPS.vex).n + (clash ? (p.id === me2 ? '  ·  TAKEN, PICK ANOTHER' : '  ·  TAKEN') : ''), nx, y + 48 * u * k, 12 * u, clash ? WARN : (OPS[pr.op] || OPS.vex).col, 'left', 800); }
         if (isHost) tx(g, 'HOST', nx, y + 70 * u * k, 10 * u, GOLD, 'left', 900);
         if (pr.rt) { rankBadge(g, cx + colW - 30 * u, y + 30 * u * k, 14 * u * Math.max(.8, k), pr.rt); tx(g, rankName(pr.rt).toUpperCase(), cx + colW - 52 * u, y + 26 * u * k, 11 * u, RANK_COL[diffFor(pr.rt).i], 'right', 800); tx(g, String(pr.rt), cx + colW - 52 * u, y + 44 * u * k, 13 * u, BONE, 'right', 700); }
         tx(g, ready ? '✓ READY' : 'NOT READY', cx + colW - 14 * u, y + cardH - 16 * u * k, 11 * u, ready ? YOU : DIM, 'right', 900);

@@ -78,6 +78,9 @@
       seats.push({ key: 'b' + b, name: names.length ? names[b % names.length] : cfg.names[b % cfg.names.length], team: t, bot: true, op }); b++; };
     if (cfg.teams) {   // from the party: the host's teams, everyone's operative and rating; bots fill up to the team size (or just enough for a rival)
       seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: cfg.teams[p.id] != null ? +cfg.teams[p.id] : i % 2, op: cfg.hops && cfg.hops[p.id], rating: cfg.rts && cfg.rts[p.id] })); const size = cfg.size || 2;
+      // two players on one team never share an operative: the first in the room keeps it, the other takes the first one
+      // (in the room's shuffled order, the same on every device) that nobody on their team has
+      seats.forEach((s, i) => { if (OPS[s.op] && !seats.slice(0, i).some(q => q.team === s.team && q.op === s.op)) return; const mine = seats.filter(q => q !== s && q.team === s.team).map(q => q.op); s.op = cfg.ops.find(k => OPS[k] && !mine.includes(k)) || s.op; });
       for (const t of [0, 1]) { const have = seats.filter(s => s.team === t).length, want = cfg.fill === false ? Math.max(1, have) : Math.max(size, have); for (let n = have; n < want; n++) bot(t); }
       return seats;
     }

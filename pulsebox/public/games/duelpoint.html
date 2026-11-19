@@ -1324,13 +1324,13 @@ const GAME = {
     const botP = () => auto ? { diff: L.i, D: L.D } : { diff: typeof o.diff === 'number' ? o.diff : 1, dummy: mode === 'range' }, used = new Set([A.name, ...(o.mates || []).map(m => m.name)]), bname = () => { const n = pick(BOT_NAMES.filter(q => !used.has(q))); used.add(n); return n; };
     let fs = [A], flip = 0;
     if (online && o.seats) {   // seats: { key, name, team (the host's numbering), bot, op } in the same order on every device; the host runs the bots
-      const mine = o.seats.find(s => s.key === String(MP.id)) || o.seats[0]; flip = mine.team; A.key = mine.key;
+      const mine = o.seats.find(s => s.key === String(MP.id)) || o.seats[0]; flip = mine.team; A.key = mine.key; if (OPS[mine.op]) A.op = mine.op;   // (a teammate had your operative first: you play the one the room gave you)
       for (const s of o.seats) if (s !== mine) fs.push(fighter({ name: s.name, op: s.op || 'vex', key: s.key, team: s.team ^ flip, net: !(s.bot && host), isBot: !!s.bot, bot: s.bot && host ? { diff: o.botDiff == null ? 1 : o.botDiff } : null, rating: s.rating || 0 }));
     } else if (online) fs.push(fighter({ name: (o.rival && o.rival.name) || 'Rival', op: 'vex', net: true, team: 1, key: String(o.rival && o.rival.id) }));
     else {   // bots: within a team every operative is different (eight operatives, at most four a side)
-      const eOps = [], mOps = [A.op, ...(o.mates || []).map(m => m.op)], fresh = taken => { const c = ops.filter(k => !taken.includes(k)); return pick(c.length ? c : ops); };
+      const eOps = [], mOps = [A.op], fresh = taken => { const c = ops.filter(k => !taken.includes(k)); return pick(c.length ? c : ops); };
       for (let i = 0; i < Math.max(1, o.size | 0); i++) { const name = bname(), op = fresh(eOps); eOps.push(op); fs.push(fighter({ name, op, team: 1, key: 'e' + i, bot: botP() })); }
-      for (let i = 1; i < (o.size | 0); i++) { const mt = o.mates && o.mates[i - 1]; if (mt) used.add(mt.name); const name = mt ? mt.name : bname(), op = mt ? mt.op : fresh(mOps); if (!mt) mOps.push(op); fs.push(fighter({ name, op, team: 0, key: 'm' + i, bot: botP() })); } }
+      for (let i = 1; i < (o.size | 0); i++) { const mt = o.mates && o.mates[i - 1]; if (mt) used.add(mt.name); const name = mt ? mt.name : bname(), op = mt && OPS[mt.op] && !mOps.includes(mt.op) ? mt.op : fresh(mOps); mOps.push(op); fs.push(fighter({ name, op, team: 0, key: 'm' + i, bot: botP() })); } }
     fs = [A, ...fs.slice(1).sort((a, b) => b.team - a.team)];   // enemies first, so M.fs[1] is always a rival
     // a map at random each match (online, the host's pick); the range is always on Saltworks
     const mapI = o.map != null ? o.map : mode === 'range' ? 0 : pick(mapPool(o.sites)); if (MAP !== MAPS[mapI]) { loadMap(mapI); emit('map', mapI); }
@@ -1937,6 +1937,9 @@ const GAME = {
       seats.push({ key: 'b' + b, name: names.length ? names[b % names.length] : cfg.names[b % cfg.names.length], team: t, bot: true, op }); b++; };
     if (cfg.teams) {   // from the party: the host's teams, everyone's operative and rating; bots fill up to the team size (or just enough for a rival)
       seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: cfg.teams[p.id] != null ? +cfg.teams[p.id] : i % 2, op: cfg.hops && cfg.hops[p.id], rating: cfg.rts && cfg.rts[p.id] })); const size = cfg.size || 2;
+      // two players on one team never share an operative: the first in the room keeps it, the other takes the first one
+      // (in the room's shuffled order, the same on every device) that nobody on their team has
+      seats.forEach((s, i) => { if (OPS[s.op] && !seats.slice(0, i).some(q => q.team === s.team && q.op === s.op)) return; const mine = seats.filter(q => q !== s && q.team === s.team).map(q => q.op); s.op = cfg.ops.find(k => OPS[k] && !mine.includes(k)) || s.op; });
       for (const t of [0, 1]) { const have = seats.filter(s => s.team === t).length, want = cfg.fill === false ? Math.max(1, have) : Math.max(size, have); for (let n = have; n < want; n++) bot(t); }
       return seats;
     }
@@ -2744,31 +2747,58 @@ const GAME = {
     X.scene.add(G); return G;
   }
   // enemies wear a red outline you can pick out at a glance, even in shade or against a busy wall: every piece of the body
-  // and gun gets a copy drawn from the inside, pushed out along its normals in flat red. The push is a fixed 1.8 cm, so the
-  // rim shrinks with the body as they get further away and never swamps a far silhouette; it is held between OL_LO and
-  // OL_HI screen pixels, so it stays a hairline up close and never thins away to nothing across the map (past about 10 m
-  // it is the one-pixel floor: a crisp edge round a small figure, not a fill). Only the outer
+  // and gun gets a copy drawn from the inside, pushed out in flat red. The push is a fixed 1.8 cm of world, so the rim keeps
+  // its proportion to the body at any range instead of swamping a far silhouette. Up close it is held to a hairline (OL_HI
+  // screen pixels). Where 1.8 cm comes to less than a pixel (past about 10 m) it is drawn one device pixel wide, the
+  // thinnest line that stays whole, and faded in proportion down to OL_A, so a far enemy has a crisp light-red edge round
+  // their own colours, not a red fill, on every screen and quality (an antialiased line smears its pixel over two, so it
+  // fades less far, OL_AA). The copies push out along normals averaged across hard
+  // edges, so boxes and plates get a closed rim on both sides instead of splitting open at their corners. Only the outer
   // edge shows: as each piece draws it marks its pixels in the stencil with that fighter's number, and the red copies,
-  // drawn after, skip their own fighter's marks, so an arm or the gun held across the chest adds no red lines inside the
-  // body (which at range ran together into a red blob). Walls and smoke still hide it.
-  const OL_TH = .018, OL_LO = 1, OL_HI = 1.5;   // metres; CSS pixels
-  let OLM = null, OLV = null;
+  // drawn after, skip their fighter's marks (and mark their own, so overlapping copies don't stack up their red), so an arm
+  // or the gun held across the chest adds no red lines inside the body. Walls and smoke still hide it.
+  const OL_TH = .018, OL_LO = 1, OL_HI = 1.5, OL_A = .6, OL_AA = .8;   // metres; device pixels; CSS pixels; the faintest it fades to
+  let OLM = null, OLV = null, OLAA = null;
   function outlineMat() {
     if (OLM) return OLM;
     OLV = new THREE.Vector4();
-    OLM = new THREE.ShaderMaterial({ uniforms: { col: { value: new THREE.Color(FOE) }, th: { value: OL_TH }, vh: { value: 720 }, lo: { value: OL_LO }, hi: { value: OL_HI } }, side: THREE.BackSide,
-      stencilWrite: true, stencilWriteMask: 0, stencilFunc: THREE.NotEqualStencilFunc, stencilRef: 0,
-      vertexShader: 'uniform float th, vh, lo, hi; void main() { vec4 v = modelViewMatrix * vec4(position, 1.0); vec3 n = normalize(normalMatrix * normal); float px = 2.0 * max(-v.z, .05) / (projectionMatrix[1][1] * vh); v.xyz += n * clamp(th, lo * px, hi * px); gl_Position = projectionMatrix * v; }',
-      fragmentShader: 'uniform vec3 col; void main() { gl_FragColor = vec4(col, 1.0); }' });
+    OLM = new THREE.ShaderMaterial({ uniforms: { col: { value: new THREE.Color(FOE) }, th: { value: OL_TH }, vh: { value: 720 }, lo: { value: OL_LO }, hi: { value: OL_HI }, amin: { value: OL_A } }, side: THREE.BackSide,
+      // blended, but kept in the solid pass so it still draws before smoke and everything see-through
+      blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+      stencilWrite: true, stencilWriteMask: 0xff, stencilFunc: THREE.NotEqualStencilFunc, stencilRef: 0, stencilZPass: THREE.ReplaceStencilOp,
+      vertexShader: 'attribute vec3 olN; uniform float th, vh, lo, hi, amin; varying float vA; void main() { vec4 v = modelViewMatrix * vec4(position, 1.0); vec3 n = normalMatrix * olN; float l = length(n);' +
+        ' float px = 2.0 * max(-v.z, .05) / (projectionMatrix[1][1] * vh), w = th / px; vA = clamp(w / lo, amin, 1.0);' +
+        ' if (l > 1e-6) v.xyz += n * (length(olN) / l * clamp(w, lo, hi) * px); gl_Position = projectionMatrix * v; }',
+      fragmentShader: 'uniform vec3 col; varying float vA; void main() { gl_FragColor = vec4(col, vA); }' });
     return OLM;
   }
   // the pixel limits need the height of what is being drawn, in device pixels: read just before each outline draws.
-  // On a screen drawn below full resolution the floor may go under a device pixel, but only with antialiasing on:
-  // without it a sub-pixel line breaks up into dots.
+  // The floor is a whole device pixel whatever the resolution: thinner, an antialiased line goes pink and patchy and a
+  // plain one breaks up into dots; below it the line fades instead of thinning.
   function olPx(r) {
-    if (!OLM) return; r.getCurrentViewport(OLV); const pr = r.getRenderTarget() ? 1 : r.getPixelRatio(), U = OLM.uniforms, aa = !(X && X.low);
-    const vh = Math.max(1, OLV.w), lo = Math.max(aa ? .6 : 1, OL_LO * pr), hi = Math.max(lo, OL_HI * pr);
-    if (U.vh.value !== vh || U.lo.value !== lo || U.hi.value !== hi) { U.vh.value = vh; U.lo.value = lo; U.hi.value = hi; OLM.uniformsNeedUpdate = true; }
+    if (!OLM) return; r.getCurrentViewport(OLV); const pr = r.getRenderTarget() ? 1 : r.getPixelRatio(), U = OLM.uniforms;
+    if (OLAA == null) OLAA = !!(r.getContext().getContextAttributes() || {}).antialias;
+    const vh = Math.max(1, OLV.w), lo = OL_LO, hi = Math.max(lo, OL_HI * pr), am = OLAA && !r.getRenderTarget() ? OL_AA : OL_A;
+    if (U.vh.value !== vh || U.lo.value !== lo || U.hi.value !== hi || U.amin.value !== am) { U.vh.value = vh; U.lo.value = lo; U.hi.value = hi; U.amin.value = am; OLM.uniformsNeedUpdate = true; }
+  }
+  // the directions the copy is pushed along: at each corner, the average of every face that meets there (so a box's rim
+  // stays closed round its edges), lengthened so each of those faces still moves out by the full width. Once per shape.
+  function olNormals(g) {
+    if (!g || g.attributes.olN || !g.attributes.normal) return;
+    const P = g.attributes.position, N = g.attributes.normal, n = P.count, at = new Int32Array(n), key = new Map(), sum = [], seen = [], out = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const k = Math.round(P.getX(i) * 1e4) + ',' + Math.round(P.getY(i) * 1e4) + ',' + Math.round(P.getZ(i) * 1e4);
+      let c = key.get(k); if (c === undefined) { c = sum.length; key.set(k, c); sum.push([0, 0, 0]); seen.push([]); } at[i] = c;
+      const x = N.getX(i), y = N.getY(i), z = N.getZ(i), L = seen[c];
+      if (!L.some(q => q[0] * x + q[1] * y + q[2] * z > .999)) { L.push([x, y, z]); const s = sum[c]; s[0] += x; s[1] += y; s[2] += z; }
+    }
+    for (let i = 0; i < n; i++) {
+      const c = at[i], s = sum[c], l = Math.hypot(s[0], s[1], s[2]);
+      if (l < .3) { out[i * 3] = N.getX(i); out[i * 3 + 1] = N.getY(i); out[i * 3 + 2] = N.getZ(i); continue; }   // a sheet seen from both sides: its own normal
+      const x = s[0] / l, y = s[1] / l, z = s[2] / l; let m = 1; for (const q of seen[c]) m = Math.min(m, q[0] * x + q[1] * y + q[2] * z);
+      const k = 1 / Math.max(m, 1 / 1.5); out[i * 3] = x * k; out[i * 3 + 1] = y * k; out[i * 3 + 2] = z * k;
+    }
+    g.setAttribute('olN', new THREE.BufferAttribute(out, 3));
   }
   // the red copy reads its fighter's number; the piece itself, while its copy shows, writes that number into the stencil
   // for the length of its own draw (the materials are shared, so the setting is put back straight after)
@@ -2782,7 +2812,7 @@ const GAME = {
     const walk = (o, inGun) => { if (o.userData.isOL) return; inGun = inGun || o === gh; if (o.isMesh && !o.userData.ol && !(inGun && o.material && o.material.transparent)) add.push(o); for (const c of o.children) walk(c, inGun); };
     walk(root, false);
     for (const o of add) {
-      const m = new THREE.Mesh(o.geometry, outlineMat()); m.userData.isOL = true; m.userData.olRef = U.olRef; m.raycast = () => {}; m.onBeforeRender = olPre; m.renderOrder = 1; m.frustumCulled = o.frustumCulled; o.add(m); o.userData.ol = m;
+      olNormals(o.geometry); const m = new THREE.Mesh(o.geometry, outlineMat()); m.userData.isOL = true; m.userData.olRef = U.olRef; m.raycast = () => {}; m.onBeforeRender = olPre; m.renderOrder = 1; m.frustumCulled = o.frustumCulled; o.add(m); o.userData.ol = m;
       const b0 = o.onBeforeRender, a0 = o.onAfterRender, own = THREE.Object3D.prototype;   // keep any hooks a piece already has
       o.onBeforeRender = b0 === own.onBeforeRender ? olMark : function (...a) { b0.apply(this, a); olMark.apply(this, a); };
       o.onAfterRender = a0 === own.onAfterRender ? olUnmark : function (...a) { olUnmark.apply(this, a); a0.apply(this, a); };
@@ -2791,14 +2821,21 @@ const GAME = {
   }
   function updateAgent(f, dt) {
     let A = X.agents.get(f);
-    if (!A || A.userData.op !== f.op) { if (A) X.scene.remove(A); A = agentModel(f); X.agents.set(f, A); }
+    if (!A || A.userData.op !== f.op) { if (A) { X.scene.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); } A = agentModel(f); X.agents.set(f, A); }
     const U = A.userData, fk0 = gun(f).k, fsk = skinFor(f, fk0) || '', fk = fk0;
     if (U.gk !== fk || U.gsk !== fsk) { U.gsk = fsk; while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]); const gm = gunModel(fk, { cast: !X.low, flash: true, skin: fsk }); gm.scale.setScalar(1.08); U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
     A.visible = true; A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;
     { const P = M ? me() : null, foeSide = !!P && f.team !== P.team, op = f.cloak > 0 && f.alive ? (foeSide ? .07 : .35) : 1; U.cop = lp(U.cop == null ? 1 : U.cop, op, Math.min(1, dt * 10));
-      if (Math.abs((U.copSet || 1) - U.cop) > .01 || (U.cop < 1 && U.copGk !== U.gk)) { const o2 = U.cop > .99 ? 1 : U.cop; const walk = o => { if (o === U.gunHold) return; if (o.isMesh && !o.userData.isOL && o.material && !o.material.isShaderMaterial) { o.material.transparent = o2 < 1; o.material.opacity = o2; o.material.depthWrite = o2 >= 1; } for (const c of o.children) walk(c); }; walk(A); U.copSet = o2; U.copGk = U.gk; }
+      // the fade goes on this fighter's own copies of its materials (everyone playing the same operative shares the
+      // originals, so fading those turned every other Wraith on the field see-through too)
+      const o2 = U.cop > .99 ? 1 : U.cop, cs = U.copSet == null ? 1 : U.copSet;
+      if (o2 === 1 ? cs !== 1 : Math.abs(cs - o2) > .01 || U.copGk !== U.gk) { const own = U.ownM || (U.ownM = new Map()), mine = m => { let c = own.get(m); if (!c) { c = m.clone(); own.set(m, c); own.set(c, c); } return c; };
+        const walk = o => { if (o === U.gunHold) return; if (o.isMesh && !o.userData.isOL && o.material && !o.material.isShaderMaterial) { const m = o.material = mine(o.material); m.transparent = o2 < 1; m.opacity = o2; m.depthWrite = o2 >= 1; } for (const c of o.children) walk(c); }; walk(A); U.copSet = o2; U.copGk = U.gk; }
       U.gunHold.visible = U.cop > .5;
-      const red = foeSide && f.alive && U.cop > .9; if (U.olOn !== red || U.olGk !== U.gk) { outline(A, red); U.olOn = red; U.olGk = U.gk; } }
+      // the red edge only on a fully solid body: a see-through one draws after it, so the whole red copy would show through.
+      // Redone whenever the gun is rebuilt (a new gun or a new skin on it), so the new gun and arms get theirs.
+      const red = foeSide && f.alive && (U.copSet == null || U.copSet === 1), gid = U.gk + '|' + U.gsk;
+      if (U.olOn !== red || (red && U.olGk !== gid)) { outline(A, red); U.olOn = red; U.olGk = gid; } }
     const sp = Math.hypot(f.vx, f.vz), sl = f.slide ? 1 : 0, amp = Math.min(1, sp / 3.5) * (f.sprinting ? 1.15 : .8) * (1 - sl), ph = f.walkT * 1.9, cr = f.crouch * (1 - sl);
     animKit(U.gunHold.children[0], dt);
     U.sl = lp(U.sl || 0, sl, Math.min(1, dt * 12)); U.spr = lp(U.spr || 0, f.sprinting ? 1 : 0, Math.min(1, dt * 8)); const sk = U.sl;
@@ -2822,6 +2859,93 @@ const GAME = {
     U.dead = f.alive ? 0 : Math.min(1, U.dead + dt * 2.6); const d = smooth(U.dead);
     A.rotation.x = d * 1.5; A.position.y = f.y + d * .14;
   }
+  /* ---------- 75 crowd: eight fighters for the price of the ones in view ----------
+     A 4v4 puts seven other bodies in the scene, each some forty pieces (a rival twice that, with its red outline), and at
+     most moments most of them are behind walls. Just before the world is drawn, each body is tested against the map from
+     the camera: rays to points across it, from the feet to over the head and out to a gun's length either side and in
+     front (along the ground too, for one who has fallen). Only when every ray meets something solid is the body left out
+     of that frame. The test reads the cells as they are drawn: a roof is its thin slab (not the solid block bullets treat
+     it as), a doorway has its wall above, and while a blast door is moving nobody is left out, so it can only skip a body
+     that really is out of sight. With shadows on, a hidden body still casts its shadow when it is close by (one can fall
+     round a corner into view) or the ground its shadow falls on is in view. Nothing here changes the game: who sees or hits whom is 40-sim's. X.crowd counts what it did. */
+  const CROWD_NEAR = 3, CROWD_SHADE = 15;   // metres: nobody this close is left out; one left out within this still casts a shadow
+  const CROWD_LAT = [0, -.32, .32, -.75, .75], CROWD_UP = [1.75, .95, .15];   // the points tested: across the body, and up it
+  let crowdRF = null, crowdMap = null;
+  // the drawn solids above the ground, per cell: a roof slab's height, and doorways (wall from the top of the door up)
+  function crowdCells() {
+    if (crowdRF && crowdMap === MAP && crowdRF.h.length === NC) return crowdRF;
+    crowdMap = MAP; crowdRF = { h: new Float32Array(NC), door: new Uint8Array(NC) };
+    for (const rf of ROOFS) for (let j = rf.r[1]; j <= rf.r[3]; j++) for (let i = rf.r[0]; i <= rf.r[2]; i++) { const k = idx(i, j); if (k >= 0) crowdRF.h[k] = rf.h; }
+    for (const d of DOORS) for (let j = d[1]; j <= d[3]; j++) for (let i = d[0]; i <= d[2]; i++) { const k = idx(i, j); if (k >= 0) { crowdRF.door[k] = 1; crowdRF.h[k] = 0; } }
+    return crowdRF;
+  }
+  // how far a ray from o along d gets (up to max) before the ground, a wall, a crate, stairs, a lintel or a roof slab
+  function crowdRay(ox, oy, oz, dx, dy, dz, max, RF) {
+    let i = Math.floor(ox / CS), j = Math.floor(oz / CS), t = 0;
+    const si = dx > 0 ? 1 : -1, sj = dz > 0 ? 1 : -1, adx = Math.abs(dx) || 1e-9, adz = Math.abs(dz) || 1e-9, tdx = CS / adx, tdz = CS / adz;
+    let tx = (dx > 0 ? (i + 1) * CS - ox : ox - i * CS) / adx, tz = (dz > 0 ? (j + 1) * CS - oz : oz - j * CS) / adz;
+    for (let n = 0; n < 240; n++) {
+      const tn = Math.min(tx, tz, max), k = idx(i, j);
+      if (k >= 0) {
+        const y0 = oy + dy * t, y1 = oy + dy * tn, ylo = Math.min(y0, y1), yhi = Math.max(y0, y1);
+        let s0 = CH[k], s1 = s0; if (CAX[k]) { s0 = lp(CH[k], CB[k], cl((oz + dz * t) / CS - j, 0, 1)); s1 = lp(CH[k], CB[k], cl((oz + dz * tn) / CS - j, 0, 1)); }
+        if (y0 < s0 - 1e-4 || y1 < s1 - 1e-4) return t;   // into the ground, a wall or a box
+        if (RF.door[k] && yhi > DOOR_H && ylo < WALL_H) return t;   // the wall over a doorway
+        if (RF.h[k] && yhi > RF.h[k] && ylo < RF.h[k] + .3) return t;   // a roof's slab
+      }
+      if (tn >= max || i < -3 || j < -3 || i > GW + 2 || j > GH + 2) return max;
+      if (tx < tz) { t = tx; tx += tdx; i += si; } else { t = tz; tz += tdz; j += sj; }
+    }
+    return max;
+  }
+  // is the point x, y, z in clear view of the camera at c?
+  function crowdSee(cx, cy, cz, x, y, z, RF, C) { const dx = x - cx, dy = y - cy, dz = z - cz, L = Math.hypot(dx, dy, dz); if (L < .01) return true; C.rays++; return crowdRay(cx, cy, cz, dx / L, dy / L, dz / L, L, RF) >= L - .02; }
+  // can the camera see any of the points across this body?
+  function crowdSees(cx, cy, cz, f, A, RF, C) {
+    const px = A.position.x, py = A.position.y, pz = A.position.z, hd = Math.hypot(px - cx, pz - cz) || 1, lx = -(pz - cz) / hd, lz = (px - cx) / hd, fx = -Math.sin(A.rotation.y), fz = -Math.cos(A.rotation.y);
+    const see = (x, y, z) => crowdSee(cx, cy, cz, x, y, z, RF, C);
+    for (const h of CROWD_UP) for (const l of CROWD_LAT) if (see(px + lx * l, py + h, pz + lz * l)) return true;
+    for (const d of [.6, 1.2]) if (see(px + fx * d, py + 1.35, pz + fz * d)) return true;   // a gun poking out ahead of them
+    if (!f.alive) for (const d of [.7, 1.4, 2]) if (see(px - fx * d, py + .3, pz - fz * d)) return true;   // fallen on their back
+    return false;
+  }
+  // can the camera see the ground where the sun throws this body's shadow (from its head, chest and knees)?
+  function crowdShadowSeen(cx, cy, cz, A, RF, C) {
+    const s = X.sun, lx = s.position.x - s.target.position.x, ly = s.position.y - s.target.position.y, lz = s.position.z - s.target.position.z; if (ly < .05) return true;
+    for (const h of [1.8, 1.2, .6]) { const x = A.position.x - lx / ly * h, z = A.position.z - lz / ly * h; if (crowdSee(cx, cy, cz, x, hAt(x, z) + .05, z, RF, C)) return true; }
+    return false;
+  }
+  function crowdCull(cam) {
+    const C = X.crowd; C.hidden = C.shade = 0; C.list.length = 0; C.frames++;
+    if (X.crowdOff || !M || X.camHook || cam !== X.camera || !(screen === 'play' || screen === 'over')) return;
+    if (X.mech && X.mech.gates.some(g => { const G = GATES[g.gi], want = G && !G.open ? GATE_H / 2 : -GATE_H / 2 - .02; return Math.abs(g.y - want) > .02; })) return;   // a blast door on the move
+    const RF = crowdCells(), e = cam.matrixWorld.elements, cx = e[12], cy = e[13], cz = e[14];
+    if (crowdRay(cx, cy, cz, 1, 0, 0, .01, RF) < .005) return;   // the camera itself is inside something (a death cam brushing a wall): everyone is drawn
+    const shade = X.renderer.shadowMap.enabled;
+    for (const [f, A] of X.agents) {
+      if (!A.visible || Math.hypot(A.position.x - cx, A.position.z - cz) < CROWD_NEAR || crowdSees(cx, cy, cz, f, A, RF, C)) continue;
+      let lit = false; const meshes = []; A.traverse(o => { if (o.isLight) lit = true; else if (o.isMesh) meshes.push(o); }); if (lit) continue;   // (a light inside would change the scene's lighting)
+      if (shade && (Math.hypot(A.position.x - cx, A.position.z - cz) < (X.crowdShade || CROWD_SHADE) || crowdShadowSeen(cx, cy, cz, A, RF, C))) { A.userData.crowdShade = meshes.map(o => { const m0 = o.layers.mask; o.layers.mask = 2; return [o, m0]; }); C.shade++; }   // its shadow only
+      else { A.visible = false; C.hidden++; }
+      C.list.push(A);
+    }
+    C.sumHidden += C.hidden; C.sumShade += C.shade;
+  }
+  // straight after the frame, everyone is put back as they were, so nothing else ever sees a body left out
+  function crowdRestore() {
+    const C = X.crowd; if (!C) return;
+    for (const A of C.list) { const sh = A.userData.crowdShade; if (sh) { for (const [o, m0] of sh) o.layers.mask = m0; A.userData.crowdShade = null; } else A.visible = true; }
+    C.list.length = 0;
+  }
+  function crowdInstall() {
+    if (!X || X.crowd) return;
+    X.crowd = { hidden: 0, shade: 0, rays: 0, frames: 0, sumHidden: 0, sumShade: 0, list: [] };
+    if (X.sun && X.sun.shadow) X.sun.shadow.camera.layers.enable(1);   // the sun still sees a body kept for its shadow (layer 1); the camera does not
+    const b0 = X.scene.onBeforeRender, a0 = X.scene.onAfterRender;
+    X.scene.onBeforeRender = function (r, sc, cam, rt) { b0.call(this, r, sc, cam, rt); crowdCull(cam); };
+    X.scene.onAfterRender = function (r, sc, cam) { crowdRestore(); a0.call(this, r, sc, cam); };
+  }
+  on('round', () => { if (typeof X !== 'undefined' && X && ready) crowdInstall(); });
   /* ---------- 76 guns: the gun kit and the guns built from it, first-person hands, moving parts, casings ----------
      Finishes are canvas textures (brushed steel, stippled polymer, cerakote, wood, carbon weave, digital camo) lit by a small
      reflection map. The kit and the guns are in gunModel below; viewAnim moves the working parts in first person. */
@@ -4949,7 +5073,7 @@ const GAME = {
     g.restore();
   }
   // a running step or a shot from the rival marks the minimap for a moment (only if a bot could have heard it too)
-  const note = f => { if (M && f === foe() && Math.hypot(f.x - me().x, f.z - me().z) < 30) heard = { x: f.x, z: f.z, t: 1.6 }; };
+  const note = f => { if (M && f && f.team !== me().team && Math.hypot(f.x - me().x, f.z - me().z) < 30) heard = { x: f.x, z: f.z, t: 1.6 }; };   // any rival, not just the nearest
   on('step', note); on('shot', (f, S, first) => { if (first && !gun(f).sil) note(f); });
   function resetMini() { mmCanvas = null; }
   // the sites by letter: 'A or B', 'A, B or C'
@@ -4969,9 +5093,11 @@ const GAME = {
     const P = siteSpot(S), s = SITES.length > 1 ? S.k : '◆', x = mx + P.x * k, y = my + P.z * k; px = fitPx(g, px);
     g.font = `900 ${px}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = Math.max(2, px * .26); g.strokeStyle = 'rgba(12,16,22,.92)'; g.strokeText(s, x, y); g.fillStyle = '#fff3e4'; g.fillText(s, x, y);
   }
-  // what a phone's thumb controls cover, as boxes [x0, y0, x1, y1] in the HUD's units: each button, the corner the move
-  // stick rests in (to the screen's edge, where the thumb lies), and the stick wherever it is held
-  function touchCover(V, u) {
+  // what the HUD keeps in the lower corners, as boxes [x0, y0, x1, y1] in its units, for the site markers to stay clear of.
+  // On a phone: each thumb button, the corner the move stick rests in (to the screen's edge, where the thumb lies), and the
+  // stick wherever it is held. Otherwise the health and abilities panel and the weapon panel with its gun list (as drawn in drawHUD).
+  function markCover(V, u, touch) {
+    if (!touch) { const r = V.x1 - 22 - 50 / pxPer(); return [[V.x0 + 22, V.y1 - 20 - 58 * u, V.x0 + 22 + 640 * u, V.y1], [r - 270 * u, V.y1 - 20 - 58 * u, r, V.y1], [r - 150 * u, V.y1 - 20 - 136 * u, r, V.y1]]; }
     const c = touchButtons().map(b => [b.x - b.r, b.y - b.r, b.x + b.r, b.y + b.r]), s = TS.stick;
     c.push([V.x0, V.y1 - 212 * u, V.x0 + 232 * u, V.y1]); if (s) c.push([s.x0 - 92 * u, s.y0 - 116 * u, s.x0 + 92 * u, s.y0 + 92 * u]);
     return c;
@@ -4994,18 +5120,20 @@ const GAME = {
       if (Math.abs(nx) > ix || Math.abs(ny) > iy) { const q = Math.min(ix / Math.max(Math.abs(nx), 1e-6), iy / Math.max(Math.abs(ny), 1e-6)); nx *= q; ny *= q; edge = true; }
       marks.push({ S, a, nx, ny, edge, x: lp(V.x0, V.x1, (nx + 1) / 2), y: lp(V.y0, V.y1, (1 - ny) / 2), d: Math.round(Math.hypot(Q.x - P.x, Q.z - P.z)) });
     });
-    // on a phone the thumb controls (drawn over this) fill the lower corners, and the pause and settings buttons the top
-    // left: no marker sits under one, and those on the side edges keep to the stretch of edge between them
-    const cover = isTouch() ? touchCover(V, u) : null, hw = 26 * u, above = 20 * u, below = 37 * u, gap = 52 * u;
-    const clear = (x, y) => { for (let n = 0; cover && n < 12; n++) { const c = cover.find(c => x + hw > c[0] && x - hw < c[2] && y + below > c[1] && y - above < c[3]); if (!c) break; y = c[1] - below - 3 * u; } return y; };
+    // the lower corners hold the HUD's panels, or on a phone the thumb controls (drawn over this), and the top left on a
+    // phone the pause and settings buttons: no marker sits under one, and on a phone those on the side edges keep to the
+    // stretch of edge between them
+    const touch = isTouch(), cover = markCover(V, u, touch), hw = 26 * u, above = 20 * u, below = 37 * u, gap = 52 * u;
+    const clear = (x, y) => { for (let n = 0; n < 12; n++) { const c = cover.find(c => x + hw > c[0] && x - hw < c[2] && y + below > c[1] && y - above < c[3]); if (!c) break; y = c[1] - below - 3 * u; } return y; };
     const top0 = lp(V.y0, V.y1, (1 - iy) / 2), lo0 = lp(V.y0, V.y1, (1 + iy) / 2), mid = (V.y0 + V.y1) / 2;
     // two on the same edge never sit on top of each other
-    for (const side of [-1, 1]) { const col = marks.filter(k => k.edge && Math.sign(k.nx) === side && Math.abs(k.nx) >= ix - .01).sort((p, q) => p.y - q.y); let lo = lo0;
-      if (cover) {   // squeeze the edge (beside you at the middle while there is room, behind you at the lowest clear point) into the clear stretch
-        const top = Math.max(top0, V.y0 + 98 / pxPer() + above + 6 * u); lo = Math.max(top, clear(side < 0 ? V.x0 + 48 : V.x1 - 48, lo0)); const ya = Math.max(top, Math.min(mid, lo - 1.2 * gap));
-        for (const k of col) { k.col = true; k.y = k.y <= mid ? lp(top, ya, cl((k.y - top0) / (mid - top0), 0, 1)) : lp(ya, lo, cl((k.y - mid) / (lo0 - mid), 0, 1)); } }
+    for (const side of [-1, 1]) { const col = marks.filter(k => k.edge && Math.sign(k.nx) === side && Math.abs(k.nx) >= ix - .01).sort((p, q) => p.y - q.y), top = touch ? Math.max(top0, V.y0 + 98 / pxPer() + above + 6 * u) : top0;
+      const lo = Math.max(top, clear(side < 0 ? V.x0 + 48 : V.x1 - 48, lo0)); for (const k of col) k.col = true;
+      if (touch) {   // squeeze the edge (beside you at the middle while there is room, behind you at the lowest clear point) into the clear stretch
+        const ya = Math.max(top, Math.min(mid, lo - 1.2 * gap));
+        for (const k of col) k.y = k.y <= mid ? lp(top, ya, cl((k.y - top0) / (mid - top0), 0, 1)) : lp(ya, lo, cl((k.y - mid) / (lo0 - mid), 0, 1)); }
       for (let i = 1; i < col.length; i++) col[i].y = Math.max(col[i].y, col[i - 1].y + gap); for (let i = col.length - 1; i >= 0; i--) { if (col[i].y > lo) col[i].y = lo; if (i < col.length - 1) col[i].y = Math.min(col[i].y, col[i + 1].y - gap); } }
-    if (cover) for (const k of marks) if (!k.col) k.y = clear(k.x, k.y);   // one in view but under a button: lifted just clear of it
+    for (const k of marks) if (!k.col) k.y = clear(k.x, k.y);   // one in view but under a panel or a button: lifted just clear of it
     for (const { S, a, nx, ny, edge, x, y, d } of marks) {
       const r = 14 * u * (edge ? .85 : 1);
       g.save(); g.globalAlpha = a * (edge ? .85 : 1); g.translate(x, y);
@@ -5037,6 +5165,13 @@ const GAME = {
     g.beginPath(); for (let k = 0; k < 6; k++) { const a = -Math.PI / 2 + k * TAU / 6; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); } g.closePath(); g.globalAlpha = .22; g.fill(); g.globalAlpha = 1; g.stroke();
     g.fillStyle = col; for (let k = 0; k <= i; k++) { const yy = r * .35 - k * r * .32; g.beginPath(); g.moveTo(-r * .5, yy + r * .12); g.lineTo(0, yy - r * .2); g.lineTo(r * .5, yy + r * .12); g.lineTo(r * .5, yy + r * .3); g.lineTo(0, yy - .02 * r); g.lineTo(-r * .5, yy + r * .3); g.closePath(); g.fill(); }
     g.restore();
+  }
+  // a name squeezed onto a card w wide: a touch smaller first, then cut with an ellipsis. Gives [text, px] for tx
+  function fitName(g, s, w, px, weight = 800) {
+    const width = (t, p) => { g.font = `${weight} ${fitPx(g, p)}px ${FONT}`; return g.measureText(t).width; };
+    for (const k of [1, .9, .82]) if (width(s, px * k) <= w) return [s, px * k];
+    const p = px * .82; let t = s; while (t.length > 1 && width(t + '…', p) > w) t = t.slice(0, -1);
+    return [t.trimEnd() + '…', p];
   }
   function drawLoading(g) {
     if (!UI.loadT0 || UI.loadM !== M) { UI.loadT0 = performance.now(); UI.loadM = M; }
@@ -5073,12 +5208,13 @@ const GAME = {
       rr(g, x, y, cw, ch, 6, 'rgba(12,16,22,.88)', q === P ? 'rgba(239,233,220,.6)' : 'rgba(239,233,220,.14)', q === P ? 2 : 1); g.fillStyle = col; g.fillRect(x, y, 5 * u, ch);
       if (tiny) { const O2 = OPS[q.op] || OPS.vex, tx0 = x + 12 * u + pw; portraitTile(g, q.op, x + 8 * u, y + 6 * u, pw, ch - 12 * u, { r: 4 });
         g.save(); g.beginPath(); g.rect(tx0 - 2 * u, y, x + cw - 3 * u - (tx0 - 2 * u), ch); g.clip();
-        tx(g, q.name.toUpperCase(), tx0, y + 17 * u, 12.5 * u, BONE, 'left', 800); tx(g, O2.n, tx0, y + 37 * u, 10.5 * u, O2.col, 'left', 800);
+        { const [nm, npx] = fitName(g, q.name.toUpperCase(), x + cw - 6 * u - tx0, 12.5 * u); tx(g, nm, tx0, y + 17 * u, npx, BONE, 'left', 800); } tx(g, O2.n, tx0, y + 37 * u, 10.5 * u, O2.col, 'left', 800);
         const isB = q.bot || q.isBot, lx = q.rating ? tx0 + 16 * u : tx0; if (q.rating) rankBadge(g, tx0 + 6 * u, y + 57 * u, 6.5 * u, q.rating);   // the third line: a bot says so, a player shows their rating
         tx(g, isB ? 'BOT' : q.rating ? String(q.rating) : q === P ? 'YOU' : 'PLAYER', lx, y + 57 * u, 10.5 * u, isB ? DIM : BONE, 'left', 800);
         g.restore(); g.restore(); return; }
       portraitTile(g, q.op, x + 8 * u, y + 6 * u, 56 * u, ch - 12 * u, { r: 4 });
-      tx(g, q.name.toUpperCase(), x + 74 * u, y + 24 * u, (slim ? 14 : 16) * u, BONE, 'left', 800); tx(g, (OPS[q.op] || OPS.vex).n, x + 74 * u, y + 44 * u, 11 * u, (OPS[q.op] || OPS.vex).col, 'left', 800);
+      { const rk = q.rating && !slim ? (g.font = `800 ${fitPx(g, 11 * u)}px ${FONT}`, g.measureText(rankName(q.rating).toUpperCase()).width + 52 * u) : (q.rating ? 40 : 36) * u;   // clear of the rank beside it
+        const [nm, npx] = fitName(g, q.name.toUpperCase(), cw - 74 * u - rk, (slim ? 14 : 16) * u); tx(g, nm, x + 74 * u, y + 24 * u, npx, BONE, 'left', 800); } tx(g, (OPS[q.op] || OPS.vex).n, x + 74 * u, y + 44 * u, 11 * u, (OPS[q.op] || OPS.vex).col, 'left', 800);
       if (q.rating && slim) { rankBadge(g, x + cw - 22 * u, y + 26 * u, 12 * u, q.rating); tx(g, String(q.rating), x + cw - 22 * u, y + 56 * u, 11 * u, BONE, 'center', 700); }
       else if (q.rating) { rankBadge(g, x + cw - 24 * u, y + 28 * u, 13 * u, q.rating); tx(g, rankName(q.rating).toUpperCase(), x + cw - 42 * u, y + 24 * u, 11 * u, RANK_COL[diffFor(q.rating).i], 'right', 800); tx(g, String(q.rating), x + cw - 42 * u, y + 42 * u, 13 * u, BONE, 'right', 700); }
       else tx(g, '—', x + cw - 24 * u, y + 30 * u, 14 * u, DIM, 'center');
@@ -5101,6 +5237,28 @@ const GAME = {
     tx(g, S.side === 'att' ? 'YOU NOW ATTACK' : 'YOU NOW DEFEND', 640, cy + 12 * u, 54 * u, col, 'center', 900);
     tx(g, S.side === 'att' ? (SITES.length > 1 ? 'Take the charge to ' + siteWords() : 'Take the charge to the site') : 'Hold them off, or defuse the charge', 640, cy + 52 * u, 15 * u, BONE, 'center', 700);
     g.restore();
+  }
+  // ---- the scoreboard mid-match: hold Tab (on a phone, tap the clock) for everyone's kills, deaths, headshots and damage,
+  // who is still standing this round, and your team's credits. Your team first (you at the top), then theirs, best first.
+  if (typeof document !== 'undefined') { addEventListener('keydown', e => { if (e.code === 'Tab') UI.board = true; }); addEventListener('keyup', e => { if (e.code === 'Tab') UI.board = false; }); addEventListener('blur', () => { UI.board = false; }); }
+  on('over', () => { UI.board = false; });
+  function drawBoard(g, V, u) {
+    const P = me(), mine = M.fs.filter(f => f.team === P.team).sort((a, b) => (b === P) - (a === P) || b.stat.k - a.stat.k), theirs = M.fs.filter(f => f.team !== P.team).sort((a, b) => b.stat.k - a.stat.k), n = mine.length + theirs.length;
+    const tw = Math.min(660 * u, V.x1 - V.x0 - 40 * u), s = tw / (660 * u), x0 = 640 - tw / 2, top = V.y0 + 84 * u, hh = 32 * u, bh = 22 * u, rh = Math.max(20 * u, Math.min(34 * u, (V.y1 - 24 * u - top - hh - 2 * bh - 10 * u) / n)), th = hh + 2 * bh + n * rh + 10 * u;
+    const cols = [['K', f => f.stat.k, 262], ['D', f => f.stat.d, 220], ['HS', f => f.stat.hs, 178], ['DMG', f => Math.round(f.stat.dmg), 112], ['CREDITS', f => f.team === P.team && !f.gone ? '◈ ' + f.credits : '', 18]];
+    g.save(); rr(g, x0, top, tw, th, 10, 'rgba(10,13,18,.92)', 'rgba(239,233,220,.2)', 1.5);
+    tx(g, 'SCOREBOARD', x0 + 16 * u, top + hh / 2, 13 * u, BONE, 'left', 900); tx(g, `ROUND ${M.round}  ·  ${M.wins[0]} – ${M.wins[1]}`, x0 + 136 * u, top + hh / 2, 11 * u, DIM, 'left', 800);
+    for (const [k, , dx] of cols) tx(g, k, x0 + tw - dx * u * s, top + hh / 2, 10 * u, DIM, 'right', 900);
+    let y = top + hh;
+    const row = (f, col) => { const down = !f.alive || f.gone; if (f === P) { g.fillStyle = 'rgba(53,224,200,.12)'; g.fillRect(x0 + 4 * u, y + 1, tw - 8 * u, rh - 2); }
+      g.fillStyle = col; g.fillRect(x0 + 4 * u, y + 2, 3 * u, rh - 4); portraitTile(g, f.op, x0 + 12 * u, y + 2, rh - 4, rh - 4, { r: 3, dead: down });
+      g.globalAlpha = down ? .5 : 1; const tag = f.gone ? '  · LEFT' : f === P ? '' : f.bot || f.isBot ? '  · BOT' : '', [nm, npx] = fitName(g, f.name.toUpperCase() + tag, tw - 280 * u * s - rh - 22 * u, Math.min(14 * u, rh * .5));
+      tx(g, nm, x0 + 18 * u + rh, y + rh / 2, npx, f === P ? YOU : BONE, 'left', 800);
+      for (const [k, fn, dx] of cols) tx(g, String(fn(f)), x0 + tw - dx * u * s, y + rh / 2, Math.min(k === 'CREDITS' ? 13 * u : 15 * u, rh * .56), k === 'CREDITS' ? GOLD : BONE, 'right', 800);
+      g.globalAlpha = 1; y += rh; };
+    const band = (label, col, list) => { tx(g, label, x0 + 16 * u, y + bh / 2 + 2 * u, 10 * u, col, 'left', 900); tx(g, `${list.filter(f => f.alive && !f.gone).length} STANDING`, x0 + tw - 18 * u, y + bh / 2 + 2 * u, 10 * u, DIM, 'right', 800); y += bh; list.forEach(f => row(f, col)); };
+    band(sideOf(P) === 'att' ? 'YOUR TEAM  ·  ATTACK' : 'YOUR TEAM  ·  DEFEND', YOU, mine); band(sideOf(P) === 'att' ? 'THEIRS  ·  DEFEND' : 'THEIRS  ·  ATTACK', FOE, theirs);
+    g.restore(); if (isTouch()) zone(x0, top, tw, th, () => { UI.board = false; });
   }
   function drawHud(g) {
     if (loadingNow()) return drawLoading(g);
@@ -5157,6 +5315,7 @@ const GAME = {
         if (ours && up) { g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(x - w / 2, h + 3, w, 4); g.fillStyle = q.hp > 30 ? BONE : WARN; g.fillRect(x - w / 2, h + 3, w * cl(q.hp / 100, 0, 1), 4); }
       };
       mine.forEach((q, i) => tile(q, -125 - tw / 2 - i * (tw + 4), YOU, true)); theirs.forEach((q, i) => tile(q, 125 + tw / 2 + i * (tw + 4), FOE, false));
+      if (touch && !demo) zone(640 - 64 * u * ts, V.y0 + 8, 128 * u * ts, 70 * u * ts, () => { UI.board = !UI.board; });   // a phone: tap the clock for the scoreboard
     } else { rr(g, -210, 0, 420, 44, 8, GLASS); tx(g, 'RANGE', -190, 22, 18, GOLD, 'left'); tx(g, `${P.stat.hits} hits / ${P.stat.shots} shots` + (P.stat.shots ? `  ·  ${Math.round(100 * P.stat.hits / P.stat.shots)}%` : ''), 190, 22, 14, BONE, 'right'); }
     g.restore();
     // --- minimap, top left (beside the kit's pause button)
@@ -5165,7 +5324,7 @@ const GAME = {
       for (const S of SITES) siteLabel(g, S, mx, my, k, 14 * u);
       if (M.planted) { g.fillStyle = WARN; g.beginPath(); g.arc(mx + M.planted.x * k, my + M.planted.z * k, 4.5 * u, 0, TAU); g.fill(); }
       if (heard && (heard.t -= 1 / 60) > 0) { g.strokeStyle = `rgba(255,138,61,${heard.t / 1.6})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + heard.x * k, my + heard.z * k, (8 + (1.6 - heard.t) * 8) * u, 0, TAU); g.stroke(); }
-      if (F.alive && (F.reveal > 0 || canSee(P, F))) { g.fillStyle = FOE; g.beginPath(); g.arc(mx + F.x * k, my + F.z * k, 4 * u, 0, TAU); g.fill(); }
+      for (const q of M.fs) if (q !== P && q.alive && !q.gone) { const ours = q.team === P.team; if (!ours && !(q.reveal > 0 || canSee(P, q))) continue; g.fillStyle = ours ? YOU : FOE; g.beginPath(); g.arc(mx + q.x * k, my + q.z * k, (ours ? 3.2 : 4) * u, 0, TAU); g.fill(); }   // your teammates, and every rival in sight
       g.save(); g.translate(mx + P.x * k, my + P.z * k); g.rotate(-P.yaw); g.fillStyle = 'rgba(53,224,200,.22)'; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 30 * u, -Math.PI / 2 - .6, -Math.PI / 2 + .6); g.fill(); g.fillStyle = YOU; g.beginPath(); g.moveTo(0, -7 * u); g.lineTo(5 * u, 5 * u); g.lineTo(-5 * u, 5 * u); g.fill(); g.restore();
       const ar = areaAt(P.x, P.z); if (ar) tx(g, ar.n.toUpperCase(), mx + 4, my + mh + 12 * u, 13 * u, ar.col, 'left'); }
     // --- kill feed, top right
@@ -5207,7 +5366,7 @@ const GAME = {
       else if (side === 'att' && !M.planted) { if (onSite(P.x, P.z)) onSiteHint(g, 'ABC'[siteAt(P.x, P.z)], key, V.y0 + 104 * u, u); else hint(g, M.t > roundT() - 6 ? (twoSites() ? 'Carry the charge to site ' + siteWords() + ' and plant it' : 'Carry the charge to the site and plant it') : '', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
       else if (side === 'def' && M.planted) hint(g, near ? key + ' to defuse' : 'Defuse the charge', V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
       else if (side === 'def' && M.t > roundT() - 6) hint(g, twoSites() ? 'Hold ' + siteWords('and') + ': stop them planting' : 'Stop them planting on the site', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
-      if (F.alive && F.defuse > 0) tx(g, 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);
+      if (M.fs.some(q => q.team !== P.team && q.alive && q.defuse > 0)) tx(g, M.fs.length > 2 ? 'THEY ARE DEFUSING' : 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);   // any of them, not just the nearest
       if (GATES.length && P.plant <= 0 && P.defuse <= 0) { const gi = gateNear(P); if (gi >= 0) hint(g, (touch ? 'Tap the button' : 'Press F') + (GATES[gi].open ? ' to shut the blast door' : ' to open the blast door'), V.y0 + 140 * u, 16 * u, GOLD); }
     }
     // --- banners
@@ -5244,6 +5403,7 @@ const GAME = {
       g.restore();
       if (M.planted && D.t > 3.2 && !M.fs.some(f => f !== me() && f.team === me().team && f.alive)) tx(g, 'WATCHING THE CHARGE', 640, V.y0 + 120 * u, 14 * u, GOLD, 'center', 900);
     }
+    if (UI.board && !UI.armory && !UI.opts && !range && !demo) drawBoard(g, V, u);
     // --- touch controls
     if (touch && !UI.armory && !demo) drawTouch(g, u);
     if (canBuy() && !UI.armory && !demo && P.alive && !UI.switched) { const w = 190 * u, h = tapH(46); btn(g, 640 - w / 2, V.y0 + 132 * u, w, h, touch ? 'ARMORY' : 'ARMORY  (B)', () => openArmory(true), { px: 17 * u, col: GOLD, edge: GOLD }); }
@@ -5553,7 +5713,7 @@ const GAME = {
     const V = K.view, W = V.x1 - V.x0, H = V.y1 - V.y0, u = uiScale(), P = me(), F = foe(), won = M.over.won;
     g.fillStyle = 'rgba(12,16,22,.78)'; g.fillRect(V.x0, V.y0, W, H);
     tx(g, won ? 'VICTORY' : 'DEFEAT', 640, V.y0 + 90 * u, 84 * u, won ? YOU : FOE); tx(g, `${M.wins[0]}  –  ${M.wins[1]}`, 640, V.y0 + 170 * u, 44 * u, BONE);
-    if (M.over.why === 'left') tx(g, 'Your rival left the match', 640, V.y0 + 212 * u, 15 * u, DIM);
+    if (M.over.why === 'left') tx(g, M.fs.length > 2 ? 'The other team left the match' : 'Your rival left the match', 640, V.y0 + 212 * u, 15 * u, DIM);
     else if (M.over.why === 'dropped') tx(g, 'You lost the connection to the room, and could not get back in', 640, V.y0 + 212 * u, 15 * u, DIM);
     const rows = [['Kills', f => f.stat.k], ['Headshots', f => f.stat.hs], ['Damage dealt', f => Math.round(f.stat.dmg)], ['Accuracy', f => f.net ? '—' : f.stat.shots ? Math.round(100 * f.stat.hits / f.stat.shots) + '%' : '—']], tw = 520 * u;
     let ty = V.y0 + 250 * u, cy;
@@ -5593,18 +5753,26 @@ const GAME = {
     const opsAll = Object.keys(OPS), sites = o ? o.sites : CFG.sites, map = o ? pick(mapPool(sites)) : MAPS.indexOf(MAP);
     if (o && MAP !== MAPS[map]) { loadMap(map); emit('map', map); }
     const used = new Set(['You']), mates = [];
-    if (o) for (let i = 1; i < (o.size | 0); i++) { const n = pick(BOT_NAMES.filter(q => !used.has(q))); used.add(n); mates.push({ name: n, op: pick(opsAll), at: rnd(1.4, 5) }); }
+    // each teammate's first idea is an operative none of the others has (eight operatives, at most three teammates)
+    if (o) for (let i = 1; i < (o.size | 0); i++) { const n = pick(BOT_NAMES.filter(q => !used.has(q))), free = opsAll.filter(k => !mates.some(m => m.op === k)); used.add(n); mates.push({ name: n, op: pick(free.length ? free : opsAll), at: rnd(1.4, 5) }); }
     UI.sel = { o, op: OPS[CFG.op] ? CFG.op : 'vex', map, t0: performance.now(), T: o ? 25 : 0, locked: 0, mates, spin: 0, hover: null };
     screen = 'select'; UI.armory = false; MP.hide(); releaseMouse(); KNAV.on = false;
   }
   function lockIn() {
     const S = UI.sel; if (!S || S.locked) return; S.locked = performance.now(); CFG.op = S.op; saveAll(); click();
     if (!S.o) { setTimeout(() => { if (UI.sel === S) { UI.sel = null; if (UI.returnTo === 'party') { UI.returnTo = null; screen = 'party'; } else { screen = 'menu'; UI.panel = 'home'; } } }, 450); return; }
-    const ops = {}; S.mates.forEach((m, i) => { ops['m' + (i + 1)] = m; });
+    mateOps(S, true);   // anyone still picking picks now, each one an operative nobody on the team has
     setTimeout(() => { if (UI.sel !== S) return; UI.sel = null; play(Object.assign({}, S.o, { map: S.map, mates: S.mates })); }, 900);
   }
+  // the bot teammates pick when their moment comes (all of them at once when you lock in): never an operative you or a
+  // teammate already has
+  function mateOps(S, all, el = 0) {
+    for (const m of S.mates) if (!m.done && (all || el > m.at)) { m.done = true; m.t = performance.now(); const mine = [S.op, ...S.mates.filter(q => q.done && q !== m).map(q => q.op)]; if (mine.includes(m.op)) { const free = Object.keys(OPS).filter(k => !mine.includes(k)); if (free.length) m.op = pick(free); } }
+  }
+  // what you cannot pick: the bot teammates' picks and, choosing from the party, the operatives your teammates there have
+  const selTaken = S => [...S.mates.filter(m => m.done).map(m => m.op), ...(!S.o && UI.returnTo === 'party' ? partyTaken() : [])];
   function selectKey(c) {
-    const S = UI.sel; if (!S || S.locked) return; const taken = S.mates.filter(m => m.done).map(m => m.op), keys = Object.keys(OPS).filter(k => !taken.includes(k)), i = keys.indexOf(S.op);
+    const S = UI.sel; if (!S || S.locked) return; const taken = selTaken(S), keys = Object.keys(OPS).filter(k => !taken.includes(k)), i = keys.indexOf(S.op);
     if (c === 'ArrowRight' || c === 'ArrowDown') S.op = keys[(i + 1) % keys.length];
     else if (c === 'ArrowLeft' || c === 'ArrowUp') S.op = keys[(i - 1 + keys.length) % keys.length];
     else if (/^Digit[1-9]$/.test(c)) { const k = Object.keys(OPS)[+c.slice(5) - 1]; if (k && !taken.includes(k)) S.op = k; }
@@ -5636,8 +5804,8 @@ const GAME = {
     const S = UI.sel; if (!S) { screen = 'menu'; return; }
     const V = K.view, u = uiScale(), W = V.x1 - V.x0, H = V.y1 - V.y0, now = performance.now(), el = (now - S.t0) / 1000, O = OPS[S.op], keys = Object.keys(OPS), touch = isTouch();
     if (S.T && !S.locked && el >= S.T) lockIn();
-    for (const m of S.mates) if (!m.done && el > m.at) { m.done = true; m.t = now; const mine = [S.op, ...S.mates.filter(q => q.done && q !== m).map(q => q.op)]; if (mine.includes(m.op)) m.op = pick(keys.filter(k => !mine.includes(k))); }   // a teammate never takes an operative already picked
-    const taken = S.mates.filter(m => m.done).map(m => m.op); if (taken.includes(S.op) && !S.locked) S.op = keys.find(k => !taken.includes(k));
+    mateOps(S, false, el);   // a teammate never takes an operative already picked
+    const taken = selTaken(S); if (taken.includes(S.op) && !S.locked) S.op = keys.find(k => !taken.includes(k)) || S.op;
     let gr = g.createLinearGradient(V.x0, 0, V.x0 + W * .55, 0); gr.addColorStop(0, 'rgba(8,10,14,.9)'); gr.addColorStop(1, 'rgba(8,10,14,0)'); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H);
     gr = g.createLinearGradient(0, V.y1 - 200 * u, 0, V.y1); gr.addColorStop(0, 'rgba(8,10,14,0)'); gr.addColorStop(1, 'rgba(8,10,14,.95)'); g.fillStyle = gr; g.fillRect(V.x0, V.y1 - 200 * u, W, 200 * u);
     g.fillStyle = 'rgba(8,10,14,.7)'; g.fillRect(V.x0, V.y0, W, 54 * u);
@@ -5898,6 +6066,12 @@ const GAME = {
     if (m.t === 'mp-rejoin' && MP.isHost() && PARTY.teams[m.old] != null) { PARTY.teams[m.from] = PARTY.teams[m.old]; delete PARTY.teams[m.old]; const pf = PARTY.prof.get(m.old); if (pf) PARTY.prof.set(m.from, pf); MP.send({ t: 'lteam', teams: PARTY.teams, set: PARTY.set }); }   // back after a drop: same team (the match hears it too)
     return false;
   }
+  // the operatives your teammates in the party have: agent select shows them as taken. Two on a team who still end up
+  // on the same one (picked at the same moment, or a move between teams) are sorted out at the start: the first in the
+  // room keeps it, the other gets one nobody on their team has (60-net seatsFor), and their card says so meanwhile
+  function partyTaken() { if (!MP.online()) return []; const me2 = myId(), t = PARTY.teams[me2] || 0; return MP.players().filter(p => p.id !== me2 && (PARTY.teams[p.id] || 0) === t).map(p => (PARTY.prof.get(p.id) || {}).op).filter(Boolean); }
+  const opOf = p => p.id === myId() ? CFG.op : (PARTY.prof.get(p.id) || { op: 'vex' }).op;
+  const opClash = (p, ps) => { const t = PARTY.teams[p.id] || 0, op = opOf(p); return ps.slice(0, ps.indexOf(p)).some(q => (PARTY.teams[q.id] || 0) === t && opOf(q) === op); };
   function swapTeam(id) { const ps = MP.players(), T2 = PARTY.teams, to = 1 - (T2[id] || 0); if (ps.filter(q => T2[q.id] === to).length >= PARTY.set.size) return; T2[id] = to; MP.send({ t: 'lteam', teams: T2, set: PARTY.set }); }
   const readyAll = () => MP.players().every(p => p.id === MP.hostId || (PARTY.prof.get(p.id) || {}).rd);
   function startParty() {
@@ -5952,7 +6126,7 @@ const GAME = {
         const hot = host && zone(cx, y, colW, cardH, () => swapTeam(p.id));
         rr(g, cx, y, colW, cardH, 8, p.id === me2 ? 'rgba(24,30,42,.96)' : 'rgba(14,18,26,.92)', hot ? col : p.id === me2 ? 'rgba(239,233,220,.45)' : 'rgba(239,233,220,.14)', p.id === me2 || hot ? 2 : 1); g.fillStyle = col; g.fillRect(cx, y, 4 * u, cardH);
         portraitTile(g, pr.op, cx + 10 * u, y + 8 * u, cardH - 16 * u, cardH - 16 * u, { r: 5 });
-        const nx = cx + cardH + 4 * u; tx(g, p.name.toUpperCase() + (p.id === me2 ? '  (YOU)' : ''), nx, y + 26 * u * k, 16 * u * Math.max(.85, k), BONE, 'left', 900); tx(g, (OPS[pr.op] || OPS.vex).n, nx, y + 48 * u * k, 12 * u, (OPS[pr.op] || OPS.vex).col, 'left', 800);
+        const nx = cx + cardH + 4 * u; tx(g, p.name.toUpperCase() + (p.id === me2 ? '  (YOU)' : ''), nx, y + 26 * u * k, 16 * u * Math.max(.85, k), BONE, 'left', 900); { const clash = opClash(p, ps); tx(g, (OPS[pr.op] || OPS.vex).n + (clash ? (p.id === me2 ? '  ·  TAKEN, PICK ANOTHER' : '  ·  TAKEN') : ''), nx, y + 48 * u * k, 12 * u, clash ? WARN : (OPS[pr.op] || OPS.vex).col, 'left', 800); }
         if (isHost) tx(g, 'HOST', nx, y + 70 * u * k, 10 * u, GOLD, 'left', 900);
         if (pr.rt) { rankBadge(g, cx + colW - 30 * u, y + 30 * u * k, 14 * u * Math.max(.8, k), pr.rt); tx(g, rankName(pr.rt).toUpperCase(), cx + colW - 52 * u, y + 26 * u * k, 11 * u, RANK_COL[diffFor(pr.rt).i], 'right', 800); tx(g, String(pr.rt), cx + colW - 52 * u, y + 44 * u * k, 13 * u, BONE, 'right', 700); }
         tx(g, ready ? '✓ READY' : 'NOT READY', cx + colW - 14 * u, y + cardH - 16 * u * k, 11 * u, ready ? YOU : DIM, 'right', 900);
