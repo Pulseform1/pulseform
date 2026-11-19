@@ -49,9 +49,9 @@ export class Input {
     if (this.down('KeyW') || this.down('ArrowUp')) y += 1; if (this.down('KeyS') || this.down('ArrowDown')) y -= 1;
     if (this.down('KeyD') || this.down('ArrowRight')) x += 1; if (this.down('KeyA') || this.down('ArrowLeft')) x -= 1;
     const m = this.touch.move;
-    if (m) { const dx = (m.x - m.x0) / 55, dy = (m.y - m.y0) / 55, l = Math.hypot(dx, dy); x = dx / Math.max(1, l); y = -dy / Math.max(1, l); this.touchRun = l > 1.6; }
+    if (m) { const dx = (m.x - m.x0) / 55, dy = (m.y - m.y0) / 55, l = Math.hypot(dx, dy); x = dx / Math.max(1, l); y = -dy / Math.max(1, l); this.touchRun = l > 1.6 || this.runLatch; }
     else this.touchRun = false;
     const l = Math.hypot(x, y); return l > 1 ? { x: x / l, y: y / l } : { x, y };
   }
-  endFrame() { this.pressed.clear(); this.clicked.clear(); this.lookX = 0; this.lookY = 0; this.wheel = 0; }
+  endFrame() { this.pressed.clear(); this.clicked.clear(); this.lookX = 0; this.lookY = 0; this.wheel = 0; this.touchFire = false; }
 }

@@ -14,6 +14,7 @@
     <p class="kicker">Untamed country &middot; 1800s</p>
     <h1>Frontier Hunter</h1>
     <p class="lede">Pitch your tent, keep the fire fed and hunt the endless wild by day and by lantern light.</p>
+    <button id="continue" data-act="continue" class="big" hidden></button>
     <h2>Choose where to make camp</h2>
     <div class="spawns">
       <button data-act="spawn" data-spawn="forest"><b>Deep Forest</b><span>A quiet clearing among tall pines and spruce. Deer and elk browse the shade.</span></button>
@@ -47,8 +48,25 @@
     <h1>Resting</h1>
     <button data-act="resume" class="big">Back to the wild</button>
     <div class="row"><span class="label">Graphics</span><button data-act="quality" data-q="low">Low</button><button data-act="quality" data-q="medium">Medium</button><button data-act="quality" data-q="high">High</button></div>
-    <button data-act="quit">Main menu</button>
+    <label class="slider"><span>Sound</span><input type="range" id="vol" min="0" max="1" step="0.05"></label>
+    <label class="slider"><span>Look speed</span><input type="range" id="sens" min="0.3" max="2.5" step="0.05"></label>
+    <p class="saved" id="saved"></p>
+    <button data-act="quit">Save and return to the menu</button>
   </div>
+</section>
+<section id="touch" hidden>
+  <div id="stick"><i></i></div>
+  <div class="tbtns">
+    <button data-k="fire" class="tfire">Fire</button>
+    <button data-k="aim" class="taim">Aim</button>
+    <button data-k="KeyR">Reload</button>
+    <button data-k="weapon">Gun</button>
+    <button data-k="KeyE" class="tuse">Use</button>
+    <button data-k="Space">Jump</button>
+    <button data-k="KeyC">Crouch</button>
+    <button data-k="run">Run</button>
+  </div>
+  <div class="ttop"><button data-k="KeyL">Lantern</button><button data-k="KeyI">Pack</button><button data-k="KeyM">Map</button><button data-k="Escape">Pause</button></div>
 </section>
 <section id="panel" hidden></section>
 <section id="map" hidden>

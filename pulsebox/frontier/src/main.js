@@ -31,7 +31,9 @@ const QUALITY = {
 const SPAWNS = { forest: 'Deep Forest', valley: 'Mountain Valley', lake: 'Wilderness Lake' };
 
 const G = { settings: loadSettings(), state: 'menu' };
-function loadSettings() { try { return { quality: 'high', sens: 1, ...JSON.parse(localStorage.getItem('fh-settings') || '{}') }; } catch { return { quality: 'high', sens: 1 }; } }
+// a sensible first guess at graphics quality: phones and tablets low, small laptops medium
+function defaultQuality() { const touch = matchMedia('(pointer: coarse)').matches, cores = navigator.hardwareConcurrency || 4; return touch ? 'low' : cores <= 4 ? 'medium' : 'high'; }
+function loadSettings() { const d = { quality: defaultQuality(), sens: 1, vol: .8 }; try { return { ...d, ...JSON.parse(localStorage.getItem('fh-settings') || '{}') }; } catch { return d; } }
 function saveSettings() { try { localStorage.setItem('fh-settings', JSON.stringify(G.settings)); } catch { } }
 if (params.get('q')) G.settings.quality = params.get('q');
 
@@ -73,6 +75,7 @@ async function assets() {
 
 // ---------- a game ----------
 async function start(opts) {
+  if (G.state === 'loading' || G.world) return;
   $('#menu').hidden = true; $('#loading').hidden = false; G.state = 'loading';
   await assets();
   const seed = opts.seed ?? ((Math.random() * 2 ** 31) | 0);
@@ -102,6 +105,7 @@ async function start(opts) {
   Object.assign(G, { world, jobs, sky, terrain, flora, grass, water, camp, player, weather, wildlife, stats: { taken: {} }, timeScale: 1, gameHours: 0, seed, spawn: opts.spawn, gameTime: 0, day: 0, envT: 0, env: { waterDist: 99, riverDist: 99, forest: 0 } });
   G.tex = TEX; G.life = new CampLife(G, G.ui);
   G.map = G.map || new SurveyMap(G); G.map.explored.clear(); G.map.markers = []; G.map.guide = false;
+  if (opts.restore) restore(opts.restore);
   // build the world around the player before showing it
   const t0 = performance.now();
   while (true) {
@@ -116,8 +120,9 @@ async function start(opts) {
   flora.rebuild(camera.position);
   sky.update(0, camera.position, 0);
   renderer.compile(scene, camera);
-  $('#loading').hidden = true; $('#hud').hidden = false; G.state = 'play';
-  setTimeout(() => toast('Press 1 for the rifle, 2 for the shotgun, 3 to put it away.'), 1500);
+  $('#loading').hidden = true; $('#hud').hidden = false; G.state = 'play'; G.saveT = 20;
+  $('#touch').hidden = !input.isTouch;
+  setTimeout(() => toast(opts.restore ? `Back at camp. Day ${G.day + 1}.` : input.isTouch ? 'Drag left to walk, right to look. Gun: draw a weapon.' : 'Press 1 for the rifle, 2 for the shotgun, 3 to put it away.'), 1500);
   if (!input.isTouch) input.lock();
 }
 
@@ -171,6 +176,17 @@ G.handL = new THREE.Group(); camera.add(G.handL); scene.add(camera);
 let last = performance.now(), fpsT = 0, fpsN = 0, fps = 60;
 function loop(now) {
   requestAnimationFrame(loop);
+// keep the frame rate up on smaller machines: trade resolution for smoothness, and take it back when there is room
+let frameAvg = 16, resT = 0, resScale = 1;
+function adaptResolution(dt) {
+  if (G.noRender || G.hold) return;
+  frameAvg += (dt * 1000 - frameAvg) * .05; resT += dt; if (resT < 2) return; resT = 0;
+  const q = QUALITY[G.settings.quality] || QUALITY.high, base = Math.min(devicePixelRatio || 1, q.pr);
+  if (frameAvg > 24 && resScale > .6) resScale = Math.max(.6, resScale - .1);
+  else if (frameAvg < 14 && resScale < 1) resScale = Math.min(1, resScale + .05);
+  else return;
+  renderer.setPixelRatio(base * resScale); renderer.setSize(innerWidth, innerHeight, false);
+}
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
   if (G.hold) return;
   step(dt);
@@ -236,7 +252,9 @@ function step(dt) {
   $('#ammo').textContent = W.label; $('#hit').classList.toggle('on', G.hitT > 0); G.hitT -= dt;
   G.ui.tick(dt);
   if (live) G.map.reveal(dt);
-  G.map.draw(); G.map.compass();
+  G.map.draw(); G.map.compass(); drawStick();
+  if (G.state === 'play') { G.saveT -= dt; if (G.saveT <= 0) { G.saveT = 30; saveGame(); } }
+  adaptResolution(dt);
   const h = sky.hours, hh = Math.floor(h), mm = Math.floor((h - hh) * 60);
   $('#clock').textContent = `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'am' : 'pm'}`;
   if (G.debug) $('#debug').textContent = `${fps.toFixed(0)} fps  calls ${renderer.info.render.calls}  tris ${(renderer.info.render.triangles / 1e6).toFixed(2)}M  trees ${flora.counts.near}/${flora.counts.mid}/${flora.counts.far}  jobs ${jobs.pending}`;
@@ -244,6 +262,17 @@ function step(dt) {
   input.endFrame();
 }
 requestAnimationFrame(loop);
+// keep the frame rate up on smaller machines: trade resolution for smoothness, and take it back when there is room
+let frameAvg = 16, resT = 0, resScale = 1;
+function adaptResolution(dt) {
+  if (G.noRender || G.hold) return;
+  frameAvg += (dt * 1000 - frameAvg) * .05; resT += dt; if (resT < 2) return; resT = 0;
+  const q = QUALITY[G.settings.quality] || QUALITY.high, base = Math.min(devicePixelRatio || 1, q.pr);
+  if (frameAvg > 24 && resScale > .6) resScale = Math.max(.6, resScale - .1);
+  else if (frameAvg < 14 && resScale < 1) resScale = Math.min(1, resScale + .05);
+  else return;
+  renderer.setPixelRatio(base * resScale); renderer.setSize(innerWidth, innerHeight, false);
+}
 
 // ---------- shooting ----------
 const gunCtx = {
@@ -302,9 +331,62 @@ function collide(x, z, r) {
   return { x: p[0], z: p[1] };
 }
 
+// ---------- saving ----------
+function saveGame() {
+  if (!G.world || (G.state !== 'play' && G.state !== 'pause' && G.state !== 'ui')) return;
+  const P = G.player, W = G.weapons, c = G.world.camp;
+  const d = { v: 1, seed: G.seed, spawn: G.spawn, camp: { x: c.x, z: c.z }, player: { x: P.pos.x, z: P.pos.z, yaw: P.yaw }, hours: G.sky.hours, day: G.day,
+    weather: G.weather.state, life: G.life.save(), ammo: W.ammo, reserve: W.reserve, gun: W.want, map: G.map.save(), stats: G.stats, lantern: { carried: G.camp.lantern.carried, on: G.camp.lantern.on }, fire: { lit: G.camp.fire.lit, fuel: G.camp.fire.fuel }, saved: Date.now() };
+  try { localStorage.setItem('fh-save', JSON.stringify(d)); $('#saved').textContent = 'Saved.'; } catch { }
+}
+function loadSave() { try { const d = JSON.parse(localStorage.getItem('fh-save') || 'null'); return d && d.v === 1 ? d : null; } catch { return null; } }
+function restore(d) {
+  G.day = d.day || 0; G.life.load(d.life); Object.assign(G.weapons.ammo, d.ammo); Object.assign(G.weapons.reserve, d.reserve); G.map.load(d.map); G.stats = d.stats || { taken: {} };
+  if (d.weather) { G.weather.state = d.weather === 'rain' ? 'cloudy' : 'clear'; G.weather.roll(); Object.assign(G.weather.cur, G.weather.tgt); }
+  if (d.fire) { G.camp.fire.lit = d.fire.lit; G.camp.fire.fuel = d.fire.fuel; }
+  if (d.lantern) { G.camp.lantern.on = d.lantern.on; if (d.lantern.carried) carryLantern(true); }
+  if (d.gun) G.weapons.select(d.gun);
+}
+addEventListener('visibilitychange', () => { if (document.hidden) saveGame(); });
+addEventListener('pagehide', saveGame);
+function drawContinue() {
+  const d = loadSave(), b = $('#continue'); if (!d) { b.hidden = true; return; }
+  b.hidden = false; b.innerHTML = `Continue &middot; <small>${SPAWNS[d.spawn] || 'Your camp'}, day ${(d.day || 0) + 1}</small>`;
+}
+
+// ---------- touch ----------
+{
+  const T = $('#touch');
+  T.addEventListener('touchstart', e => {
+    const b = e.target.closest('button'); if (!b) return; e.preventDefault(); e.stopPropagation(); audio.start();
+    const k = b.dataset.k;
+    if (k === 'fire') input.touchFire = true;
+    else if (k === 'aim') { input.touchAim = !input.touchAim; b.classList.toggle('on', input.touchAim); }
+    else if (k === 'run') { input.runLatch = !input.runLatch; b.classList.toggle('on', input.runLatch); }
+    else if (k === 'weapon') { const order = [null, 'rifle', 'shotgun'], i = order.indexOf(G.weapons.want); G.weapons.select(order[(i + 1) % 3]); }
+    else if (k === 'Escape') { if (G.state === 'play') pause(true); else if (G.state === 'ui') input.press('Escape'); }
+    else if (k === 'KeyC') { input.press(k); b.classList.toggle('on'); }
+    else input.press(k);
+  }, { passive: false });
+}
+function drawStick() {
+  const s = $('#stick'), m = input.touch.move;
+  if (!m || !input.isTouch) { s.style.display = 'none'; return; }
+  s.style.display = 'block'; s.style.left = m.x0 + 'px'; s.style.top = m.y0 + 'px';
+  const dx = m.x - m.x0, dy = m.y - m.y0, l = Math.hypot(dx, dy), k = Math.min(1, 50 / Math.max(l, 1));
+  s.firstElementChild.style.transform = `translate(${dx * k}px, ${dy * k}px)`;
+}
+
+// ---------- settings ----------
+{
+  const vol = $('#vol'), sens = $('#sens'); vol.value = G.settings.vol; sens.value = G.settings.sens; audio.setVolume(G.settings.vol);
+  vol.addEventListener('input', () => { G.settings.vol = +vol.value; audio.setVolume(G.settings.vol); saveSettings(); });
+  sens.addEventListener('input', () => { G.settings.sens = +sens.value; saveSettings(); });
+}
+
 // ---------- menus ----------
 function pause(on) {
-  if (on && G.state === 'play') { G.state = 'pause'; $('#pause').hidden = false; input.unlock(); }
+  if (on && G.state === 'play') { G.state = 'pause'; $('#pause').hidden = false; input.unlock(); saveGame(); }
   else if (!on && G.state === 'pause') { G.state = 'play'; $('#pause').hidden = true; G.wasLocked = false; input.lock(); }
 }
 document.addEventListener('click', e => {
@@ -312,7 +394,8 @@ document.addEventListener('click', e => {
   if (a === 'spawn') start({ spawn: b.dataset.spawn });
   if (a === 'resume') pause(false);
   if (a === 'quality') { G.settings.quality = b.dataset.q; saveSettings(); drawSettings(); applyQuality(); }
-  if (a === 'quit') location.reload();
+  if (a === 'quit') { saveGame(); location.href = location.pathname + location.hash; }
+  if (a === 'continue') { const d = loadSave(); if (d) start({ spawn: d.spawn, seed: d.seed, camp: d.camp, player: d.player, hours: d.hours, restore: d }); }
 });
 canvas.addEventListener('click', () => { if (G.state === 'play' && !input.locked && !input.isTouch) input.lock(); });
 function drawSettings() { for (const b of document.querySelectorAll('[data-act=quality]')) b.classList.toggle('on', b.dataset.q === G.settings.quality); }
@@ -320,7 +403,7 @@ function applyQuality() {
   resize(); if (!G.terrain) return; const q = QUALITY[G.settings.quality];
   G.terrain.setRadius(q.nearR, q.farR); G.flora.set(q.veg); G.grass.build(q.grass); G.sky.setShadowQuality(q.shadow, q.span);
 }
-drawSettings();
+drawSettings(); drawContinue();
 
 // test hooks
 window.__fh = { G, THREE, start, scene, camera, renderer, input, hold: on => { G.hold = on; },
