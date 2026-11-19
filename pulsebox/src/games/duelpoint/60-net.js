@@ -13,18 +13,33 @@
   function netTick(dt) {
     if (!M.online) return;
     if (!M.over) for (const f of M.fs) if (f.dc && M.time - f.dc > DC_WAIT) goneFor(f);
-    M.netT -= dt; if (M.netT > 0) return; M.netT = .05;
+    // who has loaded: each player says so until the host calls everyone in (or gives up waiting after 45 s)
+    if (!M.allIn) {
+      M.ldT = (M.ldT || 0) - dt; const mine = me();
+      if (M.ldT <= 0 && (ready || failed)) { M.ldT = .5; mine.loaded = true; net({ t: 'ld', f: mine.key }); }
+      if (M.host) { const humans = M.fs.filter(f => !f.isBot && !f.gone), all = humans.every(f => f.loaded || (f.dc && M.time - f.dc > 3));
+        if ((all && mine.loaded) || M.time > 45) { M.allIn = true; M.t = Math.min(M.t, BUY_T + 2); net({ t: 'go' }); } }
+    }
+    // the more people, the fewer updates each sends (and the further back the rivals are drawn), so the relay keeps up
+    const humans = M.fs.filter(f => !f.isBot && !f.gone).length, gap = humans >= 6 ? 1 / 12 : humans >= 4 ? 1 / 15 : 1 / 20;
+    M.netDelay = Math.max(.1, gap * 2.2);
+    M.netT -= dt; if (M.netT > 0) return; M.netT = gap;
+    M.fullT = (M.fullT || 0) - gap; const full = M.fullT <= 0; if (full) M.fullT = 1;   // the things that rarely change go once a second
     // a host running bots sends all its fighters in one message (up to eight fighters: far fewer messages through the relay)
     const out = [];
     for (const f of M.fs) if (!f.net && !f.gone) out.push({ t: 's', f: f.key, x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
-      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, op: f.op, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0, rt: f.rating || 0, sk: (f.skins && f.skins[f.guns[f.slot]]) || 0 });
+      al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0 });
+    for (const q of out) { const f = M.byKey[q.f], sk = (f.skins && f.skins[f.guns[f.slot]]) || 0, key = f.op + '|' + q.g + '|' + sk;
+      if (full || f._sent !== key) { q.op = f.op; q.rt = f.rating || 0; q.sk = sk; f._sent = key; } }
+    for (const q of out) { for (const k of ['sc', 'pl', 'df', 'st', 'sp', 'sd']) if (!q[k]) delete q[k]; }   // zeros are the default: leave them out
     if (out.length === 1) net(out[0]); else if (out.length) net({ t: 'S', a: out.map(q => { delete q.t; return q; }) });
   }
   function netMsg(m) {
     if (!M || !M.online || M.over) return;
     if (m.t === 'S') { if (Array.isArray(m.a)) for (const q of m.a) if (q && typeof q === 'object') netMsg(Object.assign(q, { t: 's', from: m.from })); return; }   // several fighters' snapshots in one
     switch (m.t) {   // the host's calls
-      case 'live': if (!M.host) { M.phase = 'live'; M.t = roundT(); emit('live'); } return;
+      case 'live': if (!M.host) { M.allIn = true; M.phase = 'live'; M.t = roundT(); emit('live'); } return;
+      case 'go': if (!M.host && !M.allIn) { M.allIn = true; M.t = Math.min(M.t, BUY_T + 2); } return;   // everyone has loaded: the match starts together
       case 'end': if (!M.host) endRound(m.wi ^ (M.flip || 0), m.why); return;
       case 'rs': if (!M.host) startRound(m.n); return;
       case 'over': if (!M.host) matchOver(); return;
@@ -33,12 +48,13 @@
     const F = M.byKey[String(m.f != null ? m.f : (M.alias && M.alias[String(m.from)]) || m.from)];
     if (!F || !F.net) return;   // about nobody here, or about a fighter this device runs itself
     if (F.dc) F.dc = 0;
+    if (m.t === 'ld') { F.loaded = true; return; }
     if (m.t === 'gate') { const G = GATES[m.g | 0]; if (G && G.open !== !!m.o) toggleGate(m.g | 0, F, true); return; }   // someone used a gate's switch
     if (m.t === 'brk') { hitWall(m.b | 0, +m.d || 0, F, true); return; }   // someone shot a breakable wall
     switch (m.t) {
       case 's':
         { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && Math.hypot(sn[sn.length - 1].x - m.x, sn[sn.length - 1].z - m.z) > 6) sn.length = 0; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
-        if (m.rt) F.rating = m.rt; if (m.g) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
+        if (m.rt) F.rating = m.rt; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
         break;
@@ -63,7 +79,7 @@
   function netFollow(f, dt) {
     for (const k of ['flash', 'reveal', 'kick']) if (f[k] > 0) f[k] = Math.max(0, f[k] - dt);
     if (f.swing) { f.swing.t += dt; if (f.swing.t > .7) f.swing = null; }
-    const sn = f.snaps; if (!sn || !sn.length) return; const rt = M.time - .1; while (sn.length > 2 && sn[1].at <= rt) sn.shift();
+    const sn = f.snaps; if (!sn || !sn.length) return; const rt = M.time - (M.netDelay || .1); while (sn.length > 2 && sn[1].at <= rt) sn.shift();
     const a = sn[0], b = sn[1] || a, k = b === a || b.at - a.at < 1e-6 ? 1 : cl((rt - a.at) / (b.at - a.at), 0, 1.4);
     f.x = lp(a.x, b.x, k); f.y = lp(a.y, b.y, k); f.z = lp(a.z, b.z, k); f.yaw = a.yw + angDiff(b.yw, a.yw) * k; f.pitch = lp(a.pt, b.pt, k); f.vx = b.vx; f.vz = b.vz; f.walkT += Math.hypot(f.vx, f.vz) * dt;
   }

@@ -263,6 +263,7 @@
     g.save(); g.globalAlpha = ease; g.translate(slide, 0);
     g.fillStyle = acc; g.fillRect(x0, V.y0 + 70 * u, 8 * u, 150 * u);
     tx(g, 'NOW ENTERING', x0 + 26 * u, V.y0 + 86 * u, 14 * u, DIM, 'left', 800);
+    if (M.online && !M.allIn) { const hs = M.fs.filter(f => !f.isBot && !f.gone), n = hs.filter(f => f.loaded || f === P).length; tx(g, `WAITING FOR EVERYONE TO LOAD · ${n}/${hs.length}`, x0 + 26 * u, V.y0 + 60 * u, 14 * u, GOLD, 'left', 900); }
     tx(g, MAP.n.toUpperCase(), x0 + 22 * u, V.y0 + 140 * u, 86 * u, BONE, 'left', 900);
     tx(g, MAP.tag || TAGS[MAP.k] || '', x0 + 26 * u, V.y0 + 196 * u, 16 * u, '#c9cfd8', 'left', 600);
     if (MAP.tip) { g.save(); g.font = `700 ${fitPx(g, 14 * u)}px ${FONT}`; const tw = Math.min(g.measureText(MAP.tip).width + 30 * u, 620 * u); rr(g, x0 + 22 * u, V.y0 + 214 * u, tw, 30 * u, 6, 'rgba(12,16,22,.62)', acc, 1.5); g.restore();

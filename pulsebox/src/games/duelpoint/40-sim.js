@@ -543,6 +543,8 @@
   function tick(dt) {
     if (!M || M.over) return;
     M.time += dt; if (M.mode !== 'range') M.t -= dt;
+    // online, nobody starts until everyone has loaded: round one waits on the loading screen
+    if (M.online && !M.allIn && M.round === 1 && M.phase === 'buy') M.t = Math.max(M.t, BUY_T + LOAD_T);
     if (M.phase === 'buy' && M.host && M.mode !== 'range') {
       if (M.t > 1.5 && M.fs.every(f => f.ready)) M.t = 1.5;
       if (M.t <= 0) { M.phase = 'live'; M.t = roundT(); emit('live'); net({ t: 'live' }); }
