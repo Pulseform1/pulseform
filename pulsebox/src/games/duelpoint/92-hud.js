@@ -70,19 +70,19 @@
     if (o) pass('rgba(0,0,0,.8)', o); pass(c.col, 0); g.restore();
   }
 
-  /* the shotgun reticle: a ring as wide as the pellet spread really is (it opens up as you move or jump), four ticks on
-     it and a centre dot, in your crosshair colour with its outline */
+  /* the shotgun reticle: a ring as wide as the pellet spread really is (it opens up as you move or jump) with four ticks
+     on it, drawn round your own crosshair in its colour */
   function drawShotgunReticle(g, x, y, r, k = 1, c = CFG.xh) {
-    const th = Math.max(1, (c.thick || 2) * k * .75), o = c.outline ? Math.max(.5, (c.oth || 1.5) * Math.max(1, k * .8)) : 0, tick = 6 * k, d = Math.max(2, th * 1.1);
+    // the ring keeps its own look so a tiny, faint or outline-free custom crosshair never hides it: only the colour is yours
+    const th = Math.max(1.5, 1.6 * k), o = Math.max(1, 1.2 * k), tick = 6 * k;
     r = Math.max(10 * k, r);
-    g.save(); g.globalAlpha = c.alpha == null ? 1 : c.alpha; g.translate(x, y); g.lineCap = 'butt';
+    g.save(); g.globalAlpha = Math.max(.85, c.alpha == null ? 1 : c.alpha); g.translate(x, y); g.lineCap = 'butt';
     const pass = (col, e) => {
       g.strokeStyle = g.fillStyle = col; g.lineWidth = th + e * 2;
       for (let i = 0; i < 4; i++) { const a0 = i * TAU / 4 + .32, a1 = (i + 1) * TAU / 4 - .32; g.beginPath(); g.arc(0, 0, r, a0, a1); g.stroke(); }   // a ring broken at the ticks
       for (let i = 0; i < 4; i++) { const a = i * TAU / 4, cx = Math.cos(a), sy = Math.sin(a); g.beginPath(); g.moveTo(cx * (r - tick * .6), sy * (r - tick * .6)); g.lineTo(cx * (r + tick), sy * (r + tick)); g.stroke(); }
-      g.fillRect(-d / 2 - e, -d / 2 - e, d + e * 2, d + e * 2);
     };
-    if (o) pass('rgba(0,0,0,.8)', o); pass(c.col, 0); g.restore();
+    pass('rgba(0,0,0,.8)', o); pass(c.col || '#3affd0', 0); g.restore();
   }
 
   let hitMark = null, heard = null, mmCanvas = null;
@@ -361,7 +361,8 @@
     // the crosshair marks where a shot really goes: the view punch lifts the camera a little, so it sits that much lower
     const tf = Math.tan((X ? X.camera.fov : BASE_FOV) * D2R / 2), hh = (V.y1 - V.y0) / 2, cy = 360 + Math.tan(M.camKick || 0) / tf * hh;
     if (P.alive && !(P.scoped && G.scope) && !demo) {
-      if (G.cat === 'Shotgun' && G.pspr) drawShotgunReticle(g, 640, cy, Math.tan(spreadOf(P) + G.pspr * D2R) / tf * hh, Math.max(1, u * .85));
+      // shotguns: your own crosshair (whatever you designed) plus the spread ring round it
+      if (G.cat === 'Shotgun' && G.pspr) { drawShotgunReticle(g, 640, cy, Math.tan(spreadOf(P) + G.pspr * D2R) / tf * hh, Math.max(1, u * .85)); drawCrosshair(g, 640, cy, 0, Math.max(1, u * .85)); }
       else drawCrosshair(g, 640, cy, Math.tan(spreadOf(P)) / tf * hh, Math.max(1, u * .85));
     }
     // no hit marks over the crosshair; the range alone shows the damage each shot did

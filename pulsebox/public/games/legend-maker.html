@@ -393,7 +393,7 @@ const GAME = {
   const NICK = ['The Wall', 'Ice Cold', 'The Professor', 'Air Mail', 'Big Ticket', 'The Machine', 'Sky Walker', 'Mr. Clutch', 'The Last Dynasty', 'THE G.O.A.T.'];
   const LOVR = [72, 75, 78, 81, 84, 87, 90, 93, 96, 99];
   function ladderOpps(sp) { const r = seeded(Object.keys(SPORTS).indexOf(sp) * 991 + 7); return NICK.map((n, i) => ({ nick: n, name: FN[Math.floor(r() * FN.length)] + ' ' + LN[Math.floor(r() * LN.length)], O: LOVR[i], club: CLUBS[Math.floor(r() * CLUBS.length)], look: { skin: Math.floor(r() * 6), hair: Math.floor(r() * 8), hc: Math.floor(r() * 6), c1: 11, c2: 2, build: Math.floor(r() * 3), num: 1 + Math.floor(r() * 98) } })); }
-  let ladder = null, hofSel = -1, hofPick = false, lastRec = null;
+  let ladder = null, hofSel = -1, hofPick = false, lastRec = null, hofDel = -1, hofDelT = 0;
   function startLadder(rec) { if (!rec) return; sport = rec.sport; ladder = { rec, opps: ladderOpps(rec.sport), rung: 0, over: false, duel: null, best: rec.ladder || 0 }; mode = 'ladder'; K.sfx(600, .06, 'triangle', .06); }
   const DUEL_TYPES = ['bar', 'aim', 'combo', 'power', 'mash'];
   function newDuelRound() { const D = ladder.duel, o = ladder.opps[ladder.rung], O = ladder.rec.O, type = DUEL_TYPES[(D.w + D.l + ladder.rung) % DUEL_TYPES.length]; D.mg = MG(type, clamp(.45 + (o.O - O) * .035 + ladder.rung * .02, .03, .97), { title: 'CLUTCH MOMENT', sub: `Win 2 of 3 against "${o.nick}".`, words: { perfect: 'PERFECT!', hit: 'YOURS!', miss: 'THEIRS!' } }); }
@@ -1295,6 +1295,8 @@ const GAME = {
     if (hofPick !== true) button(g, 'arenago', { x: 160, y: 610, w: 340, h: 80 }, sel ? 'ARENA WITH ' + nm : 'PICK A LEGEND', sel ? '#ff5fa2' : '#2a2a3e', sel ? (sel.rating ? `Rating ${sel.rating} · ${sel.w || 0}-${sel.l || 0}` : 'Duel real players') : 'Tap a card above', sel ? '#141414' : '#7a8aa8');
     if (hofPick !== 'arena') button(g, 'ladgo', { x: 520, y: 610, w: 340, h: 80 }, sel ? `LADDER WITH ${nm}` : 'PICK A LEGEND', sel ? '#29e0ff' : '#2a2a3e', sel ? `Best: ${sel.goat ? 'beat them all 👑' : (sel.ladder || 0) + '/10 rungs'}` : 'Tap a card above', sel ? '#141414' : '#7a8aa8');
     button(g, 'home', { x: 880, y: 610, w: 220, h: 80 }, 'BACK', '#1f2a46', null, '#eef1f8');
+    // delete a legend: a second tap confirms, so nobody is lost by a slip
+    if (!hofPick && sel) { const sure = hofDel === hofSel && performance.now() - hofDelT < 4000; button(g, 'hofdel', { x: 1110, y: 610, w: 150, h: 80 }, sure ? 'TAP AGAIN' : 'DELETE', sure ? '#ff4a4a' : '#3a1f2a', sure ? 'to delete ' + nm : nm, sure ? '#141414' : '#ff9a9a'); }
   }
   function drawLadder(g) {
     const L = ladder, r = L.rec, S = SPORTS[r.sport];
@@ -1474,6 +1476,11 @@ const GAME = {
     if (k === 'vsdone' && mode === 'ready') { const w = ovr() > cpuOvr(); if (w) { L.vsW = (L.vsW || 0) + 1; K.coin(5); gainXP(25, 'Draft win'); } streak(); K.persist(); K.add(ovr()); return K.over({ title: w ? 'You win the draft!' : ovr() === cpuOvr() ? 'A tie' : 'The CPU wins', text: `${build.name} ${ovr()} overall vs the CPU's ${cpuOvr()}. Draft wins: ${L.vsW || 0}.`, delay: 50 }); }
     if (k === 'hof' || k === 'ladder' || k === 'arena' || k === 'hofa') { hofPick = k === 'ladder' ? true : k === 'arena' || k === 'hofa' ? 'arena' : false; hofSel = L.hof.length ? (hofSel >= 0 && hofSel < L.hof.length ? hofSel : 0) : -1; mode = 'hof'; arena = null; if (!L.hof.length && k !== 'hof') msg = { t: 'Create and retire a legend first.', k: 0 }; return; }
     if (k.startsWith('card') && mode === 'hof') { hofSel = +k.slice(4); K.sfx(700, .04, 'triangle', .05); return; }
+    if (k === 'hofdel' && mode === 'hof' && L.hof[hofSel]) {
+      if (hofDel !== hofSel || performance.now() - hofDelT > 4000) { hofDel = hofSel; hofDelT = performance.now(); K.sfx(330, .06, 'square', .04); return; }
+      const gone = L.hof.splice(hofSel, 1)[0]; hofDel = -1; hofSel = L.hof.length ? Math.min(hofSel, L.hof.length - 1) : -1; K.persist();
+      msg = { t: `${gone.name} has left your Hall of Fame.`, k: 0 }; K.sfx(180, .2, 'sawtooth', .05); return;
+    }
     if (k === 'ladgo') { const rec = mode === 'verdict' ? lastRec : L.hof[hofSel]; if (rec) startLadder(rec); return; }
     if (k === 'arenago') { const rec = mode === 'verdict' ? lastRec : L.hof[hofSel]; if (rec) openArena(rec); return; }
     if (k === 'arenaretry' && arena) return openArena(arena.rec);
@@ -1746,7 +1753,7 @@ K.over = (o = {}) => {
   // tell the Pulsebox hub (when it hosts this game) about the score: profiles, leaderboards and the daily challenge
   try { if (K.score > 0 && window.parent !== window) window.parent.postMessage({ pbx: 'score', score: Math.floor(K.score) }, location.origin); } catch (e) {}
 };
-function pause() { if (K.state !== 'play') return; K.state = 'paused'; showScr('sPause'); }
+function pause() { if (K.state !== 'play') return; if (GAME.noPause) { if (GAME.onPause) GAME.onPause(); return; } K.state = 'paused'; showScr('sPause'); }   // an online game keeps running: it shows its own menu instead
 function resume() { K.state = 'play'; showScr(null); last = performance.now(); }
 function toMenu() { refresh(); attract(); showScr('sTitle'); }
 
@@ -1768,6 +1775,7 @@ addEventListener('pointerup', e => { if (K.state === 'play' && GAME.up) { const 
 addEventListener('keydown', e => {
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.repeat && K.state !== 'play') return;
+  if (e.code === 'Escape' && K.state === 'play' && GAME.esc && GAME.esc()) return;   // a game can use Escape to step back out of its own sub-screens
   if (e.code === 'Escape' || e.code === 'KeyP') { if (K.state === 'play') pause(); else if (K.state === 'paused') resume(); return; }
   if ((e.code === 'Space' || e.code === 'Enter') && K.state !== 'play') {
     if (K.state === 'title' && !$('sTitle').hidden) start();
