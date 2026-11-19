@@ -9,7 +9,7 @@ async function open(tag, dev) {
   const ctx = await b.newContext(dev ? { ...devices[dev], ignoreHTTPSErrors: true } : { viewport: { width: 1280, height: 720 }, ignoreHTTPSErrors: true }), p = await ctx.newPage();
   p.on('pageerror', e => errs.push(tag + ': ' + e.message + ' @ ' + (e.stack || '').split('\n').slice(1, 3).join(' | ')));
   await p.addInitScript(() => { Object.defineProperty(Document.prototype, 'pointerLockElement', { get() { return document.getElementById('cv'); } }); Element.prototype.requestPointerLock = function () {}; try { localStorage.setItem('pbx-mp-name', 'Q' + Math.floor(Math.random() * 90 + 10)); } catch (e) {} });
-  await p.goto(URL0 + (URL0.startsWith('http') ? '?nc=' + Date.now() : ''));
+  await p.goto(URL0 + (URL0.startsWith("http") ? "?nc=" + Date.now() : ""), { timeout: 120000 });
   await p.waitForFunction(() => typeof GAME !== 'undefined' && GAME.test && GAME.test.ready(), null, { timeout: 60000 }); await p.waitForTimeout(600);
   await p.click('#bPlay'); await p.waitForTimeout(900);
   return p;

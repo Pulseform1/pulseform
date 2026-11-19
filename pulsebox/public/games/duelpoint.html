@@ -4800,6 +4800,7 @@ const GAME = {
   function keyEvent(c, d) {
     // crouch while sprinting is a slide (a short press, so toggle-crouch doesn't leave you ducked after it); otherwise toggle crouch flips on each fresh press
     if (KM[c] === 'crouch' && d && !keys.crouch) { if (M && me().sprinting) keys.slideAt = performance.now(); else if (CFG.crouch === 'toggle') keys.crouchT = !keys.crouchT; }
+    if (KM[c] === 'fire' && d && !keys.fire) mouse.tap = true;   // a quick V tap fires even if it starts and ends between two frames, like a click
     if (KM[c]) keys[KM[c]] = d;
     if (!d) return;
     if (screen === 'select') return selectKey(c);
