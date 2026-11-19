@@ -1,0 +1,10 @@
+{
+  "name": "frontier-hunter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A first-person 3D frontier hunting game: a campsite, a lantern, a campfire and an endless wilderness",
+  "scripts": { "build": "node ../tools/build-frontier.mjs" },
+  "dependencies": { "three": "0.180.0" },
+  "devDependencies": { "esbuild": "0.28.2" }
+}
