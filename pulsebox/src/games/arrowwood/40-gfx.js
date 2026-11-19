@@ -155,7 +155,7 @@
     const fill = new THREE.DirectionalLight(LC('#bcd6ef'), .35); fill.position.set(.6, .3, -.6); scene.add(fill);
     X.hemi = hemi; X.sun = sun;
     makeTextures(q);
-    makeSky(scene);
+    X.sky = makeSky(scene);
     // the first-person bow and hands draw on top, in their own little scene
     X.vmScene = new THREE.Scene(); X.vmCam = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, .01, 5);
     X.vmScene.add(new THREE.HemisphereLight(LC('#e8f3ff'), LC('#6a5a40'), .9)); X.vmSun = new THREE.DirectionalLight(LC('#fff1da'), 1.7); X.vmScene.add(X.vmSun);

@@ -184,17 +184,21 @@
   on('elim', m => { if (X) startFinisher(m); });
   function startFinisher(m) {
     const p = CL.players.get(m.v); if (!p) return; const P = ensureModel(p);
-    const f = { m, P, p, t: 0, kind: m.bow || 'longbow', mine: m.v === CL.me, objs: [], hit: false, dur: m.v === CL.me ? 2.2 : 1.7 };
+    const killer = CL.players.get(m.k), kpos = killer && (killer.id === CL.me ? ME.st : killer.vis);
+    const f = makeFin(m, P, p, m.v === CL.me, kpos ? Math.atan2(kpos.x - m.p[0], kpos.z - m.p[2]) : m.yaw + Math.PI);
+    if (f.mine) { ME.cam = 'finisher'; ME.fin = f; ME.deadAt = now(); finisherCam(f); }
+    emit('finisher', f);
+  }
+  // the finisher itself, on any archer model (the bow shop's stage uses this on its stand-in)
+  function makeFin(m, P, p, mine, fromYaw) {
+    const f = { m, P, p, t: 0, kind: m.bow || 'longbow', mine, objs: [], hit: false, dur: mine ? 2.2 : 1.7, fromYaw };
     if (FX[f.kind]) f.dur = (FX[f.kind].dur || 2.2) * (f.mine ? 1 : .8);
     P.fin = f; P.root.visible = true; P.root.position.set(m.p[0], m.p[1], m.p[2]); P.root.rotation.set(0, m.yaw, 0); P.draw = 0; P.raise = 0;
-    const killer = CL.players.get(m.k), kpos = killer && (killer.id === CL.me ? ME.st : killer.vis);
-    f.fromYaw = kpos ? Math.atan2(kpos.x - m.p[0], kpos.z - m.p[2]) : m.yaw + Math.PI;
     if (f.kind === 'cupid') for (let k = 0; k < 6; k++) { const h = new THREE.Mesh(heartGeo(.32, .14), bmat('bigHeart', { color: LC('#e0476b'), roughness: .3, metalness: .1, emissive: LC('#5a0f20') })); h.userData.k = k; X.scene.add(h); f.objs.push(h); }
     if (f.kind === 'cupid') { const big = new THREE.Mesh(heartGeo(1.5, .7), bmat('bigHeart', {})); big.visible = false; X.scene.add(big); f.big = big; f.objs.push(big); }
     if (f.kind === 'yardstick') { const r = new THREE.Mesh(new THREE.BoxGeometry(.9, 7.2, .16), [bmat('rulerS', { color: LC('#c9a24a') }), bmat('rulerS', {}), bmat('rulerS', {}), bmat('rulerS', {}), bmat('rulerBig', { map: TEX.ruler, roughness: .55 }), bmat('rulerBig', {})]);
       r.geometry.translate(0, 3.6, 0); const uv = r.geometry.attributes.uv; for (let i = 16; i < 24; i++) uv.setXY(i, uv.getY(i), uv.getX(i)); r.castShadow = true; X.scene.add(r); f.ruler = r; f.objs.push(r); }
-    if (f.mine) { ME.cam = 'finisher'; ME.fin = f; ME.deadAt = now(); finisherCam(f); }
-    emit('finisher', f);
+    return f;
   }
   const groundY = (x, z) => visH(x, z);
   function finisherCam(f) {
@@ -301,7 +305,7 @@
   }
   function visualUpdate(dt) {
     X.t += dt; X.wind.time.value = X.t; X.wind.amt.value = .85 + .35 * Math.sin(X.t * .23) + .15 * Math.sin(X.t * .71);
-    updateCharacters(dt); updateWildlife(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); updateCash(dt); updateDebris(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
+    updateCharacters(dt); updateWildlife(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); if (STG.on) stepStage(dt); updateCash(dt); updateDebris(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
     for (let i = PINGS.length - 1; i >= 0; i--) { const p = PINGS[i]; p.t += dt; p.g.children[0].scale.setScalar(.7 + Math.sin(X.t * 6) * .15); if (p.t > 7) { X.scene.remove(p.g); PINGS.splice(i, 1); } }
     if (X.tgtUpdate) X.tgtUpdate(dt, srvNow());
     const zone = X.zone, ot = CL.phase === 'overtime'; zone.visible = ot; if (ot) { const inn = CL.zoneIn || [0, 0], col = inn[0] && inn[1] ? '#f4f1e6' : inn[0] ? W.TEAMS[0].col : inn[1] ? W.TEAMS[1].col : '#e9c46a'; zone.material.uniforms.col.value.set(col); zone.material.uniforms.t.value = X.t; zone.material.uniforms.a.value = .55; }
@@ -313,6 +317,7 @@
   }
   // draw it (skipped by the automated multi-player checks, which still run everything above)
   function drawFrame() {
+    if (STG.on) drawStage();
     X.renderer.clear(); X.renderer.render(X.scene, X.camera);
     if (VM.g && VM.g.visible) { X.renderer.clearDepth(); X.vmCam.fov = 62; X.vmCam.updateProjectionMatrix(); X.vmSun.position.copy(X.sunDir); X.renderer.render(X.vmScene, X.vmCam); }
   }

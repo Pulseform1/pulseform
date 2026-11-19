@@ -67,7 +67,7 @@ body.demo .hud-pause, body.demo .mute { display: none; }
 <script>
 const W = 1280, H = 720;  // the game world; the kit scales it to fit the screen
 /* ARROWWOOD: first-person forest archery for two to eight friends. Take cover behind oaks and ruined walls in the
-   King's Wood, draw, and land the last arrow. 1v1 and 2v2 are first to five round wins; Free for All is two and a half
+   King's Wood, draw, and land the last arrow. 1v1 and 2v2 are first to three round wins; Free for All is two and a half
    minutes of one-shot eliminations. Every elimination ends in a finisher picked by the bow that landed the shot.
    The match itself runs on the server (arrowwood/server/engine.js, shared with the practice range here); this page
    draws it, plays its sound and reads the controls. arrowwood/README.md says how to run and ship it. */
@@ -569,7 +569,7 @@ const ENG = (() => {
    have done; arrows, hits, health, ammo, eliminations, round timers, scores and coin rewards are all decided here.
    The browser's practice range runs this same engine locally, with straw dummies in place of opponents.
 
-   Modes: '1v1' and '2v2' (first to five round wins, one life per round), 'ffa' (free for all: 2:30, most eliminations
+   Modes: '1v1' and '2v2' (first to three round wins, one life per round), 'ffa' (free for all: 2:30, most eliminations
    wins, one shot one kill, respawn somewhere new) and 'practice'. A team room can switch on one-shot rules.
 
    createRoom(opts) -> room; join(room, info, now) -> { id, token } | { err }; message(room, id, msg, now);
@@ -584,7 +584,7 @@ const TICK = 1 / 20;
 const NORMAL = { intro: 3.5, round: 80, ot: 40, capture: 6, end: 4.6, ffa: 150, respawn: 3.4, grace: 45, lobbyGrace: 25, ffaPick: 22 };
 const FAST = { intro: 1, round: 25, ot: 10, capture: 2.5, end: 2.6, ffa: 40, respawn: 2.2, grace: 8, lobbyGrace: 8, ffaPick: 6 };
 const SIZES = { '1v1': 2, '2v2': 4, ffa: 8, practice: 1 };
-const WIN_ROUNDS = 5;
+const WIN_ROUNDS = 3;
 const rid = n => { let s = ''; for (let i = 0; i < n; i++) s += 'abcdefghijkmnpqrstuvwxyz23456789'[Math.floor(Math.random() * 32)]; return s; };
 const r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000;
 const cleanName = n => String(n || '').replace(/[^\p{L}\p{N} _.'-]/gu, '').trim().slice(0, 16) || 'Archer';
@@ -1024,6 +1024,8 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   // auto: medium on a computer, low on a phone or tablet; if frames still run long at the smallest resolution, auto steps
   // down to low (no shadows) by itself. High is only ever picked by hand: many laptops have the cores but not the GPU for it
   const AUTOQ = { tier: 'medium' };
+  // the bow shop's stage: a little glade far outside the wood, where nothing from a match can see it
+  const STAGE = { x: -3000, y: 0, z: 0 }, onStage = p => !!p && p[0] < -1500;
   const quality = () => QS.get('quality') || (CFG.quality !== 'auto' ? CFG.quality : (isTouch() || /iPad|iPhone|Android/.test(navigator.userAgent)) ? 'low' : AUTOQ.tier);
 
   // the private player key: made once in this browser; the server keeps only a hash of it with your coins and bows
@@ -1449,7 +1451,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     const fill = new THREE.DirectionalLight(LC('#bcd6ef'), .35); fill.position.set(.6, .3, -.6); scene.add(fill);
     X.hemi = hemi; X.sun = sun;
     makeTextures(q);
-    makeSky(scene);
+    X.sky = makeSky(scene);
     // the first-person bow and hands draw on top, in their own little scene
     X.vmScene = new THREE.Scene(); X.vmCam = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, .01, 5);
     X.vmScene.add(new THREE.HemisphereLight(LC('#e8f3ff'), LC('#6a5a40'), .9)); X.vmSun = new THREE.DirectionalLight(LC('#fff1da'), 1.7); X.vmScene.add(X.vmSun);
@@ -1518,7 +1520,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     for (const p of PATHS) for (let i = 0; i < p.length - 1; i++) { const [ax, az] = p[i], [bx, bz] = p[i + 1], dx = bx - ax, dz = bz - az, t = cl(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz), 0, 1), d = Math.hypot(x - ax - dx * t, z - az - dz * t); if (d < best) best = d; }
     return best;
   }
-  const visH = (x, z) => { const cx = cl(x, 0, 140), cz = cl(z, 0, 140), out = Math.hypot(x - cx, z - cz); return W.terrainH(cx, cz) + out * .38; };
+  const visH = (x, z) => { if (x < -1500) return STAGE.y; const cx = cl(x, 0, 140), cz = cl(z, 0, 140), out = Math.hypot(x - cx, z - cz); return W.terrainH(cx, cz) + out * .38; };
   const treeNear = (x, z, r) => W.TREES.some(t => Math.hypot(t.x - x, t.z - z) < t.r + r);
   const boxNear = (x, z, m) => W.BOXES.some(b => { const dx = x - b.x, dz = z - b.z, lx = dx * b.c - dz * b.s, lz = dx * b.s + dz * b.c; return Math.abs(lx) < b.hx + m && Math.abs(lz) < b.hz + m; });
 
@@ -2639,17 +2641,21 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   on('elim', m => { if (X) startFinisher(m); });
   function startFinisher(m) {
     const p = CL.players.get(m.v); if (!p) return; const P = ensureModel(p);
-    const f = { m, P, p, t: 0, kind: m.bow || 'longbow', mine: m.v === CL.me, objs: [], hit: false, dur: m.v === CL.me ? 2.2 : 1.7 };
+    const killer = CL.players.get(m.k), kpos = killer && (killer.id === CL.me ? ME.st : killer.vis);
+    const f = makeFin(m, P, p, m.v === CL.me, kpos ? Math.atan2(kpos.x - m.p[0], kpos.z - m.p[2]) : m.yaw + Math.PI);
+    if (f.mine) { ME.cam = 'finisher'; ME.fin = f; ME.deadAt = now(); finisherCam(f); }
+    emit('finisher', f);
+  }
+  // the finisher itself, on any archer model (the bow shop's stage uses this on its stand-in)
+  function makeFin(m, P, p, mine, fromYaw) {
+    const f = { m, P, p, t: 0, kind: m.bow || 'longbow', mine, objs: [], hit: false, dur: mine ? 2.2 : 1.7, fromYaw };
     if (FX[f.kind]) f.dur = (FX[f.kind].dur || 2.2) * (f.mine ? 1 : .8);
     P.fin = f; P.root.visible = true; P.root.position.set(m.p[0], m.p[1], m.p[2]); P.root.rotation.set(0, m.yaw, 0); P.draw = 0; P.raise = 0;
-    const killer = CL.players.get(m.k), kpos = killer && (killer.id === CL.me ? ME.st : killer.vis);
-    f.fromYaw = kpos ? Math.atan2(kpos.x - m.p[0], kpos.z - m.p[2]) : m.yaw + Math.PI;
     if (f.kind === 'cupid') for (let k = 0; k < 6; k++) { const h = new THREE.Mesh(heartGeo(.32, .14), bmat('bigHeart', { color: LC('#e0476b'), roughness: .3, metalness: .1, emissive: LC('#5a0f20') })); h.userData.k = k; X.scene.add(h); f.objs.push(h); }
     if (f.kind === 'cupid') { const big = new THREE.Mesh(heartGeo(1.5, .7), bmat('bigHeart', {})); big.visible = false; X.scene.add(big); f.big = big; f.objs.push(big); }
     if (f.kind === 'yardstick') { const r = new THREE.Mesh(new THREE.BoxGeometry(.9, 7.2, .16), [bmat('rulerS', { color: LC('#c9a24a') }), bmat('rulerS', {}), bmat('rulerS', {}), bmat('rulerS', {}), bmat('rulerBig', { map: TEX.ruler, roughness: .55 }), bmat('rulerBig', {})]);
       r.geometry.translate(0, 3.6, 0); const uv = r.geometry.attributes.uv; for (let i = 16; i < 24; i++) uv.setXY(i, uv.getY(i), uv.getX(i)); r.castShadow = true; X.scene.add(r); f.ruler = r; f.objs.push(r); }
-    if (f.mine) { ME.cam = 'finisher'; ME.fin = f; ME.deadAt = now(); finisherCam(f); }
-    emit('finisher', f);
+    return f;
   }
   const groundY = (x, z) => visH(x, z);
   function finisherCam(f) {
@@ -2756,7 +2762,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   }
   function visualUpdate(dt) {
     X.t += dt; X.wind.time.value = X.t; X.wind.amt.value = .85 + .35 * Math.sin(X.t * .23) + .15 * Math.sin(X.t * .71);
-    updateCharacters(dt); updateWildlife(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); updateCash(dt); updateDebris(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
+    updateCharacters(dt); updateWildlife(dt); updateArrows(dt); for (const k in PS) PS[k].step(dt); updateFinishers(dt); if (STG.on) stepStage(dt); updateCash(dt); updateDebris(dt); updateCamera(dt); updateArc(); poseViewModel(dt);
     for (let i = PINGS.length - 1; i >= 0; i--) { const p = PINGS[i]; p.t += dt; p.g.children[0].scale.setScalar(.7 + Math.sin(X.t * 6) * .15); if (p.t > 7) { X.scene.remove(p.g); PINGS.splice(i, 1); } }
     if (X.tgtUpdate) X.tgtUpdate(dt, srvNow());
     const zone = X.zone, ot = CL.phase === 'overtime'; zone.visible = ot; if (ot) { const inn = CL.zoneIn || [0, 0], col = inn[0] && inn[1] ? '#f4f1e6' : inn[0] ? W.TEAMS[0].col : inn[1] ? W.TEAMS[1].col : '#e9c46a'; zone.material.uniforms.col.value.set(col); zone.material.uniforms.t.value = X.t; zone.material.uniforms.a.value = .55; }
@@ -2768,6 +2774,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   }
   // draw it (skipped by the automated multi-player checks, which still run everything above)
   function drawFrame() {
+    if (STG.on) drawStage();
     X.renderer.clear(); X.renderer.render(X.scene, X.camera);
     if (VM.g && VM.g.visible) { X.renderer.clearDepth(); X.vmCam.fov = 62; X.vmCam.updateProjectionMatrix(); X.vmSun.position.copy(X.sunDir); X.renderer.render(X.vmScene, X.vmCam); }
   }
@@ -3039,7 +3046,8 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     AU.birds = ac.createGain(); AU.birds.gain.value = 1; AU.birds.connect(AU.amb);
   }
   const t0 = () => AU.ac.currentTime;
-  function at(p, ref = 4, dest, cheap) { const ac = AU.ac, pn = ac.createPanner(); Object.assign(pn, { panningModel: cheap || dest === AU.birds ? 'equalpower' : 'HRTF', distanceModel: 'inverse', refDistance: ref, maxDistance: 90, rolloffFactor: 1.2 }); if (pn.positionX) { pn.positionX.value = p[0]; pn.positionY.value = p[1]; pn.positionZ.value = p[2]; } else pn.setPosition(p[0], p[1], p[2]); pn.connect(dest || AU.out); return pn; }
+  function at(p, ref = 4, dest, cheap) { const ac = AU.ac; if (onStage(p)) { const g = ac.createGain(); g.gain.value = STG.loud ? .8 : 0; g.connect(dest || AU.out); return g; }   // the shop's stage: heard as if it were here, once
+    const pn = ac.createPanner(); Object.assign(pn, { panningModel: cheap || dest === AU.birds ? 'equalpower' : 'HRTF', distanceModel: 'inverse', refDistance: ref, maxDistance: 90, rolloffFactor: 1.2 }); if (pn.positionX) { pn.positionX.value = p[0]; pn.positionY.value = p[1]; pn.positionZ.value = p[2]; } else pn.setPosition(p[0], p[1], p[2]); pn.connect(dest || AU.out); return pn; }
   function nz(dest, dur, f, q, type, g, delay = 0, sweepTo) { const ac = AU.ac, s = ac.createBufferSource(); s.buffer = AU.buf.white; const fl = ac.createBiquadFilter(); fl.type = type; fl.frequency.setValueAtTime(f, t0() + delay); if (sweepTo) fl.frequency.exponentialRampToValueAtTime(sweepTo, t0() + delay + dur); fl.Q.value = q; const a = ac.createGain(); a.gain.setValueAtTime(.0001, t0() + delay); a.gain.exponentialRampToValueAtTime(g, t0() + delay + .005); a.gain.exponentialRampToValueAtTime(.0001, t0() + delay + dur); s.connect(fl).connect(a).connect(dest); s.start(t0() + delay, Math.random() * 1.5); s.stop(t0() + delay + dur + .05); }
   function tone(dest, f, dur, type, g, delay = 0, to) { const ac = AU.ac, o = ac.createOscillator(), a = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t0() + delay); if (to) o.frequency.exponentialRampToValueAtTime(to, t0() + delay + dur); a.gain.setValueAtTime(.0001, t0() + delay); a.gain.exponentialRampToValueAtTime(g, t0() + delay + .004); a.gain.exponentialRampToValueAtTime(.0001, t0() + delay + dur); o.connect(a).connect(dest); o.start(t0() + delay); o.stop(t0() + delay + dur + .05); }
   const S = {
@@ -3247,11 +3255,11 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     if (m.by === CL.me) { HUD.hits.push({ t: now(), zone: m.zone, dmg: m.dmg, kill: m.hp <= 0, dist: m.dist, pw: m.pw }); if (AU.ready) (m.hp <= 0 ? S.elimMark() : S.hitmark(m.zone)); }
     if (m.v === CL.me) { HUD.hurtFlash = 1; ME.hurtAt = now(); const sh = CL.players.get(m.by), sp = sh && sh.vis; if (sp) HUD.hurtDir = Math.atan2(sp.x - ME.st.x, sp.z - ME.st.z); if (AU.ready) S.hurt(); }
   });
-  on('thwack', () => HUD.rulerFlash = 1);
+  on('thwack', p => { if (!onStage(p)) HUD.rulerFlash = 1; });
   on('toast', t => HUD.toast = { t, at: now() });
   on('tgtBreak', (i, p, mine, c) => { if (mine) HUD.toast = { t: `Target broken · +${c || W.TARGET.coins} coins`, at: now() }; });
   on('recovered', () => HUD.toast = { t: 'Arrow recovered', at: now() });
-  on('roundStart', m => { HUD.banner = { t: CL.mode === 'ffa' ? 'FREE FOR ALL' : `ROUND ${m.round}`, s: CL.mode === 'ffa' ? 'One shot, one kill · most eliminations in 2:30' : (m.score[0] === 4 && m.score[1] === 4 ? 'MATCH POINT · this round wins it' : `${W.TEAMS[0].n} ${m.score[0]}–${m.score[1]} ${W.TEAMS[1].n}`), at: now(), dur: 3 }; });
+  on('roundStart', m => { HUD.banner = { t: CL.mode === 'ffa' ? 'FREE FOR ALL' : `ROUND ${m.round}`, s: CL.mode === 'ffa' ? 'One shot, one kill · most eliminations in 2:30' : (m.score[0] === ENG.WIN_ROUNDS - 1 && m.score[1] === ENG.WIN_ROUNDS - 1 ? 'MATCH POINT · this round wins it' : `${W.TEAMS[0].n} ${m.score[0]}–${m.score[1]} ${W.TEAMS[1].n}`), at: now(), dur: 3 }; });
   on('go', () => { HUD.banner = { t: 'DRAW!', s: '', at: now(), dur: 1.1 }; });
   on('overtime', () => { HUD.banner = { t: 'OVERTIME', s: 'Hold the Stone Bridge clearing to win the round', at: now(), dur: 3 }; if (AU.ready) S.horn(); });
   on('roundEnd', m => { const mine = meP(), won = mine && m.winner === mine.team; const nm = m.winner === 'replay' ? 'ROUND REPLAYED' : `${W.TEAMS[m.winner].n.toUpperCase()} TAKE THE ROUND`;
@@ -3285,7 +3293,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
       txS(g, String(CL.score[0]), cx - 34, y + 24, 30, W.TEAMS[0].col, 'center', 900, 'Lilita One'); txS(g, '–', cx, y + 24, 24, BONE, 'center', 700); txS(g, String(CL.score[1]), cx + 34, y + 24, 30, W.TEAMS[1].col, 'center', 900, 'Lilita One');
       tx(g, W.TEAMS[0].n.toUpperCase(), x + 14, y + 24, 12, W.TEAMS[0].col, 'left', 900); tx(g, W.TEAMS[1].n.toUpperCase(), x + w - 14, y + 24, 12, W.TEAMS[1].col, 'right', 900);
       tx(g, CL.phase === 'overtime' ? `OVERTIME ${fmtT(remain)}` : CL.phase === 'intro' ? `ROUND ${CL.round} · get ready` : CL.phase === 'roundEnd' ? `ROUND ${CL.round}` : `ROUND ${CL.round} · ${fmtT(remain)}`, cx, y + 46, 12, CL.phase === 'overtime' ? GOLD : DIM, 'center', 800);
-      if (CL.score[0] === 4 && CL.score[1] === 4 && CL.phase !== 'results') txS(g, 'MATCH POINT', cx, y + 70, 12, GOLD, 'center', 900);
+      if (CL.score[0] === ENG.WIN_ROUNDS - 1 && CL.score[1] === ENG.WIN_ROUNDS - 1 && CL.phase !== 'results') txS(g, 'MATCH POINT', cx, y + 70, 12, GOLD, 'center', 900);
       // alive pips
       const tm = [0, 1].map(k => [...CL.players.values()].filter(p => p.team === k && !p.dummy)); tm.forEach((list, k) => list.forEach((p, i) => { g.fillStyle = p.alive ? W.TEAMS[k].col : 'rgba(255,255,255,.18)'; g.beginPath(); g.arc(k ? x + w + 14 + i * 14 : x - 14 - i * 14, y + 24, 5, 0, TAU); g.fill(); }));
     } else if (CL.src === 'online' && CL.mode === 'ffa') {
@@ -3379,7 +3387,10 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   #aw .bow{cursor:pointer;text-align:left}
   #aw .pn.shop{width:min(940px,96vw)} #aw .bowgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;max-height:62vh;overflow-y:auto;padding:6px 4px 10px;margin-top:8px}
   #aw .bowc{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 6px 10px;border:3px solid transparent;background:rgba(255,255,255,.1)} #aw .bowc img{width:100%;aspect-ratio:1;object-fit:contain;border-radius:10px;background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.3),rgba(0,0,0,.18))} #aw .bowc b{font-size:13px;line-height:1.1;text-align:center;min-height:2.2em;display:flex;align-items:center}
-  @media (max-width:640px){#aw .bowgrid{grid-template-columns:repeat(3,minmax(0,1fr))}} #aw canvas.prev{width:100%;height:260px;border-radius:16px;background:radial-gradient(circle at 50% 40%,#8fd0ff,#2a6fc9);cursor:grab;display:block}
+  @media (max-width:640px){#aw .bowgrid{grid-template-columns:repeat(3,minmax(0,1fr))}} #aw .stagebox{position:relative;height:min(300px,46vh);border:3px solid;border-radius:16px;overflow:hidden;background:#8cc8f2} #aw .stagebox canvas.stage{width:100%;height:100%;border-radius:0;display:block;cursor:pointer;background:#8cc8f2}
+  #aw .stagebox canvas.mini{position:absolute;right:8px;top:8px;width:112px;height:112px;border-radius:12px;border:2px solid rgba(255,255,255,.55);background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.5),rgba(16,32,58,.25));cursor:grab}
+  #aw .stagecap{position:absolute;left:10px;bottom:8px;padding:3px 9px;border-radius:9px;background:rgba(16,32,58,.62);color:#fff;font-size:12px;pointer-events:none}
+  #aw canvas.prev{width:100%;height:260px;border-radius:16px;background:radial-gradient(circle at 50% 40%,#8fd0ff,#2a6fc9);cursor:grab;display:block}
   #aw .top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
   #aw .rules li{margin:3px 0} #aw .rules{margin:6px 0 0 18px;padding:0;color:rgba(255,255,255,.9);font-size:14px;font-weight:700}
   #aw .slider{width:100%} #aw .bar{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);pointer-events:auto}
@@ -3448,11 +3459,11 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     }
   }
   function afterEquip() { sendRoom({ t: 'bow', bow: PROFILE.equipped }); if (X) buildViewModel(PROFILE.equipped, meP() ? teamCol(meP().team, meP().slot, CL.mode) : W.TEAMS[0].col); const me = meP(); if (me) me.bow = PROFILE.equipped; }
-  const MODES = { '1v1': ['1v1 DUEL', 'Two archers. First to five round wins.'], '2v2': ['2v2 AMBUSH', 'Bring a teammate. First to five round wins.'], ffa: ['FREE FOR ALL', 'Up to 8. 2½ minutes. One shot, one kill.'] };
+  const MODES = { '1v1': ['1v1 DUEL', 'Two archers. First to three round wins.'], '2v2': ['2v2 AMBUSH', 'Bring a teammate. First to three round wins.'], ffa: ['FREE FOR ALL', 'Up to 8. 2½ minutes. One shot, one kill.'] };
   const rulesFor = (mode, oneShot) => mode === 'ffa' ? ['Everyone for themselves, up to eight archers.', 'The match lasts 2½ minutes; most eliminations wins.', 'One shot, one kill: any hit takes someone out.', 'You come back a few seconds later somewhere new.', 'Six arrows each life; bundles come back every so often.'] :
-    ['First to <b>five round wins</b>. The score shows between rounds, like 3–2.', 'One life each per round. At <b>4–4</b>, the next round wins the match.', oneShot ? '<b>One-shot rules:</b> any hit eliminates.' : 'A full-draw headshot eliminates; strong body hits take two; weak shots and limb hits only wound.', 'Six arrows each round. Bundles of three wait in the open; you can pull your own misses out of trees and walls.', 'After 80 seconds the Stone Bridge clearing opens for overtime: hold it to win the round.', mode === '2v2' ? 'If you go down, you watch your teammate until the round ends.' : 'Both archers down on the same instant: the round is replayed.'];
+    ['First to <b>three round wins</b>. The score shows between rounds, like 2–1.', 'One life each per round. At <b>2–2</b>, the next round wins the match.', oneShot ? '<b>One-shot rules:</b> any hit eliminates.' : 'A full-draw headshot eliminates; strong body hits take two; weak shots and limb hits only wound.', 'Six arrows each round. Bundles of three wait in the open; you can pull your own misses out of trees and walls.', 'After 80 seconds the Stone Bridge clearing opens for overtime: hold it to win the round.', mode === '2v2' ? 'If you go down, you watch your teammate until the round ends.' : 'Both archers down on the same instant: the round is replayed.'];
   function render() {
-    if (!UI.el) return; const o = UI.open; UI.el.className = o ? 'on' : ''; if (!o) { UI.el.innerHTML = ''; stopShopPreview(); return; }
+    if (!UI.el) return; const o = UI.open; UI.el.className = o ? 'on' : ''; if (!o) { UI.el.innerHTML = ''; stopShopPreview(); stopStage(); return; }
     const focus = document.activeElement && document.activeElement.id; if ((focus === 'awName' || focus === 'awCode') && UI.el.querySelector('#' + focus)) { if (o === 'room') renderRoomPlayers(); return; }
     const coins = `<span class="coins">◆ ${PROFILE.loaded ? PROFILE.coins : '…'}</span>`;
     let h = '';
@@ -3469,7 +3480,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
       <div class="awrow"><input id="awCode" class="grow" maxlength="4" placeholder="ABCD" style="font-size:28px;letter-spacing:.3em;text-transform:uppercase;text-align:center" value="${esc(UI.code || '')}"><button class="go awbig" data-a="doJoin" ${UI.creating ? 'disabled' : ''}>${UI.creating ? 'Joining...' : 'Join'}</button></div>
       <p class="err">${esc(UI.joinErr)}</p><p class="muted">Your name: <b>${esc(myName())}</b> (change it in the room)</p></div>`;
     else if (o === 'bots') h = `<div class="pn"><div class="top"><h2>Play vs bots</h2><button data-a="back">Back</button></div><div class="awsub">A full match against computer archers, right here (no room, no wait). Matches with bots don't pay coins.</div>
-      <div class="awrow">${Object.entries({ '1v1': ['1v1 DUEL', 'You against one bot. First to five round wins.'], '2v2': ['2v2 AMBUSH', 'You and a bot partner against two bots.'], ffa: ['FREE FOR ALL', 'You and five bots, 2½ minutes, one shot one kill.'] }).map(([k, [n, d]]) => `<button class="grow ${UI.botMode === k ? 'sel' : ''}" data-a="botMode" data-v="${k}" style="min-width:180px;text-align:left"><b style="font-family:'Lilita One'">${n}</b><br><span class="muted">${d}</span></button>`).join('')}</div>
+      <div class="awrow">${Object.entries({ '1v1': ['1v1 DUEL', 'You against one bot. First to three round wins.'], '2v2': ['2v2 AMBUSH', 'You and a bot partner against two bots.'], ffa: ['FREE FOR ALL', 'You and five bots, 2½ minutes, one shot one kill.'] }).map(([k, [n, d]]) => `<button class="grow ${UI.botMode === k ? 'sel' : ''}" data-a="botMode" data-v="${k}" style="min-width:180px;text-align:left"><b style="font-family:'Lilita One'">${n}</b><br><span class="muted">${d}</span></button>`).join('')}</div>
       <div class="awrow" style="margin:12px 0">${[['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']].map(([k, n]) => `<button class="grow ${UI.botLevel === k ? 'sel' : ''}" data-a="botLevel" data-v="${k}">${n}</button>`).join('')}</div>
       <ul class="rules">${rulesFor(UI.botMode, UI.botMode === 'ffa').map(r => `<li>${r}</li>`).join('')}</ul>
       <button class="go awbig" data-a="botGo" style="width:100%">Start the match</button></div>`;
@@ -3492,6 +3503,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
       <button data-a="settings">Settings</button><button data-a="shop">Bow shop</button>${CL.src === 'online' ? '<button data-a="leave">Leave the match</button>' : ''}</div></div>`;
     UI.el.innerHTML = h;
     if (o === 'shop') { if (UI.shopView === 'detail') startShopPreview(); else makeThumbs(); }
+    if (!(o === 'shop' && UI.shopView === 'detail')) stopStage();
   }
   function roomPlayersHtml() {
     const me = CL.ids.online, host = CL.host === me, size = CL.lobby.length, ffa = CL.mode === 'ffa', need = { '1v1': 1, '2v2': 2 }[CL.mode];
@@ -3538,11 +3550,11 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     if (UI.shopView === 'detail') {
       const sel = W.BOWS.find(b => b.id === UI.shopSel) || W.BOWS[0], own = PROFILE.owned.includes(sel.id), eq = PROFILE.equipped === sel.id, tier = W.tierOf(sel.price), tc = TIER_COL[tier];
       return `<div class="pn shop"><div class="top"><button data-a="shopGrid">‹ All bows</button><h2 style="margin:0">Bow shop</h2><span>${coins}</span></div>
-        <div class="awrow" style="align-items:stretch"><div style="flex:1.3;min-width:260px"><canvas class="prev" id="awPrev" style="height:300px;border:3px solid ${tc}"></canvas><div class="muted" style="text-align:center;margin-top:4px">Drag to turn it</div></div>
+        <div class="awrow" style="align-items:stretch"><div style="flex:1.3;min-width:260px"><div class="stagebox" style="border-color:${tc}"><canvas class="prev stage" id="awStage"></canvas><canvas class="prev mini" id="awPrev"></canvas><span class="stagecap">${own ? 'Your finisher' : 'Finisher preview'} · tap to replay</span></div><div class="muted" style="text-align:center;margin-top:4px">Every elimination with this bow ends like this · drag the little bow to turn it</div></div>
         <div class="col" style="flex:1;min-width:240px"><span class="tag" style="background:${tc};color:#10203a;align-self:flex-start">${tier.toUpperCase()}</span><b style="font-family:'Lilita One';font-size:28px;color:#ffd23a;line-height:1.05">${esc(sel.n)}</b>
           <div><b>Look</b><div class="muted" style="font-size:14px">${esc(sel.d)}</div></div><div><b>Finisher</b><div class="muted" style="font-size:14px">${esc(sel.fin)}</div></div>
           <div class="muted">Every bow shoots exactly the same. A bow changes the look, the arrow trail and the finisher.</div>
-          <div class="awrow">${eq ? '<span class="tag gold">EQUIPPED</span>' : own ? `<button class="go awbig" data-a="equip">Equip</button>` : `<button class="go awbig" data-a="buy" ${PROFILE.coins < sel.price ? 'disabled' : ''}>Buy · ◆ ${sel.price.toLocaleString()}</button>`}<button data-a="previewFin">▶ Preview finisher</button></div>
+          <div class="awrow">${eq ? '<span class="tag gold">EQUIPPED</span>' : own ? `<button class="go awbig" data-a="equip">Equip</button>` : `<button class="go awbig" data-a="buy" ${PROFILE.coins < sel.price ? 'disabled' : ''}>Buy · ◆ ${sel.price.toLocaleString()}</button>`}<button data-a="previewFin">▶ Watch it full size</button></div>
           ${!own && PROFILE.coins < sel.price ? `<div class="muted">${(sel.price - PROFILE.coins).toLocaleString()} more coins needed.</div>${earn}` : ''}<div class="err">${esc(UI.shopErr || '')}</div></div></div></div>`;
     }
     return `<div class="pn shop"><div class="top"><h2 style="margin:0">Bow shop</h2><span>${coins}</span><button data-a="back">Back</button></div>${earn}
@@ -3563,9 +3575,10 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   function startShopPreview() {
     const c = document.getElementById('awPrev'); if (!c || !window.THREE || !TEX.bark) return;
     if (!UI.prev) { const r = new THREE.WebGLRenderer({ antialias: true, alpha: true }); r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.ACESFilmicToneMapping; const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(32, 1, .05, 20); cam.position.set(0, 0, 3.2); sc.add(new THREE.HemisphereLight(LC('#e8eef2'), LC('#4a3f2a'), .9)); const d = new THREE.DirectionalLight(LC('#ffe2b6'), 1.6); d.position.set(1, 1.5, 2); sc.add(d); UI.prev = { r, sc, cam, rot: .6, drag: null, skin: '', bow: null }; }
-    const P = UI.prev; c.replaceWith(P.r.domElement); P.r.domElement.className = 'prev'; P.r.domElement.id = 'awPrev'; const w = P.r.domElement.clientWidth || 360, h = 260; P.r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); P.r.setSize(w, h, false); P.cam.aspect = w / h; P.cam.updateProjectionMatrix();
+    const P = UI.prev; c.replaceWith(P.r.domElement); P.r.domElement.className = 'prev mini'; P.r.domElement.id = 'awPrev'; const w = P.r.domElement.clientWidth || 120, h = P.r.domElement.clientHeight || 120; P.r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); P.r.setSize(w, h, false); P.cam.aspect = w / h; P.cam.updateProjectionMatrix();
     if (P.skin !== UI.shopSel) { if (P.bow) P.sc.remove(P.bow.g); P.bow = makeBow(UI.shopSel); P.bow.g.rotation.z = .12; P.sc.add(P.bow.g); P.skin = UI.shopSel; }
     const el = P.r.domElement; el.onpointerdown = e => { P.drag = e.clientX; el.setPointerCapture(e.pointerId); }; el.onpointermove = e => { if (P.drag != null) { P.rot += (e.clientX - P.drag) * .012; P.drag = e.clientX; } }; el.onpointerup = () => P.drag = null;
+    startStage(document.getElementById('awStage'), UI.shopSel);
     if (!P.raf) { const loop = () => { if (UI.open !== 'shop') { P.raf = 0; return; } P.raf = requestAnimationFrame(loop); if (P.drag == null) P.rot += .008; P.bow.g.rotation.y = P.rot; P.bow.setDraw(.35 + Math.sin(performance.now() / 700) * .3, true); P.r.render(P.sc, P.cam); }; P.raf = requestAnimationFrame(loop); }
   }
   function stopShopPreview() { if (UI.prev && UI.prev.raf) { cancelAnimationFrame(UI.prev.raf); UI.prev.raf = 0; } }
@@ -3578,6 +3591,127 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
     startFinisher({ v: id, k: null, bow: skin, zone: 'body', p: [x, y, z], yaw: 0, d: [0, -.1, -1], kn: 'You', vn: 'Volunteer' });
     const f = FINS[FINS.length - 1]; if (f) { f.mine = true; ME.cam = 'finisher'; ME.fin = f; finisherCam(f); }
     setTimeout(() => { UI.previewing = false; const pp = CL.players.get(id); if (pp) { emit('playerGone', pp); CL.players.delete(id); } FINS.forEach(f => f.objs.forEach(o => o.parent && o.parent.remove(o))); FINS = []; if (BILLS) { BILLS.list = []; COINS3.list = []; } ME.cam = 'fp'; ME.fin = null; openMenu(back || 'shop'); }, 2900);
+  }
+  /* ---------- 86 stage: the bow shop's show. Open a bow and a stand-in archer draws on you, takes that bow's arrow
+     and gets its finisher, again and again, in a little glade three kilometres outside the wood (past the far plane of
+     every camera in a match). The main renderer draws the glade into a corner of its own canvas before each frame,
+     and that corner is copied into the shop's box; the frame then draws over it as usual. ---------- */
+  const STG = { on: false, built: false, skin: '', t: 0, f: null, P: null, arrow: null, el: null, ctx: null, cam: null, look: null,
+    loud: true, shake: 0, a: .35, camA: 1.1, far: 4, hi: 1.3, finDur: 2.2, blob: null, vp: null };
+  function buildStage() {
+    if (STG.built) return; STG.built = true;
+    const S = X.scene, cx = STAGE.x, cz = STAGE.z, R = W.rng(909), mat = o => new THREE.MeshStandardMaterial(Object.assign({ roughness: .8, metalness: 0 }, o));
+    // the grass: a wide disc, a little darker toward its rim, with a lighter worn patch where the stand-in stands
+    const gg = new THREE.CircleGeometry(30, 64, 0, TAU); gg.rotateX(-Math.PI / 2); gg.translate(cx, 0, cz);
+    const G0 = LC('#6cbd48'), G1 = LC('#4f9e3a'), WORN = LC('#9cc45a');
+    tint(gg, (x, y, z) => { const d = Math.hypot(x - cx, z - cz), k = cl(d / 22, 0, 1), w = 1 - cl((d - 1.2) / 1.6, 0, 1), n = .94 + .06 * Math.sin(x * 1.9 + z * .7) * Math.cos(z * 1.4);
+      return [lp(lp(G0.r, G1.r, k), WORN.r, w * .5) * n, lp(lp(G0.g, G1.g, k), WORN.g, w * .5) * n, lp(lp(G0.b, G1.b, k), WORN.b, w * .5) * n]; });
+    const ground = new THREE.Mesh(gg, mat({ vertexColors: true, roughness: .95 })); ground.receiveShadow = true; S.add(ground);
+    // a ring of trees so the glade has a wood behind it, and bushes, rocks and flowers inside the ring
+    const trunks = [], crowns = [], bush = [], rocks = [], flowers = [];
+    const clearOf = ang => Math.abs(angD(ang, STG.a)) > .55 && Math.abs(angD(ang, STG.camA)) > .6;   // nothing between the camera, the shooter and the stand-in
+    for (let k = 0; k < 18; k++) { const ang = k / 18 * TAU + R() * .2, d = 10.5 + R() * 5; if (!clearOf(ang) && d < 13) continue;
+      const t = { x: cx + Math.sin(ang) * d, z: cz + Math.cos(ang) * d, r: .35 + R() * .2, h: 6 + R() * 4, lean: [0, 0], kind: R() < .35 ? 'oak' : 'oak2', seed: (R() * 1e6) | 0 };
+      const [a, b] = treeGeos(t, 0); trunks.push(...a); crowns.push(...b); }
+    for (let k = 0; k < 9; k++) { const ang = R() * TAU, d = 4.5 + R() * 5; if (!clearOf(ang)) continue; const bx = cx + Math.sin(ang) * d, bz = cz + Math.cos(ang) * d, r = .6 + R() * .5, col = pick2(R, ['#3f9b3a', '#4aa83d', '#358f36', '#52b142']);
+      for (let j = 0; j < 3; j++) { const a = R() * TAU, dd = j ? r * .55 : 0, rr = r * (j ? .7 + R() * .2 : 1); bush.push(leafBall(R, rr, bx + Math.cos(a) * dd, rr * .55, bz + Math.sin(a) * dd, 1.1, .78, 1.1, col)); } }
+    for (let k = 0; k < 6; k++) { const ang = R() * TAU, d = 3 + R() * 7; if (!clearOf(ang)) continue; const g = new THREE.DodecahedronGeometry(.18 + R() * .25, 0); g.scale(1, .6, 1); g.translate(cx + Math.sin(ang) * d, .05, cz + Math.cos(ang) * d); tint(g, () => { const v = .5 + R() * .1; return [v, v, v * 1.02]; }); rocks.push(g); }
+    for (let k = 0; k < 70; k++) { const ang = R() * TAU, d = 2.2 + R() * 9; if (!clearOf(ang) && d < 6) continue; const c = LC(pick2(R, ['#ff5f9e', '#ffd23a', '#ff7a3a', '#c06bff', '#ffffff'])), g = new THREE.OctahedronGeometry(.07, 0);
+      g.translate(cx + Math.sin(ang) * d, .14, cz + Math.cos(ang) * d); tint(g, () => [c.r, c.g, c.b]); flowers.push(g); }
+    const add = (list, m, shadow) => { if (!list.length) return; const mesh = new THREE.Mesh(merge(list), m); mesh.castShadow = mesh.receiveShadow = !!shadow; S.add(mesh); list.forEach(g => g.dispose()); };
+    add(trunks, mat({ color: LC('#8a5a33'), vertexColors: true, roughness: .85 }), true); add(crowns, windify(mat({ vertexColors: true, roughness: .7 }), .25), true);
+    add(bush, windify(mat({ vertexColors: true, roughness: .72 }), .15), true); add(rocks, mat({ vertexColors: true, roughness: .9 })); add(flowers, mat({ vertexColors: true, roughness: .6 }));
+    // the stand-in (the far team's colours), and a soft shadow under it: the sun's shadows only follow the match camera
+    STG.P = makePerson({ col: W.TEAMS[1].col, seed: 31, bow: 'longbow' }); STG.P.stuck = []; STG.P.root.visible = false; S.add(STG.P.root);
+    const bg = new THREE.CircleGeometry(.62, 28); bg.rotateX(-Math.PI / 2); STG.blob = new THREE.Mesh(bg, new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .26, depthWrite: false }));
+    STG.blob.renderOrder = 2; STG.blob.position.set(cx, .02, cz); S.add(STG.blob);
+    STG.cam = new THREE.PerspectiveCamera(40, 1.4, .05, 260); STG.look = new THREE.Vector3(cx, 1, cz); STG.vp = new THREE.Vector4();
+  }
+  // show this bow (from the shop's detail page): `holder` is the element the stage's box takes the place of
+  function startStage(holder, skin) {
+    if (!X || !TEX.bark || !holder) return; buildStage();
+    if (!STG.el) { STG.el = document.createElement('canvas'); STG.ctx = STG.el.getContext('2d'); STG.el.onclick = () => { STG.loud = true; resetStage(); }; }
+    STG.el.className = 'prev stage'; STG.el.id = 'awStage'; if (holder !== STG.el) holder.replaceWith(STG.el);
+    if (STG.skin !== skin || !STG.on) { STG.skin = skin; STG.loud = true; resetStage(); }
+    STG.on = true; sizeStage();
+  }
+  function sizeStage() {
+    const el = STG.el, gl = X.renderer.domElement, dpr = Math.min(2, devicePixelRatio || 1);
+    const w = Math.min(gl.width, Math.round((el.clientWidth || 360) * dpr)), h = Math.min(gl.height, Math.round((el.clientHeight || 280) * dpr));
+    if (el.width !== w || el.height !== h) { el.width = w; el.height = h; }
+  }
+  function stopStage() {
+    if (!STG.built) return; STG.on = false; clearStageFx(); STG.P.root.visible = false; STG.blob.visible = false;
+  }
+  // take down the last show: its props, the arrow, any blocks and bank notes still lying in the glade
+  function clearStageFx() {
+    const P = STG.P;
+    if (STG.f) { STG.f.objs.forEach(o => o.parent && o.parent.remove(o)); STG.f = null; }
+    if (STG.arrow) { X.scene.remove(STG.arrow); STG.arrow = null; }
+    P.stuck.forEach(m => m.parent && m.parent.remove(m)); P.stuck = [];
+    for (let i = DEBRIS.length - 1; i >= 0; i--) { const m = DEBRIS[i].m; if (m.position.x < -1500) { X.scene.remove(m); DEBRIS.splice(i, 1); } }
+    for (let i = FLOATS.length - 1; i >= 0; i--) { const s = FLOATS[i].s; if (s.position.x < -1500) { X.scene.remove(s); FLOATS.splice(i, 1); } }
+    if (BILLS) for (const B of [BILLS, COINS3]) B.list = B.list.filter(b => b.x > -1500);
+    if (THWACK && THWACK.position.x < -1500) THWACK.visible = false;
+    P.fin = null; resetDeath(P);
+  }
+  function resetStage() {
+    if (!STG.built) return; clearStageFx();
+    const k = STG.skin, D = FX[k];
+    STG.far = (D && D.far || (k === 'cashout' ? 4.2 : k === 'yardstick' ? 5.2 : 3.4)) * 1.2; STG.hi = D && D.hi || (k === 'yardstick' ? 2.1 : 1.3);
+    STG.finDur = D && D.dur || (k === 'cupid' ? 2.4 : 2.2); STG.t = 0; STG.shake = 0; STG.look.set(STAGE.x, 1.05, STAGE.z);
+    STG.P.root.visible = true; STG.P.lastPos = null;
+  }
+  const ST_HIT = .85, ST_FLY = .2;
+  function stepStage(dt) {
+    if (!STG.el || !STG.el.isConnected) { stopStage(); return; }
+    const P = STG.P, a = STG.a, x0 = STAGE.x, z0 = STAGE.z, T = STG.t += dt, fx = Math.sin(a), fz = Math.cos(a);   // (fx, fz): toward the archer who shoots
+    if (!STG.f) {
+      // the stand-in raises its bow and draws on you...
+      const k = cl((T - .1) / .55, 0, 1);
+      posePerson(P, { x: x0, y: 0, z: z0, yaw: a + Math.PI, pitch: -.03, crouch: false, sprint: false, draw: k * k, aim: k > 0 ? 1 : 0, arrows: 6, inAir: false }, dt);
+      // ...and your arrow gets there first
+      if (T > ST_HIT - ST_FLY) {
+        if (!STG.arrow) { STG.arrow = makeArrowMesh(STG.skin); X.scene.add(STG.arrow); }
+        const u = cl((T - (ST_HIT - ST_FLY)) / ST_FLY, 0, 1), A = [x0 + fx * 9, 1.62, z0 + fz * 9], B = [x0 + fx * .16, 1.3, z0 + fz * .16], m = STG.arrow;
+        const p = [lp(A[0], B[0], u), lp(A[1], B[1], u), lp(A[2], B[2], u)]; m.position.set(p[0], p[1], p[2]); m.lookAt(p[0] + A[0] - B[0], p[1] + A[1] - B[1], p[2] + A[2] - B[2]);
+        const sk = STG.skin, col = TRAIL[sk] || (TRAILC[sk] || (TRAILC[sk] = trailOf(sk))), q = STG.lastTrail || p;
+        for (let j = 0; j < 4; j++) { const v = j / 4; PS.trail.add(lp(q[0], p[0], v), lp(q[1], p[1], v), lp(q[2], p[2], v), 0, 0, 0, { life: .3, size: .15, col, a: .85, g: 0 }); }
+        STG.lastTrail = p;
+        if (u >= 1) {
+          STG.lastTrail = null; P.root.updateMatrixWorld(true); P.chest.attach(m); P.stuck.push(m); STG.arrow = null;
+          burst('spark', B, 12, { col: [1, .95, .7], size: .08, sp: 2.5, life: .35 });
+          const msg = { v: 'stage', k: null, bow: sk, zone: 'body', p: [x0, 0, z0], yaw: a + Math.PI, d: [-fx, -.05, -fz], kn: 'You', vn: 'Stand-in' };
+          const f = makeFin(msg, P, null, false, a); f.dur = STG.finDur; f.cam = { a: STG.camA, cam: STG.cam.position.clone(), dist: STG.far };
+          if (f.ruler) placeRuler(f, STG.camA + Math.PI / 2);
+          STG.f = f;
+        }
+      }
+    } else {
+      // the finisher, exactly as it plays in a match (it shakes this little camera, not yours)
+      const f = STG.f, sh = X.shake; f.t += dt; stepFinisher(f, dt); if (X.shake > sh) STG.shake = Math.max(STG.shake, X.shake); X.shake = sh;
+      if (f.t > STG.finDur + 1.4) { STG.loud = false; resetStage(); }   // again, quietly: tap the box to hear it once more
+    }
+    // the soft shadow stays under the body while it is there
+    const R = P.root; STG.blob.visible = R.visible; STG.blob.position.set(R.position.x, .02, R.position.z); STG.blob.scale.setScalar(cl(R.scale.x, .1, 1.6) / (1 + Math.max(0, R.position.y) * .35));
+    // the camera: three-quarters on, the way the finisher camera frames it, drifting a little
+    const f = STG.f, camA = STG.camA = a + .78 + Math.sin(X.t * .3) * .07;
+    let dist = STG.far; if (f && f.kind === 'cashout') dist *= 1 + sm(cl((f.t - .2) / 1.2, 0, 1)) * .55;
+    const ly = f ? (f.camY != null ? f.camY : f.kind === 'yardstick' && f.hit ? .3 : 1) : 1.05;
+    STG.look.lerp(new THREE.Vector3(x0, ly, z0), 1 - Math.exp(-6 * dt));
+    const c = STG.cam; c.position.set(x0 + Math.sin(camA) * dist, 1 + STG.hi, z0 + Math.cos(camA) * dist);
+    if (STG.shake > 0) { STG.shake = Math.max(0, STG.shake - dt * 2.5); c.position.x += (Math.random() - .5) * .1 * STG.shake; c.position.y += (Math.random() - .5) * .1 * STG.shake; }
+    c.lookAt(STG.look);
+  }
+  // draw the glade into the bottom-left corner of the main canvas, copy it into the shop's box; the frame then draws over it
+  function drawStage() {
+    const el = STG.el; if (!el || !el.isConnected || !STG.cam) return; sizeStage();
+    const r = X.renderer, gl = r.domElement, pr = r.getPixelRatio(), w = el.width, h = el.height; if (w < 8 || h < 8) return;
+    r.getViewport(STG.vp); const sky = X.sky, sp = sky && sky.position.clone();
+    STG.cam.aspect = w / h; STG.cam.updateProjectionMatrix(); if (sky) sky.position.copy(STG.cam.position);
+    r.setScissorTest(true); r.setViewport(0, 0, w / pr, h / pr); r.setScissor(0, 0, w / pr, h / pr); r.clear(); r.render(X.scene, STG.cam);
+    STG.ctx.drawImage(gl, 0, gl.height - h, w, h, 0, 0, w, h);
+    r.setScissorTest(false); r.setViewport(STG.vp); if (sky) sky.position.copy(sp);
   }
   /* ---------- 99 main: the kit's hooks, start-up, and a handle for the automated checks ---------- */
   let booted = false, ready = false, failed = false, lastDraw = 0, roomQ = (QS.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
@@ -3623,7 +3757,7 @@ return { createRoom, drain, join, drop, message, addBot, fillBots, tick, settle,
   GAME.bot = () => {};
   // for the browser checks (tools/arrowwood-*.mjs) and for poking at by hand from the console
   GAME.test = {
-    get ready() { return ready; }, get X() { return X; }, WILD, updateWildlife, deerVisit, CL, ME, UI, IN, W, ENG, VM, makeBow, PROFILE, KEY, SERVER, act, openMenu, closeMenu, startDraw, release, cancelDraw, connect, startPractice, startBotMatch, botRoom, leaveRoom, send, sendRoom, meP, previewNow, renderFrame, readInput,
+    get ready() { return ready; }, get X() { return X; }, WILD, updateWildlife, deerVisit, STG, CL, ME, UI, IN, W, ENG, VM, makeBow, PROFILE, KEY, SERVER, act, openMenu, closeMenu, startDraw, release, cancelDraw, connect, startPractice, startBotMatch, botRoom, leaveRoom, send, sendRoom, meP, previewNow, renderFrame, readInput,
     tp: (x, z, yaw = 0, pitch = 0) => { ME.st.x = x; ME.st.z = z; ME.st.y = W.groundAt(x, z, W.terrainH(x, z) + 3); ME.st.yaw = yaw; ME.st.pitch = pitch; send({ t: 'dev', tp: [x, ME.st.y, z], yaw, pitch }); },
     aimAt: (x, y, z, power = 1) => { const full = W.isFull(power), o = W.shotOrigin(ME.st, full), d = Math.hypot(x - o[0], z - o[2]), v = W.launchSpeed(power), g = W.GRAV, h = y - o[1]; const disc = v ** 4 - g * (g * d * d + 2 * h * v * v); ME.st.yaw = Math.atan2(-(x - o[0]), -(z - o[2])); ME.st.pitch = full ? Math.atan2(h, d) : disc < 0 ? .7 : Math.atan((v * v - Math.sqrt(disc)) / (g * d)); },
     pos: () => ({ x: ME.st.x, y: ME.st.y, z: ME.st.z, yaw: ME.st.yaw, pitch: ME.st.pitch }),

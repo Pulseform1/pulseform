@@ -1,5 +1,5 @@
 /* ARROWWOOD: first-person forest archery for two to eight friends. Take cover behind oaks and ruined walls in the
-   King's Wood, draw, and land the last arrow. 1v1 and 2v2 are first to five round wins; Free for All is two and a half
+   King's Wood, draw, and land the last arrow. 1v1 and 2v2 are first to three round wins; Free for All is two and a half
    minutes of one-shot eliminations. Every elimination ends in a finisher picked by the bow that landed the shot.
    The match itself runs on the server (arrowwood/server/engine.js, shared with the practice range here); this page
    draws it, plays its sound and reads the controls. arrowwood/README.md says how to run and ship it. */

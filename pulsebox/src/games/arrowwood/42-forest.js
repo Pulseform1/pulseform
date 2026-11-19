@@ -30,7 +30,7 @@
     for (const p of PATHS) for (let i = 0; i < p.length - 1; i++) { const [ax, az] = p[i], [bx, bz] = p[i + 1], dx = bx - ax, dz = bz - az, t = cl(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz), 0, 1), d = Math.hypot(x - ax - dx * t, z - az - dz * t); if (d < best) best = d; }
     return best;
   }
-  const visH = (x, z) => { const cx = cl(x, 0, 140), cz = cl(z, 0, 140), out = Math.hypot(x - cx, z - cz); return W.terrainH(cx, cz) + out * .38; };
+  const visH = (x, z) => { if (x < -1500) return STAGE.y; const cx = cl(x, 0, 140), cz = cl(z, 0, 140), out = Math.hypot(x - cx, z - cz); return W.terrainH(cx, cz) + out * .38; };
   const treeNear = (x, z, r) => W.TREES.some(t => Math.hypot(t.x - x, t.z - z) < t.r + r);
   const boxNear = (x, z, m) => W.BOXES.some(b => { const dx = x - b.x, dz = z - b.z, lx = dx * b.c - dz * b.s, lz = dx * b.s + dz * b.c; return Math.abs(lx) < b.hx + m && Math.abs(lz) < b.hz + m; });
 

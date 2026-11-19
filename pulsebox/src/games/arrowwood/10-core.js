@@ -24,6 +24,8 @@
   // auto: medium on a computer, low on a phone or tablet; if frames still run long at the smallest resolution, auto steps
   // down to low (no shadows) by itself. High is only ever picked by hand: many laptops have the cores but not the GPU for it
   const AUTOQ = { tier: 'medium' };
+  // the bow shop's stage: a little glade far outside the wood, where nothing from a match can see it
+  const STAGE = { x: -3000, y: 0, z: 0 }, onStage = p => !!p && p[0] < -1500;
   const quality = () => QS.get('quality') || (CFG.quality !== 'auto' ? CFG.quality : (isTouch() || /iPad|iPhone|Android/.test(navigator.userAgent)) ? 'low' : AUTOQ.tier);
 
   // the private player key: made once in this browser; the server keeps only a hash of it with your coins and bows

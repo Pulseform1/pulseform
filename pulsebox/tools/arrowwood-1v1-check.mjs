@@ -1,7 +1,7 @@
 // ARROWWOOD: two separate browser sessions play a whole 1v1 match against a real multiplayer server.
 //   node arrowwood/server/node-server.js --dev &   then   node tools/arrowwood-1v1-check.mjs [base URL] [screenshot dir]
 // The host makes a room in the menus; the guest opens the invite link; both ready up; the host shoots real arrows
-// (mouse-equivalent draw and release, aimed with the same ballistics the game uses) until someone has five round wins.
+// (mouse-equivalent draw and release, aimed with the same ballistics the game uses) until someone has three round wins.
 import { createRequire } from 'module';
 const { chromium } = createRequire(import.meta.url)('playwright');
 const BASE = process.argv[2] || 'http://localhost:8790', OUT = process.argv[3] || '';
@@ -52,7 +52,7 @@ for (let r = 0; r < 12; r++) {
 }
 ok(seen.scores.length >= 5, 'rounds end on a confirmed elimination and the score counts up', seen.scores.join(' '));
 const results = await until(host, () => GAME.test.CL.results, null, 15000);
-ok(results && Math.max(...results.score) === 5, 'first to five round wins: the match ends', results && results.score.join('–'));
+ok(results && Math.max(...results.score) === 3, 'first to three round wins: the match ends', results && results.score.join('–'));
 ok(seen.finisherGuest >= 4, 'the eliminated archer sees the third-person finisher', seen.finisherGuest);
 const coinsH = results && results.coins[await T(host, () => GAME.test.CL.ids.online)], coinsG = results && results.coins[await T(guest, () => GAME.test.CL.ids.online)];
 const idH = await T(host, () => GAME.test.CL.ids.online), rowsH = (results && results.coinRows || {})[idH] || [], sumH = rowsH.reduce((a, r) => a + r[1], 0);

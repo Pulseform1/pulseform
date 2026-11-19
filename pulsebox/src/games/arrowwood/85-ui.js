@@ -23,7 +23,10 @@
   #aw .bow{cursor:pointer;text-align:left}
   #aw .pn.shop{width:min(940px,96vw)} #aw .bowgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;max-height:62vh;overflow-y:auto;padding:6px 4px 10px;margin-top:8px}
   #aw .bowc{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 6px 10px;border:3px solid transparent;background:rgba(255,255,255,.1)} #aw .bowc img{width:100%;aspect-ratio:1;object-fit:contain;border-radius:10px;background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.3),rgba(0,0,0,.18))} #aw .bowc b{font-size:13px;line-height:1.1;text-align:center;min-height:2.2em;display:flex;align-items:center}
-  @media (max-width:640px){#aw .bowgrid{grid-template-columns:repeat(3,minmax(0,1fr))}} #aw canvas.prev{width:100%;height:260px;border-radius:16px;background:radial-gradient(circle at 50% 40%,#8fd0ff,#2a6fc9);cursor:grab;display:block}
+  @media (max-width:640px){#aw .bowgrid{grid-template-columns:repeat(3,minmax(0,1fr))}} #aw .stagebox{position:relative;height:min(300px,46vh);border:3px solid;border-radius:16px;overflow:hidden;background:#8cc8f2} #aw .stagebox canvas.stage{width:100%;height:100%;border-radius:0;display:block;cursor:pointer;background:#8cc8f2}
+  #aw .stagebox canvas.mini{position:absolute;right:8px;top:8px;width:112px;height:112px;border-radius:12px;border:2px solid rgba(255,255,255,.55);background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.5),rgba(16,32,58,.25));cursor:grab}
+  #aw .stagecap{position:absolute;left:10px;bottom:8px;padding:3px 9px;border-radius:9px;background:rgba(16,32,58,.62);color:#fff;font-size:12px;pointer-events:none}
+  #aw canvas.prev{width:100%;height:260px;border-radius:16px;background:radial-gradient(circle at 50% 40%,#8fd0ff,#2a6fc9);cursor:grab;display:block}
   #aw .top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
   #aw .rules li{margin:3px 0} #aw .rules{margin:6px 0 0 18px;padding:0;color:rgba(255,255,255,.9);font-size:14px;font-weight:700}
   #aw .slider{width:100%} #aw .bar{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);pointer-events:auto}
@@ -92,11 +95,11 @@
     }
   }
   function afterEquip() { sendRoom({ t: 'bow', bow: PROFILE.equipped }); if (X) buildViewModel(PROFILE.equipped, meP() ? teamCol(meP().team, meP().slot, CL.mode) : W.TEAMS[0].col); const me = meP(); if (me) me.bow = PROFILE.equipped; }
-  const MODES = { '1v1': ['1v1 DUEL', 'Two archers. First to five round wins.'], '2v2': ['2v2 AMBUSH', 'Bring a teammate. First to five round wins.'], ffa: ['FREE FOR ALL', 'Up to 8. 2½ minutes. One shot, one kill.'] };
+  const MODES = { '1v1': ['1v1 DUEL', 'Two archers. First to three round wins.'], '2v2': ['2v2 AMBUSH', 'Bring a teammate. First to three round wins.'], ffa: ['FREE FOR ALL', 'Up to 8. 2½ minutes. One shot, one kill.'] };
   const rulesFor = (mode, oneShot) => mode === 'ffa' ? ['Everyone for themselves, up to eight archers.', 'The match lasts 2½ minutes; most eliminations wins.', 'One shot, one kill: any hit takes someone out.', 'You come back a few seconds later somewhere new.', 'Six arrows each life; bundles come back every so often.'] :
-    ['First to <b>five round wins</b>. The score shows between rounds, like 3–2.', 'One life each per round. At <b>4–4</b>, the next round wins the match.', oneShot ? '<b>One-shot rules:</b> any hit eliminates.' : 'A full-draw headshot eliminates; strong body hits take two; weak shots and limb hits only wound.', 'Six arrows each round. Bundles of three wait in the open; you can pull your own misses out of trees and walls.', 'After 80 seconds the Stone Bridge clearing opens for overtime: hold it to win the round.', mode === '2v2' ? 'If you go down, you watch your teammate until the round ends.' : 'Both archers down on the same instant: the round is replayed.'];
+    ['First to <b>three round wins</b>. The score shows between rounds, like 2–1.', 'One life each per round. At <b>2–2</b>, the next round wins the match.', oneShot ? '<b>One-shot rules:</b> any hit eliminates.' : 'A full-draw headshot eliminates; strong body hits take two; weak shots and limb hits only wound.', 'Six arrows each round. Bundles of three wait in the open; you can pull your own misses out of trees and walls.', 'After 80 seconds the Stone Bridge clearing opens for overtime: hold it to win the round.', mode === '2v2' ? 'If you go down, you watch your teammate until the round ends.' : 'Both archers down on the same instant: the round is replayed.'];
   function render() {
-    if (!UI.el) return; const o = UI.open; UI.el.className = o ? 'on' : ''; if (!o) { UI.el.innerHTML = ''; stopShopPreview(); return; }
+    if (!UI.el) return; const o = UI.open; UI.el.className = o ? 'on' : ''; if (!o) { UI.el.innerHTML = ''; stopShopPreview(); stopStage(); return; }
     const focus = document.activeElement && document.activeElement.id; if ((focus === 'awName' || focus === 'awCode') && UI.el.querySelector('#' + focus)) { if (o === 'room') renderRoomPlayers(); return; }
     const coins = `<span class="coins">◆ ${PROFILE.loaded ? PROFILE.coins : '…'}</span>`;
     let h = '';
@@ -113,7 +116,7 @@
       <div class="awrow"><input id="awCode" class="grow" maxlength="4" placeholder="ABCD" style="font-size:28px;letter-spacing:.3em;text-transform:uppercase;text-align:center" value="${esc(UI.code || '')}"><button class="go awbig" data-a="doJoin" ${UI.creating ? 'disabled' : ''}>${UI.creating ? 'Joining...' : 'Join'}</button></div>
       <p class="err">${esc(UI.joinErr)}</p><p class="muted">Your name: <b>${esc(myName())}</b> (change it in the room)</p></div>`;
     else if (o === 'bots') h = `<div class="pn"><div class="top"><h2>Play vs bots</h2><button data-a="back">Back</button></div><div class="awsub">A full match against computer archers, right here (no room, no wait). Matches with bots don't pay coins.</div>
-      <div class="awrow">${Object.entries({ '1v1': ['1v1 DUEL', 'You against one bot. First to five round wins.'], '2v2': ['2v2 AMBUSH', 'You and a bot partner against two bots.'], ffa: ['FREE FOR ALL', 'You and five bots, 2½ minutes, one shot one kill.'] }).map(([k, [n, d]]) => `<button class="grow ${UI.botMode === k ? 'sel' : ''}" data-a="botMode" data-v="${k}" style="min-width:180px;text-align:left"><b style="font-family:'Lilita One'">${n}</b><br><span class="muted">${d}</span></button>`).join('')}</div>
+      <div class="awrow">${Object.entries({ '1v1': ['1v1 DUEL', 'You against one bot. First to three round wins.'], '2v2': ['2v2 AMBUSH', 'You and a bot partner against two bots.'], ffa: ['FREE FOR ALL', 'You and five bots, 2½ minutes, one shot one kill.'] }).map(([k, [n, d]]) => `<button class="grow ${UI.botMode === k ? 'sel' : ''}" data-a="botMode" data-v="${k}" style="min-width:180px;text-align:left"><b style="font-family:'Lilita One'">${n}</b><br><span class="muted">${d}</span></button>`).join('')}</div>
       <div class="awrow" style="margin:12px 0">${[['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']].map(([k, n]) => `<button class="grow ${UI.botLevel === k ? 'sel' : ''}" data-a="botLevel" data-v="${k}">${n}</button>`).join('')}</div>
       <ul class="rules">${rulesFor(UI.botMode, UI.botMode === 'ffa').map(r => `<li>${r}</li>`).join('')}</ul>
       <button class="go awbig" data-a="botGo" style="width:100%">Start the match</button></div>`;
@@ -136,6 +139,7 @@
       <button data-a="settings">Settings</button><button data-a="shop">Bow shop</button>${CL.src === 'online' ? '<button data-a="leave">Leave the match</button>' : ''}</div></div>`;
     UI.el.innerHTML = h;
     if (o === 'shop') { if (UI.shopView === 'detail') startShopPreview(); else makeThumbs(); }
+    if (!(o === 'shop' && UI.shopView === 'detail')) stopStage();
   }
   function roomPlayersHtml() {
     const me = CL.ids.online, host = CL.host === me, size = CL.lobby.length, ffa = CL.mode === 'ffa', need = { '1v1': 1, '2v2': 2 }[CL.mode];
@@ -182,11 +186,11 @@
     if (UI.shopView === 'detail') {
       const sel = W.BOWS.find(b => b.id === UI.shopSel) || W.BOWS[0], own = PROFILE.owned.includes(sel.id), eq = PROFILE.equipped === sel.id, tier = W.tierOf(sel.price), tc = TIER_COL[tier];
       return `<div class="pn shop"><div class="top"><button data-a="shopGrid">‹ All bows</button><h2 style="margin:0">Bow shop</h2><span>${coins}</span></div>
-        <div class="awrow" style="align-items:stretch"><div style="flex:1.3;min-width:260px"><canvas class="prev" id="awPrev" style="height:300px;border:3px solid ${tc}"></canvas><div class="muted" style="text-align:center;margin-top:4px">Drag to turn it</div></div>
+        <div class="awrow" style="align-items:stretch"><div style="flex:1.3;min-width:260px"><div class="stagebox" style="border-color:${tc}"><canvas class="prev stage" id="awStage"></canvas><canvas class="prev mini" id="awPrev"></canvas><span class="stagecap">${own ? 'Your finisher' : 'Finisher preview'} · tap to replay</span></div><div class="muted" style="text-align:center;margin-top:4px">Every elimination with this bow ends like this · drag the little bow to turn it</div></div>
         <div class="col" style="flex:1;min-width:240px"><span class="tag" style="background:${tc};color:#10203a;align-self:flex-start">${tier.toUpperCase()}</span><b style="font-family:'Lilita One';font-size:28px;color:#ffd23a;line-height:1.05">${esc(sel.n)}</b>
           <div><b>Look</b><div class="muted" style="font-size:14px">${esc(sel.d)}</div></div><div><b>Finisher</b><div class="muted" style="font-size:14px">${esc(sel.fin)}</div></div>
           <div class="muted">Every bow shoots exactly the same. A bow changes the look, the arrow trail and the finisher.</div>
-          <div class="awrow">${eq ? '<span class="tag gold">EQUIPPED</span>' : own ? `<button class="go awbig" data-a="equip">Equip</button>` : `<button class="go awbig" data-a="buy" ${PROFILE.coins < sel.price ? 'disabled' : ''}>Buy · ◆ ${sel.price.toLocaleString()}</button>`}<button data-a="previewFin">▶ Preview finisher</button></div>
+          <div class="awrow">${eq ? '<span class="tag gold">EQUIPPED</span>' : own ? `<button class="go awbig" data-a="equip">Equip</button>` : `<button class="go awbig" data-a="buy" ${PROFILE.coins < sel.price ? 'disabled' : ''}>Buy · ◆ ${sel.price.toLocaleString()}</button>`}<button data-a="previewFin">▶ Watch it full size</button></div>
           ${!own && PROFILE.coins < sel.price ? `<div class="muted">${(sel.price - PROFILE.coins).toLocaleString()} more coins needed.</div>${earn}` : ''}<div class="err">${esc(UI.shopErr || '')}</div></div></div></div>`;
     }
     return `<div class="pn shop"><div class="top"><h2 style="margin:0">Bow shop</h2><span>${coins}</span><button data-a="back">Back</button></div>${earn}
@@ -207,9 +211,10 @@
   function startShopPreview() {
     const c = document.getElementById('awPrev'); if (!c || !window.THREE || !TEX.bark) return;
     if (!UI.prev) { const r = new THREE.WebGLRenderer({ antialias: true, alpha: true }); r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.ACESFilmicToneMapping; const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(32, 1, .05, 20); cam.position.set(0, 0, 3.2); sc.add(new THREE.HemisphereLight(LC('#e8eef2'), LC('#4a3f2a'), .9)); const d = new THREE.DirectionalLight(LC('#ffe2b6'), 1.6); d.position.set(1, 1.5, 2); sc.add(d); UI.prev = { r, sc, cam, rot: .6, drag: null, skin: '', bow: null }; }
-    const P = UI.prev; c.replaceWith(P.r.domElement); P.r.domElement.className = 'prev'; P.r.domElement.id = 'awPrev'; const w = P.r.domElement.clientWidth || 360, h = 260; P.r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); P.r.setSize(w, h, false); P.cam.aspect = w / h; P.cam.updateProjectionMatrix();
+    const P = UI.prev; c.replaceWith(P.r.domElement); P.r.domElement.className = 'prev mini'; P.r.domElement.id = 'awPrev'; const w = P.r.domElement.clientWidth || 120, h = P.r.domElement.clientHeight || 120; P.r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); P.r.setSize(w, h, false); P.cam.aspect = w / h; P.cam.updateProjectionMatrix();
     if (P.skin !== UI.shopSel) { if (P.bow) P.sc.remove(P.bow.g); P.bow = makeBow(UI.shopSel); P.bow.g.rotation.z = .12; P.sc.add(P.bow.g); P.skin = UI.shopSel; }
     const el = P.r.domElement; el.onpointerdown = e => { P.drag = e.clientX; el.setPointerCapture(e.pointerId); }; el.onpointermove = e => { if (P.drag != null) { P.rot += (e.clientX - P.drag) * .012; P.drag = e.clientX; } }; el.onpointerup = () => P.drag = null;
+    startStage(document.getElementById('awStage'), UI.shopSel);
     if (!P.raf) { const loop = () => { if (UI.open !== 'shop') { P.raf = 0; return; } P.raf = requestAnimationFrame(loop); if (P.drag == null) P.rot += .008; P.bow.g.rotation.y = P.rot; P.bow.setDraw(.35 + Math.sin(performance.now() / 700) * .3, true); P.r.render(P.sc, P.cam); }; P.raf = requestAnimationFrame(loop); }
   }
   function stopShopPreview() { if (UI.prev && UI.prev.raf) { cancelAnimationFrame(UI.prev.raf); UI.prev.raf = 0; } }

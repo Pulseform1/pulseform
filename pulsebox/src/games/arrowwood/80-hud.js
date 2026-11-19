@@ -10,11 +10,11 @@
     if (m.by === CL.me) { HUD.hits.push({ t: now(), zone: m.zone, dmg: m.dmg, kill: m.hp <= 0, dist: m.dist, pw: m.pw }); if (AU.ready) (m.hp <= 0 ? S.elimMark() : S.hitmark(m.zone)); }
     if (m.v === CL.me) { HUD.hurtFlash = 1; ME.hurtAt = now(); const sh = CL.players.get(m.by), sp = sh && sh.vis; if (sp) HUD.hurtDir = Math.atan2(sp.x - ME.st.x, sp.z - ME.st.z); if (AU.ready) S.hurt(); }
   });
-  on('thwack', () => HUD.rulerFlash = 1);
+  on('thwack', p => { if (!onStage(p)) HUD.rulerFlash = 1; });
   on('toast', t => HUD.toast = { t, at: now() });
   on('tgtBreak', (i, p, mine, c) => { if (mine) HUD.toast = { t: `Target broken · +${c || W.TARGET.coins} coins`, at: now() }; });
   on('recovered', () => HUD.toast = { t: 'Arrow recovered', at: now() });
-  on('roundStart', m => { HUD.banner = { t: CL.mode === 'ffa' ? 'FREE FOR ALL' : `ROUND ${m.round}`, s: CL.mode === 'ffa' ? 'One shot, one kill · most eliminations in 2:30' : (m.score[0] === 4 && m.score[1] === 4 ? 'MATCH POINT · this round wins it' : `${W.TEAMS[0].n} ${m.score[0]}–${m.score[1]} ${W.TEAMS[1].n}`), at: now(), dur: 3 }; });
+  on('roundStart', m => { HUD.banner = { t: CL.mode === 'ffa' ? 'FREE FOR ALL' : `ROUND ${m.round}`, s: CL.mode === 'ffa' ? 'One shot, one kill · most eliminations in 2:30' : (m.score[0] === ENG.WIN_ROUNDS - 1 && m.score[1] === ENG.WIN_ROUNDS - 1 ? 'MATCH POINT · this round wins it' : `${W.TEAMS[0].n} ${m.score[0]}–${m.score[1]} ${W.TEAMS[1].n}`), at: now(), dur: 3 }; });
   on('go', () => { HUD.banner = { t: 'DRAW!', s: '', at: now(), dur: 1.1 }; });
   on('overtime', () => { HUD.banner = { t: 'OVERTIME', s: 'Hold the Stone Bridge clearing to win the round', at: now(), dur: 3 }; if (AU.ready) S.horn(); });
   on('roundEnd', m => { const mine = meP(), won = mine && m.winner === mine.team; const nm = m.winner === 'replay' ? 'ROUND REPLAYED' : `${W.TEAMS[m.winner].n.toUpperCase()} TAKE THE ROUND`;
@@ -48,7 +48,7 @@
       txS(g, String(CL.score[0]), cx - 34, y + 24, 30, W.TEAMS[0].col, 'center', 900, 'Lilita One'); txS(g, '–', cx, y + 24, 24, BONE, 'center', 700); txS(g, String(CL.score[1]), cx + 34, y + 24, 30, W.TEAMS[1].col, 'center', 900, 'Lilita One');
       tx(g, W.TEAMS[0].n.toUpperCase(), x + 14, y + 24, 12, W.TEAMS[0].col, 'left', 900); tx(g, W.TEAMS[1].n.toUpperCase(), x + w - 14, y + 24, 12, W.TEAMS[1].col, 'right', 900);
       tx(g, CL.phase === 'overtime' ? `OVERTIME ${fmtT(remain)}` : CL.phase === 'intro' ? `ROUND ${CL.round} · get ready` : CL.phase === 'roundEnd' ? `ROUND ${CL.round}` : `ROUND ${CL.round} · ${fmtT(remain)}`, cx, y + 46, 12, CL.phase === 'overtime' ? GOLD : DIM, 'center', 800);
-      if (CL.score[0] === 4 && CL.score[1] === 4 && CL.phase !== 'results') txS(g, 'MATCH POINT', cx, y + 70, 12, GOLD, 'center', 900);
+      if (CL.score[0] === ENG.WIN_ROUNDS - 1 && CL.score[1] === ENG.WIN_ROUNDS - 1 && CL.phase !== 'results') txS(g, 'MATCH POINT', cx, y + 70, 12, GOLD, 'center', 900);
       // alive pips
       const tm = [0, 1].map(k => [...CL.players.values()].filter(p => p.team === k && !p.dummy)); tm.forEach((list, k) => list.forEach((p, i) => { g.fillStyle = p.alive ? W.TEAMS[k].col : 'rgba(255,255,255,.18)'; g.beginPath(); g.arc(k ? x + w + 14 + i * 14 : x - 14 - i * 14, y + 24, 5, 0, TAU); g.fill(); }));
     } else if (CL.src === 'online' && CL.mode === 'ffa') {

@@ -9,7 +9,7 @@ crosshair; anything less arcs under gravity. While you draw, a dotted aim line s
 and a ring marks where the arrow will land; leaves let arrows through, so the line passes through them too. Settings can
 cut it back to a short arc.
 
-- **1v1 and 2v2**: first to five round wins. One life per round, six arrows per round, an overtime capture zone at
+- **1v1 and 2v2**: first to three round wins. One life per round, six arrows per round, an overtime capture zone at
   the Stone Bridge clearing after 80 seconds. A host can switch on **one-shot rules** for a room.
 - **Free for All**: up to 8 archers, 2 minutes 30, most eliminations wins. One shot, one kill. You respawn
   somewhere new.
@@ -141,7 +141,7 @@ Start a server first. The local one is `node arrowwood/server/node-server.js --d
 `npx wrangler dev --local --var ARROWWOOD_DEV:1` (port 8787), then:
 
 ```
-node tools/arrowwood-1v1-check.mjs   http://localhost:8790   # two browsers: room, invite link, a full match to five, finishers, coins once, refresh on results, rematch
+node tools/arrowwood-1v1-check.mjs   http://localhost:8790   # two browsers: room, invite link, a full match to three, finishers, coins once, refresh on results, rematch
 node tools/arrowwood-2v2-check.mjs   http://localhost:8790   # four browsers: teams, spectate your teammate, survivors keep playing
 node tools/arrowwood-shot-check.mjs  http://localhost:8790   # quick vs full draw, the dotted arc vs the real flight, walls and trees stop arrows
 node tools/arrowwood-bows-check.mjs  http://localhost:8790   # buy and equip, reload keeps them, Cashout and Yardstick finishers in a 2v2

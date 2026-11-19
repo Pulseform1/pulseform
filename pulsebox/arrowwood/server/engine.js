@@ -3,7 +3,7 @@
    have done; arrows, hits, health, ammo, eliminations, round timers, scores and coin rewards are all decided here.
    The browser's practice range runs this same engine locally, with straw dummies in place of opponents.
 
-   Modes: '1v1' and '2v2' (first to five round wins, one life per round), 'ffa' (free for all: 2:30, most eliminations
+   Modes: '1v1' and '2v2' (first to three round wins, one life per round), 'ffa' (free for all: 2:30, most eliminations
    wins, one shot one kill, respawn somewhere new) and 'practice'. A team room can switch on one-shot rules.
 
    createRoom(opts) -> room; join(room, info, now) -> { id, token } | { err }; message(room, id, msg, now);
@@ -19,7 +19,7 @@ export const TICK = 1 / 20;
 const NORMAL = { intro: 3.5, round: 80, ot: 40, capture: 6, end: 4.6, ffa: 150, respawn: 3.4, grace: 45, lobbyGrace: 25, ffaPick: 22 };
 const FAST = { intro: 1, round: 25, ot: 10, capture: 2.5, end: 2.6, ffa: 40, respawn: 2.2, grace: 8, lobbyGrace: 8, ffaPick: 6 };
 export const SIZES = { '1v1': 2, '2v2': 4, ffa: 8, practice: 1 };
-export const WIN_ROUNDS = 5;
+export const WIN_ROUNDS = 3;
 const rid = n => { let s = ''; for (let i = 0; i < n; i++) s += 'abcdefghijkmnpqrstuvwxyz23456789'[Math.floor(Math.random() * 32)]; return s; };
 const r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000;
 const cleanName = n => String(n || '').replace(/[^\p{L}\p{N} _.'-]/gu, '').trim().slice(0, 16) || 'Archer';

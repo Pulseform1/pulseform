@@ -1,4 +1,4 @@
-// ARROWWOOD round rules in Node (no browser): overtime capture, a same-tick double wipe replays the round, the 4–4
+// ARROWWOOD round rules in Node (no browser): overtime capture, a same-tick double wipe replays the round, the 2–2
 // decider, damage by zone and draw, friendly fire off, a quiver that never runs out, targets and their coins.   node tools/arrowwood-rules-test.mjs
 import * as E from '../arrowwood/server/engine.js';
 import * as W from '../arrowwood/shared/world.js';
@@ -58,10 +58,10 @@ function shootAt(room, from, to, zoneY, power = 1) {   // a real arrow from `fro
   step(room, 1); for (const f of ids) { const s = P(f).st; E.message(room, f, { t: 'fire', cid: 1, yaw: s.yaw, pitch: s.pitch, dt: 1 }); }
   step(room, 2); const r = E.drain(room).filter(o => o.m.t === 'round').map(o => o.m)[0];
   ok(r && r.winner === 'replay' && r.reason === 'wipe' && room.score.join('') === '00', 'both archers down on the same tick: the round is replayed', r && `${r.winner} ${r.reason} ${room.score.join('-')}`); }
-// the 4–4 decider: flagged, and the next round wins the match
-{ const { room, ids, P } = match('1v1'); room.score = [4, 4]; tp(room, ids[0], 70, 100); tp(room, ids[1], 70, 75, Math.PI); step(room, .2);
+// the 2–2 decider: flagged, and the next round wins the match
+{ const { room, ids, P } = match('1v1'); room.score = [2, 2]; tp(room, ids[0], 70, 100); tp(room, ids[1], 70, 75, Math.PI); step(room, .2);
   shootAt(room, ids[0], ids[1], 1.62); step(room, 1.5); const r = E.drain(room).filter(o => o.m.t === 'round').map(o => o.m)[0]; step(room, 3);
-  ok(r && r.score.join('-') === '5-4' && room.phase === 'results', 'at 4–4 the next round wins the match', r && r.score.join('-')); }
+  ok(r && r.score.join('-') === '3-2' && room.phase === 'results', 'at 2–2 the next round wins the match', r && r.score.join('-')); }
 // arrows: the quiver never runs out
 { const { room, ids, P } = match('1v1'); const me = P(ids[0]); tp(room, ids[0], 70, 100); step(room, .2); const n0 = me.st.arrows; let fired = 0;
   for (let k = 0; k < 12; k++) { E.message(room, ids[0], { t: 'in', s: 1, p: [me.st.x, me.st.y, me.st.z], yaw: 0, pitch: -.3 }); E.message(room, ids[0], { t: 'draw' }); step(room, .3); const before = room.nextId; E.message(room, ids[0], { t: 'fire', cid: 10 + k, yaw: 0, pitch: -.3, dt: .3 }); step(room, .4); if (room.nextId > before) fired++; }
