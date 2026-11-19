@@ -83,7 +83,7 @@ export class Campfire {
   }
   update(dt, night, windVec) {
     this.t += dt; const u = this.u;
-    if (this.lit) this.fuel = Math.max(0, this.fuel - dt / 900); // a full fire burns about 15 minutes of play
+    if (this.lit) this.fuel = Math.max(0, this.fuel - dt / 600); // a full fire burns about 15 minutes of play
     if (this.fuel <= 0) this.lit = false;
     const target = this.lit ? Math.min(1, .25 + this.fuel) : 0;
     u.uFuel.value += (target - u.uFuel.value) * Math.min(1, dt * 1.5);
@@ -105,4 +105,5 @@ export class Campfire {
     }
   }
   addFuel(a = 0.35) { this.fuel = Math.min(1, this.fuel + a); this.lit = true; }
+  ignite() { this.lit = true; this.fuel = Math.max(this.fuel, .45); this.heat = Math.max(this.heat, .4); }
 }

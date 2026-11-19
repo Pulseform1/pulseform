@@ -34,7 +34,7 @@ export class Player {
     this.vel.x += (want.x - this.vel.x) * Math.min(1, acc * dt); this.vel.z += (want.z - this.vel.z) * Math.min(1, acc * dt);
     if (!this.swimming && n[1] < 0.62) { this.vel.x += n[0] * 9 * dt; this.vel.z += n[2] * 9 * dt; }
     // jump and gravity
-    if (input.hit('Space') && this.onGround && !this.swimming && !this.crouched) { this.vy = 4.3; this.onGround = false; }
+    if (input.hit('Space') && !this.frozen && this.onGround && !this.swimming && !this.crouched) { this.vy = 4.3; this.onGround = false; }
     this.vy -= 15 * dt;
     let nx = this.pos.x + this.vel.x * dt, nz = this.pos.z + this.vel.z * dt;
     // collisions, twice to settle corners

@@ -128,5 +128,16 @@ export class Flora {
       for (let i = 0; i < c.length; i += 3) { const dx = c[i] - x, dz = c[i + 1] - z, rr = c[i + 2] + rad; if (dx * dx + dz * dz < rr * rr) fn(c[i], c[i + 1], c[i + 2]); }
     }
   }
+  // placed things of the given kinds within r of (x, z)
+  propsNear(x, z, r, kinds) { return this.scan(x, z, r, 'props', kinds); }
+  treesNear(x, z, r, kinds) { return this.scan(x, z, r, 'trees', kinds); }
+  scan(x, z, r, list, kinds) {
+    const out = [], c0 = Math.floor((x - r) / CHUNK), c1 = Math.floor((x + r) / CHUNK), d0 = Math.floor((z - r) / CHUNK), d1 = Math.floor((z + r) / CHUNK);
+    for (let cz = d0; cz <= d1; cz++) for (let cx = c0; cx <= c1; cx++) {
+      const ch = this.chunks.get(cx + ',' + cz); if (!ch || !ch.data) continue; const p = ch.data[list];
+      for (let i = 0; i < p.length; i += 6) if (kinds.includes(p[i + 5]) && (p[i] - x) ** 2 + (p[i + 2] - z) ** 2 < r * r) out.push({ x: p[i], z: p[i + 2], kind: p[i + 5], s: p[i + 4] });
+    }
+    return out;
+  }
   progress(cam, r = 160) { let w = 0, h = 0; for (const ch of this.chunks.values()) { if (Math.hypot((ch.cx + .5) * CHUNK - cam.x, (ch.cz + .5) * CHUNK - cam.z) < r) { w++; if (ch.data) h++; } } return w ? h / w : 0; }
 }
