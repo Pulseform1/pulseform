@@ -28,9 +28,9 @@
   // a fighter's position for drawing: between the last two ticks, unless it jumped (a respawn, a Blink)
   const ipos = (f, k) => { const p = f['p' + k]; return p == null || Math.abs(f[k] - p) > 1.5 ? f[k] : lp(p, f[k], tickA); };
   // who attacks: one side for rounds 1 to 4, the other for 5 to 8, and a side fixed at the start for a decider
-  const attIdx = () => M.mode === 'range' ? 0 : M.round <= 4 ? M.att0 : M.round <= 8 ? 1 - M.att0 : M.decAtt;
+  const attIdx = () => M.mode === 'range' ? 0 : M.round <= HALF() ? M.att0 : M.round <= 2 * HALF() ? 1 - M.att0 : M.decAtt;
   const sideOf = f => f.team === attIdx() ? 'att' : 'def';
-  const pistolRound = n => n === 1 || n === 5;
+  const pistolRound = n => n === 1 || n === HALF() + 1;
   function giveAmmo(f, k) { const G = GUNS[k]; if (G && !G.melee) f.ammo[k] = { mag: G.mag, res: G.res }; }
   const say = (s, c) => { M.say = { s, c: c || BONE, t: 0 }; emit('say', s, c); };
 
@@ -455,7 +455,7 @@
     M.fs.forEach(f => {
       const side = sideOf(f), sp = SPAWN[side], p = sp[(n + order.filter(q => sideOf(q) === side).indexOf(f)) % sp.length];
       if (!f.alive || pistolRound(n) || decider) { f.guns = { 1: null, 2: 'pip', 3: 'knife' }; f.sh = 0; f.ammo = {}; f.smokes = 0; }   // you keep what you survived with
-      if (!f.net && n === 5) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
+      if (!f.net && n === HALF() + 1) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, surge: 0, cloak: 0, daze: 0, snare: 0, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
       f.ab.e = 1; if (n === 1 || n === WIN_ROUNDS || decider) f.ab.q = 0; if (n === 1) f.ult = 0;
       Object.assign(f, { guard: 0, od: 0, phase: 0, lock: 0, chan: null, volley: null, orbT: 0 });
@@ -464,7 +464,7 @@
       if (f.bot) { if (M.auto && !f.bot.dummy) { const L = diffFor(M.rating + M.adj); f.bot = { diff: L.i, D: L.D }; } else f.bot = { diff: f.bot.diff, D: f.bot.D, dummy: f.bot.dummy }; }
     });
     M.orbs = ORBS.map((p, i) => ({ i, x: p[0], z: p[1], taken: false }));
-    if ((n === 5 || decider) && M.mode === 'demo') say(decider ? 'DECIDER' : 'SIDES SWAPPED');   // players get the switching-sides band instead
+    if ((n === HALF() + 1 || decider) && M.mode === 'demo') say(decider ? 'DECIDER' : 'SIDES SWAPPED');   // players get the switching-sides band instead
     emit('round', n);
   }
   const canBuy = () => (M.phase === 'buy' && !loadingNow()) || M.mode === 'range';
@@ -507,6 +507,7 @@
   // o: { mode, diff, rival: { name }, hostAtt, decHostAtt }
   function startMatch(o) {
     const mode = o.mode, online = mode === 'online', host = !online || MP.isHost(), ops = Object.keys(OPS);
+    WIN_ROUNDS = mode === 'range' || mode === 'demo' ? 5 : winOf(o.win != null ? o.win : online ? 5 : CFG.win);   // online, everyone uses the host's length
     const A = fighter(mode === 'demo' ? { name: 'Rook', op: pick(ops), bot: { diff: 1 } } : { name: online ? MP.name : 'You', op: CFG.op, local: true });
     const auto = mode === 'bot' && (o.diff === 'auto' || o.diff == null), L = auto ? diffFor(STATS.rating) : null;
     const botP = () => auto ? { diff: L.i, D: L.D } : { diff: typeof o.diff === 'number' ? o.diff : 1, dummy: mode === 'range' }, used = new Set([A.name, ...(o.mates || []).map(m => m.name)]), bname = () => { const n = pick(BOT_NAMES.filter(q => !used.has(q))); used.add(n); return n; };
