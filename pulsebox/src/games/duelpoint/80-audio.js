@@ -55,7 +55,7 @@
   });
   // your kill run: every kill without dying adds one (up to five), and the kill sound and banner climb with it
   let killRun = 0;
-  on('round', n => { if (n === 1) killRun = 0; });
+  on('round', () => { killRun = 0; });   // the streak (and its banner's count) starts again every round
   on('kill', (v, by) => { if (!M) return; if (v === me()) killRun = 0; else if (by === me()) killRun = Math.min(5, killRun + 1); });
   // the kill sound: a deep thump, a dry crack, then a bright bell chord that steps up the scale with each kill in a run, and a
   // shimmer that hangs in the air; a headshot adds a glassy ping on top, and three or more in a run a rising sparkle
