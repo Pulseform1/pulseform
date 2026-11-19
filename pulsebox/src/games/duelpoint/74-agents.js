@@ -230,7 +230,8 @@
       // Redone whenever the gun is rebuilt (a new gun or a new skin on it), so the new gun and arms get theirs.
       const red = foeSide && f.alive && (U.copSet == null || U.copSet === 1), gid = U.gk + '|' + U.gsk;
       if (U.olOn !== red || (red && U.olGk !== gid)) { outline(A, red); U.olOn = red; U.olGk = gid; } }
-    const sp = Math.hypot(f.vx, f.vz), sl = f.slide ? 1 : 0, amp = Math.min(1, sp / 3.5) * (f.sprinting ? 1.15 : .8) * (1 - sl), ph = f.walkT * 1.9, cr = f.crouch * (1 - sl);
+    U.kn = lp(U.kn || 0, f.alive && (f.plant > 0 || f.defuse > 0) ? 1 : 0, Math.min(1, dt * 9));   // planting or defusing: down on one knee
+    const sp = Math.hypot(f.vx, f.vz), sl = f.slide ? 1 : 0, amp = Math.min(1, sp / 3.5) * (f.sprinting ? 1.15 : .8) * (1 - sl), ph = f.walkT * 1.9, cr = Math.max(f.crouch, U.kn) * (1 - sl);
     animKit(U.gunHold.children[0], dt);
     U.sl = lp(U.sl || 0, sl, Math.min(1, dt * 12)); U.spr = lp(U.spr || 0, f.sprinting ? 1 : 0, Math.min(1, dt * 8)); const sk = U.sl;
     // legs: swing with the stride, the trailing knee bends; a crouch folds both
@@ -249,6 +250,11 @@
     // the rival's gun works too: slide, bolt, pump, magazine; and the arms tip it over to reload
     { const gm = U.gunHold.children[0], G = gun(f); if (gm && gm.userData.parts) animParts(gm, f, G, dt, false);
       const rt = f.reloadT > 0 ? 1 - f.reloadT / G.rel : -1, tl = rt < 0 ? 0 : sm(cl(rt / .14, 0, 1)) * (1 - sm(cl((rt - .88) / .12, 0, 1))); U.arms.rotation.z = -tl * .45; U.arms.rotation.x -= tl * .35; }
+    // kneeling over the charge: leaning in, head down, both hands at the floor (the gun put away); planting, the charge is in
+    // the hands on its way down; defusing, the hands work at it
+    if (U.kn > .01) { const k = U.kn, work = f.defuse > 0 ? Math.sin(X.t * 13) * .07 : 0; U.hip.position.y -= .14 * k; U.torso.rotation.x -= .5 * k; U.head.rotation.x -= .3 * k; U.arms.rotation.x = lp(U.arms.rotation.x, -1.0 + work, k); U.arms.rotation.z = lp(U.arms.rotation.z, 0, k); U.arms.position.z = lp(U.arms.position.z, .05, k); }
+    U.gunHold.visible = U.gunHold.visible && U.kn < .5;
+    { const hold = f.alive && f.plant > 0; if (hold && !U.held) { U.held = X.chargeCopy(); U.held.scale.setScalar(.75); U.arms.add(U.held); } if (U.held) { U.held.visible = hold; if (hold) U.held.position.set(.03, -.2, -.4); } }
     // a dead fighter falls back and stays down
     U.dead = f.alive ? 0 : Math.min(1, U.dead + dt * 2.6); const d = smooth(U.dead);
     A.rotation.x = d * 1.5; A.position.y = f.y + d * .14;

@@ -281,7 +281,7 @@ const GAME = {
   // error (dyn) or stays fixed
   // sens: mouse turn speed; zsens: multiplier while aiming down sights or scoped; crouch: 'hold' or 'toggle'; full: go full
   // screen when you click in to play, which lets the game keep Ctrl shortcuts (Ctrl+W) from the browser
-  const CFG = { v: 4, sens: .45, zsens: 1, tsens: 1, aim: 'mouse', aimSet: false, tpsens: .8, tpassist: false, crouch: 'hold', full: true, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 'auto', team: 'versus', size: 2, sites: 2, win: 5,
+  const CFG = { v: 4, sens: .45, zsens: 1, tsens: 1, aim: 'mouse', aimSet: false, tpsens: .8, tpassist: false, crouch: 'hold', full: true, assist: true, autofire: true, quality: 'auto', op: 'vex', diff: 'auto', team: 'versus', size: 2, sites: 2, win: 5, queue: 'unrated',
     xh: { shape: 'cross', col: '#35e0c8', alpha: 1, len: 9, gap: 3, thick: 3, dot: true, dotSize: 0, outline: true, oth: 1.5, dyn: true, out: false, olen: 4, ogap: 6 } };
   let tickA = 1;   // how far the screen is between the last simulation tick and the next (99-main sets it), so motion is smooth at any refresh rate
   // rating: your skill, which sets the adaptive bot
@@ -371,7 +371,10 @@ const GAME = {
   ];
   const LOAD_T = 5;   // the loading screen before the first round: added to that round's buy phase, so no buy time is lost
   let WIN_ROUNDS = 5; const BUY_T = 15, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5;
-  const MATCH_LENS = [3, 4, 5, 6], winOf = w => MATCH_LENS.includes(+w) ? +w : 5, HALF = () => WIN_ROUNDS - 1;   // first to 3/4/5/6: best of 5/7/9/11, sides swap at the half
+  const MATCH_LENS = [3, 4, 5, 6], winOf = w => MATCH_LENS.includes(+w) ? +w : 5, HALF = () => WIN_ROUNDS - 1;
+  // overtime: tied at one short of the target after both halves, rounds go on (sides swap every round, credits topped up) until
+  // one team is two ahead; after OT_MAX overtime rounds still level, the next round settles it (sudden death)
+  const OT_MAX = 6, otRound = n => Math.max(0, n - 2 * HALF()), suddenDeath = n => otRound(n) > OT_MAX;   // first to 3/4/5/6: best of 5/7/9/11, sides swap at the half
   // round credits are tight: a win doesn't always buy a rifle and shields, a loss rarely does
   const CASH = { start: 800, win: 2600, loss: [1600, 2000, 2400], kill: 150, plant: 250, cap: 9000, decider: 4500 };
   // the adaptive bot: your skill rating picks its level, between these ratings it blends from one to the next
@@ -541,6 +544,56 @@ const GAME = {
     const total = Math.round(sub * lvl); if (lvl !== 1) rows.push([Mx.online ? 'Online match' : 'Bot level', total - sub]);
     return { rows, total };
   }
+  /* ---------- 25 ranked: tiers, divisions and rank points ----------
+     Eight tiers, the first seven in three divisions; every division is 100 rank points (RP), so a rank is one number, its
+     "rank value" (RV): tier and division in the hundreds, RP below. Win and you gain RP, lose and you drop; cross 100 and you
+     rank up, fall below 0 and you rank down (to 80-odd of the division below). The top tier, Zenith, has no ceiling.
+     Each team size (1v1 to 4v4) has a rank of its own. The first five ranked matches at a size are placements: they move a
+     hidden skill number (MMR) fast, then your rank is set from it. After that your rank drifts toward your MMR: well above
+     your rank, you gain more and lose less; below it, the other way round.
+     What a match pays depends on how strong the other side was against your rank (bots by their level, people by their rank:
+     beat bots above your rank and you climb fast, below it and you barely move), how wide the score was, and a little on how
+     you played (your combat score against everyone's). */
+  const TIERS = [
+    { n: 'Spark', col: '#b3aca2' }, { n: 'Flint', col: '#d08b58' }, { n: 'Steel', col: '#c3d0dc' }, { n: 'Cobalt', col: '#5b97ff' },
+    { n: 'Quartz', col: '#f5a8dc' }, { n: 'Onyx', col: '#9a8cff' }, { n: 'Ember', col: '#ff8a45' }, { n: 'Zenith', col: '#ffe066' }];
+  const DIVS = 3, PLACE_N = 5, TOP = (TIERS.length - 1) * DIVS, MMR0 = 700;   // TOP: the index of Zenith, the one undivided tier
+  const rankOf = rv => {
+    rv = Math.max(0, rv | 0); const i = Math.min(TOP, Math.floor(rv / 100)), t = Math.min(TIERS.length - 1, Math.floor(i / DIVS));
+    return { i, t, d: t === TIERS.length - 1 ? 0 : i % DIVS, rp: i >= TOP ? rv - TOP * 100 : rv % 100, T: TIERS[t], top: t === TIERS.length - 1 };
+  };
+  const rankLabel = rv => { const r = rankOf(rv); return r.T.n + (r.top ? '' : ' ' + ['I', 'II', 'III'][r.d]); };
+  // the bot level that matches a rank: Spark and Flint face Recruits, Steel and Cobalt Veterans, Quartz and Onyx Elites, Ember and Zenith Legends
+  const botLevelFor = rv => Math.max(0, Math.min(3, Math.floor(rankOf(rv).t / 2)));
+  // a bot level as a rank value (the middle of its two tiers), so bots and people can be weighed together
+  const botRV = lvl => (6 * cl(lvl | 0, 0, 3) + 3) * 100;
+  const RQ = ['1', '2', '3', '4'];
+  function rankedOf(size) {
+    STATS.ranked = STATS.ranked || {}; const k = String(teamSize(size));
+    return STATS.ranked[k] || (STATS.ranked[k] = { rv: 0, mmr: MMR0, n: 0, w: 0, peak: 0 });
+  }
+  const placed = S => S.n >= PLACE_N;
+  // how strong you count as at a size: your rank once placed, your MMR while placing
+  const rankStrength = size => { const S = rankedOf(size); return placed(S) ? S.rv : S.mmr; };
+  // every size's strength, for the party (the host picks the size after you join)
+  const rankStrengths = () => Object.fromEntries(RQ.map(k => [k, Math.round(rankStrength(+k))]));
+  /* a ranked match is over: o = { won, opp (the other side's strength as a rank value), margin (rounds between the teams),
+     perf (0..1, how your combat score compares: .5 is an average showing) }. Changes STATS and says what happened. */
+  function rankedResult(size, o) {
+    const S = rankedOf(size), was = placed(S), self = was ? S.rv : S.mmr, gap = cl((o.opp - self) / 300, -3, 3), m = cl(o.margin | 0, 0, 6), pf = cl(o.perf == null ? .5 : o.perf, 0, 1) - .5;
+    let d = o.won ? 18 + 7 * gap + 1.5 * m + 8 * pf : -(15 - 6 * gap + 1.2 * m) + 8 * pf;
+    if (was) d += cl((S.mmr - S.rv) / 300, -1, 1) * 5;   // drifting toward where your skill says you belong
+    d = Math.round(o.won ? cl(d, 4, 50) : cl(d, -40, -2));
+    const before = S.rv; S.mmr = cl(S.mmr + d * (was ? 1.2 : 3), 0, 3200); S.n++; if (o.won) S.w++;
+    let after = before, justPlaced = false;
+    if (was) after = Math.max(0, before + d);
+    else if (placed(S)) { justPlaced = true; after = Math.round(cl(S.mmr - 100, 0, 1900) / 10) * 10; }   // the reveal: a little under the MMR, so the climb is yours
+    S.rv = after; S.peak = Math.max(S.peak || 0, after);
+    const rb = rankOf(before), ra = rankOf(after);
+    return { size: teamSize(size), d, before, after, placing: !was && !justPlaced, justPlaced, n: S.n, up: was && ra.i > rb.i, down: was && ra.i < rb.i, won: !!o.won };
+  }
+  // the match history: the last twenty, newest first
+  function logMatch(e) { STATS.hist = STATS.hist || []; STATS.hist.unshift(e); if (STATS.hist.length > 20) STATS.hist.length = 20; }
   /* ---------- 29 maps: the hand-drawn maps (all but Saltworks), written by tools/duelpoint-maps.mjs: edit them there ---------- */
   const MAP_DEFS = [
     {k: 'neonrow', n: 'Neon Row', theme: 'neon', mech: 'tele', roundT: 90, tag: 'A neon strip of noodle bars and arcades, and a maze of back alleys behind it.', tip: 'Two teleporters link the Back Alleys and the Boulevard half way along: the Laundry one drops you at the Billboards, the Billboards one in Steam Alley. Both ends are loud.', src: ['############################################', '#######################....................#', '#######################...............DDDD.#', '#######################.....#########.DDDD.#', '##T####################.oooc#########......#', '#.............c.........ooo.###########..###', '#........X..............oXo.#########....###', '#................c......ooo.#########....###', '#...###################.ooo............77###', '#..c###################.ooooooooooc....88###', '#...##########..........oooooooXooo..PPPP###', '#...##########..........cooooooXooo..PPPP###', '#...##########..###..##.ooooocooooo..PPPP###', '#.X.##########..#....##..............PPPP###', '#...##########.....c.#########.#############', '#...##########..#..............#############', '#...##########..#........c.....#############', '#c..##########..#..#########################', '#...#######.....#..#########################', '#...#######.....#..#########################', '#...#######..T###..#########################', '#...#######..####..#########################', '#......c###..####..#########################', '#.......###..####..#########################', '#..AAAA.#..........#########################', '#..AAAA.#..........#########################', '#............###############################', '#c...........###############################', '############################################'], roofs: [{r: [28, 1, 35, 2], h: 3}, {r: [14, 12, 15, 17], h: 3}, {r: [21, 15, 30, 15], h: 3}, {r: [21, 16, 24, 16], h: 3}, {r: [26, 16, 30, 16], h: 3}, {r: [13, 24, 18, 25], h: 3}], doors: [[36, 1, 36, 2], [22, 5, 22, 7], [39, 5, 40, 5], [22, 10, 22, 11], [30, 14, 30, 14], [8, 26, 8, 27]], tps: [[2, 4, 15, 16, 0], [13, 20, 3, 6, -1.5707963267948966]], areas: [{k: 'aspawn', n: 'Depot', r: [1, 22, 8, 27], col: '#8a9a5b', lane: 'any'}, {k: 'blvd', n: 'Boulevard', r: [1, 8, 3, 21], col: '#ff3ea5', lane: 'blvd'}, {k: 'corner', n: 'Billboards', r: [1, 4, 4, 7], col: '#ffd23f', lane: 'blvd'}, {k: 'mile', n: 'Neon Mile', r: [5, 5, 21, 7], col: '#c06bff', lane: 'blvd'}, {k: 'arch', n: 'Neon Arch', r: [22, 5, 22, 7], col: '#e05fd0', lane: 'blvd'}, {k: 'mouth', n: 'Alley Mouth', r: [9, 24, 12, 27], col: '#3df2ff', lane: 'alleys'}, {k: 'laundry', n: 'Laundry', r: [11, 18, 15, 23], col: '#4fb0c6', lane: 'alleys'}, {k: 'steam', n: 'Steam Alley', r: [14, 12, 15, 17], col: '#6f8fd8', lane: 'alleys'}, {k: 'nalley', n: 'Neon Alley', r: [14, 10, 21, 11], col: '#2aa7a0', lane: 'alleys'}, {k: 'adoor', n: 'Alley Door', r: [22, 10, 22, 11], col: '#5ad1b0', lane: 'alleys'}, {k: 'overpass', n: 'Overpass', r: [13, 24, 18, 25], col: '#b5523f', lane: 'kitchen'}, {k: 'bstreet', n: 'Back Street', r: [17, 17, 18, 23], col: '#c9862e', lane: 'kitchen'}, {k: 'court', n: 'Steam Court', r: [16, 12, 20, 16], col: '#d9a441', lane: 'kitchen'}, {k: 'kitchen', n: 'Kitchen', r: [21, 14, 30, 16], col: '#e07b39', lane: 'kitchen'}, {k: 'site', n: 'Plaza', r: [23, 1, 36, 13], col: '#ff8a3d', lane: 'any'}, {k: 'arcade', n: 'Arcade', r: [23, 1, 27, 3], col: '#f2a3c8', lane: 'any'}, {k: 'signs', n: 'Signs', r: [28, 1, 36, 2], col: '#a07ad8', lane: 'any'}, {k: 'ramp', n: 'Ramp', r: [37, 5, 40, 9], col: '#8d6bb0', lane: 'any'}, {k: 'terrace', n: 'Noodle Bar', r: [37, 10, 40, 13], col: '#7bd88f', lane: 'any'}, {k: 'dspawn', n: 'Garage', r: [37, 1, 42, 4], col: '#4f7fb0', lane: 'any'}], routes: {blvd: [[2, 20.5], [2.5, 6.5], [22.5, 6.5]], alleys: [[9.5, 25.5], [12, 18.5], [15, 11], [22.5, 10.5]], kitchen: [[9.5, 25.5], [17.5, 24.5], [18.5, 15], [30.5, 14.5]], tele: [[9.5, 25.5], [13.5, 20.5], [22.5, 6.5]], tele2: [[2, 20.5], [2.5, 4.5], [22.5, 10.5]]}, holds: [{p: [26.5, 5.5], look: [22.5, 6.5], lane: 'blvd', s: 0}, {p: [25.5, 13.5], look: [22.5, 6.5], lane: 'blvd', s: 0}, {p: [30.5, 10.5], look: [22.5, 10.5], lane: 'alleys', s: 0}, {p: [26.5, 12.5], look: [22.5, 10.5], lane: 'alleys', s: 0}, {p: [30.5, 10.5], look: [30.5, 14.5], lane: 'kitchen', s: 0}, {p: [25.5, 7.5], look: [30.5, 14.5], lane: 'kitchen', s: 0}, {p: [28.36792452830189, 9.801886792452835], look: [22.5, 6.5], lane: 'any', s: 0}]},
@@ -845,8 +898,10 @@ const GAME = {
   const eyeY = f => f.y + lp(EYE, CEYE, f.crouch);
   // a fighter's position for drawing: between the last two ticks, unless it jumped (a respawn, a Blink)
   const ipos = (f, k) => { const p = f['p' + k]; return p == null || Math.abs(f[k] - p) > 1.5 ? f[k] : lp(p, f[k], tickA); };
-  // who attacks: one side for rounds 1 to 4, the other for 5 to 8, and a side fixed at the start for a decider
-  const attIdx = () => M.mode === 'range' ? 0 : M.round <= HALF() ? M.att0 : M.round <= 2 * HALF() ? 1 - M.att0 : M.decAtt;
+  // who attacks: one side for the first half, the other for the second; in overtime the sides swap every round
+  const attIdx = () => M.mode === 'range' ? 0 : M.round <= HALF() ? M.att0 : M.round <= 2 * HALF() ? 1 - M.att0 : (otRound(M.round) % 2 ? M.decAtt : 1 - M.decAtt);
+  // is the match over at this score? first to WIN_ROUNDS, or in overtime two clear (one clear in sudden death)
+  function matchDecided() { const a = M.wins[0], b = M.wins[1], ot = otRound(a + b); if (!ot) return Math.max(a, b) >= WIN_ROUNDS; return Math.abs(a - b) >= 2 || (ot > OT_MAX && a !== b); }
   const sideOf = f => f.team === attIdx() ? 'att' : 'def';
   const pistolRound = n => n === 1 || n === HALF() + 1;
   function giveAmmo(f, k) { const G = GUNS[k]; if (G && !G.melee) f.ammo[k] = { mag: G.mag, res: G.res }; }
@@ -1009,7 +1064,7 @@ const GAME = {
       const a2 = R() * TAU, r2 = Math.sqrt(R()) * ps, yw = f.yaw + pt[0] + Math.cos(a) * r + Math.cos(a2) * r2, pc = f.pitch + pt[1] + Math.sin(a) * r + Math.sin(a2) * r2, S = castShot(f, viewDir(yw, pc));
       if (p === 0) { y0 = yw; p0 = pc; }
       emit('shot', f, S, p === 0);
-      if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k); }
+      if (S.hit && !f.net) { landed = true; damage(S.hit.f, dmgAt(G, S.dist, S.hit.head ? 1 : S.hit.leg ? 3 : 2), f, S.hit.head, G.k, S.hit.leg); }
       else if (S.sentry && !f.net) hurtSentry(S.sentry, dmgAt(G, S.dist, 2), false);
       else if (!S.hit && !f.net && BRKS.length) { const e = S.end, k = idx(Math.floor((e[0] + S.d[0] * .06) / CS), Math.floor((e[2] + S.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) hitWall(BRKX[k], dmgAt(G, S.dist, 2), f); }   // a breakable wall
     }
@@ -1051,21 +1106,34 @@ const GAME = {
   }
   // Damage is decided by the shooter and applied on the victim's own device (online it travels as a message).
   // Shields soak it until they run out.
-  function damage(v, dmg, by, head, wk) {
+  function damage(v, dmg, by, head, wk, leg) {
     if (!v.alive || M.phase === 'end') return;
-    if (v.net) { net({ t: 'hit', d: dmg, h: head ? 1 : 0, w: wk, v: v.key, f: by.key }); by.stat.dmg += Math.min(dmg, v.hp + v.sh); emit('hurt', v, by, dmg, head); return; }
-    applyDamage(v, dmg, by, head, wk);
+    if (v.net) { net({ t: 'hit', d: dmg, h: head ? 1 : 0, l: leg ? 1 : undefined, w: wk, v: v.key, f: by.key }); by.stat.dmg += Math.min(dmg, v.hp + v.sh); emit('hurt', v, by, dmg, head, leg); return; }
+    applyDamage(v, dmg, by, head, wk, leg);
   }
-  function applyDamage(v, dmg, by, head, wk) {
+  function applyDamage(v, dmg, by, head, wk, leg) {
     if (!v.alive || M.phase === 'end') return;
     if (v.guard > 0) dmg *= .5;   // Bulwark
     const real = Math.min(dmg, v.hp + v.sh), soak = Math.min(v.sh, dmg); v.sh -= soak; v.hp -= dmg - soak; if (!by.net) by.stat.dmg += real;
     if (v === me()) { M.hurt = 1; M.hurtDir = Math.atan2(by.x - v.x, by.z - v.z); }
     if (v.bot) v.bot.hitBy = { x: by.x, z: by.z, t: M.time };
-    emit('hurt', v, by, dmg, head);
+    emit('hurt', v, by, dmg, head, leg);
     if (v.hp <= 0) { v.hp = 0; die(v, by, head, wk); }
   }
-  on('hurt', (v, by, dmg, head) => { if (!M || !v || !by || v === by) return; const L = M.dlog || (M.dlog = {}), r = L[by.key + '>' + v.key] || (L[by.key + '>' + v.key] = { d: 0, n: 0, h: 0 }); r.d += Math.min(dmg, 150); r.n++; if (head) r.h++; });
+  on('hurt', (v, by, dmg, head, leg) => { if (!M || !v || !by || v === by) return; const L = M.dlog || (M.dlog = {}), r = L[by.key + '>' + v.key] || (L[by.key + '>' + v.key] = { d: 0, n: 0, h: 0, l: 0 }); r.d += Math.min(dmg, 150); r.n++; if (head) r.h++; else if (leg) r.l++; });
+  /* ---------- the match's numbers ----------
+     A combat score: damage, 150 a kill, 50 more for each extra kill in the same round and for the round's first kill, 25 a
+     plant or defuse, averaged over the rounds played. Also first kills, and the round's big moments: an ace (one fighter takes
+     a whole team of three or more in a round) and a clutch (the last one standing against two or more, who wins the round). */
+  const roundsPlayed = () => M ? Math.max(1, M.wins[0] + M.wins[1] + (M.phase === 'end' || M.over ? 0 : 1)) : 1;
+  const csOf = f => { const s = f.stat; return Math.round(((s.dmg | 0) + 150 * s.k + (s.mb | 0) + 50 * (s.fk | 0) + 25 * ((s.pl | 0) + (s.df | 0))) / roundsPlayed()); };
+  on('kill', (v, by) => {
+    if (!M || !by || !v || v === by || by.team === v.team || M.mode === 'range') return; const s = by.stat;
+    s.rk = (s.rk || 0) + 1; if (s.rk > 1) s.mb = (s.mb || 0) + 50; if (!M.fk) { M.fk = by.key; s.fk = (s.fk || 0) + 1; emit('firstKill', by, v); }
+    const foes = M.fs.filter(q => q.team === v.team && !q.gone); if (foes.length >= 3 && s.rk >= foes.length && foes.every(q => !q.alive)) emit('ace', by);
+    if (!M.clutch) for (const t of [0, 1]) { const up = M.fs.filter(q => q.team === t && q.alive), them = M.fs.filter(q => q.team !== t && q.alive); if (up.length === 1 && them.length >= 2) M.clutch = { key: up[0].key, team: t, vs: them.length }; }
+  });
+  on('planted', f => { if (f && f.stat) f.stat.pl = (f.stat.pl || 0) + 1; }); on('defused', f => { if (f && f.stat) f.stat.df = (f.stat.df || 0) + 1; });
   function die(v, by, head, wk) {
     if (!v.alive) return;
     v.alive = false; v.plant = v.defuse = 0; v.scoped = 0; v.burst = null; v.chan = null; v.volley = null; v.stat.d++; by.stat.k++; if (head) by.stat.hs++;
@@ -1075,6 +1143,7 @@ const GAME = {
     if (v === me()) M.deathInfo = { by: by.name, key: by.key, op: by.op, w: GUNS[wk] ? GUNS[wk].n : wk, head, hp: Math.ceil(by.hp), sh: by.sh, yaw: yawTo(v.x, v.z, by.x, by.z), at: [v.x, v.y, v.z], kat: [by.x, by.y, by.z], t: 0 };
     emit('kill', v, by, head, wk);
     if (!v.net) net({ t: 'dead', h: head ? 1 : 0, w: wk, f: v.key, by: by.key });
+    if (!v.net && M.mode !== 'range') { if (!dropGun(v, 1, true)) dropGun(v, 2, true); if (carries(v)) setCharge(null, v.x, v.z, false, v); }   // what they carried falls where they fall
     if (M.mode === 'range') v.respawn = 1.6;
     else if (M.host) judge();
   }
@@ -1215,14 +1284,17 @@ const GAME = {
   }
   /* ---------- the charge ---------- */
   function stepObjective(f, I, dt) {
-    if (I.use && !f.useHeld && GATES.length && f.alive && !f.plant && !f.defuse) { const g = gateNear(f); if (g >= 0) toggleGate(g, f); }   // a gate's switch
+    const press = I.use && !f.useHeld; let gated = false;
+    if (press && GATES.length && f.alive && !f.plant && !f.defuse) { const g = gateNear(f); if (g >= 0) { toggleGate(g, f); gated = true; } }   // a gate's switch
     f.useHeld = !!I.use;
+    if (stepLoot(f, I, press && !gated && !(f.plant > 0) && !(f.defuse > 0))) f.useLock = true;   // F swapped a gun: that press plants nothing
+    if (f.useLock) { if (!I.use) f.useLock = false; else I = Object.assign({}, I, { use: false }); }
     if (M.phase !== 'live' || !f.alive || M.mode === 'range') { f.plant = f.defuse = 0; f.orbT = 0; return; }
     // an ultimate orb: stand over it and hold F for a second
     const orb = M.orbs && !f.net && I.use && !(f.plant > 0) && !(f.defuse > 0) ? M.orbs.find(o => !o.taken && Math.hypot(o.x - f.x, o.z - f.z) < ORB.r) : null;
     if (orb) { f.orbT += dt; if (f.orbT >= ORB.take) { f.orbT = 0; takeOrb(orb.i, f); net({ t: 'orb', i: orb.i, f: f.key }); } } else f.orbT = 0;
     const side = sideOf(f);
-    if (side === 'att' && !M.planted && I.use && f.ground && onSite(f.x, f.z)) {
+    if (side === 'att' && !M.planted && I.use && f.ground && onSite(f.x, f.z) && (carries(f) || !M.charge)) {
       if (f.plant === 0) emit('plantStart', f); f.plant += dt; f.scoped = 0;
       if (f.plant >= PLANT_T) { f.plant = 0; plantAt(f.x, f.z, f); net({ t: 'pl', x: +f.x.toFixed(2), z: +f.z.toFixed(2), f: f.key }); }
     } else f.plant = 0;
@@ -1232,11 +1304,83 @@ const GAME = {
     } else f.defuse = 0;
   }
   function plantAt(x, z, f) {
-    M.planted = { x, z, y: hAt(x, z), t: FUSE_T, beep: 0, s: Math.max(0, siteAt(x, z)) }; if (!f.net) f.credits = Math.min(CASH.cap, f.credits + CASH.plant);
-    say(twoSites() ? 'CHARGE PLANTED ON ' + SITES[M.planted.s].k : 'CHARGE PLANTED', FOE); emit('planted', f); ultGain(f, 1);
+    M.planted = { x, z, y: hAt(x, z), t: FUSE_T, beep: 0, s: Math.max(0, siteAt(x, z)), by: f.key }; M.charge = null; if (!f.net) f.credits = Math.min(CASH.cap, f.credits + CASH.plant);
+    emit('planted', f); ultGain(f, 1);
   }
   function takeOrb(i, f) { const o = M.orbs && M.orbs[i]; if (!o || o.taken) return; o.taken = true; ultGain(f, 1); emit('orb', o, f); if (f === me()) say('ULTIMATE POINT', OPS[f.op].col); }
   function defuseDone(f) { M.defused = true; emit('defused', f); ultGain(f, 1); if (M.host) judge(); }
+
+  /* ---------- guns on the floor, and the one charge the attackers share ----------
+     A fighter who dies drops the gun they had (their main gun, or a sidearm better than the Pip). Anyone can drop the gun in
+     their hand (T) for a teammate, or buy one for a teammate in the armory, which lands at that teammate's feet. Walking
+     over a gun picks it up if that slot is free; F swaps it for the one you have. Bots take a better gun when they pass one.
+     The charge: one attacker carries it (chosen in the buy phase, and passed on in the armory or by dropping it with H).
+     A carrier who dies drops it; an attacker who walks over it picks it up; only the carrier can plant.
+     Online, the device that runs a fighter decides what it drops and picks up, and tells the others. */
+  const LOOT_R = 1.15;
+  const carries = f => !!(M && M.charge && M.charge.k === f.key);
+  const carrier = () => M && M.charge && M.charge.k ? M.byKey[M.charge.k] || null : null;
+  function addLoot(d) { M.loot = M.loot || []; if (M.loot.some(q => q.id === d.id)) return null; d.y = hAt(d.x, d.z); d.at = M.time; M.loot.push(d); emit('loot', d); return d; }
+  // put a gun on the floor at x, z (from fighter f, who dropped or bought it)
+  // (fo: the teammate it was bought for, who alone may take it for the first few seconds)
+  function lootAt(f, k, x, z, mag, res, fo) {
+    const G = GUNS[k]; if (!G || G.melee) return null; if (solidAt(x, z, f.y + .5)) { x = f.x; z = f.z; }
+    M.lootN = (M.lootN || 0) + 1; const d = addLoot({ id: f.key + '.' + M.round + '.' + M.lootN, k, x, z, m: mag != null ? mag : G.mag, r: res != null ? res : G.res, by: f.key, fo: fo || '' });
+    if (d && !f.net) net({ t: 'dp', id: d.id, k, x: r2(d.x), z: r2(d.z), m: d.m, r: d.r, fo: d.fo || undefined, f: f.key }); return d;
+  }
+  // drop the gun in a slot (the Pip and the knife stay with you): thrown a step ahead, or where you fall
+  function dropGun(f, slot, dead) {
+    const k = f.guns[slot]; if (!k || slot === 3 || (slot === 2 && k === 'pip')) return null;
+    const A = f.ammo[k] || {}, fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw), far = dead ? .15 : 1.25;
+    f.guns[slot] = slot === 2 ? 'pip' : null; if (slot === 2) giveAmmo(f, 'pip'); delete f.spent[slot];   // a gun you dropped is not yours to sell back
+    if (f.slot === slot) { f.slot = f.guns[1] ? 1 : 2; f.reloadT = 0; f.scoped = 0; f.burst = null; f.spray = 0; }
+    if (!dead) emit('swap', f);
+    return lootAt(f, k, f.x + fx * far, f.z + fz * far, A.mag, A.res);
+  }
+  // T: the gun in your hand
+  function dropHeld(f) { if (!f.alive || f.plant > 0 || f.defuse > 0 || M.mode === 'range' || M.phase === 'end') return false; return !!dropGun(f, f.slot, false); }
+  function takeLoot(f, d, remote) {
+    const G = GUNS[d.k]; if (!G || !M.loot) return; M.loot = M.loot.filter(q => q.id !== d.id); const s = G.slot;
+    if (!remote) { const have = f.guns[s]; if (have && !(s === 2 && have === 'pip')) dropGun(f, s, false); }
+    f.guns[s] = d.k; f.ammo[d.k] = { mag: d.m, res: d.r }; delete f.spent[s];
+    if (!remote) { f.slot = s; f.reloadT = 0; f.scoped = 0; f.burst = null; f.spray = 0; f.fireT = Math.max(f.fireT, G.equip * .7); }
+    emit('pickup', f, d); if (!remote) net({ t: 'pk', id: d.id, f: f.key });
+  }
+  // the charge changes hands: f carries it now, or (f null) it lies on the floor at x, z
+  // (by: the fighter on this device that made it happen, named in the message so the others know who sent it)
+  function setCharge(f, x, z, remote, by) {
+    M.charge = f ? { k: f.key, at: M.time } : { k: '', x, z, y: hAt(x, z), at: M.time };
+    emit('charge', f, remote); if (!remote) net({ t: 'cc', k: f ? f.key : '', x: r2(x || 0), z: r2(z || 0), f: (by || f || me()).key });
+  }
+  // H: put the charge down for a teammate (a step ahead of you)
+  function dropCharge(f) {
+    if (!carries(f) || !f.alive || M.planted || f.plant > 0) return false; const fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw);
+    let x = f.x + fx * 1.25, z = f.z + fz * 1.25; if (solidAt(x, z, f.y + .5)) { x = f.x; z = f.z; }
+    f.noCharge = M.time + 1.2; setCharge(null, x, z, false, f); return true;
+  }
+  // the armory: hand the charge to a teammate (yours to give, or a bot's)
+  function giveCharge(from, to) {
+    const c = carrier(); if (!to || to.team !== from.team || sideOf(to) !== 'att' || !to.alive || M.planted) return false;
+    if (c && c !== from && !(c.bot || c.isBot)) return false;   // another person has it: theirs to pass on
+    setCharge(to, 0, 0, false, from); return true;
+  }
+  // buy a gun for a teammate: it lands at their feet
+  function buyFor(f, mate, k) {
+    const G = GUNS[k]; if (!canBuy() || !G || G.melee || !mate || mate === f || mate.team !== f.team || f.credits < G.cost) return false;
+    f.credits -= G.cost; const fx = -Math.sin(mate.yaw), fz = -Math.cos(mate.yaw); lootAt(f, k, mate.x + fx * .5, mate.z + fz * .5, null, null, mate.key); emit('gift', f, mate, k); return true;
+  }
+  // each tick, for a fighter this device runs: the charge and any gun underfoot
+  function stepLoot(f, I, press) {
+    if (!f.alive || M.mode === 'range' || M.phase === 'end') { f.nearLoot = null; return false; }
+    const C = M.charge;
+    if (C && !C.k && !M.planted && sideOf(f) === 'att' && !(f.noCharge > M.time) && Math.hypot(C.x - f.x, C.z - f.z) < LOOT_R && Math.abs(C.y - f.y) < 1.4) setCharge(f);
+    f.nearLoot = null; if (!M.loot || !M.loot.length) return false;
+    let best = null, bd = LOOT_R; for (const d of M.loot) { const dd = Math.hypot(d.x - f.x, d.z - f.z); if (dd < bd && Math.abs(d.y - f.y) < 1.4 && !(d.by === f.key && M.time - d.at < 1.2) && !(d.fo && d.fo !== f.key && M.time - d.at < 6) && !(f.bot && M.phase === 'buy' && d.fo !== f.key)) { bd = dd; best = d; } }
+    if (!best) return false; const G = GUNS[best.k], have = f.guns[G.slot], free = !have || (G.slot === 2 && have === 'pip');
+    if (f.bot) { if (free || (GUNS[have].cost || 0) < G.cost) takeLoot(f, best); return false; }
+    if (free) { takeLoot(f, best); return false; }
+    f.nearLoot = best; if (press) { takeLoot(f, best); return true; } return false;
+  }
 
   /* ---------- rounds and money ---------- */
   // the host decides when a round is over and who took it
@@ -1256,6 +1400,7 @@ const GAME = {
     M.fs.forEach(f => { if (f.net) return; const won = f.team === wi; f.lossRun = won ? 0 : f.lossRun + 1; f.credits = Math.min(CASH.cap, f.credits + (won ? CASH.win : CASH.loss[Math.min(2, f.lossRun - 1)])); });
     if (why === 'boom') emit('boom', M.planted.x, M.planted.z);
     emit('end', wi, why);
+    if (M.clutch && M.clutch.team === wi && M.byKey[M.clutch.key]) { const c = M.byKey[M.clutch.key]; c.stat.cl = (c.stat.cl || 0) + 1; emit('clutch', c, M.clutch.vs); }
     if (M.host) net({ t: 'end', wi: wi ^ (M.flip || 0), why });
   }
   // which way to face at the start of a round: down the way out of the spawn, toward the site (any map, any orientation)
@@ -1267,24 +1412,27 @@ const GAME = {
     return yawTo(f.x, f.z, q[0], q[1]);
   }
   function startRound(n) {
-    M.round = n; M.phase = 'buy'; M.dlog = {}; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); resetMech(); M.vent = []; M.storm = 0; M.stormOn = false; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
-    const decider = n === WIN_ROUNDS * 2 - 1;
+    M.round = n; M.phase = 'buy'; M.dlog = {}; M.fk = null; M.clutch = null; for (const f of M.fs) f.stat.rk = 0; M.t = BUY_T + (n === 1 && M.loadT ? M.loadT : 0); resetMech(); M.vent = []; M.storm = 0; M.stormOn = false; M.planted = null; M.defused = false; M.smokes = []; M.nades = []; M.walls = []; M.flares = []; M.feed = []; M.say = null; M.deathInfo = null; M.last = null; M.kit = freshKit();
+    const ot = otRound(n), decider = ot > 0;   // overtime: everyone gets the same credits every round
     const order = [...M.fs].sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);   // the same on every device, so teammates never share a spawn
     M.fs.forEach(f => {
       const side = sideOf(f), sp = SPAWN[side], p = sp[(n + order.filter(q => sideOf(q) === side).indexOf(f)) % sp.length];
-      if (!f.alive || pistolRound(n) || decider) { f.guns = { 1: null, 2: 'pip', 3: 'knife' }; f.sh = 0; f.ammo = {}; f.smokes = 0; }   // you keep what you survived with
+      if (!f.alive || pistolRound(n) || ot === 1) { f.guns = { 1: null, 2: 'pip', 3: 'knife' }; f.sh = 0; f.ammo = {}; f.smokes = 0; }   // you keep what you survived with
       if (!f.net && n === HALF() + 1) f.credits = CASH.start; if (!f.net && decider) f.credits = CASH.decider; f.spent = {}; f.throwT = 0;   // your loadout, fresh every round
       Object.assign(f, { x: p[0], z: p[1], y: 0, vx: 0, vy: 0, vz: 0, hp: 100, alive: true, ground: true, crouch: 0, flash: 0, reveal: 0, heal: null, dash: null, surge: 0, cloak: 0, daze: 0, snare: 0, plant: 0, defuse: 0, scoped: 0, reloadT: 0, fireT: 0, spray: 0, burst: null, swing: null, autoReload: 0, ready: false, spent: {}, pitch: 0 });
-      f.ab.e = 1; if (n === 1 || n === WIN_ROUNDS || decider) f.ab.q = 0; if (n === 1) f.ult = 0;
+      f.ab.e = 1; if (n === 1 || n === HALF() + 1 || ot === 1) f.ab.q = 0; if (n === 1) f.ult = 0;
       Object.assign(f, { guard: 0, od: 0, phase: 0, lock: 0, chan: null, volley: null, orbT: 0 });
       for (const s of [1, 2]) if (f.guns[s]) giveAmmo(f, f.guns[s]); f.slot = f.guns[1] ? 1 : 2;
       f.yaw = spawnYaw(f, side); f.padT = f.tpCD = f.padCD = 0; if (f.gone) f.alive = false;
       if (f.bot) { if (M.auto && !f.bot.dummy) { const L = diffFor(M.rating + M.adj); f.bot = { diff: L.i, D: L.D }; } else f.bot = { diff: f.bot.diff, D: f.bot.D, dummy: f.bot.dummy }; }
     });
     M.orbs = ORBS.map((p, i) => ({ i, x: p[0], z: p[1], taken: false }));
-    if ((n === HALF() + 1 || decider) && M.mode === 'demo') say(decider ? 'DECIDER' : 'SIDES SWAPPED');   // players get the switching-sides band instead
+    M.loot = []; { const att = M.fs.filter(f => sideOf(f) === 'att' && !f.gone).sort((a, b) => ((a.bot || a.isBot ? 1 : 0) - (b.bot || b.isBot ? 1 : 0)) || (a.key < b.key ? -1 : 1)); M.charge = att.length && M.mode !== 'range' ? { k: att[0].key, at: -9 } : null; }
+    if ((n === HALF() + 1 || decider) && M.mode === 'demo') say(decider ? (suddenDeath(n) ? 'SUDDEN DEATH' : 'OVERTIME') : 'SIDES SWAPPED');   // players get the switching-sides band instead
     emit('round', n);
   }
+  // the loss bonus: what losing this round would pay you next round (it grows with each round lost in a row), for the armory
+  const lossNext = f => M && M.mode !== 'range' && M.mode !== 'demo' && !otRound(M.round + 1) && !pistolRound(M.round + 1) ? `  ·  lose and next round pays ◈ ${CASH.loss[Math.min(2, f.lossRun | 0)]}` : '';
   const canBuy = () => (M.phase === 'buy' && !loadingNow()) || M.mode === 'range';
   // the loading screen shows for the first LOAD_T seconds of the match
   // (once it has ended it stays ended, whatever the clock does afterwards)
@@ -1318,21 +1466,29 @@ const GAME = {
     if (M.mode === 'range') f.credits = CASH.cap;
     emit('buy', f, ok); return ok;
   }
-  // closing the armory says you are ready: when both are, the buy phase ends early
+  // REBUY: buy again what you bought last round (main gun, sidearm, shields, smokes, ability charges), as far as the money goes
+  function lastBuyOf(f) { const sp = f.spent || {}, o = { g1: sp[1] && sp[1].k, g2: sp[2] && sp[2].k, sh: sp.sh && sp.sh.k, sm: sp.smoke | 0, q: sp.abq | 0 }; return o.g1 || o.g2 || o.sh || o.sm || o.q ? o : null; }
+  on('live', () => { if (M) for (const f of M.fs) if (!f.net) { const b = lastBuyOf(f); if (b) f.lastBuy = b; } });
+  const rebuyCost = f => { const b = f.lastBuy; if (!b) return 0; let c = 0; if (b.g1 && f.guns[1] !== b.g1) c += GUNS[b.g1].cost; if (b.g2 && f.guns[2] !== b.g2) c += GUNS[b.g2].cost; const A = b.sh && ARMOR.find(a => a.k === b.sh); if (A && f.sh < A.sh) c += A.cost; c += Math.max(0, b.sm - (f.smokes | 0)) * NADE.cost + Math.max(0, b.q - (f.ab.q | 0)) * OPS[f.op].q.cost; return c; };
+  function rebuy(f) { const b = f.lastBuy; if (!b || !canBuy()) return false; let n = 0; const take = k => { if (buy(f, k)) n++; };
+    if (b.g1 && f.guns[1] !== b.g1) take(b.g1); if (b.sh) { const A = ARMOR.find(a => a.k === b.sh); if (A && f.sh < A.sh) take(b.sh); } if (b.g2 && f.guns[2] !== b.g2) take(b.g2);
+    for (let i = f.smokes | 0; i < b.sm; i++) take(NADE.k); for (let i = f.ab.q | 0; i < b.q; i++) take('abq'); return n > 0; }
+  // closing the armory says you are ready (shown to your team); the buy phase still runs its full time
   function setReady(f) { if (M.phase !== 'buy' || f.ready) return; f.ready = true; if (!f.net) net({ t: 'rdy', f: f.key }); }
 
   /* ---------- a match ---------- */
   // o: { mode, diff, rival: { name }, hostAtt, decHostAtt }
   function startMatch(o) {
     const mode = o.mode, online = mode === 'online', host = !online || MP.isHost(), ops = Object.keys(OPS);
-    WIN_ROUNDS = mode === 'range' || mode === 'demo' ? 5 : winOf(o.win != null ? o.win : online ? 5 : CFG.win);   // online, everyone uses the host's length
+    const ranked = !!o.ranked && (mode === 'bot' || online);
+    WIN_ROUNDS = mode === 'range' || mode === 'demo' || ranked ? 5 : winOf(o.win != null ? o.win : online ? 5 : CFG.win);   // online, everyone uses the host's length; ranked is always best of 9
     const A = fighter(mode === 'demo' ? { name: 'Rook', op: pick(ops), bot: { diff: 1 } } : { name: online ? MP.name : 'You', op: CFG.op, local: true });
     const auto = mode === 'bot' && (o.diff === 'auto' || o.diff == null), L = auto ? diffFor(STATS.rating) : null;
     const botP = () => auto ? { diff: L.i, D: L.D } : { diff: typeof o.diff === 'number' ? o.diff : 1, dummy: mode === 'range' }, used = new Set([A.name, ...(o.mates || []).map(m => m.name)]), bname = () => { const n = pick(BOT_NAMES.filter(q => !used.has(q))); used.add(n); return n; };
     let fs = [A], flip = 0;
     if (online && o.seats) {   // seats: { key, name, team (the host's numbering), bot, op } in the same order on every device; the host runs the bots
       const mine = o.seats.find(s => s.key === String(MP.id)) || o.seats[0]; flip = mine.team; A.key = mine.key; if (OPS[mine.op]) A.op = mine.op;   // (a teammate had your operative first: you play the one the room gave you)
-      for (const s of o.seats) if (s !== mine) fs.push(fighter({ name: s.name, op: s.op || 'vex', key: s.key, team: s.team ^ flip, net: !(s.bot && host), isBot: !!s.bot, bot: s.bot && host ? { diff: o.botDiff == null ? 1 : o.botDiff } : null, rating: s.rating || 0 }));
+      for (const s of o.seats) if (s !== mine) fs.push(fighter({ name: s.name, op: s.op || 'vex', key: s.key, team: s.team ^ flip, net: !(s.bot && host), isBot: !!s.bot, bot: s.bot && host ? { diff: o.botDiff == null ? 1 : o.botDiff } : null, rating: s.rating || 0, rk: s.rk, rkp: s.rkp }));
     } else if (online) fs.push(fighter({ name: (o.rival && o.rival.name) || 'Rival', op: 'vex', net: true, team: 1, key: String(o.rival && o.rival.id) }));
     else {   // bots: within a team every operative is different (eight operatives, at most four a side)
       const eOps = [], mOps = [A.op], fresh = taken => { const c = ops.filter(k => !taken.includes(k)); return pick(c.length ? c : ops); };
@@ -1344,7 +1500,8 @@ const GAME = {
     const hostAtt = o.hostAtt == null ? (R() < .5 ? 1 : 0) : o.hostAtt, decHostAtt = o.decHostAtt == null ? (R() < .5 ? 1 : 0) : o.decHostAtt;
     if (online && !o.seats) flip = host ? 0 : 1;
     M = { mode, online, host, auto, flip, byKey: Object.fromEntries(fs.map(f => [f.key, f])), rating: STATS.rating, adj: 0, fs, wins: [0, 0], round: 0, phase: 'buy', t: 0, time: 0, att0: (hostAtt ? 0 : 1) ^ flip, decAtt: (decHostAtt ? 0 : 1) ^ flip,
-      planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0 };
+      planted: null, defused: false, smokes: [], nades: [], walls: [], flares: [], feed: [], say: null, last: null, over: null, deathInfo: null, hurt: 0, hurtDir: 0, camKick: 0, netT: 0, ranked, botDiff: o.botDiff != null ? o.botDiff : o.diff };
+    M.size = teamSize(Math.max(fs.filter(f => f.team === 0).length, fs.filter(f => f.team === 1).length)); if (ranked) { A.rk = rankStrength(M.size); A.rkp = placed(rankedOf(M.size)) ? 1 : 0; }
     M.loadT = mode === 'bot' || online ? LOAD_T : 0; M.loading = M.loadT > 0;
     for (const f of fs) { f.rating = f === A ? STATS.rating : f.bot ? botRating(f, M) : f.rating || 0; f.skins = f === A ? Object.assign({}, STATS.equip) : f.bot || f.isBot ? botSkins() : {}; }
     startRound(1);
@@ -1370,14 +1527,13 @@ const GAME = {
     // online, nobody starts until everyone has loaded: round one waits on the loading screen
     if (M.online && !M.allIn && M.round === 1 && M.phase === 'buy') M.t = Math.max(M.t, BUY_T + LOAD_T);
     if (M.phase === 'buy' && M.host && M.mode !== 'range') {
-      if (M.t > 1.5 && M.fs.every(f => f.ready)) M.t = 1.5;
       if (M.t <= 0) { M.phase = 'live'; M.t = roundT(); emit('live'); net({ t: 'live' }); }
     }
     if (M.phase === 'live' && M.planted) { const P = M.planted; P.t -= dt; P.beep -= dt; if (P.beep <= 0) { P.beep = cl(P.t / 12, .12, 1); emit('beep'); } }
     if (M.phase === 'live' && M.host) judge();
     stepMapClock(dt);
     if (M.phase === 'end' && M.host && M.t <= 0) {
-      if (M.wins[0] >= WIN_ROUNDS || M.wins[1] >= WIN_ROUNDS) return matchOver();
+      if (matchDecided()) return matchOver();
       startRound(M.round + 1); net({ t: 'rs', n: M.round });
     }
     for (const f of M.fs) {
@@ -1643,6 +1799,9 @@ const GAME = {
     else if (R() < .5) buy(f, pick(['quill', 'hammer', 'stub']));
     if (f.credits >= 200 && R() < .65) buy(f, 'smoke'); if (f.credits >= 1400 && R() < .45) buy(f, 'smoke');
     for (let n = 0; n < 2; n++) if (f.credits >= OPS[f.op].q.cost && R() < .8) buy(f, 'abq');   // ability charges
+    // flush, with a teammate (a person on this device) who can't afford a rifle: buy them one; it lands at their feet
+    if (!pistolRound(M.round) && f.credits >= 3300) { const mate = M.fs.find(q => q !== f && q.team === f.team && !q.bot && !q.isBot && !q.net && !q.gone && !q.guns[1] && q.credits < 2000 && !(M.loot || []).some(d => d.by === f.key));
+      if (mate) buyFor(f, mate, f.credits >= 3900 && R() < .5 ? 'lancer' : 'vesper'); }
   }
 
   // the newer operatives' abilities, each with a reason
@@ -1715,6 +1874,12 @@ const GAME = {
     if (!B.plan) B.plan = side === 'att' ? planAttack(f) : planHold(f, null);
     if (M.planted && side === 'def' && B.plan.k !== 'retake') { B.plan = { k: 'retake' }; goTo(B.plan, f, M.planted.x, M.planted.z); }
     if (M.planted && side === 'att' && B.plan.k !== 'post') { const s = watchSpot(M.planted.x, M.planted.z, 5, 13); B.plan = { k: 'post', look: [M.planted.x, M.planted.z], crouch: R() < .5 }; goTo(B.plan, f, s[0], s[1]); }
+    // the charge on the floor: the nearest attacker goes for it (unless a teammate is nearer: a bot, or a person almost on it)
+    if (side === 'att' && !M.planted && M.charge && !M.charge.k && B.plan.k !== 'fetch' && B.plan.k !== 'cover') {
+      const C = M.charge, d0 = Math.hypot(C.x - f.x, C.z - f.z);
+      if (!M.fs.some(q => q !== f && q.team === f.team && q.alive && Math.hypot(C.x - q.x, C.z - q.z) < Math.min(d0 - .5, q.bot ? 1e9 : 4))) { B.plan = { k: 'fetch' }; goTo(B.plan, f, C.x, C.z); }
+    }
+    if (B.plan.k === 'fetch' && (M.planted || !M.charge || M.charge.k)) B.plan = planAttack(f);
     let P = B.plan;
     if (P.k === 'hold' && B.diff > 0 && B.last && B.last.heard && M.time - B.last.t < .3 && !(P.until > M.time)) {   // turn to face the lane the noise came from
       const lane = laneOf(B.last.x, B.last.z); if (lane !== 'any' && lane !== P.lane && mayRotate(f, lane)) { P = B.plan = planHold(f, lane); P.until = M.time + 7; }
@@ -1824,6 +1989,7 @@ const GAME = {
     if (arrived) {
       if (P.k === 'push') { if (P.pts.length) { const q = P.pts.shift(); goTo(P, f, q[0], q[1]); } else if (!P.toSite) { P.toSite = true; goTo(P, f, P.site[0], P.site[1]); } }
       if (P.k === 'hunt') B.plan = planHold(f, null);
+      if (P.k === 'fetch' && M.charge && !M.charge.k && !engaged) goal = [M.charge.x, M.charge.z];   // the last step onto it
       if (P.k === 'cover' && !engaged) I.crouch = B.diff > 1;
       if ((P.k === 'hold' || P.k === 'post') && P.crouch && !engaged) I.crouch = true;
     }
@@ -1838,7 +2004,7 @@ const GAME = {
     } else if (M.time - (B.engT || -9) < .8 && P.k !== 'retake' && P.k !== 'cover') goal = null;   // just lost a rival it was fighting: hold the angle a moment
     if (B.breaking) goal = null;   // stand and knock the wall down first
     // the charge
-    if (side === 'att' && !M.planted && P.k === 'push' && P.toSite && onSite(f.x, f.z) && (arrived || Math.hypot(P.site[0] - f.x, P.site[1] - f.z) < 1.4) && !sees && M.time - (B.engT || -9) > 1) { I.use = true; goal = null; }
+    if (side === 'att' && !M.planted && carries(f) && P.k === 'push' && P.toSite && onSite(f.x, f.z) && (arrived || Math.hypot(P.site[0] - f.x, P.site[1] - f.z) < 1.4) && !sees && M.time - (B.engT || -9) > 1) { I.use = true; goal = null; }
     if (side === 'def' && M.planted && Math.hypot(f.x - M.planted.x, f.z - M.planted.z) < 1.5) {
       if (f.hp < B.hp0 && M.planted.t > DEFUSE_T - f.defuse + 2.5) B.wait = 1.2;   // shot at while defusing: stand up and look
       if (B.wait > 0) B.wait -= dt;
@@ -1875,7 +2041,7 @@ const GAME = {
   const r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000;
   // every fighter this device runs (you, and the bots if you host) streams its state, tagged with whose it is
   function goneFor(f) {   // a dropped fighter who did not come back in time
-    f.gone = true; f.alive = false; f.dc = 0;
+    f.gone = true; f.alive = false; f.dc = 0; if (carries(f) && !M.planted) setCharge(null, f.x, f.z, true);
     if (M.fs.length <= 2 || !M.fs.some(q => q.team === f.team && !q.gone)) { M.wins[0] = Math.max(M.wins[0], M.wins[1] + 1); M.host = true; matchOver('left'); } else if (M.host) judge();
   }
   function netTick(dt) {
@@ -1898,7 +2064,7 @@ const GAME = {
     for (const f of M.fs) if (!f.net && !f.gone) out.push({ t: 's', f: f.key, x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
       al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0 });
     for (const q of out) { const f = M.byKey[q.f], sk = (f.skins && f.skins[f.guns[f.slot]]) || 0, key = f.op + '|' + q.g + '|' + sk;
-      if (full || f._sent !== key) { q.op = f.op; q.rt = f.rating || 0; q.sk = sk; f._sent = key; } }
+      if (full || f._sent !== key) { q.op = f.op; q.rt = f.rating || 0; q.sk = sk; f._sent = key; } if (full) q.dm = Math.round(f.stat.dmg); }
     for (const q of out) { for (const k of ['sc', 'pl', 'df', 'st', 'sp', 'sd']) if (!q[k]) delete q[k]; }   // zeros are the default: leave them out
     if (out.length === 1) net(out[0]); else if (out.length) net({ t: 'S', a: out.map(q => { delete q.t; return q; }) });
   }
@@ -1922,13 +2088,13 @@ const GAME = {
     switch (m.t) {
       case 's':
         { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && Math.hypot(sn[sn.length - 1].x - m.x, sn[sn.length - 1].z - m.z) > 6) sn.length = 0; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
-        if (m.rt) F.rating = m.rt; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
+        if (m.rt) F.rating = m.rt; if (m.dm != null) F.stat.dmg = +m.dm || 0; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
         break;
       case 'sh': { const S = castShot(F, viewDir(m.a, m.b)); F.kick = .08; F.cloak = 0; emit('shot', F, S, true); break; }
       case 'kn': F.swing = { t: 0, heavy: !!m.h, side: 1 }; emit('melee', F, !!m.h, null); break;
-      case 'hit': { const V = M.byKey[String(m.v)]; if (V && !V.net) applyDamage(V, m.d, F, !!m.h, m.w); break; }
+      case 'hit': { const V = M.byKey[String(m.v)]; if (V && !V.net) applyDamage(V, m.d, F, !!m.h, m.w, !!m.l); break; }
       case 'dead': {
         if (!F.alive) break; const by = M.byKey[String(m.by)] || other(F); F.alive = false; F.hp = 0; F.stat.d++; by.stat.k++; if (m.h) by.stat.hs++; if (!by.net && by.team !== F.team) by.credits = Math.min(CASH.cap, by.credits + CASH.kill);
         M.feed.unshift({ a: by.name, b: F.name, w: GUNS[m.w] ? GUNS[m.w].n : m.w, head: !!m.h, t: 0, mine: by === me() }); emit('kill', F, by, !!m.h, m.w); if (M.host) judge(); break;
@@ -1941,6 +2107,13 @@ const GAME = {
       case 'pl': if (!M.planted) plantAt(m.x, m.z, F); break;
       case 'df': defuseDone(F); break;
       case 'rdy': F.ready = true; break;
+      case 'dp': if (GUNS[m.k]) addLoot({ id: String(m.id), k: m.k, x: +m.x, z: +m.z, m: m.m | 0, r: m.r | 0, by: F.key, fo: m.fo ? String(m.fo) : '' }); break;   // a gun put on the floor
+      case 'pk': { const d = M.loot && M.loot.find(q => q.id === String(m.id)); if (d) takeLoot(F, d, true); break; }   // and picked up
+      case 'cc': {   // the charge changed hands. Two people grabbing it at once: the lower key keeps it, the same on every device
+        const nk = String(m.k || ''), c = M.charge, mine = c && c.k && M.byKey[c.k] && !M.byKey[c.k].net && M.time - c.at < 1;
+        if (nk && mine && c.k !== nk && c.k < nk) break;
+        if (nk && M.byKey[nk]) setCharge(M.byKey[nk], 0, 0, true); else setCharge(null, +m.x || 0, +m.z || 0, true); break;
+      }
     }
   }
   // place a network fighter between the two snapshots either side of "a tenth of a second ago"
@@ -1961,7 +2134,7 @@ const GAME = {
       let op = ops[b % ops.length]; for (let i = 0; i < ops.length; i++) { const k = ops[(b + i) % ops.length]; if (!mine.includes(k)) { op = k; break; } }
       seats.push({ key: 'b' + b, name: names.length ? names[b % names.length] : cfg.names[b % cfg.names.length], team: t, bot: true, op }); b++; };
     if (cfg.teams) {   // from the party: the host's teams, everyone's operative and rating; bots fill up to the team size (or just enough for a rival)
-      seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: cfg.teams[p.id] != null ? +cfg.teams[p.id] : i % 2, op: cfg.hops && cfg.hops[p.id], rating: cfg.rts && cfg.rts[p.id] })); const size = cfg.size || 2;
+      seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: cfg.teams[p.id] != null ? +cfg.teams[p.id] : i % 2, op: cfg.hops && cfg.hops[p.id], rating: cfg.rts && cfg.rts[p.id], rk: cfg.rks ? +cfg.rks[p.id] || 0 : undefined, rkp: cfg.rkps ? +cfg.rkps[p.id] || 0 : 0 })); const size = cfg.size || 2;
       // two players on one team never share an operative: the first in the room keeps it, the other takes the first one
       // (in the room's shuffled order, the same on every device) that nobody on their team has
       seats.forEach((s, i) => { if (OPS[s.op] && !seats.slice(0, i).some(q => q.team === s.team && q.op === s.op)) return; const mine = seats.filter(q => q !== s && q.team === s.team).map(q => q.op); s.op = cfg.ops.find(k => OPS[k] && !mine.includes(k)) || s.op; });
@@ -1977,7 +2150,7 @@ const GAME = {
     max: 8, min: 2, bots: 0, solo: false, onClose: () => { if (screen !== 'menu') toMenu(); }, sub: 'Create a room and send your friends the code. Two to eight players.',
     config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0, map: pick(mapPool(CFG.sites)), sites: CFG.sites, win: winOf(CFG.win), team: CFG.team, botDiff: CFG.diff === 'auto' ? diffFor(STATS.rating).i : CFG.diff,
       names: [...BOT_NAMES].sort(() => R() - .5), ops: [...Object.keys(OPS)].sort(() => R() - .5) }),
-    onStart: (cfg, roster) => { cfg.names = cfg.names || BOT_NAMES; cfg.ops = cfg.ops || ['vex']; startMatch({ mode: 'online', seats: seatsFor(cfg, roster), hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map, botDiff: cfg.botDiff, win: cfg.win }); emit('matchStart'); },
+    onStart: (cfg, roster) => { cfg.names = cfg.names || BOT_NAMES; cfg.ops = cfg.ops || ['vex']; startMatch({ mode: 'online', seats: seatsFor(cfg, roster), hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map, botDiff: cfg.botDiff, win: cfg.win, ranked: !!cfg.ranked }); emit('matchStart'); },
     onMsg: netMsg,
     // someone's connection dropped: they get DC_WAIT seconds to come back (their game rejoins the room by itself) before
     // they count as gone. Gone: in a duel you win; in a team game they drop out. If the host dropped, the room's next
@@ -2002,7 +2175,10 @@ const GAME = {
      so a gun never pokes into a wall), the reflection map, and pools of effects. 'low' is the phone tier: no shadows, a
      capped pixel ratio that also drops by itself if frames get slow. */
   let X = null, ready = false, failed = false;
-  const isTouch = () => matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+  let touchK = null; const isTouch = () => touchK != null ? touchK : (touchK = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0);   // asked many times a frame: kept until the window changes
+  if (typeof addEventListener !== 'undefined') addEventListener('resize', () => { touchK = null; });
+  // a low-powered computer (a Chromebook, four cores or fewer, or 4 GB of memory or less) plays in FAST, like a phone
+  const lowEnd = () => { try { const n = navigator; return /CrOS/.test(n.userAgent || '') || (n.hardwareConcurrency || 8) <= 4 || (n.deviceMemory || 8) <= 4; } catch (e) { return false; } };
   const BASE_FOV = 70.5;   // vertical, which is 103 degrees across on a 16:9 screen
   const SUN = [-.46, .7, -.55];   // towards the sun: over the sea, north-west, mid afternoon
   // a colour as you picked it: Three.js reads plain colours as linear light, which turns strong colours pale
@@ -2017,11 +2193,12 @@ const GAME = {
 
   function initGfx() {
     loadSave();
-    const low = CFG.quality === 'low' || (CFG.quality !== 'high' && isTouch());
+    const low = CFG.quality === 'low' || (CFG.quality !== 'high' && (isTouch() || lowEnd()));
+    if (low && !isTouch()) { GAME.maxDpr = 1.25; dispatchEvent(new Event('resize')); }   // the HUD's own canvas too: fewer pixels to clear and draw each frame
     const glc = document.createElement('canvas'); glc.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;display:block;background:#0c1016';
     const cv2 = document.getElementById('cv'); cv2.parentNode.insertBefore(glc, cv2);
     const renderer = new THREE.WebGLRenderer({ canvas: glc, antialias: !low, powerPreference: 'high-performance' });
-    const pr = Math.min(window.devicePixelRatio || 1, low ? 1.5 : 2); renderer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight, false);
+    const pr = Math.min(window.devicePixelRatio || 1, low ? (isTouch() ? 1.5 : 1) : 2); renderer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight, false);
     renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .92;
     if (!low) { renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; }
     const scene = new THREE.Scene(), haze = new THREE.Color('#cfe3ee'); scene.background = haze; scene.fog = new THREE.Fog(haze, 90, 420);
@@ -2057,9 +2234,11 @@ const GAME = {
     const dome = new THREE.Mesh(new THREE.SphereGeometry(700, 32, 20), new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false, depthWrite: false })); dome.renderOrder = -10; X.scene.add(dome); X.dome = dome;
   }
   // keep the frame rate on slow phones: if frames run long for a while, draw fewer pixels (never fewer than the screen's own)
+  // (and if that is not enough, the shadows go: they draw every fighter and gun a second time)
   function tunePixels(dt) {
     if (dt > .034) X.slow += dt; else X.slow = Math.max(0, X.slow - dt * .5);
-    if (X.slow > 1.5 && X.pr > .8) { X.pr = Math.max(.75, X.pr - .25); X.renderer.setPixelRatio(X.pr); X.renderer.setSize(innerWidth, innerHeight, false); X.slow = 0; }
+    if (X.slow > 1.2 && X.pr > .8) { X.pr = Math.max(.75, X.pr - .25); X.renderer.setPixelRatio(X.pr); X.renderer.setSize(innerWidth, innerHeight, false); X.slow = 0; }
+    else if (X.slow > 2 && X.renderer.shadowMap.enabled) { X.renderer.shadowMap.enabled = false; X.sun.castShadow = false; X.scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; }); X.slow = 0; }
   }
   (async () => { try { if (typeof document === 'undefined') return; await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'); initGfx(); ready = true; } catch (e) { console.error(e); failed = true; } })();
   /* ---------- 71 the map's mechanic, made visible, and the life around each map ----------
@@ -2353,14 +2532,24 @@ const GAME = {
     }
     // the Tunnel's roof: the underside you see, a top, and beams with lamps
     const lampM = new THREE.MeshBasicMaterial({ color: '#ffe2a8' }), beamM = new THREE.MeshLambertMaterial({ color: LC('#4a3b2c') });
+    // the beams and lamps under the roofs, merged into one mesh per material; each lamp throws a pool of warm light on the floor
+    // (painted on, not a real light: a real one per lamp made every surface in view pay for twenty lights)
+    const RG = new THREE.Group(), pools = []; W.add(RG);
     for (const rf of ROOFS) {
       const x0 = rf.r[0] * CS, z0 = rf.r[1] * CS, x1 = (rf.r[2] + 1) * CS, z1 = (rf.r[3] + 1) * CS;
       flat('roof', x0, z0, x1, z1, rf.h, -1, 2, [.8, .8, .8, .8]); flat('roof', x0, z0 - CS, x1, z1 + CS, rf.h + .3, 1, 2, [1, 1, 1, 1]);
       for (const xx of [x0, x1]) quad('roof', [[xx, rf.h, z0], [xx, rf.h, z1], [xx, rf.h + .3, z1], [xx, rf.h + .3, z0]], [xx === x0 ? -1 : 1, 0, 0], [[0, 0], [3, 0], [3, .15], [0, .15]], [.9, .9, .9, .9]);
       for (let x = x0 + 2; x < x1; x += 4) {
-        const beam = new THREE.Mesh(new THREE.BoxGeometry(.22, .26, z1 - z0), beamM); beam.position.set(x, rf.h - .13, (z0 + z1) / 2); W.add(beam);
-        if ((x - x0 - 2) % 8 === 0) { const lamp = new THREE.Mesh(new THREE.BoxGeometry(.5, .08, .2), lampM); lamp.position.set(x, rf.h - .31, (z0 + z1) / 2); W.add(lamp); if (sh) { const pl = new THREE.PointLight('#ffd9a0', .9, 11, 1.6); pl.position.set(x, rf.h - .5, (z0 + z1) / 2); W.add(pl); } }
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(.22, .26, z1 - z0), beamM); beam.position.set(x, rf.h - .13, (z0 + z1) / 2); RG.add(beam);
+        if ((x - x0 - 2) % 8 === 0) { const lamp = new THREE.Mesh(new THREE.BoxGeometry(.5, .08, .2), lampM); lamp.position.set(x, rf.h - .31, (z0 + z1) / 2); RG.add(lamp); pools.push([x, (z0 + z1) / 2]); }
       }
+    }
+    bake(RG, false);
+    if (pools.length) {
+      if (!X.poolT) X.poolT = canvasTex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.45, 'rgba(255,255,255,.4)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+      const P = [], U = [], I = [], R2 = 3.4; pools.forEach(([x, z], n) => { const y = hAt(x, z) + .03; P.push(x - R2, y, z - R2, x + R2, y, z - R2, x + R2, y, z + R2, x - R2, y, z + R2); U.push(0, 0, 1, 0, 1, 1, 0, 1); I.push(n * 4, n * 4 + 2, n * 4 + 1, n * 4, n * 4 + 3, n * 4 + 2); });
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); geo.setIndex(I);
+      const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: X.poolT, color: '#ffcf8a', transparent: true, opacity: .32, blending: THREE.AdditiveBlending, depthWrite: false })); m.renderOrder = 2; W.add(m);
     }
     // doorways: the wall carries on above them, with the name of where the door leads painted over it
     const signs = [];
@@ -2861,7 +3050,8 @@ const GAME = {
       // Redone whenever the gun is rebuilt (a new gun or a new skin on it), so the new gun and arms get theirs.
       const red = foeSide && f.alive && (U.copSet == null || U.copSet === 1), gid = U.gk + '|' + U.gsk;
       if (U.olOn !== red || (red && U.olGk !== gid)) { outline(A, red); U.olOn = red; U.olGk = gid; } }
-    const sp = Math.hypot(f.vx, f.vz), sl = f.slide ? 1 : 0, amp = Math.min(1, sp / 3.5) * (f.sprinting ? 1.15 : .8) * (1 - sl), ph = f.walkT * 1.9, cr = f.crouch * (1 - sl);
+    U.kn = lp(U.kn || 0, f.alive && (f.plant > 0 || f.defuse > 0) ? 1 : 0, Math.min(1, dt * 9));   // planting or defusing: down on one knee
+    const sp = Math.hypot(f.vx, f.vz), sl = f.slide ? 1 : 0, amp = Math.min(1, sp / 3.5) * (f.sprinting ? 1.15 : .8) * (1 - sl), ph = f.walkT * 1.9, cr = Math.max(f.crouch, U.kn) * (1 - sl);
     animKit(U.gunHold.children[0], dt);
     U.sl = lp(U.sl || 0, sl, Math.min(1, dt * 12)); U.spr = lp(U.spr || 0, f.sprinting ? 1 : 0, Math.min(1, dt * 8)); const sk = U.sl;
     // legs: swing with the stride, the trailing knee bends; a crouch folds both
@@ -2880,6 +3070,11 @@ const GAME = {
     // the rival's gun works too: slide, bolt, pump, magazine; and the arms tip it over to reload
     { const gm = U.gunHold.children[0], G = gun(f); if (gm && gm.userData.parts) animParts(gm, f, G, dt, false);
       const rt = f.reloadT > 0 ? 1 - f.reloadT / G.rel : -1, tl = rt < 0 ? 0 : sm(cl(rt / .14, 0, 1)) * (1 - sm(cl((rt - .88) / .12, 0, 1))); U.arms.rotation.z = -tl * .45; U.arms.rotation.x -= tl * .35; }
+    // kneeling over the charge: leaning in, head down, both hands at the floor (the gun put away); planting, the charge is in
+    // the hands on its way down; defusing, the hands work at it
+    if (U.kn > .01) { const k = U.kn, work = f.defuse > 0 ? Math.sin(X.t * 13) * .07 : 0; U.hip.position.y -= .14 * k; U.torso.rotation.x -= .5 * k; U.head.rotation.x -= .3 * k; U.arms.rotation.x = lp(U.arms.rotation.x, -1.0 + work, k); U.arms.rotation.z = lp(U.arms.rotation.z, 0, k); U.arms.position.z = lp(U.arms.position.z, .05, k); }
+    U.gunHold.visible = U.gunHold.visible && U.kn < .5;
+    { const hold = f.alive && f.plant > 0; if (hold && !U.held) { U.held = X.chargeCopy(); U.held.scale.setScalar(.75); U.arms.add(U.held); } if (U.held) { U.held.visible = hold; if (hold) U.held.position.set(.03, -.2, -.4); } }
     // a dead fighter falls back and stays down
     U.dead = f.alive ? 0 : Math.min(1, U.dead + dt * 2.6); const d = smooth(U.dead);
     A.rotation.x = d * 1.5; A.position.y = f.y + d * .14;
@@ -4264,6 +4459,8 @@ const GAME = {
   function warmShaders() {
     if (!X || !X.renderer) return;
     if (!X.olDummy) { X.olDummy = new THREE.Mesh(new THREE.BoxGeometry(.01, .01, .01), outlineMat()); X.olDummy.visible = false; X.scene.add(X.olDummy); }
+    if (!X.lootDummy && X.lootRing) { X.lootDummy = new THREE.Mesh(X.lootRing.g, X.lootRing.m); X.lootDummy.visible = false; X.scene.add(X.lootDummy); }   // the floor gun's ring, and the charge in your hands, ready before they first appear
+    if (!X.vcharge && X.chargeCopy) { X.vcharge = X.chargeCopy(); X.vcharge.scale.setScalar(.42); X.vcharge.visible = false; X.vroot.add(X.vcharge); }
     if (!X.smokes.length) addSmoke(); if (!X.walls.length) addWall(); if (!X.nadeObjs.length) { const o = X.nadeMk(); o.visible = false; X.scene.add(o); X.nadeObjs.push(o); }
     try { X.renderer.compile(X.scene, X.camera); X.renderer.compile(X.vscene, X.camera); } catch (e) { console.warn(e); }
   }
@@ -4300,6 +4497,11 @@ const GAME = {
     // its light is always in the scene, just dark: a light appearing mid-round changes the light count, and every lit material
     // would then rebuild its shader at once (the stutter you used to feel the moment the charge went down)
     X.chargePL = add(new THREE.PointLight(WARN, 0, 7)); X.chargePL.position.set(0, -20, 0); ch.visible = false; add(ch);
+    // the same device, carried (on the carrier's back) or lying on the floor: copies that share its shapes, with a lamp of their own
+    X.chargeLampM = new THREE.MeshBasicMaterial({ color: WARN }); X.chargeCopy = () => { const c = ch.clone(); c.traverse(o => { if (o.material === X.chargeLamp.material) o.material = X.chargeLampM; }); c.visible = true; return c; };
+    X.chargeFloor = X.chargeCopy(); X.chargeFloor.visible = false; add(X.chargeFloor);
+    X.lootRing = { g: new THREE.RingGeometry(.32, .4, 24), m: new THREE.MeshBasicMaterial({ color: '#efe9dc', transparent: true, opacity: .45, depthWrite: false, side: THREE.DoubleSide }) };
+    X.lootObjs = new Map(); X.lootProto = new Map();
     X.flareBall = add(new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffffff' }))); X.flareBall.visible = false;
     X.boom = add(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), fm({ color: '#ffb060', opacity: .8 }))); X.boom.visible = false; X.boomT = 0;
     X.ejects = []; X.casings = [];
@@ -4376,7 +4578,7 @@ const GAME = {
       if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker') && renderGunShow(dt)) return;
       if (screen === 'select' && UI.sel) { for (const g of X.smokes) g.visible = false; for (const o of X.nadeObjs) o.visible = false; for (const w of X.walls) w.visible = false; return renderSelect(dt); }
       const a = X.t * .06 + 2.4, k = MW / 64; cam.position.set(MW / 2 + 9 * k + Math.cos(a) * 30 * k, 19 * k, MH / 2 - 1 + Math.sin(a) * 26 * k); cam.rotation.set(0, 0, 0); cam.lookAt(MW / 2 + 6 * k, 0, MH / 2 - 1); cam.fov = 55; cam.updateProjectionMatrix();
-      for (const A of X.agents.values()) A.visible = false; X.charge.visible = false; for (const g of X.smokes) g.visible = false; for (const o of X.nadeObjs) o.visible = false; for (const w of X.walls) w.visible = false; hideKitFx();
+      for (const A of X.agents.values()) A.visible = false; X.charge.visible = false; for (const g of X.smokes) g.visible = false; for (const o of X.nadeObjs) o.visible = false; for (const w of X.walls) w.visible = false; hideKitFx(); hideLoot();
       X.renderer.render(X.scene, cam); return;
     }
     updateSpec(); const P = viewer(), G = gun(P); if (X.hemiBase != null) X.hemi.intensity = X.hemiBase;
@@ -4388,7 +4590,7 @@ const GAME = {
     // next shot (the crosshair stays put on screen, so the rest shows as bullets landing above it), and glides back as the spray settles
     { const pt = P.alive && !G.melee ? patOf(P, G) : [0, 0], fol = P.scoped && G.scope ? .25 : .55, k = Math.min(1, dt * 18);
       X.vpY = lp(X.vpY || 0, pt[0] * fol, k); X.vpP = lp(X.vpP || 0, pt[1] * fol, k); }
-    let yaw = P.yaw + X.vpY, pitch = P.pitch + M.camKick + X.vpP, y = X.camY - X.dip;
+    let yaw = P.yaw + X.vpY, pitch = P.pitch + M.camKick + X.vpP, y = X.camY - X.dip - .38 * sm(X.kneel || 0);
     if (P.daze > 0) { const k = Math.min(1, P.daze / .8); yaw += Math.sin(X.t * 6.3) * .014 * k; pitch += Math.cos(X.t * 4.7) * .011 * k; }   // a Shockwave's daze rocks the view
     let deathCam = null;
     if (!P.alive && M.deathInfo) {   // the death cam: you drop, turn to whoever did it, then rise behind your body to watch them
@@ -4445,11 +4647,23 @@ const GAME = {
     X.adsK = lp(X.adsK || 0, P.scoped && !G.scope && P.alive ? 1 : 0, Math.min(1, dt * 16));
     if (X.adsK > .001) { const a = X.adsK, sy = X.viewGun.userData.sight || .09; X.view.position.x = lp(X.view.position.x, 0, a); X.view.position.y = lp(X.view.position.y, -sy - rk * .05, a); X.view.position.z = lp(X.view.position.z, VO[2] - .03 + rk * .5, a); X.view.rotation.y = lp(X.view.rotation.y, 0, a); X.view.rotation.z = lp(X.view.rotation.z, 0, a); X.view.rotation.x = lp(X.view.rotation.x, rk * .5, a); }
     if (X.flashT > 0) X.flashT -= dt;
+    // planting or defusing: you kneel, the gun goes down out of sight; planting, the charge is in your hands, set down as it arms
+    X.kneel = lp(X.kneel || 0, P.alive && (P.plant > 0 || P.defuse > 0) ? 1 : 0, Math.min(1, dt * 10));
+    if (X.kneel > .001) { const k = sm(X.kneel); X.view.position.y -= .32 * k; X.view.rotation.x -= .95 * k; X.view.position.z += .1 * k; }
+    if (!X.vcharge) { X.vcharge = X.chargeCopy(); X.vcharge.scale.setScalar(.42); X.vroot.add(X.vcharge); }
+    { const q = P.alive && P.plant > 0 ? cl(P.plant / PLANT_T, 0, 1) : -1; X.vcharge.visible = q >= 0 && X.kneel > .3;
+      if (q >= 0) { const s2 = sm(cl(q / .35, 0, 1)), d2 = sm(cl((q - .35) / .55, 0, 1)); X.vcharge.position.set(.03 + Math.sin(X.t * 9) * .003 * (1 - d2), lp(-.5, -.26, s2) - d2 * .3, -.66 - d2 * .12); X.vcharge.rotation.set(lp(.9, .45, s2) + d2 * .25, .35 - d2 * .3, 0); } }
     if (P.castT > 0) { P.castT -= dt; const q = 1 - Math.max(0, P.castT) / .5, c = Math.sin(Math.min(1, q) * Math.PI); X.view.position.y -= c * .07; X.view.position.x += c * .03; X.view.rotation.x -= c * .45; X.view.rotation.z += c * .35; }   // the off hand casts: the gun dips out of the way
 
     // the rival
     for (const [f, A] of X.agents) if (!M.fs.includes(f)) { X.scene.remove(A); X.agents.delete(f); }
     { const AP = X.agents.get(P); if (AP) AP.visible = false; } for (const f of M.fs) if (f !== P || X.deathCam) updateAgent(f, dt);   // on the death cam you see your own body fall
+    // a fighter wholly behind walls is not drawn at all (nor its outline): a few lines from the camera to its head, chest, both
+    // hips, feet and gun; if every one is blocked, nothing of it could show. (Not while the camera is inside a wall.)
+    { const c = cam.position; if (hAt(c.x, c.z) < c.y - .05) for (const f of M.fs) { const A = X.agents.get(f); if (!A || !A.visible || (f === P && !X.deathCam)) continue;
+        const x = ipos(f, 'x'), y = ipos(f, 'y'), z = ipos(f, 'z'), s = Math.sin(f.yaw), co = Math.cos(f.yaw), pts = [[x, y + 1.6, z], [x, y + 1.1, z], [x + co * .38, y + 1, z - s * .38], [x - co * .38, y + 1, z + s * .38], [x, y + .25, z], [x - s * .75, y + 1.25, z - co * .75]];
+        let seen = false; for (const q of pts) { const d = Math.hypot(q[0] - c.x, q[1] - c.y, q[2] - c.z); if (d < 2.5 || los(c.x, c.y, c.z, q[0], q[1], q[2], false) >= d - .35) { seen = true; break; } }
+        A.visible = seen; } }
     // smokes, Rampart walls, the charge, a flare in flight
     while (X.smokes.length < M.smokes.length) addSmoke();
     X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { const mt = s.heat ? X.smokeHM : s.grey ? X.smokeGM : X.smokeM; if (g.children[0].material !== mt) for (const c of g.children) c.material = mt; g.position.set(s.x, s.y + 1.4, s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .12; } });
@@ -4460,7 +4674,7 @@ const GAME = {
     X.charge.visible = !!M.planted && !(M.phase === 'end' && M.last && M.last.why === 'boom');
     if (M.planted) { const C = M.planted, lit = !M.defused && C.beep > Math.max(.06, cl(C.t / 12, .12, 1) - .08); X.charge.position.set(C.x, C.y, C.z); X.chargePL.position.set(C.x, C.y + .7, C.z); X.chargeLamp.material.color.set(M.defused ? YOU : lit ? WARN : '#401018'); X.chargePL.intensity = lit && X.charge.visible ? 2.4 : 0; }
     else X.chargePL.intensity = 0;
-    kitFx(dt); stepKillFx(dt); animKit(X.viewGun, dt);
+    kitFx(dt); stepKillFx(dt); animKit(X.viewGun, dt); lootFx(dt);
     const fl = M.flares[0]; X.flareBall.visible = !!fl; if (fl) X.flareBall.position.set(fl.x, fl.y, fl.z);
     // tracers, sparks, lights fading
     for (const t of X.tracers) { const u = t.userData; if (!u.live) continue; u.age += dt;
@@ -4478,6 +4692,28 @@ const GAME = {
       const ac = X.renderer.autoClear; X.renderer.autoClear = false; X.renderer.clearDepth(); X.renderer.render(X.vscene, cam); X.renderer.autoClear = ac;
     }
   }
+
+  // guns on the floor (lying on their side over a pale ring), the charge on the floor, and the charge on its carrier's back
+  function lootFx(dt) {
+    const L = (M && M.loot) || [], seen = new Set();
+    // in the buy phase, get a floor copy of each gun people are carrying ready, one a frame, so a gun dropped mid-fight costs nothing to show
+    if (M && M.phase === 'buy') for (const f of M.fs) { const k = f.guns[1] || (f.guns[2] !== 'pip' && f.guns[2]); if (k && GUNS[k] && !X.lootProto.has(k)) { X.lootProto.set(k, gunModel(k, {})); break; } }
+    for (const d of L) {
+      seen.add(d.id); let o = X.lootObjs.get(d.id);
+      if (!o) { let pr = X.lootProto.get(d.k); if (!pr) { pr = gunModel(d.k, {}); X.lootProto.set(d.k, pr); }
+        o = new THREE.Group(); const gm = pr.clone(); gm.rotation.set(0, 0, Math.PI / 2); gm.position.y = .07; o.add(gm); const ring = new THREE.Mesh(X.lootRing.g, X.lootRing.m); ring.rotation.x = -Math.PI / 2; ring.position.y = .02; o.add(ring);
+        o.rotation.y = (d.x * 7.3 + d.z * 3.1) % TAU; X.scene.add(o); X.lootObjs.set(d.id, o); }
+      o.visible = true; o.position.set(d.x, d.y, d.z);
+    }
+    for (const [id, o] of X.lootObjs) if (!seen.has(id)) { X.scene.remove(o); X.lootObjs.delete(id); }
+    const C = M && M.charge, blink = Math.sin(X.t * 5) > 0;
+    X.chargeLampM.color.set(blink ? WARN : '#5a2620');
+    X.chargeFloor.visible = !!(C && !C.k && !M.planted); if (X.chargeFloor.visible) { X.chargeFloor.position.set(C.x, C.y, C.z); X.chargeFloor.rotation.y = X.t * .6; }
+    for (const [f, A] of X.agents) { const U = A.userData, on = !!(C && C.k === f.key && f.alive && !M.planted);
+      if (on && !U.pack) { U.pack = X.chargeCopy(); U.pack.scale.setScalar(.62); U.pack.rotation.x = -Math.PI / 2 + .25; U.pack.position.set(0, .42, .2); U.torso.add(U.pack); }
+      if (U.pack) U.pack.visible = on; }
+  }
+  function hideLoot() { if (!X || !X.lootObjs) return; for (const o of X.lootObjs.values()) o.visible = false; X.chargeFloor.visible = false; }
   // a point in the world on the screen, in the HUD's 1280 by 720 units (null when it is behind you)
   function toScreen(x, y, z) {
     if (!X || !ready) return null; const p = new THREE.Vector3(x, y, z).project(X.camera); if (p.z > 1) return null;
@@ -4844,10 +5080,11 @@ const GAME = {
     if (UI.armory) return;
     if (c === 'KeyR') reload(P); else if (c === 'Digit1') switchTo(P, 1); else if (c === 'Digit2') switchTo(P, 2); else if (c === 'Digit3') switchTo(P, 3);
     else if (c === 'KeyG') throwNade(P); else if (c === 'KeyQ') ability(P, 'q'); else if (c === 'KeyE') ability(P, 'e'); else if (c === 'KeyX') ability(P, 'x'); else if (c === 'KeyY' && X && P.alive && P.reloadT <= 0) X.inspT = INSP_D;
+    else if (c === 'KeyT') dropHeld(P); else if (c === 'KeyH') dropCharge(P);   // drop the gun in your hand, or the charge, for a teammate
   }
   if (typeof document !== 'undefined') {
     // while you play, keys the game uses (and Ctrl combinations, since Ctrl crouches) do not reach the browser
-    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[e.code] || /^(Key[BRQEFYOX]|Digit[1-3]|Tab)$/.test(e.code))) e.preventDefault(); }, true);
+    addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[e.code] || /^(Key[BRQEFYOXTH]|Digit[1-3]|Tab)$/.test(e.code))) e.preventDefault(); }, true);
     document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; if (Math.abs(e.movementX) > 500 || Math.abs(e.movementY) > 500) return;   // some browsers send a wild jump when the lock starts
       if (UI.armory) { const V = K.view, s = 1 / pxPer(); ptr = { x: cl(ptr.x + e.movementX * s, V.x0 + 2, V.x1 - 4), y: cl(ptr.y + e.movementY * s, V.y0 + 2, V.y1 - 4) }; KNAV.on = false; if (dragZ) dragZ.fn(ptr.x, ptr.y); return; }   // the armory's cursor
       const P = me(), s = .0022 * (trackpad() ? CFG.tpsens * TS.slow : CFG.sens) / zoomOf(P) * (P.scoped ? CFG.zsens : 1); TS.mvT = performance.now(); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
@@ -4874,7 +5111,7 @@ const GAME = {
   function touchButtons() {
     const V = K.view, u = uiScale(), R = V.x1, B = V.y1, P = me(), G = gun(P), fx = R - 150 * u, fy = B - 150 * u, live = M.phase === 'live', op = OPS[P.op];
     const orbNear = !!(M.orbs && M.orbs.some(o => !o.taken && Math.hypot(o.x - P.x, o.z - P.z) < ORB.r)), doorNear = GATES.length > 0 && gateNear(P) >= 0;
-    const near = M.planted && Math.hypot(P.x - M.planted.x, P.z - M.planted.z) < 1.7, canUse = live && P.alive && M.mode !== 'range' && (sideOf(P) === 'att' ? !M.planted && onSite(P.x, P.z) : near && !M.defused);
+    const near = M.planted && Math.hypot(P.x - M.planted.x, P.z - M.planted.z) < 1.7, canUse = live && P.alive && M.mode !== 'range' && (sideOf(P) === 'att' ? !M.planted && onSite(P.x, P.z) && (carries(P) || !M.charge) : near && !M.defused);
     return [
       { k: 'fire', x: fx, y: fy, r: 62 * u, t: G.melee ? 'SLASH' : 'FIRE', show: P.alive },
       { k: 'alt', x: fx - 22 * u, y: fy - 116 * u, r: 38 * u, t: G.melee ? 'STAB' : G.scope ? 'SCOPE' : G.ads ? 'AIM' : 'BURST', show: P.alive && !!(G.melee || G.scope || G.ads || G.alt), on: !!P.scoped },
@@ -4886,7 +5123,8 @@ const GAME = {
       { k: 'x', x: fx - 290 * u, y: fy + 30 * u, r: 36 * u, t: P.ult >= ultCost(P) ? op.x.n.toUpperCase() : `ULT ${P.ult | 0}/${ultCost(P)}`, show: P.alive && live, off: P.ult < ultCost(P), col: op.col },
       { k: 'e', x: fx - 204 * u, y: fy + 4 * u, r: 38 * u, t: op.e.n.toUpperCase(), show: P.alive && live, off: !P.ab.e, col: op.col },
       { k: 'nade', x: fx - 196 * u, y: fy - 104 * u, r: 34 * u, t: 'SMOKE ' + (P.smokes || 0), show: P.alive && live && P.smokes > 0, off: !(P.smokes > 0), col: NADE.col },
-      { k: 'use', x: 640, y: B - 200 * u, r: 58 * u, t: orbNear ? 'TAKE ORB' : canUse ? (sideOf(P) === 'att' ? 'PLANT' : 'DEFUSE') : 'DOOR', show: canUse || (live && P.alive && (orbNear || doorNear)), col: orbNear ? op.col : FOE },
+      { k: 'use', x: 640, y: B - 200 * u, r: 58 * u, t: P.nearLoot ? 'SWAP GUN' : orbNear ? 'TAKE ORB' : canUse ? (sideOf(P) === 'att' ? 'PLANT' : 'DEFUSE') : 'DOOR', show: canUse || (P.alive && !!P.nearLoot) || (live && P.alive && (orbNear || doorNear)), col: P.nearLoot ? BONE : orbNear ? op.col : FOE },
+      { k: 'drop', x: fx - 300 * u, y: fy - 150 * u, r: 32 * u, t: carries(P) && !M.planted ? 'DROP ◆' : 'DROP', show: P.alive && M.mode !== 'range' && M.phase !== 'end' && ((carries(P) && !M.planted) || (M.phase === 'buy' && !!(P.guns[1] || P.guns[2] !== 'pip'))), col: carries(P) ? GOLD : BONE },
     ].filter(b => b.show);
   }
   function touchDown(x, y, id) {
@@ -4894,7 +5132,7 @@ const GAME = {
       const P = me(); click();
       if (b.k === 'fire') { TS.fire = id; TS.tap = true; TS.look = { id, x, y }; try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} }   // the fire thumb keeps aiming while it holds
       else if (b.k === 'alt') altAction(P); else if (b.k === 'reload') reload(P); else if (b.k === 'swap') cycleWeapon(P); else if (b.k === 'crouch') { if (me().sprinting) TS.slideAt = performance.now(); else TS.crouch = !TS.crouch; }
-      else if (b.k === 'q' || b.k === 'e' || b.k === 'x') ability(P, b.k); else if (b.k === 'nade') throwNade(P); else TS.held.set(id, b.k);
+      else if (b.k === 'q' || b.k === 'e' || b.k === 'x') ability(P, b.k); else if (b.k === 'nade') throwNade(P); else if (b.k === 'drop') { if (!(carries(P) && dropCharge(P))) dropHeld(P); } else TS.held.set(id, b.k);
       return;
     }
     if (x < lp(K.view.x0, K.view.x1, .45)) { if (!TS.stick) TS.stick = { id, x0: x, y0: y, x, y }; } else if (!TS.look) TS.look = { id, x, y };
@@ -4968,6 +5206,8 @@ const GAME = {
   const fitPx = (g, px) => { const k = g.getTransform().a * innerWidth / g.canvas.width, min = isTouch() ? 10.5 : 9; return px * k < min ? min / k : px; };
   // a short note across the top for a few seconds ("trackpad found")
   let TOAST = null; const toast = s => { TOAST = { s, at: performance.now() }; };
+  on('gift', (f, mate, k) => { if (!M || M.mode === 'demo') return; if (mate === me()) toast(`${f.name.toUpperCase()} BOUGHT YOU A ${GUNS[k].n.toUpperCase()}`); else if (f === me()) toast(`YOU BOUGHT ${mate.name.toUpperCase()} A ${GUNS[k].n.toUpperCase()}`); });
+  on('charge', f => { if (!M || M.mode === 'demo' || M.phase === 'end') return; const P = me(); if (f === P) toast(isTouch() ? 'YOU HAVE THE CHARGE' : 'YOU HAVE THE CHARGE  ·  H TO DROP IT'); else if (f && f.team === P.team && M.round && M.time - (M.chargeToastT || -9) > .5) toast(f.name.toUpperCase() + ' HAS THE CHARGE'); else if (!f && sideOf(P) === 'att') toast('THE CHARGE IS ON THE FLOOR'); M.chargeToastT = M.time; });
   function tx(g, s, x, y, px, col = BONE, align = 'center', weight = 700) { px = fitPx(g, px); g.font = `${weight} ${px}px ${FONT}`; g.fillStyle = col; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(s, x, y); }
   function rr(g, x, y, w, h, r, fill, stroke, lw = 2) {
     g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
@@ -5229,7 +5469,7 @@ const GAME = {
     tx(g, MAP.tag || TAGS[MAP.k] || '', x0 + 26 * u, V.y0 + 196 * u, 16 * u, '#c9cfd8', 'left', 600);
     if (MAP.tip) { g.save(); g.font = `700 ${fitPx(g, 14 * u)}px ${FONT}`; const tw = Math.min(g.measureText(MAP.tip).width + 30 * u, 620 * u); rr(g, x0 + 22 * u, V.y0 + 214 * u, tw, 30 * u, 6, 'rgba(12,16,22,.62)', acc, 1.5); g.restore();
       g.save(); g.beginPath(); g.rect(x0 + 22 * u, V.y0 + 214 * u, tw, 30 * u); g.clip(); tx(g, MAP.tip, x0 + 36 * u, V.y0 + 229 * u, 13 * u, BONE, 'left', 700); g.restore(); }
-    const chips = [two ? 'TWO SITES' : 'ONE SITE', M.fs.filter(q => q.team === P.team).length + 'V' + M.fs.filter(q => q.team !== P.team).length, 'FIRST TO ' + WIN_ROUNDS];
+    const chips = [two ? 'TWO SITES' : 'ONE SITE', M.fs.filter(q => q.team === P.team).length + 'V' + M.fs.filter(q => q.team !== P.team).length, 'FIRST TO ' + WIN_ROUNDS, ...(M.ranked ? ['RANKED'] : [])];
     // the mode, the team size and the target ride on the NOW ENTERING line (lower down they sat under the map's tip)
     g.font = `800 ${fitPx(g, 14 * u)}px ${FONT}`; let cx = x0 + 26 * u + g.measureText('NOW ENTERING').width + 18 * u;
     for (const c of chips) { const px = fitPx(g, 12 * u); g.font = `800 ${px}px ${FONT}`; const w = g.measureText(c).width + px * 1.8, h = Math.max(26 * u, px * 1.9); rr(g, cx, V.y0 + 86 * u - h / 2, w, h, 4, 'rgba(239,233,220,.1)', 'rgba(239,233,220,.25)', 1); tx(g, c, cx + w / 2, V.y0 + 86 * u, 12 * u, BONE, 'center', 800); cx += w + 8 * u; }
@@ -5257,7 +5497,8 @@ const GAME = {
       portraitTile(g, q.op, x + 8 * u, y + 6 * u, 56 * u, ch - 12 * u, { r: 4 });
       { const rk = q.rating && !slim ? (g.font = `800 ${fitPx(g, 11 * u)}px ${FONT}`, g.measureText(rankName(q.rating).toUpperCase()).width + 52 * u) : (q.rating ? 40 : 36) * u;   // clear of the rank beside it
         const [nm, npx] = fitName(g, q.name.toUpperCase(), cw - 74 * u - rk, (slim ? 14 : 16) * u); tx(g, nm, x + 74 * u, y + 24 * u, npx, BONE, 'left', 800); } tx(g, (OPS[q.op] || OPS.vex).n, x + 74 * u, y + 44 * u, 11 * u, (OPS[q.op] || OPS.vex).col, 'left', 800);
-      if (q.rating && slim) { rankBadge(g, x + cw - 22 * u, y + 26 * u, 12 * u, q.rating); tx(g, String(q.rating), x + cw - 22 * u, y + 56 * u, 11 * u, BONE, 'center', 700); }
+      if (M.ranked && !(q.bot || q.isBot) && q.rk != null) { const on = !!q.rkp; tierBadge(g, x + cw - 22 * u, y + 28 * u, 12 * u, q.rk, on); if (!slim) tx(g, on ? rankLabel(q.rk).toUpperCase() : 'UNRANKED', x + cw - 40 * u, y + 24 * u, 11 * u, on ? rankOf(q.rk).T.col : DIM, 'right', 800); }
+      else if (q.rating && slim) { rankBadge(g, x + cw - 22 * u, y + 26 * u, 12 * u, q.rating); tx(g, String(q.rating), x + cw - 22 * u, y + 56 * u, 11 * u, BONE, 'center', 700); }
       else if (q.rating) { rankBadge(g, x + cw - 24 * u, y + 28 * u, 13 * u, q.rating); tx(g, rankName(q.rating).toUpperCase(), x + cw - 42 * u, y + 24 * u, 11 * u, RANK_COL[diffFor(q.rating).i], 'right', 800); tx(g, String(q.rating), x + cw - 42 * u, y + 42 * u, 13 * u, BONE, 'right', 700); }
       else tx(g, '—', x + cw - 24 * u, y + 30 * u, 14 * u, DIM, 'center');
       tx(g, q.bot ? 'BOT' : q.net && !q.isBot ? 'PLAYER' : q === P ? 'YOU' : 'BOT', x + 74 * u, y + 60 * u, 10 * u, DIM, 'left', 800);
@@ -5269,13 +5510,31 @@ const GAME = {
     g.fillStyle = 'rgba(239,233,220,.12)'; g.fillRect(V.x0, V.y1 - 6 * u, W, 6 * u); g.fillStyle = acc; g.fillRect(V.x0, V.y1 - 6 * u, W * k, 6 * u);
     if (!M.online) tx(g, isTouch() ? 'Tap to skip' : 'Click to skip', V.x1 - 24 * u, V.y1 - 22 * u, 11 * u, DIM, 'right', 700);
   }
+
+  // ---- the big moments: a band that sweeps across the top of the screen (the charge planted, an ace, a clutch)
+  let SWEEP = null; const sweep = (title, sub, col) => { SWEEP = { t0: performance.now(), title, sub, col }; };
+  on('planted', () => { if (!M || M.mode === 'range') return; const att = sideOf(me()) === 'att', S = M.planted && twoSites() ? 'SITE ' + SITES[M.planted.s].k + '  ·  ' : ''; sweep('CHARGE PLANTED', S + (att ? 'HOLD IT FOR ' + FUSE_T + ' SECONDS' : 'DEFUSE IT  ·  ' + FUSE_T + ' SECONDS'), att ? FOE : WARN); });
+  on('defused', f => { if (!M || M.mode === 'range') return; sweep('CHARGE DEFUSED', f ? f.name.toUpperCase() : '', f && f.team === me().team ? YOU : FOE); });
+  on('ace', f => { if (!M) return; sweep('ACE', f.name.toUpperCase() + ' TOOK THE WHOLE TEAM', GOLD); });
+  on('clutch', (f, vs) => { if (!M) return; sweep('CLUTCH', `${f.name.toUpperCase()}  ·  1 v ${vs}`, f.team === me().team ? YOU : FOE); });
+  function drawSweep(g) {
+    if (!SWEEP) return; const t = (performance.now() - SWEEP.t0) / 1000, D = 2.6; if (t > D) { SWEEP = null; return; }
+    const V = K.view, u = uiScale(), W = V.x1 - V.x0, cy = V.y0 + 168 * u, hh = 46 * u, inK = smooth(cl(t / .28, 0, 1)), outK = smooth(cl((t - D + .35) / .35, 0, 1)), sk = 40 * u;
+    const x0 = lp(V.x0 - W, V.x0, inK) + outK * W, x1 = x0 + W, col = SWEEP.col;
+    g.save(); g.globalAlpha = .9; g.fillStyle = 'rgba(8,10,14,.86)'; g.beginPath(); g.moveTo(x0 + sk, cy - hh); g.lineTo(x1 + sk, cy - hh); g.lineTo(x1 - sk, cy + hh); g.lineTo(x0 - sk, cy + hh); g.closePath(); g.fill();
+    g.globalAlpha = 1; g.fillStyle = col; g.fillRect(x0, cy - hh, W, 3 * u); g.fillRect(x0, cy + hh - 3 * u, W, 3 * u);
+    const sh = ((t * 900 * u) % (W + 400 * u)) - 200 * u; const gr = g.createLinearGradient(x0 + sh - 120 * u, 0, x0 + sh + 120 * u, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.5, 'rgba(255,255,255,.12)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x0, cy - hh, W, hh * 2);   // a glint runs along it
+    const tx0 = 640 + (1 - inK) * -160 * u + outK * 160 * u, pop = 1 + .18 * Math.max(0, 1 - t / .35);
+    tx(g, SWEEP.title, tx0, cy - 8 * u, 46 * u * pop, col, 'center', 900); if (SWEEP.sub) tx(g, SWEEP.sub, tx0, cy + 27 * u, 14 * u, BONE, 'center', 800);
+    g.restore();
+  }
   // ---- switching sides: a band across the screen at the start of the second half (and the decider) says which side you are now
   function drawSwitch(g) {
     const S = UI.switched; if (!S) return; const t = (performance.now() - S.t0) / 1000; if (t > 3.2) { UI.switched = null; return; }
     const V = K.view, u = uiScale(), W = V.x1 - V.x0, a = t < .25 ? smooth(t / .25) : t > 2.8 ? 1 - (t - 2.8) / .4 : 1, col = S.side === 'att' ? FOE : YOU, cy = 330;
     g.save(); g.globalAlpha = a; g.fillStyle = 'rgba(8,10,14,.86)'; g.fillRect(V.x0, cy - 78 * u, W, 156 * u); g.fillStyle = col; g.fillRect(V.x0, cy - 78 * u, W, 4 * u); g.fillRect(V.x0, cy + 74 * u, W, 4 * u);
     const sw = (t * 260 * u) % (80 * u); for (let i = -2; i < W / (80 * u) + 2; i++) { const x = V.x0 + i * 80 * u + sw; g.fillStyle = 'rgba(239,233,220,.05)'; g.beginPath(); g.moveTo(x, cy - 74 * u); g.lineTo(x + 30 * u, cy - 74 * u); g.lineTo(x + 70 * u, cy); g.lineTo(x + 30 * u, cy + 74 * u); g.lineTo(x, cy + 74 * u); g.lineTo(x + 40 * u, cy); g.closePath(); g.fill(); }
-    tx(g, S.decider ? 'DECIDER' : 'SWITCHING SIDES', 640, cy - 34 * u, 20 * u, DIM, 'center', 900);
+    tx(g, S.sd ? 'SUDDEN DEATH  ·  NEXT ROUND WINS' : S.decider ? (S.first ? 'OVERTIME  ·  WIN BY TWO' : 'OVERTIME  ·  SIDES SWAP EVERY ROUND') : 'SWITCHING SIDES', 640, cy - 34 * u, 20 * u, S.decider ? GOLD : DIM, 'center', 900);
     tx(g, S.side === 'att' ? 'YOU NOW ATTACK' : 'YOU NOW DEFEND', 640, cy + 12 * u, 54 * u, col, 'center', 900);
     tx(g, S.side === 'att' ? (SITES.length > 1 ? 'Take the charge to ' + siteWords() : 'Take the charge to the site') : 'Hold them off, or defuse the charge', 640, cy + 52 * u, 15 * u, BONE, 'center', 700);
     g.restore();
@@ -5285,16 +5544,16 @@ const GAME = {
   if (typeof document !== 'undefined') { addEventListener('keydown', e => { if (e.code === 'Tab') UI.board = true; }); addEventListener('keyup', e => { if (e.code === 'Tab') UI.board = false; }); addEventListener('blur', () => { UI.board = false; }); }
   on('over', () => { UI.board = false; });
   function drawBoard(g, V, u) {
-    const P = me(), mine = M.fs.filter(f => f.team === P.team).sort((a, b) => (b === P) - (a === P) || b.stat.k - a.stat.k), theirs = M.fs.filter(f => f.team !== P.team).sort((a, b) => b.stat.k - a.stat.k), n = mine.length + theirs.length;
-    const tw = Math.min(660 * u, V.x1 - V.x0 - 40 * u), s = tw / (660 * u), x0 = 640 - tw / 2, top = V.y0 + 84 * u, hh = 32 * u, bh = 22 * u, rh = Math.max(20 * u, Math.min(34 * u, (V.y1 - 24 * u - top - hh - 2 * bh - 10 * u) / n)), th = hh + 2 * bh + n * rh + 10 * u;
-    const cols = [['K', f => f.stat.k, 262], ['D', f => f.stat.d, 220], ['HS', f => f.stat.hs, 178], ['DMG', f => Math.round(f.stat.dmg), 112], ['CREDITS', f => f.team === P.team && !f.gone ? '◈ ' + f.credits : '', 18]];
+    const P = me(), mine = M.fs.filter(f => f.team === P.team).sort((a, b) => csOf(b) - csOf(a)), theirs = M.fs.filter(f => f.team !== P.team).sort((a, b) => csOf(b) - csOf(a)), n = mine.length + theirs.length;
+    const tw = Math.min(740 * u, V.x1 - V.x0 - 40 * u), s = tw / (740 * u), x0 = 640 - tw / 2, top = V.y0 + 84 * u, hh = 32 * u, bh = 22 * u, rh = Math.max(20 * u, Math.min(34 * u, (V.y1 - 24 * u - top - hh - 2 * bh - 10 * u) / n)), th = hh + 2 * bh + n * rh + 10 * u;
+    const cols = [['SCORE', f => csOf(f), 330], ['K', f => f.stat.k, 284], ['D', f => f.stat.d, 248], ['FK', f => f.stat.fk | 0, 212], ['HS', f => f.stat.hs, 176], ['DMG', f => Math.round(f.stat.dmg), 112], ['CREDITS', f => f.team === P.team && !f.gone && (f === P || !f.net) ? '◈ ' + f.credits : '', 18]];
     g.save(); rr(g, x0, top, tw, th, 10, 'rgba(10,13,18,.92)', 'rgba(239,233,220,.2)', 1.5);
     tx(g, 'SCOREBOARD', x0 + 16 * u, top + hh / 2, 13 * u, BONE, 'left', 900); tx(g, `ROUND ${M.round}  ·  ${M.wins[0]} – ${M.wins[1]}`, x0 + 136 * u, top + hh / 2, 11 * u, DIM, 'left', 800);
     for (const [k, , dx] of cols) tx(g, k, x0 + tw - dx * u * s, top + hh / 2, 10 * u, DIM, 'right', 900);
     let y = top + hh;
     const row = (f, col) => { const down = !f.alive || f.gone; if (f === P) { g.fillStyle = 'rgba(53,224,200,.12)'; g.fillRect(x0 + 4 * u, y + 1, tw - 8 * u, rh - 2); }
       g.fillStyle = col; g.fillRect(x0 + 4 * u, y + 2, 3 * u, rh - 4); portraitTile(g, f.op, x0 + 12 * u, y + 2, rh - 4, rh - 4, { r: 3, dead: down });
-      g.globalAlpha = down ? .5 : 1; const tag = f.gone ? '  · LEFT' : f === P ? '' : f.bot || f.isBot ? '  · BOT' : '', [nm, npx] = fitName(g, f.name.toUpperCase() + tag, tw - 280 * u * s - rh - 22 * u, Math.min(14 * u, rh * .5));
+      g.globalAlpha = down ? .5 : 1; const tag = f.gone ? '  · LEFT' : f === P ? '' : f.bot || f.isBot ? '  · BOT' : '', [nm, npx] = fitName(g, (carries(f) && !M.planted && f.team === P.team ? '◆ ' : '') + f.name.toUpperCase() + tag, tw - 360 * u * s - rh - 22 * u, Math.min(14 * u, rh * .5));
       tx(g, nm, x0 + 18 * u + rh, y + rh / 2, npx, f === P ? YOU : BONE, 'left', 800);
       for (const [k, fn, dx] of cols) tx(g, String(fn(f)), x0 + tw - dx * u * s, y + rh / 2, Math.min(k === 'CREDITS' ? 13 * u : 15 * u, rh * .56), k === 'CREDITS' ? GOLD : BONE, 'right', 800);
       g.globalAlpha = 1; y += rh; };
@@ -5312,7 +5571,8 @@ const GAME = {
       const a = M.hurtDir - P.yaw + Math.PI; g.save(); g.translate(640, 360); g.rotate(-a); g.fillStyle = `rgba(255,90,77,${M.hurt * .8})`; g.beginPath(); g.arc(0, 0, 150 * u, Math.PI * 1.36, Math.PI * 1.64); g.arc(0, 0, 134 * u, Math.PI * 1.64, Math.PI * 1.36, true); g.fill(); g.restore(); }
     // --- markers in the world: a pinged rival, the planted charge
     // teammates: a name and a marker over each, and their health
-    for (const q of M.fs) if (q !== P && q.team === P.team && q.alive) { const s = toScreen(q.x, q.y + 2.05, q.z); if (s) { g.fillStyle = YOU; g.beginPath(); g.moveTo(s[0] - 7, s[1] - 10); g.lineTo(s[0] + 7, s[1] - 10); g.lineTo(s[0], s[1]); g.closePath(); g.fill(); tx(g, `${q.name.toUpperCase()} ${Math.ceil(q.hp)}`, s[0], s[1] - 20, 13, YOU, 'center', 800); } }
+    for (const q of M.fs) if (q !== P && q.team === P.team && q.alive) { const s = toScreen(q.x, q.y + 2.05, q.z); if (s) { g.fillStyle = YOU; g.beginPath(); g.moveTo(s[0] - 7, s[1] - 10); g.lineTo(s[0] + 7, s[1] - 10); g.lineTo(s[0], s[1]); g.closePath(); g.fill(); tx(g, `${carries(q) ? '◆ ' : ''}${q.name.toUpperCase()} ${Math.ceil(q.hp)}`, s[0], s[1] - 20, 13, carries(q) ? GOLD : YOU, 'center', 800); } }
+    if (M.charge && !M.charge.k && !M.planted && side === 'att' && M.phase !== 'end') { const C = M.charge, s = toScreen(C.x, C.y + .8, C.z); if (s) { const p = 1 + Math.sin(M.time * 6) * .12; g.strokeStyle = GOLD; g.lineWidth = 2.5; g.beginPath(); g.moveTo(s[0], s[1] - 11 * p); g.lineTo(s[0] + 9 * p, s[1]); g.lineTo(s[0], s[1] + 11 * p); g.lineTo(s[0] - 9 * p, s[1]); g.closePath(); g.stroke(); tx(g, 'CHARGE  ' + Math.hypot(P.x - C.x, P.z - C.z).toFixed(0) + ' m', s[0], s[1] + 22, 12, GOLD, 'center', 800); } }
     for (const E of M.fs) if (E.alive && E.team !== me().team && E.reveal > 0) { const s = toScreen(E.x, E.y + 1.1, E.z); if (s) { g.strokeStyle = FOE; g.lineWidth = 3; g.beginPath(); g.moveTo(s[0], s[1] - 30); g.lineTo(s[0] + 20, s[1]); g.lineTo(s[0], s[1] + 30); g.lineTo(s[0] - 20, s[1]); g.closePath(); g.stroke(); } }   // everyone revealed, not just the nearest
     // the death cam: whoever killed you, marked where they stand
     if (X.deathCam && M.deathInfo) { const D = M.deathInfo, kf = M.byKey[D.key]; if (kf && kf.alive) { const s = toScreen(ipos(kf, 'x'), ipos(kf, 'y') + 2.25, ipos(kf, 'z')); if (s) { const p = .8 + .2 * Math.sin(K.t * 6);
@@ -5329,7 +5589,7 @@ const GAME = {
     }
     // no hit marks over the crosshair; the range alone shows the damage each shot did
     if (hitMark && (hitMark.t -= 1 / 60) > 0 && range) tx(g, String(hitMark.dmg), 640 + 44 * u + hitMark.x, cy - 30 * u - (1 - Math.min(1, hitMark.t / .28)) * 16, 20 * u, hitMark.head ? GOLD : '#fff');
-    drawBanner(g, V, u); drawSwitch(g);
+    drawBanner(g, V, u); drawSwitch(g); drawSweep(g);
     if (range && UI.trying) { const sk = skinOfId(UI.trying); if (sk) { const w = 460 * u, y = V.y0 + 64 * u; rr(g, 640 - w / 2, y, w, 34 * u, 6, 'rgba(10,13,18,.82)', sk.R.col, 1.5); tx(g, `TRYING ${skinName(UI.trying).toUpperCase()}  ·  ${owns(UI.trying) ? 'YOURS' : skinPrice(UI.trying) + ' IN THE STORE'}`, 640, y + 17 * u, 12 * u, sk.R.col, 'center', 900); } }
     // --- dazed, snared, surging, shrouded: the whole view says so
     { const ring = (col, a, inner) => { const gr = g.createRadialGradient(640, 360, H * inner, 640, 360, H * .85); gr.addColorStop(0, col.replace('A', '0')); gr.addColorStop(1, col.replace('A', String(a))); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H); };
@@ -5369,6 +5629,7 @@ const GAME = {
       g.globalAlpha = .9; g.drawImage(miniMap(), mx, my, mw, mh); g.globalAlpha = 1; g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 1.5; g.strokeRect(mx, my, mw, mh);
       for (const S of SITES) siteLabel(g, S, mx, my, k, 14 * u);
       if (M.planted) { g.fillStyle = WARN; g.beginPath(); g.arc(mx + M.planted.x * k, my + M.planted.z * k, 4.5 * u, 0, TAU); g.fill(); }
+      if (M.charge && !M.planted && side === 'att') { const c = carrier(), cx2 = c ? c.x : M.charge.x, cz2 = c ? c.z : M.charge.z; if (!c || c.alive) { g.strokeStyle = GOLD; g.lineWidth = 2; g.beginPath(); g.arc(mx + cx2 * k, my + cz2 * k, (c ? 6 : 4.5) * u, 0, TAU); g.stroke(); if (!c) { g.fillStyle = GOLD; g.fill(); } } }
       if (heard && (heard.t -= 1 / 60) > 0) { g.strokeStyle = `rgba(255,138,61,${heard.t / 1.6})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + heard.x * k, my + heard.z * k, (8 + (1.6 - heard.t) * 8) * u, 0, TAU); g.stroke(); }
       for (const q of M.fs) if (q !== P && q.alive && !q.gone) { const ours = q.team === P.team; if (!ours && !(q.reveal > 0 || canSee(P, q))) continue; g.fillStyle = ours ? YOU : FOE; g.beginPath(); g.arc(mx + q.x * k, my + q.z * k, (ours ? 3.2 : 4) * u, 0, TAU); g.fill(); }   // your teammates, and every rival in sight
       g.save(); g.translate(mx + P.x * k, my + P.z * k); g.rotate(-P.yaw); g.fillStyle = 'rgba(53,224,200,.22)'; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 30 * u, -Math.PI / 2 - .6, -Math.PI / 2 + .6); g.fill(); g.fillStyle = YOU; g.beginPath(); g.moveTo(0, -7 * u); g.lineTo(5 * u, 5 * u); g.lineTo(-5 * u, 5 * u); g.fill(); g.restore();
@@ -5380,7 +5641,7 @@ const GAME = {
     if (touch) {   // one strip, bottom centre, clear of both thumbs
       g.save(); g.translate(640, V.y1 - 10); g.scale(u, u); rr(g, -205, -44, 410, 44, 8, GLASS);
       tx(g, String(Math.ceil(P.hp)), -186, -22, 28, hpCol, 'left'); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(-128, -27, 84, 7); g.fillStyle = hpCol; g.fillRect(-128, -27, 84 * P.hp / 100, 7); if (P.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(-128, -17, 84 * P.sh / 50, 5); }
-      tx(g, G.n.toUpperCase(), 0, -22, 15, G.col); tx(g, G.melee ? '—' : `${A.mag} / ${A.res}`, 186, -22, 24, A.mag || G.melee ? BONE : WARN, 'right'); g.restore();
+      tx(g, G.n.toUpperCase(), 0, -22, 15, G.col); tx(g, G.melee ? '—' : `${A.mag} / ${A.res}`, 186, -22, 24, A.mag || G.melee ? BONE : WARN, 'right'); if (carries(P) && !M.planted) tx(g, '◆ YOU CARRY THE CHARGE', 0, -54, 12, GOLD, 'center', 900); g.restore();
     } else {
       g.save(); g.translate(V.x0 + 22, V.y1 - 20); g.scale(u, u); rr(g, 0, -58, 250, 58, 8, GLASS);
       tx(g, String(Math.ceil(P.hp)), 18, -28, 40, hpCol, 'left'); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(104, -36, 128, 8); g.fillStyle = hpCol; g.fillRect(104, -36, 128 * P.hp / 100, 8);
@@ -5398,9 +5659,11 @@ const GAME = {
       tx(g, G.n.toUpperCase(), -14, -38, 15, G.col, 'right'); tx(g, G.cat.toUpperCase(), -14, -18, 11, DIM, 'right');
       [1, 2, 3].forEach((s, i) => { const k = P.guns[s], y = -78 - (2 - i) * 24; if (!k) return; const on = P.slot === s; rr(g, -150, y - 10, 150, 21, 5, on ? 'rgba(239,233,220,.24)' : 'rgba(12,16,22,.7)'); tx(g, String(s), -140, y + 1, 12, on ? GOLD : DIM, 'left'); tx(g, GUNS[k].n.toUpperCase(), -10, y + 1, 12, on ? BONE : '#b9c0cc', 'right'); });
       if (canBuy()) tx(g, `◈ ${P.credits}`, -14, -170, 20, GOLD, 'right');
+      if (carries(P) && !M.planted) { const y = -78 - 3 * 24; rr(g, -150, y - 10, 150, 21, 5, 'rgba(255,214,102,.2)', GOLD, 1); tx(g, '◆', -140, y + 1, 12, GOLD, 'left'); tx(g, 'CHARGE  ·  H DROPS', -10, y + 1, 11, GOLD, 'right'); }
       g.restore();
     }
     if (touch && canBuy()) tx(g, `◈ ${P.credits}`, 640, V.y1 - 66 * u, 17 * u, GOLD);
+    if (M.phase === 'buy' && P.alive && P.nearLoot && GUNS[P.nearLoot.k] && !UI.armory) hint(g, `${touch ? 'Tap SWAP' : 'Press F'} to swap for the ${GUNS[P.nearLoot.k].n}`, V.y0 + 186 * u, 15 * u, BONE);
     // --- the charge: what to do, and how far along
     const ring = (frac, label, col) => { const y = 470; g.strokeStyle = 'rgba(12,16,22,.7)'; g.lineWidth = 12 * u; g.beginPath(); g.arc(640, y, 34 * u, 0, TAU); g.stroke(); g.strokeStyle = col; g.lineWidth = 7 * u; g.beginPath(); g.arc(640, y, 34 * u, -Math.PI / 2, -Math.PI / 2 + TAU * frac); g.stroke(); tx(g, label, 640, y + 60 * u, 15 * u, col); };
     if (P.reloadT > 0) tx(g, 'RELOADING', 640, 420, 15 * u, GOLD);
@@ -5409,10 +5672,14 @@ const GAME = {
       if (P.orbT > 0) ring(P.orbT / ORB.take, 'ULT ORB', OPS[P.op].col);
       else if (M.orbs && M.orbs.some(o => !o.taken && Math.hypot(o.x - P.x, o.z - P.z) < ORB.r)) hint(g, (touch ? 'Hold the button' : 'Hold F') + ' to take the orb: an ultimate point', V.y0 + 140 * u, 16 * u, OPS[P.op].col);
       if (P.plant > 0) ring(P.plant / PLANT_T, 'PLANTING', FOE); else if (P.defuse > 0) ring(P.defuse / DEFUSE_T, 'DEFUSING', YOU);
+      else if (side === 'att' && !M.planted && M.charge && !carries(P)) { const c = carrier();
+        if (c) { if (M.t > roundT() - 6 || onSite(P.x, P.z)) hint(g, c.name.toUpperCase() + ' HAS THE CHARGE' + (onSite(P.x, P.z) ? '  ·  COVER THE PLANT' : ''), V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
+        else hint(g, 'THE CHARGE IS ON THE FLOOR  ·  WALK OVER IT TO PICK IT UP', V.y0 + 104 * u, 16 * u, GOLD); }
       else if (side === 'att' && !M.planted) { if (onSite(P.x, P.z)) onSiteHint(g, 'ABC'[siteAt(P.x, P.z)], key, V.y0 + 104 * u, u); else hint(g, M.t > roundT() - 6 ? (twoSites() ? 'Carry the charge to site ' + siteWords() + ' and plant it' : 'Carry the charge to the site and plant it') : '', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
       else if (side === 'def' && M.planted) hint(g, near ? key + ' to defuse' : 'Defuse the charge', V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
       else if (side === 'def' && M.t > roundT() - 6) hint(g, twoSites() ? 'Hold ' + siteWords('and') + ': stop them planting' : 'Stop them planting on the site', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
       if (M.fs.some(q => q.team !== P.team && q.alive && q.defuse > 0)) tx(g, M.fs.length > 2 ? 'THEY ARE DEFUSING' : 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);   // any of them, not just the nearest
+      if (P.nearLoot && GUNS[P.nearLoot.k]) hint(g, `${touch ? 'Tap SWAP' : 'Press F'} to swap for the ${GUNS[P.nearLoot.k].n}`, V.y0 + 172 * u, 15 * u, BONE);
       if (GATES.length && P.plant <= 0 && P.defuse <= 0) { const gi = gateNear(P); if (gi >= 0) hint(g, (touch ? 'Tap the button' : 'Press F') + (GATES[gi].open ? ' to shut the blast door' : ' to open the blast door'), V.y0 + 140 * u, 16 * u, GOLD); }
     }
     // --- banners
@@ -5422,7 +5689,7 @@ const GAME = {
     if (M.online && (M.dropped || MP.rejoining)) { const p = .6 + .4 * Math.sin(K.t * 6); rr(g, 640 - 170 * u, 118 * u, 340 * u, 34 * u, 8, 'rgba(12,16,22,.85)', GOLD, 1.5); tx(g, 'CONNECTION LOST · RECONNECTING', 640, 135 * u, 14 * u, GOLD, 'center', 900); g.globalAlpha = 1; void p; }
     else if (M.online) { const dc = M.fs.find(f => f.dc && !f.gone); if (dc) { const left = Math.max(0, Math.ceil(DC_WAIT - (M.time - dc.dc))); tx(g, `${dc.name.toUpperCase()} LOST CONNECTION · WAITING ${left} s`, 640, 135 * u, 14 * u, GOLD, 'center', 900); } }
     if (M.phase === 'end' && M.last && !M.over) { const won = M.last.wi === 0, c = won ? YOU : FOE; g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, demo ? `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT` : won ? 'ROUND WON' : 'ROUND LOST', 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); }
-    if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? (twoSites() ? 'You attack: plant the charge on ' + siteWords() : 'You attack: plant the charge on the site') : (twoSites() ? 'You defend: hold ' + siteWords('and') : 'You defend: keep them off the site'), 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
+    if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { { const ot = otRound(M.round), mp = !ot && Math.max(...M.wins) === WIN_ROUNDS - 1; tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : suddenDeath(M.round) ? 'SUDDEN DEATH' : ot ? 'OVERTIME ' + ot : mp ? 'MATCH POINT' : 'ROUND ' + M.round, 640, 200, 34 * u, ot || mp ? GOLD : BONE); } tx(g, side === 'att' ? (twoSites() ? 'You attack: plant the charge on ' + siteWords() : 'You attack: plant the charge on the site') : (twoSites() ? 'You defend: hold ' + siteWords('and') : 'You defend: keep them off the site'), 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
     if (P !== me()) {   // spectating a teammate: who, their health and shield, their gun, and the others you could switch to
       const w = 420 * u, y = V.y1 - 156 * u, mates = M.fs.filter(f => f !== me() && f.team === me().team && f.alive), G2 = gun(P);
       rr(g, 640 - w / 2, y, w, 58 * u, 8, 'rgba(10,13,18,.86)', YOU, 1.5); portraitTile(g, P.op, 640 - w / 2 + 6 * u, y + 6 * u, 46 * u, 46 * u, { r: 4 });
@@ -5432,24 +5699,36 @@ const GAME = {
       if (mates.length > 1) tx(g, `${mates.indexOf(P) + 1} / ${mates.length}  ·  ${isTouch() ? 'tap' : 'click or Space'} to switch`, 640 + w / 2 - 14 * u, y + 40 * u, 10.5 * u, DIM, 'right', 800);
     }
     // between rounds: the end of one fades out to black and the next fades in, rather than a cut
-    { let k = 0; if (M.phase === 'end' && M.t < .45 && !(M.wins[0] >= WIN_ROUNDS || M.wins[1] >= WIN_ROUNDS)) k = 1 - M.t / .45; if (X.roundFadeT) { const e = (performance.now() - X.roundFadeT) / 500; if (e >= 1) X.roundFadeT = 0; else k = Math.max(k, 1 - e); }
+    { let k = 0; if (M.phase === 'end' && M.t < .45 && !matchDecided()) k = 1 - M.t / .45; if (X.roundFadeT) { const e = (performance.now() - X.roundFadeT) / 500; if (e >= 1) X.roundFadeT = 0; else k = Math.max(k, 1 - e); }
       if (k > 0) { g.fillStyle = `rgba(0,0,0,${smooth(cl(k, 0, 1))})`; g.fillRect(V.x0, V.y0, W, H); } }
     if (X.specFade > 0) { if (!X.specFadeT) X.specFadeT = performance.now(); const k = 1 - (performance.now() - X.specFadeT) / 400; if (k <= 0) { X.specFade = 0; X.specFadeT = 0; } else { g.fillStyle = `rgba(0,0,0,${smooth(k)})`; g.fillRect(V.x0, V.y0, W, H); } }   // 0.4 s, whatever the frame rate
     if (!me().alive && M.deathInfo && !range && P === me()) {
-      const D = M.deathInfo, a = cl(D.t * 3, 0, 1), cw2 = 520 * u, ch2 = 104 * u, x = 640 - cw2 / 2, y = V.y1 - 196 * u + (1 - smooth(a)) * 30 * u, L = M.dlog || {}, gave = L[me().key + '>' + D.key] || { d: 0, n: 0, h: 0 }, took = L[D.key + '>' + me().key] || { d: 0, n: 0, h: 0 };
+      // the damage report: everyone you traded shots with this round, the killer first: what you dealt them and took from
+      // them, and where the hits landed (head, body, legs)
+      const D = M.deathInfo, a = cl(D.t * 3, 0, 1), L = M.dlog || {}, mk = me().key, z0 = { d: 0, n: 0, h: 0, l: 0 };
+      const rep = M.fs.filter(q => q.team !== me().team && (L[mk + '>' + q.key] || L[q.key + '>' + mk])).sort((p2, q2) => (q2.key === D.key) - (p2.key === D.key)).slice(0, 4);
+      if (!rep.some(q => q.key === D.key) && M.byKey[D.key]) rep.unshift(M.byKey[D.key]);
+      const rrh = 21 * u, cw2 = 640 * u, ch2 = Math.max(104 * u, 34 * u + rep.length * rrh + 8 * u), x = 640 - cw2 / 2, y = V.y1 - 92 * u - ch2 + (1 - smooth(a)) * 30 * u;
       g.save(); g.globalAlpha = a; rr(g, x, y, cw2, ch2, 10, 'rgba(10,13,18,.9)', FOE, 2); g.fillStyle = FOE; g.fillRect(x, y, 6 * u, ch2);
       if (D.op) portraitTile(g, D.op, x + 16 * u, y + 12 * u, 80 * u, 80 * u, { r: 6 });
       tx(g, 'KILLED BY', x + 110 * u, y + 20 * u, 11 * u, DIM, 'left', 900); tx(g, D.by.toUpperCase(), x + 110 * u, y + 44 * u, 24 * u, FOE, 'left', 900);
       tx(g, `${D.w}${D.head ? '  ·  HEADSHOT' : ''}`, x + 110 * u, y + 68 * u, 13 * u, D.head ? GOLD : BONE, 'left', 800);
       const hb = x + 110 * u; g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(hb, y + 82 * u, 150 * u, 6 * u); g.fillStyle = BONE; g.fillRect(hb, y + 82 * u, 150 * u * D.hp / 100, 6 * u); if (D.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(hb + 156 * u, y + 82 * u, 50 * u * D.sh / 50, 6 * u); }
       tx(g, `${D.hp} HP${D.sh ? ' · ' + D.sh + ' SHIELD' : ''} LEFT`, hb, y + 96 * u, 9.5 * u, DIM, 'left', 800);
-      const rx = x + cw2 - 18 * u; tx(g, 'DAMAGE THIS ROUND', rx, y + 20 * u, 10 * u, DIM, 'right', 900);
-      tx(g, `DEALT  ${Math.round(gave.d)}`, rx, y + 46 * u, 17 * u, YOU, 'right', 900); tx(g, `${gave.n} hit${gave.n === 1 ? '' : 's'}${gave.h ? ' · ' + gave.h + ' head' : ''}`, rx, y + 62 * u, 10.5 * u, DIM, 'right', 700);
-      tx(g, `TAKEN  ${Math.round(took.d)}`, rx, y + 82 * u, 17 * u, FOE, 'right', 900); tx(g, `${took.n} hit${took.n === 1 ? '' : 's'}${took.h ? ' · ' + took.h + ' head' : ''}`, rx, y + 97 * u, 10.5 * u, DIM, 'right', 700);
+      { const rx0 = x + 330 * u, rw = cw2 - 330 * u - 16 * u, parts = r => [r.h ? r.h + 'H' : '', r.n - r.h - r.l ? r.n - r.h - r.l + 'B' : '', r.l ? r.l + 'L' : ''].filter(Boolean).join(' ');
+        g.fillStyle = 'rgba(239,233,220,.1)'; g.fillRect(rx0 - 12 * u, y + 10 * u, 1.5 * u, ch2 - 20 * u);
+        tx(g, 'DAMAGE REPORT', rx0, y + 20 * u, 10 * u, DIM, 'left', 900); tx(g, 'DEALT', rx0 + rw * .62, y + 20 * u, 10 * u, YOU, 'right', 900); tx(g, 'TAKEN', rx0 + rw, y + 20 * u, 10 * u, FOE, 'right', 900);
+        rep.forEach((q, i) => { const ry = y + 40 * u + i * rrh, gv = L[mk + '>' + q.key] || z0, tk = L[q.key + '>' + mk] || z0, [nm, npx] = fitName(g, q.name.toUpperCase(), rw * .34, 12 * u);
+          if (q.key === D.key) { g.fillStyle = 'rgba(255,138,61,.12)'; g.fillRect(rx0 - 6 * u, ry - rrh / 2 + 1, rw + 10 * u, rrh - 2); }
+          tx(g, nm, rx0, ry, npx, q.key === D.key ? FOE : BONE, 'left', 800);
+          tx(g, String(Math.round(gv.d)), rx0 + rw * .47, ry, 14 * u, gv.d ? BONE : '#5a6272', 'right', 900); tx(g, parts(gv), rx0 + rw * .62, ry, 10 * u, DIM, 'right', 700);
+          tx(g, String(Math.round(tk.d)), rx0 + rw * .85, ry, 14 * u, tk.d ? BONE : '#5a6272', 'right', 900); tx(g, parts(tk), rx0 + rw, ry, 10 * u, DIM, 'right', 700); });
+        if (rep.length) tx(g, 'H head · B body · L legs', rx0, y + ch2 - 9 * u, 9 * u, '#5a6272', 'left', 700); }
       g.restore();
       if (M.planted && D.t > 3.2 && !M.fs.some(f => f !== me() && f.team === me().team && f.alive)) tx(g, 'WATCHING THE CHARGE', 640, V.y0 + 120 * u, 14 * u, GOLD, 'center', 900);
     }
     if (UI.board && !UI.armory && !UI.opts && !range && !demo) drawBoard(g, V, u);
+    if (CFG.fps && UI.fps) tx(g, Math.round(UI.fps) + ' FPS', V.x0 + 24, V.y1 - (touch ? 200 : 96) * u, 12 * u, UI.fps < 40 ? WARN : DIM, 'left', 800);
     // --- touch controls
     if (touch && !UI.armory && !demo) drawTouch(g, u);
     if (canBuy() && !UI.armory && !demo && P.alive && !UI.switched) { const w = 190 * u, h = tapH(46); btn(g, 640 - w / 2, V.y0 + 132 * u, w, h, touch ? 'ARMORY' : 'ARMORY  (B)', () => openArmory(true), { px: 17 * u, col: GOLD, edge: GOLD }); }
@@ -5478,6 +5757,81 @@ const GAME = {
       g.fillStyle = TS.sprint ? 'rgba(255,214,102,.75)' : 'rgba(239,233,220,.5)'; g.beginPath(); g.arc(s.x0 + Math.cos(a) * L, s.y0 + Math.sin(a) * L, 27 * u, 0, TAU); g.fill();
     }
     else if (me().alive) { const x = V.x0 + 170 * u, y = V.y1 - 150 * u; g.setLineDash([6 * u, 8 * u]); g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 2 * u; g.beginPath(); g.arc(x, y, 62 * u, 0, TAU); g.stroke(); g.setLineDash([]); tx(g, 'MOVE', x, y, 13 * u, 'rgba(239,233,220,.45)'); tx(g, 'push far to sprint', x, y + 82 * u, 11 * u, 'rgba(239,233,220,.35)'); }
+  }
+  /* ---------- 93 ranked on screen: tier emblems, the queue on the play screen, the career page, the result after a match ---------- */
+  // a tier's emblem: a cut gem in the tier's colour, deeper and more faceted the higher it is, with one to three bars under it
+  // for the division; the top tier wears a crown. Not yet placed: a grey outline with a question mark
+  function tierBadge(g, x, y, r, rv, isPlaced = true) {
+    g.save(); g.translate(x, y);
+    if (!isPlaced) { g.strokeStyle = 'rgba(239,233,220,.45)'; g.lineWidth = Math.max(1.5, r * .12); g.beginPath(); g.moveTo(0, -r); g.lineTo(r * .78, -r * .1); g.lineTo(0, r * .9); g.lineTo(-r * .78, -r * .1); g.closePath(); g.stroke(); tx(g, '?', 0, 0, r * .9, 'rgba(239,233,220,.6)', 'center', 900); g.restore(); return; }
+    const R0 = rankOf(rv), col = R0.T.col, t = R0.t;
+    if (t >= 5) { g.globalAlpha = .35; g.fillStyle = col; g.beginPath(); g.arc(0, 0, r * 1.18, 0, TAU); g.fill(); g.globalAlpha = 1; }   // the high tiers glow
+    const gr = g.createLinearGradient(0, -r, 0, r); gr.addColorStop(0, '#ffffff'); gr.addColorStop(.25, col); gr.addColorStop(1, 'rgba(10,12,16,.9)');
+    g.fillStyle = gr; g.strokeStyle = col; g.lineWidth = Math.max(1.2, r * .1);
+    g.beginPath(); g.moveTo(0, -r); g.lineTo(r * .8, -r * .12); g.lineTo(0, r * .92); g.lineTo(-r * .8, -r * .12); g.closePath(); g.fill(); g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = Math.max(1, r * .05); g.beginPath(); g.moveTo(-r * .8, -r * .12); g.lineTo(r * .8, -r * .12);
+    for (let k = 0; k < Math.min(3, 1 + Math.floor(t / 2)); k++) { const s = (k + 1) / 4; g.moveTo(0, -r); g.lineTo(-r * .8 + r * 1.6 * s, -r * .12); g.moveTo(-r * .8 + r * 1.6 * s, -r * .12); g.lineTo(0, r * .92); }
+    g.stroke();
+    if (R0.top) { g.fillStyle = col; g.beginPath(); g.moveTo(-r * .55, -r * 1.02); g.lineTo(-r * .38, -r * 1.42); g.lineTo(-r * .14, -r * 1.12); g.lineTo(0, -r * 1.5); g.lineTo(r * .14, -r * 1.12); g.lineTo(r * .38, -r * 1.42); g.lineTo(r * .55, -r * 1.02); g.closePath(); g.fill(); }
+    else for (let k = 0; k <= R0.d; k++) { g.fillStyle = col; g.fillRect(-r * .5 + k * r * .36, r * 1.1, r * .28, r * .16); }
+    g.restore();
+  }
+  // a rank as words: "Cobalt II · 45 RP", or the placements still to play
+  const rankWords = size => { const S = rankedOf(size); return placed(S) ? `${rankLabel(S.rv)}  ·  ${rankOf(S.rv).rp} RP` : `Unranked  ·  placements ${S.n}/${PLACE_N}`; };
+
+  // the end of a ranked match: the emblem, the rank, the bar filling or draining, the points, and a rank up or down
+  function drawRankResult(g, x, y, w, u) {
+    const R = M.rankRes, t = (performance.now() - M.payT) / 1000, h = 196 * u, col = R.d >= 0 ? YOU : FOE;
+    rr(g, x, y, w, h, 10, GLASS); tx(g, `RANKED  ·  ${vsLabel(R.size)}`, x + 16 * u, y + 20 * u, 12 * u, GOLD, 'left', 900);
+    if (R.placing) {   // still placing: a pip for each placement match
+      tierBadge(g, x + w / 2, y + 78 * u, 30 * u, 0, false); tx(g, `PLACEMENT ${R.n} OF ${PLACE_N}`, x + w / 2, y + 134 * u, 16 * u, BONE, 'center', 900);
+      for (let k = 0; k < PLACE_N; k++) { g.fillStyle = k < R.n ? GOLD : 'rgba(255,255,255,.14)'; g.fillRect(x + w / 2 - PLACE_N * 13 * u + k * 26 * u + 3 * u, y + 152 * u, 20 * u, 6 * u); }
+      tx(g, R.won ? 'Win · your rank moves up' : 'Loss · your rank moves down', x + w / 2, y + 176 * u, 11 * u, DIM, 'center', 700); return;
+    }
+    const k = smooth(cl((t - .5) / 1.3, 0, 1)), cur = R.justPlaced ? R.after : Math.round(lp(R.before, R.after, k)), r0 = rankOf(cur), show = R.justPlaced ? t > .8 : true;
+    if (R.justPlaced && t < .8) { tierBadge(g, x + w / 2, y + 78 * u, 30 * u, 0, false); tx(g, 'YOUR RANK IS...', x + w / 2, y + 134 * u, 15 * u, BONE, 'center', 900); return; }
+    const pop = (R.up || R.justPlaced) && t > .8 && t < 1.5 ? 1 + .25 * Math.sin((t - .8) / .7 * Math.PI) : 1;
+    if ((R.up || R.justPlaced) && t > .8 && t < 2.2) { g.save(); g.globalAlpha = .5 * (1 - (t - .8) / 1.4); g.fillStyle = r0.T.col; g.beginPath(); g.arc(x + w / 2, y + 74 * u, 40 * u * (1 + (t - .8) * 1.5), 0, TAU); g.fill(); g.restore(); }
+    tierBadge(g, x + w / 2, y + 74 * u, 28 * u * pop, cur, true);
+    tx(g, rankLabel(cur).toUpperCase(), x + w / 2, y + 126 * u, 20 * u, r0.T.col, 'center', 900);
+    if (show && !r0.top) { const bx = x + 20 * u, bw = w - 40 * u; g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(bx, y + 142 * u, bw, 7 * u); g.fillStyle = r0.T.col; g.fillRect(bx, y + 142 * u, bw * r0.rp / 100, 7 * u); }
+    tx(g, R.justPlaced ? 'PLACED' : `${R.d >= 0 ? '+' : ''}${R.d} RP`, x + w / 2, y + 168 * u, 16 * u, R.justPlaced ? GOLD : col, 'center', 900);
+    if (t > 1.6) { const s = R.justPlaced ? 'RANK REVEALED' : R.up ? 'RANKED UP' : R.down ? 'RANKED DOWN' : `${r0.rp} / 100 RP`; tx(g, s, x + w / 2, y + 186 * u, 10.5 * u, R.up || R.justPlaced ? GOLD : R.down ? FOE : DIM, 'center', 900); }
+  }
+
+  // CAREER: your record, your rank at each team size, the match history, the bot rating and your collection
+  function drawCareer(g, V, W, u) {
+    const x0 = V.x0 + 60 / pxPer() + 20 * u, top = V.y0 + 40 * u, gap = 14 * u, cw = Math.min(200 * u, (V.x1 - x0 - 30 * u - 3 * gap) / 4);
+    tx(g, 'CAREER', x0, top, 34 * u, BONE, 'left', 900);
+    const card = (x, y, w, h, label, val, col) => { rr(g, x, y, w, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, label, x + 14 * u, y + 20 * u, 11 * u, DIM, 'left', 900); tx(g, String(val), x + 14 * u, y + h - 24 * u, 28 * u, col || BONE, 'left', 900); };
+    const ch = 86 * u, y1 = top + 34 * u, hs = STATS.kills ? Math.round(100 * STATS.heads / STATS.kills) + '%' : '—', wr = STATS.matches ? Math.round(100 * STATS.wins / STATS.matches) + '%' : '—';
+    [['MATCHES', STATS.matches], ['WINS', STATS.wins + '  ·  ' + wr], ['KILLS', STATS.kills], ['HEADSHOTS', hs]].forEach(([a, b], k) => card(x0 + k * (cw + gap), y1, cw, ch, a, b));
+    // ranked, one card per team size
+    const y2 = y1 + ch + 30 * u, rh = 150 * u; tx(g, 'RANKED', x0, y2 - 12 * u, 12 * u, GOLD, 'left', 900);
+    RQ.forEach((k, i) => { const S = rankedOf(+k), on = placed(S), x = x0 + i * (cw + gap), r0 = rankOf(S.rv), col = on ? r0.T.col : 'rgba(239,233,220,.3)';
+      rr(g, x, y2, cw, rh, 10, 'rgba(14,18,26,.94)', col, on ? 2 : 1.5); tx(g, vsLabel(+k), x + 14 * u, y2 + 20 * u, 13 * u, BONE, 'left', 900); tx(g, `${S.w}W · ${S.n - S.w}L`, x + cw - 12 * u, y2 + 20 * u, 10.5 * u, DIM, 'right', 800);
+      tierBadge(g, x + cw / 2, y2 + 62 * u, 24 * u, S.rv, on);
+      tx(g, on ? rankLabel(S.rv).toUpperCase() : 'UNRANKED', x + cw / 2, y2 + 106 * u, 15 * u, on ? col : BONE, 'center', 900);
+      if (on && !r0.top) { g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(x + 14 * u, y2 + 120 * u, cw - 28 * u, 5 * u); g.fillStyle = col; g.fillRect(x + 14 * u, y2 + 120 * u, (cw - 28 * u) * r0.rp / 100, 5 * u); }
+      tx(g, on ? (r0.top ? `${r0.rp} RP` : `${r0.rp} / 100 RP`) : `PLACEMENTS ${S.n}/${PLACE_N}`, x + cw / 2, y2 + 138 * u, 10.5 * u, DIM, 'center', 800); });
+    // the match history
+    const y3 = y2 + rh + 30 * u, hw = cw * 3 + gap * 2, hh = Math.max(80 * u, V.y1 - y3 - 16 * u), H = STATS.hist || [];
+    tx(g, 'MATCH HISTORY', x0, y3 - 12 * u, 12 * u, DIM, 'left', 900); rr(g, x0, y3, hw, hh, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5);
+    if (!H.length) tx(g, 'Your matches show up here once you have played one.', x0 + hw / 2, y3 + hh / 2, 13 * u, DIM, 'center', 700);
+    const rowH = 30 * u, n = Math.min(H.length, Math.floor((hh - 8 * u) / rowH));
+    for (let i = 0; i < n; i++) { const e = H[i], y = y3 + 4 * u + i * rowH, c = e.w ? YOU : FOE, p = rowH * .55;
+      g.fillStyle = c; g.fillRect(x0 + 6 * u, y + 5 * u, 4 * u, rowH - 10 * u); portraitTile(g, e.op || 'vex', x0 + 16 * u, y + 3 * u, rowH - 6 * u, rowH - 6 * u, { r: 3 });
+      const cx = x0 + 22 * u + rowH; tx(g, e.w ? 'WIN' : e.left ? 'LEFT' : 'LOSS', cx, y + rowH / 2, Math.min(13 * u, p), c, 'left', 900);
+      tx(g, `${e.s[0]}–${e.s[1]}`, cx + 52 * u, y + rowH / 2, Math.min(13 * u, p), BONE, 'left', 900);
+      tx(g, `${e.r ? 'RANKED' : 'UNRATED'} ${vsLabel(e.size)}${e.on ? ' · ONLINE' : ''}`, cx + 104 * u, y + rowH / 2, Math.min(10.5 * u, p * .8), e.r ? GOLD : DIM, 'left', 800);
+      tx(g, String(e.map || '').toUpperCase(), cx + 250 * u, y + rowH / 2, Math.min(10.5 * u, p * .8), DIM, 'left', 800);
+      tx(g, `${e.k}/${e.d}`, x0 + hw - 150 * u, y + rowH / 2, Math.min(12 * u, p), BONE, 'right', 800); tx(g, `${e.cs} CS`, x0 + hw - 80 * u, y + rowH / 2, Math.min(11 * u, p * .85), BONE, 'right', 800);
+      if (e.r) tx(g, e.pl ? `PL ${e.pl}/${PLACE_N}` : (e.rp >= 0 ? '+' : '') + e.rp + ' RP', x0 + hw - 12 * u, y + rowH / 2, Math.min(11 * u, p * .85), e.pl ? GOLD : e.rp >= 0 ? YOU : FOE, 'right', 900); }
+    // the bot rating (unrated AUTO bots follow it) and your collection
+    const x4 = x0 + hw + gap, w4 = cw, i = diffFor(STATS.rating).i; let y4 = y3;
+    rr(g, x4, y4, w4, 96 * u, 10, 'rgba(14,18,26,.94)', RANK_COL[i], 1.5); tx(g, 'BOT RATING', x4 + 14 * u, y4 + 20 * u, 11 * u, DIM, 'left', 900); rankBadge(g, x4 + 30 * u, y4 + 60 * u, 14 * u, STATS.rating);
+    tx(g, rankName(STATS.rating).toUpperCase(), x4 + 52 * u, y4 + 54 * u, 16 * u, RANK_COL[i], 'left', 900); tx(g, String(STATS.rating), x4 + 52 * u, y4 + 74 * u, 12 * u, BONE, 'left', 800); y4 += 96 * u + 10 * u;
+    if (y4 + 70 * u < V.y1) { rr(g, x4, y4, w4, 70 * u, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'COINS', x4 + 14 * u, y4 + 20 * u, 11 * u, DIM, 'left', 900); tx(g, String(STATS.coins), x4 + 14 * u, y4 + 48 * u, 22 * u, COIN, 'left', 900); tx(g, `${STATS.skins.length} SKINS`, x4 + w4 - 12 * u, y4 + 48 * u, 11 * u, DIM, 'right', 800); }
   }
   /* ---------- 94 menus: the main menu, settings, the crosshair designer, the armory, the match-end screen ----------
      Same canvas and helpers as the HUD. Every screen is laid out from the visible view and uiScale(), so the phone gets
@@ -5520,6 +5874,7 @@ const GAME = {
       tx(g, 'Crouch (Ctrl or C)', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['hold', 'HOLD'], ['toggle', 'TOGGLE']], CFG.crouch, v => { CFG.crouch = v; keys.crouchT = false; }); y += row;
       toggle(g, x, y, w, 'Full screen in play', CFG.full, v => { CFG.full = v; if (!v && document.fullscreenElement) try { document.exitFullscreen(); } catch (e) {} }, 'stops Ctrl+W closing the tab'); y += row;
     }
+    toggle(g, x, y, w, 'Show frame rate', !!CFG.fps, v => { CFG.fps = v; }, 'frames a second, top right, while you play'); y += row;
     return y;
   }
   const choice = (g, x, y, w, h, opts, cur, set) => opts.forEach(([v, label], i) => { const bw = (w - (opts.length - 1) * 8) / opts.length; btn(g, x + i * (bw + 8), y, bw, h, label, () => { set(v); saveAll(); }, { on: cur === v, fill: YOU, px: Math.min(h * .36, bw * 1.5 / Math.max(5, label.length)) }); });
@@ -5536,8 +5891,8 @@ const GAME = {
     MENU_TABS.forEach(([k, n], i) => { const x = tx0 + i * tw, on = UI.panel === k, hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
       tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, Math.min(13 * u, tw / 7.5), on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + 16 * u, V.y0 + h - 4 * u, tw - 32 * u, 3 * u); } });
     const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
-    tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 20 * u, 13 * u, BONE, 'left', 900); rankBadge(g, px + 57 * u, V.y0 + 38 * u, 7 * u, STATS.rating);
-    tx(g, rankName(STATS.rating).toUpperCase() + '  ' + STATS.rating, px + 69 * u, V.y0 + 38 * u, 10 * u, RANK_COL[diffFor(STATS.rating).i], 'left', 800);
+    tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 20 * u, 13 * u, BONE, 'left', 900); { const S = rankedOf(CFG.size), on = placed(S); tierBadge(g, px + 57 * u, V.y0 + 38 * u, 7 * u, S.rv, on);
+    tx(g, (on ? rankLabel(S.rv).toUpperCase() + '  ' + rankOf(S.rv).rp + ' RP' : 'UNRANKED ' + S.n + '/' + PLACE_N) + '  ·  ' + vsLabel(CFG.size), px + 69 * u, V.y0 + 38 * u, 10 * u, on ? rankOf(S.rv).T.col : DIM, 'left', 800); }
     coinTag(g, V.x1 - 22 * u, V.y0 + h / 2, 17 * u, STATS.coins);
     return h;
   }
@@ -5568,7 +5923,7 @@ const GAME = {
     tx(g, 'CHOOSE A MODE', x0, V.y0 + 26 * u, 12 * u, DIM, 'left', 900);
     const modes = [{ k: 2, n: 'STANDARD', sub: 'TWO OR THREE SITES', d: 'Big maps, each with its own twist: walls you shoot down, blast doors, jump pads, belts, three sites. Read the defence, choose a site, plant.', col: '#ff9a3c', maps: '6 MAPS · 100-105 S ROUNDS' },
       { k: 1, n: 'SWIFT', sub: 'ONE SITE', d: 'One site and three ways in, with a twist on every map: teleporters, ice, sandstorms, tall grass, steam, low gravity.', col: YOU, maps: '7 MAPS · 80-90 S ROUNDS' }];
-    const rw = 330 * u, cw = Math.min(330 * u, (V.x1 - x0 - rw - 70 * u) / 2 - 8 * u), ch = Math.min(250 * u, H * .42);
+    const rw = 330 * u, cw = Math.min(330 * u, (V.x1 - x0 - rw - 70 * u) / 2 - 8 * u), ch = Math.min(touch ? 210 * u : 250 * u, H * (touch ? .33 : .4));
     modes.forEach((md, i) => {
       const x = x0 + i * (cw + 16 * u), on = sites === md.k, hot = zone(x, top, cw, ch, () => { CFG.sites = md.k; saveAll(); click(); });
       g.save(); g.beginPath(); if (g.roundRect) g.roundRect(x, top, cw, ch, 10); else g.rect(x, top, cw, ch); g.clip();
@@ -5584,9 +5939,13 @@ const GAME = {
     // team size and the bots
     let y = top + ch + 26 * u; const lw = cw * 2 + 16 * u;
     tx(g, 'TEAM SIZE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [[4, '4V4 · SQUADS'], [3, '3V3'], [2, '2V2'], [1, '1V1 · DUEL']], teamSize(CFG.size), v => { CFG.size = v; saveAll(); }); y += tapH(34) + 14 * u;
-    tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), MATCH_LENS.map(w => [w, `BEST OF ${w * 2 - 1}`]), winOf(CFG.win), v => { CFG.win = v; saveAll(); }); y += tapH(34) + 14 * u;
+    const ranked = CFG.queue === 'ranked';
+    tx(g, 'QUEUE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['unrated', 'UNRATED'], ['ranked', 'RANKED  ·  ' + (placed(rankedOf(CFG.size)) ? rankLabel(rankedOf(CFG.size).rv).toUpperCase() : 'PLACEMENTS ' + rankedOf(CFG.size).n + '/' + PLACE_N)]], CFG.queue, v => { CFG.queue = v; saveAll(); }); y += tapH(34) + 14 * u;
+    if (ranked) { tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); rr(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED IS BEST OF 9  ·  OVERTIME AT 4–4  ·  BEAT BOTS ABOVE YOUR RANK TO CLIMB FASTER', x0 + 110 * u + (lw - 110 * u) / 2, y, Math.min(11.5 * u, (lw - 110 * u) / 70), GOLD, 'center', 800); }
+    else choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), MATCH_LENS.map(w => [w, `BEST OF ${w * 2 - 1}`]), winOf(CFG.win), v => { CFG.win = v; saveAll(); });
+    if (!ranked) tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); y += tapH(34) + 14 * u;
     tx(g, 'BOT LEVEL', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 14 * u;
-    if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Shift sprints, crouch mid-sprint slides. B opens the armory (buy Q there), F plants, defuses and takes orbs, E is free each round, X is your ultimate.'].forEach((l, i) => tx(g, l, x0, y + 26 * u + i * 18 * u, 11.5 * u, '#aeb6c2', 'left', 600)); }
+    if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Shift sprints, crouch mid-sprint slides. B opens the armory, F plants, defuses, takes orbs and swaps guns; T drops your gun, H the charge. Q, E, X: abilities.'].forEach((l, i) => tx(g, l, x0, y + 26 * u + i * 18 * u, 11.5 * u, '#aeb6c2', 'left', 600)); }
     // the right column: your operative, friends, practice
     const rx = V.x1 - rw - 30 * u; let ry = top;
     { const h = 120 * u, hot = zone(rx, ry, rw, h, () => openSelect(null)); rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', hot ? O.col : 'rgba(239,233,220,.14)', hot ? 2 : 1.5);
@@ -5596,31 +5955,16 @@ const GAME = {
       btn(g, rx + 16 * u, ry + 56 * u, rw - 32 * u, 36 * u, MP.online() ? 'BACK TO YOUR PARTY · ' + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u }); ry += h + 14 * u; }
     btn(g, rx, ry, (rw - 10 * u) / 2, tapH(42), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 13 * u }); btn(g, rx + (rw + 10 * u) / 2, ry, (rw - 10 * u) / 2, tapH(42), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 13 * u, sub: 'try every gun' });
     // PLAY
-    const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots', ph = 72 * u, below = ry + tapH(42) + 12 * u, roomy = V.y1 - ph - 64 * u >= below, pyy = roomy ? V.y1 - ph - 64 * u : below, pw = roomy ? rw : rw - 84 * u;   // clear of the sound button in the corner, and of the buttons above
-    btn(g, rx, pyy, pw, ph, 'PLAY', () => menuPlay(teamSize(CFG.size)), { on: true, fill: FOE, solid: true, col: INK, px: 36 * u, sub: `${sites === 2 ? 'STANDARD' : 'SWIFT'} · ${vsLabel(CFG.size)}` + (roomy ? ` · ${lvl}` : '') }); zones[zones.length - 1].prime = true;
+    const lvl = (CFG.diff === 'auto' ? (CFG.queue === 'ranked' ? DIFF[botLevelFor(rankStrength(CFG.size))].n : rankName(STATS.rating)) : DIFF[CFG.diff].n) + ' bots', ph = 72 * u, below = ry + tapH(42) + 12 * u, roomy = V.y1 - ph - 64 * u >= below, pyy = roomy ? V.y1 - ph - 64 * u : below, pw = roomy ? rw : rw - 84 * u;   // clear of the sound button in the corner, and of the buttons above
+    btn(g, rx, pyy, pw, ph, 'PLAY', () => menuPlay(teamSize(CFG.size)), { on: true, fill: FOE, solid: true, col: INK, px: 36 * u, sub: `${CFG.queue === 'ranked' ? 'RANKED' : sites === 2 ? 'STANDARD' : 'SWIFT'} · ${vsLabel(CFG.size)}` + (roomy ? ` · ${lvl}` : '') }); zones[zones.length - 1].prime = true;
     if (!touch && roomy) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Enter plays · the arrow keys work here too', rx + pw / 2, pyy - 12 * u, 10 * u, DIM, 'center', 700);
-  }
-  // CAREER: your record, your rank and the ladder, your collection
-  function drawCareer(g, V, W, u) {
-    const x0 = V.x0 + 60 / pxPer() + 20 * u, top = V.y0 + 40 * u, i = diffFor(STATS.rating).i;
-    tx(g, 'CAREER', x0, top, 34 * u, BONE, 'left', 900);
-    const card = (x, y, w, h, label, val, col) => { rr(g, x, y, w, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, label, x + 16 * u, y + 22 * u, 11 * u, DIM, 'left', 900); tx(g, String(val), x + 16 * u, y + h - 30 * u, 34 * u, col || BONE, 'left', 900); };
-    const cw = 200 * u, ch = 110 * u, y = top + 40 * u, hs = STATS.kills ? Math.round(100 * STATS.heads / STATS.kills) + '%' : '—', wr = STATS.matches ? Math.round(100 * STATS.wins / STATS.matches) + '%' : '—';
-    [['MATCHES', STATS.matches], ['WINS', STATS.wins + '  ·  ' + wr], ['KILLS', STATS.kills], ['HEADSHOTS', hs]].forEach(([a, b], k) => card(x0 + k * (cw + 14 * u), y, cw, ch, a, b));
-    const ry = y + ch + 24 * u; rr(g, x0, ry, cw * 2 + 14 * u, 190 * u, 10, 'rgba(14,18,26,.94)', RANK_COL[i], 2); rankBadge(g, x0 + 70 * u, ry + 95 * u, 44 * u, STATS.rating);
-    tx(g, 'RANK', x0 + 140 * u, ry + 40 * u, 11 * u, DIM, 'left', 900); tx(g, rankName(STATS.rating).toUpperCase(), x0 + 138 * u, ry + 84 * u, 38 * u, RANK_COL[i], 'left', 900); tx(g, `Rating ${STATS.rating}`, x0 + 140 * u, ry + 118 * u, 15 * u, BONE, 'left', 800);
-    para(g, 'Win against AUTO bots to climb; your rating sets how good they are, and every rival you meet online sees it.', x0 + 140 * u, ry + 142 * u, cw * 2 - 150 * u, 11 * u, '#aeb6c2');
-    // the ladder
-    const lx = x0 + cw * 2 + 28 * u; rr(g, lx, ry, cw * 2 + 14 * u, 190 * u, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'THE LADDER', lx + 16 * u, ry + 22 * u, 11 * u, DIM, 'left', 900);
-    DIFF.forEach((d, k) => { const yy = ry + 52 * u + k * 34 * u; rankBadge(g, lx + 34 * u, yy, 12 * u, RATING_AT[k] + 1); tx(g, d.n.toUpperCase(), lx + 56 * u, yy, 15 * u, k === i ? RANK_COL[k] : BONE, 'left', 900); tx(g, k < 3 ? `${RATING_AT[k]} – ${RATING_AT[k + 1]}` : `${RATING_AT[k]}+`, lx + cw * 2 - 10 * u, yy, 12 * u, DIM, 'right', 700); if (k === i) tx(g, 'YOU', lx + 200 * u, yy, 11 * u, RANK_COL[k], 'left', 900); });
-    const cy = ry + 210 * u; card(x0, cy, cw, ch, 'COINS', STATS.coins, COIN); card(x0 + cw + 14 * u, cy, cw, ch, 'SKINS OWNED', STATS.skins.length); card(x0 + (cw + 14 * u) * 2, cy, cw, ch, 'OPERATIVES', Object.keys(OPS).length);
   }
   function drawSettings(g, V, W, u) {
     const w = Math.min(W - 80, 760 * u), x = 640 - w / 2, row = tapH(44, 38) + 8 * u; let y = V.y0 + 24 * u;
     tx(g, 'SETTINGS', x, y + 24 * u, 36 * u, BONE, 'left'); btn(g, x + w - 150 * u, y, 150 * u, tapH(46), 'BACK', () => { UI.panel = 'home'; }, { px: 17 * u }); y += tapH(46) + 22 * u;
     y = controlRows(g, x, y, w, row);
     tx(g, 'Picture quality', x, y + tapH(44, 38) / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, tapH(44, 38), [['auto', 'AUTO'], ['low', 'FAST'], ['high', 'SHARP']], CFG.quality, v => { CFG.quality = v; }); y += row;
-    tx(g, 'Quality changes apply the next time you open the game.', x + w * .42, y + 8 * u, 12 * u, DIM, 'left'); y += 30 * u;
+    tx(g, 'AUTO plays FAST on phones and slower computers (Chromebooks). Changes apply the next time you open the game.', x + w * .42, y + 8 * u, 11 * u, DIM, 'left'); y += 30 * u;
     btn(g, x, y, Math.min(w, 260 * u), tapH(46), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 16 * u, sub: 'shape, colour, presets, codes' });
   }
   function drawOpts(g) {
@@ -5702,13 +6046,13 @@ const GAME = {
     const V = K.view, W = V.x1 - V.x0, u = uiScale(), P = me(), x = V.x0 + 20 * u, w = W - 40 * u, y0 = V.y0 + 56 * Math.min(u, 1.15), h = V.y1 - y0 - 10 * u, gap = 7 * Math.min(u, 1.2), range = M.mode === 'range';
     rr(g, x, y0, w, h, 12, 'rgba(12,16,22,.95)', 'rgba(239,233,220,.25)');
     const pad = isTouch() ? 46 / pxPer() : 0; tx(g, 'ARMORY', x + 18 * u + pad, y0 + 24 * u, 24 * u, BONE, 'left'); tx(g, `◈ ${P.credits}`, x + w - 18 * u - pad, y0 + 24 * u, 23 * u, GOLD, 'right');
-    tx(g, range ? 'Everything is free on the range' : `${pistolRound(M.round) ? 'Pistol round · ' : ''}Round starts in ${Math.max(0, Math.ceil(M.t))}`, x + w / 2, y0 + 24 * u, 14 * u, DIM);
+    { const bf = UI.buyFor && M.byKey[UI.buyFor]; tx(g, range ? 'Everything is free on the range' : bf ? `BUYING FOR ${bf.name.toUpperCase()}  ·  press a gun` : `${pistolRound(M.round) ? 'Pistol round · ' : otRound(M.round) ? 'Overtime · ' : ''}Round starts in ${Math.max(0, Math.ceil(M.t))}${lossNext(P)}`, x + w / 2, y0 + 24 * u, 14 * u, bf ? GOLD : DIM); }
     const by = y0 + 46 * u, bh = y0 + h - by - 12 * u, hh = fitPx(g, 12 * u) * 1.7, cw = (w - 28 * u - 4 * gap) / 5, ch = (bh - hh - 4 * gap) / 5; let focus = null;
     const card = (it, cx, cy, cw2 = cw) => {
       const cw = cw2, A = it.armor, AB = it.ab ? it : null, N = it === NADE ? it : null, G = A || N || AB ? null : it, sp = P.spent, lock = false;
       const on = A ? P.sh >= A.sh : AB ? (P.ab.q | 0) >= AB.ab.q.max : N ? (P.smokes || 0) >= NADE.per : P.guns[G.slot] === it.k, mineNow = A ? sp.sh && sp.sh.k === it.k : AB ? sp.abq > 0 : N ? sp.smoke > 0 : sp[G.slot] && sp[G.slot].k === it.k;
       const refund = A ? (sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0) : N || AB ? 0 : (sp[G.slot] ? GUNS[sp[G.slot].k].cost : 0), can = !on && P.credits + refund >= it.cost;
-      const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; buy(P, it.k); }); if (hot || (!focus && UI.pick === it.k)) focus = it;
+      const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; const mate = UI.buyFor && M.byKey[UI.buyFor]; if (mate && G && !G.melee) { if (!buyFor(P, mate, it.k)) click(); } else buy(P, it.k); }); if (hot || (!focus && UI.pick === it.k)) focus = it;
       rr(g, cx, cy, cw, ch, 8, on ? 'rgba(53,224,200,.14)' : hot && can ? 'rgba(255,138,61,.18)' : 'rgba(255,255,255,.045)', on ? YOU : hot || UI.pick === it.k ? 'rgba(239,233,220,.6)' : can ? 'rgba(239,233,220,.2)' : 'rgba(255,255,255,.06)');
       const tp = Math.min(15 * u, ch * .2, cw * .075), ty = cy + tp * .95;
       g.font = `700 ${fitPx(g, tp)}px ${FONT}`; const nm = it.short && g.measureText((it.n + '  ◈ 200').toUpperCase()).width > cw - 18 * u ? it.short : it.n;
@@ -5732,7 +6076,22 @@ const GAME = {
       if (ci === 4) endY = y;
     });
     // the right column, under the shields: what you are pointing at, a buy button for a gold-edged one, and the way out
-    const dx = x + 14 * u + 4 * (cw + gap), rh = tapH(50), dh = by + bh - endY - rh - gap;
+    const dx = x + 14 * u + 4 * (cw + gap), rh = tapH(50);
+    // your team, under the details: who you are buying for (press a teammate, then a gun: it lands at their feet), and,
+    // attacking, who carries the charge (press the diamond to hand it over)
+    const team = range ? [] : M.fs.filter(q => q.team === P.team && !q.gone).sort((a, b) => (b === P) - (a === P)), att = sideOf(P) === 'att', trh = Math.min(tapH(30, 26), 34 * u), tph = team.length > 1 ? 22 * u + team.length * (trh + 4 * u) : 0;
+    if (UI.buyFor && !team.some(q => q.key === UI.buyFor && q !== P)) UI.buyFor = null;
+    if (tph) { let ty2 = by + bh - rh - gap - tph; tx(g, att ? 'TEAM  ·  BUY FOR  ·  CHARGE' : 'TEAM  ·  BUY FOR', dx + 2, ty2 + 9 * u, 11 * u, DIM, 'left', 900); ty2 += 22 * u;
+      for (const q of team) { const sel = q === P ? !UI.buyFor : UI.buyFor === q.key, cw3 = att ? cw - trh - 6 * u : cw, hot = zone(dx, ty2, cw3, trh, () => { UI.buyFor = q === P ? null : q.key; click(); });
+        rr(g, dx, ty2, cw3, trh, 6, sel ? 'rgba(255,214,102,.16)' : hot ? 'rgba(255,255,255,.08)' : 'rgba(255,255,255,.035)', sel ? GOLD : 'rgba(239,233,220,.14)', sel ? 1.5 : 1);
+        portraitTile(g, q.op, dx + 3, ty2 + 3, trh - 6, trh - 6, { r: 3, dead: !q.alive });
+        const known = q === P || !q.net, [nm, npx] = fitName(g, q === P ? 'YOU' : q.name.toUpperCase(), cw3 - trh - (known ? 62 * u : 14 * u), Math.min(12.5 * u, trh * .45)); tx(g, nm, dx + trh + 4 * u, ty2 + trh / 2, npx, q === P ? YOU : BONE, 'left', 800);
+        if (known) tx(g, '◈ ' + q.credits, dx + cw3 - 7 * u, ty2 + trh / 2, Math.min(11.5 * u, trh * .42), GOLD, 'right', 800);
+        if (att) { const has = carries(q), bx2 = dx + cw - trh, can = !has && q.alive && (carries(P) || !carrier() || carrier().bot || carrier().isBot), h2 = zone(bx2, ty2, trh, trh, () => { if (giveCharge(P, q)) click(); });
+          rr(g, bx2, ty2, trh, trh, 6, has ? 'rgba(255,214,102,.3)' : h2 && can ? 'rgba(255,214,102,.12)' : 'rgba(255,255,255,.035)', has ? GOLD : can ? 'rgba(255,214,102,.45)' : 'rgba(255,255,255,.08)', has ? 2 : 1);
+          tx(g, '◆', bx2 + trh / 2, ty2 + trh / 2, trh * .5, has ? GOLD : can ? 'rgba(255,214,102,.6)' : '#3c434e', 'center', 900); }
+        ty2 += trh + 4 * u; } }
+    const dh = by + bh - endY - rh - gap - (tph ? tph + gap : 0);
     rr(g, dx, endY, cw, dh, 8, 'rgba(255,255,255,.03)', 'rgba(239,233,220,.12)');
     if (focus) {
       const F = focus, G = F.armor || F === NADE || F.ab ? null : F, fp = Math.min(13 * u, cw * .062), ub = 0; let y = endY + fp * 1.3;
@@ -5746,7 +6105,10 @@ const GAME = {
       row('PRICE', F.cost ? `◈ ${F.cost}` : 'FREE');
       g.restore();
     } else para(g, `Press a weapon to buy it, and again to sell it back. Q (${OPS[P.op].q.n}) is bought by the charge; E (${OPS[P.op].e.n}) comes free every round; X (${OPS[P.op].x.n}) charges from kills, deaths, plants, defuses and the orbs on the map. Rounds 1 and 5 are pistol rounds.`, dx + 9 * u, endY + 22 * u, cw - 18 * u, Math.min(13 * u, cw * .062), DIM);
-    btn(g, dx, by + bh - rh, cw, rh, range ? 'CLOSE' : 'READY', () => openArmory(false), { on: true, fill: YOU, px: rh * .4, sub: isTouch() ? '' : 'or press B' });
+    // REBUY: last round's loadout in one press, beside READY
+    const rbc = !range && P.lastBuy ? rebuyCost(P) : 0, half = rbc > 0;
+    if (half) btn(g, dx, by + bh - rh, cw * .48, rh, 'REBUY', () => { if (!rebuy(P)) click(); }, { px: rh * .3, sub: '◈ ' + rbc, col: P.credits >= rbc ? GOLD : '#5a6272', edge: GOLD });
+    btn(g, half ? dx + cw * .52 : dx, by + bh - rh, half ? cw * .48 : cw, rh, range ? 'CLOSE' : 'READY', () => openArmory(false), { on: true, fill: YOU, px: rh * (half ? .32 : .4), sub: isTouch() ? '' : 'or press B' });
   }
 
   // a coin count: a little gold disc and the number, right-aligned at x
@@ -5761,25 +6123,29 @@ const GAME = {
     tx(g, won ? 'VICTORY' : 'DEFEAT', 640, V.y0 + 90 * u, 84 * u, won ? YOU : FOE); tx(g, `${M.wins[0]}  –  ${M.wins[1]}`, 640, V.y0 + 170 * u, 44 * u, BONE);
     if (M.over.why === 'left') tx(g, M.fs.length > 2 ? 'The other team left the match' : 'Your rival left the match', 640, V.y0 + 212 * u, 15 * u, DIM);
     else if (M.over.why === 'dropped') tx(g, 'You lost the connection to the room, and could not get back in', 640, V.y0 + 212 * u, 15 * u, DIM);
-    const rows = [['Kills', f => f.stat.k], ['Headshots', f => f.stat.hs], ['Damage dealt', f => Math.round(f.stat.dmg)], ['Accuracy', f => f.net ? '—' : f.stat.shots ? Math.round(100 * f.stat.hits / f.stat.shots) + '%' : '—']], tw = 520 * u;
+    const rows = [['Combat score', f => csOf(f)], ['Kills', f => f.stat.k], ['First kills', f => f.stat.fk | 0], ['Headshots', f => f.stat.hs], ['Damage dealt', f => Math.round(f.stat.dmg)], ['Accuracy', f => f.net ? '—' : f.stat.shots ? Math.round(100 * f.stat.hits / f.stat.shots) + '%' : '—']], tw = 560 * u;
+    // the MVPs: the best combat score in the match, and the best on the other team
+    const best = list => list.filter(f => !f.gone).sort((a, b) => csOf(b) - csOf(a))[0], wT = M.wins[0] >= M.wins[1] ? P.team : 1 - P.team, mvp = best(M.fs.filter(f => f.team === wT)), tmvp = best(M.fs.filter(f => f.team !== wT));
     let ty = V.y0 + 250 * u, cy;
     if (M.fs.length > 2) {   // a team match: everyone, your team first (you at the top), then the rivals, best first; the rows shrink to fit 4v4
-      ty = V.y0 + 236 * u; const mine = M.fs.filter(f => f.team === P.team).sort((a, b) => (b === P) - (a === P) || b.stat.k - a.stat.k), theirs = M.fs.filter(f => f.team !== P.team).sort((a, b) => b.stat.k - a.stat.k), n = mine.length + theirs.length;
+      ty = V.y0 + 236 * u; const mine = M.fs.filter(f => f.team === P.team).sort((a, b) => csOf(b) - csOf(a)), theirs = M.fs.filter(f => f.team !== P.team).sort((a, b) => csOf(b) - csOf(a)), n = mine.length + theirs.length;
       const hh = 26 * u, rh = Math.max(18 * u, Math.min(30 * u, (V.y1 - 150 * u - ty - hh - 18 * u) / n)), th = hh + n * rh + 8 * u + 10 * u, x0 = 640 - tw / 2;
-      const cols = [['K', f => f.stat.k, 210], ['D', f => f.stat.d, 165], ['HS', f => f.stat.hs, 115], ['DMG', f => Math.round(f.stat.dmg), 40]];
+      const cols = [['SCORE', f => csOf(f), 250], ['K', f => f.stat.k, 200], ['D', f => f.stat.d, 160], ['FK', f => f.stat.fk | 0, 120], ['DMG', f => Math.round(f.stat.dmg), 40]];
       rr(g, x0, ty, tw, th, 10, GLASS); tx(g, 'SCOREBOARD', x0 + 16 * u, ty + hh / 2 + 3 * u, 11 * u, DIM, 'left', 900); for (const [k, , dx] of cols) tx(g, k, x0 + tw - dx * u, ty + hh / 2 + 3 * u, 11 * u, DIM, 'right', 900);
       let y = ty + hh; const row = (f, col) => { if (f === P) { g.fillStyle = 'rgba(53,224,200,.12)'; g.fillRect(x0 + 4 * u, y + 1, tw - 8 * u, rh - 2); } g.fillStyle = col; g.fillRect(x0 + 4 * u, y + 2, 3 * u, rh - 4);
-        portraitTile(g, f.op, x0 + 12 * u, y + 2, rh - 4, rh - 4, { r: 3, dead: !!f.gone }); tx(g, f.name.toUpperCase() + (f === P ? (/^you$/i.test(f.name) ? '' : '  (YOU)') : f.bot || f.isBot ? '  · BOT' : ''), x0 + 18 * u + rh, y + rh / 2, Math.min(14 * u, rh * .52), f === P ? YOU : BONE, 'left', 800);
+        portraitTile(g, f.op, x0 + 12 * u, y + 2, rh - 4, rh - 4, { r: 3, dead: !!f.gone }); const [nm2, np2] = fitName(g, f.name.toUpperCase() + (f === P ? (/^you$/i.test(f.name) ? '' : '  (YOU)') : f.bot || f.isBot ? '  · BOT' : ''), tw - 300 * u - rh - (f === mvp || f === tmvp ? 74 * u : 0), Math.min(14 * u, rh * .52)); tx(g, nm2, x0 + 18 * u + rh, y + rh / 2, np2, f === P ? YOU : BONE, 'left', 800);
+        if (f === mvp || f === tmvp) { g.font = `800 ${fitPx(g, np2)}px ${FONT}`; const bx = x0 + 24 * u + rh + g.measureText(nm2).width, lab = f === mvp ? 'MVP' : 'TEAM MVP'; rr(g, bx, y + rh * .2, (lab.length * 7.2 + 10) * u, rh * .6, 4, f === mvp ? 'rgba(255,214,102,.25)' : 'rgba(239,233,220,.1)', f === mvp ? GOLD : 'rgba(239,233,220,.4)', 1); tx(g, lab, bx + (lab.length * 7.2 + 10) * u / 2, y + rh / 2, Math.min(10 * u, rh * .38), f === mvp ? GOLD : BONE, 'center', 900); }
         for (const [, fn, dx] of cols) tx(g, String(fn(f)), x0 + tw - dx * u, y + rh / 2, Math.min(16 * u, rh * .58), BONE, 'right', 800); y += rh; };
       mine.forEach(f => row(f, YOU)); y += 8 * u; theirs.forEach(f => row(f, FOE));
       cy = ty + th + 30 * u;
     } else {
-      rr(g, 640 - tw / 2, ty, tw, (rows.length + 1) * 40 * u + 14 * u, 10, GLASS);
-      tx(g, P.name.toUpperCase(), 640 - 70 * u, ty + 26 * u, 15 * u, YOU, 'right'); tx(g, F.name.toUpperCase(), 640 + 70 * u, ty + 26 * u, 15 * u, FOE, 'left');
-      rows.forEach(([label, fn], i) => { const y = ty + (i + 1) * 40 * u + 26 * u; tx(g, label, 640, y, 13 * u, DIM); tx(g, String(fn(P)), 640 - 110 * u, y, 22 * u, BONE, 'right'); tx(g, String(fn(F)), 640 + 110 * u, y, 22 * u, BONE, 'left'); });
-      cy = ty + (rows.length + 1) * 40 * u + 44 * u;
+      rr(g, 640 - tw / 2, ty, tw, (rows.length + 1) * 34 * u + 14 * u, 10, GLASS);
+      tx(g, (mvp === P ? '★ ' : '') + P.name.toUpperCase(), 640 - 70 * u, ty + 26 * u, 15 * u, YOU, 'right'); tx(g, F.name.toUpperCase() + (mvp === F ? ' ★' : ''), 640 + 70 * u, ty + 26 * u, 15 * u, FOE, 'left');
+      rows.forEach(([label, fn], i) => { const y = ty + (i + 1) * 34 * u + 26 * u; tx(g, label, 640, y, 13 * u, DIM); tx(g, String(fn(P)), 640 - 110 * u, y, 22 * u, BONE, 'right'); tx(g, String(fn(F)), 640 + 110 * u, y, 22 * u, BONE, 'left'); });
+      cy = ty + (rows.length + 1) * 34 * u + 44 * u;
     }
     // what the match paid, and where the adaptive bot goes next
+    if (M.rankRes) drawRankResult(g, 640 - 280 * u - 250 * u, V.y0 + 236 * u, 250 * u, u);
     if (M.rated) { const r = M.rated; tx(g, `Rating ${r.after} (${r.after >= r.before ? '+' : ''}${r.after - r.before})   ·   next bot: ${rankName(r.after)}`, 640, cy, 15 * u, DIM); }
     // coins: the total counts up, the reasons beside it, and how far it takes you toward the rarest skin
     if (M.pay) { const t = (performance.now() - M.payT) / 1000, shown = Math.round(M.pay.total * smooth(cl(t / 1.4, 0, 1))), px0 = 640 + 280 * u, py0 = V.y0 + 236 * u;
@@ -5788,7 +6154,7 @@ const GAME = {
       const yb = py0 + 50 * u + M.pay.rows.length * 22 * u + 6 * u, frac = cl(M.pay.total / RARITY.mythic.price, 0, 1); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(px0 + 16 * u, yb, 218 * u, 5 * u); g.fillStyle = RARITY.mythic.col; g.fillRect(px0 + 16 * u, yb, 218 * u * frac * smooth(cl(t / 1.4, 0, 1)), 5 * u);
       tx(g, `${Math.round(frac * 100)}% of a Mythic  ·  you have ${STATS.coins}`, px0 + 16 * u, yb + 16 * u, 10 * u, DIM, 'left', 700); }
     const by = Math.min(V.y1 - 80 * u, cy + 40 * u);
-    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); openParty(); } else play({ mode: M.mode, diff: CFG.diff, size: teamSize(CFG.size), sites: CFG.sites }); }, { on: true, fill: FOE, px: 19 * u });
+    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); openParty(); } else play(soloOpts()); }, { on: true, fill: FOE, px: 19 * u });
     btn(g, 640 + 10 * u, by, 240 * u, tapH(56), 'MENU', toMenu, { px: 19 * u });
   }
   /* ---------- 95 agent select: pick and lock in an operative before a match ----------
@@ -6084,10 +6450,10 @@ const GAME = {
      mode (one site or two), the team size, whether bots fill empty seats and how good they are, moves players between
      teams, and starts once everyone is ready. Lobby messages ride the room relay: 'lprof' (my operative, rating, ready),
      'lteam' (the host's teams and settings), 'lswap' (please move me). */
-  const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, win: 5 }, status: '', ready: false, sent: '', joinOpen: false };
+  const PARTY = { prof: new Map(), teams: {}, set: { sites: 2, size: 2, fill: true, win: 5, ranked: false }, status: '', ready: false, sent: '', joinOpen: false };
   const myId = () => MP.id;
   function openParty() { screen = 'party'; UI.armory = false; UI.panel = 'home'; releaseMouse(); MP.show(); PARTY.status = ''; }
-  function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost() }; }
+  function partyProfile() { return { op: CFG.op, rt: STATS.rating, rd: PARTY.ready || MP.isHost(), rk: rankStrengths(), rkp: RQ.map(k => placed(rankedOf(+k)) ? 1 : 0).join('') }; }
   function sendProfile(force) { if (!MP.online()) return; const p = partyProfile(), key = JSON.stringify(p); if (!force && key === PARTY.sent) return; PARTY.sent = key; PARTY.prof.set(myId(), p); MP.send(Object.assign({ t: 'lprof' }, p)); }
   // the host keeps everyone on a team: newcomers go to the shorter side, and nobody stays on a team that has no room
   function hostTeams() {
@@ -6106,7 +6472,7 @@ const GAME = {
   MP.opts.onStatus = s => { PARTY.status = s; };
   // lobby messages; anything else is the match's
   function partyMsg(m) {
-    if (m.t === 'lprof') { PARTY.prof.set(m.from, { op: OPS[m.op] ? m.op : 'vex', rt: m.rt | 0, rd: !!m.rd }); return true; }
+    if (m.t === 'lprof') { const rk = {}; if (m.rk && typeof m.rk === 'object') for (const k of RQ) rk[k] = cl(+m.rk[k] || 0, 0, 4000); PARTY.prof.set(m.from, { op: OPS[m.op] ? m.op : 'vex', rt: m.rt | 0, rd: !!m.rd, rk, rkp: typeof m.rkp === 'string' ? m.rkp.slice(0, 4) : '' }); return true; }
     if (m.t === 'lteam') { if (m.from === MP.hostId) { PARTY.teams = m.teams || {}; PARTY.set = Object.assign(PARTY.set, m.set || {}); } return true; }
     if (m.t === 'lswap') { if (MP.isHost()) { swapTeam(m.from); } return true; }
     if (m.t === 'mp-rejoin' && MP.isHost() && PARTY.teams[m.old] != null) { PARTY.teams[m.from] = PARTY.teams[m.old]; delete PARTY.teams[m.old]; const pf = PARTY.prof.get(m.old); if (pf) PARTY.prof.set(m.from, pf); MP.send({ t: 'lteam', teams: PARTY.teams, set: PARTY.set }); }   // back after a drop: same team (the match hears it too)
@@ -6128,7 +6494,9 @@ const GAME = {
   // the room tells the match who is where: teams, operatives and ratings from the lobby
   MP.opts.max = 8; MP.opts.min = 1;   // up to eight people: 4v4
   const baseConfig = MP.opts.config;
-  MP.opts.config = () => { const c = baseConfig(); c.map = pick(mapPool(PARTY.set.sites)); c.sites = PARTY.set.sites; c.teams = Object.assign({}, PARTY.teams); c.size = PARTY.set.size; c.fill = PARTY.set.fill; c.win = winOf(PARTY.set.win);
+  MP.opts.config = () => { const c = baseConfig(); c.map = pick(mapPool(PARTY.set.sites)); c.sites = PARTY.set.sites; c.teams = Object.assign({}, PARTY.teams); c.size = PARTY.set.size; c.fill = PARTY.set.fill; c.win = PARTY.set.ranked ? 5 : winOf(PARTY.set.win); c.ranked = !!PARTY.set.ranked;
+    c.rks = {}; c.rkps = {}; for (const [id, p] of PARTY.prof) { c.rks[id] = (p.rk || {})[String(PARTY.set.size)] || 0; c.rkps[id] = (p.rkp || '')[PARTY.set.size - 1] === '1' ? 1 : 0; } c.rks[myId()] = Math.round(rankStrength(PARTY.set.size)); c.rkps[myId()] = placed(rankedOf(PARTY.set.size)) ? 1 : 0;
+    if (c.ranked) { const v = Object.values(c.rks); c.botDiff = botLevelFor(v.reduce((s, x) => s + x, 0) / Math.max(1, v.length)); }
     c.hops = {}; c.rts = {}; for (const [id, p] of PARTY.prof) { c.hops[id] = p.op; c.rts[id] = p.rt; } c.hops[myId()] = CFG.op; c.rts[myId()] = STATS.rating; return c; };
 
   // a text box for your name and a room code, laid over the canvas where the party screen asks for it
@@ -6158,7 +6526,10 @@ const GAME = {
     const ps = MP.players(), host = MP.isHost(), S2 = PARTY.set, me2 = myId();
     // the code and an invite link
     { const cx = x0 + 380 * u, cy = V.y0 + 46 * u; rr(g, cx, cy - 20 * u, 200 * u, 40 * u, 6, 'rgba(255,255,255,.06)', 'rgba(239,233,220,.25)', 1); tx(g, 'CODE', cx + 14 * u, cy, 11 * u, DIM, 'left', 900); tx(g, MP.code, cx + 186 * u, cy, 22 * u, GOLD, 'right', 900);
-      btn(g, cx + 212 * u, cy - 20 * u, 150 * u, 40 * u, PARTY.copied && performance.now() - PARTY.copied < 1500 ? 'COPIED' : 'COPY INVITE', () => { const link = location.origin + location.pathname + '?room=' + MP.code; try { navigator.clipboard.writeText(link); } catch (e) {} PARTY.copied = performance.now(); }, { px: 12 * u }); }
+      btn(g, cx + 212 * u, cy - 20 * u, 150 * u, 40 * u, PARTY.copied && performance.now() - PARTY.copied < 1500 ? 'COPIED' : 'COPY INVITE', () => { const link = location.origin + location.pathname + '?room=' + MP.code; try { navigator.clipboard.writeText(link); } catch (e) {} PARTY.copied = performance.now(); }, { px: 12 * u });
+      const qx = cx + 374 * u, qw = Math.min(250 * u, V.x1 - 140 * u - qx);
+      if (host && qw > 120 * u) choice(g, qx, cy - 20 * u, qw, 40 * u, [[false, 'UNRATED'], [true, 'RANKED']], !!S2.ranked, v => { S2.ranked = v; MP.send({ t: 'lteam', teams: PARTY.teams, set: S2 }); hostTeams(); });
+      else if (qw > 80 * u) { rr(g, qx, cy - 20 * u, qw, 40 * u, 6, S2.ranked ? 'rgba(255,214,102,.14)' : 'rgba(255,255,255,.05)', S2.ranked ? GOLD : 'rgba(239,233,220,.2)', 1); tx(g, S2.ranked ? 'RANKED  ·  ' + vsLabel(S2.size) : 'UNRATED', qx + qw / 2, cy, 13 * u, S2.ranked ? GOLD : DIM, 'center', 900); } }
     // two teams
     // the cards shrink to fit four seats a side above the buttons (k scales what is inside them)
     const colW = 380 * u, gap = 60 * u, top = V.y0 + 120 * u, cardH = Math.min(92 * u, (V.y1 - 190 * u - top) / Math.max(1, S2.size) - 10 * u), k = cardH / (92 * u);
@@ -6174,7 +6545,8 @@ const GAME = {
         portraitTile(g, pr.op, cx + 10 * u, y + 8 * u, cardH - 16 * u, cardH - 16 * u, { r: 5 });
         const nx = cx + cardH + 4 * u; tx(g, p.name.toUpperCase() + (p.id === me2 ? '  (YOU)' : ''), nx, y + 26 * u * k, 16 * u * Math.max(.85, k), BONE, 'left', 900); { const clash = opClash(p, ps); tx(g, (OPS[pr.op] || OPS.vex).n + (clash ? (p.id === me2 ? '  ·  TAKEN, PICK ANOTHER' : '  ·  TAKEN') : ''), nx, y + 48 * u * k, 12 * u, clash ? WARN : (OPS[pr.op] || OPS.vex).col, 'left', 800); }
         if (isHost) tx(g, 'HOST', nx, y + 70 * u * k, 10 * u, GOLD, 'left', 900);
-        if (pr.rt) { rankBadge(g, cx + colW - 30 * u, y + 30 * u * k, 14 * u * Math.max(.8, k), pr.rt); tx(g, rankName(pr.rt).toUpperCase(), cx + colW - 52 * u, y + 26 * u * k, 11 * u, RANK_COL[diffFor(pr.rt).i], 'right', 800); tx(g, String(pr.rt), cx + colW - 52 * u, y + 44 * u * k, 13 * u, BONE, 'right', 700); }
+        { const mine = p.id === me2, rv = mine ? rankedOf(S2.size).rv : (pr.rk || {})[String(S2.size)] || 0, on = mine ? placed(rankedOf(S2.size)) : (pr.rkp || '')[S2.size - 1] === '1';   // the rank at this team size
+          tierBadge(g, cx + colW - 30 * u, y + 30 * u * k, 13 * u * Math.max(.8, k), rv, on); tx(g, on ? rankLabel(rv).toUpperCase() : 'UNRANKED', cx + colW - 52 * u, y + 26 * u * k, 11 * u, on ? rankOf(rv).T.col : DIM, 'right', 800); tx(g, vsLabel(S2.size) + (on ? '  ' + rankOf(rv).rp + ' RP' : ''), cx + colW - 52 * u, y + 44 * u * k, 11 * u, BONE, 'right', 700); }
         tx(g, ready ? '✓ READY' : 'NOT READY', cx + colW - 14 * u, y + cardH - 16 * u * k, 11 * u, ready ? YOU : DIM, 'right', 900);
         if (hot) tx(g, '⇄ MOVE', cx + colW / 2 + 40 * u, y + cardH - 16 * u * k, 10 * u, col, 'center', 900);
       }
@@ -6190,35 +6562,44 @@ const GAME = {
     const sy = V.y1 - 92 * u;
     if (host) {
       const sx = 640 - 525 * u, cs = (opts, val, fn, w) => { choice(g, sx2, sy, w, tapH(34), opts, val, v => { fn(v); MP.send({ t: 'lteam', teams: PARTY.teams, set: S2 }); hostTeams(); }); sx2 += w + 10 * u; }; let sx2 = sx;
-      cs([[2, 'TWO SITES'], [1, 'ONE SITE']], S2.sites, v => { S2.sites = v; }, 200 * u); cs([[1, '1V1'], [2, '2V2'], [3, '3V3'], [4, '4V4']], S2.size, v => { S2.size = Math.max(v, teamSize(Math.ceil(ps.length / 2))); }, 200 * u); cs([[true, 'BOTS FILL'], [false, 'NO BOTS']], S2.fill, v => { S2.fill = v; }, 170 * u); cs(MATCH_LENS.map(w => [w, 'BO' + (w * 2 - 1)]), winOf(S2.win), v => { S2.win = v; }, 230 * u);
+      cs([[2, 'TWO SITES'], [1, 'ONE SITE']], S2.sites, v => { S2.sites = v; }, 200 * u); cs([[1, '1V1'], [2, '2V2'], [3, '3V3'], [4, '4V4']], S2.size, v => { S2.size = Math.max(v, teamSize(Math.ceil(ps.length / 2))); }, 200 * u); cs([[true, 'BOTS FILL'], [false, 'NO BOTS']], S2.fill, v => { S2.fill = v; }, 170 * u); if (S2.ranked) { rr(g, sx2, sy, 230 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED · BO9', sx2 + 115 * u, sy + tapH(34) / 2, 12 * u, GOLD, 'center', 900); sx2 += 240 * u; } else cs(MATCH_LENS.map(w => [w, 'BO' + (w * 2 - 1)]), winOf(S2.win), v => { S2.win = v; }, 230 * u);
       const ok = readyAll(); btn(g, sx2, sy - 6 * u, 200 * u, 48 * u, 'START MATCH', startParty, { on: ok, fill: FOE, solid: ok, col: ok ? INK : DIM, px: 17 * u, sub: ok ? '' : 'waiting for ready' });
-    } else tx(g, `${S2.sites === 2 ? 'TWO SITES' : 'ONE SITE'}  ·  ${vsLabel(S2.size)}  ·  ${S2.fill ? 'BOTS FILL EMPTY SEATS' : 'NO BOTS'}  ·  BEST OF ${winOf(S2.win) * 2 - 1}  ·  the host starts the match`, 640, sy + 14 * u, 13 * u, DIM, 'center', 800);
+    } else tx(g, `${S2.sites === 2 ? 'TWO SITES' : 'ONE SITE'}  ·  ${vsLabel(S2.size)}  ·  ${S2.fill ? 'BOTS FILL EMPTY SEATS' : 'NO BOTS'}  ·  ${S2.ranked ? 'RANKED  ·  BEST OF 9' : 'BEST OF ' + (winOf(S2.win) * 2 - 1)}  ·  the host starts the match`, 640, sy + 14 * u, 13 * u, DIM, 'center', 800);
     const waiting = ps.filter(p => p.id !== MP.hostId && !(p.id === me2 ? PARTY.ready : (PARTY.prof.get(p.id) || {}).rd)).length;
     tx(g, ps.length < 2 ? 'Send your friends the code. You can also start now and play with bots.' : waiting ? `Waiting for ${waiting} to ready up` : 'Everyone is ready', 640, by - 22 * u, 13 * u, waiting ? DIM : YOU, 'center', 800);
   }
   /* ---------- 99 main: the kit's hooks, moving between screens, demo and cover-art modes, the test handle ---------- */
   let booted = false, acc = 0, lastDraw = 0;
-  function toMenu() { UI.trying = null; M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
+  function toMenu() { if (M && M.ranked && !M.over && M.mode !== 'demo' && M.round > 0) rankedLeft(); UI.trying = null; M = null; screen = 'menu'; UI.panel = 'home'; UI.armory = false; resetInput(); releaseMouse(); MP.hide(); }
   function play(o) { resetInput(); UI.lastSide = null; UI.switched = null; UI.armory = false; UI.pick = null; MP.hide(); acc = 0; startMatch(o); screen = 'play'; if (!UI.armory) grabMouse(); }
   // a bot match from the menu: agent select first (the tests can skip it)
-  function menuPlay(size, select = true) { if (size) { CFG.size = size; saveAll(); } const o = { mode: 'bot', diff: CFG.diff, size: teamSize(CFG.size), sites: CFG.sites }; if (select) openSelect(o); else play(o); }
+  const soloOpts = () => { const size = teamSize(CFG.size), ranked = CFG.queue === 'ranked'; return { mode: 'bot', diff: ranked && CFG.diff === 'auto' ? botLevelFor(rankStrength(size)) : CFG.diff, size, sites: CFG.sites, ranked }; };
+  function menuPlay(size, select = true) { if (size) { CFG.size = size; saveAll(); } const o = soloOpts(); if (select) openSelect(o); else play(o); }
   on('matchStart', () => { resetInput(); acc = 0; screen = 'play'; UI.lastSide = null; UI.switched = null; });   // an online match began (60-net started it)
   // each round opens on the armory, after the loading screen or the switching-sides band if there is one
   on('round', n => {
-    UI.armory = false; UI.pick = null; UI.pendingArmory = false; if (M.mode === 'demo' || M.mode === 'range') return;
-    const side = sideOf(me()), decider = n === WIN_ROUNDS * 2 - 1; UI.switched = n > 1 && UI.lastSide && side !== UI.lastSide ? { t0: performance.now(), side, decider } : null; UI.lastSide = side;
+    UI.armory = false; UI.pick = null; UI.buyFor = null; UI.pendingArmory = false; if (M.mode === 'demo' || M.mode === 'range') return;
+    const side = sideOf(me()), decider = otRound(n) > 0; UI.switched = n > 1 && UI.lastSide && side !== UI.lastSide ? { t0: performance.now(), side, decider, sd: suddenDeath(n), first: otRound(n) === 1 } : null; UI.lastSide = side;
     if (loadingNow() || UI.switched) UI.pendingArmory = true; else openArmory(true);
   });
   on('live', () => { if (UI.armory) { UI.armory = false; if (!locked()) grabMouse(); } });
   on('map', () => { if (ready) rebuildWorld(); });
   on('planted', f => { if (M && f === me()) M.myPlants = (M.myPlants || 0) + 1; }); on('defused', f => { if (M && f === me()) M.myDefuses = (M.myDefuses || 0) + 1; });
+  // leaving a ranked match before it ends counts as a loss
+  function rankedLeft() { try { const P = me(); M.rankRes = rankedResult(M.size, { won: false, opp: rankStrength(M.size), margin: 3, perf: .3 }); logMatch({ at: Date.now(), r: 1, w: 0, s: [M.wins[0], M.wins[1]], map: MAP.n, size: M.size, on: M.online ? 1 : 0, k: P.stat.k, d: P.stat.d, cs: csOf(P), op: P.op, rp: M.rankRes.d, left: 1 }); STATS.matches++; saveAll(true); } catch (e) {} }
   on('over', won => {
     if (M.mode === 'demo') return; screen = 'over'; UI.armory = false; releaseMouse(); resetInput();
     if (M.mode === 'range') return; const P = me();
     STATS.matches++; if (won) STATS.wins++; STATS.kills += P.stat.k; STATS.heads += P.stat.hs;
     // the adaptive bot follows a rating: beat it and the next one is sharper, lose and it eases off
     { const lvl = M.auto ? diffFor(M.rating).i : (M.fs.find(f => f.team !== P.team && f.bot) || { bot: { diff: 1 } }).bot.diff; M.pay = matchCoins(P, M, won, { plants: M.myPlants, defuses: M.myDefuses, botLevel: lvl }); STATS.coins += M.pay.total; M.payT = performance.now(); }
-    if (M.auto) { const before = STATS.rating, d = won ? 22 + 4 * (M.wins[0] - M.wins[1]) : -(20 - 3 * M.wins[0]); STATS.rating = Math.round(cl(before + d, 600, 1800)); M.rated = { before, after: STATS.rating }; }
+    // ranked: the other side's strength (people by their rank, bots by their level), the score, and how you played
+    { const mine = M.fs.filter(f => f.team === P.team), them = M.fs.filter(f => f.team !== P.team && !f.gone), lvl = M.botDiff === 'auto' || M.botDiff == null ? 1 : +M.botDiff;
+      const opp = them.length ? them.reduce((s, f) => s + (f.bot || f.isBot ? botRV(f.bot ? f.bot.diff : lvl) : f.rk != null ? +f.rk : rankStrength(M.size)), 0) / them.length : rankStrength(M.size);
+      const all = M.fs.filter(f => !f.gone), avg = all.reduce((s, f) => s + csOf(f), 0) / Math.max(1, all.length), perf = cl(csOf(P) / Math.max(1, avg) / 2, 0, 1);
+      if (M.ranked && M.over.why !== 'dropped') M.rankRes = rankedResult(M.size, { won, opp, margin: Math.abs(M.wins[0] - M.wins[1]), perf });
+      logMatch({ at: Date.now(), r: M.ranked ? 1 : 0, w: won ? 1 : 0, s: [M.wins[0], M.wins[1]], map: MAP.n, size: M.size, on: M.online ? 1 : 0, k: P.stat.k, d: P.stat.d, cs: csOf(P), op: P.op, rp: M.rankRes ? M.rankRes.d : null, pl: M.rankRes && M.rankRes.placing ? M.rankRes.n : 0 }); }
+    if (M.auto && !M.ranked) { const before = STATS.rating, d = won ? 22 + 4 * (M.wins[0] - M.wins[1]) : -(20 - 3 * M.wins[0]); STATS.rating = Math.round(cl(before + d, 600, 1800)); M.rated = { before, after: STATS.rating }; }
     saveAll(true); K.score = M.wins[0];
     // tell the hub (when it hosts the game) so profiles and the daily challenge count the match
     try { if (!M.online && window.parent !== window) window.parent.postMessage({ pbx: 'score', score: M.wins[0] * 10 + (won ? 50 : 0) + M.fs[1].bot.diff * 10 }, location.origin); } catch (e) {}
@@ -6253,7 +6634,7 @@ const GAME = {
     if (screen === 'party') { if (!MP.online()) { screen = 'menu'; UI.panel = 'home'; } return true; }
     if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker')) { if (SH.reveal) SH.reveal = null; else if (SH.show) SH.show = null; else UI.panel = 'home'; return true; } if (screen === 'menu' && UI.panel !== 'home') { UI.panel = 'home'; return true; } return false; };
   GAME.draw = g => {
-    const now = performance.now(), dt = Math.min(.1, (now - (lastDraw || now)) / 1000), V = K.view; lastDraw = now;
+    const now = performance.now(), dt = Math.min(.1, (now - (lastDraw || now)) / 1000), V = K.view; lastDraw = now; if (dt > 0) UI.fps = UI.fps ? lp(UI.fps, 1 / dt, .05) : 1 / dt;
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, g.canvas.width, g.canvas.height); g.restore();
     zones.length = 0;
     if (!ready) { g.fillStyle = INK; g.fillRect(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0); tx(g, failed ? 'Could not load the 3D engine. Check your connection and reload.' : 'LOADING', 640, 360, failed ? 22 : 30, failed ? WARN : BONE); return; }
@@ -6290,6 +6671,8 @@ const GAME = {
     get M() { return M; }, get X() { return X; }, get screen() { return screen; }, get ptr() { return ptr; }, mech: () => ({ TPS, PADS, GATES, BRKS, VENTS, navCells, GRASS, ICE, LOWG, BELT, GW, GH, NC, hAt, los, setGate, setWall }), hurt: (v, n, by, h) => applyDamage(v, n, by, h, 'vesper'), get MAP() { return MAP; }, SITES, MAPS, mapPool, loadingNow, skipLoad, CFG, UI, GUNS, TS, zones, ready: () => ready,
     st: () => M && { screen, mode: M.mode, phase: M.phase, round: M.round, t: +M.t.toFixed(1), wins: M.wins, planted: !!M.planted, over: M.over, armory: UI.armory, fs: M.fs.map(f => ({ n: f.name, side: sideOf(f), hp: Math.ceil(f.hp), sh: f.sh, alive: f.alive, x: +f.x.toFixed(1), z: +f.z.toFixed(1), y: +f.y.toFixed(2), gun: gun(f).k, cr: f.credits, k: f.stat.k })) },
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
+    ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),
+    team: () => ({ dropHeld, dropCharge, giveCharge, buyFor, takeLoot, carries, carrier, matchDecided, otRound, applyDamage, startRound, endRound, stepLoot }),
     botMe: d => { me().bot = { diff: d }; me().local = false; }, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
   };
 })();
@@ -6329,7 +6712,7 @@ Object.defineProperty(K, 'skin', { get: () => GAME.skins[DEMO || K.bot ? (K.demo
 /* ---------- screen ---------- */
 let sc = 1, ox = 0, oy = 0, dpr = 1;
 function resize() {
-  dpr = Math.min(2, window.devicePixelRatio || 1);
+  dpr = Math.min(GAME.maxDpr || 2, window.devicePixelRatio || 1);   // a game can ask for fewer pixels on slow machines
   cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
   sc = Math.min(innerWidth / W, innerHeight / H); ox = (innerWidth - W * sc) / 2; oy = (innerHeight - H * sc) / 2;
   K.view = { x0: -ox / sc, y0: -oy / sc, x1: W + ox / sc, y1: H + oy / sc };

@@ -33,7 +33,7 @@ Object.defineProperty(K, 'skin', { get: () => GAME.skins[DEMO || K.bot ? (K.demo
 /* ---------- screen ---------- */
 let sc = 1, ox = 0, oy = 0, dpr = 1;
 function resize() {
-  dpr = Math.min(2, window.devicePixelRatio || 1);
+  dpr = Math.min(GAME.maxDpr || 2, window.devicePixelRatio || 1);   // a game can ask for fewer pixels on slow machines
   cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
   sc = Math.min(innerWidth / W, innerHeight / H); ox = (innerWidth - W * sc) / 2; oy = (innerHeight - H * sc) / 2;
   K.view = { x0: -ox / sc, y0: -oy / sc, x1: W + ox / sc, y1: H + oy / sc };

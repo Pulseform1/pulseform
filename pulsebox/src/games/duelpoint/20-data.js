@@ -77,7 +77,10 @@
   ];
   const LOAD_T = 5;   // the loading screen before the first round: added to that round's buy phase, so no buy time is lost
   let WIN_ROUNDS = 5; const BUY_T = 15, ROUND_T = 80, PLANT_T = 3.5, DEFUSE_T = 6, FUSE_T = 38, END_T = 4.5;
-  const MATCH_LENS = [3, 4, 5, 6], winOf = w => MATCH_LENS.includes(+w) ? +w : 5, HALF = () => WIN_ROUNDS - 1;   // first to 3/4/5/6: best of 5/7/9/11, sides swap at the half
+  const MATCH_LENS = [3, 4, 5, 6], winOf = w => MATCH_LENS.includes(+w) ? +w : 5, HALF = () => WIN_ROUNDS - 1;
+  // overtime: tied at one short of the target after both halves, rounds go on (sides swap every round, credits topped up) until
+  // one team is two ahead; after OT_MAX overtime rounds still level, the next round settles it (sudden death)
+  const OT_MAX = 6, otRound = n => Math.max(0, n - 2 * HALF()), suddenDeath = n => otRound(n) > OT_MAX;   // first to 3/4/5/6: best of 5/7/9/11, sides swap at the half
   // round credits are tight: a win doesn't always buy a rifle and shields, a loss rarely does
   const CASH = { start: 800, win: 2600, loss: [1600, 2000, 2400], kill: 150, plant: 250, cap: 9000, decider: 4500 };
   // the adaptive bot: your skill rating picks its level, between these ratings it blends from one to the next

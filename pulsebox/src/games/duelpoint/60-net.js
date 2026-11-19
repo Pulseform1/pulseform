@@ -7,7 +7,7 @@
   const r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000;
   // every fighter this device runs (you, and the bots if you host) streams its state, tagged with whose it is
   function goneFor(f) {   // a dropped fighter who did not come back in time
-    f.gone = true; f.alive = false; f.dc = 0;
+    f.gone = true; f.alive = false; f.dc = 0; if (carries(f) && !M.planted) setCharge(null, f.x, f.z, true);
     if (M.fs.length <= 2 || !M.fs.some(q => q.team === f.team && !q.gone)) { M.wins[0] = Math.max(M.wins[0], M.wins[1] + 1); M.host = true; matchOver('left'); } else if (M.host) judge();
   }
   function netTick(dt) {
@@ -30,7 +30,7 @@
     for (const f of M.fs) if (!f.net && !f.gone) out.push({ t: 's', f: f.key, x: r2(f.x), y: r2(f.y), z: r2(f.z), yw: r3(f.yaw), pt: r3(f.pitch), vx: r2(f.vx), vz: r2(f.vz), cr: r2(f.crouch), sl: f.slot, g: f.guns[f.slot], hp: Math.ceil(f.hp), sh: f.sh,
       al: f.alive ? 1 : 0, sc: f.scoped, pl: f.plant > 0 ? 1 : 0, df: f.defuse > 0 ? 1 : 0, st: f.step > 0 ? 1 : 0, rd: f.ready ? 1 : 0, sp: f.sprinting ? 1 : 0, sd: f.slide ? 1 : 0 });
     for (const q of out) { const f = M.byKey[q.f], sk = (f.skins && f.skins[f.guns[f.slot]]) || 0, key = f.op + '|' + q.g + '|' + sk;
-      if (full || f._sent !== key) { q.op = f.op; q.rt = f.rating || 0; q.sk = sk; f._sent = key; } }
+      if (full || f._sent !== key) { q.op = f.op; q.rt = f.rating || 0; q.sk = sk; f._sent = key; } if (full) q.dm = Math.round(f.stat.dmg); }
     for (const q of out) { for (const k of ['sc', 'pl', 'df', 'st', 'sp', 'sd']) if (!q[k]) delete q[k]; }   // zeros are the default: leave them out
     if (out.length === 1) net(out[0]); else if (out.length) net({ t: 'S', a: out.map(q => { delete q.t; return q; }) });
   }
@@ -54,13 +54,13 @@
     switch (m.t) {
       case 's':
         { const sn = F.snaps || (F.snaps = []), q = { at: M.time, x: m.x, y: m.y, z: m.z, yw: m.yw, pt: m.pt, vx: m.vx, vz: m.vz }; if (sn.length && Math.hypot(sn[sn.length - 1].x - m.x, sn[sn.length - 1].z - m.z) > 6) sn.length = 0; if (sn.length && sn[sn.length - 1].at >= M.time) sn[sn.length - 1] = q; else sn.push(q); if (sn.length > 12) sn.shift(); }   // two in the same instant: keep the newer
-        if (m.rt) F.rating = m.rt; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
+        if (m.rt) F.rating = m.rt; if (m.dm != null) F.stat.dmg = +m.dm || 0; if (m.g && 'sk' in m) { F.skins = F.skins || {}; F.skins[m.g] = m.sk || null; } F.op = m.op || F.op; F.hp = m.hp; F.sh = m.sh; F.slot = m.sl; if (m.g) F.guns[m.sl] = m.g; F.crouch = m.cr; F.scoped = m.sc || 0; F.plant = m.pl ? 1 : 0; F.defuse = m.df ? 1 : 0; F.ready = !!m.rd; F.sprinting = !!m.sp; if (m.sd && !F.slide) emit('slide', F); F.slide = m.sd ? { t: SLIDE_T } : null;
         if (m.st && !(F.step > 0)) emit('step', F); F.step = m.st ? .3 : 0;
         if (m.al && !F.alive && M.phase === 'buy' && !F.gone) F.alive = true;
         break;
       case 'sh': { const S = castShot(F, viewDir(m.a, m.b)); F.kick = .08; F.cloak = 0; emit('shot', F, S, true); break; }
       case 'kn': F.swing = { t: 0, heavy: !!m.h, side: 1 }; emit('melee', F, !!m.h, null); break;
-      case 'hit': { const V = M.byKey[String(m.v)]; if (V && !V.net) applyDamage(V, m.d, F, !!m.h, m.w); break; }
+      case 'hit': { const V = M.byKey[String(m.v)]; if (V && !V.net) applyDamage(V, m.d, F, !!m.h, m.w, !!m.l); break; }
       case 'dead': {
         if (!F.alive) break; const by = M.byKey[String(m.by)] || other(F); F.alive = false; F.hp = 0; F.stat.d++; by.stat.k++; if (m.h) by.stat.hs++; if (!by.net && by.team !== F.team) by.credits = Math.min(CASH.cap, by.credits + CASH.kill);
         M.feed.unshift({ a: by.name, b: F.name, w: GUNS[m.w] ? GUNS[m.w].n : m.w, head: !!m.h, t: 0, mine: by === me() }); emit('kill', F, by, !!m.h, m.w); if (M.host) judge(); break;
@@ -73,6 +73,13 @@
       case 'pl': if (!M.planted) plantAt(m.x, m.z, F); break;
       case 'df': defuseDone(F); break;
       case 'rdy': F.ready = true; break;
+      case 'dp': if (GUNS[m.k]) addLoot({ id: String(m.id), k: m.k, x: +m.x, z: +m.z, m: m.m | 0, r: m.r | 0, by: F.key, fo: m.fo ? String(m.fo) : '' }); break;   // a gun put on the floor
+      case 'pk': { const d = M.loot && M.loot.find(q => q.id === String(m.id)); if (d) takeLoot(F, d, true); break; }   // and picked up
+      case 'cc': {   // the charge changed hands. Two people grabbing it at once: the lower key keeps it, the same on every device
+        const nk = String(m.k || ''), c = M.charge, mine = c && c.k && M.byKey[c.k] && !M.byKey[c.k].net && M.time - c.at < 1;
+        if (nk && mine && c.k !== nk && c.k < nk) break;
+        if (nk && M.byKey[nk]) setCharge(M.byKey[nk], 0, 0, true); else setCharge(null, +m.x || 0, +m.z || 0, true); break;
+      }
     }
   }
   // place a network fighter between the two snapshots either side of "a tenth of a second ago"
@@ -93,7 +100,7 @@
       let op = ops[b % ops.length]; for (let i = 0; i < ops.length; i++) { const k = ops[(b + i) % ops.length]; if (!mine.includes(k)) { op = k; break; } }
       seats.push({ key: 'b' + b, name: names.length ? names[b % names.length] : cfg.names[b % cfg.names.length], team: t, bot: true, op }); b++; };
     if (cfg.teams) {   // from the party: the host's teams, everyone's operative and rating; bots fill up to the team size (or just enough for a rival)
-      seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: cfg.teams[p.id] != null ? +cfg.teams[p.id] : i % 2, op: cfg.hops && cfg.hops[p.id], rating: cfg.rts && cfg.rts[p.id] })); const size = cfg.size || 2;
+      seats = humans.map((p, i) => ({ key: String(p.id), name: p.name, team: cfg.teams[p.id] != null ? +cfg.teams[p.id] : i % 2, op: cfg.hops && cfg.hops[p.id], rating: cfg.rts && cfg.rts[p.id], rk: cfg.rks ? +cfg.rks[p.id] || 0 : undefined, rkp: cfg.rkps ? +cfg.rkps[p.id] || 0 : 0 })); const size = cfg.size || 2;
       // two players on one team never share an operative: the first in the room keeps it, the other takes the first one
       // (in the room's shuffled order, the same on every device) that nobody on their team has
       seats.forEach((s, i) => { if (OPS[s.op] && !seats.slice(0, i).some(q => q.team === s.team && q.op === s.op)) return; const mine = seats.filter(q => q !== s && q.team === s.team).map(q => q.op); s.op = cfg.ops.find(k => OPS[k] && !mine.includes(k)) || s.op; });
@@ -109,7 +116,7 @@
     max: 8, min: 2, bots: 0, solo: false, onClose: () => { if (screen !== 'menu') toMenu(); }, sub: 'Create a room and send your friends the code. Two to eight players.',
     config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0, map: pick(mapPool(CFG.sites)), sites: CFG.sites, win: winOf(CFG.win), team: CFG.team, botDiff: CFG.diff === 'auto' ? diffFor(STATS.rating).i : CFG.diff,
       names: [...BOT_NAMES].sort(() => R() - .5), ops: [...Object.keys(OPS)].sort(() => R() - .5) }),
-    onStart: (cfg, roster) => { cfg.names = cfg.names || BOT_NAMES; cfg.ops = cfg.ops || ['vex']; startMatch({ mode: 'online', seats: seatsFor(cfg, roster), hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map, botDiff: cfg.botDiff, win: cfg.win }); emit('matchStart'); },
+    onStart: (cfg, roster) => { cfg.names = cfg.names || BOT_NAMES; cfg.ops = cfg.ops || ['vex']; startMatch({ mode: 'online', seats: seatsFor(cfg, roster), hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map, botDiff: cfg.botDiff, win: cfg.win, ranked: !!cfg.ranked }); emit('matchStart'); },
     onMsg: netMsg,
     // someone's connection dropped: they get DC_WAIT seconds to come back (their game rejoins the room by itself) before
     // they count as gone. Gone: in a duel you win; in a team game they drop out. If the host dropped, the room's next

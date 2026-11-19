@@ -56,7 +56,8 @@ ok(r.ok2 && r.clouds >= 1, 'G throws the smoke and it pops into a cloud', JSON.s
 await p.waitForTimeout(600); await p.screenshot({ path: O + '/bug-fight.png' });
 // play the match out with the bots, round by round
 r = await T(p, () => { const t = GAME.test; t.botMe(1); const seen = []; for (let i = 0; i < 60 * 900 && !t.M.over; i++) { const rd = t.M.round; t.tick(1 / 60); if (t.M.round !== rd) seen.push(t.M.fs[0].credits); } return { over: !!t.M.over, wins: t.M.wins, rounds: seen.length + 1, credits: seen }; });
-ok(r.over && Math.max(...r.wins) === 5, 'a whole 2v2 match plays out to 5 rounds', JSON.stringify({ wins: r.wins, rounds: r.rounds }));
+{ const [a, b2] = [Math.max(...r.wins), Math.min(...r.wins)], fair = a + b2 <= 8 ? a === 5 : a - b2 === 2 || (a - b2 === 1 && a + b2 > 14);   // first to 5, or from 4-4 overtime: two clear (one in sudden death)
+  ok(r.over && fair, 'a whole 2v2 match plays out: first to 5, or overtime from 4-4', JSON.stringify({ wins: r.wins, rounds: r.rounds })); }
 ok(r.credits.length >= 4 && r.credits.every(c => c >= 0 && c <= 9000), 'money moves every round and stays within 0-9000', r.credits.join(','));
 await p.waitForTimeout(800); await p.screenshot({ path: O + '/bug-over.png' });
 r = await T(p, () => GAME.test.screen); ok(r === 'over', 'the match ends on the results screen', r);

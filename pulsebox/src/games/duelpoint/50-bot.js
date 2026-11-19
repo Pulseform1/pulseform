@@ -84,6 +84,9 @@
     else if (R() < .5) buy(f, pick(['quill', 'hammer', 'stub']));
     if (f.credits >= 200 && R() < .65) buy(f, 'smoke'); if (f.credits >= 1400 && R() < .45) buy(f, 'smoke');
     for (let n = 0; n < 2; n++) if (f.credits >= OPS[f.op].q.cost && R() < .8) buy(f, 'abq');   // ability charges
+    // flush, with a teammate (a person on this device) who can't afford a rifle: buy them one; it lands at their feet
+    if (!pistolRound(M.round) && f.credits >= 3300) { const mate = M.fs.find(q => q !== f && q.team === f.team && !q.bot && !q.isBot && !q.net && !q.gone && !q.guns[1] && q.credits < 2000 && !(M.loot || []).some(d => d.by === f.key));
+      if (mate) buyFor(f, mate, f.credits >= 3900 && R() < .5 ? 'lancer' : 'vesper'); }
   }
 
   // the newer operatives' abilities, each with a reason
@@ -156,6 +159,12 @@
     if (!B.plan) B.plan = side === 'att' ? planAttack(f) : planHold(f, null);
     if (M.planted && side === 'def' && B.plan.k !== 'retake') { B.plan = { k: 'retake' }; goTo(B.plan, f, M.planted.x, M.planted.z); }
     if (M.planted && side === 'att' && B.plan.k !== 'post') { const s = watchSpot(M.planted.x, M.planted.z, 5, 13); B.plan = { k: 'post', look: [M.planted.x, M.planted.z], crouch: R() < .5 }; goTo(B.plan, f, s[0], s[1]); }
+    // the charge on the floor: the nearest attacker goes for it (unless a teammate is nearer: a bot, or a person almost on it)
+    if (side === 'att' && !M.planted && M.charge && !M.charge.k && B.plan.k !== 'fetch' && B.plan.k !== 'cover') {
+      const C = M.charge, d0 = Math.hypot(C.x - f.x, C.z - f.z);
+      if (!M.fs.some(q => q !== f && q.team === f.team && q.alive && Math.hypot(C.x - q.x, C.z - q.z) < Math.min(d0 - .5, q.bot ? 1e9 : 4))) { B.plan = { k: 'fetch' }; goTo(B.plan, f, C.x, C.z); }
+    }
+    if (B.plan.k === 'fetch' && (M.planted || !M.charge || M.charge.k)) B.plan = planAttack(f);
     let P = B.plan;
     if (P.k === 'hold' && B.diff > 0 && B.last && B.last.heard && M.time - B.last.t < .3 && !(P.until > M.time)) {   // turn to face the lane the noise came from
       const lane = laneOf(B.last.x, B.last.z); if (lane !== 'any' && lane !== P.lane && mayRotate(f, lane)) { P = B.plan = planHold(f, lane); P.until = M.time + 7; }
@@ -265,6 +274,7 @@
     if (arrived) {
       if (P.k === 'push') { if (P.pts.length) { const q = P.pts.shift(); goTo(P, f, q[0], q[1]); } else if (!P.toSite) { P.toSite = true; goTo(P, f, P.site[0], P.site[1]); } }
       if (P.k === 'hunt') B.plan = planHold(f, null);
+      if (P.k === 'fetch' && M.charge && !M.charge.k && !engaged) goal = [M.charge.x, M.charge.z];   // the last step onto it
       if (P.k === 'cover' && !engaged) I.crouch = B.diff > 1;
       if ((P.k === 'hold' || P.k === 'post') && P.crouch && !engaged) I.crouch = true;
     }
@@ -279,7 +289,7 @@
     } else if (M.time - (B.engT || -9) < .8 && P.k !== 'retake' && P.k !== 'cover') goal = null;   // just lost a rival it was fighting: hold the angle a moment
     if (B.breaking) goal = null;   // stand and knock the wall down first
     // the charge
-    if (side === 'att' && !M.planted && P.k === 'push' && P.toSite && onSite(f.x, f.z) && (arrived || Math.hypot(P.site[0] - f.x, P.site[1] - f.z) < 1.4) && !sees && M.time - (B.engT || -9) > 1) { I.use = true; goal = null; }
+    if (side === 'att' && !M.planted && carries(f) && P.k === 'push' && P.toSite && onSite(f.x, f.z) && (arrived || Math.hypot(P.site[0] - f.x, P.site[1] - f.z) < 1.4) && !sees && M.time - (B.engT || -9) > 1) { I.use = true; goal = null; }
     if (side === 'def' && M.planted && Math.hypot(f.x - M.planted.x, f.z - M.planted.z) < 1.5) {
       if (f.hp < B.hp0 && M.planted.t > DEFUSE_T - f.defuse + 2.5) B.wait = 1.2;   // shot at while defusing: stand up and look
       if (B.wait > 0) B.wait -= dt;

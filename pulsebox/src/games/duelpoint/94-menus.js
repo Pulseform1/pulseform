@@ -39,6 +39,7 @@
       tx(g, 'Crouch (Ctrl or C)', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['hold', 'HOLD'], ['toggle', 'TOGGLE']], CFG.crouch, v => { CFG.crouch = v; keys.crouchT = false; }); y += row;
       toggle(g, x, y, w, 'Full screen in play', CFG.full, v => { CFG.full = v; if (!v && document.fullscreenElement) try { document.exitFullscreen(); } catch (e) {} }, 'stops Ctrl+W closing the tab'); y += row;
     }
+    toggle(g, x, y, w, 'Show frame rate', !!CFG.fps, v => { CFG.fps = v; }, 'frames a second, top right, while you play'); y += row;
     return y;
   }
   const choice = (g, x, y, w, h, opts, cur, set) => opts.forEach(([v, label], i) => { const bw = (w - (opts.length - 1) * 8) / opts.length; btn(g, x + i * (bw + 8), y, bw, h, label, () => { set(v); saveAll(); }, { on: cur === v, fill: YOU, px: Math.min(h * .36, bw * 1.5 / Math.max(5, label.length)) }); });
@@ -55,8 +56,8 @@
     MENU_TABS.forEach(([k, n], i) => { const x = tx0 + i * tw, on = UI.panel === k, hot = zone(x, V.y0, tw, h, () => { if (k === 'agents') openSelect(null); else { UI.panel = k; SH.show = null; UI.returnTo = null; } click(); });
       tx(g, n, x + tw / 2, V.y0 + h / 2 + 1, Math.min(13 * u, tw / 7.5), on ? BONE : hot ? '#d5dbe4' : DIM, 'center', 900); if (on) { g.fillStyle = FOE; g.fillRect(x + 16 * u, V.y0 + h - 4 * u, tw - 32 * u, 3 * u); } });
     const px = V.x1 - 290 * u; portraitTile(g, CFG.op, px, V.y0 + 8 * u, 40 * u, 40 * u, { r: 4 });
-    tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 20 * u, 13 * u, BONE, 'left', 900); rankBadge(g, px + 57 * u, V.y0 + 38 * u, 7 * u, STATS.rating);
-    tx(g, rankName(STATS.rating).toUpperCase() + '  ' + STATS.rating, px + 69 * u, V.y0 + 38 * u, 10 * u, RANK_COL[diffFor(STATS.rating).i], 'left', 800);
+    tx(g, (MP.name || 'You').toUpperCase(), px + 50 * u, V.y0 + 20 * u, 13 * u, BONE, 'left', 900); { const S = rankedOf(CFG.size), on = placed(S); tierBadge(g, px + 57 * u, V.y0 + 38 * u, 7 * u, S.rv, on);
+    tx(g, (on ? rankLabel(S.rv).toUpperCase() + '  ' + rankOf(S.rv).rp + ' RP' : 'UNRANKED ' + S.n + '/' + PLACE_N) + '  ·  ' + vsLabel(CFG.size), px + 69 * u, V.y0 + 38 * u, 10 * u, on ? rankOf(S.rv).T.col : DIM, 'left', 800); }
     coinTag(g, V.x1 - 22 * u, V.y0 + h / 2, 17 * u, STATS.coins);
     return h;
   }
@@ -87,7 +88,7 @@
     tx(g, 'CHOOSE A MODE', x0, V.y0 + 26 * u, 12 * u, DIM, 'left', 900);
     const modes = [{ k: 2, n: 'STANDARD', sub: 'TWO OR THREE SITES', d: 'Big maps, each with its own twist: walls you shoot down, blast doors, jump pads, belts, three sites. Read the defence, choose a site, plant.', col: '#ff9a3c', maps: '6 MAPS · 100-105 S ROUNDS' },
       { k: 1, n: 'SWIFT', sub: 'ONE SITE', d: 'One site and three ways in, with a twist on every map: teleporters, ice, sandstorms, tall grass, steam, low gravity.', col: YOU, maps: '7 MAPS · 80-90 S ROUNDS' }];
-    const rw = 330 * u, cw = Math.min(330 * u, (V.x1 - x0 - rw - 70 * u) / 2 - 8 * u), ch = Math.min(250 * u, H * .42);
+    const rw = 330 * u, cw = Math.min(330 * u, (V.x1 - x0 - rw - 70 * u) / 2 - 8 * u), ch = Math.min(touch ? 210 * u : 250 * u, H * (touch ? .33 : .4));
     modes.forEach((md, i) => {
       const x = x0 + i * (cw + 16 * u), on = sites === md.k, hot = zone(x, top, cw, ch, () => { CFG.sites = md.k; saveAll(); click(); });
       g.save(); g.beginPath(); if (g.roundRect) g.roundRect(x, top, cw, ch, 10); else g.rect(x, top, cw, ch); g.clip();
@@ -103,9 +104,13 @@
     // team size and the bots
     let y = top + ch + 26 * u; const lw = cw * 2 + 16 * u;
     tx(g, 'TEAM SIZE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [[4, '4V4 · SQUADS'], [3, '3V3'], [2, '2V2'], [1, '1V1 · DUEL']], teamSize(CFG.size), v => { CFG.size = v; saveAll(); }); y += tapH(34) + 14 * u;
-    tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), MATCH_LENS.map(w => [w, `BEST OF ${w * 2 - 1}`]), winOf(CFG.win), v => { CFG.win = v; saveAll(); }); y += tapH(34) + 14 * u;
+    const ranked = CFG.queue === 'ranked';
+    tx(g, 'QUEUE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['unrated', 'UNRATED'], ['ranked', 'RANKED  ·  ' + (placed(rankedOf(CFG.size)) ? rankLabel(rankedOf(CFG.size).rv).toUpperCase() : 'PLACEMENTS ' + rankedOf(CFG.size).n + '/' + PLACE_N)]], CFG.queue, v => { CFG.queue = v; saveAll(); }); y += tapH(34) + 14 * u;
+    if (ranked) { tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); rr(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED IS BEST OF 9  ·  OVERTIME AT 4–4  ·  BEAT BOTS ABOVE YOUR RANK TO CLIMB FASTER', x0 + 110 * u + (lw - 110 * u) / 2, y, Math.min(11.5 * u, (lw - 110 * u) / 70), GOLD, 'center', 800); }
+    else choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), MATCH_LENS.map(w => [w, `BEST OF ${w * 2 - 1}`]), winOf(CFG.win), v => { CFG.win = v; saveAll(); });
+    if (!ranked) tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); y += tapH(34) + 14 * u;
     tx(g, 'BOT LEVEL', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 14 * u;
-    if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Shift sprints, crouch mid-sprint slides. B opens the armory (buy Q there), F plants, defuses and takes orbs, E is free each round, X is your ultimate.'].forEach((l, i) => tx(g, l, x0, y + 26 * u + i * 18 * u, 11.5 * u, '#aeb6c2', 'left', 600)); }
+    if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Shift sprints, crouch mid-sprint slides. B opens the armory, F plants, defuses, takes orbs and swaps guns; T drops your gun, H the charge. Q, E, X: abilities.'].forEach((l, i) => tx(g, l, x0, y + 26 * u + i * 18 * u, 11.5 * u, '#aeb6c2', 'left', 600)); }
     // the right column: your operative, friends, practice
     const rx = V.x1 - rw - 30 * u; let ry = top;
     { const h = 120 * u, hot = zone(rx, ry, rw, h, () => openSelect(null)); rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', hot ? O.col : 'rgba(239,233,220,.14)', hot ? 2 : 1.5);
@@ -115,31 +120,16 @@
       btn(g, rx + 16 * u, ry + 56 * u, rw - 32 * u, 36 * u, MP.online() ? 'BACK TO YOUR PARTY · ' + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u }); ry += h + 14 * u; }
     btn(g, rx, ry, (rw - 10 * u) / 2, tapH(42), 'PRACTICE RANGE', () => play({ mode: 'range' }), { px: 13 * u }); btn(g, rx + (rw + 10 * u) / 2, ry, (rw - 10 * u) / 2, tapH(42), 'ARMORY', () => { play({ mode: 'range' }); openArmory(true); }, { px: 13 * u, sub: 'try every gun' });
     // PLAY
-    const lvl = (CFG.diff === 'auto' ? rankName(STATS.rating) : DIFF[CFG.diff].n) + ' bots', ph = 72 * u, below = ry + tapH(42) + 12 * u, roomy = V.y1 - ph - 64 * u >= below, pyy = roomy ? V.y1 - ph - 64 * u : below, pw = roomy ? rw : rw - 84 * u;   // clear of the sound button in the corner, and of the buttons above
-    btn(g, rx, pyy, pw, ph, 'PLAY', () => menuPlay(teamSize(CFG.size)), { on: true, fill: FOE, solid: true, col: INK, px: 36 * u, sub: `${sites === 2 ? 'STANDARD' : 'SWIFT'} · ${vsLabel(CFG.size)}` + (roomy ? ` · ${lvl}` : '') }); zones[zones.length - 1].prime = true;
+    const lvl = (CFG.diff === 'auto' ? (CFG.queue === 'ranked' ? DIFF[botLevelFor(rankStrength(CFG.size))].n : rankName(STATS.rating)) : DIFF[CFG.diff].n) + ' bots', ph = 72 * u, below = ry + tapH(42) + 12 * u, roomy = V.y1 - ph - 64 * u >= below, pyy = roomy ? V.y1 - ph - 64 * u : below, pw = roomy ? rw : rw - 84 * u;   // clear of the sound button in the corner, and of the buttons above
+    btn(g, rx, pyy, pw, ph, 'PLAY', () => menuPlay(teamSize(CFG.size)), { on: true, fill: FOE, solid: true, col: INK, px: 36 * u, sub: `${CFG.queue === 'ranked' ? 'RANKED' : sites === 2 ? 'STANDARD' : 'SWIFT'} · ${vsLabel(CFG.size)}` + (roomy ? ` · ${lvl}` : '') }); zones[zones.length - 1].prime = true;
     if (!touch && roomy) tx(g, KNAV.on ? 'Arrow keys move · Enter selects · Esc goes back' : 'Enter plays · the arrow keys work here too', rx + pw / 2, pyy - 12 * u, 10 * u, DIM, 'center', 700);
-  }
-  // CAREER: your record, your rank and the ladder, your collection
-  function drawCareer(g, V, W, u) {
-    const x0 = V.x0 + 60 / pxPer() + 20 * u, top = V.y0 + 40 * u, i = diffFor(STATS.rating).i;
-    tx(g, 'CAREER', x0, top, 34 * u, BONE, 'left', 900);
-    const card = (x, y, w, h, label, val, col) => { rr(g, x, y, w, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, label, x + 16 * u, y + 22 * u, 11 * u, DIM, 'left', 900); tx(g, String(val), x + 16 * u, y + h - 30 * u, 34 * u, col || BONE, 'left', 900); };
-    const cw = 200 * u, ch = 110 * u, y = top + 40 * u, hs = STATS.kills ? Math.round(100 * STATS.heads / STATS.kills) + '%' : '—', wr = STATS.matches ? Math.round(100 * STATS.wins / STATS.matches) + '%' : '—';
-    [['MATCHES', STATS.matches], ['WINS', STATS.wins + '  ·  ' + wr], ['KILLS', STATS.kills], ['HEADSHOTS', hs]].forEach(([a, b], k) => card(x0 + k * (cw + 14 * u), y, cw, ch, a, b));
-    const ry = y + ch + 24 * u; rr(g, x0, ry, cw * 2 + 14 * u, 190 * u, 10, 'rgba(14,18,26,.94)', RANK_COL[i], 2); rankBadge(g, x0 + 70 * u, ry + 95 * u, 44 * u, STATS.rating);
-    tx(g, 'RANK', x0 + 140 * u, ry + 40 * u, 11 * u, DIM, 'left', 900); tx(g, rankName(STATS.rating).toUpperCase(), x0 + 138 * u, ry + 84 * u, 38 * u, RANK_COL[i], 'left', 900); tx(g, `Rating ${STATS.rating}`, x0 + 140 * u, ry + 118 * u, 15 * u, BONE, 'left', 800);
-    para(g, 'Win against AUTO bots to climb; your rating sets how good they are, and every rival you meet online sees it.', x0 + 140 * u, ry + 142 * u, cw * 2 - 150 * u, 11 * u, '#aeb6c2');
-    // the ladder
-    const lx = x0 + cw * 2 + 28 * u; rr(g, lx, ry, cw * 2 + 14 * u, 190 * u, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'THE LADDER', lx + 16 * u, ry + 22 * u, 11 * u, DIM, 'left', 900);
-    DIFF.forEach((d, k) => { const yy = ry + 52 * u + k * 34 * u; rankBadge(g, lx + 34 * u, yy, 12 * u, RATING_AT[k] + 1); tx(g, d.n.toUpperCase(), lx + 56 * u, yy, 15 * u, k === i ? RANK_COL[k] : BONE, 'left', 900); tx(g, k < 3 ? `${RATING_AT[k]} – ${RATING_AT[k + 1]}` : `${RATING_AT[k]}+`, lx + cw * 2 - 10 * u, yy, 12 * u, DIM, 'right', 700); if (k === i) tx(g, 'YOU', lx + 200 * u, yy, 11 * u, RANK_COL[k], 'left', 900); });
-    const cy = ry + 210 * u; card(x0, cy, cw, ch, 'COINS', STATS.coins, COIN); card(x0 + cw + 14 * u, cy, cw, ch, 'SKINS OWNED', STATS.skins.length); card(x0 + (cw + 14 * u) * 2, cy, cw, ch, 'OPERATIVES', Object.keys(OPS).length);
   }
   function drawSettings(g, V, W, u) {
     const w = Math.min(W - 80, 760 * u), x = 640 - w / 2, row = tapH(44, 38) + 8 * u; let y = V.y0 + 24 * u;
     tx(g, 'SETTINGS', x, y + 24 * u, 36 * u, BONE, 'left'); btn(g, x + w - 150 * u, y, 150 * u, tapH(46), 'BACK', () => { UI.panel = 'home'; }, { px: 17 * u }); y += tapH(46) + 22 * u;
     y = controlRows(g, x, y, w, row);
     tx(g, 'Picture quality', x, y + tapH(44, 38) / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, tapH(44, 38), [['auto', 'AUTO'], ['low', 'FAST'], ['high', 'SHARP']], CFG.quality, v => { CFG.quality = v; }); y += row;
-    tx(g, 'Quality changes apply the next time you open the game.', x + w * .42, y + 8 * u, 12 * u, DIM, 'left'); y += 30 * u;
+    tx(g, 'AUTO plays FAST on phones and slower computers (Chromebooks). Changes apply the next time you open the game.', x + w * .42, y + 8 * u, 11 * u, DIM, 'left'); y += 30 * u;
     btn(g, x, y, Math.min(w, 260 * u), tapH(46), 'CROSSHAIR', () => { UI.panel = 'crosshair'; }, { px: 16 * u, sub: 'shape, colour, presets, codes' });
   }
   function drawOpts(g) {
@@ -221,13 +211,13 @@
     const V = K.view, W = V.x1 - V.x0, u = uiScale(), P = me(), x = V.x0 + 20 * u, w = W - 40 * u, y0 = V.y0 + 56 * Math.min(u, 1.15), h = V.y1 - y0 - 10 * u, gap = 7 * Math.min(u, 1.2), range = M.mode === 'range';
     rr(g, x, y0, w, h, 12, 'rgba(12,16,22,.95)', 'rgba(239,233,220,.25)');
     const pad = isTouch() ? 46 / pxPer() : 0; tx(g, 'ARMORY', x + 18 * u + pad, y0 + 24 * u, 24 * u, BONE, 'left'); tx(g, `◈ ${P.credits}`, x + w - 18 * u - pad, y0 + 24 * u, 23 * u, GOLD, 'right');
-    tx(g, range ? 'Everything is free on the range' : `${pistolRound(M.round) ? 'Pistol round · ' : ''}Round starts in ${Math.max(0, Math.ceil(M.t))}`, x + w / 2, y0 + 24 * u, 14 * u, DIM);
+    { const bf = UI.buyFor && M.byKey[UI.buyFor]; tx(g, range ? 'Everything is free on the range' : bf ? `BUYING FOR ${bf.name.toUpperCase()}  ·  press a gun` : `${pistolRound(M.round) ? 'Pistol round · ' : otRound(M.round) ? 'Overtime · ' : ''}Round starts in ${Math.max(0, Math.ceil(M.t))}${lossNext(P)}`, x + w / 2, y0 + 24 * u, 14 * u, bf ? GOLD : DIM); }
     const by = y0 + 46 * u, bh = y0 + h - by - 12 * u, hh = fitPx(g, 12 * u) * 1.7, cw = (w - 28 * u - 4 * gap) / 5, ch = (bh - hh - 4 * gap) / 5; let focus = null;
     const card = (it, cx, cy, cw2 = cw) => {
       const cw = cw2, A = it.armor, AB = it.ab ? it : null, N = it === NADE ? it : null, G = A || N || AB ? null : it, sp = P.spent, lock = false;
       const on = A ? P.sh >= A.sh : AB ? (P.ab.q | 0) >= AB.ab.q.max : N ? (P.smokes || 0) >= NADE.per : P.guns[G.slot] === it.k, mineNow = A ? sp.sh && sp.sh.k === it.k : AB ? sp.abq > 0 : N ? sp.smoke > 0 : sp[G.slot] && sp[G.slot].k === it.k;
       const refund = A ? (sp.sh ? ARMOR.find(a => a.k === sp.sh.k).cost : 0) : N || AB ? 0 : (sp[G.slot] ? GUNS[sp[G.slot].k].cost : 0), can = !on && P.credits + refund >= it.cost;
-      const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; buy(P, it.k); }); if (hot || (!focus && UI.pick === it.k)) focus = it;
+      const hot = zone(cx, cy, cw, ch, () => { UI.pick = it.k; const mate = UI.buyFor && M.byKey[UI.buyFor]; if (mate && G && !G.melee) { if (!buyFor(P, mate, it.k)) click(); } else buy(P, it.k); }); if (hot || (!focus && UI.pick === it.k)) focus = it;
       rr(g, cx, cy, cw, ch, 8, on ? 'rgba(53,224,200,.14)' : hot && can ? 'rgba(255,138,61,.18)' : 'rgba(255,255,255,.045)', on ? YOU : hot || UI.pick === it.k ? 'rgba(239,233,220,.6)' : can ? 'rgba(239,233,220,.2)' : 'rgba(255,255,255,.06)');
       const tp = Math.min(15 * u, ch * .2, cw * .075), ty = cy + tp * .95;
       g.font = `700 ${fitPx(g, tp)}px ${FONT}`; const nm = it.short && g.measureText((it.n + '  ◈ 200').toUpperCase()).width > cw - 18 * u ? it.short : it.n;
@@ -251,7 +241,22 @@
       if (ci === 4) endY = y;
     });
     // the right column, under the shields: what you are pointing at, a buy button for a gold-edged one, and the way out
-    const dx = x + 14 * u + 4 * (cw + gap), rh = tapH(50), dh = by + bh - endY - rh - gap;
+    const dx = x + 14 * u + 4 * (cw + gap), rh = tapH(50);
+    // your team, under the details: who you are buying for (press a teammate, then a gun: it lands at their feet), and,
+    // attacking, who carries the charge (press the diamond to hand it over)
+    const team = range ? [] : M.fs.filter(q => q.team === P.team && !q.gone).sort((a, b) => (b === P) - (a === P)), att = sideOf(P) === 'att', trh = Math.min(tapH(30, 26), 34 * u), tph = team.length > 1 ? 22 * u + team.length * (trh + 4 * u) : 0;
+    if (UI.buyFor && !team.some(q => q.key === UI.buyFor && q !== P)) UI.buyFor = null;
+    if (tph) { let ty2 = by + bh - rh - gap - tph; tx(g, att ? 'TEAM  ·  BUY FOR  ·  CHARGE' : 'TEAM  ·  BUY FOR', dx + 2, ty2 + 9 * u, 11 * u, DIM, 'left', 900); ty2 += 22 * u;
+      for (const q of team) { const sel = q === P ? !UI.buyFor : UI.buyFor === q.key, cw3 = att ? cw - trh - 6 * u : cw, hot = zone(dx, ty2, cw3, trh, () => { UI.buyFor = q === P ? null : q.key; click(); });
+        rr(g, dx, ty2, cw3, trh, 6, sel ? 'rgba(255,214,102,.16)' : hot ? 'rgba(255,255,255,.08)' : 'rgba(255,255,255,.035)', sel ? GOLD : 'rgba(239,233,220,.14)', sel ? 1.5 : 1);
+        portraitTile(g, q.op, dx + 3, ty2 + 3, trh - 6, trh - 6, { r: 3, dead: !q.alive });
+        const known = q === P || !q.net, [nm, npx] = fitName(g, q === P ? 'YOU' : q.name.toUpperCase(), cw3 - trh - (known ? 62 * u : 14 * u), Math.min(12.5 * u, trh * .45)); tx(g, nm, dx + trh + 4 * u, ty2 + trh / 2, npx, q === P ? YOU : BONE, 'left', 800);
+        if (known) tx(g, '◈ ' + q.credits, dx + cw3 - 7 * u, ty2 + trh / 2, Math.min(11.5 * u, trh * .42), GOLD, 'right', 800);
+        if (att) { const has = carries(q), bx2 = dx + cw - trh, can = !has && q.alive && (carries(P) || !carrier() || carrier().bot || carrier().isBot), h2 = zone(bx2, ty2, trh, trh, () => { if (giveCharge(P, q)) click(); });
+          rr(g, bx2, ty2, trh, trh, 6, has ? 'rgba(255,214,102,.3)' : h2 && can ? 'rgba(255,214,102,.12)' : 'rgba(255,255,255,.035)', has ? GOLD : can ? 'rgba(255,214,102,.45)' : 'rgba(255,255,255,.08)', has ? 2 : 1);
+          tx(g, '◆', bx2 + trh / 2, ty2 + trh / 2, trh * .5, has ? GOLD : can ? 'rgba(255,214,102,.6)' : '#3c434e', 'center', 900); }
+        ty2 += trh + 4 * u; } }
+    const dh = by + bh - endY - rh - gap - (tph ? tph + gap : 0);
     rr(g, dx, endY, cw, dh, 8, 'rgba(255,255,255,.03)', 'rgba(239,233,220,.12)');
     if (focus) {
       const F = focus, G = F.armor || F === NADE || F.ab ? null : F, fp = Math.min(13 * u, cw * .062), ub = 0; let y = endY + fp * 1.3;
@@ -265,7 +270,10 @@
       row('PRICE', F.cost ? `◈ ${F.cost}` : 'FREE');
       g.restore();
     } else para(g, `Press a weapon to buy it, and again to sell it back. Q (${OPS[P.op].q.n}) is bought by the charge; E (${OPS[P.op].e.n}) comes free every round; X (${OPS[P.op].x.n}) charges from kills, deaths, plants, defuses and the orbs on the map. Rounds 1 and 5 are pistol rounds.`, dx + 9 * u, endY + 22 * u, cw - 18 * u, Math.min(13 * u, cw * .062), DIM);
-    btn(g, dx, by + bh - rh, cw, rh, range ? 'CLOSE' : 'READY', () => openArmory(false), { on: true, fill: YOU, px: rh * .4, sub: isTouch() ? '' : 'or press B' });
+    // REBUY: last round's loadout in one press, beside READY
+    const rbc = !range && P.lastBuy ? rebuyCost(P) : 0, half = rbc > 0;
+    if (half) btn(g, dx, by + bh - rh, cw * .48, rh, 'REBUY', () => { if (!rebuy(P)) click(); }, { px: rh * .3, sub: '◈ ' + rbc, col: P.credits >= rbc ? GOLD : '#5a6272', edge: GOLD });
+    btn(g, half ? dx + cw * .52 : dx, by + bh - rh, half ? cw * .48 : cw, rh, range ? 'CLOSE' : 'READY', () => openArmory(false), { on: true, fill: YOU, px: rh * (half ? .32 : .4), sub: isTouch() ? '' : 'or press B' });
   }
 
   // a coin count: a little gold disc and the number, right-aligned at x
@@ -280,25 +288,29 @@
     tx(g, won ? 'VICTORY' : 'DEFEAT', 640, V.y0 + 90 * u, 84 * u, won ? YOU : FOE); tx(g, `${M.wins[0]}  –  ${M.wins[1]}`, 640, V.y0 + 170 * u, 44 * u, BONE);
     if (M.over.why === 'left') tx(g, M.fs.length > 2 ? 'The other team left the match' : 'Your rival left the match', 640, V.y0 + 212 * u, 15 * u, DIM);
     else if (M.over.why === 'dropped') tx(g, 'You lost the connection to the room, and could not get back in', 640, V.y0 + 212 * u, 15 * u, DIM);
-    const rows = [['Kills', f => f.stat.k], ['Headshots', f => f.stat.hs], ['Damage dealt', f => Math.round(f.stat.dmg)], ['Accuracy', f => f.net ? '—' : f.stat.shots ? Math.round(100 * f.stat.hits / f.stat.shots) + '%' : '—']], tw = 520 * u;
+    const rows = [['Combat score', f => csOf(f)], ['Kills', f => f.stat.k], ['First kills', f => f.stat.fk | 0], ['Headshots', f => f.stat.hs], ['Damage dealt', f => Math.round(f.stat.dmg)], ['Accuracy', f => f.net ? '—' : f.stat.shots ? Math.round(100 * f.stat.hits / f.stat.shots) + '%' : '—']], tw = 560 * u;
+    // the MVPs: the best combat score in the match, and the best on the other team
+    const best = list => list.filter(f => !f.gone).sort((a, b) => csOf(b) - csOf(a))[0], wT = M.wins[0] >= M.wins[1] ? P.team : 1 - P.team, mvp = best(M.fs.filter(f => f.team === wT)), tmvp = best(M.fs.filter(f => f.team !== wT));
     let ty = V.y0 + 250 * u, cy;
     if (M.fs.length > 2) {   // a team match: everyone, your team first (you at the top), then the rivals, best first; the rows shrink to fit 4v4
-      ty = V.y0 + 236 * u; const mine = M.fs.filter(f => f.team === P.team).sort((a, b) => (b === P) - (a === P) || b.stat.k - a.stat.k), theirs = M.fs.filter(f => f.team !== P.team).sort((a, b) => b.stat.k - a.stat.k), n = mine.length + theirs.length;
+      ty = V.y0 + 236 * u; const mine = M.fs.filter(f => f.team === P.team).sort((a, b) => csOf(b) - csOf(a)), theirs = M.fs.filter(f => f.team !== P.team).sort((a, b) => csOf(b) - csOf(a)), n = mine.length + theirs.length;
       const hh = 26 * u, rh = Math.max(18 * u, Math.min(30 * u, (V.y1 - 150 * u - ty - hh - 18 * u) / n)), th = hh + n * rh + 8 * u + 10 * u, x0 = 640 - tw / 2;
-      const cols = [['K', f => f.stat.k, 210], ['D', f => f.stat.d, 165], ['HS', f => f.stat.hs, 115], ['DMG', f => Math.round(f.stat.dmg), 40]];
+      const cols = [['SCORE', f => csOf(f), 250], ['K', f => f.stat.k, 200], ['D', f => f.stat.d, 160], ['FK', f => f.stat.fk | 0, 120], ['DMG', f => Math.round(f.stat.dmg), 40]];
       rr(g, x0, ty, tw, th, 10, GLASS); tx(g, 'SCOREBOARD', x0 + 16 * u, ty + hh / 2 + 3 * u, 11 * u, DIM, 'left', 900); for (const [k, , dx] of cols) tx(g, k, x0 + tw - dx * u, ty + hh / 2 + 3 * u, 11 * u, DIM, 'right', 900);
       let y = ty + hh; const row = (f, col) => { if (f === P) { g.fillStyle = 'rgba(53,224,200,.12)'; g.fillRect(x0 + 4 * u, y + 1, tw - 8 * u, rh - 2); } g.fillStyle = col; g.fillRect(x0 + 4 * u, y + 2, 3 * u, rh - 4);
-        portraitTile(g, f.op, x0 + 12 * u, y + 2, rh - 4, rh - 4, { r: 3, dead: !!f.gone }); tx(g, f.name.toUpperCase() + (f === P ? (/^you$/i.test(f.name) ? '' : '  (YOU)') : f.bot || f.isBot ? '  · BOT' : ''), x0 + 18 * u + rh, y + rh / 2, Math.min(14 * u, rh * .52), f === P ? YOU : BONE, 'left', 800);
+        portraitTile(g, f.op, x0 + 12 * u, y + 2, rh - 4, rh - 4, { r: 3, dead: !!f.gone }); const [nm2, np2] = fitName(g, f.name.toUpperCase() + (f === P ? (/^you$/i.test(f.name) ? '' : '  (YOU)') : f.bot || f.isBot ? '  · BOT' : ''), tw - 300 * u - rh - (f === mvp || f === tmvp ? 74 * u : 0), Math.min(14 * u, rh * .52)); tx(g, nm2, x0 + 18 * u + rh, y + rh / 2, np2, f === P ? YOU : BONE, 'left', 800);
+        if (f === mvp || f === tmvp) { g.font = `800 ${fitPx(g, np2)}px ${FONT}`; const bx = x0 + 24 * u + rh + g.measureText(nm2).width, lab = f === mvp ? 'MVP' : 'TEAM MVP'; rr(g, bx, y + rh * .2, (lab.length * 7.2 + 10) * u, rh * .6, 4, f === mvp ? 'rgba(255,214,102,.25)' : 'rgba(239,233,220,.1)', f === mvp ? GOLD : 'rgba(239,233,220,.4)', 1); tx(g, lab, bx + (lab.length * 7.2 + 10) * u / 2, y + rh / 2, Math.min(10 * u, rh * .38), f === mvp ? GOLD : BONE, 'center', 900); }
         for (const [, fn, dx] of cols) tx(g, String(fn(f)), x0 + tw - dx * u, y + rh / 2, Math.min(16 * u, rh * .58), BONE, 'right', 800); y += rh; };
       mine.forEach(f => row(f, YOU)); y += 8 * u; theirs.forEach(f => row(f, FOE));
       cy = ty + th + 30 * u;
     } else {
-      rr(g, 640 - tw / 2, ty, tw, (rows.length + 1) * 40 * u + 14 * u, 10, GLASS);
-      tx(g, P.name.toUpperCase(), 640 - 70 * u, ty + 26 * u, 15 * u, YOU, 'right'); tx(g, F.name.toUpperCase(), 640 + 70 * u, ty + 26 * u, 15 * u, FOE, 'left');
-      rows.forEach(([label, fn], i) => { const y = ty + (i + 1) * 40 * u + 26 * u; tx(g, label, 640, y, 13 * u, DIM); tx(g, String(fn(P)), 640 - 110 * u, y, 22 * u, BONE, 'right'); tx(g, String(fn(F)), 640 + 110 * u, y, 22 * u, BONE, 'left'); });
-      cy = ty + (rows.length + 1) * 40 * u + 44 * u;
+      rr(g, 640 - tw / 2, ty, tw, (rows.length + 1) * 34 * u + 14 * u, 10, GLASS);
+      tx(g, (mvp === P ? '★ ' : '') + P.name.toUpperCase(), 640 - 70 * u, ty + 26 * u, 15 * u, YOU, 'right'); tx(g, F.name.toUpperCase() + (mvp === F ? ' ★' : ''), 640 + 70 * u, ty + 26 * u, 15 * u, FOE, 'left');
+      rows.forEach(([label, fn], i) => { const y = ty + (i + 1) * 34 * u + 26 * u; tx(g, label, 640, y, 13 * u, DIM); tx(g, String(fn(P)), 640 - 110 * u, y, 22 * u, BONE, 'right'); tx(g, String(fn(F)), 640 + 110 * u, y, 22 * u, BONE, 'left'); });
+      cy = ty + (rows.length + 1) * 34 * u + 44 * u;
     }
     // what the match paid, and where the adaptive bot goes next
+    if (M.rankRes) drawRankResult(g, 640 - 280 * u - 250 * u, V.y0 + 236 * u, 250 * u, u);
     if (M.rated) { const r = M.rated; tx(g, `Rating ${r.after} (${r.after >= r.before ? '+' : ''}${r.after - r.before})   ·   next bot: ${rankName(r.after)}`, 640, cy, 15 * u, DIM); }
     // coins: the total counts up, the reasons beside it, and how far it takes you toward the rarest skin
     if (M.pay) { const t = (performance.now() - M.payT) / 1000, shown = Math.round(M.pay.total * smooth(cl(t / 1.4, 0, 1))), px0 = 640 + 280 * u, py0 = V.y0 + 236 * u;
@@ -307,6 +319,6 @@
       const yb = py0 + 50 * u + M.pay.rows.length * 22 * u + 6 * u, frac = cl(M.pay.total / RARITY.mythic.price, 0, 1); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(px0 + 16 * u, yb, 218 * u, 5 * u); g.fillStyle = RARITY.mythic.col; g.fillRect(px0 + 16 * u, yb, 218 * u * frac * smooth(cl(t / 1.4, 0, 1)), 5 * u);
       tx(g, `${Math.round(frac * 100)}% of a Mythic  ·  you have ${STATS.coins}`, px0 + 16 * u, yb + 16 * u, 10 * u, DIM, 'left', 700); }
     const by = Math.min(V.y1 - 80 * u, cy + 40 * u);
-    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); openParty(); } else play({ mode: M.mode, diff: CFG.diff, size: teamSize(CFG.size), sites: CFG.sites }); }, { on: true, fill: FOE, px: 19 * u });
+    btn(g, 640 - 250 * u, by, 240 * u, tapH(56), M.online ? 'BACK TO THE ROOM' : 'PLAY AGAIN', () => { if (M.online) { toMenu(); openParty(); } else play(soloOpts()); }, { on: true, fill: FOE, px: 19 * u });
     btn(g, 640 + 10 * u, by, 240 * u, tapH(56), 'MENU', toMenu, { px: 19 * u });
   }

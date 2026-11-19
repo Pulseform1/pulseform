@@ -11,6 +11,8 @@
   function warmShaders() {
     if (!X || !X.renderer) return;
     if (!X.olDummy) { X.olDummy = new THREE.Mesh(new THREE.BoxGeometry(.01, .01, .01), outlineMat()); X.olDummy.visible = false; X.scene.add(X.olDummy); }
+    if (!X.lootDummy && X.lootRing) { X.lootDummy = new THREE.Mesh(X.lootRing.g, X.lootRing.m); X.lootDummy.visible = false; X.scene.add(X.lootDummy); }   // the floor gun's ring, and the charge in your hands, ready before they first appear
+    if (!X.vcharge && X.chargeCopy) { X.vcharge = X.chargeCopy(); X.vcharge.scale.setScalar(.42); X.vcharge.visible = false; X.vroot.add(X.vcharge); }
     if (!X.smokes.length) addSmoke(); if (!X.walls.length) addWall(); if (!X.nadeObjs.length) { const o = X.nadeMk(); o.visible = false; X.scene.add(o); X.nadeObjs.push(o); }
     try { X.renderer.compile(X.scene, X.camera); X.renderer.compile(X.vscene, X.camera); } catch (e) { console.warn(e); }
   }
@@ -47,6 +49,11 @@
     // its light is always in the scene, just dark: a light appearing mid-round changes the light count, and every lit material
     // would then rebuild its shader at once (the stutter you used to feel the moment the charge went down)
     X.chargePL = add(new THREE.PointLight(WARN, 0, 7)); X.chargePL.position.set(0, -20, 0); ch.visible = false; add(ch);
+    // the same device, carried (on the carrier's back) or lying on the floor: copies that share its shapes, with a lamp of their own
+    X.chargeLampM = new THREE.MeshBasicMaterial({ color: WARN }); X.chargeCopy = () => { const c = ch.clone(); c.traverse(o => { if (o.material === X.chargeLamp.material) o.material = X.chargeLampM; }); c.visible = true; return c; };
+    X.chargeFloor = X.chargeCopy(); X.chargeFloor.visible = false; add(X.chargeFloor);
+    X.lootRing = { g: new THREE.RingGeometry(.32, .4, 24), m: new THREE.MeshBasicMaterial({ color: '#efe9dc', transparent: true, opacity: .45, depthWrite: false, side: THREE.DoubleSide }) };
+    X.lootObjs = new Map(); X.lootProto = new Map();
     X.flareBall = add(new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffffff' }))); X.flareBall.visible = false;
     X.boom = add(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), fm({ color: '#ffb060', opacity: .8 }))); X.boom.visible = false; X.boomT = 0;
     X.ejects = []; X.casings = [];
@@ -123,7 +130,7 @@
       if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker') && renderGunShow(dt)) return;
       if (screen === 'select' && UI.sel) { for (const g of X.smokes) g.visible = false; for (const o of X.nadeObjs) o.visible = false; for (const w of X.walls) w.visible = false; return renderSelect(dt); }
       const a = X.t * .06 + 2.4, k = MW / 64; cam.position.set(MW / 2 + 9 * k + Math.cos(a) * 30 * k, 19 * k, MH / 2 - 1 + Math.sin(a) * 26 * k); cam.rotation.set(0, 0, 0); cam.lookAt(MW / 2 + 6 * k, 0, MH / 2 - 1); cam.fov = 55; cam.updateProjectionMatrix();
-      for (const A of X.agents.values()) A.visible = false; X.charge.visible = false; for (const g of X.smokes) g.visible = false; for (const o of X.nadeObjs) o.visible = false; for (const w of X.walls) w.visible = false; hideKitFx();
+      for (const A of X.agents.values()) A.visible = false; X.charge.visible = false; for (const g of X.smokes) g.visible = false; for (const o of X.nadeObjs) o.visible = false; for (const w of X.walls) w.visible = false; hideKitFx(); hideLoot();
       X.renderer.render(X.scene, cam); return;
     }
     updateSpec(); const P = viewer(), G = gun(P); if (X.hemiBase != null) X.hemi.intensity = X.hemiBase;
@@ -135,7 +142,7 @@
     // next shot (the crosshair stays put on screen, so the rest shows as bullets landing above it), and glides back as the spray settles
     { const pt = P.alive && !G.melee ? patOf(P, G) : [0, 0], fol = P.scoped && G.scope ? .25 : .55, k = Math.min(1, dt * 18);
       X.vpY = lp(X.vpY || 0, pt[0] * fol, k); X.vpP = lp(X.vpP || 0, pt[1] * fol, k); }
-    let yaw = P.yaw + X.vpY, pitch = P.pitch + M.camKick + X.vpP, y = X.camY - X.dip;
+    let yaw = P.yaw + X.vpY, pitch = P.pitch + M.camKick + X.vpP, y = X.camY - X.dip - .38 * sm(X.kneel || 0);
     if (P.daze > 0) { const k = Math.min(1, P.daze / .8); yaw += Math.sin(X.t * 6.3) * .014 * k; pitch += Math.cos(X.t * 4.7) * .011 * k; }   // a Shockwave's daze rocks the view
     let deathCam = null;
     if (!P.alive && M.deathInfo) {   // the death cam: you drop, turn to whoever did it, then rise behind your body to watch them
@@ -192,11 +199,23 @@
     X.adsK = lp(X.adsK || 0, P.scoped && !G.scope && P.alive ? 1 : 0, Math.min(1, dt * 16));
     if (X.adsK > .001) { const a = X.adsK, sy = X.viewGun.userData.sight || .09; X.view.position.x = lp(X.view.position.x, 0, a); X.view.position.y = lp(X.view.position.y, -sy - rk * .05, a); X.view.position.z = lp(X.view.position.z, VO[2] - .03 + rk * .5, a); X.view.rotation.y = lp(X.view.rotation.y, 0, a); X.view.rotation.z = lp(X.view.rotation.z, 0, a); X.view.rotation.x = lp(X.view.rotation.x, rk * .5, a); }
     if (X.flashT > 0) X.flashT -= dt;
+    // planting or defusing: you kneel, the gun goes down out of sight; planting, the charge is in your hands, set down as it arms
+    X.kneel = lp(X.kneel || 0, P.alive && (P.plant > 0 || P.defuse > 0) ? 1 : 0, Math.min(1, dt * 10));
+    if (X.kneel > .001) { const k = sm(X.kneel); X.view.position.y -= .32 * k; X.view.rotation.x -= .95 * k; X.view.position.z += .1 * k; }
+    if (!X.vcharge) { X.vcharge = X.chargeCopy(); X.vcharge.scale.setScalar(.42); X.vroot.add(X.vcharge); }
+    { const q = P.alive && P.plant > 0 ? cl(P.plant / PLANT_T, 0, 1) : -1; X.vcharge.visible = q >= 0 && X.kneel > .3;
+      if (q >= 0) { const s2 = sm(cl(q / .35, 0, 1)), d2 = sm(cl((q - .35) / .55, 0, 1)); X.vcharge.position.set(.03 + Math.sin(X.t * 9) * .003 * (1 - d2), lp(-.5, -.26, s2) - d2 * .3, -.66 - d2 * .12); X.vcharge.rotation.set(lp(.9, .45, s2) + d2 * .25, .35 - d2 * .3, 0); } }
     if (P.castT > 0) { P.castT -= dt; const q = 1 - Math.max(0, P.castT) / .5, c = Math.sin(Math.min(1, q) * Math.PI); X.view.position.y -= c * .07; X.view.position.x += c * .03; X.view.rotation.x -= c * .45; X.view.rotation.z += c * .35; }   // the off hand casts: the gun dips out of the way
 
     // the rival
     for (const [f, A] of X.agents) if (!M.fs.includes(f)) { X.scene.remove(A); X.agents.delete(f); }
     { const AP = X.agents.get(P); if (AP) AP.visible = false; } for (const f of M.fs) if (f !== P || X.deathCam) updateAgent(f, dt);   // on the death cam you see your own body fall
+    // a fighter wholly behind walls is not drawn at all (nor its outline): a few lines from the camera to its head, chest, both
+    // hips, feet and gun; if every one is blocked, nothing of it could show. (Not while the camera is inside a wall.)
+    { const c = cam.position; if (hAt(c.x, c.z) < c.y - .05) for (const f of M.fs) { const A = X.agents.get(f); if (!A || !A.visible || (f === P && !X.deathCam)) continue;
+        const x = ipos(f, 'x'), y = ipos(f, 'y'), z = ipos(f, 'z'), s = Math.sin(f.yaw), co = Math.cos(f.yaw), pts = [[x, y + 1.6, z], [x, y + 1.1, z], [x + co * .38, y + 1, z - s * .38], [x - co * .38, y + 1, z + s * .38], [x, y + .25, z], [x - s * .75, y + 1.25, z - co * .75]];
+        let seen = false; for (const q of pts) { const d = Math.hypot(q[0] - c.x, q[1] - c.y, q[2] - c.z); if (d < 2.5 || los(c.x, c.y, c.z, q[0], q[1], q[2], false) >= d - .35) { seen = true; break; } }
+        A.visible = seen; } }
     // smokes, Rampart walls, the charge, a flare in flight
     while (X.smokes.length < M.smokes.length) addSmoke();
     X.smokes.forEach((g, i) => { const s = M.smokes[i]; g.visible = !!s; if (s) { const mt = s.heat ? X.smokeHM : s.grey ? X.smokeGM : X.smokeM; if (g.children[0].material !== mt) for (const c of g.children) c.material = mt; g.position.set(s.x, s.y + 1.4, s.z); g.scale.set(s.r, s.r * .85, s.r); g.rotation.y += dt * .12; } });
@@ -207,7 +226,7 @@
     X.charge.visible = !!M.planted && !(M.phase === 'end' && M.last && M.last.why === 'boom');
     if (M.planted) { const C = M.planted, lit = !M.defused && C.beep > Math.max(.06, cl(C.t / 12, .12, 1) - .08); X.charge.position.set(C.x, C.y, C.z); X.chargePL.position.set(C.x, C.y + .7, C.z); X.chargeLamp.material.color.set(M.defused ? YOU : lit ? WARN : '#401018'); X.chargePL.intensity = lit && X.charge.visible ? 2.4 : 0; }
     else X.chargePL.intensity = 0;
-    kitFx(dt); stepKillFx(dt); animKit(X.viewGun, dt);
+    kitFx(dt); stepKillFx(dt); animKit(X.viewGun, dt); lootFx(dt);
     const fl = M.flares[0]; X.flareBall.visible = !!fl; if (fl) X.flareBall.position.set(fl.x, fl.y, fl.z);
     // tracers, sparks, lights fading
     for (const t of X.tracers) { const u = t.userData; if (!u.live) continue; u.age += dt;
@@ -225,6 +244,28 @@
       const ac = X.renderer.autoClear; X.renderer.autoClear = false; X.renderer.clearDepth(); X.renderer.render(X.vscene, cam); X.renderer.autoClear = ac;
     }
   }
+
+  // guns on the floor (lying on their side over a pale ring), the charge on the floor, and the charge on its carrier's back
+  function lootFx(dt) {
+    const L = (M && M.loot) || [], seen = new Set();
+    // in the buy phase, get a floor copy of each gun people are carrying ready, one a frame, so a gun dropped mid-fight costs nothing to show
+    if (M && M.phase === 'buy') for (const f of M.fs) { const k = f.guns[1] || (f.guns[2] !== 'pip' && f.guns[2]); if (k && GUNS[k] && !X.lootProto.has(k)) { X.lootProto.set(k, gunModel(k, {})); break; } }
+    for (const d of L) {
+      seen.add(d.id); let o = X.lootObjs.get(d.id);
+      if (!o) { let pr = X.lootProto.get(d.k); if (!pr) { pr = gunModel(d.k, {}); X.lootProto.set(d.k, pr); }
+        o = new THREE.Group(); const gm = pr.clone(); gm.rotation.set(0, 0, Math.PI / 2); gm.position.y = .07; o.add(gm); const ring = new THREE.Mesh(X.lootRing.g, X.lootRing.m); ring.rotation.x = -Math.PI / 2; ring.position.y = .02; o.add(ring);
+        o.rotation.y = (d.x * 7.3 + d.z * 3.1) % TAU; X.scene.add(o); X.lootObjs.set(d.id, o); }
+      o.visible = true; o.position.set(d.x, d.y, d.z);
+    }
+    for (const [id, o] of X.lootObjs) if (!seen.has(id)) { X.scene.remove(o); X.lootObjs.delete(id); }
+    const C = M && M.charge, blink = Math.sin(X.t * 5) > 0;
+    X.chargeLampM.color.set(blink ? WARN : '#5a2620');
+    X.chargeFloor.visible = !!(C && !C.k && !M.planted); if (X.chargeFloor.visible) { X.chargeFloor.position.set(C.x, C.y, C.z); X.chargeFloor.rotation.y = X.t * .6; }
+    for (const [f, A] of X.agents) { const U = A.userData, on = !!(C && C.k === f.key && f.alive && !M.planted);
+      if (on && !U.pack) { U.pack = X.chargeCopy(); U.pack.scale.setScalar(.62); U.pack.rotation.x = -Math.PI / 2 + .25; U.pack.position.set(0, .42, .2); U.torso.add(U.pack); }
+      if (U.pack) U.pack.visible = on; }
+  }
+  function hideLoot() { if (!X || !X.lootObjs) return; for (const o of X.lootObjs.values()) o.visible = false; X.chargeFloor.visible = false; }
   // a point in the world on the screen, in the HUD's 1280 by 720 units (null when it is behind you)
   function toScreen(x, y, z) {
     if (!X || !ready) return null; const p = new THREE.Vector3(x, y, z).project(X.camera); if (p.z > 1) return null;

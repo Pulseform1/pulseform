@@ -3,7 +3,10 @@
      so a gun never pokes into a wall), the reflection map, and pools of effects. 'low' is the phone tier: no shadows, a
      capped pixel ratio that also drops by itself if frames get slow. */
   let X = null, ready = false, failed = false;
-  const isTouch = () => matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+  let touchK = null; const isTouch = () => touchK != null ? touchK : (touchK = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0);   // asked many times a frame: kept until the window changes
+  if (typeof addEventListener !== 'undefined') addEventListener('resize', () => { touchK = null; });
+  // a low-powered computer (a Chromebook, four cores or fewer, or 4 GB of memory or less) plays in FAST, like a phone
+  const lowEnd = () => { try { const n = navigator; return /CrOS/.test(n.userAgent || '') || (n.hardwareConcurrency || 8) <= 4 || (n.deviceMemory || 8) <= 4; } catch (e) { return false; } };
   const BASE_FOV = 70.5;   // vertical, which is 103 degrees across on a 16:9 screen
   const SUN = [-.46, .7, -.55];   // towards the sun: over the sea, north-west, mid afternoon
   // a colour as you picked it: Three.js reads plain colours as linear light, which turns strong colours pale
@@ -18,11 +21,12 @@
 
   function initGfx() {
     loadSave();
-    const low = CFG.quality === 'low' || (CFG.quality !== 'high' && isTouch());
+    const low = CFG.quality === 'low' || (CFG.quality !== 'high' && (isTouch() || lowEnd()));
+    if (low && !isTouch()) { GAME.maxDpr = 1.25; dispatchEvent(new Event('resize')); }   // the HUD's own canvas too: fewer pixels to clear and draw each frame
     const glc = document.createElement('canvas'); glc.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;display:block;background:#0c1016';
     const cv2 = document.getElementById('cv'); cv2.parentNode.insertBefore(glc, cv2);
     const renderer = new THREE.WebGLRenderer({ canvas: glc, antialias: !low, powerPreference: 'high-performance' });
-    const pr = Math.min(window.devicePixelRatio || 1, low ? 1.5 : 2); renderer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight, false);
+    const pr = Math.min(window.devicePixelRatio || 1, low ? (isTouch() ? 1.5 : 1) : 2); renderer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight, false);
     renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .92;
     if (!low) { renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; }
     const scene = new THREE.Scene(), haze = new THREE.Color('#cfe3ee'); scene.background = haze; scene.fog = new THREE.Fog(haze, 90, 420);
@@ -58,8 +62,10 @@
     const dome = new THREE.Mesh(new THREE.SphereGeometry(700, 32, 20), new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false, depthWrite: false })); dome.renderOrder = -10; X.scene.add(dome); X.dome = dome;
   }
   // keep the frame rate on slow phones: if frames run long for a while, draw fewer pixels (never fewer than the screen's own)
+  // (and if that is not enough, the shadows go: they draw every fighter and gun a second time)
   function tunePixels(dt) {
     if (dt > .034) X.slow += dt; else X.slow = Math.max(0, X.slow - dt * .5);
-    if (X.slow > 1.5 && X.pr > .8) { X.pr = Math.max(.75, X.pr - .25); X.renderer.setPixelRatio(X.pr); X.renderer.setSize(innerWidth, innerHeight, false); X.slow = 0; }
+    if (X.slow > 1.2 && X.pr > .8) { X.pr = Math.max(.75, X.pr - .25); X.renderer.setPixelRatio(X.pr); X.renderer.setSize(innerWidth, innerHeight, false); X.slow = 0; }
+    else if (X.slow > 2 && X.renderer.shadowMap.enabled) { X.renderer.shadowMap.enabled = false; X.sun.castShadow = false; X.scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; }); X.slow = 0; }
   }
   (async () => { try { if (typeof document === 'undefined') return; await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'); initGfx(); ready = true; } catch (e) { console.error(e); failed = true; } })();

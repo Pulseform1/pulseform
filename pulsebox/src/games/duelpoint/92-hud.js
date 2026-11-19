@@ -7,6 +7,8 @@
   const fitPx = (g, px) => { const k = g.getTransform().a * innerWidth / g.canvas.width, min = isTouch() ? 10.5 : 9; return px * k < min ? min / k : px; };
   // a short note across the top for a few seconds ("trackpad found")
   let TOAST = null; const toast = s => { TOAST = { s, at: performance.now() }; };
+  on('gift', (f, mate, k) => { if (!M || M.mode === 'demo') return; if (mate === me()) toast(`${f.name.toUpperCase()} BOUGHT YOU A ${GUNS[k].n.toUpperCase()}`); else if (f === me()) toast(`YOU BOUGHT ${mate.name.toUpperCase()} A ${GUNS[k].n.toUpperCase()}`); });
+  on('charge', f => { if (!M || M.mode === 'demo' || M.phase === 'end') return; const P = me(); if (f === P) toast(isTouch() ? 'YOU HAVE THE CHARGE' : 'YOU HAVE THE CHARGE  ·  H TO DROP IT'); else if (f && f.team === P.team && M.round && M.time - (M.chargeToastT || -9) > .5) toast(f.name.toUpperCase() + ' HAS THE CHARGE'); else if (!f && sideOf(P) === 'att') toast('THE CHARGE IS ON THE FLOOR'); M.chargeToastT = M.time; });
   function tx(g, s, x, y, px, col = BONE, align = 'center', weight = 700) { px = fitPx(g, px); g.font = `${weight} ${px}px ${FONT}`; g.fillStyle = col; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(s, x, y); }
   function rr(g, x, y, w, h, r, fill, stroke, lw = 2) {
     g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
@@ -268,7 +270,7 @@
     tx(g, MAP.tag || TAGS[MAP.k] || '', x0 + 26 * u, V.y0 + 196 * u, 16 * u, '#c9cfd8', 'left', 600);
     if (MAP.tip) { g.save(); g.font = `700 ${fitPx(g, 14 * u)}px ${FONT}`; const tw = Math.min(g.measureText(MAP.tip).width + 30 * u, 620 * u); rr(g, x0 + 22 * u, V.y0 + 214 * u, tw, 30 * u, 6, 'rgba(12,16,22,.62)', acc, 1.5); g.restore();
       g.save(); g.beginPath(); g.rect(x0 + 22 * u, V.y0 + 214 * u, tw, 30 * u); g.clip(); tx(g, MAP.tip, x0 + 36 * u, V.y0 + 229 * u, 13 * u, BONE, 'left', 700); g.restore(); }
-    const chips = [two ? 'TWO SITES' : 'ONE SITE', M.fs.filter(q => q.team === P.team).length + 'V' + M.fs.filter(q => q.team !== P.team).length, 'FIRST TO ' + WIN_ROUNDS];
+    const chips = [two ? 'TWO SITES' : 'ONE SITE', M.fs.filter(q => q.team === P.team).length + 'V' + M.fs.filter(q => q.team !== P.team).length, 'FIRST TO ' + WIN_ROUNDS, ...(M.ranked ? ['RANKED'] : [])];
     // the mode, the team size and the target ride on the NOW ENTERING line (lower down they sat under the map's tip)
     g.font = `800 ${fitPx(g, 14 * u)}px ${FONT}`; let cx = x0 + 26 * u + g.measureText('NOW ENTERING').width + 18 * u;
     for (const c of chips) { const px = fitPx(g, 12 * u); g.font = `800 ${px}px ${FONT}`; const w = g.measureText(c).width + px * 1.8, h = Math.max(26 * u, px * 1.9); rr(g, cx, V.y0 + 86 * u - h / 2, w, h, 4, 'rgba(239,233,220,.1)', 'rgba(239,233,220,.25)', 1); tx(g, c, cx + w / 2, V.y0 + 86 * u, 12 * u, BONE, 'center', 800); cx += w + 8 * u; }
@@ -296,7 +298,8 @@
       portraitTile(g, q.op, x + 8 * u, y + 6 * u, 56 * u, ch - 12 * u, { r: 4 });
       { const rk = q.rating && !slim ? (g.font = `800 ${fitPx(g, 11 * u)}px ${FONT}`, g.measureText(rankName(q.rating).toUpperCase()).width + 52 * u) : (q.rating ? 40 : 36) * u;   // clear of the rank beside it
         const [nm, npx] = fitName(g, q.name.toUpperCase(), cw - 74 * u - rk, (slim ? 14 : 16) * u); tx(g, nm, x + 74 * u, y + 24 * u, npx, BONE, 'left', 800); } tx(g, (OPS[q.op] || OPS.vex).n, x + 74 * u, y + 44 * u, 11 * u, (OPS[q.op] || OPS.vex).col, 'left', 800);
-      if (q.rating && slim) { rankBadge(g, x + cw - 22 * u, y + 26 * u, 12 * u, q.rating); tx(g, String(q.rating), x + cw - 22 * u, y + 56 * u, 11 * u, BONE, 'center', 700); }
+      if (M.ranked && !(q.bot || q.isBot) && q.rk != null) { const on = !!q.rkp; tierBadge(g, x + cw - 22 * u, y + 28 * u, 12 * u, q.rk, on); if (!slim) tx(g, on ? rankLabel(q.rk).toUpperCase() : 'UNRANKED', x + cw - 40 * u, y + 24 * u, 11 * u, on ? rankOf(q.rk).T.col : DIM, 'right', 800); }
+      else if (q.rating && slim) { rankBadge(g, x + cw - 22 * u, y + 26 * u, 12 * u, q.rating); tx(g, String(q.rating), x + cw - 22 * u, y + 56 * u, 11 * u, BONE, 'center', 700); }
       else if (q.rating) { rankBadge(g, x + cw - 24 * u, y + 28 * u, 13 * u, q.rating); tx(g, rankName(q.rating).toUpperCase(), x + cw - 42 * u, y + 24 * u, 11 * u, RANK_COL[diffFor(q.rating).i], 'right', 800); tx(g, String(q.rating), x + cw - 42 * u, y + 42 * u, 13 * u, BONE, 'right', 700); }
       else tx(g, '—', x + cw - 24 * u, y + 30 * u, 14 * u, DIM, 'center');
       tx(g, q.bot ? 'BOT' : q.net && !q.isBot ? 'PLAYER' : q === P ? 'YOU' : 'BOT', x + 74 * u, y + 60 * u, 10 * u, DIM, 'left', 800);
@@ -308,13 +311,31 @@
     g.fillStyle = 'rgba(239,233,220,.12)'; g.fillRect(V.x0, V.y1 - 6 * u, W, 6 * u); g.fillStyle = acc; g.fillRect(V.x0, V.y1 - 6 * u, W * k, 6 * u);
     if (!M.online) tx(g, isTouch() ? 'Tap to skip' : 'Click to skip', V.x1 - 24 * u, V.y1 - 22 * u, 11 * u, DIM, 'right', 700);
   }
+
+  // ---- the big moments: a band that sweeps across the top of the screen (the charge planted, an ace, a clutch)
+  let SWEEP = null; const sweep = (title, sub, col) => { SWEEP = { t0: performance.now(), title, sub, col }; };
+  on('planted', () => { if (!M || M.mode === 'range') return; const att = sideOf(me()) === 'att', S = M.planted && twoSites() ? 'SITE ' + SITES[M.planted.s].k + '  ·  ' : ''; sweep('CHARGE PLANTED', S + (att ? 'HOLD IT FOR ' + FUSE_T + ' SECONDS' : 'DEFUSE IT  ·  ' + FUSE_T + ' SECONDS'), att ? FOE : WARN); });
+  on('defused', f => { if (!M || M.mode === 'range') return; sweep('CHARGE DEFUSED', f ? f.name.toUpperCase() : '', f && f.team === me().team ? YOU : FOE); });
+  on('ace', f => { if (!M) return; sweep('ACE', f.name.toUpperCase() + ' TOOK THE WHOLE TEAM', GOLD); });
+  on('clutch', (f, vs) => { if (!M) return; sweep('CLUTCH', `${f.name.toUpperCase()}  ·  1 v ${vs}`, f.team === me().team ? YOU : FOE); });
+  function drawSweep(g) {
+    if (!SWEEP) return; const t = (performance.now() - SWEEP.t0) / 1000, D = 2.6; if (t > D) { SWEEP = null; return; }
+    const V = K.view, u = uiScale(), W = V.x1 - V.x0, cy = V.y0 + 168 * u, hh = 46 * u, inK = smooth(cl(t / .28, 0, 1)), outK = smooth(cl((t - D + .35) / .35, 0, 1)), sk = 40 * u;
+    const x0 = lp(V.x0 - W, V.x0, inK) + outK * W, x1 = x0 + W, col = SWEEP.col;
+    g.save(); g.globalAlpha = .9; g.fillStyle = 'rgba(8,10,14,.86)'; g.beginPath(); g.moveTo(x0 + sk, cy - hh); g.lineTo(x1 + sk, cy - hh); g.lineTo(x1 - sk, cy + hh); g.lineTo(x0 - sk, cy + hh); g.closePath(); g.fill();
+    g.globalAlpha = 1; g.fillStyle = col; g.fillRect(x0, cy - hh, W, 3 * u); g.fillRect(x0, cy + hh - 3 * u, W, 3 * u);
+    const sh = ((t * 900 * u) % (W + 400 * u)) - 200 * u; const gr = g.createLinearGradient(x0 + sh - 120 * u, 0, x0 + sh + 120 * u, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.5, 'rgba(255,255,255,.12)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x0, cy - hh, W, hh * 2);   // a glint runs along it
+    const tx0 = 640 + (1 - inK) * -160 * u + outK * 160 * u, pop = 1 + .18 * Math.max(0, 1 - t / .35);
+    tx(g, SWEEP.title, tx0, cy - 8 * u, 46 * u * pop, col, 'center', 900); if (SWEEP.sub) tx(g, SWEEP.sub, tx0, cy + 27 * u, 14 * u, BONE, 'center', 800);
+    g.restore();
+  }
   // ---- switching sides: a band across the screen at the start of the second half (and the decider) says which side you are now
   function drawSwitch(g) {
     const S = UI.switched; if (!S) return; const t = (performance.now() - S.t0) / 1000; if (t > 3.2) { UI.switched = null; return; }
     const V = K.view, u = uiScale(), W = V.x1 - V.x0, a = t < .25 ? smooth(t / .25) : t > 2.8 ? 1 - (t - 2.8) / .4 : 1, col = S.side === 'att' ? FOE : YOU, cy = 330;
     g.save(); g.globalAlpha = a; g.fillStyle = 'rgba(8,10,14,.86)'; g.fillRect(V.x0, cy - 78 * u, W, 156 * u); g.fillStyle = col; g.fillRect(V.x0, cy - 78 * u, W, 4 * u); g.fillRect(V.x0, cy + 74 * u, W, 4 * u);
     const sw = (t * 260 * u) % (80 * u); for (let i = -2; i < W / (80 * u) + 2; i++) { const x = V.x0 + i * 80 * u + sw; g.fillStyle = 'rgba(239,233,220,.05)'; g.beginPath(); g.moveTo(x, cy - 74 * u); g.lineTo(x + 30 * u, cy - 74 * u); g.lineTo(x + 70 * u, cy); g.lineTo(x + 30 * u, cy + 74 * u); g.lineTo(x, cy + 74 * u); g.lineTo(x + 40 * u, cy); g.closePath(); g.fill(); }
-    tx(g, S.decider ? 'DECIDER' : 'SWITCHING SIDES', 640, cy - 34 * u, 20 * u, DIM, 'center', 900);
+    tx(g, S.sd ? 'SUDDEN DEATH  ·  NEXT ROUND WINS' : S.decider ? (S.first ? 'OVERTIME  ·  WIN BY TWO' : 'OVERTIME  ·  SIDES SWAP EVERY ROUND') : 'SWITCHING SIDES', 640, cy - 34 * u, 20 * u, S.decider ? GOLD : DIM, 'center', 900);
     tx(g, S.side === 'att' ? 'YOU NOW ATTACK' : 'YOU NOW DEFEND', 640, cy + 12 * u, 54 * u, col, 'center', 900);
     tx(g, S.side === 'att' ? (SITES.length > 1 ? 'Take the charge to ' + siteWords() : 'Take the charge to the site') : 'Hold them off, or defuse the charge', 640, cy + 52 * u, 15 * u, BONE, 'center', 700);
     g.restore();
@@ -324,16 +345,16 @@
   if (typeof document !== 'undefined') { addEventListener('keydown', e => { if (e.code === 'Tab') UI.board = true; }); addEventListener('keyup', e => { if (e.code === 'Tab') UI.board = false; }); addEventListener('blur', () => { UI.board = false; }); }
   on('over', () => { UI.board = false; });
   function drawBoard(g, V, u) {
-    const P = me(), mine = M.fs.filter(f => f.team === P.team).sort((a, b) => (b === P) - (a === P) || b.stat.k - a.stat.k), theirs = M.fs.filter(f => f.team !== P.team).sort((a, b) => b.stat.k - a.stat.k), n = mine.length + theirs.length;
-    const tw = Math.min(660 * u, V.x1 - V.x0 - 40 * u), s = tw / (660 * u), x0 = 640 - tw / 2, top = V.y0 + 84 * u, hh = 32 * u, bh = 22 * u, rh = Math.max(20 * u, Math.min(34 * u, (V.y1 - 24 * u - top - hh - 2 * bh - 10 * u) / n)), th = hh + 2 * bh + n * rh + 10 * u;
-    const cols = [['K', f => f.stat.k, 262], ['D', f => f.stat.d, 220], ['HS', f => f.stat.hs, 178], ['DMG', f => Math.round(f.stat.dmg), 112], ['CREDITS', f => f.team === P.team && !f.gone ? '◈ ' + f.credits : '', 18]];
+    const P = me(), mine = M.fs.filter(f => f.team === P.team).sort((a, b) => csOf(b) - csOf(a)), theirs = M.fs.filter(f => f.team !== P.team).sort((a, b) => csOf(b) - csOf(a)), n = mine.length + theirs.length;
+    const tw = Math.min(740 * u, V.x1 - V.x0 - 40 * u), s = tw / (740 * u), x0 = 640 - tw / 2, top = V.y0 + 84 * u, hh = 32 * u, bh = 22 * u, rh = Math.max(20 * u, Math.min(34 * u, (V.y1 - 24 * u - top - hh - 2 * bh - 10 * u) / n)), th = hh + 2 * bh + n * rh + 10 * u;
+    const cols = [['SCORE', f => csOf(f), 330], ['K', f => f.stat.k, 284], ['D', f => f.stat.d, 248], ['FK', f => f.stat.fk | 0, 212], ['HS', f => f.stat.hs, 176], ['DMG', f => Math.round(f.stat.dmg), 112], ['CREDITS', f => f.team === P.team && !f.gone && (f === P || !f.net) ? '◈ ' + f.credits : '', 18]];
     g.save(); rr(g, x0, top, tw, th, 10, 'rgba(10,13,18,.92)', 'rgba(239,233,220,.2)', 1.5);
     tx(g, 'SCOREBOARD', x0 + 16 * u, top + hh / 2, 13 * u, BONE, 'left', 900); tx(g, `ROUND ${M.round}  ·  ${M.wins[0]} – ${M.wins[1]}`, x0 + 136 * u, top + hh / 2, 11 * u, DIM, 'left', 800);
     for (const [k, , dx] of cols) tx(g, k, x0 + tw - dx * u * s, top + hh / 2, 10 * u, DIM, 'right', 900);
     let y = top + hh;
     const row = (f, col) => { const down = !f.alive || f.gone; if (f === P) { g.fillStyle = 'rgba(53,224,200,.12)'; g.fillRect(x0 + 4 * u, y + 1, tw - 8 * u, rh - 2); }
       g.fillStyle = col; g.fillRect(x0 + 4 * u, y + 2, 3 * u, rh - 4); portraitTile(g, f.op, x0 + 12 * u, y + 2, rh - 4, rh - 4, { r: 3, dead: down });
-      g.globalAlpha = down ? .5 : 1; const tag = f.gone ? '  · LEFT' : f === P ? '' : f.bot || f.isBot ? '  · BOT' : '', [nm, npx] = fitName(g, f.name.toUpperCase() + tag, tw - 280 * u * s - rh - 22 * u, Math.min(14 * u, rh * .5));
+      g.globalAlpha = down ? .5 : 1; const tag = f.gone ? '  · LEFT' : f === P ? '' : f.bot || f.isBot ? '  · BOT' : '', [nm, npx] = fitName(g, (carries(f) && !M.planted && f.team === P.team ? '◆ ' : '') + f.name.toUpperCase() + tag, tw - 360 * u * s - rh - 22 * u, Math.min(14 * u, rh * .5));
       tx(g, nm, x0 + 18 * u + rh, y + rh / 2, npx, f === P ? YOU : BONE, 'left', 800);
       for (const [k, fn, dx] of cols) tx(g, String(fn(f)), x0 + tw - dx * u * s, y + rh / 2, Math.min(k === 'CREDITS' ? 13 * u : 15 * u, rh * .56), k === 'CREDITS' ? GOLD : BONE, 'right', 800);
       g.globalAlpha = 1; y += rh; };
@@ -351,7 +372,8 @@
       const a = M.hurtDir - P.yaw + Math.PI; g.save(); g.translate(640, 360); g.rotate(-a); g.fillStyle = `rgba(255,90,77,${M.hurt * .8})`; g.beginPath(); g.arc(0, 0, 150 * u, Math.PI * 1.36, Math.PI * 1.64); g.arc(0, 0, 134 * u, Math.PI * 1.64, Math.PI * 1.36, true); g.fill(); g.restore(); }
     // --- markers in the world: a pinged rival, the planted charge
     // teammates: a name and a marker over each, and their health
-    for (const q of M.fs) if (q !== P && q.team === P.team && q.alive) { const s = toScreen(q.x, q.y + 2.05, q.z); if (s) { g.fillStyle = YOU; g.beginPath(); g.moveTo(s[0] - 7, s[1] - 10); g.lineTo(s[0] + 7, s[1] - 10); g.lineTo(s[0], s[1]); g.closePath(); g.fill(); tx(g, `${q.name.toUpperCase()} ${Math.ceil(q.hp)}`, s[0], s[1] - 20, 13, YOU, 'center', 800); } }
+    for (const q of M.fs) if (q !== P && q.team === P.team && q.alive) { const s = toScreen(q.x, q.y + 2.05, q.z); if (s) { g.fillStyle = YOU; g.beginPath(); g.moveTo(s[0] - 7, s[1] - 10); g.lineTo(s[0] + 7, s[1] - 10); g.lineTo(s[0], s[1]); g.closePath(); g.fill(); tx(g, `${carries(q) ? '◆ ' : ''}${q.name.toUpperCase()} ${Math.ceil(q.hp)}`, s[0], s[1] - 20, 13, carries(q) ? GOLD : YOU, 'center', 800); } }
+    if (M.charge && !M.charge.k && !M.planted && side === 'att' && M.phase !== 'end') { const C = M.charge, s = toScreen(C.x, C.y + .8, C.z); if (s) { const p = 1 + Math.sin(M.time * 6) * .12; g.strokeStyle = GOLD; g.lineWidth = 2.5; g.beginPath(); g.moveTo(s[0], s[1] - 11 * p); g.lineTo(s[0] + 9 * p, s[1]); g.lineTo(s[0], s[1] + 11 * p); g.lineTo(s[0] - 9 * p, s[1]); g.closePath(); g.stroke(); tx(g, 'CHARGE  ' + Math.hypot(P.x - C.x, P.z - C.z).toFixed(0) + ' m', s[0], s[1] + 22, 12, GOLD, 'center', 800); } }
     for (const E of M.fs) if (E.alive && E.team !== me().team && E.reveal > 0) { const s = toScreen(E.x, E.y + 1.1, E.z); if (s) { g.strokeStyle = FOE; g.lineWidth = 3; g.beginPath(); g.moveTo(s[0], s[1] - 30); g.lineTo(s[0] + 20, s[1]); g.lineTo(s[0], s[1] + 30); g.lineTo(s[0] - 20, s[1]); g.closePath(); g.stroke(); } }   // everyone revealed, not just the nearest
     // the death cam: whoever killed you, marked where they stand
     if (X.deathCam && M.deathInfo) { const D = M.deathInfo, kf = M.byKey[D.key]; if (kf && kf.alive) { const s = toScreen(ipos(kf, 'x'), ipos(kf, 'y') + 2.25, ipos(kf, 'z')); if (s) { const p = .8 + .2 * Math.sin(K.t * 6);
@@ -368,7 +390,7 @@
     }
     // no hit marks over the crosshair; the range alone shows the damage each shot did
     if (hitMark && (hitMark.t -= 1 / 60) > 0 && range) tx(g, String(hitMark.dmg), 640 + 44 * u + hitMark.x, cy - 30 * u - (1 - Math.min(1, hitMark.t / .28)) * 16, 20 * u, hitMark.head ? GOLD : '#fff');
-    drawBanner(g, V, u); drawSwitch(g);
+    drawBanner(g, V, u); drawSwitch(g); drawSweep(g);
     if (range && UI.trying) { const sk = skinOfId(UI.trying); if (sk) { const w = 460 * u, y = V.y0 + 64 * u; rr(g, 640 - w / 2, y, w, 34 * u, 6, 'rgba(10,13,18,.82)', sk.R.col, 1.5); tx(g, `TRYING ${skinName(UI.trying).toUpperCase()}  ·  ${owns(UI.trying) ? 'YOURS' : skinPrice(UI.trying) + ' IN THE STORE'}`, 640, y + 17 * u, 12 * u, sk.R.col, 'center', 900); } }
     // --- dazed, snared, surging, shrouded: the whole view says so
     { const ring = (col, a, inner) => { const gr = g.createRadialGradient(640, 360, H * inner, 640, 360, H * .85); gr.addColorStop(0, col.replace('A', '0')); gr.addColorStop(1, col.replace('A', String(a))); g.fillStyle = gr; g.fillRect(V.x0, V.y0, W, H); };
@@ -408,6 +430,7 @@
       g.globalAlpha = .9; g.drawImage(miniMap(), mx, my, mw, mh); g.globalAlpha = 1; g.strokeStyle = 'rgba(239,233,220,.3)'; g.lineWidth = 1.5; g.strokeRect(mx, my, mw, mh);
       for (const S of SITES) siteLabel(g, S, mx, my, k, 14 * u);
       if (M.planted) { g.fillStyle = WARN; g.beginPath(); g.arc(mx + M.planted.x * k, my + M.planted.z * k, 4.5 * u, 0, TAU); g.fill(); }
+      if (M.charge && !M.planted && side === 'att') { const c = carrier(), cx2 = c ? c.x : M.charge.x, cz2 = c ? c.z : M.charge.z; if (!c || c.alive) { g.strokeStyle = GOLD; g.lineWidth = 2; g.beginPath(); g.arc(mx + cx2 * k, my + cz2 * k, (c ? 6 : 4.5) * u, 0, TAU); g.stroke(); if (!c) { g.fillStyle = GOLD; g.fill(); } } }
       if (heard && (heard.t -= 1 / 60) > 0) { g.strokeStyle = `rgba(255,138,61,${heard.t / 1.6})`; g.lineWidth = 2; g.beginPath(); g.arc(mx + heard.x * k, my + heard.z * k, (8 + (1.6 - heard.t) * 8) * u, 0, TAU); g.stroke(); }
       for (const q of M.fs) if (q !== P && q.alive && !q.gone) { const ours = q.team === P.team; if (!ours && !(q.reveal > 0 || canSee(P, q))) continue; g.fillStyle = ours ? YOU : FOE; g.beginPath(); g.arc(mx + q.x * k, my + q.z * k, (ours ? 3.2 : 4) * u, 0, TAU); g.fill(); }   // your teammates, and every rival in sight
       g.save(); g.translate(mx + P.x * k, my + P.z * k); g.rotate(-P.yaw); g.fillStyle = 'rgba(53,224,200,.22)'; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 30 * u, -Math.PI / 2 - .6, -Math.PI / 2 + .6); g.fill(); g.fillStyle = YOU; g.beginPath(); g.moveTo(0, -7 * u); g.lineTo(5 * u, 5 * u); g.lineTo(-5 * u, 5 * u); g.fill(); g.restore();
@@ -419,7 +442,7 @@
     if (touch) {   // one strip, bottom centre, clear of both thumbs
       g.save(); g.translate(640, V.y1 - 10); g.scale(u, u); rr(g, -205, -44, 410, 44, 8, GLASS);
       tx(g, String(Math.ceil(P.hp)), -186, -22, 28, hpCol, 'left'); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(-128, -27, 84, 7); g.fillStyle = hpCol; g.fillRect(-128, -27, 84 * P.hp / 100, 7); if (P.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(-128, -17, 84 * P.sh / 50, 5); }
-      tx(g, G.n.toUpperCase(), 0, -22, 15, G.col); tx(g, G.melee ? '—' : `${A.mag} / ${A.res}`, 186, -22, 24, A.mag || G.melee ? BONE : WARN, 'right'); g.restore();
+      tx(g, G.n.toUpperCase(), 0, -22, 15, G.col); tx(g, G.melee ? '—' : `${A.mag} / ${A.res}`, 186, -22, 24, A.mag || G.melee ? BONE : WARN, 'right'); if (carries(P) && !M.planted) tx(g, '◆ YOU CARRY THE CHARGE', 0, -54, 12, GOLD, 'center', 900); g.restore();
     } else {
       g.save(); g.translate(V.x0 + 22, V.y1 - 20); g.scale(u, u); rr(g, 0, -58, 250, 58, 8, GLASS);
       tx(g, String(Math.ceil(P.hp)), 18, -28, 40, hpCol, 'left'); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(104, -36, 128, 8); g.fillStyle = hpCol; g.fillRect(104, -36, 128 * P.hp / 100, 8);
@@ -437,9 +460,11 @@
       tx(g, G.n.toUpperCase(), -14, -38, 15, G.col, 'right'); tx(g, G.cat.toUpperCase(), -14, -18, 11, DIM, 'right');
       [1, 2, 3].forEach((s, i) => { const k = P.guns[s], y = -78 - (2 - i) * 24; if (!k) return; const on = P.slot === s; rr(g, -150, y - 10, 150, 21, 5, on ? 'rgba(239,233,220,.24)' : 'rgba(12,16,22,.7)'); tx(g, String(s), -140, y + 1, 12, on ? GOLD : DIM, 'left'); tx(g, GUNS[k].n.toUpperCase(), -10, y + 1, 12, on ? BONE : '#b9c0cc', 'right'); });
       if (canBuy()) tx(g, `◈ ${P.credits}`, -14, -170, 20, GOLD, 'right');
+      if (carries(P) && !M.planted) { const y = -78 - 3 * 24; rr(g, -150, y - 10, 150, 21, 5, 'rgba(255,214,102,.2)', GOLD, 1); tx(g, '◆', -140, y + 1, 12, GOLD, 'left'); tx(g, 'CHARGE  ·  H DROPS', -10, y + 1, 11, GOLD, 'right'); }
       g.restore();
     }
     if (touch && canBuy()) tx(g, `◈ ${P.credits}`, 640, V.y1 - 66 * u, 17 * u, GOLD);
+    if (M.phase === 'buy' && P.alive && P.nearLoot && GUNS[P.nearLoot.k] && !UI.armory) hint(g, `${touch ? 'Tap SWAP' : 'Press F'} to swap for the ${GUNS[P.nearLoot.k].n}`, V.y0 + 186 * u, 15 * u, BONE);
     // --- the charge: what to do, and how far along
     const ring = (frac, label, col) => { const y = 470; g.strokeStyle = 'rgba(12,16,22,.7)'; g.lineWidth = 12 * u; g.beginPath(); g.arc(640, y, 34 * u, 0, TAU); g.stroke(); g.strokeStyle = col; g.lineWidth = 7 * u; g.beginPath(); g.arc(640, y, 34 * u, -Math.PI / 2, -Math.PI / 2 + TAU * frac); g.stroke(); tx(g, label, 640, y + 60 * u, 15 * u, col); };
     if (P.reloadT > 0) tx(g, 'RELOADING', 640, 420, 15 * u, GOLD);
@@ -448,10 +473,14 @@
       if (P.orbT > 0) ring(P.orbT / ORB.take, 'ULT ORB', OPS[P.op].col);
       else if (M.orbs && M.orbs.some(o => !o.taken && Math.hypot(o.x - P.x, o.z - P.z) < ORB.r)) hint(g, (touch ? 'Hold the button' : 'Hold F') + ' to take the orb: an ultimate point', V.y0 + 140 * u, 16 * u, OPS[P.op].col);
       if (P.plant > 0) ring(P.plant / PLANT_T, 'PLANTING', FOE); else if (P.defuse > 0) ring(P.defuse / DEFUSE_T, 'DEFUSING', YOU);
+      else if (side === 'att' && !M.planted && M.charge && !carries(P)) { const c = carrier();
+        if (c) { if (M.t > roundT() - 6 || onSite(P.x, P.z)) hint(g, c.name.toUpperCase() + ' HAS THE CHARGE' + (onSite(P.x, P.z) ? '  ·  COVER THE PLANT' : ''), V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
+        else hint(g, 'THE CHARGE IS ON THE FLOOR  ·  WALK OVER IT TO PICK IT UP', V.y0 + 104 * u, 16 * u, GOLD); }
       else if (side === 'att' && !M.planted) { if (onSite(P.x, P.z)) onSiteHint(g, 'ABC'[siteAt(P.x, P.z)], key, V.y0 + 104 * u, u); else hint(g, M.t > roundT() - 6 ? (twoSites() ? 'Carry the charge to site ' + siteWords() + ' and plant it' : 'Carry the charge to the site and plant it') : '', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)'); }
       else if (side === 'def' && M.planted) hint(g, near ? key + ' to defuse' : 'Defuse the charge', V.y0 + 104 * u, 16 * u, near ? GOLD : 'rgba(239,233,220,.75)');
       else if (side === 'def' && M.t > roundT() - 6) hint(g, twoSites() ? 'Hold ' + siteWords('and') + ': stop them planting' : 'Stop them planting on the site', V.y0 + 104 * u, 16 * u, 'rgba(239,233,220,.75)');
       if (M.fs.some(q => q.team !== P.team && q.alive && q.defuse > 0)) tx(g, M.fs.length > 2 ? 'THEY ARE DEFUSING' : 'YOUR RIVAL IS DEFUSING', 640, 250, 20 * u, WARN);   // any of them, not just the nearest
+      if (P.nearLoot && GUNS[P.nearLoot.k]) hint(g, `${touch ? 'Tap SWAP' : 'Press F'} to swap for the ${GUNS[P.nearLoot.k].n}`, V.y0 + 172 * u, 15 * u, BONE);
       if (GATES.length && P.plant <= 0 && P.defuse <= 0) { const gi = gateNear(P); if (gi >= 0) hint(g, (touch ? 'Tap the button' : 'Press F') + (GATES[gi].open ? ' to shut the blast door' : ' to open the blast door'), V.y0 + 140 * u, 16 * u, GOLD); }
     }
     // --- banners
@@ -461,7 +490,7 @@
     if (M.online && (M.dropped || MP.rejoining)) { const p = .6 + .4 * Math.sin(K.t * 6); rr(g, 640 - 170 * u, 118 * u, 340 * u, 34 * u, 8, 'rgba(12,16,22,.85)', GOLD, 1.5); tx(g, 'CONNECTION LOST · RECONNECTING', 640, 135 * u, 14 * u, GOLD, 'center', 900); g.globalAlpha = 1; void p; }
     else if (M.online) { const dc = M.fs.find(f => f.dc && !f.gone); if (dc) { const left = Math.max(0, Math.ceil(DC_WAIT - (M.time - dc.dc))); tx(g, `${dc.name.toUpperCase()} LOST CONNECTION · WAITING ${left} s`, 640, 135 * u, 14 * u, GOLD, 'center', 900); } }
     if (M.phase === 'end' && M.last && !M.over) { const won = M.last.wi === 0, c = won ? YOU : FOE; g.fillStyle = won ? 'rgba(53,224,200,.16)' : 'rgba(255,138,61,.16)'; g.fillRect(V.x0, 250 - 62 * u, W, 124 * u); tx(g, demo ? `${M.fs[M.last.wi].name.toUpperCase()} TAKES IT` : won ? 'ROUND WON' : 'ROUND LOST', 640, 250 - 12 * u, 50 * u, c); tx(g, WHY[M.last.why].toUpperCase(), 640, 250 + 32 * u, 16 * u, BONE); }
-    if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : M.round === WIN_ROUNDS * 2 - 1 ? 'DECIDER' : 'ROUND ' + M.round, 640, 200, 34 * u, BONE); tx(g, side === 'att' ? (twoSites() ? 'You attack: plant the charge on ' + siteWords() : 'You attack: plant the charge on the site') : (twoSites() ? 'You defend: hold ' + siteWords('and') : 'You defend: keep them off the site'), 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
+    if (M.phase === 'buy' && !UI.armory && !range && !UI.switched) { { const ot = otRound(M.round), mp = !ot && Math.max(...M.wins) === WIN_ROUNDS - 1; tx(g, pistolRound(M.round) ? 'PISTOL ROUND' : suddenDeath(M.round) ? 'SUDDEN DEATH' : ot ? 'OVERTIME ' + ot : mp ? 'MATCH POINT' : 'ROUND ' + M.round, 640, 200, 34 * u, ot || mp ? GOLD : BONE); } tx(g, side === 'att' ? (twoSites() ? 'You attack: plant the charge on ' + siteWords() : 'You attack: plant the charge on the site') : (twoSites() ? 'You defend: hold ' + siteWords('and') : 'You defend: keep them off the site'), 640, 200 + 36 * u, 16 * u, side === 'att' ? FOE : YOU); }
     if (P !== me()) {   // spectating a teammate: who, their health and shield, their gun, and the others you could switch to
       const w = 420 * u, y = V.y1 - 156 * u, mates = M.fs.filter(f => f !== me() && f.team === me().team && f.alive), G2 = gun(P);
       rr(g, 640 - w / 2, y, w, 58 * u, 8, 'rgba(10,13,18,.86)', YOU, 1.5); portraitTile(g, P.op, 640 - w / 2 + 6 * u, y + 6 * u, 46 * u, 46 * u, { r: 4 });
@@ -471,24 +500,36 @@
       if (mates.length > 1) tx(g, `${mates.indexOf(P) + 1} / ${mates.length}  ·  ${isTouch() ? 'tap' : 'click or Space'} to switch`, 640 + w / 2 - 14 * u, y + 40 * u, 10.5 * u, DIM, 'right', 800);
     }
     // between rounds: the end of one fades out to black and the next fades in, rather than a cut
-    { let k = 0; if (M.phase === 'end' && M.t < .45 && !(M.wins[0] >= WIN_ROUNDS || M.wins[1] >= WIN_ROUNDS)) k = 1 - M.t / .45; if (X.roundFadeT) { const e = (performance.now() - X.roundFadeT) / 500; if (e >= 1) X.roundFadeT = 0; else k = Math.max(k, 1 - e); }
+    { let k = 0; if (M.phase === 'end' && M.t < .45 && !matchDecided()) k = 1 - M.t / .45; if (X.roundFadeT) { const e = (performance.now() - X.roundFadeT) / 500; if (e >= 1) X.roundFadeT = 0; else k = Math.max(k, 1 - e); }
       if (k > 0) { g.fillStyle = `rgba(0,0,0,${smooth(cl(k, 0, 1))})`; g.fillRect(V.x0, V.y0, W, H); } }
     if (X.specFade > 0) { if (!X.specFadeT) X.specFadeT = performance.now(); const k = 1 - (performance.now() - X.specFadeT) / 400; if (k <= 0) { X.specFade = 0; X.specFadeT = 0; } else { g.fillStyle = `rgba(0,0,0,${smooth(k)})`; g.fillRect(V.x0, V.y0, W, H); } }   // 0.4 s, whatever the frame rate
     if (!me().alive && M.deathInfo && !range && P === me()) {
-      const D = M.deathInfo, a = cl(D.t * 3, 0, 1), cw2 = 520 * u, ch2 = 104 * u, x = 640 - cw2 / 2, y = V.y1 - 196 * u + (1 - smooth(a)) * 30 * u, L = M.dlog || {}, gave = L[me().key + '>' + D.key] || { d: 0, n: 0, h: 0 }, took = L[D.key + '>' + me().key] || { d: 0, n: 0, h: 0 };
+      // the damage report: everyone you traded shots with this round, the killer first: what you dealt them and took from
+      // them, and where the hits landed (head, body, legs)
+      const D = M.deathInfo, a = cl(D.t * 3, 0, 1), L = M.dlog || {}, mk = me().key, z0 = { d: 0, n: 0, h: 0, l: 0 };
+      const rep = M.fs.filter(q => q.team !== me().team && (L[mk + '>' + q.key] || L[q.key + '>' + mk])).sort((p2, q2) => (q2.key === D.key) - (p2.key === D.key)).slice(0, 4);
+      if (!rep.some(q => q.key === D.key) && M.byKey[D.key]) rep.unshift(M.byKey[D.key]);
+      const rrh = 21 * u, cw2 = 640 * u, ch2 = Math.max(104 * u, 34 * u + rep.length * rrh + 8 * u), x = 640 - cw2 / 2, y = V.y1 - 92 * u - ch2 + (1 - smooth(a)) * 30 * u;
       g.save(); g.globalAlpha = a; rr(g, x, y, cw2, ch2, 10, 'rgba(10,13,18,.9)', FOE, 2); g.fillStyle = FOE; g.fillRect(x, y, 6 * u, ch2);
       if (D.op) portraitTile(g, D.op, x + 16 * u, y + 12 * u, 80 * u, 80 * u, { r: 6 });
       tx(g, 'KILLED BY', x + 110 * u, y + 20 * u, 11 * u, DIM, 'left', 900); tx(g, D.by.toUpperCase(), x + 110 * u, y + 44 * u, 24 * u, FOE, 'left', 900);
       tx(g, `${D.w}${D.head ? '  ·  HEADSHOT' : ''}`, x + 110 * u, y + 68 * u, 13 * u, D.head ? GOLD : BONE, 'left', 800);
       const hb = x + 110 * u; g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(hb, y + 82 * u, 150 * u, 6 * u); g.fillStyle = BONE; g.fillRect(hb, y + 82 * u, 150 * u * D.hp / 100, 6 * u); if (D.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(hb + 156 * u, y + 82 * u, 50 * u * D.sh / 50, 6 * u); }
       tx(g, `${D.hp} HP${D.sh ? ' · ' + D.sh + ' SHIELD' : ''} LEFT`, hb, y + 96 * u, 9.5 * u, DIM, 'left', 800);
-      const rx = x + cw2 - 18 * u; tx(g, 'DAMAGE THIS ROUND', rx, y + 20 * u, 10 * u, DIM, 'right', 900);
-      tx(g, `DEALT  ${Math.round(gave.d)}`, rx, y + 46 * u, 17 * u, YOU, 'right', 900); tx(g, `${gave.n} hit${gave.n === 1 ? '' : 's'}${gave.h ? ' · ' + gave.h + ' head' : ''}`, rx, y + 62 * u, 10.5 * u, DIM, 'right', 700);
-      tx(g, `TAKEN  ${Math.round(took.d)}`, rx, y + 82 * u, 17 * u, FOE, 'right', 900); tx(g, `${took.n} hit${took.n === 1 ? '' : 's'}${took.h ? ' · ' + took.h + ' head' : ''}`, rx, y + 97 * u, 10.5 * u, DIM, 'right', 700);
+      { const rx0 = x + 330 * u, rw = cw2 - 330 * u - 16 * u, parts = r => [r.h ? r.h + 'H' : '', r.n - r.h - r.l ? r.n - r.h - r.l + 'B' : '', r.l ? r.l + 'L' : ''].filter(Boolean).join(' ');
+        g.fillStyle = 'rgba(239,233,220,.1)'; g.fillRect(rx0 - 12 * u, y + 10 * u, 1.5 * u, ch2 - 20 * u);
+        tx(g, 'DAMAGE REPORT', rx0, y + 20 * u, 10 * u, DIM, 'left', 900); tx(g, 'DEALT', rx0 + rw * .62, y + 20 * u, 10 * u, YOU, 'right', 900); tx(g, 'TAKEN', rx0 + rw, y + 20 * u, 10 * u, FOE, 'right', 900);
+        rep.forEach((q, i) => { const ry = y + 40 * u + i * rrh, gv = L[mk + '>' + q.key] || z0, tk = L[q.key + '>' + mk] || z0, [nm, npx] = fitName(g, q.name.toUpperCase(), rw * .34, 12 * u);
+          if (q.key === D.key) { g.fillStyle = 'rgba(255,138,61,.12)'; g.fillRect(rx0 - 6 * u, ry - rrh / 2 + 1, rw + 10 * u, rrh - 2); }
+          tx(g, nm, rx0, ry, npx, q.key === D.key ? FOE : BONE, 'left', 800);
+          tx(g, String(Math.round(gv.d)), rx0 + rw * .47, ry, 14 * u, gv.d ? BONE : '#5a6272', 'right', 900); tx(g, parts(gv), rx0 + rw * .62, ry, 10 * u, DIM, 'right', 700);
+          tx(g, String(Math.round(tk.d)), rx0 + rw * .85, ry, 14 * u, tk.d ? BONE : '#5a6272', 'right', 900); tx(g, parts(tk), rx0 + rw, ry, 10 * u, DIM, 'right', 700); });
+        if (rep.length) tx(g, 'H head · B body · L legs', rx0, y + ch2 - 9 * u, 9 * u, '#5a6272', 'left', 700); }
       g.restore();
       if (M.planted && D.t > 3.2 && !M.fs.some(f => f !== me() && f.team === me().team && f.alive)) tx(g, 'WATCHING THE CHARGE', 640, V.y0 + 120 * u, 14 * u, GOLD, 'center', 900);
     }
     if (UI.board && !UI.armory && !UI.opts && !range && !demo) drawBoard(g, V, u);
+    if (CFG.fps && UI.fps) tx(g, Math.round(UI.fps) + ' FPS', V.x0 + 24, V.y1 - (touch ? 200 : 96) * u, 12 * u, UI.fps < 40 ? WARN : DIM, 'left', 800);
     // --- touch controls
     if (touch && !UI.armory && !demo) drawTouch(g, u);
     if (canBuy() && !UI.armory && !demo && P.alive && !UI.switched) { const w = 190 * u, h = tapH(46); btn(g, 640 - w / 2, V.y0 + 132 * u, w, h, touch ? 'ARMORY' : 'ARMORY  (B)', () => openArmory(true), { px: 17 * u, col: GOLD, edge: GOLD }); }

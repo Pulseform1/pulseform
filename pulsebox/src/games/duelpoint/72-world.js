@@ -98,14 +98,24 @@
     }
     // the Tunnel's roof: the underside you see, a top, and beams with lamps
     const lampM = new THREE.MeshBasicMaterial({ color: '#ffe2a8' }), beamM = new THREE.MeshLambertMaterial({ color: LC('#4a3b2c') });
+    // the beams and lamps under the roofs, merged into one mesh per material; each lamp throws a pool of warm light on the floor
+    // (painted on, not a real light: a real one per lamp made every surface in view pay for twenty lights)
+    const RG = new THREE.Group(), pools = []; W.add(RG);
     for (const rf of ROOFS) {
       const x0 = rf.r[0] * CS, z0 = rf.r[1] * CS, x1 = (rf.r[2] + 1) * CS, z1 = (rf.r[3] + 1) * CS;
       flat('roof', x0, z0, x1, z1, rf.h, -1, 2, [.8, .8, .8, .8]); flat('roof', x0, z0 - CS, x1, z1 + CS, rf.h + .3, 1, 2, [1, 1, 1, 1]);
       for (const xx of [x0, x1]) quad('roof', [[xx, rf.h, z0], [xx, rf.h, z1], [xx, rf.h + .3, z1], [xx, rf.h + .3, z0]], [xx === x0 ? -1 : 1, 0, 0], [[0, 0], [3, 0], [3, .15], [0, .15]], [.9, .9, .9, .9]);
       for (let x = x0 + 2; x < x1; x += 4) {
-        const beam = new THREE.Mesh(new THREE.BoxGeometry(.22, .26, z1 - z0), beamM); beam.position.set(x, rf.h - .13, (z0 + z1) / 2); W.add(beam);
-        if ((x - x0 - 2) % 8 === 0) { const lamp = new THREE.Mesh(new THREE.BoxGeometry(.5, .08, .2), lampM); lamp.position.set(x, rf.h - .31, (z0 + z1) / 2); W.add(lamp); if (sh) { const pl = new THREE.PointLight('#ffd9a0', .9, 11, 1.6); pl.position.set(x, rf.h - .5, (z0 + z1) / 2); W.add(pl); } }
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(.22, .26, z1 - z0), beamM); beam.position.set(x, rf.h - .13, (z0 + z1) / 2); RG.add(beam);
+        if ((x - x0 - 2) % 8 === 0) { const lamp = new THREE.Mesh(new THREE.BoxGeometry(.5, .08, .2), lampM); lamp.position.set(x, rf.h - .31, (z0 + z1) / 2); RG.add(lamp); pools.push([x, (z0 + z1) / 2]); }
       }
+    }
+    bake(RG, false);
+    if (pools.length) {
+      if (!X.poolT) X.poolT = canvasTex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.45, 'rgba(255,255,255,.4)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+      const P = [], U = [], I = [], R2 = 3.4; pools.forEach(([x, z], n) => { const y = hAt(x, z) + .03; P.push(x - R2, y, z - R2, x + R2, y, z - R2, x + R2, y, z + R2, x - R2, y, z + R2); U.push(0, 0, 1, 0, 1, 1, 0, 1); I.push(n * 4, n * 4 + 2, n * 4 + 1, n * 4, n * 4 + 3, n * 4 + 2); });
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); geo.setIndex(I);
+      const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: X.poolT, color: '#ffcf8a', transparent: true, opacity: .32, blending: THREE.AdditiveBlending, depthWrite: false })); m.renderOrder = 2; W.add(m);
     }
     // doorways: the wall carries on above them, with the name of where the door leads painted over it
     const signs = [];
