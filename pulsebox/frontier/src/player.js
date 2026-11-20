@@ -1,4 +1,4 @@
-// First-person walking: follows the ground, slows on steep climbs, wades and swims, bumps into trunks, rocks, logs
+// First-person walking: follows the ground, slows on steep climbs, climbs mountainsides, wades and swims, bumps into trunks, rocks, logs
 // and the tent walls (the doorway is open), with a gentle head bob and footstep cues for the audio.
 import * as THREE from 'three';
 import { WATER_Y } from './world.js';
@@ -9,7 +9,7 @@ export class Player {
     this.pos = new THREE.Vector3(); this.vel = new THREE.Vector3(); this.yaw = 0; this.pitch = 0;
     this.r = 0.3; this.eyeH = 1.64; this.crouched = false; this.crouchK = 0; this.onGround = true; this.vy = 0;
     this.bob = 0; this.bobAmt = 0; this.stepPhase = 0; this.onStep = null; this.swimming = false; this.wading = 0;
-    this.blockers = []; this.speed = 0; this.seated = null; this.sleeping = false; this.frozen = false;
+    this.blockers = []; this.speed = 0; this.climbing = false; this.seated = null; this.sleeping = false; this.frozen = false;
     this._n = [0, 1, 0];
   }
   place(x, z, yaw) { this.pos.set(x, this.world.height(x, z), z); this.yaw = yaw; this.pitch = -0.05; this.vel.set(0, 0, 0); }
@@ -29,10 +29,15 @@ export class Player {
     const n = this.world.normal(this.pos.x, this.pos.z, this._n, .7);
     const fwd = new THREE.Vector3(-Math.sin(this.yaw), 0, -Math.cos(this.yaw)), right = new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
     const want = fwd.multiplyScalar(mv.y).addScaledVector(right, mv.x).multiplyScalar(speed);
-    if (!this.swimming) { const up = -(want.x * n[0] + want.z * n[2]) / Math.max(.1, speed); if (up > 0) want.multiplyScalar(1 - Math.min(.65, up * (1 - n[1]) * 3.2)); }
+    // steep mountainsides: keep walking into the slope and you climb, hand over hand, slower (Shift climbs faster);
+    // let go of forward and you slide back down
+    const up = this.swimming ? 0 : -(want.x * n[0] + want.z * n[2]) / Math.max(.1, speed * Math.hypot(n[0], n[2]) || .1);
+    this.climbing = !this.swimming && n[1] < 0.62 && up > 0.35 && this.onGround;
+    if (this.climbing) want.setLength((running ? 2.1 : 1.4) * Math.max(.45, n[1] + .25));
+    else if (!this.swimming && up > 0) want.multiplyScalar(1 - Math.min(.65, up * Math.hypot(n[0], n[2]) * (1 - n[1]) * 3.2));
     const acc = this.onGround || this.swimming ? 10 : 2;
     this.vel.x += (want.x - this.vel.x) * Math.min(1, acc * dt); this.vel.z += (want.z - this.vel.z) * Math.min(1, acc * dt);
-    if (!this.swimming && n[1] < 0.62) { this.vel.x += n[0] * 9 * dt; this.vel.z += n[2] * 9 * dt; }
+    if (!this.swimming && n[1] < 0.62 && !this.climbing) { this.vel.x += n[0] * 9 * dt; this.vel.z += n[2] * 9 * dt; }
     // jump and gravity
     if (input.hit('Space') && !this.frozen && this.onGround && !this.swimming && !this.crouched) { this.vy = 4.3; this.onGround = false; }
     this.vy -= 15 * dt;
