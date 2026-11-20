@@ -8,6 +8,9 @@
   // a low-powered computer (a Chromebook, four cores or fewer, or 4 GB of memory or less) plays in FAST, like a phone
   const lowEnd = () => { try { const n = navigator; return /CrOS/.test(n.userAgent || '') || (n.hardwareConcurrency || 8) <= 4 || (n.deviceMemory || 8) <= 4; } catch (e) { return false; } };
   const BASE_FOV = 70.5;   // vertical, which is 103 degrees across on a 16:9 screen
+  // the field of view setting (CFG.fov) is how wide the view is across a 16:9 screen, 90 to 115 degrees; the camera wants it upright
+  const fovH = () => CFG.fov ? cl(+CFG.fov, 90, 115) : 103;
+  const baseFov = () => CFG.fov ? 2 * Math.atan(Math.tan(fovH() * D2R / 2) * 9 / 16) / D2R : BASE_FOV;
   const SUN = [-.46, .7, -.55];   // towards the sun: over the sea, north-west, mid afternoon
   // a colour as you picked it: Three.js reads plain colours as linear light, which turns strong colours pale
   const LC = hex => new THREE.Color(hex).convertSRGBToLinear();
@@ -30,7 +33,7 @@
     renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .92;
     if (!low) { renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; }
     const scene = new THREE.Scene(), haze = new THREE.Color('#cfe3ee'); scene.background = haze; scene.fog = new THREE.Fog(haze, 90, 420);
-    const camera = new THREE.PerspectiveCamera(BASE_FOV, innerWidth / innerHeight, .05, 900); camera.rotation.order = 'YXZ'; scene.add(camera);
+    const camera = new THREE.PerspectiveCamera(baseFov(), innerWidth / innerHeight, .05, 900); camera.rotation.order = 'YXZ'; scene.add(camera);
     const hemi = new THREE.HemisphereLight('#dfeeff', '#8a7a66', low ? .72 : .5); scene.add(hemi);
     const sun = new THREE.DirectionalLight('#fff0d8', low ? 1.15 : 1.3); sun.position.set(MW / 2 + SUN[0] * 90, SUN[1] * 90, MH / 2 + SUN[2] * 90); sun.target.position.set(MW / 2, 0, MH / 2); scene.add(sun, sun.target);
     if (!low) { sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); const sc = sun.shadow.camera; sc.left = -46; sc.right = 46; sc.top = 40; sc.bottom = -40; sc.near = 20; sc.far = 190; sun.shadow.bias = -.0006; sun.shadow.normalBias = .04; sc.updateProjectionMatrix(); }

@@ -156,7 +156,7 @@
     if (deathCam) { cam.position.set(deathCam.p[0], deathCam.p[1], deathCam.p[2]); cam.lookAt(deathCam.at[0], deathCam.at[1], deathCam.at[2]); X.deathCam = deathCam; }
     else { cam.position.set(ipos(P, 'x') + (Math.random() - .5) * X.shake * .3, y + (Math.random() - .5) * X.shake * .3, ipos(P, 'z')); cam.rotation.set(pitch, yaw, X.roll); X.deathCam = null; }
     X.fovK = lp(X.fovK || 0, P.slide ? 1 : P.sprinting ? .6 : 0, Math.min(1, dt * 7));   // speed widens the view a touch
-    const fov = 2 * Math.atan(Math.tan(BASE_FOV * (1 + X.fovK * .09) * D2R / 2) / zoomOf(P)) / D2R; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
+    const fov = 2 * Math.atan(Math.tan(baseFov() * (1 + X.fovK * .09) * D2R / 2) / zoomOf(P)) / D2R; cam.fov += (fov - cam.fov) * Math.min(1, dt * 18); cam.updateProjectionMatrix();
 
     // your gun
     const vsk = skinFor(P, G.k) || '';

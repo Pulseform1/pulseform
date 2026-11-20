@@ -119,6 +119,7 @@ function gunplayChecks() {
   M.phase = 'live'; T.endRound(0, 'elim_def'); ok(P.credits === 3200 && F.credits === 2400, 'win +2600, first loss +1600', P.credits + ' ' + F.credits);
   M.phase = 'live'; T.endRound(0, 'elim_def'); M.phase = 'live'; T.endRound(0, 'elim_def'); ok(F.credits === 2400 + 2000 + 2400, 'losses pay 1600, 2000, then 2400');
   P.alive = true; T.startRound(5); ok(P.credits === 800 && P.guns[2] === 'pip' && !P.guns[1], 'round 5 is a pistol round: everyone back to 800 and a pistol');
+  ok(F.lossRun === 0, 'the loss bonus starts again at the half', 'loss run ' + F.lossRun); M.phase = 'live'; T.endRound(0, 'elim_def'); ok(F.credits === 800 + 1600, 'so losing the second pistol round pays 1600, not 2400', F.credits);
 }
 
 // whole matches, bot against bot, watching for errors, fighters that stop moving, and rounds that never end
