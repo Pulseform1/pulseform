@@ -203,7 +203,10 @@
   function gunModel(k, opts = {}) {
     const sk = skinOfId(opts.skin), line = sk && sk.k === k ? sk.line : null;
     const W = GUNS[k], m = gmats(k, line), G = new THREE.Group(), cast = !!opts.cast, parts = {};
-    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false;
+    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false, bore = null;
+    // the bore: the height of the barrel's axis and the very front of the gun (its muzzle device included), and how thick the
+    // muzzle end is. Skins and the muzzle flash are placed from it, so they sit on the barrel whatever is screwed on the end.
+    const setBore = (y, z, r) => { if (!bore || z < bore.z) bore = { y, z, r }; };
     const add = (geo, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); T.add(o); return o; };
     const box = (w, h, d, mat, x, y, z, rx = 0, ry = 0, rz = 0) => add(new THREE.BoxGeometry(w, h, d), mat, x, y, z, rx, ry, rz);
     const rbox = (w, h, d, mat, x, y, z, r = .004, rx = 0, rz = 0) => {
@@ -260,6 +263,7 @@
     };
     // muzzle ends, turned on the lathe: 'brake' (ported block), 'flash' (slim hider), 'supp' (a suppressor of length sl), 'crown' (bare)
     const muzzle = (kind, z, y, r, sl = .2) => {
+      setBore(y, z, kind === 'supp' ? r * 1.95 : kind === 'brake' ? r * 1.6 : kind === 'flash' ? r * 1.4 : r);
       if (kind === 'supp') { lathe([[z, .006], [z, r * 1.75], [z + .006, r * 1.95], [z + sl - .03, r * 1.95], [z + sl - .012, r * 1.5], [z + sl, r * 1.1]], m.dark, y, 0, 22); for (let i = 0; i < 5; i++) ring(r * 1.97, .0016, z + .016 + i * .009, m.metal, y); ring(r * 1.97, .0024, z + sl - .04, m.glow, y); disc(.0065, 0, y, z - .0005, m.hole); }
       else if (kind === 'brake') { lathe([[z, .0065], [z, r * 1.35], [z + .008, r * 1.6], [z + .058, r * 1.6], [z + .068, r * 1.05]], m.dark, y, 0, 8); for (let i = 0; i < 3; i++) box(r * 3.4, r * .7, .009, m.hole, 0, y, z + .016 + i * .017); disc(.0065, 0, y, z - .0005, m.hole); }
       else if (kind === 'flash') { lathe([[z, .0065], [z, r * 1.25], [z + .04, r * 1.4], [z + .05, r * 1.05]], m.dark, y, 0, 14); for (let a = 0; a < 4; a++) box(.003, .003, .03, m.hole, Math.cos(a * Math.PI / 2 + .78) * r * 1.3, y + Math.sin(a * Math.PI / 2 + .78) * r * 1.3, z + .02); disc(.006, 0, y, z - .0005, m.hole); }
@@ -277,7 +281,7 @@
       side([[-.04, -.014], [-.047, -.04], [-.041, -.043], [-.034, -.016]], .007, m.steel, 0, .0015);   // trigger
       rail(-.168, -.095, -.012, .02); pin(.004, -.03, .028); pin(.004, .012, .028); rbox(.004, .007, .026, m.steel, -.0148, .02, -.01, .002);
       if (o.light) { rbox(.025, .024, .052, m.poly, 0, -.029, -.14, .006); disc(.0085, 0, -.029, -.1665, m.lamp); ring(.0095, .0018, -.166, m.steel, -.029); rbox(.006, .008, .012, m.acc, .0135, -.03, -.12, .002); }
-      lathe([[-.207, .005], [-.207, .0092], [-.19, .0092]], m.steel, .034); disc(.005, 0, .034, -.2075, m.hole);
+      lathe([[-.207, .005], [-.207, .0092], [-.19, .0092]], m.steel, .034); disc(.005, 0, .034, -.2075, m.hole); setBore(.034, -.207, .0092);
       if (o.supp) muzzle('supp', -.37, .034, .0092, .168);
       T = parts.slide = group(0, 0, 0);
       side([[-.2, .017], [-.2, .044], ['q', -.2, .053, -.19, .053], [.03, .053], [.043, .044], [.043, .017]], .03, m.metal, 0, .005);
@@ -287,8 +291,8 @@
       if (o.rdot) { rbox(.024, .008, .036, m.dark, 0, .0565, -.008, .003); frame(.028, .026, .072, .0032, -.026, .006, m.dark); box(.02, .016, .001, m.glass, 0, .0715, -.02); add(new THREE.SphereGeometry(.0009, 6, 6), m.red, 0, .0715, -.019); }
       else { rbox(.021, .009, .008, m.dark, 0, .058, .03, .0015); for (const sx of [-.0058, .0058]) add(new THREE.SphereGeometry(.0018, 6, 6), m.tritium, sx, .059, .0343); }
       if (o.cuts) { for (let i = 0; i < 3; i++) rbox(.012, .004, .022, m.hole, 0, .0535, -.07 - i * .032, .001); for (const sx of [-1, 1]) rbox(.0012, .004, .16, m.glow, sx * .0152, .041, -.09, .0004); }
-      if (o.cannon) { rbox(.036, .042, .09, m.fin, 0, .034, -.245, .007); for (let i = 0; i < 4; i++) for (const sx of [-1, 1]) rbox(.004, .016, .012, m.hole, sx * .018, .04, -.215 - i * .02, .002); rbox(.014, .005, .07, m.hole, 0, .055, -.245, .001); disc(.007, 0, .034, -.2905, m.hole); for (const sx of [-1, 1]) rbox(.0012, .006, .08, m.glow, sx * .0182, .022, -.245, .0005); }
-      if (o.comp) { rbox(.031, .037, .034, m.dark, 0, .034, -.2185, .006); for (let i = 0; i < 3; i++) rbox(.013, .004, .006, m.hole, 0, .0528, -.209 - i * .009, .001); disc(.0055, 0, .034, -.236, m.hole); }
+      if (o.cannon) { setBore(.034, -.2905, .019); rbox(.036, .042, .09, m.fin, 0, .034, -.245, .007); for (let i = 0; i < 4; i++) for (const sx of [-1, 1]) rbox(.004, .016, .012, m.hole, sx * .018, .04, -.215 - i * .02, .002); rbox(.014, .005, .07, m.hole, 0, .055, -.245, .001); disc(.007, 0, .034, -.2905, m.hole); for (const sx of [-1, 1]) rbox(.0012, .006, .08, m.glow, sx * .0182, .022, -.245, .0005); }
+      if (o.comp) { setBore(.034, -.236, .017); rbox(.031, .037, .034, m.dark, 0, .034, -.2185, .006); for (let i = 0; i < 3; i++) rbox(.013, .004, .006, m.hole, 0, .0528, -.209 - i * .009, .001); disc(.0055, 0, .034, -.236, m.hole); }
       decal(o.name, o.sub, .07, .0175, .0155, .03, -.105);
       T = parts.mag = group(0, -.062, .027, -.25);
       rbox(.02, o.ext ? .15 : .1, .032, m.dark, 0, o.ext ? -.025 : 0, 0, .003); rbox(.031, .013, .044, o.ext ? m.acc : m.poly, 0, o.ext ? -.106 : -.057, .003, .004);
@@ -333,7 +337,7 @@
       else if (o.stock === 'thumb') { side([[sb, .042], [sb + .03, .05], [sb + .29, .054], [sb + .31, .046], [sb + .31, -.07], [sb + .29, -.08], [sb + .14, -.07], ['q', sb + .1, -.07, sb + .08, -.04], ['q', sb + .04, -.03, sb, -.024]], .044, o.cheek || m.fin, 0, .01, [[[sb + .1, .022], [sb + .12, -.04], [sb + .2, -.048], [sb + .22, .024]]]); rbox(.048, .13, .016, m.rubber, 0, -.012, sb + .317, .006); }
       else if (o.stock === 'heavy') { side([[sb, .05], [sb + .27, .062], [sb + .29, .054], [sb + .29, -.074], [sb + .27, -.08], [sb + .2, -.07], ['q', sb + .1, -.05, sb, -.03]], .05, m.poly, 0, .01); rbox(.054, .14, .016, m.rubber, 0, -.008, sb + .297, .006); rbox(.02, .01, .1, m.steel, 0, .07, sb + .16, .004); }
       // what the support hand holds
-      if (o.fore === 'vgrip') { const z = lp(hz, rf, .42); vtube(.0155, hb - .09, hb + .004, m.poly, 0, z, .019); vtube(.0195, hb - .098, hb - .088, m.acc, 0, z); for (let i = 0; i < 3; i++) ring(.0172, .0016, z, m.rubber, hb - .03 - i * .018).rotation.x = Math.PI / 2; sup = [0, hb - .05, z]; }
+      if (o.fore === 'vgrip') { const z = lp(hz, rf, .42); vtube(.0155, hb - .09, hb + .004, m.poly, 0, z, .019); vtube(.0195, hb - .098, hb - .084, m.acc, 0, z); for (let i = 0; i < 3; i++) ring(.0172, .0016, z, m.rubber, hb - .03 - i * .018).rotation.x = Math.PI / 2; sup = [0, hb - .05, z]; }
       else if (o.fore === 'angled') { const z = lp(hz, rf, .45); side([[z - .05, hb + .004], [z + .04, hb + .004], [z + .01, hb - .034], [z - .022, hb - .034]], .03, m.poly, 0, .006); sup = [0, hb - .028, z - .005]; }
       else sup = [0, hb - .012, lp(hz, rf, .45)];
       // sight
@@ -422,7 +426,7 @@
       guardLoop(-.035, -.006); for (const sx of [-.011, .011]) side([[.03, .05], [.044, .072], [.052, .066], [.042, .05]], .008, m.steel, sx, .002); pin(.02, -.05, .058, .005);
       decal('STUB', '12 GA · 2 RD', .07, .0175, .0292, .03, -.008);
       T = parts.brk = group(0, .02, -.06);
-      for (const sx of [-.0148, .0148]) { lathe([[-.3, .0098], [-.3, .0152], [-.29, .0158], [-.02, .0158], [0, .0145], [0, .008]], m.steel, .012, sx, 16); disc(.0098, sx, .012, -.3005, m.hole); }
+      for (const sx of [-.0148, .0148]) { lathe([[-.3, .0098], [-.3, .0152], [-.29, .0158], [-.02, .0158], [0, .0145], [0, .008]], m.steel, .012, sx, 16); disc(.0098, sx, .012, -.3005, m.hole); } setBore(.032, -.36, .031);
       rbox(.06, .012, .022, m.dark, 0, .012, -.283, .004); rbox(.005, .007, .262, m.metal, 0, .0295, -.14, .002); add(new THREE.SphereGeometry(.0036, 8, 6), m.brass, 0, .0355, -.29);
       T = G; sup = [-.016, -.1, .03];
     } else if (k === 'hammer') {   // double-action revolver: stainless frame with a cylinder window, full under-lug barrel, vented rib, fluted cylinder, finger-groove grip
@@ -436,7 +440,7 @@
       for (const [y, z] of [[.03, .024], [-.002, .02], [.004, -.058]]) pin(y, z, .035, .0026, m.dark);   // side-plate screws
       rbox(.004, .01, .016, m.dark, -.019, .03, .024, .002); rbox(.002, .004, .01, m.metal, -.0215, .03, .024, .001);   // cylinder release
       // barrel: round tube on a full-length under-lug, a vented rib, crowned muzzle, ported near the end
-      lathe([[-.072, .011], [-.262, .0105], [-.27, .0095], [-.274, .0082], [-.274, .005]], m.steel, BY, 0, 24); disc(.0048, 0, BY, -.2742, m.hole);
+      setBore(BY, -.274, .011); lathe([[-.072, .011], [-.262, .0105], [-.27, .0095], [-.274, .0082], [-.274, .005]], m.steel, BY, 0, 24); disc(.0048, 0, BY, -.2742, m.hole);
       side([[-.072, BY], [-.266, BY], ['q', -.274, BY, -.274, BY - .008], [-.274, .016], ['q', -.274, .01, -.266, .01], [-.072, .01]], .023, m.steel, 0, .004);
       rbox(.011, .008, .19, m.steel, 0, BY + .0135, -.167, .002); for (let i = 0; i < 7; i++) rbox(.0115, .005, .012, m.hole, 0, BY + .0122, -.088 - i * .025, .001);
       for (const z of [-.248, -.236]) rbox(.004, .003, .009, m.hole, 0, BY + .0105, z, .001);
@@ -494,7 +498,10 @@
     }
     if (k === 'pip' || k === 'wasp' || k === 'quill' || k === 'stub' || k === 'hammer' || k === 'knife' || GUNS[k].cat === 'Sidearm') pistolHold = true;
 
-    if (line) skinKit(G, k, line, m, len);
+    if (bore && -bore.z > len) len = -bore.z;   // a muzzle device past the barrel's end: the gun is that long
+    if (line) { const K2 = skinKit(G, k, line, m, len, bore);
+      // the Stub's barrels break open to reload: what a skin put on them goes with them (rings and collars; not the drifting bits)
+      if (K2 && parts.brk) { G.updateMatrixWorld(true); for (const o of [...K2.children]) if (o.position.z < -.075 && (!o.userData.anim || o.geometry && o.geometry.type === 'TorusGeometry')) parts.brk.attach(o); } }
     const grip = k === 'knife' ? [0, 0, .045] : k === 'hammer' ? [0, -.055, .052] : k === 'stub' ? [0, -.058, .05] : pistolHold ? [0, -.062, .026] : k === 'breaker' ? [0, -.07, .05] : k === 'kite' || k === 'longbow' ? [0, -.072, .046] : [0, -.076, .026];
     if (opts.hands) {   // your own gloves and sleeves: fingers wrapped round the grip, the other hand under the gun
       const op = OPS[opts.op] || OPS.vex, band = gmats.band[op.col] || (gmats.band[op.col] = new THREE.MeshStandardMaterial({ color: LC(op.col), roughness: .5 }));
@@ -513,8 +520,8 @@
       T = G;
     }
     bake(G, cast);
-    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.line = line;
-    if (opts.flash) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.starT, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); sp.scale.setScalar(.4); sp.position.set(0, .03, -len - .06); sp.visible = false; G.add(sp); G.userData.flash = sp; }
+    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.line = line; G.userData.bore = bore;
+    if (opts.flash) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.starT, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); sp.scale.setScalar(.4); sp.position.set(0, bore ? bore.y : .03, -len - .06); sp.visible = false; G.add(sp); G.userData.flash = sp; }
     return G;
   }
   gmats.band = {};

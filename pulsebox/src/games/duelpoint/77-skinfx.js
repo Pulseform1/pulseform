@@ -112,8 +112,8 @@
       if (gk.strips >= 3) for (let i = 0; i < 4; i++) { const z0 = along(.56 + i * .09), z1 = along(.56 + (i + 1) * .09) + .003, ys2 = [topAt(z0), topAt(z1), topAt((z0 + z1) / 2)]; if (Math.max(...ys2) - Math.min(...ys2) < .008) strip(0, z0, z1, Math.max(...ys2) + .0009, .0032, 'top'); }   // only where the top runs flat
     }
     // glowing rings round the barrel, the last one turning on the rarest
-    for (let i = 0; i < (gk.rings || 0); i++) { const z = along(Math.min(.96, .8 + i * .06)), r = cl(topAt(z) - ax + .0032, .01, .03); add(new THREE.TorusGeometry(r, .0016, 6, 24), F.glowA, 0, ax, z); }
-    if (gk.rings && tier >= 4) { const z = along(.985), r = cl(topAt(along(.95)) - ax + .009, .016, .034); live(add(new THREE.TorusGeometry(r, .0011, 6, 32), F.glowB, 0, ax, z), (o, t) => { o.rotation.set(Math.sin(t * 1.3) * .5, Math.cos(t * 1.1) * .5, t * 2); }); }
+    for (let i = 0; i < (gk.rings || 0); i++) { const z = along(Math.min(.96, .8 + i * .06)), r = cl(h.rAt(z) + .0032, .01, .034); add(new THREE.TorusGeometry(r, .0016, 6, 24), F.glowA, 0, ax, z); }
+    if (gk.rings && tier >= 4) { const z = h.tip + .006, r = cl(h.rM + .009, .016, .04); live(add(new THREE.TorusGeometry(r, .0011, 6, 32), F.glowB, 0, ax, z), (o, t) => { o.rotation.set(Math.sin(t * 1.3) * .5, Math.cos(t * 1.1) * .5, t * 2); }); }
     // an energy cell on the receiver: a glowing core in a glass tube with caps, and its halo
     for (let i = 0; i < (gk.cell || 0); i++) { const sx = i ? 1 : -1, z = along(.33), y = ax - .006, xs = sideAt(y, z, sx); if (xs == null) continue; const x = sx * (xs + .0062);
       add(new THREE.CylinderGeometry(.0034, .0034, .03, 10), F.glowA, x, y, z, Math.PI / 2); add(new THREE.CylinderGeometry(.0055, .0055, .032, 12, 1, true), F.glass, x, y, z, Math.PI / 2);

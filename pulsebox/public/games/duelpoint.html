@@ -3374,7 +3374,10 @@ const GAME = {
   function gunModel(k, opts = {}) {
     const sk = skinOfId(opts.skin), line = sk && sk.k === k ? sk.line : null;
     const W = GUNS[k], m = gmats(k, line), G = new THREE.Group(), cast = !!opts.cast, parts = {};
-    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false;
+    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false, bore = null;
+    // the bore: the height of the barrel's axis and the very front of the gun (its muzzle device included), and how thick the
+    // muzzle end is. Skins and the muzzle flash are placed from it, so they sit on the barrel whatever is screwed on the end.
+    const setBore = (y, z, r) => { if (!bore || z < bore.z) bore = { y, z, r }; };
     const add = (geo, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); T.add(o); return o; };
     const box = (w, h, d, mat, x, y, z, rx = 0, ry = 0, rz = 0) => add(new THREE.BoxGeometry(w, h, d), mat, x, y, z, rx, ry, rz);
     const rbox = (w, h, d, mat, x, y, z, r = .004, rx = 0, rz = 0) => {
@@ -3431,6 +3434,7 @@ const GAME = {
     };
     // muzzle ends, turned on the lathe: 'brake' (ported block), 'flash' (slim hider), 'supp' (a suppressor of length sl), 'crown' (bare)
     const muzzle = (kind, z, y, r, sl = .2) => {
+      setBore(y, z, kind === 'supp' ? r * 1.95 : kind === 'brake' ? r * 1.6 : kind === 'flash' ? r * 1.4 : r);
       if (kind === 'supp') { lathe([[z, .006], [z, r * 1.75], [z + .006, r * 1.95], [z + sl - .03, r * 1.95], [z + sl - .012, r * 1.5], [z + sl, r * 1.1]], m.dark, y, 0, 22); for (let i = 0; i < 5; i++) ring(r * 1.97, .0016, z + .016 + i * .009, m.metal, y); ring(r * 1.97, .0024, z + sl - .04, m.glow, y); disc(.0065, 0, y, z - .0005, m.hole); }
       else if (kind === 'brake') { lathe([[z, .0065], [z, r * 1.35], [z + .008, r * 1.6], [z + .058, r * 1.6], [z + .068, r * 1.05]], m.dark, y, 0, 8); for (let i = 0; i < 3; i++) box(r * 3.4, r * .7, .009, m.hole, 0, y, z + .016 + i * .017); disc(.0065, 0, y, z - .0005, m.hole); }
       else if (kind === 'flash') { lathe([[z, .0065], [z, r * 1.25], [z + .04, r * 1.4], [z + .05, r * 1.05]], m.dark, y, 0, 14); for (let a = 0; a < 4; a++) box(.003, .003, .03, m.hole, Math.cos(a * Math.PI / 2 + .78) * r * 1.3, y + Math.sin(a * Math.PI / 2 + .78) * r * 1.3, z + .02); disc(.006, 0, y, z - .0005, m.hole); }
@@ -3448,7 +3452,7 @@ const GAME = {
       side([[-.04, -.014], [-.047, -.04], [-.041, -.043], [-.034, -.016]], .007, m.steel, 0, .0015);   // trigger
       rail(-.168, -.095, -.012, .02); pin(.004, -.03, .028); pin(.004, .012, .028); rbox(.004, .007, .026, m.steel, -.0148, .02, -.01, .002);
       if (o.light) { rbox(.025, .024, .052, m.poly, 0, -.029, -.14, .006); disc(.0085, 0, -.029, -.1665, m.lamp); ring(.0095, .0018, -.166, m.steel, -.029); rbox(.006, .008, .012, m.acc, .0135, -.03, -.12, .002); }
-      lathe([[-.207, .005], [-.207, .0092], [-.19, .0092]], m.steel, .034); disc(.005, 0, .034, -.2075, m.hole);
+      lathe([[-.207, .005], [-.207, .0092], [-.19, .0092]], m.steel, .034); disc(.005, 0, .034, -.2075, m.hole); setBore(.034, -.207, .0092);
       if (o.supp) muzzle('supp', -.37, .034, .0092, .168);
       T = parts.slide = group(0, 0, 0);
       side([[-.2, .017], [-.2, .044], ['q', -.2, .053, -.19, .053], [.03, .053], [.043, .044], [.043, .017]], .03, m.metal, 0, .005);
@@ -3458,8 +3462,8 @@ const GAME = {
       if (o.rdot) { rbox(.024, .008, .036, m.dark, 0, .0565, -.008, .003); frame(.028, .026, .072, .0032, -.026, .006, m.dark); box(.02, .016, .001, m.glass, 0, .0715, -.02); add(new THREE.SphereGeometry(.0009, 6, 6), m.red, 0, .0715, -.019); }
       else { rbox(.021, .009, .008, m.dark, 0, .058, .03, .0015); for (const sx of [-.0058, .0058]) add(new THREE.SphereGeometry(.0018, 6, 6), m.tritium, sx, .059, .0343); }
       if (o.cuts) { for (let i = 0; i < 3; i++) rbox(.012, .004, .022, m.hole, 0, .0535, -.07 - i * .032, .001); for (const sx of [-1, 1]) rbox(.0012, .004, .16, m.glow, sx * .0152, .041, -.09, .0004); }
-      if (o.cannon) { rbox(.036, .042, .09, m.fin, 0, .034, -.245, .007); for (let i = 0; i < 4; i++) for (const sx of [-1, 1]) rbox(.004, .016, .012, m.hole, sx * .018, .04, -.215 - i * .02, .002); rbox(.014, .005, .07, m.hole, 0, .055, -.245, .001); disc(.007, 0, .034, -.2905, m.hole); for (const sx of [-1, 1]) rbox(.0012, .006, .08, m.glow, sx * .0182, .022, -.245, .0005); }
-      if (o.comp) { rbox(.031, .037, .034, m.dark, 0, .034, -.2185, .006); for (let i = 0; i < 3; i++) rbox(.013, .004, .006, m.hole, 0, .0528, -.209 - i * .009, .001); disc(.0055, 0, .034, -.236, m.hole); }
+      if (o.cannon) { setBore(.034, -.2905, .019); rbox(.036, .042, .09, m.fin, 0, .034, -.245, .007); for (let i = 0; i < 4; i++) for (const sx of [-1, 1]) rbox(.004, .016, .012, m.hole, sx * .018, .04, -.215 - i * .02, .002); rbox(.014, .005, .07, m.hole, 0, .055, -.245, .001); disc(.007, 0, .034, -.2905, m.hole); for (const sx of [-1, 1]) rbox(.0012, .006, .08, m.glow, sx * .0182, .022, -.245, .0005); }
+      if (o.comp) { setBore(.034, -.236, .017); rbox(.031, .037, .034, m.dark, 0, .034, -.2185, .006); for (let i = 0; i < 3; i++) rbox(.013, .004, .006, m.hole, 0, .0528, -.209 - i * .009, .001); disc(.0055, 0, .034, -.236, m.hole); }
       decal(o.name, o.sub, .07, .0175, .0155, .03, -.105);
       T = parts.mag = group(0, -.062, .027, -.25);
       rbox(.02, o.ext ? .15 : .1, .032, m.dark, 0, o.ext ? -.025 : 0, 0, .003); rbox(.031, .013, .044, o.ext ? m.acc : m.poly, 0, o.ext ? -.106 : -.057, .003, .004);
@@ -3504,7 +3508,7 @@ const GAME = {
       else if (o.stock === 'thumb') { side([[sb, .042], [sb + .03, .05], [sb + .29, .054], [sb + .31, .046], [sb + .31, -.07], [sb + .29, -.08], [sb + .14, -.07], ['q', sb + .1, -.07, sb + .08, -.04], ['q', sb + .04, -.03, sb, -.024]], .044, o.cheek || m.fin, 0, .01, [[[sb + .1, .022], [sb + .12, -.04], [sb + .2, -.048], [sb + .22, .024]]]); rbox(.048, .13, .016, m.rubber, 0, -.012, sb + .317, .006); }
       else if (o.stock === 'heavy') { side([[sb, .05], [sb + .27, .062], [sb + .29, .054], [sb + .29, -.074], [sb + .27, -.08], [sb + .2, -.07], ['q', sb + .1, -.05, sb, -.03]], .05, m.poly, 0, .01); rbox(.054, .14, .016, m.rubber, 0, -.008, sb + .297, .006); rbox(.02, .01, .1, m.steel, 0, .07, sb + .16, .004); }
       // what the support hand holds
-      if (o.fore === 'vgrip') { const z = lp(hz, rf, .42); vtube(.0155, hb - .09, hb + .004, m.poly, 0, z, .019); vtube(.0195, hb - .098, hb - .088, m.acc, 0, z); for (let i = 0; i < 3; i++) ring(.0172, .0016, z, m.rubber, hb - .03 - i * .018).rotation.x = Math.PI / 2; sup = [0, hb - .05, z]; }
+      if (o.fore === 'vgrip') { const z = lp(hz, rf, .42); vtube(.0155, hb - .09, hb + .004, m.poly, 0, z, .019); vtube(.0195, hb - .098, hb - .084, m.acc, 0, z); for (let i = 0; i < 3; i++) ring(.0172, .0016, z, m.rubber, hb - .03 - i * .018).rotation.x = Math.PI / 2; sup = [0, hb - .05, z]; }
       else if (o.fore === 'angled') { const z = lp(hz, rf, .45); side([[z - .05, hb + .004], [z + .04, hb + .004], [z + .01, hb - .034], [z - .022, hb - .034]], .03, m.poly, 0, .006); sup = [0, hb - .028, z - .005]; }
       else sup = [0, hb - .012, lp(hz, rf, .45)];
       // sight
@@ -3593,7 +3597,7 @@ const GAME = {
       guardLoop(-.035, -.006); for (const sx of [-.011, .011]) side([[.03, .05], [.044, .072], [.052, .066], [.042, .05]], .008, m.steel, sx, .002); pin(.02, -.05, .058, .005);
       decal('STUB', '12 GA · 2 RD', .07, .0175, .0292, .03, -.008);
       T = parts.brk = group(0, .02, -.06);
-      for (const sx of [-.0148, .0148]) { lathe([[-.3, .0098], [-.3, .0152], [-.29, .0158], [-.02, .0158], [0, .0145], [0, .008]], m.steel, .012, sx, 16); disc(.0098, sx, .012, -.3005, m.hole); }
+      for (const sx of [-.0148, .0148]) { lathe([[-.3, .0098], [-.3, .0152], [-.29, .0158], [-.02, .0158], [0, .0145], [0, .008]], m.steel, .012, sx, 16); disc(.0098, sx, .012, -.3005, m.hole); } setBore(.032, -.36, .031);
       rbox(.06, .012, .022, m.dark, 0, .012, -.283, .004); rbox(.005, .007, .262, m.metal, 0, .0295, -.14, .002); add(new THREE.SphereGeometry(.0036, 8, 6), m.brass, 0, .0355, -.29);
       T = G; sup = [-.016, -.1, .03];
     } else if (k === 'hammer') {   // double-action revolver: stainless frame with a cylinder window, full under-lug barrel, vented rib, fluted cylinder, finger-groove grip
@@ -3607,7 +3611,7 @@ const GAME = {
       for (const [y, z] of [[.03, .024], [-.002, .02], [.004, -.058]]) pin(y, z, .035, .0026, m.dark);   // side-plate screws
       rbox(.004, .01, .016, m.dark, -.019, .03, .024, .002); rbox(.002, .004, .01, m.metal, -.0215, .03, .024, .001);   // cylinder release
       // barrel: round tube on a full-length under-lug, a vented rib, crowned muzzle, ported near the end
-      lathe([[-.072, .011], [-.262, .0105], [-.27, .0095], [-.274, .0082], [-.274, .005]], m.steel, BY, 0, 24); disc(.0048, 0, BY, -.2742, m.hole);
+      setBore(BY, -.274, .011); lathe([[-.072, .011], [-.262, .0105], [-.27, .0095], [-.274, .0082], [-.274, .005]], m.steel, BY, 0, 24); disc(.0048, 0, BY, -.2742, m.hole);
       side([[-.072, BY], [-.266, BY], ['q', -.274, BY, -.274, BY - .008], [-.274, .016], ['q', -.274, .01, -.266, .01], [-.072, .01]], .023, m.steel, 0, .004);
       rbox(.011, .008, .19, m.steel, 0, BY + .0135, -.167, .002); for (let i = 0; i < 7; i++) rbox(.0115, .005, .012, m.hole, 0, BY + .0122, -.088 - i * .025, .001);
       for (const z of [-.248, -.236]) rbox(.004, .003, .009, m.hole, 0, BY + .0105, z, .001);
@@ -3665,7 +3669,10 @@ const GAME = {
     }
     if (k === 'pip' || k === 'wasp' || k === 'quill' || k === 'stub' || k === 'hammer' || k === 'knife' || GUNS[k].cat === 'Sidearm') pistolHold = true;
 
-    if (line) skinKit(G, k, line, m, len);
+    if (bore && -bore.z > len) len = -bore.z;   // a muzzle device past the barrel's end: the gun is that long
+    if (line) { const K2 = skinKit(G, k, line, m, len, bore);
+      // the Stub's barrels break open to reload: what a skin put on them goes with them (rings and collars; not the drifting bits)
+      if (K2 && parts.brk) { G.updateMatrixWorld(true); for (const o of [...K2.children]) if (o.position.z < -.075 && (!o.userData.anim || o.geometry && o.geometry.type === 'TorusGeometry')) parts.brk.attach(o); } }
     const grip = k === 'knife' ? [0, 0, .045] : k === 'hammer' ? [0, -.055, .052] : k === 'stub' ? [0, -.058, .05] : pistolHold ? [0, -.062, .026] : k === 'breaker' ? [0, -.07, .05] : k === 'kite' || k === 'longbow' ? [0, -.072, .046] : [0, -.076, .026];
     if (opts.hands) {   // your own gloves and sleeves: fingers wrapped round the grip, the other hand under the gun
       const op = OPS[opts.op] || OPS.vex, band = gmats.band[op.col] || (gmats.band[op.col] = new THREE.MeshStandardMaterial({ color: LC(op.col), roughness: .5 }));
@@ -3684,8 +3691,8 @@ const GAME = {
       T = G;
     }
     bake(G, cast);
-    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.line = line;
-    if (opts.flash) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.starT, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); sp.scale.setScalar(.4); sp.position.set(0, .03, -len - .06); sp.visible = false; G.add(sp); G.userData.flash = sp; }
+    G.userData.len = len; G.userData.port = port; G.userData.sight = sight; G.userData.parts = parts; G.userData.k = k; G.userData.grip = grip; G.userData.sup = sup; G.userData.pistolHold = pistolHold; G.userData.line = line; G.userData.bore = bore;
+    if (opts.flash) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.starT, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); sp.scale.setScalar(.4); sp.position.set(0, bore ? bore.y : .03, -len - .06); sp.visible = false; G.add(sp); G.userData.flash = sp; }
     return G;
   }
   gmats.band = {};
@@ -3898,8 +3905,8 @@ const GAME = {
       if (gk.strips >= 3) for (let i = 0; i < 4; i++) { const z0 = along(.56 + i * .09), z1 = along(.56 + (i + 1) * .09) + .003, ys2 = [topAt(z0), topAt(z1), topAt((z0 + z1) / 2)]; if (Math.max(...ys2) - Math.min(...ys2) < .008) strip(0, z0, z1, Math.max(...ys2) + .0009, .0032, 'top'); }   // only where the top runs flat
     }
     // glowing rings round the barrel, the last one turning on the rarest
-    for (let i = 0; i < (gk.rings || 0); i++) { const z = along(Math.min(.96, .8 + i * .06)), r = cl(topAt(z) - ax + .0032, .01, .03); add(new THREE.TorusGeometry(r, .0016, 6, 24), F.glowA, 0, ax, z); }
-    if (gk.rings && tier >= 4) { const z = along(.985), r = cl(topAt(along(.95)) - ax + .009, .016, .034); live(add(new THREE.TorusGeometry(r, .0011, 6, 32), F.glowB, 0, ax, z), (o, t) => { o.rotation.set(Math.sin(t * 1.3) * .5, Math.cos(t * 1.1) * .5, t * 2); }); }
+    for (let i = 0; i < (gk.rings || 0); i++) { const z = along(Math.min(.96, .8 + i * .06)), r = cl(h.rAt(z) + .0032, .01, .034); add(new THREE.TorusGeometry(r, .0016, 6, 24), F.glowA, 0, ax, z); }
+    if (gk.rings && tier >= 4) { const z = h.tip + .006, r = cl(h.rM + .009, .016, .04); live(add(new THREE.TorusGeometry(r, .0011, 6, 32), F.glowB, 0, ax, z), (o, t) => { o.rotation.set(Math.sin(t * 1.3) * .5, Math.cos(t * 1.1) * .5, t * 2); }); }
     // an energy cell on the receiver: a glowing core in a glass tube with caps, and its halo
     for (let i = 0; i < (gk.cell || 0); i++) { const sx = i ? 1 : -1, z = along(.33), y = ax - .006, xs = sideAt(y, z, sx); if (xs == null) continue; const x = sx * (xs + .0062);
       add(new THREE.CylinderGeometry(.0034, .0034, .03, 10), F.glowA, x, y, z, Math.PI / 2); add(new THREE.CylinderGeometry(.0055, .0055, .032, 12, 1, true), F.glass, x, y, z, Math.PI / 2);
@@ -4330,53 +4337,56 @@ const GAME = {
     return SKMAT[key] = M2;
   }
   // a line's parts, sized from the gun: bb is the gun's box, len its barrel, ax the barrel's axis height
-  function skinKit(G, k, line, m, len) {
+  function skinKit(G, k, line, m, len, bore) {
     const L = LINES[line], tier = RARITY[L.r].tier, gl = !!L.gk; if (k === 'knife') { if (gl) knifeGlow(G, line); return; } if (tier < 1) return;
-    G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(G), top = bb.max.y, ax = .025, lc = c => new THREE.Color(c).convertSRGBToLinear();
+    G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(G), top = bb.max.y, ax = bore ? bore.y : .025, tip = bore ? bore.z : -len, lc = c => new THREE.Color(c).convertSRGBToLinear();
     // the gun's own surface under a point along it (so parts sit on the barrel, not up at the height of the sight)
     const ray = new THREE.Raycaster(), meshes = []; G.traverse(o => { if (o.isMesh) meshes.push(o); });
     const topAt = z => { ray.set(new THREE.Vector3(0, top + .2, z), new THREE.Vector3(0, -1, 0)); const h = ray.intersectObjects(meshes, false)[0]; return h ? h.point.y : ax + .02; };
+    // how thick the gun is round the barrel's axis at a point along it (rings and collars are sized to wrap it, not float off it)
+    const rAt = z => { ray.set(new THREE.Vector3(bb.max.x + .2, ax, z), new THREE.Vector3(-1, 0, 0)); const h = ray.intersectObjects(meshes, false)[0]; return h ? cl(Math.abs(h.point.x), .006, .032) : .012; };
+    const rM = Math.max(bore ? bore.r : 0, rAt(tip + .004)), ring = (z, gap = .0025) => rAt(z) + gap;
     const K2 = new THREE.Group(); G.add(K2);
     const add = (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); K2.add(o); return o; };
     const glowM = c => new THREE.MeshBasicMaterial({ color: lc(c), toneMapped: false, transparent: true, opacity: .9, blending: THREE.AdditiveBlending, depthWrite: false });
     const live = (o, fn) => { o.userData.live = true; o.userData.anim = fn; return o; };
-    const along = q => lp(bb.max.z, -len, q);   // along the gun: 0 at the back, 1 at the muzzle
+    const along = q => lp(bb.max.z, tip, q);   // along the gun: 0 at the back, 1 at the very front of the muzzle
     if (L.pat) {
       const hw = (bb.max.x - bb.min.x) / 2;
-      if (!gl) for (const q of [.86, .93]) add(new THREE.TorusGeometry(.016, .003, 8, 18), m.acc, 0, ax, along(q));   // (a glowing line brings its own rings)
+      if (!gl) for (const q of [.86, .93]) add(new THREE.TorusGeometry(ring(along(q)), .003, 8, 18), m.acc, 0, ax, along(q));   // (a glowing line brings its own rings)
       for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.003, .016, (bb.max.z - bb.min.z) * .18), m.acc, sx * (hw + .0015), ax + .004, along(.42));
-      if (tier >= 2) { for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.002, .005, (bb.max.z - bb.min.z) * .3), m.glow, sx * (hw + .003), ax - .008, along(.35)); add(new THREE.CylinderGeometry(.015, .013, .028, 12, 1, true), m.acc, 0, ax, along(.985), Math.PI / 2); }
+      if (tier >= 2) { for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.002, .005, (bb.max.z - bb.min.z) * .3), m.glow, sx * (hw + .003), ax - .008, along(.35)); add(new THREE.CylinderGeometry(rM + .0025, rM + .0025, .022, 16, 1, true), m.acc, 0, ax, tip + .0115, Math.PI / 2); }   // a collar flush with the muzzle
       if (tier >= 3 && !(gl && L.gk.pts)) { const id = L.fx && L.fx.idle;
         if (id === 'embers') for (let i = 0; i < 8; i++) { const z0 = along(.5 + R() * .4); live(add(new THREE.PlaneGeometry(.006, .006), glowM(i % 2 ? '#ffd27a' : L.alt), 0, topAt(z0), z0), (o, t, dt) => { const u = o.userData; u.k = (u.k == null ? R() : u.k) + dt * .6; if (u.k > 1) { u.k = 0; u.x = (R() - .5) * .02; } o.position.y = topAt(z0) + u.k * .07; o.position.x = (u.x || 0) + Math.sin(u.k * 9) * .004; o.material.opacity = 1 - u.k; }); }
         else if (id === 'motes') for (let i = 0; i < 6; i++) live(add(new THREE.PlaneGeometry(.005, .005), glowM(i % 2 ? '#ffffff' : L.alt), 0, 0, 0), (o, t) => { const a = t * 1.2 + i * TAU / 6; o.position.set(Math.cos(a) * .045, ax + Math.sin(a * 1.3) * .03, along(.55) + Math.sin(a) * .05); });
         else if (id === 'arcs') for (let i = 0; i < 2; i++) { const g2 = new THREE.BufferGeometry(); g2.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(18), 3)); const ln = new THREE.Line(g2, new THREE.LineBasicMaterial({ color: lc(L.alt), transparent: true, opacity: .9 })); K2.add(ln); ln.userData.live = true;
           ln.userData.anim = (o, t, dt) => { const u = o.userData; if ((u.n = (u.n || 0) - dt) > 0) return; u.n = .04 + R() * .14; o.visible = R() < .5; const pa = o.geometry.attributes.position.array, z0 = along(.45 + R() * .35); for (let k = 0; k < 6; k++) { pa[k * 3] = (k % 2 ? 1 : -1) * hw * .8 + (R() - .5) * .006; pa[k * 3 + 1] = ax + (R() - .5) * .02; pa[k * 3 + 2] = z0 - k * .008; } o.geometry.attributes.position.needsUpdate = true; }; } }
-      if (tier >= 4 && !gl) { for (const [r, sp] of [[.03, 1.4], [.022, -2]]) live(add(new THREE.TorusGeometry(r, .0022, 6, 32), glowM(L.alt), 0, ax, along(.99)), (o, t) => { o.rotation.set(t * sp * .4, t * sp, 0); });
+      if (tier >= 4 && !gl) { for (const [r, sp] of [[Math.max(.03, rM + .012), 1.4], [Math.max(.022, rM + .005), -2]]) live(add(new THREE.TorusGeometry(r, .0022, 6, 32), glowM(L.alt), 0, ax, tip + .006), (o, t) => { o.rotation.set(t * sp * .4, t * sp, 0); });
         const cz = along(.62), cy0 = topAt(cz) + .04; live(add(new THREE.OctahedronGeometry(.012, 0), glowM(L.alt), 0, cy0, cz), (o, t) => { o.position.y = cy0 + Math.sin(t * 2) * .006; o.rotation.y = t * 1.5; }); }
     }
-    if (gl) glowKit(G, K2, k, line, { bb, len, ax, topAt, along, add, live, meshes, m });   // 77-skinfx: strips, rings, cells, halos, particles, its signature piece
-    if (line === 'tidewater') for (const q of [.72, .8, .88]) add(new THREE.TorusGeometry(.016, .0028, 8, 18), m.acc, 0, ax, along(q));
+    if (gl) glowKit(G, K2, k, line, { bb, len, ax, tip, rM, rAt, topAt, along, add, live, meshes, m });   // 77-skinfx: strips, rings, cells, halos, particles, its signature piece
+    if (line === 'tidewater') for (const q of [.72, .8, .88]) add(new THREE.TorusGeometry(ring(along(q)), .0028, 8, 18), m.acc, 0, ax, along(q));
     if (line === 'circuit') { add(new THREE.BoxGeometry(.012, .024, .05), m.dark, .024, ax + .01, along(.45)); add(new THREE.BoxGeometry(.003, .016, .04), m.glow, .031, ax + .01, along(.45)); }
     if (line === 'glacier') {   // ice: shards along the top and a crown of them round the muzzle
       const ice = new THREE.MeshPhysicalMaterial({ color: lc('#cfeaff'), roughness: .05, metalness: 0, clearcoat: 1, transparent: true, opacity: .82, emissive: lc('#3a8ad0'), emissiveIntensity: .35 }); if (X.env) { ice.envMap = X.env; ice.envMapIntensity = 1.6; }
       for (let i = 0; i < 7; i++) { const q = .15 + i * .1, s = .014 + R() * .014, z = along(q), o = add(new THREE.OctahedronGeometry(s, 0), ice, (R() - .5) * .01, topAt(z) + s * .6, z, R() * .4, R(), R() * .4); o.scale.set(.6, 1.7 + R() * .6, .8); }
-      for (let i = 0; i < 6; i++) { const a = i / 6 * TAU, o = add(new THREE.ConeGeometry(.007, .045, 5), ice, Math.cos(a) * .018, ax + Math.sin(a) * .018, along(.97), 0, 0, 0); o.rotation.set(Math.PI / 2 + Math.sin(a) * .5, 0, -Math.cos(a) * .5); }
+      for (let i = 0; i < 6; i++) { const a = i / 6 * TAU, o = add(new THREE.ConeGeometry(.007, .045, 5), ice, Math.cos(a) * (rM + .004), ax + Math.sin(a) * (rM + .004), tip + .012, 0, 0, 0); o.rotation.set(Math.PI / 2 + Math.sin(a) * .5, 0, -Math.cos(a) * .5); }
     }
     if (line === 'aurum') { for (const sx of [-1, 1]) { add(new THREE.BoxGeometry(.003, .03, (bb.max.z - bb.min.z) * .3), m.metal, sx * ((bb.max.x - bb.min.x) / 2 + .001), ax - .005, along(.3)); }
-      add(new THREE.CylinderGeometry(.014, .012, .03, 12), m.metal, 0, ax, along(1) - .01, Math.PI / 2); for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + .78; add(new THREE.ConeGeometry(.004, .022, 4), m.metal, Math.cos(a) * .012, ax + Math.sin(a) * .012, along(1) - .03, -Math.PI / 2); } }
+      add(new THREE.CylinderGeometry(rM + .003, rM + .002, .026, 16), m.metal, 0, ax, tip + .013, Math.PI / 2); for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + .78; add(new THREE.ConeGeometry(.004, .022, 4), m.metal, Math.cos(a) * (rM + .002), ax + Math.sin(a) * (rM + .002), tip + .004, -Math.PI / 2); } }
     if (line === 'inferno') {   // heat fins on top, a burning core on the side, embers that rise
       for (let i = 0; i < 6; i++) { const z = along(.5 + i * .07), h = .02 + i % 2 * .006; add(new THREE.BoxGeometry(.003, h, .022), m.acc, 0, topAt(z) + h / 2 - .003, z); }
       const core = live(add(new THREE.BoxGeometry(.006, .02, .07), glowM(L.alt), (bb.max.x - bb.min.x) / 2 + .002, ax, along(.4)), (o, t) => { o.material.opacity = .65 + Math.sin(t * 4) * .3; });
       for (let i = 0; i < 8; i++) { const z0 = along(.5 + R() * .4), e = live(add(new THREE.PlaneGeometry(.006, .006), glowM(i % 2 ? '#ffd27a' : L.alt), 0, topAt(z0), z0), (o, t, dt) => { const u = o.userData; u.k = (u.k == null ? R() : u.k) + dt * (.6 + u.s); if (u.k > 1) { u.k = 0; o.position.z = along(.5 + R() * .45); u.y0 = topAt(o.position.z); o.position.x = (R() - .5) * .03; } o.position.y = (u.y0 || topAt(o.position.z)) + u.k * .1; o.material.opacity = (1 - u.k) * .9; o.rotation.z += dt * 3; }); e.userData.s = R(); e.material.side = THREE.DoubleSide; }
     }
     if (line === 'storm') {   // copper coils, capacitors, and arcs that jump between them
-      for (let i = 0; i < 7; i++) add(new THREE.TorusGeometry(.017, .0032, 6, 16), m.acc, 0, ax, along(.55 + i * .045));
+      for (let i = 0; i < 7; i++) { const z = along(.55 + i * .045); add(new THREE.TorusGeometry(ring(z, .003), .0032, 6, 16), m.acc, 0, ax, z); }
       for (const sx of [-1, 1]) add(new THREE.CylinderGeometry(.006, .006, .05, 10), m.glow, sx * .022, ax + .012, along(.35), Math.PI / 2);
       for (let i = 0; i < 3; i++) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(18), 3)); const ln = new THREE.Line(g, new THREE.LineBasicMaterial({ color: lc('#bff2ff'), transparent: true, blending: THREE.AdditiveBlending, toneMapped: false })); ln.userData.live = true; K2.add(ln);
         ln.userData.anim = (o, t, dt) => { const u = o.userData; if ((u.n = (u.n || 0) - dt) > 0) return; u.n = .03 + R() * .12; o.visible = R() < .55; const p = o.geometry.attributes.position.array, z0 = along(.5 + R() * .3), z1 = z0 - .04 - R() * .05; for (let j = 0; j < 6; j++) { const q = j / 5; p[j * 3] = (R() - .5) * .03; p[j * 3 + 1] = ax + .018 + (R() - .3) * .015; p[j * 3 + 2] = lp(z0, z1, q); } o.geometry.attributes.position.needsUpdate = true; }; }
     }
     if (line === 'voidline') {   // two rings turning round the muzzle, a crystal hovering over the receiver, motes
-      for (const [r, sp] of [[.03, 1.6], [.022, -2.3]]) live(add(new THREE.TorusGeometry(r, .0022, 6, 32), glowM(L.alt), 0, ax, along(.98)), (o, t) => { o.rotation.set(t * sp * .4, t * sp, 0); });
+      for (const [r, sp] of [[Math.max(.03, rM + .012), 1.6], [Math.max(.022, rM + .005), -2.3]]) live(add(new THREE.TorusGeometry(r, .0022, 6, 32), glowM(L.alt), 0, ax, tip + .008), (o, t) => { o.rotation.set(t * sp * .4, t * sp, 0); });
       const cz = along(.62), cy0 = topAt(cz) + .04, cr = live(add(new THREE.OctahedronGeometry(.014, 0), new THREE.MeshPhysicalMaterial({ color: lc('#2a1840'), emissive: lc(L.alt), emissiveIntensity: .9, roughness: .1, metalness: .4, clearcoat: 1 }), 0, cy0, cz), (o, t) => { o.rotation.y = t * 1.4; o.position.y = cy0 + Math.sin(t * 2) * .006; }); cr.scale.set(1, 1.6, 1);
       for (let i = 0; i < 6; i++) live(add(new THREE.PlaneGeometry(.005, .005), glowM(i % 2 ? '#f0dcff' : L.alt), 0, 0, 0), (o, t) => { const a = t * 1.3 + i * TAU / 6; o.position.set(Math.cos(a) * .045, ax + Math.sin(a * 1.3) * .03, along(.6) + Math.sin(a) * .1); o.material.opacity = .5 + Math.sin(t * 5 + i) * .4; });
     }
@@ -4387,6 +4397,8 @@ const GAME = {
       for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.002, .018, (bb.max.z - bb.min.z) * .25), m.metal, sx * ((bb.max.x - bb.min.x) / 2 + .002), top - .01, along(.45), sx * .25);
       for (let i = 0; i < 6; i++) live(add(new THREE.PlaneGeometry(.005, .005), glowM('#fff1c4'), 0, 0, 0), (o, t) => { const a = t * .9 + i * TAU / 6; o.position.set(Math.cos(a) * .05, top + .02 + Math.sin(a * 2) * .02, along(.5) + Math.sin(a) * .12); o.material.opacity = .45 + Math.sin(t * 4 + i) * .4; });
     }
+
+    return K2;
   }
   // knife blades by line: the shape of the blade and what is built round it
   const KNIFE_SHAPE = { dune: 'kukri', nightshift: 'tanto', tidewater: 'kukri', circuit: 'tanto', glacier: 'crystal', aurum: 'ornate', inferno: 'cleaver', storm: 'coil', voidline: 'energy', solaris: 'energy', starforge: 'cleaver', riftborn: 'energy', glyphbound: 'ornate', permafrost: 'crystal', holoform: 'energy' };
@@ -4634,7 +4646,7 @@ const GAME = {
     if (G.k === 'breaker' && rt > .1 && rt < .85) { const ph = (rt * 5) % 1; RK[1] += Math.sin(ph * Math.PI) * .012; RK[3] += Math.sin(ph * Math.PI) * .06; }   // each shell pushed in
     X.view.position.set(VO[0] + bobX + swayX + X.lag * .5 + RK[0] - X.runK * .03 + sideK * .02, VO[1] + Math.abs(bob) * .6 + sway + RK[1] + seat * .012 - rk * .22 - raise * raise * .3 - X.dip * .5 - X.runK * .035 + X.air + climb * .028, VO[2] + RK[2] + rk * .9 + raise * .05 + X.runK * .02 + climb * .02);
     X.view.rotation.set(rk * 1.6 + RK[3] + seat * .05 - raise * .7 - X.runK * .14 - dry * .035 + climb * .2, .02 + RK[4] + X.lag + X.runK * .38 - sideK * .35, RK[5] + raise * .35 + X.lag * .6 + X.runK * .26 - sideK * .3);
-    X.mflash.position.set(0, .025, -(X.viewGun.userData.len || .5) - .03); X.mflash.visible = X.flashT > 0 && !G.melee; X.mflash.rotation.z = Math.random() * 3; X.mflash.scale.setScalar(G.cat === 'Sniper' || G.cat === 'Shotgun' ? 1.5 : G.cat === 'Sidearm' ? .8 : 1);
+    { const bo = X.viewGun.userData.bore; X.mflash.position.set(0, bo ? bo.y : .025, -(X.viewGun.userData.len || .5) - .03); } X.mflash.visible = X.flashT > 0 && !G.melee; X.mflash.rotation.z = Math.random() * 3; X.mflash.scale.setScalar(G.cat === 'Sniper' || G.cat === 'Shotgun' ? 1.5 : G.cat === 'Sidearm' ? .8 : 1);
     viewAnim(P, G, dt, { draw: chamber, insp: X.inspT > 0 ? 1 - X.inspT / INSP_D : -1 });
     { const pb = X.viewGun.userData.parts.boltL; if (pb) { X.view.rotation.z += pb.rotation.z * .14; X.view.position.y -= pb.rotation.z * .012; } }   // working a bolt rolls the rifle
     X.viewGun.rotation.z = G.melee && X.drawT > 0 ? (1 - sm(cl(dq, 0, 1))) * TAU : 0;   // the knife flips into the hand
@@ -5216,6 +5228,8 @@ const GAME = {
   // no text is ever drawn smaller than MIN_PX on the real screen, whatever scale the layout is at
   const fitPx = (g, px) => { const k = g.getTransform().a * innerWidth / g.canvas.width, min = isTouch() ? 10.5 : 9; return px * k < min ? min / k : px; };
   // a short note across the top for a few seconds ("trackpad found")
+  // how far in from the right edge the kit's round sound button reaches (in HUD units), or 0 when it is hidden
+  const muteGap = () => { try { const b = document.getElementById('bMute'); if (!b || b.style.display === 'none') return 0; const r = b.getBoundingClientRect(); return (innerWidth - r.left) / pxPer(); } catch (e) { return 0; } };
   let TOAST = null; const toast = s => { TOAST = { s, at: performance.now() }; };
   on('gift', (f, mate, k) => { if (!M || M.mode === 'demo') return; if (mate === me()) toast(`${f.name.toUpperCase()} BOUGHT YOU A ${GUNS[k].n.toUpperCase()}`); else if (f === me()) toast(`YOU BOUGHT ${mate.name.toUpperCase()} A ${GUNS[k].n.toUpperCase()}`); });
   on('charge', f => { if (!M || M.mode === 'demo' || M.phase === 'end') return; const P = me(); if (f === P) toast(isTouch() ? 'YOU HAVE THE CHARGE' : 'YOU HAVE THE CHARGE  ·  H TO DROP IT'); else if (f && f.team === P.team && M.round && M.time - (M.chargeToastT || -9) > .5) toast(f.name.toUpperCase() + ' HAS THE CHARGE'); else if (!f && sideOf(P) === 'att') toast('THE CHARGE IS ON THE FLOOR'); M.chargeToastT = M.time; });
@@ -5889,7 +5903,7 @@ const GAME = {
       R.push((g, x, y, w, wide) => toggle(g, x, y, w, 'Full screen in play', CFG.full, v => { CFG.full = v; if (!v && document.fullscreenElement) try { document.exitFullscreen(); } catch (e) {} }, wide && 'stops Ctrl+W closing the tab'));
     }
     R.push((g, x, y, w) => fine(g, x, y, w, 'Field of view', fovH(), 90, 115, 1, v => { CFG.fov = v; }, v => Math.round(v) + '\u00b0'));
-    R.push((g, x, y, w) => fine(g, x, y, w, 'Volume', CFG.vol == null ? 1 : CFG.vol, 0, 1, .05, v => { CFG.vol = v; }, v => Math.round(v * 100) + '%'));
+    R.push((g, x, y, w) => fine(g, x, y, w, 'Volume', K.save.mute ? 0 : CFG.vol == null ? 1 : CFG.vol, 0, 1, .05, v => { CFG.vol = v; if (K.save.mute && v > 0) { K.save.mute = false; K.persist(); } }, v => K.save.mute ? 'MUTED' : Math.round(v * 100) + '%'));   // (muted with the hub's sound button: turning it up turns sound back on)
     R.push((g, x, y, w, wide) => toggle(g, x, y, w, 'Show frame rate', !!CFG.fps, v => { CFG.fps = v; }, wide && 'frames a second, top right, while you play'));
     if (page) R.push((g, x, y, w) => { tx(g, 'Picture quality', x, y + h / 2, 17 * u, BONE, 'left'); choice(g, x + w * .42, y, w * .58, h, [['auto', 'AUTO'], ['low', 'FAST'], ['high', 'SHARP']], CFG.quality, v => { if (v !== CFG.quality) toast('PICTURE QUALITY CHANGES ON THE NEXT LOAD'); CFG.quality = v; }); });
     return R;
@@ -5952,7 +5966,7 @@ const GAME = {
     tx(g, 'CHOOSE A MODE', x0, V.y0 + 26 * u, 12 * u, DIM, 'left', 900);
     const modes = [{ k: 2, n: 'STANDARD', sub: 'TWO OR THREE SITES', d: 'Big maps, each with its own twist: walls you shoot down, blast doors, jump pads, belts, three sites. Read the defence, choose a site, plant.', col: '#ff9a3c', maps: '6 MAPS · 100-105 S ROUNDS' },
       { k: 1, n: 'SWIFT', sub: 'ONE SITE', d: 'One site and three ways in, with a twist on every map: teleporters, ice, sandstorms, tall grass, steam, low gravity.', col: YOU, maps: '7 MAPS · 80-90 S ROUNDS' }];
-    const rw = 330 * u, cw = Math.min(330 * u, (V.x1 - x0 - rw - 70 * u) / 2 - 8 * u), ch = Math.min(touch ? 210 * u : 250 * u, H * (touch ? .33 : .4));
+    const rw = 330 * u, cw = Math.min(330 * u, (V.x1 - x0 - rw - 70 * u) / 2 - 8 * u), ch = Math.max(120 * u, Math.min(touch ? 210 * u : 250 * u, H * (touch ? .33 : .4), V.y1 - top - (32 * u + 3 * (tapH(34) + 14 * u) + tapH(34) / 2 + 6 * u)));   // short enough that the four rows below fit
     modes.forEach((md, i) => {
       const x = x0 + i * (cw + 16 * u), on = sites === md.k, hot = zone(x, top, cw, ch, () => { CFG.sites = md.k; saveAll(); click(); });
       g.save(); g.beginPath(); if (g.roundRect) g.roundRect(x, top, cw, ch, 10); else g.rect(x, top, cw, ch); g.clip();
@@ -5960,7 +5974,7 @@ const GAME = {
       g.strokeStyle = 'rgba(255,255,255,.04)'; g.lineWidth = 1; g.beginPath(); for (let k = -ch; k < cw; k += 12) { g.moveTo(x + k, top + ch); g.lineTo(x + k + ch, top); } g.stroke();
       modeGlyph(g, x + cw * .6, top + ch * .4, Math.min(38 * u, ch * .15), md.k === 2, md.col); g.restore();
       rr(g, x, top, cw, ch, 10, null, on ? md.col : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.14)', on ? 3 : 1.5);
-      tx(g, md.sub, x + 18 * u, top + 24 * u, 11 * u, md.col, 'left', 900); tx(g, md.n, x + 16 * u, top + ch - 92 * u, 34 * u, BONE, 'left', 900);
+      tx(g, md.sub, x + 18 * u, top + 24 * u, 11 * u, md.col, 'left', 900); tx(g, md.n, x + 16 * u, top + ch - (touch ? 50 : 92) * u, 34 * u, BONE, 'left', 900);
       // on a phone the words come out too big for the card (and ran over the TEAM SIZE row): the name, the sites and the maps say enough
       if (!touch) para(g, md.d, x + 18 * u, top + ch - 62 * u, cw - 36 * u, 12 * u, '#c9cfd8'); tx(g, md.maps, x + 18 * u, top + ch - 16 * u, 10 * u, DIM, 'left', 800);
       if (on && cw >= 300 * u) tx(g, '✓ SELECTED', x + cw - 16 * u, top + 24 * u, 11 * u, md.col, 'right', 900);
@@ -5974,7 +5988,7 @@ const GAME = {
     else choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), MATCH_LENS.map(w => [w, `BEST OF ${w * 2 - 1}`]), winOf(CFG.win), v => { CFG.win = v; saveAll(); });
     if (!ranked) tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); y += tapH(34) + 14 * u;
     tx(g, 'BOT LEVEL', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['auto', 'AUTO'], ...DIFF.map((d, i) => [i, d.n.toUpperCase()])], CFG.diff, v => { CFG.diff = v; }); y += tapH(34) + 14 * u;
-    if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Shift sprints, crouch mid-sprint slides. B opens the armory, F plants, defuses, takes orbs and swaps guns; T drops your gun, H the charge. Q, E, X: abilities.'].forEach((l, i) => tx(g, l, x0, y + 26 * u + i * 18 * u, 11.5 * u, '#aeb6c2', 'left', 600)); }
+    if (!touch && y + 70 * u < V.y1) { tx(g, 'HOW IT PLAYS', x0, y + 6 * u, 11 * u, DIM, 'left', 900); ['Stand still to shoot straight; tap the opposite key to stop dead. Sprays climb: pull down.', 'Shift sprints, crouch mid-sprint slides. B opens the armory, F plants, defuses, takes orbs and swaps guns; T drops your gun, H the charge. Q, E, X: abilities.'].reduce((yy, l) => para(g, l, x0, yy, lw, 11.5 * u, '#aeb6c2') + 4 * u, y + 26 * u); }   // wrapped to the left column, clear of PLAY
     // the right column: your operative, friends, practice
     const rx = V.x1 - rw - 30 * u; let ry = top;
     { const h = 120 * u, hot = zone(rx, ry, rw, h, () => openSelect(null)); rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', hot ? O.col : 'rgba(239,233,220,.14)', hot ? 2 : 1.5);
@@ -6339,7 +6353,11 @@ const GAME = {
   }
   function equipSkin(k, id) { if (id) STATS.equip[k] = id; else delete STATS.equip[k]; saveAll(true); click(); }
   // text that shrinks to fit a width
-  const fitTx = (g, s2, x, y, px, col, align, weight, maxW) => { g.font = `${weight} ${px}px "Chakra Petch", system-ui, sans-serif`; const w = g.measureText(s2).width; tx(g, s2, x, y, w > maxW ? px * maxW / w : px, col, align, weight); };
+  // text shrunk to fit a width; where it would go below the smallest size the screen allows, it is cut short with an ellipsis
+  const fitTx = (g, s2, x, y, px, col, align, weight, maxW) => {
+    g.font = `${weight} ${px}px ${FONT}`; const w = g.measureText(s2).width, p2 = w > maxW ? px * maxW / w : px, pf = fitPx(g, p2);
+    g.font = `${weight} ${pf}px ${FONT}`; let t = s2; if (g.measureText(t).width > maxW) { while (t.length > 1 && g.measureText(t + '…').width > maxW) t = t.slice(0, -1); t = t.trimEnd() + '…'; }
+    tx(g, t, x, y, p2, col, align, weight); };
   // how many real screen pixels one layout unit is (text never goes below a minimum size, so small cards drop lines)
   const scrPx = g => g.getTransform().a * innerWidth / g.canvas.width;
   // the Paragon colours: a hue that turns, for the edges and lettering of the rarest
@@ -6421,13 +6439,15 @@ const GAME = {
     const id = SH.show, sk = skinOfId(id); if (!sk) { SH.show = null; return; } const own = owns(id), price = skinPrice(id), L = sk.L, px = V.x1 - 430 * u, py = V.y0 + 70 * u;
     let gr = g.createLinearGradient(px - 120 * u, 0, V.x1, 0); gr.addColorStop(0, 'rgba(8,10,14,0)'); gr.addColorStop(.3, 'rgba(8,10,14,.88)'); g.fillStyle = gr; g.fillRect(px - 120 * u, V.y0, V.x1 - px + 120 * u, H);
     tx(g, sk.R.n.toUpperCase(), px, py, 13 * u, sk.R.col, 'left', 900); tx(g, L.n.toUpperCase(), px, py + 44 * u, 40 * u, BONE, 'left', 900); tx(g, sk.k === 'knife' ? 'BLADE' : GUNS[sk.k].n.toUpperCase(), px, py + 80 * u, 18 * u, '#c9cfd8', 'left', 800);
-    let y = para(g, L.blurb, px, py + 112 * u, 380 * u, 14 * u, '#c9cfd8') + 16 * u;
-    for (const [a, b] of featureList(sk)) { g.fillStyle = sk.R.col; g.fillRect(px, y - 5 * u, 4 * u, 10 * u); tx(g, a.toUpperCase(), px + 12 * u, y, 11 * u, DIM, 'left', 800); fitTx(g, b, px + 130 * u, y, 13 * u, BONE, 'left', 700, 250 * u); y += 24 * u; }
-    const by = V.y1 - 120 * u;
+    // the list fits between the name and the buttons: on a short screen the blurb goes first, then the rows close up
+    const by = V.y1 - 120 * u, bx = Math.min(px, V.x1 - muteGap() - 8 * u - 380 * u), feats = featureList(sk), room = by - (L.rl && sk.k !== 'knife' ? 58 * u : 10 * u);
+    let y = py + 112 * u; if (y + 16 * u + feats.length * 24 * u + 40 * u <= room) y = para(g, L.blurb, px, y, 380 * u, 14 * u, '#c9cfd8') + 16 * u; else y += 4 * u;
+    const rowH = cl((room - y) / Math.max(1, feats.length), 16 * u, 24 * u);
+    for (const [a, b] of feats) { g.fillStyle = sk.R.col; g.fillRect(px, y - 5 * u, 4 * u, 10 * u); tx(g, a.toUpperCase(), px + 12 * u, y, 11 * u, DIM, 'left', 800); fitTx(g, b, px + 130 * u, y, 13 * u, BONE, 'left', 700, V.x1 - 12 * u - (px + 130 * u)); y += rowH; }
     if (L.rl && sk.k !== 'knife') { const playing = SH.demo && SH.demo.id === id; btn(g, px, Math.min(y + 6 * u, by - 50 * u), 185 * u, 38 * u, playing ? 'RELOADING…' : 'WATCH THE RELOAD', () => { SH.demo = { id, t0: performance.now() }; }, { px: 12 * u, edge: sk.R.col + 'aa', off: playing }); }
-    if (own) { const on = STATS.equip[sk.k] === id; btn(g, px, by, 380 * u, 60 * u, on ? 'EQUIPPED' : 'EQUIP', () => equipSkin(sk.k, on ? null : id), { on: !on, fill: YOU, solid: true, col: INK, px: 22 * u, sub: on ? 'press again to take it off' : '' }); }
-    else { const can = STATS.coins >= price; btn(g, px, by, 380 * u, 60 * u, `BUY  ·  ${price}`, () => buySkin(id), { on: can, fill: sk.R.col, solid: can, col: can ? INK : BONE, px: 22 * u, sub: can ? `you have ${STATS.coins}` : `you have ${STATS.coins} · win matches to earn coins` }); }
-    btn(g, px, by + 70 * u, 185 * u, 40 * u, 'BACK', () => { SH.show = null; }, { px: 13 * u }); btn(g, px + 195 * u, by + 70 * u, 185 * u, 40 * u, 'TRY IN THE RANGE', () => tryInRange(id), { px: 12 * u });
+    if (own) { const on = STATS.equip[sk.k] === id; btn(g, bx, by, 380 * u, 60 * u, on ? 'EQUIPPED' : 'EQUIP', () => equipSkin(sk.k, on ? null : id), { on: !on, fill: YOU, solid: true, col: INK, px: 22 * u, sub: on ? 'press again to take it off' : '' }); }
+    else { const can = STATS.coins >= price; btn(g, bx, by, 380 * u, 60 * u, `BUY  ·  ${price}`, () => buySkin(id), { on: can, fill: sk.R.col, solid: can, col: can ? INK : BONE, px: 22 * u, sub: can ? `you have ${STATS.coins}` : `you have ${STATS.coins} · win matches to earn coins` }); }
+    btn(g, bx, by + 70 * u, 185 * u, 40 * u, 'BACK', () => { SH.show = null; }, { px: 13 * u }); btn(g, bx + 195 * u, by + 70 * u, 185 * u, 40 * u, 'TRY IN THE RANGE', () => tryInRange(id), { px: 12 * u });
     if (SH.msg && performance.now() - SH.msg.t0 < 2200) tx(g, SH.msg.s, px + 190 * u, by - 18 * u, 14 * u, WARN, 'center', 800);
   }
   function drawReveal(g, V, W, H, u) {   // the unlock: a burst in the rarity's colour, the gun spinning down, its name
@@ -6448,11 +6468,11 @@ const GAME = {
     tx(g, 'LOCKER', x0, V.y0 + 46 * u, 40 * u, BONE, 'left', 900); tx(g, `${STATS.skins.length} skin${STATS.skins.length === 1 ? '' : 's'} owned`, x0 + 4 * u, V.y0 + 78 * u, 13 * u, DIM, 'left', 700);
     coinTag(g, V.x1 - 266 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'STORE', () => { UI.panel = 'store'; }, { px: 13 * u });
     // the weapons, a column of tiles each showing what it wears
-    const tw = 168 * u, th = 46 * u, cols = 2;
+    const tw = 168 * u, cols = 2, rows = Math.ceil(SKIN_GUNS.length / cols), th = cl((V.y1 - 8 * u - top) / rows - 6 * u, 30 * u, 46 * u), ty = th / (46 * u);   // the tiles close up to fit a short screen
     SKIN_GUNS.forEach((gk, i) => { const x = x0 + (i % cols) * (tw + 8 * u), y = top + Math.floor(i / cols) * (th + 6 * u), on = gk === k, eq = STATS.equip[gk], sk = skinOfId(eq), hot = zone(x, y, tw, th, () => { if (SH.locker !== gk) SH.lpage = 0; SH.locker = gk; click(); });
       rr(g, x, y, tw, th, 6, on ? 'rgba(24,30,42,.96)' : 'rgba(12,16,22,.82)', on ? YOU : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.12)', on ? 2 : 1); if (sk) { g.fillStyle = sk.R.col; g.fillRect(x, y + th - 3 * u, tw, 3 * u); }
       const ic = gunIcon(gk, eq || null); if (ic) { const iw = tw * .5, ih = iw * ic.height / ic.width; g.drawImage(ic, x + tw - iw - 4 * u, y + (th - ih) / 2, iw, ih); }
-      tx(g, gk === 'knife' ? 'KNIFE' : GUNS[gk].n.toUpperCase(), x + 10 * u, y + 17 * u, 12 * u, BONE, 'left', 800); tx(g, sk ? sk.L.n : 'Standard', x + 10 * u, y + 33 * u, 10 * u, sk ? sk.R.col : DIM, 'left', 700); });
+      tx(g, gk === 'knife' ? 'KNIFE' : GUNS[gk].n.toUpperCase(), x + 10 * u, y + th / 2 - 7 * u * ty, 12 * u, BONE, 'left', 800); tx(g, sk ? sk.L.n : 'Standard', x + 10 * u, y + th / 2 + 9 * u * ty, 10 * u, sk ? sk.R.col : DIM, 'left', 700); });
     // its skins: standard, then each one you own, rarest first (Paragons at the top), a page at a time
     const mine = skinSort(STATS.skins.filter(id => skinOfId(id) && skinOfId(id).k === k)), rx = x0 + cols * (tw + 8 * u) + 20 * u, rw = Math.min(360 * u, V.x1 - rx - 30 * u), t = X ? X.t : 0;
     const list = [null, ...mine], h2 = 44 * u, per = Math.max(3, Math.floor((V.y1 - 70 * u - (top + 24 * u)) / (h2 + 6 * u))), pages = Math.ceil(list.length / per); SH.lpage = cl(SH.lpage || 0, 0, pages - 1);
@@ -6666,7 +6686,7 @@ const GAME = {
     zones.length = 0;
     if (!ready) { g.fillStyle = INK; g.fillRect(V.x0, V.y0, V.x1 - V.x0, V.y1 - V.y0); tx(g, failed ? 'Could not load the 3D engine. Check your connection and reload.' : 'LOADING', 640, 360, failed ? 22 : 30, failed ? WARN : BONE); return; }
     renderFrame(dt); if (posed) return;
-    const mute = document.getElementById('bMute'); if (mute) mute.style.display = isTouch() && screen === 'play' && K.state === 'play' ? 'none' : '';
+    const mute = document.getElementById('bMute'); if (mute) mute.style.display = K.state === 'play' ? 'none' : '';   // the kit's round sound button sat over our buttons in the corner: inside the game, sound is in Settings (Sound, Volume)
     if (K.bot && !DEMO) return;
     if (screen !== 'party') hideBoxes();
     if (screen === 'menu') drawMenu(g); else if (screen === 'party') drawParty(g); else if (screen === 'select') drawSelect(g); else if (screen === 'play' && M) drawHud(g); else if (screen === 'over' && M) drawOver(g);

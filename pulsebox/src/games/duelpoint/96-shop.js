@@ -56,7 +56,11 @@
   }
   function equipSkin(k, id) { if (id) STATS.equip[k] = id; else delete STATS.equip[k]; saveAll(true); click(); }
   // text that shrinks to fit a width
-  const fitTx = (g, s2, x, y, px, col, align, weight, maxW) => { g.font = `${weight} ${px}px "Chakra Petch", system-ui, sans-serif`; const w = g.measureText(s2).width; tx(g, s2, x, y, w > maxW ? px * maxW / w : px, col, align, weight); };
+  // text shrunk to fit a width; where it would go below the smallest size the screen allows, it is cut short with an ellipsis
+  const fitTx = (g, s2, x, y, px, col, align, weight, maxW) => {
+    g.font = `${weight} ${px}px ${FONT}`; const w = g.measureText(s2).width, p2 = w > maxW ? px * maxW / w : px, pf = fitPx(g, p2);
+    g.font = `${weight} ${pf}px ${FONT}`; let t = s2; if (g.measureText(t).width > maxW) { while (t.length > 1 && g.measureText(t + '…').width > maxW) t = t.slice(0, -1); t = t.trimEnd() + '…'; }
+    tx(g, t, x, y, p2, col, align, weight); };
   // how many real screen pixels one layout unit is (text never goes below a minimum size, so small cards drop lines)
   const scrPx = g => g.getTransform().a * innerWidth / g.canvas.width;
   // the Paragon colours: a hue that turns, for the edges and lettering of the rarest
@@ -138,13 +142,15 @@
     const id = SH.show, sk = skinOfId(id); if (!sk) { SH.show = null; return; } const own = owns(id), price = skinPrice(id), L = sk.L, px = V.x1 - 430 * u, py = V.y0 + 70 * u;
     let gr = g.createLinearGradient(px - 120 * u, 0, V.x1, 0); gr.addColorStop(0, 'rgba(8,10,14,0)'); gr.addColorStop(.3, 'rgba(8,10,14,.88)'); g.fillStyle = gr; g.fillRect(px - 120 * u, V.y0, V.x1 - px + 120 * u, H);
     tx(g, sk.R.n.toUpperCase(), px, py, 13 * u, sk.R.col, 'left', 900); tx(g, L.n.toUpperCase(), px, py + 44 * u, 40 * u, BONE, 'left', 900); tx(g, sk.k === 'knife' ? 'BLADE' : GUNS[sk.k].n.toUpperCase(), px, py + 80 * u, 18 * u, '#c9cfd8', 'left', 800);
-    let y = para(g, L.blurb, px, py + 112 * u, 380 * u, 14 * u, '#c9cfd8') + 16 * u;
-    for (const [a, b] of featureList(sk)) { g.fillStyle = sk.R.col; g.fillRect(px, y - 5 * u, 4 * u, 10 * u); tx(g, a.toUpperCase(), px + 12 * u, y, 11 * u, DIM, 'left', 800); fitTx(g, b, px + 130 * u, y, 13 * u, BONE, 'left', 700, 250 * u); y += 24 * u; }
-    const by = V.y1 - 120 * u;
+    // the list fits between the name and the buttons: on a short screen the blurb goes first, then the rows close up
+    const by = V.y1 - 120 * u, bx = Math.min(px, V.x1 - muteGap() - 8 * u - 380 * u), feats = featureList(sk), room = by - (L.rl && sk.k !== 'knife' ? 58 * u : 10 * u);
+    let y = py + 112 * u; if (y + 16 * u + feats.length * 24 * u + 40 * u <= room) y = para(g, L.blurb, px, y, 380 * u, 14 * u, '#c9cfd8') + 16 * u; else y += 4 * u;
+    const rowH = cl((room - y) / Math.max(1, feats.length), 16 * u, 24 * u);
+    for (const [a, b] of feats) { g.fillStyle = sk.R.col; g.fillRect(px, y - 5 * u, 4 * u, 10 * u); tx(g, a.toUpperCase(), px + 12 * u, y, 11 * u, DIM, 'left', 800); fitTx(g, b, px + 130 * u, y, 13 * u, BONE, 'left', 700, V.x1 - 12 * u - (px + 130 * u)); y += rowH; }
     if (L.rl && sk.k !== 'knife') { const playing = SH.demo && SH.demo.id === id; btn(g, px, Math.min(y + 6 * u, by - 50 * u), 185 * u, 38 * u, playing ? 'RELOADING…' : 'WATCH THE RELOAD', () => { SH.demo = { id, t0: performance.now() }; }, { px: 12 * u, edge: sk.R.col + 'aa', off: playing }); }
-    if (own) { const on = STATS.equip[sk.k] === id; btn(g, px, by, 380 * u, 60 * u, on ? 'EQUIPPED' : 'EQUIP', () => equipSkin(sk.k, on ? null : id), { on: !on, fill: YOU, solid: true, col: INK, px: 22 * u, sub: on ? 'press again to take it off' : '' }); }
-    else { const can = STATS.coins >= price; btn(g, px, by, 380 * u, 60 * u, `BUY  ·  ${price}`, () => buySkin(id), { on: can, fill: sk.R.col, solid: can, col: can ? INK : BONE, px: 22 * u, sub: can ? `you have ${STATS.coins}` : `you have ${STATS.coins} · win matches to earn coins` }); }
-    btn(g, px, by + 70 * u, 185 * u, 40 * u, 'BACK', () => { SH.show = null; }, { px: 13 * u }); btn(g, px + 195 * u, by + 70 * u, 185 * u, 40 * u, 'TRY IN THE RANGE', () => tryInRange(id), { px: 12 * u });
+    if (own) { const on = STATS.equip[sk.k] === id; btn(g, bx, by, 380 * u, 60 * u, on ? 'EQUIPPED' : 'EQUIP', () => equipSkin(sk.k, on ? null : id), { on: !on, fill: YOU, solid: true, col: INK, px: 22 * u, sub: on ? 'press again to take it off' : '' }); }
+    else { const can = STATS.coins >= price; btn(g, bx, by, 380 * u, 60 * u, `BUY  ·  ${price}`, () => buySkin(id), { on: can, fill: sk.R.col, solid: can, col: can ? INK : BONE, px: 22 * u, sub: can ? `you have ${STATS.coins}` : `you have ${STATS.coins} · win matches to earn coins` }); }
+    btn(g, bx, by + 70 * u, 185 * u, 40 * u, 'BACK', () => { SH.show = null; }, { px: 13 * u }); btn(g, bx + 195 * u, by + 70 * u, 185 * u, 40 * u, 'TRY IN THE RANGE', () => tryInRange(id), { px: 12 * u });
     if (SH.msg && performance.now() - SH.msg.t0 < 2200) tx(g, SH.msg.s, px + 190 * u, by - 18 * u, 14 * u, WARN, 'center', 800);
   }
   function drawReveal(g, V, W, H, u) {   // the unlock: a burst in the rarity's colour, the gun spinning down, its name
@@ -165,11 +171,11 @@
     tx(g, 'LOCKER', x0, V.y0 + 46 * u, 40 * u, BONE, 'left', 900); tx(g, `${STATS.skins.length} skin${STATS.skins.length === 1 ? '' : 's'} owned`, x0 + 4 * u, V.y0 + 78 * u, 13 * u, DIM, 'left', 700);
     coinTag(g, V.x1 - 266 * u, V.y0 + 46 * u, 22 * u, STATS.coins); btn(g, V.x1 - 130 * u, V.y0 + 28 * u, 110 * u, 36 * u, 'STORE', () => { UI.panel = 'store'; }, { px: 13 * u });
     // the weapons, a column of tiles each showing what it wears
-    const tw = 168 * u, th = 46 * u, cols = 2;
+    const tw = 168 * u, cols = 2, rows = Math.ceil(SKIN_GUNS.length / cols), th = cl((V.y1 - 8 * u - top) / rows - 6 * u, 30 * u, 46 * u), ty = th / (46 * u);   // the tiles close up to fit a short screen
     SKIN_GUNS.forEach((gk, i) => { const x = x0 + (i % cols) * (tw + 8 * u), y = top + Math.floor(i / cols) * (th + 6 * u), on = gk === k, eq = STATS.equip[gk], sk = skinOfId(eq), hot = zone(x, y, tw, th, () => { if (SH.locker !== gk) SH.lpage = 0; SH.locker = gk; click(); });
       rr(g, x, y, tw, th, 6, on ? 'rgba(24,30,42,.96)' : 'rgba(12,16,22,.82)', on ? YOU : hot ? 'rgba(239,233,220,.5)' : 'rgba(239,233,220,.12)', on ? 2 : 1); if (sk) { g.fillStyle = sk.R.col; g.fillRect(x, y + th - 3 * u, tw, 3 * u); }
       const ic = gunIcon(gk, eq || null); if (ic) { const iw = tw * .5, ih = iw * ic.height / ic.width; g.drawImage(ic, x + tw - iw - 4 * u, y + (th - ih) / 2, iw, ih); }
-      tx(g, gk === 'knife' ? 'KNIFE' : GUNS[gk].n.toUpperCase(), x + 10 * u, y + 17 * u, 12 * u, BONE, 'left', 800); tx(g, sk ? sk.L.n : 'Standard', x + 10 * u, y + 33 * u, 10 * u, sk ? sk.R.col : DIM, 'left', 700); });
+      tx(g, gk === 'knife' ? 'KNIFE' : GUNS[gk].n.toUpperCase(), x + 10 * u, y + th / 2 - 7 * u * ty, 12 * u, BONE, 'left', 800); tx(g, sk ? sk.L.n : 'Standard', x + 10 * u, y + th / 2 + 9 * u * ty, 10 * u, sk ? sk.R.col : DIM, 'left', 700); });
     // its skins: standard, then each one you own, rarest first (Paragons at the top), a page at a time
     const mine = skinSort(STATS.skins.filter(id => skinOfId(id) && skinOfId(id).k === k)), rx = x0 + cols * (tw + 8 * u) + 20 * u, rw = Math.min(360 * u, V.x1 - rx - 30 * u), t = X ? X.t : 0;
     const list = [null, ...mine], h2 = 44 * u, per = Math.max(3, Math.floor((V.y1 - 70 * u - (top + 24 * u)) / (h2 + 6 * u))), pages = Math.ceil(list.length / per); SH.lpage = cl(SH.lpage || 0, 0, pages - 1);
