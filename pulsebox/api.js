@@ -514,7 +514,7 @@ export class Stats {
 // One instance per room code. Players stay connected only while the game is open; nothing is stored.
 // A message { to: id } goes to that player only; anything else goes to everyone else in the room.
 // The first player in is the host (they run the monsters); if the host leaves, the next player takes over.
-const MAX_PLAYERS = 8, MAX_MSG = 16000, BIG_ROOMS = { 'odd-crowd': 14 };   // party games seat more people (Odd Crowd: 10 players + a host screen + reconnects)
+const MAX_PLAYERS = 8, MAX_MSG = 16000, BIG_ROOMS = { 'odd-crowd': 14, duelpoint: 12 };   // party games seat more people (Odd Crowd: 10 players + a host screen + reconnects)
 export class Rooms {
   constructor(state) { this.state = state; this.socks = new Map(); this.next = 1; this.host = 0; this.game = ''; }
   async fetch(request) {

@@ -96,7 +96,7 @@
   // a bot's rating, for the loading screen: an adaptive one sits near yours, a fixed level near that level's rating
   const botRating = (f, M) => Math.round(M.auto ? cl(M.rating + rnd(-60, 60), 600, 1800) : RATING_AT[cl(f.bot ? f.bot.diff : 1, 0, 3)] + rnd(10, 140));
   // the body: eye heights standing and crouched, radius, speeds (m/s), gravity, jump speed, the step you climb without jumping
-  const teamSize = n => Math.max(1, Math.min(4, (n | 0) || 2)), vsLabel = n => teamSize(n) + 'V' + teamSize(n);   // 1v1, 2v2, 3v3 or 4v4
+  const teamSize = n => Math.max(1, Math.min(5, (n | 0) || 2)), vsLabel = n => teamSize(n) + 'V' + teamSize(n);   // 1v1 up to 5v5
   // the maps' mechanics: ice grip (of normal), low gravity (of normal), belt speed, a jump pad's throw, the vents' clock,
   // the sandstorm's clock and how far you see in it
   const DC_WAIT = 20;   // seconds a dropped player has to reconnect before they count as gone

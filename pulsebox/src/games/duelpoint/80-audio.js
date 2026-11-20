@@ -7,7 +7,7 @@
   // every Duelpoint sound runs through one bus before the kit's master, so the volume setting (CFG.vol, 0 to 1) scales them all
   let busN = null;
   function bus() {
-    const ac = K.ac; if (!busN || busN.context !== ac) { busN = ac.createGain(); busN.connect(bus()); }
+    const ac = K.ac; if (!busN || busN.context !== ac) { busN = ac.createGain(); busN.connect(K.master); }
     const v = CFG.vol == null ? 1 : cl(+CFG.vol, 0, 1); if (busN.gain.value !== v) busN.gain.value = v; return busN;
   }
   // where to plug a sound in: returns an audio node that leads to the speakers, shaped for a source at fighter f (or your own)

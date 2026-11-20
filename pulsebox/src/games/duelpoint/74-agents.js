@@ -30,6 +30,15 @@
       skin: st(kit.skin, { roughness: .62, metalness: 0 }), dark: st('#15171c', { roughness: .6, metalness: .25 }), acc: st(op.col, { roughness: .35, metalness: .5, emissive: LC(op.col), emissiveIntensity: .12 }),
       metal: st('#9aa3ad', { roughness: .3, metalness: .9 }), glow: new THREE.MeshBasicMaterial({ color: LC(op.col), toneMapped: false, side: THREE.DoubleSide }) };
   }
+  let SHP = null;
+  function shadowShapes() {
+    if (SHP) return SHP; const leg = new THREE.CylinderGeometry(.095, .07, .92, 8), body = new THREE.CylinderGeometry(.2, .17, .64, 10), head = new THREE.SphereGeometry(.16, 10, 8);
+    body.translate(0, .27, 0); head.translate(0, .7, 0); const bh = [body, head].map(g => g.toNonIndexed()), n = bh[0].attributes.position.count + bh[1].attributes.position.count, P = new Float32Array(n * 3);
+    P.set(bh[0].attributes.position.array, 0); P.set(bh[1].attributes.position.array, bh[0].attributes.position.count * 3); const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.BufferAttribute(P, 3)); bg.computeBoundingSphere();
+    return SHP = { m: new THREE.MeshBasicMaterial({ color: '#000000' }), leg, body: bg, arm: new THREE.CylinderGeometry(.07, .06, .5, 6) };
+  }
+  function pxHide(r, s, c, geo) { geo.drawRange.count = 0; }
+  function pxShow(r, s, c, geo) { geo.drawRange.count = Infinity; }
   function agentModel(f) {
     const G = new THREE.Group(), op = OPS[f.op] || OPS.vex, kit = KIT[f.op] || KIT.vex, sh = !X.low, w = kit.wide; G.rotation.order = 'YXZ';
     const M = agentMats(f.op, kit, op);
@@ -134,9 +143,15 @@
         limb(S, E, .064, .054, M.suit); limb(E, Hn, .052, .042, M.suit); add(sph(.057, 10, 8), M.plate, E[0], E[1], E[2]); { const gl = add(rb(.078, .095, .07, .02), M.dark, Hn[0], Hn[1], Hn[2]); gl.lookAt(Hn[0] + d.x, Hn[1] + d.y, Hn[2] + d.z); const kn = add(rb(.07, .022, .02, .006), M.plate, Hn[0] + d.x * .03, Hn[1] + d.y * .03 + .02, Hn[2] + d.z * .03); kn.lookAt(Hn[0] + d.x, Hn[1] + d.y + .02, Hn[2] + d.z); }
         const mid = [(E[0] + Hn[0]) / 2, (E[1] + Hn[1]) / 2, (E[2] + Hn[2]) / 2]; add(sph(.056, 10, 8), M.acc, mid[0], mid[1], mid[2]).scale.set(1, .5, 1);
       }
-      bake(armMesh, sh);
+      bake(armMesh, false);
     };
-    bake(G, sh);
+    bake(G, false);
+    // the shadow: every piece of the body casting its own would draw the whole fighter again into the shadow map; four
+    // plain shapes on the bones give much the same shadow for four draws. They draw nothing in the picture itself (an empty
+    // draw range just for that pass: the shadow pass, which runs no hooks, draws them whole).
+    if (sh) { const S = shadowShapes(), px = (par, geo, x, y, z, rx = 0) => { const m = new THREE.Mesh(geo, S.m); m.position.set(x, y, z); m.rotation.x = rx; m.castShadow = true; m.userData.px = true; m.raycast = () => {}; m.onBeforeRender = pxHide; m.onAfterRender = pxShow; par.add(m); return m; };
+      for (const lg of [L, Rg]) px(lg.th, S.leg, 0, -.42, -.01);
+      px(torso, S.body, 0, 0, 0); px(arms, S.arm, 0, -.1, -.24, Math.PI / 2); }
     G.userData = { hip, L, Rg, torso, head, arms, gunHold, tails, pose, gk: '', flash: null, op: f.op, dead: 0 };
     X.scene.add(G); return G;
   }
@@ -203,13 +218,28 @@
   function outline(root, show) {
     // see-through parts of the gun (glass, glows, decals) get no outline; the body always does, even when caught half-faded by a cloak
     const add = [], gh = root.userData.gunHold, U = root.userData; if (!U.olRef) U.olRef = olN++ % 255 + 1;
-    const walk = (o, inGun) => { if (o.userData.isOL) return; inGun = inGun || o === gh; if (o.isMesh && !o.userData.ol && !(inGun && o.material && o.material.transparent)) add.push(o); for (const c of o.children) walk(c, inGun); };
+    const walk = (o, inGun) => { if (o.userData.isOL || o.userData.px) return; inGun = inGun || o === gh; if (o.isMesh && !o.userData.ol && !(inGun && o.material && o.material.transparent)) add.push(o); for (const c of o.children) walk(c, inGun); };
     walk(root, false);
-    for (const o of add) {
-      olNormals(o.geometry); const m = new THREE.Mesh(o.geometry, outlineMat()); m.userData.isOL = true; m.userData.olRef = U.olRef; m.raycast = () => {}; m.onBeforeRender = olPre; m.renderOrder = 1; m.frustumCulled = o.frustumCulled; o.add(m); o.userData.ol = m;
+    // copies made for pieces since thrown away (an old gun, old arms) give their memory back
+    U.olGeos = (U.olGeos || []).filter(m => { let q = m; while (q && q !== root) q = q.parent; if (q) return true; m.geometry.dispose(); return false; });
+    const hook = (o, m) => { o.userData.ol = m;
       const b0 = o.onBeforeRender, a0 = o.onAfterRender, own = THREE.Object3D.prototype;   // keep any hooks a piece already has
       o.onBeforeRender = b0 === own.onBeforeRender ? olMark : function (...a) { b0.apply(this, a); olMark.apply(this, a); };
-      o.onAfterRender = a0 === own.onAfterRender ? olUnmark : function (...a) { olUnmark.apply(this, a); a0.apply(this, a); };
+      o.onAfterRender = a0 === own.onAfterRender ? olUnmark : function (...a) { olUnmark.apply(this, a); a0.apply(this, a); }; };
+    const olMesh = (geo, par) => { const m = new THREE.Mesh(geo, outlineMat()); m.userData.isOL = true; m.userData.olRef = U.olRef; m.raycast = () => {}; m.onBeforeRender = olPre; m.renderOrder = 1; par.add(m); return m; };
+    // the pieces baked into a bone (or a gun part) never move or hide on their own: their copies are merged into one per
+    // bone, a draw each instead of one per piece. Anything else keeps a copy of its own, riding on the piece.
+    const byP = new Map();
+    for (const o of add) {
+      if (o.userData.baked && o.visible && o.parent && !o.geometry.index) { if (!byP.has(o.parent)) byP.set(o.parent, []); byP.get(o.parent).push(o); continue; }
+      olNormals(o.geometry); const m = olMesh(o.geometry, o); m.frustumCulled = o.frustumCulled; hook(o, m);
+    }
+    for (const [par, list] of byP) {
+      let n = 0; for (const o of list) { olNormals(o.geometry); n += o.geometry.attributes.position.count; }
+      const P = new Float32Array(n * 3), N = new Float32Array(n * 3); let at = 0;
+      for (const o of list) { const g = o.geometry; P.set(g.attributes.position.array, at * 3); N.set(g.attributes.olN.array, at * 3); at += g.attributes.position.count; }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); geo.setAttribute('olN', new THREE.BufferAttribute(N, 3)); geo.computeBoundingSphere();
+      const m = olMesh(geo, par); U.olGeos.push(m); for (const o of list) hook(o, m);
     }
     root.traverse(o => { if (o.userData.isOL) o.visible = show; });
   }
@@ -217,14 +247,14 @@
     let A = X.agents.get(f);
     if (!A || A.userData.op !== f.op) { if (A) { X.scene.remove(A); if (A.userData.ownM) for (const m of new Set(A.userData.ownM.values())) m.dispose(); } A = agentModel(f); X.agents.set(f, A); }
     const U = A.userData, fk0 = gun(f).k, fsk = skinFor(f, fk0) || '', fk = fk0;
-    if (U.gk !== fk || U.gsk !== fsk) { U.gsk = fsk; while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]); const gm = gunModel(fk, { cast: !X.low, flash: true, skin: fsk }); gm.scale.setScalar(1.08); U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
+    if (U.gk !== fk || U.gsk !== fsk) { U.gsk = fsk; while (U.gunHold.children.length) U.gunHold.remove(U.gunHold.children[0]); const gm = gunModel(fk, { cast: false, flash: true, skin: fsk }); gm.scale.setScalar(1.08); U.gunHold.add(gm); U.gk = fk; U.flash = gm.userData.flash; U.pose(gm.userData); }
     A.visible = true; A.position.set(ipos(f, 'x'), ipos(f, 'y'), ipos(f, 'z')); A.rotation.y = f.yaw;
     { const P = M ? me() : null, foeSide = !!P && f.team !== P.team, op = f.cloak > 0 && f.alive ? (foeSide ? .07 : .35) : 1; U.cop = lp(U.cop == null ? 1 : U.cop, op, Math.min(1, dt * 10));
       // the fade goes on this fighter's own copies of its materials (everyone playing the same operative shares the
       // originals, so fading those turned every other Wraith on the field see-through too)
       const o2 = U.cop > .99 ? 1 : U.cop, cs = U.copSet == null ? 1 : U.copSet;
       if (o2 === 1 ? cs !== 1 : Math.abs(cs - o2) > .01 || U.copGk !== U.gk) { const own = U.ownM || (U.ownM = new Map()), mine = m => { let c = own.get(m); if (!c) { c = m.clone(); own.set(m, c); own.set(c, c); } return c; };
-        const walk = o => { if (o === U.gunHold) return; if (o.isMesh && !o.userData.isOL && o.material && !o.material.isShaderMaterial) { const m = o.material = mine(o.material); m.transparent = o2 < 1; m.opacity = o2; m.depthWrite = o2 >= 1; } for (const c of o.children) walk(c); }; walk(A); U.copSet = o2; U.copGk = U.gk; }
+        const walk = o => { if (o === U.gunHold) return; if (o.isMesh && !o.userData.isOL && !o.userData.px && o.material && !o.material.isShaderMaterial) { const m = o.material = mine(o.material); m.transparent = o2 < 1; m.opacity = o2; m.depthWrite = o2 >= 1; } for (const c of o.children) walk(c); }; walk(A); U.copSet = o2; U.copGk = U.gk; }
       U.gunHold.visible = U.cop > .5;
       // the red edge only on a fully solid body: a see-through one draws after it, so the whole red copy would show through.
       // Redone whenever the gun is rebuilt (a new gun or a new skin on it), so the new gun and arms get theirs.

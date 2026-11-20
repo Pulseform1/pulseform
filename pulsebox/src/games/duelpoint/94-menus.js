@@ -121,7 +121,7 @@
     });
     // team size and the bots
     let y = top + ch + 26 * u; const lw = cw * 2 + 16 * u;
-    tx(g, 'TEAM SIZE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [[4, '4V4 · SQUADS'], [3, '3V3'], [2, '2V2'], [1, '1V1 · DUEL']], teamSize(CFG.size), v => { CFG.size = v; saveAll(); }); y += tapH(34) + 14 * u;
+    tx(g, 'TEAM SIZE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [[5, '5V5'], [4, '4V4'], [3, '3V3'], [2, '2V2'], [1, '1V1 · DUEL']], teamSize(CFG.size), v => { CFG.size = v; saveAll(); }); y += tapH(34) + 14 * u;
     const ranked = CFG.queue === 'ranked';
     tx(g, 'QUEUE', x0, y, 12 * u, DIM, 'left', 900); choice(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), [['unrated', 'UNRATED'], ['ranked', 'RANKED  ·  ' + (placed(rankedOf(CFG.size)) ? rankLabel(rankedOf(CFG.size).rv).toUpperCase() : 'PLACEMENTS ' + rankedOf(CFG.size).n + '/' + PLACE_N)]], CFG.queue, v => { CFG.queue = v; saveAll(); }); y += tapH(34) + 14 * u;
     if (ranked) { tx(g, 'ROUNDS', x0, y, 12 * u, DIM, 'left', 900); rr(g, x0 + 110 * u, y - tapH(34) / 2, lw - 110 * u, tapH(34), 6, 'rgba(255,214,102,.08)', 'rgba(255,214,102,.35)', 1); tx(g, 'RANKED IS BEST OF 9  ·  OVERTIME AT 4–4  ·  BEAT BOTS ABOVE YOUR RANK TO CLIMB FASTER', x0 + 110 * u + (lw - 110 * u) / 2, y, Math.min(11.5 * u, (lw - 110 * u) / 70), GOLD, 'center', 800); }
@@ -136,7 +136,7 @@
       tx(g, `${O.q.n} · ${O.e.n}`, rx + h + 4 * u, ry + 80 * u, 12 * u, O.col, 'left', 800); tx(g, hot ? 'CHANGE →' : 'CHANGE', rx + rw - 14 * u, ry + h - 16 * u, 10 * u, hot ? O.col : DIM, 'right', 900); ry += h + 14 * u; }
     // a short screen (a phone on its side): the queue shares the friends card, so PLAY stays on screen
     const tight = ry + (104 + 14 + 96 + 14 + 12 + 72) * u + tapH(42) > V.y1 - 4 * u;
-    { const h = 104 * u, bw = tight ? (rw - 40 * u) / 2 : rw - 32 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, tight ? 'up to eight' : 'up to eight, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
+    { const h = 104 * u, bw = tight ? (rw - 40 * u) / 2 : rw - 32 * u; rr(g, rx, ry, rw, h, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5); tx(g, 'PLAY WITH FRIENDS', rx + 16 * u, ry + 24 * u, 12 * u, YOU, 'left', 900); tx(g, tight ? 'up to ten' : 'up to ten, your teams, your rules', rx + 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'left', 700);
       btn(g, rx + 16 * u, ry + 56 * u, bw, 36 * u, MP.online() ? (tight ? 'PARTY · ' : 'BACK TO YOUR PARTY · ') + MP.code : 'OPEN A PARTY', () => openParty(), { on: true, fill: YOU, solid: true, col: INK, px: 14 * u });
       if (tight) { tx(g, 'FIND A MATCH', rx + rw - 16 * u, ry + 24 * u, 12 * u, GOLD, 'right', 900); tx(g, 'anyone · unrated', rx + rw - 16 * u, ry + 44 * u, 11 * u, '#aeb6c2', 'right', 700); drawQueueMini(g, rx + 24 * u + bw, ry + 56 * u, bw, 36 * u, u); }
       ry += h + 14 * u; }
@@ -311,7 +311,7 @@
     // the MVPs: the best combat score in the match, and the best on the other team
     const best = list => list.filter(f => !f.gone).sort((a, b) => csOf(b) - csOf(a))[0], wT = M.wins[0] >= M.wins[1] ? P.team : 1 - P.team, mvp = best(M.fs.filter(f => f.team === wT)), tmvp = best(M.fs.filter(f => f.team !== wT));
     let ty = V.y0 + 250 * u, cy;
-    if (M.fs.length > 2) {   // a team match: everyone, your team first (you at the top), then the rivals, best first; the rows shrink to fit 4v4
+    if (M.fs.length > 2) {   // a team match: everyone, your team first (you at the top), then the rivals, best first; the rows shrink to fit 5v5
       ty = V.y0 + 236 * u; const mine = M.fs.filter(f => f.team === P.team).sort((a, b) => csOf(b) - csOf(a)), theirs = M.fs.filter(f => f.team !== P.team).sort((a, b) => csOf(b) - csOf(a)), n = mine.length + theirs.length;
       const hh = 26 * u, rh = Math.max(18 * u, Math.min(30 * u, (V.y1 - 150 * u - ty - hh - 18 * u) / n)), th = hh + n * rh + 8 * u + 10 * u, x0 = 640 - tw / 2;
       const cols = [['SCORE', f => csOf(f), 250], ['K', f => f.stat.k, 200], ['D', f => f.stat.d, 160], ['FK', f => f.stat.fk | 0, 120], ['DMG', f => Math.round(f.stat.dmg), 40]];

@@ -92,7 +92,7 @@
   }
   /* The room: two to eight friends. VERSUS (2v2) splits them into two teams of at least two (seat order: 1st and 3rd against
      2nd and 4th); DUEL is one-on-one with two players; CO-OP puts everyone on one team. Bots fill the short team, run by the host; the host's settings say who attacks first.
-     From the party, teams run up to 4v4. A bot takes an operative nobody on its team has yet, and a name no player has. */
+     From the party, teams run up to 5v5. A bot takes an operative nobody on its team has yet, and a name no player has. */
   function seatsFor(cfg, roster) {
     const humans = roster.filter(p => !p.bot), coop = cfg.team === 'coop';
     let seats, b = 0;
@@ -113,7 +113,7 @@
     return seats;
   }
   Object.assign(MP.opts, {
-    max: 8, min: 2, bots: 0, solo: false, onClose: () => { if (screen !== 'menu') toMenu(); }, sub: 'Create a room and send your friends the code. Two to eight players.',
+    max: 10, min: 2, bots: 0, solo: false, onClose: () => { if (screen !== 'menu') toMenu(); }, sub: 'Create a room and send your friends the code. Two to ten players.',
     config: () => ({ hostAtt: R() < .5 ? 1 : 0, decHostAtt: R() < .5 ? 1 : 0, map: pick(mapPool(CFG.sites)), sites: CFG.sites, win: winOf(CFG.win), team: CFG.team, botDiff: CFG.diff === 'auto' ? diffFor(STATS.rating).i : CFG.diff,
       names: [...BOT_NAMES].sort(() => R() - .5), ops: [...Object.keys(OPS)].sort(() => R() - .5) }),
     onStart: (cfg, roster) => { cfg.names = cfg.names || BOT_NAMES; cfg.ops = cfg.ops || ['vex']; startMatch({ mode: 'online', seats: seatsFor(cfg, roster), hostAtt: cfg.hostAtt, decHostAtt: cfg.decHostAtt, map: cfg.map, botDiff: cfg.botDiff, win: cfg.win, ranked: !!cfg.ranked }); emit('matchStart'); },

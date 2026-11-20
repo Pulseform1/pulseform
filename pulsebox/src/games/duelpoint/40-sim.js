@@ -4,7 +4,7 @@
      Modes: 'bot' (you against a bot), 'online', 'range' (practice: endless money, a target that comes back), 'demo'. */
   let M = null;
   let readInput = () => ({ mx: 0, mz: 0, walk: false, sprint: false, crouch: false, jump: false, use: false, fire: false, rapid: false });   // 90-input replaces this
-  const BOT_NAMES = ['Rook', 'Kestrel', 'Mercer', 'Harrow', 'Nyx', 'Sable', 'Quill', 'Cinder', 'Wren', 'Onyx'];
+  const BOT_NAMES = ['Rook', 'Kestrel', 'Mercer', 'Harrow', 'Nyx', 'Sable', 'Quill', 'Cinder', 'Wren', 'Onyx', 'Vale', 'Ashby', 'Juno'];
   const WHY = { elim_att: 'Attacker eliminated', elim_def: 'Defender eliminated', time: 'Time ran out', boom: 'Charge detonated', defuse: 'Charge defused', left: 'Rival left the match', dropped: 'Connection lost' };
 
   function fighter(o) {
@@ -627,7 +627,7 @@
       const mine = o.seats.find(s => s.key === String(MP.id)) || o.seats[0]; flip = mine.team; A.key = mine.key; if (OPS[mine.op]) A.op = mine.op;   // (a teammate had your operative first: you play the one the room gave you)
       for (const s of o.seats) if (s !== mine) fs.push(fighter({ name: s.name, op: s.op || 'vex', key: s.key, team: s.team ^ flip, net: !(s.bot && host), isBot: !!s.bot, bot: s.bot && host ? { diff: o.botDiff == null ? 1 : o.botDiff } : null, rating: s.rating || 0, rk: s.rk, rkp: s.rkp }));
     } else if (online) fs.push(fighter({ name: (o.rival && o.rival.name) || 'Rival', op: 'vex', net: true, team: 1, key: String(o.rival && o.rival.id) }));
-    else {   // bots: within a team every operative is different (eight operatives, at most four a side)
+    else {   // bots: within a team every operative is different (eight operatives, at most five a side)
       const eOps = [], mOps = [A.op], fresh = taken => { const c = ops.filter(k => !taken.includes(k)); return pick(c.length ? c : ops); };
       for (let i = 0; i < Math.max(1, o.size | 0); i++) { const name = bname(), op = fresh(eOps); eOps.push(op); fs.push(fighter({ name, op, team: 1, key: 'e' + i, bot: botP() })); }
       for (let i = 1; i < (o.size | 0); i++) { const mt = o.mates && o.mates[i - 1]; if (mt) used.add(mt.name); const name = mt ? mt.name : bname(), op = mt && OPS[mt.op] && !mOps.includes(mt.op) ? mt.op : fresh(mOps); mOps.push(op); fs.push(fighter({ name, op, team: 0, key: 'm' + i, bot: botP() })); } }

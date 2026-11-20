@@ -2,7 +2,7 @@
      Eight tiers, the first seven in three divisions; every division is 100 rank points (RP), so a rank is one number, its
      "rank value" (RV): tier and division in the hundreds, RP below. Win and you gain RP, lose and you drop; cross 100 and you
      rank up, fall below 0 and you rank down (to 80-odd of the division below). The top tier, Zenith, has no ceiling.
-     Each team size (1v1 to 4v4) has a rank of its own. The first five ranked matches at a size are placements: they move a
+     Each team size (1v1 to 5v5) has a rank of its own. The first five ranked matches at a size are placements: they move a
      hidden skill number (MMR) fast, then your rank is set from it. After that your rank drifts toward your MMR: well above
      your rank, you gain more and lose less; below it, the other way round.
      What a match pays depends on how strong the other side was against your rank (bots by their level, people by their rank:
@@ -21,7 +21,7 @@
   const botLevelFor = rv => Math.max(0, Math.min(3, Math.floor(rankOf(rv).t / 2)));
   // a bot level as a rank value (the middle of its two tiers), so bots and people can be weighed together
   const botRV = lvl => (6 * cl(lvl | 0, 0, 3) + 3) * 100;
-  const RQ = ['1', '2', '3', '4'];
+  const RQ = ['1', '2', '3', '4', '5'];
   function rankedOf(size) {
     STATS.ranked = STATS.ranked || {}; const k = String(teamSize(size));
     return STATS.ranked[k] || (STATS.ranked[k] = { rv: 0, mmr: MMR0, n: 0, w: 0, peak: 0 });

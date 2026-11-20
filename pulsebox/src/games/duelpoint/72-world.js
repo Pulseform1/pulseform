@@ -375,7 +375,9 @@
     const t = MAP.theme, seed = [...MAP.k].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
     const hash = (...v) => { let h = seed ^ 0x9e3779b9; for (const q of v) { h = Math.imul(h ^ (q | 0), 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; } return (h >>> 0) / 4294967296; };
     const G = new THREE.Group(); W.add(G);
-    const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o || {})), bas = c => new THREE.MeshBasicMaterial({ color: LC(c) });
+    // one material per colour: bake() merges the props by material, so a fresh material for every prop left each one its own draw
+    const MC = new Map(), memo = (k, mk) => MC.get(k) || (MC.set(k, mk()), MC.get(k));
+    const lam = (c, o) => memo('l' + c + JSON.stringify(o || {}), () => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o || {}))), bas = c => memo('b' + c, () => new THREE.MeshBasicMaterial({ color: LC(c) }));
     const PAL = { harbor: ['#6f7780', '#b8452e'], neon: ['#3a3f58', '#ff3ea5'], snow: ['#7d8a96', '#c0392b'], desert: ['#8a6a48', '#c9862e'], jungle: ['#5a6448', '#8a6a40'], lava: ['#5a4a44', '#ff6a1a'], space: ['#9aa6ba', '#38e8ff'] }[t] || ['#6f7780', '#b8452e'];
     const pipeM = lam(PAL[0]), bracketM = lam('#2e3136'), boxM = lam('#8f9690'), boxDoorM = lam('#a9b0aa'), lampM = lam('#30343a'), bulbM = lam(t === 'lava' ? '#e8b48a' : '#f2e8cc');
     const neon = t === 'neon' || t === 'space', NEON = t === 'space' ? ['#38e8ff', '#9ad8ff', '#ff8a3d'] : ['#ff3ea5', '#3df2ff', '#ffd23f', '#9a7cff'], neonM = NEON.map(c => lam(c));
@@ -507,9 +509,16 @@
     }
   }
   // scenery for the other maps: what you see over the walls
-  function scenery(W, TH) {
-    const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o)), bas = c => new THREE.MeshBasicMaterial({ color: LC(c) });
+  function scenery(W0, TH) {
+    // everything here stands still: it is built into one group, with one material per colour, and merged at the end into a
+    // mesh per material (a forest of a hundred trees was three hundred draws, every frame)
+    const W = new THREE.Group(); W0.add(W);
+    const MC = new Map(), memo = (k, mk) => MC.get(k) || (MC.set(k, mk()), MC.get(k));
+    const lam = (c, o) => memo('l' + c + JSON.stringify(o || {}), () => new THREE.MeshLambertMaterial(Object.assign({ color: LC(c) }, o))), bas = c => memo('b' + c, () => new THREE.MeshBasicMaterial({ color: LC(c) }));
     const put = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); W.add(o); return o; };
+    try { sceneryIn(W, TH, lam, bas, put); } finally { W.traverse(o => { if (o.isMesh) o.material.userData.keepUV = true; }); bake(W, false); }
+  }
+  function sceneryIn(W, TH, lam, bas, put) {
     // scenery stands on rings round the map, pushed out on the bigger maps so none of it ends up inside the walls
     const ex = Math.max(0, MW / 2 - 32, (MH / 2 - 22) / .8), ring = (n, r0, r1, fn) => { for (let i = 0; i < n; i++) { const a = i / n * TAU + Math.random() * .2, r = r0 + ex + Math.random() * (r1 - r0); fn(MW / 2 + Math.cos(a) * r, MH / 2 + Math.sin(a) * r * .8, i); } };
     const floor = (c, o) => { const f = put(new THREE.PlaneGeometry(1400, 1400), lam(c, o), MW / 2, -.02, MH / 2); f.rotation.x = -Math.PI / 2; return f; };

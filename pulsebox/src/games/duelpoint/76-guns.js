@@ -189,7 +189,7 @@
       const P = new Float32Array(n * 3), N = new Float32Array(n * 3), U = new Float32Array(n * 2); let at = 0;
       for (const g of list) { P.set(g.attributes.position.array, at * 3); N.set(g.attributes.normal.array, at * 3); if (g.attributes.uv) U.set(g.attributes.uv.array, at * 2); at += g.attributes.position.count; g.dispose(); }
       const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(N, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(U, 2));
-      const m = new THREE.Mesh(geo, mat); m.castShadow = !!cast; group.add(m);
+      const m = new THREE.Mesh(geo, mat); m.castShadow = !!cast; m.userData.baked = true; group.add(m);
     }
   }
   /* Every gun is assembled from the same kit, so the arsenal reads as one family:

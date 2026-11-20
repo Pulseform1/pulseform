@@ -48,12 +48,12 @@
     [['MATCHES', STATS.matches], ['WINS', STATS.wins + '  ·  ' + wr], ['KILLS', STATS.kills], ['HEADSHOTS', hs]].forEach(([a, b], k) => card(x0 + k * (cw + gap), y1, cw, ch, a, b));
     // ranked, one card per team size
     const y2 = y1 + ch + 30 * u, rh = 150 * u; tx(g, 'RANKED', x0, y2 - 12 * u, 12 * u, GOLD, 'left', 900);
-    RQ.forEach((k, i) => { const S = rankedOf(+k), on = placed(S), x = x0 + i * (cw + gap), r0 = rankOf(S.rv), col = on ? r0.T.col : 'rgba(239,233,220,.3)';
+    { const cw4 = cw, cw = Math.min(cw4, (cw4 * 4 + gap * 3 - gap * (RQ.length - 1)) / RQ.length); RQ.forEach((k, i) => { const S = rankedOf(+k), on = placed(S), x = x0 + i * (cw + gap), r0 = rankOf(S.rv), col = on ? r0.T.col : 'rgba(239,233,220,.3)';
       rr(g, x, y2, cw, rh, 10, 'rgba(14,18,26,.94)', col, on ? 2 : 1.5); tx(g, vsLabel(+k), x + 14 * u, y2 + 20 * u, 13 * u, BONE, 'left', 900); tx(g, `${S.w}W · ${S.n - S.w}L`, x + cw - 12 * u, y2 + 20 * u, 10.5 * u, DIM, 'right', 800);
       tierBadge(g, x + cw / 2, y2 + 62 * u, 24 * u, S.rv, on);
       tx(g, on ? rankLabel(S.rv).toUpperCase() : 'UNRANKED', x + cw / 2, y2 + 106 * u, 15 * u, on ? col : BONE, 'center', 900);
       if (on && !r0.top) { g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(x + 14 * u, y2 + 120 * u, cw - 28 * u, 5 * u); g.fillStyle = col; g.fillRect(x + 14 * u, y2 + 120 * u, (cw - 28 * u) * r0.rp / 100, 5 * u); }
-      tx(g, on ? (r0.top ? `${r0.rp} RP` : `${r0.rp} / 100 RP`) : `PLACEMENTS ${S.n}/${PLACE_N}`, x + cw / 2, y2 + 138 * u, 10.5 * u, DIM, 'center', 800); });
+      tx(g, on ? (r0.top ? `${r0.rp} RP` : `${r0.rp} / 100 RP`) : `PLACEMENTS ${S.n}/${PLACE_N}`, x + cw / 2, y2 + 138 * u, 10.5 * u, DIM, 'center', 800); }); }
     // the match history
     const y3 = y2 + rh + 30 * u, hw = cw * 3 + gap * 2, hh = Math.max(80 * u, V.y1 - y3 - 16 * u), H = STATS.hist || [];
     tx(g, 'MATCH HISTORY', x0, y3 - 12 * u, 12 * u, DIM, 'left', 900); rr(g, x0, y3, hw, hh, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5);
