@@ -171,6 +171,14 @@ function pickupPingNovaChecks() {
   P.yaw = Math.PI / 2; const d2 = T.lootAt(F, 'mako', P.x + 2, P.z, 24, 48); T.tick(DT); ok(!P.nearLoot, 'a gun behind you is not offered', String(!!P.nearLoot));
   [M, P, F] = lab(); P.yaw = -Math.PI / 2; I = idle(); const d3 = T.lootAt(F, 'vesper', P.x, P.z, 30, 60); T.tick(DT); T.tick(DT);
   ok(P.guns[1] === 'vesper', 'walk over a rifle with your main slot empty and you just take it', String(P.guns[1]));
+  // the round is decided: the survivor can still pick up what is lying about, and keeps it for the next round
+  [M, P, F] = lab('lancer'); P.yaw = -Math.PI / 2; I = idle(); F.hp = 1; F.sh = 0; T.applyDamage(F, 50, P, false, 'lancer'); for (let i = 0; i < 3; i++) T.tick(DT);
+  { const d4 = T.lootAt(F, 'vesper', P.x + 2, P.z, 30, 60); T.tick(DT);
+    ok(M.phase === 'end' && P.nearLoot && P.nearLoot.id === d4.id, 'after the round is won, a rifle on the floor is still offered', `${M.phase} ${P.nearLoot ? P.nearLoot.k : 'none'}`);
+    I = { ...idle(), use: true }; T.tick(DT); I = idle(); T.tick(DT);
+    ok(P.guns[1] === 'vesper', 'press F and you take it, round over or not', String(P.guns[1]));
+    let n = 0; while (M.phase === 'end' && n++ < 2000) T.tick(DT);
+    ok(M.phase === 'buy' && P.guns[1] === 'vesper', 'and you start the next round with it', `${M.phase} ${P.guns[1]}`); }
   [M, P, F] = lab(); M.chargePing = null; T.setCharge(null, P.x + 5, P.z, false, P);
   ok(M.chargePing && Math.abs(M.chargePing.x - (P.x + 5)) < .01, 'the charge going down mid-round pings where it lies');
   [M, P, F] = lab('lancer'); P.op = 'nova'; P.ab.q = 0; F.hp = 1; F.sh = 0; T.applyDamage(F, 50, P, false, 'lancer');

@@ -7,10 +7,10 @@ const p = await (await b.newContext({ viewport: { width: 1100, height: 620 } }))
 const shot = async n => { const d = await p.evaluate(() => __fh.snap(1)); fs.writeFileSync(`${O}/${n}.jpg`, Buffer.from(d.split(',')[1], 'base64')); await p.screenshot({ path: `${O}/${n}-page.png` }); };
 const ok = (c, m, x) => console.log(`  ${c ? 'ok  ' : 'FAIL'} ${m}`, x !== undefined ? JSON.stringify(x) : '');
 await p.goto(`${FILE}?spawn=valley&seed=1234&q=medium&t=10`, { timeout: 120000 }); await p.waitForFunction(() => window.__fh && __fh.G.state === 'play', null, { timeout: 300000 });
-const help = await p.evaluate(() => !document.querySelector('#help').hidden);
-ok(help, 'first game: the controls card shows', help);
-await p.evaluate(() => { __fh.input.press('Tab'); __fh.tick(1, 1/30); });
-ok(await p.evaluate(() => document.querySelector('#help').hidden), 'Tab tucks the controls card away');
+// (read, press and read again in one go: on a slow software renderer the card's own 14 s timer can otherwise tuck it away in between)
+const tab = await p.evaluate(() => { const h = document.querySelector('#help'), shown = !h.hidden; __fh.input.press('Tab'); __fh.tick(1, 1/30); return { shown, tucked: h.hidden }; });
+ok(tab.shown, 'first game: the controls card shows', tab.shown);
+ok(tab.tucked, 'Tab tucks the controls card away');
 // put a deer 150 m out in the open
 const r = await p.evaluate(() => { __fh.hold(true); const G = __fh.G, W = G.wildlife, P = G.player;
   for (const g of [...W.groups]) W.removeGroup(g); W.seeded = true; W.target = 0;

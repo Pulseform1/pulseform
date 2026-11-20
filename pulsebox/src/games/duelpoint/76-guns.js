@@ -301,7 +301,7 @@
       decal(o.name, o.sub, .07, .0175, .0155, .03, -.105);
       T = parts.mag = group(0, -.062, .027, -.25);
       rbox(.02, o.ext ? .15 : .1, .032, m.dark, 0, o.ext ? -.025 : 0, 0, .003); rbox(.031, .013, .044, o.ext ? m.acc : m.poly, 0, o.ext ? -.106 : -.057, .003, .004);
-      T = G; sup = [-.016, -.1, .03];
+      T = G; sup = [-.02, -.08, .03];
     };
 
     /* ---- long guns with a receiver, handguard, pistol grip and stock: Gnat, Hornet, Mako, Paladin, Vesper, Lancer, Torrent ---- */
@@ -429,7 +429,7 @@
     else if (k === 'wasp') pistol({ comp: 1, ext: 1, rdot: 1, name: 'WASP', sub: 'AUTO · 13 RD' });
     else if (k === 'quill') pistol({ supp: 1, name: 'QUILL', sub: 'SUPPRESSED · 15' });
     else if (k === 'stub') {   // sawn-off double: two short barrels that break open, a wooden forend and a bird's-head grip
-      len = .36; port = null; sight = .06; pistolHold = true; Object.assign(A, { fam: 'stub', by: .032 });
+      len = .36; port = null; sight = .06; Object.assign(A, { fam: 'stub', by: .032 });
       side([[-.07, .052], [.04, .052], ['q', .062, .046, .058, .02], [.048, -.004], [-.07, -.004]], .058, m.metal, 0, .008);
       side([[-.075, .016], [-.24, .016], ['q', -.252, .004, -.238, -.02], [-.075, -.024]], .05, m.fin, 0, .01);
       side([[.004, -.002], [.05, .004], ['q', .1, -.026, .094, -.096], ['q', .09, -.126, .062, -.12], ['q', .034, -.114, .03, -.07], [.018, -.03]], .036, m.fin, 0, .012);
@@ -438,7 +438,7 @@
       T = parts.brk = group(0, .02, -.06);
       for (const sx of [-.0148, .0148]) { lathe([[-.3, .0098], [-.3, .0152], [-.29, .0158], [-.02, .0158], [0, .0145], [0, .008]], m.steel, .012, sx, 16); disc(.0098, sx, .012, -.3005, m.hole); } setBore(.032, -.36, .031);
       rbox(.06, .012, .022, m.dark, 0, .012, -.283, .004); rbox(.005, .007, .262, m.metal, 0, .0295, -.14, .002); add(new THREE.SphereGeometry(.0036, 8, 6), m.brass, 0, .0355, -.29);
-      T = G; sup = [-.016, -.1, .03];
+      T = G; sup = [0, -.034, -.16];   // both hands: the left one cups the wooden forend under the barrels
     } else if (k === 'hammer') {   // double-action revolver: stainless frame with a cylinder window, full under-lug barrel, vented rib, fluted cylinder, finger-groove grip
       len = .274; port = null; sight = .066; pistolHold = true; Object.assign(A, { fam: 'rev', by: .036 });
       const BY = .036, CY = .02, CZ = -.016;
@@ -474,7 +474,7 @@
       tube(.0034, -.1, -.028, m.steel, 0); lathe([[-.106, .002], [-.106, .0048], [-.1, .0048], [-.1, .002]], m.steel, 0);
       { const rims = parts.rims = new THREE.Group(); T.add(rims); T = rims;
         for (let i = 0; i < 6; i++) { const a = Math.PI / 2 + i * TAU / 6, x = Math.cos(a) * .016, y = Math.sin(a) * .016; add(new THREE.CylinderGeometry(.0064, .0064, .0016, 14), m.brass, x, y, .0288, Math.PI / 2); disc(.0018, x, y, .0297, m.steel, true); } }
-      T = G; sup = [-.016, -.1, .04];
+      T = G; sup = [-.02, -.08, .04];
     }
     else if (k === 'gnat') { carbine({ len: .32, rf: -.16, hz: -.26, hg: 'shroud', br: .0105, tip: 'flash', stock: 'wire', short: 1, mag: 'stick', magL: .13, sight: 'holo', sightY: .099, fore: 'vgrip', backup: false, sideHandle: 1, glow: false }); decal('GNAT', 'SMG · 20 RD', .085, .021, .0236, .03, -.105); }
     else if (k === 'hornet') { carbine({ len: .52, rf: -.18, hz: -.27, hg: 'slab', hgMat: m.poly, upper: m.fin, lower: m.poly, br: .0115, tip: 'supp', sl: .25, stock: 'wire', mag: 'stick', magL: .17, sight: 'holo', sightY: .099, counter: 1, backup: false, sideHandle: 1 }); decal('HORNET', 'SMG · 30 RD', .085, .021, .0236, .03, -.1); }
@@ -509,7 +509,7 @@
       for (let i = 0; i < 4; i++) rbox(.0255, .034, .004, m.rubber, 0, .0, .014 + i * .021, .002); rbox(.028, .032, .016, m.metal, 0, -.001, .108, .006); decal('DP', 'BLADE', .05, .0125, .0036, .008, -.1);
       }
     }
-    if (k === 'pip' || k === 'wasp' || k === 'quill' || k === 'stub' || k === 'hammer' || k === 'knife' || GUNS[k].cat === 'Sidearm') pistolHold = true;
+    if (k === 'pip' || k === 'wasp' || k === 'quill' || k === 'hammer' || k === 'knife' || (GUNS[k].cat === 'Sidearm' && k !== 'stub')) pistolHold = true;
 
     if (bore && -bore.z > len) len = -bore.z;   // a muzzle device past the barrel's end: the gun is that long
     if (line) { const K2 = skinKit(G, k, line, m, len, bore, Object.assign(A, { sight }), parts);
@@ -518,15 +518,19 @@
     const grip = k === 'knife' ? [0, 0, .045] : k === 'hammer' ? [0, -.055, .052] : k === 'stub' ? [0, -.058, .05] : pistolHold ? [0, -.062, .026] : k === 'breaker' ? [0, -.07, .05] : k === 'kite' || k === 'longbow' ? [0, -.072, .046] : [0, -.076, .026];
     if (opts.hands) {   // your own gloves and sleeves: fingers wrapped round the grip, the other hand under the gun
       const op = OPS[opts.op] || OPS.vex, band = gmats.band[op.col] || (gmats.band[op.col] = new THREE.MeshStandardMaterial({ color: LC(op.col), roughness: .5 }));
+      // your gloves and sleeves stand apart from the gun: a mid-grey glove with a hint of your operative's colour, and a
+      // sleeve dyed in it (each operative's arms look their own)
+      const HM = gmats.hands[op.col] || (gmats.hands[op.col] = (() => { const gl = m.glove.clone(), sl = m.sleeve.clone(), c = new THREE.Color(op.col);
+        gl.color.set('#6a707c').lerp(c, .16).convertSRGBToLinear(); sl.color.set('#262c38').lerp(c, .42).convertSRGBToLinear(); gl.name = sl.name = 'hand'; return { glove: gl, sleeve: sl }; })());
       const arm = (par, x, y, z, rx, ry, l) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(rx, ry, 0); par.add(g); const was = T; T = g;
-        lathe([[-.03, .03], [-.03, .037], [.0, .04], [.02, .043], [.03, .046], [l, .056], [l, .02]], m.sleeve, 0, 0, 14); lathe([[.012, .0445], [.012, .0475], [.04, .0485], [.04, .046]], band, 0, 0, 14); T = was; };
-      const fingers = (n, x, y0, z, w, dy, mat = m.glove) => { for (let i = 0; i < n; i++) rbox(w, .0155, .019, mat, x, y0 - i * dy, z, .0065); };
+        lathe([[-.03, .03], [-.03, .037], [.0, .04], [.02, .043], [.03, .046], [l, .056], [l, .02]], HM.sleeve, 0, 0, 14); lathe([[.012, .0445], [.012, .0475], [.04, .0485], [.04, .046]], band, 0, 0, 14); T = was; };
+      const fingers = (n, x, y0, z, w, dy, mat = HM.glove) => { for (let i = 0; i < n; i++) rbox(w, .0155, .019, mat, x, y0 - i * dy, z, .0065); };
       T = group(grip[0], grip[1], grip[2], k === 'knife' ? 0 : -.25);
-      if (k === 'knife') { rbox(.013, .05, .074, m.glove, .019, -.002, 0, .005); rbox(.013, .04, .07, m.glove, -.018, -.006, 0, .005); for (let i = 0; i < 4; i++) rbox(.042, .017, .0165, m.glove, 0, -.024, -.027 + i * .018, .0065); rbox(.012, .013, .04, m.glove, -.011, .02, -.022, .005); rbox(.006, .024, .04, band, .0265, -.004, .012, .002); arm(T, .006, -.02, .045, 1.1, -.3, .42); }
-      else { rbox(.014, .074, .054, m.glove, .0215, 0, .002, .006); rbox(.046, .072, .016, m.glove, .002, 0, .03, .006); fingers(4, -.002, .027, -.029, .05, .0178); rbox(.014, .018, .05, m.glove, -.0215, .032, -.012, .006); rbox(.0065, .03, .034, band, .0292, .004, .008, .002); rbox(.02, .012, .03, m.rubber, .024, .03, .004, .003); arm(T, .01, -.036, .034, .7, -.2, .42); }
+      if (k === 'knife') { rbox(.013, .05, .074, HM.glove, .019, -.002, 0, .005); rbox(.013, .04, .07, HM.glove, -.018, -.006, 0, .005); for (let i = 0; i < 4; i++) rbox(.042, .017, .0165, HM.glove, 0, -.024, -.027 + i * .018, .0065); rbox(.012, .013, .04, HM.glove, -.011, .02, -.022, .005); rbox(.006, .024, .04, band, .0265, -.004, .012, .002); arm(T, .006, -.02, .045, 1.1, -.3, .42); }
+      else { rbox(.014, .074, .054, HM.glove, .0215, 0, .002, .006); rbox(.046, .072, .016, HM.glove, .002, 0, .03, .006); fingers(4, -.002, .027, -.029, .05, .0178); rbox(.014, .018, .05, HM.glove, -.0215, .032, -.012, .006); rbox(.0065, .03, .034, band, .0292, .004, .008, .002); rbox(.02, .012, .03, m.rubber, .024, .03, .004, .003); arm(T, .01, -.036, .034, .7, -.2, .42); }
       if (k !== 'knife') {
         T = parts.lhand = group(sup[0], sup[1], sup[2], pistolHold ? .3 : 0);
-        rbox(.056, .018, .08, m.glove, 0, 0, 0, .007); rbox(.014, .044, .07, m.glove, -.032, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, m.glove, -.034, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, m.glove, .032, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002);
+        rbox(.056, .018, .08, HM.glove, 0, 0, 0, .007); rbox(.014, .044, .07, HM.glove, -.032, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, HM.glove, -.034, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, HM.glove, .032, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002);
         arm(T, -.02, -.012, .034, .5, .55, pistolHold ? .38 : .55);
         if (k === 'breaker') { const sh = vtube(.0095, -.021, .021, m.shell, 0, 0); sh.rotation.x = Math.PI / 2; sh.position.set(-.012, .03, 0); sh.userData.live = true; sh.visible = false; parts.hshell = sh; }
       }
@@ -537,15 +541,19 @@
     if (opts.flash) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.starT, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); sp.scale.setScalar(.4); sp.position.set(0, bore ? bore.y : .03, -len - .06); sp.visible = false; G.add(sp); G.userData.flash = sp; }
     return G;
   }
-  gmats.band = {};
+  gmats.band = {}; gmats.hands = {};
   function viewGun(k, op, skin) { return gunModel(k, { hands: true, op, skin }); }
   // a gun model that is finished with: free the shapes it alone owns (materials and textures are shared and cached;
   // shapes marked shared, like the skin effects', stay), and hand back any reload rig still on it
   function disposeGun(G) { if (!G) return; if (G.userData.rig) rfxDrop(G.userData.rig); G.traverse(o => { if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose(); }); const ct = G.userData.parts && G.userData.parts.counter; if (ct && ct.t) ct.t.dispose(); }
   // the armory pictures: each gun rendered side-on into a small transparent image, once
-  function gunIcon(k, skin) {
+  // (a new picture costs a model, its shaders and a read back from the GPU: at most one is made a frame, so opening the
+  // store or the locker never freezes; the rest fill in over the next few frames, and most are made ahead of time anyway)
+  const ICONB = { f: -1, n: 0 };
+  function gunIcon(k, skin, ahead) {
     const ik = skin ? k + '|' + skin : k; if (ICON[ik] !== undefined) return ICON[ik];
     if (!X || !ready) return null;
+    const fr = X.frameN || 0; if (ICONB.f !== fr) { ICONB.f = fr; ICONB.n = 0; } if (ICONB.n >= 1 && !ahead) return null; ICONB.n++;
     try {
       const w = 480, h = 150, r = X.renderer, rt = new THREE.WebGLRenderTarget(w, h); rt.texture.encoding = THREE.sRGBEncoding;
       const sc = new THREE.Scene(), gm = gunModel(k, { skin }); sc.add(gm); sc.add(new THREE.HemisphereLight('#ffffff', '#5a6270', 1.5));
@@ -559,9 +567,23 @@
       ctx.putImageData(id, 0, 0); disposeGun(gm); return ICON[ik] = cv;
     } catch (e) { console.error(e); return ICON[ik] = false; }
   }
+  // the menus' pictures, made ahead in the quiet moments: the armory's guns, the store's current set, what your locker shows
+  let iconQ = null, iconT = 0;
+  function iconsAhead(dt) {
+    if (!X || !ready || screen === 'play') return;   // never during a round
+    if (!iconQ) { iconQ = []; try { for (const k of Object.keys(GUNS)) if (!GUNS[k].melee) iconQ.push([k, null]);
+      for (const id of dailyStore()) { const sk = skinOfId(id); if (sk) iconQ.push([sk.k, id]); }
+      for (const gk of SKIN_GUNS) iconQ.push([gk, STATS.equip[gk] || null]); for (const id of STATS.skins) { const sk = skinOfId(id); if (sk) iconQ.push([sk.k, id]); } } catch (e) { iconQ = []; } }
+    if ((iconT -= dt) > 0) return; iconT = .12;
+    if (iconQ.length) { const [k, id] = iconQ.shift(); gunIcon(k, id, true); return; }
+    // then the locker's turntable, drawn once out of sight (this frame's own picture covers it), so its lighting is ready
+    if (!X.gsWarm && screen === 'menu' && UI.panel === 'home') { X.gsWarm = 1; const was = UI.panel; UI.panel = 'locker'; try { renderGunShow(0); } catch (e) {} UI.panel = was; }
+  }
   // spent brass flying out of the ejection port (first person only)
   const CASE = { pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] }, CASEGEO = {};
-  const VOS = { knife: [.15, -.15, -.31], pip: [.17, -.17, -.3], wasp: [.17, -.17, -.3], quill: [.17, -.17, -.3], stub: [.17, -.18, -.3], hammer: [.17, -.17, -.3], gnat: [.2, -.19, -.3], hornet: [.2, -.19, -.3], breaker: [.2, -.2, -.27], thresher: [.2, -.2, -.28], mako: [.2, -.2, -.28], paladin: [.21, -.21, -.27], vesper: [.2, -.2, -.28], lancer: [.2, -.2, -.28], kite: [.22, -.22, -.26], longbow: [.23, -.23, -.25], torrent: [.21, -.21, -.27] };
+  // where each gun sits in your view [right, up, ahead]: high enough that the hand on the grip shows at the bottom right,
+  // with the support hand on the near side of the gun, as tactical shooters frame it
+  const VOS = { knife: [.15, -.15, -.31], pip: [.13, -.115, -.3], wasp: [.13, -.115, -.3], quill: [.13, -.115, -.3], stub: [.17, -.165, -.29], hammer: [.13, -.115, -.3], gnat: [.185, -.172, -.29], hornet: [.185, -.172, -.29], breaker: [.185, -.178, -.27], thresher: [.185, -.178, -.28], mako: [.185, -.178, -.28], paladin: [.195, -.188, -.27], vesper: [.185, -.178, -.28], lancer: [.185, -.178, -.28], kite: [.205, -.198, -.26], longbow: [.215, -.208, -.25], torrent: [.195, -.188, -.27] };
   /* The moving parts of a gun, for your own view (fp) and your rival's model alike. `ex` carries first-person extras:
      draw (0..1 through the chambering at the end of a draw) and insp (0..1 through an inspect); show marks the store's
      turntable, which gets a skin's full reload effect without your hands. A reload runs as phases of
@@ -598,12 +620,12 @@
       pp.mag.visible = !gone; pp.mag.position.y = y0 - out; pp.mag.position.z = z0 + Math.min(out, .09) * .4; pp.mag.rotation.x = tilt0 + Math.min(out, .09) * 3;
     }
     if (pp.lhand && G.cat !== 'Sidearm') {
-      const p0 = pp.lhand.userData.p0; let h = 0, tx = p0.x, ty = p0.y, tz = p0.z;
+      // where it rests: on the handguard, or riding the pump (the reload moves it from there and back)
+      const p0 = pp.lhand.userData.p0, pz = p0.z + (pp.pump ? pp.pump.position.z : 0); let h = 0, tx = p0.x, ty = p0.y, tz = pz;
       if (G.k === 'breaker') { h = r < 0 ? 0 : sm(win(.05, .2)) * (1 - sm(win(.85, 1))); const ph = (r * 5) % 1; tx = -.005; ty = -.075 + Math.sin(ph * Math.PI) * .03; tz = -.06 - ph * .02; if (pp.hshell) pp.hshell.visible = h > .5 && ph < .55; }
       else if (pp.mag && r >= 0) { h = sm(win(.12, .22)) * (1 - sm(win(.82, .92))); const mp = pp.mag.position; tx = mp.x - .01; ty = mp.y - .06 + (r > .76 && r < .84 ? Math.sin(win(.76, .84) * Math.PI) * .03 : 0); tz = mp.z; }
-      else if (pp.pump) tz = p0.z + pp.pump.position.z;   // the support hand works the pump
       if (pp.hshell && G.k !== 'breaker') pp.hshell.visible = false; else if (pp.hshell && r < 0) pp.hshell.visible = false;
-      pp.lhand.position.set(lp(p0.x, tx, h), lp(p0.y, ty, h), h > 0 ? lp(p0.z, tz, h) : tz);
+      pp.lhand.position.set(lp(p0.x, tx, h), lp(p0.y, ty, h), lp(pz, tz, h));
     }
     // the skin's own effects: its reload (and a Mythic's inspect) on your gun, in the store, and a lighter one on a rival's
     if (U.line) skinFx(Gm, P, G, r, iq, dt, fp, fp || !!ex.show);

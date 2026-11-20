@@ -307,15 +307,15 @@ const GAME = {
     wasp: GUN('wasp', 'Wasp', 'Sidearm', 2, 450, '#ffd23f', { mag: 13, res: 39, rpm: 600, rel: 1.5, auto: true, dmg: [[20, 26], [99, 21]], head: 3, legs: .85, acc: { fs: .45, walk: 1, run: 2, jump: 5, inc: .8, max: 4.5, free: 0, recov: .35 }, pat: { vk: .35, vmax: 2, hs0: 4, hk: .9 }, desc: 'Machine pistol. Sprays fast, wild after a few shots.' }),
     quill: GUN('quill', 'Quill', 'Sidearm', 2, 500, '#8fe3ff', { mag: 15, res: 45, rpm: 405, rel: 1.5, sil: 1, dmg: [[30, 30], [99, 25]], head: 3.5, legs: .85, acc: { fs: .3, walk: .9, run: 1.9, jump: 5, inc: .5, max: 2.6, free: 0, recov: .3 }, pat: { vk: .5, vmax: 2, hs0: 5, hk: .4 }, desc: 'Suppressed pistol. Quiet and precise; one headshot on bare health.' }),
     hammer: GUN('hammer', 'Hammer', 'Sidearm', 2, 800, '#d4a24c', { mag: 6, res: 24, rpm: 240, rel: 2.25, dmg: [[30, 55], [99, 50]], head: 2.9, legs: .85, acc: { fs: .25, walk: 1.4, run: 2.8, jump: 6, inc: 2.2, max: 5, free: 0, recov: .45 }, pat: { vk: 1.6, vmax: 4, hs0: 3, hk: .5 }, punch: 2.2, desc: 'Revolver. A headshot kills anyone at any range.' }),
-    gnat: GUN('gnat', 'Gnat', 'SMG', 1, 950, '#a6f04d', { mag: 20, res: 60, rpm: 960, rel: 2.25, auto: true, ads: 1.15, punch: 1.05, kickV: 1.25, dmg: [[10, 22], [20, 19], [99, 15]], head: 2.5, legs: .85, acc: { fs: .75, walk: 1.3, run: 2.8, jump: 5, inc: .8, max: 6.5, free: 0, recov: .4 }, pat: { vk: .55, vmax: 4.2, hs0: 4, hk: 1.6 }, desc: 'Cheap, very fast SMG. Deadly at arm\'s length; the spray climbs hard and it fades fast with range. Tap or short bursts.' }),
-    hornet: GUN('hornet', 'Hornet', 'SMG', 1, 1600, '#3ee6c1', { mag: 30, res: 90, rpm: 800, rel: 2.25, auto: true, ads: 1.15, sil: 1, punch: .85, kickV: 1.05, dmg: [[15, 23], [30, 20], [99, 17]], head: 3, legs: .85, acc: { fs: .45, walk: .8, run: 1.6, jump: 4, inc: .5, max: 4.2, free: 0, recov: .34 }, pat: { vk: .42, vmax: 3, hs0: 6, hk: 1.1 }, desc: 'Suppressed SMG. Steadier on the move than the Gnat; still climbs, so burst it past mid range.' }),
+    gnat: GUN('gnat', 'Gnat', 'SMG', 1, 950, '#a6f04d', { mag: 20, res: 60, rpm: 960, rel: 2.25, auto: true, ads: 1.15, punch: 1.05, kickV: 1.25, dmg: [[10, 22], [20, 19], [99, 15]], head: 2.5, legs: .85, acc: { fs: .4, walk: .9, run: 2.2, jump: 5, inc: .7, max: 5.5, free: 0, recov: .4 }, pat: { vk: .55, vmax: 4.2, hs0: 4, hk: 1.6 }, desc: 'Cheap, very fast SMG. Deadly at arm\'s length; the spray climbs hard and it fades fast with range. Tap or short bursts.' }),
+    hornet: GUN('hornet', 'Hornet', 'SMG', 1, 1600, '#3ee6c1', { mag: 30, res: 90, rpm: 800, rel: 2.25, auto: true, ads: 1.15, sil: 1, punch: .85, kickV: 1.05, dmg: [[15, 23], [30, 20], [99, 17]], head: 3, legs: .85, acc: { fs: .3, walk: .7, run: 1.4, jump: 4, inc: .5, max: 3.6, free: 1, recov: .34 }, pat: { vk: .42, vmax: 3, hs0: 6, hk: 1.1 }, desc: 'Suppressed SMG. Steadier on the move than the Gnat; still climbs, so burst it past mid range.' }),
     breaker: GUN('breaker', 'Breaker', 'Shotgun', 1, 850, '#ffb347', { mag: 5, res: 10, rpm: 66, rel: 2.5, pel: 15, pspr: 2.6, equip: 1, dmg: [[8, 20], [12, 17], [99, 13]], head: 2, legs: .85, acc: { fs: .2, walk: .4, run: 1, jump: 3, inc: 0, max: 0, free: 0, recov: .3 }, punch: 3, desc: 'Pump shotgun. One shot up close, slow to cycle.' }),
     thresher: GUN('thresher', 'Thresher', 'Shotgun', 1, 1850, '#ff6a3d', { mag: 7, res: 21, rpm: 210, rel: 2.2, auto: true, pel: 12, pspr: 2.25, equip: 1, dmg: [[10, 17], [15, 13], [99, 10]], head: 2, legs: .85, acc: { fs: .2, walk: .4, run: .9, jump: 3, inc: .4, max: 2, free: 0, recov: .4 }, punch: 2, desc: 'Auto shotgun. Hold a corner and nothing walks past.' }),
-    mako: GUN('mako', 'Mako', 'Rifle', 1, 2050, '#4f7dff', { mag: 24, res: 72, rpm: 594, rel: 2.5, auto: true, ads: 1.25, alt: 'burst4', equip: 1, dmg: [[99, 35]], head: 3.3, legs: .85, acc: { fs: .3, walk: 2.5, run: 5.5, jump: 9, inc: .45, max: 4, free: 0, recov: .36 }, pat: { vk: .4, vmax: 3, hs0: 6, hk: 1.1 }, desc: 'Budget rifle. Aim down sights (right click) to fire 4-round bursts.' }),
-    paladin: GUN('paladin', 'Paladin', 'Rifle', 1, 2250, '#e6d3a3', { mag: 12, res: 36, rpm: 285, rel: 2.5, ads: 1.5, equip: 1, dmg: [[99, 65]], head: 3, legs: .75, acc: { fs: .1, walk: 3, run: 6, jump: 10, inc: 1.2, max: 3, free: 0, recov: .3 }, pat: { vk: 1, vmax: 3, hs0: 4, hk: .4 }, punch: 1.6, desc: 'Marksman rifle. One headshot kills. Tap, do not spray.' }),
+    mako: GUN('mako', 'Mako', 'Rifle', 1, 2050, '#4f7dff', { mag: 24, res: 72, rpm: 594, rel: 2.5, auto: true, ads: 1.25, alt: 'burst4', equip: 1, dmg: [[99, 35]], head: 3.3, legs: .85, acc: { fs: .3, walk: 1.8, run: 5.5, jump: 9, inc: .45, max: 3.4, free: 0, recov: .36 }, pat: { vk: .4, vmax: 3, hs0: 6, hk: 1.1 }, desc: 'Budget rifle. Aim down sights (right click) to fire 4-round bursts.' }),
+    paladin: GUN('paladin', 'Paladin', 'Rifle', 1, 2250, '#e6d3a3', { mag: 12, res: 36, rpm: 285, rel: 2.5, ads: 1.5, equip: 1, dmg: [[99, 65]], head: 3, legs: .75, acc: { fs: .1, walk: 2.2, run: 6, jump: 10, inc: 1.2, max: 3, free: 0, recov: .3 }, pat: { vk: 1, vmax: 3, hs0: 4, hk: .4 }, punch: 1.6, desc: 'Marksman rifle. One headshot kills. Tap, do not spray.' }),
     // the two 2900 rifles: the Vesper sprays (quiet, tight for its first shots, a gentle climb, weaker far away); the Lancer taps (one headshot kills at any range, the first shot is pin-point, then it climbs hard)
-    vesper: GUN('vesper', 'Vesper', 'Rifle', 1, 2900, '#ff5fb0', { mag: 30, res: 60, rpm: 660, rel: 2.5, auto: true, ads: 1.25, sil: 1, equip: 1, punch: .42, kickV: .8, dmg: [[15, 39], [30, 35], [99, 31]], head: 4, legs: .85, acc: { fs: .2, walk: 2.5, run: 6, jump: 10, inc: .2, max: 2.8, free: 2, recov: .3 }, pat: { vk: .3, vmax: 2.4, hs0: 6, hk: .75 }, desc: 'Suppressed spray rifle. Fast, quiet and steady for its first shots; the climb is gentle. A headshot kills inside 15 m; it loses damage past that.' }),
-    lancer: GUN('lancer', 'Lancer', 'Rifle', 1, 2900, '#e5484d', { mag: 25, res: 50, rpm: 585, rel: 2.5, auto: true, ads: 1.25, equip: 1, punch: .62, kickV: 1.3, dmg: [[99, 40]], head: 4, legs: .85, acc: { fs: .15, walk: 2.6, run: 6, jump: 10, inc: .5, max: 4.6, free: 1, recov: .38 }, pat: { vk: .55, vmax: 4, hs0: 4, hk: 1.35 }, desc: 'Tap rifle. One headshot kills at any range and the first shot is pin-point, but it kicks hard: tap or burst three.' }),
+    vesper: GUN('vesper', 'Vesper', 'Rifle', 1, 2900, '#ff5fb0', { mag: 30, res: 60, rpm: 660, rel: 2.5, auto: true, ads: 1.25, sil: 1, equip: 1, punch: .42, kickV: .8, dmg: [[15, 39], [30, 35], [99, 31]], head: 4, legs: .85, acc: { fs: .2, walk: 1.6, run: 6, jump: 10, inc: .2, max: 2.4, free: 2, recov: .3 }, pat: { vk: .3, vmax: 2.4, hs0: 6, hk: .75 }, desc: 'Suppressed spray rifle. Fast, quiet and steady for its first shots; the climb is gentle. A headshot kills inside 15 m; it loses damage past that.' }),
+    lancer: GUN('lancer', 'Lancer', 'Rifle', 1, 2900, '#e5484d', { mag: 25, res: 50, rpm: 585, rel: 2.5, auto: true, ads: 1.25, equip: 1, punch: .62, kickV: 1.3, dmg: [[99, 40]], head: 4, legs: .85, acc: { fs: .15, walk: 1.6, run: 6, jump: 10, inc: .5, max: 3.6, free: 1, recov: .38 }, pat: { vk: .55, vmax: 4, hs0: 4, hk: 1.35 }, desc: 'Tap rifle. One headshot kills at any range and the first shot is pin-point, but it kicks hard: tap or burst three.' }),
     kite: GUN('kite', 'Kite', 'Sniper', 1, 950, '#9fb6ff', { mag: 5, res: 10, rpm: 90, rel: 2.5, scope: [2.5], equip: 1, dmg: [[99, 101]], head: 2, legs: .85, acc: { fs: 2.5, sfs: 0, walk: 3, run: 8, jump: 12, inc: 0, max: 0, free: 0, recov: .3 }, punch: 3, desc: 'Light sniper. Cheap. A headshot kills, two body shots do.' }),
     longbow: GUN('longbow', 'Longbow', 'Sniper', 1, 4700, '#c58cff', { mag: 5, res: 10, rpm: 36, rel: 3.7, scope: [2.5, 5], spd: .92, equip: 1.25, dmg: [[99, 150]], head: 1.7, legs: .85, acc: { fs: 5, sfs: 0, walk: 5, run: 10, jump: 14, inc: 0, max: 0, free: 0, recov: .3 }, punch: 4, desc: 'Heavy sniper. One body shot kills. Right click twice for 5x.' }),
     knife: GUN('knife', 'Knife', 'Melee', 3, 0, '#ff8a3d', { melee: 1, auto: true, mag: 0, res: 0, rpm: 140, rel: 0, spd: 1.25, equip: .4, dmg: [[2.4, 50]], head: 1.5, legs: 1, acc: { fs: 0, walk: 0, run: 0, jump: 0, inc: 0, max: 0, free: 0, recov: .3 }, desc: 'Always with you. Left click slashes, right click stabs: 150 from behind. You run faster with it out.' }),
@@ -1002,7 +1002,8 @@ const GAME = {
   function patOf(f, G) {
     const P = G.pat; if (!P) return [0, 0]; const n = Math.max(0, f.spray - G.acc.free);
     const up = P.n2 && n > P.n2 ? P.vk * P.n2 + P.vk2 * (n - P.n2) : P.vk * n;   // vk2: a steeper climb after the n2th shot
-    return [n > P.hs0 ? P.hk * Math.sin((n - P.hs0) * .85 + f.sseed) * D2R : 0, Math.min(P.vmax, up) * D2R];
+    // (the sway starts from the middle, toward a side picked at the start of each spray, so the crosshair never jumps)
+    return [n > P.hs0 ? P.hk * Math.sin((n - P.hs0) * .7) * (f.sseed < Math.PI ? 1 : -1) * D2R : 0, Math.min(P.vmax, up) * D2R];
   }
   const viewDir = (yaw, pitch) => { const cp = Math.cos(pitch); return [-Math.sin(yaw) * cp, Math.sin(pitch), -Math.cos(yaw) * cp]; };
   // ray against a sphere / an axis-aligned box: the distance, or -1
@@ -1071,7 +1072,7 @@ const GAME = {
       else if (!S.hit && !f.net && BRKS.length) { const e = S.end, k = idx(Math.floor((e[0] + S.d[0] * .06) / CS), Math.floor((e[2] + S.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) hitWall(BRKX[k], dmgAt(G, S.dist, 2), f); }   // a breakable wall
     }
     if (landed) f.stat.hits++;
-    f.spray += 1; f.kick = .08; f.cloak = 0; f.phase = 0; if (f === me()) M.camKick = Math.min(M.camKick + G.punch * .42 * D2R * (f.scoped && G.scope ? .4 : 1), 1.6 * D2R);
+    f.spray += 1; f.sprayFrom = 0; f.kick = .08; f.cloak = 0; f.phase = 0; if (f === me()) M.camKick = Math.min(M.camKick + G.punch * .42 * D2R * (f.scoped && G.scope ? .4 : 1), 1.6 * D2R);
     if (!f.net) net({ t: 'sh', a: r3(y0), b: r3(p0), f: f.key });
     if (A.mag === 0 && A.res > 0) f.autoReload = .26;
   }
@@ -1094,8 +1095,10 @@ const GAME = {
     if (f.fireT > -1) f.fireT -= dt;   // below zero it counts how long the trigger has rested
     stepBurst(f, dt);
     if (f.autoReload > 0 && (f.autoReload -= dt) <= 0 && f.alive && !f.burst) reload(f);
-    // the spray settles once the trigger has rested a moment: from its worst to nothing in 'recov' seconds
-    if (f.fireT < -.05 && !f.burst && f.spray > 0) f.spray = Math.max(0, f.spray - dt * (f.surge > 0 ? 2 : 1) * (G.acc.free + 1 + (G.acc.inc ? G.acc.max / G.acc.inc : 4)) / G.acc.recov);
+    // the spray settles once the trigger has rested a moment: from wherever it got to (its worst, or a long spray's climb
+    // and sway) to nothing in 'recov' seconds, so the crosshair glides home at the same pace however long you held it
+    if (f.fireT < -.05 && !f.burst && f.spray > 0) { const from = f.sprayFrom || (f.sprayFrom = f.spray);
+      f.spray = Math.max(0, f.spray - dt * (f.surge > 0 ? 2 : 1) * Math.max(from, G.acc.free + 1 + (G.acc.inc ? G.acc.max / G.acc.inc : 4)) / G.acc.recov); if (!f.spray) f.sprayFrom = 0; }
     if (f.reloadT > 0) { f.reloadT -= dt; if (f.reloadT <= 0) { const A = f.ammo[G.k], n = Math.min(G.mag - A.mag, A.res); A.mag += n; if (M.mode !== 'range') A.res -= n; f.spray = 0; } }
   }
   function switchTo(f, slot) { if (!f.guns[slot] || f.slot === slot || !f.alive) return; f.slot = slot; f.reloadT = 0; f.autoReload = 0; f.scoped = 0; f.burst = null; f.spray = 0; f.fireT = Math.max(f.fireT, GUNS[f.guns[slot]].equip * .7); emit('swap', f); }
@@ -1346,7 +1349,7 @@ const GAME = {
     return at ? lootAt(f, k, at.x, at.z, A.mag, A.res) : lootAt(f, k, f.x + fx * far, f.z + fz * far, A.mag, A.res);
   }
   // T: the gun in your hand
-  function dropHeld(f) { if (!f.alive || f.plant > 0 || f.defuse > 0 || M.mode === 'range' || M.phase === 'end') return false; return !!dropGun(f, f.slot, false); }
+  function dropHeld(f) { if (!f.alive || f.plant > 0 || f.defuse > 0 || M.mode === 'range' || M.over) return false; return !!dropGun(f, f.slot, false); }
   function takeLoot(f, d, remote) {
     const G = GUNS[d.k]; if (!G || !M.loot) return; M.loot = M.loot.filter(q => q.id !== d.id); const s = G.slot;
     if (!remote) { const have = f.guns[s]; if (have && !(s === 2 && have === 'pip')) dropGun(f, s, false, d); }   // a swap: the one you had goes down where this one lay
@@ -1377,7 +1380,8 @@ const GAME = {
   // the gun you are next to would go into an empty slot (pick it up), not take the place of one (swap)
   const lootFree = f => { const d = f.nearLoot, G = d && GUNS[d.k]; if (!G) return false; const have = f.guns[G.slot]; return !have || (G.slot === 2 && have === 'pip'); };
   function stepLoot(f, I, press) {
-    if (!f.alive || M.mode === 'range' || M.phase === 'end') { f.nearLoot = null; return false; }
+    // (after a round is decided the survivors can still pick up the guns lying about and keep them for the next one)
+    if (!f.alive || M.mode === 'range' || M.over) { f.nearLoot = null; return false; }
     const C = M.charge;
     if (C && !C.k && !M.planted && sideOf(f) === 'att' && !(f.noCharge > M.time) && Math.hypot(C.x - f.x, C.z - f.z) < LOOT_R && Math.abs(C.y - f.y) < 1.4) setCharge(f);
     f.nearLoot = null; if (!M.loot || !M.loot.length) return false;
@@ -3768,7 +3772,7 @@ const GAME = {
       decal(o.name, o.sub, .07, .0175, .0155, .03, -.105);
       T = parts.mag = group(0, -.062, .027, -.25);
       rbox(.02, o.ext ? .15 : .1, .032, m.dark, 0, o.ext ? -.025 : 0, 0, .003); rbox(.031, .013, .044, o.ext ? m.acc : m.poly, 0, o.ext ? -.106 : -.057, .003, .004);
-      T = G; sup = [-.016, -.1, .03];
+      T = G; sup = [-.02, -.08, .03];
     };
 
     /* ---- long guns with a receiver, handguard, pistol grip and stock: Gnat, Hornet, Mako, Paladin, Vesper, Lancer, Torrent ---- */
@@ -3896,7 +3900,7 @@ const GAME = {
     else if (k === 'wasp') pistol({ comp: 1, ext: 1, rdot: 1, name: 'WASP', sub: 'AUTO · 13 RD' });
     else if (k === 'quill') pistol({ supp: 1, name: 'QUILL', sub: 'SUPPRESSED · 15' });
     else if (k === 'stub') {   // sawn-off double: two short barrels that break open, a wooden forend and a bird's-head grip
-      len = .36; port = null; sight = .06; pistolHold = true; Object.assign(A, { fam: 'stub', by: .032 });
+      len = .36; port = null; sight = .06; Object.assign(A, { fam: 'stub', by: .032 });
       side([[-.07, .052], [.04, .052], ['q', .062, .046, .058, .02], [.048, -.004], [-.07, -.004]], .058, m.metal, 0, .008);
       side([[-.075, .016], [-.24, .016], ['q', -.252, .004, -.238, -.02], [-.075, -.024]], .05, m.fin, 0, .01);
       side([[.004, -.002], [.05, .004], ['q', .1, -.026, .094, -.096], ['q', .09, -.126, .062, -.12], ['q', .034, -.114, .03, -.07], [.018, -.03]], .036, m.fin, 0, .012);
@@ -3905,7 +3909,7 @@ const GAME = {
       T = parts.brk = group(0, .02, -.06);
       for (const sx of [-.0148, .0148]) { lathe([[-.3, .0098], [-.3, .0152], [-.29, .0158], [-.02, .0158], [0, .0145], [0, .008]], m.steel, .012, sx, 16); disc(.0098, sx, .012, -.3005, m.hole); } setBore(.032, -.36, .031);
       rbox(.06, .012, .022, m.dark, 0, .012, -.283, .004); rbox(.005, .007, .262, m.metal, 0, .0295, -.14, .002); add(new THREE.SphereGeometry(.0036, 8, 6), m.brass, 0, .0355, -.29);
-      T = G; sup = [-.016, -.1, .03];
+      T = G; sup = [0, -.034, -.16];   // both hands: the left one cups the wooden forend under the barrels
     } else if (k === 'hammer') {   // double-action revolver: stainless frame with a cylinder window, full under-lug barrel, vented rib, fluted cylinder, finger-groove grip
       len = .274; port = null; sight = .066; pistolHold = true; Object.assign(A, { fam: 'rev', by: .036 });
       const BY = .036, CY = .02, CZ = -.016;
@@ -3941,7 +3945,7 @@ const GAME = {
       tube(.0034, -.1, -.028, m.steel, 0); lathe([[-.106, .002], [-.106, .0048], [-.1, .0048], [-.1, .002]], m.steel, 0);
       { const rims = parts.rims = new THREE.Group(); T.add(rims); T = rims;
         for (let i = 0; i < 6; i++) { const a = Math.PI / 2 + i * TAU / 6, x = Math.cos(a) * .016, y = Math.sin(a) * .016; add(new THREE.CylinderGeometry(.0064, .0064, .0016, 14), m.brass, x, y, .0288, Math.PI / 2); disc(.0018, x, y, .0297, m.steel, true); } }
-      T = G; sup = [-.016, -.1, .04];
+      T = G; sup = [-.02, -.08, .04];
     }
     else if (k === 'gnat') { carbine({ len: .32, rf: -.16, hz: -.26, hg: 'shroud', br: .0105, tip: 'flash', stock: 'wire', short: 1, mag: 'stick', magL: .13, sight: 'holo', sightY: .099, fore: 'vgrip', backup: false, sideHandle: 1, glow: false }); decal('GNAT', 'SMG · 20 RD', .085, .021, .0236, .03, -.105); }
     else if (k === 'hornet') { carbine({ len: .52, rf: -.18, hz: -.27, hg: 'slab', hgMat: m.poly, upper: m.fin, lower: m.poly, br: .0115, tip: 'supp', sl: .25, stock: 'wire', mag: 'stick', magL: .17, sight: 'holo', sightY: .099, counter: 1, backup: false, sideHandle: 1 }); decal('HORNET', 'SMG · 30 RD', .085, .021, .0236, .03, -.1); }
@@ -3976,7 +3980,7 @@ const GAME = {
       for (let i = 0; i < 4; i++) rbox(.0255, .034, .004, m.rubber, 0, .0, .014 + i * .021, .002); rbox(.028, .032, .016, m.metal, 0, -.001, .108, .006); decal('DP', 'BLADE', .05, .0125, .0036, .008, -.1);
       }
     }
-    if (k === 'pip' || k === 'wasp' || k === 'quill' || k === 'stub' || k === 'hammer' || k === 'knife' || GUNS[k].cat === 'Sidearm') pistolHold = true;
+    if (k === 'pip' || k === 'wasp' || k === 'quill' || k === 'hammer' || k === 'knife' || (GUNS[k].cat === 'Sidearm' && k !== 'stub')) pistolHold = true;
 
     if (bore && -bore.z > len) len = -bore.z;   // a muzzle device past the barrel's end: the gun is that long
     if (line) { const K2 = skinKit(G, k, line, m, len, bore, Object.assign(A, { sight }), parts);
@@ -3985,15 +3989,19 @@ const GAME = {
     const grip = k === 'knife' ? [0, 0, .045] : k === 'hammer' ? [0, -.055, .052] : k === 'stub' ? [0, -.058, .05] : pistolHold ? [0, -.062, .026] : k === 'breaker' ? [0, -.07, .05] : k === 'kite' || k === 'longbow' ? [0, -.072, .046] : [0, -.076, .026];
     if (opts.hands) {   // your own gloves and sleeves: fingers wrapped round the grip, the other hand under the gun
       const op = OPS[opts.op] || OPS.vex, band = gmats.band[op.col] || (gmats.band[op.col] = new THREE.MeshStandardMaterial({ color: LC(op.col), roughness: .5 }));
+      // your gloves and sleeves stand apart from the gun: a mid-grey glove with a hint of your operative's colour, and a
+      // sleeve dyed in it (each operative's arms look their own)
+      const HM = gmats.hands[op.col] || (gmats.hands[op.col] = (() => { const gl = m.glove.clone(), sl = m.sleeve.clone(), c = new THREE.Color(op.col);
+        gl.color.set('#6a707c').lerp(c, .16).convertSRGBToLinear(); sl.color.set('#262c38').lerp(c, .42).convertSRGBToLinear(); gl.name = sl.name = 'hand'; return { glove: gl, sleeve: sl }; })());
       const arm = (par, x, y, z, rx, ry, l) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(rx, ry, 0); par.add(g); const was = T; T = g;
-        lathe([[-.03, .03], [-.03, .037], [.0, .04], [.02, .043], [.03, .046], [l, .056], [l, .02]], m.sleeve, 0, 0, 14); lathe([[.012, .0445], [.012, .0475], [.04, .0485], [.04, .046]], band, 0, 0, 14); T = was; };
-      const fingers = (n, x, y0, z, w, dy, mat = m.glove) => { for (let i = 0; i < n; i++) rbox(w, .0155, .019, mat, x, y0 - i * dy, z, .0065); };
+        lathe([[-.03, .03], [-.03, .037], [.0, .04], [.02, .043], [.03, .046], [l, .056], [l, .02]], HM.sleeve, 0, 0, 14); lathe([[.012, .0445], [.012, .0475], [.04, .0485], [.04, .046]], band, 0, 0, 14); T = was; };
+      const fingers = (n, x, y0, z, w, dy, mat = HM.glove) => { for (let i = 0; i < n; i++) rbox(w, .0155, .019, mat, x, y0 - i * dy, z, .0065); };
       T = group(grip[0], grip[1], grip[2], k === 'knife' ? 0 : -.25);
-      if (k === 'knife') { rbox(.013, .05, .074, m.glove, .019, -.002, 0, .005); rbox(.013, .04, .07, m.glove, -.018, -.006, 0, .005); for (let i = 0; i < 4; i++) rbox(.042, .017, .0165, m.glove, 0, -.024, -.027 + i * .018, .0065); rbox(.012, .013, .04, m.glove, -.011, .02, -.022, .005); rbox(.006, .024, .04, band, .0265, -.004, .012, .002); arm(T, .006, -.02, .045, 1.1, -.3, .42); }
-      else { rbox(.014, .074, .054, m.glove, .0215, 0, .002, .006); rbox(.046, .072, .016, m.glove, .002, 0, .03, .006); fingers(4, -.002, .027, -.029, .05, .0178); rbox(.014, .018, .05, m.glove, -.0215, .032, -.012, .006); rbox(.0065, .03, .034, band, .0292, .004, .008, .002); rbox(.02, .012, .03, m.rubber, .024, .03, .004, .003); arm(T, .01, -.036, .034, .7, -.2, .42); }
+      if (k === 'knife') { rbox(.013, .05, .074, HM.glove, .019, -.002, 0, .005); rbox(.013, .04, .07, HM.glove, -.018, -.006, 0, .005); for (let i = 0; i < 4; i++) rbox(.042, .017, .0165, HM.glove, 0, -.024, -.027 + i * .018, .0065); rbox(.012, .013, .04, HM.glove, -.011, .02, -.022, .005); rbox(.006, .024, .04, band, .0265, -.004, .012, .002); arm(T, .006, -.02, .045, 1.1, -.3, .42); }
+      else { rbox(.014, .074, .054, HM.glove, .0215, 0, .002, .006); rbox(.046, .072, .016, HM.glove, .002, 0, .03, .006); fingers(4, -.002, .027, -.029, .05, .0178); rbox(.014, .018, .05, HM.glove, -.0215, .032, -.012, .006); rbox(.0065, .03, .034, band, .0292, .004, .008, .002); rbox(.02, .012, .03, m.rubber, .024, .03, .004, .003); arm(T, .01, -.036, .034, .7, -.2, .42); }
       if (k !== 'knife') {
         T = parts.lhand = group(sup[0], sup[1], sup[2], pistolHold ? .3 : 0);
-        rbox(.056, .018, .08, m.glove, 0, 0, 0, .007); rbox(.014, .044, .07, m.glove, -.032, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, m.glove, -.034, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, m.glove, .032, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002);
+        rbox(.056, .018, .08, HM.glove, 0, 0, 0, .007); rbox(.014, .044, .07, HM.glove, -.032, .022, 0, .006); for (let i = 0; i < 4; i++) rbox(.012, .034, .0165, HM.glove, -.034, .034, -.027 + i * .018, .0055); rbox(.014, .03, .046, HM.glove, .032, .016, .006, .006); rbox(.03, .004, .05, m.rubber, 0, -.0105, 0, .002);
         arm(T, -.02, -.012, .034, .5, .55, pistolHold ? .38 : .55);
         if (k === 'breaker') { const sh = vtube(.0095, -.021, .021, m.shell, 0, 0); sh.rotation.x = Math.PI / 2; sh.position.set(-.012, .03, 0); sh.userData.live = true; sh.visible = false; parts.hshell = sh; }
       }
@@ -4004,15 +4012,19 @@ const GAME = {
     if (opts.flash) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: X.starT, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); sp.scale.setScalar(.4); sp.position.set(0, bore ? bore.y : .03, -len - .06); sp.visible = false; G.add(sp); G.userData.flash = sp; }
     return G;
   }
-  gmats.band = {};
+  gmats.band = {}; gmats.hands = {};
   function viewGun(k, op, skin) { return gunModel(k, { hands: true, op, skin }); }
   // a gun model that is finished with: free the shapes it alone owns (materials and textures are shared and cached;
   // shapes marked shared, like the skin effects', stay), and hand back any reload rig still on it
   function disposeGun(G) { if (!G) return; if (G.userData.rig) rfxDrop(G.userData.rig); G.traverse(o => { if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose(); }); const ct = G.userData.parts && G.userData.parts.counter; if (ct && ct.t) ct.t.dispose(); }
   // the armory pictures: each gun rendered side-on into a small transparent image, once
-  function gunIcon(k, skin) {
+  // (a new picture costs a model, its shaders and a read back from the GPU: at most one is made a frame, so opening the
+  // store or the locker never freezes; the rest fill in over the next few frames, and most are made ahead of time anyway)
+  const ICONB = { f: -1, n: 0 };
+  function gunIcon(k, skin, ahead) {
     const ik = skin ? k + '|' + skin : k; if (ICON[ik] !== undefined) return ICON[ik];
     if (!X || !ready) return null;
+    const fr = X.frameN || 0; if (ICONB.f !== fr) { ICONB.f = fr; ICONB.n = 0; } if (ICONB.n >= 1 && !ahead) return null; ICONB.n++;
     try {
       const w = 480, h = 150, r = X.renderer, rt = new THREE.WebGLRenderTarget(w, h); rt.texture.encoding = THREE.sRGBEncoding;
       const sc = new THREE.Scene(), gm = gunModel(k, { skin }); sc.add(gm); sc.add(new THREE.HemisphereLight('#ffffff', '#5a6270', 1.5));
@@ -4026,9 +4038,23 @@ const GAME = {
       ctx.putImageData(id, 0, 0); disposeGun(gm); return ICON[ik] = cv;
     } catch (e) { console.error(e); return ICON[ik] = false; }
   }
+  // the menus' pictures, made ahead in the quiet moments: the armory's guns, the store's current set, what your locker shows
+  let iconQ = null, iconT = 0;
+  function iconsAhead(dt) {
+    if (!X || !ready || screen === 'play') return;   // never during a round
+    if (!iconQ) { iconQ = []; try { for (const k of Object.keys(GUNS)) if (!GUNS[k].melee) iconQ.push([k, null]);
+      for (const id of dailyStore()) { const sk = skinOfId(id); if (sk) iconQ.push([sk.k, id]); }
+      for (const gk of SKIN_GUNS) iconQ.push([gk, STATS.equip[gk] || null]); for (const id of STATS.skins) { const sk = skinOfId(id); if (sk) iconQ.push([sk.k, id]); } } catch (e) { iconQ = []; } }
+    if ((iconT -= dt) > 0) return; iconT = .12;
+    if (iconQ.length) { const [k, id] = iconQ.shift(); gunIcon(k, id, true); return; }
+    // then the locker's turntable, drawn once out of sight (this frame's own picture covers it), so its lighting is ready
+    if (!X.gsWarm && screen === 'menu' && UI.panel === 'home') { X.gsWarm = 1; const was = UI.panel; UI.panel = 'locker'; try { renderGunShow(0); } catch (e) {} UI.panel = was; }
+  }
   // spent brass flying out of the ejection port (first person only)
   const CASE = { pip: [.0045, .019], wasp: [.0045, .019], quill: [.0045, .019], gnat: [.0045, .019], hornet: [.0045, .019], mako: [.005, .03], paladin: [.005, .03], vesper: [.005, .03], lancer: [.005, .03], torrent: [.005, .03], kite: [.006, .04], longbow: [.0065, .045], breaker: [.0095, .05], thresher: [.0095, .05] }, CASEGEO = {};
-  const VOS = { knife: [.15, -.15, -.31], pip: [.17, -.17, -.3], wasp: [.17, -.17, -.3], quill: [.17, -.17, -.3], stub: [.17, -.18, -.3], hammer: [.17, -.17, -.3], gnat: [.2, -.19, -.3], hornet: [.2, -.19, -.3], breaker: [.2, -.2, -.27], thresher: [.2, -.2, -.28], mako: [.2, -.2, -.28], paladin: [.21, -.21, -.27], vesper: [.2, -.2, -.28], lancer: [.2, -.2, -.28], kite: [.22, -.22, -.26], longbow: [.23, -.23, -.25], torrent: [.21, -.21, -.27] };
+  // where each gun sits in your view [right, up, ahead]: high enough that the hand on the grip shows at the bottom right,
+  // with the support hand on the near side of the gun, as tactical shooters frame it
+  const VOS = { knife: [.15, -.15, -.31], pip: [.13, -.115, -.3], wasp: [.13, -.115, -.3], quill: [.13, -.115, -.3], stub: [.17, -.165, -.29], hammer: [.13, -.115, -.3], gnat: [.185, -.172, -.29], hornet: [.185, -.172, -.29], breaker: [.185, -.178, -.27], thresher: [.185, -.178, -.28], mako: [.185, -.178, -.28], paladin: [.195, -.188, -.27], vesper: [.185, -.178, -.28], lancer: [.185, -.178, -.28], kite: [.205, -.198, -.26], longbow: [.215, -.208, -.25], torrent: [.195, -.188, -.27] };
   /* The moving parts of a gun, for your own view (fp) and your rival's model alike. `ex` carries first-person extras:
      draw (0..1 through the chambering at the end of a draw) and insp (0..1 through an inspect); show marks the store's
      turntable, which gets a skin's full reload effect without your hands. A reload runs as phases of
@@ -4065,12 +4091,12 @@ const GAME = {
       pp.mag.visible = !gone; pp.mag.position.y = y0 - out; pp.mag.position.z = z0 + Math.min(out, .09) * .4; pp.mag.rotation.x = tilt0 + Math.min(out, .09) * 3;
     }
     if (pp.lhand && G.cat !== 'Sidearm') {
-      const p0 = pp.lhand.userData.p0; let h = 0, tx = p0.x, ty = p0.y, tz = p0.z;
+      // where it rests: on the handguard, or riding the pump (the reload moves it from there and back)
+      const p0 = pp.lhand.userData.p0, pz = p0.z + (pp.pump ? pp.pump.position.z : 0); let h = 0, tx = p0.x, ty = p0.y, tz = pz;
       if (G.k === 'breaker') { h = r < 0 ? 0 : sm(win(.05, .2)) * (1 - sm(win(.85, 1))); const ph = (r * 5) % 1; tx = -.005; ty = -.075 + Math.sin(ph * Math.PI) * .03; tz = -.06 - ph * .02; if (pp.hshell) pp.hshell.visible = h > .5 && ph < .55; }
       else if (pp.mag && r >= 0) { h = sm(win(.12, .22)) * (1 - sm(win(.82, .92))); const mp = pp.mag.position; tx = mp.x - .01; ty = mp.y - .06 + (r > .76 && r < .84 ? Math.sin(win(.76, .84) * Math.PI) * .03 : 0); tz = mp.z; }
-      else if (pp.pump) tz = p0.z + pp.pump.position.z;   // the support hand works the pump
       if (pp.hshell && G.k !== 'breaker') pp.hshell.visible = false; else if (pp.hshell && r < 0) pp.hshell.visible = false;
-      pp.lhand.position.set(lp(p0.x, tx, h), lp(p0.y, ty, h), h > 0 ? lp(p0.z, tz, h) : tz);
+      pp.lhand.position.set(lp(p0.x, tx, h), lp(p0.y, ty, h), lp(pz, tz, h));
     }
     // the skin's own effects: its reload (and a Mythic's inspect) on your gun, in the store, and a lighter one on a rival's
     if (U.line) skinFx(Gm, P, G, r, iq, dt, fp, fp || !!ex.show);
@@ -5614,7 +5640,7 @@ const GAME = {
     return K[K.length - 1].slice(1);
   }
   function renderFrame(dt) {
-    if (!X || !ready) return; const cam = X.camera; X.t += dt; tunePixels(dt); skinTick(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; } mechFrame(dt);
+    if (!X || !ready) return; const cam = X.camera; X.t += dt; X.frameN = (X.frameN || 0) + 1; iconsAhead(dt); tunePixels(dt); skinTick(dt); if (X.seaT) { X.seaT.offset.x = X.t * .003; X.seaT.offset.y = X.t * .0016; } mechFrame(dt);
     const live = M && (screen === 'play' || (screen === 'over' && posed)) && !loadingNow();
     if (!live) {   // behind the menus: a slow flight round the site
       if (screen === 'menu' && (UI.panel === 'store' || UI.panel === 'locker') && renderGunShow(dt)) return;
@@ -5628,10 +5654,12 @@ const GAME = {
     const ey = ipos(P, 'y') + lp(EYE, CEYE, P.crouch); X.camY = Math.abs(ey - X.camY) > 1.2 ? ey : X.camY + (ey - X.camY) * Math.min(1, dt * 22);
     X.dip = Math.max(0, (X.dip || 0) - dt * .5); X.shake = Math.max(0, X.shake - dt);
     X.roll = lp(X.roll || 0, P.slide ? .075 : 0, Math.min(1, dt * 9));   // a slide tips the view a little
-    // the spray climbs the view as well as the bullets: the camera follows about half of where the pattern has pushed the
-    // next shot (the crosshair stays put on screen, so the rest shows as bullets landing above it), and glides back as the spray settles
-    { const pt = P.alive && !G.melee ? patOf(P, G) : [0, 0], fol = P.scoped && G.scope ? .25 : .55, k = Math.min(1, dt * 18);
-      X.vpY = lp(X.vpY || 0, pt[0] * fol, k); X.vpP = lp(X.vpP || 0, pt[1] * fol, k); }
+    // the spray: the crosshair climbs and sways with the pattern, so it always shows where the next bullet goes and you pull
+    // down against it; the camera only nods a little with it (most of the climb is on screen, not in the view), and both
+    // glide back as the spray settles
+    { const pt = P.alive && !G.melee ? patOf(P, G) : [0, 0], fol = P.scoped && G.scope ? .25 : .14, k = Math.min(1, dt * 18);
+      X.vpY = lp(X.vpY || 0, pt[0] * fol, k); X.vpP = lp(X.vpP || 0, pt[1] * fol, k);
+      const k2 = Math.min(1, dt * 26); X.xhY = lp(X.xhY || 0, pt[0] - X.vpY, k2); X.xhP = lp(X.xhP || 0, pt[1] - X.vpP, k2); }
     let yaw = P.yaw + X.vpY, pitch = P.pitch + M.camKick + X.vpP, y = X.camY - X.dip - .38 * sm(X.kneel || 0);
     if (P.daze > 0) { const k = Math.min(1, P.daze / .8); yaw += Math.sin(X.t * 6.3) * .014 * k; pitch += Math.cos(X.t * 4.7) * .011 * k; }   // a Shockwave's daze rocks the view
     let deathCam = null;
@@ -5897,13 +5925,74 @@ const GAME = {
     const s = ac.createBufferSource(), fl = ac.createBiquadFilter(), a = ac.createGain(); s.buffer = noiseBuf; fl.type = kind; fl.frequency.value = freq; fl.Q.value = q;
     a.gain.setValueAtTime(v, t); a.gain.exponentialRampToValueAtTime(.0001, t + d); s.connect(fl).connect(a).connect(out); s.start(t, Math.random() * .5, d + .05);
   }
-  // gunfire by class: [crack length, crack pitch, thump pitch, tail length, loudness]
+  // gunfire by class (the fallback, for the moment before a gun's own shot is baked): [crack length, crack pitch, thump pitch, tail length, loudness]
   const SHOT = { Sidearm: [.08, 2400, 170, .12, .8], SMG: [.06, 2000, 150, .1, .7], Shotgun: [.16, 1300, 75, .3, 1.15], Rifle: [.1, 1700, 110, .22, 1], Sniper: [.2, 1200, 60, .5, 1.3], Heavy: [.1, 1400, 95, .22, 1] };
+  /* Each gun's own shot, built once from layers and baked into a sample (so a spray costs one sound a shot, not a dozen):
+       s  the snap: a split-second of bright noise, the edge of the shot
+       p  the punch: [from Hz, to Hz, seconds, level], a falling low tone, driven hard so it thumps
+       c  the crack: [Hz, seconds, level, Q], the blast's band of noise, with some sizzle above it
+       m  the action: [Hz, delay, level], the bolt or slide cycling, a dry metal clack just after
+       r  a ring: [Hz, seconds, level], the steel of a revolver, a marksman rifle or a big sniper
+       t  the room: [lowpass Hz, seconds, level], the tail, with a slap off the walls a moment later
+       rack  a pump or a bolt worked this long after the shot; sup  suppressed (a soft thup, the action louder than the blast)
+       v  how loud it plays */
+  const GSND = {
+    pip: { s: .6, p: [200, 75, .06, .8], c: [2700, .055, .75, .9], m: [3600, .016, .22], t: [1600, .26, .2], v: .85 },
+    stub: { s: .5, p: [120, 38, .16, 1.1], c: [1100, .14, .8, .6], m: [2200, .02, .15], t: [900, .55, .3], v: 1.2 },
+    wasp: { s: .6, p: [230, 95, .045, .7], c: [3000, .045, .7, .9], m: [4000, .012, .2], t: [1800, .18, .16], v: .8 },
+    quill: { sup: 1, s: .25, p: [160, 70, .05, .5], c: [1100, .04, .35, 1.2], m: [3800, .01, .35], t: [900, .1, .06], v: .7 },
+    hammer: { s: .7, p: [130, 42, .14, 1.15], c: [1700, .1, .9, .7], r: [880, .35, .12], m: [2600, .02, .25], t: [1200, .7, .3], v: 1.15 },
+    gnat: { s: .65, p: [240, 100, .04, .65], c: [3100, .04, .65, 1], m: [4200, .012, .25], t: [1900, .16, .15], v: .78 },
+    hornet: { sup: 1, s: .3, p: [170, 70, .045, .55], c: [1300, .035, .35, 1.2], m: [3500, .011, .32], t: [1100, .12, .08], v: .75 },
+    breaker: { s: .55, p: [105, 34, .2, 1.2], c: [1000, .17, .85, .55], t: [800, .75, .34], rack: .42, v: 1.25 },
+    thresher: { s: .55, p: [115, 38, .14, 1.1], c: [1150, .12, .8, .6], m: [2400, .02, .3], t: [850, .5, .3], v: 1.12 },
+    mako: { s: .65, p: [165, 55, .08, .95], c: [2000, .07, .85, .8], m: [3000, .02, .35], t: [1300, .36, .24], v: 1 },
+    paladin: { s: .7, p: [125, 45, .12, 1.1], c: [1600, .09, .9, .7], m: [2500, .025, .4], r: [620, .25, .08], t: [1150, .6, .3], v: 1.12 },
+    vesper: { sup: 1, s: .35, p: [175, 60, .06, .7], c: [1500, .05, .45, 1.1], m: [3200, .014, .45], t: [1200, .16, .1], v: .85 },
+    lancer: { s: .75, p: [140, 48, .1, 1.1], c: [1750, .085, .95, .75], m: [2800, .022, .45], t: [1250, .45, .28], v: 1.05 },
+    kite: { s: .8, p: [140, 50, .1, 1], c: [2200, .08, .9, .8], t: [1300, .6, .3], rack: .55, v: 1.1 },
+    longbow: { s: .85, p: [90, 30, .28, 1.3], c: [1300, .16, 1, .6], r: [420, .5, .07], t: [900, 1.2, .4], rack: .7, v: 1.3 },
+    torrent: { s: .6, p: [150, 52, .085, 1.05], c: [1700, .07, .8, .8], m: [2600, .018, .3], t: [1150, .35, .24], v: 1 },
+  };
+  const baked = {}, baking = {};
+  function bakeShot(k) {
+    const ac = K.ac, D = GSND[k]; if (!ac || !D || baking[k] || typeof OfflineAudioContext === 'undefined') return; baking[k] = 1;
+    const sr = ac.sampleRate, dur = Math.max(D.t[1], D.p[2]) + (D.rack ? D.rack + .32 : 0) + .15, len = Math.ceil(sr * dur);
+    let oc; try { oc = new OfflineAudioContext(1, len, sr); } catch (e) { return; }
+    const nb = oc.createBuffer(1, sr, sr), ch = nb.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+    // everything is driven into a soft clip and a fast compressor: that is what makes it punch rather than hiss
+    const mix = oc.createGain(), sh = oc.createWaveShaper(), comp = oc.createDynamicsCompressor(), cv = new Float32Array(1024);
+    for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; cv[i] = Math.tanh(2.4 * x) / Math.tanh(2.4); } sh.curve = cv;
+    comp.threshold.value = -16; comp.ratio.value = 6; comp.attack.value = .001; comp.release.value = .1; comp.knee.value = 6;
+    mix.gain.value = .7; mix.connect(sh).connect(comp).connect(oc.destination);
+    const noise = (t0, d, v, type, f, q, att = .0012) => { const n = oc.createBufferSource(), fl = oc.createBiquadFilter(), a = oc.createGain(); n.buffer = nb; fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+      a.gain.setValueAtTime(0, t0); a.gain.linearRampToValueAtTime(v, t0 + att); a.gain.exponentialRampToValueAtTime(.0001, t0 + d); n.connect(fl).connect(a).connect(mix); n.start(t0, Math.random() * .4); n.stop(t0 + d + .02); };
+    const osc = (t0, type, f0, f1, d, v) => { const o = oc.createOscillator(), a = oc.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + d);
+      a.gain.setValueAtTime(0, t0); a.gain.linearRampToValueAtTime(v, t0 + .002); a.gain.exponentialRampToValueAtTime(.0001, t0 + d); o.connect(a).connect(mix); o.start(t0); o.stop(t0 + d + .02); };
+    const sup = D.sup ? .45 : 1;
+    noise(0, .012, D.s, 'highpass', 4200, .7, .0005);   // the snap
+    osc(0, 'sine', D.p[0], D.p[1], D.p[2], D.p[3] * .62 * sup); osc(0, 'triangle', D.p[0] * 1.5, D.p[1] * 1.5, D.p[2] * .7, D.p[3] * .26 * sup);   // the punch
+    noise(.001, D.c[1], D.c[2] * 1.45, 'bandpass', D.c[0], D.c[3]); noise(.001, D.c[1] * .7, D.c[2] * .75 * sup, 'bandpass', D.c[0] * 2.1, .8); noise(.001, D.c[1] * .45, D.c[2] * .6 * sup, 'highpass', 4500, .7);   // the crack, its bite and its sizzle
+    if (D.m) { noise(D.m[1], .022, D.m[2], 'bandpass', D.m[0], 6); osc(D.m[1], 'square', D.m[0] * .5, D.m[0] * .42, .014, D.m[2] * .25); }   // the action
+    if (D.r) { osc(.002, 'sine', D.r[0], D.r[0] * .985, D.r[1], D.r[2]); osc(.002, 'sine', D.r[0] * 2.76, D.r[0] * 2.7, D.r[1] * .6, D.r[2] * .45); }   // the ring
+    noise(.006, D.t[1], D.t[2], 'lowpass', D.t[0], .5, .01); noise(.07, D.t[1] * .6, D.t[2] * .45, 'lowpass', D.t[0] * .8, .5, .012);   // the room, and the slap off the walls
+    if (D.rack) { const r = D.rack; noise(r, .05, .32, 'bandpass', 1900, 3); osc(r, 'square', 320, 260, .03, .06); noise(r + .13, .06, .38, 'bandpass', 1400, 3); osc(r + .13, 'square', 260, 200, .035, .07); }   // pump / bolt
+    oc.startRendering().then(B => { const c0 = B.getChannelData(0); let pk = 0; for (let i = 0; i < c0.length; i++) pk = Math.max(pk, Math.abs(c0[i])); if (pk > 0) { const g = .92 / pk; for (let i = 0; i < c0.length; i++) c0[i] *= g; } baked[k] = B; }).catch(() => { baking[k] = 0; });
+  }
+  // bake every gun as a match starts (it takes a few milliseconds each, off the main sound path)
+  on('round', () => { if (K.ac) for (const k in GSND) bakeShot(k); });
   on('shot', (f, S, first) => {
-    if (!first || !canHear()) return; const G = gun(f), out = outFor(f, f === me() ? .55 : 1);
+    if (!first || !canHear()) return; const G = gun(f), mine = f === me(), out = outFor(f, mine ? .6 : 1);
+    if (G.rail) { tone(out, 1800, .25, 'sawtooth', .12, -1500); hiss(out, .3, .3, 'highpass', 2500); tone(out, 70, .25, 'sine', .6, -30); return; }
+    const B = baked[G.k];
+    if (B) {   // the gun's own shot, a hair higher or lower each time; far away it loses its edge
+      const ac = K.ac, src = ac.createBufferSource(), a = ac.createGain(); src.buffer = B; src.playbackRate.value = 1 + (Math.random() - .5) * .07; a.gain.value = GSND[G.k].v;
+      let head = out; if (!mine && M) { const P = me(), d = Math.hypot(f.x - P.x, f.z - P.z); if (d > 12) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = lp(15000, 2200, cl((d - 12) / 40, 0, 1)); lpf.connect(out); head = lpf; } }
+      src.connect(a).connect(head); src.start(); return;
+    }
+    bakeShot(G.k);
     if (G.sil) { hiss(out, .06, .22, 'lowpass', 1500); tone(out, 240, .04, 'square', .04, -90); return; }
     const [d, cf, tf, tail, v] = SHOT[G.cat] || SHOT.Rifle, big = G.k === 'hammer' || G.k === 'paladin' || G.k === 'stub' || G.loud ? 1.25 : 1;
-    if (G.rail) { tone(out, 1800, .25, 'sawtooth', .12, -1500); hiss(out, .3, .3, 'highpass', 2500); tone(out, 70, .25, 'sine', .6, -30); return; }
     hiss(out, d * big, .5 * v, 'bandpass', cf, 0, .6); hiss(out, tail * big, .16 * v, 'lowpass', 900, .02); tone(out, tf, .11 * big, 'sine', .5 * v, -tf * .55);
   });
   const cue = (name, fn) => on(name, (a, b, c, d) => { if (canHear()) fn(a, b, c, d); });
@@ -6644,12 +6733,14 @@ const GAME = {
     if (M.planted && M.phase === 'live') { const s = toScreen(M.planted.x, M.planted.y + .9, M.planted.z); if (s) { const p = 1 + Math.sin(M.time * 9) * .12; g.fillStyle = FOE; g.beginPath(); g.moveTo(s[0], s[1] - 11 * u * p); g.lineTo(s[0] + 9 * u * p, s[1]); g.lineTo(s[0], s[1] + 11 * u * p); g.lineTo(s[0] - 9 * u * p, s[1]); g.fill(); tx(g, Math.hypot(P.x - M.planted.x, P.z - M.planted.z).toFixed(0) + ' m', s[0], s[1] + 24 * u, 13 * u, BONE); } }
     drawSiteMarks(g, P, u);   // the sites, while you are finding your way
     // --- crosshair and hit marks
-    // the crosshair marks where a shot really goes: the view punch lifts the camera a little, so it sits that much lower
-    const tf = Math.tan((X ? X.camera.fov : BASE_FOV) * D2R / 2), hh = (V.y1 - V.y0) / 2, cy = 360 + Math.tan(M.camKick || 0) / tf * hh;
+    // the crosshair marks where the next shot really goes: it rides up (and sways) with the spray, less the little the view
+    // itself nods, and sits a touch lower for the view punch
+    const tf = Math.tan((X ? X.camera.fov : BASE_FOV) * D2R / 2), hh = (V.y1 - V.y0) / 2, rc = P.alive && !G.melee && X;
+    const cy = 360 + Math.tan((M.camKick || 0) - (rc ? X.xhP || 0 : 0)) / tf * hh, cx = 640 - Math.tan(rc ? X.xhY || 0 : 0) / tf * hh;
     if (P.alive && !(P.scoped && G.scope) && !demo) {
       // shotguns: your own crosshair (whatever you designed) plus the spread ring round it
-      if (G.cat === 'Shotgun' && G.pspr) { drawShotgunReticle(g, 640, cy, Math.tan(spreadOf(P) + G.pspr * D2R) / tf * hh, Math.max(1, u * .85)); drawCrosshair(g, 640, cy, 0, Math.max(1, u * .85)); }
-      else drawCrosshair(g, 640, cy, Math.tan(spreadOf(P)) / tf * hh, Math.max(1, u * .85));
+      if (G.cat === 'Shotgun' && G.pspr) { drawShotgunReticle(g, cx, cy, Math.tan(spreadOf(P) + G.pspr * D2R) / tf * hh, Math.max(1, u * .85)); drawCrosshair(g, cx, cy, 0, Math.max(1, u * .85)); }
+      else drawCrosshair(g, cx, cy, Math.tan(spreadOf(P)) / tf * hh, Math.max(1, u * .85));
     }
     // no hit marks over the crosshair; the range alone shows the damage each shot did
     if (hitMark && (hitMark.t -= 1 / 60) > 0 && range) tx(g, String(hitMark.dmg), 640 + 44 * u + hitMark.x, cy - 30 * u - (1 - Math.min(1, hitMark.t / .28)) * 16, 20 * u, hitMark.head ? GOLD : '#fff');
@@ -6728,7 +6819,7 @@ const GAME = {
       g.restore();
     }
     if (touch && canBuy()) tx(g, `◈ ${P.credits}`, 640, V.y1 - 66 * u, 17 * u, GOLD);
-    if (M.phase === 'buy' && P.alive && P.nearLoot && GUNS[P.nearLoot.k] && !UI.armory) hint(g, `${touch ? 'Tap PICK UP' : 'Press F'} to ${lootFree(P) ? 'pick up' : 'swap for'} the ${GUNS[P.nearLoot.k].n}`, V.y0 + 186 * u, 15 * u, BONE);
+    if ((M.phase === 'buy' || (M.phase === 'end' && !M.over)) && P.alive && P.nearLoot && GUNS[P.nearLoot.k] && !UI.armory) hint(g, `${touch ? 'Tap PICK UP' : 'Press F'} to ${lootFree(P) ? 'pick up' : 'swap for'} the ${GUNS[P.nearLoot.k].n}`, V.y0 + 186 * u, 15 * u, BONE);
     // --- the charge: what to do, and how far along
     const ring = (frac, label, col) => { const y = 470; g.strokeStyle = 'rgba(12,16,22,.7)'; g.lineWidth = 12 * u; g.beginPath(); g.arc(640, y, 34 * u, 0, TAU); g.stroke(); g.strokeStyle = col; g.lineWidth = 7 * u; g.beginPath(); g.arc(640, y, 34 * u, -Math.PI / 2, -Math.PI / 2 + TAU * frac); g.stroke(); tx(g, label, 640, y + 60 * u, 15 * u, col); };
     if (P.reloadT > 0) tx(g, 'RELOADING', 640, 420, 15 * u, GOLD);
@@ -6870,12 +6961,12 @@ const GAME = {
     [['MATCHES', STATS.matches], ['WINS', STATS.wins + '  ·  ' + wr], ['KILLS', STATS.kills], ['HEADSHOTS', hs]].forEach(([a, b], k) => card(x0 + k * (cw + gap), y1, cw, ch, a, b));
     // ranked, one card per team size
     const y2 = y1 + ch + 30 * u, rh = 150 * u; tx(g, 'RANKED', x0, y2 - 12 * u, 12 * u, GOLD, 'left', 900);
-    { const cw4 = cw, cw = Math.min(cw4, (cw4 * 4 + gap * 3 - gap * (RQ.length - 1)) / RQ.length); RQ.forEach((k, i) => { const S = rankedOf(+k), on = placed(S), x = x0 + i * (cw + gap), r0 = rankOf(S.rv), col = on ? r0.T.col : 'rgba(239,233,220,.3)';
-      rr(g, x, y2, cw, rh, 10, 'rgba(14,18,26,.94)', col, on ? 2 : 1.5); tx(g, vsLabel(+k), x + 14 * u, y2 + 20 * u, 13 * u, BONE, 'left', 900); tx(g, `${S.w}W · ${S.n - S.w}L`, x + cw - 12 * u, y2 + 20 * u, 10.5 * u, DIM, 'right', 800);
-      tierBadge(g, x + cw / 2, y2 + 62 * u, 24 * u, S.rv, on);
-      tx(g, on ? rankLabel(S.rv).toUpperCase() : 'UNRANKED', x + cw / 2, y2 + 106 * u, 15 * u, on ? col : BONE, 'center', 900);
-      if (on && !r0.top) { g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(x + 14 * u, y2 + 120 * u, cw - 28 * u, 5 * u); g.fillStyle = col; g.fillRect(x + 14 * u, y2 + 120 * u, (cw - 28 * u) * r0.rp / 100, 5 * u); }
-      tx(g, on ? (r0.top ? `${r0.rp} RP` : `${r0.rp} / 100 RP`) : `PLACEMENTS ${S.n}/${PLACE_N}`, x + cw / 2, y2 + 138 * u, 10.5 * u, DIM, 'center', 800); }); }
+    { const cr = Math.min(cw, (cw * 4 + gap * 3 - gap * (RQ.length - 1)) / RQ.length); RQ.forEach((k, i) => { const S = rankedOf(+k), on = placed(S), x = x0 + i * (cr + gap), r0 = rankOf(S.rv), col = on ? r0.T.col : 'rgba(239,233,220,.3)';
+      rr(g, x, y2, cr, rh, 10, 'rgba(14,18,26,.94)', col, on ? 2 : 1.5); tx(g, vsLabel(+k), x + 14 * u, y2 + 20 * u, 13 * u, BONE, 'left', 900); tx(g, `${S.w}W · ${S.n - S.w}L`, x + cr - 12 * u, y2 + 20 * u, 10.5 * u, DIM, 'right', 800);
+      tierBadge(g, x + cr / 2, y2 + 62 * u, 24 * u, S.rv, on);
+      tx(g, on ? rankLabel(S.rv).toUpperCase() : 'UNRANKED', x + cr / 2, y2 + 106 * u, 15 * u, on ? col : BONE, 'center', 900);
+      if (on && !r0.top) { g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(x + 14 * u, y2 + 120 * u, cr - 28 * u, 5 * u); g.fillStyle = col; g.fillRect(x + 14 * u, y2 + 120 * u, (cr - 28 * u) * r0.rp / 100, 5 * u); }
+      tx(g, on ? (r0.top ? `${r0.rp} RP` : `${r0.rp} / 100 RP`) : `PLACEMENTS ${S.n}/${PLACE_N}`, x + cr / 2, y2 + 138 * u, 10.5 * u, DIM, 'center', 800); }); }
     // the match history
     const y3 = y2 + rh + 30 * u, hw = cw * 3 + gap * 2, hh = Math.max(80 * u, V.y1 - y3 - 16 * u), H = STATS.hist || [];
     tx(g, 'MATCH HISTORY', x0, y3 - 12 * u, 12 * u, DIM, 'left', 900); rr(g, x0, y3, hw, hh, 10, 'rgba(14,18,26,.94)', 'rgba(239,233,220,.14)', 1.5);
@@ -7907,7 +7998,7 @@ const GAME = {
     navFocus: () => { const z = navAt(); return z ? [Math.round(z.x), Math.round(z.y), Math.round(z.w)] : null; }, throwNade: () => throwNade(me()), updateAgent, siteC, hAt, play, toMenu, menuPlay: s => menuPlay(s, false), openParty, PARTY, SH, buySkin, equipSkin, redeem: c => { const p0 = window.prompt; window.prompt = () => c; try { enterCode(); } finally { window.prompt = p0; } return SH.msg && SH.msg.s; }, allSkinIds, dailyStore, storeLeft, skinPrice, skinOfId, matchCoins, openSelect, lockIn, get sel() { return UI.sel; }, tick: s => { for (let i = 0; i < s * 60; i++) tick(1 / 60); }, buy: k => buy(me(), k), fire: () => fire(me()), alt: () => altAction(me()), ability: k => ability(me(), k), openArmory,
     ranked: () => ({ rankedOf, rankedResult, rankLabel, rankOf, placed, botLevelFor, soloOpts, matchOver, STATS, csOf }),
     team: () => ({ dropHeld, dropCharge, giveCharge, takeLoot, carries, carrier, matchDecided, otRound, applyDamage, startRound, endRound, stepLoot }),
-    botMe: d => { me().bot = { diff: d }; me().local = false; }, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, partyFns: () => ({ hostClick, swapTeam, tradeTeams, hostTeams }), XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor,
+    botMe: d => { me().bot = { diff: d }; me().local = false; }, CFG, TS, get keys() { return keys; }, readInput: () => readInput(me()), dmgAt, hitboxes, headOf, castShot, viewDir, lootAt, setCharge, QUE, queueStart, queueStop, partyFns: () => ({ hostClick, swapTeam, tradeTeams, hostTeams }), XH_PRESETS, xhCode, xhFromCode, openOpts, gunModel, gunIcon, agentModel, rfx: () => ({ busy: RFX.busy.length, free: RFX.free.length, onGuns: RFX.busy.filter(r => r.gun && r.gun.userData.rig === r).length, guns: RFX.busy.map(r => r.gun && (r.gun.userData.k + (r.full ? '/full' : '/light') + ':' + r.mode + '@' + RFX.frame + '-' + r.stamp)) }), killFx, LINES, err: () => spreadOf(me()) / D2R, touchButtons, uiScale, pxPer, seed, matchOver, STATS, diffFor, shotBuf: k => baked[k],
   };
 })();
 

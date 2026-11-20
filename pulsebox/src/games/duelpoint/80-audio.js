@@ -35,13 +35,74 @@
     const s = ac.createBufferSource(), fl = ac.createBiquadFilter(), a = ac.createGain(); s.buffer = noiseBuf; fl.type = kind; fl.frequency.value = freq; fl.Q.value = q;
     a.gain.setValueAtTime(v, t); a.gain.exponentialRampToValueAtTime(.0001, t + d); s.connect(fl).connect(a).connect(out); s.start(t, Math.random() * .5, d + .05);
   }
-  // gunfire by class: [crack length, crack pitch, thump pitch, tail length, loudness]
+  // gunfire by class (the fallback, for the moment before a gun's own shot is baked): [crack length, crack pitch, thump pitch, tail length, loudness]
   const SHOT = { Sidearm: [.08, 2400, 170, .12, .8], SMG: [.06, 2000, 150, .1, .7], Shotgun: [.16, 1300, 75, .3, 1.15], Rifle: [.1, 1700, 110, .22, 1], Sniper: [.2, 1200, 60, .5, 1.3], Heavy: [.1, 1400, 95, .22, 1] };
+  /* Each gun's own shot, built once from layers and baked into a sample (so a spray costs one sound a shot, not a dozen):
+       s  the snap: a split-second of bright noise, the edge of the shot
+       p  the punch: [from Hz, to Hz, seconds, level], a falling low tone, driven hard so it thumps
+       c  the crack: [Hz, seconds, level, Q], the blast's band of noise, with some sizzle above it
+       m  the action: [Hz, delay, level], the bolt or slide cycling, a dry metal clack just after
+       r  a ring: [Hz, seconds, level], the steel of a revolver, a marksman rifle or a big sniper
+       t  the room: [lowpass Hz, seconds, level], the tail, with a slap off the walls a moment later
+       rack  a pump or a bolt worked this long after the shot; sup  suppressed (a soft thup, the action louder than the blast)
+       v  how loud it plays */
+  const GSND = {
+    pip: { s: .6, p: [200, 75, .06, .8], c: [2700, .055, .75, .9], m: [3600, .016, .22], t: [1600, .26, .2], v: .85 },
+    stub: { s: .5, p: [120, 38, .16, 1.1], c: [1100, .14, .8, .6], m: [2200, .02, .15], t: [900, .55, .3], v: 1.2 },
+    wasp: { s: .6, p: [230, 95, .045, .7], c: [3000, .045, .7, .9], m: [4000, .012, .2], t: [1800, .18, .16], v: .8 },
+    quill: { sup: 1, s: .25, p: [160, 70, .05, .5], c: [1100, .04, .35, 1.2], m: [3800, .01, .35], t: [900, .1, .06], v: .7 },
+    hammer: { s: .7, p: [130, 42, .14, 1.15], c: [1700, .1, .9, .7], r: [880, .35, .12], m: [2600, .02, .25], t: [1200, .7, .3], v: 1.15 },
+    gnat: { s: .65, p: [240, 100, .04, .65], c: [3100, .04, .65, 1], m: [4200, .012, .25], t: [1900, .16, .15], v: .78 },
+    hornet: { sup: 1, s: .3, p: [170, 70, .045, .55], c: [1300, .035, .35, 1.2], m: [3500, .011, .32], t: [1100, .12, .08], v: .75 },
+    breaker: { s: .55, p: [105, 34, .2, 1.2], c: [1000, .17, .85, .55], t: [800, .75, .34], rack: .42, v: 1.25 },
+    thresher: { s: .55, p: [115, 38, .14, 1.1], c: [1150, .12, .8, .6], m: [2400, .02, .3], t: [850, .5, .3], v: 1.12 },
+    mako: { s: .65, p: [165, 55, .08, .95], c: [2000, .07, .85, .8], m: [3000, .02, .35], t: [1300, .36, .24], v: 1 },
+    paladin: { s: .7, p: [125, 45, .12, 1.1], c: [1600, .09, .9, .7], m: [2500, .025, .4], r: [620, .25, .08], t: [1150, .6, .3], v: 1.12 },
+    vesper: { sup: 1, s: .35, p: [175, 60, .06, .7], c: [1500, .05, .45, 1.1], m: [3200, .014, .45], t: [1200, .16, .1], v: .85 },
+    lancer: { s: .75, p: [140, 48, .1, 1.1], c: [1750, .085, .95, .75], m: [2800, .022, .45], t: [1250, .45, .28], v: 1.05 },
+    kite: { s: .8, p: [140, 50, .1, 1], c: [2200, .08, .9, .8], t: [1300, .6, .3], rack: .55, v: 1.1 },
+    longbow: { s: .85, p: [90, 30, .28, 1.3], c: [1300, .16, 1, .6], r: [420, .5, .07], t: [900, 1.2, .4], rack: .7, v: 1.3 },
+    torrent: { s: .6, p: [150, 52, .085, 1.05], c: [1700, .07, .8, .8], m: [2600, .018, .3], t: [1150, .35, .24], v: 1 },
+  };
+  const baked = {}, baking = {};
+  function bakeShot(k) {
+    const ac = K.ac, D = GSND[k]; if (!ac || !D || baking[k] || typeof OfflineAudioContext === 'undefined') return; baking[k] = 1;
+    const sr = ac.sampleRate, dur = Math.max(D.t[1], D.p[2]) + (D.rack ? D.rack + .32 : 0) + .15, len = Math.ceil(sr * dur);
+    let oc; try { oc = new OfflineAudioContext(1, len, sr); } catch (e) { return; }
+    const nb = oc.createBuffer(1, sr, sr), ch = nb.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+    // everything is driven into a soft clip and a fast compressor: that is what makes it punch rather than hiss
+    const mix = oc.createGain(), sh = oc.createWaveShaper(), comp = oc.createDynamicsCompressor(), cv = new Float32Array(1024);
+    for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; cv[i] = Math.tanh(2.4 * x) / Math.tanh(2.4); } sh.curve = cv;
+    comp.threshold.value = -16; comp.ratio.value = 6; comp.attack.value = .001; comp.release.value = .1; comp.knee.value = 6;
+    mix.gain.value = .7; mix.connect(sh).connect(comp).connect(oc.destination);
+    const noise = (t0, d, v, type, f, q, att = .0012) => { const n = oc.createBufferSource(), fl = oc.createBiquadFilter(), a = oc.createGain(); n.buffer = nb; fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+      a.gain.setValueAtTime(0, t0); a.gain.linearRampToValueAtTime(v, t0 + att); a.gain.exponentialRampToValueAtTime(.0001, t0 + d); n.connect(fl).connect(a).connect(mix); n.start(t0, Math.random() * .4); n.stop(t0 + d + .02); };
+    const osc = (t0, type, f0, f1, d, v) => { const o = oc.createOscillator(), a = oc.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + d);
+      a.gain.setValueAtTime(0, t0); a.gain.linearRampToValueAtTime(v, t0 + .002); a.gain.exponentialRampToValueAtTime(.0001, t0 + d); o.connect(a).connect(mix); o.start(t0); o.stop(t0 + d + .02); };
+    const sup = D.sup ? .45 : 1;
+    noise(0, .012, D.s, 'highpass', 4200, .7, .0005);   // the snap
+    osc(0, 'sine', D.p[0], D.p[1], D.p[2], D.p[3] * .62 * sup); osc(0, 'triangle', D.p[0] * 1.5, D.p[1] * 1.5, D.p[2] * .7, D.p[3] * .26 * sup);   // the punch
+    noise(.001, D.c[1], D.c[2] * 1.45, 'bandpass', D.c[0], D.c[3]); noise(.001, D.c[1] * .7, D.c[2] * .75 * sup, 'bandpass', D.c[0] * 2.1, .8); noise(.001, D.c[1] * .45, D.c[2] * .6 * sup, 'highpass', 4500, .7);   // the crack, its bite and its sizzle
+    if (D.m) { noise(D.m[1], .022, D.m[2], 'bandpass', D.m[0], 6); osc(D.m[1], 'square', D.m[0] * .5, D.m[0] * .42, .014, D.m[2] * .25); }   // the action
+    if (D.r) { osc(.002, 'sine', D.r[0], D.r[0] * .985, D.r[1], D.r[2]); osc(.002, 'sine', D.r[0] * 2.76, D.r[0] * 2.7, D.r[1] * .6, D.r[2] * .45); }   // the ring
+    noise(.006, D.t[1], D.t[2], 'lowpass', D.t[0], .5, .01); noise(.07, D.t[1] * .6, D.t[2] * .45, 'lowpass', D.t[0] * .8, .5, .012);   // the room, and the slap off the walls
+    if (D.rack) { const r = D.rack; noise(r, .05, .32, 'bandpass', 1900, 3); osc(r, 'square', 320, 260, .03, .06); noise(r + .13, .06, .38, 'bandpass', 1400, 3); osc(r + .13, 'square', 260, 200, .035, .07); }   // pump / bolt
+    oc.startRendering().then(B => { const c0 = B.getChannelData(0); let pk = 0; for (let i = 0; i < c0.length; i++) pk = Math.max(pk, Math.abs(c0[i])); if (pk > 0) { const g = .92 / pk; for (let i = 0; i < c0.length; i++) c0[i] *= g; } baked[k] = B; }).catch(() => { baking[k] = 0; });
+  }
+  // bake every gun as a match starts (it takes a few milliseconds each, off the main sound path)
+  on('round', () => { if (K.ac) for (const k in GSND) bakeShot(k); });
   on('shot', (f, S, first) => {
-    if (!first || !canHear()) return; const G = gun(f), out = outFor(f, f === me() ? .55 : 1);
+    if (!first || !canHear()) return; const G = gun(f), mine = f === me(), out = outFor(f, mine ? .6 : 1);
+    if (G.rail) { tone(out, 1800, .25, 'sawtooth', .12, -1500); hiss(out, .3, .3, 'highpass', 2500); tone(out, 70, .25, 'sine', .6, -30); return; }
+    const B = baked[G.k];
+    if (B) {   // the gun's own shot, a hair higher or lower each time; far away it loses its edge
+      const ac = K.ac, src = ac.createBufferSource(), a = ac.createGain(); src.buffer = B; src.playbackRate.value = 1 + (Math.random() - .5) * .07; a.gain.value = GSND[G.k].v;
+      let head = out; if (!mine && M) { const P = me(), d = Math.hypot(f.x - P.x, f.z - P.z); if (d > 12) { const lpf = ac.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = lp(15000, 2200, cl((d - 12) / 40, 0, 1)); lpf.connect(out); head = lpf; } }
+      src.connect(a).connect(head); src.start(); return;
+    }
+    bakeShot(G.k);
     if (G.sil) { hiss(out, .06, .22, 'lowpass', 1500); tone(out, 240, .04, 'square', .04, -90); return; }
     const [d, cf, tf, tail, v] = SHOT[G.cat] || SHOT.Rifle, big = G.k === 'hammer' || G.k === 'paladin' || G.k === 'stub' || G.loud ? 1.25 : 1;
-    if (G.rail) { tone(out, 1800, .25, 'sawtooth', .12, -1500); hiss(out, .3, .3, 'highpass', 2500); tone(out, 70, .25, 'sine', .6, -30); return; }
     hiss(out, d * big, .5 * v, 'bandpass', cf, 0, .6); hiss(out, tail * big, .16 * v, 'lowpass', 900, .02); tone(out, tf, .11 * big, 'sine', .5 * v, -tf * .55);
   });
   const cue = (name, fn) => on(name, (a, b, c, d) => { if (canHear()) fn(a, b, c, d); });

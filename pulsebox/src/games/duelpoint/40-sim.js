@@ -131,7 +131,8 @@
   function patOf(f, G) {
     const P = G.pat; if (!P) return [0, 0]; const n = Math.max(0, f.spray - G.acc.free);
     const up = P.n2 && n > P.n2 ? P.vk * P.n2 + P.vk2 * (n - P.n2) : P.vk * n;   // vk2: a steeper climb after the n2th shot
-    return [n > P.hs0 ? P.hk * Math.sin((n - P.hs0) * .85 + f.sseed) * D2R : 0, Math.min(P.vmax, up) * D2R];
+    // (the sway starts from the middle, toward a side picked at the start of each spray, so the crosshair never jumps)
+    return [n > P.hs0 ? P.hk * Math.sin((n - P.hs0) * .7) * (f.sseed < Math.PI ? 1 : -1) * D2R : 0, Math.min(P.vmax, up) * D2R];
   }
   const viewDir = (yaw, pitch) => { const cp = Math.cos(pitch); return [-Math.sin(yaw) * cp, Math.sin(pitch), -Math.cos(yaw) * cp]; };
   // ray against a sphere / an axis-aligned box: the distance, or -1
@@ -200,7 +201,7 @@
       else if (!S.hit && !f.net && BRKS.length) { const e = S.end, k = idx(Math.floor((e[0] + S.d[0] * .06) / CS), Math.floor((e[2] + S.d[2] * .06) / CS)); if (k >= 0 && BRKX[k] >= 0) hitWall(BRKX[k], dmgAt(G, S.dist, 2), f); }   // a breakable wall
     }
     if (landed) f.stat.hits++;
-    f.spray += 1; f.kick = .08; f.cloak = 0; f.phase = 0; if (f === me()) M.camKick = Math.min(M.camKick + G.punch * .42 * D2R * (f.scoped && G.scope ? .4 : 1), 1.6 * D2R);
+    f.spray += 1; f.sprayFrom = 0; f.kick = .08; f.cloak = 0; f.phase = 0; if (f === me()) M.camKick = Math.min(M.camKick + G.punch * .42 * D2R * (f.scoped && G.scope ? .4 : 1), 1.6 * D2R);
     if (!f.net) net({ t: 'sh', a: r3(y0), b: r3(p0), f: f.key });
     if (A.mag === 0 && A.res > 0) f.autoReload = .26;
   }
@@ -223,8 +224,10 @@
     if (f.fireT > -1) f.fireT -= dt;   // below zero it counts how long the trigger has rested
     stepBurst(f, dt);
     if (f.autoReload > 0 && (f.autoReload -= dt) <= 0 && f.alive && !f.burst) reload(f);
-    // the spray settles once the trigger has rested a moment: from its worst to nothing in 'recov' seconds
-    if (f.fireT < -.05 && !f.burst && f.spray > 0) f.spray = Math.max(0, f.spray - dt * (f.surge > 0 ? 2 : 1) * (G.acc.free + 1 + (G.acc.inc ? G.acc.max / G.acc.inc : 4)) / G.acc.recov);
+    // the spray settles once the trigger has rested a moment: from wherever it got to (its worst, or a long spray's climb
+    // and sway) to nothing in 'recov' seconds, so the crosshair glides home at the same pace however long you held it
+    if (f.fireT < -.05 && !f.burst && f.spray > 0) { const from = f.sprayFrom || (f.sprayFrom = f.spray);
+      f.spray = Math.max(0, f.spray - dt * (f.surge > 0 ? 2 : 1) * Math.max(from, G.acc.free + 1 + (G.acc.inc ? G.acc.max / G.acc.inc : 4)) / G.acc.recov); if (!f.spray) f.sprayFrom = 0; }
     if (f.reloadT > 0) { f.reloadT -= dt; if (f.reloadT <= 0) { const A = f.ammo[G.k], n = Math.min(G.mag - A.mag, A.res); A.mag += n; if (M.mode !== 'range') A.res -= n; f.spray = 0; } }
   }
   function switchTo(f, slot) { if (!f.guns[slot] || f.slot === slot || !f.alive) return; f.slot = slot; f.reloadT = 0; f.autoReload = 0; f.scoped = 0; f.burst = null; f.spray = 0; f.fireT = Math.max(f.fireT, GUNS[f.guns[slot]].equip * .7); emit('swap', f); }
@@ -475,7 +478,7 @@
     return at ? lootAt(f, k, at.x, at.z, A.mag, A.res) : lootAt(f, k, f.x + fx * far, f.z + fz * far, A.mag, A.res);
   }
   // T: the gun in your hand
-  function dropHeld(f) { if (!f.alive || f.plant > 0 || f.defuse > 0 || M.mode === 'range' || M.phase === 'end') return false; return !!dropGun(f, f.slot, false); }
+  function dropHeld(f) { if (!f.alive || f.plant > 0 || f.defuse > 0 || M.mode === 'range' || M.over) return false; return !!dropGun(f, f.slot, false); }
   function takeLoot(f, d, remote) {
     const G = GUNS[d.k]; if (!G || !M.loot) return; M.loot = M.loot.filter(q => q.id !== d.id); const s = G.slot;
     if (!remote) { const have = f.guns[s]; if (have && !(s === 2 && have === 'pip')) dropGun(f, s, false, d); }   // a swap: the one you had goes down where this one lay
@@ -506,7 +509,8 @@
   // the gun you are next to would go into an empty slot (pick it up), not take the place of one (swap)
   const lootFree = f => { const d = f.nearLoot, G = d && GUNS[d.k]; if (!G) return false; const have = f.guns[G.slot]; return !have || (G.slot === 2 && have === 'pip'); };
   function stepLoot(f, I, press) {
-    if (!f.alive || M.mode === 'range' || M.phase === 'end') { f.nearLoot = null; return false; }
+    // (after a round is decided the survivors can still pick up the guns lying about and keep them for the next one)
+    if (!f.alive || M.mode === 'range' || M.over) { f.nearLoot = null; return false; }
     const C = M.charge;
     if (C && !C.k && !M.planted && sideOf(f) === 'att' && !(f.noCharge > M.time) && Math.hypot(C.x - f.x, C.z - f.z) < LOOT_R && Math.abs(C.y - f.y) < 1.4) setCharge(f);
     f.nearLoot = null; if (!M.loot || !M.loot.length) return false;

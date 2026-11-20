@@ -392,12 +392,14 @@
     if (M.planted && M.phase === 'live') { const s = toScreen(M.planted.x, M.planted.y + .9, M.planted.z); if (s) { const p = 1 + Math.sin(M.time * 9) * .12; g.fillStyle = FOE; g.beginPath(); g.moveTo(s[0], s[1] - 11 * u * p); g.lineTo(s[0] + 9 * u * p, s[1]); g.lineTo(s[0], s[1] + 11 * u * p); g.lineTo(s[0] - 9 * u * p, s[1]); g.fill(); tx(g, Math.hypot(P.x - M.planted.x, P.z - M.planted.z).toFixed(0) + ' m', s[0], s[1] + 24 * u, 13 * u, BONE); } }
     drawSiteMarks(g, P, u);   // the sites, while you are finding your way
     // --- crosshair and hit marks
-    // the crosshair marks where a shot really goes: the view punch lifts the camera a little, so it sits that much lower
-    const tf = Math.tan((X ? X.camera.fov : BASE_FOV) * D2R / 2), hh = (V.y1 - V.y0) / 2, cy = 360 + Math.tan(M.camKick || 0) / tf * hh;
+    // the crosshair marks where the next shot really goes: it rides up (and sways) with the spray, less the little the view
+    // itself nods, and sits a touch lower for the view punch
+    const tf = Math.tan((X ? X.camera.fov : BASE_FOV) * D2R / 2), hh = (V.y1 - V.y0) / 2, rc = P.alive && !G.melee && X;
+    const cy = 360 + Math.tan((M.camKick || 0) - (rc ? X.xhP || 0 : 0)) / tf * hh, cx = 640 - Math.tan(rc ? X.xhY || 0 : 0) / tf * hh;
     if (P.alive && !(P.scoped && G.scope) && !demo) {
       // shotguns: your own crosshair (whatever you designed) plus the spread ring round it
-      if (G.cat === 'Shotgun' && G.pspr) { drawShotgunReticle(g, 640, cy, Math.tan(spreadOf(P) + G.pspr * D2R) / tf * hh, Math.max(1, u * .85)); drawCrosshair(g, 640, cy, 0, Math.max(1, u * .85)); }
-      else drawCrosshair(g, 640, cy, Math.tan(spreadOf(P)) / tf * hh, Math.max(1, u * .85));
+      if (G.cat === 'Shotgun' && G.pspr) { drawShotgunReticle(g, cx, cy, Math.tan(spreadOf(P) + G.pspr * D2R) / tf * hh, Math.max(1, u * .85)); drawCrosshair(g, cx, cy, 0, Math.max(1, u * .85)); }
+      else drawCrosshair(g, cx, cy, Math.tan(spreadOf(P)) / tf * hh, Math.max(1, u * .85));
     }
     // no hit marks over the crosshair; the range alone shows the damage each shot did
     if (hitMark && (hitMark.t -= 1 / 60) > 0 && range) tx(g, String(hitMark.dmg), 640 + 44 * u + hitMark.x, cy - 30 * u - (1 - Math.min(1, hitMark.t / .28)) * 16, 20 * u, hitMark.head ? GOLD : '#fff');
@@ -476,7 +478,7 @@
       g.restore();
     }
     if (touch && canBuy()) tx(g, `◈ ${P.credits}`, 640, V.y1 - 66 * u, 17 * u, GOLD);
-    if (M.phase === 'buy' && P.alive && P.nearLoot && GUNS[P.nearLoot.k] && !UI.armory) hint(g, `${touch ? 'Tap PICK UP' : 'Press F'} to ${lootFree(P) ? 'pick up' : 'swap for'} the ${GUNS[P.nearLoot.k].n}`, V.y0 + 186 * u, 15 * u, BONE);
+    if ((M.phase === 'buy' || (M.phase === 'end' && !M.over)) && P.alive && P.nearLoot && GUNS[P.nearLoot.k] && !UI.armory) hint(g, `${touch ? 'Tap PICK UP' : 'Press F'} to ${lootFree(P) ? 'pick up' : 'swap for'} the ${GUNS[P.nearLoot.k].n}`, V.y0 + 186 * u, 15 * u, BONE);
     // --- the charge: what to do, and how far along
     const ring = (frac, label, col) => { const y = 470; g.strokeStyle = 'rgba(12,16,22,.7)'; g.lineWidth = 12 * u; g.beginPath(); g.arc(640, y, 34 * u, 0, TAU); g.stroke(); g.strokeStyle = col; g.lineWidth = 7 * u; g.beginPath(); g.arc(640, y, 34 * u, -Math.PI / 2, -Math.PI / 2 + TAU * frac); g.stroke(); tx(g, label, 640, y + 60 * u, 15 * u, col); };
     if (P.reloadT > 0) tx(g, 'RELOADING', 640, 420, 15 * u, GOLD);
