@@ -2168,7 +2168,16 @@ const GAME = {
      capped pixel ratio that also drops by itself if frames get slow. */
   let X = null, ready = false, failed = false;
   let touchK = null; const isTouch = () => touchK != null ? touchK : (touchK = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0);   // asked many times a frame: kept until the window changes
-  if (typeof addEventListener !== 'undefined') addEventListener('resize', () => { touchK = null; });
+  // A screen that can be touched is not always being touched: a touchscreen laptop or Chromebook played with a mouse or
+  // trackpad should get the mouse layout. So once the player actually uses one, that decides it: moving a mouse or
+  // clicking one switches to the mouse layout, touching the screen switches back to the touch one.
+  let touchBy = false;
+  if (typeof addEventListener !== 'undefined') {
+    addEventListener('resize', () => { if (!touchBy) touchK = null; });
+    addEventListener('pointermove', e => { if (e.pointerType === 'mouse' && (e.movementX || e.movementY)) { touchK = false; touchBy = true; } }, { passive: true, capture: true });
+    addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') { touchK = false; touchBy = true; } else if (e.pointerType === 'touch' || e.pointerType === 'pen') { touchK = true; touchBy = true; } }, { passive: true, capture: true });
+    addEventListener('touchstart', () => { touchK = true; touchBy = true; }, { passive: true, capture: true });
+  }
   // a low-powered computer (a Chromebook, four cores or fewer, or 4 GB of memory or less) plays in FAST, like a phone
   const lowEnd = () => { try { const n = navigator; return /CrOS/.test(n.userAgent || '') || (n.hardwareConcurrency || 8) <= 4 || (n.deviceMemory || 8) <= 4; } catch (e) { return false; } };
   const BASE_FOV = 70.5;   // vertical, which is 103 degrees across on a 16:9 screen
@@ -5861,7 +5870,7 @@ const GAME = {
     if (touch) {   // one strip, bottom centre, clear of both thumbs
       g.save(); g.translate(640, V.y1 - 10); g.scale(u, u); rr(g, -205, -44, 410, 44, 8, GLASS);
       tx(g, String(Math.ceil(P.hp)), -186, -22, 28, hpCol, 'left'); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(-128, -27, 84, 7); g.fillStyle = hpCol; g.fillRect(-128, -27, 84 * P.hp / 100, 7); if (P.sh) { g.fillStyle = '#7fc8ff'; g.fillRect(-128, -17, 84 * P.sh / 50, 5); }
-      tx(g, G.n.toUpperCase(), 0, -22, 15, G.col); tx(g, G.melee ? '—' : `${A.mag} / ${A.res}`, 186, -22, 24, A.mag || G.melee ? BONE : WARN, 'right'); if (carries(P) && !M.planted) tx(g, '◆ YOU CARRY THE CHARGE', 0, -54, 12, GOLD, 'center', 900); g.restore();
+      tx(g, G.n.toUpperCase(), 0, -22, 15, G.col); tx(g, G.melee ? '—' : `${A.mag} / ${A.res}`, 186, -22, 24, A.mag || G.melee ? BONE : WARN, 'right'); if (carries(P) && !M.planted) tx(g, '◆ YOU CARRY THE CHARGE', 0, canBuy() ? -84 : -54, 12, GOLD, 'center', 900); g.restore();   // above the credits while you can still buy
     } else {
       g.save(); g.translate(V.x0 + 22, V.y1 - 20); g.scale(u, u); rr(g, 0, -58, 250, 58, 8, GLASS);
       tx(g, String(Math.ceil(P.hp)), 18, -28, 40, hpCol, 'left'); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(104, -36, 128, 8); g.fillStyle = hpCol; g.fillRect(104, -36, 128 * P.hp / 100, 8);

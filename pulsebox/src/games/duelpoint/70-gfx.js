@@ -4,7 +4,16 @@
      capped pixel ratio that also drops by itself if frames get slow. */
   let X = null, ready = false, failed = false;
   let touchK = null; const isTouch = () => touchK != null ? touchK : (touchK = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0);   // asked many times a frame: kept until the window changes
-  if (typeof addEventListener !== 'undefined') addEventListener('resize', () => { touchK = null; });
+  // A screen that can be touched is not always being touched: a touchscreen laptop or Chromebook played with a mouse or
+  // trackpad should get the mouse layout. So once the player actually uses one, that decides it: moving a mouse or
+  // clicking one switches to the mouse layout, touching the screen switches back to the touch one.
+  let touchBy = false;
+  if (typeof addEventListener !== 'undefined') {
+    addEventListener('resize', () => { if (!touchBy) touchK = null; });
+    addEventListener('pointermove', e => { if (e.pointerType === 'mouse' && (e.movementX || e.movementY)) { touchK = false; touchBy = true; } }, { passive: true, capture: true });
+    addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') { touchK = false; touchBy = true; } else if (e.pointerType === 'touch' || e.pointerType === 'pen') { touchK = true; touchBy = true; } }, { passive: true, capture: true });
+    addEventListener('touchstart', () => { touchK = true; touchBy = true; }, { passive: true, capture: true });
+  }
   // a low-powered computer (a Chromebook, four cores or fewer, or 4 GB of memory or less) plays in FAST, like a phone
   const lowEnd = () => { try { const n = navigator; return /CrOS/.test(n.userAgent || '') || (n.hardwareConcurrency || 8) <= 4 || (n.deviceMemory || 8) <= 4; } catch (e) { return false; } };
   const BASE_FOV = 70.5;   // vertical, which is 103 degrees across on a 16:9 screen
