@@ -80,8 +80,11 @@ export class World {
       const d = Math.hypot(x - this.camp.x, z - this.camp.z); g *= smooth(6.5, 12, d);
       // the valley's tall grass: patches of it, waist to chest high, where a crouching hunter (or a cat) can hide
       if (this.camp.region === 'valley' && d < 3000 && f < .35) { const tall = smooth(.05, .35, this.k.n2(x * .021 + 41, z * .021 - 17)) * smooth(18, 30, d); g = g * (1 + 1.1 * tall) + .35 * tall * smooth(0.72, 0.86, ny) * smooth(0.55, 1.4, s.h); }
+      // spots of super-tall grass on open ground everywhere: shoulder high to over your head, thick enough to vanish into.
+      // Values above 2.15 tell the grass shader to grow the blades tall (see grass.js)
+      if (d > 26 && f < .3 && g > .35) { const sup = smooth(.42, .62, this.k.n2(x * .034 + 71, z * .034 + 13)) * smooth(0.8, 0.9, ny) * (1 - smooth(120, 150, s.h)); if (sup > 0) g = Math.max(g, 2.15 + .85 * sup); }
     }
-    return clamp(g, 0, 2.1);
+    return clamp(g, 0, 3);
   }
 
   // places for the camp, by the kind chosen on the menu

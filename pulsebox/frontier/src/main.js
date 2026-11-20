@@ -287,7 +287,8 @@ function step(dt) {
   // wildlife and guns
   const moving = player.speed > .4, noise = player.swimming ? .7 : !moving ? .04 : player.crouched ? .14 : player.speed > 4.5 ? 1 : .42;
   const lookV = G.drone.on ? new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)) : camera.getWorldDirection(new THREE.Vector3()), inCamp = Math.hypot(player.pos.x - camp.c.x, player.pos.z - camp.c.z) < 16;
-  if (live) G.wildlife.update(dt, { pos: player.pos, noise, crouched: player.crouched, moving, night: sky.night > .5, lantern: camp.lantern.carried && camp.lantern.on, wind: { x: w.x, z: w.y }, look: lookV, inCamp, dead: G.dead }, sky.hours);
+  G.inTall = G.grass.valueAt(player.pos.x, player.pos.z) > 2.3;   // deep in the super-tall grass: much harder to see
+  if (live) G.wildlife.update(dt, { pos: player.pos, noise, crouched: player.crouched, hidden: G.inTall, moving, night: sky.night > .5, lantern: camp.lantern.carried && camp.lantern.on, wind: { x: w.x, z: w.y }, look: lookV, inCamp, dead: G.dead }, sky.hours);
   G.wildlife.furR = G.weapons.scoped > .5 ? 240 : 34; G.wildlife.lightK = Math.max(0, sky.night - .3) * (camp.lantern.carried && camp.lantern.on ? 1 : .35);
   G.wildlife.render(dt, camera.position);
   const W = G.weapons;

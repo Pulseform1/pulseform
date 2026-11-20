@@ -79,7 +79,7 @@ class Animal {
     if (d > 260) { this.aware = Math.max(0, this.aware - dt * .2); return; }
     const sp = this.sp, fwd = [Math.sin(this.yaw), Math.cos(this.yaw)], to = [-dx / d, -dz / d];
     const facing = fwd[0] * to[0] + fwd[1] * to[1] > -.35;
-    const hearR = (10 + 48 * P.noise) * sp.hear, sightR = sp.sight * (P.night ? (P.lantern ? .9 : .4) : 1) * (P.crouched ? .55 : 1) * (P.moving ? 1 : .45);
+    const hearR = (10 + 48 * P.noise) * sp.hear, sightR = sp.sight * (P.night ? (P.lantern ? .9 : .4) : 1) * (P.crouched ? .55 : 1) * (P.moving ? 1 : .45) * (P.hidden ? (P.crouched ? .3 : .55) : 1);   // the super-tall grass hides you
     const w = P.wind, scent = d < 85 && (w.x * dx + w.z * dz) / d > .65;
     let stim = 0;
     if (d < hearR) stim += (1 - d / hearR) * 2.2;

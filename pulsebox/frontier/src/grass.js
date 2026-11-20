@@ -21,7 +21,7 @@ function bladeGeometry() {
 
 const VS_HEAD = `#include <common>
 attribute vec4 aOff; attribute vec4 aRnd;
-uniform sampler2D uField; uniform vec4 uFieldO; uniform vec4 uRing; uniform float uTime; uniform vec4 uWind; uniform vec3 uPlayer; uniform float uH; uniform vec4 uFade;
+uniform sampler2D uField; uniform vec4 uFieldO; uniform vec4 uRing; uniform float uOnly; uniform float uTime; uniform vec4 uWind; uniform vec3 uPlayer; uniform float uH; uniform vec4 uFade;
 varying vec3 vGCol; varying float vGAo;
 vec4 fieldAt( vec2 wp ) {
   vec2 t = ( wp - uFieldO.xy ) / uFieldO.z; vec2 i = floor( t ), f = t - i; ivec2 b = ivec2( i );
@@ -36,9 +36,11 @@ vec2 cam = cameraPosition.xz;
 vec2 wp = cam + mod( aOff.xy - cam + T * 0.5, T ) - T * 0.5;
 float dist = length( wp - cam );
 vec4 fd = fieldAt( wp );
-float keep = step( aRnd.x, fd.g ) * smoothstep( uFade.x, uFade.y, dist ) * ( 1.0 - smoothstep( uFade.z, uFade.w, dist ) );
-float hgt = uH * ( 0.35 + aRnd.y * aRnd.y * 1.1 ) * ( 0.2 + 0.9 * fd.g ) * keep;
-float wid = uRing.z * ( 0.7 + aRnd.z * 0.6 );
+float keep = step( aRnd.x, fd.g ) * smoothstep( uFade.x, uFade.y, dist ) * ( 1.0 - smoothstep( uFade.z, uFade.w, dist ) ) * ( uOnly > 0.5 ? step( 2.15, fd.g ) : 1.0 );
+// the super-tall spots (field over 2.15): blades shoulder high to over your head, a little wider, more upright
+float sup = smoothstep( 2.15, 2.9, fd.g );
+float hgt = mix( uH * ( 0.35 + aRnd.y * aRnd.y * 1.1 ) * ( 0.2 + 0.9 * min( fd.g, 2.1 ) ), uH * ( 2.7 + aRnd.y * 1.6 ), sup ) * keep;
+float wid = uRing.z * ( 0.7 + aRnd.z * 0.6 ) * ( 1.0 + 0.7 * sup );
 // face mostly at random, partly toward the camera so blades never vanish edge-on
 float ang = aRnd.w * 6.2832;
 vec2 rf = vec2( cos( ang ), sin( ang ) ), tc = normalize( cam - wp + 1e-3 );
@@ -48,7 +50,7 @@ float y = position.y, y2 = y * y;
 vec2 wd = normalize( uWind.xy + 1e-4 );
 float wave = sin( dot( wp, wd ) * 0.21 - uTime * 1.9 ) * 0.5 + 0.5;
 float gust = uWind.z * ( 0.35 + 0.65 * wave * wave ) + uWind.z * 0.15 * sin( uTime * 4.1 + aOff.x * 3.1 + aOff.y * 2.3 );
-vec2 bend = face * ( 0.12 + aOff.z * 0.25 ) + wd * gust * 0.55;
+vec2 bend = ( face * ( 0.12 + aOff.z * 0.25 ) + wd * gust * 0.55 ) * ( 1.0 - 0.45 * sup );
 // part around the player
 vec2 away = wp - uPlayer.xz; float pd = length( away ); bend += ( away / max( pd, 1e-3 ) ) * smoothstep( 0.9, 0.0, pd ) * 0.9 * step( abs( uPlayer.y - fd.r ), 2.5 );
 vec3 transformed = vec3( wp.x, fd.r + uFieldO.w, wp.y );
@@ -76,11 +78,12 @@ export class Grass {
     this.rings = [];
     // [inner, outer, blade width, spacing, fade]
     // the far blades are wider than they look thin, so they cover a pixel or more and never shimmer as you move
-    const conf = { high: [[0, 16, .046, .1, [-1, 0, 13, 16]], [13, 34, .13, .25, [13, 16, 25, 34]]], medium: [[0, 13, .052, .125, [-1, 0, 10, 13]], [10, 24, .15, .3, [10, 13, 18, 24]]], low: [[0, 14, .075, .22, [-1, 0, 9, 14]]] }[q] || [];
-    conf.forEach(([r0, r1, w, sp, fade], k) => this.rings.push(this.ring(r0, r1, w, sp, k, fade)));
+    // and a last, sparse ring that carries only the super-tall spots further out, so they stand on the skyline instead of popping up
+    const conf = { high: [[0, 16, .046, .1, [-1, 0, 13, 16]], [13, 34, .13, .25, [13, 16, 25, 34]], [25, 62, .26, .62, [25, 31, 52, 62], 1]], medium: [[0, 13, .052, .125, [-1, 0, 10, 13]], [10, 24, .15, .3, [10, 13, 18, 24]], [18, 50, .28, .78, [18, 23, 42, 50], 1]], low: [[0, 14, .075, .22, [-1, 0, 9, 14]], [9, 40, .3, 1, [9, 13, 32, 40], 1]] }[q] || [];
+    conf.forEach(([r0, r1, w, sp, fade, only], k) => this.rings.push(this.ring(r0, r1, w, sp, k, fade, only)));
     this.quality = q;
   }
-  ring(r0, r1, width, spacing, k, fade) {
+  ring(r0, r1, width, spacing, k, fade, only = 0) {
     const T = r1 * 2, n = Math.floor(T / spacing), count = n * n, R = mulberry(101 + k);
     const off = new Float32Array(count * 4), rnd = new Float32Array(count * 4);
     for (let j = 0, i = 0; j < n; j++) for (let x = 0; x < n; x++, i++) {
@@ -89,9 +92,9 @@ export class Grass {
     }
     const g = bladeGeometry(); g.setAttribute('aOff', new THREE.InstancedBufferAttribute(off, 4)); g.setAttribute('aRnd', new THREE.InstancedBufferAttribute(rnd, 4)); g.instanceCount = count;
     const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, metalness: 0, side: THREE.DoubleSide });
-    const uRing = { value: new THREE.Vector4(r0, r1, width, T) }, uH = { value: .55 }, uFade = { value: new THREE.Vector4(...fade) };
+    const uRing = { value: new THREE.Vector4(r0, r1, width, T) }, uH = { value: .55 }, uFade = { value: new THREE.Vector4(...fade) }, uOnly = { value: only };
     patch(mat, 'grass', sh => {
-      Object.assign(sh.uniforms, { uField: { value: this.field.tex }, uFieldO: this.field.o, uRing, uFade, uTime: U.uTime, uWind: U.uWind, uPlayer: this.uPlayer, uH, uSunCol: U.uSunCol, uSunDirF: U.uSunDirW });
+      Object.assign(sh.uniforms, { uField: { value: this.field.tex }, uFieldO: this.field.o, uRing, uFade, uOnly, uTime: U.uTime, uWind: U.uWind, uPlayer: this.uPlayer, uH, uSunCol: U.uSunCol, uSunDirF: U.uSunDirW });
       sh.vertexShader = sh.vertexShader.replace('#include <common>', VS_HEAD).replace('#include <begin_vertex>', VS_BODY)
         .replace('#include <beginnormal_vertex>', 'vec3 objectNormal = vec3( 0.0, 1.0, 0.0 );');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vGCol; varying float vGAo; uniform vec3 uSunCol; uniform vec3 uSunDirF;')
@@ -106,6 +109,8 @@ reflectedLight.indirectDiffuse *= vGAo;
     this.group.add(mesh);
     return { mesh, uRing, uH };
   }
+  // the grass value at a point (from the field around the camera): over 2.15 means the super-tall grass
+  valueAt(x, z) { const f = this.field; if (!f.ready) return 0; const o = f.o.value, i = Math.round((x - o.x) / o.z), j = Math.round((z - o.y) / o.z); if (i < 0 || j < 0 || i >= FN || j >= FN) return 0; return f.data[(j * FN + i) * 4 + 1]; }
   update(cam, player) {
     this.uPlayer.value.copy(player);
     const ax = Math.round(cam.x / 16) * 16, az = Math.round(cam.z / 16) * 16, f = this.field;
