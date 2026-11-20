@@ -96,8 +96,8 @@
   }
   /* the glow kit, built onto a gun (h carries skinKit's measures: the gun's box, barrel length, bore height, the surface
      under a point, a point along it, and its add and live helpers) */
-  function glowKit(G, K2, k, line, h) {
-    const L = LINES[line], gk = L.gk, F = lineFx(line), S = sfx(), tier = F.tier, low = !!(X && X.low), { bb, len, ax, topAt, along, add, live } = h;
+  function glowKit(G, K2, k, line, h, gko) {
+    const L = LINES[line], gk = gko || L.gk, F = lineFx(line), S = sfx(), tier = F.tier, low = !!(X && X.low), { bb, len, ax, topAt, along, add, live } = h;
     // the gun's own side under a point: sx -1 is the side you see in first person (and in the store)
     const ray = new THREE.Raycaster(), sideAt = (y, z, sx = 1) => { ray.set(V3(sx > 0 ? bb.max.x + .2 : bb.min.x - .2, y, z), V3(-sx, 0, 0)); const q = ray.intersectObjects(h.meshes, false)[0]; return q ? Math.abs(q.point.x) : null; };
     const sprite = (mat, x, y, z, s) => { const sp = new THREE.Sprite(mat); sp.position.set(x, y, z); sp.scale.setScalar(s); sp.userData.live = true; K2.add(sp); return sp; };
@@ -127,22 +127,28 @@
     // the signature piece
     const zc = along(.42), yTop = topAt(zc);
     if (gk.sig === 'star') {   // a captive star over the receiver: a white-hot core in a gyroscope of three rings, and plasma vents
-      const gy = new THREE.Group(); gy.position.set(0, yTop + .034, zc); K2.add(gy); gy.userData.live = true;
+      const FA = h.formAt, gy = new THREE.Group(); if (FA) gy.position.set(FA.x, FA.y, FA.z); else gy.position.set(0, yTop + .034, zc); K2.add(gy); gy.userData.live = true;
       const core = keep(new THREE.Mesh(SFX.sph, F.glowB)); core.scale.setScalar(.0055); gy.add(core); const hs = new THREE.Sprite(F.halo); hs.scale.setScalar(.05); gy.add(hs);
       const rings = (low ? [.019] : [.014, .019, .024]).map((r, i) => { const o = keep(new THREE.Mesh(SFX.thin, i === 1 ? F.glowB : F.glowA)); o.scale.setScalar(r); gy.add(o); return o; });
       gy.userData.anim = (o, t) => { rings[0].rotation.set(t * 2.1, t * .7, 0); if (rings[2]) { rings[1].rotation.set(t * .6, t * 1.7 + 1, t * .4); rings[2].rotation.set(-t * .9, .5, t * 1.4); } core.scale.setScalar(.0055 * (1 + .25 * Math.sin(t * 9))); hs.scale.setScalar(.045 + .012 * Math.sin(t * 2.6)); o.position.y = yTop + .034 + Math.sin(t * 1.6) * .003; };
       for (let i = 0; i < 4; i++) { const z = along(.62 + i * .055); for (const sx of [-1, 1]) { const xs = sideAt(ax, z, sx); if (xs != null) add(new THREE.BoxGeometry(.0012, .0035, .016), F.glowB, sx * (xs + .0004), ax + .002, z); } }
     }
     else if (gk.sig === 'rift') {   // a tear hanging over the receiver, black glass shards circling it
-      const gy = new THREE.Group(); gy.position.set(0, yTop + .036, zc); K2.add(gy); gy.userData.live = true;
+      const FA = h.formAt, gy = new THREE.Group(); if (FA) gy.position.set(FA.x, FA.y, FA.z); else gy.position.set(0, yTop + .036, zc); K2.add(gy); gy.userData.live = true;
       const tear = keep(new THREE.Mesh(SFX.plane, F.tear)); tear.scale.set(.012, .048, 1); tear.rotation.y = Math.PI / 2; gy.add(tear); const hs = new THREE.Sprite(F.halo); hs.scale.setScalar(.055); gy.add(hs);
       const sh = [0, 1, 2, 3].map(i => { const o = keep(new THREE.Mesh(SFX.oct, F.shard)); o.scale.set(.0035, .008, .0035); gy.add(o); return o; });
       gy.userData.anim = (o, t) => { tear.scale.x = .01 + .005 * Math.abs(Math.sin(t * 3.1)) + (Math.sin(t * 23) > .9 ? .006 : 0); sh.forEach((s, i) => { const a = t * 1.2 + i * TAU / 4; s.position.set(Math.cos(a) * .022, Math.sin(a * 1.7 + i) * .012, Math.sin(a) * .022); s.rotation.set(t * 2 + i, t * 1.3, 0); }); o.position.y = yTop + .036 + Math.sin(t * 1.3) * .003; };
     }
     else if (gk.sig === 'glyph') {   // circles of runes turning round the barrel, and runestones orbiting it
-      const r1 = live(add(SFX.plane, F.rune, 0, ax, along(.74)), (o, t) => { o.rotation.z = t * .6; }); r1.scale.setScalar(.075);
-      const r2 = live(add(SFX.plane, F.rune, 0, ax, along(.93)), (o, t) => { o.rotation.z = -t * 1.1; }); r2.scale.setScalar(.05);
-      for (let i = 0; i < 3; i++) live(add(SFX.box, F.glowA, 0, 0, 0), (o, t) => { const a = t * .8 + i * TAU / 3; o.position.set(Math.cos(a) * .04, ax + Math.sin(a) * .04, along(.5) + Math.sin(t * 1.3 + i) * .02); o.rotation.set(t, a, 0); }).scale.set(.004, .009, .0025);
+      const FA = h.formAt;
+      if (FA && !FA.ring) {   // a top line on a short gun: the circles turn on its flanks instead, clear of the sights
+        for (const sx of [-1, 1]) { const r = live(add(SFX.plane, F.rune, sx * (FA.hw + .001), ax, FA.z1, 0, Math.PI / 2, 0), (o, t) => { o.rotation.x = sx * t * .6; }); r.scale.setScalar(FA.med); }
+      } else {
+        const R = FA ? FA.R : .0375, z1 = FA ? FA.z1 : along(.74), z2 = FA ? FA.z2 : along(.93), zs = FA ? (FA.z1 + FA.z2) / 2 : along(.5);
+        const r1 = live(add(SFX.plane, F.rune, 0, ax, z1), (o, t) => { o.rotation.z = t * .6; }); r1.scale.setScalar(R * 2);
+        const r2 = live(add(SFX.plane, F.rune, 0, ax, z2), (o, t) => { o.rotation.z = -t * 1.1; }); r2.scale.setScalar(R * 1.35);
+        for (let i = 0; i < 3; i++) live(add(SFX.box, F.glowA, 0, 0, 0), (o, t) => { const a = t * .8 + i * TAU / 3; o.position.set(Math.cos(a) * R * 1.05, ax + Math.sin(a) * R * 1.05, zs + Math.sin(t * 1.3 + i) * .02); o.rotation.set(t, a, 0); }).scale.set(.004, .009, .0025);
+      }
     }
     else if (gk.sig === 'crescent') {   // a silver crescent moon riding over the receiver
       const c = live(add(new THREE.TorusGeometry(.013, .0026, 6, 24, Math.PI * 1.25), F.glowA, 0, yTop + .03, zc, 0, Math.PI / 2, 0), (o, t) => { o.position.y = yTop + .03 + Math.sin(t * 1.4) * .003; o.rotation.x = Math.sin(t * .7) * .2; });

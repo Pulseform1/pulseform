@@ -190,8 +190,9 @@
     return SKMAT[key] = M2;
   }
   // a line's parts, sized from the gun: bb is the gun's box, len its barrel, ax the barrel's axis height
-  function skinKit(G, k, line, m, len, bore) {
+  function skinKit(G, k, line, m, len, bore, A, parts) {
     const L = LINES[line], tier = RARITY[L.r].tier, gl = !!L.gk; if (k === 'knife') { if (gl) knifeGlow(G, line); return; } if (tier < 1) return;
+    const form = formKit(G, k, line, m, A, parts || {}, len, bore);   // a top line builds its own body (77-forms); the painted kit below stays off
     G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(G), top = bb.max.y, ax = bore ? bore.y : .025, tip = bore ? bore.z : -len, lc = c => new THREE.Color(c).convertSRGBToLinear();
     // the gun's own surface under a point along it (so parts sit on the barrel, not up at the height of the sight)
     const ray = new THREE.Raycaster(), meshes = []; G.traverse(o => { if (o.isMesh) meshes.push(o); });
@@ -204,20 +205,28 @@
     const glowM = c => new THREE.MeshBasicMaterial({ color: lc(c), toneMapped: false, transparent: true, opacity: .9, blending: THREE.AdditiveBlending, depthWrite: false });
     const live = (o, fn) => { o.userData.live = true; o.userData.anim = fn; return o; };
     const along = q => lp(bb.max.z, tip, q);   // along the gun: 0 at the back, 1 at the very front of the muzzle
-    if (L.pat) {
+    if (L.pat || form) {
       const hw = (bb.max.x - bb.min.x) / 2;
-      if (!gl) for (const q of [.86, .93]) add(new THREE.TorusGeometry(ring(along(q)), .003, 8, 18), m.acc, 0, ax, along(q));   // (a glowing line brings its own rings)
-      for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.003, .016, (bb.max.z - bb.min.z) * .18), m.acc, sx * (hw + .0015), ax + .004, along(.42));
-      if (tier >= 2) { for (const sx of [-1, 1]) add(new THREE.BoxGeometry(.002, .005, (bb.max.z - bb.min.z) * .3), m.glow, sx * (hw + .003), ax - .008, along(.35)); add(new THREE.CylinderGeometry(rM + .0025, rM + .0025, .022, 16, 1, true), m.acc, 0, ax, tip + .0115, Math.PI / 2); }   // a collar flush with the muzzle
+      // the painted lines' parts differ line by line (how many rings and where, the length and height of the flank plates,
+      // the collar), each sized to the gun's own side where it sits, so no two lines carry the same set
+      const hv = [...line].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7), pk = (n, sh) => (hv >>> sh) % n, L0 = bb.max.z - bb.min.z;
+      const sideX = (y, z, sx) => { const r = new THREE.Raycaster(new THREE.Vector3(sx * .3, y, z), new THREE.Vector3(-sx, 0, 0)), q = r.intersectObjects(meshes, false)[0]; return q ? Math.abs(q.point.x) : null; };
+      if (!gl && !form) { const nr = 1 + pk(3, 0), q0 = .8 + pk(3, 3) * .03, dq = .04 + pk(3, 6) * .015; for (let i = 0; i < nr; i++) { const q = Math.min(.95, q0 + i * dq); add(new THREE.TorusGeometry(ring(along(q)), .0024 + pk(2, 9) * .0012, 8, 18), m.acc, 0, ax, along(q)); } }   // (a glowing line brings its own rings)
+      if (!form) { const zq = along(.36 + pk(4, 11) * .04), len = L0 * (.12 + pk(4, 14) * .04), hgt = .011 + pk(3, 17) * .004, y = ax + .002 + pk(3, 19) * .003;
+        for (const sx of [-1, 1]) { const xs = sideX(y, zq, sx); if (xs != null) add(new THREE.BoxGeometry(.0026, hgt, len), m.acc, sx * (xs + .0013), y, zq); } }
+      if (tier >= 2 && !form) { const zq = along(.3 + pk(3, 21) * .05), y = ax - .007 - pk(2, 23) * .003; for (const sx of [-1, 1]) { const xs = sideX(y, zq, sx); if (xs != null) add(new THREE.BoxGeometry(.002, .005, L0 * (.22 + pk(3, 25) * .05)), m.glow, sx * (xs + .001), y, zq); }
+        const cl2 = .016 + pk(3, 27) * .007; add(new THREE.CylinderGeometry(rM + .0025, rM + .0025, cl2, 16, 1, true), m.acc, 0, ax, tip + cl2 / 2 + .0005, Math.PI / 2); }   // a collar flush with the muzzle
       if (tier >= 3 && !(gl && L.gk.pts)) { const id = L.fx && L.fx.idle;
         if (id === 'embers') for (let i = 0; i < 8; i++) { const z0 = along(.5 + R() * .4); live(add(new THREE.PlaneGeometry(.006, .006), glowM(i % 2 ? '#ffd27a' : L.alt), 0, topAt(z0), z0), (o, t, dt) => { const u = o.userData; u.k = (u.k == null ? R() : u.k) + dt * .6; if (u.k > 1) { u.k = 0; u.x = (R() - .5) * .02; } o.position.y = topAt(z0) + u.k * .07; o.position.x = (u.x || 0) + Math.sin(u.k * 9) * .004; o.material.opacity = 1 - u.k; }); }
         else if (id === 'motes') for (let i = 0; i < 6; i++) live(add(new THREE.PlaneGeometry(.005, .005), glowM(i % 2 ? '#ffffff' : L.alt), 0, 0, 0), (o, t) => { const a = t * 1.2 + i * TAU / 6; o.position.set(Math.cos(a) * .045, ax + Math.sin(a * 1.3) * .03, along(.55) + Math.sin(a) * .05); });
         else if (id === 'arcs') for (let i = 0; i < 2; i++) { const g2 = new THREE.BufferGeometry(); g2.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(18), 3)); const ln = new THREE.Line(g2, new THREE.LineBasicMaterial({ color: lc(L.alt), transparent: true, opacity: .9 })); K2.add(ln); ln.userData.live = true;
           ln.userData.anim = (o, t, dt) => { const u = o.userData; if ((u.n = (u.n || 0) - dt) > 0) return; u.n = .04 + R() * .14; o.visible = R() < .5; const pa = o.geometry.attributes.position.array, z0 = along(.45 + R() * .35); for (let k = 0; k < 6; k++) { pa[k * 3] = (k % 2 ? 1 : -1) * hw * .8 + (R() - .5) * .006; pa[k * 3 + 1] = ax + (R() - .5) * .02; pa[k * 3 + 2] = z0 - k * .008; } o.geometry.attributes.position.needsUpdate = true; }; } }
-      if (tier >= 4 && !gl) { for (const [r, sp] of [[Math.max(.03, rM + .012), 1.4], [Math.max(.022, rM + .005), -2]]) live(add(new THREE.TorusGeometry(r, .0022, 6, 32), glowM(L.alt), 0, ax, tip + .006), (o, t) => { o.rotation.set(t * sp * .4, t * sp, 0); });
+      if (tier >= 4 && !gl && !form) { for (const [r, sp] of [[Math.max(.03, rM + .012), 1.4], [Math.max(.022, rM + .005), -2]]) live(add(new THREE.TorusGeometry(r, .0022, 6, 32), glowM(L.alt), 0, ax, tip + .006), (o, t) => { o.rotation.set(t * sp * .4, t * sp, 0); });
         const cz = along(.62), cy0 = topAt(cz) + .04; live(add(new THREE.OctahedronGeometry(.012, 0), glowM(L.alt), 0, cy0, cz), (o, t) => { o.position.y = cy0 + Math.sin(t * 2) * .006; o.rotation.y = t * 1.5; }); }
     }
-    if (gl) glowKit(G, K2, k, line, { bb, len, ax, tip, rM, rAt, topAt, along, add, live, meshes, m });   // 77-skinfx: strips, rings, cells, halos, particles, its signature piece
+    if (form) G.updateMatrixWorld(true);
+    if (gl && !(form && !FORMS[line].gk)) glowKit(G, K2, k, line, { bb, len, ax, tip, rM, rAt, topAt, along, add, live, meshes, m, formAt: form ? G.userData.formAt : null }, form ? FORMS[line].gk : undefined);
+    if (!form) {   // 77-skinfx: strips, rings, cells, halos, particles, its signature piece
     if (line === 'tidewater') for (const q of [.72, .8, .88]) add(new THREE.TorusGeometry(ring(along(q)), .0028, 8, 18), m.acc, 0, ax, along(q));
     if (line === 'circuit') { add(new THREE.BoxGeometry(.012, .024, .05), m.dark, .024, ax + .01, along(.45)); add(new THREE.BoxGeometry(.003, .016, .04), m.glow, .031, ax + .01, along(.45)); }
     if (line === 'glacier') {   // ice: shards along the top and a crown of them round the muzzle
@@ -251,6 +260,8 @@
       for (let i = 0; i < 6; i++) live(add(new THREE.PlaneGeometry(.005, .005), glowM('#fff1c4'), 0, 0, 0), (o, t) => { const a = t * .9 + i * TAU / 6; o.position.set(Math.cos(a) * .05, top + .02 + Math.sin(a * 2) * .02, along(.5) + Math.sin(a) * .12); o.material.opacity = .45 + Math.sin(t * 4 + i) * .4; });
     }
 
+    }
+    if (form) formAudit(G, [G.userData.formRoot, K2].concat(Object.values(parts || {}).filter(p => p && p.isObject3D)), A, bore, len);
     return K2;
   }
   // knife blades by line: the shape of the blade and what is built round it

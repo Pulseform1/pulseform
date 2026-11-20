@@ -203,11 +203,14 @@
   function gunModel(k, opts = {}) {
     const sk = skinOfId(opts.skin), line = sk && sk.k === k ? sk.line : null;
     const W = GUNS[k], m = gmats(k, line), G = new THREE.Group(), cast = !!opts.cast, parts = {};
-    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false, bore = null;
+    let T = G, len = .5, port = [.02, .03, 0], sight = .09, sup = [0, -.05, -.3], pistolHold = false, bore = null, ACC = 0;
+    // where the body is (a top line's form is fitted to it), and which parts are fittings rather than body: sights, rails,
+    // grips, lights and bipods, which a form leaves standing where they are
+    const A = { by: .03 }, accy = f => { ACC = 1; f(); ACC = 0; };
     // the bore: the height of the barrel's axis and the very front of the gun (its muzzle device included), and how thick the
     // muzzle end is. Skins and the muzzle flash are placed from it, so they sit on the barrel whatever is screwed on the end.
     const setBore = (y, z, r) => { if (!bore || z < bore.z) bore = { y, z, r }; };
-    const add = (geo, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); T.add(o); return o; };
+    const add = (geo, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); if (ACC) o.userData.acc = 1; T.add(o); return o; };
     const box = (w, h, d, mat, x, y, z, rx = 0, ry = 0, rz = 0) => add(new THREE.BoxGeometry(w, h, d), mat, x, y, z, rx, ry, rz);
     const rbox = (w, h, d, mat, x, y, z, r = .004, rx = 0, rz = 0) => {
       const s = new THREE.Shape(), a = w / 2 - r, b = h / 2 - r; s.moveTo(-a, -h / 2); s.lineTo(a, -h / 2); s.quadraticCurveTo(w / 2, -h / 2, w / 2, -b); s.lineTo(w / 2, b); s.quadraticCurveTo(w / 2, h / 2, a, h / 2); s.lineTo(-a, h / 2); s.quadraticCurveTo(-w / 2, h / 2, -w / 2, b); s.lineTo(-w / 2, -b); s.quadraticCurveTo(-w / 2, -h / 2, -a, -h / 2);
@@ -274,22 +277,24 @@
 
     /* ---- pistols: Pip, Wasp (compensator, red dot, long magazine), Quill (suppressor) ---- */
     const pistol = o => {
+      Object.assign(A, { fam: 'pistol', by: .034, rf: -.175, rb: .05, top: .053, hw: .015 });
       len = o.supp ? .37 : o.comp ? .236 : .207; port = [.012, .05, -.045]; sight = o.rdot ? .07 : .058; pistolHold = true;
       side([[-.175, .015], [-.175, -.006], [-.09, -.006], [-.083, -.046], ['q', -.081, -.056, -.069, -.056], [-.02, -.056], ['q', -.008, -.056, -.005, -.044], [.022, -.116], ['q', .024, -.124, .034, -.124], [.058, -.122], ['q', .068, -.12, .066, -.108], ['q', .058, -.06, .045, -.028], [.056, -.012], [.066, .002], [.048, .015]], .028, m.fin, 0, .006,
         [[[-.075, -.012], [-.075, -.043], ['q', -.075, -.049, -.069, -.049], [-.022, -.049], ['q', -.014, -.049, -.014, -.04], [-.016, -.012]]]);
       side([[.002, -.032], [.03, -.106], [.056, -.106], ['q', .05, -.062, .036, -.03]], .0312, m.poly, 0, .003);   // grip panels
       side([[-.04, -.014], [-.047, -.04], [-.041, -.043], [-.034, -.016]], .007, m.steel, 0, .0015);   // trigger
-      rail(-.168, -.095, -.012, .02); pin(.004, -.03, .028); pin(.004, .012, .028); rbox(.004, .007, .026, m.steel, -.0148, .02, -.01, .002);
-      if (o.light) { rbox(.025, .024, .052, m.poly, 0, -.029, -.14, .006); disc(.0085, 0, -.029, -.1665, m.lamp); ring(.0095, .0018, -.166, m.steel, -.029); rbox(.006, .008, .012, m.acc, .0135, -.03, -.12, .002); }
+      accy(() => rail(-.168, -.095, -.012, .02)); pin(.004, -.03, .028); pin(.004, .012, .028); rbox(.004, .007, .026, m.steel, -.0148, .02, -.01, .002);
+      if (o.light) accy(() => { rbox(.025, .024, .052, m.poly, 0, -.029, -.14, .006); disc(.0085, 0, -.029, -.1665, m.lamp); ring(.0095, .0018, -.166, m.steel, -.029); rbox(.006, .008, .012, m.acc, .0135, -.03, -.12, .002); });
       lathe([[-.207, .005], [-.207, .0092], [-.19, .0092]], m.steel, .034); disc(.005, 0, .034, -.2075, m.hole); setBore(.034, -.207, .0092);
       if (o.supp) muzzle('supp', -.37, .034, .0092, .168);
       T = parts.slide = group(0, 0, 0);
       side([[-.2, .017], [-.2, .044], ['q', -.2, .053, -.19, .053], [.03, .053], [.043, .044], [.043, .017]], .03, m.metal, 0, .005);
       for (let i = 0; i < 6; i++) box(.0312, .024, .0026, m.dark, 0, .033, .032 - i * .0068, 0, 0, 0); for (let i = 0; i < 4; i++) box(.0312, .018, .0026, m.dark, 0, .036, -.157 - i * .0068);
       rbox(.014, .003, .036, m.hole, .004, .0532, -.045, .001); rbox(.012, .0025, .09, m.dark, 0, .054, -.12, .001);
-      rbox(.005, .008, .008, m.dark, 0, .058, -.19, .0015); add(new THREE.SphereGeometry(.0018, 6, 6), m.tritium, 0, .0595, -.1858);
+      ACC = 1; rbox(.005, .008, .008, m.dark, 0, .058, -.19, .0015); add(new THREE.SphereGeometry(.0018, 6, 6), m.tritium, 0, .0595, -.1858);
       if (o.rdot) { rbox(.024, .008, .036, m.dark, 0, .0565, -.008, .003); frame(.028, .026, .072, .0032, -.026, .006, m.dark); box(.02, .016, .001, m.glass, 0, .0715, -.02); add(new THREE.SphereGeometry(.0009, 6, 6), m.red, 0, .0715, -.019); }
       else { rbox(.021, .009, .008, m.dark, 0, .058, .03, .0015); for (const sx of [-.0058, .0058]) add(new THREE.SphereGeometry(.0018, 6, 6), m.tritium, sx, .059, .0343); }
+      ACC = 0;
       if (o.cuts) { for (let i = 0; i < 3; i++) rbox(.012, .004, .022, m.hole, 0, .0535, -.07 - i * .032, .001); for (const sx of [-1, 1]) rbox(.0012, .004, .16, m.glow, sx * .0152, .041, -.09, .0004); }
       if (o.cannon) { setBore(.034, -.2905, .019); rbox(.036, .042, .09, m.fin, 0, .034, -.245, .007); for (let i = 0; i < 4; i++) for (const sx of [-1, 1]) rbox(.004, .016, .012, m.hole, sx * .018, .04, -.215 - i * .02, .002); rbox(.014, .005, .07, m.hole, 0, .055, -.245, .001); disc(.007, 0, .034, -.2905, m.hole); for (const sx of [-1, 1]) rbox(.0012, .006, .08, m.glow, sx * .0182, .022, -.245, .0005); }
       if (o.comp) { setBore(.034, -.236, .017); rbox(.031, .037, .034, m.dark, 0, .034, -.2185, .006); for (let i = 0; i < 3; i++) rbox(.013, .004, .006, m.hole, 0, .0528, -.209 - i * .009, .001); disc(.0055, 0, .034, -.236, m.hole); }
@@ -323,7 +328,7 @@
       else if (o.hg === 'shroud') { tube(.031, hz, rf, vent(rf - hz), BY, 0, 18); ring(.031, .0035, hz + .004, m.dark, BY); ring(.031, .0035, rf - .004, m.dark, BY); }
       else { side([[rf, top - .004], [hz + .024, top - .004], [hz, top - .024], [hz, -.016], [hz + .02, -.032], [rf, -.032]], .052, o.hgMat || m.fin, 0, .008); for (let z = hz + .04; z < rf - .03; z += .048) for (const sx of [-1, 1]) rbox(.004, .012, .03, m.hole, sx * .0258, .012, z, .002); }
       if (o.glow !== false) for (const sx of [-1, 1]) rbox(.0025, .005, (rf - hz) * .7, m.glow, sx * (o.hg === 'slab' ? .0262 : o.hg === 'oct' ? .0252 : .0302), o.hg === 'oct' ? BY - .016 : o.hg === 'slab' ? -.014 : BY, (hz + rf) / 2, .001);
-      rail(o.hg === 'round' || o.hg === 'shroud' ? rf : hz + .012, rb - .016, top + .0035, hw > .03 ? .03 : .028);
+      accy(() => rail(o.hg === 'round' || o.hg === 'shroud' ? rf : hz + .012, rb - .016, top + .0035, hw > .03 ? .03 : .028));
       // barrel and muzzle
       const br = o.br || .011, mz = -len, tipL = o.tip === 'supp' ? o.sl : o.tip === 'brake' ? .068 : o.tip === 'flash' ? .05 : 0;
       if (mz + tipL < hz) { tube(br, mz + tipL - .004, hz, m.steel, BY); if (hz - mz - tipL > .1) { rbox(.022, .03, .028, m.dark, 0, BY + .006, hz - .05, .005); rbox(.008, .014, .012, m.dark, 0, BY + .026, hz - .05, .002); } }
@@ -337,6 +342,7 @@
       else if (o.stock === 'thumb') { side([[sb, .042], [sb + .03, .05], [sb + .29, .054], [sb + .31, .046], [sb + .31, -.07], [sb + .29, -.08], [sb + .14, -.07], ['q', sb + .1, -.07, sb + .08, -.04], ['q', sb + .04, -.03, sb, -.024]], .044, o.cheek || m.fin, 0, .01, [[[sb + .1, .022], [sb + .12, -.04], [sb + .2, -.048], [sb + .22, .024]]]); rbox(.048, .13, .016, m.rubber, 0, -.012, sb + .317, .006); }
       else if (o.stock === 'heavy') { side([[sb, .05], [sb + .27, .062], [sb + .29, .054], [sb + .29, -.074], [sb + .27, -.08], [sb + .2, -.07], ['q', sb + .1, -.05, sb, -.03]], .05, m.poly, 0, .01); rbox(.054, .14, .016, m.rubber, 0, -.008, sb + .297, .006); rbox(.02, .01, .1, m.steel, 0, .07, sb + .16, .004); }
       // what the support hand holds
+      ACC = 1;
       if (o.fore === 'vgrip') { const z = lp(hz, rf, .42); vtube(.0155, hb - .09, hb + .004, m.poly, 0, z, .019); vtube(.0195, hb - .098, hb - .084, m.acc, 0, z); for (let i = 0; i < 3; i++) ring(.0172, .0016, z, m.rubber, hb - .03 - i * .018).rotation.x = Math.PI / 2; sup = [0, hb - .05, z]; }
       else if (o.fore === 'angled') { const z = lp(hz, rf, .45); side([[z - .05, hb + .004], [z + .04, hb + .004], [z + .01, hb - .034], [z - .022, hb - .034]], .03, m.poly, 0, .006); sup = [0, hb - .028, z - .005]; }
       else sup = [0, hb - .012, lp(hz, rf, .45)];
@@ -346,6 +352,7 @@
       if (o.backup !== false) { rbox(.02, .014, .012, m.dark, 0, top + .016, hz + .03, .002); rbox(.004, .012, .004, m.dark, 0, top + .028, hz + .03, .001); rbox(.022, .014, .014, m.dark, 0, top + .016, rb - .03, .002); }
       if (o.counter) counter(.03, .06, hw);
       if (o.laser) { rbox(.02, .024, .052, m.poly, -.038, BY, hz + .09, .004); disc(.007, -.038, BY + .004, hz + .0635, m.red); disc(.005, -.038, BY - .006, hz + .0635, m.lamp); rbox(.012, .01, .02, m.dark, -.03, BY, hz + .09, .002); }
+      ACC = 0; Object.assign(A, { fam: 'long', rf, rb, top, hw, hz, sb: rb });
       // charging handle (moves when you rack it) and the magazine (comes out when you reload)
       T = parts.bolt = group(0, 0, 0); if (o.sideHandle) { rbox(.012, .012, .03, m.steel, -hw - .004, .032, .0, .003); rbox(.016, .01, .01, o.lower || m.fin, -hw - .012, .032, -.012, .003); } else { rbox(.034, .008, .022, m.dark, 0, top + .003, rb - .006, .002); rbox(.056, .008, .01, m.dark, 0, top + .003, rb + .002, .002); }
       T = parts.mag = group(0, -.058, -.127);
@@ -369,22 +376,25 @@
       side([[-.15, .03], [-.14, .054], [.1, .054], ['q', .128, .052, .13, .03], [.13, -.024], [.03, -.03], [.012, -.034], [.004, -.07], [-.062, -.07], ['q', -.071, -.07, -.071, -.06], [-.074, -.03], [-.15, -.03]], .046, o.auto ? m.fin : m.metal, 0, .007, [[[-.064, -.04], [-.064, -.057], ['q', -.064, -.063, -.058, -.063], [-.005, -.063], ['q', .001, -.063, .001, -.056], [-.001, -.04]]]);
       side([[-.03, -.036], [-.037, -.055], [-.031, -.058], [-.024, -.038]], .008, m.steel, 0, .0015); rbox(.003, .018, .058, m.hole, .0226, .026, -.03, .003); pin(-.01, .07, .046); pin(-.01, -.09, .046);
       tube(.019, -len + .01, -.14, m.steel, BY, 0, 18); muzzle(o.tip || (o.auto ? 'brake' : 'crown'), -len, BY, o.auto || o.tip ? .016 : .019);
+      Object.assign(A, { fam: 'long', rf: -.15, rb: .13, top: .054, hw: .023, hz: -.15, sb: .12, pump: !o.auto });
+      if (o.slug) ACC = 1;
       if (o.slug) { for (const sx of [-.008, .008]) rbox(.004, .022, .012, m.dark, sx, BY + .03, -len + .05, .001); ring(.009, .0024, .085, m.dark, .078); rbox(.024, .016, .02, m.dark, 0, .066, .085, .003); for (let i = 0; i < 3; i++) ring(.0195, .0028, -.2 - i * .1, m.glow, BY - .04); }
+      ACC = 0;
       rbox(.03, .01, .3, m.heat, 0, BY + .024, -len + .22, .004); add(new THREE.SphereGeometry(.0042, 8, 6), m.glow, 0, BY + .026, -len + .03);
       if (o.auto) {
         side([[-.15, .05], [-.4, .05], [-.42, .036], [-.42, -.03], [-.4, -.04], [-.15, -.04]], .054, m.poly, 0, .008); for (let z = -.36; z < -.18; z += .045) for (const sx of [-1, 1]) rbox(.004, .014, .028, m.hole, sx * .027, .004, z, .002);
-        rail(-.4, .1, .058); for (const sx of [-.009, .009]) rbox(.004, .02, .006, m.dark, sx, .074, .08, .001); ring(.008, .0022, .08, m.dark, .086); pistolGrip();
+        accy(() => { rail(-.4, .1, .058); for (const sx of [-.009, .009]) rbox(.004, .02, .006, m.dark, sx, .074, .08, .001); ring(.008, .0022, .08, m.dark, .086); }); pistolGrip();
         side([[.13, .05], [.36, .06], [.38, .052], [.38, -.07], [.36, -.078], [.24, -.05], ['q', .16, -.03, .13, -.02]], .044, m.poly, 0, .009, [[[.18, .028], [.2, -.012], [.31, -.04], [.33, .03]]]); rbox(.048, .13, .016, m.rubber, 0, -.008, .387, .006);
         decal('THRESHER', '12 GA · AUTO', .12, .03, .0236, .02, -.06);
         T = parts.mag = group(0, -.1, -.115); add(new THREE.CylinderGeometry(.064, .064, .05, 26), m.poly, 0, -.022, 0, 0, 0, Math.PI / 2); for (const sx of [-.0255, .0255]) { add(new THREE.TorusGeometry(.05, .004, 6, 26), m.acc, sx, -.022, 0, 0, Math.PI / 2, 0); add(new THREE.CylinderGeometry(.02, .02, .003, 14), m.dark, sx * 1.02, -.022, 0, 0, 0, Math.PI / 2); } rbox(.03, .06, .042, m.poly, 0, .04, 0, .004); T = G; sup = [0, -.058, -.3];
       } else {
         tube(.0165, -len + .09, -.14, m.metal, BY - .04, 0, 16); lathe([[-len + .074, .008], [-len + .074, .018], [-len + .09, .018]], m.dark, BY - .04);
         for (const z of [-len + .11, -.2]) rbox(.026, .07, .014, m.dark, 0, BY - .02, z, .006);
-        for (const sx of [-.009, .009]) rbox(.004, .018, .006, m.dark, sx, .062, .1, .001); ring(.008, .0022, .1, m.dark, .074);
+        accy(() => { for (const sx of [-.009, .009]) rbox(.004, .018, .006, m.dark, sx, .062, .1, .001); ring(.008, .0022, .1, m.dark, .074); });
         // wooden stock with a pistol-grip wrist, and a rubber pad
         side([[.12, .04], [.2, .044], [.44, .05], [.45, .04], [.45, -.098], [.43, -.104], [.3, -.076], ['q', .2, -.05, .15, -.062], ['q', .11, -.075, .07, -.118], [.03, -.118], ['q', .02, -.08, .03, -.03], [.12, -.024]], .046, m.fin, 0, .011); rbox(.05, .15, .018, m.rubber, 0, -.028, .458, .006);
         // shells on the side
-        rbox(.006, .044, .104, m.dark, -.0258, .008, -.03, .002); for (let i = 0; i < 4; i++) { const sz = -.066 + i * .024; vtube(.0095, -.012, .03, m.shell, -.0338, sz); vtube(.0098, -.02, -.01, m.brass, -.0338, sz); }
+        accy(() => { rbox(.006, .044, .104, m.dark, -.0258, .008, -.03, .002); for (let i = 0; i < 4; i++) { const sz = -.066 + i * .024; vtube(.0095, -.012, .03, m.shell, -.0338, sz); vtube(.0098, -.02, -.01, m.brass, -.0338, sz); } });
         decal(o.name || 'BREAKER', o.sub || '12 GA · PUMP', .13, .032, .0236, .012, -.005);
         T = parts.pump = group(0, 0, 0); hull(oct(.056, .058, BY - .04, .016), -.46, -.24, m.fin, .004); for (let i = 0; i < 7; i++) for (const sx of [-1, 1]) rbox(.004, .03, .012, m.rubber, sx * .0285, BY - .04, -.43 + i * .028, .002); T = G; sup = [0, -.052, -.35];
       }
@@ -397,18 +407,18 @@
       if (big) {
         side([[-.56, .008], [-.56, -.038], [-.24, -.046], [.02, -.04], [.012, -.034], [.004, -.07], [-.062, -.07], ['q', -.071, -.07, -.071, -.06], [-.074, -.034], [-.23, -.03], [-.23, .012]], .056, m.fin, 0, .008, [[[-.064, -.04], [-.064, -.057], ['q', -.064, -.063, -.058, -.063], [-.005, -.063], ['q', .001, -.063, .001, -.056], [-.001, -.04]]]);
         side([[.0, .016], [.13, .016], [.2, .05], [.5, .058], [.52, .05], [.52, -.094], [.5, -.102], [.3, -.08], ['q', .26, -.02, .2, -.02], [.14, -.03], [.06, -.118], [.03, -.118], ['q', .02, -.08, .024, -.034], [.0, -.03]], .05, m.fin, 0, .011, [[[.1, -.01], [.07, -.09], [.2, -.062], ['q', .22, -.02, .16, -.006]]]);
-        rbox(.054, .15, .018, m.rubber, 0, -.022, .528, .006); rbox(.05, .022, .15, m.acc, 0, .068, .37, .008); vtube(.007, -.16, -.1, m.dark, 0, .44); vtube(.012, -.168, -.158, m.rubber, 0, .44);
+        rbox(.054, .15, .018, m.rubber, 0, -.022, .528, .006); rbox(.05, .022, .15, m.acc, 0, .068, .37, .008); accy(() => { vtube(.007, -.16, -.1, m.dark, 0, .44); vtube(.012, -.168, -.158, m.rubber, 0, .44); });
         lathe([[-.95, .0155], [-.56, .0185], [-.24, .0205]], m.steel, BY, 0, 16); for (let a = 0; a < 6; a++) { const t = a / 6 * TAU; box(.0035, .0035, .5, m.dark, Math.cos(t) * .0178, BY + Math.sin(t) * .0178, -.6); }
-        muzzle('brake', -len, BY, .0155); for (const sx of [-.014, .014]) { tube(.0045, -.76, -.54, m.poly, -.055, sx, 8); rbox(.009, .012, .02, m.rubber, sx, -.055, -.765, .003); } rbox(.036, .02, .03, m.dark, 0, -.046, -.53, .004);
+        muzzle('brake', -len, BY, .0155); accy(() => { for (const sx of [-.014, .014]) { tube(.0045, -.76, -.54, m.poly, -.055, sx, 8); rbox(.009, .012, .02, m.rubber, sx, -.055, -.765, .003); } rbox(.036, .02, .03, m.dark, 0, -.046, -.53, .004); });
         for (let z = -.5; z < -.28; z += .05) for (const sx of [-1, 1]) rbox(.004, .012, .03, m.hole, sx * .028, -.012, z, .002);
-        rail(-.2, .1, .054, .026); scope(-.34, .17, .112, .024, .037); decal('LONGBOW', '.338 · BOLT', .13, .033, .0285, -.008, .33); sup = [0, -.05, -.42];
+        accy(() => { rail(-.2, .1, .054, .026); scope(-.34, .17, .112, .024, .037); }); decal('LONGBOW', '.338 · BOLT', .13, .033, .0285, -.008, .33); sup = [0, -.05, -.42];
       } else {
         side([[-.5, .01], [-.5, -.028], [-.3, -.036], [.02, -.036], [.01, -.04], [.004, -.07], [-.062, -.07], ['q', -.071, -.07, -.071, -.06], [-.074, -.036], [-.2, -.03], [-.2, .012]], .048, m.fin, 0, .01, [[[-.064, -.042], [-.064, -.057], ['q', -.064, -.063, -.058, -.063], [-.005, -.063], ['q', .001, -.063, .001, -.056], [-.001, -.042]]]);
         side([[.0, .014], [.12, .014], [.17, .042], [.43, .034], [.45, .026], [.45, -.092], [.43, -.098], [.25, -.06], ['q', .16, -.04, .12, -.06], ['q', .09, -.09, .07, -.116], [.03, -.116], ['q', .018, -.08, .024, -.036], [.0, -.034]], .046, m.fin, 0, .012);
         rbox(.05, .13, .016, m.rubber, 0, -.03, .457, .006); lathe([[-.95, .0115], [-.5, .0135], [-.24, .017]], m.steel, BY, 0, 14); muzzle('crown', -len, BY, .0115);
-        scope(-.25, .11, .104, .02, .028); decal('KITE', '.308 · BOLT', .1, .025, .0245, -.012, -.3); sup = [0, -.044, -.34];
+        accy(() => scope(-.25, .11, .104, .02, .028)); decal('KITE', '.308 · BOLT', .1, .025, .0245, -.012, -.3); sup = [0, -.044, -.34];
       }
-      side([[-.03, -.038], [-.037, -.055], [-.031, -.058], [-.024, -.04]], .008, m.steel, 0, .0015);
+      side([[-.03, -.038], [-.037, -.055], [-.031, -.058], [-.024, -.04]], .008, m.steel, 0, .0015); Object.assign(A, { fam: 'long', rf: -.24, rb: big ? .12 : .1, top: BY + (big ? .0235 : .0205), hw: big ? .025 : .022, hz: -.24, sb: big ? .13 : .12, bolt: 1 });
       T = parts.boltL = group(0, BY, big ? .07 : .06); parts.boltL.userData.z0 = big ? .07 : .06;
       tube(big ? .0148 : .013, 0, .055, m.steel, 0); add(new THREE.CylinderGeometry(.0052, .0046, .06, 8), m.steel, .036, 0, .04, 0, 0, Math.PI / 2); add(new THREE.SphereGeometry(big ? .0135 : .011, 12, 10), m.dark, .07, 0, .04);
       T = parts.mag = group(0, big ? -.068 : -.05, -.11); rbox(big ? .036 : .03, big ? .07 : .034, big ? .08 : .062, m.poly, 0, 0, 0, .005); rbox(big ? .04 : .034, .012, big ? .084 : .066, m.acc, 0, big ? -.04 : -.02, 0, .004);
@@ -419,7 +429,7 @@
     else if (k === 'wasp') pistol({ comp: 1, ext: 1, rdot: 1, name: 'WASP', sub: 'AUTO · 13 RD' });
     else if (k === 'quill') pistol({ supp: 1, name: 'QUILL', sub: 'SUPPRESSED · 15' });
     else if (k === 'stub') {   // sawn-off double: two short barrels that break open, a wooden forend and a bird's-head grip
-      len = .36; port = null; sight = .06; pistolHold = true;
+      len = .36; port = null; sight = .06; pistolHold = true; Object.assign(A, { fam: 'stub', by: .032 });
       side([[-.07, .052], [.04, .052], ['q', .062, .046, .058, .02], [.048, -.004], [-.07, -.004]], .058, m.metal, 0, .008);
       side([[-.075, .016], [-.24, .016], ['q', -.252, .004, -.238, -.02], [-.075, -.024]], .05, m.fin, 0, .01);
       side([[.004, -.002], [.05, .004], ['q', .1, -.026, .094, -.096], ['q', .09, -.126, .062, -.12], ['q', .034, -.114, .03, -.07], [.018, -.03]], .036, m.fin, 0, .012);
@@ -430,7 +440,7 @@
       rbox(.06, .012, .022, m.dark, 0, .012, -.283, .004); rbox(.005, .007, .262, m.metal, 0, .0295, -.14, .002); add(new THREE.SphereGeometry(.0036, 8, 6), m.brass, 0, .0355, -.29);
       T = G; sup = [-.016, -.1, .03];
     } else if (k === 'hammer') {   // double-action revolver: stainless frame with a cylinder window, full under-lug barrel, vented rib, fluted cylinder, finger-groove grip
-      len = .274; port = null; sight = .066; pistolHold = true;
+      len = .274; port = null; sight = .066; pistolHold = true; Object.assign(A, { fam: 'rev', by: .036 });
       const BY = .036, CY = .02, CZ = -.016;
       // frame: top strap, recoil shield and grip tang, with the window the cylinder turns in
       side([[-.072, .058], [.02, .058], ['q', .034, .058, .04, .046], [.044, .022], [.05, .004], [.03, -.012], [-.04, -.012], ['q', -.06, -.012, -.066, -.004], [-.072, .006]], .034, m.steel, 0, .005,
@@ -481,6 +491,8 @@
       len = .24; port = null; pistolHold = true;
       const shape = line ? KNIFE_SHAPE[line] : null, bladeM = line === 'aurum' ? m.metal : line === 'nightshift' ? m.dark : m.blade, lcx = c => new THREE.Color(c).convertSRGBToLinear();
       const glowB = c => new THREE.MeshBasicMaterial({ color: lcx(c), toneMapped: false, transparent: true, opacity: .92, blending: THREE.AdditiveBlending, depthWrite: false });
+      if (line && FORMS[line] && FORMS[line].knife) FORMS[line].knife({ add, side, rbox, box, lathe, m, glowB, lcx, line, L: LINES[line], grp: (x, y, z) => { const g = new THREE.Group(); g.position.set(x, y, z); T.add(g); return g; }, live: (o, fn) => { o.userData.live = true; o.userData.anim = fn; return o; } });   // a top line forges its own knife (77-forms)
+      else {
       if (shape === 'tanto') side([[-.02, .022], [-.19, .022], [-.238, -.004], [-.205, -.012], [-.02, -.012]], .006, bladeM, 0, .0022);
       else if (shape === 'kukri') side([[-.02, .018], ['q', -.12, .034, -.2, .014], ['q', -.25, -.002, -.236, -.02], ['q', -.15, -.03, -.02, -.012]], .007, bladeM, 0, .0022);
       else if (shape === 'cleaver') { side([[-.02, .032], [-.2, .034], [-.218, .022], [-.212, -.022], [-.02, -.014]], .006, bladeM, 0, .002); rbox(.0066, .002, .19, glowB(LINES[line].alt), 0, -.019, -.115, .0005); }
@@ -495,11 +507,12 @@
       if (shape !== 'energy' && shape !== 'cleaver') rbox(.0066, .0016, .16, m.glow, 0, -.0085, -.105, .0005);
       rbox(.03, .052, .012, m.acc, 0, .005, -.014, .004); side([[-.008, .017], [.03, .02], ['q', .07, .022, .1, .012], [.104, -.014], ['q', .07, -.024, .04, -.016], ['q', .02, -.02, -.008, -.014]], .024, line ? m.fin : m.poly, 0, .009);
       for (let i = 0; i < 4; i++) rbox(.0255, .034, .004, m.rubber, 0, .0, .014 + i * .021, .002); rbox(.028, .032, .016, m.metal, 0, -.001, .108, .006); decal('DP', 'BLADE', .05, .0125, .0036, .008, -.1);
+      }
     }
     if (k === 'pip' || k === 'wasp' || k === 'quill' || k === 'stub' || k === 'hammer' || k === 'knife' || GUNS[k].cat === 'Sidearm') pistolHold = true;
 
     if (bore && -bore.z > len) len = -bore.z;   // a muzzle device past the barrel's end: the gun is that long
-    if (line) { const K2 = skinKit(G, k, line, m, len, bore);
+    if (line) { const K2 = skinKit(G, k, line, m, len, bore, Object.assign(A, { sight }), parts);
       // the Stub's barrels break open to reload: what a skin put on them goes with them (rings and collars; not the drifting bits)
       if (K2 && parts.brk) { G.updateMatrixWorld(true); for (const o of [...K2.children]) if (o.position.z < -.075 && (!o.userData.anim || o.geometry && o.geometry.type === 'TorusGeometry')) parts.brk.attach(o); } }
     const grip = k === 'knife' ? [0, 0, .045] : k === 'hammer' ? [0, -.055, .052] : k === 'stub' ? [0, -.058, .05] : pistolHold ? [0, -.062, .026] : k === 'breaker' ? [0, -.07, .05] : k === 'kite' || k === 'longbow' ? [0, -.072, .046] : [0, -.076, .026];

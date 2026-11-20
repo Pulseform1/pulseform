@@ -93,7 +93,7 @@
   const SIG_N = { star: 'a captive star in three rings', rift: 'a tear in the air, shards circling', glyph: 'turning circles of runes', crescent: 'a crescent moon', icicles: 'glowing ice', fans: 'spinning RGB fans' };
   function featureList(sk) {
     const L = sk.L, t = sk.R.tier, gk = L.gk, f = [['Finish', t >= 5 ? 'alive: it breathes, flows and beats' : t >= 3 ? 'living, animated' : gk ? 'glowing, breathing' : 'its own paint']];
-    if (t >= 1) f.push(['Parts', sk.k === 'knife' ? (KNIFE_SHAPE[sk.line] || 'standard') + ' blade' : gk && gk.sig ? SIG_N[gk.sig] : 'new parts on the gun']);
+    if (t >= 1) f.push(['Parts', sk.k === 'knife' ? ((FORMS[sk.line] && FORMS[sk.line].blade) || KNIFE_SHAPE[sk.line] || 'standard') + ' blade' : gk && gk.sig ? SIG_N[gk.sig] : 'new parts on the gun']);
     if (gk && sk.k !== 'knife') f.push(['Glow', [gk.strips && 'energy strips', gk.rings && 'rings', gk.cell && 'energy cell', (gk.sight || gk.muzzle) && 'halos'].filter(Boolean).join(', ')]);
     if (L.rl && sk.k !== 'knife') f.push(['Reload', RELOAD_FX_N[L.rl.kind] || 'its own']);
     if (L.fx && L.fx.tracer) f.push(['Tracers', 'coloured']); if (L.fx && L.fx.idle) f.push(['Idle effect', (gk && gk.pts) || L.fx.idle]);
