@@ -272,7 +272,7 @@ class Animal {
     // eyes that throw back the lantern (and a little moonlight): brightest looking straight at you
     if (this.m.shine.length) { const L = this.W.lightK; let o = 0; if (L > .02 && this.state !== 'dead' && this.state !== 'down' && camDist < 140) { const c = this.W.camPos, dx = c.x - this.pos.x, dz = c.z - this.pos.z, dl = Math.hypot(dx, dz) || 1, f = (Math.sin(this.yaw) * dx + Math.cos(this.yaw) * dz) / dl; o = L * smooth(.2, .85, f) * (1 - smooth(60, 140, camDist)) * (this.sp.predator ? 1 : .7); } for (const s of this.m.shine) s.material.opacity = o; }
   }
-  dispose() { this.W.scene.remove(this.m.mesh); }
+  dispose() { this.W.scene.remove(this.m.mesh); this.gone = true; }
 }
 
 export class Wildlife {

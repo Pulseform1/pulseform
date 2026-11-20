@@ -8,7 +8,7 @@ export class Input {
     this.sens = 1;
     addEventListener('keydown', e => {
       if (e.repeat) return; const k = e.code; this.keys.add(k); this.pressed.add(k);
-      if (['Space', 'Tab', 'ArrowUp', 'ArrowDown'].includes(k) && this.active) e.preventDefault();
+      if (k === 'Tab' || (['Space', 'ArrowUp', 'ArrowDown'].includes(k) && this.active)) e.preventDefault();
     });
     addEventListener('keyup', e => this.keys.delete(e.code));
     addEventListener('blur', () => { this.keys.clear(); this.mouseDown = [false, false, false]; });

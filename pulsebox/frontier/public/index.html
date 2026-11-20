@@ -25,7 +25,7 @@
       <span class="label">Graphics</span>
       <button data-act="quality" data-q="low">Low</button><button data-act="quality" data-q="medium">Medium</button><button data-act="quality" data-q="high">High</button>
     </div>
-    <p class="keys">WASD walk &middot; Mouse look &middot; Shift run &middot; Walk into a cliff to climb &middot; C crouch &middot; E use &middot; 1-4 guns &middot; 5 rod &middot; Right mouse aim &middot; F eat &middot; L lantern &middot; I pack &middot; M map &middot; Esc pause</p>
+    <p class="keys">WASD walk &middot; Mouse look &middot; Shift run &middot; Walk into a cliff to climb &middot; 1-4 guns &middot; Right mouse aim &middot; G drone &middot; Tab all controls</p>
   </div>
 </section>
 
@@ -43,10 +43,37 @@
   <div id="hit"></div>
   <div id="hp"><span>Health <b id="hpnum">100</b></span><div id="hpbar"><i></i></div></div>
   <div id="coins"><i></i><b>0</b> coins<span id="coinpop"></span></div>
+  <button id="helpchip" type="button"><b>?</b> Controls <small>Tab</small></button>
+  <div id="help" hidden>
+    <h3>Controls</h3>
+    <div class="cols">
+      <dl><dt>Walk</dt><dd>WASD &middot; Shift run &middot; C crouch &middot; Space jump</dd>
+        <dt>Climb</dt><dd>Keep walking into a steep slope; let go to slide down</dd>
+        <dt>Guns</dt><dd>1 sniper &middot; 2 shotgun &middot; 3 double barrel &middot; 4 pistol &middot; H put away &middot; wheel to switch</dd>
+        <dt>Shoot</dt><dd>Left click fire &middot; Right click aim / scope &middot; R reload</dd>
+        <dt>Sniper</dt><dd>Wheel changes zoom &middot; hold Shift to hold your breath</dd></dl>
+      <dl><dt>Drone</dt><dd>G send up / bring back &middot; WASD fly &middot; Space up &middot; C down &middot; wheel zoom &middot; N night vision &middot; click to pin the animal in the ring</dd>
+        <dt>Pins</dt><dd>Follow the pin on screen, the compass and the map to the animal</dd>
+        <dt>Fishing</dt><dd>5 rod &middot; hold and let go to cast &middot; click when it bites, then reel</dd>
+        <dt>Camp</dt><dd>E use / dress a kill &middot; F eat &middot; L lantern &middot; I pack &middot; M map &middot; buy ammo at the chest</dd></dl>
+    </div>
+    <p class="touchonly">Touch: drag left to walk, right to look &middot; Drone sends it up; Pin marks the animal in the ring.</p>
+  </div>
   <div id="fishbar" hidden><span>Line</span><div><i></i></div><b>0 m</b></div>
 </section>
 <div id="scope"><div class="reticle"><i class="h"></i><i class="v"></i><i class="dots"></i></div><span id="scopepow"></span><span class="breath">Shift: hold your breath</span></div>
 <div id="hurt"></div>
+<div id="pins"></div>
+<div id="heat"></div>
+<section id="drone" hidden>
+  <div class="dframe"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div>
+  <div class="dring"></div>
+  <div class="dtop"><b>DRONE</b> <span id="dronemode">DAY VISION</span></div>
+  <div id="dronestat"></div>
+  <div id="dronetarget"></div>
+  <p class="dkeys">WASD fly &middot; Space up &middot; C down &middot; Shift fast &middot; Wheel zoom &middot; N night vision &middot; Click pin &middot; G come back</p>
+  <div class="dtouch"><button data-d="up">Up</button><button data-d="down">Down</button><button data-d="nv">Night</button><button data-d="pin" class="tfire">Pin</button><button data-d="back">Back</button></div>
+</section>
 <section id="death" hidden><div class="menu-inner small"><h1>You were hurt</h1><p id="deathmsg"></p><p class="sub">You wake at camp...</p></div></section>
 
 <section id="pause" hidden>
@@ -73,7 +100,7 @@
     <button data-k="KeyC">Crouch</button>
     <button data-k="run">Run</button>
   </div>
-  <div class="ttop"><button data-k="KeyL">Lantern</button><button data-k="KeyI">Pack</button><button data-k="KeyM">Map</button><button data-k="Escape">Pause</button></div>
+  <div class="ttop"><button data-k="KeyL">Lantern</button><button data-k="KeyI">Pack</button><button data-k="KeyM">Map</button><button data-k="drone">Drone</button><button data-k="help">?</button><button data-k="Escape">Pause</button></div>
 </section>
 <section id="panel" hidden></section>
 <section id="map" hidden>

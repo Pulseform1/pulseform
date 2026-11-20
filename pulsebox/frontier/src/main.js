@@ -19,6 +19,7 @@ import { Wildlife } from './wildlife.js';
 import { Weapons, GUNS, ORDER, AMMO } from './weapons.js';
 import { Fishing } from './fishing.js';
 import { Post } from './post.js';
+import { Drone } from './drone.js';
 import { CampLife } from './camplife.js';
 import { UI } from './ui.js';
 import { SurveyMap } from './map.js';
@@ -55,7 +56,7 @@ function resize() {
 }
 addEventListener('resize', resize); resize();
 G.post = new Post(renderer, scene, camera, G.settings.quality);
-const input = new Input(canvas);
+const input = new Input(canvas); G.input = input;
 const audio = new Audio();
 addEventListener('pointerdown', () => audio.start()); addEventListener('keydown', () => audio.start());
 
@@ -111,6 +112,7 @@ async function start(opts) {
   Object.assign(G, { world, jobs, sky, terrain, flora, grass, water, camp, player, weather, wildlife, stats: { taken: {} }, timeScale: 1, gameHours: 0, seed, spawn: opts.spawn, gameTime: 0, day: 0, envT: 0, env: { waterDist: 99, riverDist: 99, forest: 0 }, coins: 40, health: 100, breath: 4, dead: false });
   if (!G.weapons) { G.weapons = new Weapons(camera, TEX, TEX.glow); }
   G.fishing = new Fishing(G, scene, camera, audio);
+  G.drone = G.drone || new Drone(G, camera, renderer); G.drone.reset();
   G.tex = TEX; G.life = new CampLife(G, G.ui);
   G.map = G.map || new SurveyMap(G); G.map.explored.clear(); G.map.markers = []; G.map.guide = true; G.map.trail = [];
   if (opts.restore) restore(opts.restore);
@@ -129,11 +131,17 @@ async function start(opts) {
   sky.update(0, camera.position, 0);
   renderer.compile(scene, camera);
   $('#loading').hidden = true; $('#hud').hidden = false; G.state = 'play'; G.saveT = 20;
-  $('#touch').hidden = !input.isTouch;
-  setTimeout(() => toast(opts.restore ? `Back at camp. Day ${G.day + 1}.` : input.isTouch ? 'Drag left to walk, right to look. Gun: change weapon.' : '1 long rifle · 2 pump · 3 double barrel · 4 revolver · 5 rod · H put away. Buy ammunition at the chest.'), 1500);
+  $('#touch').hidden = !input.isTouch; document.body.classList.toggle('touch', input.isTouch);
+  setTimeout(() => toast(opts.restore ? `Back at camp. Day ${G.day + 1}.` : input.isTouch ? 'Drag left to walk, right to look. Tap ? for all the controls.' : 'Press Tab any time to see all the controls.'), 1500);
+  // the first time, show the controls card for a while, then tuck it away
+  if (!G.settings.helpSeen) { G.settings.helpSeen = true; saveSettings(); toggleHelp(true); clearTimeout(G.helpT); G.helpT = setTimeout(() => toggleHelp(false), 14000); }
   updateHud(true);
   if (!input.isTouch) input.lock();
 }
+
+// ---------- the controls card (Tab, or the ? button) ----------
+function toggleHelp(on) { const h = $('#help'), show = on ?? h.hidden; h.hidden = !show; $('#helpchip').classList.toggle('on', show); clearTimeout(G.helpT); }
+$('#helpchip').addEventListener('click', () => toggleHelp());
 
 // ---------- interaction ----------
 function nearestInteract() {
@@ -198,6 +206,15 @@ function step(dt) {
   else if (G.state === 'play' && input.hit('KeyI')) G.ui.openPack();
   else if (G.state === 'play' && input.hit('KeyM')) G.map.open();
   if (G.state === 'play') {
+    if (input.hit('Tab')) toggleHelp();
+    if (input.hit('KeyG')) { const Wq = G.weapons; Wq.ads = 0; Wq.scoped = 0; gunCtx.scope(0); G.drone.toggle(); }
+    G.drone.update(dt, input, G.settings.sens);
+  }
+  if (G.state === 'play' && G.drone.on) {
+    G.health = Math.min(100, G.health + dt * .08);
+    if (input.hit('Escape') || (!input.locked && !input.isTouch && G.wasLocked)) pause(true);
+    G.wasLocked = input.locked; G.gameTime += dt;
+  } else if (G.state === 'play') {
     const Wp = G.weapons, aimK = camera.fov / 72;   // aiming and the scope slow the look to match the view
     if (input.locked || input.isTouch) player.look(input.lookX, input.lookY, G.settings.sens * (Wp.scoped > .5 || Wp.ads > .5 ? Math.max(.12, aimK) : 1));
     player.update(dt, input, (x, z, r) => collide(x, z, r));
@@ -233,12 +250,12 @@ function step(dt) {
   camp.update(dt * G.timeScale, sky.night, new THREE.Vector3(w.x * w.z, 0, w.y * w.z));
   // wildlife and guns
   const moving = player.speed > .4, noise = player.swimming ? .7 : !moving ? .04 : player.crouched ? .14 : player.speed > 4.5 ? 1 : .42;
-  const lookV = camera.getWorldDirection(new THREE.Vector3()), inCamp = Math.hypot(player.pos.x - camp.c.x, player.pos.z - camp.c.z) < 16;
+  const lookV = G.drone.on ? new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)) : camera.getWorldDirection(new THREE.Vector3()), inCamp = Math.hypot(player.pos.x - camp.c.x, player.pos.z - camp.c.z) < 16;
   if (live) G.wildlife.update(dt, { pos: player.pos, noise, crouched: player.crouched, moving, night: sky.night > .5, lantern: camp.lantern.carried && camp.lantern.on, wind: { x: w.x, z: w.y }, look: lookV, inCamp, dead: G.dead }, sky.hours);
   G.wildlife.furR = G.weapons.scoped > .5 ? 240 : 34; G.wildlife.lightK = Math.max(0, sky.night - .3) * (camp.lantern.carried && camp.lantern.on ? 1 : .35);
   G.wildlife.render(dt, camera.position);
   const W = G.weapons;
-  if (G.state === 'play') {
+  if (G.state === 'play' && !G.drone.on) {
     W.update(dt, player.seated || player.sleeping || G.dead ? { mouseDown: [], clicked: new Set(), hit: () => false } : input, gunCtx);
     G.handL.visible = !(camp.lantern.carried && W.ads > .6) && !(W.scoped > .5);
   }
@@ -252,13 +269,13 @@ function step(dt) {
     G.handL.rotation.set(0.05 + Math.sin(ph) * .05 * sw, 0.2, Math.sin(ph * .5) * .06 * sw);
   }
   // HUD
-  const it = G.state === 'play' ? nearestInteract() : null, pr = $('#prompt');
+  const onFoot = G.state === 'play' && !G.drone.on, it = onFoot ? nearestInteract() : null, pr = $('#prompt');
   const look = camera.getWorldDirection(new THREE.Vector3());
-  G.carcass = !it && G.state === 'play' ? G.wildlife.carcassNear(player.pos, look) : null;
-  G.woodT = (G.woodT || 0) - dt; if (G.woodT < 0) { G.woodT = .25; G.wood = !it && !G.carcass && G.state === 'play' ? G.life.gatherSpot(player.pos, look) : null; }
+  G.carcass = !it && onFoot ? G.wildlife.carcassNear(player.pos, look) : null;
+  G.woodT = (G.woodT || 0) - dt; if (G.woodT < 0) { G.woodT = .25; G.wood = !it && !G.carcass && onFoot ? G.life.gatherSpot(player.pos, look) : null; }
   if (player.seated && G.timeScale > 1) { pr.textContent = 'Time passes by the fire...'; pr.classList.add('on'); }
   else if (it) { pr.textContent = 'E  ' + it.label(); pr.classList.add('on'); } else if (G.carcass) { pr.textContent = 'E  Dress the ' + G.carcass.sp.label.toLowerCase(); pr.classList.add('on'); } else if (G.wood) { pr.textContent = 'E  Gather dry wood' + (G.wood.kind === 6 ? ' from the fallen log' : G.wood.kind === 7 ? ' from the old stump' : ' from the dead tree'); pr.classList.add('on'); } else pr.classList.remove('on');
-  $('#cross').style.opacity = W.ads > .5 || W.scoped > .5 ? 0 : 1;
+  $('#cross').style.opacity = W.ads > .5 || W.scoped > .5 || G.drone.on ? 0 : 1; G.drone.draw();
   $('#ammo').textContent = W.label; $('#hit').classList.toggle('on', G.hitT > 0); G.hitT -= dt; updateHud(); G.fishing.tick(dt);
   G.ui.tick(dt);
   if (live) G.map.reveal(dt);
@@ -329,11 +346,12 @@ function hurt(dmg, a) {
   G.health = Math.max(0, G.health - dmg); G.shake = Math.min(1.2, (G.shake || 0) + .5 + dmg / 60); G.hurtT = 1;
   const d = G.player.pos.clone().sub(a.pos).setY(0); if (d.lengthSq() > 1e-4) G.player.vel.addScaledVector(d.normalize(), 5 + dmg / 8);
   audio.hurt(dmg);
+  if (G.drone.on) G.drone.recall('Something has you! The drone drops back to your pack.');
   if (G.health <= 0) return die(a);
   if (G.state === 'play') toast(a.sp.bear ? 'The grizzly is on you! Shoot it, or it will maul you.' : a.sp.ornery ? 'The moose tramples you and wheels away.' : a.sp.predator === 'cougar' ? 'The cougar has you! Shoot it off!' : 'A wolf bites and darts back to the pack.');
 }
 function die(a) {
-  G.dead = true; G.weapons.select(null); if (G.state === 'ui') G.ui.close();
+  G.dead = true; if (G.drone.on) G.drone.recall(); G.weapons.select(null); if (G.state === 'ui') G.ui.close();
   const lost = Math.floor(G.coins * .25); G.coins -= lost; G.life.pack.meat.length = 0;
   $('#death').hidden = false; $('#deathmsg').textContent = `${a.sp.bear ? 'Mauled by a grizzly' : a.sp.ornery ? 'Trampled by a moose' : a.sp.predator === 'cougar' ? 'Taken by a cougar' : 'Pulled down by wolves'}. You lost the meat in your pack${lost ? ` and ${lost} coins` : ''}.`;
   setTimeout(() => {
@@ -391,12 +409,12 @@ function saveGame() {
   if (!G.world || (G.state !== 'play' && G.state !== 'pause' && G.state !== 'ui')) return;
   const P = G.player, W = G.weapons, c = G.world.camp;
   const d = { v: 1, seed: G.seed, spawn: G.spawn, camp: { x: c.x, z: c.z }, player: { x: P.pos.x, z: P.pos.z, yaw: P.yaw }, hours: G.sky.hours, day: G.day,
-    weather: G.weather.state, life: G.life.save(), ammo: W.ammo, reserve: W.reserve, gun: W.want, map: G.map.save(), stats: G.stats, coins: G.coins, health: G.health, fish: G.fishing ? G.fishing.save() : null, lantern: { carried: G.camp.lantern.carried, on: G.camp.lantern.on }, fire: { lit: G.camp.fire.lit, fuel: G.camp.fire.fuel }, saved: Date.now() };
+    weather: G.weather.state, life: G.life.save(), ammo: W.ammo, reserve: W.reserve, gun: W.want, map: G.map.save(), stats: G.stats, coins: G.coins, health: G.health, fish: G.fishing ? G.fishing.save() : null, drone: G.drone ? G.drone.save() : null, lantern: { carried: G.camp.lantern.carried, on: G.camp.lantern.on }, fire: { lit: G.camp.fire.lit, fuel: G.camp.fire.fuel }, saved: Date.now() };
   try { localStorage.setItem('fh-save', JSON.stringify(d)); $('#saved').textContent = 'Saved.'; } catch { }
 }
 function loadSave() { try { const d = JSON.parse(localStorage.getItem('fh-save') || 'null'); return d && d.v === 1 ? d : null; } catch { return null; } }
 function restore(d) {
-  G.day = d.day || 0; G.life.load(d.life); G.weapons.load(d.ammo, d.reserve); G.map.load(d.map); G.stats = d.stats || { taken: {} }; if (d.coins != null) G.coins = d.coins; if (d.health != null) G.health = Math.max(30, d.health); if (G.fishing) G.fishing.load(d.fish);
+  G.day = d.day || 0; G.life.load(d.life); G.weapons.load(d.ammo, d.reserve); G.map.load(d.map); G.stats = d.stats || { taken: {} }; if (d.coins != null) G.coins = d.coins; if (d.health != null) G.health = Math.max(30, d.health); if (G.fishing) G.fishing.load(d.fish); if (G.drone) G.drone.load(d.drone);
   if (d.weather) { G.weather.state = d.weather === 'rain' ? 'cloudy' : 'clear'; G.weather.roll(); Object.assign(G.weather.cur, G.weather.tgt); }
   if (d.fire) { G.camp.fire.lit = d.fire.lit; G.camp.fire.fuel = d.fire.fuel; }
   if (d.lantern) { G.camp.lantern.on = d.lantern.on; if (d.lantern.carried) carryLantern(true); }
@@ -419,11 +437,20 @@ function drawContinue() {
     else if (k === 'aim') { input.touchAim = !input.touchAim; b.classList.toggle('on', input.touchAim); }
     else if (k === 'run') { input.runLatch = !input.runLatch; b.classList.toggle('on', input.runLatch); }
     else if (k === 'weapon') G.weapons.cycle(1);
+    else if (k === 'drone') input.press('KeyG');
+    else if (k === 'help') toggleHelp();
     else if (k === 'eat') eat();
     else if (k === 'Escape') { if (G.state === 'play') pause(true); else if (G.state === 'ui') input.press('Escape'); }
     else if (k === 'KeyC') { input.press(k); b.classList.toggle('on'); }
     else input.press(k);
   }, { passive: false });
+}
+{
+  const D = $('#drone .dtouch');
+  D.addEventListener('touchstart', e => { const b = e.target.closest('button'); if (!b) return; e.preventDefault(); const d = b.dataset.d;
+    if (d === 'up') G.drone.up = 1; else if (d === 'down') G.drone.up = -1; else if (d === 'nv') G.drone.setVision(!G.drone.nv); else if (d === 'pin') input.touchFire = true; else if (d === 'back') input.press('KeyG'); }, { passive: false });
+  const stop = e => { const b = e.target.closest('button'); if (b && (b.dataset.d === 'up' || b.dataset.d === 'down')) G.drone.up = 0; };
+  D.addEventListener('touchend', stop); D.addEventListener('touchcancel', stop);
 }
 function drawStick() {
   const s = $('#stick'), m = input.touch.move;
