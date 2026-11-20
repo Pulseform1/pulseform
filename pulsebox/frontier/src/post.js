@@ -43,14 +43,21 @@ const DESPECKLE = {
     vec4 base = texture2D( tDiffuse, vUv ); vec3 c = seen( base.rgb );
     float green = smoothstep( 0.008, 0.03, c.g - max( c.r, c.b ) );
     if ( green <= 0.0 ) { gl_FragColor = base; return; }
-    vec3 sum = vec3( 0.0 ); float md = 9.0;
+    // each neighbour: how different it looks, and the two brightest of them (how bright they look, and their light as stored)
+    vec3 sum = vec3( 0.0 ); float md = 9.0, s1 = 0.0, s2 = 0.0, r1 = 0.0, r2 = 0.0;
     for ( int j = -1; j <= 1; j++ ) for ( int i = -1; i <= 1; i++ ) {
       if ( i == 0 && j == 0 ) continue;
       vec3 n = texture2D( tDiffuse, vUv + vec2( float( i ), float( j ) ) * uPx ).rgb; sum += n;
-      vec3 d = abs( c - seen( n ) ); md = min( md, d.r + d.g + d.b );
+      vec3 sn = seen( n ), d = abs( c - sn ); md = min( md, d.r + d.g + d.b );
+      float sl = dot( sn, vec3( 0.3, 0.59, 0.11 ) ), rl = dot( n, vec3( 0.3, 0.59, 0.11 ) );
+      if ( sl > s1 ) { s2 = s1; r2 = r1; s1 = sl; r1 = rl; } else if ( sl > s2 ) { s2 = sl; r2 = rl; }
     }
     float lone = smoothstep( 0.09, 0.17, md );   // unlike even the closest of its eight neighbours
-    gl_FragColor = vec4( mix( base.rgb, sum / 8.0, green * lone ), base.a );
+    // a glint of one or two pixels: brighter than all but (at most) one neighbour. It is brought down to the second
+    // brightest, so a thin blade or twig (two bright neighbours, along its length) keeps its look.
+    float lc = dot( c, vec3( 0.3, 0.59, 0.11 ) ), rc = dot( base.rgb, vec3( 0.3, 0.59, 0.11 ) );
+    float glint = smoothstep( 0.02, 0.06, lc - s2 ), f = min( 1.0, r2 / max( rc, 1e-5 ) );
+    gl_FragColor = vec4( mix( base.rgb * mix( 1.0, f, green * glint ), sum / 8.0, green * lone ), base.a );
   }`,
 };
 const GRADE = {
@@ -86,10 +93,10 @@ export class Post {
     if (this.comp) this.comp.dispose();
     const c = this.comp = new EffectComposer(this.r, rt);
     c.addPass(new RenderPass(this.scene, this.cam));
-    this.despeckle2 = new ShaderPass(DESPECKLE);
-    // low graphics: no glow to spread them, so only the last pass (no glow, sun shafts or grade either)
-    if (q === 'low') { this.bloom = this.shafts = this.grade = this.despeckle = null; c.addPass(new OutputPass()); c.addPass(this.despeckle2); this.resize(); return; }
     this.despeckle = new ShaderPass({ ...DESPECKLE, defines: { LINEAR: 1 } }); c.addPass(this.despeckle);
+    this.despeckle2 = new ShaderPass(DESPECKLE);
+    // low graphics: both clean-ups, and nothing else (no glow, sun shafts or grade)
+    if (q === 'low') { this.bloom = this.shafts = this.grade = null; c.addPass(new OutputPass()); c.addPass(this.despeckle2); this.resize(); return; }
     // Medium: the glow worked at half size and fewer steps for the sun's rays, which is most of the cost on built-in graphics
     const half = this.half = q === 'high' ? 1 : .5; this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x * half, size.y * half), q === 'high' ? .42 : .32, .55, .88); c.addPass(this.bloom);
     this.shafts = new ShaderPass({ ...SHAFTS, defines: { SAMPLES: q === 'high' ? 22 : 12 } }); c.addPass(this.shafts);
