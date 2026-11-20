@@ -3339,9 +3339,44 @@ const GAME = {
     if (U.kn > .01) { const k = U.kn, work = f.defuse > 0 ? Math.sin(X.t * 13) * .07 : 0; U.hip.position.y -= .14 * k; U.torso.rotation.x -= .5 * k; U.head.rotation.x -= .3 * k; U.arms.rotation.x = lp(U.arms.rotation.x, -1.0 + work, k); U.arms.rotation.z = lp(U.arms.rotation.z, 0, k); U.arms.position.z = lp(U.arms.position.z, .05, k); }
     U.gunHold.visible = U.gunHold.visible && U.kn < .5;
     { const hold = f.alive && f.plant > 0; if (hold && !U.held) { U.held = X.chargeCopy(); U.held.scale.setScalar(.75); U.arms.add(U.held); } if (U.held) { U.held.visible = hold; if (hold) U.held.position.set(.03, -.2, -.4); } }
-    // a dead fighter falls back and stays down
-    U.dead = f.alive ? 0 : Math.min(1, U.dead + dt * 2.6); const d = smooth(U.dead);
-    A.rotation.x = d * 1.5; A.position.y = f.y + d * .14;
+    if (f.alive) { U.rag = null; f.rag = null; U.dead = 0; A.rotation.x = 0; A.rotation.z = 0; A.position.y = f.y; }
+    else ragdoll(f, A, U, dt);
+  }
+  // who shot them and from where, so the body goes down away from the shot (every device hears the kill)
+  on('kill', (v, by, head) => { v.rag = { fx: by ? by.x : null, fz: by ? by.z : null, head: !!head }; });
+  /* A body going down. Where it lies and which way it fell are fixed the moment it dies, so nothing the player does after
+     (looking round on the death cam, the facing their device still sends) moves it. The knees give first, the body twists
+     away from the shot and topples, faster and faster, lands with a small bounce and settles loose: one knee up, the arms
+     flung, the head rolled aside. A headshot drops it straight down before it tips. Shot from behind, it pitches onto its
+     face. A wall closer than a body length stops the fall short: it slumps against the wall instead of sinking through. */
+  function ragdoll(f, A, U, dt) {
+    let R = U.rag;
+    if (!R) {
+      const hit = f.rag || {}, x0 = A.position.x, y0 = A.position.y, z0 = A.position.z;
+      let dx = hit.fx != null ? x0 - hit.fx : Math.sin(f.yaw), dz = hit.fz != null ? z0 - hit.fz : Math.cos(f.yaw); const L = Math.hypot(dx, dz) || 1; dx /= L; dz /= L;
+      // the way the shot pushes first; if a wall is in the way, to either side, then the other way: the clearest one wins
+      const push = Math.atan2(dx, dz), plan = d => { const turnB = angDiff(d, f.yaw), turnF = angDiff(d + Math.PI, f.yaw), fwd = Math.abs(turnB) > Math.abs(turnF) + .3, yaw1 = f.yaw + cl(fwd ? turnF : turnB, -1.3, 1.3) * .85, s = fwd ? -1 : 1, fx = Math.sin(yaw1) * s, fz = Math.cos(yaw1) * s;
+        return { fwd, yaw1, s, fx, fz, room: los(x0, y0 + .45, z0, x0 + fx * 1.9, y0 + .45, z0 + fz * 1.9, false) }; };
+      let P2 = null; for (const off of [0, Math.PI / 2, -Math.PI / 2, Math.PI]) { const c = plan(push + off); if (!P2 || c.room > P2.room + .05) P2 = c; if (c.room >= 1.75) break; }
+      const { fwd, yaw1, s, fx, fz, room } = P2, aEnd = room >= 1.75 ? 1.5 : cl(Math.asin(cl((room - .2) / 1.6, 0, 1)), .5, 1.5);
+      const sd = String(f.key || f.name).split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7) + (M ? M.round * 131 : 0), rn = k => { const v = Math.sin(sd * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); };
+      R = U.rag = { x: x0, y: y0, z: z0, yaw0: f.yaw, yaw1, fwd, s, fx, fz, aEnd, slump: aEnd < 1.15, head: !!hit.head, t: 0, leg: rn(1) < .5 ? 0 : 1, side: rn(2) < .5 ? -1 : 1, r3: rn(3), slide: cl(room - 1.8, 0, .3) };
+    }
+    R.t += dt; const t = R.t, t0 = R.head ? .16 : .1, T = R.head ? .58 : .5, u = cl((t - t0) / T, 0, 1), ti = t0 + T;
+    const buckle = smooth(cl(t / (R.head ? .16 : .22), 0, 1)), g = smooth(u), land = t > ti ? Math.exp(-(t - ti) * 7) * Math.abs(Math.sin((t - ti) * 17)) : 0;
+    const a = R.aEnd * u * u - .12 * land;   // gravity: slow to tip, fast at the end; then the bounce dies away
+    A.rotation.y = R.yaw0 + angDiff(R.yaw1, R.yaw0) * g; A.rotation.x = a * R.s; A.rotation.z = R.side * .1 * g;
+    A.position.set(R.x + R.fx * R.slide * g, R.y + (R.fwd ? .16 : .13) * Math.sin(Math.max(0, a)) - (R.head ? .06 : 0) * buckle * (1 - g), R.z + R.fz * R.slide * g);
+    // the limbs: knees giving way, then loose on the floor
+    const hipDrop = (R.head ? .3 : .2) * buckle * (1 - g * .55) + (R.slump ? (R.fwd ? .5 : .32) * g : 0);
+    U.hip.position.y = .95 - hipDrop;
+    [U.L, U.Rg].forEach((lg, i) => { const bent = i === R.leg, kneeT = R.fwd ? (bent ? -.35 : .05) : R.slump ? 1.25 : bent ? .95 : .12, kneeS = R.fwd ? (bent ? -1.1 : -.15) : R.slump ? -1.35 : bent ? -1.55 : -.12;
+      const kt = R.fwd && R.slump ? 1.45 : kneeT, ks = R.fwd && R.slump ? -2.35 : kneeS;   // (slumped forward against a wall: kneeling)
+      lg.th.rotation.x = lp(.55 * buckle, kt, g); lg.sn.rotation.x = lp(-1.1 * buckle, ks, g); lg.th.rotation.z = (i ? -1 : 1) * .12 * g; });
+    U.torso.rotation.x = lp(.25 * buckle, R.fwd ? .2 : -.18, g); U.torso.rotation.y = R.side * .22 * g; U.torso.position.y = 0;
+    U.arms.rotation.x = lp(-.5 * buckle, R.fwd ? -1.25 : R.slump ? -.9 : 1.15 + R.r3 * .5, g); U.arms.rotation.y = R.side * .35 * g; U.arms.rotation.z = R.side * (R.fwd ? -.2 : .45) * g; U.arms.position.z = 0;
+    U.head.rotation.x = lp(.3 * buckle, R.fwd ? .45 : R.slump ? .55 : -.4, g); U.head.rotation.z = R.side * .45 * g; U.head.rotation.y = R.side * .25 * g;
+    U.tails.rotation.x = .1 + .4 * g; U.gunHold.visible = false; if (U.held) U.held.visible = false;
   }
   /* ---------- 75 crowd: eight fighters for the price of the ones in view ----------
      A 4v4 puts seven other bodies in the scene, each some forty pieces (a rival twice that, with its red outline), and at
@@ -6104,7 +6139,8 @@ const GAME = {
     addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[e.code] || /^(Key[BRQEFYOXTH]|Digit[1-3]|Tab)$/.test(e.code))) e.preventDefault(); }, true);
     document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; if (Math.abs(e.movementX) > 500 || Math.abs(e.movementY) > 500) return;   // some browsers send a wild jump when the lock starts
       if (UI.armory) { const V = K.view, s = 1 / pxPer(); ptr = { x: cl(ptr.x + e.movementX * s, V.x0 + 2, V.x1 - 4), y: cl(ptr.y + e.movementY * s, V.y0 + 2, V.y1 - 4) }; KNAV.on = false; if (dragZ) dragZ.fn(ptr.x, ptr.y); return; }   // the armory's cursor
-      const P = me(), s = .0022 * (trackpad() ? CFG.tpsens * TS.slow : CFG.sens) / zoomOf(P) * (P.scoped ? CFG.zsens : 1); TS.mvT = performance.now(); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
+      const P = me(); if (!P.alive) return;   // the dead don't turn: the body stays as it fell
+      const s = .0022 * (trackpad() ? CFG.tpsens * TS.slow : CFG.sens) / zoomOf(P) * (P.scoped ? CFG.zsens : 1); TS.mvT = performance.now(); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
     // (on a Mac, Ctrl+click arrives as a right click: while crouching that is still a shot)
     document.addEventListener('mousedown', e => { if (M && screen === 'play' && !me().alive && UI.spec && X) { nextSpec(); return; } if (!locked() || !playing()) return;
       if (UI.armory) { if (e.button === 0) { const z = zoneAt(ptr.x, ptr.y); if (z) { if (z.drag) dragZ = z; z.fn(ptr.x, ptr.y); } } return; }   // a click on the armory, at our cursor
@@ -6156,7 +6192,7 @@ const GAME = {
   }
   function touchMove(x, y, id) {
     if (TS.stick && TS.stick.id === id) { TS.stick.x = x; TS.stick.y = y; }
-    if (TS.look && TS.look.id === id && M) { const P = me(), s = .0052 * CFG.tsens * TS.slow / zoomOf(P) / uiScale() * (P.scoped ? CFG.zsens : 1); P.yaw -= (x - TS.look.x) * s; P.pitch = cl(P.pitch - (y - TS.look.y) * s, -1.4, 1.4); TS.look.x = x; TS.look.y = y; }
+    if (TS.look && TS.look.id === id && M) { const P = me(), s = .0052 * CFG.tsens * TS.slow / zoomOf(P) / uiScale() * (P.scoped ? CFG.zsens : 1); if (P.alive) { P.yaw -= (x - TS.look.x) * s; P.pitch = cl(P.pitch - (y - TS.look.y) * s, -1.4, 1.4); } TS.look.x = x; TS.look.y = y; }   // (the dead don't turn)
   }
   function touchUp(id) { if (TS.stick && TS.stick.id === id) TS.stick = null; if (TS.look && TS.look.id === id) TS.look = null; if (TS.fire === id) TS.fire = null; TS.held.delete(id); }
   function resetInput() { keys = {}; mouse.l = mouse.tap = false; TS.tap = false; UI.opts = false; TS.stick = TS.look = TS.fire = null; TS.held.clear(); TS.crouch = false; dragZ = null; }

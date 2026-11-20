@@ -88,7 +88,8 @@
     addEventListener('keydown', e => { if (playing() && (e.ctrlKey || e.altKey || KM[e.code] || /^(Key[BRQEFYOXTH]|Digit[1-3]|Tab)$/.test(e.code))) e.preventDefault(); }, true);
     document.addEventListener('mousemove', e => { if (!locked() || !playing()) return; if (Math.abs(e.movementX) > 500 || Math.abs(e.movementY) > 500) return;   // some browsers send a wild jump when the lock starts
       if (UI.armory) { const V = K.view, s = 1 / pxPer(); ptr = { x: cl(ptr.x + e.movementX * s, V.x0 + 2, V.x1 - 4), y: cl(ptr.y + e.movementY * s, V.y0 + 2, V.y1 - 4) }; KNAV.on = false; if (dragZ) dragZ.fn(ptr.x, ptr.y); return; }   // the armory's cursor
-      const P = me(), s = .0022 * (trackpad() ? CFG.tpsens * TS.slow : CFG.sens) / zoomOf(P) * (P.scoped ? CFG.zsens : 1); TS.mvT = performance.now(); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
+      const P = me(); if (!P.alive) return;   // the dead don't turn: the body stays as it fell
+      const s = .0022 * (trackpad() ? CFG.tpsens * TS.slow : CFG.sens) / zoomOf(P) * (P.scoped ? CFG.zsens : 1); TS.mvT = performance.now(); P.yaw -= e.movementX * s; P.pitch = cl(P.pitch - e.movementY * s, -1.45, 1.45); });
     // (on a Mac, Ctrl+click arrives as a right click: while crouching that is still a shot)
     document.addEventListener('mousedown', e => { if (M && screen === 'play' && !me().alive && UI.spec && X) { nextSpec(); return; } if (!locked() || !playing()) return;
       if (UI.armory) { if (e.button === 0) { const z = zoneAt(ptr.x, ptr.y); if (z) { if (z.drag) dragZ = z; z.fn(ptr.x, ptr.y); } } return; }   // a click on the armory, at our cursor
@@ -140,7 +141,7 @@
   }
   function touchMove(x, y, id) {
     if (TS.stick && TS.stick.id === id) { TS.stick.x = x; TS.stick.y = y; }
-    if (TS.look && TS.look.id === id && M) { const P = me(), s = .0052 * CFG.tsens * TS.slow / zoomOf(P) / uiScale() * (P.scoped ? CFG.zsens : 1); P.yaw -= (x - TS.look.x) * s; P.pitch = cl(P.pitch - (y - TS.look.y) * s, -1.4, 1.4); TS.look.x = x; TS.look.y = y; }
+    if (TS.look && TS.look.id === id && M) { const P = me(), s = .0052 * CFG.tsens * TS.slow / zoomOf(P) / uiScale() * (P.scoped ? CFG.zsens : 1); if (P.alive) { P.yaw -= (x - TS.look.x) * s; P.pitch = cl(P.pitch - (y - TS.look.y) * s, -1.4, 1.4); } TS.look.x = x; TS.look.y = y; }   // (the dead don't turn)
   }
   function touchUp(id) { if (TS.stick && TS.stick.id === id) TS.stick = null; if (TS.look && TS.look.id === id) TS.look = null; if (TS.fire === id) TS.fire = null; TS.held.delete(id); }
   function resetInput() { keys = {}; mouse.l = mouse.tap = false; TS.tap = false; UI.opts = false; TS.stick = TS.look = TS.fire = null; TS.held.clear(); TS.crouch = false; dragZ = null; }
