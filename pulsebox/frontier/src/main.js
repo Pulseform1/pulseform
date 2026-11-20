@@ -139,6 +139,29 @@ async function start(opts) {
   if (!input.isTouch) input.lock();
 }
 
+// ---------- the weapon bar along the bottom: each gun with its key and rounds, the one in hand lit, and the drone ----------
+const SLOT_NAME = { longrifle: 'Sniper', pump: 'Shotgun', double: 'Double', revolver: 'Pistol', rod: 'Rod' };
+{
+  const row = $('#slots .row');
+  row.innerHTML = ORDER.map((k, i) => `<button type="button" data-slot="${k}"><kbd>${i + 1}</kbd>${SLOT_NAME[k] || GUNS[k].name}</button>`).join('') + '<button type="button" class="drone" data-slot="drone"><kbd>G</kbd>Drone</button>';
+  row.addEventListener('click', e => { const b = e.target.closest('[data-slot]'); if (!b || G.state !== 'play') return; const k = b.dataset.slot;
+    if (k === 'drone') input.press('KeyG'); else if (!G.drone.on) G.weapons.select(G.weapons.want === k && k === 'rod' ? null : k); });
+}
+function drawSlots() {
+  // hidden while the drone flies: its own screen lists its keys
+  const el = $('#slots'), show = (G.state === 'play' || G.state === 'ui') && !G.drone.on; if (el.hidden === show) { el.hidden = !show; if (show) G._slotLit = performance.now(); } if (!show) return;
+  const W = G.weapons, D = G.drone, touch = input.isTouch, now = performance.now();
+  const key = touch + '|' + W.want + '|' + ORDER.map(k => GUNS[k].rod ? '' : (W.ammo[k] + W.reserve[GUNS[k].ammo] > 0 ? 1 : 0)).join('') + '|' + (D.battery < .2);
+  if (key !== G._slotKey) {   // something changed: show it brightly for a few seconds
+    if ((G._slotKey || '').split('|')[1] !== String(W.want)) G._slotLit = now;
+    G._slotKey = key; el.querySelector('.cap').textContent = touch ? 'Tap to switch' : '1–5 or scroll to switch · G drone';
+    for (const b of el.querySelectorAll('[data-slot]')) { const k = b.dataset.slot;
+      if (k === 'drone') { b.classList.toggle('low', D.battery < .2); continue; }
+      const g = GUNS[k]; b.classList.toggle('on', W.want === k); b.classList.toggle('empty', !g.rod && W.ammo[k] + W.reserve[g.ammo] === 0); }
+  }
+  el.classList.toggle('idle', now - (G._slotLit || 0) > 4500);
+}
+
 // ---------- the controls card (Tab, or the ? button) ----------
 function toggleHelp(on) { const h = $('#help'), show = on ?? h.hidden; h.hidden = !show; $('#helpchip').classList.toggle('on', show); clearTimeout(G.helpT); }
 $('#helpchip').addEventListener('click', () => toggleHelp());
@@ -275,7 +298,7 @@ function step(dt) {
   G.woodT = (G.woodT || 0) - dt; if (G.woodT < 0) { G.woodT = .25; G.wood = !it && !G.carcass && onFoot ? G.life.gatherSpot(player.pos, look) : null; }
   if (player.seated && G.timeScale > 1) { pr.textContent = 'Time passes by the fire...'; pr.classList.add('on'); }
   else if (it) { pr.textContent = 'E  ' + it.label(); pr.classList.add('on'); } else if (G.carcass) { pr.textContent = 'E  Dress the ' + G.carcass.sp.label.toLowerCase(); pr.classList.add('on'); } else if (G.wood) { pr.textContent = 'E  Gather dry wood' + (G.wood.kind === 6 ? ' from the fallen log' : G.wood.kind === 7 ? ' from the old stump' : ' from the dead tree'); pr.classList.add('on'); } else pr.classList.remove('on');
-  $('#cross').style.opacity = W.ads > .5 || W.scoped > .5 || G.drone.on ? 0 : 1; G.drone.draw();
+  $('#cross').style.opacity = W.ads > .5 || W.scoped > .5 || G.drone.on ? 0 : 1; G.drone.draw(); drawSlots();
   $('#ammo').textContent = W.label; $('#hit').classList.toggle('on', G.hitT > 0); G.hitT -= dt; updateHud(); G.fishing.tick(dt);
   G.ui.tick(dt);
   if (live) G.map.reveal(dt);

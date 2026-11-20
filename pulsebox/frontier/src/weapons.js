@@ -19,6 +19,8 @@ function mats(tex) {
     glove: new THREE.MeshStandardMaterial({ color: 0x6a4a2c, roughness: .7 }),
     glass: new THREE.MeshStandardMaterial({ color: 0x102a3a, metalness: 1, roughness: .05, emissive: 0x0a1820, emissiveIntensity: .4 }),
     black: new THREE.MeshStandardMaterial({ color: 0x060606, roughness: .9 }),
+    // fiber-optic sight inserts: unlit, so they read in shade and at dusk; green at the back, orange at the front
+    fiberR: new THREE.MeshBasicMaterial({ color: 0x5dff7a }), fiberF: new THREE.MeshBasicMaterial({ color: 0xff8a1a }),
     cork: new THREE.MeshStandardMaterial({ color: 0x8a6a44, roughness: .9 }),
     line: new THREE.LineBasicMaterial({ color: 0xe8e4d8, transparent: true, opacity: .7 }),
   };
@@ -71,6 +73,21 @@ function longRifle(M) {
   const muzzle = at(new THREE.Object3D(), 0, 0, -.85); g.add(muzzle);
   return { group: g, bolt, muzzle, rear: V(0, SY, -.02), front: V(0, SY, -.41), adsZ: -.02, rh: V(0, -.05, .07), lh: V(-.005, -.04, -.36), hip: V(.14, -.16, -.3) };
 }
+// sights that stand clear of the gun, so the sight picture is open: a rear blade (or ghost ring) and a front post, each
+// with fiber-optic dots; returns the height of the sight line
+function frontPost(g, M, z, base, top, r = .0072) {
+  g.add(at(bx(r * 1.3, top - base, .01, M.steel), 0, (top + base) / 2, z));
+  g.add(at(new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), M.fiberF), 0, top, z + .003));   // on the shooter's side of the post
+}
+function rearBlade(g, M, z, base, top, gap = .007, r = .0034) {
+  for (const x of [-1, 1]) { g.add(at(bx(.009, top - base + .004, .006, M.steel), x * (gap / 2 + .0045), (top + base) / 2, z)); g.add(at(new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), M.fiberR), x * (gap / 2 + .0045), top - .003, z + .0035)); }
+  g.add(at(bx(gap + .018, .004, .008, M.steel), 0, base + .002, z));
+}
+function ghostRing(g, M, z, base, y) {
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(.0085, .0022, 8, 22), M.steel); at(ring, 0, y, z); g.add(ring);
+  for (const x of [-1, 1]) g.add(at(bx(.003, y - base, .006, M.steel), x * .0085, (y + base) / 2 - .004, z));
+  for (const a of [-.6, Math.PI + .6]) g.add(at(new THREE.Mesh(new THREE.SphereGeometry(.0011, 8, 6), M.fiberR), Math.cos(a) * .0085, y + Math.sin(a) * .0085, z + .003));
+}
 function pumpGun(M) {
   const g = new THREE.Group();
   g.add(at(lathe([[-.12, .0135], [-.8, .0128], [-.805, .011]], M.steel, 16), 0, 0, 0));
@@ -85,23 +102,24 @@ function pumpGun(M) {
   g.add(stock([[.07, .015], [.15, .0], [.4, -.04], [.42, -.14], [.38, -.15], [.16, -.08], [.07, -.05]], .042, M.wood));
   g.add(at(bx(.046, .11, .01, M.black), 0, -.09, .42));
   g.add(at(bx(.012, .004, .7, M.steel), 0, .016, -.45)); // rib
-  g.add(at(new THREE.Mesh(new THREE.SphereGeometry(.0034, 8, 6), M.brass), 0, .021, -.79));
+  ghostRing(g, M, -.02, .02, .038); frontPost(g, M, -.785, .018, .038);
   const muzzle = at(new THREE.Object3D(), 0, 0, -.81); g.add(muzzle);
-  return { group: g, pump, muzzle, rear: V(0, .021, -.1), front: V(0, .021, -.79), adsZ: -.24, rh: V(0, -.06, .085), lh: V(-.005, -.05, -.39), hip: V(.15, -.17, -.3) };
+  return { group: g, pump, muzzle, rear: V(0, .038, -.02), front: V(0, .038, -.785), adsZ: -.14, rh: V(0, -.06, .085), lh: V(-.005, -.05, -.39), hip: V(.15, -.17, -.3) };
 }
 function doubleGun(M) {
   const g = new THREE.Group(), barrels = new THREE.Group(); g.add(barrels); barrels.position.set(0, -.012, -.06);
   for (const x of [-.0128, .0128]) barrels.add(at(lathe([[0, .0138], [-.7, .0128], [-.705, .0112]], M.steel, 16), x, .012, 0));
   barrels.add(at(bx(.01, .006, .69, M.steel), 0, .025, -.35));
-  barrels.add(at(new THREE.Mesh(new THREE.SphereGeometry(.0034, 8, 6), M.brass), 0, .031, -.69));
+  frontPost(barrels, M, -.69, .028, .048);
   barrels.add(stock([[-.06, .0], [-.3, .0], [-.31, -.018], [-.06, -.024]], .046, M.wood));
   g.add(at(bx(.052, .058, .12, M.case), 0, -.012, .0));
-  for (const x of [-.017, .017]) { const h = at(bx(.006, .024, .012, M.case), x, .022, .055); h.rotation.x = -.6; g.add(h); }
+  for (const x of [-.017, .017]) { const h = at(bx(.006, .018, .012, M.case), x, .012, .062); h.rotation.x = -.9; g.add(h); }   // hammers, laid back below the sight line
   for (const z of [.035, .05]) g.add(at(bx(.007, .02, .006, M.steel), 0, -.05, z));
   const guard = new THREE.Mesh(new THREE.TorusGeometry(.027, .003, 6, 16, Math.PI), M.steel); guard.rotation.set(0, Math.PI / 2, Math.PI); at(guard, 0, -.05, .045); g.add(guard);
   g.add(stock([[.06, .02], [.15, -.008], [.39, -.045], [.4, -.135], [.36, -.14], [.15, -.07], [.06, -.045]], .042, M.wood));
+  rearBlade(g, M, .03, .017, .036, .007, .0013);
   const muzzle = at(new THREE.Object3D(), 0, .012, -.71); barrels.add(muzzle);
-  return { group: g, barrels, muzzle, rear: V(0, .019, .0), front: V(0, .019, -.75), adsZ: -.2, rh: V(0, -.055, .08), lh: V(-.005, -.04, -.27), hip: V(.15, -.165, -.3) };
+  return { group: g, barrels, muzzle, rear: V(0, .036, .03), front: V(0, .036, -.75), adsZ: -.14, rh: V(0, -.055, .08), lh: V(-.005, -.04, -.27), hip: V(.15, -.165, -.3) };
 }
 function revolver(M) {
   const g = new THREE.Group();
@@ -111,15 +129,14 @@ function revolver(M) {
   const cylg = new THREE.Group(); at(cylg, 0, .006, -.012); g.add(cylg);
   cylg.add(cyl(.0175, .0175, .04, M.blued, 18));
   for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2, f = cyl(.003, .003, .002, M.black, 8); at(f, Math.cos(a) * .011, Math.sin(a) * .011, -.021); cylg.add(f); const fl = bx(.003, .003, .03, M.steel); at(fl, Math.cos(a + .52) * .0175, Math.sin(a + .52) * .0175, 0); cylg.add(fl); }
-  const hammer = new THREE.Group(); at(hammer, 0, .02, .045); g.add(hammer);
+  const hammer = new THREE.Group(); at(hammer, 0, .011, .045); g.add(hammer);   // low enough to keep the sight picture clear
   hammer.add(at(bx(.007, .022, .01, M.case), 0, .008, .0)); hammer.add(at(bx(.012, .004, .012, M.case), 0, .019, .004));
   g.add(at(bx(.006, .016, .008, M.steel), 0, -.016, .03));
   const guard = new THREE.Mesh(new THREE.TorusGeometry(.016, .0025, 6, 14, Math.PI), M.brass); guard.rotation.set(0, Math.PI / 2, Math.PI); at(guard, 0, -.016, .028); g.add(guard);
   const grip = stock([[.035, -.008], [.055, -.012], [.09, -.075], [.085, -.095], [.06, -.092], [.03, -.04]], .028, M.wood); g.add(grip);
-  g.add(at(bx(.004, .008, .012, M.brass), 0, .025, -.2)); // front blade
-  g.add(at(bx(.012, .004, .01, M.blued), 0, .022, .05)); // rear notch (on the frame top)
+  frontPost(g, M, -.198, .02, .034, .0034); rearBlade(g, M, .05, .022, .034, .006, .0022);
   const muzzle = at(new THREE.Object3D(), 0, .012, -.21); g.add(muzzle);
-  return { group: g, cyl: cylg, hammer, muzzle, rear: V(0, .028, .05), front: V(0, .028, -.2), adsZ: -.36, rh: V(.002, -.05, .07), lh: V(-.012, -.062, .06), hip: V(.13, -.15, -.36) };
+  return { group: g, cyl: cylg, hammer, muzzle, rear: V(0, .034, .05), front: V(0, .034, -.198), adsZ: -.36, rh: V(.002, -.05, .07), lh: V(-.012, -.062, .06), hip: V(.13, -.15, -.36) };
 }
 function rod(M) {
   const g = new THREE.Group();
